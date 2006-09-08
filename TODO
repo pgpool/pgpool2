@@ -1,0 +1,220 @@
+$Header$
+
+TODO項目
+
+o pgoool.confのreload対応
+
+o 3以上のノード数に対応
+
+-o 自動テーブルロックしてSERIAL型の同期を保証する(2.6)．
+
+o SSLのサポート
+
+o もしSQLをパースできれば，テーブル単位のレプリケーションも可能？
+
+o セッションレベルのロードバランスを指示できる機能を追加
+  /* BEGIN SESSION LEVEL LOAD BALANCE */とか．
+
+-o /*NO STRICT*/ とか /*PARALLEL*/ といった指示子があってもよいのかも
+  (pgsql-jp 35304)->2.6で/*NO STRICT*/を実装
+
+-o parameter statusの値が一致していなくてもエラーにならないようにした
+ (USとNZでレプリケーションしている例があった！)．(v2.5.4)
+
+o load balanceの比率をSQL文単位でコメントで指定できるようにする．
+
+- o STRICTモードであっても，SELECTならばnon strictにしていいはず．
+  2.5.2で実装．でも問題発生．[pgsql-jp: 35294]参照．
+
+o バグ．master/slave mode&load balance modeのときに，reset queryがマス
+  タ側にしか出ない．master_slave modeでなければこの問題は起きない->しょ
+  うがない？
+
+-o pgpoolスタート時にログを出力(v2.5.1)
+
+o セッション開始時に発行する問い合わせをpgpool.confで設定可能にする
+
+-o セッション終了時に発行する問い合わせをpgpool.confで設定可能にする(v2.4)．
+
+-o Slony-I対応(v2.5b2)
+  - マスタ側はすべてを通し，セカンダリ側はSELECTのみ通す．
+  - トランザクションブロックはマスタ側にのみ通す．
+  - replication modeでなくてもload balanceするmode追加
+
+-o no connection pooling mode(v2.5b2)
+
+-o schedule failover/縮退(v2.5b1)
+  - 単にシグナルを送るだけ
+
+o fail back/switch backの実装
+
+o 3台以上のサーバに対応
+
+-o タイムスタンプの印字機能(v2.5b2)
+
+o query cache(regex で問い合わせのパターンやキャッシュinvalidation時間
+  の設定ができる)
+
+o 監査機能
+
+-o heart beat(v2.5b2)
+
+o シーケンスをreplicationする
+  - シーケンス処理関数を入れ替え，中でロックするようにすればOKか？駄目．
+    要は，masterのロックがsecondaryのnextval()が終わるまで待つようにし
+    なければならないので，トランザクションブロックの中にいなければなら
+    ない．->自動的にトランザクションを開始すればよい？どの問い合わせの
+    ときにトランザクションを開始するか判断する必要がある．->パースツリー
+    を取ってくるか？->そこまでやりたくないが．DMLだったら自動スタート？
+    でもSELECT nextval();などはどうする？->明示的にシーケンスを扱って
+    いることを指示させるしかないか？
+
+o OIDをreplicationする
+
+o 一時テーブルを削除する関数を作る
+
+o 無停止リカバリ
+  1) rsync
+
+  2) 問い合わせ処理中でなければ，単純SELECT以外は一時的に問い合わせを
+     待たせるモードに移行->これでよいか？XIDカウンタが同期しなくなる
+     が．open transactionがあったらアボートさせる->このケースではセッ
+     ションを終了させる必要あり？
+
+  3) CHECKPOINT発行
+  4) rsync
+  5) 停止側postmaster restart
+  6) 通常モードに移行
+     - マスタとセカンダリが入れ替わるケースでは完全restartが必要？->そ
+     んなこともないだろう．
+     - 既存のコネクションを引き継げるか？そうだとしたらSETで設定した値はどうするか？
+
+  7) 複数のWebサーバで動いているpgpoolを一斉に再起動するにはどうしたら
+     よいか？また，どのpgpoolが無停止リカバリを管理するか？別のリカバ
+     リ用管理サーバを立てた方がよいか？->単なる管理ツールで良いのでは？
+     各pgpoolにshow statusを送信し，状態を定期的に把握する程度でも充分
+     便利．
+
+o 無停止リカバリ V2
+  1) rsync
+
+  2) オープントランザクションがあったら待つ．
+
+  3) オープントランザクションがいなくなったらReadyForQueryの時点で待ち
+     状態に入る
+
+  4) CHECKPOINT発行
+  5) rsync
+  6) 停止側postmaster restart
+  7) 通常モードに移行
+     - マスタとセカンダリが入れ替わるケースでは完全restartが必要？->そ
+     んなこともないだろう．
+
+  8) 複数のWebサーバで動いているpgpoolを一斉に再起動するにはどうしたら
+     よいか？また，どのpgpoolが無停止リカバリを管理するか？別のリカバ
+     リ用管理サーバを立てた方がよいか？->単なる管理ツールで良いのでは？
+     各pgpoolにshow statusを送信し，状態を定期的に把握する程度でも充分
+     便利．
+
+  参考:
+  PGClusterの動作
+
+  1) オープントランザクションがある場合は，それがクローズするまでリカ
+     バリプロセスは待ち続ける
+
+  2) たまたまマスタクラスタにつながっていたセッションはどうなるか？->
+     どんなSQLを投げてもエラー状態になる．
+
+  3) リカバリ中に新規につながったセッションはどうなるか？マスタ/リカバ
+     リ中クラスタ以外に接続．更新はレプリケーションサーバの中でキュー
+     イングされる．
+
+-o コマンド引数の処理
+
+  -f config_file (default は /usr/local/etc/pgpool.conf)
+
+-o UNIX domain/INET domain両方の socketに対応する
+
+  デフォルトは Unix domain のみ受付．config の inetdomain が true なら
+  ば，INET domain 経由の接続も受け付ける．
+
+-o サーバのデーモン化
+
+-o signal のブロック処理
+
+-o SIGCHLD のハンドラ
+
+-o child 数の管理アルゴリズム
+
+  child 数が num_min_children を下回ったら num_init_children になるまで
+  fork する
+
+-o child のtimeout処理
+
+o child は暇なときに accept しておく(LRU キューを作る)．
+
+o クライアントが quit したら，LRUキューから次のクライアントを取り出す
+  ->childがexitするとキューの中身が失われるが，それでよいか？
+
+-o TRUST認証以外への対応
+
+-o バックエンドへのコネクションに timeout を付ける
+
+-o fail over
+
+-o replication
+
+-o load balancing
+
+-o フロントエンドがコミットしないままexitすると，それに対応するバックエ
+  ンドがトランザクション完了待ち(:ERROR:  current transaction is
+  aborted, queries ignored until end of transaction block)になってしま
+  う．
+
+-o 起動する前にpidファイルのチェックを行う
+
+-o configureでPostgreSQL includeディレクトリを指定できるようにする.とい
+  うか，PostgreSQLのincludeファイルに頼らないようにすべき？->とりあえ
+  ず --with-pgsqlで指定できるようにした(6/24)
+
+-o template0, template1データベースへのコネクションをキャッシュしない(createdbが
+  ERROR:  CREATE DATABASE: source database "template1" is being accessed
+  by other usersになる)．また，regressionデータベースへのコネクション
+  もキャッシュしない(set authorization関係のテストが通らないため)．
+
+-o 以下のプロトコルの実装
+
+  - AuthenticationCleartextPassword
+  - AuthenticationCryptPassword
+  - AuthenticationMD5Password
+  - BinaryRow
+  - NotificationResponse
+  - PasswordPacket
+  - FunctionCall
+  - FunctionResultResponse
+
+-o コンフィグファイルが見つからないときは内部で持っているデフォルト値を
+  使う．
+
+-o regression testを通す
+
+- o プロトコル3(PostgreSQL 7.4)に対応する->とりあえずV3 requestが来たら
+  V2にfallback要求をフロントエンドに送るように改良した．V3プロトコルへ
+  のnative対応はまだ．
+
+  フロントエンドがV2->バックエンドにV2でネゴ
+			- V2バックエンド->接続成功
+			- V3バックエンド->接続成功
+
+  フロントエンドがV3->バックエンドにV3でネゴ
+			- V2バックエンド->接続失敗(ここで更にフロントエ
+			  ンドにV2をネゴし，そのあとV2でバックエンドに接
+			  続に行くこともできる)->実装した
+			- V3バックエンド->接続成功
+
+  結局，フロントエンドのofferしたプロトコルバージョンを覚えておき，そ
+  れを使ってバックエンドに接続すればOK
+
+-o Unixドメインソケットのパスをpgpool.confで変更可能にする(debian対策)
+
+-o cancel requestへの対応

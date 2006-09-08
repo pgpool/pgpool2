@@ -1,0 +1,1281 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html">
+<meta http-equiv="content-style-type" content="text/css">
+<link rel="stylesheet" href="./pgpool.css" type="text/css">
+<title>pgpool-II README</title>
+</head>
+<body>
+
+<!-- hhmts start -->
+Last modified: Mon Aug 28 22:47:45 JST 2006
+<!-- hhmts end -->
+
+
+<h1>What is pgpool-II?<a name="whatis"></h1>
+
+<p> pgpool-II is a middleware that works between PostgreSQL servers
+and a PostgreSQL database client. It provides following features.</p>
+
+<p>
+<ul>
+
+<li>Limiting Excess Connections</li>
+    <p>There is a limit on the maximum number of concurrent
+connections with PostgreSQL, and connections are rejected after so
+many connections. Setting the maximum number of connections, however,
+increases resource consumption and affect system
+performance. pgpool-II also has a limit on the maximum number of
+connections, but extra connections will be queued instead of returning
+an error immediately.</p>
+
+<li>Connection Pooling</li>
+    <p>pgpool-II saves connections to the PostgreSQL servers, and reuse
+them whenever a new connection with the same properties
+(i.e. username, database, protocol version) comes in. It reduces
+connection overhead, and improves system's overall throughput.</p>
+
+<li>Replication</li>
+    <p>pgpool-II can manage multiple PostgreSQL servers. Using the
+replication function enables creating a realtime backup on 2 or
+more physical disks, so that the service can continue without stopping
+servers in case of a disk failure.</p>
+
+<li>Load Balance</li>
+    <p>If a database is replicated, executing a SELECT query on any
+server will return the same result. pgpool-II takes an advantage of
+the replication feature to reduce the load on each PostgreSQL server
+by distributing SELECT queries among multiple servers, improving
+system's overall throughput. At the best, performance improves
+proportionally to the number of PostgreSQL servers. Load balance works
+the best in a situation where there are a lot of users executing many
+queries at the same time.</p>
+
+<li>Parallel Query</li>
+    <p>Using the parallel query function, data can be divided
+among the multiple servers, so that a query can be executed on all the
+servers parallely to reduce the overall execution time. Parallel query
+works the best with searching large-scale data.</p>
+
+</ul>
+</p>
+
+<p>pgpool-II talks PostgreSQL's backend and frontend protocol, and
+relays a connection between them. Therefore, a database application
+(frontend) thinks that pgpool-II is the actual PostgreSQL server, and
+the server (backend) sees pgpool-II as one of clients. Because
+pgpool-II is transparent to both the server and the client, an
+existing database application can be used with pgpool-II almost
+without a change to its sources.</p>
+
+
+<h1>Supported Platforms<a name="platform"></h1>
+
+<p>pgpool-II works on Linux, Solaris, FreeBSD, and most of the
+UNIX-like architectures. Windows is not supported. Supported
+PostgreSQL server's versions are 6.4 and higher. To use the parallel
+query, however, 7.4 and higher must be used.</p>
+
+
+<h1>pgpool-II Installation<a name="install"></h1>
+
+<p>Installing pgpool-II requires gcc 2.9 or higher, and GNU
+make. Also, pgpool-II links libpq library, so it must be installed on
+a machine used to build pgpool-II.</p>
+
+<dl>
+<dt>configure
+<dd>
+<p>
+After extracting the source tar ball, execute the configure script.
+<pre>
+./configure
+</pre>
+
+There are options that you can set if you want to set values other
+than the default.
+
+<ul>
+  <li><code>--prefix=path</code><br/>
+      pgpool-II binaries and docs will be installed to this
+directory. Default value is <code>/usr/local</code></li>
+  <li><code>--with-pgsql=path</code><br/>
+      Top directory where PostgreSQL's client libraries are
+installed. Default values is <code>/usr/local/pgsql</code></li>
+</ul>
+</p>
+
+<dt>make
+<dd>
+<p>
+<pre>
+make
+make install
+</pre>
+will install pgpool-II. (If you use FreeBSD, replace make with gmake)
+</dl>
+
+<h1>Configuring pgpool-II<a name="config"></h1>
+
+<p>Configuration files for pgpool-II are
+<code>/usr/local/etc/pgpool.conf</code> and
+<code>/usr/local/etc/pcp.conf</code> by default. There are several
+operation modes in pgpool-II. Each mode has associated functions which
+can be enabled or disabled, and specific configuration parameters to
+control their behaviors.</p>
+
+<table border>
+
+  <tr>
+    <th>Function/Mode</th>
+    <th>raw Mode</th>
+    <th>Connection Pool Mode</th>
+    <th>Replication Mode</th>
+    <th>Master/Slave Mode</th>
+    <th>Parallel Query Mode</th>
+  </tr>
+
+  <tr>
+    <td>Connection Pool</td>
+	<td align="center">X</td>
+	<td align="center">O</td>
+	<td align="center">O</td>
+	<td align="center">O</td>
+	<td align="center">O</td>
+  </tr>
+
+  <tr>
+    <td>Replication</td>
+	<td align="center">X</td>
+	<td align="center">X</td>
+	<td align="center">O</td>
+	<td align="center">X</td>
+	<td align="center">X</td>
+  </tr>
+
+  <tr>
+    <td>Load Balance</td>
+	<td align="center">X</td>
+	<td align="center">X</td>
+	<td align="center">O</td>
+	<td align="center">O</td>
+	<td align="center">X</td>
+  </tr>
+
+  <tr>
+    <td>Degeneration</td>
+	<td align="center">X</td>
+	<td align="center">X</td>
+	<td align="center">O</td>
+	<td align="center">O</td>
+	<td align="center">X</td>
+  </tr>
+
+  <tr>
+    <td>Failover</td>
+	<td align="center">O</td>
+	<td align="center">O</td>
+	<td align="center">X</td>
+	<td align="center">X</td>
+	<td align="center">X</td>
+  </tr>
+
+  <tr>
+    <td>Parallel Query</td>
+	<td align="center">X</td>
+	<td align="center">X</td>
+	<td align="center">X</td>
+	<td align="center">X</td>
+	<td align="center">O</td>
+  </tr>
+
+  <tr>
+    <td>Required # of Servers</td>
+	<td align="center">1 or higher</td>
+	<td align="center">1 or higher</td>
+	<td align="center">2 or higher</td>
+	<td align="center">2 or higher</td>
+	<td align="center">2 or higher</td>
+  </tr>
+
+  <tr>
+    <td>System DB required?</td>
+	<td align="center">no</td>
+	<td align="center">no</td>
+	<td align="center">no</td>
+	<td align="center">no</td>
+	<td align="center">yes</td>
+  </tr>
+
+</table>
+
+<h2>Configuring <code>pcp.conf</code></h2>
+
+<p>pgpool-II provides the controll interface where an administrator
+can collect pgpool-II status, and terminate pgpool-II processes via
+network. The <code>pcp.conf</code> is the user/password file for
+authentication with the interface. All modes require the
+<code>pcp.conf</code> file to be set. After installing pgpool-II,
+<code>$prefix/etc/pcp.conf.sample</code> is created. Change the name
+of the file to <code>pcp.conf</code> and add your username and the
+password.
+
+<pre>
+cp $prefix/etc/pcp.conf.sample $prefix/etc/pcp.conf
+</pre>
+
+An empty line or a line starting with "<code>#</code>" is treated as a
+comment and will be ignored. The username and the password must be
+written on one line using the following format:
+
+<pre>
+username:[password encrypted in md5]
+</pre>
+
+<code>[password encrypted in md5]</code> can be produced with the
+<code>$prefix/bin/pg_md5</code> command.
+
+<pre>
+./pg_md5 foo
+acbd18db4cc2f85cedef654fccc4a4d8
+</pre>
+
+The <code>pcp.conf</code> file must be readable by the user who
+executes pgpool-II.</p>
+
+<h2>Configuring <code>pgpool.conf</code></h2>
+
+<p>As described already, each operation mode has specific
+configuration parameters in <code>pgpool.conf</code>. After instaling
+pgpool-II, <code>$prefix/etc/pgpool.conf.sample</code> is
+created. Change the name of the file to <code>pgpool.conf</code> and
+edit the contents.
+
+<pre>
+cp $prefix/etc/pgpool.conf.sample $prefix/etc/pgpool.conf
+</pre>
+
+An empty line or a line starting with "#" is treated as a
+comment and will be ignored.</p>
+
+<h3>raw Mode</h3>
+
+<p>In the raw mode, clients simply connect to the PostgreSQL servers
+via pgpool-II. This mode is useful for simply limiting excess
+connections to the servers, or enabling failover with multiple
+servers.</p>
+
+<dl>
+  <dt>listen_addresses</dt>
+  <dd>
+      <p>Specifies the address in hostname or IP address, which will
+      be accepted by pgpool-II via TCP/IP network. <code>'*'</code> accepts
+      all incoming connections. <code>''</code> disables TCP/IP
+      connections. Default is <code>'localhost'</code>. Connections via UNIX
+      domain socket are always accepted.</p>
+  </dd>
+      
+  <dt>port</dt>
+  <dd>
+      <p>The port number where pgpool-II accepts connections. Default
+      is 9999.</p>
+  </dd>
+
+  <dt>socket_dir</dt>
+  <dd>
+      <p>The directory path of the UNIX domain socket accepting
+      connections for pgpool-II. Default is <code>'/tmp'</code>. Be
+      aware that the socket might be deleted by cron. We recommend to
+      set this value to <code>'/var/run'</code> or such directory.</p>
+  </dd>
+
+  <dt>pcp_port</dt>
+  <dd>
+      <p>The port number where PCP process accepts
+      connections. Default is 9898.</p>
+  </dd>
+
+  <dt>pcp_socket_dir</dt>
+  <dd>
+      <p>The directory path of the UNIX domain socket accepting
+      connections for PCP process. Default is <code>'/tmp'</code>. Be
+      aware that the socket might be deleted by cron. We recommend to
+      set this value to <code>'/var/run'</code> or such directory.</p>
+  </dd>
+      
+  <dt>backend_socket_dir</dt>
+  <dd>
+      <p>The directory path of the PostgreSQL server's UNIX domain
+      socket, which is used by pgpool-II to communicate with the
+      server. Default is <code>'/tmp'</code>.<p>
+  </dd>
+
+  <dt>pcp_timeout</dt>
+  <dd>p
+      <p>PCP connection timeout value in seconds. If a client doesn't
+      respond within the set seconds, PCP closes the connection with
+      the client. Default is 10 seconds. 0 means no timeout.</p>
+  </dd>
+
+  <dt>num_init_children</dt>
+  <dd>
+      <p>The number of preforked pgpool-II server processes. Default
+      is 32. Please note that cancelling a query creates another
+      connection to the backend; thus, a query cannot be cancelled if
+      the connections are full. If you want to ensure that queries can
+      be cancelled, set this values to twice the expected connections.</p>
+  </dd>
+
+  <dt>child_life_time</dt>
+  <dd>
+      <p>A pgpool-II child process' life time in seconds. When a child
+      is idle for so many seconds, it is terminated and the new child
+      will be created. This parameter is a measure to prevent memory
+      leaks and other unexpected errors. Default values is 300 (5
+      minutes). 0 diables this function. Note that processes that have
+      not accepted any connections are not applicable for this.</p>
+  </dd>
+
+  <dt>child_max_connections</dt>
+  <dd>
+      <p>A pgpool-II child process will be terminated after so many
+      connections from clients. This parameter is useful on the server
+      if it is too busy that child_life_time and connection_life_time
+      are not effective.</p>
+  </dd>
+
+  <dt>logdir</dt>
+  <dd>
+      <p>The directory path of the logs created by
+      pgpool-II. Currently, only the <code>pgpool.pid</code> file is
+      created. Default is <code>'/tmp'</code>.</p>
+  </dd>
+
+  <dt>print_timestamp</dt>
+  <dd>
+      <p>Add timestamps to the logs when set to true. Default is
+      true.</p>
+  </dd>
+
+  <dt>connection_cache</dt>
+  <dd>
+      <p>Caches connections when set to true. Default is
+      true.</p>
+  </dd>
+
+  <dt>health_check_timeout</dt>
+  <dd>
+      <p>pgpool-II periodically tries to connect to the backends to
+      detect any errors on the servers or networks. This error check
+      procedure is called "health check". If an error is detected,
+      pgpool-II tries to perform failover or degeneration.
+
+      This parameter is to prevent the health check to wait for a long
+      time in a case like network cable has been disconnected. The
+      timeout values is in seconds. Default values is 20. 0 disables
+      timeout (waits until TCP/IP timeout).
+
+      The health check requires one (1) extra connection to each
+      backend, so <code>max_connections</code> in the
+      <code>postgresql.conf</code> needs to be incremented as
+      needed.</p>
+  </dd>
+
+  <dt>health_check_period</dt>
+  <dd>
+      <p>This parameter specifies the interval between the health
+      checks in seconds. Default is 0, which means health check is
+      disabled.</p>
+  </dd>
+      
+  <dt>health_check_user</dt>
+  <dd>
+      <p>The user name to perform health check. This user must exist
+      in all the PostgreSQL backends.</p>
+  </dd>
+
+  <dt>ignore_leading_white_space</dt>
+  <dd>
+      <p>pgpool-II ignores white spaces at the beginning of SQL
+      queries while in the load balance mode. It is useful for using
+      APIs like DBI/DBD:Pg which adds white spaces against the user's
+      will.</p>
+  </dd>
+
+  <dt>log_statement</dt>
+  <dd>
+      <p>Produces SQL log messages when true. This is similar to the
+      log_statement option in PostgreSQL. It produces logs even if the
+      debug option was not passed to pgpool-II at the startup.</p>
+  </dd>
+
+  <dt>backend_hostname</dt>
+  <dd>
+      <p>Specifies the host name of the PostgreSQL backend. The empty
+      string (<code>''</code>) means pgpool-II uses UNIX domain
+      socket.
+
+      Multiple backends can be specified by adding a number at the end
+      of the parameter name (e.g.<code>backend_hostname0</code>). This
+      number is referred to as "DB node ID", and it starts from 0. The
+      backend which was given the DB node ID of 0 will be called
+      "Master DB". When multiple backends are defined, the service can
+      be continued even if the Master DB is down (not true in some
+      modes). In this case, the youngest DB node ID alive will be the
+      new Master DB.</p>
+      <p>If you plan to use only one PostgreSQL server, specify it by
+      <code>backend_hostname0</code>.</p>
+  </dd>
+
+  <dt>backend_port</dt>
+  <dd>
+      <p>Specifies the port number of the backends. Multiple backends
+      can be specified by adding a number at the end of the parameter
+      name (e.g. <code>backend_port0</code>). If you plan to use only
+      one PostgreSQL server, specify it by
+      <code>backend_port0</code>.</p>
+  </dd>
+
+  <dt>backend_weight</dt>
+  <dd>
+      <p>Specifies the load balance ratio for the backends. Multiple
+      backends can be specified by adding a number at the end of the
+      parameter name (e.g. <code>backend_weight</code>). If you plan
+      to use only one PostgreSQL server, specify it by
+      <code>backend_weight0</code>. In the raw mode, set to 1.</p>
+  </dd>
+</dl>
+
+<h4>Failover in the raw Mode</h4>
+
+<p>Failover can be performed in the raw mode if multiple servers are
+defined. pgpool-II usually accesses the backend specified by
+<code>backend_hostname0</code> during the normal operation. If the
+backend_hostname0 fails for some reason, pgpool-II tries to access the
+backend specified by backend_hostname1. If that fails, pgpool-II tries
+the backend_hostname2, 3 and so on.</p>
+
+<h3>Connection Pool Mode</h3>
+
+<p>In the connection pool mode, all functions in raw mode and the
+connection pool function can be used. To enable this mode, set
+configuration parameters in the raw mode and the below.</p>
+
+<dl>
+  <dt>max_pool</dt>
+  <dd>
+      <p>The maximum number of cached connections in the pgpool-II
+      child processes. pgpool-II reuses the cached connection if an
+      incoming connection is connecting to the same database by the
+      same username. If not, pgpool-II creates a new connection to the
+      backend. If the number of cached connections exceeds max_pool,
+      the oldest connection will be discarded, and uses that slot for
+      the new connection.
+
+      Default value is 4. Please be aware that the number of
+      connections from pgpool-II processes to the backend will be
+      <code>num_init_children</code> * <code>max_pool</code>.</p>
+  </dd>
+
+  <dt>connection_life_time</dt>
+  <dd>
+      <p>Cached connections expiration time in seconds. The expired
+      cached connection will be disconnected. Default is 0, which
+      means the cached connections will not be disconnected.</p>
+  </dd>
+
+  <dt>reset_query_list</dt>
+  <dd>
+      <p>Specifies the SQL commands sent to the backend when exitting
+      a session to reset the connection. Multiple commands can be
+      specified by delimitting each by ";". Default is
+      the following, but can be changed to suite your system.
+
+      <pre>
+      reset_query_list = 'ABORT; RESET ALL; SET SESSION AUTHORIZATION DEFAULT'
+      </pre>
+
+      Commands differ in each PostgreSQL versions, so be careful
+      especially in PostgreSQL 7.3 or prior. "ABORT" will not be
+      executed outside the transaction block by PostgreSQL 7.4 or
+      above.</p>
+  </dd>
+</dl>
+
+<h4>Failover in the Connection Pool Mode</h4>
+
+<p>Failover in the connection pool mode is the same as in the raw mode.</p>
+
+<h3>Replication Mode</h3>
+
+<p>This mode enables data replication between the backends. The
+configuration parameters below must be set in addtion to everything above.</p>
+
+<dl>
+  <dt>replication_mode
+  <dd>
+      <p>Setting true enables replication mode. Default
+      is false.</p>
+  </dd>
+
+  <dt>replication_strict</dt>
+  <dd>
+      <p>When set to true, pgpool-II waits for the Master
+      DB for all queries to be processed before moving on to the next
+      backend. This option eliminates the risk of deadlocks, but the
+      performance may degrade due to the lack of a
+      parallelism. Default value is true.</p>
+  </dd>
+
+  <dt>replication_timeout</dt>
+  <dd>
+      <p>Specifies the timeout value in milliseconds, for detecting
+      deadlocks while <code>replication_strict</code> is
+      false. Default is 5000 (5 seconds), and 0 means no
+      timeout.</p>
+  </dd>
+
+  <dt>load_balance_mode</dt>
+  <dd>
+      <p>When set to true, SELECT queries will be
+      distributed to each backend for load balance. Default is
+      false.</p>
+  </dd>
+
+  <dt>replication_stop_on_mismatch</dt>
+  <dd>
+      <p>When set to true, pgpool-II degenerates the
+      backends and keeps the service only with the Master DB if data
+      mismatch occurs. If false, pgpool-II just
+      terminates the query. Default is false.</p>
+  </dd>
+
+  <dt>insert_lock</dt>
+  <dd>
+      <p>Replicating a table with SERIAL data type, the SERIAL column
+value may differ between the backends. This problem is avoidable by
+locking the table explicitly (although, transactions' parallelism will
+be lost). To achieve this, however, the following change must be made:
+
+      <pre>
+      INSERT INTO ...
+      </pre>
+
+      to
+
+      <pre>
+      BEGIN;
+      LOCK TABLE ...
+      INSERT INTO ...
+      COMMIT;
+      </pre>
+
+      Setting <code>insert_lock</code> to true, pgpool-II
+      automatically adds the above queries each time INSERT is
+      executed (if already in transaction, simply adds LOCK TABLE
+      ....).
+
+      The downside for this is that pgpool-II does not know which
+      table has SERIAL columns, so all the INSERT statements will
+      acquire table locks.
+
+      To avoid this problem, there are two options:
+      </p>
+
+      <ol>
+	<li>set <code>insert_lock</code> to true, and add <code>/*NO
+	    INSERT LOCK*/</code> at the beginning of an INSERT
+	    statement which you don't want to acquire the table
+	    lock.</li>
+
+	<li>set <code>insert_lock</code> to false, and add
+	    <code>/*INSERT LOCK*/</code> at the beginning of an INSERT
+	    statement which you want to acquire the table lock.</li>
+      </ol>
+
+      <p>
+      Default value is false. If <code>insert_lock</code> is enabled,
+      the regression test for PostgreSQL 8.0 will fail in transactions,
+      privileges, rules and alter_table. The reasons for this is that
+      pgpool-II tries to LOCK the VIEW for the rule test, and others will
+      produce the following error message.
+
+      <pre>
+      ! ERROR: current transaction is aborted, commands ignored until
+      end of transaction block
+      </pre>
+
+      For example, the transactions test tries to INSERT into a table
+which does not exist, and pgpool-II causes PostgreSQL to acquire the
+lock before that. The transaction will be aborted, and the following
+INSERT statement produces the above error message.</p>
+</dl>
+
+<h4>Failover in the Replication Mode</h4>
+
+<p> pgpool-II degenerates a dead backend and continues the
+service. The service can be continued if there is at least one backend
+alive.</p>
+
+<h3>Master/Slave Mode</h3>
+
+<p>This mode is for using pgpool-II with another master/slave
+replication software (like Slony-I) making it do the actual data
+replication. DB nodes' information must be set as in the same manner
+as the replication mode. In addtion to that, set
+<code>master_slave_mode</code> and <code>load_balance_mode</code> to
+true. pgpool-II will send queries that need to be replicated to the
+Master DB, and others will be load balanced if possible.</p>
+
+<ol>
+  <li>For the query to be load balanced, all the requirements below
+      must be met:
+      <ul>
+	<li>PostgreSQL version 7.4 or later</li>
+	<li>the query must not be in the explicitly declared
+	    transaction (i.e. not in a BEGIN ~ END block)</li>
+      </ul>
+  <li>Queries that do not fall into the above requirement will be sent
+      to the Master DB.</li>
+</ol>
+
+<p>In the master/slave mode, <code>replication_mode</code> must be set
+to false, and <code>master_slave_mode</code> to true.</p>
+
+<h3>Parallel Mode</h3>
+
+<p>This mode enables parallel execution of queries. The replication
+function or the load balance function can not be used while in this
+mode.</p>
+
+<h4>Configuring the System DB</h4>
+
+<p>To use the parallel mode, the System DB must be configured
+properly. The System DB maintains rules, in the format of the database
+table, for deciding an appropriate backend to send partitioned
+data. The System DB does not need to be placed on the same host as
+pgpool-II. The System DB's configuration is done in the
+<code>pgpool.conf</code>.</p>
+
+<dl>
+  <dt>system_db_hostname</dt>
+  <dd>
+      <p>The hostname where the System DB is placed. Specifying the
+      empty string ('') means the System DB is at the same host as the
+      pgpool-II, and will be connected via UNIX domain socket.</p>
+  </dd>
+
+  <dt>system_db_port</dt>
+  <dd>
+      <p>The port number for the System DB</p>
+  </dd>
+
+  <dt>system_dbname</dt>
+  <dd>
+      <p>The partitioning rules and other information will be defined
+      in the database specified here. Default value is
+      <code>'pgpool'</code>.</p>
+  </dd>
+
+  <dt>system_db_schema</dt>
+  <dd>
+      <p>The partitioning rules and other information will be defined
+      in the schema specified here. Default value is
+      <code>'pgpool_catalog'</code>.</p>
+  </dd>
+
+  <dt>system_db_user</dt>
+  <dd>
+      <p>The username to connect to the System DB.</p>
+  </dd>
+
+  <dt>system_db_password</dt>
+  <dd>
+      <p>The password for the System DB. If no password is set,
+      set the empty string ('').</p>
+  </dd>
+</dl>
+
+<h4>Initial Configuration of the System DB</h4>
+
+<p>First, create the database and schema specified in the
+<code>pgpool.conf</code> file. An sample script can be found in
+<code>$prefix/share/system_db.sql</code>. If you have specified a
+different database name or schema, change them accordingly.
+
+<pre>
+psql -f $prefix/share/system_db.sql pgpool
+</pre>
+
+</p>
+
+<h4>Registering a Partitioning Rule</h4>
+
+<p>The rules for data partitioning must be registered to
+<code>pgpool_catalog.dist_def</code> table.</p>
+
+<pre>
+CREATE TABLE pgpool_catalog.dist_def(
+dbname TEXT,                                              -- database name
+schema_name TEXT,                                         -- schema name
+table_name TEXT,                                          -- table name
+col_name TEXT NOT NULL CHECK (col_name = ANY (col_list)), -- partitioning key column name
+col_list TEXT[] NOT NULL,                                 -- names of table attributes
+type_list TEXT[] NOT NULL,                                -- types of table attributes
+dist_def_func TEXT NOT NULL,                              -- name of the partitioning rule function
+PRIMARY KEY (dbname,schema_name,table_name)
+);
+</pre>
+
+Here is the example for partitioning pgbench tables.
+
+<pre>
+INSERT INTO pgpool_catalog.dist_def VALUES (
+'pgpool',
+'public',
+'accounts',
+'aid',
+ARRAY['aid','bid','abalance','filler'],
+ARRAY['integer','integer','integer','character(84)'],
+'pgpool_catalog.dist_def_accounts'
+);
+
+INSERT INTO pgpool_catalog.dist_def VALUES (
+'pgpool',
+'public',
+'branches',
+'bid',
+ARRAY['bid','bbalance','filler'],
+ARRAY['integer','integer','character(84)'],
+'pgpool_catalog.dist_def_branches'
+);
+
+INSERT INTO pgpool_catalog.dist_def VALUES (
+'pgpool',
+'public',
+'tellers',
+'tid',
+ARRAY['tid','bid','tbalance','filler'],
+ARRAY['integer','integer','integer','character(84)'],
+'pgpool_catalog.dist_def_tellers'
+);
+</pre>
+
+<p>The partitioning rule function (namely,
+pgpool_catalog.dist_def_accounts, pgpool_catalog.dist_def_branches，
+pgpool_catalog.dist_def_tellers) takes a value for the partitioning
+key column, and returns the corresponding DB node ID. Note that ID
+must start from 0. Below is the example of each function for pgbench.
+
+<pre>
+CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_accounts (val ANYELEMENT) RETURNS INTEGER AS '
+SELECT CASE WHEN $1 >= 1 and $1 <= 30000 THEN 0
+WHEN $1 > 30000 and $1 <= 60000 THEN 1
+ELSE 2
+END' LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_branches (val ANYELEMENT) RETURNS INTEGER AS '
+SELECT 0
+' LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_tellers (val ANYELEMENT) RETURNS INTEGER AS '
+SELECT CASE WHEN $1 >= 1 and $1 <= 3 THEN 0
+WHEN $1 > 3 and $1 <= 6 THEN 1
+ELSE 2
+END' LANGUAGE SQL;
+</pre>
+
+<h1>Starting/Stopping pgpool-II<a name="start"></h1>
+
+<p>All the backends and the System DB (if necessary) must be started
+before starting pgpool-II.
+
+<pre>
+pgpool [-c][-f config_file][-F pcp_config_file][-n][-d]
+</pre>
+
+<table>
+  <tr><td>-c</td><td>deletes query cache</tr>
+  <tr><td>-f config_file</td><td>specifies pgpool.conf</tr>
+  <tr><td>-F pcp_config_file</td><td>specifies pcp.conf</tr>
+  <tr><td>-n</td><td>no daemon mode (terminal is not detached)</tr>
+  <tr><td>-d</td><td>debug mode</tr>
+</table>
+
+There are two ways to stop pgpool-II. One is via PCP command
+(described later) or pgpool-II command. Below is an example of the
+pgpool-II command.
+
+<pre>
+pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] stop
+</pre>
+
+<table>
+  <tr><td><code>-m s[mart]</code></td><td>waits for clients to
+      disconnect, and shutdown (default)</td></tr>
+  <tr><td><code>-m f[ast]</code></td><td>does not wait for clients;
+      shutdown immediately</td></tr>
+  <tr><td><code>-m i[mmediate]</code></td><td>the same as <code>'-m
+      f'</code></td></tr> </table>
+
+<h1>Restrictions<a name="restriction"></h1>
+<p>
+<h2>Authentication / Access Controls</h2>
+
+<p>
+<ul>
+  <li>In the replication mode or master/slave mode, trust, clear text
+      password methods are supported.</li>
+  <li>In all the other modes, trust, clear text password, crypt, md5
+      methods are supported.</li>
+  <li>pgpool-II does not support pg_hba.conf-like access controls. If
+      the TCP/IP connection is enabled, pgpool-II accepts all the
+      connections from any host. If needed, use iptables and such to
+      control access from other hosts. (PostgreSQL server accepting
+      pgpool-II connections can use pg_hba.conf, of course).</li>
+</ul>
+</p>
+
+<h2>Functions, etc. in the Replication Mode</h2>
+
+<p>There is no guarantee that the data, which returns different values
+each time even though the same query was executed (e.g. random number,
+transaction ID, OID, SERIAL, sequence, CURRENT_TIMESTAMP), will be
+replicated correctly on multiple backends.</p>
+
+<p>Tables created by <code>CREATE TEMP TABLE</code> will not be
+deleted after exitting a session. It is because of the connetion
+pooling which, from the backend's point of view, seems that the
+session is still alive. To avoid this, you must explicitly drop the
+temporally tables by <code>DROP TABLE</code>, or use <code>CREATE TEMP
+TABLE ... ON COMMIT DROP</code> inside the transaction block.</p>
+
+<h2>Queries</h2>
+
+<p>Here are the queries which cannot be processed by pgpool-II</p>
+
+<h3>INSERT</h3> <p>You cannot use <code>DEFAULT</code> to the
+partitioning key column. For example, if the column x in the table t
+was the partitioning key column,
+
+<pre>
+INSERT INTO t(x) VALUES (DEFAULT);
+</pre>
+
+is invalid. Also, functions cannot be used as the value either.
+
+<pre>
+INSERT INTO t(x) VALUES (func());
+</pre>
+
+Constant values must be used to INSERT into the partitioning
+key. <code>SELECT INTO</code> and <code>INSERT INTO ... SELECT</code>
+are also not supported.</p>
+
+<h3>UPDATE</h3>
+
+<p>Data consistency between the backends may be lost if the
+partitioning key column values are updated. pgpool-II does not
+re-partition the updated data.</p>
+
+<p>A transaction cannot be rolled back if a query has caused an error
+on some backends due to the constraint violation.</p>
+
+<p>If a function is called in the <code>WHERE</code> clause, that
+query might not be executed correctly.
+<pre>
+e.g.)  UPDATE branches set bid = 100 where bid = (select max(bid) from beances);
+</pre>
+</p>
+
+<h3>SELECT ... FOR UPDATE</h3>
+
+<p>If a function is called in the <code>WHERE</code> clause, that
+query might not be executed correctly.
+<pre>
+例：SELECT * FROM  branches where bid = (select max(bid) from beances) FOR UPDATE;
+</pre>
+</p>
+
+<h3>COPY</h3>
+
+<p><code>COPY BINARY</code> is not supported. Copying from files are
+also not supported. Only <code>COPY FROM STDIN</code> and <code>COPY
+TO STDOUT</code> is supported.</p>
+
+<h3>ALTER/CREATE TABLE について</h3>
+
+<p>To update the partitioning rule, pgpool-II must be restarted in
+order to read them from the System DB.</p>
+
+<h3>Transaction</h3>
+
+<p><code>SELECT</code> statements executed inside a transaction block
+will be executed in the separate transaction. Here is an example:
+
+<pre>
+BEGIN;
+INSERT INTO t(a) VALUES (1);
+SELECT * FROM t ORDER BY a; <-- INSERT above is not visible from this SELECT statement
+END;
+</pre>
+
+<h3>Views / Rules</h3>
+
+<p>The same definition will be created on all the backends for views and rules.
+
+<pre>
+SELECT * FROM a, b where a.i = b.i
+</pre>
+
+<code>JOIN</code>s like above will be executed within one backend, and
+then merged with the results returned by each backend. Views and Rules
+that joins across the nodes cannot be created.
+</p>
+
+<h3>Functions / Triggers</h3>
+
+<p>The same definition will be created on all the backends for
+functions. Joins across the nodes, and data on the other nodes cannot
+be manipulated inside the functions.</p>
+
+<h3>Extended Query Protocol</h3>
+
+<p>The extended query protocol used by JDBC drivers, etc. is not
+supported. The simple query protocols must be used.</p>
+
+<h3>Multi-byte Characters</h3>
+
+<p>pgpool-II does not translate between different multi-byte
+characters. The encoding for the client, backend and System DB must be
+the same.</p>
+
+<h3>Deadlocks</h3>
+
+<p>Deadlocks across the backends cannot be detected. For example:
+
+<pre>
+(tellers table is partitioned using the following rule)
+  tid <= 10  --> node 0
+  tid >= 10  --> node 1
+
+A) BEGIN;
+B) BEGIN;
+A) SELECT * FROM tellers WHERE tid = 11 FOR UPDATE;
+B) SELECT * FROM tellers WHERE tid = 1 FOR UPDATE;
+A) SELECT * FROM tellers WHERE tid = 1 FOR UPDATE;
+B) SELECT * FROM tellers WHERE tid = 11 FOR UPDATE;
+</pre>
+
+In the case above, a single node cannot detect the deadlock, so
+pgpool-II will continually wait for the response. This phenomenon
+occurs with other queries that acquire row level locks. To avoid this
+problem, set <code>replication_timeout</code>.</p>
+
+<p>Also, if a deadlock occurs in one node, transaction states in each
+node will not be consistent. Therefore, pgpool-II terminates the
+process if a deadlock is detected.
+
+<pre>
+pool_read_kind: kind does not match between master(84) slot[1] (69)
+</pre>
+
+<h3>Schemas</h3>
+
+<p>Objects in a schema other than public must be fully referenced like:
+
+<pre>
+schema.object
+</pre>
+
+pgpool-II cannot resolve the correct schema when the path was set as
+follows:
+
+<pre>
+set search_path = xxx
+</pre>
+
+and the schema name was omitted in a query.
+
+<h2>System DB</h2>
+
+<h3>Partitioning Rules</h3>
+
+<p>Only one (1) partitioning key column can be defined in one
+partitioning rule. Conditions like 'x or y' are not supported.</p>
+
+<h2>Environment Requirements</h2>
+
+<h3>libpq</h3>
+
+<p><code>libpq</code> is linked while building pgpool-II. libpq
+version must be 3.0. Building pgpool-II with libpq version 2.0 will
+fail. Also, the System DB must be PostgreSQL 7.4 or later.</p>
+
+<h2>Query Cache</h2>
+
+<p>Currently, query cache must be deleted manually. pgpool-II does not
+invalidate old query cache automatically when the data is updated.</p>
+
+<h2>Compatibility with pgpool</h2>
+
+<!--
+<p>
+pgpool の場合 /*STRICT*/ など、pgpool を制御する特殊なコメントを書ける
+ようになっていました。pgpool-II の現在の実装では特殊コメントを無視しま
+す。
+</p>
+-->
+
+<h1>References<a name="reference"></h1>
+<h2>PCP Command Reference</h2>
+
+<h3>PCP Command List</h3>
+
+<p>PCP commands are UNIX commands which manipulate pgpool-II via network.
+
+<pre>
+* pcp_node_count        - retrives the number of nodes
+* pcp_node_info         - retrives the node information
+* pcp_proc_count        - retrives the process list
+* pcp_proc_info         - retrives the process information
+* pcp_systemdb_info     - retrives the System DB information
+* pcp_detach_node       - detaches a node from pgpool-II
+* pcp_attach_node       - attaches a node to pgpool-II
+* pcp_stop_pgpool       - stops pgpool-II
+</pre>
+</p>
+
+
+<h2>Common Command-line Arguments</h2>
+
+<p>There are five arguments common to all of the PCP commands. They
+are information about pgpool-II and for authentication. Extra
+arguments may be needed for some commands.
+
+<pre>
+e.g.)  $ pcp_node_count 10 localhost 9898 postgres hogehoge
+
+First argument    - timeout value in seconds. PCP disconnects if
+                    pgpool-II does not respond in so many seconds.
+Second argument   - pgpool-II's hostname
+Third argument    - pgpool-II's port number for PCP server
+Fourth argument   - PCP username
+Fifth argument    - PCP password
+</pre>
+
+<p>PCP usernames and passwords must use ones in the
+<code>pcp.conf</code> in <code>$prefix/etc</code>
+directory. <code>-F</code> option can be used when starting pgpool-II
+if <code>pcp.conf</code> is placed somewhere else. The password does
+not need to be in md5 format when passing it to the PCP commands.</p>
+
+
+<h2>PCP Commands</h2>
+
+<p>All PCP commands display the results to the standard output.</p>
+
+
+<h3>pcp_node_count</h3>
+
+<p>
+<pre>
+Format:
+pcp_node_count  _timeout_  _host_  _port_  _userid_  _passwd_
+</pre>
+
+Displays the number of total nodes defined in <code>pgpool.conf</code>. It does 
+not distinguish nodes status between attached/detached. ALL nodes are counted.
+</p>
+
+
+<h3>pcp_node_info</h3>
+
+<p>
+<pre>
+Format:
+pcp_node_info  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
+</pre>
+
+Displays the information on the given node ID. The output example is
+as follows:
+
+<pre>
+$ pcp_node_info 10 localhost 9898 postgres hogehoge 0
+host1 5432 1 1073741823.500000
+</pre>
+
+The result is in the following order:
+1. hostname
+2. port number
+3. status
+4. load balance weight
+
+Status is represented by a digit from [0 to 3].
+0 - This state is only used during the initialization. PCP will never display it.
+1 - Node is up. No connections yet.
+2 - Node is up. Connections are pooled.
+3 - Node is down.
+</pre>
+
+The load balance weight is displayed in normalized format.
+</p>
+
+<p>Specifying an invalid node ID will result in error with exit
+status 12, and BackendError will be displayed.</p>
+
+<h3>pcp_proc_count</h3>
+<p>
+<pre>
+Format:
+pcp_proc_count  _timeout_  _host_  _port_  _userid_  _passwd_
+</pre>
+
+Displays the list of pgpool-II child process IDs. If there is more than
+one process, IDs will be delimitted by a white space.
+
+<h3>pcp_proc_info</h3>
+<p>
+<pre>
+Format:
+pcp_proc_info  _timeout_  _host_  _port_  _userid_  _passwd_  _processid_
+</pre>
+
+Displays the information on the given pgpool-II child process ID. The
+output example is as follows:
+
+<pre>
+$ pcp_proc_info 10 localhost 9898 postgres hogehoge 3815
+postgres_db postgres 1150769932 1150767351 3 0 1
+</pre>
+
+The result is in the following order:
+1. connected database name
+2. connected username
+3. process start-up timestamp
+4. connection created timestamp
+5. protocol major version
+6. protocol minor version
+7. connection-reuse counter
+
+If there is no connection to the backends, nothing will be
+displayed. If there are multiple connections, one connection's
+information will be this displayed on each line for multiple
+times. Timestamps are displayed in EPOCH format.
+</p>
+
+<p>Specifying an invalid node ID will result in error with exit
+status 12, and BackendError will be displayed.</p>
+
+<h3>pcp_systemdb_info</h3>
+<p>
+<pre>
+Format:
+pcp_systemdb_info  _timeout_  _host_  _port_  _userid_  _passwd_
+</pre>
+
+Displays the System DB information. The output example is as follows:
+
+<pre>
+$ pcp_systemdb_info 10 localhost 9898 postgres hogehoge
+localhost 5432 yamaguti '' pgpool_catalog pgpool 3
+yamaguti public accounts aid 4 aid bid abalance filler integer integer integer character(84) dist_def_accounts
+yamaguti public branches bid 3 bid bbalance filler integer integer character(84) dist_def_branches
+yamaguti public tellers bid 4 tid bid tbalance filler integer integer integer character(84) dist_def_tellers
+</pre>
+
+First, the System DB information will be displayed on the first
+line. The result is in the following order:
+1. hostname
+2. port number
+3. username
+4. password. '' for no password.
+5. schema name
+6. database name
+7. number of partioning rules defined
+
+Second, partioning rules will be displayed on the following lines. If
+there are multiple definitions, one definition will be displayed on
+each line for multiple times. The result is in the following order:
+1. targeted partitioning database name
+2. targeted partitioning schema name
+3. targeted partitioning table name
+4. partitioning key column name
+5. number of columns in the targeted table
+6. column names (displayed as many as said in 5.)
+7. column types (displayed as many as said in 5.)
+8. partitioning rule function name
+
+If the System DB is not defined (i.e. not in pgpool-II mode, and query
+cache is disabled), it results in error with exit status 12, and
+BackendError will be displayed.</p>
+
+
+<h3>pcp_detach_node</h3>
+<p>
+<pre>
+Format:
+pcp_detach_node  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
+</pre>
+
+Detaches the given node from pgpool-II.
+</p>
+
+
+<h3>pcp_attach_node</h3>
+<p>
+<pre>
+Format:
+pcp_attach_node  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
+
+Attaches the given node to pgpool-II.
+</pre>
+</p>
+
+<h3>pcp_stop_pgpool</h3>
+<p>
+<pre>
+Format:
+pcp_stop_pgpool  _timeout_  _host_  _port_  _userid_  _passwd_  _mode_
+</pre>
+
+Terminate pgpool-II process with the given shutdown mode. The availabe
+modes are as follows:
+
+s	- smart mode
+f	- fast mode
+i	- immediate mode
+
+If pgpool-II process does not exist, it results in error with exit
+status 8, and ConnectionError will be displayed.
+
+* Currently, there is no difference between the fast and immediate
+mode. pgpool-II terminates all the processes wheter there are clients
+connected to the backends.</p>
+
+
+<h2>Exit Status</h2>
+
+<p>PCP command exits with status 0 when everything goes well. If any
+error had occured, it will exit with the following error status.
+
+<pre>
+UNKNOWNERR      1      Unknown Error (shouldn't occur)
+EOFERR          2      EOF Error
+NOMEMERR        3      Memory shortage
+READERR         4      Error while reading from the server
+WRITEERR        5      Error while writing to the server
+TIMEOUTERR      6      Timeout
+INVALERR        7      Argument(s) to the PCP command was invalid
+CONNERR         8      Server connection error
+NOCONNERR       9      No connection exists
+SOCKERR         10     Socket error
+HOSTERR         11     Hostname resolution error
+BACKENDERR      12     PCP process error on the server (specifying an invalid ID, etc.)
+AUTHERR         13     Authorization failure
+</pre>
+</p>
+
+</body>
+</html>

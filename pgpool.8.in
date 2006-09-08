@@ -1,0 +1,62 @@
+.\" Copyright 2004-2006 by PgPool Global Development Group
+.\" This man page is subject to the same license as the rest of pgpool.
+.\"
+.TH PGPOOL 8 "27 Jan 2006"
+.\" Please adjust this date whenever revising the manpage.
+.SH NAME
+pgpool \- PostgreSQL connection pool daemon
+.SH SYNOPSIS
+\fBpgpool\fR [ \fB\-d\fR ] [ \fB\-f\fR \fIfile\fR ] [ \fB\-n\fR ] [ \fB\-h\fR ]
+.LP
+\fBpgpool\fR [ \fB\-d\fR ] [ \fB\-f\fR \fIfile\fR ] [ \fB\-m\fR \fImode\fR ] \fBstop\fR
+.LP
+\fBpgpool\fR [ \fB\-d\fR ] [ \fB\-f\fR \fIfile\fR ] [ \fB\-m\fR \fImode\fR ] [ \fB-s\fR \fBm\fR[\fBaster\fR] | \fBs\fR[\fBecondary\fR] ] \fBswitch\fR
+.SH DESCRIPTION
+\fBpgpool\fR is a connection pool server for PostgreSQL.
+\fBpgpool\fR runs between PostgreSQL's client and server.
+Any PostgreSQL client can connect to \fBpgpool\fR as if it's a real PostgreSQL server.
+\fBpgpool\fR caches the connection to the PostgreSQL server to reduce the overhead
+involved in establishing the connection to it.  \fBpgpool\fR can also be
+used with two PostgreSQL servers for fail over purposes.  If the first
+server goes down, \fBpgpool\fR will automatically switch to the secondary server.
+.P
+When started without arguments, \fBpgpool\fR starts as a daemon in the background.
+When started with the argument \fBstop\fR, \fBpgpool\fR is shut down.
+With the argument \fBswitch\fR, \fBpgpool\fR will switch between master
+and secondary servers.  If only one server is configured, this will only
+restart the child processes.
+.P
+\fBpgpool\fR is typically started and stopped via system initialization scripts.
+.SH OPTIONS
+.TP
+\fB\-d\fR
+Print lots of debug messages.
+.TP
+\fB\-f\fR \fIpath\fR
+Sets the path to the configuration file (default: \fI@sysconfdir@/pgpool.conf\fR).
+.TP
+\fB\-h\fR
+Print a help message and exit.
+.TP
+\fB\-m\fR \fImode\fR
+Shutdown mode: smart, fast, or immediate.
+.TP
+\fB\-n\fR
+Do not start as daemon.  Error messages go to stdout or stderr.  Thus
+you could play with utilities such as \fBlogger\fR(1) and
+\fBrotatelogs\fR(8).
+You need to run in background explicitly if you use this option.
+.TP
+\fB-s\fR \fBm\fR[\fBaster\fR] | \fBs\fR[\fBecondary\fR]
+Determines which server to switch away from.  If this option is omitted,
+the master goes down.
+.SH FILES
+.TP
+\fI@sysconfdir@/pgpool.conf\fR
+Default configuration file
+.SH SEE ALSO
+.BR logger (1),
+.BR postmaster (1),
+.BR rotatelogs (8)
+.PP
+Additional information can be found in the \fBpgpool\fR \fIREADME\fR file.

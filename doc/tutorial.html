@@ -1,0 +1,400 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>pgpool-II チュートリアル</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-2022-jp" />
+<link href="pgpool.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<!-- hhmts start -->
+Last modified: Tue Sep  5 11:53:43 JST 2006
+<!-- hhmts end -->
+<h1>pgpool-II チュートリアル</h1>
+<p>pgpool-II のチュートリアルにようこそ。
+ここでは、pgpool-II のインストールから基本的な設定、レプリケーションおよびパラレルクエリの実行を行うまでの手順について説明します。
+また、PostgreSQL の基本的な操作に関する説明は行いませんので、必要であれば PostgreSQL のドキュメントを参照してください。</p>
+<dl>
+<dt><em>目次</em></dt>
+<dt>1. <a href="#start">さあ始めましょう</a></dt>
+<dd>1.1. <a href="#install">pgpool-II のインストール</a></dd>
+<dd>1.2. <a href="#config">設定ファイルの作成</a></dd>
+<dd>1.3. <a href="#pcp-config">PCP コマンドの設定</a></dd>
+<dd>1.4. <a href="#db-node">データベースノードの準備</a></dd>
+<dd>1.5. <a href="#start-shutdown">pgpool-II の起動と停止</a></dd>
+<dt>2. <a href="#replication">初めてのレプリケーション</a></dt>
+<dd>2.1. <a href="#replication-config">レプリケーションの設定</a></dd>
+<dd>2.2. <a href="#replication-check">レプリケーションの確認</a></dd>
+<dt>3. <a href="#parallel">パラレルクエリを使ってみよう</a></dt>
+<dd>3.1. <a href="#parallel-config">パラレルクエリの設定</a></dd>
+<dd>3.2. <a href="#system-db">システムデータベースの作成</a></dd>
+<dd>3.3. <a href="#dist-def">分散ルールの定義</a></dd>
+<dd>3.4. <a href="#parallel-check">パラレルクエリの確認</a></dd>
+</dl>
+<h2>1. <a name="start">さあ始めましょう</a></h2>
+<p>ここでは、レプリケーションおよびパラレルクエリの実行を行うための準備として、pgpool-II のインストールや設定、データベースノードの準備について説明します。</p>
+<h3>1.1. <a name="install">pgpool-II のインストール</a></h3>
+<p>pgpool-II をインストールするにはソースコードを展開したディレクトリで以下のようにコマンドを実行します。</p>
+<pre>$ ./configure
+$ make
+$ make install</pre>
+<p><code>configure</code> スクリプトでは pgpool-II をインストールする環境に合わせた設定が行われます。
+また、<code>configure</code> スクリプトを実行する際にコマンドライン引数を指定することにより、pgpool-II のインストール先の変更などを行うことができます。
+コマンドライン引数を指定しなければ、pgpool-II は <code>/usr/local</code> ディレクトリ以下にインストールされます。</p>
+<p><code>make</code> コマンドを実行すると pgpool-II のソースコードがコンパイルされ、<code>make install</code> コマンドでは実際にインストールされます。
+なお、<code>make install</code> コマンドを実行する際に pgpool-II をインストールするディレクトリへの書き込み権限が必要です。</p>
+<p>ここでは、pgpool-II を <code>/usr/local</code> ディレクトリ以下にインストールします。</p>
+<p><em>注意</em>: pgpool-II のソースコードをコンパイルするには PostgreSQL 7.4 以降で実装された libpq ライブラリ (3.0 プロトコル) が必要です。
+<code>configure</code> スクリプトを実行した際に以下のエラーメッセージが表示された場合、libpq ライブラリがインストールされていないか、インストールされていてもプロトコルのバージョンが 3.0 でない可能性があります。</p>
+<pre>configure: error: libpq is not installed or libpq is old</pre>
+<p>また、プロトコルのバージョンが 3.0 の libpq ライブラリがインストールされているにも係わらず、上記のエラーメッセージが表示される場合、<code>configure</code> スクリプトを実行した際に libpq ライブラリが認識されていない可能性があります。</p>
+<p><code>configure</code> スクリプトは標準では <code>/usr/local/pgsql</code> ディレクトリ以下からヘッダファイルや libpq ライブラリを検索します。
+PostgreSQL のインストール先が <code>/usr/local/pgsql</code> ディレクトリ以下でなければ、<code>configure</code> スクリプトを実行する際にコマンドライン引数として <code>--with-pgsql</code> や <code>--with-pgsql-includedir</code>、<code>--with-pgsql-libdir</code> オプションを指定してください。</p>
+<h3>1.2. <a name="config">設定ファイルの作成</a></h3>
+<p>pgpool-II についての設定は <code>pgpool.conf</code> ファイルに記述します。
+<code>pgpool.conf</code> ファイルの書式は 1 行ごとにパラメータ名と値を = で区切ったものです。
+pgpool-II をインストールするとサンプルとして <code>pgpool.conf.sample</code> ファイルが作成されるので、それを <code>pgpool.conf</code> というファイル名にコピーしてから編集するといいでしょう。</p>
+<pre>$ cp /usr/local/etc/pgpool.conf.sample /usr/local/etc/pgpool.conf</pre>
+<p><code>pgpool.conf</code> ファイルの初期設定では、pgpool-II は pgpool-II と同じホストからのポート番号 9999 への接続を受け付けます。
+pgpool-II と異なるホストからの接続を受け付ける場合は <code>listen_addresses</code> パラメータに * を設定します。</p>
+<pre>listen_addresses = 'localhost'
+port = 9999</pre>
+<p>ここでは、<code>pgpool.conf</code> ファイルの初期設定をそのまま使用します。</p>
+<h3>1.3. <a name="pcp-config">PCP コマンドの設定</a></h3>
+<p>pgpool-II では PCP コマンドと呼ばれるインタフェースを通して pgpool-II の停止やデータベースノードに関する情報の表示を行います。
+PCP コマンドを使用するにはユーザ認証が必要になるので、ユーザ名とパスワードを <code>pcp.conf</code> ファイルに設定します。
+<code>pcp.conf</code> ファイルの書式は以下のように 1 行ごとにユーザ名と MD5 ハッシュに変換されたパスワードを : で区切ったものです。</p>
+<pre>postgres:e8a48653851e28c69d0506508fb27fc5</pre>
+<p>pgpool-II をインストールするとサンプルとして <code>pcp.conf.sample</code> ファイルが作成されるので、それを <code>pcp.conf</code> というファイル名にコピーしてから編集するといいでしょう。</p>
+<pre>$ cp /usr/local/etc/pcp.conf.sample /usr/local/etc/pcp.conf</pre>
+<p>なお、パスワードを MD5 ハッシュに変換する際には pgpool-II とともにインストールされる <code>pg_md5</code> コマンドを使用します。
+<code>pg_md5</code> コマンドは、コマンドライン引数としてパスワードを指定すると、それを MD5 ハッシュに変換したものを表示します。</p>
+<p>例えば、以下のように <code>pg_md5</code> コマンドのコマンドライン引数として postgres を指定して実行すると、postgres を MD5 ハッシュに変換したものが表示されます。</p>
+<pre>$ /usr/bin/pg_md5 postgres
+e8a48653851e28c69d0506508fb27fc5</pre>
+<p>また、PCP コマンドはネットワークを通して実行されるので、pgpool-II が PCP コマンドを受け付けるポート番号を <code>pgpool.conf</code> ファイルの <code>pcp_port</code> パラメータに設定します。</p>
+<p>ここでは、<code>pcp_port</code> パラメータに最初から設定されているポート番号 9898 をそのまま使用します。</p>
+<pre>pcp_port = 9898</pre>
+<h3>1.4. <a name="db-node">データベースノードの準備</a></h3>
+<p>データベースノードとして使用するデータベースサーバを準備します。
+データベースサーバは、pgpool-II と同じホストで起動しても、異なるホストであっても構いません。
+もちろん、pgpool-II と同じホストで起動する場合は異なるポート番号を割り合て、異なるホストで起動する場合は pgpool-II が起動するホストからデータベースサーバに接続できるように設定する必要があります。
+pgpool-II ではデータベースサーバごとにレプリケーションを行うので、チュートリアルのためのデータベースクラスタを作成したほうがいいでしょう。</p>
+<p>ここでは、3 台のデータベースサーバを pgpool-II と同じホストの異なるポート番号 5432、5433、5434 で起動します。
+データベースサーバをデータベースノードとして使用するには、<code>pgpool.conf</code> ファイルに以下のようにパラメータを設定します。</p>
+<pre>backend_hostname0 = 'localhost'
+backend_port0 = 5432
+backend_weight0 = 1
+backend_hostname1 = 'localhost'
+backend_port1 = 5433
+backend_weight1 = 1
+backend_hostname2 = 'localhost'
+backend_port2 = 5434
+backend_weight2 = 1</pre>
+<p><code>backend_hostname</code>、<code>backend_port</code>、<code>backend_weight</code> パラメータには、データベースノードのホスト名、ポート番号、負荷分散する際の重み付けを設定します。
+パラメータ名の後ろには 0、1、2、&hellip; というように複数のデータベースノードを区別するための数字を指定します。
+<code>backend_weight</code> パラメータは、複数のデータベースノードに問い合わせを負荷分散する際、どのデータベースノードにどのくらいの割合で問い合わせを行うかということを設定するパラメータです。
+ここでは、3 台のデータベースノードの重み付けがすべて 1 に設定してあるので、問い合わせは 1 対 1 対 1 の割り合いで負荷分散されることになります。</p>
+<h3>1.5. <a name="start-shutdown">pgpool-II の起動と停止</a></h3>
+<p>pgpool-II を起動するには以下のように <code>pgpool</code> コマンドを実行します。</p>
+<pre>$ pgpool</pre>
+<p>ただし、このままでは <code>pgpool</code> コマンドを実行した端末にログメッセージが表示されるので、以下のようにログメッセージをファイルに保存するように実行することをお勧めします。</p>
+<pre>$ pgpool -n -d &gt; /tmp/pgpool.log 2&gt;&1 &</pre>
+<p><code>-n</code> オプションを指定すると pgpool-II はデーモンとして起動せず、制御端末が切り離されなくなります。
+上記のようにログメッセージをファイルに出力する場合は指定する必要があります。
+<code>-d</code> オプションはデバッグメッセージの出力を有効にします。</p>
+<p>pgpool-II を停止するには以下のように <code>pgpool</code> コマンドを実行します。</p>
+<pre>$ pgpool stop</pre>
+<p>pgpool-II を停止する際にクライアントが接続している場合、その接続が切断されるまで待ってから停止します。
+クライアントの接続が切断されるまで待たずに停止するには以下のように <code>pgpool</code> コマンドを実行します。</p>
+<pre>$ pgpool -m fast stop</pre>
+<h2>2. <a name="replication">初めてのレプリケーション</a></h2>
+<p>レプリケーションでは複数のデータベースノードに同じデータを複製して格納します。</p>
+<p>ここでは、「1. <a href="#start">さあ始めましょう</a>」で準備した 3 台のデータベースノードを使用し、pgbench が作成するデータベースのレプリケーションを行うまでの手順について説明します。</p>
+<h3>2.1. <a name="replication-config">レプリケーションの設定</a></h3>
+<p>データベースノードのレプリケーションを有効にするには、<code>pgpool.conf</code> ファイルの <code>replication_mode</code> パラメータを true に設定します。</p>
+<pre>replication_mode = true</pre>
+<p>上記のように <code>replication_mode</code> パラメータを true に設定することにより、pgpool-II への問い合わせがすべてのデータベースノードに対して実行され、同じデータが複製されて格納されるようになります。
+<p>さらに、<code>load_balance_mode</code> パラメータを true に設定することにより、pgpool-II に対する SELECT 文を複数のデータベースノードに対して振り分け、負荷分散を行うことができます。</p>
+<pre>load_balance_mode = true</pre>
+<p>ここでは、<code>replication_mode</code>、<code>load_balance_mode</code> パラメータを true に設定します。</p>
+<h3>2.2. <a name="replication-check">レプリケーションの確認</a></h3>
+<p>レプリケーションの設定を pgpool-II に反映させるには pgpool-II を再起動する必要があります。
+pgpool-II の再起動については「1.5. <a href="#start-shutdown">pgpool-II の起動と停止</a>」を参照してください。</p>
+<p>レプリケーションを有効にして pgpool-II を起動できたら、実際に pgbench を使用してレプリケーションが行われていることを確認しましょう。</p>
+<p>まず、pgbench が使用するデータベース bench_replication を作成します。
+<code>createdb</code> コマンドを pgpool-II に対して実行すると、すべてのデータベースノードに対してデータベース bench_replication が作成されます。</p>
+<pre>$ createdb -p 9999 bench_replication</pre>
+<p>そして、<code>pgbench</code> コマンドに <code>-i</code> オプションを指定して実行することにより、データベース bench_replication に対して pgbench で使用するテーブルを作成し、データを初期化します。</p>
+<pre>$ pgbench -i -p 9999 bench_replication</pre>
+<p><code>pgbench</code> コマンドに <code>-i</code> オプションを指定して実行した際に作成されるテーブルとそれぞれのテーブルの行数は以下のとおりです。
+すべてのデータベースノードのデータベース bench_replication に以下の行数のデータが格納されていれば、正常にレプリケーションが行われていることになります。</p>
+<table border="1">
+<tr>
+<th>テーブル名</th>
+<th>行数</th>
+</tr>
+<tr>
+<td>branches</td>
+<td>1</td>
+</tr>
+<tr>
+<td>tellers</td>
+<td>10</td>
+</tr>
+<tr>
+<td>accounts</td>
+<td>100000</td>
+</tr>
+<tr>
+<td>history</td>
+<td>0</td>
+</tr>
+</table>
+<p>例えば、以下のようにコマンドを実行すると、すべてのデータベースノード (ポート番号 5432、5433、5434) のデータベース bench_replication に含まれるテーブル branches、tellers、accounts、history の行数が表示されます。</p>
+<pre>$ for port in 5432 5433 5434; do
+&gt;     echo $port
+&gt;     for table_name in branches tellers accounts history; do
+&gt;         echo $table_name
+&gt;         psql -c &quot;SELECT count(*) FROM $table_name&quot; -p $port bench_replication
+&gt;     done
+&gt; done
+</pre>
+<h2>3. <a name="parallel">パラレルクエリを使ってみよう</a></h2>
+<p>レプリケーションでは複数のデータベースノードに同じデータを複製して格納するのに対して、パラレルクエリでは複数のデータベースノードに異なる範囲のデータをそれぞれ格納します。</p>
+<p>パラレルクエリを使用するにはシステムデータベースと呼ばれる特別なデータベースが必要です。</p>
+<p>システムデータベースでは、どのデータベースノードに対してどのデータを格納するかという分散ルールを格納しており、それによってデータを複数のデータベースノードに分散させます。
+また、システムデータベースは、dblink を使用することによって複数のデータベースノードに問い合わせを振り分け、それぞれのデータベースノードで実行された結果を 1 つにまとめます。</p>
+<p>ここでは、「1. <a href="#start">さあ始めましょう</a>」で準備した 3 台のデータベースノードを使用し、pgbench が作成するデータベースに対してパラレルクエリを実行するまでの手順について説明します。</p>
+<h3>3.1. <a name="parallel-config">パラレルクエリの設定</a></h3>
+<p>パラレルクエリを有効にするには <code>pgpool.conf</code> ファイルの <code>parallel_mode</code> パラメータを true に設定します。</p>
+<pre>parallel_mode = true</pre>
+<p>ただし、上記のように <code>parallel_mode</code> パラメータを true に設定しただけでは、複数のデータベースノードに対してデータを分散できません。
+さらに、システムデータベースを作成し、分散ルールの定義と登録を行う必要があります。</p>
+<p>また、dblink ではシステムデータベースから pgpool-II への TCP/IP 接続が行われるため、<code>listen_addresses</code> パラメータを適切に設定する必要があります。</p>
+<pre>listen_addresses = '*'</pre>
+<p><em>注意</em>: パラレルクエリとレプリケーションを同時に有効にすることはできません。
+パラレルクエリを有効にするにはレプリケーションを無効にする必要があります。
+また、パラレルクエリとレプリケーションではデータベースに格納されるデータの構成が異なるため、「2. <a href="#replication">初めてのレプリケーション</a>」で作成したデータベース bench_replication をそのまま使用することはできません。</p>
+<pre>replication_mode = false
+load_balance_mode = false</pre>
+<p>ここでは、<code>parallel_mode</code> パラメータを true に、<code>listen_addresses</code> パラメータを * に、<code>replication_mode</code>、<code>load_balance_mode</code> パラメータを false に設定します。</p>
+<h3>3.2. <a name="system-db">システムデータベースの作成</a></h3>
+<p>システムデータベースと通常のデータベースに違いはありません。
+ただし、システムデータベースには、dblink の関数が定義されており、分散ルールを格納するテーブル dist_def が定義されている必要があります。
+また、データベースノードの 1 台にシステムデータベースを作成することもできます。</p>
+ここでは、以下の <code>pgpool.conf</code> ファイルの初期設定に従ってシステムデータベースを作成します。</p>
+<pre>system_db_hostname = 'localhost'
+system_db_port = 5432
+system_db_dbname = 'pgpool'
+system_db_schema = 'pgpool_catalog'
+system_db_user = 'pgpool'
+system_db_password = ''</pre>
+<p><code>pgpool.conf</code> ファイルの初期設定では、システムデータベースは pgpool-II と同じホストのポート番号 5432 で起動するデータベースサーバ、つまり、1 台目のデータベースノードに作成することになります。
+また、システムデータベースのデータベース名は pgpool に、システムデータベースに接続するユーザ名も pgpool に設定されているので、pgpool というユーザを作成してからユーザ pgpool を所有者としてデータベース pgpool を作成します。
+</p>
+<pre>$ createuser -p 5432 pgpool
+$ createdb -p 5432 -O pgpool pgpool</pre>
+<h4>3.2.1. dblink のインストール</h4>
+<p>システムデータベースとしてデータベース pgpool が作成できたら、dblink をインストールします。
+dblink は PostgreSQL のソースコードの <code>contrib</code> ディレクトリに含まれるツールの 1 つです。</p>
+<p>dblink をインストールするには PostgreSQL のソースコードを展開したディレクトリで以下のようにコマンドを実行します。</p>
+<pre>$ USE_PGXS=1 make -C contrib/dblink
+$ USE_PGXS=1 make -C contrib/dblink install</pre>
+<p>データベース pgpool に対して dblink の関数を定義します。
+PostgreSQL  のインストール先が <code>/usr/local/pgsql</code> ディレクトリ以下であれば、<code>/usr/local/pgsql/share/contrib</code> ディレクトリに dblink の関数を定義するための <code>dblink.sql</code> ファイルが存在します。
+それを使用して以下のように <code>psql</code> コマンドを実行します。</p>
+<pre>$ psql -f /usr/local/pgsql/share/contrib/dblink.sql -p 5432 pgpool</pre>
+<h4>3.2.2. テーブル dist_def の定義</h4>
+<p>分散ルールを格納するテーブル dist_def をシステムデータベース pgpool に定義します。
+pgpool-II をインストールするとテーブル dist_def を含めてシステムデータベースを作成するための <code>system_db.sql</code> ファイルが作成されるので、それを使用して以下のように <code>psql</code> コマンドを実行します。</p>
+<pre>$ psql -f /usr/local/share/system_db.sql -p 5432 -U pgpool pgpool</pre>
+<p><code>system_db.sql</code> ファイルでは、スキーマ pgpool_catalog にテーブル dist_def などを定義しています。
+従って、<code>pgpool.conf</code> ファイルの <code>system_db_schema</code> パラメータで pgpool_catalog でないスキーマ名を指定している場合、<code>system_db.sql</code> ファイルを編集してスキーマ名を変更する必要があります。</p>
+<p>テーブル dist_def は以下のように定義されており、テーブル名を変更することはできません。</p>
+<pre>CREATE TABLE pgpool_catalog.dist_def (
+    dbname text, -- データベース名
+    schema_name text, -- スキーマ名
+    table_name text, -- テーブル名
+    col_name text NOT NULL CHECK (col_name = ANY (col_list)), -- 分散キー列名
+    col_list text[] NOT NULL, -- テーブルの列名
+    type_list text[] NOT NULL, -- テーブルのデータ型名
+    dist_def_func text NOT NULL, -- 分散ルール関数
+    PRIMARY KEY (dbname, schema_name, table_name)
+);</pre>
+<p>テーブル dist_def に格納されるデータは大きく分けて以下の 2 つです。</p>
+<ul>
+<li>分散ルール (col_name、dist_def_func)</li>
+<li>テーブルのメタ情報 (dbname、schema_name、table_name、col_list、type_list)</li>
+</ul>
+<p>まず、分散ルールはどのデータをどのデータベースノードに格納するかということを決定するためのデータです。
+col_name 列にはテーブルのどの列の値によって格納するデータベースノードを決定するかということを指定します。
+dist_def_func 列には、col_name 列に指定された列の値を引数として受け取り、データベースノードの番号を返す関数を指定します。</p>
+<p>テーブルのメタ情報は問い合わせの書き換えを行う際に使用されるデータです。
+パラレルクエリでは、問い合わせを複数のデータベースノードに振り分け、それぞれのデータベースノードで実行された結果を 1 つにまとめるため、問い合わせの書き換えを行います。</p>
+<h3>3.3. <a name="dist-def">分散ルールの定義</a></h3>
+<p>分散ルールはどのデータをどのデータベースノードに格納するかということを決定するものです。</p>
+<p>ここでは、スケールファクター 3 を指定してデータを初期化した pgbench のテーブルを 3 台のデータベースノードに振り分けるための分散ルールを定義します。
+なお、データベースは「2. <a href="#replication">初めてのレプリケーション</a>」で使用したデータベース bench_replication とは別にデータベース bench_parallel を作成することにします。</p>
+<p>なお、ソースコードの <code>sample</code> ディレクトリには以下の説明で使用する分散ルールが定義されたファイル <code>dist_def_pgbench.sql</code> が準備されています。
+これを使用して分散ルールを定義するにはソースコードを展開したディレクトリで以下のように psql コマンドを実行します。</p>
+<pre>$ psql -f sample/dist_def_pgbench.sql -p 5432 pgpool</pre>
+<p>まず、分散ルールとテーブルのメタ情報をシステムデータベース pgpool のテーブル dist_def に格納します。
+分散キー列名は、テーブル branches、tellers、accounts についてはプライマリキー制約が指定された列 bid、tid、aid を、テーブル history については tid 列を指定することにし、分散ルール関数はテーブルごとに作成することにします。</p>
+<pre>INSERT INTO pgpool_catalog.dist_def VALUES (
+    'bench_parallel',
+    'public',
+    'branches',
+    'bid',
+    ARRAY['bid', 'bbalance', 'filler'],
+    ARRAY['integer', 'integer', 'character(88)'],
+    'pgpool_catalog.dist_def_branches'
+);
+
+INSERT INTO pgpool_catalog.dist_def VALUES (
+    'bench_parallel',
+    'public',
+    'tellers',
+    'tid',
+    ARRAY['tid', 'bid', 'tbalance', 'filler'],
+    ARRAY['integer', 'integer', 'integer', 'character(84)'],
+    'pgpool_catalog.dist_def_tellers'
+);
+
+INSERT INTO pgpool_catalog.dist_def VALUES (
+    'bench_parallel',
+    'public',
+    'accounts',
+    'aid',
+    ARRAY['aid', 'bid', 'abalance', 'filler'],
+    ARRAY['integer', 'integer', 'integer', 'character(84)'],
+    'pgpool_catalog.dist_def_accounts'
+);
+
+INSERT INTO pgpool_catalog.dist_def VALUES (
+    'bench_parallel',
+    'public',
+    'history',
+    'tid',
+    ARRAY['tid', 'bid', 'aid', 'delta', 'mtime', 'filler'],
+    ARRAY['integer', 'integer', 'integer', 'integer', 'timestamp without time zone', 'character(22)'],
+    'pgpool_catalog.dist_def_history'
+);</pre>
+<p>次に、分散ルール関数をテーブルごとにシステムデータベース pgpool に定義します。
+分散ルール関数は、必ずしもテーブルごとに作成する必要はなく、内部関数を使用することもできます。
+また、分散ルール関数は SQL でなくとも PL/pgSQL や PL/Tcl で作成しても構いません。</p>
+<p>スケールファクター 3 を指定してデータを初期化した場合、branches テーブルの tid 列の値は 1 から 3 まで、tellers テーブルの tid 列の値は 1 から 30 まで、accounts テーブルの aid 列の値は 1 から 300000 までになるので、これらの値をもとに 3 台のデータベースノードに対してデータが均等に分散されるように関数を定義します。</p>
+<p>ここでは、引数として受け取った値から WHEN 式によって 0 から 2 までのデータベースノードの番号を返す単純な SQL 関数を定義することにします。</p>
+<pre>CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_branches(anyelement)
+RETURNS integer AS $$
+    SELECT CASE WHEN $1 &gt; 0 AND $1 &lt;= 1 THEN 0
+        WHEN $1 &gt; 1 AND $1 &lt;= 2 THEN 1
+        ELSE 2
+    END;
+$$ LANGUAGE sql;
+
+CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_tellers(anyelement)
+RETURNS integer AS $$
+    SELECT CASE WHEN $1 &gt; 0 AND $1 &lt;= 10 THEN 0
+        WHEN $1 &gt; 10 AND $1 &lt;= 20 THEN 1
+        ELSE 2
+    END;
+$$ LANGUAGE sql;
+
+CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_accounts(anyelement)
+RETURNS integer AS $$
+    SELECT CASE WHEN $1 &gt; 0 AND $1 &lt;= 100000 THEN 0
+        WHEN $1 &gt; 100000 AND $1 &lt;= 200000 THEN 1
+        ELSE 2
+    END;
+$$ LANGUAGE sql;
+
+CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_history(anyelement)
+RETURNS integer AS $$
+    SELECT CASE WHEN $1 &gt; 0 AND $1 &lt;= 10 THEN 0
+        WHEN $1 &gt; 10 AND $1 &lt;= 20 THEN 1
+        ELSE 2
+    END;
+$$ LANGUAGE sql;</pre>
+<h3>3.4. <a name="parallel-check">パラレルクエリの確認</a></h3>
+<p>パラレルクエリの設定を pgpool-II に反映させるには pgpool-II を再起動する必要があります。なお、テーブル dist_def を更新した場合も pgpool-II の再起動が必要です。
+pgpool-II の再起動については「1.5. <a href="#start-shutdown">pgpool-II の起動と停止</a>」を参照してください。</p>
+<p>パラレルクエリを有効にして pgpool-II を起動できたら、実際に pgbench を使用してパラレルクエリが実行されることを確認しましょう。</p>
+<p>まず、pgbench が使用するデータベース bench_parallel を作成します。
+<code>createdb</code> コマンドを pgpool-II に対して実行すると、すべてのデータベースノードに対してデータベース bench_parallel が作成されます。</p>
+<pre>$ createdb -p 9999 bench_parallel</pre>
+<p>そして、以下のようにスケールファクター 3 を指定して pgbench で使用するテーブルを作成し、データを初期化します。</p>
+<pre>$ pgbench -i -p 9999 -s 3 bench_parallel</pre>
+<p>スケールファクター 3 を指定してデータを初期化した pgbench のテーブルとそれぞれの行数は以下のとおりです。
+データを初期化することによって格納されるデータは、分散ルールに従って 3 台のデータベースノードに分散されます。</p>
+<table border="1">
+<tr>
+<th>テーブル名</th>
+<th>行数</th>
+</tr>
+<tr>
+<td>branches</td>
+<td>3</td>
+</tr>
+<tr>
+<td>tellers</td>
+<td>30</td>
+</tr>
+<tr>
+<td>accounts</td>
+<td>300000</td>
+</tr>
+<tr>
+<td>history</td>
+<td>0</td>
+</tr>
+</table>
+<p>データが 3 台のデータベースノードに分散されていることは、pgpool-II に対して問い合わせを実行した結果とデータベースノードに直接問い合わせを実行した結果を比較すれば確認できます。
+なお、3 台のデータベースノードには分散キー列の値が以下のように分散されているはずです。</p>
+<table border="1">
+<tr>
+<th rowspan="2">テーブル名</td>
+<th rowspan="2">分散キー列名</td>
+<th colspan="3">値</th>
+</tr>
+<tr>
+<th>データベースノード 1</td>
+<th>データベースノード 2</td>
+<th>データベースノード 3</td>
+</tr>
+<tr>
+<td>branches</td>
+<td>bid</td>
+<td>1</td>
+<td>2</td>
+<td>3</td>
+</tr>
+<tr>
+<td>tellers</td>
+<td>tid</td>
+<td>1 〜 10</td>
+<td>11 〜 20</td>
+<td>21 〜 30</td>
+</tr>
+<tr>
+<td>accounts</td>
+<td>aid</td>
+<td>1 〜 100000</td>
+<td>100001 〜 200000</td>
+<td>200001 〜 300000</td>
+</tr>
+<tr>
+<td>history</td>
+<td>tid</td>
+<td>1 〜 10</td>
+<td>11 〜 20</td>
+<td>21 〜 30</td>
+</tr>
+</table>
+<p>例えば、以下のようにコマンドを実行すると、すべてのデータベースノード (ポート番号 5432、5433、5434、9999) のデータベース bench_parallel のテーブル accounts の最小値、最大値が表示されます。</p>
+<pre>$ for port in 5432 5433 5434 9999; do
+&gt;     echo $port
+&gt;     psql -c &quot;SELECT min(aid), max(aid) FROM accounts&quot; -p $port bench_parallel
+&gt; done
+</pre>
+</body>
+</html>

@@ -1,0 +1,4076 @@
+/* -*-pgsql-c-*- */
+/*
+ * $Header$
+ *
+ * pgpool: a language independent connection pool server for PostgreSQL 
+ * written by Tatsuo Ishii
+ *
+ * Copyright (c) 2003-2006	PgPool Global Development Group
+ *
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose and without fee is hereby
+ * granted, provided that the above copyright notice appear in all
+ * copies and that both that copyright notice and this permission
+ * notice appear in supporting documentation, and that the name of the
+ * author not be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission. The author makes no representations about the
+ * suitability of this software for any purpose.  It is provided "as
+ * is" without express or implied warranty.
+ *
+ * pool_process_query.c: query processing stuff
+ *
+*/
+#include "config.h"
+#include <errno.h>
+
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <netinet/in.h>
+#include <ctype.h>
+
+#include "pool.h"
+
+#include "parser/parser.h"
+#include "parser/pg_list.h"
+#include "parser/parsenodes.h"
+#include "pool_rewrite_query.h"
+
+#define INIT_STATEMENT_LIST_SIZE 8
+
+/*
+ * prepared statement list
+ */
+typedef struct {
+	int size;
+	int cnt;
+	char **stmt_list;
+} PreparedStatementList;
+
+static POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend, 
+										POOL_CONNECTION_POOL *backend);
+
+static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend, 
+						 POOL_CONNECTION_POOL *backend, char *query);
+
+static POOL_STATUS Execute(POOL_CONNECTION *frontend, 
+						   POOL_CONNECTION_POOL *backend);
+
+#ifdef NOT_USED
+static POOL_STATUS Sync(POOL_CONNECTION *frontend, 
+						   POOL_CONNECTION_POOL *backend);
+#endif
+
+static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend, 
+								 POOL_CONNECTION_POOL *backend, int send_ready);
+
+static POOL_STATUS CompleteCommandResponse(POOL_CONNECTION *frontend, 
+										   POOL_CONNECTION_POOL *backend);
+
+static POOL_STATUS CopyInResponse(POOL_CONNECTION *frontend, 
+								  POOL_CONNECTION_POOL *backend);
+
+static POOL_STATUS CopyOutResponse(POOL_CONNECTION *frontend, 
+								   POOL_CONNECTION_POOL *backend);
+
+static POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
+								POOL_CONNECTION_POOL *backend, int copyin);
+
+static POOL_STATUS CursorResponse(POOL_CONNECTION *frontend, 
+								  POOL_CONNECTION_POOL *backend);
+
+static POOL_STATUS EmptyQueryResponse(POOL_CONNECTION *frontend,
+									  POOL_CONNECTION_POOL *backend);
+
+static int RowDescription(POOL_CONNECTION *frontend, 
+						  POOL_CONNECTION_POOL *backend);
+
+static POOL_STATUS AsciiRow(POOL_CONNECTION *frontend, 
+							POOL_CONNECTION_POOL *backend,
+							short num_fields);
+
+static POOL_STATUS BinaryRow(POOL_CONNECTION *frontend, 
+							 POOL_CONNECTION_POOL *backend,
+							 short num_fields);
+
+static POOL_STATUS FunctionCall(POOL_CONNECTION *frontend, 
+								POOL_CONNECTION_POOL *backend);
+
+static POOL_STATUS FunctionResultResponse(POOL_CONNECTION *frontend, 
+										  POOL_CONNECTION_POOL *backend);
+
+static POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend, 
+										   POOL_CONNECTION_POOL *backend);
+
+static int synchronize(POOL_CONNECTION *cp);
+static void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
+static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt);
+
+static int load_balance_enabled(POOL_CONNECTION_POOL *backend, Node* node);
+static void start_load_balance(POOL_CONNECTION_POOL *backend);
+static void end_load_balance(POOL_CONNECTION_POOL *backend);
+static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMajor, int no_ready_for_query);
+static int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node);
+static POOL_STATUS insert_lock(POOL_CONNECTION_POOL *backend, char *query, InsertStmt *node);
+static char *get_insert_command_table_name(InsertStmt *node);
+
+static void add_prepared_list(PreparedStatementList *p, char *name);
+static void del_prepared_list(PreparedStatementList *p, char *name);
+static void reset_prepared_list(PreparedStatementList *p);
+static int send_deallocate(POOL_CONNECTION_POOL *backend, PreparedStatementList *p, int n);
+static char *parse_copy_data(char *buf, int len, char delimiter, int col_id);
+
+#ifdef NOT_USED
+static POOL_CONNECTION_POOL_SLOT *slots[MAX_CONNECTION_SLOTS];
+#endif
+
+int in_load_balance;	/* non 0 if in load balance mode */
+int selected_slot;		/* selected DB node */
+int master_slave_dml;	/* non 0 if master/slave mode is specified in config file */
+static int replication_was_enabled;		/* replication mode was enabled */
+static int master_slave_was_enabled;	/* master/slave mode was enabled */
+static int internal_transaction_started;		/* to issue table lock command a transaction
+												   has been started internally */
+static char *copy_table = NULL;  /* copy table name */
+static char *copy_schema = NULL;  /* copy table name */
+static char copy_delimiter; /* copy delimiter char */
+static char *copy_null = NULL; /* copy null string */
+static void (*pending_function)(PreparedStatementList *p, char *name) = NULL;
+static char *pending_prepared_name = NULL;
+
+static PreparedStatementList prepared_list; /* prepared statement name list */
+static int is_drop_database(Node *node);		/* returns non 0 if this is a DROP DATABASE command */
+
+static int is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
+static int is_strict_query(Node *node); /* returns non 0 if this is strict query */
+static int check_copy_from_stdin(Node *node); /* returns non 0 if this is a COPY FROM STDIN */
+static POOL_STATUS read_kind_from_one_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *kind, int node);
+static POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *kind);
+static POOL_STATUS ParallelForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *database, bool send_to_frontend);
+
+static int is_select_pgcatalog = 0;
+static int is_select_for_update = 0; /* also for SELECT ... INTO */
+static char *parsed_query = NULL;
+static void query_cache_register(char kind, POOL_CONNECTION *frontend, char *database, char *data, int data_len);
+
+POOL_STATUS pool_process_query(POOL_CONNECTION *frontend, 
+							   POOL_CONNECTION_POOL *backend,
+							   int connection_reuse,
+							   int first_ready_for_query_received)
+{
+	char kind, kind1;	/* packet kind (backend) */
+	char fkind;	/* packet kind (frontend) */
+	short num_fields = 0;
+	fd_set	readmask;
+	fd_set	writemask;
+	fd_set	exceptmask;
+	int fds;
+	POOL_STATUS status;
+	int state;	/* 0: ok to issue commands 1: waiting for "ready for query" response */
+	int qcnt;
+	int i;
+
+	frontend->no_forward = connection_reuse;
+	qcnt = 0;
+	state = 0;
+
+	for (;;)
+	{
+		kind = kind1 = 0;
+		fkind = 0;
+
+		if (state == 0 && connection_reuse)
+		{
+			int st;
+
+			/* send query for resetting connection such as "ROLLBACK" "RESET ALL"... */
+			st = reset_backend(backend, qcnt);
+
+			if (st < 0)		/* error? */
+			{
+				/* probably we don't need this, since caller will
+				 * close the connection to frontend after returning with POOL_END. But I
+				 * guess I would like to be a paranoid...
+				 */
+				frontend->no_forward = 0;
+				return POOL_END;
+			}
+
+			else if (st == 0)	/* no query issued? */
+			{
+				qcnt++;
+				continue;
+			}
+
+			else if (st == 1)	/* more query remains */
+			{
+				state = 1;
+				qcnt++;
+				continue;
+			}
+
+			else	/* no more query(st == 2) */
+			{
+				frontend->no_forward = 0;
+				return POOL_CONTINUE;
+			}
+
+		}
+
+		/*
+		 * if all backends and frontend do not have any pending data
+		 * in the receiving data cache, then issue select(2) to wait for new data arrival
+		 */
+		if (is_cache_empty(frontend, backend))
+		{
+			struct timeval timeout;
+			int num_fds;
+
+			timeout.tv_sec = 1;
+			timeout.tv_usec = 0;
+
+			FD_ZERO(&readmask);
+			FD_ZERO(&writemask);
+			FD_ZERO(&exceptmask);
+
+			if (!connection_reuse)
+			{
+				FD_SET(frontend->fd, &readmask);
+				FD_SET(frontend->fd, &exceptmask);
+			}
+
+			num_fds = 0;
+
+			for (i=0;i<NUM_BACKENDS;i++)
+			{
+				if (VALID_BACKEND(i))
+				{
+					num_fds = Max(CONNECTION(backend, i)->fd + 1, num_fds);
+					FD_SET(CONNECTION(backend, i)->fd, &readmask);
+					FD_SET(CONNECTION(backend, i)->fd, &exceptmask);
+				}
+			}
+
+			if (connection_reuse)
+			{
+				num_fds = Max(frontend->fd + 1, num_fds);
+			}
+
+			pool_debug("pool_process_query: num_fds: %d", num_fds);
+
+			fds = select(num_fds, &readmask, &writemask, &exceptmask, NULL);
+			if (fds == -1)
+			{
+				if (errno == EINTR)
+					continue;
+
+				pool_error("select() failed. reason: %s", strerror(errno));
+				return POOL_ERROR;
+			}
+
+			if (fds == 0)
+			{
+				return POOL_CONTINUE;
+			}
+
+			if (FD_ISSET(MASTER(backend)->fd, &readmask))
+			{
+				status = read_kind_from_backend(frontend, backend, &kind);
+				if (status != POOL_CONTINUE)
+					return status;
+			}
+
+			if (!connection_reuse)
+			{
+				if (FD_ISSET(frontend->fd, &exceptmask))
+					return POOL_END;
+				else if (FD_ISSET(frontend->fd, &readmask))
+				{
+					status = ProcessFrontendResponse(frontend, backend);
+					if (status != POOL_CONTINUE)
+						return status;
+
+					continue;
+				}
+			}
+			
+			if (FD_ISSET(MASTER(backend)->fd, &exceptmask))
+			{
+				return POOL_ERROR;
+			}
+		}
+		else
+		{
+			if (MASTER(backend)->len > 0)
+			{
+				status = read_kind_from_backend(frontend, backend, &kind);
+				if (status != POOL_CONTINUE)
+					return status;
+
+				if (kind != 0 || kind1 != 0)
+				{
+					pool_debug("cached kind(%02x) or kind1(%02x) != 0", kind, kind1);
+				}
+				else
+				{
+					continue;
+				}
+			}
+		}
+
+		/* this is the synchronous point */
+		if (kind == 0)
+		{
+			status = read_kind_from_backend(frontend, backend, &kind);
+			if (status != POOL_CONTINUE)
+				return status;
+		}
+
+		first_ready_for_query_received = 0;
+
+		/*
+		 * Prrocess backend Response
+		 */
+
+		/*
+		 * Sanity check
+		 */
+		if (kind == 0)
+		{
+			pool_error("pool_process_query: kind is 0!");
+			return POOL_ERROR;
+		}
+
+		pool_debug("pool_process_query: kind from backend: %c", kind);
+
+		if (MAJOR(backend) == PROTO_MAJOR_V3)
+		{
+			switch (kind)
+			{
+				case 'G':
+					/* CopyIn response */
+					status = CopyInResponse(frontend, backend);
+					break;
+				case 'S':
+					/* Paramter Status */
+					status = ParameterStatus(frontend, backend);
+					break;
+				case 'Z':
+					/* Ready for query */
+					status = ReadyForQuery(frontend, backend, 1);
+					break;
+				default:
+					status = SimpleForwardToFrontend(kind, frontend, backend);
+					break;
+			}
+		}
+		else
+		{
+			switch (kind)
+			{
+				case 'A':
+					/* Notification  response */
+					status = NotificationResponse(frontend, backend);
+					break;
+
+				case 'B':
+					/* BinaryRow */
+					status = BinaryRow(frontend, backend, num_fields);
+					break;
+
+				case 'C':
+					/* Complete command response */
+					status = CompleteCommandResponse(frontend, backend);
+					break;
+
+				case 'D':
+					/* AsciiRow */
+					status = AsciiRow(frontend, backend, num_fields);
+					break;
+
+				case 'E':
+					/* Error Response */
+					status = ErrorResponse(frontend, backend);
+					break;
+
+				case 'G':
+					/* CopyIn Response */
+					status = CopyInResponse(frontend, backend);
+					break;
+
+				case 'H':
+					/* CopyOut Response */
+					status = CopyOutResponse(frontend, backend);
+					break;
+
+				case 'I':
+					/* Empty Query Response */
+					status = EmptyQueryResponse(frontend, backend);
+					break;
+
+				case 'N':
+					/* Notice Response */
+					status = NoticeResponse(frontend, backend);
+					break;
+
+				case 'P':
+					/* CursorResponse */
+					status = CursorResponse(frontend, backend);
+					break;
+
+				case 'T':
+					/* RowDescription */
+					status = RowDescription(frontend, backend);
+					if (status < 0)
+						return POOL_ERROR;
+
+					num_fields = status;
+					status = POOL_CONTINUE;
+					break;
+
+				case 'V':
+					/* FunctionResultResponse and FunctionVoidResponse */
+					status = FunctionResultResponse(frontend, backend);
+					break;
+				
+				case 'Z':
+					/* Ready for query */
+					status = ReadyForQuery(frontend, backend, 1);
+					break;
+				
+				default:
+					pool_error("Unknown message type %c(%02x)", kind, kind);
+					exit(1);
+			}
+		}
+
+		if (status != POOL_CONTINUE)
+			return status;
+
+		if (kind == 'Z' && frontend->no_forward && state == 1)
+		{
+			state = 0;
+		}
+
+	}
+	return POOL_CONTINUE;
+}
+
+POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
+									  POOL_CONNECTION_POOL *backend, char *string,
+									  Node *node,bool send_to_frontend)
+{
+	int len;
+	int fds;
+	int i;
+	char kind;
+	fd_set readmask;
+	fd_set writemask;
+	fd_set exceptmask;
+	static char *sq = "show pool_status";
+	POOL_STATUS status;
+	struct timeval timeout;
+	int num_fds;
+	int used_count = 0;
+	int error_flag = 0;
+
+	timeout.tv_sec = 1;
+	timeout.tv_usec = 0;
+
+	len = strlen(string) + 1;
+
+	if (is_drop_database(node))
+	{
+		int stime = 5;  /* XXX give arbitary time to allow closing idle connections */
+
+		pool_debug("Query: sending HUP signal to parent");
+
+		kill(getppid(), SIGHUP);        /* send HUP signal to parent */
+
+		/* we need to loop over here since we will get HUP signal while sleeping */
+		while (stime > 0)
+		{
+			stime = sleep(stime);
+		}
+	}
+
+	/* process status reporting? */
+	if (strncasecmp(sq, string, strlen(sq)) == 0)
+	{
+		pool_debug("process reporting");
+		process_reporting(frontend, backend);
+		return POOL_CONTINUE;
+	}
+
+	/* In this loop,forward the query to the backend */
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (!VALID_BACKEND(i))
+			continue;
+
+		pool_write(CONNECTION(backend, i), "Q", 1);
+
+		if (MAJOR(backend) == PROTO_MAJOR_V3)
+		{
+			int sendlen = htonl(len + 4);
+			pool_write(CONNECTION(backend, i), &sendlen, sizeof(sendlen));
+		}
+
+		if (pool_write_and_flush(CONNECTION(backend, i), string, len) < 0)
+		{
+			return POOL_END;
+		}
+
+		/*
+		 * in "strict mode" we need to wait for backend completing the query.
+		 * note that this is not applied if "NO STRICT" is specified as a comment.
+		 */
+		if ((pool_config->replication_strict &&
+			 !NO_STRICT_MODE(string) && is_strict_query(node)) ||
+			 STRICT_MODE(string))
+		{
+			pool_debug("waiting for backend %d completing the query", i);
+			if (synchronize(CONNECTION(backend, i)))
+				return POOL_END;
+		}
+	}
+
+	if (!is_cache_empty(frontend, backend))
+	{
+		return POOL_END;
+	}
+
+	/* In this loop,get data from backend */
+	for (;;)
+	{
+		FD_ZERO(&readmask);
+		FD_ZERO(&writemask);
+		FD_ZERO(&exceptmask);
+		num_fds = 0;
+
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (VALID_BACKEND(i))
+			{
+				num_fds = Max(CONNECTION(backend, i)->fd + 1, num_fds);
+				FD_SET(CONNECTION(backend, i)->fd, &readmask);
+				FD_SET(CONNECTION(backend, i)->fd, &exceptmask);
+			}
+		}
+		pool_debug("pool_parallel_query: num_fds: %d", num_fds);
+
+		fds = select(num_fds, &readmask, &writemask, &exceptmask, NULL);
+		if (fds == -1)
+		{
+			if (errno == EINTR)
+				continue;
+
+			pool_error("select() failed. reason: %s", strerror(errno));
+			return POOL_ERROR;
+		}
+
+		if (fds == 0)
+		{
+			return POOL_CONTINUE;
+		}
+		
+		/* get header of protcol */
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (!VALID_BACKEND(i) ||
+				!FD_ISSET(CONNECTION(backend, i)->fd, &readmask))
+			{
+				continue;
+			}
+			else
+			{
+				status = read_kind_from_one_backend(frontend, backend, &kind,i);
+				if (status != POOL_CONTINUE)
+					return status;
+
+				if (used_count == 0)
+				{
+					status = ParallelForwardToFrontend(kind,
+													   frontend,
+													   CONNECTION(backend, i),
+													   backend->info->database,
+													   send_to_frontend);
+					pool_debug("pool_parallel_exec: kind from backend: %c", kind);
+				}
+				else
+				{
+					status = ParallelForwardToFrontend(kind,
+													   frontend,
+													   CONNECTION(backend, i),
+													   backend->info->database,
+													   false);
+					pool_debug("pool_parallel_exec: dummy kind from backend: %c", kind);
+				}
+
+				if (status != POOL_CONTINUE)
+					return status;
+
+				if(kind == 'C' || kind == 'E' || kind == 'c')
+				{
+					if(used_count == NUM_BACKENDS -1)
+						return POOL_CONTINUE;
+					used_count++;
+					continue;
+				}
+
+				/* get body of protcol */
+				for(;;)
+				{
+					if (pool_read(CONNECTION(backend, i), &kind, 1) < 0)
+					{
+						pool_error("pool_parallel_exec: failed to read kind from %d th backend", i);
+						return POOL_ERROR;
+					}
+
+					/*
+					 * Sanity check
+					 */
+					if (kind == 0)
+					{
+						pool_error("pool_parallel_exec: kind is 0!");
+						return POOL_ERROR;
+					}
+
+					if((kind == 'E' ) &&
+					   used_count != NUM_BACKENDS -1)
+					{
+						if(error_flag ==0)
+						{
+							pool_debug("pool_parallel_exec: kind from backend: %c", kind);
+							status = ParallelForwardToFrontend(kind,
+														   frontend,
+														   CONNECTION(backend, i),
+														   backend->info->database,
+														   send_to_frontend);
+							error_flag++;
+						} else {
+							pool_debug("pool_parallel_exec: dummy from backend: %c", kind);
+							status = ParallelForwardToFrontend(kind,
+														   frontend,
+														   CONNECTION(backend, i),
+														   backend->info->database,
+														   false);
+						}
+						used_count++;
+						break;
+					}
+
+					if((kind == 'c' || kind == 'C') &&
+					   used_count != NUM_BACKENDS -1)
+					{
+						pool_debug("pool_parallel_exec: dummy from backend: %c", kind);
+						status = ParallelForwardToFrontend(kind,
+														   frontend,
+														   CONNECTION(backend, i),
+														   backend->info->database,
+														   false);
+						used_count++;
+						break;
+					}
+
+					if((kind == 'C' || kind == 'c' || kind == 'E') &&
+					   used_count == NUM_BACKENDS -1)
+					{
+						if(error_flag == 0)
+						{
+							pool_debug("pool_parallel_exec: kind from backend: %c", kind);
+							status = ParallelForwardToFrontend(kind,
+														   frontend,
+														   CONNECTION(backend, i),
+														   backend->info->database,
+														   send_to_frontend);
+						} else {
+							pool_debug("pool_parallel_exec: dummy from backend: %c", kind);
+							status = ParallelForwardToFrontend(kind,
+														   frontend,
+														   CONNECTION(backend, i),
+														   backend->info->database,
+														   false);
+						}
+						return POOL_CONTINUE;
+					}
+
+					pool_debug("pool_parallel_exec: kind from backend: %c", kind);
+					status = ParallelForwardToFrontend(kind,
+													   frontend,
+													   CONNECTION(backend, i),
+													   backend->info->database,
+													   send_to_frontend);
+
+					if (status != POOL_CONTINUE)
+					{
+						return status;
+					}
+					else
+					{
+						pool_flush(frontend);
+					}
+				}
+			}
+		}
+	}
+}
+
+static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend, 
+						 POOL_CONNECTION_POOL *backend, char *query)
+{
+	char *string;
+	int len;
+	static char *sq = "show pool_status";
+	int i;
+	List *parse_tree_list;
+	Node *node;
+	POOL_STATUS status;
+
+	if (query == NULL)	/* need to read query from frontend? */
+	{
+		/* read actual query */
+		if (MAJOR(backend) == PROTO_MAJOR_V3)
+		{
+			if (pool_read(frontend, &len, sizeof(len)) < 0)
+				return POOL_END;
+			len = ntohl(len) - 4;
+			string = pool_read2(frontend, len);
+		}
+		else
+			string = pool_read_string(frontend, &len, 0);
+
+		if (string == NULL)
+			return POOL_END;
+	}
+	else
+	{
+		len = strlen(query)+1;
+		string = query;
+	}
+
+	/* log query to log file if neccessary */
+	if (pool_config->log_statement)
+	{
+		pool_log("statement: %s", string);
+	}
+	else
+	{
+		pool_debug("statement2: %s", string);
+	}
+
+	parse_tree_list = raw_parser(string);
+
+	if (parse_tree_list != NIL)
+	{
+		node = (Node *) lfirst(list_head(parse_tree_list));
+
+		if (pool_config->enable_query_cache &&
+			SYSDB_STATUS == CON_UP &&
+			IsA(node, SelectStmt) &&
+			!(is_select_pgcatalog = IsSelectpgcatalog(node, backend)))
+		{
+			SelectStmt *select = (SelectStmt *)node;
+
+			if (! (select->into || select->lockingClause))
+			{
+				parsed_query = strdup(nodeToString(node));
+				if (parsed_query == NULL)
+				{
+					pool_error("pool_process_query: malloc failed");
+					return POOL_ERROR;
+				}
+
+				if (parsed_query)
+				{
+					if (pool_query_cache_lookup(frontend, parsed_query, backend->info->database, TSTATE(backend)) == POOL_CONTINUE)
+					{
+						free(parsed_query);
+						parsed_query = NULL;
+						free_parser();
+						return POOL_CONTINUE;
+					}
+				}
+				is_select_for_update = 0;
+			}
+			else
+			{
+				is_select_for_update = 1;
+			}
+		}
+
+		if (pool_config->parallel_mode)
+		{
+			char *parallel_query = NULL;
+
+			/* Do select pool_parallel ? */
+			parallel_query = is_parallel_query(node,backend);
+			if (parallel_query)
+			{
+				POOL_STATUS stats = pool_parallel_exec(frontend,backend,parallel_query, node,true);
+				free_parser();
+				return stats;
+			}
+
+			/* rewrite_query_phase */
+			{
+				RewriteQuery *r_query = rewrite_query_stmt(node,frontend,backend);
+				if(r_query->type == T_InsertStmt)
+				{
+					free_parser();
+					return r_query->status;
+				}
+				else if(r_query->type == T_SelectStmt)
+				{
+					free_parser();
+					return r_query->status;
+				}
+			}
+		}
+
+		/* check COPY FROM STDIN
+		 * if true, set copy_* variable
+		 */
+		check_copy_from_stdin(node);
+
+		/*
+		 * if this is DROP DATABASE command, send HUP signal to parent and
+		 * ask it to close all idle connections.
+		 * XXX This is overkill. It would be better to close the idle
+		 * connection for the database which DROP DATABASE command tries
+		 * to drop. This is impossible at this point, since we have no way
+		 * to pass such info to other processes.
+		 */
+		if (is_drop_database(node))
+		{
+			int stime = 5;	/* XXX give arbitary time to allow closing idle connections */
+
+			pool_debug("Query: sending HUP signal to parent");
+
+			kill(getppid(), SIGHUP);		/* send HUP signal to parent */
+
+			/* we need to loop over here since we will get HUP signal while sleeping */
+			while (stime > 0)
+			{
+				stime = sleep(stime);
+			}
+		}
+
+		/* process status reporting? */
+		if (strncasecmp(sq, string, strlen(sq)) == 0)
+		{
+			pool_debug("process reporting");
+			process_reporting(frontend, backend);
+			free_parser();
+			return POOL_CONTINUE;
+		}
+
+		if (frontend &&
+			(IsA(node, PrepareStmt) || IsA(node, DeallocateStmt)))
+		{
+			if (IsA(node, PrepareStmt))
+			{
+				pending_function = add_prepared_list;
+				pending_prepared_name = strdup(((PrepareStmt *)node)->name);
+			}
+			else if (IsA(node, DeallocateStmt))
+			{
+				pending_function = del_prepared_list;
+				pending_prepared_name = strdup(((DeallocateStmt *)node)->name);
+			}
+		}
+
+		/* load balance trick */
+		if (load_balance_enabled(backend, node))
+			start_load_balance(backend);
+		else if (MASTER_SLAVE)
+		{
+			pool_debug("SimpleQuery: set master_slave_dml query: %s", query);
+			master_slave_was_enabled = 1;
+			MASTER_SLAVE = 0;
+			master_slave_dml = 1;
+		}
+
+		/*
+		 * determine if we need to lock the table
+		 * to keep SERIAL data consistency among servers
+		 * conditions:
+		 * - replication is enabled
+		 * - protocol is V3
+		 * - statement is INSERT
+		 * - either "INSERT LOCK" comment exists or insert_lock directive specified
+		 */
+		if (REPLICATION && need_insert_lock(backend, string, node))
+		{
+			/* start a transaction if needed and lock the table */
+			status = insert_lock(backend, string, (InsertStmt *)node);
+			if (status != POOL_CONTINUE)
+			{
+				free_parser();
+				return status;
+			}
+		}
+	}
+
+	free_parser();
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (!VALID_BACKEND(i))
+			continue;
+
+		/* forward the query to the backend */
+		pool_write(CONNECTION(backend, i), "Q", 1);
+
+		if (MAJOR(backend) == PROTO_MAJOR_V3)
+		{
+			int sendlen = htonl(len + 4);
+			pool_write(CONNECTION(backend, i), &sendlen, sizeof(sendlen));
+		}
+
+		if (pool_write_and_flush(CONNECTION(backend, i), string, len) < 0)
+		{
+			return POOL_END;
+		}
+
+		/*
+		 * in "strict mode" we need to wait for backend completing the query.
+		 * note that this is not applied if "NO STRICT" is specified as a comment.
+		 */
+		if ((pool_config->replication_strict && !NO_STRICT_MODE(string)) ||
+			STRICT_MODE(string))
+		{
+			pool_debug("waiting for backend %d completing the query", i);
+			if (synchronize(CONNECTION(backend, i)))
+				return POOL_END;
+		}
+	}
+
+	return POOL_CONTINUE;
+}
+
+/*
+ * process EXECUTE (V3 only)
+ */
+static POOL_STATUS Execute(POOL_CONNECTION *frontend, 
+						   POOL_CONNECTION_POOL *backend)
+{
+	char *string;		/* portal name + null terminate + max_tobe_returned_rows */
+	int len;
+	int sendlen;
+	int i;
+	char kind;
+	int status;
+
+	/* read Execute packet */
+	if (pool_read(frontend, &len, sizeof(len)) < 0)
+		return POOL_END;
+
+	len = ntohl(len) - 4;
+	string = pool_read2(frontend, len);
+
+	pool_debug("Execute: portal name <%s>", string);
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		POOL_CONNECTION *cp;
+
+		if (!VALID_BACKEND(i))
+			continue;
+
+		cp = CONNECTION(backend, i);
+
+		/* forward the query to the backend */
+		pool_write(cp, "E", 1);
+		sendlen = htonl(len + 4);
+		pool_write(cp, &sendlen, sizeof(sendlen));
+		pool_write(cp, string, len);
+
+		/*
+		 * send "Flush" message so that backend notices us
+		 * the completion of the command
+		 */
+		pool_write(cp, "H", 1);
+		sendlen = htonl(4);
+		if (pool_write_and_flush(cp, &sendlen, sizeof(sendlen)) < 0)
+		{
+			return POOL_ERROR;
+		}
+
+		if (!REPLICATION)
+			break;
+		else if (pool_config->replication_strict)
+		{
+			pool_debug("waiting for backend completing the query");
+			if (synchronize(cp))
+				return POOL_END;
+		}
+	}
+
+	while ((kind = pool_read_kind(backend)),
+		   (kind != 'C' && kind != 'E' && kind != 'l' && kind != 's'))
+	{
+		if (kind < 0)
+		{
+			pool_error("Execute: pool_read_kind error");
+			return POOL_ERROR;
+		}
+
+		status = SimpleForwardToFrontend(kind, frontend, backend);
+		if (status != POOL_CONTINUE)
+			return status;
+		pool_flush(frontend);
+	}
+	status = SimpleForwardToFrontend(kind, frontend, backend);
+	if (status != POOL_CONTINUE)
+		return status;
+	pool_flush(frontend);
+
+	return POOL_CONTINUE;
+}
+
+#ifdef NOT_USED
+/*
+ * process Sync (V3 only)
+ */
+static POOL_STATUS Sync(POOL_CONNECTION *frontend, 
+						   POOL_CONNECTION_POOL *backend)
+{
+	char *string;		/* portal name + null terminate + max_tobe_returned_rows */
+	int len;
+	int sendlen;
+
+	/* read Sync packet */
+	if (pool_read(frontend, &len, sizeof(len)) < 0)
+		return POOL_END;
+
+	len = ntohl(len) - 4;
+	string = pool_read2(frontend, len);
+
+	/* forward the query to the backend */
+	pool_write(MASTER(backend), "S", 1);
+
+	sendlen = htonl(len + 4);
+	pool_write(MASTER(backend), &sendlen, sizeof(sendlen));
+	if (pool_write_and_flush(MASTER(backend), string, len) < 0)
+	{
+		return POOL_END;
+	}
+
+	if (REPLICATION)
+	{
+		/*
+		 * in "strict mode" we need to wait for master completing the query.
+		 * note that this is not applied if "NO STRICT" is specified as a comment.
+		 */
+		if (pool_config->replication_strict)
+		{
+			pool_debug("waiting for master completing the query");
+			if (synchronize(MASTER(backend)))
+				return POOL_END;
+		}
+
+		pool_write(SECONDARY(backend), "S", 1);
+		sendlen = htonl(len + 4);
+		pool_write(SECONDARY(backend), &sendlen, sizeof(sendlen));
+		if (pool_write_and_flush(SECONDARY(backend), string, len) < 0)
+		{
+			return POOL_END;
+		}
+
+		/* in "strict mode" we need to wait for secondary completing the query */
+		if (pool_config->replication_strict)
+			if (synchronize(SECONDARY(backend)))
+				return POOL_END;
+	}
+	return POOL_CONTINUE;
+}
+#endif
+
+static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend, 
+								 POOL_CONNECTION_POOL *backend, int send_ready)
+{
+	int i;
+
+	/* if a transaction is started for insert lock, we need to close it. */
+	if (internal_transaction_started)
+	{
+		int len;
+		signed char state;
+
+		if ((len = pool_read_message_length(backend)) < 0)
+			return POOL_END;
+
+		pool_debug("ReadyForQuery: message length: %d", len);
+
+		len = htonl(len);
+
+		state = pool_read_kind(backend);
+		if (state < 0)
+			return POOL_END;
+
+		/* set transaction state */
+		pool_debug("ReadyForQuery: transaction state: %c", state);
+
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (!VALID_BACKEND(i))
+				continue;
+
+			CONNECTION(backend, i)->tstate = state;
+
+			if (do_command(CONNECTION(backend, i), "COMMIT", PROTO_MAJOR_V3, 1) != POOL_CONTINUE)
+				return POOL_ERROR;
+		}
+
+		internal_transaction_started = 0;
+	}
+
+	pool_flush(frontend);
+
+	if (send_ready)
+	{
+		pool_write(frontend, "Z", 1);
+
+		if (MAJOR(backend) == PROTO_MAJOR_V3)
+		{
+			int len;
+			signed char state;
+
+			if ((len = pool_read_message_length(backend)) < 0)
+				return POOL_END;
+
+			pool_debug("ReadyForQuery: message length: %d", len);
+
+			len = htonl(len);
+			pool_write(frontend, &len, sizeof(len));
+
+			state = pool_read_kind(backend);
+			if (state < 0)
+				return POOL_END;
+
+			/* set transaction state */
+			pool_debug("ReadyForQuery: transaction state: %c", state);
+
+			for (i=0;i<NUM_BACKENDS;i++)
+			{
+				if (!VALID_BACKEND(i))
+					continue;
+
+				CONNECTION(backend, i)->tstate = state;
+			}
+
+			pool_write(frontend, &state, 1);
+		}
+
+		if (pool_flush(frontend))
+			return POOL_END;
+	}
+
+	/* end load balance mode */
+	if (in_load_balance)
+		end_load_balance(backend);
+
+	if (master_slave_dml)
+	{
+		MASTER_SLAVE = 1;
+		master_slave_was_enabled = 0;
+		master_slave_dml = 0;
+	}
+
+#ifdef NOT_USED
+	return ProcessFrontendResponse(frontend, backend);
+#endif
+	return POOL_CONTINUE;
+}
+
+static POOL_STATUS CompleteCommandResponse(POOL_CONNECTION *frontend, 
+										   POOL_CONNECTION_POOL *backend)
+{
+	int i;
+	char *string = NULL;
+	char *string1 = NULL;
+	int len, len1 = 0;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (!VALID_BACKEND(i))
+			continue;
+
+		/* read command tag */
+		string = pool_read_string(CONNECTION(backend, i), &len, 0);
+		if (string == NULL)
+			return POOL_END;
+
+		if (IS_MASTER_NODE_ID(i))
+		{
+			len1 = len;
+			string1 = strdup(string);
+		}
+		else
+		{
+			if (len != len1)
+			{
+				pool_debug("Complete Command Response: message length does not match between master(%d \"%s\",) and %d th server (%d \"%s\",)",
+					 len, string, len1, string1);
+
+				free(string1);
+				return POOL_END;
+			}
+		}
+	}
+
+	free(string1);
+
+	/* forward to the frontend */
+	pool_write(frontend, "C", 1);
+	pool_debug("Complete Command Response: string: \"%s\"", string);
+	if (pool_write(frontend, string, len) < 0)
+	{
+		return POOL_END;
+	}
+	return POOL_CONTINUE;
+}
+
+static int RowDescription(POOL_CONNECTION *frontend, 
+						  POOL_CONNECTION_POOL *backend)
+{
+	short num_fields, num_fields1 = 0;
+	int oid, mod;
+	int oid1, mod1;
+	short size, size1;
+	char *string;
+	int len, len1;
+	int i;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			/* # of fields (could be 0) */
+			pool_read(CONNECTION(backend, i), &num_fields, sizeof(short));
+
+			if (IS_MASTER_NODE_ID(i))
+			{
+				num_fields1 = num_fields;
+			}
+			else
+			{
+				if (num_fields != num_fields1)
+				{
+					pool_error("RowDescription: num_fields deos not match between backends master(%d) and %d th backend(%d)",
+					   num_fields, i, num_fields1);
+					return POOL_FATAL;
+				}
+			}
+		}
+	}
+
+	/* forward it to the frontend */
+	pool_write(frontend, "T", 1);
+	pool_write(frontend, &num_fields, sizeof(short));
+
+	num_fields = ntohs(num_fields);
+
+	for (i = 0;i<num_fields;i++)
+	{
+		int j;
+
+		/* field name */
+		for (j=0;j<NUM_BACKENDS;i++)
+		{
+			if (VALID_BACKEND(j))
+			{
+				string = pool_read_string(CONNECTION(backend, j), &len, 0);
+				if (string == NULL)
+					return POOL_END;
+
+				if (j == 0)
+				{
+					len1 = len;
+				}
+				else
+				{
+
+					if (len != len1)
+					{
+						pool_error("RowDescription: field length deos not match between backends master(%d) and %d th backend(%d)",
+						   ntohl(len), ntohl(len1));
+						return POOL_FATAL;
+					}
+				}
+
+				pool_write(frontend, string, len);
+			}
+		}
+
+		/* type oid */
+		for (j=0;j<NUM_BACKENDS;i++)
+		{
+			if (VALID_BACKEND(j))
+			{
+				pool_read(MASTER(backend), &oid, sizeof(int));
+
+				pool_debug("RowDescription: type oid: %d", ntohl(oid));
+
+				if (j == 0)
+				{
+					oid1 = oid;
+				}
+				else
+				{
+					/* we do not regard oid mismatch as fatal */
+					if (oid != oid1)
+					{
+						pool_debug("RowDescription: field oid deos not match between backends master(%d) and %d th backend(%d)",
+						 ntohl(oid), j, ntohl(oid1));
+					}
+				}
+			}
+		}
+		pool_write(frontend, &oid, sizeof(int));
+
+		/* size */
+		for (j=0;j<NUM_BACKENDS;i++)
+		{
+			if (VALID_BACKEND(j))
+			{
+				pool_read(MASTER(backend), &size, sizeof(short));
+
+				if (j == 0)
+				{
+					size1 = size;
+				}
+				else
+				{
+					if (size1 != size1)
+					{
+						pool_error("RowDescription: field size deos not match between backends master(%d) and %d th backend(%d)",
+						 ntohs(size), j, ntohs(size1));
+						return POOL_FATAL;
+					}
+				}
+			}
+		}
+		pool_debug("RowDescription: field size: %d", ntohs(size));
+		pool_write(frontend, &size, sizeof(short));
+
+		/* modifier */
+		for (j=0;j<NUM_BACKENDS;i++)
+		{
+			if (VALID_BACKEND(j))
+			{
+				pool_read(MASTER(backend), &mod, sizeof(int));
+
+				pool_debug("RowDescription: modifier: %d", ntohs(mod));
+
+				if (j == 0)
+				{
+					mod1 = mod;
+				}
+				else
+				{
+					if (mod != mod1)
+					{
+						pool_debug("RowDescription: modifier deos not match between backends master(%d) and %d th backend(%d)",
+						 ntohl(mod), j, ntohl(mod1));
+					}
+				}
+			}
+		}
+		pool_write(frontend, &mod, sizeof(int));
+	}
+
+	return num_fields;
+}
+
+static POOL_STATUS AsciiRow(POOL_CONNECTION *frontend, 
+							POOL_CONNECTION_POOL *backend,
+							short num_fields)
+{
+	static char nullmap[8192], nullmap1[8192];
+	int nbytes;
+	int i, j;
+	unsigned char mask;
+	int size, size1 = 0;
+	char *buf = NULL;
+	char msgbuf[1024];
+
+	pool_write(frontend, "D", 1);
+
+	nbytes = (num_fields + 7)/8;
+
+	if (nbytes <= 0)
+		return POOL_CONTINUE;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			/* NULL map */
+			pool_read(CONNECTION(backend, i), nullmap, nbytes);
+
+			if (IS_MASTER_NODE_ID(i))
+			{
+				memcpy(nullmap1, nullmap, nbytes);
+			}
+			else
+			{
+				if (memcmp(nullmap, nullmap1, nbytes))
+				{
+					/* XXX: NULLMAP maybe different among
+					   backends. If we were a paranoid, we have to treat
+					   this as a fatal error. However in the real world
+					   we'd better to adapt this situation. Just throw a
+					   log... */
+					pool_debug("AsciiRow: NULLMAP differ between master and %d th backend", i);
+				}
+			}
+		}
+	}
+
+	if (pool_write(frontend, nullmap, nbytes) < 0)
+		return POOL_END;
+
+	mask = 0;
+
+	for (i = 0;i<num_fields;i++)
+	{
+		if (mask == 0)
+			mask = 0x80;
+
+		/* NOT NULL? */
+		if (mask & nullmap[i/8])
+		{
+			for (j=0;j<NUM_BACKENDS;j++)
+			{
+				if (VALID_BACKEND(j))
+				{
+					/* field size */
+					if (pool_read(CONNECTION(backend, j), &size, sizeof(int)) < 0)
+						return POOL_END;
+				}
+				if (IS_MASTER_NODE_ID(i))
+				{
+					size1 = size;
+				}
+				else
+				{
+					/* XXX: field size maybe different among
+					   backends. If we were a paranoid, we have to treat
+					   this as a fatal error. However in the real world
+					   we'd better to adapt this situation. Just throw a
+					   log... */
+					if (size != size1)
+						pool_debug("AsciiRow: %d th field size does not match between master(%d) and %d th backend(%d)",
+						 i, ntohl(size), j, ntohl(size1));
+				}
+
+				buf = NULL;
+
+				/* forward to frontend */
+				pool_write(frontend, &size, sizeof(int));
+				size = ntohl(size) - 4;
+
+				/* read and send actual data only when size > 0 */
+				if (size > 0)
+				{
+					buf = pool_read2(CONNECTION(backend, j), size);
+					if (buf == NULL)
+						return POOL_END;
+				}
+			}
+		}
+
+		if (buf)
+		{
+			pool_write(frontend, buf, size);
+			snprintf(msgbuf, Min(sizeof(msgbuf), size+1), "%s", buf);
+			pool_debug("AsciiRow: len: %d data: %s", size, msgbuf);
+		}
+
+		mask >>= 1;
+	}
+	return POOL_CONTINUE;
+}
+
+static POOL_STATUS BinaryRow(POOL_CONNECTION *frontend, 
+							 POOL_CONNECTION_POOL *backend,
+							 short num_fields)
+{
+	static char nullmap[8192], nullmap1[8192];
+	int nbytes;
+	int i, j;
+	unsigned char mask;
+	int size, size1 = 0;
+	char *buf = NULL;
+
+	pool_write(frontend, "B", 1);
+
+	nbytes = (num_fields + 7)/8;
+
+	if (nbytes <= 0)
+		return POOL_CONTINUE;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			/* NULL map */
+			pool_read(CONNECTION(backend, i), nullmap, nbytes);
+			if (pool_write(frontend, nullmap, nbytes) < 0)
+				return POOL_END;
+
+			if (IS_MASTER_NODE_ID(i))
+			{
+				memcpy(nullmap1, nullmap, nbytes);
+			}
+			else
+			{
+				if (memcmp(nullmap, nullmap1, nbytes))
+				{
+					/* XXX: NULLMAP maybe different among
+					   backends. If we were a paranoid, we have to treat
+					   this as a fatal error. However in the real world
+					   we'd better to adapt this situation. Just throw a
+					   log... */
+					pool_debug("BinaryRow: NULLMAP differ between master and %d th backend", i);
+				}
+			}
+		}
+	}
+
+	if (pool_write(frontend, nullmap, nbytes) < 0)
+		return POOL_END;
+
+	mask = 0;
+
+	for (i = 0;i<num_fields;i++)
+	{
+		if (mask == 0)
+			mask = 0x80;
+
+		/* NOT NULL? */
+		if (mask & nullmap[i/8])
+		{
+			for (j=0;j<NUM_BACKENDS;j++)
+			{
+				if (VALID_BACKEND(j))
+				{
+					/* field size */
+					if (pool_read(MASTER(backend), &size, sizeof(int)) < 0)
+						return POOL_END;
+				}
+
+				if (IS_MASTER_NODE_ID(i))
+				{
+					size1 = size;
+				}
+				else
+				{
+
+					/* XXX: field size maybe different among
+					   backends. If we were a paranoid, we have to treat
+					   this as a fatal error. However in the real world
+					   we'd better to adapt this situation. Just throw a
+					   log... */
+					if (size != size1)
+						pool_debug("BinaryRow: %d th field size does not match between master(%d) and %d th backend(%d)",
+								   i, ntohl(size), j, ntohl(size1));
+				}
+
+				buf = NULL;
+
+				/* forward to frontend */
+				pool_write(frontend, &size, sizeof(int));
+				size = ntohl(size) - 4;
+
+				/* read and send actual data only when size > 0 */
+				if (size > 0)
+				{
+					buf = pool_read2(MASTER(backend), size);
+					if (buf == NULL)
+						return POOL_END;
+				}
+			}
+			if (buf)
+				pool_write(frontend, buf, size);
+
+			mask >>= 1;
+		}
+	}
+	return POOL_CONTINUE;
+}
+
+static POOL_STATUS CursorResponse(POOL_CONNECTION *frontend, 
+								  POOL_CONNECTION_POOL *backend)
+{
+	char *string = NULL;
+	char *string1 = NULL;
+	int len, len1 = 0;
+	int i;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			/* read cursor name */
+			string = pool_read_string(CONNECTION(backend, i), &len, 0);
+			if (string == NULL)
+				return POOL_END;
+
+			if (IS_MASTER_NODE_ID(i))
+			{
+				len1 = len;
+				string1 = strdup(string);
+			}
+			else
+			{
+				if (len != len1)
+				{
+					pool_error("CursorResponse: length does not match between master(%d) and %d th backend(%d)",
+					   len, i, len1);
+					pool_error("CursorResponse: master(%s) %d th backend(%s)", string1, string);
+					free(string1);
+					return POOL_END;
+				}
+			}
+		}
+	}
+
+	/* forward to the frontend */
+	pool_write(frontend, "P", 1);
+	if (pool_write(frontend, string, len) < 0)
+	{
+		return POOL_END;
+	}
+	return POOL_CONTINUE;
+}
+
+POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend, 
+						  POOL_CONNECTION_POOL *backend)
+{
+	char *string = NULL;
+	int len;
+	int i;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			/* read error message */
+			string = pool_read_string(CONNECTION(backend, i), &len, 0);
+			if (string == NULL)
+				return POOL_END;
+		}
+	}
+
+	/* forward to the frontend */
+	pool_write(frontend, "E", 1);
+	if (pool_write_and_flush(frontend, string, len) < 0)
+		return POOL_END;
+			
+	return POOL_CONTINUE;
+}
+
+POOL_STATUS NoticeResponse(POOL_CONNECTION *frontend, 
+								  POOL_CONNECTION_POOL *backend)
+{
+	char *string = NULL;
+	int len;
+	int i;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			/* read notice message */
+			string = pool_read_string(CONNECTION(backend, i), &len, 0);
+			if (string == NULL)
+				return POOL_END;
+		}
+	}
+
+	/* forward to the frontend */
+	pool_write(frontend, "N", 1);
+	if (pool_write_and_flush(frontend, string, len) < 0)
+	{
+		return POOL_END;
+	}
+	return POOL_CONTINUE;
+}
+
+static POOL_STATUS CopyInResponse(POOL_CONNECTION *frontend, 
+								  POOL_CONNECTION_POOL *backend)
+{
+	POOL_STATUS status;
+
+	/* forward to the frontend */
+	if (MAJOR(backend) == PROTO_MAJOR_V3)
+	{
+		if (SimpleForwardToFrontend('G', frontend, backend) != POOL_CONTINUE)
+			return POOL_END;
+		if (pool_flush(frontend) != POOL_CONTINUE)
+			return POOL_END;
+	}
+	else
+		if (pool_write_and_flush(frontend, "G", 1) < 0)
+			return POOL_END;
+
+	status = CopyDataRows(frontend, backend, 1);
+	return status;
+}
+
+static POOL_STATUS CopyOutResponse(POOL_CONNECTION *frontend, 
+								   POOL_CONNECTION_POOL *backend)
+{
+	POOL_STATUS status;
+
+	/* forward to the frontend */
+	if (MAJOR(backend) == PROTO_MAJOR_V3)
+	{
+		if (SimpleForwardToFrontend('H', frontend, backend) != POOL_CONTINUE)
+			return POOL_END;
+		if (pool_flush(frontend) != POOL_CONTINUE)
+			return POOL_END;
+	}
+	else
+		if (pool_write_and_flush(frontend, "H", 1) < 0)
+			return POOL_END;
+
+	status = CopyDataRows(frontend, backend, 0);
+	return status;
+}
+
+static POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
+								POOL_CONNECTION_POOL *backend, int copyin)
+{
+	char *string = NULL;
+	int len;
+	int i;
+	DistDefInfo *info = NULL;
+
+#ifdef DEBUG
+	int j = 0;
+	char buf[1024];
+#endif
+
+	if (copyin && pool_config->parallel_mode == TRUE)
+	{
+		info = pool_get_dist_def_info(MASTER_CONNECTION(backend)->sp->database,
+									  copy_schema,
+									  copy_table);
+	}
+
+	for (;;)
+	{
+		if (copyin)
+		{
+			if (MAJOR(backend) == PROTO_MAJOR_V3)
+			{
+				char kind;
+				int sendlen;
+				char *p, *p1;
+
+				if (pool_read(frontend, &kind, 1) < 0)
+					return POOL_END;
+
+				if (info && kind == 'd')
+				{
+					int id;
+					if (pool_read(frontend, &sendlen, sizeof(sendlen)))
+					{
+						return POOL_END;
+					}
+
+					len = ntohl(sendlen) - 4;
+
+					if (len <= 0)
+						return POOL_CONTINUE;
+
+					p = pool_read2(frontend, len);
+					if (p == NULL)
+						return POOL_END;
+
+					/* copy end ? */
+					if (len == 3 && memcmp(p, "\\.\n", 3) == 0)
+					{
+						for (i=0;i<NUM_BACKENDS;i++)
+						{
+							if (VALID_BACKEND(i))
+							{
+								if (pool_write(CONNECTION(backend, i), &kind, 1))
+									return POOL_END;
+								if (pool_write(CONNECTION(backend, i), &sendlen, sizeof(sendlen)))
+									return POOL_END;
+								if (pool_write(CONNECTION(backend, i), p, len))
+									return POOL_END;
+							}
+						}
+					}
+					else
+					{
+						p1 = parse_copy_data(p, len, copy_delimiter, info->dist_key_col_id);
+
+						if (!p1)
+						{
+							pool_error("CopyDataRow: cannot parse data");
+							return POOL_END;
+						}
+						else if (strcmp(p1, copy_null) == 0)
+						{
+							pool_error("CopyDataRow: key parameter is NULL");
+							free(p1);
+							return POOL_END;
+						}
+
+						id = pool_get_id(info, p1);
+						pool_debug("CopyDataRow: copying id: %d", id);
+						free(p1);
+						if (!VALID_BACKEND(id))
+						{
+							exit(1);
+						}
+						if (pool_write(CONNECTION(backend, id), &kind, 1))
+						{
+							return POOL_END;
+						}
+						if (pool_write(CONNECTION(backend, id), &sendlen, sizeof(sendlen)))
+						{
+							return POOL_END;
+						}
+						if (pool_write_and_flush(CONNECTION(backend, id), p, len))
+						{
+							return POOL_END;
+						}
+					}
+				}
+				else
+				{
+					SimpleForwardToBackend(kind, frontend, backend);
+				}
+
+				/* CopyData? */
+				if (kind == 'd')
+					continue;
+				else
+				{
+					pool_debug("CopyDataRows: copyin kind other than d (%c)", kind);
+					break;
+				}
+			}
+			else
+				string = pool_read_string(frontend, &len, 1);
+		}
+		else
+		{
+			/* CopyOut */
+			if (MAJOR(backend) == PROTO_MAJOR_V3)
+			{
+				signed char kind;
+
+				if ((kind = pool_read_kind(backend)) < 0)
+					return POOL_END;
+
+				SimpleForwardToFrontend(kind, frontend, backend);
+
+				/* CopyData? */
+				if (kind == 'd')
+					continue;
+				else
+					break;
+			}
+			else
+			{
+				for (i=0;i<NUM_BACKENDS;i++)
+				{
+					if (VALID_BACKEND(i))
+					{
+						string = pool_read_string(CONNECTION(backend, i), &len, 1);
+					}
+				}
+			}
+		}
+
+		if (string == NULL)
+			return POOL_END;
+
+#ifdef DEBUG
+		strncpy(buf, string, len);
+		pool_debug("copy line %d %d bytes :%s:", j++, len, buf);
+#endif
+
+		if (copyin)
+		{
+			for (i=0;i<NUM_BACKENDS;i++)
+			{
+				if (VALID_BACKEND(i))
+				{
+					pool_write(CONNECTION(backend, i), string, len);
+				}
+			}
+		}
+		else
+			pool_write(frontend, string, len);		
+
+		if (len == PROTO_MAJOR_V3)
+		{
+			/* end of copy? */
+			if (string[0] == '\\' &&
+				string[1] == '.' &&
+				string[2] == '\n')
+			{
+				break;
+			}
+		}
+	}
+
+	if (copyin)
+	{
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (VALID_BACKEND(i))
+			{
+				if (pool_flush(CONNECTION(backend, i)) <0)
+					return POOL_END;
+			}
+		}
+	}
+	else
+		if (pool_flush(frontend) <0)
+			return POOL_END;
+
+	return POOL_CONTINUE;
+}
+
+static POOL_STATUS EmptyQueryResponse(POOL_CONNECTION *frontend,
+									  POOL_CONNECTION_POOL *backend)
+{
+	char c;
+	int i;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			if (pool_read(CONNECTION(backend, i), &c, sizeof(c)) < 0)
+				return POOL_END;
+		}
+	}
+
+	pool_write(frontend, "I", 1);
+	return pool_write_and_flush(frontend, "", 1);
+}
+
+static POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend, 
+										POOL_CONNECTION_POOL *backend)
+{
+	int pid, pid1;
+	char *condition, *condition1 = NULL;
+	int len, len1 = 0;
+	int i;
+
+	pool_write(frontend, "A", 1);
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			if (pool_read(CONNECTION(backend, i), &pid, sizeof(pid)) < 0)
+				return POOL_ERROR;
+		}
+		condition = pool_read_string(MASTER(backend), &len, 0);
+		if (condition == NULL)
+			return POOL_END;
+
+		if (IS_MASTER_NODE_ID(i))
+		{
+			pid1 = pid;
+			len1 = len;
+			condition1 = strdup(condition);
+		}
+	}
+
+	pool_write(frontend, &pid1, sizeof(pid1));
+
+	return pool_write_and_flush(frontend, condition1, len1);
+}
+
+static POOL_STATUS FunctionCall(POOL_CONNECTION *frontend, 
+								POOL_CONNECTION_POOL *backend)
+{
+	char dummy[2];
+	int oid;
+	int argn;
+	int i;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			pool_write(CONNECTION(backend, i), "F", 1);
+		}
+	}
+
+	/* dummy */
+	if (pool_read(frontend, dummy, sizeof(dummy)) < 0)
+		return POOL_ERROR;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			pool_write(CONNECTION(backend, i), dummy, sizeof(dummy));
+		}
+	}
+
+	/* function object id */
+	if (pool_read(frontend, &oid, sizeof(oid)) < 0)
+		return POOL_ERROR;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			pool_write(CONNECTION(backend, i), &oid, sizeof(oid));
+		}
+	}
+
+	/* number of arguments */
+	if (pool_read(frontend, &argn, sizeof(argn)) < 0)
+		return POOL_ERROR;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			pool_write(CONNECTION(backend, i), &argn, sizeof(argn));
+		}
+	}
+
+	argn = ntohl(argn);
+
+	for (i=0;i<argn;i++)
+	{
+		int len;
+		char *arg;
+
+		/* length of each argument in bytes */
+		if (pool_read(frontend, &len, sizeof(len)) < 0)
+			return POOL_ERROR;
+
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (VALID_BACKEND(i))
+			{
+				pool_write(CONNECTION(backend, i), &len, sizeof(len));
+			}
+		}
+
+		len = ntohl(len);
+
+		/* argument value itself */
+		if ((arg = pool_read2(frontend, len)) == NULL)
+			return POOL_ERROR;
+
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (VALID_BACKEND(i))
+			{
+				pool_write(CONNECTION(backend, i), arg, len);
+			}
+		}
+	}
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			if (pool_flush(CONNECTION(backend, i)))
+				return POOL_ERROR;
+		}
+	}
+	return POOL_CONTINUE;
+}
+
+static POOL_STATUS FunctionResultResponse(POOL_CONNECTION *frontend, 
+										  POOL_CONNECTION_POOL *backend)
+{
+	char dummy;
+	int len;
+	char *result = 0;
+	int i;
+
+	pool_write(frontend, "V", 1);
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			if (pool_read(CONNECTION(backend, i), &dummy, 1) < 0)
+				return POOL_ERROR;
+		}
+	}
+	pool_write(frontend, &dummy, 1);
+
+	/* non empty result? */
+	if (dummy == 'G')
+	{
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (VALID_BACKEND(i))
+			{
+				/* length of result in bytes */
+				if (pool_read(CONNECTION(backend, i), &len, sizeof(len)) < 0)
+					return POOL_ERROR;
+			}
+		}
+		pool_write(frontend, &len, sizeof(len));
+
+		len = ntohl(len);
+
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (VALID_BACKEND(i))
+			{
+				/* result value itself */
+				if ((result = pool_read2(MASTER(backend), len)) == NULL)
+					return POOL_ERROR;
+			}
+		}
+		pool_write(frontend, result, len);
+	}
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			/* unused ('0') */
+			if (pool_read(MASTER(backend), &dummy, 1) < 0)
+				return POOL_ERROR;
+		}
+	}
+	pool_write(frontend, "0", 1);
+
+	return pool_flush(frontend);
+}
+
+static POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend, 
+										   POOL_CONNECTION_POOL *backend)
+{
+	char fkind;
+	POOL_STATUS status;
+	int i;
+
+	if (frontend->len <= 0 && frontend->no_forward != 0)
+		return POOL_CONTINUE;
+
+	if (pool_read(frontend, &fkind, 1) < 0)
+	{
+		pool_error("ProcessFrontendResponse: failed to read kind from frontend. fronend abnormally exited");
+		return POOL_ERROR;
+	}
+
+	pool_debug("read kind from frontend %c(%02x)", fkind, fkind);
+
+	switch (fkind)
+	{
+		case 'X':
+			if (MAJOR(backend) == PROTO_MAJOR_V3)
+			{
+				int len;
+				pool_read(frontend, &len, sizeof(len));
+			}
+			return POOL_END;
+
+		case 'Q':
+			status = SimpleQuery(frontend, backend, NULL);
+			break;
+
+/*
+		case 'S':
+			status = Sync(frontend, backend);
+			break;
+*/
+		case 'E':
+			status = Execute(frontend, backend);
+		break;
+
+		default:
+			if (MAJOR(backend) == PROTO_MAJOR_V3)
+			{
+				if (MASTER_SLAVE)
+				{
+					pool_debug("kind: %c master_slave_dml enabled", fkind);
+					master_slave_was_enabled = 1;
+					MASTER_SLAVE = 0;
+					master_slave_dml = 1;
+				}
+
+				status = SimpleForwardToBackend(fkind, frontend, backend);
+				for (i=0;i<NUM_BACKENDS;i++)
+				{
+					if (VALID_BACKEND(i))
+					{
+						if (pool_flush(CONNECTION(backend, i)))
+							status = POOL_ERROR;
+					}
+				}
+			}
+			else if (MAJOR(backend) == PROTO_MAJOR_V2 && fkind == 'F')
+				status = FunctionCall(frontend, backend);
+			else
+			{
+				pool_error("ProcessFrontendResponse: unknown message type %c(%02x)", fkind, fkind);
+				status = POOL_ERROR;
+			}
+			break;
+	}
+
+	if (status != POOL_CONTINUE)
+		status = POOL_ERROR;
+	return status;
+}
+
+static int timeoutmsec;
+
+/*
+ * enable read timeout
+ */
+void pool_enable_timeout()
+{
+	timeoutmsec = pool_config->replication_timeout;
+}
+
+/*
+ * disable read timeout
+ */
+void pool_disable_timeout()
+{
+	timeoutmsec = 0;
+}
+
+/*
+ * wait until read data is ready
+ */
+static int synchronize(POOL_CONNECTION *cp)
+{
+	return pool_check_fd(cp, 1);
+}
+
+/*
+ * wait until read data is ready
+ * if notimeout is non 0, wait forever.
+ */
+int pool_check_fd(POOL_CONNECTION *cp, int notimeout)
+{
+	fd_set readmask;
+	fd_set exceptmask;
+	int fd;
+	int fds;
+	struct timeval timeout;
+	struct timeval *tp;
+
+	fd = cp->fd;
+
+	for (;;)
+	{
+		FD_ZERO(&readmask);
+		FD_ZERO(&exceptmask);
+		FD_SET(fd, &readmask);
+		FD_SET(fd, &exceptmask);
+
+		if (notimeout || timeoutmsec == 0)
+			tp = NULL;
+		else
+		{
+			timeout.tv_sec = pool_config->replication_timeout / 1000;
+			timeout.tv_usec = (pool_config->replication_timeout - (timeout.tv_sec * 1000))*1000;
+			tp = &timeout;
+		}
+
+		fds = select(fd+1, &readmask, NULL, &exceptmask, tp);
+
+		if (fds == -1)
+		{
+			if (errno == EAGAIN || errno == EINTR)
+				continue;
+
+			pool_error("pool_check_fd: select() failed. reason %s", strerror(errno));
+			break;
+		}
+
+		if (FD_ISSET(fd, &exceptmask))
+		{
+			pool_error("pool_check_fd: exception occurred");
+			break;
+		}
+
+		if (fds == 0)
+		{
+			pool_error("pool_check_fd: data is not ready tp->tv_sec %d tp->tp_usec %d", 
+					   pool_config->replication_timeout / 1000,
+					   (pool_config->replication_timeout - (timeout.tv_sec * 1000))*1000);
+			break;
+		}
+		return 0;
+	}
+	return -1;
+}
+
+static void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+{
+	static char *cursorname = "blank";
+	static short num_fields = 3;
+	static char *field_names[] = {"item", "value", "description"};
+	static int oid = 0;
+	static short fsize = -1;
+	static int mod = 0;
+	short n;
+	int i, j;
+	short s;
+	int len;
+	short colnum;
+
+	static char nullmap[2] = {0xff, 0xff};
+	int nbytes = (num_fields + 7)/8;
+
+#define MAXNAMELEN 32
+#define MAXVALLEN 512
+#define MAXDESCLEN 64
+
+	typedef struct {
+		char name[MAXNAMELEN+1];
+		char value[MAXVALLEN+1];
+		char desc[MAXDESCLEN+1];
+	} POOL_REPORT_STATUS;
+
+#define MAXITEMS 128
+
+	POOL_REPORT_STATUS status[MAXITEMS];
+
+	short nrows;
+	int size;
+	int hsize;
+
+	i = 0;
+
+	strncpy(status[i].name, "listen_addresses", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%s", pool_config->listen_addresses);
+	strncpy(status[i].desc, "host name(s) or IP address(es) to listen to", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "port", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->port);
+	strncpy(status[i].desc, "pgpool accepting port number", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "socket_dir", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%s", pool_config->socket_dir);
+	strncpy(status[i].desc, "pgpool socket directory", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "num_init_children", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->num_init_children);
+	strncpy(status[i].desc, "# of children initially pre-forked", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "child_life_time", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->child_life_time);
+	strncpy(status[i].desc, "if idle for this seconds, child exits", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "connection_life_time", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->connection_life_time);
+	strncpy(status[i].desc, "if idle for this seconds, connection closes", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "child_max_connections", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->child_max_connections);
+	strncpy(status[i].desc, "if max_connections received, chile exits", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "max_pool", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->max_pool);
+	strncpy(status[i].desc, "max # of connection pool per child", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "logdir", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%s", pool_config->logdir);
+	strncpy(status[i].desc, "logging directory", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "backend_socket_dir", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%s", pool_config->backend_socket_dir);
+	strncpy(status[i].desc, "Unix domain socket directory for the PostgreSQL server", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "replication_mode", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->replication_mode);
+	strncpy(status[i].desc, "non 0 if operating in replication mode", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "replication_strict", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->replication_strict);
+	strncpy(status[i].desc, "non 0 if operating in strict mode", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "replication_timeout", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->replication_timeout);
+	strncpy(status[i].desc, "if secondary does not respond in this milli seconds, abort the session", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "load_balance_mode", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->load_balance_mode);
+	strncpy(status[i].desc, "non 0 if operating in load balancing mode", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "replication_stop_on_mismatch", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->replication_stop_on_mismatch);
+	strncpy(status[i].desc, "stop replication mode on fatal error", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "reset_query_list", MAXNAMELEN);
+	*(status[i].value) = '\0';
+	for (j=0;j<pool_config->num_reset_queries;j++)
+	{
+		int len;
+		len = MAXVALLEN - strlen(status[i].value);
+		strncat(status[i].value, pool_config->reset_query_list[j], len);
+		len = MAXVALLEN - strlen(status[i].value);
+		strncat(status[i].value, ";", len);
+	}
+	strncpy(status[i].desc, "queries issued at the end of session", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "print_timestamp", MAXDESCLEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->print_timestamp);
+	strncpy(status[i].desc, "if true print time stamp to each log line", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "master_slave_mode", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->master_slave_mode);
+	strncpy(status[i].desc, "if true, operate in master/slave mode", MAXDESCLEN);
+	i++;
+		 
+	strncpy(status[i].name, "connection_cache", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->connection_cache);
+	strncpy(status[i].desc, "if true, cache connection pool", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "health_check_timeout", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->health_check_timeout);
+	strncpy(status[i].desc, "health check timeout", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "health_check_period", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->health_check_period);
+	strncpy(status[i].desc, "health check period", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "health_check_user", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%s", pool_config->health_check_user);
+	strncpy(status[i].desc, "health check user", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "insert_lock", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->insert_lock);
+	strncpy(status[i].desc, "insert lock", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "ignore_leading_white_space", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->ignore_leading_white_space);
+	strncpy(status[i].desc, "ignore leading white spaces", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "replication_enabled", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->replication_enabled);
+	strncpy(status[i].desc, "non 0 if actually operating in replication mode", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "master_slave_enabled", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->master_slave_enabled);
+	strncpy(status[i].desc, "non 0 if actually operating in master/slave", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "num_reset_queries", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->num_reset_queries);
+	strncpy(status[i].desc, "number of queries in reset_query_list", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "pcp_port", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->pcp_port);
+	strncpy(status[i].desc, "PCP port # to bind", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "pcp_socket_dir", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%s", pool_config->pcp_socket_dir);
+	strncpy(status[i].desc, "PCP socket directory", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "pcp_timeout", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->pcp_timeout);
+	strncpy(status[i].desc, "PCP timeout for an idle client", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "log_statement", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->log_statement);
+	strncpy(status[i].desc, "if non 0, logs all SQL statements", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "parallel_mode", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->parallel_mode);
+	strncpy(status[i].desc, "if non 0, run in parallel query mode", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "enable_query_cache", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->enable_query_cache);
+	strncpy(status[i].desc, "if non 0, use query cache", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "pgpool2_hostname", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%s", pool_config->pgpool2_hostname);
+	strncpy(status[i].desc, "pgpool2 hostname", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "system_db_hostname", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%s", pool_config->system_db_hostname);
+	strncpy(status[i].desc, "system DB hostname", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "system_db_port", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->system_db_port);
+	strncpy(status[i].desc, "system DB port number", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "system_db_dbname", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%s", pool_config->system_db_dbname);
+	strncpy(status[i].desc, "system DB name", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "system_db_schema", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%s", pool_config->system_db_schema);
+	strncpy(status[i].desc, "system DB schema name", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "system_db_user", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%s", pool_config->system_db_user);
+	strncpy(status[i].desc, "user name to access system DB", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "system_db_password", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%s", pool_config->system_db_password);
+	strncpy(status[i].desc, "password to access system DB", MAXDESCLEN);
+	i++;
+
+	for (j = 0; j < NUM_BACKENDS; j++)
+	{
+		if (BACKEND_INFO(j).backend_port == 0)
+			continue;
+
+		snprintf(status[i].name, MAXVALLEN, "backend_hostname%d", j);
+		snprintf(status[i].value, MAXVALLEN, "%s", BACKEND_INFO(j).backend_hostname);
+		snprintf(status[i].desc, MAXVALLEN, "backend #%d hostname", j);
+		i++;
+
+		snprintf(status[i].name, MAXVALLEN, "backend_port%d", j);
+		snprintf(status[i].value, MAXVALLEN, "%d", BACKEND_INFO(j).backend_port);
+		snprintf(status[i].desc, MAXVALLEN, "backend #%d port number", j);
+		i++;
+
+		snprintf(status[i].name, MAXVALLEN, "backend_weight%d", j);
+		snprintf(status[i].value, MAXVALLEN, "%f", BACKEND_INFO(j).backend_weight);
+		snprintf(status[i].desc, MAXVALLEN, "weight of backend #%d", j);
+		i++;
+	}
+
+	nrows = i;
+
+	if (MAJOR(backend) == PROTO_MAJOR_V2)
+	{
+		/* cursor response */
+		pool_write(frontend, "P", 1);
+		pool_write(frontend, cursorname, strlen(cursorname)+1);
+	}
+
+	/* row description */
+	pool_write(frontend, "T", 1);
+
+	if (MAJOR(backend) == PROTO_MAJOR_V3)
+	{
+		len = sizeof(num_fields) + sizeof(len);
+
+		for (i=0;i<num_fields;i++)
+		{
+			char *f = field_names[i];
+			len += strlen(f)+1;
+			len += sizeof(oid);
+			len += sizeof(colnum);
+			len += sizeof(oid);
+			len += sizeof(s);
+			len += sizeof(mod);
+			len += sizeof(s);
+		}
+
+		len = htonl(len);
+		pool_write(frontend, &len, sizeof(len));
+	}
+
+	n = htons(num_fields);
+	pool_write(frontend, &n, sizeof(short));
+
+	for (i=0;i<num_fields;i++)
+	{
+		char *f = field_names[i];
+
+		pool_write(frontend, f, strlen(f)+1);		/* field name */
+
+		if (MAJOR(backend) == PROTO_MAJOR_V3)
+		{
+			pool_write(frontend, &oid, sizeof(oid));	/* table oid */
+			colnum = htons(i);
+			pool_write(frontend, &colnum, sizeof(colnum));	/* column number */
+		}
+
+		pool_write(frontend, &oid, sizeof(oid));		/* data type oid */
+		s = htons(fsize);
+		pool_write(frontend, &s, sizeof(fsize));		/* field size */
+		pool_write(frontend, &mod, sizeof(mod));		/* modifier */
+
+		if (MAJOR(backend) == PROTO_MAJOR_V3)
+		{
+			s = htons(0);
+			pool_write(frontend, &s, sizeof(fsize));	/* field format (text) */
+		}
+	}
+	pool_flush(frontend);
+
+	if (MAJOR(backend) == PROTO_MAJOR_V2)
+	{
+		/* ascii row */
+		for (i=0;i<nrows;i++)
+		{
+			pool_write(frontend, "D", 1);
+			pool_write_and_flush(frontend, nullmap, nbytes);
+
+			size = strlen(status[i].name);
+			hsize = htonl(size+4);
+			pool_write(frontend, &hsize, sizeof(hsize));
+			pool_write(frontend, status[i].name, size);
+
+			size = strlen(status[i].value);
+			hsize = htonl(size+4);
+			pool_write(frontend, &hsize, sizeof(hsize));
+			pool_write(frontend, status[i].value, size);
+
+			size = strlen(status[i].desc);
+			hsize = htonl(size+4);
+			pool_write(frontend, &hsize, sizeof(hsize));
+			pool_write(frontend, status[i].desc, size);
+		}
+	}
+	else
+	{
+		/* data row */
+		for (i=0;i<nrows;i++)
+		{
+			pool_write(frontend, "D", 1);
+			len = sizeof(len) + sizeof(nrows);
+			len += sizeof(int) + strlen(status[i].name);
+			len += sizeof(int) + strlen(status[i].value);
+			len += sizeof(int) + strlen(status[i].desc);
+			len = htonl(len);
+			pool_write(frontend, &len, sizeof(len));
+			s = htons(3);
+			pool_write(frontend, &s, sizeof(s));
+
+			len = htonl(strlen(status[i].name));
+			pool_write(frontend, &len, sizeof(len));
+			pool_write(frontend, status[i].name, strlen(status[i].name));
+
+			len = htonl(strlen(status[i].value));
+			pool_write(frontend, &len, sizeof(len));
+			pool_write(frontend, status[i].value, strlen(status[i].value));
+			
+			len = htonl(strlen(status[i].desc));
+			pool_write(frontend, &len, sizeof(len));
+			pool_write(frontend, status[i].desc, strlen(status[i].desc));
+		}
+	}
+
+	/* complete command response */
+	pool_write(frontend, "C", 1);
+	if (MAJOR(backend) == PROTO_MAJOR_V3)
+	{
+		len = htonl(sizeof(len) + strlen("SELECT")+1);
+		pool_write(frontend, &len, sizeof(len));
+	}
+	pool_write(frontend, "SELECT", strlen("SELECT")+1);
+
+	/* ready for query */
+	pool_write(frontend, "Z", 1);
+	if (MAJOR(backend) == PROTO_MAJOR_V3)
+	{
+		len = htonl(sizeof(len) + 1);
+		pool_write(frontend, &len, sizeof(len));
+		pool_write(frontend, "I", 1);
+	}
+
+	pool_flush(frontend);
+}
+
+void pool_send_frontend_exits(POOL_CONNECTION_POOL *backend)
+{
+	int len;
+	int i;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			pool_write(CONNECTION(backend, i), "X", 1);
+
+			if (MAJOR(backend) == PROTO_MAJOR_V3)
+			{
+				len = htonl(4);
+				pool_write(CONNECTION(backend, i), &len, sizeof(len));
+			}
+
+			/*
+			 * XXX we cannot call pool_flush() here since backend may already
+			 * close the socket and pool_flush() automatically invokes fail
+			 * over handler. This could happen in copy command (remember the
+			 * famouse "lost synchronization with server, resettin g
+			 * connection" message)
+			 */
+			pool_flush_it(CONNECTION(backend, i));
+		}
+	}
+}
+
+/*
+ * -------------------------------------------------------
+ * V3 functions
+ * -------------------------------------------------------
+ */
+
+static POOL_STATUS ParallelForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *database, bool send_to_frontend)
+{
+	int len;
+	char *p;
+	int status;
+
+	if (send_to_frontend)
+	{
+		pool_write(frontend, &kind, 1);
+	}
+
+	status = pool_read(backend, &len, sizeof(len));
+	if (status < 0)
+	{
+		pool_error("ParallelForwardToFrontend: error while reading message length");
+		return POOL_END;
+	}
+
+	if (send_to_frontend)
+	{
+		pool_write(frontend, &len, sizeof(len));
+	}
+
+	len = ntohl(len) - 4 ;
+
+	if (len <= 0)
+		return POOL_CONTINUE;
+
+	p = pool_read2(backend, len);
+	if (p == NULL)
+		return POOL_END;
+
+	status = POOL_CONTINUE;
+	if (send_to_frontend)
+	{
+		status = pool_write(frontend, p, len);
+		if (pool_config->enable_query_cache && SYSDB_STATUS == CON_UP && status == 0)
+		{
+			query_cache_register(kind, frontend, database, p, len);
+		}
+	}
+
+	return status;
+}
+
+POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+{
+	int len, len1 = 0;
+	char *p = NULL;
+	char *p1 = NULL;
+	char *p2 = NULL;
+	int status;
+	int sendlen;
+	int i;
+	int command_ok_row_count = 0;
+	int delete_or_update = 0;
+
+
+	pool_write(frontend, &kind, 1);
+
+	/*
+	 * Check if packet kind == 'C'(Command complete), '1'(Parse
+	 * complete), '3'(Close complete). If so, then register or unregister
+	 * pending prepared statement.
+	 */
+	if ((kind == 'C' || kind == '1' || kind == '3') &&
+		pending_function &&	pending_prepared_name)
+	{
+		pending_function(&prepared_list, pending_prepared_name);
+	}
+
+	free(pending_prepared_name);
+	pending_function = NULL;
+	pending_prepared_name = NULL;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			status = pool_read(CONNECTION(backend, i), &len, sizeof(len));
+			if (status < 0)
+			{
+				pool_error("SimpleForwardToFrontend: error while reading message length");
+				return POOL_END;
+			}
+
+			len = ntohl(len);
+			len -= 4;
+
+			p = pool_read2(CONNECTION(backend, i), len);
+			if (p == NULL)
+				return POOL_END;
+
+			if (IS_MASTER_NODE_ID(i))
+			{
+				len1 = len;
+				p1 = malloc(len);
+				if (p1 == NULL)
+				{
+					pool_error("SimpleForwardToFrontend: malloc failed");
+					return POOL_ERROR;
+				}
+				memcpy(p1, p, len);
+			}
+			else
+			{
+				if (len != len1)
+				{
+					pool_debug("SimpleForwardToFrontend: length does not match between backends master(%d) %d th backend(%d) kind:(%c)",
+							   len, i, len1, kind);
+				}
+			}
+
+			if (kind == 'C')
+			{
+				char *rows;
+
+				if ((rows = strstr(p, "UPDATE")) || (rows = strstr(p, "DELETE")))
+				{
+					delete_or_update = 1;
+
+					rows += 7;
+					command_ok_row_count += atoi(rows);
+				}
+			}
+		}
+	}
+
+	if (delete_or_update)
+	{
+		char tmp[32];
+
+		strncpy(tmp, p1, 7);
+		sprintf(tmp+7, "%d", command_ok_row_count);
+
+		p2 = strdup(tmp);
+		if (p2 == NULL)
+		{
+			pool_error("SimpleForwardToFrontend: malloc failed");
+			free(p1);
+			return POOL_ERROR;
+		}
+		
+		free(p1);
+		p1 = p2;
+		len1 = strlen(p2) + 1;
+	}
+
+	sendlen = htonl(len1+4);
+	pool_write(frontend, &sendlen, sizeof(sendlen));
+	status = pool_write(frontend, p1, len1);
+
+	/* save the received result for each kind */
+	if (pool_config->enable_query_cache && SYSDB_STATUS == CON_UP)
+	{
+		query_cache_register(kind, frontend, backend->info->database, p1, len1);
+	}
+	
+	free(p1);
+	if (status)
+		return POOL_END;
+
+	if (kind == 'A')	/* notification response */
+	{
+		pool_flush(frontend);	/* we need to immediately notice to frontend */
+	}
+	else if (kind == 'E')		/* error response? */
+	{
+		int i, k;
+		int res1;
+		char *p1;
+
+		/*
+		 * check if the error was PANIC or FATAL. If so, we just flush
+		 * the message and exit since the backend will close the
+		 * channel immediately.
+		 */
+		for (;;)
+		{
+			char e;
+
+			e = *p++;
+			if (e == '\0')
+				break;
+
+			if (e == 'S' && (strcasecmp("PANIC", p) == 0 || strcasecmp("FATAL", p) == 0))
+			{
+				pool_flush(frontend);
+				return POOL_END;
+			}
+			else
+			{
+				while (*p++)
+					;
+				continue;
+			}
+		}
+
+		for (i = 0;i < NUM_BACKENDS; i++)
+		{
+			if (VALID_BACKEND(i))
+			{
+				POOL_CONNECTION *cp = CONNECTION(backend, i);
+
+				/* We need to send "sync" message to backend in extend mode
+				 * so that it accepts next command.
+				 * Note that this may be overkill since client may send
+				 * it by itself. Moreover we do not need it in non-extend mode.
+				 * At this point we regard it is not harmfull since error resonse
+				 * will not be sent too frequently.
+				 */
+				pool_write(cp, "S", 1);
+				res1 = htonl(4);
+				if (pool_write_and_flush(cp, &res1, sizeof(res1)) < 0)
+				{
+					return POOL_END;
+				}
+			}
+		}
+	
+		while ((k = pool_read_kind(backend)) != 'Z')
+		{
+			POOL_STATUS ret;
+			if (k < 0)
+			{
+				pool_error("SimpleForwardToBackend: pool_read_kind error");
+				return POOL_ERROR;
+			}
+
+			ret = SimpleForwardToFrontend(k, frontend, backend);
+			if (ret != POOL_CONTINUE)
+				return ret;
+			pool_flush(frontend);
+		}
+
+		for (i = 0; i < NUM_BACKENDS; i++)
+		{
+			if (VALID_BACKEND(i))
+			{
+				status = pool_read(CONNECTION(backend, i), &res1, sizeof(res1));
+				if (status < 0)
+				{
+					pool_error("SimpleForwardToFrontend: error while reading message length");
+					return POOL_END;
+				}
+				res1 = ntohl(res1) - sizeof(res1);
+				p1 = pool_read2(CONNECTION(backend, i), res1);
+				if (p1 == NULL)
+					return POOL_END;
+			}
+		}
+	}
+
+	return POOL_CONTINUE;
+}
+
+POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+{
+	int len;
+	int sendlen;
+	char *p;
+	int i;
+	int name_len;
+	char *name;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			if (pool_write(CONNECTION(backend, i), &kind, 1))
+				return POOL_END;
+		}
+	}
+
+	if (pool_read(frontend, &sendlen, sizeof(sendlen)))
+	{
+		return POOL_END;
+	}
+
+	len = ntohl(sendlen) - 4;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			if (pool_write(CONNECTION(backend,i), &sendlen, sizeof(sendlen)))
+				return POOL_END;
+		}
+	}
+
+	if (len <= 0)
+		return POOL_CONTINUE;
+
+	p = pool_read2(frontend, len);
+	if (p == NULL)
+		return POOL_END;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			if (pool_write(CONNECTION(backend, i), p, len))
+				return POOL_END;
+		}
+	}
+
+	if (kind == 'P' && *p)
+	{
+		name_len = strlen(p) + 3;
+		name = malloc(name_len);
+		if (name == NULL)
+		{
+			pool_error("SimpleForwardToBackend: malloc failed: %s", strerror(errno));
+			return POOL_END;
+		}
+		sprintf(name, "\"%s\"", p);
+		pending_function = add_prepared_list;
+		pending_prepared_name = name;
+	}
+	else if (kind == 'C' && *p == 'S' && *(p + 1))
+	{
+		name_len = strlen(p + 1) + 3;
+		name = malloc(name_len);
+		if (name == NULL)
+		{
+			pool_error("SimpleForwardToBackend: malloc failed: %s", strerror(errno));
+			return POOL_END;
+		}
+		sprintf(name, "\"%s\"", p + 1);
+		pending_function = del_prepared_list;
+		pending_prepared_name = name;
+	}
+
+	if (kind == 'P' || kind == 'B' || kind == 'D' || kind == 'C')
+	{
+		int i;
+		int kind1;
+
+		for (i = 0;i < NUM_BACKENDS; i++)
+		{
+			if (VALID_BACKEND(i))
+			{
+				POOL_CONNECTION *cp = CONNECTION(backend, i);
+
+				/*
+				 * send "Flush" message so that backend notices us
+				 * the completion of the command
+				 */
+				pool_write(cp, "H", 1);
+				sendlen = htonl(4);
+				if (pool_write_and_flush(cp, &sendlen, sizeof(sendlen)) < 0)
+				{
+					return POOL_END;
+				}
+			}
+		}
+
+		if (kind == 'D' && *p == 'S')
+		{
+			kind1 = pool_read_kind(backend);
+			if (kind1 < 0)
+			{
+				pool_error("SimpleForwardToBackend: pool_read_kind error");
+				return POOL_ERROR;
+			}
+			SimpleForwardToFrontend(kind1, frontend, backend);
+			pool_flush(frontend);
+		}
+
+		kind1 = pool_read_kind(backend);
+		if (kind1 < 0)
+		{
+			pool_error("SimpleForwardToBackend: pool_read_kind error");
+			return POOL_ERROR;
+		}
+		SimpleForwardToFrontend(kind1, frontend, backend);
+		return pool_flush(frontend);
+	}
+
+	return POOL_CONTINUE;
+}
+
+POOL_STATUS ParameterStatus(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+{
+	int len, len1 = 0;
+	int *len_array;
+	int sendlen;
+	char *p;
+	char *name;
+	char *value;
+	POOL_STATUS status;
+	char parambuf[1024];		/* parameter + value string buffer. XXX is this enough? */
+	int i;
+
+	pool_write(frontend, "S", 1);
+
+	len_array = pool_read_message_length2(backend);
+
+	if (len_array == NULL)
+	{
+		return POOL_END;
+	}
+
+	len = len_array[MASTER_NODE_ID];
+	sendlen = htonl(len);
+	pool_write(frontend, &sendlen, sizeof(sendlen));
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			len = len_array[i];
+			len -= 4;
+
+			p = pool_read2(CONNECTION(backend, i), len);
+			if (p == NULL)
+				return POOL_END;
+
+			name = p;
+			value = p + strlen(name) + 1;
+
+			pool_debug("%d th backend: name: %s value: %s", i, name, value);
+
+			if (IS_MASTER_NODE_ID(i))
+			{
+				len1 = len;
+				memcpy(parambuf, p, len);
+				pool_add_param(&CONNECTION(backend, i)->params, name, value);
+			}
+
+#ifdef DEBUG
+			pool_param_debug_print(&MASTER(backend)->params);
+#endif
+		}
+	}
+
+	status = pool_write(frontend, parambuf, len1);
+	return status;
+}
+
+/*
+ * reset backend status. return values are:
+ * 0: no query was issued 1: a query was issued 2: no more queries remain -1: error
+ */
+static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
+{
+	char *query;
+	int qn;
+
+	qn = pool_config->num_reset_queries;
+
+	if (qcnt >= qn)
+	{
+		if (qcnt >= qn + prepared_list.cnt)
+		{
+			reset_prepared_list(&prepared_list);
+			return 2;
+		}
+
+		send_deallocate(backend, &prepared_list, qcnt - qn);
+		return 1;
+	}
+
+	query = pool_config->reset_query_list[qcnt];
+
+	/* if transaction state is idle, we don't need to issue ABORT */
+	if (TSTATE(backend) == 'I' && !strcmp("ABORT", query))
+		return 0;
+
+	if (SimpleQuery(NULL, backend, query) != POOL_CONTINUE)
+		return -1;
+
+	return 1;
+}
+
+/*
+ * return non 0 if load balance is possible
+ */
+static int load_balance_enabled(POOL_CONNECTION_POOL *backend, Node* node)
+{
+	if (!IsA(node, SelectStmt))
+		return 0;
+
+	if (pool_config->load_balance_mode &&
+		DUAL_MODE &&
+		MAJOR(backend) == PROTO_MAJOR_V3 &&
+		TSTATE(backend) == 'I')
+	{
+		return 1;
+	}
+	return 0;
+}
+
+/*
+ * start load balance mode
+ */
+static void start_load_balance(POOL_CONNECTION_POOL *backend)
+{
+	double max_weight;
+	int i;
+
+#ifdef NOT_USED
+	/* save backend connection slots */
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			slots[i] = CONNECTION_SLOT(backend, i);
+		}
+	}
+#endif
+
+	/* choose a backend in random manner with weight */
+	selected_slot = 0;
+	max_weight = 0.0;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			double weight;
+
+			weight = random() * BACKEND_INFO(i).backend_weight/RAND_MAX;
+
+			if (weight > max_weight)
+			{
+				max_weight = weight;
+				selected_slot = i;
+			}
+		}
+	}
+
+	/* temporarily turn off replication mode */
+	if (REPLICATION)
+		replication_was_enabled = 1;
+	if (MASTER_SLAVE)
+		master_slave_was_enabled = 1;
+
+	REPLICATION = 0;
+	MASTER_SLAVE = 0;
+
+#ifdef NOTUSED
+	backend->slots[0] = slots[selected_slot];
+#endif
+	LOAD_BALANCE_STATUS(selected_slot) = LOAD_SELECTED;
+	pool_debug("start_load_balance: selected backend id is %d", selected_slot);
+
+	/* start load balancing */
+	in_load_balance = 1;
+}
+
+/*
+ * finish load balance mode
+ */
+static void end_load_balance(POOL_CONNECTION_POOL *backend)
+{
+	in_load_balance = 0;
+	LOAD_BALANCE_STATUS(selected_slot) = LOAD_UNSELECTED;
+
+#ifdef NOT_USED
+	/* restore backend connection slots */
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			CONNECTION_SLOT(backend, i) = slots[i];
+		}
+	}
+#endif
+
+	/* turn on replication mode */
+	REPLICATION = replication_was_enabled;
+	MASTER_SLAVE = master_slave_was_enabled;
+
+	replication_was_enabled = 0;
+	master_slave_was_enabled = 0;
+
+	pool_debug("end_load_balance: end load balance mode");
+}
+
+/*
+ * send error message to frontend
+ */
+void pool_send_error_message(POOL_CONNECTION *frontend, int protoMajor,
+							 char *code,
+							 char *message,
+							 char *detail,
+							 char *hint,
+							 char *file,
+							 int line)
+{
+#define MAXDATA	1024
+#define MAXMSGBUF 128
+	if (protoMajor == PROTO_MAJOR_V2)
+	{
+		pool_write(frontend, "E", 1);
+		pool_write_and_flush(frontend, message, strlen(message)+1);
+	}
+	else if (protoMajor == PROTO_MAJOR_V3)
+	{
+		char data[MAXDATA];
+		char msgbuf[MAXMSGBUF];
+		int len;
+		int thislen;
+		int sendlen;
+
+		len = 0;
+
+		pool_write(frontend, "E", 1);
+
+		/* error level */
+		thislen = snprintf(msgbuf, MAXMSGBUF, "SERROR");
+		memcpy(data +len, msgbuf, thislen+1);
+		len += thislen + 1;
+
+		/* code */
+		thislen = snprintf(msgbuf, MAXMSGBUF, "C%s", code);
+		memcpy(data +len, msgbuf, thislen+1);
+		len += thislen + 1;
+
+		/* message */
+		thislen = snprintf(msgbuf, MAXMSGBUF, "M%s", message);
+		memcpy(data +len, msgbuf, thislen+1);
+		len += thislen + 1;
+
+		/* detail */
+		if (*detail != '\0')
+		{
+			thislen = snprintf(msgbuf, MAXMSGBUF, "D%s", detail);
+			memcpy(data +len, msgbuf, thislen+1);
+			len += thislen + 1;
+		}
+
+		/* hint */
+		if (*hint != '\0')
+		{
+			thislen = snprintf(msgbuf, MAXMSGBUF, "H%s", hint);
+			memcpy(data +len, msgbuf, thislen+1);
+			len += thislen + 1;
+		}
+
+		/* file */
+		thislen = snprintf(msgbuf, MAXMSGBUF, "F%s", file);
+		memcpy(data +len, msgbuf, thislen+1);
+		len += thislen + 1;
+
+		/* line */
+		thislen = snprintf(msgbuf, MAXMSGBUF, "L%d", line);
+		memcpy(data +len, msgbuf, thislen+1);
+		len += thislen + 1;
+
+		/* stop null */
+		len++;
+		*(data + len - 1) = '\0';
+
+		sendlen = len;
+		len = htonl(len + 4);
+		pool_write(frontend, &len, sizeof(len));
+		pool_write_and_flush(frontend, data, sendlen);
+	}
+	else
+		pool_error("send_error_message: unknown protocol major %d", protoMajor);
+}
+
+void pool_send_readyforquery(POOL_CONNECTION *frontend)
+{
+	int len;
+	pool_write(frontend, "Z", 1);
+	len = 5;
+	len = htonl(len);
+	pool_write(frontend, &len, sizeof(len));
+	pool_write(frontend, "I", 1);
+	pool_flush(frontend);
+}
+
+/*
+ * sends q query in sync manner.
+ * this function sends a query and wait for CommandComplete/ReadyForQuery.
+ * if an error occured, it returns with POOL_ERROR.
+ * this function does NOT handle SELECT/SHOW quries.
+ * if no_ready_for_query is non 0, returns without reading the packet
+ * length for ReadyForQuery. This mode is necessary when called from ReadyForQuery().
+ */
+static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMajor,
+							  int no_ready_for_query)
+{
+	int len;
+	int status;
+	char kind;
+	char *string;
+
+	pool_debug("do_command: Query: %s", query);
+
+	/* send the query to the backend */
+	pool_write(backend, "Q", 1);
+	len = strlen(query)+1;
+
+	if (protoMajor == PROTO_MAJOR_V3)
+	{
+		int sendlen = htonl(len + 4);
+		pool_write(backend, &sendlen, sizeof(sendlen));
+	}
+
+	if (pool_write_and_flush(backend, query, len) < 0)
+	{
+		return POOL_END;
+	}
+
+	/*
+	 * Expecting CompleteCommand
+	 */
+	status = pool_read(backend, &kind, sizeof(kind));
+	if (status < 0)
+	{
+		pool_error("do_command: error while reading message kind");
+		return POOL_END;
+	}
+
+	if (kind != 'C')
+	{
+		pool_error("do_command: backend does not successfully complete command %s status %c", query, kind);
+
+	}
+
+	/*
+	 * read command tag of CommandComplete response
+	 */
+	if (protoMajor == PROTO_MAJOR_V3)
+	{
+		if (pool_read(backend, &len, sizeof(len)) < 0)
+			return POOL_END;
+		len = ntohl(len) - 4;
+		string = pool_read2(backend, len);
+		if (string == NULL)
+			return POOL_END;
+		pool_debug("command tag: %s", string);
+	}
+	else
+	{
+		string = pool_read_string(backend, &len, 0);
+		if (string == NULL)
+			return POOL_END;
+	}
+
+	/*
+	 * Expecting ReadyForQuery
+	 */
+	status = pool_read(backend, &kind, sizeof(kind));
+	if (status < 0)
+	{
+		pool_error("do_command: error while reading message kind");
+		return POOL_END;
+	}
+
+	if (kind != 'Z')
+	{
+		pool_error("do_command: backend does not return ReadyForQuery");
+		return POOL_END;
+	}
+
+	if (no_ready_for_query)
+		return POOL_CONTINUE;
+
+	if (protoMajor == PROTO_MAJOR_V3)
+	{
+		if (pool_read(backend, &len, sizeof(len)) < 0)
+			return POOL_END;
+
+		status = pool_read(backend, &kind, sizeof(kind));
+		if (status < 0)
+		{
+			pool_error("do_command: error while reading transaction status");
+			return POOL_END;
+		}
+
+		/* set transaction state */
+		pool_debug("ReadyForQuery: transaction state: %c", kind);
+		backend->tstate = kind;
+	}
+
+	return POOL_CONTINUE;
+}
+
+POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *query, char *database)
+{
+    int len,sendlen;
+    int status;
+    char kind;
+
+    pool_debug("OneNode_do_command: Query: %s", query);
+
+    /* send the query to the backend */
+    pool_write(backend, "Q", 1);
+    len = strlen(query)+1;
+
+    sendlen = htonl(len + 4);
+    pool_write(backend, &sendlen, sizeof(sendlen));
+
+    if (pool_write_and_flush(backend, query, len) < 0)
+    {
+        return POOL_END;
+    }
+
+    for(;;)
+    {
+        status = pool_read(backend, &kind, sizeof(kind));
+        if (status < 0)
+        {
+            pool_error("OneNode_do_command: error while reading message kind");
+            return POOL_END;
+        }
+
+        status = ParallelForwardToFrontend(kind, frontend, backend, database, true);
+        if (kind == 'C' || kind =='E')
+        {
+            break;
+        }
+    }
+    /*
+     *      * Expecting ReadyForQuery
+     *           */
+    status = pool_read(backend, &kind, sizeof(kind));
+    if (status < 0)
+    {
+        pool_error("OneNode_do_command: error while reading message kind");
+        return POOL_END;
+    }
+
+    if (kind != 'Z')
+    {
+        pool_error("OneNode_do_command: backend does not return ReadyForQuery");
+        return POOL_END;
+    }
+
+    status = ParallelForwardToFrontend(kind, frontend, backend, database, true);
+    pool_flush(frontend);
+
+    return status;
+}
+
+
+
+/*
+ * judge if we need to lock the table
+ * to keep SERIAL consistency among servers
+ */
+static int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
+{
+	if (MAJOR(backend) != PROTO_MAJOR_V3)
+		return 0;
+	
+	/*
+	 * either insert_lock directive specified and without "NO INSERT LOCK" comment
+	 * or "INSERT LOCK" comment exists?
+	 */
+	if ((pool_config->insert_lock && strncasecmp(query, NO_LOCK_COMMENT, NO_LOCK_COMMENT_SZ)) ||
+		strncasecmp(query, LOCK_COMMENT, LOCK_COMMENT_SZ) == 0)
+	{
+		/* INSERT STATEMENT? */
+		if (IsA(node, InsertStmt))
+			return 1;
+	}
+
+	return 0;
+}
+
+/*
+ * if a transaction has not already started, start a new one.
+ * issue LOCK TABLE IN SHARE ROW EXCLUSIVE MODE
+ */
+static POOL_STATUS insert_lock(POOL_CONNECTION_POOL *backend, char *query, InsertStmt *node)
+{
+	char *table;
+	char qbuf[1024];
+	POOL_STATUS status;
+	int i;
+
+	/* insert_lock can be used in V3 only */
+	if (MAJOR(backend) != PROTO_MAJOR_V3)
+		return POOL_CONTINUE;
+
+	/* get table name */
+	table = get_insert_command_table_name(node);
+
+	/* could not get table name. probably wrong SQL command */
+	if (table == NULL)
+	{
+		return POOL_CONTINUE;
+	}
+
+	snprintf(qbuf, sizeof(qbuf), "LOCK TABLE %s IN SHARE ROW EXCLUSIVE MODE", table);
+
+	/* if we are not in a transaction block,
+	 * start a new transaction
+	 */
+	if (TSTATE(backend) == 'I')
+	{
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (VALID_BACKEND(i))
+			{
+				if (do_command(CONNECTION(backend, i), "BEGIN", PROTO_MAJOR_V3, 0) != POOL_CONTINUE)
+					return POOL_END;
+			}
+		}
+
+		/* mark that we started new transaction */
+		internal_transaction_started = 1;
+	}
+
+	status = POOL_CONTINUE;
+
+	/* issue lock table command */
+	table = get_insert_command_table_name(node);
+	snprintf(qbuf, sizeof(qbuf), "LOCK TABLE %s IN SHARE ROW EXCLUSIVE MODE", table);
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			if (do_command(CONNECTION(backend, i), qbuf, PROTO_MAJOR_V3, 0) != POOL_CONTINUE)
+			{
+				internal_transaction_started = 0;
+				return POOL_END;
+			}
+		}
+	}
+
+	return status;
+}
+
+/*
+ * obtain table name in INSERT statement
+ */
+static char *get_insert_command_table_name(InsertStmt *node)
+{
+	char *table = nodeToString(node->relation);
+
+	pool_debug("get_insert_command_table_name: extracted table name: %s", table);
+	return table;
+}
+
+/* judge if this is a DROP DATABASE command */
+static int is_drop_database(Node *node)
+{
+	return (IsA(node, DropdbStmt)) ? 1 : 0;
+}
+
+/*
+ * check if any pending data remains
+ */
+static int is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+{
+	int i;
+
+	if (frontend->len > 0)
+		return 0;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (!VALID_BACKEND(i))
+			continue;
+
+		if (CONNECTION(backend, i)->len > 0)
+			return 0;
+	}
+
+	return 1;
+}
+
+/*
+ * check if query is needed to wait completion
+ */
+static int is_strict_query(Node *node)
+{
+	switch (node->type)
+	{
+		case T_SelectStmt:
+		{
+			SelectStmt *stmt = (SelectStmt *)node;
+			return (stmt->into || stmt->lockingClause) ? 1 : 0;
+		}
+
+		case T_UpdateStmt:
+		case T_InsertStmt:
+		case T_DeleteStmt:
+		case T_LockStmt:
+			return 1;
+		
+		default:
+			return 0;
+	}
+
+	return 0;
+}
+
+static int check_copy_from_stdin(Node *node)
+{
+	if (copy_schema)
+		free(copy_schema);
+	if (copy_table)
+		free(copy_table);
+	if (copy_null)
+		free(copy_null);
+
+	copy_schema = copy_table = copy_null = NULL;
+
+	if (IsA(node, CopyStmt))
+	{
+		CopyStmt *stmt = (CopyStmt *)node;
+		if (stmt->is_from == TRUE && stmt->filename == NULL)
+		{
+			RangeVar *relation = (RangeVar *)stmt->relation;
+			ListCell *lc;
+
+			/* query is COPY FROM STDIN */
+			if (relation->schemaname)
+				copy_schema = strdup(relation->schemaname);
+			else
+				copy_schema = strdup("public");
+			copy_table = strdup(relation->relname);
+
+			copy_delimiter = '\t'; /* default delimiter */
+			copy_null = strdup("\\N"); /* default null string */
+
+			/* look up delimiter and null string. */
+			foreach (lc, stmt->options)
+			{
+				DefElem *elem = lfirst(lc);
+				Value *v;
+
+				if (strcmp(elem->defname, "delimiter") == 0)
+				{
+					v = (Value *)elem->arg;
+					copy_delimiter = v->val.str[0];
+				}
+				else if (strcmp(elem->defname, "null") == 0)
+				{
+					if (copy_null)
+						free(copy_null);
+					v = (Value *)elem->arg;
+					copy_null = strdup(v->val.str);
+				}
+			}
+		}
+		return 1;
+	}
+
+	return 0;
+}
+
+static POOL_STATUS read_kind_from_one_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *kind, int node)
+{
+	if (VALID_BACKEND(node))
+	{
+		char k;
+		if (pool_read(CONNECTION(backend, node), &k, 1) < 0)
+		{
+			pool_error("read_kind_from_one_backend: failed to read kind from %d th backend", node);
+			return POOL_ERROR;
+		}
+
+		pool_debug("read_kind_from_one_backend: read kind from %d th backend %c", node, k);
+
+		*kind = k;
+		return POOL_CONTINUE;
+	}
+	else
+	{
+		pool_error("read_kind_from_one_backend: %d th backend is not valid", node);
+		return POOL_ERROR;
+	}
+}
+
+
+
+/*
+ * read kind from backends
+ */
+static POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *kind)
+{
+	int i;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			char k;
+
+			if (pool_read(CONNECTION(backend, i), &k, 1) < 0)
+			{
+				pool_error("pool_process_query: failed to read kind from %d th backend", i);
+				return POOL_ERROR;
+			}
+
+			pool_debug("read_kind_from_backend: read kind from %d th backend %c NUM_BACKENDS: %d", i, k, NUM_BACKENDS);
+
+			if (IS_MASTER_NODE_ID(i))
+			{
+				*kind = k;
+			}
+			else
+			{
+				if (k != *kind)
+				{
+					pool_error("pool_process_query: %d th kind %c does not match with master connection kind %c",
+							   i, k, *kind);
+					pool_send_error_message(frontend, MAJOR(backend), "XX000", 
+											"kind mismatch between backends", "",
+											"check data consistency between master and secondary", __FILE__, __LINE__);
+
+					if (pool_config->replication_stop_on_mismatch)
+						return POOL_FATAL;
+					else
+						return POOL_ERROR;
+				}
+			}
+		}
+	}
+	return POOL_CONTINUE;
+}
+
+void init_prepared_list(void)
+{
+	prepared_list.cnt = 0;
+	prepared_list.size = INIT_STATEMENT_LIST_SIZE;
+	prepared_list.stmt_list = malloc(sizeof(char *) * prepared_list.size);
+	if (prepared_list.stmt_list == NULL)
+	{
+		pool_error("init_prepared_list: malloc failed: %s", strerror(errno));
+		exit(1);
+	}
+}
+
+static void add_prepared_list(PreparedStatementList *p, char *name)
+{
+	if (p->cnt == p->size)
+	{
+		p->size *= 2;
+		p->stmt_list = realloc(p->stmt_list, sizeof(char *) * p->size);
+		if (p->stmt_list == NULL)
+		{
+			pool_error("add_prepared_list: realloc failed: %s", strerror(errno));
+			exit(1);
+		}
+	}
+
+	p->stmt_list[p->cnt++] = strdup(name);
+}
+
+static void del_prepared_list(PreparedStatementList *p, char *name)
+{
+	int i;
+
+	for (i = 0; i < p->cnt; i++)
+	{
+		if (strcmp(p->stmt_list[i], name) == 0)
+			break;
+	}
+	
+	if (i == p->cnt)
+		return;
+
+	free(p->stmt_list[i]);
+	if (i != p->cnt - 1)
+	{
+		memmove(&p->stmt_list[i], &p->stmt_list[i+1],
+				sizeof(char *) * (p->cnt - i - 1));
+	}
+	p->cnt--;
+}
+
+static void reset_prepared_list(PreparedStatementList *p)
+{
+	int i;
+
+	for (i = 0; i < p->cnt; i++)
+		free(p->stmt_list[i]);
+	p->cnt = 0;
+}
+
+static int send_deallocate(POOL_CONNECTION_POOL *backend, PreparedStatementList *p,
+					int n)
+{
+	char *query;
+	int len;
+
+	if (p->cnt <= n)
+		return 1;
+	
+	len = strlen(p->stmt_list[n]) + 12; /* "DEALLOCATE " + '\0' */
+	query = malloc(len);
+	if (query == NULL)
+	{
+		pool_error("send_deallocate: malloc failed: %s", strerror(errno));
+		exit(1);
+	}
+	sprintf(query, "DEALLOCATE %s", p->stmt_list[n]);
+	if (SimpleQuery(NULL, backend, query) != POOL_CONTINUE)
+	{
+		free(query);
+		return 1;
+	}
+	free(query);
+
+	return 0;
+}
+
+/*
+ * parse_copy_data()
+ *   Parses CopyDataRow string.
+ *   Returns divide key value. If cannot parse data, returns NULL.
+ */
+static char *
+parse_copy_data(char *buf, int len, char delimiter, int col_id)
+{
+	int i, j, field = 0;
+	char *str, *p = NULL;
+
+	str = malloc(len + 1);
+
+	/* buf is terminated by '\n'. */
+	/* skip '\n' in for loop.     */
+	for (i = 0, j = 0; i < len - 1; i++)
+	{
+		if (buf[i] == '\\' && i != len - 2) /* escape */
+		{
+			if (buf[i+1] == delimiter)
+			{
+				i++;
+				str[j++] = buf[i];
+			}
+			else
+			{
+				str[j++] = buf[i];
+			}
+		}
+		else if (buf[i] == delimiter) /* delimiter */
+		{
+			if (field == col_id)
+			{
+				break;
+			}
+			else
+			{
+				field++;
+				j = 0;
+			}
+		}
+		else
+		{
+			str[j++] = buf[i];
+		}
+	}
+
+	if (field == col_id)
+	{
+		str[j] = '\0';
+		p = malloc(j);
+		if (p == NULL)
+		{
+			pool_error("parse_copy_data: malloc failed: %s", strerror(errno));
+			return NULL;
+		}					
+		strcpy(p, str);
+		p[j] = '\0';
+		pool_debug("parse_copy_data: divide key value is %s", p);
+	}
+
+	free(str);
+	return p;
+}
+
+static void
+query_cache_register(char kind, POOL_CONNECTION *frontend, char *database, char *data, int data_len)
+{
+	static int inside_T;			/* flag to see the result data sequence */
+	int result;
+
+	if (is_select_pgcatalog || is_select_for_update)
+		return;
+
+	if (kind == 'T' && parsed_query)
+	{
+		result = pool_query_cache_register(kind, frontend, database, data, data_len, parsed_query);
+		if (result < 0)
+		{
+			pool_error("pool_query_cache_register: query cache registration failed");
+			inside_T = 0;
+		}
+		else
+		{
+			inside_T = 1;
+		}
+	}
+	else if ((kind == 'D' || kind == 'C' || kind == 'E') && inside_T)
+	{
+		result = pool_query_cache_register(kind, frontend, database, data, data_len, NULL);
+		if (kind == 'C' || kind == 'E' || result < 0)
+		{
+			if (result < 0)
+				pool_error("pool_query_cache_register: query cache registration failed");
+			else
+				pool_debug("pool_query_cache_register: query cache saved");
+			
+			inside_T = 0;
+			free(parsed_query);
+			parsed_query = NULL;
+		}
+	}
+}

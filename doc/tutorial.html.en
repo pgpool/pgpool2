@@ -1,0 +1,681 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+<title>pgpool-II Tutorial</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-2022-jp" />
+<link href="pgpool.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+<!-- hhmts start -->
+Last modified: Wed Sep  6 13:53:04 JST 2006
+<!-- hhmts end -->
+
+<h1>pgpool-II Tutorial</h1>
+
+<p>Welcome to the Tutorial for pgpool-II. From here, you can learn how
+to install, setup, and run parallel queries or do replication using
+pgpool-II. We assume that you already know basic PostreSQL operations,
+so please refer to the PostgreSQL document if needed.</p>
+
+<dl>
+  <dt><em>Table of Contents</em></dt>
+  <dt>1. <a href="#start">Let's Begin!</a></dt>
+  <dd>1.1. <a href="#install">Installing pgpool-II</a></dd>
+  <dd>1.2. <a href="#config">Configuration Files</a></dd>
+  <dd>1.3. <a href="#pcp-config">Configuring PCP commands</a></dd>
+  <dd>1.4. <a href="#db-node">Preparing Database Nodes</a></dd>
+  <dd>1.5. <a href="#start-shutdown">Starting/Stopping pgpool-II</a></dd>
+  <dt>2. <a href="#replication">Your First Replication</a></dt>
+  <dd>2.1. <a href="#replication-config">Configuring Replication</a></dd>
+  <dd>2.2. <a href="#replication-check">Checking Replication</a></dd>
+  <dt>3. <a href="#parallel">Your First Parallel Query</a></dt>
+  <dd>3.1. <a href="#parallel-config">Configuring Parallel Query</a></dd>
+  <dd>3.2. <a href="#system-db">Configuring the System Database</a></dd>
+  <dd>3.3. <a href="#dist-def">Partitioning Rule Definition</a></dd>
+  <dd>3.4. <a href="#parallel-check">Checking Parallel Query</a></dd>
+</dl>
+
+
+<h2>1. <a name="start">Let's Begin!</a></h2>
+
+</p>First, we must learn how to install, configure pgpool-II and
+database nodes before using replication or parallel query.</p>
+
+<h3>1.1. <a name="install">Installing pgpool-II</a></h3>
+
+</p>Installing pgpool-II is very easy. In the directory which you have
+extracted the source tar ball, execute the following commands.</p>
+
+<pre>
+$ ./configure
+$ make
+$ make install
+</pre>
+
+<p><code>configure</code> script collects your system information
+and use it for the compilation procedure. You can pass command line
+arguments to <code>configure</code> script to change the default
+behavior, such as the installation directory. pgpool-II will be
+installed to <code>/usr/local</code> directory by default.</p>
+
+<p><code>make</code> command compiles the source code, and <code>make
+install</code> will install the executables. You must have write
+permission on the installation directory.</p>
+
+<p>In this tutorial, we will install pgpool-II in the default
+<code>/usr/local</code> directory.</p>
+
+<p><em>Note</em>: pgpool-II requires libpq library in PostgreSQL 7.4
+or later (version 3 protocol). If <code>configure</code> script
+displays the following error message, libpq library may not be
+installed, or it is not of version 3.</p>
+
+<pre>configure: error: libpq is not installed or libpq is old</pre>
+
+<p>If the library is version 3, but above message is still displayed,
+your libpq library is probably not recognized by
+<code>configure</code> script.</p>
+
+<p><code>configure</code> script searches for libpq library under
+<code>/usr/local/pgsql</code> libaray. If you have installed
+PostgreSQL to a directory other than <code>/usr/local/pgsql</code>,
+use <code>--with-pgsql</code>, or <code>--with-pgsql-includedir</code>
+and <code>--with-pgsql-libdir</code> command line options when you
+execute <code>configure</code>.</p>
+
+<h3>1.2. <a name="config">Configuration Files</a></h3>
+
+<p>pgpool-II configuration parameters are saved in
+<code>pgpool.conf</code> file. The file is in "<code>parameter =
+value</code>" per line format. When you install pgpool-II,
+<code>pgpool.conf.sample</code> is automatically created. We recommend
+copying and renaming it to <code>pgpool.conf</code>, and edit it as
+you like.</p>
+
+<pre>$ cp /usr/local/etc/pgpool.conf.sample /usr/local/etc/pgpool.conf</pre>
+
+<p>pgpool-II only accepts connections from the local host using port
+9999. If you wish to receive conenctions from other hosts, set
+<code>listen_addresses</code> to '*'.</code></p>
+
+<pre>
+listen_addresses = 'localhost'
+port = 9999
+</pre>
+
+<p>We will use the default parameters in thie tutorial.</p>
+
+<h3>1.3. <a name="pcp-config">Configuring PCP Commands</a></h3>
+
+<p>pgpool-II has an interface for administration purpose to retrieve
+information on database nodes, shutdown pgpool-II, etc. via
+network. To use PCP commands, user authentication is required. This
+authentication is different from PostgreSQL's user authentication. A
+username and password need to be defined in <code>pcp.conf</code>
+file. In the file, a username and password are listed as a pair on
+each line, and they are separated by a colon (:). Passwords are
+encrypted in md5 hash format.</p>
+
+<pre>postgres:e8a48653851e28c69d0506508fb27fc5</pre>
+
+When you install pgpool-II, <code>pcp.conf.sample</code> is
+automatically created. We recommend copying and renaming it to
+<code>pcp.conf</code>, and edit it.
+
+<pre>$ cp /usr/local/etc/pcp.conf.sample /usr/local/etc/pcp.conf</pre>
+
+<p>To encrypt your password into md5 hash format, use pg_md5 command,
+which is installed as a part of pgpool-II
+executables. <code>pg_md5</code> takes text as an command line
+argument, and displays its md5-hashed text.</p>
+
+<p>For example, give "postgres" as the command line argument, at
+<code>pg_md5</code> displays md5-hashed text to the standard
+output.</p>
+
+<pre>
+$ /usr/bin/pg_md5 postgres
+e8a48653851e28c69d0506508fb27fc5
+</pre>
+
+<p>PCP commands are executed via network, so the port number must be
+configured with <code>pcp_port</code> parameter in
+<code>pgpool.conf</code> file.</p>
+
+<p>We will use the default 9898 for <code>pcp_port</code> in this tutorial.</p>
+
+<pre>pcp_port = 9898</pre>
+
+<h3>1.4. <a name="db-node">Preparing Database Nodes</a></h3>
+
+<p>Now, we need to set up backend PostgreSQL servers for
+pgpool-II. These servers can be placed within the same host as
+pgpool-II, or on separate machines. If you decide to place the servers
+on the same host, different port numbers must be assigned for each
+server. If the servers are placed on separate machines, they must be
+configured properly so that they can accept network connections from
+pgpool-II.</p>
+
+<p>In this tutorial, we will place three servers within the same host
+as pgpool-II, and assign 5432, 5433, 5434 port numbers
+respectively. To configure pgpool-II, edit <code>pgpool.conf</code> as
+follows.
+
+<pre>
+backend_hostname0 = 'localhost'
+backend_port0 = 5432
+backend_weight0 = 1
+backend_hostname1 = 'localhost'
+backend_port1 = 5433
+backend_weight1 = 1
+backend_hostname2 = 'localhost'
+backend_port2 = 5434
+backend_weight2 = 1
+</pre>
+
+<p>For <code>backend_hostname</code>, <code>backend_port</code>,
+<code>backend_weight</code>, set the node's hostname, port number, and
+ratio for load balancing. At the end of each parameter string, node ID
+must be specified by adding positive integers starting with 0 (i.e. 0,
+1, 2, &hellip;).</p>
+
+<p><code>backend_weight</code> parameters are all 1, meaning that
+SELECT queries are equally distributed among three servers.</p>
+
+<h3>1.5. <a name="start-shutdown">Starting/Stopping pgpool-II</a></h3>
+
+<p>To fire up pgpool-II, execute the following command on a terminal.</p>
+
+<pre>$ pgpool</pre>
+
+<p>The above command, however, prints log messages on the terminal, so
+the recommended options to use are like the following.</p>
+
+<pre>$ pgpool -n -d &gt; /tmp/pgpool.log 2&gt;&1 &</pre>
+
+<p>When <code>-n</code> option is passed, pgpool-II is executed as
+non-daemon process, and the terminal will not be detached. This option
+is required to redirect log messages to a file. <code>-d</code> option
+enables debug messages to be generated.</p>
+
+<p>To stop pgpool-II process, execute the following command.</p>
+
+<pre>$ pgpool stop</pre>
+
+<p>If any client is still connected, pgpool-II waits for them to
+disconnect, and then terminate itself. Execute the following command
+instead if you want to shutdown pgpool-II forcibly.
+
+<pre>$ pgpool -m fast stop</pre>
+
+<h2>2. <a name="replication">Your First Replication</a></h2>
+
+<p>Replication enables the same data to be copied to multiple database
+nodes.</p>
+
+<p>In this section, we'll use three database nodes, which we have
+already set up in section "1. <a href="#start">Let's Begin!</a>", and
+takes you step by step to create a database replication system. Sample
+data to be replicated will be generated by pgbench benchmark
+program.</p>
+
+<h3>2.1. <a name="replication-config">Configuring Replication</a></h3>
+
+<p>To enable the database replication function, set
+<code>replication_mode</code> to true in <code>pgpool.conf</code>
+file.</p>
+
+<pre>replication_mode = true</pre>
+
+<p>When <code>replication_mode</code> is set to true, pgpool-II will send a
+copy of a received query to all the database nodes.</p>
+
+<p>When <code>load_balance_mode</code> is set to true, pgpool-II will
+distribute SELECT queries among the database nodes.</p>
+
+<pre>load_balance_mode = true</pre>
+
+<p>In this section, we enable both <code>replication_mode</code> and
+<code>load_balance_mode</code>.</p>
+
+<h3>2.2. <a name="replication-check">Checking Replication</a></h3>
+
+<p>To reflect the changes in <code>pgpool.conf</code>, pgpool-II must
+be restarted. Please refer to section "1.5 <a
+href="#start-shutdown">Starting/Stopping pgpool-II</a>".</p>
+
+<p>After configuring <code>pgpool.conf</code> and restarting
+pgpool-II, let's try the actual replication and see if everything is
+working OK.</p>
+
+<p>First, we need to create a database to be replicated. We will name
+it "bench_replication". This database needs to be created on all the
+nodes. Use <code>createdb</code> commands through pgpool-II, and the
+database will be created on all the nodes.</p>
+
+<pre>$ createdb -p 9999 bench_replication</pre>
+
+<p>Then, we'll execute pgbench with <code>-i</code>
+option. <code>-i</code> option initializes the database with
+pre-defined tables and data.</p>
+
+<pre>$ pgbench -i -p 9999 bench_replication</pre>
+
+<p>The following table is the summary of tables and data, which will
+be created by <code>pgbench -i</code>. If, on all the nodes, the
+listed tables and data are created, replication is working correctly.
+
+<table border="1">
+<tr>
+<th>Table Name</th>
+<th>Number of Rows</th>
+</tr>
+<tr>
+<td>branches</td>
+<td>1</td>
+</tr>
+<tr>
+<td>tellers</td>
+<td>10</td>
+</tr>
+<tr>
+<td>accounts</td>
+<td>100000</td>
+</tr>
+<tr>
+<td>history</td>
+<td>0</td>
+</tr>
+</table>
+
+<p>Let's use a simple shell script to check the above on all the
+nodes. The following script will display the number of rows in
+branches, tellers, accounts, and history tables on all the nodes (5432,
+5433, 5434).</p>
+
+<pre>$ for port in 5432 5433 5434; do
+&gt;     echo $port
+&gt;     for table_name in branches tellers accounts history; do
+&gt;         echo $table_name
+&gt;         psql -c &quot;SELECT count(*) FROM $table_name&quot; -p $port bench_replication
+&gt;     done
+&gt; done
+</pre>
+
+<h2>3. <a name="parallel">Your First Parallel Query</a></h2>
+
+<p>As we have seen in the previous section, replication copies the
+queries so that each database node will hold the exact copy. Parallel
+query, on the other hand, distributes particular ranges of the data to
+each node according to pre-defined rules.</p>
+
+<p>To enable parallel query in pgpool-II, you must set up another
+database called "System Database" (we will denote it as SystemDB from
+this point).</p>
+
+<p>SystemDB holds the user-defined rules to decide what data will be
+saved in which database node. Another use of SystemDB is to merge
+results sent back from the database nodes using dblink.</p>
+
+<p>In this section, we will use three database nodes which we have set
+up in section "1. <a href="#start">Let's Begin!</a>", and takes you
+step by step to create a parallel query database system. We will use
+pgbench again to create sample data.</p>
+
+<h3>3.1. <a name="parallel-config">Configuring Parallel Query</a></h3>
+
+<p>To enable the parallel query function, set <code>parallel_mode</code> to true in <code>pgpool.conf</code> file.</p>
+
+<pre>parallel_mode = true</pre>
+
+<p>Setting <code>paralle_mode</code> to true does not start parallel
+query automatically. pgpool-II needs SystemDB and the rules
+to know how to distribute data to the database nodes.</p>
+
+<p>Also, dblink used by SystemDB makes connections to
+pgpool-II. Therefore, <code>listen_addresses</code> needs to be
+configured so that pgpool-II accepts those connections.</p>
+
+<pre>listen_addresses = '*'</pre>
+
+<p><em>Note</em>: Parallel query and replication cannot be enabled at
+the same time. To use the parallel query function,
+<code>replication_mode</code> must be set to fales. Also, parallel
+query and replication store data in different format; therefore,
+"bench_replication" created in section "2. <a href="#replication">Your
+First Replication</a>" cannot be reused.</p>
+
+<pre>
+replication_mode = false
+load_balance_mode = false
+</pre>
+
+<p>In this section, we will set <code>parallel_mode</code> to true,
+<code>listen_addresses</code> to '*', <code>replication_mode</code>
+and <code>load_balance_mode</code> to false.</p>
+
+<h3>3.2. <a name="system-db">Configuring SystemDB</a></h3>
+
+<p>SystemDB is just another PostgreSQL database with dblink installed,
+and "dist_def" table to hold the distribution rules is defined. You
+can place SystemDB in a separate machine, or it can co-exist within
+one of the database nodes.</p>
+
+<p>In this section, we will create SystemDB within the 5432 port
+node. The following list is the configuration parameters for
+SystemDB</p>
+
+<pre>
+system_db_hostname = 'localhost'
+system_db_port = 5432
+system_db_dbname = 'pgpool'
+system_db_schema = 'pgpool_catalog'
+system_db_user = 'pgpool'
+system_db_password = ''
+</pre>
+
+<p>Actually, the above are the default settings of
+<code>pgpool.conf</code>. Now, we must create a user called "pgpool",
+and a database called "pgpool" owned by user "pgpool".</p>
+
+<pre>
+$ createuser -p 5432 pgpool
+$ createdb -p 5432 -O pgpool pgpool
+</pre>
+
+<h4>3.2.1. Installing dblink</h4>
+
+<p>Next, we must install dblink into "pgpool" database. dblink is one
+of the tools included in <code>contrib</code> directory in the
+PostgreSQL source code.</p>
+
+<p>To install dblink to your system, execute the following commands.</p>
+
+<pre>
+$ USE_PGXS=1 make -C contrib/dblink
+$ USE_PGXS=1 make -C contrib/dblink install
+</pre>
+
+<p>After dblink has been installed into your system, we will define
+dblink functions in "pgpool" database. If PostgreSQL is installed in
+<code>/usr/local/pgsql</code>, <code>dblink.sql</code> (a file with
+function definitions) should have been installed in
+<code>/usr/local/pgsql/share/contrib</code>. Now, execute the
+following command to define dblink functions.</p>
+
+<pre>$ psql -f /usr/local/pgsql/share/contrib/dblink.sql -p 5432 pgpool</pre>
+
+<h4>3.2.2. Defining dist_def table</h4>
+
+<p>Next, we will define a table called "dist_def" to hold the
+distribution rules. When pgpool-II was installed, a file called
+<code>system_db.sql</code> should have been installed in
+<code>/usr/local/share/system_db.sql</code> (note that in this
+tutorial, we are using the default installation directory,
+<code>/usr/local</code>). <code>systeym_db.sql</code> contains
+definitions to create special tables including "dist_def"
+table. Execute the following command to define "dist_def" table.</p>
+
+<pre>$ psql -f /usr/local/share/system_db.sql -p 5432 -U pgpool pgpool</pre>
+
+<p>In <code>system_db.sql</code>, tables including "dist_def" are
+installed in "pgpool_catalog" schema. If you have configured
+<code>system_db_schema</code> to use other schema, you need to edit
+<code>system_db.sql</code> accordingly.</p>
+
+<p>The definition for "dist_def" is as shown here, and the table name
+cannot be changed.</p>
+
+<pre>
+CREATE TABLE pgpool_catalog.dist_def (
+    dbname text, -- database name
+    schema_name text, -- schema name
+    table_name text, -- table name
+    col_name text NOT NULL CHECK (col_name = ANY (col_list)), -- distribution key-column
+    col_list text[] NOT NULL, -- list of column names
+    type_list text[] NOT NULL, -- list of column types
+    dist_def_func text NOT NULL, -- distribution function name
+    PRIMARY KEY (dbname, schema_name, table_name)
+);
+</pre>
+
+<p>A tuple stored in "dist_def" can be classified into two types.</p>
+
+<ul>
+<li>Distribution Rule (col_name、dist_def_func)</li>
+<li>Table's meta-information (dbname、schema_name、table_name、col_list、type_list)</li>
+</ul>
+
+<p>A distribution rule decides how to distribute data to a
+particular node. Data will be distributed depending on the value of
+"col_name" column. "dist_def_func" is a function that takes the value
+of "col_name" as its argument, and returns an integer which
+points to the appropriate database node ID where the data should be
+stored.</p>
+
+<p>A meta-information is used to rewrite queries. Parallel query
+must rewrite queries so that the results sent back from the backend
+nodes can be merged into one result.</p>
+
+<h3>3.3. <a name="dist-def">Defining Distribution Rules</a></h3>
+
+<p>In this tutorial, we will define rules to distribute pgbench's
+sample data into three database nodes. The sample data will be created
+by "pgbench -i -s 3" (i.e. scale factor of 3). We will create a new
+database called "bench_parallel" for this section.</p>
+
+<p>In pgpool-II's source code, you can find
+<code>dist_def_pgbench.sql</code> file in <code>sample</code>
+directoy. We will use this sample file here to create distribution
+rules for pgbench. Execute the following command in extracted
+pgpool-II source code directory.</p>
+
+<pre>$ psql -f sample/dist_def_pgbench.sql -p 5432 pgpool</pre>
+
+<p>Here is the explanation of <code>dist_def_pgbench.sql</code>.</p>
+
+<p>Inside <code>dist_def_pgbench.sql</code>, we are inserting four
+rows into "dist_def" table. There are four different distribution
+functions for each table (accounts, branches, tellers, and
+history). For key-columns, bid, tid, and aid are defined for branches,
+tellers, and accounts respectively (all of which are primary keys),
+and for history, tid is the key-column.</p>
+
+<pre>
+INSERT INTO pgpool_catalog.dist_def VALUES (
+    'bench_parallel',
+    'public',
+    'branches',
+    'bid',
+    ARRAY['bid', 'bbalance', 'filler'],
+    ARRAY['integer', 'integer', 'character(88)'],
+    'pgpool_catalog.dist_def_branches'
+);
+
+INSERT INTO pgpool_catalog.dist_def VALUES (
+    'bench_parallel',
+    'public',
+    'tellers',
+    'tid',
+    ARRAY['tid', 'bid', 'tbalance', 'filler'],
+    ARRAY['integer', 'integer', 'integer', 'character(84)'],
+    'pgpool_catalog.dist_def_tellers'
+);
+
+INSERT INTO pgpool_catalog.dist_def VALUES (
+    'bench_parallel',
+    'public',
+    'accounts',
+    'aid',
+    ARRAY['aid', 'bid', 'abalance', 'filler'],
+    ARRAY['integer', 'integer', 'integer', 'character(84)'],
+    'pgpool_catalog.dist_def_accounts'
+);
+
+INSERT INTO pgpool_catalog.dist_def VALUES (
+    'bench_parallel',
+    'public',
+    'history',
+    'tid',
+    ARRAY['tid', 'bid', 'aid', 'delta', 'mtime', 'filler'],
+    ARRAY['integer', 'integer', 'integer', 'integer', 'timestamp without time zone', 'character(22)'],
+    'pgpool_catalog.dist_def_history'
+);
+</pre>
+
+<p>Now, we must define the distribution functions for each table. Note
+that you can use the same function from different tables. Also, you
+can define functions using languages other than SQL (e.g. PL/pgSQL,
+PL/Tcl, etc.).</p>
+
+<p>The following table is the summary of tables and data, which will
+be created by <code>pgbench -i -s 3</code>.
+
+<table border="1">
+<tr>
+<th>Table Name</th>
+<th>Number of Rows</th>
+</tr>
+<tr>
+<td>branches</td>
+<td>3</td>
+</tr>
+<tr>
+<td>tellers</td>
+<td>30</td>
+</tr>
+<tr>
+<td>accounts</td>
+<td>300000</td>
+</tr>
+<tr>
+<td>history</td>
+<td>0</td>
+</tr>
+</table>
+
+<p>We are going to define four functions which distribute the shown
+data equally among three database nodes. These functions return 0, 1,
+or 2 depending on the given argument.</p>
+
+<pre>CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_branches(anyelement)
+RETURNS integer AS $$
+    SELECT CASE WHEN $1 &gt; 0 AND $1 &lt;= 1 THEN 0
+        WHEN $1 &gt; 1 AND $1 &lt;= 2 THEN 1
+        ELSE 2
+    END;
+$$ LANGUAGE sql;
+
+CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_tellers(anyelement)
+RETURNS integer AS $$
+    SELECT CASE WHEN $1 &gt; 0 AND $1 &lt;= 10 THEN 0
+        WHEN $1 &gt; 10 AND $1 &lt;= 20 THEN 1
+        ELSE 2
+    END;
+$$ LANGUAGE sql;
+
+CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_accounts(anyelement)
+RETURNS integer AS $$
+    SELECT CASE WHEN $1 &gt; 0 AND $1 &lt;= 100000 THEN 0
+        WHEN $1 &gt; 100000 AND $1 &lt;= 200000 THEN 1
+        ELSE 2
+    END;
+$$ LANGUAGE sql;
+
+CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_history(anyelement)
+RETURNS integer AS $$
+    SELECT CASE WHEN $1 &gt; 0 AND $1 &lt;= 10 THEN 0
+        WHEN $1 &gt; 10 AND $1 &lt;= 20 THEN 1
+        ELSE 2
+    END;
+$$ LANGUAGE sql;</pre>
+
+<h3>3.4. <a name="parallel-check">Checking Parallel Query</a></h3>
+
+<p>To reflect the changes in <code>pgpool.conf</code>, pgpool-II must
+be restarted. Please refer to section "1.5 <a
+href="#start-shutdown">Starting/Stopping pgpool-II</a>".</p>
+
+<p>After configuring <code>pgpool.conf</code> and restarting
+pgpool-II, let's try and see if parallel query is working OK.</p>
+
+<p>First, we need to create a database to be distributed. We will name
+it "bench_parallel". This database needs to be created on all the
+nodes. Use <code>createdb</code> commands through pgpool-II, and the
+database will be created on all the nodes.</p>
+
+<pre>$ createdb -p 9999 bench_parallel</pre>
+
+<p>Then, we'll execute pgbench with <code>-i -s 3</code>
+options. <code>-i</code> option initializes the database with
+pre-defined tables and data. <code>-s</code> option specifies the
+scale factor for initialization.</p>
+
+<pre>$ pgbench -i -s 3 -p 9999 bench_parallel</pre>
+
+<p>The tables and data created are shown in "3.3. <a
+href="#dist-def">Defining Distribution Rules</a>".</p>
+
+<p>One way to check if the data have been distributed correctly is to
+execute a SELECT query via pgpool-II and directly on the backend, and
+compare two results. If everything is configured right,
+"bench_parallel" should be distributed as follows.</p>
+
+<table border="1">
+<tr>
+<th rowspan="2">Table Name</td>
+<th rowspan="2">Key-Column Name</td>
+<th colspan="3">Values</th>
+</tr>
+<tr>
+<th>Node 1</td>
+<th>Node 2</td>
+<th>Node 3</td>
+</tr>
+<tr>
+<td>branches</td>
+<td>bid</td>
+<td>1</td>
+<td>2</td>
+<td>3</td>
+</tr>
+<tr>
+<td>tellers</td>
+<td>tid</td>
+<td>1 - 10</td>
+<td>11 - 20</td>
+<td>21 - 30</td>
+</tr>
+<tr>
+<td>accounts</td>
+<td>aid</td>
+<td>1 - 100000</td>
+<td>100001 - 200000</td>
+<td>200001 - 300000</td>
+</tr>
+<tr>
+<td>history</td>
+<td>tid</td>
+<td>1 - 10</td>
+<td>11 - 20</td>
+<td>21 - 30</td>
+</tr>
+</table>
+
+<p>Let's use a simple shell script to check the above on all the nodes
+and via pgpool-II. The following script will display the minimum and
+maximum values in accounts table using port 5432, 5433, 5434, and
+9999.</p>
+
+<pre>$ for port in 5432 5433 5434 9999; do
+&gt;     echo $port
+&gt;     psql -c &quot;SELECT min(aid), max(aid) FROM accounts&quot; -p $port bench_parallel
+&gt; done
+</pre>
+
+</body>
+</html>

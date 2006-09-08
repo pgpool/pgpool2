@@ -1,0 +1,594 @@
+3.1(kawakawa) 2006/7/1
+      o ドキュメントの改善．パッチ提供はMark Stosberg氏．
+      o 拡張問い合わせで"kind is 0!"エラーが発生するのを修正
+        (Yoshiyuki)
+      o デバッグモードがoffでもSQL文をログすることを可能にするオプショ
+        ン"log_statement"を追加．パッチ提供はThomas E Lackeyo氏．ドキュ
+	メントと若干の修正は石井による．
+      o 存在しないデータベースに接続しようとするとフェイルオーバーして
+      　しまう問題を修正(Tatstuo)
+      o 拡張問い合わせでデッドロックが発生する可能性があったのを
+	synchronize() を呼ぶことにより防止(Yoshiyuki)
+      o connection_life_timeが有効になっているときに，child_life_time
+	またはchild_max_connectionsの処理でプロセスがまれに落ちる可能
+	性があったバグを修正(Tatsuo)
+
+3.0.2(kamanu) 2006/5/17
+      o pgpool.confの内容が間違っているときに終了していなかったバグを
+	修正．バグレポート by Taiki(Tatsuo)
+
+      o health_check_userが32バイト以上のときにbuffer overrunエラーを
+	起こすバグを修正(Taiki)
+
+      o replicationモードかつロードバランス有効のときに時々落ちるバグ
+        を修正．詳細はバグトラックを参照(Tatsuo)
+	http://pgfoundry.org/tracker/index.php?func=detail&aid=1000628&group_id=1000055&atid=298
+
+      o pool_send_error_messageがエラーメッセージを正しくNULLターミネー
+	トしていないバグを修正(Yoshiyuki)
+
+      o SimpleForwardToFrontendのバグで，時々"kind mismatch error"を起
+	こす問題を修正(Yoshiyuki)
+
+      o BSD makeでも正しくmakeできるようにした(Yoshiyuki)
+
+      o pool_debug, pool_log, pool_error実行中はシグナルをマスクする．
+        そうしないと，シグナルハンドラ中で実行されたpool_debugなどが問
+	題を起こす(Tatsuo)
+
+      o extend protocolの多数のバグを修正(Yoshiyuki)
+        - テーブルロックなどでデッドロックが発生することがある
+	- error responseが返ってくるとうまくいかない
+
+      o pool_process_query.cでselect(2)の呼び方を間違っていた箇所を修
+        正(Yoshiyuki)
+
+      o INSERT lockにおいて，複数行にわたるINSERT文，エラーのある
+	INSERT文で落ちるバグを修正(Yoshiyuki)
+
+      o コネクションプールを再利用する際，startup packetを再利用しない．
+	client_encodingなどの値が変わっている可能性があるので(Tatsuo)
+
+      o client/pgpoolのコネクションを切断する際に自動的にDEALLOCATEを
+      　実行する(Yoshiyuki)
+
+      o SimpleForwardToFrontend/SimpleForwardToBackendにおいて，パケッ
+      　ト長が0の場合にはパケットをフォワードしないようにした(Tatsuo)
+
+      o pool_process_queryにおいて，バックエンドからkindを受信後，フロ
+      　ントエンドからパケットを受信すると，バックエンドからのkind情報
+	が失われてしまうバグを修正(Tatsuo)
+
+3.0.1(kamanu)	2006/02/14
+      o 2.7.2でmaster/slaveモードが動かなくなっていたバグを修正(Tatsuo)
+      
+      o master/slaveモードでprepared queryが動かないバグを修正(Tatsuo)
+
+3.0.0(kamanu)	2006/02/04
+      o PgPool Global Development Group Release
+
+2.7.2(kalekale) 2006/02/02
+
+      o LISTENしたときに，PQnotifies()ですぐにメッセージを受け取れない
+        バグを修正
+
+      o master/slave modeでNOTIFYメッセージが到達したときにpacket kindが一致
+        しないエラーになってしまうバグを修正
+
+      o pgpoolのman pageを追加(contribution by Peter Eisentra)
+
+2.7.1(kalekale) 2006/01/16
+
+      o ignore_leading_white_spaceがshow pool_statusで表示されないバグ
+	を修正
+
+2.7(kalekale) 2006/01/03
+
+      o child_max_connectionsオプションを追加．各pgpool子プロセスへの
+	接続回数がこの設定値を超えると，その子プロセスを終了する．
+	child_life_timeやconnection_life_timeが効かないくらい忙しいサー
+	バで，PostgreSQLバックエンドが肥大化するのを防ぐのに有効．
+	contributed by Pomarede Nicolas
+
+      o ignore_leading_white_spaceオプションを追加．SQL文の先頭に追加
+        されたホワイトスペースを無視する．DBI/DBD:Pgのコンビネーション
+        は勝手に行頭にホワイトスペースを追加する結果，ロードバランスさ
+        れなくなるらしい．
+
+      o V2プロトコルで，copyの最中にreadがEOFを検出した場合に対応して
+        いなかったのを修正(stdinからのcopyがCTRL-Cで強制終了した場合な
+        どに起こる)
+
+      o master/slaveモード時に縮退運転させるサーバがmaster/slaveで逆に
+        なっていたのを修正
+
+      o extended queryでExecute実行時にコマンドの完了待ちをしていない
+	ためにデッドロックが起きる問題に対応(Flushメッセージを送信)
+	詳細は[pgsql-jp: 36546]を参照
+
+2.6.5(kala) 2005/11/11
+
+      o 2.6.4で入り込んだバグの修正．V2 protocol/trust authentication/
+	最初の接続時に，接続に失敗してしまう．
+
+      o DROP DATABASEを発行したときに，そのデータベースに対してpgpool
+	から接続状態になっていると失敗してしまう問題に対処．
+
+2.6.4(kala) 2005/10/22
+
+      o client_min_messageがverboseな設定になっている場合，接続に失敗す
+	るバグを修正
+
+      o pool_config.cがpool_config.lと一致してなかったのを修正
+	(pool_cponfig.cを再生成)
+
+2.6.3(kala) 2005/09/02
+
+      o もしスイッチでない正しくない引数(たとえば pgpool -f
+	pgpool.conf foobar)が与えられると，pgpool自体の起動は行われな
+	いものの，勝手にpgpool.pidが削除されてしまうバグを修正
+
+      o show pool_statusで，backend_portが明示的に指定されていない場合
+	にセカンダリサーバが"unused"ステータスになってしまうバグを修正
+
+      o health_check()で，セカンダリのエラーを誤ってマスタのエラーとして
+        いたバグを修正．永橋さんからのご指摘([pgsql-jp: 35914]参照)
+
+2.6.2(kala) 2005/7/30
+
+      o 2.6.1で入れ込んでしまったpool_close()のfile descriptor leakバ
+        グを修正．
+
+2.6.1(kala) 2005/7/18
+
+      o フロントエンドとのソケットをnon blockingにした(Linuxでは，以前
+	からnon blockingだった)．一応内部処理はnon blockingでも大丈夫
+	になようになっているはずだが，測定の結果non blockingだからと言っ
+	て性能が上がるようなことはなかった．[pgsql-jp: 35721]参照．
+
+      o stdioライブラリはnon blockingソケットで正しく動かないとの指摘
+        を受け，fwrite/fflushの使用を止めて自前のバッファリングルーチ
+	ンに置き換えた．
+
+      o バックエンドからのread()でEOFを検知したときに縮退/フェイルオー
+	バするのを止めた(過剰反応)．
+
+      o pool_streamモジュールで，EINTR/EAGINのときにリトライするように
+	した．
+
+2.6(kala) 2005/06/25
+
+      o pool_error etc.で，asprintfの後でfreeしていなかったのを修正．
+
+      o main.cで，mallocのサイズが誤ってpool_config.num_init_children
+	* sizeof(pool_config.num_init_children)になっていたのを
+	pool_config.num_init_children * sizeof(pid_t)に修正．
+
+      o parameter statusの値が一致していなくてもエラーにならないように
+        した(USとNZでレプリケーションしている例があった！)．
+
+      o pgpool stopで終了せず，一旦killされた後，pgpool -m f stopを受
+        け付けなくなるバグを修正．
+
+      o 新しいディレクティブinsert_lockを追加．trueの場合，INSERT実行
+	時に自動的にテーブルロックを行う．これにより，SERIAL型を含むテー
+	ブルの同期を取ることができる．
+	なお，/*NO INSERT LOCK*/コメントを付けると，そのINSERT文のみ
+	テーブルロックを行わない．
+	あるいはinsert_lockがfalseでも/*INSERT LOCK*/コメントを付ける
+	とテーブルロックを行う．
+
+      o 2.5.2で追加された「strictモードであっても，SELECTだったらsecondaryの完了を待たな
+	い」仕様を取りやめ．代りに，/*NO STRICT*/コメントを追加．
+
+      o show pool_statusに新しい情報を追加．縮退やフェイルオーバ状況を
+        分かりやすく表示するようにした．
+        server_status| master( on 5432) up secondary( on 5433) down| server status
+
+2.5.2(kaku) 2005/3/12(Sat)
+
+      o 2.5.1でのenbugを修正．health checkが実際にはされていないケースが
+	あったのを修正．ケーブル抜けなどをタイムアウトで検出するのはOK
+	だが，直ちにエラーになるケースを検出できていなかった．
+
+      o strictモードであっても，SELECTだったらsecondaryの完了を待たな
+	い．これによってパフォーマンスが向上する．
+
+      o コンパイルフラグに-D_GNU_SOURCEを追加(asprintfの宣言に必要)
+
+2.5.1(kaku) 2005/2/20(Sun)
+
+      o 2.5で追加されたhealth check機能のバグ修正
+
+	- 次のhealth checkを待つ間にchild_life_timeがexpireしてSIGCHLDな
+	  どが上がるとhealth checkの間隔が正しくなくなる問題を修正
+
+	- health checkの中でconnect待ちになっているときにたまたま
+	  child_life_timeがexireしてSIGCHLDが上がるとエラーと認識され
+	  てしまうfailoverしてしまう問題を修正
+
+      o smart shutdown中にfast/immediate shutdown requestがあったらそれを受け
+	付けるようにした(以前はブロックしていた)
+
+      o 異なるプロセスのログ出力が混じってしまうのをasprintfを使って回
+	避するようにした(Thanks to Jacques Caron)
+
+      o strsep()をよりポータブルなstrtok()に置き換えた
+
+      o pgpoolが起動したときにログを出すようにした
+
+      o いくつかのログのレベルをlogがdebugに下げた
+
+2.5(kaku) 2005/2/2(Tue)
+
+      以下の機能を追加．
+      - スイッチオーバ(pgpool switchオプション)
+      - health check
+      - pgpool.confに以下を追加
+	- print_time_stamp(ログへのタイムスタンプ印字機能)
+	- master_slave_mode(レプリケーションなし，セカンダリには非トラ
+	  ンザクションのSELECTのみ発行)
+	- connection_cache(コネクションキャッシュのon/off)
+	- health_check_timeout(ヘルスチェックのタイムアウト値)
+	- health_check_period(ヘルスチェックの間隔)
+	- health_check_user(ヘルスチェックのユーザ名)
+
+      バグ修正
+      - child_life_timeのアルゴリズムの見直し．負荷の高いときに正確に
+        child_life_timeを計算できない問題があり，またselect(2)の呼び出
+	しが頻繁すぎる問題を修正
+
+2.4(kahala) 2005/1/5(Thu)
+
+      セッションの終了時に発行するSQLコマンドをpgpool.confで設定可能に
+      した(reset_query_listの追加)．
+
+      Copyrightを2005年対応に．
+
+2.3.3(iheihe) 2004/12/14(Tue)
+
+      縮退処理に関してsignal handlerを大改修してよりポータブルなコーディ
+      ングにした．これによりSolarisでも安定して縮退処理が動くようになっ
+      た(詳細は「[pgsql-jp: 34346] pgpool 2.3.1 で縮退運転に失敗します」
+      のスレッドを参照)
+
+      パケットの種類の不整合が起きたときに，実際にPostgreSQLがダウンし
+      ているかどうかチェックするhealth checkを追加した．これにより，確
+      実にサーバダウンを検知できるようになったと共に，アプリケーション
+      からの無駄なretryを最小限にすることができる．
+
+2.3.2(iheihe) 2004/12/8(Wed)
+
+      子プロセスがセッションを終了せずに縮退すると，子プロセスが終了しな
+      いバグを修正．2.3で，子プロセスにSIGTERMが送られたときにセッショ
+      ンが終了するまで待つようにしたことが原因．SIGQUITを送るようにし
+      て対処．
+
+2.3.1(iheihe) 2004/11/12(Fri)
+
+      マスタがこけて縮退運転するときに，一旦フェイルオーバすることなし
+      に直ちにセカンダリに縮退できるようになった．
+
+      masterとsecondaryの区別をSIGUSR1とSIGUSR2で行い，縮退後たまに接
+      続を受け付けなくなるバグを修正
+
+      child_life_timeをexpireしたときにセカンダリに終了パケットが送ら
+      れていなかったバグを修正
+
+      子プロセスの終了ステータスが0以外の時のみ子プロセスを再起動する
+      ようにした．これによってttyをdetachせずに運用していて端末から
+      killを送ったときにwait()ループで親プロセスが待ち続けるバグを回避
+      した．
+
+2.3(iheihe) 2004/11/05(Fri)
+
+      startup packetのメモリーリークを修正
+
+      child_life_timeを実装
+
+      pgpool {[-m {s[mart]|f[ast]|i[mmediate]}] stop]を実装．フロント
+      エンドの接続終了を待って安全に停止できるようになった．
+
+2.2.1(hilu) 2004/10/28(Thu)
+
+      バックエンド1台のコネクションプールモードにおいて，バックエンド
+      が再起動したときにpgpoolがそのことを検出できず，個々のコネクショ
+      ンにおける最初の問い合わせでエラーになってしまう問題を回避するた
+      めに，あるコネクションでエラーを検出したら，pgpoolの子プロセスを
+      再起動するようにした．
+
+      [pgsql-jp: 34117]でのバグ指摘対応．select()に渡すタイムアウトパ
+      ラメータの設定ミス．
+
+      [pgsql-jp: 34157]でのバグ指摘対応．原因は2.2での<[pgsql-jp:
+      34005]でのバグ指摘対応>によるエンバグ．MASTERとSECONDARYの同期を
+      取るために無条件にSECONDARYからのデータの到着をselect()で待って
+      いるのは間違い．readバッファにデータが残っているかどうか先にチェッ
+      クすべきだった．2.1以前は無条件にpool_read()していたのでOKだった．
+
+      [pgsql-jp: 34161]バグ指摘対応．select()に渡すタイムアウトパ
+      ラメータはselect()からreturn後，クリアされるのを忘れていた．
+
+      pgpool.conf.sampleの中のコメントの間違いを修正
+
+2.2(hilu) 2004/09/30(Thu)
+
+      [pgsql-jp: 34005]でのバグ指摘対応．
+      マスタ・セカンダリがシャットダウン時にpgpoolにnotice messageを投げる
+      pgpoolはそれを受けとったので，セカンダリからもnotice messageが来る
+      ものと思って待ち続ける
+
+      TCP/IPの受け付けアドレスを指定できるようにした(listen_addressの
+      追加)．(Peter Eisentraut氏からの貢献)
+
+2.1(hebe) 2004/09/13(Mon)
+
+      ロードバランス時にマスタとセカンダリに重みを付けるためのパラメー
+      タweight_masterとweight_secondaryを追加
+
+      autoconf 2.59，automake 1.9を使用するようにした
+
+2.0.9(heemauli) 2004/09/02(Thu)
+
+      高負荷時に対応するために，read()をnon blockモードで稼働させるよ
+      うにした
+
+      Solarisでのコンパイラワーニング(getpid()がintでないとprintf()ファ
+      ミリーが文句を言う)に対応
+
+2.0.8(heemauli) 2004/08/18(Wed)
+
+      レプリケーションモードで稼働中にコネクションプールのタイマーが働
+      くと落ちるバグを修正
+
+2.0.7(heemauli) 2004/08/13(Fri)
+
+      PowerPcアーキテクチャ上でのコンパイラワーニングを修正
+
+      コンパイル時にlex/flexが不要にした．もともとflexが生成した.cを同
+      梱しているのでflexは不要なはずだが，automakeのマクロ
+      (AM_PROG_LEX)がバグっているので従来のバージョンではこうなってし
+      まっていた．とりあえずconfigureを手で修正して対処．
+
+      -n付で起動した際に，SIGINTを受信しても終了しないことがあるバグを
+      修正．
+
+      FreeBSD 5.2.1+AMD64でのコンパイラワーニングおよびseg faultを修正．
+      main.cでstring.hをincludeしていないばかりにstrerror()が不正なア
+      ドレスを返していた模様．
+
+2.0.6(heemauli) 2004/07/22(Thu)
+
+      (バグのある)6.5のlibpqを使って接続したときに無限ループする問題を
+      修正
+
+      pool_read2に変更したところにバグがあったのを修正(enbug)
+
+2.0.5(heemauli) 2004/07/19(Mon)
+
+      レプリケーションモードでないときにもNULLMAPのチェックをしていた
+      バグを修正
+      
+      コンパイル時のエラーチェックを厳しくし，ワーニングを取った
+
+      無駄にpool_readを使っているところをpool_read2に変更
+
+      BinaryRowでマスタとセカンダリでNULLMAPが違っていても大丈夫なようにした
+
+2.0.4(heemauli) 2004/07/17(Sat)
+
+      コネクションスロットが一杯になったとき(max_poolに到達したとき)，
+      一番古いコネクションを捨てて，新しいコネクションを作れるようにし
+      た．
+
+      マスタとセカンダリでNULLMAPが違っていても大丈夫なようにした．
+
+2.0.3(heemauli) 2004/07/12(Mon)
+
+      コネクションを再利用しようとしたときに，プロセスが落ちる問題を修
+      正(2.0.2でのenbugの修正)
+
+      pgpool.conf.sampleのreplication_stop_on_mismatchのスペルミスを修
+      正
+
+      V3プロトコルかつreplicationが有効の時にflat file password
+      authenticationが動作しない問題を修正
+
+2.0.2(heemauli) 2004/07/04(Sun)
+
+      フロントエンドやバックエンドが異常終了したときのエラー処理を強化
+
+      ログメッセージのIDを"log"から"LOG"に変更した
+
+2.0.1(heemauli) 2004/07/01(Thu)
+
+      backend_host_nameが''のときにsecondary_host_nameまで''と見なされ
+      てしまうバグを修正
+
+      マスタとセカンダリで同じテーブルの行の並びが物理的に異なってもエ
+      ラーにならないようにした（その分チェックが甘くなっているがやむを
+      得ない）
+
+2.0(heemauli) 2004/06/22(Tue)
+
+      V3プロトコルにnative対応した．
+      負荷分散(load balance)できるようになった
+      データの不一致時に強制縮退運転するかどうか選択できるようになった
+
+1.2.3((hapuupuu) 2004/05/16(Sun)
+
+      ラージオブジェクト（正確にはFunctionCall）のレプリケーション動作
+      にバグがあったのを修正．
+
+1.2.2(hapuupuu) 2004/05/12(Wed)
+
+      クライアントとTCPで接続したときに，pgbench -Cが非常に遅い問題に
+      対処．
+
+	- pool_read()で，必ずREADBUSZバイト読み込む．余ったペンディン
+	  グデータにする
+
+        - CursorResponse, RowDescription, AsciiRow, BinaryRow,
+	  CompleteCommandResponseでflush()を止める．これらは
+	  ReadyForQueryまで一連のメッセージとしてバックエンドから流れ
+	  てくるので，途中のflush()は必要ない．
+
+      POOL_CONNECTION構造体から不必要なメンバを削除
+
+      pool_close()で2重closeがあったのを修正
+
+1.2.1(hapuupuu) 2004/05/08(Sat)
+
+      pool_read_string()が大きな文字列を読むときのバグを修正．
+
+      AsciiRow()とBinaryRow()から不必要なpool_write_and_flush()を削除，
+      pool_write()に置き換えた．
+
+1.2(hapuupuu) 2004/05/06(Thu)
+
+      1.1の時に，親プロセスの中でlisten fdを間違ってcloseしていたのを
+      元に戻した．
+
+      パスワードパケットを受信するときに，パスワードの長さがチェックさ
+      れていなかったのを修正．
+
+      コネクションを再利用する際に，改めて認証を行うようにした．こうし
+      ないと認証なしでコネクションを利用できてしまう．
+
+      バックエンドとの接続を切るときに，いきなりcloseするのではなく，
+      終了パケット("X")を送るようにした．
+
+1.1(hahalalu) 2004/04/29(Thu)
+
+      connection_life_timeが0以外のとき，にタイマー監視ルーチンの中で
+      segfaultするバグを修正．
+
+      clear text password/crypt/md5認証を実装．ただし，clear text
+      password認証以外はレプリケーションモードでは動きません．これは
+      saltを事前にバックエンドからフロントエンドに送信しなければならな
+      いプロトコルの性質自体に起因するものです．
+
+1.0(ehu) official release 2004/4/23(Fri)
+
+      ドキュメント類のみの修正．
+
+1.0(ehu) beta4 2004/4/21(Wed)
+
+      pidファイルの残骸が残っていても起動できるように修正した．
+
+1.0(ehu) beta3 2004/4/18(Sun)
+
+      strictモード時にも関わらずタイムアウトが有効になってしまうバグを
+      修正．また，更新系についてはstrictモードでもそうでなくてもさほど
+      性能が変わらないことがわかったので，strictモードをデフォルトにし
+      た．
+
+1.0(ehu) beta2 2004/4/17(Sat)
+
+      AsciiRow()関数で，セカンダリからの読みバイト数にntohをかますのを
+      忘れていたためにマスタとセカンダリの処理の同期がずれ，エラーになっ
+      て勝手にフェイルオーバしてしまうバグを修正．
+
+1.0(ehu) beta1 2004/4/13(Tue)
+
+      show pool_statusによる内部状態表示機能を追加．
+      htnos/htnolの使い方が間違っているところがあったのを修正（Solaris
+      でうまく動作しない，という報告と関係があるかも知れない）
+
+1.0(ehu) alpha 1 2004/3/29(Mon)
+
+      レプリケーションを実装したアルファバージョンリリース．以後0.2系
+      列はメインテナンスリリースのみとする．
+
+0.2.2(auku) 2004/3/25(Thu)
+
+      0.2.1の時にenbugしてV3プロトコルへの対応ができなくなっていたのを
+      修正．
+
+0.2.1(aulepe) 2004/3/24(Wed)
+
+      copyright noticeを更新
+      cancel requestを実装
+
+0.2.0(au) 2004/2/28(Sat)
+
+      設定項目にbackend用のUnix domain socketのディレクトリパスと
+      "backend_socket_dir"を追加．デフォルトは/tmp．Debinで
+      は/var/run/postgresqlであることへの対策が主目的．
+
+      併せて，"socket_dir"の設定がうまくいっていないバグを修正．
+
+0.1.9 (aawa) 2004/2/27(Fri)
+
+      V3プロトコルでフロントエンドが接続要求をしてきたら，V2にfallback
+      リクエストするようにした．これで一応7.4以降のフロントエンドでも
+      接続できるようになったはず．
+
+      設定項目にUnix domain socketのディレクトリパスである"socket_dir"
+      を追加．デフォルトは/tmp．Debinでは/var/run/postgresqlであること
+      への対策が主目的．
+
+0.1.8 (palia) 2004/2/5(Wed)
+
+      AsciiRowプロトコルで，データサイズが0のときの処理が抜けていたの
+      を修正．詳細は[pgcluster: 78]を参照．
+
+0.1.7 (omao) 2004/1/21(Wed)
+      空の問い合わせが入力されたときにエラー終了するバグを修正(thanks
+      to tanida@sra.co.jp)
+      README(英語)，README.euc_jp(日本語)作成．
+
+0.1.6 (nene) 2003/11/28(Fri)
+
+      大きなサイズの問い合わせが入力されたときに，文字入力ストリームモ
+      ジュールでsegmentation faultを起こすバグを修正しました．
+
+0.1.5 (io) 2003/8/28(Thu)
+
+      SSL対応のフロントエンドがつながらない問題に対応．
+      tietew@tietew.netさん，パッチをありがとうございました．
+
+0.1.4 (iiwi) 2003/8/9(Sat)
+
+      文字入力ストリームモジュールのバグを修正．mitani@sraw.co.jpさん
+      ありがとうございました．
+
+0.1.3 (elepaio) 2003/7/20(Sun)
+
+      postgresのヘッダーファイルがなくてもコンパイルできるようにした．
+
+      Solarisで libsocket, libnslをリンクしていないのでエラーになる件
+      を修正(configure.inにAC_CHECK_LIBを追加)．
+
+      FreeBSD, Solarisでは，Linuxと違ってaccept()のfdがnon blockになっ
+      ている場合，accept()が返すfdもnon blockになってしまう．accept()
+      が返すfdのnone block flagをリセットすることによりこの問題に対処．
+
+      connection_life_timeを実装した．
+
+      ログメッセージにpidが付くようにした．
+
+      max_poolを越えて接続したときにプロセスがexitしてしまうバグを修正
+      し，こういうときは"Sorry, too many clients already"を返すように
+      した．
+
+0.1.2 (apapane) 2003/7/5(Sat)
+
+      do_child()で，フロントエンドが終了した際にフロントエンドへのコネク
+      ションをクローズしていないルートがあったのを修正．
+
+      pool_get_cp()で，空きスロットを探すロジックにバグがあったのを修正．
+
+      READMEにregression test, ベンチマークテストの方法を記述
+
+0.1.1 (amakihi) 2003/6/28(Sat)
+
+      do_accept()でaccept()の引数を初期化していないバグを修正
+	
+0.1 (akohekohe) 2003/6/27(Fri)
+	
+	initial release
+
+Local Variables:
+mode: outline
+End:
