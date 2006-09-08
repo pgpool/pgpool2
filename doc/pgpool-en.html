@@ -9,7 +9,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Mon Aug 28 22:47:45 JST 2006
+<!--Last modified: Mon Aug 28 22:47:45 JST 2006-->
 <!-- hhmts end -->
 
 
@@ -894,7 +894,7 @@ e.g.)  UPDATE branches set bid = 100 where bid = (select max(bid) from beances);
 <p>If a function is called in the <code>WHERE</code> clause, that
 query might not be executed correctly.
 <pre>
-例：SELECT * FROM  branches where bid = (select max(bid) from beances) FOR UPDATE;
+SELECT * FROM  branches where bid = (select max(bid) from beances) FOR UPDATE;
 </pre>
 </p>
 
@@ -904,7 +904,7 @@ query might not be executed correctly.
 also not supported. Only <code>COPY FROM STDIN</code> and <code>COPY
 TO STDOUT</code> is supported.</p>
 
-<h3>ALTER/CREATE TABLE について</h3>
+<h3>ALTER/CREATE TABLE</h3>
 
 <p>To update the partitioning rule, pgpool-II must be restarted in
 order to read them from the System DB.</p>
