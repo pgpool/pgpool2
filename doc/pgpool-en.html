@@ -923,7 +923,7 @@ e.g.)  UPDATE branches set bid = 100 where bid = (select max(bid) from beances);
 <p>If a function is called in the <code>WHERE</code> clause, that
 query might not be executed correctly.
 <pre>
-SELECT * FROM  branches where bid = (select max(bid) from beances) FOR UPDATE;
+e.g.)  SELECT * FROM  branches where bid = (select max(bid) from beances) FOR UPDATE;
 </pre>
 </p>
 
@@ -1048,14 +1048,6 @@ fail. Also, the System DB must be PostgreSQL 7.4 or later.</p>
 invalidate old query cache automatically when the data is updated.</p>
 
 <h2>Compatibility with pgpool</h2>
-
-<!--
-<p>
-pgpool の場合 /*STRICT*/ など、pgpool を制御する特殊なコメントを書ける
-ようになっていました。pgpool-II の現在の実装では特殊コメントを無視しま
-す。
-</p>
--->
 
 <h1>References<a name="reference"></h1>
 <h2>PCP Command Reference</h2>
