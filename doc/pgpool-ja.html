@@ -2,6 +2,7 @@
 <html>
 <head>
 <meta http-equiv="content-type" content="text/html;charset=iso-2022-jp">
+<link rel="stylesheet" href="./pgpool.css" type="text/css">
 <title>pgpool-II README</title>
 </head>
 <body>
@@ -10,7 +11,39 @@
 <!--Last modified: Mon Aug 28 22:47:51 JST 2006-->
 <!-- hhmts end -->
 
-<h1>pgpool-II$B$H$O(B</h1>
+<body bgcolor="#ffffff">
+<a name"top"></a>
+<table border="0" cellpadding="2" cellspacing="1">
+  <tr>
+
+    <td colspan="2" valign="top"><div class="header_text">Welcome to pgpool -II page</div></td>
+  </tr>
+  <tr>
+    <td valign="top" style="border-right:1px dotted #cccccc;">
+	<br />
+
+	<div id="navcontainer">
+      <ul id="navlist">
+        <li id="active"><a href="#Whatis" id="current">pgpool-II$B$H$O(B</a></li>
+        <li><a href="#platform">pgpool-II$B$N2TF/4D6-(B</a></li>
+        <li><a href="#install">pgpool-II$B$N%$%s%9%H!<%k(B</a></li>
+        <li><a href="#config">pgpool-II$B$N@_Dj(B</a></li>
+        <li><a href="#start">pgpool-II$B$N5/F0$HDd;_(B</a></li>
+        <li><a href="#restriction">$B@)8B;v9`(B</a></li>
+        <li><a href="#reference">$B%j%U%!%l%s%9(B</a></li>
+      </ul>
+    </div>
+	<br />
+
+		<div class="header_small" align="center">
+
+			(last update: 2006/07/23)<br />
+			[<a href="http://pgpool.projects.postgresql.org/">English page</a>]		</div>	</td>
+    <td valign="top" style="border-left:1px dotted #cccccc;">
+	
+
+
+<h1>pgpool-II$B$H$O(B<a name="whatis"></h1>
 <p>
 pgpool-II$B$O(BPostgreSQL$B@lMQ$N%_%I%k%&%'%"$G!$(BPostgreSQL$B$N%G!<%?%Y!<%9%/%i(B
 $B%$%"%s%H$H(BPostgreSQL$B%5!<%P$N4V$K3d$j9~$`7A$GF0:n$7!$(BPostgrSQL$B$K0J2<$N$h(B
@@ -75,7 +108,7 @@ pgpool-II$B$O(BPostgreSQL$B%P%C%/%(%s%I$H%U%m%s%H%(%s%I$NDL?.%W%m%H%3%k$rM}2r
 $B$K$[$H$s$I<j$r2C$($k$3$H$J$/!$(Bpgpool-II$B$N5!G=$,MxMQ$G$-$^$9!%(B
 </p>
 
-<h1>pgpool-II$B$N2TF/4D6-(B</h1>
+<h1>pgpool-II$B$N2TF/4D6-(B<a name="platform"></h1>
 <p>
 pgpool-II$B$O!$(BLinux$B$r$O$8$a!$(BSolaris$B$d(BFreeBSD$B$J$I$N$[$H$s$I$N(BUNIX$B4D6-$GF0:n(B
 $B$7$^$9!%(BWindows$B$G$OF0$-$^$;$s!%BP1~$9$k(BPostgreSQL$B$N%P!<%8%g%s$O!$(B
@@ -83,7 +116,7 @@ PostgreSQL$B$N(B6.4$B0J9_$G$9!%$?$@$7%Q%i%l%k%/%(%j%b!<%I$r;HMQ$9$k$H$-$O(B
 PostgreSQL 7.4$B0J9_$r$*;H$$$/$@$5$$!%(B
 </p>
 
-<h1>pgpool-II$B$N%$%s%9%H!<%k(B</h1>
+<h1>pgpool-II$B$N%$%s%9%H!<%k(B<a name="install"></h1>
 <p>
 pgpool-II$B$N%$%s%9%H!<%k$K$O!$(Bgcc 2.9$B0J>e!$$*$h$S(BGNU make$B$,I,MW$G$9!%(B
 $B$^$?!$(Bpgpool-II$B$O(Blibpq$B$r;HMQ$9$k$N$G!$%S%k%I$r9T$&%^%7%s>e$K(Blibpq$B$,%$%s%9%H!<(B
@@ -123,7 +156,7 @@ make install
 make$B$r(Bgmake$B$KFI$_BX$($F$/$@$5$$(B)$B!%(B
 </dl>
 
-<h1>pgpool-II$B$N@_Dj(B</h1>
+<h1>pgpool-II$B$N@_Dj(B<a name="config"></h1>
 <p>
 pgpool-II$B$N@_Dj%U%!%$%k$O%G%U%)%k%H$G$O(B/usr/local/etc/pgpool.conf$B$*$h$S(B
 /usr/local/etc/pcp.conf$B$G$9!%(Bpgpool-II$B$OF0:n%b!<%I$K$h$C$F;HMQ$G$-$k5!G=$H!$(B
@@ -836,7 +869,7 @@ CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_tellers (val ANYELEMENT) RETU
   END' LANGUAGE SQL;
 </pre>
 
-<h1>pgpool-II$B$N5/F0$HDd;_(B</h1>
+<h1>pgpool-II$B$N5/F0$HDd;_(B<a name="start"></h1>
 <p>
 $B0J>e$G@_Dj$,=*$o$C$?$N$G!$3F(BDB$B%N!<%I$r5/F0$7!$I,MW$J$i$P%7%9%F%`(BDB$B$b5/F0(B
 $B$7$F$+$i(Bpgpool-II$B$r5/F0$7$^$9!%(B
@@ -866,7 +899,7 @@ pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] st
 </table>
 </p>
 
-<h1>$B@)8B;v9`(B</h1>
+<h1>$B@)8B;v9`(B<a name="restriction"></h1>
 <p>
 <h2>$BG'>Z!&%"%/%;%9@)8fJ}<0(B</h2>
 <p>
@@ -1116,7 +1149,7 @@ pgpool $B$N>l9g(B /*STRICT*/ $B$J$I!"(Bpgpool $B$r@)8f$9$kFC<l$J%3%a%s%H$r=
 
 </p>
 
-<h1>$B%j%U%!%l%s%9(B</h1>
+<h1>$B%j%U%!%l%s%9(B<a name="reference"></h1>
 <h2>PCP$B%3%^%s%I%j%U%!%l%s%9(B</h2>
 
 <h3>PCP$B%3%^%s%I0lMw(B</h3>
