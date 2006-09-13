@@ -1941,6 +1941,12 @@ static POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 			{
 				if (pool_flush(CONNECTION(backend, i)) <0)
 					return POOL_END;
+
+				if (pool_config->replication_strict)
+				{
+					if (synchronize(CONNECTION(backend, i)))
+						return POOL_END;
+				}
 			}
 		}
 	}
