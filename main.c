@@ -1126,9 +1126,10 @@ int health_check(void)
 
 		if (write(fd, &mysp, sizeof(mysp)) < 0)
 		{
-			pool_error("health check failed during write. host %s at port %d is down",
+			pool_error("health check failed during write. host %s at port %d is down. reason: %s",
 					   BACKEND_INFO(i).backend_hostname,
-					   BACKEND_INFO(i).backend_port);
+					   BACKEND_INFO(i).backend_port,
+					   strerror(errno));
 			close(fd);
 			return i+1;
 		}
@@ -1137,9 +1138,10 @@ int health_check(void)
 
 		if (write(fd, "X", 1) < 0)
 		{
-			pool_error("health check failed during write. host %s at port %d is down",
+			pool_error("health check failed during write. host %s at port %d is down. reason: %s. Perhaps wrong health check user?",
 					   BACKEND_INFO(i).backend_hostname,
-					   BACKEND_INFO(i).backend_port);
+					   BACKEND_INFO(i).backend_port,
+					   strerror(errno));
 			close(fd);
 			return i+1;
 		}
