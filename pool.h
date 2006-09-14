@@ -271,8 +271,13 @@ typedef struct {
 	UNIT unit;
 } Interval;
 
+#ifdef NOT_USED
 #define NUM_BACKENDS (in_load_balance? (selected_slot+1) : \
 					  (((!REPLICATION && !PARALLEL_MODE)||master_slave_dml)? Req_info->master_node_id+1: \
+					   pool_config->backend_desc->num_backends))
+#endif
+#define NUM_BACKENDS (in_load_balance? (selected_slot+1) : \
+					  (((!REPLICATION && !PARALLEL_MODE) && !MASTER_SLAVE)? Req_info->master_node_id+1: \
 					   pool_config->backend_desc->num_backends))
 #define BACKEND_INFO(backend_id) (pool_config->backend_desc->backend_info[(backend_id)])
 #define LOAD_BALANCE_STATUS(backend_id) (pool_config->load_balance_status[(backend_id)])
