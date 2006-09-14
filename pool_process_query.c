@@ -893,7 +893,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			start_load_balance(backend);
 		else if (MASTER_SLAVE)
 		{
-			pool_debug("SimpleQuery: set master_slave_dml query: %s", query);
+			pool_debug("SimpleQuery: set master_slave_dml query: %s", string);
 			master_slave_was_enabled = 1;
 			MASTER_SLAVE = 0;
 			master_slave_dml = 1;
