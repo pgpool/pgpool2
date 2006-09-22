@@ -29,8 +29,9 @@ pgpool.8: pgpool.8.in
 	sed 's,@sysconfdir\@,$(sysconfdir),g' $? >$@
 
 CLEANFILES = pgpool.8
-EXTRA_DIST = pgpool.8.in sql/system_db.sql doc/pgpool.html doc/pgpool.html.en \
-		doc/tutorial.html doc/tutorial.html.en sample/dist_def_pgbench.sql
+EXTRA_DIST = pgpool.8.in sql/system_db.sql doc/pgpool-ja.html doc/pgpool-en.html \
+		doc/tutorial-ja.html doc/tutorial-en.html doc/pgpool.css \
+		sample/dist_def_pgbench.sql
 
 SUBDIRS = parser pcp
 LDADD = parser/libsql-parser.a pcp/libpcp.la
