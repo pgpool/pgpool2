@@ -855,9 +855,9 @@ pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] st
 <p>
 <ul>
   <li>In the replication mode or master/slave mode, trust, clear text
-      password methods are supported.</li>
-  <li>In all the other modes, trust, clear text password, crypt, md5
-      methods are supported.</li>
+      password, pam methods are supported.</li>
+  <li>In all the other modes, trust, clear text password, crypt, md5,
+      pam methods are supported.</li>
   <li>pgpool-II does not support pg_hba.conf-like access controls. If
       the TCP/IP connection is enabled, pgpool-II accepts all the
       connections from any host. If needed, use iptables and such to
