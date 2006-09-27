@@ -1,61 +1,77 @@
-Summary: Pgpool is a connection pooling/replication server for PostgreSQL.
-Name: pgpool
-Version: 3.0.0
-Release: 1
-License: Berkeley/BSD
-Vendor:	 PgPool Global Development Group
-Group: Applications/Databases
-URL: http://pgfoundry.org/projects/pgpool/
-Source0: pgpool-%{version}.tar.gz
-Buildroot: %{_tmppath}/%{name}-%{version}-root
+Summary:	Pgpool is a connection pooling/replication server for PostgreSQL
+Name:		pgpool-II
+Version:	1.0.1
+Release:	3%{?dist}
+License:	BSD
+Vendor:		PgPool Global Development Group
+Group:		Applications/Databases
+URL:		http://pgpool.projects.PostgreSQL.org
+Source0:	http://pgfoundry.org/frs/download.php/1083/%{name}-%{version}.tar.gz
+BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %description
-Pgpool is a connection pooling/replication server for PostgreSQL.
+pgpool-II is a connection pooling/replication server for PostgreSQL.
+pgpool-II runs between PostgreSQL's clients(front ends) and servers
+(backends). A PostgreSQL client can connect to pgpool-II as if it were
+a standard PostgreSQL server.
 
 %prep
-%setup -q -n pgpool-%{version}
+%setup -q -n %{name}-%{version}
 %build
 CFLAGS="${CFLAGS:-%optflags}" ; export CFLAGS
 CXXFLAGS="${CXXFLAGS:-%optflags}" ; export CXXFLAGS
 
-./configure --bindir /usr/bin --sysconfdir=/etc --mandir=%{_mandir}
+%configure --bindir=%{_bindir} --sysconfdir=%{_sysconfdir} --mandir=%{_mandir} --libdir=%{_libdir}
 
-make 
+make %{?smp_flags}
 
 %install
-rm -rf $RPM_BUILD_ROOT
-make DESTDIR=$RPM_BUILD_ROOT install
-install -m 755 pgpool $RPM_BUILD_ROOT/usr/bin/
-install -m 755 pgpool.conf.sample $RPM_BUILD_ROOT/etc
-install -m 744 pgpool.8 %{_mandir}/man8/
+rm -rf %{buildroot}
+make DESTDIR=%{buildroot} install
+install -m 644 pgpool.conf.sample %{buildroot}%{_sysconfdir}
+install -m 644 pgpool.8 %{buildroot}%{_mandir}/man8/
+install -m 755 pcp/.libs/libpcp.so* %{buildroot}%{_libdir}/
+install -m 644 pcp/pcp.h  %{buildroot}%{_includedir}/
+install -m 644 pool_type.h  %{buildroot}%{_includedir}/
+install -m 644 pcp/.libs/libpcp.a  %{buildroot}%{_libdir}/
 
 %clean
-rm -rf $RPM_BUILD_ROOT
+rm -rf %{buildroot}
+
+%post -p /sbin/ldconfig
+%postun -p /sbin/ldconfig
 
 %files
 %defattr(-,root,root,-)
-%doc README README.euc_jp TODO COPYING INSTALL AUTHORS  ChangeLog NEWS 
+%doc README README.euc_jp TODO COPYING INSTALL AUTHORS ChangeLog NEWS doc/pgpool-en.html doc/pgpool-ja.html doc/pgpool.css doc/tutorial-en.html doc/tutorial-ja.html
 %{_bindir}/pgpool
-%{_sysconfdir}/pgpool.conf.sample
+%{_bindir}/pcp_attach_node
+%{_bindir}/pcp_detach_node
+%{_bindir}/pcp_node_count
+%{_bindir}/pcp_node_info
+%{_bindir}/pcp_proc_count
+%{_bindir}/pcp_proc_info
+%{_bindir}/pcp_stop_pgpool
+%{_bindir}/pcp_systemdb_info
+%{_bindir}/pg_md5
+%{_includedir}/pcp.h
+%{_includedir}/pool_type.h
+%{_libdir}/libpcp.a
+%{_libdir}/libpcp.la
+%{_libdir}/libpcp.so*
+%config(noreplace) %{_sysconfdir}/pgpool.conf.sample
+%config(noreplace) %{_sysconfdir}/pcp.conf.sample
 %{_mandir}/man8/*
+%{_datadir}/system_db.sql
 
 %changelog
-* Thu Feb 05 2006 - Devrim GUNDUZ <devrim@commandprompt.com> 3.0.0
-- Update to 3.0.0 for PgPool Global Development Group
+* Thu Sep 27 2006 - Devrim GUNDUZ <devrim@commandprompt.com> 1.0.1-3
+- Fix spec, per Yoshiyuki Asaba
 
-* Thu Feb 02 2006 - Devrim GUNDUZ <devrim@commandprompt.com> 2.7.2-1
-- Update to 2.7.2
+* Thu Sep 26 2006 - Devrim GUNDUZ <devrim@commandprompt.com> 1.0.1-2
+- Fixed rpmlint errors
+- Fixed download url
+- Added ldconfig for .so files
 
-* Thu Jan 26 2006 - Devrim GUNDUZ <devrim@commandprompt.com> 2.7.1-1
-- Update to 2.7.1
-
-* Sun Jan 15 2006 - Devrim GUNDUZ <devrim@commandprompt.com> 2.7-1
-- Update to 2.7
-
-* Wed Dec 28 2005 Devrim Gunduz <devrim@commandprompt.com> pgpool-2.6.5
-- Update to 2.6.5
-- Removed %post
-- Updated %doc files
-
-* Sat Oct 22 2005 Devrim Gunduz <devrim@PostgreSQL.org> pgpool-2.6.4
-- Update to 2.6.4
+* Thu Sep 21 2006 - David Fetter <david@fetter.org> 1.0.1-1
+- Initial build pgpool-II 1.0.1 for PgPool Global Development Group
