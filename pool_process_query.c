@@ -3266,7 +3266,7 @@ static int load_balance_enabled(POOL_CONNECTION_POOL *backend, Node* node)
  */
 static void start_load_balance(POOL_CONNECTION_POOL *backend)
 {
-	double max_weight;
+	double total_weight,r;
 	int i;
 
 #ifdef NOT_USED
@@ -3282,21 +3282,26 @@ static void start_load_balance(POOL_CONNECTION_POOL *backend)
 
 	/* choose a backend in random manner with weight */
 	selected_slot = 0;
-	max_weight = 0.0;
+	total_weight = 0.0;
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
 		if (VALID_BACKEND(i))
 		{
-			double weight;
-
-			weight = random() * BACKEND_INFO(i).backend_weight/RAND_MAX;
-
-			if (weight > max_weight)
-			{
-				max_weight = weight;
+			total_weight += BACKEND_INFO(i).backend_weight;
+		}
+	}
+	r = (((double)random())/RAND_MAX) * total_weight;
+	total_weight = 0.0;
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			if(r >= total_weight)
 				selected_slot = i;
-			}
+			else
+				break;
+			total_weight += BACKEND_INFO(i).backend_weight;
 		}
 	}
 
