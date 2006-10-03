@@ -12,7 +12,7 @@ Patch1:		%{name}-configure.patch
 
 %description
 pgpool-II is a connection pooling/replication server for PostgreSQL.
-pgpool-II runs between PostgreSQL's clients(front ends) and servers
+pgpool-II runs between PostgreSQL's clients (front ends) and servers
 (backends). A PostgreSQL client can connect to pgpool-II as if it were
 a standard PostgreSQL server.
 
