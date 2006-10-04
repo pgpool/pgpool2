@@ -299,51 +299,54 @@ RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNE
 	switch(node->type)
 	{
 		case T_SelectStmt:
+		{
+			SelectStmt *stmt = (SelectStmt *)node;
+			if(stmt->into)
 			{
-				SelectStmt *stmt = (SelectStmt *)node;
-				if(stmt->into)
-				{
-					pool_send_error_message(frontend, MAJOR(backend), "XX000",
+				pool_send_error_message(frontend, MAJOR(backend), "XX000",
 										"pgpool2 sql restriction",
 										"cannot use select into ...", "", __FILE__,
 										__LINE__);
 
 
-					pool_send_readyforquery(frontend);
-					message.status=POOL_CONTINUE;
-					break;
-				}
-			
-				examSelectStmt(node,backend,&message);
+				pool_send_readyforquery(frontend);
+				message.status=POOL_CONTINUE;
+				break;
+			}
 
-				if(message.r_code != SELECT_PGCATALOG &&
-					message.r_code != SELECT_RELATION_ERROR)
-				{
-					POOL_CONNECTION_POOL_SLOT *system_db = pool_system_db_connection();
-					message.status = OneNode_do_command(frontend, 
+			examSelectStmt(node,backend,&message);
+
+			if (message.r_code != SELECT_PGCATALOG &&
+				message.r_code != SELECT_RELATION_ERROR)
+			{
+				POOL_CONNECTION_POOL_SLOT *system_db = pool_system_db_connection();
+				message.status = OneNode_do_command(frontend, 
 													system_db->con, 
 													message.rewrite_query,
 													backend->info->database);
-				} else {
-					if(TSTATE(backend) == 'T' && SELECT_RELATION_ERROR)
-					{
-						pool_debug("pool_rewrite_stmt(select): inside transaction");
-						message.rewrite_query = nodeToString(node);
-						message.status = pool_parallel_exec(frontend,backend,message.rewrite_query,node,true);
-					} 
-					else { 
-					
-						pool_debug("pool_rewrite_stmt: executed by Master");
-						message.rewrite_query = nodeToString(node);
-						message.status = OneNode_do_command(frontend, 
-													MASTER(backend),
-													message.rewrite_query,
-													backend->info->database);
-					}
-				}
-				pool_debug("pool_rewrite_stmt: XXX message_code %d",message.r_code);
 			}
- 			break;
+			else
+			{
+				if(TSTATE(backend) == 'T' &&
+				   message.r_code == SELECT_RELATION_ERROR)
+				{
+					pool_debug("pool_rewrite_stmt(select): inside transaction");
+					message.rewrite_query = nodeToString(node);
+					message.status = pool_parallel_exec(frontend,backend,message.rewrite_query,node,true);
+				} 
+				else
+				{ 
+					pool_debug("pool_rewrite_stmt: executed by Master");
+					message.rewrite_query = nodeToString(node);
+					message.status = OneNode_do_command(frontend, 
+														MASTER(backend),
+														message.rewrite_query,
+														backend->info->database);
+				}
+			}
+			pool_debug("pool_rewrite_stmt: XXX message_code %d",message.r_code);
+		}
+		break;
 			
 		case T_InsertStmt:
 			examInsertStmt(node,backend,&message);
