@@ -154,7 +154,7 @@ void pool_memory_free(POOL_MEMORY_POOL *pool, void *ptr)
 	{
 		POOL_BLOCK *block, *ptr = NULL;
 
-		for (block = pool->largeblocks; block; ptr = block)
+		for (block = pool->largeblocks; block; ptr = block, block = block->next)
 		{
 			if (block->block == chunk)
 				break;
