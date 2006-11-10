@@ -84,7 +84,7 @@ void *pool_memory_alloc(POOL_MEMORY_POOL *pool, unsigned int size)
 	}
 	else
 	{
-		int fidx = get_free_index(size + POOL_HEADER_SIZE);
+		int fidx = get_free_index(size);
 		int allocsize = 1 << (fidx + ALIGN);
 
 		/* pick up from freelist */
@@ -150,6 +150,9 @@ void pool_memory_free(POOL_MEMORY_POOL *pool, void *ptr)
 	POOL_CHUNK *chunk = ptr - POOL_HEADER_SIZE;
 	int fidx;
 
+	if (ptr == NULL)
+		return;
+
 	if (chunk->header.size > MAX_SIZE)
 	{
 		POOL_BLOCK *block, *ptr = NULL;
@@ -158,6 +161,12 @@ void pool_memory_free(POOL_MEMORY_POOL *pool, void *ptr)
 		{
 			if (block->block == chunk)
 				break;
+		}
+
+		if (block == NULL)
+		{
+			pool_log("An adress \"%p\" does not exist in memory pool.", chunk);
+			return;
 		}
 
 		if (ptr == NULL)
