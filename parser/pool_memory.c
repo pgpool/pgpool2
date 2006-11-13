@@ -61,7 +61,7 @@ void *pool_memory_alloc(POOL_MEMORY_POOL *pool, unsigned int size)
 	POOL_BLOCK *block;
 	POOL_CHUNK *chunk;
 
-	if (size > MAX_SIZE)
+	if ((size + POOL_HEADER_SIZE) > MAX_SIZE)
 	{
 		block = malloc(sizeof(POOL_BLOCK));
 		if (block == NULL)
@@ -84,7 +84,7 @@ void *pool_memory_alloc(POOL_MEMORY_POOL *pool, unsigned int size)
 	}
 	else
 	{
-		int fidx = get_free_index(size);
+		int fidx = get_free_index(size + POOL_HEADER_SIZE);
 		int allocsize = 1 << (fidx + ALIGN);
 
 		/* pick up from freelist */
