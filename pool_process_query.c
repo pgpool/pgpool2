@@ -166,7 +166,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 							   int connection_reuse,
 							   int first_ready_for_query_received)
 {
-	char kind, kind1;	/* packet kind (backend) */
+	char kind;	/* packet kind (backend) */
 	char fkind;	/* packet kind (frontend) */
 	short num_fields = 0;
 	fd_set	readmask;
@@ -184,7 +184,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 
 	for (;;)
 	{
-		kind = kind1 = 0;
+		kind = 0;
 		fkind = 0;
 
 		if (state == 0 && connection_reuse)
@@ -309,20 +309,13 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 		}
 		else
 		{
-			if (MASTER(backend)->len > 0)
+			if (frontend->len > 0)
 			{
-				status = read_kind_from_backend(frontend, backend, &kind);
+				status = ProcessFrontendResponse(frontend, backend);
 				if (status != POOL_CONTINUE)
 					return status;
 
-				if (kind != 0 || kind1 != 0)
-				{
-					pool_debug("cached kind(%02x) or kind1(%02x) != 0", kind, kind1);
-				}
-				else
-				{
-					continue;
-				}
+				continue;
 			}
 		}
 
@@ -3069,7 +3062,7 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 	{
 		if (VALID_BACKEND(i))
 		{
-			if (pool_write(CONNECTION(backend, i), p, len))
+			if (pool_write_and_flush(CONNECTION(backend, i), p, len))
 				return POOL_END;
 		}
 	}
