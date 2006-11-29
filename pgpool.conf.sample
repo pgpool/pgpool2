@@ -17,10 +17,10 @@ pcp_port = 9898
 socket_dir = '/tmp'
 
 # Unix domain socket path for pgpool communication manager.
-# (Debian package default to /var/run/postgresql)
+# (Debian package defaults to /var/run/postgresql)
 pcp_socket_dir = '/tmp'
 
-# Unix domain socket path for the backend. Debian package default to /var/run/postgresql!
+# Unix domain socket path for the backend. Debian package defaults to /var/run/postgresql!
 backend_socket_dir = '/tmp'
 
 # pgpool communication manager timeout. 0 means no timeout, but strongly not recommended!
@@ -51,7 +51,7 @@ replication_mode = false
 
 # Set this to true if you want to avoid deadlock situations when
 # replication is enabled.  There will, however, be a noticable performance
-# degration.  A workaround is to set this to false and insert a /*STRICT*/
+# degradation.  A workaround is to set this to false and insert a /*STRICT*/
 # comment at the beginning of the SQL command.
 replication_strict = true
 
@@ -65,13 +65,13 @@ replication_timeout = 5000
 load_balance_mode = false
 
 # if there's a data mismatch between master and secondary
-# start degenration to stop replication mode
+# start degeneration to stop replication mode
 replication_stop_on_mismatch = false
 
 # Semicolon separated list of queries to be issued at the end of a session
 reset_query_list = 'ABORT; RESET ALL; SET SESSION AUTHORIZATION DEFAULT'
 
-# If true print time stamp on each log line.
+# If true print timestamp on each log line.
 print_timestamp = true
 
 # If true, operate in master/slave mode.
