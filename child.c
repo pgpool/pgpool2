@@ -255,7 +255,7 @@ void do_child(int unix_fd, int inet_fd)
 			found = 1;
 
 			/* existing connection associated with same user/database/major found.
-			 * however we should make sure that the startup packet contents identical.
+			 * however we should make sure that the startup packet contents are identical.
 			 * OPTION data and others might be different.
 			 */
 			if (sp->len != MASTER_CONNECTION(backend)->sp->len)

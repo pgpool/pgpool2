@@ -98,7 +98,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	 * 5: md5 password
 	 * 6: scm credential
 	 *
-	 * in replication mode, we only supports  kind = 0, 3. this is because to "salt"
+	 * in replication mode, we only support  kind = 0, 3. this is because to "salt"
 	 * cannot be replicated.
 	 * in non replication mode, we support kind = 0, 3, 4, 5
 	 */
@@ -186,7 +186,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 
 	if (pid != 0)
 	{
-		pool_error("pool_do_auth: backend does not return authenticaton ok");
+		pool_error("pool_do_auth: backend does not return authentication ok");
 		return -1;
 	} 
 
@@ -199,7 +199,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 		kind = pool_read_kind(cp);
 		if (kind < 0)
 		{
-			pool_error("pool_do_auth: failed to read kind before backendkeydata");
+			pool_error("pool_do_auth: failed to read kind before BackendKeyData");
 			return -1;
 		}
 		else if (kind == 'K')
@@ -663,13 +663,13 @@ static int do_crypt(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int rea
 		pool_debug("size: %d saved_size: %d", (ntohl(size) - 4), backend->pwd_size);
 		if ((ntohl(size) - 4) != backend->pwd_size)
 		{
-			pool_debug("do_crypt: password size does not match in re-authetication");
+			pool_debug("do_crypt: password size does not match in re-authentication");
 			return -1;
 		}
 
 		if (memcmp(password, backend->password, backend->pwd_size) != 0)
 		{
-			pool_debug("do_crypt: password does not match in re-authetication");
+			pool_debug("do_crypt: password does not match in re-authentication");
 			return -1;
 		}
 
@@ -831,13 +831,13 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 	{
 		if ((ntohl(size) - 4) != backend->pwd_size)
 		{
-			pool_debug("do_md5; password size does not match in re-authetication");
+			pool_debug("do_md5; password size does not match in re-authentication");
 			return -1;
 		}
 
 		if (memcmp(password, backend->password, backend->pwd_size) != 0)
 		{
-			pool_debug("do_md5; password does not match in re-authetication");
+			pool_debug("do_md5; password does not match in re-authentication");
 			return -1;
 		}
 
@@ -964,7 +964,7 @@ int pool_read_message_length(POOL_CONNECTION_POOL *cp)
 /*
  * read message length2 (V3 only)
  * unlike pool_read_message_length, this returns an array of message length.
- * the array is in the static storage, thus it will be destroyed by subsequent calls.
+ * The array is in the static storage, thus it will be destroyed by subsequent calls.
  */
 int *pool_read_message_length2(POOL_CONNECTION_POOL *cp)
 {
