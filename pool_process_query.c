@@ -2589,6 +2589,11 @@ static void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *b
 		snprintf(status[i].value, MAXVALLEN, "%f", BACKEND_INFO(j).backend_weight);
 		snprintf(status[i].desc, MAXVALLEN, "weight of backend #%d", j);
 		i++;
+
+		snprintf(status[i].name, MAXVALLEN, "backend status%d", j);
+		snprintf(status[i].value, MAXVALLEN, "%d", BACKEND_INFO(j).backend_status);
+		snprintf(status[i].desc, MAXVALLEN, "status of backend #%d", j);
+		i++;
 	}
 
 	nrows = i;
