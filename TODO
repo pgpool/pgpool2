@@ -4,8 +4,6 @@ TODO項目
 
 o pgoool.confのreload対応
 
-o 3以上のノード数に対応
-
 -o 自動テーブルロックしてSERIAL型の同期を保証する(2.6)．
 
 o SSLのサポート
@@ -46,9 +44,9 @@ o セッション開始時に発行する問い合わせをpgpool.confで設定可能にする
 -o schedule failover/縮退(v2.5b1)
   - 単にシグナルを送るだけ
 
-o fail back/switch backの実装
+-o fail back/switch backの実装(pgpool-II)
 
-o 3台以上のサーバに対応
+-o 3台以上のサーバに対応(pgpool-II)
 
 -o タイムスタンプの印字機能(v2.5b2)
 
