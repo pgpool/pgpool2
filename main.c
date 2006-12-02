@@ -909,7 +909,7 @@ static RETSIGTYPE exit_handler(int sig)
  */
 static RETSIGTYPE failover_handler(int sig)
 {
-	int replication = 0;
+
 	int node_id;
 	int i;
 
@@ -967,6 +967,19 @@ static RETSIGTYPE failover_handler(int sig)
 		return;
 	}
 
+	if (Req_info->kind == NODE_UP_REQUEST)
+	{
+		pool_log("starting fail back. reconnect host %s(%d)",
+				 BACKEND_INFO(node_id).backend_hostname,
+				 BACKEND_INFO(node_id).backend_port);
+	}
+	else
+	{
+		pool_log("starting degeneration. shutdown host %s(%d)",
+				 BACKEND_INFO(node_id).backend_hostname,
+				 BACKEND_INFO(node_id).backend_port);
+	}
+
 	/* 
 	 * if not in replication mode/master slave mode, we treat this a restart request.
 	 * otherwise we need to check if we have already failovered.
@@ -999,6 +1012,19 @@ static RETSIGTYPE failover_handler(int sig)
 		if (Req_info->master_node_id == i)
 		{
 			pool_log("failover_handler: do not restart pgpool. same master node %d was selected", i);
+			if (Req_info->kind == NODE_UP_REQUEST)
+			{
+				pool_log("failback done. reconnect host %s(%d)",
+						 BACKEND_INFO(node_id).backend_hostname,
+						 BACKEND_INFO(node_id).backend_port);
+			}
+			else
+			{
+				pool_log("failover done. shutdown host %s(%d)",
+						 BACKEND_INFO(node_id).backend_hostname,
+						 BACKEND_INFO(node_id).backend_port);
+			}
+
 			switching = 0;
 			POOL_SETMASK(&UnBlockSig);
 			return;
@@ -1006,19 +1032,6 @@ static RETSIGTYPE failover_handler(int sig)
 
 		pool_log("failover_handler: set new master node: %d", i);
 		Req_info->master_node_id = i;
-	}
-		
-	if (pool_config->replication_enabled)
-	{
-		replication = 1;
-
-		pool_log("starting degeneration. shutdown host %s(%d)",
-				 BACKEND_INFO(node_id).backend_hostname,
-				 BACKEND_INFO(node_id).backend_port);
-	}
-	else
-	{
-		pool_log("restarting pgpool");
 	}
 
 	/* kill all children */
@@ -1048,15 +1061,17 @@ static RETSIGTYPE failover_handler(int sig)
 		pids[i].start_time = time(NULL);
 	}
 
-	if (replication)
+	if (Req_info->kind == NODE_UP_REQUEST)
 	{
-		pool_log("failover or failback done. shutdown host %s(%d)",
+		pool_log("failback done. reconnect host %s(%d)",
 				 BACKEND_INFO(node_id).backend_hostname,
 				 BACKEND_INFO(node_id).backend_port);
 	}
 	else
 	{
-		pool_log("restarting pgpool done.");
+		pool_log("failover done. shutdown host %s(%d)",
+				 BACKEND_INFO(node_id).backend_hostname,
+				 BACKEND_INFO(node_id).backend_port);
 	}
 
 	Req_info->node_id = -1;
