@@ -2879,7 +2879,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 				}
 			}
 
-			if (kind == 'C')
+			if (kind == 'C')	/* packet kind is "Command Complete"? */
 			{
 				char *rows;
 
@@ -2888,7 +2888,23 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 					delete_or_update = 1;
 
 					rows += 7;
-					command_ok_row_count += atoi(rows);
+
+					/*
+					 * if we are in the parallel mode, we have to sum up the number
+					 * of affected rows
+					 */
+					if (PARALLEL_MODE)
+					{
+						command_ok_row_count += atoi(rows);
+					}
+
+					/*
+					 * else we just set the number of affected rows of the master node
+					 */
+					else if (IS_MASTER_NODE_ID(i))
+					{
+						command_ok_row_count = atoi(rows);
+					}
 				}
 			}
 		}
