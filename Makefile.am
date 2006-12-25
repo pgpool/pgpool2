@@ -19,7 +19,7 @@ data_DATA = sql/system_db.sql
 
 AM_CPPFLAGS = -Wall -Wmissing-prototypes -Wmissing-declarations -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
 
-pgpool_LDFLAGS = -lpq -Wl,-L,@PGSQL_LIB_DIR@ -Wl,-rpath,@PGSQL_LIB_DIR@
+pgpool_LDFLAGS = -lpq -L@PGSQL_LIB_DIR@ -Wl,-rpath,@PGSQL_LIB_DIR@
 
 AM_YFLAGS = -d
 
