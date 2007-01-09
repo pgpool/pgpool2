@@ -3044,7 +3044,6 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 	int sendlen;
 	char *p;
 	int i;
-	int name_len;
 	char *name;
 
 	for (i=0;i<NUM_BACKENDS;i++)
@@ -3090,27 +3089,23 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 
 	if (kind == 'P' && *p)
 	{
-		name_len = strlen(p) + 3;
-		name = malloc(name_len);
+		name = strdup(p);
 		if (name == NULL)
 		{
 			pool_error("SimpleForwardToBackend: malloc failed: %s", strerror(errno));
 			return POOL_END;
 		}
-		sprintf(name, "\"%s\"", p);
 		pending_function = add_prepared_list;
 		pending_prepared_name = name;
 	}
 	else if (kind == 'C' && *p == 'S' && *(p + 1))
 	{
-		name_len = strlen(p + 1) + 3;
-		name = malloc(name_len);
+		name = strdup(p+1);
 		if (name == NULL)
 		{
 			pool_error("SimpleForwardToBackend: malloc failed: %s", strerror(errno));
 			return POOL_END;
 		}
-		sprintf(name, "\"%s\"", p + 1);
 		pending_function = del_prepared_list;
 		pending_prepared_name = name;
 	}
@@ -3978,14 +3973,14 @@ static int send_deallocate(POOL_CONNECTION_POOL *backend, PreparedStatementList 
 	if (p->cnt <= n)
 		return 1;
 	
-	len = strlen(p->stmt_list[n]) + 12; /* "DEALLOCATE " + '\0' */
+	len = strlen(p->stmt_list[n]) + 14; /* "DEALLOCATE \"" + "\"" + '\0' */
 	query = malloc(len);
 	if (query == NULL)
 	{
 		pool_error("send_deallocate: malloc failed: %s", strerror(errno));
 		exit(1);
 	}
-	sprintf(query, "DEALLOCATE %s", p->stmt_list[n]);
+	sprintf(query, "DEALLOCATE \"%s\"", p->stmt_list[n]);
 	if (SimpleQuery(NULL, backend, query) != POOL_CONTINUE)
 	{
 		free(query);
