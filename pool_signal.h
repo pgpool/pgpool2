@@ -25,7 +25,7 @@
  */
 
 #ifndef POOL_SIGNAL_H
-#define POOL_SIGNALH
+#define POOL_SIGNAL_H
 
 /*
  * Signal stuff. Stolen from PostgreSQL source code.
