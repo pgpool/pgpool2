@@ -114,7 +114,7 @@ static int synchronize(POOL_CONNECTION *cp);
 static void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt);
 
-static int load_balance_enabled(POOL_CONNECTION_POOL *backend, Node* node);
+static int load_balance_enabled(POOL_CONNECTION_POOL *backend, Node* node, char *sql);
 static void start_load_balance(POOL_CONNECTION_POOL *backend);
 static void end_load_balance(POOL_CONNECTION_POOL *backend);
 static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMajor, int no_ready_for_query);
@@ -882,7 +882,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		}
 
 		/* load balance trick */
-		if (load_balance_enabled(backend, node))
+		if (load_balance_enabled(backend, node, string))
 			start_load_balance(backend);
 		else if (MASTER_SLAVE)
 		{
@@ -3255,9 +3255,15 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 /*
  * return non 0 if load balance is possible
  */
-static int load_balance_enabled(POOL_CONNECTION_POOL *backend, Node* node)
+static int load_balance_enabled(POOL_CONNECTION_POOL *backend, Node* node, char *sql)
 {
+	SelectStmt *select_stmt;
+
 	if (!IsA(node, SelectStmt))
+		return 0;
+
+	select_stmt = (SelectStmt *)node;
+	if (select_stmt->into || select_stmt->lockingClause)
 		return 0;
 
 	if (pool_config->load_balance_mode &&
@@ -3265,7 +3271,15 @@ static int load_balance_enabled(POOL_CONNECTION_POOL *backend, Node* node)
 		MAJOR(backend) == PROTO_MAJOR_V3 &&
 		TSTATE(backend) == 'I')
 	{
-		return 1;
+		if (pool_config->ignore_leading_white_space)
+		{
+			/* ignore leading white spaces */
+			while (*sql && isspace(*sql))
+				sql++;
+		}
+
+		if (*sql == 's' || *sql == 'S' || *sql == '(')
+			return 1;
 	}
 	return 0;
 }
