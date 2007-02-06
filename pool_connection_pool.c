@@ -44,6 +44,7 @@ POOL_CONNECTION_POOL *pool_connection_pool;	/* connection pool */
 
 static POOL_CONNECTION_POOL_SLOT *create_cp(POOL_CONNECTION_POOL_SLOT *cp, int slot);
 static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p);
+static int check_socket_status(int fd);
 
 /*
 * initialize connection pools. this should be called once at the startup.
@@ -79,7 +80,8 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor)
 	int	oldmask;
 #endif
 
-	int i;
+	int i, j, freed = 0;
+	ConnectionInfo *info;
 
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
 
@@ -99,10 +101,45 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor)
 			strcmp(MASTER_CONNECTION(p)->sp->user, user) == 0 &&
 			strcmp(MASTER_CONNECTION(p)->sp->database, database) == 0)
 		{
+			int sock_broken = 0;
+
 			/* mark this connection is under use */
 			MASTER_CONNECTION(p)->closetime = 0;
 			p->info->counter++;
 			POOL_SETMASK(&oldmask);
+
+			for (j=0;j<NUM_BACKENDS;j++)
+			{
+				if (!VALID_BACKEND(j))
+					continue;
+
+				sock_broken = check_socket_status(CONNECTION(p, j)->fd);
+				if (sock_broken < 0)
+					break;
+			}
+
+			if (sock_broken < 0)
+			{
+				pool_log("connection closed. retry to create new connection pool.");
+				for (j=0;j<NUM_BACKENDS;j++)
+				{
+					if (!VALID_BACKEND(j))
+						continue;
+
+					if (!freed)
+					{
+						pool_free_startup_packet(CONNECTION_SLOT(p, j)->sp);
+						freed = 1;
+					}
+				
+					pool_close(CONNECTION(p, j));
+				}
+				info = p->info;
+				memset(p, 0, sizeof(POOL_CONNECTION_POOL));
+				p->info = info;
+				memset(p->info, 0, sizeof(ConnectionInfo));
+				return NULL;
+			}
 			return p;
 		}
 		p++;
@@ -529,4 +566,35 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 	}
 
 	return NULL;
+}
+
+/* check_socket_status()
+ * RETURN: 0 => OK
+ *        -1 => broken socket.
+ */
+static int check_socket_status(int fd)
+{
+	fd_set rfds;
+	int result;
+	struct timeval t;
+
+	for (;;)
+	{
+		FD_ZERO(&rfds);
+		FD_SET(fd, &rfds);
+
+		t.tv_sec = t.tv_usec = 0;
+
+		result = select(fd+1, &rfds, NULL, NULL, &t);
+		if (result < 0 && errno == EINTR)
+		{
+			continue;
+		}
+		else
+		{
+			return (result == 0 ? 0 : -1);
+		}
+	}
+
+	return -1;
 }
