@@ -43,8 +43,18 @@ AC_FUNC_VPRINTF
 AC_FUNC_WAIT3
 AC_CHECK_FUNCS(setsid select socket sigprocmask strdup strerror strftime strtok asprintf)
 
-PGSQL_INCLUDE_DIR=/usr/local/pgsql/include
-PGSQL_LIB_DIR=/usr/local/pgsql/lib
+dnl Checks for pg_config command.
+AC_CHECK_PROGS(PGCONFIG, pg_config)
+
+if test -z $PGCONFIG
+then
+  PGSQL_INCLUDE_DIR=/usr/local/pgsql/include
+  PGSQL_LIB_DIR=/usr/local/pgsql/lib
+else
+  PGSQL_INCLUDE_DIR=`pg_config --includedir`
+  PGSQL_LIB_DIR=`pg_config --libdir`
+fi
+
 
 AC_ARG_WITH(pgsql,
     [  --with-pgsql=DIR     site header files for PostgreSQL in DIR],
@@ -81,7 +91,7 @@ AC_ARG_WITH(pgsql-libdir,
     ])
 
 OLD_LDFLAGS="$LDFLAGS"
-LDFLAGS="-L $PGSQL_LIB_DIR"
+LDFLAGS="-L$PGSQL_LIB_DIR"
 OLD_LIBS="$LIBS"
 AC_CHECK_LIB(pq, PQprepare, [], [AC_MSG_ERROR(libpq is not installed or libpq is old)])
 LDFLAGS="$OLD_LDFLAGS"
