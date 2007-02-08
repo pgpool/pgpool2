@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-<!--Last modified: Mon Aug 28 22:47:45 JST 2006-->
+Last modified: Thu Feb  8 22:02:45 JST 2007
 <!-- hhmts end -->
 <body bgcolor="#ffffff">
 <a name"top"></a>
@@ -35,7 +35,7 @@
 
 		<div class="header_small" align="center">
 
-			(last update: 2006/07/23)<br />
+			(last update: 2007/02/12)<br />
 			[<a href="http://www2b.biglobe.ne.jp/~caco/pgpool/">Japanese page</a>]		</div>	</td>
     <td valign="top" style="border-left:1px dotted #cccccc;">
 	
@@ -131,7 +131,7 @@ than the default.
 directory. Default value is <code>/usr/local</code></li>
   <li><code>--with-pgsql=path</code><br/>
       Top directory where PostgreSQL's client libraries are
-installed. Default values is <code>/usr/local/pgsql</code></li>
+installed. Default values is obtained by <code>pg_config</code></li>
 </ul>
 </p>
 
@@ -641,6 +641,20 @@ lock before that. The transaction will be aborted, and the following
 INSERT statement produces the above error message.</p>
 </dl>
 
+<h4>condition for load balance</h4>
+<p>
+For the query to be load balanced, all the requirements below
+      must be met:
+<ul>
+	<li>PostgreSQL version 7.4 or later</li>
+	<li>the query must not be in the explicitly declared
+	    transaction (i.e. not in a BEGIN ~ END block)</li>
+    <li>it's not SELECT INTO
+    <li>it's not SELECT FOR UPDATE
+    <li>start with "SELECT" (ignore_leading_white_space = true will
+		 ignore leading white space)
+</ul>
+
 <h4>Failover in the Replication Mode</h4>
 
 <p> pgpool-II degenerates a dead backend and continues the
@@ -656,18 +670,6 @@ as the replication mode. In addtion to that, set
 <code>master_slave_mode</code> and <code>load_balance_mode</code> to
 true. pgpool-II will send queries that need to be replicated to the
 Master DB, and others will be load balanced if possible.</p>
-
-<ol>
-  <li>For the query to be load balanced, all the requirements below
-      must be met:
-      <ul>
-	<li>PostgreSQL version 7.4 or later</li>
-	<li>the query must not be in the explicitly declared
-	    transaction (i.e. not in a BEGIN ~ END block)</li>
-      </ul>
-  <li>Queries that do not fall into the above requirement will be sent
-      to the Master DB.</li>
-</ol>
 
 <p>In the master/slave mode, <code>replication_mode</code> must be set
 to false, and <code>master_slave_mode</code> to true.</p>
