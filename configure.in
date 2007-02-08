@@ -93,7 +93,8 @@ AC_ARG_WITH(pgsql-libdir,
 OLD_LDFLAGS="$LDFLAGS"
 LDFLAGS="-L$PGSQL_LIB_DIR"
 OLD_LIBS="$LIBS"
-AC_CHECK_LIB(pq, PQprepare, [], [AC_MSG_ERROR(libpq is not installed or libpq is old)])
+AC_CHECK_LIB(pq, PQexecPrepared, [], [AC_MSG_ERROR(libpq is not installed or libpq is old)])
+AC_CHECK_FUNCS(PQprepare)
 LDFLAGS="$OLD_LDFLAGS"
 LIBS="$OLD_LIBS"
 

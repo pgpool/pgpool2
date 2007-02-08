@@ -415,11 +415,20 @@ static int create_prepared_statement(DistDefInfo *dist_info)
 	static char sql[1024];
 	PGresult *result;
 
+#ifdef HAVE_PQPREPARE
 	snprintf(sql, 1024, "SELECT %s($1::%s)", dist_info->dist_def_func,
 			 dist_info->type_list[dist_info->dist_key_col_id]);
 	result = PQprepare(system_db_info->pgconn,
 					   dist_info->prepare_name,
 					   sql, 1, NULL);
+#else
+	snprintf(sql, 1024, "PREPARE %s (%s) AS SELECT %s($1::%s)",
+			 dist_info->prepare_name,
+			 dist_info->type_list[dist_info->dist_key_col_id],
+			 dist_info->dist_def_func,
+			 dist_info->type_list[dist_info->dist_key_col_id]);
+	result = PQexec(system_db_info->pgconn,	sql);
+#endif /* HAVE_PQPREPARE */
 
 	if (!result || PQresultStatus(result) != PGRES_COMMAND_OK)
 	{

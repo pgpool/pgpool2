@@ -921,7 +921,7 @@ define_prepared_statements(void)
 	sql_len =
 		strlen(pool_config->system_db_schema) +
 		strlen(QUERY_CACHE_TABLE_NAME) +
-		64;
+		1024;
 
 	sql = (char *)malloc(sql_len);
 	if (malloc_failed(sql))
@@ -929,11 +929,6 @@ define_prepared_statements(void)
 		pool_error("pool_query_cache: malloc() failed");
 		return;
 	}
-	
-	snprintf(sql, sql_len,
-			 "INSERT INTO %s.%s VALUES ( $1, $2, $3, $4, $5 )",
-			 pool_config->system_db_schema,
-			 QUERY_CACHE_TABLE_NAME);
 
 	free(CACHE_TABLE_INFO.register_prepared_statement);
 	CACHE_TABLE_INFO.register_prepared_statement
@@ -945,11 +940,24 @@ define_prepared_statements(void)
 		return;
 	}
 
+#ifdef HAVE_PQPREPARE
+	snprintf(sql, sql_len,
+			 "INSERT INTO %s.%s VALUES ( $1, $2, $3, $4, $5 )",
+			 pool_config->system_db_schema,
+			 QUERY_CACHE_TABLE_NAME);
 	pg_result = PQprepare(system_db_info->pgconn,
 						  CACHE_TABLE_INFO.register_prepared_statement,
 						  sql,
 						  5,
 						  NULL);
+#else
+	snprintf(sql, sql_len,
+			 "PREPARE %s (TEXT, TEXT, BYTEA, TEXT, TIMESTAMP WITH TIME ZONE) AS INSERT INTO %s.%s VALUES ( $1, $2, $3, $4, $5 )",
+			 CACHE_TABLE_INFO.register_prepared_statement,
+			 pool_config->system_db_schema,
+			 QUERY_CACHE_TABLE_NAME);
+	pg_result = PQexec(system_db_info->pgconn, sql);
+#endif
 	if (!pg_result || PQresultStatus(pg_result) != PGRES_COMMAND_OK)
 	{
 		pool_error("pool_query_cache: PQprepare() failed: %s", PQerrorMessage(system_db_info->pgconn));
