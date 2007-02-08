@@ -37,7 +37,7 @@
 
 		<div class="header_small" align="center">
 
-			(last update: 2006/07/23)<br />
+			(last update: 2007/02/12)<br />
 			[<a href="http://pgpool.projects.postgresql.org/">English page</a>]		</div>	</td>
     <td valign="top" style="border-left:1px dotted #cccccc;">
 	
@@ -140,7 +140,7 @@ pgpool-II$BK\BN$d4XO"%U%!%$%k$r%$%s%9%H!<%k$9$k%H%C%W%G%#%l%/%H%j$r;XDj$7$^$9!%
 $B%G%U%)%k%H$O(B/usr/local$B$G$9!%(B
 <li>--with-pgsql=path
 PostgreSQL$B$N%/%i%$%"%s%H%i%$%V%i%j$J$I$,%$%s%9%H!<%k$5$l$F$$$k%H%C%W%G%#(B
-$B%l%/%H%j$r;XDj$7$^$9!%%G%U%)%k%H$O(B/usr/local/pgsql$B$G$9!%(B
+$B%l%/%H%j$r;XDj$7$^$9!%%G%U%)%k%H$O(Bpg_config $B%3%^%s%I$G<hF@$G$-$k%Q%9$G$9!%(B
 </ul>
 </p>
 
@@ -660,6 +660,24 @@ raw$B%b!<%I!$%3%M%/%7%g%s%W!<%k%b!<%I$K2C$(!$0J2<$r@_Dj$7$^$9!%(B
    $B$F$7$^$$$^$9!%(B
 </dl>
 
+<h4>$B%m!<%I%P%i%s%9$N>r7o$K$D$$$F(B</h4>
+<p>
+load_balance_mode = true $B$r@_Dj$7$?>l9g!$0J2<$N>r7o$rK~$?$7$?;~$KLd$$(B
+$B9g$o$;$O%m!<%I%P%i%s%9$5$l$^$9!%(B
+<ul>
+<li>PostgreSQL$B$N%P!<%8%g%s$,(B7.4$B0J9_(B
+<li>$BLd$$9g$o$;$,L@<(E*$J%H%i%s%/%6%7%g%s%V%m%C%/$NFbB&$K$J$$(B($B$D$^$j!$(B
+       BEGIN$B$rH/9T$7$F$$$J$$(B)
+<li>SELECT $BJ8(B
+<li>SELECT INTO $BJ8$G$O$J$$(B
+<li>SELECT FOR UPDATE $BJ8$G$O$J$$(B
+<li>$B%/%(%jJ8;zNs$,(B SELECT $B$G;O$^$k(B(ignore_leading_white_space = true
+    $B$N>l9g$O6uGr$OL5;k$7$^$9(B)
+</ul>
+
+$B>e5-$rK~$5$J$$>l9g$O$9$Y$F$N%P%C%/%(%s%I$K%/%(%j$rAw?.$7$^$9!#(B
+</p>
+
 <h4>$B%l%W%j%1!<%7%g%s%b!<%I$K$*$1$k=LB`1?E>$K$D$$$F(B</h4>
 <p>
 PostgreSQL$B%5!<%P$N$&$A!$(B1$BBf$,%@%&%s$9$k$H!$$=$N%5!<%P$r@Z$jN%$7$F=LB`1?(B
@@ -673,20 +691,10 @@ PostgreSQL$B%5!<%P$N$&$A!$(B1$BBf$,%@%&%s$9$k$H!$$=$N%5!<%P$r@Z$jN%$7$F=LB`1?
   $B%s%=%U%H$K%l%W%j%1!<%7%g%s$r$^$+$;$k%b!<%I$G$9!%$3$N%b!<%I$G;H$&$?$a$K(B
   $B$O!$%l%W%j%1!<%7%g%s%b!<%I$HF1$8$h$&$K!$(BDB$B%N!<%I$N%[%9%H>pJs(B
   $B$r%;%C%H$7!$(Bmaster_slave_mode$B$H(Bload_balance_mode$B$r(Btrue$B$K$7$^$9!%$3$N$H(B
-  $B$-!$Ld$$9g$o$;$K$h$C$F%^%9%?!<(BDB$B$@$1$KLd$$9g$o$;$,Aw$i$l$k>l9g$H!$(BDB$B%N!<%I$N4V$GIi2YJ,;6$5$l$FLd$$9g$o$;$,Aw$i$l$k>l9g$,$"$j$^$9!%(B
+  $B$-!$Ld$$9g$o$;$K$h$C$F%^%9%?!<(BDB$B$@$1$KLd$$9g$o$;$,Aw$i$l$k>l9g$H!$(BDB
+  $B%N!<%I$N4V$G%m!<%I%P%i%s%9$5$l$FLd$$9g$o$;$,Aw$i$l$k>l9g$,$"$j$^$9!%(B
+  $B%m!<%I%P%i%s%9$N>r7o$O%l%W%j%1!<%7%g%s%b!<%I$HF1$8$G$9!#(B
 </p>
-
-<ol>
-<li>$B0J2<$N>r7o$,$9$Y$FK~$?$5$l$F$$$k>l9g!$Ld$$9g$o$;$OIi2YJ,;6$5$l$^$9!%(B
-<ul>
-<li>PostgreSQL$B$N%P!<%8%g%s$,(B7.4$B0J9_(B
-<li>$BLd$$9g$o$;$,L@<(E*$J%H%i%s%/%6%7%g%s%V%m%C%/$NFbB&$K$J$$(B($B$D$^$j!$(B
-       BEGIN$B$rH/9T$7$F$$$J$$(B)
-</ul>
-
-<li>1)$B0J30$N>l9g$O!$%^%9%?!<(BDB$B$@$1$KLd$$9g$o$;$,Aw$i$l$^$9!%(B
-
-</ol>
 
 <p>
 $B%^%9%?!<%9%l!<%V%b!<%I$G$O!$(Bpgpool.conf$B$N(Breplication_mode$B$r(Bfalse$B$K!$(Bmaster_slave_mode
