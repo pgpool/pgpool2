@@ -1,21 +1,23 @@
 1.0.2 (suboshi) 2007/02/12
       * Version 1.0.2
       * Fix bug when executing large SQL to prevent pgpool goes into
-		infinite loop(Yoshiyuki)
+        infinite loop(Yoshiyuki)
       * Fix bug with extended protocol handling(Yoshiyuki)
       * Enhance log for failover and failback(Tatsuo)
       * Add backend status info to show pool_status(Tatsuo)
       * Fix UPDATE/DELETE returns wrong number of rows(Tatsuo)
       * Fix configure fails to link libpq when used with older
-		version of gcc(Yoshiyuki)
+        version of gcc(Yoshiyuki)
       * Fix DEALLOCATE treatment when used with PHP:PDO DBD-Pg(Yoshiyuki)
-	  * Do not load balance SELECT FOR UPDATE, SELECT INTO and SELECT
-	    with comments. This behavior is compatible with pgpool-I(Yoshiyuki)
-	  * Obtain path to libpq using pg_config. --with-pgsql will be
-	    removed in next version(Yoshiyuki)
-	  * When reusing connection pool, reconnect to backend if the
-	    socket is broken(Yoshiyuki)
-	  * Fix error with configure when used with PostgreSQL 7.4(Yoshiyuki)
+      * Do not load balance SELECT FOR UPDATE, SELECT INTO and SELECT
+        with comments. This behavior is compatible with
+        pgpool-I(Yoshiyuki)
+      * Obtain path to libpq using pg_config. --with-pgsql will be
+        removed in next version(Yoshiyuki) 
+      * When reusing connection pool, reconnect to backend if the
+        socket is broken(Yoshiyuki)
+      * Fix error with configure when used with PostgreSQL
+        7.4(Yoshiyuki)
 
 1.0.1 (suboshi) 2006/09/22
       * Version 1.0.1
