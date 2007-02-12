@@ -72,7 +72,7 @@ int pool_init_cp(void)
 /*
 * find connection by user and database
 */
-POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor)
+POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, int check_socket)
 {
 #ifdef HAVE_SIGPROCMASK
 	sigset_t oldmask;
@@ -108,37 +108,40 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor)
 			p->info->counter++;
 			POOL_SETMASK(&oldmask);
 
-			for (j=0;j<NUM_BACKENDS;j++)
+			if (check_socket)
 			{
-				if (!VALID_BACKEND(j))
-					continue;
-
-				sock_broken = check_socket_status(CONNECTION(p, j)->fd);
-				if (sock_broken < 0)
-					break;
-			}
-
-			if (sock_broken < 0)
-			{
-				pool_log("connection closed. retry to create new connection pool.");
 				for (j=0;j<NUM_BACKENDS;j++)
 				{
 					if (!VALID_BACKEND(j))
 						continue;
 
-					if (!freed)
-					{
-						pool_free_startup_packet(CONNECTION_SLOT(p, j)->sp);
-						freed = 1;
-					}
-				
-					pool_close(CONNECTION(p, j));
+					sock_broken = check_socket_status(CONNECTION(p, j)->fd);
+					if (sock_broken < 0)
+						break;
 				}
-				info = p->info;
-				memset(p, 0, sizeof(POOL_CONNECTION_POOL));
-				p->info = info;
-				memset(p->info, 0, sizeof(ConnectionInfo));
-				return NULL;
+
+				if (sock_broken < 0)
+				{
+					pool_log("connection closed. retry to create new connection pool.");
+					for (j=0;j<NUM_BACKENDS;j++)
+					{
+						if (!VALID_BACKEND(j))
+							continue;
+
+						if (!freed)
+						{
+							pool_free_startup_packet(CONNECTION_SLOT(p, j)->sp);
+							freed = 1;
+						}
+				
+						pool_close(CONNECTION(p, j));
+					}
+					info = p->info;
+					memset(p, 0, sizeof(POOL_CONNECTION_POOL));
+					p->info = info;
+					memset(p->info, 0, sizeof(ConnectionInfo));
+					return NULL;
+				}
 			}
 			return p;
 		}
@@ -154,7 +157,7 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor)
  */
 void pool_discard_cp(char *user, char *database, int protoMajor)
 {
-	POOL_CONNECTION_POOL *p = pool_get_cp(user, database, protoMajor);
+	POOL_CONNECTION_POOL *p = pool_get_cp(user, database, protoMajor, 0);
 	ConnectionInfo *info;
 	int i, freed = 0;
 

@@ -248,7 +248,7 @@ void do_child(int unix_fd, int inet_fd)
 
 		/* look for existing connection */
 		found = 0;
-		backend = pool_get_cp(sp->user, sp->database, sp->major);
+		backend = pool_get_cp(sp->user, sp->database, sp->major, 1);
 
 		if (backend != NULL)
 		{

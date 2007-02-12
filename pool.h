@@ -383,7 +383,7 @@ extern int pool_do_reauth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp);
 
 extern int pool_init_cp(void);
 extern POOL_CONNECTION_POOL *pool_create_cp(void);
-extern POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor);
+extern POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, int check_socket);
 extern void pool_discard_cp(char *user, char *database, int protoMajor);
 
 extern POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend, 
