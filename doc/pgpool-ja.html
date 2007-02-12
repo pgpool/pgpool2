@@ -31,6 +31,8 @@
         <li><a href="#start">pgpool-II$B$N5/F0$HDd;_(B</a></li>
         <li><a href="#restriction">$B@)8B;v9`(B</a></li>
         <li><a href="#reference">$B%j%U%!%l%s%9(B</a></li>
+        <li><a href="#internal">$BFbIt>pJs(B</a></li>
+        <li><a href="#release">$B%j%j!<%9%N!<%H(B</a></li>
       </ul>
     </div>
 	<br />
@@ -1403,7 +1405,7 @@ pgpool $B$N>l9g(B /*STRICT*/ $B$J$I!"(Bpgpool $B$r@)8f$9$kFC<l$J%3%a%s%H$r=
 </pre>
 </p>
 
-<h1>$BFbIt>pJs(B</h1>
+<h1>$BFbIt>pJs(B<a name="internal"></h1>
 
 <h2>$B%Q%i%l%k<B9T%(%s%8%s(B</h2>
 <p>
@@ -1759,6 +1761,34 @@ count(*) $B$r;H$C$?%/%(%j$O!"0J2<$N$h$&$K=q$-49$($,9T$o$l$^$9!#(B
 $B%+%?%m%0;2>H;~$K$O!"%/%(%j=q$-49$($r9T$o$:$K!"%/%(%j$r%N!<%I$XAw?.$7!"%P(B
 $B%C%/%(%s%I$G$N<B9T7k2L$r$=$N$^$^%U%m%s%H%(%s%I$KJV5Q$7$^$9!#(B
 </p>
+
+<h1>$B%j%j!<%9%N!<%H(B<a name="release"></h1>
+
+<h2>1.0.2 (suboshi) 2007/02/13</h2>
+<ul>
+  <li> $B5pBg$J(B SQL $B$r<B9T$7$h$&$H$7$?>l9g$K(B pgpool $B$,L58B%k!<%W$KF~$kIT(B
+  $B6q9g$r=$@5$7$^$7$?(B(Yoshiyuki) 
+  <li> $B3HD%Ld9g$;%W%m%H%3%k$r;H$C$?>l9g$K$^$l$K(B pgpool $B$,;_$^$C$F$7$^(B
+  $B$&IT6q9g$r=$@5$7$^$7$?(B(Yoshiyuki) 
+  <li> $B%U%'%$%k%*!<%P!"%U%'%$%k%P%C%/;~$N%m%0=PNO$r2~A1$7$^$7$?(B
+  (Tatsuo)
+  <li> SHOW pool_status $B$N7k2L$K%P%C%/%(%s%I%9%F!<%?%9>pJs$rDI2C$7$^$7(B
+  $B$?(B(Tatsuo)
+  <li> $B%l%W%j%1!<%7%g%s;~$K(B UPDATE/DELETE $B$N7o?t$,<B:]$N7o?t$H$O0[$J$C(B
+  $B$?7k2L$rJV$9IT6q9g$r=$@5$7$^$7$?(B(Tatsuo)
+  <li> $B8E$$(B gcc $B$r;H$&$H(B libpq $B$N%j%s%/$K<:GT$9$kIT6q9g$r=$@5$7$^$7$?(B
+  (Yoshiyuki)
+  <li> PHP:PDO $B$d(B DBD-Pg $B$r;H$C$?>l9g$K!"<+F0(B DEALLOCATE $B$,<:GT$7$F$7(B
+  $B$^$&IT6q9g$r=$@5$7$^$7$?(B(Yoshiyuki)
+  <li> SELECT FOR UPDATE, SELECT INTO $B$r%m!<%I%P%i%s%9$5$;$J$$$h$&$K$7(B
+  $B$^$7$?!#$^$?!"(BSELECT $B$NA0$K%3%a%s%H$,$"$k>l9g$b%m!<%I%P%i%s%9$5$;$J(B
+  $B$$$h$&$K$7$^$7$?!#$3$l$O(B pgpool-I $B$H$N8_49@-$N$?$a$G$9!#(B(Yoshiyuki)
+  <li> configure $B;~$N(B libpq $B$N%G%U%)%k%H%Q%9$r(B pg_config $B%3%^%s%I$r;H$C(B
+  $B$F<hF@$9$k$h$&$K$7$^$7$?!#$J$*!"(B--with-pgsql $B4XO"$N%*%W%7%g%s$O<!$N(B
+  $B%P!<%8%g%s$G$OGQ;_M=Dj$G$9(B(Yoshiyuki)
+  <li> $B%3%M%/%7%g%s%W!<%k:FMxMQ;~$K!"%=%1%C%H$,2u$l$F$$$k>l9g$O:F@\B3(B
+  $B$9$k$h$&$K$7$^$7$?(B(Yoshiyuki)
+</ul>
 
 </body>
 </html>
