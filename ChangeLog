@@ -1,4 +1,191 @@
+2007-02-13  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* Version 1.0.2
+
+2007-02-12  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* doc/pgpool-ja.html: Add release note.
+
+2007-02-12  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* doc/pgpool-ja.html: Add Japanese release note into
+	  pgpool-ja.html.
+
+2007-02-12  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* child.c, pool.h, pool_connection_pool.c: pgpool *only* checks
+	  backend connection when connection pool is reused.
+
+2007-02-09  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* NEWS: fix indent.
+
+2007-02-09  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* NEWS: Remove '\000'.
+
+2007-02-08  Tatsuo Ishii  <ishii@sraoss.co.jp>
+
+	* doc/pgpool-en.html: prepare for 1.0.2
+
+2007-02-08  Tatsuo Ishii  <ishii@sraoss.co.jp>
+
+	* NEWS, config.h.in, configure: Prepare for 1.0.2
+
+2007-02-08  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* doc/pgpool-ja.html: Add new loadbalancing rule in replication
+	  mode section.
+
+2007-02-08  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_query_cache.c, configure.in, pool_system.c: Fixed configure
+	  error if libpq version is 7.4.x. 7.4 does not have PQprepare().
+	  So when version is 7.4, pgpool uses PREPARE statement instead of
+	  PQprepare().
+
+2007-02-08  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* configure.in: Prepare for 1.0.2
+
+2007-02-07  Tatsuo Ishii  <ishii@sraoss.co.jp>
+
+	* Makefile.in, aclocal.m4, configure, configure.in, pool_config.c,
+	  parser/Makefile.in, pcp/Makefile.in: update configure.in to use
+	  pg_config.  Patch made by Yoshiyuki Asaba.
+
+2007-02-06  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_connection_pool.c: Add checking socket state when connection
+	  pool is reused.  If socket is closed, pgpool try to create new
+	  connection pool.
+
+2007-01-30  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Disable to load balance in the following
+	  cases.    - SELECT FOR UPDATE    - SELECT INTO    - /* xxx */
+	  SELECT ... (This is pgpool-I spec.)
+
+2007-01-13  Taiki Yamaguchi  <yamaguchi@sraoss.co.jp>
+
+	* pool_signal.h:
+	  fixed #ifndef ~ #define macro for that it could have been
+	  included redundantly.
+
+2007-01-10  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Fix auto-deallocation. If a client used PDO
+	  interface, pgpool didn't clean prepared statement.
+
+2007-01-05  Devrim GUNDUZ  <devrim@commandprompt.com>
+
+	* COPYING, child.c, main.c, pcp_child.c, pgpool.8.in, pool.h,
+	  pool_auth.c, pool_config.c, pool_config.l,
+	  pool_connection_pool.c, pool_error.c, pool_ipc.h, pool_params.c,
+	  pool_process_query.c, pool_query_cache.c, pool_rewrite_query.c,
+	  pool_rewrite_query.h, pool_sema.c, pool_shmem.c, pool_signal.c,
+	  pool_signal.h, pool_stream.c, pool_system.c, pool_type.h,
+	  parser/pool_memory.c, parser/pool_memory.h, parser/pool_string.c,
+	  parser/pool_string.h: Copyright update
+
+2006-12-25  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* Makefile.am, Makefile.in: Fix libpq link error (Reported by
+	  ISHIDA Akio).
+
+2006-12-04  Tatsuo Ishii  <ishii@sraoss.co.jp>
+
+	* pool_process_query.c: Fix bug with replication mode. With
+	  UPDATE/DELETE, the number of affcted rows should not be sum of
+	  each node.
+
+2006-12-02  Tatsuo Ishii  <ishii@sraoss.co.jp>
+
+	* pool_process_query.c: Add backend status info to show pool_status
+
+2006-12-02  Tatsuo Ishii  <ishii@sraoss.co.jp>
+
+	* main.c: enhance logging to make it clear what kind of
+	  failover/failback event ocuured.
+
+2006-12-02  Tatsuo Ishii  <ishii@sraoss.co.jp>
+
+	* TODO: update TODO document to reflect current status
+
+2006-11-30  Devrim GUNDUZ  <devrim@commandprompt.com>
+
+	* child.c, pool_auth.c: Fix small typos in messages
+
+2006-11-30  Devrim GUNDUZ  <devrim@commandprompt.com>
+
+	* pgpool.conf.sample: Fix small typos in config file
+
+2006-11-15  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Fix an extended query protocol handling.
+
+2006-11-13  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* parser/pool_memory.c: Fix SIGSEGV under parallel mode.
+
+2006-11-10  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* parser/pool_memory.c: 
+	  - Add NULL checking in pool_memory_free().
+	  - Fix SIGSEGV in pool_memory_alloc() if allocate size is 8192
+	  byte.
+
+	    void *x;
+	    pool_memory = pool_memory_create();
+	    x = pool_memory_alloc(pool_memory, 8192);
+
+2006-11-04  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* parser/pool_memory.c: Fixed a inifinite loop in
+	  pool_memory_free().
+
+2006-10-04  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_rewrite_query.c: Fix rewriting a query which refers
+	  pg_catalog.  Patch contributed by Yoshiharu Mori.
+
+2006-10-04  Devrim GUNDUZ  <devrim@commandprompt.com>
+
+	* pgpool.spec: - Added -libs and -devel RPM - Fix .so link problem
+	  - Cosmetic changes to spec file
+
+2006-10-04  Devrim GUNDUZ  <devrim@commandprompt.com>
+
+	* pgpool.spec: [no log message]
+
+2006-09-27  Devrim GUNDUZ  <devrim@commandprompt.com>
+
+	* pgpool.spec: * Thu Sep 27 2006 - Devrim GUNDUZ
+	  <devrim@commandprompt.com> 1.0.1-3 - Fix spec, per Yoshiyuki
+	  Asaba
+
+	  * Thu Sep 26 2006 - Devrim GUNDUZ <devrim@commandprompt.com>
+	  1.0.1-2 - Fixed rpmlint errors - Fixed download url - Added
+	  ldconfig for .so files
+
+	  ** Thu Sep 21 2006 - David Fetter <david@fetter.org> 1.0.1-1 -
+	  Initial build pgpool-II 1.0.1 for PgPool Global Development Group
+
+2006-09-27  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Fix load balancing algorithm. Patch
+	  contributed by Jeff Davis.
+
+	  See the following URL for more details.
+	  http://pgfoundry.org/pipermail/pgpool-hackers/2006-September/000034.html
+
+2006-09-25  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* doc/: pgpool-en.html, pgpool-ja.html: Add pam authentication in
+	  supported authentication protocol list.  Reported by Jeff Davis.
+
 2006-09-22    <ishii@sraoss.co.jp>
+
 	* Version 1.0.1
 	* Fix debug message in simpleQuery() so that it correctly prints
 	  query string when operated in MASTER_SLAVE mode (Tatsuo)
@@ -12,4 +199,5 @@
 	* Many docs fix (Devrim, Yoshiyuki)
 	
 2006-09-08    <ishii@sraoss.co.jp>
+
 	* Version 1.0.0
