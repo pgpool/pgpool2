@@ -60,7 +60,8 @@ PROGRAMS = $(bin_PROGRAMS)
 am_pg_md5_OBJECTS = pg_md5.$(OBJEXT) md5.$(OBJEXT)
 pg_md5_OBJECTS = $(am_pg_md5_OBJECTS)
 pg_md5_LDADD = $(LDADD)
-pg_md5_DEPENDENCIES = parser/libsql-parser.a pcp/libpcp.la
+pg_md5_DEPENDENCIES = parser/libsql-parser.a pcp/libpcp.la \
+	parser/nodes.o
 am_pgpool_OBJECTS = main.$(OBJEXT) child.$(OBJEXT) pool_auth.$(OBJEXT) \
 	pool_config.$(OBJEXT) pool_error.$(OBJEXT) \
 	pool_process_query.$(OBJEXT) pool_stream.$(OBJEXT) \
@@ -71,7 +72,8 @@ am_pgpool_OBJECTS = main.$(OBJEXT) child.$(OBJEXT) pool_auth.$(OBJEXT) \
 	pool_query_cache.$(OBJEXT)
 pgpool_OBJECTS = $(am_pgpool_OBJECTS)
 pgpool_LDADD = $(LDADD)
-pgpool_DEPENDENCIES = parser/libsql-parser.a pcp/libpcp.la
+pgpool_DEPENDENCIES = parser/libsql-parser.a pcp/libpcp.la \
+	parser/nodes.o
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -203,6 +205,8 @@ build_cpu = @build_cpu@
 build_os = @build_os@
 build_vendor = @build_vendor@
 datadir = @datadir@
+enable_rpath_FALSE = @enable_rpath_FALSE@
+enable_rpath_TRUE = @enable_rpath_TRUE@
 exec_prefix = @exec_prefix@
 host = @host@
 host_alias = @host_alias@
@@ -237,7 +241,8 @@ pg_md5_SOURCES = pg_md5.c md5.c md5.h
 sysconf_DATA = pgpool.conf.sample pcp.conf.sample
 data_DATA = sql/system_db.sql
 AM_CPPFLAGS = -Wall -Wmissing-prototypes -Wmissing-declarations -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
-pgpool_LDFLAGS = -lpq -L@PGSQL_LIB_DIR@ -Wl,-rpath,@PGSQL_LIB_DIR@
+@enable_rpath_FALSE@pgpool_LDFLAGS = -lpq -L@PGSQL_LIB_DIR@
+@enable_rpath_TRUE@pgpool_LDFLAGS = -lpq -L@PGSQL_LIB_DIR@ -Wl,-rpath,@PGSQL_LIB_DIR@
 AM_YFLAGS = -d
 man_MANS = pgpool.8
 CLEANFILES = pgpool.8
@@ -246,7 +251,7 @@ EXTRA_DIST = pgpool.8.in sql/system_db.sql doc/pgpool-ja.html doc/pgpool-en.html
 		sample/dist_def_pgbench.sql
 
 SUBDIRS = parser pcp
-LDADD = parser/libsql-parser.a pcp/libpcp.la
+LDADD = parser/libsql-parser.a pcp/libpcp.la parser/nodes.o
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
