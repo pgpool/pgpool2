@@ -9,6 +9,9 @@
 #include <errno.h>
 #include <unistd.h>
 #include <time.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "pcp.h"
 #include "pcp_stream.h"

@@ -1,3 +1,10 @@
+2007-02-16  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* Makefile.am, configure.in, pool_connection_pool.c,
+	  pool_query_cache.c, pcp/pcp.c, pcp/pcp_stream.c: Fixed compile
+	  error on MacOS X. MacOS's ld does not have rpath option. So add
+	  --disable-rpath option to configure for MacOS X.
+
 2007-02-13  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* Version 1.0.2

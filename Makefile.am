@@ -19,7 +19,11 @@ data_DATA = sql/system_db.sql
 
 AM_CPPFLAGS = -Wall -Wmissing-prototypes -Wmissing-declarations -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
 
-pgpool_LDFLAGS = -lpq -L@PGSQL_LIB_DIR@ -Wl,-rpath,@PGSQL_LIB_DIR@
+if enable_rpath
+  pgpool_LDFLAGS = -lpq -L@PGSQL_LIB_DIR@ -Wl,-rpath,@PGSQL_LIB_DIR@
+else
+  pgpool_LDFLAGS = -lpq -L@PGSQL_LIB_DIR@
+endif
 
 AM_YFLAGS = -d
 
@@ -34,4 +38,4 @@ EXTRA_DIST = pgpool.8.in sql/system_db.sql doc/pgpool-ja.html doc/pgpool-en.html
 		sample/dist_def_pgbench.sql
 
 SUBDIRS = parser pcp
-LDADD = parser/libsql-parser.a pcp/libpcp.la
+LDADD = parser/libsql-parser.a pcp/libpcp.la parser/nodes.o

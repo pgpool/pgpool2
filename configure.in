@@ -101,6 +101,17 @@ LIBS="$OLD_LIBS"
 AC_SUBST(PGSQL_INCLUDE_DIR)
 AC_SUBST(PGSQL_LIB_DIR)
 
+# --enable(disable)-rpath option
+AC_ARG_ENABLE(rpath,
+    [  --disable-rpath     do not embed shared library search path in executables],
+    [case "${enableval}" in
+      yes) rpath=yes ;;
+      no)  rpath=no ;;
+      esac],
+    [rpath=yes]
+)
+AM_CONDITIONAL([enable_rpath], test x$rpath = xyes)
+
 AM_CONFIG_HEADER(config.h)
 
 AC_OUTPUT([Makefile parser/Makefile pcp/Makefile])
