@@ -1,5 +1,5 @@
 #
-# pgpool configuration file sample
+# pgpool-II configuration file sample
 # $Header$
 
 # Host name or IP address to listen on: '*' for all, '' for no TCP/IP
