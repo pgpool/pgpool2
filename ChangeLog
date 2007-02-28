@@ -1,3 +1,8 @@
+2007-02-28  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* Makefile.am: Use libtool's -rpath option instead of ld's rpath
+	  option. Because rpath option name is platform-dependent.
+
 2007-02-16  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* Makefile.am, configure.in, pool_connection_pool.c,
