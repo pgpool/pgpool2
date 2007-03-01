@@ -1,3 +1,8 @@
+2007-03-01  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* parser/Makefile.am, parser/copyfuncs.c: Porting deep copy
+	  functions for tree nodes from PostgreSQL.
+
 2007-02-28  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* Makefile.am: Use libtool's -rpath option instead of ld's rpath
