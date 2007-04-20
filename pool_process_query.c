@@ -121,6 +121,8 @@ static int synchronize(POOL_CONNECTION *cp);
 static void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt);
 
+static int is_select_query(Node *node, char *sql);
+static int is_sequence_query(Node *node);
 static int load_balance_enabled(POOL_CONNECTION_POOL *backend, Node* node, char *sql);
 static void start_load_balance(POOL_CONNECTION_POOL *backend);
 static void end_load_balance(POOL_CONNECTION_POOL *backend);
@@ -157,6 +159,7 @@ static void (*pending_function)(PreparedStatementList *p, Portal *portal) = NULL
 static Portal *pending_prepared_portal = NULL;
 static Portal *unnamed_statement = NULL;
 static Portal *unnamed_portal = NULL;
+static int select_in_transaction = 0; /* non 0 if select query is in transaction */
 
 static PreparedStatementList prepared_list; /* prepared statement name list */
 static int is_drop_database(Node *node);		/* returns non 0 if this is a DROP DATABASE command */
@@ -956,6 +959,15 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			MASTER_SLAVE = 0;
 			master_slave_dml = 1;
 		}
+		else if (REPLICATION && is_select_query(node1, string1) && !is_sequence_query(node1))
+		{
+			replication_was_enabled = 1;
+			REPLICATION = 0;
+			LOAD_BALANCE_STATUS(MASTER_NODE_ID) = LOAD_SELECTED;
+			in_load_balance = 1;
+			select_in_transaction = 1;
+		}
+
 
 		/*
 		 * determine if we need to lock the table
@@ -1028,6 +1040,8 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 	char kind;
 	int status;
 	Portal *portal;
+	char *string1;
+	PrepareStmt *p_stmt;
 
 	/* read Execute packet */
 	if (pool_read(frontend, &len, sizeof(len)) < 0)
@@ -1045,8 +1059,7 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 	/* load balance trick */
 	if (portal)
 	{
-		char *string1;
-		PrepareStmt *p_stmt = (PrepareStmt *)portal->stmt;
+		p_stmt = (PrepareStmt *)portal->stmt;
 
 		pool_memory = pool_memory_create();
 		string1 = nodeToString(p_stmt->query);
@@ -1054,15 +1067,22 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		if (load_balance_enabled(backend, (Node *)p_stmt->query, string1))
 			start_load_balance(backend);
 
+		else if (REPLICATION && is_select_query((Node *)p_stmt->query, string1) && !is_sequence_query((Node *)p_stmt->query))
+		{
+			replication_was_enabled = 1;
+			REPLICATION = 0;
+			LOAD_BALANCE_STATUS(MASTER_NODE_ID) = LOAD_SELECTED;
+			in_load_balance = 1;
+			select_in_transaction = 1;
+		}
 		pool_memory_delete(pool_memory);
 	}
 	else if (MASTER_SLAVE)
 	{
-			master_slave_was_enabled = 1;
-			MASTER_SLAVE = 0;
-			master_slave_dml = 1;
+		master_slave_was_enabled = 1;
+		MASTER_SLAVE = 0;
+		master_slave_dml = 1;
 	}
-
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -2948,6 +2968,8 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 			free(pending_prepared_portal);
 		}
 	}
+	else if (kind == 'C' && select_in_transaction)
+		select_in_transaction = 0;
 
 	pending_function = NULL;
 	pending_prepared_portal = NULL;
@@ -3089,6 +3111,32 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 					;
 				continue;
 			}
+		}
+
+		if (select_in_transaction)
+		{
+			int i;
+
+			in_load_balance = 0;
+			REPLICATION = 1;
+			for (i = 0; i < NUM_BACKENDS; i++)
+			{
+				if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
+				{
+
+					do_command(CONNECTION(backend, i), "send invalid query from pgpool to abort transaction.",
+							   PROTO_MAJOR_V3, 0);
+					pool_write(CONNECTION(backend, i), "S", 1);
+					res1 = htonl(4);
+					if (pool_write_and_flush(CONNECTION(backend, i), &res1, sizeof(res1)) < 0)
+					{
+						return POOL_END;
+					}
+				}
+			}
+			in_load_balance = 1;
+			REPLICATION = 0;
+			select_in_transaction = 0;
 		}
 
 		for (i = 0;i < NUM_BACKENDS; i++)
@@ -3445,6 +3493,20 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
  */
 static int load_balance_enabled(POOL_CONNECTION_POOL *backend, Node* node, char *sql)
 {
+	return (pool_config->load_balance_mode &&
+			DUAL_MODE &&
+			MAJOR(backend) == PROTO_MAJOR_V3 &&
+			TSTATE(backend) == 'I' &&
+			is_select_query(node, sql) &&
+			!is_sequence_query(node));
+}
+
+
+/*
+ * return non 0 if SQL is SELECT statement.
+ */
+static int is_select_query(Node *node, char *sql)
+{
 	SelectStmt *select_stmt;
 
 	if (!IsA(node, SelectStmt))
@@ -3454,20 +3516,50 @@ static int load_balance_enabled(POOL_CONNECTION_POOL *backend, Node* node, char 
 	if (select_stmt->into || select_stmt->lockingClause)
 		return 0;
 
-	if (pool_config->load_balance_mode &&
-		DUAL_MODE &&
-		MAJOR(backend) == PROTO_MAJOR_V3 &&
-		TSTATE(backend) == 'I')
+	if (pool_config->ignore_leading_white_space)
 	{
-		if (pool_config->ignore_leading_white_space)
-		{
-			/* ignore leading white spaces */
-			while (*sql && isspace(*sql))
-				sql++;
-		}
+		/* ignore leading white spaces */
+		while (*sql && isspace(*sql))
+			sql++;
+	}
 
-		if (*sql == 's' || *sql == 'S' || *sql == '(')
-			return 1;
+	return (*sql == 's' || *sql == 'S' || *sql == '(');
+}
+
+/*
+ * return non 0 if SQL is SELECT statement.
+ */
+static int is_sequence_query(Node *node)
+{
+	SelectStmt *select_stmt;
+	ListCell *lc;
+
+	if (!IsA(node, SelectStmt))
+		return 0;
+
+	select_stmt = (SelectStmt *)node;
+	foreach (lc, select_stmt->targetList)
+	{
+		if (IsA(lfirst(lc), ResTarget))
+		{
+			ResTarget *t;
+			FuncCall *fc;
+			ListCell *c;
+
+			t = (ResTarget *) lfirst(lc);
+			if (IsA(t->val, FuncCall))
+			{
+				fc = (FuncCall *) t->val;
+				foreach (c, fc->funcname)
+				{
+					Value *v = lfirst(c);
+					if (strncasecmp(v->val.str, "NEXTVAL", 7) == 0)
+						return 1;
+					else if (strncasecmp(v->val.str, "SETVAL", 6) == 0)
+						return 1;
+				}
+			}
+		}
 	}
 
 	return 0;
