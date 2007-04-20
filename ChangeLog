@@ -1,3 +1,12 @@
+2007-04-20  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Enhance that the query that begins with
+	  "SELECT nextval()" or "SELECT setval()" are always replicated
+	  under replication mode. Then, SELECT statements are only
+	  executed by MASTER node if load_balance_mode is false. If need
+	  to replicate select statement, add a comment in the begining of
+	  the query.
+
 2007-03-01  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* pool_process_query.c: Support load balancing with extended
