@@ -1,3 +1,8 @@
+2007-04-26  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_connection_pool.c: Retry connect() when it is interrupted
+	  by signal.
+
 2007-04-20  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* pool_process_query.c: Enhance that the query that begins with

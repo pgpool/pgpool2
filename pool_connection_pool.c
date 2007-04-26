@@ -423,11 +423,18 @@ int connect_unix_domain_socket_by_port(int port, char *socket_dir)
 	snprintf(addr.sun_path, sizeof(addr.sun_path), "%s/.s.PGSQL.%d", socket_dir, port);
 	len = sizeof(struct sockaddr_un);
 
-	if (connect(fd, (struct sockaddr *)&addr, len) < 0)
+	for (;;)
 	{
-		pool_error("connect_unix_domain_socket_by_port: connect() failed: %s", strerror(errno));
-		close(fd);
-		return -1;
+		if (connect(fd, (struct sockaddr *)&addr, len) < 0)
+		{
+			if (errno == EINTR || errno == EAGAIN)
+				continue;
+
+			pool_error("connect_unix_domain_socket_by_port: connect() failed: %s", strerror(errno));
+			close(fd);
+			return -1;
+		}
+		break;
 	}
 
 	return fd;
@@ -475,11 +482,18 @@ int connect_inet_domain_socket_by_port(char *host, int port)
 			(char *) hp->h_addr,
 			hp->h_length);
 
-	if (connect(fd, (struct sockaddr *)&addr, len) < 0)
+	for (;;)
 	{
-		pool_error("connect_inet_domain_socket: connect() failed: %s",strerror(errno));
-		close(fd);
-		return -1;
+		if (connect(fd, (struct sockaddr *)&addr, len) < 0)
+		{
+			if (errno == EINTR || errno == EAGAIN)
+				continue;
+
+			pool_error("connect_inet_domain_socket: connect() failed: %s",strerror(errno));
+			close(fd);
+			return -1;
+		}
+		break;
 	}
 
 	return fd;
