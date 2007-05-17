@@ -27,6 +27,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/un.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 #ifdef HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
 #endif
@@ -45,6 +47,7 @@
 #endif
 
 #include "pool.h"
+#include "pool_ip.h"
 #include "md5.h"
 
 #ifdef NONE_BLOCK
@@ -71,6 +74,10 @@ static int exit_request;
 
 static int idle;		/* non 0 means this child is in idle state */
 
+extern int myargc;
+extern char **myargv;
+
+char remote_ps_data[NI_MAXHOST];		/* used for set_ps_display */
 
 /*
 * child main loop
@@ -87,8 +94,12 @@ void do_child(int unix_fd, int inet_fd)
 	int connections_count = 0;	/* used if child_max_connections > 0 */
 	int first_ready_for_query_received;		/* for master/slave mode */
 	int found;
+	char psbuf[NI_MAXHOST + 128];
 
 	pool_debug("I am %d", getpid());
+
+	/* Identify myself via ps */
+	init_ps_display("", "", "", "");
 
 	/* set up signal handlers */
 	signal(SIGALRM, SIG_DFL);
@@ -235,6 +246,29 @@ void do_child(int unix_fd, int inet_fd)
 			goto retry_startup;
 		}
 
+		if (pool_config->enable_pool_hba)
+		{
+			/*
+			 * do client authentication.
+			 * Note that ClientAuthentication does not return if frontend
+			 * was rejected; it simply terminates this process.
+			 */
+			frontend->protoVersion = sp->major;
+			frontend->database = strdup(sp->database);
+			if (frontend->database == NULL)
+			{
+				pool_error("do_child: strdup failed: %s\n", strerror(errno));
+				exit(1);
+			}
+			frontend->username = strdup(sp->user);
+			if (frontend->username == NULL)
+			{
+				pool_error("do_child: strdup failed: %s\n", strerror(errno));
+				exit(1);
+			}
+			ClientAuthentication(frontend);
+		}
+
 		/*
 		 * Ok, negotiaton with frontend has been done. Let's go to the next step.
 		 */
@@ -356,6 +390,12 @@ void do_child(int unix_fd, int inet_fd)
 			pool_enable_timeout();
 
 		connected = 1;
+
+ 		/* show ps status */
+		sp = MASTER_CONNECTION(backend)->sp;
+		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle",
+				 sp->user, sp->database, remote_ps_data);
+		set_ps_display(psbuf, false);
 
 		/* query process loop */
 		for (;;)
@@ -510,8 +550,7 @@ static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *time
     fd_set	readmask;
     int fds;
 
-	struct sockaddr addr;
-	socklen_t addrlen;
+	SockAddr saddr;
 	int fd = 0;
 	int afd;
 	int inet = 0;
@@ -523,6 +562,11 @@ static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *time
 #endif
 	struct timeval *timeoutval;
 	struct timeval tv1, tv2, tmback;
+
+	char remote_host[NI_MAXHOST];
+	char remote_port[NI_MAXSERV];
+
+	set_ps_display("wait for connection request", false);
 
 	FD_ZERO(&readmask);
 	FD_SET(unix_fd, &readmask);
@@ -608,12 +652,13 @@ static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *time
 	 * Note that some SysV systems do not work here. For those
 	 * systems, we need some locking mechanism for the fd.
 	 */
-	addrlen = sizeof(addr);
+	memset(&saddr, 0, sizeof(saddr));
+	saddr.salen = sizeof(saddr.addr);
 
 #ifdef ACCEPT_PERFORMANCE
 	gettimeofday(&now1,0);
 #endif
-	afd = accept(fd, &addr, &addrlen);
+	afd = accept(fd, (struct sockaddr *)&saddr.addr, &saddr.salen);
 	if (afd < 0)
 	{
 		/*
@@ -727,6 +772,20 @@ static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *time
 
 	pool_debug("I am %d accept fd %d", getpid(), afd);
 
+	pool_getnameinfo_all(&saddr, remote_host, remote_port);
+	snprintf(remote_ps_data, sizeof(remote_ps_data),
+			 remote_port[0] == '\0' ? "%s" : "%s(%s)",
+			 remote_host, remote_port);
+
+	set_ps_display("accept connection", false);
+
+	/* log who is connecting */
+	if (pool_config->log_connections)
+	{
+		pool_log("connection received: host=%s%s%s",
+				 remote_host, remote_port[0] ? " port=" : "", remote_port);
+	}
+
 	/* set NODELAY and KEEPALIVE options if INET connection */
 	if (inet)
 	{
@@ -755,6 +814,12 @@ static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *time
 		close(afd);
 		return NULL;
 	}
+
+	/* save ip addres for hba */
+	memcpy(&cp->raddr, &saddr, sizeof(SockAddr));
+	if (cp->raddr.addr.ss_family == 0)
+		cp->raddr.addr.ss_family = AF_UNIX;
+	
 	return cp;
 }
 

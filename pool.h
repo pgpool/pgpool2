@@ -45,6 +45,9 @@
 /* PCP user/password file name */
 #define PCP_PASSWD_FILE_NAME "pcp.conf"
 
+/* HBA configuration file name */
+#define HBA_CONF_FILE_NAME "pool_hba.conf"
+
 /* pid file directory */
 #define DEFAULT_LOGDIR "/tmp"
 
@@ -120,6 +123,11 @@ typedef struct {
 	int replication_mode;		/* replication mode */
 	int replication_strict;	/* if non 0, wait for completion of the
                                query sent to master to avoid deadlock */
+
+	int log_connections;		/* 0:false, 1:true - logs incoming connections */
+	int log_hostname;		/* 0:false, 1:true - resolve hostname */
+	int enable_pool_hba;		/* 0:false, 1:true - enables pool_hba.conf file authentication */
+
 	/*
 	 * if next PostgreSQL server does not respond in this milli
 	 * seconds, abort this session.  this is not compatible with
@@ -220,6 +228,15 @@ typedef struct {
 
 	char kind;	/* kind cache */
 
+	/*
+	 * frontend info needed for hba
+	 */
+	int protoVersion;
+	SockAddr raddr;
+	UserAuth auth_method;
+	char *auth_arg;
+	char *database;
+	char *username;
 } POOL_CONNECTION;
 
 /*
@@ -352,6 +369,7 @@ extern int in_load_balance;		/* non 0 if in load balance mode */
 extern int selected_slot;		/* selected DB node for load balance */
 extern int master_slave_dml;	/* non 0 if master/slave mode is specified in config file */
 extern POOL_REQUEST_INFO *Req_info;
+extern char remote_ps_data[];		/* used for set_ps_display */
 
 /*
  * public functions
@@ -473,6 +491,22 @@ extern int pool_query_cache_register(char kind, POOL_CONNECTION *frontend, char 
 extern int pool_query_cache_table_exists(void);
 extern int pool_clear_cache_by_time(Interval *interval, int size);
 
+/* pool_hba.c */
+extern void load_hba(char *hbapath);
+extern void ClientAuthentication(POOL_CONNECTION *frontend);
 
+/* pool_ip.c */
+extern void pool_getnameinfo_all(SockAddr *saddr, char *remote_host, char *remote_port);
+
+/* strlcpy.c */
+extern size_t strlcpy(char *dst, const char *src, size_t siz);
+
+/* ps_status.c */
+extern bool update_process_title;
+extern char **save_ps_display_args(int argc, char **argv);
+extern void init_ps_display(const char *username, const char *dbname,
+							const char *host_info, const char *initial_str);
+extern void set_ps_display(const char *activity, bool force);
+extern const char *get_ps_display(int *displen);
 
 #endif /* POOL_H */

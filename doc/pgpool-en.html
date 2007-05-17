@@ -6,11 +6,9 @@
 <title>pgpool-II README</title>
 </head>
 
-<!-- hhmts start -->
-Last modified: Thu Feb  8 22:02:45 JST 2007
-<!-- hhmts end -->
+<!-- hhmts start -->Last modified: Thu May 17 14:40:43 JST 2007 <!-- hhmts end -->
 <body bgcolor="#ffffff">
-<a name"top"></a>
+<a name="top"></a>
 <table border="0" cellpadding="2" cellspacing="1">
   <tr>
 
@@ -42,7 +40,7 @@ Last modified: Thu Feb  8 22:02:45 JST 2007
 
 
 
-<h1>What is pgpool-II?<a name="whatis"></h1>
+<h1>What is pgpool-II?<a name="whatis"></a></h1>
 
 <p> pgpool-II is a middleware that works between PostgreSQL servers
 and a PostgreSQL database client. It provides following features.</p>
@@ -99,7 +97,7 @@ existing database application can be used with pgpool-II almost
 without a change to its sources.</p>
 
 
-<h1>Supported Platforms<a name="platform"></h1>
+<h1>Supported Platforms<a name="platform"></a></h1>
 
 <p>pgpool-II works on Linux, Solaris, FreeBSD, and most of the
 UNIX-like architectures. Windows is not supported. Supported
@@ -107,14 +105,14 @@ PostgreSQL server's versions are 6.4 and higher. To use the parallel
 query, however, 7.4 and higher must be used.</p>
 
 
-<h1>pgpool-II Installation<a name="install"></h1>
+<h1>pgpool-II Installation<a name="install"></a></h1>
 
 <p>Installing pgpool-II requires gcc 2.9 or higher, and GNU
 make. Also, pgpool-II links libpq library, so it must be installed on
 a machine used to build pgpool-II.</p>
 
 <dl>
-<dt>configure
+<dt>configure</dt>
 <dd>
 <p>
 After extracting the source tar ball, execute the configure script.
@@ -134,8 +132,9 @@ directory. Default value is <code>/usr/local</code></li>
 installed. Default values is obtained by <code>pg_config</code></li>
 </ul>
 </p>
+</dd>
 
-<dt>make
+<dt>make</dt>
 <dd>
 <p>
 <pre>
@@ -143,9 +142,11 @@ make
 make install
 </pre>
 will install pgpool-II. (If you use FreeBSD, replace make with gmake)
+</p>
+</dd>
 </dl>
 
-<h1>Configuring pgpool-II<a name="config"></h1>
+<h1>Configuring pgpool-II<a name="config"></a></h1>
 
 <p>Configuration files for pgpool-II are
 <code>/usr/local/etc/pgpool.conf</code> and
@@ -437,6 +438,30 @@ servers.</p>
       <p>Produces SQL log messages when true. This is similar to the
       log_statement option in PostgreSQL. It produces logs even if the
       debug option was not passed to pgpool-II at the startup.</p>
+  </dd>
+
+  <dt>log_hostname</dt>
+  <dd>
+    <p>
+    If true, ps command status will show the client's hostname instead
+    of an IP address. Also, if log_connections is enabled, hostname will
+    be logged.
+    </p>
+  </dd>
+    
+  <dt>log_connections</dt>
+  <dd>
+    <p>
+    If true, all incoming connections will be printed to the log.
+    </p>
+  </dd>
+    
+  <dt>enable_pool_hba</dt>
+  <dd>
+    <p>
+    If true, use pool_hba.conf for client authentication. See <a href="#hba">
+    Setting up pool_hba.conf for client authentication</a>.
+    </p>
   </dd>
 
   <dt>backend_hostname</dt>
@@ -817,7 +842,83 @@ ELSE 2
 END' LANGUAGE SQL;
 </pre>
 
-<h1>Starting/Stopping pgpool-II<a name="start"></h1>
+<h2><a name="hba"></a>Setting up pool_hba.conf for client authentication (HBA)</h2>
+<p>
+  Just like pg_hba.conf with PostgreSQL, pgpool supports a similar
+  client authentication function using a configuration file called 
+  "pool_hba.conf".
+</p>
+<p>
+  When you install pgpool, pool_hba.conf.sample will be installed in
+  "/usr/local/etc", which is the default directory for configuration
+  files. Copy pool_hba.conf.sample as pool_hba.conf and edit it if necessary.
+  By default, pool_hba authentication is enabled. See "6. Setting up
+  pgpool.conf" for more detail.
+</p>
+<p>
+  The format of pool_hba.conf file follows very closely to pg_hba.conf.
+</p>
+<pre>
+    local      DATABASE  USER  METHOD  [OPTION]
+    host       DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTION]
+</pre>
+<p>
+  See "pool_hba.conf.sample" for details of each field.
+</p>
+<p>
+  Here are the limitations of pool_hba.
+<ul>
+<li>"hostssl" connection type is not supported</li>
+<p>
+    "hostssl" is invalid since pgpool currently does not support SSL
+    connections.
+</p>
+<li>"samegroup" for DATABASE field is not supported</li>
+<p>
+    Since pgpool does not know anything about users in the backend server,
+    database name is simply checked against the entries in the DATABASE
+    field of pool_hba.conf.
+</p>
+<li>group names following "+" for USER field is not supported</li>
+<p>
+    This is the same reason as in the "samegroup" described above. A
+    user name is simply checked against the entries in the USER field
+    of pool_hba.conf.
+</p>
+<li>IPv6 for IP address/mask is not supported</li>
+<p>
+    pgpool currently does not support IPv6.
+</p>
+<li>Only "trust", "reject" and "pam" for METHOD field are supported</li>
+<p>
+    Again, this is the same reason as in the "samegroup" described above.
+    pgpool does not hold user/password information.
+</p>
+</ul>
+<p>
+  Note that everything described in this section is about a client authen-
+  tication between a client and pgpool; a client still have to go through
+  an authentication process with PostgreSQL. As far as pool_hba is concerned,
+  it does not matter if a user name and/or database name given by a client
+  (i.e. psql -U testuser testdb) really exist in the backend. pool_hba only
+  cares if a match in the pool_hba.conf is found or not.
+</p>
+<p>
+  PAM authenticaion is supported using user information on the host where
+  pgpool is executed. To enable PAM support in pgpool, specify "--with-pam"
+  option to configure:
+</p>
+<pre>
+    configure --with-pam
+</pre>
+<p>
+  To enable PAM authentication, you need to create a
+  service-configuration file for pgpool in the system's PAM
+  configuration directory (which is usually at "/etc/pam.d"). A sample
+  service-configuration file is installed as "share/pgpool.pam" under
+  the install directory.
+</p>
+<h1>Starting/Stopping pgpool-II<a name="start"></a></h1>
 
 <p>All the backends and the System DB (if necessary) must be started
 before starting pgpool-II.
@@ -850,7 +951,7 @@ pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] st
   <tr><td><code>-m i[mmediate]</code></td><td>the same as <code>'-m
       f'</code></td></tr> </table>
 
-<h1>Restrictions<a name="restriction"></h1>
+<h1>Restrictions<a name="restriction"></a></h1>
 <p>
 <h2>Authentication / Access Controls</h2>
 
@@ -1051,7 +1152,7 @@ invalidate old query cache automatically when the data is updated.</p>
 
 <h2>Compatibility with pgpool</h2>
 
-<h1>References<a name="reference"></h1>
+<h1>References<a name="reference"></a></h1>
 <h2>PCP Command Reference</h2>
 
 <h3>PCP Command List</h3>

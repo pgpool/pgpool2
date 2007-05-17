@@ -135,6 +135,10 @@ int pool_get_config(char *confpath)
 	pool_config->connection_life_time = 0;
 	pool_config->child_max_connections = 0;
 	pool_config->logdir = DEFAULT_LOGDIR;
+ 	pool_config->log_statement = 0;
+	pool_config->log_connections = 0;
+	pool_config->log_hostname = 0;
+	pool_config->enable_pool_hba = 0;
 
 	pool_config->replication_mode = 0;
 	pool_config->replication_strict = 1;
@@ -152,7 +156,6 @@ int pool_get_config(char *confpath)
 	pool_config->health_check_user = "nobody";
 	pool_config->insert_lock = 0;
 	pool_config->ignore_leading_white_space = 0;
- 	pool_config->log_statement = 0;
 	pool_config->parallel_mode = 0;
 	pool_config->enable_query_cache = 0;
 	pool_config->system_db_hostname = "localhost";
@@ -403,6 +406,42 @@ int pool_get_config(char *confpath)
 				return(-1);
 			}
 			pool_config->logdir = str;
+		}
+       	else if (!strcmp(key, "log_connections"))
+		{
+			int v = eval_logical(yytext);
+
+			if (v < 0)
+			{
+				pool_error("pool_config: invalid value %s for %s", yytext, key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->log_connections = v;
+		}
+       	else if (!strcmp(key, "log_hostname"))
+		{
+			int v = eval_logical(yytext);
+
+			if (v < 0)
+			{
+				pool_error("pool_config: invalid value %s for %s", yytext, key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->log_hostname = v;
+		}
+       	else if (!strcmp(key, "enable_pool_hba"))
+		{
+			int v = eval_logical(yytext);
+
+			if (v < 0)
+			{
+				pool_error("pool_config: invalid value %s for %s", yytext, key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->enable_pool_hba = v;
 		}
 		else if (!strcmp(key, "backend_socket_dir"))
 		{

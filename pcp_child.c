@@ -27,6 +27,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/un.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 #ifdef HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
 #endif
@@ -61,6 +63,9 @@ static void unset_nonblock(int fd);
 static int user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len);
 static void pool_random_salt(char *md5Salt);
 
+extern int myargc;
+extern char **myargv;
+
 void
 pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 {
@@ -75,7 +80,12 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 	int rsize;
 	char *buf = NULL;
 
+	char psbuf[NI_MAXHOST + 128];
+
 	pool_debug("I am PCP %d", getpid());
+
+	/* Identify myself via ps */
+	init_ps_display("", "", "", "");
 
 	gettimeofday(&uptime, NULL);
 	srandom((unsigned int) (getpid() ^ uptime.tv_usec));
@@ -175,6 +185,9 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 
 		/* process a request */
 		pool_debug("pcp_child: received PCP packet type of service '%c'", tos);
+
+		set_ps_display("PCP: processing a request", false);
+			
 		switch (tos)
 		{
 			case 'R':			/* authentication */
@@ -224,7 +237,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 				break;
 			}
 
-			case 'M':
+			case 'M':			/* md5 salt */
 			{
 				int wsize;
 
@@ -779,6 +792,8 @@ pcp_do_accept(int unix_fd, int inet_fd)
 	int fd = 0;
 	int afd;
 	int inet = 0;
+
+	set_ps_display("PCP: wait for connection request", false);
 
 	FD_ZERO(&readmask);
 	FD_SET(unix_fd, &readmask);

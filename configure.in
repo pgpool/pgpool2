@@ -27,12 +27,32 @@ AC_CHECK_LIB(resolv,   main)
 dnl Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS(fcntl.h unistd.h getopt.h netinet/tcp.h netinet/in.h sys/param.h sys/types.h sys/time.h sys/sem.h sys/shm.h)
+AC_CHECK_HEADERS(fcntl.h unistd.h getopt.h netinet/tcp.h netinet/in.h netdb.h sys/param.h sys/types.h sys/socket.h sys/un.h sys/time.h sys/sem.h sys/shm.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_TYPE_PID_T
 AC_HEADER_TIME
+
+dnl Checks for sockaddr_storage structure, members and necessary types
+m4_include([ac_func_accept_argtypes.m4])
+AC_CHECK_TYPES([struct sockaddr_storage], [], [],
+[#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+])
+AC_CHECK_MEMBERS([struct sockaddr_storage.ss_family,
+                  struct sockaddr_storage.__ss_family,
+                  struct sockaddr_storage.ss_len,
+                  struct sockaddr_storage.__ss_len,
+                  struct sockaddr.sa_len], [], [],
+[#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+])
+
 AC_CHECK_TYPES([union semun],[],[],[#include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>])
@@ -41,7 +61,8 @@ dnl Checks for library functions.
 AC_TYPE_SIGNAL
 AC_FUNC_VPRINTF
 AC_FUNC_WAIT3
-AC_CHECK_FUNCS(setsid select socket sigprocmask strdup strerror strftime strtok asprintf)
+AC_FUNC_ACCEPT_ARGTYPES
+AC_CHECK_FUNCS(setsid select socket sigprocmask strdup strerror strftime strtok asprintf gai_strerror hstrerror)
 
 dnl Checks for pg_config command.
 AC_CHECK_PROGS(PGCONFIG, pg_config)
@@ -89,6 +110,16 @@ AC_ARG_WITH(pgsql-libdir,
 	esac
 	PGSQL_LIB_DIR="$withval"
     ])
+
+AC_ARG_WITH(pam,
+    [  --with-pam     build with PAM support],
+    [AC_DEFINE([USE_PAM], 1, [Define to 1 to build with PAM support. (--with-pam)])])
+if test "$with_pam" = yes ; then
+   AC_CHECK_LIB(pam, pam_start, [], [AC_MSG_ERROR([library 'pam' is required for PAM])])
+   AC_CHECK_HEADERS(security/pam_appl.h, [],
+                    [AC_CHECK_HEADERS(pam/pam_appl.h, [],
+                                      [AC_MSG_ERROR([header file <security/pam_appl.h> or <pam/pam_appl.h> is required for PAM.])])])
+fi
 
 OLD_LDFLAGS="$LDFLAGS"
 LDFLAGS="-L$PGSQL_LIB_DIR"

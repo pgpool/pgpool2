@@ -7,15 +7,17 @@ pgpool_SOURCES = pool.h pool_type.h version.h pgpool.conf.sample \
 	pool_signal.h pool_signal.c pcp_child.c md5.c md5.h pcp.conf.sample \
 	pool_ipc.h pool_shmem.c pool_sema.c pool_system.c \
 	pool_rewrite_query.c pool_rewrite_query.h pool_rewrite_outfuncs.c \
-	pool_query_cache.c
+	pool_query_cache.c pool_hba.conf.sample pgpool.pam\
+	pool_hba.c pool_path.h pool_path.c pool_ip.h pool_ip.c pool_type.h \
+	ps_status.c strlcpy.c
 
 pg_md5_SOURCES = pg_md5.c md5.c md5.h
 
 DEFS = @DEFS@ \
 	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\"
 
-sysconf_DATA = pgpool.conf.sample pcp.conf.sample
-data_DATA = sql/system_db.sql
+sysconf_DATA = pgpool.conf.sample pcp.conf.sample pool_hba.conf.sample
+data_DATA = sql/system_db.sql sample/pgpool.pam
 
 AM_CPPFLAGS = -Wall -Wmissing-prototypes -Wmissing-declarations -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
 
@@ -34,9 +36,8 @@ pgpool.8: pgpool.8.in
 	sed 's,@sysconfdir\@,$(sysconfdir),g' $? >$@
 
 CLEANFILES = pgpool.8
-EXTRA_DIST = pgpool.8.in sql/system_db.sql doc/pgpool-ja.html doc/pgpool-en.html \
+EXTRA_DIST = pgpool.8.in sql/system_db.sql sample/pgpool.pam doc/pgpool-ja.html doc/pgpool-en.html \
 		doc/tutorial-ja.html doc/tutorial-en.html doc/pgpool.css \
 		sample/dist_def_pgbench.sql
 
 SUBDIRS = parser pcp
-

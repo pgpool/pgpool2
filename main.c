@@ -101,6 +101,9 @@ POOL_REQUEST_INFO *Req_info;		/* request info area in shared memory */
 
 int my_proc_id;
 
+int myargc;
+char **myargv;
+
 /*
 * pgpool main program
 */
@@ -108,6 +111,7 @@ int main(int argc, char **argv)
 {
 	int opt;
 	char conf_file[POOLMAXPATHLEN+1];
+	char hba_file[POOLMAXPATHLEN+1];
 	int i;
 	int pid;
 	int size;
@@ -115,13 +119,26 @@ int main(int argc, char **argv)
 	int retrycnt;
 	int sys_retrycnt;
 
+	myargc = argc;
+	myargv = argv;
+
 	snprintf(conf_file, sizeof(conf_file), "%s/%s", DEFAULT_CONFIGDIR, POOL_CONF_FILE_NAME);
 	snprintf(pcp_conf_file, sizeof(pcp_conf_file), "%s/%s", DEFAULT_CONFIGDIR, PCP_PASSWD_FILE_NAME);
+	snprintf(hba_file, sizeof(hba_file), "%s/%s", DEFAULT_CONFIGDIR, HBA_CONF_FILE_NAME);
 
-	while ((opt = getopt(argc, argv, "cdf:F:hm:n")) != -1)
+	while ((opt = getopt(argc, argv, "a:cdf:F:hm:n")) != -1)
 	{
 		switch (opt)
 		{
+			case 'a':    /* specify hba configuration file */
+				if (!optarg)
+				{
+					usage();
+					exit(1);
+				}
+				strncpy(hba_file, optarg, sizeof(hba_file));
+				break;
+
 			case 'c':			/* clear cache option */
 				clear_cache = 1;
 				break;
@@ -187,6 +204,9 @@ int main(int argc, char **argv)
 		pool_error("Unable to get configuration. Exiting...");
 		exit(1);
 	}
+
+	if (pool_config->enable_pool_hba)
+		load_hba(hba_file);
 
 	/*
 	 * if a non-switch argument remains, then it should be either "stop" or "switch"
@@ -469,11 +489,12 @@ static void usage(void)
 {
 	fprintf(stderr, "%s version %s(%s),\n",	PACKAGE, VERSION, PGPOOLVERSION);
 	fprintf(stderr, "  a generic connection pool/replication/load balance server for PostgreSQL\n\n");
-	fprintf(stderr, "usage: pgpool [-c][-f config_file][-F pcp_config_file][-n][-d]\n");
-	fprintf(stderr, "usage: pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] stop\n");
+	fprintf(stderr, "usage: pgpool [-c][-f config_file][-F pcp_config_file][-a hba_file][-n][-d]\n");
+	fprintf(stderr, "usage: pgpool [-f config_file][-F pcp_config_file][-a hba_file] [-m {s[mart]|f[ast]|i[mmediate]}] stop\n");
 	fprintf(stderr, "usage: pgpool -h\n");
 	fprintf(stderr, "  config_file default path: %s/%s\n",DEFAULT_CONFIGDIR, POOL_CONF_FILE_NAME);
 	fprintf(stderr, "  pcp_config_file default path: %s/%s\n", DEFAULT_CONFIGDIR, PCP_PASSWD_FILE_NAME);
+	fprintf(stderr, "  hba_file default path:    %s/%s\n",DEFAULT_CONFIGDIR, HBA_CONF_FILE_NAME);
 	fprintf(stderr, "  -c: clears query cache. enable_query_cache must be on\n");
 	fprintf(stderr, "  -n: don't run in daemon mode. does not detatch control tty\n");
 	fprintf(stderr, "  -d: debug mode. lots of debug information will be printed\n");
@@ -620,6 +641,8 @@ pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 
 	if (pid == 0)
 	{
+		myargv = save_ps_display_args(myargc, myargv);
+
 		/* call PCP child main */
 		POOL_SETMASK(&UnBlockSig);
 		pcp_do_child(unix_fd, inet_fd, pcp_conf_file);
@@ -643,6 +666,8 @@ pid_t fork_a_child(int unix_fd, int inet_fd, int id)
 
 	if (pid == 0)
 	{
+		myargv = save_ps_display_args(myargc, myargv);
+
 		/* call child main */
 		POOL_SETMASK(&UnBlockSig);
 		my_proc_id = id;

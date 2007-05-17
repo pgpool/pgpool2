@@ -7,12 +7,10 @@
 </head>
 <body>
 
-<!-- hhmts start -->
-<!--Last modified: Mon Aug 28 22:47:51 JST 2006-->
-<!-- hhmts end -->
+<!-- hhmts start -->Last modified: Thu May 17 14:39:41 JST 2007 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
-<a name"top"></a>
+<a name="top"></a>
 <table border="0" cellpadding="2" cellspacing="1">
   <tr>
 
@@ -45,7 +43,7 @@
 	
 
 
-<h1>pgpool-II$B$H$O(B<a name="whatis"></h1>
+<h1>pgpool-II$B$H$O(B<a name="whatis"></a></h1>
 <p>
 pgpool-II$B$O(BPostgreSQL$B@lMQ$N%_%I%k%&%'%"$G!$(BPostgreSQL$B$N%G!<%?%Y!<%9%/%i(B
 $B%$%"%s%H$H(BPostgreSQL$B%5!<%P$N4V$K3d$j9~$`7A$GF0:n$7!$(BPostgrSQL$B$K0J2<$N$h(B
@@ -110,7 +108,7 @@ pgpool-II$B$O(BPostgreSQL$B%P%C%/%(%s%I$H%U%m%s%H%(%s%I$NDL?.%W%m%H%3%k$rM}2r
 $B$K$[$H$s$I<j$r2C$($k$3$H$J$/!$(Bpgpool-II$B$N5!G=$,MxMQ$G$-$^$9!%(B
 </p>
 
-<h1>pgpool-II$B$N2TF/4D6-(B<a name="platform"></h1>
+<h1>pgpool-II$B$N2TF/4D6-(B<a name="platform"></a></h1>
 <p>
 pgpool-II$B$O!$(BLinux$B$r$O$8$a!$(BSolaris$B$d(BFreeBSD$B$J$I$N$[$H$s$I$N(BUNIX$B4D6-$GF0:n(B
 $B$7$^$9!%(BWindows$B$G$OF0$-$^$;$s!%BP1~$9$k(BPostgreSQL$B$N%P!<%8%g%s$O!$(B
@@ -118,7 +116,7 @@ PostgreSQL$B$N(B6.4$B0J9_$G$9!%$?$@$7%Q%i%l%k%/%(%j%b!<%I$r;HMQ$9$k$H$-$O(B
 PostgreSQL 7.4$B0J9_$r$*;H$$$/$@$5$$!%(B
 </p>
 
-<h1>pgpool-II$B$N%$%s%9%H!<%k(B<a name="install"></h1>
+<h1>pgpool-II$B$N%$%s%9%H!<%k(B<a name="install"></a></h1>
 <p>
 pgpool-II$B$N%$%s%9%H!<%k$K$O!$(Bgcc 2.9$B0J>e!$$*$h$S(BGNU make$B$,I,MW$G$9!%(B
 $B$^$?!$(Bpgpool-II$B$O(Blibpq$B$r;HMQ$9$k$N$G!$%S%k%I$r9T$&%^%7%s>e$K(Blibpq$B$,%$%s%9%H!<(B
@@ -158,7 +156,7 @@ make install
 make$B$r(Bgmake$B$KFI$_BX$($F$/$@$5$$(B)$B!%(B
 </dl>
 
-<h1>pgpool-II$B$N@_Dj(B<a name="config"></h1>
+<h1>pgpool-II$B$N@_Dj(B<a name="config"></a></h1>
 <p>
 pgpool-II$B$N@_Dj%U%!%$%k$O%G%U%)%k%H$G$O(B/usr/local/etc/pgpool.conf$B$*$h$S(B
 /usr/local/etc/pcp.conf$B$G$9!%(Bpgpool-II$B$OF0:n%b!<%I$K$h$C$F;HMQ$G$-$k5!G=$H!$(B
@@ -445,6 +443,28 @@ prefork$B$9$k(Bpgpool-II$B$N%5!<%P%W%m%;%9$N?t$G$9!%%G%U%)%k%HCM$O(B32$B$K$
    true$B$J$i$P(BSQL$BJ8$r%m%0=PNO$7$^$9!%$3$NLrL\$O(BPostgreSQL$B$N(B
    log_statement$B%*%W%7%g%s$H;w$F$$$F!$%G%P%C%0%*%W%7%g%s$,$J$$$H$-$G$b(B
    $BLd$$9g$o$;$r%m%0=PNO$7$FD4$Y$k$3$H$,$G$-$k$N$GJXMx$G$9!%(B
+</p>
+
+<dt>log_hostname
+<dd>
+<p>
+   true$B$J$i$P!$(Bps$B%3%^%s%I$G$N>uBVI=<(;~$K(BIP$B%"%I%l%9$G$O$J$/!$%[%9%HL>(B
+   $B$rI=<($7$^$9!%$^$?!$(Blog_connections$B$,M-8z$J>l9g$K$O%m%0$K%[%9%HL>$r(B
+   $B=PNO$7$^$9!%(B
+</p>
+
+<dt>log_connections
+<dd>
+<p>
+   true$B$J$i$P!"A4$F$N%/%i%$%"%s%H@\B3$r%m%0$X=PNO$7$^$9!#(B
+</p>
+
+<dt>enable_pool_hba
+<dd>
+<p>
+   true$B$J$i$P!"(Bpool_hba.conf$B$K=>$C$F%/%i%$%"%s%HG'>Z$r9T$$$^$9!#(B
+   $B>\:Y$O(B<a href="#hba">$B%/%i%$%"%s%HG'>Z(B(HBA)$B$N$?$a$N(Bpool_hba.conf$B@_Dj(B
+   $BJ}K!(B</a>$B$r;2>H$7$F$/$@$5$$!#(B
 </p>
 
 <dt>backend_hostname
@@ -879,7 +899,89 @@ CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_tellers (val ANYELEMENT) RETU
   END' LANGUAGE SQL;
 </pre>
 
-<h1>pgpool-II$B$N5/F0$HDd;_(B<a name="start"></h1>
+<h2><a name="hba"></a>$B%/%i%$%"%s%HG'>Z(B(HBA)$B$N$?$a$N(B pool_hba.conf $B@_DjJ}K!(B</h2>
+<p>
+   PostgreSQL$B$N(Bpg_hba.conf$B$HF1$8$h$&$K(Bpgpool$B$G$b(Bpool_config.conf$B%U%!%$(B
+   $B%k$r;H$C$?%/%i%$%"%s%HG'>Z$,%5%]!<%H$5$l$F$$$^$9!#(B
+</p>
+<p>
+   pgpool$B$r%$%s%9%H!<%k$9$k$H%G%U%)%k%H%$%s%9%H!<%k@h$N@_Dj%U%!%$%k%G%#(B
+   $B%l%/%H%j(B"/usr/local/etc"$B$K(Bpool_hba.conf.sample$B$,0l=o$K%$%s%9%H!<%k(B
+   $B$5$l$^$9!#$3$N(Bpool_hba.conf.sample$B%U%!%$%k$r(Bpool_hba.conf$B$H$7$F%3%T!<(B
+   $B$7!"I,MW$G$"$l$PJT=8$7$F$/$@$5$$!#%G%U%)%k%H$G$O(Bpool_hba$B$K$h$kG'>Z$OM-(B
+   $B8z$K$J$C$F$$$^$9!#(B
+</p>
+<p>
+   pool_hba.conf$B$N%U%)!<%^%C%H$O(Bpg_hba.conf$B$N$b$N$H$[$H$s$IF1$8$G$9!#(B
+</p>
+<pre>
+     local      DATABASE  USER  METHOD  [OPTION]
+     host       DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTION]
+</pre>
+<p>
+   $B3F%U%#!<%k%I$G@_Dj$G$-$kCM$N>\:Y$O(B"pool_hba.conf.sample"$B$r;2>H$7$F(B
+   $B$/$@$5$$!#(B
+</p>
+<p>
+   $B0J2<$O(Bpool_hba$B$N@)8B;v9`$G$9!#(B
+
+<ul>
+<li>"hostssl"$B@\B3%?%$%W$O%5%]!<%H$5$l$^$;$s(B</li>
+<p>
+     $B8=:_(Bpgpool$B$O(BSSL$B@\B3$r%5%]!<%H$7$F$$$J$$$N$G(B"hostssl"$B$O;XDj$9$k$3(B
+     $B$H$,$G$-$^$;$s!#(B
+</p>
+<li>DATABASE$B%U%#!<%k%ICM$H$7$F(B"samegroup"$B$O%5%]!<%H$5$l$^$;$s(B</li>
+<p>
+     pgpool$B$O%P%C%/%(%s%I%5!<%P$K$"$k%f!<%6>pJs$r;vA0$KCN$k;v$,$G$-$J(B
+     $B$$$?$a!"%G!<%?%Y!<%9L>$O(Bpool_hba.conf$B$K$"$kCM$N$_$HHf3S$5$l$^$9!#(B
+     $B$J$N$G%0%k!<%W$K4X$9$kG'>Z$O(Bpool_hba$B$G9T$&$3$H$,$G$-$^$;$s!#(B
+</p>
+<li>USER$B%U%#!<%k%ICM$H$7$F(B"+"$B$r;H$C$?%0%k!<%W;XDj$O%5%]!<%H$5$l$^$;$s(B</li>
+<p>
+     $B>e5-$N(B"samegroup"$B$HF1$8M}M3$G!"%f!<%6L>$O(Bpool_hba.conf$B$K$"$kCM$N(B
+     $B$_$HHf3S$5$l$^$9!#%0%k!<%W$K4X$9$kG'>Z$O(Bpool_hba$B$G9T$&$3$H$O$G$-(B
+     $B$^$;$s!#(B
+</p>
+<li>IPv6$B%"%I%l%9(B/$B%^%9%/I=5-K!$O%5%]!<%H$5$l$^$;$s(B</li>
+<p>
+     $B8=:_(Bpgpool$B$O(BIPv6$B$r%5%]!<%H$7$F$$$^$;$s!#(B
+</p>
+<li>"trust", "reject", "pam"$B0J30$N%a%=%C%I$O%5%]!<%H$5$l$^$;$s(B</li>
+<p>
+     $B$3$l$b>e5-$N(B"samegroup"$B$HF1$8M}M3$K$h$k$b$N$G$9!#(Bpgpool$B$O%P%C%/%((B
+     $B%s%I$N%f!<%6(B/$B%Q%9%o!<%I>pJs$r;}$C$F$$$J$$$N$G!"%P%C%/%(%s%I$KJ]B8(B
+     $B$5$l$F$$$k%Q%9%o!<%I$r;H$C$?G'>Z$r9T$&$3$H$,$G$-$^$;$s!#(B
+</p>
+</ul>
+</p>
+<p>
+   $B$3$3$G@bL@$5$l$?5!G=!"@)8B$O%/%i%$%"%s%H$H(Bpgpool$B4V$G9T$o$l$k%/%i%$(B
+   $B%"%s%HG'>Z$K$D$$$F$@$H$$$&$3$H$KCm0U$7$F$/$@$5$$!#%/%i%$%s%"%s%H$O(B
+   pgpool$B$N%/%i%$%"%s%HG'>Z$K@.8y$7$?$H$7$F$b!"(BPostgreSQL$B$K$h$k%/%i%$(B
+   $B%"%s%HG'>Z$K@.8y$7$J$$$H@\B3>uBV$H$J$j$^$;$s!#(Bpool_hba$B$K$H$C$F$O%/(B
+   $B%i%$%"%s%H$K;XDj$5$l$?%f!<%6L>$d%G!<%?%Y!<%9L>(B
+   ($BNc(B. psql -U testuser testdb)$B$,<B:]$K%P%C%/%(%s%I>e$KB8:_$9$k$+$I$&(B
+   $B$+$OLdBj$G$O$"$j$^$;$s!#$=$l$,(Bpool_hba.conf$B$NCM$H%^%C%A$9$k$+$I$&$+(B
+   $B$G%A%'%C%/$,9T$o$l$^$9!#(B
+</p>
+<p>
+   pgpool$B$,2TF/$9$k%[%9%H>e$N%f!<%6>pJs$r;H$C$?(BPAM$BG'>Z$rMxMQ$9$k$3$H$,(B
+   $B$G$-$^$9!#(Bpgpool$B$r(BPAM$B%5%]!<%HIU$-$G%S%k%I$9$k$K$O(Bconfigure$B%*%W%7%g(B
+   $B%s$K(B"--with-pam"$B$r;XDj$7$F$/$@$5$$!#(B
+</p>
+<pre>
+     ./configure --with-pam
+</pre>
+<p>
+   $B<B:]$K(BPAM$BG'>Z$rM-8z$K$9$k$K$O!"(Bpool_hba.conf$B$G(B"pam"$B%a%=%C%I$r@_Dj$9(B
+   $B$k$N$K2C$(!"(Bpgpool$B$N%5!<%S%9@_Dj%U%!%$%k$r%7%9%F%`$N(BPAM$B@_Dj%G%#%l%/%H(B
+   $B%j!JDL>o$O(B /etc/pam.d $B$K:n@.$9$kI,MW$,$"$j$^$9!#%5!<%S%9@_Dj%U%!%$(B
+   $B%k$NNc$O%$%s%9%H!<%k%G%#%l%/%H%j$N(B"share/pgpool.pam"$B$r;29M$K$7$F$/(B
+   $B$@$5$$!#(B
+</p>
+
+<h1>pgpool-II$B$N5/F0$HDd;_(B<a name="start"></a></h1>
 <p>
 $B0J>e$G@_Dj$,=*$o$C$?$N$G!$3F(BDB$B%N!<%I$r5/F0$7!$I,MW$J$i$P%7%9%F%`(BDB$B$b5/F0(B
 $B$7$F$+$i(Bpgpool-II$B$r5/F0$7$^$9!%(B
@@ -909,7 +1011,7 @@ pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] st
 </table>
 </p>
 
-<h1>$B@)8B;v9`(B<a name="restriction"></h1>
+<h1>$B@)8B;v9`(B<a name="restriction"></a></h1>
 <p>
 <h2>$BG'>Z!&%"%/%;%9@)8fJ}<0(B</h2>
 <p>
@@ -1159,7 +1261,7 @@ pgpool $B$N>l9g(B /*STRICT*/ $B$J$I!"(Bpgpool $B$r@)8f$9$kFC<l$J%3%a%s%H$r=
 
 </p>
 
-<h1>$B%j%U%!%l%s%9(B<a name="reference"></h1>
+<h1>$B%j%U%!%l%s%9(B<a name="reference"></a></h1>
 <h2>PCP$B%3%^%s%I%j%U%!%l%s%9(B</h2>
 
 <h3>PCP$B%3%^%s%I0lMw(B</h3>
@@ -1405,7 +1507,7 @@ pgpool $B$N>l9g(B /*STRICT*/ $B$J$I!"(Bpgpool $B$r@)8f$9$kFC<l$J%3%a%s%H$r=
 </pre>
 </p>
 
-<h1>$BFbIt>pJs(B<a name="internal"></h1>
+<h1>$BFbIt>pJs(B<a name="internal"></a></h1>
 
 <h2>$B%Q%i%l%k<B9T%(%s%8%s(B</h2>
 <p>
@@ -1762,7 +1864,7 @@ count(*) $B$r;H$C$?%/%(%j$O!"0J2<$N$h$&$K=q$-49$($,9T$o$l$^$9!#(B
 $B%C%/%(%s%I$G$N<B9T7k2L$r$=$N$^$^%U%m%s%H%(%s%I$KJV5Q$7$^$9!#(B
 </p>
 
-<h1>$B%j%j!<%9%N!<%H(B<a name="release"></h1>
+<h1>$B%j%j!<%9%N!<%H(B<a name="release"></a></h1>
 
 <h2>1.0.2 (suboshi) 2007/02/13</h2>
 <ul>

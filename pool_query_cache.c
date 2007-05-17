@@ -545,7 +545,7 @@ static int ForwardCacheToFrontend(POOL_CONNECTION *frontend, char *cache, char t
 	int sendlen;
 	char *binary_cache = NULL;
 
-	binary_cache = PQunescapeBytea(cache, &sendlen);
+	binary_cache = (char *)PQunescapeBytea((unsigned char *)cache, (unsigned int *)&sendlen);
 	if (malloc_failed(binary_cache))
 		return -1;
 

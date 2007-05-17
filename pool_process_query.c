@@ -171,6 +171,8 @@ static POOL_STATUS read_kind_from_one_backend(POOL_CONNECTION *frontend, POOL_CO
 static POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *kind);
 static POOL_STATUS ParallelForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *database, bool send_to_frontend);
 
+static void query_ps_status(char *query, POOL_CONNECTION_POOL *backend);		/* show ps status */
+
 static int is_select_pgcatalog = 0;
 static int is_select_for_update = 0; /* also for SELECT ... INTO */
 static char *parsed_query = NULL;
@@ -767,6 +769,9 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		string = query;
 	}
 
+	/* show ps status */
+	query_ps_status(string, backend);
+
 	/* log query to log file if neccessary */
 	if (pool_config->log_statement)
 	{
@@ -877,8 +882,18 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		/* process status reporting? */
 		if (strncasecmp(sq, string, strlen(sq)) == 0)
 		{
+			StartupPacket *sp;
+			char psbuf[1024];
+
 			pool_debug("process reporting");
 			process_reporting(frontend, backend);
+
+			/* show ps status */
+			sp = MASTER_CONNECTION(backend)->sp;
+			snprintf(psbuf, sizeof(psbuf), "%s %s %s idle",
+					 sp->user, sp->database, remote_ps_data);
+			set_ps_display(psbuf, false);
+
 			free_parser();
 			return POOL_CONTINUE;
 		}
@@ -1214,6 +1229,8 @@ static POOL_STATUS Sync(POOL_CONNECTION *frontend,
 static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend, 
 								 POOL_CONNECTION_POOL *backend, int send_ready)
 {
+	StartupPacket *sp;
+	char psbuf[1024];
 	int i;
 
 	/* if a transaction is started for insert lock, we need to close it. */
@@ -1305,6 +1322,16 @@ static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 #ifdef NOT_USED
 	return ProcessFrontendResponse(frontend, backend);
 #endif
+
+	sp = MASTER_CONNECTION(backend)->sp;
+	if (MASTER(backend)->tstate == 'T')
+		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle in transaction", 
+				 sp->user, sp->database, remote_ps_data);
+	else
+		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle", 
+				 sp->user, sp->database, remote_ps_data);
+	set_ps_display(psbuf, false);
+
 	return POOL_CONTINUE;
 }
 
@@ -2646,6 +2673,21 @@ static void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *b
 	strncpy(status[i].name, "log_statement", MAXNAMELEN);
 	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->log_statement);
 	strncpy(status[i].desc, "if non 0, logs all SQL statements", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "log_connections", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->log_connections);
+	strncpy(status[i].desc, "if true, print incoming connections to the log", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "log_hostname", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->log_hostname);
+	strncpy(status[i].desc, "if true, resolve hostname for ps and log print", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "enable_pool_hba", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->enable_pool_hba);
+	strncpy(status[i].desc, "if true, use pool_hba.conf for client authentication", MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "parallel_mode", MAXNAMELEN);
@@ -4450,4 +4492,33 @@ query_cache_register(char kind, POOL_CONNECTION *frontend, char *database, char 
 			parsed_query = NULL;
 		}
 	}
+}
+
+static void query_ps_status(char *query, POOL_CONNECTION_POOL *backend)
+{
+	StartupPacket *sp;
+	char psbuf[1024];
+	int i;
+
+	if (*query == '\0')
+		return;
+
+	sp = MASTER_CONNECTION(backend)->sp;
+	i = snprintf(psbuf, sizeof(psbuf), "%s %s %s ",
+				 sp->user, sp->database, remote_ps_data);
+
+	/* skip spaces */
+	while (*query && isspace(*query))
+		query++;
+
+	for (; i< sizeof(psbuf); i++)
+	{
+		if (!*query || isspace(*query))
+			break;
+
+		psbuf[i] = toupper(*query++);
+	}
+	psbuf[i] = '\0';
+
+	set_ps_display(psbuf, false);
 }

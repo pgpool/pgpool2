@@ -1,26 +1,7 @@
 #ifndef POOL_PARSER_H
 #define POOL_PARSER_H
 
-/* bool */
-#ifndef bool
-typedef char bool;
-#endif
-
-#ifndef false
-#define false ((bool) 0)
-#endif
-
-#ifndef true
-#define true ((bool) 1)
-#endif
-
-#ifndef FALSE
-#define FALSE ((bool) 0)
-#endif
-
-#ifndef TRUE
-#define TRUE ((bool) 1)
-#endif
+#include "../pool_type.h"
 
 /* integer */
 typedef signed int int32;
