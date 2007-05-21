@@ -1,3 +1,20 @@
+1.1 (amiboshi) 2007/5/25
+      * Version 1.1
+      * Support HBA authentication(Taiki)
+      * Support log_connections(Taiki)
+      * Support log_hostname(Taiki)
+      * Show pgpool status in ps command(Taiki)
+      * Fix compile error on MacOS X(Yoshiyuki)
+      * Allow load balancing with extended protocol(Yoshiyuki)
+      * Improve replication. SELECT nextval() and SELECT setval() are
+        now replicated. (Yoshiyuki)
+      * Change SELECT query is only sent to the master node. (Yoshiyuki)
+	  - Use /*REPLICATION*/ comment to repliate a SELECT query.
+      * Fix unexpected failover error due to receiving an interrupt
+        signal while connecting to the backend. (Yoshiyuki)
+      * Add "pgpool.pam" file, for PAM configuration file, to be
+        installed under "$PREFIX/share/". (Taiki)
+
 1.0.2 (suboshi) 2007/02/12
       * Version 1.0.2
       * Fix bug when executing large SQL to prevent pgpool goes into
