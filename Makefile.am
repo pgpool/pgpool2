@@ -17,7 +17,7 @@ DEFS = @DEFS@ \
 	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\"
 
 sysconf_DATA = pgpool.conf.sample pcp.conf.sample pool_hba.conf.sample
-data_DATA = sql/system_db.sql sample/pgpool.pam
+pkgdata_DATA = sql/system_db.sql sample/pgpool.pam
 
 AM_CPPFLAGS = -Wall -Wmissing-prototypes -Wmissing-declarations -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
 

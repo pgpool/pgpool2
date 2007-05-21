@@ -55,7 +55,7 @@ mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man8dir)" \
-	"$(DESTDIR)$(datadir)" "$(DESTDIR)$(sysconfdir)"
+	"$(DESTDIR)$(pkgdatadir)" "$(DESTDIR)$(sysconfdir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_pg_md5_OBJECTS = pg_md5.$(OBJEXT) md5.$(OBJEXT)
@@ -104,9 +104,9 @@ am__vpath_adj = case $$p in \
     *) f=$$p;; \
   esac;
 am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
-dataDATA_INSTALL = $(INSTALL_DATA)
+pkgdataDATA_INSTALL = $(INSTALL_DATA)
 sysconfDATA_INSTALL = $(INSTALL_DATA)
-DATA = $(data_DATA) $(sysconf_DATA)
+DATA = $(pkgdata_DATA) $(sysconf_DATA)
 ETAGS = etags
 CTAGS = ctags
 DIST_SUBDIRS = $(SUBDIRS)
@@ -247,7 +247,7 @@ pgpool_SOURCES = pool.h pool_type.h version.h pgpool.conf.sample \
 
 pg_md5_SOURCES = pg_md5.c md5.c md5.h
 sysconf_DATA = pgpool.conf.sample pcp.conf.sample pool_hba.conf.sample
-data_DATA = sql/system_db.sql sample/pgpool.pam
+pkgdata_DATA = sql/system_db.sql sample/pgpool.pam
 AM_CPPFLAGS = -Wall -Wmissing-prototypes -Wmissing-declarations -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
 pgpool_LDADD = -L@PGSQL_LIB_DIR@ -lpq parser/libsql-parser.a pcp/libpcp.la parser/nodes.o
 @enable_rpath_FALSE@pgpool_LDFLAGS = 
@@ -461,22 +461,22 @@ uninstall-man8:
 	  echo " rm -f '$(DESTDIR)$(man8dir)/$$inst'"; \
 	  rm -f "$(DESTDIR)$(man8dir)/$$inst"; \
 	done
-install-dataDATA: $(data_DATA)
+install-pkgdataDATA: $(pkgdata_DATA)
 	@$(NORMAL_INSTALL)
-	test -z "$(datadir)" || $(mkdir_p) "$(DESTDIR)$(datadir)"
-	@list='$(data_DATA)'; for p in $$list; do \
+	test -z "$(pkgdatadir)" || $(mkdir_p) "$(DESTDIR)$(pkgdatadir)"
+	@list='$(pkgdata_DATA)'; for p in $$list; do \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
 	  f=$(am__strip_dir) \
-	  echo " $(dataDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(datadir)/$$f'"; \
-	  $(dataDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(datadir)/$$f"; \
+	  echo " $(pkgdataDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(pkgdatadir)/$$f'"; \
+	  $(pkgdataDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(pkgdatadir)/$$f"; \
 	done
 
-uninstall-dataDATA:
+uninstall-pkgdataDATA:
 	@$(NORMAL_UNINSTALL)
-	@list='$(data_DATA)'; for p in $$list; do \
+	@list='$(pkgdata_DATA)'; for p in $$list; do \
 	  f=$(am__strip_dir) \
-	  echo " rm -f '$(DESTDIR)$(datadir)/$$f'"; \
-	  rm -f "$(DESTDIR)$(datadir)/$$f"; \
+	  echo " rm -f '$(DESTDIR)$(pkgdatadir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(pkgdatadir)/$$f"; \
 	done
 install-sysconfDATA: $(sysconf_DATA)
 	@$(NORMAL_INSTALL)
@@ -775,7 +775,7 @@ check: check-recursive
 all-am: Makefile $(PROGRAMS) $(MANS) $(DATA) config.h
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man8dir)" "$(DESTDIR)$(datadir)" "$(DESTDIR)$(sysconfdir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man8dir)" "$(DESTDIR)$(pkgdatadir)" "$(DESTDIR)$(sysconfdir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
 	done
 install: install-recursive
@@ -825,7 +825,7 @@ info: info-recursive
 
 info-am:
 
-install-data-am: install-dataDATA install-man
+install-data-am: install-man install-pkgdataDATA
 
 install-exec-am: install-binPROGRAMS install-sysconfDATA
 
@@ -855,8 +855,8 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-dataDATA \
-	uninstall-info-am uninstall-man uninstall-sysconfDATA
+uninstall-am: uninstall-binPROGRAMS uninstall-info-am uninstall-man \
+	uninstall-pkgdataDATA uninstall-sysconfDATA
 
 uninstall-info: uninstall-info-recursive
 
@@ -870,16 +870,16 @@ uninstall-man: uninstall-man8
 	distclean-libtool distclean-recursive distclean-tags \
 	distcleancheck distdir distuninstallcheck dvi dvi-am html \
 	html-am info info-am install install-am install-binPROGRAMS \
-	install-data install-data-am install-dataDATA install-exec \
-	install-exec-am install-info install-info-am install-man \
-	install-man8 install-strip install-sysconfDATA installcheck \
-	installcheck-am installdirs installdirs-am maintainer-clean \
-	maintainer-clean-generic maintainer-clean-recursive \
-	mostlyclean mostlyclean-compile mostlyclean-generic \
-	mostlyclean-libtool mostlyclean-recursive pdf pdf-am ps ps-am \
-	tags tags-recursive uninstall uninstall-am \
-	uninstall-binPROGRAMS uninstall-dataDATA uninstall-info-am \
-	uninstall-man uninstall-man8 uninstall-sysconfDATA
+	install-data install-data-am install-exec install-exec-am \
+	install-info install-info-am install-man install-man8 \
+	install-pkgdataDATA install-strip install-sysconfDATA \
+	installcheck installcheck-am installdirs installdirs-am \
+	maintainer-clean maintainer-clean-generic \
+	maintainer-clean-recursive mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool mostlyclean-recursive \
+	pdf pdf-am ps ps-am tags tags-recursive uninstall uninstall-am \
+	uninstall-binPROGRAMS uninstall-info-am uninstall-man \
+	uninstall-man8 uninstall-pkgdataDATA uninstall-sysconfDATA
 
 
 pgpool.8: pgpool.8.in
