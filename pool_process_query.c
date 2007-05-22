@@ -3272,8 +3272,13 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 		}
 	}
 
-	if (len <= 0)
+	if (len == 0)
 		return POOL_CONTINUE;
+	else if (len < 0)
+	{
+		pool_error("SimpleForwardToBackend: invalid message length");
+		return POOL_END;
+	}
 
 	p = pool_read2(frontend, len);
 	if (p == NULL)
