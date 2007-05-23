@@ -5,7 +5,7 @@
 	* Support log_hostname
 	* Support "ps" status display
 	* sample/pgpool.pam: PAM service configuration file. It will be
-	  installed to "$PREFIX/share/"
+	  installed to "$PREFIX/share/pgpool-II/"
 	* doc/pgpool-ja.html: Added pool_hba description.
 	* doc/pgpool-en.html: Added pool_hba description.
 

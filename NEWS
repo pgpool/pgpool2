@@ -13,7 +13,7 @@
       * Fix unexpected failover error due to receiving an interrupt
         signal while connecting to the backend. (Yoshiyuki)
       * Add "pgpool.pam" file, for PAM configuration file, to be
-        installed under "$PREFIX/share/". (Taiki)
+        installed under "$PREFIX/share/pgpool-II/". (Taiki)
 
 1.0.2 (suboshi) 2007/02/12
       * Version 1.0.2
