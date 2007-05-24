@@ -204,7 +204,9 @@ void *pool_memory_realloc(POOL_MEMORY_POOL *pool, void *ptr, unsigned int size)
 		return ptr;
 
 	fidx = get_free_index(size + POOL_HEADER_SIZE);
-	if (fidx == get_free_index(chunk->header.size))
+	if (size + POOL_HEADER_SIZE <= MAX_SIZE &&
+		chunk->header.size <= MAX_SIZE &&
+		fidx == get_free_index(chunk->header.size))
 	{
 		return ptr;
 	}
