@@ -1,3 +1,7 @@
+2007-05-25  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* Version 1.1
+
 2007-05-24  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* parser/pool_memory.c: Fix core dump in pool_memory_realloc().
