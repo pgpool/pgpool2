@@ -690,14 +690,21 @@ load_balance_mode = true を設定した場合，以下の条件を満たした時に問い
 <li>PostgreSQLのバージョンが7.4以降
 <li>問い合わせが明示的なトランクザションブロックの内側にない(つまり，
        BEGINを発行していない)
-<li>SELECT 文
+<li>SELECT 文(ただし、SELECT nextval と SELECT setval の場合は除く)
 <li>SELECT INTO 文ではない
 <li>SELECT FOR UPDATE 文ではない
 <li>クエリ文字列が SELECT で始まる(ignore_leading_white_space = true
     の場合は空白は無視します)
 </ul>
 
-上記を満さない場合はすべてのバックエンドにクエリを送信します。
+上記を満さない場合は SELECT 以外のクエリをバックエンドに送信します。も
+し SELECT をレプリケーションさせたい場合は
+
+<pre>
+  /*REPLICATION*/ SELECT ...
+</pre>
+
+と、SELECT の前にコメントを付けてください。
 </p>
 
 <h4>レプリケーションモードにおける縮退運転について</h4>

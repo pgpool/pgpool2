@@ -674,6 +674,7 @@ For the query to be load balanced, all the requirements below
 	<li>PostgreSQL version 7.4 or later</li>
 	<li>the query must not be in the explicitly declared
 	    transaction (i.e. not in a BEGIN ~ END block)</li>
+    <li>it's not SELECT nextval or SELECT setval
     <li>it's not SELECT INTO
     <li>it's not SELECT FOR UPDATE
     <li>start with "SELECT" (ignore_leading_white_space = true will
