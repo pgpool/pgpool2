@@ -1428,7 +1428,7 @@ static int RowDescription(POOL_CONNECTION *frontend,
 		int j;
 
 		/* field name */
-		for (j=0;j<NUM_BACKENDS;i++)
+		for (j=0;j<NUM_BACKENDS;j++)
 		{
 			if (VALID_BACKEND(j))
 			{
@@ -1436,7 +1436,7 @@ static int RowDescription(POOL_CONNECTION *frontend,
 				if (string == NULL)
 					return POOL_END;
 
-				if (j == 0)
+				if (IS_MASTER_NODE_ID(j))
 				{
 					len1 = len;
 				}
@@ -1451,20 +1451,21 @@ static int RowDescription(POOL_CONNECTION *frontend,
 					}
 				}
 
-				pool_write(frontend, string, len);
+				if (IS_MASTER_NODE_ID(j))
+					pool_write(frontend, string, len);
 			}
 		}
 
 		/* type oid */
-		for (j=0;j<NUM_BACKENDS;i++)
+		for (j=0;j<NUM_BACKENDS;j++)
 		{
 			if (VALID_BACKEND(j))
 			{
-				pool_read(MASTER(backend), &oid, sizeof(int));
+				pool_read(CONNECTION(backend, j), &oid, sizeof(int));
 
 				pool_debug("RowDescription: type oid: %d", ntohl(oid));
 
-				if (j == 0)
+				if (IS_MASTER_NODE_ID(j))
 				{
 					oid1 = oid;
 				}
@@ -1482,13 +1483,13 @@ static int RowDescription(POOL_CONNECTION *frontend,
 		pool_write(frontend, &oid, sizeof(int));
 
 		/* size */
-		for (j=0;j<NUM_BACKENDS;i++)
+		for (j=0;j<NUM_BACKENDS;j++)
 		{
 			if (VALID_BACKEND(j))
 			{
-				pool_read(MASTER(backend), &size, sizeof(short));
+				pool_read(CONNECTION(backend, j), &size, sizeof(short));
 
-				if (j == 0)
+				if (IS_MASTER_NODE_ID(j))
 				{
 					size1 = size;
 				}
@@ -1507,15 +1508,15 @@ static int RowDescription(POOL_CONNECTION *frontend,
 		pool_write(frontend, &size, sizeof(short));
 
 		/* modifier */
-		for (j=0;j<NUM_BACKENDS;i++)
+		for (j=0;j<NUM_BACKENDS;j++)
 		{
 			if (VALID_BACKEND(j))
 			{
-				pool_read(MASTER(backend), &mod, sizeof(int));
+				pool_read(CONNECTION(backend, j), &mod, sizeof(int));
 
 				pool_debug("RowDescription: modifier: %d", ntohs(mod));
 
-				if (j == 0)
+				if (IS_MASTER_NODE_ID(j))
 				{
 					mod1 = mod;
 				}
@@ -1601,7 +1602,7 @@ static POOL_STATUS AsciiRow(POOL_CONNECTION *frontend,
 					if (pool_read(CONNECTION(backend, j), &size, sizeof(int)) < 0)
 						return POOL_END;
 				}
-				if (IS_MASTER_NODE_ID(i))
+				if (IS_MASTER_NODE_ID(j))
 				{
 					size1 = size;
 				}
@@ -1620,7 +1621,8 @@ static POOL_STATUS AsciiRow(POOL_CONNECTION *frontend,
 				buf = NULL;
 
 				/* forward to frontend */
-				pool_write(frontend, &size, sizeof(int));
+				if (IS_MASTER_NODE_ID(j))
+					pool_write(frontend, &size, sizeof(int));
 				size = ntohl(size) - 4;
 
 				/* read and send actual data only when size > 0 */
