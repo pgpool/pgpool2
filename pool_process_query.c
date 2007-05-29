@@ -1735,7 +1735,8 @@ static POOL_STATUS BinaryRow(POOL_CONNECTION *frontend,
 				buf = NULL;
 
 				/* forward to frontend */
-				pool_write(frontend, &size, sizeof(int));
+				if (IS_MASTER_NODE_ID(j))
+					pool_write(frontend, &size, sizeof(int));
 				size = ntohl(size) - 4;
 
 				/* read and send actual data only when size > 0 */
