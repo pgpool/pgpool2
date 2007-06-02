@@ -1136,7 +1136,7 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 	}
 
 	while ((kind = pool_read_kind(backend)),
-		   (kind != 'C' && kind != 'E' && kind != 'l' && kind != 's'))
+		   (kind != 'C' && kind != 'E' && kind != 'I' && kind != 's'))
 	{
 		if (kind < 0)
 		{
