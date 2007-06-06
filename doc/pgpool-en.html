@@ -6,7 +6,7 @@
 <title>pgpool-II README</title>
 </head>
 
-<!-- hhmts start -->Last modified: Thu May 17 14:40:43 JST 2007 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Wed Jun  6 17:29:52 JST 2007 <!-- hhmts end -->
 <body bgcolor="#ffffff">
 <a name="top"></a>
 <table border="0" cellpadding="2" cellspacing="1">
@@ -925,12 +925,13 @@ END' LANGUAGE SQL;
 before starting pgpool-II.
 
 <pre>
-pgpool [-c][-f config_file][-F pcp_config_file][-n][-d]
+pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-d]
 </pre>
 
 <table>
   <tr><td>-c</td><td>deletes query cache</tr>
   <tr><td>-f config_file</td><td>specifies pgpool.conf</tr>
+  <tr><td>-a hba_file</td><td>specifies pool_hba.conf</tr>
   <tr><td>-F pcp_config_file</td><td>specifies pcp.conf</tr>
   <tr><td>-n</td><td>no daemon mode (terminal is not detached)</tr>
   <tr><td>-d</td><td>debug mode</tr>

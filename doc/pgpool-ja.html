@@ -7,7 +7,7 @@
 </head>
 <body>
 
-<!-- hhmts start -->Last modified: Thu May 17 14:39:41 JST 2007 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Wed Jun  6 17:29:15 JST 2007 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
 <a name="top"></a>
@@ -993,12 +993,13 @@ CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_tellers (val ANYELEMENT) RETU
 以上で設定が終わったので，各DBノードを起動し，必要ならばシステムDBも起動
 してからpgpool-IIを起動します．
 <pre>
-pgpool [-c][-f config_file][-F pcp_config_file][-n][-d]
+pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-d]
 </pre>
 
 <table>
 <tr><td>-c</td><td>クエリキャッシュを消去します</tr>
 <tr><td>-f config_file</td><td>pgpool-IIの設定ファイルを指定します</tr>
+<tr><td>-a hba_file</td><td>HBA認証設定ファイルを指定します</tr>
 <tr><td>-F pcp_config_file</td><td>pcpの設定ファイルを指定します</tr>
 <tr><td>-n</td><td>デーモンモードで起動しません(制御端末を切り離しません</tr>
 <tr><td>-d</td><td>デバッグモードで起動します</tr>
