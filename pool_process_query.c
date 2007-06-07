@@ -1631,15 +1631,15 @@ static POOL_STATUS AsciiRow(POOL_CONNECTION *frontend,
 					buf = pool_read2(CONNECTION(backend, j), size);
 					if (buf == NULL)
 						return POOL_END;
+
+					if (IS_MASTER_NODE_ID(j))
+					{
+						pool_write(frontend, buf, size);
+						snprintf(msgbuf, Min(sizeof(msgbuf), size+1), "%s", buf);
+						pool_debug("AsciiRow: len: %d data: %s", size, msgbuf);
+					}
 				}
 			}
-		}
-
-		if (buf)
-		{
-			pool_write(frontend, buf, size);
-			snprintf(msgbuf, Min(sizeof(msgbuf), size+1), "%s", buf);
-			pool_debug("AsciiRow: len: %d data: %s", size, msgbuf);
 		}
 
 		mask >>= 1;
@@ -1745,10 +1745,13 @@ static POOL_STATUS BinaryRow(POOL_CONNECTION *frontend,
 					buf = pool_read2(MASTER(backend), size);
 					if (buf == NULL)
 						return POOL_END;
+
+					if (IS_MASTER_NODE_ID(j))
+					{
+						pool_write(frontend, buf, size);
+					}
 				}
 			}
-			if (buf)
-				pool_write(frontend, buf, size);
 
 			mask >>= 1;
 		}
