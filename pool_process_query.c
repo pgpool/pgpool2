@@ -976,6 +976,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		}
 		else if (REPLICATION && is_select_query(node1, string1) && !is_sequence_query(node1))
 		{
+			selected_slot = MASTER_NODE_ID;
 			replication_was_enabled = 1;
 			REPLICATION = 0;
 			LOAD_BALANCE_STATUS(MASTER_NODE_ID) = LOAD_SELECTED;
@@ -1084,6 +1085,7 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 
 		else if (REPLICATION && is_select_query((Node *)p_stmt->query, string1) && !is_sequence_query((Node *)p_stmt->query))
 		{
+			selected_slot = MASTER_NODE_ID;
 			replication_was_enabled = 1;
 			REPLICATION = 0;
 			LOAD_BALANCE_STATUS(MASTER_NODE_ID) = LOAD_SELECTED;
