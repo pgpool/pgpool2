@@ -1,3 +1,18 @@
+2007-06-11  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Fix kind mismatch error when
+	  load_balance_mode is true 
+
+2007-06-02  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Fix typo EmptyQueryResponse
+	  message. pgpool hung up in EXECUTE command. (Patch contributed
+	  by Kenichi Sawada)
+
+2007-05-29  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Fix handling protocol version 2.
+
 2007-05-25  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* Version 1.1
