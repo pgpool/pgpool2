@@ -1,3 +1,9 @@
+1.1.1 (amiboshi) 2007/6/15
+      * Version 1.1.1
+      * Fix "kind mismatch" bug when load_balance_mode is true(Yoshiyuki)
+      * Fix deadlock with extended query protocol(Yoshiyuki)
+      * Fix numerous bugs with protocol V2(Yoshiyuki)
+
 1.1 (amiboshi) 2007/5/25
       * Version 1.1
       * Support HBA authentication(Taiki)
