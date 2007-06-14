@@ -1,3 +1,7 @@
+2007-06-15  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* Version 1.1.1
+
 2007-06-11  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* pool_process_query.c: Fix kind mismatch error when
