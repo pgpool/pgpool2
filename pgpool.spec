@@ -2,13 +2,16 @@
 
 Summary:	Pgpool is a connection pooling/replication server for PostgreSQL
 Name:		postgresql-%{short_name}
-Version:	1.0.2
-Release:	2%{?dist}
+Version:	1.1.1
+Release:	1%{?dist}
 License:	BSD
 Group:		Applications/Databases
 URL:		http://pgpool.projects.PostgreSQL.org/pgpool-II/en
-Source0:	http://pgfoundry.org/frs/download.php/1258/%{short_name}-%{version}.tar.gz
+Source0:	http://pgfoundry.org/frs/download.php/1376/%{short_name}-%{version}.tar.gz
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+BuildRequires:	postgresql-devel pam-devel
+
+#Obsoletes:	postgresql-pgpool
 
 %description
 pgpool-II is a inherited project of pgpool (to classify from 
@@ -31,32 +34,24 @@ DB nodes to be connected, which was not possible in pgpool-I.
 %package devel
 Summary:	The  development files for pgpool-II
 Group:		Development/Libraries
-Requires:	%{name} = %{version}-%{release}
+Requires:	%{name} = %{version}
 
 %description devel
 Development headers and libraries for pgpool-II.
 
 %prep
 %setup -q -n %{short_name}-%{version}
-# upstream ought to make configure respect --disable-rpath
-# but this works for now
-sed -i 's|-Wl,-rpath,@PGSQL_LIB_DIR@||g' Makefile.in
 
 %build
-%configure --with-pgsql-includedir=%{_includedir}/pgsql --with-pgsql-lib=%{_libdir}/pgsql
+%configure --with-pgsql-includedir=%{_includedir}/pgsql --with-pgsql-lib=%{_libdir}/pgsql --disable-static --with-pam --disable-rpath
 
 make %{?_smp_flags}
 
 %install
 rm -rf %{buildroot}
-make DESTDIR=%{buildroot} install
-mv %{buildroot}%{_sysconfdir}/pgpool.conf.sample %{buildroot}%{_sysconfdir}/pgpool.conf
-mv %{buildroot}%{_sysconfdir}/pcp.conf.sample %{buildroot}%{_sysconfdir}/pcp.conf
-install -m 644 pgpool.8 %{buildroot}%{_mandir}/man8/
-install -m 644 -p pcp/pcp.h  %{buildroot}%{_includedir}/
-install -m 755 pcp/.libs/libpcp.so.0.* %{buildroot}%{_libdir}/
-cp -a pcp/.libs/libpcp.so.0 %{buildroot}%{_libdir}/
-install -m 644 -p pool_type.h  %{buildroot}%{_includedir}/
+make %{?_smp_flags} DESTDIR=%{buildroot} install
+mv %{buildroot}/%{_sysconfdir}/*.conf.sample %{buildroot}%{_datadir}/%{short_name}
+
 # nuke libtool archive and static lib
 rm -f %{buildroot}%{_libdir}/libpcp.{a,la}
 
@@ -79,11 +74,11 @@ rm -rf %{buildroot}
 %{_bindir}/pcp_stop_pgpool
 %{_bindir}/pcp_systemdb_info
 %{_bindir}/pg_md5
-%{_mandir}/man8/*
-%{_datadir}/system_db.sql
+%{_mandir}/man8/pgpool*
+%{_datadir}/%{short_name}/system_db.sql
 %{_libdir}/libpcp.so.*
-%config(noreplace) %{_sysconfdir}/pgpool.conf
-%config(noreplace) %{_sysconfdir}/pcp.conf
+%attr(764,root,apache) %{_datadir}/%{short_name}/*.conf.sample
+%{_datadir}/%{short_name}/pgpool.pam
 
 %files devel
 %defattr(-,root,root,-)
@@ -92,6 +87,23 @@ rm -rf %{buildroot}
 %{_libdir}/libpcp.so
 
 %changelog
+* Fri Jun 15 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.1.1-1
+- Update to 1.1.1
+
+* Sat Jun 2 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.1-1
+- Update to 1.1
+- added --disable-rpath configure parameter.
+- Chowned sample conf files, so that they can work with pgpoolAdmin.
+
+* Thu Apr 22 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.0.2-4
+- Added postgresql-devel as BR, per bugzilla review.
+- Added --disable-static flan, per bugzilla review.
+- Removed superfluous manual file installs, per bugzilla review.
+
+* Thu Apr 22 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.0.2-3
+- Rebuilt for the correct tarball
+- Fixed man8 file ownership, per bugzilla review #229321 
+
 * Tue Feb 20 2007 Jarod Wilson <jwilson@redhat.com> 1.0.2-2
 - Create proper devel package, drop -libs package
 - Nuke rpath
