@@ -1,6 +1,7 @@
 1.1.1 (amiboshi) 2007/6/15
       * Version 1.1.1
-      * Fix "kind mismatch" bug when load_balance_mode is true(Yoshiyuki)
+      * Fix "kind mismatch" bug when load_balance_mode is true
+        introduced in 1.1 (Yoshiyuki)
       * Fix deadlock with extended query protocol(Yoshiyuki)
       * Fix numerous bugs with protocol V2(Yoshiyuki)
 
