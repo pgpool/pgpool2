@@ -1,3 +1,8 @@
+2007-06-18  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Fix compile warning and memory leak in
+	  CursorResponse().
+
 2007-06-15  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* Version 1.1.1
