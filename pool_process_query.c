@@ -1345,9 +1345,16 @@ static POOL_STATUS CompleteCommandResponse(POOL_CONNECTION *frontend,
 	char *string1 = NULL;
 	int len, len1 = 0;
 
+	/* read command tag */
+	string = pool_read_string(MASTER(backend), &len, 0);
+	if (string == NULL)
+		return POOL_END;
+	len1 = len;
+	string1 = strdup(string);
+
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
-		if (!VALID_BACKEND(i))
+		if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
 			continue;
 
 		/* read command tag */
@@ -1355,33 +1362,25 @@ static POOL_STATUS CompleteCommandResponse(POOL_CONNECTION *frontend,
 		if (string == NULL)
 			return POOL_END;
 
-		if (IS_MASTER_NODE_ID(i))
+		if (len != len1)
 		{
-			len1 = len;
-			string1 = strdup(string);
+			pool_debug("Complete Command Response: message length does not match between master(%d \"%s\",) and %d th server (%d \"%s\",)",
+					   len, string, len1, string1);
+			
+			free(string1);
+			return POOL_END;
 		}
-		else
-		{
-			if (len != len1)
-			{
-				pool_debug("Complete Command Response: message length does not match between master(%d \"%s\",) and %d th server (%d \"%s\",)",
-					 len, string, len1, string1);
-
-				free(string1);
-				return POOL_END;
-			}
-		}
+	}
+	/* forward to the frontend */
+	pool_write(frontend, "C", 1);
+	pool_debug("Complete Command Response: string: \"%s\"", string1);
+	if (pool_write(frontend, string1, len1) < 0)
+	{
+		free(string1);
+		return POOL_END;
 	}
 
 	free(string1);
-
-	/* forward to the frontend */
-	pool_write(frontend, "C", 1);
-	pool_debug("Complete Command Response: string: \"%s\"", string);
-	if (pool_write(frontend, string, len) < 0)
-	{
-		return POOL_END;
-	}
 	return POOL_CONTINUE;
 }
 
@@ -1396,25 +1395,19 @@ static int RowDescription(POOL_CONNECTION *frontend,
 	int len, len1;
 	int i;
 
+	pool_read(MASTER(backend), &num_fields, sizeof(short));
+	num_fields1 = num_fields;
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
-		if (VALID_BACKEND(i))
+		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 		{
 			/* # of fields (could be 0) */
 			pool_read(CONNECTION(backend, i), &num_fields, sizeof(short));
-
-			if (IS_MASTER_NODE_ID(i))
+			if (num_fields != num_fields1)
 			{
-				num_fields1 = num_fields;
-			}
-			else
-			{
-				if (num_fields != num_fields1)
-				{
-					pool_error("RowDescription: num_fields deos not match between backends master(%d) and %d th backend(%d)",
-					   num_fields, i, num_fields1);
-					return POOL_FATAL;
-				}
+				pool_error("RowDescription: num_fields deos not match between backends master(%d) and %d th backend(%d)",
+						   num_fields, i, num_fields1);
+				return POOL_FATAL;
 			}
 		}
 	}
@@ -1422,117 +1415,94 @@ static int RowDescription(POOL_CONNECTION *frontend,
 	/* forward it to the frontend */
 	pool_write(frontend, "T", 1);
 	pool_write(frontend, &num_fields, sizeof(short));
-
 	num_fields = ntohs(num_fields);
-
 	for (i = 0;i<num_fields;i++)
 	{
 		int j;
 
 		/* field name */
+		string = pool_read_string(MASTER(backend), &len, 0);
+		if (string == NULL)
+			return POOL_END;
+		len1 = len;
+		if (pool_write(frontend, string, len) < 0)
+			return POOL_END;
+
 		for (j=0;j<NUM_BACKENDS;j++)
 		{
-			if (VALID_BACKEND(j))
+			if (VALID_BACKEND(j) && !IS_MASTER_NODE_ID(j))
 			{
 				string = pool_read_string(CONNECTION(backend, j), &len, 0);
 				if (string == NULL)
 					return POOL_END;
 
-				if (IS_MASTER_NODE_ID(j))
+				if (len != len1)
 				{
-					len1 = len;
+					pool_error("RowDescription: field length deos not match between backends master(%d) and %d th backend(%d)",
+							   ntohl(len), ntohl(len1));
+					return POOL_FATAL;
 				}
-				else
-				{
-
-					if (len != len1)
-					{
-						pool_error("RowDescription: field length deos not match between backends master(%d) and %d th backend(%d)",
-						   ntohl(len), ntohl(len1));
-						return POOL_FATAL;
-					}
-				}
-
-				if (IS_MASTER_NODE_ID(j))
-					pool_write(frontend, string, len);
 			}
 		}
 
 		/* type oid */
+		pool_read(MASTER(backend), &oid, sizeof(int));
+		oid1 = oid;
+		pool_debug("RowDescription: type oid: %d", ntohl(oid));
 		for (j=0;j<NUM_BACKENDS;j++)
 		{
-			if (VALID_BACKEND(j))
+			if (VALID_BACKEND(j) && !IS_MASTER_NODE_ID(j))
 			{
 				pool_read(CONNECTION(backend, j), &oid, sizeof(int));
 
-				pool_debug("RowDescription: type oid: %d", ntohl(oid));
-
-				if (IS_MASTER_NODE_ID(j))
+				/* we do not regard oid mismatch as fatal */
+				if (oid != oid1)
 				{
-					oid1 = oid;
-				}
-				else
-				{
-					/* we do not regard oid mismatch as fatal */
-					if (oid != oid1)
-					{
-						pool_debug("RowDescription: field oid deos not match between backends master(%d) and %d th backend(%d)",
-						 ntohl(oid), j, ntohl(oid1));
-					}
+					pool_debug("RowDescription: field oid deos not match between backends master(%d) and %d th backend(%d)",
+							   ntohl(oid), j, ntohl(oid1));
 				}
 			}
 		}
-		pool_write(frontend, &oid, sizeof(int));
+		if (pool_write(frontend, &oid1, sizeof(int)) < 0)
+			return POOL_END;
 
 		/* size */
+		pool_read(MASTER(backend), &size, sizeof(short));
+		size1 = size;
 		for (j=0;j<NUM_BACKENDS;j++)
 		{
-			if (VALID_BACKEND(j))
+			if (VALID_BACKEND(j) && !IS_MASTER_NODE_ID(j))
 			{
 				pool_read(CONNECTION(backend, j), &size, sizeof(short));
-
-				if (IS_MASTER_NODE_ID(j))
+				if (size1 != size1)
 				{
-					size1 = size;
-				}
-				else
-				{
-					if (size1 != size1)
-					{
-						pool_error("RowDescription: field size deos not match between backends master(%d) and %d th backend(%d)",
-						 ntohs(size), j, ntohs(size1));
-						return POOL_FATAL;
-					}
+					pool_error("RowDescription: field size deos not match between backends master(%d) and %d th backend(%d)",
+							   ntohs(size), j, ntohs(size1));
+					return POOL_FATAL;
 				}
 			}
 		}
 		pool_debug("RowDescription: field size: %d", ntohs(size));
-		pool_write(frontend, &size, sizeof(short));
+		pool_write(frontend, &size1, sizeof(short));
 
 		/* modifier */
+		pool_read(MASTER(backend), &mod, sizeof(int));
+		pool_debug("RowDescription: modifier: %d", ntohs(mod));
+		mod1 = mod;
 		for (j=0;j<NUM_BACKENDS;j++)
 		{
-			if (VALID_BACKEND(j))
+			if (VALID_BACKEND(j) && !IS_MASTER_NODE_ID(j))
 			{
 				pool_read(CONNECTION(backend, j), &mod, sizeof(int));
-
-				pool_debug("RowDescription: modifier: %d", ntohs(mod));
-
-				if (IS_MASTER_NODE_ID(j))
+				if (mod != mod1)
 				{
-					mod1 = mod;
-				}
-				else
-				{
-					if (mod != mod1)
-					{
-						pool_debug("RowDescription: modifier deos not match between backends master(%d) and %d th backend(%d)",
-						 ntohl(mod), j, ntohl(mod1));
-					}
+					pool_debug("RowDescription: modifier deos not match between backends master(%d) and %d th backend(%d)",
+							   ntohl(mod), j, ntohl(mod1));
 				}
 			}
 		}
-		pool_write(frontend, &mod, sizeof(int));
+		if (pool_write(frontend, &mod1, sizeof(int)) < 0)
+			return POOL_END;
 	}
 
 	return num_fields;
@@ -1557,33 +1527,27 @@ static POOL_STATUS AsciiRow(POOL_CONNECTION *frontend,
 	if (nbytes <= 0)
 		return POOL_CONTINUE;
 
+	/* NULL map */
+	pool_read(MASTER(backend), nullmap, nbytes);
+	memcpy(nullmap1, nullmap, nbytes);
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
-		if (VALID_BACKEND(i))
+		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 		{
-			/* NULL map */
 			pool_read(CONNECTION(backend, i), nullmap, nbytes);
-
-			if (IS_MASTER_NODE_ID(i))
+			if (memcmp(nullmap, nullmap1, nbytes))
 			{
-				memcpy(nullmap1, nullmap, nbytes);
-			}
-			else
-			{
-				if (memcmp(nullmap, nullmap1, nbytes))
-				{
-					/* XXX: NULLMAP maybe different among
-					   backends. If we were a paranoid, we have to treat
-					   this as a fatal error. However in the real world
-					   we'd better to adapt this situation. Just throw a
-					   log... */
-					pool_debug("AsciiRow: NULLMAP differ between master and %d th backend", i);
-				}
+				/* XXX: NULLMAP maybe different among
+				   backends. If we were a paranoid, we have to treat
+				   this as a fatal error. However in the real world
+				   we'd better to adapt this situation. Just throw a
+				   log... */
+				pool_debug("AsciiRow: NULLMAP differ between master and %d th backend", i);
 			}
 		}
 	}
 
-	if (pool_write(frontend, nullmap, nbytes) < 0)
+	if (pool_write(frontend, nullmap1, nbytes) < 0)
 		return POOL_END;
 
 	mask = 0;
@@ -1596,35 +1560,30 @@ static POOL_STATUS AsciiRow(POOL_CONNECTION *frontend,
 		/* NOT NULL? */
 		if (mask & nullmap[i/8])
 		{
+			/* field size */
+			if (pool_read(MASTER(backend), &size, sizeof(int)) < 0)
+				return POOL_END;
+			/* forward to frontend */
+			pool_write(frontend, &size, sizeof(int));
+			size1 = size;
 			for (j=0;j<NUM_BACKENDS;j++)
 			{
-				if (VALID_BACKEND(j))
+				if (VALID_BACKEND(j) && !IS_MASTER_NODE_ID(j))
 				{
 					/* field size */
 					if (pool_read(CONNECTION(backend, j), &size, sizeof(int)) < 0)
 						return POOL_END;
 				}
-				if (IS_MASTER_NODE_ID(j))
-				{
-					size1 = size;
-				}
-				else
-				{
-					/* XXX: field size maybe different among
-					   backends. If we were a paranoid, we have to treat
-					   this as a fatal error. However in the real world
-					   we'd better to adapt this situation. Just throw a
-					   log... */
-					if (size != size1)
-						pool_debug("AsciiRow: %d th field size does not match between master(%d) and %d th backend(%d)",
-						 i, ntohl(size), j, ntohl(size1));
-				}
+				/* XXX: field size maybe different among
+				   backends. If we were a paranoid, we have to treat
+				   this as a fatal error. However in the real world
+				   we'd better to adapt this situation. Just throw a
+				   log... */
+				if (size != size1)
+					pool_debug("AsciiRow: %d th field size does not match between master(%d) and %d th backend(%d)",
+							   i, ntohl(size), j, ntohl(size1));
 
 				buf = NULL;
-
-				/* forward to frontend */
-				if (IS_MASTER_NODE_ID(j))
-					pool_write(frontend, &size, sizeof(int));
 				size = ntohl(size) - 4;
 
 				/* read and send actual data only when size > 0 */
@@ -1667,36 +1626,27 @@ static POOL_STATUS BinaryRow(POOL_CONNECTION *frontend,
 	if (nbytes <= 0)
 		return POOL_CONTINUE;
 
+	/* NULL map */
+	pool_read(CONNECTION(backend, i), nullmap, nbytes);
+	if (pool_write(frontend, nullmap, nbytes) < 0)
+		return POOL_END;
+	memcpy(nullmap1, nullmap, nbytes);
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
-		if (VALID_BACKEND(i))
+		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 		{
-			/* NULL map */
 			pool_read(CONNECTION(backend, i), nullmap, nbytes);
-			if (pool_write(frontend, nullmap, nbytes) < 0)
-				return POOL_END;
-
-			if (IS_MASTER_NODE_ID(i))
+			if (memcmp(nullmap, nullmap1, nbytes))
 			{
-				memcpy(nullmap1, nullmap, nbytes);
-			}
-			else
-			{
-				if (memcmp(nullmap, nullmap1, nbytes))
-				{
-					/* XXX: NULLMAP maybe different among
-					   backends. If we were a paranoid, we have to treat
-					   this as a fatal error. However in the real world
-					   we'd better to adapt this situation. Just throw a
-					   log... */
-					pool_debug("BinaryRow: NULLMAP differ between master and %d th backend", i);
-				}
+				/* XXX: NULLMAP maybe different among
+				   backends. If we were a paranoid, we have to treat
+				   this as a fatal error. However in the real world
+				   we'd better to adapt this situation. Just throw a
+				   log... */
+				pool_debug("BinaryRow: NULLMAP differ between master and %d th backend", i);
 			}
 		}
 	}
-
-	if (pool_write(frontend, nullmap, nbytes) < 0)
-		return POOL_END;
 
 	mask = 0;
 
@@ -1708,21 +1658,16 @@ static POOL_STATUS BinaryRow(POOL_CONNECTION *frontend,
 		/* NOT NULL? */
 		if (mask & nullmap[i/8])
 		{
+			/* field size */
+			if (pool_read(MASTER(backend), &size, sizeof(int)) < 0)
+				return POOL_END;			
 			for (j=0;j<NUM_BACKENDS;j++)
 			{
-				if (VALID_BACKEND(j))
+				if (VALID_BACKEND(j) && !IS_MASTER_NODE_ID(j))
 				{
 					/* field size */
-					if (pool_read(MASTER(backend), &size, sizeof(int)) < 0)
-						return POOL_END;
-				}
-
-				if (IS_MASTER_NODE_ID(i))
-				{
-					size1 = size;
-				}
-				else
-				{
+					if (pool_read(CONNECTION(backend, i), &size, sizeof(int)) < 0)
+						return POOL_END;			
 
 					/* XXX: field size maybe different among
 					   backends. If we were a paranoid, we have to treat
@@ -1744,7 +1689,7 @@ static POOL_STATUS BinaryRow(POOL_CONNECTION *frontend,
 				/* read and send actual data only when size > 0 */
 				if (size > 0)
 				{
-					buf = pool_read2(MASTER(backend), size);
+					buf = pool_read2(CONNECTION(backend, j), size);
 					if (buf == NULL)
 						return POOL_END;
 
@@ -1769,40 +1714,40 @@ static POOL_STATUS CursorResponse(POOL_CONNECTION *frontend,
 	int len, len1 = 0;
 	int i;
 
+	/* read cursor name */
+	string = pool_read_string(MASTER(backend), &len, 0);
+	if (string == NULL)
+		return POOL_END;
+	len1 = len;
+	string1 = strdup(string);
+
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
-		if (VALID_BACKEND(i))
+		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 		{
 			/* read cursor name */
 			string = pool_read_string(CONNECTION(backend, i), &len, 0);
 			if (string == NULL)
 				return POOL_END;
-
-			if (IS_MASTER_NODE_ID(i))
+			if (len != len1)
 			{
-				len1 = len;
-				string1 = strdup(string);
-			}
-			else
-			{
-				if (len != len1)
-				{
-					pool_error("CursorResponse: length does not match between master(%d) and %d th backend(%d)",
-					   len, i, len1);
-					pool_error("CursorResponse: master(%s) %d th backend(%s)", string1, string);
-					free(string1);
-					return POOL_END;
-				}
+				pool_error("CursorResponse: length does not match between master(%d) and %d th backend(%d)",
+						   len, i, len1);
+				pool_error("CursorResponse: master(%s) %d th backend(%s)", string1, string);
+				free(string1);
+				return POOL_END;
 			}
 		}
 	}
 
 	/* forward to the frontend */
 	pool_write(frontend, "P", 1);
-	if (pool_write(frontend, string, len) < 0)
+	if (pool_write(frontend, string1, len1) < 0)
 	{
+		free(string1);
 		return POOL_END;
 	}
+	free(string1);
 	return POOL_CONTINUE;
 }
 
@@ -2134,6 +2079,7 @@ static POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 	char *condition, *condition1 = NULL;
 	int len, len1 = 0;
 	int i;
+	POOL_STATUS status;
 
 	pool_write(frontend, "A", 1);
 
@@ -2143,22 +2089,23 @@ static POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 		{
 			if (pool_read(CONNECTION(backend, i), &pid, sizeof(pid)) < 0)
 				return POOL_ERROR;
-		}
-		condition = pool_read_string(MASTER(backend), &len, 0);
-		if (condition == NULL)
-			return POOL_END;
+			condition = pool_read_string(CONNECTION(backend, i), &len, 0);
+			if (condition == NULL)
+				return POOL_END;
 
-		if (IS_MASTER_NODE_ID(i))
-		{
-			pid1 = pid;
-			len1 = len;
-			condition1 = strdup(condition);
+			if (IS_MASTER_NODE_ID(i))
+			{
+				pid1 = pid;
+				len1 = len;
+				condition1 = strdup(condition);
+			}
 		}
 	}
 
 	pool_write(frontend, &pid1, sizeof(pid1));
-
-	return pool_write_and_flush(frontend, condition1, len1);
+	status = pool_write_and_flush(frontend, condition1, len1);
+	free(condition);
+	return status;
 }
 
 static POOL_STATUS FunctionCall(POOL_CONNECTION *frontend, 
