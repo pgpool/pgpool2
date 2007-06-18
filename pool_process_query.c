@@ -2104,7 +2104,7 @@ static POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 
 	pool_write(frontend, &pid1, sizeof(pid1));
 	status = pool_write_and_flush(frontend, condition1, len1);
-	free(condition);
+	free(condition1);
 	return status;
 }
 
