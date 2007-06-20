@@ -47,6 +47,21 @@
 
 #include "version.h"
 
+#define CHECK_REQUEST \
+	do { \
+		if (failover_request) \
+		{ \
+			failover(); \
+			failover_request = 0; \
+		} \
+		if (sigchld_request) \
+		{ \
+			reaper(); \
+			sigchld_request = 0; \
+		} \
+    } while (0)
+
+
 #define PGPOOLMAXLITSENQUEUELENGTH 10000
 static void daemonize(void);
 static int read_pid_file(void);
@@ -56,6 +71,8 @@ static pid_t fork_a_child(int unix_fd, int inet_fd, int id);
 static int create_unix_domain_socket(struct sockaddr_un un_addr_tmp);
 static int create_inet_domain_socket(const char *hostname, const int port);
 static void myexit(int code);
+static void failover(void);
+static void reaper(void);
 
 static RETSIGTYPE exit_handler(int sig);
 static RETSIGTYPE reap_handler(int sig);
@@ -98,6 +115,8 @@ static int stop_sig = SIGTERM;	/* stopping signal default value */
 static int health_check_timer_expired;		/* non 0 if health check timer expired */
 
 POOL_REQUEST_INFO *Req_info;		/* request info area in shared memory */
+static volatile int failover_request = 0;
+static volatile int sigchld_request = 0;
 
 int my_proc_id;
 
@@ -366,6 +385,8 @@ int main(int argc, char **argv)
 	 */
 	for (;;)
 	{
+		CHECK_REQUEST;
+
 		/* do we need health checking for PostgreSQL? */
 		if (pool_config->health_check_period > 0)
 		{
@@ -413,7 +434,7 @@ int main(int argc, char **argv)
 						pool_log("set %d th backend down status", sts);
 						Req_info->kind = NODE_DOWN_REQUEST;
 						Req_info->node_id = sts;
-						failover_handler(SIGUSR1);
+						failover();
 						/* need to distribute this info to children */
 					}
 					else
@@ -427,7 +448,7 @@ int main(int argc, char **argv)
 							pool_log("set %d th backend down status", sts);
 							Req_info->kind = NODE_DOWN_REQUEST;
 							Req_info->node_id = sts;
-							failover_handler(SIGUSR1);
+							failover();
 							retrycnt = 0;
 						}
 						else
@@ -438,6 +459,7 @@ int main(int argc, char **argv)
 							while (sleep_time > 0)
 							{
 								sleep_time = sleep(sleep_time);
+								CHECK_REQUEST;
 							}
 							continue;
 						}
@@ -459,7 +481,10 @@ int main(int argc, char **argv)
 						sleep_time = pool_config->health_check_period/NUM_BACKENDS;
 						pool_debug("retry sleep time: %d seconds", sleep_time);
 						while (sleep_time > 0)
+						{
 							sleep_time = sleep(sleep_time);
+							CHECK_REQUEST;
+						}
 						continue;
 					}
 				}
@@ -475,6 +500,7 @@ int main(int argc, char **argv)
 			while (sleep_time > 0)
 			{
 				sleep_time = sleep(sleep_time);
+				CHECK_REQUEST;
 			}
 		}
 		else
@@ -929,10 +955,21 @@ static RETSIGTYPE exit_handler(int sig)
 
 
 /*
- * handle SIGUSR1 (backend connection error, failover/failback request, if possible)
+ * handle SIGUSR1
  *
  */
 static RETSIGTYPE failover_handler(int sig)
+{
+	POOL_SETMASK(&BlockSig);
+	failover_request = 1;
+	POOL_SETMASK(&UnBlockSig);
+}
+
+/*
+ * backend connection error, failover/failback request, if possible
+ *
+ */
+static void failover(void)
 {
 
 	int node_id;
@@ -1267,6 +1304,14 @@ system_db_health_check(void)
  * handle SIGCHLD
  */
 static RETSIGTYPE reap_handler(int sig)
+{
+	sigchld_request = 1;
+}
+
+/*
+ * Attach zombie processes and restart child processes.
+ */
+static void reaper(void)
 {
 	pid_t pid;
 	int status;
