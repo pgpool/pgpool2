@@ -1,0 +1,10 @@
+CREATE OR REPLACE FUNCTION pgpool_recovery(text, text)
+RETURNS bool
+AS 'MODULE_PATHNAME', 'pgpool_recovery'
+LANGUAGE C STRICT;
+
+
+CREATE OR REPLACE FUNCTION pgpool_remote_start(text, text)
+RETURNS bool
+AS 'MODULE_PATHNAME', 'pgpool_remote_start'
+LANGUAGE C STRICT;

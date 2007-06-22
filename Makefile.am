@@ -9,7 +9,7 @@ pgpool_SOURCES = pool.h pool_type.h version.h pgpool.conf.sample \
 	pool_rewrite_query.c pool_rewrite_query.h pool_rewrite_outfuncs.c \
 	pool_query_cache.c pool_hba.conf.sample sample/pgpool.pam\
 	pool_hba.c pool_path.h pool_path.c pool_ip.h pool_ip.c pool_type.h \
-	ps_status.c strlcpy.c
+	ps_status.c strlcpy.c recovery.c
 
 pg_md5_SOURCES = pg_md5.c md5.c md5.h
 
@@ -38,6 +38,8 @@ pgpool.8: pgpool.8.in
 CLEANFILES = pgpool.8
 EXTRA_DIST = pgpool.8.in sql/system_db.sql sample/pgpool.pam doc/pgpool-ja.html doc/pgpool-en.html \
 		doc/tutorial-ja.html doc/tutorial-en.html doc/pgpool.css \
-		sample/dist_def_pgbench.sql
+		sample/pgpool_remote_start sample/pgpool_recovery \
+		sample/dist_def_pgbench.sql sql/pgpool-recovery/pgpool-recovery.c \
+		sql/pgpool-recovery/pgpool-recovery.sql.in sql/pgpool-recovery/Makefile
 
 SUBDIRS = parser pcp

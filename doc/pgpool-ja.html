@@ -502,6 +502,15 @@ DB$B%N!<%I(BID == 0$B$N(BPostgreSQL$B$O!$FCJL$K!V%^%9%?!<(BDB$B!W$H8F$P$l
 $BIi2YJ,;6$r;HMQ$7$J$$>l9g$O!$!V(B1$B!W$r@_Dj$7$F$/$@$5$$!%(B
 </p>
 
+<dt>backend_data_directory
+<dd>
+<p>
+$B;HMQ$9$k(B PostgreSQL $B%5!<%P$N%G!<%?%Y!<%9%/%i%9%?$N%Q%9$r;XDj$7$^$9!#(B
+$B<B:]$K$O!"(B"backend_weight"$B$N8e$K(BDB$B%N!<%I(BID$B$rIU2C$7$F;HMQ$9$kJ#?t(B
+$B$N(BPostgreSQL$B$r6hJL$7$^$9!#(B1$BBf$7$+(BPostgreSQL$B$r;HMQ$7$J$$>l9g$O!"(B
+"backend_weight0"$B$H$7$F$/$@$5$$!#(B
+</p>
+
 </dl>
 
 <h4>raw$B%b!<%I$K$*$1$k%U%'%$%k%*!<%PF0:n$K$D$$$F(B</h4>
@@ -649,6 +658,18 @@ raw$B%b!<%I!$%3%M%/%7%g%s%W!<%k%b!<%I$K2C$(!$0J2<$r@_Dj$7$^$9!%(B
    $B$,CY$/$J$C$F$7$^$$$^$9!K!%(B
 
    $B$3$NLdBj$r2sHr$9$k$K$O(B2$B$D$NJ}K!$,$"$j$^$9!%(B
+</p>
+
+<dt>recovery_user
+<dd>
+<p>
+   $B%*%s%i%$%s%j%+%P%j$r9T$&$?$a$N(B PostgreSQL $B%f!<%6L>$G$9!#(B
+</p>
+
+<dt>recovery_password
+<dd>
+<p>
+   $B%*%s%i%$%s%j%+%P%j$r9T$&$?$a$N(B PostgreSQL $B%f!<%6%Q%9%o!<%I$G$9!#(B
 </p>
 
 <ol>
@@ -988,6 +1009,99 @@ CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_tellers (val ANYELEMENT) RETU
    $B$@$5$$!#(B
 </p>
 
+<h2><a name="online-recovery"></a>$B%*%s%i%$%s%j%+%P%j$N@_DjJ}K!(B</h2>
+<p>
+   $B%l%W%j%1!<%7%g%s%b!<%I$G(B pgpool $B$,F0:n$7$F$$$k>l9g!"%@%&%s$7$?%N!<(B
+   $B%I$N%G!<%?$r:FF14|$5$;$?>e$G!"%N!<%I$rI|5"$5$;$k$3$H$,$G$-$^$9!#$3(B
+   $B$N5!G=$r!V%*%s%i%$%s%j%+%P%j!W$H8F$S$^$9!#(B
+</p>
+
+<h3> pgpool $B$N@_Dj(B</h3>
+<p>
+   $B%*%s%i%$%s%j%+%P%j$r@_Dj$9$k$?$a$K$O!"(Bpgpool.conf $B$N0J2<$NCM$r@_Dj(B
+   $B$7$F$/$@$5$$!#(B
+
+   <ul>
+    <li> backend_data_directory
+    <li> recovery_user
+    <li> recovery_password
+   </ul>
+</p>
+
+
+<h3> C $B8@8l4X?t$N%$%s%9%H!<%k(B</h3>
+<p>
+$B<!$K!"%j%+%P%j$r<B;\$9$k$?$a$N(B PostgreSQL $B$N(B C $B8@8l4X?t$r3F%N!<%I$N(B
+template1 $B%G!<%?%Y!<%9$K%$%s%9%H!<%k$7$^$9!#%=!<%9%3!<%I$O(B
+
+<pre>
+  pgpool-II-x.x.x/sql/pgpool-recovery/
+</pre>
+
+$B$K$"$j$^$9!#%G%#%l%/%H%j$r0\F0$7!"(Bmake install $B$7$F$/$@$5$$!#(B
+
+<pre>
+  % cd pgpool-II-x.x.x/sql/pgpool-recovery/
+  % make install
+</pre>
+
+C $B8@8l4X?t$N%b%8%e!<%k$r%$%s%9%H!<%k$7$?$i!"B3$$$F(B C $B8@8l4X?t$r8F$S$@(B
+$B$9$?$a$N(B SQL $B$r%$%s%9%H!<%k$7$^$9!#(B
+
+<pre>
+  % cd pgpool-II-x.x.x/sql/pgpool-recovery/
+  % psql -f pgpool-recovery.sql template1
+</pre>
+</p>
+
+<h3> $B%j%+%P%j%9%/%j%W%H$NG[CV(B</h3>
+<p>
+$B%G!<%?$rF14|$5$;$k$?$a$N%9%/%j%W%H$H!"%j%b!<%H$+$i(B postmaster $B$r:F5/F0(B
+$B$5$;$k$?$a$N%9%/%j%W%H$r3F%N!<%I$N(B $PGDATA $B0J2<$KG[CV$7$^$9!#%9%/%j%W(B
+$B%H$O0J2<$NDL$j$G$9!#$J$*!"(Bpgpool-II-x.x.x/sample $B0J2<$K%5%s%W%k%9%/%j(B
+$B%W%H$bMQ0U$7$F$"$j$^$9$N$G;29M$K$7$F$/$@$5$$!#(B
+</p>
+
+<h4>pgpool_recovery </h4>
+<p>
+$B%^%9%?$+$iI|5"$5$;$k%N!<%I$X$N%G!<%?$NJ*M}%3%T!<$r9T$&%9%/%j%W%H$G$9!#(B
+pgpool $B$+$i$O0J2<$N7A<0$G%9%/%j%W%H$r<B9T$7$^$9!#(B
+
+<pre>
+  % pgpool_recovery datadir remote_host remote_datadir
+  datadir:        $B%^%9%?$N%G!<%?%Y!<%9%/%i%9%?%Q%9(B
+  remote_host:    $B%j%+%P%j%N!<%I$N%[%9%HL>(B
+  remote_datadir: $B%j%+%P%j%N!<%I$N%G!<%?%Y!<%9%/%i%9%?%Q%9(B 
+</pre>
+
+$B%5%s%W%k%9%/%j%W%H$G$O(B rsync $B$r;H$C$FJ*M}%3%T!<$r$7$F$$$^$9!#$b$7(B
+rsync $B$r;H$&>l9g$O!"%Q%9%U%l!<%:L5$7$G(B ssh $B7PM3$G%m%0%$%s$G$-$k$h$&$K(B
+$B$"$i$+$8$a@_Dj$7$F$*$/I,MW$,$"$j$^$9!#(B
+</p>
+
+<h4>pgpool_remote_start </h4>
+<p>
+$B%G!<%?:FF14|8e$K(B postmaster $B$r5/F0$5$;$k%9%/%j%W%H$G$9!#(B
+pgpool $B$+$i$O0J2<$N7A<0$G%9%/%j%W%H$r<B9T$7$^$9!#(B
+
+<pre>
+  % pgpool_remote_start remote_host remote_datadir
+  remote_host:    $B%j%+%P%j%N!<%I$N%[%9%HL>(B
+  remote_datadir: $B%j%+%P%j%N!<%I$N%G!<%?%Y!<%9%/%i%9%?%Q%9(B 
+</pre>
+
+$B%5%s%W%k%9%/%j%W%H$G$O(B ssh $B7PM3$G(B postmaster $B$r5/F0$7$F$$$^$9!#$3$A$i(B
+$B$b$"$i$+$8$a%Q%9%U%l!<%:L5$7$G(B ssh $B7PM3$G%m%0%$%s$G$-$k$h$&$K@_Dj$7$F(B
+$B$*$/I,MW$,$"$j$^$9!#(B
+</p>
+
+<h3>$B%j%+%P%j$N<B9T(B</h3>
+<p>
+$B0J>e$G%*%s%i%$%s%j%+%P%j$N=`Hw$,@0$$$^$7$?!#(B
+$B%*%s%i%$%s%j%+%P%j$r<B9T$9$k$K$O(B pcp_recovery_node $B%3%^%s%I$r;H$&$+!"(B
+pgpool $B4IM}%D!<%k$+$i<B9T$7$F$/$@$5$$!#(B
+</p>
+
 <h1>pgpool-II$B$N5/F0$HDd;_(B<a name="start"></a></h1>
 <p>
 $B0J>e$G@_Dj$,=*$o$C$?$N$G!$3F(BDB$B%N!<%I$r5/F0$7!$I,MW$J$i$P%7%9%F%`(BDB$B$b5/F0(B
@@ -1284,6 +1398,7 @@ pgpool $B$N>l9g(B /*STRICT*/ $B$J$I!"(Bpgpool $B$r@)8f$9$kFC<l$J%3%a%s%H$r=
    * pcp_detach_node	- $B%N!<%I$r@Z$jN%$9(B
    * pcp_attach_node	- $B%N!<%I$rI|5"$5$;$k(B
    * pcp_stop_pgpool	- pgpool-II$B$rDd;_$5$;$k(B
+   * pcp_recovery_node  - $B%^%9%?%N!<%I$r;H$C$F%N!<%I$N%G!<%?$r:FF14|!"%N!<%I5/F0$5$;$k(B
 </pre>
 </p>
 
@@ -1489,6 +1604,16 @@ pgpool $B$N>l9g(B /*STRICT*/ $B$J$I!"(Bpgpool $B$r@)8f$9$kFC<l$J%3%a%s%H$r=
    $B"((B $B8=:_$O(B fast $B%b!<%I$H(B immediate $B%7%c%C%H%@%&%s$N=hM}$K6hJL$O$"$j(B
       $B$^$;$s!#L?Na$rAw$C$?;~E@$G%/%i%$%"%s%H$,$$$k!&$$$J$$$K4X$o$i$:(B
       $B%7%c%C%H%@%&%s=hM}$rB(:B$K9T$$$^$9!#(B
+</pre>
+</p>
+
+<h3>pcp_recovery_pgpool</h3>
+<p>
+<pre>
+   $B=q<0!'(B
+	pcp_recovery_pgpool  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
+
+   pgpool-II$B$N%N!<%I$r%G!<%?$r:FF14|$5$;$?>e$GI|5"$5$;$^$9!#(B
 </pre>
 </p>
 

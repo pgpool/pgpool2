@@ -62,6 +62,7 @@ static PCP_CONNECTION *pcp_do_accept(int unix_fd, int inet_fd);
 static void unset_nonblock(int fd);
 static int user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len);
 static void pool_random_salt(char *md5Salt);
+static RETSIGTYPE wakeup_handler(int sig);
 
 extern int myargc;
 extern char **myargv;
@@ -100,7 +101,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 	signal(SIGQUIT, die);
 	signal(SIGCHLD, SIG_DFL);
 	signal(SIGUSR1, SIG_DFL);
-	signal(SIGUSR2, SIG_DFL);
+	signal(SIGUSR2, wakeup_handler);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGALRM, SIG_IGN);
 	
@@ -733,6 +734,46 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 
 				break;
 			}
+
+			case 'O': /* recovery request */
+			{
+				int node_id;
+				int wsize;
+				char code[] = "CommandComplete";
+				int r;
+
+				pool_debug("pcp_child: start online recovery");				
+				node_id = atoi(buf);
+
+				r = start_recovery(node_id);
+				finish_recovery();
+
+				if (r == 0) /* success */
+				{
+					pcp_write(frontend, "c", 1);
+					wsize = htonl(sizeof(code) + sizeof(int));
+					pcp_write(frontend, &wsize, sizeof(int));
+					pcp_write(frontend, code, sizeof(code));
+				}
+				else
+				{
+					int len = strlen("recovery failed") + 1;
+					pcp_write(frontend, "e", 1);
+					wsize = htonl(sizeof(int) + len);
+					pcp_write(frontend, &wsize, sizeof(int));
+					pcp_write(frontend, "recovery failed", len);
+				}
+				if (pcp_flush(frontend) < 0)
+				{
+					pool_error("pcp_child: pcp_flush() failed. reason: %s", strerror(errno));
+					exit(1);
+				}
+			}
+				break;
+
+			case 'F':
+				pool_debug("pcp_child: stop online recovery");
+				break;
 			
 			case 'X':			/* disconnect */
 				pool_debug("pcp_child: client disconnecting. close connection");
@@ -777,6 +818,12 @@ die(int sig)
 	/* send_frontend_exits(); */
 
 	exit(0);
+}
+
+static RETSIGTYPE
+wakeup_handler(int sig)
+{
+
 }
 
 static PCP_CONNECTION *

@@ -44,6 +44,7 @@ extern void free_systemdb_info(SystemDBInfo * si);
 extern int pcp_detach_node(int nid);
 extern int pcp_attach_node(int nid);
 extern void pcp_set_timeout(long sec);
+extern int pcp_recovery_node(int nid);
 
 /* ------------------------------
  * pcp_error.c

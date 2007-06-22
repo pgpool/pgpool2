@@ -78,6 +78,7 @@ static RETSIGTYPE exit_handler(int sig);
 static RETSIGTYPE reap_handler(int sig);
 static RETSIGTYPE failover_handler(int sig);
 static RETSIGTYPE health_check_timer_handler(int sig);
+static RETSIGTYPE wakeup_handler(int sig);
 
 static void usage(void);
 static void stop_me(void);
@@ -115,6 +116,8 @@ static int stop_sig = SIGTERM;	/* stopping signal default value */
 static int health_check_timer_expired;		/* non 0 if health check timer expired */
 
 POOL_REQUEST_INFO *Req_info;		/* request info area in shared memory */
+volatile int *InRecovery; /* non 0 if recovery is started */
+volatile int wakeup_request = 0;
 static volatile int failover_request = 0;
 static volatile int sigchld_request = 0;
 
@@ -350,6 +353,15 @@ int main(int argc, char **argv)
 	Req_info->kind = NODE_UP_REQUEST;
 	Req_info->node_id = -1;
 	Req_info->master_node_id = 0;
+	Req_info->conn_counter = 0;
+
+	InRecovery = pool_shared_memory_create(sizeof(int));
+	if (InRecovery == NULL)
+	{
+		pool_error("failed to allocate InRecovery");
+		myexit(1);
+	}
+	*InRecovery = 0;
 
 	/* fork the children */
 	for (i=0;i<pool_config->num_init_children;i++)
@@ -364,6 +376,7 @@ int main(int argc, char **argv)
 	pool_signal(SIGQUIT, exit_handler);
 	pool_signal(SIGCHLD, reap_handler);
 	pool_signal(SIGUSR1, failover_handler);
+	pool_signal(SIGUSR2, wakeup_handler);
 	pool_signal(SIGHUP, exit_handler);
 
 	pool_log("pgpool successfully started");
@@ -508,6 +521,7 @@ int main(int argc, char **argv)
 			pause();
 		}
 	}
+
 	pool_shmem_exit(0);
 }
 
@@ -987,6 +1001,7 @@ static void failover(void)
 	{
 		pool_debug("failover_handler: I am not parent");
 		POOL_SETMASK(&UnBlockSig);
+		kill(pcp_pid, SIGUSR2);
 		return;
 	}
 
@@ -997,6 +1012,7 @@ static void failover(void)
 	{
 		pool_debug("failover_handler called while exiting");
 		POOL_SETMASK(&UnBlockSig);
+		kill(pcp_pid, SIGUSR2);
 		return;
 	}
 
@@ -1007,6 +1023,7 @@ static void failover(void)
 	{
 		pool_debug("failover_handler called while switching");
 		POOL_SETMASK(&UnBlockSig);
+		kill(pcp_pid, SIGUSR2);
 		return;
 	}
 
@@ -1016,6 +1033,7 @@ static void failover(void)
 	{
 		pool_error("failover_handler: invalid node_id %d", node_id);
 		POOL_SETMASK(&UnBlockSig);
+		kill(pcp_pid, SIGUSR2);
 		return;
 	}
 
@@ -1026,6 +1044,7 @@ static void failover(void)
 		pool_error("failover_handler: invalid node_id %d status:%d MAX_NUM_BACKENDS: %d", node_id,
 					BACKEND_INFO(node_id).backend_status, MAX_NUM_BACKENDS);
 		POOL_SETMASK(&UnBlockSig);
+		kill(pcp_pid, SIGUSR2);
 		return;
 	}
 
@@ -1071,7 +1090,7 @@ static void failover(void)
 	}
 	else
 	{
-		if (Req_info->master_node_id == i)
+		if (Req_info->master_node_id == i && *InRecovery == 0)
 		{
 			pool_log("failover_handler: do not restart pgpool. same master node %d was selected", i);
 			if (Req_info->kind == NODE_UP_REQUEST)
@@ -1089,6 +1108,7 @@ static void failover(void)
 
 			switching = 0;
 			POOL_SETMASK(&UnBlockSig);
+			kill(pcp_pid, SIGUSR2);
 			return;
 		}
 
@@ -1139,6 +1159,7 @@ static void failover(void)
 	Req_info->node_id = -1;
 	switching = 0;
 	POOL_SETMASK(&UnBlockSig);
+	kill(pcp_pid, SIGUSR2);
 }
 
 /*
@@ -1169,6 +1190,10 @@ int health_check(void)
 	char kind;
 	int i;
 
+	if (*InRecovery)
+		return 0;
+
+	POOL_SETMASK(&BlockSig);
 	memset(&mysp, 0, sizeof(mysp));
 	mysp.len = htonl(296);
 	mysp.sp.protoVersion = htonl(PROTO_MAJOR_V2 << 16);
@@ -1198,6 +1223,7 @@ int health_check(void)
 					   BACKEND_INFO(i).backend_hostname,
 					   BACKEND_INFO(i).backend_port);
 
+			POOL_SETMASK(&UnBlockSig);
 			return i+1;
 		}
 
@@ -1208,6 +1234,7 @@ int health_check(void)
 					   BACKEND_INFO(i).backend_port,
 					   strerror(errno));
 			close(fd);
+			POOL_SETMASK(&UnBlockSig);
 			return i+1;
 		}
 
@@ -1220,12 +1247,14 @@ int health_check(void)
 					   BACKEND_INFO(i).backend_port,
 					   strerror(errno));
 			close(fd);
+			POOL_SETMASK(&UnBlockSig);
 			return i+1;
 		}
 
 		close(fd);
 	}
 
+	POOL_SETMASK(&UnBlockSig);
 	return 0;
 }
 
@@ -1245,6 +1274,9 @@ system_db_health_check(void)
 	} MySp;
 	MySp mysp;
 	char kind;
+
+	/* block all signals */
+	POOL_SETMASK(&BlockSig);
 
 	memset(&mysp, 0, sizeof(mysp));
 	mysp.len = htonl(296);
@@ -1272,6 +1304,7 @@ system_db_health_check(void)
 				   SYSDB_INFO->hostname,
 				   SYSDB_INFO->port);
 
+		POOL_SETMASK(&UnBlockSig);
 		return -1;
 	}
 
@@ -1281,6 +1314,7 @@ system_db_health_check(void)
 				   SYSDB_INFO->hostname,
 				   SYSDB_INFO->port);
 		close(fd);
+		POOL_SETMASK(&UnBlockSig);
 		return -1;
 	}
 
@@ -1292,11 +1326,13 @@ system_db_health_check(void)
 				   SYSDB_INFO->hostname,
 				   SYSDB_INFO->port);
 		close(fd);
+		POOL_SETMASK(&UnBlockSig);
 		return -1;
 	}
 
 	close(fd);
 
+	POOL_SETMASK(&UnBlockSig);
 	return 0;
 }
 
@@ -1438,4 +1474,24 @@ pool_get_system_db_info(void)
 		return NULL;
 	
 	return system_db_info->info;
+}
+
+
+/* 
+ * handle SIGUSR2
+ * Wakeup all process
+ */
+static RETSIGTYPE wakeup_handler(int sig)
+{
+	int i;
+
+	/* kill all children */
+	for (i = 0; i < pool_config->num_init_children; i++)
+	{
+		pid_t pid = pids[i].pid;
+		if (pid)
+		{
+			kill(pid, SIGUSR2);
+		}
+	}
 }

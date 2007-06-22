@@ -69,6 +69,7 @@ typedef char bool;
 #define MAX_NUM_BACKENDS 128
 #define MAX_CONNECTION_SLOTS 128
 #define MAX_DB_HOST_NAMELEN	 128
+#define MAX_PATH_LENGTH 256
 
 typedef enum {
 	CON_UNUSED,		/* unused slot */
@@ -90,6 +91,7 @@ typedef struct {
 	int backend_port;	/* backend port numbers */
 	BACKEND_STATUS backend_status;	/* backend status */
 	double backend_weight;	/* normalized backend load balance ratio */
+	char backend_data_directory[MAX_PATH_LENGTH];
 } BackendInfo;
 
 typedef struct {

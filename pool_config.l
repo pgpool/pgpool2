@@ -645,6 +645,44 @@ int pool_get_config(char *confpath)
 			pool_config->health_check_user = str;
 		}
 
+		else if (!strcmp(key, "recovery_user"))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->recovery_user = str;
+		}
+
+		else if (!strcmp(key, "recovery_password"))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->recovery_password = str;
+		}
+
 		else if (!strcmp(key, "insert_lock"))
 		{
 			int v = eval_logical(yytext);
@@ -886,6 +924,27 @@ int pool_get_config(char *confpath)
 			}
 			pool_debug("pool_config: weight slot number %d weight: %f", slot, v);
 			pool_config->backend_desc->backend_info[slot].backend_weight = v;
+		}
+		else if (!strncmp(key, "backend_data_directory", 22))
+		{
+			int slot;
+			char *str;
+
+			slot = atoi(key + 22);
+			if (slot < 0 || slot >= MAX_CONNECTION_SLOTS)
+			{
+				pool_error("pool_config: backend number %s for backend_data_directory out of range", key);
+				fclose(fd);
+				return(-1);
+			}
+
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			strncpy(BACKEND_INFO(slot).backend_data_directory, str, MAX_PATH_LENGTH);
 		}
        	else if (!strcmp(key, "log_statement"))
 		{

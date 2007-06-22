@@ -148,6 +148,8 @@ typedef struct {
 	int health_check_timeout;	/* health check timeout */
 	int health_check_period;	/* health check period */
 	char *health_check_user;		/* PostgreSQL user name for health check */
+	char *recovery_user;		/* PostgreSQL user name for online recovery */
+	char *recovery_password;		/* PostgreSQL user password for online recovery */
 	int insert_lock;	/* if non 0, automatically lock table with INSERT to keep SERIAL
 						   data consistency */
 	int ignore_leading_white_space;		/* ignore leading white spaces of each query */
@@ -329,6 +331,7 @@ typedef struct {
 #define NO_LOCK_COMMENT_SZ (sizeof(NO_LOCK_COMMENT)-1)
 
 #define MAX_NUM_SEMAPHORES		3
+#define CONN_COUNTER_SEM 0
 
 #define MY_PROCESS_INFO (pids[my_proc_id])
 
@@ -347,13 +350,15 @@ typedef enum SemNum
  */
 typedef enum {
 	NODE_UP_REQUEST = 0,
-	NODE_DOWN_REQUEST
+	NODE_DOWN_REQUEST,
+	NODE_RECOVERY_REQUEST
 } POOL_REQUEST_KIND;
 
 typedef struct {
 	POOL_REQUEST_KIND	kind;	/* request kind */
 	int node_id;		/* request node id */
 	int master_node_id;	/* the youngest node id which is not in down status */
+	int conn_counter;
 } POOL_REQUEST_INFO;
 
 /*
@@ -369,6 +374,7 @@ extern int in_load_balance;		/* non 0 if in load balance mode */
 extern int selected_slot;		/* selected DB node for load balance */
 extern int master_slave_dml;	/* non 0 if master/slave mode is specified in config file */
 extern POOL_REQUEST_INFO *Req_info;
+extern volatile int *InRecovery;
 extern char remote_ps_data[];		/* used for set_ps_display */
 
 /*
@@ -455,6 +461,9 @@ extern int send_startup_packet(POOL_CONNECTION_POOL_SLOT *cp);
 extern void pool_free_startup_packet(StartupPacket *sp);
 extern void child_exit(int code);
 
+extern void connection_count_up(void);
+extern void connection_count_down(void);
+
 extern int health_check(void);
 extern int system_db_health_check(void);
 
@@ -508,5 +517,9 @@ extern void init_ps_display(const char *username, const char *dbname,
 							const char *host_info, const char *initial_str);
 extern void set_ps_display(const char *activity, bool force);
 extern const char *get_ps_display(int *displen);
+
+/* recovery.c */
+extern int start_recovery(int recovery_node);
+extern void finish_recovery(void);
 
 #endif /* POOL_H */

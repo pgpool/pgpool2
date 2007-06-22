@@ -1301,3 +1301,80 @@ pcp_set_timeout(long sec)
 {
 	pcp_timeout.tv_sec = sec;
 }
+
+
+int
+pcp_recovery_node(int nid)
+{
+	int wsize;
+	char node_id[16];
+	char tos;
+	char *buf = NULL;
+	int rsize;
+
+	if (pc == NULL)
+	{
+#ifdef DEBUG
+		fprintf(stderr, "DEBUG: connection does not exist\n");
+#endif
+		errorcode = NOCONNERR;
+		return -1;
+	}
+
+	snprintf(node_id, sizeof(node_id), "%d", nid);
+
+	pcp_write(pc, "O", 1);
+	wsize = htonl(strlen(node_id)+1 + sizeof(int));
+	pcp_write(pc, &wsize, sizeof(int));
+	pcp_write(pc, node_id, strlen(node_id)+1);
+	if (pcp_flush(pc) < 0)
+	{
+#ifdef DEBUG
+		fprintf(stderr, "DEBUG: could not send data to backend\n");
+#endif
+		return -1;
+	}
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: send: tos=\"D\", len=%d\n", ntohl(wsize));
+#endif
+
+	if (pcp_read(pc, &tos, 1))
+		return -1;
+	if (pcp_read(pc, &rsize, sizeof(int)))
+		return -1;
+	rsize = ntohl(rsize);
+	buf = (char *)malloc(rsize);
+	if (buf == NULL)
+	{
+		errorcode = NOMEMERR;
+		return -1;
+	}
+	if (pcp_read(pc, buf, rsize - sizeof(int)))
+	{
+		free(buf);
+		return -1;
+	}
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
+#endif
+
+	if (tos == 'e')
+	{
+#ifdef DEBUG
+		fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
+#endif
+		errorcode = BACKENDERR;
+	}
+	else if (tos == 'c')
+	{
+		/* strcmp() for success message, or fail */
+		if(strcmp(buf, "CommandComplete") == 0)
+		{
+			free(buf);
+			return 0;
+		}
+	}
+
+	free(buf);
+	return -1;
+}
