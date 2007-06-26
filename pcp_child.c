@@ -76,12 +76,9 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 	char salt[4];
 	int random_salt = 0;
 	int i;
-
 	char tos;
 	int rsize;
 	char *buf = NULL;
-
-	char psbuf[NI_MAXHOST + 128];
 
 	pool_debug("I am PCP %d", getpid());
 
