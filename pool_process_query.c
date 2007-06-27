@@ -127,6 +127,7 @@ static int load_balance_enabled(POOL_CONNECTION_POOL *backend, Node* node, char 
 static void start_load_balance(POOL_CONNECTION_POOL *backend);
 static void end_load_balance(POOL_CONNECTION_POOL *backend);
 static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMajor, int no_ready_for_query);
+static POOL_STATUS do_error_command(POOL_CONNECTION *backend, int protoMajor);
 static int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node);
 static POOL_STATUS insert_lock(POOL_CONNECTION_POOL *backend, char *query, InsertStmt *node);
 static char *get_insert_command_table_name(InsertStmt *node);
@@ -1627,7 +1628,7 @@ static POOL_STATUS BinaryRow(POOL_CONNECTION *frontend,
 		return POOL_CONTINUE;
 
 	/* NULL map */
-	pool_read(CONNECTION(backend, i), nullmap, nbytes);
+	pool_read(MASTER(backend), nullmap, nbytes);
 	if (pool_write(frontend, nullmap, nbytes) < 0)
 		return POOL_END;
 	memcpy(nullmap1, nullmap, nbytes);
@@ -3114,25 +3115,18 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 		{
 			int i;
 
-			in_load_balance = 0;
-			REPLICATION = 1;
-			for (i = 0; i < NUM_BACKENDS; i++)
+			if (TSTATE(backend) != 'E')
 			{
-				if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
+				in_load_balance = 0;
+				REPLICATION = 1;
+				for (i = 0; i < NUM_BACKENDS; i++)
 				{
-
-					do_command(CONNECTION(backend, i), "send invalid query from pgpool to abort transaction.",
-							   PROTO_MAJOR_V3, 0);
-					pool_write(CONNECTION(backend, i), "S", 1);
-					res1 = htonl(4);
-					if (pool_write_and_flush(CONNECTION(backend, i), &res1, sizeof(res1)) < 0)
+					if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 					{
-						return POOL_END;
+						do_error_command(CONNECTION(backend, i), PROTO_MAJOR_V3);
 					}
 				}
 			}
-			in_load_balance = 1;
-			REPLICATION = 0;
 			select_in_transaction = 0;
 		}
 
@@ -3858,6 +3852,69 @@ static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMa
 		/* set transaction state */
 		pool_debug("ReadyForQuery: transaction state: %c", kind);
 		backend->tstate = kind;
+	}
+
+	return POOL_CONTINUE;
+}
+
+
+/*
+ * Send syntax error query to abort transaction.
+ * We need to sync transaction status in transaction block.
+ * SELECT query is sended to master only.
+ * If SELECT is error, we must abort transaction on other nodes.
+ */
+static POOL_STATUS do_error_command(POOL_CONNECTION *backend, int protoMajor)
+{
+	int len;
+	int status;
+	char kind;
+	char *string;
+	char *error_query = "send invalid query from pgpool to abort transaction";
+
+	/* send the query to the backend */
+	pool_write(backend, "Q", 1);
+	len = strlen(error_query)+1;
+
+	if (protoMajor == PROTO_MAJOR_V3)
+	{
+		int sendlen = htonl(len + 4);
+		pool_write(backend, &sendlen, sizeof(sendlen));
+	}
+
+	if (pool_write_and_flush(backend, error_query, len) < 0)
+	{
+		return POOL_END;
+	}
+
+	/*
+	 * Expecting CompleteCommand
+	 */
+	status = pool_read(backend, &kind, sizeof(kind));
+	if (status < 0)
+	{
+		pool_error("do_command: error while reading message kind");
+		return POOL_END;
+	}
+
+	/*
+	 * read ErrorResponse message
+	 */
+	if (protoMajor == PROTO_MAJOR_V3)
+	{
+		if (pool_read(backend, &len, sizeof(len)) < 0)
+			return POOL_END;
+		len = ntohl(len) - 4;
+		string = pool_read2(backend, len);
+		if (string == NULL)
+			return POOL_END;
+		pool_debug("command tag: %s", string);
+	}
+	else
+	{
+		string = pool_read_string(backend, &len, 0);
+		if (string == NULL)
+			return POOL_END;
 	}
 
 	return POOL_CONTINUE;

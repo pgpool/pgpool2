@@ -1,3 +1,9 @@
+2007-06-27  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool.h, pool_process_query.c: Fix hang up when a SELECT query
+	  has error inside transaction block. It occurs only in simple
+	  query protocol.
+
 2007-06-20  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* main.c: Fix SIGCHLD and SIGUSR1 signal handling. Signal handlers
