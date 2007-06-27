@@ -306,7 +306,7 @@ typedef struct {
 	 (BACKEND_INFO(backend_id).backend_status == CON_CONNECT_WAIT)))
 #define CONNECTION_SLOT(p, slot) ((p)->slots[(slot)])
 #define CONNECTION(p, slot) (CONNECTION_SLOT(p, slot)->con)
-#define MASTER_CONNECTION(p) ((p)->slots[Req_info->master_node_id])
+#define MASTER_CONNECTION(p) ((p)->slots[MASTER_NODE_ID])
 #define MASTER_NODE_ID (in_load_balance? selected_slot : Req_info->master_node_id)
 #define IS_MASTER_NODE_ID(node_id) (MASTER_NODE_ID == (node_id))
 //#define SECONDARY_CONNECTION(p) ((p)->slots[1])

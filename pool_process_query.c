@@ -117,10 +117,8 @@ static POOL_STATUS FunctionResultResponse(POOL_CONNECTION *frontend,
 static POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend, 
 										   POOL_CONNECTION_POOL *backend);
 
-static POOL_STATUS send_simplequery_message(POOL_CONNECTION_POOL *backend,
-											int node_id, int len, char *string);
-static POOL_STATUS wait_for_query_response(POOL_CONNECTION_POOL *backend,
-										   int node_id, char *string);
+static POOL_STATUS send_simplequery_message(POOL_CONNECTION *backend, int len, char *string, int major);
+static POOL_STATUS wait_for_query_response(POOL_CONNECTION *backend, char *string);
 static POOL_STATUS send_execute_message(POOL_CONNECTION_POOL *backend,
 										int node_id, int len, char *string);
 static int synchronize(POOL_CONNECTION *cp);
@@ -135,6 +133,7 @@ static int load_balance_enabled(POOL_CONNECTION_POOL *backend, Node* node, char 
 static void start_load_balance(POOL_CONNECTION_POOL *backend);
 static void end_load_balance(POOL_CONNECTION_POOL *backend);
 static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMajor, int no_ready_for_query);
+static POOL_STATUS do_error_command(POOL_CONNECTION *backend, int major);
 static int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node);
 static POOL_STATUS insert_lock(POOL_CONNECTION_POOL *backend, char *query, InsertStmt *node);
 static char *get_insert_command_table_name(InsertStmt *node);
@@ -189,6 +188,7 @@ static POOL_MEMORY_POOL *prepare_memory_context = NULL;
 static void query_cache_register(char kind, POOL_CONNECTION *frontend, char *database, char *data, int data_len);
 static POOL_STATUS start_internal_transaction(POOL_CONNECTION_POOL *backend, Node *node);
 static POOL_STATUS end_internal_transaction(POOL_CONNECTION_POOL *backend);
+static int extract_ntuples(char *message);
 
 
 POOL_STATUS pool_process_query(POOL_CONNECTION *frontend, 
@@ -1035,10 +1035,10 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	/* send query to master node */
 	if (!commit)
 	{
-		if (send_simplequery_message(backend, MASTER_NODE_ID, len, string) != POOL_CONTINUE)
+		if (send_simplequery_message(MASTER(backend), len, string, MAJOR(backend)) != POOL_CONTINUE)
 			return POOL_END;
 
-		if (wait_for_query_response(backend, MASTER_NODE_ID, string) != POOL_CONTINUE)
+		if (wait_for_query_response(MASTER(backend), string) != POOL_CONTINUE)
 			return POOL_END;
 	}
 
@@ -1048,7 +1048,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
 			continue;
 
-		if (send_simplequery_message(backend, i, len, string) != POOL_CONTINUE)
+		if (send_simplequery_message(CONNECTION(backend, i), len, string, MAJOR(backend)) != POOL_CONTINUE)
 			return POOL_END;
 	}
 
@@ -1058,16 +1058,16 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
 			continue;
 
-		if (wait_for_query_response(backend, i, string) != POOL_CONTINUE)
+		if (wait_for_query_response(CONNECTION(backend, i), string) != POOL_CONTINUE)
 			return POOL_END;
 	}
 
 	if (commit)
 	{
-		if (send_simplequery_message(backend, MASTER_NODE_ID, len, string) != POOL_CONTINUE)
+		if (send_simplequery_message(MASTER(backend), len, string, MAJOR(backend)) != POOL_CONTINUE)
 			return POOL_END;
 
-		if (wait_for_query_response(backend, MASTER_NODE_ID, string) != POOL_CONTINUE)
+		if (wait_for_query_response(MASTER(backend), string) != POOL_CONTINUE)
 			return POOL_END;
 
 		TSTATE(backend) = 'I';
@@ -1079,19 +1079,18 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 /* 
  * send SimpleQuery message to single node.
  */
-static POOL_STATUS send_simplequery_message(POOL_CONNECTION_POOL *backend,
-											int node_id, int len, char *string)
+static POOL_STATUS send_simplequery_message(POOL_CONNECTION *backend, int len, char *string, int major)
 {
 	/* forward the query to the backend */
-	pool_write(CONNECTION(backend, node_id), "Q", 1);
+	pool_write(backend, "Q", 1);
 	
-	if (MAJOR(backend) == PROTO_MAJOR_V3)
+	if (major == PROTO_MAJOR_V3)
 	{
 		int sendlen = htonl(len + 4);
-		pool_write(CONNECTION(backend, node_id), &sendlen, sizeof(sendlen));
+		pool_write(backend, &sendlen, sizeof(sendlen));
 	}
 	
-	if (pool_write_and_flush(CONNECTION(backend, node_id), string, len) < 0)
+	if (pool_write_and_flush(backend, string, len) < 0)
 	{
 		return POOL_END;
 	}
@@ -1102,8 +1101,7 @@ static POOL_STATUS send_simplequery_message(POOL_CONNECTION_POOL *backend,
 /* 
  * wait for query response from single node.
  */
-static POOL_STATUS wait_for_query_response(POOL_CONNECTION_POOL *backend,
-										   int node_id, char *string)
+static POOL_STATUS wait_for_query_response(POOL_CONNECTION *backend, char *string)
 {
 	/*
 	 * in "strict mode" we need to wait for backend completing the query.
@@ -1112,8 +1110,8 @@ static POOL_STATUS wait_for_query_response(POOL_CONNECTION_POOL *backend,
 	if ((pool_config->replication_strict && !NO_STRICT_MODE(string)) ||
 		STRICT_MODE(string))
 	{
-		pool_debug("waiting for backend %d completing the query", node_id);
-		if (synchronize(CONNECTION(backend, node_id)))
+		pool_debug("waiting for backend %d completing the query", backend->db_node_id);
+		if (synchronize(backend))
 			return POOL_END;
 	}
 
@@ -3065,9 +3063,6 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 	int command_ok_row_count = 0;
 	int delete_or_update = 0;
 
-
-	pool_write(frontend, &kind, 1);
-
 	/*
 	 * Check if packet kind == 'C'(Command complete), '1'(Parse
 	 * complete), '3'(Close complete). If so, then register or unregister
@@ -3093,9 +3088,41 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 	pending_function = NULL;
 	pending_prepared_portal = NULL;
 
+	status = pool_read(MASTER(backend), &len, sizeof(len));
+	len = ntohl(len);
+	len -= 4;
+	len1 = len;
+
+	p = pool_read2(MASTER(backend), len);
+	if (p == NULL)
+		return POOL_END;
+	p1 = malloc(len);
+	if (p1 == NULL)
+	{
+		pool_error("SimpleForwardToFrontend: malloc failed");
+		return POOL_ERROR;
+	}
+	memcpy(p1, p, len);
+
+	if (kind == 'C')	/* packet kind is "Command Complete"? */
+	{
+		command_ok_row_count = extract_ntuples(p);
+		pool_debug("XXXX: %d", command_ok_row_count);
+
+		/*
+		 * if we are in the parallel mode, we have to sum up the number
+		 * of affected rows
+		 */
+		if (PARALLEL_MODE &&
+			(strstr(p, "UPDATE") || strstr(p, "DELETE")))
+		{
+			delete_or_update = 1;
+		}
+	}
+
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
-		if (VALID_BACKEND(i))
+		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 		{
 			status = pool_read(CONNECTION(backend, i), &len, sizeof(len));
 			if (status < 0)
@@ -3111,52 +3138,30 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 			if (p == NULL)
 				return POOL_END;
 
-			if (IS_MASTER_NODE_ID(i))
+			if (len != len1)
 			{
-				len1 = len;
-				p1 = malloc(len);
-				if (p1 == NULL)
-				{
-					pool_error("SimpleForwardToFrontend: malloc failed");
-					return POOL_ERROR;
-				}
-				memcpy(p1, p, len);
-			}
-			else
-			{
-				if (len != len1)
-				{
-					pool_debug("SimpleForwardToFrontend: length does not match between backends master(%d) %d th backend(%d) kind:(%c)",
-							   len, i, len1, kind);
-				}
+				pool_debug("SimpleForwardToFrontend: length does not match between backends master(%d) %d th backend(%d) kind:(%c)",
+ 						   len, i, len1, kind);
 			}
 
 			if (kind == 'C')	/* packet kind is "Command Complete"? */
 			{
-				char *rows;
+				int n;
 
-				if ((rows = strstr(p, "UPDATE")) || (rows = strstr(p, "DELETE")))
+				n = extract_ntuples(p);
+				pool_debug("XXXX: %d", n);
+
+				/*
+				 * if we are in the parallel mode, we have to sum up the number
+				 * of affected rows
+				 */
+				if (delete_or_update)
 				{
-					delete_or_update = 1;
-
-					rows += 7;
-
-					/*
-					 * if we are in the parallel mode, we have to sum up the number
-					 * of affected rows
-					 */
-					if (PARALLEL_MODE)
-					{
-						command_ok_row_count += atoi(rows);
-					}
-
-					/*
-					 * else we just set the number of affected rows of the master node
-					 */
-					else if (IS_MASTER_NODE_ID(i))
-					{
-						command_ok_row_count = atoi(rows);
-					}
+					command_ok_row_count += n;
+				}
+				else if (command_ok_row_count != n) /* mismatch update rows */
+				{
+					
 				}
 			}
 		}
@@ -3182,6 +3187,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 		len1 = strlen(p2) + 1;
 	}
 
+	pool_write(frontend, &kind, 1);
 	sendlen = htonl(len1+4);
 	pool_write(frontend, &sendlen, sizeof(sendlen));
 	status = pool_write(frontend, p1, len1);
@@ -3242,19 +3248,9 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 			{
 				if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 				{
-
-					do_command(CONNECTION(backend, i), "send invalid query from pgpool to abort transaction.",
-							   PROTO_MAJOR_V3, 0);
-					pool_write(CONNECTION(backend, i), "S", 1);
-					res1 = htonl(4);
-					if (pool_write_and_flush(CONNECTION(backend, i), &res1, sizeof(res1)) < 0)
-					{
-						return POOL_END;
-					}
+					do_error_command(CONNECTION(backend, i), PROTO_MAJOR_V3);
 				}
 			}
-			in_load_balance = 1;
-			REPLICATION = 0;
 			select_in_transaction = 0;
 		}
 
@@ -4007,6 +4003,57 @@ static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMa
 	return POOL_CONTINUE;
 }
 
+/*
+ * Send syntax error query to abort transaction.
+ * We need to sync transaction status in transaction block.
+ * SELECT query is sended to master only.
+ * If SELECT is error, we must abort transaction on other nodes.
+ */
+static POOL_STATUS do_error_command(POOL_CONNECTION *backend, int major)
+{
+	char *error_query = "send invalid query from pgpool to abort transaction";
+	int status, len;
+	char kind;
+	char *string;
+
+	if (send_simplequery_message(backend, strlen(error_query) + 1, error_query, major) != POOL_CONTINUE)
+	{
+		return POOL_END;
+	}
+
+	/*
+	 * Expecting ErrorResponse
+	 */
+	status = pool_read(backend, &kind, sizeof(kind));
+	if (status < 0)
+	{
+		pool_error("do_command: error while reading message kind");
+		return POOL_END;
+	}
+
+	/*
+	 * read command tag of CommandComplete response
+	 */
+	if (major == PROTO_MAJOR_V3)
+	{
+		if (pool_read(backend, &len, sizeof(len)) < 0)
+			return POOL_END;
+		len = ntohl(len) - 4;
+		string = pool_read2(backend, len);
+		if (string == NULL)
+			return POOL_END;
+		pool_debug("command tag: %s", string);
+	}
+	else
+	{
+		string = pool_read_string(backend, &len, 0);
+		if (string == NULL)
+			return POOL_END;
+	}
+
+	return POOL_CONTINUE;
+}
+
 POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *query, char *database)
 {
     int len,sendlen;
@@ -4668,4 +4715,24 @@ static POOL_STATUS end_internal_transaction(POOL_CONNECTION_POOL *backend)
 
 	internal_transaction_started = 0;
 	return POOL_CONTINUE;	
+}
+
+/*
+ * Extract the number of tuples from CommandComplete message
+ */
+static int extract_ntuples(char *message)
+{
+	char *rows;
+
+	if ((rows = strstr(message, "UPDATE")) || (rows = strstr(message, "DELETE")))
+		rows +=7;
+	else if ((rows = strstr(message, "INSERT")))
+	{
+		rows += 7;
+		while (*rows && *rows != ' ') rows++;
+	}
+	else
+		return 0;
+
+	return atoi(rows);
 }
