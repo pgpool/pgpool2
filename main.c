@@ -49,6 +49,11 @@
 
 #define CHECK_REQUEST \
 	do { \
+		if (wakeup_request) \
+		{ \
+			wakeup_children(); \
+			wakeup_request = 0; \
+		} \
 		if (failover_request) \
 		{ \
 			failover(); \
@@ -73,6 +78,7 @@ static int create_inet_domain_socket(const char *hostname, const int port);
 static void myexit(int code);
 static void failover(void);
 static void reaper(void);
+static void wakeup_children(void);
 
 static RETSIGTYPE exit_handler(int sig);
 static RETSIGTYPE reap_handler(int sig);
@@ -117,9 +123,9 @@ static int health_check_timer_expired;		/* non 0 if health check timer expired *
 
 POOL_REQUEST_INFO *Req_info;		/* request info area in shared memory */
 volatile int *InRecovery; /* non 0 if recovery is started */
-volatile int wakeup_request = 0;
-static volatile int failover_request = 0;
-static volatile int sigchld_request = 0;
+static volatile sig_atomic_t failover_request = 0;
+static volatile sig_atomic_t sigchld_request = 0;
+static volatile sig_atomic_t wakeup_request = 0;
 
 int my_proc_id;
 
@@ -1481,7 +1487,7 @@ pool_get_system_db_info(void)
  * handle SIGUSR2
  * Wakeup all process
  */
-static RETSIGTYPE wakeup_handler(int sig)
+static void wakeup_children(void)
 {
 	int i;
 
@@ -1494,4 +1500,10 @@ static RETSIGTYPE wakeup_handler(int sig)
 			kill(pid, SIGUSR2);
 		}
 	}
+}
+
+
+static RETSIGTYPE wakeup_handler(int sig)
+{
+	wakeup_request = 1;
 }
