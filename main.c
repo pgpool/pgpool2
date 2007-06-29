@@ -62,7 +62,6 @@
 		if (sigchld_request) \
 		{ \
 			reaper(); \
-			sigchld_request = 0; \
 		} \
     } while (0)
 
@@ -1362,6 +1361,7 @@ static void reaper(void)
 	POOL_SETMASK(&BlockSig);
 
 	pool_debug("reap_handler called");
+	sigchld_request = 0;
 
 	if (exiting)
 	{
