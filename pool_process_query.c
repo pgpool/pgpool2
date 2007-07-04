@@ -158,6 +158,7 @@ static int replication_was_enabled;		/* replication mode was enabled */
 static int master_slave_was_enabled;	/* master/slave mode was enabled */
 static int internal_transaction_started;		/* to issue table lock command a transaction
 												   has been started internally */
+static int mismatch_ntuples;
 static char *copy_table = NULL;  /* copy table name */
 static char *copy_schema = NULL;  /* copy table name */
 static char copy_delimiter; /* copy delimiter char */
@@ -1355,6 +1356,42 @@ static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	StartupPacket *sp;
 	char psbuf[1024];
 	int i;
+
+	if (mismatch_ntuples)
+	{
+		int len, i;
+		signed char state;
+
+		/* If the numbers of update tuples are difference, we need to abort transaction. */
+		if (MAJOR(backend) == PROTO_MAJOR_V3)
+		{
+			if ((len = pool_read_message_length(backend)) < 0)
+				return POOL_END;
+
+			pool_debug("ReadyForQuery: message length: %d", len);
+
+			len = htonl(len);
+
+			state = pool_read_kind(backend);
+			if (state < 0)
+				return POOL_END;
+
+			/* set transaction state */
+			pool_debug("ReadyForQuery: transaction state: %c", state);
+		}
+
+		for (i = 0; i < NUM_BACKENDS; i++)
+		{
+			if (VALID_BACKEND(i))
+			{
+				do_command(CONNECTION(backend, i),
+						   "send invalid query from pgpool to abort transaction",
+						   PROTO_MAJOR_V3, 1);
+			}
+		}
+
+		mismatch_ntuples = 0;
+	}
 
 	/* if a transaction is started for insert lock, we need to close it. */
 	if (internal_transaction_started)
@@ -3146,10 +3183,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 
 			if (kind == 'C')	/* packet kind is "Command Complete"? */
 			{
-				int n;
-
-				n = extract_ntuples(p);
-				pool_debug("XXXX: %d", n);
+				int n = extract_ntuples(p);
 
 				/*
 				 * if we are in the parallel mode, we have to sum up the number
@@ -3161,36 +3195,45 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 				}
 				else if (command_ok_row_count != n) /* mismatch update rows */
 				{
-					
+					mismatch_ntuples = 1;
 				}
 			}
 		}
 	}
 
-	if (delete_or_update)
+	if (mismatch_ntuples)
 	{
-		char tmp[32];
-
-		strncpy(tmp, p1, 7);
-		sprintf(tmp+7, "%d", command_ok_row_count);
-
-		p2 = strdup(tmp);
-		if (p2 == NULL)
-		{
-			pool_error("SimpleForwardToFrontend: malloc failed");
-			free(p1);
-			return POOL_ERROR;
-		}
-		
-		free(p1);
-		p1 = p2;
-		len1 = strlen(p2) + 1;
+		pool_send_error_message(frontend, MAJOR(backend),
+								"XX001", "pgpool detected difference of the number of update tuples", "",
+								"check data consistency between master and other db node",  __FILE__, __LINE__);
 	}
+	else
+	{
+		if (delete_or_update)
+		{
+			char tmp[32];
 
-	pool_write(frontend, &kind, 1);
-	sendlen = htonl(len1+4);
-	pool_write(frontend, &sendlen, sizeof(sendlen));
-	status = pool_write(frontend, p1, len1);
+			strncpy(tmp, p1, 7);
+			sprintf(tmp+7, "%d", command_ok_row_count);
+
+			p2 = strdup(tmp);
+			if (p2 == NULL)
+			{
+				pool_error("SimpleForwardToFrontend: malloc failed");
+				free(p1);
+				return POOL_ERROR;
+			}
+		
+			free(p1);
+			p1 = p2;
+			len1 = strlen(p2) + 1;
+		}
+
+		pool_write(frontend, &kind, 1);
+		sendlen = htonl(len1+4);
+		pool_write(frontend, &sendlen, sizeof(sendlen));
+		status = pool_write(frontend, p1, len1);
+	}
 
 	/* save the received result for each kind */
 	if (pool_config->enable_query_cache && SYSDB_STATUS == CON_UP)
@@ -3308,7 +3351,6 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 			}
 		}
 	}
-
 	return POOL_CONTINUE;
 }
 
