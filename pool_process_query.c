@@ -747,7 +747,9 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	List *parse_tree_list;
 	Node *node, *node1;
 	POOL_STATUS status;
+	int force_replication; /* non 0 if force to replicate query */
 
+	force_replication = 0;
 	if (query == NULL)	/* need to read query from frontend? */
 	{
 		/* read actual query */
@@ -899,44 +901,48 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			return POOL_CONTINUE;
 		}
 
-		if (frontend &&
-			(IsA(node, PrepareStmt) || IsA(node, DeallocateStmt)))
+		if (IsA(node, PrepareStmt) || IsA(node, DeallocateStmt))
 		{
-			POOL_MEMORY_POOL *old_context;
-			Portal *portal;
-
-			if (prepare_memory_context == NULL)
+			force_replication = 1;
+			if (frontend)
 			{
-				prepare_memory_context = pool_memory_create();
+				POOL_MEMORY_POOL *old_context;
+				Portal *portal;
+
 				if (prepare_memory_context == NULL)
 				{
-					pool_error("Simple Query: pool_memory_create() failed");
-					return POOL_ERROR;
+					prepare_memory_context = pool_memory_create();
+					if (prepare_memory_context == NULL)
+					{
+						pool_error("Simple Query: pool_memory_create() failed");
+						return POOL_ERROR;
+					}
 				}
-			}
-			/* switch memory context */
-			old_context = pool_memory;
-			pool_memory = prepare_memory_context;
 
-			if (IsA(node, PrepareStmt))
-			{
-				pending_function = add_prepared_list;
-				portal = malloc(sizeof(Portal));
-				portal->portal_name = NULL;
-				portal->stmt = copyObject(node);
-				pending_prepared_portal = portal;
-			}
-			else if (IsA(node, DeallocateStmt))
-			{
-				pending_function = del_prepared_list;
-				portal = malloc(sizeof(Portal));
-				portal->portal_name = NULL;
-				portal->stmt = copyObject(node);
-				pending_prepared_portal = portal;
-			}
+				/* switch memory context */
+				old_context = pool_memory;
+				pool_memory = prepare_memory_context;
 
-			/* switch old memory context */
-			pool_memory = old_context;
+				if (IsA(node, PrepareStmt))
+				{
+					pending_function = add_prepared_list;
+					portal = malloc(sizeof(Portal));
+					portal->portal_name = NULL;
+					portal->stmt = copyObject(node);
+					pending_prepared_portal = portal;
+				}
+				else if (IsA(node, DeallocateStmt))
+				{
+					pending_function = del_prepared_list;
+					portal = malloc(sizeof(Portal));
+					portal->portal_name = NULL;
+					portal->stmt = copyObject(node);
+					pending_prepared_portal = portal;
+				}
+
+				/* switch old memory context */
+				pool_memory = old_context;
+			}
 		}
 
 		if (frontend && IsA(node, ExecuteStmt))
@@ -968,7 +974,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		/* load balance trick */
 		if (load_balance_enabled(backend, node1, string1))
 			start_load_balance(backend);
-		else if (MASTER_SLAVE)
+		else if (MASTER_SLAVE && !force_replication)
 		{
 			pool_debug("SimpleQuery: set master_slave_dml query: %s", string);
 			master_slave_was_enabled = 1;
@@ -1083,7 +1089,6 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 
 		if (load_balance_enabled(backend, (Node *)p_stmt->query, string1))
 			start_load_balance(backend);
-
 		else if (REPLICATION && is_select_query((Node *)p_stmt->query, string1) && !is_sequence_query((Node *)p_stmt->query))
 		{
 			selected_slot = MASTER_NODE_ID;
@@ -1092,6 +1097,12 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 			LOAD_BALANCE_STATUS(MASTER_NODE_ID) = LOAD_SELECTED;
 			in_load_balance = 1;
 			select_in_transaction = 1;
+		}
+		else if (MASTER_SLAVE && !IsA((Node *)p_stmt->query, TransactionStmt))
+		{
+			master_slave_was_enabled = 1;
+			MASTER_SLAVE = 0;
+			master_slave_dml = 1;
 		}
 		pool_memory_delete(pool_memory);
 	}
@@ -1128,9 +1139,7 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 			return POOL_ERROR;
 		}
 
-		if (!REPLICATION)
-			break;
-		else if (pool_config->replication_strict)
+		if (pool_config->replication_strict)
 		{
 			pool_debug("waiting for backend completing the query");
 			if (synchronize(cp))
@@ -2312,14 +2321,6 @@ static POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 		default:
 			if (MAJOR(backend) == PROTO_MAJOR_V3)
 			{
-				if (MASTER_SLAVE)
-				{
-					pool_debug("kind: %c master_slave_dml enabled", fkind);
-					master_slave_was_enabled = 1;
-					MASTER_SLAVE = 0;
-					master_slave_dml = 1;
-				}
-
 				status = SimpleForwardToBackend(fkind, frontend, backend);
 				for (i=0;i<NUM_BACKENDS;i++)
 				{
