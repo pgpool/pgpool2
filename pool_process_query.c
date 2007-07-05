@@ -1361,6 +1361,7 @@ static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	{
 		int len, i;
 		signed char state;
+		char kind;
 
 		/* If the numbers of update tuples are difference, we need to abort transaction. */
 		if (MAJOR(backend) == PROTO_MAJOR_V3)
@@ -1384,10 +1385,14 @@ static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		{
 			if (VALID_BACKEND(i))
 			{
-				do_command(CONNECTION(backend, i),
-						   "send invalid query from pgpool to abort transaction",
-						   PROTO_MAJOR_V3, 1);
+				/* abort transaction on all nodes. */
+				do_error_command(CONNECTION(backend, i), PROTO_MAJOR_V3);
 			}
+		}
+		kind = pool_read_kind(backend);
+		if (kind != 'Z') /* ReadyForQuery? */
+		{
+			return POOL_END;
 		}
 
 		mismatch_ntuples = 0;
@@ -3144,7 +3149,6 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 	if (kind == 'C')	/* packet kind is "Command Complete"? */
 	{
 		command_ok_row_count = extract_ntuples(p);
-		pool_debug("XXXX: %d", command_ok_row_count);
 
 		/*
 		 * if we are in the parallel mode, we have to sum up the number
@@ -3956,19 +3960,8 @@ static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMa
 	pool_debug("do_command: Query: %s", query);
 
 	/* send the query to the backend */
-	pool_write(backend, "Q", 1);
-	len = strlen(query)+1;
-
-	if (protoMajor == PROTO_MAJOR_V3)
-	{
-		int sendlen = htonl(len + 4);
-		pool_write(backend, &sendlen, sizeof(sendlen));
-	}
-
-	if (pool_write_and_flush(backend, query, len) < 0)
-	{
+	if (send_simplequery_message(backend, strlen(query)+1, query, protoMajor) != POOL_CONTINUE)
 		return POOL_END;
-	}
 
 	/*
 	 * Expecting CompleteCommand
@@ -3982,8 +3975,7 @@ static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMa
 
 	if (kind != 'C')
 	{
-		pool_error("do_command: backend does not successfully complete command %s status %c", query, kind);
-
+		pool_log("do_command: backend does not successfully complete command %s status %c", query, kind);
 	}
 
 	/*
