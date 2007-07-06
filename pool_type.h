@@ -109,6 +109,7 @@ typedef struct {
 	int			minor;	/* protocol minor version */
 	int			counter; /* used counter */
 	time_t 		create_time; /* connection creation time */
+	int load_balancing_node; /* load balancing node */
 } ConnectionInfo;
 
 
