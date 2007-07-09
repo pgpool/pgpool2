@@ -1005,7 +1005,7 @@ static RETSIGTYPE failover_handler(int sig)
 
 /*
  * backend connection error, failover/failback request, if possible
- *
+ * failover() must be called under protecting signals.
  */
 static void failover(void)
 {
@@ -1350,6 +1350,7 @@ static RETSIGTYPE reap_handler(int sig)
 
 /*
  * Attach zombie processes and restart child processes.
+ * reaper() must be called under protecting signals.
  */
 static void reaper(void)
 {
@@ -1550,8 +1551,10 @@ static void pool_sleep(unsigned int second)
 		}
 
 		r = pool_pause(&timeout);
+		POOL_SETMASK(&BlockSig);
 		if (r > 0)									
 			CHECK_REQUEST;
+		POOL_SETMASK(&UnBlockSig);
 		gettimeofday(&current_time, NULL);
 	}
 	POOL_SETMASK(&BlockSig);
