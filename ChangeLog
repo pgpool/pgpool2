@@ -1,3 +1,7 @@
+2007-07-09  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* main.c: Fix signal handling.
+
 2007-07-05  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* pool_process_query.c: Fix bugs in master_slave mode.
