@@ -22,11 +22,15 @@
 
 #include <ctype.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/un.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
 
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -72,6 +76,8 @@ static int create_inet_domain_socket(const char *hostname, const int port);
 static void myexit(int code);
 static void failover(void);
 static void reaper(void);
+static int pool_pause(struct timeval *timeout);
+static void pool_sleep(unsigned int second);
 
 static RETSIGTYPE exit_handler(int sig);
 static RETSIGTYPE reap_handler(int sig);
@@ -114,8 +120,9 @@ static int stop_sig = SIGTERM;	/* stopping signal default value */
 static int health_check_timer_expired;		/* non 0 if health check timer expired */
 
 POOL_REQUEST_INFO *Req_info;		/* request info area in shared memory */
-static volatile int failover_request = 0;
-static volatile int sigchld_request = 0;
+static volatile sig_atomic_t failover_request = 0;
+static volatile sig_atomic_t sigchld_request = 0;
+static int pipe_fds[2]; /* for delivering signals */
 
 int my_proc_id;
 
@@ -358,12 +365,20 @@ int main(int argc, char **argv)
 	}
 
 	/* set up signal handlers */
+	POOL_SETMASK(&BlockSig);
 	pool_signal(SIGTERM, exit_handler);
 	pool_signal(SIGINT, exit_handler);
 	pool_signal(SIGQUIT, exit_handler);
 	pool_signal(SIGCHLD, reap_handler);
 	pool_signal(SIGUSR1, failover_handler);
 	pool_signal(SIGHUP, exit_handler);
+
+	/* create pipe for delivering event */
+	if (pipe(pipe_fds) < 0)
+	{
+		pool_error("failed to create pipe");
+		myexit(1);
+	}
 
 	pool_log("pgpool successfully started");
 
@@ -455,11 +470,7 @@ int main(int argc, char **argv)
 							/* continue to retry */
 							sleep_time = pool_config->health_check_period/NUM_BACKENDS;
 							pool_debug("retry sleep time: %d seconds", sleep_time);
-							while (sleep_time > 0)
-							{
-								sleep_time = sleep(sleep_time);
-								CHECK_REQUEST;
-							}
+							pool_sleep(sleep_time);
 							continue;
 						}
 					}
@@ -479,11 +490,7 @@ int main(int argc, char **argv)
 					{
 						sleep_time = pool_config->health_check_period/NUM_BACKENDS;
 						pool_debug("retry sleep time: %d seconds", sleep_time);
-						while (sleep_time > 0)
-						{
-							sleep_time = sleep(sleep_time);
-							CHECK_REQUEST;
-						}
+						pool_sleep(sleep_time);
 						continue;
 					}
 				}
@@ -496,15 +503,20 @@ int main(int argc, char **argv)
 			}
 
 			sleep_time = pool_config->health_check_period;
-			while (sleep_time > 0)
-			{
-				sleep_time = sleep(sleep_time);
-				CHECK_REQUEST;
-			}
+			pool_sleep(sleep_time);
 		}
 		else
 		{
-			pause();
+			for (;;)
+			{
+				int r;
+
+				POOL_SETMASK(&UnBlockSig);
+				r = pool_pause(NULL);
+				POOL_SETMASK(&BlockSig);
+				if (r > 0)
+					break;
+			}
 		}
 	}
 	pool_shmem_exit(0);
@@ -666,6 +678,9 @@ pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 
 	if (pid == 0)
 	{
+		close(pipe_fds[0]);
+		close(pipe_fds[1]);
+
 		myargv = save_ps_display_args(myargc, myargv);
 
 		/* call PCP child main */
@@ -691,6 +706,9 @@ pid_t fork_a_child(int unix_fd, int inet_fd, int id)
 
 	if (pid == 0)
 	{
+		close(pipe_fds[0]);
+		close(pipe_fds[1]);
+
 		myargv = save_ps_display_args(myargc, myargv);
 
 		/* call child main */
@@ -961,20 +979,19 @@ static RETSIGTYPE failover_handler(int sig)
 {
 	POOL_SETMASK(&BlockSig);
 	failover_request = 1;
+	write(pipe_fds[1], "\0", 1);
 	POOL_SETMASK(&UnBlockSig);
 }
 
 /*
  * backend connection error, failover/failback request, if possible
- *
+ * failover() must be called under protecting signals.
  */
 static void failover(void)
 {
 
 	int node_id;
 	int i;
-
-	POOL_SETMASK(&BlockSig);
 
 	pool_debug("failover_handler called");
 
@@ -985,7 +1002,6 @@ static void failover(void)
 	if (getpid() != mypid)
 	{
 		pool_debug("failover_handler: I am not parent");
-		POOL_SETMASK(&UnBlockSig);
 		return;
 	}
 
@@ -995,7 +1011,6 @@ static void failover(void)
 	if (exiting)
 	{
 		pool_debug("failover_handler called while exiting");
-		POOL_SETMASK(&UnBlockSig);
 		return;
 	}
 
@@ -1005,7 +1020,6 @@ static void failover(void)
 	if (switching)
 	{
 		pool_debug("failover_handler called while switching");
-		POOL_SETMASK(&UnBlockSig);
 		return;
 	}
 
@@ -1014,7 +1028,6 @@ static void failover(void)
 	if (node_id < 0)
 	{
 		pool_error("failover_handler: invalid node_id %d", node_id);
-		POOL_SETMASK(&UnBlockSig);
 		return;
 	}
 
@@ -1024,7 +1037,6 @@ static void failover(void)
 	{
 		pool_error("failover_handler: invalid node_id %d status:%d MAX_NUM_BACKENDS: %d", node_id,
 					BACKEND_INFO(node_id).backend_status, MAX_NUM_BACKENDS);
-		POOL_SETMASK(&UnBlockSig);
 		return;
 	}
 
@@ -1087,7 +1099,6 @@ static void failover(void)
 			}
 
 			switching = 0;
-			POOL_SETMASK(&UnBlockSig);
 			return;
 		}
 
@@ -1137,7 +1148,6 @@ static void failover(void)
 
 	Req_info->node_id = -1;
 	switching = 0;
-	POOL_SETMASK(&UnBlockSig);
 }
 
 /*
@@ -1304,11 +1314,15 @@ system_db_health_check(void)
  */
 static RETSIGTYPE reap_handler(int sig)
 {
+	POOL_SETMASK(&BlockSig);
 	sigchld_request = 1;
+	write(pipe_fds[1], "\0", 1);
+	POOL_SETMASK(&UnBlockSig);
 }
 
 /*
  * Attach zombie processes and restart child processes.
+ * reaper() must be called under protecting signals.
  */
 static void reaper(void)
 {
@@ -1316,21 +1330,17 @@ static void reaper(void)
 	int status;
 	int i;
 
-	POOL_SETMASK(&BlockSig);
-
 	pool_debug("reap_handler called");
 	sigchld_request = 0;
 
 	if (exiting)
 	{
-		POOL_SETMASK(&UnBlockSig);
 		pool_debug("reap_handler: exited due to exiting");
 		return;
 	}
 
 	if (switching)
 	{
-		POOL_SETMASK(&UnBlockSig);
 		pool_debug("reap_handler: exited due to swicting");
 		return;
 	}
@@ -1372,7 +1382,6 @@ static void reaper(void)
 		}
 	}
 	pool_debug("reap_handler: normally exited");
-	POOL_SETMASK(&UnBlockSig);
 }
 
 /*
@@ -1438,4 +1447,58 @@ pool_get_system_db_info(void)
 		return NULL;
 	
 	return system_db_info->info;
+}
+
+/*
+ * pool_pause: A process pauses by select().
+ */
+static int pool_pause(struct timeval *timeout)
+{
+	fd_set rfds;
+	int n;
+	char dummy;
+
+	FD_ZERO(&rfds);
+	FD_SET(pipe_fds[0], &rfds);
+	n = select(pipe_fds[0]+1, &rfds, NULL, NULL, timeout);
+	if (n == 1)
+		read(pipe_fds[0], &dummy, 1);
+	return n;
+}
+
+/*
+ * pool_pause: A process sleep using pool_pause().
+ *             If a signal event occurs, it raises signal handler.
+ */
+static void pool_sleep(unsigned int second)
+{
+	struct timeval current_time, sleep_time;
+
+	gettimeofday(&current_time, NULL);
+	sleep_time.tv_sec = second + current_time.tv_sec;
+	sleep_time.tv_usec = current_time.tv_usec;
+
+	POOL_SETMASK(&UnBlockSig);
+	while (sleep_time.tv_sec > current_time.tv_sec ||
+		   sleep_time.tv_usec > current_time.tv_usec)
+	{
+		struct timeval timeout;
+		int r;
+
+		timeout.tv_sec = sleep_time.tv_sec - current_time.tv_sec;
+		timeout.tv_usec = sleep_time.tv_usec - current_time.tv_usec;
+		if (timeout.tv_usec < 0)
+		{
+			timeout.tv_sec--;
+			timeout.tv_usec += 1000000;
+		}
+
+		r = pool_pause(&timeout);
+		POOL_SETMASK(&BlockSig);
+		if (r > 0)									
+			CHECK_REQUEST;
+		POOL_SETMASK(&UnBlockSig);
+		gettimeofday(&current_time, NULL);
+	}
+	POOL_SETMASK(&BlockSig);
 }
