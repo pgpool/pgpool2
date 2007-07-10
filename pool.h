@@ -351,7 +351,8 @@ typedef enum SemNum
 typedef enum {
 	NODE_UP_REQUEST = 0,
 	NODE_DOWN_REQUEST,
-	NODE_RECOVERY_REQUEST
+	NODE_RECOVERY_REQUEST,
+	CLOSE_IDLE_REQUEST
 } POOL_REQUEST_KIND;
 
 typedef struct {
@@ -374,7 +375,7 @@ extern int in_load_balance;		/* non 0 if in load balance mode */
 extern int selected_slot;		/* selected DB node for load balance */
 extern int master_slave_dml;	/* non 0 if master/slave mode is specified in config file */
 extern POOL_REQUEST_INFO *Req_info;
-extern volatile int *InRecovery;
+extern volatile sig_atomic_t *InRecovery;
 extern char remote_ps_data[];		/* used for set_ps_display */
 
 /*
@@ -401,6 +402,7 @@ extern int pool_flush(POOL_CONNECTION *cp);
 extern int pool_flush_it(POOL_CONNECTION *cp);
 extern int pool_write_and_flush(POOL_CONNECTION *cp, void *buf, int len);
 extern char *pool_read_string(POOL_CONNECTION *cp, int *len, int line);
+extern int pool_unread(POOL_CONNECTION *cp, void *data, int len);
 
 extern int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 extern int pool_do_reauth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp);

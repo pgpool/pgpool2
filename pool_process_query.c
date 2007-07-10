@@ -50,6 +50,9 @@
 
 #define INIT_STATEMENT_LIST_SIZE 8
 
+#define DEADLOCK_ERROR_CODE "40P01"
+#define POOL_ERROR_QUERY "send invalid query from pgpool to abort transaction"
+
 typedef struct {
 	char *portal_name;
 	Node *stmt;
@@ -194,6 +197,7 @@ static void query_cache_register(char kind, POOL_CONNECTION *frontend, char *dat
 static POOL_STATUS start_internal_transaction(POOL_CONNECTION_POOL *backend, Node *node);
 static POOL_STATUS end_internal_transaction(POOL_CONNECTION_POOL *backend);
 static int extract_ntuples(char *message);
+static int detect_deadlock_error(POOL_CONNECTION *master, int major);
 
 
 POOL_STATUS pool_process_query(POOL_CONNECTION *frontend, 
@@ -763,6 +767,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	List *parse_tree_list;
 	Node *node = NULL, *node1;
 	POOL_STATUS status;
+	int deadlock_detected = 0;
 
 	if (query == NULL)	/* need to read query from frontend? */
 	{
@@ -1045,6 +1050,21 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 		if (wait_for_query_response(MASTER(backend), string) != POOL_CONTINUE)
 			return POOL_END;
+
+		/*
+		 * We must check deadlock error because a aborted transaction
+		 * by detecting deadlock isn't same on all nodes.
+		 * If a transaction is aborted on master node, pgpool send a
+		 * error query to another nodes.
+		 */
+		deadlock_detected = detect_deadlock_error(MASTER(backend), MAJOR(backend));
+		if (deadlock_detected < 0)
+			return POOL_END;
+	}
+	if (deadlock_detected)
+	{
+		string = POOL_ERROR_QUERY;
+		len = strlen(string) + 1;
 	}
 
 	/* send query to other nodes */
@@ -1137,6 +1157,7 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 	Portal *portal;
 	char *string1;
 	PrepareStmt *p_stmt;
+	int deadlock_detected = 0;
 
 	/* read Execute packet */
 	if (pool_read(frontend, &len, sizeof(len)) < 0)
@@ -1198,6 +1219,16 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 			if (synchronize(CONNECTION(backend, MASTER_NODE_ID)))
 				return POOL_END;
 		}
+
+		/*
+		 * We must check deadlock error because a aborted transaction
+		 * by detecting deadlock isn't same on all nodes.
+		 * If a transaction is aborted on master node, pgpool send a
+		 * error query to another nodes.
+		 */
+		deadlock_detected = detect_deadlock_error(MASTER(backend), MAJOR(backend));
+		if (deadlock_detected < 0)
+			return POOL_END;
 	}
 
 	/* send query to other nodes */
@@ -1205,8 +1236,15 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 	{
 		if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
 			continue;
-
-		if (send_execute_message(backend, MASTER_NODE_ID, len, string) != POOL_CONTINUE)
+		if (deadlock_detected)
+		{
+			if (send_simplequery_message(CONNECTION(backend, i),
+										 strlen(POOL_ERROR_QUERY)+1,
+										 POOL_ERROR_QUERY,
+										 MAJOR(backend)))
+				return POOL_END;
+		}
+		else if (send_execute_message(backend, i, len, string) != POOL_CONTINUE)
 			return POOL_END;
 	}
 
@@ -4023,7 +4061,7 @@ static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMa
  */
 static POOL_STATUS do_error_command(POOL_CONNECTION *backend, int major)
 {
-	char *error_query = "send invalid query from pgpool to abort transaction";
+	char *error_query = POOL_ERROR_QUERY;
 	int status, len;
 	char kind;
 	char *string;
@@ -4747,4 +4785,93 @@ static int extract_ntuples(char *message)
 		return 0;
 
 	return atoi(rows);
+}
+
+static int detect_deadlock_error(POOL_CONNECTION *master, int major)
+{
+	int deadlock = 0;
+	char kind;
+	int readlen = 0, len;
+	char *buf;
+	char *p, *str;
+
+	if ((buf = malloc(1024)) == NULL)
+	{
+		pool_error("detect_deadlock_error: malloc failed");
+		return -1;
+	}
+
+	if (pool_read(master, &kind, sizeof(kind)))
+		return POOL_END;
+	readlen += sizeof(kind);
+	p = buf;
+	memcpy(p, &kind, sizeof(kind));
+	p += sizeof(kind);
+
+	if (kind == 'E') /* deadlock error? */
+	{
+		pool_debug("error");
+		/* read actual query */
+		if (major == PROTO_MAJOR_V3)
+		{
+			char *error_code;
+			
+			if (pool_read(master, &len, sizeof(len)) < 0)
+				return POOL_END;
+			readlen += sizeof(len);
+			memcpy(p, &len, sizeof(len));
+			p += sizeof(len);
+			
+			len = ntohl(len) - 4;
+			str = malloc(len);
+			pool_read(master, str, len);
+			readlen += len;
+			if (readlen > 1024)
+			{
+				buf = realloc(buf, readlen);
+				if (buf == NULL)
+				{
+					pool_error("detect_deadlock_error: malloc failed");
+					return -1;
+				}
+			}
+			memcpy(p, str, len);
+
+			error_code = str;
+			while (*error_code)
+			{
+				if (*error_code == 'C')
+				{
+					if (strcmp(error_code+1, DEADLOCK_ERROR_CODE) == 0) /* deadlock error */
+					{
+						pool_debug("SimpleQuery: receive deadlock error from master node.");
+						deadlock = 1;
+					}
+					break;
+				}
+				else
+					error_code = error_code + strlen(error_code) + 1;
+			}
+			free(str);
+		}
+		else
+		{
+			str = pool_read_string(master, &len, 0);
+			readlen += len;
+			if (readlen > 1024)
+			{
+				buf = realloc(buf, readlen);
+				if (buf == NULL)
+				{
+					pool_error("detect_deadlock_error: malloc failed");
+					return -1;
+				}
+			}
+			memcpy(p, str, len);
+		}
+	}
+	if (pool_unread(master, buf, readlen) != 0)
+		deadlock = -1;
+	free(buf);
+	return deadlock;
 }

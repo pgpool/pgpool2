@@ -754,3 +754,31 @@ static int consume_pending_data(POOL_CONNECTION *cp, void *data, int len)
 
 	return consume_size;
 }
+
+/*
+ * pool_unread: Put back data to input buffer
+ */
+int pool_unread(POOL_CONNECTION *cp, void *data, int len)
+{
+	void *p = cp->hp;
+	int n = cp->len + len;
+	int realloc_size;
+	
+	if (cp->bufsz < n)
+	{
+		realloc_size = (n/READBUFSZ+1)*READBUFSZ;
+		p = realloc(cp->hp, realloc_size);
+		if (p == NULL)
+		{
+			pool_error("pool_unread: realloc failed");
+			return -1;
+		}
+		cp->hp = p;
+	}
+	if (cp->len != 0)
+		memmove(p + len, cp->hp + cp->po, cp->len);
+	memmove(p, data, len);
+	cp->len = n;
+	cp->po = 0;
+	return 0;
+}
