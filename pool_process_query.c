@@ -46,6 +46,9 @@
 
 #define INIT_STATEMENT_LIST_SIZE 8
 
+#define DEADLOCK_ERROR_CODE "40P01"
+#define POOL_ERROR_QUERY "send invalid query from pgpool to abort transaction"
+
 typedef struct {
 	char *portal_name;
 	Node *stmt;
@@ -140,6 +143,7 @@ static int send_deallocate(POOL_CONNECTION_POOL *backend, PreparedStatementList 
 static char *parse_copy_data(char *buf, int len, char delimiter, int col_id);
 static Portal *lookup_prepared_statement_by_statement(PreparedStatementList *p, const char *name);
 static Portal *lookup_prepared_statement_by_portal(PreparedStatementList *p, const char *name);
+static int detect_deadlock_error(POOL_CONNECTION *master, int major);
 
 #ifdef NOT_USED
 static POOL_CONNECTION_POOL_SLOT *slots[MAX_CONNECTION_SLOTS];
@@ -748,6 +752,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	Node *node, *node1;
 	POOL_STATUS status;
 	int force_replication; /* non 0 if force to replicate query */
+	int deadlock_detected = 0, checked = 0;
 
 	force_replication = 0;
 	if (query == NULL)	/* need to read query from frontend? */
@@ -1023,6 +1028,12 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		/* forward the query to the backend */
 		pool_write(CONNECTION(backend, i), "Q", 1);
 
+		if (deadlock_detected)
+		{
+			string = POOL_ERROR_QUERY;
+			len = strlen(string) + 1;
+		}
+
 		if (MAJOR(backend) == PROTO_MAJOR_V3)
 		{
 			int sendlen = htonl(len + 4);
@@ -1044,6 +1055,20 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			pool_debug("waiting for backend %d completing the query", i);
 			if (synchronize(CONNECTION(backend, i)))
 				return POOL_END;
+
+			if (!checked)
+			{
+				/*
+				 * We must check deadlock error because a aborted transaction
+				 * by detecting deadlock isn't same on all nodes.
+				 * If a transaction is aborted on master node, pgpool send a
+				 * error query to another nodes.
+				 */
+				deadlock_detected = detect_deadlock_error(CONNECTION(backend, i), MAJOR(backend));
+				if (deadlock_detected < 0)
+					return POOL_END;
+				checked = 1;
+			}
 		}
 	}
 
@@ -1065,6 +1090,7 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 	Portal *portal;
 	char *string1;
 	PrepareStmt *p_stmt;
+	int deadlock_detected = 0, checked = 0;
 
 	/* read Execute packet */
 	if (pool_read(frontend, &len, sizeof(len)) < 0)
@@ -1122,21 +1148,32 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 
 		cp = CONNECTION(backend, i);
 
-		/* forward the query to the backend */
-		pool_write(cp, "E", 1);
-		sendlen = htonl(len + 4);
-		pool_write(cp, &sendlen, sizeof(sendlen));
-		pool_write(cp, string, len);
-
-		/*
-		 * send "Flush" message so that backend notices us
-		 * the completion of the command
-		 */
-		pool_write(cp, "H", 1);
-		sendlen = htonl(4);
-		if (pool_write_and_flush(cp, &sendlen, sizeof(sendlen)) < 0)
+		if (deadlock_detected)
 		{
-			return POOL_ERROR;
+			pool_write(cp, "Q", 1);
+			len = strlen(POOL_ERROR_QUERY) + 1;
+			sendlen = htonl(len + 4);
+			pool_write(cp, &sendlen, sizeof(sendlen));
+			pool_write_and_flush(cp, POOL_ERROR_QUERY, len);
+		}
+		else
+		{
+			/* forward the query to the backend */
+			pool_write(cp, "E", 1);
+			sendlen = htonl(len + 4);
+			pool_write(cp, &sendlen, sizeof(sendlen));
+			pool_write(cp, string, len);
+
+			/*
+			 * send "Flush" message so that backend notices us
+			 * the completion of the command
+			 */
+			pool_write(cp, "H", 1);
+			sendlen = htonl(4);
+			if (pool_write_and_flush(cp, &sendlen, sizeof(sendlen)) < 0)
+			{
+				return POOL_ERROR;
+			}
 		}
 
 		if (pool_config->replication_strict)
@@ -1144,6 +1181,20 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 			pool_debug("waiting for backend completing the query");
 			if (synchronize(cp))
 				return POOL_END;
+
+			if (!checked)
+			{
+				/*
+				 * We must check deadlock error because a aborted transaction
+				 * by detecting deadlock isn't same on all nodes.
+				 * If a transaction is aborted on master node, pgpool send a
+				 * error query to another nodes.
+				 */
+				deadlock_detected = detect_deadlock_error(CONNECTION(backend, i), MAJOR(backend));
+				if (deadlock_detected < 0)
+					return POOL_END;
+				checked = 1;
+			}
 		}
 	}
 
@@ -4539,4 +4590,92 @@ static void query_ps_status(char *query, POOL_CONNECTION_POOL *backend)
 	psbuf[i] = '\0';
 
 	set_ps_display(psbuf, false);
+}
+
+static int detect_deadlock_error(POOL_CONNECTION *master, int major)
+{
+	int deadlock = 0;
+	char kind;
+	int readlen = 0, len;
+	char *buf;
+	char *p, *str;
+
+	if ((buf = malloc(1024)) == NULL)
+	{
+		pool_error("detect_deadlock_error: malloc failed");
+		return -1;
+	}
+
+	if (pool_read(master, &kind, sizeof(kind)))
+		return POOL_END;
+	readlen += sizeof(kind);
+	p = buf;
+	memcpy(p, &kind, sizeof(kind));
+	p += sizeof(kind);
+
+	if (kind == 'E') /* deadlock error? */
+	{
+		/* read actual query */
+		if (major == PROTO_MAJOR_V3)
+		{
+			char *error_code;
+			
+			if (pool_read(master, &len, sizeof(len)) < 0)
+				return POOL_END;
+			readlen += sizeof(len);
+			memcpy(p, &len, sizeof(len));
+			p += sizeof(len);
+			
+			len = ntohl(len) - 4;
+			str = malloc(len);
+			pool_read(master, str, len);
+			readlen += len;
+			if (readlen > 1024)
+			{
+				buf = realloc(buf, readlen);
+				if (buf == NULL)
+				{
+					pool_error("detect_deadlock_error: malloc failed");
+					return -1;
+				}
+			}
+			memcpy(p, str, len);
+
+			error_code = str;
+			while (*error_code)
+			{
+				if (*error_code == 'C')
+				{
+					if (strcmp(error_code+1, DEADLOCK_ERROR_CODE) == 0) /* deadlock error */
+					{
+						pool_debug("SimpleQuery: receive deadlock error from master node.");
+						deadlock = 1;
+					}
+					break;
+				}
+				else
+					error_code = error_code + strlen(error_code) + 1;
+			}
+			free(str);
+		}
+		else
+		{
+			str = pool_read_string(master, &len, 0);
+			readlen += len;
+			if (readlen > 1024)
+			{
+				buf = realloc(buf, readlen);
+				if (buf == NULL)
+				{
+					pool_error("detect_deadlock_error: malloc failed");
+					return -1;
+				}
+			}
+			memcpy(p, str, len);
+		}
+	}
+	if (pool_unread(master, buf, readlen) != 0)
+		deadlock = -1;
+	free(buf);
+	return deadlock;
 }
