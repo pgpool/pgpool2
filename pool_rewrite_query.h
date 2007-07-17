@@ -35,7 +35,7 @@
 #define SELECT_BACKEND_CONNECT 3
 #define SELECT_NOT_BACKEND_CONNECT 4
 #define SELECT_PGCATALOG 5
-#define SELECT_CHECK_PGCATALOG 6
+#define SELECT_CHECK_PGCATALOG_REPLICATION 6
 #define SELECT_DEFAULT 7
 #define SELECT_DEFAULT_INSIDE_DBLINK 8
 #define SELECT_AEXPR 9
@@ -43,6 +43,11 @@
 #define SELECT_ONETABLE 11
 #define SELECT_ONETABLE_FALSE 12
 #define SELECT_RELATION_ERROR 13
+#define INSERT_DIST_NO_RULE 14
+#define SEND_PARALLEL_ENGINE 15
+#define SEND_LOADBALANCE_ENGINE 16
+#define SELECT_NOT_REPLICATION 17
+#define SELECT_REWRITE 18
 
 typedef struct {
 	int r_code; 
@@ -68,7 +73,7 @@ extern RewriteQuery *rewrite_query_stmt(Node *node, POOL_CONNECTION *frontend,PO
 extern void nodeToRewriteString(RewriteQuery *message, ConInfoTodblink *dblink,void *obj);
 char *pool_error_message(char *message);
 extern int IsSelectpgcatalog(Node *node,POOL_CONNECTION_POOL *backend);
-extern char *is_parallel_query(Node *node,POOL_CONNECTION_POOL *backend);
+extern RewriteQuery *is_parallel_query(Node *node,POOL_CONNECTION_POOL *backend);
 
 extern POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,POOL_CONNECTION_POOL *backend, char *string,Node *node,bool send_to_frontend);
 

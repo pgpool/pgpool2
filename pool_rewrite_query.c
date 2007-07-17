@@ -161,9 +161,7 @@ static void examInsertStmt(Node *node,POOL_CONNECTION_POOL *backend, RewriteQuer
 	if (!info)
 	{
 		/* send  error message to frontend */
-		message->r_code = INSERT_SQL_RESTRICTION;
-		message->r_node = -1;
-		message->rewrite_query = pool_error_message("cannot find dist_def table info");
+		message->r_code = INSERT_DIST_NO_RULE;
 		return;
 	}
 
@@ -277,7 +275,7 @@ int IsSelectpgcatalog(Node *node,POOL_CONNECTION_POOL *backend)
 
 	/* initialize  message */
 	message.type = node->type;
-	message.r_code = SELECT_CHECK_PGCATALOG;
+	message.r_code = SELECT_CHECK_PGCATALOG_REPLICATION;
 	message.dbname = NULL;
 	message.table_relname = NULL;
 	message.table_alias = NULL;
@@ -285,8 +283,9 @@ int IsSelectpgcatalog(Node *node,POOL_CONNECTION_POOL *backend)
 	message.dbname = NULL;
 
 	nodeToRewriteString(&message,&dblink,node);
+	pool_debug("XXXXX Isselectpgcatalog %d",message.r_code);
 
-	if(message.r_code == SELECT_PGCATALOG)
+	if(message.r_code == SELECT_PGCATALOG || message.r_code == SELECT_CHECK_PGCATALOG_REPLICATION)
 		return 1;
 	else
 		return 0;
@@ -394,6 +393,7 @@ RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNE
 }
 
 #define POOL_PARALLEL "pool_parallel"
+#define POOL_LOADBALANCE "pool_loadbalance"
 
 static int check_whereClause(Node *where)
 {
@@ -494,10 +494,12 @@ static char *delimistr(char *str)
 
 	for(i = 0; i < len; i++)
 	{
-		unsigned char ch = (unsigned char) str[i];
+		char c = (unsigned char) str[i];
 		if((i != 0) && (i != len -1))
 		{
-			result[j] = (char) ch;
+			if(c=='\'' && (char) str[i+1]=='\'') 
+				i++;
+			result[j] = c;
 			j++;
 		}
 	}
@@ -507,9 +509,15 @@ static char *delimistr(char *str)
 	return result;
 }
 
-char *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
+RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 {
-	char *parallel = NULL;
+	static RewriteQuery message;
+
+	message.dbname = NULL;
+	message.table_relname = NULL;
+	message.table_alias = NULL;
+	message.schemaname = NULL;
+	message.dbname = NULL;
 
 	if (IsA(node, SelectStmt))
 	{
@@ -522,45 +530,73 @@ char *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 		direct_ok = direct_parallel_query(stmt,backend);
 		if(direct_ok == 1)
 		{
-			parallel = nodeToString(node);
-			pool_debug("can pool_parallel_exec %s",parallel);	
-			return parallel;
+			message.rewrite_query = nodeToString(node);
+			message.r_code = SEND_PARALLEL_ENGINE;
+			pool_debug("can pool_parallel_exec %s",message.rewrite_query);	
+			return &message;
 		}
 
-		if (stmt->distinctClause || stmt->into || stmt->intoColNames ||
+
+		
+		if (!(stmt->distinctClause || stmt->into || stmt->intoColNames ||
 			stmt->fromClause || stmt->groupClause || stmt->havingClause ||
 			stmt->sortClause || stmt->limitOffset || stmt->limitCount ||
-			stmt->lockingClause || stmt->larg || stmt->rarg)
-			return NULL;
-
-		n = lfirst(list_head(stmt->targetList));
-		if (IsA(n, ResTarget))
+			stmt->lockingClause || stmt->larg || stmt->rarg) && 
+			(n = lfirst(list_head(stmt->targetList))) && IsA(n, ResTarget))
 		{
 			ResTarget *target = (ResTarget *) n;
 		
 			if (target->val && IsA(target->val, FuncCall))
 			{
 				FuncCall *func = (FuncCall *) target->val;
-				if (list_length(func->funcname) == 1 &&
-					strcmp(strVal(lfirst(list_head(func->funcname))),
-						   POOL_PARALLEL) == 0)
+				if (list_length(func->funcname) == 1)
 				{
 					Node *func_args = (Node *) lfirst(list_head(func->args));
-					parallel = delimistr(nodeToString(func_args));
-					return parallel;
-				}
+					message.rewrite_query = delimistr(nodeToString(func_args));
+
+					if(strcmp(strVal(lfirst(list_head(func->funcname))),
+						   POOL_PARALLEL) == 0)
+					{
+						message.r_code = SEND_PARALLEL_ENGINE;
+						pool_debug("can pool_parallel_exec %s",message.rewrite_query);	
+						return &message;
+					} 
+					else if(strcmp(strVal(lfirst(list_head(func->funcname))),
+						   						POOL_LOADBALANCE) == 0)
+					{
+						message.r_code = SEND_LOADBALANCE_ENGINE;
+						pool_debug("can loadbalance_mode %s",message.rewrite_query);	
+						return &message;
+					}
+				} 
 			}
 		}
+
+		if(IsSelectpgcatalog(node, backend) == 1)
+		{
+			message.rewrite_query = nodeToString(node);
+			message.r_code = SEND_LOADBALANCE_ENGINE;
+			pool_debug("can send noermal %s",message.rewrite_query);	
+			return &message;
+		}		
+		
+		message.r_code = SELECT_REWRITE;
 	}
 	else if (IsA(node, CopyStmt))
 	{
 		CopyStmt *stmt = (CopyStmt *)node;
 		if (stmt->is_from == FALSE && stmt->filename == NULL)
 		{
-			parallel = nodeToString(stmt);
-			return parallel;
+			RangeVar *relation = (RangeVar *)stmt->relation;
+
+			/* check on distribution table or replicate table */
+
+			if(pool_get_dist_def_info (MASTER_CONNECTION(backend)->sp->database, relation->schemaname, relation->relname))
+			{
+				message.rewrite_query = nodeToString(stmt);
+				message.r_code = SEND_PARALLEL_ENGINE;
+			}
 		}
 	}
-
-	return NULL;
+	return &message;
 }

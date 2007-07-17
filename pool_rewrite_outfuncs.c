@@ -1311,10 +1311,19 @@ _rewriteRangeVar(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 		/* get dist_def_info */
 		info = pool_get_dist_def_info (dblink->dbname, node->schemaname, node->relname);
 
-		if(!info)
+		if(message->r_code != SELECT_CHECK_PGCATALOG_REPLICATION)
 		{
-			message->r_code = SELECT_RELATION_ERROR;
-			return;
+			if(!info)
+			{
+				message->r_code = SELECT_RELATION_ERROR;
+				return;
+			}
+		} else {
+			if(info)
+			{
+				message->r_code = SELECT_NOT_REPLICATION;
+				return;
+			}
 		}
 
 		for(i = 0; i < info->col_num; i++)
@@ -5524,23 +5533,25 @@ _rewriteNode(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, S
 			case T_SelectStmt:
 				{
 					int message_r_code = message->r_code;
-
-					if(message_r_code != SELECT_ONETABLE &&
-						checkSelectStmtOneTable(BaseSelect, message, dblink, str,obj) == 1)
+					if(message->r_code != SELECT_CHECK_PGCATALOG_REPLICATION)
 					{
-						/* Special Query rewriteing when fromClause has one-table */
-						KeepRewriteQueryCode(message, SELECT_ONETABLE);
-
-						/* Intensive Query rewriting starts */
-						if(checkIntensiveOneTable(BaseSelect, message, dblink, str, obj) == 1)
+						if(message_r_code != SELECT_ONETABLE &&
+							checkSelectStmtOneTable(BaseSelect, message, dblink, str,obj) == 1)
 						{
-							pool_debug("OneTable Intensive optimization");
-							_rewriteSelectStmtIntensive(BaseSelect, message, dblink, str, obj);
-							KeepRewriteQueryCode(message, message_r_code);
-							break;
+							/* Special Query rewriteing when fromClause has one-table */
+							KeepRewriteQueryCode(message, SELECT_ONETABLE);
+
+							/* Intensive Query rewriting starts */
+							if(checkIntensiveOneTable(BaseSelect, message, dblink, str, obj) == 1)
+							{
+								pool_debug("OneTable Intensive optimization");
+								_rewriteSelectStmtIntensive(BaseSelect, message, dblink, str, obj);
+								KeepRewriteQueryCode(message, message_r_code);
+								break;
+							}
+						} else {
+							KeepRewriteQueryCode(message, SELECT_DEFAULT);
 						}
-					} else {
-						KeepRewriteQueryCode(message, SELECT_DEFAULT);
 					}
 					/* default dblink action */
 					_rewriteSelectStmt(BaseSelect, message, dblink, str, obj);

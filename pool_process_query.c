@@ -846,21 +846,26 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 		if (pool_config->parallel_mode)
 		{
-			char *parallel_query = NULL;
-
 			/* Do select pool_parallel ? */
-			parallel_query = is_parallel_query(node,backend);
-			if (parallel_query)
+			RewriteQuery *r_query = is_parallel_query(node,backend);
+
+			if (r_query->r_code == SEND_PARALLEL_ENGINE)
 			{
-				POOL_STATUS stats = pool_parallel_exec(frontend,backend,parallel_query, node,true);
+				POOL_STATUS stats = pool_parallel_exec(frontend,backend,r_query->rewrite_query, node,true);
 				free_parser();
 				return stats;
 			}
-
-			/* rewrite_query_phase */
+			else if(r_query->r_code == SEND_LOADBALANCE_ENGINE)
 			{
-				RewriteQuery *r_query = rewrite_query_stmt(node,frontend,backend);
-				if(r_query->type == T_InsertStmt)
+				string = r_query->rewrite_query;
+				len = strlen(string)+1;
+				pool_debug("SimpleQuery: parallel_mode(loadbalance_query)=%s",string);
+			}
+			else
+			{
+				/* rewrite_query_phase */
+				r_query = rewrite_query_stmt(node,frontend,backend);
+				if(r_query->type == T_InsertStmt && r_query->r_code != INSERT_DIST_NO_RULE)
 				{
 					free_parser();
 					return r_query->status;
