@@ -143,6 +143,7 @@ static int send_deallocate(POOL_CONNECTION_POOL *backend, PreparedStatementList 
 static char *parse_copy_data(char *buf, int len, char delimiter, int col_id);
 static Portal *lookup_prepared_statement_by_statement(PreparedStatementList *p, const char *name);
 static Portal *lookup_prepared_statement_by_portal(PreparedStatementList *p, const char *name);
+static int detect_error(POOL_CONNECTION *master, char *error_code, int major);
 static int detect_deadlock_error(POOL_CONNECTION *master, int major);
 
 #ifdef NOT_USED
@@ -4594,7 +4595,18 @@ static void query_ps_status(char *query, POOL_CONNECTION_POOL *backend)
 
 static int detect_deadlock_error(POOL_CONNECTION *master, int major)
 {
-	int deadlock = 0;
+	int r =  detect_error(master, DEADLOCK_ERROR_CODE, major);
+	if (r == 1)
+		pool_debug("detect_deadlock_error: receive deadlock error from master node.");
+	return r;
+}
+
+/*
+ * detect_error: Detect specified error from error code.
+ */
+static int detect_error(POOL_CONNECTION *backend, char *error_code, int major)
+{
+	int is_error = 0;
 	char kind;
 	int readlen = 0, len;
 	char *buf;
@@ -4602,25 +4614,25 @@ static int detect_deadlock_error(POOL_CONNECTION *master, int major)
 
 	if ((buf = malloc(1024)) == NULL)
 	{
-		pool_error("detect_deadlock_error: malloc failed");
+		pool_error("detect_error: malloc failed");
 		return -1;
 	}
 
-	if (pool_read(master, &kind, sizeof(kind)))
+	if (pool_read(backend, &kind, sizeof(kind)))
 		return POOL_END;
 	readlen += sizeof(kind);
 	p = buf;
 	memcpy(p, &kind, sizeof(kind));
 	p += sizeof(kind);
 
-	if (kind == 'E') /* deadlock error? */
+	if (kind == 'E') /* ErrorResponseMessage? */
 	{
 		/* read actual query */
 		if (major == PROTO_MAJOR_V3)
 		{
-			char *error_code;
+			char *e;
 			
-			if (pool_read(master, &len, sizeof(len)) < 0)
+			if (pool_read(backend, &len, sizeof(len)) < 0)
 				return POOL_END;
 			readlen += sizeof(len);
 			memcpy(p, &len, sizeof(len));
@@ -4628,54 +4640,57 @@ static int detect_deadlock_error(POOL_CONNECTION *master, int major)
 			
 			len = ntohl(len) - 4;
 			str = malloc(len);
-			pool_read(master, str, len);
+			pool_read(backend, str, len);
 			readlen += len;
 			if (readlen > 1024)
 			{
 				buf = realloc(buf, readlen);
 				if (buf == NULL)
 				{
-					pool_error("detect_deadlock_error: malloc failed");
+					pool_error("detect_error: malloc failed");
 					return -1;
 				}
 			}
 			memcpy(p, str, len);
 
-			error_code = str;
-			while (*error_code)
+			/*
+			 * Checks error code which it is formatted 'Cxxxxxx'
+			 * (xxxxxx is error code).
+			 */
+			e = str;
+			while (*e)
 			{
-				if (*error_code == 'C')
+				if (*e == 'C')
 				{
-					if (strcmp(error_code+1, DEADLOCK_ERROR_CODE) == 0) /* deadlock error */
+					if (strcmp(e+1, error_code) == 0) /* specified error? */
 					{
-						pool_debug("SimpleQuery: receive deadlock error from master node.");
-						deadlock = 1;
+						is_error = 1;
 					}
 					break;
 				}
 				else
-					error_code = error_code + strlen(error_code) + 1;
+					e = e + strlen(e) + 1;
 			}
 			free(str);
 		}
 		else
 		{
-			str = pool_read_string(master, &len, 0);
+			str = pool_read_string(backend, &len, 0);
 			readlen += len;
 			if (readlen > 1024)
 			{
 				buf = realloc(buf, readlen);
 				if (buf == NULL)
 				{
-					pool_error("detect_deadlock_error: malloc failed");
+					pool_error("detect_error: malloc failed");
 					return -1;
 				}
 			}
 			memcpy(p, str, len);
 		}
 	}
-	if (pool_unread(master, buf, readlen) != 0)
-		deadlock = -1;
+	if (pool_unread(backend, buf, readlen) != 0)
+		is_error = -1;
 	free(buf);
-	return deadlock;
+	return is_error;
 }
