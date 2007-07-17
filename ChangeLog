@@ -1,3 +1,13 @@
+2007-07-17  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Fix hang up when backend node did fast or
+	  immediate shutdown.
+
+2007-07-11  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool.h, pool_stream.c, pool_process_query.c: Fix kind mismatch
+	  error when deadlock occured.
+
 2007-07-09  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* main.c: Fix signal handling.
