@@ -2,7 +2,7 @@
 
 Summary:	Pgpool is a connection pooling/replication server for PostgreSQL
 Name:		postgresql-%{short_name}
-Version:	1.1.1
+Version:	1.2
 Release:	1%{?dist}
 License:	BSD
 Group:		Applications/Databases
@@ -87,6 +87,9 @@ rm -rf %{buildroot}
 %{_libdir}/libpcp.so
 
 %changelog
+* Wed Aug 1 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.2-1
+- Update to 1.2
+
 * Fri Jun 15 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.1.1-1
 - Update to 1.1.1
 
