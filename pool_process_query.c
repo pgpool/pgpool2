@@ -508,6 +508,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 	fd_set readmask;
 	fd_set writemask;
 	fd_set exceptmask;
+	fd_set donemask;
 	static char *sq = "show pool_status";
 	POOL_STATUS status;
 	struct timeval timeout;
@@ -581,6 +582,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 		return POOL_END;
 	}
 
+	FD_ZERO(&donemask);
 	/* In this loop,get data from backend */
 	for (;;)
 	{
@@ -593,14 +595,20 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 		{
 			if (VALID_BACKEND(i))
 			{
-				num_fds = Max(CONNECTION(backend, i)->fd + 1, num_fds);
-				FD_SET(CONNECTION(backend, i)->fd, &readmask);
-				FD_SET(CONNECTION(backend, i)->fd, &exceptmask);
+				int fd = CONNECTION(backend,i)->fd;
+				num_fds = Max(fd, num_fds);
+				if(!FD_ISSET(fd,&donemask))
+				{
+					FD_SET(fd, &readmask);
+					FD_SET(fd, &exceptmask);
+				}
 			}
 		}
+
 		pool_debug("pool_parallel_query: num_fds: %d", num_fds);
 
 		fds = select(num_fds, &readmask, &writemask, &exceptmask, NULL);
+
 		if (fds == -1)
 		{
 			if (errno == EINTR)
@@ -655,7 +663,9 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 				{
 					if(used_count == NUM_BACKENDS -1)
 						return POOL_CONTINUE;
+
 					used_count++;
+					FD_SET(CONNECTION(backend, i)->fd, &donemask);
 					continue;
 				}
 
@@ -698,6 +708,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 														   false);
 						}
 						used_count++;
+						FD_SET(CONNECTION(backend, i)->fd, &donemask);
 						break;
 					}
 
@@ -711,6 +722,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 														   backend->info->database,
 														   false);
 						used_count++;
+						FD_SET(CONNECTION(backend, i)->fd, &donemask);
 						break;
 					}
 
