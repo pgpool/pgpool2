@@ -91,6 +91,7 @@ typedef struct {
 	int backend_port;	/* backend port numbers */
 	BACKEND_STATUS backend_status;	/* backend status */
 	double backend_weight;	/* normalized backend load balance ratio */
+	double unnormalized_weight; /* descripted parameter */
 	char backend_data_directory[MAX_PATH_LENGTH];
 } BackendInfo;
 

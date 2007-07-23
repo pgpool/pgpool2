@@ -385,6 +385,17 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				return status;
 		}
 
+		/* reload config file */
+		if (got_sighup)
+		{
+			pool_get_config(get_config_file_name(), RELOAD_CONFIG);
+			if (pool_config->enable_pool_hba)
+				load_hba(get_hba_file_name());
+			if (pool_config->parallel_mode)
+				pool_memset_system_db_info(system_db_info->info);
+			got_sighup = 0;
+		}
+
 		first_ready_for_query_received = 0;
 
 		/*
@@ -542,11 +553,12 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 	{
 		int stime = 5;  /* XXX give arbitary time to allow closing idle connections */
 
-		pool_debug("Query: sending HUP signal to parent");
+		pool_debug("Query: sending USR1 signal to parent");
 
-		kill(getppid(), SIGHUP);        /* send HUP signal to parent */
+		Req_info->kind = CLOSE_IDLE_REQUEST;
+		kill(getppid(), SIGUSR1);        /* send USR1 signal to parent */
 
-		/* we need to loop over here since we will get HUP signal while sleeping */
+		/* we need to loop over here since we will get USR1 signal while sleeping */
 		while (stime > 0)
 		{
 			stime = sleep(stime);
@@ -897,7 +909,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		check_copy_from_stdin(node);
 
 		/*
-		 * if this is DROP DATABASE command, send HUP signal to parent and
+		 * if this is DROP DATABASE command, send USR1 signal to parent and
 		 * ask it to close all idle connections.
 		 * XXX This is overkill. It would be better to close the idle
 		 * connection for the database which DROP DATABASE command tries
@@ -908,11 +920,12 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		{
 			int stime = 5;	/* XXX give arbitary time to allow closing idle connections */
 
-			pool_debug("Query: sending HUP signal to parent");
+			pool_debug("Query: sending SIGUSR1 signal to parent");
 
-			kill(getppid(), SIGHUP);		/* send HUP signal to parent */
+			Req_info->kind = CLOSE_IDLE_REQUEST;
+			kill(getppid(), SIGUSR1);		/* send USR1 signal to parent */
 
-			/* we need to loop over here since we will get HUP signal while sleeping */
+			/* we need to loop over here since we will get USR1 signal while sleeping */
 			while (stime > 0)
 			{
 				stime = sleep(stime);

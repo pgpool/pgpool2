@@ -67,6 +67,7 @@ static void cancel_request(CancelPacket *sp, int secondary_backend);
 static RETSIGTYPE die(int sig);
 static RETSIGTYPE close_idle_connection(int sig);
 static RETSIGTYPE wakeup_handler(int sig);
+static RETSIGTYPE reload_config_handler(int sig);
 static int send_params(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 static void send_frontend_exits(void);
 static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password);
@@ -84,6 +85,8 @@ extern int myargc;
 extern char **myargv;
 
 char remote_ps_data[NI_MAXHOST];		/* used for set_ps_display */
+
+volatile sig_atomic_t got_sighup = 0;
 
 /*
 * child main loop
@@ -111,10 +114,10 @@ void do_child(int unix_fd, int inet_fd)
 	signal(SIGALRM, SIG_DFL);
 	signal(SIGTERM, die);
 	signal(SIGINT, die);
-	signal(SIGHUP, close_idle_connection);
+	signal(SIGHUP, reload_config_handler);
 	signal(SIGQUIT, die);
 	signal(SIGCHLD, SIG_DFL);
-	signal(SIGUSR1, SIG_DFL);
+	signal(SIGUSR1, close_idle_connection);
 	signal(SIGUSR2, wakeup_handler);
 	signal(SIGPIPE, SIG_IGN);
 
@@ -716,6 +719,17 @@ static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *time
 	}
 #endif
 
+	/* reload config file */
+	if (got_sighup)
+	{
+		pool_get_config(get_config_file_name(), RELOAD_CONFIG);
+		if (pool_config->enable_pool_hba)
+			load_hba(get_hba_file_name());
+		if (pool_config->parallel_mode)
+			pool_memset_system_db_info(system_db_info->info);
+		got_sighup = 0;
+	}
+
 	connection_count_up();
 	accepted = 1;
 
@@ -1143,7 +1157,7 @@ static RETSIGTYPE die(int sig)
 }
 
 /*
- * signal handler for SIGHUP
+ * signal handler for SIGUSR1
  * close all idle connections
  */
 static RETSIGTYPE close_idle_connection(int sig)
@@ -1712,4 +1726,10 @@ static int select_load_balancing_node(void)
 
 	pool_debug("select_load_balancing_node: selected backend id is %d", selected_slot);
 	return selected_slot;
+}
+
+/* SIGHUP handler */
+static RETSIGTYPE reload_config_handler(int sig)
+{
+	got_sighup = 1;
 }

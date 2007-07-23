@@ -67,6 +67,11 @@
 		{ \
 			reaper(); \
 		} \
+		if (reload_config_request) \
+		{ \
+			reload_config(); \
+			reload_config_request = 0; \
+		} \
     } while (0)
 
 
@@ -82,12 +87,15 @@ static void myexit(int code);
 static void failover(void);
 static void reaper(void);
 static void wakeup_children(void);
+static void reload_config(void);
 static int pool_pause(struct timeval *timeout);
 static void pool_sleep(unsigned int second);
+static void kill_all_children(int sig);
 
 static RETSIGTYPE exit_handler(int sig);
 static RETSIGTYPE reap_handler(int sig);
 static RETSIGTYPE failover_handler(int sig);
+static RETSIGTYPE reload_config_handler(int sig);
 static RETSIGTYPE health_check_timer_handler(int sig);
 static RETSIGTYPE wakeup_handler(int sig);
 
@@ -106,6 +114,8 @@ static int pcp_pid; /* pid for child process handling PCP */
 static int pcp_unix_fd; /* unix domain socket fd for PCP (not used) */
 static int pcp_inet_fd; /* inet domain socket fd for PCP */
 static char pcp_conf_file[POOLMAXPATHLEN+1]; /* path for pcp.conf */
+static char conf_file[POOLMAXPATHLEN+1];
+static char hba_file[POOLMAXPATHLEN+1];
 
 static int exiting = 0;		/* non 0 if I'm exiting */
 static int switching = 0;		/* non 0 if I'm fail overing or degenerating */
@@ -118,7 +128,7 @@ static int clear_cache = 0;		/* non 0 if clear chache option (-c) is given */
 static int not_detach = 0;		/* non 0 if non detach option (-n) is given */
 int debug = 0;	/* non 0 if debug option is given (-d) */
 
-static pid_t mypid;	/* pgpool parent process id */
+pid_t mypid;	/* pgpool parent process id */
 
 long int weight_master;	/* normalized weight of master (0-RAND_MAX range) */
 
@@ -128,9 +138,11 @@ static int health_check_timer_expired;		/* non 0 if health check timer expired *
 
 POOL_REQUEST_INFO *Req_info;		/* request info area in shared memory */
 volatile sig_atomic_t *InRecovery; /* non 0 if recovery is started */
+volatile sig_atomic_t reload_config_request = 0;
 static volatile sig_atomic_t failover_request = 0;
 static volatile sig_atomic_t sigchld_request = 0;
 static volatile sig_atomic_t wakeup_request = 0;
+
 static int pipe_fds[2]; /* for delivering signals */
 
 int my_proc_id;
@@ -144,8 +156,6 @@ char **myargv;
 int main(int argc, char **argv)
 {
 	int opt;
-	char conf_file[POOLMAXPATHLEN+1];
-	char hba_file[POOLMAXPATHLEN+1];
 	int i;
 	int pid;
 	int size;
@@ -233,7 +243,12 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (pool_get_config(conf_file))
+	mypid = getpid();
+
+	if (pool_init_config())
+		exit(1);
+
+	if (pool_get_config(conf_file, INIT_CONFIG))
 	{
 		pool_error("Unable to get configuration. Exiting...");
 		exit(1);
@@ -243,10 +258,32 @@ int main(int argc, char **argv)
 		load_hba(hba_file);
 
 	/*
-	 * if a non-switch argument remains, then it should be either "stop" or "switch"
+	 * if a non-switch argument remains, then it should be either "reload", "stop" or "switch"
 	 */
 	if (optind == (argc - 1))
 	{
+		if (!strcmp(argv[optind], "reload"))
+		{
+				pid_t pid;
+
+				pid = read_pid_file();
+				if (pid < 0)
+				{
+					pool_error("could not read pid file");
+					pool_shmem_exit(1);
+					exit(1);
+				}
+
+				if (kill(pid, SIGHUP) == -1)
+				{
+					pool_error("could not stop pid: %d. reason: %s", pid, strerror(errno));
+					pool_shmem_exit(1);
+					exit(1);
+				}
+				pool_log("xxx %d", pid);
+				pool_shmem_exit(0);
+				exit(0);
+		}
 		if (!strcmp(argv[optind], "stop"))
 		{
 			stop_me();
@@ -300,8 +337,6 @@ int main(int argc, char **argv)
 		pool_shmem_exit(1);
 		exit(1);
 	}
-
-	mypid = getpid();
 
 	/* clear cache */
 	if (clear_cache && pool_config->enable_query_cache && SYSDB_STATUS == CON_UP)
@@ -390,7 +425,7 @@ int main(int argc, char **argv)
 	pool_signal(SIGCHLD, reap_handler);
 	pool_signal(SIGUSR1, failover_handler);
 	pool_signal(SIGUSR2, wakeup_handler);
-	pool_signal(SIGHUP, exit_handler);
+	pool_signal(SIGHUP, reload_config_handler);
 
 	/* create pipe for delivering event */
 	if (pipe(pipe_fds) < 0)
@@ -590,6 +625,8 @@ static void daemonize(void)
 	}
 #endif
 
+	mypid = getpid();
+
 	i = open("/dev/null", O_RDWR);
 	dup2(i, 0);
 	dup2(i, 1);
@@ -705,6 +742,7 @@ pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 
 		/* call PCP child main */
 		POOL_SETMASK(&UnBlockSig);
+		reload_config_request = 0;
 		pcp_do_child(unix_fd, inet_fd, pcp_conf_file);
 	}
 	else if (pid == -1)
@@ -733,6 +771,7 @@ pid_t fork_a_child(int unix_fd, int inet_fd, int id)
 
 		/* call child main */
 		POOL_SETMASK(&UnBlockSig);
+		reload_config_request = 0;
 		my_proc_id = id;
 		do_child(unix_fd, inet_fd);
 	}
@@ -949,8 +988,6 @@ static RETSIGTYPE exit_handler(int sig)
 		pool_log("received fast shutdown request");
 	else if (sig == SIGQUIT)
 		pool_log("received immediate shutdown request");
-	else if (sig == SIGHUP)
-		pool_log("received idle connection close request");
 	else
 	{
 		pool_error("exit_handler: unknown signal received %d", sig);
@@ -970,13 +1007,6 @@ static RETSIGTYPE exit_handler(int sig)
 	}
 
 	kill(pcp_pid, sig);
-
-	if (sig == SIGHUP)
-	{
-		exiting = 0;
-		POOL_SETMASK(&UnBlockSig);
-		return;
-	}
 
 	POOL_SETMASK(&UnBlockSig);
 
@@ -1041,6 +1071,13 @@ static void failover(void)
 	if (switching)
 	{
 		pool_debug("failover_handler called while switching");
+		kill(pcp_pid, SIGUSR2);
+		return;
+	}
+
+	if (Req_info->kind == CLOSE_IDLE_REQUEST)
+	{
+		kill_all_children(SIGUSR1);
 		kill(pcp_pid, SIGUSR2);
 		return;
 	}
@@ -1484,17 +1521,7 @@ pool_get_system_db_info(void)
  */
 static void wakeup_children(void)
 {
-	int i;
-
-	/* kill all children */
-	for (i = 0; i < pool_config->num_init_children; i++)
-	{
-		pid_t pid = pids[i].pid;
-		if (pid)
-		{
-			kill(pid, SIGUSR2);
-		}
-	}
+	kill_all_children(SIGUSR2);
 }
 
 
@@ -1504,6 +1531,44 @@ static RETSIGTYPE wakeup_handler(int sig)
 	wakeup_request = 1;
 	write(pipe_fds[1], "\0", 1);
 	POOL_SETMASK(&UnBlockSig);	
+}
+
+/*
+ * handle SIGHUP
+ *
+ */
+static RETSIGTYPE reload_config_handler(int sig)
+{
+	POOL_SETMASK(&BlockSig);
+	reload_config_request = 1;
+	write(pipe_fds[1], "\0", 1);
+	POOL_SETMASK(&UnBlockSig);
+}
+
+static void reload_config(void)
+{
+	pool_log("reload config files.");
+	pool_get_config(conf_file, RELOAD_CONFIG);
+	if (pool_config->enable_pool_hba)
+		load_hba(hba_file);
+	if (pool_config->parallel_mode)
+		pool_memset_system_db_info(system_db_info->info);
+	kill_all_children(SIGHUP);
+}
+
+static void kill_all_children(int sig)
+{
+	int i;
+
+	/* kill all children */
+	for (i = 0; i < pool_config->num_init_children; i++)
+	{
+		pid_t pid = pids[i].pid;
+		if (pid)
+		{
+			kill(pid, sig);
+		}
+	}
 }
 
 /*
@@ -1558,4 +1623,20 @@ static void pool_sleep(unsigned int second)
 		gettimeofday(&current_time, NULL);
 	}
 	POOL_SETMASK(&BlockSig);
+}
+
+/*
+ * get_config_file_name: return full path of pgpool.conf.
+ */
+char *get_config_file_name(void)
+{
+	return conf_file;
+}
+
+/*
+ * get_config_file_name: return full path of pool_hba.conf.
+ */
+char *get_hba_file_name(void)
+{
+	return hba_file;
 }

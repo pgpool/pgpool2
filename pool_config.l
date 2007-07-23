@@ -30,12 +30,15 @@
 #include <stdio.h>
 #include <string.h>
 
+#define CHECK_CONTEXT(mask, context) ((mask) & (context))
+
 /* to shut off compiler warnings */
 int yylex(void);
 
 POOL_CONFIG *pool_config;	/* configuration values */
 POOL_SYSTEMDB_CONNECTION_POOL *system_db_info;
 static unsigned Lineno;
+static char *default_reset_query_list[] = {"ABORT", "RESET ALL", "SET SESSION AUTHORIZATION DEFAULT"};
 
 typedef enum {
   POOL_KEY = 1,
@@ -94,15 +97,10 @@ STRING          \'([^'\n]|\\.)*\'
 
 %%
 
-int pool_get_config(char *confpath)
+int pool_init_config(void)
 {
-	FILE *fd;
-	int token;
-	char key[1024];
-	static char *default_reset_query_list[] = {"ABORT", "RESET ALL", "SET SESSION AUTHORIZATION DEFAULT"};
-	static char localhostname[256];
 	int res;
-	double total_weight;
+	static char localhostname[256];
 	int i;
 
 	pool_config = malloc(sizeof(POOL_CONFIG));
@@ -177,6 +175,16 @@ int pool_get_config(char *confpath)
 	{
 		clear_host_entry(i);
 	}
+	return 0;
+}
+
+int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
+{
+	FILE *fd;
+	int token;
+	char key[1024];
+	double total_weight;
+	int i;
 
 #define PARSE_ERROR()		pool_error("pool_config: parse error at line %d '%s'", Lineno, yytext)
 
@@ -222,7 +230,7 @@ int pool_get_config(char *confpath)
 
 		pool_debug("value: %s kind: %d", yytext, token);
 
-		if (!strcmp(key, "allow_inet_domain_socket"))
+		if (!strcmp(key, "allow_inet_domain_socket") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			/* for backward compatibility */
 			int v = eval_logical(yytext);
@@ -238,7 +246,7 @@ int pool_get_config(char *confpath)
 			else
 				pool_config->listen_addresses = strdup("");
 		}
-		else if (!strcmp(key, "listen_addresses"))
+		else if (!strcmp(key, "listen_addresses") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			char *str;
 
@@ -257,7 +265,7 @@ int pool_get_config(char *confpath)
 			pool_config->listen_addresses = str;
 		}
 
-		else if (!strcmp(key, "port"))
+		else if (!strcmp(key, "port") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			int v = atoi(yytext);
 
@@ -269,7 +277,7 @@ int pool_get_config(char *confpath)
 			}
 			pool_config->port = v;
 		}
-		else if (!strcmp(key, "pcp_port"))
+		else if (!strcmp(key, "pcp_port") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			int v = atoi(yytext);
 
@@ -281,7 +289,7 @@ int pool_get_config(char *confpath)
 			}
 			pool_config->pcp_port = v;
 		}
-		else if (!strcmp(key, "socket_dir"))
+		else if (!strcmp(key, "socket_dir") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			char *str;
 
@@ -299,7 +307,7 @@ int pool_get_config(char *confpath)
 			}
 			pool_config->socket_dir = str;
 		}
-		else if (!strcmp(key, "pcp_socket_dir"))
+		else if (!strcmp(key, "pcp_socket_dir") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			char *str;
 
@@ -317,7 +325,7 @@ int pool_get_config(char *confpath)
 			}
 			pool_config->pcp_socket_dir = str;
 		}
-		else if (!strcmp(key, "pcp_timeout"))
+		else if (!strcmp(key, "pcp_timeout") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			int v = atoi(yytext);
 
@@ -329,7 +337,7 @@ int pool_get_config(char *confpath)
 			}
 			pool_config->pcp_timeout = v;
 		}
-		else if (!strcmp(key, "num_init_children"))
+		else if (!strcmp(key, "num_init_children") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			int v = atoi(yytext);
 
@@ -341,7 +349,8 @@ int pool_get_config(char *confpath)
 			}
 			pool_config->num_init_children = v;
 		}
-		else if (!strcmp(key, "child_life_time"))
+		else if (!strcmp(key, "child_life_time") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			int v = atoi(yytext);
 
@@ -353,7 +362,8 @@ int pool_get_config(char *confpath)
 			}
 			pool_config->child_life_time = v;
 		}
-		else if (!strcmp(key, "connection_life_time"))
+		else if (!strcmp(key, "connection_life_time") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			int v = atoi(yytext);
 
@@ -365,7 +375,8 @@ int pool_get_config(char *confpath)
 			}
 			pool_config->connection_life_time = v;
 		}
-		else if (!strcmp(key, "child_max_connections"))
+		else if (!strcmp(key, "child_max_connections") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			int v = atoi(yytext);
 
@@ -377,7 +388,7 @@ int pool_get_config(char *confpath)
 			}
 			pool_config->child_max_connections = v;
 		}
-		else if (!strcmp(key, "max_pool"))
+		else if (!strcmp(key, "max_pool") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			int v = atoi(yytext);
 
@@ -389,7 +400,7 @@ int pool_get_config(char *confpath)
 			}
 			pool_config->max_pool = v;
 		}
-		else if (!strcmp(key, "logdir"))
+		else if (!strcmp(key, "logdir") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			char *str;
 
@@ -407,7 +418,8 @@ int pool_get_config(char *confpath)
 			}
 			pool_config->logdir = str;
 		}
-       	else if (!strcmp(key, "log_connections"))
+       	else if (!strcmp(key, "log_connections") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			int v = eval_logical(yytext);
 
@@ -419,7 +431,8 @@ int pool_get_config(char *confpath)
 			}
 			pool_config->log_connections = v;
 		}
-       	else if (!strcmp(key, "log_hostname"))
+       	else if (!strcmp(key, "log_hostname") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			int v = eval_logical(yytext);
 
@@ -431,7 +444,8 @@ int pool_get_config(char *confpath)
 			}
 			pool_config->log_hostname = v;
 		}
-       	else if (!strcmp(key, "enable_pool_hba"))
+       	else if (!strcmp(key, "enable_pool_hba") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			int v = eval_logical(yytext);
 
@@ -443,7 +457,7 @@ int pool_get_config(char *confpath)
 			}
 			pool_config->enable_pool_hba = v;
 		}
-		else if (!strcmp(key, "backend_socket_dir"))
+		else if (!strcmp(key, "backend_socket_dir") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			char *str;
 
@@ -461,7 +475,7 @@ int pool_get_config(char *confpath)
 			}
 			pool_config->backend_socket_dir = str;
 		}
-		else if (!strcmp(key, "replication_mode"))
+		else if (!strcmp(key, "replication_mode") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			int v = eval_logical(yytext);
 
@@ -481,7 +495,7 @@ int pool_get_config(char *confpath)
 			}
 
 		}
-		else if (!strcmp(key, "replication_strict"))
+		else if (!strcmp(key, "replication_strict") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			int v = eval_logical(yytext);
 
@@ -493,7 +507,8 @@ int pool_get_config(char *confpath)
 			}
 			pool_config->replication_strict = v;
 		}
-		else if (!strcmp(key, "replication_timeout"))
+		else if (!strcmp(key, "replication_timeout") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			int v = atoi(yytext);
 
@@ -505,7 +520,7 @@ int pool_get_config(char *confpath)
 			}
 			pool_config->replication_timeout = v;
 		}
-		else if (!strcmp(key, "load_balance_mode"))
+		else if (!strcmp(key, "load_balance_mode") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			int v = eval_logical(yytext);
 
@@ -517,7 +532,8 @@ int pool_get_config(char *confpath)
 			}
 			pool_config->load_balance_mode = v;
 		}
-		else if (!strcmp(key, "replication_stop_on_mismatch"))
+		else if (!strcmp(key, "replication_stop_on_mismatch") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			int v = eval_logical(yytext);
 
@@ -530,7 +546,8 @@ int pool_get_config(char *confpath)
 			pool_debug("replication_stop_on_mismatch: %d", v);
 			pool_config->replication_stop_on_mismatch = v;
 		}
-		else if (!strcmp(key, "reset_query_list"))
+		else if (!strcmp(key, "reset_query_list") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			char *str;
 
@@ -554,7 +571,7 @@ int pool_get_config(char *confpath)
 			}
 		}
 
-		else if (!strcmp(key, "print_timestamp"))
+		else if (!strcmp(key, "print_timestamp") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			int v = eval_logical(yytext);
 
@@ -567,7 +584,7 @@ int pool_get_config(char *confpath)
 			pool_config->print_timestamp = v;
 		}
 
-		else if (!strcmp(key, "master_slave_mode"))
+		else if (!strcmp(key, "master_slave_mode") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			int v = eval_logical(yytext);
 
@@ -587,7 +604,7 @@ int pool_get_config(char *confpath)
 			}
 		}
 
-		else if (!strcmp(key, "connection_cache"))
+		else if (!strcmp(key, "connection_cache") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			int v = eval_logical(yytext);
 
@@ -600,7 +617,8 @@ int pool_get_config(char *confpath)
 			pool_config->connection_cache = v;
 		}
 
-		else if (!strcmp(key, "health_check_timeout"))
+		else if (!strcmp(key, "health_check_timeout") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			int v = atoi(yytext);
 
@@ -613,7 +631,8 @@ int pool_get_config(char *confpath)
 			pool_config->health_check_timeout = v;
 		}
 
-		else if (!strcmp(key, "health_check_period"))
+		else if (!strcmp(key, "health_check_period") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			int v = atoi(yytext);
 
@@ -626,7 +645,8 @@ int pool_get_config(char *confpath)
 			pool_config->health_check_period = v;
 		}
 
-		else if (!strcmp(key, "health_check_user"))
+		else if (!strcmp(key, "health_check_user") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			char *str;
 
@@ -645,7 +665,8 @@ int pool_get_config(char *confpath)
 			pool_config->health_check_user = str;
 		}
 
-		else if (!strcmp(key, "recovery_user"))
+		else if (!strcmp(key, "recovery_user") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			char *str;
 
@@ -664,7 +685,8 @@ int pool_get_config(char *confpath)
 			pool_config->recovery_user = str;
 		}
 
-		else if (!strcmp(key, "recovery_password"))
+		else if (!strcmp(key, "recovery_password") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			char *str;
 
@@ -683,7 +705,8 @@ int pool_get_config(char *confpath)
 			pool_config->recovery_password = str;
 		}
 
-		else if (!strcmp(key, "insert_lock"))
+		else if (!strcmp(key, "insert_lock") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			int v = eval_logical(yytext);
 
@@ -696,7 +719,8 @@ int pool_get_config(char *confpath)
 			pool_config->insert_lock = v;
 		}
 
-		else if (!strcmp(key, "ignore_leading_white_space"))
+		else if (!strcmp(key, "ignore_leading_white_space") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			int v = eval_logical(yytext);
 
@@ -709,7 +733,7 @@ int pool_get_config(char *confpath)
 			pool_config->ignore_leading_white_space = v;
 		}
 
-		else if (!strcmp(key, "parallel_mode"))
+		else if (!strcmp(key, "parallel_mode") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			int v = eval_logical(yytext);
 
@@ -722,7 +746,7 @@ int pool_get_config(char *confpath)
 			pool_config->parallel_mode = v;
 		}
 
-		else if (!strcmp(key, "enable_query_cache"))
+		else if (!strcmp(key, "enable_query_cache") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			int v = eval_logical(yytext);
 
@@ -735,7 +759,7 @@ int pool_get_config(char *confpath)
 			pool_config->enable_query_cache = v;
 		}
 
-		else if (!strcmp(key, "pgpool2_hostname"))
+		else if (!strcmp(key, "pgpool2_hostname") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			char *str;
 
@@ -755,7 +779,7 @@ int pool_get_config(char *confpath)
 				pool_config->pgpool2_hostname = str;
 		}
 
-		else if (!strcmp(key, "system_db_hostname"))
+		else if (!strcmp(key, "system_db_hostname") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			char *str;
 
@@ -774,7 +798,7 @@ int pool_get_config(char *confpath)
 			pool_config->system_db_hostname = str;
 		}
 
-		else if (!strcmp(key, "system_db_port"))
+		else if (!strcmp(key, "system_db_port") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			int v = atoi(yytext);
 
@@ -787,7 +811,7 @@ int pool_get_config(char *confpath)
 			pool_config->system_db_port = v;
 		}
 
-		else if (!strcmp(key, "system_db_dbname"))
+		else if (!strcmp(key, "system_db_dbname") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			char *str;
 
@@ -806,7 +830,7 @@ int pool_get_config(char *confpath)
 			pool_config->system_db_dbname = str;
 		}
 
-		else if (!strcmp(key, "system_db_schema"))
+		else if (!strcmp(key, "system_db_schema") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			char *str;
 
@@ -825,7 +849,7 @@ int pool_get_config(char *confpath)
 			pool_config->system_db_schema = str;
 		}
 
-		else if (!strcmp(key, "system_db_user"))
+		else if (!strcmp(key, "system_db_user") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			char *str;
 
@@ -844,7 +868,7 @@ int pool_get_config(char *confpath)
 			pool_config->system_db_user = str;
 		}
 
-		else if (!strcmp(key, "system_db_password"))
+		else if (!strcmp(key, "system_db_password") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			char *str;
 
@@ -863,7 +887,9 @@ int pool_get_config(char *confpath)
 			pool_config->system_db_password = str;
 		}
 
-		else if (!strncmp(key, "backend_hostname", 16))
+		else if (!strncmp(key, "backend_hostname", 16) &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context) &&
+				 mypid == getpid()) /* this parameter must be modified by parent pid */
 		{
 			int slot;
 			char *str;
@@ -882,10 +908,14 @@ int pool_get_config(char *confpath)
 				fclose(fd);
 				return(-1);
 			}
-			strncpy(BACKEND_INFO(slot).backend_hostname, str, MAX_DB_HOST_NAMELEN);
+			if (context == INIT_CONFIG ||
+				(context == RELOAD_CONFIG && BACKEND_INFO(slot).backend_status == CON_UNUSED))
+				strncpy(BACKEND_INFO(slot).backend_hostname, str, MAX_DB_HOST_NAMELEN);
 		}
 
-		else if (!strncmp(key, "backend_port", 12))
+		else if (!strncmp(key, "backend_port", 12) &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context) &&
+				 mypid == getpid()) /* this parameter must be modified by parent pid */
 		{
 			int slot;
 
@@ -897,14 +927,25 @@ int pool_get_config(char *confpath)
 				return(-1);
 			}
 			pool_debug("pool_config: port slot number %d ", slot);
-			BACKEND_INFO(slot).backend_port = atoi(yytext);
-			BACKEND_INFO(slot).backend_status = CON_CONNECT_WAIT;
+			if (context == INIT_CONFIG)
+			{
+				BACKEND_INFO(slot).backend_port = atoi(yytext);
+				BACKEND_INFO(slot).backend_status = CON_CONNECT_WAIT;
+			}
+			else if (context == RELOAD_CONFIG && BACKEND_INFO(slot).backend_status == CON_UNUSED)
+			{
+				BACKEND_INFO(slot).backend_port = atoi(yytext);
+				BACKEND_INFO(slot).backend_status = CON_DOWN;
+			}
 		}
 
-		else if (!strncmp(key, "backend_weight", 14))
+		else if (!strncmp(key, "backend_weight", 14) &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context) &&
+				 mypid == getpid()) /* this parameter must be modified by parent pid */
 		{
 			int slot;
 			double v;
+			BACKEND_STATUS status;
 
 			slot = atoi(key + 14);
 			if (slot < 0 || slot >= MAX_CONNECTION_SLOTS)
@@ -922,13 +963,21 @@ int pool_get_config(char *confpath)
 				fclose(fd);
 				return(-1);
 			}
+
 			pool_debug("pool_config: weight slot number %d weight: %f", slot, v);
-			pool_config->backend_desc->backend_info[slot].backend_weight = v;
+			if (context == INIT_CONFIG ||
+				(context == RELOAD_CONFIG && (context == RELOAD_CONFIG && (status == CON_UNUSED || status == CON_DOWN))))
+			{
+				pool_config->backend_desc->backend_info[slot].unnormalized_weight = v;
+			}
 		}
-		else if (!strncmp(key, "backend_data_directory", 22))
+		else if (!strncmp(key, "backend_data_directory", 22) &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context) &&
+				 mypid == getpid()) /* this parameter must be modified by parent pid */
 		{
 			int slot;
 			char *str;
+			BACKEND_STATUS status;
 
 			slot = atoi(key + 22);
 			if (slot < 0 || slot >= MAX_CONNECTION_SLOTS)
@@ -944,9 +993,12 @@ int pool_get_config(char *confpath)
 				fclose(fd);
 				return(-1);
 			}
-			strncpy(BACKEND_INFO(slot).backend_data_directory, str, MAX_PATH_LENGTH);
+			status = BACKEND_INFO(slot).backend_status;
+			if (context == INIT_CONFIG ||
+				(context == RELOAD_CONFIG && (status == CON_UNUSED || status == CON_DOWN)))
+				strncpy(BACKEND_INFO(slot).backend_data_directory, str, MAX_PATH_LENGTH);
 		}
-       	else if (!strcmp(key, "log_statement"))
+       	else if (!strcmp(key, "log_statement") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			int v = eval_logical(yytext);
 
@@ -957,7 +1009,7 @@ int pool_get_config(char *confpath)
 			}
 			pool_config->log_statement = v;
 		}
-       	else if (!strcmp(key, "log_statement"))
+       	else if (!strcmp(key, "log_statement") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			int v = eval_logical(yytext);
 
@@ -985,7 +1037,7 @@ int pool_get_config(char *confpath)
 
 		else
 		{
-			total_weight += BACKEND_INFO(i).backend_weight;
+			total_weight += BACKEND_INFO(i).unnormalized_weight;
 			pool_config->backend_desc->num_backends = i+1;
 		}
 	}
@@ -1007,7 +1059,7 @@ int pool_get_config(char *confpath)
 		if (pool_config->backend_desc->backend_info[i].backend_port != 0)
 		{
 			pool_config->backend_desc->backend_info[i].backend_weight =
-				(RAND_MAX) * pool_config->backend_desc->backend_info[i].backend_weight / total_weight;
+				(RAND_MAX) * pool_config->backend_desc->backend_info[i].unnormalized_weight / total_weight;
 			pool_debug("backend %d weight: %f", i, pool_config->backend_desc->backend_info[i].backend_weight);
 		}
 	}
