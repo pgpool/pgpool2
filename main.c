@@ -280,7 +280,6 @@ int main(int argc, char **argv)
 					pool_shmem_exit(1);
 					exit(1);
 				}
-				pool_log("xxx %d", pid);
 				pool_shmem_exit(0);
 				exit(0);
 		}
