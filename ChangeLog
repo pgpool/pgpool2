@@ -1,3 +1,12 @@
+2007-07-23  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pgpool.conf.sample, pool.h, pool_config.l, pool_process_query.c:
+	  Add new parameter named "replicate_select". Default value is
+	  'false'. If it is true, pgpool replicates SELECT queries when
+	  load balancing is disabled. This is a old specification which
+	  was V1.0. If it is false, pgpool only sends them to the master
+	  node. This is a current specification.
+
 2007-07-17  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* pool_process_query.c: Fix hang up when backend node did fast or

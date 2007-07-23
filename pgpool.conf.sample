@@ -68,6 +68,10 @@ load_balance_mode = false
 # start degeneration to stop replication mode
 replication_stop_on_mismatch = false
 
+# If true, replicate SELECT statement when load balancing is disabled.
+# If false, it is only sended to the master node.
+replicate_select = false
+
 # Semicolon separated list of queries to be issued at the end of a session
 reset_query_list = 'ABORT; RESET ALL; SET SESSION AUTHORIZATION DEFAULT'
 

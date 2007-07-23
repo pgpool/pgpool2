@@ -1006,7 +1006,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			MASTER_SLAVE = 0;
 			master_slave_dml = 1;
 		}
-		else if (REPLICATION && is_select_query(node1, string1) && !is_sequence_query(node1))
+		else if (REPLICATION && !pool_config->replicate_select && is_select_query(node1, string1) && !is_sequence_query(node1))
 		{
 			selected_slot = MASTER_NODE_ID;
 			replication_was_enabled = 1;
@@ -1135,7 +1135,10 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 
 		if (load_balance_enabled(backend, (Node *)p_stmt->query, string1))
 			start_load_balance(backend);
-		else if (REPLICATION && is_select_query((Node *)p_stmt->query, string1) && !is_sequence_query((Node *)p_stmt->query))
+		else if (REPLICATION &&
+				 !pool_config->replicate_select &&
+				 is_select_query((Node *)p_stmt->query, string1) &&
+				 !is_sequence_query((Node *)p_stmt->query))
 		{
 			selected_slot = MASTER_NODE_ID;
 			replication_was_enabled = 1;

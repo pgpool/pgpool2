@@ -140,6 +140,7 @@ typedef struct {
 	int replication_stop_on_mismatch;		/* if there's a data mismatch between master and secondary
 											 * start degenration to stop replication mode
 											 */
+	int replicate_select; /* if non 0, replicate SELECT statement when load balancing is disabled. */
 	char **reset_query_list;		/* comma separated list of quries to be issued at the end of session */
 
 	int print_timestamp;		/* if non 0, print time stamp to each log line */
