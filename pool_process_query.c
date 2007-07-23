@@ -1069,64 +1069,75 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		TSTATE(backend) = 'T';
 	}
 
-	/* check if query is "COMMIT" */
-	commit = is_commit_query(node);
-	free_parser();
+	if (REPLICATION || PARALLEL_MODE)
+	{
+		/* check if query is "COMMIT" */
+		commit = is_commit_query(node);
+		free_parser();
 
-	/* send query to master node */
-	if (!commit)
+		/* send query to master node */
+		if (!commit)
+		{
+			if (send_simplequery_message(MASTER(backend), len, string, MAJOR(backend)) != POOL_CONTINUE)
+				return POOL_END;
+
+			if (wait_for_query_response(MASTER(backend), string) != POOL_CONTINUE)
+				return POOL_END;
+
+			/*
+			 * We must check deadlock error because a aborted transaction
+			 * by detecting deadlock isn't same on all nodes.
+			 * If a transaction is aborted on master node, pgpool send a
+			 * error query to another nodes.
+			 */
+			deadlock_detected = detect_deadlock_error(MASTER(backend), MAJOR(backend));
+			if (deadlock_detected < 0)
+				return POOL_END;
+		}
+		if (deadlock_detected)
+		{
+			string = POOL_ERROR_QUERY;
+			len = strlen(string) + 1;
+		}
+
+		/* send query to other nodes */
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
+				continue;
+
+			if (send_simplequery_message(CONNECTION(backend, i), len, string, MAJOR(backend)) != POOL_CONTINUE)
+				return POOL_END;
+		}
+
+		/* wait for response excepted for MASTER node */
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
+				continue;
+
+			if (wait_for_query_response(CONNECTION(backend, i), string) != POOL_CONTINUE)
+				return POOL_END;
+		}
+
+		if (commit)
+		{
+			if (send_simplequery_message(MASTER(backend), len, string, MAJOR(backend)) != POOL_CONTINUE)
+				return POOL_END;
+
+			if (wait_for_query_response(MASTER(backend), string) != POOL_CONTINUE)
+				return POOL_END;
+
+			TSTATE(backend) = 'I';
+		}
+	}
+	else
 	{
 		if (send_simplequery_message(MASTER(backend), len, string, MAJOR(backend)) != POOL_CONTINUE)
 			return POOL_END;
 
 		if (wait_for_query_response(MASTER(backend), string) != POOL_CONTINUE)
 			return POOL_END;
-
-		/*
-		 * We must check deadlock error because a aborted transaction
-		 * by detecting deadlock isn't same on all nodes.
-		 * If a transaction is aborted on master node, pgpool send a
-		 * error query to another nodes.
-		 */
-		deadlock_detected = detect_deadlock_error(MASTER(backend), MAJOR(backend));
-		if (deadlock_detected < 0)
-			return POOL_END;
-	}
-	if (deadlock_detected)
-	{
-		string = POOL_ERROR_QUERY;
-		len = strlen(string) + 1;
-	}
-
-	/* send query to other nodes */
-	for (i=0;i<NUM_BACKENDS;i++)
-	{
-		if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
-			continue;
-
-		if (send_simplequery_message(CONNECTION(backend, i), len, string, MAJOR(backend)) != POOL_CONTINUE)
-			return POOL_END;
-	}
-
-	/* wait for response excepted for MASTER node */
-	for (i=0;i<NUM_BACKENDS;i++)
-	{
-		if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
-			continue;
-
-		if (wait_for_query_response(CONNECTION(backend, i), string) != POOL_CONTINUE)
-			return POOL_END;
-	}
-
-	if (commit)
-	{
-		if (send_simplequery_message(MASTER(backend), len, string, MAJOR(backend)) != POOL_CONTINUE)
-			return POOL_END;
-
-		if (wait_for_query_response(MASTER(backend), string) != POOL_CONTINUE)
-			return POOL_END;
-
-		TSTATE(backend) = 'I';
 	}
 
 	return POOL_CONTINUE;
@@ -1223,10 +1234,12 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 			in_load_balance = 1;
 			select_in_transaction = 1;
 		}
+/*
 		else if (REPLICATION && start_internal_transaction(backend, (Node *)p_stmt->query))
 		{
 			return POOL_END;
 		}
+*/
 
 		commit = is_commit_query((Node *)p_stmt->query);
 		pool_memory_delete(pool_memory);
@@ -1238,8 +1251,77 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		master_slave_dml = 1;
 	}
 
-	/* send query to master node */
-	if (!commit)
+	if (REPLICATION || PARALLEL_MODE)
+	{
+		/* send query to master node */
+		if (!commit)
+		{
+			if (send_execute_message(backend, MASTER_NODE_ID, len, string) != POOL_CONTINUE)
+				return POOL_END;
+
+			if (pool_config->replication_strict)
+			{
+				pool_debug("waiting for backend completing the query");
+				if (synchronize(CONNECTION(backend, MASTER_NODE_ID)))
+					return POOL_END;
+			}
+
+			/*
+			 * We must check deadlock error because a aborted transaction
+			 * by detecting deadlock isn't same on all nodes.
+			 * If a transaction is aborted on master node, pgpool send a
+			 * error query to another nodes.
+			 */
+			deadlock_detected = detect_deadlock_error(MASTER(backend), MAJOR(backend));
+			if (deadlock_detected < 0)
+				return POOL_END;
+		}
+
+		/* send query to other nodes */
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
+				continue;
+			if (deadlock_detected)
+			{
+				if (send_simplequery_message(CONNECTION(backend, i),
+											 strlen(POOL_ERROR_QUERY)+1,
+											 POOL_ERROR_QUERY,
+											 MAJOR(backend)))
+					return POOL_END;
+			}
+			else if (send_execute_message(backend, i, len, string) != POOL_CONTINUE)
+				return POOL_END;
+		}
+
+		/* wait for nodes excepted for master node */
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
+				continue;
+
+			if (pool_config->replication_strict)
+			{
+				pool_debug("waiting for backend completing the query");
+				if (synchronize(CONNECTION(backend, i)))
+					return POOL_END;
+			}
+		}
+
+		if (commit)
+		{
+			if (send_execute_message(backend, MASTER_NODE_ID, len, string) != POOL_CONTINUE)
+				return POOL_END;
+
+			if (pool_config->replication_strict)
+			{
+				pool_debug("waiting for backend completing the query");
+				if (synchronize(MASTER(backend)))
+					return POOL_END;
+			}
+		}
+	}
+	else
 	{
 		if (send_execute_message(backend, MASTER_NODE_ID, len, string) != POOL_CONTINUE)
 			return POOL_END;
@@ -1248,60 +1330,6 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		{
 			pool_debug("waiting for backend completing the query");
 			if (synchronize(CONNECTION(backend, MASTER_NODE_ID)))
-				return POOL_END;
-		}
-
-		/*
-		 * We must check deadlock error because a aborted transaction
-		 * by detecting deadlock isn't same on all nodes.
-		 * If a transaction is aborted on master node, pgpool send a
-		 * error query to another nodes.
-		 */
-		deadlock_detected = detect_deadlock_error(MASTER(backend), MAJOR(backend));
-		if (deadlock_detected < 0)
-			return POOL_END;
-	}
-
-	/* send query to other nodes */
-	for (i=0;i<NUM_BACKENDS;i++)
-	{
-		if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
-			continue;
-		if (deadlock_detected)
-		{
-			if (send_simplequery_message(CONNECTION(backend, i),
-										 strlen(POOL_ERROR_QUERY)+1,
-										 POOL_ERROR_QUERY,
-										 MAJOR(backend)))
-				return POOL_END;
-		}
-		else if (send_execute_message(backend, i, len, string) != POOL_CONTINUE)
-			return POOL_END;
-	}
-
-	/* wait for nodes excepted for master node */
-	for (i=0;i<NUM_BACKENDS;i++)
-	{
-		if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
-			continue;
-
-		if (pool_config->replication_strict)
-		{
-			pool_debug("waiting for backend completing the query");
-			if (synchronize(CONNECTION(backend, i)))
-				return POOL_END;
-		}
-	}
-
-	if (commit)
-	{
-		if (send_execute_message(backend, MASTER_NODE_ID, len, string) != POOL_CONTINUE)
-			return POOL_END;
-
-		if (pool_config->replication_strict)
-		{
-			pool_debug("waiting for backend completing the query");
-			if (synchronize(MASTER(backend)))
 				return POOL_END;
 		}
 	}
