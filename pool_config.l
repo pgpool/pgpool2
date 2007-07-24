@@ -145,7 +145,7 @@ int pool_get_config(char *confpath)
 	pool_config->replication_timeout = 0;
 	pool_config->load_balance_mode = 0;
 	pool_config->replication_stop_on_mismatch = 0;
-	pool_config.replicate_select = 0;
+	pool_config->replicate_select = 0;
 	pool_config->reset_query_list = default_reset_query_list;
 	pool_config->num_reset_queries = sizeof(default_reset_query_list)/sizeof(char *);
 	pool_config->reset_query_list = default_reset_query_list;
