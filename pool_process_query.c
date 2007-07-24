@@ -4031,11 +4031,22 @@ static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMa
 	int status;
 	char kind;
 	char *string;
+	int deadlock_detected = 0;
 
 	pool_debug("do_command: Query: %s", query);
 
 	/* send the query to the backend */
 	if (send_simplequery_message(backend, strlen(query)+1, query, protoMajor) != POOL_CONTINUE)
+		return POOL_END;
+
+ 	/*
+	 * We must check deadlock error because a aborted transaction
+	 * by detecting deadlock isn't same on all nodes.
+	 * If a transaction is aborted on master node, pgpool send a
+	 * error query to another nodes.
+	 */
+	deadlock_detected = detect_deadlock_error(backend, protoMajor);
+	if (deadlock_detected < 0)
 		return POOL_END;
 
 	/*
@@ -4109,7 +4120,7 @@ static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMa
 		backend->tstate = kind;
 	}
 
-	return POOL_CONTINUE;
+	return deadlock_detected ? POOL_DEADLOCK : POOL_CONTINUE;
 }
 
 /*
@@ -4252,7 +4263,7 @@ static POOL_STATUS insert_lock(POOL_CONNECTION_POOL *backend, char *query, Inser
 	char *table;
 	char qbuf[1024];
 	POOL_STATUS status;
-	int i;
+	int i, deadlock_detected = 0;
 
 	/* insert_lock can be used in V3 only */
 	if (MAJOR(backend) != PROTO_MAJOR_V3)
@@ -4278,17 +4289,25 @@ static POOL_STATUS insert_lock(POOL_CONNECTION_POOL *backend, char *query, Inser
 	table = get_insert_command_table_name(node);
 	snprintf(qbuf, sizeof(qbuf), "LOCK TABLE %s IN SHARE ROW EXCLUSIVE MODE", table);
 
-	if (do_command(MASTER(backend), qbuf, MAJOR(backend), 0) != POOL_CONTINUE)
+	status = do_command(MASTER(backend), qbuf, MAJOR(backend), 0);
+	if (status == POOL_END)
 	{
 		internal_transaction_started = 0;
 		return POOL_END;
 	}
+	else if (status == POOL_DEADLOCK)
+		deadlock_detected = 1;
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
 		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 		{
-			if (do_command(CONNECTION(backend, i), qbuf, MAJOR(backend), 0) != POOL_CONTINUE)
+			if (deadlock_detected)
+				status = do_command(CONNECTION(backend, i), POOL_ERROR_QUERY, PROTO_MAJOR_V3, 0);
+			else
+				status = do_command(CONNECTION(backend, i), qbuf, PROTO_MAJOR_V3, 0);
+
+			if (status != POOL_CONTINUE)
 			{
 				internal_transaction_started = 0;
 				return POOL_END;
@@ -4296,7 +4315,7 @@ static POOL_STATUS insert_lock(POOL_CONNECTION_POOL *backend, char *query, Inser
 		}
 	}
 
-	return status;
+	return POOL_CONTINUE;
 }
 
 /*

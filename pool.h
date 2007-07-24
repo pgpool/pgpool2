@@ -64,11 +64,12 @@
 #define NO_STRICT_MODE(s) (strncasecmp((s), NO_STRICT_MODE_STR, strlen(NO_STRICT_MODE_STR)) == 0)
 
 typedef enum {
-    POOL_CONTINUE = 0,
+	POOL_CONTINUE = 0,
 	POOL_IDLE,
-    POOL_END,
-    POOL_ERROR,
-    POOL_FATAL
+	POOL_END,
+	POOL_ERROR,
+	POOL_FATAL,
+	POOL_DEADLOCK
 } POOL_STATUS;
 
 
