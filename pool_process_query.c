@@ -3813,6 +3813,7 @@ static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMa
 	int status;
 	char kind;
 	char *string;
+	int deadlock_detected = 0;
 
 	pool_debug("do_command: Query: %s", query);
 
@@ -3831,6 +3832,16 @@ static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMa
 		return POOL_END;
 	}
 
+ 	/*
+	 * We must check deadlock error because a aborted transaction
+	 * by detecting deadlock isn't same on all nodes.
+	 * If a transaction is aborted on master node, pgpool send a
+	 * error query to another nodes.
+	 */
+	deadlock_detected = detect_deadlock_error(backend, protoMajor);
+	if (deadlock_detected < 0)
+		return POOL_END;
+
 	/*
 	 * Expecting CompleteCommand
 	 */
@@ -3843,7 +3854,7 @@ static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMa
 
 	if (kind != 'C')
 	{
-		pool_error("do_command: backend does not successfully complete command %s status %c", query, kind);
+		pool_log("do_command: backend does not successfully complete command %s status %c", query, kind);
 
 	}
 
@@ -3903,7 +3914,7 @@ static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMa
 		backend->tstate = kind;
 	}
 
-	return POOL_CONTINUE;
+	return deadlock_detected ? POOL_DEADLOCK : POOL_CONTINUE;
 }
 
 
@@ -4061,7 +4072,7 @@ static POOL_STATUS insert_lock(POOL_CONNECTION_POOL *backend, char *query, Inser
 	char *table;
 	char qbuf[1024];
 	POOL_STATUS status;
-	int i;
+	int i, deadlock_detected = 0;
 
 	/* insert_lock can be used in V3 only */
 	if (MAJOR(backend) != PROTO_MAJOR_V3)
@@ -4106,15 +4117,21 @@ static POOL_STATUS insert_lock(POOL_CONNECTION_POOL *backend, char *query, Inser
 	{
 		if (VALID_BACKEND(i))
 		{
-			if (do_command(CONNECTION(backend, i), qbuf, PROTO_MAJOR_V3, 0) != POOL_CONTINUE)
+			if (deadlock_detected)
+				do_command(CONNECTION(backend, i), POOL_ERROR_QUERY, PROTO_MAJOR_V3, 0);
+			else if ((status = do_command(CONNECTION(backend, i), qbuf, PROTO_MAJOR_V3, 0)) == POOL_END)
 			{
 				internal_transaction_started = 0;
 				return POOL_END;
 			}
+			else if (status == POOL_DEADLOCK)
+			{
+				deadlock_detected = 1;
+			}
 		}
 	}
 
-	return status;
+	return POOL_CONTINUE;
 }
 
 /*

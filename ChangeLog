@@ -1,3 +1,15 @@
+2007-07-24  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool.h, pool_process_query.c: Detect deadlock in
+	  do_command(). When insert_lock was true, kind mismatch error
+	  occured.
+
+2007-07-24  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* child.c, pool_type.h, pool_process_query.c: pgpool chooses it
+	  after receiving AuthenticationOK('R') message. So pgpool load
+	  balance to the same node inside a same session.
+
 2007-07-23  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* pgpool.conf.sample, pool.h, pool_config.l, pool_process_query.c:
