@@ -3641,10 +3641,10 @@ static int is_sequence_query(Node *node)
  */
 static void start_load_balance(POOL_CONNECTION_POOL *backend)
 {
+#ifdef NOT_USED
 	double total_weight,r;
 	int i;
 
-#ifdef NOT_USED
 	/* save backend connection slots */
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -3654,31 +3654,6 @@ static void start_load_balance(POOL_CONNECTION_POOL *backend)
 		}
 	}
 #endif
-
-	/* choose a backend in random manner with weight */
-	selected_slot = 0;
-	total_weight = 0.0;
-
-	for (i=0;i<NUM_BACKENDS;i++)
-	{
-		if (VALID_BACKEND(i))
-		{
-			total_weight += BACKEND_INFO(i).backend_weight;
-		}
-	}
-	r = (((double)random())/RAND_MAX) * total_weight;
-	total_weight = 0.0;
-	for (i=0;i<NUM_BACKENDS;i++)
-	{
-		if (VALID_BACKEND(i))
-		{
-			if(r >= total_weight)
-				selected_slot = i;
-			else
-				break;
-			total_weight += BACKEND_INFO(i).backend_weight;
-		}
-	}
 
 	/* temporarily turn off replication mode */
 	if (REPLICATION)
@@ -3692,8 +3667,7 @@ static void start_load_balance(POOL_CONNECTION_POOL *backend)
 #ifdef NOTUSED
 	backend->slots[0] = slots[selected_slot];
 #endif
-	LOAD_BALANCE_STATUS(selected_slot) = LOAD_SELECTED;
-	pool_debug("start_load_balance: selected backend id is %d", selected_slot);
+	LOAD_BALANCE_STATUS(backend->info->load_balancing_node) = LOAD_SELECTED;
 
 	/* start load balancing */
 	in_load_balance = 1;

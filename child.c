@@ -66,6 +66,7 @@ static RETSIGTYPE close_idle_connection(int sig);
 static int send_params(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 static void send_frontend_exits(void);
 static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password);
+static int select_load_balancing_node(void);
 
 /*
  * non 0 means SIGTERM(smart shutdown) or SIGINT(fast shutdown) has arrived
@@ -396,6 +397,9 @@ void do_child(int unix_fd, int inet_fd)
 		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle",
 				 sp->user, sp->database, remote_ps_data);
 		set_ps_display(psbuf, false);
+
+		/* select load balancing node */
+		backend->info->load_balancing_node = select_load_balancing_node();
 
 		/* query process loop */
 		for (;;)
@@ -1609,4 +1613,42 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 		}
 	}
 	return -1;
+}
+
+
+/*
+ * Select load balancing node
+ */
+static int select_load_balancing_node(void)
+{
+	double total_weight,r;
+	int i;
+
+	/* choose a backend in random manner with weight */
+	selected_slot = 0;
+	total_weight = 0.0;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			total_weight += BACKEND_INFO(i).backend_weight;
+		}
+	}
+	r = (((double)random())/RAND_MAX) * total_weight;
+	total_weight = 0.0;
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			if(r >= total_weight)
+				selected_slot = i;
+			else
+				break;
+			total_weight += BACKEND_INFO(i).backend_weight;
+		}
+	}
+
+	pool_debug("select_load_balancing_node: selected backend id is %d", selected_slot);
+	return selected_slot;
 }
