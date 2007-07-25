@@ -4386,6 +4386,7 @@ static void add_unnamed_portal(PreparedStatementList *p, Portal *portal)
 			pfree(p_stmt->query);
 			pfree(p_stmt);
 		}
+		free(unnamed_statement);
 	}
 
 	unnamed_portal = NULL;
@@ -4424,6 +4425,7 @@ static void reset_prepared_list(PreparedStatementList *p)
 	{
 		pool_memory_delete(prepare_memory_context);
 		prepare_memory_context = NULL;
+		free(unnamed_statement);
 		unnamed_portal = NULL;
 		unnamed_statement = NULL;
 	}
