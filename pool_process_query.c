@@ -3019,19 +3019,20 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 	int command_ok_row_count = 0;
 	int delete_or_update = 0;
 
-
 	pool_write(frontend, &kind, 1);
 
 	/*
 	 * Check if packet kind == 'C'(Command complete), '1'(Parse
-	 * complete), '3'(Close complete). If so, then register or unregister
-	 * pending prepared statement.
+	 * complete), '3'(Close complete). If so, then register or
+	 * unregister pending prepared statement.
 	 */
 	if ((kind == 'C' || kind == '1' || kind == '3') &&
 		pending_function &&	pending_prepared_portal)
 	{
 		pending_function(&prepared_list, pending_prepared_portal);
-		if (IsA(pending_prepared_portal->stmt, DeallocateStmt))
+		if (pending_prepared_portal &&
+			pending_prepared_portal->stmt &&
+			IsA(pending_prepared_portal->stmt, DeallocateStmt))
 		{
 			DeallocateStmt *s = (DeallocateStmt *)pending_prepared_portal->stmt;
 
@@ -3044,8 +3045,15 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 	else if (kind == 'C' && select_in_transaction)
 		select_in_transaction = 0;
 
-	pending_function = NULL;
-	pending_prepared_portal = NULL;
+	/* 
+	 * Remove a pending function if a received message is not
+	 * NoticeResponse.
+	 */
+	if (kind != 'N')
+	{
+		pending_function = NULL;
+		pending_prepared_portal = NULL;
+	}
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -3354,6 +3362,7 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 			portal = malloc(sizeof(Portal));
 			/* translate Parse message to PrepareStmt */
 			p_stmt = palloc(sizeof(PrepareStmt));
+			p_stmt->type = T_PrepareStmt;
 			p_stmt->name = pstrdup(name);
 			p_stmt->query = copyObject(node);
 			portal->stmt = (Node *)p_stmt;
@@ -3441,6 +3450,11 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 			}
 		}
 
+		/*
+		 * Describe message with a portal name receive two messages.
+		 * 1. ParameterDescription
+		 * 2. RowDescriptions or NoData
+		 */
 		if (kind == 'D' && *p == 'S')
 		{
 			kind1 = pool_read_kind(backend);
@@ -3453,14 +3467,21 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 			pool_flush(frontend);
 		}
 
-		kind1 = pool_read_kind(backend);
-		if (kind1 < 0)
+		for (;;)
 		{
-			pool_error("SimpleForwardToBackend: pool_read_kind error");
-			return POOL_ERROR;
+			kind1 = pool_read_kind(backend);
+			if (kind1 < 0)
+			{
+				pool_error("SimpleForwardToBackend: pool_read_kind error");
+				return POOL_ERROR;
+			}
+			SimpleForwardToFrontend(kind1, frontend, backend);
+			if (pool_flush(frontend) < 0)
+				return POOL_ERROR;
+
+			if (kind1 != 'N')
+				break;
 		}
-		SimpleForwardToFrontend(kind1, frontend, backend);
-		return pool_flush(frontend);
 	}
 
 	return POOL_CONTINUE;
@@ -4403,6 +4424,8 @@ static void reset_prepared_list(PreparedStatementList *p)
 	{
 		pool_memory_delete(prepare_memory_context);
 		prepare_memory_context = NULL;
+		unnamed_portal = NULL;
+		unnamed_statement = NULL;
 	}
 	p->cnt = 0;
 }
