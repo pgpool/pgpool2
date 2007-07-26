@@ -45,6 +45,7 @@
 #include "pool.h"
 
 POOL_CONNECTION_POOL *pool_connection_pool;	/* connection pool */
+volatile sig_atomic_t backend_timer_expired = 0; /* flag for connection closed timer is expired */
 
 static POOL_CONNECTION_POOL_SLOT *create_cp(POOL_CONNECTION_POOL_SLOT *cp, int slot);
 static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p);
@@ -142,7 +143,7 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, in
 						free(CONNECTION_SLOT(p, j));
 					}
 					info = p->info;
-					memset(p, 0, sizeof(POOL_CONNECTION_POOL));
+					memset(p, 0, sizeof(POOL_CONNECTION_POOL_SLOT));
 					p->info = info;
 					memset(p->info, 0, sizeof(ConnectionInfo));
 					return NULL;
@@ -308,10 +309,15 @@ void pool_connection_pool_timer(POOL_CONNECTION_POOL *backend)
  */
 RETSIGTYPE pool_backend_timer_handler(int sig)
 {
+	backend_timer_expired = 1;
+}
+
+void pool_backend_timer(void)
+{
 #define TMINTMAX 0x7fffffff
 
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
-	int i, freed = 0;
+	int i, j;
 	time_t now;
 	time_t nearest = TMINTMAX;
 	ConnectionInfo *info;
@@ -332,6 +338,8 @@ RETSIGTYPE pool_backend_timer_handler(int sig)
 		/* timer expire? */
 		if (MASTER_CONNECTION(p)->closetime)
 		{
+			int freed = 0;
+
 			pool_debug("pool_backend_timer_handler: expire time: %d",
 					   MASTER_CONNECTION(p)->closetime+pool_config->connection_life_time);
 
@@ -343,19 +351,19 @@ RETSIGTYPE pool_backend_timer_handler(int sig)
 
 				pool_send_frontend_exits(p);
 
-				for (i=0;i<NUM_BACKENDS;i++)
+				for (j=0;j<NUM_BACKENDS;j++)
 				{
-					if (!VALID_BACKEND(i))
+					if (!VALID_BACKEND(j))
 						continue;
 
 					if (!freed)
 					{
-						pool_free_startup_packet(CONNECTION_SLOT(p, i)->sp);
+						pool_free_startup_packet(CONNECTION_SLOT(p, j)->sp);
 						freed = 1;
 					}
 
-					pool_close(CONNECTION(p, i));
-					free(CONNECTION_SLOT(p, i));
+					pool_close(CONNECTION(p, j));
+					free(CONNECTION_SLOT(p, j));
 				}
 				info = p->info;
 				memset(p, 0, sizeof(POOL_CONNECTION_POOL));

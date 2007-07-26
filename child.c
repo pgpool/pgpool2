@@ -210,6 +210,13 @@ void do_child(int unix_fd, int inet_fd)
 		idle = 0;
 		child_idle_sec = 0;
 
+		/* check backend timer is expired */
+		if (backend_timer_expired)
+		{
+			pool_backend_timer();
+			backend_timer_expired = 0;
+		}
+
 		/* disable timeout */
 		pool_disable_timeout();
 
@@ -577,6 +584,7 @@ static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *time
 {
     fd_set	readmask;
     int fds;
+	int save_errno;
 
 	SockAddr saddr;
 	int fd = 0;
@@ -618,6 +626,14 @@ static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *time
 
 	fds = select(Max(unix_fd, inet_fd)+1, &readmask, NULL, NULL, timeoutval);
 
+	save_errno = errno;
+	/* check backend timer is expired */
+	if (backend_timer_expired)
+	{
+		pool_backend_timer();
+		backend_timer_expired = 0;
+	}
+
 	/*
 	 * following code fragment computes remaining timeout val in a
 	 * portable way. Linux does this automazically but other platforms do not.
@@ -649,6 +665,8 @@ static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *time
 		pool_log("after select = {%d, %d}", timeout->tv_sec, timeout->tv_usec);
 #endif
 	}
+
+	errno = save_errno;
 
 	if (fds == -1)
 	{
@@ -696,6 +714,15 @@ static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *time
 	}
 
 	afd = accept(fd, (struct sockaddr *)&saddr.addr, &saddr.salen);
+ 
+	save_errno = errno;
+	/* check backend timer is expired */
+	if (backend_timer_expired)
+	{
+		pool_backend_timer();
+		backend_timer_expired = 0;
+	}
+	errno = save_errno;
 	if (afd < 0)
 	{
 		if (errno == EINTR && *InRecovery)
@@ -703,9 +730,9 @@ static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *time
 
 		/*
 		 * "Resource temporarily unavailable" (EAGAIN or EWOULDBLOCK)
-		 * can be silently ignored.
+		 * can be silently ignored. And EINTR can be ignored.
 		 */
-		if (errno != EAGAIN && errno != EWOULDBLOCK)
+		if (errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR)
 			pool_error("accept() failed. reason: %s", strerror(errno));
 		return NULL;
 	}
