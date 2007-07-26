@@ -1,5 +1,12 @@
 2007-07-26  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
+	* child.c, pool.h, pool_connection_pool.c: SIGALRM handler didn't
+	  safe. Because it called non-reentrant functions. We only set a
+	  flag in SIGALRM handler. Then we close expired connections in
+	  safe places.
+
+2007-07-26  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
 	* pool_connection_pool.c: Fix memory leak when connection slot is
 	  full.
 
