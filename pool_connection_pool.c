@@ -314,7 +314,7 @@ void pool_backend_timer(void)
 #define TMINTMAX 0x7fffffff
 
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
-	int i, freed = 0;
+	int i, j;
 	time_t now;
 	time_t nearest = TMINTMAX;
 	ConnectionInfo *info;
@@ -335,6 +335,8 @@ void pool_backend_timer(void)
 		/* timer expire? */
 		if (MASTER_CONNECTION(p)->closetime)
 		{
+			int freed = 0;
+
 			pool_debug("pool_backend_timer_handler: expire time: %d",
 					   MASTER_CONNECTION(p)->closetime+pool_config->connection_life_time);
 
@@ -346,19 +348,19 @@ void pool_backend_timer(void)
 
 				pool_send_frontend_exits(p);
 
-				for (i=0;i<NUM_BACKENDS;i++)
+				for (j=0;j<NUM_BACKENDS;j++)
 				{
-					if (!VALID_BACKEND(i))
+					if (!VALID_BACKEND(j))
 						continue;
 
 					if (!freed)
 					{
-						pool_free_startup_packet(CONNECTION_SLOT(p, i)->sp);
+						pool_free_startup_packet(CONNECTION_SLOT(p, j)->sp);
 						freed = 1;
 					}
 
-					pool_close(CONNECTION(p, i));
-					free(CONNECTION_SLOT(p, i));
+					pool_close(CONNECTION(p, j));
+					free(CONNECTION_SLOT(p, j));
 				}
 				info = p->info;
 				memset(p, 0, sizeof(POOL_CONNECTION_POOL));
