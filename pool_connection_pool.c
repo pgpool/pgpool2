@@ -134,8 +134,9 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, in
 							pool_free_startup_packet(CONNECTION_SLOT(p, j)->sp);
 							freed = 1;
 						}
-				
+
 						pool_close(CONNECTION(p, j));
+						free(CONNECTION_SLOT(p, j));
 					}
 					info = p->info;
 					memset(p, 0, sizeof(POOL_CONNECTION_POOL));
@@ -179,6 +180,7 @@ void pool_discard_cp(char *user, char *database, int protoMajor)
 			freed = 1;
 		}
 		pool_close(CONNECTION(p, i));
+		free(CONNECTION_SLOT(p, i));
 	}
 
 	info = p->info;
@@ -254,6 +256,7 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 		}
 
 		pool_close(CONNECTION(p, i));
+		free(CONNECTION_SLOT(p, i));
 	}
 
 	info = p->info;
@@ -349,6 +352,7 @@ RETSIGTYPE pool_backend_timer_handler(int sig)
 					}
 
 					pool_close(CONNECTION(p, i));
+					free(CONNECTION_SLOT(p, i));
 				}
 				info = p->info;
 				memset(p, 0, sizeof(POOL_CONNECTION_POOL));
