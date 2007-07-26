@@ -1683,6 +1683,7 @@ int pool_get_config(char *confpath)
 	pool_config->replication_timeout = 0;
 	pool_config->load_balance_mode = 0;
 	pool_config->replication_stop_on_mismatch = 0;
+	pool_config->replicate_select = 0;
 	pool_config->reset_query_list = default_reset_query_list;
 	pool_config->num_reset_queries = sizeof(default_reset_query_list)/sizeof(char *);
 	pool_config->reset_query_list = default_reset_query_list;
@@ -2068,6 +2069,18 @@ int pool_get_config(char *confpath)
 			pool_debug("replication_stop_on_mismatch: %d", v);
 			pool_config->replication_stop_on_mismatch = v;
 		}
+		else if (!strcmp(key, "replicate_select"))
+		{
+			int v = eval_logical(yytext);
+
+			if (v < 0)
+			{
+				pool_error("pool_config: invalid value %s for %s", yytext, key);
+				return(-1);
+			}
+			pool_debug("replicate_select: %d", v);
+			pool_config->replicate_select = v;
+ 		}
 		else if (!strcmp(key, "reset_query_list"))
 		{
 			char *str;

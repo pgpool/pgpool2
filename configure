@@ -2802,7 +2802,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=pgpool-II
- VERSION=1.1.1
+ VERSION=1.2
 
 
 cat >>confdefs.h <<_ACEOF
@@ -19983,7 +19983,8 @@ fi
 
 
 
-for ac_header in fcntl.h unistd.h getopt.h netinet/tcp.h netinet/in.h netdb.h sys/param.h sys/types.h sys/socket.h sys/un.h sys/time.h sys/sem.h sys/shm.h
+
+for ac_header in fcntl.h unistd.h getopt.h netinet/tcp.h netinet/in.h netdb.h sys/param.h sys/types.h sys/socket.h sys/un.h sys/time.h sys/sem.h sys/shm.h sys/select.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
