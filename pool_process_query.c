@@ -2618,6 +2618,11 @@ static void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *b
 	strncpy(status[i].desc, "stop replication mode on fatal error", MAXDESCLEN);
 	i++;
 
+	strncpy(status[i].name, "replicate_select", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->replicate_select);
+	strncpy(status[i].desc, "non 0 if SELECT statement is replicated", MAXDESCLEN);
+	i++;
+
 	strncpy(status[i].name, "reset_query_list", MAXNAMELEN);
 	*(status[i].value) = '\0';
 	for (j=0;j<pool_config->num_reset_queries;j++)
