@@ -965,6 +965,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 
 			pool_debug("pool_config: weight slot number %d weight: %f", slot, v);
+			status = BACKEND_INFO(slot).backend_status;
 			if (context == INIT_CONFIG ||
 				(context == RELOAD_CONFIG && (context == RELOAD_CONFIG && (status == CON_UNUSED || status == CON_DOWN))))
 			{
