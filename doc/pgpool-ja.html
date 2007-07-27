@@ -627,6 +627,15 @@ rawモード，コネクションプールモードに加え，以下を設定します．
    問い合わせを強制的に終了するだけに留めます．デフォルト値はfalseです．
 </p>
 
+<dt>replicate_select
+<dd>
+<p>
+   true を設定するとロードバランスされない SELECT 文をレプリケーション
+   させます。これは pgpool-II 1.0 までの挙動と同じになります。false を
+   設定すると SELECT 文をマスタのみに送信します。デフォルト値は false
+   です。
+</p>
+
 <dt>insert_lock
 <dd>
 <p>
@@ -719,7 +728,8 @@ load_balance_mode = true を設定した場合，以下の条件を満たした時に問い
 </ul>
 
 上記を満さない場合は SELECT 以外のクエリをバックエンドに送信します。も
-し SELECT をレプリケーションさせたい場合は
+し SELECT をレプリケーションさせたい場合は、replicate_select = true を
+設定するか、
 
 <pre>
   /*REPLICATION*/ SELECT ...
@@ -1998,6 +2008,47 @@ count(*) を使ったクエリは、以下のように書き換えが行われます。
 </p>
 
 <h1>リリースノート<a name="release"></a></h1>
+
+<h2>1.2 (tomoboshi) 2007/08/01</h2>
+<ul>
+  <li> pgpool.conf に replicate_select という新規パラメータを追加しま
+  した。デフォルト値は false です。(Yoshiyuki)
+  <ul>
+    <li> true に設定した場合は、ロードバランスされない SELECT 文をレプ
+    リケーションします(pgpool-II 1.0 の挙動)。false の場合はマスタにの
+    み SELECT を送信します。
+  </ul>
+
+  <li> まれにゾンビプロセスが残ってしまう不具合を修正しました。
+  (Yoshiyuki)
+
+  <li> トランザクション中に SELECT 文がエラーになると、ハングアップし
+  てしまう不具合を修正しました。(Yoshiyuki)
+  <ul>
+    <li> この不具合は 1.1 に入った不具合です。
+  </ul>
+
+  <li> PREPARE/EXECUTE が master/slave モードで正しく動作しない不具合
+  を修正しました。(Yoshiyuki)
+
+  <li> デッドロックを検知すると、kind mismatch error が発生する不具合
+  を修正しました。(Yoshiyuki)
+
+  <li> 拡張問い合わせプロトコルを使ったドライバを使用した場合に、構文
+        解析時に警告が発生する SQL 文を実行するとハングアップもしくは
+        プロセスがクラッシュする不具合を修正しました。(Yoshiyuki)
+
+  <li> コネクションキャッシュが一杯になるとメモリリークが発生する不具
+  合を修正しました。(Yoshiyuki)
+
+  <li> セッションが残った状態で PostgreSQL を fast shutdown もしくは
+  immediate shutdown すると、残ったセッションがハングアップする不具合
+  を修正しました。(Yoshiyuki)
+
+  <li> ロードバランス先を接続開始時に決定し、同じセッション内ではすべ
+  て同じノードにクエリを送信するようにしました。(Yoshiyuki)
+
+</ul>
 
 <h2>1.1.1 (amiboshi) 2007/06/15</h2>
 <ul>
