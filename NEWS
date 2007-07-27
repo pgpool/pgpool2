@@ -1,3 +1,26 @@
+1.2 (tomoboshi) 2007/08/01
+      * Version 1.2
+      * Add new "replicate_select" directive which the default value
+        is false. (Yoshiyuki)
+        - If it is true, SELECT query is replicated. This behavior is
+	  the same under V3.2. 
+      * Improve signal handling. (Yoshiyuki)
+        - Occasionaly, zombie processes were remained. Or processes
+	  were unstable.
+      * Fix hang up when SELECT was error inside a transaction
+        block. The bug was introduced in V3.3. (Yoshiyuki)
+      * Fix PREPARE/EXECUTE handling in master slave mode. (Yoshiyuki)
+      * Fix "kind mismatch error" when deadlock error 
+      * Fix hang up and SEGV in extended query protocol when a warning
+        SQL like "SELECT '\'';" executed. (Yoshiyuki)
+      * Fix hang up when postmaster did fast or immediate
+        shutdown. (Yoshiyuki)
+      * Fix memory leak when connection cache was full. (Yoshiyuki)
+      * Load balancing node is selected when a session
+        starts. (Yoshiyuki)
+      * Fix buffer overrun if connection_life_time was
+        set. (Yoshiyuki)
+
 1.1.1 (amiboshi) 2007/6/15
       * Version 1.1.1
       * Fix "kind mismatch" bug when load_balance_mode is true
