@@ -509,6 +509,46 @@ DistDefInfo *pool_get_dist_def_info (char *dbname, char *schema_name, char *tabl
 }
 
 /*
+ * pool_get_repli_def_info:
+ *    Looks up replication rule with dbname, schema_name and table_name.
+ */
+RepliDefInfo *pool_get_repli_def_info (char *dbname, char *schema_name, char *table_name)
+{
+	int i;
+	int repli_def_num = system_db_info->info->repli_def_num;
+	char *public ="public";
+
+	if (!dbname || !table_name)
+	{
+		return NULL;
+	}
+
+	if (!schema_name)
+	{
+		schema_name = public;
+	}
+	
+	for (i = 0; i < repli_def_num; i++)
+	{
+		char *mem_dbname;
+		char *mem_schema_name;
+		char *mem_table_name;
+
+		mem_dbname = system_db_info->info->repli_def_slot[i].dbname;
+		mem_schema_name = system_db_info->info->repli_def_slot[i].schema_name;
+		mem_table_name  = system_db_info->info->repli_def_slot[i].table_name;
+
+		if ((strcmp(mem_dbname, dbname) == 0) &&
+			(strcmp(mem_schema_name, schema_name) == 0) &&
+			(strcmp(mem_table_name, table_name) ==0))
+		{
+			return &system_db_info->info->repli_def_slot[i];
+		}
+	}
+	return NULL;
+}
+
+/*
  * pool_get_id:
  *    Returns the backend node id from value.
  */

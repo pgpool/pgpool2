@@ -596,11 +596,12 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 			if (VALID_BACKEND(i))
 			{
 				int fd = CONNECTION(backend,i)->fd;
-				num_fds = Max(fd, num_fds);
+				num_fds = Max(fd + 1, num_fds);
 				if(!FD_ISSET(fd,&donemask))
 				{
 					FD_SET(fd, &readmask);
 					FD_SET(fd, &exceptmask);
+					 pool_debug("pool_parallel_query:  %d th FD_SET: %d",i, CONNECTION(backend, i)->fd);
 				}
 			}
 		}
@@ -858,24 +859,32 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 		if (pool_config->parallel_mode)
 		{
-			/* Do select pool_parallel ? */
+			/* analze query */
 			RewriteQuery *r_query = is_parallel_query(node,backend);
+			pool_debug("SimpleQuery: query_state  =%c",r_query->table_state);
 
-			if (r_query->r_code == SEND_PARALLEL_ENGINE)
+			if(r_query->is_loadbalance)
 			{
+				if(r_query->r_code ==  SEND_LOADBALANCE_ENGINE)
+				{
+					/* use rewrited query */
+					string = r_query->rewrite_query;
+					/* change query length */
+					len = strlen(string)+1;
+				}
+				pool_debug("SimpleQuery: loadbalance_query =%s",string);
+			}
+			else if (r_query->is_parallel)
+			{
+        /* call parallel exe engine */
 				POOL_STATUS stats = pool_parallel_exec(frontend,backend,r_query->rewrite_query, node,true);
 				free_parser();
 				return stats;
 			}
-			else if(r_query->r_code == SEND_LOADBALANCE_ENGINE)
+			else if(!r_query->is_pg_catalog)
 			{
-				string = r_query->rewrite_query;
-				len = strlen(string)+1;
-				pool_debug("SimpleQuery: parallel_mode(loadbalance_query)=%s",string);
-			}
-			else
-			{
-				/* rewrite_query_phase */
+				/* rewrite query phase */
+				/* NOW　TEST
 				r_query = rewrite_query_stmt(node,frontend,backend);
 				if(r_query->type == T_InsertStmt && r_query->r_code != INSERT_DIST_NO_RULE)
 				{
@@ -887,6 +896,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 					free_parser();
 					return r_query->status;
 				}
+				*/
 			}
 		}
 

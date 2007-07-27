@@ -35,6 +35,8 @@ static void examSelectStmt(Node *node,POOL_CONNECTION_POOL *backend,RewriteQuery
 static char *delimistr(char *str);
 static int direct_parallel_query(SelectStmt *stmt,POOL_CONNECTION_POOL *backend);
 static int check_whereClause(Node *where);
+static void initMessage(RewriteQuery *message,bool analyze);
+static void initdblink(ConInfoTodblink *dblink, POOL_CONNECTION_POOL *backend);
 
 char *pool_error_message(char *message)
 {
@@ -243,22 +245,43 @@ static void examSelectStmt(Node *node,POOL_CONNECTION_POOL *backend,RewriteQuery
 	static ConInfoTodblink dblink;
 
 	/* initialize dblink info */
-	dblink.dbname =  MASTER_CONNECTION(backend)->sp->database;
-	dblink.hostaddr = pool_config->pgpool2_hostname;
-	dblink.user = MASTER_CONNECTION(backend)->sp->user;
-	dblink.port = pool_config->port;
-	dblink.password = MASTER_CONNECTION(backend)->con->password;
+	initdblink(&dblink,backend);
 
 	/* initialize  message */
+	// initMessage(message);
 	message->type = node->type;
 	message->r_code = SELECT_DEFAULT;
-	message->dbname = NULL;
-	message->table_relname = NULL;
-	message->table_alias = NULL;
-	message->schemaname = NULL;
-	message->dbname = NULL;
 
 	nodeToRewriteString(message,&dblink,node);
+}
+
+
+static void initMessage(RewriteQuery *message, bool analyze)
+{
+	message->r_code = 0;
+	message->r_node = 0;
+	message->is_pg_catalog = false;
+	message->is_loadbalance = false;
+	message->is_parallel = false;
+	message->table_relname = NULL;
+	message->table_alias = NULL;
+	message->dbname = NULL;
+	message->schemaname = NULL;
+	message->rewrite_query = NULL;
+
+	if(analyze)
+	{
+		message->analyze_num = 0;
+	}
+}
+
+static void initdblink(ConInfoTodblink *dblink,POOL_CONNECTION_POOL *backend)
+{
+	dblink->dbname =  MASTER_CONNECTION(backend)->sp->database;
+	dblink->hostaddr = pool_config->pgpool2_hostname;
+	dblink->user = MASTER_CONNECTION(backend)->sp->user;
+	dblink->port = pool_config->port;
+	dblink->password = MASTER_CONNECTION(backend)->con->password;
 }
 
 int IsSelectpgcatalog(Node *node,POOL_CONNECTION_POOL *backend)
@@ -267,28 +290,24 @@ int IsSelectpgcatalog(Node *node,POOL_CONNECTION_POOL *backend)
 	static RewriteQuery message;
 
 	/* initialize dblink info */
-	dblink.dbname =  MASTER_CONNECTION(backend)->sp->database;
-	dblink.hostaddr = pool_config->pgpool2_hostname;
-	dblink.user = MASTER_CONNECTION(backend)->sp->user;
-	dblink.port = pool_config->port;
-	dblink.password = MASTER_CONNECTION(backend)->con->password;
+	initdblink(&dblink,backend);
 
 	/* initialize  message */
+	initMessage(&message,false);
+
 	message.type = node->type;
-	message.r_code = SELECT_CHECK_PGCATALOG_REPLICATION;
-	message.dbname = NULL;
-	message.table_relname = NULL;
-	message.table_alias = NULL;
-	message.schemaname = NULL;
-	message.dbname = NULL;
 
-	nodeToRewriteString(&message,&dblink,node);
-	pool_debug("XXXXX Isselectpgcatalog %d",message.r_code);
+	initdblink(&dblink,backend);
 
-	if(message.r_code == SELECT_PGCATALOG || message.r_code == SELECT_CHECK_PGCATALOG_REPLICATION)
+	if(message.is_pg_catalog) 
+	{
+		pool_debug("Isselectpgcatalog %d",message.is_pg_catalog);
 		return 1;
+	}
 	else
+	{
 		return 0;
+	}
 }
 
 RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNECTION_POOL *backend)
@@ -512,12 +531,8 @@ static char *delimistr(char *str)
 RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 {
 	static RewriteQuery message;
+	static ConInfoTodblink dblink;
 
-	message.dbname = NULL;
-	message.table_relname = NULL;
-	message.table_alias = NULL;
-	message.schemaname = NULL;
-	message.dbname = NULL;
 
 	if (IsA(node, SelectStmt))
 	{
@@ -527,17 +542,41 @@ RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 
 		stmt = (SelectStmt *) node;
 
+    /* ANALYZE QUERY */
+		initMessage(&message,true);
+		message.r_code = SELECT_ANALYZE;
+		message.is_loadbalance = true;
+
+		initdblink(&dblink,backend);
+		nodeToRewriteString(&message,&dblink,node);
+
+		if(message.is_pg_catalog)
+		{
+			message.is_loadbalance = false;
+			message.is_parallel = false;
+			pool_debug("is_parallel_query: query is done by loadbalance(pgcatalog)");
+			return &message;
+		}
+
+		if(message.is_loadbalance)
+		{
+			message.is_parallel = false;
+			pool_debug("is_parallel_query: query is done by loadbalance");
+			return &message;
+		}
+
+		/* PARALLEL*/
 		direct_ok = direct_parallel_query(stmt,backend);
 		if(direct_ok == 1)
 		{
 			message.rewrite_query = nodeToString(node);
-			message.r_code = SEND_PARALLEL_ENGINE;
+			message.is_parallel = true;
+			message.is_loadbalance = false;
 			pool_debug("can pool_parallel_exec %s",message.rewrite_query);	
 			return &message;
 		}
 
-
-		
+		/* LOADBALANCE OR PARALLEL */
 		if (!(stmt->distinctClause || stmt->into || stmt->intoColNames ||
 			stmt->fromClause || stmt->groupClause || stmt->havingClause ||
 			stmt->sortClause || stmt->limitOffset || stmt->limitCount ||
@@ -549,42 +588,42 @@ RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 			if (target->val && IsA(target->val, FuncCall))
 			{
 				FuncCall *func = (FuncCall *) target->val;
-				if (list_length(func->funcname) == 1)
+				if (list_length(func->funcname) == 1 && func->args)
 				{
 					Node *func_args = (Node *) lfirst(list_head(func->args));
 					message.rewrite_query = delimistr(nodeToString(func_args));
 
+					/* PARALLEL */
 					if(strcmp(strVal(lfirst(list_head(func->funcname))),
 						   POOL_PARALLEL) == 0)
 					{
 						message.r_code = SEND_PARALLEL_ENGINE;
+						message.is_parallel = true;
+						message.is_loadbalance = false;
 						pool_debug("can pool_parallel_exec %s",message.rewrite_query);	
 						return &message;
 					} 
-					else if(strcmp(strVal(lfirst(list_head(func->funcname))),
+					else /* LOADBALANCE */ 
+					if(strcmp(strVal(lfirst(list_head(func->funcname))),
 						   						POOL_LOADBALANCE) == 0)
 					{
 						message.r_code = SEND_LOADBALANCE_ENGINE;
+						message.is_loadbalance = true;
+						message.is_parallel = false;
 						pool_debug("can loadbalance_mode %s",message.rewrite_query);	
 						return &message;
 					}
 				} 
 			}
-		}
-
-		if(IsSelectpgcatalog(node, backend) == 1)
-		{
-			message.rewrite_query = nodeToString(node);
-			message.r_code = SEND_LOADBALANCE_ENGINE;
-			pool_debug("can send noermal %s",message.rewrite_query);	
-			return &message;
 		}		
-		
 		message.r_code = SELECT_REWRITE;
 	}
 	else if (IsA(node, CopyStmt))
 	{
 		CopyStmt *stmt = (CopyStmt *)node;
+
+		initMessage(&message,false);
+
 		if (stmt->is_from == FALSE && stmt->filename == NULL)
 		{
 			RangeVar *relation = (RangeVar *)stmt->relation;
@@ -594,6 +633,8 @@ RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 			if(pool_get_dist_def_info (MASTER_CONNECTION(backend)->sp->database, relation->schemaname, relation->relname))
 			{
 				message.rewrite_query = nodeToString(stmt);
+				message.is_parallel = true;
+				message.is_loadbalance = false;
 				message.r_code = SEND_PARALLEL_ENGINE;
 			}
 		}

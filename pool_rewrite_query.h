@@ -48,17 +48,65 @@
 #define SEND_LOADBALANCE_ENGINE 16
 #define SELECT_NOT_REPLICATION 17
 #define SELECT_REWRITE 18
+#define SELECT_ANALYZE 19
+
+typedef struct {
+	char **col_list;		/* column list */
+	char **type_list;		/* type list */
+	int col_num;
+	bool valid;
+}SelectDefInfo;
+
+typedef struct {
+	DistDefInfo *distinfo;
+	RepliDefInfo *repliinfo;
+	SelectDefInfo *selectinfo;
+	char *alias;
+	char state;
+	int ret_num;
+} RangeInfo;
+
+typedef struct {
+	char **col_list;		/* column list */
+	char **type_list;		/* type list */
+	char **table_list;		/* table list */
+	int *valid;
+	int col_num;	
+} VirtualTable;
+
+typedef struct {
+  int now_select;
+  int last_select;
+	int part;
+  int from_num;
+  char state;
+  char *table_name;
+	bool select_union;
+	RangeInfo **range;
+	int rangeinfo_num;
+	VirtualTable *virtual;
+	SelectDefInfo *select_ret;
+} AnalyzeSelect;
 
 typedef struct {
 	int r_code; 
 	int r_node;
+	int part;
+	bool is_pg_catalog;
+	bool is_loadbalance;
+	bool is_parallel;
+	bool fromClause;
 	char *table_relname;
 	char *table_alias;
 	char *schemaname;
 	char *dbname;
 	char *rewrite_query;
+	char table_state;
 	POOL_STATUS status;
 	NodeTag type;
+	AnalyzeSelect **analyze;
+	int analyze_num;
+	int current_select;
 } RewriteQuery;
 
 typedef struct {
