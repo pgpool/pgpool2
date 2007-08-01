@@ -1,9 +1,9 @@
 1.2 (tomoboshi) 2007/08/01
       * Version 1.2
-      * Add new "replicate_select" directive which the default value
-        is false. (Yoshiyuki)
+      * Add new "replicate_select" directive, being the default value
+        is false. (Yoshiyuki) 
         - If it is true, SELECT query is replicated. This behavior is
-	  the same under V3.2. 
+	  same as V3.2 or earlier.
       * Improve signal handling. (Yoshiyuki)
         - Occasionaly, zombie processes were remained. Or processes
 	  were unstable.
