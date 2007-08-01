@@ -928,7 +928,8 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 		if (IsA(node, PrepareStmt) || IsA(node, DeallocateStmt))
 		{
-			force_replication = 1;
+			if (REPLICATION)
+				force_replication = 1;
 			if (frontend)
 			{
 				POOL_MEMORY_POOL *old_context;
