@@ -573,7 +573,7 @@ static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *time
 	static int cnt;
 #endif
 	struct timeval *timeoutval;
-	struct timeval tv1, tv2, tmback;
+	struct timeval tv1, tv2, tmback = {0, 0};
 
 	char remote_host[NI_MAXHOST];
 	char remote_port[NI_MAXSERV];
