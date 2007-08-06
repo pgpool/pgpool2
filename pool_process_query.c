@@ -1133,6 +1133,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	}
 	else
 	{
+		free_parser();
 		if (send_simplequery_message(MASTER(backend), len, string, MAJOR(backend)) != POOL_CONTINUE)
 			return POOL_END;
 
