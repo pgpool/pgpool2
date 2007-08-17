@@ -11,7 +11,8 @@ o セッション開始時に発行する問い合わせをpgpool.confで設定可能にする
 
 o 監査機能
 
-o 一時テーブルを削除する関数を作る
+o 一時テーブルを削除する関数を作る->8.3はDISCARD ALLが使えるので，それ
+  で対応する
 
 o child は暇なときに accept しておく(LRU キューを作る)．
 
@@ -20,6 +21,15 @@ o クライアントが quit したら，LRUキューから次のクライアントを取り出す
 
 o SQL パーサを最新バージョンのものにする
 
+o エラーメッセージを送るときには，fdをnon blockにする．でないと，エラー
+  処理中にハングする可能性がある．
+
+o 8.3ではDISCARD ALLでprepared objectを削除できるので，prepared query
+  の管理が不要？
+
+o DROP DATABASEのロジックを変更．今はparentにSIGUSR1を送ってすべての
+  idleコネクションを切断しているが，DROP DATABASEしようとしているデー
+  タベースへのコネクションを切断すれば十分．
 
 * レプリケーション
 o node間で戻ってきたパケット種別が一致しないときに，多数決でどれをエラー
@@ -35,7 +45,7 @@ o load balanceの比率をSQL文単位でコメントで指定できるようにする．
 
 o バグ．master/slave mode&load balance modeのときに，reset queryがマス
   タ側にしか出ない．master_slave modeでなければこの問題は起きない->しょ
-  うがない？
+  うがない？->slave側にはSELECT以外は投げられないため
 
 o OIDをreplicationする
 
