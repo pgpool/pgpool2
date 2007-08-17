@@ -1034,8 +1034,9 @@ pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] st
 <h2>認証・アクセス制御方式</h2>
 <p>
 <ul>
-<li>レプリケーションモードまたマスタ/スレーブモード時にはtrust, clear text password, pam以外の認証方式はサポートされません．
-<li>それ以外のモードでは，trust, clear text password, crypt, md5, pam以外の認証方式はサポートされません．
+<li>レプリケーションモードまたマスタ/スレーブモード時にはtrust, reject, clear
+     text password, pam, 認証方式だけが利用できます．md5認証，crypt認証などの認証方式は利用できません．
+<li>それ以外のモードでは，trust, reject, clear text password, pam, crypt, md5認証方式だけが利用できます．
 <li>pgpool-II自体にpg_hba.confによるアクセス制限はかかりません．
        TCP/IPコネクションを許可している場合，pgpool-II自体にはどのホストか
        らでも接続できてしまいます．必要ならばiptablesなどを使ってアク
