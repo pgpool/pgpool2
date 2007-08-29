@@ -248,7 +248,7 @@ static void examSelectStmt(Node *node,POOL_CONNECTION_POOL *backend,RewriteQuery
 	initdblink(&dblink,backend);
 
 	/* initialize  message */
-	// initMessage(message);
+	initMessage(message,true);
 	message->type = node->type;
 	message->r_code = SELECT_DEFAULT;
 
@@ -310,10 +310,8 @@ int IsSelectpgcatalog(Node *node,POOL_CONNECTION_POOL *backend)
 	}
 }
 
-RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNECTION_POOL *backend)
+RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNECTION_POOL *backend,RewriteQuery *message)
 {
-	static RewriteQuery message;
-
 	switch(node->type)
 	{
 		case T_SelectStmt:
@@ -328,70 +326,70 @@ RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNE
 
 
 				pool_send_readyforquery(frontend);
-				message.status=POOL_CONTINUE;
+				message->status=POOL_CONTINUE;
 				break;
 			}
 
-			examSelectStmt(node,backend,&message);
+			examSelectStmt(node,backend,message);
 
-			if (message.r_code != SELECT_PGCATALOG &&
-				message.r_code != SELECT_RELATION_ERROR)
+			if (message->r_code != SELECT_PGCATALOG &&
+				message->r_code != SELECT_RELATION_ERROR)
 			{
 				POOL_CONNECTION_POOL_SLOT *system_db = pool_system_db_connection();
-				message.status = OneNode_do_command(frontend, 
+				message->status = OneNode_do_command(frontend, 
 													system_db->con, 
-													message.rewrite_query,
+													message->rewrite_query,
 													backend->info->database);
 			}
 			else
 			{
 				if(TSTATE(backend) == 'T' &&
-				   message.r_code == SELECT_RELATION_ERROR)
+				   message->r_code == SELECT_RELATION_ERROR)
 				{
 					pool_debug("pool_rewrite_stmt(select): inside transaction");
-					message.rewrite_query = nodeToString(node);
-					message.status = pool_parallel_exec(frontend,backend,message.rewrite_query,node,true);
+					message->rewrite_query = nodeToString(node);
+					message->status = pool_parallel_exec(frontend,backend,message->rewrite_query,node,true);
 				} 
 				else
 				{ 
 					pool_debug("pool_rewrite_stmt: executed by Master");
-					message.rewrite_query = nodeToString(node);
-					message.status = OneNode_do_command(frontend, 
+					message->rewrite_query = nodeToString(node);
+					message->status = OneNode_do_command(frontend, 
 														MASTER(backend),
-														message.rewrite_query,
+														message->rewrite_query,
 														backend->info->database);
 				}
 			}
-			pool_debug("pool_rewrite_stmt: XXX message_code %d",message.r_code);
+			pool_debug("pool_rewrite_stmt: XXX message_code %d",message->r_code);
 		}
 		break;
 			
 		case T_InsertStmt:
-			examInsertStmt(node,backend,&message);
+			examInsertStmt(node,backend,message);
 
-			if(message.r_code == 0 )
+			if(message->r_code == 0 )
 			{
-				message.status = OneNode_do_command(frontend, 
-													CONNECTION(backend,message.r_node),
-													message.rewrite_query,
+				message->status = OneNode_do_command(frontend, 
+													CONNECTION(backend,message->r_node),
+													message->rewrite_query,
 													backend->info->database);
 			}
-			else if (message.r_code == INSERT_SQL_RESTRICTION)
+			else if (message->r_code == INSERT_SQL_RESTRICTION)
 			{
 				pool_send_error_message(frontend, MAJOR(backend), "XX000",
 										"pgpool2 sql restriction",
-										message.rewrite_query, "", __FILE__,
+										message->rewrite_query, "", __FILE__,
 										__LINE__);
 
 				if(TSTATE(backend) == 'T')
 				{
 					pool_debug("rewrite_query_stmt(insert): inside transaction");
-					message.status = pool_parallel_exec(frontend,backend, "POOL_RESET_TSTATE",node,false);
+					message->status = pool_parallel_exec(frontend,backend, "POOL_RESET_TSTATE",node,false);
 				}
 				else
 				{
 					pool_send_readyforquery(frontend);
-					message.status=POOL_CONTINUE;
+					message->status=POOL_CONTINUE;
 				}
 			}
 			break;
@@ -401,14 +399,14 @@ RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNE
 			break;
 #endif
 		default:
-			message.type = node->type;
-			message.status = POOL_CONTINUE;
+			message->type = node->type;
+			message->status = POOL_CONTINUE;
 			break;
 	}
 
 	pool_debug("pool_rewrite_stmt: XXX rule %d",node->type);
 	
-	return &message;
+	return message;
 }
 
 #define POOL_PARALLEL "pool_parallel"
@@ -542,6 +540,7 @@ RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 
 		stmt = (SelectStmt *) node;
 
+#if 0
     /* ANALYZE QUERY */
 		initMessage(&message,true);
 		message.r_code = SELECT_ANALYZE;
@@ -564,6 +563,7 @@ RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 			pool_debug("is_parallel_query: query is done by loadbalance");
 			return &message;
 		}
+#endif
 
 		/* PARALLEL*/
 		direct_ok = direct_parallel_query(stmt,backend);
@@ -615,8 +615,31 @@ RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 					}
 				} 
 			}
-		}		
+		}
+		
 		message.r_code = SELECT_REWRITE;
+    /* ANALYZE QUERY */
+		initMessage(&message,true);
+		message.r_code = SELECT_ANALYZE;
+		message.is_loadbalance = true;
+
+		initdblink(&dblink,backend);
+		nodeToRewriteString(&message,&dblink,node);
+
+		if(message.is_pg_catalog)
+		{
+			message.is_loadbalance = false;
+			message.is_parallel = false;
+			pool_debug("is_parallel_query: query is done by loadbalance(pgcatalog)");
+			return &message;
+		}
+
+		if(message.is_loadbalance)
+		{
+			message.is_parallel = false;
+			pool_debug("is_parallel_query: query is done by loadbalance");
+			return &message;
+		}
 	}
 	else if (IsA(node, CopyStmt))
 	{

@@ -31,7 +31,6 @@
 
 #define booltostr(x)  ((x) ? "true" : "false")
 
-static void KeepRewriteQueryCode(RewriteQuery *message, int r_code);
 
 static void _rewriteNode(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, void *obj);
 static void _rewriteList(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, List *node);
@@ -176,26 +175,42 @@ static void _rewriteOperatorArgTypes(Node *BaseSelect, RewriteQuery *message, Co
 static void _rewriteRangeFunction(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, RangeFunction *node);
 
 /* use optimization of pool_parallel */
-//static int checkFuncArgs(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, List *list);
-static int _rewriteWhereClause(Node *BaseSelect,RewriteQuery *message,ConInfoTodblink *dblink,String *str,int true_count);
-//static int checkSelectStmtOneTable(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, SelectStmt *node);
-//static int checkIntensiveOneTable(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, SelectStmt *node);
-//static void compareGroupby(RewriteQuery *message,List *targetList,List *groupby,String *str,int record);
-//static void _rewriteIntensivedblink(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, List *list);
-//static void _rewriteReturnRecords(Node *BaseSelect,RewriteQuery *message,List *list,String *str);
-//static void _rewriteIntensiveTargetList(RewriteQuery *message,List *list,String *str);
-//static int _checkDistDefColumn(ColumnRef *col,RewriteQuery *message);
+#if 0
+static int checkFuncArgs(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, List *list);
+static int checkSelectStmtOneTable(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, SelectStmt *node);
+static int checkIntensiveOneTable(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, SelectStmt *node);
+static void compareGroupby(RewriteQuery *message,List *targetList,List *groupby,String *str,int record);
+static void _rewriteIntensivedblink(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, List *list);
+static void _rewriteReturnRecords(Node *BaseSelect,RewriteQuery *message,List *list,String *str);
+static void _rewriteIntensiveTargetList(RewriteQuery *message,List *list,String *str);
+static int _checkDistDefColumn(ColumnRef *col,RewriteQuery *message);
+static void _rewriteSelectStmtIntensive(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, SelectStmt *node);
+static int checkGroupbyClause(List *list, char *colname);
+#endif
+/* analyze */
+static void KeepRewriteQueryCode(RewriteQuery *message, int r_code);
+static void KeepMessages(RewriteQuery *message,int current_select,int part);
+static int CheckWhereCaluse(Node *BaseSelect,RewriteQuery *message,ConInfoTodblink *dblink,String *str,int true_count);
 static int _writewhereClause(A_Expr *expr,RewriteQuery *message,ConInfoTodblink *dblink, String *str,int true_count);
-//static void _rewriteSelectStmtIntensive(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, SelectStmt *node);
 static char *escape_string(char *str);
 static void delay_string_append_char(RewriteQuery *message,String *str, char *parts);
-//static int checkGroupbyClause(List *list, char *colname);
-/* analyze */
-static void _rewriteEvalJoin(JoinExpr *node, RewriteQuery *message,char l_state, char r_state);
-static void build_rettuple_info(RewriteQuery *message,DistDefInfo *info,RepliDefInfo *info2,SelectDefInfo *info3,char *alias,int select_num);
+static void build_range_info(RewriteQuery *message,DistDefInfo *info,RepliDefInfo *info2,SelectDefInfo *info3,char *alias,int select_num);
 static void AnalyzeReturnRecord(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, List *list);
-static void built_virtual_table(RewriteQuery *message,List *list);
+static void build_virtual_table(RewriteQuery *message,void *obj);
 static char *search_type_from_virtual(VirtualTable *virtual,char *table,char *col);
+
+/* under define is used in _rewritejoinExpr */
+#define JDEFAULT 0
+#define JNORMAL  1
+#define JNATURAL_INNER  2
+#define JNATURAL_LEFT  3
+#define JNATURAL_RIGHT 4
+#define JNATURAL_FULL  5
+#define JINNER   6
+#define JLEFT    7
+#define JRIGHT   8
+#define JFULL    9
+#define JUSING   10
 
 static char *escape_string(char *str)
 {
@@ -231,12 +246,13 @@ delay_string_append_char(RewriteQuery *message,String *str, char *parts)
 		string_append_char(str, parts);
 }
 
+#if 0
+
 /*
  *  check Group by Clause
  *  if return value is zero, 
  *  cannot do intensive optimization.
  */ 
-/*
 static int
 checkGroupbyClause(List *list, char *colname)
 {
@@ -264,13 +280,11 @@ checkGroupbyClause(List *list, char *colname)
 	}
 	return ok_group_by;
 }
-*/
 
 /* 
  * Include function,sub-query
  * and other table member in function args? 
  */
-/*
 int 
 checkFuncArgs(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, List *list)
 {
@@ -337,39 +351,38 @@ checkFuncArgs(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, 
 		return 0;
 	}
 }
-*/
+
 /* 
  * if can Intensive Optimization, 
  * return value is 1
  */
-/*
 int 
 checkIntensiveOneTable(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, SelectStmt *node)
 {
 	RangeVar *var = NULL;
 	int message_r_code = message->r_code;
 
-	// Intensive optimization can do when tree have only one table //
+	/* Intensive optimization can do when tree have only one table */
 	if(!((list_length(node->fromClause) == 1)
             && IsA(lfirst(list_head(node->fromClause)),RangeVar)))
 	{
 		return 0;
 	}
 
-	// check groupClause's tree has only Column's list //
+	/* check groupClause's tree has only Column's list */
 	if(node->groupClause && 
 			checkGroupbyClause(node->groupClause, NULL) == 0)
 	{
 		return 0;
 	}
 
-	// TODO: can use intensive optimization if having Clause exits // 
+	/* TODO: can use intensive optimization if having Clause exits */ 
 	if (node->havingClause)
 		return 0;
 	
 	var = (RangeVar *) lfirst(list_head(node->fromClause));
 		
-	// set dblink info to message //
+	/* set dblink info to message */
 	message->table_relname = var->relname;
 	if(var->schemaname)
 		message->schemaname = var->schemaname;
@@ -385,7 +398,7 @@ checkIntensiveOneTable(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink 
 	}
 	message->dbname = dblink->dbname;
 
-	// search target list //	
+	/* search target list */	
 	if(node->targetList)
 	{
 		ListCell *lc;
@@ -406,7 +419,7 @@ checkIntensiveOneTable(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink 
 			{
 				return 0;
 			}
-			// check type cast //
+			/* check type cast */
 			if(IsA(target->val, TypeCast))
 			{
 				TypeCast *type = (TypeCast *) target->val;
@@ -415,7 +428,7 @@ checkIntensiveOneTable(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink 
 				obj = target->val;
 			}
 
-			// check function,  max,min,count and sum can do //
+			/* check function,  max,min,count and sum can do */
 			if (obj && (IsA(obj, FuncCall)))
 			{
 				FuncCall *func = (FuncCall *) obj;
@@ -423,13 +436,13 @@ checkIntensiveOneTable(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink 
  
 				if(strcmp(funcname,"max") == 0 || strcmp(funcname,"min") == 0)
 				{
-					// check function args: args must not be function or sub-query // 
+					/* check function args: args must not be function or sub-query */ 
 					if(checkFuncArgs(BaseSelect,message,dblink,str,func->args) == 0)
 						return 0;
 				} 
 				else if (strcmp(funcname,"count") == 0 || strcmp(funcname,"sum") == 0)
 				{
-					// check function args: args must not be function or sub-query // 
+					/* check function args: args must not be function or sub-query */ 
 					if(checkFuncArgs(BaseSelect,message,dblink,str,func->args) == 0 && func->agg_star != TRUE)
 					{
 						return 0;
@@ -438,19 +451,19 @@ checkIntensiveOneTable(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink 
 					return 0;
 				}
 			}
-			// check ColumnRef //
+			/* check ColumnRef */
 			else if (obj && (IsA(obj, ColumnRef)))
 			{
 				ColumnRef *col = NULL;
 				col = (ColumnRef *) obj;
-				// if ColumnRef is exits, groupCluase's tree must be exits //
+				/* if ColumnRef is exits, groupCluase's tree must be exits */
 				if(!node->groupClause)
 				{
 					return 0;
 				} 
 				else 
 				{
-					// Is this Column member of this table ? //
+					/* Is this Column member of this table ? */
 					 KeepRewriteQueryCode(message, SELECT_AEXPR);
 			        _rewriteNode(NULL, message, NULL, str, col);
 
@@ -462,7 +475,7 @@ checkIntensiveOneTable(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink 
 
 					KeepRewriteQueryCode(message, message_r_code);
 					
-					// Is this Column member in Groupby ? //
+					/* Is this Column member in Groupby ? */
 					if(checkGroupbyClause(node->groupClause, strVal(lfirst(list_head(col->fields)))) == 0)
 						return 0;
 				}
@@ -473,12 +486,10 @@ checkIntensiveOneTable(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink 
 	}
 	return 1;
 }
-*/
 
 /*
  * compare targetList to groupbylist
  */
-/*
 static void
 compareGroupby(RewriteQuery *message,List *targetList,List *groupby,String *str,int record)
 {
@@ -556,8 +567,7 @@ compareGroupby(RewriteQuery *message,List *targetList,List *groupby,String *str,
 		counter++;
 	}
 }
-*/
-/*
+
 static void
 _rewriteIntensivedblink(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, List *list)
 {
@@ -604,12 +614,10 @@ _rewriteIntensivedblink(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink
 	if(select->groupClause)
 		compareGroupby(message,list,select->groupClause,str,0);
 }
-*/
 
 /*
  * Write down records from dblink()'return
  */
-/*
 static void
 _rewriteReturnRecords(Node *BaseSelect,RewriteQuery *message,List *list,String *str)
 {
@@ -719,12 +727,10 @@ _rewriteReturnRecords(Node *BaseSelect,RewriteQuery *message,List *list,String *
 
 	delay_string_append_char(message,str, " ");
 }
-*/
 
 /*
  * Write down targetList in outer dblink.
  */
-/*
 static void
 _rewriteIntensiveTargetList(RewriteQuery *message,List *list,String *str)
 {
@@ -812,13 +818,11 @@ _rewriteIntensiveTargetList(RewriteQuery *message,List *list,String *str)
 	}
 	delay_string_append_char(message,str, " ");
 }
-*/
 
 /*
  * check select stmt
  * this function check fromClause and where 
  */
-/*
 int 
 checkSelectStmtOneTable(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, SelectStmt *node)
 {
@@ -872,7 +876,7 @@ checkSelectStmtOneTable(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink
 	{
 		int true_count = 0;
 		KeepRewriteQueryCode(message, SELECT_AEXPR);
-		true_count = _rewriteWhereClause(node->whereClause, message,dblink,str,true_count);
+		true_count = CheckWhereCaluse(node->whereClause, message,dblink,str,true_count);
 		if(true_count == 0)
 			use_select_onetable = 1; 
 	} else {
@@ -881,7 +885,96 @@ checkSelectStmtOneTable(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink
 
 	return use_select_onetable;
 }
-*/
+
+
+/*
+ * Is this column  member of table (message->table_relname) ?
+ * return 1 -- member
+ * return 0 or -1 -- not mmeber 
+ */
+
+static int
+_checkDistDefColumn(ColumnRef *col,RewriteQuery *message)
+{
+	ListCell *c;
+	List *list;
+	char first = 0;
+	char *tmp_table = NULL;
+	char *colname = NULL;
+	DistDefInfo *info = NULL;
+	int i;
+	int check_col = 0;
+
+	list = col->fields;
+
+	if(list->length > 2 || list->length == 0)
+	{
+		/* send error message */
+		return -1;
+	}
+	
+	foreach (c, col->fields)
+	{
+		Node *n = (Node *) lfirst(c);
+
+		if (IsA(n, String))
+		{
+			Value *v = (Value *) lfirst(c);
+			if(list->length == 2 && first == 0)
+			{
+				first = 1;
+				tmp_table = v->val.str;
+			}
+			else
+				colname = v->val.str;
+		}
+	}
+
+	/* alias check */
+	if(message->table_alias)
+	{
+		if(tmp_table && strcmp(message->table_alias,tmp_table) != 0)
+		{
+			return check_col;
+		}
+	} 
+	else if (!message->table_alias && message->table_relname)
+	{
+		if(tmp_table && strcmp(message->table_relname,tmp_table) != 0)
+		{
+			return check_col;
+		}
+	} 
+	else
+	{
+			return check_col;
+	}
+	
+	/* get dist_def_info */
+	info = pool_get_dist_def_info(message->dbname, message->schemaname, message->table_relname);
+
+	if(info)
+		message->is_loadbalance = true;
+	
+	if(!info)
+	{
+		/* send error message */
+		return -1;
+	}
+
+	for(i = 0; i < info->col_num; i++)
+	{
+		if(strcmp(info->col_list[i],colname) == 0)
+		{
+			check_col = 1;
+		}
+
+	}
+
+	return check_col;
+}
+
+#endif
 
 static void KeepMessages(RewriteQuery *message,int current_select,int part)
 {
@@ -905,94 +998,6 @@ static void KeepRewriteQueryCode(RewriteQuery *message, int r_code)
 		message->current_select = r_code;
 	}
 }
-
-/*
- * Is this column  member of table (message->table_relname) ?
- * return 1 -- member
- * return 0 or -1 -- not mmeber 
- */
-/*
-static int
-_checkDistDefColumn(ColumnRef *col,RewriteQuery *message)
-{
-	ListCell *c;
-	List *list;
-	char first = 0;
-	char *tmp_table = NULL;
-	char *colname = NULL;
-	DistDefInfo *info = NULL;
-	int i;
-	int check_col = 0;
-
-	list = col->fields;
-
-	if(list->length > 2 || list->length == 0)
-	{
-		// send error message //
-		return -1;
-	}
-	
-	foreach (c, col->fields)
-	{
-		Node *n = (Node *) lfirst(c);
-
-		if (IsA(n, String))
-		{
-			Value *v = (Value *) lfirst(c);
-			if(list->length == 2 && first == 0)
-			{
-				first = 1;
-				tmp_table = v->val.str;
-			}
-			else
-				colname = v->val.str;
-		}
-	}
-
-	// alias check //
-	if(message->table_alias)
-	{
-		if(tmp_table && strcmp(message->table_alias,tmp_table) != 0)
-		{
-			return check_col;
-		}
-	} 
-	else if (!message->table_alias && message->table_relname)
-	{
-		if(tmp_table && strcmp(message->table_relname,tmp_table) != 0)
-		{
-			return check_col;
-		}
-	} 
-	else
-	{
-			return check_col;
-	}
-	
-	// get dist_def_info //
-	info = pool_get_dist_def_info(message->dbname, message->schemaname, message->table_relname);
-
-	if(info)
-		message->is_loadbalance = true;
-	
-	if(!info)
-	{
-		// send error message //
-		return -1;
-	}
-
-	for(i = 0; i < info->col_num; i++)
-	{
-		if(strcmp(info->col_list[i],colname) == 0)
-		{
-			check_col = 1;
-		}
-
-	}
-
-	return check_col;
-}
-*/
 
 /*
  * A_Expr check
@@ -1046,20 +1051,19 @@ _writewhereClause(A_Expr *expr,RewriteQuery *message,ConInfoTodblink *dblink, St
 
 		case AEXPR_AND:
 			delay_string_append_char(message, str, " (");
-			true_count = true_count + _rewriteWhereClause(expr->lexpr,message,dblink,str,true_count);
+			true_count = true_count + CheckWhereCaluse(expr->lexpr,message,dblink,str,true_count);
 			delay_string_append_char(message, str, " AND ");
-			true_count = true_count + _rewriteWhereClause(expr->rexpr,message,dblink,str,true_count);
+			true_count = true_count + CheckWhereCaluse(expr->rexpr,message,dblink,str,true_count);
 			delay_string_append_char(message, str, ")");
 			break;
 
 		case AEXPR_OR:
 			delay_string_append_char(message, str, " (");
-			true_count = true_count + _rewriteWhereClause(expr->lexpr,message,dblink,str,true_count);
+			true_count = true_count + CheckWhereCaluse(expr->lexpr,message,dblink,str,true_count);
 			delay_string_append_char(message, str, " OR ");
-			true_count = true_count +  _rewriteWhereClause(expr->rexpr,message,dblink,str,true_count);
+			true_count = true_count +  CheckWhereCaluse(expr->rexpr,message,dblink,str,true_count);
 			delay_string_append_char(message, str, ")");
 			break;
-
 
 		case AEXPR_OP_ANY:
 			/* not implemented yet */
@@ -1068,12 +1072,11 @@ _writewhereClause(A_Expr *expr,RewriteQuery *message,ConInfoTodblink *dblink, St
 		case AEXPR_OP_ALL:
 			/* not implemented yet */
 			break;
-
 #if 0
 
 		case AEXPR_NOT:
 			delay_string_append_char(message, str, " (NOT ");
-			_rewriteWhereClause(expr->rexpr,str,tablename,dbname, schemaname,aliasname);
+			CheckWhereCaluse(expr->rexpr,str,tablename,dbname, schemaname,aliasname);
 			delay_string_append_char(message, str, ")");
 			break;
 
@@ -1124,7 +1127,7 @@ _writewhereClause(A_Expr *expr,RewriteQuery *message,ConInfoTodblink *dblink, St
  *  if return value is zero, all whereclause can insert dblink function.
  */
 static int
-_rewriteWhereClause(Node *BaseSelect,RewriteQuery *message,ConInfoTodblink *dblink,String *str,int true_count)
+CheckWhereCaluse(Node *BaseSelect,RewriteQuery *message,ConInfoTodblink *dblink,String *str,int true_count)
 {
 	A_Expr *expr = NULL;
 
@@ -1173,6 +1176,7 @@ static void _rewriteList(Node *BaseSelect, RewriteQuery *message, ConInfoTodblin
 	char first = 0;
 	char state;
   int loop = 0;
+	bool from;
 	int current_select = message->current_select;
 	
 	foreach(lc, node)
@@ -1187,10 +1191,38 @@ static void _rewriteList(Node *BaseSelect, RewriteQuery *message, ConInfoTodblin
 				delay_string_append_char(message, str, ",");
 		}
 
+		/* init JoinTable */
+		if(message->r_code == SELECT_ANALYZE && message->fromClause)
+		{
+			if(lfirst(lc) && IsA(lfirst(lc),JoinExpr))
+			{
+				int select_num = message->current_select;
+				AnalyzeSelect *analyze = message->analyze[select_num];
+				if(!analyze->join)
+				{
+					analyze->join = (JoinTable *) palloc(sizeof(JoinTable));
+				}
+				analyze->join->col_num = 0;
+				analyze->join->col_list = NULL;
+				analyze->join->type_list = NULL;
+				analyze->join->table_list = NULL;
+				analyze->join->using_list = NULL;
+				analyze->join->using_length = 0;
+				analyze->join->state = (char)0;
+			}
+		}
+
+		from = message->fromClause;
 		_rewriteNode(BaseSelect, message, dblink, str, lfirst(lc));
 		message->current_select = current_select;
-		if(message->fromClause)
+		message->fromClause = from;
+
+		if(message->r_code == SELECT_ANALYZE && message->fromClause)
 		{
+			if(lfirst(lc))
+				if(IsA(lfirst(lc),JoinExpr) || IsA(lfirst(lc),RangeVar) || IsA(lfirst(lc),RangeSubselect))
+					build_virtual_table(message,lfirst(lc));
+
 			if(loop == 0)
 			{
 				state = message->table_state;
@@ -1233,10 +1265,43 @@ _rewriteAlias(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, 
 }
 
 static void
+append_all_virtual(AnalyzeSelect *analyze)
+{
+	VirtualTable *virtual;
+	SelectDefInfo *select_ret;
+	int num;
+	int base;
+	int i;
+
+	virtual = analyze->virtual;
+	num = virtual->col_num;
+	select_ret = analyze->select_ret;
+	base = select_ret->col_num;
+
+	if(base == 0)
+	{
+		select_ret->col_list = (char **) palloc(num * sizeof(char *));
+		select_ret->type_list = (char **) palloc(num * sizeof(char *));
+	}
+	else
+	{
+		select_ret->col_list = (char **) repalloc(select_ret->col_list,(base + num) * sizeof(char *));
+		select_ret->type_list = (char **) repalloc(select_ret->type_list,(base + num) * sizeof(char *));
+	}
+
+	for(i = 0; i< num;i++)
+	{
+		select_ret->col_list[base + i]  = virtual->col_list[i];
+		select_ret->type_list[base + i] = virtual->type_list[i];	
+		pool_debug("append_select_def_info: col=%s,type=%s", select_ret->col_list[base + i],select_ret->type_list[base + i]);
+	}
+	select_ret->col_num = base + num;
+}
+
+static void
 append_select_def_info(SelectDefInfo *select_ret,char *col,char *type)
 {
 	int base;
-	int len1,len2;
 
 	base  = select_ret->col_num;
 	pool_debug("append_select_def_info: base=%d",base);
@@ -1252,14 +1317,9 @@ append_select_def_info(SelectDefInfo *select_ret,char *col,char *type)
 		select_ret->type_list = (char **) repalloc(select_ret->type_list,(base + 1) * sizeof(char *));
 	}
 
-	len1 = strlen(col) + 1;
-	len2 = strlen(type) + 1;
+	select_ret->col_list[base] = col;
+	select_ret->type_list[base] = type;
 
-	select_ret->col_list[base] = (char *) palloc(sizeof(char) *(len1));
-	select_ret->type_list[base] = (char *) palloc(sizeof(char) *(len2));
-
-	strcpy(select_ret->col_list[base],col);
-	strcpy(select_ret->type_list[base],type);
 	select_ret->col_num++;
 	pool_debug("append_select_def_info: col=%s,type=%s base=%d",select_ret->col_list[base],select_ret->type_list[base],select_ret->col_num);
 }
@@ -1296,6 +1356,8 @@ AnalyzeReturnRecord(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *db
 	RangeInfo **range;
 	VirtualTable *virtual;
 	ListCell   *lc;
+	int n_sublink = 0;
+	int c_sublink = 0;
 
 	select_num = message->current_select;
 
@@ -1305,7 +1367,8 @@ AnalyzeReturnRecord(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *db
 
   /* get range table info */
 	range_num = analyze->rangeinfo_num;
-	/* "range = 0" means that this select have no table */
+
+	/* "range = 0" means that this select stmt have no table */
 	range = analyze->range;
 	
 	analyze->select_ret = (SelectDefInfo *) palloc(sizeof(SelectDefInfo));
@@ -1340,6 +1403,11 @@ AnalyzeReturnRecord(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *db
 		} else {
 			obj = target->val;
 		}
+		if(typecast && alias)
+		{
+			append_select_def_info(analyze->select_ret,alias,typecast);
+			continue;
+		}
 		 
     /* column name */
 		if (obj && (IsA(obj, ColumnRef)))
@@ -1366,9 +1434,62 @@ AnalyzeReturnRecord(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *db
 				}
 			}
 		}
+		else if(obj && (IsA(obj, A_Expr)))
+		{
+			char *colname;
+			colname = (char *)palloc(sizeof(char) * strlen("?column?") + 1);
+ 			strcpy(colname,"?column?");
+			append_select_def_info(analyze->select_ret,colname,typecast);
+			continue;
+		}
+		else if(obj && (IsA(obj, FuncCall)))
+		{
+			FuncCall *func = NULL;
+			char *funcname;
+			func = (FuncCall *) obj;
+			funcname = strVal(lfirst(list_head(func->funcname)));
+			append_select_def_info(analyze->select_ret,funcname,typecast);
+			continue;
+		}
+		else if (obj && (IsA(obj,SubLink)))
+		{
+			int i;
+			int max = message->analyze_num;
+			AnalyzeSelect *sublink = NULL;
+
+			for(i = select_num + 1; i < max;i++)
+			{
+				sublink = message->analyze[i];
+				
+				if(sublink->last_select == select_num
+						&& sublink->part == 1 && c_sublink == n_sublink)
+					break; 
+			}	
+
+			n_sublink++;
+			if(sublink && (sublink->select_ret->col_num == 1))
+			{
+				if(alias)
+				{
+					append_select_def_info(analyze->select_ret,alias,sublink->select_ret->type_list[0]);
+					continue;
+				}
+				else
+				{
+					char *column = (char *) palloc((sizeof(char) * strlen("?column?") + 1));
+					strcpy(column,"?column?");
+					append_select_def_info(analyze->select_ret,column,sublink->select_ret->type_list[0]);	
+					continue;
+				}
+			}
+		}
 		
-		analyze->state =message->table_state;	
-		pool_debug("AnalyzeReturnRecord: state = %c",analyze->state);
+		if(colname && !strcmp(colname,"*"))
+		{
+			pool_debug("AnalyzeReturnRecord: colname = %s",colname);
+			append_all_virtual(analyze);
+			continue;
+		}
 
 		if(colname)
 			gettype = search_type_from_virtual(virtual,table_name,colname);
@@ -1392,130 +1513,521 @@ AnalyzeReturnRecord(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *db
 	}
 }
 
-static void append_virtual_table(VirtualTable *virtual,char **col_list,char **type_list,int col_num,char *table_name)
+static void 
+append_virtual_table(VirtualTable *virtual,char **col_list,char **type_list,int col_num,char *table_name,char state)
 {
 	int base;
 	int i;
-	pool_debug("appaend_virtual_table start");
 
 	if(virtual->col_num == 0)
 	{
 		base = 0;
-		virtual->col_list = (char**) palloc(sizeof(char*) * col_num);
-		virtual->type_list = (char**) palloc(sizeof(char*) * col_num);
+		virtual->col_list   = (char**) palloc(sizeof(char*) * col_num);
+		virtual->type_list  = (char**) palloc(sizeof(char*) * col_num);
 		virtual->table_list = (char**) palloc(sizeof(char*) * col_num);
+		virtual->state_list = (char*)  palloc(sizeof(char) * col_num);
 	} 
 	else 
   {
 		base = virtual->col_num;
-		virtual->col_list = (char**) repalloc(virtual->col_list,sizeof(char*) * (base + col_num));
-		virtual->type_list = (char**) repalloc(virtual->type_list,sizeof(char*) * (base + col_num));
-		virtual->table_list = (char**) repalloc(virtual->table_list,sizeof(char*) * (base + col_num));
+		virtual->col_list   = (char**) repalloc(virtual->col_list,sizeof(char*)  * (base + col_num));
+		virtual->type_list  = (char**) repalloc(virtual->type_list,sizeof(char*) * (base + col_num));
+		virtual->table_list = (char**) repalloc(virtual->table_list,sizeof(char*)* (base + col_num));
+		virtual->state_list = (char*)  repalloc(virtual->state_list,sizeof(char) * (base + col_num));
 	}
 	
 	for(i = 0; i< col_num; i++)
 	{
-		int len1,len2,len3;
-		len1 = strlen(col_list[i]) + 1;
-		len2 = strlen(type_list[i]) + 1;
-		len3 = strlen(table_name) + 1;
+		virtual->col_list[base + i]   = col_list[i];
+		virtual->type_list[base + i]  = type_list[i];
+		virtual->table_list[base + i] = table_name;
+		virtual->state_list[base + i] = state;
 
-		virtual->col_list[base + i] = (char *) palloc(sizeof(char) *(len1));
-		virtual->type_list[base + i] = (char *) palloc(sizeof(char) *(len2));
-		virtual->table_list[base + i] = (char *) palloc(sizeof(char) *(len3));
-
-		strcpy(virtual->col_list[base + i],col_list[i]);
-		strcpy(virtual->type_list[base + i],type_list[i]);
-		strcpy(virtual->table_list[base + i],table_name);
-
-		pool_debug("appaend_virtual_table no = %d ,col=%s,type=%s,table=%s",
-			base + i,virtual->col_list[base + i],virtual->type_list[base + i],virtual->table_list[base + i]);
+		pool_debug("append_virtual_table no=%d,col=%s,type=%s,table=%s,state=%c",
+			base + i,virtual->col_list[base + i],virtual->type_list[base + i]
+			,virtual->table_list[base + i],virtual->state_list[base + i]);
 	}
 	virtual->col_num = base + col_num;
 }
 
-static void built_virtual_table(RewriteQuery *message,List *list)
+
+static void append_join_using(AnalyzeSelect *analyze,char **col_list,char **type_list,int col_num,char *table_name)
 {
-	int select_num;
-	int range_num;
+	int num,i,j,k;
+	int same[analyze->join->col_num];
+	int lvalid[analyze->join->col_num];
+	int rvalid[col_num];
+	char **using;
+	int lc = 0;
+	int rc = 0;
+	int sc = 0;
+	int total;
+	JoinTable *join = analyze->join; 
+	JoinTable *new = (JoinTable *) palloc(sizeof(JoinTable));
+	
+	using = join->using_list;	
+	num = join->using_length;
+
+	for(i = 0; i < join->col_num; i++)
+	{
+		char *colname = join->col_list[i];
+		int match  = 0;
+		int array;
+		for(j = 0; j < num; j++)
+		{
+			if(!strcmp(colname, using[j]))
+			{
+				match++;
+				array = j;
+			}
+		}
+		if(match == 0)
+		{
+			lvalid[lc] = i;
+			lc++;
+		}
+		else if (match == 1)
+		{
+			same[sc] = array;
+			sc++;
+		}
+			/* XXX */
+	}
+
+	for(i = 0; i < col_num; i++)
+	{
+		char *colname = col_list[i];
+		int match  = 0;
+		for(j = 0; j < num; j++)
+		{
+			if(!strcmp(colname, using[j]))
+			{
+				match++;
+			}
+		}
+		if(match == 0)
+		{
+			rvalid[rc] = i;
+			rc++;
+		}
+	}
+
+	total= sc + lc + rc;
+	new->col_num = total;
+	new->col_list = (char**) palloc(sizeof(char*) * (total));
+	new->type_list = (char**) palloc(sizeof(char*) * (total));
+	new->table_list = (char**) palloc(sizeof(char*) * (total));
+
+	for(k = 0; k < sc; k++)
+	{
+		new->col_list[k] = join->col_list[same[k]]; 
+		new->type_list[k] = join->type_list[same[k]];
+		if(table_name)
+		{
+			new->table_list[k] = table_name; 
+		}
+		else 
+			new->table_list[k] = join->table_list[same[k]]; 
+	}
+	
+	for(k = sc; k < sc + lc; k++)
+	{
+		new->col_list[k] = join->col_list[lvalid[k - sc]]; 
+		new->type_list[k] = join->type_list[lvalid[k - sc]];
+		if(table_name)
+		{
+			new->table_list[k] = table_name; 
+		}
+		else 
+			new->table_list[k] = join->table_list[lvalid[k - sc]]; 
+	}
+	for(k = sc + lc; k < sc + lc + rc; k++)
+	{
+		new->col_list[k] = col_list[rvalid[k - lc - sc]]; 
+		new->type_list[k] = type_list[rvalid[k - lc - sc]];
+		if(table_name)
+		{
+			new->table_list[k] = table_name; 
+		}
+		else 
+			new->table_list[k] = NULL; 
+	}
+
+	analyze->join = new;
+
+	for(i = 0; i< analyze->join->col_num; i++)
+	{
+		pool_debug("append_join_using no = %d ,col=%s,type=%s,table=%s",
+			i,new->col_list[i],new->type_list[i],new->table_list[i]);
+	}
+}
+
+static void append_join_natural(AnalyzeSelect *analyze,char **col_list,char **type_list,int base,int col_num,char *table_name)
+{
+	int same[base + 1];
+	int rvalid[base + 1];
+	int linvalid[col_num + 1];
+	int lvalid[col_num +1];
+	int i,j,k;
+	int sc = 0;
+	int vc = 0;
+	int ic = 0;
+	int total = 0;
+	int count;
+	JoinTable *join = analyze->join; 
+	JoinTable *new = (JoinTable *) palloc(sizeof(JoinTable));
+	
+	for(i = 0; i < base; i++)
+	{
+		char *colname = join->col_list[i];
+		int match  = 0;
+		int array = -1;
+		for(j = 0; j < col_num; j++)
+		{
+			if(!strcmp(colname, col_list[j]))
+			{
+				match++;
+				array = j;
+			}
+		}
+
+		if(match == 0)
+		{
+			rvalid[vc] = i;
+			vc++;
+		}
+		else if(match == 1)
+		{
+			same[sc] = i;
+			linvalid[ic] = array;
+			sc++;
+			ic++;
+		}
+		else
+		{
+			/* XXX */
+		} 
+	}
+
+	total=sc + vc + (col_num - ic);
+	new->col_num = total;
+	new->col_list = (char**) palloc(sizeof(char*) * (total));
+	new->type_list = (char**) palloc(sizeof(char*) * (total));
+	new->table_list = (char**) palloc(sizeof(char*) * (total));
+ 
+	for(k = 0; k < sc; k++)
+	{
+		new->col_list[k] = join->col_list[same[k]]; 
+		new->type_list[k] = join->type_list[same[k]];
+		if(table_name)
+		{
+			new->table_list[k] = table_name; 
+		}
+		else 
+			new->table_list[k] = join->table_list[same[k]]; 
+	}
+
+	for(k = sc; k < sc + vc; k++)
+	{
+		new->col_list[k] = join->col_list[rvalid[k - sc]]; 
+		new->type_list[k] = join->type_list[rvalid[k - sc]];
+		if(table_name)
+		{
+			new->table_list[k] = table_name; 
+		}
+		else 
+			new->table_list[k] = join->table_list[rvalid[k - sc]]; 
+	}
+
+	count = 0;
+	for(k = 0; k <col_num ; k++)
+	{
+		int l = 0;
+		bool test = true;
+		for(l = 0; l< ic; l++)
+		{
+			if(k == linvalid[l])
+				test = false;
+		}
+		if(test)
+		{
+			lvalid[count] = k;
+			count++;
+		}
+	}
+
+	for(k = sc + vc; k < sc + vc + count; k++)
+	{
+		new->col_list[k] = col_list[lvalid[k - sc - vc]]; 
+		new->type_list[k] = type_list[lvalid[k - sc - vc]];
+		if(table_name)
+		{
+			new->table_list[k] = table_name; 
+		}
+		else 
+			new->table_list[k] = NULL; 
+	}
+	analyze->join = new;
+
+	for(i = 0; i< analyze->join->col_num; i++)
+	{
+		pool_debug("append_join_natural no = %d ,col=%s,type=%s,table=%s",
+			i,new->col_list[i],new->type_list[i],new->table_list[i]);
+	}
+}
+
+static void append_join_simple(JoinTable *join,char **col_list,char **type_list,int col_num,char *table_name)
+{
+	int base;
 	int i;
-	int stop;
-	int start;
-	AnalyzeSelect *analyze;
-	VirtualTable *virtual;
+	pool_debug("append_join_table start");
+
+	if(join->col_num == 0)
+	{
+		base = 0;
+		join->col_list = (char**) palloc(sizeof(char*) * col_num);
+		join->type_list = (char**) palloc(sizeof(char*) * col_num);
+		join->table_list = (char**) palloc(sizeof(char*) * col_num);
+	} 
+	else 
+  {
+		base = join->col_num;
+		join->col_list = (char**) repalloc(join->col_list,sizeof(char*) * (base + col_num));
+		join->type_list = (char**) repalloc(join->type_list,sizeof(char*) * (base + col_num));
+		join->table_list = (char**) repalloc(join->table_list,sizeof(char*) * (base + col_num));
+	}
+	
+	for(i = 0; i< col_num; i++)
+	{
+		join->col_list[base + i] = col_list[i];
+		join->type_list[base + i] = type_list[i];
+		join->table_list[base + i] = table_name;
+		pool_debug("append_join_table no = %d ,col=%s,type=%s,table=%s",
+			base + i,join->col_list[base + i],join->type_list[base + i],join->table_list[base + i]);
+	}
+	join->col_num = base + col_num;
+}
+
+static void build_join_table(RewriteQuery *message,char *alias, int type)
+{
+	char *table_name = NULL;
+	char state;
+	char lstate;
+	int left_num,right_num,range_num,select_num;
+	DistDefInfo *distinfo = NULL;
+	RepliDefInfo *repliinfo = NULL;
+	SelectDefInfo *selectinfo = NULL;
+	JoinTable *join;
 	RangeInfo *range;
+	AnalyzeSelect *analyze;
 
 	select_num = message->current_select;
 	analyze=message->analyze[select_num];
+	join = analyze->join;
+	left_num = join->col_num;
 	range_num = analyze->rangeinfo_num;
+	range = analyze->range[range_num - 1];
+	state = range->state;
+	lstate = join->state;
 
-	analyze->virtual = (VirtualTable *) palloc(sizeof(VirtualTable));
-	/* init virtual */
-	virtual = analyze->virtual;		
-	virtual->col_num = 0;		
+	distinfo = range->distinfo;		
+	repliinfo = range->repliinfo;
+	selectinfo = range->selectinfo;
 
-	start = 0;
-
-	for(i = 0; i< range_num; i++)
+	if(alias)
+		table_name = alias;
+	else if(!alias && range->alias)
+		table_name = range->alias;
+	
+	if(distinfo && !repliinfo && !selectinfo)
 	{
-		int next = i + 1;
-		int j;
-		range = analyze->range[i];	
+		right_num = distinfo->col_num;
+		if(!table_name)
+			table_name = distinfo->table_name;
+		pool_debug("inside build_join_info dist state=%c  %s",range->state,table_name);
 
-		stop = i;
+		if(type == JNATURAL_INNER || type == JNATURAL_RIGHT 
+		  || type == JNATURAL_LEFT || type == JNATURAL_FULL)
+			append_join_natural(analyze,distinfo->col_list,distinfo->type_list,join->col_num,distinfo->col_num,table_name);
+		else
+			append_join_simple(join,distinfo->col_list,distinfo->type_list,distinfo->col_num,table_name);
+	}
+	else if (repliinfo && !distinfo && !selectinfo)
+	{
+		right_num = repliinfo->col_num;
+		if(!table_name)
+			table_name = repliinfo->table_name;
 
-		if(next < range_num && range->state == analyze->range[next]->state)
-			continue;
+		pool_debug("inside build_join_info dist state=%c %s",range->state,table_name);
 
-		for(j = start; j <= stop; j++)
-		{	
-			char *alias = NULL;
-			char *table_name;
-			DistDefInfo *distinfo;
-			RepliDefInfo *repliinfo;
-			SelectDefInfo *selectinfo;
-			RangeInfo *range2 = analyze->range[j];
-			distinfo = range2->distinfo;		
-			repliinfo = range2->repliinfo;
-			selectinfo = range2->selectinfo;
+		if(type == JNATURAL_INNER || type == JNATURAL_RIGHT 
+		  || type == JNATURAL_LEFT || type == JNATURAL_FULL)
+			append_join_natural(analyze,repliinfo->col_list,repliinfo->type_list,join->col_num,repliinfo->col_num,table_name);
+		else if(join->using_length != 0)
+			append_join_using(analyze,repliinfo->col_list,repliinfo->type_list,repliinfo->col_num,table_name);
+		else
+			append_join_simple(join,repliinfo->col_list,repliinfo->type_list,repliinfo->col_num,table_name);
+	}
+	else if (selectinfo && !repliinfo	&& !distinfo)
+	{
+		pool_debug("inside build_join_info dist state=%c %s",range->state,table_name);
+		right_num = selectinfo->col_num;
 
-			if(range2->alias)
-				alias = range2->alias;
-			
+		if(type == JNATURAL_INNER || type == JNATURAL_RIGHT 
+		  || type == JNATURAL_LEFT || type == JNATURAL_FULL)
+			append_join_natural(analyze,selectinfo->col_list,selectinfo->type_list,join->col_num,selectinfo->col_num,table_name);
+		else if(join->using_length != 0)
+			append_join_using(analyze,selectinfo->col_list,selectinfo->type_list,selectinfo->col_num,table_name);
+		else
+			append_join_simple(join,selectinfo->col_list,selectinfo->type_list,selectinfo->col_num,table_name);
+	}
 
-			if(distinfo && !repliinfo)
-			{
-				if(alias)
-					table_name =alias;
-				else
-					table_name = distinfo->table_name;
-				pool_debug("inside build_virtual_info dist state=%c i = %d %s",range2->state,i,table_name);
-				append_virtual_table(virtual,distinfo->col_list,distinfo->type_list,distinfo->col_num,table_name);
-			} 
-			else if (repliinfo && !distinfo)
-			{
-				if(alias)
-					table_name =alias;
-				else
-					table_name = repliinfo->table_name;
-				pool_debug("inside build_virtual_info dist state=%c i = %d %s",range2->state,i,table_name);
-				append_virtual_table(virtual,repliinfo->col_list,repliinfo->type_list,repliinfo->col_num,table_name);
-			}
-			else if (selectinfo && !repliinfo	&& !distinfo)
-			{
-				table_name = alias;
-				pool_debug("inside build_virtual_info select state=%c i = %d %s",range2->state,i,table_name);
-				append_virtual_table(virtual,selectinfo->col_list,selectinfo->type_list,selectinfo->col_num,table_name);
-			}
-			else if (!selectinfo && !repliinfo	&& !distinfo)
-				pool_debug("inside build_virtual_info dist state=%c i = %d %s",range2->state,i,alias);
+	if(type == JDEFAULT)
+	{
+		join->state = state;
+		return;
+	}
+
+	join =analyze->join;
+
+	if(lstate =='E' || state == 'E')
+	{
+		join->state = 'E';
+		return;
+	}
+	if(lstate =='L' && state =='L')
+	{
+		join->state = 'L';
+		return;
+	}
+	if(lstate =='L' && state =='P')
+	{
+		int total = left_num + right_num;
+		if(type == JRIGHT)
+			join->state = 'P';
+		else if(type == JINNER)
+			join->state = 'P';
+		else if((join->col_num < total) && (type == JNATURAL_RIGHT || type == JNATURAL_INNER))
+			join->state = 'P';
+		else	
+			join->state = 'S';
+	} 
+	else if(lstate =='P' && state == 'L')
+	{
+		int total = left_num + right_num;
+		if(type == JLEFT)
+			join->state ='P';
+		else if(type == JINNER)
+			join->state ='P';
+		else if((join->col_num < total) && (type == JNATURAL_LEFT || type == JNATURAL_INNER))
+			join->state = 'P';
+		else
+			join->state ='S';
+	}	
+	else
+		join->state = 'S';
+}
+
+static void change_analyze_state(AnalyzeSelect *analyze,char state)
+{
+	if(state == 'E' || analyze->state == 'E')
+		return;
+
+	if(!analyze->state)
+		analyze->state = state;
+	else if(analyze->state == 'L' && state =='L')
+			return;
+	else
+		analyze->state = 'S';
+}
+
+static void build_virtual_table(RewriteQuery *message,void *obj)
+{
+	int select_num;
+	int range_num;
+	char *alias = NULL;
+	char *table_name = NULL;
+	char state;
+	AnalyzeSelect *analyze;
+	VirtualTable *virtual;
+	RangeInfo *range;
+	DistDefInfo *distinfo;
+	RepliDefInfo *repliinfo;
+	SelectDefInfo *selectinfo;
+	JoinTable *join;
+
+	select_num = message->current_select;
+	analyze=message->analyze[select_num];
+	virtual = analyze->virtual;		
+
+	/* last range */
+  if(IsA(obj,RangeVar) || IsA(obj,RangeSubselect))
+	{
+		range_num = analyze->rangeinfo_num;
+		range = analyze->range[range_num - 1];
+		distinfo = range->distinfo;		
+		repliinfo = range->repliinfo;
+		selectinfo = range->selectinfo;
+	} 
+	else 
+	{
+    /* join case */
+		int i;
+		join =analyze->join;
+		for(i =0; i < join->col_num;i++)
+		{
+			append_virtual_table(virtual,join->col_list++,join->type_list++,1,join->table_list[i],join->state);
 		}
-		start = i+1;
+		pool_debug("build_virtual_table join join->colnum=%d",join->col_num);
+		analyze->state = join->state;
+		return;
+	}
+
+	if(range->alias)
+		alias = range->alias;
+	
+	state = range->state;
+
+	if(distinfo && !repliinfo && !selectinfo)
+	{
+		if(alias)
+			table_name =alias;
+		else
+			table_name = distinfo->table_name;
+			
+		pool_debug("inside build_virtual_info dist state=%c  %s",range->state,table_name);
+		append_virtual_table(virtual,distinfo->col_list,distinfo->type_list,distinfo->col_num,table_name,state);
+		change_analyze_state(analyze,state);
+		return;
+	} 
+	else if (repliinfo && !distinfo && !selectinfo)
+	{
+		if(alias)
+			table_name =alias;
+		else
+			table_name = repliinfo->table_name;
+		pool_debug("inside build_virtual_info dist state=%c %s",range->state,table_name);
+		append_virtual_table(virtual,repliinfo->col_list,repliinfo->type_list,repliinfo->col_num,table_name,state);
+		change_analyze_state(analyze,state);
+		return;
+	}
+	else if (selectinfo && !repliinfo	&& !distinfo)
+	{
+		table_name = alias;
+		pool_debug("inside build_virtual_info select state=%c %s",range->state,table_name);
+		append_virtual_table(virtual,selectinfo->col_list,selectinfo->type_list,selectinfo->col_num,table_name,state);
+		change_analyze_state(analyze,state);
+		return;
+	}
+	else if (!selectinfo && !repliinfo	&& !distinfo)
+	{
+		pool_debug("inside build_virtual_info dist state=%c %s",range->state,alias);
+		change_analyze_state(analyze,'E');
 	}
 }
 
 static void
-build_rettuple_info(RewriteQuery *message,DistDefInfo *info,RepliDefInfo *info2,SelectDefInfo *info3,char *alias, int select_num)
+build_range_info(RewriteQuery *message,DistDefInfo *info,RepliDefInfo *info2,SelectDefInfo *info3,char *alias, int select_num)
 {
 	int num;
 	AnalyzeSelect *analyze;
@@ -1530,7 +2042,7 @@ build_rettuple_info(RewriteQuery *message,DistDefInfo *info,RepliDefInfo *info2,
 							(RangeInfo **) repalloc(analyze->range,sizeof(RangeInfo *) * num);
 	
 		analyze->range[num-1] = (RangeInfo *) palloc(sizeof(RangeInfo));
-		pool_debug("inside build_rettuple_info num= %d current_select=%d",num,select_num);
+		pool_debug("inside build_range_info num= %d current_select=%d",num,select_num);
 	} 
 	else 
 	{
@@ -1538,7 +2050,7 @@ build_rettuple_info(RewriteQuery *message,DistDefInfo *info,RepliDefInfo *info2,
 		analyze->range = (RangeInfo **) palloc(sizeof(RangeInfo *));
 		analyze->range[0] = (RangeInfo *) palloc(sizeof(RangeInfo));
 		analyze->rangeinfo_num = 1;
-		pool_debug("inside build_rettuple_info num= %d current_select=%d",num,select_num);
+		pool_debug("inside build_range_info num= %d current_select=%d",num,select_num);
 	}
 
 	analyze->range[num -1]->ret_num = num - 1;
@@ -1552,8 +2064,7 @@ build_rettuple_info(RewriteQuery *message,DistDefInfo *info,RepliDefInfo *info2,
 		analyze->select_ret = NULL;
 		analyze->range[num -1]->alias = alias;
 		analyze->range[num -1]->state = 'P';
-		message->table_state = 'P';
-		pool_debug("inside build_rettuple_info dist %d",select_num);
+		pool_debug("inside build_range_info dist %d",select_num);
 	} 
 	
 	/* set repli_def_info */
@@ -1564,8 +2075,8 @@ build_rettuple_info(RewriteQuery *message,DistDefInfo *info,RepliDefInfo *info2,
 		analyze->select_ret = NULL;
 		analyze->range[num -1]->alias = alias;
 		analyze->range[num -1]->state = 'L';
-		message->table_state = 'L';
-		pool_debug("inside build_rettuple_info repli %d",select_num);
+		pool_debug("inside build_range_info repli %d",select_num);
+		return;
 	}
 
 	/* CALL FROM _rertiteRangeSubselect */
@@ -1575,15 +2086,18 @@ build_rettuple_info(RewriteQuery *message,DistDefInfo *info,RepliDefInfo *info2,
 		analyze->range[num -1]->repliinfo = NULL;
 		analyze->range[num -1]->selectinfo = info3;
 		analyze->range[num -1]->alias = alias;
-		analyze->range[num -1]->state = message->table_state;
-		pool_debug("inside build_rettuple_info select %d",select_num);
+//		analyze->range[num -1]->state = message->analyze[select_num - 1]->state;
+		analyze->range[num -1]->state = message->analyze[select_num + 1]->state;
+		pool_debug("inside build_range_info select %d",select_num);
+		return;
 	}
 
 	if(info && info2)
 	{
 		/*TODO: error*/
 		analyze->select_ret = NULL;
-		pool_debug("inside build_rettuple_info error  %d",select_num);
+		pool_debug("inside build_range_info error  %d",select_num);
+		return;
 	}
 
 	if(!info && !info2 && !info3)  
@@ -1594,8 +2108,7 @@ build_rettuple_info(RewriteQuery *message,DistDefInfo *info,RepliDefInfo *info2,
 		analyze->range[num -1]->state = 'E';
 		analyze->select_ret = NULL;
 		analyze->range[num -1]->alias = alias;
-		message->table_state = 'E';
-		pool_debug("inside build_rettuple_info const or func  %d",select_num);
+		pool_debug("inside build_range_info const or func  %d",select_num);
 	}
 }
 
@@ -1604,9 +2117,12 @@ _rewriteRangeVar(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 {
 	DistDefInfo *info;
 	RepliDefInfo *info2;
-	
-	info = pool_get_dist_def_info(dblink->dbname, node->schemaname, node->relname);
-	info2 = pool_get_repli_def_info(dblink->dbname, node->schemaname, node->relname);
+
+	if(message->r_code  == SELECT_ANALYZE)
+	{	
+		info = pool_get_dist_def_info(dblink->dbname, node->schemaname, node->relname);
+		info2 = pool_get_repli_def_info(dblink->dbname, node->schemaname, node->relname);
+	}
 
 	if(message->r_code != SELECT_DEFAULT) 
 	{
@@ -1637,11 +2153,13 @@ _rewriteRangeVar(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 		{
 			Alias *alias = node->alias;
 			_rewriteNode(BaseSelect, message, dblink, str, node->alias);
-			build_rettuple_info(message,info,info2,NULL,alias->aliasname,message->current_select);
+			if(message->r_code == SELECT_ANALYZE)
+				build_range_info(message,info,info2,NULL,alias->aliasname,message->current_select);
 		} 
 		else
 		{ 
-			build_rettuple_info(message,info,info2,NULL,node->relname,message->current_select);
+			if(message->r_code == SELECT_ANALYZE)
+				build_range_info(message,info,info2,NULL,node->relname,message->current_select);
 		}
 
 		if (node->inhOpt == INH_YES)
@@ -1735,7 +2253,7 @@ _rewriteRangeVar(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 			message->table_relname = node->relname;
 			message->dbname = dblink->dbname;
 			KeepRewriteQueryCode(message, SELECT_DEFAULT_INSIDE_DBLINK);
-			_rewriteWhereClause(select->whereClause, message,dblink,str,0);
+			CheckWhereCaluse(select->whereClause, message,dblink,str,0);
 			KeepRewriteQueryCode(message, message_code);
 		}
 
@@ -1763,8 +2281,6 @@ _rewriteRangeVar(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 			}
 			delay_string_append_char(message, str, ")");
 		}
-		else
-			message->table_state = 'L';
 
 		if(node->alias)
 			delay_string_append_char(message, str, ")");
@@ -2094,122 +2610,118 @@ _rewriteRangeTblRef(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *db
 }
 
 static void
-_rewriteEvalJoin(JoinExpr *node, RewriteQuery *message, char l_state, char r_state)
-{
-  bool natural = false;
-	if (node->isNatural == TRUE)
-	{
-		/* natural join*/
-    natural = true;
-	}
-	if (node->jointype == JOIN_INNER)
-	{
-		if (node->using == NIL && node->quals == NULL && !node->isNatural)
-		{
-			/* cross join */
-			if(l_state == 'L' && r_state == 'L')
-			{
-				message->table_state ='L';
-			}
-			else
-				message->table_state ='S';
-		}
-		else
-		{
-			/* inner join */
-			if(l_state == 'L' && r_state == 'L')
-			{
-				message->table_state ='L';
-			} 
-			else if(l_state == 'P' && r_state == 'L') 
-			{
-				message->table_state ='P';
-			}
-			else if(l_state == 'L' && r_state == 'P') 
-			{
-				message->table_state ='P';
-			}
-			else
-				message->table_state ='S';
-		}
-	}
-	else if (node->jointype == JOIN_UNION)
-	{
-		/* xxx?  */
-		message->table_state ='S';
-	}
-	else if (node->jointype == JOIN_LEFT)
-	{
-		if(l_state == 'L' && r_state == 'L')
-		{
-			message->table_state ='L';
-		} 
-		else if(l_state == 'P' && r_state == 'L') 
-		{
-			message->table_state ='P';
-		}
-		else
-			message->table_state ='S';
-	}
-	else if (node->jointype == JOIN_FULL)
-	{
-		if(l_state == 'L' && r_state == 'L')
-		{
-			message->table_state ='L';
-		} else 
-			message->table_state ='S';
-	}
-	else if (node->jointype == JOIN_RIGHT)
-	{
-		if(l_state == 'L' && r_state == 'L')
-		{
-			message->table_state ='L';
-		} 
-		else if(l_state == 'L' && r_state == 'P') 
-		{
-			message->table_state ='P';
-		}
-		else
-			message->table_state ='S';
-	}
-}
-
-static void
 _rewriteJoinExpr(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, JoinExpr *node)
 {
 	char l_state,r_state;
+	bool from;
+	int select_num;
+	bool natural = false;
+	bool inner   = false;
+	bool cross   = false;
+	bool full    = false;
+	bool left    = false;
+	bool right   = false;
+	char *aliasname;
+	int using_length = 0;
+	char **using_list;	
+
+	Alias *alias = node->alias;
+	if(alias)
+		aliasname = alias->aliasname;
+	else
+		aliasname = NULL;
+
+	from = message->fromClause;
+	select_num = message->current_select;
+
 	_rewriteNode(BaseSelect, message, dblink, str, node->larg);
+
+	/* reset message */
+	message->fromClause = from;
+	message->current_select = select_num;
   l_state = message->table_state;
+			
+	if(message->r_code == SELECT_ANALYZE && 
+			(IsA(node->larg, RangeVar) || IsA(node->larg,RangeSubselect)))
+	{
+			build_join_table(message,aliasname,JDEFAULT);
+	}
+
 
 	if (node->isNatural == TRUE)
+	{
+		natural = true;
 		delay_string_append_char(message, str, " NATURAL");
+	}
 
 	if (node->jointype == JOIN_INNER)
 	{
 		if (node->using == NIL && node->quals == NULL && !node->isNatural)
+		{
+			cross = true;
 			delay_string_append_char(message, str, " CROSS JOIN ");
+		} 
 		else
+		{
 			delay_string_append_char(message, str, " JOIN ");
+			inner = true;
+		}
+			
 	}
 	else if (node->jointype == JOIN_UNION)
+	{
 		delay_string_append_char(message, str, " JOIN ");
+		inner = true;
+	}
 	else if (node->jointype == JOIN_LEFT)
+	{	
 		delay_string_append_char(message, str, " LEFT OUTER JOIN ");
+		left = true;
+	}
 	else if (node->jointype == JOIN_FULL)
+	{
 		delay_string_append_char(message, str, " FULL OUTER JOIN ");
+		full = true;
+	}	
 	else if (node->jointype == JOIN_RIGHT)
+	{
 		delay_string_append_char(message, str, " RIGHT OUTER JOIN ");
+		right = true;
+	}
 
 	_rewriteNode(BaseSelect, message, dblink, str, node->rarg);
-  r_state = message->table_state;
 
-	_rewriteEvalJoin(node, message,l_state,r_state);
+  r_state = message->table_state;
+	message->fromClause = from;
+	message->current_select = select_num;
+
+	if(message->r_code == SELECT_ANALYZE)
+	{
+		if(cross && (IsA(node->rarg, RangeVar) || IsA(node->rarg,RangeSubselect)))
+			build_join_table(message,aliasname,JNORMAL);
+
+		if(IsA(node->rarg, RangeVar) || IsA(node->rarg,RangeSubselect))
+		{
+	  	if(natural && inner) 
+				build_join_table(message,aliasname,JNATURAL_INNER);
+			else if(natural && left)
+				build_join_table(message,aliasname,JNATURAL_LEFT);
+			else if(natural && right)
+				build_join_table(message,aliasname,JNATURAL_RIGHT);
+			else if(natural && full)
+				build_join_table(message,aliasname,JNORMAL);
+		}
+	}
 
 	if (node->using != NIL && IsA(node->using, List))
 	{
 		ListCell *lc;
 		char comma = 0;
+		int count = 0;
 
+		using_length= list_length(node->using);
+		using_list = (char **) palloc(sizeof(char *) * using_length);
+		
 		delay_string_append_char(message, str, " USING(");
 
 		foreach (lc, node->using)
@@ -2225,15 +2737,36 @@ _rewriteJoinExpr(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 			delay_string_append_char(message, str, "\"");
 			delay_string_append_char(message, str, value->val.str);
 			delay_string_append_char(message, str, "\"");
+			using_list[count] = value->val.str;
+			count++;
 		}
+
+		message->analyze[select_num]->join->using_length = using_length;
+		message->analyze[select_num]->join->using_list = using_list;
 		
 		delay_string_append_char(message, str, ")");
 	}
+
 
 	if (node->quals)
 	{
 		delay_string_append_char(message, str, " ON ");
 		_rewriteNode(BaseSelect, message, dblink, str, node->quals);
+	}
+
+	if(message->r_code == SELECT_ANALYZE)
+	{
+		if(IsA(node->rarg, RangeVar) || IsA(node->rarg,RangeSubselect))
+		{
+	  	if(!natural && inner) 
+				build_join_table(message,aliasname,JINNER);
+			else if(!natural && left)
+				build_join_table(message,aliasname,JLEFT);
+			else if(!natural && right)
+				build_join_table(message,aliasname,JRIGHT);
+			else if(!natural && full)
+				build_join_table(message,aliasname,JNORMAL);
+		}
 	}
 }
 
@@ -2486,78 +3019,103 @@ _rewriteSelectStmtIntensive(Node *BaseSelect, RewriteQuery *message, ConInfoTodb
 }
 */
 
-#define SELECT_START 0
-#define SELECT_TARGETLIST 1
-#define SELECT_FROMCLAUSE 2
-#define SELECT_WHERECLAUSE 3
-#define SELECT_OTHER 4
+#define SELECT_START -1
+#define SELECT_FROMCLAUSE 0
+#define SELECT_WHERECLAUSE 1
+#define SELECT_GROUPBYCLAUSE 2
+#define SELECT_HAVINGCLAUSE 3
+#define SELECT_TARGETLIST 4
+#define SELECT_SORTCLAUSE 5
+#define SELECT_LIMITCLAUSE 6
+#define SELECT_OFFSETCLAUSE 7
+#define SELECT_OTHER 8
 
 static void
-_rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, SelectStmt *node)
+initSelectStmt(RewriteQuery *message,SelectStmt *node)
 {
-	BaseSelect = (Node *) node;
 	int count;
 	int last;
 	AnalyzeSelect *analyze;
 
-	/* analyze_num was initialized 0 */
+	if(message->r_code != SELECT_ANALYZE &&
+		 message->r_code != SELECT_DEFAULT)
+		return;
 
 	count = message->analyze_num++;
 	last = message->current_select;
 	message->current_select = count;
 
-	if(count == 0)
+	if(message->r_code == SELECT_ANALYZE)
 	{
-		message->analyze = (AnalyzeSelect **) palloc(sizeof(AnalyzeSelect *));
-		message->analyze[count]=(AnalyzeSelect *) palloc(sizeof(AnalyzeSelect));
-		message->part = SELECT_START;
+		if(count == 0)
+		{
+			int i = 0;
+			message->analyze = (AnalyzeSelect **) palloc(sizeof(AnalyzeSelect *));
+			message->analyze[count]=(AnalyzeSelect *) palloc(sizeof(AnalyzeSelect));
+			message->part = SELECT_START;
 
-		analyze = message->analyze[count];
-		analyze->now_select = 0;
-		analyze->range =NULL;
-		analyze->last_select = -1;
-		analyze->virtual = NULL;
-		analyze->part = SELECT_START;
+			analyze = message->analyze[count];
+			if(node->larg && node->rarg)
+				message->analyze[count]->select_union = true;
+			else
+				message->analyze[count]->select_union = false;
+			analyze->now_select = 0;
+			analyze->range =NULL;
+			analyze->last_select = -1;
+			analyze->virtual = NULL;
+			analyze->part = SELECT_START;
+			analyze->join = NULL;
+			analyze->state = (char) 0;
+			for(i = 0; i< 8; i++)
+				analyze->partstate[i] = (char)0;
 
-		if(node->larg && node->rarg)
-			message->analyze[count]->select_union = true;
-		else
-			message->analyze[count]->select_union = false;
+		} 
+		else 
+		{
+			message->analyze = (AnalyzeSelect **) repalloc(message->analyze,sizeof(AnalyzeSelect *) * (count+1));
+			message->analyze[count]=(AnalyzeSelect *) palloc(sizeof(AnalyzeSelect));
+			analyze = message->analyze[count];
+			analyze->now_select = count;
+			analyze->last_select = last;
+			analyze->part = message->part;
+			analyze->virtual = NULL;
+			analyze->join = NULL;
+			analyze->state = (char) 0;
 
-	} 
-	else 
-	{
-		message->analyze = (AnalyzeSelect **) repalloc(message->analyze,sizeof(AnalyzeSelect *) * (count+1));
-		message->analyze[count]=(AnalyzeSelect *) palloc(sizeof(AnalyzeSelect));
-		analyze = message->analyze[count];
-		analyze->now_select = count;
-		analyze->last_select = last;
-		analyze->part = message->part;
-		analyze->virtual = NULL;
-
-		if(node->larg && node->rarg)
-			analyze->select_union = true;
-		else
-			analyze->select_union = false;
-	}
+			if(node->larg && node->rarg)
+				analyze->select_union = true;
+			else
+				analyze->select_union = false;
+		}
 	
-	analyze->range =NULL;
-	analyze->rangeinfo_num =-1;
+		analyze->range =NULL;
+		analyze->rangeinfo_num =-1;
 
-	pool_debug("_rewriteSelectStmt: now(%d),last(%d) part from(%d)",count,
-							analyze->last_select,
-							analyze->part);
+		pool_debug("initSelectStmt: ANALYZE now(%d)",message->current_select);
 
-	if(analyze->select_union)
-		pool_debug("_rewriteSelectStmt: union or extract or intersect? true");
-	else
-		pool_debug("_rewriteSelectStmt: union or extract or intersect? false");
+		/* set default table_state */
+		/* S means that tuples was create by systemdb */
+		/* L means that tuples was create by one node */
+		/* P means that tuples was create by parallel node */
+		message->table_state = 'S';
+	} 
+}
 
-	/* set default table_state */
-	/* S means that tuples was create by systemdb */
-	/* L means that tuples was create by one node */
-	/* P means that tuples was create by parallel node */
-	message->table_state = 'S';
+
+static void
+_rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, SelectStmt *node)
+{
+	BaseSelect = (Node *) node;
+	AnalyzeSelect *analyze;
+
+	int count;
+
+	count = message->analyze_num;
+
+	initSelectStmt(message,node);
+	analyze = message->analyze[count];
+
+	analyze->part = SELECT_START;
 	
 	if (node->larg) /* SETOP */
 	{
@@ -2634,6 +3192,7 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 		delay_string_append_char(message, str, " SELECT ");
 
 		message->part = SELECT_TARGETLIST;
+		analyze->part = SELECT_TARGETLIST;
 
 		if (node->distinctClause)
 		{
@@ -2650,7 +3209,7 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 		_rewriteNode(BaseSelect, message, dblink, str, node->targetList);
 		
 		pool_debug("_rewriteSelectStmt:TARGET LIST now(%d),last(%d) current-part(%d)",count,
-							message->analyze[count]->last_select,
+							analyze->last_select,
 							message->part);
 
 		KeepMessages(message,count,SELECT_TARGETLIST);
@@ -2658,23 +3217,39 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 		if (node->fromClause)
 		{
 			message->part = SELECT_FROMCLAUSE;
+			analyze->part = SELECT_FROMCLAUSE;
 			delay_string_append_char(message, str, " FROM ");
 			message->fromClause = true;
+
+			if(message->r_code == SELECT_ANALYZE)
+			{
+				analyze->virtual = (VirtualTable *) palloc(sizeof(VirtualTable));
+				analyze->virtual->col_num = 0;
+			}
+		
 			_rewriteNode(BaseSelect, message, dblink, str, node->fromClause);
 			message->fromClause = false;
+			message->table_state = analyze->state;
+
+			/* from clause state */
+			analyze->partstate[SELECT_FROMCLAUSE] = analyze->state;
+
+			pool_debug("_rewriteSelectStmt:FROMCLAUSE LIST now(%d),last(%d) current-part(%d) state=(%c)",
+							count,
+							analyze->last_select,
+							message->part,
+							analyze->partstate[0]);
+
 			KeepMessages(message,count,SELECT_FROMCLAUSE);
-			built_virtual_table(message,node->fromClause);
 		} else {
 			/* this is const or function call*/
 			message->part = SELECT_TARGETLIST;
-			build_rettuple_info(message,NULL,NULL,NULL,NULL,message->current_select);
+			if(message->r_code == SELECT_ANALYZE)
+			{
+				build_range_info(message,NULL,NULL,NULL,NULL,message->current_select);
+			}
 		}
 
-		pool_debug("_rewriteSelectStmt:FROMCLAUSE LIST now(%d),last(%d) current-part(%d) state=(%c)",
-							count,
-							message->analyze[count]->last_select,
-							message->part,
-							message->table_state);
 	
 		message->part = SELECT_OTHER;
 		/* reset where clause */
@@ -2684,34 +3259,55 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 		if (node->whereClause)
 		{
 			message->part = SELECT_WHERECLAUSE;
+			analyze->part = SELECT_WHERECLAUSE;
 			delay_string_append_char(message, str, " WHERE ");
 			_rewriteNode(BaseSelect, message, dblink, str, node->whereClause);
 			KeepMessages(message,count,SELECT_OTHER);
 		}
+		else
+		{
+			if(message->r_code == SELECT_ANALYZE)
+				analyze->partstate[SELECT_WHERECLAUSE] = analyze->partstate[SELECT_FROMCLAUSE];
+		}
 
 		pool_debug("_rewriteSelectStmt:WHERECLAUSE LIST now(%d),last(%d) current-part(%d) state=(%c)",
 							count,
-							message->analyze[count]->last_select,
+							analyze->last_select,
 							message->part,
 							message->table_state);
 
 		if (node->groupClause)
 		{
+			analyze->part = SELECT_GROUPBYCLAUSE;
 			delay_string_append_char(message, str, " GROUP BY ");
 			_rewriteNode(BaseSelect, message, dblink, str, node->groupClause);
 			KeepMessages(message,count,SELECT_OTHER);
 		}
+		else
+		{
+			if(message->r_code == SELECT_ANALYZE)
+				analyze->partstate[SELECT_GROUPBYCLAUSE] = analyze->partstate[SELECT_WHERECLAUSE];
+		}
 
 		if (node->havingClause)
 		{
+			analyze->part = SELECT_HAVINGCLAUSE;
 			delay_string_append_char(message, str, " HAVING ");
 			_rewriteNode(BaseSelect, message, dblink, str, node->havingClause);
 			KeepMessages(message,count,SELECT_OTHER);
 		}
+		else
+		{
+			if(message->r_code == SELECT_ANALYZE)
+				analyze->partstate[SELECT_HAVINGCLAUSE] = analyze->partstate[SELECT_GROUPBYCLAUSE];
+		}
 	}
+
+	pool_debug("_rewriteSelectStmt:  HAVING status = %c",analyze->partstate[SELECT_HAVINGCLAUSE]);
 
 	if (node->sortClause)
 	{
+		analyze->part = SELECT_SORTCLAUSE;
 		delay_string_append_char(message, str, " ORDER BY ");
 		_rewriteNode(BaseSelect, message, dblink, str, node->sortClause);
 		KeepMessages(message,count,SELECT_OTHER);
@@ -2720,6 +3316,7 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 
 	if (node->limitOffset)
 	{
+		analyze->part = SELECT_OFFSETCLAUSE;
 		delay_string_append_char(message, str, " OFFSET ");
 		_rewriteNode(BaseSelect, message, dblink, str, node->limitOffset);
 		KeepMessages(message,count,SELECT_OTHER);
@@ -2727,6 +3324,7 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 
 	if (node->limitCount)
 	{
+		analyze->part = SELECT_LIMITCLAUSE;
 		delay_string_append_char(message, str, " LIMIT ");
 		if (IsA(node->limitCount, A_Const) &&
 			((A_Const *)node->limitCount)->val.type == T_Null)
@@ -2745,8 +3343,37 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 
 	pool_debug("_rewriteSelectStmt:  select status = %c",message->table_state);
 
-	if(node->targetList)
-		AnalyzeReturnRecord(BaseSelect,message,dblink,str,node->targetList);
+	if(message->r_code == SELECT_ANALYZE)
+	{
+		if(node->targetList)
+			AnalyzeReturnRecord(BaseSelect,message,dblink,str,node->targetList);
+
+		/* union,except or intersect case */
+		if(analyze->select_union)
+		{
+			analyze->select_ret = message->analyze[count+1]->select_ret;
+		}
+	}
+
+  /* change state */
+	if(count != 0)
+	{
+		AnalyzeSelect *last = message->analyze[analyze->last_select];
+		if(last->part == SELECT_WHERECLAUSE)
+		{
+			char fromstate = last->partstate[SELECT_FROMCLAUSE];
+			if(fromstate == 'P' && analyze->state == 'L')
+			{
+				last->partstate[SELECT_WHERECLAUSE] = 'P';
+			}
+			else if(fromstate == 'L' && analyze->state == 'L')
+			{
+				last->partstate[SELECT_WHERECLAUSE] = 'L';
+			}
+			else
+				last->partstate[SELECT_WHERECLAUSE] = 'S';
+		}
+	}
 }
 
 static void
@@ -2766,7 +3393,8 @@ _rewriteFuncCall(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 	{
 		int no;
 		no = message->current_select;
-		message->analyze[no]->state = 'S';
+		if(message->analyze[no]->state == 'P')
+			message->table_state = 'S';
 	}
 
 	if(strcmp(funcname,"user") == 0 ||
@@ -3080,79 +3708,106 @@ ChangeStatebyColumnRef(RewriteQuery *message,ColumnRef *col)
 
 	if(!column)
 	{	
-		message->analyze[no]->state = 'S';
+		message->table_state = 'S';
 		return;
 	}
 	
 	defined = false;
 
-	num = message->analyze[no]->rangeinfo_num;
 
-	for(i = 0;i < num; i++)
+	for(;;)
 	{
-		RangeInfo *info = message->analyze[no]->range[i];
-		DistDefInfo *distinfo =info->distinfo;
-		RepliDefInfo *repliinfo =info->repliinfo;
-		bool check_rel_name = false;
-
-		if(table_name && info->alias)
+		num = message->analyze[no]->rangeinfo_num;
+		for(i = 0;i < num; i++)
 		{
-			if(strcmp(info->alias,table_name))
-				continue;
-			/* table alias name is exists */
-			check_rel_name = true;
-
-		}
-
-		if(distinfo && !repliinfo)
-		{
-			int col_num = distinfo->col_num;
-			int j;
-
-			if(!check_rel_name && table_name)
-			{
-				if(strcmp(distinfo->table_name,table_name))
-					continue;
-			}
-
-			for(j =0; j < col_num; j++)
-			{
-				if(!strcmp(distinfo->col_list[j],column))
-				{
-					defined = true;
-				}
-			}
-		}
-		else if (!distinfo && repliinfo)
-		{
-			int col_num = repliinfo->col_num;
-			int j;
+			RangeInfo *info = message->analyze[no]->range[i];
+			DistDefInfo *distinfo =info->distinfo;
+			RepliDefInfo *repliinfo =info->repliinfo;
+			SelectDefInfo *selectinfo = info->selectinfo;
 			bool check_rel_name = false;
 
-			if(!check_rel_name && table_name)
+			if(table_name && info->alias)
 			{
-				if(strcmp(repliinfo->table_name,table_name))
+				if(strcmp(info->alias,table_name))
 					continue;
+				/* table alias name is exists */
+				check_rel_name = true;
+
 			}
 
-			for(j =0; j < col_num; j++)
+			if(distinfo && !repliinfo && !selectinfo)
 			{
-				if(!strcmp(repliinfo->col_list[j],column))
+				int col_num = distinfo->col_num;
+				int j;
+
+				if(!check_rel_name && table_name)
 				{
-					defined = true;
+					if(strcmp(distinfo->table_name,table_name))
+						continue;
+				}
+
+				for(j =0; j < col_num; j++)
+				{
+					if(!strcmp(distinfo->col_list[j],column))
+					{
+						defined = true;
+						break;
+					}
 				}
 			}
-		} 
-		else
-		{
-			/* TODO */
-		} 
+			else if (repliinfo && !distinfo && !selectinfo)
+			{
+				int col_num = repliinfo->col_num;
+				int j;
+
+				if(!check_rel_name && table_name)
+				{
+					if(strcmp(repliinfo->table_name,table_name))
+						continue;
+				}
+
+				for(j =0; j < col_num; j++)
+				{
+					if(!strcmp(repliinfo->col_list[j],column))
+					{
+						defined = true;
+						break;
+					}
+				}
+			}
+			else if (selectinfo && !repliinfo && !distinfo)
+			{
+				int col_num = selectinfo->col_num;
+				int j;
+
+				for(j =0; j < col_num; j++)
+				{
+					if(!strcmp(selectinfo->col_list[j],column))
+					{
+						defined = true;
+					}
+				}	
+			} 
+			else
+			{
+				message->table_state = 'S';
+			} 
+		}
+
+		if(defined)
+			break;
+	
+		no = message->analyze[no]->last_select;
+		if(no == -1)
+			break;
 	}
+
 	if(!defined && (message->table_state != 'L' || message->table_state != 'P'))
 	{
-		message->analyze[no]->state = 'S';
-		pool_debug("ChangeStatebyColumnRef table_state was changed:%c",message->analyze[no]->state);
+		message->table_state = 'S';
+		pool_debug("ChangeStatebyColumnRef table_state was changed:%c",message->table_state);
 	}
+
 }
 
 static void
@@ -6126,14 +6781,14 @@ _rewriteRangeSubselect(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink 
 
 	_rewriteNode(BaseSelect, message, dblink, str, node->alias);
 
+	if(message->r_code == SELECT_ANALYZE)
 	{	
 		Alias *alias;
 		int select_num = message->current_select;
 		AnalyzeSelect *analyze;
 		analyze=message->analyze[select_num];
 		alias = node->alias;
-		build_rettuple_info(message,NULL,NULL,analyze->select_ret,alias->aliasname,analyze->last_select);
-		
+		build_range_info(message,NULL,NULL,analyze->select_ret,alias->aliasname,analyze->last_select);
 	}
 }
 
@@ -6161,7 +6816,7 @@ _rewriteRangeFunction(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *
 static void
 _rewriteNode(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, void *obj)
 {
-	if (obj == NULL)
+	if(!obj)
 		return;
 	else if (IsA(obj, List) ||IsA(obj, IntList) || IsA(obj, OidList))
 		_rewriteList(BaseSelect, message, dblink, str, obj);
@@ -6296,9 +6951,7 @@ _rewriteNode(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, S
 				_rewriteDeclareCursorStmt(BaseSelect, message, dblink, str, obj);
 				break;
 			case T_SelectStmt:
-				{
 					_rewriteSelectStmt(BaseSelect, message, dblink, str, obj);
-				}
 				break;
 			case T_ColumnDef:
 				_rewriteColumnDef(BaseSelect, message, dblink, str, obj);
