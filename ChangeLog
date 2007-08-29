@@ -1,3 +1,12 @@
+2007-08-29  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Parse message including
+	  INSERT/UPDATE/DELETE query acquires RowExclusiveLock. However
+	  pgpool did not wait a response from each node. It was possible
+	  to occur deadlock problem.
+
+	  Fix memory leak in reset_prepared_list.
+
 2007-07-26  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* child.c, pool.h, pool_connection_pool.c: SIGALRM handler didn't

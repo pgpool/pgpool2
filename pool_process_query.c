@@ -123,6 +123,11 @@ static POOL_STATUS FunctionResultResponse(POOL_CONNECTION *frontend,
 static POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend, 
 										   POOL_CONNECTION_POOL *backend);
 
+static POOL_STATUS send_extended_protocol_message(POOL_CONNECTION_POOL *backend,
+												  int node_id, char *kind,
+												  int len, char *string);
+static POOL_STATUS send_execute_message(POOL_CONNECTION_POOL *backend,
+										int node_id, int len, char *string);
 static int synchronize(POOL_CONNECTION *cp);
 static void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt);
@@ -1182,19 +1187,7 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		}
 		else
 		{
-			/* forward the query to the backend */
-			pool_write(cp, "E", 1);
-			sendlen = htonl(len + 4);
-			pool_write(cp, &sendlen, sizeof(sendlen));
-			pool_write(cp, string, len);
-
-			/*
-			 * send "Flush" message so that backend notices us
-			 * the completion of the command
-			 */
-			pool_write(cp, "H", 1);
-			sendlen = htonl(4);
-			if (pool_write_and_flush(cp, &sendlen, sizeof(sendlen)) < 0)
+			if (send_execute_message(backend, i, len, string) < 0)
 			{
 				return POOL_ERROR;
 			}
@@ -1252,6 +1245,167 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		master_slave_dml = 0;
 	}
 
+	return POOL_CONTINUE;
+}
+
+/*
+ * Extended query protocol has to send Flush message.
+ */
+static POOL_STATUS send_extended_protocol_message(POOL_CONNECTION_POOL *backend,
+												  int node_id, char *kind,
+												  int len, char *string)
+{
+	POOL_CONNECTION *cp = CONNECTION(backend, node_id);
+	int sendlen;
+
+	/* forward the query to the backend */
+	pool_write(cp, kind, 1);
+	sendlen = htonl(len + 4);
+	pool_write(cp, &sendlen, sizeof(sendlen));
+	pool_write(cp, string, len);
+
+	/*
+	 * send "Flush" message so that backend notices us
+	 * the completion of the command
+	 */
+	pool_write(cp, "H", 1);
+	sendlen = htonl(4);
+	if (pool_write_and_flush(cp, &sendlen, sizeof(sendlen)) < 0)
+	{
+		return POOL_ERROR;
+	}
+
+	return POOL_CONTINUE;
+}
+
+static POOL_STATUS send_execute_message(POOL_CONNECTION_POOL *backend,
+										int node_id, int len, char *string)
+{
+	return send_extended_protocol_message(backend, node_id, "E", len, string);
+}
+
+/*
+ * process EXECUTE (V3 only)
+ */
+static POOL_STATUS Parse(POOL_CONNECTION *frontend, 
+						 POOL_CONNECTION_POOL *backend)
+{
+	int len;
+	char *string;
+	int i;
+	Portal *portal;
+	POOL_MEMORY_POOL *old_context;
+	PrepareStmt *p_stmt;
+	char *name, *stmt;
+	List *parse_tree_list;
+	Node *node = NULL;
+	int deadlock_detected = 0;
+	int checked = 0;
+
+	/* read Parse packet */
+	if (pool_read(frontend, &len, sizeof(len)) < 0)
+		return POOL_END;
+
+	len = ntohl(len) - 4;
+	string = pool_read2(frontend, len);
+
+	pool_debug("Parse: portal name <%s>", string);
+
+	name = string;
+	stmt = string + strlen(string) + 1;
+
+	parse_tree_list = raw_parser(stmt);
+	if (parse_tree_list == NIL)
+	{
+		free_parser();
+	}
+	else
+	{
+		node = (Node *) lfirst(list_head(parse_tree_list));
+
+		if (prepare_memory_context == NULL)
+		{
+			prepare_memory_context = pool_memory_create();
+			if (prepare_memory_context == NULL)
+			{
+				pool_error("Simple Query: pool_memory_create() failed");
+				return POOL_ERROR;
+			}
+		}
+		/* switch memory context */
+		old_context = pool_memory;
+		pool_memory = prepare_memory_context;
+
+		portal = malloc(sizeof(Portal));
+		/* translate Parse message to PrepareStmt */
+		p_stmt = palloc(sizeof(PrepareStmt));
+		p_stmt->type = T_PrepareStmt;
+		p_stmt->name = pstrdup(name);
+		p_stmt->query = copyObject(node);
+		portal->stmt = (Node *)p_stmt;
+		portal->portal_name = NULL;
+
+		if (*name)
+		{
+			pending_function = add_prepared_list;
+			pending_prepared_portal = portal;
+		}
+		else /* unnamed statement */
+		{
+			pending_function = add_unnamed_portal;
+			pfree(p_stmt->name);
+			p_stmt->name = NULL;
+			pending_prepared_portal = portal;
+		}
+
+		/* switch old memory context */
+		pool_memory = old_context;
+		free_parser();
+	}
+
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		POOL_CONNECTION *cp;
+
+		if (!VALID_BACKEND(i))
+			continue;
+
+		cp = CONNECTION(backend, i);
+		if (deadlock_detected)
+		{
+
+			int sendlen;
+
+			pool_write(cp, "Q", 1);
+			len = strlen(POOL_ERROR_QUERY) + 1;
+			sendlen = htonl(len + 4);
+			pool_write(cp, &sendlen, sizeof(sendlen));
+			pool_write_and_flush(cp, POOL_ERROR_QUERY, len);
+		}
+		else if (send_extended_protocol_message(backend, i, "P", len, string))
+			return POOL_END;
+
+		if (pool_config->replication_strict)
+		{
+			pool_debug("waiting for backend completing the query");
+			if (synchronize(cp))
+				return POOL_END;
+
+			if (!checked)
+			{
+				/*
+				 * We must check deadlock error because a aborted transaction
+				 * by detecting deadlock isn't same on all nodes.
+				 * If a transaction is aborted on master node, pgpool send a
+				 * error query to another nodes.
+				 */
+				deadlock_detected = detect_deadlock_error(cp, MAJOR(backend));
+				if (deadlock_detected < 0)
+					return POOL_END;
+				checked = 1;
+			}
+		}
+	}
 	return POOL_CONTINUE;
 }
 
@@ -2393,6 +2547,10 @@ static POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			status = Execute(frontend, backend);
 		break;
 
+		case 'P':
+			status = Parse(frontend, backend);
+			break;
+
 		default:
 			if (MAJOR(backend) == PROTO_MAJOR_V3)
 			{
@@ -3331,68 +3489,7 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 		}
 	}
 
-	if (kind == 'P') /* Parse message */
-	{
-		Portal *portal;
-		POOL_MEMORY_POOL *old_context;
-		PrepareStmt *p_stmt;
-		char *name, *stmt;
-		List *parse_tree_list;
-		Node *node = NULL;
-
-		name = p;
-		stmt = p + strlen(p) + 1;
-
-		parse_tree_list = raw_parser(stmt);
-		if (parse_tree_list == NIL)
-		{
-			free_parser();
-		}
-		else
-		{
-			node = (Node *) lfirst(list_head(parse_tree_list));
-
-			if (prepare_memory_context == NULL)
-			{
-				prepare_memory_context = pool_memory_create();
-				if (prepare_memory_context == NULL)
-				{
-					pool_error("Simple Query: pool_memory_create() failed");
-					return POOL_ERROR;
-				}
-			}
-			/* switch memory context */
-			old_context = pool_memory;
-			pool_memory = prepare_memory_context;
-
-			portal = malloc(sizeof(Portal));
-			/* translate Parse message to PrepareStmt */
-			p_stmt = palloc(sizeof(PrepareStmt));
-			p_stmt->type = T_PrepareStmt;
-			p_stmt->name = pstrdup(name);
-			p_stmt->query = copyObject(node);
-			portal->stmt = (Node *)p_stmt;
-			portal->portal_name = NULL;
-
-			if (*name)
-			{
-				pending_function = add_prepared_list;
-				pending_prepared_portal = portal;
-			}
-			else /* unnamed statement */
-			{
-				pending_function = add_unnamed_portal;
-				pfree(p_stmt->name);
-				p_stmt->name = NULL;
-				pending_prepared_portal = portal;
-			}
-
-			/* switch old memory context */
-			pool_memory = old_context;
-			free_parser();
-		}
-	}
-	else if (kind == 'B') /* Bind message */
+	if (kind == 'B') /* Bind message */
 	{
 		Portal *portal = NULL;
 		char *stmt_name, *portal_name;
@@ -3432,7 +3529,7 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 		pending_prepared_portal = NULL;
 	}
 
-	if (kind == 'P' || kind == 'B' || kind == 'D' || kind == 'C')
+	if (kind == 'B' || kind == 'D' || kind == 'C')
 	{
 		int i;
 		int kind1;
@@ -4427,8 +4524,16 @@ static void del_prepared_list(PreparedStatementList *p, Portal *portal)
 
 static void reset_prepared_list(PreparedStatementList *p)
 {
+	int i;
+
 	if (prepare_memory_context)
 	{
+		for (i = 0; i < p->cnt; i++)
+		{
+			free(p->portal_list[i]->portal_name);
+			free(p->portal_list[i]);
+		}
+
 		pool_memory_delete(prepare_memory_context);
 		prepare_memory_context = NULL;
 		free(unnamed_statement);
@@ -4670,7 +4775,7 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, b
 	int is_error = 0;
 	char kind;
 	int readlen = 0, len;
-	static char buf[1024]; /* memory space is large enough */
+	static char buf[8192]; /* memory space is large enough */
 	char *p, *str;
 
 	if (pool_read(backend, &kind, sizeof(kind)))
