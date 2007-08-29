@@ -1290,6 +1290,7 @@ static POOL_STATUS send_execute_message(POOL_CONNECTION_POOL *backend,
 static POOL_STATUS Parse(POOL_CONNECTION *frontend, 
 						 POOL_CONNECTION_POOL *backend)
 {
+	char kind;
 	int len;
 	char *string;
 	int i;
@@ -1406,6 +1407,23 @@ static POOL_STATUS Parse(POOL_CONNECTION *frontend,
 			}
 		}
 	}
+
+	for (;;)
+	{
+		kind = pool_read_kind(backend);
+		if (kind < 0)
+		{
+			pool_error("SimpleForwardToBackend: pool_read_kind error");
+			return POOL_ERROR;
+		}
+		SimpleForwardToFrontend(kind, frontend, backend);
+		if (pool_flush(frontend) < 0)
+			return POOL_ERROR;
+
+		if (kind != 'N')
+			break;
+	}
+
 	return POOL_CONTINUE;
 }
 
