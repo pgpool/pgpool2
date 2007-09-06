@@ -995,7 +995,7 @@ TABLE ... ON COMMIT DROP</code> inside the transaction block.</p>
 
 <p>Here are the queries which cannot be processed by pgpool-II</p>
 
-<h3>INSERT</h3> <p>You cannot use <code>DEFAULT</code> to the
+<h3>INSERT (for parallel mode)</h3> <p>You cannot use <code>DEFAULT</code> to the
 partitioning key column. For example, if the column x in the table t
 was the partitioning key column,
 
@@ -1013,7 +1013,7 @@ Constant values must be used to INSERT into the partitioning
 key. <code>SELECT INTO</code> and <code>INSERT INTO ... SELECT</code>
 are also not supported.</p>
 
-<h3>UPDATE</h3>
+<h3>UPDATE (for parallel mode)</h3>
 
 <p>Data consistency between the backends may be lost if the
 partitioning key column values are updated. pgpool-II does not
@@ -1029,7 +1029,7 @@ e.g.)  UPDATE branches set bid = 100 where bid = (select max(bid) from beances);
 </pre>
 </p>
 
-<h3>SELECT ... FOR UPDATE</h3>
+<h3>SELECT ... FOR UPDATE (for parallel mode)</h3>
 
 <p>If a function is called in the <code>WHERE</code> clause, that
 query might not be executed correctly.
@@ -1038,18 +1038,18 @@ e.g.)  SELECT * FROM  branches where bid = (select max(bid) from beances) FOR UP
 </pre>
 </p>
 
-<h3>COPY</h3>
+<h3>COPY (for parallel mode)</h3>
 
 <p><code>COPY BINARY</code> is not supported. Copying from files are
 also not supported. Only <code>COPY FROM STDIN</code> and <code>COPY
 TO STDOUT</code> is supported.</p>
 
-<h3>ALTER/CREATE TABLE</h3>
+<h3>ALTER/CREATE TABLE (for parallel mode)</h3>
 
 <p>To update the partitioning rule, pgpool-II must be restarted in
 order to read them from the System DB.</p>
 
-<h3>Transaction</h3>
+<h3>Transaction (for parallel mode)</h3>
 
 <p><code>SELECT</code> statements executed inside a transaction block
 will be executed in the separate transaction. Here is an example:
@@ -1061,7 +1061,7 @@ SELECT * FROM t ORDER BY a; <-- INSERT above is not visible from this SELECT sta
 END;
 </pre>
 
-<h3>Views / Rules</h3>
+<h3>Views / Rules (for parallel mode)</h3>
 
 <p>The same definition will be created on all the backends for views and rules.
 
@@ -1074,24 +1074,24 @@ then merged with the results returned by each backend. Views and Rules
 that joins across the nodes cannot be created.
 </p>
 
-<h3>Functions / Triggers</h3>
+<h3>Functions / Triggers (for parallel mode)</h3>
 
 <p>The same definition will be created on all the backends for
 functions. Joins across the nodes, and data on the other nodes cannot
 be manipulated inside the functions.</p>
 
-<h3>Extended Query Protocol</h3>
+<h3>Extended Query Protocol (for parallel mode)</h3>
 
 <p>The extended query protocol used by JDBC drivers, etc. is not
 supported. The simple query protocols must be used.</p>
 
-<h3>Multi-byte Characters</h3>
+<h3>Multi-byte Characters (for all modes)</h3>
 
 <p>pgpool-II does not translate between different multi-byte
 characters. The encoding for the client, backend and System DB must be
 the same.</p>
 
-<h3>Deadlocks</h3>
+<h3>Deadlocks (for parallel mode)</h3>
 
 <p>Deadlocks across the backends cannot be detected. For example:
 
@@ -1121,7 +1121,7 @@ process if a deadlock is detected.
 pool_read_kind: kind does not match between master(84) slot[1] (69)
 </pre>
 
-<h3>Schemas</h3>
+<h3>Schemas (for parallel mode)</h3>
 
 <p>Objects in a schema other than public must be fully referenced like:
 
