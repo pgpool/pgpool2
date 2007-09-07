@@ -32,7 +32,7 @@
 #define ALIGN 3
 #define POOL_HEADER_SIZE (sizeof (POOL_CHUNK_HEADER))
 
-POOL_MEMORY_POOL *pool_memory;
+POOL_MEMORY_POOL *pool_memory = NULL;
 
 static int get_free_index(unsigned int size);
 
@@ -248,11 +248,17 @@ POOL_MEMORY_POOL *pool_memory_create(void)
  * pool_memory_delete:
  *     Frees all memory which is allocated in the memory pool.
  */
-void pool_memory_delete(POOL_MEMORY_POOL *pool_memory)
+void pool_memory_delete(POOL_MEMORY_POOL *pool_memory, int reuse)
 {
 	POOL_BLOCK *block, *ptr;
 
-	for (block = pool_memory->blocks; block;)
+	/* Reuse the first memory block */
+	if (reuse && pool_memory->blocks)
+		block = pool_memory->blocks->next;
+	else
+		block = pool_memory->blocks;
+
+	while (block)
 	{
 		ptr = block->next;
 		free(block->block);
@@ -268,7 +274,26 @@ void pool_memory_delete(POOL_MEMORY_POOL *pool_memory)
 		block = ptr;
 	}
 
-	free(pool_memory);
+	if (reuse)
+	{
+		int i;
+
+		if (pool_memory->blocks)
+		{
+			pool_memory->blocks->allocsize = 0;
+			pool_memory->blocks->freepoint = pool_memory->blocks->block;
+		}
+		pool_memory->largeblocks = NULL;
+		for (i = 0; i < SLOT_NUM; i++)
+		{
+			pool_memory->freelist[i] = NULL;
+		}
+	}
+	else
+	{
+		free(pool_memory);
+		pool_memory = NULL;
+	}
 }
 
 /*

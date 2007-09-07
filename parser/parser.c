@@ -42,7 +42,8 @@ raw_parser(const char *str)
 {
 	int			yyresult;
 
-	pool_memory = pool_memory_create();
+	if (pool_memory == NULL)
+		pool_memory = pool_memory_create();
 
 	parsetree = NIL;			/* in case grammar forgets to set it */
 	have_lookahead = false;
@@ -107,6 +108,6 @@ sql_yylex(void)
 
 void free_parser(void)
 {
-	pool_memory_delete(pool_memory);
+	pool_memory_delete(pool_memory, 1);
 }
 

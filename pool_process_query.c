@@ -572,7 +572,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 	}
 
 	/* process status reporting? */
-	if (strncasecmp(sq, string, strlen(sq)) == 0)
+	if (IsA(node, VariableShowStmt) && strncasecmp(sq, string, strlen(sq)) == 0)
 	{
 		pool_debug("process reporting");
 		process_reporting(frontend, backend);
@@ -939,7 +939,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		}
 
 		/* process status reporting? */
-		if (strncasecmp(sq, string, strlen(sq)) == 0)
+		if (IsA(node, VariableShowStmt) && strncasecmp(sq, string, strlen(sq)) == 0)
 		{
 			StartupPacket *sp;
 			char psbuf[1024];
@@ -1227,9 +1227,11 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 	/* load balance trick */
 	if (portal)
 	{
+		POOL_MEMORY_POOL *pool_mem;
+
 		p_stmt = (PrepareStmt *)portal->stmt;
 
-		pool_memory = pool_memory_create();
+		pool_mem = pool_memory_create();
 		string1 = nodeToString(p_stmt->query);
 
 		if (load_balance_enabled(backend, (Node *)p_stmt->query, string1))
@@ -1254,7 +1256,7 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 */
 
 		commit = is_commit_query((Node *)p_stmt->query);
-		pool_memory_delete(pool_memory);
+		pool_memory_delete(pool_mem, 0);
 	}
 	else if (MASTER_SLAVE)
 	{
@@ -3259,6 +3261,7 @@ static void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *b
 		/* data row */
 		for (i=0;i<nrows;i++)
 		{
+			pool_debug("XXX %d", i);
 			pool_write(frontend, "D", 1);
 			len = sizeof(len) + sizeof(nrows);
 			len += sizeof(int) + strlen(status[i].name);
@@ -4744,7 +4747,7 @@ static void reset_prepared_list(PreparedStatementList *p)
 			free(p->portal_list[i]->portal_name);
 			free(p->portal_list[i]);
 		}
-		pool_memory_delete(prepare_memory_context);
+		pool_memory_delete(prepare_memory_context, 0);
 		prepare_memory_context = NULL;
 		free(unnamed_statement);
 		unnamed_portal = NULL;

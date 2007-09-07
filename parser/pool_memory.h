@@ -58,7 +58,7 @@ extern void *pool_memory_alloc(POOL_MEMORY_POOL *pool, unsigned int size);
 extern void pool_memory_free(POOL_MEMORY_POOL *pool, void *ptr);
 extern void *pool_memory_realloc(POOL_MEMORY_POOL *pool, void *ptr, unsigned int size);
 extern POOL_MEMORY_POOL *pool_memory_create(void);
-extern void pool_memory_delete(POOL_MEMORY_POOL *pool_memory);
+extern void pool_memory_delete(POOL_MEMORY_POOL *pool_memory, int reuse);
 extern char *pool_memory_strdup(POOL_MEMORY_POOL *pool_memory, const char *string);
 extern void *pool_memory_alloc_zero(POOL_MEMORY_POOL *pool_memory, unsigned int size);
 
