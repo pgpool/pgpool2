@@ -1106,7 +1106,7 @@ static POOL_CONNECTION_POOL *connect_backend(StartupPacket *sp, POOL_CONNECTION 
 	if (backend == NULL)
 	{
 		pool_send_error_message(frontend, sp->major, "XX000", "connection cache is full", "",
-								"increace max_pool", __FILE__, __LINE__);
+								"increase max_pool", __FILE__, __LINE__);
 		pool_close(frontend);
 		pool_free_startup_packet(sp);
 		return NULL;
