@@ -4088,6 +4088,9 @@ void pool_send_error_message(POOL_CONNECTION *frontend, int protoMajor,
 {
 #define MAXDATA	1024
 #define MAXMSGBUF 128
+
+	pool_set_nonblock(frontend->fd);
+
 	if (protoMajor == PROTO_MAJOR_V2)
 	{
 		pool_write(frontend, "E", 1);
@@ -4157,6 +4160,8 @@ void pool_send_error_message(POOL_CONNECTION *frontend, int protoMajor,
 	}
 	else
 		pool_error("send_error_message: unknown protocol major %d", protoMajor);
+
+	pool_unset_nonblock(frontend->fd);
 }
 
 void pool_send_readyforquery(POOL_CONNECTION *frontend)
