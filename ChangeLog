@@ -1,3 +1,9 @@
+2007-09-14  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* child.c, pool.h, pool_process_query.c: pool_process_query.c: Fix
+	  hang up when load balancing node was down. If load balancing
+	  node was down, select other node.
+
 2007-08-29  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* pool_process_query.c: Parse message including

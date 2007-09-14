@@ -66,7 +66,6 @@ static RETSIGTYPE close_idle_connection(int sig);
 static int send_params(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 static void send_frontend_exits(void);
 static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password);
-static int select_load_balancing_node(void);
 
 /*
  * non 0 means SIGTERM(smart shutdown) or SIGINT(fast shutdown) has arrived
@@ -1646,7 +1645,7 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 /*
  * Select load balancing node
  */
-static int select_load_balancing_node(void)
+int select_load_balancing_node(void)
 {
 	double total_weight,r;
 	int i;
