@@ -53,9 +53,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "keywords.h"
 #include "pool_memory.h"
 #include "gramparse.h"
 #include "makefuncs.h"
+#include "pool_string.h"
 
 #define yylex sql_yylex
 
@@ -68,7 +70,6 @@ static bool QueryIsRule = FALSE;
 
 extern TypeName *SystemTypeName(char *name);
 extern List *SystemFuncName(char *name);
-extern char *NameListToQuotedString(List *names);
 extern void yyerror(const char *s);
 
 /*
@@ -98,6 +99,8 @@ static void insertSelectOptions(SelectStmt *stmt,
 static Node *makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg);
 static Node *doNegate(Node *n);
 static void doNegateFloat(Value *v);
+static char *NameListToQuotedString(List *names);
+static char *quote_identifier(char *ident);
 
 %}
 
@@ -8935,6 +8938,102 @@ doNegateFloat(Value *v)
 		v->val.str = newval;
 	}
 }
+
+static char *NameListToQuotedString(List *names)
+{
+	String *string;
+	ListCell   *l;
+	
+	string = init_string("");
+	foreach(l, names)
+	{
+		if (l != list_head(names))
+			string_append_char(string, ".");
+		string_append_char(string, quote_identifier(strVal(lfirst(l))));
+	}
+	return string->data;
+}
+
+/*
+ * quote_identifier			- Quote an identifier only if needed
+ *
+ * When quotes are needed, we palloc the required space; slightly
+ * space-wasteful but well worth it for notational simplicity.
+ */
+static char *
+quote_identifier(char *ident)
+{
+	/*
+	 * Can avoid quoting if ident starts with a lowercase letter or underscore
+	 * and contains only lowercase letters, digits, and underscores, *and* is
+	 * not any SQL keyword.  Otherwise, supply quotes.
+	 */
+	int			nquotes = 0;
+	bool		safe;
+	const char *ptr;
+	char	   *result;
+	char	   *optr;
+
+	/*
+	 * would like to use <ctype.h> macros here, but they might yield unwanted
+	 * locale-specific results...
+	 */
+	safe = ((ident[0] >= 'a' && ident[0] <= 'z') || ident[0] == '_');
+
+	for (ptr = ident; *ptr; ptr++)
+	{
+		char		ch = *ptr;
+
+		if ((ch >= 'a' && ch <= 'z') ||
+			(ch >= '0' && ch <= '9') ||
+			(ch == '_'))
+		{
+			/* okay */
+		}
+		else
+		{
+			safe = false;
+			if (ch == '"')
+				nquotes++;
+		}
+	}
+
+	if (safe)
+	{
+		/*
+		 * Check for keyword.  This test is overly strong, since many of the
+		 * "keywords" known to the parser are usable as column names, but the
+		 * parser doesn't provide any easy way to test for whether an
+		 * identifier is safe or not... so be safe not sorry.
+		 *
+		 * Note: ScanKeywordLookup() does case-insensitive comparison, but
+		 * that's fine, since we already know we have all-lower-case.
+		 */
+		if (ScanKeywordLookup(ident) != NULL)
+			safe = false;
+	}
+
+	if (safe)
+		return ident;			/* no change needed */
+
+	result = (char *) palloc(strlen(ident) + nquotes + 2 + 1);
+
+	optr = result;
+	*optr++ = '"';
+	for (ptr = ident; *ptr; ptr++)
+	{
+		char		ch = *ptr;
+
+		if (ch == '"')
+			*optr++ = '"';
+		*optr++ = ch;
+	}
+	*optr++ = '"';
+	*optr = '\0';
+
+	return result;
+}
+
 
 #undef yylex
 #include "scan.c"

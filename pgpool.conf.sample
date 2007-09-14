@@ -93,6 +93,12 @@ health_check_period = 0
 # Health check user
 health_check_user = 'nobody'
 
+# failover command
+failover_command = ''
+
+# failback_command
+failback_command = ''
+
 # If true, automatically lock table with INSERT statements to keep SERIAL
 # data consistency.  An /*INSERT LOCK*/ comment has the same effect.  A
 # /NO INSERT LOCK*/ comment disables the effect.

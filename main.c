@@ -50,6 +50,8 @@
 #endif
 
 #include "version.h"
+#include "parser/pool_memory.h"
+#include "parser/pool_string.h"
 
 #define CHECK_REQUEST \
 	do { \
@@ -101,6 +103,8 @@ static RETSIGTYPE wakeup_handler(int sig);
 
 static void usage(void);
 static void stop_me(void);
+
+static int trigger_failover_command(int node, const char *command_line);
 
 static struct sockaddr_un un_addr;		/* unix domain socket path */
 static struct sockaddr_un pcp_un_addr;  /* unix domain socket path for PCP */
@@ -1124,10 +1128,12 @@ static void failover(void)
 	if (Req_info->kind == NODE_UP_REQUEST)
 	{
 		BACKEND_INFO(node_id).backend_status = CON_CONNECT_WAIT;	/* unset down status */
+		trigger_failover_command(node_id, pool_config->failback_command);
 	}
 	else
 	{
 		BACKEND_INFO(node_id).backend_status = CON_DOWN;	/* set down status */
+		trigger_failover_command(node_id, pool_config->failover_command);
 	}
 
 	for (i=0;i<pool_config->backend_desc->num_backends;i++)
@@ -1638,4 +1644,90 @@ char *get_config_file_name(void)
 char *get_hba_file_name(void)
 {
 	return hba_file;
+}
+
+/*
+ * trigger_failover_command: execute specified command at failover.
+ *                           command_line is null-terminated string.
+ */
+static int trigger_failover_command(int node, const char *command_line)
+{
+	int r = 0;
+	String *exec_cmd;
+	char port_buf[6];
+	char buf[2];
+	BackendInfo *info;
+
+	if (strlen(command_line) == 0)
+		return 0;
+
+	/* check nodeID */
+	if (node < 0 || node > NUM_BACKENDS)
+		return -1;
+
+	info = pool_get_node_info(node);
+	if (!info)
+		return -1;
+
+	buf[1] = '\0';
+	pool_memory = pool_memory_create();
+	if (!pool_memory)
+	{
+		pool_error("trigger_failover_command: pool_memory_create() failed");
+		return -1;
+	}
+	exec_cmd = init_string("");
+	
+	while (*command_line)
+	{
+		if (*command_line == '%')
+		{
+			if (*(command_line + 1))
+			{
+				char val = *(command_line + 1);
+				switch (val)
+				{
+					case 'p': /* port */
+						snprintf(port_buf, sizeof(port_buf), "%d", info->backend_port);
+						string_append_char(exec_cmd, port_buf);
+						break;
+
+					case 'D': /* database directory */
+						string_append_char(exec_cmd, info->backend_data_directory);
+						break;
+
+					case 'd': /* node id */
+						snprintf(port_buf, sizeof(port_buf), "%d", node);
+						string_append_char(exec_cmd, port_buf);
+						break;
+
+					case 'h': /* host name */
+						string_append_char(exec_cmd, info->backend_hostname);
+						break;
+
+					case '%': /* escape */
+						string_append_char(exec_cmd, "%");
+						break;
+
+					default: /* ignore */
+						break;
+				}
+				command_line++;
+			}
+		} else {
+			buf[0] = *command_line;
+			string_append_char(exec_cmd, buf);
+		}
+		command_line++;
+	}
+
+	if (strlen(exec_cmd->data) != 0)
+	{
+		pool_log("execute command: %s", exec_cmd->data);
+		r = system(exec_cmd->data);
+	}
+
+	pool_memory_delete(pool_memory, 0);
+
+	return r;
 }

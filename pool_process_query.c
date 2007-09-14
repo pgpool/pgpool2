@@ -3050,6 +3050,16 @@ static void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *b
 	strncpy(status[i].desc, "health check user", MAXDESCLEN);
 	i++;
 
+	strncpy(status[i].name, "failover_command", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%s", pool_config->failover_command);
+	strncpy(status[i].desc, "failover command", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "failback_command", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%s", pool_config->failover_command);
+	strncpy(status[i].desc, "failback command", MAXDESCLEN);
+	i++;
+
 	strncpy(status[i].name, "insert_lock", MAXNAMELEN);
 	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->insert_lock);
 	strncpy(status[i].desc, "insert lock", MAXDESCLEN);

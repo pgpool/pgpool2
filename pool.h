@@ -157,6 +157,8 @@ typedef struct {
 	int health_check_timeout;	/* health check timeout */
 	int health_check_period;	/* health check period */
 	char *health_check_user;		/* PostgreSQL user name for health check */
+	char *failover_command;     /* execute command when failover happens */
+	char *failback_command;     /* execute command when failback happens */
 	char *recovery_user;		/* PostgreSQL user name for online recovery */
 	char *recovery_password;		/* PostgreSQL user password for online recovery */
 	int insert_lock;	/* if non 0, automatically lock table with INSERT to keep SERIAL
