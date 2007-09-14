@@ -298,6 +298,12 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 
 			num_fds = 0;
 
+			if (!VALID_BACKEND(backend->info->load_balancing_node))
+			{
+				/* select load balancing node */
+				backend->info->load_balancing_node = select_load_balancing_node();
+			}
+
 			for (i=0;i<NUM_BACKENDS;i++)
 			{
 				if (VALID_BACKEND(i))
@@ -337,6 +343,8 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 					if (detect_postmaster_down_error(CONNECTION(backend, i), MAJOR(backend)))
 					{
 						was_error = 1;
+						if (!VALID_BACKEND(i))
+							break;
 						notice_backend_error(i);
 						sleep(5);
 						break;
@@ -364,6 +372,8 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 
 					continue;
 				}
+				if (kind == 0)
+					continue;
 			}
 			
 			if (FD_ISSET(MASTER(backend)->fd, &exceptmask))

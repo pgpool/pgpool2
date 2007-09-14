@@ -402,6 +402,7 @@ extern int pool_init_config(void);
 extern int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context);
 extern void do_child(int unix_fd, int inet_fd);
 extern void pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file);
+extern int select_load_balancing_node(void);
 extern int pool_init_cp(void);
 extern POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 									  POOL_CONNECTION_POOL *backend,
