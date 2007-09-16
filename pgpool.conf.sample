@@ -93,10 +93,22 @@ health_check_period = 0
 # Health check user
 health_check_user = 'nobody'
 
-# failover command
+# Execute command by failover.
+# special values:  %d = node id
+#                  %h = host name
+#                  %p = port number
+#                  %D = database cluster path
+#                  %% = '%' character
+#
 failover_command = ''
 
-# failback_command
+# Execute command by failback.
+# special values:  %d = node id
+#                  %h = host name
+#                  %p = port number
+#                  %D = database cluster path
+#                  %% = '%' character
+#
 failback_command = ''
 
 # If true, automatically lock table with INSERT statements to keep SERIAL
