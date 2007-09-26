@@ -941,9 +941,9 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			return POOL_CONTINUE;
 		}
 
-		if (IsA(node, PrepareStmt) || IsA(node, DeallocateStmt))
+		if (IsA(node, PrepareStmt) || IsA(node, DeallocateStmt) || IsA(node, VariableSetStmt))
 		{
-			if (REPLICATION)
+			if (DUAL_MODE)
 				force_replication = 1;
 			if (frontend)
 			{

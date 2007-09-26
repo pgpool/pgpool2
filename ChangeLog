@@ -1,3 +1,8 @@
+2007-09-26  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: SET statements are replicated in
+	  master/slave mode.
+
 2007-09-14  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* child.c, pool.h, pool_process_query.c: pool_process_query.c: Fix
