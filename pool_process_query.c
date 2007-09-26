@@ -3281,7 +3281,6 @@ static void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *b
 		/* data row */
 		for (i=0;i<nrows;i++)
 		{
-			pool_debug("XXX %d", i);
 			pool_write(frontend, "D", 1);
 			len = sizeof(len) + sizeof(nrows);
 			len += sizeof(int) + strlen(status[i].name);
@@ -4648,46 +4647,91 @@ static POOL_STATUS read_kind_from_one_backend(POOL_CONNECTION *frontend, POOL_CO
 static POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *kind)
 {
 	int i;
+	char kind_list[MAX_NUM_BACKENDS];
+	char kind_map[256]; /* 256 is the number of sizeof(char) */
+	int max_kind = 0;
+	double max_count = 0;
+	int degenerate_node_num = 0;
+	int degenerate_node[MAX_NUM_BACKENDS];
+
+	memset(kind_list, -1, sizeof(kind_list));
+	memset(kind_map, 0, sizeof(kind_map));
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
 		if (VALID_BACKEND(i))
 		{
-			char k;
-
-			if (pool_read(CONNECTION(backend, i), &k, 1) < 0)
+			if (pool_read(CONNECTION(backend, i), &kind_list[i], 1) < 0)
 			{
 				pool_error("pool_process_query: failed to read kind from %d th backend", i);
 				return POOL_ERROR;
 			}
 
-			pool_debug("read_kind_from_backend: read kind from %d th backend %c NUM_BACKENDS: %d", i, k, NUM_BACKENDS);
+			pool_debug("read_kind_from_backend: read kind from %d th backend %c NUM_BACKENDS: %d", i, kind_list[i], NUM_BACKENDS);
+		}
+	}
 
-			if (IS_MASTER_NODE_ID(i))
-			{
-				*kind = k;
-			}
-			else
-			{
-				if (k != *kind)
-				{
-					pool_error("pool_process_query: %d th kind %c does not match with master connection kind %c",
-							   i, k, *kind);
-					pool_send_error_message(frontend, MAJOR(backend), "XX000", 
-											"kind mismatch between backends", "",
-											"check data consistency between master and other db node", __FILE__, __LINE__);
+	/* register kind map */
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		/* kind is singed char.
+		 * We must check negative number.
+		 */
+		int id = kind_list[i] + 128;
 
-					if (pool_config->replication_stop_on_mismatch)
-					{
-						notice_backend_error(i);
-						child_exit(1);
-					}
-					else
-						return POOL_ERROR;
-				}
+		if (kind_list[i] == -1)
+			continue;
+
+		kind_map[id]++;
+		if (kind_map[id] > max_count)
+		{
+			max_kind = kind_list[i];
+			max_count = kind_map[id];
+		}
+	}
+
+	if (max_count != NUM_BACKENDS)
+	{
+		int trust_kind;
+
+		if (max_count <= NUM_BACKENDS / 2.0)
+		{
+			/* The group belonging to master is trusted. */
+			trust_kind = kind_list[MASTER_NODE_ID];
+		}
+		else /* max_count > NUM_BACKENDS / 2.0 */
+		{
+			trust_kind = max_kind;
+		}
+
+		for (i = 0; i < NUM_BACKENDS; i++)
+		{
+			if (kind_list[i] != -1 && trust_kind != kind_list[i])
+			{
+				/* degenerate */
+				pool_error("pool_process_query: %d th kind %c does not match with master connection kind %c",
+						   i, kind_list[i], trust_kind);
+				degenerate_node[degenerate_node_num++] = i;
 			}
 		}
 	}
+
+	if (degenerate_node_num)
+	{
+		pool_send_error_message(frontend, MAJOR(backend), "XX000", 
+								"kind mismatch between backends", "",
+								"check data consistency between master and other db node",
+								__FILE__, __LINE__);
+		if (pool_config->replication_stop_on_mismatch)
+		{
+			degenerate_backend_set(degenerate_node, degenerate_node_num);
+			child_exit(1);
+		}
+		else
+			return POOL_ERROR;
+	}
+
+	*kind = kind_list[MASTER_NODE_ID];
 	return POOL_CONTINUE;
 }
 
@@ -5088,7 +5132,7 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, b
 	int is_error = 0;
 	char kind;
 	int readlen = 0, len;
-	static char buf[1024]; /* memory space is large enough */
+	static char buf[8192]; /* memory space is large enough */
 	char *p, *str;
 
 	if (pool_read(backend, &kind, sizeof(kind)))

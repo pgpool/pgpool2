@@ -401,7 +401,7 @@ int main(int argc, char **argv)
 
 	/* initialize Req_info */
 	Req_info->kind = NODE_UP_REQUEST;
-	Req_info->node_id = -1;
+	memset(Req_info->node_id, -1, sizeof(int) * MAX_NUM_BACKENDS);
 	Req_info->master_node_id = 0;
 	Req_info->conn_counter = 0;
 
@@ -504,7 +504,7 @@ int main(int argc, char **argv)
 					{
 						pool_log("set %d th backend down status", sts);
 						Req_info->kind = NODE_DOWN_REQUEST;
-						Req_info->node_id = sts;
+						Req_info->node_id[0] = sts;
 						failover();
 						/* need to distribute this info to children */
 					}
@@ -518,7 +518,7 @@ int main(int argc, char **argv)
 							/* retry count over */
 							pool_log("set %d th backend down status", sts);
 							Req_info->kind = NODE_DOWN_REQUEST;
-							Req_info->node_id = sts;
+							Req_info->node_id[0] = sts;
 							failover();
 							retrycnt = 0;
 						}
@@ -925,28 +925,40 @@ static void myexit(int code)
 	exit(code);
 }
 
-/* notice backend connection error using SIGUSR1 */
 void notice_backend_error(int node_id)
 {
+	int n = node_id;
+
+	degenerate_backend_set(&n, 1);
+}
+
+/* notice backend connection error using SIGUSR1 */
+void degenerate_backend_set(int *node_id_set, int count)
+{
 	pid_t parent = getppid();
+	int i;
 
 	if (pool_config->parallel_mode)
 	{
 		return;
 	}
 
-	pool_log("notice_backend_error: %d fail over request from pid %d", node_id, getpid());
-
+	pool_semaphore_lock(REQUEST_INFO_SEM);
 	Req_info->kind = NODE_DOWN_REQUEST;
-	Req_info->node_id = node_id;
-
-	if (node_id < 0 || node_id >= MAX_NUM_BACKENDS || !VALID_BACKEND(node_id))
+	for (i = 0; i < count; i++)
 	{
-		pool_error("notice_backend_error: node %d is not valid backend.");
-		return;
-	}
+		if (node_id_set[i] < 0 || node_id_set[i] >= MAX_NUM_BACKENDS ||
+			!VALID_BACKEND(node_id_set[i]))
+		{
+			pool_log("notice_backend_error: node %d is not valid backend.");
+			continue;
+		}
 
+		pool_log("notice_backend_error: %d fail over request from pid %d", node_id_set[i], getpid());
+		Req_info->node_id[i] = node_id_set[i];
+	}
 	kill(parent, SIGUSR1);
+	pool_semaphore_unlock(REQUEST_INFO_SEM);
 }
 
 /* send failback request using SIGUSR1 */
@@ -956,7 +968,7 @@ void send_failback_request(int node_id)
 
 	pool_log("send_failback_request: fail back %d th node request from pid %d", node_id, getpid());
 	Req_info->kind = NODE_UP_REQUEST;
-	Req_info->node_id = node_id;
+	Req_info->node_id[0] = node_id;
 
 	if (node_id < 0 || node_id >= MAX_NUM_BACKENDS || VALID_BACKEND(node_id))
 	{
@@ -1078,43 +1090,14 @@ static void failover(void)
 		return;
 	}
 
+	pool_semaphore_lock(REQUEST_INFO_SEM);
+
 	if (Req_info->kind == CLOSE_IDLE_REQUEST)
 	{
+		pool_semaphore_unlock(REQUEST_INFO_SEM);
 		kill_all_children(SIGUSR1);
 		kill(pcp_pid, SIGUSR2);
 		return;
-	}
-
-	node_id = Req_info->node_id;
-
-	if (node_id < 0)
-	{
-		pool_error("failover_handler: invalid node_id %d", node_id);
-		kill(pcp_pid, SIGUSR2);
-		return;
-	}
-
-	if (node_id >= MAX_NUM_BACKENDS ||
-		(Req_info->kind == NODE_UP_REQUEST && VALID_BACKEND(node_id)) ||
-		(Req_info->kind == NODE_DOWN_REQUEST && !VALID_BACKEND(node_id)))
-	{
-		pool_error("failover_handler: invalid node_id %d status:%d MAX_NUM_BACKENDS: %d", node_id,
-					BACKEND_INFO(node_id).backend_status, MAX_NUM_BACKENDS);
-		kill(pcp_pid, SIGUSR2);
-		return;
-	}
-
-	if (Req_info->kind == NODE_UP_REQUEST)
-	{
-		pool_log("starting fail back. reconnect host %s(%d)",
-				 BACKEND_INFO(node_id).backend_hostname,
-				 BACKEND_INFO(node_id).backend_port);
-	}
-	else
-	{
-		pool_log("starting degeneration. shutdown host %s(%d)",
-				 BACKEND_INFO(node_id).backend_hostname,
-				 BACKEND_INFO(node_id).backend_port);
 	}
 
 	/* 
@@ -1127,13 +1110,51 @@ static void failover(void)
 	/* failback request? */
 	if (Req_info->kind == NODE_UP_REQUEST)
 	{
+		node_id = Req_info->node_id[0];
+		if (node_id >= MAX_NUM_BACKENDS ||
+			(Req_info->kind == NODE_UP_REQUEST && VALID_BACKEND(node_id)) ||
+			(Req_info->kind == NODE_DOWN_REQUEST && !VALID_BACKEND(node_id)))
+		{
+			pool_semaphore_unlock(REQUEST_INFO_SEM);
+			pool_error("failover_handler: invalid node_id %d status:%d MAX_NUM_BACKENDS: %d", node_id,
+					   BACKEND_INFO(node_id).backend_status, MAX_NUM_BACKENDS);
+			kill(pcp_pid, SIGUSR2);
+			return;
+		}
+
+		pool_log("starting fail back. reconnect host %s(%d)",
+				 BACKEND_INFO(node_id).backend_hostname,
+				 BACKEND_INFO(node_id).backend_port);
 		BACKEND_INFO(node_id).backend_status = CON_CONNECT_WAIT;	/* unset down status */
 		trigger_failover_command(node_id, pool_config->failback_command);
 	}
 	else
 	{
-		BACKEND_INFO(node_id).backend_status = CON_DOWN;	/* set down status */
-		trigger_failover_command(node_id, pool_config->failover_command);
+		int cnt = 0;
+
+		for (i = 0; i < MAX_NUM_BACKENDS; i++)
+		{
+			if (Req_info->node_id[i] != -1 &&
+				VALID_BACKEND(Req_info->node_id[i]))
+			{
+				pool_log("starting degeneration. shutdown host %s(%d)",
+						 BACKEND_INFO(Req_info->node_id[i]).backend_hostname,
+						 BACKEND_INFO(Req_info->node_id[i]).backend_port);
+
+
+				BACKEND_INFO(Req_info->node_id[i]).backend_status = CON_DOWN;	/* set down status */
+				trigger_failover_command(node_id, pool_config->failover_command);
+				cnt++;
+			}
+		}
+
+		if (cnt == 0)
+		{
+			pool_log("failover: no backends are degenerated");
+			pool_semaphore_unlock(REQUEST_INFO_SEM);
+			kill(pcp_pid, SIGUSR2);
+			return;
+		}
 	}
 
 	for (i=0;i<pool_config->backend_desc->num_backends;i++)
@@ -1164,6 +1185,7 @@ static void failover(void)
 						 BACKEND_INFO(node_id).backend_port);
 			}
 
+			pool_semaphore_unlock(REQUEST_INFO_SEM);
 			switching = 0;
 			kill(pcp_pid, SIGUSR2);
 			return;
@@ -1193,6 +1215,9 @@ static void failover(void)
 		pool_error("failover_handler: wait() failed. reason:%s", strerror(errno));
 #endif
 
+	memset(Req_info->node_id, -1, sizeof(int) * MAX_NUM_BACKENDS);
+	pool_semaphore_unlock(REQUEST_INFO_SEM);
+
 	/* fork the children */
 	for (i=0;i<pool_config->num_init_children;i++)
 	{
@@ -1213,7 +1238,6 @@ static void failover(void)
 				 BACKEND_INFO(node_id).backend_port);
 	}
 
-	Req_info->node_id = -1;
 	switching = 0;
 	kill(pcp_pid, SIGUSR2);
 }
@@ -1728,6 +1752,7 @@ static int trigger_failover_command(int node, const char *command_line)
 	}
 
 	pool_memory_delete(pool_memory, 0);
+	pool_memory = NULL;
 
 	return r;
 }

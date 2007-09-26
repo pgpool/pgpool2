@@ -343,6 +343,7 @@ typedef struct {
 
 #define MAX_NUM_SEMAPHORES		3
 #define CONN_COUNTER_SEM 0
+#define REQUEST_INFO_SEM 1
 
 #define MY_PROCESS_INFO (pids[my_proc_id])
 
@@ -368,7 +369,7 @@ typedef enum {
 
 typedef struct {
 	POOL_REQUEST_KIND	kind;	/* request kind */
-	int node_id;		/* request node id */
+	int node_id[MAX_NUM_BACKENDS];		/* request node id */
 	int master_node_id;	/* the youngest node id which is not in down status */
 	int conn_counter;
 } POOL_REQUEST_INFO;
@@ -438,6 +439,7 @@ extern POOL_STATUS NoticeResponse(POOL_CONNECTION *frontend,
 								  POOL_CONNECTION_POOL *backend);
 
 extern void notice_backend_error(int node_id);
+extern void degenerate_backend_set(int *node_id_set, int count);
 extern void send_failback_request(int node_id);
 
 extern void pool_connection_pool_timer(POOL_CONNECTION_POOL *backend);

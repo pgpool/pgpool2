@@ -156,8 +156,8 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 			if (cp->isbackend)
 			{
 			    /* fatal error, notice to parent and exit */
-			    notice_backend_error(IS_MASTER_NODE_ID(cp->db_node_id));
-			    child_exit(1);
+				notice_backend_error(cp->db_node_id);
+				child_exit(1);
 			}
 			else
 			{
@@ -270,8 +270,8 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 			if (cp->isbackend)
 			{
 			    /* fatal error, notice to parent and exit */
-			    notice_backend_error(IS_MASTER_NODE_ID(cp->db_node_id));
-			    child_exit(1);
+				notice_backend_error(cp->db_node_id);
+				child_exit(1);
 			}
 			else
 			{
@@ -453,7 +453,7 @@ int pool_flush(POOL_CONNECTION *cp)
 	{
 		if (cp->isbackend)
 		{
-			notice_backend_error(IS_MASTER_NODE_ID(cp->db_node_id));
+			notice_backend_error(cp->db_node_id);
 			child_exit(1);
 		}
 		else
@@ -580,8 +580,8 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 
 			if (cp->isbackend)
 			{
-			    notice_backend_error(IS_MASTER_NODE_ID(cp->db_node_id));
-			    child_exit(1);
+				notice_backend_error(cp->db_node_id);
+				child_exit(1);
 			}
 			else
 			{
