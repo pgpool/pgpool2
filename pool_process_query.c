@@ -169,6 +169,7 @@ static POOL_CONNECTION_POOL_SLOT *slots[MAX_CONNECTION_SLOTS];
 int in_load_balance;	/* non 0 if in load balance mode */
 int selected_slot;		/* selected DB node */
 int master_slave_dml;	/* non 0 if master/slave mode is specified in config file */
+static int force_replication;
 static int replication_was_enabled;		/* replication mode was enabled */
 static int master_slave_was_enabled;	/* master/slave mode was enabled */
 static int internal_transaction_started;		/* to issue table lock command a transaction
@@ -815,6 +816,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	POOL_STATUS status;
 	int deadlock_detected = 0;
 
+	force_replication = 0;
 	if (query == NULL)	/* need to read query from frontend? */
 	{
 		/* read actual query */
@@ -967,44 +969,49 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			return POOL_CONTINUE;
 		}
 
-		if (frontend &&
-			(IsA(node, PrepareStmt) || IsA(node, DeallocateStmt)))
+		if (IsA(node, PrepareStmt) || IsA(node, DeallocateStmt) || IsA(node, VariableSetStmt))
 		{
-			POOL_MEMORY_POOL *old_context;
-			Portal *portal;
+			if (MASTER_SLAVE)
+				force_replication = 1;
 
-			if (prepare_memory_context == NULL)
+			if (frontend)
 			{
-				prepare_memory_context = pool_memory_create();
+				POOL_MEMORY_POOL *old_context;
+				Portal *portal;
+
 				if (prepare_memory_context == NULL)
 				{
-					pool_error("Simple Query: pool_memory_create() failed");
-					return POOL_ERROR;
+					prepare_memory_context = pool_memory_create();
+					if (prepare_memory_context == NULL)
+					{
+						pool_error("Simple Query: pool_memory_create() failed");
+						return POOL_ERROR;
+					}
 				}
-			}
-			/* switch memory context */
-			old_context = pool_memory;
-			pool_memory = prepare_memory_context;
+				/* switch memory context */
+				old_context = pool_memory;
+				pool_memory = prepare_memory_context;
 
-			if (IsA(node, PrepareStmt))
-			{
-				pending_function = add_prepared_list;
-				portal = malloc(sizeof(Portal));
-				portal->portal_name = NULL;
-				portal->stmt = copyObject(node);
-				pending_prepared_portal = portal;
-			}
-			else if (IsA(node, DeallocateStmt))
-			{
-				pending_function = del_prepared_list;
-				portal = malloc(sizeof(Portal));
-				portal->portal_name = NULL;
-				portal->stmt = copyObject(node);
-				pending_prepared_portal = portal;
-			}
+				if (IsA(node, PrepareStmt))
+				{
+					pending_function = add_prepared_list;
+					portal = malloc(sizeof(Portal));
+					portal->portal_name = NULL;
+					portal->stmt = copyObject(node);
+					pending_prepared_portal = portal;
+				}
+				else if (IsA(node, DeallocateStmt))
+				{
+					pending_function = del_prepared_list;
+					portal = malloc(sizeof(Portal));
+					portal->portal_name = NULL;
+					portal->stmt = copyObject(node);
+					pending_prepared_portal = portal;
+				}
 
-			/* switch old memory context */
-			pool_memory = old_context;
+				/* switch old memory context */
+				pool_memory = old_context;
+			}
 		}
 
 		if (frontend && IsA(node, ExecuteStmt))
@@ -1042,6 +1049,11 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			master_slave_was_enabled = 1;
 			MASTER_SLAVE = 0;
 			master_slave_dml = 1;
+			if (force_replication)
+			{
+				replication_was_enabled = 0;
+				REPLICATION = 1;
+			}
 		}
 		else if (REPLICATION &&
 				 !pool_config->replicate_select &&
@@ -1072,6 +1084,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			status = insert_lock(backend, string, (InsertStmt *)node);
 			if (status != POOL_CONTINUE)
 			{
+				
 				free_parser();
 				return status;
 			}
@@ -1238,13 +1251,22 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 	if (portal)
 	{
 		POOL_MEMORY_POOL *pool_mem;
+		Node *node;
 
 		p_stmt = (PrepareStmt *)portal->stmt;
 
 		pool_mem = pool_memory_create();
 		string1 = nodeToString(p_stmt->query);
+		node = (Node *)p_stmt->query;
 
-		if (load_balance_enabled(backend, (Node *)p_stmt->query, string1))
+		if ((IsA(node, PrepareStmt) || IsA(node, DeallocateStmt) || IsA(node, VariableSetStmt)) &&
+			MASTER_SLAVE)
+		{
+			pool_debug("HHHH");
+			force_replication = 1;
+		}
+
+		if (load_balance_enabled(backend, node, string1))
 			start_load_balance(backend);
 		else if (REPLICATION &&
 				 !pool_config->replicate_select &&
@@ -1273,6 +1295,11 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		master_slave_was_enabled = 1;
 		MASTER_SLAVE = 0;
 		master_slave_dml = 1;
+		if (force_replication)
+		{
+			replication_was_enabled = 0;
+			REPLICATION = 1;
+		}
 	}
 
 	if (REPLICATION || PARALLEL_MODE)
@@ -1386,6 +1413,12 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		MASTER_SLAVE = 1;
 		master_slave_was_enabled = 0;
 		master_slave_dml = 0;
+		if (force_replication)
+		{
+			REPLICATION = 0;
+			replication_was_enabled = 0;
+			force_replication = 0;
+		}
 	}
 
 	return POOL_CONTINUE;
@@ -1513,7 +1546,7 @@ static POOL_STATUS Parse(POOL_CONNECTION *frontend,
 									   "P", len, string))
 		return POOL_END;
 
-	if (REPLICATION || PARALLEL_MODE)
+	if (REPLICATION || PARALLEL_MODE || MASTER_SLAVE)
 	{
 		/* We must synchronize because Parse message acquires table
 		 * locks.
@@ -1769,6 +1802,12 @@ static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		MASTER_SLAVE = 1;
 		master_slave_was_enabled = 0;
 		master_slave_dml = 0;
+		if (force_replication)
+		{
+			force_replication = 0;
+			REPLICATION = 0;
+			replication_was_enabled = 0;
+		}
 	}
 
 #ifdef NOT_USED
