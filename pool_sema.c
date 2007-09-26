@@ -75,7 +75,7 @@ IpcSemaphoreKill(int status, Datum semId)
 int
 pool_semaphore_create(int numSems)
 {
-	int			semNum;
+	int			i;
 
 	/* Try to create new semaphore set */
 	semId = semget(IPC_PRIVATE, numSems, IPC_CREAT | IPC_EXCL | IPCProtection);
@@ -89,15 +89,15 @@ pool_semaphore_create(int numSems)
 	on_shmem_exit(IpcSemaphoreKill, semId);
 
 	/* Initialize it to count 1 */
-	for (semNum = 0; semNum < MAX_NUM_SEMAPHORES; semNum++)
+	for (i = 0; i < numSems; i++)
 	{
 		union semun semun;
 
 		semun.val = 1;
-		if (semctl(semId, 0, SETVAL, semun) < 0)
+		if (semctl(semId, i, SETVAL, semun) < 0)
 		{
 			pool_error("semctl(%d, %d, SETVAL, %d) failed: %s",
-					   semId, semNum, 1);
+					   semId, i, 1);
 			return -1;
 		}
 	}
