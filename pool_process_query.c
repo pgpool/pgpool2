@@ -1262,7 +1262,6 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		if ((IsA(node, PrepareStmt) || IsA(node, DeallocateStmt) || IsA(node, VariableSetStmt)) &&
 			MASTER_SLAVE)
 		{
-			pool_debug("HHHH");
 			force_replication = 1;
 		}
 
