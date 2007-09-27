@@ -1398,7 +1398,7 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 			return status;
 		pool_flush(frontend);
 	}
-	if (ret != POOOL_CONTINUE)
+	if (ret != POOL_CONTINUE)
 		return ret;
 
 	status = SimpleForwardToFrontend(kind, frontend, backend);
