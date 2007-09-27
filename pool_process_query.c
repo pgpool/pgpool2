@@ -1233,6 +1233,7 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 	char *string1;
 	PrepareStmt *p_stmt;
 	int deadlock_detected = 0;
+	POOL_STATUS ret;
 
 	/* read Execute packet */
 	if (pool_read(frontend, &len, sizeof(len)) < 0)
@@ -1384,20 +1385,22 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		}
 	}
 
-	while ((kind = pool_read_kind(backend)),
-		   (kind != 'C' && kind != 'E' && kind != 'I' && kind != 's'))
+	while ((ret = read_kind_from_backend(frontend, backend, &kind)) == POOL_CONTINUE)
 	{
-		if (kind < 0)
-		{
-			pool_error("Execute: pool_read_kind error");
-			return POOL_ERROR;
-		}
-
+		/*
+		 * forward message until receiving CommandComplete,
+		 * ErrorResponse, EmptyQueryResponse or PortalSuspend.
+		 */
+		if (kind == 'C' || kind == 'E' || kind != 'I' || kind != 's')
+			break;
 		status = SimpleForwardToFrontend(kind, frontend, backend);
 		if (status != POOL_CONTINUE)
 			return status;
 		pool_flush(frontend);
 	}
+	if (ret != POOOL_CONTINUE)
+		return ret;
+
 	status = SimpleForwardToFrontend(kind, frontend, backend);
 	if (status != POOL_CONTINUE)
 		return status;
@@ -1602,12 +1605,12 @@ static POOL_STATUS Parse(POOL_CONNECTION *frontend,
 
 	for (;;)
 	{
-		kind = pool_read_kind(backend);
-		if (kind < 0)
-		{
-			pool_error("Parse: pool_read_kind error");
-			return POOL_ERROR;
-		}
+		POOL_STATUS ret;
+		ret = read_kind_from_backend(frontend, backend, &kind);
+
+		if (ret != POOL_CONTINUE)
+			return ret;
+			
 		SimpleForwardToFrontend(kind, frontend, backend);
 		if (pool_flush(frontend) < 0)
 			return POOL_ERROR;
@@ -3455,6 +3458,8 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 	int i;
 	int command_ok_row_count = 0;
 	int delete_or_update = 0;
+	char kind1;
+	POOL_STATUS ret;
 
 	/*
 	 * Check if packet kind == 'C'(Command complete), '1'(Parse
@@ -3615,7 +3620,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 	}
 	else if (kind == 'E')		/* error response? */
 	{
-		int i, k;
+		int i;
 		int res1;
 		char *p1;
 
@@ -3683,20 +3688,19 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 			}
 		}
 	
-		while ((k = pool_read_kind(backend)) != 'Z')
+		while ((ret = read_kind_from_backend(frontend, backend, &kind1)) == POOL_CONTINUE)
 		{
-			POOL_STATUS ret;
-			if (k < 0)
-			{
-				pool_error("SimpleForwardToBackend: pool_read_kind error");
-				return POOL_ERROR;
-			}
+			if (kind1 == 'Z') /* ReadyForQuery? */
+				break;
 
-			ret = SimpleForwardToFrontend(k, frontend, backend);
+			ret = SimpleForwardToFrontend(kind1, frontend, backend);
 			if (ret != POOL_CONTINUE)
 				return ret;
 			pool_flush(frontend);
 		}
+
+		if (ret != POOL_CONTINUE)
+			return ret;
 
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
@@ -3725,6 +3729,7 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 	char *p;
 	int i;
 	char *name;
+	POOL_STATUS ret;
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -3815,7 +3820,7 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 	if (kind == 'B' || kind == 'D' || kind == 'C')
 	{
 		int i;
-		int kind1;
+		char kind1;
 
 		for (i = 0;i < NUM_BACKENDS; i++)
 		{
@@ -3843,24 +3848,18 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 		 */
 		if (kind == 'D' && *p == 'S')
 		{
-			kind1 = pool_read_kind(backend);
-			if (kind1 < 0)
-			{
-				pool_error("SimpleForwardToBackend: pool_read_kind error");
-				return POOL_ERROR;
-			}
+			ret = read_kind_from_backend(frontend, backend, &kind1);
+			if (ret != POOL_CONTINUE)
+				return ret;
 			SimpleForwardToFrontend(kind1, frontend, backend);
 			pool_flush(frontend);
 		}
 
 		for (;;)
 		{
-			kind1 = pool_read_kind(backend);
-			if (kind1 < 0)
-			{
-				pool_error("SimpleForwardToBackend: pool_read_kind error");
-				return POOL_ERROR;
-			}
+			ret = read_kind_from_backend(frontend, backend, &kind1);
+			if (ret != POOL_CONTINUE)
+				return ret;
 			SimpleForwardToFrontend(kind1, frontend, backend);
 			if (pool_flush(frontend) < 0)
 				return POOL_ERROR;
