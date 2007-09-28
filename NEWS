@@ -3,8 +3,8 @@
       * Fix deadlock while processing Parse message. (Yoshiyuki)
       * Fix memory leak in reset_prepared_list(). (Yoshiyuki)
       * Fix compile error on FreeBSD 4.11. (Yoshiyuki)
-      * SET statements are replicated in master/slave
-        mode. (Yoshiyuki)
+      * SET, PREPARE and DEALLOCATE statements are replicated in
+        master/slave mode. (Yoshiyuki)
 
 1.2 (tomoboshi) 2007/08/01
       * Version 1.2
