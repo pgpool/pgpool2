@@ -5,6 +5,7 @@
 
 /* integer */
 typedef signed int int32;
+typedef signed short int16;
 typedef unsigned int PoolOid;
 typedef unsigned int Index;
 typedef short AttrNumber;

@@ -22,6 +22,7 @@
 #include <string.h>
 #include <limits.h>
 
+#include "pool_memory.h"
 #include "parser.h"
 #include "pool_string.h"
 #include "pg_list.h"
@@ -109,7 +110,6 @@ static void _outUnlistenStmt(String *str, UnlistenStmt *node);
 static void _outLoadStmt(String *str, LoadStmt *node);
 static void _outCopyStmt(String *str, CopyStmt *node);
 static void _outDeallocateStmt(String *str, DeallocateStmt *node);
-static void _outVariableResetStmt(String *str, VariableResetStmt *node);
 static void _outRenameStmt(String *str, RenameStmt *node);
 static void _outCreateRoleStmt(String *str, CreateRoleStmt *node);
 static void _outAlterRoleStmt(String *str, AlterRoleStmt *node);
@@ -136,9 +136,6 @@ static void _outGrantStmt(String *str, GrantStmt *node);
 static void _outGrantRoleStmt(String *str, GrantRoleStmt *node);
 static void _outCreateFunctionStmt(String *str, CreateFunctionStmt *node);
 static void _outAlterFunctionStmt(String *str, AlterFunctionStmt *node);
-static void _outRemoveFuncStmt(String *str, RemoveFuncStmt *node);
-static void _outRemoveAggrStmt(String *str, RemoveAggrStmt *node);
-static void _outRemoveOperStmt(String *str, RemoveOperStmt *node);
 static void _outCreateCastStmt(String *str, CreateCastStmt *node);
 static void _outDropCastStmt(String *str, DropCastStmt *node);
 static void _outReindexStmt(String *str, ReindexStmt *node);
@@ -155,6 +152,16 @@ static void _outPrepareStmt(String *str, PrepareStmt *node);
 static void _outExecuteStmt(String *str, ExecuteStmt *node);
 static void _outLockStmt(String *str, LockStmt *node);
 static void _outCommentStmt(String *str, CommentStmt *node);
+static void _outDiscardStmt(String *str, DiscardStmt *node);
+static void _outCreateOpFamilyStmt(String *str, CreateOpFamilyStmt *node);
+static void _outAlterOpFamilyStmt(String *str, AlterOpFamilyStmt *node);
+static void _outRemoveOpFamilyStmt(String *str, RemoveOpFamilyStmt *node);
+static void _outCreateEnumStmt(String *str, CreateEnumStmt *node);
+static void _outDropOwnedStmt(String *str, DropOwnedStmt *node);
+static void _outReassignOwnedStmt(String *str, ReassignOwnedStmt *node);
+static void _outAlterTSDictionaryStmt(String *str, AlterTSDictionaryStmt *node);
+static void _outAlterTSConfigurationStmt(String *str, AlterTSConfigurationStmt *node);
+static void _outXmlSerialize(String *str, XmlSerialize *node);
 
 static void _outFuncName(String *str, List *func_name);
 static void _outSetRest(String *str, VariableSetStmt *node);
@@ -170,6 +177,9 @@ static void _outFuncOptList(String *str, List *list);
 static void _outCreatedbOptList(String *str, List *options);
 static void _outOperatorArgTypes(String *str, List *args);
 static void _outRangeFunction(String *str, RangeFunction *node);
+static void _outInhRelation(String *str, InhRelation *node);
+static void _outWithDefinition(String *str, List *def_list);
+static void _outCurrentOfExpr(String *str, CurrentOfExpr *node);
 
 static char *escape_string(char *str)
 {
@@ -350,7 +360,7 @@ _outBoolExpr(String *str, BoolExpr *node)
 static void
 _outSubLink(String *str, SubLink *node)
 {
-	_outNode(str, node->lefthand);
+	_outNode(str, node->testexpr);
 
 	if (node->operName != NIL)
 	{
@@ -610,7 +620,7 @@ _outJoinExpr(String *str, JoinExpr *node)
 		else
 			string_append_char(str, " JOIN ");
 	}
-	else if (node->jointype == JOIN_UNION)
+	else if (node->jointype == JOIN_INNER)
 		string_append_char(str, " JOIN ");
 	else if (node->jointype == JOIN_LEFT)
 		string_append_char(str, " LEFT OUTER JOIN ");
@@ -684,16 +694,32 @@ _outCreateStmt(String *str, CreateStmt *node)
 		string_append_char(str, ")");
 	}
 
-	switch (node->hasoids)
+	if (node->options)
+		_outWithDefinition(str, node->options);
+
+	switch (node->oncommit)
 	{
-		case MUST_HAVE_OIDS:
-			string_append_char(str, "WITH OIDS ");
+		case ONCOMMIT_DROP:
+			string_append_char(str, " ON COMMIT DROP");
 			break;
-		case MUST_NOT_HAVE_OIDS:
-			string_append_char(str, "WITHOUT OIDS ");
+
+		case ONCOMMIT_DELETE_ROWS:
+			string_append_char(str, " ON COMMIT DELETE ROWS");
 			break;
+
+		case ONCOMMIT_PRESERVE_ROWS:
+			string_append_char(str, " ON COMMIT PRESERVE ROWS");
+			break;
+
 		default:
 			break;
+	}
+
+	if (node->tablespacename)
+	{
+		string_append_char(str, " TABLESPACE \"");
+		string_append_char(str, node->tablespacename);
+		string_append_char(str, "\"");
 	}
 }
 
@@ -705,7 +731,10 @@ _outIndexStmt(String *str, IndexStmt *node)
 	if (node->unique == TRUE)
 		string_append_char(str, "UNIQUE ");
 
-	string_append_char(str, "INDEX \"");
+	if (node->concurrent == true)
+		string_append_char(str, "INDEX CONCURRENTLY \"");
+	else
+		string_append_char(str, "INDEX \"");		
 	string_append_char(str, node->idxname);
 	string_append_char(str, "\" ON ");
 	_outNode(str, node->relation);
@@ -798,37 +827,65 @@ _outSelectStmt(String *str, SelectStmt *node)
 			string_append_char(str, ") ");
 		}
 	}
+	else if (node->valuesLists) /* VALUES ... */
+	{
+		ListCell *lc;
+		int comma = 0;
+
+		foreach (lc, node->valuesLists)
+		{
+			if (comma == 0)
+				comma = 1;
+			else
+				string_append_char(str, ",");
+
+			string_append_char(str, " VALUES (");
+			_outNode(str, lfirst(lc));
+			string_append_char(str, ")");
+		}
+	}
 	else
 	{
-		if (node->into)
+		if (node->intoClause)
 		{
-			string_append_char(str, " CREATE ");
-			if (node->into->istemp == true)
+			IntoClause *into = (IntoClause *)node->intoClause;
+			RangeVar *rel = (RangeVar *)into->rel;
+
+			string_append_char(str, "CREATE ");
+			if (rel->istemp == true)
 				string_append_char(str, "TEMP ");
 			string_append_char(str, "TABLE ");
-			_outNode(str, node->into);
+			_outNode(str, into->rel);
 
-			if (node->intoColNames)
+			if (into->colNames)
 			{
 				string_append_char(str, " (");
-				_outNode(str, node->intoColNames);
+				_outNode(str, into->colNames);
 				string_append_char(str, ") ");
 			}
+			
+			if (into->options)
+				_outWithDefinition(str, into->options);
 
-			switch (node->intoHasOids)
+			switch (into->onCommit)
 			{
-				case MUST_HAVE_OIDS:
-					string_append_char(str, " WITH OIDS AS");
+				case ONCOMMIT_DROP:
+					string_append_char(str, " ON COMMIT DROP");
 					break;
 
-				case MUST_NOT_HAVE_OIDS:
-					string_append_char(str, " WITHOUT OIDS AS ");
+				case ONCOMMIT_DELETE_ROWS:
+					string_append_char(str, " ON COMMIT DELETE ROWS");
 					break;
 
-				case DEFAULT_OIDS:
-					string_append_char(str, " AS");
+				case ONCOMMIT_PRESERVE_ROWS:
+					string_append_char(str, " ON COMMIT PRESERVE ROWS");
+					break;
+
+				default:
 					break;
 			}
+
+			string_append_char(str, " AS");
 		}
 
 		string_append_char(str, " SELECT ");
@@ -946,7 +1003,7 @@ _outLockingClause(String *str, LockingClause *node)
 
 	_outNode(str, node->lockedRels);
 
-	if (node->nowait == TRUE)
+	if (node->noWait == TRUE)
 		string_append_char(str, " NOWAIT ");
 }
 
@@ -957,6 +1014,7 @@ _outColumnDef(String *str, ColumnDef *node)
 	string_append_char(str, node->colname);
 	string_append_char(str, "\" ");
 	_outNode(str, node->typename);
+	_outNode(str, node->constraints);
 }
 
 static void
@@ -974,7 +1032,7 @@ _outTypeName(String *str, TypeName *node)
 			dot = 1;
 		else
 			string_append_char(str, ".");
-		if(node->typmod < 0)
+		if(node->typemod < 0)
 		{
 			string_append_char(str, "\"");
 			string_append_char(str, typename);
@@ -983,14 +1041,14 @@ _outTypeName(String *str, TypeName *node)
 			string_append_char(str, typename);
 	}
 	
-	if (node->typmod > 0)
+	if (node->typemod > 0)
 	{
         int lower;
         char buf[16];
         string_append_char(str, "(");
-        snprintf(buf, 16, "%d", ((node->typmod - VARHDRSZ) >> 16) & 0x00FF);
+        snprintf(buf, 16, "%d", ((node->typemod - VARHDRSZ) >> 16) & 0x00FF);
         string_append_char(str, buf);
-        lower = (node->typmod-VARHDRSZ) & 0x00FF;
+        lower = (node->typemod-VARHDRSZ) & 0x00FF;
 
         if(lower != 0)
         {
@@ -1057,6 +1115,8 @@ _outSetOperationStmt(String *str, SetOperationStmt *node)
 static void
 _outAExpr(String *str, A_Expr *node)
 {
+	Value *v;
+
 	switch (node->kind)
 	{
 		case AEXPR_OP:
@@ -1095,11 +1155,21 @@ _outAExpr(String *str, A_Expr *node)
 			break;
 
 		case AEXPR_OP_ANY:
-			/* not implemented yet */
+			_outNode(str, node->lexpr);
+			v = linitial(node->name);
+			string_append_char(str, v->val.str);
+			string_append_char(str, "ANY(");
+			_outNode(str, node->rexpr);
+			string_append_char(str, ")");
 			break;
 
 		case AEXPR_OP_ALL:
-			/* not implemented yet */
+			_outNode(str, node->lexpr);
+			v = linitial(node->name);
+			string_append_char(str, v->val.str);
+			string_append_char(str, "ALL(");
+			_outNode(str, node->rexpr);
+			string_append_char(str, ")");
 			break;
 
 		case AEXPR_DISTINCT:
@@ -1120,10 +1190,22 @@ _outAExpr(String *str, A_Expr *node)
 
 		case AEXPR_OF:
 			_outNode(str, node->lexpr);
-			if (*(char *)lfirst(list_head(node->name)) == '!')
+			v = linitial(node->name);
+			if (v->val.str[0] == '!')
 				string_append_char(str, " IS NOT OF (");
 			else
 				string_append_char(str, " IS OF (");
+			_outNode(str, node->rexpr);
+			string_append_char(str, ")");
+			break;
+
+		case AEXPR_IN:
+			_outNode(str, node->lexpr);
+			v = (Value *)lfirst(list_head(node->name));
+			if (v->val.str[0] == '=')
+				string_append_char(str, " IN (");
+			else
+				string_append_char(str, " NOT IN (");
 			_outNode(str, node->rexpr);
 			string_append_char(str, ")");
 			break;
@@ -1301,6 +1383,11 @@ _outConstraint(String *str, Constraint *node)
 				_outIdList(str, node->keys);
 				string_append_char(str, ")");
 			}
+
+			if (node->options)
+			{
+				_outWithDefinition(str, node->options);
+			}
 			
 			if (node->indexspace)
 			{
@@ -1318,6 +1405,9 @@ _outConstraint(String *str, Constraint *node)
 				_outIdList(str, node->keys);
 				string_append_char(str, ")");
 			}
+			if (node->options)
+				;
+
 			if (node->indexspace)
 			{
 				string_append_char(str, " USING INDEX TABLESPACE \"");
@@ -1442,13 +1532,18 @@ _outSortBy(String *str, SortBy *node)
 {
 	_outNode(str, node->node);
 	
-	if (node->sortby_kind == SORTBY_USING)
+	if (node->sortby_dir == SORTBY_USING)
 	{
 		string_append_char(str, " USING ");
 		_outNode(str, node->useOp);
 	}
-	else if (node->sortby_kind == SORTBY_DESC)
+	else if (node->sortby_dir == SORTBY_DESC)
 		string_append_char(str, " DESC ");
+
+	if (node->sortby_nulls == SORTBY_NULLS_FIRST)
+		string_append_char(str, " NULLS FIRST ");
+	else if (node->sortby_nulls == SORTBY_NULLS_LAST)
+		string_append_char(str, " NULLS LAST ");
 }
 
 static void _outInsertStmt(String *str, InsertStmt *node)
@@ -1456,8 +1551,7 @@ static void _outInsertStmt(String *str, InsertStmt *node)
 	string_append_char(str, "INSERT INTO ");
 	_outNode(str, node->relation);
 
-	if (node->cols == NIL && node->targetList == NIL &&
-		node->selectStmt == NULL)
+	if (node->cols == NIL && node->selectStmt == NULL)
 		string_append_char(str, " DEFAULT VALUES");
 
 	if (node->cols)
@@ -1482,18 +1576,16 @@ static void _outInsertStmt(String *str, InsertStmt *node)
 		string_append_char(str, ")");
 	}
 
-	if (node->targetList != NIL)
-	{
-		string_append_char(str, " VALUES (");
-		_outNode(str, node->targetList);
-		string_append_char(str, ")");
-	}
-
 	if (node->selectStmt)
 	{
 		_outNode(str, node->selectStmt);
 	}
 
+	if (node->returningList)
+	{
+		string_append_char(str, " RETURNING ");
+		_outNode(str, node->returningList);
+	}
 }
 
 static void _outUpdateStmt(String *str, UpdateStmt *node)
@@ -1531,6 +1623,12 @@ static void _outUpdateStmt(String *str, UpdateStmt *node)
 		string_append_char(str, " WHERE ");
 		_outNode(str, node->whereClause);
 	}
+
+	if (node->returningList)
+	{
+		string_append_char(str, " RETURNING ");
+		_outNode(str, node->returningList);
+	}
 }
 
 static void _outDeleteStmt(String *str, DeleteStmt *node)
@@ -1549,6 +1647,12 @@ static void _outDeleteStmt(String *str, DeleteStmt *node)
 	{
 		string_append_char(str, " WHERE ");
 		_outNode(str, node->whereClause);
+	}
+
+	if (node->returningList)
+	{
+		string_append_char(str, " RETURNING ");
+		_outNode(str, node->returningList);
 	}
 }
 
@@ -1624,7 +1728,7 @@ static void _outVacuumStmt(String *str, VacuumStmt *node)
 	if (node->full == TRUE)
 		string_append_char(str, "FULL ");
 	
-	if (node->freeze == TRUE)
+	if (node->freeze_min_age == 0)
 		string_append_char(str, "FREEZE ");
 
 	if (node->verbose == TRUE)
@@ -1742,6 +1846,13 @@ static void _outCopyStmt(String *str, CopyStmt *node)
 
 	string_append_char(str, "COPY ");
 
+	if (node->query)
+	{
+		string_append_char(str, "(");
+		_outNode(str, node->query);
+		string_append_char(str, ")");
+	}
+
 	_outNode(str, node->relation);
 
 	if (node->attlist)
@@ -1823,22 +1934,6 @@ static void _outDeallocateStmt(String *str, DeallocateStmt *node)
 	string_append_char(str, "DEALLOCATE \"");
 	string_append_char(str, node->name);
 	string_append_char(str, "\"");
-}
-
-static void _outVariableResetStmt(String *str, VariableResetStmt *node)
-{
-	string_append_char(str, "RESET ");
-
-	if (strcmp(node->name, "timezone") == 0)
-		string_append_char(str, "TIME ZONE");
-	else if (strcmp(node->name, "transaction_isolation") == 0)
-		string_append_char(str, "TRANSACTION ISOLATION LEVEL");
-	else if (strcmp(node->name, "session_authorization") == 0)
-		string_append_char(str, "SESSION AUTHORIZATION");
-	else if (strcmp(node->name, "all") == 0)
-		string_append_char(str, "ALL");
-	else
-		string_append_char(str, node->name);
 }
 
 static void _outRenameStmt(String *str, RenameStmt *node)
@@ -1999,9 +2094,14 @@ _outOptRoleList(String *str, List *options)
 
 		if (strcmp(elem->defname, "password") == 0)
 		{
-			string_append_char(str, " PASSWORD '");
-			string_append_char(str, value->val.str);
-			string_append_char(str, "'");
+			if (value == NULL)
+				string_append_char(str, " PASSWORD NULL");
+			else
+			{
+				string_append_char(str, " PASSWORD '");
+				string_append_char(str, value->val.str);
+				string_append_char(str, "'");
+			}
 		}
 		else if (strcmp(elem->defname, "encryptedPassword") == 0)
 		{
@@ -2132,24 +2232,9 @@ _outAlterRoleSetStmt(String *str, AlterRoleSetStmt *node)
 	string_append_char(str, node->role);
 	string_append_char(str, "\" ");
 
-	if (node->value)
+	if (node->setstmt)
 	{
-		VariableSetStmt s;
-
-		string_append_char(str, "SET ");
-		memset(&s, 0, sizeof(VariableSetStmt));
-		s.name = node->variable;
-		s.args = node->value;
-		_outSetRest(str, &s);
-	}
-	else
-	{
-		VariableResetStmt s;
-		
-		memset(&s, 0, sizeof(VariableResetStmt));
-		s.type = T_VariableResetStmt;
-		s.name = node->variable;
-		_outNode(str, &s);
+		_outNode(str, node->setstmt);
 	}
 }
 
@@ -2193,7 +2278,8 @@ _outSetRest(String *str, VariableSetStmt *node)
 	if (strcmp(node->name, "timezone") == 0)
 	{
 		string_append_char(str, "TIME ZONE ");
-		_outNode(str, node->args);
+		if (node->kind != VAR_RESET)
+			_outNode(str, node->args);
 	}
 	else if (strcmp(node->name, "TRANSACTION") == 0)
 	{
@@ -2208,24 +2294,49 @@ _outSetRest(String *str, VariableSetStmt *node)
 	else if (strcmp(node->name, "role") == 0)
 	{
 		string_append_char(str, "ROLE ");
-		_outNode(str, node->args);
+		if (node->kind != VAR_RESET)
+			_outNode(str, node->args);
 	}
 	else if (strcmp(node->name, "session_authorization") == 0)
 	{
 		string_append_char(str, "SESSION AUTHORIZATION ");
-		if (node->args == NIL)
+		if (node->args == NIL && node->kind != VAR_RESET)
 			string_append_char(str, "DEFAULT");
 		else
 			_outNode(str, node->args);
 	}
+	else if (strcmp(node->name, "transaction_isolation") == 0)
+	{
+		string_append_char(str, "TRANSACTION ISOLATION LEVEL");
+		if (node->kind != VAR_RESET)
+			_outSetTransactionModeList(str, node->args);
+	}
+	else if (strcmp(node->name, "xmloption") == 0)
+	{
+		A_Const *v = linitial(node->args);
+		string_append_char(str, "XML OPTOIN ");
+		string_append_char(str, v->val.val.str);
+	}
 	else
 	{
 		string_append_char(str, node->name);
-		string_append_char(str, " TO ");
-		if (node->args == NULL)
-			string_append_char(str, "DEFAULT");
-		else
-			_outNode(str, node->args);
+		if (node->kind != VAR_RESET)
+		{
+			if (node->kind == VAR_SET_CURRENT)
+			{
+				string_append_char(str, " FROM CURRENT");
+			}
+			else
+			{
+				string_append_char(str, " TO ");
+				if (node->args == NULL)
+				{
+					string_append_char(str, "DEFAULT");
+				}
+				else
+					_outNode(str, node->args);
+			}
+		}
 	}
 }
 
@@ -2233,6 +2344,8 @@ static void
 _outDropRoleStmt(String *str, DropRoleStmt *node)
 {
 	string_append_char(str, "DROP ROLE ");
+	if (node->missing_ok == TRUE)
+		string_append_char(str, "IF EXISTS ");
 	_outIdList(str, node->roles);
 }
 
@@ -2254,7 +2367,17 @@ _outCreateSchemaStmt(String *str, CreateSchemaStmt *node)
 static void
 _outVariableSetStmt(String *str, VariableSetStmt *node)
 {
-	string_append_char(str, "SET ");
+	if (node->kind == VAR_RESET_ALL)
+	{
+		string_append_char(str, "RESET ALL");
+		return;
+	}
+
+	if (node->kind == VAR_RESET)
+		string_append_char(str, "RESET ");
+	else
+		string_append_char(str, "SET ");
+
 	if (node->is_local)
 		string_append_char(str, "LOCAL ");
 	
@@ -2285,11 +2408,11 @@ _outConstraintsSetStmt(String *str, ConstraintsSetStmt *node)
 	string_append_char(str, "SET CONSTRAINTS ");
 
 	if (node->constraints == NIL)
-		string_append_char(str, "ALL ");
+		string_append_char(str, "ALL");
 	else
-		_outIdList(str, node->constraints);
+		_outNode(str, node->constraints);
 
-	string_append_char(str, node->deferred == TRUE ? "DEFERRED" : "IMMEDIATE");
+	string_append_char(str, node->deferred == TRUE ? " DEFERRED" : " IMMEDIATE");
 }
 
 static void
@@ -2381,10 +2504,6 @@ _outAlterTableCmd(String *str, AlterTableCmd *node)
 			string_append_char(str, "SET WITHOUT OIDS");
 			break;
 
-		case AT_ToastTable:
-			string_append_char(str, "CREATE TOAST TABLE");
-			break;
-
 		case AT_ClusterOn:
 			string_append_char(str, "CLUSTER ON \"");
 			string_append_char(str, node->name);
@@ -2399,6 +2518,14 @@ _outAlterTableCmd(String *str, AlterTableCmd *node)
 			string_append_char(str, "ENABLE TRIGGER \"");
 			string_append_char(str, node->name);
 			string_append_char(str, "\"");
+			break;
+
+		case AT_EnableAlwaysTrig:
+			/* not implemented */
+			break;
+
+		case AT_EnableReplicaTrig:
+			/* not implemented */
 			break;
 
 		case AT_EnableTrigAll:
@@ -2423,6 +2550,26 @@ _outAlterTableCmd(String *str, AlterTableCmd *node)
 			string_append_char(str, "DISABLE TRIGGER USER");
 			break;
 
+		case AT_EnableRule:
+			/* not implemented */
+			break;
+
+		case AT_EnableReplicaRule:
+			/* not implemented */
+			break;
+
+		case AT_EnableAlwaysRule:
+			/* not implemented */
+			break;
+
+		case AT_DisableRule:
+			/* not implemented */
+			break;
+
+		case AT_AddInherit:
+			/* not implemented */
+			break;
+
 		case AT_ChangeOwner:
 			string_append_char(str, "OWNER TO \"");
 			string_append_char(str, node->name);
@@ -2433,6 +2580,14 @@ _outAlterTableCmd(String *str, AlterTableCmd *node)
 			string_append_char(str, "SET TABLESPACE \"");
 			string_append_char(str, node->name);
 			string_append_char(str, "\"");
+			break;
+
+		case AT_SetRelOptions:
+			/* not implemented */
+			break;
+
+		case AT_ResetRelOptions:
+			/* not implemented */
 			break;
 
 		default:
@@ -2474,7 +2629,12 @@ _outOptSeqList(String *str, List *options)
 		else if (strcmp(e->defname, "minvalue") == 0 && !v)
 			string_append_char(str, " NO MINVALUE");
 		else if (strcmp(e->defname, "maxvalue") == 0 && !v)
-			string_append_char(str, " MAX_VALUE");
+			string_append_char(str, " NO MAXVALUE");
+		else if (strcmp(e->defname, "owned_by") == 0)
+		{
+			string_append_char(str, " OWNED BY ");
+			_outIdList(str, (List *)e->arg);
+		}
 		else
 		{
 			if (strcmp(e->defname, "cache") == 0)
@@ -2801,6 +2961,30 @@ _outDefineStmt(String *str, DefineStmt *node)
 			string_append_char(str, " ");
 			_outDefinition(str, node->definition);
 			break;
+
+		case OBJECT_TSPARSER:
+			string_append_char(str, "CREATE TEXT SEARCH PARSER ");
+			_outIdList(str, node->defnames);
+			_outDefinition(str, node->definition);
+			break;
+
+		case OBJECT_TSDICTIONARY:
+			string_append_char(str, "CREATE TEXT SEARCH DICTIONARY ");
+			_outIdList(str, node->defnames);
+			_outDefinition(str, node->definition);
+			break;
+
+		case OBJECT_TSTEMPLATE:
+			string_append_char(str, "CREATE TEXT SEARCH TEMPLATE ");
+			_outIdList(str, node->defnames);
+			_outDefinition(str, node->definition);
+			break;
+
+		case OBJECT_TSCONFIGURATION:
+			string_append_char(str, "CREATE TEXT SEARCH CONFIGURATION ");
+			_outIdList(str, node->defnames);
+			_outDefinition(str, node->definition);
+			break;
 			
 		default:
 			break;
@@ -3089,6 +3273,11 @@ _outPrivTarget(String *str, PrivTarget *node)
 			_outNode(str, node->objs);
 			break;
 
+		case ACL_OBJECT_SEQUENCE:
+			string_append_char(str, "SEQUENCE ");
+			_outNode(str, node->objs);
+			break;
+
 		case ACL_OBJECT_FUNCTION:
 			string_append_char(str, "FUNCTION ");
 			_outNode(str, node->objs);
@@ -3286,41 +3475,32 @@ _outAlterFunctionStmt(String *str, AlterFunctionStmt *node)
 static void
 _outRemoveFuncStmt(String *str, RemoveFuncStmt *node)
 {
-	string_append_char(str, "DROP FUNCTION ");
-	_outFuncName(str, node->funcname);
+	switch (node->kind)
+	{
+		case OBJECT_FUNCTION:
+			string_append_char(str, "DROP FUNCTION ");
+			break;
+
+
+		case OBJECT_AGGREGATE:
+			string_append_char(str, "DROP AGGREGATE ");
+			break;
+
+		case OBJECT_OPERATOR:
+			string_append_char(str, "DROP OPERATOR CLASS ");
+			break;
+
+		default:
+			break;
+	}
+
+	if (node->missing_ok)
+		string_append_char(str, "IF EXISTS ");
+
+	_outFuncName(str, node->name);
 
 	string_append_char(str, " (");
 	_outNode(str, node->args);
-	string_append_char(str, ")");
-
-	if (node->behavior == DROP_CASCADE)
-		string_append_char(str, " CASCADE");
-}
-
-static void
-_outRemoveAggrStmt(String *str, RemoveAggrStmt *node)
-{
-	string_append_char(str, "DROP AGGREGATE ");
-	_outFuncName(str, node->aggname);
-	string_append_char(str, "(");
-	if (node->aggtype)
-		_outNode(str, node->aggtype);
-	else
-		string_append_char(str, "*");
-	string_append_char(str, ")");
-
-	if (node->behavior == DROP_CASCADE)
-		string_append_char(str, " CASCADE");
-}
-
-static void
-_outRemoveOperStmt(String *str, RemoveOperStmt *node)
-{
-	string_append_char(str, "DROP OPERATOR ");
-	_outOperatorName(str, node->opname);
-
-	string_append_char(str, "(");
-	_outOperatorArgTypes(str, node->args);
 	string_append_char(str, ")");
 
 	if (node->behavior == DROP_CASCADE)
@@ -3744,24 +3924,7 @@ _outAlterDatabaseSetStmt(String *str, AlterDatabaseSetStmt *node)
 	string_append_char(str, node->dbname);
 	string_append_char(str, "\" ");
 
-	if (node->value)
-	{
-		VariableSetStmt v;
-
-		memset(&v, 0, sizeof(VariableSetStmt));
-
-		string_append_char(str, "SET ");
-		v.name = node->variable;
-		v.args = node->value;
-		_outSetRest(str, &v);
-	}
-	else
-	{
-		VariableResetStmt v;
-		v.type = T_VariableResetStmt;
-		v.name = node->variable;
-		_outNode(str, &v);
-	}
+	_outNode(str, node->setstmt);
 }
 
 static void
@@ -3874,11 +4037,15 @@ _outExecuteStmt(String *str, ExecuteStmt *node)
 {
 	if (node->into)
 	{
+		IntoClause *into = node->into;
+		RangeVar *rel = into->rel;
+
 		string_append_char(str, "CREATE ");
-		if (node->into->istemp == TRUE)
+		if (rel->istemp == TRUE)
 			string_append_char(str, "TEMP ");
 		string_append_char(str, "TABLE ");
-		_outNode(str, node->into);
+		_outNode(str, into->rel);
+		string_append_char(str, " AS ");
 	}
 
 	string_append_char(str, "EXECUTE \"");
@@ -4128,6 +4295,233 @@ _outRangeFunction(String *str, RangeFunction *node)
 		_outNode(str, node->coldeflist);
 		string_append_char(str, ")");
 	}
+}
+
+static void
+_outDiscardStmt(String *str, DiscardStmt *node)
+{
+	switch (node->target)
+	{
+		case DISCARD_ALL:
+			string_append_char(str, "DISCARD ALL");
+			break;
+
+		case DISCARD_TEMP:
+			string_append_char(str, "DISCARD TEMP");
+			break;
+
+		case DISCARD_PLANS:
+			string_append_char(str, "DISCARD PLANS");
+			break;
+
+		default:
+			break;
+	}
+}
+
+static void
+_outCreateOpFamilyStmt(String *str, CreateOpFamilyStmt *node)
+{
+	string_append_char(str, "CREATE OPERATOR FAMILY ");
+	_outIdList(str, node->opfamilyname);
+	string_append_char(str, " USING \"");
+	string_append_char(str, node->amname);
+	string_append_char(str, "\"");
+}
+
+static void
+_outAlterOpFamilyStmt(String *str, AlterOpFamilyStmt *node)
+{
+}
+
+static void
+_outRemoveOpFamilyStmt(String *str, RemoveOpFamilyStmt *node)
+{
+	string_append_char(str, "DROP OPERATOR FAMILY ");
+	if (node->missing_ok)
+		string_append_char(str, "IF EXISTS ");
+	_outIdList(str, node->opfamilyname);
+	string_append_char(str, " USING \"");
+	string_append_char(str, node->amname);
+	string_append_char(str, "\"");
+}
+
+static void
+_outCreateEnumStmt(String *str, CreateEnumStmt *node)
+{
+	string_append_char(str, "CREATE TYPE ");
+	_outIdList(str, node->typename);
+	string_append_char(str, " AS ENUM (");
+	_outNode(str, node->vals);
+	string_append_char(str, ")");
+}
+
+static void
+_outDropOwnedStmt(String *str, DropOwnedStmt *node)
+{
+	string_append_char(str, "DROP OWNED BY ");
+	_outIdList(str, node->roles);
+	if (node->behavior == DROP_CASCADE)
+		string_append_char(str, " CASCADE");
+}
+
+static void
+_outReassignOwnedStmt(String *str, ReassignOwnedStmt *node)
+{
+	string_append_char(str, "REASSIGN OWNED BY ");
+	_outIdList(str, node->roles);
+	string_append_char(str, " TO \"");
+	string_append_char(str, node->newrole);
+	string_append_char(str, "\"");
+}
+
+static void
+_outAlterTSDictionaryStmt(String *str, AlterTSDictionaryStmt *node)
+{
+	string_append_char(str, "ALTER TEXT SEARCH DICTIONARY ");
+	_outIdList(str, node->dictname);
+	string_append_char(str, "(");
+	_outNode(str, node->options);
+	string_append_char(str, ")");
+}
+
+static void
+_outAlterTSConfigurationStmt(String *str, AlterTSConfigurationStmt *node)
+{
+	string_append_char(str, "ALTER TEXT SEARCH CONFIGURATION ");
+	_outIdList(str, node->cfgname);
+	if (node->override == false && node->replace == false)
+	{
+		string_append_char(str, "ADD MAPPING FOR ");
+		_outIdList(str, node->tokentype);
+		string_append_char(str, " WITH ");
+		_outIdList(str, node->dicts);
+	}
+	else if (node->override == true && node->replace == false)
+	{
+		string_append_char(str, "ALTER MAPPING FOR ");
+		_outIdList(str, node->tokentype);
+		string_append_char(str, " WITH ");
+		_outIdList(str, node->dicts);
+	}
+	else if (node->override == false && node->replace == true)
+	{
+		if (node->tokentype == NIL)
+			string_append_char(str, "ALTER MAPPING ");
+		else
+		{
+			string_append_char(str, "ALTER MAPPING FOR ");
+			_outIdList(str, node->tokentype);
+		}
+		string_append_char(str, "REPLACE ");
+		_outNode(str, linitial(node->dicts));
+		string_append_char(str, " WITH ");
+		_outNode(str, lsecond(node->dicts));
+	}
+	else if (node->missing_ok == false)
+	{
+		string_append_char(str, " DROP MAPPING FOR ");
+		_outIdList(str, node->tokentype);
+	}
+	else if (node->missing_ok == true)
+	{
+		string_append_char(str, " DROP MAPPING IF EXISTS FOR ");
+		_outIdList(str, node->tokentype);
+	}
+}
+
+static void
+_outXmlSerialize(String *str, XmlSerialize *node)
+{
+
+}
+
+static void
+_outInhRelation(String *str, InhRelation *node)
+{
+	ListCell *lc;
+
+	string_append_char(str, "LIKE ");
+	_outNode(str, node->relation);
+	foreach (lc, node->options)
+	{
+		CreateStmtLikeOption v;
+		v = (CreateStmtLikeOption)lfirst(lc);
+
+		switch (v)
+		{
+			case CREATE_TABLE_LIKE_INCLUDING_DEFAULTS:
+				string_append_char(str, " INCLUDING DEFAULTS");
+				break;
+
+			case CREATE_TABLE_LIKE_EXCLUDING_DEFAULTS:
+				string_append_char(str, " EXCLUDING DEFAULTS");
+				break;
+
+			case CREATE_TABLE_LIKE_INCLUDING_CONSTRAINTS:
+				string_append_char(str, " INCLUDING CONSTRAINTS");
+				break;
+
+			case CREATE_TABLE_LIKE_EXCLUDING_CONSTRAINTS:
+				string_append_char(str, " EXCLUDING CONSTRAINTS");
+				break;
+
+			case CREATE_TABLE_LIKE_INCLUDING_INDEXES:
+				string_append_char(str, " INCLUDING INDEXES");
+				break;
+
+			case CREATE_TABLE_LIKE_EXCLUDING_INDEXES:
+				string_append_char(str, " EXCLUDING INDEXES");
+				break;
+
+			default:
+				break;
+		}
+	}
+}
+
+static void
+_outWithDefinition(String *str, List *def_list)
+{
+	int oid = 0;
+
+	if (list_length(def_list) == 1)
+	{
+		DefElem *elem;
+		Value *v;
+		
+		elem = linitial(def_list);
+		v = (Value *)elem->arg;
+		if (strcmp(elem->defname, "oids") == 0)
+		{
+			Value *v = (Value *)elem->arg;
+			if (v->val.ival == 1)
+				string_append_char(str, " WITH OIDS ");
+			else
+				string_append_char(str, " WITHOUT OIDS ");
+			oid = 1;
+		}
+	}
+
+	if (oid == 1)
+		return;
+
+	string_append_char(str, " WITH ");
+	_outDefinition(str, def_list);
+}
+
+static void
+_outCurrentOfExpr(String *str, CurrentOfExpr *node)
+{
+	string_append_char(str, "CURRENT OF ");
+	if (node->cursor_name == NULL)
+	{
+		char n[10];
+		snprintf(n, sizeof(n), "$%d", node->cursor_param);
+		string_append_char(str, n);
+	}
+	else
+		string_append_char(str, node->cursor_name);
 }
 
 /*
@@ -4399,10 +4793,6 @@ _outNode(String *str, void *obj)
 				_outDeallocateStmt(str, obj);
 				break;
 
-			case T_VariableResetStmt:
-				_outVariableResetStmt(str, obj);
-				break;
-
 			case T_RenameStmt:
 				_outRenameStmt(str, obj);
 				break;
@@ -4539,14 +4929,6 @@ _outNode(String *str, void *obj)
 				_outRemoveFuncStmt(str, obj);
 				break;
 
-			case T_RemoveAggrStmt:
-				_outRemoveAggrStmt(str, obj);
-				break;
-
-			case T_RemoveOperStmt:
-				_outRemoveOperStmt(str, obj);
-				break;
-
 			case T_CreateCastStmt:
 				_outCreateCastStmt(str, obj);
 				break;
@@ -4627,6 +5009,53 @@ _outNode(String *str, void *obj)
 			case T_RangeFunction:
 				_outRangeFunction(str, obj);
 				break;
+
+			case T_DiscardStmt:
+				_outDiscardStmt(str, obj);
+				break;
+
+			case T_CreateOpFamilyStmt:
+				_outCreateOpFamilyStmt(str, obj);
+				break;
+
+			case T_AlterOpFamilyStmt:
+				_outAlterOpFamilyStmt(str, obj);
+				break;
+
+			case T_RemoveOpFamilyStmt:
+				_outRemoveOpFamilyStmt(str, obj);
+				break;
+
+			case T_CreateEnumStmt:
+				_outCreateEnumStmt(str, obj);
+				break;
+
+			case T_DropOwnedStmt:
+				_outDropOwnedStmt(str, obj);
+				break;
+
+			case T_ReassignOwnedStmt:
+				_outReassignOwnedStmt(str, obj);
+				break;
+
+			case T_AlterTSDictionaryStmt:
+				_outAlterTSDictionaryStmt(str, obj);
+				break;
+
+			case T_AlterTSConfigurationStmt:
+				_outAlterTSConfigurationStmt(str, obj);
+				break;
+
+			case T_XmlSerialize:
+				_outXmlSerialize(str, obj);
+				break;
+
+			case T_InhRelation:
+				_outInhRelation(str, obj);
+				break;
+
+			case T_CurrentOfExpr:
+				_outCurrentOfExpr(str, obj);
 
 			default:
 				break;

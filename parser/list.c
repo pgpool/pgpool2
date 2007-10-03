@@ -16,6 +16,7 @@
 /*#include "postgres.h"*/
 
 #include <stdlib.h>
+#include "pool_memory.h"
 #include "pg_list.h"
 
 #define ereport(a,b)

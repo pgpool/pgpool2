@@ -19,5 +19,6 @@
 
 extern List *raw_parser(const char *str);
 extern void free_parser(void);
+extern int filtered_base_yylex(void);
 
 #endif   /* PARSER_H */

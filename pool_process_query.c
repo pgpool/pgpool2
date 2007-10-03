@@ -865,7 +865,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		{
 			SelectStmt *select = (SelectStmt *)node;
 
-			if (! (select->into || select->lockingClause))
+			if (! (select->intoClause || select->lockingClause))
 			{
 				parsed_query = strdup(nodeToString(node));
 				if (parsed_query == NULL)
@@ -3990,7 +3990,7 @@ static int is_select_query(Node *node, char *sql)
 		return 0;
 
 	select_stmt = (SelectStmt *)node;
-	if (select_stmt->into || select_stmt->lockingClause)
+	if (select_stmt->intoClause || select_stmt->lockingClause)
 		return 0;
 
 	if (pool_config->ignore_leading_white_space)
@@ -4582,7 +4582,7 @@ static int is_strict_query(Node *node)
 		case T_SelectStmt:
 		{
 			SelectStmt *stmt = (SelectStmt *)node;
-			return (stmt->into || stmt->lockingClause) ? 1 : 0;
+			return (stmt->intoClause || stmt->lockingClause) ? 1 : 0;
 		}
 
 		case T_UpdateStmt:

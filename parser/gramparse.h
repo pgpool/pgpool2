@@ -29,7 +29,7 @@ extern void yyerror(const char *message);
 
 /* from gram.y */
 extern void parser_init(void);
-extern int	yyparse(void);
+extern int	base_yyparse(void);
 extern List *SystemFuncName(char *name);
 extern TypeName *SystemTypeName(char *name);
 extern bool exprIsNullConstant(Node *arg);

@@ -113,7 +113,6 @@ static void _rewriteUnlistenStmt(Node *BaseSelect, RewriteQuery *message, ConInf
 static void _rewriteLoadStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, LoadStmt *node);
 static void _rewriteCopyStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, CopyStmt *node);
 static void _rewriteDeallocateStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, DeallocateStmt *node);
-static void _rewriteVariableResetStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, VariableResetStmt *node);
 static void _rewriteRenameStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, RenameStmt *node);
 static void _rewriteCreateRoleStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, CreateRoleStmt *node);
 static void _rewriteAlterRoleStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, AlterRoleStmt *node);
@@ -141,8 +140,6 @@ static void _rewriteGrantRoleStmt(Node *BaseSelect, RewriteQuery *message, ConIn
 static void _rewriteCreateFunctionStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, CreateFunctionStmt *node);
 static void _rewriteAlterFunctionStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, AlterFunctionStmt *node);
 static void _rewriteRemoveFuncStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, RemoveFuncStmt *node);
-static void _rewriteRemoveAggrStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, RemoveAggrStmt *node);
-static void _rewriteRemoveOperStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, RemoveOperStmt *node);
 static void _rewriteCreateCastStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, CreateCastStmt *node);
 static void _rewriteDropCastStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, DropCastStmt *node);
 static void _rewriteReindexStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, ReindexStmt *node);
@@ -174,6 +171,7 @@ static void _rewriteFuncOptList(Node *BaseSelect, RewriteQuery *message, ConInfo
 static void _rewriteCreatedbOptList(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, List *options);
 static void _rewriteOperatorArgTypes(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, List *args);
 static void _rewriteRangeFunction(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, RangeFunction *node);
+static void _rewriteWithDefinition(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, List *def_list);
 
 /* use optimization of pool_parallel */
 static int checkFuncArgs(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, List *list);
@@ -799,8 +797,8 @@ checkSelectStmtOneTable(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink
 	RangeVar *var = NULL;
 	int use_select_onetable = -1;
 
-	if(node->larg || node->all || node->rarg || node->into ||
-	   node->intoColNames ||  node->distinctClause || node->havingClause)
+	if(node->larg || node->all || node->rarg || node->intoClause ||
+	   node->distinctClause || node->havingClause)
 	{
 		return 0;
 	}
@@ -1410,7 +1408,7 @@ _rewriteSubLink(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink
 		KeepRewriteQueryCode(message, SELECT_AEXPR_FALSE);
 		return;
 	}
-	_rewriteNode(BaseSelect, message, dblink, str, node->lefthand);
+	_rewriteNode(BaseSelect, message, dblink, str, node->testexpr);
 
 	if (node->operName != NIL)
 	{
@@ -1669,7 +1667,7 @@ _rewriteJoinExpr(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 		else
 			delay_string_append_char(message, str, " JOIN ");
 	}
-	else if (node->jointype == JOIN_UNION)
+	else if (node->jointype == JOIN_INNER)
 		delay_string_append_char(message, str, " JOIN ");
 	else if (node->jointype == JOIN_LEFT)
 		delay_string_append_char(message, str, " LEFT OUTER JOIN ");
@@ -1743,16 +1741,32 @@ _rewriteCreateStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 		delay_string_append_char(message, str, ")");
 	}
 
-	switch (node->hasoids)
+	if (node->options)
+		_rewriteWithDefinition(BaseSelect, message, dblink, str, node->options);
+
+	switch (node->oncommit)
 	{
-		case MUST_HAVE_OIDS:
-			delay_string_append_char(message, str, "WITH OIDS ");
+		case ONCOMMIT_DROP:
+			delay_string_append_char(message, str, " ON COMMIT DROP");
 			break;
-		case MUST_NOT_HAVE_OIDS:
-			delay_string_append_char(message, str, "WITHOUT OIDS ");
-			break;
+
+		case ONCOMMIT_DELETE_ROWS:
+			delay_string_append_char(message, str, " ON COMMIT DELETE ROWS");
+
+
+		case ONCOMMIT_PRESERVE_ROWS:
+			delay_string_append_char(message, str, " ON COMMIT PRESERVE ROWS");
+ 			break;
+
 		default:
 			break;
+	}
+
+	if (node->tablespacename)
+	{
+		delay_string_append_char(message, str, " TABLESPACE \"");
+		delay_string_append_char(message, str, node->tablespacename);
+		delay_string_append_char(message, str, "\"");
 	}
 }
 
@@ -1764,7 +1778,10 @@ _rewriteIndexStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbli
 	if (node->unique == TRUE)
 		delay_string_append_char(message, str, "UNIQUE ");
 
-	delay_string_append_char(message, str, "INDEX \"");
+	if (node->concurrent == true)
+		delay_string_append_char(message, str, "INDEX CONCURRENTLY \"");
+	else
+		delay_string_append_char(message, str, "INDEX \"");		
 	delay_string_append_char(message, str, node->idxname);
 	delay_string_append_char(message, str, "\" ON ");
 	_rewriteNode(BaseSelect, message, dblink, str, node->relation);
@@ -2004,37 +2021,48 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 	}
 	else
 	{
-		if (node->into)
+		if (node->intoClause)
 		{
-			delay_string_append_char(message, str, " CREATE ");
-			if (node->into->istemp == true)
+			IntoClause *into = node->intoClause;
+			RangeVar *rel = (RangeVar *)into->rel;
+
+			delay_string_append_char(message, str, "CREATE ");
+			if (rel->istemp == true)
 				delay_string_append_char(message, str, "TEMP ");
 			delay_string_append_char(message, str, "TABLE ");
-			_rewriteNode(BaseSelect, message, dblink, str, node->into);
+			_rewriteNode(BaseSelect, message, dblink, str, into->rel);
 			KeepRewriteQueryCode(message, message_r_code);
 
-			if (node->intoColNames)
+			if (into->colNames)
 			{
 				delay_string_append_char(message, str, " (");
-				_rewriteNode(BaseSelect, message, dblink, str, node->intoColNames);
+				_rewriteNode(BaseSelect, message, dblink, str, into->colNames);
 				delay_string_append_char(message, str, ") ");
 				KeepRewriteQueryCode(message, message_r_code);
 			}
 
-			switch (node->intoHasOids)
+			if (into->options)
+				_rewriteWithDefinition(BaseSelect, message, dblink, str, into->options);
+
+			switch (into->onCommit)
 			{
-				case MUST_HAVE_OIDS:
-					delay_string_append_char(message, str, " WITH OIDS AS");
+				case ONCOMMIT_DROP:
+					delay_string_append_char(message, str, " ON COMMIT DROP");
 					break;
 
-				case MUST_NOT_HAVE_OIDS:
-					delay_string_append_char(message, str, " WITHOUT OIDS AS ");
+				case ONCOMMIT_DELETE_ROWS:
+					delay_string_append_char(message, str, " ON COMMIT DELETE ROWS");
 					break;
 
-				case DEFAULT_OIDS:
-					delay_string_append_char(message, str, " AS");
+				case ONCOMMIT_PRESERVE_ROWS:
+					delay_string_append_char(message, str, " ON COMMIT PRESERVE ROWS");
+					break;
+
+				default:
 					break;
 			}
+
+			delay_string_append_char(message, str, " AS");
 		}
 
 		delay_string_append_char(message, str, " SELECT ");
@@ -2172,7 +2200,7 @@ _rewriteLockingClause(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *
 
 	_rewriteNode(BaseSelect, message, dblink, str, node->lockedRels);
 
-	if (node->nowait == TRUE)
+	if (node->noWait == TRUE)
 		delay_string_append_char(message, str, " NOWAIT ");
 }
 
@@ -2183,6 +2211,7 @@ _rewriteColumnDef(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbli
 	delay_string_append_char(message, str, node->colname);
 	delay_string_append_char(message, str, "\" ");
 	_rewriteNode(BaseSelect, message, dblink, str, node->typename);
+	_rewriteNode(BaseSelect, message, dblink, str, node->constraints);
 }
 
 static void
@@ -2200,7 +2229,7 @@ _rewriteTypeName(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 			dot = 1;
 		else
 			delay_string_append_char(message, str, ".");
-			if(node->typmod < 0)
+			if(node->typemod < 0)
 			{
 				if(message->r_code == SELECT_DEFAULT_INSIDE_DBLINK)
 				{
@@ -2216,14 +2245,14 @@ _rewriteTypeName(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 				delay_string_append_char(message, str, typename);
 	}
 	
-	if (node->typmod > 0)
+	if (node->typemod > 0)
 	{
 		int lower;
 		char buf[16];
 		delay_string_append_char(message, str, "(");
-		snprintf(buf, 16, "%d", ((node->typmod - VARHDRSZ) >> 16) & 0x00FF);
+		snprintf(buf, 16, "%d", ((node->typemod - VARHDRSZ) >> 16) & 0x00FF);
 		delay_string_append_char(message, str, buf);
-		lower = (node->typmod-VARHDRSZ) & 0x00FF;
+		lower = (node->typemod-VARHDRSZ) & 0x00FF;
 
 		if(lower != 0)
 		{
@@ -2691,13 +2720,18 @@ _rewriteSortBy(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink,
 {
 	_rewriteNode(BaseSelect, message, dblink, str, node->node);
 	
-	if (node->sortby_kind == SORTBY_USING)
+	if (node->sortby_dir == SORTBY_USING)
 	{
 		delay_string_append_char(message, str, " USING ");
 		_rewriteNode(BaseSelect, message, dblink, str, node->useOp);
 	}
-	else if (node->sortby_kind == SORTBY_DESC)
+	else if (node->sortby_dir == SORTBY_DESC)
 		delay_string_append_char(message, str, " DESC ");
+
+	if (node->sortby_nulls == SORTBY_NULLS_FIRST)
+		delay_string_append_char(message, str, " NULLS FIRST ");
+	else if (node->sortby_nulls == SORTBY_NULLS_LAST)
+		delay_string_append_char(message, str, " NULLS LAST ");
 }
 
 static void _rewriteInsertStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, InsertStmt *node)
@@ -2705,8 +2739,7 @@ static void _rewriteInsertStmt(Node *BaseSelect, RewriteQuery *message, ConInfoT
 	delay_string_append_char(message, str, "INSERT INTO ");
 	_rewriteNode(BaseSelect, message, dblink, str, node->relation);
 
-	if (node->cols == NIL && node->targetList == NIL &&
-		node->selectStmt == NULL)
+	if (node->cols == NIL && node->selectStmt == NULL)
 		delay_string_append_char(message, str, " DEFAULT VALUES");
 
 	if (node->cols)
@@ -2731,18 +2764,16 @@ static void _rewriteInsertStmt(Node *BaseSelect, RewriteQuery *message, ConInfoT
 		delay_string_append_char(message, str, ")");
 	}
 
-	if (node->targetList != NIL)
-	{
-		delay_string_append_char(message, str, " VALUES (");
-		_rewriteNode(BaseSelect, message, dblink, str, node->targetList);
-		delay_string_append_char(message, str, ")");
-	}
-
 	if (node->selectStmt)
 	{
 		_rewriteNode(BaseSelect, message, dblink, str, node->selectStmt);
 	}
 
+	if (node->returningList)
+	{
+		delay_string_append_char(message, str, " RETURNING ");
+		_rewriteNode(BaseSelect, message, dblink, str, node->returningList);
+	}
 }
 
 static void _rewriteUpdateStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, UpdateStmt *node)
@@ -2780,6 +2811,12 @@ static void _rewriteUpdateStmt(Node *BaseSelect, RewriteQuery *message, ConInfoT
 		delay_string_append_char(message, str, " WHERE ");
 		_rewriteNode(BaseSelect, message, dblink, str, node->whereClause);
 	}
+
+	if (node->returningList)
+	{
+		delay_string_append_char(message, str, " RETURNING ");
+		_rewriteNode(BaseSelect, message, dblink, str, node->returningList);
+	}
 }
 
 static void _rewriteDeleteStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, DeleteStmt *node)
@@ -2798,6 +2835,12 @@ static void _rewriteDeleteStmt(Node *BaseSelect, RewriteQuery *message, ConInfoT
 	{
 		delay_string_append_char(message, str, " WHERE ");
 		_rewriteNode(BaseSelect, message, dblink, str, node->whereClause);
+	}
+
+	if (node->returningList)
+	{
+		delay_string_append_char(message, str, " RETURNING ");
+		_rewriteNode(BaseSelect, message, dblink, str, node->returningList);
 	}
 }
 
@@ -2873,7 +2916,7 @@ static void _rewriteVacuumStmt(Node *BaseSelect, RewriteQuery *message, ConInfoT
 	if (node->full == TRUE)
 		delay_string_append_char(message, str, "FULL ");
 	
-	if (node->freeze == TRUE)
+	if (node->freeze_min_age == 0)
 		delay_string_append_char(message, str, "FREEZE ");
 
 	if (node->verbose == TRUE)
@@ -2985,6 +3028,14 @@ static void _rewriteCopyStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTod
 
 	delay_string_append_char(message, str, "COPY ");
 
+	if (node->query)
+	{
+		delay_string_append_char(message, str, "(");
+		_rewriteNode(BaseSelect, message, dblink, str, node->query);
+		delay_string_append_char(message, str, ")");
+	}
+
+
 	if (binary == TRUE)
 		delay_string_append_char(message, str, "BINARY ");
 
@@ -3066,22 +3117,6 @@ static void _rewriteDeallocateStmt(Node *BaseSelect, RewriteQuery *message, ConI
 	delay_string_append_char(message, str, "DEALLOCATE \"");
 	delay_string_append_char(message, str, node->name);
 	delay_string_append_char(message, str, "\"");
-}
-
-static void _rewriteVariableResetStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, VariableResetStmt *node)
-{
-	delay_string_append_char(message, str, "RESET ");
-
-	if (strcmp(node->name, "timezone") == 0)
-		delay_string_append_char(message, str, "TIME ZONE");
-	else if (strcmp(node->name, "transaction_isolation") == 0)
-		delay_string_append_char(message, str, "TRANSACTION ISOLATION LEVEL");
-	else if (strcmp(node->name, "session_authorization") == 0)
-		delay_string_append_char(message, str, "SESSION AUTHORIZATION");
-	else if (strcmp(node->name, "all") == 0)
-		delay_string_append_char(message, str, "ALL");
-	else
-		delay_string_append_char(message, str, node->name);
 }
 
 static void _rewriteRenameStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, RenameStmt *node)
@@ -3242,9 +3277,14 @@ _rewriteOptRoleList(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *db
 
 		if (strcmp(elem->defname, "password") == 0)
 		{
-			delay_string_append_char(message, str, " PASSWORD '");
-			delay_string_append_char(message, str, value->val.str);
-			delay_string_append_char(message, str, "'");
+			if (value == NULL)
+				delay_string_append_char(message, str, " PASSWORD NULL");
+			else
+			{
+				delay_string_append_char(message, str, " PASSWORD '");
+				delay_string_append_char(message, str, value->val.str);
+				delay_string_append_char(message, str, "'");
+			}
 		}
 		else if (strcmp(elem->defname, "encryptedPassword") == 0)
 		{
@@ -3375,24 +3415,9 @@ _rewriteAlterRoleSetStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblin
 	delay_string_append_char(message, str, node->role);
 	delay_string_append_char(message, str, "\" ");
 
-	if (node->value)
+	if (node->setstmt)
 	{
-		VariableSetStmt s;
-
-		delay_string_append_char(message, str, "SET ");
-		memset(&s, 0, sizeof(VariableSetStmt));
-		s.name = node->variable;
-		s.args = node->value;
-		_rewriteSetRest(BaseSelect, message, dblink, str, &s);
-	}
-	else
-	{
-		VariableResetStmt s;
-		
-		memset(&s, 0, sizeof(VariableResetStmt));
-		s.type = T_VariableResetStmt;
-		s.name = node->variable;
-		_rewriteNode(BaseSelect, message, dblink, str, &s);
+		_rewriteNode(BaseSelect, message, dblink, str, node->setstmt);
 	}
 }
 
@@ -3436,7 +3461,8 @@ _rewriteSetRest(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink
 	if (strcmp(node->name, "timezone") == 0)
 	{
 		delay_string_append_char(message, str, "TIME ZONE ");
-		_rewriteNode(BaseSelect, message, dblink, str, node->args);
+		if (node->kind != VAR_RESET)
+			_rewriteNode(BaseSelect, message, dblink, str, node->args);
 	}
 	else if (strcmp(node->name, "TRANSACTION") == 0)
 	{
@@ -3451,24 +3477,49 @@ _rewriteSetRest(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink
 	else if (strcmp(node->name, "role") == 0)
 	{
 		delay_string_append_char(message, str, "ROLE ");
-		_rewriteNode(BaseSelect, message, dblink, str, node->args);
+		if (node->kind != VAR_RESET)
+			_rewriteNode(BaseSelect, message, dblink, str, node->args);
 	}
 	else if (strcmp(node->name, "session_authorization") == 0)
 	{
 		delay_string_append_char(message, str, "SESSION AUTHORIZATION ");
-		if (node->args == NIL)
+		if (node->args == NIL && node->kind != VAR_RESET)
 			delay_string_append_char(message, str, "DEFAULT");
 		else
 			_rewriteNode(BaseSelect, message, dblink, str, node->args);
 	}
+	else if (strcmp(node->name, "transaction_isolation") == 0)
+	{
+		delay_string_append_char(message, str, "TRANSACTION ISOLATION LEVEL");
+		if (node->kind != VAR_RESET)
+			_rewriteSetTransactionModeList(BaseSelect, message, dblink, str, node->args);
+	}
+	else if (strcmp(node->name, "xmloption") == 0)
+	{
+		A_Const *v = linitial(node->args);
+		delay_string_append_char(message, str, "XML OPTOIN ");
+		delay_string_append_char(message, str, v->val.val.str);
+	}
 	else
 	{
 		delay_string_append_char(message, str, node->name);
-		delay_string_append_char(message, str, " TO ");
-		if (node->args == NULL)
-			delay_string_append_char(message, str, "DEFAULT");
-		else
-			_rewriteNode(BaseSelect, message, dblink, str, node->args);
+		if (node->kind != VAR_RESET)
+		{
+			if (node->kind == VAR_SET_CURRENT)
+			{
+				delay_string_append_char(message, str, " FROM CURRENT");
+			}
+			else
+			{
+				delay_string_append_char(message, str, " TO ");
+				if (node->args == NULL)
+				{
+					delay_string_append_char(message, str, "DEFAULT");
+				}
+				else
+					_rewriteNode(BaseSelect, message, dblink, str, node->args);
+			}
+		}
 	}
 }
 
@@ -3476,6 +3527,8 @@ static void
 _rewriteDropRoleStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, DropRoleStmt *node)
 {
 	delay_string_append_char(message, str, "DROP ROLE ");
+	if (node->missing_ok == TRUE)
+		delay_string_append_char(message, str, "IF EXISTS ");
 	_rewriteIdList(BaseSelect, message, dblink, str, node->roles);
 }
 
@@ -3497,7 +3550,17 @@ _rewriteCreateSchemaStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblin
 static void
 _rewriteVariableSetStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, VariableSetStmt *node)
 {
-	delay_string_append_char(message, str, "SET ");
+	if (node->kind == VAR_RESET_ALL)
+	{
+		delay_string_append_char(message, str, "RESET ALL");
+		return;
+	}
+
+	if (node->kind == VAR_RESET)
+		delay_string_append_char(message, str, "RESET ");
+	else
+		delay_string_append_char(message, str, "SET ");
+
 	if (node->is_local)
 		delay_string_append_char(message, str, "LOCAL ");
 	
@@ -3528,11 +3591,11 @@ _rewriteConstraintsSetStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodbl
 	delay_string_append_char(message, str, "SET CONSTRAINTS ");
 
 	if (node->constraints == NIL)
-		delay_string_append_char(message, str, "ALL ");
+		delay_string_append_char(message, str, "ALL");
 	else
-		_rewriteIdList(BaseSelect, message, dblink, str, node->constraints);
+		_rewriteNode(BaseSelect, message, dblink, str, node->constraints);
 
-	delay_string_append_char(message, str, node->deferred == TRUE ? "DEFERRED" : "IMMEDIATE");
+	delay_string_append_char(message, str, node->deferred == TRUE ? " DEFERRED" : " IMMEDIATE");
 }
 
 static void
@@ -3624,15 +3687,20 @@ _rewriteAlterTableCmd(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *
 			delay_string_append_char(message, str, "SET WITHOUT OIDS");
 			break;
 
-		case AT_ToastTable:
-			delay_string_append_char(message, str, "CREATE TOAST TABLE");
-			break;
-
 		case AT_ClusterOn:
 			delay_string_append_char(message, str, "CLUSTER ON \"");
 			delay_string_append_char(message, str, node->name);
 			delay_string_append_char(message, str, "\"");
 			break;
+
+		case AT_EnableAlwaysTrig:
+			/* not implemented */
+			break;
+
+		case AT_EnableReplicaTrig:
+			/* not implemented */
+			break;
+
 
 		case AT_DropCluster:
 			delay_string_append_char(message, str, "SET WITHOUT CLUSTER");
@@ -3646,6 +3714,26 @@ _rewriteAlterTableCmd(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *
 
 		case AT_EnableTrigAll:
 			delay_string_append_char(message, str, "ENABLE TRIGGER ALL");
+			break;
+
+		case AT_EnableRule:
+			/* not implemented */
+			break;
+
+		case AT_EnableReplicaRule:
+			/* not implemented */
+			break;
+
+		case AT_EnableAlwaysRule:
+			/* not implemented */
+			break;
+
+		case AT_DisableRule:
+			/* not implemented */
+			break;
+
+		case AT_AddInherit:
+			/* not implemented */
 			break;
 
 		case AT_EnableTrigUser:
@@ -3676,6 +3764,14 @@ _rewriteAlterTableCmd(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *
 			delay_string_append_char(message, str, "SET TABLESPACE \"");
 			delay_string_append_char(message, str, node->name);
 			delay_string_append_char(message, str, "\"");
+			break;
+
+		case AT_SetRelOptions:
+			/* not implemented */
+			break;
+
+		case AT_ResetRelOptions:
+			/* not implemented */
 			break;
 
 		default:
@@ -3717,7 +3813,12 @@ _rewriteOptSeqList(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 		else if (strcmp(e->defname, "minvalue") == 0 && !v)
 			delay_string_append_char(message, str, " NO MINVALUE");
 		else if (strcmp(e->defname, "maxvalue") == 0 && !v)
-			delay_string_append_char(message, str, " MAX_VALUE");
+			delay_string_append_char(message, str, " NO MAXVALUE");
+		else if (strcmp(e->defname, "owned_by") == 0)
+		{
+			delay_string_append_char(message, str, " OWNED BY ");
+			_rewriteIdList(BaseSelect, message, dblink, str, (List *)e->arg);
+		}
 		else
 		{
 			if (strcmp(e->defname, "cache") == 0)
@@ -4043,6 +4144,30 @@ _rewriteDefineStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 			delay_string_append_char(message, str, " ");
 			_rewriteDefinition(BaseSelect, message, dblink, str, node->definition);
 			break;
+
+		case OBJECT_TSPARSER:
+			delay_string_append_char(message, str, "CREATE TEXT SEARCH PARSER ");
+			_rewriteIdList(BaseSelect, message, dblink, str, node->defnames);
+			_rewriteDefinition(BaseSelect, message, dblink, str, node->definition);
+			break;
+
+		case OBJECT_TSDICTIONARY:
+			delay_string_append_char(message, str, "CREATE TEXT SEARCH DICTIONARY ");
+			_rewriteIdList(BaseSelect, message, dblink, str, node->defnames);
+			_rewriteDefinition(BaseSelect, message, dblink, str, node->definition);
+			break;
+
+		case OBJECT_TSTEMPLATE:
+			delay_string_append_char(message, str, "CREATE TEXT SEARCH TEMPLATE ");
+			_rewriteIdList(BaseSelect, message, dblink, str, node->defnames);
+			_rewriteDefinition(BaseSelect, message, dblink, str, node->definition);
+			break;
+
+		case OBJECT_TSCONFIGURATION:
+			delay_string_append_char(message, str, "CREATE TEXT SEARCH CONFIGURATION ");
+			_rewriteIdList(BaseSelect, message, dblink, str, node->defnames);
+			_rewriteDefinition(BaseSelect, message, dblink, str, node->definition);
+			break;
 			
 		default:
 			break;
@@ -4331,6 +4456,11 @@ _rewritePrivTarget(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 			_rewriteNode(BaseSelect, message, dblink, str, node->objs);
 			break;
 
+		case ACL_OBJECT_SEQUENCE:
+			delay_string_append_char(message, str, "SEQUENCE ");
+			_rewriteNode(BaseSelect, message, dblink, str, node->objs);
+			break;
+
 		case ACL_OBJECT_FUNCTION:
 			delay_string_append_char(message, str, "FUNCTION ");
 			_rewriteNode(BaseSelect, message, dblink, str, node->objs);
@@ -4529,41 +4659,31 @@ _rewriteAlterFunctionStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodbli
 static void
 _rewriteRemoveFuncStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, RemoveFuncStmt *node)
 {
-	delay_string_append_char(message, str, "DROP FUNCTION ");
-	_rewriteFuncName(BaseSelect, message, dblink, str, node->funcname);
+	switch (node->kind)
+	{
+		case OBJECT_FUNCTION:
+			delay_string_append_char(message, str, "DROP FUNCTION ");
+			break;
+
+		case OBJECT_AGGREGATE:
+			delay_string_append_char(message, str, "DROP AGGREGATE ");
+			break;
+
+		case OBJECT_OPERATOR:
+			delay_string_append_char(message, str, "DROP OPERATOR CLASS ");
+			break;
+
+		default:
+			break;
+	}
+
+	if (node->missing_ok)
+		delay_string_append_char(message, str, "IF EXISTS ");
+
+	_rewriteFuncName(BaseSelect, message, dblink, str, node->name);
 
 	delay_string_append_char(message, str, " (");
 	_rewriteNode(BaseSelect, message, dblink, str, node->args);
-	delay_string_append_char(message, str, ")");
-
-	if (node->behavior == DROP_CASCADE)
-		delay_string_append_char(message, str, " CASCADE");
-}
-
-static void
-_rewriteRemoveAggrStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, RemoveAggrStmt *node)
-{
-	delay_string_append_char(message, str, "DROP AGGREGATE ");
-	_rewriteFuncName(BaseSelect, message, dblink, str, node->aggname);
-	delay_string_append_char(message, str, "(");
-	if (node->aggtype)
-		_rewriteNode(BaseSelect, message, dblink, str, node->aggtype);
-	else
-		delay_string_append_char(message, str, "*");
-	delay_string_append_char(message, str, ")");
-
-	if (node->behavior == DROP_CASCADE)
-		delay_string_append_char(message, str, " CASCADE");
-}
-
-static void
-_rewriteRemoveOperStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, RemoveOperStmt *node)
-{
-	delay_string_append_char(message, str, "DROP OPERATOR ");
-	_rewriteOperatorName(BaseSelect, message, dblink, str, node->opname);
-
-	delay_string_append_char(message, str, "(");
-	_rewriteOperatorArgTypes(BaseSelect, message, dblink, str, node->args);
 	delay_string_append_char(message, str, ")");
 
 	if (node->behavior == DROP_CASCADE)
@@ -4987,24 +5107,7 @@ _rewriteAlterDatabaseSetStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTod
 	delay_string_append_char(message, str, node->dbname);
 	delay_string_append_char(message, str, "\" ");
 
-	if (node->value)
-	{
-		VariableSetStmt v;
-
-		memset(&v, 0, sizeof(VariableSetStmt));
-
-		delay_string_append_char(message, str, "SET ");
-		v.name = node->variable;
-		v.args = node->value;
-		_rewriteSetRest(BaseSelect, message, dblink, str, &v);
-	}
-	else
-	{
-		VariableResetStmt v;
-		v.type = T_VariableResetStmt;
-		v.name = node->variable;
-		_rewriteNode(BaseSelect, message, dblink, str, &v);
-	}
+	_rewriteNode(BaseSelect, message, dblink, str, node->setstmt);
 }
 
 static void
@@ -5117,11 +5220,15 @@ _rewriteExecuteStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *db
 {
 	if (node->into)
 	{
+		IntoClause *into = node->into;
+		RangeVar *rel = into->rel;
+
 		delay_string_append_char(message, str, "CREATE ");
-		if (node->into->istemp == TRUE)
+		if (rel->istemp == TRUE)
 			delay_string_append_char(message, str, "TEMP ");
 		delay_string_append_char(message, str, "TABLE ");
-		_rewriteNode(BaseSelect, message, dblink, str, node->into);
+		_rewriteNode(BaseSelect, message, dblink, str, into->rel);
+		delay_string_append_char(message, str, " AS ");
 	}
 
 	delay_string_append_char(message, str, "EXECUTE \"");
@@ -5378,6 +5485,50 @@ _rewriteRangeFunction(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *
 		_rewriteNode(BaseSelect, message, dblink, str, node->coldeflist);
 		delay_string_append_char(message, str, ")");
 	}
+}
+
+static void
+_rewriteWithDefinition(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, List *def_list)
+{
+	int oid = 0;
+
+	if (list_length(def_list) == 1)
+	{
+		DefElem *elem;
+		Value *v;
+		
+		elem = linitial(def_list);
+		v = (Value *)elem->arg;
+		if (strcmp(elem->defname, "oids") == 0)
+		{
+			Value *v = (Value *)elem->arg;
+			if (v->val.ival == 1)
+				delay_string_append_char(message, str, " WITH OIDS ");
+			else
+				delay_string_append_char(message, str, " WITHOUT OIDS ");
+			oid = 1;
+		}
+	}
+
+	if (oid == 1)
+		return;
+
+	string_append_char(str, " WITH ");
+	_rewriteDefinition(BaseSelect, message, dblink, str, def_list);
+}
+
+static void
+_rewriteCurrentOfExpr(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, CurrentOfExpr *node)
+{
+	delay_string_append_char(message, str, "CURRENT OF ");
+	if (node->cursor_name == NULL)
+	{
+		char n[10];
+		snprintf(n, sizeof(n), "$%d", node->cursor_param);
+		delay_string_append_char(message, str, n);
+	}
+	else
+		delay_string_append_char(message, str, node->cursor_name);
 }
 
 /*
@@ -5672,10 +5823,6 @@ _rewriteNode(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, S
 				_rewriteDeallocateStmt(BaseSelect, message, dblink, str, obj);
 				break;
 
-			case T_VariableResetStmt:
-				_rewriteVariableResetStmt(BaseSelect, message, dblink, str, obj);
-				break;
-
 			case T_RenameStmt:
 				_rewriteRenameStmt(BaseSelect, message, dblink, str, obj);
 				break;
@@ -5812,14 +5959,6 @@ _rewriteNode(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, S
 				_rewriteRemoveFuncStmt(BaseSelect, message, dblink, str, obj);
 				break;
 
-			case T_RemoveAggrStmt:
-				_rewriteRemoveAggrStmt(BaseSelect, message, dblink, str, obj);
-				break;
-
-			case T_RemoveOperStmt:
-				_rewriteRemoveOperStmt(BaseSelect, message, dblink, str, obj);
-				break;
-
 			case T_CreateCastStmt:
 				_rewriteCreateCastStmt(BaseSelect, message, dblink, str, obj);
 				break;
@@ -5901,8 +6040,25 @@ _rewriteNode(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, S
 				_rewriteRangeFunction(BaseSelect, message, dblink, str, obj);
 				break;
 
+			case T_CurrentOfExpr:
+				_rewriteCurrentOfExpr(BaseSelect, message, dblink, str, obj);
+				break;
+
+			case T_DiscardStmt:
+			case T_CreateOpFamilyStmt:
+			case T_AlterOpFamilyStmt:
+			case T_RemoveOpFamilyStmt:
+			case T_CreateEnumStmt:
+			case T_DropOwnedStmt:
+			case T_ReassignOwnedStmt:
+			case T_AlterTSDictionaryStmt:
+			case T_AlterTSConfigurationStmt:
+			case T_XmlSerialize:
+			case T_InhRelation:
+				break;
+
 			default:
-						KeepRewriteQueryCode(message, SELECT_RELATION_ERROR);
+				KeepRewriteQueryCode(message, SELECT_RELATION_ERROR);
 				break;
 		}
 	}

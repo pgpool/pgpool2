@@ -139,7 +139,7 @@ static void examInsertStmt(Node *node,POOL_CONNECTION_POOL *backend, RewriteQuer
 		return;
 	}
 
-	list_t = (List *) insert->targetList;
+	list_t = (List *) insert->cols;
 	if (!list_t)
 	{
 		/* send  error message to frontend */
@@ -301,7 +301,7 @@ RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNE
 		case T_SelectStmt:
 		{
 			SelectStmt *stmt = (SelectStmt *)node;
-			if(stmt->into)
+			if(stmt->intoClause)
 			{
 				pool_send_error_message(frontend, MAJOR(backend), "XX000",
 										"pgpool2 sql restriction",
@@ -433,7 +433,7 @@ static int direct_parallel_query(SelectStmt *stmt,POOL_CONNECTION_POOL *backend)
 		return 1;
 	}
 
-	if (!stmt->distinctClause && !stmt->into && !stmt->intoColNames &&
+	if (!stmt->distinctClause && !stmt->intoClause &&
 		!stmt->groupClause && !stmt->havingClause && !stmt->sortClause &&
 		!stmt->limitOffset && !stmt->limitCount &&!stmt->larg && !stmt->rarg)
 	{
@@ -527,7 +527,7 @@ char *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 			return parallel;
 		}
 
-		if (stmt->distinctClause || stmt->into || stmt->intoColNames ||
+		if (stmt->distinctClause || stmt->intoClause ||
 			stmt->fromClause || stmt->groupClause || stmt->havingClause ||
 			stmt->sortClause || stmt->limitOffset || stmt->limitCount ||
 			stmt->lockingClause || stmt->larg || stmt->rarg)

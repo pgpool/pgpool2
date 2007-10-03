@@ -4,18 +4,19 @@
  *	  creator functions for primitive nodes. The functions here are for
  *	  the most frequently created nodes.
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.48 2005/10/15 02:49:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.57 2007/09/06 17:31:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "pool_parser.h"
 
 #include "makefuncs.h"
+#include "pool_memory.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -30,7 +31,8 @@
  *		makes an A_Expr node
  */
 A_Expr *
-makeA_Expr(A_Expr_Kind kind, List *name, Node *lexpr, Node *rexpr)
+makeA_Expr(A_Expr_Kind kind, List *name,
+		   Node *lexpr, Node *rexpr, int location)
 {
 	A_Expr	   *a = makeNode(A_Expr);
 
@@ -38,6 +40,7 @@ makeA_Expr(A_Expr_Kind kind, List *name, Node *lexpr, Node *rexpr)
 	a->name = name;
 	a->lexpr = lexpr;
 	a->rexpr = rexpr;
+	a->location = location;
 	return a;
 }
 
@@ -47,7 +50,7 @@ makeA_Expr(A_Expr_Kind kind, List *name, Node *lexpr, Node *rexpr)
  */
 A_Expr *
 makeSimpleA_Expr(A_Expr_Kind kind, const char *name,
-				 Node *lexpr, Node *rexpr)
+				 Node *lexpr, Node *rexpr, int location)
 {
 	A_Expr	   *a = makeNode(A_Expr);
 
@@ -55,6 +58,7 @@ makeSimpleA_Expr(A_Expr_Kind kind, const char *name,
 	a->name = list_make1(makeString((char *) name));
 	a->lexpr = lexpr;
 	a->rexpr = rexpr;
+	a->location = location;
 	return a;
 }
 
@@ -111,7 +115,7 @@ makeTargetEntry(Expr *expr,
 	 * arguments reduces the chance of error.
 	 */
 	tle->ressortgroupref = 0;
-	tle->resorigtbl = 0;
+	tle->resorigtbl = InvalidOid;
 	tle->resorigcol = 0;
 
 	tle->resjunk = resjunk;
@@ -136,11 +140,26 @@ flatCopyTargetEntry(TargetEntry *src_tle)
 }
 
 /*
+ * makeFromExpr -
+ *	  creates a FromExpr node
+ */
+FromExpr *
+makeFromExpr(List *fromlist, Node *quals)
+{
+	FromExpr   *f = makeNode(FromExpr);
+
+	f->fromlist = fromlist;
+	f->quals = quals;
+	return f;
+}
+
+/*
  * makeConst -
  *	  creates a Const node
  */
 Const *
 makeConst(Oid consttype,
+		  int32 consttypmod,
 		  int constlen,
 		  Datum constvalue,
 		  bool constisnull,
@@ -149,6 +168,7 @@ makeConst(Oid consttype,
 	Const	   *cnst = makeNode(Const);
 
 	cnst->consttype = consttype;
+	cnst->consttypmod = consttypmod;
 	cnst->constlen = constlen;
 	cnst->constvalue = constvalue;
 	cnst->constisnull = constisnull;
@@ -160,16 +180,20 @@ makeConst(Oid consttype,
 #if 0
 /*
  * makeNullConst -
- *	  creates a Const node representing a NULL of the specified type
+ *	  creates a Const node representing a NULL of the specified type/typmod
+ *
+ * This is a convenience routine that just saves a lookup of the type's
+ * storage properties.
  */
 Const *
-makeNullConst(Oid consttype)
+makeNullConst(Oid consttype, int32 consttypmod)
 {
-	short		typLen;
+	int16		typLen;
 	bool		typByVal;
 
 	get_typlenbyval(consttype, &typLen, &typByVal);
 	return makeConst(consttype,
+					 consttypmod,
 					 (int) typLen,
 					 (Datum) 0,
 					 true,
@@ -186,7 +210,8 @@ Node *
 makeBoolConst(bool value, bool isnull)
 {
 	/* note that pg_type.h hardwires size of bool as 1 ... duplicate it */
-	return (Node *) makeConst(BOOLOID, 1, BoolGetDatum(value), isnull, true);
+	return (Node *) makeConst(BOOLOID, -1, 1,
+							  BoolGetDatum(value), isnull, true);
 }
 #endif
 
@@ -261,14 +286,45 @@ makeRangeVar(char *schemaname, char *relname)
 /*
  * makeTypeName -
  *	build a TypeName node for an unqualified name.
+ *
+ * typmod is defaulted, but can be changed later by caller.
  */
 TypeName *
 makeTypeName(char *typnam)
 {
+	return makeTypeNameFromNameList(list_make1(makeString(typnam)));
+}
+
+/*
+ * makeTypeNameFromNameList -
+ *	build a TypeName node for a String list representing a qualified name.
+ *
+ * typmod is defaulted, but can be changed later by caller.
+ */
+TypeName *
+makeTypeNameFromNameList(List *names)
+{
 	TypeName   *n = makeNode(TypeName);
 
-	n->names = list_make1(makeString(typnam));
-	n->typmod = -1;
+	n->names = names;
+	n->typmods = NIL;
+	n->typemod = -1;
+	n->location = -1;
+	return n;
+}
+
+/*
+ * makeTypeNameFromOid -
+ *	build a TypeName node to represent a type already known by OID/typmod.
+ */
+TypeName *
+makeTypeNameFromOid(Oid typeid, int32 typmod)
+{
+	TypeName   *n = makeNode(TypeName);
+
+	n->typeid = typeid;
+	n->typemod = typmod;
+	n->location = -1;
 	return n;
 }
 
@@ -291,4 +347,18 @@ makeFuncExpr(Oid funcid, Oid rettype, List *args, CoercionForm fformat)
 	funcexpr->args = args;
 
 	return funcexpr;
+}
+
+/*
+ * makeDefElem -
+ *	build a DefElem node
+ */
+DefElem *
+makeDefElem(char *name, Node *arg)
+{
+	DefElem    *res = makeNode(DefElem);
+
+	res->defname = name;
+	res->arg = arg;
+	return res;
 }

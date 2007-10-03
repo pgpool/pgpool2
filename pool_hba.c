@@ -33,6 +33,7 @@
 #include "pool.h"
 #include "pool_path.h"
 #include "pool_ip.h"
+#include "parser/pool_memory.h"
 #include "parser/pg_list.h"
 
 #define MULTI_VALUE_SEP "\001" /* delimiter for multi-valued column strings */
