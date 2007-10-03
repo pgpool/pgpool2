@@ -156,6 +156,7 @@ static char *get_insert_command_table_name(InsertStmt *node);
 static void add_prepared_list(PreparedStatementList *p, Portal *portal);
 static void add_unnamed_portal(PreparedStatementList *p, Portal *portal);
 static void del_prepared_list(PreparedStatementList *p, Portal *portal);
+static void delete_all_prepared_list(PreparedStatementList *p, Portal *portal);
 static void reset_prepared_list(PreparedStatementList *p);
 static int send_deallocate(POOL_CONNECTION_POOL *backend, PreparedStatementList *p, int n);
 static char *parse_copy_data(char *buf, int len, char delimiter, int col_id);
@@ -1008,6 +1009,15 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 					portal->stmt = copyObject(node);
 					pending_prepared_portal = portal;
 				}
+				else if (IsA(node, DiscardStmt))
+				{
+					DiscardStmt *stmt = (DiscardStmt *)node;
+					if (stmt->target == DISCARD_ALL || stmt->target == DISCARD_PLANS)
+					{
+						pending_function = delete_all_prepared_list;
+						pending_prepared_portal = NULL;
+					}
+				}
 
 				/* switch old memory context */
 				pool_memory = old_context;
@@ -1391,8 +1401,9 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		 * forward message until receiving CommandComplete,
 		 * ErrorResponse, EmptyQueryResponse or PortalSuspend.
 		 */
-		if (kind == 'C' || kind == 'E' || kind != 'I' || kind != 's')
+		if (kind == 'C' || kind == 'E' || kind == 'I' || kind == 's')
 			break;
+
 		status = SimpleForwardToFrontend(kind, frontend, backend);
 		if (status != POOL_CONTINUE)
 			return status;
@@ -3467,7 +3478,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 	 * unregister pending prepared statement.
 	 */
 	if ((kind == 'C' || kind == '1' || kind == '3') &&
-		pending_function &&	pending_prepared_portal)
+		pending_function)
 	{
 		pending_function(&prepared_list, pending_prepared_portal);
 		if (pending_prepared_portal &&
@@ -4840,6 +4851,11 @@ static void del_prepared_list(PreparedStatementList *p, Portal *portal)
 				sizeof(Portal *) * (p->cnt - i - 1));
 	}
 	p->cnt--;
+}
+
+static void delete_all_prepared_list(PreparedStatementList *p, Portal *portal)
+{
+	reset_prepared_list(p);
 }
 
 static void reset_prepared_list(PreparedStatementList *p)
