@@ -1,0 +1,15 @@
+COPY t FROM 'xxx';
+COPY t FROM stdin;
+COPY t(x,y) FROM 'xxx';
+COPY t FROM 'xxx' BINARY;
+COPY t FROM 'xxx' OIDS;
+COPY t FROM 'xxx' DELIMITER ',';
+COPY t FROM 'xxx' NULL 'x';
+COPY t TO 'yyy';
+COPY t TO stdout;
+COPY t(x,y) TO 'yyy';
+COPY t TO 'yyy' BINARY;
+COPY t TO 'yyy' OIDS;
+COPY t TO 'yyy' DELIMITER ',';
+COPY t TO 'yyy' NULL 'x';
+COPY (SELECT * FROM t) TO 'xxx';

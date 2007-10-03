@@ -1,0 +1,13 @@
+select
+insert
+update
+delete
+misc
+var
+copy
+privileges
+transaction
+cursor
+prepare
+create
+drop
