@@ -120,7 +120,7 @@ insert_lock = false
 # whether the query is a SELECT so that it can be load balanced.  This
 # is useful for certain APIs such as DBI/DBD which is known to adding an
 # extra leading white space.
-ignore_leading_white_space = false
+ignore_leading_white_space = true
 
 # If true, print all statements to the log.  Like the log_statement option
 # to PostgreSQL, this allows for observing queries without engaging in full
