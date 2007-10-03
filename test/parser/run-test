@@ -3,8 +3,8 @@
 # $Header$
 
 #
-# 使い方：./run-test schedule
-#         schedule ファイルは # で始まる場合はその行を無視する
+# Usage：./run-test schedule
+#         ignore a line at the beginning of '#'
 #
 
 INPUT_DIRECTORY="input"

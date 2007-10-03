@@ -1,7 +1,5 @@
 $Header$
 
-パーサと SQL 生成処理を単体テストするためのプログラムを作成します。
-
 1. Parser test program
 
 1.1 How to build
