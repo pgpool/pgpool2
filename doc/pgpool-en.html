@@ -605,6 +605,12 @@ configuration parameters below must be set in addtion to everything above.</p>
       terminates the query. Default is false.</p>
   </dd>
 
+  <dt>replicate_select</dt>
+  <dd>
+      <p>When set to true, pgpool-II replicate SELECTs. If false,
+         pgpool-II only sends them to Master DB. Default is false.</p>
+  </dd>
+
   <dt>insert_lock</dt>
   <dd>
       <p>Replicating a table with SERIAL data type, the SERIAL column
