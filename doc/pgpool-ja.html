@@ -37,7 +37,7 @@
 
 		<div class="header_small" align="center">
 
-			(last update: 2007/02/12)<br />
+			(last update: 2007/10/04)<br />
 			[<a href="http://pgpool.projects.postgresql.org/">English page</a>]		</div>	</td>
     <td valign="top" style="border-left:1px dotted #cccccc;">
 	
@@ -428,6 +428,45 @@ prefork$B$9$k(Bpgpool-II$B$N%5!<%P%W%m%;%9$N?t$G$9!%%G%U%)%k%HCM$O(B32$B$K$
    $B%X%k%9%A%'%C%/$r9T$&$?$a$N(BPostgreSQL$B%f!<%6L>$G$9!%(B
 </p>
 
+<dt>failover_command
+<dd>
+<p>
+$B%N!<%I$,@Z$jN%$5$l$?;~$K<B9T$9$k%3%^%s%I$r;XDj$7$^$9!#FC<lJ8;z$r;XDj$9(B
+$B$k$H!"(Bpgpool $B$,I,MW$J>pJs$KCV$-49$($F%3%^%s%I$r<B9T$7$^$9!#(B
+
+<center>
+<table border>
+<tr><td>$BJ8;z(B</td><td>$B0UL#(B</td></tr>
+<tr><td>%d</td><td>$B@Z$jN%$5$l$?%N!<%IHV9f(B</td></tr>
+<tr><td>%h</td><td>$B@Z$jN%$5$l$?%N!<%I$N%[%9%HL>(B</td></tr>
+<tr><td>%p</td><td>$B@Z$jN%$5$l$?%N!<%I$N%]!<%HHV9f(B</td></tr>
+<tr><td>%D</td><td>$B@Z$jN%$5$l$?%N!<%I$N%G!<%?%Y!<%9%/%i%9%?%Q%9(B
+</td></tr>
+<tr><td>%%</td><td>'%'$BJ8;z(B</td></tr>
+</table>
+</center>
+</p>
+
+<dt>failback_command
+<dd>
+<p>
+$B%N!<%I$,I|5"$7$?;~$K<B9T$9$k%3%^%s%I$r;XDj$7$^$9!#FC<lJ8;z$r;XDj$9$k$H!"(B
+pgpool $B$,I,MW$J>pJs$KCV$-49$($F%3%^%s%I$r<B9T$7$^$9!#(B
+
+<center>
+<table border>
+<tr><td>$BJ8;z(B</td><td>$B0UL#(B</td></tr>
+<tr><td>%d</td><td>$BI|5"$7$?%N!<%IHV9f(B</td></tr>
+<tr><td>%h</td><td>$BI|5"$7$?%N!<%I$N%[%9%HL>(B</td></tr>
+<tr><td>%p</td><td>$BI|5"$7$?%N!<%I$N%]!<%HHV9f(B</td></tr>
+<tr><td>%D</td><td>$BI|5"$7$?%N!<%I$N%G!<%?%Y!<%9%/%i%9%?%Q%9(B
+</td></tr>
+<tr><td>%%</td><td>'%'$BJ8;z(B</td></tr>
+</table>
+</center>
+</p>
+
+
 <dt>ignore_leading_white_space
 <dd>
 <p>
@@ -717,7 +756,6 @@ raw$B%b!<%I!$%3%M%/%7%g%s%W!<%k%b!<%I$K2C$(!$0J2<$r@_Dj$7$^$9!%(B
 load_balance_mode = true $B$r@_Dj$7$?>l9g!$0J2<$N>r7o$rK~$?$7$?;~$KLd$$(B
 $B9g$o$;$O%m!<%I%P%i%s%9$5$l$^$9!%(B
 <ul>
-<li>PostgreSQL$B$N%P!<%8%g%s$,(B7.4$B0J9_(B
 <li>$BLd$$9g$o$;$,L@<(E*$J%H%i%s%/%6%7%g%s%V%m%C%/$NFbB&$K$J$$(B($B$D$^$j!$(B
        BEGIN$B$rH/9T$7$F$$$J$$(B)
 <li>SELECT $BJ8(B($B$?$@$7!"(BSELECT nextval $B$H(B SELECT setval $B$N>l9g$O=|$/(B)
@@ -743,6 +781,19 @@ load_balance_mode = true $B$r@_Dj$7$?>l9g!$0J2<$N>r7o$rK~$?$7$?;~$KLd$$(B
 PostgreSQL$B%5!<%P$N$&$A!$(B1$BBf$,%@%&%s$9$k$H!$$=$N%5!<%P$r@Z$jN%$7$F=LB`1?(B
 $BE>$KF~$j$^$9!%(B1$BBf$G$b%5!<%P$,@8$-;D$C$F$$$l$P!$%7%9%F%`$H$7$F$N1?MQ$r7Q(B
 $BB3$G$-$^$9!%(B
+</p>
+
+<h4>$B%l%W%j%1!<%7%g%s%b!<%I8GM-$N%(%i!<$K$D$$$F(B</h4>
+<p>
+$B%G!<%?$N@09g@-$rJ]$D$?$a$K!"%l%W%j%1!<%7%g%s;~$K(B INSERT, UPDATE,
+DELETE $B$N99?77o?t$,$9$Y$F$N%N!<%I$,F1$8$G$J$$>l9g$O%H%i%s%6%/%7%g%s$r(B
+$B%"%\!<%H$5$;$^$9!#%/%i%$%"%s%H$K$O0J2<$N%(%i!<$rJV$7$^$9!#(B
+<pre>
+   x=# update t set a = a + 1;
+   ERROR:  pgpool detected difference of the number of update tuples
+   HINT:  check data consistency between master and other db node
+</pre>
+
 </p>
 
 <h3>$B%^%9%?!<%9%l!<%V%b!<%I(B</h3>
@@ -2010,6 +2061,63 @@ count(*) $B$r;H$C$?%/%(%j$O!"0J2<$N$h$&$K=q$-49$($,9T$o$l$^$9!#(B
 
 <h1>$B%j%j!<%9%N!<%H(B<a name="release"></a></h1>
 
+<h2>2.0 (hikitsuboshi) 2007/11/14</h2>
+<h3>$B8_49@-(B</h3>
+<ul>
+  <li> ignore_leading_white_space $B$N%G%U%)%k%HCM$r(B true $B$K$7$^$7$?!#(B
+  (Yoshiyuki)
+</ul>
+
+<h3>$BA4HL(B</h3>
+<ul>
+  <li> pgpool.conf $B$r%j%m!<%I$G$-$k$h$&$K$7$^$7$?!#%j%m!<%I;~$KJ,;6%k!<(B
+  $B%k$bF1;~$K%j%m!<%I$7$^$9!#(B(Yoshiyuki)
+  <li> SQL $B%Q!<%5$r(B PostgreSQL 8.3 $B$KBP1~$7$^$7$?!#(B(Yoshiyuki)
+  <li> $B%N!<%I$r@Z$jN%$7$?:]$K%f!<%6$,@_Dj$7$?%3%^%s%I$r<B9T$G$-$k$h$&(B
+  $B$K!"(Bpgpool.conf $B$K(B failover_command $B$H$$$&%Q%i%a!<%?$rDI2C$7$^$7$?!#(B
+  (Yoshiyuki)
+  <li> $B%N!<%I$rI|5"$7$?:]$K%f!<%6$,@_Dj$7$?%3%^%s%I$r<B9T$G$-$k$h$&$K!"(B
+  pgpool.conf $B$K(B failback_command $B$H$$$&%Q%i%a!<%?$rDI2C$7$^$7$?!#(B
+  (Yoshiyuki)
+</ul>
+
+<h3>$B%l%W%j%1!<%7%g%s(B</h3>
+<ul>
+  <li> $B%H%i%s%6%/%7%g%s%V%m%C%/$K0O$^$l$F$$$J$$%/%(%j$r%l%W%j%1!<%7%g(B
+  $B%s$5$;$k>l9g!"FbItE*$K%H%i%s%6%/%7%g%s$r3+;O$5$;$k$h$&$K$7$^$7$?!#(B
+  (Yoshiyuki)
+  <li> $B%l%W%j%1!<%7%g%s$r9bB.2=$5$;$k$h$&$K$7$^$7$?!#(B(Yoshiyuki)
+  <li> $B%N!<%I$r:FF14|$5$;$FI|5"$5$;$k!"%*%s%i%$%s%j%+%P%j5!G=$r<BAu$7(B
+  $B$^$7$?!#(B(Yoshiyuki)
+  <li> INSERT, UPDATE, DELETE $B$7$?9T?t$,$9$Y$F0lCW$7$J$+$C$?>l9g$K!"%H(B
+  $B%i%s%6%/%7%g%s$r%"%\!<%H$5$;$k$h$&$K$7$^$7$?!#(B(Yoshiyuki)
+<pre>
+   x=# update t set a = a + 1;
+   ERROR:  pgpool detected difference of the number of update tuples
+   HINT:  check data consistency between master and other db node
+</pre>
+  <li> $B0[$J$k7k2L$,JV$C$F$-$?>l9g$N=hM}$r2~NI$7$^$7$?!#(B(Yoshiyuki)
+  <li> V2 $BLd9g$;%W%m%H%3%k$G%m!<%I%P%i%s%9$G$-$k$h$&$K$7$^$7$?!#(B(Yoshiyuki)
+</ul>
+
+<h3>$B%Q%i%l%k%/%(%j(B</h3>
+<ul>
+  <li> $B%Q%i%l%k%b!<%I$GItJ,%l%W%j%1!<%7%g%s$r%5%]!<%H$7$^$7$?!#(B(Yoshiharu)
+</ul>
+
+<h2>1.2.1 (tomoboshi) 2007/09/28</h2>
+<ul>
+  <li> $B3HD%Ld9g$;%W%m%H%3%k$N(B Parse $B%a%C%;!<%8$N=hM}$G%G%C%I%m%C%/$,H/(B
+  $B@8$9$k2DG=@-$,$"$kIT6q9g$r=$@5$7$^$7$?!#(B(Yoshiyuki)
+
+  <li> Prepared statement $B$r4IM}$9$kNN0h$,%a%b%j%j!<%/$7$F$$$kIT6q9g$r(B
+  $B=$@5$7$^$7$?!#(B(Yoshiyuki)
+
+  <li> $B0lIt$N(B OS $B$G%3%s%Q%$%k%(%i!<$K$J$kIT6q9g$r=$@5$7$^$7$?!#(B(Yoshiyuki)
+
+  <li>master/slave $B%b!<%IFb$G(B SET, PREPARE, DEALLOCATE $BJ8$r%l%W%j%1!<%7%g%s$5$;$k$h$&$K$7$^$7$?!#(B(Yoshiyuki)
+</ul>
+
 <h2>1.2 (tomoboshi) 2007/08/01</h2>
 <ul>
   <li> pgpool.conf $B$K(B replicate_select $B$H$$$&?75,%Q%i%a!<%?$rDI2C$7$^(B
@@ -2020,9 +2128,11 @@ count(*) $B$r;H$C$?%/%(%j$O!"0J2<$N$h$&$K=q$-49$($,9T$o$l$^$9!#(B
     $B$_(B SELECT $B$rAw?.$7$^$9!#(B
   </ul>
 
-  <li> $B$^$l$K%>%s%S%W%m%;%9$,;D$C$F$7$^$&IT6q9g$r=$@5$7$^$7$?!#(B
-  (Yoshiyuki)
-
+  <li> $B%7%0%J%k=hM}$r0BA4$K9T$&$h$&$K$7$^$7$?!#(B(Yoshiyuki)
+  <ul>
+    <li>$B$^$l$K%>%s%S%W%m%;%9$,;D$C$F$7$^$C$?$j!"IT0BDj$K$J$k$3$H$,$"$j$^$7$?!#(B
+  </ul>
+  
   <li> $B%H%i%s%6%/%7%g%sCf$K(B SELECT $BJ8$,%(%i!<$K$J$k$H!"%O%s%0%"%C%W$7(B
   $B$F$7$^$&IT6q9g$r=$@5$7$^$7$?!#(B(Yoshiyuki)
   <ul>
@@ -2048,6 +2158,9 @@ count(*) $B$r;H$C$?%/%(%j$O!"0J2<$N$h$&$K=q$-49$($,9T$o$l$^$9!#(B
 
   <li> $B%m!<%I%P%i%s%9@h$r@\B33+;O;~$K7hDj$7!"F1$8%;%C%7%g%sFb$G$O$9$Y(B
   $B$FF1$8%N!<%I$K%/%(%j$rAw?.$9$k$h$&$K$7$^$7$?!#(B(Yoshiyuki)
+
+  <li> connection_life_time $B$r@_Dj$7$F$$$k>l9g$K%P%C%U%!%*!<%P%i%s$,H/(B
+  $B@8$9$k2DG=@-$,$"$kIT6q9g$r=$@5$7$^$7$?!#(B(Yoshiyuki)
 
 </ul>
 
