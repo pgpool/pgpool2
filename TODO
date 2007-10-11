@@ -38,6 +38,8 @@ o バグ．master/slave mode&load balance modeのときに，reset queryがマス
 
 o OIDをreplicationする
 
+o graceful shutdown, attach, detach の実装
+
 
 * クエリキャッシュ
 o キャッシュの自動無効化の実装
