@@ -83,6 +83,15 @@ typedef enum {
 #define PROTO_MAJOR_V2	2
 #define PROTO_MAJOR_V3	3
 
+/*
+ * In protocol 3.0 and later, the startup packet length is not fixed, but
+ * we set an arbitrary limit on it anyway.	This is just to prevent simple
+ * denial-of-service attacks via sending enough data to run the server
+ * out of memory.
+ */
+#define MAX_STARTUP_PACKET_LENGTH 10000
+
+
 typedef struct StartupPacket_v2
 {
 	int			protoVersion;		/* Protocol version */

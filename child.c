@@ -922,6 +922,12 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 	{
 		pool_error("read_startup_packet: incorrect packet length (%d)", len);
 	}
+	else if (len >= MAX_STARTUP_PACKET_LENGTH)
+	{
+		pool_error("read_startup_packet: invalid startup packet");
+		pool_free_startup_packet(sp);
+		return NULL;
+	}
 
 	sp->startup_packet = calloc(len, 1);
 	if (!sp->startup_packet)
