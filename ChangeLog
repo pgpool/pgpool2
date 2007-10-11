@@ -1,3 +1,8 @@
+2007-10-11  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* child.c, pool.h: Check startup packet length. If the length is
+	  greater than 10,000 byte, pgpool reject the connection.
+
 2007-09-26  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* pool_process_query.c: SET statements are replicated in
