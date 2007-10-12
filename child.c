@@ -63,6 +63,7 @@ static POOL_CONNECTION_POOL *connect_backend(StartupPacket *sp, POOL_CONNECTION 
 static void cancel_request(CancelPacket *sp, int secondary_backend);
 static RETSIGTYPE die(int sig);
 static RETSIGTYPE close_idle_connection(int sig);
+static RETSIGTYPE authentication_timeout(int sig);
 static int send_params(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 static void send_frontend_exits(void);
 static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password);
@@ -871,6 +872,12 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 		return NULL;
 	}
 
+	if (pool_config->authentication_timeout > 0)
+	{
+		pool_signal(SIGALRM, authentication_timeout);
+		alarm(pool_config->authentication_timeout);
+	}
+
 	/* read startup packet length */
 	if (pool_read(cp, &len, sizeof(len)))
 	{
@@ -887,6 +894,8 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 	{
 		pool_error("read_startup_packet: invalid startup packet");
 		pool_free_startup_packet(sp);
+		alarm(0);
+		pool_signal(SIGALRM, SIG_IGN);
 		return NULL;
 	}
 
@@ -895,6 +904,8 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 	{
 		pool_error("read_startup_packet: out of memory");
 		pool_free_startup_packet(sp);
+		alarm(0);
+		pool_signal(SIGALRM, SIG_IGN);
 		return NULL;
 	}
 
@@ -902,6 +913,8 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 	if (pool_read(cp, sp->startup_packet, len))
 	{
 		pool_free_startup_packet(sp);
+		alarm(0);
+		pool_signal(SIGALRM, SIG_IGN);
 		return NULL;
 	}
 
@@ -921,6 +934,8 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 			{
 				pool_error("read_startup_packet: out of memory");
 				pool_free_startup_packet(sp);
+				alarm(0);
+				pool_signal(SIGALRM, SIG_IGN);
 				return NULL;
 			}
 			strncpy(sp->database, sp2->database, SM_DATABASE);
@@ -930,6 +945,8 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 			{
 				pool_error("read_startup_packet: out of memory");
 				pool_free_startup_packet(sp);
+				alarm(0);
+				pool_signal(SIGALRM, SIG_IGN);
 				return NULL;
 			}
 			strncpy(sp->user, sp2->user, SM_USER);
@@ -949,6 +966,8 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 					{
 						pool_error("read_startup_packet: out of memory");
 						pool_free_startup_packet(sp);
+						alarm(0);
+						pool_signal(SIGALRM, SIG_IGN);
 						return NULL;
 					}
 				}
@@ -960,6 +979,8 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 					{
 						pool_error("read_startup_packet: out of memory");
 						pool_free_startup_packet(sp);
+						alarm(0);
+						pool_signal(SIGALRM, SIG_IGN);
 						return NULL;
 					}
 				}
@@ -974,6 +995,8 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 			{
 				pool_error("read_startup_packet: out of memory");
 				pool_free_startup_packet(sp);
+				alarm(0);
+				pool_signal(SIGALRM, SIG_IGN);
 				return NULL;
 			}
 			sp->user = calloc(1, 1);
@@ -981,6 +1004,8 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 			{
 				pool_error("read_startup_packet: out of memory");
 				pool_free_startup_packet(sp);
+				alarm(0);
+				pool_signal(SIGALRM, SIG_IGN);
 				return NULL;
 			}
 			break;
@@ -988,12 +1013,15 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 		default:
 			pool_error("read_startup_packet: invalid major no: %d", sp->major);
 			pool_free_startup_packet(sp);
+			alarm(0);
+			pool_signal(SIGALRM, SIG_IGN);
 			return NULL;
 	}
 
 	pool_debug("Protocol Major: %d Minor: %d database: %s user: %s", 
 			   sp->major, sp->minor, sp->database, sp->user);
-
+	alarm(0);
+	pool_signal(SIGALRM, SIG_IGN);
 	return sp;
 }
 
@@ -1180,6 +1208,16 @@ static RETSIGTYPE close_idle_connection(int sig)
 			memset(p->info, 0, sizeof(ConnectionInfo));
 		}
 	}
+}
+
+/*
+ * signal handler for SIGALRM
+ * 
+ */
+static RETSIGTYPE authentication_timeout(int sig)
+{
+	pool_log("authentication is timeout");
+	exit(1);
 }
 
 /*

@@ -1,3 +1,11 @@
+2007-10-12  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* child.c, pool.h, pool_config.l, pool_config.c
+	  pool_process_query.c: Add new directive
+	  "authentication_timeout". The directive means the maximum time
+	  in seconds to complete client authentication. The default value
+	  is 60.
+
 2007-10-11  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* child.c, pool.h: Check startup packet length. If the length is
