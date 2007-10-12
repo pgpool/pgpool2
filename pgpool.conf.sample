@@ -44,7 +44,8 @@ connection_life_time = 0
 child_max_connections = 0
 
 # If child_idle_limit is n (n > 0), the child is forced to be
-# disconnected after n seconds idle between transactions.
+# disconnected whenever after n seconds idle (even inside an explicit
+# transactions!)
 # 0 means no disconnect.
 child_idle_limit = 0
 

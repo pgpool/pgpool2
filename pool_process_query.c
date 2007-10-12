@@ -354,7 +354,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				frontend_idle_count++;
 				if (frontend_idle_count > pool_config->child_idle_limit)
 				{
-					pool_debug("pool_process_query: child connection forced to terminate due to child_idle_limit(%d) reached", pool_config->child_idle_limit);
+					pool_log("pool_process_query: child connection forced to terminate due to child_idle_limit(%d) reached", pool_config->child_idle_limit);
 					return POOL_END;
 				}
 
@@ -3030,6 +3030,11 @@ static void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *b
 	strncpy(status[i].name, "connection_life_time", MAXNAMELEN);
 	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->connection_life_time);
 	strncpy(status[i].desc, "if idle for this seconds, connection closes", MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "child_idle_limit", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->child_idle_limit);
+	strncpy(status[i].desc, "if idle for this seconds, child connection closes", MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "child_max_connections", MAXNAMELEN);
