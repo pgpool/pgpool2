@@ -285,8 +285,18 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 			struct timeval timeout;
 			int num_fds, was_error = 0;
 
-			timeout.tv_sec = 1;
-			timeout.tv_usec = 0;
+		    /*
+			 * frontend idle counter. depends on the following
+			 * select(2) call's time out is 1 second.
+			 */
+			int frontend_idle_count = 0;
+
+		SELECT_RETRY:
+			if (pool_config->child_idle_limit > 0)
+			{
+				timeout.tv_sec = 1;
+				timeout.tv_usec = 0;
+			}
 
 			FD_ZERO(&readmask);
 			FD_ZERO(&writemask);
@@ -321,9 +331,15 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				num_fds = Max(frontend->fd + 1, num_fds);
 			}
 
+			/*
 			pool_debug("pool_process_query: num_fds: %d", num_fds);
+			*/
 
-			fds = select(num_fds, &readmask, &writemask, &exceptmask, NULL);
+			if (pool_config->child_idle_limit == 0)
+				fds = select(num_fds, &readmask, &writemask, &exceptmask, NULL);
+			else
+				fds = select(num_fds, &readmask, &writemask, &exceptmask, &timeout);
+
 			if (fds == -1)
 			{
 				if (errno == EINTR)
@@ -333,9 +349,16 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				return POOL_ERROR;
 			}
 
-			if (fds == 0)
+			if (pool_config->child_idle_limit > 0 && fds == 0)
 			{
-				return POOL_CONTINUE;
+				frontend_idle_count++;
+				if (frontend_idle_count > pool_config->child_idle_limit)
+				{
+					pool_debug("pool_process_query: child connection forced to terminate due to child_idle_limit(%d) reached", pool_config->child_idle_limit);
+					return POOL_END;
+				}
+
+				goto SELECT_RETRY;
 			}
 
 			for (i = 0; i < NUM_BACKENDS; i++)

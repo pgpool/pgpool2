@@ -134,6 +134,8 @@ typedef struct {
     int	child_life_time;	/* if idle for this seconds, child exits */
     int	connection_life_time;	/* if idle for this seconds, connection closes */
     int	child_max_connections;	/* if max_connections received, child exits */
+	int child_idle_limit;		/* If child_idle_limit is n (n > 0), the child is forced to be
+								   disconnected after n seconds idle between transactions */
     int	max_pool;	/* max # of connection pool per child */
     char *logdir;		/* logging directory */
     char *backend_socket_dir;	/* Unix domain socket directory for the PostgreSQL server */

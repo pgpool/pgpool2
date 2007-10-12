@@ -130,6 +130,7 @@ int pool_init_config(void)
 	pool_config->num_init_children = 32;
 	pool_config->max_pool = 4;
 	pool_config->child_life_time = 300;
+	pool_config->child_idle_limit = 0;
 	pool_config->connection_life_time = 0;
 	pool_config->child_max_connections = 0;
 	pool_config->logdir = DEFAULT_LOGDIR;
@@ -333,7 +334,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
+				pool_error("pool_config: %s must be equal or greater or equal to 0 numeric value", key);
 				fclose(fd);
 				return(-1);
 			}
@@ -358,11 +359,24 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be higher than 0 numeric value", key);
+				pool_error("pool_config: %s must be greater or equal to 0 numeric value", key);
 				fclose(fd);
 				return(-1);
 			}
 			pool_config->child_life_time = v;
+		}
+		else if (!strcmp(key, "child_idle_limit") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			int v = atoi(yytext);
+
+			if (token != POOL_INTEGER || v < 0)
+			{
+				pool_error("pool_config: %s must be greater or equal to 0 numeric value", key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->child_idle_limit = v;
 		}
 		else if (!strcmp(key, "connection_life_time") &&
 				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
@@ -371,7 +385,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be higher than 0 numeric value", key);
+				pool_error("pool_config: %s must be greater or equal to 0 numeric value", key);
 				fclose(fd);
 				return(-1);
 			}
@@ -384,7 +398,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be higher than 0 numeric value", key);
+				pool_error("pool_config: %s must be greater or equal to 0 numeric value", key);
 				fclose(fd);
 				return(-1);
 			}
@@ -396,7 +410,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be higher than 0 numeric value", key);
+				pool_error("pool_config: %s must be greater or equal to 0 numeric value", key);
 				fclose(fd);
 				return(-1);
 			}
@@ -516,7 +530,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be higher than 0 numeric value", key);
+				pool_error("pool_config: %s must be greater or equal to 0 numeric value", key);
 				fclose(fd);
 				return(-1);
 			}
