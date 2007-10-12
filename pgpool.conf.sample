@@ -48,6 +48,10 @@ child_max_connections = 0
 # 0 means no disconnect.
 child_idle_limit = 0
 
+# Maximum time in seconds to complete client authentication.
+# 0 means no timeout.
+authentication_timeout = 60
+
 # Logging directory
 logdir = '/tmp'
 
