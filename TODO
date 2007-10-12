@@ -17,9 +17,6 @@ o child は暇なときに accept しておく(LRU キューを作る)．
 o クライアントが quit したら，LRUキューから次のクライアントを取り出す
   ->childがexitするとキューの中身が失われるが，それでよいか？
 
-o エラーメッセージを送るときには，fdをnon blockにする．でないと，エラー
-  処理中にハングする可能性がある．
-
 o DROP DATABASEのロジックを変更．今はparentにSIGUSR1を送ってすべての
   idleコネクションを切断しているが，DROP DATABASEしようとしているデー
   タベースへのコネクションを切断すれば十分．
@@ -31,10 +28,6 @@ o セッションレベルのロードバランスを指示できる機能を追加
   /* BEGIN SESSION LEVEL LOAD BALANCE */とか．
 
 o load balanceの比率をSQL文単位でコメントで指定できるようにする．
-
-o バグ．master/slave mode&load balance modeのときに，reset queryがマス
-  タ側にしか出ない．master_slave modeでなければこの問題は起きない->しょ
-  うがない？->slave側にはSELECT以外は投げられないため
 
 o OIDをreplicationする
 
@@ -49,7 +42,3 @@ o キャッシュの自動無効化の実装
 o 複雑なクエリの高速化
 
 o トランザクション処理の改良
-
-o PostgreSQL 8.3のパーサの取り込み
-
-o レプリケーションモードとパラレルモードの統合
