@@ -2,6 +2,9 @@
 #define POOL_PARSER_H
 
 #include "../pool_type.h"
+#include <setjmp.h>
+
+extern jmp_buf jmpbuffer;
 
 /* integer */
 typedef signed int int32;
