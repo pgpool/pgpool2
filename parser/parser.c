@@ -20,6 +20,7 @@
  */
 
 #include <string.h>
+#include "pool_parser.h"
 #include "pool_memory.h"
 #include "gramparse.h"
 #include "gram.h"
@@ -27,6 +28,7 @@
 #include "value.h"
 
 List	   *parsetree;			/* result of parsing is left here */
+jmp_buf    jmpbuffer;
 
 static int	lookahead_token;	/* one-token lookahead */
 static bool have_lookahead;		/* lookahead_token set? */
@@ -50,13 +52,20 @@ raw_parser(const char *str)
 	scanner_init(str);
 	parser_init();
 
-	yyresult = yyparse();
+	if (setjmp(jmpbuffer) != 0)
+	{
+		scanner_finish();
+		return NIL; /* error */
+	}
+	else
+	{
+		yyresult = yyparse();
 
-	scanner_finish();
+		scanner_finish();
 
-	if (yyresult)				/* error */
-		return NIL;
-
+		if (yyresult)				/* error */
+			return NIL;
+	}
 	return parsetree;
 }
 

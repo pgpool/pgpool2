@@ -34,6 +34,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <setjmp.h>
 
 #define ereport(a,b)
 
@@ -742,7 +743,7 @@ other			.
 void
 yyerror(const char *message)
 {
-	/* do nothing */
+	longjmp(jmpbuffer, 1);
 }
 
 

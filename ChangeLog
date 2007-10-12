@@ -1,5 +1,11 @@
 2007-10-12  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
+	* parser/parser.c, pool_parser.h, scan.l: Fix scanner's error
+	  handling. If there was a unterminated double-quote identifier,
+	  scanner entered infinite-loop.
+
+2007-10-12  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
 	* child.c, pool.h, pool_config.l, pool_config.c
 	  pool_process_query.c: Add new directive
 	  "authentication_timeout". The directive means the maximum time
