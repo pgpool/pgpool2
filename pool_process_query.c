@@ -3042,6 +3042,11 @@ static void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *b
 	strncpy(status[i].desc, "max # of connection pool per child", MAXDESCLEN);
 	i++;
 
+	strncpy(status[i].name, "authentication_timeout", MAXNAMELEN);
+	snprintf(status[i].value, MAXVALLEN, "%d", pool_config->authentication_timeout);
+	strncpy(status[i].desc, "maximum time in seconds to complete client authentication", MAXNAMELEN);
+	i++;
+
 	strncpy(status[i].name, "logdir", MAXNAMELEN);
 	snprintf(status[i].value, MAXVALLEN, "%s", pool_config->logdir);
 	strncpy(status[i].desc, "logging directory", MAXDESCLEN);

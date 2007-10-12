@@ -133,6 +133,7 @@ int pool_init_config(void)
 	pool_config->child_idle_limit = 0;
 	pool_config->connection_life_time = 0;
 	pool_config->child_max_connections = 0;
+	pool_config->authentication_timeout = 60;
 	pool_config->logdir = DEFAULT_LOGDIR;
  	pool_config->log_statement = 0;
 	pool_config->log_connections = 0;
@@ -403,6 +404,19 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->child_max_connections = v;
+		}
+		else if (!strcmp(key, "authentication_timeout") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			int v = atoi(yytext);
+
+			if (token != POOL_INTEGER || v < 0)
+			{
+				pool_error("pool_config: %s must be higher than 0 numeric value", key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->authentication_timeout = v;
 		}
 		else if (!strcmp(key, "max_pool") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
