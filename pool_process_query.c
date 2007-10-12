@@ -883,9 +883,8 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			}
 			else if(!r_query->is_pg_catalog)
 			{
-				//r_query = rewrite_query_stmt(node,frontend,backend,r_query);
+				r_query = rewrite_query_stmt(node,frontend,backend,r_query);
 				/* rewrite query phase */
-				/* NOW TEST
 				if(r_query->type == T_InsertStmt && r_query->r_code != INSERT_DIST_NO_RULE)
 				{
 					free_parser();
@@ -896,7 +895,6 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 					free_parser();
 					return r_query->status;
 				}
-				*/
 			}
 		}
 

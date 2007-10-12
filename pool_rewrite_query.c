@@ -33,10 +33,11 @@ static int getInsertRule(ListCell *lc,List *list_t ,DistDefInfo *info, int div_k
 static void examInsertStmt(Node *node,POOL_CONNECTION_POOL *backend,RewriteQuery *message);
 static void examSelectStmt(Node *node,POOL_CONNECTION_POOL *backend,RewriteQuery *message);
 static char *delimistr(char *str);
-static int direct_parallel_query(SelectStmt *stmt,POOL_CONNECTION_POOL *backend);
+static int direct_parallel_query(RewriteQuery *message);
 static int check_whereClause(Node *where);
 static void initMessage(RewriteQuery *message,bool analyze);
 static void initdblink(ConInfoTodblink *dblink, POOL_CONNECTION_POOL *backend);
+static void analyze_debug(RewriteQuery *message);
 
 char *pool_error_message(char *message)
 {
@@ -260,6 +261,8 @@ static void initMessage(RewriteQuery *message, bool analyze)
 {
 	message->r_code = 0;
 	message->r_node = 0;
+	message->column = 0;
+	message->virtual_num = 0;
 	message->is_pg_catalog = false;
 	message->is_loadbalance = false;
 	message->is_parallel = false;
@@ -268,6 +271,9 @@ static void initMessage(RewriteQuery *message, bool analyze)
 	message->dbname = NULL;
 	message->schemaname = NULL;
 	message->rewrite_query = NULL;
+	message->rewritelock = -1;
+	message->ignore_rewrite = -1;
+	message->ret_num = 0;
 
 	if(analyze)
 	{
@@ -441,64 +447,12 @@ static int check_whereClause(Node *where)
 	}
 }
 
-static int direct_parallel_query(SelectStmt *stmt,POOL_CONNECTION_POOL *backend)
+static int direct_parallel_query(RewriteQuery *message)
 {
-
-	if(stmt->lockingClause)
-	{
-		pool_debug("lockingClasue is exist");	
+	if(message && message->analyze[0] && message->analyze[0]->state == 'P')
 		return 1;
-	}
-
-	if (!stmt->distinctClause && !stmt->into && !stmt->intoColNames &&
-		!stmt->groupClause && !stmt->havingClause && !stmt->sortClause &&
-		!stmt->limitOffset && !stmt->limitCount &&!stmt->larg && !stmt->rarg)
-	{
-		if(stmt->fromClause && (list_length(stmt->fromClause) == 1)
-			&& list_head(stmt->fromClause) && lfirst(list_head(stmt->fromClause))
-			&& IsA(lfirst(list_head(stmt->fromClause)),RangeVar))
-		{
-			ListCell *lc;
-			DistDefInfo *info = NULL;
-			RangeVar *var = NULL;
-
-			var = (RangeVar *) lfirst(list_head(stmt->fromClause));
-			info = pool_get_dist_def_info (MASTER_CONNECTION(backend)->sp->database, var->schemaname, var->relname);
-
-			if(!info)
-				return 0;
-
-			if(stmt->whereClause && 
-				(check_whereClause(stmt->whereClause)))
-			{
-				return 0;
-			}
-
-			foreach (lc, stmt->targetList)
-       		{
-           		Node *n = lfirst(lc);
-           		if (IsA(n, ResTarget))
-           		{
-					ResTarget *target = (ResTarget *) n;
-					if (target->val && (IsA(target->val, FuncCall) || 
-						IsA(target->val,CaseExpr) || IsA(target->val,SubLink)))
-					{
-						return 0;
-					}
-					else if(target->val && (IsA(target->val, TypeCast)))
-					{
-						TypeCast *type = (TypeCast *)target->val;
-						if(type->arg && (IsA(type->arg,FuncCall) ||
-						   IsA(type->arg,CaseExpr) || IsA(type->arg,SubLink)))
-							return 0;
-					}
-				}
-			}
-
-			return 1;				
-		}
-	}
-	return 0;
+	else
+		return 0;
 }
 
 static char *delimistr(char *str)
@@ -526,6 +480,19 @@ static char *delimistr(char *str)
 	return result;
 }
 
+void analyze_debug(RewriteQuery *message)
+{
+	int analyze_num,i;
+	analyze_num = message->analyze_num;
+
+	for(i = 0; i< analyze_num; i++)
+	{
+		AnalyzeSelect *analyze = message->analyze[i];
+		pool_debug("analyze_debug :select no(%d), last select(%d), last_part(%d), state(%c)",
+             analyze->now_select,analyze->last_select,analyze->call_part,analyze->state);
+	}	
+}
+
 RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 {
 	static RewriteQuery message;
@@ -539,42 +506,6 @@ RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 		int direct_ok;
 
 		stmt = (SelectStmt *) node;
-
-#if 0
-    /* ANALYZE QUERY */
-		initMessage(&message,true);
-		message.r_code = SELECT_ANALYZE;
-		message.is_loadbalance = true;
-
-		initdblink(&dblink,backend);
-		nodeToRewriteString(&message,&dblink,node);
-
-		if(message.is_pg_catalog)
-		{
-			message.is_loadbalance = false;
-			message.is_parallel = false;
-			pool_debug("is_parallel_query: query is done by loadbalance(pgcatalog)");
-			return &message;
-		}
-
-		if(message.is_loadbalance)
-		{
-			message.is_parallel = false;
-			pool_debug("is_parallel_query: query is done by loadbalance");
-			return &message;
-		}
-#endif
-
-		/* PARALLEL*/
-		direct_ok = direct_parallel_query(stmt,backend);
-		if(direct_ok == 1)
-		{
-			message.rewrite_query = nodeToString(node);
-			message.is_parallel = true;
-			message.is_loadbalance = false;
-			pool_debug("can pool_parallel_exec %s",message.rewrite_query);	
-			return &message;
-		}
 
 		/* LOADBALANCE OR PARALLEL */
 		if (!(stmt->distinctClause || stmt->into || stmt->intoColNames ||
@@ -617,7 +548,6 @@ RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 			}
 		}
 		
-		message.r_code = SELECT_REWRITE;
     /* ANALYZE QUERY */
 		initMessage(&message,true);
 		message.r_code = SELECT_ANALYZE;
@@ -638,6 +568,19 @@ RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 		{
 			message.is_parallel = false;
 			pool_debug("is_parallel_query: query is done by loadbalance");
+			return &message;
+		}
+
+		analyze_debug(&message);
+
+		/* PARALLEL*/
+		direct_ok = direct_parallel_query(&message);
+		if(direct_ok == 1)
+		{
+			message.rewrite_query = nodeToString(node);
+			message.is_parallel = true;
+			message.is_loadbalance = false;
+			pool_debug("can pool_parallel_exec %s",message.rewrite_query);	
 			return &message;
 		}
 	}
