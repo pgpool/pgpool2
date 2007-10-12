@@ -161,6 +161,7 @@ static void _outDropOwnedStmt(String *str, DropOwnedStmt *node);
 static void _outReassignOwnedStmt(String *str, ReassignOwnedStmt *node);
 static void _outAlterTSDictionaryStmt(String *str, AlterTSDictionaryStmt *node);
 static void _outAlterTSConfigurationStmt(String *str, AlterTSConfigurationStmt *node);
+static void _outXmlExpr(String *str, XmlExpr *node);
 static void _outXmlSerialize(String *str, XmlSerialize *node);
 
 static void _outFuncName(String *str, List *func_name);
@@ -4431,6 +4432,72 @@ _outAlterTSConfigurationStmt(String *str, AlterTSConfigurationStmt *node)
 }
 
 static void
+_outXmlExpr(String *str, XmlExpr *node)
+{
+	A_Const *n;
+
+	switch (node->op)
+	{
+		case IS_DOCUMENT:
+			_outNode(str, node->args);
+			string_append_char(str, " IS DOCUMENT");
+			break;
+
+		case IS_XMLCONCAT:
+			string_append_char(str, "XMLCONCAT (");
+			_outNode(str, node->args);
+			string_append_char(str, ")");
+			break;
+
+		case IS_XMLELEMENT:
+			string_append_char(str, "XMLELEMENT (");
+			if (node->name)
+			{
+				string_append_char(str, "NAME \"");
+				string_append_char(str, node->name);
+				string_append_char(str, "\"");
+				if (node->named_args != NIL)
+				{
+					string_append_char(str, ",");
+					_outIdList(str, node->named_args);
+				}
+			}
+			if (node->args != NIL)
+			{
+				string_append_char(str, ",");
+				_outNode(str, node->args);
+			}
+			string_append_char(str, ")");
+			break;
+
+		case IS_XMLFOREST:
+			string_append_char(str, "XMLFOREST (");
+			_outNode(str, node->named_args);
+			string_append_char(str, ")");
+			break;
+
+		case IS_XMLPARSE:
+			string_append_char(str, "XMLPARSE (");
+			if (node->xmloption == XMLOPTION_DOCUMENT)
+				string_append_char(str, "DOCUMENT ");
+			else
+				string_append_char(str, "CONTENT ");
+
+			_outNode(str, linitial(node->args));
+			n = lsecond(node->args);
+			if (n->val.val.str[0] == 't')
+				string_append_char(str, " PRESERVE WHITESPACE");
+
+			string_append_char(str, ")");
+			break;
+
+
+		default:
+			break;
+	}
+}
+
+static void
 _outXmlSerialize(String *str, XmlSerialize *node)
 {
 
@@ -5044,6 +5111,10 @@ _outNode(String *str, void *obj)
 
 			case T_AlterTSConfigurationStmt:
 				_outAlterTSConfigurationStmt(str, obj);
+				break;
+
+			case T_XmlExpr:
+				_outXmlExpr(str, obj);
 				break;
 
 			case T_XmlSerialize:
