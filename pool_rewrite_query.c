@@ -35,7 +35,7 @@ static void examSelectStmt(Node *node,POOL_CONNECTION_POOL *backend,RewriteQuery
 static char *delimistr(char *str);
 static int direct_parallel_query(RewriteQuery *message);
 static int check_whereClause(Node *where);
-static void initMessage(RewriteQuery *message,bool analyze);
+static void initMessage(RewriteQuery *message);
 static void initdblink(ConInfoTodblink *dblink, POOL_CONNECTION_POOL *backend);
 static void analyze_debug(RewriteQuery *message);
 
@@ -121,15 +121,6 @@ static void examInsertStmt(Node *node,POOL_CONNECTION_POOL *backend, RewriteQuer
 
     message->type = node->type;
 
-	/* the source SELECT ? */
-	if (insert->selectStmt)
-	{
-		/* send  error message to frontend */
-		message->r_code = INSERT_SQL_RESTRICTION;
-		message->r_node = -1;
-		message->rewrite_query = pool_error_message("cannot use SelectStmt in InsertStmt");
-		return;
-	}
 
 	/* insert target table */
 	table = insert->relation;
@@ -139,6 +130,29 @@ static void examInsertStmt(Node *node,POOL_CONNECTION_POOL *backend, RewriteQuer
 		message->r_code = INSERT_SQL_RESTRICTION;
 		message->r_node = -1;
 		message->rewrite_query = pool_error_message("cannot find table name");
+		return;
+	}
+
+	/* pool_debug("exam_InsertStmt insert table_name %s:",table->relname); */
+
+	info = pool_get_dist_def_info(MASTER_CONNECTION(backend)->sp->database,
+								  table->schemaname,
+								  table->relname);
+
+	if (!info)
+	{
+		/* send  error message to frontend */
+		message->r_code = INSERT_DIST_NO_RULE;
+		return;
+	}
+
+	/* the source SELECT ? */
+	if (insert->selectStmt)
+	{
+		/* send  error message to frontend */
+		message->r_code = INSERT_SQL_RESTRICTION;
+		message->r_node = -1;
+		message->rewrite_query = pool_error_message("cannot use SelectStmt in InsertStmt");
 		return;
 	}
 
@@ -155,18 +169,6 @@ static void examInsertStmt(Node *node,POOL_CONNECTION_POOL *backend, RewriteQuer
 	/* number of target list */
 	cell_num = list_t->length;
 
-	/* pool_debug("exam_InsertStmt insert table_name %s:",table->relname); */
-
-	info = pool_get_dist_def_info(MASTER_CONNECTION(backend)->sp->database,
-								  table->schemaname,
-								  table->relname);
-
-	if (!info)
-	{
-		/* send  error message to frontend */
-		message->r_code = INSERT_DIST_NO_RULE;
-		return;
-	}
 
 	/* Is the target columns ?*/
 	if (!insert->cols)
@@ -249,7 +251,7 @@ static void examSelectStmt(Node *node,POOL_CONNECTION_POOL *backend,RewriteQuery
 	initdblink(&dblink,backend);
 
 	/* initialize  message */
-	initMessage(message,true);
+	initMessage(message);
 	message->type = node->type;
 	message->r_code = SELECT_DEFAULT;
 
@@ -257,7 +259,7 @@ static void examSelectStmt(Node *node,POOL_CONNECTION_POOL *backend,RewriteQuery
 }
 
 
-static void initMessage(RewriteQuery *message, bool analyze)
+static void initMessage(RewriteQuery *message)
 {
 	message->r_code = 0;
 	message->r_node = 0;
@@ -274,11 +276,6 @@ static void initMessage(RewriteQuery *message, bool analyze)
 	message->rewritelock = -1;
 	message->ignore_rewrite = -1;
 	message->ret_num = 0;
-
-	if(analyze)
-	{
-		message->analyze_num = 0;
-	}
 }
 
 static void initdblink(ConInfoTodblink *dblink,POOL_CONNECTION_POOL *backend)
@@ -299,7 +296,7 @@ int IsSelectpgcatalog(Node *node,POOL_CONNECTION_POOL *backend)
 	initdblink(&dblink,backend);
 
 	/* initialize  message */
-	initMessage(&message,false);
+	initMessage(&message);
 
 	message.type = node->type;
 
@@ -498,6 +495,7 @@ RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 	static RewriteQuery message;
 	static ConInfoTodblink dblink;
 
+	initMessage(&message);
 
 	if (IsA(node, SelectStmt))
 	{
@@ -549,7 +547,6 @@ RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 		}
 		
     /* ANALYZE QUERY */
-		initMessage(&message,true);
 		message.r_code = SELECT_ANALYZE;
 		message.is_loadbalance = true;
 
@@ -588,8 +585,6 @@ RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 	{
 		CopyStmt *stmt = (CopyStmt *)node;
 
-		initMessage(&message,false);
-
 		if (stmt->is_from == FALSE && stmt->filename == NULL)
 		{
 			RangeVar *relation = (RangeVar *)stmt->relation;
@@ -605,5 +600,6 @@ RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 			}
 		}
 	}
+
 	return &message;
 }

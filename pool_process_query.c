@@ -943,10 +943,12 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			{
 				r_query = rewrite_query_stmt(node,frontend,backend,r_query);
 				/* rewrite query phase */
-				if(r_query->type == T_InsertStmt && r_query->r_code != INSERT_DIST_NO_RULE)
+				if(r_query->type == T_InsertStmt)
 				{
 					free_parser();
-					return r_query->status;
+
+					if(r_query->r_code != INSERT_DIST_NO_RULE)
+						return r_query->status;
 				}
 				else if(r_query->type == T_SelectStmt)
 				{
