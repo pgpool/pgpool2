@@ -3240,7 +3240,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 			pool_memory = prepare_memory_context;
 			pfree(s->name);
 			pfree(s);
-			old_context = pool_memory;
+			pool_memory = old_context;
 			free(pending_prepared_portal);
 		}
 	}
