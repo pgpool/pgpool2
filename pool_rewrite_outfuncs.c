@@ -248,7 +248,7 @@ static void
 delay_string_append_char(RewriteQuery *message,String *str, char *parts)
 {
 	if(message->r_code == SELECT_DEFAULT && message->ignore_rewrite == -1)
-		string_append_char(str, parts);
+		string_append_char( str, parts);
 }
 
 
@@ -912,6 +912,27 @@ AnalyzeReturnRecord(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *db
 					continue;
 				}
 			}
+		} 
+		else if(obj && (IsA(obj,A_Const)))
+		{
+			A_Const *cst = (A_Const *) obj;
+			char *column = NULL;
+
+			if(!typecast && cst->typename)
+			{
+				Value *v = linitial(cst->typename->names);
+				typecast = v->val.str;
+		  } 
+
+			if(!alias)
+			{
+				column = (char *)palloc(sizeof(char) * strlen("\"?column?\"") + 1);
+ 				strcpy(column,"\"?column?\"");
+				alias = column;
+			}
+
+			append_select_def_info(analyze->select_ret,alias,typecast);
+			continue;
 		}
 		
 		if(colname && !strcmp(colname,"*"))
@@ -924,10 +945,11 @@ AnalyzeReturnRecord(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *db
 			gettype = search_type_from_virtual(virtual,table_name,colname);
 		else
 		{
-			char *column;
+			char *column = NULL;
 			column = (char *)palloc(sizeof(char) * strlen("\"?column?\"") + 1);
  			strcpy(column,"\"?column?\"");
-			append_select_def_info(analyze->select_ret,column,NULL);	
+			append_select_def_info(analyze->select_ret,column,NULL);
+			continue;	
 		}
 
 		if(gettype)
@@ -3468,9 +3490,9 @@ _rewriteTypeName(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 					delay_string_append_char(message, str, typename);
 					delay_string_append_char(message, str, "\"\"");
 				} else {
-					delay_string_append_char(message, str, "\"");
+					//delay_string_append_char(message, str, "\"");
 					delay_string_append_char(message, str, typename);
-					delay_string_append_char(message, str, "\"");
+					//delay_string_append_char(message, str, "\"");
 				}
 			} else 
 				delay_string_append_char(message, str, typename);
@@ -4148,6 +4170,15 @@ static void
 _rewriteAConst(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, A_Const *node)
 {
 	char buf[16];
+	char *name = NULL;
+
+	if (node->typename)
+	{
+		Value *v = linitial(node->typename->names);
+		name = v->val.str;
+		_rewriteNode(BaseSelect, message, dblink, str, node->typename);
+		delay_string_append_char(message, str, " ");
+	}
 
 	switch (node->val.type)
 	{
@@ -4180,6 +4211,41 @@ _rewriteAConst(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink,
 		default:
 			break;
 	}
+
+	if (name && (strcmp(name, "interval") == 0) &&
+	  node->typename->typmods)
+	{
+		A_Const *v = linitial(node->typename->typmods);
+		int mask = v->val.val.ival;
+
+		if (mask == INTERVAL_MASK(YEAR))
+			delay_string_append_char(message, str, " YEAR");
+		else if (mask == INTERVAL_MASK(MONTH))
+			delay_string_append_char(message, str, " MONTH");
+		else if (mask == INTERVAL_MASK(DAY))
+			delay_string_append_char(message, str, " DAY");
+		else if (mask == INTERVAL_MASK(HOUR))
+			delay_string_append_char(message, str, " HOUR");
+		else if (mask == INTERVAL_MASK(MINUTE))
+			delay_string_append_char(message, str, " MINUTE");
+		else if (mask == INTERVAL_MASK(SECOND))
+			delay_string_append_char(message, str, " SECOND");
+		else if (mask == (INTERVAL_MASK(YEAR) | INTERVAL_MASK(MONTH)))
+			delay_string_append_char(message, str, " YEAR TO MONTH");
+		else if (mask == (INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR)))
+			delay_string_append_char(message, str, " DAY TO HOUR");
+		else if (mask == (INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) |
+				INTERVAL_MASK(MINUTE)))
+ 			delay_string_append_char(message, str, " DAY TO MINUTE");
+		else if (mask == (INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) |
+				INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND)))
+			delay_string_append_char(message, str, " DAY TO SECOND");
+		else if (mask == (INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE)))
+			delay_string_append_char(message, str, " HOUR TO MINUTE");
+		else if (mask == (INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE) |
+				INTERVAL_MASK(SECOND)))
+			delay_string_append_char(message, str, " HOUR TO SECOND");
+  }
 }
 
 static void
@@ -7315,7 +7381,7 @@ _rewriteWithDefinition(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink 
 	if (oid == 1)
 		return;
 
-	string_append_char(str, " WITH ");
+	delay_string_append_char(message, str, " WITH ");
 	_rewriteDefinition(BaseSelect, message, dblink, str, def_list);
 }
 
