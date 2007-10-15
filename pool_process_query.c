@@ -567,6 +567,46 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 	return POOL_CONTINUE;
 }
 
+
+/* using only in pool_parallel_exec */
+#define BITS (8 * sizeof(long int))
+
+/* using only in pool_parallel_exec */
+typedef struct
+{
+	long int fds_bit[1024 / BITS];
+} get_fd;
+
+/* using only in pool_parallel_exec */
+static void set_fd(unsigned long fd ,fd_set *setp)
+{
+	unsigned long tmp = fd / 1024;
+	unsigned long rem = fd % 1024;
+	setp->fds_bits[tmp] |= (1UL<<rem);
+}
+
+/* using only in pool_parallel_exec */
+static int isset_fd(unsigned long fd, fd_set *setp)
+{
+	unsigned long tmp = fd / 1024;
+	unsigned long rem = fd % 1024;
+	return (setp->fds_bits[tmp] & (1UL<<rem)) != 0;
+}
+
+/* using only in pool_parallel_exec */
+static void zero_fd(fd_set *setp)
+{
+	unsigned long *tmp = setp->fds_bits;
+	int i = 1024 / BITS;
+	while(i)
+	{
+		i--;
+		*tmp = 0;
+		tmp++;
+	}
+}
+
+
 POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 									  POOL_CONNECTION_POOL *backend, char *string,
 									  Node *node,bool send_to_frontend)
@@ -578,6 +618,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 	fd_set readmask;
 	fd_set writemask;
 	fd_set exceptmask;
+	fd_set donemask;
 	static char *sq = "show pool_status";
 	POOL_STATUS status;
 	struct timeval timeout;
@@ -594,20 +635,17 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 	{
 		int stime = 5;  /* XXX give arbitary time to allow closing idle connections */
 
-		pool_debug("Query: sending USR1 signal to parent");
+		pool_debug("Query: sending HUP signal to parent");
 
-		Req_info->kind = CLOSE_IDLE_REQUEST;
-		kill(getppid(), SIGUSR1);        /* send USR1 signal to parent */
+		kill(getppid(), SIGHUP);        /* send HUP signal to parent */
 
-		/* we need to loop over here since we will get USR1 signal while sleeping */
+		/* we need to loop over here since we will get HUP signal while sleeping */
 		while (stime > 0)
-		{
 			stime = sleep(stime);
-		}
 	}
 
 	/* process status reporting? */
-	if (IsA(node, VariableShowStmt) && strncasecmp(sq, string, strlen(sq)) == 0)
+	if (strncasecmp(sq, string, strlen(sq)) == 0)
 	{
 		pool_debug("process reporting");
 		process_reporting(frontend, backend);
@@ -626,7 +664,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 		{
 			int sendlen = htonl(len + 4);
 			pool_write(CONNECTION(backend, i), &sendlen, sizeof(sendlen));
-		}
+ 		}
 
 		if (pool_write_and_flush(CONNECTION(backend, i), string, len) < 0)
 		{
@@ -638,8 +676,8 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 		 * note that this is not applied if "NO STRICT" is specified as a comment.
 		 */
 		if ((pool_config->replication_strict &&
-			 !NO_STRICT_MODE(string) && is_strict_query(node)) ||
-			 STRICT_MODE(string))
+				!NO_STRICT_MODE(string) && is_strict_query(node)) ||
+				STRICT_MODE(string))
 		{
 			pool_debug("waiting for backend %d completing the query", i);
 			if (synchronize(CONNECTION(backend, i)))
@@ -652,6 +690,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 		return POOL_END;
 	}
 
+	zero_fd(&donemask);
 	/* In this loop,get data from backend */
 	for (;;)
 	{
@@ -664,28 +703,35 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 		{
 			if (VALID_BACKEND(i))
 			{
-				num_fds = Max(CONNECTION(backend, i)->fd + 1, num_fds);
-				FD_SET(CONNECTION(backend, i)->fd, &readmask);
-				FD_SET(CONNECTION(backend, i)->fd, &exceptmask);
+				int fd = CONNECTION(backend,i)->fd;
+				num_fds = Max(fd + 1, num_fds);
+				if(!isset_fd(fd,&donemask))
+				{
+					FD_SET(fd, &readmask);
+					FD_SET(fd, &exceptmask);
+					pool_debug("pool_parallel_query:  %d th FD_SET: %d",i, CONNECTION(backend, i)->fd);
+				}
 			}
 		}
+
 		pool_debug("pool_parallel_query: num_fds: %d", num_fds);
 
 		fds = select(num_fds, &readmask, &writemask, &exceptmask, NULL);
+
 		if (fds == -1)
 		{
 			if (errno == EINTR)
 				continue;
 
-			pool_error("select() failed. reason: %s", strerror(errno));
+				pool_error("select() failed. reason: %s", strerror(errno));
 			return POOL_ERROR;
-		}
+		 }
 
 		if (fds == 0)
 		{
 			return POOL_CONTINUE;
 		}
-		
+
 		/* get header of protcol */
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
@@ -703,19 +749,19 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 				if (used_count == 0)
 				{
 					status = ParallelForwardToFrontend(kind,
-													   frontend,
-													   CONNECTION(backend, i),
-													   backend->info->database,
-													   send_to_frontend);
+														frontend,
+														CONNECTION(backend, i),
+														backend->info->database,
+														send_to_frontend);
 					pool_debug("pool_parallel_exec: kind from backend: %c", kind);
 				}
 				else
 				{
 					status = ParallelForwardToFrontend(kind,
-													   frontend,
-													   CONNECTION(backend, i),
-													   backend->info->database,
-													   false);
+														frontend,
+														CONNECTION(backend, i),
+														backend->info->database,
+														false);
 					pool_debug("pool_parallel_exec: dummy kind from backend: %c", kind);
 				}
 
@@ -726,7 +772,9 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 				{
 					if(used_count == NUM_BACKENDS -1)
 						return POOL_CONTINUE;
+
 					used_count++;
+					set_fd(CONNECTION(backend, i)->fd, &donemask);
 					continue;
 				}
 
@@ -749,26 +797,27 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 					}
 
 					if((kind == 'E' ) &&
-					   used_count != NUM_BACKENDS -1)
+						used_count != NUM_BACKENDS -1)
 					{
 						if(error_flag ==0)
 						{
 							pool_debug("pool_parallel_exec: kind from backend: %c", kind);
 							status = ParallelForwardToFrontend(kind,
-														   frontend,
-														   CONNECTION(backend, i),
-														   backend->info->database,
-														   send_to_frontend);
+															frontend,
+															CONNECTION(backend, i),
+															backend->info->database,
+															send_to_frontend);
 							error_flag++;
 						} else {
 							pool_debug("pool_parallel_exec: dummy from backend: %c", kind);
 							status = ParallelForwardToFrontend(kind,
-														   frontend,
-														   CONNECTION(backend, i),
-														   backend->info->database,
-														   false);
+															frontend,
+															CONNECTION(backend, i),
+															backend->info->database,
+															false);
 						}
 						used_count++;
+						set_fd(CONNECTION(backend, i)->fd, &donemask);
 						break;
 					}
 
@@ -777,42 +826,42 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 					{
 						pool_debug("pool_parallel_exec: dummy from backend: %c", kind);
 						status = ParallelForwardToFrontend(kind,
-														   frontend,
-														   CONNECTION(backend, i),
-														   backend->info->database,
-														   false);
+															frontend,
+															CONNECTION(backend, i),
+															backend->info->database,
+															false);
 						used_count++;
+						set_fd(CONNECTION(backend, i)->fd, &donemask);
 						break;
 					}
-
 					if((kind == 'C' || kind == 'c' || kind == 'E') &&
-					   used_count == NUM_BACKENDS -1)
+						used_count == NUM_BACKENDS -1)
 					{
 						if(error_flag == 0)
 						{
 							pool_debug("pool_parallel_exec: kind from backend: %c", kind);
 							status = ParallelForwardToFrontend(kind,
-														   frontend,
-														   CONNECTION(backend, i),
-														   backend->info->database,
-														   send_to_frontend);
+															frontend,
+															CONNECTION(backend, i),
+															backend->info->database,
+															send_to_frontend);
 						} else {
 							pool_debug("pool_parallel_exec: dummy from backend: %c", kind);
 							status = ParallelForwardToFrontend(kind,
-														   frontend,
-														   CONNECTION(backend, i),
-														   backend->info->database,
-														   false);
+															frontend,
+															CONNECTION(backend, i),
+															backend->info->database,
+															false);
 						}
 						return POOL_CONTINUE;
 					}
 
 					pool_debug("pool_parallel_exec: kind from backend: %c", kind);
 					status = ParallelForwardToFrontend(kind,
-													   frontend,
-													   CONNECTION(backend, i),
-													   backend->info->database,
-													   send_to_frontend);
+														frontend,
+														CONNECTION(backend, i),
+														backend->info->database,
+														send_to_frontend);
 
 					if (status != POOL_CONTINUE)
 					{
