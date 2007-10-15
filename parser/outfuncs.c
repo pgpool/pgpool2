@@ -1287,6 +1287,15 @@ static void
 _outAConst(String *str, A_Const *node)
 {
 	char buf[16];
+	char *name = NULL;
+
+	if (node->typename)
+	{
+		Value *v = linitial(node->typename->names);
+		name = v->val.str;
+		_outNode(str, node->typename);
+		string_append_char(str, " ");
+	}
 
 	switch (node->val.type)
 	{
@@ -1311,6 +1320,41 @@ _outAConst(String *str, A_Const *node)
 
 		default:
 			break;
+	}
+
+	if (name && (strcmp(name, "interval") == 0) &&
+		node->typename->typmods)
+	{
+		A_Const *v = linitial(node->typename->typmods);
+		int mask = v->val.val.ival;
+
+		if (mask == INTERVAL_MASK(YEAR))
+			string_append_char(str, " YEAR");
+		else if (mask == INTERVAL_MASK(MONTH))
+			string_append_char(str, " MONTH");
+		else if (mask == INTERVAL_MASK(DAY))
+			string_append_char(str, " DAY");
+		else if (mask == INTERVAL_MASK(HOUR))
+			string_append_char(str, " HOUR");
+		else if (mask == INTERVAL_MASK(MINUTE))
+			string_append_char(str, " MINUTE");
+		else if (mask == INTERVAL_MASK(SECOND))
+			string_append_char(str, " SECOND");
+		else if (mask == (INTERVAL_MASK(YEAR) | INTERVAL_MASK(MONTH)))
+			string_append_char(str, " YEAR TO MONTH");
+		else if (mask == (INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR)))
+			string_append_char(str, " DAY TO HOUR");
+		else if (mask == (INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) |
+						  INTERVAL_MASK(MINUTE)))
+			string_append_char(str, " DAY TO MINUTE");
+		else if (mask == (INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) |
+						  INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND)))
+			string_append_char(str, " DAY TO SECOND");
+		else if (mask == (INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE)))
+			string_append_char(str, " HOUR TO MINUTE");
+		else if (mask == (INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE) |
+						  INTERVAL_MASK(SECOND)))
+			string_append_char(str, " HOUR TO SECOND");
 	}
 }
 
