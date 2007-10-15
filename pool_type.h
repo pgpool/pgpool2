@@ -143,18 +143,31 @@ typedef struct {
 } DistDefInfo;
 
 typedef struct {
+	char *dbname;     /* database name */
+	char *schema_name;    /* schema name */
+	char *table_name;   /* table name */
+	int  col_num;     /* number of clumn*/
+	char **col_list;    /* column list */
+	char **type_list;   /* type list */
+	char *prepare_name;   /* prepared statement name */
+	int is_created_prepare; /* is prepare statement created? */
+} RepliDefInfo;
+
+typedef struct {
 	int has_prepared_statement;	/* true if the current session has prepared statement created */
 	char *register_prepared_statement; /* prepared statement name for cache register */
 } QueryCacheTableInfo;
 
 typedef struct {
-	char *hostname;			/* host name */
-	int port;				/* port number */
-	char *user;				/* login user name */
-	char *password;			/* login password */
-	char *schema_name;		/* schema name */
-	char *database_name;	/* database name */
-	int dist_def_num;		/* number of distribution table */
+	char *hostname;     /* host name */
+	int port;       /* port number */
+	char *user;       /* login user name */
+	char *password;     /* login password */
+	char *schema_name;    /* schema name */
+	char *database_name;  /* database name */
+	int repli_def_num;    /* number of replication table */
+	int dist_def_num;   /* number of distribution table */
+	RepliDefInfo *repli_def_slot; /* replication rule list */
 	DistDefInfo *dist_def_slot; /* distribution rule list */
 	QueryCacheTableInfo query_cache_table_info; /* query cache db session info */
 	BACKEND_STATUS system_db_status;

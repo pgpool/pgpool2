@@ -29,6 +29,7 @@
 
 static int create_prepared_statement(DistDefInfo *dist_info);
 static int  get_col_list(DistDefInfo *info);
+static int  get_col_list2(RepliDefInfo *info);
 
 static
 int  get_col_list(DistDefInfo *info)
@@ -84,6 +85,57 @@ int  get_col_list(DistDefInfo *info)
 	return 0;
 }
 
+static
+int  get_col_list2(RepliDefInfo *info)
+{
+	int i;
+	static char sql[1024];
+	PGresult *result;
+ 
+	if (!system_db_info->pgconn ||
+		(PQstatus(system_db_info->pgconn) != CONNECTION_OK)) 
+	{
+		if (system_db_connect())
+			return -1;
+	}
+	
+	for (i = 0; i < info->col_num; i++)
+	{
+		snprintf(sql,
+				 sizeof(sql),
+				 "SELECT col_list[%d],type_list[%d] FROM %s.replicate_def where dbname = '%s' and schema_name = '%s' and table_name = '%s'",
+				 i + 1,
+				 i + 1,
+				 pool_config->system_db_schema,
+				 info->dbname,info->schema_name,
+				 info->table_name);
+
+		result = PQexec(system_db_info->pgconn, sql);
+
+		if (!result || PQresultStatus(result) != PGRES_TUPLES_OK)
+		{
+			pool_error("get_col_list2: PQexec failed: %s",
+					   PQerrorMessage(system_db_info->pgconn));
+			return -1;
+		}
+		else
+		{
+			info->col_list[i]  = malloc(strlen(PQgetvalue(result,0,0)) + 1);
+			info->type_list[i] = malloc(strlen(PQgetvalue(result,0,1)) + 1);
+
+			if (info->col_list[i] == NULL || info->type_list[i] == NULL)
+			{
+				pool_error("get_col_list2: malloc failed: %s", strerror(errno));
+				PQclear(result);
+				return -1;
+			}
+			strcpy(info->col_list[i],PQgetvalue(result,0,0));
+			strcpy(info->type_list[i],PQgetvalue(result,0,1));
+			PQclear(result);
+		}
+	}
+	return 0;
+}
 
 /*
  * system_db_connect:
@@ -134,9 +186,10 @@ int system_db_connect (void)
 int pool_memset_system_db_info (SystemDBInfo *info)
 {
 	int i;
-	static char sql[1024];
+	static char sql[1024],sql2[1024];
 	PGresult *result;
 	DistDefInfo *dist_info = NULL;
+	RepliDefInfo *repli_info = NULL;
 
 	if (!system_db_info->pgconn ||
 		(PQstatus(system_db_info->pgconn) != CONNECTION_OK)) 
@@ -145,6 +198,7 @@ int pool_memset_system_db_info (SystemDBInfo *info)
 			return -1;
 	}
 
+  /* get distribution rules */
 	snprintf(sql,
 			 sizeof(sql),
 			 "SELECT dbname, schema_name, table_name,col_name,array_upper(col_list,1),col_list,type_list, dist_def_func FROM %s.dist_def",
@@ -286,6 +340,130 @@ int pool_memset_system_db_info (SystemDBInfo *info)
 	}
 
 	PQclear(result);
+
+  /* get replication rules */
+	snprintf(sql2,
+			 sizeof(sql2),
+			 "SELECT dbname, schema_name, table_name, array_upper(col_list,1),col_list,type_list FROM %s.replicate_def",
+			 pool_config->system_db_schema);
+	
+	result = PQexec(system_db_info->pgconn, sql2);
+
+	if (!result)
+	{
+		pool_error("PQexec failed: %s", PQerrorMessage(system_db_info->pgconn));
+		return -1;
+	}
+	else if (PQresultStatus(result) != PGRES_TUPLES_OK)
+	{
+		info->repli_def_num = 0;
+		info->repli_def_slot = NULL;	
+	}
+	else
+ 	{
+		info->repli_def_num = PQntuples(result);
+		if (info->repli_def_num != 0)
+		{
+			repli_info = malloc(sizeof(RepliDefInfo) * info->repli_def_num);
+		}
+
+		if (repli_info == NULL && info->repli_def_num != 0)
+		{
+			pool_error("pool_memset_system_db_info: malloc failed: %s",
+					   strerror(errno));
+			PQclear(result);
+			pool_close_libpq_connection();
+			return -1;
+		}
+
+		info->repli_def_slot = repli_info;
+
+		for (i = 0; i < PQntuples(result); ++i)
+		{
+			char *t_dbname;
+			char *t_schema_name;
+			char *t_table_name;
+			int num;
+			int len;
+
+			num = atol(PQgetvalue(result, i ,3));
+			t_dbname = malloc(strlen(PQgetvalue(result,i,0)) + 1);
+			if (t_dbname == NULL)
+			{
+				pool_error("pool_memset_system_db_info: malloc failed: %s",
+						   strerror(errno));
+				PQclear(result);
+				pool_close_libpq_connection();
+				return -1;
+			}
+			strcpy(t_dbname, PQgetvalue(result,i,0));
+			repli_info[i].dbname = t_dbname;
+
+			t_schema_name = malloc(strlen(PQgetvalue(result,i,1)) + 1);
+			if (t_schema_name == NULL)
+			{
+				pool_error("pool_memset_system_db_info: malloc failed: %s",
+						   strerror(errno));
+				PQclear(result);
+				pool_close_libpq_connection();
+				return -1;
+			}
+			strcpy(t_schema_name, PQgetvalue(result,i,1));
+			repli_info[i].schema_name = t_schema_name;
+
+			t_table_name = malloc(strlen(PQgetvalue(result,i,2)) + 1);
+			if (t_table_name == NULL)
+			{
+				pool_error("pool_memset_system_db_info: malloc failed: %s",
+						   strerror(errno));
+				PQclear(result);
+				pool_close_libpq_connection();
+				return -1;
+			}
+			strcpy(t_table_name, PQgetvalue(result,i,2));
+			repli_info[i].table_name = t_table_name;
+
+			repli_info[i].col_num = num;
+
+			repli_info[i].col_list = calloc(num, sizeof(char *));
+			repli_info[i].type_list = calloc(num, sizeof(char *));
+			if (repli_info[i].col_list == NULL || repli_info[i].type_list == NULL)
+			{
+				pool_error("pool_memset_system_db_info: calloc failed: %s",
+						   strerror(errno));
+				PQclear(result);
+				pool_close_libpq_connection();
+				return -1;
+			}
+
+			if (get_col_list2(&repli_info[i]) < 0)
+			{
+				pool_error("get_col_list() failed");
+				PQclear(result);
+				pool_close_libpq_connection();
+				return -1;
+			}
+
+			/* create PREPARE statement */
+			len = strlen(t_dbname) + strlen(t_schema_name) +
+				strlen(t_table_name) + strlen("pgpool_");
+			
+			repli_info[i].prepare_name = malloc(len + 1);
+			if (repli_info[i].prepare_name == NULL)
+			{
+				pool_error("pool_memset_system_db_info: malloc failed: %s",
+						   strerror(errno));
+				return -1;
+			}
+
+			snprintf(repli_info[i].prepare_name, len+1, "pgpool_%s%s%s",
+					 t_dbname, t_schema_name, t_table_name);
+			repli_info[i].prepare_name[len] = '\0';
+  	}
+	}
+
+	PQclear(result);
+
 	pool_close_libpq_connection();
 	return i;
 }
@@ -325,6 +503,46 @@ DistDefInfo *pool_get_dist_def_info (char *dbname, char *schema_name, char *tabl
 			(strcmp(mem_table_name, table_name) ==0))
 		{
 			return &system_db_info->info->dist_def_slot[i];
+		}
+	}
+	return NULL;
+}
+
+/*
+ * pool_get_repli_def_info:
+ *    Looks up replication rule with dbname, schema_name and table_name.
+ */
+RepliDefInfo *pool_get_repli_def_info (char *dbname, char *schema_name, char *table_name)
+{
+	int i;
+	int repli_def_num = system_db_info->info->repli_def_num;
+	char *public ="public";
+
+	if (!dbname || !table_name)
+	{
+		return NULL;
+	}
+
+	if (!schema_name)
+	{
+		schema_name = public;
+	}
+	
+	for (i = 0; i < repli_def_num; i++)
+	{
+		char *mem_dbname;
+		char *mem_schema_name;
+		char *mem_table_name;
+
+		mem_dbname = system_db_info->info->repli_def_slot[i].dbname;
+		mem_schema_name = system_db_info->info->repli_def_slot[i].schema_name;
+		mem_table_name  = system_db_info->info->repli_def_slot[i].table_name;
+
+		if ((strcmp(mem_dbname, dbname) == 0) &&
+			(strcmp(mem_schema_name, schema_name) == 0) &&
+			(strcmp(mem_table_name, table_name) ==0))
+		{
+			return &system_db_info->info->repli_def_slot[i];
 		}
 	}
 	return NULL;

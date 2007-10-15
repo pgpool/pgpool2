@@ -918,21 +918,32 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 		if (pool_config->parallel_mode)
 		{
-			char *parallel_query = NULL;
+			/* analze query */
+			RewriteQuery *r_query = is_parallel_query(node,backend);
 
-			/* Do select pool_parallel ? */
-			parallel_query = is_parallel_query(node,backend);
-			if (parallel_query)
+			if(r_query->is_loadbalance)
 			{
-				POOL_STATUS stats = pool_parallel_exec(frontend,backend,parallel_query, node,true);
+				if(r_query->r_code ==  SEND_LOADBALANCE_ENGINE)
+				{
+					/* use rewrited query */
+					string = r_query->rewrite_query;
+					/* change query length */
+					len = strlen(string)+1;
+				}
+				pool_debug("SimpleQuery: loadbalance_query =%s",string);
+			}
+			else if (r_query->is_parallel)
+			{
+				/* call parallel exe engine */
+				POOL_STATUS stats = pool_parallel_exec(frontend,backend,r_query->rewrite_query, node,true);
 				free_parser();
 				return stats;
 			}
-
-			/* rewrite_query_phase */
+			else if(!r_query->is_pg_catalog)
 			{
-				RewriteQuery *r_query = rewrite_query_stmt(node,frontend,backend);
-				if(r_query->type == T_InsertStmt)
+				r_query = rewrite_query_stmt(node,frontend,backend,r_query);
+				/* rewrite query phase */
+				if(r_query->type == T_InsertStmt && r_query->r_code != INSERT_DIST_NO_RULE)
 				{
 					free_parser();
 					return r_query->status;
@@ -942,7 +953,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 					free_parser();
 					return r_query->status;
 				}
-			}
+ 			}
 		}
 
 		/* check COPY FROM STDIN
