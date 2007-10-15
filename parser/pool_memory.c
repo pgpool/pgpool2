@@ -280,6 +280,7 @@ void pool_memory_delete(POOL_MEMORY_POOL *pool_memory, int reuse)
 
 		if (pool_memory->blocks)
 		{
+			pool_memory->blocks->next = NULL;
 			pool_memory->blocks->allocsize = 0;
 			pool_memory->blocks->freepoint = pool_memory->blocks->block;
 		}
