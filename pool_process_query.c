@@ -3234,10 +3234,13 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 			IsA(pending_prepared_portal->stmt, DeallocateStmt))
 		{
 			DeallocateStmt *s = (DeallocateStmt *)pending_prepared_portal->stmt;
+			POOL_MEMORY_POOL *old_context = pool_memory;
 
 			free(pending_prepared_portal->portal_name);
+			pool_memory = prepare_memory_context;
 			pfree(s->name);
 			pfree(s);
+			old_context = pool_memory;
 			free(pending_prepared_portal);
 		}
 	}
@@ -4516,13 +4519,18 @@ static void add_prepared_list(PreparedStatementList *p, Portal *portal)
 
 static void add_unnamed_portal(PreparedStatementList *p, Portal *portal)
 {
+	POOL_MEMORY_POOL *old_context;
+
 	if (unnamed_statement)
 	{
 		PrepareStmt *p_stmt = (PrepareStmt *)unnamed_statement->stmt;
 		if (p_stmt->name == NULL)
 		{
+			old_context = pool_memory;
+			pool_memory = prepare_memory_context;
 			pfree(p_stmt->query);
 			pfree(p_stmt);
+			pool_memory = old_context;
 		}
 		free(unnamed_statement);
 	}
@@ -4535,6 +4543,7 @@ static void del_prepared_list(PreparedStatementList *p, Portal *portal)
 {
 	int i;
 	DeallocateStmt *s = (DeallocateStmt *)portal->stmt;
+	POOL_MEMORY_POOL *old_context;
 
 	for (i = 0; i < p->cnt; i++)
 	{
@@ -4546,7 +4555,10 @@ static void del_prepared_list(PreparedStatementList *p, Portal *portal)
 	if (i == p->cnt)
 		return;
 
+	old_context = pool_memory;
+	pool_memory = prepare_memory_context;
 	pfree((PrepareStmt *)p->portal_list[i]->stmt);
+	pool_memory = old_context;
 	free(p->portal_list[i]->portal_name);
 	free(p->portal_list[i]);
 	if (i != p->cnt - 1)

@@ -1,3 +1,8 @@
+2007-10-15  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Fix invalid memory access when pgpool
+	  processed DEALLOCATE statement.
+
 2007-10-12  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* parser/parser.c, pool_parser.h, scan.l: Fix scanner's error
