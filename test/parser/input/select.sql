@@ -72,3 +72,17 @@ SELECT XMLELEMENT(NAME a,b,c);
 SELECT XMLFOREST(a)
 SELECT XMLPARSE(DOCUMENT 1 STRIP WHITESPACE)
 SELECT XMLPARSE(DOCUMENT 1 PRESERVE WHITESPACE)
+SELECT day '1900-1-1'
+SELECT interval '1 year'
+SELECT interval '1 year' YEAR
+SELECT interval '1 year' MONTH
+SELECT interval '1 year' DAY
+SELECT interval '1 year' HOUR
+SELECT interval '1 year' MINUTE
+SELECT interval '1 year' SECOND
+SELECT interval '1 year' YEAR TO MONTH
+SELECT interval '1 year' DAY TO HOUR
+SELECT interval '1 year' DAY TO MINUTE
+SELECT interval '1 year' DAY TO SECOND
+SELECT interval '1 year' HOUR TO MINUTE
+SELECT interval '1 year' HOUR TO SECOND

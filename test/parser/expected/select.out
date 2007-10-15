@@ -5,7 +5,7 @@
  SELECT "x" FROM "a"."b"
  SELECT "foo"()
  SELECT "y" FROM "foo"()
- SELECT "*" FROM 
+syntax error: SELECT * FROM (SELECT * FROM foo);
  SELECT "a" AS "t"  FROM "x"
  SELECT "x" FROM "a" AS "b"
  SELECT "a" AS "tttttttttttttttttttttttttttttttttttttttttttttttttttttttt" ,"b" AS "uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu"  FROM "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
@@ -64,3 +64,25 @@ CREATE TABLE "x" AS SELECT "*" FROM "t"
  SELECT "*" FROM "t" WHERE 1 IS OF ("int4")
  SELECT "*" FROM "t" WHERE "a" IN ('a','b',1)
  SELECT "*" FROM "t" WHERE "a" NOT IN ('a','b',1)
+ SELECT "*" FROM "t" WHERE "a" IS DOCUMENT
+ SELECT "*" FROM "t" WHERE  (NOT "a" IS DOCUMENT)
+ SELECT XMLCONCAT ("a","b")
+ SELECT XMLELEMENT (NAME "a")
+ SELECT XMLELEMENT (NAME "a","b","c")
+ SELECT XMLFOREST ("a")
+ SELECT XMLPARSE (DOCUMENT 1)
+ SELECT XMLPARSE (DOCUMENT 1 PRESERVE WHITESPACE)
+ SELECT "day" '1900-1-1'
+ SELECT "interval" '1 year'
+ SELECT "interval" '1 year' YEAR
+ SELECT "interval" '1 year' MONTH
+ SELECT "interval" '1 year' DAY
+ SELECT "interval" '1 year' HOUR
+ SELECT "interval" '1 year' MINUTE
+ SELECT "interval" '1 year' SECOND
+ SELECT "interval" '1 year' YEAR TO MONTH
+ SELECT "interval" '1 year' DAY TO HOUR
+ SELECT "interval" '1 year' DAY TO MINUTE
+ SELECT "interval" '1 year' DAY TO SECOND
+ SELECT "interval" '1 year' HOUR TO MINUTE
+ SELECT "interval" '1 year' HOUR TO SECOND
