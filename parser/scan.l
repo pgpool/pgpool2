@@ -36,7 +36,9 @@
 #include <string.h>
 #include <setjmp.h>
 
-#define ereport(a,b)
+#ifndef ereport
+#define ereport(a,b) yyerror("")
+#endif
 #define IS_HIGHBIT_SET(c) 0
 
 #include "gramparse.h"
@@ -940,6 +942,7 @@ unescape_single_char(unsigned char c)
 static void
 check_string_escape_warning(unsigned char ychar)
 {
+#if 0
 	if (ychar == '\'')
 	{
 		if (warn_on_first_escape && escape_string_warning)
@@ -962,11 +965,13 @@ check_string_escape_warning(unsigned char ychar)
 	}
 	else
 		check_escape_warning();
+#endif
 }
 
 static void
 check_escape_warning(void)
 {
+#if 0
 	if (warn_on_first_escape && escape_string_warning)
 		ereport(WARNING,
 				(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
@@ -974,6 +979,7 @@ check_escape_warning(void)
 				 errhint("Use the escape string syntax for escapes, e.g., E'\\r\\n'."),
 				 lexer_errposition()));
 	warn_on_first_escape = false;	/* warn only once per string */
+#endif
 }
 
 /*
@@ -1039,11 +1045,13 @@ truncate_identifier(char *ident, int len, int warn)
 	if (len >= NAMEDATALEN)
 	{
 		len = strlen(ident); /*pg_mbcliplen(ident, len, NAMEDATALEN - 1);*/
+#if 0
 		if (warn)
 			ereport(NOTICE,
 					(errcode(ERRCODE_NAME_TOO_LONG),
 					 errmsg("identifier \"%s\" will be truncated to \"%.*s\"",
 							ident, len, ident)));
+#endif
 		ident[len] = '\0';
 	}
 }
