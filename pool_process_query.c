@@ -810,6 +810,8 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	{
 		len = strlen(query)+1;
 		string = query;
+		if (DUAL_MODE)
+			force_replication = 1;
 	}
 
 	/* show ps status */
