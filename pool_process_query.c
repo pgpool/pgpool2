@@ -3830,6 +3830,7 @@ static void start_load_balance(POOL_CONNECTION_POOL *backend)
 	backend->slots[0] = slots[selected_slot];
 #endif
 	LOAD_BALANCE_STATUS(backend->info->load_balancing_node) = LOAD_SELECTED;
+	selected_slot = backend->info->load_balancing_node;
 
 	/* start load balancing */
 	in_load_balance = 1;
