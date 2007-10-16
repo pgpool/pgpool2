@@ -1,3 +1,8 @@
+2007-10-16  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Fix hang up in load balancing mode. The
+	  bug was introduced in V1.2.
+
 2007-10-15  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* pool_process_query.c: Fix invalid memory access when pgpool
