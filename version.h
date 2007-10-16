@@ -1,1 +1,1 @@
-#define PGPOOLVERSION "tomoboshi"
+#define PGPOOLVERSION "sohiboshi"
