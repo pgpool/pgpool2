@@ -1682,7 +1682,7 @@ static int trigger_failover_command(int node, const char *command_line)
 	char buf[2];
 	BackendInfo *info;
 
-	if (strlen(command_line) == 0)
+	if (command_line == NULL || (strlen(command_line) == 0))
 		return 0;
 
 	/* check nodeID */
