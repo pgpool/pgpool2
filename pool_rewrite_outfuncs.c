@@ -4132,7 +4132,8 @@ _rewriteColumnRef(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbli
 
 		if(message->rewritelock == -1)
 		{
-			GetPoolColumn(message,str,table_name,column_name,message->current_select,-1,false);
+			if(!GetPoolColumn(message,str,table_name,column_name,message->current_select,-1,false))
+				delay_string_append_char(message, str, column_name);
 		}
 		else
 		{
