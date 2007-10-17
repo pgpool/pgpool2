@@ -1,3 +1,15 @@
+1.3 (sohiboshi) 2007/10/23
+      * Version 1.3
+      * Add new "authentication_timeout" directive, being the default
+        value is 60. (Yoshiyuki)
+	- Maximum time in seconds to complete client authentication.
+      * Reject a connection when startup packet length is greater than
+        10,000 byte. (Yoshiyuki)
+      * Fix invalid memory access when pgpool processed DEALLOCATE
+        statement. (Yoshiyuki)
+      * Fix hang up in load balance mode. (Yoshiyuki)
+        - This was introduced in V1.2.
+
 1.2.1 (tomoboshi) 2007/09/28
       * Version 1.2.1
       * Fix deadlock while processing Parse message. (Yoshiyuki)
