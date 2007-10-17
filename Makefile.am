@@ -38,6 +38,6 @@ pgpool.8: pgpool.8.in
 CLEANFILES = pgpool.8
 EXTRA_DIST = pgpool.8.in sql/system_db.sql sample/pgpool.pam doc/pgpool-ja.html doc/pgpool-en.html \
 		doc/tutorial-ja.html doc/tutorial-en.html doc/pgpool.css \
-		sample/dist_def_pgbench.sql
+		sample/dist_def_pgbench.sql redhat/pgpool.init redhat/pgpool.sysconfig
 
 SUBDIRS = parser pcp
