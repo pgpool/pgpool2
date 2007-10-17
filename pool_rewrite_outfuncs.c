@@ -547,8 +547,8 @@ static void _rewriteList(Node *BaseSelect, RewriteQuery *message, ConInfoTodblin
 {
 	ListCell   *lc;
 	char first = 0;
-	char state;
-  int loop = 0;
+	char state = (char)0;
+	int loop = 0;
 	bool from;
 	int current_select = message->current_select;
 	int next = -1;
@@ -1049,7 +1049,7 @@ static void append_join_using(AnalyzeSelect *analyze,char **col_list,char **type
 	{
 		char *colname = join->col_list[i];
 		int match  = 0;
-		int array;
+		int array = 0;
 		for(j = 0; j < num; j++)
 		{
 			if(!strcmp(colname, using[j]))
@@ -1306,6 +1306,7 @@ static void build_join_table(RewriteQuery *message,char *alias, int type)
 	range = analyze->range[range_num - 1];
 	state = range->state;
 	lstate = join->state;
+	right_num = 0;
 
 	distinfo = range->distinfo;		
 	repliinfo = range->repliinfo;
@@ -1345,7 +1346,7 @@ static void build_join_table(RewriteQuery *message,char *alias, int type)
 		else
 			append_join_simple(join,repliinfo->col_list,repliinfo->type_list,repliinfo->col_num,table_name);
 	}
-	else if (selectinfo && !repliinfo	&& !distinfo)
+	else if (selectinfo && !repliinfo && !distinfo)
 	{
 		pool_debug("inside build_join_info dist state=%c %s",range->state,table_name);
 		right_num = selectinfo->col_num;
@@ -1594,8 +1595,8 @@ build_range_info(RewriteQuery *message,DistDefInfo *info,RepliDefInfo *info2,Sel
 static void
 _rewriteRangeVar(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, RangeVar *node)
 {
-	DistDefInfo *info;
-	RepliDefInfo *info2;
+	DistDefInfo *info = NULL;
+	RepliDefInfo *info2 = NULL;
 
 	if(message->r_code  == SELECT_ANALYZE)
 	{	
@@ -1695,7 +1696,7 @@ _rewriteRangeVar(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 		if(select->whereClause && 
 			!(message->r_code == SELECT_PGCATALOG))
 		{
-				char * temp;
+				char * temp = NULL;
 				int message_code = message->r_code;
 				delay_string_append_char(message, str, " WHERE ");
 
@@ -3734,7 +3735,7 @@ ChangeStatebyColumnRef(RewriteQuery *message,ColumnRef *col)
 	List *list;
 	char first = 0;
 	char *table_name = NULL;
-	char *column;
+	char *column = NULL;
 	int num,no;
 
 	list = col->fields;

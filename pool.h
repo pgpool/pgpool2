@@ -524,6 +524,7 @@ extern POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 /* define pool_system.c */
 extern POOL_CONNECTION_POOL_SLOT *pool_system_db_connection(void);
 extern DistDefInfo *pool_get_dist_def_info (char * dbname, char * schema_name, char * table_name);
+extern RepliDefInfo *pool_get_repli_def_info (char * dbname, char * schema_name, char * table_name);
 extern int pool_get_id (DistDefInfo *info, const char * value);
 extern int system_db_connect (void);
 extern int pool_memset_system_db_info (SystemDBInfo *info);
