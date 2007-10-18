@@ -544,9 +544,11 @@ search_system_db_for_cache(POOL_CONNECTION *frontend, char *sql, int sql_len, st
 static int ForwardCacheToFrontend(POOL_CONNECTION *frontend, char *cache, char tstate)
 {
 	int sendlen;
+	size_t sz;
 	char *binary_cache = NULL;
 
-	binary_cache = (char *)PQunescapeBytea((unsigned char *)cache, (unsigned int *)&sendlen);
+	binary_cache = (char *)PQunescapeBytea((unsigned char *)cache, &sz);
+	sendlen = (int) sz;
 	if (malloc_failed(binary_cache))
 		return -1;
 
