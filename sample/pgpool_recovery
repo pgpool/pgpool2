@@ -10,9 +10,10 @@ datadir=$1
 DEST=$2
 DESTDIR=$3
 
-rsync -arz --delete -e ssh $datadir/global/ $DEST:$DESTDIR/global/
-rsync -arz --delete -e ssh $datadir/base/ $DEST:$DESTDIR/base/
-rsync -arz --delete -e ssh $datadir/pg_multixact/ $DEST:$DESTDIR/pg_multixact/
-rsync -arz --delete -e ssh $datadir/pg_subtrans/ $DEST:$DESTDIR/pg_subtrans/
-rsync -arz --delete -e ssh $datadir/pg_clog/ $DEST:$DESTDIR/pg_clog/
-rsync -arz --delete -e ssh $datadir/pg_xlog/ $DEST:$DESTDIR/pg_xlog/
+rsync -aurz --delete -e ssh $datadir/global/ $DEST:$DESTDIR/global/
+rsync -aurz --delete -e ssh $datadir/base/ $DEST:$DESTDIR/base/
+rsync -aurz --delete -e ssh $datadir/pg_multixact/ $DEST:$DESTDIR/pg_multixact/
+rsync -aurz --delete -e ssh $datadir/pg_subtrans/ $DEST:$DESTDIR/pg_subtrans/
+rsync -aurz --delete -e ssh $datadir/pg_clog/ $DEST:$DESTDIR/pg_clog/
+rsync -aurz --delete -e ssh $datadir/pg_xlog/ $DEST:$DESTDIR/pg_xlog/
+rsync -aurz --delete -e ssh $datadir/pg_twophase/ $DEST:$DESTDIR/pg_twophase/
