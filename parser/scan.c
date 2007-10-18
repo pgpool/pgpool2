@@ -659,6 +659,7 @@ char *yytext;
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <setjmp.h>
 
 #define ereport(a,b)
 
@@ -866,7 +867,7 @@ void yyerror(const char *s);
  * Note that xcstart must appear before operator, as explained above!
  *  Also whitespace (comment) must appear before operator.
  */
-#line 870 "scan.c"
+#line 871 "scan.c"
 
 /* Macros after this point can all be overridden by user definitions in
  * section 1.
@@ -1017,7 +1018,7 @@ YY_DECL
 	register char *yy_cp = NULL, *yy_bp = NULL;
 	register int yy_act;
 
-#line 324 "scan.l"
+#line 325 "scan.l"
 
 
 
@@ -1025,7 +1026,7 @@ YY_DECL
 					token_start = NULL;
 
 
-#line 1029 "scan.c"
+#line 1030 "scan.c"
 
 	if ( yy_init )
 		{
@@ -1110,14 +1111,14 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 331 "scan.l"
+#line 332 "scan.l"
 {
 					/* ignore */
 				}
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 335 "scan.l"
+#line 336 "scan.l"
 {
 					token_start = yytext;
 					xcdepth = 0;
@@ -1128,7 +1129,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 343 "scan.l"
+#line 344 "scan.l"
 {
 					xcdepth++;
 					/* Put back any characters past slash-star; see above */
@@ -1137,7 +1138,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 349 "scan.l"
+#line 350 "scan.l"
 {
 					if (xcdepth <= 0)
 					{
@@ -1151,32 +1152,32 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 360 "scan.l"
+#line 361 "scan.l"
 {
 					/* ignore */
 				}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 364 "scan.l"
+#line 365 "scan.l"
 {
 					/* ignore */
 				}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 368 "scan.l"
+#line 369 "scan.l"
 {
 					/* ignore */
 				}
 	YY_BREAK
 case YY_STATE_EOF(xc):
-#line 372 "scan.l"
+#line 373 "scan.l"
 { yyerror("unterminated /* comment"); }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 374 "scan.l"
+#line 375 "scan.l"
 {
 					/* Binary bit type.
 					 * At some point we should simply pass the string
@@ -1191,10 +1192,10 @@ YY_RULE_SETUP
 				}
 	YY_BREAK
 case 9:
-#line 387 "scan.l"
+#line 388 "scan.l"
 case 10:
 YY_RULE_SETUP
-#line 387 "scan.l"
+#line 388 "scan.l"
 {
 					yyless(1);
 					BEGIN(INITIAL);
@@ -1203,30 +1204,30 @@ YY_RULE_SETUP
 				}
 	YY_BREAK
 case 11:
-#line 394 "scan.l"
+#line 395 "scan.l"
 case 12:
 YY_RULE_SETUP
-#line 394 "scan.l"
+#line 395 "scan.l"
 {
 					addlit(yytext, yyleng);
 				}
 	YY_BREAK
 case 13:
-#line 398 "scan.l"
+#line 399 "scan.l"
 case 14:
 YY_RULE_SETUP
-#line 398 "scan.l"
+#line 399 "scan.l"
 {
 					/* ignore */
 				}
 	YY_BREAK
 case YY_STATE_EOF(xb):
-#line 401 "scan.l"
+#line 402 "scan.l"
 { yyerror("unterminated bit string literal"); }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 403 "scan.l"
+#line 404 "scan.l"
 {
 					/* Hexadecimal bit type.
 					 * At some point we should simply pass the string
@@ -1241,10 +1242,10 @@ YY_RULE_SETUP
 				}
 	YY_BREAK
 case 16:
-#line 416 "scan.l"
+#line 417 "scan.l"
 case 17:
 YY_RULE_SETUP
-#line 416 "scan.l"
+#line 417 "scan.l"
 {
 					yyless(1);
 					BEGIN(INITIAL);
@@ -1253,12 +1254,12 @@ YY_RULE_SETUP
 				}
 	YY_BREAK
 case YY_STATE_EOF(xh):
-#line 422 "scan.l"
+#line 423 "scan.l"
 { yyerror("unterminated hexadecimal string literal"); }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 424 "scan.l"
+#line 425 "scan.l"
 {
 					/* National character.
 					 * We will pass this along as a normal character string,
@@ -1275,7 +1276,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 438 "scan.l"
+#line 439 "scan.l"
 {
 					warn_on_first_escape = true;
 					token_start = yytext;
@@ -1285,7 +1286,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 444 "scan.l"
+#line 445 "scan.l"
 {
 					warn_on_first_escape = false;
 					token_start = yytext;
@@ -1294,10 +1295,10 @@ YY_RULE_SETUP
 				}
 	YY_BREAK
 case 21:
-#line 451 "scan.l"
+#line 452 "scan.l"
 case 22:
 YY_RULE_SETUP
-#line 451 "scan.l"
+#line 452 "scan.l"
 {
 					yyless(1);
 					BEGIN(INITIAL);
@@ -1307,21 +1308,21 @@ YY_RULE_SETUP
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 457 "scan.l"
+#line 458 "scan.l"
 {
 					addlitchar('\'');
 				}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 460 "scan.l"
+#line 461 "scan.l"
 {
 					addlit(yytext, yyleng);
 				}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 463 "scan.l"
+#line 464 "scan.l"
 {
 					if (yytext[1] == '\'')
 					{
@@ -1350,7 +1351,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 488 "scan.l"
+#line 489 "scan.l"
 {
 					unsigned char c = strtoul(yytext+1, NULL, 8);
 
@@ -1360,7 +1361,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 494 "scan.l"
+#line 495 "scan.l"
 {
 					unsigned char c = strtoul(yytext+2, NULL, 16);
 
@@ -1370,26 +1371,26 @@ YY_RULE_SETUP
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 500 "scan.l"
+#line 501 "scan.l"
 {
 					/* ignore */
 				}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 503 "scan.l"
+#line 504 "scan.l"
 {
 					/* This is only needed for \ just before EOF */
 					addlitchar(yytext[0]);
 				}
 	YY_BREAK
 case YY_STATE_EOF(xq):
-#line 507 "scan.l"
+#line 508 "scan.l"
 { yyerror("unterminated quoted string"); }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 509 "scan.l"
+#line 510 "scan.l"
 {
 					token_start = yytext;
 					dolqstart = pstrdup(yytext);
@@ -1399,7 +1400,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 515 "scan.l"
+#line 516 "scan.l"
 {
 					/* throw back all but the initial "$" */
 					yyless(1);
@@ -1409,7 +1410,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 521 "scan.l"
+#line 522 "scan.l"
 {
 					if (strcmp(yytext, dolqstart) == 0)
 					{
@@ -1432,33 +1433,33 @@ YY_RULE_SETUP
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 540 "scan.l"
+#line 541 "scan.l"
 {
 					addlit(yytext, yyleng);
 				}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 543 "scan.l"
+#line 544 "scan.l"
 {
 					addlit(yytext, yyleng);
 				}
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 546 "scan.l"
+#line 547 "scan.l"
 {
 					/* This is only needed for $ inside the quoted text */
 					addlitchar(yytext[0]);
 				}
 	YY_BREAK
 case YY_STATE_EOF(xdolq):
-#line 550 "scan.l"
+#line 551 "scan.l"
 { yyerror("unterminated dollar-quoted string"); }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 552 "scan.l"
+#line 553 "scan.l"
 {
 					token_start = yytext;
 					BEGIN(xd);
@@ -1467,7 +1468,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 557 "scan.l"
+#line 558 "scan.l"
 {
 					char		   *ident;
 
@@ -1483,39 +1484,39 @@ YY_RULE_SETUP
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 569 "scan.l"
+#line 570 "scan.l"
 {
 					addlitchar('"');
 				}
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 572 "scan.l"
+#line 573 "scan.l"
 {
 					addlit(yytext, yyleng);
 				}
 	YY_BREAK
 case YY_STATE_EOF(xd):
-#line 575 "scan.l"
+#line 576 "scan.l"
 { yyerror("unterminated quoted identifier"); }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 577 "scan.l"
+#line 578 "scan.l"
 {
 					return TYPECAST;
 				}
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 581 "scan.l"
+#line 582 "scan.l"
 {
 					return yytext[0];
 				}
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 585 "scan.l"
+#line 586 "scan.l"
 {
 					/*
 					 * Check for embedded slash-star or dash-dash; those
@@ -1596,7 +1597,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 663 "scan.l"
+#line 664 "scan.l"
 {
 					yylval.ival = atol(yytext + 1);
 					return PARAM;
@@ -1604,7 +1605,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 668 "scan.l"
+#line 669 "scan.l"
 {
 					long val;
 					char* endptr;
@@ -1628,7 +1629,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 688 "scan.l"
+#line 689 "scan.l"
 {
 					yylval.str = pstrdup(yytext);
 					return FCONST;
@@ -1636,7 +1637,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 692 "scan.l"
+#line 693 "scan.l"
 {
 					yylval.str = pstrdup(yytext);
 					return FCONST;
@@ -1644,7 +1645,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 696 "scan.l"
+#line 697 "scan.l"
 {
 					/*
 					 * throw back the [Ee], and treat as {decimal}.  Note
@@ -1659,7 +1660,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 707 "scan.l"
+#line 708 "scan.l"
 {
 					/* throw back the [Ee][+-], and proceed as above */
 					yyless(yyleng-2);
@@ -1669,7 +1670,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 715 "scan.l"
+#line 716 "scan.l"
 {
 					const ScanKeyword *keyword;
 					char		   *ident;
@@ -1693,17 +1694,17 @@ YY_RULE_SETUP
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 736 "scan.l"
+#line 737 "scan.l"
 {
 					return yytext[0];
 				}
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 740 "scan.l"
+#line 741 "scan.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1707 "scan.c"
+#line 1708 "scan.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2585,13 +2586,13 @@ int main()
 	return 0;
 	}
 #endif
-#line 740 "scan.l"
+#line 741 "scan.l"
 
 
 void
 yyerror(const char *message)
 {
-	/* do nothing */
+	longjmp(jmpbuffer, 1);
 }
 
 

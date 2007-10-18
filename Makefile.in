@@ -251,7 +251,7 @@ man_MANS = pgpool.8
 CLEANFILES = pgpool.8
 EXTRA_DIST = pgpool.8.in sql/system_db.sql sample/pgpool.pam doc/pgpool-ja.html doc/pgpool-en.html \
 		doc/tutorial-ja.html doc/tutorial-en.html doc/pgpool.css \
-		sample/dist_def_pgbench.sql
+		sample/dist_def_pgbench.sql redhat/pgpool.init redhat/pgpool.sysconfig
 
 SUBDIRS = parser pcp
 all: config.h
@@ -625,7 +625,7 @@ distclean-tags:
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
-	$(mkdir_p) $(distdir)/doc $(distdir)/sample $(distdir)/sql
+	$(mkdir_p) $(distdir)/doc $(distdir)/redhat $(distdir)/sample $(distdir)/sql
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \
