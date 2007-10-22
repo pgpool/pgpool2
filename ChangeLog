@@ -1,3 +1,10 @@
+2007-10-18  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_query_cache.c: Although the second argument of
+	  PQunescapeBytea() requires size_t which size is 8 byte in 64bit
+	  machine, pgpool passed 4 byte variable. It caused segfault. So
+	  fixed passing size_t variable.
+
 2007-10-16  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* pool_process_query.c: Fix hang up in load balancing mode. The

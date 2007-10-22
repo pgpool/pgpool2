@@ -9,6 +9,8 @@
         statement. (Yoshiyuki)
       * Fix hang up in load balance mode. (Yoshiyuki)
         - This was introduced in V1.2.
+      * Fix segmentation fault in 64-bit environment when query cache
+        is enable. (Yoshiyuki)
 
 1.2.1 (tomoboshi) 2007/09/28
       * Version 1.2.1
