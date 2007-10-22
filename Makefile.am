@@ -57,6 +57,10 @@ EXTRA_DIST = pgpool.8.in sql/system_db.sql sample/pgpool.pam doc/pgpool-ja.html 
 		test/parser/input/alter.sql test/parser/.cvsignore test/parser/Makefile \
 		test/parser/README test/parser/main.c \
 		test/parser/pool.h test/parser/run-test \
-		test/parser/test.diff test/parser/parse_schedule
+		test/parser/test.diff test/parser/parse_schedule \
+		test/jdbc/*.java test/jdbc/pgpool.properties test/jdbc/prepare.sql test/jdbc/run.sh \
+		test/jdbc/expected/autocommit test/jdbc/expected/batch \
+		test/jdbc/expected/column test/jdbc/expected/lock test/jdbc/expected/select \
+		test/jdbc/expected/update
 
 SUBDIRS = parser pcp
