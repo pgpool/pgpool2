@@ -58,7 +58,7 @@ pgpool_recovery(PG_FUNCTION_ARGS)
 
 	if (r != 0)
 	{
-		elog(ERROR, "pgpool_recovery: rsync failed");
+		elog(ERROR, "pgpool_recovery failed");
 	}
 
 	PG_RETURN_BOOL(true);
