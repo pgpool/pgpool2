@@ -1164,6 +1164,54 @@ pgpool からは以下の形式でスクリプトを実行します。
 おく必要があります。
 </p>
 
+<h4>pgpool_recovery_pitr</h4>
+<p>
+rsync によるデータコピー方式の他に、PostgreSQL の PITR を使ったリカバ
+リをすることができます。PITR によるリカバリをする場合にはあらかじめ
+PostgreSQL の設定でログをアーカイブさせるようにしておいてください。
+</p>
+
+<p>
+PITR によるリカバリを実施するには、pgpool_recovery_pitr スクリプトを
+$PGDATA/pgpool_recovery にコピーします。このスクリプトでは XLOG を強制
+的にスイッチさせるようにします。
+</p>
+
+<pre>
+  #! /bin/sh
+  psql -c 'select pg_switch_xlog()' postgres
+</pre>
+
+<p>
+スクリプトの配置が完了したらベースバックアップを取得し、リカバリ先のノー
+ドへコピーします。この時点ではまだリカバリ操作をしません。以下のような
+スクリプトを使って自動的にベースバックアップをリカバリ先にコピーするこ
+とができます。
+</p>
+
+<pre>
+  #! /bin/sh
+
+  psql -c "select pg_start_backup('pgpool-recovery')" postgres
+  tar -C /data -zcf pgsql.tar.gz pgsql
+  psql -c 'select pg_stop_backup()' postgres
+  scp pgsql.tar.gz secondary:/data
+</pre>
+
+<p>
+最後にベースバックアップを展開し、recovery.conf を編集します。
+ここでの例では、recovery.conf ではマスタにアーカイブされているログを
+scp でコピーしています。
+
+<pre>
+restore_command = 'scp master:/data/archive_log/%f %p'
+</pre>
+</p>
+
+<p>
+これで PITR によるオンラインリカバリの準備が完了です。
+</p>
+
 <h3>リカバリの実行</h3>
 <p>
 以上でオンラインリカバリの準備が整いました。

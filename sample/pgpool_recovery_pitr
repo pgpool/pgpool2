@@ -1,0 +1,3 @@
+#! /bin/sh
+
+psql -c 'select pg_switch_xlog()' postgres
