@@ -42,6 +42,7 @@
 #include <ctype.h>
 
 #include "pool.h"
+#include "pool_signal.h"
 
 #include "parser/parser.h"
 #include "parser/pg_list.h"
@@ -5225,6 +5226,13 @@ static POOL_STATUS start_internal_transaction(POOL_CONNECTION_POOL *backend, Nod
 static POOL_STATUS end_internal_transaction(POOL_CONNECTION_POOL *backend)
 {
 	int i;
+#ifdef HAVE_SIGPROCMASK
+	sigset_t oldmask;
+#else
+	int	oldmask;
+#endif
+
+	POOL_SETMASK2(&BlockSig, &oldmask);
 
 	/* We need to commit from secondary to master. */
 	for (i=0;i<NUM_BACKENDS;i++)
@@ -5234,6 +5242,7 @@ static POOL_STATUS end_internal_transaction(POOL_CONNECTION_POOL *backend)
 			if (do_command(CONNECTION(backend, i), "COMMIT", MAJOR(backend), 1) != POOL_CONTINUE)
 			{
 				internal_transaction_started = 0;
+				POOL_SETMASK(&oldmask);
 				return POOL_END;
 			}
 		}
@@ -5243,10 +5252,12 @@ static POOL_STATUS end_internal_transaction(POOL_CONNECTION_POOL *backend)
 	if (do_command(MASTER(backend), "COMMIT", MAJOR(backend), 1) != POOL_CONTINUE)
 	{
 		internal_transaction_started = 0;
+		POOL_SETMASK(&oldmask);
 		return POOL_END;
 	}
 
 	internal_transaction_started = 0;
+	POOL_SETMASK(&oldmask);
 	return POOL_CONTINUE;	
 }
 
