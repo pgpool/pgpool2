@@ -110,7 +110,8 @@ static POOL_STATUS EmptyQueryResponse(POOL_CONNECTION *frontend,
 									  POOL_CONNECTION_POOL *backend);
 
 static int RowDescription(POOL_CONNECTION *frontend, 
-						  POOL_CONNECTION_POOL *backend);
+						  POOL_CONNECTION_POOL *backend,
+						  short *result);
 
 static POOL_STATUS AsciiRow(POOL_CONNECTION *frontend, 
 							POOL_CONNECTION_POOL *backend,
@@ -531,12 +532,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 
 				case 'T':
 					/* RowDescription */
-					status = RowDescription(frontend, backend);
-					if (status < 0)
-						return POOL_ERROR;
-
-					num_fields = status;
-					status = POOL_CONTINUE;
+					status = RowDescription(frontend, backend, &num_fields);
 					break;
 
 				case 'V':
@@ -1487,7 +1483,8 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		status = SimpleForwardToFrontend(kind, frontend, backend);
 		if (status != POOL_CONTINUE)
 			return status;
-		pool_flush(frontend);
+		if (pool_flush(frontend))
+			return POOL_END;
 	}
 	if (ret != POOL_CONTINUE)
 		return ret;
@@ -1495,7 +1492,8 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 	status = SimpleForwardToFrontend(kind, frontend, backend);
 	if (status != POOL_CONTINUE)
 		return status;
-	pool_flush(frontend);
+	if (pool_flush(frontend))
+		return POOL_END;
 
 	/* end load balance mode */
 	if (in_load_balance)
@@ -1963,11 +1961,12 @@ static POOL_STATUS CompleteCommandResponse(POOL_CONNECTION *frontend,
 	}
 
 	free(string1);
-	return POOL_CONTINUE;
+	return pool_flush(frontend);
 }
 
 static int RowDescription(POOL_CONNECTION *frontend, 
-						  POOL_CONNECTION_POOL *backend)
+						  POOL_CONNECTION_POOL *backend,
+						  short *result)
 {
 	short num_fields, num_fields1 = 0;
 	int oid, mod;
@@ -2087,7 +2086,9 @@ static int RowDescription(POOL_CONNECTION *frontend,
 			return POOL_END;
 	}
 
-	return num_fields;
+	*result = num_fields;
+
+	return pool_flush(frontend);
 }
 
 static POOL_STATUS AsciiRow(POOL_CONNECTION *frontend, 
@@ -2187,6 +2188,10 @@ static POOL_STATUS AsciiRow(POOL_CONNECTION *frontend,
 
 		mask >>= 1;
 	}
+
+	if (pool_flush(frontend))
+		return POOL_END;
+
 	return POOL_CONTINUE;
 }
 
@@ -2285,6 +2290,10 @@ static POOL_STATUS BinaryRow(POOL_CONNECTION *frontend,
 			mask >>= 1;
 		}
 	}
+
+	if (pool_flush(frontend))
+		return POOL_END;
+
 	return POOL_CONTINUE;
 }
 
@@ -2330,6 +2339,10 @@ static POOL_STATUS CursorResponse(POOL_CONNECTION *frontend,
 		return POOL_END;
 	}
 	free(string1);
+
+	if (pool_flush(frontend))
+		return POOL_END;
+
 	return POOL_CONTINUE;
 }
 
@@ -3800,7 +3813,8 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 			ret = SimpleForwardToFrontend(kind1, frontend, backend);
 			if (ret != POOL_CONTINUE)
 				return ret;
-			pool_flush(frontend);
+			if (pool_flush(frontend))
+				return POOL_END;
 		}
 
 		if (ret != POOL_CONTINUE)
@@ -3956,7 +3970,8 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 			if (ret != POOL_CONTINUE)
 				return ret;
 			SimpleForwardToFrontend(kind1, frontend, backend);
-			pool_flush(frontend);
+			if (pool_flush(frontend))
+				return POOL_END;
 		}
 
 		for (;;)
