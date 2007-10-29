@@ -32,6 +32,7 @@
 #define booltostr(x)  ((x) ? "true" : "false")
 
 
+extern void _outNode(String *str, void *obj);
 static void _rewriteNode(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, void *obj);
 static void _rewriteList(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, List *node);
 static void _rewriteIdList(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, List *node);
@@ -184,12 +185,16 @@ static void AnalyzeReturnRecord(Node *BaseSelect, RewriteQuery *message, ConInfo
 static void build_virtual_table(RewriteQuery *message,void *obj, int next);
 static char *search_type_from_virtual(VirtualTable *virtual,char *table,char *col);
 static int _checkVirtualColumn(ColumnRef *col,RewriteQuery *message);
+static void SeekColumnName(Aggexpr *agg,ColumnRef *node,int state);
 /* rewirte */
 static void writeSelectHeader(RewriteQuery *message,ConInfoTodblink *dblink, String *str,int parallel,int state);
 static void writeSelectFooter(RewriteQuery *message,String *str,AnalyzeSelect *analyze,int state);
 static void KeepRewriteQueryReturnCode(RewriteQuery *message, int r_code);
 static void writeRangeHeader(RewriteQuery *message,ConInfoTodblink *dblink, String *str,DistDefInfo *info, RepliDefInfo *info2,char *alias);
 static void writeRangeFooter(RewriteQuery *message,ConInfoTodblink *dblink, String *str,DistDefInfo *info, RepliDefInfo *info2,char *alias);
+static bool CheckAggOpt(RewriteQuery *message);
+static char *GetNameFromColumnRef(ColumnRef *node,bool state);
+static void AvgFuncCall(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, FuncCall *node);
 
 /* under define is used in _rewritejoinExpr */
 #define JDEFAULT 0
@@ -2369,6 +2374,7 @@ initSelectStmt(RewriteQuery *message,SelectStmt *node)
 		analyze->join = NULL;
 		analyze->state = (char) 0;
 		analyze->aggregate = false;
+		analyze->aggexpr = NULL;
 		analyze->table_name = NULL;
 		analyze->select_range = false;
 		analyze->rarg_count = -1;
@@ -2575,6 +2581,91 @@ static void writeRangeFooter(RewriteQuery *message,ConInfoTodblink *dblink, Stri
 	}
 }
 
+static void writeSelectAggHeader(RewriteQuery *message,ConInfoTodblink *dblink, String *str,int state)
+{
+	char port[8];
+	int count = message->current_select;
+	AnalyzeSelect  *analyze;
+	Aggexpr *agg;
+	int i;
+	int ret_count = 0;
+
+	analyze = message->analyze[count];
+	agg = analyze->aggexpr;
+
+	ret_count = agg->t_num + agg->c_num + agg->h_num;
+
+	sprintf(port,"%d",dblink->port);
+	pool_debug("writeSelectHeader select_no=%d state=%d",message->current_select,state);
+
+	delay_string_append_char(message, str, "dblink(");
+	delay_string_append_char(message, str, "'");
+	delay_string_append_char(message, str, "host=");
+	delay_string_append_char(message, str, dblink->hostaddr);
+	delay_string_append_char(message, str, " dbname=");
+	delay_string_append_char(message, str, dblink->dbname);
+	delay_string_append_char(message, str, " port=");
+	delay_string_append_char(message, str, port);
+	delay_string_append_char(message, str, " user=");
+	delay_string_append_char(message, str, dblink->user);
+
+	if(strlen(dblink->password))
+	{
+		delay_string_append_char(message, str, " password=");
+		delay_string_append_char(message, str, dblink->password);
+	}
+	delay_string_append_char(message, str, "'");
+	delay_string_append_char(message, str, ",");
+	delay_string_append_char(message, str, "'");
+	delay_string_append_char(message, str, "SELECT pool_parallel(\"");
+	delay_string_append_char(message, str, "SELECT ");
+
+	message->rewritelock = count;
+
+	for(i = 0; i< agg->t_num; i++)
+	{
+		char *funcname = NULL;
+		funcname = strVal(lfirst(list_head(agg->tfunc_p[i]->funcname)));
+		if(strcmp(funcname,"avg"))
+		{
+			_rewriteFuncCall(NULL,message,NULL,str,agg->tfunc_p[i]);
+		}	
+		else
+		{
+			AvgFuncCall(NULL,message,NULL,str,agg->tfunc_p[i]);
+		}
+		ret_count--;
+		if(ret_count != 0)
+			delay_string_append_char(message, str, ",");		
+	}
+
+	for(i = 0; i< agg->c_num; i++)
+	{
+		_rewriteColumnRef(NULL,message,NULL,str,agg->col_p[i]);
+		ret_count--;
+		if(ret_count != 0)
+			delay_string_append_char(message, str, ",");		
+	}
+
+	for(i = 0; i< agg->h_num; i++)
+	{
+		char *funcname = NULL;
+		funcname = strVal(lfirst(list_head(agg->hfunc_p[i]->funcname)));
+		if(strcmp(funcname,"avg"))
+		{
+			_rewriteFuncCall(NULL,message,NULL,str,agg->hfunc_p[i]);
+		}
+		else
+		{	
+			AvgFuncCall(NULL,message,NULL,str,agg->hfunc_p[i]);
+		}
+		ret_count--;
+		if(ret_count != 0)
+			delay_string_append_char(message, str, ",");		
+	}
+	delay_string_append_char(message, str, " FROM ");
+}
+
 static void writeSelectHeader(RewriteQuery *message,ConInfoTodblink *dblink, String *str,int parallel,int state)
 {
 	char port[8];
@@ -2666,6 +2757,168 @@ static void writeSelectHeader(RewriteQuery *message,ConInfoTodblink *dblink, Str
 
 		delay_string_append_char(message, str, " FROM ");
 	}
+}
+
+static char *estimateFuncTypes(AnalyzeSelect *analyze,FuncCall *func)
+{
+	char *funcname = NULL;
+	void *obj;
+	char *type;
+	obj = lfirst(list_head(func->args));
+
+	funcname = strVal(lfirst(list_head(func->funcname)));
+
+	if(!strcmp(funcname,"max") || !strcmp(funcname,"min"))
+	{
+		if (obj && (IsA(obj, ColumnRef)))
+		{
+			char *table_name = NULL;
+			char *column_name = NULL;
+			VirtualTable  *virtual = analyze->virtual;
+			
+			column_name = GetNameFromColumnRef((ColumnRef *) obj,true);
+			table_name = GetNameFromColumnRef((ColumnRef *) obj ,false);
+			type = search_type_from_virtual(virtual,table_name,column_name);
+			return type;
+		}
+		else if( obj && (IsA(obj,TypeCast)))
+		{	
+			TypeCast *typecast = (TypeCast *) obj;
+			TypeName *typename = (TypeName *)typecast->typename;
+			type = strVal(lfirst(list_head(typename->names)));
+			return type;
+		} 
+		else 
+		{
+	  	char *numeric = "numeric";
+			type = (char *) palloc(sizeof(char) * strlen(numeric) +1);
+			strcpy(type,numeric);
+			return type;	
+		}
+	}
+	else if(!strcmp(funcname,"sum"))
+	{
+	  char *numeric = "numeric";
+		type = (char *) palloc(sizeof(char) * strlen(numeric) +1);
+		strcpy(type,numeric);
+		return type;	
+	}
+
+	return "numeric";	
+}
+
+static void writeSelectAggFooter(RewriteQuery *message,String *str,AnalyzeSelect *analyze)
+{
+	int count = message->current_select;
+	Aggexpr *agg;
+	int i;
+	int ret_count = 0;
+	int group_count = 0;
+
+	analyze = message->analyze[count];
+	agg = analyze->aggexpr;
+
+	ret_count = agg->t_num + agg->c_num + agg->h_num;
+	
+	group_count = agg->c_num;
+	
+	if(group_count != 0)
+	{
+		delay_string_append_char(message, str, " GROUP BY ");
+	
+		for(i = 0; i< agg->c_num; i++)
+		{
+			_rewriteColumnRef(NULL,message,NULL,str,agg->col_p[i]);
+			group_count--;
+			if(group_count != 0)
+				delay_string_append_char(message, str, ",");		
+		}
+	}
+
+	delay_string_append_char(message, str, "\"");
+	delay_string_append_char(message, str, ")");
+	delay_string_append_char(message, str, "'");
+	delay_string_append_char(message, str, ")");
+
+	delay_string_append_char(message, str," AS ");
+	delay_string_append_char(message, str, analyze->table_name);
+
+	/* symbol of aggregate opt */
+	delay_string_append_char(message, str,"g");
+	delay_string_append_char(message, str, " (");
+				
+	message->rewritelock = -1;
+
+	for(i = 0; i < ret_count; i++)
+	{
+		char buf[16];
+		snprintf(buf, 16, "%d", i);
+		delay_string_append_char(message, str, "pool_g$");
+		delay_string_append_char(message, str, buf);
+		delay_string_append_char(message, str, " ");
+
+		if(i < agg->t_num)
+		{
+			char *funcname = NULL;
+			funcname = strVal(lfirst(list_head(agg->tfunc_p[i]->funcname)));
+			if(!strcmp(funcname,"count"))
+				delay_string_append_char(message, str, "bigint ");
+			else if(!strcmp(funcname,"avg"))
+			{
+				delay_string_append_char(message, str, "numeric ");
+				delay_string_append_char(message, str, ",");
+				delay_string_append_char(message, str, "pool_g$");
+				delay_string_append_char(message, str, buf);
+				delay_string_append_char(message, str, "c");
+				delay_string_append_char(message, str, " ");
+				delay_string_append_char(message, str, "bigint ");
+			}
+			else
+			{
+				char *type = estimateFuncTypes(analyze,agg->tfunc_p[i]);
+				delay_string_append_char(message, str, type);
+			}
+		}
+		else if(i >= agg->t_num && i < agg->t_num + agg->c_num)
+		{
+			char *table_name = NULL;
+			char *column_name = NULL;
+			char *type = NULL;
+			VirtualTable  *virtual = analyze->virtual;
+			
+			column_name = GetNameFromColumnRef(agg->col_p[i - agg->t_num],true);
+			table_name = GetNameFromColumnRef(agg->col_p[i - agg->t_num],false);
+			type = search_type_from_virtual(virtual,table_name,column_name);
+			delay_string_append_char(message, str, type);
+		}
+		else if(i >= agg->t_num + agg->c_num)
+		{
+			char *funcname = NULL;
+			int arg = i - agg->t_num - agg->c_num;
+			funcname = strVal(lfirst(list_head(agg->hfunc_p[arg]->funcname)));
+			if(!strcmp(funcname,"count"))
+				delay_string_append_char(message, str, "bigint ");
+			else if(!strcmp(funcname,"avg"))
+			{
+				delay_string_append_char(message, str, "numeric ");
+				delay_string_append_char(message, str, ",");
+				delay_string_append_char(message, str, "pool_g$");
+				delay_string_append_char(message, str, buf);
+				delay_string_append_char(message, str, "c");
+				delay_string_append_char(message, str, " ");
+				delay_string_append_char(message, str, "bigint ");
+			}
+			else
+			{
+				char *type = estimateFuncTypes(analyze,agg->hfunc_p[arg]);
+				delay_string_append_char(message, str, type);
+			}
+		}
+		 
+		if( i + 1 != ret_count)	
+			delay_string_append_char(message, str, ",");
+	}
+	delay_string_append_char(message, str, ") ");
 }
 
 static void writeSelectFooter(RewriteQuery *message,String *str,AnalyzeSelect *analyze,int state)
@@ -2860,6 +3113,7 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 	int from_analyze = 0;
 	bool lock = false;
 	bool direct = false;
+	bool aggrewrite = false;
 
 	count = message->analyze_num;
 
@@ -2929,7 +3183,6 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 		/* COPY analyze of left arg */ 
 		if(message->r_code == SELECT_ANALYZE)
 		{
-			//CopyFromLeftArg(message,count);
 			analyze->larg_count = count + 1;
 			analyze->rarg_count = message->analyze_num;
 			pool_debug("_rewriteSelectStmt: COUNT larg=%d, rarg=%d",analyze->larg_count, analyze->rarg_count);
@@ -3101,6 +3354,11 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 		message->part = SELECT_OTHER;
 		analyze->part = SELECT_OTHER;
 
+		if (message->r_code == SELECT_ANALYZE && node->groupClause)
+		{
+			analyze->aggregate = true;
+		}
+
 		if (node->distinctClause)
 		{
 			if(message->r_code == SELECT_ANALYZE)
@@ -3125,6 +3383,8 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 		/* TARGETLIST START */
 		_rewriteNode(BaseSelect, message, dblink, str, node->targetList);
 
+		aggrewrite = CheckAggOpt(message);
+ 
 		target_analyze = message->analyze_num;
 
 		if(message->r_code == SELECT_ANALYZE)
@@ -3158,7 +3418,14 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 				}	
 				else if(analyze->partstate[SELECT_FROMCLAUSE] == 'P')
 				{
-					writeSelectHeader(message,dblink,str,PARALLEL, message->part);
+					if(aggrewrite)
+					{
+						writeSelectAggHeader(message,dblink,str, message->part);
+					}
+					else
+					{
+						writeSelectHeader(message,dblink,str,PARALLEL, message->part);
+					}
 					message->rewritelock = count;
 				}
 			}
@@ -3222,9 +3489,12 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 		}
 
 		if(!analyze->partstate[SELECT_WHERECLAUSE] && message->r_code == SELECT_ANALYZE)
-			analyze->partstate[SELECT_WHERECLAUSE] = analyze->partstate[SELECT_TARGETLIST];
+			analyze->partstate[SELECT_WHERECLAUSE] = analyze->partstate[SELECT_FROMCLAUSE];
 
-		ChangeStateRewriteFooter(message,str,SELECT_WHERECLAUSE, SELECT_GROUPBYCLAUSE);
+		if(aggrewrite)
+				writeSelectAggFooter(message,str,analyze);	
+		else
+			ChangeStateRewriteFooter(message,str,SELECT_WHERECLAUSE, SELECT_GROUPBYCLAUSE);
 
 		/* GROUPBY CLAUSE */
 		if (node->groupClause)
@@ -3383,17 +3653,280 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 }
 
 static void
+initAggexpr(AnalyzeSelect *analyze)
+{
+	Aggexpr *agg;
+
+	if(analyze->aggexpr)
+		return;
+
+	analyze->aggexpr = (Aggexpr *) palloc(sizeof(Aggexpr));
+	agg = analyze->aggexpr;
+	agg->usec_p = NULL;
+	agg->tfunc_p = NULL;
+	agg->col_p = NULL;
+	agg->hfunc_p = NULL;
+	agg->umapc = NULL;
+	agg->u_num = 0;
+	agg->t_num = 0;
+	agg->c_num = 0;
+	agg->h_num = 0;
+	agg->hc_num = 0;
+	agg->s_num = 0;
+	agg->sc_num = 0;
+	agg->opt = true;
+}
+
+static int
+FuncChangebyAggregate(AnalyzeSelect *analyze, FuncCall *fnode)
+{
+	Aggexpr *agg;
+	int i;
+
+
+	if(analyze->aggregate && analyze->aggexpr)
+		agg = analyze->aggexpr;
+	else
+		return -1;
+
+	if(!agg->opt)
+		return -1;
+
+	if(analyze->part == SELECT_TARGETLIST)
+	{
+		for(i = 0; i < agg->t_num; i++)
+		{
+			if(fnode == agg->tfunc_p[i])
+			{
+				return i;
+			}
+		}
+	} 
+	else if(analyze->part == SELECT_HAVINGCLAUSE) 
+	{
+		for(i = 0; i < agg->h_num; i++)
+		{
+			if(fnode == agg->hfunc_p[i])
+			{
+				return i;
+			}
+		}
+	}
+	else if(analyze->part == SELECT_SORTCLAUSE)
+	{
+		String *sortfunc;
+		sortfunc = init_string("");
+		_outNode(sortfunc, fnode);
+
+		for(i = 0; i < agg->t_num; i++)
+		{
+			String *having;
+			having = init_string("");
+			_outNode(having, agg->tfunc_p[i]);
+			if(!strcmp(sortfunc->data,having->data))
+			{
+				free_string(having);
+				free_string(sortfunc);
+				return i;
+			} else {
+				if(having)
+					free_string(having);
+			}
+		}
+		if(sortfunc)
+			free_string(sortfunc);
+	}
+	return -1;
+}
+
+static int
+ColumnChangebyAggregate(AnalyzeSelect *analyze,ColumnRef *cnode)
+{
+	Aggexpr *agg;
+	int i;
+
+
+	if(analyze->aggregate && analyze->aggexpr)
+		agg = analyze->aggexpr;
+	else
+		return -1;
+
+	if(!agg->opt)
+		return -1;
+
+	if(analyze->part == SELECT_GROUPBYCLAUSE)
+	{
+		for(i = 0; i < agg->c_num; i++)
+		{
+			if(cnode == agg->col_p[i])
+			{
+				return agg->t_num + i;
+			}
+		}
+	}
+	else if(analyze->part == SELECT_TARGETLIST)
+	{
+		for(i = 0; i < agg->u_num; i++)
+		{
+			char *n_c = NULL;
+			char *n_t = NULL;
+			char *c_c = NULL;
+			char *c_t = NULL;
+			n_c = GetNameFromColumnRef(cnode,true);
+			n_t = GetNameFromColumnRef(cnode,false);
+			c_c = GetNameFromColumnRef(agg->usec_p[i],true);
+			c_t = GetNameFromColumnRef(agg->usec_p[i],false);
+
+			if(n_t && c_t)
+			{
+				if(!strcmp(n_t,c_t) && !strcmp(n_c,c_c))
+					return agg->t_num + agg->umapc[i];
+			} 
+			else
+			{
+				if(!strcmp(n_c,c_c))
+					return agg->t_num + agg->umapc[i];
+			}
+		}
+	}
+	else if(analyze->part == SELECT_HAVINGCLAUSE || analyze->part == SELECT_SORTCLAUSE)
+	{
+		for(i = 0; i < agg->c_num; i++)
+		{
+			char *n_c = NULL;
+			char *n_t = NULL;
+			char *c_c = NULL;
+			char *c_t = NULL;
+			n_c = GetNameFromColumnRef(cnode,true);
+			n_t = GetNameFromColumnRef(cnode,false);
+			c_c = GetNameFromColumnRef(agg->col_p[i],true);
+			c_t = GetNameFromColumnRef(agg->col_p[i],false);
+
+			if(n_t && c_t)
+			{
+				if(!strcmp(n_t,c_t) && !strcmp(n_c,c_c))
+					return agg->t_num + i;
+			} 
+			else
+			{
+				if(!strcmp(n_c,c_c))
+					return agg->t_num + i;
+			}
+		}
+	}
+	return -1;
+}
+
+static void
+AppendAggregate(AnalyzeSelect *analyze,FuncCall *fnode,ColumnRef *cnode)
+{
+	Aggexpr *agg;
+
+	initAggexpr(analyze);
+
+	agg = analyze->aggexpr;
+
+
+	if(analyze->part == SELECT_GROUPBYCLAUSE)
+	{
+		if(!agg->col_p)
+		{
+			agg->col_p = (ColumnRef **) palloc(sizeof(ColumnRef *));
+		}
+		else
+		{
+			agg->col_p = (ColumnRef **) repalloc(agg->col_p,(agg->c_num + 1) *sizeof(ColumnRef *));
+		}
+		agg->col_p[agg->c_num] = cnode;
+		SeekColumnName(agg,cnode,SELECT_GROUPBYCLAUSE);
+		agg->c_num++;
+	}
+	else if(analyze->part == SELECT_TARGETLIST)
+	{
+		if(fnode)  /* for function */
+		{
+			if(!agg->tfunc_p)
+			{
+				agg->tfunc_p = (FuncCall **) palloc(sizeof(FuncCall *));
+			}
+			else
+			{
+				agg->tfunc_p = (FuncCall **) repalloc(agg->tfunc_p,(agg->t_num + 1) *sizeof(FuncCall *));
+			}
+			agg->tfunc_p[agg->t_num] = fnode;
+			agg->t_num++;
+		} else {   /* for Column */
+			if(!agg->usec_p)
+			{
+				agg->usec_p = (ColumnRef **) palloc(sizeof(ColumnRef *));
+				agg->umapc = (int *) palloc(sizeof(int));
+			}
+			else
+			{
+				agg->usec_p = (ColumnRef **) repalloc(agg->usec_p,(agg->u_num + 1) *sizeof(ColumnRef *));
+				agg->umapc = (int *) repalloc(agg->umapc,(agg->u_num + 1) *sizeof(int));
+			}
+			agg->usec_p[agg->u_num] = cnode;
+			agg->u_num++;
+		}
+	} 
+	else if(analyze->part == SELECT_HAVINGCLAUSE)
+	{
+		if(fnode)  /* for function */
+		{
+			if(!agg->hfunc_p)
+			{
+				agg->hfunc_p = (FuncCall **) palloc(sizeof(FuncCall *));
+			}
+			else
+			{
+				agg->hfunc_p = (FuncCall **) repalloc(agg->hfunc_p,(agg->h_num + 1) *sizeof(FuncCall *));
+			}
+			agg->hfunc_p[agg->h_num] = fnode;
+			agg->h_num++;
+		}
+	}
+}
+
+static void
 _rewriteFuncCall(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, FuncCall *node)
 {
 	char *funcname;
+	bool avg_flag = false;
 	if(message->r_code == SELECT_AEXPR)
 	{ 
 		KeepRewriteQueryReturnCode(message, SELECT_AEXPR_FALSE);
 		return;
 	}
 
-	_rewriteFuncName(BaseSelect, message, dblink, str, node->funcname);
 	funcname = strVal(lfirst(list_head(node->funcname)));
+
+	if (CheckAggOpt(message))
+	{
+		int i;
+		AnalyzeSelect *analyze;
+		int no = message->current_select;		
+		analyze = message->analyze[no];
+
+		i = FuncChangebyAggregate(analyze,node);
+		if(i != -1)
+		{
+			if(!strcmp(funcname,"count"))
+				delay_string_append_char(message, str, "sum");
+			else if(!strcmp(funcname,"avg"))
+			{
+				delay_string_append_char(message, str, "(sum");
+				avg_flag =true;
+			}
+			else
+				_rewriteFuncName(BaseSelect, message, dblink, str, node->funcname);
+		} 
+		else
+		_rewriteFuncName(BaseSelect, message, dblink, str, node->funcname);
+		
+	}
+	else
+		_rewriteFuncName(BaseSelect, message, dblink, str, node->funcname);
 
 	if(message->r_code == SELECT_ANALYZE && funcname)
 	{
@@ -3413,6 +3946,20 @@ _rewriteFuncCall(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 			int no = message->current_select;		
 			analyze = message->analyze[no];
 			analyze->aggregate = true;
+
+			if(analyze->part == SELECT_TARGETLIST || analyze->part == SELECT_HAVINGCLAUSE)
+			{
+				if(!strcmp(funcname,"count") || !strcmp(funcname,"max") || 
+						!strcmp(funcname,"min") || !strcmp(funcname,"sum") || !strcmp(funcname,"avg"))
+				{
+					AppendAggregate(analyze,node,NULL);
+				} 
+				else 
+				{
+					initAggexpr(analyze);
+					analyze->aggexpr->opt = false;
+				}
+			}
 		}
 	}
 
@@ -3427,10 +3974,74 @@ _rewriteFuncCall(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 	if (node->agg_distinct == TRUE)
 		delay_string_append_char(message, str, "DISTINCT ");
 
+	if (CheckAggOpt(message))
+	{
+		int i;
+		AnalyzeSelect *analyze;
+		int no = message->current_select;		
+		analyze = message->analyze[no];
+		i = FuncChangebyAggregate(analyze,node);
+		if(i != -1)
+		{
+		 	char buf[16];
+		 	snprintf(buf, 16, "%d", i);
+		 	delay_string_append_char(message, str, "pool_g$");
+		 	delay_string_append_char(message, str, buf);
+		 	pool_debug("_FuncCall: aggregate no = %d",i);
+			delay_string_append_char(message, str, ")");
+
+			if(avg_flag)
+			{			
+				delay_string_append_char(message, str, "/");
+				delay_string_append_char(message, str, "sum(");
+		 		delay_string_append_char(message, str, "pool_g$");
+		 		delay_string_append_char(message, str, buf);
+		 		delay_string_append_char(message, str, "c");
+				delay_string_append_char(message, str, "))");
+			}
+		 	return ;
+		}
+	}
+
 	if (node->agg_star == TRUE)
 		delay_string_append_char(message, str, "*");
 	else
 		_rewriteNode(BaseSelect, message, dblink, str, node->args);
+
+	delay_string_append_char(message, str, ")");
+}
+
+static void
+AvgFuncCall(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, FuncCall *node)
+{
+	char *funcname;
+	if(message->r_code == SELECT_AEXPR)
+	{ 
+		KeepRewriteQueryReturnCode(message, SELECT_AEXPR_FALSE);
+		return;
+	}
+
+	funcname = strVal(lfirst(list_head(node->funcname)));
+
+	delay_string_append_char(message, str, "sum");
+
+	delay_string_append_char(message, str, "(");
+
+	if (node->agg_distinct == TRUE)
+		delay_string_append_char(message, str, "DISTINCT ");
+
+	_rewriteNode(BaseSelect, message, dblink, str, node->args);
+
+	delay_string_append_char(message, str, ")");
+	delay_string_append_char(message, str, ",");
+	delay_string_append_char(message, str, "count");
+
+	delay_string_append_char(message, str, "(");
+
+	if (node->agg_distinct == TRUE)
+		delay_string_append_char(message, str, "DISTINCT ");
+
+	_rewriteNode(BaseSelect, message, dblink, str, node->args);
 
 	delay_string_append_char(message, str, ")");
 }
@@ -4083,6 +4694,97 @@ static bool GetPoolColumn(RewriteQuery *message,String *str,char *table_name,cha
 	return false;
 }
 
+static void SeekColumnName(Aggexpr *agg,ColumnRef *node, int state)
+{
+	char *column = NULL;
+	char *table = NULL;
+	int i;
+	
+	/* get column & table name from group by */
+	column = GetNameFromColumnRef(node,true);
+	table = GetNameFromColumnRef(node,false);
+
+	if(state == SELECT_GROUPBYCLAUSE)
+	{	
+		for(i = 0; i < agg->u_num; i++)
+		{
+			ColumnRef *unode = agg->usec_p[i];
+			char *t_column = NULL;
+			char *t_table = NULL;
+			t_column = GetNameFromColumnRef(unode,true);
+			t_table = GetNameFromColumnRef(unode,false);
+	
+			if(table && t_table)
+			{ 
+				if(!strcmp(table,t_table) && !strcmp(column,t_column))
+				{
+					agg->umapc[i] = agg->c_num;
+					return;
+				}	
+			} 
+			else 
+			{
+				if(!strcmp(column,t_column))
+				{
+					agg->umapc[i] = agg->c_num;
+					return;
+				}
+			}
+		}
+	}	
+}
+
+static bool CheckAggOpt(RewriteQuery *message)
+{
+	AnalyzeSelect *analyze;
+	if(message->r_code != SELECT_DEFAULT)
+		return false;
+
+	analyze = message->analyze[message->current_select];
+
+	if(analyze->aggregate && analyze->aggexpr && analyze->aggexpr->opt  
+			&& (analyze->part == SELECT_TARGETLIST || analyze->part == SELECT_GROUPBYCLAUSE 
+				|| analyze->part == SELECT_HAVINGCLAUSE || analyze->part == SELECT_SORTCLAUSE)
+			&& analyze->partstate[SELECT_FROMCLAUSE] == 'P'
+			&& analyze->partstate[SELECT_TARGETLIST] == 'S'
+			&& analyze->partstate[SELECT_WHERECLAUSE] == 'P')
+		return true;
+
+	return false;
+}
+
+static char *GetNameFromColumnRef(ColumnRef *node,bool state)
+{
+	ListCell *c;
+	List *list;
+	list = node->fields;
+	int first = 0;
+	char *table_name = NULL;
+  char *column_name = NULL;
+
+	foreach (c, node->fields)
+	{
+		Node *n = (Node *) lfirst(c);
+
+		if (IsA(n, String))
+		{
+			Value *v = (Value *) lfirst(c);
+			if(list->length == 2 && first == 0)
+			{
+				first = 1;
+				table_name = v->val.str;
+			}
+			else
+				column_name = v->val.str;
+		}
+	}
+
+	if(state)
+		return column_name;
+	else	
+		return table_name;
+}
+
 static void
 _rewriteColumnRef(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, ColumnRef *node)
 {
@@ -4091,6 +4793,23 @@ _rewriteColumnRef(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbli
 	char first = 0;
 	char *table_name = NULL;
   char *column_name = NULL;
+
+	if(CheckAggOpt(message)) 
+	{
+		int i;
+		AnalyzeSelect *analyze = message->analyze[message->current_select];
+
+		i = ColumnChangebyAggregate(analyze,node);
+		if(i != -1)
+		{
+		 char buf[16];
+		 snprintf(buf, 16, "%d", i);
+		 delay_string_append_char(message, str, "pool_g$");
+		 delay_string_append_char(message, str, buf);
+		 pool_debug("_rewriteColumnRef: aggregate no = %d",i);
+		 return ;
+		}
+	}
 
 	list = node->fields;
 
@@ -4121,6 +4840,11 @@ _rewriteColumnRef(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbli
 
 	if(message->r_code == SELECT_ANALYZE)
 	{
+		AnalyzeSelect *analyze = message->analyze[message->current_select];
+
+		if(analyze->part == SELECT_GROUPBYCLAUSE || analyze->part == SELECT_TARGETLIST)
+			AppendAggregate(analyze,NULL,node);
+	
 		if(!DetectValidColumn(message,table_name,column_name,message->current_select,-1))
 		 pool_debug("_rewriteColumnRef: wrong column select_no=%d",message->current_select);
 

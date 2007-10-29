@@ -90,6 +90,23 @@ typedef struct {
 } JoinTable;
 
 typedef struct {
+	ColumnRef **usec_p; /* targetlist columns */
+	FuncCall **tfunc_p; /* targetlist funcs   */
+	ColumnRef **col_p;  /* group by columns   */
+	FuncCall **hfunc_p; /* having   funcs */
+	int	*umapc;
+	int u_num; /* targetlist columns num */
+	int t_num; /* targetlist funcs num */
+	int c_num; /* group by column num */
+	int h_num; /* having funcs num */
+  int hc_num;/* having column num */
+  int s_num; /* sort funcs num */
+  int sc_num; /* sort column num */
+	bool opt;
+} Aggexpr;
+
+
+typedef struct {
   int now_select;
 	int part;
   int last_select;
@@ -104,6 +121,7 @@ typedef struct {
 	bool select_union;
 	bool select_range;
 	bool aggregate;
+	Aggexpr *aggexpr;
 	RangeInfo **range;
 	int rangeinfo_num;
 	VirtualTable *virtual;

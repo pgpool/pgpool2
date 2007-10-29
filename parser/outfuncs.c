@@ -30,7 +30,7 @@
 
 #define booltostr(x)  ((x) ? "true" : "false")
 
-static void _outNode(String *str, void *obj);
+void _outNode(String *str, void *obj);
 static void _outList(String *str, List *node);
 static void _outIdList(String *str, List *node);
 static void _outAlias(String *str, Alias *node);
@@ -4639,7 +4639,7 @@ _outCurrentOfExpr(String *str, CurrentOfExpr *node)
  * _outNode -
  *	  converts a Node into ascii string and append it to 'str'
  */
-static void
+void
 _outNode(String *str, void *obj)
 {
 	if (obj == NULL)

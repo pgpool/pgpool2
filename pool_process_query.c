@@ -568,7 +568,6 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 /* using only in pool_parallel_exec */
 #define BITS (8 * sizeof(long int))
 
-/* using only in pool_parallel_exec */
 static void set_fd(unsigned long fd ,fd_set *setp)
 {
 	unsigned long tmp = fd / 1024;
