@@ -725,6 +725,38 @@ rawモード，コネクションプールモードに加え，以下を設定します．
    この問題を回避するには2つの方法があります．
 </p>
 
+<ol>
+<li>insert_lockをtrueにして，INSERT文の先頭に/*NO INSERT LOCK*/コメ
+      ントを追加する．このコメントがあると，テーブルロックは行われませ
+      ん．
+
+<li>insert_lockをfalseにして，INSERT文の先頭に/*INSERT LOCK*/コメン
+      トを追加する．このコメントがあると，このINSERT文に対してのみテー
+      ブルロックが行われます．
+</ol>
+
+<p>
+   SERIAL型を使っているテーブルが多い場合は1)を，少ない場合は2)を採用
+   すると良いでしょう．
+
+   insert_lockのデフォルト値はfalseです．
+
+   なお，insert_lockを有効にしてregression testを実行すると，少くとも
+   PostgreSQL 8.0ではtransactions, privileges, rules, alter_tableが
+   failします．ruleでは，viewに対してLOCKをしようとしてしまうこと，
+   ほかのものは
+<pre>
+   ! ERROR:  current transaction is aborted, commands ignored until end of transaction block
+</pre>
+
+   というようなメッセージが出てしまうためです．たとえば，transactions 
+   では，存在しないテーブルに対してINSERTを行うテストが含まれており，
+   pgpoolが最初に存在しないテーブルに対してLOCKを行う結果，エラーになっ
+   てトランザクションがアボート状態になり，続くINSERTで上記エラーが出
+   てしまいます．
+</dl>
+
+
 <dt>recovery_user
 <dd>
 <p>
@@ -767,37 +799,6 @@ rawモード，コネクションプールモードに加え，以下を設定します．
   コマンドを起動しません。接続を制限し、現在の接続数が 0 になった時点
   でコマンドを起動します。
 </p>
-
-<ol>
-<li>insert_lockをtrueにして，INSERT文の先頭に/*NO INSERT LOCK*/コメ
-      ントを追加する．このコメントがあると，テーブルロックは行われませ
-      ん．
-
-<li>insert_lockをfalseにして，INSERT文の先頭に/*INSERT LOCK*/コメン
-      トを追加する．このコメントがあると，このINSERT文に対してのみテー
-      ブルロックが行われます．
-</ol>
-
-<p>
-   SERIAL型を使っているテーブルが多い場合は1)を，少ない場合は2)を採用
-   すると良いでしょう．
-
-   insert_lockのデフォルト値はfalseです．
-
-   なお，insert_lockを有効にしてregression testを実行すると，少くとも
-   PostgreSQL 8.0ではtransactions, privileges, rules, alter_tableが
-   failします．ruleでは，viewに対してLOCKをしようとしてしまうこと，
-   ほかのものは
-<pre>
-   ! ERROR:  current transaction is aborted, commands ignored until end of transaction block
-</pre>
-
-   というようなメッセージが出てしまうためです．たとえば，transactions 
-   では，存在しないテーブルに対してINSERTを行うテストが含まれており，
-   pgpoolが最初に存在しないテーブルに対してLOCKを行う結果，エラーになっ
-   てトランザクションがアボート状態になり，続くINSERTで上記エラーが出
-   てしまいます．
-</dl>
 
 <h4>ロードバランスの条件について</h4>
 <p>
