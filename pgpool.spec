@@ -2,16 +2,19 @@
 
 Summary:	Pgpool is a connection pooling/replication server for PostgreSQL
 Name:		postgresql-%{short_name}
-Version:	1.1.1
+Version:	1.3
 Release:	1%{?dist}
 License:	BSD
 Group:		Applications/Databases
 URL:		http://pgpool.projects.PostgreSQL.org/pgpool-II/en
-Source0:	http://pgfoundry.org/frs/download.php/1376/%{short_name}-%{version}.tar.gz
+Source0:	http://pgfoundry.org/frs/download.php/1472/%{short_name}-%{version}.tar.gz
+Source1:        pgpool.init
+Source2:        pgpool.sysconfig
+Patch1:		pgpool.conf.sample.patch
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:	postgresql-devel pam-devel
 
-#Obsoletes:	postgresql-pgpool
+Obsoletes:	postgresql-pgpool
 
 %description
 pgpool-II is a inherited project of pgpool (to classify from 
@@ -41,6 +44,7 @@ Development headers and libraries for pgpool-II.
 
 %prep
 %setup -q -n %{short_name}-%{version}
+%patch1 -p0
 
 %build
 %configure --with-pgsql-includedir=%{_includedir}/pgsql --with-pgsql-lib=%{_libdir}/pgsql --disable-static --with-pam --disable-rpath
@@ -50,7 +54,14 @@ make %{?_smp_flags}
 %install
 rm -rf %{buildroot}
 make %{?_smp_flags} DESTDIR=%{buildroot} install
-mv %{buildroot}/%{_sysconfdir}/*.conf.sample %{buildroot}%{_datadir}/%{short_name}
+install -d %{buildroot}%{_datadir}/%{name}
+mv %{buildroot}/%{_sysconfdir}/*.conf.sample %{buildroot}%{_datadir}/%{name}
+mv %{buildroot}%{_datadir}/%{short_name}/system_db.sql %{buildroot}%{_datadir}/%{name}
+mv %{buildroot}%{_datadir}/%{short_name}/pgpool.pam %{buildroot}%{_datadir}/%{name}
+install -d %{buildroot}%{_initrddir}
+install -m 755 redhat/%{SOURCE1} %{buildroot}%{_initrddir}/pgpool
+install -d %{buildroot}%{_sysconfdir}/sysconfig
+install -m 644 redhat/%{SOURCE2} %{buildroot}%{_sysconfdir}/sysconfig/pgpool
 
 # nuke libtool archive and static lib
 rm -f %{buildroot}%{_libdir}/libpcp.{a,la}
@@ -58,7 +69,10 @@ rm -f %{buildroot}%{_libdir}/libpcp.{a,la}
 %clean
 rm -rf %{buildroot}
 
-%post -p /sbin/ldconfig
+%post 
+/sbin/ldconfig
+chkconfig --add pgpool
+
 %postun -p /sbin/ldconfig
 
 %files
@@ -75,10 +89,12 @@ rm -rf %{buildroot}
 %{_bindir}/pcp_systemdb_info
 %{_bindir}/pg_md5
 %{_mandir}/man8/pgpool*
-%{_datadir}/%{short_name}/system_db.sql
+%{_datadir}/%{name}/system_db.sql
 %{_libdir}/libpcp.so.*
-%attr(764,root,apache) %{_datadir}/%{short_name}/*.conf.sample
-%{_datadir}/%{short_name}/pgpool.pam
+%attr(764,root,apache) %{_datadir}/%{name}/*.conf.sample
+%{_datadir}/%{name}/pgpool.pam
+%{_initrddir}/pgpool
+%config(noreplace) %{_sysconfdir}/sysconfig/pgpool
 
 %files devel
 %defattr(-,root,root,-)
@@ -87,6 +103,30 @@ rm -rf %{buildroot}
 %{_libdir}/libpcp.so
 
 %changelog
+* Tue Oct 16 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.3-1
+- Update to 1.3
+
+* Fri Oct 5 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.2.1-1
+- Update to 1.2.1
+
+* Wed Aug 29 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.2-5
+- Chmod sysconfig/pgpool to 644, not 755. Per BZ review.
+- Run chkconfig --add pgpool during %%post.
+
+* Thu Aug 16 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.2-4
+- Fixed the directory name where sample conf files and sql files 
+  are installed.
+
+* Sun Aug 5 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.2-3
+- Added a patch for sample conf file to use Fedora defaults
+
+* Sun Aug 5 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.2-2
+- Added an init script for pgpool
+- Added /etc/sysconfig/pgpool
+
+* Wed Aug 1 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.2-1
+- Update to 1.2
+
 * Fri Jun 15 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.1.1-1
 - Update to 1.1.1
 
