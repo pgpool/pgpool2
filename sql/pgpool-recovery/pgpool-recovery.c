@@ -24,7 +24,6 @@
 #include "executor/spi.h"
 #include "funcapi.h"
 
-#define RECOVERY_FILE "pgpool_recovery"
 #define REMOTE_START_FILE "pgpool_remote_start"
 
 #include <stdlib.h>
@@ -45,13 +44,16 @@ Datum
 pgpool_recovery(PG_FUNCTION_ARGS)
 {
 	int r;
+	char *script = DatumGetCString(DirectFunctionCall1(textout,
+													   PointerGetDatum(PG_GETARG_TEXT_P(0))));
+													   
 	char *remote_host = DatumGetCString(DirectFunctionCall1(textout,
-															PointerGetDatum(PG_GETARG_TEXT_P(0))));
+															PointerGetDatum(PG_GETARG_TEXT_P(1))));
 	char *remote_data_directory = DatumGetCString(DirectFunctionCall1(textout,
-																	  PointerGetDatum(PG_GETARG_TEXT_P(1))));
+																	  PointerGetDatum(PG_GETARG_TEXT_P(2))));
 
 	sprintf(recovery_script, "%s/%s %s %s %s",
-			DataDir, RECOVERY_FILE, DataDir, remote_host,
+			DataDir, script, DataDir, remote_host,
 			remote_data_directory);
 	elog(DEBUG1, "recovery_script: %s", recovery_script);
 	r = system(recovery_script);
