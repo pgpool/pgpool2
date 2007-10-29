@@ -1,0 +1,163 @@
+#!/bin/sh
+# pgpool    This is the init script for starting up pgpool-II
+#
+# chkconfig: - 64 36
+# description: Starts and stops the pgpool daemon
+# processname: pgpool
+# pidfile:	/var/run/pgpool.pid
+#
+# v1.0.0 Devrim GUNDUZ <devrim@CommandPrompt.com>
+# - Initial version of Red Hat / Fedora init script
+
+if [ -r /etc/sysconfig/pgpool ]; then
+    . /etc/sysconfig/pgpool
+fi
+
+# Source function library.
+INITD=/etc/rc.d/init.d
+. $INITD/functions
+
+# Get function listing for cross-distribution logic.
+TYPESET=`typeset -f|grep "declare"`
+
+# Get config.
+. /etc/sysconfig/network
+
+# Check that networking is up.
+# We need it for pgpool
+[ "${NETWORKING}" = "no" ] && exit 0
+
+# Find the name of the script
+NAME=pgpool
+
+# Set defaults for configuration variables
+PGPOOLENGINE=/usr/bin
+PGPOOLDAEMON=$PGPOOLENGINE/pgpool
+PGPOOLCONF=/etc/pgpool.conf
+PGPOOLPID=/var/run/pgpool.pid
+PGPOOLLOG=/var/log/pgpool.log
+
+test -x $PGPOOLDAEMON || exit 5
+
+# Create the log file if it does not exist
+if [ ! -r $PGPOOLLOG ]
+then
+	touch $PGPOOLLOG
+fi
+
+# Check whether the config file exists or not
+if [ ! -r /etc/pgpool.conf ]
+then
+	echo "$PGPOOLCONF not found"
+	RETVAL=1
+	failure	
+	exit
+fi
+
+script_result=0
+
+start(){
+	PGPOOL_START=$"Starting ${NAME} service: "
+
+	echo -n "$PGPOOL_START"
+	$PGPOOLDAEMON -f $PGPOOLCONF $OPTS & >> "$PGPOOLLOG" 2>&1 < /dev/null
+	sleep 2
+
+	pid=`pidof -s "$PGPOOLDAEMON"`
+	if [ $pid ] 
+	then
+		success "$PGPOOL_START"
+		touch /var/lock/subsys/${NAME}
+		echo
+	else
+		failure "$PSQL_START"
+		echo
+		script_result=1
+	fi
+}
+
+stop(){
+	echo -n $"Stopping ${NAME} service: "
+        if [ $UID -ne 0 ]; then
+                RETVAL=1
+                failure
+        else
+                killproc /usr/bin/pgpool
+                RETVAL=$?
+                [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/${NAME}
+        fi;
+        echo
+        return $RETVAL
+}
+
+switch() {
+	echo -n $"Sending switchover request to $NAME "
+	$PGPOOLDAEMON switch >> "$PGPOOLLOG" 2>&1 < /dev/null
+	RETVAL=$?
+	echo
+	if [ $RETVAL -eq 0 ] 
+	then
+		echo_success
+	else
+		echo_failure
+	fi
+	echo
+}
+
+restart(){
+    stop
+    start
+}
+
+reload(){
+echo -n $"Reloading ${NAME}: "
+   if [ -n "`pidfileofproc $PGPOOLDAEMON`" ] ; then
+      killproc $PGPOOLDAEMON -HUP
+   else
+      failure $"Reloading ${NAME}"
+   fi
+   RETVAL=$?
+   echo
+}
+
+condrestart(){
+    [ -e /var/lock/subsys/${NAME} ] && restart
+}
+
+condstop(){
+    [ -e /var/lock/subsys/${NAME} ] && stop
+}
+
+# See how we were called.
+case "$1" in
+  start)
+        start
+        ;;
+  stop)
+        stop
+        ;;
+  switch)
+        switch
+        ;;
+  status)
+        status pgpool
+        script_result=$?
+        ;;
+  restart)
+        restart
+        ;;
+  reload|force-reload)
+        reload
+        ;;
+  condrestart)
+        condrestart
+        ;;
+  condstop)
+        condstop
+        ;;
+  *)
+        echo $"Usage: $0 {start|stop|switch|status|restart|condrestart|condstop|reload|force-reload}"
+        exit 1
+esac
+
+exit $script_result
