@@ -61,6 +61,7 @@ EXTRA_DIST = pgpool.8.in sql/system_db.sql sample/pgpool.pam doc/pgpool-ja.html 
 		test/jdbc/*.java test/jdbc/pgpool.properties test/jdbc/prepare.sql test/jdbc/run.sh \
 		test/jdbc/expected/autocommit test/jdbc/expected/batch \
 		test/jdbc/expected/column test/jdbc/expected/lock test/jdbc/expected/select \
-		test/jdbc/expected/update
+		test/jdbc/expected/update \
+		redhat/pgpool.init redhat/pgpool.sysconfig
 
 SUBDIRS = parser pcp
