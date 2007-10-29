@@ -948,7 +948,7 @@ typedef enum
  */
 #define base_yylex filtered_base_yylex
 
-#define ereport(a,b)
+#define ereport(a,b) yyerror("")
 #define Assert
 List *parsetree;			/* final parse result is delivered here */
 

@@ -152,7 +152,6 @@ EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 F77 = @F77@
 FFLAGS = @FFLAGS@
-GREP = @GREP@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
@@ -185,10 +184,12 @@ SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
 YACC = @YACC@
-YFLAGS = @YFLAGS@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 ac_ct_F77 = @ac_ct_F77@
+ac_ct_RANLIB = @ac_ct_RANLIB@
+ac_ct_STRIP = @ac_ct_STRIP@
 am__fastdepCC_FALSE = @am__fastdepCC_FALSE@
 am__fastdepCC_TRUE = @am__fastdepCC_TRUE@
 am__fastdepCXX_FALSE = @am__fastdepCXX_FALSE@
@@ -205,9 +206,6 @@ build_cpu = @build_cpu@
 build_os = @build_os@
 build_vendor = @build_vendor@
 datadir = @datadir@
-datarootdir = @datarootdir@
-docdir = @docdir@
-dvidir = @dvidir@
 enable_rpath_FALSE = @enable_rpath_FALSE@
 enable_rpath_TRUE = @enable_rpath_TRUE@
 exec_prefix = @exec_prefix@
@@ -216,21 +214,17 @@ host_alias = @host_alias@
 host_cpu = @host_cpu@
 host_os = @host_os@
 host_vendor = @host_vendor@
-htmldir = @htmldir@
 includedir = @includedir@
 infodir = @infodir@
 install_sh = @install_sh@
 libdir = @libdir@
 libexecdir = @libexecdir@
-localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
-pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
-psdir = @psdir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
@@ -258,7 +252,7 @@ man_MANS = pgpool.8
 CLEANFILES = pgpool.8
 EXTRA_DIST = pgpool.8.in sql/system_db.sql sample/pgpool.pam doc/pgpool-ja.html doc/pgpool-en.html \
 		doc/tutorial-ja.html doc/tutorial-en.html doc/pgpool.css \
-		sample/pgpool_remote_start sample/pgpool_recovery \
+		sample/pgpool_remote_start sample/pgpool_recovery sample/pgpool_recovery_pitr \
 		sample/dist_def_pgbench.sql sql/pgpool-recovery/pgpool-recovery.c \
 		sql/pgpool-recovery/pgpool-recovery.sql.in sql/pgpool-recovery/Makefile \
 		test/parser/expected/cursor.out test/parser/expected/copy.out \
@@ -277,7 +271,11 @@ EXTRA_DIST = pgpool.8.in sql/system_db.sql sample/pgpool.pam doc/pgpool-ja.html 
 		test/parser/input/alter.sql test/parser/.cvsignore test/parser/Makefile \
 		test/parser/README test/parser/main.c \
 		test/parser/pool.h test/parser/run-test \
-		test/parser/test.diff test/parser/parse_schedule
+		test/parser/test.diff test/parser/parse_schedule \
+		test/jdbc/*.java test/jdbc/pgpool.properties test/jdbc/prepare.sql test/jdbc/run.sh \
+		test/jdbc/expected/autocommit test/jdbc/expected/batch \
+		test/jdbc/expected/column test/jdbc/expected/lock test/jdbc/expected/select \
+		test/jdbc/expected/update
 
 SUBDIRS = parser pcp
 all: config.h
@@ -652,7 +650,7 @@ distclean-tags:
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
-	$(mkdir_p) $(distdir)/doc $(distdir)/sample $(distdir)/sql $(distdir)/sql/pgpool-recovery $(distdir)/test/parser $(distdir)/test/parser/expected $(distdir)/test/parser/input
+	$(mkdir_p) $(distdir)/doc $(distdir)/sample $(distdir)/sql $(distdir)/sql/pgpool-recovery $(distdir)/test/jdbc $(distdir)/test/jdbc/expected $(distdir)/test/parser $(distdir)/test/parser/expected $(distdir)/test/parser/input
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

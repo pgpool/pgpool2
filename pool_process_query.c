@@ -294,7 +294,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 			int frontend_idle_count = 0;
 
 		SELECT_RETRY:
-			if (pool_config->child_idle_limit > 0)
+			if (pool_config->client_idle_limit > 0)
 			{
 				timeout.tv_sec = 1;
 				timeout.tv_usec = 0;
@@ -337,7 +337,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 			pool_debug("pool_process_query: num_fds: %d", num_fds);
 			*/
 
-			if (pool_config->child_idle_limit == 0)
+			if (pool_config->client_idle_limit == 0)
 				fds = select(num_fds, &readmask, &writemask, &exceptmask, NULL);
 			else
 				fds = select(num_fds, &readmask, &writemask, &exceptmask, &timeout);
@@ -351,12 +351,12 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				return POOL_ERROR;
 			}
 
-			if (pool_config->child_idle_limit > 0 && fds == 0)
+			if (pool_config->client_idle_limit > 0 && fds == 0)
 			{
 				frontend_idle_count++;
-				if (frontend_idle_count > pool_config->child_idle_limit)
+				if (frontend_idle_count > pool_config->client_idle_limit)
 				{
-					pool_log("pool_process_query: child connection forced to terminate due to child_idle_limit(%d) reached", pool_config->child_idle_limit);
+					pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit(%d) reached", pool_config->client_idle_limit);
 					return POOL_END;
 				}
 
@@ -3103,8 +3103,8 @@ static void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *b
 	strncpy(status[i].desc, "if idle for this seconds, connection closes", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "child_idle_limit", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->child_idle_limit);
+	strncpy(status[i].name, "client_idle_limit", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->client_idle_limit);
 	strncpy(status[i].desc, "if idle for this seconds, child connection closes", POOLCONFIG_MAXDESCLEN);
 	i++;
 
