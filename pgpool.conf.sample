@@ -186,3 +186,9 @@ recovery_user = 'nobody'
 
 # online recovery password
 recovery_password = ''
+
+# execute a command in first stage.
+recovery_1st_stage_command = ''
+
+# execute a command in second stage.
+recovery_2nd_stage_command = ''

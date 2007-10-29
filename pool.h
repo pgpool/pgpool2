@@ -173,6 +173,8 @@ typedef struct {
 	char *failback_command;     /* execute command when failback happens */
 	char *recovery_user;		/* PostgreSQL user name for online recovery */
 	char *recovery_password;		/* PostgreSQL user password for online recovery */
+	char *recovery_1st_stage_command;   /* Online recovery command in 1st stage */
+	char *recovery_2nd_stage_command;   /* Online recovery command in 2nd stage */
 	int insert_lock;	/* if non 0, automatically lock table with INSERT to keep SERIAL
 						   data consistency */
 	int ignore_leading_white_space;		/* ignore leading white spaces of each query */

@@ -3275,6 +3275,26 @@ static void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *b
 	strncpy(status[i].desc, "if true, use pool_hba.conf for client authentication", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	strncpy(status[i].name, "recovery_user", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->recovery_user);
+	strncpy(status[i].desc, "online recovery user", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "recovery_password", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->recovery_password);
+	strncpy(status[i].desc, "online recovery password", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "recovery_1st_stage_command", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->recovery_1st_stage_command);
+	strncpy(status[i].desc, "execute a command in first stage.", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "recovery_2nd_stage_command", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->recovery_2nd_stage_command);
+	strncpy(status[i].desc, "execute a command in second stage.", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	strncpy(status[i].name, "parallel_mode", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->parallel_mode);
 	strncpy(status[i].desc, "if non 0, run in parallel query mode", POOLCONFIG_MAXDESCLEN);
@@ -5231,6 +5251,10 @@ static POOL_STATUS end_internal_transaction(POOL_CONNECTION_POOL *backend)
 	int	oldmask;
 #endif
 
+	/*
+	 * We must block all signals. If pgpool SIGTERM, SIGINT or SIGQUIT
+	 * is delivered, it possibly causes data consistensy.
+	 */
 	POOL_SETMASK2(&BlockSig, &oldmask);
 
 	/* We need to commit from secondary to master. */

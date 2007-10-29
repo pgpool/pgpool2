@@ -33,7 +33,7 @@
 #define WAIT_RETRY_COUNT 30
 
 static int exec_checkpoint(PGconn *conn);
-static int exec_recovery(PGconn *conn, BackendInfo *backend);
+static int exec_recovery(PGconn *conn, BackendInfo *backend, char first_stage);
 static int exec_remote_start(PGconn *conn, BackendInfo *backend);
 static PGconn *connect_backend_libpq(BackendInfo *backend);
 static int wait_connection_closed(void);
@@ -73,10 +73,9 @@ int start_recovery(int recovery_node)
 		pool_error("start_recovery: CHECKPOINT failed");
 		return 1;
 	}
-	if (exec_recovery(conn, recovery_backend) != 0)
+	if (exec_recovery(conn, recovery_backend, 1) != 0)
 	{
 		PQfinish(conn);
-		pool_error("start_recovery: rsync failed");
 		return 1;
 	}
 
@@ -95,10 +94,9 @@ int start_recovery(int recovery_node)
 		pool_error("start_recovery: CHECKPOINT failed");
 		return 1;
 	}
-	if (exec_recovery(conn, recovery_backend) != 0)
+	if (exec_recovery(conn, recovery_backend, 0) != 0)
 	{
 		PQfinish(conn);
-		pool_error("start_recovery: recovery failed");
 		return 1;
 	}
 	if (exec_remote_start(conn, recovery_backend) != 0)
@@ -151,10 +149,11 @@ static int exec_checkpoint(PGconn *conn)
 /*
  * Call pgpool_recovery() function.
  */
-static int exec_recovery(PGconn *conn, BackendInfo *backend)
+static int exec_recovery(PGconn *conn, BackendInfo *backend, char first_stage)
 {
 	PGresult *result;
 	char *hostname;
+	char *script;
 	int r;
 
 	if (strlen(backend->backend_hostname) == 0)
@@ -162,17 +161,26 @@ static int exec_recovery(PGconn *conn, BackendInfo *backend)
 	else
 		hostname = backend->backend_hostname;
 
-	sprintf(recovery_command, "SELECT pgpool_recovery('%s', '%s')",
-			 hostname,
-			 backend->backend_data_directory);
+	script = first_stage ? pool_config->recovery_1st_stage_command : pool_config->recovery_2nd_stage_command;
 
-	pool_debug("exec_rsync: start recovery");
+	if (script == NULL || strlen(script) == 0)
+	{
+		/* do not execute script */
+		return 0;
+	}
+
+	sprintf(recovery_command, "SELECT pgpool_recovery('%s', '%s', '%s')",
+			script,
+			hostname,
+			backend->backend_data_directory);
+
+	pool_debug("exec_recovery: start recovery");
 	result = PQexec(conn, recovery_command);
 	r = (PQresultStatus(result) !=  PGRES_TUPLES_OK);
 	if (r != 0)
-		pool_error("exec_rsync: pgpool_recovery failed: %s", PQresultErrorMessage(result));
+		pool_error("exec_recovery: pgpool_recovery failed: %s", PQresultErrorMessage(result));
 	PQclear(result);
-	pool_debug("exec_rsync: finish recovery");
+	pool_debug("exec_recovery: finish recovery");
 	return r;
 }
 
