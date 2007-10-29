@@ -371,10 +371,19 @@ prefork$B$9$k(Bpgpool-II$B$N%5!<%P%W%m%;%9$N?t$G$9!%%G%U%)%k%HCM$O(B32$B$K$
 <dt>child_max_connections
 <dd>
 <p>
-   $B3F(Bpgpool-II$B;R%W%m%;%9$X$N@\B32s?t$,$3$N@_DjCM$rD6$($k$H!"$=$N;R%W%m%;(B
-   $B%9$r=*N;$7$^$9!#(Bchild_life_time$B$d(Bconnection_life_time$B$,8z$+$J$$$/$i(B
-   $B$$K;$7$$%5!<%P$G!"(BPostgreSQL$B%P%C%/%(%s%I$,HnBg2=$9$k$N$rKI$0$N$KM-(B
-   $B8z$G$9!#(B
+   $B3F(Bpgpool-II$B;R%W%m%;%9$X$N@\B32s?t$,$3$N@_DjCM$rD6$($k$H!"$=$N;R%W%m(B
+   $B%;%9$r=*N;$7$^$9!#(Bchild_life_time$B$d(Bconnection_life_time$B$,8z$+$J$$$/(B
+   $B$i$$K;$7$$%5!<%P$G!"(BPostgreSQL$B%P%C%/%(%s%I$,HnBg2=$9$k$N$rKI$0$N$K(B
+   $BM-8z$G$9!#(B
+</p>
+
+<dt>client_idle_limit
+<dd>
+<p>
+  $BA02s%/%i%$%"%s%H$+$iMh$?%/%(%j$+$i!$(Bclient_idle_limit $BIC1[$($F$b<!$N(B
+  $B%/%(%j$,FO$+$J$$>l9g$O!$%/%i%$%"%s%H$X$N@\B3$r6/@)E*$K@ZCG$7!$%/%i%$(B
+  $B%"%s%H$+$i$N<!$N%3%M%/%7%g%s$rBT$D$h$&$K$7$^$9!#%G%U%)%k%HCM$O(B 0($BL5(B
+  $B8z(B)$B$G$9!#(B
 </p>
 
 <dt>authentication_timeout
@@ -726,6 +735,37 @@ raw$B%b!<%I!$%3%M%/%7%g%s%W!<%k%b!<%I$K2C$(!$0J2<$r@_Dj$7$^$9!%(B
 <dd>
 <p>
    $B%*%s%i%$%s%j%+%P%j$r9T$&$?$a$N(B PostgreSQL $B%f!<%6%Q%9%o!<%I$G$9!#(B
+</p>
+
+<dt>recovery_1st_stage_command
+<dd>
+<p>
+  $B:G=i$K%*%s%i%$%s%j%+%P%jCf$K5/F0$9$k%3%^%s%IL>$r;XDj$7$^$9!#%3%^%s%I(B
+  $B%U%!%$%k$O%;%-%e%j%F%#>e$N4QE@$+$i%G!<%?%Y!<%9%/%i%9%?0J2<$K$"$k%3%^(B
+  $B%s%I$d%9%/%j%W%H$N$_$r8F$S=P$7$^$9!#(B
+
+  $BNc$($P!"(Brecovery_1st_stage_command = 'sync-command' $B$H@_Dj$7$F$"$k>l(B
+  $B9g!"(B$PGDATA/sync-command $B$r5/F0$7$h$&$H$7$^$9!#(B
+
+  recovery_1st_stage_command $B$r<B9T$7$F$$$k4V$O(B pgpool $B$G$O%/%i%$%"%s(B
+  $B%H$+$i$N@\B3$r(B<b>$B@)8B$7$^$;$s(B</b>$B!#;2>H$d99?7$r9T$&$3$H$,$G$-$^$9!#(B
+</p>
+
+<dt>recovery_2nd_stage_command
+<dd>
+<p>
+  2 $B2sL\$N%*%s%i%$%s%j%+%P%jCf$K5/F0$9$k%3%^%s%IL>$r;XDj$7$^$9!#%3%^%s(B
+  $B%I%U%!%$%k$O%;%-%e%j%F%#>e$N4QE@$+$i%G!<%?%Y!<%9%/%i%9%?0J2<$K$"$k%3(B
+  $B%^%s%I$d%9%/%j%W%H$N$_$r8F$S=P$7$^$9!#(B
+
+  $BNc$($P!"(Brecovery_2nd_stage_command = 'sync-command' $B$H@_Dj$7$F$"$k>l(B
+  $B9g!"(B$PGDATA/sync-command $B$r5/F0$7$h$&$H$7$^$9!#(B
+
+  recovery_2nd_stage_command $B$r<B9T$7$F$$$k4V$O(B pgpool $B$G$O%/%i%$%"%s(B
+  $B%H$+$i@\B3!";2>H!"99?7=hM}$r0l@Z(B<b>$B<u$1IU$1$^$;$s(B</b>$B!#$^$?!"%P%C%A(B
+  $B=hM}$J$I$K$h$C$F@\B3$7$F$$$k%/%i%$%"%s%H$,D9;~4VB8:_$7$F$$$k>l9g$K$O(B
+  $B%3%^%s%I$r5/F0$7$^$;$s!#@\B3$r@)8B$7!"8=:_$N@\B3?t$,(B 0 $B$K$J$C$?;~E@(B
+  $B$G%3%^%s%I$r5/F0$7$^$9!#(B
 </p>
 
 <ol>
@@ -1094,6 +1134,8 @@ CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_tellers (val ANYELEMENT) RETU
     <li> backend_data_directory
     <li> recovery_user
     <li> recovery_password
+    <li> recovery_1st_stage_command
+    <li> recovery_2nd_stage_command
    </ul>
 </p>
 
@@ -1148,6 +1190,15 @@ rsync $B$r;H$&>l9g$O!"%Q%9%U%l!<%:L5$7$G(B ssh $B7PM3$G%m%0%$%s$G$-$k$h$&$K(
 $B$"$i$+$8$a@_Dj$7$F$*$/I,MW$,$"$j$^$9!#(B
 </p>
 
+<p>
+pgpool_recovery $B$r;H$&>l9g$O(B pgpool.conf $B$K0J2<$N9T$rDI2C$7$F$/$@$5$$!#(B
+
+<pre>
+recovery_1st_stage_command = 'pgpool_recovery'
+recovery_2nd_stage_command = 'pgpool_recovery'
+</pre>
+</p>
+
 <h4>pgpool_remote_start </h4>
 <p>
 $B%G!<%?:FF14|8e$K(B postmaster $B$r5/F0$5$;$k%9%/%j%W%H$G$9!#(B
@@ -1166,15 +1217,37 @@ pgpool $B$+$i$O0J2<$N7A<0$G%9%/%j%W%H$r<B9T$7$^$9!#(B
 
 <h4>pgpool_recovery_pitr</h4>
 <p>
-rsync $B$K$h$k%G!<%?%3%T!<J}<0$NB>$K!"(BPostgreSQL $B$N(B PITR $B$r;H$C$?%j%+%P(B
+rsync $B$K$h$k%G!<%?%3%T!<J}<0$NB>$K!"(BPostgreSQL $B$N(B PITR $B$r;H$C$F%j%+%P(B
 $B%j$r$9$k$3$H$,$G$-$^$9!#(BPITR $B$K$h$k%j%+%P%j$r$9$k>l9g$K$O$"$i$+$8$a(B
 PostgreSQL $B$N@_Dj$G%m%0$r%"!<%+%$%V$5$;$k$h$&$K$7$F$*$$$F$/$@$5$$!#(B
 </p>
 
 <p>
-PITR $B$K$h$k%j%+%P%j$r<B;\$9$k$K$O!"(Bpgpool_recovery_pitr $B%9%/%j%W%H$r(B
-$PGDATA/pgpool_recovery $B$K%3%T!<$7$^$9!#$3$N%9%/%j%W%H$G$O(B XLOG $B$r6/@)(B
-$BE*$K%9%$%C%A$5$;$k$h$&$K$7$^$9!#(B
+$B%Y!<%9%P%C%/%"%C%W$r<hF@$7!"%j%+%P%j@h$X%3%T!<$9$k%9%/%j%W%H(B($B$3$3$G$O(B
+$B%U%!%$%kL>$r(B copy-base-backup $B$H$7$^$9(B)$B$rMQ0U$7$^$9!#Nc$($P0J2<$N$h$&(B
+$B$J%9%/%j%W%H$G<hF@$9$k$3$H$,$G$-$^$9!#(B
+
+<pre>
+  #! /bin/sh
+
+  psql -c "select pg_start_backup('pgpool-recovery')" postgres
+  echo "restore_command = 'scp master:/data/archive_log/%f %p'" > /data/recovery.conf
+  tar -C /data -zcf pgsql.tar.gz pgsql
+  psql -c 'select pg_stop_backup()' postgres
+  scp pgsql.tar.gz secondary:/data
+</pre>
+
+$B%Y!<%9%P%C%/%"%C%W<hF@;~$K(B recovery.conf $B$r@8@.$7$F$*$-$^$9!#(B
+<pre>
+restore_command = 'scp master:/data/archive_log/%f %p'
+</pre>
+
+</p>
+
+<p>
+$B<!$K:G?7$N>uBV$^$G(B PITR $B$K$h$k%j%+%P%j$r<B;\$G$-$k$h$&$K$9$k$?$a$K!"(B
+pgpool_recovery_pitr $B%9%/%j%W%H$r(B$PGDATA $B$K%3%T!<$7$^$9!#$3$N%9%/%j%W(B
+$B%H$G$O(B XLOG $B$r6/@)E*$K%9%$%C%A$5$;$k$h$&$K$7$^$9!#(B
 </p>
 
 <pre>
@@ -1183,29 +1256,13 @@ $PGDATA/pgpool_recovery $B$K%3%T!<$7$^$9!#$3$N%9%/%j%W%H$G$O(B XLOG $B$r6/@)
 </pre>
 
 <p>
-$B%9%/%j%W%H$NG[CV$,40N;$7$?$i%Y!<%9%P%C%/%"%C%W$r<hF@$7!"%j%+%P%j@h$N%N!<(B
-$B%I$X%3%T!<$7$^$9!#$3$N;~E@$G$O$^$@%j%+%P%jA`:n$r$7$^$;$s!#0J2<$N$h$&$J(B
-$B%9%/%j%W%H$r;H$C$F<+F0E*$K%Y!<%9%P%C%/%"%C%W$r%j%+%P%j@h$K%3%T!<$9$k$3(B
-$B$H$,$G$-$^$9!#(B
-</p>
+$B%9%/%j%W%H$NG[CV$,40N;$7$?$i(B pgpool.conf $B$K@_Dj$7$^$9!#(B
 
 <pre>
-  #! /bin/sh
-
-  psql -c "select pg_start_backup('pgpool-recovery')" postgres
-  tar -C /data -zcf pgsql.tar.gz pgsql
-  psql -c 'select pg_stop_backup()' postgres
-  scp pgsql.tar.gz secondary:/data
+recovery_1st_stage_command = 'copy-base-backup'
+recovery_2nd_stage_command = 'pgpool_recovery_pitr'
 </pre>
 
-<p>
-$B:G8e$K%Y!<%9%P%C%/%"%C%W$rE83+$7!"(Brecovery.conf $B$rJT=8$7$^$9!#(B
-$B$3$3$G$NNc$G$O!"(Brecovery.conf $B$G$O%^%9%?$K%"!<%+%$%V$5$l$F$$$k%m%0$r(B
-scp $B$G%3%T!<$7$F$$$^$9!#(B
-
-<pre>
-restore_command = 'scp master:/data/archive_log/%f %p'
-</pre>
 </p>
 
 <p>
@@ -2135,6 +2192,9 @@ count(*) $B$r;H$C$?%/%(%j$O!"0J2<$N$h$&$K=q$-49$($,9T$o$l$^$9!#(B
   <li> $B%N!<%I$rI|5"$7$?:]$K%f!<%6$,@_Dj$7$?%3%^%s%I$r<B9T$G$-$k$h$&$K!"(B
   pgpool.conf $B$K(B failback_command $B$H$$$&%Q%i%a!<%?$rDI2C$7$^$7$?!#(B
   (Yoshiyuki)
+  <li> pgpool.conf $B$K(B client_idle_limit $B$H$$$&%Q%i%a!<%?$rDI2C$7$^$7$?!#(B
+  $B$3$N%Q%i%a!<%?$G$O%/%i%$%"%s%H$+$i$N%/%(%j$N:GBgBT$A;~4V$r@_Dj$9$k$3(B
+  $B$H$,$G$-$^$9!#(B(Tatsuo)
 </ul>
 
 <h3>$B%l%W%j%1!<%7%g%s(B</h3>
@@ -2152,7 +2212,8 @@ count(*) $B$r;H$C$?%/%(%j$O!"0J2<$N$h$&$K=q$-49$($,9T$o$l$^$9!#(B
    ERROR:  pgpool detected difference of the number of update tuples
    HINT:  check data consistency between master and other db node
 </pre>
-  <li> $B0[$J$k7k2L$,JV$C$F$-$?>l9g$N=hM}$r2~NI$7$^$7$?!#(B(Yoshiyuki)
+  <li> $BJ#?t$N%P%C%/%(%s%I$+$i0[$J$k7k2L$,JV$C$F$-$?>l9g$K!"F1$87k2L$,(B
+  $BB??tJV$C$F$-$?7k2L$r?.Mj$9$kB??t7hJ}<0$r<BAu$7$^$7$?!#(B(Yoshiyuki)
   <li> V2 $BLd9g$;%W%m%H%3%k$G%m!<%I%P%i%s%9$G$-$k$h$&$K$7$^$7$?!#(B(Yoshiyuki)
 </ul>
 
