@@ -53,6 +53,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	int key;
 	int protoMajor;
 	int length;
+	int authkind;
 	int i;
 	StartupPacket *sp;
 
@@ -105,17 +106,17 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	 * in non replication mode, we support kind = 0, 3, 4, 5
 	 */
 
-	pid = pool_read_int(cp);
-	if (pid < 0)
+	authkind = pool_read_int(cp);
+	if (authkind < 0)
 	{
-		pool_error("pool_do_auth: read pid failed");
+		pool_error("pool_do_auth: read auth kind failed");
 		return -1;
 	}
 
-	pid = ntohl(pid);
+	authkind = ntohl(authkind);
 
 	/* trust? */
-	if (pid == 0)
+	if (authkind == 0)
 	{
 		int msglen;
 
@@ -136,15 +137,15 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	}
 
 	/* clear text password authentication? */
-	else if (pid == 3)
+	else if (authkind == 3)
 	{
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
 			pool_debug("trying clear text password authentication");
 
-			pid = do_clear_text_password(CONNECTION(cp, i), frontend, 0, protoMajor);
+			authkind = do_clear_text_password(CONNECTION(cp, i), frontend, 0, protoMajor);
 
-			if (pid < 0)
+			if (authkind < 0)
 			{
 				pool_error("do_clear_text_password failed in slot %d", i);
 				return -1;
@@ -153,15 +154,15 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	}
 
 	/* crypt authentication? */
-	else if (pid == 4)
+	else if (authkind == 4)
 	{
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
 			pool_debug("trying crypt authentication");
 
-			pid = do_crypt(CONNECTION(cp, i), frontend, 0, protoMajor);
+			authkind = do_crypt(CONNECTION(cp, i), frontend, 0, protoMajor);
 
-			if (pid < 0)
+			if (authkind < 0)
 			{
 				pool_error("do_crypt_text_password failed in slot %d", i);
 				return -1;
@@ -170,7 +171,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	}
 
 	/* md5 authentication? */
-	else if (pid == 5)
+	else if (authkind == 5)
 	{
 		if (NUM_BACKENDS > 1)
 		{
@@ -186,9 +187,9 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 		{
 			pool_debug("trying md5 authentication");
 
-			pid = do_md5(CONNECTION(cp, i), frontend, 0, protoMajor);
+			authkind = do_md5(CONNECTION(cp, i), frontend, 0, protoMajor);
 
-			if (pid < 0)
+			if (authkind < 0)
 			{
 				pool_error("do_md5failed in slot %d", i);
 				return -1;
@@ -196,7 +197,13 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 		}
 	}
 
-	if (pid != 0)
+	else
+	{
+		pool_error("pool_do_auth: unsupported auth kind received: %d", authkind);
+		return -1;
+	}
+
+	if (authkind != 0)
 	{
 		pool_error("pool_do_auth: backend does not return authentication ok");
 		return -1;
