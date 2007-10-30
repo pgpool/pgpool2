@@ -174,7 +174,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	{
 		if (NUM_BACKENDS > 1)
 		{
-			pool_send_error_message(frontend, 3, AUTHFAIL_ERRORCODE,
+			pool_send_error_message(frontend, protoMajor, AUTHFAIL_ERRORCODE,
 									"MD5 authentication is unsupported in replication, master-slave and parallel modes.",
 									"",
 									"check pg_hba.conf",
