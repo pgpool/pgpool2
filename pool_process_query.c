@@ -3276,22 +3276,22 @@ static void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *b
 	i++;
 
 	strncpy(status[i].name, "recovery_user", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->recovery_user);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->recovery_user);
 	strncpy(status[i].desc, "online recovery user", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "recovery_password", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->recovery_password);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->recovery_password);
 	strncpy(status[i].desc, "online recovery password", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "recovery_1st_stage_command", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->recovery_1st_stage_command);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->recovery_1st_stage_command);
 	strncpy(status[i].desc, "execute a command in first stage.", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "recovery_2nd_stage_command", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->recovery_2nd_stage_command);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->recovery_2nd_stage_command);
 	strncpy(status[i].desc, "execute a command in second stage.", POOLCONFIG_MAXDESCLEN);
 	i++;
 
