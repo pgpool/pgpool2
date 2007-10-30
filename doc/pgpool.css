@@ -101,8 +101,13 @@ ul, ol,dl {
 dt {
 	font-weight:bold;
 }
-li {
+
+ul li {
 	list-style:square;
+	color: #663333;
+}
+
+ol li {
 	color: #663333;
 }
 

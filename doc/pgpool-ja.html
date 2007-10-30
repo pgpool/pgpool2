@@ -27,6 +27,7 @@
         <li><a href="#install">pgpool-IIのインストール</a></li>
         <li><a href="#config">pgpool-IIの設定</a></li>
         <li><a href="#start">pgpool-IIの起動と停止</a></li>
+	<li><a href="#online-recovery">オンラインリカバリ</a></li>
         <li><a href="#restriction">制限事項</a></li>
         <li><a href="#reference">リファレンス</a></li>
         <li><a href="#internal">内部情報</a></li>
@@ -1119,164 +1120,6 @@ CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_tellers (val ANYELEMENT) RETU
    ださい。
 </p>
 
-<h2><a name="online-recovery"></a>オンラインリカバリの設定方法</h2>
-<p>
-   レプリケーションモードで pgpool が動作している場合、ダウンしたノー
-   ドのデータを再同期させた上で、ノードを復帰させることができます。こ
-   の機能を「オンラインリカバリ」と呼びます。
-</p>
-
-<h3> pgpool の設定</h3>
-<p>
-   オンラインリカバリを設定するためには、pgpool.conf の以下の値を設定
-   してください。
-
-   <ul>
-    <li> backend_data_directory
-    <li> recovery_user
-    <li> recovery_password
-    <li> recovery_1st_stage_command
-    <li> recovery_2nd_stage_command
-   </ul>
-</p>
-
-
-<h3> C 言語関数のインストール</h3>
-<p>
-次に、リカバリを実施するための PostgreSQL の C 言語関数を各ノードの
-template1 データベースにインストールします。ソースコードは
-
-<pre>
-  pgpool-II-x.x.x/sql/pgpool-recovery/
-</pre>
-
-にあります。ディレクトリを移動し、make install してください。
-
-<pre>
-  % cd pgpool-II-x.x.x/sql/pgpool-recovery/
-  % make install
-</pre>
-
-C 言語関数のモジュールをインストールしたら、続いて C 言語関数を呼びだ
-すための SQL をインストールします。
-
-<pre>
-  % cd pgpool-II-x.x.x/sql/pgpool-recovery/
-  % psql -f pgpool-recovery.sql template1
-</pre>
-</p>
-
-<h3> リカバリスクリプトの配置</h3>
-<p>
-データを同期させるためのスクリプトと、リモートから postmaster を再起動
-させるためのスクリプトを各ノードの $PGDATA 以下に配置します。スクリプ
-トは以下の通りです。なお、pgpool-II-x.x.x/sample 以下にサンプルスクリ
-プトも用意してありますので参考にしてください。
-</p>
-
-<h4>pgpool_recovery </h4>
-<p>
-マスタから復帰させるノードへのデータの物理コピーを行うスクリプトです。
-pgpool からは以下の形式でスクリプトを実行します。
-
-<pre>
-  % pgpool_recovery datadir remote_host remote_datadir
-  datadir:        マスタのデータベースクラスタパス
-  remote_host:    リカバリノードのホスト名
-  remote_datadir: リカバリノードのデータベースクラスタパス 
-</pre>
-
-サンプルスクリプトでは rsync を使って物理コピーをしています。もし
-rsync を使う場合は、パスフレーズ無しで ssh 経由でログインできるように
-あらかじめ設定しておく必要があります。
-</p>
-
-<p>
-pgpool_recovery を使う場合は pgpool.conf に以下の行を追加してください。
-
-<pre>
-recovery_1st_stage_command = 'pgpool_recovery'
-recovery_2nd_stage_command = 'pgpool_recovery'
-</pre>
-</p>
-
-<h4>pgpool_remote_start </h4>
-<p>
-データ再同期後に postmaster を起動させるスクリプトです。
-pgpool からは以下の形式でスクリプトを実行します。
-
-<pre>
-  % pgpool_remote_start remote_host remote_datadir
-  remote_host:    リカバリノードのホスト名
-  remote_datadir: リカバリノードのデータベースクラスタパス 
-</pre>
-
-サンプルスクリプトでは ssh 経由で postmaster を起動しています。こちら
-もあらかじめパスフレーズ無しで ssh 経由でログインできるように設定して
-おく必要があります。
-</p>
-
-<h4>pgpool_recovery_pitr</h4>
-<p>
-rsync によるデータコピー方式の他に、PostgreSQL の PITR を使ってリカバ
-リをすることができます。PITR によるリカバリをする場合にはあらかじめ
-PostgreSQL の設定でログをアーカイブさせるようにしておいてください。
-</p>
-
-<p>
-ベースバックアップを取得し、リカバリ先へコピーするスクリプト(ここでは
-ファイル名を copy-base-backup とします)を用意します。例えば以下のよう
-なスクリプトで取得することができます。
-
-<pre>
-  #! /bin/sh
-
-  psql -c "select pg_start_backup('pgpool-recovery')" postgres
-  echo "restore_command = 'scp master:/data/archive_log/%f %p'" > /data/recovery.conf
-  tar -C /data -zcf pgsql.tar.gz pgsql
-  psql -c 'select pg_stop_backup()' postgres
-  scp pgsql.tar.gz secondary:/data
-</pre>
-
-ベースバックアップ取得時に recovery.conf を生成しておきます。
-<pre>
-restore_command = 'scp master:/data/archive_log/%f %p'
-</pre>
-
-</p>
-
-<p>
-次に最新の状態まで PITR によるリカバリを実施できるようにするために、
-pgpool_recovery_pitr スクリプトを$PGDATA にコピーします。このスクリプ
-トでは XLOG を強制的にスイッチさせるようにします。
-</p>
-
-<pre>
-  #! /bin/sh
-  psql -c 'select pg_switch_xlog()' postgres
-</pre>
-
-<p>
-スクリプトの配置が完了したら pgpool.conf に設定します。
-
-<pre>
-recovery_1st_stage_command = 'copy-base-backup'
-recovery_2nd_stage_command = 'pgpool_recovery_pitr'
-</pre>
-
-</p>
-
-<p>
-これで PITR によるオンラインリカバリの準備が完了です。
-</p>
-
-<h3>リカバリの実行</h3>
-<p>
-以上でオンラインリカバリの準備が整いました。
-オンラインリカバリを実行するには pcp_recovery_node コマンドを使うか、
-pgpool 管理ツールから実行してください。
-</p>
-
 <h1>pgpool-IIの起動と停止<a name="start"></a></h1>
 <p>
 以上で設定が終わったので，各DBノードを起動し，必要ならばシステムDBも起動
@@ -1307,6 +1150,255 @@ pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] st
 <tr><td>-m i[mmediate]</td><td>-m fと同じ動作です</td></tr>
 </table>
 </p>
+
+<h1><a name="online-recovery"></a>オンラインリカバリ</h1>
+<h2> オンラインリカバリ概要</h2>
+<p>
+   レプリケーションモードで pgpool が動作している場合、ダウンしたノー
+   ドのデータを再同期させた上で、ノードを復帰させることができます。こ
+   の機能を「オンラインリカバリ」と呼びます。
+</p>
+
+<p>
+   オンラインリカバリを実施するためには、ノードが切り離されていると
+   pgpool が検知している必要があります。ノードを動的に追加したい場合に
+   は pgpool.conf の backend_* パラメータを追加しておき、設定ファイル
+   を再読み込みさせると、ノードが切り離された状態で pgpool にノード情
+   報が登録されます。
+</p>
+
+<p>
+   また、リカバリするノードの PostgreSQL がすでに動作中であれば、あら
+   かじめ PostgreSQL をシャットダウンさせておいてください。
+</p>
+
+<p>
+   pgpool ではオンラインリカバリを 2 段階に分けて実施します。pgpool の
+   クライアントからは完全なデータの同期を取るために若干の接続待ちが発
+   生します。リカバリ手順で以下の通りです。
+
+  <ol>
+    <li> CHECKPOINT 実行
+    <li> ファーストステージの実施
+    <li> 接続がすべて切断されるまで待機
+    <li> CHECKPOINT 実行
+    <li> セカンドステージの実施
+    <li> postmaster の起動(pgpool_remote_start の実行)
+    <li> ノードの復帰
+  </ol>
+</p>
+
+<p>
+   データ同期の第一段階を「ファーストステージ」と呼びます。ファースト
+   ステージ中に1 回目のデータ同期を行います。ファーストステージ中はデー
+   タの更新や参照を並行して行うことができます。
+</p>
+
+<p>
+   ファーストステージで処理する内容はユーザが定義することができます。
+   スクリプトでは 3 つの引数を受け取ることができます。
+
+  <ol>
+    <li> マスタのデータベースクラスタパス
+    <li> リカバリノードのホスト名
+    <li> リカバリノードのデータベースクラスタパス
+  </ol>
+</p>
+
+<p>
+   次に 2 回目のデータ同期を行います。これを「セカンドステージ」と呼び
+   ます。pgpool ではセカンドステージに入る前に接続中のクライアントがす
+   べて接続が終了されるまで待ちます。その間に接続リクエストが来た場合
+   には、その接続をすべてブロックします。
+
+   すべての接続が終了されると、ファーストステージ以降に更新されたデー
+   タを同期するためのセカンドステージが開始されます。そこで最終的なデー
+   タの同期を行います。この間はクライアントからは pgpool への接続が待
+   たされる状態になります。
+</p>
+
+<p>
+<font color="red">
+   なお、オンラインリカバリの制限事項として、複数のホストに pgpool を
+   配置してレプリケーションさせている場合には、オンラインリカバリは正
+   しく動作しません。どれかの pgpool にリカバリリクエストを出した時に、
+   他の pgpool から更新が伝搬すると、データを同期させることができなく
+   なります。
+</font>
+</p>
+
+<h2> pgpool の設定</h2>
+<p>
+   オンラインリカバリを設定するためには、pgpool.conf の以下の値を設定
+   してください。
+
+   <ul>
+    <li> backend_data_directory
+    <li> recovery_user
+    <li> recovery_password
+    <li> recovery_1st_stage_command
+    <li> recovery_2nd_stage_command
+   </ul>
+</p>
+
+
+<h2> C 言語関数のインストール</h2>
+<p>
+次に、リカバリを実施するための PostgreSQL の C 言語関数を各ノードの
+template1 データベースにインストールします。ソースコードは
+</p>
+
+<pre>
+  pgpool-II-x.x.x/sql/pgpool-recovery/
+</pre>
+
+<p>
+にあります。ディレクトリを移動し、make install してください。
+</p>
+
+<pre>
+  % cd pgpool-II-x.x.x/sql/pgpool-recovery/
+  % make install
+</pre>
+
+<p>
+C 言語関数のモジュールをインストールしたら、続いて C 言語関数を呼びだ
+すための SQL をインストールします。
+</p>
+
+<pre>
+  % cd pgpool-II-x.x.x/sql/pgpool-recovery/
+  % psql -f pgpool-recovery.sql template1
+</pre>
+
+
+<h2> リカバリスクリプトの配置</h2>
+<p>
+データを同期させるためのスクリプトと、リモートから postmaster を再起動
+させるためのスクリプトを各ノードの $PGDATA 以下に配置します。あらかじ
+めpgpool-II-x.x.x/sample 以下にサンプルスクリプトも用意してありますの
+で参考にしてください。ここではサンプルスクリプトを使って、PITR による
+リカバリ方法と、rsync によるリカバリ方法を説明します。
+</p>
+
+<h3>PITR によるリカバリ</h3>
+<p>
+ここでは PostgreSQL の PITR 機能を使ってリカバリをする設定例を説明しま
+す。PITR によるリカバリをする場合にはあらかじめ PostgreSQL の設定でロ
+グをアーカイブさせるようにしておいてください。
+</p>
+
+<p>
+まずファーストステージでベースバックアップを取得し、リカバリ先へコピー
+するスクリプト(ここではファイル名を copy-base-backup とします)を用意し
+ます。例えば以下のようなスクリプトで取得することができます。
+</p>
+
+<pre>
+  #! /bin/sh
+
+  psql -c "select pg_start_backup('pgpool-recovery')" postgres
+  echo "restore_command = 'scp master:/data/archive_log/%f %p'" > /data/recovery.conf
+  tar -C /data -zcf pgsql.tar.gz pgsql
+  psql -c 'select pg_stop_backup()' postgres
+  scp pgsql.tar.gz secondary:/data
+</pre>
+
+<p>
+ベースバックアップ取得時に recovery.conf を生成しておきます。
+</p>
+<pre>
+restore_command = 'scp master:/data/archive_log/%f %p'
+</pre>
+
+</p>
+
+<p>
+セカンドステージでは最新の状態まで PITR によるリカバリを実施できるよう
+にするために、pgpool_recovery_pitr スクリプトを$PGDATA にコピーします。
+このスクリプトでは XLOG を強制的にスイッチさせるようにします。
+</p>
+
+<pre>
+  #! /bin/sh
+  psql -c 'select pg_switch_xlog()' postgres
+</pre>
+
+<p>
+スクリプトの配置が完了したら pgpool.conf に設定します。
+
+<pre>
+recovery_1st_stage_command = 'copy-base-backup'
+recovery_2nd_stage_command = 'pgpool_recovery_pitr'
+</pre>
+
+</p>
+
+<p>
+これで PITR によるオンラインリカバリの準備が完了です。
+</p>
+
+<h4>pgpool_remote_start </h4>
+<p>
+データ再同期後に postmaster を起動させるスクリプトです。
+pgpool からは以下の形式でスクリプトを実行します。
+</p>
+
+<pre>
+  % pgpool_remote_start remote_host remote_datadir
+  remote_host:    リカバリノードのホスト名
+  remote_datadir: リカバリノードのデータベースクラスタパス 
+</pre>
+
+<p>
+サンプルスクリプトでは ssh 経由で postmaster を起動しています。こちら
+もあらかじめパスフレーズ無しで ssh 経由でログインできるように設定して
+おく必要があります。
+</p>
+
+<p>
+PITR によるリカバリであれば、recovery.conf の内容にしたがってリカバリ
+した後に postmaster が接続可能状態になります。
+</p>
+
+<h3>rsync によるリカバリ </h3>
+<p>
+7.4 以前の場合は PITR 機能がありません。そこで PITR を使わずに rsync
+を使ったリカバリ方法を説明します。sample ディレクトリに
+pgpool_recovery というファイルがあります。マスタから復帰させるノードへ
+のデータの物理コピーを行うスクリプトです。pgpool からは以下の形式でス
+クリプトを実行します。
+</p>
+
+<pre>
+  % pgpool_recovery datadir remote_host remote_datadir
+  datadir:        マスタのデータベースクラスタパス
+  remote_host:    リカバリノードのホスト名
+  remote_datadir: リカバリノードのデータベースクラスタパス 
+</pre>
+
+<p>
+サンプルスクリプトでは rsync を使って物理コピーをしています。もし
+rsync を使う場合は、パスフレーズ無しで ssh 経由でログインできるように
+あらかじめ設定しておく必要があります。
+</p>
+
+<p>
+pgpool_recovery を使う場合は pgpool.conf に以下の行を追加してください。
+
+<pre>
+recovery_1st_stage_command = 'pgpool_recovery'
+recovery_2nd_stage_command = 'pgpool_recovery'
+</pre>
+</p>
+
+<h2>リカバリの実行</h2>
+<p>
+以上でオンラインリカバリの準備が整いました。
+オンラインリカバリを実行するには pcp_recovery_node コマンドを使うか、
+pgpool 管理ツールから実行してください。
+</p>
+
 
 <h1>制限事項<a name="restriction"></a></h1>
 <p>
