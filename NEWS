@@ -1,3 +1,47 @@
+2.0 (hikitsuboshi) 2007/11/xx
+      * Version 2.0
+
+      * Incompatibility since pgpool-II 1.x
+        - the default value for ignore_leading_white_space is now
+          true(Yoshiyuki) 
+
+      * General
+        - Allow to reload pgpool.conf(Yoshiyuki)
+        - The paraser is now compatible with PostgreSQL 8.3(Yoshiyuki)
+        - Add new directive "failover_command" to specify command when
+          a node is detached(Yoshiyuki)
+        - Add new directive "client_idle_limit" to specify the time out since
+          the last command is arrived from a client(Tatsuo)
+  
+      * Replication
+        - Always start a new transaction even if the query is not in
+          an explicit transaction to enhance the reliabilty of
+          replication(Yoshiyuki)
+        - Enhance the performance of replication for write
+          queries. Now the worst case is 1/2 compared with single DB
+          node regardless the number of DB nodes. Previous release
+          tends to degrade according to the numer of DB
+          nodes(Yoshiyuki)
+        - Add "online recovery" which allows to add a DB node and sync
+          with other DB nodes without stopping the pgpool
+          server(Yoshiyuki)
+        - Abort a transaction if INSERT, UPDATE and DELETE reports
+          different number of result rows(Yoshiyuki)
+
+          x=# update t set a = a + 1;
+          ERROR:  pgpool detected difference of the number of update tuples
+          HINT:  check data consistency between master and other db node
+
+        - If the results from DB nodes do not match, select the
+          possible correct result by "decide by majority". Previous
+          release always trust the result of the master DB
+          node(Yoshiyuki)
+        - Allow load balance in V2 frontend/backend protocol(Yoshiyuki)
+
+      * Parallel query
+        - Allow "partial replication" to enhance the performance of
+          the parallel query(Yoshiharu)
+
 1.3 (sohiboshi) 2007/10/23
       * Version 1.3
       * Add new "authentication_timeout" directive, being the default
