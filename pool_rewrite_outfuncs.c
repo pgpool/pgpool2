@@ -4184,6 +4184,8 @@ _rewriteSetOperationStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblin
 static void
 _rewriteAExpr(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, A_Expr *node)
 {
+	Value *v;
+
 	switch (node->kind)
 	{
 		case AEXPR_OP:
@@ -4222,11 +4224,21 @@ _rewriteAExpr(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, 
 			break;
 
 		case AEXPR_OP_ANY:
-			/* not implemented yet */
+			_rewriteNode(BaseSelect,message,dblink,str, node->lexpr);
+			v = linitial(node->name);
+			delay_string_append_char(message,str, v->val.str);
+			delay_string_append_char(message,str, "ANY(");
+			_rewriteNode(BaseSelect,message,dblink,str, node->rexpr);
+			delay_string_append_char(message,str, ")");
 			break;
 
 		case AEXPR_OP_ALL:
-			/* not implemented yet */
+			_rewriteNode(BaseSelect,message,dblink,str, node->lexpr);
+			v = linitial(node->name);
+			delay_string_append_char(message,str, v->val.str);
+			delay_string_append_char(message,str, "ALL(");
+			_rewriteNode(BaseSelect,message,dblink,str, node->rexpr);
+			delay_string_append_char(message,str, ")");
 			break;
 
 		case AEXPR_DISTINCT:
@@ -4247,14 +4259,24 @@ _rewriteAExpr(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, 
 
 		case AEXPR_OF:
 			_rewriteNode(BaseSelect, message, dblink, str, node->lexpr);
-			if (*(char *)lfirst(list_head(node->name)) == '!')
+			v = linitial(node->name);
+			if (v->val.str[0] == '!')
 				delay_string_append_char(message, str, " IS NOT OF (");
 			else
 				delay_string_append_char(message, str, " IS OF (");
 			_rewriteNode(BaseSelect, message, dblink, str, node->rexpr);
 			delay_string_append_char(message, str, ")");
 			break;
-
+		case AEXPR_IN:
+			_rewriteNode(BaseSelect,message,dblink,str, node->lexpr);
+			v = (Value *)lfirst(list_head(node->name));
+			if (v->val.str[0] == '=')
+				delay_string_append_char(message,str, " IN (");
+			else
+				delay_string_append_char(message,str, " NOT IN (");
+			_rewriteNode(BaseSelect,message,dblink,str, node->rexpr);
+			delay_string_append_char(message,str, ")");
+			break;
 		default:
 			break;
 	}
