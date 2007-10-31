@@ -1,13 +1,118 @@
+2007-11-1  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+	* pgpool-II 2.0 beta1: See NEWS
+
+2007-10-18  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_query_cache.c: Although the second argument of
+	  PQunescapeBytea() requires size_t which size is 8 byte in 64bit
+	  machine, pgpool passed 4 byte variable. It caused segfault. So
+	  fixed passing size_t variable.
+
+2007-10-16  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Fix hang up in load balancing mode. The
+	  bug was introduced in V1.2.
+
+2007-10-15  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Fix invalid memory access when pgpool
+	  processed DEALLOCATE statement.
+
+2007-10-12  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* parser/parser.c, pool_parser.h, scan.l: Fix scanner's error
+	  handling. If there was a unterminated double-quote identifier,
+	  scanner entered infinite-loop.
+
+2007-10-12  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* child.c, pool.h, pool_config.l, pool_config.c
+	  pool_process_query.c: Add new directive
+	  "authentication_timeout". The directive means the maximum time
+	  in seconds to complete client authentication. The default value
+	  is 60.
+
+2007-10-11  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* child.c, pool.h: Check startup packet length. If the length is
+	  greater than 10,000 byte, pgpool reject the connection.
+
+2007-09-26  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: SET statements are replicated in
+	  master/slave mode.
+
+2007-09-14  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* child.c, pool.h, pool_process_query.c: pool_process_query.c: Fix
+	  hang up when load balancing node was down. If load balancing
+	  node was down, select other node.
+
+2007-08-29  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Parse message including
+	  INSERT/UPDATE/DELETE query acquires RowExclusiveLock. However
+	  pgpool did not wait a response from each node. It was possible
+	  to occur deadlock problem.
+
+	  Fix memory leak in reset_prepared_list.
+
+2007-07-26  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* child.c, pool.h, pool_connection_pool.c: SIGALRM handler didn't
+	  safe. Because it called non-reentrant functions. We only set a
+	  flag in SIGALRM handler. Then we close expired connections in
+	  safe places.
+
+2007-07-26  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_connection_pool.c: Fix memory leak when connection slot is
+	  full.
+
+2007-07-24  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool.h, pool_process_query.c: Detect deadlock in
+	  do_command(). When insert_lock was true, kind mismatch error
+	  occured.
+
+2007-07-24  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* child.c, pool_type.h, pool_process_query.c: pgpool chooses it
+	  after receiving AuthenticationOK('R') message. So pgpool load
+	  balance to the same node inside a same session.
+
+2007-07-23  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pgpool.conf.sample, pool.h, pool_config.l, pool_process_query.c:
+	  Add new parameter named "replicate_select". Default value is
+	  'false'. If it is true, pgpool replicates SELECT queries when
+	  load balancing is disabled. This is a old specification which
+	  was V1.0. If it is false, pgpool only sends them to the master
+	  node. This is a current specification.
+
+2007-07-17  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Fix hang up when backend node did fast or
+	  immediate shutdown.
+
+2007-07-11  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool.h, pool_stream.c, pool_process_query.c: Fix kind mismatch
+	  error when deadlock occured.
+
+2007-07-09  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* main.c: Fix signal handling.
+
+2007-07-05  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Fix bugs in master_slave mode.
+
 2007-06-27  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* pool.h, pool_process_query.c: Fix hang up when a SELECT query
 	  has error inside transaction block. It occurs only in simple
 	  query protocol.
-
-2007-06-22  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
-	* Add new features in pgpool-II 2.0.
-	  - support online-recovery in replication mode.
-	  - improve replication mode.
 
 2007-06-20  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
