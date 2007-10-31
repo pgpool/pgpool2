@@ -4,6 +4,8 @@
       * Incompatibility since pgpool-II 1.x
         - the default value for ignore_leading_white_space is now
           true(Yoshiyuki) 
+ 	- replicate_strict is removed. The value is always
+          true(Yoshiyuki)
 
       * General
         - Allow to reload pgpool.conf(Yoshiyuki)

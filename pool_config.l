@@ -141,7 +141,6 @@ int pool_init_config(void)
 	pool_config->enable_pool_hba = 0;
 
 	pool_config->replication_mode = 0;
-	pool_config->replication_strict = 1;
 	pool_config->replication_timeout = 0;
 	pool_config->load_balance_mode = 0;
 	pool_config->replication_stop_on_mismatch = 0;
@@ -530,18 +529,6 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 
-		}
-		else if (!strcmp(key, "replication_strict") && CHECK_CONTEXT(INIT_CONFIG, context))
-		{
-			int v = eval_logical(yytext);
-
-			if (v < 0)
-			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
-				fclose(fd);
-				return(-1);
-			}
-			pool_config->replication_strict = v;
 		}
 		else if (!strcmp(key, "replication_timeout") &&
 				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))

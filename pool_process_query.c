@@ -666,9 +666,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 		 * in "strict mode" we need to wait for backend completing the query.
 		 * note that this is not applied if "NO STRICT" is specified as a comment.
 		 */
-		if ((pool_config->replication_strict &&
-				!NO_STRICT_MODE(string) && is_strict_query(node)) ||
-				STRICT_MODE(string))
+		if (is_strict_query(node))
 		{
 			pool_debug("waiting for backend %d completing the query", i);
 			if (synchronize(CONNECTION(backend, i)))
@@ -1290,16 +1288,11 @@ static POOL_STATUS send_simplequery_message(POOL_CONNECTION *backend, int len, c
 static POOL_STATUS wait_for_query_response(POOL_CONNECTION *backend, char *string)
 {
 	/*
-	 * in "strict mode" we need to wait for backend completing the query.
-	 * note that this is not applied if "NO STRICT" is specified as a comment.
+	 * we need to wait for backend completing the query.
 	 */
-	if ((pool_config->replication_strict && !NO_STRICT_MODE(string)) ||
-		STRICT_MODE(string))
-	{
-		pool_debug("waiting for backend %d completing the query", backend->db_node_id);
-		if (synchronize(backend))
-			return POOL_END;
-	}
+	pool_debug("waiting for backend %d completing the query", backend->db_node_id);
+	if (synchronize(backend))
+		return POOL_END;
 
 	return POOL_CONTINUE;
 }
@@ -1396,12 +1389,9 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 			if (send_execute_message(backend, MASTER_NODE_ID, len, string) != POOL_CONTINUE)
 				return POOL_END;
 
-			if (pool_config->replication_strict)
-			{
-				pool_debug("waiting for backend completing the query");
-				if (synchronize(CONNECTION(backend, MASTER_NODE_ID)))
-					return POOL_END;
-			}
+			pool_debug("waiting for backend completing the query");
+			if (synchronize(CONNECTION(backend, MASTER_NODE_ID)))
+				return POOL_END;
 
 			/*
 			 * We must check deadlock error because a aborted transaction
@@ -1437,12 +1427,9 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 			if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
 				continue;
 
-			if (pool_config->replication_strict)
-			{
-				pool_debug("waiting for backend completing the query");
-				if (synchronize(CONNECTION(backend, i)))
-					return POOL_END;
-			}
+			pool_debug("waiting for backend completing the query");
+			if (synchronize(CONNECTION(backend, i)))
+				return POOL_END;
 		}
 
 		if (commit)
@@ -1450,12 +1437,9 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 			if (send_execute_message(backend, MASTER_NODE_ID, len, string) != POOL_CONTINUE)
 				return POOL_END;
 
-			if (pool_config->replication_strict)
-			{
-				pool_debug("waiting for backend completing the query");
-				if (synchronize(MASTER(backend)))
-					return POOL_END;
-			}
+			pool_debug("waiting for backend completing the query");
+			if (synchronize(MASTER(backend)))
+				return POOL_END;
 		}
 	}
 	else
@@ -1463,12 +1447,9 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		if (send_execute_message(backend, MASTER_NODE_ID, len, string) != POOL_CONTINUE)
 			return POOL_END;
 
-		if (pool_config->replication_strict)
-		{
-			pool_debug("waiting for backend completing the query");
-			if (synchronize(CONNECTION(backend, MASTER_NODE_ID)))
-				return POOL_END;
-		}
+		pool_debug("waiting for backend completing the query");
+		if (synchronize(CONNECTION(backend, MASTER_NODE_ID)))
+			return POOL_END;
 	}
 
 	while ((ret = read_kind_from_backend(frontend, backend, &kind)) == POOL_CONTINUE)
@@ -1642,12 +1623,9 @@ static POOL_STATUS Parse(POOL_CONNECTION *frontend,
 		/* We must synchronize because Parse message acquires table
 		 * locks.
 		 */
-		if (pool_config->replication_strict)
-		{
-			pool_debug("waiting for master completing the query");
-			if (synchronize(MASTER(backend)))
-				return POOL_END;
-		}
+		pool_debug("waiting for master completing the query");
+		if (synchronize(MASTER(backend)))
+			return POOL_END;
 
 		/*
 		 * We must check deadlock error because a aborted transaction
@@ -1683,12 +1661,9 @@ static POOL_STATUS Parse(POOL_CONNECTION *frontend,
 			if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
 				continue;
 
-			if (pool_config->replication_strict)
-			{
-				pool_debug("waiting for backend completing the query");
-				if (synchronize(CONNECTION(backend, i)))
-					return POOL_END;
-			}
+			pool_debug("waiting for backend completing the query");
+			if (synchronize(CONNECTION(backend, i)))
+				return POOL_END;
 		}
 	}
 
@@ -1741,15 +1716,11 @@ static POOL_STATUS Sync(POOL_CONNECTION *frontend,
 	if (REPLICATION)
 	{
 		/*
-		 * in "strict mode" we need to wait for master completing the query.
-		 * note that this is not applied if "NO STRICT" is specified as a comment.
+		 * we need to wait for master completing the query.
 		 */
-		if (pool_config->replication_strict)
-		{
-			pool_debug("waiting for master completing the query");
-			if (synchronize(MASTER(backend)))
-				return POOL_END;
-		}
+		pool_debug("waiting for master completing the query");
+		if (synchronize(MASTER(backend)))
+			return POOL_END;
 
 		pool_write(SECONDARY(backend), "S", 1);
 		sendlen = htonl(len + 4);
@@ -1759,10 +1730,9 @@ static POOL_STATUS Sync(POOL_CONNECTION *frontend,
 			return POOL_END;
 		}
 
-		/* in "strict mode" we need to wait for secondary completing the query */
-		if (pool_config->replication_strict)
-			if (synchronize(SECONDARY(backend)))
-				return POOL_END;
+		/* we need to wait for secondary completing the query */
+		if (synchronize(SECONDARY(backend)))
+			return POOL_END;
 	}
 	return POOL_CONTINUE;
 }
@@ -2639,11 +2609,8 @@ static POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 				if (pool_flush(CONNECTION(backend, i)) <0)
 					return POOL_END;
 
-				if (pool_config->replication_strict)
-				{
-					if (synchronize(CONNECTION(backend, i)))
-						return POOL_END;
-				}
+				if (synchronize(CONNECTION(backend, i)))
+					return POOL_END;
 			}
 		}
 	}
@@ -3135,11 +3102,6 @@ static void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *b
 	strncpy(status[i].name, "replication_mode", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->replication_mode);
 	strncpy(status[i].desc, "non 0 if operating in replication mode", POOLCONFIG_MAXDESCLEN);
-	i++;
-
-	strncpy(status[i].name, "replication_strict", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->replication_strict);
-	strncpy(status[i].desc, "non 0 if operating in strict mode", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "replication_timeout", POOLCONFIG_MAXNAMELEN);

@@ -59,15 +59,8 @@ logdir = '/tmp'
 # Replication mode
 replication_mode = false
 
-# Set this to true if you want to avoid deadlock situations when
-# replication is enabled.  There will, however, be a noticable performance
-# degradation.  A workaround is to set this to false and insert a /*STRICT*/
-# comment at the beginning of the SQL command.
-replication_strict = true
-
-# When replication_strict is set to false, there will be a chance for
-# deadlocks.  Set this to nonzero (in milliseconds) to detect this
-# situation and resolve the deadlock by aborting current session.
+# Set this to nonzero (in milliseconds) to detect this situation and
+# resolve the deadlock by aborting current session.
 replication_timeout = 5000
 
 # Load balancing mode, i.e., all SELECTs except in a transaction block

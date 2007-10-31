@@ -57,12 +57,6 @@
 /* pid file name */
 #define PID_FILE_NAME "pgpool.pid"
 
-/* strict mode comment in SQL */
-#define STRICT_MODE_STR "/*STRICT*/"
-#define STRICT_MODE(s) (strncasecmp((s), STRICT_MODE_STR, strlen(STRICT_MODE_STR)) == 0)
-#define NO_STRICT_MODE_STR "/*NO STRICT*/"
-#define NO_STRICT_MODE(s) (strncasecmp((s), NO_STRICT_MODE_STR, strlen(NO_STRICT_MODE_STR)) == 0)
-
 typedef enum {
 	POOL_CONTINUE = 0,
 	POOL_IDLE,

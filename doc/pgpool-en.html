@@ -573,20 +573,10 @@ configuration parameters below must be set in addtion to everything above.</p>
       is false.</p>
   </dd>
 
-  <dt>replication_strict</dt>
-  <dd>
-      <p>When set to true, pgpool-II waits for the Master
-      DB for all queries to be processed before moving on to the next
-      backend. This option eliminates the risk of deadlocks, but the
-      performance may degrade due to the lack of a
-      parallelism. Default value is true.</p>
-  </dd>
-
   <dt>replication_timeout</dt>
   <dd>
       <p>Specifies the timeout value in milliseconds, for detecting
-      deadlocks while <code>replication_strict</code> is
-      false. Default is 5000 (5 seconds), and 0 means no
+      deadlocks. Default is 5000 (5 seconds), and 0 means no
       timeout.</p>
   </dd>
 
