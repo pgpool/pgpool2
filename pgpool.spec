@@ -2,14 +2,14 @@
 
 Summary:	Pgpool is a connection pooling/replication server for PostgreSQL
 Name:		postgresql-%{short_name}
-Version:	1.3
-Release:	1%{?dist}
+Version:	2.0
+Release:	beta1%{?dist}.1
 License:	BSD
 Group:		Applications/Databases
 URL:		http://pgpool.projects.PostgreSQL.org/pgpool-II/en
-Source0:	http://pgfoundry.org/frs/download.php/1472/%{short_name}-%{version}.tar.gz
-Source1:        pgpool.init
-Source2:        pgpool.sysconfig
+Source0:	http://pgfoundry.org/frs/download.php/1502/%{short_name}-%{version}-beta1.tar.gz
+Source1:	pgpool.init
+Source2:	pgpool.sysconfig
 Patch1:		pgpool.conf.sample.patch
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:	postgresql-devel pam-devel
@@ -37,13 +37,13 @@ DB nodes to be connected, which was not possible in pgpool-I.
 %package devel
 Summary:	The  development files for pgpool-II
 Group:		Development/Libraries
-Requires:	%{name} = %{version}
+Requires:	%{name} = %{version}-beta1
 
 %description devel
 Development headers and libraries for pgpool-II.
 
 %prep
-%setup -q -n %{short_name}-%{version}
+%setup -q -n %{short_name}-%{version}-beta1
 %patch1 -p0
 
 %build
@@ -59,9 +59,9 @@ mv %{buildroot}/%{_sysconfdir}/*.conf.sample %{buildroot}%{_datadir}/%{name}
 mv %{buildroot}%{_datadir}/%{short_name}/system_db.sql %{buildroot}%{_datadir}/%{name}
 mv %{buildroot}%{_datadir}/%{short_name}/pgpool.pam %{buildroot}%{_datadir}/%{name}
 install -d %{buildroot}%{_initrddir}
-install -m 755 redhat/%{SOURCE1} %{buildroot}%{_initrddir}/pgpool
+install -m 755 %{SOURCE1} %{buildroot}%{_initrddir}/pgpool
 install -d %{buildroot}%{_sysconfdir}/sysconfig
-install -m 644 redhat/%{SOURCE2} %{buildroot}%{_sysconfdir}/sysconfig/pgpool
+install -m 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sysconfig/pgpool
 
 # nuke libtool archive and static lib
 rm -f %{buildroot}%{_libdir}/libpcp.{a,la}
@@ -85,6 +85,7 @@ chkconfig --add pgpool
 %{_bindir}/pcp_node_info
 %{_bindir}/pcp_proc_count
 %{_bindir}/pcp_proc_info
+%{_bindir}/pcp_recovery_node
 %{_bindir}/pcp_stop_pgpool
 %{_bindir}/pcp_systemdb_info
 %{_bindir}/pg_md5
@@ -103,6 +104,9 @@ chkconfig --add pgpool
 %{_libdir}/libpcp.so
 
 %changelog
+* Thu Nov 01 2007 Devrim Gunduz <devrim@CommandPrompt.com> 2.0-beta1
+- Update to 2.0 beta1 
+
 * Tue Oct 16 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.3-1
 - Update to 1.3
 
