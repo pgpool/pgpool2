@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -Wall -Wmissing-prototypes -Wmissing-declarations -D_GNU_SOURCE -I .. -I @PGSQL_INCLUDE_DIR@
+AM_CPPFLAGS = -D_GNU_SOURCE -I .. -I @PGSQL_INCLUDE_DIR@
 
 lib_LTLIBRARIES = libpcp.la
 libpcp_la_SOURCES = pcp.h ../pool_type.h md5.h pcp.c pcp_stream.h pcp_stream.c pcp_error.c md5.c

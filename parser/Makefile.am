@@ -4,7 +4,7 @@ libsql_parser_a_SOURCES = gram.y gramparse.h list.c makefuncs.c makefuncs.h memn
 
 EXTRA_DIST = scan.c scan.l
 
-AM_CPPFLAGS = -pg -Wall -Wmissing-prototypes -Wmissing-declarations -D_GNU_SOURCE -I .. -I @PGSQL_INCLUDE_DIR@
+AM_CPPFLAGS = -D_GNU_SOURCE -I .. -I @PGSQL_INCLUDE_DIR@
 
 AM_YFLAGS = -d
 

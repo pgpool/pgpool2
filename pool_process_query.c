@@ -3016,7 +3016,7 @@ static void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *b
 	int len;
 	short colnum;
 
-	static char nullmap[2] = {0xff, 0xff};
+	static unsigned char nullmap[2] = {0xff, 0xff};
 	int nbytes = (num_fields + 7)/8;
 
 #define POOLCONFIG_MAXNAMELEN 32

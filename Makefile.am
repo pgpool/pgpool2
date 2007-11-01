@@ -19,7 +19,7 @@ DEFS = @DEFS@ \
 sysconf_DATA = pgpool.conf.sample pcp.conf.sample pool_hba.conf.sample
 pkgdata_DATA = sql/system_db.sql sample/pgpool.pam
 
-AM_CPPFLAGS = -Wall -Wmissing-prototypes -Wmissing-declarations -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
+AM_CPPFLAGS = -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
 
 pgpool_LDADD = -L@PGSQL_LIB_DIR@ -lpq parser/libsql-parser.a pcp/libpcp.la parser/nodes.o
 if enable_rpath

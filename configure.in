@@ -11,6 +11,43 @@ AC_PROG_LIBTOOL
 AM_PROG_LEX
 AC_PROG_YACC
 
+dnl Check compiler option
+dnl check -Wall option
+OLD_CFLAGS=$CFLAGS
+CFLAGS="$CFLAGS -Wall"
+AC_MSG_CHECKING(for -Wall option)
+AC_CACHE_VAL(ac_cv_wall,
+  AC_TRY_COMPILE([], [char a;], ac_cv_wall=yes, ac_cv_wall=no))
+echo $ac_cv_wall
+if test $ac_cv_wall = no; then
+   CFLAGS=$OLD_CFLAGS
+fi
+
+dnl check -Wmissing-prototypes
+OLD_CFLAGS=$CFLAGS
+CFLAGS="$CFLAGS -Wmissing-prototypes"
+AC_MSG_CHECKING(for -Wmissing-prototypes option)
+AC_CACHE_VAL(ac_cv_wmissing_prototypes,
+  AC_TRY_COMPILE([], [char a;], ac_cv_wmissing_prototypes=yes,
+  ac_cv_wmissing_prototypes=no))
+echo $ac_cv_wmissing_prototypes
+if test $ac_cv_wmissing_prototypes = no; then
+   CFLAGS=$OLD_CFLAGS
+fi
+
+
+dnl check -Wmissing-prototypes
+OLD_CFLAGS=$CFLAGS
+CFLAGS="$CFLAGS -Wmissing-declarations"
+AC_MSG_CHECKING(for -Wmissing-declarations option)
+AC_CACHE_VAL(ac_cv_wmissing_declarations,
+  AC_TRY_COMPILE([], [char a;], ac_cv_wmissing_declarations=yes,
+  ac_cv_wmissing_declarations=no))
+echo $ac_cv_wmissing_declarations
+if test $ac_cv_wmissing_declarations = no; then
+   CFLAGS=$OLD_CFLAGS
+fi
+
 dnl Checks for libraries.
 AC_CHECK_LIB(m,        main)
 AC_CHECK_LIB(nsl,      main)
