@@ -79,7 +79,7 @@ main(int argc, char **argv)
 		myexit(errorcode);
 	}
 
-	if ((process_list = pcp_process_count(&process_count)) < 0)
+	if ((process_list = pcp_process_count(&process_count)) == NULL)
 	{
 		pcp_errorstr(errorcode);
 		pcp_disconnect();
