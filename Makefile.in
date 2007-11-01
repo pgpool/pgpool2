@@ -178,7 +178,6 @@ PGCONFIG = @PGCONFIG@
 PGSQL_INCLUDE_DIR = @PGSQL_INCLUDE_DIR@
 PGSQL_LIB_DIR = @PGSQL_LIB_DIR@
 RANLIB = @RANLIB@
-SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
@@ -243,10 +242,10 @@ pgpool_SOURCES = pool.h pool_type.h version.h pgpool.conf.sample \
 pg_md5_SOURCES = pg_md5.c md5.c md5.h
 sysconf_DATA = pgpool.conf.sample pcp.conf.sample pool_hba.conf.sample
 pkgdata_DATA = sql/system_db.sql sample/pgpool.pam
-AM_CPPFLAGS = -pg -Wall -Wmissing-prototypes -Wmissing-declarations -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
+AM_CPPFLAGS = -Wall -Wmissing-prototypes -Wmissing-declarations -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
 pgpool_LDADD = -L@PGSQL_LIB_DIR@ -lpq parser/libsql-parser.a pcp/libpcp.la parser/nodes.o
 @enable_rpath_FALSE@pgpool_LDFLAGS = 
-@enable_rpath_TRUE@pgpool_LDFLAGS = -pg -rpath @PGSQL_LIB_DIR@ -rpath $(libdir)
+@enable_rpath_TRUE@pgpool_LDFLAGS = -rpath @PGSQL_LIB_DIR@ -rpath $(libdir)
 AM_YFLAGS = -d
 man_MANS = pgpool.8
 CLEANFILES = pgpool.8
@@ -275,7 +274,8 @@ EXTRA_DIST = pgpool.8.in sql/system_db.sql sample/pgpool.pam doc/pgpool-ja.html 
 		test/jdbc/*.java test/jdbc/pgpool.properties test/jdbc/prepare.sql test/jdbc/run.sh \
 		test/jdbc/expected/autocommit test/jdbc/expected/batch \
 		test/jdbc/expected/column test/jdbc/expected/lock test/jdbc/expected/select \
-		test/jdbc/expected/update
+		test/jdbc/expected/update \
+		redhat/pgpool.init redhat/pgpool.sysconfig
 
 SUBDIRS = parser pcp
 all: config.h
@@ -650,7 +650,7 @@ distclean-tags:
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
-	$(mkdir_p) $(distdir)/doc $(distdir)/sample $(distdir)/sql $(distdir)/sql/pgpool-recovery $(distdir)/test/jdbc $(distdir)/test/jdbc/expected $(distdir)/test/parser $(distdir)/test/parser/expected $(distdir)/test/parser/input
+	$(mkdir_p) $(distdir)/doc $(distdir)/redhat $(distdir)/sample $(distdir)/sql $(distdir)/sql/pgpool-recovery $(distdir)/test/jdbc $(distdir)/test/jdbc/expected $(distdir)/test/parser $(distdir)/test/parser/expected $(distdir)/test/parser/input
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

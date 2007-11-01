@@ -1679,7 +1679,6 @@ int pool_init_config(void)
 	pool_config->enable_pool_hba = 0;
 
 	pool_config->replication_mode = 0;
-	pool_config->replication_strict = 1;
 	pool_config->replication_timeout = 0;
 	pool_config->load_balance_mode = 0;
 	pool_config->replication_stop_on_mismatch = 0;
@@ -1706,6 +1705,10 @@ int pool_init_config(void)
 	pool_config->system_db_user = "pgpool";
 	pool_config->system_db_password = "";
 	pool_config->backend_desc->num_backends = 0;
+    pool_config->recovery_user = "";
+    pool_config->recovery_password = "";
+    pool_config->recovery_1st_stage_command = "";
+    pool_config->recovery_2nd_stage_command = "";
 
 	res = gethostname(localhostname,sizeof(localhostname));
 	if(res !=0 )
@@ -1868,7 +1871,8 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			pool_config->pcp_socket_dir = str;
 		}
-		else if (!strcmp(key, "pcp_timeout") && CHECK_CONTEXT(INIT_CONFIG, context))
+		else if (!strcmp(key, "pcp_timeout") &&
+			 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			int v = atoi(yytext);
 
@@ -2063,18 +2067,6 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 
-		}
-		else if (!strcmp(key, "replication_strict") && CHECK_CONTEXT(INIT_CONFIG, context))
-		{
-			int v = eval_logical(yytext);
-
-			if (v < 0)
-			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
-				fclose(fd);
-				return(-1);
-			}
-			pool_config->replication_strict = v;
 		}
 		else if (!strcmp(key, "replication_timeout") &&
 				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
@@ -2312,6 +2304,46 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->recovery_password = str;
+		}
+
+		else if (!strcmp(key, "recovery_1st_stage_command") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->recovery_1st_stage_command = str;
+		}
+
+		else if (!strcmp(key, "recovery_2nd_stage_command") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->recovery_2nd_stage_command = str;
 		}
 
 		else if (!strcmp(key, "insert_lock") &&
