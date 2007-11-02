@@ -568,26 +568,25 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 /* using only in pool_parallel_exec */
 #define BITS (8 * sizeof(long int))
 
-static void set_fd(unsigned long fd ,fd_set *setp)
+static void set_fd(unsigned long fd ,unsigned long *setp)
 {
 	unsigned long tmp = fd / 1024;
 	unsigned long rem = fd % 1024;
-	setp->fds_bits[tmp] |= (1UL<<rem);
+	setp[tmp] |= (1UL<<rem);
 }
 
 /* using only in pool_parallel_exec */
-static int isset_fd(unsigned long fd, fd_set *setp)
+static int isset_fd(unsigned long fd, unsigned long *setp)
 {
 	unsigned long tmp = fd / 1024;
 	unsigned long rem = fd % 1024;
-	return (setp->fds_bits[tmp] & (1UL<<rem)) != 0;
+	return (setp[tmp] & (1UL<<rem)) != 0;
 }
 
 /* using only in pool_parallel_exec */
-static void zero_fd(fd_set *setp)
+static void zero_fd(unsigned long *setp)
 {
-	unsigned long *tmp; 
-	tmp = (unsigned long *) setp->fds_bits;
+	unsigned long *tmp = setp; 
 	int i = 1024 / BITS;
 	while(i)
 	{
@@ -609,7 +608,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 	fd_set readmask;
 	fd_set writemask;
 	fd_set exceptmask;
-	fd_set donemask;
+	unsigned long donemask[ 1024 / BITS];
 	static char *sq = "show pool_status";
 	POOL_STATUS status;
 	struct timeval timeout;
@@ -679,7 +678,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 		return POOL_END;
 	}
 
-	zero_fd(&donemask);
+	zero_fd(donemask);
 	/* In this loop,get data from backend */
 	for (;;)
 	{
@@ -694,7 +693,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 			{
 				int fd = CONNECTION(backend,i)->fd;
 				num_fds = Max(fd + 1, num_fds);
-				if(!isset_fd(fd,&donemask))
+				if(!isset_fd(fd,donemask))
 				{
 					FD_SET(fd, &readmask);
 					FD_SET(fd, &exceptmask);
@@ -763,7 +762,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 						return POOL_CONTINUE;
 
 					used_count++;
-					set_fd(CONNECTION(backend, i)->fd, &donemask);
+					set_fd(CONNECTION(backend, i)->fd, donemask);
 					continue;
 				}
 
@@ -806,7 +805,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 															false);
 						}
 						used_count++;
-						set_fd(CONNECTION(backend, i)->fd, &donemask);
+						set_fd(CONNECTION(backend, i)->fd, donemask);
 						break;
 					}
 
@@ -820,7 +819,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 															backend->info->database,
 															false);
 						used_count++;
-						set_fd(CONNECTION(backend, i)->fd, &donemask);
+						set_fd(CONNECTION(backend, i)->fd, donemask);
 						break;
 					}
 					if((kind == 'C' || kind == 'c' || kind == 'E') &&
