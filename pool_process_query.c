@@ -4225,6 +4225,13 @@ static int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *no
 {
 	if (MAJOR(backend) != PROTO_MAJOR_V3)
 		return 0;
+
+	if (pool_config->ignore_leading_white_space)
+	{
+		/* ignore leading white spaces */
+		while (*query && isspace(*query))
+			query++;
+	}
 	
 	/*
 	 * either insert_lock directive specified and without "NO INSERT LOCK" comment
