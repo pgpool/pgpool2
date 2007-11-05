@@ -1318,7 +1318,8 @@ static POOL_STATUS send_extended_protocol_message(POOL_CONNECTION_POOL *backend,
 	pool_write(cp, kind, 1);
 	sendlen = htonl(len + 4);
 	pool_write(cp, &sendlen, sizeof(sendlen));
-	pool_write(cp, string, len);
+	if (len > 0)
+		pool_write(cp, string, len);
 
 	/*
 	 * send "Flush" message so that backend notices us
@@ -1424,6 +1425,23 @@ static POOL_STATUS Parse(POOL_CONNECTION *frontend,
 
 		if (REPLICATION && insert_stmt_with_lock)
 		{
+			char kind;
+
+			/* synchronize transaction state */
+			for (i = 0; i < NUM_BACKENDS; i++)
+			{
+				if (!VALID_BACKEND(i))
+					continue;
+
+				send_extended_protocol_message(backend, i, "S", 0, "");
+			}
+
+			kind = pool_read_kind(backend);
+			if (kind != 'Z')
+				return POOL_END;
+			if (ReadyForQuery(frontend, backend, 0) != POOL_CONTINUE)
+				return POOL_END;
+
 			/* start a transaction if needed and lock the table */
 			status = insert_lock(backend, stmt, (InsertStmt *)p_stmt->query);
 			if (status != POOL_CONTINUE)
@@ -1561,6 +1579,8 @@ static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	StartupPacket *sp;
 	char psbuf[1024];
 	int i;
+	int len;
+	signed char state;
 
 	/* if a transaction is started for insert lock, we need to close it. */
 	if (internal_transaction_started)
@@ -1598,38 +1618,37 @@ static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 
 	pool_flush(frontend);
 
+	if (MAJOR(backend) == PROTO_MAJOR_V3)
+	{
+		if ((len = pool_read_message_length(backend)) < 0)
+			return POOL_END;
+
+		pool_debug("ReadyForQuery: message length: %d", len);
+
+		state = pool_read_kind(backend);
+		if (state < 0)
+			return POOL_END;
+
+		/* set transaction state */
+		pool_debug("ReadyForQuery: transaction state: %c", state);
+
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (!VALID_BACKEND(i))
+				continue;
+
+			CONNECTION(backend, i)->tstate = state;
+		}
+	}
+
 	if (send_ready)
 	{
 		pool_write(frontend, "Z", 1);
 
 		if (MAJOR(backend) == PROTO_MAJOR_V3)
 		{
-			int len;
-			signed char state;
-
-			if ((len = pool_read_message_length(backend)) < 0)
-				return POOL_END;
-
-			pool_debug("ReadyForQuery: message length: %d", len);
-
 			len = htonl(len);
 			pool_write(frontend, &len, sizeof(len));
-
-			state = pool_read_kind(backend);
-			if (state < 0)
-				return POOL_END;
-
-			/* set transaction state */
-			pool_debug("ReadyForQuery: transaction state: %c", state);
-
-			for (i=0;i<NUM_BACKENDS;i++)
-			{
-				if (!VALID_BACKEND(i))
-					continue;
-
-				CONNECTION(backend, i)->tstate = state;
-			}
-
 			pool_write(frontend, &state, 1);
 		}
 
@@ -4091,7 +4110,7 @@ retry_read_packet:
 		return POOL_END;
 	}
 
-	if (kind != 'C')
+	if (kind == 'E')
 	{
 		pool_log("do_command: backend does not successfully complete command %s status %c", query, kind);
 
