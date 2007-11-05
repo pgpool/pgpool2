@@ -4555,6 +4555,13 @@ POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backe
  */
 static int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 {
+	if (pool_config->ignore_leading_white_space)
+	{
+		/* ignore leading white spaces */
+		while (*query && isspace(*query))
+			query++;
+	}
+
 	/*
 	 * either insert_lock directive specified and without "NO INSERT LOCK" comment
 	 * or "INSERT LOCK" comment exists?
