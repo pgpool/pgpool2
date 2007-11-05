@@ -1358,6 +1358,8 @@ static POOL_STATUS Parse(POOL_CONNECTION *frontend,
 	Node *node = NULL;
 	int deadlock_detected = 0;
 	int checked = 0;
+	int insert_stmt_with_lock = 0;
+	POOL_STATUS status;
 
 	/* read Parse packet */
 	if (pool_read(frontend, &len, sizeof(len)) < 0)
@@ -1379,6 +1381,8 @@ static POOL_STATUS Parse(POOL_CONNECTION *frontend,
 	else
 	{
 		node = (Node *) lfirst(list_head(parse_tree_list));
+
+		insert_stmt_with_lock = need_insert_lock(backend, stmt, node);
 
 		if (prepare_memory_context == NULL)
 		{
@@ -1417,6 +1421,16 @@ static POOL_STATUS Parse(POOL_CONNECTION *frontend,
 
 		/* switch old memory context */
 		pool_memory = old_context;
+
+		if (REPLICATION && insert_stmt_with_lock)
+		{
+			/* start a transaction if needed and lock the table */
+			status = insert_lock(backend, stmt, (InsertStmt *)p_stmt->query);
+			if (status != POOL_CONTINUE)
+			{
+				return status;
+			}
+		}
 		free_parser();
 	}
 
@@ -4069,6 +4083,7 @@ static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMa
 	/*
 	 * Expecting CompleteCommand
 	 */
+retry_read_packet:
 	status = pool_read(backend, &kind, sizeof(kind));
 	if (status < 0)
 	{
@@ -4101,6 +4116,9 @@ static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMa
 		if (string == NULL)
 			return POOL_END;
 	}
+
+	if (kind == 'N') /* warning? */
+		goto retry_read_packet;
 
 	/*
 	 * Expecting ReadyForQuery
