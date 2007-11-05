@@ -44,6 +44,10 @@
 #include "parser/parsenodes.h"
 #include "pool_rewrite_query.h"
 
+#ifndef FD_SETSIZE
+#define FD_SETSIZE 512
+#endif
+
 #define INIT_STATEMENT_LIST_SIZE 8
 
 #define DEADLOCK_ERROR_CODE "40P01"
@@ -512,6 +516,37 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 	return POOL_CONTINUE;
 }
 
+/* using only in pool_parallel_exec */
+#define BITS (8 * sizeof(long int))
+
+static void set_fd(unsigned long fd ,unsigned long *setp)
+{
+	unsigned long tmp = fd / FD_SETSIZE;
+	unsigned long rem = fd % FD_SETSIZE;
+	setp[tmp] |= (1UL<<rem);
+}
+
+/* using only in pool_parallel_exec */
+static int isset_fd(unsigned long fd, unsigned long *setp)
+{
+	unsigned long tmp = fd / FD_SETSIZE;
+	unsigned long rem = fd % FD_SETSIZE;
+	return (setp[tmp] & (1UL<<rem)) != 0;
+}
+
+/* using only in pool_parallel_exec */
+static void zero_fd(unsigned long *setp)
+{
+	unsigned long *tmp = setp;
+	int i = FD_SETSIZE / BITS;
+	while(i)
+	{
+		i--;
+		*tmp = 0;
+		tmp++;
+	}
+}
+
 POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 									  POOL_CONNECTION_POOL *backend, char *string,
 									  Node *node,bool send_to_frontend)
@@ -523,6 +558,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 	fd_set readmask;
 	fd_set writemask;
 	fd_set exceptmask;
+	unsigned long donemask[FD_SETSIZE / BITS];
 	static char *sq = "show pool_status";
 	POOL_STATUS status;
 	struct timeval timeout;
@@ -596,6 +632,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 		return POOL_END;
 	}
 
+	zero_fd(donemask);
 	/* In this loop,get data from backend */
 	for (;;)
 	{
@@ -608,9 +645,14 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 		{
 			if (VALID_BACKEND(i))
 			{
-				num_fds = Max(CONNECTION(backend, i)->fd + 1, num_fds);
-				FD_SET(CONNECTION(backend, i)->fd, &readmask);
-				FD_SET(CONNECTION(backend, i)->fd, &exceptmask);
+				int fd = CONNECTION(backend,i)->fd;
+				num_fds = Max(fd + 1, num_fds);
+				if(!isset_fd(fd,donemask))
+				{
+					FD_SET(fd, &readmask);
+					FD_SET(fd, &exceptmask);
+					pool_debug("pool_parallel_query:  %d th FD_SET: %d",i, CONNECTION(backend, i)->fd);
+				}
 			}
 		}
 		pool_debug("pool_parallel_query: num_fds: %d", num_fds);
@@ -670,7 +712,9 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 				{
 					if(used_count == NUM_BACKENDS -1)
 						return POOL_CONTINUE;
+
 					used_count++;
+					set_fd(CONNECTION(backend, i)->fd, donemask);
 					continue;
 				}
 
@@ -713,6 +757,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 														   false);
 						}
 						used_count++;
+						set_fd(CONNECTION(backend, i)->fd, donemask);
 						break;
 					}
 
@@ -726,6 +771,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 														   backend->info->database,
 														   false);
 						used_count++;
+						set_fd(CONNECTION(backend, i)->fd, donemask);
 						break;
 					}
 
