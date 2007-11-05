@@ -49,6 +49,10 @@
 #include "parser/parsenodes.h"
 #include "pool_rewrite_query.h"
 
+#ifndef FD_SETSIZE
+#define FD_SETSIZE 512
+#endif
+
 #define INIT_STATEMENT_LIST_SIZE 8
 
 #define DEADLOCK_ERROR_CODE "40P01"
@@ -570,16 +574,16 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 
 static void set_fd(unsigned long fd ,unsigned long *setp)
 {
-	unsigned long tmp = fd / 1024;
-	unsigned long rem = fd % 1024;
+	unsigned long tmp = fd / FD_SETSIZE;
+	unsigned long rem = fd % FD_SETSIZE;
 	setp[tmp] |= (1UL<<rem);
 }
 
 /* using only in pool_parallel_exec */
 static int isset_fd(unsigned long fd, unsigned long *setp)
 {
-	unsigned long tmp = fd / 1024;
-	unsigned long rem = fd % 1024;
+	unsigned long tmp = fd / FD_SETSIZE;
+	unsigned long rem = fd % FD_SETSIZE;
 	return (setp[tmp] & (1UL<<rem)) != 0;
 }
 
@@ -587,7 +591,7 @@ static int isset_fd(unsigned long fd, unsigned long *setp)
 static void zero_fd(unsigned long *setp)
 {
 	unsigned long *tmp = setp; 
-	int i = 1024 / BITS;
+	int i = FD_SETSIZE / BITS;
 	while(i)
 	{
 		i--;
@@ -608,7 +612,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 	fd_set readmask;
 	fd_set writemask;
 	fd_set exceptmask;
-	unsigned long donemask[ 1024 / BITS];
+	unsigned long donemask[FD_SETSIZE / BITS];
 	static char *sq = "show pool_status";
 	POOL_STATUS status;
 	struct timeval timeout;
