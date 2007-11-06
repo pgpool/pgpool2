@@ -71,6 +71,9 @@ public class RunTest {
 	if (testcase.equals("update"))
 	    return new UpdateTest();
 
+	if (testcase.equals("insert"))
+	    return new InsertTest();
+
 	/* unknown test case */
 	return null;
     }

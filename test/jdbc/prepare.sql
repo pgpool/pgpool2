@@ -48,3 +48,7 @@ DROP TABLE up;
 CREATE TABLE up (a int);
 INSERT INTO up VALUES (1);
 INSERT INTO up VALUES (2);
+
+-- insert
+DROP TABLE ins;
+CREATE TABLE ins (a int);
