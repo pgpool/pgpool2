@@ -1444,13 +1444,13 @@ static POOL_STATUS Parse(POOL_CONNECTION *frontend,
 					return POOL_END;
 				if (ReadyForQuery(frontend, backend, 0) != POOL_CONTINUE)
 					return POOL_END;
+			}
 
-				/* start a transaction if needed and lock the table */
-				status = insert_lock(backend, stmt, (InsertStmt *)p_stmt->query);
-				if (status != POOL_CONTINUE)
-				{
-					return status;
-				}
+			/* start a transaction if needed and lock the table */
+			status = insert_lock(backend, stmt, (InsertStmt *)p_stmt->query);
+			if (status != POOL_CONTINUE)
+			{
+				return status;
 			}
 		}
 		free_parser();
