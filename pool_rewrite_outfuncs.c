@@ -253,7 +253,12 @@ static void
 delay_string_append_char(RewriteQuery *message,String *str, char *parts)
 {
 	if(message->r_code == SELECT_DEFAULT && message->ignore_rewrite == -1)
-		string_append_char( str, parts);
+	{
+		if(parts)
+			string_append_char( str, parts);
+		else
+			message->r_code = SELECT_RELATION_ERROR;
+	}
 }
 
 
@@ -610,7 +615,17 @@ static void _rewriteList(Node *BaseSelect, RewriteQuery *message, ConInfoTodblin
 			else
 			{
 				if(state =='L' && message->table_state == 'L')
+				{
 					message->table_state = 'L';
+				}
+				else if (state == 'L' && message->table_state == 'P') 
+				{
+					message->table_state = 'P';
+				}
+				else if (state == 'P' && message->table_state == 'L') 
+				{
+					message->table_state = 'P';
+				}
 				else
 				{
 					state = 'S';
@@ -1386,11 +1401,11 @@ static void build_join_table(RewriteQuery *message,char *alias, int type)
 	if(lstate =='L' && state =='P')
 	{
 		int total = left_num + right_num;
-		if(type == JRIGHT)
+		if(type == JRIGHT || type == JNORMAL || JINNER || JNATURAL_INNER)
 			join->state = 'P';
-		else if(type == JINNER)
+		else if((join->col_num <= total) && (type == JNATURAL_RIGHT))
 			join->state = 'P';
-		else if((join->col_num < total) && (type == JNATURAL_RIGHT || type == JNATURAL_INNER))
+		else if((join->col_num == total) && (type == JNATURAL_LEFT))
 			join->state = 'P';
 		else	
 			join->state = 'S';
@@ -1398,11 +1413,11 @@ static void build_join_table(RewriteQuery *message,char *alias, int type)
 	else if(lstate =='P' && state == 'L')
 	{
 		int total = left_num + right_num;
-		if(type == JLEFT)
+		if(type == JRIGHT || type == JNORMAL || JINNER || JNATURAL_INNER)
 			join->state ='P';
-		else if(type == JINNER)
-			join->state ='P';
-		else if((join->col_num < total) && (type == JNATURAL_LEFT || type == JNATURAL_INNER))
+		else if((join->col_num <= total) && (type == JNATURAL_LEFT))
+			join->state = 'P';
+		else if((join->col_num == total) && (type == JNATURAL_RIGHT))
 			join->state = 'P';
 		else
 			join->state ='S';
@@ -1417,9 +1432,21 @@ static void change_analyze_state(AnalyzeSelect *analyze,char state)
 		return;
 
 	if(!analyze->state)
+	{
 		analyze->state = state;
+	}
+	else if(analyze->state == 'P' && state =='L')
+	{
+		analyze->state = 'P';
+	}
+	else if(analyze->state == 'L' && state =='P')
+	{
+		analyze->state = 'P';
+	}
 	else if(analyze->state == 'L' && state =='L')
+	{
 			return;
+	}
 	else
 		analyze->state = 'S';
 }
