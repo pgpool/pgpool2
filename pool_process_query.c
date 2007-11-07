@@ -208,6 +208,7 @@ static int is_select_pgcatalog = 0;
 static int is_select_for_update = 0; /* also for SELECT ... INTO */
 static char *parsed_query = NULL;
 static POOL_MEMORY_POOL *prepare_memory_context = NULL;
+static int receive_sync = 0;
 
 static void query_cache_register(char kind, POOL_CONNECTION *frontend, char *database, char *data, int data_len);
 static POOL_STATUS start_internal_transaction(POOL_CONNECTION_POOL *backend, Node *node);
@@ -1617,17 +1618,43 @@ static POOL_STATUS Parse(POOL_CONNECTION *frontend,
 
 		/* switch old memory context */
 		pool_memory = old_context;
-		free_parser();
-	}
 
-	if (REPLICATION && insert_stmt_with_lock)
-	{
-		/* start a transaction if needed and lock the table */
-		status = insert_lock(backend, stmt, (InsertStmt *)node);
-		if (status != POOL_CONTINUE)
+		if (REPLICATION)
 		{
-			return status;
+			char kind;
+
+			if (TSTATE(backend) != 'T')
+			{
+				/* synchronize transaction state */
+				for (i = 0; i < NUM_BACKENDS; i++)
+				{
+					if (!VALID_BACKEND(i))
+						continue;
+
+					send_extended_protocol_message(backend, i, "S", 0, "");
+				}
+
+				kind = pool_read_kind(backend);
+				if (kind != 'Z')
+					return POOL_END;
+				if (ReadyForQuery(frontend, backend, 0) != POOL_CONTINUE)
+					return POOL_END;
+			}
+
+			if (is_strict_query(node))
+				start_internal_transaction(backend, node);
+
+			if (insert_stmt_with_lock)
+			{
+				/* start a transaction if needed and lock the table */
+				status = insert_lock(backend, stmt, (InsertStmt *)node);
+				if (status != POOL_CONTINUE)
+				{
+					return status;
+				}
+			}
 		}
+		free_parser();
 	}
 
 	/* send to master node */
@@ -1761,6 +1788,8 @@ static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	StartupPacket *sp;
 	char psbuf[1024];
 	int i;
+	int len;
+	signed char state;
 
 	if (mismatch_ntuples)
 	{
@@ -1804,7 +1833,7 @@ static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	}
 
 	/* if a transaction is started for insert lock, we need to close it. */
-	if (internal_transaction_started)
+	if (internal_transaction_started && receive_sync == 0)
 	{
 		int len;
 		signed char state;
@@ -1830,40 +1859,41 @@ static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			return POOL_ERROR;
 	}
 
-	pool_flush(frontend);
+	receive_sync = 0;
+
+	if (MAJOR(backend) == PROTO_MAJOR_V3)
+	{
+		if ((len = pool_read_message_length(backend)) < 0)
+			return POOL_END;
+
+		pool_debug("ReadyForQuery: message length: %d", len);
+
+		state = pool_read_kind(backend);
+		if (state < 0)
+			return POOL_END;
+
+		/* set transaction state */
+		pool_debug("ReadyForQuery: transaction state: %c", state);
+
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (!VALID_BACKEND(i))
+				continue;
+
+			CONNECTION(backend, i)->tstate = state;
+		}
+	}
 
 	if (send_ready)
 	{
+		pool_flush(frontend);
+
 		pool_write(frontend, "Z", 1);
 
 		if (MAJOR(backend) == PROTO_MAJOR_V3)
 		{
-			int len;
-			signed char state;
-
-			if ((len = pool_read_message_length(backend)) < 0)
-				return POOL_END;
-
-			pool_debug("ReadyForQuery: message length: %d", len);
-
 			len = htonl(len);
 			pool_write(frontend, &len, sizeof(len));
-
-			state = pool_read_kind(backend);
-			if (state < 0)
-				return POOL_END;
-
-			/* set transaction state */
-			pool_debug("ReadyForQuery: transaction state: %c", state);
-
-			for (i=0;i<NUM_BACKENDS;i++)
-			{
-				if (!VALID_BACKEND(i))
-					continue;
-
-				CONNECTION(backend, i)->tstate = state;
-			}
-
 			pool_write(frontend, &state, 1);
 		}
 
@@ -3847,6 +3877,12 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 	int i;
 	char *name;
 	POOL_STATUS ret;
+
+	if (kind == 'S') /* Sync message? */
+	{
+		pool_log("YYYYY");
+		receive_sync = 1;
+	}
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
