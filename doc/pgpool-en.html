@@ -25,6 +25,7 @@
         <li><a href="#install">pgpool-II Installation</a></li>
         <li><a href="#config">Configuring pgpool-II</a></li>
         <li><a href="#start">Starting/Stopping pgpool-II</a></li>
+        <li><a href="#online-recovery">Online recovery</a></li>
         <li><a href="#restriction">Restrictions</a></li>
         <li><a href="#reference">References</a></li>
       </ul>
@@ -33,7 +34,7 @@
 
 		<div class="header_small" align="center">
 
-			(last update: 2007/02/12)<br />
+			(last update: 2007/11/17)<br />
 			[<a href="http://www2b.biglobe.ne.jp/~caco/pgpool/">Japanese page</a>]		</div>	</td>
     <td valign="top" style="border-left:1px dotted #cccccc;">
 	
@@ -303,13 +304,13 @@ servers.</p>
       be accepted by pgpool-II via TCP/IP network. <code>'*'</code> accepts
       all incoming connections. <code>''</code> disables TCP/IP
       connections. Default is <code>'localhost'</code>. Connections via UNIX
-      domain socket are always accepted.</p>
+      domain socket are always accepted. This parameter can only be set at server start.</p>
   </dd>
       
   <dt>port</dt>
   <dd>
       <p>The port number where pgpool-II accepts connections. Default
-      is 9999.</p>
+      is 9999. This parameter can only be set at server start.</p>
   </dd>
 
   <dt>socket_dir</dt>
@@ -317,13 +318,15 @@ servers.</p>
       <p>The directory path of the UNIX domain socket accepting
       connections for pgpool-II. Default is <code>'/tmp'</code>. Be
       aware that the socket might be deleted by cron. We recommend to
-      set this value to <code>'/var/run'</code> or such directory.</p>
+      set this value to <code>'/var/run'</code> or such directory.
+      This parameter can only be set at server start.</p>
   </dd>
 
   <dt>pcp_port</dt>
   <dd>
       <p>The port number where PCP process accepts
-      connections. Default is 9898.</p>
+      connections. Default is 9898. This parameter can only be set at
+      server start.</p>
   </dd>
 
   <dt>pcp_socket_dir</dt>
@@ -331,21 +334,24 @@ servers.</p>
       <p>The directory path of the UNIX domain socket accepting
       connections for PCP process. Default is <code>'/tmp'</code>. Be
       aware that the socket might be deleted by cron. We recommend to
-      set this value to <code>'/var/run'</code> or such directory.</p>
+      set this value to <code>'/var/run'</code> or such
+      directory. This parameter can only be set at server start.</p>
   </dd>
       
   <dt>backend_socket_dir</dt>
   <dd>
       <p>The directory path of the PostgreSQL server's UNIX domain
       socket, which is used by pgpool-II to communicate with the
-      server. Default is <code>'/tmp'</code>.<p>
+      server. Default is <code>'/tmp'</code>. This parameter can only
+      be set at server start.<p>
   </dd>
 
   <dt>pcp_timeout</dt>
   <dd>p
       <p>PCP connection timeout value in seconds. If a client doesn't
       respond within the set seconds, PCP closes the connection with
-      the client. Default is 10 seconds. 0 means no timeout.</p>
+      the client. Default is 10 seconds. 0 means no timeout. This
+      parameter can be changed on service.</p>
   </dd>
 
   <dt>num_init_children</dt>
@@ -354,7 +360,8 @@ servers.</p>
       is 32. Please note that cancelling a query creates another
       connection to the backend; thus, a query cannot be cancelled if
       the connections are full. If you want to ensure that queries can
-      be cancelled, set this values to twice the expected connections.</p>
+      be cancelled, set this values to twice the expected
+      connections. This parameter can only be set at server start.</p>
   </dd>
 
   <dt>child_life_time</dt>
@@ -364,7 +371,9 @@ servers.</p>
       will be created. This parameter is a measure to prevent memory
       leaks and other unexpected errors. Default values is 300 (5
       minutes). 0 diables this function. Note that processes that have
-      not accepted any connections are not applicable for this.</p>
+      not accepted any connections are not applicable for this.
+      This parameter can be changed on service.
+      </p>
   </dd>
 
   <dt>child_max_connections</dt>
@@ -372,7 +381,9 @@ servers.</p>
       <p>A pgpool-II child process will be terminated after so many
       connections from clients. This parameter is useful on the server
       if it is too busy that child_life_time and connection_life_time
-      are not effective.</p>
+      are not effective.
+      This parameter can be changed on service.
+      </p>
   </dd>
 
   <dt>logdir</dt>
@@ -385,7 +396,9 @@ servers.</p>
   <dt>print_timestamp</dt>
   <dd>
       <p>Add timestamps to the logs when set to true. Default is
-      true.</p>
+      true.
+      This parameter can be changed on service.
+      </p>
   </dd>
 
   <dt>connection_cache</dt>
@@ -409,7 +422,9 @@ servers.</p>
       The health check requires one (1) extra connection to each
       backend, so <code>max_connections</code> in the
       <code>postgresql.conf</code> needs to be incremented as
-      needed.</p>
+      needed.
+      This parameter can be changed on service.
+     </p>
   </dd>
 
   <dt>health_check_period</dt>
@@ -425,19 +440,61 @@ servers.</p>
       in all the PostgreSQL backends.</p>
   </dd>
 
+<dt>failover_command
+<dd>
+<p>
+
+This parameter specifies a command when a node is detached.
+pgpool-II replaces special characters to backend information.
+
+<center>
+<table border>
+<tr><td>Special character</td><td>Description</td></tr>
+<tr><td>%d</td><td>Backend ID of a detached node.</td></tr>
+<tr><td>%h</td><td>Hostname of a detached node.</td></tr>
+<tr><td>%p</td><td>Port number of a detached node.</td></tr>
+<tr><td>%D</td><td>Database cluster directory of a detached node.
+</td></tr>
+<tr><td>%%</td><td>'%' character</td></tr>
+</table>
+</center>
+This parameter can be changed on service.
+</p>
+
+<dt>failback_command
+<dd>
+<p>
+This parameter specifies a command when a node is attached.
+pgpool-II replaces special characters to backend information.
+
+<center>
+<table border>
+<tr><td>Special character</td><td>Description</td></tr>
+<tr><td>%d</td><td>Backend ID of an attached node.</td></tr>
+<tr><td>%h</td><td>Hostname of an attached node.</td></tr>
+<tr><td>%p</td><td>Port number of an attached node.</td></tr>
+<tr><td>%D</td><td>Database cluster path of an attached node.
+</td></tr>
+<tr><td>%%</td><td>'%' character</td></tr>
+</table>
+</center>
+      This parameter can be changed on service.
+</p>
+
   <dt>ignore_leading_white_space</dt>
   <dd>
       <p>pgpool-II ignores white spaces at the beginning of SQL
       queries while in the load balance mode. It is useful for using
       APIs like DBI/DBD:Pg which adds white spaces against the user's
-      will.</p>
+      will. This parameter can be changed on service.</p>
   </dd>
 
   <dt>log_statement</dt>
   <dd>
       <p>Produces SQL log messages when true. This is similar to the
       log_statement option in PostgreSQL. It produces logs even if the
-      debug option was not passed to pgpool-II at the startup.</p>
+      debug option was not passed to pgpool-II at the startup.
+      This parameter can be changed on service.</p>
   </dd>
 
   <dt>log_hostname</dt>
@@ -445,7 +502,7 @@ servers.</p>
     <p>
     If true, ps command status will show the client's hostname instead
     of an IP address. Also, if log_connections is enabled, hostname will
-    be logged.
+    be logged. This parameter can be changed on service.
     </p>
   </dd>
     
@@ -453,7 +510,7 @@ servers.</p>
   <dd>
     <p>
     If true, all incoming connections will be printed to the log.
-    </p>
+    This parameter can be changed on service.</p>
   </dd>
     
   <dt>enable_pool_hba</dt>
@@ -461,6 +518,7 @@ servers.</p>
     <p>
     If true, use pool_hba.conf for client authentication. See <a href="#hba">
     Setting up pool_hba.conf for client authentication</a>.
+    This parameter can only be set at server start.
     </p>
   </dd>
 
@@ -480,6 +538,12 @@ servers.</p>
       new Master DB.</p>
       <p>If you plan to use only one PostgreSQL server, specify it by
       <code>backend_hostname0</code>.</p>
+
+      <p>
+      This parameter can be added by reloading a configuration
+      file. However, this cannot be update so you must restart
+      pgpool-II.
+      </p>
   </dd>
 
   <dt>backend_port</dt>
@@ -489,16 +553,46 @@ servers.</p>
       name (e.g. <code>backend_port0</code>). If you plan to use only
       one PostgreSQL server, specify it by
       <code>backend_port0</code>.</p>
+
+      <p>
+      This parameter can be added by reloading a configuration
+      file. However, this cannot be update so you must restart
+      pgpool-II.
+      </p>
   </dd>
 
   <dt>backend_weight</dt>
   <dd>
       <p>Specifies the load balance ratio for the backends. Multiple
       backends can be specified by adding a number at the end of the
-      parameter name (e.g. <code>backend_weight</code>). If you plan
+      parameter name (e.g. <code>backend_weight0</code>). If you plan
       to use only one PostgreSQL server, specify it by
       <code>backend_weight0</code>. In the raw mode, set to 1.</p>
+      <p>
+      This parameter can be added by reloading a configuration
+      file. However, this cannot be update so you must restart
+      pgpool-II.
+      </p>
   </dd>
+
+  <dt>backend_data_directory</dt>
+      <p>Specifies the database cluster directory of the
+      backends. Multiple backends can be specified by adding a number
+      at the end of the parameter name
+      (e.g. <code>backend_data_directory0</code>).
+       If you plan not to use online recovery, you don't need to
+      specify this parameter.
+      </p>
+
+      <p>
+      This parameter can be added by reloading a configuration
+      file. However, this cannot be update so you must restart
+      pgpool-II.
+      </p>
+  <dd>
+  </dd>
+
+
 </dl>
 
 <h4>Failover in the raw Mode</h4>
@@ -529,7 +623,8 @@ configuration parameters in the raw mode and the below.</p>
 
       Default value is 4. Please be aware that the number of
       connections from pgpool-II processes to the backend will be
-      <code>num_init_children</code> * <code>max_pool</code>.</p>
+      <code>num_init_children</code> * <code>max_pool</code>.
+      This parameter can only be set at server start. </p>
   </dd>
 
   <dt>connection_life_time</dt>
@@ -660,6 +755,60 @@ be lost). To achieve this, however, the following change must be made:
 which does not exist, and pgpool-II causes PostgreSQL to acquire the
 lock before that. The transaction will be aborted, and the following
 INSERT statement produces the above error message.</p>
+
+
+<dt>recovery_user
+<dd>
+<p>
+This parameter specifies a PostgreSQL username for online recovery.
+It can be changed on service.
+</p>
+
+<dt>recovery_password
+<dd>
+<p>
+This parameter specifies a PostgreSQL password for online recovery.
+It can be changed on service.
+</p>
+
+<dt>recovery_1st_stage_command
+<dd>
+<p>
+This parameter specifies a command at the first stage of online
+recovery. The command file must be put on database cluster directory
+because of a security issue.
+
+For example, if recovery_1st_stage_command = 'sync-command', then
+pgpool-II executes $PGDATA/sync-command.
+
+Note that pgpool-II <b>accepts</b> connections and queries while
+recovery_1st_stage command is executed. You can retrieve and update
+data.
+</p>
+<p>
+It can be changed on service.
+</p>
+
+<dt>recovery_2nd_stage_command
+<dd>
+<p>
+This parameter specifies a command at the second stage of online
+recovery. The command file must be put on database cluster directory
+because of a security issue.
+
+For example, if recovery_2nd_stage_command = 'sync-command', then
+pgpool-II executes $PGDATA/sync-command.
+
+Note that pgpool-II <b>do not accept</b> connections and queries while
+recovery_2nd_stage_command is executed. Then if a client exists for a
+long time, the command isn't execute. pgpool-II waits until all clients
+close a connection. The command is executed when no cilent connects to
+pgpool-II.
+</p>
+<p>
+It can be changed on service.
+</p>
+
 </dl>
 
 <h4>condition for load balance</h4>
@@ -948,6 +1097,246 @@ pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] st
       shutdown immediately</td></tr>
   <tr><td><code>-m i[mmediate]</code></td><td>the same as <code>'-m
       f'</code></td></tr> </table>
+
+<h1><a name="online-recovery"></a>Online Recovery</h1>
+<h2>Overview</h2>
+<p>
+pgpool-II with replication mode can sync database and attache a node
+in service. We call "online recovery".
+</p>
+
+<p>
+A recovery target node must have detached before doing online recovery.
+
+If you wish to add PostgreSQL server dynamically, add backend_*
+parameters and reload pgpool.conf. pgpool-II register a new node as a
+detached node.
+</p>
+
+<p>
+   If PostgreSQL have already started, You need to shutdown PostgreSQL
+   process.
+</p>
+
+<p>
+pgpool-II perform online recovery separated two phase. It has a few second
+or minute that a client wait connecting to pgpool-II while a recovery
+node synchronizes database. It is processed the following sequence.
+
+  <ol>
+    <li> CHECKPOINT
+    <li> First stage of online recovery
+    <li> Waiting until all clients have disconnected
+    <li> CHECKPOINT
+    <li> Second stage of online recovery
+    <li> starting up postmaster (perform pgpool_remote_start)
+    <li> node attaching
+  </ol>
+</p>
+
+<p>
+   We call the first step of data sync "first stage". We synchronize
+   data in the first stage. In the first stage, you <b>can</b> update or
+   retrieve all tables concurrently.
+</p>
+
+<p>
+  You can specify a script executing at the first stage. pgpool-II
+  passes three arguments to the script.
+
+  <ol>
+    <li> Database cluster path of a master node.
+    <li> Hostname of a recovery target node.
+    <li> Database cluster path of a recovery target node.
+  </ol>
+</p>
+
+<p>
+  Next, we synchronize data in the second step. We call it "second
+  stage". Before entering the second stage, pgpool-II waits until all
+  clients have disconnected. It blocks any connection until finishing
+  the second stage.
+
+  After that all connections are disconnected, merge updated data
+  between the first stage and the second stage. We perform final data
+  synchronization.
+</p>
+
+<p>
+<font color="red">
+Note that there is a restriction about online recovery. If pgpool-II
+works on multiple hosts, online recovery doesn't work
+correctly. Because pgpool-II stops clients on the 2nd stage of online
+recovery. If there are some pgpool hosts, pgpool-II excepted for
+receiving online recovery request cannot block connections.
+</font>
+</p>
+
+<h2> configuration for online recovery</h2>
+<p>
+Set the following parameters for online recovery in pgpool.conf.
+
+   <ul>
+    <li> backend_data_directory
+    <li> recovery_user
+    <li> recovery_password
+    <li> recovery_1st_stage_command
+    <li> recovery_2nd_stage_command
+   </ul>
+</p>
+
+
+<h2> Installation of C language function</h2>
+<p>
+You need to install the C language function for online recovery to
+"template1" database of all backend nodes.
+
+Source code is in pgpool-II tar ball.
+</p>
+
+<pre>
+  pgpool-II-x.x.x/sql/pgpool-recovery/
+</pre>
+
+<p>
+Change the directory and do "make install".
+</p>
+
+<pre>
+  % cd pgpool-II-x.x.x/sql/pgpool-recovery/
+  % make install
+</pre>
+
+<p>
+Then, install SQL function.
+</p>
+
+<pre>
+  % cd pgpool-II-x.x.x/sql/pgpool-recovery/
+  % psql -f pgpool-recovery.sql template1
+</pre>
+
+
+<h2> Recovery script deployment </h2>
+<p>
+We must deploy data sync scripts and a remote start script into
+database cluster($PGDATA). Sample script files are in
+pgpool-II-x.x.x/sample directory. 
+</p>
+
+<h3>Online recovery by PITR</h3>
+<p>
+We explain how to do online recovery by Point In Time Recovery(PITR).
+Note that all PostgreSQL servers need to enable PITR.
+</p>
+
+<p>
+We prepare a script to get  base backup on a master node and copy to
+recovery target node on the first stage. The script named
+"copy-base-backup" for example. It is the sample script.
+
+</p>
+
+<pre>
+  #! /bin/sh
+
+  psql -c "select pg_start_backup('pgpool-recovery')" postgres
+  echo "restore_command = 'scp master:/data/archive_log/%f %p'" > /data/recovery.conf
+  tar -C /data -zcf pgsql.tar.gz pgsql
+  psql -c 'select pg_stop_backup()' postgres
+  scp pgsql.tar.gz secondary:/data
+</pre>
+
+<p>
+The script generates the following recovery.conf.
+</p>
+<pre>
+restore_command = 'scp master:/data/archive_log/%f %p'
+</pre>
+
+</p>
+
+<p>
+Then, we prepare a script to switch XLOG on the second stage.
+We deploy these scripts into $PGDATA.
+</p>
+
+<pre>
+  #! /bin/sh
+  psql -c 'select pg_switch_xlog()' postgres
+</pre>
+
+<p>
+Finally, we edit pgpool.conf.
+
+<pre>
+recovery_1st_stage_command = 'copy-base-backup'
+recovery_2nd_stage_command = 'pgpool_recovery_pitr'
+</pre>
+
+</p>
+
+<p>
+We have finished preparing online recovery by PITR.
+</p>
+
+<h4>pgpool_remote_start </h4>
+<p>
+The script is to start up postmaster process from remote host.
+pgpool-II executes as the following way.
+</p>
+
+<pre>
+  % pgpool_remote_start remote_host remote_datadir
+  remote_host:    Hostname of a recovery target.
+  remote_datadir: Database cluster path of a recovery target.
+</pre>
+
+<p>
+In the sample script, we start up postmaster process over ssh.
+So you need to connect over ssh without pass phrase.
+</p>
+
+<p>
+postmaster automatically starts up with PITR. Then it accepts
+connections.
+</p>
+
+<h3>Online recovery with rsync.</h3>
+<p>
+Under PostgreSQL 7.4, it does not have PITR. So we explain online
+recovery with rsync. In "sample" directory of pgpool-II tar ball,
+there is a recovery script named "pgpool_recovery". It uses rsync
+command. pgpool-II calls the script with three arguments.
+</p>
+
+<pre>
+  % pgpool_recovery datadir remote_host remote_datadir
+  datadir:        Database cluster path of a master node.
+  remote_host:    Hostname of a recovery target node.
+  remote_datadir: Database cluster path of a recovery target node.
+</pre>
+
+<p>
+The script copy physical file with rsync over ssh. So you need to
+connect over ssh without pass phrase.
+</p>
+
+<p>
+If you use pgpool_recovery, add the following lines into pgpool.conf.
+
+<pre>
+recovery_1st_stage_command = 'pgpool_recovery'
+recovery_2nd_stage_command = 'pgpool_recovery'
+</pre>
+</p>
+
+<h2>How to perform online recovery</h2>
+<p>
+For doing online recovery, you use pcp_recovery_node command or
+operate on pgpoolAdmin.
+</p>
+
 
 <h1>Restrictions<a name="restriction"></a></h1>
 <p>
