@@ -10,6 +10,8 @@ pgpool \- PostgreSQL connection pool daemon
 .LP
 \fBpgpool\fR [ \fB\-d\fR ] [ \fB\-f\fR \fIfile\fR ] [ \fB\-m\fR \fImode\fR ] \fBstop\fR
 .LP
+\fBpgpool\fR [ \fB\-d\fR ] [ \fB\-f\fR \fIfile\fR ] \fBreload\fR
+.LP
 \fBpgpool\fR [ \fB\-d\fR ] [ \fB\-f\fR \fIfile\fR ] [ \fB\-m\fR \fImode\fR ] [ \fB-s\fR \fBm\fR[\fBaster\fR] | \fBs\fR[\fBecondary\fR] ] \fBswitch\fR
 .SH DESCRIPTION
 \fBpgpool\fR is a connection pool server for PostgreSQL.
