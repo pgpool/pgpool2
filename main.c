@@ -586,6 +586,7 @@ static void usage(void)
 	fprintf(stderr, "  a generic connection pool/replication/load balance server for PostgreSQL\n\n");
 	fprintf(stderr, "usage: pgpool [-c][-f config_file][-F pcp_config_file][-a hba_file][-n][-d]\n");
 	fprintf(stderr, "usage: pgpool [-f config_file][-F pcp_config_file][-a hba_file] [-m {s[mart]|f[ast]|i[mmediate]}] stop\n");
+	fprintf(stderr, "usage: pgpool [-f config_file][-F pcp_config_file][-a hba_file] reload\n");
 	fprintf(stderr, "usage: pgpool -h\n");
 	fprintf(stderr, "  config_file default path: %s/%s\n",DEFAULT_CONFIGDIR, POOL_CONF_FILE_NAME);
 	fprintf(stderr, "  pcp_config_file default path: %s/%s\n", DEFAULT_CONFIGDIR, PCP_PASSWD_FILE_NAME);
