@@ -18,6 +18,15 @@ CREATE TABLE pgpool_catalog.dist_def(
 	PRIMARY KEY (dbname,schema_name,table_name)
 );
 
+CREATE TABLE pgpool_catalog.replicate_def(
+	dbname TEXT,
+	schema_name TEXT,
+	table_name TEXT,
+	col_list TEXT[] NOT NULL,
+	type_list TEXT[] NOT NULL,
+	PRIMARY KEY (dbname,schema_name,table_name)
+);
+
 CREATE TABLE pgpool_catalog.query_cache (
 	hash TEXT,
 	query TEXT,
