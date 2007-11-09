@@ -189,7 +189,7 @@ pgpool-II$B$N@_Dj%U%!%$%k$O%G%U%)%k%H$G$O(B/usr/local/etc/pgpool.conf$B$*$h$S
 <td align="center">$B!_(B</td>
 <td align="center">$B!{(B</td>
 <td align="center">$B!_(B</td>
-<td align="center">$B!_(B</td>
+<td align="center">$B"$(B(*)</td>
 </tr>
 
 <tr>
@@ -198,7 +198,7 @@ pgpool-II$B$N@_Dj%U%!%$%k$O%G%U%)%k%H$G$O(B/usr/local/etc/pgpool.conf$B$*$h$S
 <td align="center">$B!_(B</td>
 <td align="center">$B!{(B</td>
 <td align="center">$B!{(B</td>
-<td align="center">$B!_(B</td>
+<td align="center">$B"$(B(*)</td>
 </tr>
 
 <tr>
@@ -248,6 +248,8 @@ pgpool-II$B$N@_Dj%U%!%$%k$O%G%U%)%k%H$G$O(B/usr/local/etc/pgpool.conf$B$*$h$S
 
 </table>
 
+(*)$B%Q%i%l%k%/%(%j%b!<%I$G$O%G!<%?$rJ,3d$7$FJ]B8$7$F$$$k%F!<%V%k$KBP$7$F$O!"%l%W%j%1!<%7%g%s$J$i$S$KIi2YJ,;6$N5!G=$O;H$($^$;$s!#(B
+
 <h2>pcp.conf$B$N@_Dj(B</h2>
 <p>
 $B$I$NF0:n%b!<%I$G$b!$(Bpcp.conf$B$N@_Dj$OI,MW$G$9!%(Bpgpool-II$B$K$O4IM}<T$,(Bpgpool-II$B$N(B
@@ -256,20 +258,26 @@ pgpool-II$B$N@_Dj%U%!%$%k$O%G%U%)%k%H$G$O(B/usr/local/etc/pgpool.conf$B$*$h$S
 $B$N%f!<%6L>$H%Q%9%o!<%I$r(Bpcp.conf$B$KEPO?$7$^$9!%(B
 pgpool-II$B$r%$%s%9%H!<%k$9$k$H!$(B$prefix/etc/pcp.conf.sample$B$,$G$-$k$N$G!$$=$l$r(B
 $prefix/etc/pcp.conf$B$H$$$&L>A0$G%3%T!<$7$^$9!%(B
+</p>
 <pre>
 cp $prefix/etc/pcp.conf.sample $prefix/etc/pcp.conf
 </pre>
+<p>
 pcp.conf$B$G$O6uGr9T$d(B#$B$G;O$^$k9T$O%3%a%s%H$H8+$J$5$l$^$9!%(B
 $B%f!<%6$H%Q%9%o!<%I$O!$(B
+</p>
 <pre>
 $B%f!<%6L>(B:[md5$B0E9f2=$7$?%Q%9%o!<%I(B]
 </pre>
+<p>
 $B$N$h$&$K;XDj$7$^$9!%(B
 [md5$B0E9f2=$7$?%Q%9%o!<%I(B]$B$O!$(B$prefix/bin/pg_md5$B%3%^%s%I$G:n@.$G$-$^$9!%(B
+</p>
 <pre>
 ./pg_md5 foo
 acbd18db4cc2f85cedef654fccc4a4d8
 </pre>
+<p>
 pcp.conf$B$O!$(Bpgpool-II$B$rF0:n$5$;$k%f!<%6(BID$B$GFI$_<h$j2DG=$K$J$C$F$$$J$1$l$P(B
 $B$J$j$^$;$s!%(B
 </p>
@@ -279,9 +287,11 @@ pcp.conf$B$O!$(Bpgpool-II$B$rF0:n$5$;$k%f!<%6(BID$B$GFI$_<h$j2DG=$K$J$C$F$$
 $BA0=R$N$h$&$K!$F0:n%b!<%I$K$h$C$F!$(Bpgpool.conf$B$N@_Dj9`L\$,0[$J$j$^$9!%(B
 pgpool-II$B$r%$%s%9%H!<%k$9$k$H!$(B$prefix/etc/pgpool.conf.sample$B$,$G$-$k$N$G!$$=$l$r(B
 $prefix/etc/pgpool.conf$B$H$$$&L>A0$G%3%T!<$7$^$9!%(B
+</p>
 <pre>
 cp $prefix/etc/pgpool.conf.sample $prefix/etc/pgpool.conf
 </pre>
+<p>
 pgpool.conf$B$G$O6uGr9T$d(B#$B$G;O$^$k9T$O%3%a%s%H$H8+$J$5$l$^$9!%(B
 </p>
 
@@ -621,7 +631,7 @@ backend_data_directory $B$O?7$7$/DI2C$7$?9T$r@_Dj%U%!%$%k:FFI$_9~$_$GDI2C$9$k(
 
 </dl>
 
-<h4>raw$B%b!<%I$K$*$1$k%U%'%$%k%*!<%PF0:n$K$D$$$F(B</h4>
+<h4><p>raw$B%b!<%I$K$*$1$k%U%'%$%k%*!<%PF0:n$K$D$$$F(B</p></h4>
 <p>
 raw$B%b!<%I$K$*$$$F!$(B2$BBf0J>e$N(BPostgreSQL$B%5!<%P$r;XDj$9$k$H!$%U%'%$%k%*!<%P(B
 $B$,2DG=$G$9!%%U%'%$%k%*!<%P$G$O!$@5>o;~$K$O(Bbackend_hostname0$B$G;XDj$7$?(B
@@ -688,7 +698,7 @@ raw$B%b!<%I$K2C$(!$%3%M%/%7%g%s%W!<%j%s%0$,MxMQ$G$-$k$h$&$K$J$j$^$9!%(B
 
 </dl>
 
-<h4>$B%3%M%/%7%g%s%W!<%k%b!<%I$K$*$1$k%U%'%$%k%*!<%PF0:n$K$D$$$F(B</h4>
+<h4><p>$B%3%M%/%7%g%s%W!<%k%b!<%I$K$*$1$k%U%'%$%k%*!<%PF0:n$K$D$$$F(B</p></h4>
 <p>
 raw$B%b!<%I$HF1MM$NF0:n$r$7$^$9!%(B
 </p>
@@ -815,7 +825,6 @@ raw$B%b!<%I!$%3%M%/%7%g%s%W!<%k%b!<%I$K2C$(!$0J2<$r@_Dj$7$^$9!%(B
 <p>
 $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O@_Dj%U%!%$%k$r:FFI$_9~$_$7$F$/$@$5$$!#(B
 </p>
-</dl>
 
 
 <dt>recovery_user
@@ -868,8 +877,9 @@ raw$B%b!<%I!$%3%M%/%7%g%s%W!<%k%b!<%I$K2C$(!$0J2<$r@_Dj$7$^$9!%(B
 <p>
 $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O@_Dj%U%!%$%k$r:FFI$_9~$_$7$F$/$@$5$$!#(B
 </p>
+</dl>
 
-<h4>$B%m!<%I%P%i%s%9$N>r7o$K$D$$$F(B</h4>
+<h4><p>$B%m!<%I%P%i%s%9$N>r7o$K$D$$$F(B</p></h4>
 <p>
 load_balance_mode = true $B$r@_Dj$7$?>l9g!$0J2<$N>r7o$rK~$?$7$?;~$KLd$$(B
 $B9g$o$;$O%m!<%I%P%i%s%9$5$l$^$9!%(B
@@ -882,26 +892,28 @@ load_balance_mode = true $B$r@_Dj$7$?>l9g!$0J2<$N>r7o$rK~$?$7$?;~$KLd$$(B
 <li>$B%/%(%jJ8;zNs$,(B SELECT $B$G;O$^$k(B(ignore_leading_white_space = true
     $B$N>l9g$O6uGr$OL5;k$7$^$9(B)
 </ul>
-
+<p>
 $B>e5-$rK~$5$J$$>l9g$O(B SELECT $B0J30$N%/%(%j$r%P%C%/%(%s%I$KAw?.$7$^$9!#$b(B
 $B$7(B SELECT $B$r%l%W%j%1!<%7%g%s$5$;$?$$>l9g$O!"(Breplicate_select = true $B$r(B
 $B@_Dj$9$k$+!"(B
+</p>
 
 <pre>
   /*REPLICATION*/ SELECT ...
 </pre>
 
+<p>
 $B$H!"(BSELECT $B$NA0$K%3%a%s%H$rIU$1$F$/$@$5$$!#(B
 </p>
 
-<h4>$B%l%W%j%1!<%7%g%s%b!<%I$K$*$1$k=LB`1?E>$K$D$$$F(B</h4>
+<h4><p>$B%l%W%j%1!<%7%g%s%b!<%I$K$*$1$k=LB`1?E>$K$D$$$F(B</p></h4>
 <p>
 PostgreSQL$B%5!<%P$N$&$A!$(B1$BBf$,%@%&%s$9$k$H!$$=$N%5!<%P$r@Z$jN%$7$F=LB`1?(B
 $BE>$KF~$j$^$9!%(B1$BBf$G$b%5!<%P$,@8$-;D$C$F$$$l$P!$%7%9%F%`$H$7$F$N1?MQ$r7Q(B
 $BB3$G$-$^$9!%(B
 </p>
 
-<h4>$B%l%W%j%1!<%7%g%s%b!<%I8GM-$N%(%i!<$K$D$$$F(B</h4>
+<h4><p>$B%l%W%j%1!<%7%g%s%b!<%I8GM-$N%(%i!<$K$D$$$F(B</p></h4>
 <p>
 $B%G!<%?$N@09g@-$rJ]$D$?$a$K!"%l%W%j%1!<%7%g%s;~$K(B INSERT, UPDATE,
 DELETE $B$N99?77o?t$,$9$Y$F$N%N!<%I$,F1$8$G$J$$>l9g$O%H%i%s%6%/%7%g%s$r(B
@@ -933,13 +945,17 @@ DELETE $B$N99?77o?t$,$9$Y$F$N%N!<%I$,F1$8$G$J$$>l9g$O%H%i%s%6%/%7%g%s$r(B
 
 <h3>$B%Q%i%l%k%b!<%I(B</h3>
 <p>
-$B%Q%i%l%k%/%(%j5!G=$,MxMQ$G$-$k%b!<%I$G$9!%%l%W%j%1!<%7%g%s$dIi2YJ,;65!G=(B
-$B$OMxMQ$G$-$^$;$s!%(B
-$B%Q%i%l%k%b!<%I$G$O!$(Bpgpool.conf$B$N(Breplication_mode$B$H(Bmaster_slave $B$r(B
-false$B$K$7!"(Bparallel_mode $B$r(Btrue$B$K$7$^$9!%(B
+$B%Q%i%l%k%/%(%j5!G=$,MxMQ$G$-$k%b!<%I$G$9!%%F!<%V%k$rJ,3d$5$;!"3F%N!<%I$K%G!<%?(B
+$B$r;}$?$;$k$3$H$,$G$-$^$9!#$^$?%l%W%j%1!<%7%g%s$dIi2YJ,;65!G=$bF1;~$K;H$&$3$H$,(B
+$B$G$-$^$9!#(B
+
+$B%Q%i%l%k%b!<%I$G$O!$(Bpgpool.conf$B$N(Breplication_mode$B$^$?$O(Bloadbalance_mode$B$K(Btrue
+$B$r@_Dj$7!"(Bmaster_slave $B$r(Bfalse$B$K$7!"(Bparallel_mode $B$r(Btrue$B$K$7$^$9!%(B
 $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O(B pgpool-II $B$r:F5/F0$7$F$/$@$5$$!#(B
 </p>
-<h4>$B%7%9%F%`(BDB$B$N@_Dj(B</h4>
+<p>
+<b>$B%7%9%F%`(BDB$B$N@_Dj(B</b>
+</p>
 <p>
 $B%Q%i%l%k%b!<%I$rMxMQ$9$k$?$a$K$O!$%7%9%F%`(BDB$B$r@_Dj$9$kI,MW$,$"$j$^$9!%(B
 $B%7%9%F%`(BDB$B$O%G!<%?$r3F(BPostgreSQL$B%5!<%P$GJ,3d$9$k$?$a$N%k!<%k$r(B
@@ -999,7 +1015,7 @@ PostgreSQL$B$N%F!<%V%k$N7A$GJ];}$7$^$9!%%7%9%F%`(BDB$B$O(Bpgpool$B$,F0:n$9$
 
 </dl>
 
-<h4>$B%7%9%F%`(BDB$B$N=i4|@_Dj(B</h4>
+<h4><p>$B%7%9%F%`(BDB$B$N=i4|@_Dj(B</p></h4>
 <p>
 $B%7%9%F%`(BDB$B$K%9%-!<%^$H%F!<%V%k$r:n@.$7$^$9!%=i4|@_DjMQ$N%9%/%j%W%H$,(B
 $prefix/share/system_db.sql$B$K$"$k$N$G$=$l$rMxMQ$7$^$9!%$?$@$7!$$3$N%9%/(B
@@ -1010,22 +1026,24 @@ $prefix/share/system_db.sql$B$K$"$k$N$G$=$l$rMxMQ$7$^$9!%$?$@$7!$$3$N%9%/(B
 psql -f $prefix/share/system_db.sql pgpool
 </p>
 
-<h4>dblink$B$N%$%s%9%H!<%k(B</h4>
+<h4><p>dblink$B$N%$%s%9%H!<%k(B</p></h4>
+<p>
 $B%Q%i%l%k%b!<%I$G$O(Bdblink$B$r;H$$$^$9!#(Bdblink$B$O(BPostgreSQL$B%=!<%9%U%!%$%k(B
 ($POSTGRES_SRC)
+</p>
 <pre>
 $(POSTGRES_SRC)/contrib/dblink
 </pre>
 <p>
 $B$K$"$j$^$9!#(B$POSTGRES_SRC/contrib/dblink/README.dblink$B$r;29M$K%7%9%F%`(B
 DB$B$K(Bdblink$B$r%$%s%9%H!<%k$7$F$/$@$5$$!#(B
-</p>
 $B$^$?!"(Bpgpool$B%G!<%?%Y!<%9$K4X?t$NEPO?$,I,MW$G$9!#(B
+</p>
 <pre>
 psql pgpool < $POSTGRES_SRC/contrib/dblink/dblink.sql
 </pre>
 
-<h4>$B%3%M%/%7%g%s?t$N@_Dj(B</h4>
+<h4><p>$B%3%M%/%7%g%s?t$N@_Dj(B</p></h4>
 <p>
 $B%Q%i%l%k%b!<%I$G$O!"%/%(%j$K$h$j%7%9%F%`(BDB$B$+$i(Bdblink$B7PM3$G(Bpgpool$B$K@\B3(B
 $B$9$k$N$G!"A[Dj$5$l$kF1;~@\B3?t0J>e$N%3%M%/%7%g%s$,I,MW$K$J$k>l9g$,$"$j(B
@@ -1039,10 +1057,10 @@ psql pgpool < $POSTGRES_SRC/contrib/dblink/dblink.sql
 num_init_children = $BA[Dj$5$l$kF1;~@\B3?t(B * ( 1 + $B%/%(%j$NCf$G;H$o$l$F$$$k%F!<%V%k$N:GBg?t(B)
 </pre>
 
-<h4>$B%G!<%?J,3d%k!<%k$NEPO?(B</h4>
+<h4><p>$B%G!<%?J,3d%k!<%k$NEPO?(B</p></h4>
 <p>
-$B%Q%i%l%k%/%(%j$NBP>]$H$J$k%F!<%V%k$N%G!<%?J,3d%k!<%k$O$"$i$+$8$a(B
-pgpool_catalog.dist_def $B$H$$$&%F!<%V%k$KEPO?$7$F$*$-$^$9!%(B
+$B%G!<%?J,3d$r9T$&%F!<%V%k$KBP$7$F$O!"%F!<%V%k>pJs$r$"$i$+$8$a(B pgpool_catalog.dist_def 
+$B$H$$$&%F!<%V%k$KEPO?$7$F$*$-$^$9!%(B
 </p>
 
 <pre>
@@ -1057,8 +1075,41 @@ CREATE TABLE pgpool_catalog.dist_def(
 	PRIMARY KEY (dbname,schema_name,table_name)
 );
 </pre>
+<h4><p>$B%l%W%j%1!<%7%g%s%F!<%V%k$N%k!<%kEPO?(B</p></h4>
+<p>
+$B0l$D$N(BSQL$BJ8$K(BJOIN$BEy$G%G!<%?J,3d%k!<%k$KEPO?$7$?%F!<%V%k$H6&$K(B
+$B%l%W%j%1!<%7%g%s$r9T$&%F!<%V%k$r;XDj$9$k>l9g$K$O!"%l%W%j%1!<%7%g%s(B
+$B$r9T$&%F!<%V%k$N>pJs$r$"$i$+$8$a!"(Bpgpool_catalog.replicate_def 
+$B$H$$$&%F!<%V%k$KEPO?$7$F$*$-$^$9!#(B
+</p>
 
+<pre>
+CREATE TABLE pgpool_catalog.replicate_def(
+	dbname TEXT,	-- DB$BL>(B
+	schema_name TEXT,	--schema$BL>(B
+	table_name TEXT,	-- $B%F!<%V%kL>(B
+	col_list TEXT[] NOT NULL,	-- table$B$NB0@-L>(B
+	type_list TEXT[] NOT NULL,	-- $BB0@-$N%?%$%WL>(B
+	PRIMARY KEY (dbname,schema_name,table_name)
+);
+</pre>
+
+</p>
+
+<p>
 pgbench$B$N%F!<%V%k$rJ,3d$9$k%k!<%k$NNc$r<($7$^$9!%(B
+</p>
+<p>
+$B$3$NNc$G$O!"(Baccounts$B%F!<%V%k$KBP$7$F$OJ,3d$r9T$$!"(Bbranches$B%F!<%V%k(B
+$B$H(Btellers$B%F!<%V%k$KBP$7$F$O%l%W%j%1!<%7%g%s$r9T$&$3$H$K$7$^$9!#(B
+$B$^$?!"(Baccounts$B%F!<%V%k$H(Bbanches$B%F!<%V%k$O(Bbid$B$G7k9g$5$l$k$3$H$rA[Dj$7(B
+branches$B%F!<%V%k$O%l%W%j%1!<%7%g%s%F!<%V%k$N%k!<%kEPO?$r9T$$$^$9!#(B
+
+$B$b$7!"(Baccounts$B%F!<%V%k!"(Bbranches$B%F!<%V%k$H(Btellers$B%F!<%V%k$N#3$D$N(B
+$B%F!<%V%k$N7k9g$,9T$o$l$k>l9g$K$O!"$"$i$+$8$a(Btellers$B%F!<%V%k$KBP$7$F$b(B
+$B%l%W%j%1!<%7%g%s%F!<%V%k$N%k!<%kEPO?$r9T$&I,MW$,$"$j$^$9!#!!(B
+</p>
+
 
 <pre>
 INSERT INTO pgpool_catalog.dist_def VALUES (
@@ -1071,48 +1122,25 @@ INSERT INTO pgpool_catalog.dist_def VALUES (
 	'pgpool_catalog.dist_def_accounts'
 );
 
-INSERT INTO pgpool_catalog.dist_def VALUES (
+INSERT INTO pgpool_catalog.replicate_def VALUES (
 	'pgpool',
 	'public',
 	'branches',
-	'bid',
 	ARRAY['bid','bbalance','filler'],
-	ARRAY['integer','integer','character(84)'],
-	'pgpool_catalog.dist_def_branches'
-);
-INSERT INTO pgpool_catalog.dist_def VALUES (
-	'pgpool',
-	'public',
-	'tellers',
-	'tid',
-	ARRAY['tid','bid','tbalance','filler'],
-	ARRAY['integer','integer','integer','character(84)'],
-	'pgpool_catalog.dist_def_tellers'
+	ARRAY['integer','integer','character(84)']
 );
 </pre>
 
 <p>
-$B$3$3$G!$(Bpgpool_catalog.dist_def_accounts$B!$(B
-pgpool_catalog.dist_def_branches$B!$(Bpgpool_catalog.dist_def_tellers$B$O!$0z(B
-$B?t$H$7$FJ,3d%-!<$NCM$r<u$1<h$j!$$I$N(BPostgreSQL$B%5!<%P(B($B!V(BDB$B%N!<%I!W$H8F$S(B
-$B$^$9(B)$B$r(B0$B$+$i$NHV9f$GJV$94X?t$G$9!%$3$3$G$O!$(B3$BBf$N(BDB$B%N!<%I$K%G!<%?$rJ,3d(B
-$B$9$k4X?t$NNc$r<($7$^$9!%(B
+$B$3$3$G!$(Bpgpool_catalog.dist_def_accounts$B$O!$0z?t$H$7$FJ,3d%-!<$NCM$r<u$1<h$j!$(B
+$B$I$N(BPostgreSQL$B%5!<%P(B($B!V(BDB$B%N!<%I!W$H8F$S$^$9(B)$B$r(B0$B$+$i$NHV9f$GJV$94X?t$G$9!%$3(B
+$B$3$G$O!$(B3$BBf$N(BDB$B%N!<%I$K%G!<%?$rJ,3d$9$k4X?t$NNc$r<($7$^$9!#(B
 </p>
 <pre>
 CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_accounts (val ANYELEMENT) RETURNS INTEGER AS '
   SELECT CASE WHEN $1 >= 1 and $1 <= 30000 THEN 0
 	      WHEN $1 > 30000 and $1 <= 60000 THEN 1
 	      ELSE 2
-  END' LANGUAGE SQL;
- 
-CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_branches (val ANYELEMENT) RETURNS INTEGER AS '
-  SELECT 0
-  ' LANGUAGE SQL;
-	 
-CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_tellers (val ANYELEMENT) RETURNS INTEGER AS '
-  SELECT CASE WHEN $1 >= 1 and $1 <= 3 THEN 0
-          WHEN $1 > 3 and $1 <= 6 THEN 1
-	  ELSE 2
   END' LANGUAGE SQL;
 </pre>
 
@@ -1205,7 +1233,8 @@ CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_tellers (val ANYELEMENT) RETU
 <pre>
 pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-d]
 </pre>
-
+</p>
+<p>
 <table>
 <tr><td>-c</td><td>$B%/%(%j%-%c%C%7%e$r>C5n$7$^$9(B</tr>
 <tr><td>-f config_file</td><td>pgpool-II$B$N@_Dj%U%!%$%k$r;XDj$7$^$9(B</tr>
@@ -1214,14 +1243,16 @@ pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-d]
 <tr><td>-n</td><td>$B%G!<%b%s%b!<%I$G5/F0$7$^$;$s(B($B@)8fC<Kv$r@Z$jN%$7$^$;$s(B</tr>
 <tr><td>-d</td><td>$B%G%P%C%0%b!<%I$G5/F0$7$^$9(B</tr>
 </table>
-
+</p>
+<p>
 pgpool-II$B$NDd;_$O8e=R$N(Bpcp$B%3%^%s%I$G$b$G$-$^$9$,!$(Bpgpool-II$B%3%^%s%I$r;H$&$3$H(B
 $B$b$G$-$^$9!%(B
-
+</p>
 <pre>
 pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] stop
 </pre>
 
+<p>
 <table>
 <tr><td>-m s[mart]</td><td>$B@\B3Cf$N%/%i%$%"%s%H$,@\B3$r=*$o$k$N$rBT$C$F$+$iDd;_$7$^$9(B($B%G%U%)%k%H(B)</td></tr>
 <tr><td>-m f[ast]</td><td>$B@\B3Cf$N%/%i%$%"%s%H$,@\B3$r=*$o$k$N$rBT$?$:$KD>$A$KDd;_$7$^$9(B</td></tr>
@@ -1416,7 +1447,7 @@ recovery_2nd_stage_command = 'pgpool_recovery_pitr'
 $B$3$l$G(B PITR $B$K$h$k%*%s%i%$%s%j%+%P%j$N=`Hw$,40N;$G$9!#(B
 </p>
 
-<h4>pgpool_remote_start </h4>
+<h4><p>pgpool_remote_start</p></h4>
 <p>
 $B%G!<%?:FF14|8e$K(B postmaster $B$r5/F0$5$;$k%9%/%j%W%H$G$9!#(B
 pgpool $B$+$i$O0J2<$N7A<0$G%9%/%j%W%H$r<B9T$7$^$9!#(B
@@ -1530,24 +1561,35 @@ JDBC $B%I%i%$%P$J$I$N$h$&$J3HD%Ld$$9g$o$;%W%m%H%3%k$K$OBP1~$7$F$$$^$;$s!#(B
 $BI,$:4J0WLd$$9g$o$;%W%m%H%3%k$r;HMQ$7$F$/$@$5$$!#(B
 </p>
 
+<h3>SELECT</h3>
+<p>
+$B@)8BBP>](B:$B%Q%i%l%k%b!<%I(B
+</p>
+<p>
+postgresql.conf $B$N(B add_missing_from$B@_DjCM$r(B off ($B%G%U%)%k%HCM(B)$B$K@_Dj$7$F$/$@$5$$!#(B
+add_missing_from $B@_DjCM$,(B on $B$N;~$K;H$($k%/%(%j$O@5$7$/(Bpgpool$B$G=hM}$5$l$J$$2DG=@-(B
+$B$,$"$j$^$9!#(B
+</p>
 <h3>INSERT</h3>
 <p>
 $B@)8BBP>](B:$B%Q%i%l%k%b!<%I(B
 </p>
 <p>
-INSERT $B$r9T$&:]$K$O!"J,3d%k!<%k$H$J$kCM$r(B DEFAULT $B$K$O$G$-$^$;$s!#Nc$((B
+$B%G!<%?J,3d$r$7$F$$$k%F!<%V%k$KBP$7$F(BINSERT $B$r9T$&:]$K$O!"J,3d%k!<%k$H$J$kCM$r(B DEFAULT $B$K$O$G$-$^$;$s!#Nc$((B
 $B$P%F!<%V%k(B t $B$K(B x $B$H$$$&%+%i%`$,$"$j!"(Bx $B$,J,3d%k!<%k$NBP>]%+%i%`$@$C$?(B
 $B>l9g$K$O!"(B
-
+</p>
 <pre>
   INSERT INTO t(x) VALUES (DEFAULT);
 </pre>
-
+<p>
 $B$O$G$-$^$;$s!#$^$?!"J,3d%k!<%k$H$J$kCM$,4X?t8F$S=P$7$N>l9g$b(B
 $BBP1~$7$F$$$^$;$s!#(B
+</p>
 <pre>
   INSERT INTO t(x) VALUES (func());
 </pre>
+<p>
 $BI,$:L@<(E*$KCM$rM?$($kI,MW$,$"$j$^$9!#(B
 
 $B$^$?!"(BSELECT INTO $B$d(B INSERT INTO ... SELECT $B$H$$$&7A<0$b%5%]!<%H$7$F$$(B
@@ -1568,7 +1610,7 @@ INSERT $B$r9T$&:]$K$O!"J,3d%k!<%k$H$J$kCM$r(B DEFAULT $B$K$O$G$-$^$;$s!#Nc$(
 $B$k$3$H$O$G$-$^$;$s!#(B
 </p>
 <p>
-WHERE $B6g$K%5%V%/%(%j$d4X?t8F$S=P$7$,$"$k>l9g$K$O@5$7$/F0$+$J$$2DG=@-$,(B
+WHERE $B6g$K%G!<%?J,3d$r9T$C$?%F!<%V%k$r;2>H$9$k%5%V%/%(%j$d4X?t8F$S=P$7$,$"$k>l9g$K$O@5$7$/F0$+$J$$2DG=@-$,(B
 $B$"$j$^$9!#(B
 </p>
 <pre>
@@ -1580,7 +1622,7 @@ WHERE $B6g$K%5%V%/%(%j$d4X?t8F$S=P$7$,$"$k>l9g$K$O@5$7$/F0$+$J$$2DG=@-$,(B
 $B@)8BBP>](B:$B%Q%i%l%k%b!<%I(B
 </p>
 <p>
-WHERE $B6g$K%5%V%/%(%j$d4X?t8F$S=P$7$,$"$k>l9g$K$O@5$7$/F0$+$J$$2DG=@-$,(B
+WHERE $B6g$K%G!<%?J,3d$r9T$C$?%F!<%V%k$r;2>H$9$k%5%V%/%(%j$d4X?t8F$S=P$7$,$"$k>l9g$K$O@5$7$/F0$+$J$$2DG=@-$,(B
 $B$"$j$^$9!#(B
 <pre>
 $BNc!'(BSELECT * FROM  branches where bid = (select max(bid) from beances) FOR UPDATE;
@@ -1627,12 +1669,19 @@ pgpool $B$K>pJs$r99?7$5$;$k$?$a$K$O!"(Bpgpool $B$r:F5/F0$9$kI,MW$,$"$j$^$9!#
 </p>
 <p>
 View $B$d(B Rule $B$O3F%N!<%I$KF1$8FbMF$,Dj5A$5$l$^$9!#(B
+</p>
 <pre>
   SELECT * FROM a, b where a.i = b.i
 </pre>
-$B$N$h$&$J(B JOIN $B$N>l9g$K!"(Ba $B$H(B b $B$O%N!<%IFb$G$N$_=hM}$r9T$$!"$=$N7k2L$r(B
+<p>
+$B$N$h$&$J(B $B%F!<%V%k7k9g(B $B$N>l9g$K!"(Ba $B$H(B b $B$O%N!<%IFb$G$N$_=hM}$r9T$$!"$=$N7k2L$r(B
 $BE}9g$7$^$9!#%N!<%I$r$^$?$,$C$?(B JOIN $B$r9T$&(B View $B$r:n@.$9$k$3$H$O$G$-$^(B
 $B$;$s!#(BRule $B$K$D$$$F$bF1MM$K$J$j$^$9!#(B
+$B$?$@$7!"%G!<%?J,3d$7$?%F!<%V%k$rF1$8%N!<%IFb$G$N$_7k9g$7$?$$>l9g$K!"(BVIEW$B$r:n@.$9$k$3$H$O(B
+$B2DG=$G$9!#$3$N>l9g$K$O(BVIEW$B$r(Bpgpool_catalog.dist_def$B%F!<%V%k$K(BVIEW$B$rEPO?$7$F$*$-$^$9!#(B
+$B$3$N>l9g$K$O!"(Bpgpool_catalog.dist_def$B%F!<%V%k$N(Bcol_name$B$H(Bdist_def_func$B$K$O!"(BVIEW$B$GDj5A$7$?(B
+$B%+%i%`$H(BVIEW$B$KBP$7$F(BINSERT$B$,H/9T$5$l$?>l9g$K2?=h$N%N!<%I$K%/%(%j$rLd$$9g$o$;$k$N$+$r7hDj(B
+$B$9$k4X?t$rEPO?$7$F$/$@$5$$!#(B
 </p>
 
 <h3>$B4X?t(B/$B%H%j%,$K$D$$$F(B</h3>
@@ -1650,19 +1699,20 @@ View $B$d(B Rule $B$O3F%N!<%I$KF1$8FbMF$,Dj5A$5$l$^$9!#(B
 </p>
 <p>
 $B%N!<%I4V$r$^$?$,$k%G%C%I%m%C%/$r8!=P$9$k$3$H$,$G$-$^$;$s!#(B
+</p>
 <pre>
-$BNc!'(Btellers$B%F!<%V%k$O0J2<$N%k!<%k$GJ,3d$5$l$F$$$k!#(B
-    tid <= 10 $B%N!<%I(B 0
-    tid >= 10 $B%N!<%I(B 1
+$BNc!'(Baccounts$B%F!<%V%k$O0J2<$N%k!<%k$GJ,3d$5$l$F$$$k!#(B
+    aid <= 100000 $B%N!<%I(B 0
+    aid >= 100000 $B%N!<%I(B 1
 
   A) BEGIN;
   B) BEGIN;
-  A) SELECT * FROM tellers WHERE tid = 11 FOR UPDATE;
-  B) SELECT * FROM tellers WHERE tid = 1 FOR UPDATE;
-  A) SELECT * FROM tellers WHERE tid = 1 FOR UPDATE;
-  B) SELECT * FROM tellers WHERE tid = 11 FOR UPDATE;
+  A) SELECT * FROM accounts WHERE aid = 100001 FOR UPDATE;
+  B) SELECT * FROM accounts WHERE aid = 100000 FOR UPDATE;
+  A) SELECT * FROM accounts WHERE aid = 100000 FOR UPDATE;
+  B) SELECT * FROM accounts WHERE aid = 100001 FOR UPDATE;
 </pre>
-
+<p>
 $B$3$N>l9g!"C10l$N%N!<%I$G$O%G%C%I%m%C%/$r8!CN$G$-$J$$$?$a!"(Bpgpool $B$OBT(B
 $B$?$5$l$?>uBV$K$J$j$^$9!#$3$N8=>]$O(B SELECT FOR UPDATE $B0J30$K$b9T%m%C%/(B
 $B$r3MF@$9$k%/%(%j$GH/@8$9$k2DG=@-$,$"$j$^$9!#2sHr:v$H$7$^$7$F$O!"(B
@@ -1682,15 +1732,27 @@ replication_timeout $B$r@_Dj$9$k$h$&$K$7$F$/$@$5$$!#(B
 </p>
 <p>
 public $B0J30$N%9%-!<%^$KB0$9$h$&$J%*%V%8%'%/%H$N;2>H$OI,$:(B
+</p>
 <pre>
   $B%9%-!<%^(B.$B%*%V%8%'%/%H(B
 </pre>
+<p>
 $B$H;XDj$9$k$h$&$K$7$F$/$@$5$$!#(B
+</p>
 <pre>
   set search_path = xxx
 </pre>
+<p>
 $B$r;XDj$7!"%9%-!<%^L>$r>JN,$9$k$H!"(Bpgpool $B$,$I$NJ,;6%k!<%k$rE,MQ$9$k$+(B
 $BH=CG$G$-$^$;$s!#(B
+</p>
+<h3>$B%F!<%V%kL>!"%+%i%`L>$K$D$$$F(B</h3>
+<p>
+$B@)8BBP>](B:$B%Q%i%l%k%b!<%I(B
+</p>
+<p>
+pool_$B$G;O$^$k%F!<%V%k!"%+%i%`L>$O;H$($^$;$s!#%/%(%j=q$-49$($N:]$KFbIt=hM}$G;HMQ$7$^$9!#(B
+</p>
 
 <h2>$B%7%9%F%`(B DB</h2>
 
@@ -1776,25 +1838,26 @@ pgpool $B$N>l9g(B /*STRICT*/ $B$J$I!"(Bpgpool $B$r@)8f$9$kFC<l$J%3%a%s%H$r=
 
 
 <h3>pcp_node_count</h3>
-<p>
 <pre>
    $B=q<0!'(B
 	pcp_node_count  _timeout_  _host_  _port_  _userid_  _passwd_
 </pre>
+<p>
    pgpool-II$B$N(B pgpool.conf $B$GDj5A$5$l$?%N!<%I$NAm?t$rI=<($7$^$9!#@Z$jN%$5$l$F$$$k(B
    $B%N!<%I$N6hJL$O$7$^$;$s!#(B
 </p>
 
 
 <h3>pcp_node_info</h3>
-<p>
 <pre>
    $B=q<0!'(B
 	pcp_node_info  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
 </pre>
 
+<p>
    pgpool-II$B$N(B pgpool.conf $B$GDj5A$5$l$?%N!<%I$N>pJs$rI=<($7$^$9!#=PNO7k2L$O0J2<$N(B
    $BNc$NDL$j$G$9!#(B
+</p>
 
 <pre>
    ex)
@@ -1814,6 +1877,7 @@ pgpool $B$N>l9g(B /*STRICT*/ $B$J$I!"(Bpgpool $B$r@)8f$9$kFC<l$J%3%a%s%H$r=
    3 - $B%N!<%I%@%&%s(B
 </pre>
 
+<p>
    $B%m!<%I%P%i%s%9%&%'%$%H$O(BNormalize$B$5$l$?%U%)!<%^%C%H$G=PNO$5$l$^$9!#(B
 </p>
 <p>
@@ -1828,9 +1892,10 @@ pgpool $B$N>l9g(B /*STRICT*/ $B$J$I!"(Bpgpool $B$r@)8f$9$kFC<l$J%3%a%s%H$r=
    $B=q<0!'(B
 	pcp_proc_count  _timeout_  _host_  _port_  _userid_  _passwd_
 </pre>
+<p>
    pgpool-II$B$N;R%W%m%;%9$N%W%m%;%9(BID$B$r0lMwI=<($7$^$9!#J#?t$"$k>l9g$O6uGrJ8;z$G6h(B
    $B@Z$i$l$^$9!#(B
-</pre>
+</p>
 
 
 <h3>pcp_proc_info</h3>
@@ -1839,7 +1904,9 @@ pgpool $B$N>l9g(B /*STRICT*/ $B$J$I!"(Bpgpool $B$r@)8f$9$kFC<l$J%3%a%s%H$r=
    $B=q<0!'(B
 	pcp_proc_info  _timeout_  _host_  _port_  _userid_  _passwd_  _processid_
 </pre>
+<p>
    pgpool-II$B$N;R%W%m%;%9>pJs$rI=<($7$^$9!#=PNO7k2L$O0J2<$NNc$NDL$j$G$9!#(B
+</p>
 <pre>
    ex)
    $ pcp_proc_info 10 localhost 9898 postgres hogehoge 3815
@@ -1982,8 +2049,13 @@ pgpool $B$N>l9g(B /*STRICT*/ $B$J$I!"(Bpgpool $B$r@)8f$9$kFC<l$J%3%a%s%H$r=
 </p>
 
 <h1>$BFbIt>pJs(B<a name="internal"></a></h1>
+<p>
+  pgpool-II$B%P!<%8%g%s(B 2.0 $B0J9_$G$O!"(B1.x $B%P!<%8%g%s$HHf$YBgI}$J2~NI$,2C$($i$l$F$$$^$9!#(B
+  1.x $B%P!<%8%g%s$N>pJs$H$O8_49@-$,$J$$$N$GCm0U$7$F$/$@$5$$!#(B	
+</p>
 
 <h2>$B%Q%i%l%k<B9T%(%s%8%s(B</h2>
+
 <p>
 pgpool-II$B$K$O%Q%i%l%k<B9T%(%s%8%s$,AH$_9~$^$l$F$$$^$9!#(B
 </p>
@@ -1997,266 +2069,245 @@ pgpool-II$B$K$O%Q%i%l%k<B9T%(%s%8%s$,AH$_9~$^$l$F$$$^$9!#(B
 <p>
 $B%Q%i%l%k%b!<%I$G(Bpgpool-II$B$,9T$&%/%(%j=q$-49$($K$D$$$F@bL@$7$^$9!#(B
 </p>
-
-<h3>$B$O$8$a$K(B</h3>
 <p>
-$B%Q%i%l%k%b!<%I$G$O!"%/%i%$%"%s%H$,Aw?.$7$?8!:w7O$NLd$$9g$o$;$O!"(BSQL
-$B%Q!<%5$rDL$7$F$+$i%7%9%F%`(BDB$B$KEPO?$5$l$F$$$k>pJs$r$b$H$K2r@O$r9T$$!"(B
-$B%/%(%j$r0J2<$N#4$D$N%?%$%W$KJ,N`$7$^$9!#(B
+$B%Q%i%l%k%b!<%I$G$O!"%/%i%$%"%s%H$,Aw?.$7$?8!:w7O(B(SELECT$B=hM}(B)$B$NLd$$9g$o$;$O!"Bg$-$/J,$1$F0J2<$N(B 2 $B$D$N=hM}$r9T$$$^$9!#(B
+</p>
 <ol>
-  <li>$B%/%(%j$N=q$-49$($,I,MW$J$$%/%(%j(B
-  <li>pgpool-II$BFH<+$N%-!<%o!<%I$r;}$C$?%/%(%j(B
-  <li>$B%/%(%j$N=q$-49$($,I,MW$J%/%(%j(B
-  <li>$BNc30E*$J%/%(%j(B
+  <li>$B%/%(%j$N2r@O(B
+  <li>$B%/%(%j$N=q$-49$((B
 </ol>
 
-$B$3$N#4$D$N%?%$%W$r4p=`$H$7!"%/%(%j$r<B9T$7$^$9!#(B
-</p>
-
 <p>
-$B0J2<$G$O!">e5-$N(B4$B$D$N%Q%?!<%s$K$D$$$F@bL@$7$^$9!#(B
+$B$3$l$i#2$D$N=hM}$K$D$$$F=g$K@bL@CW$7$^$9!#(B
 </p>
 
-<h4>$B%/%(%j=q$-49$($,I,MW$J$$%/%(%j(B</h4>
+<h3>$B%/%(%j$N2r@O(B</h3>
+<h4>
 <p>
-$B%/%(%j=q$-49$($,I,MW$J$$%/%(%j$O!"%Q%i%l%k<B9T%(%s%8%s$r;H$C$F3F%N(B
-$B!<%I$K%/%(%j$rLd$$9g$o$;$^$9!#(B
+$B$O$8$a$K(B
 </p>
+</h4>
 <p>
-$B$3$N%?%$%W$N%/%(%j$O!"0J2<$N>r7o$r$9$Y$FK~$?$9I,MW$,$"$j$^$9!#(B
-</p>
+$B%/%i%$%"%s%H$,Aw?.$7$?8!:w7O$NLd$$9g$o$;$O!"(BSQL$B%Q!<%5$rDL$7$F$+$i%7%9%F%`(BDB$B$KEPO?$5$l$F$$$k>pJs$r(B
+$B$b$H$K%/%(%j2r@O$r9T$$$^$9!#%/%(%j$N2r@O$K$O<B9T%9%F!<%?%9$NA+0\$GI>2A$7$F$$$^$9!#(B
+$B$3$3$G<B9T%9%F!<%?%9$H$$$&$N$O!"$"$k%G!<%?$N=89g$,2?=h$G<hF@$^$?$O=hM}$G$-$k$N$+H=CG$9$k$b$N$G$9!#(B
+$BNc$($P!"(Bpgpool_catalog.dist_def$B%F!<%V%k$KEPO?$5$l$F$$$k%F!<%V%k$N%G!<%?=89gA4BN$O!"%G!<%?$,J,3d$5(B
+$B$l$F$$$k$N$G$9$Y$F$N%N!<%I$+$i<hF@$9$kI,MW$,$"$j$^$9!#5U$K!"(Bpgpool_catalog.replicate_def$B%F!<%V%k(B
+$B$KEPO?$5$l$F$$$k%F!<%V%k$N%G!<%?=89gA4BN$O!"$9$Y$F$N%N!<%I$+$i<hF@$9$k$N$G$O$J$/!"$$$:$l$+$N%N!<%I(B
+$B$+$i<hF@$9$l$P==J,$G$9!#(B
+$B$3$3$G$9$Y$F$N%N!<%I$G=hM}$9$kI,MW$,$"$k>uBV$r(B P $B>uBV!"0l$D$N%N!<%I$G=hM}$9$kI,MW$,$"$k>uBV$r(B L $B>u(B
+$BBV$H$7$FDj5A$7$^$9!#(B
+$B$b$&0l$D!"FCJL$J>uBV$H$7$F(B S $B>uBV$,$"$j$^$9!#$3$l$O!"$9$Y$F$N%N!<%I$+$i<hF@$7$?A4%G!<%?$KBP$7$F=hM}(B
+$B$r9T$C$?$H$-$N>uBV$N$3$H$r<($7$^$9!#(B
+$BNc$($P!"%=!<%H=hM}$G$9!#(Bpgpool_catalog.dist_def$B%F!<%V%k$KEPO?$5$l$F$$$k%F!<%V%k$N%G!<%?$KBP$9$k%=!<(B
+$B%H=hM}$O!"$9$Y$F$N%N!<%I$+$i%G!<%?$r<hF@$7$?8e$K<B9T$9$kI,MW$,$"$j$^$9!#(B
 
-<ul>
-    <li>DISTINCT $B$r;H$C$F$$$J$$!#(B
-      <dl>
-        <dt>$BM}M3(B</dt>
-        <dd>
-        $B3F%N!<%I$KJ,;6$7$F$$$k%G!<%?4V$N=EJ#$,$o$+$i$J$$$+$i$G$9!#(B
-        </dd>
-      </dl>
-
-    <li>SELECT .. INTO .. $B$r;H$C$F$$$J$$(B
-      <dl>
-        <dt>$BM}M3(B</dt>
-        <dd>
-        SELECT .. INTO .. $B$O(Bpgpool-ll$B$N@)8B;v9`$H$J$C$F$*$j$^$9!#(B
-        </dd>
-      </dl>
-
-    <li>GROUP BY, HAVING $B$r;H$C$F$$$J$$(B
-      <dl>
-        <dt>$BM}M3(B</dt>
-        <dd>
-		$B3F%N!<%I$KJ,;6$7$F$$$k%G!<%?4V$N=87W$,I,MW$@$+$i$G$9!#(B
-        </dd>
-      </dl>
-    <li>$B%=!<%H(B,ORDER BY , LIMIT (OFFSET)$B$r;H$C$F$$$J$$(B
-      <dl>
-        <dt>$BM}M3(B</dt>
-        <dd>
-        $B3F%N!<%I$KJ,;6$7$F$$$k%G!<%?4V$G%=!<%H!"(BORDER BY, LIMIT$B$r9T$C$F$b0[$J$k7k2L$,F@$i$l$k$+$i$G$9!#(B
-        </dd>
-      </dl>
-        
-    <li>UNION,INTERSECT,EXCEPT$B$r;H$C$F$$$J$$(B
-      <dl>
-        <dt>$BM}M3(B</dt>
-        <dd>
-        $BF1$8%N!<%I4V$N(B UNION$B!"(BINTERSECT, EXCEPT $B$K$J$j!"4|BT$5$l$k7k2L$,F@$i$l$J$$2DG=@-$,$"$j$^$9!#(B
-        </dd>
-      </dl>
-
-    <li>$B%?!<%2%C%H%j%9%H$NCf$K(BCASE$BJ8$,;H$o$l$F$$$J$$!#(B
-      <dl>
-        <dt>$BM}M3(B</dt>
-        <dd>
-        CASE $BJ8$NCf$K4X?t$,;H$o$l$k>l9g$r9MN8$7$F$$$^$9!#(B
-        </dd>
-      </dl>
-
-    <li>FROM $B6g$K;H$o$l$F$$$k%F!<%V%k$,<B%F!<%V%k0l$D$N>l9g!#(B
-      <dl>
-        <dt>$BM}M3(B</dt>
-        <dd>
-        JOIN $B$,;H$o$l$F$$$k%1!<%9$G$O!"F1$8%N!<%IFb$G$N(BJOIN$B$H$J$C$F$7$^$$$^$9!#(B
-        </dd>
-      </dl>
-
-    <li>$B%5%V%/%(%j$,;H$o$l$F$$$J$$!#(B
-      <dl>
-        <dt>$BM}M3(B</dt>
-        <dd>
-        $B%5%V%/%(%j$,!"=q$-49$($,I,MW$J%/%(%j$N>l9g$,$"$j$^$9!#(B
-        </dd>
-      </dl>
-
-    <li>$B4X?t$,;H$o$l$F$$$J$$!#(B
-      <dl>
-        <dt>$BM}M3(B</dt>
-        <dd>
-        $B%f!<%6$,Dj5A$7$?4X?t$d!"=8Ls4X?t$N>l9g$K$O4|BT$5$l$k7k2L$,F@$i$l$J$$2DG=@-$,$"$j$^$9!#(B
-        </dd>
-      </dl>
-</ul>
-    $B>e5-$N>r7o$rK~$?$9%/%(%j(B
-<pre>
-      $BNc(B)  SELECT * FROM t1 WHERE t1.a = 100  
-</pre>
-</p>
-
-
-<h4>pgpool-II$BFH<+$N%-!<%o!<%I$r;}$C$?%/%(%j(B</h4>
-<p>
-pgpool-ll$BFH<+$N%-!<%o!<%I$r;}$C$?%/%(%j$O0J2<$N%/%(%j$G$9!#(B
-
-<pre>
-    select pool_parallel('$B%/%(%j(B')
-</pre>
-
-pgpool$B$O$3$N%/%(%j$r<u$1<h$k$H!"(Bpool_parallel$B4X?t$N0z?t$NCf$N%/%(%j(B
-$B$r!"%Q%i%l%k<B9T%(%s%8%s$r;H$C$F3F%N!<%I$KLd$$9g$o$;$^$9!#(B
 </p>
 <p>
-$B$J$*!"$3$N%/%(%j$O%7%9%F%`(BDB$B$N(Bdblink$B7PM3$+$iAw?.$5$l$k%/%(%j$G!"0lHL%f!<%6(B
-$B$,;H$&$3$H$rA[Dj$7$F$$$^$;$s!#(B
-</p>
+$B8!:w7O%/%(%j$O!"0J2<$N=hM}=g$K2r@O$5$l!"<B9T%9%F!<%?%9$,A+0\$7$F$$$-$^$9!#(B
+$B<B9T%9%F!<%?%9$,A+0\$7$F$$$/2aDx$G(B S $B>uBV$H$J$k$H!"0J9_$N=hM}$OI,$:(B S $B>uBV$H$J$j$^$9!#(B
+$B$=$7$F:G8e$N(BSELECT$B$N:G=*<B9T%9%F!<%?%9$N>uBV$K$h$j!"2?=h$N(BDB$B$G=hM}$5$l$k$+$,(B
+$B7hDj$7$^$9!#(B
 
-<h4>$B%/%(%j$N=q$-49$($,I,MW$J%/%(%j(B</h4>
-<p>
-$B>e5-#2$D$N%?%$%W$N%/%(%j$HNc30E*$J%/%(%j$r=|$$$F!"8!:w7O$N%/%(%j$O=q$-(B
-$B49$($r9T$$$^$9!#(B
-</p>
-<p>
-pgpool-II$B$G$N%/%(%j=q$-49$($O!"3F%N!<%I$KJ,;6$7$F$$$k%F!<%V%k$r0l$D(B
-$B$K$^$H$a!"%f!<%6$,;2>H$7$?$$%F!<%V%k$r:n@.$7$^$9!#(B
-</p>
-
-<p>
-$B$?$H$($P(Bt1$B$H$$$&%F!<%V%k$,$"$k>l9g$K$O!"(B
-</p>
-
-<pre>
-    t1 = dblink('host','select pool_parallel(\'select * from t1\')') as t1 (colname type, ...)
-</pre>
-$B$H=q$-49$($^$9!#(B
-
-<p>
-$B$3$3$G!"(Bdblink$B$OBh0l0z?t$N%[%9%H$KBhFs0z?t$N%/%(%j$r<B9T$7!"%/%(%j$N(B
-$B7k2L$r<u$1<h$k4X?t$G$9!#(B
-</p>
-<p>
-$B$^$?!"(Bdblink$B$NCf$N(Bpool_parallel$B4X?t$O(Bpgpool-II$BFH<+$N%-!<%o!<%I$r(B
-$B$b$C$?%/%(%j$J$N$G!"$3$N%/%(%j$r<u$1<h$C$?(Bpgpool-II$B$O!"%Q%i%l%k<B9T(B
-$B%(%s%8%s$r;H$C$F!"3F%N!<%I$KLd$$9g$o$;$r9T$$$^$9!#$3$l$K$h$j!"3F%N!<(B
-$B%I$KJ,;6$7$F$$$k%F!<%V%k$r0l$D$K$^$H$a$k$3$H$,$G$-$^$9!#(B
-</p>
-<p>
-$B$?$H$($P!"(B
-</p>
-<pre>
-    SELECT * FROM t1 ORDER BY a;
-</pre>
-<p>
-$B$H$$$&%/%(%j$O!"(B
-</p>
-<pre>
-    SELECT * FROM 
-       dblink('host','pool_parallel(\'SELECT * FROM t1\') as t1 (colname type, ...a)
-    ORDER BY a;
-</pre>
-
-<p>
-$B$H=q$-49$($i$l$^$9!#(B
-</p>
-
-<p>
-$B>e5-$N$H$*$j=q$-49$($i$l$?%/%(%j$O%7%9%F%`(BDB$B$KAw$i$l!"(Bpgpool$B$r7PM3$7$F%U(B
-$B%m%s%H%(%s%I$KLd$$9g$o$;7k2L$rAw?.$7$^$9!#(B
-</p>
-<p>
-$B$7$+$7!"$3$N$^$^$G$O3F%N!<%I$N%F!<%V%k$r%7%9%F%`(BDB$B$KAw?.$7!"%7%9%F%`(BD
-B$B$K%F!<%V%k%G!<%?$,$=$m$C$?$?$"$H$K%=!<%H$J$I$N=hM}$r9T$&$N$G!"%7%9%F(B
-$B%`(BDB$B$,%\%H%k%M%C%/$H$J$C$F$7$^$$$^$9!#$=$3$G(Bpgpool-II$B$G$OFCDj$N%/%(%j(B
-$B$KBP$7$F$O!"0J2<$N$h$&$JFCJL$J=hM}$r9T$$$^$9!#(B
 <ol>
-  <li>WHERE $B6g$K$h$k>r7o$N9J$j9~$_(B
-  <li>$B=8Ls$K$h$k%/%(%j=q$-49$((B
+  <li> UNION$B!"(BEXTRACT$B!"(BINTERCECT$B$,MxMQ$5$l$F$$$k$+$I$&$+(B
+  <li> FROM $B6g$N<B9T%9%F!<%?%9(B
+  <li> TARGETLIST $B$K$h$k<B9T%9%F!<%?%9$NJQ2=(B
+  <li> WHERE $B6g(B $B$K$k<B9T%9%F!<%?%9$NJQ2=(B
+  <li> GROUP BY $B6g$K$h$k<B9T%9%F!<%?%9$NJQ2=(B
+  <li> HAVING $B6g$K$h$k<B9T%9%F!<%?%9$NJQ2=(B
+  <li> ORDER BY $B6g$K$h$k<B9T%9%F!<%?%9$NJQ2=(B
+  <li> LIMIT OFFSET $B=R8l$K<B9T%9%F!<%?%9$NJQ2=(B
+  <li> SELECT$B$N:G=*<B9T%9%F!<%?%9$N<hF@(B
+</ol>
+<p>
+SELECT$B$N:G=*<B9T%9%F!<%?%9$H=hM}$5$l$k>l=j$H$N4X78$O!"0J2<$NDL$j$G$9!#(B
+</p>
+
+<p>
+<table border>
+<tr><td>$B<B9T%9%F!<%?%9(B</td><td>$B=hM}$5$l$k>l=j(B</td></tr>
+<tr><td align = center>L</td><td>$B$$$:$l$+$N%N!<%I$KLd$$9g$o$;$r9T$&(B</td></tr>
+<tr><td align = center>P</td><td>$B$9$Y$F$N%N!<%IF1$8Ld$$9g$o$;$r9T$$!"%Q%i%l%k<B9T%(%s%8%s$rDL$7$F%/%i%$%"%s%H$KJV5Q(B</td></tr>
+<tr><td align = center>S</td><td>$B%7%9%F%`(BDB$B$G=hM}$r9T$C$?8e$K%/%i%$%"%s%H$KJV5Q(B</td></tr>
+</td></tr>
+</table>
+</p>
+
+<p>
+$B$^$?%5%V%/%(%j$KBP$7$F$b>e5-$N%k!<%k$,E,1~$5$l$^$9!#(B
+$B0J2<$NC1=c$J%/%(%j$G$O!"(Bp1-table$B$,%7%9%F%`(BDB$B$N(Bpgpool_catalog.dist_def$B%F!<%V%k$KEPO?$5$l$F$$$k>l9g!"$D$^$j%G!<%?$NJ,3d$,(B
+$B9T$o$l$F$$$k>l9g$K$O!"%5%V%/%(%j$N:G=*<B9T%9%F!<%?%9$,(B P $B$H$J$j!"$=$N7k2L%5%V%/%(%j$N8F$S=P$785$G$"$k(B SELECT $B$N<B9T%9%F!<%?%9$b(B P $B$H$J$j$^$9!#(B
+<pre>
+	SELECT * FROM (SELECT * FROM P1-table) as P2-table;
+</pre>
+</p>
+<p>
+$B<!$K6qBNE*$K<B9T%9%F!<%?%9$,$I$N$h$&$KA+0\$9$k$N$+@bL@$7$^$9!#(B
+$B$^$:(B2. From$B6g$N<B9T%9%F!<%?%9(B $B$+$i@bL@$7$^$9!#(B
+
+</p>
+<h4>
+<p>
+FROM $B6g$N<B9T%9%F!<%?%9(B
+</p>
+</h4>
+<p>
+$B8!:w7O%/%(%j(B(SELECT)$B$O(B FROM $B6g$K$h$j%G!<%?$N=89g$rDj5A$7$^$9!#(BFROM$B6g$+$i9=@.$;$l$k%G!<%?=89g$O(B P $B>uBV(B, L $B>u(B
+$BBV!"$^$?$O(B S $B>uBV$r<h$j$^$9!#(BFROM$B6g$K;XDj$7$F$$$k%F!<%V%k$,0l$D$N>l9g$K$O!"C1=c$K%F!<%V%k$N<B9T%9%F!<%?%9$,(B
+FROM$B6g$+$i9=@.$5$l$k%G!<%?=89gA4BN$N<B9T%9%F!<%?%9$H$J$j$^$9!#(BFROM$B6g$KJ#?t$N%F!<%V%k!"Kt$O%5%V%/%(%j$,$"$k>l9g(B
+$B$K$O!"7k9gJ}K!$K$h$C$F0J2<$N$h$&$K<B9T%9%F!<%?%9$,7hDj$7$^$9!#(B
+</p>
+
+<p>
+<table border>
+<tr><td>$B7k9gJ}<0(B</td><td align = center colspan = 3> LEFT OUTER JOIN </td><td align = center colspan = 3> RIGHT OUTER JOIN </td><td align = center colspan = 3>FULL OUTER JOIN</td><td align = center colspan = 3>$B!!!!!!$=$NB>!!!!!!(B</td></tr>
+<tr><td align = center>$B:8!@1&(B</td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td></tr>
+<tr><td align = center> P </td><td> S </td><td> P </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> P </td><td> S </td></tr>
+<tr><td align = center> L </td><td> S </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> S </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td></tr>
+<tr><td align = center> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td></tr>
+</td></tr>
+</table>
+</p>
+
+<p>
+$B0J2<$NNc$G$O!"(BP1-table$B$,(B P $B>uBV$N%F!<%V%k$G(BL1-table,L2-table$B$,(B L $B>uBV$N%F!<%V%k$@$H$7$^$9!#(B
+$B$9$k$H>e5-$NI=$K$h$j!"(BP1-table ($B:8(B)$B$H(BL1-table ($B1&(B) $B$,7k9g$7(B P $B>uBV$H$J$j!"$5$i$K(B P $B>uBV$H(B L $B>uBV$N(BL2-table$B$,7k9g$7$F(BFROM$B6g$N<B9T%9%F!<%?%9$O(B P $B>uBV$H$J$j$^$9!#(B 
+<pre>
+	SELECT * FROM P1-table,L1-table,L2-table;
+</pre>
+</p>
+
+<h4>
+<p>
+TARGETLIST $B$H(B WHERE$B6g$N<B9T%9%F!<%?%9(B
+</p>
+</h4>
+
+<p>
+$B4pK\E*$J%/%(%j$G$O!"(BFROM $B6g$HF1$8<B9T%9%F!<%?%9$r7Q>5$7$^$9!#(B
+$B$7$+$7!"(BTARGETLIST $B$H(B WHERE$B6g$N<B9T%9%F!<%?%9$O!"0J2<$N>l9g$KJQ2=$7$^$9!#(B
+<ol>
+  <li> $B%5%V%/%(%j$,$"$k>l9g(B
+  <li> FROM$B6g$,(B P $B>uBV$N>l9g!"$+$D!"(BTARGETLIST$B$K=8Ls4X?t!"(BDISTINCT$B$,$"$k>l9g(B 
+  <li> FROM$B6g$GDj5A$7$?%F!<%V%k(B($B%G!<%?=89g(B)$B$KB8:_$7$J$$%+%i%`$,;H$o$l$F$$$k>l9g(B
 </ol>
 </p>
 <p>
-$B$J$*!"$3$N=hM}$O%5%V%/%(%j$KBP$7$F$b>r7o$rK~$?$;$P9T$o$l$^$9!#(B
+$B%5%V%/%(%j$N:G=*<B9T%9%F!<%?%9$,(B P $B>uBV!"$^$?$O!"(BS $B>uBV$N>l9g$K$O!"(BTARGETLIST$B!"(BWHERE$B6g$N<B9T%9%F!<%?%9(B
+$B$O!"(BS $B>uBV$H$J$j$^$9!#(B
+$B2<5-$NNc$G$O!"%5%V%/%(%j$G;H$o$l$F$$$k%F!<%V%k$,!"(BP $B>uBV$N>l9g$K$O!"%5%V%/%(%j$N:G=*<B9T%9%F!<%?%9$O(B
+P $B>uBV$H$J$j$^$9!#$=$N$?$a(B L1-table$B$N<B9T%9%F!<%?%9$K0MB8$;$:$K!"(BWHERE$B6g$N<B9T%9%F!<%?%9$O(B S$B>uBV$H$J$j(B
+$B!"$3$N%/%(%j$N<B9T>l=j$O%7%9%F%`(BDB$B$H$J$j$^$9!#(B
 </p>
+<pre>
+	SELECT * FROM L1-table where L1-table.column IN (SELECT * FROM P1-table);
+</pre>
+
 <p>
-$B<!$K$3$N=hM}$K$D$$$F@bL@$7$^$9!#(B
+FROM $B6g$,(B P $B>uBV$N>l9g!"$+$D!"(BTARGETLIST$B$K=8Ls4X?t$,$"$k>l9g$O!"%G!<%?$r<hF@8e$K=87W$9$kI,MW$,$"$k$?$a!"(BS$B>uBV(B
+$B$KA+0\$7$^$9!#(B
+$B$^$?!"FCDj$N>r7o$N2<$G$O!"=8Ls4X?t$K$h$k:GE,2=$,9T$o$l$^$9!#(B
 </p>
 
-<h4>WHERE$B6g$K$h$k>r7o$N9J$j9~$_(B</h4>
 <p>
-$B$?$H$($P!"(B
-
-<pre>
-    SELECT * FROM t1 WHERE a = 100 ORDER BY a;
-</pre>
-
-$B$H$$$&%/%(%j$O!"0J2<$N$h$&$K(BWHERE $B6g$r(Bdblink$B$NCf$KF~$l$k$3$H$,2DG=$G$9!#(B
-
-<pre>
-    SELECT * FROM 
-       dblink('host','pool_parallel(\'SELECT * FROM t1 WHERE a = 100 \') as t1 (colname type, ...a)
-    ORDER BY a;
-</pre>
-
-dblink$B$NCf$K(BWHERE $B6g$r$$$l$k$3$H$K$h$j!"8!:w>r7o$N9J$j9~$_$r3F%N!<%I$K(B
-$B9T$o$;!"%7%9%F%`(BDB$B$NIi2Y$r2<$2$k$3$H$,$G$-$^$9!#(B
+FROM$B6g$GDj5A$7$?%F!<%V%k!"%5%V%/%(%j$K$OB8:_$7$J$$%+%i%`$,(BWHERE$B6g$K;H$o$l$F$$$k>l9g$,$"$j$^$9!#$3$l$O0J2<$N$h$&$JAj4X%5%V%/%(%jFb$GH/@8$7$^$9!#(B
 </p>
+<pre>
+	SELECT * FROM L1-table FROM L1-table.col1 IN (SELECT * FROM P1-table WHERE P1-table.col = L1-table.col1);
+</pre>
+<p>$B>e5-$N%5%V%/%(%j$K;H$o$l$F$$$k(B L1-table.col1$B$O!"(BL1-table$B$r30It;2>H$7$F$$$^$9!#$3$N>l9g$K%5%V%/%(%j$N(BWHERE$B6g$N<B9T%9%F!<%?%9$O(B S $B>uBV$H$J$j$^$9!#(B
+
+
+<h4>
 <p>
-$B>e5-$N=q$-49$($,9T$o$l$k$?$a$K$O!"0J2<$N>r7o$r$9$Y$FK~$?$9I,MW$,$"$j$^(B
-$B$9!#(B
+GROUP BY $B6g!"(BHAVING $B6g!"(BORDER BY $B6g!"(BLIMIT OFFSET $B=R8l$N<B9T%9%F!<%?%9(B
 </p>
-<ol>
-  <li>WHERE $B6g$N8!:w>r7o$NCf$G!"%5%V%/%(%j$H4X?t$r;H$C$F$$$J$$!#(B
-  <li>WHERE $B6g$N8!:w>r7o$NCf$G!"%+%i%`$r;H$&>l9g$K$O!"%+%i%`$O(BFROM $B6g$N%F(B
-     $B!<%V%k$K=jB0$7$F$$$J$$$H$$$1$J$$!#(B
-</ol>
-AND $B$d(BOR $B$r;H$C$F8!:w>r7o$,J#?t$"$k>l9g$K$b!"8!:w>r7o$4$H$K>e5-$N>r7o$r(B
-$B%A%'%C%/$7!">r7o$K0cH?$,$"$C$?>l9g$K$O!"8!:w>r7o$r(BTRUE $B$G=q$-49$($^$9!#(B 
+</h4>
+
 <p>
-$B$?$H$($P!"(B
-</p>
-<pre>
-    SELECT * FROM t1 WHERE a = 100 and b > ($B%5%V%/%(%j(B);
-</pre>
-
-$B$H$$$&%/%(%j$O!"0J2<$N$h$&$K%/%(%j$r=q$-49$($^$9!#(B
-
-<pre>
-    SELECT * FROM 
-       dblink('host','pool_parallel(\'SELECT * FROM t1 WHERE a = 100 and TRUE\') as t1 (colname type, ...)
-    WHERE a = 100 and b > ($B%5%V%/%(%j(B);
-
-    (*)$B$3$3$G30B&$N(BWHERE $B6g$N(B a = 100 $B$O!"9=J8>e!"L50UL#$J$b$N$H$J$j$^$9(B
-       $B$,!"8=>u$N(Bpgpool-II$B$G$O!"(B a = 100 $B$r$J$/$9$3$H$r9T$$$^$;$s!#(B
-</pre>
-
-$B$^$?!"%F!<%V%k$N7k9g$r9T$&%/%(%j(B
-    
-<pre>
-    SELECT * FROM t1,t2 WHERE t1.a = 100 and t2.a = 200;
-</pre>
-
-$B$O!"0J2<$N$h$&$K%/%(%j$r=q$-49$($^$9!#(B
-
-<pre>
-    SELECT * FROM 
-       dblink('host','pool_parallel(\'SELECT * FROM t1 WHERE t1.a = 100 and TRUE\') as t1 (colname type, ...),
-       dblink('host','pool_parallel(\'SELECT * FROM t2 WHERE TRUE and t2.a = 200\') as t2 (colname type, ...)
-    WHERE t1.a = 100 and t2.a = 200;
-</pre>
-$B$3$3$G$b!"%F!<%V%k$4$H$K8!:w>r7o$r%A%'%C%/$7!"2DG=$J8B$j(Bpool_parallel$B4X?t$N$J$+(B
-$B$K(BWHERE $B6g$rF~$l$FJBNs=hM}$r9T$$$^$9!#(B
+WHERE$B6g$N<B9T%9%F!<%?%9$,(B P $B>uBV$N>l9g$K!"(BGROUP BY , HAVING $B6g!"(BORDER BY $B6g!"(BLIMIT OFFSET $B=R8l$,$"$k$H(BS$B>uBV$KA+0\$7$^$9!#(B
+GROUP BY$B6g$,B8:_$7$J$$%/%(%j$O(BWHERE$B6g$N<B9T%9%F!<%?%9$r7Q>5$7$^$9!#$^$?!"(BHAVING$B6g$,L5$$>l9g$K$O(BGROUP BY $B6g$N<B9T%9%F!<%?%9$r7Q>5$7$^$9!#(B
+ORDER BY $B6g!"(BLIMIT OFFSET $B=R8l$bF1MM$G$9!#(B
 </p>
 
-<h4>$B=8Ls$K$h$k%/%(%j=q$-49$((B</h4>
+<p>
+UNION$B!"(BEXTRACT$B!"(BINTERSECT$B$,;H$o$l$F$$$k>l9g(B
+</p>
+
+<p>
+UNION$B!"(BEXTRAT$B!"(BINTERSECT$B$,;H$C$F$$$k%/%(%j$O:8B&$N(BSELECT$BJ8$H1&B&$N(BSELECT$BJ8$N:G=*<B9T%9%F!<%?%9$K0MB8$7$^$9!#(B
+$B:8B&$H1&B&$N(BSELECT$BJ8$N:G=*<B9T%9%F!<%?%9$,6&$K(B L $B>uBV$N;~$K$O!"(BL $B>uBV$H$J$j$^$9!#(B
+$B$^$?!":8B&$H1&B&$N(BSELECT$BJ8$N:G=*<B9T%9%F!<%?%9$,6&$K(B P $B>uBV!"$+$D(BUNION ALL$B$N>l9g$K$O(B P $B>uBV$H$J$j$^$9!#(B
+$B$=$NB>$NAH$_9g$o$;$N>l9g$K$O!"(BS$B>uBV$H$J$j$^$9!#(B
+</p>
+
+<h4>
+<p>
+SELECT$B$N:G=*<B9T%9%F!<%?%9$N<hF@(B
+</p>
+</h4>
+
+<p>
+$B<B9T%9%F!<%?%9$,$9$Y$F(B L $B>uBV$N>l9g$K$O(BL$B>uBV!"$9$Y$F(B P $B>uBV$N>l9g$K$O!"(BP $B>uBV$H$J$j$^$9!#(B
+$B$=$l0J30$O!"(BS $B>uBV$H$J$j$^$9!#(B
+L $B>uBV$N>l9g$K$O!"(Bpgpool.conf$B$N(Bloadbalance_mode$B$,(Btrue$B$N>l9g$K$OIi2YJ,;6$5$l!"$=$l0J30$N>l9g$K$O(BMASTER$B$KLd$$9g$o$;$r9T$$$^$9!#$^$?!"(BP $B>uBV$N>l9g$K$O!"%Q%i%l%k<B9T%(%s%8%s$r;H$C$FJBNs=hM}$,9T$o$l$^$9!#(BS $B>uBV$N>l9g$K$O!"<!$N%U%'!<%:$G$"$k%/%(%j=q$-49$($r9T$$$^$9!#(B
+</p>
+
+<h3>$B%/%(%j=q$-49$((B</h3>
+
+<p>
+$B%/%(%j$N2r@O%U%'!<%:$G<hF@$7$?<B9T%9%F!<%?%9$r;H$C$F%/%(%j$N=q$-49$($r9T$$$^$9!#(B
+$BNc$H$7$F(B P $B>uBV$N(B P1-table $B$H(B L $B>uBV$N(B L1-table $B$r;H$C$?%/%(%j$G@bL@$7$^$9(B
+</p>
+<pre>
+	SELECT P1-table.col, L1-table.col FROM P1-table,L1-table where P1-table.col = L1-table.col order by P1-table.col;
+</pre>
+<p>
+$B$3$N%/%(%j$G$O(B ORDER BY $B6g$,$"$k$?$a(B S $B>uBV$H$J$j!"(BFROM$B6g!"(BWHERE$B6g!"(BTARGETLIST$B$O(B P $B>uBV$H$J$j$^$9!#(B
+$B$3$N$h$&$J%/%(%j$G$O0J2<$N$h$&$K=q$-49$($i$l$^$9!#(B
+</p>
+<pre>
+	SELECT P1-table.col, L1-table.col FROM
+	$B!!!!!!(Bdblink(select pool_parallel(SELECT P1-table.col, L1-table.col FROM P1-table,L1-table where P1-table.col = L1-table.col)) 
+  	order by P1-table.col;
+</pre>
+<p>
+$B$3$3$G(Bdblink$B$O(Bpgpool-II$B$KLd$$9g$o$;$rAw?.$7$^$9!#$^$?!"(Bpool_parallel$B$O0z?t$N%/%(%j$r%Q%i%l%k<B9T%(%s%8%s$r$K$o$?$94X?t$G$9!#$J$*!">e5-$O$"$/$^$G%$%a!<%8$G$"$j<B:]$K<B9T2DG=$J%/%(%j$G$O$"$j$^$;$s!#(B
+</p>
+<p>  
+$B>e5-$NNc$N$h$&$K!"(BFROM$B6g!"(BWHERE$B6g!"(BTARGETLIST$B$,$9$Y$F(B P $B>uBV$N>l9g$K$O!"(BFROM$B6g!"(BWHERE$B6g!"(BTARGETLIST$B$r$^$H$a$FJBNs=hM}$r9T$$$^$9!#(B
+
+<p>
+$B<!$NNc$r8+$F$_$^$9!#(B
+</p>
+<pre>
+	SELECT L1-table.col FROM L1-table WHERE L1-table.col % 2 = 0 AND L1-table.col IN (SELECT P1-table FROM P1-table) ;
+</pre>
+<p>
+$B$3$NNc$G$O!"(BFROM $B6g$O(B L $B>uBV!"(BTARGETLIST$B$b(B L $B>uBV!"(BWHERE$B6g$O(B P $B>uBV$N%5%V%/%(%j$r;}$C$F$$$k$?$a(B S $B>uBV$H$J$j$^$9!#(B
+$B$3$l$O0J2<$N$h$&$K=q$-49$($,9T$o$l$^$9!#(B
+</p>
+<pre>
+	SELECT L1-table.col FROM dblink(SELECT loadbalance(SELECT L1-table.col FROM L1-table WHERE L1-table.col % 2 = 0 AND TRUE))
+		WHERE
+			L1-table.col %2 = 0 AND 
+		  L1-table.col IN 
+		  (
+		  	SELECT P1-Table FROM 
+		  	dblink(select pool_parallel(SELECT P1-table FROM P1-table))
+		  ) ;
+</pre>
+<p>
+$B$3$3$G!"(Bpool_loadbalance$B$O%/%(%j$r$$$:$l$+$N%N!<%I$KAw?.$9$k4X?t$G$9!#(B
+</p>
+
+<h4>
+<p>
+$B=8Ls$K$h$k%/%(%j=q$-49$((B
+</p>
+</h4>
+
 <p>
 $B=87W$r9T$&%/%(%j(B($B=8Ls4X?t!"(BGROUP BY )$B$O3F%N!<%I$K7W;;$5$;!"%7%9%F%`(BDB$B$G(B
 $B:F=87W$r9T$&$3$H$K$h$j!"%7%9%F%`(BDB$B$NIi2Y$r8:$i$7%Q%U%)!<%^%s%9$b8~>e(B
@@ -2266,19 +2317,19 @@ AND $B$d(BOR $B$r;H$C$F8!:w>r7o$,J#?t$"$k>l9g$K$b!"8!:w>r7o$4$H$K>e5-$N>r7o$r
 $B$^$:!":G=i$K(Bpgpool-II$B$,<B:]$K9T$&%/%(%j$N=q$-49$($r8+$F$_$^$9!#(B
 </p>
 <p>
-count(*) $B$r;H$C$?%/%(%j$O!"0J2<$N$h$&$K=q$-49$($,9T$o$l$^$9!#(B
+FROM $B6g$,(B P $B>uBV$G(B count(*) $B$r;H$C$?%/%(%j$O!"0J2<$N$h$&$K=q$-49$($,9T$o$l$^$9!#(B
 </p>
 
 <pre>
-    select count(*) from t1;
+    select count(*) from P1-table;
 
     -> $B%/%(%j=q$-49$((B
 
     SELECT 
-        sum(arg_$0) as count 
+        sum(pool_c$1) as count 
     FROM 
-        dblink('host',pool_parallel('select count(*) from t1 ') 
-        as t1(arg_$0 bigint);
+        dblink(select pool_parallel('select count(*) from  P1-table'))
+					AS pool_$1g (pool_c$1 bigint); 
 </pre>
 
 <p>
@@ -2290,52 +2341,35 @@ count(*) $B$r;H$C$?%/%(%j$O!"0J2<$N$h$&$K=q$-49$($,9T$o$l$^$9!#(B
 $B>e5-$N$h$&$J%/%(%j=q$-49$($,9T$o$l$k>r7o$O0J2<$N>l9g$G$9!#(B
 </p>
 <ol>
-  <li>
-    <dl><dt>
-     $B%?!<%2%C%H%j%9%H$K=8Ls4X?t(B(count, sum, min, max$B$N$_(B)$B$,D>@\;H$o$l$F$$$k!#(B
-     </dt>
-     <dd>
-        $B!{(B select max(a),min(a) from t1;
-     </dd>
-     <dd>
-        $B!_(B select max(a) + 1,min(a) from t1;
-     </dd>
-     <dd>
-         (*) $B=8Ls4X?t$OF1;~$KJ#?t;XDj2DG=(B
-     </dd>
-	 </dt>
-	</dl>
-
-
-  <li>$B=8Ls4X?t$N0z?t$K4X?t!"%5%V%/%(%j$,$J$$!#<0$O;HMQ2DG=!#(B
-  <li>FROM $B6g$K;H$o$l$F$$$k%F!<%V%k$,0l$D!#(B
-  <li>WHERE $B6g$K;XDj$7$F$$$k8!:w>r7o$O!"4X?t!"%5%V%/%(%j$r;H$o$:!"(BFROM
-$B6g$G;XDj$7$?%F!<%V%k$N%+%i%`$,;H$o$l$F$$$k!#(B
-  <li><dl>GROUP BY $B$,$"$k>l9g$K$O!"(BGROUP BY $B$K(BFROM $B6g$G;XDj$7$?%F!<%V%k$N(B
-$B%+%i%`L>$N$_$r;XDj$7$F$$$k!#(B
-     <dt>(*)HAVING $B6g$,$"$k>l9g$K$O%/%(%j=q$-49$($O9T$o$J$$!#(B</dt>
-     </dl>
+  <li>FROM $B6g$,(BP $B>uBV(B
+  <li>$B%?!<%2%C%H%j%9%H$K=8Ls4X?t(B(count, sum, min, max,avg$B$N$_BP1~(B),GROUP BY$B$K;XDj$7$?%+%i%`$,;H$o$l$F$$$k(B
+  <li>WHERE $B6g$,(BP $B>uBV(B
+  <li>HAVING $B6g(B $B$K;H$o$l$F$$$k=8Ls4X?t(B(count, sum, min, max,avg$B$N$_BP1~(B),FROM$B6g$GDj5A$5$l$F$$$k%+%i%`(B,GROUP BY$B$K;XDj$7$?%+%i%`$N$_;H$o$l$F$$$k!#(B
 </ol>
-$B>e5-$N>r7o$rK~$?$9%/%(%j(B
 <pre>
   $BNc(B)
-     select bid,max(aid) from accounts wehre bid%2 = 0 group by bid;
-     
-     $B"*%/%(%j=q$-49$((B
-
-     SELECT 
-         bid,max(args_$0) 
-     FROM
-         dblink('host','SELECT pool_parallel("select bid, max(aid) from accounts where bid%2 = 0 group by bid"))
-              AS accounts(bid integer, args_$0 numeric)
-     GROUP BY bid;
+     select P1-table.col,L1-table.col,count(*),avg(P1-table.col) from P1-table,L1-table wehre P1-table.col %2 = 0 group by P1-table.col,L1-table.coli having count(*) < 100
 </pre>
 
-<h4>$BNc30E*$J%/%(%j(B</h4>
+<h3>$B%Q%i%l%k%b!<%I$NCm0U;v9`(B</h3>
 <p>
-$B%/%(%j$,%7%9%F%`(BDB$B$N>pJs$KB8:_$7$J$$%F!<%V%k$r;2>H$7$F$$$k>l9g$d%7%9%F%`(B
-$B%+%?%m%0;2>H;~$K$O!"%/%(%j=q$-49$($r9T$o$:$K!"%/%(%j$r%N!<%I$XAw?.$7!"%P(B
-$B%C%/%(%s%I$G$N<B9T7k2L$r$=$N$^$^%U%m%s%H%(%s%I$KJV5Q$7$^$9!#(B
+$B%Q%i%l%k%b!<%I$G$O!"%/%(%j$N2r@O$N:]$K%+%i%`L>$H%?%$%W$,I,MW$K$J$j$^$9!#$=$N$?$a!"%5%V%/%(%j$N(BTARGETLIST$B$K<0!"4X?t$r;H$C$F$$$k>l9g$K$OJLL>$H7?L>$r%-%c%9%H$G$D$1$kI,MW$,$"$j$^$9!#<0!"4X?t$K7?$N%-%c%9%H$,$J$$>l9g$K$O!"(Btext$B7?$H$7$F=hM}$5$l$^$9$N$GCm0U$7$F$/$@$5$$!#(B
+$B$J$*!"=8Ls4X?t$N>l9g$G$+$D=8Ls$K$h$k%/%(%j=q$-49$($,9T$o$l$k>l9g$K$O!"(Bcount$B$O(Bbigint$B7?!"(Bsum$B$O(Bnumeric$B7?$H$J$j$^$9!#(Bmin,max$B$N>l9g$K$O!"0z?t$,F|IU7?$N>l9g$K$OF|IU7?$H$7$F7W;;$5$l!"$=$l0J30$O(Bnumeric$B$H$7$F7W;;$5$l$^$9!#(Bavg$B$O(Bsum/count$B$H$7$F=hM}$5$l$^$9!#(B
+</p>
+
+<h3>$B%Q%i%l%k%b!<%I$N%Q%U%)!<%^%s%9$K$D$$$F(B</h3>
+<p>
+<p>
+SELECT$B$N:G=*<B9T%9%F!<%?%9$H%Q%U%)!<%^%s%9$N$*$*$h$=$NL\0B$O0J2<$N$H$*$j$G$9!#(B
+<table border>
+<tr><td>$B<B9T%9%F!<%?%9(B</td><td>$B%Q%U%)!<%^%s%9(B</td></tr>
+<tr><td align = center>L</td><td>$B%Q%i%l%k%/%(%j$rMxMQ$7$J$$$N$G(Bpgpool-II$B$N%*!<%P!<%X%C%I$r=|$-!"C1BN%N!<%I$H$N@-G=Nt2=$O$J$$(B</td></tr>
+<tr><td align = center>P</td><td>$BJBNs=hM}$r9T$&$N$G9bB.!"FC$K%7!<%1%s%7%c%k%9%-%c%s$N>l9g$K$O8z2L$,$G$k!#$^$?!"%G!<%?$rJ,3d$9$k$3$H$G%F!<%V%k%5%$%:(B(/1$BBf(B)$B$,>.$5$/$J$k$3$H$K$h$j%-%c%C%7%e$K>h$j$d$9$/$J$k(B </td></tr>
+<tr><td align = center>S</td><td>$B=8Ls$K$h$k%/%(%j=q$-49$($,9T$o$l$k$H9bB.(B</td></tr>
+</td></tr>
+</table>
+</p>
+
 </p>
 
 <h1>$B%j%j!<%9%N!<%H(B<a name="release"></a></h1>

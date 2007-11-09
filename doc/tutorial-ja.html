@@ -28,7 +28,8 @@ Last modified: Tue Sep  5 11:53:43 JST 2006
 <dd>3.1. <a href="#parallel-config">$B%Q%i%l%k%/%(%j$N@_Dj(B</a></dd>
 <dd>3.2. <a href="#system-db">$B%7%9%F%`%G!<%?%Y!<%9$N:n@.(B</a></dd>
 <dd>3.3. <a href="#dist-def">$BJ,;6%k!<%k$NDj5A(B</a></dd>
-<dd>3.4. <a href="#parallel-check">$B%Q%i%l%k%/%(%j$N3NG'(B</a></dd>
+<dd>3.4. <a href="#replicate-def">$BJ#@=%k!<%k$N3NG'(B</a></dd>
+<dd>3.5. <a href="#parallel-check">$B%Q%i%l%k%/%(%j$N3NG'(B</a></dd>
 </dl>
 <h2>1. <a name="start">$B$5$";O$a$^$7$g$&(B</a></h2>
 <p>$B$3$3$G$O!"%l%W%j%1!<%7%g%s$*$h$S%Q%i%l%k%/%(%j$N<B9T$r9T$&$?$a$N=`Hw$H$7$F!"(Bpgpool-II $B$N%$%s%9%H!<%k$d@_Dj!"%G!<%?%Y!<%9%N!<%I$N=`Hw$K$D$$$F@bL@$7$^$9!#(B</p>
@@ -128,7 +129,9 @@ pgpool-II $B$N:F5/F0$K$D$$$F$O!V(B1.5. <a href="#start-shutdown">pgpool-II $B
 <pre>$ pgbench -i -p 9999 bench_replication</pre>
 <p><code>pgbench</code> $B%3%^%s%I$K(B <code>-i</code> $B%*%W%7%g%s$r;XDj$7$F<B9T$7$?:]$K:n@.$5$l$k%F!<%V%k$H$=$l$>$l$N%F!<%V%k$N9T?t$O0J2<$N$H$*$j$G$9!#(B
 $B$9$Y$F$N%G!<%?%Y!<%9%N!<%I$N%G!<%?%Y!<%9(B bench_replication $B$K0J2<$N9T?t$N%G!<%?$,3JG<$5$l$F$$$l$P!"@5>o$K%l%W%j%1!<%7%g%s$,9T$o$l$F$$$k$3$H$K$J$j$^$9!#(B</p>
-<table border="1">
+
+<center>
+<table border>
 <tr>
 <th>$B%F!<%V%kL>(B</th>
 <th>$B9T?t(B</th>
@@ -150,6 +153,7 @@ pgpool-II $B$N:F5/F0$K$D$$$F$O!V(B1.5. <a href="#start-shutdown">pgpool-II $B
 <td>0</td>
 </tr>
 </table>
+</center>
 <p>$BNc$($P!"0J2<$N$h$&$K%3%^%s%I$r<B9T$9$k$H!"$9$Y$F$N%G!<%?%Y!<%9%N!<%I(B ($B%]!<%HHV9f(B 5432$B!"(B5433$B!"(B5434) $B$N%G!<%?%Y!<%9(B bench_replication $B$K4^$^$l$k%F!<%V%k(B branches$B!"(Btellers$B!"(Baccounts$B!"(Bhistory $B$N9T?t$,I=<($5$l$^$9!#(B</p>
 <pre>$ for port in 5432 5433 5434; do
 &gt;     echo $port
@@ -160,7 +164,7 @@ pgpool-II $B$N:F5/F0$K$D$$$F$O!V(B1.5. <a href="#start-shutdown">pgpool-II $B
 &gt; done
 </pre>
 <h2>3. <a name="parallel">$B%Q%i%l%k%/%(%j$r;H$C$F$_$h$&(B</a></h2>
-<p>$B%l%W%j%1!<%7%g%s$G$OJ#?t$N%G!<%?%Y!<%9%N!<%I$KF1$8%G!<%?$rJ#@=$7$F3JG<$9$k$N$KBP$7$F!"%Q%i%l%k%/%(%j$G$OJ#?t$N%G!<%?%Y!<%9%N!<%I$K0[$J$kHO0O$N%G!<%?$r$=$l$>$l3JG<$7$^$9!#(B</p>
+<p>$B%Q%i%l%k%/%(%j$G$OJ#?t$N%G!<%?%Y!<%9%N!<%I$K0[$J$kHO0O$N%G!<%?$r3JG<$7$^$9!#$3$l$r%Q!<%F%#%7%g%K%s%0$H8F$S$^$9!#$^$?%Q!<%F%#%7%g%s%K%s%0$H6&$KJ#?t$N%G!<%?%Y!<%9%N!<%I$KF1$8%G!<%?$rJ#@=$9$k$3$H$b$G$-$^$9!#$D$^$j%Q!<%F%#%7%g%K%s%0$7$F$$$k%F!<%V%k$H%l%W%j%1!<%7%g%s$7$F$$$k%F!<%V%k$r6&B8$5$;$k$3$H$,$G$-$^$9!#(B</p>
 <p>$B%Q%i%l%k%/%(%j$r;HMQ$9$k$K$O%7%9%F%`%G!<%?%Y!<%9$H8F$P$l$kFCJL$J%G!<%?%Y!<%9$,I,MW$G$9!#(B</p>
 <p>$B%7%9%F%`%G!<%?%Y!<%9$G$O!"$I$N%G!<%?%Y!<%9%N!<%I$KBP$7$F$I$N%G!<%?$r3JG<$9$k$+$H$$$&J,;6%k!<%k$r3JG<$7$F$*$j!"$=$l$K$h$C$F%G!<%?$rJ#?t$N%G!<%?%Y!<%9%N!<%I$KJ,;6$5$;$^$9!#(B
 $B$^$?!"%7%9%F%`%G!<%?%Y!<%9$O!"(Bdblink $B$r;HMQ$9$k$3$H$K$h$C$FJ#?t$N%G!<%?%Y!<%9%N!<%I$KLd$$9g$o$;$r?6$jJ,$1!"$=$l$>$l$N%G!<%?%Y!<%9%N!<%I$G<B9T$5$l$?7k2L$r(B 1 $B$D$K$^$H$a$^$9!#(B</p>
@@ -172,17 +176,19 @@ pgpool-II $B$N:F5/F0$K$D$$$F$O!V(B1.5. <a href="#start-shutdown">pgpool-II $B
 $B$5$i$K!"%7%9%F%`%G!<%?%Y!<%9$r:n@.$7!"J,;6%k!<%k$NDj5A$HEPO?$r9T$&I,MW$,$"$j$^$9!#(B</p>
 <p>$B$^$?!"(Bdblink $B$G$O%7%9%F%`%G!<%?%Y!<%9$+$i(B pgpool-II $B$X$N(B TCP/IP $B@\B3$,9T$o$l$k$?$a!"(B<code>listen_addresses</code> $B%Q%i%a!<%?$rE,@Z$K@_Dj$9$kI,MW$,$"$j$^$9!#(B</p>
 <pre>listen_addresses = '*'</pre>
-<p><em>$BCm0U(B</em>: $B%Q%i%l%k%/%(%j$H%l%W%j%1!<%7%g%s$rF1;~$KM-8z$K$9$k$3$H$O$G$-$^$;$s!#(B
-$B%Q%i%l%k%/%(%j$rM-8z$K$9$k$K$O%l%W%j%1!<%7%g%s$rL58z$K$9$kI,MW$,$"$j$^$9!#(B
+<p><em>$BCm0U(B</em>: $B%Q%i%l%k%/%(%j$H%l%W%j%1!<%7%g%s$rF1;~$KM-8z$K$9$k$3$H$,$G$-$^$9$,!"%Q!<%F%#%7%g%K%s%0$7$F$$$k%F!<%V%k$KBP$7$F$O!"%l%W%j%1!<%7%g%s$5$l$^$;$s!#(B
 $B$^$?!"%Q%i%l%k%/%(%j$H%l%W%j%1!<%7%g%s$G$O%G!<%?%Y!<%9$K3JG<$5$l$k%G!<%?$N9=@.$,0[$J$k$?$a!"!V(B2. <a href="#replication">$B=i$a$F$N%l%W%j%1!<%7%g%s(B</a>$B!W$G:n@.$7$?%G!<%?%Y!<%9(B bench_replication $B$r$=$N$^$^;HMQ$9$k$3$H$O$G$-$^$;$s!#(B</p>
-<pre>replication_mode = false
+<pre>replication_mode = true
 load_balance_mode = false</pre>
+<p>$B$^$?$O!"(B</p>
+<pre>replication_mode = false
+load_balance_mode = true</pre>
 <p>$B$3$3$G$O!"(B<code>parallel_mode</code> $B%Q%i%a!<%?$r(B true $B$K!"(B<code>listen_addresses</code> $B%Q%i%a!<%?$r(B * $B$K!"(B<code>replication_mode</code>$B!"(B<code>load_balance_mode</code> $B%Q%i%a!<%?$r(B false $B$K@_Dj$7$^$9!#(B</p>
 <h3>3.2. <a name="system-db">$B%7%9%F%`%G!<%?%Y!<%9$N:n@.(B</a></h3>
 <p>$B%7%9%F%`%G!<%?%Y!<%9$HDL>o$N%G!<%?%Y!<%9$K0c$$$O$"$j$^$;$s!#(B
 $B$?$@$7!"%7%9%F%`%G!<%?%Y!<%9$K$O!"(Bdblink $B$N4X?t$,Dj5A$5$l$F$*$j!"J,;6%k!<%k$r3JG<$9$k%F!<%V%k(B dist_def $B$,Dj5A$5$l$F$$$kI,MW$,$"$j$^$9!#(B
-$B$^$?!"%G!<%?%Y!<%9%N!<%I$N(B 1 $BBf$K%7%9%F%`%G!<%?%Y!<%9$r:n@.$9$k$3$H$b$G$-$^$9!#(B</p>
-$B$3$3$G$O!"0J2<$N(B <code>pgpool.conf</code> $B%U%!%$%k$N=i4|@_Dj$K=>$C$F%7%9%F%`%G!<%?%Y!<%9$r:n@.$7$^$9!#(B</p>
+$B$^$?!"%G!<%?%Y!<%9%N!<%I$N(B 1 $BBf$K%7%9%F%`%G!<%?%Y!<%9$r:n@.$9$k$3$H$b$G$-$^$9$7!"(Bpgpool-II$B$r%+%9%1!<%I@\B3$9$k$3$H$GIi2YJ,;6$9$k$3$H$b$G$-$^$9!#(B</p>
+<p>$B$3$3$G$O!"0J2<$N(B <code>pgpool.conf</code> $B%U%!%$%k$N=i4|@_Dj$K=>$C$F%7%9%F%`%G!<%?%Y!<%9$r:n@.$7$^$9!#(B</p>
 <pre>system_db_hostname = 'localhost'
 system_db_port = 5432
 system_db_dbname = 'pgpool'
@@ -194,7 +200,7 @@ system_db_password = ''</pre>
 </p>
 <pre>$ createuser -p 5432 pgpool
 $ createdb -p 5432 -O pgpool pgpool</pre>
-<h4>3.2.1. dblink $B$N%$%s%9%H!<%k(B</h4>
+<h4><p>3.2.1. dblink $B$N%$%s%9%H!<%k(B</p></h4>
 <p>$B%7%9%F%`%G!<%?%Y!<%9$H$7$F%G!<%?%Y!<%9(B pgpool $B$,:n@.$G$-$?$i!"(Bdblink $B$r%$%s%9%H!<%k$7$^$9!#(B
 dblink $B$O(B PostgreSQL $B$N%=!<%9%3!<%I$N(B <code>contrib</code> $B%G%#%l%/%H%j$K4^$^$l$k%D!<%k$N(B 1 $B$D$G$9!#(B</p>
 <p>dblink $B$r%$%s%9%H!<%k$9$k$K$O(B PostgreSQL $B$N%=!<%9%3!<%I$rE83+$7$?%G%#%l%/%H%j$G0J2<$N$h$&$K%3%^%s%I$r<B9T$7$^$9!#(B</p>
@@ -204,7 +210,7 @@ $ USE_PGXS=1 make -C contrib/dblink install</pre>
 PostgreSQL  $B$N%$%s%9%H!<%k@h$,(B <code>/usr/local/pgsql</code> $B%G%#%l%/%H%j0J2<$G$"$l$P!"(B<code>/usr/local/pgsql/share/contrib</code> $B%G%#%l%/%H%j$K(B dblink $B$N4X?t$rDj5A$9$k$?$a$N(B <code>dblink.sql</code> $B%U%!%$%k$,B8:_$7$^$9!#(B
 $B$=$l$r;HMQ$7$F0J2<$N$h$&$K(B <code>psql</code> $B%3%^%s%I$r<B9T$7$^$9!#(B</p>
 <pre>$ psql -f /usr/local/pgsql/share/contrib/dblink.sql -p 5432 pgpool</pre>
-<h4>3.2.2. $B%F!<%V%k(B dist_def $B$NDj5A(B</h4>
+<h4><p>3.2.2. $B%F!<%V%k(B dist_def $B$NDj5A(B</p></h4>
 <p>$BJ,;6%k!<%k$r3JG<$9$k%F!<%V%k(B dist_def $B$r%7%9%F%`%G!<%?%Y!<%9(B pgpool $B$KDj5A$7$^$9!#(B
 pgpool-II $B$r%$%s%9%H!<%k$9$k$H%F!<%V%k(B dist_def $B$r4^$a$F%7%9%F%`%G!<%?%Y!<%9$r:n@.$9$k$?$a$N(B <code>system_db.sql</code> $B%U%!%$%k$,:n@.$5$l$k$N$G!"$=$l$r;HMQ$7$F0J2<$N$h$&$K(B <code>psql</code> $B%3%^%s%I$r<B9T$7$^$9!#(B</p>
 <pre>$ psql -f /usr/local/share/system_db.sql -p 5432 -U pgpool pgpool</pre>
@@ -231,6 +237,35 @@ col_name $BNs$K$O%F!<%V%k$N$I$NNs$NCM$K$h$C$F3JG<$9$k%G!<%?%Y!<%9%N!<%I$r7hDj$9
 dist_def_func $BNs$K$O!"(Bcol_name $BNs$K;XDj$5$l$?Ns$NCM$r0z?t$H$7$F<u$1<h$j!"%G!<%?%Y!<%9%N!<%I$NHV9f$rJV$94X?t$r;XDj$7$^$9!#(B</p>
 <p>$B%F!<%V%k$N%a%?>pJs$OLd$$9g$o$;$N=q$-49$($r9T$&:]$K;HMQ$5$l$k%G!<%?$G$9!#(B
 $B%Q%i%l%k%/%(%j$G$O!"Ld$$9g$o$;$rJ#?t$N%G!<%?%Y!<%9%N!<%I$K?6$jJ,$1!"$=$l$>$l$N%G!<%?%Y!<%9%N!<%I$G<B9T$5$l$?7k2L$r(B 1 $B$D$K$^$H$a$k$?$a!"Ld$$9g$o$;$N=q$-49$($r9T$$$^$9!#(B</p>
+
+
+<h4><p>3.2.3. $B%F!<%V%k(B replicate_def $B$NDj5A(B</p></h4>
+<p>
+$B0l$D$N(BSQL$BJ8$K%F!<%V%k$N7k9gEy$G(Bdist_def$B$KEPO?$7$?%F!<%V%k$H6&$K%l%W%j%1!<%7%g%s$r9T$&%F!<%V%k$r;XDj$9$k>l9g$K$O!"(B
+$B%l%W%j%1!<%7%g%s$r9T$&%F!<%V%k$N>pJs(B($BJ#@=%k!<%k(B)$B$r$"$i$+$8$a!"(Breplicate_def $B$H$$$&%F!<%V%k$KEPO?$7$F$*$-$^$9!#(B
+$B%F!<%V%k(B dist_def $B$NDj5A$N:]$K!"(Bsystem_db.sql$B%U%!%$%k$+$i:n@.$7$?>l9g$K$O!"$9$G$K(Breplicate_def$B%F!<%V%k$,:n@.$5$l$F$$$^$9!#(B
+replicate_def$B%F!<%V%k$O0J2<$N$h$&$KDj5A$5$l$F$$$^$9!#(B
+<pre>
+CREATE TABLE pgpool_catalog.replicate_def(
+  dbname TEXT, -- $B%G!<%?%Y!<%9L>(B
+  schema_name TEXT, -- $B%9%-!<%^L>(B
+  table_name TEXT, -- $B%F!<%V%kL>(B
+  col_list TEXT[] NOT NULL, -- $B%F!<%V%k$NNsL>(B
+  type_list TEXT[] NOT NULL, -- $B%F!<%V%k$N%G!<%?7?L>(B
+  PRIMARY KEY (dbname,schema_name,table_name)
+);
+</pre>
+</p>
+<p>
+$B%F!<%V%k(B replicate_def $B$K3JG<$5$l$k%G!<%?$O%F!<%V%k$N%a%?>pJs(B(dbname$B!"(Bschema_name$B!"(Btable_name$B!"(Bcol_list$B!"(Btype_list)$B$H$J$j$^$9!#(B
+</p>
+
+<p>
+pgpool-ll $B$O!"%/%(%j$K;H$o$l$F$$$k!"$9$Y$F$N%F!<%V%k!"%+%i%`!"7?>pJs$r(Bdist_def$B$^$?$O!"(Breplicate_def$B%F!<%V%k$KEPO?$7$F$$$k>pJs(B
+$B$rMQ$$$F!"%/%(%j$N2r@O$H%/%(%j$N=q$-49$($r9T$$$^$9!#$=$N$?$a(B replicate_def$B%F!<%V%k$K@5$7$$>pJs$rEPO?$7$F$*$+$J$$$H!"@5$7$$<B9T(B
+$B7k2L$,F@$i$l$J$$2DG=@-$,$"$j$^$9!#(B
+</p>
+
 <h3>3.3. <a name="dist-def">$BJ,;6%k!<%k$NDj5A(B</a></h3>
 <p>$BJ,;6%k!<%k$O$I$N%G!<%?$r$I$N%G!<%?%Y!<%9%N!<%I$K3JG<$9$k$+$H$$$&$3$H$r7hDj$9$k$b$N$G$9!#(B</p>
 <p>$B$3$3$G$O!"%9%1!<%k%U%!%/%?!<(B 3 $B$r;XDj$7$F%G!<%?$r=i4|2=$7$?(B pgbench $B$N%F!<%V%k$r(B 3 $BBf$N%G!<%?%Y!<%9%N!<%I$K?6$jJ,$1$k$?$a$NJ,;6%k!<%k$rDj5A$7$^$9!#(B
@@ -239,27 +274,9 @@ dist_def_func $BNs$K$O!"(Bcol_name $BNs$K;XDj$5$l$?Ns$NCM$r0z?t$H$7$F<u$1<h$j
 $B$3$l$r;HMQ$7$FJ,;6%k!<%k$rDj5A$9$k$K$O%=!<%9%3!<%I$rE83+$7$?%G%#%l%/%H%j$G0J2<$N$h$&$K(B psql $B%3%^%s%I$r<B9T$7$^$9!#(B</p>
 <pre>$ psql -f sample/dist_def_pgbench.sql -p 5432 pgpool</pre>
 <p>$B$^$:!"J,;6%k!<%k$H%F!<%V%k$N%a%?>pJs$r%7%9%F%`%G!<%?%Y!<%9(B pgpool $B$N%F!<%V%k(B dist_def $B$K3JG<$7$^$9!#(B
-$BJ,;6%-!<NsL>$O!"%F!<%V%k(B branches$B!"(Btellers$B!"(Baccounts $B$K$D$$$F$O%W%i%$%^%j%-!<@)Ls$,;XDj$5$l$?Ns(B bid$B!"(Btid$B!"(Baid $B$r!"%F!<%V%k(B history $B$K$D$$$F$O(B tid $BNs$r;XDj$9$k$3$H$K$7!"J,;6%k!<%k4X?t$O%F!<%V%k$4$H$K:n@.$9$k$3$H$K$7$^$9!#(B</p>
-<pre>INSERT INTO pgpool_catalog.dist_def VALUES (
-    'bench_parallel',
-    'public',
-    'branches',
-    'bid',
-    ARRAY['bid', 'bbalance', 'filler'],
-    ARRAY['integer', 'integer', 'character(88)'],
-    'pgpool_catalog.dist_def_branches'
-);
-
-INSERT INTO pgpool_catalog.dist_def VALUES (
-    'bench_parallel',
-    'public',
-    'tellers',
-    'tid',
-    ARRAY['tid', 'bid', 'tbalance', 'filler'],
-    ARRAY['integer', 'integer', 'integer', 'character(84)'],
-    'pgpool_catalog.dist_def_tellers'
-);
-
+$B$3$3$G$O(Baccounts$B%F!<%V%k$r3F%G!<%?%Y!<%9%N!<%I$KBP$7$F%G!<%?J,3d$r9T$$$^$9!#(B
+$BJ,;6%-!<NsL>$O!"(Baccounts $B$K$D$$$F$O%W%i%$%^%j%-!<@)Ls$,;XDj$5$l$?Ns(B aid $B$K;XDj$7$^$9!#(B</p>
+<pre>
 INSERT INTO pgpool_catalog.dist_def VALUES (
     'bench_parallel',
     'public',
@@ -269,37 +286,13 @@ INSERT INTO pgpool_catalog.dist_def VALUES (
     ARRAY['integer', 'integer', 'integer', 'character(84)'],
     'pgpool_catalog.dist_def_accounts'
 );
-
-INSERT INTO pgpool_catalog.dist_def VALUES (
-    'bench_parallel',
-    'public',
-    'history',
-    'tid',
-    ARRAY['tid', 'bid', 'aid', 'delta', 'mtime', 'filler'],
-    ARRAY['integer', 'integer', 'integer', 'integer', 'timestamp without time zone', 'character(22)'],
-    'pgpool_catalog.dist_def_history'
-);</pre>
+</pre>
 <p>$B<!$K!"J,;6%k!<%k4X?t$r%F!<%V%k$4$H$K%7%9%F%`%G!<%?%Y!<%9(B pgpool $B$KDj5A$7$^$9!#(B
 $BJ,;6%k!<%k4X?t$O!"I,$:$7$b%F!<%V%k$4$H$K:n@.$9$kI,MW$O$J$/!"FbIt4X?t$r;HMQ$9$k$3$H$b$G$-$^$9!#(B
 $B$^$?!"J,;6%k!<%k4X?t$O(B SQL $B$G$J$/$H$b(B PL/pgSQL $B$d(B PL/Tcl $B$G:n@.$7$F$b9=$$$^$;$s!#(B</p>
-<p>$B%9%1!<%k%U%!%/%?!<(B 3 $B$r;XDj$7$F%G!<%?$r=i4|2=$7$?>l9g!"(Bbranches $B%F!<%V%k$N(B tid $BNs$NCM$O(B 1 $B$+$i(B 3 $B$^$G!"(Btellers $B%F!<%V%k$N(B tid $BNs$NCM$O(B 1 $B$+$i(B 30 $B$^$G!"(Baccounts $B%F!<%V%k$N(B aid $BNs$NCM$O(B 1 $B$+$i(B 300000 $B$^$G$K$J$k$N$G!"$3$l$i$NCM$r$b$H$K(B 3 $BBf$N%G!<%?%Y!<%9%N!<%I$KBP$7$F%G!<%?$,6QEy$KJ,;6$5$l$k$h$&$K4X?t$rDj5A$7$^$9!#(B</p>
+<p>$B%9%1!<%k%U%!%/%?!<(B 3 $B$r;XDj$7$F%G!<%?$r=i4|2=$7$?>l9g!"(Baccounts $B%F!<%V%k$N(B aid $BNs$NCM$O(B 1 $B$+$i(B 300000 $B$^$G$K$J$k$N$G!"$3$l$i$NCM$r$b$H$K(B 3 $BBf$N%G!<%?%Y!<%9%N!<%I$KBP$7$F%G!<%?$,6QEy$KJ,;6$5$l$k$h$&$K4X?t$rDj5A$7$^$9!#(B</p>
 <p>$B$3$3$G$O!"0z?t$H$7$F<u$1<h$C$?CM$+$i(B WHEN $B<0$K$h$C$F(B 0 $B$+$i(B 2 $B$^$G$N%G!<%?%Y!<%9%N!<%I$NHV9f$rJV$9C1=c$J(B SQL $B4X?t$rDj5A$9$k$3$H$K$7$^$9!#(B</p>
-<pre>CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_branches(anyelement)
-RETURNS integer AS $$
-    SELECT CASE WHEN $1 &gt; 0 AND $1 &lt;= 1 THEN 0
-        WHEN $1 &gt; 1 AND $1 &lt;= 2 THEN 1
-        ELSE 2
-    END;
-$$ LANGUAGE sql;
-
-CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_tellers(anyelement)
-RETURNS integer AS $$
-    SELECT CASE WHEN $1 &gt; 0 AND $1 &lt;= 10 THEN 0
-        WHEN $1 &gt; 10 AND $1 &lt;= 20 THEN 1
-        ELSE 2
-    END;
-$$ LANGUAGE sql;
-
+<pre>
 CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_accounts(anyelement)
 RETURNS integer AS $$
     SELECT CASE WHEN $1 &gt; 0 AND $1 &lt;= 100000 THEN 0
@@ -307,16 +300,38 @@ RETURNS integer AS $$
         ELSE 2
     END;
 $$ LANGUAGE sql;
+</pre>
 
-CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_history(anyelement)
-RETURNS integer AS $$
-    SELECT CASE WHEN $1 &gt; 0 AND $1 &lt;= 10 THEN 0
-        WHEN $1 &gt; 10 AND $1 &lt;= 20 THEN 1
-        ELSE 2
-    END;
-$$ LANGUAGE sql;</pre>
-<h3>3.4. <a name="parallel-check">$B%Q%i%l%k%/%(%j$N3NG'(B</a></h3>
-<p>$B%Q%i%l%k%/%(%j$N@_Dj$r(B pgpool-II $B$KH?1G$5$;$k$K$O(B pgpool-II $B$r:F5/F0$9$kI,MW$,$"$j$^$9!#$J$*!"%F!<%V%k(B dist_def $B$r99?7$7$?>l9g$b(B pgpool-II $B$N:F5/F0$,I,MW$G$9!#(B
+<h3>3.4 <a name="replicate-def">$BJ#@=%k!<%k$NDj5A(B</a></h3>
+<p>$BJ#@=%k!<%k$O$I$N%F!<%V%k$,%l%W%j%1!<%7%g%s$5$l$F$$$k$+$I$&$+$r7hDj$9$k$b$N$G$9!#(B</p>
+<p>$B$3$3$G$O!"(Bpgbench$B$G:n@.$5$l$k!!(Bbranches $B%F!<%V%k$H(B tellers $B$rEPO?$7$F$*$-$^$9!#$3$l$K$h$j!"(Baccounts$B%F!<%V%k!"(Bbranches$B%F!<%V%k$H(Btellers$B%F!<%V%k$r(B
+$B;H$C$?Ld$$9g$o$;$,2DG=$H$J$j$^$9!#(B
+<pre>
+INSERT INTO pgpool_catalog.dist_def VALUES (
+    'bench_parallel',
+    'public',
+    'branches',
+    ARRAY['bid', 'bbalance', 'filler'],
+    ARRAY['integer', 'integer', 'character(88)']
+);
+
+INSERT INTO pgpool_catalog.dist_def VALUES (
+    'bench_parallel',
+    'public',
+    'tellers',
+    ARRAY['tid', 'bid', 'tbalance', 'filler'],
+    ARRAY['integer', 'integer', 'integer', 'character(84)']
+);
+</pre>
+<p>$B$J$*!"%=!<%9%3!<%I$N(B <code>sample</code> $B%G%#%l%/%H%j$K$O>e5-$N@bL@$G;HMQ$9$kJ#@=%k!<%k$,Dj5A$5$l$?%U%!%$%k(B <code>replicate_def_pgbench.sql</code> $B$,=`Hw$5$l$F$$$^$9!#(B
+$B$3$l$r;HMQ$7$FJ,;6%k!<%k$rDj5A$9$k$K$O%=!<%9%3!<%I$rE83+$7$?%G%#%l%/%H%j$G0J2<$N$h$&$K(B psql $B%3%^%s%I$r<B9T$7$^$9!#(B</p>
+<pre>
+$ psql -f sample/replicate_def_pgbench.sql -p 5432 pgpool
+</pre>
+
+
+<h3>3.5. <a name="parallel-check">$B%Q%i%l%k%/%(%j$N3NG'(B</a></h3>
+<p>$B%Q%i%l%k%/%(%j$N@_Dj$r(B pgpool-II $B$KH?1G$5$;$k$K$O(B pgpool-II $B$r:F5/F0$9$kI,MW$,$"$j$^$9!#$J$*!"%F!<%V%k(B dist_def$B!"(Breplicate_def $B$r99?7$7$?>l9g$b(B pgpool-II $B$N:F5/F0$,I,MW$G$9!#(B
 pgpool-II $B$N:F5/F0$K$D$$$F$O!V(B1.5. <a href="#start-shutdown">pgpool-II $B$N5/F0$HDd;_(B</a>$B!W$r;2>H$7$F$/$@$5$$!#(B</p>
 <p>$B%Q%i%l%k%/%(%j$rM-8z$K$7$F(B pgpool-II $B$r5/F0$G$-$?$i!"<B:]$K(B pgbench $B$r;HMQ$7$F%Q%i%l%k%/%(%j$,<B9T$5$l$k$3$H$r3NG'$7$^$7$g$&!#(B</p>
 <p>$B$^$:!"(Bpgbench $B$,;HMQ$9$k%G!<%?%Y!<%9(B bench_parallel $B$r:n@.$7$^$9!#(B
@@ -325,7 +340,8 @@ pgpool-II $B$N:F5/F0$K$D$$$F$O!V(B1.5. <a href="#start-shutdown">pgpool-II $B
 <p>$B$=$7$F!"0J2<$N$h$&$K%9%1!<%k%U%!%/%?!<(B 3 $B$r;XDj$7$F(B pgbench $B$G;HMQ$9$k%F!<%V%k$r:n@.$7!"%G!<%?$r=i4|2=$7$^$9!#(B</p>
 <pre>$ pgbench -i -p 9999 -s 3 bench_parallel</pre>
 <p>$B%9%1!<%k%U%!%/%?!<(B 3 $B$r;XDj$7$F%G!<%?$r=i4|2=$7$?(B pgbench $B$N%F!<%V%k$H$=$l$>$l$N9T?t$O0J2<$N$H$*$j$G$9!#(B
-$B%G!<%?$r=i4|2=$9$k$3$H$K$h$C$F3JG<$5$l$k%G!<%?$O!"J,;6%k!<%k$K=>$C$F(B 3 $BBf$N%G!<%?%Y!<%9%N!<%I$KJ,;6$5$l$^$9!#(B</p>
+$B%G!<%?$r=i4|2=$9$k$3$H$K$h$C$F3JG<$5$l$k%G!<%?$O!"%F!<%V%k(B dist_def $B$KEPO?$5$l$F$$$k%F!<%V%k$KBP$7$F$OJ,;6%k!<%k$K=>$C$F(B 3 $BBf$N%G!<%?%Y!<%9%N!<%I$KJ,;6$5$l$^$9!#(B</p>
+<center>
 <table border="1">
 <tr>
 <th>$B%F!<%V%kL>(B</th>
@@ -348,49 +364,9 @@ pgpool-II $B$N:F5/F0$K$D$$$F$O!V(B1.5. <a href="#start-shutdown">pgpool-II $B
 <td>0</td>
 </tr>
 </table>
+</center>
 <p>$B%G!<%?$,(B 3 $BBf$N%G!<%?%Y!<%9%N!<%I$KJ,;6$5$l$F$$$k$3$H$O!"(Bpgpool-II $B$KBP$7$FLd$$9g$o$;$r<B9T$7$?7k2L$H%G!<%?%Y!<%9%N!<%I$KD>@\Ld$$9g$o$;$r<B9T$7$?7k2L$rHf3S$9$l$P3NG'$G$-$^$9!#(B
-$B$J$*!"(B3 $BBf$N%G!<%?%Y!<%9%N!<%I$K$OJ,;6%-!<Ns$NCM$,0J2<$N$h$&$KJ,;6$5$l$F$$$k$O$:$G$9!#(B</p>
-<table border="1">
-<tr>
-<th rowspan="2">$B%F!<%V%kL>(B</td>
-<th rowspan="2">$BJ,;6%-!<NsL>(B</td>
-<th colspan="3">$BCM(B</th>
-</tr>
-<tr>
-<th>$B%G!<%?%Y!<%9%N!<%I(B 1</td>
-<th>$B%G!<%?%Y!<%9%N!<%I(B 2</td>
-<th>$B%G!<%?%Y!<%9%N!<%I(B 3</td>
-</tr>
-<tr>
-<td>branches</td>
-<td>bid</td>
-<td>1</td>
-<td>2</td>
-<td>3</td>
-</tr>
-<tr>
-<td>tellers</td>
-<td>tid</td>
-<td>1 $B!A(B 10</td>
-<td>11 $B!A(B 20</td>
-<td>21 $B!A(B 30</td>
-</tr>
-<tr>
-<td>accounts</td>
-<td>aid</td>
-<td>1 $B!A(B 100000</td>
-<td>100001 $B!A(B 200000</td>
-<td>200001 $B!A(B 300000</td>
-</tr>
-<tr>
-<td>history</td>
-<td>tid</td>
-<td>1 $B!A(B 10</td>
-<td>11 $B!A(B 20</td>
-<td>21 $B!A(B 30</td>
-</tr>
-</table>
-<p>$BNc$($P!"0J2<$N$h$&$K%3%^%s%I$r<B9T$9$k$H!"$9$Y$F$N%G!<%?%Y!<%9%N!<%I(B ($B%]!<%HHV9f(B 5432$B!"(B5433$B!"(B5434$B!"(B9999) $B$N%G!<%?%Y!<%9(B bench_parallel $B$N%F!<%V%k(B accounts $B$N:G>.CM!":GBgCM$,I=<($5$l$^$9!#(B</p>
+$BNc$($P!"0J2<$N$h$&$K%3%^%s%I$r<B9T$9$k$H!"$9$Y$F$N%G!<%?%Y!<%9%N!<%I(B ($B%]!<%HHV9f(B 5432$B!"(B5433$B!"(B5434$B!"(B9999) $B$N%G!<%?%Y!<%9(B bench_parallel $B$N%F!<%V%k(B accounts $B$N:G>.CM!":GBgCM$,I=<($5$l$^$9!#(B</p>
 <pre>$ for port in 5432 5433 5434 9999; do
 &gt;     echo $port
 &gt;     psql -c &quot;SELECT min(aid), max(aid) FROM accounts&quot; -p $port bench_parallel
