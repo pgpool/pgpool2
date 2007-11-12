@@ -28,6 +28,7 @@
         <li><a href="#online-recovery">Online recovery</a></li>
         <li><a href="#restriction">Restrictions</a></li>
         <li><a href="#reference">References</a></li>
+		<li><a href="#internal">internal</a></li>
       </ul>
     </div>
 	<br />
@@ -173,7 +174,7 @@ control their behaviors.</p>
 	<td align="center">O</td>
 	<td align="center">O</td>
 	<td align="center">O</td>
-	<td align="center">O</td>
+	<td align="center">0</td>
   </tr>
 
   <tr>
@@ -182,7 +183,7 @@ control their behaviors.</p>
 	<td align="center">X</td>
 	<td align="center">O</td>
 	<td align="center">X</td>
-	<td align="center">X</td>
+	<td align="center">△(*)</td>
   </tr>
 
   <tr>
@@ -191,7 +192,7 @@ control their behaviors.</p>
 	<td align="center">X</td>
 	<td align="center">O</td>
 	<td align="center">O</td>
-	<td align="center">X</td>
+	<td align="center">△(*)</td>
   </tr>
 
   <tr>
@@ -240,7 +241,7 @@ control their behaviors.</p>
   </tr>
 
 </table>
-
+(*)The function of the replication and the load-balancing cannot be used for the table preserved by dividing data in Prallel Query Mode. 
 <h2>Configuring <code>pcp.conf</code></h2>
 
 <p>pgpool-II provides the controll interface where an administrator
@@ -251,27 +252,29 @@ authentication with the interface. All modes require the
 <code>$prefix/etc/pcp.conf.sample</code> is created. Change the name
 of the file to <code>pcp.conf</code> and add your username and the
 password.
+</p>
 
 <pre>
 cp $prefix/etc/pcp.conf.sample $prefix/etc/pcp.conf
 </pre>
-
+<p>
 An empty line or a line starting with "<code>#</code>" is treated as a
 comment and will be ignored. The username and the password must be
 written on one line using the following format:
-
+</p>
 <pre>
 username:[password encrypted in md5]
 </pre>
-
+<p>
 <code>[password encrypted in md5]</code> can be produced with the
 <code>$prefix/bin/pg_md5</code> command.
+</p>
 
 <pre>
 ./pg_md5 foo
 acbd18db4cc2f85cedef654fccc4a4d8
 </pre>
-
+<p>
 The <code>pcp.conf</code> file must be readable by the user who
 executes pgpool-II.</p>
 
@@ -286,10 +289,10 @@ edit the contents.
 <pre>
 cp $prefix/etc/pgpool.conf.sample $prefix/etc/pgpool.conf
 </pre>
-
+<p>
 An empty line or a line starting with "#" is treated as a
 comment and will be ignored.</p>
-
+</p>
 <h3>raw Mode</h3>
 
 <p>In the raw mode, clients simply connect to the PostgreSQL servers
@@ -595,7 +598,7 @@ pgpool-II replaces special characters to backend information.
 
 </dl>
 
-<h4>Failover in the raw Mode</h4>
+<h4><p>Failover in the raw Mode</p></h4>
 
 <p>Failover can be performed in the raw mode if multiple servers are
 defined. pgpool-II usually accesses the backend specified by
@@ -652,7 +655,7 @@ configuration parameters in the raw mode and the below.</p>
   </dd>
 </dl>
 
-<h4>Failover in the Connection Pool Mode</h4>
+<h4><p>Failover in the Connection Pool Mode</p></h4>
 
 <p>Failover in the connection pool mode is the same as in the raw mode.</p>
 
@@ -811,7 +814,7 @@ It can be changed on service.
 
 </dl>
 
-<h4>condition for load balance</h4>
+<h4><p>condition for load balance</p></h4>
 <p>
 For the query to be load balanced, all the requirements below
       must be met:
@@ -826,7 +829,7 @@ For the query to be load balanced, all the requirements below
 		 ignore leading white space)
 </ul>
 
-<h4>Failover in the Replication Mode</h4>
+<h4><p>Failover in the Replication Mode</p></h4>
 
 <p> pgpool-II degenerates a dead backend and continues the
 service. The service can be continued if there is at least one backend
@@ -847,11 +850,10 @@ to false, and <code>master_slave_mode</code> to true.</p>
 
 <h3>Parallel Mode</h3>
 
-<p>This mode enables parallel execution of queries. The replication
-function or the load balance function can not be used while in this
-mode.</p>
+<p>This mode enables parallel execution of queries.The table is divided, and data can be given to each node. Moreover, the replication and the loadbalance function can be used at the same time. In a parallel mode, true is set to replication_mode or loadbalance_mode of pgpool.conf, master_slave is made false, and parallel_mode is made true. When you change this parameter Please reactivate pgpool-II. 
+</p>
 
-<h4>Configuring the System DB</h4>
+<h4><p>Configuring the System DB</p></h4>
 
 <p>To use the parallel mode, the System DB must be configured
 properly. The System DB maintains rules, in the format of the database
@@ -899,7 +901,7 @@ pgpool-II. The System DB's configuration is done in the
   </dd>
 </dl>
 
-<h4>Initial Configuration of the System DB</h4>
+<h4><p>Initial Configuration of the System DB</p></h4>
 
 <p>First, create the database and schema specified in the
 <code>pgpool.conf</code> file. An sample script can be found in
@@ -912,7 +914,7 @@ psql -f $prefix/share/system_db.sql pgpool
 
 </p>
 
-<h4>Registering a Partitioning Rule</h4>
+<h4><p>Registering a Partitioning Rule</p></h4>
 
 <p>The rules for data partitioning must be registered to
 <code>pgpool_catalog.dist_def</code> table.</p>
@@ -930,62 +932,58 @@ PRIMARY KEY (dbname,schema_name,table_name)
 );
 </pre>
 
-Here is the example for partitioning pgbench tables.
+
+<h4><p>Registering a Replication Rule</p></h4>
+<p>
+When the table that does the replication to one SQL sentence with the table registered in the partitioning rule with JOIN etc. is specified, information on the table that does the replication is registered in the table named pgpool_catalog.replicate_def beforehand. 
+</p>
 
 <pre>
+CREATE TABLE pgpool_catalog.replicate_def(
+	dbname TEXT,	    --database name
+	schema_name TEXT,	--schema name 
+	table_name TEXT,	--teble name
+	col_list TEXT[] NOT NULL,	-- names of table attributes
+	type_list TEXT[] NOT NULL,	-- types of table attributes
+	PRIMARY KEY (dbname,schema_name,table_name)
+);
+</pre>
+
+<h4><p>Example for partitioning pgbench tables</p></h4>
+
+<p>
+It divides into the accounts table in this example, and the replication will be done to the branches table and the tellers table. Moreover, the accounts table and the banches table assume uniting with bid The branches table registers the rule of the replication table. When three tables of the accounts table and the branches table and the tellers table are united, it is necessary to register the rule of the replication table to the tellers table beforehand.  
+</p>
+<pre>
 INSERT INTO pgpool_catalog.dist_def VALUES (
-'pgpool',
-'public',
-'accounts',
-'aid',
-ARRAY['aid','bid','abalance','filler'],
-ARRAY['integer','integer','integer','character(84)'],
-'pgpool_catalog.dist_def_accounts'
+	'pgpool',
+	'public',
+	'accounts',
+	'aid',
+	ARRAY['aid','bid','abalance','filler'],
+	ARRAY['integer','integer','integer','character(84)'],
+	'pgpool_catalog.dist_def_accounts'
 );
 
-INSERT INTO pgpool_catalog.dist_def VALUES (
-'pgpool',
-'public',
-'branches',
-'bid',
-ARRAY['bid','bbalance','filler'],
-ARRAY['integer','integer','character(84)'],
-'pgpool_catalog.dist_def_branches'
-);
-
-INSERT INTO pgpool_catalog.dist_def VALUES (
-'pgpool',
-'public',
-'tellers',
-'tid',
-ARRAY['tid','bid','tbalance','filler'],
-ARRAY['integer','integer','integer','character(84)'],
-'pgpool_catalog.dist_def_tellers'
+INSERT INTO pgpool_catalog.replicate_def VALUES (
+	'pgpool',
+	'public',
+	'branches',
+	ARRAY['bid','bbalance','filler'],
+	ARRAY['integer','integer','character(84)']
 );
 </pre>
 
 <p>The partitioning rule function (namely,
-pgpool_catalog.dist_def_accounts, pgpool_catalog.dist_def_branches, 
-pgpool_catalog.dist_def_tellers) takes a value for the partitioning
+pgpool_catalog.dist_def_accounts) takes a value for the partitioning
 key column, and returns the corresponding DB node ID. Note that ID
 must start from 0. Below is the example of each function for pgbench.
-
+</p>
 <pre>
 CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_accounts (val ANYELEMENT) RETURNS INTEGER AS '
 SELECT CASE WHEN $1 >= 1 and $1 <= 30000 THEN 0
 WHEN $1 > 30000 and $1 <= 60000 THEN 1
 ELSE 2
-END' LANGUAGE SQL;
-
-CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_branches (val ANYELEMENT) RETURNS INTEGER AS '
-SELECT 0
-' LANGUAGE SQL;
-
-CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_tellers (val ANYELEMENT) RETURNS INTEGER AS '
-SELECT CASE WHEN $1 >= 1 and $1 <= 3 THEN 0
-WHEN $1 > 3 and $1 <= 6 THEN 1
-ELSE 2
-END' LANGUAGE SQL;
 </pre>
 
 <h2><a name="hba"></a>Setting up pool_hba.conf for client authentication (HBA)</h2>
@@ -1068,11 +1066,12 @@ END' LANGUAGE SQL;
 
 <p>All the backends and the System DB (if necessary) must be started
 before starting pgpool-II.
+</p>
 
 <pre>
 pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-d]
 </pre>
-
+<p>
 <table>
   <tr><td>-c</td><td>deletes query cache</tr>
   <tr><td>-f config_file</td><td>specifies pgpool.conf</tr>
@@ -1081,15 +1080,15 @@ pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-d]
   <tr><td>-n</td><td>no daemon mode (terminal is not detached)</tr>
   <tr><td>-d</td><td>debug mode</tr>
 </table>
-
 There are two ways to stop pgpool-II. One is via PCP command
 (described later) or pgpool-II command. Below is an example of the
 pgpool-II command.
+</p>
 
 <pre>
 pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] stop
 </pre>
-
+<p>
 <table>
   <tr><td><code>-m s[mart]</code></td><td>waits for clients to
       disconnect, and shutdown (default)</td></tr>
@@ -1097,6 +1096,7 @@ pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] st
       shutdown immediately</td></tr>
   <tr><td><code>-m i[mmediate]</code></td><td>the same as <code>'-m
       f'</code></td></tr> </table>
+</p>
 
 <h1><a name="online-recovery"></a>Online Recovery</h1>
 <h2>Overview</h2>
@@ -1280,7 +1280,7 @@ recovery_2nd_stage_command = 'pgpool_recovery_pitr'
 We have finished preparing online recovery by PITR.
 </p>
 
-<h4>pgpool_remote_start </h4>
+<h4><p>pgpool_remote_start</p></h4>
 <p>
 The script is to start up postmaster process from remote host.
 pgpool-II executes as the following way.
@@ -1294,7 +1294,7 @@ pgpool-II executes as the following way.
 
 <p>
 In the sample script, we start up postmaster process over ssh.
-So you need to connect over ssh without pass phrase.
+So you need to connect over ssh without pass .
 </p>
 
 <p>
@@ -1319,7 +1319,7 @@ command. pgpool-II calls the script with three arguments.
 
 <p>
 The script copy physical file with rsync over ssh. So you need to
-connect over ssh without pass phrase.
+connect over ssh without pass .
 </p>
 
 <p>
@@ -1381,16 +1381,18 @@ was the partitioning key column,
 <pre>
 INSERT INTO t(x) VALUES (DEFAULT);
 </pre>
-
+<p>
 is invalid. Also, functions cannot be used as the value either.
+</p>
 
 <pre>
 INSERT INTO t(x) VALUES (func());
 </pre>
-
+<p>
 Constant values must be used to INSERT into the partitioning
 key. <code>SELECT INTO</code> and <code>INSERT INTO ... SELECT</code>
-are also not supported.</p>
+are also not supported.
+</p>
 
 <h3>UPDATE (for parallel mode)</h3>
 
@@ -1442,15 +1444,20 @@ END;
 
 <h3>Views / Rules (for parallel mode)</h3>
 
-<p>The same definition will be created on all the backends for views and rules.
+<p>
+The same definition will be created on all the backends for views and rules.
+</p>
 
 <pre>
 SELECT * FROM a, b where a.i = b.i
 </pre>
-
+<p>
 <code>JOIN</code>s like above will be executed within one backend, and
 then merged with the results returned by each backend. Views and Rules
 that joins across the nodes cannot be created.
+However, to JOIN tables that divide data only in the same node, VIEW can be made.
+VIEW is registered in the pgpool_catalog.dist_def table. Moreover, please register 
+a col_name and a dist_def_func. These are used when Insert for View was used. 
 </p>
 
 <h3>Functions / Triggers (for parallel mode)</h3>
@@ -1473,7 +1480,7 @@ the same.</p>
 <h3>Deadlocks (for parallel mode)</h3>
 
 <p>Deadlocks across the backends cannot be detected. For example:
-
+</p>
 <pre>
 (tellers table is partitioned using the following rule)
   tid <= 10  --> node 0
@@ -1486,16 +1493,16 @@ B) SELECT * FROM tellers WHERE tid = 1 FOR UPDATE;
 A) SELECT * FROM tellers WHERE tid = 1 FOR UPDATE;
 B) SELECT * FROM tellers WHERE tid = 11 FOR UPDATE;
 </pre>
-
+<p>
 In the case above, a single node cannot detect the deadlock, so
 pgpool-II will continually wait for the response. This phenomenon
 occurs with other queries that acquire row level locks. To avoid this
 problem, set <code>replication_timeout</code>.</p>
-
+</p>
 <p>Also, if a deadlock occurs in one node, transaction states in each
 node will not be consistent. Therefore, pgpool-II terminates the
 process if a deadlock is detected.
-
+</p>
 <pre>
 pool_read_kind: kind does not match between master(84) slot[1] (69)
 </pre>
@@ -1503,20 +1510,30 @@ pool_read_kind: kind does not match between master(84) slot[1] (69)
 <h3>Schemas (for parallel mode)</h3>
 
 <p>Objects in a schema other than public must be fully referenced like:
-
+</p>
 <pre>
 schema.object
 </pre>
-
+<p>
 pgpool-II cannot resolve the correct schema when the path was set as
 follows:
-
+</p>
 <pre>
 set search_path = xxx
 </pre>
-
+<p>
 and the schema name was omitted in a query.
+</p>
+<h3>table name、column name(for parallel mode)</h3>
+<p>
+Limitation object:Parallel mode
+</p>
+<p>
+The table and the column name that starts by pool_xx cannot be used. 
+When rewriting the query, the name is used by internal processing. 
+</p>
 
+</p>
 <h2>System DB</h2>
 
 <h3>Partitioning Rules</h3>
@@ -1590,12 +1607,12 @@ not need to be in md5 format when passing it to the PCP commands.</p>
 
 <h3>pcp_node_count</h3>
 
-<p>
 <pre>
 Format:
 pcp_node_count  _timeout_  _host_  _port_  _userid_  _passwd_
 </pre>
 
+<p>
 Displays the number of total nodes defined in <code>pgpool.conf</code>. It does 
 not distinguish nodes status between attached/detached. ALL nodes are counted.
 </p>
@@ -1603,19 +1620,19 @@ not distinguish nodes status between attached/detached. ALL nodes are counted.
 
 <h3>pcp_node_info</h3>
 
-<p>
 <pre>
 Format:
 pcp_node_info  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
 </pre>
 
+<p>
 Displays the information on the given node ID. The output example is
 as follows:
+</p>
 
 <pre>
 $ pcp_node_info 10 localhost 9898 postgres hogehoge 0
 host1 5432 1 1073741823.500000
-</pre>
 
 The result is in the following order:
 1. hostname
@@ -1629,7 +1646,7 @@ Status is represented by a digit from [0 to 3].
 2 - Node is up. Connections are pooled.
 3 - Node is down.
 </pre>
-
+<p>
 The load balance weight is displayed in normalized format.
 </p>
 
@@ -1642,24 +1659,23 @@ status 12, and BackendError will be displayed.</p>
 Format:
 pcp_proc_count  _timeout_  _host_  _port_  _userid_  _passwd_
 </pre>
-
+<p>
 Displays the list of pgpool-II child process IDs. If there is more than
 one process, IDs will be delimitted by a white space.
-
+</p>
 <h3>pcp_proc_info</h3>
 <p>
 <pre>
 Format:
 pcp_proc_info  _timeout_  _host_  _port_  _userid_  _passwd_  _processid_
 </pre>
-
+<p>
 Displays the information on the given pgpool-II child process ID. The
 output example is as follows:
-
+</p>
 <pre>
 $ pcp_proc_info 10 localhost 9898 postgres hogehoge 3815
 postgres_db postgres 1150769932 1150767351 3 0 1
-</pre>
 
 The result is in the following order:
 1. connected database name
@@ -1669,7 +1685,8 @@ The result is in the following order:
 5. protocol major version
 6. protocol minor version
 7. connection-reuse counter
-
+</pre>
+<p>
 If there is no connection to the backends, nothing will be
 displayed. If there are multiple connections, one connection's
 information will be this displayed on each line for multiple
@@ -1685,16 +1702,15 @@ status 12, and BackendError will be displayed.</p>
 Format:
 pcp_systemdb_info  _timeout_  _host_  _port_  _userid_  _passwd_
 </pre>
-
+<p>
 Displays the System DB information. The output example is as follows:
-
+</p>
 <pre>
 $ pcp_systemdb_info 10 localhost 9898 postgres hogehoge
 localhost 5432 yamaguti '' pgpool_catalog pgpool 3
 yamaguti public accounts aid 4 aid bid abalance filler integer integer integer character(84) dist_def_accounts
 yamaguti public branches bid 3 bid bbalance filler integer integer character(84) dist_def_branches
 yamaguti public tellers bid 4 tid bid tbalance filler integer integer integer character(84) dist_def_tellers
-</pre>
 
 First, the System DB information will be displayed on the first
 line. The result is in the following order:
@@ -1705,10 +1721,13 @@ line. The result is in the following order:
 5. schema name
 6. database name
 7. number of partioning rules defined
-
+</pre>
+<p>
 Second, partioning rules will be displayed on the following lines. If
 there are multiple definitions, one definition will be displayed on
 each line for multiple times. The result is in the following order:
+</p>
+<pre>
 1. targeted partitioning database name
 2. targeted partitioning schema name
 3. targeted partitioning table name
@@ -1717,19 +1736,19 @@ each line for multiple times. The result is in the following order:
 6. column names (displayed as many as said in 5.)
 7. column types (displayed as many as said in 5.)
 8. partitioning rule function name
-
+</pre>
+<p>
 If the System DB is not defined (i.e. not in pgpool-II mode, and query
 cache is disabled), it results in error with exit status 12, and
 BackendError will be displayed.</p>
 
 
 <h3>pcp_detach_node</h3>
-<p>
 <pre>
 Format:
 pcp_detach_node  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
 </pre>
-
+<p>
 Detaches the given node from pgpool-II.
 </p>
 
@@ -1745,22 +1764,26 @@ Attaches the given node to pgpool-II.
 </p>
 
 <h3>pcp_stop_pgpool</h3>
-<p>
 <pre>
 Format:
 pcp_stop_pgpool  _timeout_  _host_  _port_  _userid_  _passwd_  _mode_
 </pre>
 
+<p>
 Terminate pgpool-II process with the given shutdown mode. The availabe
 modes are as follows:
+</p>
 
+<pre>
 s	- smart mode
 f	- fast mode
 i	- immediate mode
-
+</pre>
+<p>
 If pgpool-II process does not exist, it results in error with exit
 status 8, and ConnectionError will be displayed.
-
+</p>
+<p>
 * Currently, there is no difference between the fast and immediate
 mode. pgpool-II terminates all the processes wheter there are clients
 connected to the backends.</p>
@@ -1787,6 +1810,268 @@ BACKENDERR      12     PCP process error on the server (specifying an invalid ID
 AUTHERR         13     Authorization failure
 </pre>
 </p>
+
+<h1>Inside information<a name="internal"></a></h1>
+<p>
+On The pgpool-II version 2.0.x, Extensive modifications are added compared with the version 1.x 
+Please note incompatibility with information on the version 1.x.
+</p>
+
+<h2>Parallel execution engine</h2>
+<p>
+The parallel execution engine is built into pgpool-II. 
+This engine inquires same Query as each node, and indicates the engine that transmits the result to the front end in order of the response of the node. 
+</p>
+
+<h2>Query Rewriting</h2>
+<p>
+It explains the Query rewriting that pgpool-II does in a parallel mode. 
+</p>
+<p>
+In a parallel mode, the inquiry of the retrieval system (SELECT processing) that the client transmitted is following it divided roughly Two processing is done. 
+</p>
+<pre>
+Analysis of Query
+Rewriting of Query
+</pre>
+<p>
+I will sequentially explain these two processing. 
+</p>
+<h3>Analysis of Query</h3>
+<h4><p>Introduction</p></h4>
+<p>
+The inquiry of the retrieval system that the client transmitted analyzes Query  
+based on information registered in system DB after SQL parser is passed. It 
+evaluates it to the analysis of Query by the transition of the execution status. 
+The execution status is the one that the set of a certain data acquires where or 
+it is treatable is judged here. For instance, because data is divided as for 
+the entire data sets of tables registered in the pgpool_catalog.dist_def table, 
+it is necessary to acquire it from all nodes. Oppositely, the entire data sets 
+of tables registered in the pgpool_catalog.replicate_def table are enough if 
+it doesn't acquire from all nodes but it acquires it from either of node. 
+The state that should be processed here by all nodes The state of P and the 
+state that should be processed by one node It defines it as a state of L. 
+As special ..another.. There is a state of S. This shows the state when processing
+it to all data acquired from all nodes. For instance, the sorting application. 
+After data is acquired from all nodes, it is necessary to execute the sorting 
+application to the data of the table registered in the pgpool_catalog.dist_def table. 
+</p>
+
+<p>
+Retrieval system Query is analyzed in the following order of processing, and the 
+execution status changes. In the process to which the execution status changes 
+The following processing : as for the state of S It enters the state of S. And, 
+whether it is processed with DB where is decided by the state of the final execution
+status of the last SELECT. 
+</p>
+
+<ol>
+  <li>Whether UNION, EXTRACT, and INTERCECT are used or not?
+  <li>Execution status of FROM Clause
+  <li>Change in execution status by TARGETLIST
+  <li>Change in execution status accouding to WHERE Clause
+  <li>Change in execution status according to GROUP BY Clause
+  <li>Change in execution status according to HAVING Clause
+  <li>Change in execution status according to ORDER BY Clause
+  <li>It changes into the LIMIT OFFSET predicate in the execution status. 
+  <li>Acquisition of the final execution status of SELECT
+</ol>
+
+<p>
+The relation between the final execution status of SELECT and the processed place is as follows. 
+</p>
+
+<p>
+<table border>
+		<tr><td>Execution status</td><td>Processed place</td></tr>
+		<tr><td align=center>L</td><td>It inquires of either of node. </td></tr>
+		<tr><td align=center>P</td><td>It returns it to the client through all the same node inquiries and a parallel execution engines.</td></tr>
+		<tr><td align=center>S</td><td>After it processes it with system DB, it returns it to the client. </td></tr>
+</table>
+</p>
+
+<p>
+Moreover, the above-mentioned rule adjusts to Sub-Query. In simple following Query, When p1-table is registered in pgpool_catalog.dist_def table of system DB, that is, when data is divided, the final execution status of Sub-Query : It becomes P, and call origin of Sub-Query as a result Execution status of SELECT also : It becomes P 
+</p>
+
+<pre>
+SELECT * FROM (SELECT * FROM P1-table) as P2-table;
+</pre>
+
+<p>
+Next, it explains how the execution status changes concretely. Two first of all. It explains from the execution status of the From . 
+</p>
+
+<h4><p>Execution status of FROM Clause</p></h4>
+<p>
+Retrieval system Query (SELECT) The set of data is defined according to the FROMCluase. ..the state of P and the state of L.. The state of S is taken. The execution status of the table : simply when the table specified for the FROM Clause is one It becomes the execution status of the entire data set composed of the FROM Cluase. The execution status is decided according to the JOIN method as follows when there is two or more tables or Sub-Query in the FROM Clause. 
+</p>
+
+<p>
+<table border>
+<tr><td>JOIN type</td><td align = center colspan = 3> LEFT OUTER JOIN </td><td align = center colspan = 3> RIGHT OUTER JOIN </td><td align = center colspan = 3>FULL OUTER JOIN</td><td align = center colspan = 3>　　　others　　　</td></tr>
+		<tr><td align = center>left＼right</td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td></tr>
+
+<tr><td align = center> P </td><td> S </td><td> P </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> P </td><td> S </td></tr>
+
+<tr><td align = center> L </td><td> S </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> S </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td></tr>
+
+<tr><td align = center> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td></tr>
+
+</td></tr>
+</table>
+</p>
+
+<p>
+In the following examples, P1-table with the table in the state of P :
+L1-table and L2-table : It is assumed that the table in the state of L.
+
+P1-table (left) and L1-table (right) according to the above-mentioned table then JOIN : In addition ..entering the state of P.., With the state of P L2-table in the state of L joins and the execution status of the FROM Clause It enters the state of P. 
+</p>
+
+<pre>
+SELECT * FROM P1-table,L1-table,L2-table;
+</pre>
+
+<h4><p>Change in execution status by TARGETLIST and Where Clause</p></h4>
+<p>
+In a basic Query, the same execution status as the FROM Clause is succeeded to. However, with TARGETLIST The execution status of the WHERE Clause changes in the following cases. 
+</p>
+<ol>
+	<li>When there is a subQuery
+	<li>The FROM Clause When and, there are an aggregate function and DISTINCT in TARGETLIST for P
+	<li>When the column that doesn't exist in the table (data set) defined by the FROM Clause is used
+</ol>
+<p>
+The final execution status of the subQuery The execution status of TARGETLIST and the WHERE Clause enters the state of S for the state of P or S. In the following example, when the table used by the subQuery is P, the final execution status of the subQuery : It enters the state of P. Therefore, The execution status of the WHERE Clause : without depending on the execution status of L1-table It enters the state of S, and the execution place of this Query becomes system DB. 
+</p>
+<pre>
+	SELECT * FROM L1-table where L1-table.column IN (SELECT * FROM P1-table);
+</pre>
+<p>
+The FROM Clause It changes in the state of S to have to total it after data is acquired when and, there is an aggregate function in TARGETLIST for P. Moreover, optimization by the aggregate function is done under a specific condition. 
+</p>
+<p>
+The column that doesn't exist in the table and the subQuery defined by the FROM Clause might be used for the WHERE Clause. This is generated in following correlation Sub-Query. 
+</p>
+<pre>
+	SELECT * FROM L1-table FROM L1-table.col1 IN (SELECT * FROM P1-table WHERE P1-table.col = L1-table.col1);
+</pre>
+<p>
+It is used for the above-mentioned Sub-Query External refer to L1-table for L1-table.col1. The execution status of the WHERE Clause of the Sub-Query : in this case It enters the state of S. 
+</p>
+<h4><p>Change in execution status by GROUP BY, HAVING, ORDER BY and LIMIT OFFSET</p></h4>
+
+<p>
+The execution status of the WHERE Clause It changes in the state of S when there are GROUP BY, HAVING Clause, and ORDER BY Clause and LIMIT OFFSET predicate for P. The Query where the GROUP BY Clause doesn't exist succeeds to the execution status of the WHERE Clause. Moreover, the execution status of the GROUP BY Clause is succeeded to when there is no HAVING Clause. The ORDER BY Clause and the LIMIT OFFSET predicate are also similar. 
+</p>
+
+<h4><p>When UNION, EXTRACT, and INTERSECT are used</p></h4>
+<p>
+The Query that UNION, EXTRAT, and INTERSECT use depends on the final execution status of a left SELECT sentence and right SELECT sentence. The final execution status of a left, right SELECT sentence both : It enters the state of L at the state of L. Moreover, the final execution status of a left, right SELECT sentence both : For the state of P and UNION ALL It enters the state of P. It enters the state of S for other combinations. 
+</p>
+<h4><p>Acquisition of the final execution status of SELECT</p></h4>
+<p>
+Everything the execution status Everything ..the state of L.. for L It enters the state of P for P. Besides, it enters the state of S. The load is distributed when loadbalance_mode of pgpool.conf is true for L, and it inquires of MASTER besides. Moreover, the parallel processing is done for P with a parallel execution engine. The Query rewriting at S that is the following phase is done. 
+</p>
+
+<h3>Query rewriting</h3>
+<p>
+The Query is rewritten by using the execution status acquired in an analyzing phase of the Query. As an example the state of P With P1-table the state of L It explains by the Query that uses L1-table. 
+</p>
+<pre>
+SELECT P1-table.col, L1-table.col FROM P1-table,L1-table where P1-table.col = L1-table.col order by P1-table.col;
+</pre>
+
+<p>
+In this Query Because there is ORDER BY Clause It enters the state of S, and the FROM Clause, the WHERE Clause, and TARGETLIST : It enters the state of P. It is rewritten in such a Query as follows. 
+</p>
+
+<pre>
+SELECT P1-table.col, L1-table.col FROM
+	dblink(select pool_parallel(SELECT P1-table.col, L1-table.col FROM P1-table,L1-table where P1-table.col = L1-table.col)) 
+  	order by P1-table.col;
+</pre>
+<p>
+the dblink transmits the inquiry to pgpool-II here. Moreover, pool_parallel is the function which send the Query of arguments to the parallel execution engine. The above-mentioned is an image to the end and no actually executable Query. 
+</p>
+<p>
+The FROM Clause, the WHERE Clause, and TARGETLIST all : like the above-mentioned example The parallel processing is done bringing the FROM Clause, the WHERE Clause, and TARGETLIST together for P. 
+</p>
+<p>
+The following example is seen. 
+</p>
+
+<pre>
+SELECT L1-table.col FROM L1-table WHERE L1-table.col % 2 = 0 AND L1-table.col IN (SELECT P1-table FROM P1-table) ;
+</pre>
+
+<p>
+In this example, the FROM Clause : The state of L and TARGETLIST also : The state of L and the WHERE Clause : Because it has the subQuery in the state of P It enters the state of S. As for this, rewriting is done as follows. 
+</p>
+<pre>
+	SELECT L1-table.col FROM dblink(SELECT loadbalance(SELECT L1-table.col FROM L1-table WHERE L1-table.col % 2 = 0 AND TRUE))
+		WHERE
+			L1-table.col %2 = 0 AND 
+		  L1-table.col IN 
+		  (
+		  	SELECT P1-Table FROM 
+		  	dblink(select pool_parallel(SELECT P1-table FROM P1-table))
+		  ) ;
+</pre>
+<p>
+Here, pool_loadbalance is a function that transmits Queries to either of node. 
+</p>
+
+<h3>Query rewriting by aggregate functions</h3>
+<p>
+As for the totaled Query (aggregate function and GROUP BY), it calculates, and the decreasing performance also improves the load of system DB to each node by recounting it with system DB. 
+</p>
+<p>
+First of all, rewriting the Query that pgpool-II actually does first is seen. 
+</p>
+<p>
+The Query which have state P in FROM Clause and count(*) in TARGETLIST,  The Rewriting Query is done as follows
+</p>
+<pre>
+  select count(*) from P1-table;
+
+	-> rewrite
+
+    SELECT 
+        sum(pool_c$1) as count 
+    FROM 
+        dblink(select pool_parallel('select count(*) from  P1-table'))
+					AS pool_$1g (pool_c$1 bigint); 
+</pre>
+<p>
+The condition that the Query rewriting like the above-mentioned is done is the following. 
+</p>
+<ol>
+		<li>The FROM Clause is in the state of P. 
+		<li>The column specified for the aggregate function (Only count, sum, min, max, and avg correspond) and GROUP BY is used for the target list. 
+		<li>The WHERE Clause is in the state of P. 
+		<li>Only the column defined by the aggregate function (Only count, sum, min, max, and avg correspond) used for the HAVING Clause and the FROM Clause and the column specified for GROUP BY are used. 
+</ol>
+<h3>Notes of parallel mode</h3>
+<p>
+When the Query is analyzed, the column name and the type are needed in a parallel mode. Therefore, when the expression and the function are used for TARGETLIST of the subQuery, it is necessary to give the alias and the type name in Cast. Please note processing as the text type when there are no Cast of the type in the expression and the function. As for count, when the Query rewriting by the case of the aggregate function and consolidating is done, the bigint type and sum become numeric types. It is calculated as a date type when the argument is a date type for min and max, and, besides, it is calculated as numeric. Avg is processed as sum/count. 
+</p>
+
+<h3>About the performance of a parallel mode</h3>
+<p>The final execution status of SELECT and a rough standard of the performance are as follows.
+</p>
+<p>
+<table border>
+		<tr><td>Execution status</td><td>Performance</td></tr>
+<tr><td align = center>L</td><td>There is no performance deterioration with a single purpose node excluding the overhead of pgpool-II because it doesn't use a parallel Query. </td></tr>
+<tr><td align = center>P</td><td>The parallel processing is done with high-speed, especially the sequential scanning. Moreover, it becomes easy to get on cash because the size of the table becomes small by dividing data.  </td></tr>
+<tr><td align = center>S</td><td>When the Query rewriting by aggregate functions is done, it is fast. </td></tr>
+</td></tr>
+</table>
+</p>
+
+
 
 </body>
 </html>

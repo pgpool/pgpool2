@@ -1671,15 +1671,15 @@ pgpool $B$K>pJs$r99?7$5$;$k$?$a$K$O!"(Bpgpool $B$r:F5/F0$9$kI,MW$,$"$j$^$9!#
 View $B$d(B Rule $B$O3F%N!<%I$KF1$8FbMF$,Dj5A$5$l$^$9!#(B
 </p>
 <pre>
-  SELECT * FROM a, b where a.i = b.i
+  CREATE VIEW sample AS SELECT * FROM a, b where a.i = b.i
 </pre>
 <p>
-$B$N$h$&$J(B $B%F!<%V%k7k9g(B $B$N>l9g$K!"(Ba $B$H(B b $B$O%N!<%IFb$G$N$_=hM}$r9T$$!"$=$N7k2L$r(B
-$BE}9g$7$^$9!#%N!<%I$r$^$?$,$C$?(B JOIN $B$r9T$&(B View $B$r:n@.$9$k$3$H$O$G$-$^(B
-$B$;$s!#(BRule $B$K$D$$$F$bF1MM$K$J$j$^$9!#(B
-$B$?$@$7!"%G!<%?J,3d$7$?%F!<%V%k$rF1$8%N!<%IFb$G$N$_7k9g$7$?$$>l9g$K!"(BVIEW$B$r:n@.$9$k$3$H$O(B
-$B2DG=$G$9!#$3$N>l9g$K$O(BVIEW$B$r(Bpgpool_catalog.dist_def$B%F!<%V%k$K(BVIEW$B$rEPO?$7$F$*$-$^$9!#(B
-$B$3$N>l9g$K$O!"(Bpgpool_catalog.dist_def$B%F!<%V%k$N(Bcol_name$B$H(Bdist_def_func$B$K$O!"(BVIEW$B$GDj5A$7$?(B
+$B>e5-$N$h$&$J(B $B%F!<%V%k7k9g$r4^$s$@(BVIEW$B$O!"(Ba $B$H(B b $B$OF1$8%N!<%IFb$G$N$_7k9g=hM}$r9T$$!"(B
+$B3F%N!<%I$+$i$N<B9T7k2L$rE}9g$7$^$9!#%N!<%I$r$^$?$,$C$?(B JOIN $B$r9T$&(B View $B$r:n@.$9$k(B
+$B$3$H$O$G$-$^$;$s!#(BRule $B$K$D$$$F$bF1MM$K$J$j$^$9!#$?$@$7!"%G!<%?J,3d$7$?%F!<%V%k$rF1(B
+$B$8%N!<%IFb$G$N$_7k9g$7$?$$>l9g$K!"(BVIEW$B$r:n@.$9$k$3$H$O2DG=$G$9!#$3$N>l9g$K$O(BVIEW$B$r(B
+pgpool_catalog.dist_def$B%F!<%V%k$K(BVIEW$B$rEPO?$7$F$*$-$^$9!#(B
+$B$^$?!"(Bpgpool_catalog.dist_def$B%F!<%V%k$N(Bcol_name$B$H(Bdist_def_func$B$K$O!"(BVIEW$B$GDj5A$7$?(B
 $B%+%i%`$H(BVIEW$B$KBP$7$F(BINSERT$B$,H/9T$5$l$?>l9g$K2?=h$N%N!<%I$K%/%(%j$rLd$$9g$o$;$k$N$+$r7hDj(B
 $B$9$k4X?t$rEPO?$7$F$/$@$5$$!#(B
 </p>
