@@ -183,7 +183,7 @@ control their behaviors.</p>
 	<td align="center">X</td>
 	<td align="center">O</td>
 	<td align="center">X</td>
-	<td align="center">Å¢(*)</td>
+	<td align="center">(*)</td>
   </tr>
 
   <tr>
@@ -192,7 +192,7 @@ control their behaviors.</p>
 	<td align="center">X</td>
 	<td align="center">O</td>
 	<td align="center">O</td>
-	<td align="center">Å¢(*)</td>
+	<td align="center">(*)</td>
   </tr>
 
   <tr>
@@ -350,8 +350,8 @@ servers.</p>
   </dd>
 
   <dt>pcp_timeout</dt>
-  <dd>p
-      <p>PCP connection timeout value in seconds. If a client doesn't
+  <dd>
+      <p>PCP connection timeout value in seconds. If a client does not
       respond within the set seconds, PCP closes the connection with
       the client. Default is 10 seconds. 0 means no timeout. This
       parameter can be changed on service.</p>
@@ -583,7 +583,7 @@ pgpool-II replaces special characters to backend information.
       backends. Multiple backends can be specified by adding a number
       at the end of the parameter name
       (e.g. <code>backend_data_directory0</code>).
-       If you plan not to use online recovery, you don't need to
+       If you plan not to use online recovery, you do not need to
       specify this parameter.
       </p>
 
@@ -734,7 +734,7 @@ be lost). To achieve this, however, the following change must be made:
       <ol>
 	<li>set <code>insert_lock</code> to true, and add <code>/*NO
 	    INSERT LOCK*/</code> at the beginning of an INSERT
-	    statement which you don't want to acquire the table
+	    statement which you do not want to acquire the table
 	    lock.</li>
 
 	<li>set <code>insert_lock</code> to false, and add
@@ -804,9 +804,9 @@ pgpool-II executes $PGDATA/sync-command.
 
 Note that pgpool-II <b>do not accept</b> connections and queries while
 recovery_2nd_stage_command is executed. Then if a client exists for a
-long time, the command isn't execute. pgpool-II waits until all clients
-close a connection. The command is executed when no cilent connects to
-pgpool-II.
+long time, the command is not executed. pgpool-II waits until all 
+clients close a connection. The command is executed when no cilent 
+connects to pgpool-II.
 </p>
 <p>
 It can be changed on service.
@@ -1040,8 +1040,8 @@ ELSE 2
 </p>
 </ul>
 <p>
-  Note that everything described in this section is about a client authen-
-  tication between a client and pgpool; a client still have to go through
+  Note that everything described in this section is about a client 
+  authentication between a client and pgpool; a client still have to go through
   an authentication process with PostgreSQL. As far as pool_hba is concerned,
   it does not matter if a user name and/or database name given by a client
   (i.e. psql -U testuser testdb) really exist in the backend. pool_hba only
@@ -1101,15 +1101,15 @@ pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] st
 <h1><a name="online-recovery"></a>Online Recovery</h1>
 <h2>Overview</h2>
 <p>
-pgpool-II with replication mode can sync database and attache a node
-in service. We call "online recovery".
+pgpool-II, with replication mode, can sync database and attach a node
+in service. We call it "online recovery".
 </p>
 
 <p>
 A recovery target node must have detached before doing online recovery.
 
 If you wish to add PostgreSQL server dynamically, add backend_*
-parameters and reload pgpool.conf. pgpool-II register a new node as a
+parameters and reload pgpool.conf. pgpool-II registers a new node as a
 detached node.
 </p>
 
@@ -1121,7 +1121,7 @@ detached node.
 <p>
 pgpool-II perform online recovery separated two phase. It has a few second
 or minute that a client wait connecting to pgpool-II while a recovery
-node synchronizes database. It is processed the following sequence.
+node synchronizes database. It is processed the following sequence:
 
   <ol>
     <li> CHECKPOINT
@@ -1152,27 +1152,27 @@ node synchronizes database. It is processed the following sequence.
 </p>
 
 <p>
-  Next, we synchronize data in the second step. We call it "second
+  We synchronize data in the second step. We call it "second
   stage". Before entering the second stage, pgpool-II waits until all
   clients have disconnected. It blocks any connection until finishing
   the second stage.
 
-  After that all connections are disconnected, merge updated data
-  between the first stage and the second stage. We perform final data
+  After all connections are disconnected, merge updated data between 
+  the first stage and the second stage. We perform final data
   synchronization.
 </p>
 
 <p>
-<font color="red">
-Note that there is a restriction about online recovery. If pgpool-II
-works on multiple hosts, online recovery doesn't work
-correctly. Because pgpool-II stops clients on the 2nd stage of online
-recovery. If there are some pgpool hosts, pgpool-II excepted for
-receiving online recovery request cannot block connections.
+ <font color="red">
+  Note that there is a restriction about online recovery. If pgpool-II
+  works on multiple hosts, online recovery does not work
+  correctly, because pgpool-II stops clients on the 2nd stage of online
+  recovery. If there are some pgpool hosts, pgpool-II excepted for
+  receiving online recovery request cannot block connections.
 </font>
 </p>
 
-<h2> configuration for online recovery</h2>
+<h2> Configuration for online recovery</h2>
 <p>
 Set the following parameters for online recovery in pgpool.conf.
 
@@ -1524,7 +1524,7 @@ set search_path = xxx
 <p>
 and the schema name was omitted in a query.
 </p>
-<h3>table nameÅAcolumn name(for parallel mode)</h3>
+<h3>table name - column name(for parallel mode)</h3>
 <p>
 Limitation object:Parallel mode
 </p>
@@ -1795,7 +1795,7 @@ connected to the backends.</p>
 error had occured, it will exit with the following error status.
 
 <pre>
-UNKNOWNERR      1      Unknown Error (shouldn't occur)
+UNKNOWNERR      1      Unknown Error (should not occur)
 EOFERR          2      EOF Error
 NOMEMERR        3      Memory shortage
 READERR         4      Error while reading from the server
@@ -1848,21 +1848,23 @@ it is treatable is judged here. For instance, because data is divided as for
 the entire data sets of tables registered in the pgpool_catalog.dist_def table, 
 it is necessary to acquire it from all nodes. Oppositely, the entire data sets 
 of tables registered in the pgpool_catalog.replicate_def table are enough if 
-it doesn't acquire from all nodes but it acquires it from either of node. 
-The state that should be processed here by all nodes The state of P and the 
-state that should be processed by one node It defines it as a state of L. 
-As special ..another.. There is a state of S. This shows the state when processing
-it to all data acquired from all nodes. For instance, the sorting application. 
-After data is acquired from all nodes, it is necessary to execute the sorting 
-application to the data of the table registered in the pgpool_catalog.dist_def table. 
+it does not acquire from all nodes but it acquires it from either of the 
+nodes. The state that should be processed here by all nodes The state of 
+P and the state that should be processed by one node It defines it as a 
+state of L. As special ..another.. There is a state of S. This shows 
+the state when processing it to all data acquired from all nodes. For 
+instance, the sorting application. After data is acquired from all 
+nodes, it is necessary to execute the sorting application to the data of 
+the table registered in the pgpool_catalog.dist_def table. 
 </p>
 
 <p>
-Retrieval system Query is analyzed in the following order of processing, and the 
-execution status changes. In the process to which the execution status changes 
-The following processing : as for the state of S It enters the state of S. And, 
-whether it is processed with DB where is decided by the state of the final execution
-status of the last SELECT. 
+Retrieval system Query is analyzed in the following order of 
+processing, and the  execution status changes. In the process to which  
+the execution status changes the following processing : as for the state 
+of S It enters the state of S. Also whether it is processed with DB 
+where is decided by the state of the final execution status of the last 
+SELECT. 
 </p>
 
 <ol>
@@ -1935,12 +1937,13 @@ SELECT * FROM P1-table,L1-table,L2-table;
 
 <h4><p>Change in execution status by TARGETLIST and Where Clause</p></h4>
 <p>
-In a basic Query, the same execution status as the FROM Clause is succeeded to. However, with TARGETLIST The execution status of the WHERE Clause changes in the following cases. 
+In a basic Query, the same execution status as the FROM Clause is succeeded to. However, with TARGETLIST, te execution status of the WHERE Clause changes in the following cases. 
 </p>
 <ol>
 	<li>When there is a subQuery
 	<li>The FROM Clause When and, there are an aggregate function and DISTINCT in TARGETLIST for P
-	<li>When the column that doesn't exist in the table (data set) defined by the FROM Clause is used
+	<li>When the column that does not exist in the table (data set) 
+	    defined by the FROM Clause is used
 </ol>
 <p>
 The final execution status of the subQuery The execution status of TARGETLIST and the WHERE Clause enters the state of S for the state of P or S. In the following example, when the table used by the subQuery is P, the final execution status of the subQuery : It enters the state of P. Therefore, The execution status of the WHERE Clause : without depending on the execution status of L1-table It enters the state of S, and the execution place of this Query becomes system DB. 
@@ -1952,7 +1955,7 @@ The final execution status of the subQuery The execution status of TARGETLIST an
 The FROM Clause It changes in the state of S to have to total it after data is acquired when and, there is an aggregate function in TARGETLIST for P. Moreover, optimization by the aggregate function is done under a specific condition. 
 </p>
 <p>
-The column that doesn't exist in the table and the subQuery defined by the FROM Clause might be used for the WHERE Clause. This is generated in following correlation Sub-Query. 
+The column that does not exist in the table and the subQuery defined by the FROM Clause might be used for the WHERE Clause. This is generated in following correlation Sub-Query. 
 </p>
 <pre>
 	SELECT * FROM L1-table FROM L1-table.col1 IN (SELECT * FROM P1-table WHERE P1-table.col = L1-table.col1);
@@ -1963,7 +1966,7 @@ It is used for the above-mentioned Sub-Query External refer to L1-table for L1-t
 <h4><p>Change in execution status by GROUP BY, HAVING, ORDER BY and LIMIT OFFSET</p></h4>
 
 <p>
-The execution status of the WHERE Clause It changes in the state of S when there are GROUP BY, HAVING Clause, and ORDER BY Clause and LIMIT OFFSET predicate for P. The Query where the GROUP BY Clause doesn't exist succeeds to the execution status of the WHERE Clause. Moreover, the execution status of the GROUP BY Clause is succeeded to when there is no HAVING Clause. The ORDER BY Clause and the LIMIT OFFSET predicate are also similar. 
+The execution status of the WHERE Clause It changes in the state of S when there are GROUP BY, HAVING Clause, and ORDER BY Clause and LIMIT OFFSET predicate for P. The Query where the GROUP BY Clause does not exist succeeds to the execution status of the WHERE Clause. Moreover, the execution status of the GROUP BY Clause is succeeded to when there is no HAVING Clause. The ORDER BY Clause and the LIMIT OFFSET predicate are also similar. 
 </p>
 
 <h4><p>When UNION, EXTRACT, and INTERSECT are used</p></h4>
@@ -2064,7 +2067,7 @@ When the Query is analyzed, the column name and the type are needed in a paralle
 <p>
 <table border>
 		<tr><td>Execution status</td><td>Performance</td></tr>
-<tr><td align = center>L</td><td>There is no performance deterioration with a single purpose node excluding the overhead of pgpool-II because it doesn't use a parallel Query. </td></tr>
+<tr><td align = center>L</td><td>There is no performance deterioration with a single purpose node excluding the overhead of pgpool-II because it does not use a parallel Query. </td></tr>
 <tr><td align = center>P</td><td>The parallel processing is done with high-speed, especially the sequential scanning. Moreover, it becomes easy to get on cash because the size of the table becomes small by dividing data.  </td></tr>
 <tr><td align = center>S</td><td>When the Query rewriting by aggregate functions is done, it is fast. </td></tr>
 </td></tr>
