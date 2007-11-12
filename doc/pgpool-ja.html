@@ -618,9 +618,10 @@ backend_weight は新しく追加した行を設定ファイル再読み込みで追加する
 <dd>
 <p>
 使用する PostgreSQL サーバのデータベースクラスタのパスを指定します。
-実際には、"backend_weight"の後にDBノードIDを付加して使用する複数
-のPostgreSQLを区別します。1台しかPostgreSQLを使用しない場合は、
-"backend_weight0"としてください。
+実際には、"backend_data_directory"の後にDBノードIDを付加して使用する複
+数のPostgreSQLを区別します。
+このパラメータはオンラインリカバリの際に使用します。オンラインリカバリ
+を使用しない場合には設定する必要はありません。
 </p>
 
 <p>
