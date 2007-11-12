@@ -36,18 +36,19 @@ so please refer to the PostgreSQL document if needed.</p>
   <dd>3.1. <a href="#parallel-config">Configuring Parallel Query</a></dd>
   <dd>3.2. <a href="#system-db">Configuring the System Database</a></dd>
   <dd>3.3. <a href="#dist-def">Partitioning Rule Definition</a></dd>
-  <dd>3.4. <a href="#parallel-check">Checking Parallel Query</a></dd>
+  <dd>3.4. <a href="#replicate-def">Replication Rule Definition</a></dd>
+  <dd>3.5. <a href="#parallel-check">Checking Parallel Query</a></dd>
 </dl>
 
 
 <h2>1. <a name="start">Let's Begin!</a></h2>
 
-</p>First, we must learn how to install, configure pgpool-II and
+<p>First, we must learn how to install, configure pgpool-II and
 database nodes before using replication or parallel query.</p>
 
 <h3>1.1. <a name="install">Installing pgpool-II</a></h3>
 
-</p>Installing pgpool-II is very easy. In the directory which you have
+<p>Installing pgpool-II is very easy. In the directory which you have
 extracted the source tar ball, execute the following commands.</p>
 
 <pre>
@@ -121,11 +122,11 @@ each line, and they are separated by a colon (:). Passwords are
 encrypted in md5 hash format.</p>
 
 <pre>postgres:e8a48653851e28c69d0506508fb27fc5</pre>
-
+<p>
 When you install pgpool-II, <code>pcp.conf.sample</code> is
 automatically created. We recommend copying and renaming it to
 <code>pcp.conf</code>, and edit it.
-
+</p>
 <pre>$ cp /usr/local/etc/pcp.conf.sample /usr/local/etc/pcp.conf</pre>
 
 <p>To encrypt your password into md5 hash format, use pg_md5 command,
@@ -269,7 +270,7 @@ pre-defined tables and data.</p>
 be created by <code>pgbench -i</code>. If, on all the nodes, the
 listed tables and data are created, replication is working correctly.
 
-<table border="1">
+<table border="1" align="center">
 <tr>
 <th>Table Name</th>
 <th>Number of Rows</th>
@@ -307,11 +308,9 @@ branches, tellers, accounts, and history tables on all the nodes (5432,
 </pre>
 
 <h2>3. <a name="parallel">Your First Parallel Query</a></h2>
-
-<p>As we have seen in the previous section, replication copies the
-queries so that each database node will hold the exact copy. Parallel
-query, on the other hand, distributes particular ranges of the data to
-each node according to pre-defined rules.</p>
+<p>
+Data within the different range is stored in two or more data base nodes in a parallel Query. This is called a partitioning. Moreover, the same data as two or more data base nodes can be reproduced with partitioning.  
+</p>
 
 <p>To enable parallel query in pgpool-II, you must set up another
 database called "System Database" (we will denote it as SystemDB from
@@ -342,28 +341,38 @@ configured so that pgpool-II accepts those connections.</p>
 
 <pre>listen_addresses = '*'</pre>
 
-<p><em>Note</em>: Parallel query and replication cannot be enabled at
-the same time. To use the parallel query function,
-<code>replication_mode</code> must be set to fales. Also, parallel
-query and replication store data in different format; therefore,
+<p>
+Attention: The replication is not done for the table that does the partitioning
+though a parallel Query and the replication can be made effective at the same time. 
+The data base made by Moreover, because the composition of the data stored in 
+the data base is different in a parallel Query and the replication, that is, 
 "bench_replication" created in section "2. <a href="#replication">Your
 First Replication</a>" cannot be reused.</p>
 
 <pre>
-replication_mode = false
+replication_mode = true
 load_balance_mode = false
 </pre>
+<p>
+OR
+</p>
+<pre>
+replication_mode = false
+load_balance_mode = true
+</pre>
 
-<p>In this section, we will set <code>parallel_mode</code> to true,
-<code>listen_addresses</code> to '*', <code>replication_mode</code>
-and <code>load_balance_mode</code> to false.</p>
+<p>In this section, we will set <code>parallel_mode and load_balance_mode</code> to true,
+<code>listen_addresses</code> to '*', <code>replication_mode</code>to false.</p>
 
 <h3>3.2. <a name="system-db">Configuring SystemDB</a></h3>
 
-<p>SystemDB is just another PostgreSQL database with dblink installed,
-and "dist_def" table to hold the distribution rules is defined. You
-can place SystemDB in a separate machine, or it can co-exist within
-one of the database nodes.</p>
+<p>
+There is no difference in the data base the system data base and usually. 
+However, the function of dblink is defined in the system data base, and 
+the table that stores a distribution rule.. It is necessary to define dist_def. Moreover,
+the data base node One can make the system data base, and pgpool-II can be 
+distributed in the load by connecting the cascade. 
+</p>
 
 <p>In this section, we will create SystemDB within the 5432 port
 node. The following list is the configuration parameters for
@@ -387,7 +396,7 @@ $ createuser -p 5432 pgpool
 $ createdb -p 5432 -O pgpool pgpool
 </pre>
 
-<h4>3.2.1. Installing dblink</h4>
+<h4><p>3.2.1. Installing dblink</p></h4>
 
 <p>Next, we must install dblink into "pgpool" database. dblink is one
 of the tools included in <code>contrib</code> directory in the
@@ -409,7 +418,7 @@ following command to define dblink functions.</p>
 
 <pre>$ psql -f /usr/local/pgsql/share/contrib/dblink.sql -p 5432 pgpool</pre>
 
-<h4>3.2.2. Defining dist_def table</h4>
+<h4><p>3.2.2. Defining dist_def table</p></h4>
 
 <p>Next, we will define a table called "dist_def" to hold the
 distribution rules. When pgpool-II was installed, a file called
@@ -461,6 +470,28 @@ stored.</p>
 must rewrite queries so that the results sent back from the backend
 nodes can be merged into one result.</p>
 
+<h4><p>3.2.2. Defining replicate_def table</p></h4>
+<p>
+When the table that does the replication to one SQL sentence with the table 
+registered in dist_def by uniting tables is specified, information on the 
+table that does the replication (replication rule) is registered in the table
+named replicate_def beforehand. 
+The replicate_def table has already been made when making it from the 
+system_db.sql file when dist_def is defined. 
+The replicate_def table is defined as follows.
+</p>
+<pre>
+CREATE TABLE pgpool_catalog.dist_def (
+    dbname text, -- database name
+    schema_name text, -- schema name
+    table_name text, -- table name
+    col_list text[] NOT NULL, -- list of column names
+    type_list text[] NOT NULL, -- list of column types
+    PRIMARY KEY (dbname, schema_name, table_name)
+);
+</pre>
+
+
 <h3>3.3. <a name="dist-def">Defining Distribution Rules</a></h3>
 
 <p>In this tutorial, we will define rules to distribute pgbench's
@@ -478,34 +509,12 @@ pgpool-II source code directory.</p>
 
 <p>Here is the explanation of <code>dist_def_pgbench.sql</code>.</p>
 
-<p>Inside <code>dist_def_pgbench.sql</code>, we are inserting four
-rows into "dist_def" table. There are four different distribution
-functions for each table (accounts, branches, tellers, and
-history). For key-columns, bid, tid, and aid are defined for branches,
-tellers, and accounts respectively (all of which are primary keys),
-and for history, tid is the key-column.</p>
+<p>Inside <code>dist_def_pgbench.sql</code>, we are inserting one
+row into "dist_def" table. There is a distribution
+function for accounts table. 
+For key-column, aid is defined for accounts respectively (which is primary keys)</p>
 
 <pre>
-INSERT INTO pgpool_catalog.dist_def VALUES (
-    'bench_parallel',
-    'public',
-    'branches',
-    'bid',
-    ARRAY['bid', 'bbalance', 'filler'],
-    ARRAY['integer', 'integer', 'character(88)'],
-    'pgpool_catalog.dist_def_branches'
-);
-
-INSERT INTO pgpool_catalog.dist_def VALUES (
-    'bench_parallel',
-    'public',
-    'tellers',
-    'tid',
-    ARRAY['tid', 'bid', 'tbalance', 'filler'],
-    ARRAY['integer', 'integer', 'integer', 'character(84)'],
-    'pgpool_catalog.dist_def_tellers'
-);
-
 INSERT INTO pgpool_catalog.dist_def VALUES (
     'bench_parallel',
     'public',
@@ -515,53 +524,23 @@ INSERT INTO pgpool_catalog.dist_def VALUES (
     ARRAY['integer', 'integer', 'integer', 'character(84)'],
     'pgpool_catalog.dist_def_accounts'
 );
-
-INSERT INTO pgpool_catalog.dist_def VALUES (
-    'bench_parallel',
-    'public',
-    'history',
-    'tid',
-    ARRAY['tid', 'bid', 'aid', 'delta', 'mtime', 'filler'],
-    ARRAY['integer', 'integer', 'integer', 'integer', 'timestamp without time zone', 'character(22)'],
-    'pgpool_catalog.dist_def_history'
-);
 </pre>
 
-<p>Now, we must define the distribution functions for each table. Note
+<p>Now, we must define the distribution function for accounts table. Note
 that you can use the same function from different tables. Also, you
 can define functions using languages other than SQL (e.g. PL/pgSQL,
 PL/Tcl, etc.).</p>
 
-<p>The following table is the summary of tables and data, which will
-be created by <code>pgbench -i -s 3</code>.
+<p>
+The accounts table when data is initialized specifying 3 scale factor,
+The value of the aid is 1 to 300000.
+The function is defined so that data is evenly distributed to three data base nodes. 
+</p>
+<p>
+SQL function will be defined as the return of the number of the data base node. 
+</p>
 
-<table border="1">
-<tr>
-<th>Table Name</th>
-<th>Number of Rows</th>
-</tr>
-<tr>
-<td>branches</td>
-<td>3</td>
-</tr>
-<tr>
-<td>tellers</td>
-<td>30</td>
-</tr>
-<tr>
-<td>accounts</td>
-<td>300000</td>
-</tr>
-<tr>
-<td>history</td>
-<td>0</td>
-</tr>
-</table>
-
-<p>We are going to define four functions which distribute the shown
-data equally among three database nodes. These functions return 0, 1,
-or 2 depending on the given argument.</p>
-
+</p>
 <pre>CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_branches(anyelement)
 RETURNS integer AS $$
     SELECT CASE WHEN $1 &gt; 0 AND $1 &lt;= 1 THEN 0
@@ -569,32 +548,46 @@ RETURNS integer AS $$
         ELSE 2
     END;
 $$ LANGUAGE sql;
+</pre>
 
-CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_tellers(anyelement)
-RETURNS integer AS $$
-    SELECT CASE WHEN $1 &gt; 0 AND $1 &lt;= 10 THEN 0
-        WHEN $1 &gt; 10 AND $1 &lt;= 20 THEN 1
-        ELSE 2
-    END;
-$$ LANGUAGE sql;
+<h3>3.4. <a name="replicate-def">Defining Replication Rules</a></h3>
+<p>
+The replication rule is the one that which table decides the replication whether to be done. 
+</p>
 
-CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_accounts(anyelement)
-RETURNS integer AS $$
-    SELECT CASE WHEN $1 &gt; 0 AND $1 &lt;= 100000 THEN 0
-        WHEN $1 &gt; 100000 AND $1 &lt;= 200000 THEN 1
-        ELSE 2
-    END;
-$$ LANGUAGE sql;
+<p>
+Here, it is made with pgbench With the branches table and  tellers  table are registered.
 
-CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_history(anyelement)
-RETURNS integer AS $$
-    SELECT CASE WHEN $1 &gt; 0 AND $1 &lt;= 10 THEN 0
-        WHEN $1 &gt; 10 AND $1 &lt;= 20 THEN 1
-        ELSE 2
-    END;
-$$ LANGUAGE sql;</pre>
+As a result, the accounts table and the inquiry that uses the branches table 
+and the tellers table become possible. 
+</p>
+<pre>
+INSERT INTO pgpool_catalog.dist_def VALUES (
+    'bench_parallel',
+    'public',
+    'branches',
+    ARRAY['bid', 'bbalance', 'filler'],
+    ARRAY['integer', 'integer', 'character(88)']
+);
 
-<h3>3.4. <a name="parallel-check">Checking Parallel Query</a></h3>
+INSERT INTO pgpool_catalog.dist_def VALUES (
+    'bench_parallel',
+    'public',
+    'tellers',
+    ARRAY['tid', 'bid', 'tbalance', 'filler'],
+    ARRAY['integer', 'integer', 'integer', 'character(84)']
+);
+</pre>
+<p>
+Replicate_def_pgbench.sql is prepared in sample directory.
+
+In the directory that progresses the source code to define a replicate rule by using this as follows The psql command is executed. 
+</p>
+<pre>
+$ psql -f sample/replicate_def_pgbench.sql -p 5432 pgpool
+</pre>
+
+<h3>3.5. <a name="parallel-check">Checking Parallel Query</a></h3>
 
 <p>To reflect the changes in <code>pgpool.conf</code>, pgpool-II must
 be restarted. Please refer to section "1.5 <a
@@ -625,44 +618,26 @@ execute a SELECT query via pgpool-II and directly on the backend, and
 compare two results. If everything is configured right,
 "bench_parallel" should be distributed as follows.</p>
 
-<table border="1">
+<table border="1" align ="center">
 <tr>
-<th rowspan="2">Table Name</td>
-<th rowspan="2">Key-Column Name</td>
-<th colspan="3">Values</th>
+<th >Table Name</th>
+<th >the number of lines</th>
 </tr>
 <tr>
-<th>Node 1</td>
-<th>Node 2</td>
-<th>Node 3</td>
+		<td>branches</td>
+		<td>3</td>
 </tr>
 <tr>
-<td>branches</td>
-<td>bid</td>
-<td>1</td>
-<td>2</td>
-<td>3</td>
+		<td>tellers</td>
+		<td>30</td>
 </tr>
 <tr>
-<td>tellers</td>
-<td>tid</td>
-<td>1 - 10</td>
-<td>11 - 20</td>
-<td>21 - 30</td>
+		<td>accounts</td>
+		<td>300000</td>
 </tr>
 <tr>
-<td>accounts</td>
-<td>aid</td>
-<td>1 - 100000</td>
-<td>100001 - 200000</td>
-<td>200001 - 300000</td>
-</tr>
-<tr>
-<td>history</td>
-<td>tid</td>
-<td>1 - 10</td>
-<td>11 - 20</td>
-<td>21 - 30</td>
+		<td>history</td>
+		<td>0</td>
 </tr>
 </table>
 
