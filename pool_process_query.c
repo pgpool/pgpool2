@@ -4129,7 +4129,7 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 static int load_balance_enabled(POOL_CONNECTION_POOL *backend, Node* node, char *sql)
 {
 	return (pool_config->load_balance_mode &&
-			DUAL_MODE &&
+			(DUAL_MODE || pool_config->parallel_mode) &&
 			MAJOR(backend) == PROTO_MAJOR_V3 &&
 			TSTATE(backend) == 'I' &&
 			is_select_query(node, sql) &&
