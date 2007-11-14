@@ -1401,7 +1401,7 @@ static void build_join_table(RewriteQuery *message,char *alias, int type)
 	if(lstate =='L' && state =='P')
 	{
 		int total = left_num + right_num;
-		if(type == JRIGHT || type == JNORMAL || JINNER || JNATURAL_INNER)
+		if(type == JRIGHT || type == JNORMAL || type == JINNER || type == JNATURAL_INNER)
 			join->state = 'P';
 		else if((join->col_num <= total) && (type == JNATURAL_RIGHT))
 			join->state = 'P';
@@ -1413,7 +1413,7 @@ static void build_join_table(RewriteQuery *message,char *alias, int type)
 	else if(lstate =='P' && state == 'L')
 	{
 		int total = left_num + right_num;
-		if(type == JRIGHT || type == JNORMAL || JINNER || JNATURAL_INNER)
+		if(type == JLEFT || type == JNORMAL || type == JINNER || type == JNATURAL_INNER)
 			join->state ='P';
 		else if((join->col_num <= total) && (type == JNATURAL_LEFT))
 			join->state = 'P';
