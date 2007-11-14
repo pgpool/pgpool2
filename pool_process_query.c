@@ -206,6 +206,7 @@ static void query_ps_status(char *query, POOL_CONNECTION_POOL *backend);		/* sho
 
 static int is_select_pgcatalog = 0;
 static int is_select_for_update = 0; /* also for SELECT ... INTO */
+static bool is_parallel_table = false;
 static char *parsed_query = NULL;
 static POOL_MEMORY_POOL *prepare_memory_context = NULL;
 static int receive_sync = 0;
@@ -217,6 +218,7 @@ static int extract_ntuples(char *message);
 static int detect_error(POOL_CONNECTION *master, char *error_code, int major, bool unread);
 static int detect_deadlock_error(POOL_CONNECTION *master, int major);
 static int detect_postmaster_down_error(POOL_CONNECTION *master, int major);
+static bool is_partition_table(POOL_CONNECTION_POOL *backend, Node *node);
 
 POOL_STATUS pool_process_query(POOL_CONNECTION *frontend, 
 							   POOL_CONNECTION_POOL *backend,
@@ -923,6 +925,8 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	if (parse_tree_list != NIL)
 	{
 		node = (Node *) lfirst(list_head(parse_tree_list));
+
+		is_parallel_table = is_partition_table(backend,node);
 
 		if (pool_config->enable_query_cache &&
 			SYSDB_STATUS == CON_UP &&
@@ -3665,7 +3669,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 		 * if we are in the parallel mode, we have to sum up the number
 		 * of affected rows
 		 */
-		if (PARALLEL_MODE &&
+		if (PARALLEL_MODE && is_parallel_table && 
 			(strstr(p, "UPDATE") || strstr(p, "DELETE")))
 		{
 			delete_or_update = 1;
@@ -4570,7 +4574,7 @@ POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backe
 
     for(;;)
     {
-        status = pool_read(backend, &kind, sizeof(kind));
+        status = pool_read_parallel(backend, &kind, sizeof(kind));
         if (status < 0)
         {
             pool_error("OneNode_do_command: error while reading message kind");
@@ -4586,7 +4590,7 @@ POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backe
     /*
      *      * Expecting ReadyForQuery
      *           */
-    status = pool_read(backend, &kind, sizeof(kind));
+    status = pool_read_parallel(backend, &kind, sizeof(kind));
     if (status < 0)
     {
         pool_error("OneNode_do_command: error while reading message kind");
@@ -4697,6 +4701,40 @@ static POOL_STATUS insert_lock(POOL_CONNECTION_POOL *backend, char *query, Inser
 	}
 
 	return POOL_CONTINUE;
+}
+
+static bool is_partition_table(POOL_CONNECTION_POOL *backend, Node *node)
+{
+	DistDefInfo *info = NULL;
+	RangeVar *var = NULL;;
+
+	if (IsA(node, UpdateStmt))
+	{
+		UpdateStmt *update = (UpdateStmt*) node;
+
+		if(!IsA(update->relation,RangeVar))
+			return false;
+
+		var = (RangeVar *) update->relation;
+	}
+	else if (IsA(node, DeleteStmt))
+	{
+		DeleteStmt *delete = (DeleteStmt*) node;
+
+		if(!IsA(delete->relation,RangeVar))
+			return false;
+		
+		var = (RangeVar *) delete->relation;
+	} else
+		return false;
+		
+	info = pool_get_dist_def_info(MASTER_CONNECTION(backend)->sp->database,
+									  var->schemaname,
+									  var->relname);
+	if(info)
+		return true;
+	else
+		return false;
 }
 
 /*
