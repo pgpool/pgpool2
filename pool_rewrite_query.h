@@ -121,6 +121,7 @@ typedef struct {
 	bool select_union;
 	bool select_range;
 	bool aggregate;
+	bool retlock;
 	Aggexpr *aggexpr;
 	RangeInfo **range;
 	int rangeinfo_num;

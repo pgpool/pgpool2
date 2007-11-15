@@ -562,6 +562,20 @@ static void _rewriteList(Node *BaseSelect, RewriteQuery *message, ConInfoTodblin
 	bool from;
 	int current_select = message->current_select;
 	int next = -1;
+	bool lock = false;
+	AnalyzeSelect *analyze;
+
+	analyze = message->analyze[current_select];
+		
+	if(message->r_code == SELECT_DEFAULT && message->ignore_rewrite == -1 && 
+				analyze->part == SELECT_TARGETLIST)
+	{
+		if(analyze->retlock == false)
+		{
+			lock = true;
+			analyze->retlock = true;
+		}
+	}
 	
 	foreach(lc, node)
 	{
@@ -581,8 +595,6 @@ static void _rewriteList(Node *BaseSelect, RewriteQuery *message, ConInfoTodblin
 		{
 			if(lfirst(lc) && IsA(lfirst(lc),JoinExpr))
 			{
-				int select_num = message->current_select;
-				AnalyzeSelect *analyze = message->analyze[select_num];
 				if(!analyze->join)
 				{
 					analyze->join = (JoinTable *) palloc(sizeof(JoinTable));
@@ -605,8 +617,19 @@ static void _rewriteList(Node *BaseSelect, RewriteQuery *message, ConInfoTodblin
 		if(message->r_code == SELECT_ANALYZE && message->fromClause)
 		{
 			if(lfirst(lc))
+			{
 				if(IsA(lfirst(lc),JoinExpr) || IsA(lfirst(lc),RangeVar) || IsA(lfirst(lc),RangeSubselect))
 					build_virtual_table(message,lfirst(lc),next);
+
+				if(IsA(lfirst(lc),JoinExpr))
+				{
+					JoinExpr *join = lfirst(lc);
+					if (join->quals)
+					{
+						_rewriteNode(BaseSelect, message, dblink, str, join->quals);
+					}
+				}
+			}
 
 			if(loop == 0)
 			{
@@ -636,10 +659,20 @@ static void _rewriteList(Node *BaseSelect, RewriteQuery *message, ConInfoTodblin
 		loop++;
 
 		if(message->r_code == SELECT_DEFAULT && message->ignore_rewrite == -1 && 
-				 message->analyze[current_select]->part == SELECT_TARGETLIST)
+				 analyze->part == SELECT_TARGETLIST)
 		{
 			pool_debug("_rewriteList select=%d,count=%d", current_select,message->analyze[current_select]->ret_count);
-			message->analyze[current_select]->ret_count++;
+			if(lock)
+				message->analyze[current_select]->ret_count++;
+		}
+	}
+
+	if(message->r_code == SELECT_DEFAULT && message->ignore_rewrite == -1 && 
+				analyze->part == SELECT_TARGETLIST)
+	{
+		if(analyze->retlock && lock)
+		{
+			analyze->retlock = false;
 		}
 	}
 }
@@ -2407,6 +2440,7 @@ initSelectStmt(RewriteQuery *message,SelectStmt *node)
 		analyze->rarg_count = -1;
 		analyze->larg_count = -1;
 		analyze->ret_count = 0;
+		analyze->retlock = false;
 
 		for(i = 0; i< 8; i++)
 			analyze->partstate[i] = (char)0;
@@ -4326,9 +4360,9 @@ _rewriteValue(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, 
 			break;
 
 		case T_String:
-			delay_string_append_char(message, str, "'");
+			/* delay_string_append_char(message, str, "'"); */
 			delay_string_append_char(message, str, escape_string(value->val.str));
-			delay_string_append_char(message, str, "'");
+			/* delay_string_append_char(message, str, "'"); */
 			break;
 
 		case T_Null:
@@ -5065,7 +5099,7 @@ AliasToResTargetCondition(RewriteQuery *message,String *str)
 	{
 		ret = n_analyze->ret_count;
 		col_no = n_analyze->select_ret->return_list[n_analyze->ret_count];
-		pool_debug("_rewirteResTarget select no =%d,ret_no = %d,col_no =%d,colname=%s", select_no,ret,col_no,n_analyze->select_ret->col_list[ret]);
+		pool_debug("AliasToResTargetCondition select no =%d,ret_no = %d,col_no =%d,colname=%s", select_no,ret,col_no,n_analyze->select_ret->col_list[ret]);
 		delay_string_append_char(message, str, " AS ");
 		snprintf(buf, 16, "%d", col_no);
 		delay_string_append_char(message, str,"pool_c$");
@@ -5077,7 +5111,7 @@ AliasToResTargetCondition(RewriteQuery *message,String *str)
 	{
 		ret = u_analyze->ret_count;
 		col_no = u_analyze->select_ret->return_list[u_analyze->ret_count];
-		pool_debug("_rewirteResTarget(union) select now=%d up=%d,ret_no = %d,col_no =%d,colname=%s", select_no,select_no-1,ret,col_no,u_analyze->select_ret->col_list[ret]);
+		pool_debug("AliasToResTargetCondition(union) select now=%d up=%d,ret_no = %d,col_no =%d,colname=%s", select_no,select_no-1,ret,col_no,u_analyze->select_ret->col_list[ret]);
 		delay_string_append_char(message, str, " AS ");
 		snprintf(buf, 16, "%d", col_no);
 		delay_string_append_char(message, str,"pool_c$");
@@ -8099,17 +8133,70 @@ _rewriteRangeSubselect(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink 
 	delay_string_append_char(message, str, "(");
 	_rewriteNode(BaseSelect, message, dblink, str, node->subquery);
 	delay_string_append_char(message, str, ")");
-	_rewriteNode(BaseSelect, message, dblink, str, node->alias);
 
 	if(message->r_code == SELECT_ANALYZE)
 	{	
 		AnalyzeSelect *analyze;
 		analyze=message->analyze[sub_no];
 
+		if(node->alias && node->alias->colnames)
+		{
+			ListCell   *lc;
+			int num = list_length(node->alias->colnames);
+			int ret_num = message->analyze[last + 1]->select_ret->col_num;
+			if(num == ret_num)
+			{	
+				char **col_list;
+				int i = 0;
+				col_list = (char **) palloc(sizeof(char *) * num);
+		
+				foreach(lc,node->alias->colnames)
+				{
+					Node *n = lfirst(lc);
+					Value *value = (Value *) n;
+					col_list[i] = value->val.str;
+					i++;
+				}
+				message->analyze[last+1]->select_ret->col_list = col_list;
+			}
+		}
+
+		
+
 		message->analyze[last]->select_range = true;
 
 		pool_debug("_rewriteTRangeSubSelect: select range ture %d",sub_no);
 		build_range_info(message,NULL,NULL,analyze->select_ret,table_name,last,sub_no);
+	} 
+	else if(message->r_code == SELECT_DEFAULT && message->ignore_rewrite == -1)
+	{
+		Alias *alias = (Alias *) node->alias;
+		delay_string_append_char(message, str, " AS ");
+		delay_string_append_char(message, str, alias->aliasname);
+		delay_string_append_char(message, str, " ");
+
+		if (alias->colnames)
+		{
+			AnalyzeSelect *analyze;
+			int ret_num;
+			int i;
+			analyze = message->analyze[last + 1];
+			ret_num = analyze->select_ret->col_num;
+			delay_string_append_char(message, str, "(");
+
+			for (i = 0; i< ret_num; i++)
+			{
+				char buf[16];	
+				snprintf(buf, 16, "%d", analyze->select_ret->return_list[i]);
+				delay_string_append_char(message, str," pool_c$");
+				delay_string_append_char(message, str,buf);
+				if(i != ret_num -1)
+					delay_string_append_char(message, str,",");	
+			}
+			delay_string_append_char(message, str, ")");
+		}
+	} else {
+		_rewriteNode(BaseSelect, message, dblink, str, node->alias);
 	}
 }
 
