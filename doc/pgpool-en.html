@@ -1062,6 +1062,30 @@ ELSE 2
   service-configuration file is installed as "share/pgpool.pam" under
   the install directory.
 </p>
+
+<h2>Setting method of Query cache</h2>
+<p>The Query cache can be used in all modes in pgpool-II. The setting of pgpool.conf is set as follows.</p>
+<pre>
+enable_query_cache = true
+</pre>
+
+<p>
+Moreover, please make the following tables in the System DB. 
+</p>
+<pre>
+CREATE TABLE pgpool_catalog.query_cache (
+  hash TEXT,
+  query TEXT,
+  value bytea,
+  dbname TEXT,
+  create_time TIMESTAMP WITH TIME ZONE,
+  PRIMARY KEY(hash, dbname)
+);
+</pre>
+<p>
+However, please rewrite it suitably when you use a different schema because the schema name is "pgpool_catalog" in this example. 
+</p>
+
 <h1>Starting/Stopping pgpool-II<a name="start"></a></h1>
 
 <p>All the backends and the System DB (if necessary) must be started

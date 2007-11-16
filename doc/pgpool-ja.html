@@ -1227,6 +1227,32 @@ CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_accounts (val ANYELEMENT) RET
    ださい。
 </p>
 
+<h2>クエリキャッシュの設定方法</h2>
+
+<p>
+	pgpool-IIでは、すべてのモードでクエリキャッシュを利用することができます。
+  利用する場合には、pgpool.confの設定を以下のように設定します。
+<pre>
+enable_query_cache = true
+</pre>
+<p>
+また、システムDBに以下のテーブルを作成してください。
+</p>
+<pre>
+CREATE TABLE pgpool_catalog.query_cache (
+  hash TEXT,
+  query TEXT,
+  value bytea,
+  dbname TEXT,
+  create_time TIMESTAMP WITH TIME ZONE,
+  PRIMARY KEY(hash, dbname)
+);
+</pre>
+<p>
+ただし，この例ではスキーマ名が"pgpool_catalog"となっているので，違うスキーマを使う場合は適当に書き換えてください．
+</p>
+
+
 <h1>pgpool-IIの起動と停止<a name="start"></a></h1>
 <p>
 以上で設定が終わったので，各DBノードを起動し，必要ならばシステムDBも起動
