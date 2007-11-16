@@ -141,6 +141,9 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	{
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
+			if (!VALID_BACKEND(i))
+				continue;
+
 			pool_debug("trying clear text password authentication");
 
 			authkind = do_clear_text_password(CONNECTION(cp, i), frontend, 0, protoMajor);
@@ -158,6 +161,9 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	{
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
+			if (!VALID_BACKEND(i))
+				continue;
+
 			pool_debug("trying crypt authentication");
 
 			authkind = do_crypt(CONNECTION(cp, i), frontend, 0, protoMajor);
@@ -185,6 +191,9 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
+			if (!VALID_BACKEND(i))
+				continue;
+
 			pool_debug("trying md5 authentication");
 
 			authkind = do_md5(CONNECTION(cp, i), frontend, 0, protoMajor);
