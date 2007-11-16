@@ -178,6 +178,7 @@ PGCONFIG = @PGCONFIG@
 PGSQL_INCLUDE_DIR = @PGSQL_INCLUDE_DIR@
 PGSQL_LIB_DIR = @PGSQL_LIB_DIR@
 RANLIB = @RANLIB@
+SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
@@ -242,7 +243,7 @@ pgpool_SOURCES = pool.h pool_type.h version.h pgpool.conf.sample \
 pg_md5_SOURCES = pg_md5.c md5.c md5.h
 sysconf_DATA = pgpool.conf.sample pcp.conf.sample pool_hba.conf.sample
 pkgdata_DATA = sql/system_db.sql sample/pgpool.pam
-AM_CPPFLAGS = -Wall -Wmissing-prototypes -Wmissing-declarations -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
+AM_CPPFLAGS = -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
 pgpool_LDADD = -L@PGSQL_LIB_DIR@ -lpq parser/libsql-parser.a pcp/libpcp.la parser/nodes.o
 @enable_rpath_FALSE@pgpool_LDFLAGS = 
 @enable_rpath_TRUE@pgpool_LDFLAGS = -rpath @PGSQL_LIB_DIR@ -rpath $(libdir)
@@ -271,10 +272,10 @@ EXTRA_DIST = pgpool.8.in sql/system_db.sql sample/pgpool.pam doc/pgpool-ja.html 
 		test/parser/README test/parser/main.c \
 		test/parser/pool.h test/parser/run-test \
 		test/parser/parse_schedule \
-		test/jdbc/*.java test/jdbc/pgpool.properties test/jdbc/prepare.sql test/jdbc/run.sh \
+		test/jdbc/*.java test/jdbc/README.euc_jp test/jdbc/pgpool.properties test/jdbc/prepare.sql test/jdbc/run.sh \
 		test/jdbc/expected/autocommit test/jdbc/expected/batch \
 		test/jdbc/expected/column test/jdbc/expected/lock test/jdbc/expected/select \
-		test/jdbc/expected/update \
+		test/jdbc/expected/update test/jdbc/expected/insert \
 		redhat/pgpool.init redhat/pgpool.sysconfig
 
 SUBDIRS = parser pcp
