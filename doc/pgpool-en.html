@@ -1298,9 +1298,22 @@ So you need to connect over ssh without pass .
 </p>
 
 <p>
+If you recover with PITR, you need to expand a base backup. Then,
 postmaster automatically starts up with PITR. Then it accepts
 connections.
 </p>
+
+<pre>
+#! /bin/sh
+DEST=$1
+DESTDIR=$2
+PGCTL=/usr/local/pgsql/bin/pg_ctl
+
+# Expand a base backup
+ssh -T $DEST 'cd /data/; tar zxf pgsql.tar.gz' 2>/dev/null 1>/dev/null < /dev/null
+# Startup PostgreSQL server
+ssh -T $DEST $PGCTL -w -D $DESTDIR start 2>/dev/null 1>/dev/null < /dev/null &
+</pre>
 
 <h3>Online recovery with rsync.</h3>
 <p>
@@ -1335,6 +1348,13 @@ recovery_2nd_stage_command = 'pgpool_recovery'
 <p>
 For doing online recovery, you use pcp_recovery_node command or
 operate on pgpoolAdmin.
+</p>
+
+<p>
+Note that you need to pass a greater number to the first argument of
+pcp_recovery_node. It is a timeout parameter. If you use pgpoolAdmin, 
+set "_PGPOOL2_PCP_TIMEOUT " parameter to a greater number in
+pgmgt.conf.php.
 </p>
 
 
