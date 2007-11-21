@@ -1,3 +1,8 @@
+2007-11-21  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Fix segmentation fault with UPDATE or
+	  DELETE query. 
+
 2007-11-16  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* pgpool-II 2.0: See NEWS
