@@ -926,7 +926,8 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	{
 		node = (Node *) lfirst(list_head(parse_tree_list));
 
-		is_parallel_table = is_partition_table(backend,node);
+		if (PARALLEL_MODE)
+			is_parallel_table = is_partition_table(backend,node);
 
 		if (pool_config->enable_query_cache &&
 			SYSDB_STATUS == CON_UP &&
