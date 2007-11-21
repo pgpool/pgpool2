@@ -1187,6 +1187,16 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			return POOL_ERROR;
 		}
 	}
+	else
+	{  /* syntax error */
+		if (MASTER_SLAVE)
+		{
+			pool_debug("SimpleQuery: set master_slave_dml query: %s", string);
+			master_slave_was_enabled = 1;
+			MASTER_SLAVE = 0;
+			master_slave_dml = 1;
+		}		
+	}
 
 	if (MAJOR(backend) == PROTO_MAJOR_V2 && is_start_transaction_query(node))
 	{
