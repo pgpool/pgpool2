@@ -169,10 +169,12 @@ static int exec_recovery(PGconn *conn, BackendInfo *backend, char first_stage)
 		return 0;
 	}
 
-	sprintf(recovery_command, "SELECT pgpool_recovery('%s', '%s', '%s')",
-			script,
-			hostname,
-			backend->backend_data_directory);
+	snprintf(recovery_command,
+			 sizeof(recovery_command),
+			 "SELECT pgpool_recovery('%s', '%s', '%s')",
+			 script,
+			 hostname,
+			 backend->backend_data_directory);
 
 	pool_debug("exec_recovery: start recovery");
 	result = PQexec(conn, recovery_command);
@@ -198,9 +200,10 @@ static int exec_remote_start(PGconn *conn, BackendInfo *backend)
 	else
 		hostname = backend->backend_hostname;
 
-	sprintf(recovery_command, "SELECT pgpool_remote_start('%s', '%s')",
-			hostname,
-			backend->backend_data_directory);
+	snprintf(recovery_command, sizeof(recovery_command),
+			 "SELECT pgpool_remote_start('%s', '%s')",
+			 hostname,
+			 backend->backend_data_directory);
 
 	pool_debug("exec_remote_start: start pgpool_remote_start");
 	result = PQexec(conn, recovery_command);
@@ -218,10 +221,11 @@ static int exec_remote_start(PGconn *conn, BackendInfo *backend)
 static int check_postmaster_started(BackendInfo *backend)
 {
 	int i;
-	char port_str[10];
+	char port_str[16];
 	PGconn *conn;
 
-	snprintf(port_str, 10, "%d", backend->backend_port);
+	snprintf(port_str, sizeof(port_str),
+			 "%d", backend->backend_port);
 	for (i = 0; i < WAIT_RETRY_COUNT; i++)
 	{
 		ConnStatusType r;
@@ -244,10 +248,11 @@ static int check_postmaster_started(BackendInfo *backend)
 
 static PGconn *connect_backend_libpq(BackendInfo *backend)
 {
-	char port_str[10];
+	char port_str[16];
 	PGconn *conn;
 
-	sprintf(port_str, "%d", backend->backend_port);
+	snprintf(port_str, sizeof(port_str),
+			 "%d", backend->backend_port);
 	conn = PQsetdbLogin(backend->backend_hostname,
 						port_str,
 						NULL,
