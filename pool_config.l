@@ -569,6 +569,20 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			pool_debug("replication_stop_on_mismatch: %d", v);
 			pool_config->replication_stop_on_mismatch = v;
 		}
+		else if (!strcmp(key, "replicate_select") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			int v = eval_logical(yytext);
+
+			if (v < 0)
+			{
+				pool_error("pool_config: invalid value %s for %s", yytext, key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_debug("replicate_select: %d", v);
+			pool_config->replicate_select = v;
+		}
 		else if (!strcmp(key, "reset_query_list") &&
 				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
