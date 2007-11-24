@@ -6,7 +6,10 @@
 <title>pgpool-II README</title>
 </head>
 
-<!-- hhmts start -->Last modified: Wed Jun  6 17:29:52 JST 2007 <!-- hhmts end -->
+<!-- hhmts start -->
+Last modified: Sat Nov 24 21:48:54 JST 2007
+<!-- hhmts end -->
+
 <body bgcolor="#ffffff">
 <a name="top"></a>
 <table border="0" cellpadding="2" cellspacing="1">
@@ -35,8 +38,7 @@
 
 		<div class="header_small" align="center">
 
-			(last update: 2007/11/17)<br />
-			[<a href="http://www2b.biglobe.ne.jp/~caco/pgpool/">Japanese page</a>]		</div>	</td>
+			[<a href="pgpool-ja.html">Japanese page</a>]		</div>	</td>
     <td valign="top" style="border-left:1px dotted #cccccc;">
 	
 
@@ -375,7 +377,7 @@ servers.</p>
       leaks and other unexpected errors. Default value is 300 (5
       minutes). 0 disables this function. Note that processes that have
       not accepted any connections are not applicable for this.
-      This parameter can be changed on service.
+      You need to reload pgpool.conf if you change the value.
       </p>
   </dd>
 
@@ -385,15 +387,34 @@ servers.</p>
       connections from clients. This parameter is useful on the server
       if it is too busy that child_life_time and connection_life_time
       are not effective.
-      This parameter can be changed on service.
+      You need to reload pgpool.conf if you change the value.
       </p>
   </dd>
+
+  <dt>client_idle_limit
+  <dd>
+  <p>Disconnect the connection to a client being idle for
+       client_idle_limit seconds since the last query has been sent.
+       This is usefull for preventing for pgpool childs from being
+       ocuppied by a lazy client or TCP/IP connection between client and
+       pgpool is accidentally down. The default value for
+       client_idle_limit is 0, which means the functionality is turned
+       off. You need to reload pgpool.conf if you change
+       client_idle_limit.</p>
+
+  <dt>authentication_timeout
+  <dd>
+  <p>Specify the timeout for pgpool authentication. 0 disables the time
+      out, which is the default. You need to restart pgpool-II if you
+      change authentication_timeout.</p>
 
   <dt>logdir</dt>
   <dd>
       <p>The directory path of the logs created by
       pgpool-II. Currently, only the <code>pgpool.pid</code> file is
-      created. Default is <code>'/tmp'</code>.</p>
+      created. Default is <code>'/tmp'</code>.
+      You need to restart pgpool-II if you change logdir.
+       </p>
   </dd>
 
   <dt>print_timestamp</dt>
@@ -401,6 +422,7 @@ servers.</p>
       <p>Add timestamps to the logs when set to true. Default is
       true.
       This parameter can be changed on service.
+      You need to reload pgpool.conf if you change print_timestamp.
       </p>
   </dd>
 
@@ -426,7 +448,7 @@ servers.</p>
       backend, so <code>max_connections</code> in the
       <code>postgresql.conf</code> needs to be incremented as
       needed.
-      This parameter can be changed on service.
+      You need to reload pgpool.conf if you change the value.
      </p>
   </dd>
 
@@ -434,13 +456,17 @@ servers.</p>
   <dd>
       <p>This parameter specifies the interval between the health
       checks in seconds. Default is 0, which means health check is
-      disabled.</p>
+      disabled.
+      You need to reload pgpool.conf if you change health_check_period.
+       </p>
   </dd>
       
   <dt>health_check_user</dt>
   <dd>
       <p>The user name to perform health check. This user must exist
-      in all the PostgreSQL backends.</p>
+      in all the PostgreSQL backends.
+      You need to reload pgpool.conf if you change health_check_user.
+       </p>
   </dd>
 
 <dt>failover_command
@@ -461,7 +487,7 @@ pgpool-II replaces special characters to backend information.
 <tr><td>%%</td><td>'%' character</td></tr>
 </table>
 </center>
-This parameter can be changed on service.
+You need to reload pgpool.conf if you change failover_command.
 </p>
 
 <dt>failback_command
@@ -481,7 +507,7 @@ pgpool-II replaces special characters to backend information.
 <tr><td>%%</td><td>'%' character</td></tr>
 </table>
 </center>
-      This parameter can be changed on service.
+      You need to reload pgpool.conf if you change failback_command.
 </p>
 
   <dt>ignore_leading_white_space</dt>
@@ -489,7 +515,9 @@ pgpool-II replaces special characters to backend information.
       <p>pgpool-II ignores white spaces at the beginning of SQL
       queries while in the load balance mode. It is useful for using
       APIs like DBI/DBD:Pg which adds white spaces against the user's
-      will. This parameter can be changed on service.</p>
+      will. 
+      You need to reload pgpool.conf if you change the value.
+       </p>
   </dd>
 
   <dt>log_statement</dt>
@@ -497,7 +525,8 @@ pgpool-II replaces special characters to backend information.
       <p>Produces SQL log messages when true. This is similar to the
       log_statement parameter in PostgreSQL. It produces logs even if the
       debug option was not passed to pgpool-II at startup.
-      This parameter can be changed on service.</p>
+      You need to reload pgpool.conf if you change the value.
+       </p>
   </dd>
 
   <dt>log_hostname</dt>
@@ -505,7 +534,7 @@ pgpool-II replaces special characters to backend information.
     <p>
     If true, ps command status will show the client's hostname instead
     of an IP address. Also, if log_connections is enabled, hostname will
-    be logged. This parameter can be changed on service.
+    be logged. You need to reload pgpool.conf if you change the value.
     </p>
   </dd>
     
@@ -513,7 +542,8 @@ pgpool-II replaces special characters to backend information.
   <dd>
     <p>
     If true, all incoming connections will be printed to the log.
-    This parameter can be changed on service.</p>
+    You need to reload pgpool.conf if you change the value.
+    </p>
   </dd>
     
   <dt>enable_pool_hba</dt>
@@ -521,7 +551,7 @@ pgpool-II replaces special characters to backend information.
     <p>
     If true, use pool_hba.conf for client authentication. See <a href="#hba">
     Setting up pool_hba.conf for client authentication</a>.
-    This parameter can only be set at server start.
+    You need to restart pgpool-II if you change the value.
     </p>
   </dd>
 
@@ -1957,8 +1987,8 @@ Retrieval system Query (SELECT) The set of data is defined according to the FROM
 
 <p>
 <table border>
-<tr><td>JOIN type</td><td align = center colspan = 3> LEFT OUTER JOIN </td><td align = center colspan = 3> RIGHT OUTER JOIN </td><td align = center colspan = 3>FULL OUTER JOIN</td><td align = center colspan = 3>Å@Å@Å@othersÅ@Å@Å@</td></tr>
-		<tr><td align = center>leftÅ_right</td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td></tr>
+<tr><td>JOIN type</td><td align = center colspan = 3> LEFT OUTER JOIN </td><td align = center colspan = 3> RIGHT OUTER JOIN </td><td align = center colspan = 3>FULL OUTER JOIN</td><td align = center colspan = 3>$B!!!!!!(Bothers$B!!!!!!(B</td></tr>
+		<tr><td align = center>left$B!@(Bright</td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td></tr>
 
 <tr><td align = center> P </td><td> S </td><td> P </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> P </td><td> S </td></tr>
 
@@ -2120,7 +2150,10 @@ When the Query is analyzed, the column name and the type are needed in a paralle
 </table>
 </p>
 
-
+<h1>Tutorial</h1>
+<p>
+<a href="tutorial-en.html">A tutorial for pgpool-II</a> is available.
+</p>
 
 </body>
 </html>
