@@ -1,3 +1,8 @@
+2007-11-16  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_auth.c: Fix segmentation fault in a password authentication
+	  when a node is down. 
+
 2007-10-18  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* pool_query_cache.c: Although the second argument of
