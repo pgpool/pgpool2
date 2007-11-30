@@ -52,28 +52,33 @@ static int getInsertRule(ListCell *lc,List *list_t ,DistDefInfo *info,int div_ke
 {
 	int loop_counter = 0;
 	int node_number = -1;
+	ListCell *cell;
 
-	foreach(lc,list_t)
+	if(list_t->length != 1)
+		return -1;
+
+  cell = list_head(list_t);
+
+	if(!cell && !IsA(cell,List))
+		return 1;
+
+	foreach(lc,lfirst(cell))
 	{
-		Node *n;
-		ResTarget *target;
 		A_Const *constant;
 		Value value;
 		void *obj = NULL;
 
-		n = lfirst(lc);
-		target = (ResTarget *) n;
+		obj = lfirst(lc);
 
-		if(target->val && IsA(target->val, TypeCast))
+		if(obj && IsA(obj, TypeCast))
 		{
-			TypeCast *type = (TypeCast *) target->val;
+			TypeCast *type = (TypeCast *) obj;
 			obj = type->arg;
+
 			if(!obj)
 			{
 				return -1;
 			}
-		} else {
-			obj = target->val;
 		}
 
 		if(obj && !IsA(obj, A_Const))
@@ -119,7 +124,7 @@ static void examInsertStmt(Node *node,POOL_CONNECTION_POOL *backend, RewriteQuer
 	int dist_def_flag = 0;
 	InsertStmt *insert = (InsertStmt *) node;
 
-    message->type = node->type;
+  message->type = node->type;
 
 
 	/* insert target table */
@@ -147,7 +152,7 @@ static void examInsertStmt(Node *node,POOL_CONNECTION_POOL *backend, RewriteQuer
 	}
 
 	/* the source SELECT ? */
-	if (insert->selectStmt)
+	if (insert->selectStmt && ((SelectStmt *)insert->selectStmt)->targetList)
 	{
 		/* send  error message to frontend */
 		message->r_code = INSERT_SQL_RESTRICTION;
@@ -156,7 +161,8 @@ static void examInsertStmt(Node *node,POOL_CONNECTION_POOL *backend, RewriteQuer
 		return;
 	}
 
-	list_t = (List *) insert->cols;
+	list_t = (List *)(((SelectStmt *)insert->selectStmt)->valuesLists);
+
 	if (!list_t)
 	{
 		/* send  error message to frontend */
@@ -168,7 +174,6 @@ static void examInsertStmt(Node *node,POOL_CONNECTION_POOL *backend, RewriteQuer
 	
 	/* number of target list */
 	cell_num = list_t->length;
-
 
 	/* Is the target columns ?*/
 	if (!insert->cols)
@@ -187,7 +192,7 @@ static void examInsertStmt(Node *node,POOL_CONNECTION_POOL *backend, RewriteQuer
 			return;
 		}
 
-    }
+  }
 	else 
 	{
 		List *list_cols = (List *) insert->cols;
