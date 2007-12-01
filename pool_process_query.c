@@ -3643,6 +3643,13 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 			free(pending_prepared_portal);
 		}
 	}
+	else if (kind == 'E' && pending_function)
+	{
+		/* PREPARE or DEALLOCATE is error.
+		 * Free pending portal object.
+		 */
+		free(pending_prepared_portal);
+	}
 	else if (kind == 'C' && select_in_transaction)
 		select_in_transaction = 0;
 
