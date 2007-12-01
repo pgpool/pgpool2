@@ -3895,7 +3895,6 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 
 	if (kind == 'S') /* Sync message? */
 	{
-		pool_log("YYYYY");
 		receive_sync = 1;
 	}
 
