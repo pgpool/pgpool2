@@ -3979,16 +3979,42 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 		}
 	}
 
+	/* Close message with prepared statement name. */
 	else if (kind == 'C' && *p == 'S' && *(p + 1))
 	{
-		name = strdup(p+1);
+		POOL_MEMORY_POOL *old_context = pool_memory;
+		DeallocateStmt *deallocate_stmt;
+
+		pool_memory = prepare_memory_context;
+		name = pstrdup(p+1);
 		if (name == NULL)
 		{
 			pool_error("SimpleForwardToBackend: malloc failed: %s", strerror(errno));
+			pool_memory = old_context;
 			return POOL_END;
 		}
+
+		/* Translate from Close message to DEALLOCATE statement.*/
+		deallocate_stmt = palloc(sizeof(DeallocateStmt));
+		if (deallocate_stmt == NULL)
+		{
+			pool_error("SimpleForwardToBackend: malloc failed: %s", strerror(errno));
+			pool_memory = old_context;
+			return POOL_END;
+		}
+		deallocate_stmt->name = name;
+
+		pending_prepared_portal = malloc(sizeof(Portal));
+		if (pending_prepared_portal == NULL)
+		{
+			pool_error("SimpleForwardToBackend: malloc failed: %s", strerror(errno));
+			pool_memory = old_context;
+			return POOL_END;
+		}
+		pending_prepared_portal->stmt = (Node *)deallocate_stmt;
+		pending_prepared_portal->portal_name = NULL;
 		pending_function = del_prepared_list;
-		pending_prepared_portal = NULL;
+		pool_memory = old_context;
 	}
 
 	if (kind == 'B' || kind == 'D' || kind == 'C')
