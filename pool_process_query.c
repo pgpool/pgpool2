@@ -4477,7 +4477,7 @@ retry_read_packet:
 		return POOL_END;
 	}
 
-	if (kind != 'C')
+	if (kind == 'E')
 	{
 		pool_log("do_command: backend does not successfully complete command %s status %c", query, kind);
 	}
