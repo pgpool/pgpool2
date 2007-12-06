@@ -173,7 +173,20 @@ static void examInsertStmt(Node *node,POOL_CONNECTION_POOL *backend, RewriteQuer
 	}
 	
 	/* number of target list */
-	cell_num = list_t->length;
+
+	if(list_t->length == 1 && IsA(lfirst(list_head(list_t)),List))
+	{
+		cell_num = ((List *) lfirst(list_head(list_t)))->length;
+	} 
+	else 
+	{
+			/* send  error message to frontend */
+			message->r_code = INSERT_SQL_RESTRICTION;
+			message->r_node = -1;
+			message->rewrite_query = pool_error_message("cannot analzye this InsertStmt");
+			return;
+  }
+
 
 	/* Is the target columns ?*/
 	if (!insert->cols)
@@ -181,7 +194,7 @@ static void examInsertStmt(Node *node,POOL_CONNECTION_POOL *backend, RewriteQuer
 		div_key_num = info->dist_key_col_id;
 		dist_def_flag = 1;
 
-		pool_debug("div key num %d, div_key columname %s",div_key_num,info->col_list[div_key_num]);
+		pool_debug("cell number %d, div key num %d, div_key columname %s",cell_num,div_key_num,info->col_list[div_key_num]);
 
 		if (cell_num < div_key_num)
 		{
