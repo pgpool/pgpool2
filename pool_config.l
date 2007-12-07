@@ -28,6 +28,7 @@
 #include "pool.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define CHECK_CONTEXT(mask, context) ((mask) & (context))

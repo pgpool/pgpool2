@@ -49,6 +49,10 @@
 #include <fcntl.h>
 #endif
 
+#ifdef HAVE_CRYPT_H
+#include <crypt.h>
+#endif
+
 #include "pool.h"
 #include "pool_ip.h"
 #include "md5.h"

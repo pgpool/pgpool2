@@ -416,7 +416,7 @@ pcp_node_count(void)
 	{
 		if (strcmp(buf, "CommandComplete") == 0)
 		{
-			index = memchr(buf, '\0', rsize) + 1;
+			index = (char *) memchr(buf, '\0', rsize) + 1;
 			if (index != NULL)
 			{
 				int ret = atoi(index);
@@ -519,19 +519,19 @@ pcp_node_info(int nid)
 			// FIXME
 //			rsize -= strlen("CommandComplete") + 1;
 
- 			index = memchr(buf, '\0', rsize) + 1;
+ 			index = (char *) memchr(buf, '\0', rsize) + 1;
 			if (index != NULL)
 				strcpy(backend_info->backend_hostname, index);
 
-			index = memchr(index, '\0', rsize) + 1;
+			index = (char *) memchr(index, '\0', rsize) + 1;
 			if (index != NULL)
 				backend_info->backend_port = atoi(index);
 
-			index = memchr(index, '\0', rsize) + 1;
+			index = (char *) memchr(index, '\0', rsize) + 1;
 			if (index != NULL)
 				backend_info->backend_status = atoi(index);
 
-			index = memchr(index, '\0', rsize) + 1;
+			index = (char *) memchr(index, '\0', rsize) + 1;
 			if (index != NULL)
 				backend_info->backend_weight = atof(index);
 
@@ -619,7 +619,7 @@ pcp_process_count(int *pnum)
 			char *index = NULL;
 			int i;
 
-			index = memchr(buf, '\0', rsize) + 1;
+			index = (char *) memchr(buf, '\0', rsize) + 1;
 			process_count = atoi(index);
 
 			process_list = (int *)malloc(sizeof(int) * process_count);
@@ -632,7 +632,7 @@ pcp_process_count(int *pnum)
 
 			for (i = 0; i < process_count; i++)
 			{
-				index = memchr(index, '\0', rsize) + 1;
+				index = (char *) memchr(index, '\0', rsize) + 1;
 				process_list[i] = atoi(index);
 			}
 
@@ -728,7 +728,7 @@ pcp_process_info(int pid, int *array_size)
 
 			if (strcmp(buf, "ArraySize") == 0)
 			{
-				index = memchr(buf, '\0', rsize) + 1;
+				index = (char *) memchr(buf, '\0', rsize) + 1;
 				if (index != NULL)
 					ci_size = atoi(index);
 
@@ -754,31 +754,31 @@ pcp_process_info(int pid, int *array_size)
 			}
 			else if (strcmp(buf, "ProcessInfo") == 0)
 			{
-				index = memchr(buf, '\0', rsize) + 1;
+				index = (char *) memchr(buf, '\0', rsize) + 1;
 				if (index != NULL)
 					strcpy(process_info->connection_info[offset].database, index);
 			
-				index = memchr(index, '\0', rsize) + 1;
+				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
 					strcpy(process_info->connection_info[offset].user, index);
 			
-				index = memchr(index, '\0', rsize) + 1;
+				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
 					process_info->start_time = atol(index);
 
-				index = memchr(index, '\0', rsize) + 1;
+				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
 					process_info->connection_info[offset].create_time = atol(index);
 
-				index = memchr(index, '\0', rsize) + 1;
+				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
 					process_info->connection_info[offset].major = atoi(index);
 
-				index = memchr(index, '\0', rsize) + 1;
+				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
 					process_info->connection_info[offset].minor = atoi(index);
 
-				index = memchr(index, '\0', rsize) + 1;
+				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
 					process_info->connection_info[offset].counter = atoi(index);
 
@@ -883,7 +883,7 @@ pcp_systemdb_info(void)
 					return NULL;
 				}
 
-				index = memchr(buf, '\0', rsize) + 1;
+				index = (char *) memchr(buf, '\0', rsize) + 1;
 				if (index != NULL)
 					systemdb_info->hostname = strdup(index);
 				if (systemdb_info->hostname == NULL)
@@ -894,11 +894,11 @@ pcp_systemdb_info(void)
 					return NULL;
 				}				
 			
-				index = memchr(index, '\0', rsize) + 1;
+				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
 					systemdb_info->port = atoi(index);
 			
-				index = memchr(index, '\0', rsize) + 1;
+				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
 					systemdb_info->user = strdup(index);
 				if (systemdb_info->user == NULL)
@@ -909,7 +909,7 @@ pcp_systemdb_info(void)
 					return NULL;
 				}
 
-				index = memchr(index, '\0', rsize) + 1;
+				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
 					systemdb_info->password = strdup(index);
 				if (systemdb_info->password == NULL)
@@ -920,7 +920,7 @@ pcp_systemdb_info(void)
 					return NULL;
 				}
 
-				index = memchr(index, '\0', rsize) + 1;
+				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
 					systemdb_info->schema_name = strdup(index);
 				if (systemdb_info->schema_name == NULL)
@@ -931,7 +931,7 @@ pcp_systemdb_info(void)
 					return NULL;
 				}
 
-				index = memchr(index, '\0', rsize) + 1;
+				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
 					systemdb_info->database_name = strdup(index);
 				if (systemdb_info->database_name == NULL)
@@ -942,11 +942,11 @@ pcp_systemdb_info(void)
 					return NULL;
 				}
 			
-				index = memchr(index, '\0', rsize) + 1;
+				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
 					systemdb_info->dist_def_num = atoi(index);
 
-				index = memchr(index, '\0', rsize) + 1;
+				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
 					systemdb_info->system_db_status = atoi(index);
 
@@ -977,7 +977,7 @@ pcp_systemdb_info(void)
 					return NULL;
 				}
 
-				index = memchr(buf, '\0', rsize) + 1;
+				index = (char *) memchr(buf, '\0', rsize) + 1;
 				if (index != NULL)
 					dist_def_info->dbname = strdup(index);
 				if (dist_def_info->dbname == NULL)
@@ -988,7 +988,7 @@ pcp_systemdb_info(void)
 					return NULL;
 				}
 			
-				index = memchr(index, '\0', rsize) + 1;
+				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
 					dist_def_info->schema_name = strdup(index);
 				if (dist_def_info->schema_name == NULL)
@@ -999,7 +999,7 @@ pcp_systemdb_info(void)
 					return NULL;
 				}
 			
-				index = memchr(index, '\0', rsize) + 1;
+				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
 					dist_def_info->table_name = strdup(index);
 				if (dist_def_info->table_name == NULL)
@@ -1010,7 +1010,7 @@ pcp_systemdb_info(void)
 					return NULL;
 				}
 
-				index = memchr(index, '\0', rsize) + 1;
+				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
 					dist_def_info->dist_key_col_name = strdup(index);
 				if (dist_def_info->dist_key_col_name == NULL)
@@ -1021,7 +1021,7 @@ pcp_systemdb_info(void)
 					return NULL;
 				}
 
-				index = memchr(index, '\0', rsize) + 1;
+				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
 					dist_def_info->col_num = atoi(index);
 
@@ -1036,7 +1036,7 @@ pcp_systemdb_info(void)
 				}
 				for (i = 0; i < dist_def_info->col_num; i++)
 				{
-					index = memchr(index, '\0', rsize) + 1;
+					index = (char *) memchr(index, '\0', rsize) + 1;
 					if (index != NULL)
 						dist_def_info->col_list[i] = strdup(index);
 					if (dist_def_info->col_list[i] == NULL)
@@ -1059,7 +1059,7 @@ pcp_systemdb_info(void)
 				}
 				for (i = 0; i < dist_def_info->col_num; i++)
 				{
-					index = memchr(index, '\0', rsize) + 1;
+					index = (char *) memchr(index, '\0', rsize) + 1;
 					if (index != NULL)
 						dist_def_info->type_list[i] = strdup(index);
 					if (dist_def_info->type_list[i] == NULL)
@@ -1071,7 +1071,7 @@ pcp_systemdb_info(void)
 					}
 				}
 
-				index = memchr(index, '\0', rsize) + 1;
+				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
 					dist_def_info->dist_def_func = strdup(index);
 				if (dist_def_info->dist_def_func == NULL)

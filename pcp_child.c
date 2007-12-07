@@ -966,7 +966,7 @@ user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len)
 
 	/* strcpy() should be OK, but use strncpy() to be extra careful */
 	strncpy(packet_username, buf, MAX_USER_PASSWD_LEN);
-	index = memchr(buf, '\0', MAX_USER_PASSWD_LEN) + 1;
+	index = (char *) memchr(buf, '\0', MAX_USER_PASSWD_LEN) + 1;
 	if (index == NULL)
 	{
 		pool_debug("pcp_child: error while reading authentication packet");
