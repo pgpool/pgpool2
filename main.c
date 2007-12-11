@@ -467,11 +467,11 @@ int main(int argc, char **argv)
 
 			if (retrycnt == 0)
 			{
-				pool_log("starting health checking");
+				pool_debug("starting health checking");
 			}
 			else
 			{
-				pool_log("retrying %d th health checking", retrycnt);
+				pool_debug("retrying %d th health checking", retrycnt);
 			}
 
 			if (pool_config->health_check_timeout > 0)
