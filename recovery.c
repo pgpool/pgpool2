@@ -47,6 +47,8 @@ int start_recovery(int recovery_node)
 	BackendInfo *recovery_backend;
 	PGconn *conn;
 
+	pool_log("starting recovering node %d", recovery_node);
+
 	if (VALID_BACKEND(recovery_node))
 	{
 		pool_error("start_recovery: backend node %d is alive", recovery_node);
@@ -73,11 +75,18 @@ int start_recovery(int recovery_node)
 		pool_error("start_recovery: CHECKPOINT failed");
 		return 1;
 	}
+
+	pool_log("CHECKPOINT in the 1st stage done");
+
 	if (exec_recovery(conn, recovery_backend, 1) != 0)
 	{
 		PQfinish(conn);
 		return 1;
 	}
+
+	pool_log("1st stage is done");
+
+	pool_log("starting 2nd stage");
 
 	/* 2nd stage */
 	*InRecovery = 1;
@@ -88,12 +97,17 @@ int start_recovery(int recovery_node)
 		return 1;
 	}
 
+	pool_log("all connections from clients have been closed");
+
 	if (exec_checkpoint(conn) != 0)
 	{
 		PQfinish(conn);
 		pool_error("start_recovery: CHECKPOINT failed");
 		return 1;
 	}
+
+	pool_log("CHECKPOINT in the 2nd stage done");
+
 	if (exec_recovery(conn, recovery_backend, 0) != 0)
 	{
 		PQfinish(conn);
@@ -113,10 +127,14 @@ int start_recovery(int recovery_node)
 		return 1;
 	}
 
+	pool_log("%d node restarted", recovery_node);
+
 	send_failback_request(recovery_node);
 	pause(); /* wait for failback */
 
 	PQfinish(conn);
+
+	pool_log("recovery done");
 
 	return 0;
 }
@@ -175,6 +193,8 @@ static int exec_recovery(PGconn *conn, BackendInfo *backend, char first_stage)
 			 script,
 			 hostname,
 			 backend->backend_data_directory);
+
+	pool_log("starting recovery command: \"%s\"", recovery_command);
 
 	pool_debug("exec_recovery: start recovery");
 	result = PQexec(conn, recovery_command);
