@@ -209,7 +209,6 @@ static int is_select_for_update = 0; /* also for SELECT ... INTO */
 static bool is_parallel_table = false;
 static char *parsed_query = NULL;
 static POOL_MEMORY_POOL *prepare_memory_context = NULL;
-static int receive_sync = 0;
 
 static void query_cache_register(char kind, POOL_CONNECTION *frontend, char *database, char *data, int data_len);
 static POOL_STATUS start_internal_transaction(POOL_CONNECTION_POOL *backend, Node *node);
@@ -1646,6 +1645,7 @@ static POOL_STATUS Parse(POOL_CONNECTION *frontend,
 					if (!VALID_BACKEND(i))
 						continue;
 
+					/* send sync message */
 					send_extended_protocol_message(backend, i, "S", 0, "");
 				}
 
@@ -1738,6 +1738,7 @@ static POOL_STATUS Parse(POOL_CONNECTION *frontend,
 		if (pool_flush(frontend) < 0)
 			return POOL_ERROR;
 
+		/* Ignore warning messages */
 		if (kind != 'N')
 			break;
 	}
@@ -1847,8 +1848,11 @@ static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		mismatch_ntuples = 0;
 	}
 
-	/* if a transaction is started for insert lock, we need to close it. */
-	if (internal_transaction_started && receive_sync == 0)
+	/* 
+	 * if a transaction is started for insert lock, we need to close
+	 * the transaction.
+	 */
+	if (internal_transaction_started)
 	{
 		int len;
 		signed char state;
@@ -1873,8 +1877,6 @@ static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		if (end_internal_transaction(backend) != POOL_CONTINUE)
 			return POOL_ERROR;
 	}
-
-	receive_sync = 0;
 
 	if (MAJOR(backend) == PROTO_MAJOR_V3)
 	{
@@ -3900,11 +3902,6 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 	char *name;
 	POOL_STATUS ret;
 
-	if (kind == 'S') /* Sync message? */
-	{
-		receive_sync = 1;
-	}
-
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
 		if (VALID_BACKEND(i))
@@ -4139,6 +4136,15 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 {
 	char *query;
 	int qn;
+
+	/*
+	 * Reset all state variables
+	 */
+	in_load_balance = 0;
+	force_replication = 0;
+	internal_transaction_started = 0;
+	mismatch_ntuples = 0;
+	select_in_transaction = 0;
 
 	qn = pool_config->num_reset_queries;
 
