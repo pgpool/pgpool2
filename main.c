@@ -93,6 +93,7 @@ static void reload_config(void);
 static int pool_pause(struct timeval *timeout);
 static void pool_sleep(unsigned int second);
 static void kill_all_children(int sig);
+static int get_next_master_node(void);
 
 static RETSIGTYPE exit_handler(int sig);
 static RETSIGTYPE reap_handler(int sig);
@@ -1036,6 +1037,19 @@ static RETSIGTYPE exit_handler(int sig)
 	myexit(0);
 }
 
+/*
+ * calculate next master node id
+ */
+static int get_next_master_node(void)
+{
+	int i;
+	for (i=0;i<pool_config->backend_desc->num_backends;i++)
+	{
+		if (VALID_BACKEND(i))
+			break;
+	}
+	return i;
+}
 
 /*
  * handle SIGUSR1
@@ -1057,6 +1071,7 @@ static void failover(void)
 {
 	int node_id;
 	int i;
+	int new_master;
 
 	pool_debug("failover_handler called");
 
@@ -1158,19 +1173,15 @@ static void failover(void)
 		}
 	}
 
-	for (i=0;i<pool_config->backend_desc->num_backends;i++)
-	{
-		if (VALID_BACKEND(i))
-			break;
-	}
+	new_master = get_next_master_node();
 
-	if (i == pool_config->backend_desc->num_backends)
+	if (new_master == pool_config->backend_desc->num_backends)
 	{
 		pool_error("failover_handler: no valid DB node found");
 	}
 	else
 	{
-		if (Req_info->master_node_id == i && *InRecovery == 0)
+		if (Req_info->master_node_id == new_master && *InRecovery == 0)
 		{
 			pool_log("failover_handler: do not restart pgpool. same master node %d was selected", i);
 			if (Req_info->kind == NODE_UP_REQUEST)
@@ -1193,7 +1204,7 @@ static void failover(void)
 		}
 
 		pool_log("failover_handler: set new master node: %d", i);
-		Req_info->master_node_id = i;
+		Req_info->master_node_id = new_master;
 	}
 
 	/* kill all children */
@@ -1728,6 +1739,11 @@ static int trigger_failover_command(int node, const char *command_line)
 
 					case 'h': /* host name */
 						string_append_char(exec_cmd, info->backend_hostname);
+						break;
+
+					case 'm': /* master node id */
+						snprintf(port_buf, sizeof(port_buf), "%d", get_next_master_node());
+						string_append_char(exec_cmd, port_buf);
 						break;
 
 					case '%': /* escape */
