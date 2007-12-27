@@ -1,3 +1,73 @@
+2007-12-27  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* main.c, pgpool.conf.sample, doc/pgpool-en.html,
+	  doc/pgpool-ja.html: Allow '%m' character to obtain master node
+	  id in failover_command and failback_command.
+
+2007-12-26  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Fix internal transaction handling in
+	  extended query protocol. pgpool did not send "COMMIT" to close
+	  an internal transaction block.
+
+2007-12-22  Tatsuo Ishii  <ishii@sraoss.co.jp>
+
+	* recovery.c: Add lots of pool_log to show the recovery steps.
+	
+2007-12-11  Tatsuo Ishii  <ishii@sraoss.co.jp>
+
+	* main.c: Change "starting health checking" and "retrying %d th
+	  health checking" log messages to DEBUG messages since they are
+	  too verbose.
+
+2007-12-07  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* child.c, configure, configure.in, pcp_child.c, pool_config.c,
+	  pool_config.l, pcp/pcp.c: Fix compile error and warning on
+	  Solaris 10.
+
+2007-12-06  Yoshiharu Mori  <y-mori@sraoss.co.jp>
+
+	* pool_rewrite_query.c: FIX: INSERT statment in a parallel
+	  mode. How to count the Value Clause list was wrong.
+	
+2007-12-05  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_stream.c: Improve buffering algorithm in pool_write().
+	
+2007-12-03  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Don't output log if PostgreSQL send a
+	  warning message in do_command().
+
+2007-12-01  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Fix memory leak when PREPARE or DEALLOCATE
+	  is failed. 
+
+	* pool_process_query.c: Fix segmentation fault if CloseComplete
+	  command was received. 
+
+2007-11-30  Yoshiharu Mori  <y-mori@sraoss.co.jp>
+	* pool_rewrite_query.c: The INSERT statment did not correspond to
+	  the parser of postgresql 8.3 that pgpool-II 2.0 had. Therefore,
+	  the following errors occur if INSERT is done in a parallel mode.
+
+	     ERROR: pgpool2 sql restriction
+	     DETAIL: cannot use SElectStmt in InserStmt
+
+2007-11-24  Tatsuo Ishii  <ishii@sraoss.co.jp>
+	* doc/pgpool-en.html, doc/pgpool-ja.html: Fix english docs.
+	  Add a link to tutorial. 
+
+2007-11-22  Tatsuo Ishii  <ishii@sraoss.co.jp>
+	* pool_config.c, pool_config.l: Add missing replicate_select
+	  entry.
+
+2007-11-21  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pgpool-II 2.0.1: See NEWS
+
 2007-11-21  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* pool_process_query.c: Fix segmentation fault with UPDATE or
