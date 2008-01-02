@@ -1070,7 +1070,6 @@ static RETSIGTYPE failover_handler(int sig)
 static void failover(void)
 {
 	int node_id;
-	int i;
 	int new_master;
 
 	pool_debug("failover_handler called");
@@ -1120,7 +1119,7 @@ static void failover(void)
 	 * if not in replication mode/master slave mode, we treat this a restart request.
 	 * otherwise we need to check if we have already failovered.
 	 */
-	pool_debug("failover_handler: starting to selec new master node");
+	pool_debug("failover_handler: starting to select new master node");
 	switching = 1;
 	node_id = Req_info->node_id[0];
 
@@ -1183,7 +1182,7 @@ static void failover(void)
 	{
 		if (Req_info->master_node_id == new_master && *InRecovery == 0)
 		{
-			pool_log("failover_handler: do not restart pgpool. same master node %d was selected", i);
+			pool_log("failover_handler: do not restart pgpool. same master node %d was selected", new_master);
 			if (Req_info->kind == NODE_UP_REQUEST)
 			{
 				pool_log("failback done. reconnect host %s(%d)",
