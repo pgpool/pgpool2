@@ -1069,6 +1069,7 @@ static RETSIGTYPE failover_handler(int sig)
  */
 static void failover(void)
 {
+	int i;
 	int node_id;
 	int new_master;
 
