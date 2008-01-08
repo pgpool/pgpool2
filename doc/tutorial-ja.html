@@ -307,7 +307,7 @@ $$ LANGUAGE sql;
 <p>ここでは、pgbenchで作成される　branches テーブルと tellers を登録しておきます。これにより、accountsテーブル、branchesテーブルとtellersテーブルを
 使った問い合わせが可能となります。
 <pre>
-INSERT INTO pgpool_catalog.dist_def VALUES (
+INSERT INTO pgpool_catalog.replicate_def VALUES (
     'bench_parallel',
     'public',
     'branches',
@@ -315,7 +315,7 @@ INSERT INTO pgpool_catalog.dist_def VALUES (
     ARRAY['integer', 'integer', 'character(88)']
 );
 
-INSERT INTO pgpool_catalog.dist_def VALUES (
+INSERT INTO pgpool_catalog.replicate_def VALUES (
     'bench_parallel',
     'public',
     'tellers',
