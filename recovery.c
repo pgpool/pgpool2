@@ -32,8 +32,11 @@
 
 #define WAIT_RETRY_COUNT 30
 
+#define FIRST_STAGE 0
+#define SECOND_STAGE 1
+
 static int exec_checkpoint(PGconn *conn);
-static int exec_recovery(PGconn *conn, BackendInfo *backend, char first_stage);
+static int exec_recovery(PGconn *conn, BackendInfo *backend, char stage);
 static int exec_remote_start(PGconn *conn, BackendInfo *backend);
 static PGconn *connect_backend_libpq(BackendInfo *backend);
 static int wait_connection_closed(void);
@@ -78,7 +81,7 @@ int start_recovery(int recovery_node)
 
 	pool_log("CHECKPOINT in the 1st stage done");
 
-	if (exec_recovery(conn, recovery_backend, 1) != 0)
+	if (exec_recovery(conn, recovery_backend, FIRST_STAGE) != 0)
 	{
 		PQfinish(conn);
 		return 1;
@@ -108,7 +111,7 @@ int start_recovery(int recovery_node)
 
 	pool_log("CHECKPOINT in the 2nd stage done");
 
-	if (exec_recovery(conn, recovery_backend, 0) != 0)
+	if (exec_recovery(conn, recovery_backend, SECOND_STAGE) != 0)
 	{
 		PQfinish(conn);
 		return 1;
@@ -167,7 +170,7 @@ static int exec_checkpoint(PGconn *conn)
 /*
  * Call pgpool_recovery() function.
  */
-static int exec_recovery(PGconn *conn, BackendInfo *backend, char first_stage)
+static int exec_recovery(PGconn *conn, BackendInfo *backend, char stage)
 {
 	PGresult *result;
 	char *hostname;
@@ -179,7 +182,8 @@ static int exec_recovery(PGconn *conn, BackendInfo *backend, char first_stage)
 	else
 		hostname = backend->backend_hostname;
 
-	script = first_stage ? pool_config->recovery_1st_stage_command : pool_config->recovery_2nd_stage_command;
+	script = (stage == FIRST_STAGE) ?
+		pool_config->recovery_1st_stage_command : pool_config->recovery_2nd_stage_command;
 
 	if (script == NULL || strlen(script) == 0)
 	{
