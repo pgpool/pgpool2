@@ -102,7 +102,7 @@ void load_hba(char *hbapath)
 	POOL_MEMORY_POOL *old_context;
 	if (hba_memory_context == NULL)
 	{
-		hba_memory_context = pool_memory_create();
+		hba_memory_context = pool_memory_create(PARSER_BLOCK_SIZE);
 		if (hba_memory_context == NULL)
 		{
 			pool_error("load_hba: pool_memory_create() failed");

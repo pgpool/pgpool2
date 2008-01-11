@@ -1706,7 +1706,7 @@ static int trigger_failover_command(int node, const char *command_line)
 		return -1;
 
 	buf[1] = '\0';
-	pool_memory = pool_memory_create();
+	pool_memory = pool_memory_create(PREPARE_BLOCK_SIZE);
 	if (!pool_memory)
 	{
 		pool_error("trigger_failover_command: pool_memory_create() failed");

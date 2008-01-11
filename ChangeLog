@@ -1,3 +1,11 @@
+2008-01-11  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* main.c, pool_hba.c, pool_process_query.c, parser/parser.c,
+	  parser/pool_memory.c, parser/pool_memory.h: Fix memory leak at
+	  prepared statement list. pgpool caches a parse tree in prepared
+	  statement list. The parse tree copy deeply, but we freed only
+	  the top node of the parse tree.
+
 2007-12-27  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* main.c, pgpool.conf.sample, doc/pgpool-en.html,

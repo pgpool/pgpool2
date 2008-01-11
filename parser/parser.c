@@ -48,7 +48,7 @@ raw_parser(const char *str)
 	int			yyresult;
 
 	if (pool_memory == NULL)
-		pool_memory = pool_memory_create();
+		pool_memory = pool_memory_create(PARSER_BLOCK_SIZE);
 
 	parsetree = NIL;			/* in case grammar forgets to set it */
 	have_lookahead = false;

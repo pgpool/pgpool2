@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_SIZE 8192
 #define ALIGN 3
 #define POOL_HEADER_SIZE (sizeof (POOL_CHUNK_HEADER))
 
@@ -61,7 +60,7 @@ void *pool_memory_alloc(POOL_MEMORY_POOL *pool, unsigned int size)
 	POOL_BLOCK *block;
 	POOL_CHUNK *chunk;
 
-	if ((size + POOL_HEADER_SIZE) > MAX_SIZE)
+	if ((size + POOL_HEADER_SIZE) > pool->blocksize)
 	{
 		block = malloc(sizeof(POOL_BLOCK));
 		if (block == NULL)
@@ -106,9 +105,9 @@ void *pool_memory_alloc(POOL_MEMORY_POOL *pool, unsigned int size)
 				pool_error("pool_memory_alloc: malloc failed: %s", strerror(errno));
 				child_exit(1);
 			}
-			block->size = MAX_SIZE;
+			block->size = pool->blocksize;
 			block->allocsize = 0;
-			block->block = malloc(MAX_SIZE);
+			block->block = malloc(pool->blocksize);
 			if (block->block == NULL)
 			{
 				pool_error("pool_memory_alloc: malloc failed: %s", strerror(errno));
@@ -153,7 +152,7 @@ void pool_memory_free(POOL_MEMORY_POOL *pool, void *ptr)
 	if (ptr == NULL)
 		return;
 
-	if (chunk->header.size > MAX_SIZE)
+	if (chunk->header.size > pool->blocksize)
 	{
 		POOL_BLOCK *block, *ptr = NULL;
 
@@ -204,8 +203,8 @@ void *pool_memory_realloc(POOL_MEMORY_POOL *pool, void *ptr, unsigned int size)
 		return ptr;
 
 	fidx = get_free_index(size + POOL_HEADER_SIZE);
-	if (size + POOL_HEADER_SIZE <= MAX_SIZE &&
-		chunk->header.size <= MAX_SIZE &&
+	if (size + POOL_HEADER_SIZE <= pool->blocksize &&
+		chunk->header.size <= pool->blocksize &&
 		fidx == get_free_index(chunk->header.size))
 	{
 		return ptr;
@@ -222,7 +221,7 @@ void *pool_memory_realloc(POOL_MEMORY_POOL *pool, void *ptr, unsigned int size)
  * pool_memory_create:
  *     Create a new memory pool.
  */
-POOL_MEMORY_POOL *pool_memory_create(void)
+POOL_MEMORY_POOL *pool_memory_create(int blocksize)
 {
 	POOL_MEMORY_POOL *pool;
 	int i;
@@ -235,6 +234,7 @@ POOL_MEMORY_POOL *pool_memory_create(void)
 	}
 	pool->blocks = NULL;
 	pool->largeblocks = NULL;
+	pool->blocksize = blocksize;
 	
 	for (i = 0; i < SLOT_NUM; i++)
 	{

@@ -64,6 +64,7 @@
 typedef struct {
 	char *portal_name;
 	Node *stmt;
+	POOL_MEMORY_POOL *prepare_ctxt;
 } Portal;
 
 /*
@@ -168,6 +169,7 @@ static int send_deallocate(POOL_CONNECTION_POOL *backend, PreparedStatementList 
 static char *parse_copy_data(char *buf, int len, char delimiter, int col_id);
 static Portal *lookup_prepared_statement_by_statement(PreparedStatementList *p, const char *name);
 static Portal *lookup_prepared_statement_by_portal(PreparedStatementList *p, const char *name);
+static Portal *create_portal(void);
 
 #ifdef NOT_USED
 static POOL_CONNECTION_POOL_SLOT *slots[MAX_CONNECTION_SLOTS];
@@ -208,7 +210,6 @@ static int is_select_pgcatalog = 0;
 static int is_select_for_update = 0; /* also for SELECT ... INTO */
 static bool is_parallel_table = false;
 static char *parsed_query = NULL;
-static POOL_MEMORY_POOL *prepare_memory_context = NULL;
 
 static void query_cache_register(char kind, POOL_CONNECTION *frontend, char *database, char *data, int data_len);
 static POOL_STATUS start_internal_transaction(POOL_CONNECTION_POOL *backend, Node *node);
@@ -1059,26 +1060,23 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 			if (frontend)
 			{
-				POOL_MEMORY_POOL *old_context;
+				POOL_MEMORY_POOL *old_context = NULL;
 				Portal *portal;
-
-				if (prepare_memory_context == NULL)
-				{
-					prepare_memory_context = pool_memory_create();
-					if (prepare_memory_context == NULL)
-					{
-						pool_error("Simple Query: pool_memory_create() failed");
-						return POOL_ERROR;
-					}
-				}
-				/* switch memory context */
-				old_context = pool_memory;
-				pool_memory = prepare_memory_context;
 
 				if (IsA(node, PrepareStmt))
 				{
 					pending_function = add_prepared_list;
-					portal = malloc(sizeof(Portal));
+					portal = create_portal();
+					if (portal == NULL)
+					{
+						pool_error("SimpleQuery: create_portal() failed");
+						return POOL_END;
+					}
+
+					/* switch memory context */
+					old_context = pool_memory;
+					pool_memory = portal->prepare_ctxt;
+
 					portal->portal_name = NULL;
 					portal->stmt = copyObject(node);
 					pending_prepared_portal = portal;
@@ -1086,7 +1084,17 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 				else if (IsA(node, DeallocateStmt))
 				{
 					pending_function = del_prepared_list;
-					portal = malloc(sizeof(Portal));
+					portal = create_portal();
+					if (portal == NULL)
+					{
+						pool_error("SimpleQuery: create_portal() failed");
+						return POOL_END;
+					}
+
+					/* switch memory context */
+					old_context = pool_memory;
+					pool_memory = portal->prepare_ctxt;
+
 					portal->portal_name = NULL;
 					portal->stmt = copyObject(node);
 					pending_prepared_portal = portal;
@@ -1102,7 +1110,8 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 				}
 
 				/* switch old memory context */
-				pool_memory = old_context;
+				if (old_context)
+					pool_memory = old_context;
 			}
 		}
 
@@ -1348,12 +1357,10 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 	/* load balance trick */
 	if (portal)
 	{
-		POOL_MEMORY_POOL *pool_mem;
 		Node *node;
 
 		p_stmt = (PrepareStmt *)portal->stmt;
 
-		pool_mem = pool_memory_create();
 		string1 = nodeToString(p_stmt->query);
 		node = (Node *)p_stmt->query;
 
@@ -1385,7 +1392,6 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 */
 
 		commit = is_commit_query((Node *)p_stmt->query);
-		pool_memory_delete(pool_mem, 0);
 	}
 	else if (MASTER_SLAVE)
 	{
@@ -1595,20 +1601,17 @@ static POOL_STATUS Parse(POOL_CONNECTION *frontend,
 
 		insert_stmt_with_lock = need_insert_lock(backend, stmt, node);
 
-		if (prepare_memory_context == NULL)
+		portal = create_portal();
+		if (portal == NULL)
 		{
-			prepare_memory_context = pool_memory_create();
-			if (prepare_memory_context == NULL)
-			{
-				pool_error("Simple Query: pool_memory_create() failed");
-				return POOL_ERROR;
-			}
+			pool_error("Parse: create_portal() failed");
+			return POOL_END;
 		}
+
 		/* switch memory context */
 		old_context = pool_memory;
-		pool_memory = prepare_memory_context;
+		pool_memory = portal->prepare_ctxt;
 
-		portal = malloc(sizeof(Portal));
 		/* translate Parse message to PrepareStmt */
 		p_stmt = palloc(sizeof(PrepareStmt));
 		p_stmt->type = T_PrepareStmt;
@@ -3635,13 +3638,9 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 			IsA(pending_prepared_portal->stmt, DeallocateStmt))
 		{
 			DeallocateStmt *s = (DeallocateStmt *)pending_prepared_portal->stmt;
-			POOL_MEMORY_POOL *old_context = pool_memory;
 
 			free(pending_prepared_portal->portal_name);
-			pool_memory = prepare_memory_context;
-			pfree(s->name);
-			pfree(s);
-			pool_memory = old_context;
+			pool_memory_delete(pending_prepared_portal->prepare_ctxt, 0);
 			free(pending_prepared_portal);
 		}
 	}
@@ -3650,6 +3649,8 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 		/* PREPARE or DEALLOCATE is error.
 		 * Free pending portal object.
 		 */
+		free(pending_prepared_portal->portal_name);
+		pool_memory_delete(pending_prepared_portal->prepare_ctxt, 0);
 		free(pending_prepared_portal);
 	}
 	else if (kind == 'C' && select_in_transaction)
@@ -3982,7 +3983,14 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 		POOL_MEMORY_POOL *old_context = pool_memory;
 		DeallocateStmt *deallocate_stmt;
 
-		pool_memory = prepare_memory_context;
+		pending_prepared_portal = create_portal();
+		if (pending_prepared_portal == NULL)
+		{
+			pool_error("SimpleForwardToBackend: malloc failed: %s", strerror(errno));
+			return POOL_END;
+		}
+
+		pool_memory = pending_prepared_portal->prepare_ctxt;
 		name = pstrdup(p+1);
 		if (name == NULL)
 		{
@@ -4000,14 +4008,6 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 			return POOL_END;
 		}
 		deallocate_stmt->name = name;
-
-		pending_prepared_portal = malloc(sizeof(Portal));
-		if (pending_prepared_portal == NULL)
-		{
-			pool_error("SimpleForwardToBackend: malloc failed: %s", strerror(errno));
-			pool_memory = old_context;
-			return POOL_END;
-		}
 		pending_prepared_portal->stmt = (Node *)deallocate_stmt;
 		pending_prepared_portal->portal_name = NULL;
 		pending_function = del_prepared_list;
@@ -5025,6 +5025,27 @@ static POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNEC
 	return POOL_CONTINUE;
 }
 
+/*
+ * Create portal object 
+ * Return object is allocated from heap memory.
+ */
+
+static Portal *create_portal(void)
+{
+	Portal *p;
+
+	if ((p = malloc(sizeof(Portal))) == NULL)
+		return NULL;
+
+	p->prepare_ctxt = pool_memory_create(PREPARE_BLOCK_SIZE);
+	if (p->prepare_ctxt == NULL)
+	{
+		free(p);
+		return NULL;
+	}
+	return p;
+}
+
 void init_prepared_list(void)
 {
 	prepared_list.cnt = 0;
@@ -5054,19 +5075,9 @@ static void add_prepared_list(PreparedStatementList *p, Portal *portal)
 
 static void add_unnamed_portal(PreparedStatementList *p, Portal *portal)
 {
-	POOL_MEMORY_POOL *old_context;
-
 	if (unnamed_statement)
 	{
-		PrepareStmt *p_stmt = (PrepareStmt *)unnamed_statement->stmt;
-		if (p_stmt->name == NULL)
-		{
-			old_context = pool_memory;
-			pool_memory = prepare_memory_context;
-			pfree(p_stmt->query);
-			pfree(p_stmt);
-			pool_memory = old_context;
-		}
+		pool_memory_delete(unnamed_statement->prepare_ctxt, 0);
 		free(unnamed_statement);
 	}
 
@@ -5078,7 +5089,6 @@ static void del_prepared_list(PreparedStatementList *p, Portal *portal)
 {
 	int i;
 	DeallocateStmt *s = (DeallocateStmt *)portal->stmt;
-	POOL_MEMORY_POOL *old_context;
 
 	for (i = 0; i < p->cnt; i++)
 	{
@@ -5090,10 +5100,7 @@ static void del_prepared_list(PreparedStatementList *p, Portal *portal)
 	if (i == p->cnt)
 		return;
 
-	old_context = pool_memory;
-	pool_memory = prepare_memory_context;
-	pfree((PrepareStmt *)p->portal_list[i]->stmt);
-	pool_memory = old_context;
+	pool_memory_delete(p->portal_list[i]->prepare_ctxt, 0);
 	free(p->portal_list[i]->portal_name);
 	free(p->portal_list[i]);
 	if (i != p->cnt - 1)
@@ -5113,20 +5120,23 @@ static void reset_prepared_list(PreparedStatementList *p)
 {
 	int i;
 
-	if (prepare_memory_context)
+	if (p)
 	{
 		for (i = 0; i < p->cnt; i++)
 		{
+			pool_memory_delete(p->portal_list[i]->prepare_ctxt, 0);
 			free(p->portal_list[i]->portal_name);
 			free(p->portal_list[i]);
 		}
-		pool_memory_delete(prepare_memory_context, 0);
-		prepare_memory_context = NULL;
-		free(unnamed_statement);
+		if (unnamed_statement)
+		{
+			pool_memory_delete(unnamed_statement->prepare_ctxt, 0);
+			free(unnamed_statement);
+		}
 		unnamed_portal = NULL;
 		unnamed_statement = NULL;
+		p->cnt = 0;
 	}
-	p->cnt = 0;
 }
 
 static Portal *lookup_prepared_statement_by_statement(PreparedStatementList *p, const char *name)
