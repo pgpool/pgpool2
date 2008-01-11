@@ -61,10 +61,11 @@
 
 #define POOL_ERROR_QUERY "send invalid query from pgpool to abort transaction"
 
+/* Prepared statement information */
 typedef struct {
-	char *portal_name;
-	Node *stmt;
-	POOL_MEMORY_POOL *prepare_ctxt;
+	char *portal_name; /* portal name*/
+	Node *stmt;        /* parse tree for prepared statement */
+	POOL_MEMORY_POOL *prepare_ctxt; /* memory context for parse tree */
 } Portal;
 
 /*
