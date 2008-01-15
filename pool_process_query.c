@@ -3638,8 +3638,6 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 			pending_prepared_portal->stmt &&
 			IsA(pending_prepared_portal->stmt, DeallocateStmt))
 		{
-			DeallocateStmt *s = (DeallocateStmt *)pending_prepared_portal->stmt;
-
 			free(pending_prepared_portal->portal_name);
 			pool_memory_delete(pending_prepared_portal->prepare_ctxt, 0);
 			free(pending_prepared_portal);
