@@ -377,6 +377,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				{
 					if (detect_postmaster_down_error(CONNECTION(backend, i), MAJOR(backend)))
 					{
+						/* detach backend node. */
 						was_error = 1;
 						if (!VALID_BACKEND(i))
 							break;
@@ -873,6 +874,11 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 	}
 }
 
+
+/*
+ * Process Query('Q') message
+ * Query messages include a SQL string.
+ */
 static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend, 
 						 POOL_CONNECTION_POOL *backend, char *query)
 {
@@ -921,6 +927,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		pool_debug("statement2: %s", string);
 	}
 
+	/* parse SQL string */
 	parse_tree_list = raw_parser(string);
 
 	if (parse_tree_list != NIL)
@@ -1056,6 +1063,9 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 		if (IsA(node, PrepareStmt) || IsA(node, DeallocateStmt) || IsA(node, VariableSetStmt))
 		{
+			/*
+			 * PREPARE, DEALLOCATE and SET statements must be replicated.
+			 */
 			if (MASTER_SLAVE)
 				force_replication = 1;
 
@@ -1264,6 +1274,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 				return POOL_END;
 		}
 
+		/* send "COMMIT" to master node if query is "COMMIT" */
 		if (commit)
 		{
 			if (send_simplequery_message(MASTER(backend), len, string, MAJOR(backend)) != POOL_CONTINUE)
@@ -1289,7 +1300,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 }
 
 /* 
- * send SimpleQuery message to single node.
+ * send SimpleQuery message to a single node.
  */
 static POOL_STATUS send_simplequery_message(POOL_CONNECTION *backend, int len, char *string, int major)
 {
@@ -1311,7 +1322,7 @@ static POOL_STATUS send_simplequery_message(POOL_CONNECTION *backend, int len, c
 }
 
 /* 
- * wait for query response from single node.
+ * wait for query response from a single node.
  */
 static POOL_STATUS wait_for_query_response(POOL_CONNECTION *backend, char *string)
 {
@@ -1802,6 +1813,10 @@ static POOL_STATUS Sync(POOL_CONNECTION *frontend,
 }
 #endif
 
+/*
+ * Process ReadyForQuery('Z') message.
+ * An internal transaction is close in this function.
+ */
 static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend, 
 								 POOL_CONNECTION_POOL *backend, int send_ready)
 {
@@ -2923,7 +2938,8 @@ static POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 
 	switch (fkind)
 	{
-		case 'X':
+
+		case 'X':  /* Terminate message*/
 			if (MAJOR(backend) == PROTO_MAJOR_V3)
 			{
 				int len;
@@ -2931,7 +2947,7 @@ static POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			}
 			return POOL_END;
 
-		case 'Q':
+		case 'Q':  /* Query message*/
 			status = SimpleQuery(frontend, backend, NULL);
 			break;
 
@@ -2940,11 +2956,11 @@ static POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			status = Sync(frontend, backend);
 			break;
 */
-		case 'E':
+		case 'E':  /* Execute message */
 			status = Execute(frontend, backend);
 		break;
 
-		case 'P':
+		case 'P':  /* Parse message */
 			status = Parse(frontend, backend);
 			break;
 
@@ -3070,6 +3086,9 @@ int pool_check_fd(POOL_CONNECTION *cp, int notimeout)
 	return -1;
 }
 
+/*
+ * Process "show pool_status" query.
+ */
 static void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 {
 	static char *cursorname = "blank";
@@ -5028,7 +5047,6 @@ static POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNEC
  * Create portal object 
  * Return object is allocated from heap memory.
  */
-
 static Portal *create_portal(void)
 {
 	Portal *p;
@@ -5517,6 +5535,7 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, b
 	}
 	if (unread || !is_error)
 	{
+		/* put a message to read buffer */
 		if (pool_unread(backend, buf, readlen) != 0)
 			is_error = -1;
 	}
