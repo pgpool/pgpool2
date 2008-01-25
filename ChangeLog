@@ -1,3 +1,21 @@
+2008-01-25  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Load balancing node was changed after
+	  processing transaction. For example,
+
+          SELECT 1; <-- node 1
+	  BEGIN;
+	  SELECT 2; <-- node 0(master)
+	  END;
+	  SELECT 3; <-- node 0(master)
+
+	  "SELECT 3" was sended to a master node, not a load balancing
+	  node. 
+
+	  VALID_BACKEND macro does not check node validation if
+	  in_load_balancing is 1. So we do not use VALID_BACKEND macro to
+	  check whether load balancing node is down.
+
 2008-01-11  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* main.c, pool_hba.c, pool_process_query.c, parser/parser.c,
