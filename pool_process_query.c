@@ -320,7 +320,11 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 
 			num_fds = 0;
 
-			if (!VALID_BACKEND(backend->info->load_balancing_node))
+			/*
+			 * Do not use VALID_BACKEND macro.
+			 * Because if in_load_balance == 1, VALID_BACKEND macro may return 0.
+			 */
+			if (BACKEND_INFO(backend->info->load_balancing_node).backend_status == CON_DOWN)
 			{
 				/* select load balancing node */
 				backend->info->load_balancing_node = select_load_balancing_node();
