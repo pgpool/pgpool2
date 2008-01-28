@@ -1,3 +1,14 @@
+2008-01-28  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Change log level of the following message
+	  from ERROR to LOG.
+
+	  ProcessFrontendResponse: failed to read kind from
+	  frontend. fronend abnormally exited
+
+	  This means that pgpool detects unexpected EOF. This is not
+	  pgpool's error.
+
 2008-01-25  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* pool_process_query.c: Load balancing node was changed after
