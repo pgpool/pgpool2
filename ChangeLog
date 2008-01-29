@@ -1,3 +1,7 @@
+2008-01-29  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* COPYING, ...: Update copyright.
+
 2008-01-28  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* pool_process_query.c: Change log level of the following message

@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Portions Copyright (c) 2003-2007,	PgPool Global Development Group
+ * Portions Copyright (c) 2003-2008,	PgPool Global Development Group
  * Portions Copyright (c) 2004, PostgreSQL Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and

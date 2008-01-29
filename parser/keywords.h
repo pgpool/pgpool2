@@ -4,6 +4,7 @@
  *	  lexical token lookup for reserved words in postgres SQL
  *
  *
+ * Portions Copyright (c) 2003-2008, PgPool Global Development Group
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
