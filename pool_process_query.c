@@ -1504,8 +1504,6 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		status = SimpleForwardToFrontend(kind, frontend, backend);
 		if (status != POOL_CONTINUE)
 			return status;
-		if (pool_flush(frontend))
-			return POOL_END;
 	}
 	if (ret != POOL_CONTINUE)
 		return ret;
@@ -1513,8 +1511,6 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 	status = SimpleForwardToFrontend(kind, frontend, backend);
 	if (status != POOL_CONTINUE)
 		return status;
-	if (pool_flush(frontend))
-		return POOL_END;
 
 	/* end load balance mode */
 	if (in_load_balance)
