@@ -947,11 +947,19 @@ int pool_read_message_length(POOL_CONNECTION_POOL *cp)
 	int length, length0;
 	int i;
 
-	length0 = 0;
+	/* read message from master node */
+	status = pool_read(CONNECTION(cp, MASTER_NODE_ID), &length0, sizeof(length0));
+	if (status < 0)
+	{
+		pool_error("pool_read_message_length: error while reading message length in slot %d", i);
+		return -1;
+	}
+	length0 = ntohl(length0);
+	pool_debug("pool_read_message_length: slot: %d length: %d", MASTER_NODE_ID, length0);
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
-		if (!VALID_BACKEND(i))
+		if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
 		{
 			continue;
 		}
@@ -966,27 +974,20 @@ int pool_read_message_length(POOL_CONNECTION_POOL *cp)
 		length = ntohl(length);
 		pool_debug("pool_read_message_length: slot: %d length: %d", i, length);
 
-		if (IS_MASTER_NODE_ID(i))
+		if (length != length0)
 		{
-			length0 = length;
-		}
-		else
-		{
-			if (length != length0)
-			{
-				pool_error("pool_read_message_length: message length (%d) in slot %d does not match with slot 0", length, i);
-				return -1;
-			}
+			pool_error("pool_read_message_length: message length (%d) in slot %d does not match with slot 0(%d)", length, i, length0);
+			return -1;
 		}
 	}
 
-	if (length < 0)
+	if (length0 < 0)
 	{
 		pool_error("pool_read_message_length: invalid message length (%d)", length);
 		return -1;
 	}
 
-	return length;
+	return length0;
 }
 
 /*
@@ -1001,11 +1002,20 @@ int *pool_read_message_length2(POOL_CONNECTION_POOL *cp)
 	int i;
 	static int length_array[MAX_CONNECTION_SLOTS];
 
-	length0 = 0;
+	/* read message from master node */
+	status = pool_read(CONNECTION(cp, MASTER_NODE_ID), &length0, sizeof(length0));
+	if (status < 0)
+	{
+		pool_error("pool_read_message_length2: error while reading message length in slot %d", MASTER_NODE_ID);
+		return NULL;
+	}
 
+	length0 = ntohl(length0);
+	length_array[MASTER_NODE_ID] = length0;
+	pool_debug("pool_read_message_length2: master slot: %d length: %d", MASTER_NODE_ID, length0);
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
-		if (VALID_BACKEND(i))
+		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 		{
 			status = pool_read(CONNECTION(cp, i), &length, sizeof(length));
 			if (status < 0)
@@ -1017,16 +1027,9 @@ int *pool_read_message_length2(POOL_CONNECTION_POOL *cp)
 			length = ntohl(length);
 			pool_debug("pool_read_message_length2: master slot: %d length: %d", i, length);
 
-			if (IS_MASTER_NODE_ID(i))
+			if (length != length0)
 			{
-				length0 = length;
-			}
-			else
-			{
-				if (length != length0)
-				{
-					pool_error("pool_read_message_length2: message length (%d) in slot %d does not match with slot 0", length, i);
-				}
+				pool_error("pool_read_message_length2: message length (%d) in slot %d does not match with slot 0(%d)", length, i, length0);
 			}
 
 			if (length < 0)
@@ -1039,7 +1042,7 @@ int *pool_read_message_length2(POOL_CONNECTION_POOL *cp)
 		}
 
 	}
-	return &length_array[0];
+	return &length_array[MASTER_NODE_ID];
 }
 
 signed char pool_read_kind(POOL_CONNECTION_POOL *cp)
