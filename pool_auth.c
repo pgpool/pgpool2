@@ -1042,7 +1042,7 @@ int *pool_read_message_length2(POOL_CONNECTION_POOL *cp)
 		}
 
 	}
-	return &length_array[MASTER_NODE_ID];
+	return &length_array[0];
 }
 
 signed char pool_read_kind(POOL_CONNECTION_POOL *cp)
