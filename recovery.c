@@ -30,7 +30,7 @@
 #include "pool.h"
 #include "libpq-fe.h"
 
-#define WAIT_RETRY_COUNT 30
+#define WAIT_RETRY_COUNT (pool_config->recovery_timeout / 3)
 
 #define FIRST_STAGE 0
 #define SECOND_STAGE 1
@@ -244,14 +244,13 @@ static int exec_remote_start(PGconn *conn, BackendInfo *backend)
  */
 static int check_postmaster_started(BackendInfo *backend)
 {
-	int i;
+	int i = 0;
 	char port_str[16];
 	PGconn *conn;
 
 	snprintf(port_str, sizeof(port_str),
 			 "%d", backend->backend_port);
-	for (i = 0; i < WAIT_RETRY_COUNT; i++)
-	{
+	do {
 		ConnStatusType r;
 		conn = PQsetdbLogin(backend->backend_hostname,
 							port_str,
@@ -265,8 +264,11 @@ static int check_postmaster_started(BackendInfo *backend)
 		if (r == CONNECTION_OK)
 			return 0;
 
-		sleep(3);
-	}
+		if (WAIT_RETRY_COUNT != 0)
+			sleep(3);
+	} while (i++ < WAIT_RETRY_COUNT);
+	
+	pool_error("check_postmaster_started: remote host start up did not finish in %d sec.", WAIT_RETRY_COUNT);
 	return 1;
 }
 
@@ -295,18 +297,20 @@ static PGconn *connect_backend_libpq(BackendInfo *backend)
 
 /*
  * Wait all connections are closed.
- * If connection remained, sleep 3 sec and retry to wait.
  */
 static int wait_connection_closed(void)
 {
-	int i;
+	int i = 0;
 
-	for (i = 0; i < WAIT_RETRY_COUNT; i++)
-	{
+	do {
+
 		if (Req_info->conn_counter == 0)
 			return 0;
-		sleep(3);
-	}
 
+		if (WAIT_RETRY_COUNT != 0)
+			sleep(3);
+	} while (i++ < WAIT_RETRY_COUNT);
+
+	pool_error("wait_connection_closed: existing connections did not close in %d sec.", WAIT_RETRY_COUNT);
 	return 1;
 }
