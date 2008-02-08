@@ -335,7 +335,7 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 	buf += consume_size;
 
 	/* if this is not the master backend, then set timeout */
-	notimeout = IS_MASTER_NODE_ID(cp->db_node_id);
+	notimeout = !IS_MASTER_NODE_ID(cp->db_node_id);
 
 	while (len > 0)
 	{
@@ -655,7 +655,7 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 	}
 
 	/* if this is not the master backend, then set timeout */
-	notimeout = IS_MASTER_NODE_ID(cp->db_node_id);
+	notimeout = !IS_MASTER_NODE_ID(cp->db_node_id);
 
 	for (;;)
 	{
