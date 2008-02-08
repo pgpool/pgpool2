@@ -52,6 +52,11 @@ pgpool_recovery(PG_FUNCTION_ARGS)
 	char *remote_data_directory = DatumGetCString(DirectFunctionCall1(textout,
 																	  PointerGetDatum(PG_GETARG_TEXT_P(2))));
 
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pgpool_recovery function"))));
+
 	sprintf(recovery_script, "%s/%s %s %s %s",
 			DataDir, script, DataDir, remote_host,
 			remote_data_directory);
@@ -75,6 +80,11 @@ pgpool_remote_start(PG_FUNCTION_ARGS)
 															PointerGetDatum(PG_GETARG_TEXT_P(0))));
 	char *remote_data_directory = DatumGetCString(DirectFunctionCall1(textout,
 																	  PointerGetDatum(PG_GETARG_TEXT_P(1))));
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pgpool_remote_start function"))));
 
 	sprintf(recovery_script, "%s/%s %s %s", DataDir, REMOTE_START_FILE,
 			remote_host, remote_data_directory);
