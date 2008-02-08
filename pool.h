@@ -169,6 +169,7 @@ typedef struct {
 	char *recovery_password;		/* PostgreSQL user password for online recovery */
 	char *recovery_1st_stage_command;   /* Online recovery command in 1st stage */
 	char *recovery_2nd_stage_command;   /* Online recovery command in 2nd stage */
+	int recovery_timeout;				/* maximum time in seconds to wait for remote start-up */
 	int insert_lock;	/* if non 0, automatically lock table with INSERT to keep SERIAL
 						   data consistency */
 	int ignore_leading_white_space;		/* ignore leading white spaces of each query */

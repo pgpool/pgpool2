@@ -172,6 +172,7 @@ int pool_init_config(void)
     pool_config->recovery_password = "";
     pool_config->recovery_1st_stage_command = "";
     pool_config->recovery_2nd_stage_command = "";
+	pool_config->recovery_timeout = 90;
 
 	res = gethostname(localhostname,sizeof(localhostname));
 	if(res !=0 )
@@ -821,6 +822,20 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->recovery_2nd_stage_command = str;
+		}
+
+		else if (!strcmp(key, "recovery_timeout") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			int v = atoi(yytext);
+
+			if (token != POOL_INTEGER || v < 0)
+			{
+				pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->recovery_timeout = v;
 		}
 
 		else if (!strcmp(key, "insert_lock") &&
