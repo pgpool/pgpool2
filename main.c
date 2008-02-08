@@ -1610,6 +1610,10 @@ static void kill_all_children(int sig)
 			kill(pid, sig);
 		}
 	}
+
+	/* make PCP process reload as well */
+	if (sig == SIGHUP)
+		kill(pcp_pid, sig);
 }
 
 /*

@@ -268,7 +268,7 @@ static int check_postmaster_started(BackendInfo *backend)
 			sleep(3);
 	} while (i++ < WAIT_RETRY_COUNT);
 	
-	pool_error("check_postmaster_started: remote host start up did not finish in %d sec.", WAIT_RETRY_COUNT);
+	pool_error("check_postmaster_started: remote host start up did not finish in %d sec.", pool_config->recovery_timeout);
 	return 1;
 }
 
@@ -311,6 +311,6 @@ static int wait_connection_closed(void)
 			sleep(3);
 	} while (i++ < WAIT_RETRY_COUNT);
 
-	pool_error("wait_connection_closed: existing connections did not close in %d sec.", WAIT_RETRY_COUNT);
+	pool_error("wait_connection_closed: existing connections did not close in %d sec.", pool_config->recovery_timeout);
 	return 1;
 }

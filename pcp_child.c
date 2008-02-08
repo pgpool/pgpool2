@@ -66,9 +66,12 @@ static void unset_nonblock(int fd);
 static int user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len);
 static void pool_random_salt(char *md5Salt);
 static RETSIGTYPE wakeup_handler(int sig);
+static RETSIGTYPE reload_config_handler(int sig);
 
 extern int myargc;
 extern char **myargv;
+
+volatile sig_atomic_t pcp_got_sighup = 0;
 
 void
 pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
@@ -97,7 +100,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 	/* set up signal handlers */
 	signal(SIGTERM, die);
 	signal(SIGINT, die);
-	signal(SIGHUP, die);
+	signal(SIGHUP, reload_config_handler);
 	signal(SIGQUIT, die);
 	signal(SIGCHLD, SIG_DFL);
 	signal(SIGUSR1, SIG_DFL);
@@ -113,10 +116,8 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 		{
 			frontend = pcp_do_accept(unix_fd, inet_fd);
 			if (frontend == NULL)
-			{
-				/* pcp_do_accept() calls pool_error(), so just exit */
-				exit(1);
-			}
+				continue;
+
 			unset_nonblock(frontend->fd);
 		}
 
@@ -894,6 +895,12 @@ pcp_do_accept(int unix_fd, int inet_fd)
 		return NULL;
 	}
 
+	if (pcp_got_sighup)
+	{
+		pool_get_config(get_config_file_name(), RELOAD_CONFIG);
+		pcp_got_sighup = 0;
+	}
+
 	pool_debug("I am PCP %d accept fd %d", getpid(), afd);
 
 	if (inet)
@@ -934,7 +941,7 @@ unset_nonblock(int fd)
 {
 	int var;
 
-	/* set fd to none blocking */
+	/* set fd to non-blocking */
 	var = fcntl(fd, F_GETFL, 0);
 	if (var == -1)
 	{
@@ -1057,4 +1064,10 @@ static void pool_random_salt(char *md5Salt)
 	md5Salt[2] = (rand % 255) + 1;
 	rand = random();
 	md5Salt[3] = (rand % 255) + 1;
+}
+
+/* SIGHUP handler */
+static RETSIGTYPE reload_config_handler(int sig)
+{
+	pcp_got_sighup = 1;
 }
