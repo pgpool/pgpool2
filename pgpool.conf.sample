@@ -59,10 +59,6 @@ logdir = '/tmp'
 # Replication mode
 replication_mode = false
 
-# Set this to nonzero (in milliseconds) to detect this situation and
-# resolve the deadlock by aborting current session.
-replication_timeout = 5000
-
 # Load balancing mode, i.e., all SELECTs except in a transaction block
 # are load balanced.  This is ignored if replication_mode is false.
 load_balance_mode = false

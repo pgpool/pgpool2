@@ -702,13 +702,6 @@ configuration parameters below must be set in addtion to everything above.</p>
       is false.</p>
   </dd>
 
-  <dt>replication_timeout</dt>
-  <dd>
-      <p>Specifies the timeout value in milliseconds, for detecting
-      deadlocks. Default is 5000 (5 seconds), and 0 means no
-      timeout.</p>
-  </dd>
-
   <dt>load_balance_mode</dt>
   <dd>
       <p>When set to true, SELECT queries will be
@@ -1578,8 +1571,7 @@ B) SELECT * FROM tellers WHERE tid = 11 FOR UPDATE;
 <p>
 In the case above, a single node cannot detect the deadlock, so
 pgpool-II will still wait for the response. This phenomenon
-occurs with other queries that acquire row level locks. To avoid this
-problem, set <code>replication_timeout</code>.</p>
+occurs with other queries that acquire row level locks.
 </p>
 <p>Also, if a deadlock occurs in one node, transaction states in each
 node will not be consistent. Therefore, pgpool-II terminates the

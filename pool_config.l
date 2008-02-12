@@ -142,7 +142,6 @@ int pool_init_config(void)
 	pool_config->enable_pool_hba = 0;
 
 	pool_config->replication_mode = 0;
-	pool_config->replication_timeout = 0;
 	pool_config->load_balance_mode = 0;
 	pool_config->replication_stop_on_mismatch = 0;
 	pool_config->replicate_select = 0;
@@ -531,19 +530,6 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 
-		}
-		else if (!strcmp(key, "replication_timeout") &&
-				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
-		{
-			int v = atoi(yytext);
-
-			if (token != POOL_INTEGER || v < 0)
-			{
-				pool_error("pool_config: %s must be greater or equal to 0 numeric value", key);
-				fclose(fd);
-				return(-1);
-			}
-			pool_config->replication_timeout = v;
 		}
 		else if (!strcmp(key, "load_balance_mode") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{

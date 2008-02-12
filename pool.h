@@ -135,19 +135,10 @@ typedef struct {
     char *logdir;		/* logging directory */
     char *backend_socket_dir;	/* Unix domain socket directory for the PostgreSQL server */
 	int replication_mode;		/* replication mode */
-	int replication_strict;	/* if non 0, wait for completion of the
-                               query sent to master to avoid deadlock */
 
 	int log_connections;		/* 0:false, 1:true - logs incoming connections */
 	int log_hostname;		/* 0:false, 1:true - resolve hostname */
 	int enable_pool_hba;		/* 0:false, 1:true - enables pool_hba.conf file authentication */
-
-	/*
-	 * if next PostgreSQL server does not respond in this milli
-	 * seconds, abort this session.  this is not compatible with
-	 * replication_strict = 1. 0 means no timeout.
-	 */
-	int replication_timeout;
 
 	int load_balance_mode;		/* load balance mode */
 
@@ -462,9 +453,7 @@ extern int connect_unix_domain_socket(int secondary_backend);
 extern int connect_inet_domain_socket_by_port(char *host, int port);
 extern int connect_unix_domain_socket_by_port(int port, char *socket_dir);
 
-extern int pool_check_fd(POOL_CONNECTION *cp, int notimeout);
-extern void pool_enable_timeout(void);
-extern void pool_disable_timeout(void);
+extern int pool_check_fd(POOL_CONNECTION *cp);
 
 extern void pool_send_frontend_exits(POOL_CONNECTION_POOL *backend);
 

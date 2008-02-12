@@ -116,18 +116,14 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 
 	int consume_size;
 	int readlen;
-	int notimeout;
 
 	consume_size = consume_pending_data(cp, buf, len);
 	len -= consume_size;
 	buf += consume_size;
 
-	/* if this is not the master backend, then set timeout */
-	notimeout = !IS_MASTER_NODE_ID(cp->db_node_id);
-
 	while (len > 0)
 	{
-		if (pool_check_fd(cp, notimeout))
+		if (pool_check_fd(cp))
 		{
 			if (!IS_MASTER_NODE_ID(cp->db_node_id))
 			{
@@ -214,18 +210,14 @@ int pool_read_parallel(POOL_CONNECTION *cp, void *buf, int len)
 
 	int consume_size;
 	int readlen;
-	int notimeout;
 
 	consume_size = consume_pending_data(cp, buf, len);
 	len -= consume_size;
 	buf += consume_size;
 
-	/* if this is not the master backend, then set timeout */
-	notimeout = 1;
-
 	while (len > 0)
 	{
-		if (pool_check_fd(cp, notimeout))
+		if (pool_check_fd(cp))
 		{
 			if (!IS_MASTER_NODE_ID(cp->db_node_id))
 			{
@@ -312,7 +304,6 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 	int alloc_size;
 	int consume_size;
 	int readlen;
-	int notimeout;
 
 	req_size = cp->len + len;
 
@@ -334,12 +325,9 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 	len -= consume_size;
 	buf += consume_size;
 
-	/* if this is not the master backend, then set timeout */
-	notimeout = !IS_MASTER_NODE_ID(cp->db_node_id);
-
 	while (len > 0)
 	{
-		if (pool_check_fd(cp, notimeout))
+		if (pool_check_fd(cp))
 		{
 			if (!IS_MASTER_NODE_ID(cp->db_node_id))
 			{
@@ -587,7 +575,6 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 	int strlength;
 	int flag;
 	int consume_size;
-	int notimeout;
 
 #ifdef DEBUG
 	static char pbuf[READBUFSZ];
@@ -654,12 +641,9 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 		readsize = cp->sbufsz;
 	}
 
-	/* if this is not the master backend, then set timeout */
-	notimeout = !IS_MASTER_NODE_ID(cp->db_node_id);
-
 	for (;;)
 	{
-		if (pool_check_fd(cp, notimeout))
+		if (pool_check_fd(cp))
 		{
 			if (!IS_MASTER_NODE_ID(cp->db_node_id))
 			{

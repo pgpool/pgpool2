@@ -3000,44 +3000,24 @@ static POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 	return status;
 }
 
-static int timeoutmsec;
-
-/*
- * enable read timeout
- */
-void pool_enable_timeout()
-{
-	timeoutmsec = pool_config->replication_timeout;
-}
-
-/*
- * disable read timeout
- */
-void pool_disable_timeout()
-{
-	timeoutmsec = 0;
-}
-
 /*
  * wait until read data is ready
  */
 static int synchronize(POOL_CONNECTION *cp)
 {
-	return pool_check_fd(cp, 1);
+	return pool_check_fd(cp);
 }
 
 /*
  * wait until read data is ready
  * if notimeout is non 0, wait forever.
  */
-int pool_check_fd(POOL_CONNECTION *cp, int notimeout)
+int pool_check_fd(POOL_CONNECTION *cp)
 {
 	fd_set readmask;
 	fd_set exceptmask;
 	int fd;
 	int fds;
-	struct timeval timeout;
-	struct timeval *tp;
 
 	fd = cp->fd;
 
@@ -3048,17 +3028,8 @@ int pool_check_fd(POOL_CONNECTION *cp, int notimeout)
 		FD_SET(fd, &readmask);
 		FD_SET(fd, &exceptmask);
 
-		if (notimeout || timeoutmsec == 0)
-			tp = NULL;
-		else
-		{
-			timeout.tv_sec = pool_config->replication_timeout / 1000;
-			timeout.tv_usec = (pool_config->replication_timeout - (timeout.tv_sec * 1000))*1000;
-			tp = &timeout;
-		}
-
-		fds = select(fd+1, &readmask, NULL, &exceptmask, tp);
-
+		/* no timeout */
+		fds = select(fd+1, &readmask, NULL, &exceptmask, NULL);
 		if (fds == -1)
 		{
 			if (errno == EAGAIN || errno == EINTR)
@@ -3071,14 +3042,6 @@ int pool_check_fd(POOL_CONNECTION *cp, int notimeout)
 		if (FD_ISSET(fd, &exceptmask))
 		{
 			pool_error("pool_check_fd: exception occurred");
-			break;
-		}
-
-		if (fds == 0)
-		{
-			pool_error("pool_check_fd: data is not ready tp->tv_sec %d tp->tp_usec %d", 
-					   pool_config->replication_timeout / 1000,
-					   (pool_config->replication_timeout - (timeout.tv_sec * 1000))*1000);
 			break;
 		}
 		return 0;
@@ -3189,11 +3152,6 @@ static void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *b
 	strncpy(status[i].name, "replication_mode", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->replication_mode);
 	strncpy(status[i].desc, "non 0 if operating in replication mode", POOLCONFIG_MAXDESCLEN);
-	i++;
-
-	strncpy(status[i].name, "replication_timeout", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->replication_timeout);
-	strncpy(status[i].desc, "if secondary does not respond in this milli seconds, abort the session", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "load_balance_mode", POOLCONFIG_MAXNAMELEN);
