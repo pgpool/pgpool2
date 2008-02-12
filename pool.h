@@ -315,15 +315,16 @@ typedef struct {
 					  (((!REPLICATION && !PARALLEL_MODE)||master_slave_dml)? Req_info->master_node_id+1: \
 					   pool_config->backend_desc->num_backends))
 #endif
-#define NUM_BACKENDS (in_load_balance? (selected_slot+1) : \
-					  (((!REPLICATION && !PARALLEL_MODE) && !MASTER_SLAVE)? Req_info->master_node_id+1: \
-					   pool_config->backend_desc->num_backends))
+/* NUM_BACKENDS now always returns actual number of backends if not in_load_balance */
+#define NUM_BACKENDS (in_load_balance ? (selected_slot+1) : pool_config->backend_desc->num_backends)
 #define BACKEND_INFO(backend_id) (pool_config->backend_desc->backend_info[(backend_id)])
 #define LOAD_BALANCE_STATUS(backend_id) (pool_config->load_balance_status[(backend_id)])
+/* if RAW_MODE, VALID_BACKEND returns the selected node only */
 #define VALID_BACKEND(backend_id) \
+	(RAW_MODE ? (backend_id) == MASTER_NODE_ID : \
 	(in_load_balance ? LOAD_BALANCE_STATUS(backend_id) == LOAD_SELECTED : \
     ((BACKEND_INFO(backend_id).backend_status == CON_UP) || \
-	 (BACKEND_INFO(backend_id).backend_status == CON_CONNECT_WAIT)))
+	 (BACKEND_INFO(backend_id).backend_status == CON_CONNECT_WAIT))))
 #define CONNECTION_SLOT(p, slot) ((p)->slots[(slot)])
 #define CONNECTION(p, slot) (CONNECTION_SLOT(p, slot)->con)
 #define MASTER_CONNECTION(p) ((p)->slots[MASTER_NODE_ID])
@@ -334,6 +335,7 @@ typedef struct {
 #define MASTER_SLAVE (pool_config->master_slave_enabled)
 #define DUAL_MODE (REPLICATION || MASTER_SLAVE)
 #define PARALLEL_MODE (pool_config->parallel_mode)
+#define RAW_MODE (!REPLICATION && !PARALLEL_MODE && !MASTER_SLAVE)
 #define MASTER(p) MASTER_CONNECTION(p)->con
 //#define SECONDARY(p) SECONDARY_CONNECTION(p)->con
 #define MAJOR(p) MASTER_CONNECTION(p)->sp->major
