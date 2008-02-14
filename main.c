@@ -1045,6 +1045,12 @@ static int get_next_master_node(void)
 	int i;
 	for (i=0;i<pool_config->backend_desc->num_backends;i++)
 	{
+		/*
+		 * Do not use VALID_BACKEND macro in raw mode.
+		 * VALID_BACKEND return true only if the argument is master
+		 * node id. In other words, standby nodes are false. So need
+		 * to check backend status without VALID_BACKEND.
+		 */
 		if (RAW_MODE)
 		{
 			if (BACKEND_INFO(i).backend_status == CON_CONNECT_WAIT)
