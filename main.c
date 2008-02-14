@@ -1045,7 +1045,12 @@ static int get_next_master_node(void)
 	int i;
 	for (i=0;i<pool_config->backend_desc->num_backends;i++)
 	{
-		if (VALID_BACKEND(i))
+		if (RAW_MODE)
+		{
+			if (BACKEND_INFO(i).backend_status == CON_CONNECT_WAIT)
+				break;
+		}
+		else if (VALID_BACKEND(i))
 			break;
 	}
 	return i;
@@ -1646,8 +1651,7 @@ static void pool_sleep(unsigned int second)
 	sleep_time.tv_usec = current_time.tv_usec;
 
 	POOL_SETMASK(&UnBlockSig);
-	while (sleep_time.tv_sec > current_time.tv_sec ||
-		   sleep_time.tv_usec > current_time.tv_usec)
+	while (sleep_time.tv_sec > current_time.tv_sec)
 	{
 		struct timeval timeout;
 		int r;
