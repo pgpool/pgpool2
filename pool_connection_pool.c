@@ -555,8 +555,7 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 	{
 		pool_debug("new_connection: connecting %d backend", i);
 
-		if (BACKEND_INFO(i).backend_status == CON_DOWN ||
-			BACKEND_INFO(i).backend_status == CON_UNUSED)
+		if (!VALID_BACKEND(i))
 		{
 			pool_debug("new_connection: skipping slot %d because backend_status = %d",
 					   i, BACKEND_INFO(i).backend_status);
