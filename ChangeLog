@@ -1,3 +1,61 @@
+2008-02-14  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_connection_pool.c: Do not create connection cache to
+	  standby nodes in raw_mode. As a result, we can use pgpool-II +
+	  warm standby with raw_mode.
+
+	* main.c: Fix a failover bug that pgpool did not determine a next
+	  master node in raw_mode.
+
+2008-02-12  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* child.c, pgpool.conf.sample, pool.h, pool_config.c,
+	  pool_config.l, pool_process_query.c, pool_stream.c: Remove
+	  "replication_timeout" parameter. This parameter was enabled if
+	  replication_strict = false. However replication_strict was
+	  already removed.
+
+2008-02-12  Taiki Yamaguchi  <yamaguchi@sraoss.co.jp>
+
+	* pool.h: Fix a bug in raw mode where only 1 of multiple nodes
+	  were recognized by pgpool.
+
+2008-02-08  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* sql/pgpool-recovery/pgpool-recovery.c: PostgreSQL superuser can
+	  *only* execute pgpool_recovery and pgpool_remote_start functions
+	  because of security issue.
+
+2008-02-08  Taiki Yamaguchi  <yamaguchi@sraoss.co.jp>
+
+	* pgpool.conf.sample, pool.h, pool_config.c, pool_config.l: added
+	  a new configuration parameter "recovery_timeout". 
+
+          pgpool waits so many seconds, specified by recovery_timeout,
+	  for:
+
+          1) all client connections are closed before the 2nd stage
+          2) a remote host to start up in the final stage
+
+          Note that "recovery_timeout = 0" means NO WAIT; not no timeout.
+
+	* recovery.c: Use "recovery_timeout" to decide how long pgpool
+	should wait before online-recovery fails.
+
+	* main.c, pcp_child.c, recovery.c: Implemented configuration file
+	  "reload" function into PCP.
+
+	* pcp/pcp.c: Disabled PCP client's timeout.
+	  PCP commands still take timeout option, but ignores and set
+	  notimeout.
+
+2008-02-05  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Remove unneccesary flushing output
+	  buffer.
+
+	* pool_auth.c: Fix authentication error when master was down.
+
 2008-01-29  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* COPYING, ...: Update copyright.
