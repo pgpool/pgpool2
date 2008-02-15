@@ -568,9 +568,10 @@ int main(int argc, char **argv)
 			for (;;)
 			{
 				int r;
+				struct timeval t = {3, 0};
 
 				POOL_SETMASK(&UnBlockSig);
-				r = pool_pause(NULL);
+				r = pool_pause(&t);
 				POOL_SETMASK(&BlockSig);
 				if (r > 0)
 					break;
@@ -1451,7 +1452,6 @@ static void reaper(void)
 	int i;
 
 	pool_debug("reap_handler called");
-	sigchld_request = 0;
 
 	if (exiting)
 	{
@@ -1464,6 +1464,9 @@ static void reaper(void)
 		pool_debug("reap_handler: exited due to swicting");
 		return;
 	}
+
+	/* clear SIGCHLD request */
+	sigchld_request = 0;
 
 #ifdef HAVE_WAITPID
 	pool_debug("reap_handler: call waitpid");
@@ -1648,7 +1651,7 @@ static int pool_pause(struct timeval *timeout)
 }
 
 /*
- * pool_pause: A process sleep using pool_pause().
+ * pool_sleep: A process sleep using pool_pause().
  *             If a signal event occurs, it raises signal handler.
  */
 static void pool_sleep(unsigned int second)
