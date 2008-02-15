@@ -1065,7 +1065,8 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			return POOL_CONTINUE;
 		}
 
-		if (IsA(node, PrepareStmt) || IsA(node, DeallocateStmt) || IsA(node, VariableSetStmt))
+		if (IsA(node, PrepareStmt) || IsA(node, DeallocateStmt) ||
+			IsA(node, VariableSetStmt) || IsA(node, DiscardStmt))
 		{
 			/*
 			 * PREPARE, DEALLOCATE and SET statements must be replicated.
