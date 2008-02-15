@@ -1146,6 +1146,7 @@ static void failover(void)
 			pool_error("failover_handler: invalid node_id %d status:%d MAX_NUM_BACKENDS: %d", node_id,
 					   BACKEND_INFO(node_id).backend_status, MAX_NUM_BACKENDS);
 			kill(pcp_pid, SIGUSR2);
+			switching = 0;
 			return;
 		}
 
@@ -1180,6 +1181,7 @@ static void failover(void)
 			pool_log("failover: no backends are degenerated");
 			pool_semaphore_unlock(REQUEST_INFO_SEM);
 			kill(pcp_pid, SIGUSR2);
+			switching = 0;
 			return;
 		}
 	}
@@ -1211,6 +1213,7 @@ static void failover(void)
 			pool_semaphore_unlock(REQUEST_INFO_SEM);
 			switching = 0;
 			kill(pcp_pid, SIGUSR2);
+			switching = 0;
 			return;
 		}
 
