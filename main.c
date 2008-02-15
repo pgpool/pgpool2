@@ -1214,7 +1214,7 @@ static void failover(void)
 			return;
 		}
 
-		pool_log("failover_handler: set new master node: %d", i);
+		pool_log("failover_handler: set new master node: %d", new_master);
 		Req_info->master_node_id = new_master;
 	}
 
