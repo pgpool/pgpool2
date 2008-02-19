@@ -65,6 +65,7 @@
 typedef struct {
 	char *portal_name; /* portal name*/
 	Node *stmt;        /* parse tree for prepared statement */
+	char *sql_string;  /* original SQL statement */
 	POOL_MEMORY_POOL *prepare_ctxt; /* memory context for parse tree */
 } Portal;
 
@@ -1095,6 +1096,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 					portal->portal_name = NULL;
 					portal->stmt = copyObject(node);
+					portal->sql_string = NULL;
 					pending_prepared_portal = portal;
 				}
 				else if (IsA(node, DeallocateStmt))
@@ -1113,6 +1115,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 					portal->portal_name = NULL;
 					portal->stmt = copyObject(node);
+					portal->sql_string = NULL;
 					pending_prepared_portal = portal;
 				}
 				else if (IsA(node, DiscardStmt))
@@ -1378,7 +1381,7 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 
 		p_stmt = (PrepareStmt *)portal->stmt;
 
-		string1 = nodeToString(p_stmt->query);
+		string1 = portal->sql_string;
 		node = (Node *)p_stmt->query;
 
 		if ((IsA(node, PrepareStmt) || IsA(node, DeallocateStmt) || IsA(node, VariableSetStmt)) &&
@@ -1632,6 +1635,7 @@ static POOL_STATUS Parse(POOL_CONNECTION *frontend,
 		p_stmt->query = copyObject(node);
 		portal->stmt = (Node *)p_stmt;
 		portal->portal_name = NULL;
+		portal->sql_string = pstrdup(stmt);
 
 		if (*name)
 		{
