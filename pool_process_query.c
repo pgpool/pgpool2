@@ -455,7 +455,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 		first_ready_for_query_received = 0;
 
 		/*
-		 * Prrocess backend Response
+		 * Process backend Response
 		 */
 
 		/*
@@ -478,7 +478,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 					status = CopyInResponse(frontend, backend);
 					break;
 				case 'S':
-					/* Paramter Status */
+					/* Parameter Status */
 					status = ParameterStatus(frontend, backend);
 					break;
 				case 'Z':
@@ -636,7 +636,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 
 	if (is_drop_database(node))
 	{
-		int stime = 5;  /* XXX give arbitary time to allow closing idle connections */
+		int stime = 5;  /* XXX give arbitrary time to allow closing idle connections */
 
 		pool_debug("Query: sending HUP signal to parent");
 
@@ -733,7 +733,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 			return POOL_CONTINUE;
 		}
 
-		/* get header of protcol */
+		/* get header of protocol */
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
 			if (!VALID_BACKEND(i) ||
@@ -779,7 +779,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 					continue;
 				}
 
-				/* get body of protcol */
+				/* get body of protocol */
 				for(;;)
 				{
 					if (pool_read(CONNECTION(backend, i), &kind, 1) < 0)
@@ -921,7 +921,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	/* show ps status */
 	query_ps_status(string, backend);
 
-	/* log query to log file if neccessary */
+	/* log query to log file if necessary */
 	if (pool_config->log_statement)
 	{
 		pool_log("statement: %s", string);
@@ -977,7 +977,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 		if (pool_config->parallel_mode)
 		{
-			/* analze query */
+			/* analyze query */
 			RewriteQuery *r_query = is_parallel_query(node,backend);
 
 			if(r_query->is_loadbalance)
@@ -1032,7 +1032,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		 */
 		if (is_drop_database(node))
 		{
-			int stime = 5;	/* XXX give arbitary time to allow closing idle connections */
+			int stime = 5;	/* XXX give arbitrary time to allow closing idle connections */
 
 			pool_debug("Query: sending SIGUSR1 signal to parent");
 
@@ -2040,7 +2040,7 @@ static int RowDescription(POOL_CONNECTION *frontend,
 			pool_read(CONNECTION(backend, i), &num_fields, sizeof(short));
 			if (num_fields != num_fields1)
 			{
-				pool_error("RowDescription: num_fields deos not match between backends master(%d) and %d th backend(%d)",
+				pool_error("RowDescription: num_fields does not match between backends master(%d) and %d th backend(%d)",
 						   num_fields, i, num_fields1);
 				return POOL_FATAL;
 			}
@@ -2073,7 +2073,7 @@ static int RowDescription(POOL_CONNECTION *frontend,
 
 				if (len != len1)
 				{
-					pool_error("RowDescription: field length deos not match between backends master(%d) and %d th backend(%d)",
+					pool_error("RowDescription: field length does not match between backends master(%d) and %d th backend(%d)",
 							   ntohl(len), ntohl(len1));
 					return POOL_FATAL;
 				}
@@ -2093,7 +2093,7 @@ static int RowDescription(POOL_CONNECTION *frontend,
 				/* we do not regard oid mismatch as fatal */
 				if (oid != oid1)
 				{
-					pool_debug("RowDescription: field oid deos not match between backends master(%d) and %d th backend(%d)",
+					pool_debug("RowDescription: field oid does not match between backends master(%d) and %d th backend(%d)",
 							   ntohl(oid), j, ntohl(oid1));
 				}
 			}
@@ -2111,7 +2111,7 @@ static int RowDescription(POOL_CONNECTION *frontend,
 				pool_read(CONNECTION(backend, j), &size, sizeof(short));
 				if (size1 != size1)
 				{
-					pool_error("RowDescription: field size deos not match between backends master(%d) and %d th backend(%d)",
+					pool_error("RowDescription: field size does not match between backends master(%d) and %d th backend(%d)",
 							   ntohs(size), j, ntohs(size1));
 					return POOL_FATAL;
 				}
@@ -2131,7 +2131,7 @@ static int RowDescription(POOL_CONNECTION *frontend,
 				pool_read(CONNECTION(backend, j), &mod, sizeof(int));
 				if (mod != mod1)
 				{
-					pool_debug("RowDescription: modifier deos not match between backends master(%d) and %d th backend(%d)",
+					pool_debug("RowDescription: modifier does not match between backends master(%d) and %d th backend(%d)",
 							   ntohl(mod), j, ntohl(mod1));
 				}
 			}
@@ -2931,7 +2931,7 @@ static POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 
 	if (pool_read(frontend, &fkind, 1) < 0)
 	{
-		pool_log("ProcessFrontendResponse: failed to read kind from frontend. fronend abnormally exited");
+		pool_log("ProcessFrontendResponse: failed to read kind from frontend. frontend abnormally exited");
 		return POOL_END;
 	}
 
@@ -3530,7 +3530,7 @@ void pool_send_frontend_exits(POOL_CONNECTION_POOL *backend)
 			 * XXX we cannot call pool_flush() here since backend may already
 			 * close the socket and pool_flush() automatically invokes fail
 			 * over handler. This could happen in copy command (remember the
-			 * famouse "lost synchronization with server, resettin g
+			 * famous "lost synchronization with server, resetting
 			 * connection" message)
 			 */
 			pool_flush_it(CONNECTION(backend, i));
@@ -3824,7 +3824,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 				 * so that it accepts next command.
 				 * Note that this may be overkill since client may send
 				 * it by itself. Moreover we do not need it in non-extend mode.
-				 * At this point we regard it is not harmfull since error resonse
+				 * At this point we regard it is not harmful since error response
 				 * will not be sent too frequently.
 				 */
 				pool_write(cp, "S", 1);
@@ -4420,7 +4420,7 @@ void pool_send_readyforquery(POOL_CONNECTION *frontend)
  * sends q query in sync manner.
  * this function sends a query and wait for CommandComplete/ReadyForQuery.
  * if an error occured, it returns with POOL_ERROR.
- * this function does NOT handle SELECT/SHOW quries.
+ * this function does NOT handle SELECT/SHOW queries.
  * if no_ready_for_query is non 0, returns without reading the packet
  * length for ReadyForQuery. This mode is necessary when called from ReadyForQuery().
  */
@@ -4530,7 +4530,7 @@ retry_read_packet:
 /*
  * Send syntax error query to abort transaction.
  * We need to sync transaction status in transaction block.
- * SELECT query is sended to master only.
+ * SELECT query is sent to master only.
  * If SELECT is error, we must abort transaction on other nodes.
  */
 static POOL_STATUS do_error_command(POOL_CONNECTION *backend, int major)
@@ -5352,7 +5352,7 @@ static POOL_STATUS end_internal_transaction(POOL_CONNECTION_POOL *backend)
 
 	/*
 	 * We must block all signals. If pgpool SIGTERM, SIGINT or SIGQUIT
-	 * is delivered, it possibly causes data consistensy.
+	 * is delivered, it possibly causes data consistency.
 	 */
 	POOL_SETMASK2(&BlockSig, &oldmask);
 
