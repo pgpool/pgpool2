@@ -204,7 +204,11 @@ static int exec_recovery(PGconn *conn, BackendInfo *backend, char stage)
 	result = PQexec(conn, recovery_command);
 	r = (PQresultStatus(result) !=  PGRES_TUPLES_OK);
 	if (r != 0)
-		pool_error("exec_recovery: pgpool_recovery failed: %s", PQresultErrorMessage(result));
+	{
+		pool_error("exec_recovery: %s command failed at %s",
+				   script,
+				   (stage == FIRST_STAGE) ? "1st stage" : "2nd stage");
+	}
 	PQclear(result);
 	pool_debug("exec_recovery: finish recovery");
 	return r;
