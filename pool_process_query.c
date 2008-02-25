@@ -185,6 +185,7 @@ static int replication_was_enabled;		/* replication mode was enabled */
 static int master_slave_was_enabled;	/* master/slave mode was enabled */
 static int internal_transaction_started;		/* to issue table lock command a transaction
 												   has been started internally */
+static int in_progress = 0;
 static int mismatch_ntuples;
 static char *copy_table = NULL;  /* copy table name */
 static char *copy_schema = NULL;  /* copy table name */
@@ -313,10 +314,14 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 			FD_ZERO(&writemask);
 			FD_ZERO(&exceptmask);
 
-			if (!connection_reuse)
+			/*
+			 * Do not read a message from frontend while backends process a query.
+			 */
+			if (!connection_reuse && !in_progress)
 			{
 				FD_SET(frontend->fd, &readmask);
 				FD_SET(frontend->fd, &exceptmask);
+				num_fds = Max(frontend->fd + 1, num_fds);
 			}
 
 			num_fds = 0;
@@ -339,11 +344,6 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 					FD_SET(CONNECTION(backend, i)->fd, &readmask);
 					FD_SET(CONNECTION(backend, i)->fd, &exceptmask);
 				}
-			}
-
-			if (connection_reuse)
-			{
-				num_fds = Max(frontend->fd + 1, num_fds);
 			}
 
 			/*
@@ -401,7 +401,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 			if (was_error)
 				continue;
 
-			if (!connection_reuse)
+			if (!connection_reuse && !in_progress)
 			{
 				if (FD_ISSET(frontend->fd, &exceptmask))
 					return POOL_END;
@@ -424,7 +424,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 		}
 		else
 		{
-			if (frontend->len > 0)
+			if (frontend->len > 0 && !in_progress)
 			{
 				status = ProcessFrontendResponse(frontend, backend);
 				if (status != POOL_CONTINUE)
@@ -1942,6 +1942,8 @@ static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			return POOL_END;
 	}
 
+	in_progress = 0;
+
 	/* end load balance mode */
 	if (in_load_balance)
 		end_load_balance(backend);
@@ -2953,6 +2955,7 @@ static POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			return POOL_END;
 
 		case 'Q':  /* Query message*/
+			in_progress = 1;
 			status = SimpleQuery(frontend, backend, NULL);
 			break;
 
@@ -4121,6 +4124,7 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 	/*
 	 * Reset all state variables
 	 */
+	in_progress = 0;
 	in_load_balance = 0;
 	force_replication = 0;
 	internal_transaction_started = 0;
@@ -4799,7 +4803,7 @@ static int is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 {
 	int i;
 
-	if (frontend->len > 0)
+	if (frontend->len > 0 && !in_progress)
 		return 0;
 
 	for (i=0;i<NUM_BACKENDS;i++)
