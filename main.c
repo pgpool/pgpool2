@@ -53,6 +53,9 @@
 #include "parser/pool_memory.h"
 #include "parser/pool_string.h"
 
+/*
+ * Process pending signal actions.
+ */
 #define CHECK_REQUEST \
 	do { \
 		if (wakeup_request) \
@@ -103,6 +106,7 @@ static RETSIGTYPE health_check_timer_handler(int sig);
 static RETSIGTYPE wakeup_handler(int sig);
 
 static void usage(void);
+static void show_version(void);
 static void stop_me(void);
 
 static int trigger_failover_command(int node, const char *command_line);
@@ -175,7 +179,7 @@ int main(int argc, char **argv)
 	snprintf(pcp_conf_file, sizeof(pcp_conf_file), "%s/%s", DEFAULT_CONFIGDIR, PCP_PASSWD_FILE_NAME);
 	snprintf(hba_file, sizeof(hba_file), "%s/%s", DEFAULT_CONFIGDIR, HBA_CONF_FILE_NAME);
 
-	while ((opt = getopt(argc, argv, "a:cdf:F:hm:n")) != -1)
+	while ((opt = getopt(argc, argv, "a:cdf:F:hm:nv")) != -1)
 	{
 		switch (opt)
 		{
@@ -241,6 +245,10 @@ int main(int argc, char **argv)
 			case 'n':	/* no detaching control ttys */
 				not_detach = 1;
 				break;
+
+			case 'v':
+				show_version();
+				exit(0);
 
 			default:
 				usage();
@@ -580,6 +588,11 @@ int main(int argc, char **argv)
 	}
 
 	pool_shmem_exit(0);
+}
+
+static void show_version(void)
+{
+	fprintf(stderr, "%s version %s (%s)\n",	PACKAGE, VERSION, PGPOOLVERSION);
 }
 
 static void usage(void)
