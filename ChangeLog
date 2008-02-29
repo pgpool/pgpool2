@@ -1,3 +1,10 @@
+2008-02-29  Taiki Yamaguchi  <yamaguchi@sraoss.co.jp>
+
+	* pg_md5.c: Implement "-p" option for password prompt to avoid
+	reading password from command-line argument. (patch contributed by
+	Volkan Yazici) Also disable terminal ECHO while reading password
+	with "-p" option.
+
 2008-02-14  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* pool_connection_pool.c: Do not create connection cache to
