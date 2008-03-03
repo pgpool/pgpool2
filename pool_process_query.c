@@ -653,6 +653,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 	{
 		pool_debug("process reporting");
 		process_reporting(frontend, backend);
+		in_progress = 0;
 		return POOL_CONTINUE;
 	}
 
@@ -1055,6 +1056,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 			pool_debug("process reporting");
 			process_reporting(frontend, backend);
+			in_progress = 0;
 
 			/* show ps status */
 			sp = MASTER_CONNECTION(backend)->sp;
