@@ -5,6 +5,53 @@
 	Volkan Yazici) Also disable terminal ECHO while reading password
 	with "-p" option.
 
+2008-02-26  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* main.c: Add comment. Add -v option, which prints version info.
+
+2008-02-25  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Fix asynchronous query handling.
+	  When ReadyForQuery message was received, pgpool set off
+	  loadbalancing flag, internal transaction flag and so on. If
+	  client sended a Query message before receiving the ReadyForQuery
+	  message, pgpool reported error message.
+
+	  So, we block the Query message while backend nodes process a
+	  query.
+
+	* recovery.c: Improve error message.
+
+2008-02-20  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Return TRUE in is_select_query() if a
+	  query is "COPY TO STDOUT". kind mismatching error was caused by
+	  pg_dump or pg_dumpall. Per report by Bruno Lustosa.
+
+2008-02-19  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Fix misspell. Patch contributed by Jun
+	  Kuriyama.
+
+	* pool_process_query.c: Fix HINT clause handling in extended query
+	  protocol. pgpool did not replicate the following query with
+	  extended query protocol.
+	    /* REPLICATION */ SELECT func();
+	  Per report by Sagar Thapa.
+
+
+2008-02-18  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_stream.c: Add error checking.
+
+2008-02-15  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* main.c: Polling signals per 3 secs when health check is
+	  disabled.
+
+	* main.c: Fix zombie process problem. "switching" flag did not
+	  clear when invalid node ID was detached.
+
 2008-02-14  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* pool_connection_pool.c: Do not create connection cache to
