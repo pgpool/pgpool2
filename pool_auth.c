@@ -951,7 +951,7 @@ int pool_read_message_length(POOL_CONNECTION_POOL *cp)
 	status = pool_read(CONNECTION(cp, MASTER_NODE_ID), &length0, sizeof(length0));
 	if (status < 0)
 	{
-		pool_error("pool_read_message_length: error while reading message length in slot %d", i);
+		pool_error("pool_read_message_length: error while reading message length in slot %d", MASTER_NODE_ID);
 		return -1;
 	}
 	length0 = ntohl(length0);
