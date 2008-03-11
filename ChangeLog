@@ -1,3 +1,22 @@
+2008-03-11  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Fixed hang up if a node was executed
+	  immediate shutdown.
+
+	* main.c, doc/pgpool-ja.html, doc/pgpool-en.html: 
+	  - Add '%M'format to obtain old master node ID into
+	    failover_command and failback_command.
+	  - When master node was down, killed all children process during
+	    executing failover_command.
+	  - Fixed SIGSEGV if backend0 was undefined.
+
+2008-03-10  Tatsuo Ishii  <ishii@sraoss.co.jp>
+
+	* pool_process_query.c: Fix a compiler warning.
+
+	* pool_auth.c: Fix using uninialized varible in
+	  pool_read_message_length().
+
 2008-02-29  Taiki Yamaguchi  <yamaguchi@sraoss.co.jp>
 
 	* pg_md5.c: Implement "-p" option for password prompt to avoid
