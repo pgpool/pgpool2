@@ -5460,7 +5460,8 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, b
 	memcpy(p, &kind, sizeof(kind));
 	p += sizeof(kind);
 
-	if (kind == 'E') /* ErrorResponseMessage? */
+	/* ErrorResponse or NoticeResponse message? */
+	if (kind == 'E' || kind == 'N')
 	{
 		/* read actual query */
 		if (major == PROTO_MAJOR_V3)
