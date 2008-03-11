@@ -411,7 +411,7 @@ int main(int argc, char **argv)
 	/* initialize Req_info */
 	Req_info->kind = NODE_UP_REQUEST;
 	memset(Req_info->node_id, -1, sizeof(int) * MAX_NUM_BACKENDS);
-	Req_info->master_node_id = 0;
+	Req_info->master_node_id = get_next_master_node();
 	Req_info->conn_counter = 0;
 
 	InRecovery = pool_shared_memory_create(sizeof(int));
@@ -1097,8 +1097,11 @@ static void failover(void)
 	int i;
 	int node_id;
 	int new_master;
+	int nodes[MAX_NUM_BACKENDS];
 
 	pool_debug("failover_handler called");
+
+	memset(nodes, 0, sizeof(int) * MAX_NUM_BACKENDS);
 
 	/*
 	 * this could happen in a child process if a signal has been sent
@@ -1185,7 +1188,8 @@ static void failover(void)
 
 
 				BACKEND_INFO(Req_info->node_id[i]).backend_status = CON_DOWN;	/* set down status */
-				trigger_failover_command(Req_info->node_id[i], pool_config->failover_command);
+				/* save down node */
+				nodes[Req_info->node_id[i]] = 1;
 				cnt++;
 			}
 		}
@@ -1224,15 +1228,19 @@ static void failover(void)
 						 BACKEND_INFO(node_id).backend_port);
 			}
 
+			/* exec failover_command */
+			for (i = 0; i < pool_config->backend_desc->num_backends; i++)
+			{
+				if (nodes[i])
+					trigger_failover_command(i, pool_config->failover_command);
+			}
+
 			pool_semaphore_unlock(REQUEST_INFO_SEM);
 			switching = 0;
 			kill(pcp_pid, SIGUSR2);
 			switching = 0;
 			return;
 		}
-
-		pool_log("failover_handler: set new master node: %d", new_master);
-		Req_info->master_node_id = new_master;
 	}
 
 	/* kill all children */
@@ -1245,6 +1253,16 @@ static void failover(void)
 			pool_debug("failover_handler: kill %d", pid);
 		}
 	}
+
+	/* exec failover_command */
+	for (i = 0; i < pool_config->backend_desc->num_backends; i++)
+	{
+		if (nodes[i])
+			trigger_failover_command(i, pool_config->failover_command);
+	}
+
+	pool_log("failover_handler: set new master node: %d", new_master);
+	Req_info->master_node_id = new_master;
 
 /* no need to wait since it will be done in reap_handler */
 #ifdef NOT_USED
@@ -1774,8 +1792,13 @@ static int trigger_failover_command(int node, const char *command_line)
 						string_append_char(exec_cmd, info->backend_hostname);
 						break;
 
-					case 'm': /* master node id */
+					case 'm': /* new master node id */
 						snprintf(port_buf, sizeof(port_buf), "%d", get_next_master_node());
+						string_append_char(exec_cmd, port_buf);
+						break;
+
+					case 'M': /* old master node id */
+						snprintf(port_buf, sizeof(port_buf), "%d", MASTER_NODE_ID);
 						string_append_char(exec_cmd, port_buf);
 						break;
 
