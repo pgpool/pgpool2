@@ -122,15 +122,15 @@ main(int argc, char **argv)
 static void
 usage(void)
 {
-	fprintf(stderr, "pcp_attach_node - attach a node from pgpool-II\n\n");
-	fprintf(stderr, "Usage: pcp_attach_node timeout hostname port# username password nodeID\n");
-	fprintf(stderr, "Usage: pcp_attach_node -h\n\n");
+	fprintf(stderr, "pcp_recovery_node - recovery a node\n\n");
+	fprintf(stderr, "Usage: pcp_recovery_node timeout hostname port# username password nodeID\n");
+	fprintf(stderr, "Usage: pcp_recovery_node -h\n\n");
 	fprintf(stderr, "  timeout  - connection timeout value in seconds. command exits on timeout\n");
 	fprintf(stderr, "  hostname - pgpool-II hostname\n");
 	fprintf(stderr, "  port#    - pgpool-II port number\n");
 	fprintf(stderr, "  username - username for PCP authentication\n");
 	fprintf(stderr, "  password - password for PCP authentication\n");
-	fprintf(stderr, "  nodeID   - ID of a node to be attached\n");
+	fprintf(stderr, "  nodeID   - ID of a node to recover\n");
 	fprintf(stderr, "  -h       - print this help\n");
 }
 
