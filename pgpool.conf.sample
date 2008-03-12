@@ -59,8 +59,8 @@ logdir = '/tmp'
 # Replication mode
 replication_mode = false
 
-# Load balancing mode, i.e., all SELECTs except in a transaction block
-# are load balanced.  This is ignored if replication_mode is false.
+# Load balancing mode, i.e., all SELECTs are load balanced.
+# This is ignored if replication_mode is false.
 load_balance_mode = false
 
 # if there's a data mismatch between master and secondary
