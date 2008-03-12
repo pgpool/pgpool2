@@ -851,7 +851,13 @@ static int create_inet_domain_socket(const char *hostname, const int port)
 	status = bind(fd, (struct sockaddr *)&addr, len);
 	if (status == -1)
 	{
-		pool_error("bind() failed. reason: %s", strerror(errno));
+		char *host = "", *serv = "";
+		char hostname[NI_MAXHOST], servname[NI_MAXSERV];
+		if (getnameinfo((struct sockaddr *) &addr, len, hostname, sizeof(hostname), servname, sizeof(servname), 0) == 0) {
+			host = hostname;
+			serv = servname;
+		}
+		pool_error("bind(%s:%s) failed. reason: %s", host, serv, strerror(errno));
 		myexit(1);
 	}
 
@@ -887,7 +893,7 @@ static int create_unix_domain_socket(struct sockaddr_un un_addr_tmp)
 	status = bind(fd, (struct sockaddr *)&addr, len);
 	if (status == -1)
 	{
-		pool_error("bind() failed. reason: %s", strerror(errno));
+		pool_error("bind(%s) failed. reason: %s", addr.sun_path, strerror(errno));
 		myexit(1);
 	}
 
@@ -904,6 +910,12 @@ static int create_unix_domain_socket(struct sockaddr_un un_addr_tmp)
 		myexit(1);
 	}
 	return fd;
+}
+
+static void myunlink(const char* path)
+{
+	if (unlink(path) == 0) return;
+	pool_error("unlink(%s) failed: %s", path, strerror(errno));
 }
 
 static void myexit(int code)
@@ -932,10 +944,10 @@ static void myexit(int code)
 		POOL_SETMASK(&UnBlockSig);
 	}
 	
-	unlink(un_addr.sun_path);
-	unlink(pcp_un_addr.sun_path);
+	myunlink(un_addr.sun_path);
+	myunlink(pcp_un_addr.sun_path);
 	snprintf(path, sizeof(path), "%s/%s", pool_config->logdir, PID_FILE_NAME);
-	unlink(path);
+	myunlink(path);
 
 	pool_shmem_exit(code);
 	exit(code);
