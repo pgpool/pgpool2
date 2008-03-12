@@ -414,8 +414,11 @@ void do_child(int unix_fd, int inet_fd)
 		if (MAJOR(backend) == PROTO_MAJOR_V2)
 			TSTATE(backend) = 'I';
 
-		/* select load balancing node */
-		backend->info->load_balancing_node = select_load_balancing_node();
+		if (pool_config->load_balance_mode)
+		{
+			/* select load balancing node */
+			backend->info->load_balancing_node = select_load_balancing_node();
+		}
 
 		/* query process loop */
 		for (;;)
