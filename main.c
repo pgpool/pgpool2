@@ -143,7 +143,7 @@ long int weight_master;	/* normalized weight of master (0-RAND_MAX range) */
 
 static int stop_sig = SIGTERM;	/* stopping signal default value */
 
-static int health_check_timer_expired;		/* non 0 if health check timer expired */
+static volatile sig_atomic_t health_check_timer_expired;		/* non 0 if health check timer expired */
 
 POOL_REQUEST_INFO *Req_info;		/* request info area in shared memory */
 volatile sig_atomic_t *InRecovery; /* non 0 if recovery is started */
@@ -488,7 +488,7 @@ int main(int argc, char **argv)
 				/*
 				 * set health checker timeout. we want to detect
 				 * commnuication path failure much earlier before
-				 * TCP/IP statck detects it.
+				 * TCP/IP stack detects it.
 				 */
 				pool_signal(SIGALRM, health_check_timer_handler);
 				alarm(pool_config->health_check_timeout);
@@ -499,7 +499,9 @@ int main(int argc, char **argv)
 			 */
 			errno = 0;
 			health_check_timer_expired = 0;
+			POOL_SETMASK(&UnBlockSig);
 			sts = health_check();
+			POOL_SETMASK(&BlockSig);
 			if (pool_config->parallel_mode || pool_config->enable_query_cache)
 				sys_sts = system_db_health_check();
 
