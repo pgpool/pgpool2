@@ -3622,6 +3622,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 			IsA(pending_prepared_portal->stmt, DeallocateStmt))
 		{
 			free(pending_prepared_portal->portal_name);
+			pending_prepared_portal->portal_name = NULL;
 			pool_memory_delete(pending_prepared_portal->prepare_ctxt, 0);
 			free(pending_prepared_portal);
 		}
@@ -3631,9 +3632,13 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 		/* PREPARE or DEALLOCATE is error.
 		 * Free pending portal object.
 		 */
-		free(pending_prepared_portal->portal_name);
-		pool_memory_delete(pending_prepared_portal->prepare_ctxt, 0);
-		free(pending_prepared_portal);
+		if (pending_prepared_portal)
+		{
+			free(pending_prepared_portal->portal_name);
+			pending_prepared_portal->portal_name = NULL;
+			pool_memory_delete(pending_prepared_portal->prepare_ctxt, 0);
+			free(pending_prepared_portal);
+		}
 	}
 	else if (kind == 'C' && select_in_transaction)
 		select_in_transaction = 0;
@@ -5080,25 +5085,33 @@ static void del_prepared_list(PreparedStatementList *p, Portal *portal)
 	int i;
 	DeallocateStmt *s = (DeallocateStmt *)portal->stmt;
 
-	for (i = 0; i < p->cnt; i++)
+	/* DEALLOCATE ALL? */
+	if (s->name == NULL)
 	{
-		PrepareStmt *p_stmt = (PrepareStmt *)p->portal_list[i]->stmt;
-		if (strcmp(p_stmt->name, s->name) == 0)
-			break;
+		reset_prepared_list(p);
 	}
+	else
+	{
+		for (i = 0; i < p->cnt; i++)
+		{
+			PrepareStmt *p_stmt = (PrepareStmt *)p->portal_list[i]->stmt;
+			if (strcmp(p_stmt->name, s->name) == 0)
+				break;
+		}
 	
-	if (i == p->cnt)
-		return;
+		if (i == p->cnt)
+			return;
 
-	pool_memory_delete(p->portal_list[i]->prepare_ctxt, 0);
-	free(p->portal_list[i]->portal_name);
-	free(p->portal_list[i]);
-	if (i != p->cnt - 1)
-	{
-		memmove(&p->portal_list[i], &p->portal_list[i+1],
-				sizeof(Portal *) * (p->cnt - i - 1));
+		pool_memory_delete(p->portal_list[i]->prepare_ctxt, 0);
+		free(p->portal_list[i]->portal_name);
+		free(p->portal_list[i]);
+		if (i != p->cnt - 1)
+		{
+			memmove(&p->portal_list[i], &p->portal_list[i+1],
+					sizeof(Portal *) * (p->cnt - i - 1));
+		}
+		p->cnt--;
 	}
-	p->cnt--;
 }
 
 static void delete_all_prepared_list(PreparedStatementList *p, Portal *portal)
