@@ -3,7 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include <termio.h>
+#include <termios.h>
 
 #include "md5.h"
 
