@@ -197,6 +197,9 @@ static Portal *unnamed_statement = NULL;
 static Portal *unnamed_portal = NULL;
 static int select_in_transaction = 0; /* non 0 if select query is in transaction */
 
+/* non 0 if "BEGIN" query with extended query protocol received */
+static int receive_extended_begin = 0;
+
 static PreparedStatementList prepared_list; /* prepared statement name list */
 static int is_drop_database(Node *node);		/* returns non 0 if this is a DROP DATABASE command */
 
@@ -1071,7 +1074,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			/*
 			 * PREPARE, DEALLOCATE and SET statements must be replicated.
 			 */
-			if (MASTER_SLAVE)
+			if (MASTER_SLAVE && TSTATE(backend) != 'E')
 				force_replication = 1;
 
 			if (frontend)
@@ -1369,6 +1372,17 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 
 	pool_debug("Execute: portal name <%s>", string);
 
+	if (receive_extended_begin)
+	{
+		/* send sync message */
+		send_extended_protocol_message(backend, MASTER_NODE_ID, "S", 0, "");
+
+		kind = pool_read_kind(backend);
+		if (kind != 'Z')
+			return POOL_END;
+		if (ReadyForQuery(frontend, backend, 0) != POOL_CONTINUE)
+			return POOL_END;
+	}
 
 	portal = lookup_prepared_statement_by_portal(&prepared_list,
 												 string);
@@ -1383,10 +1397,27 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		string1 = portal->sql_string;
 		node = (Node *)p_stmt->query;
 
-		if ((IsA(node, PrepareStmt) || IsA(node, DeallocateStmt) || IsA(node, VariableSetStmt)) &&
-			MASTER_SLAVE)
+		if ((IsA(node, PrepareStmt) || IsA(node, DeallocateStmt) ||
+			 IsA(node, VariableSetStmt)) &&
+			MASTER_SLAVE && TSTATE(backend) != 'E')
 		{
 			force_replication = 1;
+		}
+		/*
+		 * JDBC driver sends "BEGIN" query internally if setAutoCommit(false).
+		 * But it does not send Sync message after "BEGIN" query.
+		 * In extended query protocol, PostgreSQL returns
+		 * ReadyForQuery when a client sends Sync message.
+		 * We can't know a transaction state...
+		 * So pgpool send Sync message internally.
+		 */
+		else if (IsA(node, TransactionStmt) && MASTER_SLAVE)
+		{
+			TransactionStmt *stmt = (TransactionStmt *) node;
+
+			if (stmt->kind == TRANS_STMT_BEGIN ||
+				stmt->kind == TRANS_STMT_START)
+				receive_extended_begin = true;
 		}
 
 		if (load_balance_enabled(backend, node, string1))
@@ -1409,10 +1440,10 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 			return POOL_END;
 		}
 */
-
 		commit = is_commit_query((Node *)p_stmt->query);
 	}
-	else if (MASTER_SLAVE)
+
+	if (MASTER_SLAVE)
 	{
 		master_slave_was_enabled = 1;
 		MASTER_SLAVE = 0;
@@ -1514,23 +1545,6 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 	status = SimpleForwardToFrontend(kind, frontend, backend);
 	if (status != POOL_CONTINUE)
 		return status;
-
-	/* end load balance mode */
-	if (in_load_balance)
-		end_load_balance(backend);
-
-	if (master_slave_dml)
-	{
-		MASTER_SLAVE = 1;
-		master_slave_was_enabled = 0;
-		master_slave_dml = 0;
-		if (force_replication)
-		{
-			REPLICATION = 0;
-			replication_was_enabled = 0;
-			force_replication = 0;
-		}
-	}
 
 	return POOL_CONTINUE;
 }
@@ -1908,9 +1922,35 @@ static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 
 		pool_debug("ReadyForQuery: message length: %d", len);
 
-		state = pool_read_kind(backend);
-		if (state < 0)
-			return POOL_END;
+		/*
+		 * Do not check transaction state in master/slave mode.
+		 * Because SET, PREPARE, DEALLOCATE are replicated.
+		 * If these queries are executed inside a transaction block,
+		 * transation state is inconsistency. But it is no problem.
+		 */
+		if (master_slave_dml)
+		{
+			char kind, kind1;
+
+			if (pool_read(MASTER(backend), &kind, sizeof(kind)))
+				return POOL_END;
+
+			for (i = 0; i < NUM_BACKENDS; i++)
+			{
+				if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
+					continue;
+				
+				if (pool_read(CONNECTION(backend, i), &kind1, sizeof(kind)))
+					return POOL_END;
+			}
+			state = kind;
+		}
+		else
+		{
+			state = pool_read_kind(backend);
+			if (state < 0)
+				return POOL_END;
+		}
 
 		/* set transaction state */
 		pool_debug("ReadyForQuery: transaction state: %c", state);
@@ -2958,11 +2998,6 @@ static POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			status = SimpleQuery(frontend, backend, NULL);
 			break;
 
-/*
-		case 'S':
-			status = Sync(frontend, backend);
-			break;
-*/
 		case 'E':  /* Execute message */
 			status = Execute(frontend, backend);
 		break;
@@ -2971,10 +3006,15 @@ static POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			status = Parse(frontend, backend);
 			break;
 
+		case 'S':
+			receive_extended_begin = 0;
+			/* fall through */
+
 		default:
 			if (MAJOR(backend) == PROTO_MAJOR_V3)
 			{
-				if (MASTER_SLAVE)
+				if (MASTER_SLAVE &&
+					(TSTATE(backend) != 'I' || receive_extended_begin))
 				{
 					pool_debug("kind: %c master_slave_dml enabled", fkind);
 					master_slave_was_enabled = 1;
@@ -4134,6 +4174,7 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 	internal_transaction_started = 0;
 	mismatch_ntuples = 0;
 	select_in_transaction = 0;
+	receive_extended_begin = 0;
 
 	qn = pool_config->num_reset_queries;
 
