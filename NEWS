@@ -1,3 +1,62 @@
+2.1 (inamiboshi) 2008/4/??
+      * Version 2.1
+
+      * New feature
+        - Support '%m' format to obtain new master node ID to
+          failover_command and failback_command. (Yoshiyuki)
+        - Support '%M' format to obtain old master node ID to
+          failover_command and failback_command. (Yoshiyuki)
+        - Add new directive "recovery_timeout" to specify recovery
+          timeout in second. (Taiki)
+	- Add optino '-v' to print pgpool version. (Yoshiyuki)
+
+      * Incompatibility
+        - Restrict pgpool_recovery() and pgpool_remote_start()
+          functions to superusers. (Yoshiyuki)
+        - Do not create a connection pool to standby node in raw
+          mode. (Yoshiyuki)
+        - Remove "replication_timeout" parameter. (Yoshiyuki)
+          - This enabled if replication_strict was false. However,
+            replication_strict was already removed.
+        - Ignore timeout argument of pcp commands. (Taiki)
+	- Do not replicate "COPY TO STDOUT" when replicate_select is
+          false. (Yoshiyuki)
+
+      * Bug fix
+      ** General
+        - Fix crash when CloseComplete message was
+          received. (Yoshiyuki)
+	- Improve network I/O routine. (Yoshiyuki)
+	- Fix compile error on Solaris 10. (Yoshiyuki)
+	- Improve log messages of health check and recovery. (Tatsuo)
+	- Change error level of the "failed to read kind from
+          frontend" message from ERROR to LOG. (Yoshiyuki)
+	- Fix failover failure in raw mode. (Taiki)
+	- Fix zombie process bug. (Yoshiyuki)
+	- Fix health_check_timeout to work correctly. (Kenichi Sawada)
+	- Support ps status on FreeBSD. (ISHIDA Akio)
+	- Improve bind(2) failure report. (Jun Kuriyama)
+	- Improve error message when client authentication
+          failed. (Tatsuo)
+
+      ** Replication
+        - Fix replicate_select to work correctly. (Tatsuo)
+        - Fix a wrong rollback bug with extended query. (Yoshiyuki)
+        - Fix a bug with asynchronous query. (Yoshiyuki)
+        - Fix hint clause handling like /*REPLICATION*/ with extended
+          query. (Yoshiyuki)
+        - Fix crash of "DEALLOCATE ALL". (Yoshiyuki)
+        - Fix hang up when a backend node does immediate
+          shutdown. (Yoshiyuki)
+
+      ** Master Slave
+        - Fix load balancing to work correctly. (Yoshiyuki)
+	- Fix crash if SET, PREPARE or DEALLOCATE is executed inside a
+          transaction block. (Yoshiyuki)
+
+      ** Parallel query
+        - Fix INSERT failure. (Yoshiharu)
+
 2.0.1 (hikitsuboshi) 2007/11/21
       * Version 2.0.1
       * Fix process down with UPDATE or DELETE query.(Yoshiyuki)
