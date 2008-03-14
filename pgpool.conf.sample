@@ -97,7 +97,8 @@ health_check_user = 'nobody'
 #                  %h = host name
 #                  %p = port number
 #                  %D = database cluster path
-#                  %m = master node id
+#                  %m = new master node id
+#                  %M = old master node id
 #                  %% = '%' character
 #
 failover_command = ''
@@ -107,7 +108,8 @@ failover_command = ''
 #                  %h = host name
 #                  %p = port number
 #                  %D = database cluster path
-#                  %m = master node id
+#                  %m = new master node id
+#                  %M = old master node id
 #                  %% = '%' character
 #
 failback_command = ''
