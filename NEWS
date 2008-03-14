@@ -2,10 +2,10 @@
       * Version 2.1
 
       * New feature
-        - Support '%m' format to obtain new master node ID to
-          failover_command and failback_command. (Yoshiyuki)
-        - Support '%M' format to obtain old master node ID to
-          failover_command and failback_command. (Yoshiyuki)
+        - Add '%m' format to failover_command and failback_command to
+          obtain new master node ID. (Yoshiyuki)
+        - Add '%m' format to failover_command and failback_command to
+          obtain old master node ID. (Yoshiyuki)
         - Add new directive "recovery_timeout" to specify recovery
           timeout in second. (Taiki)
 	- Add optino '-v' to print pgpool version. (Yoshiyuki)
@@ -27,7 +27,7 @@
         - Fix crash when CloseComplete message was
           received. (Yoshiyuki)
 	- Improve network I/O routine. (Yoshiyuki)
-	- Fix compile error on Solaris 10. (Yoshiyuki)
+	- Fix compile errors on Solaris 10. (Yoshiyuki)
 	- Improve log messages of health check and recovery. (Tatsuo)
 	- Change error level of the "failed to read kind from
           frontend" message from ERROR to LOG. (Yoshiyuki)
