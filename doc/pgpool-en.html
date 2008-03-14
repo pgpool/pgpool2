@@ -273,6 +273,13 @@ username:[password encrypted in md5]
 </p>
 
 <pre>
+pg_md5 -p
+password: &lt;your password&gt;
+</pre>
+
+or
+
+<pre>
 ./pg_md5 foo
 acbd18db4cc2f85cedef654fccc4a4d8
 </pre>
@@ -839,6 +846,21 @@ connects to pgpool-II.
 It can be changed on service.
 </p>
 
+<dt>recovery_timeout
+<dd>
+<p>
+pgpool does not accept connections at second stage. If a client
+connect to pgpool during recovery processing, pgpool wait to be
+close.
+</p>
+<p>
+This parameter specifies recovery timeout in sec. If timeout, pgpool
+cancels online recovery and accepts connections. 0 means no wait.
+</p>
+<p>
+It can be changed on service.
+</p>
+
 </dl>
 
 <h4><p>condition for load balance</p></h4>
@@ -855,6 +877,12 @@ For the query to be load balanced, all the requirements below
     <li>start with "SELECT" (ignore_leading_white_space = true will
 		 ignore leading white space)
 </ul>
+
+<p>
+Note: JDBC driver has autocommit option. If autocommit is false, JDBC driver
+send "BEGIN" and "COMMIT" internally. So pgpool cannot load balancing.
+You need to call setAutoCommit(true) to enable autocommit.
+</p>
 
 <h4><p>Failover in the Replication Mode</p></h4>
 
@@ -1290,12 +1318,15 @@ recovery target node on the first stage. The script is named
 
 <pre>
   #! /bin/sh
+  DATA=$1
+  RECOVERY_TARGET=$2
+  RECOVERY_DATA=$3
 
   psql -c "select pg_start_backup('pgpool-recovery')" postgres
-  echo "restore_command = 'scp master:/data/archive_log/%f %p'" > /data/recovery.conf
+  echo "restore_command = 'scp $HOSTNAME:/data/archive_log/%f %p'" > /data/recovery.conf
   tar -C /data -zcf pgsql.tar.gz pgsql
   psql -c 'select pg_stop_backup()' postgres
-  scp pgsql.tar.gz secondary:/data
+  scp pgsql.tar.gz $RECOVERY_TARGET:$RECOVERY_DATA
 </pre>
 
 <p>
