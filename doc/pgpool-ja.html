@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="content-type" content="text/html;charset=iso-2022-jp">
 <link rel="stylesheet" href="./pgpool.css" type="text/css">
-<title>pgpool-II README</title>
+<title>pgpool-II ユーザマニュアル</title>
 </head>
 <body>
 
@@ -927,11 +927,13 @@ load_balance_mode = true を設定した場合，以下の条件を満たした時に問い
 </p>
 
 <p>
-JDBC ドライバなどのように、ドライバ内で autocommit の有効・無効のオプ
-ションがあります。autocommit を無効にしていますと、内部で BEGIN コマン
-ドを実行するため、正しくロードバランスされない可能性があります。クエリ
-をロードバランスさせたい場合は autocommit を有効にしてください。JDBC
-であれば setAutoCommit(true) を実行します。
+<font color="red">
+注意点として、JDBC ドライバなどのように、ドライバ内で autocommit の有
+効・無効のオプションがあります。autocommit を無効にしていますと、内部
+で BEGIN コマンドを実行するため、正しくロードバランスされない可能性が
+あります。クエリをロードバランスさせたい場合は autocommit を有効にして
+ください。JDBCであれば setAutoCommit(true) を実行します。
+</font>
 </p>
 
 <h4><p>レプリケーションモードにおける縮退運転について</p></h4>

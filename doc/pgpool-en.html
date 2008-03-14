@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="content-type" content="text/html">
 <link rel="stylesheet" href="./pgpool.css" type="text/css">
-<title>pgpool-II README</title>
+<title>pgpool-II user manual</title>
 </head>
 
 <!-- hhmts start -->
@@ -879,9 +879,11 @@ For the query to be load balanced, all the requirements below
 </ul>
 
 <p>
+<font color="red">
 Note: JDBC driver has autocommit option. If autocommit is false, JDBC driver
 send "BEGIN" and "COMMIT" internally. So pgpool cannot load balancing.
 You need to call setAutoCommit(true) to enable autocommit.
+</font>
 </p>
 
 <h4><p>Failover in the Replication Mode</p></h4>
