@@ -187,4 +187,4 @@ recovery_1st_stage_command = ''
 recovery_2nd_stage_command = ''
 
 # maximum time in seconds to wait for remote start-up. 0 means no wait
-recovery_timeout = 90;
+recovery_timeout = 90
