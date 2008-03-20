@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Thu Mar 20 16:31:36 JST 2008
+Last modified: Thu Mar 20 17:29:30 JST 2008
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -704,15 +704,27 @@ rawモードに加え，コネクションプーリングが利用できるようになります．
 <pre>
    reset_query_list = 'ABORT; RESET ALL; SET SESSION AUTHORIZATION DEFAULT'
 </pre>
-   PostgreSQLのバージョンによって使用できるSQLコマンドが違うので，
-   PostgreSQL 7.3以前では注意してください．
 
-   なお，「ABORT」は，PostgreSQL 7.4以上ではトランザクションブロックの
-   中にいない場合には発行されません．
+<p>
+   PostgreSQLのバージョンによって使用できるSQLコマンドが違いますが，
+   各バージョンごとのお勧め設定は以下です．
 </p>
+<p>
+<table border>
+<tr><th>PostgreSQLバージョン</th><th>reset_query_listの設定値</th></tr>
+<tr><td>7.1以前</td><td>ABORT</td></tr>
+<tr><td>7.2から8.2</td><td>ABORT; RESET ALL; SET SESSION AUTHORIZATION DEFAULT</td></tr>
+<tr><td>8.3以降</td><td>ABORT; DISCARD ALL</td></tr>
+</table>
+</p>
+<p>
+   「ABORT」は，PostgreSQL 7.4以上ではトランザクションブロックの中にいない場合には発行されません．
+</p>
+
 <p>
 このパラメータを変更した時には設定ファイルを再読み込みしてください。
 </p>
+</dd>
 
 </dl>
 

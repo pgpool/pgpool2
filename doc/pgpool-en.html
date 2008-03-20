@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Thu Mar 20 16:30:27 JST 2008
+Last modified: Thu Mar 20 17:32:31 JST 2008
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -693,11 +693,21 @@ configuration parameters in the raw mode and below.</p>
       reset_query_list = 'ABORT; RESET ALL; SET SESSION AUTHORIZATION DEFAULT'
       </pre>
 
-      Commands differ in each PostgreSQL versions, so be careful
-      especially in PostgreSQL 7.3 or prior. "ABORT" will not be
-      executed outside the transaction block by PostgreSQL 7.4 or
-      above.</p>
-  </dd>
+<p>
+      Commands differ in each PostgreSQL versions. Here are recommended settings.
+</p>
+<p>
+<table border>
+<tr><th>PostgreSQL version</th><th>reset_query_list value</th></tr>
+<tr><td>7.1 or before</td><td>ABORT</td></tr>
+<tr><td>7.2 to 8.2</td><td>ABORT; RESET ALL; SET SESSION AUTHORIZATION DEFAULT</td></tr>
+<tr><td>8.3 or later</td><td>ABORT; DISCARD ALL</td></tr>
+</table>
+</p>
+<p>
+You need to re-read pgpool.conf upon modification of this direrctive.
+</p>
+</dd>
 </dl>
 
 <h4><p>Failover in the Connection Pool Mode</p></h4>
