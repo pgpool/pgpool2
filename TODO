@@ -2,9 +2,17 @@ $Header$
 
 * General
 
+- Allow to stop PostgeSQL from pgpoolAdmin to make the on-line
+  recovery more convenient. This requires something like
+  pgpool_remote_stop to be specified in pgpool.conf.
+
+- If DISCARD ALL is specified in the reset_query_list and transaction
+  is not closed when client disconnects, automatically issue ABORT
+  before issuing DISCARD ALL
+
 - Allow client encoding conversion
 
-- SSL support
+- Add SSL support
 
 - Allow to specify queries issued when starting sessions
 
@@ -29,6 +37,11 @@ $Header$
 - Allow replication of OID
 
 - Allow to specify functions to be replicated other than nextval(), setval()
+
+* On line recovery
+
+- Allow recovery_1st_stage_command to get PostgreSQL listen port,
+  database cluster directory etc. info
 
 * Query cache
 
