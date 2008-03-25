@@ -1,46 +1,43 @@
 $Header$
 
-TODO項目
+* General
 
-* 全般
-o SSLのサポート
+- Allow client encoding conversion
 
-o セッション開始時に発行する問い合わせをpgpool.confで設定可能にする
+- SSL support
 
-o 監査機能
+- Allow to specify queries issued when starting sessions
 
-o child は暇なときに accept しておく(LRU キューを作る)．
+- Audit functionality?
 
-o クライアントが quit したら，LRUキューから次のクライアントを取り出す
-  ->childがexitするとキューの中身が失われるが，それでよいか？
+- Make accept queue
 
-o DROP DATABASEのロジックを変更．今はparentにSIGUSR1を送ってすべての
-  idleコネクションを切断しているが，DROP DATABASEしようとしているデー
-  タベースへのコネクションを切断すれば十分．
+- Graceful shutdown, attach, detach
 
-* レプリケーション
-o もしSQLをパースできれば，テーブル単位のレプリケーションも可能？
+* Query handling
 
-o セッションレベルのロードバランスを指示できる機能を追加
-  /* BEGIN SESSION LEVEL LOAD BALANCE */とか．
+- Enhance DROP DATABASE handling (not disconnect all idle connections)
 
-o load balanceの比率をSQL文単位でコメントで指定できるようにする．
+* Replication
 
-o OIDをreplicationする
+- Allow per table replication
 
-o graceful shutdown, attach, detach の実装
+- Allow per session level and query level load balancing
 
-o nextval や setval 以外にもレプリケーション対象とする関数を設定できる
-  ようにする。
+- Allow replication of SEQUENCE
 
+- Allow replication of OID
 
-* クエリキャッシュ
-o キャッシュの自動無効化の実装
+- Allow to specify functions to be replicated other than nextval(), setval()
 
+* Query cache
 
-* パラレルクエリ
-o 複雑なクエリの高速化
+- Cache invalidation
 
-o トランザクション処理の改良
+* Parallel query
 
-o 拡張問合せプロトコル対応
+- Performance enhance for more complex queries
+
+- Allow to handle transaction
+
+- Allow to handle extended queries
