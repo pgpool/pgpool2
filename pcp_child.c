@@ -71,7 +71,8 @@ static RETSIGTYPE reload_config_handler(int sig);
 extern int myargc;
 extern char **myargv;
 
-volatile sig_atomic_t pcp_got_sighup = 0;
+static volatile sig_atomic_t pcp_got_sighup = 0;
+volatile sig_atomic_t pcp_wakeup_request = 0;
 
 void
 pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
@@ -835,7 +836,7 @@ die(int sig)
 static RETSIGTYPE
 wakeup_handler(int sig)
 {
-
+	pcp_wakeup_request = 1;
 }
 
 static PCP_CONNECTION *

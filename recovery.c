@@ -44,6 +44,8 @@ static int check_postmaster_started(BackendInfo *backend);
 
 static char recovery_command[1024];
 
+extern volatile sig_atomic_t pcp_wakeup_request;
+
 int start_recovery(int recovery_node)
 {
 	BackendInfo *backend;
@@ -133,7 +135,15 @@ int start_recovery(int recovery_node)
 	pool_log("%d node restarted", recovery_node);
 
 	send_failback_request(recovery_node);
-	pause(); /* wait for failback */
+
+	/* wait for failback */
+	while (!pcp_wakeup_request)
+	{
+		struct timeval t = {1, 0};
+		/* polling SIGUSR2 signal per 1 sec */
+		select(0, NULL, NULL, NULL, &t);
+	}
+	pcp_wakeup_request = 0;
 
 	PQfinish(conn);
 
