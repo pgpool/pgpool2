@@ -193,15 +193,37 @@ SELECT queries are equally distributed among three servers.</p>
 
 <pre>$ pgpool</pre>
 
-<p>The above command, however, prints log messages on the terminal, so
-the recommended options to use are like the following.</p>
+<p>The above command, however, prints no log messages because pgpool
+detaches the terminal. If you want to show pgpool log messages, you
+pass <code>-n</code> option to pgpool command. pgpool-II is executed
+as non-daemon process, and the terminal will not be detached.
+</p>
+
+<pre>
+$ pgpool -n &
+</pre>
+
+<p>
+The log messages are printed on the terminal, so the recommended
+options to use are like the following.
+</p>
 
 <pre>$ pgpool -n -d &gt; /tmp/pgpool.log 2&gt;&1 &</pre>
 
-<p>When <code>-n</code> option is passed, pgpool-II is executed as
-non-daemon process, and the terminal will not be detached. This option
-is required to redirect log messages to a file. <code>-d</code> option
-enables debug messages to be generated.</p>
+<p><code>-d</code> option enables debug messages to be generated.</p>
+
+<p>
+The above command keeps appending log messages to /tmp/pgpool.log. If
+you need to rotate log files, pass the logs to a external command
+which have log rotation function. For example, <a
+href="http://www.cronolog.org"><code>cronolog</code></a> helps you.
+</p>
+
+<pre>
+$ pgpool -n 2>&1 | /usr/sbin/cronolog \
+  --hardlink=/var/log/pgsql/pgpool.log \
+  '/var/log/pgsql/%Y-%m-%d-pgpool.log' &
+</pre>
 
 <p>To stop pgpool-II process, execute the following command.</p>
 

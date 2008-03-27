@@ -98,11 +98,33 @@ backend_weight2 = 1</pre>
 <h3>1.5. <a name="start-shutdown">pgpool-II の起動と停止</a></h3>
 <p>pgpool-II を起動するには以下のように <code>pgpool</code> コマンドを実行します。</p>
 <pre>$ pgpool</pre>
-<p>ただし、このままでは <code>pgpool</code> コマンドを実行した端末にログメッセージが表示されるので、以下のようにログメッセージをファイルに保存するように実行することをお勧めします。</p>
+<p>
+ただし、このままでは <code>pgpool</code> プロセスは制御端末を切り離
+すため、ログが出力されなくなります(エラーは標準エラーに出力されます)。
+制御端末を切り離さないで起動する場合は <code>-n</code> オプションを指定します。
+</p>
+
+<pre>
+$ pgpool -n &
+</pre>
+
+<p>
+コマンドを実行した端末にログメッセージが表示されるので、以下のようにログメッセージをファイルに保存するように実行することをお勧めします。</p>
 <pre>$ pgpool -n -d &gt; /tmp/pgpool.log 2&gt;&1 &</pre>
-<p><code>-n</code> オプションを指定すると pgpool-II はデーモンとして起動せず、制御端末が切り離されなくなります。
-上記のようにログメッセージをファイルに出力する場合は指定する必要があります。
-<code>-d</code> オプションはデバッグメッセージの出力を有効にします。</p>
+<p><code>-d</code> オプションはデバッグメッセージの出力を有効にします。</p>
+<p>
+上記の例はファイルにリダイレクトさせているため、ログが追加され続けます。
+ログをローテートさせたい場合は、ローテート機能を持ったコマンドにログを
+渡してください。例えば、<a
+href="http://www.cronolog.org/"><code>cronolog</code></a> を使う場合で
+あれば、以下のようにパイプでログメッセージを渡してください。
+
+<pre>
+$ pgpool -n 2>&1 | /usr/sbin/cronolog \
+  --hardlink=/var/log/pgsql/pgpool.log \
+  '/var/log/pgsql/%Y-%m-%d-pgpool.log' &
+</pre>
+
 <p>pgpool-II を停止するには以下のように <code>pgpool</code> コマンドを実行します。</p>
 <pre>$ pgpool stop</pre>
 <p>pgpool-II を停止する際にクライアントが接続している場合、その接続が切断されるまで待ってから停止します。
