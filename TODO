@@ -2,6 +2,18 @@ $Header$
 
 * General
 
+- Allow client encoding conversion. This was possible in pgpool-I
+
+- Allow special comment such as "/* STRICT */". This was possible in pgpool-I
+
+- Allow multi statement
+
+- Sometimes query is sent to a DB node despite its weight is 0
+
+- Avoid cross pgpool process deadlock situation. This is a long
+  standing problem since pgpool-II was born (pgpool-I avoids this by
+  setting timeout)
+
 - Allow to stop PostgeSQL from pgpoolAdmin to make the on-line
   recovery more convenient. This requires something like
   pgpool_remote_stop to be specified in pgpool.conf.
@@ -9,8 +21,6 @@ $Header$
 - If DISCARD ALL is specified in the reset_query_list and transaction
   is not closed when client disconnects, automatically issue ABORT
   before issuing DISCARD ALL
-
-- Allow client encoding conversion
 
 - Add SSL support
 
@@ -54,3 +64,14 @@ $Header$
 - Allow to handle transaction
 
 - Allow to handle extended queries
+
+- process alias in FROM clause
+
+db=# select * from data1 as d1 inner join data2 as d2 on d1.id=d2.id;
+ERROR:  sql error
+DETAIL:  ERROR:  missing FROM-clause entry for table "d1"
+LINE 1: SELECT pool_parallel("SELECT d1.id, d1.aaaa, d1.bbbb...
+               ^
+2008-03-11 10:28:17 LOG:   pid 6186: statement: SELECT pool_parallel("SELECT d1.id, d1.aaaa, d1.bbbb, a.cccc FROM data1")
+
+- process USING clause in JOIN
