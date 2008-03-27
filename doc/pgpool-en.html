@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Thu Mar 20 17:32:31 JST 2008
+Last modified: Thu Mar 27 10:55:04 JST 2008
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -501,6 +501,14 @@ pgpool-II replaces special characters to backend information.
 </table>
 </center>
 You need to reload pgpool.conf if you change failover_command.
+</p>
+
+<p>
+When a failover is performed, pgpool kills all its child processes, which
+will in turn terminate all active sessions to pgpool. Then pgpool invoke
+failover_command and wait for its completion.
+After this, pgpool starts new child processes and becomes ready to wait
+for connections from clients.
 </p>
 
 <dt>failback_command
