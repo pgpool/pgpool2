@@ -1966,8 +1966,6 @@ static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 
 	if (send_ready)
 	{
-		pool_flush(frontend);
-
 		pool_write(frontend, "Z", 1);
 
 		if (MAJOR(backend) == PROTO_MAJOR_V3)
@@ -3895,8 +3893,6 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 			ret = SimpleForwardToFrontend(kind1, frontend, backend);
 			if (ret != POOL_CONTINUE)
 				return ret;
-			if (pool_flush(frontend))
-				return POOL_END;
 		}
 
 		if (ret != POOL_CONTINUE)
