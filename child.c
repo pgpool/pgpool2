@@ -270,13 +270,13 @@ void do_child(int unix_fd, int inet_fd)
 			if (frontend->database == NULL)
 			{
 				pool_error("do_child: strdup failed: %s\n", strerror(errno));
-				exit(1);
+				child_exit(1);
 			}
 			frontend->username = strdup(sp->user);
 			if (frontend->username == NULL)
 			{
 				pool_error("do_child: strdup failed: %s\n", strerror(errno));
-				exit(1);
+				child_exit(1);
 			}
 			ClientAuthentication(frontend);
 		}
@@ -1254,7 +1254,7 @@ static RETSIGTYPE close_idle_connection(int sig)
 static RETSIGTYPE authentication_timeout(int sig)
 {
 	pool_log("authentication is timeout");
-	exit(1);
+	child_exit(1);
 }
 
 /*
@@ -1771,7 +1771,7 @@ int select_load_balancing_node(void)
 	total_weight = 0.0;
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
-		if (VALID_BACKEND(i))
+		if (VALID_BACKEND(i) && BACKEND_INFO(i).backend_weight > 0.0)
 		{
 			if(r >= total_weight)
 				selected_slot = i;

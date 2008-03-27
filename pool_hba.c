@@ -155,7 +155,7 @@ void ClientAuthentication(POOL_CONNECTION *frontend)
 		 * use exit(2) since this is not so fatal. other entries in
 		 * pool_hba.conf may be valid, so treat it as reject.
 		 */
-		exit(2);
+		child_exit(2);
 	}
 
 	switch (frontend->auth_method)
@@ -185,7 +185,7 @@ void ClientAuthentication(POOL_CONNECTION *frontend)
 			if ((errmessage = (char *)malloc(messagelen+1)) == NULL)
 			{
 				pool_error("ClientAuthentication: malloc failed: %s", strerror(errno));
-				exit(1);
+				child_exit(1);
 			}
 			
 #ifdef USE_SSL
@@ -353,7 +353,7 @@ static void auth_failed(POOL_CONNECTION *frontend)
 	if ((errmessage = (char *)malloc(messagelen+1)) == NULL)
 	{
 		pool_error("auth_failed: malloc failed: %s", strerror(errno));
-		exit(1);
+		child_exit(1);
 	}
 
 	switch (frontend->auth_method)
@@ -417,7 +417,7 @@ static void auth_failed(POOL_CONNECTION *frontend)
 	 * don't need to free(errmessage). I will just kill myself.
 	 */
 	close_all_backend_connections();
-	exit(2);
+	child_exit(2);
 }
 
 
