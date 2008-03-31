@@ -3,6 +3,9 @@
 .\"
 .TH PGPOOL 8 "27 Jan 2006"
 .\" Please adjust this date whenever revising the manpage.
+.hy 0
+.ad l
+.nf
 .SH NAME
 pgpool \- PostgreSQL connection pool daemon
 .SH SYNOPSIS
@@ -18,17 +21,28 @@ pgpool \- PostgreSQL connection pool daemon
 \fBpgpool\fR runs between PostgreSQL's client and server.
 Any PostgreSQL client can connect to \fBpgpool\fR as if it's a real PostgreSQL server.
 \fBpgpool\fR caches the connection to the PostgreSQL server to reduce the overhead
-involved in establishing the connection to it.  \fBpgpool\fR can also be
+involved in establishing the connection to it.
+.P
+\fBpgpool\fR can also be
 used with two PostgreSQL servers for fail over purposes.  If the first
 server goes down, \fBpgpool\fR will automatically switch to the secondary server.
 .P
-When started without arguments, \fBpgpool\fR starts as a daemon in the background.
-When started with the argument \fBstop\fR, \fBpgpool\fR is shut down.
-With the argument \fBswitch\fR, \fBpgpool\fR will switch between master
+\fBpgpool\fR is typically started and stopped via system initialization scripts.
+.
+.P
+.SH INVOCATION
+.TP
+\fBpgpool\fP [ \fIoptions...\fP ]
+Starts as a daemon in the background (unless \fB\-n\fR is given).
+.TP
+\fBpgpool\fP [ \fIoptions...\fP ] \fBstop\fP
+Shutdown.
+.TP
+\fBpgpool\fP [ \fIoptions...\fP ] \fBswitch\fP
+Switch between master
 and secondary servers.  If only one server is configured, this will only
 restart the child processes.
-.P
-\fBpgpool\fR is typically started and stopped via system initialization scripts.
+..
 .SH OPTIONS
 .TP
 \fB\-d\fR
@@ -41,17 +55,29 @@ Sets the path to the configuration file (default: \fI@sysconfdir@/pgpool.conf\fR
 Print a help message and exit.
 .TP
 \fB\-m\fR \fImode\fR
-Shutdown mode: smart, fast, or immediate.
+Shutdown mode: 
+.B smart, fast, 
+or
+.BR immediate .
 .TP
 \fB\-n\fR
-Do not start as daemon.  Error messages go to stdout or stderr.  Thus
-you could play with utilities such as \fBlogger\fR(1) and
-\fBrotatelogs\fR(8).
-You need to run in background explicitly if you use this option.
+Foreground mode.
+Error messages go to stdout or stderr, which
+could be piped out to log processors such as
+.BR logger (1)
+or
+.BR rotatelogs (8).
+To daemonize, explicitly invoke 
+.B pgpool
+in background.
 .TP
-\fB-s\fR \fBm\fR[\fBaster\fR] | \fBs\fR[\fBecondary\fR]
-Determines which server to switch away from.  If this option is omitted,
-the master goes down.
+\fB\-s\fR \fBm\fR[\fBaster\fR] | \fBs\fR[\fBecondary\fR]
+Determines which server to switch away from.
+Default is to drop the master.
+.TP
+.B \-v
+Print version and exit.
+.
 .SH FILES
 .TP
 \fI@sysconfdir@/pgpool.conf\fR
