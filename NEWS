@@ -48,6 +48,7 @@
         - Fix crash of "DEALLOCATE ALL". (Yoshiyuki)
         - Fix hang up when a backend node does immediate
           shutdown. (Yoshiyuki)
+	- Fix hang up online recovery in high load.
 
       ** Master Slave
         - Fix load balancing to work correctly. (Yoshiyuki)
