@@ -1757,6 +1757,12 @@ _rewriteRangeVar(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 			message->schemaname = NULL;
 
 		delay_string_append_char(message, str, node->relname);
+
+		if (alias_name)
+		{
+			delay_string_append_char(message, str, " AS ");
+			delay_string_append_char(message, str, alias_name);
+		}
 		
 		if(select->whereClause && 
 			!(message->r_code == SELECT_PGCATALOG))
