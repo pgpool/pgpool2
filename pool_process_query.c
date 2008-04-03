@@ -59,6 +59,8 @@
 #define ADMIN_SHUTDOWN_ERROR_CODE "57P01"
 #define CRASH_SHUTDOWN_ERROR_CODE "57P02"
 
+#define SPECIFIED_ERROR 1
+
 #define POOL_ERROR_QUERY "send invalid query from pgpool to abort transaction"
 
 /* Prepared statement information */
@@ -158,6 +160,7 @@ static void start_load_balance(POOL_CONNECTION_POOL *backend);
 static void end_load_balance(POOL_CONNECTION_POOL *backend);
 static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMajor, int no_ready_for_query);
 static POOL_STATUS do_error_command(POOL_CONNECTION *backend, int major);
+static POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id, int major);
 static int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node);
 static POOL_STATUS insert_lock(POOL_CONNECTION_POOL *backend, char *query, InsertStmt *node);
 static char *get_insert_command_table_name(InsertStmt *node);
@@ -196,6 +199,7 @@ static Portal *pending_prepared_portal = NULL;
 static Portal *unnamed_statement = NULL;
 static Portal *unnamed_portal = NULL;
 static int select_in_transaction = 0; /* non 0 if select query is in transaction */
+static int execute_select = 0; /* non 0 if select query is in transaction */
 
 /* non 0 if "BEGIN" query with extended query protocol received */
 static int receive_extended_begin = 0;
@@ -382,7 +386,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 			{
 				if (VALID_BACKEND(i) && FD_ISSET(CONNECTION(backend, i)->fd, &readmask))
 				{
-					if (detect_postmaster_down_error(CONNECTION(backend, i), MAJOR(backend)))
+					if (detect_postmaster_down_error(CONNECTION(backend, i), MAJOR(backend)) == SPECIFIED_ERROR)
 					{
 						/* detach backend node. */
 						was_error = 1;
@@ -1260,7 +1264,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			if (deadlock_detected < 0)
 				return POOL_END;
 		}
-		if (deadlock_detected)
+		if (deadlock_detected == SPECIFIED_ERROR)
 		{
 			string = POOL_ERROR_QUERY;
 			len = strlen(string) + 1;
@@ -1435,6 +1439,7 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 			LOAD_BALANCE_STATUS(MASTER_NODE_ID) = LOAD_SELECTED;
 			in_load_balance = 1;
 			select_in_transaction = 1;
+			execute_select = 1;
 		}
 /*
 		else if (REPLICATION && start_internal_transaction(backend, (Node *)p_stmt->query))
@@ -1485,12 +1490,13 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		{
 			if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
 				continue;
-			if (deadlock_detected)
+			if (deadlock_detected == SPECIFIED_ERROR)
 			{
-				if (send_simplequery_message(CONNECTION(backend, i),
-											 strlen(POOL_ERROR_QUERY)+1,
-											 POOL_ERROR_QUERY,
-											 MAJOR(backend)))
+				char msg[1024] = "pgpoool_error_portal"; /* large enough */
+				int len = strlen(msg);
+
+				memset(msg + len, 0, sizeof(int));
+				if (send_execute_message(backend, i, len + 5, msg))
 					return POOL_END;
 			}
 			else if (send_execute_message(backend, i, len, string) != POOL_CONTINUE)
@@ -3685,7 +3691,10 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 		}
 	}
 	else if (kind == 'C' && select_in_transaction)
+	{
 		select_in_transaction = 0;
+		execute_select = 0;
+	}
 
 	/* 
 	 * Remove a pending function if a received message is not
@@ -3862,10 +3871,23 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 			{
 				if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 				{
-					do_error_command(CONNECTION(backend, i), PROTO_MAJOR_V3);
+					/*
+					 * We must abort transaction to sync transaction state.
+					 * If the error is happend with Execute message,
+					 * we must send invalid Execute message to abort
+					 * transaction.
+					 *
+					 * Because extended query protocol ignores all
+					 * messages before receiving Sync message inside error state.
+					 */
+					if (execute_select)
+						do_error_execute_command(backend, i, PROTO_MAJOR_V3);
+					else
+						do_error_command(CONNECTION(backend, i), PROTO_MAJOR_V3);
 				}
 			}
 			select_in_transaction = 0;
+			execute_select = 0;
 		}
 
 		for (i = 0;i < NUM_BACKENDS; i++)
@@ -4175,6 +4197,7 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 	internal_transaction_started = 0;
 	mismatch_ntuples = 0;
 	select_in_transaction = 0;
+	execute_select = 0;
 	receive_extended_begin = 0;
 
 	qn = pool_config->num_reset_queries;
@@ -4633,6 +4656,59 @@ static POOL_STATUS do_error_command(POOL_CONNECTION *backend, int major)
 	else
 	{
 		string = pool_read_string(backend, &len, 0);
+		if (string == NULL)
+			return POOL_END;
+	}
+
+	return POOL_CONTINUE;
+}
+
+/*
+ * Send invalid portal execution to abort transaction.
+ * We need to sync transaction status in transaction block.
+ * SELECT query is sent to master only.
+ * If SELECT is error, we must abort transaction on other nodes.
+ */
+static POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id, int major)
+{
+	int status;
+	char kind;
+	char *string;
+	char msg[1024] = "pgpoool_error_portal"; /* large enough */
+	int len = strlen(msg);
+
+	memset(msg + len, 0, sizeof(int));
+	if (send_execute_message(backend, node_id, len + 5, msg))
+	{
+		return POOL_END;
+	}
+
+	/*
+	 * Expecting ErrorResponse
+	 */
+	status = pool_read(CONNECTION(backend, node_id), &kind, sizeof(kind));
+	if (status < 0)
+	{
+		pool_error("do_command: error while reading message kind");
+		return POOL_END;
+	}
+
+	/*
+	 * read command tag of CommandComplete response
+	 */
+	if (major == PROTO_MAJOR_V3)
+	{
+		if (pool_read(CONNECTION(backend, node_id), &len, sizeof(len)) < 0)
+			return POOL_END;
+		len = ntohl(len) - 4;
+		string = pool_read2(CONNECTION(backend, node_id), len);
+		if (string == NULL)
+			return POOL_END;
+		pool_debug("command tag: %s", string);
+	}
+	else
+	{
+		string = pool_read_string(CONNECTION(backend, node_id), &len, 0);
 		if (string == NULL)
 			return POOL_END;
 	}
@@ -5476,14 +5552,14 @@ static int extract_ntuples(char *message)
 static int detect_postmaster_down_error(POOL_CONNECTION *backend, int major)
 {
 	int r =  detect_error(backend, ADMIN_SHUTDOWN_ERROR_CODE, major, false);
-	if (r)
+	if (r == SPECIFIED_ERROR)
 	{
 		pool_debug("detect_stop_postmaster_error: receive admin shutdown error from a node.");
 		return r;
 	}
 
 	r = detect_error(backend, CRASH_SHUTDOWN_ERROR_CODE, major, false);
-	if (r == 1)
+	if (r == SPECIFIED_ERROR)
 	{
 		pool_debug("detect_stop_postmaster_error: receive crash shutdown error from a node.");
 	}
@@ -5493,7 +5569,7 @@ static int detect_postmaster_down_error(POOL_CONNECTION *backend, int major)
 static int detect_deadlock_error(POOL_CONNECTION *backend, int major)
 {
 	int r =  detect_error(backend, DEADLOCK_ERROR_CODE, major, true);
-	if (r == 1)
+	if (r == SPECIFIED_ERROR)
 		pool_debug("detect_deadlock_error: receive deadlock error from master node.");
 	return r;
 }
@@ -5544,11 +5620,8 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, b
 			while (*e)
 			{
 				if (*e == 'C')
-				{
-					if (strcmp(e+1, error_code) == 0) /* specified error? */
-					{
-						is_error = 1;
-					}
+				{/* specified error? */
+					is_error = (strcmp(e+1, error_code) == 0) ? SPECIFIED_ERROR : 0;
 					break;
 				}
 				else
