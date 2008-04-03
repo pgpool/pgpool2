@@ -199,6 +199,8 @@ static int select_in_transaction = 0; /* non 0 if select query is in transaction
 
 /* non 0 if "BEGIN" query with extended query protocol received */
 static int receive_extended_begin = 0;
+/* non 0 if allow to close internal transaction */
+static int allow_close_transaction = 1;
 
 static PreparedStatementList prepared_list; /* prepared statement name list */
 static int is_drop_database(Node *node);		/* returns non 0 if this is a DROP DATABASE command */
@@ -1889,7 +1891,7 @@ static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	 * if a transaction is started for insert lock, we need to close
 	 * the transaction.
 	 */
-	if (internal_transaction_started)
+	if (internal_transaction_started && allow_close_transaction)
 	{
 		int len;
 		signed char state;
@@ -2993,14 +2995,17 @@ static POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 
 		case 'Q':  /* Query message*/
 			in_progress = 1;
+			allow_close_transaction = 1;
 			status = SimpleQuery(frontend, backend, NULL);
 			break;
 
 		case 'E':  /* Execute message */
+			allow_close_transaction = 1;
 			status = Execute(frontend, backend);
-		break;
+			break;
 
 		case 'P':  /* Parse message */
+			allow_close_transaction = 0;
 			status = Parse(frontend, backend);
 			break;
 
