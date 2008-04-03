@@ -1,3 +1,16 @@
+2008-04-03  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_process_query.c: Do not close a internal transaction when
+	  Sync message is received after receiving Parse message. This
+	  hack is for PHP-PDO.
+
+2008-04-01  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
+
+	* pool_rewrite_outfuncs.c: Fix "AS" handling in FROM clause. Patch
+	  contributed by sho-san.
+
+	* configure.in, configure: Prepare for 2.1 beta2.
+
 2008-03-31  Tatsuo Ishii  <ishii@sraoss.co.jp>
 
 	* TODO: Add Docs section and add an item (writelibpcp docs)
