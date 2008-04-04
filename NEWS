@@ -48,7 +48,9 @@
         - Fix crash of "DEALLOCATE ALL". (Yoshiyuki)
         - Fix hang up when a backend node does immediate
           shutdown. (Yoshiyuki)
-	- Fix hang up online recovery in high load.
+	- Fix hang up online recovery in high load. (Yoshiyuki)
+	- Fix hang up with extended query protocol when SELECT is
+	  failed inside a transaction block. (Yoshiyuki)
 
       ** Master Slave
         - Fix load balancing to work correctly. (Yoshiyuki)
