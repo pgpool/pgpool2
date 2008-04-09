@@ -66,7 +66,7 @@ start(){
 	PGPOOL_START=$"Starting ${NAME} service: "
 
 	echo -n "$PGPOOL_START"
-	$PGPOOLDAEMON -f $PGPOOLCONF $OPTS & >> "$PGPOOLLOG" 2>&1 < /dev/null
+	$PGPOOLDAEMON -f $PGPOOLCONF -n $OPTS >> "$PGPOOLLOG" 2>&1 < /dev/null &
 	sleep 2
 
 	pid=`pidof -s "$PGPOOLDAEMON"`
@@ -97,7 +97,7 @@ stop(){
 }
 
 switch() {
-	echo -n $"Sending switchover request to $NAME "
+	echo -n $"Sending switchover request to ${NAME} "
 	$PGPOOLDAEMON switch >> "$PGPOOLLOG" 2>&1 < /dev/null
 	RETVAL=$?
 	echo
