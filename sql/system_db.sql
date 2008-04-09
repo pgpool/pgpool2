@@ -1,6 +1,7 @@
 -- $Header$
 
 DROP TABLE pgpool_catalog.dist_def;
+DROP TABLE pgpool_catalog.replicate_def;
 DROP TABLE pgpool_catalog.query_cache;
 DROP SCHEMA pgpool_catalog;
 
