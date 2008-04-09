@@ -8,7 +8,7 @@ INSERT INTO pgpool_catalog.replicate_def VALUES (
     ARRAY['integer', 'integer', 'character(88)']
 );
 
-INSERT INTO pgpool_catalog.dist_def VALUES (
+INSERT INTO pgpool_catalog.replicate_def VALUES (
     'bench_parallel',
     'public',
     'tellers',
