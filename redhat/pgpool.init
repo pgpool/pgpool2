@@ -8,11 +8,12 @@
 #
 # v1.0.0 Devrim GUNDUZ <devrim@CommandPrompt.com>
 # - Initial version of Red Hat / Fedora init script
-
-if [ -r /etc/sysconfig/pgpool ]; then
-    . /etc/sysconfig/pgpool
-fi
-
+# v1.0.1 Devrim GUNDUZ <devrim@CommandPrompt.com>
+# - - Honor /etc/sysconfig/pgpool settings. Previously we could never
+#  customize PGPOOLPID=/var/run/pgpool.pid et al.
+# - Remaining hardcoded paths replaced by customizable variables
+#   such as $PGPOOLCONF .
+ 
 # Source function library.
 INITD=/etc/rc.d/init.d
 . $INITD/functions
@@ -37,16 +38,21 @@ PGPOOLCONF=/etc/pgpool.conf
 PGPOOLPID=/var/run/pgpool.pid
 PGPOOLLOG=/var/log/pgpool.log
 
+# read in the site custom setup
+if [ -r /etc/sysconfig/pgpool ]; then
+    . /etc/sysconfig/pgpool
+fi
+
 test -x $PGPOOLDAEMON || exit 5
 
-# Create the log file if it does not exist
+# Create the pgpool.log log file if it does not exist
 if [ ! -r $PGPOOLLOG ]
 then
 	touch $PGPOOLLOG
 fi
 
-# Check whether the config file exists or not
-if [ ! -r /etc/pgpool.conf ]
+# Check whether the pgpool.conf config file exists or not
+if [ ! -r "$PGPOOLCONF" ]
 then
 	echo "$PGPOOLCONF not found"
 	RETVAL=1
@@ -82,7 +88,7 @@ stop(){
                 RETVAL=1
                 failure
         else
-                killproc /usr/bin/pgpool
+                killproc $PGPOOLDAEMON
                 RETVAL=$?
                 [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/${NAME}
         fi;
