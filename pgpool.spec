@@ -3,13 +3,13 @@
 Summary:	Pgpool is a connection pooling/replication server for PostgreSQL
 Name:		postgresql-%{short_name}
 Version:	2.1
-Release:	beta2%{?dist}.1
+Release:	0.2.beta2%{?dist}
 License:	BSD
 Group:		Applications/Databases
 URL:		http://pgpool.projects.PostgreSQL.org/pgpool-II/en
 Source0:	http://pgfoundry.org/frs/download.php/1726/%{short_name}-%{version}-beta2.tar.gz
-Source1:	pgpool.init
-Source2:	pgpool.sysconfig
+Source1:        pgpool.init
+Source2:        pgpool.sysconfig
 Patch1:		pgpool.conf.sample.patch
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:	postgresql-devel pam-devel
@@ -37,7 +37,7 @@ DB nodes to be connected, which was not possible in pgpool-I.
 %package devel
 Summary:	The  development files for pgpool-II
 Group:		Development/Libraries
-Requires:	%{name} = %{version}-beta2
+Requires:	%{name} = %{version}-%{release}
 
 %description devel
 Development headers and libraries for pgpool-II.
@@ -54,10 +54,8 @@ make %{?_smp_flags}
 %install
 rm -rf %{buildroot}
 make %{?_smp_flags} DESTDIR=%{buildroot} install
-install -d %{buildroot}%{_datadir}/%{name}
-mv %{buildroot}/%{_sysconfdir}/*.conf.sample %{buildroot}%{_datadir}/%{name}
-mv %{buildroot}%{_datadir}/%{short_name}/system_db.sql %{buildroot}%{_datadir}/%{name}
-mv %{buildroot}%{_datadir}/%{short_name}/pgpool.pam %{buildroot}%{_datadir}/%{name}
+install -d %{buildroot}%{_datadir}/%{short_name}
+mv %{buildroot}/%{_sysconfdir}/*.conf.sample %{buildroot}%{_datadir}/%{short_name}
 install -d %{buildroot}%{_initrddir}
 install -m 755 %{SOURCE1} %{buildroot}%{_initrddir}/pgpool
 install -d %{buildroot}%{_sysconfdir}/sysconfig
@@ -90,10 +88,10 @@ chkconfig --add pgpool
 %{_bindir}/pcp_systemdb_info
 %{_bindir}/pg_md5
 %{_mandir}/man8/pgpool*
-%{_datadir}/%{name}/system_db.sql
+%{_datadir}/%{short_name}/system_db.sql
 %{_libdir}/libpcp.so.*
-%attr(764,root,apache) %{_datadir}/%{name}/*.conf.sample
-%{_datadir}/%{name}/pgpool.pam
+%attr(764,root,apache) %{_datadir}/%{short_name}/*.conf.sample
+%{_datadir}/%{short_name}/pgpool.pam
 %{_initrddir}/pgpool
 %config(noreplace) %{_sysconfdir}/sysconfig/pgpool
 
@@ -104,19 +102,26 @@ chkconfig --add pgpool
 %{_libdir}/libpcp.so
 
 %changelog
+* Fri Apr 11 2008 Devrim Gunduz <devrim@CommandPrompt.com> 2.1-0.2.beta2
+- Fix Requires: issue, per #442021 (Alex Lancaster)
+
 * Sun Apr 6 2008 Devrim Gunduz <devrim@CommandPrompt.com> 2.1-beta2
 - Update to 2.1 beta2
 
-* Mon Mar 17 2008 Devrim Gunduz <devrim@CommandPrompt.com> 2.1-beta1
-- Update to 2.1 beta1 
+* Mon Feb 18 2008 Fedora Release Engineering <rel-eng@fedoraproject.org> - 2.0.1-3.1
+- Autorebuild for GCC 4.3
 
-* Wed Nov 21 2007 Devrim Gunduz <devrim@CommandPrompt.com> 2.0.1
+* Mon Jan 21 2008 Devrim GUNDUZ <devrim@commandprompt.com> 2.0.1-2.1
+- Rebuilt against PostgreSQL 8.3
+
+* Sat Jan 19 2008 Devrim Gunduz <devrim@CommandPrompt.com> 2.0.1-2
+- Fix Requires of -devel package, per bz#429436
+
+* Sun Jan 13 2008 Devrim Gunduz <devrim@CommandPrompt.com> 2.0.1-1
 - Update to 2.0.1
+- Add a temp patch that will disappear in 2.0.2
 
-* Thu Nov 01 2007 Devrim Gunduz <devrim@CommandPrompt.com> 2.0-beta1
-- Update to 2.0 beta1 
-
-* Tue Oct 16 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.3-1
+* Tue Oct 23 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.3-1
 - Update to 1.3
 
 * Fri Oct 5 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.2.1-1
