@@ -57,9 +57,9 @@ pgpool_recovery(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to use pgpool_recovery function"))));
 
-	sprintf(recovery_script, "%s/%s %s %s %s",
-			DataDir, script, DataDir, remote_host,
-			remote_data_directory);
+	snprintf(recovery_script, sizeof(recovery_script), "%s/%s %s %s %s",
+			 DataDir, script, DataDir, remote_host,
+			 remote_data_directory);
 	elog(DEBUG1, "recovery_script: %s", recovery_script);
 	r = system(recovery_script);
 
@@ -86,8 +86,9 @@ pgpool_remote_start(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to use pgpool_remote_start function"))));
 
-	sprintf(recovery_script, "%s/%s %s %s", DataDir, REMOTE_START_FILE,
-			remote_host, remote_data_directory);
+	snprintf(recovery_script, sizeof(recovery_script),
+			 "%s/%s %s %s", DataDir, REMOTE_START_FILE,
+			 remote_host, remote_data_directory);
 	elog(DEBUG1, "recovery_script: %s", recovery_script);
 	r = system(recovery_script);
 
