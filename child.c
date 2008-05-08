@@ -1757,7 +1757,7 @@ int select_load_balancing_node(void)
 	int i;
 
 	/* choose a backend in random manner with weight */
-	selected_slot = 0;
+	selected_slot = MASTER_NODE_ID;
 	total_weight = 0.0;
 
 	for (i=0;i<NUM_BACKENDS;i++)
