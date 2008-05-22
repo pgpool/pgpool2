@@ -1389,7 +1389,11 @@ int health_check(void)
 
 		read(fd, &kind, 1);
 
-		if (write(fd, "X", 1) < 0)
+		/*
+		 * If a backend raised a FATAL error(max connections error or
+		 * startin up error?), do not send a Terminate message.
+		 */
+		if ((kind != 'E') && (write(fd, "X", 1) < 0))
 		{
 			pool_error("health check failed during write. host %s at port %d is down. reason: %s. Perhaps wrong health check user?",
 					   BACKEND_INFO(i).backend_hostname,
