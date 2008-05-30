@@ -2205,7 +2205,7 @@ static POOL_STATUS AsciiRow(POOL_CONNECTION *frontend,
 	int i, j;
 	unsigned char mask;
 	int size, size1 = 0;
-	char *buf = NULL;
+	char *buf = NULL, *sendbuf = NULL;
 	char msgbuf[1024];
 
 	pool_write(frontend, "D", 1);
@@ -2251,9 +2251,23 @@ static POOL_STATUS AsciiRow(POOL_CONNECTION *frontend,
 			/* field size */
 			if (pool_read(MASTER(backend), &size, sizeof(int)) < 0)
 				return POOL_END;
+
+			size1 = ntohl(size) - 4;
+
+			/* read and send actual data only when size > 0 */
+			if (size1 > 0)
+			{
+				sendbuf = pool_read2(MASTER(backend), size1);
+				if (sendbuf == NULL)
+					return POOL_END;
+			}
+
 			/* forward to frontend */
 			pool_write(frontend, &size, sizeof(int));
-			size1 = size;
+			pool_write(frontend, sendbuf, size1);
+			snprintf(msgbuf, Min(sizeof(msgbuf), size1+1), "%s", sendbuf);
+			pool_debug("AsciiRow: len: %d data: %s", size1, msgbuf);
+
 			for (j=0;j<NUM_BACKENDS;j++)
 			{
 				if (VALID_BACKEND(j) && !IS_MASTER_NODE_ID(j))
@@ -2261,31 +2275,25 @@ static POOL_STATUS AsciiRow(POOL_CONNECTION *frontend,
 					/* field size */
 					if (pool_read(CONNECTION(backend, j), &size, sizeof(int)) < 0)
 						return POOL_END;
-				}
-				/* XXX: field size maybe different among
-				   backends. If we were a paranoid, we have to treat
-				   this as a fatal error. However in the real world
-				   we'd better to adapt this situation. Just throw a
-				   log... */
-				if (size != size1)
-					pool_debug("AsciiRow: %d th field size does not match between master(%d) and %d th backend(%d)",
-							   i, ntohl(size), j, ntohl(size1));
 
-				buf = NULL;
-				size = ntohl(size) - 4;
+					buf = NULL;
+					size = ntohl(size) - 4;
 
-				/* read and send actual data only when size > 0 */
-				if (size > 0)
-				{
-					buf = pool_read2(CONNECTION(backend, j), size);
-					if (buf == NULL)
-						return POOL_END;
+					/* XXX: field size maybe different among
+					   backends. If we were a paranoid, we have to treat
+					   this as a fatal error. However in the real world
+					   we'd better to adapt this situation. Just throw a
+					   log... */
+					if (size != size1)
+						pool_debug("AsciiRow: %d th field size does not match between master(%d) and %d th backend(%d)",
+								   i, ntohl(size), j, ntohl(size1));
 
-					if (IS_MASTER_NODE_ID(j))
+					/* read and send actual data only when size > 0 */
+					if (size > 0)
 					{
-						pool_write(frontend, buf, size);
-						snprintf(msgbuf, Min(sizeof(msgbuf), size+1), "%s", buf);
-						pool_debug("AsciiRow: len: %d data: %s", size, msgbuf);
+						buf = pool_read2(CONNECTION(backend, j), size);
+						if (buf == NULL)
+							return POOL_END;
 					}
 				}
 			}
