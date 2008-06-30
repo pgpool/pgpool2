@@ -1014,8 +1014,10 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 				{
 					free_parser();
 
-					if(r_query->r_code != INSERT_DIST_NO_RULE)
+					if(r_query->r_code != INSERT_DIST_NO_RULE) {
+						in_progress = 0;
 						return r_query->status;
+					}
 				}
 				else if(r_query->type == T_SelectStmt)
 				{
