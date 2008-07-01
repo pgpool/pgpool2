@@ -2110,6 +2110,81 @@ _rewriteRangeTblRef(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *db
 
 }
 
+static char *GetTableName(Node *node)
+{
+
+	if(IsA(node, RangeVar))
+	{
+		RangeVar *range = (RangeVar *)node;
+		if(range->alias)
+		{
+			Alias *alias = range->alias;
+			return alias->aliasname;
+		} else {
+			return range->relname;
+		}
+	}
+	else if (IsA(node,RangeSubselect))
+	{
+		RangeSubselect *select = (RangeSubselect *)node;
+		Alias * alias = select->alias;
+		return alias->aliasname;
+	}
+	return NULL;
+}
+
+static int RetVirtualColumn(VirtualTable *virtual, char *tablename, char *colname)
+{
+	int col_num = virtual->col_num;
+	int i;
+	for( i = 0; i < col_num; i++)
+	{
+		if(strcmp(virtual->col_list[i], colname) == 0 
+				&& strcmp(virtual->table_list[i], tablename) == 0)
+		{
+			return virtual->column_no[i];
+		}
+	}
+
+	/* ERROR OR AMBIGIUS */
+	return -1;
+}
+
+static void
+ConvertFromUsingToON(RewriteQuery *message, String *str, JoinExpr *node, int select_num) 
+{
+	char *lname;
+	char *rname;
+	char comma = 0;
+	ListCell *lc;
+	VirtualTable *virtual = message->analyze[select_num]->virtual;
+
+	lname = GetTableName(node->larg);
+	rname = GetTableName(node->rarg);
+
+	foreach (lc, node->using)
+	{
+		Value *value;
+		char lbuf[16];
+		char rbuf[16];
+
+		if (comma == 0)
+			comma = 1;
+		else
+			delay_string_append_char(message, str, " AND ");
+
+		value = lfirst(lc);
+		snprintf(lbuf, 16, "%d",RetVirtualColumn(virtual,lname,value->val.str));
+		snprintf(rbuf, 16, "%d",RetVirtualColumn(virtual,rname,value->val.str));
+		delay_string_append_char(message, str, " pool_c$");
+		delay_string_append_char(message, str, lbuf);
+		delay_string_append_char(message, str, " = ");
+		delay_string_append_char(message, str, " pool_c$");
+		delay_string_append_char(message, str, rbuf);
+		delay_string_append_char(message, str, " ");
+	}
+}
+
 static void
 _rewriteJoinExpr(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, JoinExpr *node)
 {
@@ -2187,7 +2262,7 @@ _rewriteJoinExpr(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 
 	_rewriteNode(BaseSelect, message, dblink, str, node->rarg);
 
-  r_state = message->table_state;
+	r_state = message->table_state;
 	message->fromClause = from;
 	message->current_select = select_num;
 
@@ -2198,7 +2273,7 @@ _rewriteJoinExpr(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 
 		if(IsA(node->rarg, RangeVar) || IsA(node->rarg,RangeSubselect))
 		{
-	  	if(natural && inner) 
+			if(natural && inner) 
 				build_join_table(message,aliasname,JNATURAL_INNER);
 			else if(natural && left)
 				build_join_table(message,aliasname,JNATURAL_LEFT);
@@ -2217,30 +2292,38 @@ _rewriteJoinExpr(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 
 		using_length= list_length(node->using);
 		using_list = (char **) palloc(sizeof(char *) * using_length);
-		
-		delay_string_append_char(message, str, " USING(");
 
-		foreach (lc, node->using)
+		if(message->r_code == SELECT_DEFAULT 
+				&& message->analyze[select_num]->state == 'S')
 		{
-			Value *value;
+			/* Rewrite Using Cluase to On Clause */
+			delay_string_append_char(message, str, " ON");
+			ConvertFromUsingToON(message, str, node, select_num);
+		} else { 
+			delay_string_append_char(message, str, " USING(");
 
-			if (comma == 0)
-				comma = 1;
-			else
-				delay_string_append_char(message, str, ",");
+			foreach (lc, node->using)
+			{
+				Value *value;
+
+				if (comma == 0)
+					comma = 1;
+				else
+					delay_string_append_char(message, str, ",");
 			
-			value = lfirst(lc);
-			delay_string_append_char(message, str, "\"");
-			delay_string_append_char(message, str, value->val.str);
-			delay_string_append_char(message, str, "\"");
-			using_list[count] = value->val.str;
-			count++;
-		}
+				value = lfirst(lc);
+				delay_string_append_char(message, str, "\"");
+				delay_string_append_char(message, str, value->val.str);
+				delay_string_append_char(message, str, "\"");
+				using_list[count] = value->val.str;
+				count++;
+			}
 
-		message->analyze[select_num]->join->using_length = using_length;
-		message->analyze[select_num]->join->using_list = using_list;
+			message->analyze[select_num]->join->using_length = using_length;
+			message->analyze[select_num]->join->using_list = using_list;
 		
-		delay_string_append_char(message, str, ")");
+			delay_string_append_char(message, str, ")");
+		}
 	}
 
 
