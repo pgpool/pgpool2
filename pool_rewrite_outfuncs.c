@@ -1106,44 +1106,30 @@ static void append_join_using(AnalyzeSelect *analyze,char **col_list,char **type
 	for(i = 0; i < join->col_num; i++)
 	{
 		char *colname = join->col_list[i];
-		int match  = 0;
-		int array = 0;
 		for(j = 0; j < num; j++)
 		{
 			if(!strcmp(colname, using[j]))
 			{
-				match++;
-				array = j;
+				same[sc] = i;
+				sc++;
+			} else {
+				lvalid[lc] = i;
+				lc++;
 			}
 		}
-		if(match == 0)
-		{
-			lvalid[lc] = i;
-			lc++;
-		}
-		else if (match == 1)
-		{
-			same[sc] = array;
-			sc++;
-		}
-			/* XXX */
 	}
+	
 
 	for(i = 0; i < col_num; i++)
 	{
 		char *colname = col_list[i];
-		int match  = 0;
 		for(j = 0; j < num; j++)
 		{
-			if(!strcmp(colname, using[j]))
+			if(strcmp(colname, using[j]))
 			{
-				match++;
+				rvalid[rc] = i;
+				rc++;
 			}
-		}
-		if(match == 0)
-		{
-			rvalid[rc] = i;
-			rc++;
 		}
 	}
 
@@ -1157,24 +1143,14 @@ static void append_join_using(AnalyzeSelect *analyze,char **col_list,char **type
 	{
 		new->col_list[k] = join->col_list[same[k]]; 
 		new->type_list[k] = join->type_list[same[k]];
-		if(table_name)
-		{
-			new->table_list[k] = table_name; 
-		}
-		else 
-			new->table_list[k] = join->table_list[same[k]]; 
+		new->table_list[k] = join->table_list[same[k]]; 
 	}
 	
 	for(k = sc; k < sc + lc; k++)
 	{
 		new->col_list[k] = join->col_list[lvalid[k - sc]]; 
 		new->type_list[k] = join->type_list[lvalid[k - sc]];
-		if(table_name)
-		{
-			new->table_list[k] = table_name; 
-		}
-		else 
-			new->table_list[k] = join->table_list[lvalid[k - sc]]; 
+		new->table_list[k] = join->table_list[lvalid[k - sc]]; 
 	}
 	for(k = sc + lc; k < sc + lc + rc; k++)
 	{
@@ -2876,8 +2852,8 @@ static void writeSelectHeader(RewriteQuery *message,ConInfoTodblink *dblink, Str
 
 				if(first == 0)
 				{
-					delay_string_append_char(message, str, analyze->virtual->table_list[i]);
-					delay_string_append_char(message, str, ".");
+					//delay_string_append_char(message, str, analyze->virtual->table_list[i]);
+					//delay_string_append_char(message, str, "ooo.");
 					if(strcmp(col_name,"\"?column?\""))
 						delay_string_append_char(message, str, col_name);
 					else
@@ -3517,8 +3493,14 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 		if (node->distinctClause)
 		{
 			if(message->r_code == SELECT_ANALYZE)
+				analyze->partstate[SELECT_TARGETLIST] = 'S';
+#if 0
+			/* TODO
+       * DISTINCT optimization
+       */
+			if(message->r_code == SELECT_ANALYZE)
 				analyze->aggregate = true;
-
+#endif 
 			delay_string_append_char(message, str, "DISTINCT ");
 			if (lfirst(list_head(node->distinctClause)) != NIL)
 			{
@@ -5030,8 +5012,10 @@ _rewriteColumnRef(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbli
 			AppendAggregate(analyze,NULL,node);
 	
 		if(!DetectValidColumn(message,table_name,column_name,message->current_select,-1))
-		 pool_debug("_rewriteColumnRef: wrong column select_no=%d",message->current_select);
-
+		{
+			message->is_loadbalance = true;
+		 	pool_debug("_rewriteColumnRef: wrong column select_no=%d",message->current_select);
+		}
 		if(strcmp(column_name,"*"))
 				ChangeStatebyColumnRef(message,node);
 	}
