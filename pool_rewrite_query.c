@@ -381,7 +381,7 @@ RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNE
 														backend->info->database);
 				}
 			}
-			pool_debug("pool_rewrite_stmt: XXX message_code %d",message->r_code);
+			pool_debug("pool_rewrite_stmt: select message_code %d",message->r_code);
 		}
 		break;
 			
@@ -425,7 +425,7 @@ RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNE
 			break;
 	}
 
-	pool_debug("pool_rewrite_stmt: XXX rule %d",node->type);
+	pool_debug("pool_rewrite_stmt: query rule %d",node->type);
 	
 	return message;
 }

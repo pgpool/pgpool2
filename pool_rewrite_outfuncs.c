@@ -255,7 +255,12 @@ delay_string_append_char(RewriteQuery *message,String *str, char *parts)
 	if(message->r_code == SELECT_DEFAULT && message->ignore_rewrite == -1)
 	{
 		if(parts)
+		{
 			string_append_char( str, parts);
+#ifdef DEBUG
+			pool_debug("debug Rewrite  Query %s", str->data);
+#endif 
+		}
 		else
 			message->r_code = SELECT_RELATION_ERROR;
 	}
@@ -2162,6 +2167,7 @@ ConvertFromUsingToON(RewriteQuery *message, String *str, JoinExpr *node, int sel
 	lname = GetTableName(node->larg);
 	rname = GetTableName(node->rarg);
 
+	delay_string_append_char(message, str, " ON");
 	foreach (lc, node->using)
 	{
 		Value *value;
@@ -2293,11 +2299,10 @@ _rewriteJoinExpr(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 		using_length= list_length(node->using);
 		using_list = (char **) palloc(sizeof(char *) * using_length);
 
-		if(message->r_code == SELECT_DEFAULT 
+		if(message->r_code == SELECT_DEFAULT && message->rewritelock == -1 
 				&& message->analyze[select_num]->state == 'S')
 		{
 			/* Rewrite Using Cluase to On Clause */
-			delay_string_append_char(message, str, " ON");
 			ConvertFromUsingToON(message, str, node, select_num);
 		} else { 
 			delay_string_append_char(message, str, " USING(");
@@ -2312,9 +2317,7 @@ _rewriteJoinExpr(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 					delay_string_append_char(message, str, ",");
 			
 				value = lfirst(lc);
-				delay_string_append_char(message, str, "\"");
 				delay_string_append_char(message, str, value->val.str);
-				delay_string_append_char(message, str, "\"");
 				using_list[count] = value->val.str;
 				count++;
 			}
@@ -2746,7 +2749,7 @@ static void writeSelectAggHeader(RewriteQuery *message,ConInfoTodblink *dblink, 
 	ret_count = agg->t_num + agg->c_num + agg->h_num;
 
 	sprintf(port,"%d",dblink->port);
-	pool_debug("writeSelectHeader select_no=%d state=%d",message->current_select,state);
+	pool_debug("writeSelectAggHeader select_no=%d state=%d",message->current_select,state);
 
 	delay_string_append_char(message, str, "dblink(");
 	delay_string_append_char(message, str, "'");
@@ -3283,6 +3286,7 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 	if(message->r_code == SELECT_DEFAULT && message->rewritelock == -1 
 			&& message->ignore_rewrite == -1) 
 	{
+#if 0
 		if(analyze->state == 'P')
 		{	
 			if(analyze->call_part != SELECT_FROMCLAUSE || !CheckUnionFromClause(message))
@@ -3294,6 +3298,7 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 			else
 				lock =true;
 		}
+#endif
 		if(analyze->state == 'L')
 		{
 			if(analyze->call_part != SELECT_FROMCLAUSE && !CheckUnionFromClause(message))
@@ -3742,6 +3747,9 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 			AnalyzeReturnRecord(BaseSelect,message,dblink,str,node->targetList);
 
 		pool_debug("_rewriteSelectStmt select_no=%d state=%s",message->current_select,analyze->partstate);
+
+		if(strstr(analyze->partstate,"E"))
+			message->is_loadbalance = true;
 
   	/* change state */
 		if(count != 0)
@@ -4842,12 +4850,16 @@ static bool GetPoolColumn(RewriteQuery *message,String *str,char *table_name,cha
 		char buf[16];
 		snprintf(buf, 16, "%d", virtual->column_no[i]);
 
-		if(analyze_now->partstate[SELECT_FROMCLAUSE] != 'S')
+#if 0
+		if(analyze_now->partstate[SELECT_FROMCLAUSE] != 'S') {
 			delay_string_append_char(message, str, analyze->table_name);
-		else 
+			delay_string_append_char(message, str, ".");
+		} else {
 			delay_string_append_char(message, str, virtual->table_list[i]);
-
-		delay_string_append_char(message, str, ".pool_c$");
+			delay_string_append_char(message, str, ".");
+		}
+#endif
+		delay_string_append_char(message, str, "pool_c$");
 		delay_string_append_char(message, str, buf);
 
 		return true;

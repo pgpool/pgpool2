@@ -635,6 +635,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 	int num_fds;
 	int used_count = 0;
 	int error_flag = 0;
+	unsigned long datacount = 0;
 
 	timeout.tv_sec = 1;
 	timeout.tv_usec = 0;
@@ -811,6 +812,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 						if(error_flag ==0)
 						{
 							pool_debug("pool_parallel_exec: kind from backend: %c", kind);
+
 							status = ParallelForwardToFrontend(kind,
 															frontend,
 															CONNECTION(backend, i),
@@ -846,6 +848,8 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 					if((kind == 'C' || kind == 'c' || kind == 'E') &&
 						used_count == NUM_BACKENDS -1)
 					{
+						pool_debug("pool_parallel_exec: kind from backend: D %ul", datacount);
+
 						if(error_flag == 0)
 						{
 							pool_debug("pool_parallel_exec: kind from backend: %c", kind);
@@ -864,8 +868,12 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 						}
 						return POOL_CONTINUE;
 					}
+							
+					if(kind == 'D')
+						datacount++;
+					else
+						pool_debug("pool_parallel_exec: kind from backend: %c", kind);
 
-					pool_debug("pool_parallel_exec: kind from backend: %c", kind);
 					status = ParallelForwardToFrontend(kind,
 														frontend,
 														CONNECTION(backend, i),
@@ -1004,6 +1012,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 				/* call parallel exe engine */
 				POOL_STATUS stats = pool_parallel_exec(frontend,backend,r_query->rewrite_query, node,true);
 				free_parser();
+				in_progress = 0;
 				return stats;
 			}
 			else if(!r_query->is_pg_catalog)
@@ -1022,6 +1031,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 				else if(r_query->type == T_SelectStmt)
 				{
 					free_parser();
+					in_progress = 0;
 					return r_query->status;
 				}
  			}
@@ -4728,59 +4738,60 @@ static POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int n
 
 POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *query, char *database)
 {
-    int len,sendlen;
-    int status;
-    char kind;
+	int len,sendlen;
+	int status;
+	char kind;
 
-    pool_debug("OneNode_do_command: Query: %s", query);
+	pool_debug("OneNode_do_command: Query: %s", query);
 
-    /* send the query to the backend */
-    pool_write(backend, "Q", 1);
-    len = strlen(query)+1;
+	/* send the query to the backend */
+	pool_write(backend, "Q", 1);
+	len = strlen(query)+1;
 
-    sendlen = htonl(len + 4);
-    pool_write(backend, &sendlen, sizeof(sendlen));
+	sendlen = htonl(len + 4);
+	pool_write(backend, &sendlen, sizeof(sendlen));
 
-    if (pool_write_and_flush(backend, query, len) < 0)
-    {
-        return POOL_END;
-    }
+	if (pool_write_and_flush(backend, query, len) < 0)
+	{
+		return POOL_END;
+	}
 
-    for(;;)
-    {
-        status = pool_read_parallel(backend, &kind, sizeof(kind));
-        if (status < 0)
-        {
-            pool_error("OneNode_do_command: error while reading message kind");
-            return POOL_END;
-        }
+	for(;;)
+	{
+		status = pool_read(backend, &kind, sizeof(kind));
+		if (status < 0)
+		{
+			pool_error("OneNode_do_command: error while reading message kind");
+			return POOL_END;
+		}
 
-        status = ParallelForwardToFrontend(kind, frontend, backend, database, true);
-        if (kind == 'C' || kind =='E')
-        {
-            break;
-        }
-    }
-    /*
-     *      * Expecting ReadyForQuery
-     *           */
-    status = pool_read_parallel(backend, &kind, sizeof(kind));
-    if (status < 0)
-    {
-        pool_error("OneNode_do_command: error while reading message kind");
-        return POOL_END;
-    }
+		status = ParallelForwardToFrontend(kind, frontend, backend, database, true);
+		if (kind == 'C' || kind =='E')
+		{
+			break;
+		}
+	}
+	/*
+	 * Expecting ReadyForQuery
+	 *          
+	 */
+	status = pool_read(backend, &kind, sizeof(kind));
+	if (status < 0)
+	{
+		pool_error("OneNode_do_command: error while reading message kind");
+		return POOL_END;
+	}
 
-    if (kind != 'Z')
-    {
-        pool_error("OneNode_do_command: backend does not return ReadyForQuery");
-        return POOL_END;
-    }
+	if (kind != 'Z')
+	{
+		pool_error("OneNode_do_command: backend does not return ReadyForQuery");
+		return POOL_END;
+	}
 
-    status = ParallelForwardToFrontend(kind, frontend, backend, database, true);
-    pool_flush(frontend);
+		status = ParallelForwardToFrontend(kind, frontend, backend, database, true);
+		pool_flush(frontend);
 
-    return status;
+		return status;
 }
 
 
