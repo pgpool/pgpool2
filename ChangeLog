@@ -1,3 +1,19 @@
+
+2008-07-04  Yoshiharu Mori   <y-mori@sraoss.co.jp>
+
+	* pool_rewrite_outfuncs.c: Fix query rewrite of DISTINCT ON
+	  and join partitioned tables  
+
+2008-07-01  Yoshiharu Mori   <y-mori@sraoss.co.jp>
+
+	* pool_rewrite_outfuncs.c: Fix Converting JOIN expression from 
+	  USING to ON in query rewriting at parallel mode
+
+2008-06-30  Yoshiharu Mori   <y-mori@sraoss.co.jp>
+
+	* pool_process_query.c: Fix Hung up when two or more insert 
+	  statment was executed in parallel mode
+
 2008-04-03  Yoshiyuki Asaba  <y-asaba@sraoss.co.jp>
 
 	* pool_process_query.c: Do not close a internal transaction when

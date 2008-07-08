@@ -61,6 +61,10 @@
         - Fix INSERT failure. (Yoshiharu)
         - Fix syntax error when a query contains "AS" in FROM
           clause. (sho)
+        - Fix Hung up when two or more statment was executed 
+          in parallel mode (Yoshiharu)
+        - Fix Query rewriting of Join Expression and DISTINCT ON
+          (Yoshiharu)
 
 2.0.1 (hikitsuboshi) 2007/11/21
       * Version 2.0.1
