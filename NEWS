@@ -8,7 +8,7 @@
           obtain old master node ID. (Yoshiyuki)
         - Add new directive "recovery_timeout" to specify recovery
           timeout in second. (Taiki)
-	- Add optino '-v' to print pgpool version. (Yoshiyuki)
+        - Add optino '-v' to print pgpool version. (Yoshiyuki)
 
       * Incompatibility
         - Restrict pgpool_recovery() and pgpool_remote_start()
@@ -19,24 +19,24 @@
           - This enabled if replication_strict was false. However,
             replication_strict was already removed.
         - Ignore timeout argument of pcp commands. (Taiki)
-	- Do not replicate "COPY TO STDOUT" when replicate_select is
+        - Do not replicate "COPY TO STDOUT" when replicate_select is
           false. (Yoshiyuki)
 
       * Bug fix
       ** General
         - Fix crash when CloseComplete message was
           received. (Yoshiyuki)
-	- Improve network I/O routine. (Yoshiyuki)
-	- Fix compile errors on Solaris 10. (Yoshiyuki)
-	- Improve log messages of health check and recovery. (Tatsuo)
-	- Change error level of the "failed to read kind from
+        - Improve network I/O routine. (Yoshiyuki)
+        - Fix compile errors on Solaris 10. (Yoshiyuki)
+        - Improve log messages of health check and recovery. (Tatsuo)
+        - Change error level of the "failed to read kind from
           frontend" message from ERROR to LOG. (Yoshiyuki)
-	- Fix failover failure in raw mode. (Taiki)
-	- Fix zombie process bug. (Yoshiyuki)
-	- Fix health_check_timeout to work correctly. (Kenichi Sawada)
-	- Support ps status on FreeBSD. (ISHIDA Akio)
-	- Improve bind(2) failure report. (Jun Kuriyama)
-	- Improve error message when client authentication
+        - Fix failover failure in raw mode. (Taiki)
+        - Fix zombie process bug. (Yoshiyuki)
+        - Fix health_check_timeout to work correctly. (Kenichi Sawada)
+        - Support ps status on FreeBSD. (ISHIDA Akio)
+        - Improve bind(2) failure report. (Jun Kuriyama)
+        - Improve error message when client authentication
           failed. (Tatsuo)
 
       ** Replication
@@ -48,18 +48,18 @@
         - Fix crash of "DEALLOCATE ALL". (Yoshiyuki)
         - Fix hang up when a backend node does immediate
           shutdown. (Yoshiyuki)
-	- Fix hang up online recovery in high load. (Yoshiyuki)
-	- Fix hang up with extended query protocol when SELECT is
-	  failed inside a transaction block. (Yoshiyuki)
+        - Fix hang up online recovery in high load. (Yoshiyuki)
+        - Fix hang up with extended query protocol when SELECT is
+          failed inside a transaction block. (Yoshiyuki)
 
       ** Master Slave
         - Fix load balancing to work correctly. (Yoshiyuki)
-	- Fix crash if SET, PREPARE or DEALLOCATE is executed inside a
+        - Fix crash if SET, PREPARE or DEALLOCATE is executed inside a
           transaction block. (Yoshiyuki)
 
       ** Parallel query
         - Fix INSERT failure. (Yoshiharu)
-	- Fix syntax error when a query contains "AS" in FROM
+        - Fix syntax error when a query contains "AS" in FROM
           clause. (sho)
 
 2.0.1 (hikitsuboshi) 2007/11/21
@@ -74,7 +74,7 @@
       * Incompatibility since pgpool-II 1.x
         - the default value for ignore_leading_white_space is now
           true(Yoshiyuki) 
- 	- replicate_strict is removed. The value is always
+        - replicate_strict is removed. The value is always
           true(Yoshiyuki)
 
       * General
@@ -118,7 +118,7 @@
       * Version 1.3
       * Add new "authentication_timeout" directive, being the default
         value is 60. (Yoshiyuki)
-	- Maximum time in seconds to complete client authentication.
+        - Maximum time in seconds to complete client authentication.
       * Reject a connection when startup packet length is greater than
         10,000 byte. (Yoshiyuki)
       * Fix invalid memory access when pgpool processed DEALLOCATE
@@ -141,10 +141,10 @@
       * Add new "replicate_select" directive, being the default value
         is false. (Yoshiyuki) 
         - If it is true, SELECT query is replicated. This behavior is
-	  same as V3.2 or earlier.
+          same as V3.2 or earlier.
       * Improve signal handling. (Yoshiyuki)
         - Occasionaly, zombie processes were remained. Or processes
-	  were unstable.
+          were unstable.
       * Fix hang up when SELECT was error inside a transaction
         block. The bug was introduced in V3.3. (Yoshiyuki)
       * Fix PREPARE/EXECUTE handling in master slave mode. (Yoshiyuki)
@@ -177,7 +177,7 @@
       * Improve replication. SELECT nextval() and SELECT setval() are
         now replicated. (Yoshiyuki)
       * Change SELECT query is only sent to the master node. (Yoshiyuki)
-	  - Use /*REPLICATION*/ comment to repliate a SELECT query.
+        - Use /*REPLICATION*/ comment to repliate a SELECT query.
       * Fix unexpected failover error due to receiving an interrupt
         signal while connecting to the backend. (Yoshiyuki)
       * Add "pgpool.pam" file, for PAM configuration file, to be
