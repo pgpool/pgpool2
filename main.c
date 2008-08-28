@@ -622,6 +622,7 @@ static void daemonize(void)
 {
 	int			i;
 	pid_t		pid;
+	int			fdlimit;
 
 	pid = fork();
 	if (pid == (pid_t) -1)
@@ -648,11 +649,16 @@ static void daemonize(void)
 
 	mypid = getpid();
 
+	chdir("/");
+
 	i = open("/dev/null", O_RDWR);
 	dup2(i, 0);
 	dup2(i, 1);
 	dup2(i, 2);
-	close(i);
+
+    fdlimit = sysconf(_SC_OPEN_MAX);
+    for (i = 3; i < fdlimit; i++)
+		close(i);
 
 	write_pid_file();
 }
@@ -1224,6 +1230,21 @@ static void failover(void)
 	{
 		pool_error("failover_handler: no valid DB node found");
 	}
+
+/*
+ * Before we tried to minimize restarting pgpool to protect existing
+ * connections from clients to pgpool children. What we did here was,
+ * if children other than master went down, we did not fail over.
+ * This is wrong. Think about following scenario. If someone
+ * accidentaly plugs out the network cable, the TCP/IP stack keeps
+ * retrying for long time (typically 2 hours). The only way to stop
+ * the retry is restarting the process.  Botom line is, we need to
+ * restart all children in any case.  See pgpool-general list posting
+ * "TCP connections are *not* closed when a backend timeout" on Jul 13
+ * 2008 for more details.
+ */
+
+#ifdef NOT_USED
 	else
 	{
 		if (Req_info->master_node_id == new_master && *InRecovery == 0)
@@ -1256,7 +1277,7 @@ static void failover(void)
 			return;
 		}
 	}
-
+#endif
 	/* kill all children */
 	for (i = 0; i < pool_config->num_init_children; i++)
 	{
