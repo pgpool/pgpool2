@@ -1278,11 +1278,12 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		}
 		if (deadlock_detected == SPECIFIED_ERROR)
 		{
+			pool_log("SimpleQuery: received deadlock error message from master node. query: %s", string);
 			string = POOL_ERROR_QUERY;
 			len = strlen(string) + 1;
 		}
 
-		/* send query to other nodes */
+		/* send query to other than master nodes */
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
 			if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
@@ -1292,7 +1293,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 				return POOL_END;
 		}
 
-		/* wait for response excepted for MASTER node */
+		/* wait for response except MASTER node */
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
 			if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
@@ -1755,6 +1756,8 @@ static POOL_STATUS Parse(POOL_CONNECTION *frontend,
 			{
 				if (deadlock_detected)
 				{
+					pool_log("Parse: received deadlock error message from master node");
+
 					if (send_simplequery_message(CONNECTION(backend, i),
 												 strlen(POOL_ERROR_QUERY)+1,
 												 POOL_ERROR_QUERY,
@@ -1767,13 +1770,13 @@ static POOL_STATUS Parse(POOL_CONNECTION *frontend,
 			}
 		}
 
-		/* wait for nodes excepted for master node */
+		/* wait for DB nodes completing query except master node */
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
 			if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
 				continue;
 
-			pool_debug("waiting for backend completing the query");
+			pool_debug("waiting for %th backend completing the query", i);
 			if (synchronize(CONNECTION(backend, i)))
 				return POOL_END;
 		}
@@ -1853,7 +1856,10 @@ static POOL_STATUS Sync(POOL_CONNECTION *frontend,
 
 /*
  * Process ReadyForQuery('Z') message.
- * An internal transaction is close in this function.
+ *
+ * - if the global error status "mismatch_ntuples" is set, send a error query
+ *	 to all DB nodes
+ * - internal transaction is closed
  */
 static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend, 
 								 POOL_CONNECTION_POOL *backend, int send_ready)
@@ -4633,7 +4639,7 @@ retry_read_packet:
 }
 
 /*
- * Send syntax error query to abort transaction.
+ * Send a syntax error query to abort transaction.
  * We need to sync transaction status in transaction block.
  * SELECT query is sent to master only.
  * If SELECT is error, we must abort transaction on other nodes.
@@ -5591,7 +5597,7 @@ static int detect_deadlock_error(POOL_CONNECTION *backend, int major)
 {
 	int r =  detect_error(backend, DEADLOCK_ERROR_CODE, major, true);
 	if (r == SPECIFIED_ERROR)
-		pool_debug("detect_deadlock_error: receive deadlock error from master node.");
+		pool_debug("detect_deadlock_error: received deadlock error message from backend");
 	return r;
 }
 
