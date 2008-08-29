@@ -4267,27 +4267,49 @@ static int load_balance_enabled(POOL_CONNECTION_POOL *backend, Node* node, char 
 
 
 /*
- * return non 0 if SQL is SELECT statement.
- * COPY TO STDOUT is OK too.
+ * returns non 0 if the SQL statement can be load
+ * balanced. Followings are statemnts go into this category.
+ *
+ * - SELECT without FOR UPDATE/SHARE
+ * - COPY TO STDOUT
+ * - DECLARE..SELECT (without INTO nor FOR UPDATE/SHARE)
+ * - FETCH
+ * - CLOSE
+ * 
+ * note that for SELECT INTO, this function returns 0
  */
 static int is_select_query(Node *node, char *sql)
 {
 	if (node == NULL)
 		return 0;
 
-	if (IsA(node, SelectStmt))
+	if (pool_config->ignore_leading_white_space)
 	{
-		SelectStmt *select_stmt = (SelectStmt *)node;
+		/* ignore leading white spaces */
+		while (*sql && isspace(*sql))
+			sql++;
+	}
+
+	if (IsA(node, SelectStmt) || IsA(node, DeclareCursorStmt))
+	{
+		SelectStmt *select_stmt;
+
+		if (IsA(node, SelectStmt))
+			 select_stmt = (SelectStmt *)node;
+		else
+			select_stmt = (SelectStmt *)((DeclareCursorStmt *)node)->query;
+
 		if (select_stmt->intoClause || select_stmt->lockingClause)
 			return 0;
 
-		if (pool_config->ignore_leading_white_space)
-		{
-			/* ignore leading white spaces */
-			while (*sql && isspace(*sql))
-				sql++;
-		}
-		return (*sql == 's' || *sql == 'S' || *sql == '(');
+		if (IsA(node, SelectStmt))
+			return (*sql == 's' || *sql == 'S' || *sql == '(');
+		else
+			return (*sql == 'd' || *sql == 'D');
+	}
+	else if (IsA(node, FetchStmt) || IsA(node, ClosePortalStmt))
+	{
+		return (*sql == 'f' || *sql == 'F' || *sql == 'c' || *sql == 'C');
 	}
 	else if (IsA(node, CopyStmt))
 	{
@@ -4299,7 +4321,8 @@ static int is_select_query(Node *node, char *sql)
 }
 
 /*
- * return non 0 if SQL is SELECT statement.
+ * returns non 0 if SQL is SELECT statement including nextval() or
+ * setval() call
  */
 static int is_sequence_query(Node *node)
 {
@@ -4337,6 +4360,10 @@ static int is_sequence_query(Node *node)
 	return 0;
 }
 
+/*
+ * returns non 0 if SQL is transaction starting command (START
+ * TRANSACTION or BEGIN)
+ */
 static int is_start_transaction_query(Node *node)
 {
 	TransactionStmt *stmt;
@@ -4348,6 +4375,10 @@ static int is_start_transaction_query(Node *node)
 	return stmt->kind == TRANS_STMT_START || stmt->kind == TRANS_STMT_BEGIN;
 }
 
+/*
+ * returns non 0 if SQL is transaction commit or abort command (END
+ * TRANSACTION or ROLLBACK or ABORT)
+ */
 static int is_commit_query(Node *node)
 {
 	TransactionStmt *stmt;
