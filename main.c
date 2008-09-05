@@ -1715,7 +1715,13 @@ static void kill_all_children(int sig)
 }
 
 /*
- * pool_pause: A process pauses by select().
+ * pause in a period specified by timeout. If any data is coming
+ * through pipe_fds[0], that means one of: failover request(SIGUSR1),
+ * SIGCHLD received, children wake up request(SIGUSR2 used in on line
+ * recovery processing) or config file reload request(SIGHUP) has been
+ * occurred.  In this case this function returns 1.
+ * otherwise 0: (no signal event occurred), -1: (error)
+ * XXX: is it ok that select(2) error is ignored here?
  */
 static int pool_pause(struct timeval *timeout)
 {
@@ -1732,8 +1738,12 @@ static int pool_pause(struct timeval *timeout)
 }
 
 /*
- * pool_sleep: A process sleep using pool_pause().
- *             If a signal event occurs, it raises signal handler.
+ * sleep for seconds specified by "second".  Unlike pool_pause(), this
+ * function guarantees that it will sleep for specified seconds.  This
+ * function uses pool_pause() internally. If it informs that there is
+ * a pending signal event, they are processed using CHECK_REQUEST
+ * macro. Note that most of these procsses are done while all signals
+ * are blocked.
  */
 static void pool_sleep(unsigned int second)
 {
