@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Thu Mar 27 10:55:04 JST 2008
+Last modified: Fri Oct 31 10:24:14 JST 2008
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -755,6 +755,65 @@ configuration parameters below must be set in addtion to everything above.</p>
          pgpool-II only sends them to Master DB. Default is false.</p>
   </dd>
 
+<p>
+replicate_select, load_balance_mode, if the SELECT query is inside an
+explicit transaction block will affect to how replication works. Details
+are shown below.
+</p>
+
+<p>
+<table border>
+
+<tr>
+<td>SELECT is inside a transaction block</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+<td>Y</td>
+<td>N</td>
+</tr>
+
+<tr>
+<td>replicate_select is true</td>
+<td>Y</td>
+<td>Y</td>
+<td>N</td>
+<td>N</td>
+<td>Y</td>
+<td>Y</td>
+<td>N</td>
+<td>N</td>
+</tr>
+
+<tr>
+<td>load_balance_mode is true</td>
+<td>Y</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+<td>Y</td>
+<td>N</td>
+<td>Y</td>
+<td>Y</td>
+</tr>
+
+<tr>
+<td>results(R:replication, M: send only to master，L: load balance</td>
+<td>R</td>
+<td>R</td>
+<td>M</td>
+<td>M</td>
+<td>L</td>
+<td>R</td>
+<td>M</td>
+<td>L</td>
+</tr>
+</table>
+</p>
+
   <dt>insert_lock</dt>
   <dd>
       <p>Replicating a table with SERIAL data type, the SERIAL column
@@ -895,10 +954,18 @@ For the query to be load balanced, all the requirements below
 	    transaction (i.e. not in a BEGIN ~ END block)</li>
     <li>it's not SELECT nextval or SELECT setval
     <li>it's not SELECT INTO
-    <li>it's not SELECT FOR UPDATE
+    <li>it's not SELECT FOR UPDATE nor FOR SHARE
     <li>start with "SELECT" (ignore_leading_white_space = true will
-		 ignore leading white space)
+		 ignore leading white space) or one of COPY TO STDOUT, DECLARE..SELECT, FETCH, CLOSE
 </ul>
+</p>
+<p>
+Note that you could supress load balancing by inserting arbitary
+comments just in front of the SELECT query:
+<pre>
+  /*REPLICATION*/ SELECT ...
+</pre>
+</p>
 
 <p>
 <font color="red">

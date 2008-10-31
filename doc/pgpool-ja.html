@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Wed Mar 26 12:17:34 JST 2008
+Last modified: Fri Oct 31 10:15:35 JST 2008
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -776,6 +776,62 @@ rawモード，コネクションプールモードに加え，以下を設定します．
    設定すると SELECT 文をマスタのみに送信します。デフォルト値は false
    です。
 </p>
+<p>
+replicate_select，load_balance_mode，SELECT問合わせが明示的なトランザクションブロックの内側にあるかどうかどうかで，レプリケーションモードの動作が変化します．詳細を表に示します．
+</p>
+
+<p>
+<table border>
+
+<tr>
+<td>SELECTが明示的なトランザクションブロックの内側にある</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+<td>Y</td>
+<td>N</td>
+</tr>
+
+<tr>
+<td>replicate_selectがtrue</td>
+<td>Y</td>
+<td>Y</td>
+<td>N</td>
+<td>N</td>
+<td>Y</td>
+<td>Y</td>
+<td>N</td>
+<td>N</td>
+</tr>
+
+<tr>
+<td>load_balance_modeがtrue</td>
+<td>Y</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+<td>Y</td>
+<td>N</td>
+<td>Y</td>
+<td>Y</td>
+</tr>
+
+<tr>
+<td>結果(R:レプリケーション, M: マスタのみに送信，L: ロードバランスされる</td>
+<td>R</td>
+<td>R</td>
+<td>M</td>
+<td>M</td>
+<td>L</td>
+<td>R</td>
+<td>M</td>
+<td>L</td>
+</tr>
+</table>
+</p>
 
 <dt>insert_lock
 <dd>
@@ -924,38 +980,32 @@ rawモード，コネクションプールモードに加え，以下を設定します．
 
 <h4><p>ロードバランスの条件について</p></h4>
 <p>
-load_balance_mode = true を設定した場合，以下の条件を満たした時に問い
-合わせはロードバランスされます．
+load_balance_mode = true を設定した場合，以下の条件のすべてを満たした時にSELECTなどの問い合わせがロードバランスされます．
 <ul>
-<li>問い合わせが明示的なトランクザションブロックの内側にない(つまり，
-       BEGINを発行していない)
-<li>SELECT 文(ただし、SELECT nextval と SELECT setval の場合は除く)
+<li>PostgreSQLのバージョンが7.4以降である
+<li>問い合わせが明示的なトランクザションブロックの内側にない(つまり，BEGINを発行していない)
+<li>SELECT文(ただし、SELECT nextval と SELECT setval の場合は除く)またはCOPY TO STDOUT, DECLARE..SELECT, FETCH, CLOSEのいずれかである
 <li>SELECT INTO 文ではない
-<li>SELECT FOR UPDATE 文ではない
-<li>クエリ文字列が SELECT で始まる(ignore_leading_white_space = true
-    の場合は空白は無視します)
+<li>SELECT FOR UPDATE/SELECT FOR SHARE文ではない
+<li>クエリ文字列が SELECT で始まる(ignore_leading_white_space = trueの場合は空白は無視します)
 </ul>
-<p>
-上記を満さない場合は SELECT 以外のクエリをバックエンドに送信します。も
-し SELECT をレプリケーションさせたい場合は、replicate_select = true を
-設定するか、
 </p>
-
+<p>
+なお，
 <pre>
   /*REPLICATION*/ SELECT ...
 </pre>
-
+</p>
 <p>
-と、SELECT の前にコメントを付けてください。
+とすることによって，本来負荷分散されたり，マスタのみに送信されるべき問合わせがすべてのバックエンドに送信される（レプリケーションされる）ようになります．副作用がある関数を含む問合わせに対してはこのテクニックが利用できます．
 </p>
 
 <p>
 <font color="red">
-注意点として、JDBC ドライバなどのように、ドライバ内で autocommit の有
-効・無効のオプションがあります。autocommit を無効にしていますと、内部
-で BEGIN コマンドを実行するため、正しくロードバランスされない可能性が
-あります。クエリをロードバランスさせたい場合は autocommit を有効にして
-ください。JDBCであれば setAutoCommit(true) を実行します。
+注意: JDBC ドライバなどのように、ドライバ内で autocommit の有効・無効のオプションがある場合、
+autocommit を無効にすると、pgpoolが内部で BEGIN コマンドを実行する関係上、正しくロードバランスされない可能性があります。
+クエリをロードバランスさせたい場合は autocommit を有効にしてください。
+たとえばJDBCであれば setAutoCommit(true) を実行してください。
 </font>
 </p>
 
