@@ -186,5 +186,8 @@ recovery_1st_stage_command = ''
 # execute a command in second stage.
 recovery_2nd_stage_command = ''
 
-# maximum time in seconds to wait for remote start-up. 0 means no wait
+# maximum time in seconds to wait for the recovering node's postmaster
+# start-up. 0 means no wait.
+# this is also used as a timer waiting for clients disconnected before
+# starting 2nd stage
 recovery_timeout = 90
