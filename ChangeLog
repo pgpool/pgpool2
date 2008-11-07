@@ -1,4 +1,33 @@
+2008-11-07  Tatsuo Ishii  <ishii@sraoss.co.jp>
 
+	* Add client_idle_limit_in_recovery
+	
+2008-08-29  Tatsuo Ishii  <ishii@sraoss.co.jp>
+
+	* main.c: Fix bug in fork_a_child which mistakely closed pipe fds
+	  which are not created yet at the startup time
+
+	* pool_process_query.c: Allow to load balance DECLARE, FETCH and
+	  CLOSE. Also fix comments.
+
+2008-08-28  Tatsuo Ishii  <ishii@sraoss.co.jp>
+
+	* main.c: Close all file descriptors when running in daemon mode.
+	  Otherwise we inherit socket from apache when it's started by
+	  pgpoolAdmin. This results in that port 80 is occupied for
+	  example.  Pach provided by Akio Ishida. Also add
+	  chdir("/"). This is always good for daemon programs.
+
+	* main.c: Always fail over and restart all children. Before we do
+	  restart if master has not been changed. This was wrong. If we
+	  have trouble with network cable or something, TCP/IP stack keeps
+	  on retrying for long time and the only way to prevent it is
+	  restarting process.
+
+2008-08-28  Tatsuo Ishii  <ishii@sraoss.co.jp>
+
+	* pool_process_query.c: Fix/enhance log messages and comments
+	
 2008-07-04  Yoshiharu Mori   <y-mori@sraoss.co.jp>
 
 	* pool_rewrite_outfuncs.c: Fix query rewrite of DISTINCT ON

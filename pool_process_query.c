@@ -313,7 +313,8 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 			int frontend_idle_count = 0;
 
 		SELECT_RETRY:
-			if (pool_config->client_idle_limit > 0)
+			if ((*InRecovery == 0 && pool_config->client_idle_limit > 0) ||
+				(*InRecovery && pool_config->client_idle_limit_in_recovery > 0))
 			{
 				timeout.tv_sec = 1;
 				timeout.tv_usec = 0;
@@ -356,10 +357,11 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				}
 			}
 
-			if (pool_config->client_idle_limit == 0)
-				fds = select(num_fds, &readmask, &writemask, &exceptmask, NULL);
-			else
+			if ((*InRecovery == 0 && pool_config->client_idle_limit > 0) ||
+				(*InRecovery && pool_config->client_idle_limit_in_recovery > 0))
 				fds = select(num_fds, &readmask, &writemask, &exceptmask, &timeout);
+			else
+				fds = select(num_fds, &readmask, &writemask, &exceptmask, NULL);
 
 			if (fds == -1)
 			{
@@ -370,12 +372,19 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				return POOL_ERROR;
 			}
 
-			if (pool_config->client_idle_limit > 0 && fds == 0)
+			if (((*InRecovery == 0 && pool_config->client_idle_limit > 0) ||
+				 (*InRecovery && pool_config->client_idle_limit_in_recovery > 0)) && fds == 0)
 			{
 				frontend_idle_count++;
-				if (frontend_idle_count > pool_config->client_idle_limit)
+				if (*InRecovery == 0 && (frontend_idle_count > pool_config->client_idle_limit))
 				{
 					pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit(%d) reached", pool_config->client_idle_limit);
+					return POOL_END;
+				}
+
+				if (*InRecovery && (frontend_idle_count > pool_config->client_idle_limit_in_recovery))
+				{
+					pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit_in_recovery(%d) reached", pool_config->client_idle_limit_in_recovery);
 					return POOL_END;
 				}
 
@@ -3382,6 +3391,16 @@ static void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *b
 	strncpy(status[i].name, "recovery_2nd_stage_command", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->recovery_2nd_stage_command);
 	strncpy(status[i].desc, "execute a command in second stage.", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "recovery_timeout", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->recovery_timeout);
+	strncpy(status[i].desc, "max time in seconds to wait for the recovering node's postmaster", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "client_idle_limit_in_recovery", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->client_idle_limit_in_recovery);
+	strncpy(status[i].desc, "if idle for this seconds, child connection closes in recovery 2nd statge", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "parallel_mode", POOLCONFIG_MAXNAMELEN);

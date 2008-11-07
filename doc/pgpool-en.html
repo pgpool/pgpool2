@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Fri Oct 31 10:24:14 JST 2008
+Last modified: Fri Nov  7 18:02:24 JST 2008
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -410,7 +410,8 @@ servers.</p>
        ocuppied by a lazy client or TCP/IP connection between client and
        pgpool is accidentally down. The default value for
        client_idle_limit is 0, which means the functionality is turned
-       off. You need to reload pgpool.conf if you change
+       off. You need to reload pgpool.conf This parameter is ignored in
+       the second stage of on line recovery. if you change
        client_idle_limit.</p>
 
   <dt>authentication_timeout
@@ -941,6 +942,18 @@ cancels online recovery and accepts connections. 0 means no wait.
 <p>
 It can be changed on service.
 </p>
+
+  <dt>client_idle_limit_in_recovery
+  <dd>
+  <p> Similar to client_idle_limit but only takes effect in recovery 2nd
+	   stage. Disconnect the connection to a client being idle for
+	   client_idle_limit_in_recovery seconds since the last query has
+	   been sent.  This is usefull for preventing for pgpool recovery
+	   disturbed by a lazy client or TCP/IP connection between client and
+	   pgpool is accidentally down. The default value for
+	   client_idle_limit_in_recovery is 0, which means the functionality is turned
+	   off. You need to reload pgpool.conf if you change
+	   client_idle_limit_in_recovery.</p>
 
 </dl>
 

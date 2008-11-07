@@ -191,3 +191,9 @@ recovery_2nd_stage_command = ''
 # this is also used as a timer waiting for clients disconnected before
 # starting 2nd stage
 recovery_timeout = 90
+
+# If client_idle_limit_in_recovery is n (n > 0), the client is forced
+# to be disconnected whenever after n seconds idle (even inside an
+# explicit transactions!)  0 means no disconnect. This parameter only
+# takes effect in recovery 2nd stage.
+client_idle_limit_in_recovery = 0
