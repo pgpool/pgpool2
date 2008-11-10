@@ -4661,7 +4661,7 @@ retry_read_packet:
 
 	if (kind != 'Z')
 	{
-		pool_error("do_command: backend does not return ReadyForQuery");
+		pool_error("do_command: backend returns %c while expecting ReadyForQuery", kind);
 		return POOL_END;
 	}
 
