@@ -376,6 +376,11 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				 (*InRecovery && pool_config->client_idle_limit_in_recovery > 0)) && fds == 0)
 			{
 				frontend_idle_count++;
+
+				pool_debug("idle count:%d InRecovery:%d client_idle_limit:%d client_idle_limit_in_recovery:%d",
+						   frontend_idle_count, pool_config->client_idle_limit,
+						   pool_config->client_idle_limit_in_recovery);
+
 				if (*InRecovery == 0 && (frontend_idle_count > pool_config->client_idle_limit))
 				{
 					pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit(%d) reached", pool_config->client_idle_limit);
@@ -4578,7 +4583,7 @@ void pool_send_readyforquery(POOL_CONNECTION *frontend)
 }
 
 /*
- * sends q query in sync manner.
+ * sends a query in sync manner.
  * this function sends a query and wait for CommandComplete/ReadyForQuery.
  * if an error occured, it returns with POOL_ERROR.
  * this function does NOT handle SELECT/SHOW queries.
@@ -4610,6 +4615,67 @@ static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMa
 	if (deadlock_detected < 0)
 		return POOL_END;
 
+	/*
+	 * Continue to read packets until we get ReadForQuery (Z).
+	 * Until that we may recieve one of:
+	 * 
+	 * N: Notice response
+	 * E: Error response
+	 * C: Comand complete
+	 *
+	 * XXX: we ignore Notice and Error here. Even notice/error
+	 * messages are not sent to the frontend. May be it's ok since the
+	 * error was caused by our internal use of SQL command (otherwise users
+	 * will be confused).
+	 */
+	for(;;)
+	{
+		status = pool_read(backend, &kind, sizeof(kind));
+		if (status < 0)
+		{
+			pool_error("do_command: error while reading message kind");
+			return POOL_END;
+		}
+
+		pool_debug("do_command: kind: %c", kind);
+
+		if (kind == 'Z')		/* Ready for Query? */
+			break;		/* get out the loop without reading message lenghth */
+
+		if (protoMajor == PROTO_MAJOR_V3)
+		{
+			if (pool_read(backend, &len, sizeof(len)) < 0)
+			{
+				pool_error("do_command: error while reading message length");
+				return POOL_END;
+			}
+			len = ntohl(len) - 4;
+			string = pool_read2(backend, len);
+			if (string == NULL)
+			{
+				pool_error("do_command: error while reading rest of message");
+				return POOL_END;
+			}
+		}
+		else
+		{
+			string = pool_read_string(backend, &len, 0);
+			if (string == NULL)
+			{
+				pool_error("do_command: error while reading rest of message");
+				return POOL_END;
+			}
+		}
+	}
+
+/*
+ * until 2008/11/12 we believed that we never had packets other than
+ * 'Z' after receiving 'C'. However a counter example was presented by
+ * a poor customer. So we replaced the whole thing with codes
+ * above. In a side effect we were be able to get ride of nasty
+ * "goto". Congratulations.
+ */
+#ifdef NOT_USED
 	/*
 	 * Expecting CompleteCommand
 	 */
@@ -4664,15 +4730,21 @@ retry_read_packet:
 		pool_error("do_command: backend returns %c while expecting ReadyForQuery", kind);
 		return POOL_END;
 	}
+#endif
 
 	if (no_ready_for_query)
 		return POOL_CONTINUE;
 
 	if (protoMajor == PROTO_MAJOR_V3)
 	{
+		/* read packet lenghth for ready for query */
 		if (pool_read(backend, &len, sizeof(len)) < 0)
+		{
+			pool_error("do_command: error while reading message length");
 			return POOL_END;
+		}
 
+		/* read transaction state */
 		status = pool_read(backend, &kind, sizeof(kind));
 		if (status < 0)
 		{
@@ -4681,7 +4753,7 @@ retry_read_packet:
 		}
 
 		/* set transaction state */
-		pool_debug("ReadyForQuery: transaction state: %c", kind);
+		pool_debug("do_command: transaction state: %c", kind);
 		backend->tstate = kind;
 	}
 
@@ -4765,7 +4837,7 @@ static POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int n
 	status = pool_read(CONNECTION(backend, node_id), &kind, sizeof(kind));
 	if (status < 0)
 	{
-		pool_error("do_command: error while reading message kind");
+		pool_error("do_error_execute_command: error while reading message kind");
 		return POOL_END;
 	}
 
