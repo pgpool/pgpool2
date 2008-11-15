@@ -5914,4 +5914,5 @@ static POOL_STATUS pool_discard_packet(POOL_CONNECTION_POOL *cp)
 			}
 		}
 	}
+	return POOL_CONTINUE;
 }
