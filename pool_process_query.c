@@ -231,6 +231,7 @@ static int detect_error(POOL_CONNECTION *master, char *error_code, int major, bo
 static int detect_deadlock_error(POOL_CONNECTION *master, int major);
 static int detect_postmaster_down_error(POOL_CONNECTION *master, int major);
 static bool is_partition_table(POOL_CONNECTION_POOL *backend, Node *node);
+static POOL_STATUS pool_discard_packet(POOL_CONNECTION_POOL *cp);
 
 POOL_STATUS pool_process_query(POOL_CONNECTION *frontend, 
 							   POOL_CONNECTION_POOL *backend,
@@ -1884,29 +1885,27 @@ static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	int len;
 	signed char state;
 
-	if (mismatch_ntuples)
+	/*
+	 * If the numbers of update tuples are differ, we need to abort transaction
+	 * by using do_error_command. This only works with PROTO_MAJOR_V3.
+	 */
+	if (mismatch_ntuples && MAJOR(backend) == PROTO_MAJOR_V3)
 	{
-		int len, i;
+		int i;
 		signed char state;
 		char kind;
 
-		/* If the numbers of update tuples are difference, we need to abort transaction. */
-		if (MAJOR(backend) == PROTO_MAJOR_V3)
-		{
-			if ((len = pool_read_message_length(backend)) < 0)
-				return POOL_END;
+		/*
+		 * XXX: discard rest of ReadyForQuery packet
+		 */
+		if (pool_read_message_length(backend) < 0)
+			return POOL_END;
 
-			pool_debug("ReadyForQuery: message length: %d", len);
+		state = pool_read_kind(backend);
+		if (state < 0)
+			return POOL_END;
 
-			len = htonl(len);
-
-			state = pool_read_kind(backend);
-			if (state < 0)
-				return POOL_END;
-
-			/* set transaction state */
-			pool_debug("ReadyForQuery: transaction state: %c", state);
-		}
+		pool_debug("ReadyForQuery: transaction state: %c", state);
 
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
@@ -1916,12 +1915,23 @@ static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				do_error_command(CONNECTION(backend, i), PROTO_MAJOR_V3);
 			}
 		}
-		kind = pool_read_kind(backend);
-		if (kind != 'Z') /* ReadyForQuery? */
-		{
-			return POOL_END;
-		}
 
+		/* loop through until we get ReadyForQuery */
+		for(;;)
+		{
+			kind = pool_read_kind(backend);
+			if (kind < 0)
+				return POOL_END;
+
+			if (kind == 'Z')
+				break;
+
+			if (pool_discard_packet(backend) != POOL_CONTINUE)
+			{
+				pool_error("ReadyForQuery: pool_discard_packet failed");
+				return POOL_END;
+			}
+		}
 		mismatch_ntuples = 0;
 	}
 
@@ -1966,7 +1976,7 @@ static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		 * Do not check transaction state in master/slave mode.
 		 * Because SET, PREPARE, DEALLOCATE are replicated.
 		 * If these queries are executed inside a transaction block,
-		 * transation state is inconsistency. But it is no problem.
+		 * transation state will be inconsistent. But it is no problem.
 		 */
 		if (master_slave_dml)
 		{
@@ -4761,7 +4771,9 @@ retry_read_packet:
 }
 
 /*
- * Send a syntax error query to abort transaction.
+ * Send a syntax error query to abort transaction and receive response
+ * from backend and discard it until we get Error response.
+ *
  * We need to sync transaction status in transaction block.
  * SELECT query is sent to master only.
  * If SELECT is error, we must abort transaction on other nodes.
@@ -4778,6 +4790,56 @@ static POOL_STATUS do_error_command(POOL_CONNECTION *backend, int major)
 		return POOL_END;
 	}
 
+	/*
+	 * Continue to read packets until we get Error response (E).
+	 * Until that we may recieve one of:
+	 * 
+	 * N: Notice response
+	 * C: Comand complete
+	 *
+	 * XXX: we ignore Notice here. Even notice messages are not sent
+	 * to the frontend. May be it's ok since the error was caused by
+	 * our internal use of SQL command (otherwise users will be
+	 * confused).
+	 */
+	do
+	{
+		status = pool_read(backend, &kind, sizeof(kind));
+		if (status < 0)
+		{
+			pool_error("do_error_command: error while reading message kind");
+			return POOL_END;
+		}
+
+		pool_debug("do_error_command: kind: %c", kind);
+
+		if (major == PROTO_MAJOR_V3)
+		{
+			if (pool_read(backend, &len, sizeof(len)) < 0)
+			{
+				pool_error("do_error_command: error while reading message length");
+				return POOL_END;
+			}
+			len = ntohl(len) - 4;
+			string = pool_read2(backend, len);
+			if (string == NULL)
+			{
+				pool_error("do_error_command: error while reading rest of message");
+				return POOL_END;
+			}
+		}
+		else
+		{
+			string = pool_read_string(backend, &len, 0);
+			if (string == NULL)
+			{
+				pool_error("do_error_command: error while reading rest of message");
+				return POOL_END;
+			}
+		}
+	} while (kind != 'E');
+
+#ifdef NOT_USED
 	/*
 	 * Expecting ErrorResponse
 	 */
@@ -4807,7 +4869,7 @@ static POOL_STATUS do_error_command(POOL_CONNECTION *backend, int major)
 		if (string == NULL)
 			return POOL_END;
 	}
-
+#endif
 	return POOL_CONTINUE;
 }
 
@@ -4864,6 +4926,9 @@ static POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int n
 	return POOL_CONTINUE;
 }
 
+/*
+ * This function is only used in parallel mode
+ */
 POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *query, char *database)
 {
 	int len,sendlen;
@@ -5170,6 +5235,9 @@ static int check_copy_from_stdin(Node *node)
 	return 0;
 }
 
+/*
+ * read kind from one backend
+ */
 static POOL_STATUS read_kind_from_one_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *kind, int node)
 {
 	if (VALID_BACKEND(node))
@@ -5192,8 +5260,6 @@ static POOL_STATUS read_kind_from_one_backend(POOL_CONNECTION *frontend, POOL_CO
 		return POOL_ERROR;
 	}
 }
-
-
 
 /*
  * read kind from backends
@@ -5793,4 +5859,59 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, b
 	}
 
 	return is_error;
+}
+
+/*
+ * read message length and rest of the packet then discard it
+ */
+static POOL_STATUS pool_discard_packet(POOL_CONNECTION_POOL *cp)
+{
+	int status, len, i;
+	char kind;
+	char *string;
+	POOL_CONNECTION *backend;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (!VALID_BACKEND(i))
+		{
+			continue;
+		}
+
+		backend = CONNECTION(cp, i);
+
+		status = pool_read(backend, &kind, sizeof(kind));
+		if (status < 0)
+		{
+			pool_error("pool_discard_packet: error while reading message kind");
+			return POOL_END;
+		}
+
+		pool_debug("pool_discard_packet: kind: %c", kind);
+
+		if (MAJOR(cp) == PROTO_MAJOR_V3)
+		{
+			if (pool_read(backend, &len, sizeof(len)) < 0)
+			{
+				pool_error("pool_discard_packet: error while reading message length");
+				return POOL_END;
+			}
+			len = ntohl(len) - 4;
+			string = pool_read2(backend, len);
+			if (string == NULL)
+			{
+				pool_error("pool_discard_packet: error while reading rest of message");
+				return POOL_END;
+			}
+		}
+		else
+		{
+			string = pool_read_string(backend, &len, 0);
+			if (string == NULL)
+			{
+				pool_error("pool_discard_packet: error while reading rest of message");
+				return POOL_END;
+			}
+		}
+	}
 }
