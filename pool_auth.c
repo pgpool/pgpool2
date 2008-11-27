@@ -184,7 +184,7 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 	/* md5 authentication? */
 	else if (authkind == 5)
 	{
-		if (NUM_BACKENDS > 1)
+		if (!RAW_MODE && NUM_BACKENDS > 1)
 		{
 			pool_send_error_message(frontend, protoMajor, AUTHFAIL_ERRORCODE,
 									"MD5 authentication is unsupported in replication, master-slave and parallel modes.",
