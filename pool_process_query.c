@@ -188,8 +188,8 @@ static int replication_was_enabled;		/* replication mode was enabled */
 static int master_slave_was_enabled;	/* master/slave mode was enabled */
 static int internal_transaction_started;		/* to issue table lock command a transaction
 												   has been started internally */
-static int in_progress = 0;
-static int mismatch_ntuples;
+static int in_progress = 0;		/* indicates while doing something after receiving Query */
+static int mismatch_ntuples;	/* number of updated tuples */
 static char *copy_table = NULL;  /* copy table name */
 static char *copy_schema = NULL;  /* copy table name */
 static char copy_delimiter; /* copy delimiter char */
@@ -299,28 +299,24 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 		}
 
 		/*
-		 * if all backends and frontend do not have any pending data
-		 * in the receiving data cache, then issue select(2) to wait for new data arrival
+		 * if all backends do not have any pending data in the
+		 * receiving data cache, then issue select(2) to wait for new
+		 * data arrival
 		 */
 		if (is_cache_empty(frontend, backend))
 		{
-			struct timeval timeout;
+			struct timeval timeoutdata;
+			struct timeval *timeout;
 			int num_fds, was_error = 0;
 
 		    /*
-			 * frontend idle counter. depends on the following
+			 * frontend idle counters. depends on the following
 			 * select(2) call's time out is 1 second.
 			 */
-			int frontend_idle_count = 0;
+			int idle_count = 0;	/* for other than in recovery */
+			int idle_count_in_recovery = 0;	/* for in recovery */
 
 		SELECT_RETRY:
-			if ((*InRecovery == 0 && pool_config->client_idle_limit > 0) ||
-				(*InRecovery && pool_config->client_idle_limit_in_recovery > 0))
-			{
-				timeout.tv_sec = 1;
-				timeout.tv_usec = 0;
-			}
-
 			FD_ZERO(&readmask);
 			FD_ZERO(&writemask);
 			FD_ZERO(&exceptmask);
@@ -358,11 +354,20 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				}
 			}
 
-			if ((*InRecovery == 0 && pool_config->client_idle_limit > 0) ||
-				(*InRecovery && pool_config->client_idle_limit_in_recovery > 0))
-				fds = select(num_fds, &readmask, &writemask, &exceptmask, &timeout);
+			/*
+			 * wait for data arriving from frontend and backend
+			 */
+			if (pool_config->client_idle_limit > 0 ||
+				pool_config->client_idle_limit_in_recovery > 0)
+			{
+				timeoutdata.tv_sec = 1;
+				timeoutdata.tv_usec = 0;
+				timeout = &timeoutdata;
+			}
 			else
-				fds = select(num_fds, &readmask, &writemask, &exceptmask, NULL);
+				timeout = NULL;
+
+			fds = select(num_fds, &readmask, &writemask, &exceptmask, timeout);
 
 			if (fds == -1)
 			{
@@ -373,27 +378,29 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				return POOL_ERROR;
 			}
 
-			if (((*InRecovery == 0 && pool_config->client_idle_limit > 0) ||
-				 (*InRecovery && pool_config->client_idle_limit_in_recovery > 0)) && fds == 0)
+			/* select timeout */
+			if (fds == 0)
 			{
-				frontend_idle_count++;
-
-				pool_debug("idle count:%d InRecovery:%d client_idle_limit:%d client_idle_limit_in_recovery:%d",
-						   frontend_idle_count, pool_config->client_idle_limit,
-						   pool_config->client_idle_limit_in_recovery);
-
-				if (*InRecovery == 0 && (frontend_idle_count > pool_config->client_idle_limit))
+				if (*InRecovery == 0 && pool_config->client_idle_limit > 0)
 				{
-					pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit(%d) reached", pool_config->client_idle_limit);
-					return POOL_END;
-				}
+					idle_count++;
 
-				if (*InRecovery && (frontend_idle_count > pool_config->client_idle_limit_in_recovery))
+					if (idle_count > pool_config->client_idle_limit)
+					{
+						pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit(%d) reached", pool_config->client_idle_limit);
+						return POOL_END;
+					}
+				}
+				else if (*InRecovery > 0 && pool_config->client_idle_limit_in_recovery > 0)
 				{
-					pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit_in_recovery(%d) reached", pool_config->client_idle_limit_in_recovery);
-					return POOL_END;
-				}
+					idle_count_in_recovery++;
 
+					if (idle_count_in_recovery > pool_config->client_idle_limit_in_recovery)
+					{
+						pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit_in_recovery(%d) reached", pool_config->client_idle_limit_in_recovery);
+						return POOL_END;
+					}
+				}
 				goto SELECT_RETRY;
 			}
 
@@ -600,7 +607,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 }
 
 
-/* using only in pool_parallel_exec */
+/* used only in pool_parallel_exec */
 #define BITS (8 * sizeof(long int))
 
 static void set_fd(unsigned long fd ,unsigned long *setp)
@@ -610,7 +617,7 @@ static void set_fd(unsigned long fd ,unsigned long *setp)
 	setp[tmp] |= (1UL<<rem);
 }
 
-/* using only in pool_parallel_exec */
+/* used only in pool_parallel_exec */
 static int isset_fd(unsigned long fd, unsigned long *setp)
 {
 	unsigned long tmp = fd / FD_SETSIZE;
@@ -618,7 +625,7 @@ static int isset_fd(unsigned long fd, unsigned long *setp)
 	return (setp[tmp] & (1UL<<rem)) != 0;
 }
 
-/* using only in pool_parallel_exec */
+/* used only in pool_parallel_exec */
 static void zero_fd(unsigned long *setp)
 {
 	unsigned long *tmp = setp; 
@@ -5133,8 +5140,10 @@ static int is_drop_database(Node *node)
 }
 
 /*
- * check if any pending data remains
- */
+ * check if any pending data remains.  Also if there's some pending data in
+ * frontend AND no processing any Query, then returns 0.
+ * XXX: is this correct thing?
+*/
 static int is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 {
 	int i;
@@ -5828,7 +5837,7 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, b
 			memcpy(p, str, len);
 
 			/*
-			 * Checks error code which it is formatted 'Cxxxxxx'
+			 * Checks error code which is formatted 'Cxxxxxx'
 			 * (xxxxxx is error code).
 			 */
 			e = str;
