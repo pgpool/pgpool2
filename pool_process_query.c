@@ -5397,6 +5397,9 @@ static POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNEC
 								msg->data, "",
 								"check data consistency among db nodes",
 								__FILE__, __LINE__);
+
+		free_string(msg);
+
 		if (pool_config->replication_stop_on_mismatch)
 		{
 			degenerate_backend_set(degenerate_node, degenerate_node_num);
