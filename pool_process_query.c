@@ -56,6 +56,7 @@
 #define INIT_STATEMENT_LIST_SIZE 8
 
 #define DEADLOCK_ERROR_CODE "40P01"
+#define SERIALIZATION_FAIL_ERROR_CODE "40001"
 #define ADMIN_SHUTDOWN_ERROR_CODE "57P01"
 #define CRASH_SHUTDOWN_ERROR_CODE "57P02"
 
@@ -229,6 +230,7 @@ static POOL_STATUS end_internal_transaction(POOL_CONNECTION_POOL *backend);
 static int extract_ntuples(char *message);
 static int detect_error(POOL_CONNECTION *master, char *error_code, int major, bool unread);
 static int detect_deadlock_error(POOL_CONNECTION *master, int major);
+static int detect_serialization_error(POOL_CONNECTION *master, int major);
 static int detect_postmaster_down_error(POOL_CONNECTION *master, int major);
 static bool is_partition_table(POOL_CONNECTION_POOL *backend, Node *node);
 static POOL_STATUS pool_discard_packet(POOL_CONNECTION_POOL *cp);
@@ -931,6 +933,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	List *parse_tree_list;
 	Node *node = NULL, *node1;
 	POOL_STATUS status;
+	int serialization_error_detected = 0;
 	int deadlock_detected = 0;
 
 	force_replication = 0;
@@ -1297,10 +1300,39 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			deadlock_detected = detect_deadlock_error(MASTER(backend), MAJOR(backend));
 			if (deadlock_detected < 0)
 				return POOL_END;
+
+			/*
+			 * Check serialization failure error and abort all nodes
+			 * if so. Otherwise we allow data inconsistency among DB
+			 * nodes. See following scenario: (M:master, S:slave)
+			 *
+			 * M:S1:BEGIN;
+			 * M:S2:BEGIN;
+			 * S:S1:BEGIN;
+			 * S:S2:BEGIN;
+			 * M:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+			 * M:S2:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+			 * S:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+			 * S:S2:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+			 * M:S1:UPDATE t1 SET i = i + 1;
+			 * S:S1:UPDATE t1 SET i = i + 1;
+			 * M:S2:UPDATE t1 SET i = i + 1; <-- blocked
+			 * S:S1:COMMIT;
+			 * M:S1:COMMIT;
+			 * M:S2:ERROR:  could not serialize access due to concurrent update
+			 * S:S2:UPDATE t1 SET i = i + 1; <-- success in UPDATE and data becomes inconsistent!
+			 */
+			serialization_error_detected = detect_serialization_error(MASTER(backend), MAJOR(backend));
+			if (serialization_error_detected < 0)
+				return POOL_END;
 		}
-		if (deadlock_detected == SPECIFIED_ERROR)
+		if (deadlock_detected == SPECIFIED_ERROR || serialization_error_detected == SPECIFIED_ERROR)
 		{
-			pool_log("SimpleQuery: received deadlock error message from master node. query: %s", string);
+			if (deadlock_detected == SPECIFIED_ERROR)
+				pool_log("SimpleQuery: received deadlock error message from master node. query: %s", string);
+			else
+				pool_log("SimpleQuery: received serialization failure error message from master node. query: %s", string);
+
 			string = POOL_ERROR_QUERY;
 			len = strlen(string) + 1;
 		}
@@ -1402,6 +1434,7 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 	char *string1;
 	PrepareStmt *p_stmt;
 	int deadlock_detected = 0;
+	int serialization_error_detected = 0;
 	POOL_STATUS ret;
 
 	/* read Execute packet */
@@ -1518,6 +1551,16 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 			deadlock_detected = detect_deadlock_error(MASTER(backend), MAJOR(backend));
 			if (deadlock_detected < 0)
 				return POOL_END;
+
+			/*
+			 * Check serialization failure error and abort all nodes
+			 * if so. Otherwise we allow data inconsistency among DB
+			 * nodes. See following scenario: (M:master, S:slave)
+			 */
+			serialization_error_detected = detect_serialization_error(MASTER(backend), MAJOR(backend));
+			if (serialization_error_detected < 0)
+				return POOL_END;
+
 		}
 
 		/* send query to other nodes */
@@ -1525,10 +1568,15 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		{
 			if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
 				continue;
-			if (deadlock_detected == SPECIFIED_ERROR)
+			if (deadlock_detected == SPECIFIED_ERROR || serialization_error_detected == SPECIFIED_ERROR)
 			{
 				char msg[1024] = "pgpoool_error_portal"; /* large enough */
 				int len = strlen(msg);
+
+				if (deadlock_detected == SPECIFIED_ERROR)
+					pool_log("Execute: received deadlock error message from master node. query: %s", string);
+				else
+					pool_log("Execute: received serialization failure error message from master node. query: %s", string);
 
 				memset(msg + len, 0, sizeof(int));
 				if (send_execute_message(backend, i, len + 5, msg))
@@ -5843,6 +5891,14 @@ static int detect_deadlock_error(POOL_CONNECTION *backend, int major)
 	int r =  detect_error(backend, DEADLOCK_ERROR_CODE, major, true);
 	if (r == SPECIFIED_ERROR)
 		pool_debug("detect_deadlock_error: received deadlock error message from backend");
+	return r;
+}
+
+static int detect_serialization_error(POOL_CONNECTION *backend, int major)
+{
+	int r =  detect_error(backend, SERIALIZATION_FAIL_ERROR_CODE, major, true);
+	if (r == SPECIFIED_ERROR)
+		pool_debug("detect_serialization_error: received serialization failure message from backend");
 	return r;
 }
 
