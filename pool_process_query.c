@@ -5271,38 +5271,63 @@ static POOL_STATUS read_kind_from_one_backend(POOL_CONNECTION *frontend, POOL_CO
 }
 
 /*
- * read kind from backends
+ * read_kind_from_backend: read kind from backends.
+ * the "frontend" parameter is used to send "kind mismatch" error message to the frontend.
+ * the out parameter "decided_kind" is the packet kind decided by this function.
+ * this function uses "decide by majority" method if kinds from all backends do not agree.
  */
-static POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *kind)
+static POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *decided_kind)
 {
 	int i;
-	char kind_list[MAX_NUM_BACKENDS];
-	char kind_map[256]; /* 256 is the number of sizeof(char) */
+	unsigned char kind_list[MAX_NUM_BACKENDS];	/* records each backend's kind */
+	unsigned char kind_map[256]; /* records which kind gets majority.
+								  *	256 is the number of distinct values expressed by unsigned char
+								 */
+	unsigned char kind;
+	int trust_kind;	/* decided kind */
 	int max_kind = 0;
 	double max_count = 0;
-	int degenerate_node_num = 0;
-	int degenerate_node[MAX_NUM_BACKENDS];
+	int degenerate_node_num = 0;		/* number of backends degeneration requested */
+	int degenerate_node[MAX_NUM_BACKENDS];		/* degeneration requested backend list */
 
-	memset(kind_list, -1, sizeof(kind_list));
 	memset(kind_map, 0, sizeof(kind_map));
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
+		/* initialize degenerate record */
+		degenerate_node[i] = 0;
+
 		if (VALID_BACKEND(i))
 		{
-			if (pool_read(CONNECTION(backend, i), &kind_list[i], 1) < 0)
+			if (pool_read(CONNECTION(backend, i), &kind, 1) < 0)
 			{
 				pool_error("pool_process_query: failed to read kind from %d th backend", i);
 				return POOL_ERROR;
 			}
 
 			pool_debug("read_kind_from_backend: read kind from %d th backend %c NUM_BACKENDS: %d", i, kind_list[i], NUM_BACKENDS);
+
+			kind_list[i] = kind;
+
+			kind_map[kind]++;
+
+			if (kind_map[kind] > max_count)
+			{
+				max_kind = kind_list[i];
+				max_count = kind_map[kind];
+			}
 		}
+		else
+			kind_list[i] = 0;
 	}
 
+#ifdef NOT_USED
 	/* register kind map */
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
+		/* initialize degenerate record */
+		degenerate_node[i] = 0;
+
 		/* kind is singed char.
 		 * We must check negative number.
 		 */
@@ -5318,38 +5343,59 @@ static POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNEC
 			max_count = kind_map[id];
 		}
 	}
+#endif
 
 	if (max_count != NUM_BACKENDS)
 	{
-		int trust_kind;
+		/*
+		 * not all backends agree with kind. We need to do "decide by majority"
+		 */
 
 		if (max_count <= NUM_BACKENDS / 2.0)
 		{
-			/* The group belonging to master is trusted. */
+			/* no one gets majority. We trust master node's kind */
 			trust_kind = kind_list[MASTER_NODE_ID];
 		}
 		else /* max_count > NUM_BACKENDS / 2.0 */
 		{
+			/* trust majority's kind */
 			trust_kind = max_kind;
 		}
 
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
-			if (kind_list[i] != -1 && trust_kind != kind_list[i])
+			if (kind_list[i] != 0 && trust_kind != kind_list[i])
 			{
 				/* degenerate */
-				pool_error("pool_process_query: %d th kind %c does not match with master connection kind %c",
+				pool_error("pool_process_query: %d th kind %c does not match with master or majority connection kind %c",
 						   i, kind_list[i], trust_kind);
 				degenerate_node[degenerate_node_num++] = i;
 			}
 		}
 	}
+	else
+		trust_kind = kind_list[MASTER_NODE_ID]; 
+
+	*decided_kind = trust_kind;
 
 	if (degenerate_node_num)
 	{
+		String *msg = init_string("kind mismatch among backends");
+
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			char buf[32];
+
+			if (kind_list[i])
+			{
+				snprintf(buf, sizeof(buf), " %d[%c]", i, kind_list[i]);
+				string_append_char(msg, buf);
+			}
+		}
+
 		pool_send_error_message(frontend, MAJOR(backend), "XX000", 
-								"kind mismatch between backends", "",
-								"check data consistency between master and other db node",
+								msg->data, "",
+								"check data consistency among db nodes",
 								__FILE__, __LINE__);
 		if (pool_config->replication_stop_on_mismatch)
 		{
@@ -5360,7 +5406,6 @@ static POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNEC
 			return POOL_ERROR;
 	}
 
-	*kind = kind_list[MASTER_NODE_ID];
 	return POOL_CONTINUE;
 }
 
