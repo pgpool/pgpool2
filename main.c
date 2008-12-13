@@ -289,7 +289,7 @@ int main(int argc, char **argv)
 
 				if (kill(pid, SIGHUP) == -1)
 				{
-					pool_error("could not stop pid: %d. reason: %s", pid, strerror(errno));
+					pool_error("could not reload configuration file pid: %d. reason: %s", pid, strerror(errno));
 					pool_shmem_exit(1);
 					exit(1);
 				}
