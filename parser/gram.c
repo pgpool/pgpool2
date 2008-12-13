@@ -1,9 +1,7 @@
-/* A Bison parser, made by GNU Bison 2.3.  */
+/* A Bison parser, made by GNU Bison 2.1.  */
 
-/* Skeleton implementation for Bison's Yacc-like parsers in C
-
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-   Free Software Foundation, Inc.
+/* Skeleton parser for Yacc-like parsing with Bison,
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,21 +18,13 @@
    Foundation, Inc., 51 Franklin Street, Fifth Floor,
    Boston, MA 02110-1301, USA.  */
 
-/* As a special exception, you may create a larger work that contains
-   part or all of the Bison parser skeleton and distribute that work
-   under terms of your choice, so long as that work isn't itself a
-   parser generator using the skeleton or a modified version thereof
-   as a parser skeleton.  Alternatively, if you modify or redistribute
-   the parser skeleton itself, you may (at your option) remove this
-   special exception, which will cause the skeleton and the resulting
-   Bison output files to be licensed under the GNU General Public
-   License without this special exception.
+/* As a special exception, when this file is copied by Bison into a
+   Bison output file, you may use that output file without restriction.
+   This special exception was added by the Free Software Foundation
+   in version 1.24 of Bison.  */
 
-   This special exception was added by the Free Software Foundation in
-   version 2.2 of Bison.  */
-
-/* C LALR(1) parser skeleton written by Richard Stallman, by
-   simplifying the original so-called "semantic" parser.  */
+/* Written by Richard Stallman by simplifying the original so called
+   ``semantic'' parser.  */
 
 /* All symbols defined below should begin with yy or YY, to avoid
    infringing on user name space.  This should be done even for local
@@ -47,7 +37,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "2.3"
+#define YYBISON_VERSION "2.1"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -1018,10 +1008,9 @@ static DefElem *defWithOids(bool value);
 # define YYTOKEN_TABLE 0
 #endif
 
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef union YYSTYPE
+#if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
 #line 146 "gram.y"
-{
+typedef union YYSTYPE {
 	int					ival;
 	char				chr;
 	char				*str;
@@ -1052,16 +1041,15 @@ typedef union YYSTYPE
 
 	InsertStmt			*istmt;
 	VariableSetStmt		*vsetstmt;
-}
-/* Line 187 of yacc.c.  */
-#line 1058 "gram.c"
-	YYSTYPE;
+} YYSTYPE;
+/* Line 196 of yacc.c.  */
+#line 1047 "gram.c"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
 #endif
 
-#if ! defined YYLTYPE && ! defined YYLTYPE_IS_DECLARED
+#if ! defined (YYLTYPE) && ! defined (YYLTYPE_IS_DECLARED)
 typedef struct YYLTYPE
 {
   int first_line;
@@ -1078,55 +1066,22 @@ typedef struct YYLTYPE
 /* Copy the second part of user declarations.  */
 
 
-/* Line 216 of yacc.c.  */
-#line 1083 "gram.c"
+/* Line 219 of yacc.c.  */
+#line 1071 "gram.c"
 
-#ifdef short
-# undef short
+#if ! defined (YYSIZE_T) && defined (__SIZE_TYPE__)
+# define YYSIZE_T __SIZE_TYPE__
 #endif
-
-#ifdef YYTYPE_UINT8
-typedef YYTYPE_UINT8 yytype_uint8;
-#else
-typedef unsigned char yytype_uint8;
+#if ! defined (YYSIZE_T) && defined (size_t)
+# define YYSIZE_T size_t
 #endif
-
-#ifdef YYTYPE_INT8
-typedef YYTYPE_INT8 yytype_int8;
-#elif (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
-typedef signed char yytype_int8;
-#else
-typedef short int yytype_int8;
+#if ! defined (YYSIZE_T) && (defined (__STDC__) || defined (__cplusplus))
+# include <stddef.h> /* INFRINGES ON USER NAME SPACE */
+# define YYSIZE_T size_t
 #endif
-
-#ifdef YYTYPE_UINT16
-typedef YYTYPE_UINT16 yytype_uint16;
-#else
-typedef unsigned short int yytype_uint16;
+#if ! defined (YYSIZE_T)
+# define YYSIZE_T unsigned int
 #endif
-
-#ifdef YYTYPE_INT16
-typedef YYTYPE_INT16 yytype_int16;
-#else
-typedef short int yytype_int16;
-#endif
-
-#ifndef YYSIZE_T
-# ifdef __SIZE_TYPE__
-#  define YYSIZE_T __SIZE_TYPE__
-# elif defined size_t
-#  define YYSIZE_T size_t
-# elif ! defined YYSIZE_T && (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
-#  include <stddef.h> /* INFRINGES ON USER NAME SPACE */
-#  define YYSIZE_T size_t
-# else
-#  define YYSIZE_T unsigned int
-# endif
-#endif
-
-#define YYSIZE_MAXIMUM ((YYSIZE_T) -1)
 
 #ifndef YY_
 # if YYENABLE_NLS
@@ -1140,32 +1095,7 @@ typedef short int yytype_int16;
 # endif
 #endif
 
-/* Suppress unused-variable warnings by "using" E.  */
-#if ! defined lint || defined __GNUC__
-# define YYUSE(e) ((void) (e))
-#else
-# define YYUSE(e) /* empty */
-#endif
-
-/* Identity function, used to suppress warnings about constant conditions.  */
-#ifndef lint
-# define YYID(n) (n)
-#else
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
-static int
-YYID (int i)
-#else
-static int
-YYID (i)
-    int i;
-#endif
-{
-  return i;
-}
-#endif
-
-#if ! defined yyoverflow || YYERROR_VERBOSE
+#if ! defined (yyoverflow) || YYERROR_VERBOSE
 
 /* The parser invokes alloca or malloc; define the necessary symbols.  */
 
@@ -1173,77 +1103,65 @@ YYID (i)
 #  if YYSTACK_USE_ALLOCA
 #   ifdef __GNUC__
 #    define YYSTACK_ALLOC __builtin_alloca
-#   elif defined __BUILTIN_VA_ARG_INCR
-#    include <alloca.h> /* INFRINGES ON USER NAME SPACE */
-#   elif defined _AIX
-#    define YYSTACK_ALLOC __alloca
-#   elif defined _MSC_VER
-#    include <malloc.h> /* INFRINGES ON USER NAME SPACE */
-#    define alloca _alloca
 #   else
 #    define YYSTACK_ALLOC alloca
-#    if ! defined _ALLOCA_H && ! defined _STDLIB_H && (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
+#    if defined (__STDC__) || defined (__cplusplus)
 #     include <stdlib.h> /* INFRINGES ON USER NAME SPACE */
-#     ifndef _STDLIB_H
-#      define _STDLIB_H 1
-#     endif
+#     define YYINCLUDED_STDLIB_H
 #    endif
 #   endif
 #  endif
 # endif
 
 # ifdef YYSTACK_ALLOC
-   /* Pacify GCC's `empty if-body' warning.  */
-#  define YYSTACK_FREE(Ptr) do { /* empty */; } while (YYID (0))
+   /* Pacify GCC's `empty if-body' warning. */
+#  define YYSTACK_FREE(Ptr) do { /* empty */; } while (0)
 #  ifndef YYSTACK_ALLOC_MAXIMUM
     /* The OS might guarantee only one guard page at the bottom of the stack,
        and a page size can be as small as 4096 bytes.  So we cannot safely
        invoke alloca (N) if N exceeds 4096.  Use a slightly smaller number
        to allow for a few compiler-allocated temporary stack slots.  */
-#   define YYSTACK_ALLOC_MAXIMUM 4032 /* reasonable circa 2006 */
+#   define YYSTACK_ALLOC_MAXIMUM 4032 /* reasonable circa 2005 */
 #  endif
 # else
 #  define YYSTACK_ALLOC YYMALLOC
 #  define YYSTACK_FREE YYFREE
 #  ifndef YYSTACK_ALLOC_MAXIMUM
-#   define YYSTACK_ALLOC_MAXIMUM YYSIZE_MAXIMUM
+#   define YYSTACK_ALLOC_MAXIMUM ((YYSIZE_T) -1)
 #  endif
-#  if (defined __cplusplus && ! defined _STDLIB_H \
-       && ! ((defined YYMALLOC || defined malloc) \
-	     && (defined YYFREE || defined free)))
-#   include <stdlib.h> /* INFRINGES ON USER NAME SPACE */
-#   ifndef _STDLIB_H
-#    define _STDLIB_H 1
-#   endif
+#  ifdef __cplusplus
+extern "C" {
 #  endif
 #  ifndef YYMALLOC
 #   define YYMALLOC malloc
-#   if ! defined malloc && ! defined _STDLIB_H && (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
+#   if (! defined (malloc) && ! defined (YYINCLUDED_STDLIB_H) \
+	&& (defined (__STDC__) || defined (__cplusplus)))
 void *malloc (YYSIZE_T); /* INFRINGES ON USER NAME SPACE */
 #   endif
 #  endif
 #  ifndef YYFREE
 #   define YYFREE free
-#   if ! defined free && ! defined _STDLIB_H && (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
+#   if (! defined (free) && ! defined (YYINCLUDED_STDLIB_H) \
+	&& (defined (__STDC__) || defined (__cplusplus)))
 void free (void *); /* INFRINGES ON USER NAME SPACE */
 #   endif
 #  endif
+#  ifdef __cplusplus
+}
+#  endif
 # endif
-#endif /* ! defined yyoverflow || YYERROR_VERBOSE */
+#endif /* ! defined (yyoverflow) || YYERROR_VERBOSE */
 
 
-#if (! defined yyoverflow \
-     && (! defined __cplusplus \
-	 || (defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL \
-	     && defined YYSTYPE_IS_TRIVIAL && YYSTYPE_IS_TRIVIAL)))
+#if (! defined (yyoverflow) \
+     && (! defined (__cplusplus) \
+	 || (defined (YYLTYPE_IS_TRIVIAL) && YYLTYPE_IS_TRIVIAL \
+             && defined (YYSTYPE_IS_TRIVIAL) && YYSTYPE_IS_TRIVIAL)))
 
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
 {
-  yytype_int16 yyss;
+  short int yyss;
   YYSTYPE yyvs;
     YYLTYPE yyls;
 };
@@ -1254,13 +1172,13 @@ union yyalloc
 /* The size of an array large to enough to hold all stacks, each with
    N elements.  */
 # define YYSTACK_BYTES(N) \
-     ((N) * (sizeof (yytype_int16) + sizeof (YYSTYPE) + sizeof (YYLTYPE)) \
+     ((N) * (sizeof (short int) + sizeof (YYSTYPE) + sizeof (YYLTYPE))	\
       + 2 * YYSTACK_GAP_MAXIMUM)
 
 /* Copy COUNT objects from FROM to TO.  The source and destination do
    not overlap.  */
 # ifndef YYCOPY
-#  if defined __GNUC__ && 1 < __GNUC__
+#  if defined (__GNUC__) && 1 < __GNUC__
 #   define YYCOPY(To, From, Count) \
       __builtin_memcpy (To, From, (Count) * sizeof (*(From)))
 #  else
@@ -1271,7 +1189,7 @@ union yyalloc
 	  for (yyi = 0; yyi < (Count); yyi++)	\
 	    (To)[yyi] = (From)[yyi];		\
 	}					\
-      while (YYID (0))
+      while (0)
 #  endif
 # endif
 
@@ -1289,22 +1207,28 @@ union yyalloc
 	yynewbytes = yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
 	yyptr += yynewbytes / sizeof (*yyptr);				\
       }									\
-    while (YYID (0))
+    while (0)
 
 #endif
 
-/* YYFINAL -- State number of the termination state.  */
+#if defined (__STDC__) || defined (__cplusplus)
+   typedef signed char yysigned_char;
+#else
+   typedef short int yysigned_char;
+#endif
+
+/* YYFINAL -- State number of the termination state. */
 #define YYFINAL  621
 /* YYLAST -- Last index in YYTABLE.  */
 #define YYLAST   48561
 
-/* YYNTOKENS -- Number of terminals.  */
+/* YYNTOKENS -- Number of terminals. */
 #define YYNTOKENS  408
-/* YYNNTS -- Number of nonterminals.  */
+/* YYNNTS -- Number of nonterminals. */
 #define YYNNTS  427
-/* YYNRULES -- Number of rules.  */
+/* YYNRULES -- Number of rules. */
 #define YYNRULES  1812
-/* YYNRULES -- Number of states.  */
+/* YYNRULES -- Number of states. */
 #define YYNSTATES  3287
 
 /* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
@@ -1315,7 +1239,7 @@ union yyalloc
   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
 
 /* YYTRANSLATE[YYLEX] -- Bison symbol number corresponding to YYLEX.  */
-static const yytype_uint16 yytranslate[] =
+static const unsigned short int yytranslate[] =
 {
        0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -1387,7 +1311,7 @@ static const yytype_uint16 yytranslate[] =
 #if YYDEBUG
 /* YYPRHS[YYN] -- Index of the first RHS symbol of rule number YYN in
    YYRHS.  */
-static const yytype_uint16 yyprhs[] =
+static const unsigned short int yyprhs[] =
 {
        0,     0,     3,     5,     9,    11,    13,    15,    17,    19,
       21,    23,    25,    27,    29,    31,    33,    35,    37,    39,
@@ -1573,8 +1497,8 @@ static const yytype_uint16 yyprhs[] =
     5921,  5923,  5925
 };
 
-/* YYRHS -- A `-1'-separated list of the rules' RHS.  */
-static const yytype_int16 yyrhs[] =
+/* YYRHS -- A `-1'-separated list of the rules' RHS. */
+static const short int yyrhs[] =
 {
      409,     0,    -1,   410,    -1,   410,   405,   411,    -1,   411,
       -1,   650,    -1,   651,    -1,   656,    -1,   607,    -1,   424,
@@ -2172,7 +2096,7 @@ static const yytype_int16 yyrhs[] =
 };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
-static const yytype_uint16 yyrline[] =
+static const unsigned short int yyrline[] =
 {
        0,   539,   539,   543,   549,   558,   559,   560,   561,   562,
      563,   564,   565,   566,   567,   568,   569,   570,   571,   572,
@@ -2361,7 +2285,7 @@ static const yytype_uint16 yyrline[] =
 
 #if YYDEBUG || YYERROR_VERBOSE || YYTOKEN_TABLE
 /* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
-   First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
+   First, the terminals, then, starting at YYNTOKENS, nonterminals. */
 static const char *const yytname[] =
 {
   "$end", "error", "$undefined", "ABORT_P", "ABSOLUTE_P", "ACCESS",
@@ -2545,7 +2469,7 @@ static const char *const yytname[] =
 # ifdef YYPRINT
 /* YYTOKNUM[YYLEX-NUM] -- Internal token number corresponding to
    token YYLEX-NUM.  */
-static const yytype_uint16 yytoknum[] =
+static const unsigned short int yytoknum[] =
 {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
@@ -2592,7 +2516,7 @@ static const yytype_uint16 yytoknum[] =
 # endif
 
 /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
-static const yytype_uint16 yyr1[] =
+static const unsigned short int yyr1[] =
 {
        0,   408,   409,   410,   410,   411,   411,   411,   411,   411,
      411,   411,   411,   411,   411,   411,   411,   411,   411,   411,
@@ -2779,7 +2703,7 @@ static const yytype_uint16 yyr1[] =
 };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
-static const yytype_uint8 yyr2[] =
+static const unsigned char yyr2[] =
 {
        0,     2,     1,     3,     1,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
@@ -2968,7 +2892,7 @@ static const yytype_uint8 yyr2[] =
 /* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
    STATE-NUM when YYTABLE doesn't specify something else to do.  Zero
    means the default is an error.  */
-static const yytype_uint16 yydefact[] =
+static const unsigned short int yydefact[] =
 {
       96,   811,   417,   878,   877,   811,   213,     0,   868,     0,
      811,   285,   300,     0,     0,     0,     0,   417,   811,     0,
@@ -3301,8 +3225,8 @@ static const yytype_uint16 yydefact[] =
        0,   772,   781,   441,   773,     0,   424
 };
 
-/* YYDEFGOTO[NTERM-NUM].  */
-static const yytype_int16 yydefgoto[] =
+/* YYDEFGOTO[NTERM-NUM]. */
+static const short int yydefgoto[] =
 {
       -1,    47,    48,    49,    50,  1000,  1590,  2057,    51,    52,
       53,    54,    55,    56,    57,    58,    59,  1029,    60,    61,
@@ -3686,7 +3610,7 @@ static const int yypact[] =
 };
 
 /* YYPGOTO[NTERM-NUM].  */
-static const yytype_int16 yypgoto[] =
+static const short int yypgoto[] =
 {
    -2901, -2901, -2901,  2004, -2901,  -645,  -444, -2901, -2901, -2901,
    -2901, -2901, -2901, -2901, -2901, -2901, -2901, -2901, -2901, -2901,
@@ -3738,7 +3662,7 @@ static const yytype_int16 yypgoto[] =
    number is the opposite.  If zero, do what YYDEFACT says.
    If YYTABLE_NINF, syntax error.  */
 #define YYTABLE_NINF -1643
-static const yytype_int16 yytable[] =
+static const short int yytable[] =
 {
      142,   620,   681,   607,   141,   988,  1276,  1775,   819,  1079,
     1782,   467,  1728,   546,  1674,   491,   747,  1333,  1390,   546,
@@ -8599,7 +8523,7 @@ static const yytype_int16 yytable[] =
        0,   526
 };
 
-static const yytype_int16 yycheck[] =
+static const short int yycheck[] =
 {
        0,    46,   157,    41,     0,   631,   777,  1299,   561,   699,
     1314,    11,  1253,    21,  1205,    12,   478,   823,   884,    27,
@@ -13462,7 +13386,7 @@ static const yytype_int16 yycheck[] =
 
 /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
    symbol of state STATE-NUM.  */
-static const yytype_uint16 yystos[] =
+static const unsigned short int yystos[] =
 {
        0,     3,    13,    15,    16,    29,    48,    50,    51,    55,
       56,    65,    67,    83,    86,    92,    98,   104,   110,   116,
@@ -13820,7 +13744,7 @@ do								\
       yychar = (Token);						\
       yylval = (Value);						\
       yytoken = YYTRANSLATE (yychar);				\
-      YYPOPSTACK (1);						\
+      YYPOPSTACK;						\
       goto yybackup;						\
     }								\
   else								\
@@ -13828,7 +13752,7 @@ do								\
       yyerror (YY_("syntax error: cannot back up")); \
       YYERROR;							\
     }								\
-while (YYID (0))
+while (0)
 
 
 #define YYTERROR	1
@@ -13843,7 +13767,7 @@ while (YYID (0))
 #ifndef YYLLOC_DEFAULT
 # define YYLLOC_DEFAULT(Current, Rhs, N)				\
     do									\
-      if (YYID (N))                                                    \
+      if (N)								\
 	{								\
 	  (Current).first_line   = YYRHSLOC (Rhs, 1).first_line;	\
 	  (Current).first_column = YYRHSLOC (Rhs, 1).first_column;	\
@@ -13857,7 +13781,7 @@ while (YYID (0))
 	  (Current).first_column = (Current).last_column =		\
 	    YYRHSLOC (Rhs, 0).last_column;				\
 	}								\
-    while (YYID (0))
+    while (0)
 #endif
 
 
@@ -13869,8 +13793,8 @@ while (YYID (0))
 # if YYLTYPE_IS_TRIVIAL
 #  define YY_LOCATION_PRINT(File, Loc)			\
      fprintf (File, "%d.%d-%d.%d",			\
-	      (Loc).first_line, (Loc).first_column,	\
-	      (Loc).last_line,  (Loc).last_column)
+              (Loc).first_line, (Loc).first_column,	\
+              (Loc).last_line,  (Loc).last_column)
 # else
 #  define YY_LOCATION_PRINT(File, Loc) ((void) 0)
 # endif
@@ -13897,101 +13821,36 @@ while (YYID (0))
 do {						\
   if (yydebug)					\
     YYFPRINTF Args;				\
-} while (YYID (0))
+} while (0)
 
-# define YY_SYMBOL_PRINT(Title, Type, Value, Location)			  \
-do {									  \
-  if (yydebug)								  \
-    {									  \
-      YYFPRINTF (stderr, "%s ", Title);					  \
-      yy_symbol_print (stderr,						  \
-		  Type, Value, Location); \
-      YYFPRINTF (stderr, "\n");						  \
-    }									  \
-} while (YYID (0))
-
-
-/*--------------------------------.
-| Print this symbol on YYOUTPUT.  |
-`--------------------------------*/
-
-/*ARGSUSED*/
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
-static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp)
-#else
-static void
-yy_symbol_value_print (yyoutput, yytype, yyvaluep, yylocationp)
-    FILE *yyoutput;
-    int yytype;
-    YYSTYPE const * const yyvaluep;
-    YYLTYPE const * const yylocationp;
-#endif
-{
-  if (!yyvaluep)
-    return;
-  YYUSE (yylocationp);
-# ifdef YYPRINT
-  if (yytype < YYNTOKENS)
-    YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
-# else
-  YYUSE (yyoutput);
-# endif
-  switch (yytype)
-    {
-      default:
-	break;
-    }
-}
-
-
-/*--------------------------------.
-| Print this symbol on YYOUTPUT.  |
-`--------------------------------*/
-
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
-static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp)
-#else
-static void
-yy_symbol_print (yyoutput, yytype, yyvaluep, yylocationp)
-    FILE *yyoutput;
-    int yytype;
-    YYSTYPE const * const yyvaluep;
-    YYLTYPE const * const yylocationp;
-#endif
-{
-  if (yytype < YYNTOKENS)
-    YYFPRINTF (yyoutput, "token %s (", yytname[yytype]);
-  else
-    YYFPRINTF (yyoutput, "nterm %s (", yytname[yytype]);
-
-  YY_LOCATION_PRINT (yyoutput, *yylocationp);
-  YYFPRINTF (yyoutput, ": ");
-  yy_symbol_value_print (yyoutput, yytype, yyvaluep, yylocationp);
-  YYFPRINTF (yyoutput, ")");
-}
+# define YY_SYMBOL_PRINT(Title, Type, Value, Location)		\
+do {								\
+  if (yydebug)							\
+    {								\
+      YYFPRINTF (stderr, "%s ", Title);				\
+      yysymprint (stderr,					\
+                  Type, Value, Location);	\
+      YYFPRINTF (stderr, "\n");					\
+    }								\
+} while (0)
 
 /*------------------------------------------------------------------.
 | yy_stack_print -- Print the state stack from its BOTTOM up to its |
 | TOP (included).                                                   |
 `------------------------------------------------------------------*/
 
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
+#if defined (__STDC__) || defined (__cplusplus)
 static void
-yy_stack_print (yytype_int16 *bottom, yytype_int16 *top)
+yy_stack_print (short int *bottom, short int *top)
 #else
 static void
 yy_stack_print (bottom, top)
-    yytype_int16 *bottom;
-    yytype_int16 *top;
+    short int *bottom;
+    short int *top;
 #endif
 {
   YYFPRINTF (stderr, "Stack now");
-  for (; bottom <= top; ++bottom)
+  for (/* Nothing. */; bottom <= top; ++bottom)
     YYFPRINTF (stderr, " %d", *bottom);
   YYFPRINTF (stderr, "\n");
 }
@@ -14000,46 +13859,37 @@ yy_stack_print (bottom, top)
 do {								\
   if (yydebug)							\
     yy_stack_print ((Bottom), (Top));				\
-} while (YYID (0))
+} while (0)
 
 
 /*------------------------------------------------.
 | Report that the YYRULE is going to be reduced.  |
 `------------------------------------------------*/
 
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
+#if defined (__STDC__) || defined (__cplusplus)
 static void
-yy_reduce_print (YYSTYPE *yyvsp, YYLTYPE *yylsp, int yyrule)
+yy_reduce_print (int yyrule)
 #else
 static void
-yy_reduce_print (yyvsp, yylsp, yyrule)
-    YYSTYPE *yyvsp;
-    YYLTYPE *yylsp;
+yy_reduce_print (yyrule)
     int yyrule;
 #endif
 {
-  int yynrhs = yyr2[yyrule];
   int yyi;
   unsigned long int yylno = yyrline[yyrule];
-  YYFPRINTF (stderr, "Reducing stack by rule %d (line %lu):\n",
-	     yyrule - 1, yylno);
-  /* The symbols being reduced.  */
-  for (yyi = 0; yyi < yynrhs; yyi++)
-    {
-      fprintf (stderr, "   $%d = ", yyi + 1);
-      yy_symbol_print (stderr, yyrhs[yyprhs[yyrule] + yyi],
-		       &(yyvsp[(yyi + 1) - (yynrhs)])
-		       , &(yylsp[(yyi + 1) - (yynrhs)])		       );
-      fprintf (stderr, "\n");
-    }
+  YYFPRINTF (stderr, "Reducing stack by rule %d (line %lu), ",
+             yyrule - 1, yylno);
+  /* Print the symbols being reduced, and their result.  */
+  for (yyi = yyprhs[yyrule]; 0 <= yyrhs[yyi]; yyi++)
+    YYFPRINTF (stderr, "%s ", yytname[yyrhs[yyi]]);
+  YYFPRINTF (stderr, "-> %s\n", yytname[yyr1[yyrule]]);
 }
 
 # define YY_REDUCE_PRINT(Rule)		\
 do {					\
   if (yydebug)				\
-    yy_reduce_print (yyvsp, yylsp, Rule); \
-} while (YYID (0))
+    yy_reduce_print (Rule);		\
+} while (0)
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
    multiple parsers can coexist.  */
@@ -14073,44 +13923,42 @@ int yydebug;
 #if YYERROR_VERBOSE
 
 # ifndef yystrlen
-#  if defined __GLIBC__ && defined _STRING_H
+#  if defined (__GLIBC__) && defined (_STRING_H)
 #   define yystrlen strlen
 #  else
 /* Return the length of YYSTR.  */
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
 static YYSIZE_T
+#   if defined (__STDC__) || defined (__cplusplus)
 yystrlen (const char *yystr)
-#else
-static YYSIZE_T
+#   else
 yystrlen (yystr)
-    const char *yystr;
-#endif
+     const char *yystr;
+#   endif
 {
-  YYSIZE_T yylen;
-  for (yylen = 0; yystr[yylen]; yylen++)
+  const char *yys = yystr;
+
+  while (*yys++ != '\0')
     continue;
-  return yylen;
+
+  return yys - yystr - 1;
 }
 #  endif
 # endif
 
 # ifndef yystpcpy
-#  if defined __GLIBC__ && defined _STRING_H && defined _GNU_SOURCE
+#  if defined (__GLIBC__) && defined (_STRING_H) && defined (_GNU_SOURCE)
 #   define yystpcpy stpcpy
 #  else
 /* Copy YYSRC to YYDEST, returning the address of the terminating '\0' in
    YYDEST.  */
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
 static char *
+#   if defined (__STDC__) || defined (__cplusplus)
 yystpcpy (char *yydest, const char *yysrc)
-#else
-static char *
+#   else
 yystpcpy (yydest, yysrc)
-    char *yydest;
-    const char *yysrc;
-#endif
+     char *yydest;
+     const char *yysrc;
+#   endif
 {
   char *yyd = yydest;
   const char *yys = yysrc;
@@ -14136,7 +13984,7 @@ yytnamerr (char *yyres, const char *yystr)
 {
   if (*yystr == '"')
     {
-      YYSIZE_T yyn = 0;
+      size_t yyn = 0;
       char const *yyp = yystr;
 
       for (;;)
@@ -14171,123 +14019,57 @@ yytnamerr (char *yyres, const char *yystr)
 }
 # endif
 
-/* Copy into YYRESULT an error message about the unexpected token
-   YYCHAR while in state YYSTATE.  Return the number of bytes copied,
-   including the terminating null byte.  If YYRESULT is null, do not
-   copy anything; just return the number of bytes that would be
-   copied.  As a special case, return 0 if an ordinary "syntax error"
-   message will do.  Return YYSIZE_MAXIMUM if overflow occurs during
-   size calculation.  */
-static YYSIZE_T
-yysyntax_error (char *yyresult, int yystate, int yychar)
-{
-  int yyn = yypact[yystate];
-
-  if (! (YYPACT_NINF < yyn && yyn <= YYLAST))
-    return 0;
-  else
-    {
-      int yytype = YYTRANSLATE (yychar);
-      YYSIZE_T yysize0 = yytnamerr (0, yytname[yytype]);
-      YYSIZE_T yysize = yysize0;
-      YYSIZE_T yysize1;
-      int yysize_overflow = 0;
-      enum { YYERROR_VERBOSE_ARGS_MAXIMUM = 5 };
-      char const *yyarg[YYERROR_VERBOSE_ARGS_MAXIMUM];
-      int yyx;
-
-# if 0
-      /* This is so xgettext sees the translatable formats that are
-	 constructed on the fly.  */
-      YY_("syntax error, unexpected %s");
-      YY_("syntax error, unexpected %s, expecting %s");
-      YY_("syntax error, unexpected %s, expecting %s or %s");
-      YY_("syntax error, unexpected %s, expecting %s or %s or %s");
-      YY_("syntax error, unexpected %s, expecting %s or %s or %s or %s");
-# endif
-      char *yyfmt;
-      char const *yyf;
-      static char const yyunexpected[] = "syntax error, unexpected %s";
-      static char const yyexpecting[] = ", expecting %s";
-      static char const yyor[] = " or %s";
-      char yyformat[sizeof yyunexpected
-		    + sizeof yyexpecting - 1
-		    + ((YYERROR_VERBOSE_ARGS_MAXIMUM - 2)
-		       * (sizeof yyor - 1))];
-      char const *yyprefix = yyexpecting;
-
-      /* Start YYX at -YYN if negative to avoid negative indexes in
-	 YYCHECK.  */
-      int yyxbegin = yyn < 0 ? -yyn : 0;
-
-      /* Stay within bounds of both yycheck and yytname.  */
-      int yychecklim = YYLAST - yyn + 1;
-      int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
-      int yycount = 1;
-
-      yyarg[0] = yytname[yytype];
-      yyfmt = yystpcpy (yyformat, yyunexpected);
-
-      for (yyx = yyxbegin; yyx < yyxend; ++yyx)
-	if (yycheck[yyx + yyn] == yyx && yyx != YYTERROR)
-	  {
-	    if (yycount == YYERROR_VERBOSE_ARGS_MAXIMUM)
-	      {
-		yycount = 1;
-		yysize = yysize0;
-		yyformat[sizeof yyunexpected - 1] = '\0';
-		break;
-	      }
-	    yyarg[yycount++] = yytname[yyx];
-	    yysize1 = yysize + yytnamerr (0, yytname[yyx]);
-	    yysize_overflow |= (yysize1 < yysize);
-	    yysize = yysize1;
-	    yyfmt = yystpcpy (yyfmt, yyprefix);
-	    yyprefix = yyor;
-	  }
-
-      yyf = YY_(yyformat);
-      yysize1 = yysize + yystrlen (yyf);
-      yysize_overflow |= (yysize1 < yysize);
-      yysize = yysize1;
-
-      if (yysize_overflow)
-	return YYSIZE_MAXIMUM;
-
-      if (yyresult)
-	{
-	  /* Avoid sprintf, as that infringes on the user's name space.
-	     Don't have undefined behavior even if the translation
-	     produced a string with the wrong number of "%s"s.  */
-	  char *yyp = yyresult;
-	  int yyi = 0;
-	  while ((*yyp = *yyf) != '\0')
-	    {
-	      if (*yyp == '%' && yyf[1] == 's' && yyi < yycount)
-		{
-		  yyp += yytnamerr (yyp, yyarg[yyi++]);
-		  yyf += 2;
-		}
-	      else
-		{
-		  yyp++;
-		  yyf++;
-		}
-	    }
-	}
-      return yysize;
-    }
-}
 #endif /* YYERROR_VERBOSE */
+
 
 
+#if YYDEBUG
+/*--------------------------------.
+| Print this symbol on YYOUTPUT.  |
+`--------------------------------*/
+
+#if defined (__STDC__) || defined (__cplusplus)
+static void
+yysymprint (FILE *yyoutput, int yytype, YYSTYPE *yyvaluep, YYLTYPE *yylocationp)
+#else
+static void
+yysymprint (yyoutput, yytype, yyvaluep, yylocationp)
+    FILE *yyoutput;
+    int yytype;
+    YYSTYPE *yyvaluep;
+    YYLTYPE *yylocationp;
+#endif
+{
+  /* Pacify ``unused variable'' warnings.  */
+  (void) yyvaluep;
+  (void) yylocationp;
+
+  if (yytype < YYNTOKENS)
+    YYFPRINTF (yyoutput, "token %s (", yytname[yytype]);
+  else
+    YYFPRINTF (yyoutput, "nterm %s (", yytname[yytype]);
+
+  YY_LOCATION_PRINT (yyoutput, *yylocationp);
+  YYFPRINTF (yyoutput, ": ");
+
+# ifdef YYPRINT
+  if (yytype < YYNTOKENS)
+    YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
+# endif
+  switch (yytype)
+    {
+      default:
+        break;
+    }
+  YYFPRINTF (yyoutput, ")");
+}
+
+#endif /* ! YYDEBUG */
 /*-----------------------------------------------.
 | Release the memory associated to this symbol.  |
 `-----------------------------------------------*/
 
-/*ARGSUSED*/
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
+#if defined (__STDC__) || defined (__cplusplus)
 static void
 yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, YYLTYPE *yylocationp)
 #else
@@ -14299,8 +14081,9 @@ yydestruct (yymsg, yytype, yyvaluep, yylocationp)
     YYLTYPE *yylocationp;
 #endif
 {
-  YYUSE (yyvaluep);
-  YYUSE (yylocationp);
+  /* Pacify ``unused variable'' warnings.  */
+  (void) yyvaluep;
+  (void) yylocationp;
 
   if (!yymsg)
     yymsg = "Deleting";
@@ -14310,7 +14093,7 @@ yydestruct (yymsg, yytype, yyvaluep, yylocationp)
     {
 
       default:
-	break;
+        break;
     }
 }
 
@@ -14318,13 +14101,13 @@ yydestruct (yymsg, yytype, yyvaluep, yylocationp)
 /* Prevent warnings from -Wmissing-prototypes.  */
 
 #ifdef YYPARSE_PARAM
-#if defined __STDC__ || defined __cplusplus
+# if defined (__STDC__) || defined (__cplusplus)
 int yyparse (void *YYPARSE_PARAM);
-#else
+# else
 int yyparse ();
-#endif
+# endif
 #else /* ! YYPARSE_PARAM */
-#if defined __STDC__ || defined __cplusplus
+#if defined (__STDC__) || defined (__cplusplus)
 int yyparse (void);
 #else
 int yyparse ();
@@ -14351,24 +14134,20 @@ YYLTYPE yylloc;
 `----------*/
 
 #ifdef YYPARSE_PARAM
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
-int
-yyparse (void *YYPARSE_PARAM)
-#else
-int
-yyparse (YYPARSE_PARAM)
-    void *YYPARSE_PARAM;
-#endif
+# if defined (__STDC__) || defined (__cplusplus)
+int yyparse (void *YYPARSE_PARAM)
+# else
+int yyparse (YYPARSE_PARAM)
+  void *YYPARSE_PARAM;
+# endif
 #else /* ! YYPARSE_PARAM */
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
+#if defined (__STDC__) || defined (__cplusplus)
 int
 yyparse (void)
 #else
 int
 yyparse ()
-
+    ;
 #endif
 #endif
 {
@@ -14380,12 +14159,6 @@ yyparse ()
   int yyerrstatus;
   /* Look-ahead token as an internal (translated) token number.  */
   int yytoken = 0;
-#if YYERROR_VERBOSE
-  /* Buffer for error messages, and its allocated size.  */
-  char yymsgbuf[128];
-  char *yymsg = yymsgbuf;
-  YYSIZE_T yymsg_alloc = sizeof yymsgbuf;
-#endif
 
   /* Three stacks and their tools:
      `yyss': related to states,
@@ -14396,9 +14169,9 @@ yyparse ()
      to reallocate them elsewhere.  */
 
   /* The state stack.  */
-  yytype_int16 yyssa[YYINITDEPTH];
-  yytype_int16 *yyss = yyssa;
-  yytype_int16 *yyssp;
+  short int yyssa[YYINITDEPTH];
+  short int *yyss = yyssa;
+  short int *yyssp;
 
   /* The semantic value stack.  */
   YYSTYPE yyvsa[YYINITDEPTH];
@@ -14409,10 +14182,10 @@ yyparse ()
   YYLTYPE yylsa[YYINITDEPTH];
   YYLTYPE *yyls = yylsa;
   YYLTYPE *yylsp;
-  /* The locations where the error started and ended.  */
+  /* The locations where the error started and ended. */
   YYLTYPE yyerror_range[2];
 
-#define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N), yylsp -= (N))
+#define YYPOPSTACK   (yyvsp--, yyssp--, yylsp--)
 
   YYSIZE_T yystacksize = YYINITDEPTH;
 
@@ -14421,9 +14194,9 @@ yyparse ()
   YYSTYPE yyval;
   YYLTYPE yyloc;
 
-  /* The number of symbols on the RHS of the reduced rule.
-     Keep to zero when no symbol should be popped.  */
-  int yylen = 0;
+  /* When reducing, the number of symbols on the RHS of the reduced
+     rule.  */
+  int yylen;
 
   YYDPRINTF ((stderr, "Starting parse\n"));
 
@@ -14453,7 +14226,8 @@ yyparse ()
 `------------------------------------------------------------*/
  yynewstate:
   /* In all cases, when you get here, the value and location stacks
-     have just been pushed.  So pushing a state here evens the stacks.  */
+     have just been pushed. so pushing a state here evens the stacks.
+     */
   yyssp++;
 
  yysetstate:
@@ -14466,11 +14240,11 @@ yyparse ()
 
 #ifdef yyoverflow
       {
-	/* Give user a chance to reallocate the stack.  Use copies of
+	/* Give user a chance to reallocate the stack. Use copies of
 	   these so that the &'s don't force the real ones into
 	   memory.  */
 	YYSTYPE *yyvs1 = yyvs;
-	yytype_int16 *yyss1 = yyss;
+	short int *yyss1 = yyss;
 	YYLTYPE *yyls1 = yyls;
 
 	/* Each stack pointer address is followed by the size of the
@@ -14498,7 +14272,7 @@ yyparse ()
 	yystacksize = YYMAXDEPTH;
 
       {
-	yytype_int16 *yyss1 = yyss;
+	short int *yyss1 = yyss;
 	union yyalloc *yyptr =
 	  (union yyalloc *) YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize));
 	if (! yyptr)
@@ -14533,10 +14307,12 @@ yyparse ()
 `-----------*/
 yybackup:
 
-  /* Do appropriate processing given the current state.  Read a
-     look-ahead token if we need one and don't already have one.  */
+/* Do appropriate processing given the current state.  */
+/* Read a look-ahead token if we need one and don't already have one.  */
+/* yyresume: */
 
   /* First try to decide what to do without reference to look-ahead token.  */
+
   yyn = yypact[yystate];
   if (yyn == YYPACT_NINF)
     goto yydefault;
@@ -14578,21 +14354,22 @@ yybackup:
   if (yyn == YYFINAL)
     YYACCEPT;
 
+  /* Shift the look-ahead token.  */
+  YY_SYMBOL_PRINT ("Shifting", yytoken, &yylval, &yylloc);
+
+  /* Discard the token being shifted unless it is eof.  */
+  if (yychar != YYEOF)
+    yychar = YYEMPTY;
+
+  *++yyvsp = yylval;
+  *++yylsp = yylloc;
+
   /* Count tokens shifted since error; after three, turn off error
      status.  */
   if (yyerrstatus)
     yyerrstatus--;
 
-  /* Shift the look-ahead token.  */
-  YY_SYMBOL_PRINT ("Shifting", yytoken, &yylval, &yylloc);
-
-  /* Discard the shifted token unless it is eof.  */
-  if (yychar != YYEOF)
-    yychar = YYEMPTY;
-
   yystate = yyn;
-  *++yyvsp = yylval;
-  *++yylsp = yylloc;
   goto yynewstate;
 
 
@@ -14623,29 +14400,29 @@ yyreduce:
      GCC warning that YYVAL may be used uninitialized.  */
   yyval = yyvsp[1-yylen];
 
-  /* Default location.  */
-  YYLLOC_DEFAULT (yyloc, (yylsp - yylen), yylen);
+  /* Default location. */
+  YYLLOC_DEFAULT (yyloc, yylsp - yylen, yylen);
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
         case 2:
 #line 539 "gram.y"
-    { parsetree = (yyvsp[(1) - (1)].list); }
+    { parsetree = (yyvsp[0].list); }
     break;
 
   case 3:
 #line 544 "gram.y"
-    { if ((yyvsp[(3) - (3)].node) != NULL)
-					(yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node));
+    { if ((yyvsp[0].node) != NULL)
+					(yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node));
 				  else
-					(yyval.list) = (yyvsp[(1) - (3)].list);
+					(yyval.list) = (yyvsp[-2].list);
 				}
     break;
 
   case 4:
 #line 550 "gram.y"
-    { if ((yyvsp[(1) - (1)].node) != NULL)
-						(yyval.list) = list_make1((yyvsp[(1) - (1)].node));
+    { if ((yyvsp[0].node) != NULL)
+						(yyval.list) = list_make1((yyvsp[0].node));
 					  else
 						(yyval.list) = NIL;
 					}
@@ -14661,8 +14438,8 @@ yyreduce:
     {
 					CreateRoleStmt *n = makeNode(CreateRoleStmt);
 					n->stmt_type = ROLESTMT_ROLE;
-					n->role = (yyvsp[(3) - (5)].str);
-					n->options = (yyvsp[(5) - (5)].list);
+					n->role = (yyvsp[-2].str);
+					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -14679,7 +14456,7 @@ yyreduce:
 
   case 100:
 #line 681 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].defelt)); }
+    { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].defelt)); }
     break;
 
   case 101:
@@ -14691,7 +14468,7 @@ yyreduce:
 #line 687 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("password",
-									 (Node *)makeString((yyvsp[(2) - (2)].str)));
+									 (Node *)makeString((yyvsp[0].str)));
 				}
     break;
 
@@ -14706,7 +14483,7 @@ yyreduce:
 #line 696 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("encryptedPassword",
-									 (Node *)makeString((yyvsp[(3) - (3)].str)));
+									 (Node *)makeString((yyvsp[0].str)));
 				}
     break;
 
@@ -14714,7 +14491,7 @@ yyreduce:
 #line 701 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("unencryptedPassword",
-									 (Node *)makeString((yyvsp[(3) - (3)].str)));
+									 (Node *)makeString((yyvsp[0].str)));
 				}
     break;
 
@@ -14806,56 +14583,56 @@ yyreduce:
   case 118:
 #line 755 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("connectionlimit", (Node *)makeInteger((yyvsp[(3) - (3)].ival)));
+					(yyval.defelt) = makeDefElem("connectionlimit", (Node *)makeInteger((yyvsp[0].ival)));
 				}
     break;
 
   case 119:
 #line 759 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("validUntil", (Node *)makeString((yyvsp[(3) - (3)].str)));
+					(yyval.defelt) = makeDefElem("validUntil", (Node *)makeString((yyvsp[0].str)));
 				}
     break;
 
   case 120:
 #line 764 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("rolemembers", (Node *)(yyvsp[(2) - (2)].list));
+					(yyval.defelt) = makeDefElem("rolemembers", (Node *)(yyvsp[0].list));
 				}
     break;
 
   case 121:
 #line 769 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("sysid", (Node *)makeInteger((yyvsp[(2) - (2)].ival)));
+					(yyval.defelt) = makeDefElem("sysid", (Node *)makeInteger((yyvsp[0].ival)));
 				}
     break;
 
   case 122:
 #line 773 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("adminmembers", (Node *)(yyvsp[(2) - (2)].list));
+					(yyval.defelt) = makeDefElem("adminmembers", (Node *)(yyvsp[0].list));
 				}
     break;
 
   case 123:
 #line 777 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("rolemembers", (Node *)(yyvsp[(2) - (2)].list));
+					(yyval.defelt) = makeDefElem("rolemembers", (Node *)(yyvsp[0].list));
 				}
     break;
 
   case 124:
 #line 781 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("addroleto", (Node *)(yyvsp[(3) - (3)].list));
+					(yyval.defelt) = makeDefElem("addroleto", (Node *)(yyvsp[0].list));
 				}
     break;
 
   case 125:
 #line 785 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("addroleto", (Node *)(yyvsp[(3) - (3)].list));
+					(yyval.defelt) = makeDefElem("addroleto", (Node *)(yyvsp[0].list));
 				}
     break;
 
@@ -14864,8 +14641,8 @@ yyreduce:
     {
 					CreateRoleStmt *n = makeNode(CreateRoleStmt);
 					n->stmt_type = ROLESTMT_USER;
-					n->role = (yyvsp[(3) - (5)].str);
-					n->options = (yyvsp[(5) - (5)].list);
+					n->role = (yyvsp[-2].str);
+					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -14874,9 +14651,9 @@ yyreduce:
 #line 817 "gram.y"
     {
 					AlterRoleStmt *n = makeNode(AlterRoleStmt);
-					n->role = (yyvsp[(3) - (5)].str);
+					n->role = (yyvsp[-2].str);
 					n->action = +1;	/* add, if there are members */
-					n->options = (yyvsp[(5) - (5)].list);
+					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				 }
     break;
@@ -14885,8 +14662,8 @@ yyreduce:
 #line 828 "gram.y"
     {
 					AlterRoleSetStmt *n = makeNode(AlterRoleSetStmt);
-					n->role = (yyvsp[(3) - (4)].str);
-					n->setstmt = (yyvsp[(4) - (4)].vsetstmt);
+					n->role = (yyvsp[-1].str);
+					n->setstmt = (yyvsp[0].vsetstmt);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -14895,9 +14672,9 @@ yyreduce:
 #line 845 "gram.y"
     {
 					AlterRoleStmt *n = makeNode(AlterRoleStmt);
-					n->role = (yyvsp[(3) - (5)].str);
+					n->role = (yyvsp[-2].str);
 					n->action = +1;	/* add, if there are members */
-					n->options = (yyvsp[(5) - (5)].list);
+					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				 }
     break;
@@ -14906,8 +14683,8 @@ yyreduce:
 #line 857 "gram.y"
     {
 					AlterRoleSetStmt *n = makeNode(AlterRoleSetStmt);
-					n->role = (yyvsp[(3) - (4)].str);
-					n->setstmt = (yyvsp[(4) - (4)].vsetstmt);
+					n->role = (yyvsp[-1].str);
+					n->setstmt = (yyvsp[0].vsetstmt);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -14917,7 +14694,7 @@ yyreduce:
     {
 					DropRoleStmt *n = makeNode(DropRoleStmt);
 					n->missing_ok = FALSE;
-					n->roles = (yyvsp[(3) - (3)].list);
+					n->roles = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -14927,7 +14704,7 @@ yyreduce:
     {
 					DropRoleStmt *n = makeNode(DropRoleStmt);
 					n->missing_ok = TRUE;
-					n->roles = (yyvsp[(5) - (5)].list);
+					n->roles = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -14937,7 +14714,7 @@ yyreduce:
     {
 					DropRoleStmt *n = makeNode(DropRoleStmt);
 					n->missing_ok = FALSE;
-					n->roles = (yyvsp[(3) - (3)].list);
+					n->roles = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -14946,7 +14723,7 @@ yyreduce:
 #line 910 "gram.y"
     {
 					DropRoleStmt *n = makeNode(DropRoleStmt);
-					n->roles = (yyvsp[(5) - (5)].list);
+					n->roles = (yyvsp[0].list);
 					n->missing_ok = TRUE;
 					(yyval.node) = (Node *)n;
 				}
@@ -14957,8 +14734,8 @@ yyreduce:
     {
 					CreateRoleStmt *n = makeNode(CreateRoleStmt);
 					n->stmt_type = ROLESTMT_GROUP;
-					n->role = (yyvsp[(3) - (5)].str);
-					n->options = (yyvsp[(5) - (5)].list);
+					n->role = (yyvsp[-2].str);
+					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -14967,10 +14744,10 @@ yyreduce:
 #line 945 "gram.y"
     {
 					AlterRoleStmt *n = makeNode(AlterRoleStmt);
-					n->role = (yyvsp[(3) - (6)].str);
-					n->action = (yyvsp[(4) - (6)].ival);
+					n->role = (yyvsp[-3].str);
+					n->action = (yyvsp[-2].ival);
 					n->options = list_make1(makeDefElem("rolemembers",
-														(Node *)(yyvsp[(6) - (6)].list)));
+														(Node *)(yyvsp[0].list)));
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -14990,7 +14767,7 @@ yyreduce:
     {
 					DropRoleStmt *n = makeNode(DropRoleStmt);
 					n->missing_ok = FALSE;
-					n->roles = (yyvsp[(3) - (3)].list);
+					n->roles = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15000,7 +14777,7 @@ yyreduce:
     {
 					DropRoleStmt *n = makeNode(DropRoleStmt);
 					n->missing_ok = TRUE;
-					n->roles = (yyvsp[(5) - (5)].list);
+					n->roles = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15010,12 +14787,12 @@ yyreduce:
     {
 					CreateSchemaStmt *n = makeNode(CreateSchemaStmt);
 					/* One can omit the schema name or the authorization id. */
-					if ((yyvsp[(3) - (6)].str) != NULL)
-						n->schemaname = (yyvsp[(3) - (6)].str);
+					if ((yyvsp[-3].str) != NULL)
+						n->schemaname = (yyvsp[-3].str);
 					else
-						n->schemaname = (yyvsp[(5) - (6)].str);
-					n->authid = (yyvsp[(5) - (6)].str);
-					n->schemaElts = (yyvsp[(6) - (6)].list);
+						n->schemaname = (yyvsp[-1].str);
+					n->authid = (yyvsp[-1].str);
+					n->schemaElts = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15025,16 +14802,16 @@ yyreduce:
     {
 					CreateSchemaStmt *n = makeNode(CreateSchemaStmt);
 					/* ...but not both */
-					n->schemaname = (yyvsp[(3) - (4)].str);
+					n->schemaname = (yyvsp[-1].str);
 					n->authid = NULL;
-					n->schemaElts = (yyvsp[(4) - (4)].list);
+					n->schemaElts = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
 
   case 143:
 #line 1016 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 144:
@@ -15044,7 +14821,7 @@ yyreduce:
 
   case 145:
 #line 1021 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].node)); }
+    { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].node)); }
     break;
 
   case 146:
@@ -15055,7 +14832,7 @@ yyreduce:
   case 153:
 #line 1050 "gram.y"
     {
-					VariableSetStmt *n = (yyvsp[(2) - (2)].vsetstmt);
+					VariableSetStmt *n = (yyvsp[0].vsetstmt);
 					n->is_local = false;
 					(yyval.node) = (Node *) n;
 				}
@@ -15064,7 +14841,7 @@ yyreduce:
   case 154:
 #line 1056 "gram.y"
     {
-					VariableSetStmt *n = (yyvsp[(3) - (3)].vsetstmt);
+					VariableSetStmt *n = (yyvsp[0].vsetstmt);
 					n->is_local = true;
 					(yyval.node) = (Node *) n;
 				}
@@ -15073,7 +14850,7 @@ yyreduce:
   case 155:
 #line 1062 "gram.y"
     {
-					VariableSetStmt *n = (yyvsp[(3) - (3)].vsetstmt);
+					VariableSetStmt *n = (yyvsp[0].vsetstmt);
 					n->is_local = false;
 					(yyval.node) = (Node *) n;
 				}
@@ -15084,8 +14861,8 @@ yyreduce:
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_VALUE;
-					n->name = (yyvsp[(1) - (3)].str);
-					n->args = (yyvsp[(3) - (3)].list);
+					n->name = (yyvsp[-2].str);
+					n->args = (yyvsp[0].list);
 					(yyval.vsetstmt) = n;
 				}
     break;
@@ -15095,8 +14872,8 @@ yyreduce:
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_VALUE;
-					n->name = (yyvsp[(1) - (3)].str);
-					n->args = (yyvsp[(3) - (3)].list);
+					n->name = (yyvsp[-2].str);
+					n->args = (yyvsp[0].list);
 					(yyval.vsetstmt) = n;
 				}
     break;
@@ -15106,7 +14883,7 @@ yyreduce:
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_DEFAULT;
-					n->name = (yyvsp[(1) - (3)].str);
+					n->name = (yyvsp[-2].str);
 					(yyval.vsetstmt) = n;
 				}
     break;
@@ -15116,7 +14893,7 @@ yyreduce:
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_DEFAULT;
-					n->name = (yyvsp[(1) - (3)].str);
+					n->name = (yyvsp[-2].str);
 					(yyval.vsetstmt) = n;
 				}
     break;
@@ -15126,7 +14903,7 @@ yyreduce:
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_CURRENT;
-					n->name = (yyvsp[(1) - (3)].str);
+					n->name = (yyvsp[-2].str);
 					(yyval.vsetstmt) = n;
 				}
     break;
@@ -15137,8 +14914,8 @@ yyreduce:
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_VALUE;
 					n->name = "timezone";
-					if ((yyvsp[(3) - (3)].node) != NULL)
-						n->args = list_make1((yyvsp[(3) - (3)].node));
+					if ((yyvsp[0].node) != NULL)
+						n->args = list_make1((yyvsp[0].node));
 					else
 						n->kind = VAR_SET_DEFAULT;
 					(yyval.vsetstmt) = n;
@@ -15151,7 +14928,7 @@ yyreduce:
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_MULTI;
 					n->name = "TRANSACTION";
-					n->args = (yyvsp[(2) - (2)].list);
+					n->args = (yyvsp[0].list);
 					(yyval.vsetstmt) = n;
 				}
     break;
@@ -15162,7 +14939,7 @@ yyreduce:
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_MULTI;
 					n->name = "SESSION CHARACTERISTICS";
-					n->args = (yyvsp[(5) - (5)].list);
+					n->args = (yyvsp[0].list);
 					(yyval.vsetstmt) = n;
 				}
     break;
@@ -15173,8 +14950,8 @@ yyreduce:
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_VALUE;
 					n->name = "client_encoding";
-					if ((yyvsp[(2) - (2)].str) != NULL)
-						n->args = list_make1(makeStringConst((yyvsp[(2) - (2)].str), NULL));
+					if ((yyvsp[0].str) != NULL)
+						n->args = list_make1(makeStringConst((yyvsp[0].str), NULL));
 					else
 						n->kind = VAR_SET_DEFAULT;
 					(yyval.vsetstmt) = n;
@@ -15187,7 +14964,7 @@ yyreduce:
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_VALUE;
 					n->name = "role";
-					n->args = list_make1(makeStringConst((yyvsp[(2) - (2)].str), NULL));
+					n->args = list_make1(makeStringConst((yyvsp[0].str), NULL));
 					(yyval.vsetstmt) = n;
 				}
     break;
@@ -15198,7 +14975,7 @@ yyreduce:
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_VALUE;
 					n->name = "session_authorization";
-					n->args = list_make1(makeStringConst((yyvsp[(3) - (3)].str), NULL));
+					n->args = list_make1(makeStringConst((yyvsp[0].str), NULL));
 					(yyval.vsetstmt) = n;
 				}
     break;
@@ -15219,47 +14996,47 @@ yyreduce:
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_VALUE;
 					n->name = "xmloption";
-					n->args = list_make1(makeStringConst((yyvsp[(3) - (3)].ival) == XMLOPTION_DOCUMENT ? "DOCUMENT" : "CONTENT", NULL));
+					n->args = list_make1(makeStringConst((yyvsp[0].ival) == XMLOPTION_DOCUMENT ? "DOCUMENT" : "CONTENT", NULL));
 					(yyval.vsetstmt) = n;
 				}
     break;
 
   case 169:
 #line 1179 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 170:
 #line 1181 "gram.y"
     {
-					(yyval.str) = palloc(strlen((yyvsp[(1) - (3)].str)) + strlen((yyvsp[(3) - (3)].str)) + 2);
-					sprintf((yyval.str), "%s.%s", (yyvsp[(1) - (3)].str), (yyvsp[(3) - (3)].str));
+					(yyval.str) = palloc(strlen((yyvsp[-2].str)) + strlen((yyvsp[0].str)) + 2);
+					sprintf((yyval.str), "%s.%s", (yyvsp[-2].str), (yyvsp[0].str));
 				}
     break;
 
   case 171:
 #line 1187 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
+    { (yyval.list) = list_make1((yyvsp[0].node)); }
     break;
 
   case 172:
 #line 1188 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node)); }
     break;
 
   case 173:
 #line 1192 "gram.y"
-    { (yyval.node) = makeStringConst((yyvsp[(1) - (1)].str), NULL); }
+    { (yyval.node) = makeStringConst((yyvsp[0].str), NULL); }
     break;
 
   case 174:
 #line 1194 "gram.y"
-    { (yyval.node) = makeStringConst((yyvsp[(1) - (1)].str), NULL); }
+    { (yyval.node) = makeStringConst((yyvsp[0].str), NULL); }
     break;
 
   case 175:
 #line 1196 "gram.y"
-    { (yyval.node) = makeAConst((yyvsp[(1) - (1)].value)); }
+    { (yyval.node) = makeAConst((yyvsp[0].value)); }
     break;
 
   case 176:
@@ -15305,28 +15082,28 @@ yyreduce:
   case 184:
 #line 1222 "gram.y"
     {
-					(yyval.node) = makeStringConst((yyvsp[(1) - (1)].str), NULL);
+					(yyval.node) = makeStringConst((yyvsp[0].str), NULL);
 				}
     break;
 
   case 185:
 #line 1226 "gram.y"
     {
-					(yyval.node) = makeStringConst((yyvsp[(1) - (1)].str), NULL);
+					(yyval.node) = makeStringConst((yyvsp[0].str), NULL);
 				}
     break;
 
   case 186:
 #line 1230 "gram.y"
     {
-					A_Const *n = (A_Const *) makeStringConst((yyvsp[(2) - (3)].str), (yyvsp[(1) - (3)].typnam));
-					if ((yyvsp[(3) - (3)].ival) != INTERVAL_FULL_RANGE)
+					A_Const *n = (A_Const *) makeStringConst((yyvsp[-1].str), (yyvsp[-2].typnam));
+					if ((yyvsp[0].ival) != INTERVAL_FULL_RANGE)
 					{
-						if (((yyvsp[(3) - (3)].ival) & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0)
+						if (((yyvsp[0].ival) & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0)
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("time zone interval must be HOUR or HOUR TO MINUTE")));
-						n->typename->typmods = list_make1(makeIntConst((yyvsp[(3) - (3)].ival)));
+						n->typename->typmods = list_make1(makeIntConst((yyvsp[0].ival)));
 					}
 					(yyval.node) = (Node *)n;
 				}
@@ -15335,21 +15112,21 @@ yyreduce:
   case 187:
 #line 1243 "gram.y"
     {
-					A_Const *n = (A_Const *) makeStringConst((yyvsp[(5) - (6)].str), (yyvsp[(1) - (6)].typnam));
-					if (((yyvsp[(6) - (6)].ival) != INTERVAL_FULL_RANGE)
-						&& (((yyvsp[(6) - (6)].ival) & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0))
+					A_Const *n = (A_Const *) makeStringConst((yyvsp[-1].str), (yyvsp[-5].typnam));
+					if (((yyvsp[0].ival) != INTERVAL_FULL_RANGE)
+						&& (((yyvsp[0].ival) & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0))
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("time zone interval must be HOUR or HOUR TO MINUTE")));
-					n->typename->typmods = list_make2(makeIntConst((yyvsp[(6) - (6)].ival)),
-													  makeIntConst((yyvsp[(3) - (6)].ival)));
+					n->typename->typmods = list_make2(makeIntConst((yyvsp[0].ival)),
+													  makeIntConst((yyvsp[-3].ival)));
 					(yyval.node) = (Node *)n;
 				}
     break;
 
   case 188:
 #line 1254 "gram.y"
-    { (yyval.node) = makeAConst((yyvsp[(1) - (1)].value)); }
+    { (yyval.node) = makeAConst((yyvsp[0].value)); }
     break;
 
   case 189:
@@ -15364,7 +15141,7 @@ yyreduce:
 
   case 191:
 #line 1260 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 192:
@@ -15379,12 +15156,12 @@ yyreduce:
 
   case 194:
 #line 1266 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 195:
 #line 1267 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 196:
@@ -15392,7 +15169,7 @@ yyreduce:
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_RESET;
-					n->name = (yyvsp[(2) - (2)].str);
+					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -15438,19 +15215,19 @@ yyreduce:
 
   case 201:
 #line 1309 "gram.y"
-    { (yyval.vsetstmt) = (yyvsp[(2) - (2)].vsetstmt); }
+    { (yyval.vsetstmt) = (yyvsp[0].vsetstmt); }
     break;
 
   case 202:
 #line 1310 "gram.y"
-    { (yyval.vsetstmt) = (VariableSetStmt *) (yyvsp[(1) - (1)].node); }
+    { (yyval.vsetstmt) = (VariableSetStmt *) (yyvsp[0].node); }
     break;
 
   case 203:
 #line 1316 "gram.y"
     {
 					VariableShowStmt *n = makeNode(VariableShowStmt);
-					n->name = (yyvsp[(2) - (2)].str);
+					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -15495,8 +15272,8 @@ yyreduce:
 #line 1350 "gram.y"
     {
 					ConstraintsSetStmt *n = makeNode(ConstraintsSetStmt);
-					n->constraints = (yyvsp[(3) - (4)].list);
-					n->deferred    = (yyvsp[(4) - (4)].boolean);
+					n->constraints = (yyvsp[-1].list);
+					n->deferred    = (yyvsp[0].boolean);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -15508,7 +15285,7 @@ yyreduce:
 
   case 210:
 #line 1360 "gram.y"
-    { (yyval.list) = (yyvsp[(1) - (1)].list); }
+    { (yyval.list) = (yyvsp[0].list); }
     break;
 
   case 211:
@@ -15569,8 +15346,8 @@ yyreduce:
 #line 1423 "gram.y"
     {
 					AlterTableStmt *n = makeNode(AlterTableStmt);
-					n->relation = (yyvsp[(3) - (4)].range);
-					n->cmds = (yyvsp[(4) - (4)].list);
+					n->relation = (yyvsp[-1].range);
+					n->cmds = (yyvsp[0].list);
 					n->relkind = OBJECT_TABLE;
 					(yyval.node) = (Node *)n;
 				}
@@ -15580,8 +15357,8 @@ yyreduce:
 #line 1431 "gram.y"
     {
 					AlterTableStmt *n = makeNode(AlterTableStmt);
-					n->relation = (yyvsp[(3) - (4)].range);
-					n->cmds = (yyvsp[(4) - (4)].list);
+					n->relation = (yyvsp[-1].range);
+					n->cmds = (yyvsp[0].list);
 					n->relkind = OBJECT_INDEX;
 					(yyval.node) = (Node *)n;
 				}
@@ -15589,12 +15366,12 @@ yyreduce:
 
   case 220:
 #line 1441 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
+    { (yyval.list) = list_make1((yyvsp[0].node)); }
     break;
 
   case 221:
 #line 1442 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node)); }
     break;
 
   case 222:
@@ -15602,7 +15379,7 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_AddColumn;
-					n->def = (yyvsp[(3) - (3)].node);
+					n->def = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15612,8 +15389,8 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_ColumnDefault;
-					n->name = (yyvsp[(3) - (4)].str);
-					n->def = (yyvsp[(4) - (4)].node);
+					n->name = (yyvsp[-1].str);
+					n->def = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15623,7 +15400,7 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DropNotNull;
-					n->name = (yyvsp[(3) - (6)].str);
+					n->name = (yyvsp[-3].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15633,7 +15410,7 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_SetNotNull;
-					n->name = (yyvsp[(3) - (6)].str);
+					n->name = (yyvsp[-3].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15643,8 +15420,8 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_SetStatistics;
-					n->name = (yyvsp[(3) - (6)].str);
-					n->def = (Node *) (yyvsp[(6) - (6)].value);
+					n->name = (yyvsp[-3].str);
+					n->def = (Node *) (yyvsp[0].value);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15654,8 +15431,8 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_SetStorage;
-					n->name = (yyvsp[(3) - (6)].str);
-					n->def = (Node *) makeString((yyvsp[(6) - (6)].str));
+					n->name = (yyvsp[-3].str);
+					n->def = (Node *) makeString((yyvsp[0].str));
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15665,8 +15442,8 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DropColumn;
-					n->name = (yyvsp[(3) - (4)].str);
-					n->behavior = (yyvsp[(4) - (4)].dbehavior);
+					n->name = (yyvsp[-1].str);
+					n->behavior = (yyvsp[0].dbehavior);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15676,9 +15453,9 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_AlterColumnType;
-					n->name = (yyvsp[(3) - (6)].str);
-					n->def = (Node *) (yyvsp[(5) - (6)].typnam);
-					n->transform = (yyvsp[(6) - (6)].node);
+					n->name = (yyvsp[-3].str);
+					n->def = (Node *) (yyvsp[-1].typnam);
+					n->transform = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15688,7 +15465,7 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_AddConstraint;
-					n->def = (yyvsp[(2) - (2)].node);
+					n->def = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15698,8 +15475,8 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DropConstraint;
-					n->name = (yyvsp[(3) - (4)].str);
-					n->behavior = (yyvsp[(4) - (4)].dbehavior);
+					n->name = (yyvsp[-1].str);
+					n->behavior = (yyvsp[0].dbehavior);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15718,7 +15495,7 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_ClusterOn;
-					n->name = (yyvsp[(3) - (3)].str);
+					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15738,7 +15515,7 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_EnableTrig;
-					n->name = (yyvsp[(3) - (3)].str);
+					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15748,7 +15525,7 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_EnableAlwaysTrig;
-					n->name = (yyvsp[(4) - (4)].str);
+					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15758,7 +15535,7 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_EnableReplicaTrig;
-					n->name = (yyvsp[(4) - (4)].str);
+					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15786,7 +15563,7 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DisableTrig;
-					n->name = (yyvsp[(3) - (3)].str);
+					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15814,7 +15591,7 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_EnableRule;
-					n->name = (yyvsp[(3) - (3)].str);
+					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15824,7 +15601,7 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_EnableAlwaysRule;
-					n->name = (yyvsp[(4) - (4)].str);
+					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15834,7 +15611,7 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_EnableReplicaRule;
-					n->name = (yyvsp[(4) - (4)].str);
+					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15844,7 +15621,7 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DisableRule;
-					n->name = (yyvsp[(3) - (3)].str);
+					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15854,7 +15631,7 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_AddInherit;
-					n->def = (Node *) (yyvsp[(2) - (2)].range);
+					n->def = (Node *) (yyvsp[0].range);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15864,7 +15641,7 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DropInherit;
-					n->def = (Node *) (yyvsp[(3) - (3)].range);
+					n->def = (Node *) (yyvsp[0].range);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15872,18 +15649,18 @@ yyreduce:
   case 249:
 #line 1669 "gram.y"
     {
-					(yyval.node) = (yyvsp[(1) - (1)].node);
+					(yyval.node) = (yyvsp[0].node);
 				}
     break;
 
   case 250:
 #line 1675 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
+    { (yyval.list) = list_make1((yyvsp[0].node)); }
     break;
 
   case 251:
 #line 1676 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node)); }
     break;
 
   case 252:
@@ -15891,7 +15668,7 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_ChangeOwner;
-					n->name = (yyvsp[(3) - (3)].str);
+					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15901,7 +15678,7 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_SetTableSpace;
-					n->name = (yyvsp[(3) - (3)].str);
+					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15911,7 +15688,7 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_SetRelOptions;
-					n->def = (Node *)(yyvsp[(2) - (2)].list);
+					n->def = (Node *)(yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15921,7 +15698,7 @@ yyreduce:
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_ResetRelOptions;
-					n->def = (Node *)(yyvsp[(2) - (2)].list);
+					n->def = (Node *)(yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15930,10 +15707,10 @@ yyreduce:
 #line 1717 "gram.y"
     {
 					/* Treat SET DEFAULT NULL the same as DROP DEFAULT */
-					if (exprIsNullConstant((yyvsp[(3) - (3)].node)))
+					if (exprIsNullConstant((yyvsp[0].node)))
 						(yyval.node) = NULL;
 					else
-						(yyval.node) = (yyvsp[(3) - (3)].node);
+						(yyval.node) = (yyvsp[0].node);
 				}
     break;
 
@@ -15959,7 +15736,7 @@ yyreduce:
 
   case 261:
 #line 1734 "gram.y"
-    { (yyval.node) = (yyvsp[(2) - (2)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 262:
@@ -15971,7 +15748,7 @@ yyreduce:
 #line 1749 "gram.y"
     {
 					ClosePortalStmt *n = makeNode(ClosePortalStmt);
-					n->portalname = (yyvsp[(2) - (2)].str);
+					n->portalname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -15989,22 +15766,22 @@ yyreduce:
 #line 1779 "gram.y"
     {
 					CopyStmt *n = makeNode(CopyStmt);
-					n->relation = (yyvsp[(3) - (10)].range);
+					n->relation = (yyvsp[-7].range);
 					n->query = NULL;
-					n->attlist = (yyvsp[(4) - (10)].list);
-					n->is_from = (yyvsp[(6) - (10)].boolean);
-					n->filename = (yyvsp[(7) - (10)].str);
+					n->attlist = (yyvsp[-6].list);
+					n->is_from = (yyvsp[-4].boolean);
+					n->filename = (yyvsp[-3].str);
 
 					n->options = NIL;
 					/* Concatenate user-supplied flags */
-					if ((yyvsp[(2) - (10)].defelt))
-						n->options = lappend(n->options, (yyvsp[(2) - (10)].defelt));
-					if ((yyvsp[(5) - (10)].defelt))
-						n->options = lappend(n->options, (yyvsp[(5) - (10)].defelt));
-					if ((yyvsp[(8) - (10)].defelt))
-						n->options = lappend(n->options, (yyvsp[(8) - (10)].defelt));
-					if ((yyvsp[(10) - (10)].list))
-						n->options = list_concat(n->options, (yyvsp[(10) - (10)].list));
+					if ((yyvsp[-8].defelt))
+						n->options = lappend(n->options, (yyvsp[-8].defelt));
+					if ((yyvsp[-5].defelt))
+						n->options = lappend(n->options, (yyvsp[-5].defelt));
+					if ((yyvsp[-2].defelt))
+						n->options = lappend(n->options, (yyvsp[-2].defelt));
+					if ((yyvsp[0].list))
+						n->options = list_concat(n->options, (yyvsp[0].list));
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -16014,11 +15791,11 @@ yyreduce:
     {
 					CopyStmt *n = makeNode(CopyStmt);
 					n->relation = NULL;
-					n->query = (yyvsp[(2) - (6)].node);
+					n->query = (yyvsp[-4].node);
 					n->attlist = NIL;
 					n->is_from = false;
-					n->filename = (yyvsp[(4) - (6)].str);
-					n->options = (yyvsp[(6) - (6)].list);
+					n->filename = (yyvsp[-2].str);
+					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -16035,7 +15812,7 @@ yyreduce:
 
   case 269:
 #line 1824 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 270:
@@ -16050,7 +15827,7 @@ yyreduce:
 
   case 272:
 #line 1832 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].defelt)); }
+    { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].defelt)); }
     break;
 
   case 273:
@@ -16075,14 +15852,14 @@ yyreduce:
   case 276:
 #line 1847 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("delimiter", (Node *)makeString((yyvsp[(3) - (3)].str)));
+					(yyval.defelt) = makeDefElem("delimiter", (Node *)makeString((yyvsp[0].str)));
 				}
     break;
 
   case 277:
 #line 1851 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("null", (Node *)makeString((yyvsp[(3) - (3)].str)));
+					(yyval.defelt) = makeDefElem("null", (Node *)makeString((yyvsp[0].str)));
 				}
     break;
 
@@ -16103,28 +15880,28 @@ yyreduce:
   case 280:
 #line 1863 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("quote", (Node *)makeString((yyvsp[(3) - (3)].str)));
+					(yyval.defelt) = makeDefElem("quote", (Node *)makeString((yyvsp[0].str)));
 				}
     break;
 
   case 281:
 #line 1867 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("escape", (Node *)makeString((yyvsp[(3) - (3)].str)));
+					(yyval.defelt) = makeDefElem("escape", (Node *)makeString((yyvsp[0].str)));
 				}
     break;
 
   case 282:
 #line 1871 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("force_quote", (Node *)(yyvsp[(3) - (3)].list));
+					(yyval.defelt) = makeDefElem("force_quote", (Node *)(yyvsp[0].list));
 				}
     break;
 
   case 283:
 #line 1875 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("force_notnull", (Node *)(yyvsp[(4) - (4)].list));
+					(yyval.defelt) = makeDefElem("force_notnull", (Node *)(yyvsp[0].list));
 				}
     break;
 
@@ -16155,7 +15932,7 @@ yyreduce:
   case 288:
 #line 1901 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("delimiter", (Node *)makeString((yyvsp[(3) - (3)].str)));
+					(yyval.defelt) = makeDefElem("delimiter", (Node *)makeString((yyvsp[0].str)));
 				}
     break;
 
@@ -16178,14 +15955,14 @@ yyreduce:
 #line 1922 "gram.y"
     {
 					CreateStmt *n = makeNode(CreateStmt);
-					(yyvsp[(4) - (11)].range)->istemp = (yyvsp[(2) - (11)].boolean);
-					n->relation = (yyvsp[(4) - (11)].range);
-					n->tableElts = (yyvsp[(6) - (11)].list);
-					n->inhRelations = (yyvsp[(8) - (11)].list);
+					(yyvsp[-7].range)->istemp = (yyvsp[-9].boolean);
+					n->relation = (yyvsp[-7].range);
+					n->tableElts = (yyvsp[-5].list);
+					n->inhRelations = (yyvsp[-3].list);
 					n->constraints = NIL;
-					n->options = (yyvsp[(9) - (11)].list);
-					n->oncommit = (yyvsp[(10) - (11)].oncommit);
-					n->tablespacename = (yyvsp[(11) - (11)].str);
+					n->options = (yyvsp[-2].list);
+					n->oncommit = (yyvsp[-1].oncommit);
+					n->tablespacename = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -16197,14 +15974,14 @@ yyreduce:
 					 * by our inheritance capabilities. Let's try it...
 					 */
 					CreateStmt *n = makeNode(CreateStmt);
-					(yyvsp[(4) - (12)].range)->istemp = (yyvsp[(2) - (12)].boolean);
-					n->relation = (yyvsp[(4) - (12)].range);
-					n->tableElts = (yyvsp[(8) - (12)].list);
-					n->inhRelations = list_make1((yyvsp[(6) - (12)].range));
+					(yyvsp[-8].range)->istemp = (yyvsp[-10].boolean);
+					n->relation = (yyvsp[-8].range);
+					n->tableElts = (yyvsp[-4].list);
+					n->inhRelations = list_make1((yyvsp[-6].range));
 					n->constraints = NIL;
-					n->options = (yyvsp[(10) - (12)].list);
-					n->oncommit = (yyvsp[(11) - (12)].oncommit);
-					n->tablespacename = (yyvsp[(12) - (12)].str);
+					n->options = (yyvsp[-2].list);
+					n->oncommit = (yyvsp[-1].oncommit);
+					n->tablespacename = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -16246,7 +16023,7 @@ yyreduce:
 
   case 301:
 #line 1970 "gram.y"
-    { (yyval.list) = (yyvsp[(1) - (1)].list); }
+    { (yyval.list) = (yyvsp[0].list); }
     break;
 
   case 302:
@@ -16257,39 +16034,39 @@ yyreduce:
   case 303:
 #line 1976 "gram.y"
     {
-					(yyval.list) = list_make1((yyvsp[(1) - (1)].node));
+					(yyval.list) = list_make1((yyvsp[0].node));
 				}
     break;
 
   case 304:
 #line 1980 "gram.y"
     {
-					(yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node));
+					(yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node));
 				}
     break;
 
   case 305:
 #line 1986 "gram.y"
-    { (yyval.node) = (yyvsp[(1) - (1)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 306:
 #line 1987 "gram.y"
-    { (yyval.node) = (yyvsp[(1) - (1)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 307:
 #line 1988 "gram.y"
-    { (yyval.node) = (yyvsp[(1) - (1)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 308:
 #line 1992 "gram.y"
     {
 					ColumnDef *n = makeNode(ColumnDef);
-					n->colname = (yyvsp[(1) - (3)].str);
-					n->typename = (yyvsp[(2) - (3)].typnam);
-					n->constraints = (yyvsp[(3) - (3)].list);
+					n->colname = (yyvsp[-2].str);
+					n->typename = (yyvsp[-1].typnam);
+					n->constraints = (yyvsp[0].list);
 					n->is_local = true;
 					(yyval.node) = (Node *)n;
 				}
@@ -16297,7 +16074,7 @@ yyreduce:
 
   case 309:
 #line 2003 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].node)); }
+    { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].node)); }
     break;
 
   case 310:
@@ -16308,35 +16085,35 @@ yyreduce:
   case 311:
 #line 2009 "gram.y"
     {
-					switch (nodeTag((yyvsp[(3) - (3)].node)))
+					switch (nodeTag((yyvsp[0].node)))
 					{
 						case T_Constraint:
 							{
-								Constraint *n = (Constraint *)(yyvsp[(3) - (3)].node);
-								n->name = (yyvsp[(2) - (3)].str);
+								Constraint *n = (Constraint *)(yyvsp[0].node);
+								n->name = (yyvsp[-1].str);
 							}
 							break;
 						case T_FkConstraint:
 							{
-								FkConstraint *n = (FkConstraint *)(yyvsp[(3) - (3)].node);
-								n->constr_name = (yyvsp[(2) - (3)].str);
+								FkConstraint *n = (FkConstraint *)(yyvsp[0].node);
+								n->constr_name = (yyvsp[-1].str);
 							}
 							break;
 						default:
 							break;
 					}
-					(yyval.node) = (yyvsp[(3) - (3)].node);
+					(yyval.node) = (yyvsp[0].node);
 				}
     break;
 
   case 312:
 #line 2029 "gram.y"
-    { (yyval.node) = (yyvsp[(1) - (1)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 313:
 #line 2030 "gram.y"
-    { (yyval.node) = (yyvsp[(1) - (1)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 314:
@@ -16376,8 +16153,8 @@ yyreduce:
 					n->raw_expr = NULL;
 					n->cooked_expr = NULL;
 					n->keys = NULL;
-					n->options = (yyvsp[(2) - (3)].list);
-					n->indexspace = (yyvsp[(3) - (3)].str);
+					n->options = (yyvsp[-1].list);
+					n->indexspace = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -16391,8 +16168,8 @@ yyreduce:
 					n->raw_expr = NULL;
 					n->cooked_expr = NULL;
 					n->keys = NULL;
-					n->options = (yyvsp[(3) - (4)].list);
-					n->indexspace = (yyvsp[(4) - (4)].str);
+					n->options = (yyvsp[-1].list);
+					n->indexspace = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -16403,7 +16180,7 @@ yyreduce:
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_CHECK;
 					n->name = NULL;
-					n->raw_expr = (yyvsp[(3) - (4)].node);
+					n->raw_expr = (yyvsp[-1].node);
 					n->cooked_expr = NULL;
 					n->keys = NULL;
 					n->indexspace = NULL;
@@ -16417,14 +16194,14 @@ yyreduce:
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_DEFAULT;
 					n->name = NULL;
-					if (exprIsNullConstant((yyvsp[(2) - (2)].node)))
+					if (exprIsNullConstant((yyvsp[0].node)))
 					{
 						/* DEFAULT NULL should be reported as empty expr */
 						n->raw_expr = NULL;
 					}
 					else
 					{
-						n->raw_expr = (yyvsp[(2) - (2)].node);
+						n->raw_expr = (yyvsp[0].node);
 					}
 					n->cooked_expr = NULL;
 					n->keys = NULL;
@@ -16438,12 +16215,12 @@ yyreduce:
     {
 					FkConstraint *n = makeNode(FkConstraint);
 					n->constr_name		= NULL;
-					n->pktable			= (yyvsp[(2) - (5)].range);
+					n->pktable			= (yyvsp[-3].range);
 					n->fk_attrs			= NIL;
-					n->pk_attrs			= (yyvsp[(3) - (5)].list);
-					n->fk_matchtype		= (yyvsp[(4) - (5)].ival);
-					n->fk_upd_action	= (char) ((yyvsp[(5) - (5)].ival) >> 8);
-					n->fk_del_action	= (char) ((yyvsp[(5) - (5)].ival) & 0xFF);
+					n->pk_attrs			= (yyvsp[-2].list);
+					n->fk_matchtype		= (yyvsp[-1].ival);
+					n->fk_upd_action	= (char) ((yyvsp[0].ival) >> 8);
+					n->fk_del_action	= (char) ((yyvsp[0].ival) & 0xFF);
 					n->deferrable		= FALSE;
 					n->initdeferred		= FALSE;
 					(yyval.node) = (Node *)n;
@@ -16490,15 +16267,15 @@ yyreduce:
 #line 2191 "gram.y"
     {
 					InhRelation *n = makeNode(InhRelation);
-					n->relation = (yyvsp[(2) - (3)].range);
-					n->options = (yyvsp[(3) - (3)].list);
+					n->relation = (yyvsp[-1].range);
+					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
 
   case 326:
 #line 2200 "gram.y"
-    { (yyval.list) = lappend_int((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].ival)); }
+    { (yyval.list) = lappend_int((yyvsp[-1].list), (yyvsp[0].ival)); }
     break;
 
   case 327:
@@ -16539,30 +16316,30 @@ yyreduce:
   case 334:
 #line 2220 "gram.y"
     {
-					switch (nodeTag((yyvsp[(3) - (3)].node)))
+					switch (nodeTag((yyvsp[0].node)))
 					{
 						case T_Constraint:
 							{
-								Constraint *n = (Constraint *)(yyvsp[(3) - (3)].node);
-								n->name = (yyvsp[(2) - (3)].str);
+								Constraint *n = (Constraint *)(yyvsp[0].node);
+								n->name = (yyvsp[-1].str);
 							}
 							break;
 						case T_FkConstraint:
 							{
-								FkConstraint *n = (FkConstraint *)(yyvsp[(3) - (3)].node);
-								n->constr_name = (yyvsp[(2) - (3)].str);
+								FkConstraint *n = (FkConstraint *)(yyvsp[0].node);
+								n->constr_name = (yyvsp[-1].str);
 							}
 							break;
 						default:
 							break;
 					}
-					(yyval.node) = (yyvsp[(3) - (3)].node);
+					(yyval.node) = (yyvsp[0].node);
 				}
     break;
 
   case 335:
 #line 2240 "gram.y"
-    { (yyval.node) = (yyvsp[(1) - (1)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 336:
@@ -16571,7 +16348,7 @@ yyreduce:
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_CHECK;
 					n->name = NULL;
-					n->raw_expr = (yyvsp[(3) - (4)].node);
+					n->raw_expr = (yyvsp[-1].node);
 					n->cooked_expr = NULL;
 					n->indexspace = NULL;
 					(yyval.node) = (Node *)n;
@@ -16586,9 +16363,9 @@ yyreduce:
 					n->name = NULL;
 					n->raw_expr = NULL;
 					n->cooked_expr = NULL;
-					n->keys = (yyvsp[(3) - (6)].list);
-					n->options = (yyvsp[(5) - (6)].list);
-					n->indexspace = (yyvsp[(6) - (6)].str);
+					n->keys = (yyvsp[-3].list);
+					n->options = (yyvsp[-1].list);
+					n->indexspace = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -16601,9 +16378,9 @@ yyreduce:
 					n->name = NULL;
 					n->raw_expr = NULL;
 					n->cooked_expr = NULL;
-					n->keys = (yyvsp[(4) - (7)].list);
-					n->options = (yyvsp[(6) - (7)].list);
-					n->indexspace = (yyvsp[(7) - (7)].str);
+					n->keys = (yyvsp[-3].list);
+					n->options = (yyvsp[-1].list);
+					n->indexspace = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -16613,21 +16390,21 @@ yyreduce:
     {
 					FkConstraint *n = makeNode(FkConstraint);
 					n->constr_name		= NULL;
-					n->pktable			= (yyvsp[(7) - (11)].range);
-					n->fk_attrs			= (yyvsp[(4) - (11)].list);
-					n->pk_attrs			= (yyvsp[(8) - (11)].list);
-					n->fk_matchtype		= (yyvsp[(9) - (11)].ival);
-					n->fk_upd_action	= (char) ((yyvsp[(10) - (11)].ival) >> 8);
-					n->fk_del_action	= (char) ((yyvsp[(10) - (11)].ival) & 0xFF);
-					n->deferrable		= ((yyvsp[(11) - (11)].ival) & 1) != 0;
-					n->initdeferred		= ((yyvsp[(11) - (11)].ival) & 2) != 0;
+					n->pktable			= (yyvsp[-4].range);
+					n->fk_attrs			= (yyvsp[-7].list);
+					n->pk_attrs			= (yyvsp[-3].list);
+					n->fk_matchtype		= (yyvsp[-2].ival);
+					n->fk_upd_action	= (char) ((yyvsp[-1].ival) >> 8);
+					n->fk_del_action	= (char) ((yyvsp[-1].ival) & 0xFF);
+					n->deferrable		= ((yyvsp[0].ival) & 1) != 0;
+					n->initdeferred		= ((yyvsp[0].ival) & 2) != 0;
 					(yyval.node) = (Node *)n;
 				}
     break;
 
   case 340:
 #line 2296 "gram.y"
-    { (yyval.list) = (yyvsp[(2) - (3)].list); }
+    { (yyval.list) = (yyvsp[-1].list); }
     break;
 
   case 341:
@@ -16637,18 +16414,18 @@ yyreduce:
 
   case 342:
 #line 2301 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
+    { (yyval.list) = list_make1((yyvsp[0].node)); }
     break;
 
   case 343:
 #line 2302 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node)); }
     break;
 
   case 344:
 #line 2306 "gram.y"
     {
-					(yyval.node) = (Node *) makeString((yyvsp[(1) - (1)].str));
+					(yyval.node) = (Node *) makeString((yyvsp[0].str));
 				}
     break;
 
@@ -16685,22 +16462,22 @@ yyreduce:
 
   case 349:
 #line 2340 "gram.y"
-    { (yyval.ival) = ((yyvsp[(1) - (1)].ival) << 8) | (FKCONSTR_ACTION_NOACTION & 0xFF); }
+    { (yyval.ival) = ((yyvsp[0].ival) << 8) | (FKCONSTR_ACTION_NOACTION & 0xFF); }
     break;
 
   case 350:
 #line 2342 "gram.y"
-    { (yyval.ival) = (FKCONSTR_ACTION_NOACTION << 8) | ((yyvsp[(1) - (1)].ival) & 0xFF); }
+    { (yyval.ival) = (FKCONSTR_ACTION_NOACTION << 8) | ((yyvsp[0].ival) & 0xFF); }
     break;
 
   case 351:
 #line 2344 "gram.y"
-    { (yyval.ival) = ((yyvsp[(1) - (2)].ival) << 8) | ((yyvsp[(2) - (2)].ival) & 0xFF); }
+    { (yyval.ival) = ((yyvsp[-1].ival) << 8) | ((yyvsp[0].ival) & 0xFF); }
     break;
 
   case 352:
 #line 2346 "gram.y"
-    { (yyval.ival) = ((yyvsp[(2) - (2)].ival) << 8) | ((yyvsp[(1) - (2)].ival) & 0xFF); }
+    { (yyval.ival) = ((yyvsp[0].ival) << 8) | ((yyvsp[-1].ival) & 0xFF); }
     break;
 
   case 353:
@@ -16710,12 +16487,12 @@ yyreduce:
 
   case 354:
 #line 2351 "gram.y"
-    { (yyval.ival) = (yyvsp[(3) - (3)].ival); }
+    { (yyval.ival) = (yyvsp[0].ival); }
     break;
 
   case 355:
 #line 2354 "gram.y"
-    { (yyval.ival) = (yyvsp[(3) - (3)].ival); }
+    { (yyval.ival) = (yyvsp[0].ival); }
     break;
 
   case 356:
@@ -16745,7 +16522,7 @@ yyreduce:
 
   case 361:
 #line 2365 "gram.y"
-    { (yyval.list) = (yyvsp[(3) - (4)].list); }
+    { (yyval.list) = (yyvsp[-1].list); }
     break;
 
   case 362:
@@ -16755,7 +16532,7 @@ yyreduce:
 
   case 363:
 #line 2371 "gram.y"
-    { (yyval.list) = (yyvsp[(2) - (2)].list); }
+    { (yyval.list) = (yyvsp[0].list); }
     break;
 
   case 364:
@@ -16795,7 +16572,7 @@ yyreduce:
 
   case 371:
 #line 2383 "gram.y"
-    { (yyval.str) = (yyvsp[(2) - (2)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 372:
@@ -16805,7 +16582,7 @@ yyreduce:
 
   case 373:
 #line 2387 "gram.y"
-    { (yyval.str) = (yyvsp[(4) - (4)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 374:
@@ -16823,14 +16600,14 @@ yyreduce:
 					 * to find it.	Similarly, the output column names must
 					 * be attached to that Select's target list.
 					 */
-					SelectStmt *n = findLeftmostSelect((SelectStmt *) (yyvsp[(6) - (6)].node));
+					SelectStmt *n = findLeftmostSelect((SelectStmt *) (yyvsp[0].node));
 					if (n->intoClause != NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("CREATE TABLE AS cannot specify INTO")));
-					(yyvsp[(4) - (6)].into)->rel->istemp = (yyvsp[(2) - (6)].boolean);
-					n->intoClause = (yyvsp[(4) - (6)].into);
-					(yyval.node) = (yyvsp[(6) - (6)].node);
+					(yyvsp[-2].into)->rel->istemp = (yyvsp[-4].boolean);
+					n->intoClause = (yyvsp[-2].into);
+					(yyval.node) = (yyvsp[0].node);
 				}
     break;
 
@@ -16838,17 +16615,17 @@ yyreduce:
 #line 2420 "gram.y"
     {
 					(yyval.into) = makeNode(IntoClause);
-					(yyval.into)->rel = (yyvsp[(1) - (5)].range);
-					(yyval.into)->colNames = (yyvsp[(2) - (5)].list);
-					(yyval.into)->options = (yyvsp[(3) - (5)].list);
-					(yyval.into)->onCommit = (yyvsp[(4) - (5)].oncommit);
-					(yyval.into)->tableSpaceName = (yyvsp[(5) - (5)].str);
+					(yyval.into)->rel = (yyvsp[-4].range);
+					(yyval.into)->colNames = (yyvsp[-3].list);
+					(yyval.into)->options = (yyvsp[-2].list);
+					(yyval.into)->onCommit = (yyvsp[-1].oncommit);
+					(yyval.into)->tableSpaceName = (yyvsp[0].str);
 				}
     break;
 
   case 377:
 #line 2431 "gram.y"
-    { (yyval.list) = (yyvsp[(2) - (3)].list); }
+    { (yyval.list) = (yyvsp[-1].list); }
     break;
 
   case 378:
@@ -16858,19 +16635,19 @@ yyreduce:
 
   case 379:
 #line 2436 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
+    { (yyval.list) = list_make1((yyvsp[0].node)); }
     break;
 
   case 380:
 #line 2437 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node)); }
     break;
 
   case 381:
 #line 2442 "gram.y"
     {
 					ColumnDef *n = makeNode(ColumnDef);
-					n->colname = (yyvsp[(1) - (1)].str);
+					n->colname = (yyvsp[0].str);
 					n->typename = NULL;
 					n->inhcount = 0;
 					n->is_local = true;
@@ -16886,9 +16663,9 @@ yyreduce:
 #line 2467 "gram.y"
     {
 					CreateSeqStmt *n = makeNode(CreateSeqStmt);
-					(yyvsp[(4) - (5)].range)->istemp = (yyvsp[(2) - (5)].boolean);
-					n->sequence = (yyvsp[(4) - (5)].range);
-					n->options = (yyvsp[(5) - (5)].list);
+					(yyvsp[-1].range)->istemp = (yyvsp[-3].boolean);
+					n->sequence = (yyvsp[-1].range);
+					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -16897,15 +16674,15 @@ yyreduce:
 #line 2478 "gram.y"
     {
 					AlterSeqStmt *n = makeNode(AlterSeqStmt);
-					n->sequence = (yyvsp[(3) - (4)].range);
-					n->options = (yyvsp[(4) - (4)].list);
+					n->sequence = (yyvsp[-1].range);
+					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
 
   case 384:
 #line 2486 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].defelt)); }
+    { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].defelt)); }
     break;
 
   case 385:
@@ -16916,7 +16693,7 @@ yyreduce:
   case 386:
 #line 2491 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("cache", (Node *)(yyvsp[(2) - (2)].value));
+					(yyval.defelt) = makeDefElem("cache", (Node *)(yyvsp[0].value));
 				}
     break;
 
@@ -16937,21 +16714,21 @@ yyreduce:
   case 389:
 #line 2503 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("increment", (Node *)(yyvsp[(3) - (3)].value));
+					(yyval.defelt) = makeDefElem("increment", (Node *)(yyvsp[0].value));
 				}
     break;
 
   case 390:
 #line 2507 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("maxvalue", (Node *)(yyvsp[(2) - (2)].value));
+					(yyval.defelt) = makeDefElem("maxvalue", (Node *)(yyvsp[0].value));
 				}
     break;
 
   case 391:
 #line 2511 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("minvalue", (Node *)(yyvsp[(2) - (2)].value));
+					(yyval.defelt) = makeDefElem("minvalue", (Node *)(yyvsp[0].value));
 				}
     break;
 
@@ -16972,21 +16749,21 @@ yyreduce:
   case 394:
 #line 2523 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("owned_by", (Node *)(yyvsp[(3) - (3)].list));
+					(yyval.defelt) = makeDefElem("owned_by", (Node *)(yyvsp[0].list));
 				}
     break;
 
   case 395:
 #line 2527 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("start", (Node *)(yyvsp[(3) - (3)].value));
+					(yyval.defelt) = makeDefElem("start", (Node *)(yyvsp[0].value));
 				}
     break;
 
   case 396:
 #line 2531 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("restart", (Node *)(yyvsp[(3) - (3)].value));
+					(yyval.defelt) = makeDefElem("restart", (Node *)(yyvsp[0].value));
 				}
     break;
 
@@ -17002,37 +16779,37 @@ yyreduce:
 
   case 399:
 #line 2541 "gram.y"
-    { (yyval.value) = (yyvsp[(1) - (1)].value); }
+    { (yyval.value) = (yyvsp[0].value); }
     break;
 
   case 400:
 #line 2542 "gram.y"
-    { (yyval.value) = (yyvsp[(1) - (1)].value); }
+    { (yyval.value) = (yyvsp[0].value); }
     break;
 
   case 401:
 #line 2545 "gram.y"
-    { (yyval.value) = makeFloat((yyvsp[(1) - (1)].str)); }
+    { (yyval.value) = makeFloat((yyvsp[0].str)); }
     break;
 
   case 402:
 #line 2547 "gram.y"
     {
-					(yyval.value) = makeFloat((yyvsp[(2) - (2)].str));
+					(yyval.value) = makeFloat((yyvsp[0].str));
 					doNegateFloat((yyval.value));
 				}
     break;
 
   case 403:
 #line 2553 "gram.y"
-    { (yyval.value) = makeInteger((yyvsp[(1) - (1)].ival)); }
+    { (yyval.value) = makeInteger((yyvsp[0].ival)); }
     break;
 
   case 404:
 #line 2566 "gram.y"
     {
 				CreatePLangStmt *n = makeNode(CreatePLangStmt);
-				n->plname = (yyvsp[(5) - (5)].str);
+				n->plname = (yyvsp[0].str);
 				/* parameters are all to be supplied by system */
 				n->plhandler = NIL;
 				n->plvalidator = NIL;
@@ -17045,10 +16822,10 @@ yyreduce:
 #line 2577 "gram.y"
     {
 				CreatePLangStmt *n = makeNode(CreatePLangStmt);
-				n->plname = (yyvsp[(5) - (9)].str);
-				n->plhandler = (yyvsp[(7) - (9)].list);
-				n->plvalidator = (yyvsp[(8) - (9)].list);
-				n->pltrusted = (yyvsp[(2) - (9)].boolean);
+				n->plname = (yyvsp[-4].str);
+				n->plhandler = (yyvsp[-2].list);
+				n->plvalidator = (yyvsp[-1].list);
+				n->pltrusted = (yyvsp[-7].boolean);
 				/* LANCOMPILER is now ignored entirely */
 				(yyval.node) = (Node *)n;
 			}
@@ -17066,17 +16843,17 @@ yyreduce:
 
   case 408:
 #line 2598 "gram.y"
-    { (yyval.list) = list_make1(makeString((yyvsp[(1) - (1)].str))); }
+    { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
     break;
 
   case 409:
 #line 2599 "gram.y"
-    { (yyval.list) = lcons(makeString((yyvsp[(1) - (2)].str)), (yyvsp[(2) - (2)].list)); }
+    { (yyval.list) = lcons(makeString((yyvsp[-1].str)), (yyvsp[0].list)); }
     break;
 
   case 410:
 #line 2603 "gram.y"
-    { (yyval.list) = (yyvsp[(2) - (2)].list); }
+    { (yyval.list) = (yyvsp[0].list); }
     break;
 
   case 411:
@@ -17086,7 +16863,7 @@ yyreduce:
 
   case 412:
 #line 2608 "gram.y"
-    { (yyval.str) = (yyvsp[(2) - (2)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 413:
@@ -17098,8 +16875,8 @@ yyreduce:
 #line 2614 "gram.y"
     {
 					DropPLangStmt *n = makeNode(DropPLangStmt);
-					n->plname = (yyvsp[(4) - (5)].str);
-					n->behavior = (yyvsp[(5) - (5)].dbehavior);
+					n->plname = (yyvsp[-1].str);
+					n->behavior = (yyvsp[0].dbehavior);
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
@@ -17109,8 +16886,8 @@ yyreduce:
 #line 2622 "gram.y"
     {
 					DropPLangStmt *n = makeNode(DropPLangStmt);
-					n->plname = (yyvsp[(6) - (7)].str);
-					n->behavior = (yyvsp[(7) - (7)].dbehavior);
+					n->plname = (yyvsp[-1].str);
+					n->behavior = (yyvsp[0].dbehavior);
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
@@ -17130,16 +16907,16 @@ yyreduce:
 #line 2644 "gram.y"
     {
 					CreateTableSpaceStmt *n = makeNode(CreateTableSpaceStmt);
-					n->tablespacename = (yyvsp[(3) - (6)].str);
-					n->owner = (yyvsp[(4) - (6)].str);
-					n->location = (yyvsp[(6) - (6)].str);
+					n->tablespacename = (yyvsp[-3].str);
+					n->owner = (yyvsp[-2].str);
+					n->location = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
     break;
 
   case 419:
 #line 2653 "gram.y"
-    { (yyval.str) = (yyvsp[(2) - (2)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 420:
@@ -17151,7 +16928,7 @@ yyreduce:
 #line 2668 "gram.y"
     {
 					DropTableSpaceStmt *n = makeNode(DropTableSpaceStmt);
-					n->tablespacename = (yyvsp[(3) - (3)].str);
+					n->tablespacename = (yyvsp[0].str);
 					n->missing_ok = false;
 					(yyval.node) = (Node *) n;
 				}
@@ -17161,7 +16938,7 @@ yyreduce:
 #line 2675 "gram.y"
     {
 					DropTableSpaceStmt *n = makeNode(DropTableSpaceStmt);
-					n->tablespacename = (yyvsp[(5) - (5)].str);
+					n->tablespacename = (yyvsp[0].str);
 					n->missing_ok = true;
 					(yyval.node) = (Node *) n;
 				}
@@ -17171,13 +16948,13 @@ yyreduce:
 #line 2695 "gram.y"
     {
 					CreateTrigStmt *n = makeNode(CreateTrigStmt);
-					n->trigname = (yyvsp[(3) - (14)].str);
-					n->relation = (yyvsp[(7) - (14)].range);
-					n->funcname = (yyvsp[(11) - (14)].list);
-					n->args = (yyvsp[(13) - (14)].list);
-					n->before = (yyvsp[(4) - (14)].boolean);
-					n->row = (yyvsp[(8) - (14)].boolean);
-					memcpy(n->actions, (yyvsp[(5) - (14)].str), 4);
+					n->trigname = (yyvsp[-11].str);
+					n->relation = (yyvsp[-7].range);
+					n->funcname = (yyvsp[-3].list);
+					n->args = (yyvsp[-1].list);
+					n->before = (yyvsp[-10].boolean);
+					n->row = (yyvsp[-6].boolean);
+					memcpy(n->actions, (yyvsp[-9].str), 4);
 					n->isconstraint  = FALSE;
 					n->deferrable	 = FALSE;
 					n->initdeferred  = FALSE;
@@ -17190,18 +16967,18 @@ yyreduce:
 #line 2715 "gram.y"
     {
 					CreateTrigStmt *n = makeNode(CreateTrigStmt);
-					n->trigname = (yyvsp[(4) - (19)].str);
-					n->relation = (yyvsp[(8) - (19)].range);
-					n->funcname = (yyvsp[(16) - (19)].list);
-					n->args = (yyvsp[(18) - (19)].list);
+					n->trigname = (yyvsp[-15].str);
+					n->relation = (yyvsp[-11].range);
+					n->funcname = (yyvsp[-3].list);
+					n->args = (yyvsp[-1].list);
 					n->before = FALSE;
 					n->row = TRUE;
-					memcpy(n->actions, (yyvsp[(6) - (19)].str), 4);
+					memcpy(n->actions, (yyvsp[-13].str), 4);
 					n->isconstraint  = TRUE;
-					n->deferrable = ((yyvsp[(10) - (19)].ival) & 1) != 0;
-					n->initdeferred = ((yyvsp[(10) - (19)].ival) & 2) != 0;
+					n->deferrable = ((yyvsp[-9].ival) & 1) != 0;
+					n->initdeferred = ((yyvsp[-9].ival) & 2) != 0;
 
-					n->constrrel = (yyvsp[(9) - (19)].range);
+					n->constrrel = (yyvsp[-10].range);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -17220,7 +16997,7 @@ yyreduce:
 #line 2740 "gram.y"
     {
 					char *e = palloc(4);
-					e[0] = (yyvsp[(1) - (1)].chr); e[1] = '\0';
+					e[0] = (yyvsp[0].chr); e[1] = '\0';
 					(yyval.str) = e;
 				}
     break;
@@ -17229,7 +17006,7 @@ yyreduce:
 #line 2746 "gram.y"
     {
 					char *e = palloc(4);
-					e[0] = (yyvsp[(1) - (3)].chr); e[1] = (yyvsp[(3) - (3)].chr); e[2] = '\0';
+					e[0] = (yyvsp[-2].chr); e[1] = (yyvsp[0].chr); e[2] = '\0';
 					(yyval.str) = e;
 				}
     break;
@@ -17238,7 +17015,7 @@ yyreduce:
 #line 2752 "gram.y"
     {
 					char *e = palloc(4);
-					e[0] = (yyvsp[(1) - (5)].chr); e[1] = (yyvsp[(3) - (5)].chr); e[2] = (yyvsp[(5) - (5)].chr); e[3] = '\0';
+					e[0] = (yyvsp[-4].chr); e[1] = (yyvsp[-2].chr); e[2] = (yyvsp[0].chr); e[3] = '\0';
 					(yyval.str) = e;
 				}
     break;
@@ -17261,7 +17038,7 @@ yyreduce:
   case 433:
 #line 2767 "gram.y"
     {
-					(yyval.boolean) = (yyvsp[(3) - (3)].boolean);
+					(yyval.boolean) = (yyvsp[0].boolean);
 				}
     break;
 
@@ -17298,12 +17075,12 @@ yyreduce:
 
   case 439:
 #line 2791 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].value)); }
+    { (yyval.list) = list_make1((yyvsp[0].value)); }
     break;
 
   case 440:
 #line 2792 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].value)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].value)); }
     break;
 
   case 441:
@@ -17315,39 +17092,39 @@ yyreduce:
 #line 2798 "gram.y"
     {
 					char buf[64];
-					snprintf(buf, sizeof(buf), "%d", (yyvsp[(1) - (1)].ival));
+					snprintf(buf, sizeof(buf), "%d", (yyvsp[0].ival));
 					(yyval.value) = makeString(pstrdup(buf));
 				}
     break;
 
   case 443:
 #line 2803 "gram.y"
-    { (yyval.value) = makeString((yyvsp[(1) - (1)].str)); }
+    { (yyval.value) = makeString((yyvsp[0].str)); }
     break;
 
   case 444:
 #line 2804 "gram.y"
-    { (yyval.value) = makeString((yyvsp[(1) - (1)].str)); }
+    { (yyval.value) = makeString((yyvsp[0].str)); }
     break;
 
   case 445:
 #line 2805 "gram.y"
-    { (yyval.value) = makeString((yyvsp[(1) - (1)].str)); }
+    { (yyval.value) = makeString((yyvsp[0].str)); }
     break;
 
   case 446:
 #line 2806 "gram.y"
-    { (yyval.value) = makeString((yyvsp[(1) - (1)].str)); }
+    { (yyval.value) = makeString((yyvsp[0].str)); }
     break;
 
   case 447:
 #line 2807 "gram.y"
-    { (yyval.value) = makeString((yyvsp[(1) - (1)].str)); }
+    { (yyval.value) = makeString((yyvsp[0].str)); }
     break;
 
   case 448:
 #line 2811 "gram.y"
-    { (yyval.range) = (yyvsp[(2) - (2)].range); }
+    { (yyval.range) = (yyvsp[0].range); }
     break;
 
   case 449:
@@ -17357,24 +17134,24 @@ yyreduce:
 
   case 450:
 #line 2817 "gram.y"
-    { (yyval.ival) = (yyvsp[(1) - (1)].ival); }
+    { (yyval.ival) = (yyvsp[0].ival); }
     break;
 
   case 451:
 #line 2819 "gram.y"
     {
-					if ((yyvsp[(1) - (2)].ival) == 0 && (yyvsp[(2) - (2)].ival) != 0)
+					if ((yyvsp[-1].ival) == 0 && (yyvsp[0].ival) != 0)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("constraint declared INITIALLY DEFERRED must be DEFERRABLE")));
-					(yyval.ival) = (yyvsp[(1) - (2)].ival) | (yyvsp[(2) - (2)].ival);
+					(yyval.ival) = (yyvsp[-1].ival) | (yyvsp[0].ival);
 				}
     break;
 
   case 452:
 #line 2827 "gram.y"
     {
-					if ((yyvsp[(1) - (1)].ival) != 0)
+					if ((yyvsp[0].ival) != 0)
 						(yyval.ival) = 3;
 					else
 						(yyval.ival) = 0;
@@ -17384,11 +17161,11 @@ yyreduce:
   case 453:
 #line 2834 "gram.y"
     {
-					if ((yyvsp[(2) - (2)].ival) == 0 && (yyvsp[(1) - (2)].ival) != 0)
+					if ((yyvsp[0].ival) == 0 && (yyvsp[-1].ival) != 0)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("constraint declared INITIALLY DEFERRED must be DEFERRABLE")));
-					(yyval.ival) = (yyvsp[(1) - (2)].ival) | (yyvsp[(2) - (2)].ival);
+					(yyval.ival) = (yyvsp[-1].ival) | (yyvsp[0].ival);
 				}
     break;
 
@@ -17421,9 +17198,9 @@ yyreduce:
 #line 2858 "gram.y"
     {
 					DropPropertyStmt *n = makeNode(DropPropertyStmt);
-					n->relation = (yyvsp[(5) - (6)].range);
-					n->property = (yyvsp[(3) - (6)].str);
-					n->behavior = (yyvsp[(6) - (6)].dbehavior);
+					n->relation = (yyvsp[-1].range);
+					n->property = (yyvsp[-3].str);
+					n->behavior = (yyvsp[0].dbehavior);
 					n->removeType = OBJECT_TRIGGER;
 					n->missing_ok = false;
 					(yyval.node) = (Node *) n;
@@ -17434,9 +17211,9 @@ yyreduce:
 #line 2868 "gram.y"
     {
 					DropPropertyStmt *n = makeNode(DropPropertyStmt);
-					n->relation = (yyvsp[(7) - (8)].range);
-					n->property = (yyvsp[(5) - (8)].str);
-					n->behavior = (yyvsp[(8) - (8)].dbehavior);
+					n->relation = (yyvsp[-1].range);
+					n->property = (yyvsp[-3].str);
+					n->behavior = (yyvsp[0].dbehavior);
 					n->removeType = OBJECT_TRIGGER;
 					n->missing_ok = true;
 					(yyval.node) = (Node *) n;
@@ -17447,11 +17224,11 @@ yyreduce:
 #line 2891 "gram.y"
     {
 					CreateTrigStmt *n = makeNode(CreateTrigStmt);
-					n->trigname = (yyvsp[(3) - (8)].str);
-					n->args = list_make1((yyvsp[(6) - (8)].node));
+					n->trigname = (yyvsp[-5].str);
+					n->args = list_make1((yyvsp[-2].node));
 					n->isconstraint  = TRUE;
-					n->deferrable = ((yyvsp[(8) - (8)].ival) & 1) != 0;
-					n->initdeferred = ((yyvsp[(8) - (8)].ival) & 2) != 0;
+					n->deferrable = ((yyvsp[0].ival) & 1) != 0;
+					n->initdeferred = ((yyvsp[0].ival) & 2) != 0;
 
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -17466,8 +17243,8 @@ yyreduce:
     {
 					DropPropertyStmt *n = makeNode(DropPropertyStmt);
 					n->relation = NULL;
-					n->property = (yyvsp[(3) - (4)].str);
-					n->behavior = (yyvsp[(4) - (4)].dbehavior);
+					n->property = (yyvsp[-1].str);
+					n->behavior = (yyvsp[0].dbehavior);
 					n->removeType = OBJECT_TRIGGER; /* XXX */
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -17482,9 +17259,9 @@ yyreduce:
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_AGGREGATE;
 					n->oldstyle = false;
-					n->defnames = (yyvsp[(3) - (5)].list);
-					n->args = (yyvsp[(4) - (5)].list);
-					n->definition = (yyvsp[(5) - (5)].list);
+					n->defnames = (yyvsp[-2].list);
+					n->args = (yyvsp[-1].list);
+					n->definition = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -17496,9 +17273,9 @@ yyreduce:
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_AGGREGATE;
 					n->oldstyle = true;
-					n->defnames = (yyvsp[(3) - (4)].list);
+					n->defnames = (yyvsp[-1].list);
 					n->args = NIL;
-					n->definition = (yyvsp[(4) - (4)].list);
+					n->definition = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -17509,9 +17286,9 @@ yyreduce:
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_OPERATOR;
 					n->oldstyle = false;
-					n->defnames = (yyvsp[(3) - (4)].list);
+					n->defnames = (yyvsp[-1].list);
 					n->args = NIL;
-					n->definition = (yyvsp[(4) - (4)].list);
+					n->definition = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -17522,9 +17299,9 @@ yyreduce:
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_TYPE;
 					n->oldstyle = false;
-					n->defnames = (yyvsp[(3) - (4)].list);
+					n->defnames = (yyvsp[-1].list);
 					n->args = NIL;
-					n->definition = (yyvsp[(4) - (4)].list);
+					n->definition = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -17536,7 +17313,7 @@ yyreduce:
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_TYPE;
 					n->oldstyle = false;
-					n->defnames = (yyvsp[(3) - (3)].list);
+					n->defnames = (yyvsp[0].list);
 					n->args = NIL;
 					n->definition = NIL;
 					(yyval.node) = (Node *)n;
@@ -17550,32 +17327,32 @@ yyreduce:
 					RangeVar *r = makeNode(RangeVar);
 
 					/* can't use qualified_name, sigh */
-					switch (list_length((yyvsp[(3) - (7)].list)))
+					switch (list_length((yyvsp[-4].list)))
 					{
 						case 1:
 							r->catalogname = NULL;
 							r->schemaname = NULL;
-							r->relname = strVal(linitial((yyvsp[(3) - (7)].list)));
+							r->relname = strVal(linitial((yyvsp[-4].list)));
 							break;
 						case 2:
 							r->catalogname = NULL;
-							r->schemaname = strVal(linitial((yyvsp[(3) - (7)].list)));
-							r->relname = strVal(lsecond((yyvsp[(3) - (7)].list)));
+							r->schemaname = strVal(linitial((yyvsp[-4].list)));
+							r->relname = strVal(lsecond((yyvsp[-4].list)));
 							break;
 						case 3:
-							r->catalogname = strVal(linitial((yyvsp[(3) - (7)].list)));
-							r->schemaname = strVal(lsecond((yyvsp[(3) - (7)].list)));
-							r->relname = strVal(lthird((yyvsp[(3) - (7)].list)));
+							r->catalogname = strVal(linitial((yyvsp[-4].list)));
+							r->schemaname = strVal(lsecond((yyvsp[-4].list)));
+							r->relname = strVal(lthird((yyvsp[-4].list)));
 							break;
 						default:
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("improper qualified name (too many dotted names): %s",
-											NameListToString((yyvsp[(3) - (7)].list)))));
+											NameListToString((yyvsp[-4].list)))));
 							break;
 					}
 					n->typevar = r;
-					n->coldeflist = (yyvsp[(6) - (7)].list);
+					n->coldeflist = (yyvsp[-1].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -17584,8 +17361,8 @@ yyreduce:
 #line 3018 "gram.y"
     {
 					CreateEnumStmt *n = makeNode(CreateEnumStmt);
-					n->typename = (yyvsp[(3) - (8)].list);
-					n->vals = (yyvsp[(7) - (8)].list);
+					n->typename = (yyvsp[-5].list);
+					n->vals = (yyvsp[-1].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -17596,8 +17373,8 @@ yyreduce:
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_TSPARSER;
 					n->args = NIL;
-					n->defnames = (yyvsp[(5) - (6)].list);
-					n->definition = (yyvsp[(6) - (6)].list);
+					n->defnames = (yyvsp[-1].list);
+					n->definition = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -17608,8 +17385,8 @@ yyreduce:
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_TSDICTIONARY;
 					n->args = NIL;
-					n->defnames = (yyvsp[(5) - (6)].list);
-					n->definition = (yyvsp[(6) - (6)].list);
+					n->defnames = (yyvsp[-1].list);
+					n->definition = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -17620,8 +17397,8 @@ yyreduce:
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_TSTEMPLATE;
 					n->args = NIL;
-					n->defnames = (yyvsp[(5) - (6)].list);
-					n->definition = (yyvsp[(6) - (6)].list);
+					n->defnames = (yyvsp[-1].list);
+					n->definition = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -17632,69 +17409,69 @@ yyreduce:
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_TSCONFIGURATION;
 					n->args = NIL;
-					n->defnames = (yyvsp[(5) - (6)].list);
-					n->definition = (yyvsp[(6) - (6)].list);
+					n->defnames = (yyvsp[-1].list);
+					n->definition = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
 
   case 474:
 #line 3062 "gram.y"
-    { (yyval.list) = (yyvsp[(2) - (3)].list); }
+    { (yyval.list) = (yyvsp[-1].list); }
     break;
 
   case 475:
 #line 3065 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].defelt)); }
+    { (yyval.list) = list_make1((yyvsp[0].defelt)); }
     break;
 
   case 476:
 #line 3066 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].defelt)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].defelt)); }
     break;
 
   case 477:
 #line 3070 "gram.y"
     {
-					(yyval.defelt) = makeDefElem((yyvsp[(1) - (3)].str), (Node *)(yyvsp[(3) - (3)].node));
+					(yyval.defelt) = makeDefElem((yyvsp[-2].str), (Node *)(yyvsp[0].node));
 				}
     break;
 
   case 478:
 #line 3074 "gram.y"
     {
-					(yyval.defelt) = makeDefElem((yyvsp[(1) - (1)].str), NULL);
+					(yyval.defelt) = makeDefElem((yyvsp[0].str), NULL);
 				}
     break;
 
   case 479:
 #line 3080 "gram.y"
-    { (yyval.node) = (Node *)(yyvsp[(1) - (1)].typnam); }
+    { (yyval.node) = (Node *)(yyvsp[0].typnam); }
     break;
 
   case 480:
 #line 3081 "gram.y"
-    { (yyval.node) = (Node *)makeString(pstrdup((yyvsp[(1) - (1)].keyword))); }
+    { (yyval.node) = (Node *)makeString(pstrdup((yyvsp[0].keyword))); }
     break;
 
   case 481:
 #line 3082 "gram.y"
-    { (yyval.node) = (Node *)(yyvsp[(1) - (1)].list); }
+    { (yyval.node) = (Node *)(yyvsp[0].list); }
     break;
 
   case 482:
 #line 3083 "gram.y"
-    { (yyval.node) = (Node *)(yyvsp[(1) - (1)].value); }
+    { (yyval.node) = (Node *)(yyvsp[0].value); }
     break;
 
   case 483:
 #line 3084 "gram.y"
-    { (yyval.node) = (Node *)makeString((yyvsp[(1) - (1)].str)); }
+    { (yyval.node) = (Node *)makeString((yyvsp[0].str)); }
     break;
 
   case 484:
 #line 3087 "gram.y"
-    { (yyval.list) = (yyvsp[(2) - (3)].list); }
+    { (yyval.list) = (yyvsp[-1].list); }
     break;
 
   case 485:
@@ -17704,58 +17481,58 @@ yyreduce:
 
   case 486:
 #line 3091 "gram.y"
-    { (yyval.list) = (yyvsp[(2) - (3)].list); }
+    { (yyval.list) = (yyvsp[-1].list); }
     break;
 
   case 487:
 #line 3094 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].defelt)); }
+    { (yyval.list) = list_make1((yyvsp[0].defelt)); }
     break;
 
   case 488:
 #line 3095 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].defelt)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].defelt)); }
     break;
 
   case 489:
 #line 3099 "gram.y"
     {
-					(yyval.defelt) = makeDefElem((yyvsp[(1) - (3)].str), (Node *)(yyvsp[(3) - (3)].node));
+					(yyval.defelt) = makeDefElem((yyvsp[-2].str), (Node *)(yyvsp[0].node));
 				}
     break;
 
   case 490:
 #line 3105 "gram.y"
-    { (yyval.list) = list_make1(makeString((yyvsp[(1) - (1)].str))); }
+    { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
     break;
 
   case 491:
 #line 3107 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), makeString((yyvsp[(3) - (3)].str))); }
+    { (yyval.list) = lappend((yyvsp[-2].list), makeString((yyvsp[0].str))); }
     break;
 
   case 492:
 #line 3125 "gram.y"
     {
 					CreateOpClassStmt *n = makeNode(CreateOpClassStmt);
-					n->opclassname = (yyvsp[(4) - (13)].list);
-					n->isDefault = (yyvsp[(5) - (13)].boolean);
-					n->datatype = (yyvsp[(8) - (13)].typnam);
-					n->amname = (yyvsp[(10) - (13)].str);
-					n->opfamilyname = (yyvsp[(11) - (13)].list);
-					n->items = (yyvsp[(13) - (13)].list);
+					n->opclassname = (yyvsp[-9].list);
+					n->isDefault = (yyvsp[-8].boolean);
+					n->datatype = (yyvsp[-5].typnam);
+					n->amname = (yyvsp[-3].str);
+					n->opfamilyname = (yyvsp[-2].list);
+					n->items = (yyvsp[0].list);
 					(yyval.node) = (Node *) n;
 				}
     break;
 
   case 493:
 #line 3138 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
+    { (yyval.list) = list_make1((yyvsp[0].node)); }
     break;
 
   case 494:
 #line 3139 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node)); }
     break;
 
   case 495:
@@ -17763,10 +17540,10 @@ yyreduce:
     {
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_OPERATOR;
-					n->name = (yyvsp[(3) - (4)].list);
+					n->name = (yyvsp[-1].list);
 					n->args = NIL;
-					n->number = (yyvsp[(2) - (4)].ival);
-					n->recheck = (yyvsp[(4) - (4)].boolean);
+					n->number = (yyvsp[-2].ival);
+					n->recheck = (yyvsp[0].boolean);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -17776,10 +17553,10 @@ yyreduce:
     {
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_OPERATOR;
-					n->name = (yyvsp[(3) - (7)].list);
-					n->args = (yyvsp[(5) - (7)].list);
-					n->number = (yyvsp[(2) - (7)].ival);
-					n->recheck = (yyvsp[(7) - (7)].boolean);
+					n->name = (yyvsp[-4].list);
+					n->args = (yyvsp[-2].list);
+					n->number = (yyvsp[-5].ival);
+					n->recheck = (yyvsp[0].boolean);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -17789,9 +17566,9 @@ yyreduce:
     {
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_FUNCTION;
-					n->name = (yyvsp[(3) - (4)].list);
-					n->args = extractArgTypes((yyvsp[(4) - (4)].list));
-					n->number = (yyvsp[(2) - (4)].ival);
+					n->name = (yyvsp[-1].list);
+					n->args = extractArgTypes((yyvsp[0].list));
+					n->number = (yyvsp[-2].ival);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -17801,10 +17578,10 @@ yyreduce:
     {
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_FUNCTION;
-					n->name = (yyvsp[(6) - (7)].list);
-					n->args = extractArgTypes((yyvsp[(7) - (7)].list));
-					n->number = (yyvsp[(2) - (7)].ival);
-					n->class_args = (yyvsp[(4) - (7)].list);
+					n->name = (yyvsp[-1].list);
+					n->args = extractArgTypes((yyvsp[0].list));
+					n->number = (yyvsp[-5].ival);
+					n->class_args = (yyvsp[-3].list);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -17814,7 +17591,7 @@ yyreduce:
     {
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_STORAGETYPE;
-					n->storedtype = (yyvsp[(2) - (2)].typnam);
+					n->storedtype = (yyvsp[0].typnam);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -17831,7 +17608,7 @@ yyreduce:
 
   case 502:
 #line 3195 "gram.y"
-    { (yyval.list) = (yyvsp[(2) - (2)].list); }
+    { (yyval.list) = (yyvsp[0].list); }
     break;
 
   case 503:
@@ -17853,8 +17630,8 @@ yyreduce:
 #line 3206 "gram.y"
     {
 					CreateOpFamilyStmt *n = makeNode(CreateOpFamilyStmt);
-					n->opfamilyname = (yyvsp[(4) - (6)].list);
-					n->amname = (yyvsp[(6) - (6)].str);
+					n->opfamilyname = (yyvsp[-2].list);
+					n->amname = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -17863,10 +17640,10 @@ yyreduce:
 #line 3216 "gram.y"
     {
 					AlterOpFamilyStmt *n = makeNode(AlterOpFamilyStmt);
-					n->opfamilyname = (yyvsp[(4) - (8)].list);
-					n->amname = (yyvsp[(6) - (8)].str);
+					n->opfamilyname = (yyvsp[-4].list);
+					n->amname = (yyvsp[-2].str);
 					n->isDrop = false;
-					n->items = (yyvsp[(8) - (8)].list);
+					n->items = (yyvsp[0].list);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -17875,22 +17652,22 @@ yyreduce:
 #line 3225 "gram.y"
     {
 					AlterOpFamilyStmt *n = makeNode(AlterOpFamilyStmt);
-					n->opfamilyname = (yyvsp[(4) - (8)].list);
-					n->amname = (yyvsp[(6) - (8)].str);
+					n->opfamilyname = (yyvsp[-4].list);
+					n->amname = (yyvsp[-2].str);
 					n->isDrop = true;
-					n->items = (yyvsp[(8) - (8)].list);
+					n->items = (yyvsp[0].list);
 					(yyval.node) = (Node *) n;
 				}
     break;
 
   case 509:
 #line 3236 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
+    { (yyval.list) = list_make1((yyvsp[0].node)); }
     break;
 
   case 510:
 #line 3237 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node)); }
     break;
 
   case 511:
@@ -17898,8 +17675,8 @@ yyreduce:
     {
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_OPERATOR;
-					n->number = (yyvsp[(2) - (5)].ival);
-					n->args = (yyvsp[(4) - (5)].list);
+					n->number = (yyvsp[-3].ival);
+					n->args = (yyvsp[-1].list);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -17909,8 +17686,8 @@ yyreduce:
     {
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_FUNCTION;
-					n->number = (yyvsp[(2) - (5)].ival);
-					n->args = (yyvsp[(4) - (5)].list);
+					n->number = (yyvsp[-3].ival);
+					n->args = (yyvsp[-1].list);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -17919,9 +17696,9 @@ yyreduce:
 #line 3262 "gram.y"
     {
 					RemoveOpClassStmt *n = makeNode(RemoveOpClassStmt);
-					n->opclassname = (yyvsp[(4) - (7)].list);
-					n->amname = (yyvsp[(6) - (7)].str);
-					n->behavior = (yyvsp[(7) - (7)].dbehavior);
+					n->opclassname = (yyvsp[-3].list);
+					n->amname = (yyvsp[-1].str);
+					n->behavior = (yyvsp[0].dbehavior);
 					n->missing_ok = false;
 					(yyval.node) = (Node *) n;
 				}
@@ -17931,9 +17708,9 @@ yyreduce:
 #line 3271 "gram.y"
     {
 					RemoveOpClassStmt *n = makeNode(RemoveOpClassStmt);
-					n->opclassname = (yyvsp[(6) - (9)].list);
-					n->amname = (yyvsp[(8) - (9)].str);
-					n->behavior = (yyvsp[(9) - (9)].dbehavior);
+					n->opclassname = (yyvsp[-3].list);
+					n->amname = (yyvsp[-1].str);
+					n->behavior = (yyvsp[0].dbehavior);
 					n->missing_ok = true;
 					(yyval.node) = (Node *) n;
 				}
@@ -17943,9 +17720,9 @@ yyreduce:
 #line 3283 "gram.y"
     {
 					RemoveOpFamilyStmt *n = makeNode(RemoveOpFamilyStmt);
-					n->opfamilyname = (yyvsp[(4) - (7)].list);
-					n->amname = (yyvsp[(6) - (7)].str);
-					n->behavior = (yyvsp[(7) - (7)].dbehavior);
+					n->opfamilyname = (yyvsp[-3].list);
+					n->amname = (yyvsp[-1].str);
+					n->behavior = (yyvsp[0].dbehavior);
 					n->missing_ok = false;
 					(yyval.node) = (Node *) n;
 				}
@@ -17955,9 +17732,9 @@ yyreduce:
 #line 3292 "gram.y"
     {
 					RemoveOpFamilyStmt *n = makeNode(RemoveOpFamilyStmt);
-					n->opfamilyname = (yyvsp[(6) - (9)].list);
-					n->amname = (yyvsp[(8) - (9)].str);
-					n->behavior = (yyvsp[(9) - (9)].dbehavior);
+					n->opfamilyname = (yyvsp[-3].list);
+					n->amname = (yyvsp[-1].str);
+					n->behavior = (yyvsp[0].dbehavior);
 					n->missing_ok = true;
 					(yyval.node) = (Node *) n;
 				}
@@ -17967,8 +17744,8 @@ yyreduce:
 #line 3313 "gram.y"
     {
 					DropOwnedStmt *n = makeNode(DropOwnedStmt);
-					n->roles = (yyvsp[(4) - (5)].list);
-					n->behavior = (yyvsp[(5) - (5)].dbehavior);
+					n->roles = (yyvsp[-1].list);
+					n->behavior = (yyvsp[0].dbehavior);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -17977,8 +17754,8 @@ yyreduce:
 #line 3323 "gram.y"
     {
 					ReassignOwnedStmt *n = makeNode(ReassignOwnedStmt);
-					n->roles = (yyvsp[(4) - (6)].list);
-					n->newrole = (yyvsp[(6) - (6)].str);
+					n->roles = (yyvsp[-2].list);
+					n->newrole = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -17987,10 +17764,10 @@ yyreduce:
 #line 3341 "gram.y"
     {
 					DropStmt *n = makeNode(DropStmt);
-					n->removeType = (yyvsp[(2) - (6)].objtype);
+					n->removeType = (yyvsp[-4].objtype);
 					n->missing_ok = TRUE;
-					n->objects = (yyvsp[(5) - (6)].list);
-					n->behavior = (yyvsp[(6) - (6)].dbehavior);
+					n->objects = (yyvsp[-1].list);
+					n->behavior = (yyvsp[0].dbehavior);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -17999,10 +17776,10 @@ yyreduce:
 #line 3350 "gram.y"
     {
 					DropStmt *n = makeNode(DropStmt);
-					n->removeType = (yyvsp[(2) - (4)].objtype);
+					n->removeType = (yyvsp[-2].objtype);
 					n->missing_ok = FALSE;
-					n->objects = (yyvsp[(3) - (4)].list);
-					n->behavior = (yyvsp[(4) - (4)].dbehavior);
+					n->objects = (yyvsp[-1].list);
+					n->behavior = (yyvsp[0].dbehavior);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -18069,40 +17846,40 @@ yyreduce:
 
   case 533:
 #line 3376 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].list)); }
+    { (yyval.list) = list_make1((yyvsp[0].list)); }
     break;
 
   case 534:
 #line 3377 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].list)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].list)); }
     break;
 
   case 535:
 #line 3380 "gram.y"
-    { (yyval.list) = list_make1(makeString((yyvsp[(1) - (1)].str))); }
+    { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
     break;
 
   case 536:
 #line 3381 "gram.y"
-    { (yyval.list) = lcons(makeString((yyvsp[(1) - (2)].str)), (yyvsp[(2) - (2)].list)); }
+    { (yyval.list) = lcons(makeString((yyvsp[-1].str)), (yyvsp[0].list)); }
     break;
 
   case 537:
 #line 3385 "gram.y"
-    { (yyval.list) = list_make1(makeString((yyvsp[(2) - (2)].str))); }
+    { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
     break;
 
   case 538:
 #line 3387 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), makeString((yyvsp[(3) - (3)].str))); }
+    { (yyval.list) = lappend((yyvsp[-2].list), makeString((yyvsp[0].str))); }
     break;
 
   case 539:
 #line 3400 "gram.y"
     {
 					TruncateStmt *n = makeNode(TruncateStmt);
-					n->relations = (yyvsp[(3) - (4)].list);
-					n->behavior = (yyvsp[(4) - (4)].dbehavior);
+					n->relations = (yyvsp[-1].list);
+					n->behavior = (yyvsp[0].dbehavior);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -18111,10 +17888,10 @@ yyreduce:
 #line 3431 "gram.y"
     {
 					CommentStmt *n = makeNode(CommentStmt);
-					n->objtype = (yyvsp[(3) - (6)].objtype);
-					n->objname = (yyvsp[(4) - (6)].list);
+					n->objtype = (yyvsp[-3].objtype);
+					n->objname = (yyvsp[-2].list);
 					n->objargs = NIL;
-					n->comment = (yyvsp[(6) - (6)].str);
+					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -18124,9 +17901,9 @@ yyreduce:
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_AGGREGATE;
-					n->objname = (yyvsp[(4) - (7)].list);
-					n->objargs = (yyvsp[(5) - (7)].list);
-					n->comment = (yyvsp[(7) - (7)].str);
+					n->objname = (yyvsp[-3].list);
+					n->objargs = (yyvsp[-2].list);
+					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -18136,9 +17913,9 @@ yyreduce:
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_FUNCTION;
-					n->objname = (yyvsp[(4) - (7)].list);
-					n->objargs = extractArgTypes((yyvsp[(5) - (7)].list));
-					n->comment = (yyvsp[(7) - (7)].str);
+					n->objname = (yyvsp[-3].list);
+					n->objargs = extractArgTypes((yyvsp[-2].list));
+					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -18148,9 +17925,9 @@ yyreduce:
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_OPERATOR;
-					n->objname = (yyvsp[(4) - (9)].list);
-					n->objargs = (yyvsp[(6) - (9)].list);
-					n->comment = (yyvsp[(9) - (9)].str);
+					n->objname = (yyvsp[-5].list);
+					n->objargs = (yyvsp[-3].list);
+					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -18160,9 +17937,9 @@ yyreduce:
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_CONSTRAINT;
-					n->objname = lappend((yyvsp[(6) - (8)].list), makeString((yyvsp[(4) - (8)].str)));
+					n->objname = lappend((yyvsp[-2].list), makeString((yyvsp[-4].str)));
 					n->objargs = NIL;
-					n->comment = (yyvsp[(8) - (8)].str);
+					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -18172,9 +17949,9 @@ yyreduce:
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_RULE;
-					n->objname = lappend((yyvsp[(6) - (8)].list), makeString((yyvsp[(4) - (8)].str)));
+					n->objname = lappend((yyvsp[-2].list), makeString((yyvsp[-4].str)));
 					n->objargs = NIL;
-					n->comment = (yyvsp[(8) - (8)].str);
+					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -18185,9 +17962,9 @@ yyreduce:
 					/* Obsolete syntax supported for awhile for compatibility */
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_RULE;
-					n->objname = list_make1(makeString((yyvsp[(4) - (6)].str)));
+					n->objname = list_make1(makeString((yyvsp[-2].str)));
 					n->objargs = NIL;
-					n->comment = (yyvsp[(6) - (6)].str);
+					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -18197,9 +17974,9 @@ yyreduce:
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_TRIGGER;
-					n->objname = lappend((yyvsp[(6) - (8)].list), makeString((yyvsp[(4) - (8)].str)));
+					n->objname = lappend((yyvsp[-2].list), makeString((yyvsp[-4].str)));
 					n->objargs = NIL;
-					n->comment = (yyvsp[(8) - (8)].str);
+					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -18209,9 +17986,9 @@ yyreduce:
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_OPCLASS;
-					n->objname = (yyvsp[(5) - (9)].list);
-					n->objargs = list_make1(makeString((yyvsp[(7) - (9)].str)));
-					n->comment = (yyvsp[(9) - (9)].str);
+					n->objname = (yyvsp[-4].list);
+					n->objargs = list_make1(makeString((yyvsp[-2].str)));
+					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -18221,9 +17998,9 @@ yyreduce:
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_OPFAMILY;
-					n->objname = (yyvsp[(5) - (9)].list);
-					n->objargs = list_make1(makeString((yyvsp[(7) - (9)].str)));
-					n->comment = (yyvsp[(9) - (9)].str);
+					n->objname = (yyvsp[-4].list);
+					n->objargs = list_make1(makeString((yyvsp[-2].str)));
+					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -18233,9 +18010,9 @@ yyreduce:
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_LARGEOBJECT;
-					n->objname = list_make1((yyvsp[(5) - (7)].value));
+					n->objname = list_make1((yyvsp[-2].value));
 					n->objargs = NIL;
-					n->comment = (yyvsp[(7) - (7)].str);
+					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -18245,9 +18022,9 @@ yyreduce:
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_CAST;
-					n->objname = list_make1((yyvsp[(5) - (10)].typnam));
-					n->objargs = list_make1((yyvsp[(7) - (10)].typnam));
-					n->comment = (yyvsp[(10) - (10)].str);
+					n->objname = list_make1((yyvsp[-5].typnam));
+					n->objargs = list_make1((yyvsp[-3].typnam));
+					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -18257,9 +18034,9 @@ yyreduce:
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_LANGUAGE;
-					n->objname = (yyvsp[(5) - (7)].list);
+					n->objname = (yyvsp[-2].list);
 					n->objargs = NIL;
-					n->comment = (yyvsp[(7) - (7)].str);
+					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -18269,8 +18046,8 @@ yyreduce:
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_TSPARSER;
-					n->objname = (yyvsp[(6) - (8)].list);
-					n->comment = (yyvsp[(8) - (8)].str);
+					n->objname = (yyvsp[-2].list);
+					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -18280,8 +18057,8 @@ yyreduce:
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_TSDICTIONARY;
-					n->objname = (yyvsp[(6) - (8)].list);
-					n->comment = (yyvsp[(8) - (8)].str);
+					n->objname = (yyvsp[-2].list);
+					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -18291,8 +18068,8 @@ yyreduce:
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_TSTEMPLATE;
-					n->objname = (yyvsp[(6) - (8)].list);
-					n->comment = (yyvsp[(8) - (8)].str);
+					n->objname = (yyvsp[-2].list);
+					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -18302,8 +18079,8 @@ yyreduce:
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_TSCONFIGURATION;
-					n->objname = (yyvsp[(6) - (8)].list);
-					n->comment = (yyvsp[(8) - (8)].str);
+					n->objname = (yyvsp[-2].list);
+					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -18370,7 +18147,7 @@ yyreduce:
 
   case 569:
 #line 3599 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 570:
@@ -18381,8 +18158,8 @@ yyreduce:
   case 571:
 #line 3611 "gram.y"
     {
-					FetchStmt *n = (FetchStmt *) (yyvsp[(2) - (4)].node);
-					n->portalname = (yyvsp[(4) - (4)].str);
+					FetchStmt *n = (FetchStmt *) (yyvsp[-2].node);
+					n->portalname = (yyvsp[0].str);
 					n->ismove = FALSE;
 					(yyval.node) = (Node *)n;
 				}
@@ -18394,7 +18171,7 @@ yyreduce:
 					FetchStmt *n = makeNode(FetchStmt);
 					n->direction = FETCH_FORWARD;
 					n->howMany = 1;
-					n->portalname = (yyvsp[(2) - (2)].str);
+					n->portalname = (yyvsp[0].str);
 					n->ismove = FALSE;
 					(yyval.node) = (Node *)n;
 				}
@@ -18403,8 +18180,8 @@ yyreduce:
   case 573:
 #line 3627 "gram.y"
     {
-					FetchStmt *n = (FetchStmt *) (yyvsp[(2) - (4)].node);
-					n->portalname = (yyvsp[(4) - (4)].str);
+					FetchStmt *n = (FetchStmt *) (yyvsp[-2].node);
+					n->portalname = (yyvsp[0].str);
 					n->ismove = TRUE;
 					(yyval.node) = (Node *)n;
 				}
@@ -18416,7 +18193,7 @@ yyreduce:
 					FetchStmt *n = makeNode(FetchStmt);
 					n->direction = FETCH_FORWARD;
 					n->howMany = 1;
-					n->portalname = (yyvsp[(2) - (2)].str);
+					n->portalname = (yyvsp[0].str);
 					n->ismove = TRUE;
 					(yyval.node) = (Node *)n;
 				}
@@ -18477,7 +18254,7 @@ yyreduce:
     {
 					FetchStmt *n = makeNode(FetchStmt);
 					n->direction = FETCH_ABSOLUTE;
-					n->howMany = (yyvsp[(2) - (2)].ival);
+					n->howMany = (yyvsp[0].ival);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -18487,7 +18264,7 @@ yyreduce:
     {
 					FetchStmt *n = makeNode(FetchStmt);
 					n->direction = FETCH_RELATIVE;
-					n->howMany = (yyvsp[(2) - (2)].ival);
+					n->howMany = (yyvsp[0].ival);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -18497,7 +18274,7 @@ yyreduce:
     {
 					FetchStmt *n = makeNode(FetchStmt);
 					n->direction = FETCH_FORWARD;
-					n->howMany = (yyvsp[(1) - (1)].ival);
+					n->howMany = (yyvsp[0].ival);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -18527,7 +18304,7 @@ yyreduce:
     {
 					FetchStmt *n = makeNode(FetchStmt);
 					n->direction = FETCH_FORWARD;
-					n->howMany = (yyvsp[(2) - (2)].ival);
+					n->howMany = (yyvsp[0].ival);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -18557,7 +18334,7 @@ yyreduce:
     {
 					FetchStmt *n = makeNode(FetchStmt);
 					n->direction = FETCH_BACKWARD;
-					n->howMany = (yyvsp[(2) - (2)].ival);
+					n->howMany = (yyvsp[0].ival);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -18587,11 +18364,11 @@ yyreduce:
     {
 					GrantStmt *n = makeNode(GrantStmt);
 					n->is_grant = true;
-					n->privileges = (yyvsp[(2) - (7)].list);
-					n->objtype = ((yyvsp[(4) - (7)].privtarget))->objtype;
-					n->objects = ((yyvsp[(4) - (7)].privtarget))->objs;
-					n->grantees = (yyvsp[(6) - (7)].list);
-					n->grant_option = (yyvsp[(7) - (7)].boolean);
+					n->privileges = (yyvsp[-5].list);
+					n->objtype = ((yyvsp[-3].privtarget))->objtype;
+					n->objects = ((yyvsp[-3].privtarget))->objs;
+					n->grantees = (yyvsp[-1].list);
+					n->grant_option = (yyvsp[0].boolean);
 					(yyval.node) = (Node*)n;
 				}
     break;
@@ -18602,11 +18379,11 @@ yyreduce:
 					GrantStmt *n = makeNode(GrantStmt);
 					n->is_grant = false;
 					n->grant_option = false;
-					n->privileges = (yyvsp[(2) - (7)].list);
-					n->objtype = ((yyvsp[(4) - (7)].privtarget))->objtype;
-					n->objects = ((yyvsp[(4) - (7)].privtarget))->objs;
-					n->grantees = (yyvsp[(6) - (7)].list);
-					n->behavior = (yyvsp[(7) - (7)].dbehavior);
+					n->privileges = (yyvsp[-5].list);
+					n->objtype = ((yyvsp[-3].privtarget))->objtype;
+					n->objects = ((yyvsp[-3].privtarget))->objs;
+					n->grantees = (yyvsp[-1].list);
+					n->behavior = (yyvsp[0].dbehavior);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -18617,18 +18394,18 @@ yyreduce:
 					GrantStmt *n = makeNode(GrantStmt);
 					n->is_grant = false;
 					n->grant_option = true;
-					n->privileges = (yyvsp[(5) - (10)].list);
-					n->objtype = ((yyvsp[(7) - (10)].privtarget))->objtype;
-					n->objects = ((yyvsp[(7) - (10)].privtarget))->objs;
-					n->grantees = (yyvsp[(9) - (10)].list);
-					n->behavior = (yyvsp[(10) - (10)].dbehavior);
+					n->privileges = (yyvsp[-5].list);
+					n->objtype = ((yyvsp[-3].privtarget))->objtype;
+					n->objects = ((yyvsp[-3].privtarget))->objs;
+					n->grantees = (yyvsp[-1].list);
+					n->behavior = (yyvsp[0].dbehavior);
 					(yyval.node) = (Node *)n;
 				}
     break;
 
   case 595:
 #line 3818 "gram.y"
-    { (yyval.list) = (yyvsp[(1) - (1)].list); }
+    { (yyval.list) = (yyvsp[0].list); }
     break;
 
   case 596:
@@ -18643,32 +18420,32 @@ yyreduce:
 
   case 598:
 #line 3826 "gram.y"
-    { (yyval.list) = list_make1(makeString((yyvsp[(1) - (1)].str))); }
+    { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
     break;
 
   case 599:
 #line 3828 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), makeString((yyvsp[(3) - (3)].str))); }
+    { (yyval.list) = lappend((yyvsp[-2].list), makeString((yyvsp[0].str))); }
     break;
 
   case 600:
 #line 3831 "gram.y"
-    { (yyval.str) = pstrdup((yyvsp[(1) - (1)].keyword)); }
+    { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
     break;
 
   case 601:
 #line 3832 "gram.y"
-    { (yyval.str) = pstrdup((yyvsp[(1) - (1)].keyword)); }
+    { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
     break;
 
   case 602:
 #line 3833 "gram.y"
-    { (yyval.str) = pstrdup((yyvsp[(1) - (1)].keyword)); }
+    { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
     break;
 
   case 603:
 #line 3834 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 604:
@@ -18676,7 +18453,7 @@ yyreduce:
     {
 					PrivTarget *n = makeNode(PrivTarget);
 					n->objtype = ACL_OBJECT_RELATION;
-					n->objs = (yyvsp[(1) - (1)].list);
+					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
     break;
@@ -18686,7 +18463,7 @@ yyreduce:
     {
 					PrivTarget *n = makeNode(PrivTarget);
 					n->objtype = ACL_OBJECT_RELATION;
-					n->objs = (yyvsp[(2) - (2)].list);
+					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
     break;
@@ -18696,7 +18473,7 @@ yyreduce:
     {
 					PrivTarget *n = makeNode(PrivTarget);
 					n->objtype = ACL_OBJECT_SEQUENCE;
-					n->objs = (yyvsp[(2) - (2)].list);
+					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
     break;
@@ -18706,7 +18483,7 @@ yyreduce:
     {
 					PrivTarget *n = makeNode(PrivTarget);
 					n->objtype = ACL_OBJECT_FUNCTION;
-					n->objs = (yyvsp[(2) - (2)].list);
+					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
     break;
@@ -18716,7 +18493,7 @@ yyreduce:
     {
 					PrivTarget *n = makeNode(PrivTarget);
 					n->objtype = ACL_OBJECT_DATABASE;
-					n->objs = (yyvsp[(2) - (2)].list);
+					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
     break;
@@ -18726,7 +18503,7 @@ yyreduce:
     {
 					PrivTarget *n = makeNode(PrivTarget);
 					n->objtype = ACL_OBJECT_LANGUAGE;
-					n->objs = (yyvsp[(2) - (2)].list);
+					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
     break;
@@ -18736,7 +18513,7 @@ yyreduce:
     {
 					PrivTarget *n = makeNode(PrivTarget);
 					n->objtype = ACL_OBJECT_NAMESPACE;
-					n->objs = (yyvsp[(2) - (2)].list);
+					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
     break;
@@ -18746,19 +18523,19 @@ yyreduce:
     {
 					PrivTarget *n = makeNode(PrivTarget);
 					n->objtype = ACL_OBJECT_TABLESPACE;
-					n->objs = (yyvsp[(2) - (2)].list);
+					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
     break;
 
   case 612:
 #line 3902 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
+    { (yyval.list) = list_make1((yyvsp[0].node)); }
     break;
 
   case 613:
 #line 3903 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node)); }
     break;
 
   case 614:
@@ -18766,10 +18543,10 @@ yyreduce:
     {
 					PrivGrantee *n = makeNode(PrivGrantee);
 					/* This hack lets us avoid reserving PUBLIC as a keyword*/
-					if (strcmp((yyvsp[(1) - (1)].str), "public") == 0)
+					if (strcmp((yyvsp[0].str), "public") == 0)
 						n->rolname = NULL;
 					else
-						n->rolname = (yyvsp[(1) - (1)].str);
+						n->rolname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -18779,10 +18556,10 @@ yyreduce:
     {
 					PrivGrantee *n = makeNode(PrivGrantee);
 					/* Treat GROUP PUBLIC as a synonym for PUBLIC */
-					if (strcmp((yyvsp[(2) - (2)].str), "public") == 0)
+					if (strcmp((yyvsp[0].str), "public") == 0)
 						n->rolname = NULL;
 					else
-						n->rolname = (yyvsp[(2) - (2)].str);
+						n->rolname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -18799,20 +18576,20 @@ yyreduce:
 
   case 618:
 #line 3935 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].funwithargs)); }
+    { (yyval.list) = list_make1((yyvsp[0].funwithargs)); }
     break;
 
   case 619:
 #line 3937 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].funwithargs)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].funwithargs)); }
     break;
 
   case 620:
 #line 3942 "gram.y"
     {
 					FuncWithArgs *n = makeNode(FuncWithArgs);
-					n->funcname = (yyvsp[(1) - (2)].list);
-					n->funcargs = extractArgTypes((yyvsp[(2) - (2)].list));
+					n->funcname = (yyvsp[-1].list);
+					n->funcargs = extractArgTypes((yyvsp[0].list));
 					(yyval.funwithargs) = n;
 				}
     break;
@@ -18822,10 +18599,10 @@ yyreduce:
     {
 					GrantRoleStmt *n = makeNode(GrantRoleStmt);
 					n->is_grant = true;
-					n->granted_roles = (yyvsp[(2) - (6)].list);
-					n->grantee_roles = (yyvsp[(4) - (6)].list);
-					n->admin_opt = (yyvsp[(5) - (6)].boolean);
-					n->grantor = (yyvsp[(6) - (6)].str);
+					n->granted_roles = (yyvsp[-4].list);
+					n->grantee_roles = (yyvsp[-2].list);
+					n->admin_opt = (yyvsp[-1].boolean);
+					n->grantor = (yyvsp[0].str);
 					(yyval.node) = (Node*)n;
 				}
     break;
@@ -18836,9 +18613,9 @@ yyreduce:
 					GrantRoleStmt *n = makeNode(GrantRoleStmt);
 					n->is_grant = false;
 					n->admin_opt = false;
-					n->granted_roles = (yyvsp[(2) - (6)].list);
-					n->grantee_roles = (yyvsp[(4) - (6)].list);
-					n->behavior = (yyvsp[(6) - (6)].dbehavior);
+					n->granted_roles = (yyvsp[-4].list);
+					n->grantee_roles = (yyvsp[-2].list);
+					n->behavior = (yyvsp[0].dbehavior);
 					(yyval.node) = (Node*)n;
 				}
     break;
@@ -18849,9 +18626,9 @@ yyreduce:
 					GrantRoleStmt *n = makeNode(GrantRoleStmt);
 					n->is_grant = false;
 					n->admin_opt = true;
-					n->granted_roles = (yyvsp[(5) - (9)].list);
-					n->grantee_roles = (yyvsp[(7) - (9)].list);
-					n->behavior = (yyvsp[(9) - (9)].dbehavior);
+					n->granted_roles = (yyvsp[-4].list);
+					n->grantee_roles = (yyvsp[-2].list);
+					n->behavior = (yyvsp[0].dbehavior);
 					(yyval.node) = (Node*)n;
 				}
     break;
@@ -18868,7 +18645,7 @@ yyreduce:
 
   case 626:
 #line 3996 "gram.y"
-    { (yyval.str) = (yyvsp[(3) - (3)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 627:
@@ -18880,15 +18657,15 @@ yyreduce:
 #line 4015 "gram.y"
     {
 					IndexStmt *n = makeNode(IndexStmt);
-					n->unique = (yyvsp[(2) - (13)].boolean);
+					n->unique = (yyvsp[-11].boolean);
 					n->concurrent = false;
-					n->idxname = (yyvsp[(4) - (13)].str);
-					n->relation = (yyvsp[(6) - (13)].range);
-					n->accessMethod = (yyvsp[(7) - (13)].str);
-					n->indexParams = (yyvsp[(9) - (13)].list);
-					n->options = (yyvsp[(11) - (13)].list);
-					n->tableSpace = (yyvsp[(12) - (13)].str);
-					n->whereClause = (yyvsp[(13) - (13)].node);
+					n->idxname = (yyvsp[-9].str);
+					n->relation = (yyvsp[-7].range);
+					n->accessMethod = (yyvsp[-6].str);
+					n->indexParams = (yyvsp[-4].list);
+					n->options = (yyvsp[-2].list);
+					n->tableSpace = (yyvsp[-1].str);
+					n->whereClause = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -18897,15 +18674,15 @@ yyreduce:
 #line 4031 "gram.y"
     {
 					IndexStmt *n = makeNode(IndexStmt);
-					n->unique = (yyvsp[(2) - (14)].boolean);
+					n->unique = (yyvsp[-12].boolean);
 					n->concurrent = true;
-					n->idxname = (yyvsp[(5) - (14)].str);
-					n->relation = (yyvsp[(7) - (14)].range);
-					n->accessMethod = (yyvsp[(8) - (14)].str);
-					n->indexParams = (yyvsp[(10) - (14)].list);
-					n->options = (yyvsp[(12) - (14)].list);
-					n->tableSpace = (yyvsp[(13) - (14)].str);
-					n->whereClause = (yyvsp[(14) - (14)].node);
+					n->idxname = (yyvsp[-9].str);
+					n->relation = (yyvsp[-7].range);
+					n->accessMethod = (yyvsp[-6].str);
+					n->indexParams = (yyvsp[-4].list);
+					n->options = (yyvsp[-2].list);
+					n->tableSpace = (yyvsp[-1].str);
+					n->whereClause = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -18922,7 +18699,7 @@ yyreduce:
 
   case 632:
 #line 4052 "gram.y"
-    { (yyval.str) = (yyvsp[(2) - (2)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 633:
@@ -18932,23 +18709,23 @@ yyreduce:
 
   case 634:
 #line 4056 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].ielem)); }
+    { (yyval.list) = list_make1((yyvsp[0].ielem)); }
     break;
 
   case 635:
 #line 4057 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].ielem)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].ielem)); }
     break;
 
   case 636:
 #line 4066 "gram.y"
     {
 					(yyval.ielem) = makeNode(IndexElem);
-					(yyval.ielem)->name = (yyvsp[(1) - (4)].str);
+					(yyval.ielem)->name = (yyvsp[-3].str);
 					(yyval.ielem)->expr = NULL;
-					(yyval.ielem)->opclass = (yyvsp[(2) - (4)].list);
-					(yyval.ielem)->ordering = (yyvsp[(3) - (4)].ival);
-					(yyval.ielem)->nulls_ordering = (yyvsp[(4) - (4)].ival);
+					(yyval.ielem)->opclass = (yyvsp[-2].list);
+					(yyval.ielem)->ordering = (yyvsp[-1].ival);
+					(yyval.ielem)->nulls_ordering = (yyvsp[0].ival);
 				}
     break;
 
@@ -18957,10 +18734,10 @@ yyreduce:
     {
 					(yyval.ielem) = makeNode(IndexElem);
 					(yyval.ielem)->name = NULL;
-					(yyval.ielem)->expr = (yyvsp[(1) - (4)].node);
-					(yyval.ielem)->opclass = (yyvsp[(2) - (4)].list);
-					(yyval.ielem)->ordering = (yyvsp[(3) - (4)].ival);
-					(yyval.ielem)->nulls_ordering = (yyvsp[(4) - (4)].ival);
+					(yyval.ielem)->expr = (yyvsp[-3].node);
+					(yyval.ielem)->opclass = (yyvsp[-2].list);
+					(yyval.ielem)->ordering = (yyvsp[-1].ival);
+					(yyval.ielem)->nulls_ordering = (yyvsp[0].ival);
 				}
     break;
 
@@ -18969,21 +18746,21 @@ yyreduce:
     {
 					(yyval.ielem) = makeNode(IndexElem);
 					(yyval.ielem)->name = NULL;
-					(yyval.ielem)->expr = (yyvsp[(2) - (6)].node);
-					(yyval.ielem)->opclass = (yyvsp[(4) - (6)].list);
-					(yyval.ielem)->ordering = (yyvsp[(5) - (6)].ival);
-					(yyval.ielem)->nulls_ordering = (yyvsp[(6) - (6)].ival);
+					(yyval.ielem)->expr = (yyvsp[-4].node);
+					(yyval.ielem)->opclass = (yyvsp[-2].list);
+					(yyval.ielem)->ordering = (yyvsp[-1].ival);
+					(yyval.ielem)->nulls_ordering = (yyvsp[0].ival);
 				}
     break;
 
   case 639:
 #line 4094 "gram.y"
-    { (yyval.list) = (yyvsp[(1) - (1)].list); }
+    { (yyval.list) = (yyvsp[0].list); }
     break;
 
   case 640:
 #line 4095 "gram.y"
-    { (yyval.list) = (yyvsp[(2) - (2)].list); }
+    { (yyval.list) = (yyvsp[0].list); }
     break;
 
   case 641:
@@ -19025,12 +18802,12 @@ yyreduce:
 #line 4124 "gram.y"
     {
 					CreateFunctionStmt *n = makeNode(CreateFunctionStmt);
-					n->replace = (yyvsp[(2) - (9)].boolean);
-					n->funcname = (yyvsp[(4) - (9)].list);
-					n->parameters = (yyvsp[(5) - (9)].list);
-					n->returnType = (yyvsp[(7) - (9)].typnam);
-					n->options = (yyvsp[(8) - (9)].list);
-					n->withClause = (yyvsp[(9) - (9)].list);
+					n->replace = (yyvsp[-7].boolean);
+					n->funcname = (yyvsp[-5].list);
+					n->parameters = (yyvsp[-4].list);
+					n->returnType = (yyvsp[-2].typnam);
+					n->options = (yyvsp[-1].list);
+					n->withClause = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19039,12 +18816,12 @@ yyreduce:
 #line 4136 "gram.y"
     {
 					CreateFunctionStmt *n = makeNode(CreateFunctionStmt);
-					n->replace = (yyvsp[(2) - (7)].boolean);
-					n->funcname = (yyvsp[(4) - (7)].list);
-					n->parameters = (yyvsp[(5) - (7)].list);
+					n->replace = (yyvsp[-5].boolean);
+					n->funcname = (yyvsp[-3].list);
+					n->parameters = (yyvsp[-2].list);
 					n->returnType = NULL;
-					n->options = (yyvsp[(6) - (7)].list);
-					n->withClause = (yyvsp[(7) - (7)].list);
+					n->options = (yyvsp[-1].list);
+					n->withClause = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19061,7 +18838,7 @@ yyreduce:
 
   case 652:
 #line 4153 "gram.y"
-    { (yyval.list) = (yyvsp[(2) - (3)].list); }
+    { (yyval.list) = (yyvsp[-1].list); }
     break;
 
   case 653:
@@ -19071,21 +18848,21 @@ yyreduce:
 
   case 654:
 #line 4158 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].fun_param)); }
+    { (yyval.list) = list_make1((yyvsp[0].fun_param)); }
     break;
 
   case 655:
 #line 4159 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].fun_param)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].fun_param)); }
     break;
 
   case 656:
 #line 4174 "gram.y"
     {
 					FunctionParameter *n = makeNode(FunctionParameter);
-					n->name = (yyvsp[(2) - (3)].str);
-					n->argType = (yyvsp[(3) - (3)].typnam);
-					n->mode = (yyvsp[(1) - (3)].fun_param_mode);
+					n->name = (yyvsp[-1].str);
+					n->argType = (yyvsp[0].typnam);
+					n->mode = (yyvsp[-2].fun_param_mode);
 					(yyval.fun_param) = n;
 				}
     break;
@@ -19094,9 +18871,9 @@ yyreduce:
 #line 4182 "gram.y"
     {
 					FunctionParameter *n = makeNode(FunctionParameter);
-					n->name = (yyvsp[(1) - (3)].str);
-					n->argType = (yyvsp[(3) - (3)].typnam);
-					n->mode = (yyvsp[(2) - (3)].fun_param_mode);
+					n->name = (yyvsp[-2].str);
+					n->argType = (yyvsp[0].typnam);
+					n->mode = (yyvsp[-1].fun_param_mode);
 					(yyval.fun_param) = n;
 				}
     break;
@@ -19105,8 +18882,8 @@ yyreduce:
 #line 4190 "gram.y"
     {
 					FunctionParameter *n = makeNode(FunctionParameter);
-					n->name = (yyvsp[(1) - (2)].str);
-					n->argType = (yyvsp[(2) - (2)].typnam);
+					n->name = (yyvsp[-1].str);
+					n->argType = (yyvsp[0].typnam);
 					n->mode = FUNC_PARAM_IN;
 					(yyval.fun_param) = n;
 				}
@@ -19117,8 +18894,8 @@ yyreduce:
     {
 					FunctionParameter *n = makeNode(FunctionParameter);
 					n->name = NULL;
-					n->argType = (yyvsp[(2) - (2)].typnam);
-					n->mode = (yyvsp[(1) - (2)].fun_param_mode);
+					n->argType = (yyvsp[0].typnam);
+					n->mode = (yyvsp[-1].fun_param_mode);
 					(yyval.fun_param) = n;
 				}
     break;
@@ -19128,7 +18905,7 @@ yyreduce:
     {
 					FunctionParameter *n = makeNode(FunctionParameter);
 					n->name = NULL;
-					n->argType = (yyvsp[(1) - (1)].typnam);
+					n->argType = (yyvsp[0].typnam);
 					n->mode = FUNC_PARAM_IN;
 					(yyval.fun_param) = n;
 				}
@@ -19161,42 +18938,42 @@ yyreduce:
 					 * but for now better to silently swallow typmod, etc.
 					 * - thomas 2000-03-22
 					 */
-					(yyval.typnam) = (yyvsp[(1) - (1)].typnam);
+					(yyval.typnam) = (yyvsp[0].typnam);
 				}
     break;
 
   case 667:
 #line 4244 "gram.y"
-    { (yyval.typnam) = (yyvsp[(1) - (1)].typnam); }
+    { (yyval.typnam) = (yyvsp[0].typnam); }
     break;
 
   case 668:
 #line 4246 "gram.y"
     {
-					(yyval.typnam) = makeTypeNameFromNameList(lcons(makeString((yyvsp[(1) - (4)].str)), (yyvsp[(2) - (4)].list)));
+					(yyval.typnam) = makeTypeNameFromNameList(lcons(makeString((yyvsp[-3].str)), (yyvsp[-2].list)));
 					(yyval.typnam)->pct_type = true;
-					(yyval.typnam)->location = (yylsp[(1) - (4)]);
+					(yyval.typnam)->location = (yylsp[-3]);
 				}
     break;
 
   case 669:
 #line 4252 "gram.y"
     {
-					(yyval.typnam) = makeTypeNameFromNameList(lcons(makeString((yyvsp[(2) - (5)].str)), (yyvsp[(3) - (5)].list)));
+					(yyval.typnam) = makeTypeNameFromNameList(lcons(makeString((yyvsp[-3].str)), (yyvsp[-2].list)));
 					(yyval.typnam)->pct_type = true;
 					(yyval.typnam)->setof = TRUE;
-					(yyval.typnam)->location = (yylsp[(2) - (5)]);
+					(yyval.typnam)->location = (yylsp[-3]);
 				}
     break;
 
   case 670:
 #line 4263 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].defelt)); }
+    { (yyval.list) = list_make1((yyvsp[0].defelt)); }
     break;
 
   case 671:
 #line 4264 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].defelt)); }
+    { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].defelt)); }
     break;
 
   case 672:
@@ -19272,14 +19049,14 @@ yyreduce:
   case 682:
 #line 4312 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("cost", (Node *)(yyvsp[(2) - (2)].value));
+					(yyval.defelt) = makeDefElem("cost", (Node *)(yyvsp[0].value));
 				}
     break;
 
   case 683:
 #line 4316 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("rows", (Node *)(yyvsp[(2) - (2)].value));
+					(yyval.defelt) = makeDefElem("rows", (Node *)(yyvsp[0].value));
 				}
     break;
 
@@ -19287,46 +19064,46 @@ yyreduce:
 #line 4320 "gram.y"
     {
 					/* we abuse the normal content of a DefElem here */
-					(yyval.defelt) = makeDefElem("set", (Node *)(yyvsp[(1) - (1)].vsetstmt));
+					(yyval.defelt) = makeDefElem("set", (Node *)(yyvsp[0].vsetstmt));
 				}
     break;
 
   case 685:
 #line 4328 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("as", (Node *)(yyvsp[(2) - (2)].list));
+					(yyval.defelt) = makeDefElem("as", (Node *)(yyvsp[0].list));
 				}
     break;
 
   case 686:
 #line 4332 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("language", (Node *)makeString((yyvsp[(2) - (2)].str)));
+					(yyval.defelt) = makeDefElem("language", (Node *)makeString((yyvsp[0].str)));
 				}
     break;
 
   case 687:
 #line 4336 "gram.y"
     {
-					(yyval.defelt) = (yyvsp[(1) - (1)].defelt);
+					(yyval.defelt) = (yyvsp[0].defelt);
 				}
     break;
 
   case 688:
 #line 4341 "gram.y"
-    { (yyval.list) = list_make1(makeString((yyvsp[(1) - (1)].str))); }
+    { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
     break;
 
   case 689:
 #line 4343 "gram.y"
     {
-					(yyval.list) = list_make2(makeString((yyvsp[(1) - (3)].str)), makeString((yyvsp[(3) - (3)].str)));
+					(yyval.list) = list_make2(makeString((yyvsp[-2].str)), makeString((yyvsp[0].str)));
 				}
     break;
 
   case 690:
 #line 4349 "gram.y"
-    { (yyval.list) = (yyvsp[(2) - (2)].list); }
+    { (yyval.list) = (yyvsp[0].list); }
     break;
 
   case 691:
@@ -19338,20 +19115,20 @@ yyreduce:
 #line 4363 "gram.y"
     {
 					AlterFunctionStmt *n = makeNode(AlterFunctionStmt);
-					n->func = (yyvsp[(3) - (5)].funwithargs);
-					n->actions = (yyvsp[(4) - (5)].list);
+					n->func = (yyvsp[-2].funwithargs);
+					n->actions = (yyvsp[-1].list);
 					(yyval.node) = (Node *) n;
 				}
     break;
 
   case 693:
 #line 4373 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].defelt)); }
+    { (yyval.list) = list_make1((yyvsp[0].defelt)); }
     break;
 
   case 694:
 #line 4374 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].defelt)); }
+    { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].defelt)); }
     break;
 
   case 697:
@@ -19359,9 +19136,9 @@ yyreduce:
     {
 					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
 					n->kind = OBJECT_FUNCTION;
-					n->name = (yyvsp[(3) - (5)].list);
-					n->args = extractArgTypes((yyvsp[(4) - (5)].list));
-					n->behavior = (yyvsp[(5) - (5)].dbehavior);
+					n->name = (yyvsp[-2].list);
+					n->args = extractArgTypes((yyvsp[-1].list));
+					n->behavior = (yyvsp[0].dbehavior);
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
@@ -19372,9 +19149,9 @@ yyreduce:
     {
 					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
 					n->kind = OBJECT_FUNCTION;
-					n->name = (yyvsp[(5) - (7)].list);
-					n->args = extractArgTypes((yyvsp[(6) - (7)].list));
-					n->behavior = (yyvsp[(7) - (7)].dbehavior);
+					n->name = (yyvsp[-2].list);
+					n->args = extractArgTypes((yyvsp[-1].list));
+					n->behavior = (yyvsp[0].dbehavior);
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
@@ -19385,9 +19162,9 @@ yyreduce:
     {
 					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
 					n->kind = OBJECT_AGGREGATE;
-					n->name = (yyvsp[(3) - (5)].list);
-					n->args = (yyvsp[(4) - (5)].list);
-					n->behavior = (yyvsp[(5) - (5)].dbehavior);
+					n->name = (yyvsp[-2].list);
+					n->args = (yyvsp[-1].list);
+					n->behavior = (yyvsp[0].dbehavior);
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
@@ -19398,9 +19175,9 @@ yyreduce:
     {
 					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
 					n->kind = OBJECT_AGGREGATE;
-					n->name = (yyvsp[(5) - (7)].list);
-					n->args = (yyvsp[(6) - (7)].list);
-					n->behavior = (yyvsp[(7) - (7)].dbehavior);
+					n->name = (yyvsp[-2].list);
+					n->args = (yyvsp[-1].list);
+					n->behavior = (yyvsp[0].dbehavior);
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
@@ -19411,9 +19188,9 @@ yyreduce:
     {
 					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
 					n->kind = OBJECT_OPERATOR;
-					n->name = (yyvsp[(3) - (7)].list);
-					n->args = (yyvsp[(5) - (7)].list);
-					n->behavior = (yyvsp[(7) - (7)].dbehavior);
+					n->name = (yyvsp[-4].list);
+					n->args = (yyvsp[-2].list);
+					n->behavior = (yyvsp[0].dbehavior);
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
@@ -19424,9 +19201,9 @@ yyreduce:
     {
 					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
 					n->kind = OBJECT_OPERATOR;
-					n->name = (yyvsp[(5) - (9)].list);
-					n->args = (yyvsp[(7) - (9)].list);
-					n->behavior = (yyvsp[(9) - (9)].dbehavior);
+					n->name = (yyvsp[-4].list);
+					n->args = (yyvsp[-2].list);
+					n->behavior = (yyvsp[0].dbehavior);
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
@@ -19444,37 +19221,37 @@ yyreduce:
 
   case 704:
 #line 4472 "gram.y"
-    { (yyval.list) = list_make2((yyvsp[(1) - (3)].typnam), (yyvsp[(3) - (3)].typnam)); }
+    { (yyval.list) = list_make2((yyvsp[-2].typnam), (yyvsp[0].typnam)); }
     break;
 
   case 705:
 #line 4474 "gram.y"
-    { (yyval.list) = list_make2(NULL, (yyvsp[(3) - (3)].typnam)); }
+    { (yyval.list) = list_make2(NULL, (yyvsp[0].typnam)); }
     break;
 
   case 706:
 #line 4476 "gram.y"
-    { (yyval.list) = list_make2((yyvsp[(1) - (3)].typnam), NULL); }
+    { (yyval.list) = list_make2((yyvsp[-2].typnam), NULL); }
     break;
 
   case 707:
 #line 4481 "gram.y"
-    { (yyval.list) = list_make1(makeString((yyvsp[(1) - (1)].str))); }
+    { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
     break;
 
   case 708:
 #line 4483 "gram.y"
-    { (yyval.list) = lcons(makeString((yyvsp[(1) - (3)].str)), (yyvsp[(3) - (3)].list)); }
+    { (yyval.list) = lcons(makeString((yyvsp[-2].str)), (yyvsp[0].list)); }
     break;
 
   case 709:
 #line 4495 "gram.y"
     {
 					CreateCastStmt *n = makeNode(CreateCastStmt);
-					n->sourcetype = (yyvsp[(4) - (11)].typnam);
-					n->targettype = (yyvsp[(6) - (11)].typnam);
-					n->func = (yyvsp[(10) - (11)].funwithargs);
-					n->context = (CoercionContext) (yyvsp[(11) - (11)].ival);
+					n->sourcetype = (yyvsp[-7].typnam);
+					n->targettype = (yyvsp[-5].typnam);
+					n->func = (yyvsp[-1].funwithargs);
+					n->context = (CoercionContext) (yyvsp[0].ival);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19483,10 +19260,10 @@ yyreduce:
 #line 4505 "gram.y"
     {
 					CreateCastStmt *n = makeNode(CreateCastStmt);
-					n->sourcetype = (yyvsp[(4) - (10)].typnam);
-					n->targettype = (yyvsp[(6) - (10)].typnam);
+					n->sourcetype = (yyvsp[-6].typnam);
+					n->targettype = (yyvsp[-4].typnam);
 					n->func = NULL;
-					n->context = (CoercionContext) (yyvsp[(10) - (10)].ival);
+					n->context = (CoercionContext) (yyvsp[0].ival);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19510,10 +19287,10 @@ yyreduce:
 #line 4522 "gram.y"
     {
 					DropCastStmt *n = makeNode(DropCastStmt);
-					n->sourcetype = (yyvsp[(5) - (9)].typnam);
-					n->targettype = (yyvsp[(7) - (9)].typnam);
-					n->behavior = (yyvsp[(9) - (9)].dbehavior);
-					n->missing_ok = (yyvsp[(3) - (9)].boolean);
+					n->sourcetype = (yyvsp[-4].typnam);
+					n->targettype = (yyvsp[-2].typnam);
+					n->behavior = (yyvsp[0].dbehavior);
+					n->missing_ok = (yyvsp[-6].boolean);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19532,8 +19309,8 @@ yyreduce:
 #line 4548 "gram.y"
     {
 					ReindexStmt *n = makeNode(ReindexStmt);
-					n->kind = (yyvsp[(2) - (4)].objtype);
-					n->relation = (yyvsp[(3) - (4)].range);
+					n->kind = (yyvsp[-2].objtype);
+					n->relation = (yyvsp[-1].range);
 					n->name = NULL;
 					(yyval.node) = (Node *)n;
 				}
@@ -19544,7 +19321,7 @@ yyreduce:
     {
 					ReindexStmt *n = makeNode(ReindexStmt);
 					n->kind = OBJECT_DATABASE;
-					n->name = (yyvsp[(3) - (4)].str);
+					n->name = (yyvsp[-1].str);
 					n->relation = NULL;
 					n->do_system = true;
 					n->do_user = false;
@@ -19557,7 +19334,7 @@ yyreduce:
     {
 					ReindexStmt *n = makeNode(ReindexStmt);
 					n->kind = OBJECT_DATABASE;
-					n->name = (yyvsp[(3) - (4)].str);
+					n->name = (yyvsp[-1].str);
 					n->relation = NULL;
 					n->do_system = true;
 					n->do_user = true;
@@ -19590,9 +19367,9 @@ yyreduce:
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_AGGREGATE;
-					n->object = (yyvsp[(3) - (7)].list);
-					n->objarg = (yyvsp[(4) - (7)].list);
-					n->newname = (yyvsp[(7) - (7)].str);
+					n->object = (yyvsp[-4].list);
+					n->objarg = (yyvsp[-3].list);
+					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19602,8 +19379,8 @@ yyreduce:
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_CONVERSION;
-					n->object = (yyvsp[(3) - (6)].list);
-					n->newname = (yyvsp[(6) - (6)].str);
+					n->object = (yyvsp[-3].list);
+					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19613,8 +19390,8 @@ yyreduce:
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_DATABASE;
-					n->subname = (yyvsp[(3) - (6)].str);
-					n->newname = (yyvsp[(6) - (6)].str);
+					n->subname = (yyvsp[-3].str);
+					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19624,9 +19401,9 @@ yyreduce:
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_FUNCTION;
-					n->object = (yyvsp[(3) - (6)].funwithargs)->funcname;
-					n->objarg = (yyvsp[(3) - (6)].funwithargs)->funcargs;
-					n->newname = (yyvsp[(6) - (6)].str);
+					n->object = (yyvsp[-3].funwithargs)->funcname;
+					n->objarg = (yyvsp[-3].funwithargs)->funcargs;
+					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19636,8 +19413,8 @@ yyreduce:
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_ROLE;
-					n->subname = (yyvsp[(3) - (6)].str);
-					n->newname = (yyvsp[(6) - (6)].str);
+					n->subname = (yyvsp[-3].str);
+					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19647,8 +19424,8 @@ yyreduce:
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_LANGUAGE;
-					n->subname = (yyvsp[(4) - (7)].str);
-					n->newname = (yyvsp[(7) - (7)].str);
+					n->subname = (yyvsp[-3].str);
+					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19658,9 +19435,9 @@ yyreduce:
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_OPCLASS;
-					n->object = (yyvsp[(4) - (9)].list);
-					n->subname = (yyvsp[(6) - (9)].str);
-					n->newname = (yyvsp[(9) - (9)].str);
+					n->object = (yyvsp[-5].list);
+					n->subname = (yyvsp[-3].str);
+					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19670,9 +19447,9 @@ yyreduce:
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_OPFAMILY;
-					n->object = (yyvsp[(4) - (9)].list);
-					n->subname = (yyvsp[(6) - (9)].str);
-					n->newname = (yyvsp[(9) - (9)].str);
+					n->object = (yyvsp[-5].list);
+					n->subname = (yyvsp[-3].str);
+					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19682,8 +19459,8 @@ yyreduce:
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_SCHEMA;
-					n->subname = (yyvsp[(3) - (6)].str);
-					n->newname = (yyvsp[(6) - (6)].str);
+					n->subname = (yyvsp[-3].str);
+					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19693,9 +19470,9 @@ yyreduce:
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TABLE;
-					n->relation = (yyvsp[(3) - (6)].range);
+					n->relation = (yyvsp[-3].range);
 					n->subname = NULL;
-					n->newname = (yyvsp[(6) - (6)].str);
+					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19705,9 +19482,9 @@ yyreduce:
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_SEQUENCE;
-					n->relation = (yyvsp[(3) - (6)].range);
+					n->relation = (yyvsp[-3].range);
 					n->subname = NULL;
-					n->newname = (yyvsp[(6) - (6)].str);
+					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19717,9 +19494,9 @@ yyreduce:
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_VIEW;
-					n->relation = (yyvsp[(3) - (6)].range);
+					n->relation = (yyvsp[-3].range);
 					n->subname = NULL;
-					n->newname = (yyvsp[(6) - (6)].str);
+					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19729,9 +19506,9 @@ yyreduce:
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_INDEX;
-					n->relation = (yyvsp[(3) - (6)].range);
+					n->relation = (yyvsp[-3].range);
 					n->subname = NULL;
-					n->newname = (yyvsp[(6) - (6)].str);
+					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19741,9 +19518,9 @@ yyreduce:
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_COLUMN;
-					n->relation = (yyvsp[(3) - (8)].range);
-					n->subname = (yyvsp[(6) - (8)].str);
-					n->newname = (yyvsp[(8) - (8)].str);
+					n->relation = (yyvsp[-5].range);
+					n->subname = (yyvsp[-2].str);
+					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19753,9 +19530,9 @@ yyreduce:
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TRIGGER;
-					n->relation = (yyvsp[(5) - (8)].range);
-					n->subname = (yyvsp[(3) - (8)].str);
-					n->newname = (yyvsp[(8) - (8)].str);
+					n->relation = (yyvsp[-3].range);
+					n->subname = (yyvsp[-5].str);
+					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19765,8 +19542,8 @@ yyreduce:
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_ROLE;
-					n->subname = (yyvsp[(3) - (6)].str);
-					n->newname = (yyvsp[(6) - (6)].str);
+					n->subname = (yyvsp[-3].str);
+					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19776,8 +19553,8 @@ yyreduce:
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_ROLE;
-					n->subname = (yyvsp[(3) - (6)].str);
-					n->newname = (yyvsp[(6) - (6)].str);
+					n->subname = (yyvsp[-3].str);
+					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19787,8 +19564,8 @@ yyreduce:
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TABLESPACE;
-					n->subname = (yyvsp[(3) - (6)].str);
-					n->newname = (yyvsp[(6) - (6)].str);
+					n->subname = (yyvsp[-3].str);
+					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19798,8 +19575,8 @@ yyreduce:
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TSPARSER;
-					n->object = (yyvsp[(5) - (8)].list);
-					n->newname = (yyvsp[(8) - (8)].str);
+					n->object = (yyvsp[-3].list);
+					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19809,8 +19586,8 @@ yyreduce:
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TSDICTIONARY;
-					n->object = (yyvsp[(5) - (8)].list);
-					n->newname = (yyvsp[(8) - (8)].str);
+					n->object = (yyvsp[-3].list);
+					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19820,8 +19597,8 @@ yyreduce:
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TSTEMPLATE;
-					n->object = (yyvsp[(5) - (8)].list);
-					n->newname = (yyvsp[(8) - (8)].str);
+					n->object = (yyvsp[-3].list);
+					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19831,8 +19608,8 @@ yyreduce:
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TSCONFIGURATION;
-					n->object = (yyvsp[(5) - (8)].list);
-					n->newname = (yyvsp[(8) - (8)].str);
+					n->object = (yyvsp[-3].list);
+					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19852,9 +19629,9 @@ yyreduce:
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_AGGREGATE;
-					n->object = (yyvsp[(3) - (7)].list);
-					n->objarg = (yyvsp[(4) - (7)].list);
-					n->newschema = (yyvsp[(7) - (7)].str);
+					n->object = (yyvsp[-4].list);
+					n->objarg = (yyvsp[-3].list);
+					n->newschema = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19864,8 +19641,8 @@ yyreduce:
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_DOMAIN;
-					n->object = (yyvsp[(3) - (6)].list);
-					n->newschema = (yyvsp[(6) - (6)].str);
+					n->object = (yyvsp[-3].list);
+					n->newschema = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19875,9 +19652,9 @@ yyreduce:
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_FUNCTION;
-					n->object = (yyvsp[(3) - (6)].funwithargs)->funcname;
-					n->objarg = (yyvsp[(3) - (6)].funwithargs)->funcargs;
-					n->newschema = (yyvsp[(6) - (6)].str);
+					n->object = (yyvsp[-3].funwithargs)->funcname;
+					n->objarg = (yyvsp[-3].funwithargs)->funcargs;
+					n->newschema = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19887,8 +19664,8 @@ yyreduce:
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_SEQUENCE;
-					n->relation = (yyvsp[(3) - (6)].range);
-					n->newschema = (yyvsp[(6) - (6)].str);
+					n->relation = (yyvsp[-3].range);
+					n->newschema = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19898,8 +19675,8 @@ yyreduce:
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_TABLE;
-					n->relation = (yyvsp[(3) - (6)].range);
-					n->newschema = (yyvsp[(6) - (6)].str);
+					n->relation = (yyvsp[-3].range);
+					n->newschema = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19909,8 +19686,8 @@ yyreduce:
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_TYPE;
-					n->object = (yyvsp[(3) - (6)].list);
-					n->newschema = (yyvsp[(6) - (6)].str);
+					n->object = (yyvsp[-3].list);
+					n->newschema = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19920,9 +19697,9 @@ yyreduce:
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_AGGREGATE;
-					n->object = (yyvsp[(3) - (7)].list);
-					n->objarg = (yyvsp[(4) - (7)].list);
-					n->newowner = (yyvsp[(7) - (7)].str);
+					n->object = (yyvsp[-4].list);
+					n->objarg = (yyvsp[-3].list);
+					n->newowner = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19932,8 +19709,8 @@ yyreduce:
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_CONVERSION;
-					n->object = (yyvsp[(3) - (6)].list);
-					n->newowner = (yyvsp[(6) - (6)].str);
+					n->object = (yyvsp[-3].list);
+					n->newowner = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19943,8 +19720,8 @@ yyreduce:
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_DATABASE;
-					n->object = list_make1((yyvsp[(3) - (6)].str));
-					n->newowner = (yyvsp[(6) - (6)].str);
+					n->object = list_make1((yyvsp[-3].str));
+					n->newowner = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19954,8 +19731,8 @@ yyreduce:
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_DOMAIN;
-					n->object = (yyvsp[(3) - (6)].list);
-					n->newowner = (yyvsp[(6) - (6)].str);
+					n->object = (yyvsp[-3].list);
+					n->newowner = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19965,9 +19742,9 @@ yyreduce:
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_FUNCTION;
-					n->object = (yyvsp[(3) - (6)].funwithargs)->funcname;
-					n->objarg = (yyvsp[(3) - (6)].funwithargs)->funcargs;
-					n->newowner = (yyvsp[(6) - (6)].str);
+					n->object = (yyvsp[-3].funwithargs)->funcname;
+					n->objarg = (yyvsp[-3].funwithargs)->funcargs;
+					n->newowner = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19977,8 +19754,8 @@ yyreduce:
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_LANGUAGE;
-					n->object = list_make1((yyvsp[(4) - (7)].str));
-					n->newowner = (yyvsp[(7) - (7)].str);
+					n->object = list_make1((yyvsp[-3].str));
+					n->newowner = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -19988,9 +19765,9 @@ yyreduce:
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_OPERATOR;
-					n->object = (yyvsp[(3) - (9)].list);
-					n->objarg = (yyvsp[(5) - (9)].list);
-					n->newowner = (yyvsp[(9) - (9)].str);
+					n->object = (yyvsp[-6].list);
+					n->objarg = (yyvsp[-4].list);
+					n->newowner = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20000,9 +19777,9 @@ yyreduce:
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_OPCLASS;
-					n->object = (yyvsp[(4) - (9)].list);
-					n->addname = (yyvsp[(6) - (9)].str);
-					n->newowner = (yyvsp[(9) - (9)].str);
+					n->object = (yyvsp[-5].list);
+					n->addname = (yyvsp[-3].str);
+					n->newowner = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20012,9 +19789,9 @@ yyreduce:
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_OPFAMILY;
-					n->object = (yyvsp[(4) - (9)].list);
-					n->addname = (yyvsp[(6) - (9)].str);
-					n->newowner = (yyvsp[(9) - (9)].str);
+					n->object = (yyvsp[-5].list);
+					n->addname = (yyvsp[-3].str);
+					n->newowner = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20024,8 +19801,8 @@ yyreduce:
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_SCHEMA;
-					n->object = list_make1((yyvsp[(3) - (6)].str));
-					n->newowner = (yyvsp[(6) - (6)].str);
+					n->object = list_make1((yyvsp[-3].str));
+					n->newowner = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20035,8 +19812,8 @@ yyreduce:
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_TYPE;
-					n->object = (yyvsp[(3) - (6)].list);
-					n->newowner = (yyvsp[(6) - (6)].str);
+					n->object = (yyvsp[-3].list);
+					n->newowner = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20046,8 +19823,8 @@ yyreduce:
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_TABLESPACE;
-					n->object = list_make1((yyvsp[(3) - (6)].str));
-					n->newowner = (yyvsp[(6) - (6)].str);
+					n->object = list_make1((yyvsp[-3].str));
+					n->newowner = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20057,8 +19834,8 @@ yyreduce:
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_TSDICTIONARY;
-					n->object = (yyvsp[(5) - (8)].list);
-					n->newowner = (yyvsp[(8) - (8)].str);
+					n->object = (yyvsp[-3].list);
+					n->newowner = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20068,8 +19845,8 @@ yyreduce:
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_TSCONFIGURATION;
-					n->object = (yyvsp[(5) - (8)].list);
-					n->newowner = (yyvsp[(8) - (8)].str);
+					n->object = (yyvsp[-3].list);
+					n->newowner = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20083,13 +19860,13 @@ yyreduce:
 #line 4980 "gram.y"
     {
 					RuleStmt *n = makeNode(RuleStmt);
-					n->replace = (yyvsp[(2) - (14)].boolean);
-					n->relation = (yyvsp[(10) - (14)].range);
-					n->rulename = (yyvsp[(4) - (14)].str);
-					n->whereClause = (yyvsp[(11) - (14)].node);
-					n->event = (yyvsp[(8) - (14)].ival);
-					n->instead = (yyvsp[(13) - (14)].boolean);
-					n->actions = (yyvsp[(14) - (14)].list);
+					n->replace = (yyvsp[-12].boolean);
+					n->relation = (yyvsp[-4].range);
+					n->rulename = (yyvsp[-10].str);
+					n->whereClause = (yyvsp[-3].node);
+					n->event = (yyvsp[-6].ival);
+					n->instead = (yyvsp[-1].boolean);
+					n->actions = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 					QueryIsRule=FALSE;
 				}
@@ -20102,27 +19879,27 @@ yyreduce:
 
   case 771:
 #line 4996 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
+    { (yyval.list) = list_make1((yyvsp[0].node)); }
     break;
 
   case 772:
 #line 4997 "gram.y"
-    { (yyval.list) = (yyvsp[(2) - (3)].list); }
+    { (yyval.list) = (yyvsp[-1].list); }
     break;
 
   case 773:
 #line 5003 "gram.y"
-    { if ((yyvsp[(3) - (3)].node) != NULL)
-					(yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node));
+    { if ((yyvsp[0].node) != NULL)
+					(yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node));
 				  else
-					(yyval.list) = (yyvsp[(1) - (3)].list);
+					(yyval.list) = (yyvsp[-2].list);
 				}
     break;
 
   case 774:
 #line 5009 "gram.y"
-    { if ((yyvsp[(1) - (1)].node) != NULL)
-					(yyval.list) = list_make1((yyvsp[(1) - (1)].node));
+    { if ((yyvsp[0].node) != NULL)
+					(yyval.list) = list_make1((yyvsp[0].node));
 				  else
 					(yyval.list) = NIL;
 				}
@@ -20130,7 +19907,7 @@ yyreduce:
 
   case 780:
 #line 5025 "gram.y"
-    { (yyval.node) = (yyvsp[(1) - (1)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 781:
@@ -20177,9 +19954,9 @@ yyreduce:
 #line 5044 "gram.y"
     {
 					DropPropertyStmt *n = makeNode(DropPropertyStmt);
-					n->relation = (yyvsp[(5) - (6)].range);
-					n->property = (yyvsp[(3) - (6)].str);
-					n->behavior = (yyvsp[(6) - (6)].dbehavior);
+					n->relation = (yyvsp[-1].range);
+					n->property = (yyvsp[-3].str);
+					n->behavior = (yyvsp[0].dbehavior);
 					n->removeType = OBJECT_RULE;
 					n->missing_ok = false;
 					(yyval.node) = (Node *) n;
@@ -20190,9 +19967,9 @@ yyreduce:
 #line 5054 "gram.y"
     {
 					DropPropertyStmt *n = makeNode(DropPropertyStmt);
-					n->relation = (yyvsp[(7) - (8)].range);
-					n->property = (yyvsp[(5) - (8)].str);
-					n->behavior = (yyvsp[(8) - (8)].dbehavior);
+					n->relation = (yyvsp[-1].range);
+					n->property = (yyvsp[-3].str);
+					n->behavior = (yyvsp[0].dbehavior);
 					n->removeType = OBJECT_RULE;
 					n->missing_ok = true;
 					(yyval.node) = (Node *) n;
@@ -20204,7 +19981,7 @@ yyreduce:
     {
 					NotifyStmt *n = makeNode(NotifyStmt);
 					n->relation = makeNode(RangeVar);
-					n->relation->relname = (yyvsp[(2) - (2)].str);
+					n->relation->relname = (yyvsp[0].str);
 					n->relation->schemaname = NULL;
 					(yyval.node) = (Node *)n;
 				}
@@ -20215,7 +19992,7 @@ yyreduce:
     {
 					ListenStmt *n = makeNode(ListenStmt);
 					n->relation = makeNode(RangeVar);
-					n->relation->relname = (yyvsp[(2) - (2)].str);
+					n->relation->relname = (yyvsp[0].str);
 					n->relation->schemaname = NULL;
 					(yyval.node) = (Node *)n;
 				}
@@ -20226,7 +20003,7 @@ yyreduce:
     {
 					UnlistenStmt *n = makeNode(UnlistenStmt);
 					n->relation = makeNode(RangeVar);
-					n->relation->relname = (yyvsp[(2) - (2)].str);
+					n->relation->relname = (yyvsp[0].str);
 					n->relation->schemaname = NULL;
 					(yyval.node) = (Node *)n;
 				}
@@ -20258,7 +20035,7 @@ yyreduce:
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_BEGIN;
-					n->options = (yyvsp[(3) - (3)].list);
+					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20268,7 +20045,7 @@ yyreduce:
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_START;
-					n->options = (yyvsp[(3) - (3)].list);
+					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20309,7 +20086,7 @@ yyreduce:
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_SAVEPOINT;
 					n->options = list_make1(makeDefElem("savepoint_name",
-														(Node *)makeString((yyvsp[(2) - (2)].str))));
+														(Node *)makeString((yyvsp[0].str))));
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20320,7 +20097,7 @@ yyreduce:
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_RELEASE;
 					n->options = list_make1(makeDefElem("savepoint_name",
-														(Node *)makeString((yyvsp[(3) - (3)].str))));
+														(Node *)makeString((yyvsp[0].str))));
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20331,7 +20108,7 @@ yyreduce:
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_RELEASE;
 					n->options = list_make1(makeDefElem("savepoint_name",
-														(Node *)makeString((yyvsp[(2) - (2)].str))));
+														(Node *)makeString((yyvsp[0].str))));
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20342,7 +20119,7 @@ yyreduce:
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_ROLLBACK_TO;
 					n->options = list_make1(makeDefElem("savepoint_name",
-														(Node *)makeString((yyvsp[(5) - (5)].str))));
+														(Node *)makeString((yyvsp[0].str))));
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20353,7 +20130,7 @@ yyreduce:
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_ROLLBACK_TO;
 					n->options = list_make1(makeDefElem("savepoint_name",
-														(Node *)makeString((yyvsp[(4) - (4)].str))));
+														(Node *)makeString((yyvsp[0].str))));
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20363,7 +20140,7 @@ yyreduce:
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_PREPARE;
-					n->gid = (yyvsp[(3) - (3)].str);
+					n->gid = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20373,7 +20150,7 @@ yyreduce:
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_COMMIT_PREPARED;
-					n->gid = (yyvsp[(3) - (3)].str);
+					n->gid = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20383,7 +20160,7 @@ yyreduce:
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_ROLLBACK_PREPARED;
-					n->gid = (yyvsp[(3) - (3)].str);
+					n->gid = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20406,7 +20183,7 @@ yyreduce:
   case 812:
 #line 5236 "gram.y"
     { (yyval.defelt) = makeDefElem("transaction_isolation",
-									   makeStringConst((yyvsp[(3) - (3)].str), NULL)); }
+									   makeStringConst((yyvsp[0].str), NULL)); }
     break;
 
   case 813:
@@ -20423,17 +20200,17 @@ yyreduce:
 
   case 815:
 #line 5249 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].defelt)); }
+    { (yyval.list) = list_make1((yyvsp[0].defelt)); }
     break;
 
   case 816:
 #line 5251 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].defelt)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].defelt)); }
     break;
 
   case 817:
 #line 5253 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].defelt)); }
+    { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].defelt)); }
     break;
 
   case 819:
@@ -20445,10 +20222,10 @@ yyreduce:
 #line 5273 "gram.y"
     {
 					ViewStmt *n = makeNode(ViewStmt);
-					n->view = (yyvsp[(4) - (8)].range);
-					n->view->istemp = (yyvsp[(2) - (8)].boolean);
-					n->aliases = (yyvsp[(5) - (8)].list);
-					n->query = (yyvsp[(7) - (8)].node);
+					n->view = (yyvsp[-4].range);
+					n->view->istemp = (yyvsp[-6].boolean);
+					n->aliases = (yyvsp[-3].list);
+					n->query = (yyvsp[-1].node);
 					n->replace = false;
 					(yyval.node) = (Node *) n;
 				}
@@ -20458,10 +20235,10 @@ yyreduce:
 #line 5284 "gram.y"
     {
 					ViewStmt *n = makeNode(ViewStmt);
-					n->view = (yyvsp[(6) - (10)].range);
-					n->view->istemp = (yyvsp[(4) - (10)].boolean);
-					n->aliases = (yyvsp[(7) - (10)].list);
-					n->query = (yyvsp[(9) - (10)].node);
+					n->view = (yyvsp[-4].range);
+					n->view->istemp = (yyvsp[-6].boolean);
+					n->aliases = (yyvsp[-3].list);
+					n->query = (yyvsp[-1].node);
 					n->replace = true;
 					(yyval.node) = (Node *) n;
 				}
@@ -20503,7 +20280,7 @@ yyreduce:
 #line 5329 "gram.y"
     {
 					LoadStmt *n = makeNode(LoadStmt);
-					n->filename = (yyvsp[(2) - (2)].str);
+					n->filename = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20512,15 +20289,15 @@ yyreduce:
 #line 5345 "gram.y"
     {
 					CreatedbStmt *n = makeNode(CreatedbStmt);
-					n->dbname = (yyvsp[(3) - (5)].str);
-					n->options = (yyvsp[(5) - (5)].list);
+					n->dbname = (yyvsp[-2].str);
+					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
 
   case 828:
 #line 5354 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].defelt)); }
+    { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].defelt)); }
     break;
 
   case 829:
@@ -20531,7 +20308,7 @@ yyreduce:
   case 830:
 #line 5360 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("tablespace", (Node *)makeString((yyvsp[(3) - (3)].str)));
+					(yyval.defelt) = makeDefElem("tablespace", (Node *)makeString((yyvsp[0].str)));
 				}
     break;
 
@@ -20545,7 +20322,7 @@ yyreduce:
   case 832:
 #line 5368 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("location", (Node *)makeString((yyvsp[(3) - (3)].str)));
+					(yyval.defelt) = makeDefElem("location", (Node *)makeString((yyvsp[0].str)));
 				}
     break;
 
@@ -20559,7 +20336,7 @@ yyreduce:
   case 834:
 #line 5376 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("template", (Node *)makeString((yyvsp[(3) - (3)].str)));
+					(yyval.defelt) = makeDefElem("template", (Node *)makeString((yyvsp[0].str)));
 				}
     break;
 
@@ -20573,14 +20350,14 @@ yyreduce:
   case 836:
 #line 5384 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("encoding", (Node *)makeString((yyvsp[(3) - (3)].str)));
+					(yyval.defelt) = makeDefElem("encoding", (Node *)makeString((yyvsp[0].str)));
 				}
     break;
 
   case 837:
 #line 5388 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("encoding", (Node *)makeInteger((yyvsp[(3) - (3)].ival)));
+					(yyval.defelt) = makeDefElem("encoding", (Node *)makeInteger((yyvsp[0].ival)));
 				}
     break;
 
@@ -20594,14 +20371,14 @@ yyreduce:
   case 839:
 #line 5396 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("connectionlimit", (Node *)makeInteger((yyvsp[(4) - (4)].ival)));
+					(yyval.defelt) = makeDefElem("connectionlimit", (Node *)makeInteger((yyvsp[0].ival)));
 				}
     break;
 
   case 840:
 #line 5400 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("owner", (Node *)makeString((yyvsp[(3) - (3)].str)));
+					(yyval.defelt) = makeDefElem("owner", (Node *)makeString((yyvsp[0].str)));
 				}
     break;
 
@@ -20626,8 +20403,8 @@ yyreduce:
 #line 5426 "gram.y"
     {
 					AlterDatabaseStmt *n = makeNode(AlterDatabaseStmt);
-					n->dbname = (yyvsp[(3) - (5)].str);
-					n->options = (yyvsp[(5) - (5)].list);
+					n->dbname = (yyvsp[-2].str);
+					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				 }
     break;
@@ -20636,15 +20413,15 @@ yyreduce:
 #line 5436 "gram.y"
     {
 					AlterDatabaseSetStmt *n = makeNode(AlterDatabaseSetStmt);
-					n->dbname = (yyvsp[(3) - (4)].str);
-					n->setstmt = (yyvsp[(4) - (4)].vsetstmt);
+					n->dbname = (yyvsp[-1].str);
+					n->setstmt = (yyvsp[0].vsetstmt);
 					(yyval.node) = (Node *)n;
 				}
     break;
 
   case 846:
 #line 5446 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].defelt)); }
+    { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].defelt)); }
     break;
 
   case 847:
@@ -20655,7 +20432,7 @@ yyreduce:
   case 848:
 #line 5452 "gram.y"
     {
-					(yyval.defelt) = makeDefElem("connectionlimit", (Node *)makeInteger((yyvsp[(4) - (4)].ival)));
+					(yyval.defelt) = makeDefElem("connectionlimit", (Node *)makeInteger((yyvsp[0].ival)));
 				}
     break;
 
@@ -20663,7 +20440,7 @@ yyreduce:
 #line 5466 "gram.y"
     {
 					DropdbStmt *n = makeNode(DropdbStmt);
-					n->dbname = (yyvsp[(3) - (3)].str);
+					n->dbname = (yyvsp[0].str);
 					n->missing_ok = FALSE;
 					(yyval.node) = (Node *)n;
 				}
@@ -20673,7 +20450,7 @@ yyreduce:
 #line 5473 "gram.y"
     {
 					DropdbStmt *n = makeNode(DropdbStmt);
-					n->dbname = (yyvsp[(5) - (5)].str);
+					n->dbname = (yyvsp[0].str);
 					n->missing_ok = TRUE;
 					(yyval.node) = (Node *)n;
 				}
@@ -20683,9 +20460,9 @@ yyreduce:
 #line 5490 "gram.y"
     {
 					CreateDomainStmt *n = makeNode(CreateDomainStmt);
-					n->domainname = (yyvsp[(3) - (6)].list);
-					n->typename = (yyvsp[(5) - (6)].typnam);
-					n->constraints = (yyvsp[(6) - (6)].list);
+					n->domainname = (yyvsp[-3].list);
+					n->typename = (yyvsp[-1].typnam);
+					n->constraints = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20695,8 +20472,8 @@ yyreduce:
     {
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
 					n->subtype = 'T';
-					n->typename = (yyvsp[(3) - (4)].list);
-					n->def = (yyvsp[(4) - (4)].node);
+					n->typename = (yyvsp[-1].list);
+					n->def = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20706,7 +20483,7 @@ yyreduce:
     {
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
 					n->subtype = 'N';
-					n->typename = (yyvsp[(3) - (6)].list);
+					n->typename = (yyvsp[-3].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20716,7 +20493,7 @@ yyreduce:
     {
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
 					n->subtype = 'O';
-					n->typename = (yyvsp[(3) - (6)].list);
+					n->typename = (yyvsp[-3].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20726,8 +20503,8 @@ yyreduce:
     {
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
 					n->subtype = 'C';
-					n->typename = (yyvsp[(3) - (5)].list);
-					n->def = (yyvsp[(5) - (5)].node);
+					n->typename = (yyvsp[-2].list);
+					n->def = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20737,9 +20514,9 @@ yyreduce:
     {
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
 					n->subtype = 'X';
-					n->typename = (yyvsp[(3) - (7)].list);
-					n->name = (yyvsp[(6) - (7)].str);
-					n->behavior = (yyvsp[(7) - (7)].dbehavior);
+					n->typename = (yyvsp[-4].list);
+					n->name = (yyvsp[-1].str);
+					n->behavior = (yyvsp[0].dbehavior);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20758,8 +20535,8 @@ yyreduce:
 #line 5559 "gram.y"
     {
 					AlterTSDictionaryStmt *n = makeNode(AlterTSDictionaryStmt);
-					n->dictname = (yyvsp[(5) - (6)].list);
-					n->options = (yyvsp[(6) - (6)].list);
+					n->dictname = (yyvsp[-1].list);
+					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20768,9 +20545,9 @@ yyreduce:
 #line 5569 "gram.y"
     {
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
-					n->cfgname = (yyvsp[(5) - (11)].list);
-					n->tokentype = (yyvsp[(9) - (11)].list);
-					n->dicts = (yyvsp[(11) - (11)].list);
+					n->cfgname = (yyvsp[-6].list);
+					n->tokentype = (yyvsp[-2].list);
+					n->dicts = (yyvsp[0].list);
 					n->override = false;
 					n->replace = false;
 					(yyval.node) = (Node*)n;
@@ -20781,9 +20558,9 @@ yyreduce:
 #line 5579 "gram.y"
     {
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
-					n->cfgname = (yyvsp[(5) - (11)].list);
-					n->tokentype = (yyvsp[(9) - (11)].list);
-					n->dicts = (yyvsp[(11) - (11)].list);
+					n->cfgname = (yyvsp[-6].list);
+					n->tokentype = (yyvsp[-2].list);
+					n->dicts = (yyvsp[0].list);
 					n->override = true;
 					n->replace = false;
 					(yyval.node) = (Node*)n;
@@ -20794,9 +20571,9 @@ yyreduce:
 #line 5589 "gram.y"
     {
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
-					n->cfgname = (yyvsp[(5) - (11)].list);
+					n->cfgname = (yyvsp[-6].list);
 					n->tokentype = NIL;
-					n->dicts = list_make2((yyvsp[(9) - (11)].list),(yyvsp[(11) - (11)].list));
+					n->dicts = list_make2((yyvsp[-2].list),(yyvsp[0].list));
 					n->override = false;
 					n->replace = true;
 					(yyval.node) = (Node*)n;
@@ -20807,9 +20584,9 @@ yyreduce:
 #line 5599 "gram.y"
     {
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
-					n->cfgname = (yyvsp[(5) - (13)].list);
-					n->tokentype = (yyvsp[(9) - (13)].list);
-					n->dicts = list_make2((yyvsp[(11) - (13)].list),(yyvsp[(13) - (13)].list));
+					n->cfgname = (yyvsp[-8].list);
+					n->tokentype = (yyvsp[-4].list);
+					n->dicts = list_make2((yyvsp[-2].list),(yyvsp[0].list));
 					n->override = false;
 					n->replace = true;
 					(yyval.node) = (Node*)n;
@@ -20820,8 +20597,8 @@ yyreduce:
 #line 5609 "gram.y"
     {
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
-					n->cfgname = (yyvsp[(5) - (9)].list);
-					n->tokentype = (yyvsp[(9) - (9)].list);
+					n->cfgname = (yyvsp[-4].list);
+					n->tokentype = (yyvsp[0].list);
 					n->missing_ok = false;
 					(yyval.node) = (Node*)n;
 				}
@@ -20831,8 +20608,8 @@ yyreduce:
 #line 5617 "gram.y"
     {
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
-					n->cfgname = (yyvsp[(5) - (11)].list);
-					n->tokentype = (yyvsp[(11) - (11)].list);
+					n->cfgname = (yyvsp[-6].list);
+					n->tokentype = (yyvsp[0].list);
 					n->missing_ok = true;
 					(yyval.node) = (Node*)n;
 				}
@@ -20842,11 +20619,11 @@ yyreduce:
 #line 5639 "gram.y"
     {
 			  CreateConversionStmt *n = makeNode(CreateConversionStmt);
-			  n->conversion_name = (yyvsp[(4) - (10)].list);
-			  n->for_encoding_name = (yyvsp[(6) - (10)].str);
-			  n->to_encoding_name = (yyvsp[(8) - (10)].str);
-			  n->func_name = (yyvsp[(10) - (10)].list);
-			  n->def = (yyvsp[(2) - (10)].boolean);
+			  n->conversion_name = (yyvsp[-6].list);
+			  n->for_encoding_name = (yyvsp[-4].str);
+			  n->to_encoding_name = (yyvsp[-2].str);
+			  n->func_name = (yyvsp[0].list);
+			  n->def = (yyvsp[-8].boolean);
 			  (yyval.node) = (Node *)n;
 			}
     break;
@@ -20855,8 +20632,8 @@ yyreduce:
 #line 5661 "gram.y"
     {
 			       ClusterStmt *n = makeNode(ClusterStmt);
-				   n->relation = (yyvsp[(2) - (3)].range);
-				   n->indexname = (yyvsp[(3) - (3)].str);
+				   n->relation = (yyvsp[-1].range);
+				   n->indexname = (yyvsp[0].str);
 				   (yyval.node) = (Node*)n;
 				}
     break;
@@ -20875,15 +20652,15 @@ yyreduce:
 #line 5676 "gram.y"
     {
 				   ClusterStmt *n = makeNode(ClusterStmt);
-				   n->relation = (yyvsp[(4) - (4)].range);
-				   n->indexname = (yyvsp[(2) - (4)].str);
+				   n->relation = (yyvsp[0].range);
+				   n->indexname = (yyvsp[-2].str);
 				   (yyval.node) = (Node*)n;
 				}
     break;
 
   case 870:
 #line 5685 "gram.y"
-    { (yyval.str) = (yyvsp[(2) - (2)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 871:
@@ -20897,9 +20674,9 @@ yyreduce:
 					VacuumStmt *n = makeNode(VacuumStmt);
 					n->vacuum = true;
 					n->analyze = false;
-					n->full = (yyvsp[(2) - (4)].boolean);
-					n->freeze_min_age = (yyvsp[(3) - (4)].boolean) ? 0 : -1;
-					n->verbose = (yyvsp[(4) - (4)].boolean);
+					n->full = (yyvsp[-2].boolean);
+					n->freeze_min_age = (yyvsp[-1].boolean) ? 0 : -1;
+					n->verbose = (yyvsp[0].boolean);
 					n->relation = NULL;
 					n->va_cols = NIL;
 					(yyval.node) = (Node *)n;
@@ -20912,10 +20689,10 @@ yyreduce:
 					VacuumStmt *n = makeNode(VacuumStmt);
 					n->vacuum = true;
 					n->analyze = false;
-					n->full = (yyvsp[(2) - (5)].boolean);
-					n->freeze_min_age = (yyvsp[(3) - (5)].boolean) ? 0 : -1;
-					n->verbose = (yyvsp[(4) - (5)].boolean);
-					n->relation = (yyvsp[(5) - (5)].range);
+					n->full = (yyvsp[-3].boolean);
+					n->freeze_min_age = (yyvsp[-2].boolean) ? 0 : -1;
+					n->verbose = (yyvsp[-1].boolean);
+					n->relation = (yyvsp[0].range);
 					n->va_cols = NIL;
 					(yyval.node) = (Node *)n;
 				}
@@ -20924,11 +20701,11 @@ yyreduce:
   case 874:
 #line 5723 "gram.y"
     {
-					VacuumStmt *n = (VacuumStmt *) (yyvsp[(5) - (5)].node);
+					VacuumStmt *n = (VacuumStmt *) (yyvsp[0].node);
 					n->vacuum = true;
-					n->full = (yyvsp[(2) - (5)].boolean);
-					n->freeze_min_age = (yyvsp[(3) - (5)].boolean) ? 0 : -1;
-					n->verbose |= (yyvsp[(4) - (5)].boolean);
+					n->full = (yyvsp[-3].boolean);
+					n->freeze_min_age = (yyvsp[-2].boolean) ? 0 : -1;
+					n->verbose |= (yyvsp[-1].boolean);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -20941,7 +20718,7 @@ yyreduce:
 					n->analyze = true;
 					n->full = false;
 					n->freeze_min_age = -1;
-					n->verbose = (yyvsp[(2) - (2)].boolean);
+					n->verbose = (yyvsp[0].boolean);
 					n->relation = NULL;
 					n->va_cols = NIL;
 					(yyval.node) = (Node *)n;
@@ -20956,9 +20733,9 @@ yyreduce:
 					n->analyze = true;
 					n->full = false;
 					n->freeze_min_age = -1;
-					n->verbose = (yyvsp[(2) - (4)].boolean);
-					n->relation = (yyvsp[(3) - (4)].range);
-					n->va_cols = (yyvsp[(4) - (4)].list);
+					n->verbose = (yyvsp[-2].boolean);
+					n->relation = (yyvsp[-1].range);
+					n->va_cols = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -21005,7 +20782,7 @@ yyreduce:
 
   case 885:
 #line 5779 "gram.y"
-    { (yyval.list) = (yyvsp[(2) - (3)].list); }
+    { (yyval.list) = (yyvsp[-1].list); }
     break;
 
   case 886:
@@ -21017,9 +20794,9 @@ yyreduce:
 #line 5792 "gram.y"
     {
 					ExplainStmt *n = makeNode(ExplainStmt);
-					n->analyze = (yyvsp[(2) - (4)].boolean);
-					n->verbose = (yyvsp[(3) - (4)].boolean);
-					n->query = (yyvsp[(4) - (4)].node);
+					n->analyze = (yyvsp[-2].boolean);
+					n->verbose = (yyvsp[-1].boolean);
+					n->query = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -21038,16 +20815,16 @@ yyreduce:
 #line 5823 "gram.y"
     {
 					PrepareStmt *n = makeNode(PrepareStmt);
-					n->name = (yyvsp[(2) - (5)].str);
-					n->argtypes = (yyvsp[(3) - (5)].list);
-					n->query = (yyvsp[(5) - (5)].node);
+					n->name = (yyvsp[-3].str);
+					n->argtypes = (yyvsp[-2].list);
+					n->query = (yyvsp[0].node);
 					(yyval.node) = (Node *) n;
 				}
     break;
 
   case 897:
 #line 5832 "gram.y"
-    { (yyval.list) = (yyvsp[(2) - (3)].list); }
+    { (yyval.list) = (yyvsp[-1].list); }
     break;
 
   case 898:
@@ -21059,8 +20836,8 @@ yyreduce:
 #line 5851 "gram.y"
     {
 					ExecuteStmt *n = makeNode(ExecuteStmt);
-					n->name = (yyvsp[(2) - (3)].str);
-					n->params = (yyvsp[(3) - (3)].list);
+					n->name = (yyvsp[-1].str);
+					n->params = (yyvsp[0].list);
 					n->into = NULL;
 					(yyval.node) = (Node *) n;
 				}
@@ -21070,11 +20847,11 @@ yyreduce:
 #line 5860 "gram.y"
     {
 					ExecuteStmt *n = makeNode(ExecuteStmt);
-					n->name = (yyvsp[(7) - (8)].str);
-					n->params = (yyvsp[(8) - (8)].list);
-					(yyvsp[(4) - (8)].into)->rel->istemp = (yyvsp[(2) - (8)].boolean);
-					n->into = (yyvsp[(4) - (8)].into);
-					if ((yyvsp[(4) - (8)].into)->colNames)
+					n->name = (yyvsp[-1].str);
+					n->params = (yyvsp[0].list);
+					(yyvsp[-4].into)->rel->istemp = (yyvsp[-6].boolean);
+					n->into = (yyvsp[-4].into);
+					if ((yyvsp[-4].into)->colNames)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("column name list not allowed in CREATE TABLE / AS EXECUTE")));
@@ -21085,7 +20862,7 @@ yyreduce:
 
   case 905:
 #line 5875 "gram.y"
-    { (yyval.list) = (yyvsp[(2) - (3)].list); }
+    { (yyval.list) = (yyvsp[-1].list); }
     break;
 
   case 906:
@@ -21097,7 +20874,7 @@ yyreduce:
 #line 5887 "gram.y"
     {
 						DeallocateStmt *n = makeNode(DeallocateStmt);
-						n->name = (yyvsp[(2) - (2)].str);
+						n->name = (yyvsp[0].str);
 						(yyval.node) = (Node *) n;
 					}
     break;
@@ -21106,7 +20883,7 @@ yyreduce:
 #line 5893 "gram.y"
     {
 						DeallocateStmt *n = makeNode(DeallocateStmt);
-						n->name = (yyvsp[(3) - (3)].str);
+						n->name = (yyvsp[0].str);
 						(yyval.node) = (Node *) n;
 					}
     break;
@@ -21132,9 +20909,9 @@ yyreduce:
   case 911:
 #line 5921 "gram.y"
     {
-					(yyvsp[(4) - (5)].istmt)->relation = (yyvsp[(3) - (5)].range);
-					(yyvsp[(4) - (5)].istmt)->returningList = (yyvsp[(5) - (5)].list);
-					(yyval.node) = (Node *) (yyvsp[(4) - (5)].istmt);
+					(yyvsp[-1].istmt)->relation = (yyvsp[-2].range);
+					(yyvsp[-1].istmt)->returningList = (yyvsp[0].list);
+					(yyval.node) = (Node *) (yyvsp[-1].istmt);
 				}
     break;
 
@@ -21143,7 +20920,7 @@ yyreduce:
     {
 					(yyval.istmt) = makeNode(InsertStmt);
 					(yyval.istmt)->cols = NIL;
-					(yyval.istmt)->selectStmt = (yyvsp[(1) - (1)].node);
+					(yyval.istmt)->selectStmt = (yyvsp[0].node);
 				}
     break;
 
@@ -21151,8 +20928,8 @@ yyreduce:
 #line 5936 "gram.y"
     {
 					(yyval.istmt) = makeNode(InsertStmt);
-					(yyval.istmt)->cols = (yyvsp[(2) - (4)].list);
-					(yyval.istmt)->selectStmt = (yyvsp[(4) - (4)].node);
+					(yyval.istmt)->cols = (yyvsp[-2].list);
+					(yyval.istmt)->selectStmt = (yyvsp[0].node);
 				}
     break;
 
@@ -21167,28 +20944,28 @@ yyreduce:
 
   case 915:
 #line 5951 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].target)); }
+    { (yyval.list) = list_make1((yyvsp[0].target)); }
     break;
 
   case 916:
 #line 5953 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].target)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].target)); }
     break;
 
   case 917:
 #line 5958 "gram.y"
     {
 					(yyval.target) = makeNode(ResTarget);
-					(yyval.target)->name = (yyvsp[(1) - (2)].str);
-					(yyval.target)->indirection = (yyvsp[(2) - (2)].list);
+					(yyval.target)->name = (yyvsp[-1].str);
+					(yyval.target)->indirection = (yyvsp[0].list);
 					(yyval.target)->val = NULL;
-					(yyval.target)->location = (yylsp[(1) - (2)]);
+					(yyval.target)->location = (yylsp[-1]);
 				}
     break;
 
   case 918:
 #line 5968 "gram.y"
-    { (yyval.list) = (yyvsp[(2) - (2)].list); }
+    { (yyval.list) = (yyvsp[0].list); }
     break;
 
   case 919:
@@ -21200,17 +20977,17 @@ yyreduce:
 #line 5982 "gram.y"
     {
 					DeleteStmt *n = makeNode(DeleteStmt);
-					n->relation = (yyvsp[(3) - (6)].range);
-					n->usingClause = (yyvsp[(4) - (6)].list);
-					n->whereClause = (yyvsp[(5) - (6)].node);
-					n->returningList = (yyvsp[(6) - (6)].list);
+					n->relation = (yyvsp[-3].range);
+					n->usingClause = (yyvsp[-2].list);
+					n->whereClause = (yyvsp[-1].node);
+					n->returningList = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
 
   case 921:
 #line 5993 "gram.y"
-    { (yyval.list) = (yyvsp[(2) - (2)].list); }
+    { (yyval.list) = (yyvsp[0].list); }
     break;
 
   case 922:
@@ -21223,16 +21000,16 @@ yyreduce:
     {
 					LockStmt *n = makeNode(LockStmt);
 
-					n->relations = (yyvsp[(3) - (5)].list);
-					n->mode = (yyvsp[(4) - (5)].ival);
-					n->nowait = (yyvsp[(5) - (5)].boolean);
+					n->relations = (yyvsp[-2].list);
+					n->mode = (yyvsp[-1].ival);
+					n->nowait = (yyvsp[0].boolean);
 					(yyval.node) = (Node *)n;
 				}
     break;
 
   case 924:
 #line 6008 "gram.y"
-    { (yyval.ival) = (yyvsp[(2) - (3)].ival); }
+    { (yyval.ival) = (yyvsp[-1].ival); }
     break;
 
   case 925:
@@ -21294,40 +21071,40 @@ yyreduce:
 #line 6039 "gram.y"
     {
 					UpdateStmt *n = makeNode(UpdateStmt);
-					n->relation = (yyvsp[(2) - (7)].range);
-					n->targetList = (yyvsp[(4) - (7)].list);
-					n->fromClause = (yyvsp[(5) - (7)].list);
-					n->whereClause = (yyvsp[(6) - (7)].node);
-					n->returningList = (yyvsp[(7) - (7)].list);
+					n->relation = (yyvsp[-5].range);
+					n->targetList = (yyvsp[-3].list);
+					n->fromClause = (yyvsp[-2].list);
+					n->whereClause = (yyvsp[-1].node);
+					n->returningList = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
 
   case 937:
 #line 6051 "gram.y"
-    { (yyval.list) = (yyvsp[(1) - (1)].list); }
+    { (yyval.list) = (yyvsp[0].list); }
     break;
 
   case 938:
 #line 6052 "gram.y"
-    { (yyval.list) = list_concat((yyvsp[(1) - (3)].list),(yyvsp[(3) - (3)].list)); }
+    { (yyval.list) = list_concat((yyvsp[-2].list),(yyvsp[0].list)); }
     break;
 
   case 939:
 #line 6056 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].target)); }
+    { (yyval.list) = list_make1((yyvsp[0].target)); }
     break;
 
   case 940:
 #line 6057 "gram.y"
-    { (yyval.list) = (yyvsp[(1) - (1)].list); }
+    { (yyval.list) = (yyvsp[0].list); }
     break;
 
   case 941:
 #line 6062 "gram.y"
     {
-					(yyval.target) = (yyvsp[(1) - (3)].target);
-					(yyval.target)->val = (Node *) (yyvsp[(3) - (3)].node);
+					(yyval.target) = (yyvsp[-2].target);
+					(yyval.target)->val = (Node *) (yyvsp[0].node);
 				}
     break;
 
@@ -21342,11 +21119,11 @@ yyreduce:
 					 * into the destination ResTargets.  XXX this approach
 					 * cannot work for general row expressions as sources.
 					 */
-					if (list_length((yyvsp[(2) - (5)].list)) != list_length((yyvsp[(5) - (5)].list)))
+					if (list_length((yyvsp[-3].list)) != list_length((yyvsp[0].list)))
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("number of columns does not match number of values")));
-					forboth(col_cell, (yyvsp[(2) - (5)].list), val_cell, (yyvsp[(5) - (5)].list))
+					forboth(col_cell, (yyvsp[-3].list), val_cell, (yyvsp[0].list))
 					{
 						ResTarget *res_col = (ResTarget *) lfirst(col_cell);
 						Node *res_val = (Node *) lfirst(val_cell);
@@ -21354,7 +21131,7 @@ yyreduce:
 						res_col->val = res_val;
 					}
 
-					(yyval.list) = (yyvsp[(2) - (5)].list);
+					(yyval.list) = (yyvsp[-3].list);
 				}
     break;
 
@@ -21362,31 +21139,31 @@ yyreduce:
 #line 6097 "gram.y"
     {
 					(yyval.target) = makeNode(ResTarget);
-					(yyval.target)->name = (yyvsp[(1) - (2)].str);
-					(yyval.target)->indirection = (yyvsp[(2) - (2)].list);
+					(yyval.target)->name = (yyvsp[-1].str);
+					(yyval.target)->indirection = (yyvsp[0].list);
 					(yyval.target)->val = NULL;	/* upper production sets this */
-					(yyval.target)->location = (yylsp[(1) - (2)]);
+					(yyval.target)->location = (yylsp[-1]);
 				}
     break;
 
   case 944:
 #line 6107 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].target)); }
+    { (yyval.list) = list_make1((yyvsp[0].target)); }
     break;
 
   case 945:
 #line 6108 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list),(yyvsp[(3) - (3)].target)); }
+    { (yyval.list) = lappend((yyvsp[-2].list),(yyvsp[0].target)); }
     break;
 
   case 946:
 #line 6119 "gram.y"
     {
 					DeclareCursorStmt *n = makeNode(DeclareCursorStmt);
-					n->portalname = (yyvsp[(2) - (7)].str);
+					n->portalname = (yyvsp[-5].str);
 					/* currently we always set FAST_PLAN option */
-					n->options = (yyvsp[(3) - (7)].ival) | (yyvsp[(5) - (7)].ival) | CURSOR_OPT_FAST_PLAN;
-					n->query = (yyvsp[(7) - (7)].node);
+					n->options = (yyvsp[-4].ival) | (yyvsp[-2].ival) | CURSOR_OPT_FAST_PLAN;
+					n->query = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -21398,22 +21175,22 @@ yyreduce:
 
   case 948:
 #line 6130 "gram.y"
-    { (yyval.ival) = (yyvsp[(1) - (3)].ival) | CURSOR_OPT_NO_SCROLL; }
+    { (yyval.ival) = (yyvsp[-2].ival) | CURSOR_OPT_NO_SCROLL; }
     break;
 
   case 949:
 #line 6131 "gram.y"
-    { (yyval.ival) = (yyvsp[(1) - (2)].ival) | CURSOR_OPT_SCROLL; }
+    { (yyval.ival) = (yyvsp[-1].ival) | CURSOR_OPT_SCROLL; }
     break;
 
   case 950:
 #line 6132 "gram.y"
-    { (yyval.ival) = (yyvsp[(1) - (2)].ival) | CURSOR_OPT_BINARY; }
+    { (yyval.ival) = (yyvsp[-1].ival) | CURSOR_OPT_BINARY; }
     break;
 
   case 951:
 #line 6133 "gram.y"
-    { (yyval.ival) = (yyvsp[(1) - (2)].ival) | CURSOR_OPT_INSENSITIVE; }
+    { (yyval.ival) = (yyvsp[-1].ival) | CURSOR_OPT_INSENSITIVE; }
     break;
 
   case 952:
@@ -21433,94 +21210,94 @@ yyreduce:
 
   case 957:
 #line 6191 "gram.y"
-    { (yyval.node) = (yyvsp[(2) - (3)].node); }
+    { (yyval.node) = (yyvsp[-1].node); }
     break;
 
   case 958:
 #line 6192 "gram.y"
-    { (yyval.node) = (yyvsp[(2) - (3)].node); }
+    { (yyval.node) = (yyvsp[-1].node); }
     break;
 
   case 959:
 #line 6202 "gram.y"
-    { (yyval.node) = (yyvsp[(1) - (1)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 960:
 #line 6204 "gram.y"
     {
-					insertSelectOptions((SelectStmt *) (yyvsp[(1) - (2)].node), (yyvsp[(2) - (2)].list), NIL,
+					insertSelectOptions((SelectStmt *) (yyvsp[-1].node), (yyvsp[0].list), NIL,
 										NULL, NULL);
-					(yyval.node) = (yyvsp[(1) - (2)].node);
+					(yyval.node) = (yyvsp[-1].node);
 				}
     break;
 
   case 961:
 #line 6210 "gram.y"
     {
-					insertSelectOptions((SelectStmt *) (yyvsp[(1) - (4)].node), (yyvsp[(2) - (4)].list), (yyvsp[(3) - (4)].list),
-										list_nth((yyvsp[(4) - (4)].list), 0), list_nth((yyvsp[(4) - (4)].list), 1));
-					(yyval.node) = (yyvsp[(1) - (4)].node);
+					insertSelectOptions((SelectStmt *) (yyvsp[-3].node), (yyvsp[-2].list), (yyvsp[-1].list),
+										list_nth((yyvsp[0].list), 0), list_nth((yyvsp[0].list), 1));
+					(yyval.node) = (yyvsp[-3].node);
 				}
     break;
 
   case 962:
 #line 6216 "gram.y"
     {
-					insertSelectOptions((SelectStmt *) (yyvsp[(1) - (4)].node), (yyvsp[(2) - (4)].list), (yyvsp[(4) - (4)].list),
-										list_nth((yyvsp[(3) - (4)].list), 0), list_nth((yyvsp[(3) - (4)].list), 1));
-					(yyval.node) = (yyvsp[(1) - (4)].node);
+					insertSelectOptions((SelectStmt *) (yyvsp[-3].node), (yyvsp[-2].list), (yyvsp[0].list),
+										list_nth((yyvsp[-1].list), 0), list_nth((yyvsp[-1].list), 1));
+					(yyval.node) = (yyvsp[-3].node);
 				}
     break;
 
   case 963:
 #line 6224 "gram.y"
-    { (yyval.node) = (yyvsp[(1) - (1)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 964:
 #line 6225 "gram.y"
-    { (yyval.node) = (yyvsp[(1) - (1)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 965:
 #line 6255 "gram.y"
     {
 					SelectStmt *n = makeNode(SelectStmt);
-					n->distinctClause = (yyvsp[(2) - (8)].list);
-					n->targetList = (yyvsp[(3) - (8)].list);
-					n->intoClause = (yyvsp[(4) - (8)].into);
-					n->fromClause = (yyvsp[(5) - (8)].list);
-					n->whereClause = (yyvsp[(6) - (8)].node);
-					n->groupClause = (yyvsp[(7) - (8)].list);
-					n->havingClause = (yyvsp[(8) - (8)].node);
+					n->distinctClause = (yyvsp[-6].list);
+					n->targetList = (yyvsp[-5].list);
+					n->intoClause = (yyvsp[-4].into);
+					n->fromClause = (yyvsp[-3].list);
+					n->whereClause = (yyvsp[-2].node);
+					n->groupClause = (yyvsp[-1].list);
+					n->havingClause = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
     break;
 
   case 966:
 #line 6266 "gram.y"
-    { (yyval.node) = (yyvsp[(1) - (1)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 967:
 #line 6268 "gram.y"
     {
-					(yyval.node) = makeSetOp(SETOP_UNION, (yyvsp[(3) - (4)].boolean), (yyvsp[(1) - (4)].node), (yyvsp[(4) - (4)].node));
+					(yyval.node) = makeSetOp(SETOP_UNION, (yyvsp[-1].boolean), (yyvsp[-3].node), (yyvsp[0].node));
 				}
     break;
 
   case 968:
 #line 6272 "gram.y"
     {
-					(yyval.node) = makeSetOp(SETOP_INTERSECT, (yyvsp[(3) - (4)].boolean), (yyvsp[(1) - (4)].node), (yyvsp[(4) - (4)].node));
+					(yyval.node) = makeSetOp(SETOP_INTERSECT, (yyvsp[-1].boolean), (yyvsp[-3].node), (yyvsp[0].node));
 				}
     break;
 
   case 969:
 #line 6276 "gram.y"
     {
-					(yyval.node) = makeSetOp(SETOP_EXCEPT, (yyvsp[(3) - (4)].boolean), (yyvsp[(1) - (4)].node), (yyvsp[(4) - (4)].node));
+					(yyval.node) = makeSetOp(SETOP_EXCEPT, (yyvsp[-1].boolean), (yyvsp[-3].node), (yyvsp[0].node));
 				}
     break;
 
@@ -21528,7 +21305,7 @@ yyreduce:
 #line 6283 "gram.y"
     {
 					(yyval.into) = makeNode(IntoClause);
-					(yyval.into)->rel = (yyvsp[(2) - (2)].range);
+					(yyval.into)->rel = (yyvsp[0].range);
 					(yyval.into)->colNames = NIL;
 					(yyval.into)->options = NIL;
 					(yyval.into)->onCommit = ONCOMMIT_NOOP;
@@ -21544,7 +21321,7 @@ yyreduce:
   case 972:
 #line 6301 "gram.y"
     {
-					(yyval.range) = (yyvsp[(3) - (3)].range);
+					(yyval.range) = (yyvsp[0].range);
 					(yyval.range)->istemp = true;
 				}
     break;
@@ -21552,7 +21329,7 @@ yyreduce:
   case 973:
 #line 6306 "gram.y"
     {
-					(yyval.range) = (yyvsp[(3) - (3)].range);
+					(yyval.range) = (yyvsp[0].range);
 					(yyval.range)->istemp = true;
 				}
     break;
@@ -21560,7 +21337,7 @@ yyreduce:
   case 974:
 #line 6311 "gram.y"
     {
-					(yyval.range) = (yyvsp[(4) - (4)].range);
+					(yyval.range) = (yyvsp[0].range);
 					(yyval.range)->istemp = true;
 				}
     break;
@@ -21568,7 +21345,7 @@ yyreduce:
   case 975:
 #line 6316 "gram.y"
     {
-					(yyval.range) = (yyvsp[(4) - (4)].range);
+					(yyval.range) = (yyvsp[0].range);
 					(yyval.range)->istemp = true;
 				}
     break;
@@ -21576,7 +21353,7 @@ yyreduce:
   case 976:
 #line 6321 "gram.y"
     {
-					(yyval.range) = (yyvsp[(4) - (4)].range);
+					(yyval.range) = (yyvsp[0].range);
 					(yyval.range)->istemp = true;
 				}
     break;
@@ -21584,7 +21361,7 @@ yyreduce:
   case 977:
 #line 6326 "gram.y"
     {
-					(yyval.range) = (yyvsp[(4) - (4)].range);
+					(yyval.range) = (yyvsp[0].range);
 					(yyval.range)->istemp = true;
 				}
     break;
@@ -21592,7 +21369,7 @@ yyreduce:
   case 978:
 #line 6331 "gram.y"
     {
-					(yyval.range) = (yyvsp[(2) - (2)].range);
+					(yyval.range) = (yyvsp[0].range);
 					(yyval.range)->istemp = false;
 				}
     break;
@@ -21600,7 +21377,7 @@ yyreduce:
   case 979:
 #line 6336 "gram.y"
     {
-					(yyval.range) = (yyvsp[(1) - (1)].range);
+					(yyval.range) = (yyvsp[0].range);
 					(yyval.range)->istemp = false;
 				}
     break;
@@ -21637,7 +21414,7 @@ yyreduce:
 
   case 986:
 #line 6356 "gram.y"
-    { (yyval.list) = (yyvsp[(4) - (5)].list); }
+    { (yyval.list) = (yyvsp[-1].list); }
     break;
 
   case 987:
@@ -21652,7 +21429,7 @@ yyreduce:
 
   case 989:
 #line 6362 "gram.y"
-    { (yyval.list) = (yyvsp[(1) - (1)].list);}
+    { (yyval.list) = (yyvsp[0].list);}
     break;
 
   case 990:
@@ -21662,27 +21439,27 @@ yyreduce:
 
   case 991:
 #line 6367 "gram.y"
-    { (yyval.list) = (yyvsp[(3) - (3)].list); }
+    { (yyval.list) = (yyvsp[0].list); }
     break;
 
   case 992:
 #line 6371 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].sortby)); }
+    { (yyval.list) = list_make1((yyvsp[0].sortby)); }
     break;
 
   case 993:
 #line 6372 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].sortby)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].sortby)); }
     break;
 
   case 994:
 #line 6376 "gram.y"
     {
 					(yyval.sortby) = makeNode(SortBy);
-					(yyval.sortby)->node = (yyvsp[(1) - (4)].node);
+					(yyval.sortby)->node = (yyvsp[-3].node);
 					(yyval.sortby)->sortby_dir = SORTBY_USING;
-					(yyval.sortby)->sortby_nulls = (yyvsp[(4) - (4)].ival);
-					(yyval.sortby)->useOp = (yyvsp[(3) - (4)].list);
+					(yyval.sortby)->sortby_nulls = (yyvsp[0].ival);
+					(yyval.sortby)->useOp = (yyvsp[-1].list);
 				}
     break;
 
@@ -21690,31 +21467,31 @@ yyreduce:
 #line 6384 "gram.y"
     {
 					(yyval.sortby) = makeNode(SortBy);
-					(yyval.sortby)->node = (yyvsp[(1) - (3)].node);
-					(yyval.sortby)->sortby_dir = (yyvsp[(2) - (3)].ival);
-					(yyval.sortby)->sortby_nulls = (yyvsp[(3) - (3)].ival);
+					(yyval.sortby)->node = (yyvsp[-2].node);
+					(yyval.sortby)->sortby_dir = (yyvsp[-1].ival);
+					(yyval.sortby)->sortby_nulls = (yyvsp[0].ival);
 					(yyval.sortby)->useOp = NIL;
 				}
     break;
 
   case 996:
 #line 6396 "gram.y"
-    { (yyval.list) = list_make2((yyvsp[(4) - (4)].node), (yyvsp[(2) - (4)].node)); }
+    { (yyval.list) = list_make2((yyvsp[0].node), (yyvsp[-2].node)); }
     break;
 
   case 997:
 #line 6398 "gram.y"
-    { (yyval.list) = list_make2((yyvsp[(2) - (4)].node), (yyvsp[(4) - (4)].node)); }
+    { (yyval.list) = list_make2((yyvsp[-2].node), (yyvsp[0].node)); }
     break;
 
   case 998:
 #line 6400 "gram.y"
-    { (yyval.list) = list_make2(NULL, (yyvsp[(2) - (2)].node)); }
+    { (yyval.list) = list_make2(NULL, (yyvsp[0].node)); }
     break;
 
   case 999:
 #line 6402 "gram.y"
-    { (yyval.list) = list_make2((yyvsp[(2) - (2)].node), NULL); }
+    { (yyval.list) = list_make2((yyvsp[0].node), NULL); }
     break;
 
   case 1000:
@@ -21730,7 +21507,7 @@ yyreduce:
 
   case 1001:
 #line 6414 "gram.y"
-    { (yyval.list) = (yyvsp[(1) - (1)].list); }
+    { (yyval.list) = (yyvsp[0].list); }
     break;
 
   case 1002:
@@ -21740,7 +21517,7 @@ yyreduce:
 
   case 1003:
 #line 6420 "gram.y"
-    { (yyval.node) = (yyvsp[(1) - (1)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 1004:
@@ -21755,12 +21532,12 @@ yyreduce:
 
   case 1005:
 #line 6431 "gram.y"
-    { (yyval.node) = (yyvsp[(1) - (1)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 1006:
 #line 6435 "gram.y"
-    { (yyval.list) = (yyvsp[(3) - (3)].list); }
+    { (yyval.list) = (yyvsp[0].list); }
     break;
 
   case 1007:
@@ -21770,7 +21547,7 @@ yyreduce:
 
   case 1008:
 #line 6440 "gram.y"
-    { (yyval.node) = (yyvsp[(2) - (2)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 1009:
@@ -21780,7 +21557,7 @@ yyreduce:
 
   case 1010:
 #line 6445 "gram.y"
-    { (yyval.list) = (yyvsp[(1) - (1)].list); }
+    { (yyval.list) = (yyvsp[0].list); }
     break;
 
   case 1011:
@@ -21790,7 +21567,7 @@ yyreduce:
 
   case 1012:
 #line 6450 "gram.y"
-    { (yyval.list) = (yyvsp[(1) - (1)].list); }
+    { (yyval.list) = (yyvsp[0].list); }
     break;
 
   case 1013:
@@ -21800,21 +21577,21 @@ yyreduce:
 
   case 1014:
 #line 6455 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
+    { (yyval.list) = list_make1((yyvsp[0].node)); }
     break;
 
   case 1015:
 #line 6456 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].node)); }
+    { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].node)); }
     break;
 
   case 1016:
 #line 6461 "gram.y"
     {
 					LockingClause *n = makeNode(LockingClause);
-					n->lockedRels = (yyvsp[(3) - (4)].list);
+					n->lockedRels = (yyvsp[-1].list);
 					n->forUpdate = TRUE;
-					n->noWait = (yyvsp[(4) - (4)].boolean);
+					n->noWait = (yyvsp[0].boolean);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -21823,16 +21600,16 @@ yyreduce:
 #line 6469 "gram.y"
     {
 					LockingClause *n = makeNode(LockingClause);
-					n->lockedRels = (yyvsp[(3) - (4)].list);
+					n->lockedRels = (yyvsp[-1].list);
 					n->forUpdate = FALSE;
-					n->noWait = (yyvsp[(4) - (4)].boolean);
+					n->noWait = (yyvsp[0].boolean);
 					(yyval.node) = (Node *) n;
 				}
     break;
 
   case 1018:
 #line 6479 "gram.y"
-    { (yyval.list) = (yyvsp[(2) - (2)].list); }
+    { (yyval.list) = (yyvsp[0].list); }
     break;
 
   case 1019:
@@ -21844,7 +21621,7 @@ yyreduce:
 #line 6486 "gram.y"
     {
 					SelectStmt *n = makeNode(SelectStmt);
-					n->valuesLists = list_make1((yyvsp[(2) - (2)].list));
+					n->valuesLists = list_make1((yyvsp[0].list));
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -21852,15 +21629,15 @@ yyreduce:
   case 1021:
 #line 6492 "gram.y"
     {
-					SelectStmt *n = (SelectStmt *) (yyvsp[(1) - (3)].node);
-					n->valuesLists = lappend(n->valuesLists, (yyvsp[(3) - (3)].list));
+					SelectStmt *n = (SelectStmt *) (yyvsp[-2].node);
+					n->valuesLists = lappend(n->valuesLists, (yyvsp[0].list));
 					(yyval.node) = (Node *) n;
 				}
     break;
 
   case 1022:
 #line 6509 "gram.y"
-    { (yyval.list) = (yyvsp[(2) - (2)].list); }
+    { (yyval.list) = (yyvsp[0].list); }
     break;
 
   case 1023:
@@ -21870,26 +21647,26 @@ yyreduce:
 
   case 1024:
 #line 6514 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
+    { (yyval.list) = list_make1((yyvsp[0].node)); }
     break;
 
   case 1025:
 #line 6515 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node)); }
     break;
 
   case 1026:
 #line 6526 "gram.y"
     {
-					(yyval.node) = (Node *) (yyvsp[(1) - (1)].range);
+					(yyval.node) = (Node *) (yyvsp[0].range);
 				}
     break;
 
   case 1027:
 #line 6530 "gram.y"
     {
-					(yyvsp[(1) - (2)].range)->alias = (yyvsp[(2) - (2)].alias);
-					(yyval.node) = (Node *) (yyvsp[(1) - (2)].range);
+					(yyvsp[-1].range)->alias = (yyvsp[0].alias);
+					(yyval.node) = (Node *) (yyvsp[-1].range);
 				}
     break;
 
@@ -21897,7 +21674,7 @@ yyreduce:
 #line 6535 "gram.y"
     {
 					RangeFunction *n = makeNode(RangeFunction);
-					n->funccallnode = (yyvsp[(1) - (1)].node);
+					n->funccallnode = (yyvsp[0].node);
 					n->coldeflist = NIL;
 					(yyval.node) = (Node *) n;
 				}
@@ -21907,8 +21684,8 @@ yyreduce:
 #line 6542 "gram.y"
     {
 					RangeFunction *n = makeNode(RangeFunction);
-					n->funccallnode = (yyvsp[(1) - (2)].node);
-					n->alias = (yyvsp[(2) - (2)].alias);
+					n->funccallnode = (yyvsp[-1].node);
+					n->alias = (yyvsp[0].alias);
 					n->coldeflist = NIL;
 					(yyval.node) = (Node *) n;
 				}
@@ -21918,8 +21695,8 @@ yyreduce:
 #line 6550 "gram.y"
     {
 					RangeFunction *n = makeNode(RangeFunction);
-					n->funccallnode = (yyvsp[(1) - (5)].node);
-					n->coldeflist = (yyvsp[(4) - (5)].list);
+					n->funccallnode = (yyvsp[-4].node);
+					n->coldeflist = (yyvsp[-1].list);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -21929,10 +21706,10 @@ yyreduce:
     {
 					RangeFunction *n = makeNode(RangeFunction);
 					Alias *a = makeNode(Alias);
-					n->funccallnode = (yyvsp[(1) - (6)].node);
-					a->aliasname = (yyvsp[(3) - (6)].str);
+					n->funccallnode = (yyvsp[-5].node);
+					a->aliasname = (yyvsp[-3].str);
 					n->alias = a;
-					n->coldeflist = (yyvsp[(5) - (6)].list);
+					n->coldeflist = (yyvsp[-1].list);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -21942,10 +21719,10 @@ yyreduce:
     {
 					RangeFunction *n = makeNode(RangeFunction);
 					Alias *a = makeNode(Alias);
-					n->funccallnode = (yyvsp[(1) - (5)].node);
-					a->aliasname = (yyvsp[(2) - (5)].str);
+					n->funccallnode = (yyvsp[-4].node);
+					a->aliasname = (yyvsp[-3].str);
 					n->alias = a;
-					n->coldeflist = (yyvsp[(4) - (5)].list);
+					n->coldeflist = (yyvsp[-1].list);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -21964,8 +21741,8 @@ yyreduce:
 					 * However, it does seem like a good idea to emit
 					 * an error message that's better than "syntax error".
 					 */
-					if (IsA((yyvsp[(1) - (1)].node), SelectStmt) &&
-						((SelectStmt *) (yyvsp[(1) - (1)].node))->valuesLists)
+					if (IsA((yyvsp[0].node), SelectStmt) &&
+						((SelectStmt *) (yyvsp[0].node))->valuesLists)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("VALUES in FROM must have an alias"),
@@ -21983,8 +21760,8 @@ yyreduce:
 #line 6603 "gram.y"
     {
 					RangeSubselect *n = makeNode(RangeSubselect);
-					n->subquery = (yyvsp[(1) - (2)].node);
-					n->alias = (yyvsp[(2) - (2)].alias);
+					n->subquery = (yyvsp[-1].node);
+					n->alias = (yyvsp[0].alias);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -21992,22 +21769,22 @@ yyreduce:
   case 1035:
 #line 6610 "gram.y"
     {
-					(yyval.node) = (Node *) (yyvsp[(1) - (1)].jexpr);
+					(yyval.node) = (Node *) (yyvsp[0].jexpr);
 				}
     break;
 
   case 1036:
 #line 6614 "gram.y"
     {
-					(yyvsp[(2) - (4)].jexpr)->alias = (yyvsp[(4) - (4)].alias);
-					(yyval.node) = (Node *) (yyvsp[(2) - (4)].jexpr);
+					(yyvsp[-2].jexpr)->alias = (yyvsp[0].alias);
+					(yyval.node) = (Node *) (yyvsp[-2].jexpr);
 				}
     break;
 
   case 1037:
 #line 6640 "gram.y"
     {
-					(yyval.jexpr) = (yyvsp[(2) - (3)].jexpr);
+					(yyval.jexpr) = (yyvsp[-1].jexpr);
 				}
     break;
 
@@ -22018,8 +21795,8 @@ yyreduce:
 					JoinExpr *n = makeNode(JoinExpr);
 					n->jointype = JOIN_INNER;
 					n->isNatural = FALSE;
-					n->larg = (yyvsp[(1) - (4)].node);
-					n->rarg = (yyvsp[(4) - (4)].node);
+					n->larg = (yyvsp[-3].node);
+					n->rarg = (yyvsp[0].node);
 					n->using = NIL;
 					n->quals = NULL;
 					(yyval.jexpr) = n;
@@ -22030,14 +21807,14 @@ yyreduce:
 #line 6656 "gram.y"
     {
 					JoinExpr *n = makeNode(JoinExpr);
-					n->jointype = (yyvsp[(2) - (5)].jtype);
+					n->jointype = (yyvsp[-3].jtype);
 					n->isNatural = FALSE;
-					n->larg = (yyvsp[(1) - (5)].node);
-					n->rarg = (yyvsp[(4) - (5)].node);
-					if ((yyvsp[(5) - (5)].node) != NULL && IsA((yyvsp[(5) - (5)].node), List))
-						n->using = (List *) (yyvsp[(5) - (5)].node); /* USING clause */
+					n->larg = (yyvsp[-4].node);
+					n->rarg = (yyvsp[-1].node);
+					if ((yyvsp[0].node) != NULL && IsA((yyvsp[0].node), List))
+						n->using = (List *) (yyvsp[0].node); /* USING clause */
 					else
-						n->quals = (yyvsp[(5) - (5)].node); /* ON clause */
+						n->quals = (yyvsp[0].node); /* ON clause */
 					(yyval.jexpr) = n;
 				}
     break;
@@ -22049,12 +21826,12 @@ yyreduce:
 					JoinExpr *n = makeNode(JoinExpr);
 					n->jointype = JOIN_INNER;
 					n->isNatural = FALSE;
-					n->larg = (yyvsp[(1) - (4)].node);
-					n->rarg = (yyvsp[(3) - (4)].node);
-					if ((yyvsp[(4) - (4)].node) != NULL && IsA((yyvsp[(4) - (4)].node), List))
-						n->using = (List *) (yyvsp[(4) - (4)].node); /* USING clause */
+					n->larg = (yyvsp[-3].node);
+					n->rarg = (yyvsp[-1].node);
+					if ((yyvsp[0].node) != NULL && IsA((yyvsp[0].node), List))
+						n->using = (List *) (yyvsp[0].node); /* USING clause */
 					else
-						n->quals = (yyvsp[(4) - (4)].node); /* ON clause */
+						n->quals = (yyvsp[0].node); /* ON clause */
 					(yyval.jexpr) = n;
 				}
     break;
@@ -22063,10 +21840,10 @@ yyreduce:
 #line 6683 "gram.y"
     {
 					JoinExpr *n = makeNode(JoinExpr);
-					n->jointype = (yyvsp[(3) - (5)].jtype);
+					n->jointype = (yyvsp[-2].jtype);
 					n->isNatural = TRUE;
-					n->larg = (yyvsp[(1) - (5)].node);
-					n->rarg = (yyvsp[(5) - (5)].node);
+					n->larg = (yyvsp[-4].node);
+					n->rarg = (yyvsp[0].node);
 					n->using = NIL; /* figure out which columns later... */
 					n->quals = NULL; /* fill later */
 					(yyval.jexpr) = n;
@@ -22080,8 +21857,8 @@ yyreduce:
 					JoinExpr *n = makeNode(JoinExpr);
 					n->jointype = JOIN_INNER;
 					n->isNatural = TRUE;
-					n->larg = (yyvsp[(1) - (4)].node);
-					n->rarg = (yyvsp[(4) - (4)].node);
+					n->larg = (yyvsp[-3].node);
+					n->rarg = (yyvsp[0].node);
 					n->using = NIL; /* figure out which columns later... */
 					n->quals = NULL; /* fill later */
 					(yyval.jexpr) = n;
@@ -22092,8 +21869,8 @@ yyreduce:
 #line 6709 "gram.y"
     {
 					(yyval.alias) = makeNode(Alias);
-					(yyval.alias)->aliasname = (yyvsp[(2) - (5)].str);
-					(yyval.alias)->colnames = (yyvsp[(4) - (5)].list);
+					(yyval.alias)->aliasname = (yyvsp[-3].str);
+					(yyval.alias)->colnames = (yyvsp[-1].list);
 				}
     break;
 
@@ -22101,7 +21878,7 @@ yyreduce:
 #line 6715 "gram.y"
     {
 					(yyval.alias) = makeNode(Alias);
-					(yyval.alias)->aliasname = (yyvsp[(2) - (2)].str);
+					(yyval.alias)->aliasname = (yyvsp[0].str);
 				}
     break;
 
@@ -22109,8 +21886,8 @@ yyreduce:
 #line 6720 "gram.y"
     {
 					(yyval.alias) = makeNode(Alias);
-					(yyval.alias)->aliasname = (yyvsp[(1) - (4)].str);
-					(yyval.alias)->colnames = (yyvsp[(3) - (4)].list);
+					(yyval.alias)->aliasname = (yyvsp[-3].str);
+					(yyval.alias)->colnames = (yyvsp[-1].list);
 				}
     break;
 
@@ -22118,7 +21895,7 @@ yyreduce:
 #line 6726 "gram.y"
     {
 					(yyval.alias) = makeNode(Alias);
-					(yyval.alias)->aliasname = (yyvsp[(1) - (1)].str);
+					(yyval.alias)->aliasname = (yyvsp[0].str);
 				}
     break;
 
@@ -22154,19 +21931,19 @@ yyreduce:
 
   case 1053:
 #line 6752 "gram.y"
-    { (yyval.node) = (Node *) (yyvsp[(3) - (4)].list); }
+    { (yyval.node) = (Node *) (yyvsp[-1].list); }
     break;
 
   case 1054:
 #line 6753 "gram.y"
-    { (yyval.node) = (yyvsp[(2) - (2)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 1055:
 #line 6759 "gram.y"
     {
 					/* default inheritance */
-					(yyval.range) = (yyvsp[(1) - (1)].range);
+					(yyval.range) = (yyvsp[0].range);
 					(yyval.range)->inhOpt = INH_DEFAULT;
 					(yyval.range)->alias = NULL;
 				}
@@ -22176,7 +21953,7 @@ yyreduce:
 #line 6766 "gram.y"
     {
 					/* inheritance query */
-					(yyval.range) = (yyvsp[(1) - (2)].range);
+					(yyval.range) = (yyvsp[-1].range);
 					(yyval.range)->inhOpt = INH_YES;
 					(yyval.range)->alias = NULL;
 				}
@@ -22186,7 +21963,7 @@ yyreduce:
 #line 6773 "gram.y"
     {
 					/* no inheritance */
-					(yyval.range) = (yyvsp[(2) - (2)].range);
+					(yyval.range) = (yyvsp[0].range);
 					(yyval.range)->inhOpt = INH_NO;
 					(yyval.range)->alias = NULL;
 				}
@@ -22196,7 +21973,7 @@ yyreduce:
 #line 6780 "gram.y"
     {
 					/* no inheritance, SQL99-style syntax */
-					(yyval.range) = (yyvsp[(3) - (4)].range);
+					(yyval.range) = (yyvsp[-1].range);
 					(yyval.range)->inhOpt = INH_NO;
 					(yyval.range)->alias = NULL;
 				}
@@ -22205,7 +21982,7 @@ yyreduce:
   case 1059:
 #line 6799 "gram.y"
     {
-					(yyval.range) = (yyvsp[(1) - (1)].range);
+					(yyval.range) = (yyvsp[0].range);
 				}
     break;
 
@@ -22213,9 +21990,9 @@ yyreduce:
 #line 6803 "gram.y"
     {
 					Alias *alias = makeNode(Alias);
-					alias->aliasname = (yyvsp[(2) - (2)].str);
-					(yyvsp[(1) - (2)].range)->alias = alias;
-					(yyval.range) = (yyvsp[(1) - (2)].range);
+					alias->aliasname = (yyvsp[0].str);
+					(yyvsp[-1].range)->alias = alias;
+					(yyval.range) = (yyvsp[-1].range);
 				}
     break;
 
@@ -22223,20 +22000,20 @@ yyreduce:
 #line 6810 "gram.y"
     {
 					Alias *alias = makeNode(Alias);
-					alias->aliasname = (yyvsp[(3) - (3)].str);
-					(yyvsp[(1) - (3)].range)->alias = alias;
-					(yyval.range) = (yyvsp[(1) - (3)].range);
+					alias->aliasname = (yyvsp[0].str);
+					(yyvsp[-2].range)->alias = alias;
+					(yyval.range) = (yyvsp[-2].range);
 				}
     break;
 
   case 1062:
 #line 6819 "gram.y"
-    { (yyval.node) = (yyvsp[(1) - (1)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 1063:
 #line 6824 "gram.y"
-    { (yyval.node) = (yyvsp[(2) - (2)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 1064:
@@ -22246,7 +22023,7 @@ yyreduce:
 
   case 1065:
 #line 6830 "gram.y"
-    { (yyval.node) = (yyvsp[(2) - (2)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 1066:
@@ -22254,7 +22031,7 @@ yyreduce:
     {
 					CurrentOfExpr *n = makeNode(CurrentOfExpr);
 					/* cvarno is filled in by parse analysis */
-					n->cursor_name = (yyvsp[(4) - (4)].str);
+					n->cursor_name = (yyvsp[0].str);
 					n->cursor_param = 0;
 					(yyval.node) = (Node *) n;
 				}
@@ -22266,7 +22043,7 @@ yyreduce:
 					CurrentOfExpr *n = makeNode(CurrentOfExpr);
 					/* cvarno is filled in by parse analysis */
 					n->cursor_name = NULL;
-					n->cursor_param = (yyvsp[(4) - (4)].ival);
+					n->cursor_param = (yyvsp[0].ival);
 					(yyval.node) = (Node *) n;
 				}
     break;
@@ -22279,14 +22056,14 @@ yyreduce:
   case 1069:
 #line 6853 "gram.y"
     {
-					(yyval.list) = list_make1((yyvsp[(1) - (1)].node));
+					(yyval.list) = list_make1((yyvsp[0].node));
 				}
     break;
 
   case 1070:
 #line 6857 "gram.y"
     {
-					(yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node));
+					(yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node));
 				}
     break;
 
@@ -22294,8 +22071,8 @@ yyreduce:
 #line 6863 "gram.y"
     {
 					ColumnDef *n = makeNode(ColumnDef);
-					n->colname = (yyvsp[(1) - (2)].str);
-					n->typename = (yyvsp[(2) - (2)].typnam);
+					n->colname = (yyvsp[-1].str);
+					n->typename = (yyvsp[0].typnam);
 					n->constraints = NIL;
 					n->is_local = true;
 					(yyval.node) = (Node *)n;
@@ -22305,16 +22082,16 @@ yyreduce:
   case 1072:
 #line 6884 "gram.y"
     {
-					(yyval.typnam) = (yyvsp[(1) - (2)].typnam);
-					(yyval.typnam)->arrayBounds = (yyvsp[(2) - (2)].list);
+					(yyval.typnam) = (yyvsp[-1].typnam);
+					(yyval.typnam)->arrayBounds = (yyvsp[0].list);
 				}
     break;
 
   case 1073:
 #line 6889 "gram.y"
     {
-					(yyval.typnam) = (yyvsp[(2) - (3)].typnam);
-					(yyval.typnam)->arrayBounds = (yyvsp[(3) - (3)].list);
+					(yyval.typnam) = (yyvsp[-1].typnam);
+					(yyval.typnam)->arrayBounds = (yyvsp[0].list);
 					(yyval.typnam)->setof = TRUE;
 				}
     break;
@@ -22323,8 +22100,8 @@ yyreduce:
 #line 6895 "gram.y"
     {
 					/* SQL99's redundant syntax */
-					(yyval.typnam) = (yyvsp[(1) - (5)].typnam);
-					(yyval.typnam)->arrayBounds = list_make1(makeInteger((yyvsp[(4) - (5)].ival)));
+					(yyval.typnam) = (yyvsp[-4].typnam);
+					(yyval.typnam)->arrayBounds = list_make1(makeInteger((yyvsp[-1].ival)));
 				}
     break;
 
@@ -22332,20 +22109,20 @@ yyreduce:
 #line 6901 "gram.y"
     {
 					/* SQL99's redundant syntax */
-					(yyval.typnam) = (yyvsp[(2) - (6)].typnam);
-					(yyval.typnam)->arrayBounds = list_make1(makeInteger((yyvsp[(5) - (6)].ival)));
+					(yyval.typnam) = (yyvsp[-4].typnam);
+					(yyval.typnam)->arrayBounds = list_make1(makeInteger((yyvsp[-1].ival)));
 					(yyval.typnam)->setof = TRUE;
 				}
     break;
 
   case 1076:
 #line 6911 "gram.y"
-    {  (yyval.list) = lappend((yyvsp[(1) - (3)].list), makeInteger(-1)); }
+    {  (yyval.list) = lappend((yyvsp[-2].list), makeInteger(-1)); }
     break;
 
   case 1077:
 #line 6913 "gram.y"
-    {  (yyval.list) = lappend((yyvsp[(1) - (4)].list), makeInteger((yyvsp[(3) - (4)].ival))); }
+    {  (yyval.list) = lappend((yyvsp[-3].list), makeInteger((yyvsp[-1].ival))); }
     break;
 
   case 1078:
@@ -22355,88 +22132,88 @@ yyreduce:
 
   case 1079:
 #line 6919 "gram.y"
-    { (yyval.typnam) = (yyvsp[(1) - (1)].typnam); }
+    { (yyval.typnam) = (yyvsp[0].typnam); }
     break;
 
   case 1080:
 #line 6920 "gram.y"
-    { (yyval.typnam) = (yyvsp[(1) - (1)].typnam); }
+    { (yyval.typnam) = (yyvsp[0].typnam); }
     break;
 
   case 1081:
 #line 6921 "gram.y"
-    { (yyval.typnam) = (yyvsp[(1) - (1)].typnam); }
+    { (yyval.typnam) = (yyvsp[0].typnam); }
     break;
 
   case 1082:
 #line 6922 "gram.y"
-    { (yyval.typnam) = (yyvsp[(1) - (1)].typnam); }
+    { (yyval.typnam) = (yyvsp[0].typnam); }
     break;
 
   case 1083:
 #line 6923 "gram.y"
-    { (yyval.typnam) = (yyvsp[(1) - (1)].typnam); }
+    { (yyval.typnam) = (yyvsp[0].typnam); }
     break;
 
   case 1084:
 #line 6925 "gram.y"
     {
-					(yyval.typnam) = (yyvsp[(1) - (2)].typnam);
-					if ((yyvsp[(2) - (2)].ival) != INTERVAL_FULL_RANGE)
-						(yyval.typnam)->typmods = list_make1(makeIntConst((yyvsp[(2) - (2)].ival)));
+					(yyval.typnam) = (yyvsp[-1].typnam);
+					if ((yyvsp[0].ival) != INTERVAL_FULL_RANGE)
+						(yyval.typnam)->typmods = list_make1(makeIntConst((yyvsp[0].ival)));
 				}
     break;
 
   case 1085:
 #line 6931 "gram.y"
     {
-					(yyval.typnam) = (yyvsp[(1) - (5)].typnam);
-					(yyval.typnam)->typmods = list_make2(makeIntConst((yyvsp[(5) - (5)].ival)),
-											 makeIntConst((yyvsp[(3) - (5)].ival)));
+					(yyval.typnam) = (yyvsp[-4].typnam);
+					(yyval.typnam)->typmods = list_make2(makeIntConst((yyvsp[0].ival)),
+											 makeIntConst((yyvsp[-2].ival)));
 				}
     break;
 
   case 1086:
 #line 6950 "gram.y"
-    { (yyval.typnam) = (yyvsp[(1) - (1)].typnam); }
+    { (yyval.typnam) = (yyvsp[0].typnam); }
     break;
 
   case 1087:
 #line 6951 "gram.y"
-    { (yyval.typnam) = (yyvsp[(1) - (1)].typnam); }
+    { (yyval.typnam) = (yyvsp[0].typnam); }
     break;
 
   case 1088:
 #line 6952 "gram.y"
-    { (yyval.typnam) = (yyvsp[(1) - (1)].typnam); }
+    { (yyval.typnam) = (yyvsp[0].typnam); }
     break;
 
   case 1089:
 #line 6953 "gram.y"
-    { (yyval.typnam) = (yyvsp[(1) - (1)].typnam); }
+    { (yyval.typnam) = (yyvsp[0].typnam); }
     break;
 
   case 1090:
 #line 6965 "gram.y"
     {
-					(yyval.typnam) = makeTypeName((yyvsp[(1) - (2)].str));
-					(yyval.typnam)->typmods = (yyvsp[(2) - (2)].list);
-					(yyval.typnam)->location = (yylsp[(1) - (2)]);
+					(yyval.typnam) = makeTypeName((yyvsp[-1].str));
+					(yyval.typnam)->typmods = (yyvsp[0].list);
+					(yyval.typnam)->location = (yylsp[-1]);
 				}
     break;
 
   case 1091:
 #line 6971 "gram.y"
     {
-					(yyval.typnam) = makeTypeNameFromNameList(lcons(makeString((yyvsp[(1) - (3)].str)), (yyvsp[(2) - (3)].list)));
-					(yyval.typnam)->typmods = (yyvsp[(3) - (3)].list);
-					(yyval.typnam)->location = (yylsp[(1) - (3)]);
+					(yyval.typnam) = makeTypeNameFromNameList(lcons(makeString((yyvsp[-2].str)), (yyvsp[-1].list)));
+					(yyval.typnam)->typmods = (yyvsp[0].list);
+					(yyval.typnam)->location = (yylsp[-2]);
 				}
     break;
 
   case 1092:
 #line 6978 "gram.y"
-    { (yyval.list) = (yyvsp[(2) - (3)].list); }
+    { (yyval.list) = (yyvsp[-1].list); }
     break;
 
   case 1093:
@@ -22448,7 +22225,7 @@ yyreduce:
 #line 6986 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("int4");
-					(yyval.typnam)->location = (yylsp[(1) - (1)]);
+					(yyval.typnam)->location = (yylsp[0]);
 				}
     break;
 
@@ -22456,7 +22233,7 @@ yyreduce:
 #line 6991 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("int4");
-					(yyval.typnam)->location = (yylsp[(1) - (1)]);
+					(yyval.typnam)->location = (yylsp[0]);
 				}
     break;
 
@@ -22464,7 +22241,7 @@ yyreduce:
 #line 6996 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("int2");
-					(yyval.typnam)->location = (yylsp[(1) - (1)]);
+					(yyval.typnam)->location = (yylsp[0]);
 				}
     break;
 
@@ -22472,7 +22249,7 @@ yyreduce:
 #line 7001 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("int8");
-					(yyval.typnam)->location = (yylsp[(1) - (1)]);
+					(yyval.typnam)->location = (yylsp[0]);
 				}
     break;
 
@@ -22480,15 +22257,15 @@ yyreduce:
 #line 7006 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("float4");
-					(yyval.typnam)->location = (yylsp[(1) - (1)]);
+					(yyval.typnam)->location = (yylsp[0]);
 				}
     break;
 
   case 1099:
 #line 7011 "gram.y"
     {
-					(yyval.typnam) = (yyvsp[(2) - (2)].typnam);
-					(yyval.typnam)->location = (yylsp[(1) - (2)]);
+					(yyval.typnam) = (yyvsp[0].typnam);
+					(yyval.typnam)->location = (yylsp[-1]);
 				}
     break;
 
@@ -22496,7 +22273,7 @@ yyreduce:
 #line 7016 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("float8");
-					(yyval.typnam)->location = (yylsp[(1) - (2)]);
+					(yyval.typnam)->location = (yylsp[-1]);
 				}
     break;
 
@@ -22504,8 +22281,8 @@ yyreduce:
 #line 7021 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("numeric");
-					(yyval.typnam)->typmods = (yyvsp[(2) - (2)].list);
-					(yyval.typnam)->location = (yylsp[(1) - (2)]);
+					(yyval.typnam)->typmods = (yyvsp[0].list);
+					(yyval.typnam)->location = (yylsp[-1]);
 				}
     break;
 
@@ -22513,8 +22290,8 @@ yyreduce:
 #line 7027 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("numeric");
-					(yyval.typnam)->typmods = (yyvsp[(2) - (2)].list);
-					(yyval.typnam)->location = (yylsp[(1) - (2)]);
+					(yyval.typnam)->typmods = (yyvsp[0].list);
+					(yyval.typnam)->location = (yylsp[-1]);
 				}
     break;
 
@@ -22522,8 +22299,8 @@ yyreduce:
 #line 7033 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("numeric");
-					(yyval.typnam)->typmods = (yyvsp[(2) - (2)].list);
-					(yyval.typnam)->location = (yylsp[(1) - (2)]);
+					(yyval.typnam)->typmods = (yyvsp[0].list);
+					(yyval.typnam)->location = (yylsp[-1]);
 				}
     break;
 
@@ -22531,7 +22308,7 @@ yyreduce:
 #line 7039 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("bool");
-					(yyval.typnam)->location = (yylsp[(1) - (1)]);
+					(yyval.typnam)->location = (yylsp[0]);
 				}
     break;
 
@@ -22542,13 +22319,13 @@ yyreduce:
 					 * Check FLOAT() precision limits assuming IEEE floating
 					 * types - thomas 1997-09-18
 					 */
-					if ((yyvsp[(2) - (3)].ival) < 1)
+					if ((yyvsp[-1].ival) < 1)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 								 errmsg("precision for type float must be at least 1 bit")));
-					else if ((yyvsp[(2) - (3)].ival) <= 24)
+					else if ((yyvsp[-1].ival) <= 24)
 						(yyval.typnam) = SystemTypeName("float4");
-					else if ((yyvsp[(2) - (3)].ival) <= 53)
+					else if ((yyvsp[-1].ival) <= 53)
 						(yyval.typnam) = SystemTypeName("float8");
 					else
 						ereport(ERROR,
@@ -22567,28 +22344,28 @@ yyreduce:
   case 1107:
 #line 7075 "gram.y"
     {
-					(yyval.typnam) = (yyvsp[(1) - (1)].typnam);
+					(yyval.typnam) = (yyvsp[0].typnam);
 				}
     break;
 
   case 1108:
 #line 7079 "gram.y"
     {
-					(yyval.typnam) = (yyvsp[(1) - (1)].typnam);
+					(yyval.typnam) = (yyvsp[0].typnam);
 				}
     break;
 
   case 1109:
 #line 7087 "gram.y"
     {
-					(yyval.typnam) = (yyvsp[(1) - (1)].typnam);
+					(yyval.typnam) = (yyvsp[0].typnam);
 				}
     break;
 
   case 1110:
 #line 7091 "gram.y"
     {
-					(yyval.typnam) = (yyvsp[(1) - (1)].typnam);
+					(yyval.typnam) = (yyvsp[0].typnam);
 					(yyval.typnam)->typmods = NIL;
 				}
     break;
@@ -22598,10 +22375,10 @@ yyreduce:
     {
 					char *typname;
 
-					typname = (yyvsp[(2) - (5)].boolean) ? "varbit" : "bit";
+					typname = (yyvsp[-3].boolean) ? "varbit" : "bit";
 					(yyval.typnam) = SystemTypeName(typname);
-					(yyval.typnam)->typmods = (yyvsp[(4) - (5)].list);
-					(yyval.typnam)->location = (yylsp[(1) - (5)]);
+					(yyval.typnam)->typmods = (yyvsp[-1].list);
+					(yyval.typnam)->location = (yylsp[-4]);
 				}
     break;
 
@@ -22609,7 +22386,7 @@ yyreduce:
 #line 7111 "gram.y"
     {
 					/* bit defaults to bit(1), varbit to no limit */
-					if ((yyvsp[(2) - (2)].boolean))
+					if ((yyvsp[0].boolean))
 					{
 						(yyval.typnam) = SystemTypeName("varbit");
 					}
@@ -22618,28 +22395,28 @@ yyreduce:
 						(yyval.typnam) = SystemTypeName("bit");
 						(yyval.typnam)->typmods = list_make1(makeIntConst(1));
 					}
-					(yyval.typnam)->location = (yylsp[(1) - (2)]);
+					(yyval.typnam)->location = (yylsp[-1]);
 				}
     break;
 
   case 1113:
 #line 7132 "gram.y"
     {
-					(yyval.typnam) = (yyvsp[(1) - (1)].typnam);
+					(yyval.typnam) = (yyvsp[0].typnam);
 				}
     break;
 
   case 1114:
 #line 7136 "gram.y"
     {
-					(yyval.typnam) = (yyvsp[(1) - (1)].typnam);
+					(yyval.typnam) = (yyvsp[0].typnam);
 				}
     break;
 
   case 1115:
 #line 7142 "gram.y"
     {
-					(yyval.typnam) = (yyvsp[(1) - (1)].typnam);
+					(yyval.typnam) = (yyvsp[0].typnam);
 				}
     break;
 
@@ -22652,7 +22429,7 @@ yyreduce:
 					 * of one, but should not be constrained if the length
 					 * was not specified.
 					 */
-					(yyval.typnam) = (yyvsp[(1) - (1)].typnam);
+					(yyval.typnam) = (yyvsp[0].typnam);
 					(yyval.typnam)->typmods = NIL;
 				}
     break;
@@ -22660,55 +22437,55 @@ yyreduce:
   case 1117:
 #line 7159 "gram.y"
     {
-					if (((yyvsp[(5) - (5)].str) != NULL) && (strcmp((yyvsp[(5) - (5)].str), "sql_text") != 0))
+					if (((yyvsp[0].str) != NULL) && (strcmp((yyvsp[0].str), "sql_text") != 0))
 					{
 						char *type;
 
-						type = palloc(strlen((yyvsp[(1) - (5)].str)) + 1 + strlen((yyvsp[(5) - (5)].str)) + 1);
-						strcpy(type, (yyvsp[(1) - (5)].str));
+						type = palloc(strlen((yyvsp[-4].str)) + 1 + strlen((yyvsp[0].str)) + 1);
+						strcpy(type, (yyvsp[-4].str));
 						strcat(type, "_");
-						strcat(type, (yyvsp[(5) - (5)].str));
-						(yyvsp[(1) - (5)].str) = type;
+						strcat(type, (yyvsp[0].str));
+						(yyvsp[-4].str) = type;
 					}
 
-					(yyval.typnam) = SystemTypeName((yyvsp[(1) - (5)].str));
-					(yyval.typnam)->typmods = list_make1(makeIntConst((yyvsp[(3) - (5)].ival)));
-					(yyval.typnam)->location = (yylsp[(1) - (5)]);
+					(yyval.typnam) = SystemTypeName((yyvsp[-4].str));
+					(yyval.typnam)->typmods = list_make1(makeIntConst((yyvsp[-2].ival)));
+					(yyval.typnam)->location = (yylsp[-4]);
 				}
     break;
 
   case 1118:
 #line 7178 "gram.y"
     {
-					if (((yyvsp[(2) - (2)].str) != NULL) && (strcmp((yyvsp[(2) - (2)].str), "sql_text") != 0))
+					if (((yyvsp[0].str) != NULL) && (strcmp((yyvsp[0].str), "sql_text") != 0))
 					{
 						char *type;
 
-						type = palloc(strlen((yyvsp[(1) - (2)].str)) + 1 + strlen((yyvsp[(2) - (2)].str)) + 1);
-						strcpy(type, (yyvsp[(1) - (2)].str));
+						type = palloc(strlen((yyvsp[-1].str)) + 1 + strlen((yyvsp[0].str)) + 1);
+						strcpy(type, (yyvsp[-1].str));
 						strcat(type, "_");
-						strcat(type, (yyvsp[(2) - (2)].str));
-						(yyvsp[(1) - (2)].str) = type;
+						strcat(type, (yyvsp[0].str));
+						(yyvsp[-1].str) = type;
 					}
 
-					(yyval.typnam) = SystemTypeName((yyvsp[(1) - (2)].str));
+					(yyval.typnam) = SystemTypeName((yyvsp[-1].str));
 
 					/* char defaults to char(1), varchar to no limit */
-					if (strcmp((yyvsp[(1) - (2)].str), "char") == 0)
+					if (strcmp((yyvsp[-1].str), "char") == 0)
 						(yyval.typnam)->typmods = list_make1(makeIntConst(1));
 
-					(yyval.typnam)->location = (yylsp[(1) - (2)]);
+					(yyval.typnam)->location = (yylsp[-1]);
 				}
     break;
 
   case 1119:
 #line 7201 "gram.y"
-    { (yyval.str) = (yyvsp[(2) - (2)].boolean) ? "varchar": "char"; }
+    { (yyval.str) = (yyvsp[0].boolean) ? "varchar": "char"; }
     break;
 
   case 1120:
 #line 7203 "gram.y"
-    { (yyval.str) = (yyvsp[(2) - (2)].boolean) ? "varchar": "char"; }
+    { (yyval.str) = (yyvsp[0].boolean) ? "varchar": "char"; }
     break;
 
   case 1121:
@@ -22718,17 +22495,17 @@ yyreduce:
 
   case 1122:
 #line 7207 "gram.y"
-    { (yyval.str) = (yyvsp[(3) - (3)].boolean) ? "varchar": "char"; }
+    { (yyval.str) = (yyvsp[0].boolean) ? "varchar": "char"; }
     break;
 
   case 1123:
 #line 7209 "gram.y"
-    { (yyval.str) = (yyvsp[(3) - (3)].boolean) ? "varchar": "char"; }
+    { (yyval.str) = (yyvsp[0].boolean) ? "varchar": "char"; }
     break;
 
   case 1124:
 #line 7211 "gram.y"
-    { (yyval.str) = (yyvsp[(2) - (2)].boolean) ? "varchar": "char"; }
+    { (yyval.str) = (yyvsp[0].boolean) ? "varchar": "char"; }
     break;
 
   case 1125:
@@ -22743,7 +22520,7 @@ yyreduce:
 
   case 1127:
 #line 7220 "gram.y"
-    { (yyval.str) = (yyvsp[(3) - (3)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 1128:
@@ -22754,54 +22531,54 @@ yyreduce:
   case 1129:
 #line 7229 "gram.y"
     {
-					if ((yyvsp[(5) - (5)].boolean))
+					if ((yyvsp[0].boolean))
 						(yyval.typnam) = SystemTypeName("timestamptz");
 					else
 						(yyval.typnam) = SystemTypeName("timestamp");
 					/* XXX the timezone field seems to be unused
 					 * - thomas 2001-09-06
 					 */
-					(yyval.typnam)->timezone = (yyvsp[(5) - (5)].boolean);
-					(yyval.typnam)->typmods = list_make1(makeIntConst((yyvsp[(3) - (5)].ival)));
-					(yyval.typnam)->location = (yylsp[(1) - (5)]);
+					(yyval.typnam)->timezone = (yyvsp[0].boolean);
+					(yyval.typnam)->typmods = list_make1(makeIntConst((yyvsp[-2].ival)));
+					(yyval.typnam)->location = (yylsp[-4]);
 				}
     break;
 
   case 1130:
 #line 7242 "gram.y"
     {
-					if ((yyvsp[(2) - (2)].boolean))
+					if ((yyvsp[0].boolean))
 						(yyval.typnam) = SystemTypeName("timestamptz");
 					else
 						(yyval.typnam) = SystemTypeName("timestamp");
 					/* XXX the timezone field seems to be unused
 					 * - thomas 2001-09-06
 					 */
-					(yyval.typnam)->timezone = (yyvsp[(2) - (2)].boolean);
-					(yyval.typnam)->location = (yylsp[(1) - (2)]);
+					(yyval.typnam)->timezone = (yyvsp[0].boolean);
+					(yyval.typnam)->location = (yylsp[-1]);
 				}
     break;
 
   case 1131:
 #line 7254 "gram.y"
     {
-					if ((yyvsp[(5) - (5)].boolean))
+					if ((yyvsp[0].boolean))
 						(yyval.typnam) = SystemTypeName("timetz");
 					else
 						(yyval.typnam) = SystemTypeName("time");
-					(yyval.typnam)->typmods = list_make1(makeIntConst((yyvsp[(3) - (5)].ival)));
-					(yyval.typnam)->location = (yylsp[(1) - (5)]);
+					(yyval.typnam)->typmods = list_make1(makeIntConst((yyvsp[-2].ival)));
+					(yyval.typnam)->location = (yylsp[-4]);
 				}
     break;
 
   case 1132:
 #line 7263 "gram.y"
     {
-					if ((yyvsp[(2) - (2)].boolean))
+					if ((yyvsp[0].boolean))
 						(yyval.typnam) = SystemTypeName("timetz");
 					else
 						(yyval.typnam) = SystemTypeName("time");
-					(yyval.typnam)->location = (yylsp[(1) - (2)]);
+					(yyval.typnam)->location = (yylsp[-1]);
 				}
     break;
 
@@ -22809,7 +22586,7 @@ yyreduce:
 #line 7274 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("interval");
-					(yyval.typnam)->location = (yylsp[(1) - (1)]);
+					(yyval.typnam)->location = (yylsp[0]);
 				}
     break;
 
@@ -22903,12 +22680,12 @@ yyreduce:
 
   case 1151:
 #line 7336 "gram.y"
-    { (yyval.node) = (yyvsp[(1) - (1)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 1152:
 #line 7338 "gram.y"
-    { (yyval.node) = makeTypeCast((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].typnam)); }
+    { (yyval.node) = makeTypeCast((yyvsp[-2].node), (yyvsp[0].typnam)); }
     break;
 
   case 1153:
@@ -22916,102 +22693,102 @@ yyreduce:
     {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("timezone");
-					n->args = list_make2((yyvsp[(5) - (5)].node), (yyvsp[(1) - (5)].node));
+					n->args = list_make2((yyvsp[0].node), (yyvsp[-4].node));
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(2) - (5)]);
+					n->location = (yylsp[-3]);
 					(yyval.node) = (Node *) n;
 				}
     break;
 
   case 1154:
 #line 7359 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", NULL, (yyvsp[(2) - (2)].node), (yylsp[(1) - (2)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", NULL, (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1155:
 #line 7361 "gram.y"
-    { (yyval.node) = doNegate((yyvsp[(2) - (2)].node), (yylsp[(1) - (2)])); }
+    { (yyval.node) = doNegate((yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1156:
 #line 7363 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1157:
 #line 7365 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "-", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "-", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1158:
 #line 7367 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "*", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "*", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1159:
 #line 7369 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "/", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "/", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1160:
 #line 7371 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "%", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "%", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1161:
 #line 7373 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "^", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "^", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1162:
 #line 7375 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "<", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "<", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1163:
 #line 7377 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, ">", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, ">", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1164:
 #line 7379 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "=", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "=", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1165:
 #line 7382 "gram.y"
-    { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[(2) - (3)].list), (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[-1].list), (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1166:
 #line 7384 "gram.y"
-    { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[(1) - (2)].list), NULL, (yyvsp[(2) - (2)].node), (yylsp[(1) - (2)])); }
+    { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[-1].list), NULL, (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1167:
 #line 7386 "gram.y"
-    { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[(2) - (2)].list), (yyvsp[(1) - (2)].node), NULL, (yylsp[(2) - (2)])); }
+    { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[0].list), (yyvsp[-1].node), NULL, (yylsp[0])); }
     break;
 
   case 1168:
 #line 7389 "gram.y"
-    { (yyval.node) = (Node *) makeA_Expr(AEXPR_AND, NIL, (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeA_Expr(AEXPR_AND, NIL, (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1169:
 #line 7391 "gram.y"
-    { (yyval.node) = (Node *) makeA_Expr(AEXPR_OR, NIL, (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeA_Expr(AEXPR_OR, NIL, (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1170:
 #line 7393 "gram.y"
-    { (yyval.node) = (Node *) makeA_Expr(AEXPR_NOT, NIL, NULL, (yyvsp[(2) - (2)].node), (yylsp[(1) - (2)])); }
+    { (yyval.node) = (Node *) makeA_Expr(AEXPR_NOT, NIL, NULL, (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1171:
 #line 7396 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1172:
@@ -23019,17 +22796,17 @@ yyreduce:
     {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("like_escape");
-					n->args = list_make2((yyvsp[(3) - (5)].node), (yyvsp[(5) - (5)].node));
+					n->args = list_make2((yyvsp[-2].node), (yyvsp[0].node));
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(4) - (5)]);
-					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~", (yyvsp[(1) - (5)].node), (Node *) n, (yylsp[(2) - (5)]));
+					n->location = (yylsp[-1]);
+					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~", (yyvsp[-4].node), (Node *) n, (yylsp[-3]));
 				}
     break;
 
   case 1173:
 #line 7408 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~", (yyvsp[(1) - (4)].node), (yyvsp[(4) - (4)].node), (yylsp[(2) - (4)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~", (yyvsp[-3].node), (yyvsp[0].node), (yylsp[-2])); }
     break;
 
   case 1174:
@@ -23037,17 +22814,17 @@ yyreduce:
     {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("like_escape");
-					n->args = list_make2((yyvsp[(4) - (6)].node), (yyvsp[(6) - (6)].node));
+					n->args = list_make2((yyvsp[-2].node), (yyvsp[0].node));
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(5) - (6)]);
-					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~", (yyvsp[(1) - (6)].node), (Node *) n, (yylsp[(2) - (6)]));
+					n->location = (yylsp[-1]);
+					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~", (yyvsp[-5].node), (Node *) n, (yylsp[-4]));
 				}
     break;
 
   case 1175:
 #line 7420 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~*", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~*", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1176:
@@ -23055,17 +22832,17 @@ yyreduce:
     {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("like_escape");
-					n->args = list_make2((yyvsp[(3) - (5)].node), (yyvsp[(5) - (5)].node));
+					n->args = list_make2((yyvsp[-2].node), (yyvsp[0].node));
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(4) - (5)]);
-					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~*", (yyvsp[(1) - (5)].node), (Node *) n, (yylsp[(2) - (5)]));
+					n->location = (yylsp[-1]);
+					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~*", (yyvsp[-4].node), (Node *) n, (yylsp[-3]));
 				}
     break;
 
   case 1177:
 #line 7432 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~*", (yyvsp[(1) - (4)].node), (yyvsp[(4) - (4)].node), (yylsp[(2) - (4)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~*", (yyvsp[-3].node), (yyvsp[0].node), (yylsp[-2])); }
     break;
 
   case 1178:
@@ -23073,11 +22850,11 @@ yyreduce:
     {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("like_escape");
-					n->args = list_make2((yyvsp[(4) - (6)].node), (yyvsp[(6) - (6)].node));
+					n->args = list_make2((yyvsp[-2].node), (yyvsp[0].node));
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(5) - (6)]);
-					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~*", (yyvsp[(1) - (6)].node), (Node *) n, (yylsp[(2) - (6)]));
+					n->location = (yylsp[-1]);
+					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~*", (yyvsp[-5].node), (Node *) n, (yylsp[-4]));
 				}
     break;
 
@@ -23088,11 +22865,11 @@ yyreduce:
 					FuncCall *n = makeNode(FuncCall);
 					c->val.type = T_Null;
 					n->funcname = SystemFuncName("similar_escape");
-					n->args = list_make2((yyvsp[(4) - (4)].node), (Node *) c);
+					n->args = list_make2((yyvsp[0].node), (Node *) c);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(2) - (4)]);
-					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "~", (yyvsp[(1) - (4)].node), (Node *) n, (yylsp[(2) - (4)]));
+					n->location = (yylsp[-2]);
+					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "~", (yyvsp[-3].node), (Node *) n, (yylsp[-2]));
 				}
     break;
 
@@ -23101,11 +22878,11 @@ yyreduce:
     {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("similar_escape");
-					n->args = list_make2((yyvsp[(4) - (6)].node), (yyvsp[(6) - (6)].node));
+					n->args = list_make2((yyvsp[-2].node), (yyvsp[0].node));
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(5) - (6)]);
-					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "~", (yyvsp[(1) - (6)].node), (Node *) n, (yylsp[(2) - (6)]));
+					n->location = (yylsp[-1]);
+					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "~", (yyvsp[-5].node), (Node *) n, (yylsp[-4]));
 				}
     break;
 
@@ -23116,11 +22893,11 @@ yyreduce:
 					FuncCall *n = makeNode(FuncCall);
 					c->val.type = T_Null;
 					n->funcname = SystemFuncName("similar_escape");
-					n->args = list_make2((yyvsp[(5) - (5)].node), (Node *) c);
+					n->args = list_make2((yyvsp[0].node), (Node *) c);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(5) - (5)]);
-					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~", (yyvsp[(1) - (5)].node), (Node *) n, (yylsp[(2) - (5)]));
+					n->location = (yylsp[0]);
+					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~", (yyvsp[-4].node), (Node *) n, (yylsp[-3]));
 				}
     break;
 
@@ -23129,11 +22906,11 @@ yyreduce:
     {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("similar_escape");
-					n->args = list_make2((yyvsp[(5) - (7)].node), (yyvsp[(7) - (7)].node));
+					n->args = list_make2((yyvsp[-2].node), (yyvsp[0].node));
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(6) - (7)]);
-					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~", (yyvsp[(1) - (7)].node), (Node *) n, (yylsp[(2) - (7)]));
+					n->location = (yylsp[-1]);
+					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~", (yyvsp[-6].node), (Node *) n, (yylsp[-5]));
 				}
     break;
 
@@ -23141,7 +22918,7 @@ yyreduce:
 #line 7499 "gram.y"
     {
 					NullTest *n = makeNode(NullTest);
-					n->arg = (Expr *) (yyvsp[(1) - (3)].node);
+					n->arg = (Expr *) (yyvsp[-2].node);
 					n->nulltesttype = IS_NULL;
 					(yyval.node) = (Node *)n;
 				}
@@ -23151,7 +22928,7 @@ yyreduce:
 #line 7506 "gram.y"
     {
 					NullTest *n = makeNode(NullTest);
-					n->arg = (Expr *) (yyvsp[(1) - (2)].node);
+					n->arg = (Expr *) (yyvsp[-1].node);
 					n->nulltesttype = IS_NULL;
 					(yyval.node) = (Node *)n;
 				}
@@ -23161,7 +22938,7 @@ yyreduce:
 #line 7513 "gram.y"
     {
 					NullTest *n = makeNode(NullTest);
-					n->arg = (Expr *) (yyvsp[(1) - (4)].node);
+					n->arg = (Expr *) (yyvsp[-3].node);
 					n->nulltesttype = IS_NOT_NULL;
 					(yyval.node) = (Node *)n;
 				}
@@ -23171,7 +22948,7 @@ yyreduce:
 #line 7520 "gram.y"
     {
 					NullTest *n = makeNode(NullTest);
-					n->arg = (Expr *) (yyvsp[(1) - (2)].node);
+					n->arg = (Expr *) (yyvsp[-1].node);
 					n->nulltesttype = IS_NOT_NULL;
 					(yyval.node) = (Node *)n;
 				}
@@ -23180,7 +22957,7 @@ yyreduce:
   case 1187:
 #line 7527 "gram.y"
     {
-					(yyval.node) = (Node *)makeOverlaps((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].list), (yylsp[(2) - (3)]));
+					(yyval.node) = (Node *)makeOverlaps((yyvsp[-2].list), (yyvsp[0].list), (yylsp[-1]));
 				}
     break;
 
@@ -23188,7 +22965,7 @@ yyreduce:
 #line 7531 "gram.y"
     {
 					BooleanTest *b = makeNode(BooleanTest);
-					b->arg = (Expr *) (yyvsp[(1) - (3)].node);
+					b->arg = (Expr *) (yyvsp[-2].node);
 					b->booltesttype = IS_TRUE;
 					(yyval.node) = (Node *)b;
 				}
@@ -23198,7 +22975,7 @@ yyreduce:
 #line 7538 "gram.y"
     {
 					BooleanTest *b = makeNode(BooleanTest);
-					b->arg = (Expr *) (yyvsp[(1) - (4)].node);
+					b->arg = (Expr *) (yyvsp[-3].node);
 					b->booltesttype = IS_NOT_TRUE;
 					(yyval.node) = (Node *)b;
 				}
@@ -23208,7 +22985,7 @@ yyreduce:
 #line 7545 "gram.y"
     {
 					BooleanTest *b = makeNode(BooleanTest);
-					b->arg = (Expr *) (yyvsp[(1) - (3)].node);
+					b->arg = (Expr *) (yyvsp[-2].node);
 					b->booltesttype = IS_FALSE;
 					(yyval.node) = (Node *)b;
 				}
@@ -23218,7 +22995,7 @@ yyreduce:
 #line 7552 "gram.y"
     {
 					BooleanTest *b = makeNode(BooleanTest);
-					b->arg = (Expr *) (yyvsp[(1) - (4)].node);
+					b->arg = (Expr *) (yyvsp[-3].node);
 					b->booltesttype = IS_NOT_FALSE;
 					(yyval.node) = (Node *)b;
 				}
@@ -23228,7 +23005,7 @@ yyreduce:
 #line 7559 "gram.y"
     {
 					BooleanTest *b = makeNode(BooleanTest);
-					b->arg = (Expr *) (yyvsp[(1) - (3)].node);
+					b->arg = (Expr *) (yyvsp[-2].node);
 					b->booltesttype = IS_UNKNOWN;
 					(yyval.node) = (Node *)b;
 				}
@@ -23238,7 +23015,7 @@ yyreduce:
 #line 7566 "gram.y"
     {
 					BooleanTest *b = makeNode(BooleanTest);
-					b->arg = (Expr *) (yyvsp[(1) - (4)].node);
+					b->arg = (Expr *) (yyvsp[-3].node);
 					b->booltesttype = IS_NOT_UNKNOWN;
 					(yyval.node) = (Node *)b;
 				}
@@ -23247,7 +23024,7 @@ yyreduce:
   case 1194:
 #line 7573 "gram.y"
     {
-					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_DISTINCT, "=", (yyvsp[(1) - (5)].node), (yyvsp[(5) - (5)].node), (yylsp[(2) - (5)]));
+					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_DISTINCT, "=", (yyvsp[-4].node), (yyvsp[0].node), (yylsp[-3]));
 				}
     break;
 
@@ -23256,8 +23033,8 @@ yyreduce:
     {
 					(yyval.node) = (Node *) makeA_Expr(AEXPR_NOT, NIL, NULL,
 									(Node *) makeSimpleA_Expr(AEXPR_DISTINCT,
-															  "=", (yyvsp[(1) - (6)].node), (yyvsp[(6) - (6)].node), (yylsp[(2) - (6)])),
-											 (yylsp[(2) - (6)]));
+															  "=", (yyvsp[-5].node), (yyvsp[0].node), (yylsp[-4])),
+											 (yylsp[-4]));
 
 				}
     break;
@@ -23265,14 +23042,14 @@ yyreduce:
   case 1196:
 #line 7585 "gram.y"
     {
-					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OF, "=", (yyvsp[(1) - (6)].node), (Node *) (yyvsp[(5) - (6)].list), (yylsp[(2) - (6)]));
+					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OF, "=", (yyvsp[-5].node), (Node *) (yyvsp[-1].list), (yylsp[-4]));
 				}
     break;
 
   case 1197:
 #line 7589 "gram.y"
     {
-					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OF, "<>", (yyvsp[(1) - (7)].node), (Node *) (yyvsp[(6) - (7)].list), (yylsp[(2) - (7)]));
+					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OF, "<>", (yyvsp[-6].node), (Node *) (yyvsp[-1].list), (yylsp[-5]));
 				}
     break;
 
@@ -23280,9 +23057,9 @@ yyreduce:
 #line 7593 "gram.y"
     {
 					(yyval.node) = (Node *) makeA_Expr(AEXPR_AND, NIL,
-						(Node *) makeSimpleA_Expr(AEXPR_OP, ">=", (yyvsp[(1) - (6)].node), (yyvsp[(4) - (6)].node), (yylsp[(2) - (6)])),
-						(Node *) makeSimpleA_Expr(AEXPR_OP, "<=", (yyvsp[(1) - (6)].node), (yyvsp[(6) - (6)].node), (yylsp[(2) - (6)])),
-											 (yylsp[(2) - (6)]));
+						(Node *) makeSimpleA_Expr(AEXPR_OP, ">=", (yyvsp[-5].node), (yyvsp[-2].node), (yylsp[-4])),
+						(Node *) makeSimpleA_Expr(AEXPR_OP, "<=", (yyvsp[-5].node), (yyvsp[0].node), (yylsp[-4])),
+											 (yylsp[-4]));
 				}
     break;
 
@@ -23290,9 +23067,9 @@ yyreduce:
 #line 7600 "gram.y"
     {
 					(yyval.node) = (Node *) makeA_Expr(AEXPR_OR, NIL,
-						(Node *) makeSimpleA_Expr(AEXPR_OP, "<", (yyvsp[(1) - (7)].node), (yyvsp[(5) - (7)].node), (yylsp[(2) - (7)])),
-						(Node *) makeSimpleA_Expr(AEXPR_OP, ">", (yyvsp[(1) - (7)].node), (yyvsp[(7) - (7)].node), (yylsp[(2) - (7)])),
-											 (yylsp[(2) - (7)]));
+						(Node *) makeSimpleA_Expr(AEXPR_OP, "<", (yyvsp[-6].node), (yyvsp[-2].node), (yylsp[-5])),
+						(Node *) makeSimpleA_Expr(AEXPR_OP, ">", (yyvsp[-6].node), (yyvsp[0].node), (yylsp[-5])),
+											 (yylsp[-5]));
 				}
     break;
 
@@ -23301,14 +23078,14 @@ yyreduce:
     {
 					(yyval.node) = (Node *) makeA_Expr(AEXPR_OR, NIL,
 						(Node *) makeA_Expr(AEXPR_AND, NIL,
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">=", (yyvsp[(1) - (6)].node), (yyvsp[(4) - (6)].node), (yylsp[(2) - (6)])),
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<=", (yyvsp[(1) - (6)].node), (yyvsp[(6) - (6)].node), (yylsp[(2) - (6)])),
-											(yylsp[(2) - (6)])),
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">=", (yyvsp[-5].node), (yyvsp[-2].node), (yylsp[-4])),
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<=", (yyvsp[-5].node), (yyvsp[0].node), (yylsp[-4])),
+											(yylsp[-4])),
 						(Node *) makeA_Expr(AEXPR_AND, NIL,
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">=", (yyvsp[(1) - (6)].node), (yyvsp[(6) - (6)].node), (yylsp[(2) - (6)])),
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<=", (yyvsp[(1) - (6)].node), (yyvsp[(4) - (6)].node), (yylsp[(2) - (6)])),
-											(yylsp[(2) - (6)])),
-											 (yylsp[(2) - (6)]));
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">=", (yyvsp[-5].node), (yyvsp[0].node), (yylsp[-4])),
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<=", (yyvsp[-5].node), (yyvsp[-2].node), (yylsp[-4])),
+											(yylsp[-4])),
+											 (yylsp[-4]));
 				}
     break;
 
@@ -23317,14 +23094,14 @@ yyreduce:
     {
 					(yyval.node) = (Node *) makeA_Expr(AEXPR_AND, NIL,
 						(Node *) makeA_Expr(AEXPR_OR, NIL,
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<", (yyvsp[(1) - (7)].node), (yyvsp[(5) - (7)].node), (yylsp[(2) - (7)])),
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">", (yyvsp[(1) - (7)].node), (yyvsp[(7) - (7)].node), (yylsp[(2) - (7)])),
-											(yylsp[(2) - (7)])),
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<", (yyvsp[-6].node), (yyvsp[-2].node), (yylsp[-5])),
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">", (yyvsp[-6].node), (yyvsp[0].node), (yylsp[-5])),
+											(yylsp[-5])),
 						(Node *) makeA_Expr(AEXPR_OR, NIL,
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<", (yyvsp[(1) - (7)].node), (yyvsp[(7) - (7)].node), (yylsp[(2) - (7)])),
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">", (yyvsp[(1) - (7)].node), (yyvsp[(5) - (7)].node), (yylsp[(2) - (7)])),
-											(yylsp[(2) - (7)])),
-											 (yylsp[(2) - (7)]));
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<", (yyvsp[-6].node), (yyvsp[0].node), (yylsp[-5])),
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">", (yyvsp[-6].node), (yyvsp[-2].node), (yylsp[-5])),
+											(yylsp[-5])),
+											 (yylsp[-5]));
 				}
     break;
 
@@ -23332,19 +23109,19 @@ yyreduce:
 #line 7633 "gram.y"
     {
 					/* in_expr returns a SubLink or a list of a_exprs */
-					if (IsA((yyvsp[(3) - (3)].node), SubLink))
+					if (IsA((yyvsp[0].node), SubLink))
 					{
 						/* generate foo = ANY (subquery) */
-						SubLink *n = (SubLink *) (yyvsp[(3) - (3)].node);
+						SubLink *n = (SubLink *) (yyvsp[0].node);
 						n->subLinkType = ANY_SUBLINK;
-						n->testexpr = (yyvsp[(1) - (3)].node);
+						n->testexpr = (yyvsp[-2].node);
 						n->operName = list_make1(makeString("="));
 						(yyval.node) = (Node *)n;
 					}
 					else
 					{
 						/* generate scalar IN expression */
-						(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_IN, "=", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)]));
+						(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_IN, "=", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1]));
 					}
 				}
     break;
@@ -23353,21 +23130,21 @@ yyreduce:
 #line 7651 "gram.y"
     {
 					/* in_expr returns a SubLink or a list of a_exprs */
-					if (IsA((yyvsp[(4) - (4)].node), SubLink))
+					if (IsA((yyvsp[0].node), SubLink))
 					{
 						/* generate NOT (foo = ANY (subquery)) */
 						/* Make an = ANY node */
-						SubLink *n = (SubLink *) (yyvsp[(4) - (4)].node);
+						SubLink *n = (SubLink *) (yyvsp[0].node);
 						n->subLinkType = ANY_SUBLINK;
-						n->testexpr = (yyvsp[(1) - (4)].node);
+						n->testexpr = (yyvsp[-3].node);
 						n->operName = list_make1(makeString("="));
 						/* Stick a NOT on top */
-						(yyval.node) = (Node *) makeA_Expr(AEXPR_NOT, NIL, NULL, (Node *) n, (yylsp[(2) - (4)]));
+						(yyval.node) = (Node *) makeA_Expr(AEXPR_NOT, NIL, NULL, (Node *) n, (yylsp[-2]));
 					}
 					else
 					{
 						/* generate scalar NOT IN expression */
-						(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_IN, "<>", (yyvsp[(1) - (4)].node), (yyvsp[(4) - (4)].node), (yylsp[(2) - (4)]));
+						(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_IN, "<>", (yyvsp[-3].node), (yyvsp[0].node), (yylsp[-2]));
 					}
 				}
     break;
@@ -23376,10 +23153,10 @@ yyreduce:
 #line 7671 "gram.y"
     {
 					SubLink *n = makeNode(SubLink);
-					n->subLinkType = (yyvsp[(3) - (4)].ival);
-					n->testexpr = (yyvsp[(1) - (4)].node);
-					n->operName = (yyvsp[(2) - (4)].list);
-					n->subselect = (yyvsp[(4) - (4)].node);
+					n->subLinkType = (yyvsp[-1].ival);
+					n->testexpr = (yyvsp[-3].node);
+					n->operName = (yyvsp[-2].list);
+					n->subselect = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -23387,10 +23164,10 @@ yyreduce:
   case 1205:
 #line 7680 "gram.y"
     {
-					if ((yyvsp[(3) - (6)].ival) == ANY_SUBLINK)
-						(yyval.node) = (Node *) makeA_Expr(AEXPR_OP_ANY, (yyvsp[(2) - (6)].list), (yyvsp[(1) - (6)].node), (yyvsp[(5) - (6)].node), (yylsp[(2) - (6)]));
+					if ((yyvsp[-3].ival) == ANY_SUBLINK)
+						(yyval.node) = (Node *) makeA_Expr(AEXPR_OP_ANY, (yyvsp[-4].list), (yyvsp[-5].node), (yyvsp[-1].node), (yylsp[-4]));
 					else
-						(yyval.node) = (Node *) makeA_Expr(AEXPR_OP_ALL, (yyvsp[(2) - (6)].list), (yyvsp[(1) - (6)].node), (yyvsp[(5) - (6)].node), (yylsp[(2) - (6)]));
+						(yyval.node) = (Node *) makeA_Expr(AEXPR_OP_ALL, (yyvsp[-4].list), (yyvsp[-5].node), (yyvsp[-1].node), (yylsp[-4]));
 				}
     break;
 
@@ -23415,7 +23192,7 @@ yyreduce:
   case 1207:
 #line 7702 "gram.y"
     {
-					(yyval.node) = makeXmlExpr(IS_DOCUMENT, NULL, NIL, list_make1((yyvsp[(1) - (3)].node)));
+					(yyval.node) = makeXmlExpr(IS_DOCUMENT, NULL, NIL, list_make1((yyvsp[-2].node)));
 				}
     break;
 
@@ -23423,95 +23200,95 @@ yyreduce:
 #line 7706 "gram.y"
     {
 					(yyval.node) = (Node *) makeA_Expr(AEXPR_NOT, NIL, NULL,
-											 makeXmlExpr(IS_DOCUMENT, NULL, NIL, list_make1((yyvsp[(1) - (4)].node))),
-											 (yylsp[(2) - (4)]));
+											 makeXmlExpr(IS_DOCUMENT, NULL, NIL, list_make1((yyvsp[-3].node))),
+											 (yylsp[-2]));
 				}
     break;
 
   case 1209:
 #line 7723 "gram.y"
-    { (yyval.node) = (yyvsp[(1) - (1)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 1210:
 #line 7725 "gram.y"
-    { (yyval.node) = makeTypeCast((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].typnam)); }
+    { (yyval.node) = makeTypeCast((yyvsp[-2].node), (yyvsp[0].typnam)); }
     break;
 
   case 1211:
 #line 7727 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", NULL, (yyvsp[(2) - (2)].node), (yylsp[(1) - (2)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", NULL, (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1212:
 #line 7729 "gram.y"
-    { (yyval.node) = doNegate((yyvsp[(2) - (2)].node), (yylsp[(1) - (2)])); }
+    { (yyval.node) = doNegate((yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1213:
 #line 7731 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1214:
 #line 7733 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "-", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "-", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1215:
 #line 7735 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "*", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "*", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1216:
 #line 7737 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "/", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "/", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1217:
 #line 7739 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "%", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "%", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1218:
 #line 7741 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "^", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "^", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1219:
 #line 7743 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "<", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "<", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1220:
 #line 7745 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, ">", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, ">", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1221:
 #line 7747 "gram.y"
-    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "=", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "=", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1222:
 #line 7749 "gram.y"
-    { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[(2) - (3)].list), (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
+    { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[-1].list), (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1223:
 #line 7751 "gram.y"
-    { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[(1) - (2)].list), NULL, (yyvsp[(2) - (2)].node), (yylsp[(1) - (2)])); }
+    { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[-1].list), NULL, (yyvsp[0].node), (yylsp[-1])); }
     break;
 
   case 1224:
 #line 7753 "gram.y"
-    { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[(2) - (2)].list), (yyvsp[(1) - (2)].node), NULL, (yylsp[(2) - (2)])); }
+    { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[0].list), (yyvsp[-1].node), NULL, (yylsp[0])); }
     break;
 
   case 1225:
 #line 7755 "gram.y"
     {
-					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_DISTINCT, "=", (yyvsp[(1) - (5)].node), (yyvsp[(5) - (5)].node), (yylsp[(2) - (5)]));
+					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_DISTINCT, "=", (yyvsp[-4].node), (yyvsp[0].node), (yylsp[-3]));
 				}
     break;
 
@@ -23519,28 +23296,28 @@ yyreduce:
 #line 7759 "gram.y"
     {
 					(yyval.node) = (Node *) makeA_Expr(AEXPR_NOT, NIL,
-						NULL, (Node *) makeSimpleA_Expr(AEXPR_DISTINCT, "=", (yyvsp[(1) - (6)].node), (yyvsp[(6) - (6)].node), (yylsp[(2) - (6)])), (yylsp[(2) - (6)]));
+						NULL, (Node *) makeSimpleA_Expr(AEXPR_DISTINCT, "=", (yyvsp[-5].node), (yyvsp[0].node), (yylsp[-4])), (yylsp[-4]));
 				}
     break;
 
   case 1227:
 #line 7764 "gram.y"
     {
-					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OF, "=", (yyvsp[(1) - (6)].node), (Node *) (yyvsp[(5) - (6)].list), (yylsp[(2) - (6)]));
+					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OF, "=", (yyvsp[-5].node), (Node *) (yyvsp[-1].list), (yylsp[-4]));
 				}
     break;
 
   case 1228:
 #line 7768 "gram.y"
     {
-					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OF, "<>", (yyvsp[(1) - (7)].node), (Node *) (yyvsp[(6) - (7)].list), (yylsp[(2) - (7)]));
+					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OF, "<>", (yyvsp[-6].node), (Node *) (yyvsp[-1].list), (yylsp[-5]));
 				}
     break;
 
   case 1229:
 #line 7772 "gram.y"
     {
-					(yyval.node) = makeXmlExpr(IS_DOCUMENT, NULL, NIL, list_make1((yyvsp[(1) - (3)].node)));
+					(yyval.node) = makeXmlExpr(IS_DOCUMENT, NULL, NIL, list_make1((yyvsp[-2].node)));
 				}
     break;
 
@@ -23548,31 +23325,31 @@ yyreduce:
 #line 7776 "gram.y"
     {
 					(yyval.node) = (Node *) makeA_Expr(AEXPR_NOT, NIL, NULL,
-											 makeXmlExpr(IS_DOCUMENT, NULL, NIL, list_make1((yyvsp[(1) - (4)].node))),
-											 (yylsp[(2) - (4)]));
+											 makeXmlExpr(IS_DOCUMENT, NULL, NIL, list_make1((yyvsp[-3].node))),
+											 (yylsp[-2]));
 				}
     break;
 
   case 1231:
 #line 7791 "gram.y"
-    { (yyval.node) = (yyvsp[(1) - (1)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 1232:
 #line 7792 "gram.y"
-    { (yyval.node) = (yyvsp[(1) - (1)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 1233:
 #line 7794 "gram.y"
     {
 					ParamRef *p = makeNode(ParamRef);
-					p->number = (yyvsp[(1) - (2)].ival);
-					if ((yyvsp[(2) - (2)].list))
+					p->number = (yyvsp[-1].ival);
+					if ((yyvsp[0].list))
 					{
 						A_Indirection *n = makeNode(A_Indirection);
 						n->arg = (Node *) p;
-						n->indirection = (yyvsp[(2) - (2)].list);
+						n->indirection = (yyvsp[0].list);
 						(yyval.node) = (Node *) n;
 					}
 					else
@@ -23583,26 +23360,26 @@ yyreduce:
   case 1234:
 #line 7808 "gram.y"
     {
-					if ((yyvsp[(4) - (4)].list))
+					if ((yyvsp[0].list))
 					{
 						A_Indirection *n = makeNode(A_Indirection);
-						n->arg = (yyvsp[(2) - (4)].node);
-						n->indirection = (yyvsp[(4) - (4)].list);
+						n->arg = (yyvsp[-2].node);
+						n->indirection = (yyvsp[0].list);
 						(yyval.node) = (Node *)n;
 					}
 					else
-						(yyval.node) = (yyvsp[(2) - (4)].node);
+						(yyval.node) = (yyvsp[-2].node);
 				}
     break;
 
   case 1235:
 #line 7820 "gram.y"
-    { (yyval.node) = (yyvsp[(1) - (1)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 1236:
 #line 7822 "gram.y"
-    { (yyval.node) = (yyvsp[(1) - (1)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 1237:
@@ -23612,7 +23389,7 @@ yyreduce:
 					n->subLinkType = EXPR_SUBLINK;
 					n->testexpr = NULL;
 					n->operName = NIL;
-					n->subselect = (yyvsp[(1) - (1)].node);
+					n->subselect = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -23624,7 +23401,7 @@ yyreduce:
 					n->subLinkType = EXISTS_SUBLINK;
 					n->testexpr = NULL;
 					n->operName = NIL;
-					n->subselect = (yyvsp[(2) - (2)].node);
+					n->subselect = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -23636,21 +23413,21 @@ yyreduce:
 					n->subLinkType = ARRAY_SUBLINK;
 					n->testexpr = NULL;
 					n->operName = NIL;
-					n->subselect = (yyvsp[(2) - (2)].node);
+					n->subselect = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
     break;
 
   case 1240:
 #line 7851 "gram.y"
-    {	(yyval.node) = (yyvsp[(2) - (2)].node);	}
+    {	(yyval.node) = (yyvsp[0].node);	}
     break;
 
   case 1241:
 #line 7853 "gram.y"
     {
 					RowExpr *r = makeNode(RowExpr);
-					r->args = (yyvsp[(1) - (1)].list);
+					r->args = (yyvsp[0].list);
 					r->row_typeid = 0;	/* not analyzed yet */
 					(yyval.node) = (Node *)r;
 				}
@@ -23660,11 +23437,11 @@ yyreduce:
 #line 7870 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = (yyvsp[(1) - (3)].list);
+					n->funcname = (yyvsp[-2].list);
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(1) - (3)]);
+					n->location = (yylsp[-2]);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -23673,11 +23450,11 @@ yyreduce:
 #line 7880 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = (yyvsp[(1) - (4)].list);
-					n->args = (yyvsp[(3) - (4)].list);
+					n->funcname = (yyvsp[-3].list);
+					n->args = (yyvsp[-1].list);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(1) - (4)]);
+					n->location = (yylsp[-3]);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -23686,15 +23463,15 @@ yyreduce:
 #line 7890 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = (yyvsp[(1) - (5)].list);
-					n->args = (yyvsp[(4) - (5)].list);
+					n->funcname = (yyvsp[-4].list);
+					n->args = (yyvsp[-1].list);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					/* Ideally we'd mark the FuncCall node to indicate
 					 * "must be an aggregate", but there's no provision
 					 * for that in FuncCall at the moment.
 					 */
-					n->location = (yylsp[(1) - (5)]);
+					n->location = (yylsp[-4]);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -23703,11 +23480,11 @@ yyreduce:
 #line 7904 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = (yyvsp[(1) - (5)].list);
-					n->args = (yyvsp[(4) - (5)].list);
+					n->funcname = (yyvsp[-4].list);
+					n->args = (yyvsp[-1].list);
 					n->agg_star = FALSE;
 					n->agg_distinct = TRUE;
-					n->location = (yylsp[(1) - (5)]);
+					n->location = (yylsp[-4]);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -23726,11 +23503,11 @@ yyreduce:
 					 * really was.
 					 */
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = (yyvsp[(1) - (4)].list);
+					n->funcname = (yyvsp[-3].list);
 					n->args = NIL;
 					n->agg_star = TRUE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(1) - (4)]);
+					n->location = (yylsp[-3]);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -23800,7 +23577,7 @@ yyreduce:
 					s->val.val.str = "now";
 					s->typename = SystemTypeName("text");
 					d = SystemTypeName("timetz");
-					d->typmods = list_make1(makeIntConst((yyvsp[(3) - (4)].ival)));
+					d->typmods = list_make1(makeIntConst((yyvsp[-1].ival)));
 
 					(yyval.node) = (Node *)makeTypeCast((Node *)s, d);
 				}
@@ -23818,7 +23595,7 @@ yyreduce:
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(1) - (1)]);
+					n->location = (yylsp[0]);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -23838,7 +23615,7 @@ yyreduce:
 					s->typename = SystemTypeName("text");
 
 					d = SystemTypeName("timestamptz");
-					d->typmods = list_make1(makeIntConst((yyvsp[(3) - (4)].ival)));
+					d->typmods = list_make1(makeIntConst((yyvsp[-1].ival)));
 
 					(yyval.node) = (Node *)makeTypeCast((Node *)s, d);
 				}
@@ -23878,7 +23655,7 @@ yyreduce:
 					s->val.val.str = "now";
 					s->typename = SystemTypeName("text");
 					d = SystemTypeName("time");
-					d->typmods = list_make1(makeIntConst((yyvsp[(3) - (4)].ival)));
+					d->typmods = list_make1(makeIntConst((yyvsp[-1].ival)));
 
 					(yyval.node) = (Node *)makeTypeCast((Node *)s, d);
 				}
@@ -23919,7 +23696,7 @@ yyreduce:
 					s->typename = SystemTypeName("text");
 
 					d = SystemTypeName("timestamp");
-					d->typmods = list_make1(makeIntConst((yyvsp[(3) - (4)].ival)));
+					d->typmods = list_make1(makeIntConst((yyvsp[-1].ival)));
 
 					(yyval.node) = (Node *)makeTypeCast((Node *)s, d);
 				}
@@ -23933,7 +23710,7 @@ yyreduce:
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(1) - (1)]);
+					n->location = (yylsp[0]);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -23946,7 +23723,7 @@ yyreduce:
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(1) - (1)]);
+					n->location = (yylsp[0]);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -23959,7 +23736,7 @@ yyreduce:
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(1) - (1)]);
+					n->location = (yylsp[0]);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -23972,14 +23749,14 @@ yyreduce:
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(1) - (1)]);
+					n->location = (yylsp[0]);
 					(yyval.node) = (Node *)n;
 				}
     break;
 
   case 1260:
 #line 8137 "gram.y"
-    { (yyval.node) = makeTypeCast((yyvsp[(3) - (6)].node), (yyvsp[(5) - (6)].typnam)); }
+    { (yyval.node) = makeTypeCast((yyvsp[-3].node), (yyvsp[-1].typnam)); }
     break;
 
   case 1261:
@@ -23987,10 +23764,10 @@ yyreduce:
     {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("date_part");
-					n->args = (yyvsp[(3) - (4)].list);
+					n->args = (yyvsp[-1].list);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(1) - (4)]);
+					n->location = (yylsp[-3]);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -24005,10 +23782,10 @@ yyreduce:
 					 */
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("overlay");
-					n->args = (yyvsp[(3) - (4)].list);
+					n->args = (yyvsp[-1].list);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(1) - (4)]);
+					n->location = (yylsp[-3]);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -24019,10 +23796,10 @@ yyreduce:
 					/* position(A in B) is converted to position(B, A) */
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("position");
-					n->args = (yyvsp[(3) - (4)].list);
+					n->args = (yyvsp[-1].list);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(1) - (4)]);
+					n->location = (yylsp[-3]);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -24035,10 +23812,10 @@ yyreduce:
 					 */
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("substring");
-					n->args = (yyvsp[(3) - (4)].list);
+					n->args = (yyvsp[-1].list);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(1) - (4)]);
+					n->location = (yylsp[-3]);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -24056,11 +23833,11 @@ yyreduce:
 					/* Convert SystemTypeName() to SystemFuncName() even though
 					 * at the moment they result in the same thing.
 					 */
-					n->funcname = SystemFuncName(((Value *)llast((yyvsp[(5) - (6)].typnam)->names))->val.str);
-					n->args = list_make1((yyvsp[(3) - (6)].node));
+					n->funcname = SystemFuncName(((Value *)llast((yyvsp[-1].typnam)->names))->val.str);
+					n->args = list_make1((yyvsp[-3].node));
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(1) - (6)]);
+					n->location = (yylsp[-5]);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -24073,10 +23850,10 @@ yyreduce:
 					 */
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("btrim");
-					n->args = (yyvsp[(4) - (5)].list);
+					n->args = (yyvsp[-1].list);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(1) - (5)]);
+					n->location = (yylsp[-4]);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -24086,10 +23863,10 @@ yyreduce:
     {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("ltrim");
-					n->args = (yyvsp[(4) - (5)].list);
+					n->args = (yyvsp[-1].list);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(1) - (5)]);
+					n->location = (yylsp[-4]);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -24099,10 +23876,10 @@ yyreduce:
     {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("rtrim");
-					n->args = (yyvsp[(4) - (5)].list);
+					n->args = (yyvsp[-1].list);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(1) - (5)]);
+					n->location = (yylsp[-4]);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -24112,10 +23889,10 @@ yyreduce:
     {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("btrim");
-					n->args = (yyvsp[(3) - (4)].list);
+					n->args = (yyvsp[-1].list);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					n->location = (yylsp[(1) - (4)]);
+					n->location = (yylsp[-3]);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -24123,7 +23900,7 @@ yyreduce:
   case 1270:
 #line 8250 "gram.y"
     {
-					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_NULLIF, "=", (yyvsp[(3) - (6)].node), (yyvsp[(5) - (6)].node), (yylsp[(1) - (6)]));
+					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_NULLIF, "=", (yyvsp[-3].node), (yyvsp[-1].node), (yylsp[-5]));
 				}
     break;
 
@@ -24131,7 +23908,7 @@ yyreduce:
 #line 8254 "gram.y"
     {
 					CoalesceExpr *c = makeNode(CoalesceExpr);
-					c->args = (yyvsp[(3) - (4)].list);
+					c->args = (yyvsp[-1].list);
 					(yyval.node) = (Node *)c;
 				}
     break;
@@ -24140,7 +23917,7 @@ yyreduce:
 #line 8260 "gram.y"
     {
 					MinMaxExpr *v = makeNode(MinMaxExpr);
-					v->args = (yyvsp[(3) - (4)].list);
+					v->args = (yyvsp[-1].list);
 					v->op = IS_GREATEST;
 					(yyval.node) = (Node *)v;
 				}
@@ -24150,7 +23927,7 @@ yyreduce:
 #line 8267 "gram.y"
     {
 					MinMaxExpr *v = makeNode(MinMaxExpr);
-					v->args = (yyvsp[(3) - (4)].list);
+					v->args = (yyvsp[-1].list);
 					v->op = IS_LEAST;
 					(yyval.node) = (Node *)v;
 				}
@@ -24159,42 +23936,42 @@ yyreduce:
   case 1274:
 #line 8274 "gram.y"
     {
-					(yyval.node) = makeXmlExpr(IS_XMLCONCAT, NULL, NIL, (yyvsp[(3) - (4)].list));
+					(yyval.node) = makeXmlExpr(IS_XMLCONCAT, NULL, NIL, (yyvsp[-1].list));
 				}
     break;
 
   case 1275:
 #line 8278 "gram.y"
     {
-					(yyval.node) = makeXmlExpr(IS_XMLELEMENT, (yyvsp[(4) - (5)].str), NIL, NIL);
+					(yyval.node) = makeXmlExpr(IS_XMLELEMENT, (yyvsp[-1].str), NIL, NIL);
 				}
     break;
 
   case 1276:
 #line 8282 "gram.y"
     {
-					(yyval.node) = makeXmlExpr(IS_XMLELEMENT, (yyvsp[(4) - (7)].str), (yyvsp[(6) - (7)].list), NIL);
+					(yyval.node) = makeXmlExpr(IS_XMLELEMENT, (yyvsp[-3].str), (yyvsp[-1].list), NIL);
 				}
     break;
 
   case 1277:
 #line 8286 "gram.y"
     {
-					(yyval.node) = makeXmlExpr(IS_XMLELEMENT, (yyvsp[(4) - (7)].str), NIL, (yyvsp[(6) - (7)].list));
+					(yyval.node) = makeXmlExpr(IS_XMLELEMENT, (yyvsp[-3].str), NIL, (yyvsp[-1].list));
 				}
     break;
 
   case 1278:
 #line 8290 "gram.y"
     {
-					(yyval.node) = makeXmlExpr(IS_XMLELEMENT, (yyvsp[(4) - (9)].str), (yyvsp[(6) - (9)].list), (yyvsp[(8) - (9)].list));
+					(yyval.node) = makeXmlExpr(IS_XMLELEMENT, (yyvsp[-5].str), (yyvsp[-3].list), (yyvsp[-1].list));
 				}
     break;
 
   case 1279:
 #line 8294 "gram.y"
     {
-					(yyval.node) = makeXmlExpr(IS_XMLFOREST, NULL, (yyvsp[(3) - (4)].list), NIL);
+					(yyval.node) = makeXmlExpr(IS_XMLFOREST, NULL, (yyvsp[-1].list), NIL);
 				}
     break;
 
@@ -24202,9 +23979,9 @@ yyreduce:
 #line 8298 "gram.y"
     {
 					XmlExpr *x = (XmlExpr *) makeXmlExpr(IS_XMLPARSE, NULL, NIL,
-														 list_make2((yyvsp[(4) - (6)].node),
-																	makeBoolAConst((yyvsp[(5) - (6)].boolean))));
-					x->xmloption = (yyvsp[(3) - (6)].ival);
+														 list_make2((yyvsp[-2].node),
+																	makeBoolAConst((yyvsp[-1].boolean))));
+					x->xmloption = (yyvsp[-3].ival);
 					(yyval.node) = (Node *)x;
 				}
     break;
@@ -24212,14 +23989,14 @@ yyreduce:
   case 1281:
 #line 8306 "gram.y"
     {
-					(yyval.node) = makeXmlExpr(IS_XMLPI, (yyvsp[(4) - (5)].str), NULL, NIL);
+					(yyval.node) = makeXmlExpr(IS_XMLPI, (yyvsp[-1].str), NULL, NIL);
 				}
     break;
 
   case 1282:
 #line 8310 "gram.y"
     {
-					(yyval.node) = makeXmlExpr(IS_XMLPI, (yyvsp[(4) - (7)].str), NULL, list_make1((yyvsp[(6) - (7)].node)));
+					(yyval.node) = makeXmlExpr(IS_XMLPI, (yyvsp[-3].str), NULL, list_make1((yyvsp[-1].node)));
 				}
     break;
 
@@ -24227,7 +24004,7 @@ yyreduce:
 #line 8314 "gram.y"
     {
 					(yyval.node) = makeXmlExpr(IS_XMLROOT, NULL, NIL,
-									 list_make3((yyvsp[(3) - (7)].node), (yyvsp[(5) - (7)].node), (yyvsp[(6) - (7)].node)));
+									 list_make3((yyvsp[-4].node), (yyvsp[-2].node), (yyvsp[-1].node)));
 				}
     break;
 
@@ -24235,16 +24012,16 @@ yyreduce:
 #line 8319 "gram.y"
     {
 					XmlSerialize *n = makeNode(XmlSerialize);
-					n->xmloption = (yyvsp[(3) - (7)].ival);
-					n->expr = (yyvsp[(4) - (7)].node);
-					n->typename = (yyvsp[(6) - (7)].typnam);
+					n->xmloption = (yyvsp[-4].ival);
+					n->expr = (yyvsp[-3].node);
+					n->typename = (yyvsp[-1].typnam);
 					(yyval.node) = (Node *)n;
 				}
     break;
 
   case 1285:
 #line 8332 "gram.y"
-    { (yyval.node) = (yyvsp[(2) - (2)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 1286:
@@ -24278,27 +24055,27 @@ yyreduce:
 
   case 1291:
 #line 8351 "gram.y"
-    { (yyval.list) = (yyvsp[(3) - (4)].list); }
+    { (yyval.list) = (yyvsp[-1].list); }
     break;
 
   case 1292:
 #line 8354 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].target)); }
+    { (yyval.list) = list_make1((yyvsp[0].target)); }
     break;
 
   case 1293:
 #line 8355 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].target)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].target)); }
     break;
 
   case 1294:
 #line 8359 "gram.y"
     {
 					(yyval.target) = makeNode(ResTarget);
-					(yyval.target)->name = (yyvsp[(3) - (3)].str);
+					(yyval.target)->name = (yyvsp[0].str);
 					(yyval.target)->indirection = NULL;
-					(yyval.target)->val = (Node *) (yyvsp[(1) - (3)].node);
-					(yyval.target)->location = (yylsp[(1) - (3)]);
+					(yyval.target)->val = (Node *) (yyvsp[-2].node);
+					(yyval.target)->location = (yylsp[-2]);
 				}
     break;
 
@@ -24308,8 +24085,8 @@ yyreduce:
 					(yyval.target) = makeNode(ResTarget);
 					(yyval.target)->name = NULL;
 					(yyval.target)->indirection = NULL;
-					(yyval.target)->val = (Node *) (yyvsp[(1) - (1)].node);
-					(yyval.target)->location = (yylsp[(1) - (1)]);
+					(yyval.target)->val = (Node *) (yyvsp[0].node);
+					(yyval.target)->location = (yylsp[0]);
 				}
     break;
 
@@ -24340,7 +24117,7 @@ yyreduce:
 
   case 1301:
 #line 8395 "gram.y"
-    { (yyval.list) = (yyvsp[(3) - (4)].list); }
+    { (yyval.list) = (yyvsp[-1].list); }
     break;
 
   case 1302:
@@ -24350,7 +24127,7 @@ yyreduce:
 
   case 1303:
 #line 8397 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(2) - (5)].list), (yyvsp[(4) - (5)].node)); }
+    { (yyval.list) = lappend((yyvsp[-3].list), (yyvsp[-1].node)); }
     break;
 
   case 1304:
@@ -24370,12 +24147,12 @@ yyreduce:
 
   case 1307:
 #line 8405 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 1308:
 #line 8406 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 1309:
@@ -24425,32 +24202,32 @@ yyreduce:
 
   case 1318:
 #line 8421 "gram.y"
-    { (yyval.list) = list_make1(makeString((yyvsp[(1) - (1)].str))); }
+    { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
     break;
 
   case 1319:
 #line 8423 "gram.y"
-    { (yyval.list) = (yyvsp[(3) - (4)].list); }
+    { (yyval.list) = (yyvsp[-1].list); }
     break;
 
   case 1320:
 #line 8428 "gram.y"
-    { (yyval.list) = list_make1(makeString((yyvsp[(1) - (1)].str))); }
+    { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
     break;
 
   case 1321:
 #line 8430 "gram.y"
-    { (yyval.list) = (yyvsp[(3) - (4)].list); }
+    { (yyval.list) = (yyvsp[-1].list); }
     break;
 
   case 1322:
 #line 8435 "gram.y"
-    { (yyval.list) = list_make1(makeString((yyvsp[(1) - (1)].str))); }
+    { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
     break;
 
   case 1323:
 #line 8437 "gram.y"
-    { (yyval.list) = (yyvsp[(3) - (4)].list); }
+    { (yyval.list) = (yyvsp[-1].list); }
     break;
 
   case 1324:
@@ -24476,14 +24253,14 @@ yyreduce:
   case 1328:
 #line 8457 "gram.y"
     {
-					(yyval.list) = list_make1((yyvsp[(1) - (1)].node));
+					(yyval.list) = list_make1((yyvsp[0].node));
 				}
     break;
 
   case 1329:
 #line 8461 "gram.y"
     {
-					(yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node));
+					(yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node));
 				}
     break;
 
@@ -24492,8 +24269,8 @@ yyreduce:
     {
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
-					n->val.val.str = (yyvsp[(1) - (3)].str);
-					(yyval.list) = list_make2((Node *) n, (yyvsp[(3) - (3)].node));
+					n->val.val.str = (yyvsp[-2].str);
+					(yyval.list) = list_make2((Node *) n, (yyvsp[0].node));
 				}
     break;
 
@@ -24504,29 +24281,29 @@ yyreduce:
 
   case 1332:
 #line 8477 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].typnam)); }
+    { (yyval.list) = list_make1((yyvsp[0].typnam)); }
     break;
 
   case 1333:
 #line 8478 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].typnam)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].typnam)); }
     break;
 
   case 1334:
 #line 8482 "gram.y"
-    {	(yyval.list) = list_make1((yyvsp[(1) - (1)].node));		}
+    {	(yyval.list) = list_make1((yyvsp[0].node));		}
     break;
 
   case 1335:
 #line 8484 "gram.y"
-    {	(yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node));	}
+    {	(yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node));	}
     break;
 
   case 1336:
 #line 8488 "gram.y"
     {
 					ArrayExpr *n = makeNode(ArrayExpr);
-					n->elements = (yyvsp[(2) - (3)].list);
+					n->elements = (yyvsp[-1].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -24535,14 +24312,14 @@ yyreduce:
 #line 8494 "gram.y"
     {
 					ArrayExpr *n = makeNode(ArrayExpr);
-					n->elements = (yyvsp[(2) - (3)].list);
+					n->elements = (yyvsp[-1].list);
 					(yyval.node) = (Node *)n;
 				}
     break;
 
   case 1338:
 #line 8506 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 1339:
@@ -24577,31 +24354,31 @@ yyreduce:
 
   case 1345:
 #line 8513 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 1346:
 #line 8523 "gram.y"
     {
-					(yyval.list) = list_make4((yyvsp[(1) - (4)].node), (yyvsp[(2) - (4)].node), (yyvsp[(3) - (4)].node), (yyvsp[(4) - (4)].node));
+					(yyval.list) = list_make4((yyvsp[-3].node), (yyvsp[-2].node), (yyvsp[-1].node), (yyvsp[0].node));
 				}
     break;
 
   case 1347:
 #line 8527 "gram.y"
     {
-					(yyval.list) = list_make3((yyvsp[(1) - (3)].node), (yyvsp[(2) - (3)].node), (yyvsp[(3) - (3)].node));
+					(yyval.list) = list_make3((yyvsp[-2].node), (yyvsp[-1].node), (yyvsp[0].node));
 				}
     break;
 
   case 1348:
 #line 8534 "gram.y"
-    { (yyval.node) = (yyvsp[(2) - (2)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 1349:
 #line 8540 "gram.y"
-    { (yyval.list) = list_make2((yyvsp[(3) - (3)].node), (yyvsp[(1) - (3)].node)); }
+    { (yyval.list) = list_make2((yyvsp[0].node), (yyvsp[-2].node)); }
     break;
 
   case 1350:
@@ -24612,7 +24389,7 @@ yyreduce:
   case 1351:
 #line 8558 "gram.y"
     {
-					(yyval.list) = list_make3((yyvsp[(1) - (3)].node), (yyvsp[(2) - (3)].node), (yyvsp[(3) - (3)].node));
+					(yyval.list) = list_make3((yyvsp[-2].node), (yyvsp[-1].node), (yyvsp[0].node));
 				}
     break;
 
@@ -24620,14 +24397,14 @@ yyreduce:
 #line 8562 "gram.y"
     {
 					/* not legal per SQL99, but might as well allow it */
-					(yyval.list) = list_make3((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yyvsp[(2) - (3)].node));
+					(yyval.list) = list_make3((yyvsp[-2].node), (yyvsp[0].node), (yyvsp[-1].node));
 				}
     break;
 
   case 1353:
 #line 8567 "gram.y"
     {
-					(yyval.list) = list_make2((yyvsp[(1) - (2)].node), (yyvsp[(2) - (2)].node));
+					(yyval.list) = list_make2((yyvsp[-1].node), (yyvsp[0].node));
 				}
     break;
 
@@ -24646,15 +24423,15 @@ yyreduce:
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_Integer;
 					n->val.val.ival = 1;
-					(yyval.list) = list_make3((yyvsp[(1) - (2)].node), (Node *) n,
-									makeTypeCast((yyvsp[(2) - (2)].node), SystemTypeName("int4")));
+					(yyval.list) = list_make3((yyvsp[-1].node), (Node *) n,
+									makeTypeCast((yyvsp[0].node), SystemTypeName("int4")));
 				}
     break;
 
   case 1355:
 #line 8588 "gram.y"
     {
-					(yyval.list) = (yyvsp[(1) - (1)].list);
+					(yyval.list) = (yyvsp[0].list);
 				}
     break;
 
@@ -24665,34 +24442,34 @@ yyreduce:
 
   case 1357:
 #line 8596 "gram.y"
-    { (yyval.node) = (yyvsp[(2) - (2)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 1358:
 #line 8599 "gram.y"
-    { (yyval.node) = (yyvsp[(2) - (2)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 1359:
 #line 8602 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(3) - (3)].list), (yyvsp[(1) - (3)].node)); }
+    { (yyval.list) = lappend((yyvsp[0].list), (yyvsp[-2].node)); }
     break;
 
   case 1360:
 #line 8603 "gram.y"
-    { (yyval.list) = (yyvsp[(2) - (2)].list); }
+    { (yyval.list) = (yyvsp[0].list); }
     break;
 
   case 1361:
 #line 8604 "gram.y"
-    { (yyval.list) = (yyvsp[(1) - (1)].list); }
+    { (yyval.list) = (yyvsp[0].list); }
     break;
 
   case 1362:
 #line 8608 "gram.y"
     {
 					SubLink *n = makeNode(SubLink);
-					n->subselect = (yyvsp[(1) - (1)].node);
+					n->subselect = (yyvsp[0].node);
 					/* other fields will be filled later */
 					(yyval.node) = (Node *)n;
 				}
@@ -24700,7 +24477,7 @@ yyreduce:
 
   case 1363:
 #line 8614 "gram.y"
-    { (yyval.node) = (Node *)(yyvsp[(2) - (3)].list); }
+    { (yyval.node) = (Node *)(yyvsp[-1].list); }
     break;
 
   case 1364:
@@ -24708,36 +24485,36 @@ yyreduce:
     {
 					CaseExpr *c = makeNode(CaseExpr);
 					c->casetype = 0; /* not analyzed yet */
-					c->arg = (Expr *) (yyvsp[(2) - (5)].node);
-					c->args = (yyvsp[(3) - (5)].list);
-					c->defresult = (Expr *) (yyvsp[(4) - (5)].node);
+					c->arg = (Expr *) (yyvsp[-3].node);
+					c->args = (yyvsp[-2].list);
+					c->defresult = (Expr *) (yyvsp[-1].node);
 					(yyval.node) = (Node *)c;
 				}
     break;
 
   case 1365:
 #line 8637 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
+    { (yyval.list) = list_make1((yyvsp[0].node)); }
     break;
 
   case 1366:
 #line 8638 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].node)); }
+    { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].node)); }
     break;
 
   case 1367:
 #line 8643 "gram.y"
     {
 					CaseWhen *w = makeNode(CaseWhen);
-					w->expr = (Expr *) (yyvsp[(2) - (4)].node);
-					w->result = (Expr *) (yyvsp[(4) - (4)].node);
+					w->expr = (Expr *) (yyvsp[-2].node);
+					w->result = (Expr *) (yyvsp[0].node);
 					(yyval.node) = (Node *)w;
 				}
     break;
 
   case 1368:
 #line 8652 "gram.y"
-    { (yyval.node) = (yyvsp[(2) - (2)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 1369:
@@ -24747,7 +24524,7 @@ yyreduce:
 
   case 1370:
 #line 8656 "gram.y"
-    { (yyval.node) = (yyvsp[(1) - (1)].node); }
+    { (yyval.node) = (yyvsp[0].node); }
     break;
 
   case 1371:
@@ -24758,21 +24535,21 @@ yyreduce:
   case 1372:
 #line 8666 "gram.y"
     {
-					(yyval.node) = makeColumnRef((yyvsp[(1) - (1)].str), NIL, (yylsp[(1) - (1)]));
+					(yyval.node) = makeColumnRef((yyvsp[0].str), NIL, (yylsp[0]));
 				}
     break;
 
   case 1373:
 #line 8670 "gram.y"
     {
-					(yyval.node) = makeColumnRef((yyvsp[(1) - (2)].str), (yyvsp[(2) - (2)].list), (yylsp[(1) - (2)]));
+					(yyval.node) = makeColumnRef((yyvsp[-1].str), (yyvsp[0].list), (yylsp[-1]));
 				}
     break;
 
   case 1374:
 #line 8677 "gram.y"
     {
-					(yyval.node) = (Node *) makeString((yyvsp[(2) - (2)].str));
+					(yyval.node) = (Node *) makeString((yyvsp[0].str));
 				}
     break;
 
@@ -24788,7 +24565,7 @@ yyreduce:
     {
 					A_Indices *ai = makeNode(A_Indices);
 					ai->lidx = NULL;
-					ai->uidx = (yyvsp[(2) - (3)].node);
+					ai->uidx = (yyvsp[-1].node);
 					(yyval.node) = (Node *) ai;
 				}
     break;
@@ -24797,20 +24574,20 @@ yyreduce:
 #line 8692 "gram.y"
     {
 					A_Indices *ai = makeNode(A_Indices);
-					ai->lidx = (yyvsp[(2) - (5)].node);
-					ai->uidx = (yyvsp[(4) - (5)].node);
+					ai->lidx = (yyvsp[-3].node);
+					ai->uidx = (yyvsp[-1].node);
 					(yyval.node) = (Node *) ai;
 				}
     break;
 
   case 1378:
 #line 8701 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
+    { (yyval.list) = list_make1((yyvsp[0].node)); }
     break;
 
   case 1379:
 #line 8702 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].node)); }
+    { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].node)); }
     break;
 
   case 1380:
@@ -24820,12 +24597,12 @@ yyreduce:
 
   case 1381:
 #line 8707 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].node)); }
+    { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].node)); }
     break;
 
   case 1384:
 #line 8722 "gram.y"
-    { (yyval.node) = (Node *) (yyvsp[(1) - (1)].node); }
+    { (yyval.node) = (Node *) (yyvsp[0].node); }
     break;
 
   case 1385:
@@ -24835,37 +24612,37 @@ yyreduce:
 
   case 1386:
 #line 8727 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
+    { (yyval.list) = list_make1((yyvsp[0].node)); }
     break;
 
   case 1387:
 #line 8728 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node)); }
     break;
 
   case 1388:
 #line 8736 "gram.y"
-    { (yyval.list) = (yyvsp[(2) - (3)].list); }
+    { (yyval.list) = (yyvsp[-1].list); }
     break;
 
   case 1389:
 #line 8747 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].target)); }
+    { (yyval.list) = list_make1((yyvsp[0].target)); }
     break;
 
   case 1390:
 #line 8748 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].target)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].target)); }
     break;
 
   case 1391:
 #line 8753 "gram.y"
     {
 					(yyval.target) = makeNode(ResTarget);
-					(yyval.target)->name = (yyvsp[(3) - (3)].str);
+					(yyval.target)->name = (yyvsp[0].str);
 					(yyval.target)->indirection = NIL;
-					(yyval.target)->val = (Node *)(yyvsp[(1) - (3)].node);
-					(yyval.target)->location = (yylsp[(1) - (3)]);
+					(yyval.target)->val = (Node *)(yyvsp[-2].node);
+					(yyval.target)->location = (yylsp[-2]);
 				}
     break;
 
@@ -24875,8 +24652,8 @@ yyreduce:
 					(yyval.target) = makeNode(ResTarget);
 					(yyval.target)->name = NULL;
 					(yyval.target)->indirection = NIL;
-					(yyval.target)->val = (Node *)(yyvsp[(1) - (1)].node);
-					(yyval.target)->location = (yylsp[(1) - (1)]);
+					(yyval.target)->val = (Node *)(yyvsp[0].node);
+					(yyval.target)->location = (yylsp[0]);
 				}
     break;
 
@@ -24885,34 +24662,34 @@ yyreduce:
     {
 					ColumnRef *n = makeNode(ColumnRef);
 					n->fields = list_make1(makeString("*"));
-					n->location = (yylsp[(1) - (1)]);
+					n->location = (yylsp[0]);
 
 					(yyval.target) = makeNode(ResTarget);
 					(yyval.target)->name = NULL;
 					(yyval.target)->indirection = NIL;
 					(yyval.target)->val = (Node *)n;
-					(yyval.target)->location = (yylsp[(1) - (1)]);
+					(yyval.target)->location = (yylsp[0]);
 				}
     break;
 
   case 1394:
 #line 8790 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 1395:
 #line 8791 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 1396:
 #line 8795 "gram.y"
-    { (yyval.list) = list_make1((yyvsp[(1) - (1)].range)); }
+    { (yyval.list) = list_make1((yyvsp[0].range)); }
     break;
 
   case 1397:
 #line 8796 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].range)); }
+    { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].range)); }
     break;
 
   case 1398:
@@ -24921,32 +24698,32 @@ yyreduce:
 					(yyval.range) = makeNode(RangeVar);
 					(yyval.range)->catalogname = NULL;
 					(yyval.range)->schemaname = NULL;
-					(yyval.range)->relname = (yyvsp[(1) - (1)].str);
+					(yyval.range)->relname = (yyvsp[0].str);
 				}
     break;
 
   case 1399:
 #line 8815 "gram.y"
     {
-					check_qualified_name((yyvsp[(2) - (2)].list));
+					check_qualified_name((yyvsp[0].list));
 					(yyval.range) = makeNode(RangeVar);
-					switch (list_length((yyvsp[(2) - (2)].list)))
+					switch (list_length((yyvsp[0].list)))
 					{
 						case 1:
 							(yyval.range)->catalogname = NULL;
-							(yyval.range)->schemaname = (yyvsp[(1) - (2)].str);
-							(yyval.range)->relname = strVal(linitial((yyvsp[(2) - (2)].list)));
+							(yyval.range)->schemaname = (yyvsp[-1].str);
+							(yyval.range)->relname = strVal(linitial((yyvsp[0].list)));
 							break;
 						case 2:
-							(yyval.range)->catalogname = (yyvsp[(1) - (2)].str);
-							(yyval.range)->schemaname = strVal(linitial((yyvsp[(2) - (2)].list)));
-							(yyval.range)->relname = strVal(lsecond((yyvsp[(2) - (2)].list)));
+							(yyval.range)->catalogname = (yyvsp[-1].str);
+							(yyval.range)->schemaname = strVal(linitial((yyvsp[0].list)));
+							(yyval.range)->relname = strVal(lsecond((yyvsp[0].list)));
 							break;
 						default:
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("improper qualified name (too many dotted names): %s",
-											NameListToString(lcons(makeString((yyvsp[(1) - (2)].str)), (yyvsp[(2) - (2)].list))))));
+											NameListToString(lcons(makeString((yyvsp[-1].str)), (yyvsp[0].list))))));
 							break;
 					}
 				}
@@ -24954,52 +24731,52 @@ yyreduce:
 
   case 1400:
 #line 8841 "gram.y"
-    { (yyval.list) = list_make1(makeString((yyvsp[(1) - (1)].str))); }
+    { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
     break;
 
   case 1401:
 #line 8843 "gram.y"
-    { (yyval.list) = lappend((yyvsp[(1) - (3)].list), makeString((yyvsp[(3) - (3)].str))); }
+    { (yyval.list) = lappend((yyvsp[-2].list), makeString((yyvsp[0].str))); }
     break;
 
   case 1402:
 #line 8847 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 1403:
 #line 8850 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 1404:
 #line 8853 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 1405:
 #line 8855 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 1406:
 #line 8857 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 1407:
 #line 8859 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 1408:
 #line 8870 "gram.y"
-    { (yyval.list) = list_make1(makeString((yyvsp[(1) - (1)].str))); }
+    { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
     break;
 
   case 1409:
 #line 8872 "gram.y"
-    { (yyval.list) = check_func_name(lcons(makeString((yyvsp[(1) - (2)].str)), (yyvsp[(2) - (2)].list))); }
+    { (yyval.list) = check_func_name(lcons(makeString((yyvsp[-1].str)), (yyvsp[0].list))); }
     break;
 
   case 1410:
@@ -25007,7 +24784,7 @@ yyreduce:
     {
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_Integer;
-					n->val.val.ival = (yyvsp[(1) - (1)].ival);
+					n->val.val.ival = (yyvsp[0].ival);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -25017,7 +24794,7 @@ yyreduce:
     {
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_Float;
-					n->val.val.str = (yyvsp[(1) - (1)].str);
+					n->val.val.str = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -25027,7 +24804,7 @@ yyreduce:
     {
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
-					n->val.val.str = (yyvsp[(1) - (1)].str);
+					n->val.val.str = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -25037,7 +24814,7 @@ yyreduce:
     {
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_BitString;
-					n->val.val.str = (yyvsp[(1) - (1)].str);
+					n->val.val.str = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -25052,7 +24829,7 @@ yyreduce:
 					 */
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_BitString;
-					n->val.val.str = (yyvsp[(1) - (1)].str);
+					n->val.val.str = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -25062,10 +24839,10 @@ yyreduce:
     {
 					/* generic type 'literal' syntax */
 					A_Const *n = makeNode(A_Const);
-					n->typename = makeTypeNameFromNameList((yyvsp[(1) - (2)].list));
-					n->typename->location = (yylsp[(1) - (2)]);
+					n->typename = makeTypeNameFromNameList((yyvsp[-1].list));
+					n->typename->location = (yylsp[-1]);
 					n->val.type = T_String;
-					n->val.val.str = (yyvsp[(2) - (2)].str);
+					n->val.val.str = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -25075,11 +24852,11 @@ yyreduce:
     {
 					/* generic syntax with a type modifier */
 					A_Const *n = makeNode(A_Const);
-					n->typename = makeTypeNameFromNameList((yyvsp[(1) - (5)].list));
-					n->typename->typmods = (yyvsp[(3) - (5)].list);
-					n->typename->location = (yylsp[(1) - (5)]);
+					n->typename = makeTypeNameFromNameList((yyvsp[-4].list));
+					n->typename->typmods = (yyvsp[-2].list);
+					n->typename->location = (yylsp[-4]);
 					n->val.type = T_String;
-					n->val.val.str = (yyvsp[(5) - (5)].str);
+					n->val.val.str = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -25088,9 +24865,9 @@ yyreduce:
 #line 8941 "gram.y"
     {
 					A_Const *n = makeNode(A_Const);
-					n->typename = (yyvsp[(1) - (2)].typnam);
+					n->typename = (yyvsp[-1].typnam);
 					n->val.type = T_String;
-					n->val.val.str = (yyvsp[(2) - (2)].str);
+					n->val.val.str = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -25099,12 +24876,12 @@ yyreduce:
 #line 8949 "gram.y"
     {
 					A_Const *n = makeNode(A_Const);
-					n->typename = (yyvsp[(1) - (3)].typnam);
+					n->typename = (yyvsp[-2].typnam);
 					n->val.type = T_String;
-					n->val.val.str = (yyvsp[(2) - (3)].str);
+					n->val.val.str = (yyvsp[-1].str);
 					/* precision is not specified, but fields may be... */
-					if ((yyvsp[(3) - (3)].ival) != INTERVAL_FULL_RANGE)
-						n->typename->typmods = list_make1(makeIntConst((yyvsp[(3) - (3)].ival)));
+					if ((yyvsp[0].ival) != INTERVAL_FULL_RANGE)
+						n->typename->typmods = list_make1(makeIntConst((yyvsp[0].ival)));
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -25113,11 +24890,11 @@ yyreduce:
 #line 8960 "gram.y"
     {
 					A_Const *n = makeNode(A_Const);
-					n->typename = (yyvsp[(1) - (6)].typnam);
+					n->typename = (yyvsp[-5].typnam);
 					n->val.type = T_String;
-					n->val.val.str = (yyvsp[(5) - (6)].str);
-					n->typename->typmods = list_make2(makeIntConst((yyvsp[(6) - (6)].ival)),
-													  makeIntConst((yyvsp[(3) - (6)].ival)));
+					n->val.val.str = (yyvsp[-1].str);
+					n->typename->typmods = list_make2(makeIntConst((yyvsp[0].ival)),
+													  makeIntConst((yyvsp[-3].ival)));
 					(yyval.node) = (Node *)n;
 				}
     break;
@@ -25147,82 +24924,82 @@ yyreduce:
 
   case 1423:
 #line 8985 "gram.y"
-    { (yyval.ival) = (yyvsp[(1) - (1)].ival); }
+    { (yyval.ival) = (yyvsp[0].ival); }
     break;
 
   case 1424:
 #line 8986 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 1425:
 #line 8987 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 1426:
 #line 8989 "gram.y"
-    { (yyval.ival) = (yyvsp[(1) - (1)].ival); }
+    { (yyval.ival) = (yyvsp[0].ival); }
     break;
 
   case 1427:
 #line 8990 "gram.y"
-    { (yyval.ival) = - (yyvsp[(2) - (2)].ival); }
+    { (yyval.ival) = - (yyvsp[0].ival); }
     break;
 
   case 1428:
 #line 9006 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 1429:
 #line 9007 "gram.y"
-    { (yyval.str) = pstrdup((yyvsp[(1) - (1)].keyword)); }
+    { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
     break;
 
   case 1430:
 #line 9008 "gram.y"
-    { (yyval.str) = pstrdup((yyvsp[(1) - (1)].keyword)); }
+    { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
     break;
 
   case 1431:
 #line 9013 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 1432:
 #line 9014 "gram.y"
-    { (yyval.str) = pstrdup((yyvsp[(1) - (1)].keyword)); }
+    { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
     break;
 
   case 1433:
 #line 9015 "gram.y"
-    { (yyval.str) = pstrdup((yyvsp[(1) - (1)].keyword)); }
+    { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
     break;
 
   case 1434:
 #line 9021 "gram.y"
-    { (yyval.str) = (yyvsp[(1) - (1)].str); }
+    { (yyval.str) = (yyvsp[0].str); }
     break;
 
   case 1435:
 #line 9022 "gram.y"
-    { (yyval.str) = pstrdup((yyvsp[(1) - (1)].keyword)); }
+    { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
     break;
 
   case 1436:
 #line 9023 "gram.y"
-    { (yyval.str) = pstrdup((yyvsp[(1) - (1)].keyword)); }
+    { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
     break;
 
   case 1437:
 #line 9024 "gram.y"
-    { (yyval.str) = pstrdup((yyvsp[(1) - (1)].keyword)); }
+    { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
     break;
 
   case 1438:
 #line 9025 "gram.y"
-    { (yyval.str) = pstrdup((yyvsp[(1) - (1)].keyword)); }
+    { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
     break;
 
   case 1811:
@@ -25250,14 +25027,16 @@ yyreduce:
     break;
 
 
-/* Line 1267 of yacc.c.  */
-#line 25255 "gram.c"
       default: break;
     }
-  YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
 
-  YYPOPSTACK (yylen);
-  yylen = 0;
+/* Line 1126 of yacc.c.  */
+#line 25035 "gram.c"
+
+  yyvsp -= yylen;
+  yyssp -= yylen;
+  yylsp -= yylen;
+
   YY_STACK_PRINT (yyss, yyssp);
 
   *++yyvsp = yyval;
@@ -25286,41 +25065,110 @@ yyerrlab:
   if (!yyerrstatus)
     {
       ++yynerrs;
-#if ! YYERROR_VERBOSE
-      yyerror (YY_("syntax error"));
-#else
-      {
-	YYSIZE_T yysize = yysyntax_error (0, yystate, yychar);
-	if (yymsg_alloc < yysize && yymsg_alloc < YYSTACK_ALLOC_MAXIMUM)
-	  {
-	    YYSIZE_T yyalloc = 2 * yysize;
-	    if (! (yysize <= yyalloc && yyalloc <= YYSTACK_ALLOC_MAXIMUM))
-	      yyalloc = YYSTACK_ALLOC_MAXIMUM;
-	    if (yymsg != yymsgbuf)
-	      YYSTACK_FREE (yymsg);
-	    yymsg = (char *) YYSTACK_ALLOC (yyalloc);
-	    if (yymsg)
-	      yymsg_alloc = yyalloc;
-	    else
-	      {
-		yymsg = yymsgbuf;
-		yymsg_alloc = sizeof yymsgbuf;
-	      }
-	  }
+#if YYERROR_VERBOSE
+      yyn = yypact[yystate];
 
-	if (0 < yysize && yysize <= yymsg_alloc)
-	  {
-	    (void) yysyntax_error (yymsg, yystate, yychar);
-	    yyerror (yymsg);
-	  }
-	else
-	  {
-	    yyerror (YY_("syntax error"));
-	    if (yysize != 0)
-	      goto yyexhaustedlab;
-	  }
-      }
+      if (YYPACT_NINF < yyn && yyn < YYLAST)
+	{
+	  int yytype = YYTRANSLATE (yychar);
+	  YYSIZE_T yysize0 = yytnamerr (0, yytname[yytype]);
+	  YYSIZE_T yysize = yysize0;
+	  YYSIZE_T yysize1;
+	  int yysize_overflow = 0;
+	  char *yymsg = 0;
+#	  define YYERROR_VERBOSE_ARGS_MAXIMUM 5
+	  char const *yyarg[YYERROR_VERBOSE_ARGS_MAXIMUM];
+	  int yyx;
+
+#if 0
+	  /* This is so xgettext sees the translatable formats that are
+	     constructed on the fly.  */
+	  YY_("syntax error, unexpected %s");
+	  YY_("syntax error, unexpected %s, expecting %s");
+	  YY_("syntax error, unexpected %s, expecting %s or %s");
+	  YY_("syntax error, unexpected %s, expecting %s or %s or %s");
+	  YY_("syntax error, unexpected %s, expecting %s or %s or %s or %s");
 #endif
+	  char *yyfmt;
+	  char const *yyf;
+	  static char const yyunexpected[] = "syntax error, unexpected %s";
+	  static char const yyexpecting[] = ", expecting %s";
+	  static char const yyor[] = " or %s";
+	  char yyformat[sizeof yyunexpected
+			+ sizeof yyexpecting - 1
+			+ ((YYERROR_VERBOSE_ARGS_MAXIMUM - 2)
+			   * (sizeof yyor - 1))];
+	  char const *yyprefix = yyexpecting;
+
+	  /* Start YYX at -YYN if negative to avoid negative indexes in
+	     YYCHECK.  */
+	  int yyxbegin = yyn < 0 ? -yyn : 0;
+
+	  /* Stay within bounds of both yycheck and yytname.  */
+	  int yychecklim = YYLAST - yyn;
+	  int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
+	  int yycount = 1;
+
+	  yyarg[0] = yytname[yytype];
+	  yyfmt = yystpcpy (yyformat, yyunexpected);
+
+	  for (yyx = yyxbegin; yyx < yyxend; ++yyx)
+	    if (yycheck[yyx + yyn] == yyx && yyx != YYTERROR)
+	      {
+		if (yycount == YYERROR_VERBOSE_ARGS_MAXIMUM)
+		  {
+		    yycount = 1;
+		    yysize = yysize0;
+		    yyformat[sizeof yyunexpected - 1] = '\0';
+		    break;
+		  }
+		yyarg[yycount++] = yytname[yyx];
+		yysize1 = yysize + yytnamerr (0, yytname[yyx]);
+		yysize_overflow |= yysize1 < yysize;
+		yysize = yysize1;
+		yyfmt = yystpcpy (yyfmt, yyprefix);
+		yyprefix = yyor;
+	      }
+
+	  yyf = YY_(yyformat);
+	  yysize1 = yysize + yystrlen (yyf);
+	  yysize_overflow |= yysize1 < yysize;
+	  yysize = yysize1;
+
+	  if (!yysize_overflow && yysize <= YYSTACK_ALLOC_MAXIMUM)
+	    yymsg = (char *) YYSTACK_ALLOC (yysize);
+	  if (yymsg)
+	    {
+	      /* Avoid sprintf, as that infringes on the user's name space.
+		 Don't have undefined behavior even if the translation
+		 produced a string with the wrong number of "%s"s.  */
+	      char *yyp = yymsg;
+	      int yyi = 0;
+	      while ((*yyp = *yyf))
+		{
+		  if (*yyp == '%' && yyf[1] == 's' && yyi < yycount)
+		    {
+		      yyp += yytnamerr (yyp, yyarg[yyi++]);
+		      yyf += 2;
+		    }
+		  else
+		    {
+		      yyp++;
+		      yyf++;
+		    }
+		}
+	      yyerror (yymsg);
+	      YYSTACK_FREE (yymsg);
+	    }
+	  else
+	    {
+	      yyerror (YY_("syntax error"));
+	      goto yyexhaustedlab;
+	    }
+	}
+      else
+#endif /* YYERROR_VERBOSE */
+	yyerror (YY_("syntax error"));
     }
 
   yyerror_range[0] = yylloc;
@@ -25331,15 +25179,14 @@ yyerrlab:
 	 error, discard it.  */
 
       if (yychar <= YYEOF)
-	{
+        {
 	  /* Return failure if at end of input.  */
 	  if (yychar == YYEOF)
 	    YYABORT;
-	}
+        }
       else
 	{
-	  yydestruct ("Error: discarding",
-		      yytoken, &yylval, &yylloc);
+	  yydestruct ("Error: discarding", yytoken, &yylval, &yylloc);
 	  yychar = YYEMPTY;
 	}
     }
@@ -25357,15 +25204,13 @@ yyerrorlab:
   /* Pacify compilers like GCC when the user code never invokes
      YYERROR and the label yyerrorlab therefore never appears in user
      code.  */
-  if (/*CONSTCOND*/ 0)
+  if (0)
      goto yyerrorlab;
 
   yyerror_range[0] = yylsp[1-yylen];
-  /* Do not reclaim the symbols of the rule which action triggered
-     this YYERROR.  */
-  YYPOPSTACK (yylen);
-  yylen = 0;
-  YY_STACK_PRINT (yyss, yyssp);
+  yylsp -= yylen;
+  yyvsp -= yylen;
+  yyssp -= yylen;
   yystate = *yyssp;
   goto yyerrlab1;
 
@@ -25395,9 +25240,8 @@ yyerrlab1:
 	YYABORT;
 
       yyerror_range[0] = *yylsp;
-      yydestruct ("Error: popping",
-		  yystos[yystate], yyvsp, yylsp);
-      YYPOPSTACK (1);
+      yydestruct ("Error: popping", yystos[yystate], yyvsp, yylsp);
+      YYPOPSTACK;
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
     }
@@ -25409,11 +25253,11 @@ yyerrlab1:
 
   yyerror_range[1] = yylloc;
   /* Using YYLLOC is tempting, but would change the location of
-     the look-ahead.  YYLOC is available though.  */
-  YYLLOC_DEFAULT (yyloc, (yyerror_range - 1), 2);
+     the look-ahead.  YYLOC is available though. */
+  YYLLOC_DEFAULT (yyloc, yyerror_range - 1, 2);
   *++yylsp = yyloc;
 
-  /* Shift the error token.  */
+  /* Shift the error token. */
   YY_SYMBOL_PRINT ("Shifting", yystos[yyn], yyvsp, yylsp);
 
   yystate = yyn;
@@ -25448,26 +25292,17 @@ yyreturn:
   if (yychar != YYEOF && yychar != YYEMPTY)
      yydestruct ("Cleanup: discarding lookahead",
 		 yytoken, &yylval, &yylloc);
-  /* Do not reclaim the symbols of the rule which action triggered
-     this YYABORT or YYACCEPT.  */
-  YYPOPSTACK (yylen);
-  YY_STACK_PRINT (yyss, yyssp);
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
 		  yystos[*yyssp], yyvsp, yylsp);
-      YYPOPSTACK (1);
+      YYPOPSTACK;
     }
 #ifndef yyoverflow
   if (yyss != yyssa)
     YYSTACK_FREE (yyss);
 #endif
-#if YYERROR_VERBOSE
-  if (yymsg != yymsgbuf)
-    YYSTACK_FREE (yymsg);
-#endif
-  /* Make sure YYID is used.  */
-  return YYID (yyresult);
+  return yyresult;
 }
 
 
