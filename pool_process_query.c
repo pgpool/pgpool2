@@ -55,6 +55,7 @@
 
 #define INIT_STATEMENT_LIST_SIZE 8
 
+#define ACTIVE_SQL_TRANSACTION_ERROR_CODE "25001"		/* SET TRANSACTION ISOLATION LEVEL must be called before any query */
 #define DEADLOCK_ERROR_CODE "40P01"
 #define SERIALIZATION_FAIL_ERROR_CODE "40001"
 #define ADMIN_SHUTDOWN_ERROR_CODE "57P01"
@@ -232,6 +233,7 @@ static int detect_error(POOL_CONNECTION *master, char *error_code, int major, bo
 static int detect_deadlock_error(POOL_CONNECTION *master, int major);
 static int detect_serialization_error(POOL_CONNECTION *master, int major);
 static int detect_postmaster_down_error(POOL_CONNECTION *master, int major);
+static int detect_active_sql_transaction_error(POOL_CONNECTION *backend, int major);
 static bool is_partition_table(POOL_CONNECTION_POOL *backend, Node *node);
 static POOL_STATUS pool_discard_packet(POOL_CONNECTION_POOL *cp);
 
@@ -410,6 +412,9 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 			{
 				if (VALID_BACKEND(i) && FD_ISSET(CONNECTION(backend, i)->fd, &readmask))
 				{
+					/*
+					 * admin shutdown postmaster or postmaster goes down
+					 */
 					if (detect_postmaster_down_error(CONNECTION(backend, i), MAJOR(backend)) == SPECIFIED_ERROR)
 					{
 						/* detach backend node. */
@@ -420,7 +425,6 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 						sleep(5);
 						break;
 					}
-
 					status = read_kind_from_backend(frontend, backend, &kind);
 					if (status != POOL_CONTINUE)
 						return status;
@@ -935,6 +939,7 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	POOL_STATUS status;
 	int serialization_error_detected = 0;
 	int deadlock_detected = 0;
+	int	active_sql_transaction_error = 0;
 
 	force_replication = 0;
 	if (query == NULL)	/* need to read query from frontend? */
@@ -1292,19 +1297,18 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 				return POOL_END;
 
 			/*
-			 * We must check deadlock error because a aborted transaction
-			 * by detecting deadlock isn't same on all nodes.
-			 * If a transaction is aborted on master node, pgpool send a
-			 * error query to another nodes.
+			 * Check dead lock error on the master node and abort
+			 * transactions on all nodes if so.
 			 */
 			deadlock_detected = detect_deadlock_error(MASTER(backend), MAJOR(backend));
 			if (deadlock_detected < 0)
 				return POOL_END;
 
 			/*
-			 * Check serialization failure error and abort all nodes
-			 * if so. Otherwise we allow data inconsistency among DB
-			 * nodes. See following scenario: (M:master, S:slave)
+			 * Check serialization failure error and abort
+			 * transactions on all nodes if so. Otherwise we allow
+			 * data inconsistency among DB nodes. See following
+			 * scenario: (M:master, S:slave)
 			 *
 			 * M:S1:BEGIN;
 			 * M:S2:BEGIN;
@@ -1325,14 +1329,33 @@ static POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			serialization_error_detected = detect_serialization_error(MASTER(backend), MAJOR(backend));
 			if (serialization_error_detected < 0)
 				return POOL_END;
+
+			/*
+			 * check "SET TRANSACTION ISOLATION LEVEL must be called before any query" error.
+			 * This happens in following scenario:
+			 * 
+			 * M:S1:BEGIN;
+			 * S:S1:BEGIN;
+			 * M:S1:SELECT 1; <-- only sent to MASTER
+			 * M:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+			 * S:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+			 * M: <-- error
+			 * S: <-- ok since no previous SELECT is sent. kind mismatch error occurs!
+			 */
+			active_sql_transaction_error = detect_active_sql_transaction_error(MASTER(backend), MAJOR(backend));
+			if (active_sql_transaction_error < 0)
+				return POOL_END;
 		}
-		if (deadlock_detected == SPECIFIED_ERROR || serialization_error_detected == SPECIFIED_ERROR)
+
+		if (deadlock_detected == SPECIFIED_ERROR || serialization_error_detected == SPECIFIED_ERROR ||
+			active_sql_transaction_error == SPECIFIED_ERROR)
 		{
 			if (deadlock_detected == SPECIFIED_ERROR)
 				pool_log("SimpleQuery: received deadlock error message from master node. query: %s", string);
-			else
+			else if (serialization_error_detected == SPECIFIED_ERROR)
 				pool_log("SimpleQuery: received serialization failure error message from master node. query: %s", string);
-
+			else
+				pool_log("SimpleQuery: received SET TRANSACTION ISOLATION LEVEL must be called before any query error. query: %s", string);
 			string = POOL_ERROR_QUERY;
 			len = strlen(string) + 1;
 		}
@@ -1927,8 +1950,8 @@ static POOL_STATUS Sync(POOL_CONNECTION *frontend,
 /*
  * Process ReadyForQuery('Z') message.
  *
- * - if the global error status "mismatch_ntuples" is set, send a error query
- *	 to all DB nodes
+ * - if the global error status "mismatch_ntuples" is set, send an error query
+ *	 to all DB nodes to abort transaction.
  * - internal transaction is closed
  */
 static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend, 
@@ -1981,6 +2004,16 @@ static POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			if (kind == 'Z')
 				break;
 
+			/* put the message back to read buffer */
+			for (i=0;i<NUM_BACKENDS;i++)
+			{
+				if (VALID_BACKEND(i))
+				{
+					pool_unread(CONNECTION(backend,i), &kind, 1);
+				}
+			}
+
+			/* discard rest of the packet */
 			if (pool_discard_packet(backend) != POOL_CONTINUE)
 			{
 				pool_error("ReadyForQuery: pool_discard_packet failed");
@@ -5886,6 +5919,16 @@ static int detect_postmaster_down_error(POOL_CONNECTION *backend, int major)
 	return r;
 }
 
+static int detect_active_sql_transaction_error(POOL_CONNECTION *backend, int major)
+{
+	int r =  detect_error(backend, ACTIVE_SQL_TRANSACTION_ERROR_CODE, major, true);
+	if (r == SPECIFIED_ERROR)
+	{
+		pool_debug("detect_active_sql_transaction_error: receive SET TRANSACTION ISOLATION LEVEL must be called before any query error from a node.");
+	}
+	return r;
+}
+
 static int detect_deadlock_error(POOL_CONNECTION *backend, int major)
 {
 	int r =  detect_error(backend, DEADLOCK_ERROR_CODE, major, true);
@@ -5923,7 +5966,7 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, b
 	/* ErrorResponse or NoticeResponse message? */
 	if (kind == 'E' || kind == 'N')
 	{
-		/* read actual query */
+		/* read actual message */
 		if (major == PROTO_MAJOR_V3)
 		{
 			char *e;
