@@ -1458,6 +1458,7 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 	PrepareStmt *p_stmt;
 	int deadlock_detected = 0;
 	int serialization_error_detected = 0;
+	int	active_sql_transaction_error = 0;
 	POOL_STATUS ret;
 
 	/* read Execute packet */
@@ -1566,10 +1567,8 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 				return POOL_END;
 
 			/*
-			 * We must check deadlock error because a aborted transaction
-			 * by detecting deadlock isn't same on all nodes.
-			 * If a transaction is aborted on master node, pgpool send a
-			 * error query to another nodes.
+			 * Check dead lock error on the master node and abort
+			 * transactions on all nodes if so.
 			 */
 			deadlock_detected = detect_deadlock_error(MASTER(backend), MAJOR(backend));
 			if (deadlock_detected < 0)
@@ -1584,6 +1583,22 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 			if (serialization_error_detected < 0)
 				return POOL_END;
 
+			/*
+			 * check "SET TRANSACTION ISOLATION LEVEL must be called before any query" error.
+			 * This happens in following scenario:
+			 * 
+			 * M:S1:BEGIN;
+			 * S:S1:BEGIN;
+			 * M:S1:SELECT 1; <-- only sent to MASTER
+			 * M:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+			 * S:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+			 * M: <-- error
+			 * S: <-- ok since no previous SELECT is sent. kind mismatch error occurs!
+			 */
+			active_sql_transaction_error = detect_active_sql_transaction_error(MASTER(backend), MAJOR(backend));
+			if (active_sql_transaction_error < 0)
+				return POOL_END;
+
 		}
 
 		/* send query to other nodes */
@@ -1591,15 +1606,18 @@ static POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		{
 			if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
 				continue;
-			if (deadlock_detected == SPECIFIED_ERROR || serialization_error_detected == SPECIFIED_ERROR)
+			if (deadlock_detected == SPECIFIED_ERROR || serialization_error_detected == SPECIFIED_ERROR ||
+				active_sql_transaction_error == SPECIFIED_ERROR)
 			{
 				char msg[1024] = "pgpoool_error_portal"; /* large enough */
 				int len = strlen(msg);
 
 				if (deadlock_detected == SPECIFIED_ERROR)
 					pool_log("Execute: received deadlock error message from master node. query: %s", string);
+				else if (serialization_error_detected == SPECIFIED_ERROR)
+					pool_log("SimpleQuery: received serialization failure error message from master node. query: %s", string);
 				else
-					pool_log("Execute: received serialization failure error message from master node. query: %s", string);
+					pool_log("SimpleQuery: received SET TRANSACTION ISOLATION LEVEL must be called before any query error. query: %s", string);
 
 				memset(msg + len, 0, sizeof(int));
 				if (send_execute_message(backend, i, len + 5, msg))
