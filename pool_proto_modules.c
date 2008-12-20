@@ -73,7 +73,7 @@ int allow_close_transaction = 1;
 PreparedStatementList prepared_list; /* prepared statement name list */
 
 int is_select_pgcatalog = 0;
-int is_select_for_update = 0; /* also for SELECT ... INTO */
+int is_select_for_update = 0; /* 1 if SELECT INTO or SELECT FOR UPDATE */
 bool is_parallel_table = false;
 char *parsed_query = NULL;
 
@@ -220,7 +220,7 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 			{
 				if(r_query->r_code ==  SEND_LOADBALANCE_ENGINE)
 				{
-					/* use rewrited query */
+					/* use rewritten query */
 					string = r_query->rewrite_query;
 					/* change query length */
 					len = strlen(string)+1;
