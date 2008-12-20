@@ -156,7 +156,7 @@ int pool_init_config(void)
 	pool_config->health_check_user = "nobody";
 	pool_config->failover_command = "";
 	pool_config->failback_command = "";
-	pool_config->insert_lock = 0;
+	pool_config->insert_lock = 1;
 	pool_config->ignore_leading_white_space = 1;
 	pool_config->parallel_mode = 0;
 	pool_config->enable_query_cache = 0;
