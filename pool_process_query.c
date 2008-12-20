@@ -69,6 +69,7 @@ static void query_cache_register(char kind, POOL_CONNECTION *frontend, char *dat
 static int extract_ntuples(char *message);
 static int detect_error(POOL_CONNECTION *master, char *error_code, int major, bool unread);
 static int detect_postmaster_down_error(POOL_CONNECTION *master, int major);
+static void free_select_result(POOL_SELECT_RESULT *result);
 
 int in_load_balance;	/* non 0 if in load balance mode */
 int selected_slot;		/* selected DB node */
@@ -765,7 +766,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 
 
 /* 
- * send SimpleQuery message to a single node.
+ * send SimpleQuery message to a node.
  */
 POOL_STATUS send_simplequery_message(POOL_CONNECTION *backend, int len, char *string, int major)
 {
@@ -2719,6 +2720,254 @@ POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backe
 		return status;
 }
 
+/*
+ * Free POOL_SELECT_RESULT object
+ */
+static void free_select_result(POOL_SELECT_RESULT *result)
+{
+	int i;
+
+	if (result->nullflags)
+		free(result->nullflags);
+
+	if (result->data)
+	{
+		for(i=0;i<result->numrows;i++)
+		{
+			if (result->data[i])
+				free(result->data[i]);
+		}
+		free(result->data);
+	}
+
+	if (result->rowdesc)
+	{
+		if (result->rowdesc->attrinfo)
+		{
+			for(i=0;i<result->rowdesc->num_attrs;i++)
+			{
+				if (result->rowdesc->attrinfo[i].attrname)
+					free(result->rowdesc->attrinfo[i].attrname);
+			}
+			free(result->rowdesc->attrinfo);
+		}
+		free(result->rowdesc);
+	}
+}
+
+/*
+ * Send a SELECT to one DB node. This function works for V3 only.
+ */
+POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result)
+{
+#define DO_QUERY_ALLOC_NUM 1024	/* memory allocation unit for POOL_SELECT_RESULT */
+
+	int i;
+	int len;
+	char kind;
+	char *packet;
+	char *p;
+	short num_fields;
+	int num_data;
+	int intval;
+	short shortval;
+
+	POOL_SELECT_RESULT *res;
+	RowDesc *rowdesc;
+	AttrInfo *attrinfo;
+
+	res = malloc(sizeof(*res));
+	if (!res)
+	{
+		pool_error("pool_query: malloc failed");
+		return POOL_ERROR;
+	}
+	rowdesc = malloc(sizeof(*rowdesc));
+	if (!rowdesc)
+	{
+		pool_error("pool_query: malloc failed");
+		return POOL_ERROR;
+	}
+	memset(res, 0, sizeof(*res));
+	memset(rowdesc, 0, sizeof(*rowdesc));
+	*result = res;
+
+	res->rowdesc = rowdesc;
+
+	num_data = 0;
+
+	res->nullflags = malloc(DO_QUERY_ALLOC_NUM*sizeof(int));
+	if (!res->nullflags)
+	{
+		pool_error("do_query: malloc failed");
+		return POOL_ERROR;
+	}
+	res->data = malloc(DO_QUERY_ALLOC_NUM*sizeof(char *));
+	if (!res->data)
+	{
+		pool_error("do_query: malloc failed");
+		return POOL_ERROR;
+	}
+
+	/* send a query to the backend */
+	if (send_simplequery_message(backend, strlen(query) + 1, query, PROTO_MAJOR_V3) != POOL_CONTINUE)
+	{
+		return POOL_END;
+	}
+
+	/*
+	 * Continue to read packets until we get Ready for command('Z')
+	 * 
+	 * XXX: we ignore other than Z here. Even notice messages are not sent
+	 * to the frontend. May be it's ok since the error was caused by
+	 * our internal use of SQL command (otherwise users will be
+	 * confused).
+	 */
+	for(;;)
+	{
+		if (pool_read(backend, &kind, sizeof(kind)) < 0)
+		{
+			pool_error("do_query: error while reading message kind");
+			return POOL_END;
+		}
+
+		pool_debug("do_query: kind: %c", kind);
+
+		if (pool_read(backend, &len, sizeof(len)) < 0)
+		{
+			pool_error("do_query: error while reading message length");
+			return POOL_END;
+		}
+		len = ntohl(len) - 4;
+		packet = pool_read2(backend, len);
+		if (packet == NULL)
+		{
+			pool_error("do_query: error while reading rest of message");
+			return POOL_END;
+		}
+
+		switch (kind)
+		{
+			case 'Z':	/* Ready for query */
+				return POOL_CONTINUE;
+				break;
+				
+			case 'T':	/* Row Description */
+				p = packet;
+				memcpy(&shortval, p, sizeof(short));
+				num_fields = ntohs(shortval);		/* number of fields */
+				pool_debug("num_fileds: %d", num_fields);
+
+				if (num_fields > 0)
+				{
+					rowdesc->num_attrs = num_fields;
+					attrinfo = malloc(sizeof(*attrinfo)*num_fields);
+					if (!attrinfo)
+					{
+						pool_error("do_query: malloc failed");
+						return POOL_ERROR;
+					}
+					rowdesc->attrinfo = attrinfo;
+					
+					p += sizeof(num_fields);
+
+					/* extract attribute info */
+					for (i = 0;i<num_fields;i++)
+					{
+						len = strlen(p) + 1;
+						attrinfo->attrname = malloc(len);
+						if (!attrinfo->attrname)
+						{
+							pool_error("do_query: malloc failed");
+							return POOL_ERROR;
+						}
+						memcpy(attrinfo->attrname, p, len);
+						p += len;
+						memcpy(&intval, p, sizeof(int));
+						attrinfo->oid = htonl(intval);
+						p += sizeof(int);
+						memcpy(&shortval, p, sizeof(short));
+						attrinfo->attrnumber = htons(shortval);
+						p += sizeof(short);
+						memcpy(&intval, p, sizeof(int));
+						attrinfo->typeoid = htonl(intval);
+						p += sizeof(int);
+						memcpy(&shortval, p, sizeof(short));
+						attrinfo->size = htons(shortval);
+						p += sizeof(short);
+						memcpy(&intval, p, sizeof(int));
+						attrinfo->mod = htonl(intval);
+						p += sizeof(int);
+						p += sizeof(short);		/* skip format code since we use "text" anyway */
+
+						attrinfo++;
+					}
+				}
+				break;
+
+			case 'D':	/* data row */
+				p = packet;
+
+				memcpy(&shortval, p, sizeof(short));
+				num_fields = htons(shortval);
+				p += sizeof(short);
+
+				if (num_fields > 0)
+				{
+					res->numrows++;
+
+					for (i=0;i<num_fields;i++)
+					{
+						memcpy(&intval, p, sizeof(int));
+						len = htonl(intval);
+						p += sizeof(int);
+						
+						res->nullflags[num_data] = len;
+
+						if (len > 0)	/* NOT NULL? */
+						{
+							res->data[num_data] = malloc(len + 1);
+							if (!res->data[num_data])
+							{
+								pool_error("do_query: malloc failed");
+								return POOL_ERROR;
+							}
+							memcpy(res->data[num_data], p, len);
+							*(res->data[num_data] + 1) = '\0';
+
+							p += len;
+						}
+
+						num_data++;
+
+						if (num_data % DO_QUERY_ALLOC_NUM == 0)
+						{
+							res->nullflags = realloc(res->nullflags,
+													 (num_data/DO_QUERY_ALLOC_NUM +1)*DO_QUERY_ALLOC_NUM*sizeof(int));
+							if (!res->nullflags)
+							{
+								pool_error("do_query: malloc failed");
+								return POOL_ERROR;
+							}
+							res->data = realloc(res->data,
+												(num_data/DO_QUERY_ALLOC_NUM +1)*DO_QUERY_ALLOC_NUM*sizeof(char *));
+							if (!res->data)
+							{
+								pool_error("do_query: malloc failed");
+								return POOL_ERROR;
+							}
+						}
+					}
+				}
+				break;
+
+			default:
+				break;
+		}
+
+	}
+	return POOL_CONTINUE;
+}
 
 
 /*
@@ -2727,10 +2976,31 @@ POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backe
  */
 int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 {
-	/* INSERT STATEMENT? */
+#define NEXTVALQUERY "SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.relname = '%s'"
+
+#define INSERT_STATEMENT_MAX_CACHE		16
+#define MAX_ITEM_LENGTH	1024
+
+	/* table lookup cache structure */
+	typedef struct {
+		char dbname[MAX_ITEM_LENGTH];	/* database name */
+		char relname[MAX_ITEM_LENGTH];	/* table name */
+		int	use_serial;	/* 1: use SERIAL data type */
+		int refcnt;		/* reference count */
+	} MyRelCache;
+
+	static MyRelCache relcache[INSERT_STATEMENT_MAX_CACHE];
+
+	int i;
+	char *rel;
+	int use_serial = 0;
+	char *dbname;
+
+	/* INSERT statement? */
 	if (!IsA(node, InsertStmt))
 		return 0;
 
+	/* need to ignore leading while spaces? */
 	if (pool_config->ignore_leading_white_space)
 	{
 		/* ignore leading white spaces */
@@ -2738,17 +3008,97 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 			query++;
 	}
 
-	/*
-	 * either insert_lock directive specified and without "NO INSERT LOCK" comment
-	 * or "INSERT LOCK" comment exists?
+	/* is there "NO_LOCK" comment? */
+	if (strncasecmp(query, NO_LOCK_COMMENT, NO_LOCK_COMMENT_SZ) == 0)
+		return 0;
+
+	/* is there "LOCK" comment? */
+	if (strncasecmp(query, LOCK_COMMENT, LOCK_COMMENT_SZ) == 0)
+		return 1;
+
+	if (pool_config->insert_lock == 0)	/* insert_lock is specified? */
+		return 0;
+
+	/* 
+	 * if insert_lock is true, then check if the table actually uses
+	 * SERIAL data type
 	 */
-	if ((pool_config->insert_lock && strncasecmp(query, NO_LOCK_COMMENT, NO_LOCK_COMMENT_SZ)) ||
-		strncasecmp(query, LOCK_COMMENT, LOCK_COMMENT_SZ) == 0)
+
+	/* obtain table name */
+	rel = get_insert_command_table_name((InsertStmt *)node);
+	if (rel == NULL)
 	{
-			return 1;
+		pool_error("need_insert_lock: get_insert_command_table_name failed");
+		return 0;
 	}
 
-	return 0;
+	/* eliminate double quotes surrounding the table name */
+	rel[strlen(rel)-1] = '\0';
+	rel++;
+
+	/* obtain database name */
+	dbname = MASTER_CONNECTION(backend)->sp->database;
+
+	/* look for cache first */
+	for (i=0;i<INSERT_STATEMENT_MAX_CACHE;i++)
+	{
+		if (strcasecmp(relcache[i].dbname, dbname) == 0 &&
+			strcasecmp(relcache[i].relname, rel) == 0)
+		{
+			relcache[i].refcnt++;
+			use_serial = relcache[i].use_serial;
+			break;
+		}
+	}
+
+	if (i == INSERT_STATEMENT_MAX_CACHE)		/* not in cache? */
+	{
+		char qbuf[1024];
+		int maxrefcnt = INT_MAX;
+		POOL_SELECT_RESULT *res = NULL;
+		int index = 0;
+
+		snprintf(qbuf, sizeof(qbuf), NEXTVALQUERY, rel);
+
+		/* check the system catalog if the table has SERIAL data type */
+		if (do_query(MASTER(backend), qbuf, &res) != POOL_CONTINUE)
+		{
+			pool_error("need_insert_lock: do_query failed");
+			if (res)
+				free_select_result(res);
+			return 0;
+		}
+
+		/*
+		 * if the query returns some rows and found nextval() is used,
+		 * then we assume it uses SERIAL data type
+		 */
+		if (res->numrows >= 1 && strcmp(res->data[0], "0"))
+			use_serial = 1;
+
+		free_select_result(res);
+
+		for (i=0;i<INSERT_STATEMENT_MAX_CACHE;i++)
+		{
+			if (relcache[i].refcnt == 0)
+			{
+				index = i;
+				break;
+			}
+			else if (relcache[i].refcnt < maxrefcnt)
+			{
+				maxrefcnt = relcache[i].refcnt;
+				index = i;
+			}
+		}
+
+		/* register cache */
+		strncpy(relcache[index].dbname, dbname, MAX_ITEM_LENGTH);
+		strncpy(relcache[index].relname, rel, MAX_ITEM_LENGTH);
+		relcache[index].use_serial = use_serial;
+		relcache[index].refcnt++;
+	}
+	return use_serial;
 }
 
 /*

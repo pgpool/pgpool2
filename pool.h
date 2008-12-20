@@ -379,6 +379,28 @@ typedef struct {
 	int conn_counter;
 } POOL_REQUEST_INFO;
 
+/* description of row. corresponding to RowDescription message */
+typedef struct {
+	char *attrname;		/* attribute name */
+	int oid;	/* 0 or non 0 if it's a table oblect */
+	int attrnumber;		/* attribute number starting with 1. 0 if it's not a table */
+	int typeoid;		/* data type oid */
+	int	size;	/* data length minus means variable data type */
+	int mod;	/* data type modifier */
+} AttrInfo;
+
+typedef struct {
+	int num_attrs;		/* number of attributes */
+	AttrInfo *attrinfo;
+} RowDesc;
+
+typedef struct {
+	RowDesc *rowdesc;	/* attribute info */
+	int numrows;		/* number of rows */
+	int *nullflags;	/* if NULL, -1 or length of the string excluding termination null */
+	char **data;		/* actual row character data terminated with null */
+} POOL_SELECT_RESULT;
+
 /*
  * global variables
  */
@@ -511,6 +533,8 @@ extern POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION
 
 extern POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	char *hostname, int port, char *dbname, char *user, char *password);
+
+extern POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result);
 
 /* define pool_system.c */
 extern POOL_CONNECTION_POOL_SLOT *pool_system_db_connection(void);
