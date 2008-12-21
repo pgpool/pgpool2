@@ -114,10 +114,11 @@ failover_command = ''
 #
 failback_command = ''
 
-# If true, automatically lock table with INSERT statements to keep SERIAL
-# data consistency.  An /*INSERT LOCK*/ comment has the same effect.  A
-# /NO INSERT LOCK*/ comment disables the effect.
-insert_lock = false
+# If true, automatically locks a table with INSERT statements to keep
+# SERIAL data consistency.  If the data does not have SERIAL data
+# type, no lock will be issued. An /*INSERT LOCK*/ comment has the
+# same effect.  A /NO INSERT LOCK*/ comment disables the effect.
+insert_lock = true
 
 # If true, ignore leading white spaces of each query while pgpool judges
 # whether the query is a SELECT so that it can be load balanced.  This
