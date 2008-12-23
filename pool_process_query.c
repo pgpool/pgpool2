@@ -2992,6 +2992,7 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 	static MyRelCache relcache[INSERT_STATEMENT_MAX_CACHE];
 
 	int i;
+	char *str;
 	char *rel;
 	int use_serial = 0;
 	char *dbname;
@@ -3025,16 +3026,26 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 	 */
 
 	/* obtain table name */
-	rel = get_insert_command_table_name((InsertStmt *)node);
-	if (rel == NULL)
+	str = get_insert_command_table_name((InsertStmt *)node);
+	if (str == NULL)
 	{
 		pool_error("need_insert_lock: get_insert_command_table_name failed");
 		return 0;
 	}
 
-	/* eliminate double quotes surrounding the table name */
-	rel[strlen(rel)-1] = '\0';
-	rel++;
+	/* eliminate double quotes */
+	rel = malloc(strlen(str)+1);
+	if (!rel)
+	{
+		pool_error("need_insert_lock: malloc failed");
+		return 0;
+	}
+	for(i=0;*str;str++)
+	{
+		if (*str != '"')
+			rel[i++] = *str;
+	}
+	rel[i] = '\0';
 
 	/* obtain database name */
 	dbname = MASTER_CONNECTION(backend)->sp->database;
@@ -3125,15 +3136,7 @@ POOL_STATUS insert_lock(POOL_CONNECTION_POOL *backend, char *query, InsertStmt *
 		return POOL_CONTINUE;
 	}
 
-	snprintf(qbuf, sizeof(qbuf), "LOCK TABLE %s IN SHARE ROW EXCLUSIVE MODE", table);
-
-	if (start_internal_transaction(backend, (Node *)node) != POOL_CONTINUE)
-		return POOL_END;
-
-	status = POOL_CONTINUE;
-
 	/* issue lock table command */
-	table = get_insert_command_table_name(node);
 	snprintf(qbuf, sizeof(qbuf), "LOCK TABLE %s IN SHARE ROW EXCLUSIVE MODE", table);
 
 	status = do_command(MASTER(backend), qbuf, MAJOR(backend), 0);
