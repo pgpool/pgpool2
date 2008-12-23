@@ -436,11 +436,12 @@ void do_child(int unix_fd, int inet_fd)
 					/*
 					 * do not cache connection if:
 					 * pool_config->connection_cahe == 0 or
-					 * datase name is template0, template1, or regression
+					 * datase name is template0, template1, postgres or regression
 					 */
 					if (pool_config->connection_cache == 0 ||
 						!strcmp(sp->database, "template0") ||
 						!strcmp(sp->database, "template1") ||
+						!strcmp(sp->database, "postgres") ||
 						!strcmp(sp->database, "regression"))
 					{
 						pool_close(frontend);
