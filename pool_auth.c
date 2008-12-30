@@ -327,7 +327,8 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 				pool_error("pool_do_auth: failed to read pid in slot %d", i);
 				return -1;
 			}
-			CONNECTION_SLOT(cp, i)->pid = pid;
+
+			CONNECTION_SLOT(cp, i)->pid = cp->info[i].pid = pid;
 
 			/* read key */
 			if (pool_read(CONNECTION(cp, i), &key, sizeof(key)) < 0)
@@ -335,7 +336,8 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 				pool_error("pool_do_auth: failed to read key in slot %d", i);
 				return -1;
 			}
-			CONNECTION_SLOT(cp, i)->key = key;
+			CONNECTION_SLOT(cp, i)->key = cp->info[i].key = key;
+	
 		}
 	}
 

@@ -62,7 +62,7 @@ void child_exit(int code);
 static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *timeout);
 static StartupPacket *read_startup_packet(POOL_CONNECTION *cp);
 static POOL_CONNECTION_POOL *connect_backend(StartupPacket *sp, POOL_CONNECTION *frontend);
-static void cancel_request(CancelPacket *sp, int secondary_backend);
+static void cancel_request(CancelPacket *sp);
 static RETSIGTYPE die(int sig);
 static RETSIGTYPE close_idle_connection(int sig);
 static RETSIGTYPE wakeup_handler(int sig);
@@ -226,9 +226,8 @@ void do_child(int unix_fd, int inet_fd)
 		/* cancel request? */
 		if (sp->major == 1234 && sp->minor == 5678)
 		{
-			cancel_request((CancelPacket *)sp->startup_packet, 0);
-			if (DUAL_MODE)
-				cancel_request((CancelPacket *)sp->startup_packet, 1);
+			cancel_request((CancelPacket *)sp->startup_packet);
+
 			pool_close(frontend);
 			pool_free_startup_packet(sp);
 			connection_count_down();
@@ -1078,16 +1077,33 @@ int send_startup_packet(POOL_CONNECTION_POOL_SLOT *cp)
 /*
  * process cancel request
  */
-static void cancel_request(CancelPacket *sp, int backend_id)
+static void cancel_request(CancelPacket *sp)
 {
 	int	len;
 	int fd;
 	POOL_CONNECTION *con;
 	int i;
+	ConnectionInfo *c = NULL;
+	CancelPacket cp;
 
 	pool_debug("Cancel request received");
 
-	for (i=0;i<NUM_BACKENDS;i++)
+	/* look for cancel key from shmem info */
+	for (i=0;i<pool_config->num_init_children*pool_config->max_pool;i++)
+	{
+		c = &con_info[i];
+
+		if (c->pid == sp->pid && c->key == sp->key)
+		{
+			pool_debug("found pid:%d key:%d i:%d",c->pid, c->key,i);
+			c = &con_info[i/pool_config->max_pool * pool_config->max_pool];
+			break;
+		}
+	}
+	if (i == pool_config->num_init_children*pool_config->max_pool)
+		return;	/* invalid key */
+	
+	for (i=0;i<NUM_BACKENDS;i++,c++)
 	{
 		if (!VALID_BACKEND(i))
 			continue;
@@ -1110,10 +1126,22 @@ static void cancel_request(CancelPacket *sp, int backend_id)
 		len = htonl(sizeof(len) + sizeof(CancelPacket));
 		pool_write(con, &len, sizeof(len));
 
-		if (pool_write_and_flush(con, sp, sizeof(CancelPacket)) < 0)
+		cp.protoVersion = sp->protoVersion;
+		cp.pid = c->pid;
+		cp.key = c->key;
+
+		pool_debug("pid:%d key: %d",cp.pid,cp.key);
+
+		if (pool_write_and_flush(con, &cp, sizeof(CancelPacket)) < 0)
 			pool_error("Could not send cancel request packet for backend %d", i);
 
 		pool_close(con);
+
+		/*
+		 * this is needed to enure that the next DB node executes the
+		 * query supposed to be canceled.
+		 */
+		sleep(1);
 	}
 }
 

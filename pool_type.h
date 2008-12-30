@@ -108,6 +108,8 @@ typedef struct {
 	char		user[SM_USER];	/* User name */
 	int			major;	/* protocol major version */
 	int			minor;	/* protocol minor version */
+	int			pid;	/* backend process id */
+	int			key;	/* cancel key */
 	int			counter; /* used counter */
 	time_t 		create_time; /* connection creation time */
 	int load_balancing_node; /* load balancing node */
@@ -121,7 +123,7 @@ typedef struct {
 typedef struct {
 	pid_t pid; /* OS's process id */
 	time_t start_time; /* fork() time */
-	ConnectionInfo *connection_info; /* connection information */
+	ConnectionInfo *connection_info; /* head of the connection info for this process */
 } ProcessInfo;
 
 /*
