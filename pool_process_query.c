@@ -3962,8 +3962,8 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, b
 	memcpy(p, &kind, sizeof(kind));
 	p += sizeof(kind);
 
-	/* ErrorResponse or NoticeResponse message? */
-	if (kind == 'E' || kind == 'N')
+	/* ErrorResponse? */
+	if (kind == 'E')
 	{
 		/* read actual message */
 		if (major == PROTO_MAJOR_V3)
