@@ -75,6 +75,16 @@ PreparedStatementList prepared_list; /* prepared statement name list */
 int is_select_pgcatalog = 0;
 int is_select_for_update = 0; /* 1 if SELECT INTO or SELECT FOR UPDATE */
 bool is_parallel_table = false;
+
+/*
+ * last query string sent to simpleQuery()
+ */
+char query_string_buffer[QUERY_STRING_BUFFER_LEN];
+
+/*
+ * query string produced by nodeToString() in simpleQuery().
+ * this variable only usefull when enable_query_cache is true.
+ */
 char *parsed_query = NULL;
 
 POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend, 
@@ -153,6 +163,9 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 		len = strlen(query)+1;
 		string = query;
 	}
+
+	/* save last query string for logging purpose */
+	strncpy(query_string_buffer, string, sizeof(query_string_buffer));
 
 	/* show ps status */
 	query_ps_status(string, backend);

@@ -3460,7 +3460,11 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 
 	if (degenerate_node_num)
 	{
-		String *msg = init_string("kind mismatch among backends");
+		String *msg = init_string("kind mismatch among backends. ");
+
+		string_append_char(msg, "possible last query was: \"");
+		string_append_char(msg, query_string_buffer);
+		string_append_char(msg, "\" kind details are:");
 
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
