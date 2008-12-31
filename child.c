@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2008	PgPool Global Development Group
+ * Copyright (c) 2003-2009	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -435,7 +435,7 @@ void do_child(int unix_fd, int inet_fd)
 					/*
 					 * do not cache connection if:
 					 * pool_config->connection_cahe == 0 or
-					 * datase name is template0, template1, postgres or regression
+					 * database name is template0, template1, postgres or regression
 					 */
 					if (pool_config->connection_cache == 0 ||
 						!strcmp(sp->database, "template0") ||

@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2008	PgPool Global Development Group
+ * Copyright (c) 2003-2009	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -118,7 +118,7 @@ ProcessInfo *pids;	/* shmem child pid table */
 
 /*
  * shmem connection info table
- * this is a two dimention array. i.e.:
+ * this is a two dimension array. i.e.:
  * con_info[pool_config->num_init_children][pool_config->max_pool]
  */
 ConnectionInfo *con_info;		
@@ -137,7 +137,7 @@ static int exiting = 0;		/* non 0 if I'm exiting */
 static int switching = 0;		/* non 0 if I'm fail overing or degenerating */
 
 #ifdef NOT_USED
-static int degenerated = 0;	/* set non 0 if already degerated */
+static int degenerated = 0;	/* set non 0 if already degenerated */
 #endif
 
 static int clear_cache = 0;		/* non 0 if clear chache option (-c) is given */
@@ -351,7 +351,7 @@ int main(int argc, char **argv)
 
 	if (pool_semaphore_create(MAX_NUM_SEMAPHORES))
 	{
-		pool_error("Unable to create semaphoes. Exiting...");
+		pool_error("Unable to create semaphores. Exiting...");
 		pool_shmem_exit(1);
 		exit(1);
 	}
@@ -493,7 +493,7 @@ int main(int argc, char **argv)
 			{
 				/*
 				 * set health checker timeout. we want to detect
-				 * commnuication path failure much earlier before
+				 * communication path failure much earlier before
 				 * TCP/IP stack detects it.
 				 */
 				pool_signal(SIGALRM, health_check_timer_handler);
@@ -615,14 +615,14 @@ static void usage(void)
 	fprintf(stderr, "  pcp_config_file default path: %s/%s\n", DEFAULT_CONFIGDIR, PCP_PASSWD_FILE_NAME);
 	fprintf(stderr, "  hba_file default path:    %s/%s\n",DEFAULT_CONFIGDIR, HBA_CONF_FILE_NAME);
 	fprintf(stderr, "  -c: clears query cache. enable_query_cache must be on\n");
-	fprintf(stderr, "  -n: don't run in daemon mode. does not detatch control tty\n");
+	fprintf(stderr, "  -n: don't run in daemon mode. does not detach control tty\n");
 	fprintf(stderr, "  -d: debug mode. lots of debug information will be printed\n");
 	fprintf(stderr, "  stop: stop pgpool\n");
 	fprintf(stderr, "  -h: print this help\n");
 }
 
 /*
-* detatch control ttys
+* detach control ttys
 */
 static void daemonize(void)
 {
@@ -797,12 +797,12 @@ pid_t fork_a_child(int unix_fd, int inet_fd, int id)
 
 	if (pid == 0)
 	{
-		/* Before we unconditionaly closed pipe_fds[0]), pipe_fds[1])
-		 * here, which is apprently wrong since in the start up of
-		 * pgpool, pipe(2) is not called yet and it mistakely closes
+		/* Before we unconditionally closed pipe_fds[0] and pipe_fds[1]
+		 * here, which is apparently wrong since in the start up of
+		 * pgpool, pipe(2) is not called yet and it mistakenly closes
 		 * fd 0. Now we check the fd > 0 before close(), expecting
 		 * pipe returns fds greater than 0.  Note that we cannot
-		 * unconditionaly remove close(2) calls since fork_a_child()
+		 * unconditionally remove close(2) calls since fork_a_child()
 		 * may be called *after* pgpool starting up.
 		 */
 		if (pipe_fds[0] > 0)
@@ -1253,9 +1253,9 @@ static void failover(void)
  * connections from clients to pgpool children. What we did here was,
  * if children other than master went down, we did not fail over.
  * This is wrong. Think about following scenario. If someone
- * accidentaly plugs out the network cable, the TCP/IP stack keeps
+ * accidentally plugs out the network cable, the TCP/IP stack keeps
  * retrying for long time (typically 2 hours). The only way to stop
- * the retry is restarting the process.  Botom line is, we need to
+ * the retry is restarting the process.  Bottom line is, we need to
  * restart all children in any case.  See pgpool-general list posting
  * "TCP connections are *not* closed when a backend timeout" on Jul 13
  * 2008 for more details.
@@ -1429,7 +1429,7 @@ int health_check(void)
 
 		/*
 		 * If a backend raised a FATAL error(max connections error or
-		 * startin up error?), do not send a Terminate message.
+		 * starting up error?), do not send a Terminate message.
 		 */
 		if ((kind != 'E') && (write(fd, "X", 1) < 0))
 		{
@@ -1548,7 +1548,7 @@ static void reaper(void)
 
 	if (switching)
 	{
-		pool_debug("reap_handler: exited due to swicting");
+		pool_debug("reap_handler: exited due to switching");
 		return;
 	}
 
@@ -1748,7 +1748,7 @@ static int pool_pause(struct timeval *timeout)
  * function guarantees that it will sleep for specified seconds.  This
  * function uses pool_pause() internally. If it informs that there is
  * a pending signal event, they are processed using CHECK_REQUEST
- * macro. Note that most of these procsses are done while all signals
+ * macro. Note that most of these processes are done while all signals
  * are blocked.
  */
 static void pool_sleep(unsigned int second)
