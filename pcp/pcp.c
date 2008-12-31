@@ -42,6 +42,11 @@
 struct timeval pcp_timeout;
 
 static PCP_CONNECTION *pc;
+#ifdef DEBUG
+static int debug = 1;
+#else
+static int debug = 0;
+#endif
 static int pcp_authorize(char *username, char *password);
 
 /* --------------------------------
@@ -62,9 +67,7 @@ pcp_connect(char *hostname, int port, char *username, char *password)
 
 	if (pc != NULL)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: connection to backend \"%s\" already exists\n", hostname);
-#endif
+		if (debug) fprintf(stderr, "DEBUG: connection to backend \"%s\" already exists\n", hostname);
 		return 0;
 	}
 
@@ -76,9 +79,7 @@ pcp_connect(char *hostname, int port, char *username, char *password)
 
 		if (fd < 0)
 		{
-#ifdef DEBUG
-			fprintf(stderr, "DEBUG: could not create socket\n");
-#endif
+			if (debug) fprintf(stderr, "DEBUG: could not create socket\n");
 			errorcode = SOCKERR;
 			return -1;
 		}
@@ -100,9 +101,7 @@ pcp_connect(char *hostname, int port, char *username, char *password)
 
 		if (connect(fd, (struct sockaddr *) &unix_addr, sizeof(unix_addr)) < 0)
 		{
-#ifdef DEBUG
-			fprintf(stderr, "DEBUG: could not connect to \"%s\"\n", unix_addr.sun_path);
-#endif
+			if (debug) fprintf(stderr, "DEBUG: could not connect to \"%s\"\n", unix_addr.sun_path);
 			close(fd);
 			errorcode = CONNERR;
 			return -1;
@@ -113,9 +112,7 @@ pcp_connect(char *hostname, int port, char *username, char *password)
 		fd = socket(AF_INET, SOCK_STREAM, 0);
 		if (fd < 0)
 		{
-#ifdef DEBUG
-			fprintf(stderr, "DEBUG: could not create socket\n");
-#endif
+		  	if (debug) fprintf(stderr, "DEBUG: could not create socket\n");
 			errorcode = SOCKERR;
 			return -1;
 		}
@@ -123,9 +120,7 @@ pcp_connect(char *hostname, int port, char *username, char *password)
 		if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY,
 					   (char *) &on, sizeof(on)) < 0)
 		{
-#ifdef DEBUG
-			fprintf(stderr, "DEBUG: could not set socket option\n");
-#endif
+			if (debug) fprintf(stderr, "DEBUG: could not set socket option\n");
 			close(fd);
 			errorcode = SOCKERR;
 			return -1;
@@ -136,9 +131,7 @@ pcp_connect(char *hostname, int port, char *username, char *password)
 		hp = gethostbyname(hostname);
 		if ((hp == NULL) || (hp->h_addrtype != AF_INET))
 		{
-#ifdef DEBUG
-			fprintf(stderr, "DEBUG: could not retrieve hostname\n");
-#endif
+			if (debug) fprintf(stderr, "DEBUG: could not retrieve hostname\n");
 			close(fd);
 			errorcode = HOSTERR;
 			return -1;
@@ -151,9 +144,7 @@ pcp_connect(char *hostname, int port, char *username, char *password)
 		len = sizeof(struct sockaddr_in);
 		if (connect(fd, (struct sockaddr *) &addr, len) < 0)
 		{
-#ifdef DEBUG
-			fprintf(stderr, "DEBUG: could not connect to \"%s\"\n", hostname);
-#endif
+			if (debug) fprintf(stderr, "DEBUG: could not connect to \"%s\"\n", hostname);
 			close(fd);
 			errorcode = CONNERR;
 			return -1;
@@ -163,9 +154,7 @@ pcp_connect(char *hostname, int port, char *username, char *password)
 	pc = pcp_open(fd);
 	if (pc == NULL)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: could not allocate buffer space\n");
-#endif
+		if (debug) fprintf(stderr, "DEBUG: could not allocate buffer space\n");
 		close(fd);
 		return -1;
 	}
@@ -202,9 +191,7 @@ pcp_authorize(char *username, char *password)
 	pcp_write(pc, &wsize, sizeof(int));
 	if (pcp_flush(pc) < 0)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: could not send data to backend\n");
-#endif
+		if (debug) fprintf(stderr, "DEBUG: could not send data to backend\n");
 		return -1;
 	}
 
@@ -243,14 +230,10 @@ pcp_authorize(char *username, char *password)
 	pcp_write(pc, encrypt_buf, strlen(encrypt_buf)+1);
 	if (pcp_flush(pc) < 0)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: could not send data to backend\n");
-#endif
+		if  (debug) fprintf(stderr, "DEBUG: could not send data to backend\n");
 		return -1;
 	}
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: send: tos=\"R\", len=%d\n", ntohl(wsize));
-#endif
+	if (debug) fprintf(stderr, "DEBUG: send: tos=\"R\", len=%d\n", ntohl(wsize));
 
 	if (pcp_read(pc, &tos, 1))
 		return -1;
@@ -265,15 +248,11 @@ pcp_authorize(char *username, char *password)
 	}
 	if (pcp_read(pc, buf, rsize - sizeof(int)))
 		return -1;
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
-#endif
+	if (debug) fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
 
 	if (tos == 'e')
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
-#endif
+		if (debug) fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
 		errorcode = BACKENDERR;
 	}
 	else if (tos == 'r')
@@ -284,9 +263,7 @@ pcp_authorize(char *username, char *password)
 			return 0;
 		}
 
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: authentication failed. reason=%s\n", buf);
-#endif
+		if (debug) fprintf(stderr, "DEBUG: authentication failed. reason=%s\n", buf);
 		errorcode = AUTHERR;
 	}
 	free(buf);
@@ -305,9 +282,7 @@ pcp_disconnect(void)
 
 	if (pc == NULL)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: connection does not exist\n");
-#endif
+		if (debug) fprintf(stderr, "DEBUG: connection does not exist\n");
 		return;
 	}
 
@@ -318,9 +293,7 @@ pcp_disconnect(void)
 	{
 		/* backend had closed connection already */
 	}
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: send: tos=\"X\", len=%d\n", sizeof(int));
-#endif
+	if (debug) fprintf(stderr, "DEBUG: send: tos=\"X\", len=%d\n", sizeof(int));
 
 	pcp_close(pc);
 	pc = NULL;
@@ -339,9 +312,7 @@ pcp_terminate_pgpool(char mode)
 
 	if (pc == NULL)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: connection does not exist\n");
-#endif
+		if (debug) fprintf(stderr, "DEBUG: connection does not exist\n");
 		errorcode = NOCONNERR;
 		return -1;
 	}
@@ -352,14 +323,10 @@ pcp_terminate_pgpool(char mode)
 	pcp_write(pc, &mode, sizeof(char));
 	if (pcp_flush(pc) < 0)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: could not send data to backend\n");
-#endif
+		if (debug) fprintf(stderr, "DEBUG: could not send data to backend\n");
 		return -1;
 	}
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: send: tos=\"T\", len=%d\n", ntohl(wsize));
-#endif
+	if (debug) fprintf(stderr, "DEBUG: send: tos=\"T\", len=%d\n", ntohl(wsize));
 
 	return 0;
 }
@@ -381,9 +348,7 @@ pcp_node_count(void)
 
 	if (pc == NULL)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: connection does not exist\n");
-#endif
+		if (debug) fprintf(stderr, "DEBUG: connection does not exist\n");
 		errorcode = NOCONNERR;
 		return -1;
 	}
@@ -393,14 +358,10 @@ pcp_node_count(void)
 	pcp_write(pc, &wsize, sizeof(int));
 	if (pcp_flush(pc) < 0)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: could not send data to backend\n");
-#endif
+		if (debug) fprintf(stderr, "DEBUG: could not send data to backend\n");
 		return -1;
 	}
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: send: tos=\"L\", len=%d\n", ntohl(wsize));
-#endif
+	if (debug) fprintf(stderr, "DEBUG: send: tos=\"L\", len=%d\n", ntohl(wsize));
 
 	if (pcp_read(pc, &tos, 1))
 		return -1;
@@ -419,15 +380,11 @@ pcp_node_count(void)
 		return -1;
 	}
 
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
-#endif
+	if (debug) fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
 
 	if (tos == 'e')
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
-#endif
+		if (debug) fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
 		errorcode = BACKENDERR;
 	}
 	else if (tos == 'l')
@@ -466,9 +423,7 @@ pcp_node_info(int nid)
 
 	if (pc == NULL)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: connection does not exist\n");
-#endif
+		if (debug) fprintf(stderr, "DEBUG: connection does not exist\n");
 		errorcode = NOCONNERR;
 		return NULL;
 	}
@@ -481,14 +436,10 @@ pcp_node_info(int nid)
 	pcp_write(pc, node_id, strlen(node_id)+1);
 	if (pcp_flush(pc) < 0)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: could not send data to backend\n");
-#endif
+		if (debug) fprintf(stderr, "DEBUG: could not send data to backend\n");
 		return NULL;
 	}
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: send: tos=\"I\", len=%d\n", ntohl(wsize));
-#endif
+	if (debug) fprintf(stderr, "DEBUG: send: tos=\"I\", len=%d\n", ntohl(wsize));
 
 	if (pcp_read(pc, &tos, 1))
 		return NULL;	
@@ -507,15 +458,11 @@ pcp_node_info(int nid)
 		return NULL;
 	}
 
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
-#endif
+	if (debug) fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
 
 	if (tos == 'e')
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
-#endif
+		if (debug) fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
 		errorcode = BACKENDERR;
 		free(buf);
 		return NULL;
@@ -578,9 +525,7 @@ pcp_process_count(int *pnum)
 	
 	if (pc == NULL)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: connection does not exist\n");
-#endif
+		if (debug) fprintf(stderr, "DEBUG: connection does not exist\n");
 		errorcode = NOCONNERR;
 		return NULL;
 	}
@@ -590,14 +535,10 @@ pcp_process_count(int *pnum)
 	pcp_write(pc, &wsize, sizeof(int));
 	if (pcp_flush(pc) < 0)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: could not send data to backend\n");
-#endif
+		if (debug) fprintf(stderr, "DEBUG: could not send data to backend\n");
 		return NULL;
 	}
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: send: tos=\"N\", len=%d\n", ntohl(wsize));
-#endif
+	if (debug) fprintf(stderr, "DEBUG: send: tos=\"N\", len=%d\n", ntohl(wsize));
 
 	if (pcp_read(pc, &tos, 1))
 		return NULL;			
@@ -615,15 +556,11 @@ pcp_process_count(int *pnum)
 		free(buf);
 		return NULL;		
 	}
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
-#endif
+	if (debug) fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
 
 	if (tos == 'e')
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
-#endif
+		if (debug) fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
 		free(buf);
 		errorcode = BACKENDERR;
 		return NULL;
@@ -685,9 +622,7 @@ pcp_process_info(int pid, int *array_size)
 
 	if (pc == NULL)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: connection does not exist\n");
-#endif
+		if (debug) fprintf(stderr, "DEBUG: connection does not exist\n");
 		errorcode = NOCONNERR;
 		return NULL;
 	}
@@ -700,14 +635,10 @@ pcp_process_info(int pid, int *array_size)
 	pcp_write(pc, process_id, strlen(process_id)+1);
 	if (pcp_flush(pc) < 0)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: could not send data to backend\n");
-#endif
+		if (debug) fprintf(stderr, "DEBUG: could not send data to backend\n");
 		return NULL;
 	}
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: send: tos=\"P\", len=%d\n", ntohl(wsize));
-#endif
+	if (debug) fprintf(stderr, "DEBUG: send: tos=\"P\", len=%d\n", ntohl(wsize));
 
 	while (1)
 	{
@@ -727,15 +658,11 @@ pcp_process_info(int pid, int *array_size)
 			free(buf);
 			return NULL;
 		}
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
-#endif
+		if (debug) fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
 
 		if (tos == 'e')
 		{
-#ifdef DEBUG
-			fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
-#endif
+			if (debug) fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
 			free(buf);
 			errorcode = BACKENDERR;
 			return NULL;
@@ -836,9 +763,7 @@ pcp_systemdb_info(void)
 
 	if (pc == NULL)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: connection does not exist\n");
-#endif
+		if (debug) fprintf(stderr, "DEBUG: connection does not exist\n");
 		errorcode = NOCONNERR;
 		return NULL;
 	}
@@ -848,14 +773,10 @@ pcp_systemdb_info(void)
 	pcp_write(pc, &wsize, sizeof(int));
 	if (pcp_flush(pc) < 0)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: could not send data to backend\n");
-#endif
+		if (debug) fprintf(stderr, "DEBUG: could not send data to backend\n");
 		return NULL;
 	}
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: send: tos=\"S\", len=%d\n", ntohl(wsize));
-#endif
+	if (debug) fprintf(stderr, "DEBUG: send: tos=\"S\", len=%d\n", ntohl(wsize));
 
 	while (1) {
 		if (pcp_read(pc, &tos, 1))
@@ -874,15 +795,11 @@ pcp_systemdb_info(void)
 			free(buf);
 			return NULL;
 		}
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
-#endif
+		if (debug) fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
 
 		if (tos == 'e')
 		{
-#ifdef DEBUG
-			fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
-#endif
+			if (debug) fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
 			free(buf);
 			errorcode = BACKENDERR;
 			return NULL;
@@ -1166,9 +1083,7 @@ pcp_detach_node(int nid)
 
 	if (pc == NULL)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: connection does not exist\n");
-#endif
+		if (debug) fprintf(stderr, "DEBUG: connection does not exist\n");
 		errorcode = NOCONNERR;
 		return -1;
 	}
@@ -1181,14 +1096,10 @@ pcp_detach_node(int nid)
 	pcp_write(pc, node_id, strlen(node_id)+1);
 	if (pcp_flush(pc) < 0)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: could not send data to backend\n");
-#endif
+		if (debug) fprintf(stderr, "DEBUG: could not send data to backend\n");
 		return -1;
 	}
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: send: tos=\"D\", len=%d\n", ntohl(wsize));
-#endif
+	if (debug) fprintf(stderr, "DEBUG: send: tos=\"D\", len=%d\n", ntohl(wsize));
 
 	if (pcp_read(pc, &tos, 1))
 		return -1;
@@ -1206,15 +1117,11 @@ pcp_detach_node(int nid)
 		free(buf);
 		return -1;
 	}
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
-#endif
+	if (debug) fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
 
 	if (tos == 'e')
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
-#endif
+		if (debug) fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
 		errorcode = BACKENDERR;
 	}
 	else if (tos == 'd')
@@ -1249,9 +1156,7 @@ pcp_attach_node(int nid)
 
 	if (pc == NULL)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: connection does not exist\n");
-#endif
+		if (debug) fprintf(stderr, "DEBUG: connection does not exist\n");
 		errorcode = NOCONNERR;
 		return -1;
 	}
@@ -1264,14 +1169,10 @@ pcp_attach_node(int nid)
 	pcp_write(pc, node_id, strlen(node_id)+1);
 	if (pcp_flush(pc) < 0)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: could not send data to backend\n");
-#endif
+		if (debug) fprintf(stderr, "DEBUG: could not send data to backend\n");
 		return -1;
 	}
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: send: tos=\"D\", len=%d\n", ntohl(wsize));
-#endif
+	if (debug) fprintf(stderr, "DEBUG: send: tos=\"D\", len=%d\n", ntohl(wsize));
 
 	if (pcp_read(pc, &tos, 1))
 		return -1;
@@ -1289,15 +1190,11 @@ pcp_attach_node(int nid)
 		free(buf);
 		return -1;
 	}
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
-#endif
+	if (debug) fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
 
 	if (tos == 'e')
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
-#endif
+		if (debug) fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
 		errorcode = BACKENDERR;
 	}
 	else if (tos == 'c')
@@ -1334,9 +1231,7 @@ pcp_recovery_node(int nid)
 
 	if (pc == NULL)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: connection does not exist\n");
-#endif
+		if (debug) fprintf(stderr, "DEBUG: connection does not exist\n");
 		errorcode = NOCONNERR;
 		return -1;
 	}
@@ -1349,14 +1244,10 @@ pcp_recovery_node(int nid)
 	pcp_write(pc, node_id, strlen(node_id)+1);
 	if (pcp_flush(pc) < 0)
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: could not send data to backend\n");
-#endif
+		if (debug) fprintf(stderr, "DEBUG: could not send data to backend\n");
 		return -1;
 	}
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: send: tos=\"D\", len=%d\n", ntohl(wsize));
-#endif
+	if (debug) fprintf(stderr, "DEBUG: send: tos=\"D\", len=%d\n", ntohl(wsize));
 
 	if (pcp_read(pc, &tos, 1))
 		return -1;
@@ -1374,15 +1265,11 @@ pcp_recovery_node(int nid)
 		free(buf);
 		return -1;
 	}
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
-#endif
+	if (debug) fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
 
 	if (tos == 'e')
 	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
-#endif
+		if (debug) fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
 		errorcode = BACKENDERR;
 	}
 	else if (tos == 'c')
@@ -1397,4 +1284,16 @@ pcp_recovery_node(int nid)
 
 	free(buf);
 	return -1;
+}
+
+void
+pcp_enable_debug(void)
+{
+	debug = 1;
+}
+
+void
+pcp_disable_debug(void)
+{
+	debug = 0;
 }

@@ -62,6 +62,8 @@ extern int pcp_detach_node(int nid);
 extern int pcp_attach_node(int nid);
 extern void pcp_set_timeout(long sec);
 extern int pcp_recovery_node(int nid);
+extern void pcp_enable_debug(void);
+extern void pcp_disable_debug(void);
 
 /* ------------------------------
  * pcp_error.c
