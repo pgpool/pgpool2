@@ -1576,9 +1576,14 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 
 	if (mismatch_ntuples)
 	{
+		String *msg = init_string("pgpool detected difference of the number of updated or deleted tuples. Possible last query was: \"");
+		string_append_char(msg, query_string_buffer);
+		string_append_char(msg, "\"");
 		pool_send_error_message(frontend, MAJOR(backend),
-								"XX001", "pgpool detected difference of the number of update tuples", "",
+								"XX001", msg->data, "",
 								"check data consistency between master and other db node",  __FILE__, __LINE__);
+		pool_error(msg->data);
+		free_string(msg);
 	}
 	else
 	{
@@ -3462,7 +3467,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 	{
 		String *msg = init_string("kind mismatch among backends. ");
 
-		string_append_char(msg, "possible last query was: \"");
+		string_append_char(msg, "Possible last query was: \"");
 		string_append_char(msg, query_string_buffer);
 		string_append_char(msg, "\" kind details are:");
 
@@ -3481,6 +3486,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 								msg->data, "",
 								"check data consistency among db nodes",
 								__FILE__, __LINE__);
+		pool_error(msg->data);
 
 		free_string(msg);
 
