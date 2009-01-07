@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2008	PgPool Global Development Group
+ * Copyright (c) 2003-2009	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -67,7 +67,7 @@ static int is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 static POOL_STATUS ParallelForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *database, bool send_to_frontend);
 static void query_cache_register(char kind, POOL_CONNECTION *frontend, char *database, char *data, int data_len);
 static int extract_ntuples(char *message);
-static int detect_error(POOL_CONNECTION *master, char *error_code, int major, bool unread);
+static int detect_error(POOL_CONNECTION *master, char *error_code, int major, char class, bool unread);
 static int detect_postmaster_down_error(POOL_CONNECTION *master, int major);
 static void free_select_result(POOL_SELECT_RESULT *result);
 
@@ -251,6 +251,9 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 
 			for (i = 0; i < NUM_BACKENDS; i++)
 			{
+				pool_debug("i: %d master:%d readfd:%d exceptfd:%d", i, MASTER_NODE_ID, FD_ISSET(CONNECTION(backend, i)->fd, &readmask),
+						   FD_ISSET(CONNECTION(backend, i)->fd, &exceptmask));
+
 				if (VALID_BACKEND(i) && FD_ISSET(CONNECTION(backend, i)->fd, &readmask))
 				{
 					/*
@@ -1472,7 +1475,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 	}
 	else if (kind == 'E' && pending_function)
 	{
-		/* PREPARE or DEALLOCATE is error.
+		/* An error occurred with PREPARE or DEALLOCATE command.
 		 * Free pending portal object.
 		 */
 		if (pending_prepared_portal)
@@ -1576,7 +1579,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 
 	if (mismatch_ntuples)
 	{
-		String *msg = init_string("pgpool detected difference of the number of updated or deleted tuples. Possible last query was: \"");
+		String *msg = init_string("pgpool detected difference of the number of inserted, updated or deleted tuples. Possible last query was: \"");
 		string_append_char(msg, query_string_buffer);
 		string_append_char(msg, "\"");
 		pool_send_error_message(frontend, MAJOR(backend),
@@ -1671,7 +1674,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 				{
 					/*
 					 * We must abort transaction to sync transaction state.
-					 * If the error is happend with Execute message,
+					 * If the error was caused by an Execute message,
 					 * we must send invalid Execute message to abort
 					 * transaction.
 					 *
@@ -3390,9 +3393,9 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 				return POOL_ERROR;
 			}
 
-			pool_debug("read_kind_from_backend: read kind from %d th backend %c NUM_BACKENDS: %d", i, kind_list[i], NUM_BACKENDS);
-
 			kind_list[i] = kind;
+
+			pool_debug("read_kind_from_backend: read kind from %d th backend %c NUM_BACKENDS: %d", i, kind_list[i], NUM_BACKENDS);
 
 			kind_map[kind]++;
 
@@ -3913,14 +3916,14 @@ static int extract_ntuples(char *message)
 
 static int detect_postmaster_down_error(POOL_CONNECTION *backend, int major)
 {
-	int r =  detect_error(backend, ADMIN_SHUTDOWN_ERROR_CODE, major, false);
+	int r =  detect_error(backend, ADMIN_SHUTDOWN_ERROR_CODE, major, 'E', false);
 	if (r == SPECIFIED_ERROR)
 	{
 		pool_debug("detect_stop_postmaster_error: receive admin shutdown error from a node.");
 		return r;
 	}
 
-	r = detect_error(backend, CRASH_SHUTDOWN_ERROR_CODE, major, false);
+	r = detect_error(backend, CRASH_SHUTDOWN_ERROR_CODE, major, 'N', false);
 	if (r == SPECIFIED_ERROR)
 	{
 		pool_debug("detect_stop_postmaster_error: receive crash shutdown error from a node.");
@@ -3930,7 +3933,7 @@ static int detect_postmaster_down_error(POOL_CONNECTION *backend, int major)
 
 int detect_active_sql_transaction_error(POOL_CONNECTION *backend, int major)
 {
-	int r =  detect_error(backend, ACTIVE_SQL_TRANSACTION_ERROR_CODE, major, true);
+	int r =  detect_error(backend, ACTIVE_SQL_TRANSACTION_ERROR_CODE, major, 'E', true);
 	if (r == SPECIFIED_ERROR)
 	{
 		pool_debug("detect_active_sql_transaction_error: receive SET TRANSACTION ISOLATION LEVEL must be called before any query error from a node.");
@@ -3940,7 +3943,7 @@ int detect_active_sql_transaction_error(POOL_CONNECTION *backend, int major)
 
 int detect_deadlock_error(POOL_CONNECTION *backend, int major)
 {
-	int r =  detect_error(backend, DEADLOCK_ERROR_CODE, major, true);
+	int r =  detect_error(backend, DEADLOCK_ERROR_CODE, major, 'E', true);
 	if (r == SPECIFIED_ERROR)
 		pool_debug("detect_deadlock_error: received deadlock error message from backend");
 	return r;
@@ -3948,7 +3951,7 @@ int detect_deadlock_error(POOL_CONNECTION *backend, int major)
 
 int detect_serialization_error(POOL_CONNECTION *backend, int major)
 {
-	int r =  detect_error(backend, SERIALIZATION_FAIL_ERROR_CODE, major, true);
+	int r =  detect_error(backend, SERIALIZATION_FAIL_ERROR_CODE, major, 'E', true);
 	if (r == SPECIFIED_ERROR)
 		pool_debug("detect_serialization_error: received serialization failure message from backend");
 	return r;
@@ -3957,7 +3960,7 @@ int detect_serialization_error(POOL_CONNECTION *backend, int major)
 /*
  * detect_error: Detect specified error from error code.
  */
-static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, bool unread)
+static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, char class, bool unread)
 {
 	int is_error = 0;
 	char kind;
@@ -3972,8 +3975,10 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, b
 	memcpy(p, &kind, sizeof(kind));
 	p += sizeof(kind);
 
-	/* ErrorResponse? */
-	if (kind == 'E')
+	pool_debug("detect_error: kind: %c", kind);
+
+	/* Specified class? */
+	if (kind == class)
 	{
 		/* read actual message */
 		if (major == PROTO_MAJOR_V3)
