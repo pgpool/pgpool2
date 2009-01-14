@@ -251,9 +251,6 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 
 			for (i = 0; i < NUM_BACKENDS; i++)
 			{
-				pool_debug("i: %d master:%d readfd:%d exceptfd:%d", i, MASTER_NODE_ID, FD_ISSET(CONNECTION(backend, i)->fd, &readmask),
-						   FD_ISSET(CONNECTION(backend, i)->fd, &exceptmask));
-
 				if (VALID_BACKEND(i) && FD_ISSET(CONNECTION(backend, i)->fd, &readmask))
 				{
 					/*
