@@ -9,7 +9,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Portions Copyright (c) 2003-2008	PgPool Global Development Group
+ * Portions Copyright (c) 2003-2009	PgPool Global Development Group
  *
  */
 /*--------------------------------------------------------------------
@@ -261,10 +261,10 @@ init_ps_display(const char *username, const char *dbname,
 #ifdef PS_USE_SETPROCTITLE
 
 	/*
-	 * apparently setproctitle() already adds a `progname:' prefix to the ps
-	 * line
+	 * apparently setproctitle() already adds a `progname: ' prefix to the
+	 * ps line
 	 */
-	snprintf(ps_buffer, ps_buffer_size, " ");
+	snprintf(ps_buffer, ps_buffer_size, "");
 #else
 	snprintf(ps_buffer, ps_buffer_size,
 			 "pgpool: ");
