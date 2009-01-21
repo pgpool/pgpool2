@@ -251,25 +251,39 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 
 			for (i = 0; i < NUM_BACKENDS; i++)
 			{
-				if (VALID_BACKEND(i) && FD_ISSET(CONNECTION(backend, i)->fd, &readmask))
+				if (VALID_BACKEND(i))
 				{
 					/*
-					 * admin shutdown postmaster or postmaster goes down
+					 * make sure that connection slot exists
 					 */
-					if (detect_postmaster_down_error(CONNECTION(backend, i), MAJOR(backend)) == SPECIFIED_ERROR)
+					if (CONNECTION_SLOT(backend, i) == 0)
 					{
-						/* detach backend node. */
+						pool_log("FATAL ERROR: VALID_BACKEND returns non 0 but connection slot is empty. backend id:%d RAW_MODE:%d in_load_balance:%d LOAD_BALANCE_STATUS:%d status:%d",
+								 i, RAW_MODE, in_load_balance, LOAD_BALANCE_STATUS(i), BACKEND_INFO(i).backend_status);
 						was_error = 1;
-						if (!VALID_BACKEND(i))
-							break;
-						notice_backend_error(i);
-						sleep(5);
 						break;
 					}
-					status = read_kind_from_backend(frontend, backend, &kind);
-					if (status != POOL_CONTINUE)
-						return status;
-					break;
+						
+					if (FD_ISSET(CONNECTION(backend, i)->fd, &readmask))
+					{
+						/*
+						 * admin shutdown postmaster or postmaster goes down
+						 */
+						if (detect_postmaster_down_error(CONNECTION(backend, i), MAJOR(backend)) == SPECIFIED_ERROR)
+						{
+							/* detach backend node. */
+							was_error = 1;
+							if (!VALID_BACKEND(i))
+								break;
+							notice_backend_error(i);
+							sleep(5);
+							break;
+						}
+						status = read_kind_from_backend(frontend, backend, &kind);
+						if (status != POOL_CONTINUE)
+							return status;
+						break;
+					}
 				}
 			}
 
