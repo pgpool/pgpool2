@@ -170,7 +170,7 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 		{
 			if (cp->isbackend)
 			{
-				pool_error("pool_read2: EOF encountered with backend");
+				pool_error("pool_read: EOF encountered with backend");
 				return -1;
 
 #ifdef NOT_USED
