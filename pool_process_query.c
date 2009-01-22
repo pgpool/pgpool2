@@ -1371,6 +1371,11 @@ void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	pool_flush(frontend);
 }
 
+/*
+ * send "terminate"(X) message to all backends, indicating that
+ * backend should prepare to close connection to frontend (actually
+ * pgpool)
+ */
 void pool_send_frontend_exits(POOL_CONNECTION_POOL *backend)
 {
 	int len;
@@ -1380,6 +1385,7 @@ void pool_send_frontend_exits(POOL_CONNECTION_POOL *backend)
 	{
 		if (VALID_BACKEND(i))
 		{
+			/* send terminate message */
 			pool_write(CONNECTION(backend, i), "X", 1);
 
 			if (MAJOR(backend) == PROTO_MAJOR_V3)
@@ -1395,7 +1401,9 @@ void pool_send_frontend_exits(POOL_CONNECTION_POOL *backend)
 			 * famous "lost synchronization with server, resetting
 			 * connection" message)
 			 */
+			pool_set_nonblock(CONNECTION(backend, i)->fd);
 			pool_flush_it(CONNECTION(backend, i));
+			pool_unset_nonblock(CONNECTION(backend, i)->fd);
 		}
 	}
 }
