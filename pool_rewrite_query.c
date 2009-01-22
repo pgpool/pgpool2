@@ -112,6 +112,9 @@ static int getInsertRule(ListCell *lc,List *list_t ,DistDefInfo *info,int div_ke
 	return node_number;
 }
 
+/*
+ * This function processes the decision whether to distribute the insert sentence to the node. 
+ */
 static void examInsertStmt(Node *node,POOL_CONNECTION_POOL *backend, RewriteQuery *message)
 {
 	RangeVar *table;
@@ -338,6 +341,10 @@ RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNE
 		case T_SelectStmt:
 		{
 			SelectStmt *stmt = (SelectStmt *)node;
+ 
+      /* Because "SELECT INTO" cannot be used in a parallel mode, 
+       * the error message is generated and send "ready for query" to frontend. 
+       */    
 			if(stmt->intoClause)
 			{
 				pool_send_error_message(frontend, MAJOR(backend), "XX000",
@@ -351,11 +358,18 @@ RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNE
 				break;
 			}
 
+			/*
+			 * The Query is actually rewritten based on analytical information on the Query.
+			 */
 			examSelectStmt(node,backend,message);
 
 			if (message->r_code != SELECT_PGCATALOG &&
 				message->r_code != SELECT_RELATION_ERROR)
 			{
+				/* 
+				 * The rewritten Query is transmitted to system db,
+				 * and execution status is received.
+				 */
 				POOL_CONNECTION_POOL_SLOT *system_db = pool_system_db_connection();
 				message->status = OneNode_do_command(frontend, 
 													system_db->con, 
@@ -367,12 +381,21 @@ RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNE
 				if(TSTATE(backend) == 'T' &&
 				   message->r_code == SELECT_RELATION_ERROR)
 				{
-					pool_debug("pool_rewrite_stmt(select): inside transaction");
+					/*
+					 * In the case of message->r_code == SELECT_RELATION_ERROR and in the transaction, 
+					 * Transmit the Query to all back ends, and to abort transaction.
+					 */
+					pool_debug("pool_rewrite_stmt(select): Inside transaction. abort transaction");
 					message->rewrite_query = nodeToString(node);
 					message->status = pool_parallel_exec(frontend,backend,message->rewrite_query,node,true);
 				} 
 				else
 				{ 
+					/*
+					 * Ohter cases of message->r_code == SELECT_RELATION_ERROR
+					 * or SELECT_PG_CATALOG,
+					 * Transmit the Query to Master node and receive status.
+					 */
 					pool_debug("pool_rewrite_stmt: executed by Master");
 					message->rewrite_query = nodeToString(node);
 					message->status = OneNode_do_command(frontend, 
@@ -386,10 +409,13 @@ RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNE
 		break;
 			
 		case T_InsertStmt:
+
+		  /* The distribution of the INSERT sentence. */
 			examInsertStmt(node,backend,message);
 
 			if(message->r_code == 0 )
 			{
+				/* send the INSERT sentence */
 				message->status = OneNode_do_command(frontend, 
 													CONNECTION(backend,message->r_node),
 													message->rewrite_query,
@@ -397,6 +423,7 @@ RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNE
 			}
 			else if (message->r_code == INSERT_SQL_RESTRICTION)
 			{
+				/* Restriction case of INSERT sentence */
 				pool_send_error_message(frontend, MAJOR(backend), "XX000",
 										"pgpool2 sql restriction",
 										message->rewrite_query, "", __FILE__,
@@ -404,11 +431,13 @@ RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNE
 
 				if(TSTATE(backend) == 'T')
 				{
-					pool_debug("rewrite_query_stmt(insert): inside transaction");
+					/* In Transaction, send the invalid message to backend to abort this transaction */
+					pool_debug("rewrite_query_stmt(insert): Inside transaction. Abort transaction");
 					message->status = pool_parallel_exec(frontend,backend, "POOL_RESET_TSTATE",node,false);
 				}
 				else
 				{
+					/* return "ready for query" to frontend */
 					pool_send_readyforquery(frontend);
 					message->status=POOL_CONTINUE;
 				}
@@ -462,6 +491,11 @@ static int check_whereClause(Node *where)
 	}
 }
 
+/*
+ * After analyzing query, check the analyze[0]->state.
+ * if the analyze[0]->state ==`P`, this query can be executed 
+ * on parallel engine.
+ */
 static int direct_parallel_query(RewriteQuery *message)
 {
 	if(message && message->analyze[0] && message->analyze[0]->state == 'P')
@@ -508,6 +542,12 @@ void analyze_debug(RewriteQuery *message)
 	}	
 }
 
+/* 
+ * This function checks the KEYWORD(POOL_PARALLEL,POOL_LOADBALANCE)
+ * if the special function(like pool_parallel() or pool_loadbalance())
+ * is used, mark the r_code,is_parallel and is_loadbalance. 
+ * In othe cases, It is necessary to analyze the Query. 
+ */
 RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 {
 	static RewriteQuery message;
@@ -523,7 +563,7 @@ RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 
 		stmt = (SelectStmt *) node;
 
-		/* LOADBALANCE OR PARALLEL */
+		/* Check the special function is used in this query*/
 		if (!(stmt->distinctClause || stmt->intoClause ||
 			stmt->fromClause || stmt->groupClause || stmt->havingClause ||
 			stmt->sortClause || stmt->limitOffset || stmt->limitCount ||
@@ -540,7 +580,7 @@ RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 					Node *func_args = (Node *) lfirst(list_head(func->args));
 					message.rewrite_query = delimistr(nodeToString(func_args));
 
-					/* PARALLEL */
+					/* pool_parallel() is used in this query */
 					if(strcmp(strVal(lfirst(list_head(func->funcname))),
 						   POOL_PARALLEL) == 0)
 					{
@@ -550,7 +590,7 @@ RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 						pool_debug("can pool_parallel_exec %s",message.rewrite_query);	
 						return &message;
 					} 
-					else /* LOADBALANCE */ 
+					else /* pool_loadbalance() is used in this query */ 
 					if(strcmp(strVal(lfirst(list_head(func->funcname))),
 						   						POOL_LOADBALANCE) == 0)
 					{
@@ -586,9 +626,12 @@ RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 			return &message;
 		}
 
+		/* Analyzing Query Start */
 		analyze_debug(&message);
 
-		/* PARALLEL*/
+		/* After the analyzing query, 
+		 * this query can be executed as parallel exec, is_parallel flag is turned on
+		 */
 		direct_ok = direct_parallel_query(&message);
 		if(direct_ok == 1)
 		{
@@ -601,6 +644,7 @@ RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 	}
 	else if (IsA(node, CopyStmt))
 	{
+		/* For Copy Statement, check the table name, mark the is_parallel flag. */
 		CopyStmt *stmt = (CopyStmt *)node;
 
 		if (stmt->is_from == FALSE && stmt->filename == NULL)

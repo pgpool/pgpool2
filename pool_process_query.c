@@ -468,6 +468,11 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 }
 
 
+/* 
+ * set_fd,isset_fs,zero_fd are used 
+ * for check fd in parallel mode
+ */
+
 /* used only in pool_parallel_exec */
 #define BITS (8 * sizeof(long int))
 
@@ -499,7 +504,10 @@ static void zero_fd(unsigned long *setp)
 	}
 }
 
-
+/*
+ * This function transmits to a parallel Query, and does processing 
+ * that receives the result to each back end. 
+ */
 POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 									  POOL_CONNECTION_POOL *backend, char *string,
 									  Node *node,bool send_to_frontend)
@@ -547,7 +555,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 		return POOL_CONTINUE;
 	}
 
-	/* In this loop,forward the query to the backend */
+	/* In this loop,forward the query to the all backends */
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
 		if (!VALID_BACKEND(i))
@@ -584,7 +592,8 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 	}
 
 	zero_fd(donemask);
-	/* In this loop,get data from backend */
+
+	/* In this loop, receive data from the all backends and send data to frontend */
 	for (;;)
 	{
 		FD_ZERO(&readmask);
@@ -1414,6 +1423,11 @@ void pool_send_frontend_exits(POOL_CONNECTION_POOL *backend)
  * -------------------------------------------------------
  */
 
+/*
+ * This function transmits to a parallel Query to each backend, 
+ * and receives the results from backends . 
+ * 
+ */
 static POOL_STATUS ParallelForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *database, bool send_to_frontend)
 {
 	int len;
@@ -2687,6 +2701,7 @@ static POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int n
 }
 
 /*
+ * Transmit an arbitrary Query to a specific node. 
  * This function is only used in parallel mode
  */
 POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *query, char *database)

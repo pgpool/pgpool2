@@ -51,6 +51,7 @@
 #define SELECT_ANALYZE 19
 #define SELECT_DEFAULT_PREP 20
 
+/* build TARGET-LIST */
 typedef struct {
 	char **col_list;		/* column list */
 	char **type_list;		/* type list */
@@ -59,6 +60,7 @@ typedef struct {
 	bool valid;
 }SelectDefInfo;
 
+/* This struct is used as  TARGET-LIST of Sub-Select */
 typedef struct {
 	DistDefInfo *distinfo;
 	RepliDefInfo *repliinfo;
@@ -68,6 +70,7 @@ typedef struct {
 	int ret_num;
 } RangeInfo;
 
+/* build Virtual Table of FROM-Cluase */
 typedef struct {
 	char **col_list;		/* column list */
 	char **type_list;		/* type list */
@@ -78,6 +81,7 @@ typedef struct {
 	int col_num;	
 } VirtualTable;
 
+/* this struct is used by JOIN Expr */
 typedef struct {
 	char **col_list;		/* column list */
 	char **type_list;		/* type list */
@@ -89,6 +93,7 @@ typedef struct {
 	int using_length;
 } JoinTable;
 
+/* this struct is used in optimization of aggregate opr */
 typedef struct {
 	ColumnRef **usec_p; /* targetlist columns */
 	FuncCall **tfunc_p; /* targetlist funcs   */
@@ -105,7 +110,7 @@ typedef struct {
 	bool opt;
 } Aggexpr;
 
-
+/* main struct of alanyzing query */
 typedef struct {
   int now_select;
 	int part;
@@ -130,6 +135,9 @@ typedef struct {
 	SelectDefInfo *select_ret;
 } AnalyzeSelect;
 
+/* This struct is used as Information that relates 
+ * to distribution processing of parallel query
+ */
 typedef struct {
 	int r_code; 
 	int r_node;
@@ -156,6 +164,7 @@ typedef struct {
 	AnalyzeSelect **analyze;
 } RewriteQuery;
 
+/* This info is used in dblink */
 typedef struct {
 	char *hostaddr;
 	char *dbname;

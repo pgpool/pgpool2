@@ -226,11 +226,20 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 
 		if (pool_config->parallel_mode)
 		{
-			/* analyze query */
+      /* The Query is analyzed first in a parallel mode(in_parallel_query), 
+       * and, next, the Query is rewritten(rewrite_query_stmt).
+       */
+ 
+			/* analyze the query */
 			RewriteQuery *r_query = is_parallel_query(node,backend);
 
 			if(r_query->is_loadbalance)
 			{
+        /* Usual processing of pgpool is done by using the rewritten Query 
+         * if judged a possible load-balancing as a result of analyzing 
+         * the Query. 
+         * Of course, the load is distributed only for load_balance_mode=true. 
+         */
 				if(r_query->r_code ==  SEND_LOADBALANCE_ENGINE)
 				{
 					/* use rewritten query */
@@ -241,8 +250,11 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 				pool_debug("SimpleQuery: loadbalance_query =%s",string);
 			}
 			else if (r_query->is_parallel)
-			{
-				/* call parallel exe engine */
+			{ 
+				/* 
+				 * For the Query that the parallel processing is possible.
+				 * Call parallel exe engine and return status to the upper layer.
+				 */
 				POOL_STATUS stats = pool_parallel_exec(frontend,backend,r_query->rewrite_query, node,true);
 				free_parser();
 				in_progress = 0;
@@ -250,8 +262,8 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 			}
 			else if(!r_query->is_pg_catalog)
 			{
+				/* rewrite query and execute */
 				r_query = rewrite_query_stmt(node,frontend,backend,r_query);
-				/* rewrite query phase */
 				if(r_query->type == T_InsertStmt)
 				{
 					free_parser();
@@ -268,6 +280,9 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 					return r_query->status;
 				}
  			}
+			/*
+			 * The same processing as usual pgpool is done to other Query type.
+       */
 		}
 
 		/* check COPY FROM STDIN
