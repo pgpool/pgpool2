@@ -1,3 +1,85 @@
+2.2 (urukiboshi) 2009/2/?
+	  * Version 2.2
+
+	  This version enhances SERIAL data type handling and on line
+	  recovery. Also an important bug, serializable transactions could
+	  cause data inconsistency among DB nodes, is fixed. Also query
+	  cancelation, which never worked since pgpool-II was born, is
+	  finally fixed.
+
+	  * New features
+
+		- With insert_lock, now a table is locked only if it has
+          SERIAL data type and now the default value for insert_lock
+          is true(Tatsuo)
+
+		- Add client_idle_limit_in_recovery directive. This will
+		  prevent 2nd stage of on line recovery from not going forward
+		  by idle clients sitting forever(Tatsuo)
+
+		- Add pid_file_name directive which specifies a path to the
+		  file containing pgpool process id. "logdir" is no more used(Tatsuo)
+
+		- Allow to load balance DECLARE, FETCH and CLOSE(Tatsuo)
+
+	  * Bug fixes
+
+		- Close all file descriptors when running in daemon mode.
+		  Otherwise we inherit sockets from apache when it's started by
+		  pgpoolAdmin. This results in that port 80 is occupied for
+		  example.  Patch provided by Akio Ishida. Also add
+		  chdir("/"). This is always good for daemon programs(Tatsuo)
+
+	    - Allow MD5 authentication in raw mode as stated in docs(Tatsuo)
+
+		- Check transaction serialization failure error in
+		  serializable mode and abort all nodes if so. Otherwise we
+		  allow data inconsistency among DB nodes(Tatsuo).
+
+		  See following scenario: (M:master, S:slave)
+
+		  	M:S1:BEGIN;
+			M:S2:BEGIN;
+			S:S1:BEGIN;
+			S:S2:BEGIN;
+			M:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+			M:S2:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+			S:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+			S:S2:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+			M:S1:UPDATE t1 SET i = i + 1;
+			S:S1:UPDATE t1 SET i = i + 1;
+			M:S2:UPDATE t1 SET i = i + 1; <-- blocked
+			S:S1:COMMIT;
+			M:S1:COMMIT;
+			M:S2:ERROR:  could not serialize access due to concurrent update
+			S:S2:UPDATE t1 SET i = i + 1; <-- success in UPDATE and data becomes inconsistent!
+
+		- avoid kind mismatch error caused by "SET TRANSACTION
+		  ISOLATION LEVEL must be called before any query"(Tatsuo).
+
+		   This could happen in following scenario:
+
+		    M:S1:BEGIN;
+            S:S1:BEGIN;
+			M:S1:SELECT 1; <-- only sent to MASTER
+			M:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+			S:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+			M: <-- error
+			S: <-- ok since no previous SELECT is sent. kind mismatch error occurs!
+
+		- Query cancelation now works. It never works since pgpool-II
+          was born.
+
+	  * Incompatible changes
+
+		- Always fail over and restart all children. Before we do
+		  restart only if master has not been changed. This is
+		  wrong. If we have trouble with network cable or something,
+		  TCP/IP stack keeps on retrying for long time and the only
+		  way to prevent it is restarting process(Tatsuo)
+
+	  * "logdir" is no more used. Instead use "pid_file_name"(Tatsuo)
+
 2.1 (inamiboshi) 2008/7/25
       * Version 2.1
 

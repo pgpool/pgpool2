@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Fri Nov  7 18:02:24 JST 2008
+Last modified: Sun Jan 25 19:28:56 JST 2009
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -52,15 +52,6 @@ and a PostgreSQL database client. It provides the following features.</p>
 <p>
 <ul>
 
-<li>Limiting Exceeding Connections</li>
-    <p>There is a limit on the maximum number of concurrent
-connections with PostgreSQL, and connections are rejected after this
-many connections. Setting the maximum number of connections, however,
-increases resource consumption and affect system
-performance. pgpool-II also has a limit on the maximum number of
-connections, but extra connections will be queued instead of returning
-an error immediately.</p>
-
 <li>Connection Pooling</li>
     <p>pgpool-II saves connections to the PostgreSQL servers, and reuse
 them whenever a new connection with the same properties
@@ -82,6 +73,15 @@ system's overall throughput. At best, performance improves
 proportionally to the number of PostgreSQL servers. Load balance works
 best in a situation where there are a lot of users executing many
 queries at the same time.</p>
+
+<li>Limiting Exceeding Connections</li>
+    <p>There is a limit on the maximum number of concurrent
+connections with PostgreSQL, and connections are rejected after this
+many connections. Setting the maximum number of connections, however,
+increases resource consumption and affect system
+performance. pgpool-II also has a limit on the maximum number of
+connections, but extra connections will be queued instead of returning
+an error immediately.</p>
 
 <li>Parallel Query</li>
     <p>Using the parallel query function, data can be divided
@@ -422,10 +422,17 @@ servers.</p>
 
   <dt>logdir</dt>
   <dd>
-      <p>The directory path of the logs created by
-      pgpool-II. Currently, only the <code>pgpool.pid</code> file is
-      created. Default is <code>'/tmp'</code>.
-      You need to restart pgpool-II if you change logdir.
+      <p>The directory path of the logs. pgpool-II 2.2 or later does not
+      use this directive. In the future pgpool-II might implement its
+      own logging system and we leave this directive as it is.
+       </p>
+  </dd>
+
+  <dt>pid_file_name</dt>
+  <dd>
+      <p>Full path to a file which contains pgpool's process id.
+	   Default is "/var/run/pgpool/pgpool.pid".
+    You need to restart pgpool-II if you change the value.
        </p>
   </dd>
 
@@ -750,6 +757,7 @@ configuration parameters below must be set in addtion to everything above.</p>
       terminates the query. Default is false.</p>
   </dd>
 
+<a name="replicate_select">
   <dt>replicate_select</dt>
   <dd>
       <p>When set to true, pgpool-II replicate SELECTs. If false,
@@ -840,11 +848,10 @@ be lost). To achieve this, however, the following change must be made:
       executed (if already in transaction, simply adds LOCK TABLE
       ....).
 
-      The downside for this is that pgpool-II does not know which
-      table has SERIAL columns, so all the INSERT statements will
-      acquire table locks.
+      As of pgpool-II 2.2, it automatically detects if the table has a
+      SERIAL columns or not, so only tables having SERIAL columns are locked.
 
-      To avoid this problem, there are two options:
+      Also you might want to make a fine control:
       </p>
 
       <ol>
@@ -978,6 +985,11 @@ comments just in front of the SELECT query:
 <pre>
   /*REPLICATION*/ SELECT ...
 </pre>
+</p>
+
+<p>
+Please refer to <a href="#replicate_select">replicate_select</a> as well.
+See also a <a href="load_balance.png">flow chart</a>.
 </p>
 
 <p>
