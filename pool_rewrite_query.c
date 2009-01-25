@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2008	PgPool Global Development Group
+ * Copyright (c) 2003-2009	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -34,7 +34,6 @@ static void examInsertStmt(Node *node,POOL_CONNECTION_POOL *backend,RewriteQuery
 static void examSelectStmt(Node *node,POOL_CONNECTION_POOL *backend,RewriteQuery *message);
 static char *delimistr(char *str);
 static int direct_parallel_query(RewriteQuery *message);
-static int check_whereClause(Node *where);
 static void initMessage(RewriteQuery *message);
 static void initdblink(ConInfoTodblink *dblink, POOL_CONNECTION_POOL *backend);
 static void analyze_debug(RewriteQuery *message);
@@ -461,35 +460,6 @@ RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNE
 
 #define POOL_PARALLEL "pool_parallel"
 #define POOL_LOADBALANCE "pool_loadbalance"
-
-static int check_whereClause(Node *where)
-{
-	if(IsA(where,SubLink) || IsA(where,RangeSubselect)
-		|| IsA(where,FuncCall) || IsA(where, RowExpr))
-	{
-		return 1;
-	}
-	else if(IsA(where, A_Expr))
-	{
-		A_Expr *expr = (A_Expr *) where;
-		int count = 0;
-
-		if(expr->lexpr)
-		{
-			count = check_whereClause(expr->lexpr);
-		}
-
-		if(expr->rexpr)
-		{
-			count += check_whereClause(expr->rexpr);
-		}
-		return count;
-	}
-	else
-	{	
-		return 0;
-	}
-}
 
 /*
  * After analyzing query, check the analyze[0]->state.
