@@ -56,6 +56,9 @@ authentication_timeout = 60
 # Logging directory
 logdir = '/tmp'
 
+# pid file name
+pid_file_name = '/var/run/pgpool/pgpool.pid'
+
 # Replication mode
 replication_mode = false
 
@@ -73,6 +76,8 @@ replicate_select = false
 
 # Semicolon separated list of queries to be issued at the end of a session
 reset_query_list = 'ABORT; RESET ALL; SET SESSION AUTHORIZATION DEFAULT'
+# for 8.3 or newer PostgreSQL versions following is recommended.
+# reset_query_list = 'ABORT; DISCARD ALL'
 
 # If true print timestamp on each log line.
 print_timestamp = true

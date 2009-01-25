@@ -56,7 +56,7 @@
 #define DEFAULT_SOCKET_DIR "/tmp"
 
 /* pid file name */
-#define PID_FILE_NAME "pgpool.pid"
+#define DEFAULT_PID_FILE_NAME "/var/run/pgpool/pgpool.pid"
 
 typedef enum {
 	POOL_CONTINUE = 0,
@@ -134,6 +134,7 @@ typedef struct {
 	int authentication_timeout; /* maximum time in seconds to complete client authentication */
     int	max_pool;	/* max # of connection pool per child */
     char *logdir;		/* logging directory */
+    char *pid_file_name;		/* pid file name */
     char *backend_socket_dir;	/* Unix domain socket directory for the PostgreSQL server */
 	int replication_mode;		/* replication mode */
 
