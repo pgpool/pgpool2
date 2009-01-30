@@ -38,6 +38,8 @@ static void initMessage(RewriteQuery *message);
 static void initdblink(ConInfoTodblink *dblink, POOL_CONNECTION_POOL *backend);
 static void analyze_debug(RewriteQuery *message);
 
+
+/* create error message  */
 char *pool_error_message(char *message)
 {
 	String *str;
@@ -47,6 +49,10 @@ char *pool_error_message(char *message)
 	return str->data;
 }
 
+/*
+ *  search DistDefInfo(this info is build in starting process 
+ *  and get node id where a query send.
+ */ 
 static int getInsertRule(ListCell *lc,List *list_t ,DistDefInfo *info,int div_key_num)
 {
 	int loop_counter = 0;
@@ -112,7 +118,8 @@ static int getInsertRule(ListCell *lc,List *list_t ,DistDefInfo *info,int div_ke
 }
 
 /*
- * This function processes the decision whether to distribute the insert sentence to the node. 
+ * This function processes the decision whether to 
+ * distribute the insert sentence to the node. 
  */
 static void examInsertStmt(Node *node,POOL_CONNECTION_POOL *backend, RewriteQuery *message)
 {
@@ -263,6 +270,7 @@ static void examInsertStmt(Node *node,POOL_CONNECTION_POOL *backend, RewriteQuer
 	message->rewrite_query = nodeToString(node);
 }
 
+/* start of rewriting query */
 static void examSelectStmt(Node *node,POOL_CONNECTION_POOL *backend,RewriteQuery *message)
 {
 	static ConInfoTodblink dblink;
@@ -275,10 +283,11 @@ static void examSelectStmt(Node *node,POOL_CONNECTION_POOL *backend,RewriteQuery
 	message->type = node->type;
 	message->r_code = SELECT_DEFAULT;
 
+  /* do rewrite query */
 	nodeToRewriteString(message,&dblink,node);
 }
 
-
+/* initialize Message */
 static void initMessage(RewriteQuery *message)
 {
 	message->r_code = 0;
@@ -298,6 +307,7 @@ static void initMessage(RewriteQuery *message)
 	message->ret_num = 0;
 }
 
+/* set dblink info */
 static void initdblink(ConInfoTodblink *dblink,POOL_CONNECTION_POOL *backend)
 {
 	dblink->dbname =  MASTER_CONNECTION(backend)->sp->database;
@@ -307,6 +317,7 @@ static void initdblink(ConInfoTodblink *dblink,POOL_CONNECTION_POOL *backend)
 	dblink->password = MASTER_CONNECTION(backend)->con->password;
 }
 
+/* reference of pg_catalog or not */
 int IsSelectpgcatalog(Node *node,POOL_CONNECTION_POOL *backend)
 {
 	static ConInfoTodblink dblink;
@@ -333,6 +344,10 @@ int IsSelectpgcatalog(Node *node,POOL_CONNECTION_POOL *backend)
 	}
 }
 
+/* 
+ *  SELECT statement or INSERT statement is special, 
+ *  peculiar process is needed in parallel mode.
+ */
 RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNECTION_POOL *backend,RewriteQuery *message)
 {
 	switch(node->type)
@@ -341,9 +356,9 @@ RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNE
 		{
 			SelectStmt *stmt = (SelectStmt *)node;
  
-      /* Because "SELECT INTO" cannot be used in a parallel mode, 
-       * the error message is generated and send "ready for query" to frontend. 
-       */    
+			 /* Because "SELECT INTO" cannot be used in a parallel mode, 
+			  * the error message is generated and send "ready for query" to frontend. 
+			  */    
 			if(stmt->intoClause)
 			{
 				pool_send_error_message(frontend, MAJOR(backend), "XX000",
@@ -474,6 +489,8 @@ static int direct_parallel_query(RewriteQuery *message)
 		return 0;
 }
 
+
+/* escape delimiter character */
 static char *delimistr(char *str)
 {
 	char *result;
@@ -499,6 +516,7 @@ static char *delimistr(char *str)
 	return result;
 }
 
+/* for debug */
 void analyze_debug(RewriteQuery *message)
 {
 	int analyze_num,i;

@@ -30,7 +30,7 @@
 #include "parser/pool_string.h"
 
 /* return code set */
-#define INSERT_SQL_RESTRICTION 1
+#define INSERT_SQL_RESTRICTION 1 
 #define SELECT_INIT 2
 #define SELECT_BACKEND_CONNECT 3
 #define SELECT_NOT_BACKEND_CONNECT 4
@@ -51,46 +51,46 @@
 #define SELECT_ANALYZE 19
 #define SELECT_DEFAULT_PREP 20
 
-/* build TARGET-LIST */
+/* build Sub-Select`s target List */
 typedef struct {
-	char **col_list;		/* column list */
-	char **type_list;		/* type list */
-	int  *return_list;
-	int col_num;
-	bool valid;
-}SelectDefInfo;
+	char **col_list;    /* column list */
+	char **type_list;   /* type list */
+	int  *return_list;  /* order of col_list */
+	int col_num;        /* column number */
+	bool valid;         /* return to frontend */
+} SelectDefInfo;
 
-/* This struct is used as  TARGET-LIST of Sub-Select */
+/* This struct is used as each table/sub-select of FROM-CLUASE */
 typedef struct {
-	DistDefInfo *distinfo;
-	RepliDefInfo *repliinfo;
-	SelectDefInfo *selectinfo;
-	char *alias;
-	char state;
-	int ret_num;
+	DistDefInfo *distinfo;     /* distribution table into */
+	RepliDefInfo *repliinfo;   /* replication table info */
+	SelectDefInfo *selectinfo; /* Sub-Select info */
+	char *alias;               /* alias name */
+	char state;                /* P = parallel, L = loadbarance S = systemdb(dblink) E = error*/
+	int ret_num;               /* build column number */
 } RangeInfo;
 
 /* build Virtual Table of FROM-Cluase */
 typedef struct {
-	char **col_list;		/* column list */
-	char **type_list;		/* type list */
-	char **table_list;		/* table list */
-	char *state_list;
-	int *column_no;
-	int *valid;
-	int col_num;	
+	char **col_list;     /* column list */
+	char **type_list;    /* type list */
+	char **table_list;   /* table list */
+	char *state_list;    /* state of each column */
+	int *column_no;      /* order of column */
+	int *valid;          /* valid column is true */
+	int col_num;         /* virtual table column num */
 } VirtualTable;
 
 /* this struct is used by JOIN Expr */
 typedef struct {
-	char **col_list;		/* column list */
-	char **type_list;		/* type list */
-	char **table_list;		/* table list */
-	char state;
-	int *valid;
-	int col_num;
-	char **using_list;	
-	int using_length;
+	char **col_list;      /* column list */
+	char **type_list;     /* type list */
+	char **table_list;    /* table list */
+	char state;           /* P = parallel, L = loadbarance S = systemdb(dblink) E = error*/
+	int *valid;           /* valid column is true */
+	int col_num;          /* number of colum */
+	char **using_list;    /* if join expr has using-list, column name is listed up */
+	int using_length;     /* column number of using-list */
 } JoinTable;
 
 /* this struct is used in optimization of aggregate opr */
@@ -99,78 +99,79 @@ typedef struct {
 	FuncCall **tfunc_p; /* targetlist funcs   */
 	ColumnRef **col_p;  /* group by columns   */
 	FuncCall **hfunc_p; /* having   funcs */
-	int	*umapc;
-	int u_num; /* targetlist columns num */
-	int t_num; /* targetlist funcs num */
-	int c_num; /* group by column num */
-	int h_num; /* having funcs num */
-  int hc_num;/* having column num */
-  int s_num; /* sort funcs num */
-  int sc_num; /* sort column num */
-	bool opt;
+	int *umapc; /* order of number */ 
+	int u_num;  /* targetlist columns num */
+	int t_num;  /* targetlist funcs num */
+	int c_num;  /* group by column num */
+	int h_num;  /* having funcs num */
+	int hc_num; /* having column num */
+	int s_num;  /* sort funcs num */
+	int sc_num; /* sort column num */
+	bool opt;   /* optimization flag */
 } Aggexpr;
 
 /* main struct of alanyzing query */
 typedef struct {
-  int now_select;
-	int part;
-  int last_select;
-	int call_part;
-  int from_num;
-	int larg_count;
-	int rarg_count;
-	int ret_count;
-  char state;
-  char *table_name;
-	char partstate[8];
-	bool select_union;
-	bool select_range;
-	bool aggregate;
-	bool retlock;
-	Aggexpr *aggexpr;
-	RangeInfo **range;
-	int rangeinfo_num;
-	VirtualTable *virtual;
-	JoinTable *join;
-	SelectDefInfo *select_ret;
+	int now_select;  /* rank of select */
+	int part;        /* the postion of analyzing select statement */
+	int last_select; /* caller select rank */
+	int call_part;   /* caller's potion */
+	int from_num;    /* number for from-cluase */
+	int larg_count;  /* left arg count */
+	int rarg_count;  /* right arg count */
+	int ret_count;   /* return list count */
+	char state;      /* final state */
+	char *table_name; /* table name or virtual table name */
+	char partstate[8]; /* state of analyzing part */
+	bool select_union; /* if UNION is used, this flag is true */
+	bool select_range; /* RangeSubSelect is used  */
+	bool aggregate;    /* aggregate optimaztion ? */
+	bool retlock;      /* this is used  */ 
+	Aggexpr *aggexpr;   /* Aggexpr in this statement*/
+	RangeInfo **range;  /* RangeInfo in from cluase */
+	int rangeinfo_num;  /* RangeInfo's number in this select statement*/
+	VirtualTable *virtual; /* Virtual Table in this select statment */
+	JoinTable *join;       /* sumary of join table */
+	SelectDefInfo *select_ret; /* build return list */
 } AnalyzeSelect;
 
-/* This struct is used as Information that relates 
+/*
+ * This struct is used as Information that relates 
  * to distribution processing of parallel query
  */
 typedef struct {
-	int r_code; 
-	int r_node;
-	int part;
-	int rewritelock;
-	int analyze_num;
-	int current_select;
-	int ignore_rewrite;
-	int column;
-	int virtual_num;
-	int ret_num;
-	bool is_pg_catalog;
-	bool is_loadbalance;
-	bool is_parallel;
-	bool fromClause;
-	char *table_relname;
-	char *table_alias;
-	char *schemaname;
-	char *dbname;
-	char *rewrite_query;
-	char table_state;
-	POOL_STATUS status;
-	NodeTag type;
-	AnalyzeSelect **analyze;
+	int r_code;           /* analyze or rewrite */
+	int r_node;           /* which node, query is sent */
+	int part;             /* part of select statment */
+	int rewritelock;      /* dblink start postion and lock rewrite */
+	int analyze_num;      /* sum of AnalyzeSelect */
+	int current_select;   /* postion of analyze[] */  
+	int ignore_rewrite;   /* dont rewrite */
+	int column;           /* column number */
+	int virtual_num;     /* Virtual table column number */
+	int ret_num;         /* expect return cloumn number */
+	bool is_pg_catalog;  /* reference of pg_catalog */
+	bool is_loadbalance; /* load ballance ? */
+	bool is_parallel;    /* can paralle exec ? */
+	bool fromClause;     /* having FromCluase ? */
+	char *table_relname; /* table name */
+	char *table_alias;   /* table alias name */
+	char *schemaname;    /* schema */
+	char *dbname;        /* connect dbname */
+	char *rewrite_query; /* execute query */
+	char table_state;    /* final state */
+	POOL_STATUS status;  /* return POOL_STATUS */
+	NodeTag type;        /* Query Type */
+	AnalyzeSelect **analyze;  /* point to analyzing result */
 } RewriteQuery;
 
 /* This info is used in dblink */
 typedef struct {
-	char *hostaddr;
-	char *dbname;
-	char *user;
-	int   port;
-	char *password;
+	char *hostaddr; /* hostname */
+	char *dbname;   /* data base name */
+	char *user;     /* access user name */
+	int   port;     /* access port number */
+	char *password;  /* passward of connection */
 } ConInfoTodblink;
 
 extern RewriteQuery *rewrite_query_stmt(Node *node, POOL_CONNECTION *frontend,POOL_CONNECTION_POOL *backend,RewriteQuery *message);
@@ -178,6 +179,5 @@ extern void nodeToRewriteString(RewriteQuery *message, ConInfoTodblink *dblink,v
 char *pool_error_message(char *message);
 extern int IsSelectpgcatalog(Node *node,POOL_CONNECTION_POOL *backend);
 extern RewriteQuery *is_parallel_query(Node *node,POOL_CONNECTION_POOL *backend);
-
 extern POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,POOL_CONNECTION_POOL *backend, char *string,Node *node,bool send_to_frontend);
 
