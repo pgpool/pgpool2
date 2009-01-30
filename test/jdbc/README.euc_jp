@@ -6,7 +6,11 @@ JDBC ドライバテストスイートでは、JDBC ドライバを使って pgpool へ接続し、
 
 1.1 準備
 あらかじめ CLASSPATH に JDBC ドライバの jar ファイルを通しておいてくだ
-さい。接続先等のテスト環境の設定は pgpool.properties で定義します。
+さい。例を示します。
+
+export CLASSPATH=.:/home/t-ishii/lib/postgresql-8.3-604.jdbc4.jar 
+
+接続先等のテスト環境の設定は pgpool.properties で定義します。
 
   pgpooltest.host=localhost
   pgpool が動作しているホスト名を指定します。
