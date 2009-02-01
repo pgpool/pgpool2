@@ -7,11 +7,14 @@
 	  cancelation, which never worked since pgpool-II was born, is
 	  finally fixed.
 
-	  * New features
+	  * New features/enhancements
 
 		- With insert_lock, now a table is locked only if it has
           SERIAL data type and now the default value for insert_lock
           is true(Tatsuo)
+
+		- Start internal transaction other than INSERT, UPDATE, DELETE
+          and SELECT to keep node consistency(Tatsuo)
 
 		- Add client_idle_limit_in_recovery directive. This will
 		  prevent 2nd stage of on line recovery from not going forward
