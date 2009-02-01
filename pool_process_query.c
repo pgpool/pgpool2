@@ -71,6 +71,9 @@ static int detect_error(POOL_CONNECTION *master, char *error_code, int major, ch
 static int detect_postmaster_down_error(POOL_CONNECTION *master, int major);
 static void free_select_result(POOL_SELECT_RESULT *result);
 
+static bool is_internal_transaction_needed(Node *node);
+static int compare(const void *p1, const void *p2);
+
 int in_load_balance;	/* non 0 if in load balance mode */
 int selected_slot;		/* selected DB node */
 int master_slave_dml;	/* non 0 if master/slave mode is specified in config file */
@@ -3859,16 +3862,106 @@ void query_ps_status(char *query, POOL_CONNECTION_POOL *backend)
 	set_ps_display(psbuf, false);
 }
 
+/* compare function for bsearch() */
+static int compare(const void *p1, const void *p2)
+{
+	int 	v1,	v2;
+
+	v1 = *(NodeTag *) p1;
+	v2 = *(NodeTag *) p2;
+	return (v1 > v2) ? 1 : ((v1 == v2) ? 0 : -1);
+}
+
+/* return true if needed to start a transaction for the nodetag */
+static bool is_internal_transaction_needed(Node *node)
+{
+	static NodeTag nodemap[] = {
+		T_InsertStmt,
+		T_DeleteStmt,
+		T_UpdateStmt,
+		T_SelectStmt,
+		T_AlterTableStmt,
+		T_AlterDomainStmt,
+		T_GrantStmt,
+		T_GrantRoleStmt,
+		T_ClosePortalStmt,
+		T_ClusterStmt,
+		T_CopyStmt,
+		T_CreateStmt,	/* CREAE TABLE */
+		T_DefineStmt,	/* CREATE AGGREGATE, OPERATOR, TYPE */
+		T_DropStmt,		/* DROP TABLE etc. */
+		T_TruncateStmt,
+		T_CommentStmt,
+		T_FetchStmt,
+		T_IndexStmt,	/* CREATE INDEX */
+		T_CreateFunctionStmt,
+		T_AlterFunctionStmt,
+		T_RemoveFuncStmt,
+		T_RenameStmt,	/* ALTER AGGREGATE etc. */
+		T_RuleStmt,		/* CREATE RULE */
+		T_NotifyStmt,
+		T_ListenStmt,
+		T_UnlistenStmt,
+		T_ViewStmt,		/* CREATE VIEW */
+		T_LoadStmt,
+		T_CreateDomainStmt,
+		T_CreatedbStmt,
+		T_DropdbStmt,
+		T_CreateSeqStmt,
+		T_AlterSeqStmt,
+		T_VariableSetStmt,		/* SET */
+		T_CreateTrigStmt,
+		T_DropPropertyStmt,
+		T_CreatePLangStmt,
+		T_DropPLangStmt,
+		T_CreateRoleStmt,
+		T_AlterRoleStmt,
+		T_DropRoleStmt,
+		T_LockStmt,
+		T_ConstraintsSetStmt,
+		T_ReindexStmt,
+		T_CreateSchemaStmt,
+		T_AlterDatabaseStmt,
+		T_AlterDatabaseSetStmt,
+		T_AlterRoleSetStmt,
+		T_CreateConversionStmt,
+		T_CreateCastStmt,
+		T_DropCastStmt,
+		T_CreateOpClassStmt,
+		T_CreateOpFamilyStmt,
+		T_AlterOpFamilyStmt,
+		T_RemoveOpClassStmt,
+		T_RemoveOpFamilyStmt,
+		T_PrepareStmt,
+		T_ExecuteStmt,
+		T_DeallocateStmt,
+		T_DeclareCursorStmt,
+		T_CreateTableSpaceStmt,
+		T_DropTableSpaceStmt,
+		T_AlterObjectSchemaStmt,
+		T_AlterOwnerStmt,
+		T_DropOwnedStmt,
+		T_ReassignOwnedStmt,
+		T_CompositeTypeStmt,	/* CREATE TYPE */
+		T_CreateEnumStmt,
+		T_AlterTSDictionaryStmt,
+		T_AlterTSConfigurationStmt
+	};
+
+	return bsearch(&nodeTag(node), nodemap, sizeof(nodemap)/sizeof(nodemap[0]), sizeof(NodeTag), compare) != NULL;
+}
+
 POOL_STATUS start_internal_transaction(POOL_CONNECTION_POOL *backend, Node *node)
 {
 	int i;
 
+	if (TSTATE(backend) != 'I')
+		return POOL_CONTINUE;
+
 	/* if we are not in a transaction block,
 	 * start a new transaction
 	 */
-	if (TSTATE(backend) == 'I' &&
-		(IsA(node, InsertStmt) || IsA(node, UpdateStmt) ||
-		 IsA(node, DeleteStmt) || IsA(node, SelectStmt)))
+	if (is_internal_transaction_needed(node))
 	{
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
