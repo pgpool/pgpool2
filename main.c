@@ -1343,6 +1343,10 @@ static void failover(void)
 	}
 
 	switching = 0;
+
+	/* kick wakeup_handler in pcp_child to notice that
+	 * faiover/failback done
+	 */
 	kill(pcp_pid, SIGUSR2);
 }
 
@@ -1388,7 +1392,7 @@ int health_check(void)
 
 	for (i=0;i<pool_config->backend_desc->num_backends;i++)
 	{
-		pool_debug("health_check: %d the DB node status: %d", i, BACKEND_INFO(i).backend_status);
+		pool_debug("health_check: %d th DB node status: %d", i, BACKEND_INFO(i).backend_status);
 
 		if (BACKEND_INFO(i).backend_status == CON_UNUSED ||
 			BACKEND_INFO(i).backend_status == CON_DOWN)
