@@ -134,13 +134,20 @@ int start_recovery(int recovery_node)
 
 	pool_log("%d node restarted", recovery_node);
 
+	/*
+	 * reset failover completion flag.  this is necessary since
+	 * previous failover/failback will set the flag to 1.
+	 */
+	pcp_wakeup_request = 0;
+
+	/* send failback request to pgpool parent */
 	send_failback_request(recovery_node);
 
 	/* wait for failback */
 	while (!pcp_wakeup_request)
 	{
 		struct timeval t = {1, 0};
-		/* polling SIGUSR2 signal per 1 sec */
+		/* polling SIGUSR2 signal every 1 sec */
 		select(0, NULL, NULL, NULL, &t);
 	}
 	pcp_wakeup_request = 0;
