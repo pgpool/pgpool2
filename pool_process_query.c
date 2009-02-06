@@ -1009,6 +1009,11 @@ void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	strncpy(status[i].desc, "logging directory", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	strncpy(status[i].name, "pid_file_name", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->pid_file_name);
+	strncpy(status[i].desc, "path to pid file", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	strncpy(status[i].name, "backend_socket_dir", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->backend_socket_dir);
 	strncpy(status[i].desc, "Unix domain socket directory for the PostgreSQL server", POOLCONFIG_MAXDESCLEN);
@@ -3990,7 +3995,7 @@ POOL_STATUS end_internal_transaction(POOL_CONNECTION_POOL *backend)
 
 	/*
 	 * We must block all signals. If pgpool SIGTERM, SIGINT or SIGQUIT
-	 * is delivered, it possibly causes data consistency.
+	 * is delivered, it could cause data inconsistency.
 	 */
 	POOL_SETMASK2(&BlockSig, &oldmask);
 
