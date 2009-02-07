@@ -93,8 +93,14 @@
           debugging or logging verboseness is set, PostgreSQL might
           sends NOTICE before ReadyForQuery(Tatsuo)
 
-		- Query cancelation now works. It never works since pgpool-II
+		- Query cancelation now works. It never worked since pgpool-II
           was born(Tatsuo)
+
+		- Fix online recovery to wait for failback done before
+          allowing to accept connections from clients. It was supposed
+          to work like this but actually was not since the day 0 when
+          online recovery was born. Without the fix there could be
+          potential data inconsistency among DB nodes(Tatsuo)
 
 	  * Incompatible changes
 
