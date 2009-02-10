@@ -3910,8 +3910,10 @@ static bool is_internal_transaction_needed(Node *node)
 		T_ViewStmt,		/* CREATE VIEW */
 		T_LoadStmt,
 		T_CreateDomainStmt,
-		T_CreatedbStmt,
-		T_DropdbStmt,
+		/*
+		  T_CreatedbStmt,	CREATE DATABASE/DROP DATABASE cannot execute inside a transaction block
+		  T_DropdbStmt,
+		*/
 		T_CreateSeqStmt,
 		T_AlterSeqStmt,
 		T_VariableSetStmt,		/* SET */
