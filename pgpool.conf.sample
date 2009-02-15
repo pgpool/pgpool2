@@ -76,7 +76,10 @@ replicate_select = false
 
 # Semicolon separated list of queries to be issued at the end of a session
 reset_query_list = 'ABORT; RESET ALL; SET SESSION AUTHORIZATION DEFAULT'
-# for 8.3 or newer PostgreSQL versions following is recommended.
+# for 8.3 or newer PostgreSQL versions DISCARD ALL can be used as
+# follows. However beware that DISCARD ALL holds exclusive lock on
+# pg_listener so it will be a serious performance problem if there are
+# lots of concurrent sessions.
 # reset_query_list = 'ABORT; DISCARD ALL'
 
 # If true print timestamp on each log line.

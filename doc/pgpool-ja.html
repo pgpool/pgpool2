@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Thu Feb  5 17:23:57 JST 2009
+Last modified: Wed Feb 11 18:51:39 JST 2009
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -697,7 +697,15 @@ raw$B%b!<%I$K2C$(!"%3%M%/%7%g%s%W!<%j%s%0$,MxMQ$G$-$k$h$&$K$J$j$^$9!#(B
 </table>
 </p>
 <p>
-   $B!V(BABORT$B!W$O!"(BPostgreSQL 7.4$B0J>e$G$O%H%i%s%6%/%7%g%s%V%m%C%/$NCf$K$$$J$$>l9g$K$OH/9T$5$l$^$;$s!#(B
+
+<ul>
+<li>$B!V(BABORT$B!W$O!"(BPostgreSQL 7.4$B0J>e$G$O%H%i%s%6%/%7%g%s%V%m%C%/$NCf$K$$(B
+	 $B$J$$>l9g$K$OH/9T$5$l$^$;$s!#(B
+<li>DISCARD ALL$B$O%7%9%F%`%F!<%V%k$N(Bpg_listener$B$KGSB>%m%C%/$r$+$1$k$?$a!"(B
+	 $BF1;~<B9T%;%C%7%g%s$,B?$$$H$-$O@-G=Dc2<$r5/$7$^$9!#(B
+	 $BF1;~<B9T%;%C%7%g%s$,B?$$>l9g$O!"LLE]$G$b(BDISCARD$B%3%^%s%I$GGK4~$7$?$$%*%V%8%'%/%H$r$$$A$$$A;XDj$9$k$3$H$r$*4+$a$7$^$9!#(B
+</ul>
+
 </p>
 
 <p>
@@ -2554,6 +2562,8 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
 <li>$B@_Dj9`L\(Bpid_file_name$B$,DI2C$5$l$^$7$?!#$3$l$O!"(Bpgpool-II$B$N(Bpid$B%U%!%$%k$r;XDj$7$^$9!#(B
 	 $B$3$l$K$h$j!"(Blogdir$B$O;HMQ$5$l$J$/$J$j$^$7$?(B(Tatsuo)$B!#(B
 <li>DECLARE, FETCH, CLOSE$B$GIi2YJ,;6$5$l$k$h$&$K$J$j$^$7$?(B(Tatsuo)$B!#(B
+<li>pcp$B%3%^%s%I$K%G%P%C%0%*%W%7%g%s(B(-d)$B$,DI2C$5$l$^$7$?(B(Jun Kuriyama)$B!#(B
+<li>"kind mismatch"$B%(%i!<$N:]$K!"860x$H$J$C$?%/%(%j$rI=<($9$k$h$&$K$7$^$7$?(B(Tatsuo)$B!#(B
 </ul>
 </p>
 
@@ -2622,6 +2632,9 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
 
 <li>$B%*%s%i%$%s%j%+%P%j$N8e%/%i%$%"%s%H$+$i$N@\B3$r<u$1IU$1$k%?%$%_%s%0$,Aa$9$.$k%P%0$r=$@5$7$^$7$?!#(B
 $B$3$N%P%0$K$h$j!"%N!<%I%G!<%?$N4S@-$,J]$?$l$J$$2DG=@-$,$"$j$^$7$?(B(Tatsuo)
+
+<li>SELECT, INSERT, UPDATE, DELETE$B0J30$N%3%^%s%I$G$bI,MW$J$i$P%H%i%s%6%/%7%g%s%V%m%C%/$NFbB&$G<B9T$9$k$h$&$K$7$^$7$?!#(B
+$B$3$l$K$h$j!"%(%i!<H/@8$N:]$K%m!<%k%P%C%/$7$F%N!<%I$N@09g@-$rJ]$D$3$H$,$G$-$^$9(B(Tatsuo)
 
 </ul>
 

@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Sun Jan 25 19:28:56 JST 2009
+Last modified: Wed Feb 11 18:50:45 JST 2009
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -720,6 +720,12 @@ configuration parameters in the raw mode and below.</p>
 <tr><td>8.3 or later</td><td>ABORT; DISCARD ALL</td></tr>
 </table>
 </p>
+<ul>
+<li>"ABORT" is not issued when not in a transaction block for 7.4 or later.
+<li>DISCARD ALL degrades performance since it aquires an exclusive lock on pg_listeners.
+If there will be many concurrent sessions, you might not want to use DISCARD ALL, rather you specify each object using DISCARD command.
+</ul>
+
 <p>
 You need to re-read pgpool.conf upon modification of this direrctive.
 </p>
