@@ -3,6 +3,7 @@ $Header$
 * General
 
 - drop table should be in a transactin block? It is judged here:
+  (this item was resolved in 2.2)
 
 POOL_STATUS start_internal_transaction(POOL_CONNECTION_POOL *backend, Node *node)
 {
@@ -44,6 +45,7 @@ POOL_STATUS start_internal_transaction(POOL_CONNECTION_POOL *backend, Node *node
 2009-01-09 00:25:52 JST t-ishii test 878 LOG:  unexpected EOF on client connection
 
 - BEGIN; BEGIN; causes:
+  (this item was resolved in 2.2)
 
   ERROR:  kind mismatch among backends 0[N] 1[E]
 
