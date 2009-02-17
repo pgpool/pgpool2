@@ -3955,7 +3955,19 @@ static bool is_internal_transaction_needed(Node *node)
 		T_AlterTSConfigurationStmt
 	};
 
-	return bsearch(&nodeTag(node), nodemap, sizeof(nodemap)/sizeof(nodemap[0]), sizeof(NodeTag), compare) != NULL;
+	if (bsearch(&nodeTag(node), nodemap, sizeof(nodemap)/sizeof(nodemap[0]), sizeof(NodeTag), compare) != NULL)
+	{
+		/*
+		 * chek CREATE INDEX CONCURRENTLY. If so, do not start transaction
+		 */
+		if (IsA(node, IndexStmt))
+		{
+			if (((IndexStmt *)node)->concurrent)
+				return false;
+		}
+		return true;
+	}
+	return false;
 }
 
 POOL_STATUS start_internal_transaction(POOL_CONNECTION_POOL *backend, Node *node)
