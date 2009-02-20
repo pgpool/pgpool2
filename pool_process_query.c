@@ -1391,7 +1391,9 @@ void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 /*
  * send "terminate"(X) message to all backends, indicating that
  * backend should prepare to close connection to frontend (actually
- * pgpool)
+ * pgpool). Note that caller must be protecedt from a signal
+ * interruption while calling this function. Otherwise the number of
+ * valid backends might be changed by failover/failback.
  */
 void pool_send_frontend_exits(POOL_CONNECTION_POOL *backend)
 {
@@ -1400,9 +1402,12 @@ void pool_send_frontend_exits(POOL_CONNECTION_POOL *backend)
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
-		if (VALID_BACKEND(i))
+		/*
+		 * send a terminate message to backend if there's an existing
+		 * connection
+		 */
+		if (VALID_BACKEND(i) && CONNECTION_SLOT(backend, i))
 		{
-			/* send terminate message */
 			pool_write(CONNECTION(backend, i), "X", 1);
 
 			if (MAJOR(backend) == PROTO_MAJOR_V3)
