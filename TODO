@@ -2,6 +2,16 @@ $Header$
 
 * General
 
+- Prepare for changing postgresql.conf directives which produce 'S'
+  message. Othewise we get:
+
+  pool_process_query: 1 th kind S does not match with master or majority
+  connection kind C
+
+  ERROR: pid 26122: kind mismatch
+  among backends. Possible last query was: "UPDATE branches SET bbalance
+  = bbalance + -3820 WHERE bid = 1;" kind details are: 0[C] 1[S]
+
 - drop table should be in a transactin block? It is judged here:
   (this item was resolved in 2.2)
 
