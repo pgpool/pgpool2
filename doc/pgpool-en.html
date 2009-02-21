@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Wed Feb 11 18:50:45 JST 2009
+Last modified: Sat Feb 21 18:43:56 JST 2009
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1309,9 +1309,16 @@ in service. We call that "online recovery".
 <p>
 A recovery target node must have detached before doing online recovery.
 
-If you wish to add PostgreSQL server dynamically, add backend_*
+If you wish to add PostgreSQL server dynamically, add backend_hostname etc.
 parameters and reload pgpool.conf. pgpool-II registers a new node as a
 detached node.
+</p>
+
+<p>
+<font color="red">caution: Stop autovacuum on the master node (the
+first node which is up and running). Autovacuum may change the contents
+of the database and might cause inconsistency after online recovery if
+it's runnung.</font>
 </p>
 
 <p>
@@ -1537,6 +1544,22 @@ command. pgpool-II calls the script with three arguments.
 <p>
 The script copy physical file with rsync over ssh. So you need to
 connect over ssh without pass .
+</p>
+
+<p>
+Note of rsync:
+<ul>
+
+ <li>-z (or --compress) option does compression before transmitting
+	  data. This will be great for slower connection, but it might be a
+	  CPU overhead for a 100M or faster connectons. In this case you
+	  might want not to use the option.
+
+ <li>The latest version rsync 3.0.5 has great speed performance
+	  improvements (50% faster according to a report from pgpool-general
+	  mailing list.
+</ul>
+
 </p>
 
 <p>
