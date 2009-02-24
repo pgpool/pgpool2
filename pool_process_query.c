@@ -3434,11 +3434,39 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 
 		if (VALID_BACKEND(i))
 		{
-			if (pool_read(CONNECTION(backend, i), &kind, 1) < 0)
+			do
 			{
-				pool_error("pool_process_query: failed to read kind from %d th backend", i);
-				return POOL_ERROR;
-			}
+				char *p, *value;
+				int len;
+
+				if (pool_read(CONNECTION(backend, i), &kind, 1) < 0)
+				{
+					pool_error("read_kind_from_backend: failed to read kind from %d th backend", i);
+					return POOL_ERROR;
+				}
+
+				/*
+				 * Read and discard parameter status
+				 */
+				if (kind != 'S')
+				{
+					break;
+				}
+					
+				if (pool_read(CONNECTION(backend, i), &len, sizeof(len)) < 0)
+				{
+					pool_error("read_kind_from_backend: failed to read parameter status packet length from %d th backend", i);
+					return POOL_ERROR;
+				}
+				len = htonl(len) - 4;
+				p = pool_read2(CONNECTION(backend, i), len);
+				if (p == NULL)
+				{
+					pool_error("read_kind_from_backend: failed to read parameter status packet from %d th backend", i);
+				}
+				value = p + strlen(p) + 1;
+				pool_log("read_kind_from_backend: parameter name: %s value: %s", p, value);
+			} while (kind == 'S');
 
 			kind_list[i] = kind;
 
@@ -3502,7 +3530,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 			if (kind_list[i] != 0 && trust_kind != kind_list[i])
 			{
 				/* degenerate */
-				pool_error("pool_process_query: %d th kind %c does not match with master or majority connection kind %c",
+				pool_error("read_kind_from_backend: %d th kind %c does not match with master or majority connection kind %c",
 						   i, kind_list[i], trust_kind);
 				degenerate_node[degenerate_node_num++] = i;
 			}

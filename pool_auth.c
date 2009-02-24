@@ -1036,7 +1036,7 @@ int *pool_read_message_length2(POOL_CONNECTION_POOL *cp)
 
 			if (length != length0)
 			{
-				pool_error("pool_read_message_length2: message length (%d) in slot %d does not match with slot 0(%d)", length, i, length0);
+				pool_log("pool_read_message_length2: message length (%d) in slot %d does not match with slot 0(%d)", length, i, length0);
 			}
 
 			if (length < 0)
