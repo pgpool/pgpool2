@@ -1,9 +1,9 @@
-2.2 (urukiboshi) 2009/2/?
+2.2 (urukiboshi) 2009/2/28
 	  * Version 2.2
 
 	  This version enhances SERIAL data type handling and on line
 	  recovery. Also an important bug, serializable transactions could
-	  cause data inconsistency among DB nodes, is fixed. Also query
+	  cause data inconsistency among DB nodes, is fixed. Query
 	  cancelation, which never worked since pgpool-II was born, is
 	  finally fixed.
 
@@ -32,19 +32,20 @@
 
 	  * Bug fixes
 
-		- Close all file descriptors when running in daemon mode.
-		  Otherwise we inherit sockets from apache when it's started by
-		  pgpoolAdmin. This results in that port 80 is occupied for
-		  example.  Patch provided by Akio Ishida. Also add
-		  chdir("/"). This is always good for daemon programs(Tatsuo)
+	    - Close all file descriptors when running in daemon mode.
+	      Otherwise we inherit sockets from apache when it's
+	      started by pgpoolAdmin. This results in that port 80 is
+	      occupied for example.  Patch provided by Akio
+	      Ishida. Also add chdir("/"). This is always good for
+	      daemon programs(Tatsuo)
 
 	    - Allow MD5 authentication in raw mode as stated in docs(Tatsuo)
 
-		- Check transaction serialization failure error in
-		  serializable mode and abort all nodes if so. Otherwise we
-		  allow data inconsistency among DB nodes(Tatsuo).
+	    - Check transaction serialization failure error in
+	      serializable mode and abort all nodes if so. Otherwise
+	      we allow data inconsistency among DB nodes(Tatsuo).
 
-		  See following scenario: (M:master, S:slave)
+	      See following scenario: (M:master, S:slave)
 
 		  	M:S1:BEGIN;
 			M:S2:BEGIN;
@@ -67,7 +68,7 @@
 
 		   This could happen in following scenario:
 
-		    M:S1:BEGIN;
+	        M:S1:BEGIN;
             S:S1:BEGIN;
 			M:S1:SELECT 1; <-- only sent to MASTER
 			M:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
@@ -75,17 +76,16 @@
 			M: <-- error
 			S: <-- ok since no previous SELECT is sent. kind mismatch error occurs!
 
-		- Process status display has extra space on FreeeBSD(Jun
-          Kuriyama)
+		- Process status display has extra space on FreeeBSD(Jun Kuriyama)
 
 		- Fix incorrect kind mismatch detection case. e.g: BEGIN;
-          BEGIN; (Tatsuo)
+		  BEGIN; (Tatsuo)
 
 	    - If PostgreSQL sends lots of DEBUG message, sometimes pgpool
-          complains:
+	      complains:
 		  2008-11-08 22:41:53 ERROR: pid 23744: do_command: backend does not
 		  return ReadyForQuery. This due to a wrong assumption for the
-          client/server protocol(Tatsuo)
+		  client/server protocol(Tatsuo)
 
 		- Fix the case when sending an erronous query to abort
           transaction. It assumed that after sending an error query,
@@ -101,6 +101,15 @@
           to work like this but actually was not since the day 0 when
           online recovery was born. Without the fix there could be
           potential data inconsistency among DB nodes(Tatsuo)
+
+		- Fix pgpool-II crash after on line recovery. This happens
+          after the failback process adds a recovered node which has
+          no connection to the node(Tatsuo)
+
+		- Fix pgpool-II errors when postgresql.conf is reloaded. This
+          was caused by parameter status packet sent asynchronously
+          from backend, which indicates the internal setting of
+          backend has been changed(Tatsuo)
 
 	  * Incompatible changes
 

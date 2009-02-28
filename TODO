@@ -12,6 +12,15 @@ $Header$
   among backends. Possible last query was: "UPDATE branches SET bbalance
   = bbalance + -3820 WHERE bid = 1;" kind details are: 0[C] 1[S]
 
+  It seems PostgreSQL sends following parameter status at the *first* pgpool.conf reload only.
+
+2009-02-23 23:06:21 LOG:   pid 5611: name: is_superuser value: on
+2009-02-23 23:06:31 LOG:   pid 5627: name: DateStyle value: ISO, MDY
+2009-02-23 23:06:31 LOG:   pid 5626: name: DateStyle value: ISO, MDY
+2009-02-23 23:06:31 LOG:   pid 5622: name: DateStyle value: ISO, MDY
+
+  (this item was resolved in 2.2)
+
 - drop table should be in a transactin block? It is judged here:
   (this item was resolved in 2.2)
 
