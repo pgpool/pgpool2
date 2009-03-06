@@ -172,11 +172,25 @@ char **myargv;
 int main(int argc, char **argv)
 {
 	int opt;
+	int optindex;
 	int i;
 	int pid;
 	int size;
 	int retrycnt;
 	int sys_retrycnt;
+
+	static struct option long_options[] = {
+		{"hba-file", required_argument, NULL, 'a'},
+		{"clear-cache", no_argument, NULL, 'c'},
+		{"debug", no_argument, NULL, 'd'},
+		{"config-file", required_argument, NULL, 'f'},
+		{"pcp-password-file", required_argument, NULL, 'F'},
+		{"help", no_argument, NULL, 'h'},
+		{"mode", required_argument, NULL, 'm'},
+		{"no-daemon", no_argument, NULL, 'n'},
+		{"version", no_argument, NULL, 'v'},
+		{NULL, 0, NULL, 0}
+	};
 
 	myargc = argc;
 	myargv = argv;
@@ -185,7 +199,7 @@ int main(int argc, char **argv)
 	snprintf(pcp_conf_file, sizeof(pcp_conf_file), "%s/%s", DEFAULT_CONFIGDIR, PCP_PASSWD_FILE_NAME);
 	snprintf(hba_file, sizeof(hba_file), "%s/%s", DEFAULT_CONFIGDIR, HBA_CONF_FILE_NAME);
 
-	while ((opt = getopt(argc, argv, "a:cdf:F:hm:nv")) != -1)
+	while ((opt = getopt_long(argc, argv, "a:cdf:F:hm:nv", long_options, &optindex)) != -1)
 	{
 		switch (opt)
 		{
