@@ -1,7 +1,7 @@
-.\" Copyright 2004-2007 by PgPool Global Development Group
+.\" Copyright 2004-2009 by PgPool Global Development Group
 .\" This man page is subject to the same license as the rest of pgpool.
 .\"
-.TH PGPOOL 8 "27 Jan 2006"
+.TH PGPOOL 8 "08 Mar 2009"
 .\" Please adjust this date whenever revising the manpage.
 .hy 0
 .ad l
@@ -9,13 +9,12 @@
 .SH NAME
 pgpool \- PostgreSQL connection pool daemon
 .SH SYNOPSIS
-\fBpgpool\fR [ \fB\-d\fR ] [ \fB\-f\fR \fIfile\fR ] [ \fB\-n\fR ] [ \fB\-h\fR ]
+\fBpgpool\fR [ \fB\-c\fR] [ \fB\-f config_file\fR ] [ \fB\-F pcp_config_file\fR ] [ \fB\-a hba_file\fR ] [ \fB\-n\fR ] [ \fB\-d\fR ]
 .LP
-\fBpgpool\fR [ \fB\-d\fR ] [ \fB\-f\fR \fIfile\fR ] [ \fB\-m\fR \fImode\fR ] \fBstop\fR
+\fBpgpool\fR [ \fB\-f config_file\fR ] [ \fB\-F pcp_config_file\fR ] [ \fB\-a hba_file\fR ] [ \fB\-m\fR \fI{s[mart]|f[ast]|i[mmediate]}\fR ] \fBstop\fR
 .LP
-\fBpgpool\fR [ \fB\-d\fR ] [ \fB\-f\fR \fIfile\fR ] \fBreload\fR
+\fBpgpool\fR [ \fB\-f config_file\fR ] [ \fB\-F pcp_config_file\fR ] [ \fB\-a hba_file\fR ] \fBreload\fR
 .LP
-\fBpgpool\fR [ \fB\-d\fR ] [ \fB\-f\fR \fIfile\fR ] [ \fB\-m\fR \fImode\fR ] [ \fB-s\fR \fBm\fR[\fBaster\fR] | \fBs\fR[\fBecondary\fR] ] \fBswitch\fR
 .SH DESCRIPTION
 \fBpgpool\fR is a connection pool server for PostgreSQL.
 \fBpgpool\fR runs between PostgreSQL's client and server.
@@ -38,29 +37,52 @@ Starts as a daemon in the background (unless \fB\-n\fR is given).
 \fBpgpool\fP [ \fIoptions...\fP ] \fBstop\fP
 Shutdown.
 .TP
-\fBpgpool\fP [ \fIoptions...\fP ] \fBswitch\fP
-Switch between master
-and secondary servers.  If only one server is configured, this will only
-restart the child processes.
+\fBpgpool\fP [ \fIoptions...\fP ] \fBreload\fP
+Reloads the configuration.
 ..
 .SH OPTIONS
 .TP
+\fB\-a\fR \fIpath\fR
+.P
+.B \--hba-file\fR \fIpath\fR
+Sets the path to the \fIpool_hba.conf\fR configuration file (default: \fI@sysconfdir@/pgpool_hba.conf\fR).
+.TP
+\fB\-c\fR
+.P
+.B \--clear-cache
+Clears the query cache.
+.TP
 \fB\-d\fR
+.P
+.B \--debug
 Print lots of debug messages.
 .TP
 \fB\-f\fR \fIpath\fR
-Sets the path to the configuration file (default: \fI@sysconfdir@/pgpool.conf\fR).
+.P
+.B \--config-file\fR \fIpath\fR
+Sets the path to the \fIpgpool.conf\fR configuration file (default: \fI@sysconfdir@/pgpool.conf\fR).
+.TP
+\fB\-F\fR \fIpath\fR
+.P
+.B \--pcp-config-file\fR \fIpath\fR
+Sets the path to the \fIpcp.conf\fR configuration file (default: \fI@sysconfdir@/pcp.conf\fR).
 .TP
 \fB\-h\fR
+.P
+.B \--help
 Print a help message and exit.
 .TP
 \fB\-m\fR \fImode\fR
+.P
+.B \--mode\fR \fImode\fR
 Shutdown mode: 
 .B smart, fast, 
 or
 .BR immediate .
 .TP
 \fB\-n\fR
+.P
+.B \--no-daemon
 Foreground mode.
 Error messages go to stdout or stderr, which
 could be piped out to log processors such as
@@ -71,17 +93,21 @@ To daemonize, explicitly invoke
 .B pgpool
 in background.
 .TP
-\fB\-s\fR \fBm\fR[\fBaster\fR] | \fBs\fR[\fBecondary\fR]
-Determines which server to switch away from.
-Default is to drop the master.
-.TP
 .B \-v
+.P
+.B \--version
 Print version and exit.
 .
 .SH FILES
 .TP
 \fI@sysconfdir@/pgpool.conf\fR
 Default configuration file
+.TP
+\fI@sysconfdir@/pool_hba.conf\fR
+Host Based Access configuration file
+.TP
+\fI@sysconfdir@/pcp.conf\fR
+PCP commands configuration file
 .SH SEE ALSO
 .BR logger (1),
 .BR postmaster (1),

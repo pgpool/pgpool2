@@ -1274,12 +1274,12 @@ pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-d]
 </pre>
 <p>
 <table>
-  <tr><td>-c</td><td>deletes query cache</tr>
-  <tr><td>-f config_file</td><td>specifies pgpool.conf</tr>
-  <tr><td>-a hba_file</td><td>specifies pool_hba.conf</tr>
-  <tr><td>-F pcp_config_file</td><td>specifies pcp.conf</tr>
-  <tr><td>-n</td><td>no daemon mode (terminal is not detached)</tr>
-  <tr><td>-d</td><td>debug mode</tr>
+  <tr><td>-c<br/>--clear-cache</td><td>deletes query cache</tr>
+  <tr><td>-f config_file<br/>--config-file config-file</td><td>specifies pgpool.conf</tr>
+  <tr><td>-a hba_file<br/>--hba-file hba_file</td><td>specifies pool_hba.conf</tr>
+  <tr><td>-F pcp_config_file<br/>--pcp-password-file</td><td>specifies pcp.conf</tr>
+  <tr><td>-n<br/>--no-daemon</td><td>no daemon mode (terminal is not detached)</tr>
+  <tr><td>-d<br/>--debug</td><td>debug mode</tr>
 </table>
 There are two ways to stop pgpool-II. One is via PCP command
 (described later) or pgpool-II command. Below is an example of the
@@ -1291,12 +1291,12 @@ pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] st
 </pre>
 <p>
 <table>
-  <tr><td><code>-m s[mart]</code></td><td>waits for clients to
-      disconnect, and shutdown (default)</td></tr>
-  <tr><td><code>-m f[ast]</code></td><td>does not wait for clients;
-      shutdown immediately</td></tr>
-  <tr><td><code>-m i[mmediate]</code></td><td>the same as <code>'-m
-      f'</code></td></tr> </table>
+  <tr><td><code>-m s[mart]</code><br/><code>--mode s[mart]</code></td>
+      <td>waits for clients to disconnect, and shutdown (default)</td></tr>
+  <tr><td><code>-m f[ast]</code><br/><code>--mode f[ast]</code></td>
+      <td>does not wait for clients; shutdown immediately</td></tr>
+  <tr><td><code>-m i[mmediate]</code><br/><code>--mode i[mmediate]</code></td>
+      <td>the same as <code>'-m f'</code></td></tr> </table>
 </p>
 
 <h1><a name="online-recovery"></a>Online Recovery</h1>
