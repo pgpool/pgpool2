@@ -605,20 +605,32 @@ static void show_version(void)
 
 static void usage(void)
 {
-	fprintf(stderr, "%s version %s(%s),\n",	PACKAGE, VERSION, PGPOOLVERSION);
+	fprintf(stderr, "%s version %s (%s),\n",	PACKAGE, VERSION, PGPOOLVERSION);
 	fprintf(stderr, "  a generic connection pool/replication/load balance server for PostgreSQL\n\n");
-	fprintf(stderr, "usage: pgpool [-c][-f config_file][-F pcp_config_file][-a hba_file][-n][-d]\n");
-	fprintf(stderr, "usage: pgpool [-f config_file][-F pcp_config_file][-a hba_file] [-m {s[mart]|f[ast]|i[mmediate]}] stop\n");
-	fprintf(stderr, "usage: pgpool [-f config_file][-F pcp_config_file][-a hba_file] reload\n");
-	fprintf(stderr, "usage: pgpool -h\n");
-	fprintf(stderr, "  config_file default path: %s/%s\n",DEFAULT_CONFIGDIR, POOL_CONF_FILE_NAME);
-	fprintf(stderr, "  pcp_config_file default path: %s/%s\n", DEFAULT_CONFIGDIR, PCP_PASSWD_FILE_NAME);
-	fprintf(stderr, "  hba_file default path:    %s/%s\n",DEFAULT_CONFIGDIR, HBA_CONF_FILE_NAME);
-	fprintf(stderr, "  -c: clears query cache. enable_query_cache must be on\n");
-	fprintf(stderr, "  -n: don't run in daemon mode. does not detach control tty\n");
-	fprintf(stderr, "  -d: debug mode. lots of debug information will be printed\n");
-	fprintf(stderr, "  stop: stop pgpool\n");
-	fprintf(stderr, "  -h: print this help\n");
+	fprintf(stderr, "Usage:\n");
+	fprintf(stderr, "  pgpool [ -c] [ -f CONFIG_FILE ] [ -F PCP_CONFIG_FILE ] [ -a HBA_CONFIG_FILE ]\n");
+	fprintf(stderr, "         [ -n ] [ -d ]\n");
+	fprintf(stderr, "  pgpool [ -f CONFIG_FILE ] [ -F PCP_CONFIG_FILE ] [ -a HBA_CONFIG_FILE ]\n");
+	fprintf(stderr, "         [ -m SHUTDOWN-MODE ] stop\n");
+	fprintf(stderr, "  pgpool [ -f CONFIG_FILE ] [ -F PCP_CONFIG_FILE ] [ -a HBA_CONFIG_FILE ] reload\n\n");
+	fprintf(stderr, "Common options:\n");
+	fprintf(stderr, "  -a HBA_CONFIG_FILE  Sets the path to the pool_hba.conf configuration file\n");
+	fprintf(stderr, "                      (default: %s/%s)\n",DEFAULT_CONFIGDIR, HBA_CONF_FILE_NAME);
+	fprintf(stderr, "  -f CONFIG_FILE      Sets the path to the pgpool.conf configuration file\n");
+	fprintf(stderr, "                      (default: %s/%s)\n",DEFAULT_CONFIGDIR, POOL_CONF_FILE_NAME);
+	fprintf(stderr, "  -F PCP_CONFIG_FILE  Sets the path to the pcp.conf configuration file\n");
+	fprintf(stderr, "                      (default: %s/%s)\n",DEFAULT_CONFIGDIR, PCP_PASSWD_FILE_NAME);
+	fprintf(stderr, "  -h                  Prints this help\n\n");
+	fprintf(stderr, "Start options:\n");
+	fprintf(stderr, "  -c                  Clears query cache (enable_query_cache must be on)\n");
+	fprintf(stderr, "  -n                  Don't run in daemon mode, does not detach control tty\n");
+	fprintf(stderr, "  -d                  Debug mode\n\n");
+	fprintf(stderr, "Stop options:\n");
+	fprintf(stderr, "  -m SHUTDOWN-MODE    Can be \"smart\", \"fast\", or \"immediate\"\n\n");
+	fprintf(stderr, "Shutdown modes are:\n");
+	fprintf(stderr, "  smart       quit after all clients have disconnected\n");
+	fprintf(stderr, "  fast        quit directly, with proper shutdown\n");
+	fprintf(stderr, "  immediate   quit without complete shutdown; will lead to recovery on restart\n");
 }
 
 /*
