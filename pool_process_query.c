@@ -3056,6 +3056,15 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 	int use_serial = 0;
 	char *dbname;
 
+	/*
+	 * for version 2 protocol, we cannot check if it's actually uses
+	 * SERIAL data types or not since the underlying infrastructure
+	 * (do_query) does not support the protocol. So we just return
+	 * false.
+	 */
+	if (MAJOR(backend) == PROTO_MAJOR_V2)
+		return 0;
+
 	/* INSERT statement? */
 	if (!IsA(node, InsertStmt))
 		return 0;
