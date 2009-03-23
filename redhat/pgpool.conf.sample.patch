@@ -1,0 +1,46 @@
+--- pgpool.conf.sample.old	2009-03-22 22:18:52.000000000 +0200
++++ pgpool.conf.sample	2009-03-22 22:46:20.000000000 +0200
+@@ -12,16 +12,14 @@
+ # Port number for pgpool communication manager
+ pcp_port = 9898
+ 
+-# Unix domain socket path.  (The Debian package defaults to
+-# /var/run/postgresql.)
++# Unix domain socket path.  
+ socket_dir = '/tmp'
+ 
+ # Unix domain socket path for pgpool communication manager.
+-# (Debian package defaults to /var/run/postgresql)
+ pcp_socket_dir = '/tmp'
+ 
+-# Unix domain socket path for the backend. Debian package defaults to /var/run/postgresql!
+-backend_socket_dir = '/tmp'
++# Unix domain socket path for the backend. 
++backend_socket_dir = '/var/run/pgpool'
+ 
+ # pgpool communication manager timeout. 0 means no timeout, but strongly not recommended!
+ pcp_timeout = 10
+@@ -54,7 +52,7 @@
+ authentication_timeout = 60
+ 
+ # Logging directory
+-logdir = '/tmp'
++logdir = '/var/log/pgpool'
+ 
+ # pid file name
+ pid_file_name = '/var/run/pgpool/pgpool.pid'
+@@ -166,10 +164,10 @@
+ 
+ # backend_hostname, backend_port, backend_weight
+ # here are examples
+-#backend_hostname0 = 'host1'
+-#backend_port0 = 5432
+-#backend_weight0 = 1
+-#backend_data_directory0 = '/data'
++backend_hostname0 = 'localhost'
++backend_port0 = 5432
++backend_weight0 = 1
++backend_data_directory0 = '/var/lib/pgsql/data'
+ #backend_hostname1 = 'host2'
+ #backend_port1 = 5433
+ #backend_weight1 = 1
