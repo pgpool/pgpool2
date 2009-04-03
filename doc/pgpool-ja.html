@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Sun Mar  1 22:21:45 JST 2009
+Last modified: Fri Apr  3 19:48:41 JST 2009
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -29,6 +29,7 @@ Last modified: Sun Mar  1 22:21:45 JST 2009
         <li><a href="#install">pgpool-IIのインストール</a></li>
         <li><a href="#config">pgpool-IIの設定</a></li>
         <li><a href="#start">pgpool-IIの起動と停止</a></li>
+        <li><a href="#reload">pgpool-IIの設定ファイルの再読み込み</a></li>
 	<li><a href="#online-recovery">オンラインリカバリ</a></li>
         <li><a href="#restriction">制限事項</a></li>
         <li><a href="#reference">リファレンス</a></li>
@@ -1381,6 +1382,25 @@ pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] st
 <tr><td>-m f[ast]</td><td>接続中のクライアントが接続を終わるのを待たずに直ちに停止します</td></tr>
 <tr><td>-m i[mmediate]</td><td>-m fと同じ動作です</td></tr>
 </table>
+</p>
+
+<h1>pgpool-IIの設定ファイルの再読み込み<a name="reload"></a></h1>
+<p>
+pgpool-IIの設定ファイルは、pgpool-IIを再起動することなく読み直すことができます。
+<pre>
+pgpool [-f config_file][-a hba_file][-F pcp_config_file] reload
+</pre>
+</p>
+<p>
+<table>
+<tr><td>-f config_file</td><td>pgpool-IIの設定ファイルを指定します</tr>
+<tr><td>-a hba_file</td><td>HBA認証設定ファイルを指定します</tr>
+<tr><td>-F pcp_config_file</td><td>pcpの設定ファイルを指定します</tr>
+</table>
+</p>
+<p>
+設定項目によっては、再読み込みを行なっても反映されないものがあるので、ご注意下さい。
+また、設定の変更はすでに接続中のセッションには反映されません。次回、クライアントがpgpool-IIに接続したときから反映されます。
 </p>
 
 <h1><a name="online-recovery"></a>オンラインリカバリ</h1>

@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Sat Feb 21 18:43:56 JST 2009
+Last modified: Fri Apr  3 22:42:18 JST 2009
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -28,6 +28,7 @@ Last modified: Sat Feb 21 18:43:56 JST 2009
         <li><a href="#install">pgpool-II Installation</a></li>
         <li><a href="#config">Configuring pgpool-II</a></li>
         <li><a href="#start">Starting/Stopping pgpool-II</a></li>
+        <li><a href="#reload">Reloading pgpool-II configuration files</a></li>
         <li><a href="#online-recovery">Online recovery</a></li>
         <li><a href="#restriction">Restrictions</a></li>
         <li><a href="#reference">References</a></li>
@@ -1297,6 +1298,25 @@ pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] st
       shutdown immediately</td></tr>
   <tr><td><code>-m i[mmediate]</code></td><td>the same as <code>'-m
       f'</code></td></tr> </table>
+</p>
+
+<h1>Reloading pgpool-II configuration files<a name="reload"></a></h1>
+<p>pgpool-II can reload configuration files without restarting it.
+</p>
+
+<pre>
+pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file] reload
+</pre>
+<p>
+<table>
+  <tr><td>-f config_file<br/>--config-file config-file</td><td>specifies pgpool.conf</tr>
+  <tr><td>-a hba_file<br/>--hba-file hba_file</td><td>specifies pool_hba.conf</tr>
+  <tr><td>-F pcp_config_file<br/>--pcp-password-file</td><td>specifies pcp.conf</tr>
+</table>
+
+<p>
+Please note that some configuration items are not changed with
+relaoding. Also configuration reflects its changes after new session starts.
 </p>
 
 <h1><a name="online-recovery"></a>Online Recovery</h1>
