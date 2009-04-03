@@ -8,12 +8,14 @@
 #
 # v1.0.0 Devrim GUNDUZ <devrim@CommandPrompt.com>
 # - Initial version of Red Hat / Fedora init script
-# v1.0.1 Devrim GUNDUZ <devrim@CommandPrompt.com>
-# - - Honor /etc/sysconfig/pgpool settings. Previously we could never
-#  customize PGPOOLPID=/var/run/pgpool.pid et al.
-# - Remaining hardcoded paths replaced by customizable variables
-#   such as $PGPOOLCONF .
- 
+#
+# v2.2 Devrim GUNDUZ <devrim@CommandPrompt.com>
+# - New and improved version which has some fixes.
+
+if [ -r /etc/sysconfig/pgpool ]; then
+    . /etc/sysconfig/pgpool
+fi
+
 # Source function library.
 INITD=/etc/rc.d/init.d
 . $INITD/functions
@@ -29,30 +31,23 @@ TYPESET=`typeset -f|grep "declare"`
 [ "${NETWORKING}" = "no" ] && exit 0
 
 # Find the name of the script
-NAME=pgpool
+NAME=`basename $0`
+if [ ${NAME:0:1} = "S" -o ${NAME:0:1} = "K" ]
+then
+	NAME=${NAME:3}
+fi
 
 # Set defaults for configuration variables
 PGPOOLENGINE=/usr/bin
 PGPOOLDAEMON=$PGPOOLENGINE/pgpool
-PGPOOLCONF=/etc/pgpool.conf
-PGPOOLPID=/var/run/pgpool.pid
+PGPOOLCONF=/etc/pgpool-II/pgpool.conf
+PGPOOLPIDDIR=/var/run/pgpool
 PGPOOLLOG=/var/log/pgpool.log
-
-# read in the site custom setup
-if [ -r /etc/sysconfig/pgpool ]; then
-    . /etc/sysconfig/pgpool
-fi
 
 test -x $PGPOOLDAEMON || exit 5
 
-# Create the pgpool.log log file if it does not exist
-if [ ! -r $PGPOOLLOG ]
-then
-	touch $PGPOOLLOG
-fi
-
-# Check whether the pgpool.conf config file exists or not
-if [ ! -r "$PGPOOLCONF" ]
+# Check whether the config file exists or not
+if [ ! -r $PGPOOLCONF ]
 then
 	echo "$PGPOOLCONF not found"
 	RETVAL=1
@@ -60,13 +55,37 @@ then
 	exit
 fi
 
+# Create the log file if it does not exist
+if [ ! -x $PGPOOLLOG ]
+then
+	touch $PGPOOLLOG
+	chown postgres: $PGPOOLLOG
+fi
+
+if [ ! -d $PGPOOLPIDDIR ]
+then
+	mkdir $PGPOOLPIDDIR
+	chown postgres: $PGPOOLPIDDIR
+fi
+
 script_result=0
 
 start(){
+	pid=`pidof -s "$PGPOOLDAEMON"`
+	if [ $pid ]
+	then
+		echo "pgpool is already running with pid $pid"
+		failure "$PGPOQL_START"
+		echo
+		script_result=1
+		exit 1
+	fi
+
 	PGPOOL_START=$"Starting ${NAME} service: "
 
 	echo -n "$PGPOOL_START"
-	$PGPOOLDAEMON -f $PGPOOLCONF -n $OPTS >> "$PGPOOLLOG" 2>&1 < /dev/null &
+
+	$PGPOOLDAEMON -f $PGPOOLCONF $OPTS & >> "$PGPOOLLOG" 2>&1 < /dev/null
 	sleep 2
 
 	pid=`pidof -s "$PGPOOLDAEMON"`
@@ -76,7 +95,7 @@ start(){
 		touch /var/lock/subsys/${NAME}
 		echo
 	else
-		failure "$PSQL_START"
+		failure "$PGPOQL_START"
 		echo
 		script_result=1
 	fi
@@ -88,7 +107,8 @@ stop(){
                 RETVAL=1
                 failure
         else
-                killproc $PGPOOLDAEMON
+		killproc /usr/bin/pgpool
+#		$PGPOOLDAEMON stop & >> "$PGPOOLLOG" 2>&1 < /dev/null
                 RETVAL=$?
                 [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/${NAME}
         fi;
@@ -97,8 +117,8 @@ stop(){
 }
 
 switch() {
-	echo -n $"Sending switchover request to ${NAME} "
-	$PGPOOLDAEMON switch >> "$PGPOOLLOG" 2>&1 < /dev/null
+	echo -n $"Sending switchover request to $NAME "
+	$PGPOOLDAEMON -f $PGPOOLCONF switch >> "$PGPOOLLOG" 2>&1 < /dev/null
 	RETVAL=$?
 	echo
 	if [ $RETVAL -eq 0 ] 
@@ -116,22 +136,23 @@ restart(){
 }
 
 reload(){
-echo -n $"Reloading ${NAME}: "
-   if [ -n "`pidfileofproc $PGPOOLDAEMON`" ] ; then
-      killproc $PGPOOLDAEMON -HUP
-   else
-      failure $"Reloading ${NAME}"
-   fi
-   RETVAL=$?
-   echo
+	echo -n $"Reloading ${NAME}: "
+
+	if [ -n "`pidfileofproc $PGPOOLDAEMON`" ] ; then
+		killproc $PGPOOLDAEMON -HUP
+	else
+		failure $"Reloading ${NAME}"
+	fi
+	RETVAL=$?
+	echo
 }
 
 condrestart(){
-    [ -e /var/lock/subsys/${NAME} ] && restart
+	[ -e /var/lock/subsys/${NAME} ] && restart
 }
 
 condstop(){
-    [ -e /var/lock/subsys/${NAME} ] && stop
+	[ -e /var/lock/subsys/${NAME} ] && stop
 }
 
 # See how we were called.
