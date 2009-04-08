@@ -141,6 +141,9 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 	int deadlock_detected = 0;
 	int	active_sql_transaction_error = 0;
 
+	POOL_MEMORY_POOL *old_context = NULL;
+	Portal *portal;
+
 	force_replication = 0;
 	if (query == NULL)	/* need to read query from frontend? */
 	{
@@ -343,63 +346,66 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 			if (MASTER_SLAVE && TSTATE(backend) != 'E')
 				force_replication = 1;
 
-			if (frontend)
+			/*
+			 * Before we did followings only when frontend != NULL,
+			 * which was wrong since if, for example, reset_query_list
+			 * contains "DISCARD ALL", then it does not register
+			 * pending function and it causes trying to DEALLOCATE non
+			 * existing prepared statment(2009/4/3 Tatsuo).
+			 */
+			if (IsA(node, PrepareStmt))
 			{
-				POOL_MEMORY_POOL *old_context = NULL;
-				Portal *portal;
-
-				if (IsA(node, PrepareStmt))
+				pending_function = add_prepared_list;
+				portal = create_portal();
+				if (portal == NULL)
 				{
-					pending_function = add_prepared_list;
-					portal = create_portal();
-					if (portal == NULL)
-					{
-						pool_error("SimpleQuery: create_portal() failed");
-						return POOL_END;
-					}
-
-					/* switch memory context */
-					old_context = pool_memory;
-					pool_memory = portal->prepare_ctxt;
-
-					portal->portal_name = NULL;
-					portal->stmt = copyObject(node);
-					portal->sql_string = NULL;
-					pending_prepared_portal = portal;
-				}
-				else if (IsA(node, DeallocateStmt))
-				{
-					pending_function = del_prepared_list;
-					portal = create_portal();
-					if (portal == NULL)
-					{
-						pool_error("SimpleQuery: create_portal() failed");
-						return POOL_END;
-					}
-
-					/* switch memory context */
-					old_context = pool_memory;
-					pool_memory = portal->prepare_ctxt;
-
-					portal->portal_name = NULL;
-					portal->stmt = copyObject(node);
-					portal->sql_string = NULL;
-					pending_prepared_portal = portal;
-				}
-				else if (IsA(node, DiscardStmt))
-				{
-					DiscardStmt *stmt = (DiscardStmt *)node;
-					if (stmt->target == DISCARD_ALL || stmt->target == DISCARD_PLANS)
-					{
-						pending_function = delete_all_prepared_list;
-						pending_prepared_portal = NULL;
-					}
+					pool_error("SimpleQuery: create_portal() failed");
+					return POOL_END;
 				}
 
-				/* switch old memory context */
-				if (old_context)
-					pool_memory = old_context;
+				/* switch memory context */
+				old_context = pool_memory;
+				pool_memory = portal->prepare_ctxt;
+
+				portal->portal_name = NULL;
+				portal->stmt = copyObject(node);
+				portal->sql_string = NULL;
+				pending_prepared_portal = portal;
 			}
+			else if (IsA(node, DeallocateStmt))
+			{
+				pending_function = del_prepared_list;
+				portal = create_portal();
+				if (portal == NULL)
+				{
+					pool_error("SimpleQuery: create_portal() failed");
+					return POOL_END;
+				}
+
+				/* switch memory context */
+				old_context = pool_memory;
+				pool_memory = portal->prepare_ctxt;
+
+				portal->portal_name = NULL;
+				portal->stmt = copyObject(node);
+				portal->sql_string = NULL;
+				pending_prepared_portal = portal;
+			}
+			else if (IsA(node, DiscardStmt))
+			{
+				DiscardStmt *stmt = (DiscardStmt *)node;
+				if (stmt->target == DISCARD_ALL || stmt->target == DISCARD_PLANS)
+				{
+					pending_function = delete_all_prepared_list;
+					pending_prepared_portal = NULL;
+				}
+			}
+
+			/* switch old memory context */
+			if (old_context)
+				pool_memory = old_context;
+
+			/* end of wrong if (see 2009/4/3 comment above) */
 		}
 
 		if (frontend && IsA(node, ExecuteStmt))
@@ -657,18 +663,6 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 	string = pool_read2(frontend, len);
 
 	pool_debug("Execute: portal name <%s>", string);
-
-	if (receive_extended_begin)
-	{
-		/* send sync message */
-		send_extended_protocol_message(backend, MASTER_NODE_ID, "S", 0, "");
-
-		kind = pool_read_kind(backend);
-		if (kind != 'Z')
-			return POOL_END;
-		if (ReadyForQuery(frontend, backend, 0) != POOL_CONTINUE)
-			return POOL_END;
-	}
 
 	portal = lookup_prepared_statement_by_portal(&prepared_list,
 												 string);
@@ -1431,6 +1425,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 										   POOL_CONNECTION_POOL *backend)
 {
 	char fkind;
+	char kind;
 	POOL_STATUS status;
 	int i;
 
@@ -1444,6 +1439,18 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 	}
 
 	pool_debug("read kind from frontend %c(%02x)", fkind, fkind);
+
+	if (receive_extended_begin)
+	{
+		/* send sync message */
+		send_extended_protocol_message(backend, MASTER_NODE_ID, "S", 0, "");
+
+		kind = pool_read_kind(backend);
+		if (kind != 'Z')
+			return POOL_END;
+		if (ReadyForQuery(frontend, backend, 0) != POOL_CONTINUE)
+			return POOL_END;
+	}
 
 	switch (fkind)
 	{
