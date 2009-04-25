@@ -1,3 +1,23 @@
+2.2.1 (urukiboshi) 2009/4/25
+	  * Version 2.2.1
+
+	  This version fixes various bugs in 2.2.
+
+	  * Bug fixes
+
+	  - In master slave mode, sometimes DEALLOCATE fails. This is
+		caused by that the first PREPARE was not executed on the
+		slave(Toshihiro)
+
+	  - Update pgpool.spec along with related files(Devrim)
+
+	  - Fix inser_lock so that it is ignored when protocol version is
+        2(Tatsuo)
+		
+	  - Remove excessive log messages regarding parameter change notice(Tatsuo)
+
+	  - Add missing files to doc(Tatsuo)
+
 2.2 (urukiboshi) 2009/2/28
 	  * Version 2.2
 
