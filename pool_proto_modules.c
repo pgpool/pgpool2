@@ -1442,6 +1442,8 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 
 	if (receive_extended_begin)
 	{
+		receive_extended_begin = 0;
+
 		/* send sync message */
 		send_extended_protocol_message(backend, MASTER_NODE_ID, "S", 0, "");
 
