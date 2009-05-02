@@ -457,7 +457,11 @@ void do_child(int unix_fd, int inet_fd)
 						 * this connection since it might be in unknown status
 						 */
 						if (status1 != POOL_CONTINUE)
+						{
+							pool_debug("error in resetting connections. discarding connection pools...");
+							pool_send_frontend_exits(backend);
 							pool_discard_cp(sp->user, sp->database, sp->major);
+						}
 						else
 							pool_connection_pool_timer(backend);
 					}
