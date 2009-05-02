@@ -2104,6 +2104,19 @@ int is_select_query(Node *node, char *sql)
 	if (node == NULL)
 		return 0;
 
+	/*
+	 * 2009/5/1 Tatsuo says: This test is not bogus. As of 2.2, pgpool
+	 * sets Portal->sql_string to NULL for SQL command PREPARE.
+	 * Usually this is ok, since in most cases SQL command EXECUTE
+	 * follows anyway. Problem is, some applications mix PREPARE with
+	 * extended protocol command "EXECUTE" and so on. Execute() seems
+	 * to think this never happens but it is not real. Someday we
+	 * should extract actual query string from PrepareStmt->query and
+	 * set it to Portal->sql_string.
+	 */
+	if (sql == NULL)
+		return 0;
+
 	if (pool_config->ignore_leading_white_space)
 	{
 		/* ignore leading white spaces */
