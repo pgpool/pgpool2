@@ -5,7 +5,7 @@
 * pgpool: a language independent connection pool server for PostgreSQL 
 * written by Tatsuo Ishii
 *
-* Copyright (c) 2003-2008	PgPool Global Development Group
+* Copyright (c) 2003-2009	PgPool Global Development Group
 *
 * Permission to use, copy, modify, and distribute this software and
 * its documentation for any purpose and without fee is hereby
@@ -389,6 +389,7 @@ int pool_flush_it(POOL_CONNECTION *cp)
 					continue;
 
 				pool_error("pool_flush_it: select() failed. reason: %s", strerror(errno));
+				cp->wbufpo = 0;
 				return -1;
 			}
 			else if (sts == 0)
@@ -398,6 +399,7 @@ int pool_flush_it(POOL_CONNECTION *cp)
 			else if (FD_ISSET(cp->fd, &exceptmask))
 			{
 				pool_log("pool_flush_it: exception occured");
+				cp->wbufpo = 0;
 				return -1;
 			}
 		}
@@ -417,6 +419,7 @@ int pool_flush_it(POOL_CONNECTION *cp)
 			else if (wlen < 0)
 			{
 				pool_error("pool_flush_it: invalid write size %d", sts);
+				cp->wbufpo = 0;
 				return -1;
 			}
 
@@ -437,6 +440,7 @@ int pool_flush_it(POOL_CONNECTION *cp)
 		{
 			pool_error("pool_flush_it: write failed (%s) offset: %d wlen: %d",
 					   strerror(errno), offset, wlen);
+			cp->wbufpo = 0;
 			return -1;
 		}
 	}
@@ -460,7 +464,11 @@ int pool_flush(POOL_CONNECTION *cp)
 		}
 		else
 		{
-			return -1;
+			/*
+			 * ignore error on frontend. we need to continue the
+			 * processing with backends
+			 */
+			return 0;
 		}
 	}
 	return 0;
