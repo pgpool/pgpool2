@@ -1,3 +1,28 @@
+2.2.2 (urukiboshi) 2009/5/5
+	  * Version 2.2.2
+
+	  This version fixes various bugs in 2.2.1 or before. Please note
+	  that an importan fix is made to avoid data incositency risk,
+	  which could happen when client does not exit gracely(without
+	  sending "X" packet) while pgpool is trying to send data to
+	  it. This could happen with all version of pgpool-II.
+
+	  * Bug fixes
+
+	  - Ignore write error on frontend connection. This is needed to
+		continue processing with backend, otherwise we risk data
+		incositency(Tatsuo)
+
+	  - Fix bug introduced in 2.2.1 (In master slave mode, sometimes
+	  	DEALLOCATE fails). If prepared statement reused, pgpool
+	  	hangs(Toshihiro)
+
+	  - Fix pgpool crash when SQL command PREPARE and protocol level
+        EXECUTE are mixed. The bug was introduced in 2.2(Tatsuo)
+
+	  - Avoid "unexpected EOF on client connection" error in PostgreSQL
+        when reset query fails(Tatsuo)
+		
 2.2.1 (urukiboshi) 2009/4/25
 	  * Version 2.2.1
 
