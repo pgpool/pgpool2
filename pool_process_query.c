@@ -74,6 +74,9 @@ static void free_select_result(POOL_SELECT_RESULT *result);
 static bool is_internal_transaction_needed(Node *node);
 static int compare(const void *p1, const void *p2);
 
+/* timeout sec for pool_check_fd */
+static int timeoutsec;
+
 int in_load_balance;	/* non 0 if in load balance mode */
 int selected_slot;		/* selected DB node */
 int master_slave_dml;	/* non 0 if master/slave mode is specified in config file */
@@ -874,8 +877,19 @@ int synchronize(POOL_CONNECTION *cp)
 }
 
 /*
+ * set timeout in seconds for pool_check_fd
+ * if timeoutval < 0, we assume no timeout(wait forever).
+ */
+void pool_set_timeout(int timeoutval)
+{
+	if (timeoutval > 0)
+		timeoutsec = timeoutval;
+	else
+		timeoutsec = 0;
+}
+
+/*
  * wait until read data is ready
- * if notimeout is non 0, wait forever.
  */
 int pool_check_fd(POOL_CONNECTION *cp)
 {
@@ -883,8 +897,19 @@ int pool_check_fd(POOL_CONNECTION *cp)
 	fd_set exceptmask;
 	int fd;
 	int fds;
+	struct timeval timeout;
+	struct timeval *timeoutp;
 
 	fd = cp->fd;
+
+	if (timeoutsec > 0)
+	{
+		timeout.tv_sec = timeoutsec;
+		timeout.tv_usec = 0;
+		timeoutp = &timeout;
+	}
+	else
+		timeoutp = NULL;
 
 	for (;;)
 	{
@@ -893,8 +918,7 @@ int pool_check_fd(POOL_CONNECTION *cp)
 		FD_SET(fd, &readmask);
 		FD_SET(fd, &exceptmask);
 
-		/* no timeout */
-		fds = select(fd+1, &readmask, NULL, &exceptmask, NULL);
+		fds = select(fd+1, &readmask, NULL, &exceptmask, timeoutp);
 		if (fds == -1)
 		{
 			if (errno == EAGAIN || errno == EINTR)
@@ -903,6 +927,8 @@ int pool_check_fd(POOL_CONNECTION *cp)
 			pool_error("pool_check_fd: select() failed. reason %s", strerror(errno));
 			break;
 		}
+		else if (fds == 0)		/* timeout */
+			break;
 
 		if (FD_ISSET(fd, &exceptmask))
 		{
@@ -2067,9 +2093,15 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 	if (TSTATE(backend) == 'I' && !strcmp("ABORT", query))
 		return 0;
 
-	if (SimpleQuery(NULL, backend, query) != POOL_CONTINUE)
-		return -1;
+	pool_set_timeout(10);
 
+	if (SimpleQuery(NULL, backend, query) != POOL_CONTINUE)
+	{
+		pool_set_timeout(0);
+		return -1;
+	}
+
+	pool_set_timeout(0);
 	return 1;
 }
 
