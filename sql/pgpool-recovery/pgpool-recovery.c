@@ -4,7 +4,7 @@
  *
  * pgpool-recovery: exec online recovery script from SELECT statement.
  *
- * Copyright (c) 2003-2008	PgPool Global Development Group
+ * Copyright (c) 2003-2009	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -23,6 +23,7 @@
 #include "miscadmin.h"
 #include "executor/spi.h"
 #include "funcapi.h"
+#include "utils/builtins.h"		/* PostgreSQL 8.4 needs this for textout */
 
 #define REMOTE_START_FILE "pgpool_remote_start"
 
