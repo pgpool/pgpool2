@@ -23,6 +23,7 @@
 #include "miscadmin.h"
 #include "executor/spi.h"
 #include "funcapi.h"
+#include "utils/builtins.h"		/* PostgreSQL 8.4 needs this for textout */
 
 #define REMOTE_START_FILE "pgpool_remote_start"
 
