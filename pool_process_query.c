@@ -2081,13 +2081,13 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 
 	if (qcnt >= qn)
 	{
-		if (qcnt >= qn + prepared_list.cnt)
+		if (prepared_list.cnt == 0)
 		{
 			reset_prepared_list(&prepared_list);
 			return 2;
 		}
 
-		send_deallocate(backend, &prepared_list, qcnt - qn);
+		send_deallocate(backend, &prepared_list, 0);
 		return 1;
 	}
 
