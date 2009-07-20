@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2008	PgPool Global Development Group
+ * Copyright (c) 2003-2009	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -141,7 +141,7 @@ extern POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 										   POOL_CONNECTION_POOL *backend);
 
 
-extern POOL_STATUS wait_for_query_response(POOL_CONNECTION *backend, char *string);
+extern POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *string);
 extern int is_select_query(Node *node, char *sql);
 extern int is_sequence_query(Node *node);
 extern int is_start_transaction_query(Node *node);

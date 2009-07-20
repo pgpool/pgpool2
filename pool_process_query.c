@@ -819,16 +819,55 @@ POOL_STATUS send_simplequery_message(POOL_CONNECTION *backend, int len, char *st
 }
 
 /* 
- * wait for query response from a single node.
+ * Wait for query response from single node. This checks frontend
+ * connection by writing dummy parameter status packet every 1
+ * seccond, and if the connection broke, returns error since there's
+ * no point in that waiting until backend returns response.
  */
-POOL_STATUS wait_for_query_response(POOL_CONNECTION *backend, char *string)
+POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *string)
 {
-	/*
-	 * we need to wait for backend completing the query.
-	 */
-	pool_debug("waiting for backend %d completing the query", backend->db_node_id);
-	if (synchronize(backend))
-		return POOL_END;
+#define DUMMY_PARAMETER "pgpool_dummy_param"
+#define DUMMY_VALUE "pgpool_dummy_value"
+
+	int status;
+	int plen;
+
+	pool_debug("wait_for_query_response: waiting for backend %d completing the query", backend->db_node_id);
+
+	for (;;)
+	{
+		/* Check to see if data from backend is ready */
+		pool_set_timeout(1);
+		status = pool_check_fd(backend);
+		pool_set_timeout(0);
+
+		if (status < 0)	/* error ? */
+		{
+			pool_error("wait_for_query_response: backend error occured while waiting for backend response");
+			return POOL_END;
+		} else if (status > 0)		/* data is not ready */
+		{
+			/* Write dummy parameter staus packet to check if the socket to frontend is ok */
+			if (pool_write(frontend, "S", 1) < 0)
+				return POOL_END;
+			plen = sizeof(DUMMY_PARAMETER)+sizeof(DUMMY_VALUE)+sizeof(plen);
+			plen = htonl(plen);
+			if (pool_write(frontend, &plen, sizeof(plen)) < 0)
+				return POOL_END;
+			if (pool_write(frontend, DUMMY_PARAMETER, sizeof(DUMMY_PARAMETER)) < 0)
+				return POOL_END;
+			if (pool_write(frontend, DUMMY_VALUE, sizeof(DUMMY_VALUE)) < 0)
+				return POOL_END;
+			if (pool_flush_it(frontend) < 0)
+			{
+				pool_error("wait_for_query_response: frontend error ouccured while waiting for backend reply");
+				return POOL_END;
+			}
+		}
+		else
+			break;
+				
+	}
 
 	return POOL_CONTINUE;
 }
@@ -891,7 +930,8 @@ void pool_set_timeout(int timeoutval)
 }
 
 /*
- * wait until read data is ready
+ * Wait until read data is ready.
+ * return values: 0: normal 1: data is not ready -1: error
  */
 int pool_check_fd(POOL_CONNECTION *cp)
 {
@@ -930,7 +970,7 @@ int pool_check_fd(POOL_CONNECTION *cp)
 			break;
 		}
 		else if (fds == 0)		/* timeout */
-			break;
+			return 1;
 
 		if (FD_ISSET(fd, &exceptmask))
 		{
@@ -4113,6 +4153,7 @@ POOL_STATUS end_internal_transaction(POOL_CONNECTION_POOL *backend)
 	{
 		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 		{
+			/* COMMIT success? */
 			if (do_command(CONNECTION(backend, i), "COMMIT", MAJOR(backend), 1) != POOL_CONTINUE)
 			{
 				internal_transaction_started = 0;
