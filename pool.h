@@ -483,6 +483,7 @@ extern int connect_unix_domain_socket(int secondary_backend);
 extern int connect_inet_domain_socket_by_port(char *host, int port);
 extern int connect_unix_domain_socket_by_port(int port, char *socket_dir);
 
+extern void pool_set_timeout(int timeoutval);
 extern int pool_check_fd(POOL_CONNECTION *cp);
 
 extern void pool_send_frontend_exits(POOL_CONNECTION_POOL *backend);
