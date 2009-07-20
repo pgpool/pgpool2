@@ -583,5 +583,6 @@ extern void finish_recovery(void);
 /* child.c */
 extern void pool_set_nonblock(int fd);
 extern void pool_unset_nonblock(int fd);
+extern void cancel_request(CancelPacket *sp);
 
 #endif /* POOL_H */

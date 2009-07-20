@@ -60,7 +60,6 @@
 static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *timeout);
 static StartupPacket *read_startup_packet(POOL_CONNECTION *cp);
 static POOL_CONNECTION_POOL *connect_backend(StartupPacket *sp, POOL_CONNECTION *frontend);
-static void cancel_request(CancelPacket *sp);
 static RETSIGTYPE die(int sig);
 static RETSIGTYPE close_idle_connection(int sig);
 static RETSIGTYPE wakeup_handler(int sig);
@@ -1079,7 +1078,7 @@ int send_startup_packet(POOL_CONNECTION_POOL_SLOT *cp)
 /*
  * process cancel request
  */
-static void cancel_request(CancelPacket *sp)
+void cancel_request(CancelPacket *sp)
 {
 	int	len;
 	int fd;

@@ -514,18 +514,32 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 
 	if (REPLICATION || PARALLEL_MODE)
 	{
-		/* check if query is "COMMIT" */
+		/* check if query is "COMMIT" or "ROLLBACK" */
 		commit = is_commit_query(node);
 		free_parser();
 
-		/* send query to master node */
+		/*
+		 * Query is not commit/rollback
+		 */
 		if (!commit)
 		{
+			/* Send the query to master node */
+
 			if (send_simplequery_message(MASTER(backend), len, string, MAJOR(backend)) != POOL_CONTINUE)
 				return POOL_END;
 
-			if (wait_for_query_response(MASTER(backend), string) != POOL_CONTINUE)
+			if (wait_for_query_response(frontend, MASTER(backend), string) != POOL_CONTINUE)
+			{
+				/* Cancel current transaction */
+				CancelPacket cancel_packet;
+
+				cancel_packet.protoVersion = htonl(80877102);
+				cancel_packet.pid = MASTER_CONNECTION(backend)->pid;
+				cancel_packet.key= MASTER_CONNECTION(backend)->key;
+				cancel_request(&cancel_packet);
+
 				return POOL_END;
+			}
 
 			/*
 			 * Check dead lock error on the master node and abort
@@ -607,17 +621,17 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 			if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
 				continue;
 
-			if (wait_for_query_response(CONNECTION(backend, i), string) != POOL_CONTINUE)
+			if (wait_for_query_response(frontend, CONNECTION(backend, i), string) != POOL_CONTINUE)
 				return POOL_END;
 		}
 
-		/* send "COMMIT" to master node if query is "COMMIT" */
+		/* send "COMMIT" or "ROLLBACK" to only master node if query is "COMMIT" or "ROLLBACK" */
 		if (commit)
 		{
 			if (send_simplequery_message(MASTER(backend), len, string, MAJOR(backend)) != POOL_CONTINUE)
 				return POOL_END;
 
-			if (wait_for_query_response(MASTER(backend), string) != POOL_CONTINUE)
+			if (wait_for_query_response(frontend, MASTER(backend), string) != POOL_CONTINUE)
 				return POOL_END;
 
 			TSTATE(backend) = 'I';
@@ -629,8 +643,18 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 		if (send_simplequery_message(MASTER(backend), len, string, MAJOR(backend)) != POOL_CONTINUE)
 			return POOL_END;
 
-		if (wait_for_query_response(MASTER(backend), string) != POOL_CONTINUE)
-			return POOL_END;
+		if (wait_for_query_response(frontend, MASTER(backend), string) != POOL_CONTINUE)
+		{
+				/* Cancel current transaction */
+				CancelPacket cancel_packet;
+
+				cancel_packet.protoVersion = htonl(80877102);
+				cancel_packet.pid = MASTER_CONNECTION(backend)->pid;
+				cancel_packet.key= MASTER_CONNECTION(backend)->key;
+				cancel_request(&cancel_packet);
+
+				return POOL_END;
+		}
 	}
 
 	return POOL_CONTINUE;
