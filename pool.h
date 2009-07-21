@@ -78,6 +78,9 @@ typedef enum {
 #define PROTO_MAJOR_V2	2
 #define PROTO_MAJOR_V3	3
 
+/* Cancel packet proto major */
+#define PROTO_CANCEL	80877102
+
 /*
  * In protocol 3.0 and later, the startup packet length is not fixed, but
  * we set an arbitrary limit on it anyway.	This is just to prevent simple
