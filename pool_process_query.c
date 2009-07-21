@@ -4093,14 +4093,25 @@ static bool is_internal_transaction_needed(Node *node)
 	if (bsearch(&nodeTag(node), nodemap, sizeof(nodemap)/sizeof(nodemap[0]), sizeof(NodeTag), compare) != NULL)
 	{
 		/*
-		 * chek CREATE INDEX CONCURRENTLY. If so, do not start transaction
+		 * Check CREATE INDEX CONCURRENTLY. If so, do not start transaction
 		 */
 		if (IsA(node, IndexStmt))
 		{
 			if (((IndexStmt *)node)->concurrent)
 				return false;
 		}
+
+		/*
+		 * Check CLUSTER with no option. If so, do not start transaction
+		 */
+		else if (IsA(node, ClusterStmt))
+		{
+			if (((ClusterStmt *)node)->relation == NULL)
+				return false;
+		}
+
 		return true;
+
 	}
 	return false;
 }
