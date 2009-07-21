@@ -528,7 +528,7 @@ int main(int argc, char **argv)
 					else
 					{
 						retrycnt++;
-						pool_signal(SIGALRM, SIG_IGN);
+						pool_signal(SIGALRM, SIG_IGN);	/* Cancel timer */
 
 						if (retrycnt > NUM_BACKENDS)
 						{
@@ -1380,6 +1380,7 @@ static RETSIGTYPE health_check_timer_handler(int sig)
 int health_check(void)
 {
 	int fd;
+	int sts;
 
 	/* V2 startup packet */
 	typedef struct {
@@ -1435,7 +1436,28 @@ int health_check(void)
 			return i+1;
 		}
 
-		read(fd, &kind, 1);
+		/*
+		 * Don't bother to be blocked by read(2). It will be
+		 * interrupted by ALRAM anyway.
+		 */
+		sts = read(fd, &kind, 1);
+		if (sts == -1)
+		{
+			pool_error("health check failed during read. host %s at port %d is down. reason: %s",
+					   BACKEND_INFO(i).backend_hostname,
+					   BACKEND_INFO(i).backend_port,
+					   strerror(errno));
+			close(fd);
+			return i+1;
+		}
+		else if (sts == 0)
+		{
+			pool_error("health check failed. EOF encountered. host %s at port %d is down",
+					   BACKEND_INFO(i).backend_hostname,
+					   BACKEND_INFO(i).backend_port);
+			close(fd);
+			return i+1;
+		}
 
 		/*
 		 * If a backend raised a FATAL error(max connections error or
