@@ -54,6 +54,7 @@
 #define ACTIVE_SQL_TRANSACTION_ERROR_CODE "25001"		/* SET TRANSACTION ISOLATION LEVEL must be called before any query */
 #define DEADLOCK_ERROR_CODE "40P01"
 #define SERIALIZATION_FAIL_ERROR_CODE "40001"
+#define QUERY_CANCEL_ERROR_CODE "57014"
 #define ADMIN_SHUTDOWN_ERROR_CODE "57P01"
 #define CRASH_SHUTDOWN_ERROR_CODE "57P02"
 
@@ -3593,7 +3594,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 		/* initialize degenerate record */
 		degenerate_node[i] = 0;
 
-		/* kind is singed char.
+		/* kind is signed char.
 		 * We must check negative number.
 		 */
 		int id = kind_list[i] + 128;
@@ -4247,6 +4248,14 @@ int detect_serialization_error(POOL_CONNECTION *backend, int major)
 	int r =  detect_error(backend, SERIALIZATION_FAIL_ERROR_CODE, major, 'E', true);
 	if (r == SPECIFIED_ERROR)
 		pool_debug("detect_serialization_error: received serialization failure message from backend");
+	return r;
+}
+
+int detect_query_cancel_error(POOL_CONNECTION *backend, int major)
+{
+	int r =  detect_error(backend, QUERY_CANCEL_ERROR_CODE, major, 'E', true);
+	if (r == SPECIFIED_ERROR)
+		pool_debug("detect_query_cancel_error: received query cancel error message from backend");
 	return r;
 }
 

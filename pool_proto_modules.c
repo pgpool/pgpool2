@@ -46,6 +46,7 @@
 #include "pool.h"
 #include "pool_signal.h"
 #include "pool_proto_modules.h"
+#include "parser/pool_string.h"
 
 int force_replication;
 int replication_was_enabled;		/* replication mode was enabled */
@@ -86,6 +87,9 @@ char query_string_buffer[QUERY_STRING_BUFFER_LEN];
  * this variable only usefull when enable_query_cache is true.
  */
 char *parsed_query = NULL;
+
+static int check_errors(POOL_CONNECTION_POOL *backend, int backend_id);
+static void generate_error_message(char *prefix, int specific_error, char *query);
 
 POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend, 
 										POOL_CONNECTION_POOL *backend)
@@ -137,9 +141,7 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 	List *parse_tree_list;
 	Node *node = NULL, *node1;
 	POOL_STATUS status;
-	int serialization_error_detected = 0;
-	int deadlock_detected = 0;
-	int	active_sql_transaction_error = 0;
+	int specific_error;
 
 	POOL_MEMORY_POOL *old_context = NULL;
 	Portal *portal;
@@ -541,68 +543,17 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 				return POOL_END;
 			}
 
-			/*
-			 * Check dead lock error on the master node and abort
-			 * transactions on all nodes if so.
-			 */
-			deadlock_detected = detect_deadlock_error(MASTER(backend), MAJOR(backend));
-			if (deadlock_detected < 0)
-				return POOL_END;
+			/* Check specific errors */
+			specific_error = check_errors(backend, MASTER_NODE_ID);
+			if (specific_error)
+			{
+				/* log error message */
+				generate_error_message("SimpleQuery: ", specific_error, string);
 
-			/*
-			 * Check serialization failure error and abort
-			 * transactions on all nodes if so. Otherwise we allow
-			 * data inconsistency among DB nodes. See following
-			 * scenario: (M:master, S:slave)
-			 *
-			 * M:S1:BEGIN;
-			 * M:S2:BEGIN;
-			 * S:S1:BEGIN;
-			 * S:S2:BEGIN;
-			 * M:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
-			 * M:S2:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
-			 * S:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
-			 * S:S2:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
-			 * M:S1:UPDATE t1 SET i = i + 1;
-			 * S:S1:UPDATE t1 SET i = i + 1;
-			 * M:S2:UPDATE t1 SET i = i + 1; <-- blocked
-			 * S:S1:COMMIT;
-			 * M:S1:COMMIT;
-			 * M:S2:ERROR:  could not serialize access due to concurrent update
-			 * S:S2:UPDATE t1 SET i = i + 1; <-- success in UPDATE and data becomes inconsistent!
-			 */
-			serialization_error_detected = detect_serialization_error(MASTER(backend), MAJOR(backend));
-			if (serialization_error_detected < 0)
-				return POOL_END;
-
-			/*
-			 * check "SET TRANSACTION ISOLATION LEVEL must be called before any query" error.
-			 * This happens in following scenario:
-			 * 
-			 * M:S1:BEGIN;
-			 * S:S1:BEGIN;
-			 * M:S1:SELECT 1; <-- only sent to MASTER
-			 * M:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
-			 * S:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
-			 * M: <-- error
-			 * S: <-- ok since no previous SELECT is sent. kind mismatch error occurs!
-			 */
-			active_sql_transaction_error = detect_active_sql_transaction_error(MASTER(backend), MAJOR(backend));
-			if (active_sql_transaction_error < 0)
-				return POOL_END;
-		}
-
-		if (deadlock_detected == SPECIFIED_ERROR || serialization_error_detected == SPECIFIED_ERROR ||
-			active_sql_transaction_error == SPECIFIED_ERROR)
-		{
-			if (deadlock_detected == SPECIFIED_ERROR)
-				pool_log("SimpleQuery: received deadlock error message from master node. query: %s", string);
-			else if (serialization_error_detected == SPECIFIED_ERROR)
-				pool_log("SimpleQuery: received serialization failure error message from master node. query: %s", string);
-			else
-				pool_log("SimpleQuery: received SET TRANSACTION ISOLATION LEVEL must be called before any query error. query: %s", string);
-			string = POOL_ERROR_QUERY;
-			len = strlen(string) + 1;
+				/* Set error query to abort transactions on other nodes */
+				string = POOL_ERROR_QUERY;
+				len = strlen(string) + 1;
+			}
 		}
 
 		/* send query to other than master nodes */
@@ -641,7 +592,7 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 			if (send_simplequery_message(MASTER(backend), len, string, MAJOR(backend)) != POOL_CONTINUE)
 				return POOL_END;
 
-			if (wait_for_query_response(frontend, CONNECTION(backend, i), string) != POOL_CONTINUE)
+			if (wait_for_query_response(frontend, MASTER(backend), string) != POOL_CONTINUE)
 			{
 				/* Cancel current transaction */
 				CancelPacket cancel_packet;
@@ -695,10 +646,8 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 	Portal *portal;
 	char *string1;
 	PrepareStmt *p_stmt;
-	int deadlock_detected = 0;
-	int serialization_error_detected = 0;
-	int	active_sql_transaction_error = 0;
 	POOL_STATUS ret;
+	int specific_error = 0;
 
 	/* read Execute packet */
 	if (pool_read(frontend, &len, sizeof(len)) < 0)
@@ -807,39 +756,14 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 				return POOL_END;
 			}
 
-			/*
-			 * Check dead lock error on the master node and abort
-			 * transactions on all nodes if so.
-			 */
-			deadlock_detected = detect_deadlock_error(MASTER(backend), MAJOR(backend));
-			if (deadlock_detected < 0)
-				return POOL_END;
 
-			/*
-			 * Check serialization failure error and abort all nodes
-			 * if so. Otherwise we allow data inconsistency among DB
-			 * nodes. See following scenario: (M:master, S:slave)
-			 */
-			serialization_error_detected = detect_serialization_error(MASTER(backend), MAJOR(backend));
-			if (serialization_error_detected < 0)
-				return POOL_END;
-
-			/*
-			 * check "SET TRANSACTION ISOLATION LEVEL must be called before any query" error.
-			 * This happens in following scenario:
-			 * 
-			 * M:S1:BEGIN;
-			 * S:S1:BEGIN;
-			 * M:S1:SELECT 1; <-- only sent to MASTER
-			 * M:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
-			 * S:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
-			 * M: <-- error
-			 * S: <-- ok since no previous SELECT is sent. kind mismatch error occurs!
-			 */
-			active_sql_transaction_error = detect_active_sql_transaction_error(MASTER(backend), MAJOR(backend));
-			if (active_sql_transaction_error < 0)
-				return POOL_END;
-
+			/* Check specific errors */
+			specific_error = check_errors(backend, MASTER_NODE_ID);
+			if (specific_error)
+			{
+				/* log error message */
+				generate_error_message("Execute: ", specific_error, string);
+			}
 		}
 
 		/* send query to other nodes */
@@ -847,18 +771,11 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		{
 			if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
 				continue;
-			if (deadlock_detected == SPECIFIED_ERROR || serialization_error_detected == SPECIFIED_ERROR ||
-				active_sql_transaction_error == SPECIFIED_ERROR)
+
+			if (specific_error)
 			{
 				char msg[1024] = "pgpoool_error_portal"; /* large enough */
 				int len = strlen(msg);
-
-				if (deadlock_detected == SPECIFIED_ERROR)
-					pool_log("Execute: received deadlock error message from master node. query: %s", string);
-				else if (serialization_error_detected == SPECIFIED_ERROR)
-					pool_log("SimpleQuery: received serialization failure error message from master node. query: %s", string);
-				else
-					pool_log("SimpleQuery: received SET TRANSACTION ISOLATION LEVEL must be called before any query error. query: %s", string);
 
 				memset(msg + len, 0, sizeof(int));
 				if (send_execute_message(backend, i, len + 5, msg))
@@ -2368,4 +2285,91 @@ POOL_STATUS EmptyQueryResponse(POOL_CONNECTION *frontend,
 
 	pool_write(frontend, "I", 1);
 	return pool_write_and_flush(frontend, "", 1);
+}
+
+/*
+ * Check various errors from backend.  return values: 0: no error 1:
+ * deadlock detected 2: serialization error detected 3: query cancel
+ * detected: 4
+ */
+static int check_errors(POOL_CONNECTION_POOL *backend, int backend_id)
+{
+
+	/*
+	 * Check dead lock error on the master node and abort
+	 * transactions on all nodes if so.
+	 */
+	if (detect_deadlock_error(CONNECTION(backend, backend_id), MAJOR(backend)) == SPECIFIED_ERROR)
+		return 1;
+
+	/*
+	 * Check serialization failure error and abort
+	 * transactions on all nodes if so. Otherwise we allow
+	 * data inconsistency among DB nodes. See following
+	 * scenario: (M:master, S:slave)
+	 *
+	 * M:S1:BEGIN;
+	 * M:S2:BEGIN;
+	 * S:S1:BEGIN;
+	 * S:S2:BEGIN;
+	 * M:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+	 * M:S2:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+	 * S:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+	 * S:S2:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+	 * M:S1:UPDATE t1 SET i = i + 1;
+	 * S:S1:UPDATE t1 SET i = i + 1;
+	 * M:S2:UPDATE t1 SET i = i + 1; <-- blocked
+	 * S:S1:COMMIT;
+	 * M:S1:COMMIT;
+	 * M:S2:ERROR:  could not serialize access due to concurrent update
+	 * S:S2:UPDATE t1 SET i = i + 1; <-- success in UPDATE and data becomes inconsistent!
+	 */
+	if (detect_serialization_error(CONNECTION(backend, backend_id), MAJOR(backend)) == SPECIFIED_ERROR)
+		return 2;
+
+	/*
+	 * check "SET TRANSACTION ISOLATION LEVEL must be called before any query" error.
+	 * This happens in following scenario:
+	 * 
+	 * M:S1:BEGIN;
+	 * S:S1:BEGIN;
+	 * M:S1:SELECT 1; <-- only sent to MASTER
+	 * M:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+	 * S:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+	 * M: <-- error
+	 * S: <-- ok since no previous SELECT is sent. kind mismatch error occurs!
+	 */
+	if (detect_active_sql_transaction_error(CONNECTION(backend, backend_id), MAJOR(backend)) == SPECIFIED_ERROR)
+		return 3;
+
+	/* check query cancel error */
+	if (detect_query_cancel_error(CONNECTION(backend, backend_id), MAJOR(backend)) == SPECIFIED_ERROR)
+		return 4;
+
+	return 0;
+}
+
+static void generate_error_message(char *prefix, int specific_error, char *query)
+{
+	static char *error_messages[] = {
+		"received deadlock error message from master node. query: %s",
+		"received serialization failure error message from master node. query: %s",
+		"received SET TRANSACTION ISOLATION LEVEL must be called before any query error. query: %s",
+		"received query cancel error message from master node. query: %s"
+	};
+
+	String *msg;
+
+	if (specific_error < 1 || specific_error > sizeof(error_messages)/sizeof(char *))
+	{
+		pool_error("generate_error_message: invalid specific_error: %d", specific_error);
+		return;
+	}
+
+	specific_error--;
+
+	msg = init_string(prefix);
+	string_append_char(msg, error_messages[specific_error]);
+	pool_error(msg->data, query);
+	free_string(msg);
 }
