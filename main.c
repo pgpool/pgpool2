@@ -1009,7 +1009,7 @@ void degenerate_backend_set(int *node_id_set, int count)
 		if (node_id_set[i] < 0 || node_id_set[i] >= MAX_NUM_BACKENDS ||
 			!VALID_BACKEND(node_id_set[i]))
 		{
-			pool_log("notice_backend_error: node %d is not valid backend.");
+			pool_log("notice_backend_error: node %d is not valid backend.", i);
 			continue;
 		}
 
@@ -1031,7 +1031,7 @@ void send_failback_request(int node_id)
 
 	if (node_id < 0 || node_id >= MAX_NUM_BACKENDS || VALID_BACKEND(node_id))
 	{
-		pool_error("send_failback_request: node %d is alive.");
+		pool_error("send_failback_request: node %d is alive.", node_id);
 		return;
 	}
 

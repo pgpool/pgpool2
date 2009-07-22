@@ -749,7 +749,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 					if((kind == 'C' || kind == 'c' || kind == 'E') &&
 						used_count == NUM_BACKENDS -1)
 					{
-						pool_debug("pool_parallel_exec: kind from backend: D %ul", datacount);
+						pool_debug("pool_parallel_exec: kind from backend: D %lu", datacount);
 
 						if(error_flag == 0)
 						{

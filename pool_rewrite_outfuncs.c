@@ -5295,7 +5295,7 @@ _rewriteResTarget(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbli
 		{
 			char *col_name = select->col_list[message->ret_num];
 			pool_debug("_rewriteResTarget: check(%d) ret_num=%d",message->current_select,message->ret_num);
-			pool_debug("_rewriteResTarget: col ret_num=%d",message->current_select,col_name);
+			pool_debug("_rewriteResTarget: col ret_num=%d col_name=%s",message->current_select,col_name);
 			delay_string_append_char(message, str, " AS ");
 			delay_string_append_char(message, str, col_name);
 

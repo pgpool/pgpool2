@@ -434,9 +434,18 @@ extern char query_string_buffer[];		/* last query string sent to simpleQuery() *
  */
 extern char *get_config_file_name(void);
 extern char *get_hba_file_name(void);
+#ifdef __GNUC__
+extern void pool_error(const char *fmt,...)
+   	__attribute__((format (printf, 1, 2)));
+extern void pool_debug(const char *fmt,...)
+   	__attribute__((format (printf, 1, 2)));
+extern void pool_log(const char *fmt,...)
+   	__attribute__((format (printf, 1, 2)));
+#else
 extern void pool_error(const char *fmt,...);
 extern void pool_debug(const char *fmt,...);
 extern void pool_log(const char *fmt,...);
+#endif
 extern int pool_init_config(void);
 extern int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context);
 extern void do_child(int unix_fd, int inet_fd);
