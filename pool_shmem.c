@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Portions Copyright (c) 2003-2008, PgPool Global Development Group
+ * Portions Copyright (c) 2003-2009, PgPool Global Development Group
  * Portions Copyright (c) 2003-2004, PostgreSQL Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
@@ -79,7 +79,7 @@ pool_shared_memory_create(size_t size)
 
 	if (memAddress == (void *) -1)
 	{
-		pool_error("shmat(id=%d) failed: %s", shmid);
+		pool_error("shmat(id=%d) failed: %s", shmid, strerror(errno));
 		return NULL;
 	}
 
@@ -97,7 +97,7 @@ static void
 IpcMemoryDetach(int status, Datum shmaddr)
 {
 	if (shmdt((void *) shmaddr) < 0)
-		pool_log("shmdt(%p) failed: %s", shmaddr, strerror(errno));
+		pool_log("shmdt(%p) failed: %s", (void *) shmaddr, strerror(errno));
 }
 
 /*
@@ -119,7 +119,7 @@ IpcMemoryDelete(int status, Datum shmId)
   		return;  
 
 	if (shmctl(shmId, IPC_RMID, NULL) < 0)
-		pool_log("shmctl(%d, %d, 0) failed: %s",
+		pool_log("shmctl(%lu, %d, 0) failed: %s",
 				 shmId, IPC_RMID, strerror(errno));
 }
 

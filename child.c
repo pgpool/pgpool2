@@ -1653,7 +1653,7 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 	}
 	else
 	{
-		pool_error("s_do_auth: auth kind %d not supported yet");
+		pool_error("s_do_auth: auth kind %d not supported yet", auth_kind);
 		return -1;
 	}
 

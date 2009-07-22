@@ -1035,7 +1035,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 			if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
 				continue;
 
-			pool_debug("waiting for %th backend completing the query", i);
+			pool_debug("waiting for %dth backend completing the query", i);
 			if (synchronize(CONNECTION(backend, i)))
 				return POOL_END;
 		}
@@ -1554,7 +1554,7 @@ POOL_STATUS CompleteCommandResponse(POOL_CONNECTION *frontend,
 		if (len != len1)
 		{
 			pool_debug("Complete Command Response: message length does not match between master(%d \"%s\",) and %d th server (%d \"%s\",)",
-					   len, string, len1, string1);
+					   len, string, i, len1, string1);
 			
 			free(string1);
 			return POOL_END;
@@ -1629,7 +1629,7 @@ int RowDescription(POOL_CONNECTION *frontend,
 				if (len != len1)
 				{
 					pool_error("RowDescription: field length does not match between backends master(%d) and %d th backend(%d)",
-							   ntohl(len), ntohl(len1));
+							   ntohl(len), j, ntohl(len1));
 					return POOL_FATAL;
 				}
 			}
@@ -1941,7 +1941,7 @@ POOL_STATUS CursorResponse(POOL_CONNECTION *frontend,
 			{
 				pool_error("CursorResponse: length does not match between master(%d) and %d th backend(%d)",
 						   len, i, len1);
-				pool_error("CursorResponse: master(%s) %d th backend(%s)", string1, string);
+				pool_error("CursorResponse: master(%s) %d th backend(%s)", string1, i, string);
 				free(string1);
 				return POOL_END;
 			}
