@@ -624,7 +624,7 @@ static void _rewriteList(Node *BaseSelect, RewriteQuery *message, ConInfoTodblin
 			if(lfirst(lc))
 			{ 
 #if 0   
-				/* 2009/07/27
+				/* 2009/07/27 */
 				if(IsA(lfirst(lc),JoinExpr) || IsA(lfirst(lc),RangeVar) || IsA(lfirst(lc),RangeSubselect))
 					build_virtual_table(message,lfirst(lc),next);
 #endif
