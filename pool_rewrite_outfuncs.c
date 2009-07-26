@@ -622,8 +622,13 @@ static void _rewriteList(Node *BaseSelect, RewriteQuery *message, ConInfoTodblin
 		if(message->r_code == SELECT_ANALYZE && message->fromClause)
 		{
 			if(lfirst(lc))
-			{
+			{ 
+#if 0   
+				/* 2009/07/27
 				if(IsA(lfirst(lc),JoinExpr) || IsA(lfirst(lc),RangeVar) || IsA(lfirst(lc),RangeSubselect))
+					build_virtual_table(message,lfirst(lc),next);
+#endif
+				if(IsA(lfirst(lc),RangeVar) || IsA(lfirst(lc),RangeSubselect))
 					build_virtual_table(message,lfirst(lc),next);
 
 				if(IsA(lfirst(lc),JoinExpr))
@@ -2305,12 +2310,14 @@ _rewriteJoinExpr(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 		}
 	}
 
-
+#if 0 /* 2009/07/24*/
 	if (node->quals)
 	{
 		delay_string_append_char(message, str, " ON ");
+		if(message->r_code != SELECT_ANALYZE)
 		_rewriteNode(BaseSelect, message, dblink, str, node->quals);
 	}
+#endif
 
 	if(message->r_code == SELECT_ANALYZE)
 	{
@@ -2325,6 +2332,18 @@ _rewriteJoinExpr(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 			else if(!natural && full)
 				build_join_table(message,aliasname,JNORMAL);
 		}
+	}
+	
+	/* 2009/07/24
+	 * move build_virtual_table from _rewriteList
+	 */
+	if(message->r_code == SELECT_ANALYZE)
+			build_virtual_table(message,node,message->analyze_num);
+
+	if (node->quals)
+	{
+		delay_string_append_char(message, str, " ON ");
+		_rewriteNode(BaseSelect, message, dblink, str, node->quals);
 	}
 }
 
@@ -3246,6 +3265,7 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 
 	count = message->analyze_num;
 
+  /* Allocate Memory Space and initialize some Flags*/
 	initSelectStmt(message,node);
 
 	if(message->r_code == SELECT_DEFAULT)
