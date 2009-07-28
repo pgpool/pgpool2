@@ -1740,6 +1740,16 @@ be manipulated inside the functions.</p>
 <p>The extended query protocol used by JDBC drivers, etc. is not
 supported. The simple query protocol must be used.</p>
 
+<h3>Natural Join (for parallel mode)</h3>
+
+<p>The Natural Join is not supported. 
+   "ON join condition" or "USING (join_column)"  must be needed.</p>
+
+<h3>USING CLAUSE (for parallel mode)</h3>
+
+<p> The USING CLAUSE is converted to ON CLAUSE by query rewrite process.
+    Therefore, when "*" is used at target list, the row of the same column name appears.</p>
+
 <h3>Multi-byte Characters (for all modes)</h3>
 
 <p>pgpool-II does not translate between different multi-byte
