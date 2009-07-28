@@ -3161,7 +3161,7 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 	if (!IsA(node, InsertStmt))
 		return 0;
 
-	/* need to ignore leading while spaces? */
+	/* need to ignore leading white spaces? */
 	if (pool_config->ignore_leading_white_space)
 	{
 		/* ignore leading white spaces */
