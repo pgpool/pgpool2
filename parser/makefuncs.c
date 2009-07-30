@@ -4,13 +4,13 @@
  *	  creator functions for primitive nodes. The functions here are for
  *	  the most frequently created nodes.
  *
- * Portions Copyright (c) 2003-2008, PgPool Global Development Group
- * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2009, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.57 2007/09/06 17:31:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.64 2009/04/04 21:12:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,11 +21,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define Assert
 #define ereport(a,b)
 #define elog(a,b)
 
-#define BOOLOID 16
-
+#define BOOLOID 16		/* XXX */
 
 /*
  * makeA_Expr -
@@ -91,6 +91,9 @@ makeVar(Index varno,
 	var->varnoold = varno;
 	var->varoattno = varattno;
 
+	/* Likewise, we just set location to "unknown" here */
+	var->location = -1;
+
 	return var;
 }
 
@@ -136,6 +139,7 @@ flatCopyTargetEntry(TargetEntry *src_tle)
 {
 	TargetEntry *tle = makeNode(TargetEntry);
 
+	Assert(IsA(src_tle, TargetEntry));
 	memcpy(tle, src_tle, sizeof(TargetEntry));
 	return tle;
 }
@@ -174,6 +178,7 @@ makeConst(Oid consttype,
 	cnst->constvalue = constvalue;
 	cnst->constisnull = constisnull;
 	cnst->constbyval = constbyval;
+	cnst->location = -1;		/* "unknown" */
 
 	return cnst;
 }
@@ -221,12 +226,13 @@ makeBoolConst(bool value, bool isnull)
  *	  creates a BoolExpr node
  */
 Expr *
-makeBoolExpr(BoolExprType boolop, List *args)
+makeBoolExpr(BoolExprType boolop, List *args, int location)
 {
 	BoolExpr   *b = makeNode(BoolExpr);
 
 	b->boolop = boolop;
 	b->args = args;
+	b->location = location;
 
 	return (Expr *) b;
 }
@@ -261,6 +267,7 @@ makeRelabelType(Expr *arg, Oid rtype, int32 rtypmod, CoercionForm rformat)
 	r->resulttype = rtype;
 	r->resulttypmod = rtypmod;
 	r->relabelformat = rformat;
+	r->location = -1;
 
 	return r;
 }
@@ -270,7 +277,7 @@ makeRelabelType(Expr *arg, Oid rtype, int32 rtypmod, CoercionForm rformat)
  *	  creates a RangeVar node (rather oversimplified case)
  */
 RangeVar *
-makeRangeVar(char *schemaname, char *relname)
+makeRangeVar(char *schemaname, char *relname, int location)
 {
 	RangeVar   *r = makeNode(RangeVar);
 
@@ -280,6 +287,7 @@ makeRangeVar(char *schemaname, char *relname)
 	r->inhOpt = INH_DEFAULT;
 	r->istemp = false;
 	r->alias = NULL;
+	r->location = location;
 
 	return r;
 }
@@ -346,6 +354,7 @@ makeFuncExpr(Oid funcid, Oid rettype, List *args, CoercionForm fformat)
 	funcexpr->funcretset = false;		/* only allowed case here */
 	funcexpr->funcformat = fformat;
 	funcexpr->args = args;
+	funcexpr->location = -1;
 
 	return funcexpr;
 }
@@ -353,13 +362,37 @@ makeFuncExpr(Oid funcid, Oid rettype, List *args, CoercionForm fformat)
 /*
  * makeDefElem -
  *	build a DefElem node
+ *
+ * This is sufficient for the "typical" case with an unqualified option name
+ * and no special action.
  */
 DefElem *
 makeDefElem(char *name, Node *arg)
 {
 	DefElem    *res = makeNode(DefElem);
 
+	res->defnamespace = NULL;
 	res->defname = name;
 	res->arg = arg;
+	res->defaction = DEFELEM_UNSPEC;
+
+	return res;
+}
+
+/*
+ * makeDefElemExtended -
+ *	build a DefElem node with all fields available to be specified
+ */
+DefElem *
+makeDefElemExtended(char *namespace, char *name, Node *arg,
+					DefElemAction defaction)
+{
+	DefElem    *res = makeNode(DefElem);
+
+	res->defnamespace = namespace;
+	res->defname = name;
+	res->arg = arg;
+	res->defaction = defaction;
+
 	return res;
 }

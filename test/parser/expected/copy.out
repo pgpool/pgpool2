@@ -12,4 +12,4 @@ COPY "t" TO 'yyy' BINARY
 COPY "t" TO 'yyy' OIDS 
 COPY "t" TO 'yyy' DELIMITERS ','
 COPY "t" TO 'yyy' NULL 'x' 
-COPY ( SELECT "*" FROM "t") TO 'xxx'
+COPY ( SELECT * FROM "t") TO 'xxx'

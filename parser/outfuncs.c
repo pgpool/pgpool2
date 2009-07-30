@@ -3,13 +3,13 @@
  * outfuncs.c
  *	  Output functions for Postgres tree nodes.
  *
- * Portions Copyright (c) 2003-2008, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.261.2.1 2005/11/14 23:54:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.360 2009/06/11 14:48:58 momjian Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -81,8 +81,8 @@ static void _outColumnDef(String *str, ColumnDef *node);
 static void _outTypeName(String *str, TypeName *node);
 static void _outTypeCast(String *str, TypeCast *node);
 static void _outIndexElem(String *str, IndexElem *node);
-static void _outSortClause(String *str, SortClause *node);
-static void _outGroupClause(String *str, GroupClause *node);
+static void _outWithClause(String *str, WithClause *node);
+static void _outCommonTableExpr(String *str, CommonTableExpr *node);
 static void _outSetOperationStmt(String *str, SetOperationStmt *node);
 static void _outAExpr(String *str, A_Expr *node);
 static void _outValue(String *str, Value *value);
@@ -92,6 +92,7 @@ static void _outAConst(String *str, A_Const *node);
 static void _outA_Indices(String *str, A_Indices *node);
 static void _outA_Indirection(String *str, A_Indirection *node);
 static void _outResTarget(String *str, ResTarget *node);
+static void _outWindowDef(String *str, WindowDef *node);
 static void _outConstraint(String *str, Constraint *node);
 static void _outFkConstraint(String *str, FkConstraint *node);
 
@@ -171,7 +172,6 @@ static void _outSetTransactionModeList(String *str, List *list);
 static void _outAlterTableCmd(String *str, AlterTableCmd *node);
 static void _outOptSeqList(String *str, List *options);
 static void _outPrivGrantee(String *str, PrivGrantee *node);
-static void _outPrivTarget(String *str, PrivTarget *node);
 static void _outFuncWithArgs(String *str, FuncWithArgs *node);
 static void _outFunctionParameter(String *str, FunctionParameter *node);
 static void _outPrivilegeList(String *str, List *list);
@@ -769,7 +769,9 @@ static void
 _outNotifyStmt(String *str, NotifyStmt *node)
 {
 	string_append_char(str, "NOTIFY ");
-	_outNode(str, node->relation);
+	string_append_char(str, "\"");
+	string_append_char(str, node->conditionname);
+	string_append_char(str, "\"");
 }
 
 static void
@@ -890,6 +892,9 @@ _outSelectStmt(String *str, SelectStmt *node)
 			string_append_char(str, " AS");
 		}
 
+		if (node->withClause)
+			_outWithClause(str, node->withClause);
+
 		string_append_char(str, " SELECT ");
 
 		if (node->distinctClause)
@@ -927,6 +932,12 @@ _outSelectStmt(String *str, SelectStmt *node)
 		{
 			string_append_char(str, " HAVING ");
 			_outNode(str, node->havingClause);
+		}
+
+		if (node->windowClause)
+		{
+			string_append_char(str, " WINDOW ");
+			_outNode(str, node->windowClause);
 		}
 	}
 
@@ -984,6 +995,19 @@ _outFuncCall(String *str, FuncCall *node)
 		_outNode(str, node->args);
 
 	string_append_char(str, ")");
+
+	if (node->over)
+	{
+		string_append_char(str, " OVER ");
+		if (node->over->name)
+		{
+			string_append_char(str, "\"");
+			string_append_char(str, node->over->name);
+			string_append_char(str, "\"");
+		}
+		else
+			_outWindowDef(str, node->over);
+	}
 }
 
 static void
@@ -1022,45 +1046,104 @@ _outColumnDef(String *str, ColumnDef *node)
 static void
 _outTypeName(String *str, TypeName *node)
 {
-	ListCell *lc;
-	char dot = 0;
 
-	foreach (lc, node->names)
-	{
-		Value *v = (Value *) lfirst(lc);
-		char *typename = v->val.str;
+	/* don't quote SystemType name, because
+	 * 1. char is not "char".
+	 * 2. in 8.4, interval with fields cause error.
+	 * =# SELECT '1'::"interval" year;
+	 * ERROR:  syntax error at or near "year"
+	 * LINE 1: SELECT '1'::"interval" year;
+	 */
+	if (list_length(node->names) == 2 && 
+		strcmp("pg_catalog", strVal(linitial(node->names))) == 0)
+   	{
+		string_append_char(str, strVal(lsecond(node->names)));
 
-		if (dot == 0)
-			dot = 1;
-		else
-			string_append_char(str, ".");
-		if(node->typemod < 0)
+		if (strcmp("interval", strVal(lsecond(node->names))) == 0)
 		{
-			string_append_char(str, "\"");
-			string_append_char(str, typename);
-			string_append_char(str, "\"");
-		} else 
-			string_append_char(str, typename);
+			if (node->typmods != NIL)
+			{
+				A_Const		*v = (A_Const *) linitial(node->typmods);
+				int			mask = v->val.val.ival;
+
+				/* precision for SECOND field.
+				 * backword comaptibility.
+				 * use `'1.2 second'::interval(0) second'
+				 * not `'1.2 second'::interval second(0)'(standarad for 8.4).
+				 */
+				if ((INTERVAL_MASK(SECOND) & mask) && 
+					list_length(node->typmods) == 2)
+				{
+					string_append_char(str, "(");
+					_outAConst(str, lsecond(node->typmods));
+					string_append_char(str, ")");
+				}
+
+				/* optional fields */
+				if (mask == INTERVAL_MASK(YEAR))
+					string_append_char(str, " YEAR");
+				else if (mask == INTERVAL_MASK(MONTH))
+					string_append_char(str, " MONTH");
+				else if (mask == INTERVAL_MASK(DAY))
+					string_append_char(str, " DAY");
+				else if (mask == INTERVAL_MASK(HOUR))
+					string_append_char(str, " HOUR");
+				else if (mask == INTERVAL_MASK(MINUTE))
+					string_append_char(str, " MINUTE");
+				else if (mask == INTERVAL_MASK(SECOND))
+					string_append_char(str, " SECOND");
+				else if (mask == (INTERVAL_MASK(YEAR) | INTERVAL_MASK(MONTH)))
+					string_append_char(str, " YEAR TO MONTH");
+				else if (mask == (INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR)))
+					string_append_char(str, " DAY TO HOUR");
+				else if (mask == (INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) |
+								  INTERVAL_MASK(MINUTE)))
+					string_append_char(str, " DAY TO MINUTE");
+				else if (mask == (INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) | 
+								  INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND)))
+					string_append_char(str, " DAY TO SECOND");
+				else if (mask == (INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE)))
+					string_append_char(str, " HOUR TO MINUTE");
+				else if (mask == (INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE) |
+								  INTERVAL_MASK(SECOND)))
+					string_append_char(str, " HOUR TO SECOND");
+				else if (mask == (INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND)))
+					string_append_char(str, " MINUTE TO SECOND");
+			}
+
+			return;
+		}
+	}
+	else
+	{
+		ListCell *lc;
+		char dot = 0;
+
+		foreach (lc, node->names)
+		{
+			Value *v = (Value *) lfirst(lc);
+			char *typename = v->val.str;
+
+			if (dot == 0)
+				dot = 1;
+			else
+				string_append_char(str, ".");
+			if(node->typemod < 0)
+			{
+				string_append_char(str, "\"");
+				string_append_char(str, typename);
+				string_append_char(str, "\"");
+			} else 
+				string_append_char(str, typename);
+		}
 	}
 	
-	if (node->typemod > 0)
+	/* precisions */
+	if (node->typmods)
 	{
-        int lower;
-        char buf[16];
-        string_append_char(str, "(");
-        snprintf(buf, 16, "%d", ((node->typemod - VARHDRSZ) >> 16) & 0x00FF);
-        string_append_char(str, buf);
-        lower = (node->typemod-VARHDRSZ) & 0x00FF;
-
-        if(lower != 0)
-        {
-            char buf2[16];
-            string_append_char(str, ",");
-            snprintf(buf2, 16, "%d",lower);
-            string_append_char(str, buf2);
-        }
-
-        string_append_char(str, ")");
+		string_append_char(str, "(");
+		_outList(str, node->typmods);
+		string_append_char(str, ")");
 	}
 }
 
@@ -1094,17 +1177,33 @@ _outIndexElem(String *str, IndexElem *node)
 	}
 }
 
-
 static void
-_outSortClause(String *str, SortClause *node)
+_outWithClause(String *str, WithClause *node)
 {
+	string_append_char(str, " WITH ");
+	if (node->recursive)
+		string_append_char(str, "RECURSIVE ");
 
+	_outList(str, node->ctes);
 }
 
 static void
-_outGroupClause(String *str, GroupClause *node)
+_outCommonTableExpr(String *str, CommonTableExpr *node)
 {
+	string_append_char(str, "\"");
+	string_append_char(str, node->ctename);
+	string_append_char(str, "\" ");
 
+	if (node->aliascolnames)
+	{
+		string_append_char(str, "(");
+		_outIdList(str, node->aliascolnames);
+		string_append_char(str, ") ");
+	}
+
+	string_append_char(str, "AS (");
+	_outNode(str, node->ctequery);
+	string_append_char(str, ")");
 }
 
 static void
@@ -1271,6 +1370,15 @@ _outColumnRef(String *str, ColumnRef *node)
 			string_append_char(str, v->val.str);
 			string_append_char(str, "\"");
 		}
+		else if (IsA(n, A_Star)) 
+		{
+			if (first == 0)
+				first = 1;
+			else
+				string_append_char(str, ".");
+
+			string_append_char(str, "*");
+		}
 	}
 }
 
@@ -1288,15 +1396,6 @@ static void
 _outAConst(String *str, A_Const *node)
 {
 	char buf[16];
-	char *name = NULL;
-
-	if (node->typename)
-	{
-		Value *v = linitial(node->typename->names);
-		name = v->val.str;
-		_outNode(str, node->typename);
-		string_append_char(str, " ");
-	}
 
 	switch (node->val.type)
 	{
@@ -1321,41 +1420,6 @@ _outAConst(String *str, A_Const *node)
 
 		default:
 			break;
-	}
-
-	if (name && (strcmp(name, "interval") == 0) &&
-		node->typename->typmods)
-	{
-		A_Const *v = linitial(node->typename->typmods);
-		int mask = v->val.val.ival;
-
-		if (mask == INTERVAL_MASK(YEAR))
-			string_append_char(str, " YEAR");
-		else if (mask == INTERVAL_MASK(MONTH))
-			string_append_char(str, " MONTH");
-		else if (mask == INTERVAL_MASK(DAY))
-			string_append_char(str, " DAY");
-		else if (mask == INTERVAL_MASK(HOUR))
-			string_append_char(str, " HOUR");
-		else if (mask == INTERVAL_MASK(MINUTE))
-			string_append_char(str, " MINUTE");
-		else if (mask == INTERVAL_MASK(SECOND))
-			string_append_char(str, " SECOND");
-		else if (mask == (INTERVAL_MASK(YEAR) | INTERVAL_MASK(MONTH)))
-			string_append_char(str, " YEAR TO MONTH");
-		else if (mask == (INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR)))
-			string_append_char(str, " DAY TO HOUR");
-		else if (mask == (INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) |
-						  INTERVAL_MASK(MINUTE)))
-			string_append_char(str, " DAY TO MINUTE");
-		else if (mask == (INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) |
-						  INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND)))
-			string_append_char(str, " DAY TO SECOND");
-		else if (mask == (INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE)))
-			string_append_char(str, " HOUR TO MINUTE");
-		else if (mask == (INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE) |
-						  INTERVAL_MASK(SECOND)))
-			string_append_char(str, " HOUR TO SECOND");
 	}
 }
 
@@ -1401,6 +1465,67 @@ _outResTarget(String *str, ResTarget *node)
 			string_append_char(str, "\" ");
 		}
 	}
+}
+
+static void
+_outWindowDef(String *str, WindowDef *node)
+{
+	if (node->name)
+	{
+		string_append_char(str, "\"");
+		string_append_char(str, node->name);
+		string_append_char(str, "\" AS ");
+	}
+	string_append_char(str, "(");
+
+	if (node->refname)
+	{
+		string_append_char(str, "\"");
+		string_append_char(str, node->refname);
+		string_append_char(str, "\" ");
+	}
+
+	if (node->partitionClause)
+	{
+		string_append_char(str, " PARTITION BY ");
+		_outNode(str, node->partitionClause);
+	}
+
+	if (node->orderClause)
+	{
+		string_append_char(str, " ORDER BY ");
+		_outNode(str, node->orderClause);
+	}
+
+	if (node->frameOptions != FRAMEOPTION_DEFAULTS)
+	{
+		if (node->frameOptions & FRAMEOPTION_RANGE)
+			string_append_char(str, " RANGE");
+		else if (node->frameOptions & FRAMEOPTION_ROWS)
+			string_append_char(str, " ROWS");
+
+		if (node->frameOptions & FRAMEOPTION_BETWEEN)
+			string_append_char(str, " BETWEEN");
+
+		if (node->frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING)
+			string_append_char(str, " UNBOUNDED PRECEDING");
+		else if (node->frameOptions & FRAMEOPTION_START_UNBOUNDED_FOLLOWING)
+			string_append_char(str, " UNBOUNDED FOLLOWING");
+		else if (node->frameOptions & FRAMEOPTION_START_CURRENT_ROW)
+			string_append_char(str, " UNBOUNDED CURRENT ROW");
+
+		if (node->frameOptions & FRAMEOPTION_BETWEEN)
+		{
+			string_append_char(str, " AND");
+			if (node->frameOptions & FRAMEOPTION_END_UNBOUNDED_PRECEDING)
+				string_append_char(str, " UNBOUNDED PRECEDING");
+			else if (node->frameOptions & FRAMEOPTION_END_UNBOUNDED_FOLLOWING)
+				string_append_char(str, " UNBOUNDED FOLLOWING");
+			else if (node->frameOptions & FRAMEOPTION_END_CURRENT_ROW)
+				string_append_char(str, " UNBOUNDED CURRENT ROW");
+		}
+	}
+	string_append_char(str, ")");
 }
 
 static void
@@ -1834,13 +1959,21 @@ static void _outClosePortalStmt(String *str, ClosePortalStmt *node)
 static void _outListenStmt(String *str, ListenStmt *node)
 {
 	string_append_char(str, "LISTEN ");
-	_outNode(str, node->relation);
+	string_append_char(str, "\"");
+	string_append_char(str, node->conditionname);
+	string_append_char(str, "\"");
 }
 
 static void _outUnlistenStmt(String *str, UnlistenStmt *node)
 {
 	string_append_char(str, "UNLISTEN ");
-	_outNode(str, node->relation);
+	if (node->conditionname == NULL) 
+		string_append_char(str, "*");
+	else {
+		string_append_char(str, "\"");
+		string_append_char(str, node->conditionname);
+		string_append_char(str, "\"");
+	}
 }
 
 static void _outLoadStmt(String *str, LoadStmt *node)
@@ -2852,7 +2985,7 @@ _outFuncName(String *str, List *func_name)
 static void
 _outCreateTrigStmt(String *str, CreateTrigStmt *node)
 {
-	int i, len;
+	bool	has_events = false;
 
 	if (node->isconstraint == TRUE)
 		string_append_char(str, "CREATE CONSTRAINT TRIGGER \"");
@@ -2866,18 +2999,33 @@ _outCreateTrigStmt(String *str, CreateTrigStmt *node)
 	else
 		string_append_char(str, "AFTER ");
 
-	len = strlen(node->actions);
-	for (i = 0; i < len; i++)
+	if (node->events & TRIGGER_TYPE_INSERT)
 	{
-		if (i)
+		if (has_events)
 			string_append_char(str, "OR ");
-		
-		if (node->actions[i] == 'i')
-			string_append_char(str, "INSERT ");
-		else if (node->actions[i] == 'd')
-			string_append_char(str, "DELETE ");
-		else
-			string_append_char(str, "UPDATE ");
+		string_append_char(str, "INSERT ");
+		has_events = true;
+	}
+	if (node->events & TRIGGER_TYPE_DELETE)
+	{
+		if (has_events)
+			string_append_char(str, "OR ");
+		string_append_char(str, "DELETE ");
+		has_events = true;
+	}
+	if (node->events & TRIGGER_TYPE_UPDATE)
+	{
+		if (has_events)
+			string_append_char(str, "OR ");
+		string_append_char(str, "UPDATE ");
+		has_events = true;
+	}
+	if (node->events & TRIGGER_TYPE_TRUNCATE)
+	{
+		if (has_events)
+			string_append_char(str, "OR ");
+		string_append_char(str, "TRUNCATE ");
+		has_events = true;
 	}
 
 	string_append_char(str, "ON ");
@@ -3076,8 +3224,10 @@ _outCreateOpClassItem(String *str, CreateOpClassItem *node)
 				_outNode(str, node->args);
 				string_append_char(str, ")");
 			}
+			/* XXX
 			if (node->recheck == TRUE)
 				string_append_char(str, " RECHECK");
+			*/
 			break;
 
 		case OPCLASS_ITEM_FUNCTION:
@@ -3311,47 +3461,6 @@ _outFuncWithArgs(String *str, FuncWithArgs *node)
 }
 
 static void
-_outPrivTarget(String *str, PrivTarget *node)
-{
-	switch (node->objtype)
-	{
-		case ACL_OBJECT_RELATION:
-			_outNode(str, node->objs);
-			break;
-
-		case ACL_OBJECT_SEQUENCE:
-			string_append_char(str, "SEQUENCE ");
-			_outNode(str, node->objs);
-			break;
-
-		case ACL_OBJECT_FUNCTION:
-			string_append_char(str, "FUNCTION ");
-			_outNode(str, node->objs);
-			break;
-
-		case ACL_OBJECT_DATABASE:
-			string_append_char(str, "DATABASE ");
-			_outIdList(str, node->objs);
-			break;
-
-		case ACL_OBJECT_LANGUAGE:
-			string_append_char(str, "LANGUAGE ");
-			_outIdList(str, node->objs);
-			break;
-
-		case ACL_OBJECT_NAMESPACE:
-			string_append_char(str, "SCHEMA ");
-			_outIdList(str, node->objs);
-			break;
-
-		case ACL_OBJECT_TABLESPACE:
-			string_append_char(str, "TABLESPACE ");
-			_outIdList(str, node->objs);
-			break;
-	}
-}
-
-static void
 _outPrivGrantee(String *str, PrivGrantee *node)
 {
 	if (node->rolname == NULL)
@@ -3367,8 +3476,6 @@ _outPrivGrantee(String *str, PrivGrantee *node)
 static void
 _outGrantStmt(String *str, GrantStmt *node)
 {
-	PrivTarget *n;
-	
 	if (node->is_grant == true)
 		string_append_char(str, "GRANT ");
 	else
@@ -3382,11 +3489,42 @@ _outGrantStmt(String *str, GrantStmt *node)
 
 	string_append_char(str, " ON ");
 
-	n = makeNode(PrivTarget);
-	n->objtype = node->objtype;
-	n->objs = node->objects;
-	_outNode(str, n);
-	pfree(n);
+	switch (node->objtype)
+	{
+		case ACL_OBJECT_RELATION:
+			_outNode(str, node->objects);
+			break;
+
+		case ACL_OBJECT_SEQUENCE:
+			string_append_char(str, "SEQUENCE ");
+			_outNode(str, node->objects);
+			break;
+
+		case ACL_OBJECT_FUNCTION:
+			string_append_char(str, "FUNCTION ");
+			_outNode(str, node->objects);
+			break;
+
+		case ACL_OBJECT_DATABASE:
+			string_append_char(str, "DATABASE ");
+			_outIdList(str, node->objects);
+			break;
+
+		case ACL_OBJECT_LANGUAGE:
+			string_append_char(str, "LANGUAGE ");
+			_outIdList(str, node->objects);
+			break;
+
+		case ACL_OBJECT_NAMESPACE:
+			string_append_char(str, "SCHEMA ");
+			_outIdList(str, node->objects);
+			break;
+
+		case ACL_OBJECT_TABLESPACE:
+			string_append_char(str, "TABLESPACE ");
+			_outIdList(str, node->objects);
+			break;
+	}
 
 	if (node->is_grant == true)
 		string_append_char(str, " TO ");
@@ -3716,25 +3854,25 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 			break;
 
 		case OBJECT_CONVERSION:
-			string_append_char(str, "CONVERSION ");
-			_outFuncName(str, node->object);
-			string_append_char(str, " OWNER TO \"");
+			string_append_char(str, "CONVERSION \"");
+			string_append_char(str, strVal(linitial(node->object)));
+			string_append_char(str, "\" OWNER TO \"");
 			string_append_char(str, node->newowner);
 			string_append_char(str, "\"");
 			break;
 
 		case OBJECT_DATABASE:
 			string_append_char(str, "DATABASE \"");
-			_outIdList(str, node->object);
+			string_append_char(str, strVal(linitial(node->object)));
 			string_append_char(str, "\" OWNER TO \"");
 			string_append_char(str, node->newowner);
 			string_append_char(str, "\"");
 			break;
 
 		case OBJECT_DOMAIN:
-			string_append_char(str, "DOMAIN ");
-			_outFuncName(str, node->object);
-			string_append_char(str, " OWNER TO \"");
+			string_append_char(str, "DOMAIN \"");
+			string_append_char(str, strVal(linitial(node->object)));
+			string_append_char(str, "\" OWNER TO \"");
 			string_append_char(str, node->newowner);
 			string_append_char(str, "\"");
 			break;
@@ -3745,6 +3883,14 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 			string_append_char(str, "(");
 			_outNode(str, node->objarg);
 			string_append_char(str, ") OWNER TO \"");
+			string_append_char(str, node->newowner);
+			string_append_char(str, "\"");
+			break;
+
+		case OBJECT_LANGUAGE:
+			string_append_char(str, "LANGUAGE \"");
+			string_append_char(str, strVal(linitial(node->object)));
+			string_append_char(str, "\" OWNER TO \"");
 			string_append_char(str, node->newowner);
 			string_append_char(str, "\"");
 			break;
@@ -3769,25 +3915,67 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 			string_append_char(str, "\"");
 			break;
 
+		case OBJECT_OPFAMILY:
+			string_append_char(str, "OPERATOR FAMILY ");
+			_outFuncName(str, node->object);
+			string_append_char(str, " USING ");
+			string_append_char(str, node->addname);
+			string_append_char(str, " OWNER TO \"");
+			string_append_char(str, node->newowner);
+			string_append_char(str, "\"");
+			break;
+
 		case OBJECT_SCHEMA:
 			string_append_char(str, "SCHEMA \"");
-			string_append_char(str, linitial(node->object));
+			string_append_char(str, strVal(linitial(node->object)));
 			string_append_char(str, "\" OWNER TO \"");
 			string_append_char(str, node->newowner);
 			string_append_char(str, "\"");
 			break;
 
 		case OBJECT_TYPE:
-			string_append_char(str, "TYPE ");
-			_outFuncName(str, node->object);
-			string_append_char(str, " OWNER TO \"");
+			string_append_char(str, "TYPE \"");
+			string_append_char(str, strVal(linitial(node->object)));
+			string_append_char(str, "\" OWNER TO \"");
 			string_append_char(str, node->newowner);
 			string_append_char(str, "\"");
 			break;
 
 		case OBJECT_TABLESPACE:
 			string_append_char(str, "TABLESPACE \"");
-			string_append_char(str, linitial(node->object));
+			string_append_char(str, strVal(linitial(node->object)));
+			string_append_char(str, "\" OWNER TO \"");
+			string_append_char(str, node->newowner);
+			string_append_char(str, "\"");
+			break;
+
+		case OBJECT_TSDICTIONARY:
+			string_append_char(str, "TEXT SEARCH DICTIONARY \"");
+			string_append_char(str, strVal(linitial(node->object)));
+			string_append_char(str, "\" OWNER TO \"");
+			string_append_char(str, node->newowner);
+			string_append_char(str, "\"");
+			break;
+
+		case OBJECT_TSCONFIGURATION:
+			string_append_char(str, "TEXT SEARCH CONFIGURATION \"");
+			string_append_char(str, strVal(linitial(node->object)));
+			string_append_char(str, "\" OWNER TO \"");
+			string_append_char(str, node->newowner);
+			string_append_char(str, "\"");
+			break;
+
+		case OBJECT_FDW:
+			string_append_char(str, "FOREIGN DATA WRAPPER \"");
+			string_append_char(str, strVal(linitial(node->object)));
+			string_append_char(str, "\" OWNER TO \"");
+			string_append_char(str, node->newowner);
+			string_append_char(str, "\"");
+			break;
+
+		case OBJECT_FOREIGN_SERVER:
+			string_append_char(str, "SERVER \"");
+			string_append_char(str, strVal(linitial(node->object)));
 			string_append_char(str, "\" OWNER TO \"");
 			string_append_char(str, node->newowner);
 			string_append_char(str, "\"");
@@ -4530,8 +4718,12 @@ _outXmlExpr(String *str, XmlExpr *node)
 
 			_outNode(str, linitial(node->args));
 			n = lsecond(node->args);
-			if (n->val.val.str[0] == 't')
-				string_append_char(str, " PRESERVE WHITESPACE");
+			{
+				Node *arg = ((TypeCast *) n)->arg;
+
+				if (((A_Const *) arg)->val.val.str[0] == 't')
+					string_append_char(str, " PRESERVE WHITESPACE");
+			}
 
 			string_append_char(str, ")");
 			break;
@@ -4665,6 +4857,11 @@ _outNode(String *str, void *obj)
 			case T_RangeVar:
 				_outRangeVar(str, obj);
 				break;
+				/*
+			case T_IntoClause:
+				_outIntoClause(str, obj);
+				break;
+				*/
 			case T_Var:
 				_outVar(str, obj);
 				break;
@@ -4677,6 +4874,11 @@ _outNode(String *str, void *obj)
 			case T_Aggref:
 				_outAggref(str, obj);
 				break;
+				/*
+			case T_WindowFunc:
+				_outWindowFunc(str, obj);
+				break;
+				*/
 			case T_ArrayRef:
 				_outArrayRef(str, obj);
 				break;
@@ -4701,6 +4903,11 @@ _outNode(String *str, void *obj)
 			case T_SubPlan:
 				_outSubPlan(str, obj);
 				break;
+				/*
+			case T_AlternativeSubPlan:
+				_outAlternativeSubPlan(str, obj);
+				break;
+				*/
 			case T_FieldSelect:
 				_outFieldSelect(str, obj);
 				break;
@@ -4710,6 +4917,14 @@ _outNode(String *str, void *obj)
 			case T_RelabelType:
 				_outRelabelType(str, obj);
 				break;
+				/*
+			case T_CoerceViaIO:
+				_outCoerceViaIO(str, obj);
+				break;
+			case T_ArrayCoerceExpr:
+				_outArrayCoerceExpr(str, obj);
+				break;
+				*/
 			case T_ConvertRowtypeExpr:
 				_outConvertRowtypeExpr(str, obj);
 				break;
@@ -4728,6 +4943,11 @@ _outNode(String *str, void *obj)
 			case T_RowExpr:
 				_outRowExpr(str, obj);
 				break;
+				/*
+			case T_RowCompareExpr:
+				_outRowCompareExpr(str, obj);
+				break;
+				*/
 			case T_CoalesceExpr:
 				_outCoalesceExpr(str, obj);
 				break;
@@ -4792,11 +5012,16 @@ _outNode(String *str, void *obj)
 			case T_IndexElem:
 				_outIndexElem(str, obj);
 				break;
-			case T_SortClause:
-				_outSortClause(str, obj);
+				/*
+			case T_RowMarkClause:
+				_outRowMarkClause(str, obj);
 				break;
-			case T_GroupClause:
-				_outGroupClause(str, obj);
+				*/
+			case T_WithClause:
+				_outWithClause(str, obj);
+				break;
+			case T_CommonTableExpr:
+				_outCommonTableExpr(str, obj);
 				break;
 			case T_SetOperationStmt:
 				_outSetOperationStmt(str, obj);
@@ -4816,14 +5041,27 @@ _outNode(String *str, void *obj)
 			case T_A_Const:
 				_outAConst(str, obj);
 				break;
+				/*
+			case T_A_Star:
+				_outA_Star(str, obj);
+				break;
+				*/
 			case T_A_Indices:
 				_outA_Indices(str, obj);
 				break;
 			case T_A_Indirection:
 				_outA_Indirection(str, obj);
 				break;
+				/*
+			case T_A_ArrayExpr:
+				_outA_ArrayExpr(str, obj);
+				break;
+				*/
 			case T_ResTarget:
 				_outResTarget(str, obj);
+				break;
+			case T_WindowDef:
+				_outWindowDef(str, obj);
 				break;
 			case T_Constraint:
 				_outConstraint(str, obj);
@@ -5009,10 +5247,6 @@ _outNode(String *str, void *obj)
 				_outGrantStmt(str, obj);
 				break;
 
-			case T_PrivTarget:
-				_outPrivTarget(str, obj);
-				break;
-
 			case T_FuncWithArgs:
 				_outFuncWithArgs(str, obj);
 				break;
@@ -5172,6 +5406,7 @@ _outNode(String *str, void *obj)
 
 			case T_CurrentOfExpr:
 				_outCurrentOfExpr(str, obj);
+				break;
 
 			default:
 				break;

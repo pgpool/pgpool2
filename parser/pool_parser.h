@@ -2,7 +2,7 @@
 /*
  * $Header$
  *
- * Copyright (c) 2006-2008, pgpool Global Development Group
+ * Copyright (c) 2006-2009, pgpool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -24,9 +24,17 @@
 
 extern jmp_buf jmpbuffer;
 
+#define AssertMacro
+
 /* integer */
-typedef signed int int32;
-typedef signed short int16;
+
+/* 
+ * move int32 and int16 to pool_types.h since there's no point that
+ * these are solely used for parser
+ * typedef signed int int32;
+ * typedef signed short int16;
+ */
+
 typedef unsigned int PoolOid;
 typedef unsigned int Index;
 typedef short AttrNumber;
@@ -113,5 +121,15 @@ typedef unsigned long Datum;	/* XXX sizeof(long) >= sizeof(void *) */
 /* array */
 #define lengthof(array) (sizeof(array) / sizeof(((array)[0])))
 #define endof(array) (&(array)[lengthof(array)])
+
+/* from include/catalog/pg_trigger.h  start */
+/* Bits within tgtype */
+#define TRIGGER_TYPE_ROW                (1 << 0)
+#define TRIGGER_TYPE_BEFORE             (1 << 1)
+#define TRIGGER_TYPE_INSERT             (1 << 2)
+#define TRIGGER_TYPE_DELETE             (1 << 3)
+#define TRIGGER_TYPE_UPDATE             (1 << 4)
+#define TRIGGER_TYPE_TRUNCATE           (1 << 5)
+/* from include/catalog/pg_trigger.h  end */
 
 #endif /* POOL_PARSER_H */

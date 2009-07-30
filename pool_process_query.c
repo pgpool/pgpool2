@@ -2216,7 +2216,8 @@ int is_select_query(Node *node, char *sql)
 			return 0;
 
 		if (IsA(node, SelectStmt))
-			return (*sql == 's' || *sql == 'S' || *sql == '(');
+			return (*sql == 's' || *sql == 'S' || *sql == '(' ||
+					*sql == 'w' || *sql == 'W' || *sql == 't' || *sql == 'T');
 		else
 			return (*sql == 'd' || *sql == 'D');
 	}

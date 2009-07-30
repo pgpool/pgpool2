@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2008	PgPool Global Development Group
+ * Copyright (c) 2003-2009	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -71,5 +71,6 @@ extern void *pool_memory_alloc_zero(POOL_MEMORY_POOL *pool_memory, unsigned int 
 #define repalloc(p, s)  pool_memory_realloc(pool_memory, (p), (s))
 #define pstrdup(s)  pool_memory_strdup(pool_memory, (s))
 #define palloc0(s) pool_memory_alloc_zero(pool_memory, (s))
+#define palloc0fast(s) pool_memory_alloc_zero(pool_memory, (s))	/* Added in 8.4 */
 
 #endif /* POOL_MEMORY_H */

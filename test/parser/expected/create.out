@@ -1,9 +1,9 @@
-CREATE TABLE "foo" ("a" "int4","b" "text") 
-CREATE TABLE "foo" ("a" "int4","b" "text") INHERITS ("bar")
-CREATE TABLE "foo" ("a" "int4","b" "text") INHERITS ("a","b","c","d")
-CREATE TABLE "foo" ("a" "int4","b" "numeric")  WITH OIDS 
-CREATE TABLE "foo" ("a" "int4","b" "numeric")  WITHOUT OIDS 
-CREATE TABLE "foo" ("a" "int4","b" "numeric")  WITH ("fillfactor"=10)
+CREATE TABLE "foo" ("a" int4,"b" "text") 
+CREATE TABLE "foo" ("a" int4,"b" "text") INHERITS ("bar")
+CREATE TABLE "foo" ("a" int4,"b" "text") INHERITS ("a","b","c","d")
+CREATE TABLE "foo" ("a" int4,"b" numeric)  WITH OIDS 
+CREATE TABLE "foo" ("a" int4,"b" numeric)  WITHOUT OIDS 
+CREATE TABLE "foo" ("a" int4,"b" numeric)  WITH ("fillfactor"=10)
 CREATE TABLE "foo" ("a" ,"b" )  AS SELECT 1,2
 CREATE TABLE "foo" ("a" ,"b" )  WITH OIDS  AS SELECT 1,2
 CREATE TABLE "foo" ("a" ,"b" )  WITHOUT OIDS  AS SELECT 1,2
@@ -16,26 +16,26 @@ CREATE TABLE "foo" ("a" ,"b" )  ON COMMIT DROP AS SELECT 1,2
 CREATE TABLE "foo" ("a" ,"b" )  ON COMMIT DELETE ROWS AS SELECT 1,2
 CREATE TABLE "foo" ("a" ,"b" )  ON COMMIT PRESERVE ROWS AS SELECT 1,2
 CREATE TABLE "foo" ("a" ,"b" )  ON COMMIT PRESERVE ROWS AS SELECT 1,2
-CREATE TABLE "foo" ("a" "int4",LIKE "a" INCLUDING DEFAULTS) 
-CREATE TABLE "foo" ("a" "int4",LIKE "a" INCLUDING CONSTRAINTS) 
-CREATE TABLE "foo" ("a" "int4",LIKE "a" EXCLUDING DEFAULTS) 
-CREATE TABLE "foo" ("a" "int4",LIKE "a" EXCLUDING CONSTRAINTS) 
-CREATE TABLE "foo" ("a" "int4" UNIQUE) 
-CREATE TABLE "foo" ("a" "int4" UNIQUE WITH ("fillfactor"=10)) 
-CREATE TABLE "foo" ("a" "int4" PRIMARY KEY) 
-CREATE TABLE "foo" ("a" "int4" CHECK ( ("a">100 ))) 
-CREATE TABLE "foo" ("a" "int4" REFERENCES "b"("c")) 
-CREATE TABLE "foo" ("a" "int4" REFERENCES "b"("c") MATCH FULL) 
+CREATE TABLE "foo" ("a" int4,LIKE "a" INCLUDING DEFAULTS) 
+CREATE TABLE "foo" ("a" int4,LIKE "a" INCLUDING CONSTRAINTS) 
+CREATE TABLE "foo" ("a" int4,LIKE "a" EXCLUDING DEFAULTS) 
+CREATE TABLE "foo" ("a" int4,LIKE "a" EXCLUDING CONSTRAINTS) 
+CREATE TABLE "foo" ("a" int4 UNIQUE) 
+CREATE TABLE "foo" ("a" int4 UNIQUE WITH ("fillfactor"=10)) 
+CREATE TABLE "foo" ("a" int4 PRIMARY KEY) 
+CREATE TABLE "foo" ("a" int4 CHECK ( ("a">100 ))) 
+CREATE TABLE "foo" ("a" int4 REFERENCES "b"("c")) 
+CREATE TABLE "foo" ("a" int4 REFERENCES "b"("c") MATCH FULL) 
 syntax error: CREATE TABLE foo (a int references b(c) MATCH PARTIAL)
-CREATE TABLE "foo" ("a" "int4" REFERENCES "b"("c")) 
-CREATE TABLE "foo" ("a" "int4" REFERENCES "b"("c") ON UPDATE RESTRICT) 
-CREATE TABLE "foo" ("a" "int4" REFERENCES "b"("c") ON UPDATE CASCADE) 
-CREATE TABLE "foo" ("a" "int4" REFERENCES "b"("c") ON UPDATE SET NULL) 
-CREATE TABLE "foo" ("a" "int4" REFERENCES "b"("c") ON UPDATE SET DEFAULT) 
-CREATE TABLE "foo" ("a" "int4" REFERENCES "b"("c") ON DELETE RESTRICT) 
-CREATE TABLE "foo" ("a" "int4" REFERENCES "b"("c") ON DELETE CASCADE) 
-CREATE TABLE "foo" ("a" "int4" REFERENCES "b"("c") ON DELETE SET NULL) 
-CREATE TABLE "foo" ("a" "int4" REFERENCES "b"("c") ON DELETE SET DEFAULT) 
+CREATE TABLE "foo" ("a" int4 REFERENCES "b"("c")) 
+CREATE TABLE "foo" ("a" int4 REFERENCES "b"("c") ON UPDATE RESTRICT) 
+CREATE TABLE "foo" ("a" int4 REFERENCES "b"("c") ON UPDATE CASCADE) 
+CREATE TABLE "foo" ("a" int4 REFERENCES "b"("c") ON UPDATE SET NULL) 
+CREATE TABLE "foo" ("a" int4 REFERENCES "b"("c") ON UPDATE SET DEFAULT) 
+CREATE TABLE "foo" ("a" int4 REFERENCES "b"("c") ON DELETE RESTRICT) 
+CREATE TABLE "foo" ("a" int4 REFERENCES "b"("c") ON DELETE CASCADE) 
+CREATE TABLE "foo" ("a" int4 REFERENCES "b"("c") ON DELETE SET NULL) 
+CREATE TABLE "foo" ("a" int4 REFERENCES "b"("c") ON DELETE SET DEFAULT) 
 CREATE TYPE "enum_test" AS ENUM ('label1','label2')
 syntax error: CREATE TYPE enum_test AS ENUM ();
 syntax error: CREATE TYPE enum_test AS ENUM;

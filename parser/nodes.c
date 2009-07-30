@@ -19,6 +19,7 @@
  */
 /*#include "postgres.h"*/
 
+#include "../pool_type.h"
 #include "nodes.h"
 
 /*

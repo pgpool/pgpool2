@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2008	PgPool Global Development Group
+ * Copyright (c) 2003-2009	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -29,6 +29,20 @@
 #include "config.h"
 #include <sys/types.h>
 #include <sys/socket.h>
+
+typedef signed char int8;		/* == 8 bits */
+typedef signed short int16;		/* == 16 bits */
+typedef signed int int32;		/* == 32 bits */
+
+/*
+ * uintN
+ *		Unsigned integer, EXACTLY N BITS IN SIZE,
+ *		used for numerical computations and the
+ *		frontend/backend protocol.
+ */
+typedef unsigned char uint8;	/* == 8 bits */
+typedef unsigned short uint16;	/* == 16 bits */
+typedef unsigned int uint32;	/* == 32 bits */
 
 /* Define common boolean type. C++ and BEOS already has it so exclude them. */
 #ifdef c_plusplus

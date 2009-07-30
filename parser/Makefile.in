@@ -54,7 +54,8 @@ libsql_parser_a_LIBADD =
 am_libsql_parser_a_OBJECTS = gram.$(OBJEXT) list.$(OBJEXT) \
 	makefuncs.$(OBJEXT) nodes.$(OBJEXT) parser.$(OBJEXT) \
 	pool_memory.$(OBJEXT) pool_string.$(OBJEXT) value.$(OBJEXT) \
-	keywords.$(OBJEXT) outfuncs.$(OBJEXT) copyfuncs.$(OBJEXT)
+	keywords.$(OBJEXT) outfuncs.$(OBJEXT) copyfuncs.$(OBJEXT) \
+	kwlookup.$(OBJEXT)
 libsql_parser_a_OBJECTS = $(am_libsql_parser_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -181,7 +182,7 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 noinst_LIBRARIES = libsql-parser.a
-libsql_parser_a_SOURCES = gram.y gramparse.h list.c makefuncs.c makefuncs.h memnodes.h nodes.h nodes.c parsenodes.h parser.c parser.h pg_list.h pool_memory.c pool_memory.h pool_string.c pool_string.h primnodes.h  scansup.h value.c value.h keywords.h keywords.c pool_parser.h outfuncs.c copyfuncs.c
+libsql_parser_a_SOURCES = gram.y gramparse.h list.c makefuncs.c makefuncs.h memnodes.h nodes.h nodes.c parsenodes.h parser.c parser.h pg_list.h pool_memory.c pool_memory.h pool_string.c pool_string.h primnodes.h  scansup.h value.c value.h keywords.h keywords.c pool_parser.h outfuncs.c copyfuncs.c kwlist.h kwlookup.c
 EXTRA_DIST = scan.c scan.l
 AM_CPPFLAGS = -D_GNU_SOURCE -I .. -I @PGSQL_INCLUDE_DIR@
 AM_YFLAGS = -d
@@ -240,6 +241,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/copyfuncs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gram.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/keywords.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kwlookup.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/list.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/makefuncs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nodes.Po@am__quote@

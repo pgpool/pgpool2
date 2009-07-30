@@ -2,7 +2,7 @@
 
 PROGRAM=parser-test
 PGPOOL_SRC=../../parser
-PARSER_OBJS=gram.o parser.o pool_string.o list.o makefuncs.o value.o nodes.o pool_memory.o main.o keywords.o outfuncs.o
+PARSER_OBJS=gram.o parser.o pool_string.o list.o makefuncs.o value.o nodes.o pool_memory.o main.o keywords.o outfuncs.o copyfuncs.o kwlookup.o
 
 all: $(PROGRAM)
 
@@ -59,6 +59,12 @@ scan.c : $(PGPOOL_SRC)/scan.l
 	flex -o$@ $<
 
 pool_memory.o: $(PGPOOL_SRC)/pool_memory.c $(PGPOOL_SRC)/pool_memory.h
+	gcc -Wall -c -g -include pool.h -I. -I $(PGPOOL_SRC) $<
+
+copyfuncs.o: $(PGPOOL_SRC)/copyfuncs.c
+	gcc -Wall -c -g -include pool.h -I. -I $(PGPOOL_SRC) $<
+
+kwlookup.o: $(PGPOOL_SRC)/kwlookup.c
 	gcc -Wall -c -g -include pool.h -I. -I $(PGPOOL_SRC) $<
 
 test: $(PROGRAM)

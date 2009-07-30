@@ -4,11 +4,11 @@
  *	  prototypes for the creator functions (for primitive nodes)
  *
  *
- * Portions Copyright (c) 2003-2008, PgPool Global Development Group
- * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2009, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/makefuncs.h,v 1.60 2007/09/06 17:31:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/makefuncs.h,v 1.67 2009/04/04 21:12:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,14 +50,14 @@ extern Const *makeNullConst(Oid consttype, int32 consttypmod);
 
 extern Node *makeBoolConst(bool value, bool isnull);
 
-extern Expr *makeBoolExpr(BoolExprType boolop, List *args);
+extern Expr *makeBoolExpr(BoolExprType boolop, List *args, int location);
 
 extern Alias *makeAlias(const char *aliasname, List *colnames);
 
 extern RelabelType *makeRelabelType(Expr *arg, Oid rtype, int32 rtypmod,
 				CoercionForm rformat);
 
-extern RangeVar *makeRangeVar(char *schemaname, char *relname);
+extern RangeVar *makeRangeVar(char *schemaname, char *relname, int location);
 
 extern TypeName *makeTypeName(char *typnam);
 extern TypeName *makeTypeNameFromNameList(List *names);
@@ -67,5 +67,7 @@ extern FuncExpr *makeFuncExpr(Oid funcid, Oid rettype,
 			 List *args, CoercionForm fformat);
 
 extern DefElem *makeDefElem(char *name, Node *arg);
+extern DefElem *makeDefElemExtended(char *namespace, char *name, Node *arg,
+									DefElemAction defaction);
 
 #endif   /* MAKEFUNC_H */

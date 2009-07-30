@@ -7,14 +7,15 @@
  * (since we need to be able to do basic parsing even while inside an
  * aborted transaction).  Therefore, the data structures returned by
  * the grammar are "raw" parsetrees that still need to be analyzed by
- * parse_analyze.
+ * analyze.c and related files.
  *
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2009, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parser.c,v 1.63 2004/12/31 22:00:27 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parser.c,v 1.76 2009/01/01 17:23:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,16 +23,16 @@
 #include <string.h>
 #include "pool_parser.h"
 #include "pool_memory.h"
-#include "gramparse.h"
+#include "gramparse.h"	/* required before parser/gram.h! */
 #include "gram.h"
 #include "parser.h"
-#include "value.h"
+
 
 List	   *parsetree;			/* result of parsing is left here */
 jmp_buf    jmpbuffer;
 
+static bool have_lookahead;		/* is lookahead info valid? */
 static int	lookahead_token;	/* one-token lookahead */
-static bool have_lookahead;		/* lookahead_token set? */
 static YYSTYPE lookahead_yylval;	/* yylval for lookahead token */
 static YYLTYPE lookahead_yylloc;	/* yylloc for lookahead token */
 
@@ -114,6 +115,7 @@ filtered_base_yylex(void)
 	switch (cur_token)
 	{
 		case NULLS_P:
+
 			/*
 			 * NULLS FIRST and NULLS LAST must be reduced to one token
 			 */
@@ -142,29 +144,17 @@ filtered_base_yylex(void)
 			break;
 
 		case WITH:
+
 			/*
-			 * WITH CASCADED, LOCAL, or CHECK must be reduced to one token
-			 *
-			 * XXX an alternative way is to recognize just WITH_TIME and put
-			 * the ugliness into the datetime datatype productions instead of
-			 * WITH CHECK OPTION.  However that requires promoting WITH to a
-			 * fully reserved word.  If we ever have to do that anyway
-			 * (perhaps for SQL99 recursive queries), come back and simplify
-			 * this code.
+			 * WITH TIME must be reduced to one token
 			 */
 			cur_yylval = base_yylval;
 			cur_yylloc = base_yylloc;
 			next_token = base_yylex();
 			switch (next_token)
 			{
-				case CASCADED:
-					cur_token = WITH_CASCADED;
-					break;
-				case LOCAL:
-					cur_token = WITH_LOCAL;
-					break;
-				case CHECK:
-					cur_token = WITH_CHECK;
+				case TIME:
+					cur_token = WITH_TIME;
 					break;
 				default:
 					/* save the lookahead token for next time */

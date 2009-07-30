@@ -4,11 +4,11 @@
  *	  lexical token lookup for reserved words in postgres SQL
  *
  *
- * Portions Copyright (c) 2003-2008, PgPool Global Development Group
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2009, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/keywords.h,v 1.20 2004/12/31 22:03:38 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/parser/keywords.h,v 1.26 2009/01/01 17:24:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,9 +25,12 @@
 typedef struct ScanKeyword
 {
 	const char *name;			/* in lower case */
-	short		value;			/* grammar's token code */
-	short		category;		/* see codes above */
+	int16		value;			/* grammar's token code */
+	int16		category;		/* see codes above */
 } ScanKeyword;
+
+extern const ScanKeyword ScanKeywords[];
+extern const ScanKeyword *LastScanKeyword;
 
 extern const ScanKeyword *ScanKeywordLookup(const char *text);
 
