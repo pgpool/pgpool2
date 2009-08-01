@@ -101,6 +101,7 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, in
 	for (i=0;i<pool_config->max_pool;i++)
 	{
 		if (MASTER_CONNECTION(p) &&
+			MASTER_CONNECTION(p)->sp &&
 			MASTER_CONNECTION(p)->sp->major == protoMajor &&
 			MASTER_CONNECTION(p)->sp->user != NULL &&
 			strcmp(MASTER_CONNECTION(p)->sp->user, user) == 0 &&
@@ -238,7 +239,7 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 	closetime = MASTER_CONNECTION(p)->closetime;
 	for (i=0;i<pool_config->max_pool;i++)
 	{
-		pool_debug("user: %s database: %s closetime: %d",
+		pool_debug("user: %s database: %s closetime: %ld",
 				   MASTER_CONNECTION(p)->sp->user,
 				   MASTER_CONNECTION(p)->sp->database,
 				   MASTER_CONNECTION(p)->closetime);
@@ -289,7 +290,7 @@ void pool_connection_pool_timer(POOL_CONNECTION_POOL *backend)
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
 	int i;
 
-	pool_debug("pool_connection_pool_timer: set close time %d", time(NULL));
+	pool_debug("pool_connection_pool_timer: set close time %ld", time(NULL));
 
 	MASTER_CONNECTION(backend)->closetime = time(NULL);		/* set connection close time */
 
@@ -300,6 +301,8 @@ void pool_connection_pool_timer(POOL_CONNECTION_POOL *backend)
 	for (i=0;i<pool_config->max_pool;i++, p++)
 	{
 		if (!MASTER_CONNECTION(p))
+			continue;
+		if (!MASTER_CONNECTION(p)->sp)
 			continue;
 		if (MASTER_CONNECTION(p)->sp->user == NULL)
 			continue;
@@ -336,11 +339,13 @@ void pool_backend_timer(void)
 
 	now = time(NULL);
 
-	pool_debug("pool_backend_timer_handler called at %d", now);
+	pool_debug("pool_backend_timer_handler called at %ld", now);
 
 	for (i=0;i<pool_config->max_pool;i++, p++)
 	{
 		if (!MASTER_CONNECTION(p))
+			continue;
+		if (!MASTER_CONNECTION(p)->sp)
 			continue;
 		if (MASTER_CONNECTION(p)->sp->user == NULL)
 			continue;
@@ -350,7 +355,7 @@ void pool_backend_timer(void)
 		{
 			int freed = 0;
 
-			pool_debug("pool_backend_timer_handler: expire time: %d",
+			pool_debug("pool_backend_timer_handler: expire time: %ld",
 					   MASTER_CONNECTION(p)->closetime+pool_config->connection_life_time);
 
 			if (now >= (MASTER_CONNECTION(p)->closetime+pool_config->connection_life_time))
