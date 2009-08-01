@@ -1249,6 +1249,8 @@ static RETSIGTYPE close_idle_connection(int sig)
 	{
 		if (!MASTER_CONNECTION(p))
 			continue;
+ 		if (!MASTER_CONNECTION(p)->sp)
+			continue;
 		if (MASTER_CONNECTION(p)->sp->user == NULL)
 			continue;
 
@@ -1308,6 +1310,8 @@ static void send_frontend_exits(void)
 	for (i=0;i<pool_config->max_pool;i++, p++)
 	{
 		if (!MASTER_CONNECTION(p))
+			continue;
+		if (!MASTER_CONNECTION(p)->sp)
 			continue;
 		if (MASTER_CONNECTION(p)->sp->user == NULL)
 			continue;
