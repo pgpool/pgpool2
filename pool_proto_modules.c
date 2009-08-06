@@ -670,6 +670,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 
 		string1 = portal->sql_string;
 		node = (Node *)p_stmt->query;
+		strncpy(query_string_buffer, string1, sizeof(query_string_buffer));
 
 		if ((IsA(node, PrepareStmt) || IsA(node, DeallocateStmt) ||
 			 IsA(node, VariableSetStmt)) &&
