@@ -2383,8 +2383,16 @@ void pool_send_error_message(POOL_CONNECTION *frontend, int protoMajor,
 							 char *file,
 							 int line)
 {
-#define MAXDATA	1024
-#define MAXMSGBUF 128
+/*
+ * Buffer length for each message part
+ */
+#define MAXMSGBUF 256
+/*
+ * Buffer length for result message buffer.
+ * Since msg is consisted of 7 parts, msg buffer should be large
+ * enough to hold those message parts
+*/
+#define MAXDATA	(MAXMSGBUF+1)*7+1
 
 	pool_set_nonblock(frontend->fd);
 
@@ -2407,16 +2415,19 @@ void pool_send_error_message(POOL_CONNECTION *frontend, int protoMajor,
 
 		/* error level */
 		thislen = snprintf(msgbuf, MAXMSGBUF, "SERROR");
+		thislen = Min(thislen, MAXMSGBUF);
 		memcpy(data +len, msgbuf, thislen+1);
 		len += thislen + 1;
 
 		/* code */
 		thislen = snprintf(msgbuf, MAXMSGBUF, "C%s", code);
+		thislen = Min(thislen, MAXMSGBUF);
 		memcpy(data +len, msgbuf, thislen+1);
 		len += thislen + 1;
 
 		/* message */
 		thislen = snprintf(msgbuf, MAXMSGBUF, "M%s", message);
+		thislen = Min(thislen, MAXMSGBUF);
 		memcpy(data +len, msgbuf, thislen+1);
 		len += thislen + 1;
 
@@ -2424,6 +2435,7 @@ void pool_send_error_message(POOL_CONNECTION *frontend, int protoMajor,
 		if (*detail != '\0')
 		{
 			thislen = snprintf(msgbuf, MAXMSGBUF, "D%s", detail);
+			thislen = Min(thislen, MAXMSGBUF);
 			memcpy(data +len, msgbuf, thislen+1);
 			len += thislen + 1;
 		}
@@ -2432,17 +2444,20 @@ void pool_send_error_message(POOL_CONNECTION *frontend, int protoMajor,
 		if (*hint != '\0')
 		{
 			thislen = snprintf(msgbuf, MAXMSGBUF, "H%s", hint);
+			thislen = Min(thislen, MAXMSGBUF);
 			memcpy(data +len, msgbuf, thislen+1);
 			len += thislen + 1;
 		}
 
 		/* file */
 		thislen = snprintf(msgbuf, MAXMSGBUF, "F%s", file);
+		thislen = Min(thislen, MAXMSGBUF);
 		memcpy(data +len, msgbuf, thislen+1);
 		len += thislen + 1;
 
 		/* line */
 		thislen = snprintf(msgbuf, MAXMSGBUF, "L%d", line);
+		thislen = Min(thislen, MAXMSGBUF);
 		memcpy(data +len, msgbuf, thislen+1);
 		len += thislen + 1;
 
