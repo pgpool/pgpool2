@@ -258,20 +258,22 @@ EXTRA_DIST = pgpool.8.in sql/system_db.sql sample/pgpool.pam doc/pgpool-ja.html 
 		sample/dist_def_pgbench.sql sample/replicate_def_pgbench.sql \
 		sql/pgpool-recovery/pgpool-recovery.c \
 		sql/pgpool-recovery/pgpool-recovery.sql.in sql/pgpool-recovery/Makefile \
-		test/parser/expected/cursor.out test/parser/expected/copy.out \
-		test/parser/expected/privileges.out test/parser/expected/delete.out \
-		test/parser/expected/insert.out test/parser/expected/misc.out \
-		test/parser/expected/prepare.out test/parser/expected/transaction.out \
-		test/parser/expected/select.out test/parser/expected/update.out \
-		test/parser/expected/var.out test/parser/expected/create.out \
-		test/parser/expected/drop.out test/parser/input/cursor.sql \
-		test/parser/input/copy.sql test/parser/input/privileges.sql \
-		test/parser/input/delete.sql test/parser/input/insert.sql \
+		test/parser/expected/copy.out test/parser/expected/create.out \
+		test/parser/expected/cursor.out test/parser/expected/delete.out \
+		test/parser/expected/drop.out test/parser/expected/insert.out \
+		test/parser/expected/misc.out test/parser/expected/prepare.out \
+		test/parser/expected/privileges.out test/parser/expected/select.out \
+		test/parser/expected/transaction.out test/parser/expected/update.out \
+		test/parser/expected/v84.out test/parser/expected/var.out \
+		test/parser/input/alter.sql \
+		test/parser/input/copy.sql test/parser/input/create.sql \
+		test/parser/input/cursor.sql test/parser/input/delete.sql \
+		test/parser/input/drop.sql test/parser/input/insert.sql \
 		test/parser/input/misc.sql test/parser/input/prepare.sql \
-		test/parser/input/transaction.sql test/parser/input/select.sql \
-		test/parser/input/update.sql test/parser/input/var.sql \
-		test/parser/input/create.sql test/parser/input/drop.sql \
-		test/parser/input/alter.sql test/parser/.cvsignore test/parser/Makefile \
+		test/parser/input/privileges.sql test/parser/input/select.sql \
+		test/parser/input/transaction.sql test/parser/input/update.sql \
+		test/parser/input/v84.sql test/parser/input/var.sql \
+		test/parser/.cvsignore test/parser/Makefile \
 		test/parser/README test/parser/main.c \
 		test/parser/pool.h test/parser/run-test \
 		test/parser/parse_schedule \
