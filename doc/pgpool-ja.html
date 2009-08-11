@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Tue May  5 11:03:05 JST 2009
+Last modified: Tue Aug 11 22:46:30 JST 2009
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2602,6 +2602,41 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
 </p>
 
 <h1>$B%j%j!<%9%N!<%H(B<a name="release"></a></h1>
+
+<h2>2.2.3 (urukiboshi) 2009/8/11</h2>
+<h3>$B35MW(B</h3>
+<p>
+$B$3$N%P!<%8%g%s$G$O!"(B2.2.2$B0JA0$N?'!9$J%P%0$,=$@5$5$l$F$$$^$9!#(B
+</p>
+<h3>$B%P%0=$@5(B</h3>
+<ul>
+ <li>$B%P%C%/%(%s%I$K?7$7$$%3%M%/%7%g%s$rD%$k:]$K!"%P%C%/%(%s%I$N0l$D$,>c32$r5/$7$F$$$k$H%1!<%9$G!"8e=hM}$NCf$G(Bpgpool-II$B$N;R%W%m%;%9$,Mn$A$k$3$H$,$"$k%P%0$r=$@5$7$^$7$?(B(Tatsuo)
+ <li>$B%Q%i%l%k%/%(%j$N%P%0$r=$@5$7$^$7$?(B(Yoshiharu Mori)
+ <li>$B3HD%%W%m%H%3%k$N>l9g$K$b%(%i!<%a%C%;!<%8$NCf$G:G8e$K;HMQ$7$?%/%(%j$,I=<($G$-$k$h$&$K$J$j$^$7$?(B(Akio Ishida)
+ <li>kind mismatch error$B%a%C%;!<%8$N:n@.$G!"%a%C%;!<%8FbMF$,2u$l$k$3$H$,$"$k%P%0$r=$@5$7$^$7$?(B(Tatsuo, Akio Ishida)
+ <li>$B%P%C%/%(%s%I$X$N@\B35-=R;R$N;2>H%?%$%_%s%0$K$h$C$F$O(Bpgpool-II$B$N;R%W%m%;%9$,Mn$A$k$3$H$,$"$k%P%0$r=$@5$7$^$7$?(B(Tatsuo)$B!#(B
+ <li>pool_error$B$d(Bpool_log$B$N0z?t$,4V0c$C$F$$$?8D=j$r=$@5$7$^$7$?(B(Akio Ishida)$B!#(B
+ <li>statement_timeout$B$N%?%$%`%"%&%H$K$h$k%(%i!<=hM}$r2~NI$7$^$7$?!#<B:]$K$O%?%$%`%"%&%H$^$G$K(Bstatement_timeout$B$G@_Dj$7$?;~4V$NG\$+$+$C$F$$$?$N$rD>$7$^$7$?!#$^$?!"(Bmaster$B$@$1$,(Bstatement_timeout$B$rJV$7$?>l9g$K$bBP1~$G$-$k$h$&$K$7$^$7$?!#0JA0$O(Bkind mismatch$B%(%i!<$K$J$C$F$$$^$7$?(B(Tatsuo)$B!#(B
+(master$B0J30$,(Bstatement_timeout$B$rJV$5$J$$%1!<%9$G$O(Bkind mismatch$B%(%i!<$K$J$j$^$9(B)$B!#(B
+
+ <li>health check$B$r$h$j6/2=$7!"(Bpostmaster$B$,(BSIGSTOP$B$G;_$C$F$7$^$C$F$$$k>l9g$b>c328!CN$G$-$k$h$&$K$7$^$7$?!#(B
+
+ <li>$B%P%C%/%(%s%I$K(BSQL$B$rEj$2!"$=$N1~Ez$rBT$C$F$$$k4V$K%/%i%$%"%s%H$,(Bpgpool$B$KBP$9$k%3%M%/%7%g%s$r@ZCG$7$?$3$H$,8!=P$G$-$k$h$&$K$J$j$^$7$?!#(B
+$B$?$H$($P!"(BWeb$B%"%W%j%1!<%7%g%s$G$O(BDB$B$KBP$7$F%j%/%(%9%H$rEj$2$F!"1~Ez$,$J$$$H%-%c%s%;%k$9$k$h$&$J$3$H$,IQHK$K5/$j$^$9!#(B
+$B$3$N>l9g!":#$^$G$O(Bpgpool$B$d(BPostgreSQL$B$N%W%m%;%9$,;D$C$F$7$^$$!"F1;~@\B3?t$,8O3i$7$?$j!"%m%C%/$r<h$C$?$^$^$N%H%i%s%6%/%7%g%s$,;D$k$J$I$7$F%7%9%F%`A4BN$K1F6A$rM?$($k$3$H$,$"$j$^$7$?!#(B
+$B:#2s$N=$@5$K$h$j!"$3$&$7$?>u67$,8!=P$G$-$k$h$&$K$J$C$?$@$1$G$J$/!"(BSQL$B$N1~EzBT$A$N4V$K%/%i%$%"%s%H$,%3%M%/%7%g%s$r@ZCG$7$?:]$K$O!"(BSQL$B%3%^%s%I$N%-%c%s%;%k$r(Bpgpool$B$,9T$J$C$F!"%m%C%/BT$A$J$I$N%P%C%/%(%s%I%W%m%;%9$,;D$k$N$rKI$0$3$H$,$G$-$k$h$&$K$J$j$^$7$?(B(Tatsuo)$B!#(B
+
+<li>$B0z?t$J$7$N(BCLUSTER$B%3%^%s%I$O%H%i%s%6%/%7%g%s$NCf$G$O<B9T$G$-$J$$$N$G!"<+F0%H%i%s%6%/%7%g%s$r%9%?!<%H$7$J$$$h$&$K$7$^$7$?(B(Tatsuo)$B!#(B
+
+<li>$BJ#?t$N%W%j%Z%"%I%9%F!<%H%a%s%H$r;H$C$F$$$k:]$K!"%;%C%7%g%s$N=*$j$G$=$N0lIt$@$1$,2rJ|$5$l$k%P%0$r=$@5$7$^$7$?(B(Akio Ishida)
+$B!#(B
+<li>sql/pgpool-recovery/pgpool-recovery.c$B$,(BPostgreSQL 8.4$B$G%3%s%Q%$%k$G$-$k$h$&$K$7$^$7$?(B(Tatsuo)$B!#(B
+
+<li>$B3HD%%W%m%H%3%k$r;H$C$F$$$k>l9g$K!"%/%i%$%"%s%H$H(Bpgpool$B$N4V$G$*8_$$$KBT$A>uBV$K$J$C$F$7$^$&$3$H$,$"$k%P%0$r=$@5$7$^$7$?(B(Gavin Sherry)$B!#(B
+
+<li>COPY FROM$B$r<B9TCf$K%/%i%$%"%s%H$,=hM}$rCfCG$7$?>l9g$K!"%P%C%/%(%s%I%W%m%;%9$,;D$C$F$7$^$&%P%0$r=$@5$7$^$7$?(B(Tatsuo)$B!#(B
+
+</ul>
 
 <h2>2.2.2 (urukiboshi) 2009/5/5</h2>
 <h3>$B35MW(B</h3>
