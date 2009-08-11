@@ -1,3 +1,151 @@
+2009-08-11 22:52  t-ishii
+
+	* configure.in, configure (V2_2_STABLE): Stamp 2.2.3.
+
+2009-08-11 22:48  t-ishii
+
+	* doc/pgpool-ja.html (V2_2_STABLE): Fix description of parallel
+	  query.  Add release note for 2.2.3.
+
+2009-08-11 22:23  t-ishii
+
+	* pool_connection_pool.c (V2_2_STABLE): Fix new_connection() so
+	  that it does leave garbage in POOL_CONNECTION_POOL->slot[i]. This
+	  caused segfault in child_exit().  Bug report at [pgpool-general-jp:
+	  586].
+
+2009-08-07 14:27  y-mori
+
+	* pool_process_query.c, pool_rewrite_outfuncs.c (V2_2_STABLE): FIX
+	  parallel query
+
+	     1. Fix JOIN Expr
+	          Subquery was used on larg or rarg.
+	          Subquery was used on ON-Cluase.
+	          Full OUTER JOIN was not optimized.　　
+	     2. Fail_on_error=false was passed to the 3rd arguments of dblink.
+
+2009-08-06 16:55  t-ishii
+
+	* pool_proto_modules.c (V2_2_STABLE): Print last query for kind
+	  mismatch error message even extended protocol is used. Patch
+	  contributed by Akio Ishida.
+
+2009-08-06 16:38  t-ishii
+
+	* pool_process_query.c (V2_2_STABLE): Fix buffer overrun error
+	  which mangled kind mismatch error message in
+	  pool_send_error_message().  Bug rpeort by Takahiro Itagaki at
+	  [pgsql-jp: 39950].  Fix suggested by Akio Ishida at [pgsql-jp:
+	  39952].
+
+2009-08-01 20:40  t-ishii
+
+	* child.c (V2_2_STABLE): Check MASTER_CONNECTION(p)->sp) is non 0
+	  before further referring to sp. Current implementation may interrupt
+	  in the window, after setting p and before setting sp. Per bug report
+	  from Jun Kuwamura.
+
+2009-08-01 20:34  t-ishii
+
+	* pool_connection_pool.c (V2_2_STABLE): Fix pool_debug's mismatch
+	  between data type and conversion specification for time_t.  Check
+	  MASTER_CONNECTION(p)->sp) is non 0 before further referring to sp.
+	  Current implementation may interrupt in the window, after setting p
+	  and before setting sp.
+
+2009-07-30 16:46  t-ishii
+
+	* pool_process_query.c (V2_2_STABLE): Fix typo in comment
+
+2009-07-28 14:52  y-mori
+
+	* doc/: pgpool-en.html, pgpool-ja.html (V2_2_STABLE): add
+	  restrictions for parallel mode
+
+	     -Natural Join
+	       => not support
+	     -USING CLAUSE at Join Expression
+	       => auto convert to ON CLAUSE
+
+2009-07-26 18:04  t-ishii
+
+	* pool_rewrite_outfuncs.c (V2_2_STABLE): Fix breakage by previous
+	  commit.  Patch by Guillaume Lelarge.
+
+2009-07-26 12:01  t-ishii
+
+	* pool_process_query.c (V2_2_STABLE): Fix comment about load
+	  balancing.
+
+2009-07-26 11:57  t-ishii
+
+	* pool_sema.c (V2_2_STABLE): Fix various pool_error/log format
+	  errors.  Patch provided by Akio Ishida.
+
+2009-07-24 21:30  y-mori
+
+	* pool_rewrite_outfuncs.c (V2_2_STABLE): fix: Join statment in
+	  parallel query
+
+	       sample)
+	       Accouts table is defined by dist_def,
+	       the below query is executed as loadbalance.
+
+	       SELECT a.aid
+	         FROM
+	           accounts as a
+	         JOIN
+	           accounts as b
+	         ON  a.aid=b.aid
+	         WHERE a.aid =1 or a.aid=2;
+
+2009-07-22 17:46  t-ishii
+
+	* child.c, main.c, pool.h, pool_process_query.c,
+	  pool_proto_modules.c, pool_rewrite_outfuncs.c, pool_shmem.c
+	  (V2_2_STABLE): Fix various pool_error/log format errors.  Patch
+	  provided by Akio Ishida.
+
+2009-07-22 14:33  t-ishii
+
+	* pool_process_query.c, pool_proto_modules.c, pool_proto_modules.h
+	  (V2_2_STABLE): Query cancel by statement timeout does not
+	  generate "kind mismatch" error any more.  How to reproduce the test
+	  case:
+
+	  Directory connect to PostgreSQL.  T1: BEGIN; T1: LOCK TABLE t1;
+
+	  T2: SET statement_timeout TO 5000; T2: UPDATE t1 SET ...
+
+	  UPDATE query aborts and error message comes out on T2: ERROR:
+	  canceling statement due to statement timeout
+
+	  A side effect of this is, statement timeout works correctly (rather
+	  than statement timeout value * # of node).
+
+	  Note that to initiate T1 by directory connecting to slave node will
+	  not work (still results in kind mismatch error). But I don't think
+	  this could happend in the real world.
+
+	  Also refactor error detecting modules (detect_deadlock_error and so
+	  on).
+
+2009-07-21 18:48  t-ishii
+
+	* main.c (V2_2_STABLE): Check read(2) error in health_check(). This
+	  should detect case described in message below, i.e. postmaster is
+	  blocked by SIGSTOP.
+
+	  Subject: [Pgpool-general] Healt Check issues From: Vctrjsn@gmail.com
+	  To: pgpool-general@pgfoundry.org Date: Sun, 05 Jul 2009 18:01:18
+	  +0000
+
+2009-07-21 12:59  t-ishii
+
+	* ChangeLog (V2_2_STABLE): Update Change. We are getting closer to
+	  2.2.3.
+
 2009-07-21 10:36  t-ishii
 
 	* pool.h, pool_proto_modules.c (V2_2_STABLE): Check frontend
