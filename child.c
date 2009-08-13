@@ -1228,8 +1228,10 @@ static RETSIGTYPE die(int sig)
 			break;
 	}
 
-	send_frontend_exits();
-
+	/*
+	 * child_exit() does this. So we don't need it.
+	 * send_frontend_exits();
+	 */
 	child_exit(0);
 }
 
