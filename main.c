@@ -428,6 +428,14 @@ int main(int argc, char **argv)
 	}
 	*InRecovery = 0;
 
+	/*
+	 * We need to block signal here. Otherwise child might send some
+	 * signals, for example SIGUSR1(fail over).  Children will inherit
+	 * signal blocking but they do unblock signals at the very beginning
+	 * of process.  So this is harmless.
+	 */
+	POOL_SETMASK(&BlockSig);
+
 	/* fork the children */
 	for (i=0;i<pool_config->num_init_children;i++)
 	{
@@ -436,7 +444,7 @@ int main(int argc, char **argv)
 	}
 
 	/* set up signal handlers */
-	POOL_SETMASK(&BlockSig);
+
 	pool_signal(SIGTERM, exit_handler);
 	pool_signal(SIGINT, exit_handler);
 	pool_signal(SIGQUIT, exit_handler);
