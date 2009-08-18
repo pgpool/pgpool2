@@ -189,7 +189,10 @@ void do_child(int unix_fd, int inet_fd)
 				timeout.tv_sec == 0 && timeout.tv_usec == 0)
 			{
 				pool_debug("child life %d seconds expired", pool_config->child_life_time);
-				send_frontend_exits();
+				/*
+				 * Doesn't need to call this. child_exit() calls it.
+				 * send_frontend_exits();
+				 */
 				child_exit(2);
 			}
 			continue;
