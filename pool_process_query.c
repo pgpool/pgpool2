@@ -827,7 +827,7 @@ POOL_STATUS send_simplequery_message(POOL_CONNECTION *backend, int len, char *st
  * seccond, and if the connection broke, returns error since there's
  * no point in that waiting until backend returns response.
  */
-POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *string)
+POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *string, int protoVersion)
 {
 #define DUMMY_PARAMETER "pgpool_dummy_param"
 #define DUMMY_VALUE "pgpool_dummy_value"
@@ -840,7 +840,7 @@ POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *
 	for (;;)
 	{
 		/* Check to see if data from backend is ready */
-		pool_set_timeout(1);
+		pool_set_timeout(30);
 		status = pool_check_fd(backend);
 		pool_set_timeout(0);
 
@@ -848,28 +848,53 @@ POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *
 		{
 			pool_error("wait_for_query_response: backend error occured while waiting for backend response");
 			return POOL_END;
-		} else if (status > 0)		/* data is not ready */
+		}
+		else if (status > 0)		/* data is not ready */
 		{
-			/* Write dummy parameter staus packet to check if the socket to frontend is ok */
-			if (pool_write(frontend, "S", 1) < 0)
-				return POOL_END;
-			plen = sizeof(DUMMY_PARAMETER)+sizeof(DUMMY_VALUE)+sizeof(plen);
-			plen = htonl(plen);
-			if (pool_write(frontend, &plen, sizeof(plen)) < 0)
-				return POOL_END;
-			if (pool_write(frontend, DUMMY_PARAMETER, sizeof(DUMMY_PARAMETER)) < 0)
-				return POOL_END;
-			if (pool_write(frontend, DUMMY_VALUE, sizeof(DUMMY_VALUE)) < 0)
-				return POOL_END;
-			if (pool_flush_it(frontend) < 0)
+			if (protoVersion == PROTO_MAJOR_V3)
 			{
-				pool_error("wait_for_query_response: frontend error ouccured while waiting for backend reply");
-				return POOL_END;
+				/* Write dummy parameter staus packet to check if the socket to frontend is ok */
+				if (pool_write(frontend, "S", 1) < 0)
+					return POOL_END;
+				plen = sizeof(DUMMY_PARAMETER)+sizeof(DUMMY_VALUE)+sizeof(plen);
+				plen = htonl(plen);
+				if (pool_write(frontend, &plen, sizeof(plen)) < 0)
+					return POOL_END;
+				if (pool_write(frontend, DUMMY_PARAMETER, sizeof(DUMMY_PARAMETER)) < 0)
+					return POOL_END;
+				if (pool_write(frontend, DUMMY_VALUE, sizeof(DUMMY_VALUE)) < 0)
+					return POOL_END;
+				if (pool_flush_it(frontend) < 0)
+				{
+					pool_error("wait_for_query_response: frontend error occured while waiting for backend reply");
+					return POOL_END;
+				}
+
+			} else		/* Protocol version 2 */
+			{
+/*
+ * If you want to monitor client connection even if you are using V2 protocol,
+ * define following
+ */
+#define SEND_NOTICE_ON_PROTO2
+#ifdef SEND_NOTICE_ON_PROTO2
+				static char *notice_message = {"keep alive checking from pgpool-II"};
+
+				/* Write notice message packet to check if the socket to frontend is ok */
+				if (pool_write(frontend, "N", 1) < 0)
+					return POOL_END;
+				if (pool_write(frontend, notice_message, strlen(notice_message)+1) < 0)
+					return POOL_END;
+				if (pool_flush_it(frontend) < 0)
+				{
+					pool_error("wait_for_query_response: frontend error occured while waiting for backend reply");
+					return POOL_END;
+				}
+#endif
 			}
 		}
 		else
 			break;
-				
 	}
 
 	return POOL_CONTINUE;
