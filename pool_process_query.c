@@ -2125,7 +2125,7 @@ POOL_STATUS ParameterStatus(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 }
 
 /*
- * reset backend status. return values are:
+ * Reset backend status. return values are:
  * 0: no query was issued 1: a query was issued 2: no more queries remain -1: error
  */
 static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
@@ -2138,6 +2138,17 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 	 */
 	in_progress = 0;
 	in_load_balance = 0;
+
+	/*
+	 * Until pgpool-II 2.2.3 we don't have following 2 lines.
+	 * If we were executing someting in load balance mode, and if
+	 * frontend failed before executing end_loadl_balance() in
+	 * ReadyForQuery(), these variables remained and we may do
+	 * something only in master node!
+	 */
+	REPLICATION = pool_config->replication_mode;
+	MASTER_SLAVE = pool_config->master_slave_mode;
+
 	force_replication = 0;
 	internal_transaction_started = 0;
 	mismatch_ntuples = 0;
