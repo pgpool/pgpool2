@@ -20,7 +20,7 @@ main(int argc, char *argv[])
 
 #define PRINT_USAGE(exit_code)	print_usage(argv[0], exit_code)
 #define COMPARE_ARG(arg)		(!strcmp(argv[1], arg))
-	
+
 	if (argc != 2)
 		PRINT_USAGE(EXIT_FAILURE);
 	else if (COMPARE_ARG("--help") || COMPARE_ARG("-h"))
@@ -41,7 +41,7 @@ main(int argc, char *argv[])
 
 			fprintf(stderr, "Couldn't read input from stdin. (fgets(): %s)",
 					strerror(eno));
-			
+
 			exit(EXIT_FAILURE);
 		}
 		set_tio_attr(0);

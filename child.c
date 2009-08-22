@@ -2,7 +2,7 @@
 /*
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2009	PgPool Global Development Group
@@ -468,7 +468,7 @@ void do_child(int unix_fd, int inet_fd)
 							pool_connection_pool_timer(backend);
 					}
 					break;
-				
+
 				/* error occured. discard backend connection pool
                    and disconnect connection to the frontend */
 				case POOL_ERROR:
@@ -651,7 +651,7 @@ static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *time
 				tmback.tv_usec += 1000000;
 				timeout->tv_sec = tmback.tv_sec;
 				timeout->tv_usec = tmback.tv_usec;
-			} 
+			}
 		}
 #ifdef DEBUG
 		pool_log("g:after select = {%d, %d}", tv2.tv_sec, tv2.tv_usec);
@@ -707,7 +707,7 @@ static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *time
 	}
 
 	afd = accept(fd, (struct sockaddr *)&saddr.addr, &saddr.salen);
- 
+
 	save_errno = errno;
 	/* check backend timer is expired */
 	if (backend_timer_expired)
@@ -893,7 +893,7 @@ static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *time
 	memcpy(&cp->raddr, &saddr, sizeof(SockAddr));
 	if (cp->raddr.addr.ss_family == 0)
 		cp->raddr.addr.ss_family = AF_UNIX;
-	
+
 	return cp;
 }
 
@@ -1059,7 +1059,7 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 			return NULL;
 	}
 
-	pool_debug("Protocol Major: %d Minor: %d database: %s user: %s", 
+	pool_debug("Protocol Major: %d Minor: %d database: %s user: %s",
 			   sp->major, sp->minor, sp->database, sp->user);
 	alarm(0);
 	pool_signal(SIGALRM, SIG_IGN);
@@ -1074,7 +1074,7 @@ int send_startup_packet(POOL_CONNECTION_POOL_SLOT *cp)
 	int len;
 
 	len = htonl(cp->sp->len + sizeof(len));
-	pool_write(cp->con, &len, sizeof(len)); 
+	pool_write(cp->con, &len, sizeof(len));
 	return pool_write_and_flush(cp->con, cp->sp->startup_packet, cp->sp->len);
 }
 
@@ -1106,7 +1106,7 @@ void cancel_request(CancelPacket *sp)
 	}
 	if (i == pool_config->num_init_children*pool_config->max_pool)
 		return;	/* invalid key */
-	
+
 	for (i=0;i<NUM_BACKENDS;i++,c++)
 	{
 		if (!VALID_BACKEND(i))
@@ -1286,7 +1286,7 @@ static RETSIGTYPE close_idle_connection(int sig)
 
 /*
  * signal handler for SIGALRM
- * 
+ *
  */
 static RETSIGTYPE authentication_timeout(int sig)
 {
@@ -1596,7 +1596,7 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 		int size;
 		char salt[3];
 		char *crypt_password;
-		
+
 		status = pool_read(cp->con, &salt, 2);
 		if (status > 0)
 		{
@@ -1788,7 +1788,7 @@ void connection_count_down(void)
 	pool_semaphore_unlock(CONN_COUNTER_SEM);
 }
 
-/* 
+/*
  * handle SIGUSR2
  * Wakeup all process
  */

@@ -2,7 +2,7 @@
 /*
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Portions Copyright (c) 2003-2009, PgPool Global Development Group
@@ -51,17 +51,17 @@ IpcSemaphoreKill(int status, Datum semId)
 	union semun semun;
 	struct semid_ds seminfo;
 
- 	/* 
- 	 * Is a previously-existing sema segment still existing and in use? 
- 	 */ 
+ 	/*
+ 	 * Is a previously-existing sema segment still existing and in use?
+ 	 */
 	semun.buf = &seminfo;
- 	if (semctl(semId, 0, IPC_STAT, semun) < 0 
+ 	if (semctl(semId, 0, IPC_STAT, semun) < 0
  		&& (errno == EINVAL || errno == EACCES
 #ifdef EIDRM
 			|| errno == EIDRM
 #endif
-		)) 
- 		return; 
+		))
+ 		return;
 
 	semun.val = 0;				/* unused, but keep compiler quiet */
 

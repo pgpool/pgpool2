@@ -1,8 +1,8 @@
 /* -*-pgsql-c-*- */
 /*
  * $Header$
- * 
- * pgpool: a language independent connection pool server for PostgreSQL 
+ *
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2008	PgPool Global Development Group
@@ -288,7 +288,7 @@ static int check_postmaster_started(BackendInfo *backend)
 		if (WAIT_RETRY_COUNT != 0)
 			sleep(3);
 	} while (i++ < WAIT_RETRY_COUNT);
-	
+
 	pool_error("check_postmaster_started: remote host start up did not finish in %d sec.", pool_config->recovery_timeout);
 	return 1;
 }

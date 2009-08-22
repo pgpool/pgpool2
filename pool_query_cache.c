@@ -2,7 +2,7 @@
 /*
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2008	PgPool Global Development Group
@@ -60,7 +60,7 @@ typedef struct
 
 typedef enum
 {
-	CACHE_FOUND, CACHE_NOT_FOUND, CACHE_ERROR 
+	CACHE_FOUND, CACHE_NOT_FOUND, CACHE_ERROR
 } CACHE_STATUS;
 
 static QueryCacheInfo *query_cache_info;
@@ -166,7 +166,7 @@ pool_clear_cache_by_time(Interval *interval, int size)
 		free(query_delete_timepoint_in_str);
 		return -1;
 	}
-	
+
 	snprintf(sql, sql_len,
 			 "DELETE FROM %s.%s WHERE create_time <= '%s'",
 			 pool_config->system_db_schema,
@@ -186,7 +186,7 @@ pool_clear_cache_by_time(Interval *interval, int size)
 		free(sql);
 		return -1;
 	}
-	
+
 	PQclear(pg_result);
 	free(query_delete_timepoint_in_str);
 	free(sql);
@@ -214,7 +214,7 @@ pool_query_cache_table_exists(void)
 	sql = (char *)malloc(sql_len);
 	if (malloc_failed(sql))
 		return 0;
-	
+
 	snprintf(sql, sql_len,
 			 "SELECT hash, query, value, dbname, create_time FROM %s.%s LIMIT 1",
 			 pool_config->system_db_schema,
@@ -230,7 +230,7 @@ pool_query_cache_table_exists(void)
 		free(sql);
 		return 0;
 	}
-			
+
 	PQclear(pg_result);
 	pool_close_libpq_connection();
 	free(sql);
@@ -292,7 +292,7 @@ pool_query_cache_lookup(POOL_CONNECTION *frontend, char *query, char *database, 
 	timeout.tv_usec = 0;
 
 	pool_debug("pool_query_cache_lookup: searching cache for query: \"%s\"", query);
-	status = search_system_db_for_cache(frontend, sql, strlen(sql)+1, &timeout, tstate);		
+	status = search_system_db_for_cache(frontend, sql, strlen(sql)+1, &timeout, tstate);
 
 	/* make sure that the remaining data is discarded */
 	SYSDB_CON->po = 0;
@@ -362,7 +362,7 @@ search_system_db_for_cache(POOL_CONNECTION *frontend, char *sql, int sql_len, st
 		timeout = NULL;
 	else
 		timeout = t;
-	
+
 	/* don't really need select() or for(;;) here, but we may need it someday... or not */
 	for (;;)
 	{
@@ -376,7 +376,7 @@ search_system_db_for_cache(POOL_CONNECTION *frontend, char *sql, int sql_len, st
 		{
 			if (errno == EINTR)
 				continue;
-		
+
 			pool_error("pool_query_cache_lookup: select() failed. reason: %s", strerror(errno));
 			return CACHE_ERROR;
 		}
@@ -384,8 +384,8 @@ search_system_db_for_cache(POOL_CONNECTION *frontend, char *sql, int sql_len, st
 		/* select() timeout */
 		if (fds == 0)
 			return CACHE_ERROR;
-	
-		for (;;) 
+
+		for (;;)
 		{
 			if (! FD_ISSET(SYSDB_CON->fd, &readmask))
 			{
@@ -425,7 +425,7 @@ search_system_db_for_cache(POOL_CONNECTION *frontend, char *sql, int sql_len, st
 				int status;
 
 				cache_found = 1;
-				
+
 				if (SYSDB_MAJOR == PROTO_MAJOR_V3)
 				{
 					if (pool_read(SYSDB_CON, &readlen, sizeof(readlen)) < 0)
@@ -532,7 +532,7 @@ search_system_db_for_cache(POOL_CONNECTION *frontend, char *sql, int sql_len, st
 
 		break;
 	}
-	
+
 	return return_value;
 }
 
@@ -610,7 +610,7 @@ pool_query_cache_register(char kind,
 			}
 
 			pool_debug("pool_query_cache_register: saving cache for query: \"%s\"", query);
-	
+
 			/* initialize query_cache_info and save the query */
 			ret = init_query_cache_info(frontend, database, query);
 			if (ret)
@@ -621,10 +621,10 @@ pool_query_cache_register(char kind,
 			send_len = htonl(data_len + sizeof(int));
 			write_cache(&send_len, sizeof(int));
 			write_cache(data, data_len);
-			
+
 			break;
 		}
-			
+
 		case 'D':				/* DataRow */
 		{
 			/* for all SELECT result data from the backend, 'T' must come first */
@@ -641,7 +641,7 @@ pool_query_cache_register(char kind,
 
 			break;
 		}
-		
+
 		case 'C':				/* CommandComplete */
 		{
 			PGresult *pg_result = NULL;
@@ -676,10 +676,10 @@ pool_query_cache_register(char kind,
 			escaped_query = (char *)malloc(strlen(query_cache_info->query) * 2 + 1);
 			if (malloc_failed(escaped_query))
 			{
-				free_query_cache_info();				
+				free_query_cache_info();
 				return -1;
 			}
-			
+
 /* 			escaped_query_len = PQescapeStringConn(system_db_info->pgconn, */
 /* 												   escaped_query, */
 /* 												   query_cache_info->query, */
@@ -752,7 +752,7 @@ pool_query_cache_register(char kind,
 			break;
 		}
 	}
-	
+
 	return 0;
 }
 
@@ -766,7 +766,7 @@ static int
 init_query_cache_info(POOL_CONNECTION *pc, char *database, char *query)
 {
 	int query_len;				/* length of the SELECT query to be cached */
-	
+
 	query_cache_info = (QueryCacheInfo *)malloc(sizeof(QueryCacheInfo));
 	if (malloc_failed(query_cache_info))
 		return -1;
@@ -777,7 +777,7 @@ init_query_cache_info(POOL_CONNECTION *pc, char *database, char *query)
 	if (malloc_failed(query_cache_info->query))
 		return -1;
 	memcpy(query_cache_info->query, query, query_len + 1);
-	
+
 	/* md5_query */
 	query_cache_info->md5_query = (char *)malloc(33); /* md5sum is always 33 bytes (including the '\0') */
 	if (malloc_failed(query_cache_info->md5_query))
@@ -847,7 +847,7 @@ static int
 write_cache(void *buf, int len)
 {
 	int required_len;
-	
+
 	if (len < 0)
 		return -1;
 
@@ -885,7 +885,7 @@ pq_time_to_str(time_t t)
 	char *time_p;
 	char iso_time[32];
 	struct tm *tm;
-	
+
 	tm = localtime(&t);
 	strftime(iso_time, sizeof(iso_time), "%Y-%m-%d %H:%M:%S%z", tm);
 
@@ -911,7 +911,7 @@ system_db_connection_exists(void)
 		if (system_db_connect())
 			return 0;
 	}
-	
+
 	return 1;
 }
 
@@ -974,7 +974,7 @@ define_prepared_statements(void)
 		free(sql);
 		return;
 	}
-	
+
 	pool_debug("pool_query_cache: prepared statements created");
 	CACHE_TABLE_INFO.has_prepared_statement = 1;
 

@@ -91,7 +91,7 @@ char *parsed_query = NULL;
 static int check_errors(POOL_CONNECTION_POOL *backend, int backend_id);
 static void generate_error_message(char *prefix, int specific_error, char *query);
 
-POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend, 
+POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 										POOL_CONNECTION_POOL *backend)
 {
 	int pid, pid1;
@@ -131,7 +131,7 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
  * Process Query('Q') message
  * Query messages include a SQL string.
  */
- POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend, 
+ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 						 POOL_CONNECTION_POOL *backend, char *query)
 {
 	char *string, *string1;
@@ -231,19 +231,19 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 
 		if (pool_config->parallel_mode)
 		{
-      /* The Query is analyzed first in a parallel mode(in_parallel_query), 
+      /* The Query is analyzed first in a parallel mode(in_parallel_query),
        * and, next, the Query is rewritten(rewrite_query_stmt).
        */
- 
+
 			/* analyze the query */
 			RewriteQuery *r_query = is_parallel_query(node,backend);
 
 			if(r_query->is_loadbalance)
 			{
-        /* Usual processing of pgpool is done by using the rewritten Query 
-         * if judged a possible load-balancing as a result of analyzing 
-         * the Query. 
-         * Of course, the load is distributed only for load_balance_mode=true. 
+        /* Usual processing of pgpool is done by using the rewritten Query
+         * if judged a possible load-balancing as a result of analyzing
+         * the Query.
+         * Of course, the load is distributed only for load_balance_mode=true.
          */
 				if(r_query->r_code ==  SEND_LOADBALANCE_ENGINE)
 				{
@@ -255,8 +255,8 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 				pool_debug("SimpleQuery: loadbalance_query =%s",string);
 			}
 			else if (r_query->is_parallel)
-			{ 
-				/* 
+			{
+				/*
 				 * For the Query that the parallel processing is possible.
 				 * Call parallel exe engine and return status to the upper layer.
 				 */
@@ -506,7 +506,7 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 			master_slave_was_enabled = 1;
 			MASTER_SLAVE = 0;
 			master_slave_dml = 1;
-		}		
+		}
 	}
 
 	if (MAJOR(backend) == PROTO_MAJOR_V2 && is_start_transaction_query(node))
@@ -635,7 +635,7 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 /*
  * process EXECUTE (V3 only)
  */
-POOL_STATUS Execute(POOL_CONNECTION *frontend, 
+POOL_STATUS Execute(POOL_CONNECTION *frontend,
 						   POOL_CONNECTION_POOL *backend)
 {
 	char *string;		/* portal name + null terminate + max_tobe_returned_rows */
@@ -871,7 +871,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 /*
  * process Parse (V3 only)
  */
-POOL_STATUS Parse(POOL_CONNECTION *frontend, 
+POOL_STATUS Parse(POOL_CONNECTION *frontend,
 						 POOL_CONNECTION_POOL *backend)
 {
 	char kind;
@@ -1049,7 +1049,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 
 		if (ret != POOL_CONTINUE)
 			return ret;
-			
+
 		SimpleForwardToFrontend(kind, frontend, backend);
 		if (pool_flush(frontend) < 0)
 			return POOL_ERROR;
@@ -1068,7 +1068,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
  *	 to all DB nodes to abort transaction.
  * - internal transaction is closed
  */
-POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend, 
+POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 								 POOL_CONNECTION_POOL *backend, int send_ready)
 {
 	StartupPacket *sp;
@@ -1137,7 +1137,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		mismatch_ntuples = 0;
 	}
 
-	/* 
+	/*
 	 * if a transaction is started for insert lock, we need to close
 	 * the transaction.
 	 */
@@ -1191,7 +1191,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			{
 				if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
 					continue;
-				
+
 				if (pool_read(CONNECTION(backend, i), &kind1, sizeof(kind)))
 					return POOL_END;
 			}
@@ -1256,10 +1256,10 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 
 	sp = MASTER_CONNECTION(backend)->sp;
 	if (MASTER(backend)->tstate == 'T')
-		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle in transaction", 
+		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle in transaction",
 				 sp->user, sp->database, remote_ps_data);
 	else
-		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle", 
+		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle",
 				 sp->user, sp->database, remote_ps_data);
 	set_ps_display(psbuf, false);
 
@@ -1267,7 +1267,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 }
 
 
-POOL_STATUS FunctionCall(POOL_CONNECTION *frontend, 
+POOL_STATUS FunctionCall(POOL_CONNECTION *frontend,
 								POOL_CONNECTION_POOL *backend)
 {
 	char dummy[2];
@@ -1364,7 +1364,7 @@ POOL_STATUS FunctionCall(POOL_CONNECTION *frontend,
 	return POOL_CONTINUE;
 }
 
-POOL_STATUS FunctionResultResponse(POOL_CONNECTION *frontend, 
+POOL_STATUS FunctionResultResponse(POOL_CONNECTION *frontend,
 										  POOL_CONNECTION_POOL *backend)
 {
 	char dummy;
@@ -1426,7 +1426,7 @@ POOL_STATUS FunctionResultResponse(POOL_CONNECTION *frontend,
 	return pool_flush(frontend);
 }
 
-POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend, 
+POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 										   POOL_CONNECTION_POOL *backend)
 {
 	char fkind;
@@ -1527,7 +1527,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 	return status;
 }
 
-POOL_STATUS CompleteCommandResponse(POOL_CONNECTION *frontend, 
+POOL_STATUS CompleteCommandResponse(POOL_CONNECTION *frontend,
 										   POOL_CONNECTION_POOL *backend)
 {
 	int i;
@@ -1556,7 +1556,7 @@ POOL_STATUS CompleteCommandResponse(POOL_CONNECTION *frontend,
 		{
 			pool_debug("Complete Command Response: message length does not match between master(%d \"%s\",) and %d th server (%d \"%s\",)",
 					   len, string, i, len1, string1);
-			
+
 			free(string1);
 			return POOL_END;
 		}
@@ -1574,7 +1574,7 @@ POOL_STATUS CompleteCommandResponse(POOL_CONNECTION *frontend,
 	return pool_flush(frontend);
 }
 
-int RowDescription(POOL_CONNECTION *frontend, 
+int RowDescription(POOL_CONNECTION *frontend,
 						  POOL_CONNECTION_POOL *backend,
 						  short *result)
 {
@@ -1701,7 +1701,7 @@ int RowDescription(POOL_CONNECTION *frontend,
 	return pool_flush(frontend);
 }
 
-POOL_STATUS AsciiRow(POOL_CONNECTION *frontend, 
+POOL_STATUS AsciiRow(POOL_CONNECTION *frontend,
 							POOL_CONNECTION_POOL *backend,
 							short num_fields)
 {
@@ -1813,7 +1813,7 @@ POOL_STATUS AsciiRow(POOL_CONNECTION *frontend,
 	return POOL_CONTINUE;
 }
 
-POOL_STATUS BinaryRow(POOL_CONNECTION *frontend, 
+POOL_STATUS BinaryRow(POOL_CONNECTION *frontend,
 							 POOL_CONNECTION_POOL *backend,
 							 short num_fields)
 {
@@ -1865,14 +1865,14 @@ POOL_STATUS BinaryRow(POOL_CONNECTION *frontend,
 		{
 			/* field size */
 			if (pool_read(MASTER(backend), &size, sizeof(int)) < 0)
-				return POOL_END;			
+				return POOL_END;
 			for (j=0;j<NUM_BACKENDS;j++)
 			{
 				if (VALID_BACKEND(j) && !IS_MASTER_NODE_ID(j))
 				{
 					/* field size */
 					if (pool_read(CONNECTION(backend, i), &size, sizeof(int)) < 0)
-						return POOL_END;			
+						return POOL_END;
 
 					/* XXX: field size maybe different among
 					   backends. If we were a paranoid, we have to treat
@@ -1915,7 +1915,7 @@ POOL_STATUS BinaryRow(POOL_CONNECTION *frontend,
 	return POOL_CONTINUE;
 }
 
-POOL_STATUS CursorResponse(POOL_CONNECTION *frontend, 
+POOL_STATUS CursorResponse(POOL_CONNECTION *frontend,
 								  POOL_CONNECTION_POOL *backend)
 {
 	char *string = NULL;
@@ -1964,7 +1964,7 @@ POOL_STATUS CursorResponse(POOL_CONNECTION *frontend,
 	return POOL_CONTINUE;
 }
 
-POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend, 
+POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend,
 						  POOL_CONNECTION_POOL *backend)
 {
 	char *string = NULL;
@@ -1992,11 +1992,11 @@ POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend,
 		TSTATE(backend) = 'E';
 	else
 		TSTATE(backend) = 'I';
-			
+
 	return POOL_CONTINUE;
 }
 
-POOL_STATUS NoticeResponse(POOL_CONNECTION *frontend, 
+POOL_STATUS NoticeResponse(POOL_CONNECTION *frontend,
 								  POOL_CONNECTION_POOL *backend)
 {
 	char *string = NULL;
@@ -2023,7 +2023,7 @@ POOL_STATUS NoticeResponse(POOL_CONNECTION *frontend,
 	return POOL_CONTINUE;
 }
 
-POOL_STATUS CopyInResponse(POOL_CONNECTION *frontend, 
+POOL_STATUS CopyInResponse(POOL_CONNECTION *frontend,
 								  POOL_CONNECTION_POOL *backend)
 {
 	POOL_STATUS status;
@@ -2044,7 +2044,7 @@ POOL_STATUS CopyInResponse(POOL_CONNECTION *frontend,
 	return status;
 }
 
-POOL_STATUS CopyOutResponse(POOL_CONNECTION *frontend, 
+POOL_STATUS CopyOutResponse(POOL_CONNECTION *frontend,
 								   POOL_CONNECTION_POOL *backend)
 {
 	POOL_STATUS status;
@@ -2234,7 +2234,7 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 			}
 		}
 		else
-			pool_write(frontend, string, len);		
+			pool_write(frontend, string, len);
 
 		if (len == PROTO_MAJOR_V3)
 		{
@@ -2331,7 +2331,7 @@ static int check_errors(POOL_CONNECTION_POOL *backend, int backend_id)
 	/*
 	 * check "SET TRANSACTION ISOLATION LEVEL must be called before any query" error.
 	 * This happens in following scenario:
-	 * 
+	 *
 	 * M:S1:BEGIN;
 	 * S:S1:BEGIN;
 	 * M:S1:SELECT 1; <-- only sent to MASTER

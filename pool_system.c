@@ -2,7 +2,7 @@
 /*
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2008	PgPool Global Development Group
@@ -37,14 +37,14 @@ int  get_col_list(DistDefInfo *info)
 	int i;
 	static char sql[1024];
 	PGresult *result;
- 
+
 	if (!system_db_info->pgconn ||
-		(PQstatus(system_db_info->pgconn) != CONNECTION_OK)) 
+		(PQstatus(system_db_info->pgconn) != CONNECTION_OK))
 	{
 		if (system_db_connect())
 			return -1;
 	}
-	
+
 	for (i = 0; i < info->col_num; i++)
 	{
 		snprintf(sql,
@@ -91,14 +91,14 @@ int  get_col_list2(RepliDefInfo *info)
 	int i;
 	static char sql[1024];
 	PGresult *result;
- 
+
 	if (!system_db_info->pgconn ||
-		(PQstatus(system_db_info->pgconn) != CONNECTION_OK)) 
+		(PQstatus(system_db_info->pgconn) != CONNECTION_OK))
 	{
 		if (system_db_connect())
 			return -1;
 	}
-	
+
 	for (i = 0; i < info->col_num; i++)
 	{
 		snprintf(sql,
@@ -146,7 +146,7 @@ int system_db_connect (void)
 	static char conninfo[1024];
 	int i;
 
-	snprintf(conninfo, 
+	snprintf(conninfo,
 			 sizeof(conninfo),
 			 "host='%s' port=%d dbname='%s' user='%s' password='%s'",
 			 system_db_info->info->hostname,
@@ -192,7 +192,7 @@ int pool_memset_system_db_info (SystemDBInfo *info)
 	RepliDefInfo *repli_info = NULL;
 
 	if (!system_db_info->pgconn ||
-		(PQstatus(system_db_info->pgconn) != CONNECTION_OK)) 
+		(PQstatus(system_db_info->pgconn) != CONNECTION_OK))
 	{
 		if (system_db_connect())
 			return -1;
@@ -203,7 +203,7 @@ int pool_memset_system_db_info (SystemDBInfo *info)
 			 sizeof(sql),
 			 "SELECT dbname, schema_name, table_name,col_name,array_upper(col_list,1),col_list,type_list, dist_def_func FROM %s.dist_def",
 			 pool_config->system_db_schema);
-	
+
 	result = PQexec(system_db_info->pgconn, sql);
 	if (!result || PQresultStatus(result) != PGRES_TUPLES_OK)
 	{
@@ -299,7 +299,7 @@ int pool_memset_system_db_info (SystemDBInfo *info)
 			}
 			strcpy(t_dist_def_func, PQgetvalue(result,i,7));
 			dist_info[i].dist_def_func = t_dist_def_func;
-			
+
 			dist_info[i].col_num = num;
 
 			dist_info[i].col_list = calloc(num, sizeof(char *));
@@ -324,7 +324,7 @@ int pool_memset_system_db_info (SystemDBInfo *info)
 			/* create PREPARE statement */
 			len = strlen(t_dbname) + strlen(t_schema_name) +
 				strlen(t_table_name) + strlen("pgpool_");
-			
+
 			dist_info[i].prepare_name = malloc(len + 1);
 			if (dist_info[i].prepare_name == NULL)
 			{
@@ -346,7 +346,7 @@ int pool_memset_system_db_info (SystemDBInfo *info)
 			 sizeof(sql2),
 			 "SELECT dbname, schema_name, table_name, array_upper(col_list,1),col_list,type_list FROM %s.replicate_def",
 			 pool_config->system_db_schema);
-	
+
 	result = PQexec(system_db_info->pgconn, sql2);
 
 	if (!result)
@@ -357,7 +357,7 @@ int pool_memset_system_db_info (SystemDBInfo *info)
 	else if (PQresultStatus(result) != PGRES_TUPLES_OK)
 	{
 		info->repli_def_num = 0;
-		info->repli_def_slot = NULL;	
+		info->repli_def_slot = NULL;
 	}
 	else
  	{
@@ -447,7 +447,7 @@ int pool_memset_system_db_info (SystemDBInfo *info)
 			/* create PREPARE statement */
 			len = strlen(t_dbname) + strlen(t_schema_name) +
 				strlen(t_table_name) + strlen("pgpool_");
-			
+
 			repli_info[i].prepare_name = malloc(len + 1);
 			if (repli_info[i].prepare_name == NULL)
 			{
@@ -487,7 +487,7 @@ DistDefInfo *pool_get_dist_def_info (char *dbname, char *schema_name, char *tabl
 	{
 		schema_name = public;
 	}
-	
+
 	for (i = 0; i < dist_def_num; i++)
 	{
 		char *mem_dbname;
@@ -527,7 +527,7 @@ RepliDefInfo *pool_get_repli_def_info (char *dbname, char *schema_name, char *ta
 	{
 		schema_name = public;
 	}
-	
+
 	for (i = 0; i < repli_def_num; i++)
 	{
 		char *mem_dbname;
@@ -560,7 +560,7 @@ int pool_get_id (DistDefInfo *info, const char *value)
 	int length;
 
 	if (!system_db_info->pgconn ||
-		(PQstatus(system_db_info->pgconn) != CONNECTION_OK)) 
+		(PQstatus(system_db_info->pgconn) != CONNECTION_OK))
 	{
 		if (system_db_connect())
 			return -1;
@@ -590,11 +590,11 @@ int pool_get_id (DistDefInfo *info, const char *value)
 
 		if(strlen(id))
 		{
-			num = atoi(id); 
+			num = atoi(id);
 			PQclear(result);
 
 			if(num < NUM_BACKENDS)
-			{	
+			{
 				return num;
 			} else {
 				return -1;

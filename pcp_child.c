@@ -1,8 +1,8 @@
 /* -*-pgsql-c-*- */
 /*
  * $Header$
- * 
- * pgpool: a language independent connection pool server for PostgreSQL 
+ *
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2008	PgPool Global Development Group
@@ -108,7 +108,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 	signal(SIGUSR2, wakeup_handler);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGALRM, SIG_IGN);
-	
+
 	for(;;)
 	{
 		errno = 0;
@@ -177,7 +177,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 		/* is this connection authenticated? if not disconnect immediately*/
 		if ((! authenticated) && (tos != 'R' && tos != 'M'))
 		{
-			pool_debug("pcp_child: connection not authorized");					
+			pool_debug("pcp_child: connection not authorized");
 			free(buf);
 			buf = NULL;
 			pcp_close(frontend);
@@ -190,7 +190,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 		pool_debug("pcp_child: received PCP packet type of service '%c'", tos);
 
 		set_ps_display("PCP: processing a request", false);
-			
+
 		switch (tos)
 		{
 			case 'R':			/* authentication */
@@ -199,7 +199,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 
 				if (random_salt)
 				{
-					authenticated = user_authenticate(buf, pcp_conf_file, salt, 4);					
+					authenticated = user_authenticate(buf, pcp_conf_file, salt, 4);
 				}
 				if (!random_salt || !authenticated)
 				{
@@ -270,7 +270,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 				char mesg[16];
 
 				snprintf(mesg, sizeof(mesg), "%d", node_count);
-				
+
 				pcp_write(frontend, "l", 1);
 				wsize = htonl(sizeof(code) +
 							  strlen(mesg)+1 +
@@ -291,7 +291,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 			{
 				int node_id;
 				int wsize;
-				
+
 				BackendInfo *bi = NULL;
 
 				node_id = atoi(buf);
@@ -322,7 +322,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 					snprintf(port_str, sizeof(port_str), "%d", bi->backend_port);
 					snprintf(status, sizeof(status), "%d", bi->backend_status);
 					snprintf(weight_str, sizeof(weight_str), "%f", bi->backend_weight);
-				
+
 					pcp_write(frontend, "i", 1);
 					wsize = htonl(sizeof(code) +
 								  strlen(bi->backend_hostname)+1 +
@@ -376,7 +376,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 					snprintf(mesg+total_port_len, strlen(port)+1, "%s", port);
 					total_port_len += strlen(port)+1;
 				}
-				
+
 				pcp_write(frontend, "n", 1);
 				wsize = htonl(sizeof(code) +
 							  strlen(process_count_str)+1 +
@@ -391,19 +391,19 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 					pool_error("pcp_child: pcp_flush() failed. reason: %s", strerror(errno));
 					exit(1);
 				}
-				
+
 				free(process_list);
 				free(mesg);
 
 				pool_debug("pcp_child: %d process(es) found", process_count);
 				break;
 			}
-				
+
 			case 'P':			/* process info */
 			{
 				int proc_id;
 				int wsize;
-				
+
 				ProcessInfo *pi = NULL;
 
 				proc_id = atoi(buf);
@@ -510,7 +510,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 			case 'S':			/* SystemDB info */
 			{
 				int wsize;
-				
+
 				SystemDBInfo *si = NULL;
 				si = pool_get_system_db_info();
 
@@ -585,7 +585,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 						int type_list_offset;
 						DistDefInfo *ddi;
 						int i, j;
-					
+
 						for (i = 0; i < si->dist_def_num; i++)
 						{
 							ddi = &si->dist_def_slot[i];
@@ -605,7 +605,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 								pool_error("pcp_child: malloc() failed. reason: %s", strerror(errno));
 								exit(1);
 							}
-						
+
 							col_list_offset = type_list_offset = 0;
 							for (j = 0; j < ddi->col_num; j++)
 							{
@@ -664,13 +664,13 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 				}
 				break;
 			}
-			
+
 			case 'D':			/* detach node */
 			{
 				int node_id;
 				int wsize;
 				char code[] = "CommandComplete";
-				
+
 				node_id = atoi(buf);
 				pool_debug("pcp_child: detaching Node ID %d", node_id);
 				notice_backend_error(node_id);
@@ -692,7 +692,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 				int node_id;
 				int wsize;
 				char code[] = "CommandComplete";
-				
+
 				node_id = atoi(buf);
 				pool_debug("pcp_child: attaching Node ID %d", node_id);
 				send_failback_request(node_id);
@@ -708,7 +708,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 				}
 				break;
 			}
-			
+
 			case 'T':
 			{
 				char mode = buf[0];
@@ -754,7 +754,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 				}
 				else
 				{
-					pool_debug("pcp_child: start online recovery");				
+					pool_debug("pcp_child: start online recovery");
 					node_id = atoi(buf);
 
 					r = start_recovery(node_id);
@@ -787,7 +787,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 			case 'F':
 				pool_debug("pcp_child: stop online recovery");
 				break;
-			
+
 			case 'X':			/* disconnect */
 				pool_debug("pcp_child: client disconnecting. close connection");
 				authenticated = 0;
@@ -866,7 +866,7 @@ pcp_do_accept(int unix_fd, int inet_fd)
 	{
 		if (errno == EAGAIN || errno == EINTR)
 			return NULL;
-		
+
 		pool_error("pcp_child: select() failed. reason: %s", strerror(errno));
 		return NULL;
 	}

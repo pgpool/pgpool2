@@ -6,7 +6,7 @@
  * This file was imported from PostgreSQL source code.
  * See below for the copyright and description.
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Portions Copyright (c) 2003-2008	PgPool Global Development Group

@@ -2,7 +2,7 @@
 /*
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2009	PgPool Global Development Group
@@ -65,7 +65,7 @@ int pool_init_cp(void)
 		return -1;
 	}
 	memset(pool_connection_pool, 0, sizeof(POOL_CONNECTION_POOL)*pool_config->max_pool);
-	
+
 	for (i = 0; i < pool_config->max_pool; i++)
 	{
 		pool_connection_pool[i].info = &(MY_PROCESS_INFO.connection_info[i]);
@@ -254,7 +254,7 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 	p = oldestp;
 	pool_send_frontend_exits(p);
 
-	pool_debug("discarding old %d th connection. user: %s database: %s", 
+	pool_debug("discarding old %d th connection. user: %s database: %s",
 			   oldestp - pool_connection_pool,
 			   MASTER_CONNECTION(p)->sp->user,
 			   MASTER_CONNECTION(p)->sp->database);

@@ -2,7 +2,7 @@
 /*
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2009	PgPool Global Development Group
@@ -85,7 +85,7 @@ int master_slave_dml;	/* non 0 if master/slave mode is specified in config file 
 /*
  * main module for query processing
  */
-POOL_STATUS pool_process_query(POOL_CONNECTION *frontend, 
+POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 							   POOL_CONNECTION_POOL *backend,
 							   int connection_reuse,
 							   int first_ready_for_query_received)
@@ -272,7 +272,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 						was_error = 1;
 						break;
 					}
-						
+
 					if (FD_ISSET(CONNECTION(backend, i)->fd, &readmask))
 					{
 						/*
@@ -314,7 +314,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				if (kind == 0)
 					continue;
 			}
-			
+
 			if (FD_ISSET(MASTER(backend)->fd, &exceptmask))
 			{
 				return POOL_ERROR;
@@ -454,12 +454,12 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 					/* FunctionResultResponse and FunctionVoidResponse */
 					status = FunctionResultResponse(frontend, backend);
 					break;
-				
+
 				case 'Z':
 					/* Ready for query */
 					status = ReadyForQuery(frontend, backend, 1);
 					break;
-				
+
 				default:
 					pool_error("Unknown message type %c(%02x)", kind, kind);
 					exit(1);
@@ -479,8 +479,8 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 }
 
 
-/* 
- * set_fd,isset_fs,zero_fd are used 
+/*
+ * set_fd,isset_fs,zero_fd are used
  * for check fd in parallel mode
  */
 
@@ -505,7 +505,7 @@ static int isset_fd(unsigned long fd, unsigned long *setp)
 /* used only in pool_parallel_exec */
 static void zero_fd(unsigned long *setp)
 {
-	unsigned long *tmp = setp; 
+	unsigned long *tmp = setp;
 	int i = FD_SETSIZE / BITS;
 	while(i)
 	{
@@ -516,8 +516,8 @@ static void zero_fd(unsigned long *setp)
 }
 
 /*
- * This function transmits to a parallel Query, and does processing 
- * that receives the result to each back end. 
+ * This function transmits to a parallel Query, and does processing
+ * that receives the result to each back end.
  */
 POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 									  POOL_CONNECTION_POOL *backend, char *string,
@@ -771,7 +771,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 						}
 						return POOL_CONTINUE;
 					}
-							
+
 					if(kind == 'D')
 						datacount++;
 					else
@@ -799,20 +799,20 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 
 
 
-/* 
+/*
  * send SimpleQuery message to a node.
  */
 POOL_STATUS send_simplequery_message(POOL_CONNECTION *backend, int len, char *string, int major)
 {
 	/* forward the query to the backend */
 	pool_write(backend, "Q", 1);
-	
+
 	if (major == PROTO_MAJOR_V3)
 	{
 		int sendlen = htonl(len + 4);
 		pool_write(backend, &sendlen, sizeof(sendlen));
 	}
-	
+
 	if (pool_write_and_flush(backend, string, len) < 0)
 	{
 		return POOL_END;
@@ -821,7 +821,7 @@ POOL_STATUS send_simplequery_message(POOL_CONNECTION *backend, int len, char *st
 	return POOL_CONTINUE;
 }
 
-/* 
+/*
  * Wait for query response from single node. This checks frontend
  * connection by writing dummy parameter status packet every 1
  * seccond, and if the connection broke, returns error since there's
@@ -1157,7 +1157,7 @@ void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->master_slave_mode);
 	strncpy(status[i].desc, "if true, operate in master/slave mode", POOLCONFIG_MAXDESCLEN);
 	i++;
-		 
+
 	strncpy(status[i].name, "connection_cache", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->connection_cache);
 	strncpy(status[i].desc, "if true, cache connection pool", POOLCONFIG_MAXDESCLEN);
@@ -1456,7 +1456,7 @@ void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 			len = htonl(strlen(status[i].value));
 			pool_write(frontend, &len, sizeof(len));
 			pool_write(frontend, status[i].value, strlen(status[i].value));
-			
+
 			len = htonl(strlen(status[i].desc));
 			pool_write(frontend, &len, sizeof(len));
 			pool_write(frontend, status[i].desc, strlen(status[i].desc));
@@ -1533,9 +1533,9 @@ void pool_send_frontend_exits(POOL_CONNECTION_POOL *backend)
  */
 
 /*
- * This function transmits to a parallel Query to each backend, 
- * and receives the results from backends . 
- * 
+ * This function transmits to a parallel Query to each backend,
+ * and receives the results from backends .
+ *
  */
 static POOL_STATUS ParallelForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *database, bool send_to_frontend)
 {
@@ -1634,7 +1634,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 		execute_select = 0;
 	}
 
-	/* 
+	/*
 	 * Remove a pending function if a received message is not
 	 * NoticeResponse.
 	 */
@@ -1668,7 +1668,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 		 * if we are in the parallel mode, we have to sum up the number
 		 * of affected rows
 		 */
-		if (PARALLEL_MODE && is_parallel_table && 
+		if (PARALLEL_MODE && is_parallel_table &&
 			(strstr(p, "UPDATE") || strstr(p, "DELETE")))
 		{
 			delete_or_update = 1;
@@ -1746,7 +1746,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 				free(p1);
 				return POOL_ERROR;
 			}
-		
+
 			free(p1);
 			p1 = p2;
 			len1 = strlen(p2) + 1;
@@ -1763,7 +1763,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 	{
 		query_cache_register(kind, frontend, backend->info->database, p1, len1);
 	}
-	
+
 	free(p1);
 	if (status)
 		return POOL_END;
@@ -1854,7 +1854,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 				}
 			}
 		}
-	
+
 		while ((ret = read_kind_from_backend(frontend, backend, &kind1)) == POOL_CONTINUE)
 		{
 			if (kind1 == 'Z') /* ReadyForQuery? */
@@ -2211,7 +2211,7 @@ int load_balance_enabled(POOL_CONNECTION_POOL *backend, Node* node, char *sql)
  * - DECLARE..SELECT (without INTO nor FOR UPDATE/SHARE)
  * - FETCH
  * - CLOSE
- * 
+ *
  * note that for SELECT INTO, this function returns 0
  */
 int is_select_query(Node *node, char *sql)
@@ -2558,7 +2558,7 @@ static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMa
 	/*
 	 * Continue to read packets until we get ReadForQuery (Z).
 	 * Until that we may recieve one of:
-	 * 
+	 *
 	 * N: Notice response
 	 * E: Error response
 	 * C: Comand complete
@@ -2723,7 +2723,7 @@ POOL_STATUS do_error_command(POOL_CONNECTION *backend, int major)
 	/*
 	 * Continue to read packets until we get Error response (E).
 	 * Until that we may recieve one of:
-	 * 
+	 *
 	 * N: Notice response
 	 * C: Comand complete
 	 *
@@ -2857,7 +2857,7 @@ static POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int n
 }
 
 /*
- * Transmit an arbitrary Query to a specific node. 
+ * Transmit an arbitrary Query to a specific node.
  * This function is only used in parallel mode
  */
 POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *query, char *database)
@@ -2906,7 +2906,7 @@ POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backe
 	}
 	/*
 	 * Expecting ReadyForQuery
-	 *          
+	 *
 	 */
 	status = pool_read(backend, &kind, sizeof(kind));
 
@@ -3031,7 +3031,7 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 
 	/*
 	 * Continue to read packets until we get Ready for command('Z')
-	 * 
+	 *
 	 * XXX: we ignore other than Z here. Even notice messages are not sent
 	 * to the frontend. May be it's ok since the error was caused by
 	 * our internal use of SQL command (otherwise users will be
@@ -3065,7 +3065,7 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 			case 'Z':	/* Ready for query */
 				return POOL_CONTINUE;
 				break;
-				
+
 			case 'T':	/* Row Description */
 				p = packet;
 				memcpy(&shortval, p, sizeof(short));
@@ -3082,7 +3082,7 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 						return POOL_ERROR;
 					}
 					rowdesc->attrinfo = attrinfo;
-					
+
 					p += sizeof(num_fields);
 
 					/* extract attribute info */
@@ -3135,7 +3135,7 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 						memcpy(&intval, p, sizeof(int));
 						len = htonl(intval);
 						p += sizeof(int);
-						
+
 						res->nullflags[num_data] = len;
 
 						if (len > 0)	/* NOT NULL? */
@@ -3247,7 +3247,7 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 	if (pool_config->insert_lock == 0)	/* insert_lock is specified? */
 		return 0;
 
-	/* 
+	/*
 	 * if insert_lock is true, then check if the table actually uses
 	 * SERIAL data type
 	 */
@@ -3415,11 +3415,11 @@ bool is_partition_table(POOL_CONNECTION_POOL *backend, Node *node)
 
 		if(!IsA(delete->relation,RangeVar))
 			return false;
-		
+
 		var = (RangeVar *) delete->relation;
 	} else
 		return false;
-		
+
 	info = pool_get_dist_def_info(MASTER_CONNECTION(backend)->sp->database,
 									  var->schemaname,
 									  var->relname);
@@ -3488,7 +3488,7 @@ int is_strict_query(Node *node)
 		case T_DeleteStmt:
 		case T_LockStmt:
 			return 1;
-		
+
 		default:
 			return 0;
 	}
@@ -3624,7 +3624,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 				{
 					break;
 				}
-					
+
 				if (pool_read(CONNECTION(backend, i), &len, sizeof(len)) < 0)
 				{
 					pool_error("read_kind_from_backend: failed to read parameter status packet length from %d th backend", i);
@@ -3709,7 +3709,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 		}
 	}
 	else
-		trust_kind = kind_list[MASTER_NODE_ID]; 
+		trust_kind = kind_list[MASTER_NODE_ID];
 
 	*decided_kind = trust_kind;
 
@@ -3732,7 +3732,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 			}
 		}
 
-		pool_send_error_message(frontend, MAJOR(backend), "XX000", 
+		pool_send_error_message(frontend, MAJOR(backend), "XX000",
 								msg->data, "",
 								"check data consistency among db nodes",
 								__FILE__, __LINE__);
@@ -3753,7 +3753,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 }
 
 /*
- * Create portal object 
+ * Create portal object
  * Return object is allocated from heap memory.
  */
 Portal *create_portal(void)
@@ -3829,7 +3829,7 @@ void del_prepared_list(PreparedStatementList *p, Portal *portal)
 			if (strcmp(p_stmt->name, s->name) == 0)
 				break;
 		}
-	
+
 		if (i == p->cnt)
 			return;
 
@@ -3994,7 +3994,7 @@ parse_copy_data(char *buf, int len, char delimiter, int col_id)
 		{
 			pool_error("parse_copy_data: malloc failed: %s", strerror(errno));
 			return NULL;
-		}					
+		}
 		strcpy(p, str);
 		p[j] = '\0';
 		pool_debug("parse_copy_data: divide key value is %s", p);
@@ -4035,7 +4035,7 @@ query_cache_register(char kind, POOL_CONNECTION *frontend, char *database, char 
 				pool_error("pool_query_cache_register: query cache registration failed");
 			else
 				pool_debug("pool_query_cache_register: query cache saved");
-			
+
 			inside_T = 0;
 			free(parsed_query);
 			parsed_query = NULL;
@@ -4254,7 +4254,7 @@ POOL_STATUS end_internal_transaction(POOL_CONNECTION_POOL *backend)
 
 	internal_transaction_started = 0;
 	POOL_SETMASK(&oldmask);
-	return POOL_CONTINUE;	
+	return POOL_CONTINUE;
 }
 
 /*
@@ -4355,13 +4355,13 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 		if (major == PROTO_MAJOR_V3)
 		{
 			char *e;
-			
+
 			if (pool_read(backend, &len, sizeof(len)) < 0)
 				return POOL_END;
 			readlen += sizeof(len);
 			memcpy(p, &len, sizeof(len));
 			p += sizeof(len);
-			
+
 			len = ntohl(len) - 4;
 			str = malloc(len);
 			pool_read(backend, str, len);
