@@ -2,7 +2,7 @@
 /*
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2008	PgPool Global Development Group
@@ -221,7 +221,7 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 	{
 		pool_error("pool_do_auth: backend does not return authentication ok");
 		return -1;
-	} 
+	}
 
 	/*
 	 * authentication ok. now read pid and secret key from the
@@ -337,7 +337,7 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 				return -1;
 			}
 			CONNECTION_SLOT(cp, i)->key = cp->info[i].key = key;
-	
+
 		}
 	}
 
@@ -372,7 +372,7 @@ int pool_do_reauth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 			/* clear text password */
 			status = do_clear_text_password(MASTER(cp), frontend, 1, protoMajor);
 			break;
-			
+
 		case 4:
 			/* crypt password */
 			status = do_crypt(MASTER(cp), frontend, 1, protoMajor);
@@ -384,7 +384,7 @@ int pool_do_reauth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 			break;
 
 		default:
-			pool_error("pool_do_reauth: unknown authentication request code %d", 
+			pool_error("pool_do_reauth: unknown authentication request code %d",
 					   MASTER(cp)->auth_kind);
 			return -1;
 	}

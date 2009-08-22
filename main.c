@@ -2,7 +2,7 @@
 /*
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2009	PgPool Global Development Group
@@ -121,7 +121,7 @@ ProcessInfo *pids;	/* shmem child pid table */
  * this is a two dimension array. i.e.:
  * con_info[pool_config->num_init_children][pool_config->max_pool]
  */
-ConnectionInfo *con_info;		
+ConnectionInfo *con_info;
 
 static int unix_fd;	/* unix domain socket fd */
 static int inet_fd;	/* inet domain socket fd */
@@ -247,7 +247,7 @@ int main(int argc, char **argv)
 					exit(1);
 				}
 				break;
-				
+
 			case 'n':	/* no detaching control ttys */
 				not_detach = 1;
 				break;
@@ -779,7 +779,7 @@ static void write_pid_file(void)
 pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 {
 	pid_t pid;
-	
+
 	pid = fork();
 
 	if (pid == 0)
@@ -962,7 +962,7 @@ static void myunlink(const char* path)
 static void myexit(int code)
 {
 	int i;
-	
+
 	if (getpid() != mypid)
 		return;
 
@@ -983,7 +983,7 @@ static void myexit(int code)
 			pool_error("wait() failed. reason:%s", strerror(errno));
 		POOL_SETMASK(&UnBlockSig);
 	}
-	
+
 	myunlink(un_addr.sun_path);
 	myunlink(pcp_un_addr.sun_path);
 	myunlink(pool_config->pid_file_name);
@@ -1195,7 +1195,7 @@ static void failover(void)
 		return;
 	}
 
-	/* 
+	/*
 	 * if not in replication mode/master slave mode, we treat this a restart request.
 	 * otherwise we need to check if we have already failovered.
 	 */
@@ -1518,7 +1518,7 @@ system_db_health_check(void)
 	/* if SystemDB is already down, ignore */
 	if (SYSDB_STATUS == CON_UNUSED || SYSDB_STATUS == CON_DOWN)
 		return 0;
-	
+
 	if (*SYSDB_INFO->hostname == '\0')
 		fd = connect_unix_domain_socket_by_port(SYSDB_INFO->port, pool_config->backend_socket_dir);
 	else
@@ -1613,7 +1613,7 @@ static void reaper(void)
 			break;
 		} else {
 			pool_debug("child %d exits with status %d by signal %d", pid, status, WTERMSIG(status));
-		
+
 			/* look for exiting child's pid */
 			for (i=0;i<pool_config->num_init_children;i++)
 			{
@@ -1695,12 +1695,12 @@ pool_get_system_db_info(void)
 {
 	if (system_db_info == NULL)
 		return NULL;
-	
+
 	return system_db_info->info;
 }
 
 
-/* 
+/*
  * handle SIGUSR2
  * Wakeup all processes
  */
@@ -1712,10 +1712,10 @@ static void wakeup_children(void)
 
 static RETSIGTYPE wakeup_handler(int sig)
 {
-	POOL_SETMASK(&BlockSig);	
+	POOL_SETMASK(&BlockSig);
 	wakeup_request = 1;
 	write(pipe_fds[1], "\0", 1);
-	POOL_SETMASK(&UnBlockSig);	
+	POOL_SETMASK(&UnBlockSig);
 }
 
 /*
@@ -1815,7 +1815,7 @@ static void pool_sleep(unsigned int second)
 
 		r = pool_pause(&timeout);
 		POOL_SETMASK(&BlockSig);
-		if (r > 0)									
+		if (r > 0)
 			CHECK_REQUEST;
 		POOL_SETMASK(&UnBlockSig);
 		gettimeofday(&current_time, NULL);
@@ -1870,7 +1870,7 @@ static int trigger_failover_command(int node, const char *command_line)
 		return -1;
 	}
 	exec_cmd = init_string("");
-	
+
 	while (*command_line)
 	{
 		if (*command_line == '%')

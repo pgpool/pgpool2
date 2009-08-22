@@ -401,7 +401,7 @@ char *yytext;
  *
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2009	PgPool Global Development Group
@@ -2760,7 +2760,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 	{
 		int dist_num;
 		SystemDBInfo *info;
-		
+
 		system_db_info = malloc(sizeof(POOL_SYSTEMDB_CONNECTION_POOL));
 		if (system_db_info == NULL)
 		{

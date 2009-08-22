@@ -2,7 +2,7 @@
 /*
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Portions Copyright (c) 2003-2009, PgPool Global Development Group
@@ -107,16 +107,16 @@ IpcMemoryDetach(int status, Datum shmaddr)
 static void
 IpcMemoryDelete(int status, Datum shmId)
 {
-  	struct shmid_ds shmStat;  
+  	struct shmid_ds shmStat;
 
-  	/*  
-  	 * Is a previously-existing shmem segment still existing and in use?  
-  	 */  
-  	if (shmctl(shmId, IPC_STAT, &shmStat) < 0  
-  		&& (errno == EINVAL || errno == EACCES))  
-  		return;  
+  	/*
+  	 * Is a previously-existing shmem segment still existing and in use?
+  	 */
+  	if (shmctl(shmId, IPC_STAT, &shmStat) < 0
+  		&& (errno == EINVAL || errno == EACCES))
+  		return;
   	else if (shmStat.shm_nattch != 0)
-  		return;  
+  		return;
 
 	if (shmctl(shmId, IPC_RMID, NULL) < 0)
 		pool_log("shmctl(%lu, %d, 0) failed: %s",

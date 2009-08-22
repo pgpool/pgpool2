@@ -206,7 +206,7 @@ doTheRounds(uint32 X[16], uint32 state[4])
 	GG(d, a, b, c, X[ 2], S22, T[29]);
 	GG(c, d, a, b, X[ 7], S23, T[30]);
 	GG(b, c, d, a, X[12], S24, T[31]);
-	
+
 	HH(a, b, c, d, X[ 5], S31, T[32]);
 	HH(d, a, b, c, X[ 8], S32, T[33]);
 	HH(c, d, a, b, X[11], S33, T[34]);

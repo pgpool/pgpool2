@@ -3,7 +3,7 @@
  *
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Portions Copyright (c) 2003-2008	PgPool Global Development Group
@@ -98,7 +98,7 @@ static POOL_CONNECTION *pam_frontend_kludge; /* Workaround for passing
 void load_hba(char *hbapath)
 {
 	FILE *file;
-	
+
 	POOL_MEMORY_POOL *old_context;
 	if (hba_memory_context == NULL)
 	{
@@ -187,7 +187,7 @@ void ClientAuthentication(POOL_CONNECTION *frontend)
 				pool_error("ClientAuthentication: malloc failed: %s", strerror(errno));
 				child_exit(1);
 			}
-			
+
 #ifdef USE_SSL
 			snprintf(errmessage, messagelen+7, /* +7 is for "SSL off" */
 					 "no pool_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
@@ -201,7 +201,7 @@ void ClientAuthentication(POOL_CONNECTION *frontend)
 			pool_error(errmessage);
 			pool_send_error_message(frontend, frontend->protoVersion, "XX000", errmessage,
 									"", "", __FILE__, __LINE__);
-		
+
 			free(errmessage);
 			break;
 		}
@@ -303,7 +303,7 @@ static char *recv_password_packet(POOL_CONNECTION *frontend)
 
 		if (pool_read(frontend, &kind, 1) < 0)
 			return NULL;
-		
+
 		if (kind != 'p')
 		{
 			pool_error("expected password response, got message type %c",
@@ -312,7 +312,7 @@ static char *recv_password_packet(POOL_CONNECTION *frontend)
 		}
 	}
 	/* pre-3.0 protocol does not send a message type */
-	
+
 	if (pool_read(frontend, &rsize, sizeof(int)) < 0)
 		return NULL;
 
@@ -698,11 +698,11 @@ static void parse_hba(List *line, int line_num, POOL_CONNECTION *frontend,
 				return;
 			}
 		}
-		
+
 		/* Ignore line if client port is not in the matching addr range. */
 		if (!rangeSockAddr(&frontend->raddr.addr, &addr, &mask))
 			return;
-		
+
 		/* Read the rest of the line. */
 		line_item = lnext(line_item);
 		if (!line_item)
@@ -714,7 +714,7 @@ static void parse_hba(List *line, int line_num, POOL_CONNECTION *frontend,
 	}
 	else
 		goto hba_syntax;
-	
+
 	/* Does the entry match database and user? */
 	/*
 	 * duplicate db and username since strtok() in check_db() and check_user()
@@ -1251,17 +1251,17 @@ static void free_lines(List **lines, List **line_nums)
 		{
 			List *ln = lfirst(line);
 			ListCell *token;
-			
+
 			foreach(token, ln)
 				free(lfirst(token));
 
 			list_free(ln);
 		}
-		
+
 		list_free(*lines);
 		*lines = NIL;
 	}
-	
+
 	if (*line_nums)
 	{
 		list_free(*line_nums);
