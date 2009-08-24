@@ -2,6 +2,10 @@ $Header$
 
 * General
 
+- Add backend id to statement log
+
+- Show PostgreSQL backend process ids in process status
+
 - Prepare for changing postgresql.conf directives which produce 'S'
   message. Othewise we get:
 
