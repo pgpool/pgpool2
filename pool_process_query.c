@@ -876,7 +876,7 @@ POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *
  * If you want to monitor client connection even if you are using V2 protocol,
  * define following
  */
-#define SEND_NOTICE_ON_PROTO2
+#undef SEND_NOTICE_ON_PROTO2
 #ifdef SEND_NOTICE_ON_PROTO2
 				static char *notice_message = {"keep alive checking from pgpool-II"};
 
