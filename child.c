@@ -68,6 +68,8 @@ static RETSIGTYPE authentication_timeout(int sig);
 static int send_params(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 static void send_frontend_exits(void);
 static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password);
+static void connection_count_up(void);
+static void connection_count_down(void);
 
 /*
  * non 0 means SIGTERM(smart shutdown) or SIGINT(fast shutdown) has arrived
@@ -1774,17 +1776,34 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 	return -1;
 }
 
-void connection_count_up(void)
+/*
+ * Count up connection counter (from frontend to pgpool)
+ * in shared memory
+ */
+static void connection_count_up(void)
 {
 	pool_semaphore_lock(CONN_COUNTER_SEM);
 	Req_info->conn_counter++;
 	pool_semaphore_unlock(CONN_COUNTER_SEM);
 }
 
-void connection_count_down(void)
+/*
+ * Count down connection counter (from frontend to pgpool)
+ * in shared memory
+ */
+static void connection_count_down(void)
 {
 	pool_semaphore_lock(CONN_COUNTER_SEM);
-	Req_info->conn_counter--;
+	/*
+	 * Make sure that we do not decrement too much.  If failed to read
+	 * a start up packet, or receive cancel request etc.,
+	 * connection_count_down() is called and goes back to the
+	 * connection accept loop. Problem is, at the very beginning of
+	 * the connection accept loop, if we have received a signal, we
+	 * call child_exit() which calls connection_count_down() again.
+	 */
+	if (Req_info->conn_counter > 0)
+		Req_info->conn_counter--;
 	pool_semaphore_unlock(CONN_COUNTER_SEM);
 }
 

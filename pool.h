@@ -528,9 +528,6 @@ extern int send_startup_packet(POOL_CONNECTION_POOL_SLOT *cp);
 extern void pool_free_startup_packet(StartupPacket *sp);
 extern void child_exit(int code);
 
-extern void connection_count_up(void);
-extern void connection_count_down(void);
-
 extern int health_check(void);
 extern int system_db_health_check(void);
 
