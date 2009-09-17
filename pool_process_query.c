@@ -59,7 +59,7 @@
 #define CRASH_SHUTDOWN_ERROR_CODE "57P02"
 
 static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt);
-static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMajor, int no_ready_for_query);
+static POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *query, int protoMajor, int pid, int key, int no_ready_for_query);
 static POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id, int major);
 static char *get_insert_command_table_name(InsertStmt *node);
 static void reset_prepared_list(PreparedStatementList *p);
@@ -2524,15 +2524,15 @@ void pool_send_readyforquery(POOL_CONNECTION *frontend)
 }
 
 /*
- * sends a query in sync manner.
- * this function sends a query and wait for CommandComplete/ReadyForQuery.
- * if an error occured, it returns with POOL_ERROR.
- * this function does NOT handle SELECT/SHOW queries.
- * if no_ready_for_query is non 0, returns without reading the packet
+ * Send a query to a backend in sync manner.
+ * This function sends a query and waits for CommandComplete/ReadyForQuery.
+ * If an error occured, it returns with POOL_ERROR.
+ * This function does NOT handle SELECT/SHOW queries.
+ * If no_ready_for_query is non 0, returns without reading the packet
  * length for ReadyForQuery. This mode is necessary when called from ReadyForQuery().
  */
-static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMajor,
-							  int no_ready_for_query)
+static POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
+							  char *query, int protoMajor, int pid, int key, int no_ready_for_query)
 {
 	int len;
 	int status;
@@ -2546,11 +2546,28 @@ static POOL_STATUS do_command(POOL_CONNECTION *backend, char *query, int protoMa
 	if (send_simplequery_message(backend, strlen(query)+1, query, protoMajor) != POOL_CONTINUE)
 		return POOL_END;
 
+	/*
+	 * Wait for response from badckend while polling frontend connection is ok.
+	 * If not, cancel the transaction.
+	 */
+	if (wait_for_query_response(frontend, backend, query, protoMajor) != POOL_CONTINUE)
+	{
+		/* Cancel current transaction */
+		CancelPacket cancel_packet;
+
+		cancel_packet.protoVersion = htonl(PROTO_CANCEL);
+		cancel_packet.pid = pid;
+		cancel_packet.key= key;
+		cancel_request(&cancel_packet);
+		return POOL_END;
+	}
+
  	/*
-	 * We must check deadlock error because a aborted transaction
-	 * by detecting deadlock isn't same on all nodes.
-	 * If a transaction is aborted on master node, pgpool send a
-	 * error query to another nodes.
+	 * We must check deadlock error here. If a deadlock error is
+	 * detected by a backend, other backend might not be noticed the
+	 * error.  In this case caller should send an error query to the
+	 * backend to abort the transaction. Otherwise the transaction
+	 * state might vary among backends(idle in transaction vs. abort).
 	 */
 	deadlock_detected = detect_deadlock_error(backend, protoMajor);
 	if (deadlock_detected < 0)
@@ -3328,7 +3345,7 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
  * if a transaction has not already started, start a new one.
  * issue LOCK TABLE IN SHARE ROW EXCLUSIVE MODE
  */
-POOL_STATUS insert_lock(POOL_CONNECTION_POOL *backend, char *query, InsertStmt *node)
+POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *query, InsertStmt *node)
 {
 	char *table;
 	char qbuf[1024];
@@ -3351,7 +3368,8 @@ POOL_STATUS insert_lock(POOL_CONNECTION_POOL *backend, char *query, InsertStmt *
 	/* issue lock table command */
 	snprintf(qbuf, sizeof(qbuf), "LOCK TABLE %s IN SHARE ROW EXCLUSIVE MODE", table);
 
-	status = do_command(MASTER(backend), qbuf, MAJOR(backend), 0);
+	status = do_command(frontend, MASTER(backend), qbuf, MAJOR(backend), MASTER_CONNECTION(backend)->pid,
+						MASTER_CONNECTION(backend)->key, 0);
 	if (status == POOL_END)
 	{
 		internal_transaction_started = 0;
@@ -3365,9 +3383,11 @@ POOL_STATUS insert_lock(POOL_CONNECTION_POOL *backend, char *query, InsertStmt *
 		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 		{
 			if (deadlock_detected)
-				status = do_command(CONNECTION(backend, i), POOL_ERROR_QUERY, PROTO_MAJOR_V3, 0);
+				status = do_command(frontend, CONNECTION(backend, i), POOL_ERROR_QUERY, PROTO_MAJOR_V3,
+									MASTER_CONNECTION(backend)->pid, MASTER_CONNECTION(backend)->key, 0);
 			else
-				status = do_command(CONNECTION(backend, i), qbuf, PROTO_MAJOR_V3, 0);
+				status = do_command(frontend, CONNECTION(backend, i), qbuf, PROTO_MAJOR_V3, 
+									MASTER_CONNECTION(backend)->pid, MASTER_CONNECTION(backend)->key, 0);
 
 			if (status != POOL_CONTINUE)
 			{
@@ -4171,7 +4191,7 @@ static bool is_internal_transaction_needed(Node *node)
 	return false;
 }
 
-POOL_STATUS start_internal_transaction(POOL_CONNECTION_POOL *backend, Node *node)
+POOL_STATUS start_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, Node *node)
 {
 	int i;
 
@@ -4187,7 +4207,8 @@ POOL_STATUS start_internal_transaction(POOL_CONNECTION_POOL *backend, Node *node
 		{
 			if (VALID_BACKEND(i))
 			{
-				if (do_command(CONNECTION(backend, i), "BEGIN", MAJOR(backend), 0) != POOL_CONTINUE)
+				if (do_command(frontend, CONNECTION(backend, i), "BEGIN", MAJOR(backend), 
+							   MASTER_CONNECTION(backend)->pid,	MASTER_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
 					return POOL_END;
 			}
 		}
@@ -4199,7 +4220,7 @@ POOL_STATUS start_internal_transaction(POOL_CONNECTION_POOL *backend, Node *node
 }
 
 
-POOL_STATUS end_internal_transaction(POOL_CONNECTION_POOL *backend)
+POOL_STATUS end_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 {
 	int i;
 #ifdef HAVE_SIGPROCMASK
@@ -4220,7 +4241,8 @@ POOL_STATUS end_internal_transaction(POOL_CONNECTION_POOL *backend)
 		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 		{
 			/* COMMIT success? */
-			if (do_command(CONNECTION(backend, i), "COMMIT", MAJOR(backend), 1) != POOL_CONTINUE)
+			if (do_command(frontend, CONNECTION(backend, i), "COMMIT", MAJOR(backend), 
+						   MASTER_CONNECTION(backend)->pid,	MASTER_CONNECTION(backend)->key, 1) != POOL_CONTINUE)
 			{
 				internal_transaction_started = 0;
 				POOL_SETMASK(&oldmask);
@@ -4230,7 +4252,8 @@ POOL_STATUS end_internal_transaction(POOL_CONNECTION_POOL *backend)
 	}
 
 	/* commit on master */
-	if (do_command(MASTER(backend), "COMMIT", MAJOR(backend), 1) != POOL_CONTINUE)
+	if (do_command(frontend, MASTER(backend), "COMMIT", MAJOR(backend), 
+				   MASTER_CONNECTION(backend)->pid,	MASTER_CONNECTION(backend)->key, 1) != POOL_CONTINUE)
 	{
 		internal_transaction_started = 0;
 		POOL_SETMASK(&oldmask);

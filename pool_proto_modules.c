@@ -477,14 +477,14 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 		if (REPLICATION)
 		{
 			/* start a transaction if needed */
-			if (start_internal_transaction(backend, (Node *)node) != POOL_CONTINUE)
+			if (start_internal_transaction(frontend, backend, (Node *)node) != POOL_CONTINUE)
 				return POOL_END;
 
 			/* check if need lock */
 			if (need_insert_lock(backend, string, node))
 			{
 				/* if so, issue lock command */
-				status = insert_lock(backend, string, (InsertStmt *)node);
+				status = insert_lock(frontend, backend, string, (InsertStmt *)node);
 				if (status != POOL_CONTINUE)
 				{
 					free_parser();
@@ -492,7 +492,7 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 				}
 			}
 		}
-		else if (REPLICATION && query == NULL && start_internal_transaction(backend, node))
+		else if (REPLICATION && query == NULL && start_internal_transaction(frontend, backend, node))
 		{
 			free_parser();
 			return POOL_ERROR;
@@ -971,12 +971,12 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 			}
 
 			if (is_strict_query(node))
-				start_internal_transaction(backend, node);
+				start_internal_transaction(frontend, backend, node);
 
 			if (insert_stmt_with_lock)
 			{
 				/* start a transaction if needed and lock the table */
-				status = insert_lock(backend, stmt, (InsertStmt *)node);
+				status = insert_lock(frontend, backend, stmt, (InsertStmt *)node);
 				if (status != POOL_CONTINUE)
 				{
 					return status;
@@ -1163,7 +1163,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			pool_debug("ReadyForQuery: transaction state: %c", state);
 		}
 
-		if (end_internal_transaction(backend) != POOL_CONTINUE)
+		if (end_internal_transaction(frontend, backend) != POOL_CONTINUE)
 			return POOL_ERROR;
 	}
 
