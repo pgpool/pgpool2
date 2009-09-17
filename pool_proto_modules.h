@@ -151,7 +151,7 @@ extern int load_balance_enabled(POOL_CONNECTION_POOL *backend, Node* node, char 
 extern void start_load_balance(POOL_CONNECTION_POOL *backend);
 extern void end_load_balance(POOL_CONNECTION_POOL *backend);
 extern int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node);
-extern POOL_STATUS insert_lock(POOL_CONNECTION_POOL *backend, char *query, InsertStmt *node);
+extern POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *query, InsertStmt *node);
 extern void add_prepared_list(PreparedStatementList *p, Portal *portal);
 extern void add_unnamed_portal(PreparedStatementList *p, Portal *portal);
 extern void delete_all_prepared_list(PreparedStatementList *p, Portal *portal);
@@ -159,8 +159,8 @@ extern char *parse_copy_data(char *buf, int len, char delimiter, int col_id);
 extern Portal *lookup_prepared_statement_by_portal(PreparedStatementList *p, const char *name);extern Portal *lookup_prepared_statement_by_statement(PreparedStatementList *p, const char *name);
 extern int check_copy_from_stdin(Node *node); /* returns non 0 if this is a COPY FROM STDIN */
 extern void query_ps_status(char *query, POOL_CONNECTION_POOL *backend);		/* show ps status */
-extern POOL_STATUS start_internal_transaction(POOL_CONNECTION_POOL *backend, Node *node);
-extern POOL_STATUS end_internal_transaction(POOL_CONNECTION_POOL *backend);
+extern POOL_STATUS start_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, Node *node);
+extern POOL_STATUS end_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 extern int detect_deadlock_error(POOL_CONNECTION *master, int major);
 extern int detect_serialization_error(POOL_CONNECTION *master, int major);
 extern int detect_active_sql_transaction_error(POOL_CONNECTION *backend, int major);
