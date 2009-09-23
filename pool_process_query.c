@@ -1755,7 +1755,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 		pool_write(frontend, &kind, 1);
 		sendlen = htonl(len1+4);
 		pool_write(frontend, &sendlen, sizeof(sendlen));
-		status = pool_write(frontend, p1, len1);
+		pool_write(frontend, p1, len1);
 	}
 
 	/* save the received result for each kind */
@@ -1863,8 +1863,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 			ret = SimpleForwardToFrontend(kind1, frontend, backend);
 			if (ret != POOL_CONTINUE)
 				return ret;
-			if (pool_flush(frontend))
-				return POOL_END;
+			pool_flush(frontend);
 		}
 
 		if (ret != POOL_CONTINUE)
@@ -2035,9 +2034,10 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 		}
 
 		/*
-		 * Describe message with a portal name receive two messages.
+		 * Describe message with a portal name will receive two messages.
 		 * 1. ParameterDescription
 		 * 2. RowDescriptions or NoData
+		 * So we read one message here.
 		 */
 		if (kind == 'D' && *p == 'S')
 		{
@@ -2049,6 +2049,9 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 				return POOL_END;
 		}
 
+		/*
+		 * Forward to frontend until a NOTICE message received.
+		 */
 		for (;;)
 		{
 			ret = read_kind_from_backend(frontend, backend, &kind1);
@@ -2166,7 +2169,15 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 			return 2;
 		}
 
-		send_deallocate(backend, &prepared_list, 0);
+		/* Delete from prepared list */
+		if (send_deallocate(backend, &prepared_list, 0))
+		{
+			/* Deallocate failed. We are in unknown state. Ask caller
+			 * to reset backend connection.
+			 */
+			reset_prepared_list(&prepared_list);
+			return -1;
+		}
 		return 1;
 	}
 
