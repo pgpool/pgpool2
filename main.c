@@ -763,7 +763,7 @@ static void write_pid_file(void)
 		exit(1);
 	}
 	snprintf(pidbuf, sizeof(pidbuf), "%d", (int)getpid());
-	fwrite(pidbuf, strlen(pidbuf), 1, fd);
+	fwrite(pidbuf, strlen(pidbuf)+1, 1, fd);
 	if (fclose(fd))
 	{
 		pool_error("could not write pid file as %s. reason: %s",
