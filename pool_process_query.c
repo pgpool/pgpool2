@@ -2161,10 +2161,20 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 
 	qn = pool_config->num_reset_queries;
 
+	/*
+	 * After execution of all SQL commands in the reset_query_list, we
+	 * remove all prepared objects in the prepared_list.
+	 */
 	if (qcnt >= qn)
 	{
 		if (prepared_list.cnt == 0)
 		{
+			/*
+			 * Either no prepared objects were created or DISCARD ALL
+			 * or DEALLOCATE ALL is on the reset_query_list and they
+			 * were executed.  The latter causes call to
+			 * reset_prepared_list which removes all prepared objects.
+			 */
 			reset_prepared_list(&prepared_list);
 			return 2;
 		}
@@ -2178,6 +2188,15 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 			reset_prepared_list(&prepared_list);
 			return -1;
 		}
+		/*
+		 * If DEALLOCATE returns ERROR response, instead of
+		 * CommandComplete, del_prepared_list is not called and the
+		 * prepared object keeps on sitting on the prepared list. This
+		 * will cause infinite call to reset_backend.  So we call
+		 * del_prepared_list() again. This is harmless since trying to
+		 * remove same prepared object will be ignored.
+		 */
+		del_prepared_list(&prepared_list, prepared_list.portal_list[0]);
 		return 1;
 	}
 
@@ -2619,6 +2638,12 @@ static POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backen
 				return POOL_END;
 			}
 			len = ntohl(len) - 4;
+			
+			if (kind != 'N' && kind != 'E' && kind != 'C')
+			{
+				pool_error("do_command: error, kind is not N, E or C(%02x)", kind);
+				return POOL_END;
+			}
 			string = pool_read2(backend, len);
 			if (string == NULL)
 			{
