@@ -907,6 +907,9 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 	}
 	else
 	{
+		/* Save last query string for logging purpose */
+		snprintf(query_string_buffer, sizeof(query_string_buffer), "Parse: %s", stmt);
+
 		node = (Node *) lfirst(list_head(parse_tree_list));
 
 		insert_stmt_with_lock = need_insert_lock(backend, stmt, node);
