@@ -2883,6 +2883,7 @@ POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backe
 	int len,sendlen;
 	int status;
 	char kind;
+	bool notice = false;
 
 	pool_debug("OneNode_do_command: Query: %s", query);
 
@@ -2906,8 +2907,16 @@ POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backe
 			pool_error("OneNode_do_command: error while reading message kind");
 			return POOL_END;
 		}
-
-		status = ParallelForwardToFrontend(kind, frontend, backend, database, true);
+		
+		if (kind == 'N' && strstr(query,"dblink")) {
+			notice = true;
+			status = ParallelForwardToFrontend(kind, frontend, backend, database, false);
+		} else {
+			if(notice)
+				status = ParallelForwardToFrontend(kind, frontend, backend, database, false);
+			else
+				status = ParallelForwardToFrontend(kind, frontend, backend, database, true);
+		}
 		if (kind == 'C' || kind =='E')
 		{
 			break;
@@ -2918,6 +2927,12 @@ POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backe
 	 *
 	 */
 	status = pool_read(backend, &kind, sizeof(kind));
+
+	if(notice)
+				pool_send_error_message(frontend, 3, "XX000",
+										"pgpool2 sql restriction(notice from dblink)",query,"", 
+										__FILE__,__LINE__);
+
 	if (status < 0)
 	{
 		pool_error("OneNode_do_command: error while reading message kind");
@@ -2930,8 +2945,9 @@ POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backe
 		return POOL_END;
 	}
 
-		status = ParallelForwardToFrontend(kind, frontend, backend, database, true);
-		pool_flush(frontend);
+
+	status = ParallelForwardToFrontend(kind, frontend, backend, database, true);
+	pool_flush(frontend);
 
 		return status;
 }
