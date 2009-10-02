@@ -68,8 +68,14 @@ int execute_select = 0; /* non 0 if select query is in transaction */
 
 /* non 0 if "BEGIN" query with extended query protocol received */
 int receive_extended_begin = 0;
-/* non 0 if allow to close internal transaction */
-int allow_close_transaction = 1;
+
+/*
+ * Non 0 if allow to close internal transaction.  This variable was
+ * introduced on 2008/4/3 not to close an internal transaction when
+ * Sync message is received after receiving Parse message. This hack
+ * is for PHP-PDO.
+ */
+static int allow_close_transaction = 1;
 
 PreparedStatementList prepared_list; /* prepared statement name list */
 
@@ -669,22 +675,30 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		p_stmt = (PrepareStmt *)portal->stmt;
 
 		string1 = portal->sql_string;
+		pool_debug("Execute: query: %s", string1);
 		node = (Node *)p_stmt->query;
 		strncpy(query_string_buffer, string1, sizeof(query_string_buffer));
 
-		if ((IsA(node, PrepareStmt) || IsA(node, DeallocateStmt) ||
-			 IsA(node, VariableSetStmt)) &&
-			MASTER_SLAVE && TSTATE(backend) != 'E')
+ 		if ((IsA(node, PrepareStmt) || IsA(node, DeallocateStmt) ||
+ 			 IsA(node, VariableSetStmt)) &&
+  			MASTER_SLAVE && TSTATE(backend) != 'E')
 		{
+			/*
+			 * PREPARE, DEALLOCATE, SET, DISCARD
+			 * should be executed on all nodes.  So we set
+			 * force_replication.
+			 */
 			force_replication = 1;
 		}
 		/*
-		 * JDBC driver sends "BEGIN" query internally if setAutoCommit(false).
-		 * But it does not send Sync message after "BEGIN" query.
-		 * In extended query protocol, PostgreSQL returns
-		 * ReadyForQuery when a client sends Sync message.
-		 * We can't know a transaction state...
-		 * So pgpool send Sync message internally.
+		 * JDBC driver sends "BEGIN" query internally if
+		 * setAutoCommit(false).  But it does not send Sync message
+		 * after "BEGIN" query.  In extended query protocol,
+		 * PostgreSQL returns ReadyForQuery when a client sends Sync
+		 * message.  Problem is, pgpool can't know the transaction
+		 * state without receiving ReadyForQuery. So we remember that
+		 * we need to send Sync message internally afterward, whenever
+		 * we receive BEGIN in extended protocol.
 		 */
 		else if (IsA(node, TransactionStmt) && MASTER_SLAVE)
 		{
@@ -692,7 +706,8 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 
 			if (stmt->kind == TRANS_STMT_BEGIN ||
 				stmt->kind == TRANS_STMT_START)
-				receive_extended_begin = true;
+				/* Remember we need to send sync later in extended protocol */
+				receive_extended_begin = 1;
 		}
 
 		if (load_balance_enabled(backend, node, string1))
@@ -1050,7 +1065,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 				continue;
 
 			pool_debug("Parse: waiting for %dth backend completing the query", i);
-			if (wait_for_query_response(frontend, CONNECTION(backend), string, MAJOR(backend)) != POOL_CONTINUE)
+			if (wait_for_query_response(frontend, CONNECTION(backend, i), string, MAJOR(backend)) != POOL_CONTINUE)
 			{
 				/* Cancel current transaction */
 				CancelPacket cancel_packet;
@@ -1467,6 +1482,10 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 
 	pool_debug("read kind from frontend %c(%02x)", fkind, fkind);
 
+	/*
+	 * If we have received BEGIN in extended protocol before, we need
+	 * to send a sync message to know the transaction stare.
+	 */
 	if (receive_extended_begin)
 	{
 		receive_extended_begin = 0;
@@ -1508,7 +1527,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			status = Parse(frontend, backend);
 			break;
 
-		case 'S':
+		case 'S':  /* Sync message */
 			receive_extended_begin = 0;
 			/* fall through */
 
@@ -1523,7 +1542,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 					MASTER_SLAVE = 0;
 					master_slave_dml = 1;
 				}
-
+	
 				status = SimpleForwardToBackend(fkind, frontend, backend);
 				for (i=0;i<NUM_BACKENDS;i++)
 				{
