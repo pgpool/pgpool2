@@ -823,7 +823,7 @@ POOL_STATUS send_simplequery_message(POOL_CONNECTION *backend, int len, char *st
 
 /*
  * Wait for query response from single node. This checks frontend
- * connection by writing dummy parameter status packet every 1
+ * connection by writing dummy parameter status packet every 30
  * seccond, and if the connection broke, returns error since there's
  * no point in that waiting until backend returns response.
  */
