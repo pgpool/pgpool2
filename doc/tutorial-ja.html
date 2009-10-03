@@ -107,20 +107,41 @@ $ pgpool -n &
 
 <p>
 コマンドを実行した端末にログメッセージが表示されるので、以下のようにログメッセージをファイルに保存するように実行することをお勧めします。</p>
-<pre>$ pgpool -n -d &gt; /tmp/pgpool.log 2&gt;&1 &</pre>
+<pre>$ pgpool -n -d &gt; /var/log/pgpool/pgpool.log 2&gt;&1 &</pre>
 <p><code>-d</code> オプションはデバッグメッセージの出力を有効にします。</p>
 <p>
 上記の例はファイルにリダイレクトさせているため、ログが追加され続けます。
 ログをローテートさせたい場合は、ローテート機能を持ったコマンドにログを
-渡してください。例えば、<a
-href="http://www.cronolog.org/"><code>cronolog</code></a> を使う場合で
-あれば、以下のようにパイプでログメッセージを渡してください。
+渡してください。
+
+たとえば、Apache2に付属するrotatelogsを使うのであれば、
+
+<pre>
+$ pgpool -n 2>&1 | /usr/local/apache2/bin/rotatelogs \
+  -l -f /var/log/pgpool/pgpool.log.%A 86400 &
+</pre>
+
+とすれば毎日夜中の0時にログがローテートされ、pgpool.log.Thursday のような名前のログファイルが毎日作成されます。
+ただし、すでに同じ名前のファイルがある場合にはログがそのファイルに追加されてしまうので、cronを使って古いログファイルを消去する設定を併せて行っておく方が良いでしょう。
+例を示します。
+<pre>
+55 23 * * * /usr/bin/find /var/log/pgpool -type f -mtime +5 -exec /bin/rm -f '{}' \;
+</pre>
+</p>
+<p>
+<em>注意</em>: Linuxディストリビューションによっては、rotatelogs は /usr/sbin/rotatelogs2 のような名前でインストールされているかも知れません。
+-f オプションは rotatelogs が起動された直後に直ちにログファイルを作るオプションで、apache2 2.2.9 以降でのみ有効です。
+</p>
+
+<p>
+<a href="http://www.cronolog.org/"><code>cronolog</code></a> を使う場合であれば、以下のようにパイプでログメッセージを渡してください。
 
 <pre>
 $ pgpool -n 2>&1 | /usr/sbin/cronolog \
-  --hardlink=/var/log/pgsql/pgpool.log \
-  '/var/log/pgsql/%Y-%m-%d-pgpool.log' &
+  --hardlink=/var/log/pgpool/pgpool.log \
+  '/var/log/pgpool/%Y-%m-%d-pgpool.log' &
 </pre>
+</p>
 
 <p>pgpool-II を停止するには以下のように <code>pgpool</code> コマンドを実行します。</p>
 <pre>$ pgpool stop</pre>

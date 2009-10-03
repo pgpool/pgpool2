@@ -209,7 +209,26 @@ options to use are like the following.
 <p>
 The above command keeps appending log messages to /tmp/pgpool.log. If
 you need to rotate log files, pass the logs to a external command
-which have log rotation function. For example, <a
+which have log rotation function. 
+
+For example, you can use rotatelogs coming with Apache2:
+<pre>
+$ pgpool -n 2>&1 | /usr/local/apache2/bin/rotatelogs \
+  -l -f /var/log/pgpool/pgpool.log.%A 86400 &
+</pre>
+This will generate a log file named "pgpool.log.Thursday" everyday then
+rotate it 00:00 at midnight. Rotatelogs adds log to a file if it already
+exists. To delete old log files before rotation, you could use cron:
+<pre>
+55 23 * * * /usr/bin/find /var/log/pgpool -type f -mtime +5 -exec /bin/rm -f '{}' \;
+</pre>
+Please note that rotaelogs may exist as /usr/sbin/rotatelogs2 in some
+distributions.
+-f option generates a log file as soon as rotatelogs starts and is
+available apache2 2.2.9 or greater.
+</p>
+<p>
+Also <a
 href="http://www.cronolog.org"><code>cronolog</code></a> helps you.
 </p>
 
