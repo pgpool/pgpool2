@@ -73,8 +73,6 @@ extern int execute_select; /* non 0 if select query is in transaction */
 
 /* non 0 if "BEGIN" query with extended query protocol received */
 extern int receive_extended_begin;
-/* non 0 if allow to close internal transaction */
-extern int allow_close_transaction;
 
 extern int is_select_pgcatalog;
 extern int is_select_for_update; /* also for SELECT ... INTO */
