@@ -1,7 +1,29 @@
+2.2.5 (urukiboshi) 2009/10/4
+	  * Version 2.2.5
+
+	  This version fixes various bugs in 2.2.4 or before.
+
+	  * Bug fixes
+
+	  - Fix connection_count_down(). It decrements the connection
+        counter too much in some corner cases and causes online
+        recover never completes(Tatsuo)
+
+	  - Detect frontend exiting while waiting for commands complete in
+        other cases such as internal locks are issued and Parse
+        (Tatsuo)
+
+	  - Fix inifinit loop in reset_backend(Xavier Noguer, Tatsuo)
+
+	  - Fix Parse() to print actual query when it detects kind
+        mismatch error(Tatsuo)
+
+	  - Document enhancements(Tatsuo)
+
 2.2.4 (urukiboshi) 2009/8/24
 	  * Version 2.2.4
 
-	  This version fixes various bugs in 2.2.2 or before.
+	  This version fixes various bugs in 2.2.3 or before.
 
 	  * Bug fixes
 
