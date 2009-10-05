@@ -1,11 +1,11 @@
 Summary:	Pgpool is a connection pooling/replication server for PostgreSQL
 Name:		pgpool-II
-Version:	2.2
+Version:	2.2.5
 Release:	1%{?dist}
 License:	BSD
 Group:		Applications/Databases
 URL:		http://pgpool.projects.PostgreSQL.org
-Source0:	http://pgfoundry.org/frs/download.php/2108/%{name}-%{version}.tar.gz
+Source0:	http://pgfoundry.org/frs/download.php/2423/%{name}-%{version}.tar.gz
 Source1:        pgpool.init
 Source2:        pgpool.sysconfig
 Patch1:		pgpool.conf.sample.patch
@@ -94,7 +94,7 @@ chkconfig --add pgpool
 %{_libdir}/libpcp.so.*
 %{_datadir}/%{name}/pgpool.pam
 %{_initrddir}/pgpool
-%attr(764,root,apache) %config(noreplace) %{_sysconfdir}/%{name}/*.conf
+%attr(764,root,root) %config(noreplace) %{_sysconfdir}/%{name}/*.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/pgpool
 
 %files devel
@@ -104,6 +104,17 @@ chkconfig --add pgpool
 %{_libdir}/libpcp.so
 
 %changelog
+* Sun Oct 4 2009 Devrim Gunduz <devrim@CommandPrompt.com> 2.2.5-1
+- Update to 2.2.5, for various fixes described at
+  http://lists.pgfoundry.org/pipermail/pgpool-general/2009-October/002188.html
+- Re-apply a fix for Red Hat Bugzilla #442372
+
+* Wed Sep 9 2009 Devrim Gunduz <devrim@CommandPrompt.com> 2.2.4-1
+- Update to 2.2.4
+
+* Wed May 6 2009 Devrim Gunduz <devrim@CommandPrompt.com> 2.2.2-1
+- Update to 2.2.2
+
 * Sun Mar 1 2009 Devrim Gunduz <devrim@CommandPrompt.com> 2.2-1
 - Update to 2.2
 - Fix URL
