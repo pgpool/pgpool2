@@ -1,11 +1,11 @@
 Summary:	Pgpool is a connection pooling/replication server for PostgreSQL
 Name:		pgpool-II
-Version:	2.2
-Release:	1%{?dist}
+Version:	2.2.5
+Release:	2%{?dist}
 License:	BSD
 Group:		Applications/Databases
 URL:		http://pgpool.projects.PostgreSQL.org
-Source0:	http://pgfoundry.org/frs/download.php/2108/%{name}-%{version}.tar.gz
+Source0:	http://pgfoundry.org/frs/download.php/2423/%{name}-%{version}.tar.gz
 Source1:        pgpool.init
 Source2:        pgpool.sysconfig
 Patch1:		pgpool.conf.sample.patch
@@ -77,7 +77,7 @@ chkconfig --add pgpool
 %files
 %defattr(-,root,root,-)
 %dir %{_datadir}/%{name}
-%doc README README.euc_jp TODO COPYING INSTALL AUTHORS ChangeLog NEWS doc/pgpool-en.html doc/pgpool-ja.html doc/pgpool.css doc/tutorial-en.html doc/tutorial-ja.html
+%doc README README.euc_jp TODO COPYING INSTALL AUTHORS ChangeLog NEWS doc/pgpool-en.html doc/pgpool-ja.html doc/pgpool.css doc/tutorial-en.html doc/tutorial-ja.html doc/load_balance.odp doc/load_balance.png
 %{_bindir}/pgpool
 %{_bindir}/pcp_attach_node
 %{_bindir}/pcp_detach_node
@@ -94,7 +94,7 @@ chkconfig --add pgpool
 %{_libdir}/libpcp.so.*
 %{_datadir}/%{name}/pgpool.pam
 %{_initrddir}/pgpool
-%attr(764,root,apache) %config(noreplace) %{_sysconfdir}/%{name}/*.conf
+%attr(764,root,root) %config(noreplace) %{_sysconfdir}/%{name}/*.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/pgpool
 
 %files devel
@@ -104,6 +104,20 @@ chkconfig --add pgpool
 %{_libdir}/libpcp.so
 
 %changelog
+* Mon Oct 5 2009 Devrim Gunduz <devrim@CommandPrompt.com> 2.2.5-2
+- Add 2 new docs, per Tatsuo.
+
+* Sun Oct 4 2009 Devrim Gunduz <devrim@CommandPrompt.com> 2.2.5-1
+- Update to 2.2.5, for various fixes described at
+  http://lists.pgfoundry.org/pipermail/pgpool-general/2009-October/002188.html
+- Re-apply a fix for Red Hat Bugzilla #442372
+
+* Wed Sep 9 2009 Devrim Gunduz <devrim@CommandPrompt.com> 2.2.4-1
+- Update to 2.2.4
+
+* Wed May 6 2009 Devrim Gunduz <devrim@CommandPrompt.com> 2.2.2-1
+- Update to 2.2.2
+
 * Sun Mar 1 2009 Devrim Gunduz <devrim@CommandPrompt.com> 2.2-1
 - Update to 2.2
 - Fix URL
