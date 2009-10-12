@@ -4237,6 +4237,16 @@ static bool is_internal_transaction_needed(Node *node)
 				return false;
 		}
 
+		/*
+		 * REINDEX DATABASE or SYSTEM cannot be executed in a transaction block
+		 */
+		else if (IsA(node, ReindexStmt))
+		{
+			if (((ReindexStmt *)node)->kind == OBJECT_DATABASE ||
+				((ReindexStmt *)node)->do_system)
+				return false;
+		}
+
 		return true;
 
 	}
