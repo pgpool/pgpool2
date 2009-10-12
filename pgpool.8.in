@@ -1,7 +1,7 @@
 .\" Copyright 2004-2009 by PgPool Global Development Group
 .\" This man page is subject to the same license as the rest of pgpool.
 .\"
-.TH PGPOOL 8 "08 Mar 2009"
+.TH PGPOOL 8 "12 Oct 2009"
 .\" Please adjust this date whenever revising the manpage.
 .hy 0
 .ad l
@@ -39,7 +39,7 @@ Shutdown.
 .TP
 \fBpgpool\fP [ \fIoptions...\fP ] \fBreload\fP
 Reloads the configuration.
-..
+.
 .SH OPTIONS
 .TP
 \fB\-a\fR \fIpath\fR
