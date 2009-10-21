@@ -1570,7 +1570,7 @@ static RETSIGTYPE reap_handler(int sig)
 
 /*
  * Attach zombie processes and restart child processes.
- * reaper() must be called under protecting signals.
+ * reaper() must be called protected from signals.
  */
 static void reaper(void)
 {
@@ -1603,16 +1603,29 @@ static void reaper(void)
 	while ((pid = wait3(&status, WNOHANG, NULL)) > 0)
 #endif
 	{
+		if (WIFSIGNALED(status) && WTERMSIG(status) == SIGSEGV)
+		{
+			/* Child terminated by segmentation fault. Report it */
+			pool_error("Child process %d was terminated by segmentation fault", pid);
+		}
+			
 		/* if exiting child process was PCP handler */
 		if (pid == pcp_pid)
 		{
-			pool_debug("PCP child %d exits with status %d by signal %d", pid, status, WTERMSIG(status));
+			if (WIFSIGNALED(status))
+				pool_debug("PCP child %d exits with status %d by signal %d", pid, status, WTERMSIG(status));
+			else
+				pool_debug("PCP child %d exits with status %d", pid, status);
 
 			pcp_pid = pcp_fork_a_child(pcp_unix_fd, pcp_inet_fd, pcp_conf_file);
 			pool_debug("fork a new PCP child pid %d", pcp_pid);
 			break;
-		} else {
-			pool_debug("child %d exits with status %d by signal %d", pid, status, WTERMSIG(status));
+		} else
+		{
+			if (WIFSIGNALED(status))
+				pool_debug("child %d exits with status %d by signal %d", pid, status, WTERMSIG(status));
+			else
+				pool_debug("child %d exits with status %d", pid, status);
 
 			/* look for exiting child's pid */
 			for (i=0;i<pool_config->num_init_children;i++)
