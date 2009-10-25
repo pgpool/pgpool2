@@ -74,6 +74,9 @@ public class RunTest {
 	if (testcase.equals("insert"))
 	    return new InsertTest();
 
+	if (testcase.equals("CreateTempTable"))
+	    return new CreateTempTableTest();
+
 	/* unknown test case */
 	return null;
     }
