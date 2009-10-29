@@ -70,7 +70,6 @@ static void query_cache_register(char kind, POOL_CONNECTION *frontend, char *dat
 static int extract_ntuples(char *message);
 static int detect_error(POOL_CONNECTION *master, char *error_code, int major, char class, bool unread);
 static int detect_postmaster_down_error(POOL_CONNECTION *master, int major);
-static void free_select_result(POOL_SELECT_RESULT *result);
 
 static bool is_internal_transaction_needed(Node *node);
 static int compare(const void *p1, const void *p2);
@@ -2991,7 +2990,7 @@ POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backe
 /*
  * Free POOL_SELECT_RESULT object
  */
-static void free_select_result(POOL_SELECT_RESULT *result)
+void free_select_result(POOL_SELECT_RESULT *result)
 {
 	int i;
 
@@ -3237,9 +3236,8 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 	return POOL_CONTINUE;
 }
 
-
 /*
- * judge if we need to lock the table
+ * Judge if we need to lock the table
  * to keep SERIAL consistency among servers
  */
 int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
@@ -3250,24 +3248,9 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
  */
 #define NEXTVALQUERY "SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.relname = '%s'"
 
-#define INSERT_STATEMENT_MAX_CACHE		16
-#define MAX_ITEM_LENGTH	1024
-
-	/* table lookup cache structure */
-	typedef struct {
-		char dbname[MAX_ITEM_LENGTH];	/* database name */
-		char relname[MAX_ITEM_LENGTH];	/* table name */
-		int	use_serial;	/* 1: use SERIAL data type */
-		int refcnt;		/* reference count */
-	} MyRelCache;
-
-	static MyRelCache relcache[INSERT_STATEMENT_MAX_CACHE];
-
-	int i;
 	char *str;
-	char *rel;
-	int use_serial = 0;
-	char *dbname;
+	int result;
+	static POOL_RELCACHE *relcache;
 
 	/*
 	 * for version 2 protocol, we cannot check if it's actually uses
@@ -3314,83 +3297,26 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 		return 0;
 	}
 
-	/* eliminate double quotes */
-	rel = malloc(strlen(str)+1);
-	if (!rel)
+	/*
+	 * If relcache does not exist, create it.
+	 */
+	if (!relcache)
 	{
-		pool_error("need_insert_lock: malloc failed");
-		return 0;
-	}
-	for(i=0;*str;str++)
-	{
-		if (*str != '"')
-			rel[i++] = *str;
-	}
-	rel[i] = '\0';
-
-	/* obtain database name */
-	dbname = MASTER_CONNECTION(backend)->sp->database;
-
-	/* look for cache first */
-	for (i=0;i<INSERT_STATEMENT_MAX_CACHE;i++)
-	{
-		if (strcasecmp(relcache[i].dbname, dbname) == 0 &&
-			strcasecmp(relcache[i].relname, rel) == 0)
+		relcache = pool_create_relcache(32, NEXTVALQUERY,
+										int_register_func, int_unregister_func,
+										false);
+		if (relcache == NULL)
 		{
-			relcache[i].refcnt++;
-			use_serial = relcache[i].use_serial;
-			break;
+			pool_error("need_insert_lock: pool_create_relcache error");
+			return false;
 		}
 	}
 
-	if (i == INSERT_STATEMENT_MAX_CACHE)		/* not in cache? */
-	{
-		char qbuf[1024];
-		int maxrefcnt = INT_MAX;
-		POOL_SELECT_RESULT *res = NULL;
-		int index = 0;
-
-		snprintf(qbuf, sizeof(qbuf), NEXTVALQUERY, rel);
-
-		/* check the system catalog if the table has SERIAL data type */
-		if (do_query(MASTER(backend), qbuf, &res) != POOL_CONTINUE)
-		{
-			pool_error("need_insert_lock: do_query failed");
-			if (res)
-				free_select_result(res);
-			return 0;
-		}
-
-		/*
-		 * if the query returns some rows and found nextval() is used,
-		 * then we assume it uses SERIAL data type
-		 */
-		if (res->numrows >= 1 && strcmp(res->data[0], "0"))
-			use_serial = 1;
-
-		free_select_result(res);
-
-		for (i=0;i<INSERT_STATEMENT_MAX_CACHE;i++)
-		{
-			if (relcache[i].refcnt == 0)
-			{
-				index = i;
-				break;
-			}
-			else if (relcache[i].refcnt < maxrefcnt)
-			{
-				maxrefcnt = relcache[i].refcnt;
-				index = i;
-			}
-		}
-
-		/* register cache */
-		strncpy(relcache[index].dbname, dbname, MAX_ITEM_LENGTH);
-		strncpy(relcache[index].relname, rel, MAX_ITEM_LENGTH);
-		relcache[index].use_serial = use_serial;
-		relcache[index].refcnt++;
-	}
-	return use_serial;
+	/*
+	 * Search relcache.
+	 */
+	result = (int)pool_search_relcache(relcache, backend, str);
+	return result;
 }
 
 /*

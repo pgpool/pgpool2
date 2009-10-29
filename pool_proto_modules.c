@@ -96,6 +96,7 @@ char *parsed_query = NULL;
 
 static int check_errors(POOL_CONNECTION_POOL *backend, int backend_id);
 static void generate_error_message(char *prefix, int specific_error, char *query);
+static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 
 POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 										POOL_CONNECTION_POOL *backend)
@@ -928,6 +929,25 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 		node = (Node *) lfirst(list_head(parse_tree_list));
 
 		insert_stmt_with_lock = need_insert_lock(backend, stmt, node);
+
+		/* Special treatment for master/slave + temp tables */
+		if (MASTER_SLAVE)
+		{
+			/* Is there "NO LOAD BALANCE" comment? */
+			if (!strncasecmp(stmt, NO_LOAD_BALANCE, NO_LOAD_BALANCE_COMMENT_SZ) ||
+				/* or the table used in a query is a temporary one ? */
+				is_temp_table(backend, node))
+			{
+				/*
+				 * From now on, let only master handle queries.  This is
+				 * typically usefull for using temp tables in master/slave
+				 * mode
+				 */
+				master_slave_was_enabled = 1;
+				MASTER_SLAVE = 0;
+				master_slave_dml = 1;
+			}
+		}
 
 		portal = create_portal();
 		if (portal == NULL)
@@ -2414,4 +2434,71 @@ static void generate_error_message(char *prefix, int specific_error, char *query
 	string_append_char(msg, error_messages[specific_error]);
 	pool_error(msg->data, query);
 	free_string(msg);
+}
+
+/*
+ * Judge the table used in a query represented by node is a temporary
+ * table or not.
+ */
+static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node)
+{
+/*
+ * Query to know if the target table is a temporary one.
+ * This query is valid through PostgreSQL 7.3 to 8.3.
+ */
+#define ISTEMPQUERY "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.relname = '%s' AND c.relistemp"
+
+	char *str;
+	int result;
+	static POOL_RELCACHE *relcache;
+
+	/*
+	 * For version 2 protocol, we cannot support the checking since
+	 * the underlying infrastructure (do_query) does not support the
+	 * protocol. So we just return false.
+	 */
+	if (MAJOR(backend) == PROTO_MAJOR_V2)
+		return 0;
+
+	/* For SELECT, it's hard to extract table names. So we always return 0 */
+	if (IsA(node, SelectStmt))
+	{
+		return 0;
+	}
+
+	/* Obtain table name */
+	if (IsA(node, InsertStmt))
+		str = nodeToString(((InsertStmt *)node)->relation);
+	else if (IsA(node, UpdateStmt))
+		str = nodeToString(((UpdateStmt *)node)->relation);
+	else if (IsA(node, DeleteStmt))
+		str = nodeToString(((DeleteStmt *)node)->relation);
+	else		/* Unknown statement */
+		str = NULL;
+
+	if (str == NULL)
+	{
+			return 0;
+	}
+
+	/*
+	 * If relcache does not exist, create it.
+	 */
+	if (!relcache)
+	{
+		relcache = pool_create_relcache(32, ISTEMPQUERY,
+										int_register_func, int_unregister_func,
+										true);
+		if (relcache == NULL)
+		{
+			pool_error("is_temp_table: pool_create_relcache error");
+			return false;
+		}
+	}
+
+	/*
+	 * Search relcache.
+	 */
+	result = (int)pool_search_relcache(relcache, backend, str);
+	return result;
 }
