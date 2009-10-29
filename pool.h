@@ -309,6 +309,43 @@ typedef struct {
 	UNIT unit;
 } Interval;
 
+/*
+ * Relation cache structure
+ */
+#define MAX_ITEM_LENGTH	1024
+
+/* Relation lookup cache structure */
+
+typedef void *(*func_ptr) ();
+
+typedef struct {
+	char dbname[MAX_ITEM_LENGTH];	/* database name */
+	char relname[MAX_ITEM_LENGTH];	/* table name */
+	void *data;	/* user data */
+	int refcnt;		/* reference count */
+	int session_id;		/* LocalSessionId */
+} PoolRelCache;
+
+typedef struct {
+	int num;		/* number of cache items */
+	char sql[MAX_ITEM_LENGTH];	/* Query to relation */
+	/*
+	 * User defined function to be called at data register.
+	 * Argument is POOL_SELECT_RESULT *.
+	 * This function must return a pointer to be
+	 * saved in cache->data.
+	 */
+	func_ptr	register_func;
+	/*
+	 * User defined function to be called at data unregister.
+	 * Argument cache->data.
+	 */
+	func_ptr	unregister_func;
+	bool cache_is_session_local;		/* True if cache life time is session local */
+	PoolRelCache *cache;	/* cache data */
+} POOL_RELCACHE;
+
+
 #ifdef NOT_USED
 #define NUM_BACKENDS (in_load_balance? (selected_slot+1) : \
 					  (((!REPLICATION && !PARALLEL_MODE)||master_slave_dml)? Req_info->master_node_id+1: \
@@ -350,6 +387,8 @@ typedef struct {
 #define LOCK_COMMENT_SZ (sizeof(LOCK_COMMENT)-1)
 #define NO_LOCK_COMMENT "/*NO INSERT LOCK*/"
 #define NO_LOCK_COMMENT_SZ (sizeof(NO_LOCK_COMMENT)-1)
+#define NO_LOAD_BALANCE "/*NO LOAD BALANCE*/"
+#define NO_LOAD_BALANCE_COMMENT_SZ (sizeof(NO_LOAD_BALANCE)-1)
 
 #define MAX_NUM_SEMAPHORES		3
 #define CONN_COUNTER_SEM 0
@@ -428,6 +467,8 @@ extern volatile sig_atomic_t got_sighup;
 
 #define QUERY_STRING_BUFFER_LEN 1024
 extern char query_string_buffer[];		/* last query string sent to simpleQuery() */
+
+extern int LocalSessionId;	/* Local session id. incremented when new frontend connected */
 
 /*
  * public functions
@@ -593,5 +634,17 @@ extern void finish_recovery(void);
 extern void pool_set_nonblock(int fd);
 extern void pool_unset_nonblock(int fd);
 extern void cancel_request(CancelPacket *sp);
+
+/* pool_process_query.c */
+void free_select_result(POOL_SELECT_RESULT *result);
+
+/* pool_relcache.c */
+POOL_RELCACHE *pool_create_relcache(int cachesize, char *sql,
+									func_ptr register_func, func_ptr unregister_func,
+									bool issessionlocal);
+void pool_discard_relcache(POOL_RELCACHE *relcache);
+void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backend, char *table);
+void *int_register_func(POOL_SELECT_RESULT *res);
+void *int_unregister_func(void *data);
 
 #endif /* POOL_H */

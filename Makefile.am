@@ -9,7 +9,7 @@ pgpool_SOURCES = pool.h pool_type.h version.h pgpool.conf.sample \
 	pool_rewrite_query.c pool_rewrite_query.h pool_rewrite_outfuncs.c \
 	pool_query_cache.c pool_hba.conf.sample sample/pgpool.pam\
 	pool_hba.c pool_path.h pool_path.c pool_ip.h pool_ip.c pool_type.h \
-	ps_status.c strlcpy.c recovery.c \
+	ps_status.c strlcpy.c recovery.c pool_relcache.c \
 	pool_proto_modules.c pool_proto_modules.h
 
 pg_md5_SOURCES = pg_md5.c md5.c md5.h
