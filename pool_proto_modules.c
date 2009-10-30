@@ -2443,14 +2443,29 @@ static void generate_error_message(char *prefix, int specific_error, char *query
 static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node)
 {
 /*
+ * Query to know if pg_class has relistemp column or not.
+ * PostgreSQL 8.4 or later has this.
+ */
+#define HASRELITEMPPQUERY "SELECT count(*) FROM pg_catalog.pg_class AS c, pg_attribute AS a WHERE c.relname = 'pg_class' AND a.attrelid = c.oid AND a.attname = 'relistemp'"
+
+/*
  * Query to know if the target table is a temporary one.
  * This query is valid through PostgreSQL 7.3 to 8.3.
  */
-#define ISTEMPQUERY "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.relname = '%s' AND c.relistemp"
+#define ISTEMPQUERY83 "SELECT count(*) FROM pg_class AS c, pg_namespace AS n WHERE c.relname = '%s' AND c.relnamespace = n.oid AND n.nspname ~ '^pg_temp_'"
+
+/*
+ * Query to know if the target table is a temporary one.
+ * This query is valid PostgreSQL 8.4 or later.
+ */
+#define ISTEMPQUERY84 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.relname = '%s' AND c.relistemp"
 
 	char *str;
+	int hasrelistemp;
 	int result;
+	static POOL_RELCACHE *hasrelistemp_cache;
 	static POOL_RELCACHE *relcache;
+	char *query;
 
 	/*
 	 * For version 2 protocol, we cannot support the checking since
@@ -2482,11 +2497,32 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node)
 	}
 
 	/*
+	 * Check backend version
+	 */
+	if (!hasrelistemp_cache)
+	{
+		hasrelistemp_cache = pool_create_relcache(32, HASRELITEMPPQUERY,
+										int_register_func, int_unregister_func,
+										false);
+		if (hasrelistemp_cache == NULL)
+		{
+			pool_error("is_temp_table: pool_create_relcache error");
+			return false;
+		}
+	}
+
+	hasrelistemp = (int)pool_search_relcache(hasrelistemp_cache, backend, "pg_class");
+	if (hasrelistemp)
+		query = ISTEMPQUERY84;
+	else
+		query = ISTEMPQUERY83;
+
+	/*
 	 * If relcache does not exist, create it.
 	 */
 	if (!relcache)
 	{
-		relcache = pool_create_relcache(32, ISTEMPQUERY,
+		relcache = pool_create_relcache(32, query,
 										int_register_func, int_unregister_func,
 										true);
 		if (relcache == NULL)
