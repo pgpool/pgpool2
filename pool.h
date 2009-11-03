@@ -564,6 +564,21 @@ extern void pool_send_error_message(POOL_CONNECTION *frontend, int protoMajor,
 							 char *hint,
 							 char *file,
 							 int line);
+extern void pool_send_fatal_message(POOL_CONNECTION *frontend, int protoMajor,
+							 char *code,
+							 char *message,
+							 char *detail,
+							 char *hint,
+							 char *file,
+							 int line);
+extern void pool_send_severity_message(POOL_CONNECTION *frontend, int protoMajor,
+							 char *code,
+							 char *message,
+							 char *detail,
+							 char *hint,
+							 char *file,
+							 char *severity,
+							 int line);
 extern void pool_send_readyforquery(POOL_CONNECTION *frontend);
 extern int send_startup_packet(POOL_CONNECTION_POOL_SLOT *cp);
 extern void pool_free_startup_packet(StartupPacket *sp);

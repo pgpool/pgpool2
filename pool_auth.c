@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2008	PgPool Global Development Group
+ * Copyright (c) 2003-2009	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -35,13 +35,16 @@
 #endif
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define AUTHFAIL_ERRORCODE "28000"
 
 static POOL_STATUS pool_send_auth_ok(POOL_CONNECTION *frontend, int pid, int key, int protoMajor);
 static int do_clear_text_password(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reauth, int protoMajor);
+static void pool_send_auth_fail(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp);
 static int do_crypt(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reauth, int protoMajor);
 static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reauth, int protoMajor);
+
 
 /*
 * do authentication against backend. if success return 0 otherwise non 0.
@@ -155,7 +158,8 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 
 			if (authkind < 0)
 			{
-				pool_error("do_clear_text_password failed in slot %d", i);
+				pool_debug("do_clear_text_password failed in slot %d", i);
+				pool_send_auth_fail(frontend, cp);
 				return -1;
 			}
 		}
@@ -175,7 +179,8 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 
 			if (authkind < 0)
 			{
-				pool_error("do_crypt_text_password failed in slot %d", i);
+				pool_debug("do_crypt_text_password failed in slot %d", i);
+				pool_send_auth_fail(frontend, cp);
 				return -1;
 			}
 		}
@@ -205,7 +210,8 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 
 			if (authkind < 0)
 			{
-				pool_error("do_md5failed in slot %d", i);
+				pool_debug("do_md5failed in slot %d", i);
+				pool_send_auth_fail(frontend, cp);
 				return -1;
 			}
 		}
@@ -219,7 +225,7 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 
 	if (authkind != 0)
 	{
-		pool_error("pool_do_auth: backend does not return authentication ok");
+		pool_error("pool_do_auth: unknown authentication response from backend %d", authkind);
 		return -1;
 	}
 
@@ -410,11 +416,40 @@ int pool_do_reauth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	else
 	{
 		pool_debug("pool_do_reauth: authentication failed");
+		pool_send_auth_fail(frontend, cp);               
 		return -1;
 	}
 
 	return (pool_send_auth_ok(frontend, MASTER_CONNECTION(cp)->pid, MASTER_CONNECTION(cp)->key, protoMajor) != POOL_CONTINUE);
 }
+
+/*
+* send authentication failure message text to frontend
+*/
+static void pool_send_auth_fail(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
+{
+	int messagelen;
+	char *errmessage;
+	int protoMajor;
+
+	bool send_error_to_frontend = true;
+
+	protoMajor = MAJOR(cp);
+
+	messagelen = strlen(MASTER_CONNECTION(cp)->sp->user) + 100;
+	if ((errmessage = (char *)malloc(messagelen+1)) == NULL)
+	{
+		pool_error("pool_send_auth_fail_failed: malloc failed: %s", strerror(errno));
+		child_exit(1);
+	}
+
+	snprintf(errmessage, messagelen, "password authentication failed for user \"%s\"",
+		 MASTER_CONNECTION(cp)->sp->user);
+	if (send_error_to_frontend)
+	pool_send_fatal_message(frontend, protoMajor, "XX000", errmessage,
+				"", "", __FILE__, __LINE__);
+	free(errmessage);
+} 
 
 /*
 * send authentication ok to frontend. if success return 0 otherwise non 0.
@@ -486,7 +521,7 @@ static int do_clear_text_password(POOL_CONNECTION *backend, POOL_CONNECTION *fro
 		{
 			if (pool_read(frontend, &size, sizeof(size)))
 			{
-				pool_error("do_clear_text_password: failed to read password packet size");
+				pool_debug("do_clear_text_password: failed to read password packet size");
 				return -1;
 			}
 		}
@@ -496,7 +531,7 @@ static int do_clear_text_password(POOL_CONNECTION *backend, POOL_CONNECTION *fro
 
 			if (pool_read(frontend, &k, sizeof(k)))
 			{
-				pool_error("do_clear_text_password: failed to read password packet \"p\"");
+				pool_debug("do_clear_text_password: failed to read password packet \"p\"");
 				return -1;
 			}
 			if (k != 'p')
@@ -664,7 +699,7 @@ static int do_crypt(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int rea
 
 			if (pool_read(frontend, &k, sizeof(k)))
 			{
-				pool_error("do_crypt_password: failed to read password packet \"p\"");
+				pool_debug("do_crypt_password: failed to read password packet \"p\"");
 				return -1;
 			}
 			if (k != 'p')
@@ -732,13 +767,13 @@ static int do_crypt(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int rea
 	{
 		if (pool_read(backend, &len, sizeof(len)))
 		{
-			pool_error("do_clear_text_password: failed to read authentication packet size");
+			pool_error("do_crypt: failed to read authentication packet size");
 			return -1;
 		}
 
 		if (ntohl(len) != 8)
 		{
-			pool_error("do_clear_text_password: incorrect authentication packet size (%d)", ntohl(len));
+			pool_error("do_crypt: incorrect authentication packet size (%d)", ntohl(len));
 			return -1;
 		}
 	}
@@ -833,7 +868,7 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 
 			if (pool_read(frontend, &k, sizeof(k)))
 			{
-				pool_error("do_md5_password: failed to read password packet \"p\"");
+				pool_debug("do_md5_password: failed to read password packet \"p\"");
 				return -1;
 			}
 			if (k != 'p')
@@ -906,7 +941,7 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 
 		if (ntohl(len) != 8)
 		{
-			pool_error("do_clear_text_password: incorrect authentication packet size (%d)", ntohl(len));
+			pool_error("do_md5: incorrect authentication packet size (%d)", ntohl(len));
 			return -1;
 		}
 	}
