@@ -3228,7 +3228,7 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 								return POOL_ERROR;
 							}
 							memcpy(res->data[num_data], p, len);
-							*(res->data[num_data] + 1) = '\0';
+							*(res->data[num_data] + len) = '\0';
 
 							p += len;
 						}
