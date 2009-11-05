@@ -834,6 +834,7 @@ _outSelectStmt(String *str, SelectStmt *node)
 		ListCell *lc;
 		int comma = 0;
 
+		string_append_char(str, " VALUES");
 		foreach (lc, node->valuesLists)
 		{
 			if (comma == 0)
@@ -841,7 +842,7 @@ _outSelectStmt(String *str, SelectStmt *node)
 			else
 				string_append_char(str, ",");
 
-			string_append_char(str, " VALUES (");
+			string_append_char(str, " (");
 			_outNode(str, lfirst(lc));
 			string_append_char(str, ")");
 		}
