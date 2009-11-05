@@ -10,3 +10,4 @@ INSERT INTO "t"("a", "b", "c") VALUES (2,DEFAULT,'''\\')
 INSERT INTO "foo"("a", "b") VALUES (1,2) RETURNING *
 INSERT INTO "foo"("a", "b") VALUES (1,2) RETURNING "a"
 INSERT INTO "foo"("a", "b") VALUES (1,2) RETURNING "a","b"
+INSERT INTO "foo"("a", "b") VALUES (1,2), (3,4), (5,6)

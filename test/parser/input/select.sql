@@ -86,3 +86,4 @@ SELECT interval '1 year' DAY TO MINUTE
 SELECT interval '1 year' DAY TO SECOND
 SELECT interval '1 year' HOUR TO MINUTE
 SELECT interval '1 year' HOUR TO SECOND
+VALUES (1, 2), (3, 4), (5, 6);

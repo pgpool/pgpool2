@@ -86,3 +86,4 @@ CREATE TABLE "x" AS SELECT * FROM "t"
  SELECT '1 year'::interval DAY TO SECOND
  SELECT '1 year'::interval HOUR TO MINUTE
  SELECT '1 year'::interval HOUR TO SECOND
+ VALUES (1,2), (3,4), (5,6)
