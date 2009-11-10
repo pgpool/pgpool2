@@ -10,6 +10,7 @@ pgpool_SOURCES = pool.h pool_type.h version.h pgpool.conf.sample \
 	pool_query_cache.c pool_hba.conf.sample sample/pgpool.pam\
 	pool_hba.c pool_path.h pool_path.c pool_ip.h pool_ip.c pool_type.h \
 	ps_status.c strlcpy.c recovery.c pool_relcache.c \
+	pool_timestamp.c pool_timestamp.h \
 	pool_proto_modules.c pool_proto_modules.h
 
 pg_md5_SOURCES = pg_md5.c md5.c md5.h
@@ -67,6 +68,12 @@ EXTRA_DIST = pgpool.8.in sql/system_db.sql sample/pgpool.pam doc/pgpool-ja.html 
 		test/jdbc/expected/autocommit test/jdbc/expected/batch \
 		test/jdbc/expected/column test/jdbc/expected/lock test/jdbc/expected/select \
 		test/jdbc/expected/update test/jdbc/expected/insert \
+		test/timestamp/Makefile test/timestamp/input/insert.sql \
+		test/timestamp/input/update.sql test/timestamp/input/misc.sql \
+		test/timestamp/expected/insert.out test/timestamp/expected/update.out \
+		test/timestamp/expected/misc.out test/timestamp/main.c \
+		test/timestamp/parse_schedule test/timestamp/run-test \
 		redhat/pgpool.init redhat/pgpool.sysconfig
+
 
 SUBDIRS = parser pcp

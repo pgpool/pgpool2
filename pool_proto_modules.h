@@ -42,6 +42,7 @@ typedef struct {
 	Node *stmt;        /* parse tree for prepared statement */
 	char *sql_string;  /* original SQL statement */
 	POOL_MEMORY_POOL *prepare_ctxt; /* memory context for parse tree */
+	int num_tsparams;
 } Portal;
 
 /*

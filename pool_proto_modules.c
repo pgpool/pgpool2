@@ -45,6 +45,7 @@
 
 #include "pool.h"
 #include "pool_signal.h"
+#include "pool_timestamp.h"
 #include "pool_proto_modules.h"
 #include "parser/pool_string.h"
 
@@ -525,17 +526,44 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 	{
 		/* check if query is "COMMIT" or "ROLLBACK" */
 		commit = is_commit_query(node);
-		free_parser();
 
 		/*
 		 * Query is not commit/rollback
 		 */
 		if (!commit)
 		{
+			char		*rewrite_query;
+
+			if (node)
+		   	{
+				Portal *portal = NULL;
+
+				if (IsA(node, PrepareStmt))
+				{
+					portal = pending_prepared_portal;
+					portal->num_tsparams = 0;
+				}
+				else if (IsA(node, ExecuteStmt))
+					portal = lookup_prepared_statement_by_statement(
+							&prepared_list, ((ExecuteStmt *) node)->name);
+
+				/* rewrite `now()' to timestamp literal */
+				rewrite_query = rewrite_timestamp(backend, node, false, portal);
+				if (rewrite_query != NULL)
+				{
+					string = rewrite_query;
+					len = strlen(string) + 1;
+				}
+
+			}
+
 			/* Send the query to master node */
 
 			if (send_simplequery_message(MASTER(backend), len, string, MAJOR(backend)) != POOL_CONTINUE)
+			{
+				free_parser();
 				return POOL_END;
+			}
 
 			if (wait_for_query_response(frontend, MASTER(backend), string, MAJOR(backend)) != POOL_CONTINUE)
 			{
@@ -547,6 +575,7 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 				cancel_packet.key= MASTER_CONNECTION(backend)->key;
 				cancel_request(&cancel_packet);
 
+				free_parser();
 				return POOL_END;
 			}
 
@@ -570,7 +599,10 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 				continue;
 
 			if (send_simplequery_message(CONNECTION(backend, i), len, string, MAJOR(backend)) != POOL_CONTINUE)
+			{
+				free_parser();
 				return POOL_END;
+			}
 		}
 
 		/* Wait for nodes othan than the master node */
@@ -589,6 +621,7 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 				cancel_packet.key= MASTER_CONNECTION(backend)->key;
 				cancel_request(&cancel_packet);
 
+				free_parser();
 				return POOL_END;
 			}
 		}
@@ -597,7 +630,10 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 		if (commit)
 		{
 			if (send_simplequery_message(MASTER(backend), len, string, MAJOR(backend)) != POOL_CONTINUE)
+			{
+				free_parser();
 				return POOL_END;
+			}
 
 			if (wait_for_query_response(frontend, MASTER(backend), string, MAJOR(backend)) != POOL_CONTINUE)
 			{
@@ -609,12 +645,14 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 				cancel_packet.key= MASTER_CONNECTION(backend)->key;
 				cancel_request(&cancel_packet);
 
+				free_parser();
 				return POOL_END;
 			}
 
 
 			TSTATE(backend) = 'I';
 		}
+		free_parser();
 	}
 	else
 	{
@@ -919,7 +957,8 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 	parse_tree_list = raw_parser(stmt);
 	if (parse_tree_list == NIL)
 	{
-		free_parser();
+		/* free_parser(); */
+		;
 	}
 	else
 	{
@@ -953,6 +992,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 		if (portal == NULL)
 		{
 			pool_error("Parse: create_portal() failed");
+			free_parser();
 			return POOL_END;
 		}
 
@@ -987,6 +1027,37 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 
 		if (REPLICATION)
 		{
+			char		*rewrite_query;
+			bool		 rewrite_to_params = true;
+
+			/*
+			 * rewrite `now()'.
+			 * if stmt is unnamed, we rewrite `now()' to timestamp constant.
+			 * else we rewrite `now()' to params and expand that at Bind
+			 * message.
+			 */
+			if (*name == '\0')
+				rewrite_to_params = false;
+			portal->num_tsparams = 0;
+			rewrite_query = rewrite_timestamp(backend, node, rewrite_to_params, portal);
+			if (rewrite_query != NULL)
+			{
+				string = palloc(strlen(name) + strlen(rewrite_query) + 2);
+				strcpy(string, name);
+				strcpy(string + strlen(name) + 1, rewrite_query);
+				memcpy(string + strlen(name) + strlen(rewrite_query) + 2,
+						stmt + strlen(stmt) + 1,
+						len - (strlen(name) + strlen(stmt) + 2));
+
+				len = len - strlen(stmt) + strlen(rewrite_query);
+				name = string;
+				stmt = string + strlen(name) + 1;
+				pool_debug("rewrite query  %s %s len=%d", name, stmt, len);
+			}
+		}
+
+		if (REPLICATION)
+		{
 			char kind;
 
 			if (TSTATE(backend) != 'T')
@@ -1003,9 +1074,16 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 
 				kind = pool_read_kind(backend);
 				if (kind != 'Z')
+				{
+					free_parser();
 					return POOL_END;
+				}
+
 				if (ReadyForQuery(frontend, backend, 0) != POOL_CONTINUE)
+				{
+					free_parser();
 					return POOL_END;
+				}
 			}
 
 			if (is_strict_query(node))
@@ -1017,17 +1095,22 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 				status = insert_lock(frontend, backend, stmt, (InsertStmt *)node);
 				if (status != POOL_CONTINUE)
 				{
+					free_parser();
 					return status;
 				}
 			}
 		}
-		free_parser();
 	}
 
 	/* send to master node */
 	if (send_extended_protocol_message(backend, MASTER_NODE_ID,
 									   "P", len, string))
+	{
+		free_parser();
 		return POOL_END;
+	}
+
+	free_parser();
 
 	if (REPLICATION || PARALLEL_MODE || MASTER_SLAVE)
 	{

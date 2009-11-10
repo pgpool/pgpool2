@@ -71,7 +71,7 @@ am_pgpool_OBJECTS = main.$(OBJEXT) child.$(OBJEXT) pool_auth.$(OBJEXT) \
 	pool_query_cache.$(OBJEXT) pool_hba.$(OBJEXT) \
 	pool_path.$(OBJEXT) pool_ip.$(OBJEXT) ps_status.$(OBJEXT) \
 	strlcpy.$(OBJEXT) recovery.$(OBJEXT) pool_relcache.$(OBJEXT) \
-	pool_proto_modules.$(OBJEXT)
+	pool_timestamp.$(OBJEXT) pool_proto_modules.$(OBJEXT)
 pgpool_OBJECTS = $(am_pgpool_OBJECTS)
 pgpool_DEPENDENCIES = parser/libsql-parser.a pcp/libpcp.la \
 	parser/nodes.o
@@ -239,6 +239,7 @@ pgpool_SOURCES = pool.h pool_type.h version.h pgpool.conf.sample \
 	pool_query_cache.c pool_hba.conf.sample sample/pgpool.pam\
 	pool_hba.c pool_path.h pool_path.c pool_ip.h pool_ip.c pool_type.h \
 	ps_status.c strlcpy.c recovery.c pool_relcache.c \
+	pool_timestamp.c pool_timestamp.h \
 	pool_proto_modules.c pool_proto_modules.h
 
 pg_md5_SOURCES = pg_md5.c md5.c md5.h
@@ -281,6 +282,11 @@ EXTRA_DIST = pgpool.8.in sql/system_db.sql sample/pgpool.pam doc/pgpool-ja.html 
 		test/jdbc/expected/autocommit test/jdbc/expected/batch \
 		test/jdbc/expected/column test/jdbc/expected/lock test/jdbc/expected/select \
 		test/jdbc/expected/update test/jdbc/expected/insert \
+		test/timestamp/Makefile test/timestamp/input/insert.sql \
+		test/timestamp/input/update.sql test/timestamp/input/misc.sql \
+		test/timestamp/expected/insert.out test/timestamp/expected/update.out \
+		test/timestamp/expected/misc.out test/timestamp/main.c \
+		test/timestamp/parse_schedule test/timestamp/run-test \
 		redhat/pgpool.init redhat/pgpool.sysconfig
 
 SUBDIRS = parser pcp
@@ -404,6 +410,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_signal.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_stream.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_system.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_timestamp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ps_status.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/recovery.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strlcpy.Po@am__quote@
@@ -658,7 +665,7 @@ distclean-tags:
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
-	$(mkdir_p) $(distdir)/doc $(distdir)/redhat $(distdir)/sample $(distdir)/sql $(distdir)/sql/pgpool-recovery $(distdir)/test/jdbc $(distdir)/test/jdbc/expected $(distdir)/test/parser $(distdir)/test/parser/expected $(distdir)/test/parser/input
+	$(mkdir_p) $(distdir)/doc $(distdir)/redhat $(distdir)/sample $(distdir)/sql $(distdir)/sql/pgpool-recovery $(distdir)/test/jdbc $(distdir)/test/jdbc/expected $(distdir)/test/parser $(distdir)/test/parser/expected $(distdir)/test/parser/input $(distdir)/test/timestamp $(distdir)/test/timestamp/expected $(distdir)/test/timestamp/input
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \
