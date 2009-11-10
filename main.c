@@ -277,7 +277,7 @@ int main(int argc, char **argv)
 		load_hba(hba_file);
 
 	/*
-	 * if a non-switch argument remains, then it should be either "reload", "stop" or "switch"
+	 * If a non-switch argument remains, then it should be either "reload" or "stop".
 	 */
 	if (optind == (argc - 1))
 	{
