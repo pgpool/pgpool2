@@ -475,7 +475,7 @@ rewrite_timestamp_update(UpdateStmt *u_stmt, TSRewriteContext *ctx)
 	ListCell		*lc;
 	bool			 rewrite;
 
-	/* rewrite "update ... set col1 = now() */
+	/* rewrite "update ... set col1 = now()" */
 	raw_expression_tree_walker(
 			(Node *) u_stmt->targetList,
 			rewrite_timestamp_walker, (void *) ctx);
