@@ -1948,8 +1948,12 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 		/* rewrite bind message */
 		if (REPLICATION && portal && portal->num_tsparams > 0)
 		{
-			p = rewrite_msg = bind_rewrite_timestamp(backend, portal, p, &len);
-			sendlen = htonl(len + 4);
+			rewrite_msg = bind_rewrite_timestamp(backend, portal, p, &len);
+			if (rewrite_msg != NULL)
+			{
+				p = rewrite_msg;
+				sendlen = htonl(len + 4);
+			}
 		}
 	}
 
@@ -1976,7 +1980,6 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 			}
 		}
 	}
-	free(rewrite_msg);
 
 	if (kind == 'B') /* Bind message */
 	{
@@ -2004,6 +2007,7 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 				free(portal->portal_name);
 			portal->portal_name = strdup(portal_name);
 		}
+		free(rewrite_msg);
 	}
 
 	/* Close message with prepared statement name. */
