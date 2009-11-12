@@ -74,13 +74,11 @@ replication_stop_on_mismatch = false
 # If false, it is only sent to the master node.
 replicate_select = false
 
-# Semicolon separated list of queries to be issued at the end of a session
-reset_query_list = 'ABORT; RESET ALL; SET SESSION AUTHORIZATION DEFAULT'
-# for 8.3 or newer PostgreSQL versions DISCARD ALL can be used as
-# follows. However beware that DISCARD ALL holds exclusive lock on
-# pg_listener so it will be a serious performance problem if there are
-# lots of concurrent sessions.
-# reset_query_list = 'ABORT; DISCARD ALL'
+# Semicolon separated list of queries to be issued at the end of a
+# session
+reset_query_list = 'ABORT; DISCARD ALL'
+# for 8.2 or older this should be as follows. 
+#reset_query_list = 'ABORT; RESET ALL; SET SESSION AUTHORIZATION DEFAULT'
 
 # If true print timestamp on each log line.
 print_timestamp = true
