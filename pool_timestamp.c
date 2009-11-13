@@ -26,6 +26,7 @@
 #include "pool.h"
 #include "pool_timestamp.h"
 #include "parser/parsenodes.h"
+#include "parser/gramparse.h"
 #include "parser/pool_memory.h"
 
 #define Assert(x)
@@ -154,7 +155,7 @@ isStringConst(Node *node, const char *str)
 	a_const = (A_Const *) node;
 	val = a_const->val;
 
-	if (val.type == T_String && strcmp(str, val.val.str) == 0)
+	if (val.type == T_String && val.val.str && strcmp(str, val.val.str) == 0)
 		return true;
 
 	return false;
@@ -210,10 +211,12 @@ rewrite_timestamp_walker(Node *node, void *context)
 		if (list_length(fcall->funcname) == 1 &&
 			strcmp("now", strVal(linitial(fcall->funcname))) == 0)
 		{
-			extern List *SystemFuncName(char *name);
+			TypeCast	*tc = makeNode(TypeCast);
+			tc->arg = makeTsExpr(ctx);
+			tc->typename = SystemTypeName("text");
 
 			fcall->funcname = SystemFuncName("timestamptz");
-			fcall->args = list_make1(makeTsExpr(ctx));
+			fcall->args = list_make1(tc);
 			ctx->rewrite = true;
 		}
 	}
@@ -626,6 +629,17 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 
 		/* save to portal */
 		portal->num_tsparams = list_length(ctx.params);
+
+		/* add param type */
+		if (IsA(node, PrepareStmt))
+		{
+			int				 i;
+			PrepareStmt		*p_stmt = (PrepareStmt *) node;
+
+			for (i = ctx.num_params; i <= portal->num_tsparams; i++)
+				p_stmt->argtypes =
+				   	lappend(p_stmt->argtypes, SystemTypeName("timestamptz"));
+		}
 	}
 	else
 	{
@@ -672,8 +686,7 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend, Portal *portal,
 	ts_len = strlen(ts);
 
 	*len += (strlen(ts) + sizeof(int32)) * portal->num_tsparams;
-	/*sendlen = htonl(*len + 4);*/
-	new_msg = copy_to = (char *) malloc(*len); /* XXX how to free */
+	new_msg = copy_to = (char *) malloc(*len);
 	copy_from = orig_msg;
 
 	/* portal_name */
