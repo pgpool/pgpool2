@@ -1366,16 +1366,14 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			pool_write(frontend, &len, sizeof(len));
 			pool_write(frontend, &state, 1);
 		}
-
-		if (pool_flush(frontend))
-			return POOL_END;
+		pool_flush(frontend);
 	}
 
 	in_progress = 0;
 
 	/* end load balance mode */
 	if (in_load_balance)
-		end_load_balance(backend);
+		end_load_balance();
 
 	if (master_slave_dml)
 	{

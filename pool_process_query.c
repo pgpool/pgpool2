@@ -2166,6 +2166,37 @@ POOL_STATUS ParameterStatus(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 }
 
 /*
+ * Reset all state variables
+ */
+void reset_variables(void)
+{
+	in_progress = 0;
+
+	/* End load balance mode */
+	if (in_load_balance)
+		end_load_balance();
+
+	if (master_slave_dml)
+	{
+		MASTER_SLAVE = 1;
+		master_slave_was_enabled = 0;
+		master_slave_dml = 0;
+		if (force_replication)
+		{
+			force_replication = 0;
+			REPLICATION = 0;
+			replication_was_enabled = 0;
+		}
+	}
+
+	internal_transaction_started = 0;
+	mismatch_ntuples = 0;
+	select_in_transaction = 0;
+	execute_select = 0;
+	receive_extended_begin = 0;
+}
+
+/*
  * Reset backend status. return values are:
  * 0: no query was issued 1: a query was issued 2: no more queries remain -1: error
  */
@@ -2177,25 +2208,7 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 	/*
 	 * Reset all state variables
 	 */
-	in_progress = 0;
-	in_load_balance = 0;
-
-	/*
-	 * Until pgpool-II 2.2.3 we don't have following 2 lines.
-	 * If we were executing someting in load balance mode, and if
-	 * frontend failed before executing end_loadl_balance() in
-	 * ReadyForQuery(), these variables remained and we may do
-	 * something only in master node!
-	 */
-	REPLICATION = pool_config->replication_mode;
-	MASTER_SLAVE = pool_config->master_slave_mode;
-
-	force_replication = 0;
-	internal_transaction_started = 0;
-	mismatch_ntuples = 0;
-	select_in_transaction = 0;
-	execute_select = 0;
-	receive_extended_begin = 0;
+	reset_variables();
 
 	qn = pool_config->num_reset_queries;
 
@@ -2447,24 +2460,12 @@ void start_load_balance(POOL_CONNECTION_POOL *backend)
 }
 
 /*
- * finish load balance mode
+ * Finish load balance mode
  */
-void end_load_balance(POOL_CONNECTION_POOL *backend)
+void end_load_balance(void)
 {
 	in_load_balance = 0;
 	LOAD_BALANCE_STATUS(selected_slot) = LOAD_UNSELECTED;
-
-#ifdef NOT_USED
-	/* restore backend connection slots */
-
-	for (i=0;i<NUM_BACKENDS;i++)
-	{
-		if (VALID_BACKEND(i))
-		{
-			CONNECTION_SLOT(backend, i) = slots[i];
-		}
-	}
-#endif
 
 	/* turn on replication mode */
 	REPLICATION = replication_was_enabled;

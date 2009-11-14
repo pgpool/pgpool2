@@ -652,6 +652,7 @@ extern void cancel_request(CancelPacket *sp);
 
 /* pool_process_query.c */
 void free_select_result(POOL_SELECT_RESULT *result);
+void reset_variables(void);
 
 /* pool_relcache.c */
 POOL_RELCACHE *pool_create_relcache(int cachesize, char *sql,
