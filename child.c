@@ -448,6 +448,7 @@ void do_child(int unix_fd, int inet_fd)
 						!strcmp(sp->database, "postgres") ||
 						!strcmp(sp->database, "regression"))
 					{
+						reset_variables();
 						pool_close(frontend);
 						pool_send_frontend_exits(backend);
 						pool_discard_cp(sp->user, sp->database, sp->major);
