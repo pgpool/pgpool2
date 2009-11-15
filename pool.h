@@ -173,6 +173,7 @@ typedef struct {
 						   data consistency */
 	int ignore_leading_white_space;		/* ignore leading white spaces of each query */
  	int log_statement; /* 0:false, 1: true - logs all SQL statements */
+ 	int log_per_node_statement; /* 0:false, 1: true - logs per node detailed SQL statements */
 
 	int parallel_mode;	/* if non 0, run in parallel query mode */
 
@@ -653,6 +654,7 @@ extern void cancel_request(CancelPacket *sp);
 /* pool_process_query.c */
 void free_select_result(POOL_SELECT_RESULT *result);
 void reset_variables(void);
+void per_node_statement_log(POOL_CONNECTION_POOL *backend, int node_id, char *query);
 
 /* pool_relcache.c */
 POOL_RELCACHE *pool_create_relcache(int cachesize, char *sql,

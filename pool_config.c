@@ -1863,6 +1863,7 @@ int pool_init_config(void)
 	pool_config->logdir = DEFAULT_LOGDIR;
 	pool_config->pid_file_name = DEFAULT_PID_FILE_NAME;
  	pool_config->log_statement = 0;
+ 	pool_config->log_per_node_statement = 0;
 	pool_config->log_connections = 0;
 	pool_config->log_hostname = 0;
 	pool_config->enable_pool_hba = 0;
@@ -2898,6 +2899,17 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->log_statement = v;
+		}
+       	else if (!strcmp(key, "log_per_node_statement") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			int v = eval_logical(yytext);
+
+			if (v < 0)
+			{
+				pool_error("pool_config: invalid value %s for %s", yytext, key);
+				return(-1);
+			}
+			pool_config->log_per_node_statement = v;
 		}
        	else if (!strcmp(key, "log_statement") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{

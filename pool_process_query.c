@@ -3415,6 +3415,8 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 	/* issue lock table command */
 	snprintf(qbuf, sizeof(qbuf), "LOCK TABLE %s IN SHARE ROW EXCLUSIVE MODE", table);
 
+	per_node_statement_log(backend, MASTER_NODE_ID, qbuf);
+
 	status = do_command(frontend, MASTER(backend), qbuf, MAJOR(backend), MASTER_CONNECTION(backend)->pid,
 						MASTER_CONNECTION(backend)->key, 0);
 	if (status == POOL_END)
@@ -4266,6 +4268,8 @@ POOL_STATUS start_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTIO
 		{
 			if (VALID_BACKEND(i))
 			{
+				per_node_statement_log(backend, i, "BEGIN");
+
 				if (do_command(frontend, CONNECTION(backend, i), "BEGIN", MAJOR(backend), 
 							   MASTER_CONNECTION(backend)->pid,	MASTER_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
 					return POOL_END;
@@ -4299,6 +4303,8 @@ POOL_STATUS end_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTION_
 	{
 		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 		{
+			per_node_statement_log(backend, i, "COMMIT");
+
 			/* COMMIT success? */
 			if (do_command(frontend, CONNECTION(backend, i), "COMMIT", MAJOR(backend), 
 						   MASTER_CONNECTION(backend)->pid,	MASTER_CONNECTION(backend)->key, 1) != POOL_CONTINUE)
@@ -4311,6 +4317,7 @@ POOL_STATUS end_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTION_
 	}
 
 	/* commit on master */
+	per_node_statement_log(backend, MASTER_NODE_ID, "COMMIT");
 	if (do_command(frontend, MASTER(backend), "COMMIT", MAJOR(backend), 
 				   MASTER_CONNECTION(backend)->pid,	MASTER_CONNECTION(backend)->key, 1) != POOL_CONTINUE)
 	{

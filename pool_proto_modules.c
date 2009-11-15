@@ -559,6 +559,8 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 
 			/* Send the query to master node */
 
+			per_node_statement_log(backend, MASTER_NODE_ID, string);
+
 			if (send_simplequery_message(MASTER(backend), len, string, MAJOR(backend)) != POOL_CONTINUE)
 			{
 				free_parser();
@@ -598,6 +600,8 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 			if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
 				continue;
 
+			per_node_statement_log(backend, i, string);
+
 			if (send_simplequery_message(CONNECTION(backend, i), len, string, MAJOR(backend)) != POOL_CONTINUE)
 			{
 				free_parser();
@@ -629,6 +633,8 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 		/* send "COMMIT" or "ROLLBACK" to only master node if query is "COMMIT" or "ROLLBACK" */
 		if (commit)
 		{
+			per_node_statement_log(backend, MASTER_NODE_ID, string);
+
 			if (send_simplequery_message(MASTER(backend), len, string, MAJOR(backend)) != POOL_CONTINUE)
 			{
 				free_parser();
@@ -657,6 +663,9 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 	else
 	{
 		free_parser();
+
+		per_node_statement_log(backend, MASTER_NODE_ID, string);
+
 		if (send_simplequery_message(MASTER(backend), len, string, MAJOR(backend)) != POOL_CONTINUE)
 			return POOL_END;
 
@@ -689,7 +698,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 	char kind;
 	int status, commit = 0;
 	Portal *portal;
-	char *string1;
+	char *string1 = NULL;
 	PrepareStmt *p_stmt;
 	POOL_STATUS ret;
 	int specific_error = 0;
@@ -794,7 +803,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		if (!commit)
 		{
 			/* Send the query to master node */
-
+			per_node_statement_log(backend, MASTER_NODE_ID, string1);
 			if (send_execute_message(backend, MASTER_NODE_ID, len, string) != POOL_CONTINUE)
 				return POOL_END;
 
@@ -836,8 +845,12 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 				if (send_execute_message(backend, i, len + 5, msg))
 					return POOL_END;
 			}
-			else if (send_execute_message(backend, i, len, string) != POOL_CONTINUE)
-				return POOL_END;
+			else
+			{
+				per_node_statement_log(backend, i, string1);
+				if (send_execute_message(backend, i, len, string) != POOL_CONTINUE)
+					return POOL_END;
+			}
 		}
 
 		/* Wait for nodes other than the master node */
@@ -863,6 +876,8 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		/* send "COMMIT" or "ROLLBACK" to only master node if query is "COMMIT" or "ROLLBACK" */
 		if (commit)
 		{
+			per_node_statement_log(backend, MASTER_NODE_ID, string1);
+
 			if (send_execute_message(backend, MASTER_NODE_ID, len, string) != POOL_CONTINUE)
 				return POOL_END;
 
@@ -882,6 +897,8 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 	}
 	else
 	{
+		per_node_statement_log(backend, MASTER_NODE_ID, string1);
+
 		if (send_execute_message(backend, MASTER_NODE_ID, len, string) != POOL_CONTINUE)
 			return POOL_END;
 
@@ -1148,6 +1165,8 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 				if (deadlock_detected)
 				{
 					pool_log("Parse: received deadlock error message from master node");
+
+					per_node_statement_log(backend, i, POOL_ERROR_QUERY);
 
 					if (send_simplequery_message(CONNECTION(backend, i),
 												 strlen(POOL_ERROR_QUERY)+1,
@@ -2618,4 +2637,15 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node)
 	 */
 	result = (int)pool_search_relcache(relcache, backend, str);
 	return result;
+}
+
+/*
+ * Make per DB node statement log
+ */
+void per_node_statement_log(POOL_CONNECTION_POOL *backend, int node_id, char *query)
+{
+	POOL_CONNECTION_POOL_SLOT *slot = backend->slots[node_id];
+
+	if (pool_config->log_per_node_statement)
+		pool_log("DB node id: %d backend pid: %d statement: %s", node_id, ntohl(slot->pid), query);
 }

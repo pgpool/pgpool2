@@ -137,6 +137,10 @@ ignore_leading_white_space = true
 # debugging.
 log_statement = false
 
+# If true, print all statements to the log. Similar to log_statement except
+# that prints DB node id and backend process id info.
+log_per_node_statement = false
+
 # If true, incoming connections will be printed to the log.
 log_connections = false
 
