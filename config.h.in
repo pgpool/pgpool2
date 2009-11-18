@@ -45,6 +45,9 @@
 /* Define to 1 if you have the `compat' library (-lcompat). */
 #undef HAVE_LIBCOMPAT
 
+/* Define to 1 if you have the `crypt' library (-lcrypt). */
+#undef HAVE_LIBCRYPT
+
 /* Define to 1 if you have the `gen' library (-lgen). */
 #undef HAVE_LIBGEN
 
