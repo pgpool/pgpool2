@@ -1542,6 +1542,16 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 
 		case 'P':  /* Parse message */
 			allow_close_transaction = 0;
+
+			if (MASTER_SLAVE &&
+				(TSTATE(backend) != 'I' || receive_extended_begin))
+			{
+				pool_debug("kind: %c master_slave_dml enabled", fkind);
+				master_slave_was_enabled = 1;
+				MASTER_SLAVE = 0;
+				master_slave_dml = 1;
+			}
+
 			status = Parse(frontend, backend);
 			break;
 
