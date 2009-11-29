@@ -1912,6 +1912,11 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 		{
 			if (VALID_BACKEND(i))
 			{
+				char msgbuf[128];
+
+				snprintf(msgbuf, sizeof(msgbuf), "%c message", kind);
+				per_node_statement_log(backend, i, msgbuf);
+
 				if (pool_write(CONNECTION(backend, i), &kind, 1))
 					return POOL_END;
 				if (pool_write(CONNECTION(backend,i), &sendlen, sizeof(sendlen)))
@@ -1961,6 +1966,11 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 	{
 		if (VALID_BACKEND(i))
 		{
+			char msgbuf[128];
+
+			snprintf(msgbuf, sizeof(msgbuf), "%c message", kind);
+			per_node_statement_log(backend, i, msgbuf);
+
 			if (pool_write(CONNECTION(backend, i), &kind, 1))
 			{
 				free(rewrite_msg);
