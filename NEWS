@@ -1,3 +1,52 @@
+2.2.6 (urukiboshi) 2009/12/01
+
+	  * Version 2.2.6
+
+	  This version enhances handling of backend weight. Also it allows
+	  to use temp tables in master/slave mode. It includes various
+	  fixes for bugs in 2.2.5 or before as usual.
+
+	  * Bug fixes
+
+	  - Do not allow to load balance DECLARE, CLOSE, FETCH and
+        MOVE. If data gets updated and CLOSE issued after transaction
+        commit(i.e. holdbale cursor), this will cause data
+        inconsistency since CLOSE is executed one of the severs,
+        rather than all(Tatsuo)
+
+	  - In master/slave mode, execute Parse message on only master
+        node. In previous versions Parse executed on all nodes, which
+        grabbed unneccessary lock(Tatsuo)
+
+	  - Remove init script from all runlevels before uninstall(Devrim)
+
+	  - Fix pgpoo.spec(Devrim)
+
+	  - Do not execute REINDEX DATABASE or SYSTEM, CREATE/DROP TABLE
+        SPACE inside a transaction block(Tatsuo)
+
+	  * Enhancements
+
+	  - Allow to change weight by reloading pgool.conf. This will take
+        effect for next client sessions(Tatsuo)
+
+	  - Reply with usefull error messages, rather than "server closed
+        the connection unexpectedly" when authentication fails(Glyn
+        Astill)
+
+	  - Add info to logs when writing to sockets falis to know if it
+        was for backend or frontend(Tatsuo)
+
+	  - Do not complain when writing to socket of frontend
+        fails(Tatsuo)
+
+	  - Allow to use temp tables in master/slave
+        mode. INSERT/UPDATE/DELETE will automatically be sent to
+        master only. Still SELECT you need to add /*NO LOAD BALANCE*/
+        comment(Tatsuo)
+
+	  - Add temp table test to test/jdbc(Tatsuo)
+
 2.2.5 (urukiboshi) 2009/10/4
 	  * Version 2.2.5
 
