@@ -958,6 +958,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 	int deadlock_detected = 0;
 	int insert_stmt_with_lock = 0;
 	POOL_STATUS status;
+	char per_node_statement_log_buffer[1024];
 
 	/* read Parse packet */
 	if (pool_read(frontend, &len, sizeof(len)) < 0)
@@ -1120,6 +1121,8 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 	}
 
 	/* send to master node */
+	snprintf(per_node_statement_log_buffer, sizeof(per_node_statement_log_buffer), "Parse: %s", stmt);
+	per_node_statement_log(backend, MASTER_NODE_ID, per_node_statement_log_buffer);
 	if (send_extended_protocol_message(backend, MASTER_NODE_ID,
 									   "P", len, string))
 	{
@@ -1174,9 +1177,14 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 												 MAJOR(backend)))
 						return POOL_END;
 				}
-				else if (send_extended_protocol_message(backend, i,
-														"P", len, string))
-					return POOL_END;
+				else
+				{
+					snprintf(per_node_statement_log_buffer, sizeof(per_node_statement_log_buffer), "Parse: %s", stmt);
+					per_node_statement_log(backend, i, per_node_statement_log_buffer);
+
+					if (send_extended_protocol_message(backend, i,"P", len, string))
+						return POOL_END;
+				}
 			}
 		}
 
@@ -1644,6 +1652,16 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 
 		case 'P':  /* Parse message */
 			allow_close_transaction = 0;
+
+			if (MASTER_SLAVE &&
+				(TSTATE(backend) != 'I' || receive_extended_begin))
+			{
+				pool_debug("kind: %c master_slave_dml enabled", fkind);
+				master_slave_was_enabled = 1;
+				MASTER_SLAVE = 0;
+				master_slave_dml = 1;
+			}
+
 			status = Parse(frontend, backend);
 			break;
 
