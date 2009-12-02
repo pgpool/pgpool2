@@ -650,6 +650,7 @@ extern void finish_recovery(void);
 extern void pool_set_nonblock(int fd);
 extern void pool_unset_nonblock(int fd);
 extern void cancel_request(CancelPacket *sp);
+extern void check_stop_request(void);
 
 /* pool_process_query.c */
 void free_select_result(POOL_SELECT_RESULT *result);

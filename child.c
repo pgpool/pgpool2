@@ -74,7 +74,7 @@ static void connection_count_down(void);
 /*
  * non 0 means SIGTERM(smart shutdown) or SIGINT(fast shutdown) has arrived
  */
-static int exit_request;
+volatile sig_atomic_t exit_request = 0;
 
 static int idle;		/* non 0 means this child is in idle state */
 static int accepted = 0;
@@ -174,11 +174,7 @@ void do_child(int unix_fd, int inet_fd)
 		StartupPacket *sp;
 
 		/* pgpool stop request already sent? */
-		if (exit_request)
-		{
-			die(0);
-			child_exit(0);
-		}
+		check_stop_request();
 
 		idle = 1;
 		accepted = 0;
@@ -1211,13 +1207,13 @@ static POOL_CONNECTION_POOL *connect_backend(StartupPacket *sp, POOL_CONNECTION 
 }
 
 /*
- * signal handler for SIGINT and SIGQUUT
+ * signal handler for SIGTERM, SIGINT and SIGQUUT
  */
 static RETSIGTYPE die(int sig)
 {
-	exit_request = 1;
+	pool_debug("child received shutdown request signal %d", sig);
 
-	pool_debug("child receives shutdown request signal %d", sig);
+	exit_request = sig;
 
 	switch (sig)
 	{
@@ -1225,23 +1221,16 @@ static RETSIGTYPE die(int sig)
 			if (idle == 0)
 			{
 				pool_debug("child receives smart shutdown request but it's not in idle state");
-				return;
 			}
 			break;
 
 		case SIGINT:	/* fast shutdown */
 		case SIGQUIT:	/* immediate shutdown */
-			child_exit(0);
 			break;
 		default:
+			pool_error("die() received unknown signal: %d", sig);
 			break;
 	}
-
-	/*
-	 * child_exit() does this. So we don't need it.
-	 * send_frontend_exits();
-	 */
-	child_exit(0);
 }
 
 /*
@@ -1861,4 +1850,23 @@ int select_load_balancing_node(void)
 static RETSIGTYPE reload_config_handler(int sig)
 {
 	got_sighup = 1;
+}
+
+/*
+ * Exit myself if SIGTERM, SIGINT or SIGQUIT has been sent
+ */
+void check_stop_request(void)
+{
+    /*
+	 * If smart shutdown was requested but we are not in idle state,
+	 * do not exit
+	 */
+	if (exit_request == SIGTERM && idle == 0)
+		return;
+
+	if (exit_request)
+	{
+		reset_variables();
+		child_exit(0);
+	}
 }

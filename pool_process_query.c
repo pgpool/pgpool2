@@ -150,6 +150,8 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 
 		}
 
+		check_stop_request();
+
 		/*
 		 * if all backends do not have any pending data in the
 		 * receiving data cache, then issue select(2) to wait for new
