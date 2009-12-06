@@ -200,6 +200,11 @@ void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	strncpy(status[i].desc, "failback command", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	strncpy(status[i].name, "fail_over_on_backend_error", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->insert_lock);
+	strncpy(status[i].desc, "fail_over_on_backend_error", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	strncpy(status[i].name, "insert_lock", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->insert_lock);
 	strncpy(status[i].desc, "insert lock", POOLCONFIG_MAXDESCLEN);

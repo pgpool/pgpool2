@@ -282,6 +282,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 						 */
 						if (detect_postmaster_down_error(CONNECTION(backend, i), MAJOR(backend)) == SPECIFIED_ERROR)
 						{
+							pool_log("postmaster on DB node %d was shutdown by administrative command", i);
 							/* detach backend node. */
 							was_error = 1;
 							if (!VALID_BACKEND(i))

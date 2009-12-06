@@ -161,6 +161,15 @@ typedef struct {
 	char *health_check_user;		/* PostgreSQL user name for health check */
 	char *failover_command;     /* execute command when failover happens */
 	char *failback_command;     /* execute command when failback happens */
+
+	/*
+	 * If true, trigger fail over when writing to the backend
+	 * communication socket fails. This is the same behavior of
+	 * pgpool-II 2.2.x or earlier. If set to false, pgpool will report
+	 * an error and disconnect the session.
+	 */
+	int	fail_over_on_backend_error;
+
 	char *recovery_user;		/* PostgreSQL user name for online recovery */
 	char *recovery_password;		/* PostgreSQL user password for online recovery */
 	char *recovery_1st_stage_command;   /* Online recovery command in 1st stage */

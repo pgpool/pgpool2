@@ -120,6 +120,12 @@ failover_command = ''
 #
 failback_command = ''
 
+# If true, trigger fail over when writing to the backend communication
+# socket fails. This is the same behavior of pgpool-II 2.2.x or
+# earlier. If set to false, pgpool will report an error and disconnect
+# the session.
+fail_over_on_backend_error = true
+
 # If true, automatically locks a table with INSERT statements to keep
 # SERIAL data consistency.  If the data does not have SERIAL data
 # type, no lock will be issued. An /*INSERT LOCK*/ comment has the

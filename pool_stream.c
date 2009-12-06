@@ -442,10 +442,10 @@ int pool_flush_it(POOL_CONNECTION *cp)
 			 * just report debug message.
 			 */
 			if (cp->isbackend)
-				pool_error("pool_flush_it: write failed to backend (%s) offset: %d wlen: %d",
-						   strerror(errno), offset, wlen);
+				pool_error("pool_flush_it: write failed to backend (%d). reason: %s offset: %d wlen: %d",
+						   cp->db_node_id, strerror(errno), offset, wlen);
 			else
-				pool_debug("pool_flush_it: write failed to frontend (%s) offset: %d wlen: %d",
+				pool_debug("pool_flush_it: write failed to frontend. reason: %s offset: %d wlen: %d",
 						   strerror(errno), offset, wlen);
 
 			cp->wbufpo = 0;
@@ -467,8 +467,14 @@ int pool_flush(POOL_CONNECTION *cp)
 	{
 		if (cp->isbackend)
 		{
-			notice_backend_error(cp->db_node_id);
-			child_exit(1);
+			/* if fail_over_on_backend_erro is true, then trigger failover */
+			if (pool_config->fail_over_on_backend_error)
+			{
+				notice_backend_error(cp->db_node_id);
+				child_exit(1);
+			}
+			else
+				return -1;
 		}
 		else
 		{
