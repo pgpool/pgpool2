@@ -190,6 +190,13 @@ typedef struct {
 } SystemDBInfo;
 
 /*
+ * Backend status record file
+ */
+typedef struct {
+	BACKEND_STATUS status[MAX_NUM_BACKENDS];
+} BackendStatusRecord;
+
+/*
  *  It seems that sockaddr_storage is now commonly used in place of sockaddr.
  *  So, define it if it is not define yet, and create new SockAddr structure
  *  that uses sockaddr_storage.

@@ -84,6 +84,8 @@
 static void daemonize(void);
 static int read_pid_file(void);
 static void write_pid_file(void);
+static int read_status_file(void);
+static int write_statusd_file(void);
 static pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file);
 static pid_t fork_a_child(int unix_fd, int inet_fd, int id);
 static int create_unix_domain_socket(struct sockaddr_un un_addr_tmp);
@@ -162,6 +164,8 @@ static volatile sig_atomic_t wakeup_request = 0;
 static int pipe_fds[2]; /* for delivering signals */
 
 int my_proc_id;
+
+static BackendStatusRecord backend_rec;	/* Backend status record */
 
 int myargc;
 char **myargv;
@@ -355,6 +359,11 @@ int main(int argc, char **argv)
 		pool_shmem_exit(1);
 		exit(1);
 	}
+
+	/*
+	 * Restore previous backend status if possible
+	 */
+	read_status_file();
 
 	/* clear cache */
 	if (clear_cache && pool_config->enable_query_cache && SYSDB_STATUS == CON_UP)
@@ -774,6 +783,77 @@ static void write_pid_file(void)
 }
 
 /*
+* Read the status file
+*/
+static int read_status_file(void)
+{
+	FILE *fd;
+	char fnamebuf[POOLMAXPATHLEN];
+	int i;
+
+	snprintf(fnamebuf, sizeof(fnamebuf), "%s/%s", pool_config->logdir, STATUS_FILE_NAME);
+	fd = fopen(fnamebuf, "r");
+	if (!fd)
+	{
+		pool_log("Backend status file %s does not exist", fnamebuf);
+		return -1;
+	}
+	if (fread(&backend_rec, 1, sizeof(backend_rec), fd) <= 0)
+	{
+		pool_error("Could not read backend status file as %s. reason: %s",
+				   fnamebuf, strerror(errno));
+		fclose(fd);
+		return -1;
+	}
+	fclose(fd);
+
+	for (i=0;i< pool_config->backend_desc->num_backends;i++)
+	{
+		if (backend_rec.status[i] == CON_DOWN)
+			BACKEND_INFO(i).backend_status = CON_DOWN;
+		else
+			BACKEND_INFO(i).backend_status = CON_CONNECT_WAIT;
+	}
+
+	return 0;
+}
+
+/*
+* Write the pid file
+*/
+static int write_status_file(void)
+{
+	FILE *fd;
+	char fnamebuf[POOLMAXPATHLEN];
+	int i;
+
+	snprintf(fnamebuf, sizeof(fnamebuf), "%s/%s", pool_config->logdir, STATUS_FILE_NAME);
+	fd = fopen(fnamebuf, "w");
+	if (!fd)
+	{
+		pool_error("Could not open status file %s", fnamebuf);
+		return -1;
+	}
+
+	memset(&backend_rec, 0, sizeof(backend_rec));
+
+	for (i=0;i< pool_config->backend_desc->num_backends;i++)
+	{
+		backend_rec.status[i] = BACKEND_INFO(i).backend_status;
+	}
+
+	if (fwrite(&backend_rec, 1, sizeof(backend_rec), fd) <= 0)
+	{
+		pool_error("Could not write backend status file as %s. reason: %s",
+				   fnamebuf, strerror(errno));
+		fclose(fd);
+		return -1;
+	}
+	fclose(fd);
+	return 0;
+}
+
+/*
  * fork a child for PCP
  */
 pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file)
@@ -992,6 +1072,8 @@ static void myexit(int code)
 	myunlink(un_addr.sun_path);
 	myunlink(pcp_un_addr.sun_path);
 	myunlink(pool_config->pid_file_name);
+
+	write_status_file();
 
 	pool_shmem_exit(code);
 	exit(code);

@@ -58,6 +58,9 @@
 /* pid file name */
 #define DEFAULT_PID_FILE_NAME "/var/run/pgpool/pgpool.pid"
 
+/* status file name */
+#define STATUS_FILE_NAME "pgpool_status"
+
 typedef enum {
 	POOL_CONTINUE = 0,
 	POOL_IDLE,
