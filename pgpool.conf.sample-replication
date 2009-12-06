@@ -1,0 +1,216 @@
+#
+# pgpool-II configuration file sample for replication mode
+# $Header$
+
+# Host name or IP address to listen on: '*' for all, '' for no TCP/IP
+# connections
+listen_addresses = 'localhost'
+
+# Port number for pgpool
+port = 9999
+
+# Port number for pgpool communication manager
+pcp_port = 9898
+
+# Unix domain socket path.  (The Debian package defaults to
+# /var/run/postgresql.)
+socket_dir = '/tmp'
+
+# Unix domain socket path for pgpool communication manager.
+# (Debian package defaults to /var/run/postgresql)
+pcp_socket_dir = '/tmp'
+
+# Unix domain socket path for the backend. Debian package defaults to /var/run/postgresql!
+backend_socket_dir = '/tmp'
+
+# pgpool communication manager timeout. 0 means no timeout, but strongly not recommended!
+pcp_timeout = 10
+
+# number of pre-forked child process
+num_init_children = 32
+
+# Number of connection pools allowed for a child process
+max_pool = 4
+
+# If idle for this many seconds, child exits.  0 means no timeout.
+child_life_time = 300
+
+# If idle for this many seconds, connection to PostgreSQL closes.
+# 0 means no timeout.
+connection_life_time = 0
+
+# If child_max_connections connections were received, child exits.
+# 0 means no exit.
+child_max_connections = 0
+
+# If client_idle_limit is n (n > 0), the client is forced to be
+# disconnected whenever after n seconds idle (even inside an explicit
+# transactions!)
+# 0 means no disconnect.
+client_idle_limit = 0
+
+# Maximum time in seconds to complete client authentication.
+# 0 means no timeout.
+authentication_timeout = 60
+
+# Logging directory
+logdir = '/tmp'
+
+# pid file name
+pid_file_name = '/var/run/pgpool/pgpool.pid'
+
+# Replication mode
+replication_mode = true
+
+# Load balancing mode, i.e., all SELECTs are load balanced.
+# This is ignored if replication_mode is false.
+load_balance_mode = true
+
+# if there's a data mismatch between master and secondary
+# start degeneration to stop replication mode
+replication_stop_on_mismatch = false
+
+# If true, replicate SELECT statement when load balancing is disabled.
+# If false, it is only sent to the master node.
+replicate_select = false
+
+# Semicolon separated list of queries to be issued at the end of a
+# session
+reset_query_list = 'ABORT; DISCARD ALL'
+# for 8.2 or older this should be as follows. 
+#reset_query_list = 'ABORT; RESET ALL; SET SESSION AUTHORIZATION DEFAULT'
+
+# If true print timestamp on each log line.
+print_timestamp = true
+
+# If true, operate in master/slave mode.
+master_slave_mode = false
+
+# If true, cache connection pool.
+connection_cache = true
+
+# Health check timeout.  0 means no timeout.
+health_check_timeout = 20
+
+# Health check period.  0 means no health check.
+health_check_period = 0
+
+# Health check user
+health_check_user = 'nobody'
+
+# Execute command by failover.
+# special values:  %d = node id
+#                  %h = host name
+#                  %p = port number
+#                  %D = database cluster path
+#                  %m = new master node id
+#                  %M = old master node id
+#                  %% = '%' character
+#
+failover_command = ''
+
+# Execute command by failback.
+# special values:  %d = node id
+#                  %h = host name
+#                  %p = port number
+#                  %D = database cluster path
+#                  %m = new master node id
+#                  %M = old master node id
+#                  %% = '%' character
+#
+failback_command = ''
+
+# If true, trigger fail over when writing to the backend communication
+# socket fails. This is the same behavior of pgpool-II 2.2.x or
+# earlier. If set to false, pgpool will report an error and disconnect
+# the session.
+fail_over_on_backend_error = true
+
+# If true, automatically locks a table with INSERT statements to keep
+# SERIAL data consistency.  If the data does not have SERIAL data
+# type, no lock will be issued. An /*INSERT LOCK*/ comment has the
+# same effect.  A /NO INSERT LOCK*/ comment disables the effect.
+insert_lock = true
+
+# If true, ignore leading white spaces of each query while pgpool judges
+# whether the query is a SELECT so that it can be load balanced.  This
+# is useful for certain APIs such as DBI/DBD which is known to adding an
+# extra leading white space.
+ignore_leading_white_space = true
+
+# If true, print all statements to the log.  Like the log_statement option
+# to PostgreSQL, this allows for observing queries without engaging in full
+# debugging.
+log_statement = false
+
+# If true, print all statements to the log. Similar to log_statement except
+# that prints DB node id and backend process id info.
+log_per_node_statement = false
+
+# If true, incoming connections will be printed to the log.
+log_connections = false
+
+# If true, hostname will be shown in ps status. Also shown in
+# connection log if log_connections = true.
+# Be warned that this feature will add overhead to look up hostname.
+log_hostname = false
+
+# if non 0, run in parallel query mode
+parallel_mode = false
+
+# if non 0, use query cache
+enable_query_cache = false
+
+#set pgpool2 hostname 
+pgpool2_hostname = ''
+
+# system DB info
+system_db_hostname = 'localhost'
+system_db_port = 5432
+system_db_dbname = 'pgpool'
+system_db_schema = 'pgpool_catalog'
+system_db_user = 'pgpool'
+system_db_password = ''
+
+# backend_hostname, backend_port, backend_weight
+# here are examples
+backend_hostname0 = 'host1'
+backend_port0 = 5432
+backend_weight0 = 1
+backend_data_directory0 = '/data'
+backend_hostname1 = 'host2'
+backend_port1 = 5432
+backend_weight1 = 1
+backend_data_directory1 = '/data1'
+
+# - HBA -
+
+# If true, use pool_hba.conf for client authentication. In pgpool-II
+# 1.1, the default value is false. The default value will be true in
+# 1.2.
+enable_pool_hba = false
+
+# - online recovery -
+# online recovery user
+recovery_user = 'nobody'
+
+# online recovery password
+recovery_password = ''
+
+# execute a command in first stage.
+recovery_1st_stage_command = ''
+
+# execute a command in second stage.
+recovery_2nd_stage_command = ''
+
+# maximum time in seconds to wait for the recovering node's postmaster
+# start-up. 0 means no wait.
+# this is also used as a timer waiting for clients disconnected before
+# starting 2nd stage
+recovery_timeout = 90
+
+# If client_idle_limit_in_recovery is n (n > 0), the client is forced
+# to be disconnected whenever after n seconds idle (even inside an
+# explicit transactions!)  0 means no disconnect. This parameter only
+# takes effect in recovery 2nd stage.
+client_idle_limit_in_recovery = 0
