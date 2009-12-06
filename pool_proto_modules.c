@@ -1268,8 +1268,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 			return ret;
 
 		SimpleForwardToFrontend(kind, frontend, backend);
-		if (pool_flush(frontend) < 0)
-			return POOL_ERROR;
+		pool_flush(frontend);
 
 		/* Ignore warning messages */
 		if (kind != 'N')

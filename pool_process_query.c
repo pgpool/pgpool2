@@ -1634,8 +1634,7 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 			if (ret != POOL_CONTINUE)
 				return ret;
 			SimpleForwardToFrontend(kind1, frontend, backend);
-			if (pool_flush(frontend) < 0)
-				return POOL_ERROR;
+			pool_flush(frontend);
 
 			if (kind1 != 'N')
 				break;
