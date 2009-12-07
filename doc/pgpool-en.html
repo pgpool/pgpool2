@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Tue May 12 10:00:04 JST 2009
+Last modified: Mon Dec  7 18:37:01 JST 2009
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -114,9 +114,10 @@ query, however, 7.4 and higher must be used.</p>
 
 <p>
 pgpool-II can be downloaded from <a href="http://pgfoundry.org/projects/pgpool/">pgpool Development page</a>.
+Also packages are provided for various platforms including CentOS, RedHat Enterprise Linux, Fedora and Debian.
 </p>
 
-<p>Installing pgpool-II requires gcc 2.9 or higher, and GNU
+<p>Installing pgpool-II from source code requires gcc 2.9 or higher, and GNU
 make. Also, pgpool-II links libpq library, so it must be installed on
 a machine used to build pgpool-II.</p>
 
@@ -200,15 +201,6 @@ control their behaviors.</p>
 	<td align="center">O</td>
 	<td align="center">O</td>
 	<td align="center">(*)</td>
-  </tr>
-
-  <tr>
-    <td>Degeneration</td>
-	<td align="center">X</td>
-	<td align="center">X</td>
-	<td align="center">O</td>
-	<td align="center">O</td>
-	<td align="center">X</td>
   </tr>
 
   <tr>
@@ -423,9 +415,7 @@ servers.</p>
 
   <dt>logdir</dt>
   <dd>
-      <p>The directory path of the logs. pgpool-II 2.2 or later does not
-      use this directive. In the future pgpool-II might implement its
-      own logging system and we leave this directive as it is.
+      <p>The directory path of the logs. pgpool_status is written under this directory.
        </p>
   </dd>
 
@@ -448,7 +438,7 @@ servers.</p>
 
   <dt>connection_cache</dt>
   <dd>
-      <p>Caches connections when set to true. Default is
+      <p>Caches connections to backend when set to true. Default is
       true.</p>
   </dd>
 
@@ -542,6 +532,18 @@ pgpool-II replaces special characters to backend information.
       You need to reload pgpool.conf if you change failback_command.
 </p>
 
+  <dt>fail_over_on_backend_error</dt>
+  <dd>
+      <p>
+If true, trigger fail over when writing to the backend communication
+socket fails. This is the same behavior of pgpool-II 2.2.x or
+earlier. If set to false, pgpool will report an error and disconnect
+the session. 
+Please note that, however, pgpool will do the fail over when connecting to backend fails or pgpool detects the administrative shutdown of postmaster.
+You need to reload pgpool.conf if you change the value.
+</p>
+</dd>
+
   <dt>ignore_leading_white_space</dt>
   <dd>
       <p>pgpool-II ignores white spaces at the beginning of SQL
@@ -557,6 +559,14 @@ pgpool-II replaces special characters to backend information.
       <p>Produces SQL log messages when true. This is similar to the
       log_statement parameter in PostgreSQL. It produces logs even if the
       debug option was not passed to pgpool-II at startup.
+      You need to reload pgpool.conf if you change the value.
+       </p>
+  </dd>
+
+  <dt>log_per_node_statement</dt>
+  <dd>
+      <p>Similar to log_statement, except that it prints logs for each DB node separately.
+      It would be usefull if you want to make sure that replication is working or not, for example.
       You need to reload pgpool.conf if you change the value.
        </p>
   </dd>
@@ -637,6 +647,9 @@ pgpool-II replaces special characters to backend information.
       This parameter can be added by reloading a configuration
       file. However, this cannot be updated so you must restart
       pgpool-II.
+	  In pgpool-II 2.2.6/2.3 or later, you can change the value by re-loading the configuration file.
+	  This will take effect on next newly connected client sesson.
+	  This is usefull if you want to prevent any query sent to slaves to perform some administrative work in master/slave mode.
       </p>
   </dd>
 
@@ -707,7 +720,7 @@ configuration parameters in the raw mode and below.</p>
       the following, but can be changed to suit your system.
 
       <pre>
-      reset_query_list = 'ABORT; RESET ALL; SET SESSION AUTHORIZATION DEFAULT'
+      reset_query_list = 'ABORT; DISCARD ALL'
       </pre>
 
 <p>
@@ -723,8 +736,6 @@ configuration parameters in the raw mode and below.</p>
 </p>
 <ul>
 <li>"ABORT" is not issued when not in a transaction block for 7.4 or later.
-<li>DISCARD ALL degrades performance since it aquires an exclusive lock on pg_listeners.
-If there will be many concurrent sessions, you might not want to use DISCARD ALL, rather you specify each object using DISCARD command.
 </ul>
 
 <p>
@@ -983,7 +994,7 @@ For the query to be load balanced, all the requirements below
     <li>it's not SELECT INTO
     <li>it's not SELECT FOR UPDATE nor FOR SHARE
     <li>start with "SELECT" (ignore_leading_white_space = true will
-		 ignore leading white space) or one of COPY TO STDOUT, DECLARE..SELECT, FETCH, CLOSE
+		 ignore leading white space) or one of COPY TO STDOUT, EXPLAIN, EXPLAIN ANALYZE SELECT...
 </ul>
 </p>
 <p>
@@ -1022,6 +1033,9 @@ In addtion to that, set
 <code>master_slave_mode</code> and <code>load_balance_mode</code> to
 true. pgpool-II will send queries that need to be replicated to the
 Master DB, and others will be load balanced if possible.</p>
+
+<p>In master/slave mode, DDL and DML for temporary table can be executed on master only.
+SELECT should be executed on master only as well but for this you need to use comment /*NO LOAD BALANCE*/ before the SELECT statement.</p>
 
 <p>In the master/slave mode, <code>replication_mode</code> must be set
 to false, and <code>master_slave_mode</code> to true.</p>
@@ -1298,6 +1312,19 @@ pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] st
       <td>does not wait for clients; shutdown immediately</td></tr>
   <tr><td><code>-m i[mmediate]</code><br/><code>--mode i[mmediate]</code></td>
       <td>the same as <code>'-m f'</code></td></tr> </table>
+</p>
+<p>
+pgpool records backend status into [logdir]/pgpool_status file. When pgpool restarts it reads the file and restore the backend status. This will prevent data difference among DB nodes which might be caused by following scenario:
+<ol>
+<li>One of backend suddenly stopps and pgpool execute fail over
+<li>Update one of active DB through pgpool
+<li>Our administrator decides to stop pgpool
+<li>Someone decides to restart the stopping DB without letting our admin know
+<li>Our poor administrator restarts pgpool
+</ol>
+</p>
+<p>
+If for some reason, for example, the stopping DB is synched with the active DB by hand, you could remove pgpool_status safely before starting pgpool.
 </p>
 
 <h1>Reloading pgpool-II configuration files<a name="reload"></a></h1>
@@ -1627,10 +1654,56 @@ pgmgt.conf.php.
 
 <p>There is no guarantee that the data, which returns different values
 each time even though the same query was executed (e.g. random number,
-transaction ID, OID, SERIAL, sequence, CURRENT_TIMESTAMP), will be
+transaction ID, OID, SERIAL, sequence), will be
 replicated correctly on multiple backends.</p>
+<p>For SERIAL, enabling insert_lock will help replicating data.
+insert_lock also helps SELECT setval() and SELECT nextval().</p>
 
-<p>Tables created by <code>CREATE TEMP TABLE</code> will not be
+<p>In pgpool-II 2.3 or later, INSET/UPDATE using CURRENT_TIMESTAMP,
+CURRENT_DATE, now() can be replicated. Also INSET/UPDATE for tables
+using CURRENT_TIMESTAMP, CURRENT_DATE, now() as their DEFAULT values can
+be replicated.
+This is done by replacing those functions by constrants fetched from master at query execution time.
+There are a few limitations however:
+<ul>
+<li>The calculation of temporal data in table default value is not accurate in some cases. For example, following table definition:
+<pre>
+CREATE TABLE rel1(
+  d1 date DEFAULT CURRENT_DATE + 1
+)
+is treated same as:
+CREATE TABLE rel1(
+  d1 date DEFAULT CURRENT_DATE
+)
+</pre>
+<li>Suppose we have following table:
+<pre>
+CREATE TABLE rel1(
+  c1 int,
+  c2 timestamp default now()
+)
+</pre>
+We can replicate
+<pre>
+INSERT INTO rel1(c1) VALUES(1) 
+</pre>
+since this turn into
+<pre>
+INSERT INTO rel1(c1, c2) VALUES(1, '2009-01-01 23:59:59.123456+09')
+</pre>
+However,
+<pre>
+INSERT INTO rel1(c1) SELECT 1
+</pre>
+cannot to be transformed thus cannot be properly replicated in the current implementation.
+</ul>
+</p>
+
+<p>Tables created by <code>CREATE TEMP TABLE</code> will be delete at the end of
+session by specifying DISCARD ALL in reset_query_list if you are using PostgreSQL 8.3 or later.
+</p>
+<p>
+For 8.2.x or before <code>CREATE TEMP TABLE</code> will not be
 deleted after exitting a session. It is because of the connection
 pooling which, from the backend's point of view, seems that the
 session is still alive. To avoid this, you must explicitly drop the

@@ -1,3 +1,127 @@
+2009-12-07 18:38  t-ishii
+
+	* NEWS, doc/pgpool-en.html, doc/pgpool-ja.html: Prepare 2.3
+
+2009-12-07 17:11  t-ishii
+
+	* pool_process_query.c: Allow to load balance EXPLAIN and EXPLAIN
+	  ANALYZE (only if query is SELECT). This will prevent kind mismatch
+	  errors when query plan are different among servers.
+
+2009-12-06 21:55  t-ishii
+
+	* main.c, pool.h, pool_type.h: Restore backend status by using
+	  pgpool_status file.
+
+2009-12-06 20:53  t-ishii
+
+	* version.h: Change code name for pgpool-II 2.3
+
+2009-12-06 18:57  t-ishii
+
+	* pgpool.conf.sample-master-slave, pgpool.conf.sample-replication:
+	  Add pgpool.conf sample for replication mode and master/slave mode
+
+2009-12-06 17:46  t-ishii
+
+	* pgpool.conf.sample, pool.h, pool_config.c, pool_config.l,
+	  pool_process_query.c, pool_process_reporting.c, pool_stream.c:
+	  Add new configuration parameter fail_over_on_backend_error which
+	  controls the behavior when write to backend socket fails.
+
+	  Also add pool_log when postmaster administrative shutdown detected.
+
+2009-12-06 16:52  t-ishii
+
+	* pool_process_query.c, pool_proto_modules.c: Ignore error of
+	  pool_flush(frontend).
+
+2009-12-06 16:46  t-ishii
+
+	* pool_proto_modules.c: Optimization when num_init_children == 1.
+	  In this case we don't need to wait for master returning a response
+	  before sending a query to the other nodes.
+
+2009-12-06 16:43  t-ishii
+
+	* Makefile.am, Makefile.in, pool_process_query.c,
+	  pool_process_reporting.c: Teach process_reporting() about
+	  log_per_node_statement.  Also refactor pool_process_query.c to
+	  remove process_reporting() and make a new source file
+	  "pool_process_reporting.c" to hold the funtcion. Main reason for
+	  this is, process_reporting() is now big enough to have a separate C
+	  source file.
+
+2009-12-02 23:19  t-ishii
+
+	* child.c, pool.h, pool_process_query.c: Enhance SIGINT handler.
+
+2009-12-02 23:11  t-ishii
+
+	* pool_proto_modules.c: Fix ProcessFrontendResponse() handling of
+	  Parse message in master/slave mode. If it's inside transaction,
+	  enable master_slave_dml, which means execute parse on master only.
+	  This will prevent unwanted parase executed on slave, which holds at
+	  least AccessShareLock on tables until transaction commits.  It seems
+	  unamed statement does not release the lock until execute.
+
+	  Please note that, even with this fix, bind state will remain on
+	  slave if JDBC issues parse with autocommit off. This is because
+	  BEGIN parsed, bind on both master and slave but execute only on
+	  master. However, this is not harmfull since parse/bind does not hold
+	  any locks on tables.
+
+	  Also add some logging statemets.
+
+2009-12-01 22:05  t-ishii
+
+	* ChangeLog: v2.2.6
+
+2009-12-01 22:02  t-ishii
+
+	* doc/pgpool-ja.html, NEWS: Add release note
+
+2009-11-29 20:56  t-ishii
+
+	* pool_process_query.c: Fix is_select_query() not to allow cursor
+	  statements.  Close() should not allowed since hold cursor + update
+	  may cause data inconsistency.
+
+2009-11-29 17:42  t-ishii
+
+	* pool_process_query.c: Add logging by per_node_statement().
+
+2009-11-29 17:29  t-ishii
+
+	* pool_proto_modules.c: Fix ProcessFrontendResponse() handling of
+	  Parse message in master/slave mode. If it's inside transaction,
+	  enable master_slave_dml, which means execute parse on master only.
+	  This will prevent unwanted parase executed on slave, which holds at
+	  least AccessShareLock on tables until transaction commits.  It seems
+	  unamed statement does not release the lock until execute.
+
+	  Please note that, even with this fix, bind state will remain on
+	  slave if JDBC issues parse with autocommit off. This is because
+	  BEGIN parsed, bind on both master and slave but execute only on
+	  master. However, this is not harmfull since parse/bind does not hold
+	  any locks on tables.
+
+2009-11-18 15:55  t-ishii
+
+	* config.h.in, configure, configure.in: Add -lcrypt for linking
+	  commnad. Certain distribution ships libpq without linking to
+	  libcrypt by some reasons which I don't know.
+
+2009-11-18 15:45  t-ishii
+
+	* config.h.in, configure, configure.in: Add -lcrypt for linking
+	  commnad. Certain distribution ships libpq without linking to
+	  libcrypt by some reasons which I don't know.
+
+2009-11-15 20:16  t-ishii
+
+	* ChangeLog: Run cvs2cl.pl -t --fsf -b -F trunk
+
 2009-11-15 17:27  t-ishii
 
 	* pgpool.conf.sample, pool.h, pool_config.c, pool_config.l,
@@ -20,11 +144,29 @@
 
 	  Remove unnecessary argument of end_load_balance().
 
+2009-11-14 22:16  t-ishii
+
+	* pool.h, pool_process_query.c, pool_proto_modules.c,
+	  pool_proto_modules.h, child.c: Fix connection_cache = false case.
+	  In this mode, if frontend exits abnormaly, some global state
+	  variables are not reset. For this purpose, new function
+	  reset_variables() added.
+
+	  Remove unnecessary argument of end_load_balance().
+
 2009-11-14 20:41  t-ishii
 
 	* pool_config.c: Update pool_config.l
 
 2009-11-14 20:40  t-ishii
+
+	* pool_config.l: Allow to change weight with reloading pgpool.conf
+
+2009-11-14 20:38  t-ishii
+
+	* pool_config.c: Update pgpool_config.l
+
+2009-11-14 20:37  t-ishii
 
 	* pool_config.l: Allow to change weight with reloading pgpool.conf
 
@@ -81,6 +223,16 @@
 	* pool_relcache.c: Fix relcache replacement logic bug.  Patches
 	  provided by Akio Ishida.
 
+2009-11-05 13:12  t-ishii
+
+	* parser/outfuncs.c, test/parser/expected/insert.out,
+	  test/parser/expected/select.out, test/parser/input/insert.sql,
+	  test/parser/input/select.sql: Fix nodeToString() bug. example
+	  test case: If nodeToString() is given the parse tree of "insert into
+	  r1 values(1,2), (3,4)", it returns "insert into r1 values(1,2),
+	  values(3,4)", which is apparently wrong.  Patch provided by Akio
+	  Ishida.
+
 2009-11-05 12:43  t-ishii
 
 	* ChangeLog, TODO, parser/outfuncs.c,
@@ -109,6 +261,13 @@
 	  unhelpfull "server closed the connection unexpectedly" message.
 	  Patch provided by Glyn Astill with minor tweak by Tatsuo Ishii.
 
+2009-11-03 10:57  t-ishii
+
+	* pool.h, pool_auth.c, pool_process_query.c: When authentication
+	  fails, report to frontend proper error messages, rather than
+	  unhelpfull "server closed the connection unexpectedly" message.
+	  Patch provided by Glyn Astill with minor tweak by Tatsuo Ishii.
+
 2009-11-03 10:50  t-ishii
 
 	* pool_stream.c: Fix pool_flush_it() so that it does not complain
@@ -116,6 +275,11 @@
 	  was backend or frontend to avoid confusion.
 
 2009-10-30 14:11  t-ishii
+
+	* pool_proto_modules.c: Allow is_temp_table to work with pre 8.4
+	  PostgreSQL.
+
+2009-10-30 14:01  t-ishii
 
 	* pool_proto_modules.c: Allow is_temp_table to work with pre 8.4
 	  PostgreSQL.
@@ -136,7 +300,27 @@
 	  used to control this.  SELECT still needs /*NO LOAD BALANCE*/. It's
 	  hard to find all tables in a SELECT statement.
 
+2009-10-29 21:58  t-ishii
+
+	* child.c, pool.h, pool_process_query.c, Makefile.am, Makefile.in,
+	  configure, configure.in, pool_proto_modules.c: Add
+	  pool_relcache.c to Makefile.am.  Refactor need_insert_lock to use
+	  pool_search_relcache and friends.  Add LocalSessionId to child.c
+	  which manage per session counter of relcache.  Allow to use temp
+	  tables with master/slave mode. Parse() failed.  since Parse() was
+	  always sent to master and slave and slave does not have the temp
+	  table. To fix this, is_temp_table() added to pool_proto_modules.c
+	  which inquire particular table is a temporary one or not when
+	  INSERT/UPDATE/DELETE. If it's a temporary table, parse message is
+	  sent to only master. Note that /*NO LOAD BALANCE*/ directive can be
+	  used to control this.  SELECT still needs /*NO LOAD BALANCE*/. It's
+	  hard to find all tables in a SELECT statement.
+
 2009-10-29 21:46  t-ishii
+
+	* pool_relcache.c: Per process relation cache module
+
+2009-10-29 21:42  t-ishii
 
 	* pool_relcache.c: Per process relation cache module
 
@@ -144,6 +328,11 @@
 
 	* test/jdbc/: CreateTempTableTest.java, expected/CreateTempTable,
 	  RunTest.java: Add temp table test
+
+2009-10-25 16:14  t-ishii
+
+	* test/jdbc/: CreateTempTableTest.java, expected/CreateTempTable:
+	  Add temp table test
 
 2009-10-22 20:52  devrim
 
@@ -166,11 +355,30 @@
 
 	* pgpool.8.in: Fix typo in man page. Patch provided by Rodolphe.
 
+2009-10-12 11:19  t-ishii
+
+	* pgpool.8.in: Fix typo in man pages. Patch provided by Rodolphe.
+
 2009-10-12 10:54  t-ishii
 
 	* pool_process_query.c: REINDEX DATABASE or SYSTEM should not be
 	  executed in a transaction block. See [pgpool-general-jp: 623] for
 	  more details.
+
+2009-10-12 10:41  t-ishii
+
+	* pool_process_query.c: REINDEX DATABASE or SYSTEM should not be
+	  executed in a transaction block. See [pgpool-general-jp: 623] for
+	  more details.
+
+2009-10-06 00:13  devrim
+
+	* pgpool.spec:
+	   - Update to 2.2.5, for various fixes described at
+
+	  http://lists.pgfoundry.org/pipermail/pgpool-general/2009-October/002188.html
+	   - Re-apply a fix for Red Hat Bugzilla #442372
+	   - Add 2 new docs, per Tatsuo.
 
 2009-10-06 00:12  devrim
 
@@ -186,20 +394,34 @@
 	  - Re-apply a fix for Red Hat Bugzilla #442372
 	  - Sync with Fedora spec.
 
+2009-10-04 18:15  t-ishii
+
+	* NEWS, configure.in, configure, ChangeLog (utags: V2_2_5): Prepare
+	  2.2.5
+
+2009-10-04 18:15  t-ishii
+
+	* doc/pgpool-ja.html (tags: V2_2_5): Add release note for 2.2.5
+
 2009-10-04 08:52  t-ishii
 
-	* doc/: tutorial-en.html, tutorial-ja.html: Add sample to use
-	  rotatelogs
+	* doc/: tutorial-en.html (tags: V2_2_5), tutorial-en.html,
+	  tutorial-ja.html: Add sample to use rotatelogs
+
+2009-10-03 21:45  t-ishii
+
+	* doc/tutorial-ja.html (tags: V2_2_5): Add sample to use rotatelogs
 
 2009-10-03 21:39  t-ishii
 
-	* sample/pgpool_recovery_pitr: Enhance online recovery 2nd stage
-	  script to sync sequence value
+	* sample/: pgpool_recovery_pitr (tags: V2_2_5),
+	  pgpool_recovery_pitr: Enhance online recovery 2nd stage script to
+	  sync sequence value
 
 2009-10-03 20:55  t-ishii
 
-	* pool_proto_modules.h: Remove unnecessary declaration
-	  "allow_close_transaction"
+	* pool_proto_modules.h (tags: V2_2_5), pool_proto_modules.h: Remove
+	  unnecessary declaration "allow_close_transaction"
 
 2009-10-02 17:00  t-ishii
 
@@ -207,12 +429,13 @@
 
 2009-10-02 16:56  t-ishii
 
-	* pool_proto_modules.c: Fix Parse() to use
-	  wait_for_query_response() instead of synchronize().
+	* pool_proto_modules.c (tags: V2_2_5), pool_proto_modules.c: Fix
+	  Parse() to use wait_for_query_response() instead of synchronize().
 
 2009-10-02 16:53  t-ishii
 
-	* pool_process_query.c: Fix comment
+	* pool_process_query.c (tags: V2_2_5), pool_process_query.c: Fix
+	  comment
 
 2009-09-26 18:14  t-ishii
 
@@ -220,6 +443,26 @@
 	  Parse() detects kind mismatch errors.
 
 2009-09-26 16:51  t-ishii
+
+	* pool_process_query.c: Fix reset_backend to deal with DEALLOCATE
+	  error. In this case prepared objects are not removed and
+	  reset_backend is infinitely called.
+
+	  Fix do_command to guard against the case that after execution of an
+	  SQL command, the backend does not return either N, E or C. This
+	  should not happen but there was a report that it actually happend in
+	  certain cases(maybe caused by asynchronized backend data?)
+
+	  See:
+
+	  Subject: Re: [Pgpool-general] pgpool 2.2.4: DEALLOCATED children
+	  From: Xavier Noguer Date: Fri, 25 Sep 2009 03:35:57 -0400
+
+	  For more details.
+
+	  Patches by Xavier Noguer with minor tweak by Tatsuo Ishii.
+
+2009-09-26 16:36  t-ishii
 
 	* pool_process_query.c: Fix reset_backend to deal with DEALLOCATE
 	  error. In this case prepared objects are not removed and
@@ -268,19 +511,54 @@
 	  This patch was applied to only 2.2-STABLE tree by y-mori on
 	  2009/09/08.
 
+2009-09-25 23:36  t-ishii
+
+	* pool_proto_modules.c: Make allow_close_transaction to static and
+	  add comments.
+
+	  Let execute CREATAE TEMP TABLE on every nodes in master/slave mode.
+	  If not, subsequent Parse or Bind to use the table will fail.  At
+	  this point this doen't work since MASTER_SLAVE set to 0 in
+	  ProcessFrontendResponse. More analysis is needed...
+
 2009-09-25 16:35  t-ishii
 
-	* main.c: Fix write_pid_file. It forgot to write out NULL
-	  termination of pid. Pgpool occasionally won't stop because of this
-	  bug.
+	* main.c (tags: V2_2_5), main.c: Fix write_pid_file. It forgot to
+	  write out NULL termination of pid. Pgpool occasionally won't stop
+	  because of this bug.
+
+2009-09-23 20:39  t-ishii
+
+	* pool_process_query.c: Remove error checks for
+	  pool_write(frontend), pool_flush(frontend) in
+	  SimpleForwardToFrontend.
+
+	  Check error for send_deallocate() in reset_backend. Otherwise
+	  send_deallocate will be called infinitely.  Per bug report from
+	  Agustin Almonte Ferrada. See:
+
+	  Subject: Re: [Pgpool-general] pgpool 2.2.4: DEALLOCATED children
+	  From: Agustin Almonte Ferrada <aalmonte@antica.cl> To: Tatsuo Ishii
+	  <ishii@sraoss.co.jp> Cc: pgpool-general@pgfoundry.org Date: Wed, 23
+	  Sep 2009 01:55:54 -0400
 
 2009-09-23 11:03  t-ishii
 
-	* pool_auth.c: Fix pool_read_kind and pool_read_int so that the
-	  error message for kind is shown in hexadecimal. Other part of
-	  pgpool-II already does this.
+	* pool_auth.c (tags: V2_2_5), pool_auth.c: Fix pool_read_kind and
+	  pool_read_int so that the error message for kind is shown in
+	  hexadecimal. Other part of pgpool-II already does this.
 
 2009-09-17 20:32  t-ishii
+
+	* pool_process_query.c, pool_proto_modules.c, pool_proto_modules.h:
+	  Teach do_command() to use wait_for_query_response().  insert_lock()
+	  calls do_command() to issue LOCK TABLE to lock tables having SERIAL
+	  column when insert_lock is true. Problem is, insert_lock() waits
+	  forever in do_command() if the target table is locked by someone
+	  else. This patch should give a way insert_lock() to espcape from the
+	  situation.
+
+2009-09-17 20:17  t-ishii
 
 	* pool_process_query.c, pool_proto_modules.c, pool_proto_modules.h:
 	  Teach do_command() to use wait_for_query_response().  insert_lock()
@@ -308,6 +586,54 @@
 
 	* pool_process_query.c: Undef #define SEND_NOTICE_ON_PROTO2, which
 	  was defined by mistake.
+
+2009-09-06 12:52  t-ishii
+
+	* child.c, pool.h (utags: V2_2_5): Fix connection_count_down() so
+	  that it does decrement too much in some corner cases.  If failed to
+	  read a start up packet, or receive cancel request etc.,
+	  connection_count_down() is called and goes back to the onnection
+	  accept loop. Problem is, at the very beginning of the connection
+	  accept loop, if we have received a signal, we call child_exit()
+	  which calls connection_count_down() again.  Problem report by
+	  Ryoichi TANABE. See [pgpool-general-jp: 616] for more details.
+
+	  Also unneccesary public declarations for connection_count_up() and
+	  connection_count_down() are removed.
+
+2009-08-24 13:58  t-ishii
+
+	* ChangeLog (tags: V2_2_4): Prepare 2.2.4
+
+2009-08-24 13:55  t-ishii
+
+	* NEWS, configure, doc/pgpool-ja.html (utags: V2_2_4): Prepare
+	  2.2.4
+
+2009-08-24 13:53  t-ishii
+
+	* configure.in (tags: V2_2_4): Prepare 2.2.4.
+
+2009-08-24 13:36  t-ishii
+
+	* TODO (tags: V2_2_5, V2_2_4): Add a few items
+
+2009-08-22 13:19  t-ishii
+
+	* child.c, main.c, md5.c (tags: V2_2_5), pcp_child.c (tags:
+	  V2_2_5), pg_md5.c (tags: V2_2_5), pool_auth.c, pool_config.c
+	  (tags: V2_2_5), pool_connection_pool.c (tags: V2_2_5),
+	  pool_error.c (tags: V2_2_5), pool_hba.c (tags: V2_2_5), pool_ip.c
+	  (tags: V2_2_5), pool_params.c (tags: V2_2_5), pool_path.c (tags:
+	  V2_2_5), pool_process_query.c, pool_proto_modules.c,
+	  pool_query_cache.c (tags: V2_2_5), pool_rewrite_outfuncs.c (tags:
+	  V2_2_5), pool_rewrite_query.c (tags: V2_2_5), pool_sema.c (tags:
+	  V2_2_5), pool_shmem.c (tags: V2_2_5), pool_signal.c (tags:
+	  V2_2_5), pool_stream.c (tags: V2_2_5), pool_system.c (tags:
+	  V2_2_5), ps_status.c (tags: V2_2_5), recovery.c (tags: V2_2_5),
+	  strlcpy.c (tags: V2_2_5), pcp/md5.c (tags: V2_2_5) (utags:
+	  V2_2_4): Remove unnecessary spaces and tabs at end of line.
+	  Patch conributed by Jun Kuriyama.
 
 2009-08-22 13:04  t-ishii
 
@@ -338,6 +664,16 @@
 	  SEND_NOTICE_ON_PROTO2 around line 879 to enable this feature in
 	  version 2 protocol.
 
+2009-08-18 17:38  t-ishii
+
+	* pool_process_query.c, pool_proto_modules.c, pool_proto_modules.h
+	  (tags: V2_2_4): Change wait_for_query_response() so that it sends
+	  NOTICE message to frontend periodically. It appears that pgpool-II
+	  2.2.3 unconditionaly sends param packet to client even it uses
+	  version 2 protocol, which is apparentlt wrong. Also tweak checking
+	  period from 1 second to 30 seconds since 1 second seems too
+	  aggressive.
+
 2009-08-18 17:30  t-ishii
 
 	* child.c: Remove unneccessary call to send_frontend_exit() in
@@ -354,11 +690,47 @@
 	  before establish signal handler. See [pgpool-general-jp: 586] for
 	  more details.
 
+2009-08-13 22:36  t-ishii
+
+	* child.c: Remove unnessary call of send_frontend_exits() in die().
+
+2009-08-13 22:34  t-ishii
+
+	* main.c: Block signals before forking children rather after.
+	  Otherwise parent will be killed by failover signal if it receives
+	  before establish signal handler. See [pgpool-general-jp: 586] for
+	  more details.
+
+2009-08-11 22:53  t-ishii
+
+	* ChangeLog (tags: V2_2_3): Prepare 2.2.3.
+
+2009-08-11 22:52  t-ishii
+
+	* configure.in, configure (utags: V2_2_3): Stamp 2.2.3.
+
+2009-08-11 22:48  t-ishii
+
+	* doc/pgpool-ja.html (tags: V2_2_3): Fix description of parallel
+	  query.  Add release note for 2.2.3.
+
 2009-08-11 22:23  t-ishii
 
-	* pool_connection_pool.c: Fix new_connection() so that it does
-	  leave garbage in POOL_CONNECTION_POOL->slot[i]. This caused segfault
-	  in child_exit().  Bug report at [pgpool-general-jp: 586].
+	* pool_connection_pool.c (tags: V2_2_3), pool_connection_pool.c:
+	  Fix new_connection() so that it does leave garbage in
+	  POOL_CONNECTION_POOL->slot[i]. This caused segfault in child_exit().
+	  Bug report at [pgpool-general-jp: 586].
+
+2009-08-07 14:27  y-mori
+
+	* pool_process_query.c, pool_rewrite_outfuncs.c (utags: V2_2_3):
+	  FIX parallel query
+
+	     1. Fix JOIN Expr
+	          Subquery was used on larg or rarg.
+	          Subquery was used on ON-Cluase.
+	          Full OUTER JOIN was not optimized.　　
+	     2. Fail_on_error=false was passed to the 3rd arguments of dblink.
 
 2009-08-06 20:38  t-ishii
 
@@ -371,11 +743,18 @@
 
 2009-08-06 16:55  t-ishii
 
-	* pool_proto_modules.c: Print last query for kind mismatch error
-	  message even extended protocol is used. Patch contributed by Akio
-	  Ishida.
+	* pool_proto_modules.c (tags: V2_2_3), pool_proto_modules.c: Print
+	  last query for kind mismatch error message even extended protocol is
+	  used. Patch contributed by Akio Ishida.
 
 2009-08-06 16:46  t-ishii
+
+	* pool_process_query.c: Fix buffer overrun error which mangled kind
+	  mismatch error message in pool_send_error_message().  Bug rpeort by
+	  Takahiro Itagaki at [pgsql-jp: 39950].  Fix suggested by Akio Ishida
+	  at [pgsql-jp: 39952].
+
+2009-08-06 16:38  t-ishii
 
 	* pool_process_query.c: Fix buffer overrun error which mangled kind
 	  mismatch error message in pool_send_error_message().  Bug rpeort by
@@ -392,6 +771,13 @@
 	* child.c: Check MASTER_CONNECTION(p)->sp) is non 0 before further
 	  referring to sp. Current implementation may interrupt in the window,
 	  after setting p and before setting sp.
+
+2009-08-01 20:40  t-ishii
+
+	* child.c (tags: V2_2_3): Check MASTER_CONNECTION(p)->sp) is non 0
+	  before further referring to sp. Current implementation may interrupt
+	  in the window, after setting p and before setting sp. Per bug report
+	  from Jun Kuwamura.
 
 2009-08-01 20:34  t-ishii
 
@@ -423,11 +809,30 @@
 	  test/parser/expected/select.out, test/parser/expected/update.out:
 	  Adopt PostgreSQL 8.4 parser. Patch contributed by Akio Ishida.
 
+2009-07-30 16:46  t-ishii
+
+	* pool_process_query.c: Fix typo in comment
+
+2009-07-28 14:52  y-mori
+
+	* doc/: pgpool-en.html (tags: V2_2_5, V2_2_4, V2_2_3),
+	  pgpool-ja.html: add restrictions for parallel mode
+
+	     -Natural Join
+	       => not support
+	     -USING CLAUSE at Join Expression
+	       => auto convert to ON CLAUSE
+
 2009-07-28 09:34  t-ishii
 
 	* pool_process_query.c: Fix typo in comment
 
 2009-07-26 18:14  t-ishii
+
+	* pool_rewrite_outfuncs.c: Fix breakage by previous commit.  Patch
+	  by Guillaume Lelarge.
+
+2009-07-26 18:04  t-ishii
 
 	* pool_rewrite_outfuncs.c: Fix breakage by previous commit.  Patch
 	  by Guillaume Lelarge.
@@ -454,8 +859,24 @@
 
 2009-07-26 11:57  t-ishii
 
-	* pool_sema.c: Fix various pool_error/log format errors.  Patch
-	  provided by Akio Ishida.
+	* pool_sema.c (tags: V2_2_3), pool_sema.c: Fix various
+	  pool_error/log format errors.  Patch provided by Akio Ishida.
+
+2009-07-24 21:30  y-mori
+
+	* pool_rewrite_outfuncs.c: fix: Join statment in parallel query
+
+	       sample)
+	       Accouts table is defined by dist_def,
+	       the below query is executed as loadbalance.
+
+	       SELECT a.aid
+	         FROM
+	           accounts as a
+	         JOIN
+	           accounts as b
+	         ON  a.aid=b.aid
+	         WHERE a.aid =1 or a.aid=2;
 
 2009-07-22 17:51  t-ishii
 
@@ -464,11 +885,42 @@
 	  various pool_error/log format errors.  Patch provided by Akio
 	  Ishida.
 
+2009-07-22 17:46  t-ishii
+
+	* child.c, main.c (tags: V2_2_3), pool.h (tags: V2_2_4, V2_2_3),
+	  pool_process_query.c, pool_proto_modules.c,
+	  pool_rewrite_outfuncs.c, pool_shmem.c (tags: V2_2_3): Fix various
+	  pool_error/log format errors.  Patch provided by Akio Ishida.
+
 2009-07-22 17:26  t-ishii
 
 	* pool_process_query.c, pool_proto_modules.c, pool_proto_modules.h:
 	  Query cancel by statement timeout does not generate "kind mismatch"
 	  error any more.  How to reproduce the test case:
+
+	  Directory connect to PostgreSQL.  T1: BEGIN; T1: LOCK TABLE t1;
+
+	  T2: SET statement_timeout TO 5000; T2: UPDATE t1 SET ...
+
+	  UPDATE query aborts and error message comes out on T2: ERROR:
+	  canceling statement due to statement timeout
+
+	  A side effect of this is, statement timeout works correctly (rather
+	  than statement timeout value * # of node).
+
+	  Note that to initiate T1 by directory connecting to slave node will
+	  not work (still results in kind mismatch error). But I don't think
+	  this could happend in the real world.
+
+	  Also refactor error detecting modules (detect_deadlock_error and so
+	  on).
+
+2009-07-22 14:33  t-ishii
+
+	* pool_process_query.c, pool_proto_modules.c, pool_proto_modules.h
+	  (tags: V2_2_3): Query cancel by statement timeout does not
+	  generate "kind mismatch" error any more.  How to reproduce the test
+	  case:
 
 	  Directory connect to PostgreSQL.  T1: BEGIN; T1: LOCK TABLE t1;
 
@@ -497,6 +949,10 @@
 	  To: pgpool-general@pgfoundry.org Date: Sun, 05 Jul 2009 18:01:18
 	  +0000
 
+2009-07-21 12:59  t-ishii
+
+	* ChangeLog: Update Change. We are getting closer to 2.2.3.
+
 2009-07-21 10:43  t-ishii
 
 	* pool.h, pool_proto_modules.c: Check frontend connection while
@@ -504,7 +960,19 @@
 	  Replace synchronize() with wait_for_query_response().  Also tweak
 	  pool.h so that it includes cancel packet's mazic proto number.
 
+2009-07-21 10:36  t-ishii
+
+	* pool.h, pool_proto_modules.c: Check frontend connection while
+	  waiting for response from backend for extended protocol (Execute()).
+	  Replace sychronize() with wait_for_query_response().  Also tweak
+	  pool.h so that it includes cancel packet's mazic proto number.
+
 2009-07-21 09:30  t-ishii
+
+	* pool_process_query.c: Do not start transaction if the command is
+	  CLUSTER with no argument
+
+2009-07-21 09:26  t-ishii
 
 	* pool_process_query.c: Do not start transaction if the command is
 	  CLUSTER with no argument
@@ -559,6 +1027,18 @@
 	  copy-in state if it receives ABORT (issued in reset_backend).  It
 	  seems PostgreSQL is not implemented as stated in the doc...
 
+2009-07-20 20:47  t-ishii
+
+	* child.c, pool.h, pool_process_query.c, pool_proto_modules.c,
+	  pool_proto_modules.h: Check frontend connection while waiting for
+	  response from backend.  This is done in wait_for_query_response() by
+	  writing a dummy parameter status packet to pgpool client every 1
+	  second. If the write fails, a cancel packet is sent to backend to
+	  free backend.  This is usefull to prevent pgpool child from waiting
+	  forever for backend response. Pgpool client will diconnect to pgpool
+	  if the query takes too long. This is typical use case for Web
+	  applications.
+
 2009-07-15 15:09  t-ishii
 
 	* pool_process_query.c: Fix bug with prepared statement
@@ -583,10 +1063,84 @@
 
 	  Bug analysis and fix provided by Akio Ishida.
 
+2009-07-15 14:14  t-ishii
+
+	* pool_process_query.c: Fix bug with prepared statement
+	  deallocation:
+
+	  Subject: [Pgpool-general] Pgpool probelms From: Nimesh Satam
+	  <nimesh.satam@gmail.com> To: pgpool-general@pgfoundry.org Cc: Nimesh
+	  Satam <nimesh.zedo@gmail.com> Date: Wed, 17 Jun 2009 11:31:37 +0530
+
+	  This was caused a bug in reset_backend().
+
+	  if (qcnt >= qn + prepared_list.cnt) {
+	      reset_prepared_list(&prepared_list);
+	      return 2; } send_deallocate(backend, &prepared_list, qcnt - qn);
+	  return 1;
+
+	  Problem is, send_deallocate -> SimpleQuery("DEALLOCATE") calls
+	  del_prepared_list, which will decrement prepared_list.cnt. In short,
+	  incrementing of qcnt *and* decrementing of prepared_list.cnt happen
+	  at the same time. So deallocate is only called 1/2 times than it
+	  should be.
+
+	  Bug analysis and fix provided by Akio Ishida.
+
+2009-07-14 17:42  t-ishii
+
+	* sql/pgpool-recovery/pgpool-recovery.c (tags: V2_2_5, V2_2_4,
+	  V2_2_3): Update copyright year
+
 2009-07-14 17:39  t-ishii
 
-	* sql/pgpool-recovery/pgpool-recovery.c: PostgreSQL 8.4 needs to
+	* sql/pgpool-recovery/: pgpool-recovery.c: PostgreSQL 8.4 needs to
 	  include utils/binutils.h
+
+2009-06-26 13:59  t-ishii
+
+	* pool_process_query.c: Fix bug with SimpleForwardToFrontend().
+	  Clients using the extend protocol send 'H'(Flush) after each
+	  command. Problem is, SimpleForwardToFrontend does not immediately
+	  forward 'C'(Command Complete) packet to frontend. So the client
+	  sends 'H' and wait for 'C'. On the other hand backend receives 'H'
+	  but reply back nothing since Command complete has nothing to be
+	  returned. Both side stuck.
+
+	  The fix is, forwarding 'C' packet immediately after receiving it
+	  from backend. To prevent similar bugs happen in the future, I put
+	  pool_flush(frontend) after calling SimpleForwardToFrontend in
+	  pool_process_query() (other places already do this).
+
+	  The extra pool_flush() might harm performance. So I did some tests
+	  using pgbench -S, and found nothing has been changed regarding
+	  performance after patching.
+
+	  Bug report from Gavin Sherry along with patches for
+	  SimpleForwardToFrontend().
+
+2009-05-27 11:01  t-ishii
+
+	* pool.h, pool_process_query.c: Add pool_set_timeout() to control
+	  pool_check_fd()'s behavior.  This can be used for various places.
+	  The first user is reset_backend() to fix following scenario: Do
+	  COPY_FROM(for example pgbench -i) Cancel pgbench pgpool waits for
+	  response from backend while sending reset queries and hang.  Backend
+	  waits for data coming from pgpool forever.
+
+	  BTW, I don't think PostgreSQL's befaviro for COPY_FROM is quite
+	  correct since the doc stats:"Receipt of any other non-copy message
+	  type constitutes an error that will abort the copy-in state as
+	  described above" If my understanding correct, COPY_FROM should abort
+	  copy-in state if it receives ABORT (issued in reset_backend).  It
+	  seems PostgreSQL is not implemented as stated in the doc...
+
+2009-05-24 22:56  t-ishii
+
+	* sql/pgpool-recovery/Makefile (tags: V2_2_5, V2_2_4, V2_2_3):
+	  Support pre 8.0 PostgreSQL which does not have pg_config --pgxs
+	  option.  Patch provided by Enrico Pirozzi with slight modification
+	  by Tatsuo Ishii
 
 2009-05-24 17:43  t-ishii
 
@@ -596,30 +1150,54 @@
 
 2009-05-12 10:01  t-ishii
 
-	* doc/pgpool-en.html: Fix description of client_idle_limit
+	* doc/: pgpool-en.html: Fix description of client_idle_limit
+
+2009-05-05 11:07  t-ishii
+
+	* configure.in, configure, NEWS (tags: V2_2_3) (utags: V2_2_2):
+	  prepare 2.2.2
+
+2009-05-05 11:04  t-ishii
+
+	* doc/pgpool-ja.html (tags: V2_2_2): Add 2.2.2 release note
 
 2009-05-02 17:48  t-ishii
 
-	* pool_process_query.c: Fix is_select_query() to test "sql"
-	  parameter is NULL.  As of 2.2, pgpool sets Portal->sql_string to
-	  NULL for SQL command PREPARE.  Usually this is ok, since in most
-	  cases SQL command EXECUTE follows anyway. Problem is, some
-	  applications mix PREPARE with extended protocol command "EXECUTE"
-	  and so on. Execute() seems to think this never happens but it is not
-	  real. Someday we should extract actual query string from
-	  PrepareStmt->query and set it to Portal->sql_string.
+	* pool_process_query.c, pool_process_query.c (tags: V2_2_2): Fix
+	  is_select_query() to test "sql" parameter is NULL.  As of 2.2,
+	  pgpool sets Portal->sql_string to NULL for SQL command PREPARE.
+	  Usually this is ok, since in most cases SQL command EXECUTE follows
+	  anyway. Problem is, some applications mix PREPARE with extended
+	  protocol command "EXECUTE" and so on. Execute() seems to think this
+	  never happens but it is not real. Someday we should extract actual
+	  query string from PrepareStmt->query and set it to
+	  Portal->sql_string.
 
 2009-05-02 17:45  t-ishii
 
-	* pool_stream.c: Fix pool_flush() so that it ignores error on
-	  frontend connection.  This is needed to continue processing with
-	  backend, otherwise we risk data incositency.
+	* pool_stream.c (tags: V2_2_3, V2_2_2), pool_stream.c: Fix
+	  pool_flush() so that it ignores error on frontend connection.  This
+	  is needed to continue processing with backend, otherwise we risk
+	  data incositency.
 
 2009-05-02 17:41  t-ishii
 
-	* child.c: Call pool_send_frontend_exits() before pool_discard_cp()
-	  when resetting connection fails. This will avoid "unexpected EOF on
-	  client connection" error on when pgpool client exits abnormaly
+	* child.c (tags: V2_2_2), child.c: Call pool_send_frontend_exits()
+	  before pool_discard_cp() when resetting connection fails. This will
+	  avoid "unexpected EOF on client connection" error on when pgpool
+	  client exits abnormaly
+
+2009-05-01 09:39  t-ishii
+
+	* pool_proto_modules.c (tags: V2_2_2): Add missing patches for
+	  this:
+
+	  2009-04-08 20:11  t-ishii
+
+	  	* pool_proto_modules.c (V2_2_STABLE): In master slave mode,
+	  	  sometimes DEALLOCATE fails. This is caused by that the first
+	  	  PREPARE was not executed on the slave.  Patch contributed by
+	  	  Toshihiro Kitagawa.
 
 2009-05-01 09:37  t-ishii
 
@@ -630,11 +1208,33 @@
 	  caused by that the first PREPARE was not executed on the slave.
 	  Patch contributed by Toshihiro Kitagawa.
 
+2009-04-25 16:20  t-ishii
+
+	* ChangeLog (tags: V2_2_2, V2_2_1): prepare for 2.2.1
+
+2009-04-25 16:16  t-ishii
+
+	* configure.in, configure (utags: V2_2_1): prepare for 2.2.1
+
+2009-04-25 16:12  t-ishii
+
+	* doc/pgpool-ja.html (tags: V2_2_1): Add 2.2.1 release note
+
+2009-04-25 16:05  t-ishii
+
+	* NEWS (tags: V2_2_1): Prepare 2.2.1
+
 2009-04-08 20:11  t-ishii
 
-	* pool_proto_modules.c: In master slave mode, sometimes DEALLOCATE
-	  fails. This is caused by that the first PREPARE was not executed on
-	  the slave.  Patch contributed by Toshihiro Kitagawa.
+	* pool_proto_modules.c (tags: V2_2_1), pool_proto_modules.c: In
+	  master slave mode, sometimes DEALLOCATE fails. This is caused by
+	  that the first PREPARE was not executed on the slave.  Patch
+	  contributed by Toshihiro Kitagawa.
+
+2009-04-03 22:49  t-ishii
+
+	* doc/: pgpool-en.html (tags: V2_2_2, V2_2_1), pgpool-ja.html: Add
+	  documents about configuration reloading.
 
 2009-04-03 22:43  t-ishii
 
@@ -648,6 +1248,12 @@
 	  not NULL. This is problematic if frontend == NULL, which could
 	  happen with queries defined in reset_query_list. The bug had been
 	  there since 2.1 BTW.
+
+2009-04-03 19:21  t-ishii
+
+	* pgpool.spec, redhat/pgpool.conf.sample.patch, redhat/pgpool.init
+	  (utags: V2_2_1, V2_2_2, V2_2_3, V2_2_4, V2_2_5): Merge changes
+	  made on HEAD regarding RPM spec files
 
 2009-03-23 10:14  devrim
 
@@ -668,20 +1274,31 @@
 
 2009-03-14 12:39  t-ishii
 
-	* pool_process_query.c: Fix need_insert_lock so that it returns
-	  false if the protocol version is 2. insert_lock has not been working
-	  for V2 protocol anyway, so this is ok.
+	* pool_process_query.c, pool_process_query.c (tags: V2_2_1): Fix
+	  need_insert_lock so that it returns false if the protocol version is
+	  2. insert_lock has not been working for V2 protocol anyway, so this
+	  is ok.
 
 2009-03-09 00:00  gleu
 
 	* main.c, pgpool.8.in, doc/pgpool-en.html: Update usage function,
 	  doc and man page.
 
+2009-03-08 23:58  gleu
+
+	* main.c, pgpool.8.in (tags: V2_2_5, V2_2_4, V2_2_3) (utags:
+	  V2_2_1, V2_2_2): Update usage function and man page.
+
 2009-03-07 18:19  t-ishii
 
 	* pool_process_query.c: Add a comment to need_insert_lock() if the
 	  query being used to check if the table has SERIAL column is valid
 	  for PostgreSQL 7.3 to 8.3.
+
+2009-03-07 08:54  t-ishii
+
+	* pool_process_query.c: Make excessive message level in
+	  read_kind_from_backend from LOG to DEBUG.
 
 2009-03-07 08:49  t-ishii
 
@@ -692,9 +1309,23 @@
 
 	* main.c: Add support for long options name in pgpool command.
 
+2009-03-01 22:34  t-ishii
+
+	* doc/pgpool-ja.html: Fix release note for 2.2
+
 2009-03-01 22:22  t-ishii
 
 	* doc/pgpool-ja.html: Fix release note for 2.2
+
+2009-02-28 15:33  t-ishii
+
+	* Makefile.in (tags: V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1,
+	  V2_2_0): Update Makefile.am
+
+2009-02-28 15:33  t-ishii
+
+	* Makefile.am (tags: V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1,
+	  V2_2_0): Add doc/load_balance.png, doc/load_balance.odp
 
 2009-02-28 15:29  t-ishii
 
@@ -2138,6 +2769,10 @@
 	* pool_rewrite_query.c: FIX: INSERT statment in a parallel mode
 	       How to count the Value Clause list was wrong
 
+2007-12-05 17:19  y-asaba
+
+	* pool_stream.c: Improve buffering algorithm in pool_write().
+
 2007-12-05 17:15  y-asaba
 
 	* pool_stream.c: Improve buffering algorithm in pool_write().
@@ -2170,6 +2805,10 @@
 
 	       ERROR: pgpool2 sql restriction
 	       DETAIL: cannot use SElectStmt in InserStmt
+
+2007-11-29 14:50  y-asaba
+
+	* ChangeLog: update.
 
 2007-11-24 22:04  t-ishii
 
@@ -2213,6 +2852,11 @@
 	* pool_process_query.c: Send a syntax error query to a master node
 	  when master_slave is true.
 
+2007-11-21 10:40  y-asaba
+
+	* pool_process_query.c: Send a syntax error query to a master node
+	  when master_slave is true.
+
 2007-11-16 14:29  y-mori
 
 	* doc/: pgpool-en.html (tags: V2_0_1), pgpool-ja.html (utags:
@@ -2220,8 +2864,8 @@
 
 2007-11-16 11:52  y-asaba
 
-	* pool_auth.c (tags: V2_0_1, V2_0_0): Fix segmentation fault in a
-	  password authentication when a node is down.
+	* pool_auth.c (tags: V2_0_1, V2_0_0), pool_auth.c: Fix segmentation
+	  fault in a password authentication when a node is down.
 
 2007-11-16 10:56  y-asaba
 
@@ -2358,6 +3002,15 @@
 	* pool_rewrite_outfuncs.c: fix: join rule for /*NOT*/SQL99 type
 	  join,CROSS JOIN and NATURAL JOIN
 
+2007-11-06 16:22  y-asaba
+
+	* pool_process_query.c: Fix insert lock with JDBC and the following
+	  scenario.
+
+	    BEGIN;
+	    INSERT INTO a ...  <- get table lock.
+	    INSERT INTO b ...  <- don't get table lock.
+
 2007-11-06 16:07  y-asaba
 
 	* test/jdbc/InsertTest.java (tags: V2_2_5, V2_2_4, V2_2_3, V2_2_2,
@@ -2379,10 +3032,30 @@
 	  V2_1_0_BETA1, V2_0_1, V2_0_0), Makefile.am: Add INSERT statement
 	  test.
 
+2007-11-06 13:38  y-asaba
+
+	* pool_process_query.c: Don't close internal transaction when
+	  pgpool recieves Sync message.
+
+2007-11-05 16:26  y-asaba
+
+	* pool_process_query.c: Send Sync message before calling
+	  insert_lock().
+
+2007-11-05 14:49  y-asaba
+
+	* pool_process_query.c: Fix insert_lock with extended query
+	  protocol.
+
 2007-11-05 14:26  y-asaba
 
 	* pool_process_query.c: Fix insert_lock with extended query
 	  protocol.
+
+2007-11-05 13:24  y-mori
+
+	* pool_process_query.c: FIX: read wrong file descriptor in
+	  pool_parallel_exec()
 
 2007-11-05 11:08  y-asaba
 
@@ -2390,6 +3063,10 @@
 	  isset_fd and zero_fd.
 
 2007-11-05 10:41  y-asaba
+
+	* pool_process_query.c: Ignore white space in need_insert_lock().
+
+2007-11-05 10:35  y-asaba
 
 	* pool_process_query.c: Ignore white space in need_insert_lock().
 
@@ -2588,6 +3265,10 @@
 
 	* pool_process_query.c: Check return value of pool_flush().
 
+2007-10-26 16:27  y-asaba
+
+	* pool_process_query.c: Check return value of pool_flush().
+
 2007-10-23 16:32  y-asaba
 
 	* sql/pgpool-recovery/pgpool-recovery.c: Change error message.
@@ -2663,12 +3344,22 @@
 
 	* NEWS, doc/pgpool-ja.html: Merge from V1_STABLE branch.
 
+2007-10-22 13:20  y-asaba
+
+	* ChangeLog, NEWS, doc/pgpool-ja.html (utags: V1_3): Add a item
+	  about fixing query cache.
+
+2007-10-18 21:41  t-ishii
+
+	* Makefile.in, configure, parser/scan.c (utags: V1_3): Run autoconf
+
 2007-10-18 18:55  y-asaba
 
-	* pool_query_cache.c (tags: V2_0_1, V2_0_0, V2_0_0_BETA1): Although
-	  the second argument of PQunescapeBytea() requires size_t which size
-	  is 8 byte in 64bit machine, pgpool passed 4 byte variable.  It
-	  caused segfault. So fixed passing size_t variable.
+	* pool_query_cache.c (tags: V1_3), pool_query_cache.c (tags:
+	  V2_0_1, V2_0_0, V2_0_0_BETA1): Although the second argument of
+	  PQunescapeBytea() requires size_t which size is 8 byte in 64bit
+	  machine, pgpool passed 4 byte variable.  It caused segfault. So
+	  fixed passing size_t variable.
 
 2007-10-18 18:52  y-mori
 
@@ -2697,6 +3388,11 @@
 
 	* pool_process_query.c: Fix compile warning on Solaris.
 
+2007-10-18 11:49  y-asaba
+
+	* pool_process_query.c (tags: V1_3): Fix compiler warning on
+	  Solaris.
+
 2007-10-18 10:21  y-asaba
 
 	* pool_config.c, pool_config.l: Set failback_command default value
@@ -2712,14 +3408,68 @@
 	* pool_rewrite_outfuncs.c: FIX: lost alias name of column in query
 	  rewriting when it was used at GRUP BY CLAUSE..etc
 
+2007-10-17 13:13  devrim
+
+	* pool_config.l (tags: V1_3): Fix typos in comments
+
+2007-10-17 13:03  devrim
+
+	* pgpool.spec (tags: V1_3):
+	  - Update to 1.3
+
 2007-10-17 12:00  y-mori
 
 	* pool.h, pool_process_query.c, pool_rewrite_outfuncs.c: Fix:
 	  compiler's warning
 
+2007-10-17 11:50  y-asaba
+
+	* NEWS: Release note for 1.3.
+
+2007-10-17 11:26  y-asaba
+
+	* Makefile.am (tags: V1_3): Add redhat/* into EXTRA_DIST.
+
+2007-10-16 22:46  devrim
+
+	* pgpool.spec: Sync with Fedora spec file Add init script and
+	  sysconfig file
+
+2007-10-16 22:44  devrim
+
+	* redhat/: pgpool.init, pgpool.sysconfig (utags: V1_3): RPM init
+	  script and sysconfig file for Fedora / Red Hat
+
+2007-10-16 18:18  y-asaba
+
+	* doc/pgpool-ja.html: Prepare for 1.3
+
+2007-10-16 18:08  y-asaba
+
+	* version.h (tags: V1_3): Prepare for 1.3
+
+2007-10-16 17:18  y-asaba
+
+	* configure.in (tags: V1_3): Prepare for 1.3.
+
+2007-10-16 16:48  y-asaba
+
+	* ChangeLog: update.
+
 2007-10-16 12:44  y-asaba
 
 	* pool_process_query.c: Fix hang up in load balancing mode.
+
+2007-10-16 11:57  y-asaba
+
+	* pool_process_query.c: Fix hang up in load balancing mode.
+
+	    BEGIN;
+	    SELECT 1;
+	    COMMIT;
+	    SELECT 1;  <-- hang up
+
+	  The bug was introduced in V1.2.  Reported by Felix J. Ogris.
 
 2007-10-15 22:56  y-mori
 
@@ -2766,10 +3516,29 @@
 	  V2_0_1, V2_0_0, V2_0_0_BETA1), pool_type.h (tags: V2_0_1, V2_0_0,
 	  V2_0_0_BETA1): ADD query rewriting to main trunc
 
+2007-10-15 15:51  y-asaba
+
+	* pool_process_query.c: Fix typo.
+
+2007-10-15 15:38  y-asaba
+
+	* pool_process_query.c, ChangeLog: Fix invalid memory access when
+	  pgpool processed DEALLOCATE statement.
+
 2007-10-15 15:11  y-asaba
 
 	* parser/pool_memory.c (tags: V2_0_1, V2_0_0, V2_0_0_BETA1): Fix
 	  core dump with a large SQL.
+
+2007-10-15 14:45  y-asaba
+
+	* pool_process_query.c: reset queries are replicated in
+	  master/slave mode.
+
+2007-10-12 23:14  y-mori
+
+	* pool_process_query.c, pool_rewrite_outfuncs.c,
+	  pool_rewrite_query.c: ADD query rewriting
 
 2007-10-12 21:27  t-ishii
 
@@ -2779,12 +3548,12 @@
 
 2007-10-12 18:15  y-asaba
 
-	* pgpool.conf.sample: Add new directive "authentication_timeout"
-	  into pgpool.conf.sample.
+	* pgpool.conf.sample (tags: V1_3), pgpool.conf.sample: Add new
+	  directive "authentication_timeout" into pgpool.conf.sample.
 
 2007-10-12 15:56  y-asaba
 
-	* doc/pgpool-ja.html: Add authentication_timeout.
+	* doc/: pgpool-ja.html: Add authentication_timeout.
 
 2007-10-12 14:55  y-asaba
 
@@ -2796,6 +3565,13 @@
 	  pool_parser.h (tags: V2_0_1, V2_0_0, V2_0_0_BETA1), scan.l: Fix
 	  scanner's error handling. If there was a unterminated double-quote
 	  identifier, scanner entered infinite-loop.
+
+2007-10-12 14:20  y-asaba
+
+	* ChangeLog, parser/parser.c (tags: V1_3), parser/pool_parser.h
+	  (tags: V1_3), parser/scan.l (tags: V1_3): Fix scanner's error
+	  handling. If there was a unterminated double-quote identifier,
+	  scanner entered infinite-loop.
 
 2007-10-12 13:51  y-asaba
 
@@ -2834,10 +3610,18 @@
 
 	  Need to work on show pool_status and docs.
 
+2007-10-12 13:32  y-asaba
+
+	* child.c (tags: V1_3), ChangeLog, pool.h (tags: V1_3),
+	  pool_config.c (tags: V1_3), pool_config.l, pool_process_query.c:
+	  Add new directive "authentication_timeout". The directive means the
+	  maximum time in seconds to complete client authentication. The
+	  default value is 60.
+
 2007-10-11 17:32  y-asaba
 
-	* child.c, pool.h: Check startup packet length. If the length is
-	  greater than 10,000 byte, pgpool reject the connection.
+	* ChangeLog, child.c, pool.h: Check startup packet length. If the
+	  length is greater than 10,000 byte, pgpool reject the connection.
 
 2007-10-11 10:49  y-asaba
 
@@ -3026,6 +3810,11 @@
 	* pgpool.conf.sample, pool_config.c, pool_config.l: The default
 	  value of ignore_leading_white_space is true in pgpool-II 2.x.
 
+2007-09-28 10:39  y-asaba
+
+	* NEWS, doc/pgpool-ja.html (utags: V1_2_1): SET, PREPARE and
+	  DEALLOCATE statements are replicated in master/slave mode.
+
 2007-09-27 18:38  gleu
 
 	* pool_process_query.c: Typo fix.
@@ -3086,6 +3875,15 @@
 	  detached because these don't belong to the group which master
 	  belongs to.
 
+2007-09-26 14:01  y-asaba
+
+	* NEWS, doc/pgpool-ja.html: Add item into V1.2.1 release note.
+
+2007-09-26 13:23  y-asaba
+
+	* ChangeLog, pool_process_query.c (utags: V1_2_1): SET statements
+	  are replicated in master/slave mode.
+
 2007-09-26 12:32  y-asaba
 
 	* pool_sema.c (tags: V2_0_1, V2_0_0, V2_0_0_BETA1): Fix
@@ -3135,6 +3933,32 @@
 	* child.c, pool.h, pool_process_query.c: Fix hang up when load
 	  balancing node was down.
 
+2007-09-14 20:06  y-asaba
+
+	* ChangeLog, child.c (tags: V1_2_1), pool.h (tags: V1_2_1),
+	  pool_process_query.c: Fix hang up when load balancing node was
+	  down.
+
+2007-09-12 13:43  y-asaba
+
+	* NEWS: 1.2.1 release note.
+
+2007-09-12 13:31  y-asaba
+
+	* doc/pgpool-ja.html: 1.2.1 release note in Japanese.
+
+2007-09-12 13:21  t-ishii
+
+	* configure (tags: V1_2_1): Run autoconf
+
+2007-09-12 12:55  y-asaba
+
+	* configure.in (tags: V1_2_1): Prepare for 1.2.1
+
+2007-09-10 22:34  t-ishii
+
+	* child.c: Fix misspell in a comment
+
 2007-09-10 22:29  t-ishii
 
 	* pool_process_query.c: Modfify pool_send_error_message() so that
@@ -3163,9 +3987,20 @@
 	    - Reuse parser memory space in free_parser().
 	    - Check node type before comparing with "show pool_status()".
 
+2007-09-06 10:47  y-asaba
+
+	* doc/pgpool-en.html (tags: V1_3, V1_2_1): Fix restricted query
+	  section.
+
 2007-09-06 10:43  y-asaba
 
 	* doc/pgpool-en.html: Fix restricted query section.
+
+2007-08-29 19:03  y-mori
+
+	* pool.h, pool_process_query.c, pool_rewrite_outfuncs.c,
+	  pool_rewrite_query.c, pool_rewrite_query.h: implemented QUERY
+	  ANALYZING (now in progress)
 
 2007-08-29 15:49  y-asaba
 
@@ -3177,10 +4012,30 @@
 
 	* recovery.c: Fix compile error.
 
+2007-08-29 15:40  y-asaba
+
+	* pool_query_cache.c, pcp/pcp.c (tags: V1_3), pcp/pcp_stream.c
+	  (tags: V1_3) (utags: V1_2_1): Fix compile error on FreeBSD 4.11.
+
 2007-08-29 15:01  y-asaba
 
 	* pool_process_query.c: Read response messages in Parse() until
 	  receiving ParseComplete or ErrorResponse message.
+
+2007-08-29 14:53  y-asaba
+
+	* pool_process_query.c: Read response messages in Parse() until
+	  receiving ParseComplete or ErrorResponse message.
+
+2007-08-29 11:16  y-asaba
+
+	* ChangeLog, pool_process_query.c:
+	  * Fix handling Parse message.  Parse message including
+	  INSERT/UPDATE/DELETE query acquires RowExclusiveLock. However pgpool
+	  did not wait a response from each node. It was possible to occur
+	  deadlock problem.
+
+	  * Fix memory leak in reset_prepared_list()
 
 2007-08-28 19:07  y-asaba
 
@@ -3196,6 +4051,10 @@
 	  deadlock problem.
 
 	  * Fix memory leak in reset_prepared_list()
+
+2007-08-17 10:51  t-ishii
+
+	* doc/pgpool-ja.html: Enhance documentation
 
 2007-08-17 10:50  t-ishii
 
@@ -3213,6 +4072,10 @@
 	  If it is false, pgpool only sends them to the master node. This is a
 	  current specification.
 
+2007-08-13 06:37  t-ishii
+
+	* pgpool.conf.sample (tags: V1_2_1): Fix typo in a comment
+
 2007-08-06 10:42  y-asaba
 
 	* pool_process_query.c: Fix memory leak.
@@ -3221,9 +4084,45 @@
 
 	* child.c: Remove compiler warning.
 
+2007-08-01 13:26  y-asaba
+
+	* child.c (tags: V1_2): Remove compiler warning
+
+2007-08-01 13:06  y-asaba
+
+	* NEWS (tags: V1_2): Review release note.
+
+2007-08-01 13:03  y-asaba
+
+	* pool_process_query.c (tags: V1_2): Fix SEGV when connection_cache
+	  is true and replication_mode is false.
+
+2007-07-31 13:02  y-asaba
+
+	* doc/pgpool-en.html (tags: V1_2): Add a description about
+	  "replicate_select" directive.
+
+2007-07-27 21:09  y-mori
+
+	* pool_process_query.c, pool_rewrite_outfuncs.c,
+	  pool_rewrite_query.c, pool_rewrite_query.h, pool_system.c: add
+	  query analyzing process before rewriting query
+
+2007-07-27 14:57  y-asaba
+
+	* NEWS: Release note for 1.2
+
+2007-07-27 11:45  y-asaba
+
+	* doc/pgpool-ja.html (tags: V1_2): Update release note for v1.2
+
 2007-07-27 10:19  y-asaba
 
 	* doc/pgpool-ja.html: Merge from V1_STABLE branch
+
+2007-07-26 19:24  y-asaba
+
+	* ChangeLog (tags: V1_2): update.
 
 2007-07-26 19:15  y-asaba
 
@@ -3232,7 +4131,47 @@
 	  non-reentrant functions.  We only set a flag in SIGALRM handler.
 	  Then we close expired connections in safe places.
 
+2007-07-26 19:12  y-asaba
+
+	* pool_connection_pool.c (tags: V1_3, V1_2_1, V1_2): Fix buffer
+	  over run when connection_life_time is expired.
+
+2007-07-26 18:03  y-asaba
+
+	* child.c, pool.h (tags: V1_2), pool_connection_pool.c: SIGALRM
+	  handler didn't safe because it called non-reentrant functions.  We
+	  only set a flag in SIGALRM handler. Then we close expired
+	  connections in safe places.
+
+2007-07-26 17:07  t-ishii
+
+	* configure, pool_config.c (tags: V1_2_1) (utags: V1_2): Run
+	  autoconf
+
+2007-07-26 16:53  y-asaba
+
+	* doc/pgpool-ja.html: Add release note for 1.2 and description of
+	  replicate_select parameter.
+
+2007-07-26 16:46  y-asaba
+
+	* version.h (tags: V1_2_1, V1_2): Prepare for 1.2
+
+2007-07-26 16:30  y-asaba
+
+	* pool_process_query.c: Add replicate_select value to the result of
+	  "SHOW pool_status" command.
+
 2007-07-26 14:15  y-asaba
+
+	* pool_connection_pool.c: Fix memory leak when connection slot is
+	  full.
+
+2007-07-26 14:12  y-asaba
+
+	* ChangeLog: update.
+
+2007-07-26 14:11  y-asaba
 
 	* pool_connection_pool.c: Fix memory leak when connection slot is
 	  full.
@@ -3256,10 +4195,59 @@
 	  If pgpool receives a warning message that is NoticeMessage('N')
 	  under the extended query protocol, it reads a next message.
 
+2007-07-25 21:24  y-asaba
+
+	* pool_process_query.c: Fix memory leak.
+
+2007-07-25 20:39  y-asaba
+
+	* pool_process_query.c: Fix SEGV when pgpool received a Parse
+	  message without a statement name.
+
 2007-07-24 18:02  y-asaba
 
 	* pool.h, pool_process_query.c: Detect deadlock in do_command().
 	  When insert_lock was true, kind mismatch error occured.
+
+2007-07-24 17:41  y-asaba
+
+	* ChangeLog, pool.h, pool_process_query.c: Detect deadlock in
+	  do_command().  When insert_lock was true, kind mismatch error
+	  occured.
+
+2007-07-24 10:57  y-asaba
+
+	* child.c, pool_process_query.c, pool_type.h (tags: V1_3, V1_2_1,
+	  V1_2): Load balancing node was chosen before sending "SELECT"
+	  statement.  But this way had the following problems.
+
+	    psql>\d accounts
+	    Did not find any relation with OID XXX
+
+	  pgpool chooses it after receiving AuthenticationOK('R') message. So
+	  pgpool load balance to the same node inside a same session.
+
+	  This fix isn't backported to pgpool.
+
+2007-07-24 10:39  y-asaba
+
+	* pool_config.l (tags: V1_2_1, V1_2): Fixed compile error.
+
+2007-07-23 15:54  y-asaba
+
+	* ChangeLog, pgpool.conf.sample (tags: V1_2), pool.h,
+	  pool_config.l, pool_process_query.c: Add new parameter named
+	  "replicate_select". Default value is 'false'.
+
+	  If it is true, pgpool replicates SELECT queries when load balancing
+	  is disabled. This is a old specification which was V1.0.
+
+	  If it is false, pgpool only sends them to the master node. This is a
+	  current specification.
+
+2007-07-23 15:30  y-asaba
+
+	* configure.in (tags: V1_2): Prepare for 1.2
 
 2007-07-23 14:32  y-asaba
 
@@ -3281,7 +4269,40 @@
 
 	  Or you send SIGHUP signal to the pgpool parent process.
 
+2007-07-19 15:01  y-mori
+
+	* pool_process_query.c: BUGFIX: Occasionally, Bad file descripter
+	  is read in parallel_query_mode
+
+2007-07-18 20:33  devrim
+
+	* pgpool.spec (tags: V1_2_1, V1_2): Update to 1.2
+
+2007-07-17 17:58  y-mori
+
+	* pool_process_query.c, pool_rewrite_outfuncs.c,
+	  pool_rewrite_query.c, pool_rewrite_query.h, pool_system.c,
+	  pool_type.h: Unification of replication mode and parallel query
+	  mode Now It's still working.
+
+2007-07-17 17:19  y-asaba
+
+	* ChangeLog: update
+
 2007-07-17 15:04  y-asaba
+
+	* pool_process_query.c: Fix hang up when backend node did fast or
+	  immediate shutdown.
+
+	  If shutdown occured, postgres send an error which error code is
+	  "57P01" and error message is "terminating connection due to
+	  administrator command".
+
+	  However, another nodes did not send any messages. pgpool waited for
+	  a message from them. when the error is sended, pgpool reads the
+	  message and degenerate.
+
+2007-07-17 14:50  y-asaba
 
 	* pool_process_query.c: Fix hang up when backend node did fast or
 	  immediate shutdown.
@@ -3298,6 +4319,29 @@
 
 	* pool_process_query.c (tags: ROOT_OF_V2_0_PARALLEL_UNSTABLE):
 	  Rearrange detect_deadlock_error().
+
+2007-07-17 11:26  y-asaba
+
+	* pool_process_query.c: Rearrange detect_deadlock_error().
+
+2007-07-11 11:15  y-asaba
+
+	* pool.h, pool_process_query.c, pool_stream.c (tags: V1_3, V1_2_1,
+	  V1_2): Fixed kind mismatch error when deadlock error occured.
+	  The problem is the following senario.
+
+	    A: BEGIN:
+	    B: BEGIN;
+	    A: LOCK TABLE t1 IN SHARE ROW EXCLUSIVE MODE;
+	    B: LOCK TABLE t2 IN SHARE ROW EXCLUSIVE MODE;
+	    A: LOCK TABLE t2 IN SHARE ROW EXCLUSIVE MODE;
+	    B: LOCK TABLE t1 IN SHARE ROW EXCLUSIVE MODE;
+
+	  Transaction "A" aborts on master node, but it completes on another
+	  nodes. It causes wrong failover.
+
+	  So pgpool checks deadlock error(code == '40P01') and sends error
+	  query to another nodes.
 
 2007-07-10 18:56  y-asaba
 
@@ -3325,6 +4369,22 @@
 2007-07-09 14:18  y-asaba
 
 	* main.c: Add comments.
+
+2007-07-09 14:17  y-asaba
+
+	* ChangeLog: update.
+
+2007-07-09 14:00  y-asaba
+
+	* config.h.in (tags: V1_3, V1_2_1, V1_2), configure.in, main.c
+	  (tags: V1_3, V1_2_1, V1_2): Fix race condition between flag
+	  checking and signal blocking.
+
+	  Normally, this case solve to call pselect(2). But Linux's pselect(2)
+	  is emulated by select(2) and sigprocmask(2). It contains this race.
+	  So pgpool archieves using the self-pipe trick.
+
+	  See 'man pselect' if you want to get more information.
 
 2007-07-09 13:23  y-asaba
 
@@ -3367,6 +4427,28 @@
 
 	  pgpool chooses it after receiving AuthenticationOK('R') message. So
 	  pgpool load balance to the same node inside a same session.
+
+2007-07-05 20:14  y-asaba
+
+	* ChangeLog: Update ChangeLog.
+
+2007-07-05 19:58  y-asaba
+
+	* pool_process_query.c: Fix the following bugs in master_slave mode
+	  && load_balance mode.
+
+	  1.  We force to replicate PREPARE and DEALLOCATE statement because
+	  of the case.
+
+	    PREPARE xx AS SELECT 1;
+	    EXECUTE xx;
+
+	  If EXECUTE statement was load balanced, it occured the error.
+
+	    ERROR:  prepared statement "xx" does not exist
+
+	  2.  pgpool didn't load balance a SELECT query using extended
+	  protocol.
 
 2007-07-05 18:12  y-asaba
 
@@ -3425,6 +4507,17 @@
 	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1,
 	  V2_0_1, V2_0_0, V2_0_0_BETA1, ROOT_OF_V2_0_PARALLEL_UNSTABLE):
 	  Fix checking the number of arguments.
+
+2007-06-27 17:30  y-asaba
+
+	* ChangeLog, pool.h, pool_process_query.c: Fix hang up when a
+	  SELECT query has error inside transaction block. It occurs only in
+	  simple query protocol. We reproduce the bug with the following
+	  operation.
+
+	    BEGIN;
+	    SELECT * FROM non_exist_table; <-- ERROR
+	    SELECT 1;
 
 2007-06-26 10:35  y-asaba
 
@@ -4134,4 +5227,160 @@
 	  pcp/pcp_stream.c, pcp/pcp_stream.h, pcp/pcp_node_info.c,
 	  pcp/pcp_proc_count.c, pcp/pcp_proc_info.c, pcp/pcp_stop_pgpool.c,
 	  pcp/pcp_systemdb_info.c: Initial revision
+
+2006-09-08 12:35  t-ishii
+
+	* README, configure.in, Makefile.am, aclocal.m4, Makefile.in,
+	  config.h.in (tags: V1_0_1), AUTHORS (tags: V2_2_5, V2_2_4,
+	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
+	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1, V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  configure, COPYING (tags: V1_0_1), ChangeLog, INSTALL (tags:
+	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
+	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1, V1_3,
+	  V1_2_1, V1_2, ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1,
+	  V1_0_2, V1_0_1), NEWS, TODO (tags: V1_0_1), config.guess (tags:
+	  V1_3, V1_2_1, V1_2, V1_1_1, V1_1, V1_0_2, V1_0_1), config.sub
+	  (tags: V1_3, V1_2_1, V1_2, ROOT_OF_V2_0_PARALLEL_UNSTABLE,
+	  V1_1_1, V1_1, V1_0_2, V1_0_1), depcomp (tags: V2_2_5, V2_2_4,
+	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
+	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1, V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  install-sh (tags: V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
+	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
+	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0,
+	  V2_0_0_BETA1, V1_3, V1_2_1, V1_2, ROOT_OF_V2_0_PARALLEL_UNSTABLE,
+	  V1_1_1, V1_1, V1_0_2, V1_0_1), ltmain.sh (tags: V1_3, V1_2_1,
+	  V1_2, V1_1_1, V1_1, V1_0_2, V1_0_1), missing (tags: V2_2_5,
+	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
+	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1, V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  mkinstalldirs (tags: V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1,
+	  V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1,
+	  V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0,
+	  V2_0_0_BETA1, V1_3, V1_2_1, V1_2, ROOT_OF_V2_0_PARALLEL_UNSTABLE,
+	  V1_1_1, V1_1, V1_0_2, V1_0_1), pg_md5.c (tags: V2_0_1, V2_0_0,
+	  V2_0_0_BETA1, V1_3, V1_2_1, V1_2, ROOT_OF_V2_0_PARALLEL_UNSTABLE,
+	  V1_1_1, V1_1, V1_0_2, V1_0_1), pool_config.c, README.euc_jp,
+	  main.c, md5.c (tags: V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
+	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1, V1_3,
+	  V1_2_1, V1_2, ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1,
+	  V1_0_2, V1_0_1), md5.h (tags: V2_2_5, V2_2_4, V2_2_3, V2_2_2,
+	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
+	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1,
+	  V2_0_1, V2_0_0, V2_0_0_BETA1, V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  pgpool.conf.sample (tags: V1_0_1), pgpool.spec (tags: V1_0_1),
+	  pool.h, pool_type.h (tags: V1_0_1), version.h (tags: V1_0_2,
+	  V1_0_1), child.c (tags: V1_0_1), pool_auth.c (tags: V1_0_1),
+	  pool_config.l (tags: V1_0_1), pool_error.c (tags: V1_0_1),
+	  pool_connection_pool.c (tags: V1_0_1), pool_params.c (tags:
+	  V1_0_1), pool_process_query.c, pool_signal.c (tags: V1_0_1),
+	  pool_signal.h (tags: V1_0_1), pool_stream.c (tags: V1_0_1),
+	  pcp.conf.sample (tags: V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1,
+	  V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1,
+	  V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0,
+	  V2_0_0_BETA1, V1_3, V1_2_1, V1_2, ROOT_OF_V2_0_PARALLEL_UNSTABLE,
+	  V1_1_1, V1_1, V1_0_2, V1_0_1), pcp_child.c (tags: V1_0_1),
+	  pool_ipc.h (tags: V1_0_1), pool_sema.c (tags: V1_0_1),
+	  pool_shmem.c (tags: V1_0_1), pool_system.c (tags: V1_0_1),
+	  pool_rewrite_query.c (tags: V1_0_1), pool_rewrite_query.h (tags:
+	  V1_0_1), pool_rewrite_outfuncs.c (tags: V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  pgpool.8.in (tags: V1_0_1), pool_query_cache.c (tags: V1_0_1),
+	  doc/pgpool.html, doc/pgpool.html.en, doc/tutorial.html,
+	  doc/tutorial.html.en, parser/Makefile.am (tags: V1_0_2, V1_0_1),
+	  parser/Makefile.in, sample/dist_def_pgbench.sql (tags: V2_2_5,
+	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
+	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1, V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  sql/system_db.sql (tags: V2_0_0_BETA1, V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  parser/gram.c (tags: V1_0_2, V1_0_1), parser/gram.h (tags:
+	  V1_0_2, V1_0_1), parser/gram.y (tags: V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  parser/gramparse.h (tags: V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  parser/list.c (tags: V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  parser/makefuncs.c (tags: V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  parser/makefuncs.h (tags: V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  parser/memnodes.h (tags: V2_0_1, V2_0_0, V2_0_0_BETA1, V1_3,
+	  V1_2_1, V1_2, ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1,
+	  V1_0_2, V1_0_1), parser/nodes.c (tags: V2_0_1, V2_0_0,
+	  V2_0_0_BETA1, V1_3, V1_2_1, V1_2, ROOT_OF_V2_0_PARALLEL_UNSTABLE,
+	  V1_1_1, V1_1, V1_0_2, V1_0_1), parser/nodes.h (tags: V1_3,
+	  V1_2_1, V1_2, ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1,
+	  V1_0_2, V1_0_1), parser/parsenodes.h (tags: V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  parser/parser.c (tags: V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  parser/parser.h (tags: V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  parser/pg_list.h (tags: V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  parser/pool_memory.c (tags: V1_0_1), parser/pool_memory.h (tags:
+	  V1_0_1), parser/pool_string.c (tags: V1_0_1),
+	  parser/pool_string.h (tags: V1_0_1), parser/keywords.c (tags:
+	  V1_3, V1_2_1, V1_2, ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1,
+	  V1_0_2, V1_0_1), parser/keywords.h (tags: V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  parser/pool_parser.h (tags: V1_0_2, V1_0_1), parser/primnodes.h
+	  (tags: V1_3, V1_2_1, V1_2, ROOT_OF_V2_0_PARALLEL_UNSTABLE,
+	  V1_1_1, V1_1, V1_0_2, V1_0_1), parser/scansup.h (tags: V2_0_1,
+	  V2_0_0, V2_0_0_BETA1, V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  parser/value.c (tags: V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  parser/value.h (tags: V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  parser/outfuncs.c (tags: V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  parser/scan.c, parser/scan.l (tags: V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  pcp/Makefile.am (tags: V1_3, V1_2_1, V1_2, V1_1_1, V1_1, V1_0_2,
+	  V1_0_1), pcp/Makefile.in, pcp/md5.h (tags: V2_2_5, V2_2_4,
+	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
+	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1, V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  pcp/pcp.h (tags: V1_3, V1_2_1, V1_2, V1_1_1, V1_1, V1_0_2,
+	  V1_0_1), pcp/md5.c (tags: V2_2_3, V2_2_2, V2_2_1, V2_2_0,
+	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
+	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0,
+	  V2_0_0_BETA1, V1_3, V1_2_1, V1_2, ROOT_OF_V2_0_PARALLEL_UNSTABLE,
+	  V1_1_1, V1_1, V1_0_2, V1_0_1), pcp/pcp.c (tags: V1_0_2, V1_0_1),
+	  pcp/pcp_attach_node.c (tags: V2_0_1, V2_0_0, V2_0_0_BETA1, V1_3,
+	  V1_2_1, V1_2, ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1,
+	  V1_0_2, V1_0_1), pcp/pcp_detach_node.c (tags: V2_0_1, V2_0_0,
+	  V2_0_0_BETA1, V1_3, V1_2_1, V1_2, ROOT_OF_V2_0_PARALLEL_UNSTABLE,
+	  V1_1_1, V1_1, V1_0_2, V1_0_1), pcp/pcp_error.c (tags: V2_0_1,
+	  V2_0_0, V2_0_0_BETA1, V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  pcp/pcp_node_count.c (tags: V2_0_1, V2_0_0, V2_0_0_BETA1, V1_3,
+	  V1_2_1, V1_2, ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1,
+	  V1_0_2, V1_0_1), pcp/pcp_stream.c (tags: V1_0_2, V1_0_1),
+	  pcp/pcp_stream.h (tags: V2_0_1, V2_0_0, V2_0_0_BETA1, V1_3,
+	  V1_2_1, V1_2, ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1,
+	  V1_0_2, V1_0_1), pcp/pcp_node_info.c (tags: V2_0_1, V2_0_0,
+	  V2_0_0_BETA1, V1_3, V1_2_1, V1_2, ROOT_OF_V2_0_PARALLEL_UNSTABLE,
+	  V1_1_1, V1_1, V1_0_2, V1_0_1), pcp/pcp_proc_count.c (tags:
+	  V2_0_0_BETA1, V1_3, V1_2_1, V1_2, ROOT_OF_V2_0_PARALLEL_UNSTABLE,
+	  V1_1_1, V1_1, V1_0_2, V1_0_1), pcp/pcp_proc_info.c (tags: V2_0_1,
+	  V2_0_0, V2_0_0_BETA1, V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
+	  pcp/pcp_stop_pgpool.c (tags: V2_0_1, V2_0_0, V2_0_0_BETA1, V1_3,
+	  V1_2_1, V1_2, ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1,
+	  V1_0_2, V1_0_1), pcp/pcp_systemdb_info.c (tags: V2_0_1, V2_0_0,
+	  V2_0_0_BETA1, V1_3, V1_2_1, V1_2, ROOT_OF_V2_0_PARALLEL_UNSTABLE,
+	  V1_1_1, V1_1, V1_0_2, V1_0_1) (utags: V1_0_0): pgpool-II initial
+	  release
 

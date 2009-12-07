@@ -1,3 +1,230 @@
+2.3 (tomiteboshi) 2009/12/07
+
+	  * Version 2.3
+
+	  This version enhances replication, especially CURRENT_TIMESTAMP,
+	  CURRENT_DATE, now() etc. now can be properly replicated. Also
+	  perforance of replication when num_init_children == 1 is
+	  enhanced. Pgpool-II now records the status of down nodes, and
+	  remember when it restarts to ensure that keep the node status as
+	  before. Also some logs are enhanced and more fine fail over
+	  controls are added. Please note that pgpool-II 2.3 includes all
+	  of enhancements and fixes of pgpool-II 2.2.1 to 2.2.6.
+
+	  * Incompatibilities from 2.2.x
+
+	  - pgpool_status file is created under logdir. So you need to
+        give write permission to the directory so that pgpool-II can
+        read/write pgpool_status file.
+
+	  * Enhancements
+
+	  - Enable proper replication of results of temporal functions
+        (CURRENT_TIMESTAMP, CURRENT_DATE, now() etc.). Now
+        applications can execute INSERT/UPDATE tables which include
+        defaut values using those temporal functions. There are small
+        limitations. See restriction sections of docs for more
+        details (Akio Ishida)
+
+	  - Use PostgreSQL 8.4's SQL parser(Akio Ishida)
+
+	  - Enhance the performance 20% to 100% of replication when
+		num_init_children == 1(Tatsuo)
+
+	  - Add new directive log_per_node_statement which is similar to
+        log_statement except that prints info for each DB node to make
+        it easier which query is sent to which DB node(Tatsuo)
+
+	  - Add new directive fail_over_on_backend_error to control the
+		 behaviro of fail over(Tatsuo)
+
+	  - Record DB node status and remember when pgpool-II restarts(Tatsuo)
+
+	  - EXPLAIN and EXPLAIN ANALYZE for SELECT query are now load
+        balanced. This will prevent unwanted kind mismatch errors when
+        EXPLAIN produces slightly different plan(Tatsuo)
+
+	  - Enhance CSS of pgpool-ja.html(Tatsuo)
+
+	  - Add sample configuration file for replication mode and
+        master/slave mode(Tatsuo)
+
+	 - Add test for temporal data(Akio Ishida)
+
+2.2.6 (urukiboshi) 2009/12/01
+
+	  * Version 2.2.6
+
+	  This version enhances handling of backend weight. Also it allows
+	  to use temp tables in master/slave mode. It includes various
+	  fixes for bugs in 2.2.5 or before as usual.
+
+	  * Bug fixes
+
+	  - Do not allow to load balance DECLARE, CLOSE, FETCH and
+        MOVE. If data gets updated and CLOSE issued after transaction
+        commit(i.e. holdbale cursor), this will cause data
+        inconsistency since CLOSE is executed one of the severs,
+        rather than all(Tatsuo)
+
+	  - In master/slave mode, execute Parse message on only master
+        node. In previous versions Parse executed on all nodes, which
+        grabbed unneccessary lock(Tatsuo)
+
+	  - Remove init script from all runlevels before uninstall(Devrim)
+
+	  - Fix pgpoo.spec(Devrim)
+
+	  - Do not execute REINDEX DATABASE or SYSTEM, CREATE/DROP TABLE
+        SPACE inside a transaction block(Tatsuo)
+
+	  * Enhancements
+
+	  - Allow to change weight by reloading pgool.conf. This will take
+        effect for next client sessions(Tatsuo)
+
+	  - Reply with usefull error messages, rather than "server closed
+        the connection unexpectedly" when authentication fails(Glyn
+        Astill)
+
+	  - Add info to logs when writing to sockets falis to know if it
+        was for backend or frontend(Tatsuo)
+
+	  - Do not complain when writing to socket of frontend
+        fails(Tatsuo)
+
+	  - Allow to use temp tables in master/slave
+        mode. INSERT/UPDATE/DELETE will automatically be sent to
+        master only. Still SELECT you need to add /*NO LOAD BALANCE*/
+        comment(Tatsuo)
+
+	  - Add temp table test to test/jdbc(Tatsuo)
+
+2.2.5 (urukiboshi) 2009/10/4
+	  * Version 2.2.5
+
+	  This version fixes various bugs in 2.2.4 or before.
+
+	  * Bug fixes
+
+	  - Fix connection_count_down(). It decrements the connection
+        counter too much in some corner cases and causes online
+        recover never completes(Tatsuo)
+
+	  - Detect frontend exiting while waiting for commands complete in
+        other cases such as internal locks are issued and Parse
+        (Tatsuo)
+
+	  - Fix inifinit loop in reset_backend(Xavier Noguer, Tatsuo)
+
+	  - Fix Parse() to print actual query when it detects kind
+        mismatch error(Tatsuo)
+
+	  - Document enhancements(Tatsuo)
+
+2.2.4 (urukiboshi) 2009/8/24
+	  * Version 2.2.4
+
+	  This version fixes various bugs in 2.2.3 or before.
+
+	  * Bug fixes
+
+	  - Fix possible bug introduced in pgpool-II 2.2.2.  Load balance
+		control variables may remain not be restored and subsequent
+		DML/DDL call might sent to only master node(Tatsuo)
+
+	  - Send NOTICE message to frontend periodically if V2 protocol is
+		used. This is ifdef out since it affectes visible change to
+		applications.  2.2.3 unconditionaly sends param packet to
+		client even it uses version 2 protocol, which is apparentlt
+		wrong. Also tweak checking period from 1 second to 30 seconds
+		since 1 second seems too aggressive(Tatsuo)
+
+	  - Block signals before forking children rather after.  Otherwise
+		parent will be killed by failover signal if it receives a
+		signal before establishing signal handler(Tatsuo)
+
+	  - Remove unnecessary spaces and tabs at the end of line(Jun Kuriyama)
+
+2.2.3 (urukiboshi) 2009/8/11
+	  * Version 2.2.3
+
+	  This version fixes various bugs in 2.2.2 or before.
+
+	  * Bug fixes
+
+	  - Fix child process death if one of backends is not available(Tatsuo).
+
+	  - Fix various parallel query bugs(Yoshiharu Mori)
+
+	  - Fix message corruption for kid mismatch error(Akio Ishida)
+
+	  - Now stetmemt_time works(Tatsuo)
+
+	  - Enhance health checking to detect postmaster stopping by
+        SIGSTOP(Tatsuo)
+
+	  - Detect frontend abnormal exiting while waiting for reply from
+        backend. This only works with V3 protocol(Tatsuo)
+
+	  - Do not start internal transaction if command is CLUSTER
+        without arguments(Tatsuo)
+
+	  - Fix bug with COPY FROM in that backend process remains after
+        COPY failed(Tatsuo)
+
+	  * Enhancements
+
+	  - Show last query for extended protocol(Akio Ishida)
+
+	  - Allow to compile sql/pgpool-recovery/pgpool-recovery.c with
+        PostgreSQL 8.4(Tatsuo)
+
+2.2.2 (urukiboshi) 2009/5/5
+	  * Version 2.2.2
+
+	  This version fixes various bugs in 2.2.1 or before. Please note
+	  that an importan fix is made to avoid data incositency risk,
+	  which could happen when client does not exit gracely(without
+	  sending "X" packet) while pgpool is trying to send data to
+	  it. This could happen with all version of pgpool-II.
+
+	  * Bug fixes
+
+	  - Ignore write error on frontend connection. This is needed to
+		continue processing with backend, otherwise we risk data
+		incositency(Tatsuo)
+
+	  - Fix bug introduced in 2.2.1 (In master slave mode, sometimes
+	  	DEALLOCATE fails). If prepared statement reused, pgpool
+	  	hangs(Toshihiro)
+
+	  - Fix pgpool crash when SQL command PREPARE and protocol level
+        EXECUTE are mixed. The bug was introduced in 2.2(Tatsuo)
+
+	  - Avoid "unexpected EOF on client connection" error in PostgreSQL
+        when reset query fails(Tatsuo)
+		
+2.2.1 (urukiboshi) 2009/4/25
+	  * Version 2.2.1
+
+	  This version fixes various bugs in 2.2.
+
+	  * Bug fixes
+
+	  - In master slave mode, sometimes DEALLOCATE fails. This is
+		caused by that the first PREPARE was not executed on the
+		slave(Toshihiro)
+
+	  - Update pgpool.spec along with related files(Devrim)
+
+	  - Fix inser_lock so that it is ignored when protocol version is
+        2(Tatsuo)
+		
+	  - Remove excessive log messages regarding parameter change notice(Tatsuo)
+
+	  - Add missing files to doc(Tatsuo)
+
 2.2 (urukiboshi) 2009/2/28
 	  * Version 2.2
 
