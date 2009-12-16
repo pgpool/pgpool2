@@ -653,6 +653,7 @@ extern void cancel_request(CancelPacket *sp);
 /* pool_process_query.c */
 void free_select_result(POOL_SELECT_RESULT *result);
 void reset_variables(void);
+POOL_STATUS pool_extract_error_message(POOL_CONNECTION *backend, int major, bool unread, char **message);
 
 /* pool_relcache.c */
 POOL_RELCACHE *pool_create_relcache(int cachesize, char *sql,
