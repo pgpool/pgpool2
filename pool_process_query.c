@@ -3999,8 +3999,23 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 
 			len = ntohl(len) - 4;
 			str = malloc(len);
+
+			if (!str)
+			{
+				pool_error("detect_error: malloc failed");
+				return POOL_END;
+			}
+
 			pool_read(backend, str, len);
 			readlen += len;
+
+			if (readlen >= sizeof(buf))
+			{
+				pool_error("detect_error: not enough buffer space");
+				free(str);
+				return POOL_END;
+			}
+
 			memcpy(p, str, len);
 
 			/*
@@ -4024,6 +4039,13 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 		{
 			str = pool_read_string(backend, &len, 0);
 			readlen += len;
+
+			if (readlen >= sizeof(buf))
+			{
+				pool_error("detect_error: not enough buffer space");
+				return POOL_END;
+			}
+
 			memcpy(p, str, len);
 		}
 	}
