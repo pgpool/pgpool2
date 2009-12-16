@@ -668,6 +668,7 @@ extern void check_stop_request(void);
 void free_select_result(POOL_SELECT_RESULT *result);
 void reset_variables(void);
 void per_node_statement_log(POOL_CONNECTION_POOL *backend, int node_id, char *query);
+POOL_STATUS pool_extract_error_message(POOL_CONNECTION *backend, int major, bool unread, char **message);
 
 /* pool_relcache.c */
 POOL_RELCACHE *pool_create_relcache(int cachesize, char *sql,
