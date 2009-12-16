@@ -85,7 +85,7 @@ static void daemonize(void);
 static int read_pid_file(void);
 static void write_pid_file(void);
 static int read_status_file(void);
-static int write_statusd_file(void);
+static int write_status_file(void);
 static pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file);
 static pid_t fork_a_child(int unix_fd, int inet_fd, int id);
 static int create_unix_domain_socket(struct sockaddr_un un_addr_tmp);
@@ -469,7 +469,7 @@ int main(int argc, char **argv)
 		myexit(1);
 	}
 
-	pool_log("pgpool successfully started");
+	pool_log("%s successfully started. version %s (%s)", PACKAGE, VERSION, PGPOOLVERSION);
 
 	/* fork a child for PCP handling */
 	snprintf(pcp_un_addr.sun_path, sizeof(pcp_un_addr.sun_path), "%s/.s.PGSQL.%d",
