@@ -1,0 +1,148 @@
+ul#navlist
+	{
+	width: 158px;
+	\width: 160px;
+	w\idth: 158px;
+	padding: 0px;
+	border: 1px solid #808080;
+	border-top: 0px;
+	margin: 0px;
+	font: bold 12px verdana,helvetica,arial,sans-serif;
+	background: #808080;
+	}
+	
+	ul#navlist li
+	{
+	list-style: none;
+	margin: 0px;
+	border: 0px;
+	border-top: 1px solid #808080;
+	font-size:7pt;
+	}
+	
+	ul#navlist li a
+	{
+	display: block;
+	width: 122px;
+	\width: 158px;
+	w\idth: 122px;
+	padding: 4px 8px 4px 8px;
+	border: 0px;
+	border-left: 20px solid #aaaabb;
+	background: #ccccdd;
+	text-decoration: none;
+	text-align: right;
+	
+	}
+	
+	ul#navlist li a:link { color: #666677; }
+	div#navcontainer li a:visited { color: #666677; }
+	
+	ul#navlist li a:hover
+	{
+	border-color: #ff9000;
+	color: #ffffff;
+	background: #000d33;
+	}
+	
+/* --------------------------- */
+body {
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	font-size:9pt;
+	margin: 0px;
+	color: black;
+	border-left: 20px solid #ccc;
+}
+td {
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	font-size:10pt;
+	margin: 0px;
+	color: black;
+	border-left: 2px dotted #ccc;
+}
+pre {
+	font-size:10px;
+	background-color:#f0f0f0;
+	color: brown;
+	padding: 5px;
+	margin-left:40px;
+	margin-right:30px;
+}
+h1 {
+	border-bottom: 2px solid #6699CC;
+	padding: 5px;
+	margin-left:10px;
+	background:#F9FBF9;
+}
+h2 {
+	border-bottom: 2px solid #669966;
+	padding: 5px;
+	margin-left:30px;
+	background: #F4F8F1;
+}
+
+h3 {
+	border-bottom: 2px solid #669966;
+	padding: 5px;
+	margin-left:40px;
+	background: #F4F8F1;
+}
+
+h4 {
+	border-bottom: 2px solid #669966;
+	padding: 5px;
+	margin-left:50px;
+	background: #F4F8F1;
+}
+
+p {
+	padding-left: 15px;
+	padding-right: 150px;
+	margin-left:25px;
+	margin-right:25px;
+
+}
+
+ul, ol,dl {
+	margin-left:40px;
+	padding-right: 30px;
+}
+dt {
+	font-weight:bold;
+}
+
+ul li {
+	padding-right: 30px;
+	list-style:square;
+	color: #663333;
+}
+
+ol li {
+	padding-right: 30px;
+	color: #663333;
+}
+
+
+	a:link { color: blue; }
+	a:hover{ color: red; }
+
+
+.header_small {
+	font-size: 0.9em;
+	background-color: #f0f0f0;
+	
+}
+.header_text {
+	border-bottom: 2px solid #663366;
+	padding: 5px;
+	background-color: #E9F8F8;	
+	font-size: 2em;
+	font-weight:bold;
+	padding:25px;
+}
+
+.copyright {
+	padding: 5px;
+	padding:25px;
+	text-align:center;
+}
