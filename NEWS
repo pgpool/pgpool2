@@ -1,3 +1,32 @@
+2.3.1 (tomiteboshi) 2009/12/18
+
+	  * Version 2.3.1
+
+	  This version includes various fixes for bugs in 2.3 or before.
+	  All 2.3 users are encouraged to upgrade to 2.3.1 as soon as
+	  possible.
+
+	  * Bug fixes
+
+	  - If all of following conditions met, incorrect data is written
+        to DB(Tatsuo)
+
+		- pgpool is running in replication mode
+		- pgpool is running on 64bit OS
+		- INSERT or UPDATE are used which explicitly include now(),
+		- CURRENT_TIMESTAMP, CURRENT_DATE, CURRENT_TIME. Or the target
+		- Table's default value use above functions
+	    - The SQQL statement inclludes out of 32bit
+		  integer(-2147483648 to 2147483647 in decimal)
+
+		Example SQL: INSERT INTO t1(id, regdate) VALUES(98887776655,
+		NOW());
+
+	  - Fix crush in case of more than 18 DB nodes are used(Tatsuo)
+
+	  - Enhance kind mismatch error message. If kind is ERROR or
+        NOTICE, the error or notice message from PostgreSQL will be printed(Tatsuo)
+
 2.3 (tomiteboshi) 2009/12/07
 
 	  * Version 2.3

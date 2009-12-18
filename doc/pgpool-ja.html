@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Mon Dec  7 18:41:35 JST 2009
+Last modified: Fri Dec 18 17:05:42 JST 2009
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2657,6 +2657,38 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
 </p>
 
 <h1>$B%j%j!<%9%N!<%H(B<a name="release"></a></h1>
+
+<h2>2.3.1 (tomiteboshi) 2009/12/18</h2>
+<h3>$B35MW(B</h3>
+<p>
+$B$3$N%P!<%8%g%s$G$O!"(B2.3$B$N?'!9$J%P%0$,=$@5$5$l$F$$$^$9!#(B
+$BFC$K!"$"$k>r7o$G(BDB$B$KIT@5$J?tCM$,=q$-9~$^$l$k%P%0$,=$@5$5$l$F$*$j!"0J2<$N<($9>r7o$K9gCW$9$k;H$$J}$r$7$F$$$k(B2.3$B%f!<%6$O;j5^%P!<%8%g%s%"%C%W$9$k$3$H$r$*4+$a$7$^$9!#(B
+</p>
+
+<h3>$B%P%0=$@5$H2~NIE@(B</h3>
+<p>
+<ul>
+ <li>$B0J2<$N$9$Y$F$N>r7o$K9gCW$9$k>l9g!"(BDB$B$KIT@5$JCM$,=q$-9~$^$l$k%P%0$r=$@5$7$^$7$?(B(Tatsuo)
+	  <p>
+	  <ol>
+	   <li>$B%l%W%j%1!<%7%g%s%b!<%I$GF0:n(B
+	   <li>64bit OS
+	   <li>INSERT$B$^$?$O(BUPDATE$B$K$*$$$F!"(Bnow(), CURRENT_TIMESTAMP, CURRENT_DATE, CURRENT_TIME$B$rD>@\4^$`$+!"%F!<%V%k$N%G%U%)%k%HCM$K4^$s$G$$$k(B
+	   <li>$B99$K$=$N(BSQL$BFb$K(B32bit(10$B?J$G(B-2147483648$B$+$i(B2147483647)$B$NHO0O$rD6$($k@0?tDj?t$,4^$^$l$F$$$k(B
+	  </ol>
+	  $B0J>e$rK~$?$9(BSQL$B$NNc(B:
+	  <pre>
+	  INSERT INTO t1(id, regdate) VALUES(98887776655, NOW());
+	  </pre>
+	  $B$3$NNc$G$O!"(B98887776655$B$,(B32bit$BCM$K%+%C%H$5$l$F=q$-9~$^$l$^$9!#(B
+	  </p>
+
+  <li>18$B0J>e$N(BDB$B%N!<%I$r;HMQ$7$F$$$k>l9g$K!"(Bshow pool_status$B$G%/%i%C%7%e$9$k%P%0$r=$@5$7$^$7$?!#(B
+$B$3$N%P%0$O(Bshow pool_status$B$,<BAu$5$l$F$+$i$:$C$HB8:_$7$F$$$?$b$N$G$9!#(B
+
+  <li>"kind mismatch"$B%a%C%;!<%8$,=P$?:]$K!"(Bkind$B$,(BERROR$B$^$?$O(BNOTICE$B$J$i$P!"$=$N%a%C%;!<%8$rI=<($9$k$h$&$K$7$^$7$?!#$3$l$K$h$j!"(BPostgreSQL$B$N%m%0$r8+$J$/$F$b(Bkind mismatch$B%(%i!<$N860x$rMF0W$KD4$Y$k$3$H$,$G$-$k$h$&$K$J$j$^$7$?(B(Tatsuo)
+ </ul>
+</p>
 
 <h2>2.3 (tomiteboshi) 2009/12/07</h2>
 <h3>$B35MW(B</h3>
