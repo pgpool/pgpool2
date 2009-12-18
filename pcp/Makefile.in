@@ -47,7 +47,9 @@ subdir = pcp
 DIST_COMMON = $(include_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/ac_func_accept_argtypes.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/c-compiler.m4 \
+	$(top_srcdir)/c-library.m4 $(top_srcdir)/general.m4 \
+	$(top_srcdir)/ac_func_accept_argtypes.m4 \
 	$(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
