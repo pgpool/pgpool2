@@ -268,22 +268,42 @@ static int check_postmaster_started(BackendInfo *backend)
 	int i = 0;
 	char port_str[16];
 	PGconn *conn;
+	static bool is_first = true;
+	static char *dbname;
 
 	snprintf(port_str, sizeof(port_str),
 			 "%d", backend->backend_port);
+
+ Retry:
+	/*
+	 * First we try with "postgres" database.
+	 */
+	if (is_first)
+		dbname = "postgres";
+
 	do {
 		ConnStatusType r;
 		conn = PQsetdbLogin(backend->backend_hostname,
 							port_str,
 							NULL,
 							NULL,
-							"template1",
+							dbname,
 							pool_config->recovery_user,
 							pool_config->recovery_password);
+
+		if (is_first)
+			is_first = false;
+
 		r = PQstatus(conn);
 		PQfinish(conn);
 		if (r == CONNECTION_OK)
 			return 0;
+
+		/*
+		 * Retry with template1
+		 */
+		dbname = "template1";
+		goto Retry;
 
 		if (WAIT_RETRY_COUNT != 0)
 			sleep(3);
