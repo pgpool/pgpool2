@@ -3524,6 +3524,9 @@ Portal *lookup_prepared_statement_by_portal(PreparedStatementList *p, const char
 	return NULL;
 }
 
+/*
+ * Send DEALLOCATE message to backend by using SimpleQuery.
+ */
 static int send_deallocate(POOL_CONNECTION_POOL *backend, PreparedStatementList *p,
 					int n)
 {
@@ -3539,8 +3542,8 @@ static int send_deallocate(POOL_CONNECTION_POOL *backend, PreparedStatementList 
 	query = malloc(len);
 	if (query == NULL)
 	{
-		pool_error("send_deallocate: malloc failed: %s", strerror(errno));
-		exit(1);
+		pool_error("send_deallocate: malloc failed");
+		return -1;
 	}
 	sprintf(query, "DEALLOCATE \"%s\"", p_stmt->name);
 
@@ -3566,6 +3569,11 @@ parse_copy_data(char *buf, int len, char delimiter, int col_id)
 	char *str, *p = NULL;
 
 	str = malloc(len + 1);
+	if (str == NULL)
+	{
+		pool_error("parse_copy_data: malloc failed");
+		return NULL;
+	}
 
 	/* buf is terminated by '\n'. */
 	/* skip '\n' in for loop.     */
@@ -3607,7 +3615,7 @@ parse_copy_data(char *buf, int len, char delimiter, int col_id)
 		p = malloc(j);
 		if (p == NULL)
 		{
-			pool_error("parse_copy_data: malloc failed: %s", strerror(errno));
+			pool_error("parse_copy_data: malloc failed");
 			return NULL;
 		}
 		strcpy(p, str);
