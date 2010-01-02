@@ -254,7 +254,7 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 	p = oldestp;
 	pool_send_frontend_exits(p);
 
-	pool_debug("discarding old %d th connection. user: %s database: %s",
+	pool_debug("discarding old %zd th connection. user: %s database: %s",
 			   oldestp - pool_connection_pool,
 			   MASTER_CONNECTION(p)->sp->user,
 			   MASTER_CONNECTION(p)->sp->database);

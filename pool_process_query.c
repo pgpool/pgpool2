@@ -3338,7 +3338,7 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 	/*
 	 * Search relcache.
 	 */
-	result = (int)pool_search_relcache(relcache, backend, str);
+	result = pool_search_relcache(relcache, backend, str)==0?0:1;
 	return result;
 }
 
