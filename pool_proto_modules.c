@@ -2679,7 +2679,7 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node)
 		}
 	}
 
-	hasrelistemp = (int)pool_search_relcache(hasrelistemp_cache, backend, "pg_class");
+	hasrelistemp = pool_search_relcache(hasrelistemp_cache, backend, "pg_class")==0?0:1;
 	if (hasrelistemp)
 		query = ISTEMPQUERY84;
 	else
@@ -2703,7 +2703,7 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node)
 	/*
 	 * Search relcache.
 	 */
-	result = (int)pool_search_relcache(relcache, backend, str);
+	result = pool_search_relcache(relcache, backend, str)==0?0:1;
 	return result;
 }
 
