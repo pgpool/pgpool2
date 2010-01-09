@@ -293,7 +293,7 @@ pcp_disconnect(void)
 	{
 		/* backend had closed connection already */
 	}
-	if (debug) fprintf(stderr, "DEBUG: send: tos=\"X\", len=%d\n", sizeof(int));
+	if (debug) fprintf(stderr, "DEBUG: send: tos=\"X\", len=%zd\n", sizeof(int));
 
 	pcp_close(pc);
 	pc = NULL;
