@@ -101,7 +101,6 @@ void do_child(int unix_fd, int inet_fd)
 	struct timeval timeout;
 	static int connected;
 	int connections_count = 0;	/* used if child_max_connections > 0 */
-	int first_ready_for_query_received;		/* for master/slave mode */
 	int found;
 	char psbuf[NI_MAXHOST + 128];
 
@@ -289,8 +288,6 @@ void do_child(int unix_fd, int inet_fd)
 		 * we need to connect to the backend and send the startup packet.
 		 */
 
-		first_ready_for_query_received = 0;		/* for master/slave mode */
-
 		/* look for existing connection */
 		found = 0;
 		backend = pool_get_cp(sp->user, sp->database, sp->major, 1);
@@ -332,13 +329,6 @@ void do_child(int unix_fd, int inet_fd)
 				connection_count_down();
 				continue;
 			}
-
-			/* in master/slave mode, the first "ready for query"
-			 * packet should be treated as if we were not in the
-			 * mode
-			 */
-			if (MASTER_SLAVE)
-				first_ready_for_query_received = 1;
 		}
 
 		else
@@ -425,7 +415,7 @@ void do_child(int unix_fd, int inet_fd)
 		{
 			POOL_STATUS status;
 
-			status = pool_process_query(frontend, backend, 0, first_ready_for_query_received);
+			status = pool_process_query(frontend, backend, 0);
 
 			sp = MASTER_CONNECTION(backend)->sp;
 
@@ -454,7 +444,7 @@ void do_child(int unix_fd, int inet_fd)
 						POOL_STATUS status1;
 
 						/* send reset request to backend */
-						status1 = pool_process_query(frontend, backend, 1, 0);
+						status1 = pool_process_query(frontend, backend, 1);
 						pool_close(frontend);
 
 						/* if we detect errors on resetting connection, we need to discard
