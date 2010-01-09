@@ -291,6 +291,8 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 							was_error = 1;
 							if (!VALID_BACKEND(i))
 								break;
+
+							pool_log("pool_process_query: postmaster of backend: %d goes down", i);
 							notice_backend_error(i);
 							sleep(5);
 							break;
