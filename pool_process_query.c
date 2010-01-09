@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2009	PgPool Global Development Group
+ * Copyright (c) 2003-2010	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -20,7 +20,7 @@
  *
  * pool_process_query.c: query processing stuff
  *
-*/
+ */
 #include "config.h"
 #include <errno.h>
 
@@ -82,12 +82,12 @@ int selected_slot;		/* selected DB node */
 int master_slave_dml;	/* non 0 if master/slave mode is specified in config file */
 
 /*
- * main module for query processing
+ * Main module for query processing
+ * reset_request: if non 0, call reset_backend to execute reset queries
  */
 POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 							   POOL_CONNECTION_POOL *backend,
-							   int connection_reuse,
-							   int first_ready_for_query_received)
+							   int reset_request)
 {
 	char kind;	/* packet kind (backend) */
 	char fkind;	/* packet kind (frontend) */
@@ -97,11 +97,18 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 	fd_set	exceptmask;
 	int fds;
 	POOL_STATUS status;
-	int state;	/* 0: ok to issue commands 1: waiting for "ready for query" response */
 	int qcnt;
 	int i;
 
-	frontend->no_forward = connection_reuse;
+	/*
+	 * This variable is used while processing reset_request (i.e.:
+	 * reset_request == 1).  If state is 0, then we call
+	 * reset_backend. And we set state to 1 so that we wait for ready
+	 * for query message from badckends.
+	 */
+	int state;
+
+	frontend->no_forward = reset_request;
 	qcnt = 0;
 	state = 0;
 
@@ -110,7 +117,8 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 		kind = 0;
 		fkind = 0;
 
-		if (state == 0 && connection_reuse)
+		/* Are we requested to send reset queries? */
+		if (state == 0 && reset_request)
 		{
 			int st;
 
@@ -177,7 +185,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 			/*
 			 * Do not read a message from frontend while backends process a query.
 			 */
-			if (!connection_reuse && !in_progress)
+			if (!reset_request && !in_progress)
 			{
 				FD_SET(frontend->fd, &readmask);
 				FD_SET(frontend->fd, &exceptmask);
@@ -298,7 +306,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 			if (was_error)
 				continue;
 
-			if (!connection_reuse && !in_progress)
+			if (!reset_request && !in_progress)
 			{
 				if (FD_ISSET(frontend->fd, &exceptmask))
 					return POOL_END;
@@ -323,6 +331,16 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 		{
 			if (frontend->len > 0 && !in_progress)
 			{
+				/* We do not read anything from frontend after receiving X packet.
+				 * Just emit log message. This will guard us from buggy frontend.
+				 */
+				if (reset_request)
+				{
+					pool_log("pool_process_query: garbage data from frontend after receiving terminate message ignored");
+					frontend->len = 0;
+					continue;
+				}
+
 				status = ProcessFrontendResponse(frontend, backend);
 				if (status != POOL_CONTINUE)
 					return status;
@@ -349,8 +367,6 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				pool_memset_system_db_info(system_db_info->info);
 			got_sighup = 0;
 		}
-
-		first_ready_for_query_received = 0;
 
 		/*
 		 * Process backend Response
@@ -468,6 +484,9 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 		if (status != POOL_CONTINUE)
 			return status;
 
+		/* Do we receive ready for query while processing reset
+		 * request?
+		 */
 		if (kind == 'Z' && frontend->no_forward && state == 1)
 		{
 			state = 0;
