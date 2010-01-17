@@ -666,7 +666,8 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend, Portal *portal,
 		const char *orig_msg, int *len)
 {
 	int16		 tmp2,
-				 num_params;
+				 num_params,
+				 num_formats;
 	int32		 tmp4;
 	int			 i,
 				 ts_len,
@@ -686,7 +687,7 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend, Portal *portal,
 	ts_len = strlen(ts);
 
 	*len += (strlen(ts) + sizeof(int32)) * portal->num_tsparams;
-	new_msg = copy_to = (char *) malloc(*len);
+	new_msg = copy_to = (char *) malloc(*len + portal->num_tsparams * sizeof(int16));
 	copy_from = orig_msg;
 
 	/* portal_name */
@@ -702,10 +703,29 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend, Portal *portal,
 	/* format code */
 	memcpy(&tmp2, copy_from, sizeof(int16));
 	copy_len = sizeof(int16);
-	tmp2 = ntohs(tmp2);
-	copy_len += tmp2 * sizeof(int16);
+	tmp2 = num_formats = ntohs(tmp2);
+
+	if (num_formats > 1)
+	{
+		/* enlarge message length */
+		*len += portal->num_tsparams * sizeof(int16);
+		tmp2 += portal->num_tsparams;
+	}
+	tmp2 = htons(tmp2);
+	memcpy(copy_to, &tmp2, copy_len);
+	copy_to += copy_len; copy_from += copy_len;
+
+	copy_len = num_formats * sizeof(int16);
+
 	memcpy(copy_to, copy_from, copy_len);
 	copy_to += copy_len; copy_from += copy_len;
+
+	if (num_formats > 1)
+	{
+		/* set format codes to zero(text) */
+		memset(copy_to, 0, portal->num_tsparams * 2);
+		copy_to += sizeof(int16) * portal->num_tsparams;
+	}
 
 	/* num params */
 	memcpy(&tmp2, copy_from, sizeof(int16));
