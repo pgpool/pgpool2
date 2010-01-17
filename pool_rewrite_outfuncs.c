@@ -1,3 +1,28 @@
+/* -*-pgsql-c-*- */
+/*
+ * $Header$
+ * 
+ * pgpool: a language independent connection pool server for PostgreSQL 
+ * written by Tatsuo Ishii
+ *
+ * Portions Copyright (c) 2003-2010	PgPool Global Development Group
+ * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose and without fee is hereby
+ * granted, provided that the above copyright notice appear in all
+ * copies and that both that copyright notice and this permission
+ * notice appear in supporting documentation, and that the name of the
+ * author not be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission. The author makes no representations about the
+ * suitability of this software for any purpose.  It is provided "as
+ * is" without express or implied warranty.
+ *
+ * This file was created based on outfuncs.c of PostgreSQL. I retain
+ * original header comment of the file below.
+ */
 /*-------------------------------------------------------------------------
  *
  * outfuncs.c
@@ -7311,6 +7336,16 @@ _rewriteGrantStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbli
 		case ACL_OBJECT_TABLESPACE:
 			delay_string_append_char(message, str, "TABLESPACE ");
 			_rewriteIdList(BaseSelect, message, dblink, str, node->objects);
+			break;
+
+		case ACL_OBJECT_COLUMN:
+		case ACL_OBJECT_FDW:
+		case ACL_OBJECT_FOREIGN_SERVER:
+			pool_log("_rewriteGrantStmt: modules for ACL_OBJECT_COLUMN, ACL_OBJECT_FDW and ACL_OBJECT_FOREIGN_SERVER are not implemented yet");
+			break;
+
+		default:
+			pool_log("_rewriteGrantStmt: unknowm node type %d", node->objtype);
 			break;
 	}
 
