@@ -172,10 +172,11 @@ void do_child(int unix_fd, int inet_fd)
 		int ssl_request = 0;
 		StartupPacket *sp;
 
+		idle = 1;
+
 		/* pgpool stop request already sent? */
 		check_stop_request();
 
-		idle = 1;
 		accepted = 0;
 
 		/* perform accept() */
