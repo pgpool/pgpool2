@@ -1922,51 +1922,86 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 	char *p;
 	int i;
 	char *name;
+
 	POOL_STATUS ret;
 
-	for (i=0;i<NUM_BACKENDS;i++)
+	/* Bind, Describe or Close message? */
+	if (kind == 'B' || kind == 'D' || kind == 'C')
 	{
-		if (VALID_BACKEND(i))
+		if (pool_read(frontend, &sendlen, sizeof(sendlen)))
 		{
-			if (pool_write(CONNECTION(backend, i), &kind, 1))
-				return POOL_END;
+			return POOL_END;
 		}
-	}
+		len = ntohl(sendlen) - 4;
+		p = pool_read2(frontend, len);
+		if (p == NULL)
+			return POOL_END;
 
-	if (pool_read(frontend, &sendlen, sizeof(sendlen)))
-	{
-		return POOL_END;
-	}
+		/* Forward to the master node */
+		if (send_extended_protocol_message(backend, MASTER_NODE_ID, &kind, len, p))
+			return POOL_END;
 
-	len = ntohl(sendlen) - 4;
-
-	for (i=0;i<NUM_BACKENDS;i++)
-	{
-		if (VALID_BACKEND(i))
+		if (REPLICATION || PARALLEL_MODE || MASTER_SLAVE)
 		{
-			if (pool_write(CONNECTION(backend,i), &sendlen, sizeof(sendlen)))
-				return POOL_END;
+			for (i=0;i<NUM_BACKENDS;i++)
+			{
+				if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
+				{
+					/* Forward to other nodes */
+					if (send_extended_protocol_message(backend, i, &kind, len, p))
+						return POOL_END;
+				}
+
+			}
 		}
+
 	}
-
-	if (len == 0)
-		return POOL_CONTINUE;
-	else if (len < 0)
+	else
 	{
-		pool_error("SimpleForwardToBackend: invalid message length");
-		return POOL_END;
-	}
-
-	p = pool_read2(frontend, len);
-	if (p == NULL)
-		return POOL_END;
-
-	for (i=0;i<NUM_BACKENDS;i++)
-	{
-		if (VALID_BACKEND(i))
+		for (i=0;i<NUM_BACKENDS;i++)
 		{
-			if (pool_write_and_flush(CONNECTION(backend, i), p, len))
-				return POOL_END;
+			if (VALID_BACKEND(i))
+			{
+				if (pool_write(CONNECTION(backend, i), &kind, 1))
+					return POOL_END;
+			}
+		}
+
+		if (pool_read(frontend, &sendlen, sizeof(sendlen)))
+		{
+			return POOL_END;
+		}
+
+		len = ntohl(sendlen) - 4;
+
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (VALID_BACKEND(i))
+			{
+				if (pool_write(CONNECTION(backend,i), &sendlen, sizeof(sendlen)))
+					return POOL_END;
+			}
+		}
+
+		if (len == 0)
+			return POOL_CONTINUE;
+		else if (len < 0)
+		{
+			pool_error("SimpleForwardToBackend: invalid message length");
+			return POOL_END;
+		}
+
+		p = pool_read2(frontend, len);
+		if (p == NULL)
+			return POOL_END;
+
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (VALID_BACKEND(i))
+			{
+				if (pool_write_and_flush(CONNECTION(backend, i), p, len))
+					return POOL_END;
+			}
 		}
 	}
 
@@ -2035,44 +2070,77 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 		pool_memory = old_context;
 	}
 
+	/* Bind, Describe or Close message? */
 	if (kind == 'B' || kind == 'D' || kind == 'C')
 	{
 		int i;
 		char kind1;
 
-		for (i = 0;i < NUM_BACKENDS; i++)
+		/*
+		 * Send "Flush" message so that backend notices us
+		 * the completion of the command
+		 */
+		pool_write(MASTER(backend), "H", 1);
+		sendlen = htonl(4);
+		if (pool_write_and_flush(MASTER(backend), &sendlen, sizeof(sendlen)) < 0)
 		{
-			if (VALID_BACKEND(i))
-			{
-				POOL_CONNECTION *cp = CONNECTION(backend, i);
+			return POOL_END;
+		}
 
-				/*
-				 * send "Flush" message so that backend notices us
-				 * the completion of the command
-				 */
-				pool_write(cp, "H", 1);
-				sendlen = htonl(4);
-				if (pool_write_and_flush(cp, &sendlen, sizeof(sendlen)) < 0)
+		if (REPLICATION || PARALLEL_MODE || MASTER_SLAVE)
+		{
+			for (i=0;i<NUM_BACKENDS;i++)
+			{
+				if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 				{
-					return POOL_END;
+					/* Send to other nodes */
+					POOL_CONNECTION *cp = CONNECTION(backend, i);
+
+					pool_write(cp, "H", 1);
+					sendlen = htonl(4);
+					if (pool_write_and_flush(cp, &sendlen, sizeof(sendlen)) < 0)
+					{
+						return POOL_END;
+					}
 				}
 			}
 		}
 
 		/*
-		 * Describe message with a portal name will receive two messages.
+		 * After sending describe message with a portal name, two
+		 * messages will be received.
 		 * 1. ParameterDescription
 		 * 2. RowDescriptions or NoData
 		 * So we read one message here.
 		 */
 		if (kind == 'D' && *p == 'S')
 		{
-			ret = read_kind_from_backend(frontend, backend, &kind1);
-			if (ret != POOL_CONTINUE)
-				return ret;
-			SimpleForwardToFrontend(kind1, frontend, backend);
-			if (pool_flush(frontend))
-				return POOL_END;
+			if (REPLICATION || PARALLEL_MODE || MASTER_SLAVE)
+			{
+				ret = read_kind_from_backend(frontend, backend, &kind1);
+				if (ret != POOL_CONTINUE)
+					return POOL_END;
+				SimpleForwardToFrontend(kind1, frontend, backend);
+				if (pool_flush(frontend))
+					return POOL_END;
+			}
+			else
+			{
+				if (pool_read(MASTER(backend), &kind1, 1))
+					return POOL_END;
+				if (pool_write(frontend, &kind1, 1))
+					return POOL_END;
+				if (pool_read(MASTER(backend), &sendlen, sizeof(sendlen)))
+					return POOL_END;
+				if (pool_write(frontend, &sendlen, sizeof(sendlen)))
+					return POOL_END;
+				len = ntohl(sendlen) - 4;
+				p = pool_read2(MASTER(backend), len);
+				if (p == NULL)
+					return POOL_END;
+				if (pool_write_and_flush(frontend, p, len))
+					return POOL_END;
+			}
 		}
 
 		/*
@@ -2080,12 +2148,31 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 		 */
 		for (;;)
 		{
-			ret = read_kind_from_backend(frontend, backend, &kind1);
-			if (ret != POOL_CONTINUE)
-				return ret;
-			SimpleForwardToFrontend(kind1, frontend, backend);
-			if (pool_flush(frontend) < 0)
-				return POOL_ERROR;
+			if (REPLICATION || PARALLEL_MODE || MASTER_SLAVE)
+			{
+				ret = read_kind_from_backend(frontend, backend, &kind1);
+				if (ret != POOL_CONTINUE)
+					return ret;
+				SimpleForwardToFrontend(kind1, frontend, backend);
+				pool_flush(frontend);
+			}
+			else
+			{
+				if (pool_read(MASTER(backend), &kind1, 1))
+					return POOL_END;
+				if (pool_write(frontend, &kind1, 1))
+					return POOL_END;
+				if (pool_read(MASTER(backend), &sendlen, sizeof(sendlen)))
+					return POOL_END;
+				if (pool_write(frontend, &sendlen, sizeof(sendlen)))
+					return POOL_END;
+				len = ntohl(sendlen) - 4;
+				p = pool_read2(MASTER(backend), len);
+				if (p == NULL)
+					return POOL_END;
+				if (pool_write_and_flush(frontend, p, len))
+					return POOL_END;
+			}
 
 			if (kind1 != 'N')
 				break;
