@@ -1018,7 +1018,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 	len = ntohl(len) - 4;
 	string = pool_read2(frontend, len);
 
-	pool_debug("Parse: portal name <%s>", string);
+	pool_debug("Parse: statement name <%s>", string);
 
 	name = string;
 	stmt = string + strlen(string) + 1;
@@ -1072,6 +1072,11 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 		/* translate Parse message to PrepareStmt */
 		p_stmt = palloc(sizeof(PrepareStmt));
 		p_stmt->type = T_PrepareStmt;
+
+		/* XXX: there's a confusion here. Someone mixed up statement
+		 * name with portal name. It is regarded that statment name ==
+		 * portal name. Someday we should fix this. Sigh.
+		 */
 		p_stmt->name = pstrdup(name);
 		p_stmt->query = copyObject(node);
 		portal->stmt = (Node *)p_stmt;
