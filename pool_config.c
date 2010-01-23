@@ -490,7 +490,7 @@ char *yytext;
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2009	PgPool Global Development Group
+ * Copyright (c) 2003-2010	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1901,6 +1901,7 @@ int pool_init_config(void)
     pool_config->recovery_2nd_stage_command = "";
 	pool_config->recovery_timeout = 90;
 	pool_config->client_idle_limit_in_recovery = 0;
+	pool_config->lobj_lock_table = "";
 
 	res = gethostname(localhostname,sizeof(localhostname));
 	if(res !=0 )
@@ -2937,6 +2938,26 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			pool_config->log_statement = v;
 		}
+
+		else if (!strcmp(key, "lobj_lock_table") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->lobj_lock_table = str;
+		}
+
 	}
 
 	fclose(fd);

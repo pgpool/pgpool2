@@ -60,7 +60,6 @@
 #define CRASH_SHUTDOWN_ERROR_CODE "57P02"
 
 static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt);
-static POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *query, int protoMajor, int pid, int key, int no_ready_for_query);
 static POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id, int major);
 static char *get_insert_command_table_name(InsertStmt *node);
 static void reset_prepared_list(PreparedStatementList *p);
@@ -1489,9 +1488,27 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 		return POOL_END;
 
 	/*
+	 * If Function call message for lo_creat, rewrite it
+	 */
+	if (kind == 'F')
+	{
+		char *rewrite_lo;
+		int rewrite_len;
+
+		rewrite_lo = pool_rewrite_lo_creat(kind, p, len, frontend, backend, &rewrite_len);
+
+		if (rewrite_lo != NULL)
+		{
+			p = rewrite_lo;
+			len = rewrite_len;
+			sendlen = htonl(len + 4);
+		}
+	}
+
+	/*
 	 * If Bind message, rewrite it
 	 */
-	if (kind == 'B')
+	else if (kind == 'B')
 	{
 		Portal *portal = NULL;
 		char *stmt_name, *portal_name;
@@ -2279,8 +2296,8 @@ void pool_send_readyforquery(POOL_CONNECTION *frontend)
  * If no_ready_for_query is non 0, returns without reading the packet
  * length for ReadyForQuery. This mode is necessary when called from ReadyForQuery().
  */
-static POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
-							  char *query, int protoMajor, int pid, int key, int no_ready_for_query)
+POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
+					   char *query, int protoMajor, int pid, int key, int no_ready_for_query)
 {
 	int len;
 	int status;
