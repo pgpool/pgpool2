@@ -265,7 +265,7 @@ get_current_timestamp(POOL_CONNECTION_POOL *backend)
 	POOL_STATUS		 status;
 	static char		timestamp[32];
 
-	status = do_query(MASTER(backend), "SELECT now()", &res);
+	status = do_query(MASTER(backend), "SELECT now()", &res, MAJOR(backend));
 	if (status != POOL_CONTINUE)
 	{
 		pool_error("get_current_timestamp: do_query faild");

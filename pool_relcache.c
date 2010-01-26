@@ -142,7 +142,7 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 
 	per_node_statement_log(backend, MASTER_NODE_ID, query);
 
-	if (do_query(MASTER(backend), query, &res) != POOL_CONTINUE)
+	if (do_query(MASTER(backend), query, &res, MAJOR(backend)) != POOL_CONTINUE)
 	{
 		pool_error("pool_search_relcache: do_query failed");
 		if (res)

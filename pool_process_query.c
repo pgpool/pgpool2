@@ -2759,18 +2759,18 @@ void free_select_result(POOL_SELECT_RESULT *result)
 }
 
 /*
- * Send a SELECT to one DB node. This function works for V3 only.
+ * Send a SELECT to one DB node.
  */
-POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result)
+POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result, int major)
 {
 #define DO_QUERY_ALLOC_NUM 1024	/* memory allocation unit for POOL_SELECT_RESULT */
 
 	int i;
 	int len;
 	char kind;
-	char *packet;
-	char *p;
-	short num_fields;
+	char *packet = NULL;
+	char *p = NULL;
+	short num_fields = 0;
 	int num_data;
 	int intval;
 	short shortval;
@@ -2778,6 +2778,10 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 	POOL_SELECT_RESULT *res;
 	RowDesc *rowdesc;
 	AttrInfo *attrinfo;
+
+	int nbytes;
+	static char nullmap[8192];
+	unsigned char mask = 0;
 
 	res = malloc(sizeof(*res));
 	if (!res)
@@ -2813,7 +2817,7 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 	}
 
 	/* send a query to the backend */
-	if (send_simplequery_message(backend, strlen(query) + 1, query, PROTO_MAJOR_V3) != POOL_CONTINUE)
+	if (send_simplequery_message(backend, strlen(query) + 1, query, major) != POOL_CONTINUE)
 	{
 		return POOL_END;
 	}
@@ -2836,17 +2840,32 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 
 		pool_debug("do_query: kind: %c", kind);
 
-		if (pool_read(backend, &len, sizeof(len)) < 0)
+		if (major == PROTO_MAJOR_V3)
 		{
-			pool_error("do_query: error while reading message length");
-			return POOL_END;
+			if (pool_read(backend, &len, sizeof(len)) < 0)
+			{
+				pool_error("do_query: error while reading message length");
+				return POOL_END;
+			}
+			len = ntohl(len) - 4;
+			packet = pool_read2(backend, len);
+			if (packet == NULL)
+			{
+				pool_error("do_query: error while reading rest of message");
+				return POOL_END;
+			}
 		}
-		len = ntohl(len) - 4;
-		packet = pool_read2(backend, len);
-		if (packet == NULL)
+		else
 		{
-			pool_error("do_query: error while reading rest of message");
-			return POOL_END;
+			mask = 0;
+			if (kind == 'C' || kind == 'E' || kind == 'N' || kind == 'P')
+			{
+				if  (pool_read_string(backend, &len, 0) == NULL)
+				{
+					pool_error("do_query: error while reading string of message type %c", kind);
+					return POOL_END;
+				}
+			}
 		}
 
 		switch (kind)
@@ -2856,8 +2875,20 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 				break;
 
 			case 'T':	/* Row Description */
-				p = packet;
-				memcpy(&shortval, p, sizeof(short));
+				if (major == PROTO_MAJOR_V3)
+				{
+					p = packet;
+                    memcpy(&shortval, p, sizeof(short));
+                    p += sizeof(num_fields);
+				}
+				else
+				{
+					if (pool_read(backend, &shortval, sizeof(short)) < 0)
+                    {
+                        pool_error("do_query: error while reading number of fields");
+                        return POOL_END;
+                    }
+				}
 				num_fields = ntohs(shortval);		/* number of fields */
 				pool_debug("num_fileds: %d", num_fields);
 
@@ -2872,36 +2903,66 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 					}
 					rowdesc->attrinfo = attrinfo;
 
-					p += sizeof(num_fields);
-
 					/* extract attribute info */
 					for (i = 0;i<num_fields;i++)
 					{
-						len = strlen(p) + 1;
-						attrinfo->attrname = malloc(len);
-						if (!attrinfo->attrname)
+						if (major == PROTO_MAJOR_V3)
 						{
-							pool_error("do_query: malloc failed");
-							return POOL_ERROR;
+							len = strlen(p) + 1;
+							attrinfo->attrname = malloc(len);
+							if (!attrinfo->attrname)
+							{
+								pool_error("do_query: malloc failed");
+								return POOL_ERROR;
+							}
+							memcpy(attrinfo->attrname, p, len);
+							p += len;
+							memcpy(&intval, p, sizeof(int));
+							attrinfo->oid = htonl(intval);
+							p += sizeof(int);
+							memcpy(&shortval, p, sizeof(short));
+							attrinfo->attrnumber = htons(shortval);
+							p += sizeof(short);
+							memcpy(&intval, p, sizeof(int));
+							attrinfo->typeoid = htonl(intval);
+							p += sizeof(int);
+							memcpy(&shortval, p, sizeof(short));
+							attrinfo->size = htons(shortval);
+							p += sizeof(short);
+							memcpy(&intval, p, sizeof(int));
+							attrinfo->mod = htonl(intval);
+							p += sizeof(int);
+							p += sizeof(short);		/* skip format code since we use "text" anyway */
 						}
-						memcpy(attrinfo->attrname, p, len);
-						p += len;
-						memcpy(&intval, p, sizeof(int));
-						attrinfo->oid = htonl(intval);
-						p += sizeof(int);
-						memcpy(&shortval, p, sizeof(short));
-						attrinfo->attrnumber = htons(shortval);
-						p += sizeof(short);
-						memcpy(&intval, p, sizeof(int));
-						attrinfo->typeoid = htonl(intval);
-						p += sizeof(int);
-						memcpy(&shortval, p, sizeof(short));
-						attrinfo->size = htons(shortval);
-						p += sizeof(short);
-						memcpy(&intval, p, sizeof(int));
-						attrinfo->mod = htonl(intval);
-						p += sizeof(int);
-						p += sizeof(short);		/* skip format code since we use "text" anyway */
+						else
+						{
+							p = pool_read_string(backend, &len, 0);
+							attrinfo->attrname = malloc(len);
+							if (!attrinfo->attrname)
+							{
+								pool_error("do_query: malloc failed");
+								return POOL_ERROR;
+							}
+							memcpy(attrinfo->attrname, p, len);
+							if (pool_read(backend, &intval, sizeof(int)) < 0)
+							{
+								pool_error("do_query: error while reading type oid");
+								return POOL_END;
+							}
+							attrinfo->typeoid = ntohl(intval);
+							if (pool_read(backend, &shortval, sizeof(short)) < 0)
+							{
+								pool_error("do_query: error while reading type size");
+                                return POOL_END;
+							}
+							attrinfo->size = ntohs(shortval);
+							if (pool_read(backend, &intval, sizeof(int)) < 0)
+							{
+								pool_error("do_query: error while reading type modifier");
+                                return POOL_END;
+							}
+							attrinfo->mod = ntohl(intval);
+						}
 
 						attrinfo++;
 					}
@@ -2909,36 +2970,97 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 				break;
 
 			case 'D':	/* data row */
-				p = packet;
-
-				memcpy(&shortval, p, sizeof(short));
-				num_fields = htons(shortval);
-				p += sizeof(short);
+				if (major == PROTO_MAJOR_V3)
+				{
+					p = packet;
+					memcpy(&shortval, p, sizeof(short));
+					num_fields = htons(shortval);
+					p += sizeof(short);
+				}
 
 				if (num_fields > 0)
 				{
+ 					if (major == PROTO_MAJOR_V2)
+ 					{
+ 						nbytes = (num_fields + 7)/8;
+ 
+ 						if (nbytes <= 0)
+ 						{
+ 							pool_error("do_query: error while reading null bitmap");
+ 							return POOL_END;
+ 						}
+ 
+ 						pool_read(backend, nullmap, nbytes);
+ 					}
+
 					res->numrows++;
 
 					for (i=0;i<num_fields;i++)
 					{
-						memcpy(&intval, p, sizeof(int));
-						len = htonl(intval);
-						p += sizeof(int);
-
-						res->nullflags[num_data] = len;
-
-						if (len > 0)	/* NOT NULL? */
+						if (major == PROTO_MAJOR_V3)
 						{
-							res->data[num_data] = malloc(len + 1);
-							if (!res->data[num_data])
-							{
-								pool_error("do_query: malloc failed");
-								return POOL_ERROR;
-							}
-							memcpy(res->data[num_data], p, len);
-							*(res->data[num_data] + len) = '\0';
+							memcpy(&intval, p, sizeof(int));
+							len = htonl(intval);
+							p += sizeof(int);
 
-							p += len;
+							res->nullflags[num_data] = len;
+
+							if (len > 0)	/* NOT NULL? */
+							{
+								res->data[num_data] = malloc(len + 1);
+								if (!res->data[num_data])
+								{
+									pool_error("do_query: malloc failed");
+									return POOL_ERROR;
+								}
+								memcpy(res->data[num_data], p, len);
+								*(res->data[num_data] + len) = '\0';
+
+								p += len;
+							}
+						}
+						else
+						{
+							if (mask == 0)
+								mask = 0x80;
+
+							/* NOT NULL? */
+							if (mask & nullmap[i/8])
+							{
+								/* field size */
+								if (pool_read(backend, &len, sizeof(int)) < 0)
+								{
+									pool_error("do_query: error while reading field size");
+									return POOL_END;
+								}
+								len = ntohl(len) - 4;
+
+								res->nullflags[num_data] = len;
+
+								if (len > 0)
+								{
+									p = pool_read2(backend, len);
+									res->data[num_data] = malloc(len + 1);
+									if (!res->data[num_data])
+									{
+										pool_error("do_query: malloc failed");
+										return POOL_ERROR;
+									}
+									memcpy(res->data[num_data], p, len);
+									*(res->data[num_data] + len) = '\0';
+									if (res->data[num_data] == NULL)
+									{
+										pool_error("do_query: error while reading field data");
+										return POOL_END;
+									}
+								}
+							}
+							else
+							{
+								res->nullflags[num_data] = -1;
+							}
+
+							mask >>= 1;
 						}
 
 						num_data++;
