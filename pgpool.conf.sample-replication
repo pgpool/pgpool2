@@ -214,3 +214,17 @@ recovery_timeout = 90
 # explicit transactions!)  0 means no disconnect. This parameter only
 # takes effect in recovery 2nd stage.
 client_idle_limit_in_recovery = 0
+
+# Specify table name to lock. This is used when rewriting lo_creat
+# command in replication mode. The table must exist and has writable
+# permission to public. If the table name is '', no rewriting occurs.
+lobj_lock_table = ''
+
+# If true, enable SSL support for both frontend and backend connections.
+# note that you must also set ssl_key and ssl_cert for SSL to work in
+# the frontend connections.
+ssl = false
+# path to the SSL private key file
+#ssl_key = './server.key'
+# path to the SSL public certificate file
+#ssl_key = './server.cert'

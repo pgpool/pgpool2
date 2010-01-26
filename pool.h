@@ -35,6 +35,12 @@
 #include <sys/types.h>
 #include <limits.h>
 
+#ifdef USE_SSL
+#include <openssl/crypto.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#endif
+
 /* undef this if you have problems with non blocking accept() */
 #define NONE_BLOCK
 
@@ -210,6 +216,11 @@ typedef struct {
 	int replication_enabled;		/* replication mode enabled */
 	int master_slave_enabled;		/* master/slave mode enabled */
 	int num_reset_queries;		/* number of queries in reset_query_list */
+
+	/* ssl configuration */
+	int ssl;	/* if non 0, activate ssl support (frontend+backend) */
+	char *ssl_cert;	/* path to ssl certificate (frontend only) */
+	char *ssl_key;	/* path to ssl key (frontend only) */
 } POOL_CONFIG;
 
 #define MAX_PASSWORD_SIZE		1024
@@ -229,6 +240,12 @@ typedef struct {
 	char *wbuf;	/* write buffer for the connection */
 	int wbufsz;	/* write buffer size */
 	int wbufpo;	/* buffer offset */
+
+#ifdef USE_SSL
+	SSL_CTX *ssl_ctx; /* SSL connection context */
+	SSL *ssl;	/* SSL connection */
+#endif
+	int ssl_active; /* SSL is failed if < 0, off if 0, on if > 0 */
 
 	char *hp;	/* pending data buffer head address */
 	int po;		/* pending data offset */
@@ -532,6 +549,13 @@ extern POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMa
 extern void pool_discard_cp(char *user, char *database, int protoMajor);
 extern void pool_backend_timer(void);
 
+/* SSL functionality */
+extern void pool_ssl_negotiate_serverclient(POOL_CONNECTION *cp);
+extern void pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp);
+extern void pool_ssl_close(POOL_CONNECTION *cp);
+extern int pool_ssl_read(POOL_CONNECTION *cp, void *buf, int size);
+extern int pool_ssl_write(POOL_CONNECTION *cp, const void *buf, int size);
+
 extern POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend, 
 								  POOL_CONNECTION_POOL *backend);
 
@@ -620,8 +644,6 @@ extern POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION
 extern POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	char *hostname, int port, char *dbname, char *user, char *password);
 
-extern POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result, int major);
-
 /* define pool_system.c */
 extern POOL_CONNECTION_POOL_SLOT *pool_system_db_connection(void);
 extern DistDefInfo *pool_get_dist_def_info (char * dbname, char * schema_name, char * table_name);
@@ -666,24 +688,24 @@ extern void cancel_request(CancelPacket *sp);
 extern void check_stop_request(void);
 
 /* pool_process_query.c */
-void reset_variables(void);
-void per_node_statement_log(POOL_CONNECTION_POOL *backend, int node_id, char *query);
-POOL_STATUS pool_extract_error_message(POOL_CONNECTION *backend, int major, bool unread, char **message);
-POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
+extern void reset_variables(void);
+extern void per_node_statement_log(POOL_CONNECTION_POOL *backend, int node_id, char *query);
+extern POOL_STATUS pool_extract_error_message(POOL_CONNECTION *backend, int major, bool unread, char **message);
+extern POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
 					   char *query, int protoMajor, int pid, int key, int no_ready_for_query);
-POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result, int major);
-void free_select_result(POOL_SELECT_RESULT *result);
+extern POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result, int major);
+extern void free_select_result(POOL_SELECT_RESULT *result);
 
 /* pool_relcache.c */
-POOL_RELCACHE *pool_create_relcache(int cachesize, char *sql,
+extern POOL_RELCACHE *pool_create_relcache(int cachesize, char *sql,
 									func_ptr register_func, func_ptr unregister_func,
 									bool issessionlocal);
-void pool_discard_relcache(POOL_RELCACHE *relcache);
-void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backend, char *table);
-void *int_register_func(POOL_SELECT_RESULT *res);
-void *int_unregister_func(void *data);
+extern void pool_discard_relcache(POOL_RELCACHE *relcache);
+extern void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backend, char *table);
+extern void *int_register_func(POOL_SELECT_RESULT *res);
+extern void *int_unregister_func(void *data);
 
 /* pool_lobj.c */
-char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len, POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, int* len);
+extern char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len, POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, int* len);
 
 #endif /* POOL_H */

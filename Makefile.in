@@ -73,8 +73,9 @@ am_pgpool_OBJECTS = main.$(OBJEXT) child.$(OBJEXT) pool_auth.$(OBJEXT) \
 	pool_query_cache.$(OBJEXT) pool_hba.$(OBJEXT) \
 	pool_path.$(OBJEXT) pool_ip.$(OBJEXT) ps_status.$(OBJEXT) \
 	strlcpy.$(OBJEXT) recovery.$(OBJEXT) pool_relcache.$(OBJEXT) \
-	pool_process_reporting.$(OBJEXT) pool_timestamp.$(OBJEXT) \
-	pool_proto_modules.$(OBJEXT) pool_lobj.$(OBJEXT)
+	pool_process_reporting.$(OBJEXT) pool_ssl.$(OBJEXT) \
+	pool_timestamp.$(OBJEXT) pool_proto_modules.$(OBJEXT) \
+	pool_lobj.$(OBJEXT)
 pgpool_OBJECTS = $(am_pgpool_OBJECTS)
 pgpool_DEPENDENCIES = parser/libsql-parser.a pcp/libpcp.la \
 	parser/nodes.o
@@ -243,7 +244,7 @@ pgpool_SOURCES = pool.h pool_type.h version.h pgpool.conf.sample \
 	pool_query_cache.c pool_hba.conf.sample sample/pgpool.pam\
 	pool_hba.c pool_path.h pool_path.c pool_ip.h pool_ip.c pool_type.h \
 	ps_status.c strlcpy.c recovery.c pool_relcache.c pool_process_reporting.c \
-	pool_timestamp.c pool_timestamp.h \
+	pool_ssl.c pool_timestamp.c pool_timestamp.h \
 	pool_proto_modules.c pool_proto_modules.h \
 	pool_lobj.c
 
@@ -417,6 +418,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_sema.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_shmem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_signal.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_ssl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_stream.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_system.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_timestamp.Po@am__quote@

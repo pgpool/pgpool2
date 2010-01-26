@@ -1902,6 +1902,9 @@ int pool_init_config(void)
 	pool_config->recovery_timeout = 90;
 	pool_config->client_idle_limit_in_recovery = 0;
 	pool_config->lobj_lock_table = "";
+	pool_config->ssl = 0;
+	pool_config->ssl_cert = "";
+	pool_config->ssl_key = "";
 
 	res = gethostname(localhostname,sizeof(localhostname));
 	if(res !=0 )
@@ -2958,6 +2961,53 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			pool_config->lobj_lock_table = str;
 		}
 
+        else if (!strcmp(key, "ssl") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			int v = eval_logical(yytext);
+
+			if (v < 0)
+			{
+				pool_error("pool_config: invalid value %s for %s", yytext, key);
+				return(-1);
+			}
+			pool_config->ssl = v;
+		}
+		else if (!strcmp(key, "ssl_cert") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->ssl_cert = str;
+		}
+		else if (!strcmp(key, "ssl_key") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->ssl_key = str;
+		}
 	}
 
 	fclose(fd);

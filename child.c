@@ -169,7 +169,6 @@ void do_child(int unix_fd, int inet_fd)
 	for (;;)
 	{
 		int connection_reuse = 1;
-		int ssl_request = 0;
 		StartupPacket *sp;
 
 		idle = 1;
@@ -235,25 +234,10 @@ void do_child(int unix_fd, int inet_fd)
 		}
 
 		/* SSL? */
-		if (sp->major == 1234 && sp->minor == 5679)
+		if (sp->major == 1234 && sp->minor == 5679 && !frontend->ssl_active)
 		{
-			/* SSL not supported */
-			pool_debug("SSLRequest: sent N; retry startup");
-			if (ssl_request)
-			{
-				pool_close(frontend);
-				pool_free_startup_packet(sp);
-				connection_count_down();
-				continue;
-			}
-
-			/*
-			 * say to the frontend "we do not suppport SSL"
-			 * note that this is not a NOTICE response despite it's an 'N'!
-			 */
-			pool_write_and_flush(frontend, "N", 1);
-			ssl_request = 1;
-			pool_free_startup_packet(sp);
+			pool_debug("SSLRequest from client");
+			pool_ssl_negotiate_serverclient(frontend);
 			goto retry_startup;
 		}
 
@@ -1167,6 +1151,7 @@ static POOL_CONNECTION_POOL *connect_backend(StartupPacket *sp, POOL_CONNECTION 
 
 			/* mark this is a backend connection */
 			CONNECTION(backend, i)->isbackend = 1;
+			pool_ssl_negotiate_clientserver(CONNECTION(backend, i));
 
 			/*
 			 * save startup packet info
@@ -1434,6 +1419,7 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	cp->con = pool_open(fd);
 	cp->closetime = 0;
 	cp->con->isbackend = 1;
+	pool_ssl_negotiate_clientserver(cp->con);
 
 	/*
 	 * build V3 startup packet

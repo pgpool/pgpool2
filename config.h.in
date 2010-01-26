@@ -107,6 +107,9 @@
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 #undef HAVE_NETINET_TCP_H
 
+/* Define to 1 if you have the <openssl/ssl.h> header file. */
+#undef HAVE_OPENSSL_SSL_H
+
 /* Define to 1 if you have the <pam/pam_appl.h> header file. */
 #undef HAVE_PAM_PAM_APPL_H
 
@@ -278,6 +281,9 @@
 
 /* Use replacement snprintf() functions. */
 #undef USE_REPL_SNPRINTF
+
+/* Define to 1 to build with SSL support. (--with-openssl) */
+#undef USE_SSL
 
 /* Version number of package */
 #undef VERSION

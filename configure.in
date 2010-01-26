@@ -275,6 +275,25 @@ AC_ARG_WITH(pgsql-libdir,
 	PGSQL_LIB_DIR="$withval"
     ])
 
+
+AC_ARG_WITH(openssl,
+    [  --with-openssl     build with OpenSSL support],
+    [],
+    [openssl=no])
+
+if test "$with_openssl" = yes || test "$with_openssl" = auto; then
+    AC_CHECK_HEADERS(openssl/ssl.h,
+        [AC_DEFINE([USE_SSL], 1,
+            [Define to 1 to build with SSL support. (--with-openssl)])],
+	[
+            if test "$with_openssl" = yes; then
+                AC_MSG_ERROR([header file <openssl/ssl.h> is required for SSL])
+            else
+                AC_MSG_WARN([header file <openssl/ssl.h> is required for SSL])
+            fi
+        ])
+fi
+
 AC_ARG_WITH(pam,
     [  --with-pam     build with PAM support],
     [AC_DEFINE([USE_PAM], 1, [Define to 1 to build with PAM support. (--with-pam)])])

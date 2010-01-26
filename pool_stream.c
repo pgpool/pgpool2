@@ -5,7 +5,7 @@
 * pgpool: a language independent connection pool server for PostgreSQL
 * written by Tatsuo Ishii
 *
-* Copyright (c) 2003-2009	PgPool Global Development Group
+* Copyright (c) 2003-2010	PgPool Global Development Group
 *
 * Permission to use, copy, modify, and distribute this software and
 * its documentation for any purpose and without fee is hereby
@@ -109,6 +109,9 @@ void pool_close(POOL_CONNECTION *cp)
 	if (cp->buf2)
 		free(cp->buf2);
 	pool_discard_params(&cp->params);
+
+	pool_ssl_close(cp);
+
 	free(cp);
 }
 
@@ -144,7 +147,12 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 			}
 		}
 
-		readlen = read(cp->fd, readbuf, READBUFSZ);
+		if (cp->ssl_active > 0) {
+		  readlen = pool_ssl_read(cp, readbuf, READBUFSZ);
+		} else {
+		  readlen = read(cp->fd, readbuf, READBUFSZ);
+		}
+
 		if (readlen == -1)
 		{
 			if (errno == EINTR || errno == EAGAIN)
@@ -254,7 +262,12 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 			}
 		}
 
-		readlen = read(cp->fd, buf, len);
+		if (cp->ssl_active > 0) {
+		  readlen = pool_ssl_read(cp, buf, len);
+		} else {
+		  readlen = read(cp->fd, buf, len);
+		}
+
 		if (readlen == -1)
 		{
 			if (errno == EINTR || errno == EAGAIN)
@@ -404,7 +417,11 @@ int pool_flush_it(POOL_CONNECTION *cp)
 			}
 		}
 #endif
-		sts = write(cp->fd, cp->wbuf + offset, wlen);
+		if (cp->ssl_active > 0) {
+		  sts = pool_ssl_write(cp, cp->wbuf + offset, wlen);
+		} else {
+		  sts = write(cp->fd, cp->wbuf + offset, wlen);
+		}
 
 		if (sts > 0)
 		{
@@ -593,7 +610,12 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 			}
 		}
 
-		readlen = read(cp->fd, cp->sbuf+readp, readsize);
+		if (cp->ssl_active > 0) {
+		  readlen = pool_ssl_read(cp, cp->sbuf+readp, readsize);
+		} else {
+		  readlen = read(cp->fd, cp->sbuf+readp, readsize);
+		}
+
 		if (readlen == -1)
 		{
 			pool_error("pool_read_string: read() failed. reason:%s", strerror(errno));
