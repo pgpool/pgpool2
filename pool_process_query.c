@@ -1572,19 +1572,22 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 
 				if (pool_write(CONNECTION(backend, i), &kind, 1))
 				{
-					free(rewrite_msg);
+					if (rewrite_msg)
+						free(rewrite_msg);
 					return POOL_END;
 				}
 
 				if (pool_write(CONNECTION(backend,i), &sendlen, sizeof(sendlen)))
 				{
-					free(rewrite_msg);
+					if (rewrite_msg)
+						free(rewrite_msg);
 					return POOL_END;
 				}
 
 				if (pool_write_and_flush(CONNECTION(backend, i), p, len))
 				{
-					free(rewrite_msg);
+					if (rewrite_msg)
+						free(rewrite_msg);
 					return POOL_END;
 				}
 			}
@@ -1620,7 +1623,8 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 				free(portal->portal_name);
 			portal->portal_name = strdup(portal_name);
 		}
-		free(rewrite_msg);
+		if (rewrite_msg)
+			free(rewrite_msg);
 	}
 
 	/* Close message with prepared statement name. */

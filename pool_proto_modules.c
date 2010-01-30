@@ -1096,7 +1096,11 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 			pending_prepared_portal = portal;
 		}
 
-		/* switch old memory context */
+		/*
+		 * Switch to old memory context. Caution. Now we are in parser
+		 * memory context.
+		 * Palloced memories will be gone if free_parser() called!
+		 */
 		pool_memory = old_context;
 
 		if (REPLICATION)
@@ -1186,7 +1190,10 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 		return POOL_END;
 	}
 
-	free_parser();
+	/*
+	 * Cannot call free_parser() here. Since "string" might be allocated in parser context.
+	 * free_parser();
+	 */
 
 	if (REPLICATION || PARALLEL_MODE || MASTER_SLAVE)
 	{
@@ -1204,6 +1211,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 			cancel_packet.pid = MASTER_CONNECTION(backend)->pid;
 			cancel_packet.key= MASTER_CONNECTION(backend)->key;
 			cancel_request(&cancel_packet);
+			free_parser();
 			return POOL_END;
 		}
 
@@ -1215,7 +1223,10 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 		 */
 		deadlock_detected = detect_deadlock_error(MASTER(backend), MAJOR(backend));
 		if (deadlock_detected < 0)
+		{
+			free_parser();
 			return POOL_END;
+		}
 
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
@@ -1231,7 +1242,10 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 												 strlen(POOL_ERROR_QUERY)+1,
 												 POOL_ERROR_QUERY,
 												 MAJOR(backend)))
+					{
+						free_parser();
 						return POOL_END;
+					}
 				}
 				else
 				{
@@ -1239,7 +1253,10 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 					per_node_statement_log(backend, i, per_node_statement_log_buffer);
 
 					if (send_extended_protocol_message(backend, i,"P", len, string))
+					{
+						free_parser();
 						return POOL_END;
+					}
 				}
 			}
 		}
@@ -1260,10 +1277,16 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 				cancel_packet.pid = MASTER_CONNECTION(backend)->pid;
 				cancel_packet.key= MASTER_CONNECTION(backend)->key;
 				cancel_request(&cancel_packet);
+				free_parser();
 				return POOL_END;
 			}
 		}
 	}
+
+	/*
+	 * Ok. we are safe to call free_parser();
+	 */
+	free_parser();
 
 	for (;;)
 	{
