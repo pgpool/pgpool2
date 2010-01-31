@@ -171,7 +171,7 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 	 */
 	if (TSTATE(backend) == 'E')
 	{
-		pool_log("pool_check_lo_creat: failed to execute: %s", LOCK_QUERY);
+		pool_log("pool_check_lo_creat: failed to execute: %s", qbuf);
 		return NULL;
 	}
 
