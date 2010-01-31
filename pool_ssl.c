@@ -22,6 +22,8 @@
  *
  */
 
+#include <string.h>
+
 #include "config.h"
 #include "pool.h"
 
