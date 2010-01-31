@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2009	PgPool Global Development Group
+ * Copyright (c) 2003-2010	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -304,6 +304,26 @@ void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	strncpy(status[i].name, "client_idle_limit_in_recovery", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->client_idle_limit_in_recovery);
 	strncpy(status[i].desc, "if idle for this seconds, child connection closes in recovery 2nd statge", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "lobj_lock_table", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->lobj_lock_table);
+	strncpy(status[i].desc, "table name used for large object replication control", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "ssl", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->ssl);
+	strncpy(status[i].desc, "SSL support", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "ssl_key", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ssl_key);
+	strncpy(status[i].desc, "path to the SSL private key file", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "ssl_cert", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ssl_cert);
+	strncpy(status[i].desc, "path to the SSL public certificate file", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "parallel_mode", POOLCONFIG_MAXNAMELEN);
