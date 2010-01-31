@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Mon Dec  7 18:37:01 JST 2009
+Last modified: Sat Jan 30 19:41:07 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -118,8 +118,10 @@ Also packages are provided for various platforms including CentOS, RedHat Enterp
 </p>
 
 <p>Installing pgpool-II from source code requires gcc 2.9 or higher, and GNU
-make. Also, pgpool-II links libpq library, so it must be installed on
-a machine used to build pgpool-II.</p>
+make. Also, pgpool-II links libpq library, so the libpq library and development
+headers must be installed on a machine used to build pgpool-II.  Additionally
+the OpenSSL library and development headers must be present in order to
+enable OpenSSL support in pgpool-II</p>
 
 <dl>
 <dt>configure</dt>
@@ -140,6 +142,9 @@ directory. Default value is <code>/usr/local</code></li>
   <li><code>--with-pgsql=path</code><br/>
       Top directory where PostgreSQL's client libraries are
 installed. Default value is obtained by <code>pg_config</code></li>
+  <li><code>--with-openssl</code><br/>
+      pgpool-II binaries will be built with OpenSSL support.  The default
+      is that OpenSSL support is disabled.</li>
 </ul>
 </p>
 </dd>
@@ -670,8 +675,59 @@ You need to reload pgpool.conf if you change the value.
       </p>
   </dd>
 
+  <dt>ssl</dt>
+  <dd>
+      <p>
+      If true, enable SSL support for both the frontend and backend
+      connections.  Note that <code>ssl_key</code> and <code>ssl_cert</code>
+      must also be set in order for SSL to work in the frontend connections.
+      </p>
+
+      <p>
+      The default is that SSL is off.  Note that OpenSSL support must also
+      have been configured at compilation time, as mentioned in the
+      <a href="#install">installation</a> section.
+      </p>
+
+      <p>
+      The pgpool-II daemon must be restarted when updating SSL related settings.
+      </p>
+  </dd>
+
+  <dt>ssl_key</dt>
+  <dd>
+      <p>
+      The path to the private key file to use for incoming frontend connections.
+      </p>
+
+      <p>
+      There is no default value for this option, and if left unset SSL will
+      be disabled for incoming frontend connections.
+      </p>
+  </dd>
+
+  <dt>ssl_cert</dt>
+  <dd>
+      <p>
+      The path to the public x509 certificate file to use for incoming 
+      frontend connections.
+      </p>
+
+      <p>
+      There is no default value for this option, and if left unset SSL will
+      be disabled for incoming frontend connections.
+      </p>
+  </dd>
+  </dl>
 
 </dl>
+
+<h4>Generating SSL certificates</h4>
+
+Certificate handling is outside the scope of this document.  The
+<a href="http://developer.postgresql.org/pgdocs/postgres/ssl-tcp.html">
+Secure TCP/IP Connections with SSL</a> page at postgresql.org has pointers
+with sample commands for how to generate self-signed certificates.
 
 <h4><p>Failover in the raw Mode</p></h4>
 
@@ -980,6 +1036,55 @@ It can be changed on service.
 	   off. You need to reload pgpool.conf if you change
 	   client_idle_limit_in_recovery.</p>
 
+<dt>lobj_lock_table
+<dd>
+<p>
+Specify table name used for large object replication control. If
+it is specified, pgpool will lock the table specified by
+lobj_lock_table and generate large object id by looking into
+pg_largeobject system catalog and call lo_create to create large object.
+This way, it's guaranteed to use same large object id in all DB nodes in
+replication mode. Please note that PostgreSQL 8.0 or before does not
+have lo_create, thus this functionality will not work.
+</p>
+<p>
+Libpq function lo_creat() call will trigger this functionality. Also
+large object creation through Java API (JDBC driver), PHP
+API(pg_lo_create, or similar API in PHP library such as PDO) and same
+API in various programing languages are known to use similar protocol,
+thus should work.
+</p>
+<p>
+Following large object create operation will not work:
+<p>
+<ul>
+<li>lo_create of libpq
+<li>Any API of any language using lo_create
+<li>lo_import function in backend
+<li>SELECT lo_creat
+</ul>
+</p>
+<p>
+It does not matter what lobj_lock_table's schema is, but it should be
+writable by any user. Here is an example to create such a table:
+</p>
+<p>
+<pre>
+CREATE TABLE public.my_lock_table ();
+GRANT ALL ON public.my_lock_table TO PUBLIC;
+</pre>
+</p>
+<p>
+The table specified by lobj_lock_table must be created beforehand. If
+you create the table in template1, any database created afterward will
+have the table.
+</p>
+<p>
+If lobj_lock_table has empty string(''), the functionality is disabled
+(thus large object replication will not work). The default value for
+lobj_lock_table is ''.
+</p>
+
 </dl>
 
 <h4><p>condition for load balance</p></h4>
@@ -1091,6 +1196,41 @@ pgpool-II. The System DB's configuration is done in
       <p>The password for the System DB. If no password is set,
       set the empty string ('').</p>
   </dd>
+
+  <dt>ssl_ca_cert</dt>
+  <dd>
+      <p>
+      The path to a PEM format file containing one or more CA root
+      certificates, which can be used to verify the backend server
+      certificate.  This is analagous to the <code>-CAfile</code> option 
+      to the OpenSSL <code>verify(1)</code> command.
+      </p>
+
+      <p>
+      The default value for this option is unset, such that no
+      verification takes place.  Verification will still occur if
+      this option is not set but a value has been given for 
+      <code>ssl_ca_cert_dir</code>.
+      </p>
+  </dd>
+
+  <dt>ssl_ca_cert_dir</dt>
+  <dd>
+      <p>
+      The path to a directory containing PEM format CA certficate
+      files, which can be used to verify the backend server
+      certificate.  This is analagous to the <code>-CApath</code> option 
+      to the OpenSSL <code>verify(1)</code> command.
+      </p>
+
+      <p>
+      The default value for this option is unset, such that no
+      verification takes place.  Verification will still occur if
+      this option is not set but a value has been given for 
+      <code>ssl_ca_cert</code>.
+      </p>
+  </dd>
+
 </dl>
 
 <h4><p>Initial Configuration of the System DB</p></h4>
@@ -1650,6 +1790,13 @@ pgmgt.conf.php.
 </ul>
 </p>
 
+<h2>Large object</h2>
+<p>
+pgpool-II 2.3.2 or later supports large object replication. For this, you need to
+enable lobj_lock_table directive in pgpool.conf. Proper large object
+replication using backend function lo_import is not supported, however.
+</p>
+
 <h2>Functions, etc. In Replication Mode</h2>
 
 <p>There is no guarantee that the data, which returns different values
@@ -1699,7 +1846,7 @@ cannot to be transformed thus cannot be properly replicated in the current imple
 </ul>
 </p>
 
-<p>Tables created by <code>CREATE TEMP TABLE</code> will be delete at the end of
+<p>Tables created by <code>CREATE TEMP TABLE</code> will be deleted at the end of
 session by specifying DISCARD ALL in reset_query_list if you are using PostgreSQL 8.3 or later.
 </p>
 <p>

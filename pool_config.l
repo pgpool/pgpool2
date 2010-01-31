@@ -180,6 +180,8 @@ int pool_init_config(void)
 	pool_config->ssl = 0;
 	pool_config->ssl_cert = "";
 	pool_config->ssl_key = "";
+	pool_config->ssl_ca_cert = "";
+	pool_config->ssl_ca_cert_dir = "";
 
 	res = gethostname(localhostname,sizeof(localhostname));
 	if(res !=0 )
@@ -1282,6 +1284,44 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->ssl_key = str;
+		}
+		else if (!strcmp(key, "ssl_ca_cert") && 
+		         CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->ssl_ca_cert = str;
+		}
+		else if (!strcmp(key, "ssl_ca_cert_dir") && 
+		         CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->ssl_ca_cert_dir = str;
 		}
 	}
 

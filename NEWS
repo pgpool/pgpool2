@@ -1,3 +1,54 @@
+2.3.2 (tomiteboshi) 2010/02/01
+
+	  * Version 2.3.2
+
+	  This version includes various fixes for bugs in 2.3.1 or before.
+	  All 2.3.x users are encouraged to upgrade to 2.3.2 as soon as
+	  possible.
+
+	  Also this version enables long awaited SSL support and large
+	  object support.
+
+	  * Enhancements
+
+	  - SSL support(Sean Finney)
+
+	  - Large object replication support. You need PostgreSQL 8.1 or
+        later, however(Tatsuo)
+
+	  - While health checking and recovery use postgres database if
+		possible.  If postgres database does not exist, use template1
+		as it stands now.  While connecting template1, certain
+		commands, for example DROP DATABASE cannot used. Using postgres
+		database allows to use these commands while recovery(Tatsuo)
+
+	  * Bug fixes
+
+	  - Fix errors in timestamp rewriting which occasionaly cause
+		broken packet sending to slave nodes(Tatsuo)
+
+	  - Fix errors when timestamp rewriting is used with V2
+        protocol(Toshihiro Kitagawa)
+
+	  - Propagate Bind, Describe and Close messages to only master
+        node if running in master/slave and in transaction (Tatsuo)
+
+	  - Fix do_child() so that check_stop_request() exits immediately
+		when smart shutdown signal has been sent.  This has been used
+		to work in 2.2(Toshihiro Kitagawa)
+
+	  - Fix ProcessFrontendResponse not to accept invalid frotend
+        packet(Xavier Noguer)
+
+	  - Use %dz for sizeof in fprintf for more portability(Tatsuo)
+
+	  - Fix compiler warnings(Tatsuo)
+
+	  - Do not force replication of DEALLOCATE if operated in
+		master/slave mode. Now that pgpool do not execute PARSE in all
+		nodes, this was pointless and caused problem (kind mismatch
+		when executing DEALLOCATE)(Tatuso)
+
 2.3.1 (tomiteboshi) 2009/12/18
 
 	  * Version 2.3.1
@@ -16,8 +67,8 @@
 		- INSERT or UPDATE are used which explicitly include now(),
 		- CURRENT_TIMESTAMP, CURRENT_DATE, CURRENT_TIME. Or the target
 		- Table's default value use above functions
-	    - The SQQL statement inclludes out of 32bit
-		  integer(-2147483648 to 2147483647 in decimal)
+	    - The SQL statement inclludes out of 32bit
+		  integer value(-2147483648 to 2147483647 in decimal)
 
 		Example SQL: INSERT INTO t1(id, regdate) VALUES(98887776655,
 		NOW());

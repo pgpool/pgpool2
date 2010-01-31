@@ -113,6 +113,7 @@ int pool_ssl_write(POOL_CONNECTION *cp, const void *buf, int size) {
 
 static int init_ssl_ctx(POOL_CONNECTION *cp, enum ssl_conn_type conntype) {
 	int error = 0;
+	char *cacert = NULL, *cacert_dir = NULL;
 
 	/* initialize SSL members */
 	cp->ssl_ctx = SSL_CTX_new(TLSv1_method());
@@ -135,6 +136,22 @@ static int init_ssl_ctx(POOL_CONNECTION *cp, enum ssl_conn_type conntype) {
 			pool_error("pool_ssl: SSL key failure: %ld", ERR_get_error());
 			error = -1;
 		}
+	} else {
+		/* set extra verification if ssl_ca_cert or ssl_ca_cert_dir are set */
+		if (strlen(pool_config->ssl_ca_cert))
+			cacert = pool_config->ssl_ca_cert;
+		if (strlen(pool_config->ssl_ca_cert_dir))
+			cacert_dir = pool_config->ssl_ca_cert_dir;
+    
+		if ( (!error) && (cacert || cacert_dir) ) {
+			if (! SSL_CTX_load_verify_locations(cp->ssl_ctx, cacert, cacert_dir)) {
+				pool_error("pool_ssl: SSL CA load error: %ld", ERR_get_error());   
+				error = -1;
+			} else {
+				SSL_CTX_set_verify(cp->ssl_ctx, SSL_VERIFY_PEER, NULL);
+			}
+		}
+
 	}
 
 	if (! error) {

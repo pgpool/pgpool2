@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Fri Dec 18 17:05:42 JST 2009
+Last modified: Sat Jan 30 19:58:41 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -121,12 +121,16 @@ pgpool-II$B$N%=!<%9%3!<%I$+$i$N%$%s%9%H!<%k$K$O!"(Bgcc 2.9$B0J>e!"$*$h$S(BGN
 configure$B$K;XDj$G$-$k%*%W%7%g%s$O0J2<$G$9!#(B
 
 <ul>
-<li>--prefix=path
+<li><code>--prefix=path</code><br/>
 pgpool-II$BK\BN$d4XO"%U%!%$%k$r%$%s%9%H!<%k$9$k%H%C%W%G%#%l%/%H%j$r;XDj$7$^$9!#(B
-$B%G%U%)%k%H$O(B/usr/local$B$G$9!#(B
-<li>--with-pgsql=path
+$B%G%U%)%k%H$O(B/usr/local$B$G$9!#(B</li>
+<li><code>--with-pgsql=path</code><br/>
 PostgreSQL$B$N%/%i%$%"%s%H%i%$%V%i%j$J$I$,%$%s%9%H!<%k$5$l$F$$$k%H%C%W%G%#(B
-$B%l%/%H%j$r;XDj$7$^$9!#%G%U%)%k%H$O(Bpg_config $B%3%^%s%I$G<hF@$G$-$k%Q%9$G$9!#(B
+$B%l%/%H%j$r;XDj$7$^$9!#%G%U%)%k%H$O(B<code>pg_config</code>$B%3%^%s%I$G<hF@$G$-$k%Q%9$G$9!#(B</li>
+  <li><code>--with-openssl</code><br/>
+	 pgpool-II$B$r(BOpenSSL$B%5%]!<%HIU$G:n@.$7$^$9!#(B
+	 $B%G%U%)%k%H$G$O(BOpenSSL$B%5%]!<%H$OL58z$G$9!#(B</li>
+
 </ul>
 </p>
 
@@ -640,7 +644,53 @@ backend_data_directory $B$O?7$7$/DI2C$7$?9T$r@_Dj%U%!%$%k:FFI$_9~$_$GDI2C$9$k(
 $B$k>l9g$K$O(B pgpool-II $B$r:F5/F0$7$F$/$@$5$$!#(B
 </p>
 
+  <dt>ssl</dt>
+  <dd>
+      <p>
+	 true$B$J$i$P(Bpgpool-II$B$H%U%m%s%H%(%s%I!"(Bpgpool-II$B$H%P%C%/%(%s%I$N4V$N(BSSL$B@\B3$,2DG=$K$J$j$^$9!#(B
+	 $B$J$*!"(Bpgpool-II$B$H%U%m%s%H%(%s%I$N@\B3$K(BSSL$B$,MxMQ$G$-$k$?$a$K$O!"(B<code>ssl_key</code>$B$H(B<code>ssl_cert</code>$B$,@_Dj$5$l$F$J$1$l$P$J$j$^$;$s!#(B
+      </p>
+
+      <p>
+	 $B%G%U%)%k%H$G$O(BSSL$B%5%]!<%H$O%*%U$K$J$C$F$$$^$9!#(BSSL$B%5%]!<%H$rM-8z$K$9$k$?$a$K$O!"(Bconfigure$B;~$K(BOpenSSL$B%5%]!<%H$rM-8z$K$9$kI,MW$,$"$j$^$9!#>\:Y$O(B<a href="#install">$B%$%s%9%H!<%k(B</a>$B$N9`L\$r$4Mw2<$5$$!#(B
+      </p>
+
+      <p>
+	 ssl$B$rM-8z$K@_Dj$7$?$i!"(Bpgpool$B$N:F5/F0$r$7$F$/$@$5$$!#(B
+      </p>
+  </dd>
+
+  <dt>ssl_key</dt>
+  <dd>
+      <p>
+	 $B%U%m%s%H%(%s%I$H$N@\B3$K;HMQ$9$k%W%i%$%Y!<%H%-!<%U%!%$%k$N%U%k%Q%9$r;XDj$7$^$9!#(B
+      </p>
+
+      <p>
+	 ssl_key$B$N%G%U%)%k%HCM$O$"$j$^$;$s!#(B
+	 ssl_key$B$N@_Dj$,$J$$>l9g$O!"%U%m%s%H%(%s%I$H$N@\B3$G(BSSL$B$,;HMQ$5$l$J$/$J$j$^$9!#(B
+      </p>
+  </dd>
+
+  <dt>ssl_cert</dt>
+  <dd>
+      <p>
+	 $B%U%m%s%H%(%s%I$H$N@\B3$K;HMQ$9$k8x3+(Bx509$B>ZL@=q$N%U%k%Q%9$r;XDj$7$^$9!#(B
+      </p>
+
+      <p>
+	 ssl_cert$B$N%G%U%)%k%HCM$O$"$j$^$;$s!#(B
+	 ssl_cert$B$N@_Dj$,$J$$>l9g$O!"%U%m%s%H%(%s%I$H$N@\B3$G(BSSL$B$,;HMQ$5$l$J$/$J$j$^$9!#(B
+      </p>
+  </dd>
+
 </dl>
+
+<h4>SSL$B>ZL@=q$N@8@.(B</h4>
+<p>
+$B>ZL@=q$N07$$$K$D$$$F$O$3$N%^%K%e%"%k$NHO0O30$G$9!#(B
+PostgreSQL$B%I%-%e%a%s%H(B<a href="http://www.postgresql.jp/document/pg842doc/html/ssl-tcp.html">SSL$B$K$h$k0BA4$J(BTCP/IP$B@\B3(B</a>$B$N>O$K<+J,$GG'>Z$9$k>ZL@=q$r:n@.$9$k%3%^%s%I$NNc$,$"$j$^$9!#(B
+</p>
 
 <h4><p>raw$B%b!<%I$K$*$1$k%U%'%$%k%*!<%PF0:n$K$D$$$F(B</p></h4>
 <p>
@@ -977,6 +1027,65 @@ recovery_timeout$B$r(B0$B$H$7$F$b%?%$%`%"%&%H$,L58z$K$J$k$o$1$G$O$J$/!"C1$KB(
 $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O@_Dj%U%!%$%k$r:FFI$_9~$_$7$F$/$@$5$$!#(B
 </p>
 
+<dt>lobj_lock_table
+<dd>
+<p>
+$B%i!<%8%*%V%8%'%/%H$N%l%W%j%1!<%7%g%s$r9T$$$?$$$H$-$K%m%C%/4IM}$K;H$&$?$a$N%F!<%V%kL>$r;XDj$7$^$9!#(B
+$B$3$N%F!<%V%k$,;XDj$5$l$F$$$F!"%i!<%8%*%V%8%'%/%H$N:n@.MW5a$,%/%i%$%"%s%H$+$iAw?.$5$l!"(B
+$B$+$D$=$NMW5a$NCf$K%i!<%8%*%V%8%'%/%H$N(BID$B$NL@<(E*$J;XDj$,4^$^$l$F$$$J$$>l9g(B($B$D$^$j!"(Blo_creat$B$G%i!<%8%*%V%8%'%/%H$r:n@.$9$k>l9g(B)$B!"(B
+pgpool-II$B$O!"GSB>@)8f$N$?$a$K$3$N%F!<%V%k$r%m%C%/$7$?8e!"(B
+$B%i!<%8%*%V%8%'%/%H$r3JG<$9$k%7%9%F%`%+%?%m%0(Bpg_largeobject$B$N%i!<%8%*%V%8%'%/%H$K3JG<$5$l$F$$$k(BID$B$N:GBgCM$r<h$j$@$7!"(B
+$B$=$NCM(B+1$B$N(BID$B$r;H$C$F(Blo_create()$B$r8F$S=P$7$F%i!<%8%*%V%8%'%/%H$N:n@.$r9T$$$^$9(B(lo_create()$B$r;}$?$J$$%P!<%8%g%s(B8.1$B$h$jA0$N(BPostgreSQL$B$G$O$3$N=hM}$O9T$o$l$^$;$s(B)$B!#(B
+$B$3$NJ}K!$K$h$j!"$9$Y$F$N(BDB$B%N!<%I$GF1$8(BID$B$r;}$D%i!<%8%*%V%8%'%/%H$,:n@.$5$l$k$3$H$,J]>Z$5$l$^$9!#(B
+</p>
+<p>
+$B$3$N$h$&$J=hM}$NBP>]$H$J$k%i!<%8%*%V%8%'%/%H$NA`:n$O!"(BPostgreSQL$B$N(BC$B8@8lMQ$N(BAPI(libpq)$B$G8@$&$H!"(Blo_creat()$B$G$9!#(B
+2010$BG/(B2$B7n;~E@$N2f!9$ND4::$G$O!"0J2<$N8@8l$N%i!<%8%*%V%8%'%/%H:n@.(BAPI$B$O!"$9$Y$F(Blo_creat()$B$r8F$S=P$9$+!"(B
+$B$^$?$O(Blo_creat()$B$HF1$8DL?.%W%m%H%3%k$r;H$C$F$$$k$N$G!"(Bpgpool-II$B$N>e5-$NA`:n$NBP>]$K$J$j!"%i!<%8%*%V%8%'%/%H$N%l%W%j%1!<%7%g%s$,0BA4$K9T$o$l$k$h$&$K$J$j$^$9!#(B
+</p>
+<p>
+<ul>
+<li>Java(JDBC$B%I%i%$%P(B)
+<li>PHP(pg_lo_create$B4X?t!"$^$?$O(BPDO$B$J$I$N3:Ev(BAPI)
+<li>psql$B$+$i(B\lo_import$B$r8F$S=P$9>l9g(B
+</ul>
+</p>
+<p>
+$B>e5-0J30$G$"$C$F$b!"%i!<%8%*%V%8%'%/%H$N:n@.(BAPI$B$G%i!<%8%*%V%8%'%/%H$N(BID$B$r0z?t$H$7$FEO$9$h$&$K$J$C$F$$$J$$$b$N$O4V0c$$$J$/(Blo_creat()$B$r;H$C$F$*$j!"(Bpgpool-II$B$N>e5-$NA`:n$NBP>]$K$J$k$H9M$($FNI$$$G$7$g$&!#(B
+</p>
+
+<p>
+pgpool-II$B$N>e5-=hM}$NBP>]$H$J$i$J$$$h$&$J%i!<%8%*%V%8%'%/%H$N:n@.=hM}$O0J2<$N$b$N$G$9!#(B
+</p>
+<p>
+<ul>
+<li>libpq$B$N(Blo_create()$B$r;HMQ$7$F$$$k(B
+<li>C$B8@8l0J30$N(BAPI$B$G!"(Blo_create()$B$r;HMQ$7$F$$$k$b$N(B
+<li>$B%P%C%/%(%s%I4X?t$N(Blo_import$B$r(BSELECT$B$G8F$S=P$9>l9g(B
+<li>$B%P%C%/%(%s%I4X?t$N(Blo_creat$B$r(BSELECT$B$G8F$S=P$9>l9g(B
+</ul>
+</p>
+<p>
+lobj_lock_table$B$G;XDj$9$k%F!<%V%k$O$I$N$h$&$JDj5A$N$b$N$G$b9=$$$^$;$s$,!"(B
+$B$"$i$+$8$a:n@.:Q$G$+$D$9$Y$F$N%f!<%6$,=q$-9~$_2DG=$G$J$1$l$P$J$j$^$;$s!#(B
+$B$=$N$h$&$J%F!<%V%k$r:n$kNc$r<($7$^$9!#(B
+</p>
+<p>
+<pre>
+CREATE TABLE public.my_lock_table ();
+GRANT ALL ON public.my_lock_table TO PUBLIC;
+</pre>
+</p>
+<p>
+$B$3$NA`:n$O(Bpgpool-II$B7PM3$G@\B3$9$k$9$Y$F$N%G!<%?%Y!<%9$KBP$7$F!"$"$i$+$8$a<B;\$7$F$*$+$J$1$l$P$J$j$^$;$s!#(B
+$B$7$+$7!"$3$NA`:n$r(Btemplate1$B%G!<%?%Y!<%9$KBP$7$F0lEY9T$C$F$*$1$P!"0J8e:n@.$5$l$k%G!<%?%Y!<%9$K$O$3$N%F!<%V%k$,4^$^$l$k$h$&$K$J$k$N$G!"4IM}$N<j4V$,>J$1$^$9!#(B
+</p>
+<p>
+lobj_lock_table$B$K;XDj$9$k%F!<%V%kL>$,6uJ8;z$N>l9g$O!"%i!<%8%*%V%8%'%/%H$K4X$9$k>e5-$N=hM}$O9T$$$^$;$s(B
+($B$7$?$,$C$F!"%i!<%8%*%V%8%'%/%H$N%l%W%j%1!<%7%g%s$OJ]>Z$5$l$^$;$s(B)$B!#(B
+lobj_lock_table$B$N%G%U%)%k%HCM$O6uJ8;z$G$9!#(B
+</p>
+
 </dl>
 
 <h4><p>$B%m!<%I%P%i%s%9$N>r7o$K$D$$$F(B</p></h4>
@@ -994,7 +1103,7 @@ load_balance_mode = true $B$r@_Dj$7$?>l9g!"0J2<$N>r7o$N$9$Y$F$rK~$?$7$?;~$K(BS
 <p>
 
 (<a href="#replicate_select">replicate_select$B$N9`L\(B</a>$B$b;29M$K$7$F$/$@$5$$(B)
-$B$^$?!"(B<a href="load_balance.png">$B>\:Y$JH=Dj>r7o$r%U%m!<%A%c!<%H$K$7$?$b(B</a>$B$N$b$4Mw2<$5$$!#(B
+$B$^$?!"(B<a href="load_balance.png">$B>\:Y$JH=Dj>r7o$r%U%m!<%A%c!<%H$K$7$?$b$N(B</a>$B$b$4Mw2<$5$$!#(B
 
 $B$J$*!"(B
 <pre>
@@ -2657,6 +2766,41 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
 </p>
 
 <h1>$B%j%j!<%9%N!<%H(B<a name="release"></a></h1>
+
+<h2>2.3.2 (tomiteboshi) 2010/02/01</h2>
+<h3>$B35MW(B</h3>
+<p>
+$B$3$N%P!<%8%g%s$G$O!"(B2.3.1$B$N?'!9$J%P%0$,=$@5$5$l$F$$$^$9!#(B
+$BFC$K!"%?%$%`%9%?%s%W$N=q$-49$(5!G=$N%P%0$,=$@5$5$l$F$$$k$N$G!"(B2.3, 2.3.1$B%f!<%6$O$J$k$Y$/Aa$/(B2.3.2$B$K%"%C%W%0%l!<%I$9$k$3$H$r$*4+$a$7$^$9!#(B
+</p>
+<p>
+$B$^$?!"(B2.3.2$B$G$O(BSSL$B%5%]!<%H!"%i!<%8%*%V%8%'%/%H$N%l%W%j%1!<%7%g%s5!G=$,DI2C$5$l$F$$$^$9!#(B
+</p>
+
+<h3>$B2~NIE@(B</h3>
+<p>
+<ul>
+ <li>SSL$B$,%5%]!<%H$5$l$^$7$?(B((Sean Finney)
+ <li>$B%i!<%8%*%V%8%'%/%H$N%l%W%j%1!<%7%g%s$,%5%]!<%H$5$l$^$7$?(B(Tatsuo)
+ <li>$B%X%k%9%A%'%C%/$H%*%s%i%$%s%j%+%P%j$N:]$K2DG=$G$"$l$P(Bpostgres$B%G!<%?%Y!<%9$r;H$&$h$&$K$7$^$7$?!#(B
+	  postgres$B%G!<%?%Y!<%9$,B8:_$7$J$$>l9g$O(Btemplate1$B$,;H$o$l$^$9(B($B0JA0$NF0:n$HF1$8(B)$B!#(B
+	  $B$3$l$K$h$j!"(BDROP DATABASE$B$J$I$N%3%^%s%I$,%*%s%i%$%s%j%+%P%jCf$G$b;H$($k$h$&$K$J$j$^$7$?(B(Tatsuo)
+</ul>
+</p>
+
+<h3>$B%P%0=$@5(B</h3>
+<p>
+<ul>
+ <li>$B$?$^$K%?%$%`%9%?%s%W$r=q$-49$($?Ld$$9g$o$;$,%^%9%?0J30$N(BDB$B%N!<%I$KIT@5$J%Q%1%C%H$rAw$C$F$7$^$&LdBj$r=$@5$7$^$7$?(B(Tatsuo)
+ <li>V2$B%W%m%H%3%k$G%?%$%`%9%?%s%W$N=q$-49$(=hM}$,%(%i!<$K$J$k$N$r=$@5$7$^$7$?(B(Toshihiro Kitagawa)
+ <li>master/slave$B%b!<%I!"$+$D%H%i%s%6%/%7%g%sFb$GH/9T$5$l$k(BBind$B!"(BDescribe$B!"(BClose$B%a%C%;!<%8$O%^%9%?$@$1$KAw$k$h$&$K$7$^$7$?(B(Tatsuo)
+ <li>2.3$B$G(Bsmart shutdown$B$K$h$j$9$0$KDd;_$7$J$/$J$C$?%P%0$r=$@5$7$^$7$?(B(Toshihiro Kitagawa)
+ <li>$B%U%m%s%H%(%s%I$+$i$NIT@5$J%3%^%s%I$r<u$1IU$1$J$$$h$&$K$7$^$7$?(B(Xavier Noguer)
+ <li>$B0\?"@-$r9b$a$k$?$a$K!"(Bfprintf$B$N0z?t$K(B%dz$B$r;HMQ$9$k$h$&$K$7$^$7$?(B(Tatsuo)
+ <li>$B%3%s%Q%$%i%o!<%K%s%0$r=$@5$7$^$7$?(B(Tatsuo)
+ <li>master/slave$B%b!<%I$N:]$K!"(BDEALLOCATE$B$r$9$Y$F$N%N!<%I$KAw$i$J$$$h$&$K$7$F!"(Bkind mismatch$B%(%i!<$rKI$0$h$&$K$7$^$7$?(B(Tatsuo)
+</ul>
+</p>
 
 <h2>2.3.1 (tomiteboshi) 2009/12/18</h2>
 <h3>$B35MW(B</h3>

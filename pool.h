@@ -221,6 +221,8 @@ typedef struct {
 	int ssl;	/* if non 0, activate ssl support (frontend+backend) */
 	char *ssl_cert;	/* path to ssl certificate (frontend only) */
 	char *ssl_key;	/* path to ssl key (frontend only) */
+	char *ssl_ca_cert;	/* path to root (CA) certificate */
+	char *ssl_ca_cert_dir;	/* path to directory containing CA certificates */
 } POOL_CONFIG;
 
 #define MAX_PASSWORD_SIZE		1024
