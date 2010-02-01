@@ -691,6 +691,7 @@ extern void check_stop_request(void);
 
 /* pool_process_query.c */
 extern void reset_variables(void);
+extern void reset_connection(void);
 extern void per_node_statement_log(POOL_CONNECTION_POOL *backend, int node_id, char *query);
 extern POOL_STATUS pool_extract_error_message(POOL_CONNECTION *backend, int major, bool unread, char **message);
 extern POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,

@@ -1865,6 +1865,18 @@ void reset_variables(void)
 	receive_extended_begin = 0;
 }
 
+
+/*
+ * if connection_cache == 0, we don't need reset_query.
+ * but we need reset prepared list.
+ */
+void reset_connection(void)
+{
+	reset_variables();
+	reset_prepared_list(&prepared_list);
+}
+
+
 /*
  * Reset backend status. return values are:
  * 0: no query was issued 1: a query was issued 2: no more queries remain -1: error

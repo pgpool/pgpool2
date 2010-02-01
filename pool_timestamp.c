@@ -636,7 +636,7 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 			int				 i;
 			PrepareStmt		*p_stmt = (PrepareStmt *) node;
 
-			for (i = ctx.num_params; i <= portal->num_tsparams; i++)
+			for (i = 0; i < portal->num_tsparams; i++)
 				p_stmt->argtypes =
 				   	lappend(p_stmt->argtypes, SystemTypeName("timestamptz"));
 		}
