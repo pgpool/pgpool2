@@ -1561,7 +1561,7 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 			}
 		}
 	}
-	else	/* Othe than Bind, Describe or Close message */
+	else	/* Other than Bind, Describe or Close message */
 	{
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
