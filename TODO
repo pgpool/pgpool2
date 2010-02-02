@@ -2,7 +2,7 @@ $Header$
 
 * General
 
-- Add backend id to statement log
+- Add backend id to statement log(this item was reolved in 2.3)
 
 - Show PostgreSQL backend process ids in process status
 
@@ -25,7 +25,7 @@ $Header$
 
   (this item was resolved in 2.2)
 
-- drop table should be in a transactin block? It is judged here:
+- Drop table should be in a transactin block? It is judged here:
   (this item was resolved in 2.2)
 
 POOL_STATUS start_internal_transaction(POOL_CONNECTION_POOL *backend, Node *node)
@@ -121,7 +121,7 @@ test tablespace           ... FAILED
   is not closed when client disconnects, automatically issue ABORT
   before issuing DISCARD ALL
 
-- Add SSL support
+- Add SSL support(this item was resolved in 2.3.2)
 
 - Allow to specify queries issued when starting sessions
 
@@ -137,6 +137,8 @@ test tablespace           ... FAILED
 
 * Replication
 
+- Allow to replicate timestamp value (this item was resolved in 2.3)
+
 - Allow per table replication
 
 - Allow per session level and query level load balancing
@@ -145,7 +147,12 @@ test tablespace           ... FAILED
 
 - Allow replication of OID
 
-- Allow to specify functions to be replicated other than nextval(), setval()
+- Allow to specify functions to be replicated other than nextval(),
+  setval()
+
+* Master/slave mode
+
+- Send query to master only if SELECT uses temp tables
 
 * On line recovery
 
@@ -155,6 +162,8 @@ test tablespace           ... FAILED
 * Query cache
 
 - Cache invalidation
+
+- More effcient cache (memcache?)
 
 * Parallel query
 
