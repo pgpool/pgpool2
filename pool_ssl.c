@@ -29,6 +29,22 @@
 
 #ifdef USE_SSL
 
+#define SSL_RETURN_VOID_IF(cond, msg) \
+	do { \
+		if ( (cond) ) { \
+			perror_ssl( (msg) ); \
+			return; \
+		} \
+	} while (0);
+
+#define SSL_RETURN_ERROR_IF(cond, msg) \
+	do { \
+		if ( (cond) ) { \
+			perror_ssl( (msg) ); \
+			return -1; \
+		} \
+	} while (0);
+
 #include <arpa/inet.h> /* for htonl() */
 
 /* Major/minor codes to negotiate SSL prior to startup packet */
@@ -39,6 +55,9 @@ enum ssl_conn_type { ssl_conn_clientserver, ssl_conn_serverclient };
 
 /* perform per-connection ssl initialization.  returns nonzero on error */
 static int init_ssl_ctx(POOL_CONNECTION *cp, enum ssl_conn_type conntype);
+
+/* OpenSSL error message */
+static void perror_ssl(const char *context);
 
 /* attempt to negotiate a secure connection */
 void pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp) {
@@ -58,11 +77,9 @@ void pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp) {
 	switch (server_response) {
 		case 'S':
 			SSL_set_fd(cp->ssl, cp->fd);
-			if (SSL_connect(cp->ssl) < 0) {
-				pool_error("pool_ssl: SSL_connect failed: %ld", ERR_get_error());
-			} else {
-				cp->ssl_active = 1;
-			}
+			SSL_RETURN_VOID_IF( (SSL_connect(cp->ssl) < 0),
+			                    "SSL_connect");
+			cp->ssl_active = 1;
 			break;
 		case 'N':
 			pool_error("pool_ssl: server doesn't want to talk SSL");
@@ -87,11 +104,8 @@ void pool_ssl_negotiate_serverclient(POOL_CONNECTION *cp) {
 		pool_write_and_flush(cp, "S", 1);
 
 		SSL_set_fd(cp->ssl, cp->fd);
-		if (SSL_accept(cp->ssl) < 0) {
-			pool_error("pool_ssl: SSL_accept failed: %ld", ERR_get_error());
-		} else {
-			cp->ssl_active = 1;
-		}
+		SSL_RETURN_VOID_IF( (SSL_accept(cp->ssl) < 0), "SSL_accept");
+		cp->ssl_active = 1;
 	}
 }
 
@@ -119,25 +133,18 @@ static int init_ssl_ctx(POOL_CONNECTION *cp, enum ssl_conn_type conntype) {
 
 	/* initialize SSL members */
 	cp->ssl_ctx = SSL_CTX_new(TLSv1_method());
-	if (! cp->ssl_ctx) {
-		pool_error("pool_ssl: SSL_CTX_new failed: %ld", ERR_get_error());
-		error = -1;
-	}
+	SSL_RETURN_ERROR_IF( (! cp->ssl_ctx), "SSL_CTX_new" );
 
 	if ( conntype == ssl_conn_serverclient) {
-		if ( (!error) && SSL_CTX_use_certificate_file(cp->ssl_ctx, 
-													  pool_config->ssl_cert,
-													  SSL_FILETYPE_PEM) <= 0) {
-			pool_error("pool_ssl: SSL cert failure: %ld", ERR_get_error());
-			error = -1;
-		}
+		error = SSL_CTX_use_certificate_file(cp->ssl_ctx,
+		                                     pool_config->ssl_cert,
+		                                     SSL_FILETYPE_PEM);
+		SSL_RETURN_ERROR_IF( (error <= 0), "Loading SSL certificate");
 
-		if ( (!error) && SSL_CTX_use_PrivateKey_file(cp->ssl_ctx, 
-													 pool_config->ssl_key, 
-													 SSL_FILETYPE_PEM) <= 0) {
-			pool_error("pool_ssl: SSL key failure: %ld", ERR_get_error());
-			error = -1;
-		}
+		error = SSL_CTX_use_PrivateKey_file(cp->ssl_ctx,
+		                                    pool_config->ssl_key,
+		                                    SSL_FILETYPE_PEM);
+		SSL_RETURN_ERROR_IF( (error <= 0), "Loading SSL private key");
 	} else {
 		/* set extra verification if ssl_ca_cert or ssl_ca_cert_dir are set */
 		if (strlen(pool_config->ssl_ca_cert))
@@ -145,26 +152,38 @@ static int init_ssl_ctx(POOL_CONNECTION *cp, enum ssl_conn_type conntype) {
 		if (strlen(pool_config->ssl_ca_cert_dir))
 			cacert_dir = pool_config->ssl_ca_cert_dir;
     
-		if ( (!error) && (cacert || cacert_dir) ) {
-			if (! SSL_CTX_load_verify_locations(cp->ssl_ctx, cacert, cacert_dir)) {
-				pool_error("pool_ssl: SSL CA load error: %ld", ERR_get_error());   
-				error = -1;
-			} else {
-				SSL_CTX_set_verify(cp->ssl_ctx, SSL_VERIFY_PEER, NULL);
-			}
-		}
-
-	}
-
-	if (! error) {
-		cp->ssl = SSL_new(cp->ssl_ctx);
-		if (! cp->ssl) {
-			pool_error("pool_ssl: SSL_new failed: %ld", ERR_get_error());
-			error = -1;
+		if ( cacert || cacert_dir ) {
+			error = (!SSL_CTX_load_verify_locations(cp->ssl_ctx,
+			                                        cacert,
+			                                        cacert_dir));
+			SSL_RETURN_ERROR_IF(error, "SSL verification setup");
+			SSL_CTX_set_verify(cp->ssl_ctx, SSL_VERIFY_PEER, NULL);
 		}
 	}
 
-	return error;
+	cp->ssl = SSL_new(cp->ssl_ctx);
+	SSL_RETURN_ERROR_IF( (! cp->ssl), "SSL_new");
+
+	return 0;
+}
+
+static void perror_ssl(const char *context) {
+	unsigned long err;
+	static const char *no_err_reason = "no SSL error reported";
+	const char *reason;
+
+	err = ERR_get_error();
+	if (! err) {
+		reason = no_err_reason;
+	} else {
+		reason = ERR_reason_error_string(err);
+	}
+
+	if (reason != NULL) {
+		pool_error("pool_ssl: %s: %s", context, reason);
+	} else {
+		pool_error("pool_ssl: %s: Unknown SSL error %lu", context, err);
+	}
 }
 
 #else /* USE_SSL: wrap / no-op ssl functionality if it's not available */
