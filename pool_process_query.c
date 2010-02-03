@@ -3594,7 +3594,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 					snprintf(buf, sizeof(buf), " %d[%c: ", i, kind_list[i]);
 					string_append_char(msg, buf);
 
-					if (pool_extract_error_message(CONNECTION(backend, i), MAJOR(backend), true, &m) == POOL_CONTINUE)
+					if (pool_extract_error_message(false, CONNECTION(backend, i), MAJOR(backend), true, &m) == POOL_CONTINUE)
 					{
 						string_append_char(msg, m);
 						string_append_char(msg, "]");
@@ -4333,16 +4333,21 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 }
 
 /*
- * pool_error_message: Extract human readble message from ERROR/NOTICE
- * reponse packet and return it. Packet kind should have already been
- * read, and it should be either 'E' or 'N'. The returned string is
- * placed in static buffer. Message larger than the buffer will be
- * silently truncated. Be warned that next call to this function will
- * break the buffer.  If unread is true, the packet will be returned
- * to the stream.
+ * pool_extract_error_message: Extract human readable message from
+ * ERROR/NOTICE reponse packet and return it. If read_kind is true,
+ * kind will be read in this function. If read_kind is false, kind
+ * should have been already read and it should be either 'E' or
+ * 'N'.The returned string is placed in static buffer. Message larger
+ * than the buffer will be silently truncated. Be warned that next
+ * call to this function will break the buffer.  If unread is true,
+ * the packet will be returned to the stream.
+ *
+ * Return values are: 0: not error or notice message 1: succeeded to
+ * extract error message -1: error)
  */
-POOL_STATUS pool_extract_error_message(POOL_CONNECTION *backend, int major, bool unread, char **message)
+int pool_extract_error_message(bool read_kind, POOL_CONNECTION *backend, int major, bool unread, char **message)
 {
+	char kind;
 	int readlen = 0, len;
 	static char buf[8192]; /* unread buffer */
 	static char message_buf[8192];		/* mesasge buffer */
@@ -4350,13 +4355,32 @@ POOL_STATUS pool_extract_error_message(POOL_CONNECTION *backend, int major, bool
 
 	p = buf;
 
+	if (read_kind)
+	{
+		len = sizeof(kind);
+
+		if (pool_read(backend, &kind, len) < 0)
+			return -1;
+
+		readlen += len;
+		memcpy(p, &kind, len);
+		p += len;
+
+		if (kind != 'E' && kind != 'N')
+		{
+			if (pool_unread(backend, buf, readlen) != 0)
+				return -1;
+			return 0;
+		}
+	}
+
 	/* read actual message */
 	if (major == PROTO_MAJOR_V3)
 	{
 		char *e;
 
 		if (pool_read(backend, &len, sizeof(len)) < 0)
-			return POOL_END;
+			return -1;
 		readlen += sizeof(len);
 		memcpy(p, &len, sizeof(len));
 		p += sizeof(len);
@@ -4366,7 +4390,7 @@ POOL_STATUS pool_extract_error_message(POOL_CONNECTION *backend, int major, bool
 		if (!str)
 		{
 			pool_error("pool_extract_error_message: malloc failed");
-			return POOL_END;
+			return -1;
 		}
 
 		pool_read(backend, str, len);
@@ -4376,7 +4400,7 @@ POOL_STATUS pool_extract_error_message(POOL_CONNECTION *backend, int major, bool
 		{
 			pool_error("pool_extract_error_message: not enough buffer space");
 			free(str);
-			return POOL_END;
+			return -1;
 		}
 
 		memcpy(p, str, len);
@@ -4410,7 +4434,7 @@ POOL_STATUS pool_extract_error_message(POOL_CONNECTION *backend, int major, bool
 		if (readlen >= sizeof(buf))
 		{
 			pool_error("pool_extract_error_message: not enough buffer space");
-			return POOL_END;
+			return -1;
 		}
 
 		memcpy(p, str, len);
@@ -4422,11 +4446,11 @@ POOL_STATUS pool_extract_error_message(POOL_CONNECTION *backend, int major, bool
 	{
 		/* Put the message to read buffer */
 		if (pool_unread(backend, buf, readlen) != 0)
-			return POOL_END;
+			return -1;
 	}
 
 	*message = message_buf;
-	return POOL_CONTINUE;
+	return 1;
 }
 
 /*

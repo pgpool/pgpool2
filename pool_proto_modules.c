@@ -599,6 +599,16 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 						free_parser();
 						return POOL_END;
 					}
+
+					/*
+					 * Check if some error detected.  If so, emit
+					 * log. This is usefull when invalid encoding error
+					 * occurs. In this case, PostgreSQL does not report
+					 * what statement caused that error and make users
+					 * confused.
+					 */
+					per_node_error_log(backend, i, string, "SimpleQuery: Error or notice message from backend: ", true);
+
 				}
 				if (commit)
 				{
@@ -643,6 +653,17 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 				string = POOL_ERROR_QUERY;
 				len = strlen(string) + 1;
 			}
+			else
+			{
+				/*
+				 * Check if some error detected.  If so, emit
+				 * log. This is usefull when invalid encoding error
+				 * occurs. In this case, PostgreSQL does not report
+				 * what statement caused that error and make users
+				 * confused.
+				 */
+				per_node_error_log(backend, MASTER_NODE_ID, string, "SimpleQuery: Error or notice message from backend: ", true);
+			}
 		}
 
 		/* send query to other than master nodes */
@@ -679,6 +700,16 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 				free_parser();
 				return POOL_END;
 			}
+
+			/*
+			 * Check if some error detected.  If so, emit
+			 * log. This is usefull when invalid encoding error
+			 * occurs. In this case, PostgreSQL does not report
+			 1* what statement caused that error and make users
+			 * confused.
+			 */
+			per_node_error_log(backend, i, string, "SimpleQuery: Error or notice message from backend: ", true);
+
 		}
 
 		/* send "COMMIT" or "ROLLBACK" to only master node if query is "COMMIT" or "ROLLBACK" */
@@ -706,6 +737,14 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 				return POOL_END;
 			}
 
+			/*
+			 * Check if some error detected.  If so, emit
+			 * log. This is usefull when invalid encoding error
+			 * occurs. In this case, PostgreSQL does not report
+			 1* what statement caused that error and make users
+			 * confused.
+			 */
+			per_node_error_log(backend, MASTER_NODE_ID, string, "SimpleQuery: Error or notice message from backend: ", true);
 
 			TSTATE(backend) = 'I';
 		}
@@ -713,8 +752,6 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 	}
 	else
 	{
-		free_parser();
-
 		per_node_statement_log(backend, MASTER_NODE_ID, string);
 
 		if (send_simplequery_message(MASTER(backend), len, string, MAJOR(backend)) != POOL_CONTINUE)
@@ -730,8 +767,20 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 				cancel_packet.key= MASTER_CONNECTION(backend)->key;
 				cancel_request(&cancel_packet);
 
+				free_parser();
 				return POOL_END;
 		}
+
+		/*
+		 * Check if some error detected.  If so, emit
+		 * log. This is usefull when invalid encoding error
+		 * occurs. In this case, PostgreSQL does not report
+		 1* what statement caused that error and make users
+		 * confused.
+		 */
+		per_node_error_log(backend, MASTER_NODE_ID, string, "SimpleQuery: Error or notice message from backend: ", true);
+
+		free_parser();
 	}
 
 	return POOL_CONTINUE;
@@ -1227,6 +1276,16 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 			free_parser();
 			return POOL_END;
 		}
+		else
+		{
+			/*
+			 * Check if other than dealock error detected.  If so, emit
+			 * log. This is usefull when invalid encoding error occurs. In
+			 * this case, PostgreSQL does not report what statement caused
+			 * that error and make users confused.
+			 */
+			per_node_error_log(backend, MASTER_NODE_ID, stmt, "Parse(): Error or notice message from backend: ", true);
+		}
 
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
@@ -1280,6 +1339,15 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 				free_parser();
 				return POOL_END;
 			}
+
+			/*
+			 * Check if error (or notice response) from backend is
+			 * detected.  If so, emit log. This is usefull when
+			 * invalid encoding error occurs. In this case, PostgreSQL
+			 * does not report what statement caused that error and
+			 * make users confused.
+			 */
+			per_node_error_log(backend, i, stmt, "Parse(): Error or notice message from backend: ", true);
 		}
 	}
 
@@ -2746,4 +2814,20 @@ void per_node_statement_log(POOL_CONNECTION_POOL *backend, int node_id, char *qu
 
 	if (pool_config->log_per_node_statement)
 		pool_log("DB node id: %d backend pid: %d statement: %s", node_id, ntohl(slot->pid), query);
+}
+
+/*
+ * Check kind and produce error message
+ * All data read in this function is returned to stream.
+ */
+void per_node_error_log(POOL_CONNECTION_POOL *backend, int node_id, char *query, char *prefix, bool unread)
+{
+	POOL_CONNECTION_POOL_SLOT *slot = backend->slots[node_id];
+	char *message;
+
+	if (pool_extract_error_message(true, CONNECTION(backend, node_id), MAJOR(backend), true, &message) > 0)
+	{
+		pool_log("%s: DB node id: %d backend pid: %d statement: %s message: %s",
+				 prefix, node_id, ntohl(slot->pid), query, message);
+	}
 }
