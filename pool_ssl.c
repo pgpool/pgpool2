@@ -82,7 +82,11 @@ void pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp) {
 			cp->ssl_active = 1;
 			break;
 		case 'N':
-			pool_error("pool_ssl: server doesn't want to talk SSL");
+			/*
+			 * If backend does not support SSL but pgpool does, we get this.
+			 * i.e. This is normal.
+			 */
+			pool_debug("pool_ssl: server doesn't want to talk SSL");
 			break;
 		default:
 			pool_error("pool_ssl: unhandled response: %c", server_response);
