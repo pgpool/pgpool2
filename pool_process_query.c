@@ -3606,7 +3606,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 					snprintf(buf, sizeof(buf), " %d[%c: ", i, kind_list[i]);
 					string_append_char(msg, buf);
 
-					if (pool_extract_error_message(false, CONNECTION(backend, i), MAJOR(backend), true, &m) == POOL_CONTINUE)
+					if (pool_extract_error_message(false, CONNECTION(backend, i), MAJOR(backend), true, &m) == 1)
 					{
 						string_append_char(msg, m);
 						string_append_char(msg, "]");
