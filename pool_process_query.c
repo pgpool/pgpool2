@@ -1521,6 +1521,7 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 		else
 		{
 			portal = lookup_prepared_statement_by_statement(&prepared_list, stmt_name);
+			portal->portal_name = strdup(portal_name);
 		}
 
 		/* rewrite bind message */
@@ -3499,6 +3500,17 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 				pool_debug("read_kind_from_backend: parameter name: %s value: %s", p, value);
 			} while (kind == 'S');
 
+#ifdef DEALLOCATE_ERROR_TEST
+			/*
+			  pool_log("i:%d kind:%c pending_function:%x pending_prepared_portal:%x",
+					 i, kind, pending_function, pending_prepared_portal);
+			*/
+			if (i == 1 && kind == 'C' &&
+				pending_function && pending_prepared_portal &&
+				IsA(pending_prepared_portal->stmt, DeallocateStmt))
+				kind = 'E';
+#endif
+
 			kind_list[i] = kind;
 
 			pool_debug("read_kind_from_backend: read kind from %d th backend %c NUM_BACKENDS: %d", i, kind_list[i], NUM_BACKENDS);
@@ -3602,6 +3614,37 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 					else
 					{
 						string_append_char(msg, "unknown message]");
+					}
+					
+					/*
+					 * If the error was caused by DEALLOCATE then print original query
+					 */
+					if 	(kind_list[i] == 'E')
+					{
+						List *parse_tree_list;
+						Node *node;
+
+						parse_tree_list = raw_parser(query_string_buffer);
+
+						if (parse_tree_list != NIL)
+						{
+							node = (Node *) lfirst(list_head(parse_tree_list));
+
+							if (IsA(node, DeallocateStmt))
+							{
+								Portal *portal;
+								DeallocateStmt *d = (DeallocateStmt *)node;
+
+								portal = lookup_prepared_statement_by_statement(&prepared_list, d->name);
+								if (portal && portal->sql_string)
+								{
+									string_append_char(msg, "[");
+									string_append_char(msg, portal->sql_string);
+									string_append_char(msg, "]");
+								}
+							}
+						}
+						free_parser();
 					}
 				}
 				else
