@@ -1,3 +1,76 @@
+2010-02-07 16:04  t-ishii
+
+	* pool_process_query.c: Fix read_kind_from_backend so that it
+	  properly checks the return value from pool_extract_error_message.
+
+2010-02-07 12:08  t-ishii
+
+	* pool_process_query.c: Enhance read_kind_from_backend.  If kind
+	  mismatch error occurs and command is DEALLOCATE, print original
+	  prepared query which DEALLOCATE tries to delete.
+
+2010-02-07 12:05  t-ishii
+
+	* pool_proto_modules.c: Fix SimpleQuery if DEALLOCATE received,
+	  register pending function.
+
+2010-02-07 12:04  t-ishii
+
+	* main.c: Fix I/O check in reading/writing status file.
+
+2010-02-04 09:31  t-ishii
+
+	* pool_ssl.c: Change pool_error to pool_log when backend does not
+	  support SSL but pgpool does.
+
+2010-02-03 19:31  t-ishii
+
+	* pool_ssl.c: All previously handled errors related to the OpenSSL
+	  engine are now handled with a macro and a small static function in
+	  order to both produce more informative errors as well as commonize
+	  some duplicate code in pool_ssl.c
+
+	  Patch contributed by Sean Finney
+
+2010-02-03 17:11  t-ishii
+
+	* pool.h, pool_process_query.c, pool_proto_modules.c: Emit
+	  statement log when error or notice message comes from backend when
+	  SimpleQuery or Parse executed.  This is usefull because PostgreSQL
+	  does not log particular statement if the error was detected *before*
+	  raw parser get executed.  This typlically happens when encoding
+	  error was found.
+
+2010-02-02 14:45  t-ishii
+
+	* TODO: Sync TODO with 2.3.2
+
+2010-02-02 14:44  t-ishii
+
+	* doc/: pgpool-en.html, pgpool-ja.html: Add description about how
+	  to sync sequences in online recovery
+
+2010-02-02 14:43  t-ishii
+
+	* pool_process_query.c: Fix typo in comment
+
+2010-02-01 18:05  t-ishii
+
+	* child.c, pool.h, pool_process_query.c, pool_timestamp.c,
+	  test/timestamp/expected/insert.out,
+	  test/timestamp/input/insert.sql: Fix timestamp rewritting.  Fix
+	  number of parameters of Prepare.  Fix prepared statement list to be
+	  reset when connection_cache = false.  Patch contributed by Akio
+	  Ishida.
+
+2010-01-31 22:28  t-ishii
+
+	* pool_ssl.c: Include string.h for strlen
+
+2010-01-31 12:15  t-ishii
+
+	* ChangeLog: Update ChangeLog
+
 2010-01-31 11:55  t-ishii
 
 	* pool_process_reporting.c: Add lobj_lock_table, ssl, ssl_key and
