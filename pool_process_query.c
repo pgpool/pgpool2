@@ -4458,9 +4458,8 @@ int pool_extract_error_message(bool read_kind, POOL_CONNECTION *backend, int maj
 			if (*e == 'M')
 			{
 				e++;
-				len = Max(sizeof(message_buf)-1, strlen(e));
-				memcpy(message_buf, e, len);
-				message_buf[sizeof(message_buf)] = '\0';
+				strncpy(message_buf, e, sizeof(message_buf)-1);
+				message_buf[sizeof(message_buf)-1] = '\0';
 				break;
 			}
 			else
@@ -4471,7 +4470,7 @@ int pool_extract_error_message(bool read_kind, POOL_CONNECTION *backend, int maj
 	else
 	{
 		str = pool_read_string(backend, &len, 0);
-		len = Max(sizeof(message_buf)-1, len);
+		len = Min(sizeof(message_buf)-1, len);
 		readlen += len;
 
 		if (readlen >= sizeof(buf))
@@ -4482,7 +4481,7 @@ int pool_extract_error_message(bool read_kind, POOL_CONNECTION *backend, int maj
 
 		memcpy(p, str, len);
 		memcpy(message_buf, str, len);
-		message_buf[sizeof(message_buf)] = '\0';
+		message_buf[len] = '\0';
 	}
 
 	if (unread)
