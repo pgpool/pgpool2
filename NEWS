@@ -1,3 +1,11 @@
+2.3.2 (tomiteboshi) 2010/02/11
+
+	  * Version 2.3.2.1
+
+	  This version fixes bug in 2.3.x. It is identfied that
+	  pgpool-II 2.3.x has a problem with erroneous query
+	  processing(Akio Ishida).
+
 2.3.2 (tomiteboshi) 2010/02/07
 
 	  * Version 2.3.2
