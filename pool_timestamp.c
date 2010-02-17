@@ -677,6 +677,14 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend, Portal *portal,
 				*copy_to,
 				*new_msg;
 
+#ifdef TIMESTAMPDEBUG
+	fprintf(stderr, "message length:%d\n", *len);
+	for(i=0;i<*len;i++)
+	{
+		fprintf(stderr, "%02x ", orig_msg[i]);
+	}
+#endif
+
 	ts = get_current_timestamp(backend);
 	if (ts == NULL)
 	{
@@ -712,12 +720,12 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend, Portal *portal,
 		tmp2 += portal->num_tsparams;
 	}
 	tmp2 = htons(tmp2);
-	memcpy(copy_to, &tmp2, copy_len);
+	memcpy(copy_to, &tmp2, copy_len);	/* copy number of format codes */
 	copy_to += copy_len; copy_from += copy_len;
 
 	copy_len = num_formats * sizeof(int16);
 
-	memcpy(copy_to, copy_from, copy_len);
+	memcpy(copy_to, copy_from, copy_len);		/* copy format codes */
 	copy_to += copy_len; copy_from += copy_len;
 
 	if (num_formats > 1)
@@ -740,8 +748,16 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend, Portal *portal,
 	for (i = 0; i < num_params; i++)
 	{
 		memcpy(&tmp4, copy_from + copy_len, sizeof(int32));
+		tmp4 = ntohl(tmp4);		/* param length */
 		copy_len += sizeof(int32);
-		copy_len += ntohl(tmp4);
+
+		/* If param length is -1, it indicates that the value is NULL
+		 * and we don't have value slot. So we don't add up copy_len.
+		 */
+		if (tmp4 > 0)
+		{
+			copy_len += tmp4;
+		}
 	}
 	memcpy(copy_to, copy_from, copy_len);
 	copy_to += copy_len; copy_from += copy_len;
