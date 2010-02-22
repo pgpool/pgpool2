@@ -1,4 +1,22 @@
-2.3.2 (tomiteboshi) 2010/02/11
+2.3.2.2 (tomiteboshi) 2010/02/22
+
+	  * Version 2.3.2.2
+
+	  This version fixes various bug in 2.3.x.
+
+	  - When rewriting timestamp in extended query, it allocated less
+        than what it actually needed. This causes random problematic
+        behavior, typically "message: invalid string in message" error
+        in backend(Tatsuo).
+
+	  - In extended query, if one of parameters contains NULL, ppool
+        crashes(Tatsuo).
+
+	  - If in previous status file all nodes were marked down status,
+		it is regarded that this file is bogus. This will prevent "all
+		node down" syndrome(Tatsuo).
+
+2.3.2.1 (tomiteboshi) 2010/02/11
 
 	  * Version 2.3.2.1
 
