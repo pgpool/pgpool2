@@ -1169,7 +1169,8 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 			rewrite_query = rewrite_timestamp(backend, node, rewrite_to_params, portal);
 			if (rewrite_query != NULL)
 			{
-				string = palloc(strlen(name) + strlen(rewrite_query) + 2);
+				int alloc_len = len - strlen(stmt) + strlen(rewrite_query);
+				string = palloc(alloc_len);
 				strcpy(string, name);
 				strcpy(string + strlen(name) + 1, rewrite_query);
 				memcpy(string + strlen(name) + strlen(rewrite_query) + 2,
