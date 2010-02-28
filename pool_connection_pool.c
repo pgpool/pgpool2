@@ -504,7 +504,7 @@ int connect_inet_domain_socket_by_port(char *host, int port)
 	hp = gethostbyname(host);
 	if ((hp == NULL) || (hp->h_addrtype != AF_INET))
 	{
-		pool_error("connect_inet_domain_socket: gethostbyname() failed: %s host: %s", hsterror(h_errno), host);
+		pool_error("connect_inet_domain_socket: gethostbyname() failed: %s host: %s", hstrerror(h_errno), host);
 		close(fd);
 		return -1;
 	}
