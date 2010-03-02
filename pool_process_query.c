@@ -1521,7 +1521,10 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 		else
 		{
 			portal = lookup_prepared_statement_by_statement(&prepared_list, stmt_name);
-			portal->portal_name = strdup(portal_name);
+			if (portal)
+			{
+				portal->portal_name = strdup(portal_name);
+			}
 		}
 
 		/* rewrite bind message */
