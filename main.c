@@ -1509,7 +1509,7 @@ int health_check(void)
 	char kind;
 	int i;
 
-	/* Do health check during recovery */
+	/* Do not execute health check during recovery */
 	if (*InRecovery)
 		return 0;
 
