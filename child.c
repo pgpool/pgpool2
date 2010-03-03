@@ -1090,9 +1090,9 @@ void cancel_request(CancelPacket *sp)
 			continue;
 
 		if (*(BACKEND_INFO(i).backend_hostname) == '\0')
-			fd = connect_unix_domain_socket(i);
+			fd = connect_unix_domain_socket(i, TRUE);
 		else
-			fd = connect_inet_domain_socket(i);
+			fd = connect_inet_domain_socket(i, TRUE);
 
 		if (fd < 0)
 		{
@@ -1403,11 +1403,11 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	 */
 	if (*hostname == '\0')
 	{
-		fd = connect_unix_domain_socket_by_port(port, pool_config->backend_socket_dir);
+		fd = connect_unix_domain_socket_by_port(port, pool_config->backend_socket_dir, TRUE);
 	}
 	else
 	{
-		fd = connect_inet_domain_socket_by_port(hostname, port);
+		fd = connect_inet_domain_socket_by_port(hostname, port, TRUE);
 	}
 
 	if (fd < 0)

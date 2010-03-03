@@ -410,7 +410,7 @@ void pool_backend_timer(void)
 /*
  * connect to postmaster through INET domain socket
  */
-int connect_inet_domain_socket(int slot)
+int connect_inet_domain_socket(int slot, bool retry)
 {
 	char *host;
 	int port;
@@ -418,13 +418,13 @@ int connect_inet_domain_socket(int slot)
 	host = pool_config->backend_desc->backend_info[slot].backend_hostname;
 	port = pool_config->backend_desc->backend_info[slot].backend_port;
 
-	return connect_inet_domain_socket_by_port(host, port);
+	return connect_inet_domain_socket_by_port(host, port, retry);
 }
 
 /*
  * connect to postmaster through UNIX domain socket
  */
-int connect_unix_domain_socket(int slot)
+int connect_unix_domain_socket(int slot, bool retry)
 {
 	int port;
 	char *socket_dir;
@@ -432,10 +432,14 @@ int connect_unix_domain_socket(int slot)
 	port = pool_config->backend_desc->backend_info[slot].backend_port;
 	socket_dir = pool_config->backend_socket_dir;
 
-	return connect_unix_domain_socket_by_port(port, socket_dir);
+	return connect_unix_domain_socket_by_port(port, socket_dir, retry);
 }
 
-int connect_unix_domain_socket_by_port(int port, char *socket_dir)
+/*
+ * Connect to PostgreSQL server by using UNIX domain socket.
+ * If retry is true, retry to call connect() upon receiving EINTR error.
+ */
+int connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry)
 {
 	struct sockaddr_un addr;
 	int fd;
@@ -457,7 +461,7 @@ int connect_unix_domain_socket_by_port(int port, char *socket_dir)
 	{
 		if (connect(fd, (struct sockaddr *)&addr, len) < 0)
 		{
-			if (errno == EINTR || errno == EAGAIN)
+			if ((errno == EINTR && retry) || errno == EAGAIN)
 				continue;
 
 			pool_error("connect_unix_domain_socket_by_port: connect() failed: %s", strerror(errno));
@@ -470,7 +474,11 @@ int connect_unix_domain_socket_by_port(int port, char *socket_dir)
 	return fd;
 }
 
-int connect_inet_domain_socket_by_port(char *host, int port)
+/*
+ * Connect to PostgreSQL server by using INET domain socket.
+ * If retry is true, retry to call connect() upon receiving EINTR error.
+ */
+int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 {
 	int fd;
 	int len;
@@ -516,7 +524,7 @@ int connect_inet_domain_socket_by_port(char *host, int port)
 	{
 		if (connect(fd, (struct sockaddr *)&addr, len) < 0)
 		{
-			if (errno == EINTR || errno == EAGAIN)
+			if ((errno == EINTR && retry) || errno == EAGAIN)
 				continue;
 
 			pool_error("connect_inet_domain_socket: connect() failed: %s",strerror(errno));
@@ -539,11 +547,11 @@ static POOL_CONNECTION_POOL_SLOT *create_cp(POOL_CONNECTION_POOL_SLOT *cp, int s
 
 	if (*b->backend_hostname == '\0')
 	{
-		fd = connect_unix_domain_socket(slot);
+		fd = connect_unix_domain_socket(slot, TRUE);
 	}
 	else
 	{
-		fd = connect_inet_domain_socket(slot);
+		fd = connect_inet_domain_socket(slot, TRUE);
 	}
 
 	if (fd < 0)

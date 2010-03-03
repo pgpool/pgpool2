@@ -1538,9 +1538,9 @@ int health_check(void)
 			continue;
 
 		if (*(BACKEND_INFO(i).backend_hostname) == '\0')
-			fd = connect_unix_domain_socket(i);
+			fd = connect_unix_domain_socket(i, FALSE);
 		else
-			fd = connect_inet_domain_socket(i);
+			fd = connect_inet_domain_socket(i, FALSE);
 
 		if (fd < 0)
 		{
@@ -1650,9 +1650,9 @@ system_db_health_check(void)
 		return 0;
 
 	if (*SYSDB_INFO->hostname == '\0')
-		fd = connect_unix_domain_socket_by_port(SYSDB_INFO->port, pool_config->backend_socket_dir);
+		fd = connect_unix_domain_socket_by_port(SYSDB_INFO->port, pool_config->backend_socket_dir, FALSE);
 	else
-		fd = connect_inet_domain_socket_by_port(SYSDB_INFO->hostname, SYSDB_INFO->port);
+		fd = connect_inet_domain_socket_by_port(SYSDB_INFO->hostname, SYSDB_INFO->port, FALSE);
 
 	if (fd < 0)
 	{
