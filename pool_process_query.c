@@ -3460,6 +3460,9 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 	int degenerate_node_num = 0;		/* number of backends degeneration requested */
 	int degenerate_node[MAX_NUM_BACKENDS];		/* degeneration requested backend list */
 
+	POOL_MEMORY_POOL *old_context = NULL;
+	POOL_MEMORY_POOL *parser_context = NULL;
+
 	memset(kind_map, 0, sizeof(kind_map));
 
 	for (i=0;i<NUM_BACKENDS;i++)
@@ -3627,6 +3630,10 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 						List *parse_tree_list;
 						Node *node;
 
+						/* Switch to parser memory context */
+						old_context = pool_memory;
+						pool_memory = parser_context;
+
 						parse_tree_list = raw_parser(query_string_buffer);
 
 						if (parse_tree_list != NIL)
@@ -3648,6 +3655,10 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 							}
 						}
 						free_parser();
+
+						/* Switch to old memory context */
+						parser_context = pool_memory;
+						pool_memory = old_context;
 					}
 				}
 				else
