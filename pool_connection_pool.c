@@ -459,6 +459,12 @@ int connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry)
 
 	for (;;)
 	{
+		if (exit_request)		/* exit request already sent */
+		{
+			pool_log("connect_unix_domain_socket_by_port: exit request has been sent");
+			return -1;
+		}
+
 		if (connect(fd, (struct sockaddr *)&addr, len) < 0)
 		{
 			if ((errno == EINTR && retry) || errno == EAGAIN)
@@ -522,6 +528,12 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 
 	for (;;)
 	{
+		if (exit_request)		/* exit request already sent */
+		{
+			pool_log("connect_inet_domain_socket_by_port: exit request has been sent");
+			return -1;
+		}
+
 		if (connect(fd, (struct sockaddr *)&addr, len) < 0)
 		{
 			if ((errno == EINTR && retry) || errno == EAGAIN)

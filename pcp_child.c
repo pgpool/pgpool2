@@ -58,7 +58,7 @@
 #define MAX_USER_PASSWD_LEN  128
 
 extern void pcp_set_timeout(long sec);
-static int exit_request; /* non 0 means SIGTERM(smart shutdown) or SIGINT(fast shutdown) has arrived */
+volatile sig_atomic_t pcp_exit_request; /* non 0 means SIGTERM(smart shutdown) or SIGINT(fast shutdown) has arrived */
 
 static RETSIGTYPE die(int sig);
 static PCP_CONNECTION *pcp_do_accept(int unix_fd, int inet_fd);
@@ -813,7 +813,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 static RETSIGTYPE
 die(int sig)
 {
-	exit_request = 1;
+	pcp_exit_request = 1;
 
 	pool_debug("PCP child receives shutdown request signal %d", sig);
 

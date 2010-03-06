@@ -498,6 +498,7 @@ extern POOL_REQUEST_INFO *Req_info;
 extern volatile sig_atomic_t *InRecovery;
 extern char remote_ps_data[];		/* used for set_ps_display */
 extern volatile sig_atomic_t got_sighup;
+extern volatile sig_atomic_t exit_request;
 
 #define QUERY_STRING_BUFFER_LEN 1024
 extern char query_string_buffer[];		/* last query string sent to simpleQuery() */
