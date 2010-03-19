@@ -1280,7 +1280,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 		else
 		{
 			/*
-			 * Check if other than dealock error detected.  If so, emit
+			 * Check if other than deadlock error detected.  If so, emit
 			 * log. This is usefull when invalid encoding error occurs. In
 			 * this case, PostgreSQL does not report what statement caused
 			 * that error and make users confused.
