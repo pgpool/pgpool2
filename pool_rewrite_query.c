@@ -62,7 +62,7 @@ static int getInsertRule(ListCell *lc,List *list_t ,DistDefInfo *info,int div_ke
 	if(list_t->length != 1)
 		return -1;
 
-  cell = list_head(list_t);
+	cell = list_head(list_t);
 
 	if(!cell && !IsA(cell,List))
 		return 1;
@@ -75,23 +75,17 @@ static int getInsertRule(ListCell *lc,List *list_t ,DistDefInfo *info,int div_ke
 
 		obj = lfirst(lc);
 
-		if(obj && IsA(obj, TypeCast))
+		/* it supports casting syntax such as "A::B::C" */
+		while (obj && IsA(obj, TypeCast))
 		{
 			TypeCast *type = (TypeCast *) obj;
 			obj = type->arg;
-
-			if(!obj)
-			{
-				return -1;
-			}
 		}
 
-		if(obj && !IsA(obj, A_Const))
-		{
+		if(!obj || !IsA(obj, A_Const))
 			return -1;
-		}
 
- 		if (loop_counter == div_key_num)
+		if (loop_counter == div_key_num)
 		{
 			constant = (A_Const *) obj;
 			value = constant->val;
@@ -108,7 +102,7 @@ static int getInsertRule(ListCell *lc,List *list_t ,DistDefInfo *info,int div_ke
 					node_number = pool_get_id(info, value.val.str);
 				else
 					return -1;
- 				break;
+				break;
 			}
 		}
 		loop_counter++;
