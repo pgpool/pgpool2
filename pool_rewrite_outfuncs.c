@@ -2103,8 +2103,32 @@ _rewriteRangeTblRef(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *db
 
 }
 
-static char *GetTableName(Node *node)
+static int
+RetVirtualColumn(VirtualTable *virtual, char *tablename, char *colname)
 {
+	int col_num = virtual->col_num;
+	int i;
+
+	if (tablename && colname)
+	{
+		for( i = 0; i < col_num; i++)
+		{
+			if(strcmp(virtual->col_list[i], colname) == 0
+			   && strcmp(virtual->table_list[i], tablename) == 0)
+			{
+				return virtual->column_no[i];
+			}
+		}
+	}
+	/* Error */
+	return -1;
+}
+
+static void 
+SearchVirtualColumnID(VirtualTable *virtual, Node *node, char *colname, int *col_id, bool *ambiguous)
+{
+	int tmp_id;
+	char *name = NULL;
 
 	if(IsA(node, RangeVar))
 	{
@@ -2112,48 +2136,53 @@ static char *GetTableName(Node *node)
 		if(range->alias)
 		{
 			Alias *alias = range->alias;
-			return alias->aliasname;
+			name = alias->aliasname;
 		} else {
-			return range->relname;
+			name = range->relname;
 		}
 	}
 	else if (IsA(node,RangeSubselect))
 	{
 		RangeSubselect *select = (RangeSubselect *)node;
-		Alias * alias = select->alias;
-		return alias->aliasname;
+		Alias *alias = select->alias;
+		name = alias->aliasname;
 	}
-	return NULL;
+	else if (IsA(node,JoinExpr))
+	{
+		JoinExpr *jexpr = (JoinExpr *)node;
+		if (jexpr->larg)
+			SearchVirtualColumnID(virtual, jexpr->larg, colname, col_id, ambiguous);
+		if (jexpr->rarg)
+			SearchVirtualColumnID(virtual, jexpr->rarg, colname, col_id, ambiguous);
+	}
+
+	if (name && (tmp_id = RetVirtualColumn(virtual, name, colname)) != -1)
+	{
+		if (*col_id == -1)
+			*col_id = tmp_id;
+		else
+			*ambiguous = true;
+	}
 }
 
-static int RetVirtualColumn(VirtualTable *virtual, char *tablename, char *colname)
+static int
+GetVirtualColumnID(VirtualTable *virtual, Node *node, char *colname)
 {
-	int col_num = virtual->col_num;
-	int i;
-	for( i = 0; i < col_num; i++)
-	{
-		if(strcmp(virtual->col_list[i], colname) == 0
-				&& strcmp(virtual->table_list[i], tablename) == 0)
-		{
-			return virtual->column_no[i];
-		}
-	}
-
-	/* ERROR OR AMBIGIUS */
-	return -1;
+	int col_id = -1;
+	bool ambiguous = false;
+	SearchVirtualColumnID(virtual, node, colname, &col_id, &ambiguous);
+	if (ambiguous)
+		return -1;
+	else
+		return col_id;
 }
 
 static void
 ConvertFromUsingToON(RewriteQuery *message, String *str, JoinExpr *node, int select_num)
 {
-	char *lname;
-	char *rname;
 	char comma = 0;
 	ListCell *lc;
 	VirtualTable *virtual = message->analyze[select_num]->virtual;
-
-	lname = GetTableName(node->larg);
-	rname = GetTableName(node->rarg);
 
 	delay_string_append_char(message, str, " ON");
 	foreach (lc, node->using)
@@ -2168,8 +2197,8 @@ ConvertFromUsingToON(RewriteQuery *message, String *str, JoinExpr *node, int sel
 			delay_string_append_char(message, str, " AND ");
 
 		value = lfirst(lc);
-		snprintf(lbuf, 16, "%d",RetVirtualColumn(virtual,lname,value->val.str));
-		snprintf(rbuf, 16, "%d",RetVirtualColumn(virtual,rname,value->val.str));
+		snprintf(lbuf, 16, "%d", GetVirtualColumnID(virtual, node->larg, value->val.str));
+		snprintf(rbuf, 16, "%d", GetVirtualColumnID(virtual, node->rarg, value->val.str));
 		delay_string_append_char(message, str, " \"pool_c$");
 		delay_string_append_char(message, str, lbuf);
 		delay_string_append_char(message, str, "\"");
