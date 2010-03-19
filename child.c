@@ -1202,6 +1202,7 @@ static RETSIGTYPE die(int sig)
 
 		case SIGINT:	/* fast shutdown */
 		case SIGQUIT:	/* immediate shutdown */
+			child_exit(0);
 			break;
 		default:
 			pool_error("die() received unknown signal: %d", sig);
