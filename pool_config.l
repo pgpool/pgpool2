@@ -1413,9 +1413,9 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				pool_error("failed to get systemdb info");
 				return(-1);
 			}
-			if (!pool_config->replication_enabled)
+			if (!pool_config->replication_enabled && !pool_config->load_balance_mode)
 			{
-				pool_error("pool_config: parallel_mode requires replication_mode turned on");
+				pool_error("pool_config: parallel_mode requires replication_mode or load_balance_mode turned on");
 				return(-1);
 			}
 		}
