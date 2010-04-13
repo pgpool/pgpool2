@@ -68,6 +68,8 @@ static int is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 static POOL_STATUS ParallelForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *database, bool send_to_frontend);
 static void query_cache_register(char kind, POOL_CONNECTION *frontend, char *database, char *data, int data_len);
 static int extract_ntuples(char *message);
+static bool is_panic_or_fatal_error(const char *message);
+static POOL_STATUS send_sync_to_recover(POOL_CONNECTION *frontend, POOL_CONNECTION *backend);
 static int detect_error(POOL_CONNECTION *master, char *error_code, int major, char class, bool unread);
 static int detect_postmaster_down_error(POOL_CONNECTION *master, int major);
 
@@ -1809,25 +1811,10 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 		 * the message and exit since the backend will close the
 		 * channel immediately.
 		 */
-		for (;;)
+		if (is_panic_or_fatal_error(p))
 		{
-			char e;
-
-			e = *p++;
-			if (e == '\0')
-				break;
-
-			if (e == 'S' && (strcasecmp("PANIC", p) == 0 || strcasecmp("FATAL", p) == 0))
-			{
-				pool_flush(frontend);
-				return POOL_END;
-			}
-			else
-			{
-				while (*p++)
-					;
-				continue;
-			}
+			pool_flush(frontend);
+			return POOL_END;
 		}
 
 		if (select_in_transaction)
@@ -2140,6 +2127,15 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 					return POOL_END;
 				if (pool_write_and_flush(frontend, p, len))
 					return POOL_END;
+
+				if (kind1 == 'E')
+				{
+					if (is_panic_or_fatal_error(p))
+						return POOL_END;
+					ret = send_sync_to_recover(frontend, MASTER(backend));
+					if (ret != POOL_CONTINUE)
+						return ret;
+				}
 			}
 		}
 
@@ -2172,6 +2168,15 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 					return POOL_END;
 				if (pool_write_and_flush(frontend, p, len))
 					return POOL_END;
+
+				if (kind1 == 'E')
+				{
+					if (is_panic_or_fatal_error(p))
+						return POOL_END;
+					ret = send_sync_to_recover(frontend, MASTER(backend));
+					if (ret != POOL_CONTINUE)
+						return ret;
+				}
 			}
 
 			if (kind1 != 'N')
@@ -4433,6 +4438,83 @@ static int extract_ntuples(char *message)
 		return 0;
 
 	return atoi(rows);
+}
+
+/*
+ * Returns true if error message contains PANIC or FATAL.
+ * This function works for V3 only.
+ */
+static bool is_panic_or_fatal_error(const char *message)
+{
+	for (;;)
+	{
+		char id;
+
+		id = *message++;
+		if (id == '\0')
+			break;
+
+		if (id == 'S' && (strcasecmp("PANIC", message) == 0 || strcasecmp("FATAL", message) == 0))
+			return true;
+		else
+		{
+			while (*message++)
+				;
+			continue;
+		}
+	}
+	return false;
+}
+
+/*
+ * Send a "Sync"(S) message to a backend in extended query 
+ * protocol so that it accepts next command.
+ * This function is called in raw Mode or Connection Pool Mode.
+ */
+static POOL_STATUS send_sync_to_recover(POOL_CONNECTION *frontend, POOL_CONNECTION *backend)
+{
+	int res;
+	int ret;
+	int len;
+	int sendlen;
+	char kind;
+	char *p;
+
+	pool_write(backend, "S", 1);
+	res = htonl(4);
+	if (pool_write_and_flush(backend, &res, sizeof(res)) < 0)
+		return POOL_END;
+
+	/*
+	 * We don't send "ReadyForQuery"(Z) message to frontend,
+	 * because "Sync"(S) message is sent by pgpool.
+	 */
+	while ((ret = pool_read(backend, &kind, 1)) == 0)
+	{
+		pool_debug("send_sync_to_recover: kind from backend: %c", kind);
+
+		if (pool_read(backend, &sendlen, sizeof(sendlen)))
+			return POOL_END;
+		len = ntohl(sendlen) - 4;
+		p = pool_read2(backend, len);
+		if (p == NULL)
+			return POOL_END;
+
+		if (kind == 'Z')
+			break;
+
+		if (pool_write(frontend, &kind, 1))
+			return POOL_END;
+		if (pool_write(frontend, &sendlen, sizeof(sendlen)))
+			return POOL_END;
+		if (pool_write_and_flush(frontend, p, len))
+			return POOL_END;
+	}
+
+	if (ret != 0)
+		return POOL_END;
+
+	return POOL_CONTINUE;
 }
 
 static int detect_postmaster_down_error(POOL_CONNECTION *backend, int major)
