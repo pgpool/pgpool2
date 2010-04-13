@@ -69,7 +69,7 @@ int pool_init_cp(void)
 	for (i = 0; i < pool_config->max_pool; i++)
 	{
 		pool_connection_pool[i].info = &(MY_PROCESS_INFO.connection_info[i]);
-		memset(pool_connection_pool[i].info, 0, sizeof(ConnectionInfo));
+		memset(pool_connection_pool[i].info, 0, sizeof(ConnectionInfo) * MAX_NUM_BACKENDS);
 	}
 	return 0;
 }
@@ -154,7 +154,7 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, in
 					info = p->info;
 					memset(p, 0, sizeof(POOL_CONNECTION_POOL_SLOT));
 					p->info = info;
-					memset(p->info, 0, sizeof(ConnectionInfo));
+					memset(p->info, 0, sizeof(ConnectionInfo) * MAX_NUM_BACKENDS);
 					POOL_SETMASK(&oldmask);
 					return NULL;
 				}
@@ -201,7 +201,7 @@ void pool_discard_cp(char *user, char *database, int protoMajor)
 	info = p->info;
 	memset(p, 0, sizeof(POOL_CONNECTION_POOL));
 	p->info = info;
-	memset(p->info, 0, sizeof(ConnectionInfo));
+	memset(p->info, 0, sizeof(ConnectionInfo) * MAX_NUM_BACKENDS);
 }
 
 
@@ -277,7 +277,7 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 	info = p->info;
 	memset(p, 0, sizeof(POOL_CONNECTION_POOL));
 	p->info = info;
-	memset(p->info, 0, sizeof(ConnectionInfo));
+	memset(p->info, 0, sizeof(ConnectionInfo) * MAX_NUM_BACKENDS);
 
 	return new_connection(p);
 }
@@ -383,7 +383,7 @@ void pool_backend_timer(void)
 				info = p->info;
 				memset(p, 0, sizeof(POOL_CONNECTION_POOL));
 				p->info = info;
-				memset(p->info, 0, sizeof(ConnectionInfo));
+				memset(p->info, 0, sizeof(ConnectionInfo) * MAX_NUM_BACKENDS);
 			}
 			else
 			{
