@@ -8,7 +8,7 @@
 
       * Bug fixes
 
-      - Fix occasional hangup in extend protocol master/slave mode,
+      - Fix occasional hangup in extend protocol + master/slave mode,
         row mode or connection pool mode. Back patch from 2.3
         tree(Kitagawa)
 
