@@ -1,3 +1,43 @@
+2.2.7 (urukiboshi) 2010/04/15
+
+      * Version 2.2.7
+
+      This version enhances displaying error messages when kind
+      mismatch error occurs. Also it includes various fixes for bugs
+      in 2.2.6 or before as usual.
+
+      * Bug fixes
+
+      - Fix occasional hangup in extend protocol master/slave mode,
+        row mode or connection pool mode. Back patch from 2.3
+        tree(Kitagawa)
+
+      - Fix long standing bug since pgpool-II 1.0 which causes
+        segfault of pgpool child process. This was caused by
+        miscalculation of shmem size in pgpool parent. Bug analysis by
+        Kitagawa patch created by Tatsuo
+
+      - Send Parse, Bind, Describe and Close message to only master
+        node if operated in explicit transaction and master/slave
+        mode(Tatsuo).
+
+      - Emit a log when postmaster goes down(Tatsuo)
+
+      - Fix memory leak in make_persistent_db_connection(Xavier
+        Noguer)
+
+      - Do not force replication of DEALLOCATE if operated in
+        master/slave mode. Now that pgpool do not execute PARSE in all
+        nodes, this was pointless and caused problem (kind mismatch
+        when executing DEALLOCATE) (Tatsuo)
+
+      - Fix crash with show pool_status when there many (more than 18)
+        DB nodes(Tatsuo)
+
+      - Enhance "kind mismatch" message. If kind is ERROR or NOTICE,
+        print the ERROR/NOTICE message to help users to find what's
+        going on(Tatsuo)
+
 2.2.6 (urukiboshi) 2009/12/01
 
 	  * Version 2.2.6
