@@ -689,7 +689,13 @@ configuration parameters in the raw mode and below.</p>
       Default value is 4. Please be aware that the number of
       connections from pgpool-II processes to the backend will be
       <code>num_init_children</code> * <code>max_pool</code>.
-      This parameter can only be set at server start. </p>
+
+      Therefore, max_pool should satisfy following fomula:<br/>
+      <br/>
+      <code>num_init_children * max_pool &lt;= max_connections - superuser_reserved_connections</code><br/>
+      <br/>
+      max_connections and superuser_reserved_connections are parameters of PostgreSQL.
+      max_pool can only be set at server start. </p>
   </dd>
 
   <dt>connection_life_time</dt>

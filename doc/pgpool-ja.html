@@ -663,7 +663,12 @@ rawモードに加え、コネクションプーリングが利用できるようになります。
    なお、pgpool-II全体としては、num_init_children*max_pool 分だけ
    PostgreSQLへのコネクションが張られる点に注意してください。
 
-このパラメータを変更した時には pgpool-II を再起動してください。
+   したがって、一般的には以下の式が成り立つようにそれぞれのパラメータを設定する必要があります。<br/>
+<br/>
+   num_init_children * max_pool &lt;= max_connections - superuser_reserved_connections<br/>
+<br/>
+max_connections と superuser_reserved_connections は、PostgreSQL のパラメータです。
+max_pool を変更した時には pgpool-II を再起動してください。
 </p>
 
 <dt>connection_life_time
