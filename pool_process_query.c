@@ -162,6 +162,19 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 		check_stop_request();
 
 		/*
+		 * If we are in recovery and client_idle_limit_in_recovery is -1, then
+		 * exit immediately.
+		 */
+		if (*InRecovery > 0 && pool_config->client_idle_limit_in_recovery == -1)
+		{
+			pool_log("pool_process_query: child connection forced to terminate due to client_idle_limitis -1");
+			pool_send_error_message(frontend, MAJOR(backend),
+									"57000", "connection terminated due to online recovery",
+									"","",  __FILE__, __LINE__);
+			return POOL_END;
+		}
+
+		/*
 		 * if all backends do not have any pending data in the
 		 * receiving data cache, then issue select(2) to wait for new
 		 * data arrival
@@ -223,7 +236,8 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 			 * wait for data arriving from frontend and backend
 			 */
 			if (pool_config->client_idle_limit > 0 ||
-				pool_config->client_idle_limit_in_recovery > 0)
+				pool_config->client_idle_limit_in_recovery > 0 ||
+				pool_config->client_idle_limit_in_recovery == -1)
 			{
 				timeoutdata.tv_sec = 1;
 				timeoutdata.tv_usec = 0;
@@ -253,6 +267,9 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 					if (idle_count > pool_config->client_idle_limit)
 					{
 						pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit(%d) reached", pool_config->client_idle_limit);
+						pool_send_error_message(frontend, MAJOR(backend),
+												"57000", "connection terminated due to online recovery",
+												"","",  __FILE__, __LINE__);
 						return POOL_END;
 					}
 				}
@@ -263,8 +280,23 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 					if (idle_count_in_recovery > pool_config->client_idle_limit_in_recovery)
 					{
 						pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit_in_recovery(%d) reached", pool_config->client_idle_limit_in_recovery);
+						pool_send_error_message(frontend, MAJOR(backend),
+												"57000", "connection terminated due to online recovery",
+												"","",  __FILE__, __LINE__);
 						return POOL_END;
 					}
+				}
+				else if (*InRecovery > 0 && pool_config->client_idle_limit_in_recovery == -1)
+				{
+					/*
+					 * If we are in recovery and client_idle_limit_in_recovery is -1, then
+					 * exit immediately.
+					 */
+					pool_log("pool_process_query: child connection forced to terminate due to client_idle_limitis -1");
+					pool_send_error_message(frontend, MAJOR(backend),
+											"57000", "connection terminated due to online recovery",
+											"","",  __FILE__, __LINE__);
+					return POOL_END;
 				}
 				goto SELECT_RETRY;
 			}

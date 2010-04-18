@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Tue Feb  2 09:30:57 JST 2010
+Last modified: Sun Apr 18 21:23:43 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1033,8 +1033,13 @@ It can be changed on service.
 	   disturbed by a lazy client or TCP/IP connection between client and
 	   pgpool is accidentally down. The default value for
 	   client_idle_limit_in_recovery is 0, which means the functionality is turned
-	   off. You need to reload pgpool.conf if you change
-	   client_idle_limit_in_recovery.</p>
+	   off.
+  </p>
+  <p>
+	   If your clients are very busy, pgpool-II cannot enter the recovery 2nd stage regardless of the value of client_idle_limit_in_recovery. In this case you can set -1 to client_idle_limit_in_recovery so that pgpool-II immediately disconnect such busy clients before entering the 2nd stage.
+  </p>
+  <p>
+   You need to reload pgpool.conf if you change client_idle_limit_in_recovery.</p>
 
 <dt>lobj_lock_table
 <dd>
