@@ -1,3 +1,94 @@
+2.3.3 (tomiteboshi) 2010/04/XX
+
+	  * Version 2.3.3
+
+	  This version fixes various bugs since 2.3.2.2.
+
+	  * Incompatible changes
+
+	  - Please note that this version of pgpool consumes more shared
+		memory than before. If you encounter problems when starting up
+		pgpool, please look into pgpool log. If you find messages
+		something like "could not create shared memory segment: Cannot
+		allocate memory", please increase the shared memory on your
+		system.
+
+	  - Now parallel mode requires replication mode turned
+        on. parallel mode without replication mode turned on has been
+        broken since pgpool-II was born anyway(Kitagawa)
+
+	  - Change default value for insert_lock to false since there's no
+		point in turning this on in master/slave mode. Fix suggested by
+		Fujii Masao(Tatsuo)
+
+	  * Newly added documents
+
+	  - README.online-recovery, which is an internal document of
+        online recovery, added(Tatsuo)
+
+	  * Bug fixes
+
+	  - Fix long standing bug since pgpool-II 1.0 which causes
+		segfault of pgpool child process.  This was caused by
+		miscalculation of shmem size in pgpool parent. Bug analysis by
+		Kitagawa patch created by Tatsuo
+
+	  - Add restriction for parallel mode(Kitagawa)
+		- The Natural Join is not supported
+		- The USING CLAUSE is converted to ON CLAUSE by query rewrite
+		  process
+
+	  - Fix possible crash during rewriting JOIN syntax that have
+        USING in parallel query mode(Kitagawa)
+
+		This fix is supporting such as following JOIN syntax.
+
+		 example:
+		 - SELECT * FROM a JOIN b USING (aid) JOIN c USING (cid);
+		 - SELECT * FROM a JOIN b USING (aid) JOIN c USING (cid) JOIN d USING (did)
+
+	  - Fix parallel query so that it can parse INSERT statements that
+		have current_time before a partitioning key column(Kitagawa)
+
+	  - Fix SimpleForwardToBackend() so that pgpool doesn't keep
+		waiting for reply from a backend, when clients using the
+		extended query protocol cause a command error such as bind
+		error. This bug occur in master/slave, raw, and connection
+		pool mode.  This fix is, sending SYNC message to recover error
+		after command error(Kiatagawa)
+
+	  - Fix SIGINT/SIGQUIT is ignored if pgpool child is in
+		select(). In this case pgpool retries select() thus the signal
+		is ignored(Tatsuo)
+
+	  - Fix connect_inet_domain_socket_by_port/
+		connect_unix_domain_socket_by_port so that they check if
+		SIGTERM/SIGINT/SIGQUIT signal has been delivered.  Per bug
+		report from Daniel Codina(Tatsuo)
+
+	  - Fix possible crash during creating "kind mismatch" error
+		message. This used to work but was broken in 2.3.2(Tatsuo)
+
+	  - Fix bug with healh checking. If a network problem such as
+		unplugged wire happens while calling connect(), health
+		checking does not work since
+		connect_unix_domain_socket()/connect_inet_domain_socket() do
+		retry if connect() is interrupted by ALARM signal. Added new
+		retry argument which controls the retrying behavior to those
+		functions.  Per bug report and problem analysis by Daniel
+		Codina(Tatsuo)
+
+	  - Fix enbug in 2.3.2.2 with time stamp rewriting in
+		SimpleForwardToBackend. Per bug report from Bugtrack #1010771.
+		Report from Peter Pramberge(Tatsuo)
+
+	  - Fix rewriting "*" in paralell query.  Patch conributed by
+        sho-san(Kitagawa)
+
+	  - Fix connect_inet_domain_socket_by_port() so that it print out
+		error message by using hstrerror(), rather than
+		strerror()(Tatsuo)
+
 2.3.2.2 (tomiteboshi) 2010/02/22
 
 	  * Version 2.3.2.2
