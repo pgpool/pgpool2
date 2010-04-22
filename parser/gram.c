@@ -986,7 +986,7 @@ typedef enum
 #define base_yylex filtered_base_yylex
 
 #define ereport(a,b) yyerror("")
-#define Assert
+#define Assert(expr)	((void) 0)
 List *parsetree;			/* final parse result is delivered here */
 
 static bool QueryIsRule = FALSE;

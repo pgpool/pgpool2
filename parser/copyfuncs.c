@@ -27,7 +27,7 @@
 #include <stddef.h>
 #include "pool_memory.h"
 #include "parsenodes.h"
-#define Assert
+#define Assert(expr)	((void) 0)
 
 
 /*

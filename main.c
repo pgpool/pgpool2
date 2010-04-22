@@ -979,7 +979,7 @@ static int create_inet_domain_socket(const char *hostname, const int port)
 	}
 
 	memset((char *) &addr, 0, sizeof(addr));
-	((struct sockaddr *)&addr)->sa_family = AF_INET;
+	addr.sin_family = AF_INET;
 
 	if (strcmp(hostname, "*")==0)
 	{
@@ -1043,7 +1043,7 @@ static int create_unix_domain_socket(struct sockaddr_un un_addr_tmp)
 		myexit(1);
 	}
 	memset((char *) &addr, 0, sizeof(addr));
-	((struct sockaddr *)&addr)->sa_family = AF_UNIX;
+	addr.sun_family = AF_UNIX;
 	snprintf(addr.sun_path, sizeof(addr.sun_path), un_addr_tmp.sun_path);
 	len = sizeof(struct sockaddr_un);
 	status = bind(fd, (struct sockaddr *)&addr, len);

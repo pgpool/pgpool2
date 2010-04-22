@@ -453,7 +453,7 @@ int connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry)
 	}
 
 	memset((char *) &addr, 0, sizeof(addr));
-	((struct sockaddr *)&addr)->sa_family = AF_UNIX;
+	addr.sun_family = AF_UNIX;
 	snprintf(addr.sun_path, sizeof(addr.sun_path), "%s/.s.PGSQL.%d", socket_dir, port);
 	len = sizeof(struct sockaddr_un);
 
@@ -510,7 +510,7 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 	}
 
 	memset((char *) &addr, 0, sizeof(addr));
-	((struct sockaddr *)&addr)->sa_family = AF_INET;
+	addr.sin_family = AF_INET;
 
 	addr.sin_port = htons(port);
 	len = sizeof(struct sockaddr_in);

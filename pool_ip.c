@@ -451,6 +451,7 @@ SockAddr_cidr_mask(struct sockaddr_storage * mask, char *numbits, int family)
 						& 0xffffffffUL;
 				else
 					maskl = 0;
+				memset(&mask4, 0, sizeof(mask4));
 				mask4.sin_addr.s_addr = htonl(maskl);
 				memcpy(mask, &mask4, sizeof(mask4));
 				break;

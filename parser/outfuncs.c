@@ -3525,6 +3525,16 @@ _outGrantStmt(String *str, GrantStmt *node)
 			string_append_char(str, "TABLESPACE ");
 			_outIdList(str, node->objects);
 			break;
+
+		case ACL_OBJECT_FDW:
+			string_append_char(str, "FOREIGN DATA WRAPPER ");
+			_outIdList(str, node->objects);
+			break;
+
+		case ACL_OBJECT_FOREIGN_SERVER:
+			string_append_char(str, "FOREIGN SERVER ");
+			_outIdList(str, node->objects);
+			break;
 	}
 
 	if (node->is_grant == true)

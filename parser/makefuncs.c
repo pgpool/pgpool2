@@ -21,9 +21,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define Assert
-#define ereport(a,b)
-#define elog(a,b)
+#define Assert(expr)	((void) 0)
+#define ereport(a,b)	((void) 0)
+#define elog(a,b)		((void) 0)
 
 #define BOOLOID 16		/* XXX */
 
