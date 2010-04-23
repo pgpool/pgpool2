@@ -462,7 +462,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE RANLIB ac_ct_RANLIB build build_cpu build_vendor build_os host host_cpu host_vendor host_os EGREP LN_S ECHO AR ac_ct_AR CPP CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL LEX LEXLIB LEX_OUTPUT_ROOT YACC LIBOBJS PGCONFIG PGSQL_INCLUDE_DIR PGSQL_LIB_DIR enable_rpath_TRUE enable_rpath_FALSE LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE RANLIB ac_ct_RANLIB build build_cpu build_vendor build_os host host_cpu host_vendor host_os SED EGREP LN_S ECHO AR ac_ct_AR CPP CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL LEX LEXLIB LEX_OUTPUT_ROOT YACC LIBOBJS PGCONFIG PGSQL_INCLUDE_DIR PGSQL_LIB_DIR enable_rpath_TRUE enable_rpath_FALSE LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -2805,7 +2805,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=pgpool-II
- VERSION=2.3.2.2
+ VERSION=2.3.3
 
 
 cat >>confdefs.h <<_ACEOF
@@ -3270,6 +3270,7 @@ do
     done
   done
 done
+IFS=$as_save_IFS
 lt_ac_max=0
 lt_ac_count=0
 # Add /usr/xpg4/bin/sed as it is typically found on Solaris
@@ -3304,6 +3305,7 @@ done
 fi
 
 SED=$lt_cv_path_SED
+
 echo "$as_me:$LINENO: result: $SED" >&5
 echo "${ECHO_T}$SED" >&6
 
@@ -3744,7 +3746,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 3747 "configure"' > conftest.$ac_ext
+  echo '#line 3749 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -5343,7 +5345,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:5346:" \
+echo "$as_me:5348:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -6406,11 +6408,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6409: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6411: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6413: \$? = $ac_status" >&5
+   echo "$as_me:6415: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -6674,11 +6676,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6677: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6679: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6681: \$? = $ac_status" >&5
+   echo "$as_me:6683: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -6778,11 +6780,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6781: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6783: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:6785: \$? = $ac_status" >&5
+   echo "$as_me:6787: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -8247,7 +8249,7 @@ linux*)
   libsuff=
   case "$host_cpu" in
   x86_64*|s390x*|powerpc64*)
-    echo '#line 8250 "configure"' > conftest.$ac_ext
+    echo '#line 8252 "configure"' > conftest.$ac_ext
     if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -8266,7 +8268,7 @@ linux*)
 
   # Append ld.so.conf contents to the search path
   if test -f /etc/ld.so.conf; then
-    lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s", \$2)); skip = 1; } { if (!skip) print \$0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;/^$/d' | tr '\n' ' '`
+    lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s 2>/dev/null", \$2)); skip = 1; } { if (!skip) print \$0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;/^$/d' | tr '\n' ' '`
     sys_lib_dlsearch_path_spec="/lib${libsuff} /usr/lib${libsuff} $lt_ld_extra"
   fi
 
@@ -9144,7 +9146,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9147 "configure"
+#line 9149 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -9244,7 +9246,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9247 "configure"
+#line 9249 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -9575,6 +9577,9 @@ CC=$lt_compiler
 # Is the compiler the GNU C compiler?
 with_gcc=$GCC
 
+gcc_dir=\`gcc -print-file-name=. | $SED 's,/\.$,,'\`
+gcc_ver=\`gcc -dumpversion\`
+
 # An ERE matcher.
 EGREP=$lt_EGREP
 
@@ -9708,11 +9713,11 @@ striplib=$lt_striplib
 
 # Dependencies to place before the objects being linked to create a
 # shared library.
-predep_objects=$lt_predep_objects
+predep_objects=\`echo $lt_predep_objects | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
 
 # Dependencies to place after the objects being linked to create a
 # shared library.
-postdep_objects=$lt_postdep_objects
+postdep_objects=\`echo $lt_postdep_objects | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
 
 # Dependencies to place before the objects being linked to create a
 # shared library.
@@ -9724,7 +9729,7 @@ postdeps=$lt_postdeps
 
 # The library search path used internally by the compiler when linking
 # a shared library.
-compiler_lib_search_path=$lt_compiler_lib_search_path
+compiler_lib_search_path=\`echo $lt_compiler_lib_search_path | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
 
 # Method to check whether dependent libraries are shared objects.
 deplibs_check_method=$lt_deplibs_check_method
@@ -9804,7 +9809,7 @@ variables_saved_for_relink="$variables_saved_for_relink"
 link_all_deplibs=$link_all_deplibs
 
 # Compile-time system search path for libraries
-sys_lib_search_path_spec=$lt_sys_lib_search_path_spec
+sys_lib_search_path_spec=\`echo $lt_sys_lib_search_path_spec | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
 
 # Run-time system search path for libraries
 sys_lib_dlsearch_path_spec=$lt_sys_lib_dlsearch_path_spec
@@ -11584,11 +11589,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:11587: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:11592: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:11591: \$? = $ac_status" >&5
+   echo "$as_me:11596: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -11688,11 +11693,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:11691: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:11696: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:11695: \$? = $ac_status" >&5
+   echo "$as_me:11700: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -12224,7 +12229,7 @@ linux*)
   libsuff=
   case "$host_cpu" in
   x86_64*|s390x*|powerpc64*)
-    echo '#line 12227 "configure"' > conftest.$ac_ext
+    echo '#line 12232 "configure"' > conftest.$ac_ext
     if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -12243,7 +12248,7 @@ linux*)
 
   # Append ld.so.conf contents to the search path
   if test -f /etc/ld.so.conf; then
-    lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s", \$2)); skip = 1; } { if (!skip) print \$0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;/^$/d' | tr '\n' ' '`
+    lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s 2>/dev/null", \$2)); skip = 1; } { if (!skip) print \$0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;/^$/d' | tr '\n' ' '`
     sys_lib_dlsearch_path_spec="/lib${libsuff} /usr/lib${libsuff} $lt_ld_extra"
   fi
 
@@ -12628,6 +12633,9 @@ CC=$lt_compiler_CXX
 # Is the compiler the GNU C compiler?
 with_gcc=$GCC_CXX
 
+gcc_dir=\`gcc -print-file-name=. | $SED 's,/\.$,,'\`
+gcc_ver=\`gcc -dumpversion\`
+
 # An ERE matcher.
 EGREP=$lt_EGREP
 
@@ -12761,11 +12769,11 @@ striplib=$lt_striplib
 
 # Dependencies to place before the objects being linked to create a
 # shared library.
-predep_objects=$lt_predep_objects_CXX
+predep_objects=\`echo $lt_predep_objects_CXX | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
 
 # Dependencies to place after the objects being linked to create a
 # shared library.
-postdep_objects=$lt_postdep_objects_CXX
+postdep_objects=\`echo $lt_postdep_objects_CXX | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
 
 # Dependencies to place before the objects being linked to create a
 # shared library.
@@ -12777,7 +12785,7 @@ postdeps=$lt_postdeps_CXX
 
 # The library search path used internally by the compiler when linking
 # a shared library.
-compiler_lib_search_path=$lt_compiler_lib_search_path_CXX
+compiler_lib_search_path=\`echo $lt_compiler_lib_search_path_CXX | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
 
 # Method to check whether dependent libraries are shared objects.
 deplibs_check_method=$lt_deplibs_check_method
@@ -12857,7 +12865,7 @@ variables_saved_for_relink="$variables_saved_for_relink"
 link_all_deplibs=$link_all_deplibs_CXX
 
 # Compile-time system search path for libraries
-sys_lib_search_path_spec=$lt_sys_lib_search_path_spec
+sys_lib_search_path_spec=\`echo $lt_sys_lib_search_path_spec | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
 
 # Run-time system search path for libraries
 sys_lib_dlsearch_path_spec=$lt_sys_lib_dlsearch_path_spec
@@ -13279,11 +13287,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13282: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13290: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13286: \$? = $ac_status" >&5
+   echo "$as_me:13294: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -13383,11 +13391,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13386: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13394: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13390: \$? = $ac_status" >&5
+   echo "$as_me:13398: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14832,7 +14840,7 @@ linux*)
   libsuff=
   case "$host_cpu" in
   x86_64*|s390x*|powerpc64*)
-    echo '#line 14835 "configure"' > conftest.$ac_ext
+    echo '#line 14843 "configure"' > conftest.$ac_ext
     if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -14851,7 +14859,7 @@ linux*)
 
   # Append ld.so.conf contents to the search path
   if test -f /etc/ld.so.conf; then
-    lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s", \$2)); skip = 1; } { if (!skip) print \$0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;/^$/d' | tr '\n' ' '`
+    lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s 2>/dev/null", \$2)); skip = 1; } { if (!skip) print \$0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;/^$/d' | tr '\n' ' '`
     sys_lib_dlsearch_path_spec="/lib${libsuff} /usr/lib${libsuff} $lt_ld_extra"
   fi
 
@@ -15236,6 +15244,9 @@ CC=$lt_compiler_F77
 # Is the compiler the GNU C compiler?
 with_gcc=$GCC_F77
 
+gcc_dir=\`gcc -print-file-name=. | $SED 's,/\.$,,'\`
+gcc_ver=\`gcc -dumpversion\`
+
 # An ERE matcher.
 EGREP=$lt_EGREP
 
@@ -15369,11 +15380,11 @@ striplib=$lt_striplib
 
 # Dependencies to place before the objects being linked to create a
 # shared library.
-predep_objects=$lt_predep_objects_F77
+predep_objects=\`echo $lt_predep_objects_F77 | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
 
 # Dependencies to place after the objects being linked to create a
 # shared library.
-postdep_objects=$lt_postdep_objects_F77
+postdep_objects=\`echo $lt_postdep_objects_F77 | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
 
 # Dependencies to place before the objects being linked to create a
 # shared library.
@@ -15385,7 +15396,7 @@ postdeps=$lt_postdeps_F77
 
 # The library search path used internally by the compiler when linking
 # a shared library.
-compiler_lib_search_path=$lt_compiler_lib_search_path_F77
+compiler_lib_search_path=\`echo $lt_compiler_lib_search_path_F77 | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
 
 # Method to check whether dependent libraries are shared objects.
 deplibs_check_method=$lt_deplibs_check_method
@@ -15465,7 +15476,7 @@ variables_saved_for_relink="$variables_saved_for_relink"
 link_all_deplibs=$link_all_deplibs_F77
 
 # Compile-time system search path for libraries
-sys_lib_search_path_spec=$lt_sys_lib_search_path_spec
+sys_lib_search_path_spec=\`echo $lt_sys_lib_search_path_spec | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
 
 # Run-time system search path for libraries
 sys_lib_dlsearch_path_spec=$lt_sys_lib_dlsearch_path_spec
@@ -15607,11 +15618,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15610: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15621: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15614: \$? = $ac_status" >&5
+   echo "$as_me:15625: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -15875,11 +15886,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15878: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15889: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15882: \$? = $ac_status" >&5
+   echo "$as_me:15893: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -15979,11 +15990,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15982: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15993: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15986: \$? = $ac_status" >&5
+   echo "$as_me:15997: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -17448,7 +17459,7 @@ linux*)
   libsuff=
   case "$host_cpu" in
   x86_64*|s390x*|powerpc64*)
-    echo '#line 17451 "configure"' > conftest.$ac_ext
+    echo '#line 17462 "configure"' > conftest.$ac_ext
     if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -17467,7 +17478,7 @@ linux*)
 
   # Append ld.so.conf contents to the search path
   if test -f /etc/ld.so.conf; then
-    lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s", \$2)); skip = 1; } { if (!skip) print \$0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;/^$/d' | tr '\n' ' '`
+    lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s 2>/dev/null", \$2)); skip = 1; } { if (!skip) print \$0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;/^$/d' | tr '\n' ' '`
     sys_lib_dlsearch_path_spec="/lib${libsuff} /usr/lib${libsuff} $lt_ld_extra"
   fi
 
@@ -17852,6 +17863,9 @@ CC=$lt_compiler_GCJ
 # Is the compiler the GNU C compiler?
 with_gcc=$GCC_GCJ
 
+gcc_dir=\`gcc -print-file-name=. | $SED 's,/\.$,,'\`
+gcc_ver=\`gcc -dumpversion\`
+
 # An ERE matcher.
 EGREP=$lt_EGREP
 
@@ -17985,11 +17999,11 @@ striplib=$lt_striplib
 
 # Dependencies to place before the objects being linked to create a
 # shared library.
-predep_objects=$lt_predep_objects_GCJ
+predep_objects=\`echo $lt_predep_objects_GCJ | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
 
 # Dependencies to place after the objects being linked to create a
 # shared library.
-postdep_objects=$lt_postdep_objects_GCJ
+postdep_objects=\`echo $lt_postdep_objects_GCJ | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
 
 # Dependencies to place before the objects being linked to create a
 # shared library.
@@ -18001,7 +18015,7 @@ postdeps=$lt_postdeps_GCJ
 
 # The library search path used internally by the compiler when linking
 # a shared library.
-compiler_lib_search_path=$lt_compiler_lib_search_path_GCJ
+compiler_lib_search_path=\`echo $lt_compiler_lib_search_path_GCJ | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
 
 # Method to check whether dependent libraries are shared objects.
 deplibs_check_method=$lt_deplibs_check_method
@@ -18081,7 +18095,7 @@ variables_saved_for_relink="$variables_saved_for_relink"
 link_all_deplibs=$link_all_deplibs_GCJ
 
 # Compile-time system search path for libraries
-sys_lib_search_path_spec=$lt_sys_lib_search_path_spec
+sys_lib_search_path_spec=\`echo $lt_sys_lib_search_path_spec | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
 
 # Run-time system search path for libraries
 sys_lib_dlsearch_path_spec=$lt_sys_lib_dlsearch_path_spec
@@ -18333,6 +18347,9 @@ CC=$lt_compiler_RC
 # Is the compiler the GNU C compiler?
 with_gcc=$GCC_RC
 
+gcc_dir=\`gcc -print-file-name=. | $SED 's,/\.$,,'\`
+gcc_ver=\`gcc -dumpversion\`
+
 # An ERE matcher.
 EGREP=$lt_EGREP
 
@@ -18466,11 +18483,11 @@ striplib=$lt_striplib
 
 # Dependencies to place before the objects being linked to create a
 # shared library.
-predep_objects=$lt_predep_objects_RC
+predep_objects=\`echo $lt_predep_objects_RC | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
 
 # Dependencies to place after the objects being linked to create a
 # shared library.
-postdep_objects=$lt_postdep_objects_RC
+postdep_objects=\`echo $lt_postdep_objects_RC | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
 
 # Dependencies to place before the objects being linked to create a
 # shared library.
@@ -18482,7 +18499,7 @@ postdeps=$lt_postdeps_RC
 
 # The library search path used internally by the compiler when linking
 # a shared library.
-compiler_lib_search_path=$lt_compiler_lib_search_path_RC
+compiler_lib_search_path=\`echo $lt_compiler_lib_search_path_RC | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
 
 # Method to check whether dependent libraries are shared objects.
 deplibs_check_method=$lt_deplibs_check_method
@@ -18562,7 +18579,7 @@ variables_saved_for_relink="$variables_saved_for_relink"
 link_all_deplibs=$link_all_deplibs_RC
 
 # Compile-time system search path for libraries
-sys_lib_search_path_spec=$lt_sys_lib_search_path_spec
+sys_lib_search_path_spec=\`echo $lt_sys_lib_search_path_spec | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
 
 # Run-time system search path for libraries
 sys_lib_dlsearch_path_spec=$lt_sys_lib_dlsearch_path_spec
@@ -25620,6 +25637,7 @@ s,@host@,$host,;t t
 s,@host_cpu@,$host_cpu,;t t
 s,@host_vendor@,$host_vendor,;t t
 s,@host_os@,$host_os,;t t
+s,@SED@,$SED,;t t
 s,@EGREP@,$EGREP,;t t
 s,@LN_S@,$LN_S,;t t
 s,@ECHO@,$ECHO,;t t
