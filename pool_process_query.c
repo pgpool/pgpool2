@@ -2993,19 +2993,25 @@ POOL_STATUS do_error_command(POOL_CONNECTION *backend, int major)
 }
 
 /*
- * Send invalid portal execution to abort transaction.
- * We need to sync transaction status in transaction block.
- * SELECT query is sent to master only.
- * If SELECT is error, we must abort transaction on other nodes.
+ * Send invalid portal execution to specified DB node to abort current
+ * transaction.  Pgpool-II sends a SELECT query to master node only in
+ * load balance mode. Problem is, if the query failed, master node
+ * goes to abort status while other nodes remain normal status. To
+ * sync transaction status in each node, we send error query to other
+ * than master node to ket them go into abort status.
  */
 static POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id, int major)
 {
 	int status;
 	char kind;
 	char *string;
-	char msg[1024] = "pgpoool_error_portal"; /* large enough */
+	char msg[1024] = "pgpool_error_portal"; /* large enough */
 	int len = strlen(msg);
+	char buf[8192]; /* memory space is large enough */
+	char *p;
+	int readlen = 0;
 
+	p = buf;
 	memset(msg + len, 0, sizeof(int));
 	if (send_execute_message(backend, node_id, len + 5, msg))
 	{
@@ -3013,33 +3019,88 @@ static POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int n
 	}
 
 	/*
-	 * Expecting ErrorResponse
+	 * Discard responses from backend until ErrorResponse received.
+	 * Note that we need to preserve non-error responses
+	 * (i.e. ReadyForQuery) and put back them using pool_unread().
+	 * Otherwise, ReadyForQuery response of DEALLOCATE. This could
+	 * happen if PHP PDO used. (2010/04/21)
 	 */
-	status = pool_read(CONNECTION(backend, node_id), &kind, sizeof(kind));
-	if (status < 0)
-	{
-		pool_error("do_error_execute_command: error while reading message kind");
-		return POOL_END;
-	}
+	do {
+		status = pool_read(CONNECTION(backend, node_id), &kind, sizeof(kind));
+		if (status < 0)
+		{
+			pool_error("do_error_execute_command: error while reading message kind");
+			return POOL_END;
+		}
 
-	/*
-	 * read command tag of CommandComplete response
-	 */
-	if (major == PROTO_MAJOR_V3)
+		/*
+		 * read command tag of CommandComplete response
+		 */
+		if (kind != 'E')
+		{
+			readlen += sizeof(kind);
+			memcpy(p, &kind, sizeof(kind));
+			p += sizeof(kind);
+		}
+
+		if (major == PROTO_MAJOR_V3)
+		{
+			if (pool_read(CONNECTION(backend, node_id), &len, sizeof(len)) < 0)
+				return POOL_END;
+
+			if (kind != 'E')
+			{
+				readlen += sizeof(len);
+				memcpy(p, &len, sizeof(len));
+				p += sizeof(len);
+			}
+
+			len = ntohl(len) - 4;
+			string = pool_read2(CONNECTION(backend, node_id), len);
+			if (string == NULL)
+				return POOL_END;
+			pool_debug("command tag: %s", string);
+
+			if (kind != 'E')
+			{
+				readlen += len;
+				if (readlen >= sizeof(buf))
+				{
+					pool_error("do_error_execute_command: not enough buffer space");
+					return POOL_END;
+				}
+				memcpy(p, string, len);
+				p += sizeof(len);
+			}
+		}
+		else
+		{
+			string = pool_read_string(CONNECTION(backend, node_id), &len, 0);
+			if (string == NULL)
+				return POOL_END;
+
+			if (kind != 'E')
+			{
+				readlen += len;
+				if (readlen >= sizeof(buf))
+				{
+					pool_error("do_error_execute_command: not enough buffer space");
+					return POOL_END;
+				}
+				memcpy(p, string, len);
+				p += sizeof(len);
+			}
+		}
+	} while (kind != 'E');
+
+	if (readlen > 0)
 	{
-		if (pool_read(CONNECTION(backend, node_id), &len, sizeof(len)) < 0)
+		/* put messages back to read buffer */
+		if (pool_unread(CONNECTION(backend, node_id), buf, readlen) != 0)
+		{
+			pool_error("do_error_execute_command: pool_unread failed");
 			return POOL_END;
-		len = ntohl(len) - 4;
-		string = pool_read2(CONNECTION(backend, node_id), len);
-		if (string == NULL)
-			return POOL_END;
-		pool_debug("command tag: %s", string);
-	}
-	else
-	{
-		string = pool_read_string(CONNECTION(backend, node_id), &len, 0);
-		if (string == NULL)
-			return POOL_END;
+		}
 	}
 
 	return POOL_CONTINUE;
