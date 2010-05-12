@@ -207,6 +207,10 @@ typedef struct {
 
 	char *lobj_lock_table;		/* table name to lock for rewriting lo_creat */
 
+	int debug_level;			/* debug message verbosity level.
+								 * 0: no message, 1 <= : more verbose
+								 */
+
 	BackendDesc *backend_desc;	/* PostgreSQL Server description. Placed on shared memory */
 
 	LOAD_BALANCE_STATUS	load_balance_status[MAX_NUM_BACKENDS];	/* to remember which DB node is selected for load balancing */
@@ -483,6 +487,7 @@ typedef struct {
  * global variables
  */
 extern pid_t mypid; /* parent pid */
+extern bool run_as_pcp_child;
 extern POOL_CONFIG *pool_config;	/* configuration values */
 extern POOL_CONNECTION_POOL *pool_connection_pool;	/* connection pool */
 extern volatile sig_atomic_t backend_timer_expired; /* flag for connection closed timer is expired */

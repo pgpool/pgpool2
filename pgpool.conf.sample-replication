@@ -238,3 +238,6 @@ ssl = false
 # -CAfile and -CApath options to openssl verify(1), respectively.
 #ssl_ca_cert = ''
 #ssl_ca_cert_dir = ''
+
+# Debug message verbosity level. 0: no message, 1 <= : more verbose
+debug_level = 0

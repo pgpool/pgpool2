@@ -138,13 +138,9 @@ static char hba_file[POOLMAXPATHLEN+1];
 static int exiting = 0;		/* non 0 if I'm exiting */
 static int switching = 0;		/* non 0 if I'm fail overing or degenerating */
 
-#ifdef NOT_USED
-static int degenerated = 0;	/* set non 0 if already degenerated */
-#endif
-
 static int clear_cache = 0;		/* non 0 if clear chache option (-c) is given */
 static int not_detach = 0;		/* non 0 if non detach option (-n) is given */
-int debug = 0;	/* non 0 if debug option is given (-d) */
+int debug = 0;	/* non 0 if debug option is given (-d). pcp only */
 
 pid_t mypid;	/* pgpool parent process id */
 
@@ -164,6 +160,7 @@ static volatile sig_atomic_t wakeup_request = 0;
 static int pipe_fds[2]; /* for delivering signals */
 
 int my_proc_id;
+bool run_as_pcp_child;
 
 static BackendStatusRecord backend_rec;	/* Backend status record */
 
@@ -181,6 +178,7 @@ int main(int argc, char **argv)
 	int size;
 	int retrycnt;
 	int sys_retrycnt;
+	int debug_level = 0;
 
 	myargc = argc;
 	myargv = argv;
@@ -207,7 +205,7 @@ int main(int argc, char **argv)
 				break;
 
 			case 'd':	/* debug option */
-				debug = 1;
+				debug_level = 1;
 				break;
 
 			case 'f':	/* specify configuration file */
@@ -282,6 +280,11 @@ int main(int argc, char **argv)
 		pool_error("Unable to get configuration. Exiting...");
 		exit(1);
 	}
+
+	/*
+	 * Override debug level
+	 */
+	pool_config->debug_level = debug_level;
 
 	if (pool_config->enable_pool_hba)
 		load_hba(hba_file);
@@ -902,6 +905,7 @@ pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 		/* call PCP child main */
 		POOL_SETMASK(&UnBlockSig);
 		reload_config_request = 0;
+		run_as_pcp_child = true;
 		pcp_do_child(unix_fd, inet_fd, pcp_conf_file);
 	}
 	else if (pid == -1)
@@ -943,6 +947,7 @@ pid_t fork_a_child(int unix_fd, int inet_fd, int id)
 		POOL_SETMASK(&UnBlockSig);
 		reload_config_request = 0;
 		my_proc_id = id;
+		run_as_pcp_child = false;
 		do_child(unix_fd, inet_fd);
 	}
 	else if (pid == -1)

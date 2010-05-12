@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2008	PgPool Global Development Group
+ * Copyright (c) 2003-2010	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -92,8 +92,12 @@ void pool_debug(const char *fmt,...)
 	int	oldmask;
 #endif
 
-	if (!debug)
-		return;
+	if (run_as_pcp_child)
+		if (!debug)
+			return;
+	else
+		if (pool_config->debug_level <= 0)
+			return;
 
 	POOL_SETMASK2(&BlockSig, &oldmask);
 
