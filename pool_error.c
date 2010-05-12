@@ -93,11 +93,15 @@ void pool_debug(const char *fmt,...)
 #endif
 
 	if (run_as_pcp_child)
+	{
 		if (!debug)
 			return;
+	}
 	else
+	{
 		if (pool_config->debug_level <= 0)
 			return;
+	}
 
 	POOL_SETMASK2(&BlockSig, &oldmask);
 
