@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <getopt.h>
 
 #include "pcp.h"
 
@@ -40,8 +41,15 @@ main(int argc, char **argv)
 	char pass[MAX_USER_PASSWD_LEN];
 	char mode;
 	int ch;
+	int	optindex;
 
-	while ((ch = getopt(argc, argv, "hd")) != -1) {
+	static struct option long_options[] = {
+		{"debug", no_argument, NULL, 'd'},
+		{"help", no_argument, NULL, 'h'},
+		{NULL, 0, NULL, 0}
+	};
+	
+    while ((ch = getopt_long(argc, argv, "hd", long_options, &optindex)) != -1) {
 		switch (ch) {
 		case 'd':
 			pcp_enable_debug();

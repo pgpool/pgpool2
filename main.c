@@ -179,7 +179,21 @@ int main(int argc, char **argv)
 	int retrycnt;
 	int sys_retrycnt;
 	int debug_level = 0;
+	int	optindex;
 
+	static struct option long_options[] = {
+		{"hba-file", required_argument, NULL, 'a'},
+		{"clear", no_argument, NULL, 'c'},
+		{"debug", no_argument, NULL, 'd'},
+		{"config-file", required_argument, NULL, 'f'},
+		{"pcp-file", required_argument, NULL, 'F'},
+		{"help", no_argument, NULL, 'h'},
+		{"mode", required_argument, NULL, 'm'},
+		{"dont-detach", no_argument, NULL, 'n'},
+		{"version", no_argument, NULL, 'v'},
+		{NULL, 0, NULL, 0}
+	};
+	
 	myargc = argc;
 	myargv = argv;
 
@@ -187,7 +201,7 @@ int main(int argc, char **argv)
 	snprintf(pcp_conf_file, sizeof(pcp_conf_file), "%s/%s", DEFAULT_CONFIGDIR, PCP_PASSWD_FILE_NAME);
 	snprintf(hba_file, sizeof(hba_file), "%s/%s", DEFAULT_CONFIGDIR, HBA_CONF_FILE_NAME);
 
-	while ((opt = getopt(argc, argv, "a:cdf:F:hm:nv")) != -1)
+    while ((opt = getopt_long(argc, argv, "a:cdf:F:hm:nv", long_options, &optindex)) != -1)
 	{
 		switch (opt)
 		{
@@ -649,19 +663,23 @@ static void usage(void)
 	fprintf(stderr, "         [ -m SHUTDOWN-MODE ] stop\n");
 	fprintf(stderr, "  pgpool [ -f CONFIG_FILE ] [ -F PCP_CONFIG_FILE ] [ -a HBA_CONFIG_FILE ] reload\n\n");
 	fprintf(stderr, "Common options:\n");
-	fprintf(stderr, "  -a HBA_CONFIG_FILE  Sets the path to the pool_hba.conf configuration file\n");
+	fprintf(stderr, "  -a, --hba-file=HBA_CONFIG_FILE\n");
+	fprintf(stderr, "                      Sets the path to the pool_hba.conf configuration file\n");
 	fprintf(stderr, "                      (default: %s/%s)\n",DEFAULT_CONFIGDIR, HBA_CONF_FILE_NAME);
-	fprintf(stderr, "  -f CONFIG_FILE      Sets the path to the pgpool.conf configuration file\n");
+	fprintf(stderr, "  -f, --config-file=CONFIG_FILE\n");
+	fprintf(stderr, "                      Sets the path to the pgpool.conf configuration file\n");
 	fprintf(stderr, "                      (default: %s/%s)\n",DEFAULT_CONFIGDIR, POOL_CONF_FILE_NAME);
-	fprintf(stderr, "  -F PCP_CONFIG_FILE  Sets the path to the pcp.conf configuration file\n");
+	fprintf(stderr, "  -F, --pcp-file=PCP_CONFIG_FILE\n");
+	fprintf(stderr, "                      Sets the path to the pcp.conf configuration file\n");
 	fprintf(stderr, "                      (default: %s/%s)\n",DEFAULT_CONFIGDIR, PCP_PASSWD_FILE_NAME);
-	fprintf(stderr, "  -h                  Prints this help\n\n");
+	fprintf(stderr, "  -h, --help          Prints this help\n\n");
 	fprintf(stderr, "Start options:\n");
-	fprintf(stderr, "  -c                  Clears query cache (enable_query_cache must be on)\n");
-	fprintf(stderr, "  -n                  Don't run in daemon mode, does not detach control tty\n");
-	fprintf(stderr, "  -d                  Debug mode\n\n");
+	fprintf(stderr, "  -c, --clear         Clears query cache (enable_query_cache must be on)\n");
+	fprintf(stderr, "  -n, --dont-detach   Don't run in daemon mode, does not detach control tty\n");
+	fprintf(stderr, "  -d, --debug         Debug mode\n\n");
 	fprintf(stderr, "Stop options:\n");
-	fprintf(stderr, "  -m SHUTDOWN-MODE    Can be \"smart\", \"fast\", or \"immediate\"\n\n");
+	fprintf(stderr, "  -m, --mode=SHUTDOWN-MODE\n");
+	fprintf(stderr, "                      Can be \"smart\", \"fast\", or \"immediate\"\n\n");
 	fprintf(stderr, "Shutdown modes are:\n");
 	fprintf(stderr, "  smart       quit after all clients have disconnected\n");
 	fprintf(stderr, "  fast        quit directly, with proper shutdown\n");
