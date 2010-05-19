@@ -993,6 +993,15 @@ int pool_check_fd(POOL_CONNECTION *cp)
 	struct timeval timeout;
 	struct timeval *timeoutp;
 
+	/*
+	 * If SSL is enabled, we need to check SSL internal buffer
+	 * is empty or not first. Otherwise select(2) will stuck.
+	 */
+	if (pool_ssl_pending(cp))
+	{
+		return 0;
+	}
+		
 	fd = cp->fd;
 
 	if (timeoutsec > 0)
@@ -3388,6 +3397,13 @@ static int is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 {
 	int i;
 
+	/*
+	 * If SSL is enabled, we need to check SSL internal buffer
+	 * is empty or not first.
+	 */
+	if (pool_ssl_pending(frontend))
+		return 0;
+
 	if (frontend->len > 0 && !in_progress)
 		return 0;
 
@@ -3395,6 +3411,13 @@ static int is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 	{
 		if (!VALID_BACKEND(i))
 			continue;
+
+		/*
+		 * If SSL is enabled, we need to check SSL internal buffer
+		 * is empty or not first.
+		 */
+		if (pool_ssl_pending(CONNECTION(backend, i)))
+			return 0;
 
 		if (CONNECTION(backend, i)->len > 0)
 			return 0;
