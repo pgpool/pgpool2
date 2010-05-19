@@ -563,6 +563,7 @@ extern void pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp);
 extern void pool_ssl_close(POOL_CONNECTION *cp);
 extern int pool_ssl_read(POOL_CONNECTION *cp, void *buf, int size);
 extern int pool_ssl_write(POOL_CONNECTION *cp, const void *buf, int size);
+extern bool pool_ssl_pending(POOL_CONNECTION *cp);
 
 extern POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend, 
 								  POOL_CONNECTION_POOL *backend);

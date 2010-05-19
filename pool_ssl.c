@@ -124,7 +124,55 @@ void pool_ssl_close(POOL_CONNECTION *cp) {
 }
 
 int pool_ssl_read(POOL_CONNECTION *cp, void *buf, int size) {
-	return SSL_read(cp->ssl, buf, size);
+	int n;
+	int err;
+
+ retry:
+	errno = 0;
+	n = SSL_read(cp->ssl, buf, size);
+	err = SSL_get_error(cp->ssl, n);
+
+	switch (err)
+	{
+		case SSL_ERROR_NONE:
+			break;
+		case SSL_ERROR_WANT_READ:
+			n = 0;
+			break;
+		case SSL_ERROR_WANT_WRITE:
+
+			/*
+			 * Returning 0 here would cause caller to wait for read-ready,
+			 * which is not correct since what SSL wants is wait for
+			 * write-ready.  The former could get us stuck in an infinite
+			 * wait, so don't risk it; busy-loop instead.
+			 */
+			goto retry;
+
+		case SSL_ERROR_SYSCALL:
+			if (n == -1)
+			{
+				pool_error("SSL_read error: %d", err);
+			}
+			else
+			{
+				pool_error("SSL_read error: EOF detected");
+				n = -1;
+			}
+			break;
+
+		case SSL_ERROR_SSL:
+		case SSL_ERROR_ZERO_RETURN:
+			perror_ssl("SSL_read");
+			n = -1;
+			break;
+		default:
+			perror_ssl("SSL_read");
+			n = -1;
+			break;
+	}
+
+	return n;
 }
 
 int pool_ssl_write(POOL_CONNECTION *cp, const void *buf, int size) {
@@ -190,6 +238,16 @@ static void perror_ssl(const char *context) {
 	}
 }
 
+/*
+ * Return true if SSL layer has any pending data in buffer
+ */
+bool pool_ssl_pending(POOL_CONNECTION *cp)
+{
+	if (cp->ssl_active > 0 && SSL_pending(cp->ssl) > 0)
+		return true;
+	return false;
+}
+
 #else /* USE_SSL: wrap / no-op ssl functionality if it's not available */
 
 void pool_ssl_negotiate_serverclient(POOL_CONNECTION *cp) {
@@ -217,6 +275,11 @@ int pool_ssl_write(POOL_CONNECTION *cp, const void *buf, int size) {
 	notice_backend_error(cp->db_node_id);
 	child_exit(1);
 	return -1; /* never reached */
+}
+
+bool pool_ssl_pending(POOL_CONNECTION *cp)
+{
+	return false;
 }
 
 #endif /* USE_SSL */
