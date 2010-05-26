@@ -25,6 +25,7 @@
 
 #include "pool.h"
 #include "pool_timestamp.h"
+#include "pool_relcache.h"
 #include "parser/parsenodes.h"
 #include "parser/gramparse.h"
 #include "parser/pool_memory.h"

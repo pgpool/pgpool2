@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "pool.h"
+#include "pool_relcache.h"
 
 /*
  * Create relation cache
