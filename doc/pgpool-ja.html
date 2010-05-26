@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Wed May 12 13:45:32 JST 2010
+Last modified: Mon May 24 16:54:23 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -351,13 +351,25 @@ pcp$B$,(Bpgppool$B$H@\B3$9$k:]$N%?%$%`%"%&%HCM!#(B0$B$K$9$k$H%?%$%`%"%&%H$7
 <dt>num_init_children
 <dd>
 <p>
-prefork$B$9$k(Bpgpool-II$B$N%5!<%P%W%m%;%9$N?t$G$9!#%G%U%)%k%HCM$O(B32$B$K$J$C$F(B
-$B$$$^$9!#(B
-   $B$J$*!"Ld$$9g$o$;$N%-%c%s%;%k$r9T$&$HDL>o$N%3%M%/%7%g%s$H$OJL$K?7$?(B
-   $B$J%3%M%/%7%g%s$,D%$i$l$^$9!#$7$?$,$C$F!"$9$Y$F$N%3%M%/%7%g%s$,;HMQ(B
-   $BCf$N>l9g$OLd$$9g$o$;$N%-%c%s%;%k$,$G$-$J$/$C$F$7$^$&$N$G!"$4Cm0U2<(B
-   $B$5$$!#Ld$$9g$o$;$N%-%c%s%;%k$rI,$:J]>Z$7$?$$>l9g$O!"A[Dj$5$l$k%3%M(B
-   $B%/%7%g%s?t$NG\$NCM$r@_Dj$9$k$3$H$r$*$9$9$a$7$^$9!#(B
+prefork$B$9$k(Bpgpool-II$B$N%5!<%P%W%m%;%9$N?t$G$9!#%G%U%)%k%HCM$O(B32$B$K$J$C$F$$$^$9!#(B
+$B4pK\E*$K8e=R$N(Bmax_pool*num_init_children$BJ,$@$1(BPostgreSQL$B$X$N%3%M%/%7%g%s$,D%$i$l$^$9$,!"B>$K0J2<$N9MN8$,I,MW$G$9!#(B
+<ul>
+<li>$BLd$$9g$o$;$N%-%c%s%;%k$r9T$&$HDL>o$N%3%M%/%7%g%s$H$OJL$K?7$?$J%3%M%/%7%g%s$,D%$i$l$^$9!#(B
+$B$7$?$,$C$F!"$9$Y$F$N%3%M%/%7%g%s$,;HMQCf$N>l9g$OLd$$9g$o$;$N%-%c%s%;%k$,$G$-$J$/$J$C$F$7$^$&$N$G!"$4Cm0U2<$5$$!#(B
+$BLd$$9g$o$;$N%-%c%s%;%k$rI,$:J]>Z$7$?$$>l9g$O!"A[Dj$5$l$k%3%M%/%7%g%s?t$NG\$NCM$r@_Dj$9$k$3$H$r$*$9$9$a$7$^$9!#(B
+<li>$B0lHL%f!<%6$G(BPostgreSQL$B$K@\B3$G$-$k$N$O!"(Bmax_connections - superuser_reserved_connections $BJ,$@$1$G$9!#(B
+
+</ul>
+</p>
+<p>
+$B0J>e$r$^$H$a$k$H!"(B
+<pre>
+max_pool*num_init_children <= (max_connections - superuser_reserved_connections) ($B%/%(%j$N%-%c%s%;%k$r9MN8$7$J$$>l9g(B)
+max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connections) ($B%/%(%j$N%-%c%s%;%k$r9MN8$9$k>l9g(B)
+</pre>
+$B$N$I$A$i$+$rK~$?$9$h$&$K@_Dj$7$F$/$@$5$$!#(B
+</p>
+<p>
 $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O(B pgpool-II $B$r:F5/F0$7$F$/$@$5$$!#(B
 </p>
 
