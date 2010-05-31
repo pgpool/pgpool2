@@ -45,10 +45,6 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
-
 #ifdef HAVE_CRYPT_H
 #include <crypt.h>
 #endif
@@ -56,6 +52,7 @@
 #include "pool.h"
 #include "pool_ip.h"
 #include "md5.h"
+#include "pool_stream.h"
 
 static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *timeout);
 static StartupPacket *read_startup_packet(POOL_CONNECTION *cp);
@@ -504,48 +501,6 @@ void do_child(int unix_fd, int inet_fd)
  * private functions
  * -------------------------------------------------------------------
  */
-
-/*
- * set non-block flag
- */
-void pool_set_nonblock(int fd)
-{
-	int var;
-
-	/* set fd to none blocking */
-	var = fcntl(fd, F_GETFL, 0);
-	if (var == -1)
-	{
-		pool_error("fcntl failed. %s", strerror(errno));
-		child_exit(1);
-	}
-	if (fcntl(fd, F_SETFL, var | O_NONBLOCK) == -1)
-	{
-		pool_error("fcntl failed. %s", strerror(errno));
-		child_exit(1);
-	}
-}
-
-/*
- * unset non-block flag
- */
-void pool_unset_nonblock(int fd)
-{
-	int var;
-
-	/* set fd to none blocking */
-	var = fcntl(fd, F_GETFL, 0);
-	if (var == -1)
-	{
-		pool_error("fcntl failed. %s", strerror(errno));
-		child_exit(1);
-	}
-	if (fcntl(fd, F_SETFL, var & ~O_NONBLOCK) == -1)
-	{
-		pool_error("fcntl failed. %s", strerror(errno));
-		child_exit(1);
-	}
-}
 
 /*
 * perform accept() and return new fd

@@ -33,6 +33,7 @@
 #include "pool.h"
 #include "pool_path.h"
 #include "pool_ip.h"
+#include "pool_stream.h"
 #include "parser/pool_memory.h"
 #include "parser/pg_list.h"
 

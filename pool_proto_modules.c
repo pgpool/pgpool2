@@ -48,6 +48,7 @@
 #include "pool_timestamp.h"
 #include "pool_proto_modules.h"
 #include "pool_relcache.h"
+#include "pool_stream.h"
 #include "parser/pool_string.h"
 
 int force_replication;

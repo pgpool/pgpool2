@@ -529,17 +529,6 @@ extern POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 									  POOL_CONNECTION_POOL *backend,
 									  int reset_request);
 
-extern POOL_CONNECTION *pool_open(int fd);
-extern void pool_close(POOL_CONNECTION *cp);
-extern int pool_read(POOL_CONNECTION *cp, void *buf, int len);
-extern char *pool_read2(POOL_CONNECTION *cp, int len);
-extern int pool_write(POOL_CONNECTION *cp, void *buf, int len);
-extern int pool_flush(POOL_CONNECTION *cp);
-extern int pool_flush_it(POOL_CONNECTION *cp);
-extern int pool_write_and_flush(POOL_CONNECTION *cp, void *buf, int len);
-extern char *pool_read_string(POOL_CONNECTION *cp, int *len, int line);
-extern int pool_unread(POOL_CONNECTION *cp, void *data, int len);
-
 extern int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 extern int pool_do_reauth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp);
 
@@ -683,8 +672,6 @@ extern int start_recovery(int recovery_node);
 extern void finish_recovery(void);
 
 /* child.c */
-extern void pool_set_nonblock(int fd);
-extern void pool_unset_nonblock(int fd);
 extern void cancel_request(CancelPacket *sp);
 extern void check_stop_request(void);
 

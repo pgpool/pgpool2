@@ -37,6 +37,7 @@
 
 #include "pool.h"
 #include "md5.h"
+#include "pool_stream.h"
 
 #define QUERY_CACHE_TABLE_NAME "query_cache"
 #define CACHE_REGISTER_PREPARED_STMT "register_prepared_stmt"

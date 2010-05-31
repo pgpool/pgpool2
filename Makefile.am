@@ -4,16 +4,16 @@ pgpool_SOURCES = pool.h pool_type.h version.h pgpool.conf.sample \
 	pgpool.conf.sample-replication pgpool.conf.sample-master-slave \
 	README.euc_jp pgpool.spec \
 	main.c child.c pool_auth.c pool_config.l pool_error.c \
-	pool_process_query.c pool_stream.c pool_connection_pool.c pool_params.c \
+	pool_process_query.c pool_stream.c pool_stream.h pool_connection_pool.c pool_params.c \
 	pool_signal.h pool_signal.c pcp_child.c md5.c md5.h pcp.conf.sample \
 	pool_ipc.h pool_shmem.c pool_sema.c pool_system.c \
 	pool_rewrite_query.c pool_rewrite_query.h pool_rewrite_outfuncs.c \
 	pool_query_cache.c pool_hba.conf.sample sample/pgpool.pam\
 	pool_hba.c pool_path.h pool_path.c pool_ip.h pool_ip.c pool_type.h \
-	ps_status.c strlcpy.c recovery.c pool_relcache.c pool_process_reporting.c \
+	ps_status.c strlcpy.c recovery.c pool_relcache.c pool_relcache.h pool_process_reporting.c \
 	pool_ssl.c pool_timestamp.c pool_timestamp.h \
 	pool_proto_modules.c pool_proto_modules.h \
-	pool_lobj.c
+	pool_lobj.c pool_lobj.h
 
 pg_md5_SOURCES = pg_md5.c md5.c md5.h
 

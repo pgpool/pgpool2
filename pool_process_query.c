@@ -47,6 +47,7 @@
 #include "pool_proto_modules.h"
 #include "pool_lobj.h"
 #include "pool_relcache.h"
+#include "pool_stream.h"
 
 #ifndef FD_SETSIZE
 #define FD_SETSIZE 512
