@@ -117,12 +117,12 @@ static int trigger_failover_command(int node, const char *command_line);
 static struct sockaddr_un un_addr;		/* unix domain socket path */
 static struct sockaddr_un pcp_un_addr;  /* unix domain socket path for PCP */
 
-ProcessInfo *pids;	/* shmem child pid table */
+ProcessInfo *process_info;	/* Per child info table on shmem */
 
 /*
  * shmem connection info table
- * this is a two dimension array. i.e.:
- * con_info[pool_config->num_init_children][pool_config->max_pool]
+ * this is a three dimension array. i.e.:
+ * con_info[pool_config->num_init_children][pool_config->max_pool][MAX_NUM_BACKENDS]
  */
 ConnectionInfo *con_info;
 
@@ -436,16 +436,16 @@ int main(int argc, char **argv)
 	memset(con_info, 0, size);
 
 	size = pool_config->num_init_children * (sizeof(ProcessInfo));
-	pids = pool_shared_memory_create(size);
-	if (pids == NULL)
+	process_info = pool_shared_memory_create(size);
+	if (process_info == NULL)
 	{
-		pool_error("failed to allocate pids");
+		pool_error("failed to allocate process_info");
 		myexit(1);
 	}
-	memset(pids, 0, size);
+	memset(process_info, 0, size);
 	for (i = 0; i < pool_config->num_init_children; i++)
 	{
-		pids[i].connection_info = &con_info[i * pool_config->max_pool * MAX_NUM_BACKENDS];
+		process_info[i].connection_info = &con_info[i * pool_config->max_pool * MAX_NUM_BACKENDS];
 	}
 
 	/* create fail over/switch over event area */
@@ -481,8 +481,8 @@ int main(int argc, char **argv)
 	/* fork the children */
 	for (i=0;i<pool_config->num_init_children;i++)
 	{
-		pids[i].pid = fork_a_child(unix_fd, inet_fd, i);
-		pids[i].start_time = time(NULL);
+		process_info[i].pid = fork_a_child(unix_fd, inet_fd, i);
+		process_info[i].start_time = time(NULL);
 	}
 
 	/* set up signal handlers */
@@ -1105,12 +1105,12 @@ static void myexit(int code)
 	if (getpid() != mypid)
 		return;
 
-	if (pids != NULL) {
+	if (process_info != NULL) {
 		POOL_SETMASK(&AuthBlockSig);
 		exiting = 1;
 		for (i = 0; i < pool_config->num_init_children; i++)
 		{
-			pid_t pid = pids[i].pid;
+			pid_t pid = process_info[i].pid;
 			if (pid)
 			{
 				kill(pid, SIGTERM);
@@ -1222,7 +1222,7 @@ static RETSIGTYPE exit_handler(int sig)
 
 	for (i = 0; i < pool_config->num_init_children; i++)
 	{
-		pid_t pid = pids[i].pid;
+		pid_t pid = process_info[i].pid;
 		if (pid)
 		{
 			kill(pid, sig);
@@ -1239,7 +1239,7 @@ static RETSIGTYPE exit_handler(int sig)
 	if (errno != ECHILD)
 		pool_error("wait() failed. reason:%s", strerror(errno));
 
-	pids = NULL;
+	process_info = NULL;
 	myexit(0);
 }
 
@@ -1460,7 +1460,7 @@ static void failover(void)
 	/* kill all children */
 	for (i = 0; i < pool_config->num_init_children; i++)
 	{
-		pid_t pid = pids[i].pid;
+		pid_t pid = process_info[i].pid;
 		if (pid)
 		{
 			kill(pid, SIGQUIT);
@@ -1496,8 +1496,8 @@ static void failover(void)
 	/* fork the children */
 	for (i=0;i<pool_config->num_init_children;i++)
 	{
-		pids[i].pid = fork_a_child(unix_fd, inet_fd, i);
-		pids[i].start_time = time(NULL);
+		process_info[i].pid = fork_a_child(unix_fd, inet_fd, i);
+		process_info[i].start_time = time(NULL);
 	}
 
 	if (Req_info->kind == NODE_UP_REQUEST)
@@ -1803,14 +1803,14 @@ static void reaper(void)
 			/* look for exiting child's pid */
 			for (i=0;i<pool_config->num_init_children;i++)
 			{
-				if (pid == pids[i].pid)
+				if (pid == process_info[i].pid)
 				{
 					/* if found, fork a new child */
 					if (!switching && !exiting && status)
 					{
-						pids[i].pid = fork_a_child(unix_fd, inet_fd, i);
-						pids[i].start_time = time(NULL);
-						pool_debug("fork a new child pid %d", pids[i].pid);
+						process_info[i].pid = fork_a_child(unix_fd, inet_fd, i);
+						process_info[i].start_time = time(NULL);
+						pool_debug("fork a new child pid %d", process_info[i].pid);
 						break;
 					}
 				}
@@ -1853,7 +1853,7 @@ pool_get_process_list(int *array_size)
 	*array_size = pool_config->num_init_children;
 	array = calloc(*array_size, sizeof(int));
 	for (i = 0; i < *array_size; i++)
-		array[i] = pids[i].pid;
+		array[i] = process_info[i].pid;
 
 	return array;
 }
@@ -1867,8 +1867,8 @@ pool_get_process_info(pid_t pid)
 	int		i;
 
 	for (i = 0; i < pool_config->num_init_children; i++)
-		if (pids[i].pid == pid)
-			return &pids[i];
+		if (process_info[i].pid == pid)
+			return &process_info[i];
 
 	return NULL;
 }
@@ -1934,7 +1934,7 @@ static void kill_all_children(int sig)
 	/* kill all children */
 	for (i = 0; i < pool_config->num_init_children; i++)
 	{
-		pid_t pid = pids[i].pid;
+		pid_t pid = process_info[i].pid;
 		if (pid)
 		{
 			kill(pid, sig);

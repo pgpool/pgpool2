@@ -280,7 +280,7 @@ typedef struct {
 #define CONN_COUNTER_SEM 0
 #define REQUEST_INFO_SEM 1
 
-#define MY_PROCESS_INFO (pids[my_proc_id])
+#define MY_PROCESS_INFO (process_info[my_proc_id])
 
 /*
  * number specified when semaphore is locked/unlocked
@@ -342,7 +342,7 @@ extern volatile sig_atomic_t backend_timer_expired; /* flag for connection close
 extern long int weight_master;	/* normalized weight of master (0-RAND_MAX range) */
 extern int my_proc_id;  /* process table id (!= UNIX's PID) */
 extern POOL_SYSTEMDB_CONNECTION_POOL *system_db_info; /* systemdb */
-extern ProcessInfo *pids; /* shmem process information table */
+extern ProcessInfo *process_info; /* shmem process information table */
 extern ConnectionInfo *con_info; /* shmem connection info table */
 extern int in_load_balance;		/* non 0 if in load balance mode */
 extern int selected_slot;		/* selected DB node for load balance */
