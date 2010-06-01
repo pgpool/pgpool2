@@ -44,6 +44,7 @@
 
 #include "pool.h"
 #include "pool_stream.h"
+#include "pool_config.h"
 
 POOL_CONNECTION_POOL *pool_connection_pool;	/* connection pool */
 volatile sig_atomic_t backend_timer_expired = 0; /* flag for connection closed timer is expired */

@@ -50,6 +50,7 @@
 #endif
 
 #include "pool.h"
+#include "pool_config.h"
 #include "pool_ip.h"
 #include "md5.h"
 #include "pool_stream.h"

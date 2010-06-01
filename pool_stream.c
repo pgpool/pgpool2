@@ -40,6 +40,7 @@
 
 #include "pool.h"
 #include "pool_stream.h"
+#include "pool_config.h"
 
 static int mystrlen(char *str, int upper, int *flag);
 static int mystrlinelen(char *str, int upper, int *flag);

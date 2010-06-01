@@ -19,6 +19,7 @@
  * is" without express or implied warranty.
  */
 #include "pool.h"
+#include "pool_config.h"
 
 #include <ctype.h>
 #include <sys/types.h>

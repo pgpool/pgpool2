@@ -76,13 +76,6 @@ typedef enum {
 	POOL_DEADLOCK
 } POOL_STATUS;
 
-
-typedef enum {
-	INIT_CONFIG = 1,   /* 0x01 */
-	RELOAD_CONFIG = 2  /* 0x02 */
-} POOL_CONFIG_CONTEXT;
-
-
 /* protocol major version numbers */
 #define PROTO_MAJOR_V2	2
 #define PROTO_MAJOR_V3	3
@@ -126,107 +119,6 @@ typedef struct CancelPacket
 	int			pid;	/* bcckend process id */
 	int			key;	/* cancel key */
 } CancelPacket;
-
-/*
- * configuration paramters
- */
-typedef struct {
-	char *listen_addresses; /* hostnames/IP addresses to listen on */
-    int	port;	/* port # to bind */
-	int pcp_port;				/* PCP port # to bind */
-	char *socket_dir;		/* pgpool socket directory */
-	char *pcp_socket_dir;		/* PCP socket directory */
-	int pcp_timeout;			/* PCP timeout for an idle client */
-    int	num_init_children;	/* # of children initially pre-forked */
-    int	child_life_time;	/* if idle for this seconds, child exits */
-    int	connection_life_time;	/* if idle for this seconds, connection closes */
-    int	child_max_connections;	/* if max_connections received, child exits */
-	int client_idle_limit;		/* If client_idle_limit is n (n > 0), the client is forced to be
-								   disconnected after n seconds idle */
-	int authentication_timeout; /* maximum time in seconds to complete client authentication */
-    int	max_pool;	/* max # of connection pool per child */
-    char *logdir;		/* logging directory */
-    char *pid_file_name;		/* pid file name */
-    char *backend_socket_dir;	/* Unix domain socket directory for the PostgreSQL server */
-	int replication_mode;		/* replication mode */
-
-	int log_connections;		/* 0:false, 1:true - logs incoming connections */
-	int log_hostname;		/* 0:false, 1:true - resolve hostname */
-	int enable_pool_hba;		/* 0:false, 1:true - enables pool_hba.conf file authentication */
-
-	int load_balance_mode;		/* load balance mode */
-
-	int replication_stop_on_mismatch;		/* if there's a data mismatch between master and secondary
-											 * start degenration to stop replication mode
-											 */
-	int replicate_select; /* if non 0, replicate SELECT statement when load balancing is disabled. */
-	char **reset_query_list;		/* comma separated list of quries to be issued at the end of session */
-
-	int print_timestamp;		/* if non 0, print time stamp to each log line */
-	int master_slave_mode;		/* if non 0, operate in master/slave mode */
-	int connection_cache;		/* if non 0, cache connection pool */
-	int health_check_timeout;	/* health check timeout */
-	int health_check_period;	/* health check period */
-	char *health_check_user;		/* PostgreSQL user name for health check */
-	char *failover_command;     /* execute command when failover happens */
-	char *failback_command;     /* execute command when failback happens */
-
-	/*
-	 * If true, trigger fail over when writing to the backend
-	 * communication socket fails. This is the same behavior of
-	 * pgpool-II 2.2.x or earlier. If set to false, pgpool will report
-	 * an error and disconnect the session.
-	 */
-	int	fail_over_on_backend_error;
-
-	char *recovery_user;		/* PostgreSQL user name for online recovery */
-	char *recovery_password;		/* PostgreSQL user password for online recovery */
-	char *recovery_1st_stage_command;   /* Online recovery command in 1st stage */
-	char *recovery_2nd_stage_command;   /* Online recovery command in 2nd stage */
-	int recovery_timeout;				/* maximum time in seconds to wait for remote start-up */
-	int client_idle_limit_in_recovery;		/* If > 0, the client is forced to be
-											 *  disconnected after n seconds idle
-											 *  This parameter is only valid while in recovery 2nd statge */
-	int insert_lock;	/* if non 0, automatically lock table with INSERT to keep SERIAL
-						   data consistency */
-	int ignore_leading_white_space;		/* ignore leading white spaces of each query */
- 	int log_statement; /* 0:false, 1: true - logs all SQL statements */
- 	int log_per_node_statement; /* 0:false, 1: true - logs per node detailed SQL statements */
-
-	int parallel_mode;	/* if non 0, run in parallel query mode */
-
-	int enable_query_cache;		/* if non 0, use query cache. 0 by default */
-
-	char *pgpool2_hostname;		/* pgpool2 hostname */
-	char *system_db_hostname;	/* system DB hostname */
-	int system_db_port;			/* system DB port number */
-	char *system_db_dbname;		/* system DB name */
-	char *system_db_schema;		/* system DB schema name */
-	char *system_db_user;		/* user name to access system DB */
-	char *system_db_password;	/* password to access system DB */
-
-	char *lobj_lock_table;		/* table name to lock for rewriting lo_creat */
-
-	int debug_level;			/* debug message verbosity level.
-								 * 0: no message, 1 <= : more verbose
-								 */
-
-	BackendDesc *backend_desc;	/* PostgreSQL Server description. Placed on shared memory */
-
-	LOAD_BALANCE_STATUS	load_balance_status[MAX_NUM_BACKENDS];	/* to remember which DB node is selected for load balancing */
-
-	/* followings do not exist in the configuration file */
-	int replication_enabled;		/* replication mode enabled */
-	int master_slave_enabled;		/* master/slave mode enabled */
-	int num_reset_queries;		/* number of queries in reset_query_list */
-
-	/* ssl configuration */
-	int ssl;	/* if non 0, activate ssl support (frontend+backend) */
-	char *ssl_cert;	/* path to ssl certificate (frontend only) */
-	char *ssl_key;	/* path to ssl key (frontend only) */
-	char *ssl_ca_cert;	/* path to root (CA) certificate */
-	char *ssl_ca_cert_dir;	/* path to directory containing CA certificates */
-} POOL_CONFIG;
 
 #define MAX_PASSWORD_SIZE		1024
 
@@ -346,42 +238,6 @@ typedef struct {
 	UNIT unit;
 } Interval;
 
-/*
- * Relation cache structure
- */
-#define MAX_ITEM_LENGTH	1024
-
-/* Relation lookup cache structure */
-
-typedef void *(*func_ptr) ();
-
-typedef struct {
-	char dbname[MAX_ITEM_LENGTH];	/* database name */
-	char relname[MAX_ITEM_LENGTH];	/* table name */
-	void *data;	/* user data */
-	int refcnt;		/* reference count */
-	int session_id;		/* LocalSessionId */
-} PoolRelCache;
-
-typedef struct {
-	int num;		/* number of cache items */
-	char sql[MAX_ITEM_LENGTH];	/* Query to relation */
-	/*
-	 * User defined function to be called at data register.
-	 * Argument is POOL_SELECT_RESULT *.
-	 * This function must return a pointer to be
-	 * saved in cache->data.
-	 */
-	func_ptr	register_func;
-	/*
-	 * User defined function to be called at data unregister.
-	 * Argument cache->data.
-	 */
-	func_ptr	unregister_func;
-	bool cache_is_session_local;		/* True if cache life time is session local */
-	PoolRelCache *cache;	/* cache data */
-} POOL_RELCACHE;
-
 
 /* NUM_BACKENDS now always returns actual number of backends if not in_load_balance */
 #define NUM_BACKENDS (in_load_balance ? (selected_slot+1) : pool_config->backend_desc->num_backends)
@@ -480,7 +336,7 @@ typedef struct {
  */
 extern pid_t mypid; /* parent pid */
 extern bool run_as_pcp_child;
-extern POOL_CONFIG *pool_config;	/* configuration values */
+
 extern POOL_CONNECTION_POOL *pool_connection_pool;	/* connection pool */
 extern volatile sig_atomic_t backend_timer_expired; /* flag for connection closed timer is expired */
 extern long int weight_master;	/* normalized weight of master (0-RAND_MAX range) */
@@ -519,8 +375,6 @@ extern void pool_error(const char *fmt,...);
 extern void pool_debug(const char *fmt,...);
 extern void pool_log(const char *fmt,...);
 #endif
-extern int pool_init_config(void);
-extern int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context);
 extern void do_child(int unix_fd, int inet_fd);
 extern void pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file);
 extern int select_load_balancing_node(void);

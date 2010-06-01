@@ -27,6 +27,7 @@
 #include "config.h"
 #include "pool.h"
 #include "pool_stream.h"
+#include "pool_config.h"
 
 #ifdef USE_SSL
 

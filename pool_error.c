@@ -29,6 +29,7 @@
 #include <stdlib.h>
 
 #include "pool.h"
+#include "pool_config.h"
 
 #define MAXSTRFTIME 128
 

@@ -23,6 +23,8 @@
 #include "pool.h"
 #include "pool_proto_modules.h"
 #include "pool_stream.h"
+#include "pool_config.h"
+
 #include <string.h>
 #include <netinet/in.h>
 

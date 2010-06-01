@@ -509,6 +509,7 @@ char *yytext;
 #line 27 "pool_config.l"
 
 #include "pool.h"
+#include "pool_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -540,7 +541,7 @@ static char **extract_string_tokens(char *str, char *delim, int *n);
 static int eval_logical(char *str);
 static void clear_host_entry(int slot);
 
-#line 544 "pool_config.c"
+#line 545 "pool_config.c"
 
 #define INITIAL 0
 
@@ -720,10 +721,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 84 "pool_config.l"
+#line 85 "pool_config.l"
 
 
-#line 727 "pool_config.c"
+#line 728 "pool_config.c"
 
 	if ( !(yy_init) )
 		{
@@ -805,12 +806,12 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 86 "pool_config.l"
+#line 87 "pool_config.l"
 Lineno++; return POOL_EOL;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 87 "pool_config.l"
+#line 88 "pool_config.l"
 /* eat whitespace */
 	YY_BREAK
 case 3:
@@ -818,50 +819,50 @@ case 3:
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 88 "pool_config.l"
+#line 89 "pool_config.l"
 /* eat comment */
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 90 "pool_config.l"
+#line 91 "pool_config.l"
 return POOL_KEY;
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 91 "pool_config.l"
+#line 92 "pool_config.l"
 return POOL_STRING;
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 92 "pool_config.l"
+#line 93 "pool_config.l"
 return POOL_UNQUOTED_STRING;
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 93 "pool_config.l"
+#line 94 "pool_config.l"
 return POOL_INTEGER;
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 94 "pool_config.l"
+#line 95 "pool_config.l"
 return POOL_REAL;
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 95 "pool_config.l"
+#line 96 "pool_config.l"
 return POOL_EQUALS;
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 97 "pool_config.l"
+#line 98 "pool_config.l"
 return POOL_PARSE_ERROR;
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 99 "pool_config.l"
+#line 100 "pool_config.l"
 ECHO;
 	YY_BREAK
-#line 865 "pool_config.c"
+#line 866 "pool_config.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1819,7 +1820,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 99 "pool_config.l"
+#line 100 "pool_config.l"
 
 
 

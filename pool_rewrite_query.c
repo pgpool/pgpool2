@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2009	PgPool Global Development Group
+ * Copyright (c) 2003-2010	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -23,11 +23,12 @@
  */
 
 #include "pool.h"
+#include "pool_config.h"
+#include "pool_rewrite_query.h"
+
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
-#include "pool_rewrite_query.h"
-
 
 static int getInsertRule(ListCell *lc,List *list_t ,DistDefInfo *info, int div_key_num);
 static void examInsertStmt(Node *node,POOL_CONNECTION_POOL *backend,RewriteQuery *message);

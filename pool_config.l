@@ -26,6 +26,7 @@
 %{
 
 #include "pool.h"
+#include "pool_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>

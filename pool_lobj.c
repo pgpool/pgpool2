@@ -31,6 +31,7 @@
 #include "pool.h"
 #include "pool_lobj.h"
 #include "pool_relcache.h"
+#include "pool_config.h"
 
 /*
  * Rewrite lo_creat call to lo_create call if:

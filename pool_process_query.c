@@ -42,6 +42,7 @@
 #include <ctype.h>
 
 #include "pool.h"
+#include "pool_config.h"
 #include "pool_signal.h"
 #include "pool_timestamp.h"
 #include "pool_proto_modules.h"

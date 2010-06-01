@@ -24,6 +24,7 @@
 
 #include "pool.h"
 #include "pool_stream.h"
+#include "pool_config.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
