@@ -108,7 +108,7 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 		return NULL;
 	}
 
-	local_session_id = pool_get_local_session_id;
+	local_session_id = pool_get_local_session_id();
 	if (local_session_id < 0)
 	{
 		pool_error("pool_search_relcache: pool_get_local_session_id failed");
