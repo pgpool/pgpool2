@@ -51,6 +51,7 @@
 
 #include "pool.h"
 #include "pool_process_context.h"
+#include "pool_session_context.h"
 #include "pool_config.h"
 #include "pool_ip.h"
 #include "md5.h"
@@ -70,7 +71,9 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password);
 static void connection_count_up(void);
 static void connection_count_down(void);
 static void init_system_db_connection(void);
-
+static bool connect_using_existing_connection(POOL_CONNECTION *frontend,
+											  POOL_CONNECTION_POOL *backend,
+											  StartupPacket *sp);
 /*
  * non 0 means SIGTERM(smart shutdown) or SIGINT(fast shutdown) has arrived
  */
@@ -304,67 +307,12 @@ void do_child(int unix_fd, int inet_fd)
 
 		else
 		{
-			int i, freed = 0;
-			/*
-			 * save startup packet info
-			 */
-			for (i = 0; i < NUM_BACKENDS; i++)
-			{
-				if (VALID_BACKEND(i))
-				{
-					if (!freed)
-					{
-						pool_free_startup_packet(backend->slots[i]->sp);
-						freed = 1;
-					}
-					backend->slots[i]->sp = sp;
-				}
-			}
-
-			/* reuse existing connection to backend */
-
-			if (pool_do_reauth(frontend, backend))
-			{
-				pool_close(frontend);
-				connection_count_down();
+			/* reuse existing connection */
+			if (!connect_using_existing_connection(frontend, backend, sp))
 				continue;
-			}
-
-			if (MAJOR(backend) == 3)
-			{
-				if (send_params(frontend, backend))
-				{
-					pool_close(frontend);
-					connection_count_down();
-					continue;
-				}
-			}
-
-			/* send ReadyForQuery to frontend */
-			pool_write(frontend, "Z", 1);
-
-			if (MAJOR(backend) == 3)
-			{
-				int len;
-				char tstate;
-
-				len = htonl(5);
-				pool_write(frontend, &len, sizeof(len));
-				tstate = TSTATE(backend);
-				pool_write(frontend, &tstate, 1);
-			}
-
-			if (pool_flush(frontend) < 0)
-			{
-				pool_close(frontend);
-				connection_count_down();
-				continue;
-			}
-
 		}
 
 		connected = 1;
-		LocalSessionId++;
 
  		/* show ps status */
 		sp = MASTER_CONNECTION(backend)->sp;
@@ -372,14 +320,10 @@ void do_child(int unix_fd, int inet_fd)
 				 sp->user, sp->database, remote_ps_data);
 		set_ps_display(psbuf, false);
 
-		if (MAJOR(backend) == PROTO_MAJOR_V2)
-			TSTATE(backend) = 'I';
-
-		if (pool_config->load_balance_mode)
-		{
-			/* select load balancing node */
-			backend->info->load_balancing_node = select_load_balancing_node();
-		}
+		/*
+		 * Initialize per session context
+		 */
+		pool_init_session_context(frontend, backend);
 
 		/* query process loop */
 		for (;;)
@@ -997,6 +941,72 @@ int send_startup_packet(POOL_CONNECTION_POOL_SLOT *cp)
 	len = htonl(cp->sp->len + sizeof(len));
 	pool_write(cp->con, &len, sizeof(len));
 	return pool_write_and_flush(cp->con, cp->sp->startup_packet, cp->sp->len);
+}
+
+/*
+ * Reuse existing connection
+ */
+static bool connect_using_existing_connection(POOL_CONNECTION *frontend, 
+											  POOL_CONNECTION_POOL *backend,
+											  StartupPacket *sp)
+{
+	int i, freed = 0;
+	/*
+	 * save startup packet info
+	 */
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			if (!freed)
+			{
+				pool_free_startup_packet(backend->slots[i]->sp);
+				freed = 1;
+			}
+			backend->slots[i]->sp = sp;
+		}
+	}
+
+	/* reuse existing connection to backend */
+
+	if (pool_do_reauth(frontend, backend))
+	{
+		pool_close(frontend);
+		connection_count_down();
+		return false;
+	}
+
+	if (MAJOR(backend) == 3)
+	{
+		if (send_params(frontend, backend))
+		{
+			pool_close(frontend);
+			connection_count_down();
+			return false;
+		}
+	}
+
+	/* send ReadyForQuery to frontend */
+	pool_write(frontend, "Z", 1);
+
+	if (MAJOR(backend) == 3)
+	{
+		int len;
+		char tstate;
+
+		len = htonl(5);
+		pool_write(frontend, &len, sizeof(len));
+		tstate = TSTATE(backend);
+		pool_write(frontend, &tstate, 1);
+	}
+
+	if (pool_flush(frontend) < 0)
+	{
+		pool_close(frontend);
+		connection_count_down();
+		return false;
+	}
+	return true;
 }
 
 /*

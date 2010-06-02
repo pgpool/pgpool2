@@ -14,7 +14,8 @@ pgpool_SOURCES = pool.h pool_type.h version.h pgpool.conf.sample \
 	pool_ssl.c pool_timestamp.c pool_timestamp.h \
 	pool_proto_modules.c pool_proto_modules.h \
 	pool_lobj.c pool_lobj.h \
-	pool_process_context.c pool_process_context.h
+	pool_process_context.c pool_process_context.h \
+	pool_session_context.c pool_session_context.h
 
 pg_md5_SOURCES = pg_md5.c md5.c md5.h
 

@@ -203,6 +203,7 @@ typedef struct {
 } POOL_CONNECTION_POOL_SLOT;
 
 typedef struct {
+	int pool_index;		/* currentlt used index(0 start) of pool */
 	ConnectionInfo *info;		/* connection info on shmem */
     POOL_CONNECTION_POOL_SLOT	*slots[MAX_NUM_BACKENDS];
 } POOL_CONNECTION_POOL;
