@@ -25,6 +25,7 @@
 #include "pool.h"
 #include "pool_config.h"
 #include "pool_rewrite_query.h"
+#include "pool_proto_modules.h"
 
 #include <string.h>
 #include <errno.h>
@@ -647,4 +648,67 @@ RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 	}
 
 	return &message;
+}
+
+POOL_STATUS pool_do_parallel_query(POOL_CONNECTION *frontend,
+								   POOL_CONNECTION_POOL *backend,
+								   Node *node, bool *parallel, char **string, int *len)
+{
+	/* The Query is analyzed first in a parallel mode(in_parallel_query),
+	 * and, next, the Query is rewritten(rewrite_query_stmt).
+	 */
+
+	/* analyze the query */
+	RewriteQuery *r_query = is_parallel_query(node,backend);
+
+	if(r_query->is_loadbalance)
+	{
+        /* Usual processing of pgpool is done by using the rewritten Query
+         * if judged a possible load-balancing as a result of analyzing
+         * the Query.
+         * Of course, the load is distributed only for load_balance_mode=true.
+         */
+		if(r_query->r_code ==  SEND_LOADBALANCE_ENGINE)
+		{
+			/* use rewritten query */
+			*string = r_query->rewrite_query;
+			/* change query length */
+			*len = strlen(*string)+1;
+		}
+		pool_debug("SimpleQuery: loadbalance_query =%s",*string);
+	}
+	else if (r_query->is_parallel)
+	{
+		/*
+		 * For the Query that the parallel processing is possible.
+		 * Call parallel exe engine and return status to the upper layer.
+		 */
+		POOL_STATUS stats = pool_parallel_exec(frontend,backend,r_query->rewrite_query, node,true);
+		free_parser();
+		in_progress = 0;
+		return stats;
+	}
+	else if(!r_query->is_pg_catalog)
+	{
+		/* rewrite query and execute */
+		r_query = rewrite_query_stmt(node,frontend,backend,r_query);
+		if(r_query->type == T_InsertStmt)
+		{
+			free_parser();
+
+			if(r_query->r_code != INSERT_DIST_NO_RULE) {
+				in_progress = 0;
+				return r_query->status;
+			}
+		}
+		else if(r_query->type == T_SelectStmt)
+		{
+			free_parser();
+			in_progress = 0;
+			return r_query->status;
+		}
+	}
+
+	*parallel = false;
+	return POOL_CONTINUE;
 }

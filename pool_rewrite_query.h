@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2008	PgPool Global Development Group
+ * Copyright (c) 2003-2010	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -21,6 +21,9 @@
  * pool_rewrite_query.h: rewrite_query
  *
  */
+
+#ifndef POOL_REWRITE_QUERY_H
+#define POOL_REWRITE_QUERY_H
 
 #include "parser/nodes.h"
 #include "parser/parser.h"
@@ -180,4 +183,10 @@ char *pool_error_message(char *message);
 extern int IsSelectpgcatalog(Node *node,POOL_CONNECTION_POOL *backend);
 extern RewriteQuery *is_parallel_query(Node *node,POOL_CONNECTION_POOL *backend);
 extern POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,POOL_CONNECTION_POOL *backend, char *string,Node *node,bool send_to_frontend);
+
+POOL_STATUS pool_do_parallel_query(POOL_CONNECTION *frontend,
+								   POOL_CONNECTION_POOL *backend,
+								   Node *node, bool *parallel, char **string, int *len);
+
+#endif	/* POOL_REWRITE_QUERY_H */
 

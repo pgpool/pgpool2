@@ -47,6 +47,7 @@
 #include "pool_signal.h"
 #include "pool_timestamp.h"
 #include "pool_proto_modules.h"
+#include "pool_rewrite_query.h"
 #include "pool_relcache.h"
 #include "pool_stream.h"
 #include "pool_config.h"
@@ -240,65 +241,12 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 			}
 		}
 
-		if (pool_config->parallel_mode)
+		if (PARALLEL_MODE)
 		{
-      /* The Query is analyzed first in a parallel mode(in_parallel_query),
-       * and, next, the Query is rewritten(rewrite_query_stmt).
-       */
-
-			/* analyze the query */
-			RewriteQuery *r_query = is_parallel_query(node,backend);
-
-			if(r_query->is_loadbalance)
-			{
-        /* Usual processing of pgpool is done by using the rewritten Query
-         * if judged a possible load-balancing as a result of analyzing
-         * the Query.
-         * Of course, the load is distributed only for load_balance_mode=true.
-         */
-				if(r_query->r_code ==  SEND_LOADBALANCE_ENGINE)
-				{
-					/* use rewritten query */
-					string = r_query->rewrite_query;
-					/* change query length */
-					len = strlen(string)+1;
-				}
-				pool_debug("SimpleQuery: loadbalance_query =%s",string);
-			}
-			else if (r_query->is_parallel)
-			{
-				/*
-				 * For the Query that the parallel processing is possible.
-				 * Call parallel exe engine and return status to the upper layer.
-				 */
-				POOL_STATUS stats = pool_parallel_exec(frontend,backend,r_query->rewrite_query, node,true);
-				free_parser();
-				in_progress = 0;
-				return stats;
-			}
-			else if(!r_query->is_pg_catalog)
-			{
-				/* rewrite query and execute */
-				r_query = rewrite_query_stmt(node,frontend,backend,r_query);
-				if(r_query->type == T_InsertStmt)
-				{
-					free_parser();
-
-					if(r_query->r_code != INSERT_DIST_NO_RULE) {
-						in_progress = 0;
-						return r_query->status;
-					}
-				}
-				else if(r_query->type == T_SelectStmt)
-				{
-					free_parser();
-					in_progress = 0;
-					return r_query->status;
-				}
- 			}
-			/*
-			 * The same processing as usual pgpool is done to other Query type.
-       */
+			bool parallel = true;
+			status = pool_do_parallel_query(frontend, backend, node, &parallel, &string, &len);
+			if (parallel)
+				return status;
 		}
 
 		/* check COPY FROM STDIN
