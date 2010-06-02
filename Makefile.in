@@ -75,7 +75,7 @@ am_pgpool_OBJECTS = main.$(OBJEXT) child.$(OBJEXT) pool_auth.$(OBJEXT) \
 	strlcpy.$(OBJEXT) recovery.$(OBJEXT) pool_relcache.$(OBJEXT) \
 	pool_process_reporting.$(OBJEXT) pool_ssl.$(OBJEXT) \
 	pool_timestamp.$(OBJEXT) pool_proto_modules.$(OBJEXT) \
-	pool_lobj.$(OBJEXT)
+	pool_lobj.$(OBJEXT) pool_process_context.$(OBJEXT)
 pgpool_OBJECTS = $(am_pgpool_OBJECTS)
 pgpool_DEPENDENCIES = parser/libsql-parser.a pcp/libpcp.la \
 	parser/nodes.o
@@ -246,7 +246,8 @@ pgpool_SOURCES = pool.h pool_type.h version.h pgpool.conf.sample \
 	ps_status.c strlcpy.c recovery.c pool_relcache.c pool_relcache.h pool_process_reporting.c \
 	pool_ssl.c pool_timestamp.c pool_timestamp.h \
 	pool_proto_modules.c pool_proto_modules.h \
-	pool_lobj.c pool_lobj.h
+	pool_lobj.c pool_lobj.h \
+	pool_process_context.c pool_process_context.h
 
 pg_md5_SOURCES = pg_md5.c md5.c md5.h
 sysconf_DATA = pgpool.conf.sample pcp.conf.sample pool_hba.conf.sample \
@@ -408,6 +409,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_lobj.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_params.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_path.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_process_context.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_process_query.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_process_reporting.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_proto_modules.Po@am__quote@

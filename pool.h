@@ -280,8 +280,6 @@ typedef struct {
 #define CONN_COUNTER_SEM 0
 #define REQUEST_INFO_SEM 1
 
-#define MY_PROCESS_INFO (process_info[my_proc_id])
-
 /*
  * number specified when semaphore is locked/unlocked
  */

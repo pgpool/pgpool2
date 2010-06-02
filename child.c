@@ -50,6 +50,7 @@
 #endif
 
 #include "pool.h"
+#include "pool_process_context.h"
 #include "pool_config.h"
 #include "pool_ip.h"
 #include "md5.h"
@@ -127,6 +128,9 @@ void do_child(int unix_fd, int inet_fd)
 		pool_set_nonblock(inet_fd);
 	}
 #endif
+
+	/* Initialize per process context */
+	pool_init_process_context();
 
 	/* initialize random seed */
 	gettimeofday(&now, &tz);
