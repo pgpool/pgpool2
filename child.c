@@ -68,6 +68,7 @@ static void send_frontend_exits(void);
 static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password);
 static void connection_count_up(void);
 static void connection_count_down(void);
+static void init_system_db_connection(void);
 
 /*
  * non 0 means SIGTERM(smart shutdown) or SIGINT(fast shutdown) has arrived
@@ -131,25 +132,8 @@ void do_child(int unix_fd, int inet_fd)
 	gettimeofday(&now, &tz);
 	srandom((unsigned int) now.tv_usec);
 
-	/* initialize systemdb connection */
-	if (pool_config->parallel_mode || pool_config->enable_query_cache)
-	{
-		system_db_connect();
-		if (PQstatus(system_db_info->pgconn) != CONNECTION_OK)
-		{
-			pool_error("Could not make persistent libpq system DB connection");
-		}
-
-		system_db_info->connection = make_persistent_db_connection(pool_config->system_db_hostname,
-																   pool_config->system_db_port,
-																   pool_config->system_db_dbname,
-																   pool_config->system_db_user,
-																   pool_config->system_db_password);
-		if (system_db_info->connection == NULL)
-		{
-			pool_error("Could not make persistent system DB connection");
-		}
-	}
+	/* initialize system db connection */
+	init_system_db_connection();
 
 	/* initialize connection pool */
 	if (pool_init_cp())
@@ -1803,5 +1787,30 @@ void check_stop_request(void)
 	{
 		reset_variables();
 		child_exit(0);
+	}
+}
+
+/*
+ * Initialize system DB connection
+ */
+static void init_system_db_connection(void)
+{	
+	if (pool_config->parallel_mode || pool_config->enable_query_cache)
+	{
+		system_db_connect();
+		if (PQstatus(system_db_info->pgconn) != CONNECTION_OK)
+		{
+			pool_error("Could not make persistent libpq system DB connection");
+		}
+
+		system_db_info->connection = make_persistent_db_connection(pool_config->system_db_hostname,
+																   pool_config->system_db_port,
+																   pool_config->system_db_dbname,
+																   pool_config->system_db_user,
+																   pool_config->system_db_password);
+		if (system_db_info->connection == NULL)
+		{
+			pool_error("Could not make persistent system DB connection");
+		}
 	}
 }
