@@ -83,3 +83,16 @@ POOL_SESSION_CONTEXT *pool_get_session_context(void)
 	return session_context;
 }
 
+/*
+ * Return local session id
+ */
+int pool_get_local_session_id(void)
+{
+	if (!session_context)
+	{
+		pool_error("pool_get_local_session_id: session context is not initialized");
+		return -1;
+	}
+
+	return session_context->process_context->local_session_id;
+}

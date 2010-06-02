@@ -27,6 +27,7 @@
 
 #include "pool.h"
 #include "pool_relcache.h"
+#include "pool_session_context.h"
 
 /*
  * Create relation cache
@@ -97,6 +98,7 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 	char query[1024];
 	POOL_SELECT_RESULT *res = NULL;
 	int index = 0;
+	int local_session_id;
 
 	/* Eliminate double quotes */
 	rel = malloc(strlen(table)+1);
@@ -105,6 +107,14 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 		pool_error("pool_search_relcache: malloc failed");
 		return NULL;
 	}
+
+	local_session_id = pool_get_local_session_id;
+	if (local_session_id < 0)
+	{
+		pool_error("pool_search_relcache: pool_get_local_session_id failed");
+		return NULL;
+	}
+
 	for(i=0;*table;table++)
 	{
 		if (*table != '"')
@@ -123,7 +133,7 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 		 */
 		if (relcache->cache_is_session_local)
 		{
-			if (relcache->cache[i].session_id != LocalSessionId)
+			if (relcache->cache[i].session_id != local_session_id)
 				continue;
 		}
 
@@ -162,7 +172,7 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 		 */
 		if (relcache->cache_is_session_local)
 		{
-			if (relcache->cache[i].session_id != LocalSessionId)
+			if (relcache->cache[i].session_id != local_session_id)
 			{
 				index = i;
 				break;
@@ -186,7 +196,7 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 	strncpy(relcache->cache[index].dbname, dbname, MAX_ITEM_LENGTH);
 	strncpy(relcache->cache[index].relname, rel, MAX_ITEM_LENGTH);
 	relcache->cache[index].refcnt = 1;
-	relcache->cache[index].session_id = LocalSessionId;
+	relcache->cache[index].session_id = local_session_id;
 	free(rel);
 
 	/*

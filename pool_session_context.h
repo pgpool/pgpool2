@@ -53,5 +53,6 @@ typedef struct {
 
 extern void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 extern POOL_SESSION_CONTEXT *pool_get_session_context(void);
+extern int pool_get_local_session_id(void);
 
 #endif /* POOL_SESSION_CONTEXT_H */

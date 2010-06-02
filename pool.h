@@ -355,8 +355,6 @@ extern volatile sig_atomic_t exit_request;
 #define QUERY_STRING_BUFFER_LEN 1024
 extern char query_string_buffer[];		/* last query string sent to simpleQuery() */
 
-extern int LocalSessionId;	/* Local session id. incremented when new frontend connected */
-
 /*
  * public functions
  */
