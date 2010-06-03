@@ -81,7 +81,7 @@ typedef char bool;
 #define SM_TTY			64
 
 #define MAX_NUM_BACKENDS 128
-#define MAX_CONNECTION_SLOTS 128
+#define MAX_CONNECTION_SLOTS MAX_NUM_BACKENDS
 #define MAX_DB_HOST_NAMELEN	 128
 #define MAX_PATH_LENGTH 256
 
