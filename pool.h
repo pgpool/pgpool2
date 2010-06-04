@@ -29,6 +29,8 @@
 #include "config.h"
 #include "pool_type.h"
 #include "pool_signal.h"
+#include "parser/nodes.h"
+
 #include "libpq-fe.h"
 #include <stdio.h>
 #include <time.h>
@@ -244,12 +246,19 @@ typedef struct {
 #define NUM_BACKENDS (in_load_balance ? (selected_slot+1) : pool_config->backend_desc->num_backends)
 #define BACKEND_INFO(backend_id) (pool_config->backend_desc->backend_info[(backend_id)])
 #define LOAD_BALANCE_STATUS(backend_id) (pool_config->load_balance_status[(backend_id)])
-/* if RAW_MODE, VALID_BACKEND returns the selected node only */
+
+/*
+ * This macro returns true if:
+ *   current query is in progress and the DB node is healthy OR
+ *   no query is in progress and the DB node is healthy
+ */
+extern bool pool_is_node_to_be_sent_in_current_query(int node_id);
+
 #define VALID_BACKEND(backend_id) \
-	(RAW_MODE ? (backend_id) == MASTER_NODE_ID : \
-	(in_load_balance ? LOAD_BALANCE_STATUS(backend_id) == LOAD_SELECTED : \
-    ((BACKEND_INFO(backend_id).backend_status == CON_UP) || \
-	 (BACKEND_INFO(backend_id).backend_status == CON_CONNECT_WAIT))))
+	(pool_is_node_to_be_sent_in_current_query((backend_id)) && \
+    ((BACKEND_INFO((backend_id)).backend_status == CON_UP) || \
+	 (BACKEND_INFO((backend_id)).backend_status == CON_CONNECT_WAIT)))
+
 #define CONNECTION_SLOT(p, slot) ((p)->slots[(slot)])
 #define CONNECTION(p, slot) (CONNECTION_SLOT(p, slot)->con)
 #define MASTER_CONNECTION(p) ((p)->slots[MASTER_NODE_ID])
@@ -499,6 +508,7 @@ extern POOL_STATUS pool_query_cache_lookup(POOL_CONNECTION *frontend, char *quer
 extern int pool_query_cache_register(char kind, POOL_CONNECTION *frontend, char *database, char *data, int data_len, char *query);
 extern int pool_query_cache_table_exists(void);
 extern int pool_clear_cache_by_time(Interval *interval, int size);
+extern POOL_STATUS pool_execute_query_cache_lookup(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, Node *node);
 
 /* pool_hba.c */
 extern void load_hba(char *hbapath);

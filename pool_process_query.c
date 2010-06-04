@@ -49,6 +49,8 @@
 #include "pool_lobj.h"
 #include "pool_relcache.h"
 #include "pool_stream.h"
+#include "pool_session_context.h"
+#include "pool_query_context.h"
 
 #ifndef FD_SETSIZE
 #define FD_SETSIZE 512
@@ -1189,6 +1191,8 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 	int delete_or_update = 0;
 	char kind1;
 	POOL_STATUS ret;
+	POOL_SESSION_CONTEXT *session_context = pool_get_session_context();
+	POOL_QUERY_CONTEXT *query_context = session_context->query_context;
 
 	/*
 	 * Check if packet kind == 'C'(Command complete), '1'(Parse
@@ -1277,6 +1281,9 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 	{
 		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 		{
+			if (session_context->in_progress && !pool_is_node_to_be_sent(query_context, i))
+				continue;
+
 			status = pool_read(CONNECTION(backend, i), &len, sizeof(len));
 			if (status < 0)
 			{
@@ -3592,6 +3599,9 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 	POOL_MEMORY_POOL *old_context = NULL;
 	POOL_MEMORY_POOL *parser_context = NULL;
 
+	POOL_SESSION_CONTEXT *session_context = pool_get_session_context();
+	POOL_QUERY_CONTEXT *query_context = session_context->query_context;
+
 	memset(kind_map, 0, sizeof(kind_map));
 
 	for (i=0;i<NUM_BACKENDS;i++)
@@ -3601,6 +3611,9 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 
 		if (VALID_BACKEND(i))
 		{
+			if (session_context->in_progress && !pool_is_node_to_be_sent(query_context, i))
+				continue;
+
 			do
 			{
 				char *p, *value;
@@ -3705,6 +3718,9 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
+			if (session_context->in_progress && !pool_is_node_to_be_sent(query_context, i))
+				continue;
+
 			if (kind_list[i] != 0 && trust_kind != kind_list[i])
 			{
 				/* degenerate */

@@ -76,7 +76,6 @@ POOL_SESSION_CONTEXT *pool_get_session_context(void)
 {
 	if (!session_context)
 	{
-		pool_error("pool_get_session_context: session context is not initialized");
 		return NULL;
 	}
 
