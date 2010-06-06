@@ -1504,7 +1504,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 	POOL_STATUS status;
 	int i;
 
-	if (frontend->len <= 0 && frontend->no_forward != 0)
+	if (pool_read_buffer_is_empty(frontend) && frontend->no_forward != 0)
 		return POOL_CONTINUE;
 
 	if (pool_read(frontend, &fkind, 1) < 0)

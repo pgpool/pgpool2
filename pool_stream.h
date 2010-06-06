@@ -29,6 +29,19 @@
 #define READBUFSZ 1024
 #define WRITEBUFSZ 8192
 
+/*
+ * Return true if read buffer is empty. Argument is POOL_CONNECTION.
+ */
+#define pool_read_buffer_is_empty(connection) ((connection)->len <= 0)
+
+/*
+ * Discard read buffer contents
+ */
+#define pool_discard_read_buffer(connection) \
+    do { \
+       (connection)->len = 0; \
+    } while (0)
+
 extern POOL_CONNECTION *pool_open(int fd);
 extern void pool_close(POOL_CONNECTION *cp);
 extern int pool_read(POOL_CONNECTION *cp, void *buf, int len);
