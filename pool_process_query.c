@@ -208,7 +208,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 			/*
 			 * Do not read a message from frontend while backends process a query.
 			 */
-			if (!reset_request && !in_progress)
+			if (!reset_request && !pool_is_query_in_progress())
 			{
 				FD_SET(frontend->fd, &readmask);
 				FD_SET(frontend->fd, &exceptmask);
@@ -349,7 +349,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 			if (was_error)
 				continue;
 
-			if (!reset_request && !in_progress)
+			if (!reset_request && !pool_is_query_in_progress())
 			{
 				if (FD_ISSET(frontend->fd, &exceptmask))
 					return POOL_END;
@@ -372,7 +372,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 		}
 		else
 		{
-			if (!pool_read_buffer_is_empty(frontend) && !in_progress)
+			if (!pool_read_buffer_is_empty(frontend) && !pool_is_query_in_progress())
 			{
 				/* We do not read anything from frontend after receiving X packet.
 				 * Just emit log message. This will guard us from buggy frontend.
@@ -623,7 +623,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 	{
 		pool_debug("process reporting");
 		process_reporting(frontend, backend);
-		in_progress = 0;
+		pool_unset_query_in_progress();
 		return POOL_CONTINUE;
 	}
 
@@ -1191,8 +1191,6 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 	int delete_or_update = 0;
 	char kind1;
 	POOL_STATUS ret;
-	POOL_SESSION_CONTEXT *session_context = pool_get_session_context();
-	POOL_QUERY_CONTEXT *query_context = session_context->query_context;
 
 	/*
 	 * Check if packet kind == 'C'(Command complete), '1'(Parse
@@ -1281,9 +1279,6 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 	{
 		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 		{
-			if (session_context->in_progress && !pool_is_node_to_be_sent(query_context, i))
-				continue;
-
 			status = pool_read(CONNECTION(backend, i), &len, sizeof(len));
 			if (status < 0)
 			{
@@ -1904,7 +1899,7 @@ POOL_STATUS ParameterStatus(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
  */
 void reset_variables(void)
 {
-	in_progress = 0;
+	pool_unset_query_in_progress();
 
 	/* End load balance mode */
 	if (in_load_balance)
@@ -3447,7 +3442,7 @@ static int is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 	if (pool_ssl_pending(frontend))
 		return 0;
 
-	if (!pool_read_buffer_is_empty(frontend) && !in_progress)
+	if (!pool_read_buffer_is_empty(frontend) && !pool_is_query_in_progress())
 		return 0;
 
 	for (i=0;i<NUM_BACKENDS;i++)

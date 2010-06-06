@@ -26,6 +26,7 @@
 #include "pool_config.h"
 #include "pool_rewrite_query.h"
 #include "pool_proto_modules.h"
+#include "pool_session_context.h"
 
 #include <string.h>
 #include <errno.h>
@@ -685,7 +686,7 @@ POOL_STATUS pool_do_parallel_query(POOL_CONNECTION *frontend,
 		 */
 		POOL_STATUS stats = pool_parallel_exec(frontend,backend,r_query->rewrite_query, node,true);
 		free_parser();
-		in_progress = 0;
+		pool_unset_query_in_progress();
 		return stats;
 	}
 	else if(!r_query->is_pg_catalog)
@@ -697,14 +698,14 @@ POOL_STATUS pool_do_parallel_query(POOL_CONNECTION *frontend,
 			free_parser();
 
 			if(r_query->r_code != INSERT_DIST_NO_RULE) {
-				in_progress = 0;
+				pool_unset_query_in_progress();
 				return r_query->status;
 			}
 		}
 		else if(r_query->type == T_SelectStmt)
 		{
 			free_parser();
-			in_progress = 0;
+			pool_unset_query_in_progress();
 			return r_query->status;
 		}
 	}

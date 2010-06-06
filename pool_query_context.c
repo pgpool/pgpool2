@@ -57,7 +57,7 @@ void pool_query_context_destroy(POOL_QUERY_CONTEXT *query_context)
 	if (query_context)
 	{
 		session_context = pool_get_session_context();
-		session_context->in_progress = false;
+		pool_unset_query_in_progress();
 		session_context->query_context = NULL;
 		free(query_context);
 	}
@@ -75,7 +75,7 @@ void pool_start_query(POOL_QUERY_CONTEXT *query_context, char *query, Node *node
 		session_context = pool_get_session_context();
 		query_context->original_query = query;
 		query_context->parse_tree = node;
-		session_context->in_progress = true;
+		pool_set_query_in_progress();
 		session_context->query_context = query_context;
 	}
 }
@@ -173,7 +173,7 @@ bool pool_is_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id)
 }
 
 /*
- * Return if the DB node is needed to send query.
+ * Return true if the DB node is needed to send query.
  * Intended to be called from VALID_BACKEND
  */
 bool pool_is_node_to_be_sent_in_current_query(int node_id)
@@ -184,7 +184,7 @@ bool pool_is_node_to_be_sent_in_current_query(int node_id)
 	if (!sc)
 		return true;
 
-	if (sc->in_progress && sc->query_context)
+	if (pool_is_query_in_progress() && sc->query_context)
 	{
 		return pool_is_node_to_be_sent(sc->query_context, node_id);
 	}

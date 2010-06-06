@@ -53,7 +53,6 @@ typedef struct {
 	int master_slave_was_enabled;	/* master/slave mode was enabled */
 	int internal_transaction_started;		/* to issue table lock command a transaction
 											   has been started internally */
-	int in_progress = 0;		/* indicates while doing something after receiving Query */
 	int mismatch_ntuples;	/* number of updated tuples */
 	char *copy_table = NULL;  /* copy table name */
 	char *copy_schema = NULL;  /* copy table name */
@@ -95,7 +94,6 @@ typedef struct {
 	char *parsed_query = NULL;
 
 
-	bool in_progress;	/* true if we are busy and do not accept input from frontend */
 	int load_balance_node_id;	/* selected load balance node id */
 	bool received_write_query;	/* have we recived a write query in this transaction? */
 	bool send_ready_for_query;	/* ok to send ReadyForQuery */
@@ -112,5 +110,8 @@ typedef struct {
 extern void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 extern POOL_SESSION_CONTEXT *pool_get_session_context(void);
 extern int pool_get_local_session_id(void);
+extern bool pool_is_query_in_progress(void);
+extern void pool_set_query_in_progress(void);
+extern void pool_unset_query_in_progress(void);
 
 #endif /* POOL_SESSION_CONTEXT_H */
