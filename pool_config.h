@@ -63,6 +63,8 @@ typedef struct {
 
 	int print_timestamp;		/* if non 0, print time stamp to each log line */
 	int master_slave_mode;		/* if non 0, operate in master/slave mode */
+	char *master_slave_sub_mode;		/* either "slony" or "stream" */
+
 	int connection_cache;		/* if non 0, cache connection pool */
 	int health_check_timeout;	/* health check timeout */
 	int health_check_period;	/* health check period */

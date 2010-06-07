@@ -86,6 +86,9 @@ print_timestamp = true
 # If true, operate in master/slave mode.
 master_slave_mode = true
 
+# Master/slave sub mode. either 'slony' or 'stream'. Default is 'slony'.
+master_slave_sub_mode = 'slony'
+
 # If true, cache connection pool.
 connection_cache = true
 

@@ -179,6 +179,11 @@ void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	strncpy(status[i].desc, "if true, operate in master/slave mode", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	strncpy(status[i].name, "master_slave_sub_mode", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->master_slave_sub_mode);
+	strncpy(status[i].desc, "master/slave sub mode", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	strncpy(status[i].name, "connection_cache", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->connection_cache);
 	strncpy(status[i].desc, "if true, cache connection pool", POOLCONFIG_MAXDESCLEN);

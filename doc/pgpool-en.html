@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Wed May 12 13:43:25 JST 2010
+Last modified: Mon Jun  7 17:13:27 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1146,7 +1146,7 @@ alive.</p>
 <h3>Master/Slave Mode</h3>
 
 <p>This mode is for using pgpool-II with another master/slave
-replication software (like Slony-I), so it really does the actual data
+replication software (like Slony-I and Streaming replication), so it really does the actual data
 replication. DB nodes' information must be set as the replication mode.
 In addtion to that, set
 <code>master_slave_mode</code> and <code>load_balance_mode</code> to
@@ -1158,6 +1158,11 @@ SELECT should be executed on master only as well but for this you need to use co
 
 <p>In the master/slave mode, <code>replication_mode</code> must be set
 to false, and <code>master_slave_mode</code> to true.</p>
+
+<p>master/slave mode has "sub mode". The default is 'slony' which is
+suitable for Slony-I. You can also set it to 'stream', which should be
+set if you want to work with PostgreSQL's buil-in replication system
+(Streaming Replication).
 
 <h3>Parallel Mode</h3>
 
