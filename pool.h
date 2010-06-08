@@ -547,4 +547,7 @@ extern POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backen
 extern POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result, int major);
 extern void free_select_result(POOL_SELECT_RESULT *result);
 
+/* pool_config.c */
+extern int eval_logical(char *str);
+
 #endif /* POOL_H */

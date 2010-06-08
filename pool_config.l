@@ -55,7 +55,6 @@ typedef enum {
 
 static char *extract_string(char *value, POOL_TOKEN token);
 static char **extract_string_tokens(char *str, char *delim, int *n);
-static int eval_logical(char *str);
 static void clear_host_entry(int slot);
 
 %}
@@ -1495,22 +1494,102 @@ static char *extract_string(char *value, POOL_TOKEN token)
 	return ret;
 }
 
-static int eval_logical(char *str)
+/*
+ * Try to interpret value as boolean value.  Valid values are: true,
+ * false, yes, no, on, off, 1, 0; as well as unique prefixes thereof.
+ * If the string parses okay, return true, else false.
+ * If okay and result is not NULL, return the value in *result.
+ * This function copied from PostgreSQL source code.
+ */
+static bool parse_bool_with_len(const char *value, size_t len, bool *result)
 {
-	int ret;
+	switch (*value)
+	{
+		case 't':
+		case 'T':
+			if (strncasecmp(value, "true", len) == 0)
+			{
+				if (result)
+					*result = true;
+				return true;
+			}
+			break;
+		case 'f':
+		case 'F':
+			if (strncasecmp(value, "false", len) == 0)
+			{
+				if (result)
+					*result = false;
+				return true;
+			}
+			break;
+		case 'y':
+		case 'Y':
+			if (strncasecmp(value, "yes", len) == 0)
+			{
+				if (result)
+					*result = true;
+				return true;
+			}
+			break;
+		case 'n':
+		case 'N':
+			if (strncasecmp(value, "no", len) == 0)
+			{
+				if (result)
+					*result = false;
+				return true;
+			}
+			break;
+		case 'o':
+		case 'O':
+			/* 'o' is not unique enough */
+			if (strncasecmp(value, "on", (len > 2 ? len : 2)) == 0)
+			{
+				if (result)
+					*result = true;
+				return true;
+			}
+			else if (strncasecmp(value, "off", (len > 2 ? len : 2)) == 0)
+			{
+				if (result)
+					*result = false;
+				return true;
+			}
+			break;
+		case '1':
+			if (len == 1)
+			{
+				if (result)
+					*result = true;
+				return true;
+			}
+			break;
+		case '0':
+			if (len == 1)
+			{
+				if (result)
+					*result = false;
+				return true;
+			}
+			break;
+		default:
+			break;
+	}
 
-	if (!strcasecmp(str, "true"))
-		ret = 1;
-	else if (!strcasecmp(str, "false"))
-		ret = 0;
-	else if (!strcmp(str, "1"))
-		ret = 1;
-	else if (!strcmp(str, "0"))
-		ret = 0;
-	else
-		ret = -1;
+	if (result)
+		*result = false;		/* suppress compiler warning */
+	return false;
+}
 
-	return ret;
+int eval_logical(char *str)
+{
+	bool result;
+
+	if (!parse_bool_with_len(str, strlen(str), &result))
+		return -1;
+
+	return (result ? 1 : 0);
 }
 
 /*
