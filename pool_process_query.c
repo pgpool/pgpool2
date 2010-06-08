@@ -454,7 +454,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 			switch (kind)
 			{
 				case 'A':
-					/* Notification  response */
+					/* Notification Response */
 					status = NotificationResponse(frontend, backend);
 					break;
 
@@ -464,8 +464,8 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 					break;
 
 				case 'C':
-					/* Complete command response */
-					status = CompleteCommandResponse(frontend, backend);
+					/* Completed Response */
+					status = CompletedResponse(frontend, backend);
 					break;
 
 				case 'D':

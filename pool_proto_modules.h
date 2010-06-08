@@ -19,7 +19,8 @@
  * suitability of this software for any purpose.  It is provided "as
  * is" without express or implied warranty.
  *
- * pool_proto_modules.h.: header file for pool_proto_modules.c and pool_process_qeury.c
+ * pool_proto_modules.h.: header file for pool_proto_modules.c, pool_proto2.c
+ * and pool_process_qeury.c
  *
  */
 
@@ -84,9 +85,6 @@ extern PreparedStatementList prepared_list; /* prepared statement name list */
 /*
  * modules defined in pool_proto_modules.c
  */
-extern POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend, 
-										POOL_CONNECTION_POOL *backend);
-
 extern POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend, 
 						 POOL_CONNECTION_POOL *backend, char *query);
 
@@ -99,9 +97,6 @@ extern POOL_STATUS Parse(POOL_CONNECTION *frontend,
 extern POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend, 
 								 POOL_CONNECTION_POOL *backend, int send_ready);
 
-extern POOL_STATUS CompleteCommandResponse(POOL_CONNECTION *frontend, 
-										   POOL_CONNECTION_POOL *backend);
-
 extern POOL_STATUS CopyInResponse(POOL_CONNECTION *frontend, 
 								  POOL_CONNECTION_POOL *backend);
 
@@ -111,32 +106,41 @@ extern POOL_STATUS CopyOutResponse(POOL_CONNECTION *frontend,
 extern POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 								POOL_CONNECTION_POOL *backend, int copyin);
 
-extern POOL_STATUS CursorResponse(POOL_CONNECTION *frontend, 
+extern POOL_STATUS FunctionCall(POOL_CONNECTION *frontend, 
+								POOL_CONNECTION_POOL *backend);
+
+extern POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend, 
+										   POOL_CONNECTION_POOL *backend);
+
+/*
+ * modules defined in pool_proto2.c
+ */
+extern POOL_STATUS AsciiRow(POOL_CONNECTION *frontend,
+							POOL_CONNECTION_POOL *backend,
+							short num_fields);
+
+extern POOL_STATUS BinaryRow(POOL_CONNECTION *frontend,
+							 POOL_CONNECTION_POOL *backend,
+							 short num_fields);
+
+extern POOL_STATUS CompletedResponse(POOL_CONNECTION *frontend, 
+									 POOL_CONNECTION_POOL *backend);
+
+extern POOL_STATUS CursorResponse(POOL_CONNECTION *frontend,
 								  POOL_CONNECTION_POOL *backend);
 
 extern POOL_STATUS EmptyQueryResponse(POOL_CONNECTION *frontend,
 									  POOL_CONNECTION_POOL *backend);
 
-extern int RowDescription(POOL_CONNECTION *frontend, 
-						  POOL_CONNECTION_POOL *backend,
-						  short *result);
-
-extern POOL_STATUS AsciiRow(POOL_CONNECTION *frontend, 
-							POOL_CONNECTION_POOL *backend,
-							short num_fields);
-
-extern POOL_STATUS BinaryRow(POOL_CONNECTION *frontend, 
-							 POOL_CONNECTION_POOL *backend,
-							 short num_fields);
-
-extern POOL_STATUS FunctionCall(POOL_CONNECTION *frontend, 
-								POOL_CONNECTION_POOL *backend);
-
-extern POOL_STATUS FunctionResultResponse(POOL_CONNECTION *frontend, 
+extern POOL_STATUS FunctionResultResponse(POOL_CONNECTION *frontend,
 										  POOL_CONNECTION_POOL *backend);
 
-extern POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend, 
-										   POOL_CONNECTION_POOL *backend);
+extern POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
+										POOL_CONNECTION_POOL *backend);
+
+extern int RowDescription(POOL_CONNECTION *frontend,
+						  POOL_CONNECTION_POOL *backend,
+						  short *result);
 
 
 extern POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *string, int protoVersion);
