@@ -85,7 +85,7 @@
 static void daemonize(void);
 static int read_pid_file(void);
 static void write_pid_file(void);
-static int read_status_file(void);
+static int read_status_file(bool discard_status);
 static int write_status_file(void);
 static pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file);
 static pid_t fork_a_child(int unix_fd, int inet_fd, int id);
@@ -181,6 +181,7 @@ int main(int argc, char **argv)
 	int sys_retrycnt;
 	int debug_level = 0;
 	int	optindex;
+	bool discard_status = false;
 
 	static struct option long_options[] = {
 		{"hba-file", required_argument, NULL, 'a'},
@@ -191,6 +192,7 @@ int main(int argc, char **argv)
 		{"help", no_argument, NULL, 'h'},
 		{"mode", required_argument, NULL, 'm'},
 		{"dont-detach", no_argument, NULL, 'n'},
+		{"discard-status", no_argument, NULL, 'D'},
 		{"version", no_argument, NULL, 'v'},
 		{NULL, 0, NULL, 0}
 	};
@@ -202,7 +204,7 @@ int main(int argc, char **argv)
 	snprintf(pcp_conf_file, sizeof(pcp_conf_file), "%s/%s", DEFAULT_CONFIGDIR, PCP_PASSWD_FILE_NAME);
 	snprintf(hba_file, sizeof(hba_file), "%s/%s", DEFAULT_CONFIGDIR, HBA_CONF_FILE_NAME);
 
-    while ((opt = getopt_long(argc, argv, "a:cdf:F:hm:nv", long_options, &optindex)) != -1)
+    while ((opt = getopt_long(argc, argv, "a:cdf:F:hm:nDv", long_options, &optindex)) != -1)
 	{
 		switch (opt)
 		{
@@ -267,6 +269,10 @@ int main(int argc, char **argv)
 
 			case 'n':	/* no detaching control ttys */
 				not_detach = 1;
+				break;
+
+			case 'D':	/* discard pool_status */
+				discard_status = true;
 				break;
 
 			case 'v':
@@ -387,7 +393,7 @@ int main(int argc, char **argv)
 	/*
 	 * Restore previous backend status if possible
 	 */
-	read_status_file();
+	read_status_file(discard_status);
 
 	/* clear cache */
 	if (clear_cache && pool_config->enable_query_cache && SYSDB_STATUS == CON_UP)
@@ -656,10 +662,10 @@ static void show_version(void)
 static void usage(void)
 {
 	fprintf(stderr, "%s version %s (%s),\n",	PACKAGE, VERSION, PGPOOLVERSION);
-	fprintf(stderr, "  a generic connection pool/replication/load balance server for PostgreSQL\n\n");
+	fprintf(stderr, "  A generic connection pool/replication/load balance server for PostgreSQL\n\n");
 	fprintf(stderr, "Usage:\n");
 	fprintf(stderr, "  pgpool [ -c] [ -f CONFIG_FILE ] [ -F PCP_CONFIG_FILE ] [ -a HBA_CONFIG_FILE ]\n");
-	fprintf(stderr, "         [ -n ] [ -d ]\n");
+	fprintf(stderr, "         [ -n ] [ -D ] [ -d ]\n");
 	fprintf(stderr, "  pgpool [ -f CONFIG_FILE ] [ -F PCP_CONFIG_FILE ] [ -a HBA_CONFIG_FILE ]\n");
 	fprintf(stderr, "         [ -m SHUTDOWN-MODE ] stop\n");
 	fprintf(stderr, "  pgpool [ -f CONFIG_FILE ] [ -F PCP_CONFIG_FILE ] [ -a HBA_CONFIG_FILE ] reload\n\n");
@@ -677,6 +683,7 @@ static void usage(void)
 	fprintf(stderr, "Start options:\n");
 	fprintf(stderr, "  -c, --clear         Clears query cache (enable_query_cache must be on)\n");
 	fprintf(stderr, "  -n, --dont-detach   Don't run in daemon mode, does not detach control tty\n");
+	fprintf(stderr, "  -D, --discard-status Discard pool_sttaus file and do not restore previous status\n");
 	fprintf(stderr, "  -d, --debug         Debug mode\n\n");
 	fprintf(stderr, "Stop options:\n");
 	fprintf(stderr, "  -m, --mode=SHUTDOWN-MODE\n");
@@ -822,7 +829,7 @@ static void write_pid_file(void)
 /*
 * Read the status file
 */
-static int read_status_file(void)
+static int read_status_file(bool discard_status)
 {
 	FILE *fd;
 	char fnamebuf[POOLMAXPATHLEN];
@@ -836,6 +843,25 @@ static int read_status_file(void)
 		pool_log("Backend status file %s does not exist", fnamebuf);
 		return -1;
 	}
+
+	/*
+	 * If discard_status is true, unlink pool_status and
+	 * do not restore previous status.
+	 */
+	if (discard_status)
+	{
+		fclose(fd);
+		if (unlink(fnamebuf) == 0)
+		{
+			pool_log("Backend status file %s discarded", fnamebuf);
+		}
+		else
+		{
+			pool_error("Failed to discard backend status file %s reason:%s", fnamebuf, strerror(errno));
+		}
+		return 0;
+	}
+
 	if (fread(&backend_rec, 1, sizeof(backend_rec), fd) != sizeof(backend_rec))
 	{
 		pool_error("Could not read backend status file as %s. reason: %s",
