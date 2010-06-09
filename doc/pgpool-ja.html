@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Mon Jun  7 17:14:56 JST 2010
+Last modified: Wed Jun  9 20:30:34 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -828,9 +828,11 @@ rawモード、コネクションプールモードに加え、以下を設定します。
 <dt>replication_stop_on_mismatch
 <dd>
 <p>
-   trueを指定するとマスターDBと他のDBノードの間でデータの不一致があった場合
-   に強制的に縮退運転に入ります。このオプションがfalseの場合は、該当の
-   問い合わせを強制的に終了するだけに留めます。デフォルト値はfalseです。
+   trueを指定が指定されていて、かつトランザクションの中で実行されたSELECT結果がDBノードの間で不一致になった場合に、そのDBノードを切り放して縮退運転に入ります。
+縮退対象のDBノードは「多数決」で少数派になったものが対象になります。
+もし多数決で同票になった場合は、マスタDBノード(DBノード番号がもっともわかいもの)を含むグループが優先され、それ以外のグループに所属するDBノードが切り放しの対象になります。
+このオプションがfalseの場合は、該当の問い合わせを強制的に終了するだけに留めます。
+デフォルト値はfalseです。
 </p>
 
 <a name="replicate_select">
@@ -1509,17 +1511,18 @@ CREATE TABLE pgpool_catalog.query_cache (
 以上で設定が終わったので、各DBノードを起動し、必要ならばシステムDBも起動
 してからpgpool-IIを起動します。
 <pre>
-pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-d]
+pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-D][-d]
 </pre>
 </p>
 <p>
 <table>
-<tr><td>-c</td><td>クエリキャッシュを消去します</tr>
-<tr><td>-f config_file</td><td>pgpool-IIの設定ファイルを指定します</tr>
-<tr><td>-a hba_file</td><td>HBA認証設定ファイルを指定します</tr>
-<tr><td>-F pcp_config_file</td><td>pcpの設定ファイルを指定します</tr>
-<tr><td>-n</td><td>デーモンモードで起動しません(制御端末を切り離しません</tr>
-<tr><td>-d</td><td>デバッグモードで起動します</tr>
+<tr><td>-c</td><td>クエリキャッシュを消去します</td></tr>
+<tr><td>-f config_file</td><td>pgpool-IIの設定ファイルを指定します</td></tr>
+<tr><td>-a hba_file</td><td>HBA認証設定ファイルを指定します</td></tr>
+<tr><td>-F pcp_config_file</td><td>pcpの設定ファイルを指定します</td></tr>
+<tr><td>-n</td><td>デーモンモードで起動しません(制御端末を切り離しません</td></tr>
+<tr><td>-D</td><td>pgpool_statusを削除し、以前の状態を復元しません</td></tr>
+<tr><td>-d</td><td>デバッグモードで起動します</td></tr>
 </table>
 </p>
 <p>

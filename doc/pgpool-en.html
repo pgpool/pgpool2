@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Mon Jun  7 17:13:27 JST 2010
+Last modified: Wed Jun  9 20:23:10 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -834,10 +834,12 @@ configuration parameters below must be set in addtion to everything above.</p>
 
   <dt>replication_stop_on_mismatch</dt>
   <dd>
-      <p>When set to true, pgpool-II degenerates the
-      backends and keeps the service only with the Master DB if data
-      mismatch occurs. If false, pgpool-II just
-      terminates the query. Default is false.</p>
+	  <p>When set to true, if a SELECT statement returns a result set of records
+	  different between the backends, the backends that differ from most
+	  frequent result set are degenerated. This is only valid if the SELECT
+	  statement is part of a transaction and replicate_select is set to true.
+	  If set to false, the session is terminated and the backends are not
+	  degenerated. Default is false.</p>
   </dd>
 
 <a name="replicate_select">
@@ -1444,7 +1446,7 @@ before starting pgpool-II.
 </p>
 
 <pre>
-pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-d]
+pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-D][-d]
 </pre>
 <p>
 <table>
@@ -1453,6 +1455,7 @@ pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-d]
   <tr><td>-a hba_file<br/>--hba-file hba_file</td><td>specifies pool_hba.conf</tr>
   <tr><td>-F pcp_config_file<br/>--pcp-password-file</td><td>specifies pcp.conf</tr>
   <tr><td>-n<br/>--no-daemon</td><td>no daemon mode (terminal is not detached)</tr>
+  <tr><td>-D<br/>--discard-status</td><td>Discard pgpool_status file and do not restore previous status</tr>
   <tr><td>-d<br/>--debug</td><td>debug mode</tr>
 </table>
 There are two ways to stop pgpool-II. One is via PCP command
