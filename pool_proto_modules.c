@@ -377,7 +377,7 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 		 * - statement is INSERT
 		 * - either "INSERT LOCK" comment exists or insert_lock directive specified
 		 */
-		if (REPLICATION)
+		if (!RAW_MODE)
 		{
 			/* start a transaction if needed */
 			if (start_internal_transaction(frontend, backend, (Node *)node) != POOL_CONTINUE)
@@ -421,7 +421,7 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 		TSTATE(backend) = 'T';
 	}
 
-	if (REPLICATION || PARALLEL_MODE)
+	if (!RAW_MODE)
 	{
 		/* check if query is "COMMIT" or "ROLLBACK" */
 		commit = is_commit_query(node);
