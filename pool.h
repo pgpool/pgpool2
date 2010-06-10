@@ -253,6 +253,7 @@ typedef struct {
  *   no query is in progress and the DB node is healthy
  */
 extern bool pool_is_node_to_be_sent_in_current_query(int node_id);
+extern int pool_virtual_master_db_node_id(void);
 
 #define VALID_BACKEND(backend_id) \
 	(pool_is_node_to_be_sent_in_current_query((backend_id)) && \
@@ -261,15 +262,28 @@ extern bool pool_is_node_to_be_sent_in_current_query(int node_id);
 
 #define CONNECTION_SLOT(p, slot) ((p)->slots[(slot)])
 #define CONNECTION(p, slot) (CONNECTION_SLOT(p, slot)->con)
-#define MASTER_CONNECTION(p) ((p)->slots[MASTER_NODE_ID])
-#define MASTER_NODE_ID (in_load_balance? selected_slot : Req_info->master_node_id)
+
+/*
+ * The first DB ndoe id appears in pgpool.conf or the first "live" DB
+ * node otherwise.
+ */
+#define REAL_MASTER_NODE_ID (Req_info->master_node_id)
+
+/*
+ * "Virtual" master node id. It's same as REAL_MASTER_NODE_ID if not
+ * in load balance mode. If in load balance, it's the first load
+ * balance node.
+ */
+#define MASTER_NODE_ID (pool_virtual_master_db_node_id())
 #define IS_MASTER_NODE_ID(node_id) (MASTER_NODE_ID == (node_id))
+#define MASTER_CONNECTION(p) ((p)->slots[MASTER_NODE_ID])
+#define MASTER(p) MASTER_CONNECTION(p)->con
+
 #define REPLICATION (pool_config->replication_mode)
 #define MASTER_SLAVE (pool_config->master_slave_mode)
 #define DUAL_MODE (REPLICATION || MASTER_SLAVE)
 #define PARALLEL_MODE (pool_config->parallel_mode)
 #define RAW_MODE (!REPLICATION && !PARALLEL_MODE && !MASTER_SLAVE)
-#define MASTER(p) MASTER_CONNECTION(p)->con
 #define MAJOR(p) MASTER_CONNECTION(p)->sp->major
 #define TSTATE(p) MASTER(p)->tstate
 #define SYSDB_INFO (system_db_info->info)

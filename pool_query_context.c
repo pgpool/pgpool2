@@ -143,12 +143,20 @@ void pool_clear_node_to_be_sent(POOL_QUERY_CONTEXT *query_context)
  */
 void pool_setall_node_to_be_sent(POOL_QUERY_CONTEXT *query_context)
 {
+	int i;
+
 	if (!query_context)
 	{
 		pool_error("pool_setall_node_to_be_sent: no query context");
 		return;
 	}
-	memset(query_context->where_to_send, true, sizeof(query_context->where_to_send));
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if ((BACKEND_INFO(i)).backend_status == CON_UP ||
+			(BACKEND_INFO((i)).backend_status == CON_CONNECT_WAIT))
+			query_context->where_to_send[i] = true;
+	}
 	return;
 }
 
@@ -173,7 +181,7 @@ bool pool_is_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id)
 }
 
 /*
- * Return true if the DB node is needed to send query.
+ * Returns true if the DB node is needed to send query.
  * Intended to be called from VALID_BACKEND
  */
 bool pool_is_node_to_be_sent_in_current_query(int node_id)
@@ -192,12 +200,31 @@ bool pool_is_node_to_be_sent_in_current_query(int node_id)
 }
 
 /*
+ * Returns virtual master DB node id,
+ */
+int pool_virtual_master_db_node_id(void)
+{
+	POOL_SESSION_CONTEXT *sc;
+
+	sc = pool_get_session_context();
+	if (!sc)
+		return 0;
+
+	if (sc->query_context)
+	{
+		return sc->query_context->virtual_master_node_id;
+	}
+	return REAL_MASTER_NODE_ID;
+}
+
+/*
  * Decide where to send queries(thus expecting response)
  */
 void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *node)
 {
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_CONNECTION_POOL *backend;
+	int i;
 
 	if (!query_context)
 	{
@@ -218,7 +245,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	 */
 	if (RAW_MODE)
 	{
-		pool_set_node_to_be_sent(query_context, MASTER_NODE_ID);
+		pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
 	}
 	else if (MASTER_SLAVE)
 	{
@@ -246,7 +273,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 			else
 			{
 				/* only send to master node */
-				pool_set_node_to_be_sent(query_context, MASTER_NODE_ID);
+				pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
 			}
 		}
 	}
@@ -268,7 +295,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 				 !is_sequence_query(node))
 		{
 			/* only send to master node */
-			pool_set_node_to_be_sent(query_context, MASTER_NODE_ID);
+			pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
 		}
 		else
 		{
@@ -279,6 +306,16 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	else
 	{
 		pool_error("pool_where_to_send: unknown mode");
+		return;
+	}
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (query_context->where_to_send[i])
+		{
+			query_context->virtual_master_node_id = i;
+			break;
+		}
 	}
 	return;
 }

@@ -63,7 +63,9 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 			return;
 		}
 
-		process_info[backend->pool_index].connection_info->load_balancing_node = select_load_balancing_node();
+		session_context->load_balance_node_id = 
+			process_info[backend->pool_index].connection_info->load_balancing_node =
+			select_load_balancing_node();
 
 		pool_debug("selected load balancing node: %d", backend->info->load_balancing_node);
 	}

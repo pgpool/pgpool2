@@ -42,6 +42,7 @@ typedef struct {
 	Node *parse_tree;	/* raw parser output if any */
 	Node *rewritten_parse_tree;	/* rewritten raw parser output if any */
 	bool where_to_send[MAX_NUM_BACKENDS];		/* DB node map to send query */
+	int  virtual_master_node_id;	/* the first DB node to send query */
 
 	bool is_extended;	/* true if extended query */
 

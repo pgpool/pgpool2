@@ -217,7 +217,9 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 	int i, freed = 0;
 	time_t closetime;
 	POOL_CONNECTION_POOL *oldestp;
+	POOL_CONNECTION_POOL *ret;
 	ConnectionInfo *info;
+	int pool_index;
 
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
 
@@ -230,7 +232,12 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 	for (i=0;i<pool_config->max_pool;i++)
 	{
 		if (MASTER_CONNECTION(p) == NULL)
-			return new_connection(p);
+		{
+			ret = new_connection(p);
+			if (ret)
+				ret->pool_index = i;
+			return ret;
+		}
 		p++;
 	}
 
@@ -241,6 +248,8 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 	 */
 	oldestp = p = pool_connection_pool;
 	closetime = MASTER_CONNECTION(p)->closetime;
+	pool_index = 0;
+
 	for (i=0;i<pool_config->max_pool;i++)
 	{
 		pool_debug("user: %s database: %s closetime: %ld",
@@ -251,6 +260,7 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 		{
 			closetime = MASTER_CONNECTION(p)->closetime;
 			oldestp = p;
+			pool_index = i;
 		}
 		p++;
 	}
@@ -283,7 +293,11 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 	p->info = info;
 	memset(p->info, 0, sizeof(ConnectionInfo) * MAX_NUM_BACKENDS);
 
-	return new_connection(p);
+	ret = new_connection(p);
+	if (ret)
+		ret->pool_index = pool_index;
+
+	return ret;
 }
 
 /*
@@ -633,7 +647,6 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 	if (active_backend_count > 0)
 	{
 		p->info->create_time = time(NULL);
-		p->pool_index = i;
 		return p;
 	}
 
