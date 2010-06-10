@@ -264,7 +264,7 @@ extern bool pool_is_node_to_be_sent_in_current_query(int node_id);
 #define MASTER_CONNECTION(p) ((p)->slots[MASTER_NODE_ID])
 #define MASTER_NODE_ID (in_load_balance? selected_slot : Req_info->master_node_id)
 #define IS_MASTER_NODE_ID(node_id) (MASTER_NODE_ID == (node_id))
-#define REPLICATION (pool_config->replication_enabled)
+#define REPLICATION (pool_config->replication_mode)
 #define MASTER_SLAVE (pool_config->master_slave_mode)
 #define DUAL_MODE (REPLICATION || MASTER_SLAVE)
 #define PARALLEL_MODE (pool_config->parallel_mode)
