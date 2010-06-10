@@ -3606,9 +3606,6 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 
 		if (VALID_BACKEND(i))
 		{
-			if (session_context->in_progress && !pool_is_node_to_be_sent(query_context, i))
-				continue;
-
 			do
 			{
 				char *p, *value;
