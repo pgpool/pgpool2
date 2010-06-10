@@ -271,7 +271,7 @@ int main(int argc, char **argv)
 				not_detach = 1;
 				break;
 
-			case 'D':	/* discard pool_status */
+			case 'D':	/* discard pgpool_status */
 				discard_status = true;
 				break;
 
@@ -845,7 +845,7 @@ static int read_status_file(bool discard_status)
 	}
 
 	/*
-	 * If discard_status is true, unlink pool_status and
+	 * If discard_status is true, unlink pgpool_status and
 	 * do not restore previous status.
 	 */
 	if (discard_status)
