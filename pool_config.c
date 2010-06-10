@@ -538,10 +538,9 @@ typedef enum {
 
 static char *extract_string(char *value, POOL_TOKEN token);
 static char **extract_string_tokens(char *str, char *delim, int *n);
-static int eval_logical(char *str);
 static void clear_host_entry(int slot);
 
-#line 545 "pool_config.c"
+#line 544 "pool_config.c"
 
 #define INITIAL 0
 
@@ -721,10 +720,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 85 "pool_config.l"
+#line 84 "pool_config.l"
 
 
-#line 728 "pool_config.c"
+#line 727 "pool_config.c"
 
 	if ( !(yy_init) )
 		{
@@ -806,12 +805,12 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 87 "pool_config.l"
+#line 86 "pool_config.l"
 Lineno++; return POOL_EOL;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 88 "pool_config.l"
+#line 87 "pool_config.l"
 /* eat whitespace */
 	YY_BREAK
 case 3:
@@ -819,50 +818,50 @@ case 3:
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 89 "pool_config.l"
+#line 88 "pool_config.l"
 /* eat comment */
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 91 "pool_config.l"
+#line 90 "pool_config.l"
 return POOL_KEY;
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 92 "pool_config.l"
+#line 91 "pool_config.l"
 return POOL_STRING;
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 93 "pool_config.l"
+#line 92 "pool_config.l"
 return POOL_UNQUOTED_STRING;
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 94 "pool_config.l"
+#line 93 "pool_config.l"
 return POOL_INTEGER;
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 95 "pool_config.l"
+#line 94 "pool_config.l"
 return POOL_REAL;
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 96 "pool_config.l"
+#line 95 "pool_config.l"
 return POOL_EQUALS;
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 98 "pool_config.l"
+#line 97 "pool_config.l"
 return POOL_PARSE_ERROR;
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 100 "pool_config.l"
+#line 99 "pool_config.l"
 ECHO;
 	YY_BREAK
-#line 866 "pool_config.c"
+#line 865 "pool_config.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1820,7 +1819,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 100 "pool_config.l"
+#line 99 "pool_config.l"
 
 
 
@@ -3220,22 +3219,102 @@ static char *extract_string(char *value, POOL_TOKEN token)
 	return ret;
 }
 
-static int eval_logical(char *str)
+/*
+ * Try to interpret value as boolean value.  Valid values are: true,
+ * false, yes, no, on, off, 1, 0; as well as unique prefixes thereof.
+ * If the string parses okay, return true, else false.
+ * If okay and result is not NULL, return the value in *result.
+ * This function copied from PostgreSQL source code.
+ */
+static bool parse_bool_with_len(const char *value, size_t len, bool *result)
 {
-	int ret;
+	switch (*value)
+	{
+		case 't':
+		case 'T':
+			if (strncasecmp(value, "true", len) == 0)
+			{
+				if (result)
+					*result = true;
+				return true;
+			}
+			break;
+		case 'f':
+		case 'F':
+			if (strncasecmp(value, "false", len) == 0)
+			{
+				if (result)
+					*result = false;
+				return true;
+			}
+			break;
+		case 'y':
+		case 'Y':
+			if (strncasecmp(value, "yes", len) == 0)
+			{
+				if (result)
+					*result = true;
+				return true;
+			}
+			break;
+		case 'n':
+		case 'N':
+			if (strncasecmp(value, "no", len) == 0)
+			{
+				if (result)
+					*result = false;
+				return true;
+			}
+			break;
+		case 'o':
+		case 'O':
+			/* 'o' is not unique enough */
+			if (strncasecmp(value, "on", (len > 2 ? len : 2)) == 0)
+			{
+				if (result)
+					*result = true;
+				return true;
+			}
+			else if (strncasecmp(value, "off", (len > 2 ? len : 2)) == 0)
+			{
+				if (result)
+					*result = false;
+				return true;
+			}
+			break;
+		case '1':
+			if (len == 1)
+			{
+				if (result)
+					*result = true;
+				return true;
+			}
+			break;
+		case '0':
+			if (len == 1)
+			{
+				if (result)
+					*result = false;
+				return true;
+			}
+			break;
+		default:
+			break;
+	}
 
-	if (!strcasecmp(str, "true"))
-		ret = 1;
-	else if (!strcasecmp(str, "false"))
-		ret = 0;
-	else if (!strcmp(str, "1"))
-		ret = 1;
-	else if (!strcmp(str, "0"))
-		ret = 0;
-	else
-		ret = -1;
+	if (result)
+		*result = false;		/* suppress compiler warning */
+	return false;
+}
 
-	return ret;
+int eval_logical(char *str)
+{
+	bool result;
+
+	if (!parse_bool_with_len(str, strlen(str), &result))
+		return -1;
+
+	return (result ? 1 : 0);
 }
 
 /*
