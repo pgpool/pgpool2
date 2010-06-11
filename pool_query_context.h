@@ -33,8 +33,6 @@
 /*
  * Query context:
  * Manages per query context
- * 拡張問い合わせでは複数のクエリコンテキストが同時に走るかも知れない。
- * 内部で発生する問い合わせもあるし。
  */
 typedef struct {
 	char *original_query;		/* original query string */

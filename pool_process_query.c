@@ -1901,6 +1901,7 @@ void reset_variables(void)
 {
 	pool_unset_query_in_progress();
 
+#ifdef REMOVED
 	/* End load balance mode */
 	if (in_load_balance)
 		end_load_balance();
@@ -1917,6 +1918,7 @@ void reset_variables(void)
 			replication_was_enabled = 0;
 		}
 	}
+#endif
 
 	internal_transaction_started = 0;
 	mismatch_ntuples = 0;
@@ -2183,6 +2185,7 @@ void start_load_balance(POOL_CONNECTION_POOL *backend)
 	}
 #endif
 
+#ifdef REMOVED
 	/* temporarily turn off replication mode */
 	if (REPLICATION)
 		replication_was_enabled = 1;
@@ -2191,6 +2194,7 @@ void start_load_balance(POOL_CONNECTION_POOL *backend)
 
 	REPLICATION = 0;
 	MASTER_SLAVE = 0;
+#endif
 
 #ifdef NOTUSED
 	backend->slots[0] = slots[selected_slot];
@@ -2207,6 +2211,7 @@ void start_load_balance(POOL_CONNECTION_POOL *backend)
  */
 void end_load_balance(void)
 {
+#ifdef REMOVED
 	in_load_balance = 0;
 	LOAD_BALANCE_STATUS(selected_slot) = LOAD_UNSELECTED;
 
@@ -2216,7 +2221,7 @@ void end_load_balance(void)
 
 	replication_was_enabled = 0;
 	master_slave_was_enabled = 0;
-
+#endif
 	pool_debug("end_load_balance: end load balance mode");
 }
 

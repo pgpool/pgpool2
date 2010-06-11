@@ -579,6 +579,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 				receive_extended_begin = 1;
 		}
 
+#ifdef REMOVED
 		if (load_balance_enabled(backend, node, string1))
 			start_load_balance(backend);
 		else if (REPLICATION &&
@@ -594,6 +595,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 			select_in_transaction = 1;
 			execute_select = 1;
 		}
+#endif
 /*
 		else if (REPLICATION && start_internal_transaction(backend, (Node *)p_stmt->query))
 		{
@@ -604,6 +606,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		commit = is_commit_query((Node *)p_stmt->query);
 	}
 
+#ifdef REMOVED
 	if (MASTER_SLAVE)
 	{
 		master_slave_was_enabled = 1;
@@ -615,6 +618,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 			REPLICATION = 1;
 		}
 	}
+#endif
 
 	if (REPLICATION || PARALLEL_MODE)
 	{
@@ -1270,6 +1274,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	if (in_load_balance)
 		end_load_balance();
 
+#ifdef REMOVED
 	if (master_slave_dml)
 	{
 		MASTER_SLAVE = 1;
@@ -1282,6 +1287,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			replication_was_enabled = 0;
 		}
 	}
+#endif
 
 #ifdef NOT_USED
 	return ProcessFrontendResponse(frontend, backend);
