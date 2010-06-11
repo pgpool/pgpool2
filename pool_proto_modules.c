@@ -579,46 +579,10 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 				receive_extended_begin = 1;
 		}
 
-#ifdef REMOVED
-		if (load_balance_enabled(backend, node, string1))
-			start_load_balance(backend);
-		else if (REPLICATION &&
-				 !pool_config->replicate_select &&
-				 is_select_query((Node *)p_stmt->query, string1) &&
-				 !is_sequence_query((Node *)p_stmt->query))
-		{
-			selected_slot = MASTER_NODE_ID;
-			replication_was_enabled = 1;
-			REPLICATION = 0;
-			LOAD_BALANCE_STATUS(MASTER_NODE_ID) = LOAD_SELECTED;
-			in_load_balance = 1;
-			select_in_transaction = 1;
-			execute_select = 1;
-		}
-#endif
-/*
-		else if (REPLICATION && start_internal_transaction(backend, (Node *)p_stmt->query))
-		{
-			return POOL_END;
-		}
-*/
 		/* check if query is "COMMIT" or "ROLLBACK" */
 		commit = is_commit_query((Node *)p_stmt->query);
 	}
 
-#ifdef REMOVED
-	if (MASTER_SLAVE)
-	{
-		master_slave_was_enabled = 1;
-		MASTER_SLAVE = 0;
-		master_slave_dml = 1;
-		if (force_replication)
-		{
-			replication_was_enabled = 0;
-			REPLICATION = 1;
-		}
-	}
-#endif
 
 	if (REPLICATION || PARALLEL_MODE)
 	{
@@ -1268,31 +1232,6 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		pool_flush(frontend);
 	}
 
-	pool_unset_query_in_progress();
-
-	/* end load balance mode */
-	if (in_load_balance)
-		end_load_balance();
-
-#ifdef REMOVED
-	if (master_slave_dml)
-	{
-		MASTER_SLAVE = 1;
-		master_slave_was_enabled = 0;
-		master_slave_dml = 0;
-		if (force_replication)
-		{
-			force_replication = 0;
-			REPLICATION = 0;
-			replication_was_enabled = 0;
-		}
-	}
-#endif
-
-#ifdef NOT_USED
-	return ProcessFrontendResponse(frontend, backend);
-#endif
-
 	sp = MASTER_CONNECTION(backend)->sp;
 	if (MASTER(backend)->tstate == 'T')
 		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle in transaction",
@@ -1301,6 +1240,8 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle",
 				 sp->user, sp->database, remote_ps_data);
 	set_ps_display(psbuf, false);
+
+	pool_query_context_destroy(pool_get_session_context()->query_context);
 
 	return POOL_CONTINUE;
 }
