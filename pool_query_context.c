@@ -30,6 +30,8 @@
 #include <string.h>
 #include <netinet/in.h>
 
+static bool is_should_be_sent_to_primary(Node *node);
+
 /*
  * Create and initialize per query session context
  */
@@ -249,31 +251,69 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	}
 	else if (MASTER_SLAVE)
 	{
-		/*
-		 * PREPARE, SET, DEALLOCATE and DISCARD statements must be
-		 * replicated even if we are in master/slave mode.
-		 */
-		if (IsA(node, PrepareStmt) || IsA(node, DeallocateStmt) ||
-			IsA(node, VariableSetStmt) || IsA(node, DiscardStmt))
+		/* Streaming Replication+Hot Standby? */
+		if (!strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
 		{
-			pool_setall_node_to_be_sent(query_context);
-		}
-		else
-		{
-			if (pool_config->load_balance_mode &&
-				MAJOR(backend) == PROTO_MAJOR_V3 &&
-				TSTATE(backend) == 'I' &&
-				is_select_query(node, query) &&
-				!is_sequence_query(node))
+			/* Should be sent to primary only? */
+			if (is_should_be_sent_to_primary(node))
 			{
-				/* load balance */
-				pool_set_node_to_be_sent(query_context,
-										 session_context->load_balance_node_id);
+				pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
 			}
 			else
 			{
+				if (pool_config->load_balance_mode &&
+					MAJOR(backend) == PROTO_MAJOR_V3 &&
+					TSTATE(backend) == 'I' &&
+					is_select_query(node, query))
+				{
+					/* load balance */
+					pool_set_node_to_be_sent(query_context,
+											 session_context->load_balance_node_id);
+				}
+				else
+				{
+					/* Send to all nodes */
+					pool_setall_node_to_be_sent(query_context);
+				}
+			}
+		}
+		else
+		{
+			/*
+			 * DMLs msut be sent to master
+			 */
+			if (IsA(node, InsertStmt) || IsA(node, DeleteStmt) ||
+				IsA(node, UpdateStmt))
+			{
 				/* only send to master node */
 				pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
+			}
+			/*
+			 * PREPARE, SET, DEALLOCATE and DISCARD statements must be
+			 * replicated even if we are in master/slave mode.
+			 */
+			if (IsA(node, PrepareStmt) || IsA(node, DeallocateStmt) ||
+				IsA(node, VariableSetStmt) || IsA(node, DiscardStmt))
+			{
+				pool_setall_node_to_be_sent(query_context);
+			}
+			else
+			{
+				if (pool_config->load_balance_mode &&
+					MAJOR(backend) == PROTO_MAJOR_V3 &&
+					TSTATE(backend) == 'I' &&
+					is_select_query(node, query) &&
+					!is_sequence_query(node))
+				{
+					/* load balance */
+					pool_set_node_to_be_sent(query_context,
+											 session_context->load_balance_node_id);
+				}
+				else
+				{
+					/* only send to master node */
+					pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
+				}
 			}
 		}
 	}
@@ -392,4 +432,280 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context, char *query, i
 		per_node_error_log(backend, i, query, "pool_send_and_wait: Error or notice message from backend: ", true);
 	}
 	return POOL_CONTINUE;
+}
+
+/*
+ * Return true if the statement should be sent to primary only.
+ */
+static bool is_should_be_sent_to_primary(Node *node)
+{
+/* From storage/lock.h */
+#define NoLock					0
+#define AccessShareLock			1		/* SELECT */
+#define RowShareLock			2		/* SELECT FOR UPDATE/FOR SHARE */
+#define RowExclusiveLock		3		/* INSERT, UPDATE, DELETE */
+#define ShareUpdateExclusiveLock 4		/* VACUUM (non-FULL),ANALYZE, CREATE
+										 * INDEX CONCURRENTLY */
+#define ShareLock				5		/* CREATE INDEX (WITHOUT CONCURRENTLY) */
+#define ShareRowExclusiveLock	6		/* like EXCLUSIVE MODE, but allows ROW
+										 * SHARE */
+#define ExclusiveLock			7		/* blocks ROW SHARE/SELECT...FOR
+										 * UPDATE */
+#define AccessExclusiveLock		8		/* ALTER TABLE, DROP TABLE, VACUUM
+										 * FULL, and unqualified LOCK TABLE */
+
+	static NodeTag nodemap[] = {
+		T_InsertStmt,
+		T_DeleteStmt,
+		T_UpdateStmt,
+		T_SelectStmt,
+		T_AlterTableStmt,
+		T_AlterTableCmd,
+		T_AlterDomainStmt,
+		T_SetOperationStmt,
+		T_GrantStmt,
+		T_GrantRoleStmt,
+		T_ClosePortalStmt,
+		T_ClusterStmt,
+		T_CopyStmt,
+		T_CreateStmt,	/* CREAE TABLE */
+		T_DefineStmt,	/* CREATE AGGREGATE, OPERATOR, TYPE */
+		T_DropStmt,		/* DROP TABLE etc. */
+		T_TruncateStmt,
+		T_CommentStmt,
+		/*
+		  T_FetchStmt,
+		*/
+		T_IndexStmt,	/* CREATE INDEX */
+		T_CreateFunctionStmt,
+		T_AlterFunctionStmt,
+		T_RemoveFuncStmt,
+		T_RenameStmt,	/* ALTER AGGREGATE etc. */
+		T_RuleStmt,		/* CREATE RULE */
+		T_NotifyStmt,
+		T_ListenStmt,
+		T_UnlistenStmt,
+		T_ViewStmt,		/* CREATE VIEW */
+		/*
+		  T_LoadStmt,
+		*/
+		T_CreateDomainStmt,
+		T_CreatedbStmt,
+		T_DropdbStmt,
+		T_VacuumStmt,
+		/*
+		  T_ExplainStmt,		XXX: explain analyze?
+		*/
+		T_CreateSeqStmt,
+		T_AlterSeqStmt,
+		T_VariableSetStmt,		/* SET */
+		/*
+		T_VariableShowStmt,
+		T_DiscardStmt,
+		*/
+		T_CreateTrigStmt,
+		T_DropPropertyStmt,
+		T_CreatePLangStmt,
+		T_DropPLangStmt,
+		T_CreateRoleStmt,
+		T_AlterRoleStmt,
+		T_DropRoleStmt,
+		T_LockStmt,
+		T_ConstraintsSetStmt,
+		T_ReindexStmt,
+		T_CreateSchemaStmt,
+		T_AlterDatabaseStmt,
+		T_AlterDatabaseSetStmt,
+		T_AlterRoleSetStmt,
+		T_CreateConversionStmt,
+		T_CreateCastStmt,
+		T_DropCastStmt,
+		T_CreateOpClassStmt,
+		T_CreateOpFamilyStmt,
+		T_AlterOpFamilyStmt,
+		T_RemoveOpClassStmt,
+		T_RemoveOpFamilyStmt,
+		T_PrepareStmt,
+		T_ExecuteStmt,
+		/*
+		  T_DeallocateStmt,		DEALLOCATE
+		  T_DeclareCursorStmt,	DECLARE
+		*/
+		T_CreateTableSpaceStmt,
+		T_DropTableSpaceStmt,
+		T_AlterObjectSchemaStmt,
+		T_AlterOwnerStmt,
+		T_DropOwnedStmt,
+		T_ReassignOwnedStmt,
+		T_CompositeTypeStmt,	/* CREATE TYPE */
+		T_CreateEnumStmt,
+		T_AlterTSDictionaryStmt,
+		T_AlterTSConfigurationStmt,
+		T_CreateFdwStmt,
+		T_AlterFdwStmt,
+		T_DropFdwStmt,
+		T_CreateForeignServerStmt,
+		T_AlterForeignServerStmt,
+		T_DropForeignServerStmt,
+		T_CreateUserMappingStmt,
+		T_AlterUserMappingStmt,
+		T_DropUserMappingStmt,
+	};
+
+	if (bsearch(&nodeTag(node), nodemap, sizeof(nodemap)/sizeof(nodemap[0]),
+				sizeof(NodeTag), compare) != NULL)
+	{
+		/*
+		 * SELECT INTO
+		 * SELECT FOR SHARE or UPDATE
+		 */
+		if (IsA(node, SelectStmt))
+		{
+			/* SELECT INTO? */
+			if (((SelectStmt *)node)->intoClause)
+				return true;
+
+			/* SELECT FOR SHARE or UPDATE */
+			else if (((SelectStmt *)node)->lockingClause)
+				return true;
+
+			/*
+			 * SELECT nextval(), setval()
+			 * XXX: We do not search in subquery.
+			 */
+			else if (is_sequence_query(node))
+				return true;
+
+			return false;
+		}
+
+		/*
+		 * COPY FROM
+		 */
+		else if (IsA(node, CopyStmt))
+		{
+			return ((CopyStmt *)node)->is_from;
+		}
+
+		/*
+		 * LOCK
+		 */
+		else if (IsA(node, LockStmt))
+		{
+			return (((LockStmt *)node)->mode >= RowExclusiveLock);
+		}
+
+		/*
+		 * TRANSACTION COMMAND
+		 */
+		else if (IsA(node, TransactionStmt))
+		{
+			ListCell   *list_item;
+
+			/*
+			 * Check "BEGIN READ WRITE" "START TRANSACTION READ WRITE"
+			 */
+			if (((TransactionStmt *)node)->kind == TRANS_STMT_BEGIN ||
+				((TransactionStmt *)node)->kind == TRANS_STMT_START)
+			{
+				List *options = ((TransactionStmt *)node)->options;
+				foreach(list_item, options)
+				{
+					DefElem *opt = (DefElem *) lfirst(list_item);
+
+					if (!strcmp("transaction_read_only", opt->defname))
+					{
+						bool read_only;
+
+						read_only = ((A_Const *)opt->arg)->val.val.ival;
+						if (!read_only)
+							return true;
+					}
+				}
+				return false;
+			}
+
+			/*
+			 * 2PC commands
+			 */
+			else if (((TransactionStmt *)node)->kind == TRANS_STMT_PREPARE ||
+					 ((TransactionStmt *)node)->kind == TRANS_STMT_COMMIT_PREPARED ||
+					 ((TransactionStmt *)node)->kind == TRANS_STMT_ROLLBACK_PREPARED)
+				return true;
+
+			else
+				return false;
+		}
+
+		/*
+		 * SET
+		 */
+		else if (IsA(node, VariableSetStmt))
+		{
+			ListCell   *list_item;
+			bool ret = false;
+
+			/*
+			 * SET transaction_read_only TO off
+			 */
+			if (((VariableSetStmt *)node)->kind == VAR_SET_VALUE &&
+				!strcmp(((VariableSetStmt *)node)->name, "transaction_read_only"))
+			{
+				List *options = ((VariableSetStmt *)node)->args;
+				foreach(list_item, options)
+				{
+					A_Const *v = (A_Const *)lfirst(list_item);
+
+					switch (v->val.type)
+					{
+						case T_String:
+							if (!strcasecmp(v->val.val.str, "off") ||
+								!strcasecmp(v->val.val.str, "f") ||
+								!strcasecmp(v->val.val.str, "false"))
+								ret = true;
+							break;
+						case T_Integer:
+							if (v->val.val.ival)
+								ret = true;
+						default:
+							break;
+					}
+				}
+				return ret;
+			}
+
+			/*
+			 * Check "SET TRANSACTION READ WRITE" "SET SESSION
+			 * CHARACTERISTICS AS TRANSACTION READ WRITE"
+			 */
+			else if (((VariableSetStmt *)node)->kind == VAR_SET_MULTI &&
+				(!strcmp(((VariableSetStmt *)node)->name, "TRANSACTION") ||
+				 !strcmp(((VariableSetStmt *)node)->name, "SESSION CHARACTERISTICS")))
+			{
+				List *options = ((VariableSetStmt *)node)->args;
+				foreach(list_item, options)
+				{
+					DefElem *opt = (DefElem *) lfirst(list_item);
+
+					if (!strcmp("transaction_read_only", opt->defname))
+					{
+						bool read_only;
+
+						read_only = ((A_Const *)opt->arg)->val.val.ival;
+						if (!read_only)
+							return true;
+					}
+				}
+				return false;
+			}
+			else
+				return false;
+		}
+		return true;
+	}
+
+	/*
+	 * All unknown statements are sent to master
+	 */
+	return true;
 }

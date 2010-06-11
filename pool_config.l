@@ -676,7 +676,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 
-			if (strcmp(str, "slony") && strcmp(str, "stream"))
+			if (strcmp(str, MODE_SLONY) && strcmp(str, MODE_STREAMREP))
 			{
 				pool_error("pool_config: %s must be either \"slony\" or \"stream\"", key);
 				fclose(fd);

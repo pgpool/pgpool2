@@ -27,6 +27,12 @@
 #define POOL_CONFIG_H
 
 /*
+ * Master/slave sub mode
+ */
+#define MODE_STREAMREP "stream"		/* Streaming Replication */
+#define MODE_SLONY "slony"		/* Slony-I */
+
+/*
  * configuration paramters
  */
 typedef struct {

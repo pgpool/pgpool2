@@ -80,7 +80,6 @@ static int detect_error(POOL_CONNECTION *master, char *error_code, int major, ch
 static int detect_postmaster_down_error(POOL_CONNECTION *master, int major);
 
 static bool is_internal_transaction_needed(Node *node);
-static int compare(const void *p1, const void *p2);
 
 /* timeout sec for pool_check_fd */
 static int timeoutsec;
@@ -4104,7 +4103,7 @@ void query_ps_status(char *query, POOL_CONNECTION_POOL *backend)
 }
 
 /* compare function for bsearch() */
-static int compare(const void *p1, const void *p2)
+int compare(const void *p1, const void *p2)
 {
 	int 	v1,	v2;
 
