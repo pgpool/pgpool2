@@ -1901,25 +1901,6 @@ void reset_variables(void)
 {
 	pool_unset_query_in_progress();
 
-#ifdef REMOVED
-	/* End load balance mode */
-	if (in_load_balance)
-		end_load_balance();
-
-	if (master_slave_dml)
-	{
-		MASTER_SLAVE = 1;
-		master_slave_was_enabled = 0;
-		master_slave_dml = 0;
-		if (force_replication)
-		{
-			force_replication = 0;
-			REPLICATION = 0;
-			replication_was_enabled = 0;
-		}
-	}
-#endif
-
 	internal_transaction_started = 0;
 	mismatch_ntuples = 0;
 	select_in_transaction = 0;
@@ -2171,39 +2152,6 @@ int is_commit_query(Node *node)
  */
 void start_load_balance(POOL_CONNECTION_POOL *backend)
 {
-#ifdef NOT_USED
-	double total_weight,r;
-	int i;
-
-	/* save backend connection slots */
-	for (i=0;i<NUM_BACKENDS;i++)
-	{
-		if (VALID_BACKEND(i))
-		{
-			slots[i] = CONNECTION_SLOT(backend, i);
-		}
-	}
-#endif
-
-#ifdef REMOVED
-	/* temporarily turn off replication mode */
-	if (REPLICATION)
-		replication_was_enabled = 1;
-	if (MASTER_SLAVE)
-		master_slave_was_enabled = 1;
-
-	REPLICATION = 0;
-	MASTER_SLAVE = 0;
-#endif
-
-#ifdef NOTUSED
-	backend->slots[0] = slots[selected_slot];
-#endif
-	LOAD_BALANCE_STATUS(backend->info->load_balancing_node) = LOAD_SELECTED;
-	selected_slot = backend->info->load_balancing_node;
-
-	/* start load balancing */
-	in_load_balance = 1;
 }
 
 /*
@@ -2211,18 +2159,6 @@ void start_load_balance(POOL_CONNECTION_POOL *backend)
  */
 void end_load_balance(void)
 {
-#ifdef REMOVED
-	in_load_balance = 0;
-	LOAD_BALANCE_STATUS(selected_slot) = LOAD_UNSELECTED;
-
-	/* turn on replication mode */
-	REPLICATION = replication_was_enabled;
-	MASTER_SLAVE = master_slave_was_enabled;
-
-	replication_was_enabled = 0;
-	master_slave_was_enabled = 0;
-#endif
-	pool_debug("end_load_balance: end load balance mode");
 }
 
 /*
