@@ -214,8 +214,10 @@ recovery_timeout = 90
 
 # If client_idle_limit_in_recovery is n (n > 0), the client is forced
 # to be disconnected whenever after n seconds idle (even inside an
-# explicit transactions!)  0 means no disconnect. This parameter only
-# takes effect in recovery 2nd stage.
+# explicit transactions!) in the second stage of online recovery.
+# n = -1 forces clients to be disconnected immediately.
+# 0 disables this functionality(wait forever).
+# This parameter only takes effect in recovery 2nd stage.
 client_idle_limit_in_recovery = 0
 
 # Specify table name to lock. This is used when rewriting lo_creat

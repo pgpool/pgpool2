@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Wed Jun  9 20:23:10 JST 2010
+Last modified: Mon Jun 14 08:48:48 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1042,9 +1042,10 @@ It can be changed on service.
 	   client_idle_limit_in_recovery seconds since the last query has
 	   been sent.  This is usefull for preventing for pgpool recovery
 	   disturbed by a lazy client or TCP/IP connection between client and
-	   pgpool is accidentally down. The default value for
-	   client_idle_limit_in_recovery is 0, which means the functionality is turned
-	   off.
+	   pgpool is accidentally down.
+	   If -1 specified, disconnect the connection to a client immediately.
+	   The default value for client_idle_limit_in_recovery is 0,
+	   which means the functionality is turned off.
   </p>
   <p>
 	   If your clients are very busy, pgpool-II cannot enter the recovery 2nd stage regardless of the value of client_idle_limit_in_recovery. In this case you can set -1 to client_idle_limit_in_recovery so that pgpool-II immediately disconnect such busy clients before entering the 2nd stage.
