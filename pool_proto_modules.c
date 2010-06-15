@@ -351,10 +351,10 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 			IsA(node, VariableSetStmt) || IsA(node, DiscardStmt))
 		{
 			/*
-			 * PREPARE, SET, DEALLOCATE and DISCARD statements must be
+			 * PREPARE, SET and DISCARD statements must be
 			 * replicated even if we are in master/slave mode.
 			 */
-			if (MASTER_SLAVE && TSTATE(backend) != 'E')
+			if (MASTER_SLAVE && TSTATE(backend) != 'E' && ! IsA(node, DeallocateStmt))
 				force_replication = 1;
 
 			/*
