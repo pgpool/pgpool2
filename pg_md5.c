@@ -1,35 +1,85 @@
+/* -*-pgsql-c-*- */
+/*
+ * $Header$
+ *
+ * pgpool: a language independent connection pool server for PostgreSQL
+ * written by Tatsuo Ishii
+ *
+ * Copyright (c) 2003-2010	PgPool Global Development Group
+ *
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose and without fee is hereby
+ * granted, provided that the above copyright notice appear in all
+ * copies and that both that copyright notice and this permission
+ * notice appear in supporting documentation, and that the name of the
+ * author not be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission. The author makes no representations about the
+ * suitability of this software for any purpose.  It is provided "as
+ * is" without express or implied warranty.
+ *
+ * pg_md5 command main
+ *
+ */
+#include "pool.h"
+#include "pool_config.h"
+#include "md5.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
 #include <termios.h>
-
-#include "md5.h"
-
+#ifdef HAVE_GETOPT_H
+#include <getopt.h>
+#endif
 
 /* Maximum number of characters allowed for input. */
 #define MAX_INPUT_SIZE	32
 
-void	print_usage(const char prog[], int exit_code);
-void	set_tio_attr(int enable);
+static void	print_usage(const char prog[], int exit_code);
+static void	set_tio_attr(int enable);
 
 int
 main(int argc, char *argv[])
 {
-
 #define PRINT_USAGE(exit_code)	print_usage(argv[0], exit_code)
-#define COMPARE_ARG(arg)		(!strcmp(argv[1], arg))
 
-	if (argc != 2)
-		PRINT_USAGE(EXIT_FAILURE);
-	else if (COMPARE_ARG("--help") || COMPARE_ARG("-h"))
-		PRINT_USAGE(EXIT_SUCCESS);
+	int opt;
+	int optindex;
+	bool md5auth = false;
+	bool prompt = false;
+
+	static struct option long_options[] = {
+		{"help", no_argument, NULL, 'h'},
+		{"prompt", no_argument, NULL, 'p'},
+		{"md5auth", no_argument, NULL, 'm'},
+		{NULL, 0, NULL, 0}
+	};
+
+    while ((opt = getopt_long(argc, argv, "h:p:m", long_options, &optindex)) != -1)
+	{
+		switch (opt)
+		{
+			case 'p':    /* prompt for password */
+				prompt = true;
+				break;
+
+			case 'm':	/* produce md5 authentication password */
+				md5auth = true;
+				break;
+
+			default:
+				PRINT_USAGE(EXIT_SUCCESS);
+				break;
+		}
+	}				
 
 	/* Prompt for password. */
-	else if (COMPARE_ARG("--prompt") || COMPARE_ARG("-p"))
+	if (prompt)
 	{
-	   	char	 md5[MD5_PASSWD_LEN+1];
+		char	 md5[MD5_PASSWD_LEN+1];
 		char	 buf[MAX_INPUT_SIZE+1];
 		int		 len;
 
@@ -58,11 +108,18 @@ main(int argc, char *argv[])
 		printf("\n%s\n", md5);
 	}
 
-	/* Read password from argv[1]. */
+	/* Read password from argv. */
 	else
 	{
 		char	md5[MD5_PASSWD_LEN+1];
-		int		len = strlen(argv[1]);
+		int		len;
+
+		if (optind >= argc)
+		{
+			PRINT_USAGE(EXIT_FAILURE);
+		}
+			
+		len = strlen(argv[optind]);
 
 		if (len > MAX_INPUT_SIZE)
 		{
@@ -70,7 +127,7 @@ main(int argc, char *argv[])
 			PRINT_USAGE(EXIT_FAILURE);
 		}
 
-		pool_md5_hash(argv[1], len, md5);
+		pool_md5_hash(argv[optind], len, md5);
 		printf("%s\n", md5);
 	}
 
@@ -78,7 +135,7 @@ main(int argc, char *argv[])
 }
 
 
-void
+static void
 print_usage(const char prog[], int exit_code)
 {
 	fprintf(((exit_code == EXIT_SUCCESS) ? stdout : stderr),
@@ -88,6 +145,7 @@ print_usage(const char prog[], int exit_code)
   %s <PASSWORD>\n\
 \n\
   --prompt, -p    Prompt password using standard input.\n\
+  --md5auth, -m   Produce md5 authentication password.\n\
   --help, -h      This help menu.\n\
 \n\
 Warning: At most %d characters are allowed for input.\n\
@@ -100,7 +158,7 @@ Warning: Plain password argument is deprecated for security concerns\n\
 }
 
 
-void
+static void
 set_tio_attr(int set)
 {
 	struct termios tio;
