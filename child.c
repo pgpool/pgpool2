@@ -100,7 +100,7 @@ void do_child(int unix_fd, int inet_fd)
 	struct timezone tz;
 	int child_idle_sec;
 	struct timeval timeout;
-	static int connected;
+	static int connected;		/* non 0 if has been accepted connections from frontend */
 	int connections_count = 0;	/* used if child_max_connections > 0 */
 	int found;
 	char psbuf[NI_MAXHOST + 128];
@@ -155,7 +155,6 @@ void do_child(int unix_fd, int inet_fd)
 
 	for (;;)
 	{
-		int connection_reuse = 1;
 		StartupPacket *sp;
 
 		idle = 1;
@@ -252,7 +251,10 @@ void do_child(int unix_fd, int inet_fd)
 		}
 
 		/*
-		 * Ok, negotiaton with frontend has been done. Let's go to the next step.
+		 * Ok, negotiaton with frontend has been done. Let's go to the
+		 * next step.  Connect to backend if there's no existing
+		 * connection which can be reused by this frontend.
+		 * Authentication is also done in this step.
 		 */
 
 		/*
@@ -294,8 +296,6 @@ void do_child(int unix_fd, int inet_fd)
 		if (backend == NULL)
 		{
 			/* create a new connection to backend */
-			connection_reuse = 0;
-
 			if ((backend = connect_backend(sp, frontend)) == NULL)
 			{
 				connection_count_down();
@@ -377,11 +377,6 @@ void do_child(int unix_fd, int inet_fd)
 				/* error occured. discard backend connection pool
                    and disconnect connection to the frontend */
 				case POOL_ERROR:
-#ifdef NOT_USED
-					pool_discard_cp(sp->user, sp->database);
-					pool_close(frontend);
-					notice_backend_error();
-#endif
 					pool_log("do_child: exits with status 1 due to error");
 					child_exit(1);
 					break;
