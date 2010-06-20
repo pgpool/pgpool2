@@ -144,5 +144,6 @@ extern POOL_CONFIG *pool_config;	/* configuration values */
 
 extern int pool_init_config(void);
 extern int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context);
+extern int eval_logical(char *str);
 
 #endif /* POOL_CONFIG_H */

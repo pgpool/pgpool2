@@ -98,7 +98,6 @@ void do_child(int unix_fd, int inet_fd)
 	POOL_CONNECTION_POOL *backend;
 	struct timeval now;
 	struct timezone tz;
-	int child_idle_sec;
 	struct timeval timeout;
 	static int connected;		/* non 0 if has been accepted connections from frontend */
 	int connections_count = 0;	/* used if child_max_connections > 0 */
@@ -146,8 +145,6 @@ void do_child(int unix_fd, int inet_fd)
 		child_exit(1);
 	}
 
-	child_idle_sec = 0;
-
 	timeout.tv_sec = pool_config->child_life_time;
 	timeout.tv_usec = 0;
 
@@ -186,9 +183,8 @@ void do_child(int unix_fd, int inet_fd)
 		/* set frontend fd to blocking */
 		pool_unset_nonblock(frontend->fd);
 
-		/* set busy flag and clear child idle timer */
+		/* reset busy flag */
 		idle = 0;
-		child_idle_sec = 0;
 
 		/* check backend timer is expired */
 		if (backend_timer_expired)

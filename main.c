@@ -89,6 +89,7 @@ static int read_status_file(bool discard_status);
 static int write_status_file(void);
 static pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file);
 static pid_t fork_a_child(int unix_fd, int inet_fd, int id);
+static pid_t worker_fork_a_child(void);
 static int create_unix_domain_socket(struct sockaddr_un un_addr_tmp);
 static int create_inet_domain_socket(const char *hostname, const int port);
 static void myexit(int code);
@@ -97,7 +98,6 @@ static void reaper(void);
 static void wakeup_children(void);
 static void reload_config(void);
 static int pool_pause(struct timeval *timeout);
-static void pool_sleep(unsigned int second);
 static void kill_all_children(int sig);
 static int get_next_master_node(void);
 
@@ -164,6 +164,8 @@ int my_proc_id;
 bool run_as_pcp_child;
 
 static BackendStatusRecord backend_rec;	/* Backend status record */
+
+static pid_t worker_pid; /* pid of worker process */
 
 int myargc;
 char **myargv;
@@ -518,6 +520,9 @@ int main(int argc, char **argv)
     /* maybe change "*" to pool_config->pcp_listen_addresses */
 	pcp_inet_fd = create_inet_domain_socket("*", pool_config->pcp_port);
 	pcp_pid = pcp_fork_a_child(pcp_unix_fd, pcp_inet_fd, pcp_conf_file);
+
+	/* Fork worker process */
+	worker_pid = worker_fork_a_child();
 
 	retrycnt = 0;		/* reset health check retry counter */
 	sys_retrycnt = 0;	/* reset SystemDB health check retry counter */
@@ -1004,6 +1009,46 @@ pid_t fork_a_child(int unix_fd, int inet_fd, int id)
 }
 
 /*
+* fork worker child process
+*/
+pid_t worker_fork_a_child()
+{
+	pid_t pid;
+
+	pid = fork();
+
+	if (pid == 0)
+	{
+		/* Before we unconditionally closed pipe_fds[0] and pipe_fds[1]
+		 * here, which is apparently wrong since in the start up of
+		 * pgpool, pipe(2) is not called yet and it mistakenly closes
+		 * fd 0. Now we check the fd > 0 before close(), expecting
+		 * pipe returns fds greater than 0.  Note that we cannot
+		 * unconditionally remove close(2) calls since fork_a_child()
+		 * may be called *after* pgpool starting up.
+		 */
+		if (pipe_fds[0] > 0)
+		{
+			close(pipe_fds[0]);
+			close(pipe_fds[1]);
+		}
+
+		myargv = save_ps_display_args(myargc, myargv);
+
+		/* call child main */
+		POOL_SETMASK(&UnBlockSig);
+		reload_config_request = 0;
+		do_worker_child();
+	}
+	else if (pid == -1)
+	{
+		pool_error("fork() failed. reason: %s", strerror(errno));
+		myexit(1);
+	}
+	return pid;
+}
+
+/*
 * create inet domain socket
 */
 static int create_inet_domain_socket(const char *hostname, const int port)
@@ -1256,6 +1301,7 @@ static RETSIGTYPE exit_handler(int sig)
 	}
 
 	kill(pcp_pid, sig);
+	kill(worker_pid, sig);
 
 	POOL_SETMASK(&UnBlockSig);
 
@@ -1812,12 +1858,27 @@ static void reaper(void)
 		if (pid == pcp_pid)
 		{
 			if (WIFSIGNALED(status))
-				pool_debug("PCP child %d exits with status %d by signal %d", pid, status, WTERMSIG(status));
+				pool_log("PCP child %d exits with status %d by signal %d", pid, status, WTERMSIG(status));
 			else
-				pool_debug("PCP child %d exits with status %d", pid, status);
+				pool_log("PCP child %d exits with status %d", pid, status);
 
 			pcp_pid = pcp_fork_a_child(pcp_unix_fd, pcp_inet_fd, pcp_conf_file);
-			pool_debug("fork a new PCP child pid %d", pcp_pid);
+			pool_log("fork a new PCP child pid %d", pcp_pid);
+			break;
+		}
+
+		/* exiting process was worker process */
+		else if (pid == worker_pid)
+		{
+			if (WIFSIGNALED(status))
+				pool_log("worker child %d exits with status %d by signal %d", pid, status, WTERMSIG(status));
+			else
+				pool_log("worker child %d exits with status %d", pid, status);
+
+			if (status)
+				worker_pid = worker_fork_a_child();
+
+			pool_log("fork a new worker child pid %d", worker_pid);
 			break;
 		} else
 		{
@@ -2003,7 +2064,7 @@ static int pool_pause(struct timeval *timeout)
  * macro. Note that most of these processes are done while all signals
  * are blocked.
  */
-static void pool_sleep(unsigned int second)
+void pool_sleep(unsigned int second)
 {
 	struct timeval current_time, sleep_time;
 
