@@ -16,7 +16,7 @@ pgpool_SOURCES = pool.h pool_type.h version.h pgpool.conf.sample \
 	pool_lobj.c pool_lobj.h \
 	pool_process_context.c pool_process_context.h \
 	pool_session_context.c pool_session_context.h \
-< 	pool_query_context.c pool_query_context.h \
+ 	pool_query_context.c pool_query_context.h \
 	pool_worker_child.c
 
 pg_md5_SOURCES = pg_md5.c md5.c md5.h
@@ -25,7 +25,8 @@ DEFS = @DEFS@ \
 	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\"
 
 sysconf_DATA = pgpool.conf.sample pcp.conf.sample pool_hba.conf.sample \
-				pgpool.conf.sample-replication pgpool.conf.sample-master-slave
+				pgpool.conf.sample-replication pgpool.conf.sample-master-slave \
+				pgpool.conf.sample-stream
 pkgdata_DATA = sql/system_db.sql sample/pgpool.pam
 
 AM_CPPFLAGS = -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
