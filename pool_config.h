@@ -70,7 +70,12 @@ typedef struct {
 	int print_timestamp;		/* if non 0, print time stamp to each log line */
 	int master_slave_mode;		/* if non 0, operate in master/slave mode */
 	char *master_slave_sub_mode;		/* either "slony" or "stream" */
-
+	unsigned long long int delay_threshold;		/* If the standby server delays more than delay_threshold,
+										 * any query goes to the primary only. The unit is in bytes.
+										 * 0 disables the check. Default is 0.
+										 * Note that health_check_period required to be greater than 0
+										 * to enable the functionality. */
+	char *log_standby_delay;		/* how to log standby lag */
 	int connection_cache;		/* if non 0, cache connection pool */
 	int health_check_timeout;	/* health check timeout */
 	int health_check_period;	/* health check period */

@@ -184,6 +184,16 @@ void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	strncpy(status[i].desc, "master/slave sub mode", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	strncpy(status[i].name, "delay_threshold", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%lld", pool_config->delay_threshold);
+	strncpy(status[i].desc, "standby delay threshold", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "log_standby_delay", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->log_standby_delay);
+	strncpy(status[i].desc, "how to log standby delay", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	strncpy(status[i].name, "connection_cache", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->connection_cache);
 	strncpy(status[i].desc, "if true, cache connection pool", POOLCONFIG_MAXDESCLEN);
@@ -407,6 +417,11 @@ void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "backend status%d", j);
 		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", BACKEND_INFO(j).backend_status);
 		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "status of backend #%d", j);
+		i++;
+
+		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "standby_delay%d", j);
+		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%lld", BACKEND_INFO(j).standby_delay);
+		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "standby delay of backend #%d", j);
 		i++;
 	}
 

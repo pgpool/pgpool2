@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Mon Jun 14 08:48:48 JST 2010
+Last modified: Mon Jun 21 14:41:09 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1162,10 +1162,53 @@ SELECT should be executed on master only as well but for this you need to use co
 <p>In the master/slave mode, <code>replication_mode</code> must be set
 to false, and <code>master_slave_mode</code> to true.</p>
 
-<p>master/slave mode has "sub mode". The default is 'slony' which is
+<p>master/slave mode has 'master_slave_sub mode'.
+The default is 'slony' which is
 suitable for Slony-I. You can also set it to 'stream', which should be
 set if you want to work with PostgreSQL's buil-in replication system
 (Streaming Replication).
+</p>
+
+<h4>Streaming Replication</h4>
+<p>
+As stated above, pgpool-II could work with Streaming Replication, which
+has been usable since PostgreSQL 9.0, if master_slave is enabled and
+master_slave_sub_mode is 'stream'
+(please note that pgpool-II assumes that Streaming Replication is used
+with Hot Standby aat present).
+Following directives can be used with this mode:
+</p>
+<p>
+<ul>
+<li>delay_threshold
+<p>
+Specify the accepted replication delay of the standby against the
+primary server in bytes.
+If the delay exceeds delay_threshold, pgpool-II does not send SELECT to
+the standby server but sends to the primary server
+even if load balance mode is enabled.
+If delay_threshold is 0 or heath checking is disabled, the delay
+checking is not peformed.
+The default value for delay_threshold is 0.
+You need to reload pgpool.conf if you change the directive.
+</p>
+
+<li>log_standby_delay
+<p>
+Specify how to log the replication delay.
+If 'none' is specified, no log is written.
+If 'always', log the delay every time health checking is performed.
+If 'if_over_threshold' is specified, the log is written when the delay
+exceeds delay_threshold.
+The default value for log_standby_delay is 'none'.
+You need to reload pgpool.conf if you change the directive.
+</p>
+<p>
+You could check the replication delay by using "show pool_status"
+command as well.
+</p>
+</ul>
+</p>
 
 <h3>Parallel Mode</h3>
 

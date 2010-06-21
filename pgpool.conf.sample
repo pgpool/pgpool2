@@ -89,6 +89,18 @@ master_slave_mode = false
 # Master/slave sub mode. either 'slony' or 'stream'. Default is 'slony'.
 master_slave_sub_mode = 'slony'
 
+# If the standby server delays more than delay_threshold,
+# any query goes to the primary only. The unit is in bytes.
+# 0 disables the check. Default is 0.
+# Note that health_check_period required to be greater than 0
+# to enable the functionality.
+delay_threshold = 0
+
+# 'always' logs the standby delay whenever health check runs.
+# 'if_over_threshold' logs only if the delay exceeds delay_threshold.
+# 'none' disables the delay log.
+log_standby_delay = 'none'
+
 # If true, cache connection pool.
 connection_cache = true
 

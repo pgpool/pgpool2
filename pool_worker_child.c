@@ -61,13 +61,24 @@ extern int myargc;
 extern char **myargv;
 
 char remote_ps_data[NI_MAXHOST];		/* used for set_ps_display */
-static volatile sig_atomic_t got_sighup = 0;
 static POOL_CONNECTION_POOL_SLOT	*slots[MAX_NUM_BACKENDS];
+static volatile sig_atomic_t reload_config_request = 0;
 
 static void establish_persistent_connection(void);
 static void check_replication_time_lag(void);
 static long text_to_lsn(char *text);
 static RETSIGTYPE my_signal_handler(int sig);
+static RETSIGTYPE reload_config_handler(int sig);
+static void reload_config(void);
+
+#define CHECK_REQUEST \
+	do { \
+		if (reload_config_request) \
+		{ \
+			reload_config(); \
+			reload_config_request = 0; \
+		} \
+    } while (0)
 
 /*
 * worker child main loop
@@ -84,7 +95,7 @@ void do_worker_child(void)
 	signal(SIGALRM, SIG_DFL);
 	signal(SIGTERM, my_signal_handler);
 	signal(SIGINT, my_signal_handler);
-	signal(SIGHUP, my_signal_handler);
+	signal(SIGHUP, reload_config_handler);
 	signal(SIGQUIT, my_signal_handler);
 	signal(SIGCHLD, SIG_IGN);
 	signal(SIGUSR1, SIG_IGN);
@@ -96,6 +107,8 @@ void do_worker_child(void)
 
 	for (;;)
 	{
+		CHECK_REQUEST;
+
 		/*
 		 * If streaming replication mode, do time lag checking
 		 */
@@ -150,8 +163,10 @@ static void check_replication_time_lag(void)
 	int i;
 	POOL_STATUS sts;
 	POOL_SELECT_RESULT *res;
-	long lsn[MAX_NUM_BACKENDS];
+	unsigned long long int lsn[MAX_NUM_BACKENDS];
 	char *query;
+	BackendInfo *bkinfo;
+	unsigned long long int lag;
 
 	if (NUM_BACKENDS <= 1)
 	{
@@ -211,7 +226,6 @@ static void check_replication_time_lag(void)
 		}
 		else
 		{
-			pool_log("%d %s", i, res->data[0]);
 			lsn[i] = text_to_lsn(res->data[0]);
 			free_select_result(res);
 		}
@@ -222,18 +236,38 @@ static void check_replication_time_lag(void)
 		if (!VALID_BACKEND(i))
 			continue;
 
-		if (REAL_MASTER_NODE_ID != i)
+		/* Set standby delay value */
+		bkinfo = pool_get_node_info(i);
+		lag = lsn[REAL_MASTER_NODE_ID] - lsn[i];
+
+		if (REAL_MASTER_NODE_ID == i)
 		{
-			pool_log("DB node id: %d is behind %ld from primary (id: %d)", i, lsn[REAL_MASTER_NODE_ID] - lsn[i], REAL_MASTER_NODE_ID);
+			bkinfo->standby_delay = 0;
+		}
+		else
+		{
+			bkinfo->standby_delay = lag;
+
+			/* Log delay if necessary */
+			if (!strcmp(pool_config->log_standby_delay, "always") ||
+				(pool_config->delay_threshold &&
+				 !strcmp(pool_config->log_standby_delay, "if_over_threshold") &&
+				 lag > pool_config->delay_threshold))
+			{
+				pool_log("Replication of node:%d is behind %lld bytes from the primary server (node:%d)", i, lsn[REAL_MASTER_NODE_ID] - lsn[i], REAL_MASTER_NODE_ID);
+			}
 		}
 	}
 }
 
+/*
+ * Convert logid/recoff style text to 64bit log location (LSN)
+ */
 static long text_to_lsn(char *text)
 {
 	unsigned int xlogid;
 	unsigned int xrecoff;
-	long lsn;
+	unsigned long long int lsn;
 
 	if (sscanf(text, "%X/%X", &xlogid, &xrecoff) != 2)
 	{
@@ -246,17 +280,34 @@ static long text_to_lsn(char *text)
 
 static RETSIGTYPE my_signal_handler(int sig)
 {
+	POOL_SETMASK(&BlockSig);
+
 	switch (sig)
 	{
-		case SIGHUP:
-		got_sighup = 1;
-		break;
-
 		case SIGTERM:
 		case SIGINT:
 		case SIGQUIT:
-		default:
 			exit(0);
+		default:
+			exit(1);
 			break;
 	}
+
+	POOL_SETMASK(&UnBlockSig);
+}
+
+static RETSIGTYPE reload_config_handler(int sig)
+{
+	POOL_SETMASK(&BlockSig);
+	reload_config_request = 1;
+	POOL_SETMASK(&UnBlockSig);
+}
+
+static void reload_config(void)
+{
+	pool_log("reload config files.");
+	pool_get_config(get_config_file_name(), RELOAD_CONFIG);
+	if (pool_config->enable_pool_hba)
+		load_hba(get_hba_file_name());
+	reload_config_request = 0;
 }

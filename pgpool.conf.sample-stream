@@ -1,5 +1,5 @@
 #
-# pgpool-II configuration file sample for replication mode
+# pgpool-II configuration file sample for Stream replication/Hot standby.
 # $Header$
 
 # Host name or IP address to listen on: '*' for all, '' for no TCP/IP
@@ -60,7 +60,7 @@ logdir = '/tmp'
 pid_file_name = '/var/run/pgpool/pgpool.pid'
 
 # Replication mode
-replication_mode = true
+replication_mode = false
 
 # Load balancing mode, i.e., all SELECTs are load balanced.
 # This is ignored if replication_mode is false.
@@ -84,20 +84,22 @@ reset_query_list = 'ABORT; DISCARD ALL'
 print_timestamp = true
 
 # If true, operate in master/slave mode.
-master_slave_mode = false
+master_slave_mode = true
 
 # Master/slave sub mode. either 'slony' or 'stream'. Default is 'slony'.
-master_slave_sub_mode = 'slony'
+master_slave_sub_mode = 'stream'
 
 # If the standby server delays more than delay_threshold,
 # any query goes to the primary only. The unit is in bytes.
 # 0 disables the check. Default is 0.
 # Note that health_check_period required to be greater than 0
 # to enable the functionality.
-delay_threshold = 0
+delay_threshold = 10000000
 
-# if true, log the delay between the primary and the standby.
-log_standby_delay = false
+# 'always' logs the standby delay whenever health check runs.
+# 'if_over_threshold' logs only if the delay exceeds delay_threshold.
+# 'none' disables the delay log.
+log_standby_delay = 'if_over_threshold'
 
 # If true, cache connection pool.
 connection_cache = true
@@ -143,7 +145,7 @@ fail_over_on_backend_error = true
 # SERIAL data consistency.  If the data does not have SERIAL data
 # type, no lock will be issued. An /*INSERT LOCK*/ comment has the
 # same effect.  A /NO INSERT LOCK*/ comment disables the effect.
-insert_lock = true
+insert_lock = false
 
 # If true, ignore leading white spaces of each query while pgpool judges
 # whether the query is a SELECT so that it can be load balanced.  This

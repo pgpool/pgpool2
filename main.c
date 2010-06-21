@@ -2012,6 +2012,9 @@ static void reload_config(void)
 	if (pool_config->parallel_mode)
 		pool_memset_system_db_info(system_db_info->info);
 	kill_all_children(SIGHUP);
+
+	if (worker_pid)
+		kill(worker_pid, SIGHUP);
 }
 
 static void kill_all_children(int sig)

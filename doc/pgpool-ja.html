@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Mon Jun 14 08:49:29 JST 2010
+Last modified: Mon Jun 21 14:40:24 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1192,11 +1192,45 @@ DELETE $B$N99?77o?t$,$9$Y$F$N%N!<%I$,F1$8$G$J$$>l9g!"0U?^E*$K9=J8%(%i!<$r5/$9(
 <p>
 $B%^%9%?!<%9%l!<%V%b!<%I$G$O!"(Bpgpool.conf$B$N(Breplication_mode$B$r(Bfalse$B$K!"(Bmaster_slave_mode
 $B$r(Btrue$B$K$7$^$9!#(B
-$B$^$?!"(B"sub mode"$B$r;XDj$9$k$3$H$,$G$-$^$9!#$3$l$O!"(B'slony'($B%G%U%)%k%H(B)$B$+!"(B'stream'$B$G$9!#(B
-'slony'$B$O(BSlony-I$B$rMxMQ$9$k;~$K;XDj$7$^$9!#(B'stream'$B$O!"(BPostgreSQL$BAH$_9~$_$N(BStreaming Replication$B$rMxMQ$9$k$H$-$K;XDj$7$^$9!#(B
+$B$^$?!"(B'master_slave_sub_mode'$B$r;XDj$9$k$3$H$,$G$-$^$9!#$3$l$O!"(B'slony'($B%G%U%)%k%H(B)$B$+!"(B'stream'$B$G$9!#(B
+'slony'$B$O(BSlony-I$B$rMxMQ$9$k;~$K;XDj$7$^$9!#(B
+'stream'$B$O!"(BPostgreSQL$BAH$_9~$_$N(BStreaming Replication$B$rMxMQ$9$k$H$-$K;XDj$7$^$9!#(B
 </p>
 <p>
 $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O(B pgpool-II $B$r:F5/F0$7$F$/$@$5$$!#(B
+</p>
+
+<h4>Streaming Replication$B$X$NBP1~(B</h4>
+<p>
+$BA0=R$N$h$&$K!"%^%9%?%9%l!<%V%b!<%I$G!"(B'master_slave_sub mode'$B$K(B'stream'$B$r;XDj$9$k$H!"(BPostgreSQL 9.0$B$+$iMxMQ2DG=$K$J$C$?(Btreaming Replication$B$KBP1~$7$^$9(B
+(pgpool-II$B$G$O!":#$N$H$3$m!"(BStreaming Replication$B$H(BHot Standby$B$rJ;MQ$9$k$3$H$rA0Ds$K$7$F$$$^$9(B)$B!#(B
+$B$3$N%b!<%I$G$O!"0J2<$N@_DjCM$,MxMQ$G$-$^$9!#(B
+<ul>
+<li>delay_threshold
+<p>
+$B%9%?%s%P%$%5!<%P$X$N%l%W%j%1!<%7%g%s$NCY1d5vMFEY$r%P%$%HC10L$G;XDj$7$^$9!#(B
+pgpool-II$B$O!"%X%k%9%A%'%C%/$N:]$K!"%9%?%s%P%$%5!<%P$NCY1d$,$3$NCM$rD6$($?>l9g$K$O!"(B
+$BIi2YJ,;6$,M-8z$G$"$C$F$b$=$N(BDB$B%N!<%I$K(BSELECT$B$rAw?.$;$:!"%W%i%$%^%j%5!<%P$KAw$k$h$&$K$7$^$9!#(B
+delay_threshold$B$,(B0$B$N>l9g$O!"CY1d$N%A%'%C%/$r9T$J$$$^$;$s!#(B
+$B$^$?!"(Bdelay_threshold$B$,;XDj$5$l$F$$$F$b!"%X%k%9%A%'%C%/$,L58z$J$i$P!"$d$O$j$3$N5!G=$OF/$-$^$;$s!#(B
+$B%G%U%)%k%HCM$O(B0$B$G$9!#(B
+$B$3$N%Q%i%a!<%?$O@_Dj%U%!%$%k$N:FFI9~$K$h$C$FJQ99$G$-$^$9!#(B
+</p>
+
+<li>log_standby_delay
+<p>
+$B%l%W%j%1!<%7%g%s$NCY1d>u67$r%m%0$9$k>r7o$r;XDj$7$^$9!#(B
+'none'$B$r;XDj$9$k$H!"%m%0$r=PNO$7$^$;$s!#(B
+'always'$B$J$i%X%k%9%A%'%C%/$r<B9T$9$k$?$S$KI,$:=PNO$7$^$9!#(B
+'if_over_threshold'$B$r;XDj$9$k$H!"(Bdelay_threshold$B$rD6$($?$H$-$@$1%m%0$,=PNO$5$l$^$9!#(B
+$B%G%U%)%k%HCM$O(B'none'$B$G$9!#(B
+$B$3$N%Q%i%a!<%?$O@_Dj%U%!%$%k$N:FFI9~$K$h$C$FJQ99$G$-$^$9!#(B
+</p>
+<p>
+$B$J$*!"%l%W%j%1!<%7%g%s$NCY1d>u67$O(B show pool_status $B%3%^%s%I$G$b3NG'$G$-$^$9!#(B
+</p>
+</ul>
+
 </p>
 
 <h3>$B%Q%i%l%k%b!<%I(B</h3>

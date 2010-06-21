@@ -1878,6 +1878,8 @@ int pool_init_config(void)
 	pool_config->print_timestamp = 1;
 	pool_config->master_slave_mode = 0;
 	pool_config->master_slave_sub_mode = "slony";
+	pool_config->delay_threshold = 0;
+	pool_config->log_standby_delay = 0;
 	pool_config->connection_cache = 1;
 	pool_config->health_check_timeout = 20;
 	pool_config->health_check_period = 0;
@@ -2408,6 +2410,46 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->master_slave_sub_mode = str;
+		}
+
+		else if (!strcmp(key, "delay_threshold") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			long long int v = atol(yytext);
+
+			if (token != POOL_INTEGER || v < 0)
+			{
+				pool_error("pool_config: %s must be greater or equal to 0 numeric value", key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->delay_threshold = v;
+		}
+
+		else if (!strcmp(key, "log_standby_delay") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+
+			if (strcmp(str, "always") && strcmp(str, "if_over_threshold") && strcmp(str, "none"))
+			{
+				pool_error("pool_config: invalid log_standby_delay %s", key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->log_standby_delay = str;
 		}
 
 		else if (!strcmp(key, "connection_cache") && CHECK_CONTEXT(INIT_CONFIG, context))
