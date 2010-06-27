@@ -23,6 +23,7 @@
  */
 #include "pool.h"
 #include "pool_config.h"
+#include "pool_passwd.h"
 #include "md5.h"
 
 #include <stdio.h>
@@ -34,6 +35,8 @@
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
+#include <pwd.h>
+#include <libgen.h>
 
 /* Maximum number of characters allowed for input. */
 #define MAX_INPUT_SIZE	32
@@ -46,6 +49,8 @@ main(int argc, char *argv[])
 {
 #define PRINT_USAGE(exit_code)	print_usage(argv[0], exit_code)
 
+	char conf_file[POOLMAXPATHLEN+1];
+	char pool_passwd[POOLMAXPATHLEN+1];
 	int opt;
 	int optindex;
 	bool md5auth = false;
@@ -55,10 +60,14 @@ main(int argc, char *argv[])
 		{"help", no_argument, NULL, 'h'},
 		{"prompt", no_argument, NULL, 'p'},
 		{"md5auth", no_argument, NULL, 'm'},
+		{"md5auth", no_argument, NULL, 'm'},
+		{"config-file", required_argument, NULL, 'f'},
 		{NULL, 0, NULL, 0}
 	};
 
-    while ((opt = getopt_long(argc, argv, "h:p:m", long_options, &optindex)) != -1)
+	snprintf(conf_file, sizeof(conf_file), "%s/%s", DEFAULT_CONFIGDIR, POOL_CONF_FILE_NAME);
+
+    while ((opt = getopt_long(argc, argv, "hpmf:", long_options, &optindex)) != -1)
 	{
 		switch (opt)
 		{
@@ -68,6 +77,14 @@ main(int argc, char *argv[])
 
 			case 'm':	/* produce md5 authentication password */
 				md5auth = true;
+				break;
+
+			case 'f':	/* specify configuration file */
+				if (!optarg)
+				{
+					PRINT_USAGE(EXIT_SUCCESS);
+				}
+				strncpy(conf_file, optarg, sizeof(conf_file));
 				break;
 
 			default:
@@ -104,14 +121,35 @@ main(int argc, char *argv[])
 			len--;
 		}
 
-		pool_md5_hash(buf, len, md5);
+		if (md5auth)
+		{
+			struct passwd *pw;
+
+			if (pool_init_config())
+			{
+				fprintf(stderr, "pool_init_config() failed\n\n");
+				PRINT_USAGE(EXIT_FAILURE);
+			}
+
+			pw = getpwuid(geteuid());
+			if (!pw)
+			{
+				fprintf(stderr, "getpwuid() failed\n\n");
+				exit(EXIT_FAILURE);
+			}
+			pool_md5_encrypt(buf, pw->pw_name, strlen(pw->pw_name), md5);
+		}
+		else
+		{
+			pool_md5_hash(buf, len, md5);
+		}
 		printf("\n%s\n", md5);
 	}
 
 	/* Read password from argv. */
 	else
 	{
-		char	md5[MD5_PASSWD_LEN+1];
+		char	md5[POOL_PASSWD_LEN+1];
 		int		len;
 
 		if (optind >= argc)
@@ -127,7 +165,41 @@ main(int argc, char *argv[])
 			PRINT_USAGE(EXIT_FAILURE);
 		}
 
-		pool_md5_hash(argv[optind], len, md5);
+		if (md5auth)
+		{
+			struct passwd *pw;
+
+			if (pool_init_config())
+			{
+				fprintf(stderr, "pool_init_config() failed\n\n");
+				PRINT_USAGE(EXIT_FAILURE);
+			}
+			if (pool_get_config(conf_file, INIT_CONFIG))
+			{
+				fprintf(stderr, "Unable to get configuration. Exiting...");
+				PRINT_USAGE(EXIT_FAILURE);
+			}
+
+			snprintf(pool_passwd, sizeof(pool_passwd), "%s/%s",
+					 dirname(conf_file), pool_config->pool_passwd);
+			pool_init_pool_passwd(pool_passwd);
+
+			pw = getpwuid(geteuid());
+			if (!pw)
+			{
+				fprintf(stderr, "getpwuid() failed\n\n");
+				exit(EXIT_FAILURE);
+			}
+			pg_md5_encrypt(argv[optind], pw->pw_name, strlen(pw->pw_name), md5);
+			pool_create_passwdent(pw->pw_name, md5);
+			fprintf(stderr, "%s\n", pool_get_passwd(pw->pw_name));
+			pool_finish_pool_passwd();
+		}
+		else
+		{
+			pool_md5_hash(argv[optind], len, md5);
+		}
+
 		printf("%s\n", md5);
 	}
 

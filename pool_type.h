@@ -254,11 +254,11 @@ typedef enum UserAuth
 	uaReject,
 	/*  uaKrb4, */
 	/*  uaKrb5, */
-	uaTrust
+	uaTrust,
 	/*  uaIdent, */
 	/*  uaPassword, */
 	/*  uaCrypt, */
-	/*  uaMD5 */
+	uaMD5
 #ifdef USE_PAM
 	,uaPAM
 #endif /* USE_PAM */

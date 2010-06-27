@@ -113,12 +113,21 @@ int pool_init_config(void)
 
 	memset(pool_config, 0, sizeof(POOL_CONFIG));
 
+#ifdef PGPOOL_MAIN
 	pool_config->backend_desc = pool_shared_memory_create(sizeof(BackendDesc));
 	if (pool_config->backend_desc == NULL)
 	{
 		pool_error("failed to allocate pool_config->backend_desc");
 		return -1;
 	}
+#else
+	pool_config->backend_desc = malloc(sizeof(BackendDesc));
+	if (pool_config->backend_desc == NULL)
+	{
+		pool_error("failed to allocate pool_config->backend_desc");
+		return -1;
+	}
+#endif
 
 	/* set hardcoded default values */
 	pool_config->listen_addresses = "localhost";
@@ -142,6 +151,7 @@ int pool_init_config(void)
 	pool_config->log_connections = 0;
 	pool_config->log_hostname = 0;
 	pool_config->enable_pool_hba = 0;
+	pool_config->pool_passwd = "pool_passwd";
 
 	pool_config->replication_mode = 0;
 	pool_config->load_balance_mode = 0;
@@ -525,6 +535,25 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			pool_config->enable_pool_hba = v;
 		}
+		else if (!strcmp(key, "pool_passwd") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->pool_passwd = str;
+		}
+
 		else if (!strcmp(key, "backend_socket_dir") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			char *str;
@@ -1463,12 +1492,17 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 		}
 		memset(system_db_info, 0, sizeof(*system_db_info));
 
+#ifdef PGPOOL_MAIN
 		system_db_info->system_db_status = pool_shared_memory_create(sizeof(BACKEND_STATUS));
+#else
+		system_db_info->system_db_status = malloc(sizeof(BACKEND_STATUS));
+#endif
 		if (system_db_info->system_db_status == NULL)
 		{
 			pool_error("failed to allocate system_db_info->system_db_status");
 			return -1;
 		}
+
 		*system_db_info->system_db_status = CON_CONNECT_WAIT;	/* which is the same as SYSDB_STATUS = CON_CONNECT_WAIT */
 
 		info = malloc(sizeof(SystemDBInfo));
@@ -1488,8 +1522,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 		info->dist_def_num = 0;
 		info->dist_def_slot = NULL;
 
+#ifdef PGPOOL_MAIN
 		if (pool_config->parallel_mode)
 		{
+
 			dist_num = pool_memset_system_db_info(info);
 			if(dist_num < 0)
 			{
@@ -1512,6 +1548,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 		}
 		SYSDB_STATUS = CON_UP;
+#endif
 	}
 
 	return 0;

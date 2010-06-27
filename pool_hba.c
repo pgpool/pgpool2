@@ -62,6 +62,7 @@ static char *tokenize_inc_file(const char *outer_filename, const char *inc_filen
 static bool pg_isblank(const char c);
 static void next_token(FILE *fp, char *buf, int bufsz);
 static char * next_token_expand(const char *filename, FILE *file);
+static POOL_STATUS CheckMd5Auth(POOL_CONNECTION *frontend);
 
 #ifdef USE_PAM
 #ifdef HAVE_PAM_PAM_APPL_H
@@ -217,8 +218,9 @@ void ClientAuthentication(POOL_CONNECTION *frontend)
 /* 		case uaIdent: */
 /* 			break; */
 
-/* 		case uaMD5: */
-/* 			break; */
+		case uaMD5:
+			status = CheckMd5Auth(frontend);
+ 			break;
 
 /* 		case uaCrypt: */
 /* 			break; */
@@ -389,7 +391,12 @@ static void auth_failed(POOL_CONNECTION *frontend)
 /* 					 "Ident authentication with pgpool failed for user \"%s\"", */
 /* 					 frontend->username); */
 /* 			break; */
-/* 		case uaMD5: */
+ 		case uaMD5:
+			snprintf(errmessage, messagelen,
+					 "\"MD5\" authentication with pgpool failed for user \"%s\"",
+					 frontend->username);
+			break;
+
 /* 		case uaCrypt: */
 /* 		case uaPassword: */
 /* 			snprintf(errmessage, messagelen, */
@@ -793,9 +800,9 @@ static void parse_hba_auth(ListCell **line_item, UserAuth *userauth_p,
 	*/
 	else if (strcmp(token, "reject") == 0)
 		*userauth_p = uaReject;
-	/*
 	else if (strcmp(token, "md5") == 0)
 		*userauth_p = uaMD5;
+	/*
 	else if (strcmp(token, "crypt") == 0)
 		*userauth_p = uaCrypt;
 	*/
@@ -1436,3 +1443,19 @@ static POOL_STATUS CheckPAMAuth(POOL_CONNECTION *frontend, char *user, char *pas
 }
 
 #endif   /* USE_PAM */
+
+static POOL_STATUS CheckMd5Auth(POOL_CONNECTION *frontend)
+{
+	POOL_STATUS status;
+
+	/* Look for the entry in pool_passwd */
+
+	/* Not found. authentication failed */
+	/* return POOL_ERROR;*/
+
+	/*
+	 * If found, save the password.
+	 * Actual authentication will be performed later.
+	 */
+	return POOL_CONTINUE;
+}

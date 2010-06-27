@@ -16,10 +16,20 @@ pgpool_SOURCES = pool.h pool_type.h version.h pgpool.conf.sample \
 	pool_lobj.c pool_lobj.h \
 	pool_process_context.c pool_process_context.h \
 	pool_session_context.c pool_session_context.h \
- 	pool_query_context.c pool_query_context.h \
-	pool_worker_child.c
+	pool_query_context.c pool_query_context.h \
+	pool_worker_child.c \
+	pool_passwd.c pool_passwd.h \
+	pool_globals.c
 
-pg_md5_SOURCES = pg_md5.c md5.c md5.h
+pgpool_DEFS = -DPGPOOL_MAIN
+
+pg_md5_SOURCES = pg_md5.c md5.c md5.h \
+	pool.h \
+	pool_config.l pool_config.h \
+	pool_error.c \
+	pool_signal.h pool_signal.c \
+	pool_passwd.c pool_passwd.h \
+	pool_globals.c
 
 DEFS = @DEFS@ \
 	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\"

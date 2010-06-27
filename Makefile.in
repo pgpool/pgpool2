@@ -60,7 +60,10 @@ am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man8dir)" \
 	"$(DESTDIR)$(pkgdatadir)" "$(DESTDIR)$(sysconfdir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am_pg_md5_OBJECTS = pg_md5.$(OBJEXT) md5.$(OBJEXT)
+am_pg_md5_OBJECTS = pg_md5.$(OBJEXT) md5.$(OBJEXT) \
+	pool_config.$(OBJEXT) pool_error.$(OBJEXT) \
+	pool_signal.$(OBJEXT) pool_passwd.$(OBJEXT) \
+	pool_globals.$(OBJEXT)
 pg_md5_OBJECTS = $(am_pg_md5_OBJECTS)
 pg_md5_LDADD = $(LDADD)
 am_pgpool_OBJECTS = main.$(OBJEXT) child.$(OBJEXT) pool_auth.$(OBJEXT) \
@@ -77,7 +80,8 @@ am_pgpool_OBJECTS = main.$(OBJEXT) child.$(OBJEXT) pool_auth.$(OBJEXT) \
 	pool_timestamp.$(OBJEXT) pool_proto2.$(OBJEXT) \
 	pool_proto_modules.$(OBJEXT) pool_lobj.$(OBJEXT) \
 	pool_process_context.$(OBJEXT) pool_session_context.$(OBJEXT) \
-	pool_query_context.$(OBJEXT) pool_worker_child.$(OBJEXT)
+	pool_query_context.$(OBJEXT) pool_worker_child.$(OBJEXT) \
+	pool_passwd.$(OBJEXT) pool_globals.$(OBJEXT)
 pgpool_OBJECTS = $(am_pgpool_OBJECTS)
 pgpool_DEPENDENCIES = parser/libsql-parser.a pcp/libpcp.la \
 	parser/nodes.o
@@ -94,6 +98,7 @@ LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 LEXCOMPILE = $(LEX) $(LFLAGS) $(AM_LFLAGS)
 LTLEXCOMPILE = $(LIBTOOL) --mode=compile $(LEX) $(LFLAGS) $(AM_LFLAGS)
+YLWRAP = $(top_srcdir)/ylwrap
 SOURCES = $(pg_md5_SOURCES) $(pgpool_SOURCES)
 DIST_SOURCES = $(pg_md5_SOURCES) $(pgpool_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
@@ -251,12 +256,23 @@ pgpool_SOURCES = pool.h pool_type.h version.h pgpool.conf.sample \
 	pool_lobj.c pool_lobj.h \
 	pool_process_context.c pool_process_context.h \
 	pool_session_context.c pool_session_context.h \
-< 	pool_query_context.c pool_query_context.h \
-	pool_worker_child.c
+	pool_query_context.c pool_query_context.h \
+	pool_worker_child.c \
+	pool_passwd.c pool_passwd.h \
+	pool_globals.c
 
-pg_md5_SOURCES = pg_md5.c md5.c md5.h
+pgpool_DEFS = -DPGPOOL_MAIN
+pg_md5_SOURCES = pg_md5.c md5.c md5.h \
+	pool.h \
+	pool_config.l pool_config.h \
+	pool_error.c \
+	pool_signal.h pool_signal.c \
+	pool_passwd.c pool_passwd.h \
+	pool_globals.c
+
 sysconf_DATA = pgpool.conf.sample pcp.conf.sample pool_hba.conf.sample \
-				pgpool.conf.sample-replication pgpool.conf.sample-master-slave
+				pgpool.conf.sample-replication pgpool.conf.sample-master-slave \
+				pgpool.conf.sample-stream
 
 pkgdata_DATA = sql/system_db.sql sample/pgpool.pam
 AM_CPPFLAGS = -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
@@ -409,10 +425,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_config.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_connection_pool.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_error.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_globals.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_hba.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_ip.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_lobj.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_params.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_passwd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_path.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_process_context.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_process_query.Po@am__quote@
@@ -459,9 +477,7 @@ distclean-compile:
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
 .l.c:
-	$(LEXCOMPILE) $<
-	sed '/^#/ s|$(LEX_OUTPUT_ROOT)\.c|$@|' $(LEX_OUTPUT_ROOT).c >$@
-	rm -f $(LEX_OUTPUT_ROOT).c
+	$(SHELL) $(YLWRAP) $< $(LEX_OUTPUT_ROOT).c $@ -- $(LEXCOMPILE)
 
 mostlyclean-libtool:
 	-rm -f *.lo

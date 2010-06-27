@@ -49,10 +49,12 @@
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
+#include <libgen.h>
 
 #include "version.h"
 #include "parser/pool_memory.h"
 #include "parser/pool_string.h"
+#include "pool_passwd.h"
 
 /*
  * Process pending signal actions.
@@ -141,9 +143,6 @@ static int switching = 0;		/* non 0 if I'm fail overing or degenerating */
 
 static int clear_cache = 0;		/* non 0 if clear chache option (-c) is given */
 static int not_detach = 0;		/* non 0 if non detach option (-n) is given */
-int debug = 0;	/* non 0 if debug option is given (-d). pcp only */
-
-pid_t mypid;	/* pgpool parent process id */
 
 long int weight_master;	/* normalized weight of master (0-RAND_MAX range) */
 
@@ -161,7 +160,6 @@ static volatile sig_atomic_t wakeup_request = 0;
 static int pipe_fds[2]; /* for delivering signals */
 
 int my_proc_id;
-bool run_as_pcp_child;
 
 static BackendStatusRecord backend_rec;	/* Backend status record */
 
@@ -302,6 +300,18 @@ int main(int argc, char **argv)
 	{
 		pool_error("Unable to get configuration. Exiting...");
 		exit(1);
+	}
+
+	/*
+	 * Locate pool_passwd
+	 */
+	if (strcmp("", pool_config->pool_passwd))
+	{
+		char pool_passwd[POOLMAXPATHLEN+1];
+
+		snprintf(pool_passwd, sizeof(pool_passwd), "%s/%s",
+				 dirname(conf_file), pool_config->pool_passwd);
+		pool_init_pool_passwd(pool_passwd);
 	}
 
 	/*

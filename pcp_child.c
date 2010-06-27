@@ -65,7 +65,6 @@ static RETSIGTYPE die(int sig);
 static PCP_CONNECTION *pcp_do_accept(int unix_fd, int inet_fd);
 static void unset_nonblock(int fd);
 static int user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len);
-static void pool_random_salt(char *md5Salt);
 static RETSIGTYPE wakeup_handler(int sig);
 static RETSIGTYPE reload_config_handler(int sig);
 
@@ -1050,22 +1049,6 @@ user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len)
 
 	fclose(fp);
 	return 0;
-}
-
-/*
- *  pool_random_salt
- */
-static void pool_random_salt(char *md5Salt)
-{
-	long rand = random();
-
-	md5Salt[0] = (rand % 255) + 1;
-	rand = random();
-	md5Salt[1] = (rand % 255) + 1;
-	rand = random();
-	md5Salt[2] = (rand % 255) + 1;
-	rand = random();
-	md5Salt[3] = (rand % 255) + 1;
 }
 
 /* SIGHUP handler */

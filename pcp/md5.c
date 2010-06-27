@@ -24,11 +24,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-
+#include "pool.h"
 #include "md5.h"
 
+#ifdef NOT_USED
 typedef unsigned char uint8;	/* == 8 bits */
 typedef unsigned int uint32;	/* == 32 bits */
+#endif
 
 #define S11 7
 #define S12 12
@@ -398,6 +400,43 @@ pool_md5_encrypt(const char *passwd, const char *salt, size_t salt_len,
 	memcpy(crypt_buf + passwd_len, salt, salt_len);
 
 	ret = pool_md5_hash(crypt_buf, passwd_len + salt_len, buf);
+
+	free(crypt_buf);
+
+	return ret;
+}
+
+/*
+ * Computes MD5 checksum of "passwd" (a null-terminated string) followed
+ * by "salt" (which need not be null-terminated).
+ *
+ * Output format is "md5" followed by a 32-hex-digit MD5 checksum.
+ * Hence, the output buffer "buf" must be at least 36 bytes long.
+ *
+ * Returns TRUE if okay, FALSE on error (out of memory).
+ */
+bool
+pg_md5_encrypt(const char *passwd, const char *salt, size_t salt_len,
+			   char *buf)
+{
+	size_t		passwd_len = strlen(passwd);
+
+	/* +1 here is just to avoid risk of unportable malloc(0) */
+	char	   *crypt_buf = malloc(passwd_len + salt_len + 1);
+	bool		ret;
+
+	if (!crypt_buf)
+		return false;
+
+	/*
+	 * Place salt at the end because it may be known by users trying to crack
+	 * the MD5 output.
+	 */
+	memcpy(crypt_buf, passwd, passwd_len);
+	memcpy(crypt_buf + passwd_len, salt, salt_len);
+
+	strcpy(buf, "md5");
+	ret = pool_md5_hash(crypt_buf, passwd_len + salt_len, buf + 3);
 
 	free(crypt_buf);
 

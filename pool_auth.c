@@ -25,6 +25,7 @@
 #include "pool.h"
 #include "pool_stream.h"
 #include "pool_config.h"
+#include "pool_passwd.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -41,15 +42,20 @@
 
 #define AUTHFAIL_ERRORCODE "28000"
 
-static POOL_STATUS pool_send_auth_ok(POOL_CONNECTION *frontend, int pid, int key, int protoMajor);
+static POOL_STATUS pool_send_backend_key_data(POOL_CONNECTION *frontend, int pid, int key, int protoMajor);
 static int do_clear_text_password(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reauth, int protoMajor);
 static void pool_send_auth_fail(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp);
 static int do_crypt(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reauth, int protoMajor);
 static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reauth, int protoMajor);
-
+static int send_md5auth_request(POOL_CONNECTION *frontend, int protoMajor, char *salt);
+static int read_password_packet(POOL_CONNECTION *frontend, int protoMajor, 	char *password);
+static int send_password_packet(POOL_CONNECTION *backend, int protoMajor, char *password);
+static int send_auth_ok(POOL_CONNECTION *frontend, int protoMajor);
 
 /*
-* do authentication against backend. if success return 0 otherwise non 0.
+ * After sending the start up packet to the backend, do the
+ * authentication against backend. if success return 0 otherwise non
+ * 0.
 */
 int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 {
@@ -111,7 +117,7 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 	 * 5: md5 password
 	 * 6: scm credential
 	 *
-	 * in replication mode, we only support  kind = 0, 3. this is because to "salt"
+	 * in replication mode, we only support  kind = 0, 3. this is because "salt"
 	 * cannot be replicated.
 	 * in non replication mode, we support kind = 0, 3, 4, 5
 	 */
@@ -191,7 +197,10 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 	/* md5 authentication? */
 	else if (authkind == 5)
 	{
-		if (!RAW_MODE && NUM_BACKENDS > 1)
+		/* If MD5 auth is not active in pool_hba.conf, it cannot be
+		 * used with other than raw mode.
+		 */
+		if (frontend->auth_method != uaMD5 && !RAW_MODE && NUM_BACKENDS > 1)
 		{
 			pool_send_error_message(frontend, protoMajor, AUTHFAIL_ERRORCODE,
 									"MD5 authentication is unsupported in replication, master-slave and parallel modes.",
@@ -356,7 +365,7 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 	strncpy(cp->info->user, sp->user, sizeof(cp->info->user) - 1);
 	cp->info->counter = 1;
 
-	return pool_send_auth_ok(frontend, pid, key, protoMajor);
+	return pool_send_backend_key_data(frontend, pid, key, protoMajor);
 }
 
 /*
@@ -422,7 +431,7 @@ int pool_do_reauth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 		return -1;
 	}
 
-	return (pool_send_auth_ok(frontend, MASTER_CONNECTION(cp)->pid, MASTER_CONNECTION(cp)->key, protoMajor) != POOL_CONTINUE);
+	return (pool_send_backend_key_data(frontend, MASTER_CONNECTION(cp)->pid, MASTER_CONNECTION(cp)->key, protoMajor) != POOL_CONTINUE);
 }
 
 /*
@@ -454,28 +463,14 @@ static void pool_send_auth_fail(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL 
 } 
 
 /*
-* send authentication ok to frontend. if success return 0 otherwise non 0.
+* Send backend key data to frontend. if success return 0 otherwise non 0.
 */
-static POOL_STATUS pool_send_auth_ok(POOL_CONNECTION *frontend, int pid, int key, int protoMajor)
+static POOL_STATUS pool_send_backend_key_data(POOL_CONNECTION *frontend, int pid, int key, int protoMajor)
 {
 	char kind;
 	int len;
 
-#ifdef NOT_USED
-	if (protoMajor == PROTO_MAJOR_V2)
-	{
-		/* return "Authentication OK" to the frontend */
-		kind = 'R';
-		pool_write(frontend, &kind, 1);
-		len = htonl(0);
-		if (pool_write_and_flush(frontend, &len, sizeof(len)) < 0)
-		{
-			return -1;
-		}
-	}
-#endif
-
-	/* send backend key data */
+	/* Send backend key data */
 	kind = 'K';
 	pool_write(frontend, &kind, 1);
 	if (protoMajor == PROTO_MAJOR_V3)
@@ -822,78 +817,123 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 	char salt[4];
 	static int size;
 	static char password[MAX_PASSWORD_SIZE];
-	char response;
 	int kind;
-	int len;
+	char encbuf[POOL_PASSWD_LEN+1];
+	char *pool_passwd;
 
-	if (!reauth)
+	if (!RAW_MODE && NUM_BACKENDS > 1)
 	{
-		/* read salt */
-		if (pool_read(backend, salt, sizeof(salt)))
+		/* master? */
+		if (IS_MASTER_NODE_ID(backend->db_node_id))
 		{
-			pool_error("do_md5: failed to read salt");
-			return -1;
+			/* Send md5 auth request to frontend with my own salt */
+			pool_random_salt(salt);
+			if (send_md5auth_request(frontend, protoMajor, salt))
+			{
+				pool_error("do_md5: send_md5auth_request failed");
+				return -1;
+			}
+
+			/* Read password packet */
+			if (read_password_packet(frontend, protoMajor, password))
+			{
+				pool_error("do_md5: read_password_packet failed");
+				return -1;
+			}
+
+			/* Check the password using my salt + pool_passwd */
+			pool_passwd = pool_get_passwd(frontend->username);
+			if (!pool_passwd)
+			{
+				pool_debug("do_md5: %s does not exist in pool_passwd", frontend->username);
+				return -1;
+			}
+
+			pg_md5_encrypt(pool_passwd+strlen("md5"), salt, sizeof(salt), encbuf);
+			if (strcmp(password, encbuf))
+			{
+				/* Password does not match */
+				pool_debug("password does not match: frontend:%s pgpool:%s", password, encbuf);
+				return -1;
+			}
 		}
-		pool_debug("DB node id: %d salt: %hhx%hhx%hhx%hhx", backend->db_node_id,
-				   salt[0], salt[1], salt[2], salt[3]);
+		kind = 0;
+
+		if (!reauth)
+		{
+			/*
+			 * If ok, authenticate against backends using pool_passwd
+			 */
+			/* Read salt */
+			if (pool_read(backend, salt, sizeof(salt)))
+			{
+				pool_error("do_md5: failed to read salt");
+				return -1;
+			}
+			pool_debug("DB node id: %d salt: %hhx%hhx%hhx%hhx", backend->db_node_id,
+					   salt[0], salt[1], salt[2], salt[3]);
+
+			/* Encrypt password in pool_passwd using the salt */
+			pg_md5_encrypt(pool_passwd+strlen("md5"), salt, sizeof(salt), encbuf);
+
+			/* Send password packet to backend and receive auth response */
+			kind = send_password_packet(backend, protoMajor, encbuf);
+			if (kind < 0)
+			{
+				return -1;
+			}
+		}
+
+		if (!reauth && kind == 0)
+		{
+			if (IS_MASTER_NODE_ID(backend->db_node_id))
+			{
+				/* Send auth ok to frontend */
+				if (send_auth_ok(frontend, protoMajor) < 0)
+				{
+					pool_error("do_md5: send_auth_ok failed");
+					return -1;
+				}
+			}
+
+			/* Save the auth info */
+			backend->auth_kind = 5;
+		}
+		return kind;
 	}
 	else
 	{
-		memcpy(salt, backend->salt, sizeof(salt));
+		if (!reauth)
+		{
+			/* read salt */
+			if (pool_read(backend, salt, sizeof(salt)))
+			{
+				pool_error("do_md5: failed to read salt");
+				return -1;
+			}
+			pool_debug("DB node id: %d salt: %hhx%hhx%hhx%hhx", backend->db_node_id,
+					   salt[0], salt[1], salt[2], salt[3]);
+		}
+		else
+		{
+			memcpy(salt, backend->salt, sizeof(salt));
+		}
 	}
 
 	/* master? */
 	if (IS_MASTER_NODE_ID(backend->db_node_id))
 	{
-		pool_write(frontend, "R", 1);	/* authenticaton */
-		if (protoMajor == PROTO_MAJOR_V3)
+		/* Send md5 auth request to frontend */
+		if (send_md5auth_request(frontend, protoMajor, salt))
 		{
-			len = htonl(12);
-			pool_write(frontend, &len, sizeof(len));
-		}
-		kind = htonl(5);
-		pool_write(frontend, &kind, sizeof(kind));	/* indicating MD5 */
-		pool_write_and_flush(frontend, salt, sizeof(salt));		/* salt */
-
-		/* read password packet */
-		if (protoMajor == PROTO_MAJOR_V2)
-		{
-			if (pool_read(frontend, &size, sizeof(size)))
-			{
-				pool_error("do_md5: failed to read password packet size");
-				return -1;
-			}
-		}
-		else
-		{
-			char k;
-
-			if (pool_read(frontend, &k, sizeof(k)))
-			{
-				pool_debug("do_md5_password: failed to read password packet \"p\"");
-				return -1;
-			}
-			if (k != 'p')
-			{
-				pool_error("do_md5_password: password packet does not start with \"p\"");
-				return -1;
-			}
-			if (pool_read(frontend, &size, sizeof(size)))
-			{
-				pool_error("do_md5_password: failed to read password packet size");
-				return -1;
-			}
-		}
-
-		if ((ntohl(size) - 4) > sizeof(password))
-		{
-			pool_error("do_md5: password is too long(size: %d)", ntohl(size) - 4);
+			pool_error("do_md5: send_md5auth_request failed");
 			return -1;
 		}
 
-		if (pool_read(frontend, password, ntohl(size) - 4))
+		/* Read password packet */
+		if (read_password_packet(frontend, protoMajor, password))
 		{
-			pool_error("do_md5: failed to read password (size: %d)", ntohl(size) - 4);
+			pool_error("do_md5: read_password_packet failed");
 			return -1;
 		}
 	}
@@ -916,61 +956,19 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 		return 0;
 	}
 
-	/* send password packet to backend */
-	if (protoMajor == PROTO_MAJOR_V3)
-		pool_write(backend, "p", 1);
-	pool_write(backend, &size, sizeof(size));
-	pool_write_and_flush(backend, password, ntohl(size) -4);
-	if (pool_read(backend, &response, sizeof(response)))
+	/* Send password packet to backend and receive auth response */
+	kind = send_password_packet(backend, protoMajor, password);
+	if (kind < 0)
 	{
-		pool_error("do_md5: failed to read authentication response");
 		return -1;
 	}
 
-	if (response != 'R')
-	{
-		pool_debug("do_md5: backend does not return R while processing MD5 authentication %c", response);
-		return -1;
-	}
-
-	if (protoMajor == PROTO_MAJOR_V3)
-	{
-		if (pool_read(backend, &len, sizeof(len)))
-		{
-			pool_error("do_md5: failed to read authentication packet size");
-			return -1;
-		}
-
-		if (ntohl(len) != 8)
-		{
-			pool_error("do_md5: incorrect authentication packet size (%d)", ntohl(len));
-			return -1;
-		}
-	}
-
-	/* expect to read "Authentication OK" response. kind should be 0... */
-	if (pool_read(backend, &kind, sizeof(kind)))
-	{
-		pool_debug("do_md5: failed to read Authentication OK response");
-		return -1;
-	}
-
-	/* if authenticated, save info */
+	/* If authenticated, reply back to frontend and save info */
 	if (!reauth && kind == 0)
 	{
-		int msglen;
-
-		pool_write(frontend, "R", 1);
-
-		if (protoMajor == PROTO_MAJOR_V3)
+		if (send_auth_ok(frontend, protoMajor) < 0)
 		{
-			msglen = htonl(8);
-			pool_write(frontend, &msglen, sizeof(msglen));
-		}
-
-		msglen = htonl(0);
-		if (pool_write_and_flush(frontend, &msglen, sizeof(msglen)) < 0)
-		{
+			pool_error("do_md5: send_auth_ok failed");
 			return -1;
 		}
 
@@ -980,6 +978,151 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 		memcpy(backend->salt, salt, sizeof(salt));
 	}
 	return kind;
+}
+
+/*
+ * Send md5 authentication request packet to frontend
+ */
+static int send_md5auth_request(POOL_CONNECTION *frontend, int protoMajor, char *salt)
+{
+	int len;
+	int kind;
+
+	pool_write(frontend, "R", 1);	/* authenticaton */
+	if (protoMajor == PROTO_MAJOR_V3)
+	{
+		len = htonl(12);
+		pool_write(frontend, &len, sizeof(len));
+	}
+	kind = htonl(5);
+	pool_write(frontend, &kind, sizeof(kind));	/* indicating MD5 */
+	pool_write_and_flush(frontend, salt, 4);		/* salt */
+
+	return 0;
+}
+
+/*
+ * Read password packet from frontend
+ */
+static int read_password_packet(POOL_CONNECTION *frontend, int protoMajor, 	char *password)
+{
+	int size;
+
+	/* Read password packet */
+	if (protoMajor == PROTO_MAJOR_V2)
+	{
+		if (pool_read(frontend, &size, sizeof(size)))
+		{
+			pool_error("read_password_packet: failed to read password packet size");
+			return -1;
+		}
+	}
+	else
+	{
+		char k;
+
+		if (pool_read(frontend, &k, sizeof(k)))
+		{
+			pool_debug("read_password_packet_password: failed to read password packet \"p\"");
+			return -1;
+		}
+		if (k != 'p')
+		{
+			pool_error("read_password_packet_password: password packet does not start with \"p\"");
+			return -1;
+		}
+		if (pool_read(frontend, &size, sizeof(size)))
+		{
+			pool_error("read_password_packet_password: failed to read password packet size");
+			return -1;
+		}
+	}
+
+	if (pool_read(frontend, password, ntohl(size) - 4))
+	{
+		pool_error("read_password_packet: failed to read password (size: %d)", ntohl(size) - 4);
+		return -1;
+	}
+	return 0;
+}
+
+/*
+ * Send password packet to backend and receive authentication response
+ * packet.  Return value is the last field of authentication
+ * response. If it's 0, authentication was successfull.
+ */
+static int send_password_packet(POOL_CONNECTION *backend, int protoMajor, char *password)
+{
+	int size;
+	int len;
+	int kind;
+	char response;
+
+	/* Send password packet to backend */
+	if (protoMajor == PROTO_MAJOR_V3)
+		pool_write(backend, "p", 1);
+	size = htonl(sizeof(size) + strlen(password));
+	pool_write(backend, &size, sizeof(size));
+	pool_write_and_flush(backend, password, strlen(password));
+
+	if (pool_read(backend, &response, sizeof(response)))
+	{
+		pool_error("send_password_packet: failed to read authentication response");
+		return -1;
+	}
+
+	if (response != 'R')
+	{
+		pool_debug("send_password_packet: backend does not return R");
+		return -1;
+	}
+
+	if (protoMajor == PROTO_MAJOR_V3)
+	{
+		if (pool_read(backend, &len, sizeof(len)))
+		{
+			pool_error("send_password_packet: failed to read authentication packet size");
+			return -1;
+		}
+
+		if (ntohl(len) != 8)
+		{
+			pool_error("send_password_packet: incorrect authentication packet size (%d)", ntohl(len));
+			return -1;
+		}
+	}
+
+	/* Expect to read "Authentication OK" response. kind should be 0... */
+	if (pool_read(backend, &kind, sizeof(kind)))
+	{
+		pool_debug("send_password_packet: failed to read Authentication OK response");
+		return -1;
+	}
+
+	return kind;
+}
+
+/*
+ * Send auth ok to frontend
+ */
+static int send_auth_ok(POOL_CONNECTION *frontend, int protoMajor)
+{
+	int msglen;
+
+	pool_write(frontend, "R", 1);
+
+	if (protoMajor == PROTO_MAJOR_V3)
+	{
+		msglen = htonl(8);
+		pool_write(frontend, &msglen, sizeof(msglen));
+	}
+
+	msglen = htonl(0);
+	if (pool_write_and_flush(frontend, &msglen, sizeof(msglen)) < 0)
+	{
+		return -1;
+	}
+	return 0;
 }
 
 /*
@@ -1167,4 +1310,20 @@ int pool_read_int(POOL_CONNECTION_POOL *cp)
 	}
 
 	return data;
+}
+
+/*
+ *  pool_random_salt
+ */
+void pool_random_salt(char *md5Salt)
+{
+	long rand = random();
+
+	md5Salt[0] = (rand % 255) + 1;
+	rand = random();
+	md5Salt[1] = (rand % 255) + 1;
+	rand = random();
+	md5Salt[2] = (rand % 255) + 1;
+	rand = random();
+	md5Salt[3] = (rand % 255) + 1;
 }

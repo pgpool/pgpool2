@@ -58,6 +58,7 @@ typedef struct {
 	int log_connections;		/* 0:false, 1:true - logs incoming connections */
 	int log_hostname;		/* 0:false, 1:true - resolve hostname */
 	int enable_pool_hba;		/* 0:false, 1:true - enables pool_hba.conf file authentication */
+	char *pool_passwd;	/* pool_passwd file name. "" disables pool_passwd */
 
 	int load_balance_mode;		/* load balance mode */
 
