@@ -29,6 +29,7 @@
 
 #include <string.h>
 #include <netinet/in.h>
+#include <stdlib.h>
 
 static bool is_should_be_sent_to_primary(Node *node);
 
