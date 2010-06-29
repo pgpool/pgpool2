@@ -662,7 +662,7 @@ static void usage(void)
 	fprintf(stderr, "Shutdown modes are:\n");
 	fprintf(stderr, "  smart       quit after all clients have disconnected\n");
 	fprintf(stderr, "  fast        quit directly, with proper shutdown\n");
-	fprintf(stderr, "  immediate   quit without complete shutdown; will lead to recovery on restart\n");
+	fprintf(stderr, "  immediate   the same mode as fast\n");
 }
 
 /*
