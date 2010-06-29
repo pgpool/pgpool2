@@ -2,7 +2,7 @@ bin_PROGRAMS = pgpool pg_md5
 
 pgpool_SOURCES = pool.h pool_type.h version.h pgpool.conf.sample \
 	pgpool.conf.sample-replication pgpool.conf.sample-master-slave \
-	README.euc_jp pgpool.spec \
+	README.euc_jp README.online-recovery pgpool.spec \
 	main.c child.c pool_auth.c pool_config.l pool_error.c \
 	pool_process_query.c pool_stream.c pool_connection_pool.c pool_params.c \
 	pool_signal.h pool_signal.c pcp_child.c md5.c md5.h pcp.conf.sample \
