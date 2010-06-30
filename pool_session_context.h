@@ -25,11 +25,49 @@
 
 #ifndef POOL_SESSION_CONTEXT_H
 #define POOL_SESSION_CONTEXT_H
+#define INIT_LIST_SIZE 8
 
 #include "pool.h"
 #include "pool_process_context.h"
 #include "pool_session_context.h"
 #include "pool_query_context.h"
+#include "parser/pool_memory.h"
+
+/*
+ * Prepared Statement:
+ */
+typedef struct {
+	char *name;		/* prepared statement name */
+	int num_tsparams;
+	POOL_QUERY_CONTEXT *qctxt;
+} PreparedStatement;
+
+/*
+ * Prepared statement list:
+ */
+typedef struct {
+	int capacity;	/* capacity of list */
+	int size;		/* number of PreparedStatement */
+	PreparedStatement **pstmts;	/* prepared statement list */
+} PreparedStatementList;
+
+/* 
+ * Portal:
+ */
+typedef struct {
+	char *name;		/* portal name */
+	int num_tsparams;
+	PreparedStatement *pstmt;
+} Portal;
+
+/*
+ * Portal list:
+ */
+typedef struct {
+	int capacity;	/* capacity of list */
+	int size;		/* number of portal */
+	Portal **portals;	/* portal list */
+} PortalList;
 
 /*
  * Per session context:
@@ -44,6 +82,14 @@ typedef struct {
 							 * all responses are returned from backend
 							 */
 	POOL_QUERY_CONTEXT *query_context;	/* associated query context */
+	POOL_MEMORY_POOL *memory_context;	/* memory context for session */
+	PreparedStatement *unnamed_pstmt;	/* unnamed statement */
+	PreparedStatement *pending_pstmt;	/* used until receive backend response */
+	Portal *unnamed_portal;	/* unnamed portal */
+	Portal *pending_portal;	/* used until receive backend response */
+	PreparedStatementList *pstmt_list;	/* named statement list */
+	PortalList *portal_list;	/* named portal list */
+	void (*pending_function)(void);	/* switched function by backend response */
 	int load_balance_node_id;	/* selected load balance node id */
 
 #ifdef NOT_USED
@@ -58,10 +104,6 @@ typedef struct {
 	char *copy_schema = NULL;  /* copy table name */
 	char copy_delimiter; /* copy delimiter char */
 	char *copy_null = NULL; /* copy null string */
-	void (*pending_function)(PreparedStatementList *p, Portal *portal) = NULL;
-	Portal *pending_prepared_portal = NULL;
-	Portal *unnamed_statement = NULL;
-	Portal *unnamed_portal = NULL;
 	int select_in_transaction = 0; /* non 0 if select query is in transaction */
 	int execute_select = 0; /* non 0 if select query is in transaction */
 
@@ -99,10 +141,6 @@ typedef struct {
 	bool send_ready_for_query;	/* ok to send ReadyForQuery */
 	bool igore_till_sync;		/* ignore any command until Sync message */
 	LOAD_BALANCE_STATUS	load_balance_status[MAX_NUM_BACKENDS];	/* to remember which DB node is selected for load balancing */
-	/* unnamed statement */
-	/* unnamed portal */
-	/* named statement list */
-	/* named portal list */
 #endif
 
 } POOL_SESSION_CONTEXT;
@@ -113,5 +151,16 @@ extern int pool_get_local_session_id(void);
 extern bool pool_is_query_in_progress(void);
 extern void pool_set_query_in_progress(void);
 extern void pool_unset_query_in_progress(void);
+extern void pool_remove_prepared_statement_by_pstmt_name(const char *name);
+extern void pool_remove_prepared_statement(void);
+extern void pool_remove_portal(void);
+extern void pool_remove_pending_objects(void);
+extern void pool_clear_prepared_statement_list(void);
+extern void *pool_create_prepared_statement(const char *name, int num_tsparams, POOL_QUERY_CONTEXT *qc);
+extern void *pool_create_portal(const char *name, int num_tsparams, PreparedStatement *pstmt);
+extern void pool_add_prepared_statement(void);
+extern void pool_add_portal(void);
+extern PreparedStatement *pool_get_prepared_statement_by_pstmt_name(const char *name);
+extern Portal *pool_get_portal_by_portal_name(const char *name);
 
 #endif /* POOL_SESSION_CONTEXT_H */
