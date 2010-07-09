@@ -56,8 +56,6 @@
 #define FD_SETSIZE 512
 #endif
 
-#define INIT_STATEMENT_LIST_SIZE 8
-
 #define ACTIVE_SQL_TRANSACTION_ERROR_CODE "25001"		/* SET TRANSACTION ISOLATION LEVEL must be called before any query */
 #define DEADLOCK_ERROR_CODE "40P01"
 #define SERIALIZATION_FAIL_ERROR_CODE "40001"
@@ -68,7 +66,6 @@
 static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt);
 static POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id, int major);
 static char *get_insert_command_table_name(InsertStmt *node);
-static void reset_prepared_list(PreparedStatementList *p);
 static int send_deallocate(POOL_CONNECTION_POOL *backend, PreparedStatementList *p, int n);
 static int is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 static POOL_STATUS ParallelForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *database, bool send_to_frontend);
@@ -991,11 +988,13 @@ POOL_STATUS send_extended_protocol_message(POOL_CONNECTION_POOL *backend,
 	return POOL_CONTINUE;
 }
 
+#ifdef NOT_USED
 POOL_STATUS send_execute_message(POOL_CONNECTION_POOL *backend,
 										int node_id, int len, char *string)
 {
 	return send_extended_protocol_message(backend, node_id, "E", len, string);
 }
+#endif
 
 /*
  * wait until read data is ready
@@ -1190,38 +1189,46 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 	int delete_or_update = 0;
 	char kind1;
 	POOL_STATUS ret;
+	POOL_SESSION_CONTEXT *session_context;
+
+	/* Get session context */
+	session_context = pool_get_session_context();
+	if (!session_context)
+	{
+		pool_error("SimpleForwardToFrontend: cannot get session context");
+		return POOL_END;
+	}
 
 	/*
 	 * Check if packet kind == 'C'(Command complete), '1'(Parse
 	 * complete), '3'(Close complete). If so, then register or
 	 * unregister pending prepared statement.
 	 */
-	if ((kind == 'C' || kind == '1' || kind == '3') &&
-		pending_function)
+	if ((kind == 'C' || kind == '1' || kind == '2' || kind == '3') &&
+		session_context->pending_function)
 	{
-		pending_function(&prepared_list, pending_prepared_portal);
-		if (pending_prepared_portal &&
-			pending_prepared_portal->stmt &&
-			IsA(pending_prepared_portal->stmt, DeallocateStmt))
+		Node *parse_tree;
+
+		session_context->pending_function();
+
+		if (session_context->pending_pstmt)
 		{
-			free(pending_prepared_portal->portal_name);
-			pending_prepared_portal->portal_name = NULL;
-			pool_memory_delete(pending_prepared_portal->prepare_ctxt, 0);
-			free(pending_prepared_portal);
+			parse_tree = session_context->pending_pstmt->qctxt->parse_tree;
+
+			if (IsA(parse_tree, DeallocateStmt))
+				pool_remove_pending_objects();
 		}
+
+		session_context->pending_function = NULL;
+		session_context->pending_pstmt = NULL;
+		session_context->pending_portal = NULL;
 	}
-	else if (kind == 'E' && pending_function)
+	else if (kind == 'E' && session_context->pending_function)
 	{
 		/* An error occurred with PREPARE or DEALLOCATE command.
 		 * Free pending portal object.
 		 */
-		if (pending_prepared_portal)
-		{
-			free(pending_prepared_portal->portal_name);
-			pending_prepared_portal->portal_name = NULL;
-			pool_memory_delete(pending_prepared_portal->prepare_ctxt, 0);
-			free(pending_prepared_portal);
-		}
+		pool_remove_pending_objects();
 	}
 	/* 
 	 * The response of Execute command will be EmptyQueryResponse(I),
@@ -1239,8 +1246,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 	 */
 	if (kind != 'N')
 	{
-		pending_function = NULL;
-		pending_prepared_portal = NULL;
+		pool_remove_pending_objects();
 	}
 
 	status = pool_read(MASTER(backend), &len, sizeof(len));
@@ -1470,6 +1476,9 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 			}
 		}
 	}
+	
+	pool_unset_query_in_progress();
+
 	return POOL_CONTINUE;
 }
 
@@ -1479,10 +1488,20 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 	int sendlen;
 	char *p;
 	int i;
-	char *name;
 	char *rewrite_msg = NULL;
 	POOL_STATUS ret;
 	char msgbuf[128];
+	PreparedStatement *pstmt;
+	Portal *portal;
+	POOL_SESSION_CONTEXT *session_context;
+
+	/* Get session context */
+	session_context = pool_get_session_context();
+	if (!session_context)
+	{
+		pool_error("SimpleForwardToBackend: cannot get session context");
+		return POOL_END;
+	}
 
 	/* Read message length */
 	if (pool_read(frontend, &sendlen, sizeof(sendlen)))
@@ -1547,25 +1566,24 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 	 */
 	else if (kind == 'B')
 	{
-		Portal *portal = NULL;
 		char *stmt_name, *portal_name;
 
 		portal_name = p;
 		stmt_name = p + strlen(portal_name) + 1;
+		
+		pstmt = pool_get_prepared_statement_by_pstmt_name(stmt_name);
 
-		if (*stmt_name == '\0')
-			portal = unnamed_statement;
-		else
+		portal = pool_create_portal(portal_name, pstmt->num_tsparams, pstmt);
+		if (portal == NULL)
 		{
-			portal = lookup_prepared_statement_by_statement(&prepared_list, stmt_name);
-			if (portal)
-			{
-				portal->portal_name = strdup(portal_name);
-			}
+			pool_error("SimpleForwardToBackend: creating portal failed: %s", strerror(errno));
+			return POOL_END;
 		}
+		session_context->pending_portal = portal;
+		session_context->pending_function = pool_add_portal;
 
 		/* rewrite bind message */
-		if (REPLICATION && portal && portal->num_tsparams > 0)
+		if (REPLICATION && portal->num_tsparams > 0)
 		{
 			rewrite_msg = bind_rewrite_timestamp(backend, portal, p, &len);
 			if (rewrite_msg != NULL)
@@ -1640,6 +1658,7 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 	 */
 	if (kind == 'B')
 	{
+#ifdef NOT_USED
 		Portal *portal = NULL;
 		char *stmt_name, *portal_name;
 
@@ -1664,6 +1683,7 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 				free(portal->portal_name);
 			portal->portal_name = strdup(portal_name);
 		}
+#endif
 		if (rewrite_msg)
 			free(rewrite_msg);
 	}
@@ -1671,6 +1691,7 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 	/* Close message with prepared statement name. */
 	else if (kind == 'C' && *p == 'S' && *(p + 1))
 	{
+#ifdef NOT_USED
 		POOL_MEMORY_POOL *old_context = pool_memory;
 		DeallocateStmt *deallocate_stmt;
 
@@ -1703,6 +1724,10 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 		pending_prepared_portal->portal_name = NULL;
 		pending_function = del_prepared_list;
 		pool_memory = old_context;
+#endif
+		pstmt = pool_get_prepared_statement_by_pstmt_name(p+1);
+		session_context->pending_pstmt = pstmt;
+		session_context->pending_function = pool_remove_prepared_statement;
 	}
 
 	/* Bind, Describe or Close message? */
@@ -1915,7 +1940,7 @@ void reset_variables(void)
 void reset_connection(void)
 {
 	reset_variables();
-	reset_prepared_list(&prepared_list);
+	pool_clear_prepared_statement_list();
 }
 
 
@@ -1927,6 +1952,15 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 {
 	char *query;
 	int qn;
+	POOL_SESSION_CONTEXT *session_context;
+
+	/* Get session context */
+	session_context = pool_get_session_context();
+	if (!session_context)
+	{
+		pool_error("reset_backend: cannot get session context");
+		return POOL_END;
+	}
 
 	/*
 	 * Reset all state variables
@@ -1941,7 +1975,7 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 	 */
 	if (qcnt >= qn)
 	{
-		if (prepared_list.cnt == 0)
+		if (session_context->pstmt_list->size == 0)
 		{
 			/*
 			 * Either no prepared objects were created or DISCARD ALL
@@ -1949,17 +1983,20 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 			 * were executed.  The latter causes call to
 			 * reset_prepared_list which removes all prepared objects.
 			 */
-			reset_prepared_list(&prepared_list);
+//			reset_prepared_list(&prepared_list);
 			return 2;
 		}
 
+		char *name = session_context->pstmt_list->pstmts[0]->name;
+
 		/* Delete from prepared list */
-		if (send_deallocate(backend, &prepared_list, 0))
+		if (send_deallocate(backend, session_context->pstmt_list, 0))
 		{
 			/* Deallocate failed. We are in unknown state. Ask caller
 			 * to reset backend connection.
 			 */
-			reset_prepared_list(&prepared_list);
+//			reset_prepared_list(&prepared_list);
+			pool_remove_prepared_statement_by_pstmt_name(name);
 			return -1;
 		}
 		/*
@@ -1970,7 +2007,8 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 		 * del_prepared_list() again. This is harmless since trying to
 		 * remove same prepared object will be ignored.
 		 */
-		del_prepared_list(&prepared_list, prepared_list.portal_list[0]);
+//		del_prepared_list(&prepared_list, prepared_list.portal_list[0]);
+		pool_remove_prepared_statement_by_pstmt_name(name);
 		return 1;
 	}
 
@@ -2629,7 +2667,7 @@ static POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int n
 
 	p = buf;
 	memset(msg + len, 0, sizeof(int));
-	if (send_execute_message(backend, node_id, len + 5, msg))
+	if (send_extended_protocol_message(backend, node_id, "E", len + 5, msg))
 	{
 		return POOL_END;
 	}
@@ -3727,14 +3765,14 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 
 							if (IsA(node, DeallocateStmt))
 							{
-								Portal *portal;
+								PreparedStatement *ps;
 								DeallocateStmt *d = (DeallocateStmt *)node;
 
-								portal = lookup_prepared_statement_by_statement(&prepared_list, d->name);
-								if (portal && portal->sql_string)
+								ps = pool_get_prepared_statement_by_pstmt_name(d->name);
+								if (ps && ps->qctxt->original_query)
 								{
 									string_append_char(msg, "[");
-									string_append_char(msg, portal->sql_string);
+									string_append_char(msg, ps->qctxt->original_query);
 									string_append_char(msg, "]");
 								}
 							}
@@ -3774,6 +3812,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 	return POOL_CONTINUE;
 }
 
+#ifdef NOT_USED
 /*
  * Create portal object
  * Return object is allocated from heap memory.
@@ -3793,143 +3832,7 @@ Portal *create_portal(void)
 	}
 	return p;
 }
-
-void init_prepared_list(void)
-{
-	prepared_list.cnt = 0;
-	prepared_list.size = INIT_STATEMENT_LIST_SIZE;
-	prepared_list.portal_list = malloc(sizeof(Portal *) * prepared_list.size);
-	if (prepared_list.portal_list == NULL)
-	{
-		pool_error("init_prepared_list: malloc failed: %s", strerror(errno));
-		exit(1);
-	}
-}
-
-void add_prepared_list(PreparedStatementList *p, Portal *portal)
-{
-	if (p->cnt == p->size)
-	{
-		p->size *= 2;
-		p->portal_list = realloc(p->portal_list, sizeof(Portal *) * p->size);
-		if (p->portal_list == NULL)
-		{
-			pool_error("add_prepared_list: realloc failed: %s", strerror(errno));
-			exit(1);
-		}
-	}
-	p->portal_list[p->cnt++] = portal;
-}
-
-void add_unnamed_portal(PreparedStatementList *p, Portal *portal)
-{
-	if (unnamed_statement)
-	{
-		pool_memory_delete(unnamed_statement->prepare_ctxt, 0);
-		free(unnamed_statement);
-	}
-
-	unnamed_portal = NULL;
-	unnamed_statement = portal;
-}
-
-void del_prepared_list(PreparedStatementList *p, Portal *portal)
-{
-	int i;
-	DeallocateStmt *s = (DeallocateStmt *)portal->stmt;
-
-	/* DEALLOCATE ALL? */
-	if (s->name == NULL)
-	{
-		reset_prepared_list(p);
-	}
-	else
-	{
-		for (i = 0; i < p->cnt; i++)
-		{
-			PrepareStmt *p_stmt = (PrepareStmt *)p->portal_list[i]->stmt;
-			if (strcmp(p_stmt->name, s->name) == 0)
-				break;
-		}
-
-		if (i == p->cnt)
-			return;
-
-		pool_memory_delete(p->portal_list[i]->prepare_ctxt, 0);
-		free(p->portal_list[i]->portal_name);
-		free(p->portal_list[i]);
-		if (i != p->cnt - 1)
-		{
-			memmove(&p->portal_list[i], &p->portal_list[i+1],
-					sizeof(Portal *) * (p->cnt - i - 1));
-		}
-		p->cnt--;
-	}
-}
-
-void delete_all_prepared_list(PreparedStatementList *p, Portal *portal)
-{
-	reset_prepared_list(p);
-}
-
-static void reset_prepared_list(PreparedStatementList *p)
-{
-	int i;
-
-	if (p)
-	{
-		for (i = 0; i < p->cnt; i++)
-		{
-			pool_memory_delete(p->portal_list[i]->prepare_ctxt, 0);
-			free(p->portal_list[i]->portal_name);
-			free(p->portal_list[i]);
-		}
-		if (unnamed_statement)
-		{
-			pool_memory_delete(unnamed_statement->prepare_ctxt, 0);
-			free(unnamed_statement);
-		}
-		unnamed_portal = NULL;
-		unnamed_statement = NULL;
-		p->cnt = 0;
-	}
-}
-
-Portal *lookup_prepared_statement_by_statement(PreparedStatementList *p, const char *name)
-{
-	int i;
-
-	/* unnamed portal? */
-	if (name == NULL || name[0] == '\0' || (name[0] == '\"' && name[1] == '\"'))
-		return unnamed_statement;
-
-	for (i = 0; i < p->cnt; i++)
-	{
-		PrepareStmt *p_stmt = (PrepareStmt *)p->portal_list[i]->stmt;
-		if (strcmp(p_stmt->name, name) == 0)
-			return p->portal_list[i];
-	}
-
-	return NULL;
-}
-
-Portal *lookup_prepared_statement_by_portal(PreparedStatementList *p, const char *name)
-{
-	int i;
-
-	/* unnamed portal? */
-	if (name == NULL || name[0] == '\0' || (name[0] == '\"' && name[1] == '\"'))
-		return unnamed_portal;
-
-	for (i = 0; i < p->cnt; i++)
-	{
-		if (p->portal_list[i]->portal_name &&
-			strcmp(p->portal_list[i]->portal_name, name) == 0)
-			return p->portal_list[i];
-	}
-
-	return NULL;
-}
+#endif
 
 /*
  * Send DEALLOCATE message to backend by using SimpleQuery.
@@ -3941,10 +3844,10 @@ static int send_deallocate(POOL_CONNECTION_POOL *backend, PreparedStatementList 
 	int len;
 	PrepareStmt *p_stmt;
 
-	if (p->cnt <= n)
+	if (p->size <= n)
 		return 1;
 
-	p_stmt = (PrepareStmt *)p->portal_list[n]->stmt;
+	p_stmt = (PrepareStmt *)p->pstmts[n]->qctxt->parse_tree;
 	len = strlen(p_stmt->name) + 14; /* "DEALLOCATE \"" + "\"" + '\0' */
 	query = malloc(len);
 	if (query == NULL)

@@ -65,10 +65,6 @@ char *copy_table = NULL;  /* copy table name */
 char *copy_schema = NULL;  /* copy table name */
 char copy_delimiter; /* copy delimiter char */
 char *copy_null = NULL; /* copy null string */
-void (*pending_function)(PreparedStatementList *p, Portal *portal) = NULL;
-Portal *pending_prepared_portal = NULL;
-Portal *unnamed_statement = NULL;
-Portal *unnamed_portal = NULL;
 int select_in_transaction = 0; /* non 0 if select query is in transaction */
 int execute_select = 0; /* non 0 if select query is in transaction */
 
@@ -82,8 +78,6 @@ int receive_extended_begin = 0;
  * is for PHP-PDO.
  */
 static int allow_close_transaction = 1;
-
-PreparedStatementList prepared_list; /* prepared statement name list */
 
 int is_select_pgcatalog = 0;
 int is_select_for_update = 0; /* 1 if SELECT INTO or SELECT FOR UPDATE */
@@ -121,9 +115,6 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_QUERY_CONTEXT *query_context;
-
-	POOL_MEMORY_POOL *old_context = NULL;
-	Portal *portal;
 
 	/* Get session context */
 	session_context = pool_get_session_context();
@@ -279,77 +270,66 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 			 */
 			if (IsA(node, PrepareStmt))
 			{
-				pending_function = add_prepared_list;
-				portal = create_portal();
-				if (portal == NULL)
+				PreparedStatement *ps;
+
+				ps = pool_create_prepared_statement(((PrepareStmt *)node)->name, 
+													0, query_context);
+				if (ps == NULL)
 				{
-					pool_error("SimpleQuery: create_portal() failed");
+					pool_error("SimpleQuery: failed to create prepared statement: %s", strerror(errno));
 					return POOL_END;
 				}
 
-				/* switch memory context */
-				old_context = pool_memory;
-				pool_memory = portal->prepare_ctxt;
-
-				portal->portal_name = NULL;
-				portal->stmt = copyObject(node);
-				portal->sql_string = NULL;
-				pending_prepared_portal = portal;
+				session_context->pending_pstmt = ps;
+				session_context->pending_function = pool_add_prepared_statement;
 			}
 			else if (IsA(node, DeallocateStmt))
 			{
-				pending_function = del_prepared_list;
-				portal = create_portal();
-				if (portal == NULL)
+				char *name;
+				PreparedStatement *ps;
+
+				name = ((DeallocateStmt *)node)->name;
+				ps = pool_create_prepared_statement(name, 0, query_context);
+				if (ps == NULL)
 				{
-					pool_error("SimpleQuery: create_portal() failed");
+					pool_error("SimpleQuery: failed to create prepared statement: %s", strerror(errno));
 					return POOL_END;
 				}
 
-				/* switch memory context */
-				old_context = pool_memory;
-				pool_memory = portal->prepare_ctxt;
+				session_context->pending_pstmt = ps;
 
-				portal->portal_name = NULL;
-				portal->stmt = copyObject(node);
-				portal->sql_string = NULL;
-				pending_prepared_portal = portal;
+				if (name == NULL)
+					session_context->pending_function = pool_clear_prepared_statement_list;
+				else
+					session_context->pending_function = pool_remove_prepared_statement;
 			}
 			else if (IsA(node, DiscardStmt))
 			{
 				DiscardStmt *stmt = (DiscardStmt *)node;
 				if (stmt->target == DISCARD_ALL || stmt->target == DISCARD_PLANS)
 				{
-					pending_function = delete_all_prepared_list;
-					pending_prepared_portal = NULL;
+					session_context->pending_pstmt = NULL;
+					session_context->pending_portal = NULL;
+					session_context->pending_function = pool_clear_prepared_statement_list;
 				}
 			}
-
-			/* switch old memory context */
-			if (old_context)
-				pool_memory = old_context;
-
-			/* end of wrong if (see 2009/4/3 comment above) */
 		}
 
 		if (frontend && IsA(node, ExecuteStmt))
 		{
-			Portal *portal;
-			PrepareStmt *p_stmt;
-			ExecuteStmt *e_stmt = (ExecuteStmt *)node;
+			PreparedStatement *ps;
 
-			portal = lookup_prepared_statement_by_statement(&prepared_list,
-															e_stmt->name);
-			if (!portal)
+			ps = pool_get_prepared_statement_by_pstmt_name(((ExecuteStmt *)node)->name);
+
+			if (ps)
 			{
-				string1 = string;
-				node1 = node;
+				string1 = ps->qctxt->original_query;
+				node1 = ps->qctxt->parse_tree;
 			}
 			else
 			{
-				p_stmt = (PrepareStmt *)portal->stmt;
-				string1 = nodeToString(p_stmt->query);
-				node1 = (Node *)p_stmt->query;
+				string1 = string;
+				node1 = node;
 			}
 		}
 		else
@@ -435,19 +415,18 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 
 			if (node)
 		   	{
-				Portal *portal = NULL;
+				PreparedStatement *ps = NULL;
 
 				if (IsA(node, PrepareStmt))
 				{
-					portal = pending_prepared_portal;
-					portal->num_tsparams = 0;
+					ps = session_context->pending_pstmt;
+					ps->num_tsparams = 0;
 				}
 				else if (IsA(node, ExecuteStmt))
-					portal = lookup_prepared_statement_by_statement(
-							&prepared_list, ((ExecuteStmt *) node)->name);
+					ps = pool_get_prepared_statement_by_pstmt_name(((ExecuteStmt *) node)->name);
 
 				/* rewrite `now()' to timestamp literal */
-				rewrite_query = rewrite_timestamp(backend, node, false, portal);
+				rewrite_query = rewrite_timestamp(backend, node, false, ps);
 				if (rewrite_query != NULL)
 				{
 					string = rewrite_query;
@@ -464,13 +443,13 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 			if (pool_config->num_init_children == 1)
 			{
 				/* Send query to all DB nodes at once */
-				status = pool_send_and_wait(query_context, string, len, 0, 0);
+				status = pool_send_and_wait(query_context, string, len, 0, 0, "");
 				free_parser();
 				return status;
 			}
 
 			/* Send the query to master node */
-			if (pool_send_and_wait(query_context, string, len, 1, MASTER_NODE_ID) != POOL_CONTINUE)
+			if (pool_send_and_wait(query_context, string, len, 1, MASTER_NODE_ID, "") != POOL_CONTINUE)
 			{
 				free_parser();
 				return POOL_END;
@@ -478,7 +457,7 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 		}
 
 		/* Send query to other than master node */
-		if (pool_send_and_wait(query_context, string, len, -1, MASTER_NODE_ID) != POOL_CONTINUE)
+		if (pool_send_and_wait(query_context, string, len, -1, MASTER_NODE_ID, "") != POOL_CONTINUE)
 		{
 			free_parser();
 			return POOL_END;
@@ -487,7 +466,7 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 		/* Send "COMMIT" or "ROLLBACK" to only master node if query is "COMMIT" or "ROLLBACK" */
 		if (commit)
 		{
-			if (pool_send_and_wait(query_context, string, len, 1, MASTER_NODE_ID) != POOL_CONTINUE)
+			if (pool_send_and_wait(query_context, string, len, 1, MASTER_NODE_ID, "") != POOL_CONTINUE)
 			{
 				free_parser();
 				return POOL_END;
@@ -497,7 +476,7 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 	}
 	else
 	{
-		if (pool_send_and_wait(query_context, string, len, 1, MASTER_NODE_ID) != POOL_CONTINUE)
+		if (pool_send_and_wait(query_context, string, len, 1, MASTER_NODE_ID, "") != POOL_CONTINUE)
 		{
 			free_parser();
 			return POOL_END;
@@ -515,14 +494,24 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 {
 	char *string;		/* portal name + null terminate + max_tobe_returned_rows */
 	int len;
-	int i;
 	char kind;
 	int status, commit = 0;
+	PreparedStatement *ps;
 	Portal *portal;
 	char *string1 = NULL;
 	PrepareStmt *p_stmt;
 	POOL_STATUS ret;
 	int specific_error = 0;
+	POOL_SESSION_CONTEXT *session_context;
+	POOL_QUERY_CONTEXT *query_context;
+
+	/* Get session context */
+	session_context = pool_get_session_context();
+	if (!session_context)
+	{
+		pool_error("Execute: cannot get session context");
+		return POOL_END;
+	}
 
 	/* read Execute packet */
 	if (pool_read(frontend, &len, sizeof(len)) < 0)
@@ -533,20 +522,31 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 
 	pool_debug("Execute: portal name <%s>", string);
 
-	portal = lookup_prepared_statement_by_portal(&prepared_list,
-												 string);
+	portal = pool_get_portal_by_portal_name(string);
+	ps = pool_get_prepared_statement_by_pstmt_name(portal->pstmt->name);
+	query_context = ps->qctxt;
 
 	/* load balance trick */
 	if (portal)
 	{
 		Node *node;
 
-		p_stmt = (PrepareStmt *)portal->stmt;
+		p_stmt = (PrepareStmt *)portal->pstmt->qctxt->parse_tree;
 
-		string1 = portal->sql_string;
+		string1 = portal->pstmt->qctxt->original_query;
 		pool_debug("Execute: query: %s", string1);
-		node = (Node *)p_stmt->query;
+		node = (Node *)p_stmt;
 		strncpy(query_string_buffer, string1, sizeof(query_string_buffer));
+
+		/*
+		 * Start query context
+		 */
+		pool_start_query(query_context, string1, node);
+
+		/*
+		 * Decide where to send query
+		 */
+		pool_where_to_send(query_context, query_context->original_query, node);
 
  		if ((IsA(node, PrepareStmt) || IsA(node, DeallocateStmt) ||
  			 IsA(node, VariableSetStmt)) &&
@@ -592,20 +592,8 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 		if (!commit)
 		{
 			/* Send the query to master node */
-			per_node_statement_log(backend, MASTER_NODE_ID, string1);
-			if (send_execute_message(backend, MASTER_NODE_ID, len, string) != POOL_CONTINUE)
-				return POOL_END;
-
-			if (wait_for_query_response(frontend, MASTER(backend), string, MAJOR(backend)) != POOL_CONTINUE)
+			if (pool_send_and_wait(query_context, string, len, 1, MASTER_NODE_ID, "E") != POOL_CONTINUE)
 			{
-				/* Cancel current transaction */
-				CancelPacket cancel_packet;
-
-				cancel_packet.protoVersion = htonl(PROTO_CANCEL);
-				cancel_packet.pid = MASTER_CONNECTION(backend)->pid;
-				cancel_packet.key= MASTER_CONNECTION(backend)->key;
-				cancel_request(&cancel_packet);
-
 				return POOL_END;
 			}
 
@@ -619,89 +607,37 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 			}
 		}
 
-		/* send query to other nodes */
-		for (i=0;i<NUM_BACKENDS;i++)
+		if (specific_error)
 		{
-			if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
-				continue;
+			char msg[1024] = "pgpool_error_portal"; /* large enough */
+			int len = strlen(msg);
 
-			if (specific_error)
-			{
-				char msg[1024] = "pgpoool_error_portal"; /* large enough */
-				int len = strlen(msg);
+			memset(msg + len, 0, sizeof(int));
 
-				memset(msg + len, 0, sizeof(int));
-				if (send_execute_message(backend, i, len + 5, msg))
-					return POOL_END;
-			}
-			else
-			{
-				per_node_statement_log(backend, i, string1);
-				if (send_execute_message(backend, i, len, string) != POOL_CONTINUE)
-					return POOL_END;
-			}
-		}
-
-		/* Wait for nodes other than the master node */
-		for (i=0;i<NUM_BACKENDS;i++)
-		{
-			if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
-				continue;
-
-			if (wait_for_query_response(frontend, CONNECTION(backend, i), string, MAJOR(backend)) != POOL_CONTINUE)
-			{
-				/* Cancel current transaction */
-				CancelPacket cancel_packet;
-
-				cancel_packet.protoVersion = htonl(PROTO_CANCEL);
-				cancel_packet.pid = MASTER_CONNECTION(backend)->pid;
-				cancel_packet.key= MASTER_CONNECTION(backend)->key;
-				cancel_request(&cancel_packet);
-
+			/* send query to other nodes */
+			if (pool_send_and_wait(query_context, msg, len, -1, MASTER_NODE_ID, "E") != POOL_CONTINUE)
 				return POOL_END;
-			}
 		}
-
+		else
+		{
+			if (pool_send_and_wait(query_context, string, len, -1, MASTER_NODE_ID, "E") != POOL_CONTINUE)
+				return POOL_END;
+		}
+		
 		/* send "COMMIT" or "ROLLBACK" to only master node if query is "COMMIT" or "ROLLBACK" */
 		if (commit)
 		{
-			per_node_statement_log(backend, MASTER_NODE_ID, string1);
-
-			if (send_execute_message(backend, MASTER_NODE_ID, len, string) != POOL_CONTINUE)
-				return POOL_END;
-
-			if (wait_for_query_response(frontend, MASTER(backend), string, MAJOR(backend)) != POOL_CONTINUE)
+			if (pool_send_and_wait(query_context, string, len, 1, MASTER_NODE_ID, "E") != POOL_CONTINUE)
 			{
-				/* Cancel current transaction */
-				CancelPacket cancel_packet;
-
-				cancel_packet.protoVersion = htonl(PROTO_CANCEL);
-				cancel_packet.pid = MASTER_CONNECTION(backend)->pid;
-				cancel_packet.key= MASTER_CONNECTION(backend)->key;
-				cancel_request(&cancel_packet);
-
 				return POOL_END;
 			}
 		}
 	}
 	else
 	{
-		per_node_statement_log(backend, MASTER_NODE_ID, string1);
-
-		if (send_execute_message(backend, MASTER_NODE_ID, len, string) != POOL_CONTINUE)
-			return POOL_END;
-
-		if (wait_for_query_response(frontend, MASTER(backend), string, MAJOR(backend)) != POOL_CONTINUE)
+		if (pool_send_and_wait(query_context, string, len, -1, MASTER_NODE_ID, "E") != POOL_CONTINUE)
 		{
-				/* Cancel current transaction */
-				CancelPacket cancel_packet;
-
-				cancel_packet.protoVersion = htonl(PROTO_CANCEL);
-				cancel_packet.pid = MASTER_CONNECTION(backend)->pid;
-				cancel_packet.key= MASTER_CONNECTION(backend)->key;
-				cancel_request(&cancel_packet);
-
-				return POOL_END;
+			return POOL_END;
 		}
 	}
 
@@ -738,7 +674,6 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 	int len;
 	char *string;
 	int i;
-	Portal *portal;
 	POOL_MEMORY_POOL *old_context;
 	PrepareStmt *p_stmt;
 	char *name, *stmt;
@@ -748,6 +683,20 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 	int insert_stmt_with_lock = 0;
 	POOL_STATUS status;
 	char per_node_statement_log_buffer[1024];
+	PreparedStatement *ps;
+	POOL_SESSION_CONTEXT *session_context;
+	POOL_QUERY_CONTEXT *query_context;
+
+	/* Get session context */
+	session_context = pool_get_session_context();
+	if (!session_context)
+	{
+		pool_error("Parse: cannot get session context");
+		return POOL_END;
+	}
+
+	/* Create query context */
+	query_context = pool_init_query_context();
 
 	/* read Parse packet */
 	if (pool_read(frontend, &len, sizeof(len)) < 0)
@@ -795,17 +744,9 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 			}
 		}
 
-		portal = create_portal();
-		if (portal == NULL)
-		{
-			pool_error("Parse: create_portal() failed");
-			free_parser();
-			return POOL_END;
-		}
-
 		/* switch memory context */
 		old_context = pool_memory;
-		pool_memory = portal->prepare_ctxt;
+		pool_memory = session_context->memory_context;
 
 		/* translate Parse message to PrepareStmt */
 		p_stmt = palloc(sizeof(PrepareStmt));
@@ -817,21 +758,29 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 		 */
 		p_stmt->name = pstrdup(name);
 		p_stmt->query = copyObject(node);
-		portal->stmt = (Node *)p_stmt;
-		portal->portal_name = NULL;
-		portal->sql_string = pstrdup(stmt);
+		ps = pool_create_prepared_statement(name, 0, query_context);
 
+		/*
+		 * Start query context
+		 */
+		pool_start_query(query_context, pstrdup(stmt), (Node *)p_stmt);
+
+		/*
+		 * Decide where to send query
+		 */
+		pool_where_to_send(query_context, query_context->original_query, (Node *)p_stmt);
+		
 		if (*name)
 		{
-			pending_function = add_prepared_list;
-			pending_prepared_portal = portal;
+			session_context->pending_pstmt = ps;
+			session_context->pending_function = pool_add_prepared_statement;
 		}
 		else /* unnamed statement */
 		{
-			pending_function = add_unnamed_portal;
 			pfree(p_stmt->name);
-			p_stmt->name = NULL;
-			pending_prepared_portal = portal;
+			ps->name = "";
+			session_context->pending_pstmt = ps;
+			session_context->pending_function = pool_add_prepared_statement;
 		}
 
 		/*
@@ -854,8 +803,8 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 			 */
 			if (*name == '\0')
 				rewrite_to_params = false;
-			portal->num_tsparams = 0;
-			rewrite_query = rewrite_timestamp(backend, node, rewrite_to_params, portal);
+			ps->num_tsparams = 0;
+			rewrite_query = rewrite_timestamp(backend, node, rewrite_to_params, ps);
 			if (rewrite_query != NULL)
 			{
 				int alloc_len = len - strlen(stmt) + strlen(rewrite_query);
@@ -921,13 +870,6 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 
 	/* send to master node */
 	snprintf(per_node_statement_log_buffer, sizeof(per_node_statement_log_buffer), "Parse: %s", stmt);
-	per_node_statement_log(backend, MASTER_NODE_ID, per_node_statement_log_buffer);
-	if (send_extended_protocol_message(backend, MASTER_NODE_ID,
-									   "P", len, string))
-	{
-		free_parser();
-		return POOL_END;
-	}
 
 	/*
 	 * Cannot call free_parser() here. Since "string" might be allocated in parser context.
@@ -941,15 +883,8 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 		 * locks.
 		 */
 		pool_debug("Parse: waiting for master completing the query");
-		if (wait_for_query_response(frontend, MASTER(backend), string, MAJOR(backend)) != POOL_CONTINUE)
+		if (pool_send_and_wait(query_context, string, len, 1, MASTER_NODE_ID, "P") != POOL_CONTINUE)
 		{
-			/* Cancel current transaction */
-			CancelPacket cancel_packet;
-
-			cancel_packet.protoVersion = htonl(PROTO_CANCEL);
-			cancel_packet.pid = MASTER_CONNECTION(backend)->pid;
-			cancel_packet.key= MASTER_CONNECTION(backend)->key;
-			cancel_request(&cancel_packet);
 			free_parser();
 			return POOL_END;
 		}
@@ -977,67 +912,33 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 			per_node_error_log(backend, MASTER_NODE_ID, stmt, "Parse(): Error or notice message from backend: ", true);
 		}
 
-		for (i=0;i<NUM_BACKENDS;i++)
+		if (deadlock_detected)
 		{
-			if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
+			pool_log("Parse: received deadlock error message from master node");
+			if (pool_send_and_wait(query_context, POOL_ERROR_QUERY,
+								   strlen(POOL_ERROR_QUERY)+1, -1,
+								   MASTER_NODE_ID, "") != POOL_CONTINUE)
 			{
-				if (deadlock_detected)
-				{
-					pool_log("Parse: received deadlock error message from master node");
-
-					per_node_statement_log(backend, i, POOL_ERROR_QUERY);
-
-					if (send_simplequery_message(CONNECTION(backend, i),
-												 strlen(POOL_ERROR_QUERY)+1,
-												 POOL_ERROR_QUERY,
-												 MAJOR(backend)))
-					{
-						free_parser();
-						return POOL_END;
-					}
-				}
-				else
-				{
-					snprintf(per_node_statement_log_buffer, sizeof(per_node_statement_log_buffer), "Parse: %s", stmt);
-					per_node_statement_log(backend, i, per_node_statement_log_buffer);
-
-					if (send_extended_protocol_message(backend, i,"P", len, string))
-					{
-						free_parser();
-						return POOL_END;
-					}
-				}
-			}
-		}
-
-		/* wait for DB nodes completing query except master node */
-		for (i=0;i<NUM_BACKENDS;i++)
-		{
-			if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
-				continue;
-
-			pool_debug("Parse: waiting for %dth backend completing the query", i);
-			if (wait_for_query_response(frontend, CONNECTION(backend, i), string, MAJOR(backend)) != POOL_CONTINUE)
-			{
-				/* Cancel current transaction */
-				CancelPacket cancel_packet;
-
-				cancel_packet.protoVersion = htonl(PROTO_CANCEL);
-				cancel_packet.pid = MASTER_CONNECTION(backend)->pid;
-				cancel_packet.key= MASTER_CONNECTION(backend)->key;
-				cancel_request(&cancel_packet);
 				free_parser();
 				return POOL_END;
 			}
-
-			/*
-			 * Check if error (or notice response) from backend is
-			 * detected.  If so, emit log. This is usefull when
-			 * invalid encoding error occurs. In this case, PostgreSQL
-			 * does not report what statement caused that error and
-			 * make users confused.
-			 */
-			per_node_error_log(backend, i, stmt, "Parse(): Error or notice message from backend: ", true);
+		}
+		else
+		{
+			snprintf(per_node_statement_log_buffer, sizeof(per_node_statement_log_buffer), "Parse: %s", stmt);
+			if (pool_send_and_wait(query_context, string, len, -1, MASTER_NODE_ID, "P") != POOL_CONTINUE)
+			{
+				free_parser();
+				return POOL_END;
+			}
+		}
+	}
+	else
+	{
+		if (pool_send_and_wait(query_context, string, len, 1, MASTER_NODE_ID, "P") != POOL_CONTINUE)
+		{
+			free_parser();
+			return POOL_END;
 		}
 	}
 
@@ -1079,6 +980,15 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	int i;
 	int len;
 	signed char state;
+	POOL_SESSION_CONTEXT *session_context;
+
+	/* Get session context */
+	session_context = pool_get_session_context();
+	if (!session_context)
+	{
+		pool_error("ReadyForQuery: cannot get session context");
+		return POOL_END;
+	}
 
 	/*
 	 * If the numbers of update tuples are differ, we need to abort transaction
@@ -1232,6 +1142,8 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		pool_flush(frontend);
 	}
 
+	pool_unset_query_in_progress();
+
 	sp = MASTER_CONNECTION(backend)->sp;
 	if (MASTER(backend)->tstate == 'T')
 		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle in transaction",
@@ -1241,7 +1153,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				 sp->user, sp->database, remote_ps_data);
 	set_ps_display(psbuf, false);
 
-	pool_query_context_destroy(pool_get_session_context()->query_context);
+//	pool_query_context_destroy(pool_get_session_context()->query_context);
 
 	return POOL_CONTINUE;
 }

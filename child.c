@@ -148,8 +148,6 @@ void do_child(int unix_fd, int inet_fd)
 	timeout.tv_sec = pool_config->child_life_time;
 	timeout.tv_usec = 0;
 
-	init_prepared_list();
-
 	for (;;)
 	{
 		StartupPacket *sp;
