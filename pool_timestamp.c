@@ -530,7 +530,7 @@ rewrite_timestamp_update(UpdateStmt *u_stmt, TSRewriteContext *ctx)
  */
 char *
 rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
-	   	bool rewrite_to_params, Portal *portal)
+				  bool rewrite_to_params, PreparedStatement *pstmt)
 {
 	TSRewriteContext	ctx;
 	Node			*stmt;
@@ -600,11 +600,11 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 		rewrite = ctx.rewrite;
 
 		/* add params */
-		if (portal)
+		if (pstmt)
 		{
 			int		i;
 
-			for (i = 0; i < portal->num_tsparams; i++)
+			for (i = 0; i < pstmt->num_tsparams; i++)
 			{
 				e_stmt->params = lappend(e_stmt->params, ctx.ts_const);
 				rewrite = true;
@@ -617,7 +617,7 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 	if (!rewrite)
 		return NULL;
 
-	if (ctx.rewrite_to_params && portal)
+	if (ctx.rewrite_to_params && pstmt)
 	{
 		ListCell	*lc;
 		int			 num = ctx.num_params + 1;
@@ -630,7 +630,7 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 		}
 
 		/* save to portal */
-		portal->num_tsparams = list_length(ctx.params);
+		pstmt->num_tsparams = list_length(ctx.params);
 
 		/* add param type */
 		if (IsA(node, PrepareStmt))
@@ -638,7 +638,7 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 			int				 i;
 			PrepareStmt		*p_stmt = (PrepareStmt *) node;
 
-			for (i = 0; i < portal->num_tsparams; i++)
+			for (i = 0; i < pstmt->num_tsparams; i++)
 				p_stmt->argtypes =
 				   	lappend(p_stmt->argtypes, SystemTypeName("timestamptz"));
 		}
