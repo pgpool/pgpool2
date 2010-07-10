@@ -172,7 +172,7 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 	/*
 	 * If transaction state is E, do_command failed to execute command
 	 */
-	if (TSTATE(backend) == 'E')
+	if (TSTATE(backend, MASTER_NODE_ID) == 'E')
 	{
 		pool_log("pool_check_lo_creat: failed to execute: %s", qbuf);
 		return NULL;

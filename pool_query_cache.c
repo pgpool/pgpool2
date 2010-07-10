@@ -1004,7 +1004,7 @@ POOL_STATUS pool_execute_query_cache_lookup(POOL_CONNECTION *frontend, POOL_CONN
 		}
 
 
-		if (pool_query_cache_lookup(frontend, parsed_query, backend->info->database, TSTATE(backend)) == POOL_CONTINUE)
+		if (pool_query_cache_lookup(frontend, parsed_query, backend->info->database, TSTATE(backend, MASTER_NODE_ID)) == POOL_CONTINUE)
 		{
 			free(parsed_query);
 			parsed_query = NULL;

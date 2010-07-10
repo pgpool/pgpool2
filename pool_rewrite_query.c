@@ -389,7 +389,7 @@ RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNE
 			}
 			else
 			{
-				if(TSTATE(backend) == 'T' &&
+				if(TSTATE(backend, MASTER_NODE_ID) == 'T' &&
 				   message->r_code == SELECT_RELATION_ERROR)
 				{
 					/*
@@ -440,7 +440,7 @@ RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNE
 										message->rewrite_query, "", __FILE__,
 										__LINE__);
 
-				if(TSTATE(backend) == 'T')
+				if(TSTATE(backend, MASTER_NODE_ID) == 'T')
 				{
 					/* In Transaction, send the invalid message to backend to abort this transaction */
 					pool_debug("rewrite_query_stmt(insert): Inside transaction. Abort transaction");

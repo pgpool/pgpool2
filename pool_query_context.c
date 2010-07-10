@@ -267,7 +267,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					MAJOR(backend) == PROTO_MAJOR_V3)
 				{
 					/* Outside of an explicit transaction? */
-					if (TSTATE(backend) == 'I')
+					if (TSTATE(backend, MASTER_NODE_ID) == 'I')
 					{
 						BackendInfo *bkinfo = pool_get_node_info(session_context->load_balance_node_id);
 
@@ -326,7 +326,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 			{
 				if (pool_config->load_balance_mode &&
 					MAJOR(backend) == PROTO_MAJOR_V3 &&
-					TSTATE(backend) == 'I' &&
+					TSTATE(backend, MASTER_NODE_ID) == 'I' &&
 					is_select_query(node, query) &&
 					!is_sequence_query(node))
 				{
@@ -346,7 +346,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	{
 		if (pool_config->load_balance_mode &&
 			MAJOR(backend) == PROTO_MAJOR_V3 &&
-			TSTATE(backend) == 'I' &&
+			TSTATE(backend, MASTER_NODE_ID) == 'I' &&
 			is_select_query(node, query) &&
 			!is_sequence_query(node))
 		{

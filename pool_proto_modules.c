@@ -398,7 +398,12 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 
 	if (MAJOR(backend) == PROTO_MAJOR_V2 && is_start_transaction_query(node))
 	{
-		TSTATE(backend) = 'T';
+		int i;
+
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			TSTATE(backend, i) = 'T';
+		}
 	}
 
 	if (!RAW_MODE)
@@ -550,7 +555,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend,
 
  		if ((IsA(node, PrepareStmt) || IsA(node, DeallocateStmt) ||
  			 IsA(node, VariableSetStmt)) &&
-  			MASTER_SLAVE && TSTATE(backend) != 'E')
+  			MASTER_SLAVE && TSTATE(backend, MASTER_NODE_ID) != 'E')
 		{
 			/*
 			 * PREPARE, DEALLOCATE, SET, DISCARD
@@ -826,7 +831,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend,
 		{
 			char kind;
 
-			if (TSTATE(backend) != 'T')
+			if (TSTATE(backend, MASTER_NODE_ID) != 'T')
 			{
 				/* synchronize transaction state */
 				for (i = 0; i < NUM_BACKENDS; i++)
@@ -1318,7 +1323,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			allow_close_transaction = 0;
 
 			if (MASTER_SLAVE &&
-				(TSTATE(backend) != 'I' || receive_extended_begin))
+				(TSTATE(backend, MASTER_NODE_ID) != 'I' || receive_extended_begin))
 			{
 				pool_debug("kind: %c master_slave_dml enabled", fkind);
 				master_slave_was_enabled = 1;
@@ -1339,7 +1344,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 				 fkind == 'C' || fkind == 'B' || fkind == 'F' || fkind == 'd' || fkind == 'c'))
 			{
 				if (MASTER_SLAVE &&
-					(TSTATE(backend) != 'I' || receive_extended_begin))
+					(TSTATE(backend, MASTER_NODE_ID) != 'I' || receive_extended_begin))
 				{
 					pool_debug("kind: %c master_slave_dml enabled", fkind);
 					master_slave_was_enabled = 1;

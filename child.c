@@ -983,7 +983,7 @@ static bool connect_using_existing_connection(POOL_CONNECTION *frontend,
 
 		len = htonl(5);
 		pool_write(frontend, &len, sizeof(len));
-		tstate = TSTATE(backend);
+		tstate = TSTATE(backend, MASTER_NODE_ID);
 		pool_write(frontend, &tstate, 1);
 	}
 

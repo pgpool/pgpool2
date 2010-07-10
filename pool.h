@@ -162,6 +162,7 @@ typedef struct {
 
 	char tstate;		/* transaction state (V3 only) */
 
+	bool is_internal_transaction_started;		/* True if an internal transaction has already started */
 	/*
 	 * following are used to remember when re-use the authenticated connection
 	 */
@@ -285,7 +286,8 @@ extern int pool_virtual_master_db_node_id(void);
 #define PARALLEL_MODE (pool_config->parallel_mode)
 #define RAW_MODE (!REPLICATION && !PARALLEL_MODE && !MASTER_SLAVE)
 #define MAJOR(p) MASTER_CONNECTION(p)->sp->major
-#define TSTATE(p) MASTER(p)->tstate
+#define TSTATE(p, i) (CONNECTION(p, i)->tstate)
+#define INTERNAL_TRANSACTION_STARTED(p, i) (CONNECTION(p, i)->is_internal_transaction_started)
 #define SYSDB_INFO (system_db_info->info)
 #define SYSDB_CONNECTION (system_db_info->connection)
 #define SYSDB_STATUS (*system_db_info->system_db_status)

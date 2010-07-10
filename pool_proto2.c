@@ -385,10 +385,18 @@ POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend,
 		return POOL_END;
 
 	/* change transaction state */
-	if (TSTATE(backend) == 'T')
-		TSTATE(backend) = 'E';
-	else
-		TSTATE(backend) = 'I';
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			if (TSTATE(backend, i) == 'T')
+				TSTATE(backend, i) = 'E';
+		}
+		else
+		{
+			TSTATE(backend, i) = 'I';
+		}
+	}
 
 	return POOL_CONTINUE;
 }

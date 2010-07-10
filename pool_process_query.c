@@ -154,7 +154,10 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 
 			else	/* no more query(st == 2) */
 			{
-				TSTATE(backend) = 'I';
+				for (i=0;i<NUM_BACKENDS;i++)
+				{
+					TSTATE(backend, i) = 'I';
+				}
 				frontend->no_forward = 0;
 				return POOL_CONTINUE;
 			}
@@ -1476,8 +1479,10 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 			}
 		}
 	}
-	
+
+/*	
 	pool_unset_query_in_progress();
+*/
 
 	return POOL_CONTINUE;
 }
@@ -2015,7 +2020,7 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 	query = pool_config->reset_query_list[qcnt];
 
 	/* if transaction state is idle, we don't need to issue ABORT */
-	if (TSTATE(backend) == 'I' && !strcmp("ABORT", query))
+	if (TSTATE(backend, MASTER_NODE_ID) == 'I' && !strcmp("ABORT", query))
 		return 0;
 
 	pool_set_timeout(10);
@@ -2038,7 +2043,7 @@ int load_balance_enabled(POOL_CONNECTION_POOL *backend, Node* node, char *sql)
 	return (pool_config->load_balance_mode &&
 			(DUAL_MODE || pool_config->parallel_mode) &&
 			MAJOR(backend) == PROTO_MAJOR_V3 &&
-			TSTATE(backend) == 'I' &&
+			TSTATE(backend, MASTER_NODE_ID) == 'I' &&
 			is_select_query(node, sql) &&
 			!is_sequence_query(node));
 }
@@ -4131,21 +4136,22 @@ static bool is_internal_transaction_needed(Node *node)
 	return false;
 }
 
+/*
+ * Start an internal transaction if necessary.
+ */
 POOL_STATUS start_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, Node *node)
 {
 	int i;
 
-	if (TSTATE(backend) != 'I')
-		return POOL_CONTINUE;
-
-	/* if we are not in a transaction block,
+	/* If we are not in a transaction block,
 	 * start a new transaction
 	 */
 	if (is_internal_transaction_needed(node))
 	{
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
-			if (VALID_BACKEND(i))
+			if (VALID_BACKEND(i) && !INTERNAL_TRANSACTION_STARTED(backend, i) &&
+				TSTATE(backend, i) == 'I')
 			{
 				per_node_statement_log(backend, i, "BEGIN");
 
@@ -4153,15 +4159,16 @@ POOL_STATUS start_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTIO
 							   MASTER_CONNECTION(backend)->pid,	MASTER_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
 					return POOL_END;
 			}
+			/* Mark that we started new transaction */
+			INTERNAL_TRANSACTION_STARTED(backend, i) = true;
 		}
-
-		/* mark that we started new transaction */
-		internal_transaction_started = 1;
 	}
 	return POOL_CONTINUE;
 }
 
-
+/*
+ * End internal transaction.
+ */
 POOL_STATUS end_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 {
 	int i;
@@ -4180,7 +4187,8 @@ POOL_STATUS end_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTION_
 	/* We need to commit from secondary to master. */
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
-		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
+		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i) &&
+			TSTATE(backend, i) == 'I')
 		{
 			per_node_statement_log(backend, i, "COMMIT");
 
@@ -4188,7 +4196,7 @@ POOL_STATUS end_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTION_
 			if (do_command(frontend, CONNECTION(backend, i), "COMMIT", MAJOR(backend), 
 						   MASTER_CONNECTION(backend)->pid,	MASTER_CONNECTION(backend)->key, 1) != POOL_CONTINUE)
 			{
-				internal_transaction_started = 0;
+				INTERNAL_TRANSACTION_STARTED(backend, i) = true;
 				POOL_SETMASK(&oldmask);
 				return POOL_END;
 			}
@@ -4200,12 +4208,12 @@ POOL_STATUS end_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTION_
 	if (do_command(frontend, MASTER(backend), "COMMIT", MAJOR(backend), 
 				   MASTER_CONNECTION(backend)->pid,	MASTER_CONNECTION(backend)->key, 1) != POOL_CONTINUE)
 	{
-		internal_transaction_started = 0;
+		INTERNAL_TRANSACTION_STARTED(backend, MASTER_NODE_ID) = true;
 		POOL_SETMASK(&oldmask);
 		return POOL_END;
 	}
 
-	internal_transaction_started = 0;
+	INTERNAL_TRANSACTION_STARTED(backend, MASTER_NODE_ID) = true;
 	POOL_SETMASK(&oldmask);
 	return POOL_CONTINUE;
 }

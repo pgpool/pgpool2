@@ -32,10 +32,10 @@
 #include "parser/pg_list.h"
 #include "parser/parsenodes.h"
 #include "pool_rewrite_query.h"
+#include "pool_session_context.h"
 
 #define SPECIFIED_ERROR 1
 #define POOL_ERROR_QUERY "send invalid query from pgpool to abort transaction"
-
 
 extern int force_replication;
 extern int replication_was_enabled;		/* replication mode was enabled */
