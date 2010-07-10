@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Mon Jun 21 14:41:09 JST 2010
+Last modified: Sat Jul 10 20:06:49 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -675,7 +675,7 @@ You need to reload pgpool.conf if you change the value.
       </p>
   </dd>
 
-  <dt>ssl</dt>
+  <dt><a name="ssl">ssl</a></dt>
   <dd>
       <p>
       If true, enable SSL support for both the frontend and backend
@@ -1411,8 +1411,8 @@ ELSE 2
 <ul>
 <li>"hostssl" connection type is not supported</li>
 <p>
-    "hostssl" is invalid since pgpool currently does not support SSL
-    connections.
+    Though "hostssl" is invalid but pgpool-II 2.3 or later supports SSL.
+	See <a href="#ssl">SSL</a> for more details.
 </p>
 <li>"samegroup" for DATABASE field is not supported</li>
 <p>
@@ -1430,11 +1430,15 @@ ELSE 2
 <p>
     pgpool currently does not support IPv6.
 </p>
-<li>Only "trust", "reject" and "pam" for METHOD field are supported</li>
+<li>Only "trust", "reject", "md5" and "pam" for METHOD field are supported</li>
 <p>
     Again, this is the same reason as in the "samegroup" described above.
     pgpool does not hold user/password information.
 </p>
+<p>
+To use md5 autentication, you need to register your name and password in
+"pool_passwd".
+See <a href="#md5">Authentication / Access Controls</a> for more details.
 </ul>
 <p>
   Note that everything described in this section is about a client
@@ -1444,6 +1448,7 @@ ELSE 2
   (i.e. psql -U testuser testdb) really exist in the backend. pool_hba only
   cares if a match in the pool_hba.conf is found or not.
 </p>
+
 <p>
   PAM authentication is supported using user information on the host where
   pgpool is executed. To enable PAM support in pgpool, specify "--with-pam"
@@ -1867,12 +1872,30 @@ pgmgt.conf.php.
 
 <h1>Restrictions<a name="restriction"></a></h1>
 <p>
-<h2>Authentication / Access Controls</h2>
+<h2><a name="md5"></a>Authentication / Access Controls</h2>
 
 <p>
 <ul>
   <li>In the replication mode or master/slave mode, trust, clear text
-      password, pam methods are supported.</li>
+      password, pam methods are supported.
+	   clear text password is not supported.
+	   md5 is supported by using "pool_passwd". Here are steps to enable
+	   md5 authentication:
+	   <ol>
+		<li>Login as DB user and type "pg_md5 --md5auth <your_passwd>"
+			 user name and md5 encrypted password is registered into
+			 pool_passwd.
+			 If pool_passwd does not exist yet, pg_md5 command will
+			 automatically create it for you.</li>
+		<li> The format of pool_passwd is "username:encrypted_passwd".</li>
+		<li>You need to also add appropreate md5 entry to pool_hba.conf.
+			 See <a href="#hba">Setting up pool_hba.conf for client
+			 authentication (HBA)</a> for more details.</li>
+		<li>Please note that the user name and passowrd must be
+			 identical to those registered in PostgreSQL.</li>
+	   </ol>
+
+	   </li>
   <li>In all the other modes, trust, clear text password, crypt, md5,
       pam methods are supported.</li>
   <li>pgpool-II does not support pg_hba.conf-like access controls. If
@@ -1880,7 +1903,7 @@ pgmgt.conf.php.
       connections from any host. If needed, use iptables and such to
       control access from other hosts. (PostgreSQL server accepting
       pgpool-II connections can use pg_hba.conf, of course).</li>
-</ul>
+	   </ul>
 </p>
 
 <h2>Large object</h2>

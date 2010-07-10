@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Mon Jun 21 14:40:24 JST 2010
+Last modified: Sat Jul 10 19:59:14 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -657,7 +657,7 @@ backend_data_directory $B$O?7$7$/DI2C$7$?9T$r@_Dj%U%!%$%k:FFI$_9~$_$GDI2C$9$k(
 $B$k>l9g$K$O(B pgpool-II $B$r:F5/F0$7$F$/$@$5$$!#(B
 </p>
 
-  <dt>ssl</dt>
+  <dt><a name="ssl">ssl</a></dt>
   <dd>
       <p>
 	 true$B$J$i$P(Bpgpool-II$B$H%U%m%s%H%(%s%I!"(Bpgpool-II$B$H%P%C%/%(%s%I$N4V$N(BSSL$B@\B3$,2DG=$K$J$j$^$9!#(B
@@ -1463,9 +1463,10 @@ CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_accounts (val ANYELEMENT) RET
 <ul>
 <li>"hostssl"$B@\B3%?%$%W$O%5%]!<%H$5$l$^$;$s(B</li>
 <p>
-     $B8=:_(Bpgpool$B$O(BSSL$B@\B3$r%5%]!<%H$7$F$$$J$$$N$G(B"hostssl"$B$O;XDj$9$k$3(B
-     $B$H$,$G$-$^$;$s!#(B
+     pool_hba.conf$B$K(B"hostssl"$B$O;XDj$9$k$3$H$O$G$-$^$;$s$,!"(Bpgpool-II$B$O(B2.3$B0J9_$G(BSSL$B$r%5%]!<%H$7$F$$$^$9!#(B
+$B>\:Y$O(B<a href="#ssl">SSL</a>$B$r;2>H$7$F$/$@$5$$!#(B
 </p>
+
 <li>DATABASE$B%U%#!<%k%ICM$H$7$F(B"samegroup"$B$O%5%]!<%H$5$l$^$;$s(B</li>
 <p>
      pgpool$B$O%P%C%/%(%s%I%5!<%P$K$"$k%f!<%6>pJs$r;vA0$KCN$k;v$,$G$-$J(B
@@ -1482,12 +1483,15 @@ CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_accounts (val ANYELEMENT) RET
 <p>
      $B8=:_(Bpgpool$B$O(BIPv6$B$r%5%]!<%H$7$F$$$^$;$s!#(B
 </p>
-<li>"trust", "reject", "pam"$B0J30$N%a%=%C%I$O%5%]!<%H$5$l$^$;$s(B</li>
+<li>"trust", "reject", "pam", "md5"$B0J30$N%a%=%C%I$O%5%]!<%H$5$l$^$;$s(B</li>
 <p>
      $B$3$l$b>e5-$N(B"samegroup"$B$HF1$8M}M3$K$h$k$b$N$G$9!#(Bpgpool$B$O%P%C%/%((B
      $B%s%I$N%f!<%6(B/$B%Q%9%o!<%I>pJs$r;}$C$F$$$J$$$N$G!"%P%C%/%(%s%I$KJ]B8(B
      $B$5$l$F$$$k%Q%9%o!<%I$r;H$C$?G'>Z$r9T$&$3$H$,$G$-$^$;$s!#(B
 </p>
+<p>
+md5$B$K4X$7$F$O!"(Bpool_passwd$B$H$$$&%Q%9%o!<%I%U%!%$%k$rJ;MQ$9$k$3$H$K$h$C$FMxMQ$G$-$^$9!#(B
+$B>\:Y$O(B<a href="#md5">$BG'>Z!&%"%/%;%9@)8fJ}<0(B</a>$B$r;2>H$7$F$/$@$5$$!#(B
 </ul>
 </p>
 <p>
@@ -1943,11 +1947,24 @@ _PGPOOL2_PCP_TIMEOUT $B$rBg$-$/$7$F$/$@$5$$!#(B
 
 <h1>$B@)8B;v9`(B<a name="restriction"></a></h1>
 <p>
-<h2>$BG'>Z!&%"%/%;%9@)8fJ}<0(B</h2>
+<h2><a name="md5"></a>$BG'>Z!&%"%/%;%9@)8fJ}<0(B</h2>
 <p>
 <ul>
 <li>$B%l%W%j%1!<%7%g%s%b!<%I$^$?%^%9%?(B/$B%9%l!<%V%b!<%I;~$K$O(Btrust, reject, clear
-     text password, pam, $BG'>ZJ}<0$@$1$,MxMQ$G$-$^$9!#(Bmd5$BG'>Z!"(Bcrypt$BG'>Z$J$I$NG'>ZJ}<0$OMxMQ$G$-$^$;$s!#(B
+     text password, pam, $BG'>ZJ}<0$@$1$,MxMQ$G$-$^$9!#(B
+crypt$BG'>Z$OMxMQ$G$-$^$;$s!#(B
+md5$BG'>Z$K4X$7$F$O!"(BPostgreSQL$B$K3:Ev%f!<%6$r(Bmd5$BG'>ZIU$G(BPostgreSQL$B$KEPO?$7!"<!$K(Bpgpool$B$KIUB0$9$k(Bpg_md5$B%3%^%s%I$r;H$C$F!"(Bpool_passwd$B$H$$$&G'>Z%U%!%$%k$r:n@.$9$k$3$H$K$h$jMxMQ$G$-$k$h$&$K$J$j$^$9!#(B
+<ol>
+<li>DB$B%f!<%6$N%"%+%&%s%H$G%m%0%$%s$7!"(B"pg_md5 --md5auth $B%Q%9%o!<%I(B" $B$r<B9T$7$^$9!#(B
+<li>md5$B$K$h$j0E9f2=$5$l$?%Q%9%o!<%I$,(Bpool_passwd$B$KEPO?$5$l$^$9!#(B
+pool_passwd$B$,$^$@B8:_$7$J$1$l$P!"(Bpgpool.conf$B$HF1$8%G%#%l%/%H%jFb$K:n@.$5$l$^$9!#(B
+<li>pool_passwd$B$N%U%)!<%^%C%H$O!"(B"$B%f!<%6L>(B:$B%Q%9%o!<%I(B"$B$H$J$C$F$$$^$9!#(B
+<li>pool_hba.conf$B$K(Bmd5$BG'>Z$N%(%s%H%j$r:n@.$7$^$9!#(B
+pool_hba.conf$B$K$D$$$F$O!"(B<a href="#hba">$B%/%i%$%"%s%HG'>Z(B(HBA)$B$N$?$a$N(Bpool_hba.conf$B@_DjJ}K!(B</a>
+$B$r;2>H$7$F$/$@$5$$!#(B
+<li>$BCm0U;v9`(B: pool_passwd$B$KEPO?$9$k%Q%9%o!<%I$O!"(BPostgreSQL$B$KEPO?$7$?%Q%9%o!<%I$H40A4$KF1$8$G$J$1$l$P$J$j$^$;$s!#(B
+</ol>
+
 <li>$B$=$l0J30$N%b!<%I$G$O!"(Btrust, reject, clear text password, pam, crypt, md5$BG'>ZJ}<0$@$1$,MxMQ$G$-$^$9!#(B
 </ul>
 </p>

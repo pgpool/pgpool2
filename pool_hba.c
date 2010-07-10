@@ -37,6 +37,7 @@
 #include "pool_config.h"
 #include "parser/pool_memory.h"
 #include "parser/pg_list.h"
+#include "pool_passwd.h"
 
 #define MULTI_VALUE_SEP "\001" /* delimiter for multi-valued column strings */
 #define MAX_TOKEN	256
@@ -62,7 +63,7 @@ static char *tokenize_inc_file(const char *outer_filename, const char *inc_filen
 static bool pg_isblank(const char c);
 static void next_token(FILE *fp, char *buf, int bufsz);
 static char * next_token_expand(const char *filename, FILE *file);
-static POOL_STATUS CheckMd5Auth(POOL_CONNECTION *frontend);
+static POOL_STATUS CheckMd5Auth(char *username);
 
 #ifdef USE_PAM
 #ifdef HAVE_PAM_PAM_APPL_H
@@ -219,7 +220,7 @@ void ClientAuthentication(POOL_CONNECTION *frontend)
 /* 			break; */
 
 		case uaMD5:
-			status = CheckMd5Auth(frontend);
+			status = CheckMd5Auth(frontend->username);
  			break;
 
 /* 		case uaCrypt: */
@@ -1444,18 +1445,21 @@ static POOL_STATUS CheckPAMAuth(POOL_CONNECTION *frontend, char *user, char *pas
 
 #endif   /* USE_PAM */
 
-static POOL_STATUS CheckMd5Auth(POOL_CONNECTION *frontend)
+static POOL_STATUS CheckMd5Auth(char *username)
 {
-	POOL_STATUS status;
+	char *passwd;
 
 	/* Look for the entry in pool_passwd */
+	passwd = pool_get_passwd(username);
 
-	/* Not found. authentication failed */
-	/* return POOL_ERROR;*/
+	if (passwd == NULL)
+	{
+		/* Not found. authentication failed */
+		return POOL_ERROR;
+	}
 
 	/*
-	 * If found, save the password.
-	 * Actual authentication will be performed later.
+	 * Ok for now. Actual authentication will be performed later.
 	 */
 	return POOL_CONTINUE;
 }
