@@ -3206,7 +3206,9 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 	if (pool_config->parallel_mode || pool_config->enable_query_cache)
 	{
+#ifdef PGPOOL_MAIN
 		int dist_num;
+#endif
 		SystemDBInfo *info;
 		
 		system_db_info = malloc(sizeof(POOL_SYSTEMDB_CONNECTION_POOL));
