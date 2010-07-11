@@ -171,7 +171,7 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 	}
 
 	/* Start query processing */
-	session_context->in_progress = true;
+	pool_set_query_in_progress();
 
 	/* parse SQL string */
 	parse_tree_list = raw_parser(string);
@@ -449,7 +449,9 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 			{
 				/* Send query to all DB nodes at once */
 				status = pool_send_and_wait(query_context, string, len, 0, 0, "");
+				/*
 				free_parser();
+				*/
 				return status;
 			}
 
@@ -473,7 +475,9 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 		{
 			if (pool_send_and_wait(query_context, string, len, 1, MASTER_NODE_ID, "") != POOL_CONTINUE)
 			{
+/*
 				free_parser();
+*/
 				return POOL_END;
 			}
 		}
@@ -486,7 +490,9 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 			free_parser();
 			return POOL_END;
 		}
+/*
 		free_parser();
+*/
 	}
 	return POOL_CONTINUE;
 }
@@ -984,6 +990,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	char psbuf[1024];
 	int i;
 	int len;
+	signed char kind;
 	signed char state;
 	POOL_SESSION_CONTEXT *session_context;
 
@@ -1059,30 +1066,10 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	 * if a transaction is started for insert lock, we need to close
 	 * the transaction.
 	 */
-	if (internal_transaction_started && allow_close_transaction)
+	if (pool_is_query_in_progress() && allow_close_transaction)
 	{
-		int len;
-		signed char state;
-
-		if (MAJOR(backend) == PROTO_MAJOR_V3)
-		{
-			if ((len = pool_read_message_length(backend)) < 0)
-				return POOL_END;
-
-			pool_debug("ReadyForQuery: message length: %d", len);
-
-			len = htonl(len);
-
-			state = pool_read_kind(backend);
-			if (state < 0)
-				return POOL_END;
-
-			/* set transaction state */
-			pool_debug("ReadyForQuery: transaction state: %c", state);
-		}
-
 		if (end_internal_transaction(frontend, backend) != POOL_CONTINUE)
-			return POOL_ERROR;
+			return POOL_END;
 	}
 
 	if (MAJOR(backend) == PROTO_MAJOR_V3)
@@ -1090,6 +1077,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		if ((len = pool_read_message_length(backend)) < 0)
 			return POOL_END;
 
+#ifdef NOT_USED
 		pool_debug("ReadyForQuery: message length: %d", len);
 
 		/*
@@ -1125,12 +1113,31 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		/* set transaction state */
 		pool_debug("ReadyForQuery: transaction state: %c", state);
 
+#endif
+
+		/*
+		 * Set transaction state for each node
+		 */
+		state = TSTATE(backend, MASTER_NODE_ID);
+
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
 			if (!VALID_BACKEND(i))
 				continue;
 
-			CONNECTION(backend, i)->tstate = state;
+			if (pool_read(CONNECTION(backend, i), &kind, sizeof(kind)))
+				return POOL_END;
+
+			TSTATE(backend, i) = kind;
+
+			/*
+			 * The transaction state to be returned to frontend is
+			 * master's.
+			 */
+			if (i == MASTER_NODE_ID)
+			{
+				state = kind;
+			}
 		}
 	}
 
@@ -1147,7 +1154,38 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		pool_flush(frontend);
 	}
 
-	pool_unset_query_in_progress();
+	if (pool_is_query_in_progress())
+	{
+		Node *node;
+		char *query;
+
+		node = pool_get_parse_tree();
+		query = pool_get_query_string();
+
+		if (node)
+		{
+			/*
+			 * If the query was BEGIN/START TRANSACTION, clear the
+			 * history that we had writing command in the transaction.
+			 */
+			if (is_start_transaction_query(node))
+			{
+				pool_unset_writing_transaction();
+			}
+
+			/*
+			 * If the query was not READ SELECT, remember that we had
+			 * a write query in this transaction.
+			 */
+			else if (!is_select_query(node, query))
+			{
+				pool_set_writing_transaction();
+			}
+		}
+		pool_unset_query_in_progress();
+	}
+
+	pool_query_context_destroy(pool_get_session_context()->query_context);
 
 	sp = MASTER_CONNECTION(backend)->sp;
 	if (MASTER(backend)->tstate == 'T')
@@ -1157,8 +1195,6 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle",
 				 sp->user, sp->database, remote_ps_data);
 	set_ps_display(psbuf, false);
-
-//	pool_query_context_destroy(pool_get_session_context()->query_context);
 
 	return POOL_CONTINUE;
 }

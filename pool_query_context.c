@@ -260,14 +260,23 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 			{
 				pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
 			}
+
+			/*
+			 * Ok, we might be able to load balance the SELECT query.
+			 */
 			else
 			{
 				if (pool_config->load_balance_mode &&
 					is_select_query(node, query) &&
 					MAJOR(backend) == PROTO_MAJOR_V3)
 				{
-					/* Outside of an explicit transaction? */
-					if (TSTATE(backend, MASTER_NODE_ID) == 'I')
+					/* 
+					 * If we are outside of an explicit transaction OR
+					 * the transaction has not issued a write query
+					 * yet, we might be able to load balance.
+					 */
+					if (TSTATE(backend, MASTER_NODE_ID) == 'I' ||
+						!pool_is_writing_transaction())
 					{
 						BackendInfo *bkinfo = pool_get_node_info(session_context->load_balance_node_id);
 
@@ -302,7 +311,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 				}
 			}
 		}
-		else
+		else	/* Slony-I case */
 		{
 			/*
 			 * DMLs msut be sent to master
@@ -458,7 +467,7 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context, char *query, i
 		 * Check if some error detected.  If so, emit
 		 * log. This is usefull when invalid encoding error
 		 * occurs. In this case, PostgreSQL does not report
-		 1* what statement caused that error and make users
+		 * what statement caused that error and make users
 		 * confused.
 		 */
 		per_node_error_log(backend, i, query, "pool_send_and_wait: Error or notice message from backend: ", true);
@@ -467,7 +476,8 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context, char *query, i
 }
 
 /*
- * Return true if the statement should be sent to primary only.
+ * Decide if the statement should be sent to primary only in
+ * master/slave+HR/SR mode.
  */
 static bool is_should_be_sent_to_primary(Node *node)
 {
@@ -628,7 +638,7 @@ static bool is_should_be_sent_to_primary(Node *node)
 		}
 
 		/*
-		 * TRANSACTION COMMAND
+		 * Transaction commands
 		 */
 		else if (IsA(node, TransactionStmt))
 		{
@@ -740,4 +750,42 @@ static bool is_should_be_sent_to_primary(Node *node)
 	 * All unknown statements are sent to master
 	 */
 	return true;
+}
+
+/*
+ * Returns parse tree for current query.
+ * Preconition: the query is in progress state.
+ */
+Node *pool_get_parse_tree(void)
+{
+	POOL_SESSION_CONTEXT *sc;
+
+	sc = pool_get_session_context();
+	if (!sc)
+		return NULL;
+
+	if (pool_is_query_in_progress() && sc->query_context)
+	{
+		return sc->query_context->parse_tree;
+	}
+	return NULL;
+}
+
+/*
+ * Returns raw query string for current query.
+ * Preconition: the query is in progress state.
+ */
+char *pool_get_query_string(void)
+{
+	POOL_SESSION_CONTEXT *sc;
+
+	sc = pool_get_session_context();
+	if (!sc)
+		return NULL;
+
+	if (pool_is_query_in_progress() && sc->query_context)
+	{
+		return sc->query_context->original_query;
+	}
+	return NULL;
 }

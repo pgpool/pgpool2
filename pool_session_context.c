@@ -116,6 +116,12 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 
 		pool_debug("selected load balancing node: %d", backend->info->load_balancing_node);
 	}
+
+	/* Unset query is in progress */
+	pool_unset_query_in_progress();
+
+	/* We don't have a write query in this transaction yet. */
+	pool_unset_writing_transaction();
 }
 
 /*
@@ -174,7 +180,7 @@ void pool_set_query_in_progress(void)
 }
 
 /*
- * Un set query is in progress
+ * Unset query is in progress
  */
 void pool_unset_query_in_progress(void)
 {
@@ -627,4 +633,43 @@ Portal *pool_get_portal_by_portal_name(const char *name)
 	}
 
 	return NULL;
+}
+
+/*
+ * We don't have a write query in this transaction yet.
+ */
+void pool_unset_writing_transaction(void)
+{
+	if (!session_context)
+	{
+		pool_error("pool_unset_writing_query: session context is not initialized");
+		return;
+	}
+	session_context->writing_trasnction = false;
+}
+
+/*
+ * We have a write query in this transaction.
+ */
+void pool_set_writing_transaction(void)
+{
+	if (!session_context)
+	{
+		pool_error("pool_set_writing_query: session context is not initialized");
+		return;
+	}
+	session_context->writing_trasnction = true;
+}
+
+/*
+ * Do we have a write query in this transaction?
+ */
+bool pool_is_writing_transaction(void)
+{
+	if (!session_context)
+	{
+		pool_error("pool_is_writing_query: session context is not initialized");
+		return false;
+	}
+	return session_context->writing_trasnction;
 }

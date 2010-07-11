@@ -1524,8 +1524,10 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 		{
 			if (VALID_BACKEND(i))
 			{
+#ifdef NOT_USED
 				snprintf(msgbuf, sizeof(msgbuf), "%c message", kind);
 				per_node_statement_log(backend, i, msgbuf);
+#endif
 
 				if (pool_write(CONNECTION(backend, i), &kind, 1))
 					return POOL_END;
@@ -1603,9 +1605,10 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 	if (kind == 'B' || kind == 'D' || kind == 'C')
 	{
 		/* Forward to the master node */
+#ifdef NOT_USED
 		snprintf(msgbuf, sizeof(msgbuf), "%c message", kind);
 		per_node_statement_log(backend, MASTER_NODE_ID, msgbuf);
-
+#endif
 		if (send_extended_protocol_message(backend, MASTER_NODE_ID, &kind, len, p))
 			return POOL_END;
 
@@ -1615,8 +1618,10 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 			{
 				if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 				{
+#ifdef NOT_USED
 					snprintf(msgbuf, sizeof(msgbuf), "%c message", kind);
 					per_node_statement_log(backend, i, msgbuf);
+#endif
 
 					/* Forward to other nodes */
 					if (send_extended_protocol_message(backend, i, &kind, len, p))
@@ -1631,8 +1636,10 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 		{
 			if (VALID_BACKEND(i))
 			{
+#ifdef NOT_USED
 				snprintf(msgbuf, sizeof(msgbuf), "%c message", kind);
 				per_node_statement_log(backend, i, msgbuf);
+#endif
 
 				if (pool_write(CONNECTION(backend, i), &kind, 1))
 				{
@@ -2187,20 +2194,6 @@ int is_commit_query(Node *node)
 
 	stmt = (TransactionStmt *)node;
 	return stmt->kind == TRANS_STMT_COMMIT || stmt->kind == TRANS_STMT_ROLLBACK;
-}
-
-/*
- * start load balance mode
- */
-void start_load_balance(POOL_CONNECTION_POOL *backend)
-{
-}
-
-/*
- * Finish load balance mode
- */
-void end_load_balance(void)
-{
 }
 
 /*
@@ -4158,9 +4151,11 @@ POOL_STATUS start_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTIO
 				if (do_command(frontend, CONNECTION(backend, i), "BEGIN", MAJOR(backend), 
 							   MASTER_CONNECTION(backend)->pid,	MASTER_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
 					return POOL_END;
+
+				/* Mark that we started new transaction */
+				INTERNAL_TRANSACTION_STARTED(backend, i) = true;
 			}
-			/* Mark that we started new transaction */
-			INTERNAL_TRANSACTION_STARTED(backend, i) = true;
+			pool_unset_writing_transaction();
 		}
 	}
 	return POOL_CONTINUE;
@@ -4172,6 +4167,8 @@ POOL_STATUS start_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTIO
 POOL_STATUS end_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 {
 	int i;
+	int len;
+	char tstate;
 #ifdef HAVE_SIGPROCMASK
 	sigset_t oldmask;
 #else
@@ -4188,32 +4185,69 @@ POOL_STATUS end_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTION_
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
 		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i) &&
-			TSTATE(backend, i) == 'I')
+			TSTATE(backend, i) == 'T' &&
+			INTERNAL_TRANSACTION_STARTED(backend, i))
 		{
+			if (MAJOR(backend) == PROTO_MAJOR_V3)
+			{
+				/*
+				 * Skip rest of Ready for Query packet
+				 */
+				if (pool_read(CONNECTION(backend, i), &len, sizeof(len)))
+				{
+					POOL_SETMASK(&oldmask);
+					return POOL_END;
+				}
+				if (pool_read(CONNECTION(backend, i), &tstate, sizeof(tstate)))
+				{
+					POOL_SETMASK(&oldmask);
+					return POOL_END;
+				}
+			}
+
 			per_node_statement_log(backend, i, "COMMIT");
 
 			/* COMMIT success? */
 			if (do_command(frontend, CONNECTION(backend, i), "COMMIT", MAJOR(backend), 
 						   MASTER_CONNECTION(backend)->pid,	MASTER_CONNECTION(backend)->key, 1) != POOL_CONTINUE)
 			{
-				INTERNAL_TRANSACTION_STARTED(backend, i) = true;
+				INTERNAL_TRANSACTION_STARTED(backend, i) = false;
 				POOL_SETMASK(&oldmask);
 				return POOL_END;
 			}
+			INTERNAL_TRANSACTION_STARTED(backend, i) = false;
 		}
 	}
 
-	/* commit on master */
-	per_node_statement_log(backend, MASTER_NODE_ID, "COMMIT");
-	if (do_command(frontend, MASTER(backend), "COMMIT", MAJOR(backend), 
-				   MASTER_CONNECTION(backend)->pid,	MASTER_CONNECTION(backend)->key, 1) != POOL_CONTINUE)
+	/* Commit on master */
+	if (TSTATE(backend, MASTER_NODE_ID) == 'T' &&
+			INTERNAL_TRANSACTION_STARTED(backend, MASTER_NODE_ID))
 	{
-		INTERNAL_TRANSACTION_STARTED(backend, MASTER_NODE_ID) = true;
-		POOL_SETMASK(&oldmask);
-		return POOL_END;
+		/*
+		 * Skip rest of Ready for Query packet
+		 */
+		if (pool_read(CONNECTION(backend, MASTER_NODE_ID), &len, sizeof(len)))
+		{
+			POOL_SETMASK(&oldmask);
+			return POOL_END;
+		}
+		if (pool_read(CONNECTION(backend, MASTER_NODE_ID), &tstate, sizeof(tstate)))
+		{
+			POOL_SETMASK(&oldmask);
+			return POOL_END;
+		}
+
+		per_node_statement_log(backend, MASTER_NODE_ID, "COMMIT");
+		if (do_command(frontend, MASTER(backend), "COMMIT", MAJOR(backend), 
+					   MASTER_CONNECTION(backend)->pid,	MASTER_CONNECTION(backend)->key, 1) != POOL_CONTINUE)
+		{
+			INTERNAL_TRANSACTION_STARTED(backend, MASTER_NODE_ID) = false;
+			POOL_SETMASK(&oldmask);
+			return POOL_END;
+		}
+		INTERNAL_TRANSACTION_STARTED(backend, MASTER_NODE_ID) = false;
 	}
 
-	INTERNAL_TRANSACTION_STARTED(backend, MASTER_NODE_ID) = true;
 	POOL_SETMASK(&oldmask);
 	return POOL_CONTINUE;
 }
