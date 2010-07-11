@@ -91,9 +91,6 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 	/* Initialize local session id */
 	pool_incremnet_local_session_id();
 
-	/* Initialize transaction state to idle */
-	session_context->transaction_state = 'I';
-
 	/* Initialize prepared statement list */
 	init_prepared_statement_list();
 
