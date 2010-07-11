@@ -296,6 +296,11 @@ int main(int argc, char **argv)
 	if (pool_init_config())
 		exit(1);
 
+	/*
+	 * Override debug level
+	 */
+	pool_config->debug_level = debug_level;
+
 	if (pool_get_config(conf_file, INIT_CONFIG))
 	{
 		pool_error("Unable to get configuration. Exiting...");
