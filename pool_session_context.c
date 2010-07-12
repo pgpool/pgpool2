@@ -645,7 +645,7 @@ void pool_unset_writing_transaction(void)
 		pool_error("pool_unset_writing_query: session context is not initialized");
 		return;
 	}
-	session_context->writing_trasnction = false;
+	session_context->writing_transaction = false;
 }
 
 /*
@@ -658,7 +658,7 @@ void pool_set_writing_transaction(void)
 		pool_error("pool_set_writing_query: session context is not initialized");
 		return;
 	}
-	session_context->writing_trasnction = true;
+	session_context->writing_transaction = true;
 }
 
 /*
@@ -671,5 +671,5 @@ bool pool_is_writing_transaction(void)
 		pool_error("pool_is_writing_query: session context is not initialized");
 		return false;
 	}
-	return session_context->writing_trasnction;
+	return session_context->writing_transaction;
 }

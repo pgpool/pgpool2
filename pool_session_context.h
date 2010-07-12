@@ -84,9 +84,15 @@ typedef struct {
 	bool in_progress;
 
 	/* If true write query has been appeared in this transaction */
-	bool writing_trasnction;
+	bool writing_transaction;
 
-	POOL_QUERY_CONTEXT *query_context;	/* associated query context */
+	/*
+	 * Associated query context, only used for non-extended
+	 * protocol. In extended protocol, the query context resides in
+	 * "PreparedStatementList *pstmt_list" (see below).
+	 */
+	POOL_QUERY_CONTEXT *query_context;
+
 	POOL_MEMORY_POOL *memory_context;	/* memory context for session */
 	PreparedStatement *unnamed_pstmt;	/* unnamed statement */
 	PreparedStatement *pending_pstmt;	/* used until receive backend response */
