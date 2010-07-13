@@ -31,7 +31,17 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 
-static bool is_should_be_sent_to_primary(Node *node);
+/*
+ * Where to send query
+ */
+typedef enum {
+	POOL_PRIMARY,
+	POOL_STANDBY,
+	POOL_EITHER,
+	POOL_BOTH
+} POOL_DEST;
+
+static POOL_DEST send_to_where(Node *node);
 
 /*
  * Create and initialize per query session context
@@ -255,10 +265,20 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 		/* Streaming Replication+Hot Standby? */
 		if (!strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
 		{
+			POOL_DEST dest;
+
+			dest = send_to_where(node);
+			pool_debug("send_to_where: %d query: %s", dest, query);
+
 			/* Should be sent to primary only? */
-			if (is_should_be_sent_to_primary(node))
+			if (dest == POOL_PRIMARY)
 			{
 				pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
+			}
+			/* Should be sent to both primary and standby? */
+			else if (dest == POOL_BOTH)
+			{
+				pool_setall_node_to_be_sent(query_context);
 			}
 
 			/*
@@ -270,10 +290,21 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					is_select_query(node, query) &&
 					MAJOR(backend) == PROTO_MAJOR_V3)
 				{
+#ifdef NOT_USED
+					/* 
+					 * If (we are outside of an explicit transaction) OR
+					 * (the transaction has not issued a write query yet, AND
+					 *	transaction isolation level is not SERIALIZABLE)
+					 * we might be able to load balance.
+					 */
+					if (TSTATE(backend, MASTER_NODE_ID) == 'I' ||
+						(!pool_is_writing_transaction() &&
+						 pool_get_transaction_isolation() != POOL_SERIALIZABLE))
+#endif
 					/* 
 					 * If we are outside of an explicit transaction OR
-					 * the transaction has not issued a write query
-					 * yet, we might be able to load balance.
+					 * the transaction has not issued a write query yet,
+					 * we might be able to load balance.
 					 */
 					if (TSTATE(backend, MASTER_NODE_ID) == 'I' ||
 						!pool_is_writing_transaction())
@@ -306,8 +337,8 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 				}
 				else
 				{
-					/* Send to all nodes */
-					pool_setall_node_to_be_sent(query_context);
+					/* Send to the primary only */
+					pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
 				}
 			}
 		}
@@ -476,10 +507,10 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context, char *query, i
 }
 
 /*
- * Decide if the statement should be sent to primary only in
- * master/slave+HR/SR mode.
+ * From syntactically analysis decide the statement to be sent to the
+ * primary, the standby or either or both in master/slave+HR/SR mode.
  */
-static bool is_should_be_sent_to_primary(Node *node)
+static POOL_DEST send_to_where(Node *node)
 {
 /* From storage/lock.h */
 #define NoLock					0
@@ -496,7 +527,9 @@ static bool is_should_be_sent_to_primary(Node *node)
 #define AccessExclusiveLock		8		/* ALTER TABLE, DROP TABLE, VACUUM
 										 * FULL, and unqualified LOCK TABLE */
 
+/* From 9.0 include/nodes/node.h */
 	static NodeTag nodemap[] = {
+		T_PlannedStmt,
 		T_InsertStmt,
 		T_DeleteStmt,
 		T_UpdateStmt,
@@ -507,6 +540,9 @@ static bool is_should_be_sent_to_primary(Node *node)
 		T_SetOperationStmt,
 		T_GrantStmt,
 		T_GrantRoleStmt,
+		/*
+		T_AlterDefaultPrivilegesStmt,	Our parser does not support yet
+		*/
 		T_ClosePortalStmt,
 		T_ClusterStmt,
 		T_CopyStmt,
@@ -515,36 +551,32 @@ static bool is_should_be_sent_to_primary(Node *node)
 		T_DropStmt,		/* DROP TABLE etc. */
 		T_TruncateStmt,
 		T_CommentStmt,
-		/*
-		  T_FetchStmt,
-		*/
+		T_FetchStmt,
 		T_IndexStmt,	/* CREATE INDEX */
 		T_CreateFunctionStmt,
 		T_AlterFunctionStmt,
 		T_RemoveFuncStmt,
+		/*
+		T_DoStmt,		Our parser does not support yet
+		*/
 		T_RenameStmt,	/* ALTER AGGREGATE etc. */
 		T_RuleStmt,		/* CREATE RULE */
 		T_NotifyStmt,
 		T_ListenStmt,
 		T_UnlistenStmt,
+		T_TransactionStmt,
 		T_ViewStmt,		/* CREATE VIEW */
-		/*
-		  T_LoadStmt,
-		*/
+		T_LoadStmt,
 		T_CreateDomainStmt,
 		T_CreatedbStmt,
 		T_DropdbStmt,
 		T_VacuumStmt,
-		/*
-		  T_ExplainStmt,		XXX: explain analyze?
-		*/
+		T_ExplainStmt,
 		T_CreateSeqStmt,
 		T_AlterSeqStmt,
 		T_VariableSetStmt,		/* SET */
-		/*
 		T_VariableShowStmt,
 		T_DiscardStmt,
-		*/
 		T_CreateTrigStmt,
 		T_DropPropertyStmt,
 		T_CreatePLangStmt,
@@ -555,6 +587,7 @@ static bool is_should_be_sent_to_primary(Node *node)
 		T_LockStmt,
 		T_ConstraintsSetStmt,
 		T_ReindexStmt,
+		T_CheckPointStmt,
 		T_CreateSchemaStmt,
 		T_AlterDatabaseStmt,
 		T_AlterDatabaseSetStmt,
@@ -569,10 +602,8 @@ static bool is_should_be_sent_to_primary(Node *node)
 		T_RemoveOpFamilyStmt,
 		T_PrepareStmt,
 		T_ExecuteStmt,
-		/*
-		  T_DeallocateStmt,		DEALLOCATE
-		  T_DeclareCursorStmt,	DECLARE
-		*/
+		T_DeallocateStmt,		/* DEALLOCATE */
+		T_DeclareCursorStmt,	/* DECLARE */
 		T_CreateTableSpaceStmt,
 		T_DropTableSpaceStmt,
 		T_AlterObjectSchemaStmt,
@@ -592,6 +623,9 @@ static bool is_should_be_sent_to_primary(Node *node)
 		T_CreateUserMappingStmt,
 		T_AlterUserMappingStmt,
 		T_DropUserMappingStmt,
+		/*
+		T_AlterTableSpaceOptionsStmt,	Our parser does not support yet
+		*/
 	};
 
 	if (bsearch(&nodeTag(node), nodemap, sizeof(nodemap)/sizeof(nodemap[0]),
@@ -605,20 +639,20 @@ static bool is_should_be_sent_to_primary(Node *node)
 		{
 			/* SELECT INTO? */
 			if (((SelectStmt *)node)->intoClause)
-				return true;
+				return POOL_PRIMARY;
 
 			/* SELECT FOR SHARE or UPDATE */
 			else if (((SelectStmt *)node)->lockingClause)
-				return true;
+				return POOL_PRIMARY;
 
 			/*
 			 * SELECT nextval(), setval()
 			 * XXX: We do not search in subquery.
 			 */
 			else if (is_sequence_query(node))
-				return true;
+				return POOL_PRIMARY;
 
-			return false;
+			return POOL_EITHER;
 		}
 
 		/*
@@ -626,7 +660,7 @@ static bool is_should_be_sent_to_primary(Node *node)
 		 */
 		else if (IsA(node, CopyStmt))
 		{
-			return ((CopyStmt *)node)->is_from;
+			return (((CopyStmt *)node)->is_from)?POOL_PRIMARY:POOL_EITHER;
 		}
 
 		/*
@@ -634,7 +668,7 @@ static bool is_should_be_sent_to_primary(Node *node)
 		 */
 		else if (IsA(node, LockStmt))
 		{
-			return (((LockStmt *)node)->mode >= RowExclusiveLock);
+			return (((LockStmt *)node)->mode >= RowExclusiveLock)?POOL_PRIMARY:POOL_BOTH;
 		}
 
 		/*
@@ -661,10 +695,10 @@ static bool is_should_be_sent_to_primary(Node *node)
 
 						read_only = ((A_Const *)opt->arg)->val.val.ival;
 						if (!read_only)
-							return true;
+							return POOL_PRIMARY;
 					}
 				}
-				return false;
+				return POOL_BOTH;
 			}
 
 			/*
@@ -673,10 +707,10 @@ static bool is_should_be_sent_to_primary(Node *node)
 			else if (((TransactionStmt *)node)->kind == TRANS_STMT_PREPARE ||
 					 ((TransactionStmt *)node)->kind == TRANS_STMT_COMMIT_PREPARED ||
 					 ((TransactionStmt *)node)->kind == TRANS_STMT_ROLLBACK_PREPARED)
-				return true;
+				return POOL_PRIMARY;
 
 			else
-				return false;
+				return POOL_BOTH;
 		}
 
 		/*
@@ -685,7 +719,7 @@ static bool is_should_be_sent_to_primary(Node *node)
 		else if (IsA(node, VariableSetStmt))
 		{
 			ListCell   *list_item;
-			bool ret = false;
+			bool ret = POOL_BOTH;
 
 			/*
 			 * SET transaction_read_only TO off
@@ -704,11 +738,11 @@ static bool is_should_be_sent_to_primary(Node *node)
 							if (!strcasecmp(v->val.val.str, "off") ||
 								!strcasecmp(v->val.val.str, "f") ||
 								!strcasecmp(v->val.val.str, "false"))
-								ret = true;
+								ret = POOL_PRIMARY;
 							break;
 						case T_Integer:
 							if (v->val.val.ival)
-								ret = true;
+								ret = POOL_PRIMARY;
 						default:
 							break;
 					}
@@ -735,21 +769,31 @@ static bool is_should_be_sent_to_primary(Node *node)
 
 						read_only = ((A_Const *)opt->arg)->val.val.ival;
 						if (!read_only)
-							return true;
+							return POOL_PRIMARY;
 					}
 				}
-				return false;
+				return POOL_BOTH;
 			}
 			else
-				return false;
+			{
+				/*
+				 * All other SET command sent to both primary and
+				 * standby
+				 */
+				return POOL_BOTH;
+			}
 		}
-		return true;
+
+		/*
+		 * Other statements are sent to primary
+		 */
+		return POOL_PRIMARY;
 	}
 
 	/*
-	 * All unknown statements are sent to master
+	 * All unknown statements are sent to primary
 	 */
-	return true;
+	return POOL_PRIMARY;
 }
 
 /*
@@ -789,3 +833,71 @@ char *pool_get_query_string(void)
 	}
 	return NULL;
 }
+
+/*
+ * Return true if the query is:
+ * SET TRANSACTION ISOLATION LEVEL SERIALIZABLE or
+ * SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE or
+ * SET transaction_isolation TO 'serializable'
+ */
+bool is_set_transaction_serializable(Node *node, char *query)
+{
+	ListCell   *list_item;
+
+	if (!IsA(node, VariableSetStmt))
+		return false;
+
+	if (((VariableSetStmt *)node)->kind == VAR_SET_VALUE &&
+		!strcmp(((VariableSetStmt *)node)->name, "transaction_isolation"))
+	{
+		List *options = ((VariableSetStmt *)node)->args;
+		foreach(list_item, options)
+		{
+			A_Const *v = (A_Const *)lfirst(list_item);
+
+			switch (v->val.type)
+			{
+				case T_String:
+					if (!strcasecmp(v->val.val.str, "serializable"))
+						return true;
+					break;
+				default:
+					break;
+			}
+		}
+		return false;
+	}
+
+	else if (((VariableSetStmt *)node)->kind == VAR_SET_MULTI &&
+			 (!strcmp(((VariableSetStmt *)node)->name, "TRANSACTION") ||
+			  !strcmp(((VariableSetStmt *)node)->name, "SESSION CHARACTERISTICS")))
+	{
+		List *options = ((VariableSetStmt *)node)->args;
+		foreach(list_item, options)
+		{
+			DefElem *opt = (DefElem *) lfirst(list_item);
+			if (!strcmp("transaction_isolation", opt->defname))
+			{
+				A_Const *v = (A_Const *)opt->arg;
+ 
+				if (!strcasecmp(v->val.val.str, "serializable"))
+					return true;
+			}
+		}
+	}
+	return false;
+}
+
+/*
+ * Return true if the query is 2PC transaction query.
+ */
+bool is_2pc_transaction_query(Node *node, char *query)
+{
+	if (((TransactionStmt *)node)->kind == TRANS_STMT_PREPARE ||
+		((TransactionStmt *)node)->kind == TRANS_STMT_COMMIT_PREPARED ||
+		((TransactionStmt *)node)->kind == TRANS_STMT_ROLLBACK_PREPARED)
+		return true;
+
+	return false;
+}
+

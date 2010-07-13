@@ -1153,6 +1153,9 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		pool_flush(frontend);
 	}
 
+#ifdef NOT_USED
+	if (pool_is_query_in_progress() && pool_is_command_success())
+#endif
 	if (pool_is_query_in_progress())
 	{
 		Node *node;
@@ -1165,11 +1168,47 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		{
 			/*
 			 * If the query was BEGIN/START TRANSACTION, clear the
-			 * history that we had writing command in the transaction.
+			 * history that we had writing command in the transaction
+			 * and forget the transaction isolation level.
 			 */
 			if (is_start_transaction_query(node))
 			{
 				pool_unset_writing_transaction();
+				pool_unset_transaction_isolation();
+			}
+
+#ifdef NOT_USED
+			/*
+			 * SET TRANSACTION ISOLATION LEVEL SERIALIZABLE or SET
+			 * SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL
+			 * SERIALIZABLE, remember it.
+			 */
+			else if (is_set_transaction_serializable(node, query))
+			{
+				pool_set_transaction_isolation(POOL_SERIALIZABLE);
+			}
+#endif
+			/*
+			 * If 2PC commands, automatically close transaction on standbys since
+			 * 2PC commands close transaction on standby.
+			 */
+			else if (is_2pc_transaction_query(node, query))
+			{
+				for (i=0;i<NUM_BACKENDS;i++)
+				{
+					if (TSTATE(backend, i) == 'T' &&
+						BACKEND_INFO(i).backend_status == CON_UP &&
+						REAL_MASTER_NODE_ID != i)
+					{
+						per_node_statement_log(backend, i, "COMMIT");
+						if (do_command(frontend, CONNECTION(backend, i), "COMMIT", MAJOR(backend), 
+									   MASTER_CONNECTION(backend)->pid,
+									   MASTER_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
+						{
+							return POOL_END;
+						}
+					}
+				}
 			}
 
 			/*

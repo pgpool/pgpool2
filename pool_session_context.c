@@ -120,8 +120,14 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 	/* Unset query is in progress */
 	pool_unset_query_in_progress();
 
+	/*The command in progress has not succeeded yet */
+	pool_unset_command_success();
+
 	/* We don't have a write query in this transaction yet. */
 	pool_unset_writing_transaction();
+
+	/* Forget transaction isolation mode */
+	pool_unset_transaction_isolation();
 }
 
 /*
@@ -684,4 +690,130 @@ bool pool_is_writing_transaction(void)
 		return false;
 	}
 	return session_context->writing_transaction;
+}
+
+/*
+ * Forget transaction isolation mode
+ */
+void pool_unset_transaction_isolation(void)
+{
+	if (!session_context)
+	{
+		pool_error("pool_unset_transaction_isolation: session context is not initialized");
+		return;
+	}
+	session_context->transaction_isolation = POOL_UNKNOWN;
+}
+
+/*
+ * Set transaction isolation mode
+ */
+void pool_set_transaction_isolation(POOL_TRANSACTION_ISOLATION isolation_level)
+{
+	if (!session_context)
+	{
+		pool_error("pool_set_transaction_isolation: session context is not initialized");
+		return;
+	}
+	session_context->transaction_isolation = isolation_level;
+}
+
+/*
+ * Get or return cached transaction isolation mode
+ */
+POOL_TRANSACTION_ISOLATION pool_get_transaction_isolation(void)
+{
+	POOL_STATUS status;
+	POOL_SELECT_RESULT *res;
+	POOL_TRANSACTION_ISOLATION ret;
+
+	if (!session_context)
+	{
+		pool_error("pool_get_transaction_isolation: session context is not initialized");
+		return POOL_UNKNOWN;
+	}
+
+	/* It seems cached result is usable. Return it. */
+	if (session_context->transaction_isolation != POOL_UNKNOWN)
+		return session_context->transaction_isolation;
+
+	/* No cached data is available. Ask backend. */
+	status = do_query(MASTER(session_context->backend),
+					  "SELECT current_setting('transaction_isolation')", &res, MAJOR(session_context->backend));
+
+	if (res->numrows <= 0)
+	{
+		pool_error("pool_get_transaction_isolation: do_query returns no rows");
+		free_select_result(res);
+		return POOL_UNKNOWN;
+	}
+	if (res->data[0] == NULL)
+	{
+		pool_error("pool_get_transaction_isolation: do_query returns no data");
+		free_select_result(res);
+		return POOL_UNKNOWN;
+	}
+	if (res->nullflags[0] == -1)
+	{
+		pool_error("pool_get_transaction_isolation: do_query returns NULL");
+		free_select_result(res);
+		return POOL_UNKNOWN;
+	}
+
+	if (!strcmp(res->data[0], "read committed"))
+		ret = POOL_READ_COMMITTED;
+	else if (!strcmp(res->data[0], "serializable"))
+		ret = POOL_SERIALIZABLE;
+	else
+	{
+		pool_error("pool_get_transaction_isolation: unknown transaction isolation level:%s",
+				   res->data[0]);
+		ret = POOL_UNKNOWN;
+	}   
+
+	free_select_result(res);
+
+	if (ret != POOL_UNKNOWN)
+		session_context->transaction_isolation = ret;
+
+	return ret;
+}
+
+/*
+ * The command in progress has not succeeded yet.
+ */
+void pool_unset_command_success(void)
+{
+	if (!session_context)
+	{
+		pool_error("pool_unset_command_success: session context is not initialized");
+		return;
+	}
+	session_context->command_success = false;
+}
+
+/*
+ * The command in progress has succeeded.
+ */
+void pool_set_command_success(void)
+{
+	if (!session_context)
+	{
+		pool_error("pool_set_command_success: session context is not initialized");
+		return;
+	}
+	session_context->command_success = true;
+}
+
+/*
+ * Has the command in progress succeeded?
+ */
+bool pool_is_command_success(void)
+{
+	if (!session_context)
+	{
+		pool_error("pool_is_command_success: session context is not initialized");
+		return false;
+	}
+	return session_context->command_success;
 }

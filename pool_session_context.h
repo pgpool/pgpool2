@@ -70,6 +70,15 @@ typedef struct {
 } PortalList;
 
 /*
+ * Transaction isolation mode
+ */
+typedef enum {
+	POOL_UNKNOWN,				/* Unknown. Need to ask backend */
+	POOL_READ_COMMITTED,		/* Read committed */
+	POOL_SERIALIZABLE			/* Serializable */
+} POOL_TRANSACTION_ISOLATION;
+
+/*
  * Per session context:
  */
 typedef struct {
@@ -79,12 +88,20 @@ typedef struct {
 
 	/* If true, we are waiting for backend response.  For SELECT this
 	 * flags should be kept until all responses are returned from
-	 * backend
+	 * backend. i.e. until "Read for Query" packet.
 	 */
 	bool in_progress;
 
+	/* If true, the command in progress has finished sucessfully. */
+	bool command_success;
+
 	/* If true write query has been appeared in this transaction */
 	bool writing_transaction;
+
+	/*
+	 * Transaction isolation mode.
+	 */
+	POOL_TRANSACTION_ISOLATION transaction_isolation;
 
 	/*
 	 * Associated query context, only used for non-extended
@@ -176,6 +193,12 @@ extern Portal *pool_get_portal_by_portal_name(const char *name);
 
 extern void pool_unset_writing_transaction(void);
 extern void pool_set_writing_transaction(void);
-bool pool_is_writing_transaction(void);
+extern bool pool_is_writing_transaction(void);
+extern void pool_unset_transaction_isolation(void);
+extern void pool_set_transaction_isolation(POOL_TRANSACTION_ISOLATION isolation_level);
+extern POOL_TRANSACTION_ISOLATION pool_get_transaction_isolation(void);
+extern void pool_unset_command_success(void);
+extern void pool_set_command_success(void);
+extern bool pool_is_command_success(void);
 
 #endif /* POOL_SESSION_CONTEXT_H */
