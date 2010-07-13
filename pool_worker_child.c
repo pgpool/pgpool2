@@ -198,6 +198,7 @@ static void check_replication_time_lag(void)
 		if (sts != POOL_CONTINUE)
 		{
 			pool_error("check_replication_time_lag: %s failed", query);
+			slots[i] = NULL;
 			return;
 		}
 		if (!res)
