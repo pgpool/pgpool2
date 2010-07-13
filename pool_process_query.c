@@ -1233,6 +1233,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_C
 		 */
 		pool_remove_pending_objects();
 	}
+
 	/* 
 	 * The response of Execute command will be EmptyQueryResponse(I),
 	 * if Bind error occurs.
@@ -4154,8 +4155,8 @@ POOL_STATUS start_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTIO
 
 				/* Mark that we started new transaction */
 				INTERNAL_TRANSACTION_STARTED(backend, i) = true;
+				pool_unset_writing_transaction();
 			}
-			pool_unset_writing_transaction();
 		}
 	}
 	return POOL_CONTINUE;
