@@ -270,12 +270,12 @@ void do_child(int unix_fd, int inet_fd)
 			 */
 			if (sp->len != MASTER_CONNECTION(backend)->sp->len)
 			{
-				pool_debug("pool_process_query: connection exists but startup packet length is not identical");
+				pool_debug("do_child: connection exists but startup packet length is not identical");
 				found = 0;
 			}
 			else if(memcmp(sp->startup_packet, MASTER_CONNECTION(backend)->sp->startup_packet, sp->len) != 0)
 			{
-				pool_debug("pool_process_query: connection exists but startup packet contents is not identical");
+				pool_debug("do_child: connection exists but startup packet contents is not identical");
 				found = 0;
 			}
 
