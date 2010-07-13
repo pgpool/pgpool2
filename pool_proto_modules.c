@@ -105,12 +105,12 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
  POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 						 POOL_CONNECTION_POOL *backend, char *query)
 {
-	char *string, *string1;
+	char *string;
 	int len;
 	static char *sq = "show pool_status";
 	int commit;
 	List *parse_tree_list;
-	Node *node = NULL, *node1;
+	Node *node = NULL;
 	POOL_STATUS status;
 
 	POOL_SESSION_CONTEXT *session_context;
@@ -195,6 +195,11 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 				return POOL_ERROR;
 			}
 		}
+
+		/*
+		 * Start query context
+		 */
+		pool_start_query(query_context, string, node);
 
 		if (PARALLEL_MODE)
 		{
@@ -289,7 +294,10 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 				PreparedStatement *ps;
 
 				name = ((DeallocateStmt *)node)->name;
-				ps = pool_create_prepared_statement(name, 0, query_context);
+				if (name == NULL)
+					ps = pool_create_prepared_statement("", 0, query_context);
+				else
+					ps = pool_create_prepared_statement(name, 0, query_context);
 				if (ps == NULL)
 				{
 					pool_error("SimpleQuery: failed to create prepared statement: %s", strerror(errno));
@@ -320,33 +328,19 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 			PreparedStatement *ps;
 
 			ps = pool_get_prepared_statement_by_pstmt_name(((ExecuteStmt *)node)->name);
-
 			if (ps)
 			{
-				string1 = ps->qctxt->original_query;
-				node1 = ps->qctxt->parse_tree;
-			}
-			else
-			{
-				string1 = string;
-				node1 = node;
+				free_parser();
+				pool_query_context_destroy(query_context);
+				query_context = ps->qctxt;
 			}
 		}
-		else
-		{
-			string1 = string;
-			node1 = node;
-		}
-
-		/*
-		 * Start query context
-		 */
-		pool_start_query(query_context, string1, node1);
 
 		/*
 		 * Decide where to send query
 		 */
-		pool_where_to_send(query_context, string1, node1);
+		pool_where_to_send(query_context, query_context->original_query,
+						   query_context->parse_tree);
 
 		/*
 		 * determine if we need to lock the table
@@ -431,14 +425,19 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 					ps = pool_get_prepared_statement_by_pstmt_name(((ExecuteStmt *) node)->name);
 
 				/* rewrite `now()' to timestamp literal */
-				rewrite_query = rewrite_timestamp(backend, node, false, ps);
+				rewrite_query = rewrite_timestamp(backend, query_context->parse_tree, false, ps);
 				if (rewrite_query != NULL)
 				{
-					string = rewrite_query;
+					query_context->rewritten_query = rewrite_query;
 					len = strlen(string) + 1;
 				}
 
 			}
+
+			if (query_context->rewritten_query == NULL)
+				string = query_context->original_query;
+			else
+				string = query_context->rewritten_query;
 
 			/*
 			 * Optimization effort: If there's only one session, we do
