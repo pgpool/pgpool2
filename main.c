@@ -2141,6 +2141,7 @@ static int trigger_failover_command(int node, const char *command_line)
 	char port_buf[6];
 	char buf[2];
 	BackendInfo *info;
+	BackendInfo *newmaster;
 
 	if (command_line == NULL || (strlen(command_line) == 0))
 		return 0;
@@ -2187,6 +2188,11 @@ static int trigger_failover_command(int node, const char *command_line)
 
 					case 'h': /* host name */
 						string_append_char(exec_cmd, info->backend_hostname);
+						break;
+
+					case 'H': /* new master host name */
+						newmaster = pool_get_node_info(get_next_master_node());
+						string_append_char(exec_cmd, newmaster->backend_hostname);
 						break;
 
 					case 'm': /* new master node id */
