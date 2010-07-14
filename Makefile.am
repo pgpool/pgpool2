@@ -21,11 +21,9 @@ pgpool_SOURCES = pool.h pool_type.h version.h pgpool.conf.sample \
 	pool_passwd.c pool_passwd.h \
 	pool_globals.c
 
-pgpool_DEFS = -DPGPOOL_MAIN
-
 pg_md5_SOURCES = pg_md5.c md5.c md5.h \
 	pool.h \
-	pool_config.l pool_config.h \
+	pool_config_md5.c pool_config.h \
 	pool_error.c \
 	pool_signal.h pool_signal.c \
 	pool_passwd.c pool_passwd.h \

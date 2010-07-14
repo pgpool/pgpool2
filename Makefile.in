@@ -61,7 +61,7 @@ am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man8dir)" \
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_pg_md5_OBJECTS = pg_md5.$(OBJEXT) md5.$(OBJEXT) \
-	pool_config.$(OBJEXT) pool_error.$(OBJEXT) \
+	pool_config_md5.$(OBJEXT) pool_error.$(OBJEXT) \
 	pool_signal.$(OBJEXT) pool_passwd.$(OBJEXT) \
 	pool_globals.$(OBJEXT)
 pg_md5_OBJECTS = $(am_pg_md5_OBJECTS)
@@ -98,7 +98,6 @@ LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 LEXCOMPILE = $(LEX) $(LFLAGS) $(AM_LFLAGS)
 LTLEXCOMPILE = $(LIBTOOL) --mode=compile $(LEX) $(LFLAGS) $(AM_LFLAGS)
-YLWRAP = $(top_srcdir)/ylwrap
 SOURCES = $(pg_md5_SOURCES) $(pgpool_SOURCES)
 DIST_SOURCES = $(pg_md5_SOURCES) $(pgpool_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
@@ -261,10 +260,9 @@ pgpool_SOURCES = pool.h pool_type.h version.h pgpool.conf.sample \
 	pool_passwd.c pool_passwd.h \
 	pool_globals.c
 
-pgpool_DEFS = -DPGPOOL_MAIN
 pg_md5_SOURCES = pg_md5.c md5.c md5.h \
 	pool.h \
-	pool_config.l pool_config.h \
+	pool_config_md5.c pool_config.h \
 	pool_error.c \
 	pool_signal.h pool_signal.c \
 	pool_passwd.c pool_passwd.h \
@@ -423,6 +421,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pg_md5.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_auth.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_config.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_config_md5.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_connection_pool.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_error.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_globals.Po@am__quote@
@@ -477,7 +476,9 @@ distclean-compile:
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
 .l.c:
-	$(SHELL) $(YLWRAP) $< $(LEX_OUTPUT_ROOT).c $@ -- $(LEXCOMPILE)
+	$(LEXCOMPILE) $<
+	sed '/^#/ s|$(LEX_OUTPUT_ROOT)\.c|$@|' $(LEX_OUTPUT_ROOT).c >$@
+	rm -f $(LEX_OUTPUT_ROOT).c
 
 mostlyclean-libtool:
 	-rm -f *.lo
