@@ -161,6 +161,7 @@ static void establish_persistent_connection(void)
 static void check_replication_time_lag(void)
 {
 	int i;
+	int active_nodes = 0;
 	POOL_STATUS sts;
 	POOL_SELECT_RESULT *res;
 	unsigned long long int lsn[MAX_NUM_BACKENDS];
@@ -171,6 +172,20 @@ static void check_replication_time_lag(void)
 	if (NUM_BACKENDS <= 1)
 	{
 		/* If there's only one node, there's no point to do checking */
+		return;
+	}
+
+	/* Count healthy nodes */
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+			active_nodes++;
+	}
+
+	if (active_nodes <= 1)
+	{
+		/* If there's only one or less active node, there's no point
+		 * to do checking */
 		return;
 	}
 
