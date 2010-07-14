@@ -1190,7 +1190,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 #endif
 			/*
 			 * If 2PC commands, automatically close transaction on standbys since
-			 * 2PC commands close transaction on standby.
+			 * 2PC commands close transaction on primary.
 			 */
 			else if (is_2pc_transaction_query(node, query))
 			{
