@@ -156,7 +156,8 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 			{
 				for (i=0;i<NUM_BACKENDS;i++)
 				{
-					TSTATE(backend, i) = 'I';
+					if (VALID_BACKEND(i))
+						TSTATE(backend, i) = 'I';
 				}
 				frontend->no_forward = 0;
 				return POOL_CONTINUE;
@@ -1496,7 +1497,6 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CO
 	int i;
 	char *rewrite_msg = NULL;
 	POOL_STATUS ret;
-	char msgbuf[128];
 	PreparedStatement *pstmt;
 	Portal *portal;
 	POOL_SESSION_CONTEXT *session_context;
