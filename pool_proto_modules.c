@@ -176,6 +176,19 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 	/* parse SQL string */
 	parse_tree_list = raw_parser(string);
 
+	if (parse_tree_list == NIL)
+	{
+		/*
+		 * Unable to parse the query. Probably syntax error or the
+		 * query is too new and our parser cannot understand. Treat as
+		 * if it were an ordinaly SET command(thus replicated).
+		 */
+		char *p = "SET DATESTYLE to ISO";
+
+		pool_log("SimpleQuery: Unable to parse the query: %s", string);
+		parse_tree_list = raw_parser(p);
+	}
+
 	if (parse_tree_list != NIL)
 	{
 		/*
@@ -375,21 +388,6 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 			return POOL_ERROR;
 		}
 	}
-	else
-	{
-		/*
-		 * Unable to parse the query. Probably syntax error or the
-		 * query is too new and our parser cannot understand. Treat as
-		 * if it were an ordinaly SET command(thus replicated).
-		 */
-		char *p = "SET DATESTYLE TO ISO";
-		parse_tree_list = raw_parser(p);
-		node = (Node *) lfirst(list_head(parse_tree_list));
-		pool_where_to_send(query_context, p, node);
-		free_parser();
-		node = NULL;
-	}
-
 	if (MAJOR(backend) == PROTO_MAJOR_V2 && is_start_transaction_query(node))
 	{
 		int i;
@@ -1196,7 +1194,8 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			{
 				for (i=0;i<NUM_BACKENDS;i++)
 				{
-					if (TSTATE(backend, i) == 'T' &&
+					if (CONNECTION_SLOT(backend, i) &&
+						TSTATE(backend, i) == 'T' &&
 						BACKEND_INFO(i).backend_status == CON_UP &&
 						REAL_MASTER_NODE_ID != i)
 					{
