@@ -788,6 +788,14 @@ static POOL_DEST send_to_where(Node *node)
 		}
 
 		/*
+		 * DISCARD
+		 */
+		else if (IsA(node, DiscardStmt))
+		{
+			return POOL_BOTH;
+		}
+
+		/*
 		 * Other statements are sent to primary
 		 */
 		return POOL_PRIMARY;
