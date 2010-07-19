@@ -41,7 +41,7 @@ typedef enum {
 	POOL_BOTH
 } POOL_DEST;
 
-static POOL_DEST send_to_where(Node *node);
+static POOL_DEST send_to_where(Node *node, char *query);
 
 /*
  * Create and initialize per query session context
@@ -270,7 +270,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 		{
 			POOL_DEST dest;
 
-			dest = send_to_where(node);
+			dest = send_to_where(node, query);
 			pool_debug("send_to_where: %d query: %s", dest, query);
 
 			/* Should be sent to primary only? */
@@ -513,7 +513,7 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context, char *query, i
  * From syntactically analysis decide the statement to be sent to the
  * primary, the standby or either or both in master/slave+HR/SR mode.
  */
-static POOL_DEST send_to_where(Node *node)
+static POOL_DEST send_to_where(Node *node, char *query)
 {
 /* From storage/lock.h */
 #define NoLock					0
@@ -707,11 +707,8 @@ static POOL_DEST send_to_where(Node *node)
 			/*
 			 * 2PC commands
 			 */
-			else if (((TransactionStmt *)node)->kind == TRANS_STMT_PREPARE ||
-					 ((TransactionStmt *)node)->kind == TRANS_STMT_COMMIT_PREPARED ||
-					 ((TransactionStmt *)node)->kind == TRANS_STMT_ROLLBACK_PREPARED)
+			else if (is_2pc_transaction_query(node, query))
 				return POOL_PRIMARY;
-
 			else
 				return POOL_BOTH;
 		}
