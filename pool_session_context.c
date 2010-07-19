@@ -128,6 +128,10 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 
 	/* Forget transaction isolation mode */
 	pool_unset_transaction_isolation();
+
+	/* Initialize where to send map for PREPARE statemets */
+	memset(&session_context->prep_where, 0, sizeof(session_context->prep_where));
+	session_context->prep_where.nelem = POOL_MAX_PREPARED_STATEMENTS;
 }
 
 /*
@@ -816,4 +820,84 @@ bool pool_is_command_success(void)
 		return false;
 	}
 	return session_context->command_success;
+}
+
+/*
+ * Copy send map
+ */
+void pool_copy_prep_where(bool *src, bool *dest)
+{
+	memcpy(dest, src, sizeof(bool)*MAX_NUM_BACKENDS);
+}
+
+/*
+ * Add to send map a PREPARED statement
+ */
+void pool_add_prep_where(char *name, bool *map)
+{
+	int i;
+
+	if (!session_context)
+	{
+		pool_error("pool_add_prep_where: session context is not initialized");
+		return;
+	}
+
+	for (i=0;i<POOL_MAX_PREPARED_STATEMENTS;i++)
+	{
+		if (*session_context->prep_where.name[i] == '\0')
+		{
+			strncpy(session_context->prep_where.name[i], name, POOL_MAX_PREPARED_NAME);
+			pool_copy_prep_where(map, session_context->prep_where.where_to_send[i]);
+			return;
+		}
+	}
+	pool_error("pool_add_prep_where: no empty slot found");
+}
+
+/*
+ * Search send map by PREPARED statement name
+ */
+bool *pool_get_prep_where(char *name)
+{
+	int i;
+
+	if (!session_context)
+	{
+		pool_error("pool_get_prep_where: session context is not initialized");
+		return NULL;
+	}
+
+	for (i=0;i<POOL_MAX_PREPARED_STATEMENTS;i++)
+	{
+		if (!strcmp(session_context->prep_where.name[i], name))
+		{
+			return session_context->prep_where.where_to_send[i];
+		}
+	}
+	return NULL;
+}
+
+/*
+ * Remove PREPARED statement by name
+ */
+void pool_delete_prep_where(char *name)
+{
+	int i;
+
+	if (!session_context)
+	{
+		pool_error("pool_delete_prep_where: session context is not initialized");
+		return;
+	}
+
+	for (i=0;i<POOL_MAX_PREPARED_STATEMENTS;i++)
+	{
+		if (!strcmp(session_context->prep_where.name[i], name))
+		{
+			memcpy(&session_context->prep_where.where_to_send[i], 0, sizeof(bool)*MAX_NUM_BACKENDS);
+			*session_context->prep_where.name[i] = '\0';
+			return;
+		}
+	}
 }

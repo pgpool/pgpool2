@@ -79,6 +79,18 @@ typedef enum {
 } POOL_TRANSACTION_ISOLATION;
 
 /*
+ * where to send map for PREPARE/EXECUTE/DEALLOCATE
+ */
+#define POOL_MAX_PREPARED_STATEMENTS 128
+#define POOL_MAX_PREPARED_NAME 64
+
+typedef struct {
+	int nelem;	/* Number of elements */
+	char name[POOL_MAX_PREPARED_STATEMENTS][POOL_MAX_PREPARED_NAME];		/* Prepared statement name */
+	bool where_to_send[POOL_MAX_PREPARED_STATEMENTS][MAX_NUM_BACKENDS];
+} POOL_PREPARED_SEND_MAP;
+	
+/*
  * Per session context:
  */
 typedef struct {
@@ -109,6 +121,9 @@ typedef struct {
 	 * "PreparedStatementList *pstmt_list" (see below).
 	 */
 	POOL_QUERY_CONTEXT *query_context;
+
+	/* where to send map for PREPARE/EXECUTE/DEALLOCATE */
+	POOL_PREPARED_SEND_MAP prep_where;
 
 	POOL_MEMORY_POOL *memory_context;	/* memory context for session */
 	PreparedStatement *unnamed_pstmt;	/* unnamed statement */
@@ -200,5 +215,9 @@ extern POOL_TRANSACTION_ISOLATION pool_get_transaction_isolation(void);
 extern void pool_unset_command_success(void);
 extern void pool_set_command_success(void);
 extern bool pool_is_command_success(void);
+extern void pool_copy_prep_where(bool *src, bool *dest);
+extern void pool_add_prep_where(char *name, bool *map);
+extern bool *pool_get_prep_where(char *name);
+extern void pool_delete_prep_where(char *name);
 
 #endif /* POOL_SESSION_CONTEXT_H */

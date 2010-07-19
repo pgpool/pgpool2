@@ -293,7 +293,7 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 			if (IsA(node, PrepareStmt))
 			{
 				PreparedStatement *ps;
-
+#ifdef NOT_USED
 				ps = pool_create_prepared_statement(((PrepareStmt *)node)->name, 
 													0, query_context);
 				if (ps == NULL)
@@ -304,12 +304,13 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 
 				session_context->pending_pstmt = ps;
 				session_context->pending_function = pool_add_prepared_statement;
+#endif
 			}
 			else if (IsA(node, DeallocateStmt))
 			{
 				char *name;
 				PreparedStatement *ps;
-
+#ifdef NOT_USED
 				name = ((DeallocateStmt *)node)->name;
 				if (name == NULL)
 					ps = pool_create_prepared_statement("", 0, query_context);
@@ -327,6 +328,7 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 					session_context->pending_function = pool_clear_prepared_statement_list;
 				else
 					session_context->pending_function = pool_remove_prepared_statement;
+#endif
 			}
 			else if (IsA(node, DiscardStmt))
 			{
@@ -342,6 +344,7 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 
 		if (frontend && IsA(node, ExecuteStmt))
 		{
+#ifdef NOT_USED			
 			PreparedStatement *ps;
 
 			ps = pool_get_prepared_statement_by_pstmt_name(((ExecuteStmt *)node)->name);
@@ -351,6 +354,7 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 				pool_query_context_destroy(query_context);
 				query_context = ps->qctxt;
 			}
+#endif
 		}
 
 		/*
@@ -420,8 +424,10 @@ static int is_temp_table(POOL_CONNECTION_POOL *backend, Node *node);
 
 				if (IsA(node, PrepareStmt))
 				{
+#ifdef NOT_USED
 					ps = session_context->pending_pstmt;
 					ps->num_tsparams = 0;
+#endif
 				}
 				else if (IsA(node, ExecuteStmt))
 					ps = pool_get_prepared_statement_by_pstmt_name(((ExecuteStmt *) node)->name);
