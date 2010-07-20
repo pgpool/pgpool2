@@ -102,7 +102,10 @@ static void _outUpdateStmt(String *str, UpdateStmt *node);
 static void _outDeleteStmt(String *str, DeleteStmt *node);
 static void _outTransactionStmt(String *str, TransactionStmt *node);
 static void _outTruncateStmt(String *str, TruncateStmt *node);
+#ifdef NOT_USED
+/* 9.0 does have this */
 static void _outVacuumStmt(String *str, VacuumStmt *node);
+#endif
 static void _outExplainStmt(String *str, ExplainStmt *node);
 static void _outClusterStmt(String *str, ClusterStmt *node);
 static void _outCheckPointStmt(String *str, CheckPointStmt *node);
@@ -1890,6 +1893,8 @@ static void _outTruncateStmt(String *str, TruncateStmt *node)
 	_outNode(str, node->relations);
 }
 
+#ifdef NOT_USED
+/* 9.0 does not have */
 static void _outVacuumStmt(String *str, VacuumStmt *node)
 {
 	if (node->vacuum == true)
@@ -1917,6 +1922,7 @@ static void _outVacuumStmt(String *str, VacuumStmt *node)
 		string_append_char(str, ") ");
 	}
 }
+#endif
 
 static void _outExplainStmt(String *str, ExplainStmt *node)
 {
@@ -5114,9 +5120,12 @@ _outNode(String *str, void *obj)
 				_outTruncateStmt(str, obj);
 				break;
 
+#ifdef NOT_USED
+				/* 9.0 does not have this */
 			case T_VacuumStmt:
 				_outVacuumStmt(str, obj);
 				break;
+#endif
 
 			case T_ExplainStmt:
 				_outExplainStmt(str, obj);

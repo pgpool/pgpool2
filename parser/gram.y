@@ -242,6 +242,7 @@ static DefElem *defWithOids(bool value);
 				transaction_mode_item
 
 %type <ival>	opt_lock lock_type cast_context
+%type <ival>	vacuum_option_list vacuum_option_elem
 %type <boolean>	opt_force opt_or_replace
 				opt_grant_grant_option opt_grant_admin_option
 				opt_nowait opt_if_exists opt_with_data
@@ -6362,12 +6363,13 @@ cluster_index_specification:
 VacuumStmt: VACUUM opt_full opt_freeze opt_verbose
 				{
 					VacuumStmt *n = makeNode(VacuumStmt);
-					n->vacuum = true;
-					n->analyze = false;
-					n->full = $2;
+					n->options = VACOPT_VACUUM;
+					if ($2)
+						n->options |= VACOPT_FULL;
+					if ($4)
+						n->options |= VACOPT_VERBOSE;
 					n->freeze_min_age = $3 ? 0 : -1;
 					n->freeze_table_age = $3 ? 0 : -1;
-					n->verbose = $4;
 					n->relation = NULL;
 					n->va_cols = NIL;
 					$$ = (Node *)n;
@@ -6375,12 +6377,13 @@ VacuumStmt: VACUUM opt_full opt_freeze opt_verbose
 			| VACUUM opt_full opt_freeze opt_verbose qualified_name
 				{
 					VacuumStmt *n = makeNode(VacuumStmt);
-					n->vacuum = true;
-					n->analyze = false;
-					n->full = $2;
+					n->options = VACOPT_VACUUM;
+					if ($2)
+						n->options |= VACOPT_FULL;
+					if ($4)
+						n->options |= VACOPT_VERBOSE;
 					n->freeze_min_age = $3 ? 0 : -1;
 					n->freeze_table_age = $3 ? 0 : -1;
-					n->verbose = $4;
 					n->relation = $5;
 					n->va_cols = NIL;
 					$$ = (Node *)n;
@@ -6388,25 +6391,64 @@ VacuumStmt: VACUUM opt_full opt_freeze opt_verbose
 			| VACUUM opt_full opt_freeze opt_verbose AnalyzeStmt
 				{
 					VacuumStmt *n = (VacuumStmt *) $5;
-					n->vacuum = true;
-					n->full = $2;
+					n->options |= VACOPT_VACUUM;
+					if ($2)
+						n->options |= VACOPT_FULL;
+					if ($4)
+						n->options |= VACOPT_VERBOSE;
 					n->freeze_min_age = $3 ? 0 : -1;
 					n->freeze_table_age = $3 ? 0 : -1;
-					n->verbose |= $4;
 					$$ = (Node *)n;
 				}
+			| VACUUM '(' vacuum_option_list ')'
+				{
+					VacuumStmt *n = makeNode(VacuumStmt);
+					n->options = VACOPT_VACUUM | $3;
+					if (n->options & VACOPT_FREEZE)
+						n->freeze_min_age = n->freeze_table_age = 0;
+					else
+						n->freeze_min_age = n->freeze_table_age = -1;
+					n->relation = NULL;
+					n->va_cols = NIL;
+					$$ = (Node *) n;
+				}
+			| VACUUM '(' vacuum_option_list ')' qualified_name opt_name_list
+				{
+					VacuumStmt *n = makeNode(VacuumStmt);
+					n->options = VACOPT_VACUUM | $3;
+					if (n->options & VACOPT_FREEZE)
+						n->freeze_min_age = n->freeze_table_age = 0;
+					else
+						n->freeze_min_age = n->freeze_table_age = -1;
+					n->relation = $5;
+					n->va_cols = $6;
+					if (n->va_cols != NIL)	/* implies analyze */
+						n->options |= VACOPT_ANALYZE;
+					$$ = (Node *) n;
+				}
+		;
+
+vacuum_option_list:
+			vacuum_option_elem								{ $$ = $1; }
+			| vacuum_option_list ',' vacuum_option_elem		{ $$ = $1 | $3; }
+		;
+
+vacuum_option_elem:
+			analyze_keyword		{ $$ = VACOPT_ANALYZE; }
+			| VERBOSE			{ $$ = VACOPT_VERBOSE; }
+			| FREEZE			{ $$ = VACOPT_FREEZE; }
+			| FULL				{ $$ = VACOPT_FULL; }
 		;
 
 AnalyzeStmt:
 			analyze_keyword opt_verbose
 				{
 					VacuumStmt *n = makeNode(VacuumStmt);
-					n->vacuum = false;
-					n->analyze = true;
-					n->full = false;
+					n->options = VACOPT_ANALYZE;
+					if ($2)
+						n->options |= VACOPT_VERBOSE;
 					n->freeze_min_age = -1;
 					n->freeze_table_age = -1;
-					n->verbose = $2;
 					n->relation = NULL;
 					n->va_cols = NIL;
 					$$ = (Node *)n;
@@ -6414,12 +6456,11 @@ AnalyzeStmt:
 			| analyze_keyword opt_verbose qualified_name opt_name_list
 				{
 					VacuumStmt *n = makeNode(VacuumStmt);
-					n->vacuum = false;
-					n->analyze = true;
-					n->full = false;
+					n->options = VACOPT_ANALYZE;
+					if ($2)
+						n->options |= VACOPT_VERBOSE;
 					n->freeze_min_age = -1;
 					n->freeze_table_age = -1;
-					n->verbose = $2;
 					n->relation = $3;
 					n->va_cols = $4;
 					$$ = (Node *)n;
