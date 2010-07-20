@@ -64,6 +64,7 @@ extern void pool_set_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node
 extern void pool_unset_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id);
 extern void pool_clear_node_to_be_sent(POOL_QUERY_CONTEXT *query_context);
 extern void pool_setall_node_to_be_sent(POOL_QUERY_CONTEXT *query_context);
+extern bool pool_multi_node_to_be_sent(POOL_QUERY_CONTEXT *query_context);
 extern void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *node);
 POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context, char *query, int len,
 							   int send_type, int node_id, char *kind);

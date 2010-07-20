@@ -175,6 +175,36 @@ void pool_setall_node_to_be_sent(POOL_QUERY_CONTEXT *query_context)
 }
 
 /*
+ * Return true if multiple nodes are targets
+ */
+bool pool_multi_node_to_be_sent(POOL_QUERY_CONTEXT *query_context)
+{
+	int i;
+	int cnt = 0;
+
+	if (!query_context)
+	{
+		pool_error("pool_multi_node_to_be_sent: no query context");
+		return false;
+	}
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (((BACKEND_INFO(i)).backend_status == CON_UP ||
+			 BACKEND_INFO((i)).backend_status == CON_CONNECT_WAIT) &&
+			query_context->where_to_send[i])
+		{
+			cnt++;
+			if (cnt > 1)
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+/*
  * Return if the DB node is needed to send query
  */
 bool pool_is_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id)
@@ -384,12 +414,14 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 				{
 					pool_setall_node_to_be_sent(query_context);
 				}
-
-				wts = pool_get_prep_where(d->name);
-				if (wts)
+				else
 				{
-					/* Inherit same map from PREPARE */
-					pool_copy_prep_where(wts, query_context->where_to_send);
+					wts = pool_get_prep_where(d->name);
+					if (wts)
+					{
+						/* Inherit same map from PREPARE */
+						pool_copy_prep_where(wts, query_context->where_to_send);
+					}
 				}
 			}
 		}
@@ -491,8 +523,10 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context, char *query, i
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_CONNECTION *frontend;
 	POOL_CONNECTION_POOL *backend;
-
+	bool is_commit;
 	int i;
+
+	is_commit = is_commit_query(query_context->parse_tree);
 
 	session_context = pool_get_session_context();
 	frontend = session_context->frontend;
@@ -507,6 +541,16 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context, char *query, i
 			continue;
 		else if (send_type > 0 && i != node_id)
 			continue;
+
+		/*
+		 * If in master/slave mode, we do not send COMMIT/ABORT to
+		 * slaves/standbys if it's in I(idle) state.
+		 */
+		if (is_commit && MASTER_SLAVE && !IS_MASTER_NODE_ID(i) && TSTATE(backend, i) == 'I')
+		{
+			pool_unset_node_to_be_sent(query_context, i);
+			continue;
+		}
 
 		per_node_statement_log(backend, i, query);
 
@@ -531,6 +575,15 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context, char *query, i
 			continue;
 		else if (send_type > 0 && i != node_id)
 			continue;
+
+		/*
+		 * If in master/slave mode, we do not send COMMIT/ABORT to
+		 * slaves/standbys if it's in I(idle) state.
+		 */
+		if (is_commit && MASTER_SLAVE && !IS_MASTER_NODE_ID(i) && TSTATE(backend, i) == 'I')
+		{
+			continue;
+		}
 
 		if (wait_for_query_response(frontend, CONNECTION(backend, i), query, MAJOR(backend)) != POOL_CONTINUE)
 		{
@@ -750,6 +803,12 @@ static POOL_DEST send_to_where(Node *node, char *query)
 					}
 				}
 				return POOL_BOTH;
+			}
+			else if (((TransactionStmt *)node)->kind == TRANS_STMT_SAVEPOINT ||
+					 ((TransactionStmt *)node)->kind == TRANS_STMT_ROLLBACK_TO ||
+					 ((TransactionStmt *)node)->kind == TRANS_STMT_RELEASE)
+			{
+				return POOL_PRIMARY;
 			}
 
 			/*
