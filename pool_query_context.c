@@ -382,7 +382,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 				/* DELLOCATE ALL? */
 				if (d->name == NULL)
 				{
-					return POOL_BOTH;
+					pool_setall_node_to_be_sent(query_context);
 				}
 
 				wts = pool_get_prep_where(d->name);
