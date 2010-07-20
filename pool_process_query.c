@@ -4018,6 +4018,7 @@ int compare(const void *p1, const void *p2)
 static bool is_internal_transaction_needed(Node *node)
 {
 	static NodeTag nodemap[] = {
+		T_PlannedStmt,
 		T_InsertStmt,
 		T_DeleteStmt,
 		T_UpdateStmt,
@@ -4026,6 +4027,9 @@ static bool is_internal_transaction_needed(Node *node)
 		T_AlterDomainStmt,
 		T_GrantStmt,
 		T_GrantRoleStmt,
+		/*
+		T_AlterDefaultPrivilegesStmt,	Our parser does not support yet
+		*/
 		T_ClosePortalStmt,
 		T_ClusterStmt,
 		T_CopyStmt,
@@ -4039,6 +4043,9 @@ static bool is_internal_transaction_needed(Node *node)
 		T_CreateFunctionStmt,
 		T_AlterFunctionStmt,
 		T_RemoveFuncStmt,
+		/*
+		T_DoStmt,		Our parser does not support yet
+		*/
 		T_RenameStmt,	/* ALTER AGGREGATE etc. */
 		T_RuleStmt,		/* CREATE RULE */
 		T_NotifyStmt,
@@ -4050,6 +4057,8 @@ static bool is_internal_transaction_needed(Node *node)
 		/*
 		  T_CreatedbStmt,	CREATE DATABASE/DROP DATABASE cannot execute inside a transaction block
 		  T_DropdbStmt,
+		  T_VacuumStmt,
+		  T_ExplainStmt,
 		*/
 		T_CreateSeqStmt,
 		T_AlterSeqStmt,
@@ -4091,7 +4100,19 @@ static bool is_internal_transaction_needed(Node *node)
 		T_CompositeTypeStmt,	/* CREATE TYPE */
 		T_CreateEnumStmt,
 		T_AlterTSDictionaryStmt,
-		T_AlterTSConfigurationStmt
+		T_AlterTSConfigurationStmt,
+		T_CreateFdwStmt,
+		T_AlterFdwStmt,
+		T_DropFdwStmt,
+		T_CreateForeignServerStmt,
+		T_AlterForeignServerStmt,
+		T_DropForeignServerStmt,
+		T_CreateUserMappingStmt,
+		T_AlterUserMappingStmt,
+		T_DropUserMappingStmt,
+		/*
+		T_AlterTableSpaceOptionsStmt,	Our parser does not support yet
+		*/
 	};
 
 	if (bsearch(&nodeTag(node), nodemap, sizeof(nodemap)/sizeof(nodemap[0]), sizeof(NodeTag), compare) != NULL)
