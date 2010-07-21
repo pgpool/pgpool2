@@ -334,7 +334,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 							sleep(5);
 							break;
 						}
-						status = read_kind_from_backend(frontend, backend, &kind);
+						status = ProcessBackendResponse(frontend, backend, &state);
 						if (status != POOL_CONTINUE)
 							return status;
 						break;

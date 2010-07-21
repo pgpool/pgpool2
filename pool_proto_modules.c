@@ -2307,13 +2307,7 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 				{
 					char *contents = NULL;
 
-					if (pool_read(frontend, &kind, 1) < 0)
-					{
-						pool_log("ProcessFrontendResponse: failed to read kind from frontend. frontend abnormally exited");
-						return POOL_END;
-					}
-
-					pool_debug("read kind from frontend %c(%02x)", kind, kind);
+					pool_debug("CopyDataRows: read kind from frontend %c(%02x)", kind, kind);
 
 					if (pool_read(frontend, &len, sizeof(len)) < 0)
 						return POOL_END;
