@@ -1435,6 +1435,33 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			    (fkind == 'S' || fkind == 'H' || fkind == 'D' || fkind == 'f'||
 				 fkind == 'C' || fkind == 'B' || fkind == 'F' || fkind == 'd' || fkind == 'c'))
 			{
+				/* Function call? */
+				if (fkind == 'F' && MASTER_SLAVE)
+				{
+					/*
+					 * Send to primary/master node only.
+					 * For this we treat function call as if INSERT.
+					 */
+					POOL_QUERY_CONTEXT *query_context;
+					char *query = "INSERT INTO foo VALUES(1)";
+					Node *node;
+					List *parse_tree_list;
+
+					/* Create query context */
+					query_context = pool_init_query_context();
+					if (!query_context)
+					{
+						pool_error("ProcessFrontendResponse: pool_init_query_context failed");
+						return POOL_END;
+					}
+					parse_tree_list = raw_parser(query);
+					node = (Node *) lfirst(list_head(parse_tree_list));
+					pool_start_query(query_context, query, node);
+					pool_where_to_send(query_context, query_context->original_query,
+									   query_context->parse_tree);
+				}
+
+#ifdef NOT_USED
 				if (MASTER_SLAVE &&
 					(TSTATE(backend, MASTER_NODE_ID) != 'I' || receive_extended_begin))
 				{
@@ -1443,6 +1470,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 					MASTER_SLAVE = 0;
 					master_slave_dml = 1;
 				}
+#endif
 	
 				status = SimpleForwardToBackend(fkind, frontend, backend);
 				for (i=0;i<NUM_BACKENDS;i++)
@@ -1456,6 +1484,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			}
 			else if (MAJOR(backend) == PROTO_MAJOR_V2 && fkind == 'F')
 				status = FunctionCall(frontend, backend);
+
 			else
 			{
 				pool_error("ProcessFrontendResponse: unknown message type %c(%02x)", fkind, fkind);
