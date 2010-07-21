@@ -57,6 +57,9 @@ POOL_QUERY_CONTEXT *pool_init_query_context(void)
 		return NULL;
 	}
 
+	/* Create memory context */
+	qc->memory_context = pool_memory_create(PARSER_BLOCK_SIZE);
+
 	return qc;
 }
 
@@ -72,6 +75,7 @@ void pool_query_context_destroy(POOL_QUERY_CONTEXT *query_context)
 		session_context = pool_get_session_context();
 		pool_unset_query_in_progress();
 		session_context->query_context = NULL;
+		pool_memory_delete(query_context->memory_context, 0);
 		free(query_context);
 	}
 }
@@ -87,6 +91,7 @@ void pool_start_query(POOL_QUERY_CONTEXT *query_context, char *query, Node *node
 	{
 		session_context = pool_get_session_context();
 		query_context->original_query = query;
+		query_context->rewritten_query = NULL;
 		query_context->parse_tree = node;
 		query_context->virtual_master_node_id = REAL_MASTER_NODE_ID;
 		pool_set_query_in_progress();
@@ -285,6 +290,15 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	 * Zap out DB node map
 	 */
 	pool_clear_node_to_be_sent(query_context);
+
+	/*
+	 * If there is "NO LOAD BALANCE" comment, we send only to master node.
+	 */
+	if (!strncasecmp(query, NO_LOAD_BALANCE, NO_LOAD_BALANCE_COMMENT_SZ))
+	{
+		pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
+		return;
+	}
 
 	/*
 	 * In raw mode, we send only to master node. Simple enough.
@@ -511,14 +525,19 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 
 /*
  * Send query and wait for response
+ * string:
+ *  simple query protocol: a query
+ *  extended query protocol: contents of the message
  * send_type:
  *  -1: do not send this node_id
- *	0: send to all nodes
+ *   0: send to all nodes
  *  >0: send to this node_id
- * kind: simple query protocol is ""
+ * kind:
+ *  simple query protocol: ""
+ *  extended query protocol: a kind
  */
-POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context, char *query, int len,
-							   int send_type, int node_id, char *kind)
+POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context, char *string,
+							   int len, int send_type, int node_id, char *kind)
 {
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_CONNECTION *frontend;
@@ -552,16 +571,16 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context, char *query, i
 			continue;
 		}
 
-		per_node_statement_log(backend, i, query);
+		per_node_statement_log(backend, i, string);
 
 		if (*kind == '\0')
 		{
-			if (send_simplequery_message(CONNECTION(backend, i), len, query, MAJOR(backend)) != POOL_CONTINUE)
+			if (send_simplequery_message(CONNECTION(backend, i), len, string, MAJOR(backend)) != POOL_CONTINUE)
 				return POOL_END;
 		}			
 		else
 		{
-			if (send_extended_protocol_message(backend, i, kind, len, query) != POOL_CONTINUE)
+			if (send_extended_protocol_message(backend, i, kind, len, string) != POOL_CONTINUE)
 				return POOL_END;
 		}
 	}
@@ -585,7 +604,7 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context, char *query, i
 			continue;
 		}
 
-		if (wait_for_query_response(frontend, CONNECTION(backend, i), query, MAJOR(backend)) != POOL_CONTINUE)
+		if (wait_for_query_response(frontend, CONNECTION(backend, i), string, MAJOR(backend)) != POOL_CONTINUE)
 		{
 			/* Cancel current transaction */
 			CancelPacket cancel_packet;
@@ -605,7 +624,7 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context, char *query, i
 		 * what statement caused that error and make users
 		 * confused.
 		 */
-		per_node_error_log(backend, i, query, "pool_send_and_wait: Error or notice message from backend: ", true);
+		per_node_error_log(backend, i, string, "pool_send_and_wait: Error or notice message from backend: ", true);
 	}
 	return POOL_CONTINUE;
 }
@@ -1054,3 +1073,32 @@ bool is_2pc_transaction_query(Node *node, char *query)
 	return false;
 }
 
+/*
+ * Set query state, if specified state less than current state
+ * state:
+ *  0: before parse   1: parse done     2: bind done
+ *  3: describe done  4: execute done  -1: in error
+ */
+void pool_set_query_state(POOL_QUERY_CONTEXT *query_context, short state)
+{
+	int i;
+
+	if (!query_context)
+	{
+		pool_error("pool_set_query_state: no query context");
+		return;
+	}
+
+	if (state < -1 || state > 4)
+	{
+		pool_error("pool_set_query_state: invalid query state: %d", state);
+		return;
+	}
+
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		if (query_context->where_to_send[i] &&
+			query_context->query_state[i] < state)
+			query_context->query_state[i] = state;
+	}
+}

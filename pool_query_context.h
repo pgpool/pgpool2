@@ -29,6 +29,7 @@
 #include "pool.h"
 #include "pool_process_context.h"
 #include "parser/nodes.h"
+#include "parser/pool_memory.h"
 
 /*
  * Query context:
@@ -41,17 +42,15 @@ typedef struct {
 	Node *rewritten_parse_tree;	/* rewritten raw parser output if any */
 	bool where_to_send[MAX_NUM_BACKENDS];		/* DB node map to send query */
 	int  virtual_master_node_id;	/* the first DB node to send query */
+	POOL_MEMORY_POOL *memory_context;	/* memory context for query */
 
-	bool is_extended;	/* true if extended query */
+	/*
+	 * query_state:
+	 * 0: before parse   1: parse done     2: bind done
+	 * 3: describe done  4: execute done  -1: in error
+	 */
+	short query_state[MAX_NUM_BACKENDS];
 
-	/* below are extended query only */
-	bool is_named_statement;		/* true if named statement */
-	bool is_named_portal;		/* true if named portal */
-	/* query state: either 0: before parse, 1: parse done, 2: bind
-	 * done, 3: describe done 4: execute done -1: in error -> or
-	 * should be a bitmap? */
-
-	
 } POOL_QUERY_CONTEXT;
 
 extern POOL_QUERY_CONTEXT *pool_init_query_context(void);
@@ -72,5 +71,6 @@ extern Node *pool_get_parse_tree(void);
 extern char *pool_get_query_string(void);
 extern bool is_set_transaction_serializable(Node *ndoe, char *query);
 extern bool is_2pc_transaction_query(Node *node, char *query);
+extern void pool_set_query_state(POOL_QUERY_CONTEXT *query_context, short state);
 
 #endif /* POOL_QUERY_CONTEXT_H */
