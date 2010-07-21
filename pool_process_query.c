@@ -181,7 +181,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 		 * receiving data cache, then issue select(2) to wait for new
 		 * data arrival
 		 */
-		if (is_cache_empty(frontend, backend))
+		if (is_cache_empty(frontend, backend) && !pool_is_query_in_progress())
 		{
 			struct timeval timeoutdata;
 			struct timeval *timeout;
