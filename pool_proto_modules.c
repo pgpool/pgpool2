@@ -1921,16 +1921,36 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			break;
 
 		case 'F':	/* FunctionCall */
+			if (MASTER_SLAVE)
+			{
+				/*
+				 * Send to primary/master node only.
+				 * For this we treat function call as if INSERT.
+				 */
+				POOL_QUERY_CONTEXT *query_context;
+				char *query = "INSERT INTO foo VALUES(1)";
+				Node *node;
+				List *parse_tree_list;
+
+				/* Create query context */
+				query_context = pool_init_query_context();
+				if (!query_context)
+				{
+					pool_error("ProcessFrontendResponse: pool_init_query_context failed");
+					return POOL_END;
+				}
+				parse_tree_list = raw_parser(query);
+				node = (Node *) lfirst(list_head(parse_tree_list));
+				pool_start_query(query_context, query, node);
+				pool_where_to_send(query_context, query_context->original_query,
+								   query_context->parse_tree);
+			}
+
 			if (MAJOR(backend) == PROTO_MAJOR_V3)
-			{
 				status = FunctionCall3(frontend, backend, len, contents);
-				break;
-			}
 			else
-			{
 				status = FunctionCall(frontend, backend);
-				break;
-			}
+			break;
 
 		case 'c':	/* CopyDone */
 		case 'd':	/* CopyData */
