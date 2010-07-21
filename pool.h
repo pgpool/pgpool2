@@ -457,7 +457,7 @@ extern signed char pool_read_kind(POOL_CONNECTION_POOL *cp);
 extern int pool_read_int(POOL_CONNECTION_POOL *cp);
 
 extern POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
-extern POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
+extern POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, int len, char *contents);
 extern POOL_STATUS ParameterStatus(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 
 extern int pool_init_params(ParamStatus *params);
@@ -569,6 +569,8 @@ extern POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backen
 extern POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result, int major);
 extern void free_select_result(POOL_SELECT_RESULT *result);
 extern int compare(const void *p1, const void *p2);
+extern POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id, int major);
+extern POOL_STATUS pool_discard_packet_contents(POOL_CONNECTION_POOL *cp);
 
 /* pool_auth.c */
 extern void pool_random_salt(char *md5Salt);
