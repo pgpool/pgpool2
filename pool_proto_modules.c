@@ -2028,8 +2028,10 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 			case 'E':	/* ErrorResponse */
 				status = ErrorResponse3(frontend, backend);
 				if (pool_is_doing_extended_query_message())
+				{
 					pool_set_ignore_till_sync();
-				pool_unset_query_in_progress();
+					pool_unset_query_in_progress();
+				}
 				break;
 
 			case 'C':	/* CommandComplete */				
