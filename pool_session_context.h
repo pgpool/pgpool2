@@ -37,8 +37,11 @@
  * Prepared Statement:
  */
 typedef struct {
-	char *name;		/* prepared statement name */
+	char *name;	/* prepared statement name */
 	int num_tsparams;
+	int parse_len;	/* the length of parse message which is 
+					   not network byte order */
+	char *parse_contents;	/* contents of parse message */
 	POOL_QUERY_CONTEXT *qctxt;
 } PreparedStatement;
 
@@ -104,11 +107,20 @@ typedef struct {
 	 */
 	bool in_progress;
 
+	/* If true, we are doing extended query message */
+	bool doing_extended_query_message;
+
 	/* If true, the command in progress has finished sucessfully. */
 	bool command_success;
 
 	/* If true write query has been appeared in this transaction */
 	bool writing_transaction;
+
+	/* If true, "SHOW pool_status" is in progress */
+	bool pool_status_stmt;
+
+	/* ignore any command until Sync message */
+	bool ignore_till_sync;
 
 	/*
 	 * Transaction isolation mode.
@@ -130,9 +142,8 @@ typedef struct {
 	PreparedStatement *pending_pstmt;	/* used until receive backend response */
 	Portal *unnamed_portal;	/* unnamed portal */
 	Portal *pending_portal;	/* used until receive backend response */
-	PreparedStatementList *pstmt_list;	/* named statement list */
-	PortalList *portal_list;	/* named portal list */
-	void (*pending_function)(void);	/* switched function by backend response */
+	PreparedStatementList pstmt_list;	/* named statement list */
+	PortalList portal_list;	/* named portal list */
 	int load_balance_node_id;	/* selected load balance node id */
 
 #ifdef NOT_USED
@@ -182,7 +193,6 @@ typedef struct {
 	int load_balance_node_id;	/* selected load balance node id */
 	bool received_write_query;	/* have we recived a write query in this transaction? */
 	bool send_ready_for_query;	/* ok to send ReadyForQuery */
-	bool igore_till_sync;		/* ignore any command until Sync message */
 	LOAD_BALANCE_STATUS	load_balance_status[MAX_NUM_BACKENDS];	/* to remember which DB node is selected for load balancing */
 #endif
 
@@ -194,12 +204,23 @@ extern int pool_get_local_session_id(void);
 extern bool pool_is_query_in_progress(void);
 extern void pool_set_query_in_progress(void);
 extern void pool_unset_query_in_progress(void);
+extern bool pool_is_pool_status_stmt(void);
+extern void pool_set_pool_status_stmt(void);
+extern void pool_unset_pool_status_stmt(void);
+extern bool pool_is_doing_extended_query_message(void);
+extern void pool_set_doing_extended_query_message(void);
+extern void pool_unset_doing_extended_query_message(void);
+extern bool pool_is_ignore_till_sync(void);
+extern void pool_set_ignore_till_sync(void);
+extern void pool_unset_ignore_till_sync(void);
 extern void pool_remove_prepared_statement_by_pstmt_name(const char *name);
 extern void pool_remove_prepared_statement(void);
 extern void pool_remove_portal(void);
 extern void pool_remove_pending_objects(void);
 extern void pool_clear_prepared_statement_list(void);
-extern PreparedStatement *pool_create_prepared_statement(const char *name, int num_tsparams, POOL_QUERY_CONTEXT *qc);
+extern PreparedStatement *pool_create_prepared_statement(const char *name, int num_tsparams,
+														 int len, char *contents,
+														 POOL_QUERY_CONTEXT *qc);
 extern Portal *pool_create_portal(const char *name, int num_tsparams, PreparedStatement *pstmt);
 extern void pool_add_prepared_statement(void);
 extern void pool_add_portal(void);

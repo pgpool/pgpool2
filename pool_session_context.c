@@ -31,43 +31,8 @@
 static POOL_SESSION_CONTEXT session_context_d;
 static POOL_SESSION_CONTEXT *session_context;
 
-/*
- * Initialize prepared statement list
- */
-static void init_prepared_statement_list(void)
-{
-	PreparedStatementList *pslist = NULL;
-
-	session_context->pstmt_list = malloc(sizeof(PreparedStatementList));
-	pslist = session_context->pstmt_list;
-	pslist->pstmts = malloc(sizeof(PreparedStatement *) * INIT_LIST_SIZE);
-	if (pslist == NULL || pslist->pstmts == NULL)
-	{
-		pool_error("init_prepared_statement_list: malloc failed: %s", strerror(errno));
-		exit(1);
-	}
-	pslist->size = 0;
-	pslist->capacity = INIT_LIST_SIZE;
-}
-
-/*
- * Initialize portal list
- */
-static void init_portal_list(void)
-{
-	PortalList *plist;
-
-	session_context->portal_list = malloc(sizeof(PortalList));
-	plist = session_context->portal_list;
-	plist->portals = malloc(sizeof(Portal *) * INIT_LIST_SIZE);
-	if (plist == NULL || plist->portals == NULL)
-	{
-		pool_error("init_portal_list: malloc failed: %s", strerror(errno));
-		exit(1);
-	}
-	plist->size = 0;
-	plist->capacity = INIT_LIST_SIZE;
-}
+static void init_prepared_statement_list(void);
+static void init_portal_list(void);
 
 /*
  * Initialize per session context
@@ -120,7 +85,7 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 	/* Unset query is in progress */
 	pool_unset_query_in_progress();
 
-	/*The command in progress has not succeeded yet */
+	/* The command in progress has not succeeded yet */
 	pool_unset_command_success();
 
 	/* We don't have a write query in this transaction yet. */
@@ -128,6 +93,12 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 
 	/* Forget transaction isolation mode */
 	pool_unset_transaction_isolation();
+
+	/* "SHOW pool_status" has not executed yet */
+	pool_unset_pool_status_stmt();
+
+	/* Backends have not ignored messages yet */
+	pool_unset_ignore_till_sync();
 
 	/* Initialize where to send map for PREPARE statemets */
 	memset(&session_context->prep_where, 0, sizeof(session_context->prep_where));
@@ -186,6 +157,8 @@ void pool_set_query_in_progress(void)
 		return;
 	}
 
+	pool_debug("pool_set_query_in_progress: done");
+
 	session_context->in_progress = true;
 }
 
@@ -200,7 +173,147 @@ void pool_unset_query_in_progress(void)
 		return;
 	}
 
+	pool_debug("pool_unset_query_in_progress: done");
+
 	session_context->in_progress = false;
+}
+
+/*
+ * Return true if "SHOW pool_status" is in progress
+ */
+bool pool_is_pool_status_stmt(void)
+{
+	if (!session_context)
+	{
+		pool_error("pool_is_pool_status_stmt: session context is not initialized");
+		return false;
+	}
+
+	return session_context->pool_status_stmt;
+}
+
+/*
+ * Set pool_status_stmt
+ */
+void pool_set_pool_status_stmt(void)
+{
+	if (!session_context)
+	{
+		pool_error("pool_set_pool_status_stmt: session context is not initialized");
+		return;
+	}
+
+	pool_debug("pool_set_pool_status_stmt: done");
+
+	session_context->pool_status_stmt = true;
+}
+
+/*
+ * Unset pool_status_stmt
+ */
+void pool_unset_pool_status_stmt(void)
+{
+	if (!session_context)
+	{
+		pool_error("pool_unset_pool_status_stmt: session context is not initialized");
+		return;
+	}
+
+	pool_debug("pool_unset_pool_status_stmt: done");
+
+	session_context->pool_status_stmt = false;
+}
+
+/*
+ * Return true if we are doing extended query message
+ */
+bool pool_is_doing_extended_query_message(void)
+{
+	if (!session_context)
+	{
+		pool_error("pool_is_doing_extended_query_message: session context is not initialized");
+		return false;
+	}
+
+	return session_context->doing_extended_query_message;
+}
+
+/*
+ * Set doing_extended_query_message
+ */
+void pool_set_doing_extended_query_message(void)
+{
+	if (!session_context)
+	{
+		pool_error("pool_set_doing_extended_query_message: session context is not initialized");
+		return;
+	}
+
+	pool_debug("pool_set_doing_extended_query_message: done");
+
+	session_context->doing_extended_query_message = true;
+}
+
+/*
+ * Unset doing_extended_query_message
+ */
+void pool_unset_doing_extended_query_message(void)
+{
+	if (!session_context)
+	{
+		pool_error("pool_unset_doing_extended_query_message: session context is not initialized");
+		return;
+	}
+
+	pool_debug("pool_unset_doing_extended_query_message: done");
+
+	session_context->doing_extended_query_message = false;
+}
+
+/*
+ * Return true if backends ignore extended query message
+ */
+bool pool_is_ignore_till_sync(void)
+{
+	if (!session_context)
+	{
+		pool_error("pool_is_ignore_till_sync: session context is not initialized");
+		return false;
+	}
+
+	return session_context->ignore_till_sync;
+}
+
+/*
+ * Set ignore_till_sync
+ */
+void pool_set_ignore_till_sync(void)
+{
+	if (!session_context)
+	{
+		pool_error("pool_set_ignore_till_sync: session context is not initialized");
+		return;
+	}
+
+	pool_debug("pool_set_ignore_till_sync: done");
+
+	session_context->ignore_till_sync = true;
+}
+
+/*
+ * Unset ignore_till_sync
+ */
+void pool_unset_ignore_till_sync(void)
+{
+	if (!session_context)
+	{
+		pool_error("pool_unset_ignore_till_sync: session context is not initialized");
+		return;
+	}
+
+	pool_debug("pool_unset_ignore_till_sync: done");
+
+	session_context->ignore_till_sync = false;
 }
 
 /*
@@ -222,7 +335,7 @@ static void pool_remove_portal_by_portal_name(const char *name)
 		return;
 	}
 
-	plist = session_context->portal_list;
+	plist = &session_context->portal_list;
 
 	for (i = 0; i < plist->size; i++)
 	{
@@ -242,7 +355,7 @@ static void pool_remove_portal_by_portal_name(const char *name)
 		memmove(&plist->portals[i], &plist->portals[i+1],
 				sizeof(Portal *) * (plist->size - i - 1));
 	}
-	plist->size--;	
+	plist->size--;
 }
 
 /*
@@ -265,7 +378,7 @@ static void pool_remove_portal_by_pstmt_name(const char *name)
 		return;
 	}
 
-	plist = session_context->portal_list;
+	plist = &session_context->portal_list;
 
 	for (i = 0; i < plist->size; i++)
 	{
@@ -281,6 +394,9 @@ void pool_remove_prepared_statement_by_pstmt_name(const char *name)
 {
 	int i;
 	PreparedStatementList *pslist;
+	bool in_progress;
+
+	in_progress = pool_is_query_in_progress();
 
 	if (!session_context)
 	{
@@ -297,10 +413,12 @@ void pool_remove_prepared_statement_by_pstmt_name(const char *name)
 							 session_context->unnamed_pstmt);
 			session_context->unnamed_pstmt = NULL;
 		}
+		if (in_progress)
+			pool_set_query_in_progress();
 		return;
 	}
 
-	pslist = session_context->pstmt_list;
+	pslist = &session_context->pstmt_list;
 
 	for (i = 0; i < pslist->size; i++)
 	{
@@ -314,8 +432,12 @@ void pool_remove_prepared_statement_by_pstmt_name(const char *name)
 
 	/* prepared statement not found */
 	if (i == pslist->size)
+	{
+		if (in_progress)
+			pool_set_query_in_progress();
 		return;
-	
+	}
+
 	if (i != pslist->size - 1)
 	{
 		memmove(&pslist->pstmts[i], &pslist->pstmts[i+1],
@@ -324,6 +446,9 @@ void pool_remove_prepared_statement_by_pstmt_name(const char *name)
 	pslist->size--;
 
 	pool_remove_portal_by_pstmt_name(name);
+
+	if (in_progress)
+		pool_set_query_in_progress();
 }
 
 /*
@@ -403,7 +528,6 @@ void pool_remove_pending_objects(void)
 
 	session_context->pending_pstmt = NULL;
 	session_context->pending_portal = NULL;
-	session_context->pending_function = NULL;
 }
 
 /*
@@ -411,7 +535,6 @@ void pool_remove_pending_objects(void)
  */
 void pool_clear_prepared_statement_list(void)
 {
-	int i;
 	PreparedStatementList *pslist;
 
 	if (!session_context)
@@ -420,21 +543,26 @@ void pool_clear_prepared_statement_list(void)
 		return;
 	}
 
-	pslist = session_context->pstmt_list;
+	pslist = &session_context->pstmt_list;
 
-	for (i = 0; i < pslist->size; i++)
+	while (pslist->size > 0)
 	{
-		pool_remove_prepared_statement_by_pstmt_name(pslist->pstmts[i]->name);
+		pool_remove_prepared_statement_by_pstmt_name(pslist->pstmts[0]->name);
 	}
 }
 
-/* 
+/*
  * Create a prepared statement
+ * len: the length of parse message which is not network byte order
+ * contents: the contents of parse message
  */
-PreparedStatement *pool_create_prepared_statement(const char *name, int num_tsparams, POOL_QUERY_CONTEXT *qc)
+PreparedStatement *pool_create_prepared_statement(const char *name,
+												  int num_tsparams,
+												  int len, char *contents,
+												  POOL_QUERY_CONTEXT *qc)
 {
 	PreparedStatement *ps;
-	POOL_QUERY_CONTEXT *q;
+//	POOL_QUERY_CONTEXT *q;
 
 	if (!session_context)
 	{
@@ -446,7 +574,11 @@ PreparedStatement *pool_create_prepared_statement(const char *name, int num_tspa
 						   sizeof(PreparedStatement));
 	ps->name = pool_memory_strdup(session_context->memory_context, name);
 	ps->num_tsparams = num_tsparams;
+	ps->parse_len = len;
+	ps->parse_contents = pool_memory_alloc(session_context->memory_context, len);
+	memcpy(ps->parse_contents, contents, len);
 
+#ifdef NOT_USED
 	/* 
 	 * duplicate query_context because session_context->query_context is 
 	 * freed by pool_query_context_destroy()
@@ -458,6 +590,8 @@ PreparedStatement *pool_create_prepared_statement(const char *name, int num_tspa
 		exit(1);
 	}
 	ps->qctxt = memcpy(q, qc, sizeof(POOL_QUERY_CONTEXT));
+#endif
+	ps->qctxt = qc;
 
 	return ps;
 }
@@ -504,7 +638,7 @@ void pool_add_prepared_statement(void)
 	}
 
 	ps = pool_get_prepared_statement_by_pstmt_name(session_context->pending_pstmt->name);
-	pslist = session_context->pstmt_list;
+	pslist = &session_context->pstmt_list;
 
 	if (ps)
 	{
@@ -512,6 +646,7 @@ void pool_add_prepared_statement(void)
 		if (*session_context->pending_pstmt->name == '\0')
 		{
 			session_context->unnamed_pstmt = session_context->pending_pstmt;
+			session_context->query_context = session_context->pending_pstmt->qctxt;
 		}
 		else
 		{
@@ -563,7 +698,7 @@ void pool_add_portal(void)
 	}
 
 	p = pool_get_portal_by_portal_name(session_context->pending_portal->name);
-	plist = session_context->portal_list;
+	plist = &session_context->portal_list;
 
 	if (p)
 	{
@@ -618,7 +753,7 @@ PreparedStatement *pool_get_prepared_statement_by_pstmt_name(const char *name)
 	if (*name == '\0')
 		return session_context->unnamed_pstmt;
 
-	pslist = session_context->pstmt_list;
+	pslist = &session_context->pstmt_list;
 
 	for (i = 0; i < pslist->size; i++)
 	{
@@ -646,7 +781,7 @@ Portal *pool_get_portal_by_portal_name(const char *name)
 	if (*name == '\0')
 		return session_context->unnamed_portal;
 
-	plist = session_context->portal_list;
+	plist = &session_context->portal_list;
 
 	for (i = 0; i < plist->size; i++)
 	{
@@ -899,5 +1034,41 @@ void pool_delete_prep_where(char *name)
 			*session_context->prep_where.name[i] = '\0';
 			return;
 		}
+	}
+}
+
+/*
+ * Initialize prepared statement list
+ */
+static void init_prepared_statement_list(void)
+{
+	PreparedStatementList *pslist;
+
+	pslist = &session_context->pstmt_list;
+	pslist->size = 0;
+	pslist->capacity = INIT_LIST_SIZE;
+	pslist->pstmts = malloc(sizeof(PreparedStatement *) * INIT_LIST_SIZE);
+	if (pslist->pstmts == NULL)
+	{
+		pool_error("init_prepared_statement_list: malloc failed: %s", strerror(errno));
+		exit(1);
+	}
+}
+
+/*
+ * Initialize portal list
+ */
+static void init_portal_list(void)
+{
+	PortalList *plist;
+
+	plist = &session_context->portal_list;
+	plist->size = 0;
+	plist->capacity = INIT_LIST_SIZE;
+	plist->portals = malloc(sizeof(Portal *) * INIT_LIST_SIZE);
+	if (plist->portals == NULL)
+	{
+		pool_error("init_portal_list: malloc failed: %s", strerror(errno));
+		exit(1);
 	}
 }
