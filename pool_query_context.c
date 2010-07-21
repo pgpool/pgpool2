@@ -802,12 +802,14 @@ static POOL_DEST send_to_where(Node *node, char *query)
 							return POOL_PRIMARY;
 					}
 				}
-				return POOL_BOTH;
+				/* Other TRANSACTION start commands are sent to the primary */
+				return POOL_PRIMARY;
 			}
 			else if (((TransactionStmt *)node)->kind == TRANS_STMT_SAVEPOINT ||
 					 ((TransactionStmt *)node)->kind == TRANS_STMT_ROLLBACK_TO ||
 					 ((TransactionStmt *)node)->kind == TRANS_STMT_RELEASE)
 			{
+				/* SAVEPOINT related commands are sent to the primary */
 				return POOL_PRIMARY;
 			}
 
@@ -817,7 +819,8 @@ static POOL_DEST send_to_where(Node *node, char *query)
 			else if (is_2pc_transaction_query(node, query))
 				return POOL_PRIMARY;
 			else
-				return POOL_BOTH;
+				/* COMMIT etc. */
+				return POOL_PRIMARY;
 		}
 
 		/*
