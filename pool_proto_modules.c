@@ -274,6 +274,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			 */
 			if (IsA(node, PrepareStmt))
 			{
+#ifdef NOT_USED
 				PreparedStatement *ps;
 
 				ps = pool_create_prepared_statement(((PrepareStmt *)node)->name, 
@@ -285,9 +286,11 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 				}
 
 				session_context->pending_pstmt = ps;
+#endif
 			}
 			else if (IsA(node, DeallocateStmt))
 			{
+#ifdef NOT_USED
 				char *name;
 				PreparedStatement *ps;
 
@@ -304,11 +307,11 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 				session_context->pending_pstmt = ps;
 
-#ifdef NOT_USED
 				if (name == NULL)
 					session_context->pending_function = pool_clear_prepared_statement_list;
 				else
 					session_context->pending_function = pool_remove_prepared_statement;
+#endif
 			}
 			else if (IsA(node, DiscardStmt))
 			{
@@ -318,7 +321,6 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 					session_context->pending_pstmt = NULL;
 					session_context->pending_portal = NULL;
 				}
-#endif
 			}
 		}
 
@@ -412,8 +414,10 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 				if (IsA(node, PrepareStmt))
 				{
+#ifdef NOT_USED
 					ps = session_context->pending_pstmt;
 					ps->num_tsparams = 0;
+#endif
 				}
 				else if (IsA(node, ExecuteStmt))
 					ps = pool_get_prepared_statement_by_pstmt_name(((ExecuteStmt *) node)->name);
@@ -1537,7 +1541,8 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		return POOL_END;
 	}
 
-	if (session_context->query_context != NULL)
+	if (session_context->query_context != NULL &&
+		pool_is_doing_extended_query_message())
 	{
 		Node *node = session_context->query_context->parse_tree;
 
