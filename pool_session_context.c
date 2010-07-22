@@ -103,6 +103,11 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 	/* Initialize where to send map for PREPARE statemets */
 	memset(&session_context->prep_where, 0, sizeof(session_context->prep_where));
 	session_context->prep_where.nelem = POOL_MAX_PREPARED_STATEMENTS;
+
+	/* Reset flag to indicate difference in number of affected tuples
+	 * in UPDATE/DELETE.
+	 */
+	session_context->mismatch_ntuples = false;
 }
 
 /*

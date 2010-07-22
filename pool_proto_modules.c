@@ -61,7 +61,6 @@ int replication_was_enabled;		/* replication mode was enabled */
 int master_slave_was_enabled;	/* master/slave mode was enabled */
 int internal_transaction_started;		/* to issue table lock command a transaction
 												   has been started internally */
-int mismatch_ntuples;	/* number of updated tuples */
 char *copy_table = NULL;  /* copy table name */
 char *copy_schema = NULL;  /* copy table name */
 char copy_delimiter; /* copy delimiter char */
@@ -102,6 +101,7 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 									 POOL_CONNECTION_POOL *backend,
 									 PreparedStatement *ps);
 static void overwrite_map_for_deallocate(POOL_QUERY_CONTEXT *query_context);
+static int* find_victim_nodes(int *ntuples, int nmembers, int master_node, int *number_of_nodes);
 
 /*
  * Process Query('Q') message
@@ -1178,8 +1178,8 @@ POOL_STATUS FunctionCall3(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 /*
  * Process ReadyForQuery('Z') message.
  *
- * - if the global error status "mismatch_ntuples" is set, send an error query
- *	 to all DB nodes to abort transaction.
+ * - if the error status "mismatch_ntuples" is set, send an error query
+ *	 to all DB nodes to abort transaction or do failover.
  * - internal transaction is closed
  */
 POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
@@ -1202,14 +1202,58 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	}
 
 	/*
-	 * If the numbers of update tuples are differ, we need to abort transaction
-	 * by using do_error_command. This only works with PROTO_MAJOR_V3.
+	 * If the numbers of update tuples are differ and
+	 * failover_if_affected_tuples_mismatch is false, we abort
+	 * transactions by using do_error_command.  If
+	 * failover_if_affected_tuples_mismatch is true, trigger failover.
+	 * This only works with PROTO_MAJOR_V3.
 	 */
-	if (mismatch_ntuples && MAJOR(backend) == PROTO_MAJOR_V3)
+	if (session_context->mismatch_ntuples && MAJOR(backend) == PROTO_MAJOR_V3)
 	{
 		int i;
 		signed char state;
 		char kind;
+
+		/*
+		 * If failover_if_affected_tuples_mismatch, is true, then
+		 * decide victim nodes by using find_victim_nodes and
+		 * degenerate them.
+		 */
+		if (pool_config->failover_if_affected_tuples_mismatch)
+		{
+			int *victim_nodes;
+			int number_of_nodes;
+			char msgbuf[128];
+
+			victim_nodes = find_victim_nodes(session_context->ntuples, NUM_BACKENDS,
+											 MASTER_NODE_ID, &number_of_nodes);
+			if (victim_nodes)
+			{
+				String *msg = init_string("ReadyForQuery: Degenerate backends:");
+				int i;
+
+				for (i=0;i<number_of_nodes;i++)
+				{
+					snprintf(msgbuf, sizeof(msgbuf), " %d", victim_nodes[i]);
+					string_append_char(msg, msgbuf);
+				}
+				pool_log("%s", msg->data);
+				free_string(msg);
+
+				msg = init_string("ReadyForQuery: Number of affected tuples are:");
+
+				for (i=0;i<NUM_BACKENDS;i++)
+				{
+					snprintf(msgbuf, sizeof(msgbuf), " %d", session_context->ntuples[i]);
+					string_append_char(msg, msgbuf);
+				}
+				pool_log("%s", msg->data);
+				free_string(msg);
+
+				degenerate_backend_set(victim_nodes, number_of_nodes);
+				child_exit(1);
+			}
+		}
 
 		/*
 		 * XXX: discard rest of ReadyForQuery packet
@@ -1220,8 +1264,6 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		state = pool_read_kind(backend);
 		if (state < 0)
 			return POOL_END;
-
-		pool_debug("ReadyForQuery: transaction state: %c", state);
 
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
@@ -1258,7 +1300,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				return POOL_END;
 			}
 		}
-		mismatch_ntuples = 0;
+		session_context->mismatch_ntuples = false;
 	}
 
 	/*
@@ -2715,4 +2757,118 @@ static void overwrite_map_for_deallocate(POOL_QUERY_CONTEXT *query_context)
 			}
 		}
 	}
+}
+
+/*
+ * Find victim nodes by "decide by majority" rule and returns array
+ * of victim node ids. If no victim is found, return NULL.
+ *
+ * Arguments:
+ * ntuples: Array of number of affected tuples. -1 represents down node.
+ * nmembers: Number of elements in ntuples.
+ * master_node: The master node id. Less than 0 means ignore this parameter.
+ * number_of_nodes: Number of elements in victim nodes array.
+ *
+ * Note: If no one wins and master_node > 0, winner would be the
+ * master and other nodes who has same number of tuples as the master.
+ *
+ * Caution: Returned victim node array is allocated in static memory
+ * of this function. Subsequent calls to this function will overwrite
+ * the memory.
+ */
+static int* find_victim_nodes(int *ntuples, int nmembers, int master_node, int *number_of_nodes)
+{
+	static int victim_nodes[MAX_NUM_BACKENDS];
+	static int votes[MAX_NUM_BACKENDS];
+	int maxvotes;
+	int majority_ntuples;
+	int me;
+	int cnt;
+	int healthy_nodes;
+	int i, j;
+
+	healthy_nodes = 0;
+	*number_of_nodes = 0;
+	maxvotes = 0;
+
+	for (i=0;i<nmembers;i++)
+	{
+		me = ntuples[i];
+
+		/* Health node? */
+		if (me < 0)
+		{
+			votes[i] = -1;
+			continue;
+		}
+
+		healthy_nodes++;
+		votes[i] = 1;
+
+		for (j=0;j<nmembers;j++)
+		{
+			if (i != j && me == ntuples[j])
+			{
+				votes[i]++;
+
+				if (votes[i] > maxvotes)
+				{
+					maxvotes = votes[i];
+					majority_ntuples = me;
+				}
+			}
+		}
+	}
+
+	/* Everyone is different */
+	if (maxvotes == 1)
+	{
+		/* Master node is specified? */
+		if (master_node < 0)
+			return NULL;
+
+		/*
+		 * If master node is specified, let it and others who has same
+		 * ntuples win.
+		 */
+		majority_ntuples = ntuples[master_node];
+	}
+	else
+	{
+		/* Find number of majority */
+		cnt = 0;
+		for (i=0;i<nmembers;i++)
+		{
+			if (votes[i] == maxvotes)
+			{
+				cnt++;
+			}
+		}
+
+		if (cnt <= healthy_nodes / 2.0)
+		{
+			/* No one wins */
+
+			/* Master node is specified? */
+			if (master_node < 0)
+				return NULL;
+
+			/*
+			 * If master node is specified, let it and others who has same
+			 * ntuples win.
+			 */
+			majority_ntuples = ntuples[master_node];
+		}
+	}
+
+	/* Make victim nodes list */
+	for (i=0;i<nmembers;i++)
+	{
+		if (ntuples[i] > 0 && ntuples[i] != majority_ntuples)
+		{
+			victim_nodes[(*number_of_nodes)++] = i;
+		}
+	}
+
+	return victim_nodes;
 }

@@ -42,7 +42,6 @@ extern int replication_was_enabled;		/* replication mode was enabled */
 extern int master_slave_was_enabled;	/* master/slave mode was enabled */
 extern int internal_transaction_started;		/* to issue table lock command a transaction
 												   has been started internally */
-extern int mismatch_ntuples;	/* number of updated tuples */
 extern char *copy_table;  /* copy table name */
 extern char *copy_schema;  /* copy table name */
 extern char copy_delimiter; /* copy delimiter char */

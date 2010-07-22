@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Wed Jul 14 13:50:01 JST 2010
+Last modified: Thu Jul 22 12:55:49 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -833,12 +833,28 @@ configuration parameters below must be set in addtion to everything above.</p>
       false.</p>
   </dd>
 
+  <dt>failover_if_affected_tuples_mismatch</dt>
+  <dd>
+	  <p>When set to true, if a backend returns number of affected
+      tuples by UPDATE/DELETE 
+	  different between the backends, the backends that differ from most
+	  frequent result set are degenerated.
+	  If set to false, the session is terminated and the backends are not
+	  degenerated. Default is false.</p>
+  </dd>
+
   <dt>replication_stop_on_mismatch</dt>
   <dd>
-	  <p>When set to true, if a SELECT statement returns a result set of records
+	  <p>When set to true, if a backend returns packet kind 
 	  different between the backends, the backends that differ from most
-	  frequent result set are degenerated. This is only valid if the SELECT
-	  statement is part of a transaction and replicate_select is set to true.
+	  frequent result set are degenerated. Typical use case is the SELECT
+	  statement is part of a transaction and replicate_select is set to
+	  true, and SELECT returns diffrent number of rows among backends.
+	  Other than SELECT statement might trigger this though.
+	  For example, a backend succeeded in an UPDATE, while others
+	  failed.
+	  Also please note that pgpool does NOT examine content of records
+	  returned from SELECT.
 	  If set to false, the session is terminated and the backends are not
 	  degenerated. Default is false.</p>
   </dd>

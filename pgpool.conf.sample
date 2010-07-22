@@ -66,9 +66,16 @@ replication_mode = false
 # This is ignored if replication_mode is false.
 load_balance_mode = false
 
-# if there's a data mismatch between master and secondary
-# start degeneration to stop replication mode
+# If there's a disagreement with the packet kind sent from backend,
+# then degenrate the node which is most likely "minority".  If false,
+# just force to exit this session.
 replication_stop_on_mismatch = false
+
+# If there's a disagreement with the number of affected tuples in
+# UPDATE/DELETE, then degenrate the node which is most likely
+# "minority".
+# If false, just abort the transaction to keep the consistency.
+failover_if_affected_tuples_mismatch = false
 
 # If true, replicate SELECT statement when load balancing is disabled.
 # If false, it is only sent to the master node.

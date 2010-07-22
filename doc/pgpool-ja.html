@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Wed Jul 14 13:50:48 JST 2010
+Last modified: Thu Jul 22 13:07:52 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -829,10 +829,22 @@ raw$B%b!<%I!"%3%M%/%7%g%s%W!<%k%b!<%I$K2C$(!"0J2<$r@_Dj$7$^$9!#(B
 <dt>replication_stop_on_mismatch
 <dd>
 <p>
-   true$B$r;XDj$,;XDj$5$l$F$$$F!"$+$D%H%i%s%6%/%7%g%s$NCf$G<B9T$5$l$?(BSELECT$B7k2L$,(BDB$B%N!<%I$N4V$GIT0lCW$K$J$C$?>l9g$K!"$=$N(BDB$B%N!<%I$r@Z$jJ|$7$F=LB`1?E>$KF~$j$^$9!#(B
+   $B3F(BDB$B%N!<%I$+$iAw$i$l$F$/$k%Q%1%C%H$N<oN`$,IT0lCW$K$J$C$?>l9g$K!"(BDB$B%N!<%I$r@Z$jJ|$7$F=LB`1?E>$KF~$j$^$9!#(B
+$BNI$/$"$k%1!<%9$H$7$F$O!"(Breplicate_select$B$,;XDj$5$l$F$$$F(BSELECT$B$,3F(BDB$B%N!<%I$G<B9T$5$l$F$$$k$H$-$K!"8!:w7k2L9T?t$,0lCW$7$J$$$J$I!"$,$"$j$^$9(B($B$3$l$K8BDj$5$l$k$b$N$G$O$"$j$^$;$s!#$?$H$($P$"$k(BDB$B%N!<%I$G(BUPDATE$B$,@.8y$7$?$N$K!"B>$N(BDB$B%N!<%I$G$O<:GT$7$?>l9g$,0lNc$G$9(B)$B!#(B
+$B$?$@$7!"(Bpgpool$B$O%Q%1%C%H$NCf?H$^$G$O%A%'%C%/$7$F$$$J$$$N$G!"(BSELECT$B7k2L$N%G!<%?FbMF$,0[$J$C$F$$$F$b!"=LB`$O5/$-$J$$$3$H$KCm0U$7$F$/$@$5$$!#(B
 $B=LB`BP>]$N(BDB$B%N!<%I$O!VB??t7h!W$G>/?tGI$K$J$C$?$b$N$,BP>]$K$J$j$^$9!#(B
 $B$b$7B??t7h$GF1I<$K$J$C$?>l9g$O!"%^%9%?(BDB$B%N!<%I(B(DB$B%N!<%IHV9f$,$b$C$H$b$o$+$$$b$N(B)$B$r4^$`%0%k!<%W$,M%@h$5$l!"$=$l0J30$N%0%k!<%W$K=jB0$9$k(BDB$B%N!<%I$,@Z$jJ|$7$NBP>]$K$J$j$^$9!#(B
-$B$3$N%*%W%7%g%s$,(Bfalse$B$N>l9g$O!"3:Ev$NLd$$9g$o$;$r6/@)E*$K=*N;$9$k$@$1$KN1$a$^$9!#(B
+$B$3$N%*%W%7%g%s$,(Bfalse$B$N>l9g$O!"3:Ev$N%;%C%7%g%s$r6/@)E*$K=*N;$9$k$@$1$KN1$a$^$9!#(B
+$B%G%U%)%k%HCM$O(Bfalse$B$G$9!#(B
+</p>
+
+<dt>failover_if_affected_tuples_mismatch
+<dd>
+<p>
+   $B3F(BDB$B%N!<%I$G<B9T$5$l$?(BUPDATE/DELETE$B$N7k2L9T?t$,IT0lCW$K$J$C$?>l9g$K!"(BDB$B%N!<%I$r@Z$jJ|$7$F=LB`1?E>$KF~$j$^$9!#(B
+$B=LB`BP>]$N(BDB$B%N!<%I$O!VB??t7h!W$G>/?tGI$K$J$C$?$b$N$,BP>]$K$J$j$^$9!#(B
+$B$b$7B??t7h$GF1I<$K$J$C$?>l9g$O!"%^%9%?(BDB$B%N!<%I(B(DB$B%N!<%IHV9f$,$b$C$H$b$o$+$$$b$N(B)$B$r4^$`%0%k!<%W$,M%@h$5$l!"$=$l0J30$N%0%k!<%W$K=jB0$9$k(BDB$B%N!<%I$,@Z$jJ|$7$NBP>]$K$J$j$^$9!#(B
+$B$3$N%*%W%7%g%s$,(Bfalse$B$N>l9g$O!"3:Ev$N%;%C%7%g%s$r6/@)E*$K=*N;$9$k$@$1$KN1$a$^$9!#(B
 $B%G%U%)%k%HCM$O(Bfalse$B$G$9!#(B
 </p>
 
@@ -2898,6 +2910,93 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
 </p>
 
 <h1>$B%j%j!<%9%N!<%H(B<a name="release"></a></h1>
+
+<h2>3.0(umiyameboshi) 2010/08/xx</h2>
+<p>
+$B$3$N%P!<%8%g%s$O(B3.0$B7ONs$N:G=i$NHG$G!"(B2.2$B7O$d(B2.3$B7O$+$i$N!V%a%8%c!<%P!<%8%g%s%"%C%W!W$K$"$?$j$^$9!#(B
+$BB?$/$N5!G=2~NI$,$J$5$l!"?75!G=$,DI2C$5$l$k$H6&$K!"FbIt9=B$$,@0M}$5$l$F8+DL$7$,NI$/$J$C$FJ]<i@-$,8~>e$7$F$$$^$9!#(B
+</p>
+
+<h3>$B?75!G=(B</h3>
+<p>
+<ul>
+ <li>pgpool$B$N5/F0;~$K!"%9%F!<%?%9%U%!%$%k$rL5;k$9$k%*%W%7%g%s$,DI2C$5$l$^$7$?!#(B
+
+ <li>failover_if_affected_tuples_mismatch $B$H$$$&@_Dj9`L\$,DI2C$5$l$^$7$?!#(B
+$B=>Mh!"%l%W%j%1!<%7%g%s%b!<%I$G(BUPDATE/DELETE$B$N7k2L9T?t$,0[$J$k$H!"%H%i%s%6%/%7%g%s$r%"%\!<%H$7$F%;%C%7%g%s$r6/@)@ZCG$7$F$$$^$7$?!#(B
+failover_if_affected_tuples_mismatch $B$r(B true$B$K@_Dj$9$k$H!"$3$N8=>]$,5/$-$?$H$-$K!"IT0lCW$N$"$C$?(BDB$B%N!<%I$r@Z$jJ|$7$F=LB`1?E>$KF~$k$h$&$K$J$j$^$9!#(B
+</ul>
+</p>
+
+<h2>2.3.3 (tomiteboshi) 2010/04/23</h2>
+<p>$B$3$N%P!<%8%g%s$G$O!"(B2.3.2.2 $B0JA0$N?'!9$J%P%0$,=$@5$5$l$F$$$^$9!#(B</p>
+
+<h3>$B8_49@-$N$J$$JQ99(B</h3>
+<ul>
+<li>$B$3$N%P!<%8%g%s$+$i!"(Bpgpool $B$,0JA0$h$jB?$/$N6&M-%a%b%j$r;H$&$h$&$K$J$C$?$N$GCm0U$7$F$/$@$5$$!#(B
+$B$3$l$K$h$kLdBj$,(B pgpool $B$N5/F0;~$KH/@8$7$?>l9g$O!"(Bpgpool $B$N%m%0$r8+$F$/$@$5$$!#(B
+"could not create shared memory segment: Cannot allocate memory" $B$H$$$C$?%a%C%;!<%8$,$"$l$P!"%7%9%F%`$N6&M-%a%b%j$rA}$d$7$F$/$@$5$$!#(B</li>
+<li>$B%Q%i%l%k%b!<%I$,!"%l%W%j%1!<%7%g%s%b!<%I$+%m!<%I%P%i%s%9%b!<%I$,M-8z$G$J$$$H;H$($J$$$h$&$K$J$j$^$7$?!#(B
+pgpool-II $B$G$O$:$C$H!"%l%W%j%1!<%7%g%s%b!<%I$+%m!<%I%P%i%s%9%b!<%I$,M-8z$G$J$$$H$-%Q%i%l%k%b!<%I$O@5$7$/F0:n$7$F$$$^$;$s$G$7$?!#(B(Kitagawa)</li>
+<li>insert_lock $B$N%G%U%)%k%HCM$r(B false $B$KJQ99$7$^$7$?!#$3$l$O!"%^%9%?!&%9%l!<%V%b!<%I$G$O(B true $B$K$7$F$bL50UL#$J$?$a$G$9!#(B
+Fujii Masao $B$5$s$N;XE&$K$h$j=$@5$7$^$7$?!#(B(Tatsuo)</li>
+</ul>
+
+<h3>$B?7$7$/DI2C$7$?%I%-%e%a%s%H(B</h3>
+<ul>
+<li>README.online-recovery $B$rDI2C$7$^$7$?!#$3$N%I%-%e%a%s%H$K$O!"%*%s%i%$%s%j%+%P%j$NFbItE*$J$3$H$,=q$$$F$"$j$^$9!#(B</li>
+</ul>
+
+<h3>$B%P%0=$@5(B</h3>
+<ul>
+<li>$B;R%W%m%;%9$,(B segfault $B$r5/$3$9(B pgpool-II 1.0 $B$+$iD9$$4VB8:_$7$?%P%0$r=$@5$7$^$7$?!#(B
+$B$3$l$O!"?F%W%m%;%9$,(B shmem $B%5%$%:$N7W;;$r4V0c$($F$$$?$3$H$K5/0x$7$^$9!#%P%02r@O(B(Kitagawa)$B!"%Q%C%A:n@.(B(Tatsuo)</li>
+
+<li>$B%I%-%e%a%s%H$K%Q%i%l%k%b!<%IMQ$N0J2<$N@)Ls$rDI5-$7$^$7$?!#(B(Kitagawa)
+  <ul>
+  <li>- NATURAL JOIN $B$O;H$($^$;$s!#(B</li>
+  <li>- USING $B6g$,!"%/%(%j=q$-49$(=hM}$K$h$C$F(B ON $B6g$KJQ49$5$l$^$9!#(B</li>
+  </ul>
+</li>
+
+<li>$B%Q%i%l%k%b!<%I$N$H$-!"(BUSING $B6g$r4^$`(B JOIN $B9=J8$N=q$-49$($GH/@8$9$k2DG=@-$,$"$C$?%/%i%C%7%e$r=$@5$7$^$7$?!#(B(Kitagawa)<br>
+  $B$3$N=$@5$K$h$j!"0J2<$N$h$&$J(B JOIN $B9=J8$,;H$($k$h$&$K$J$j$^$9!#(B<br>
+  $BNc!'(B<pre>
+SELECT * FROM a JOIN b USING (aid) JOIN c USING (cid);
+SELECT * FROM a JOIN b USING (aid) JOIN c USING (cid) JOIN d USING</pre>
+</li>
+
+<li>$B%Q%i%l%k%/%(%j$G!"J,;6%-!<Ns$NA0$K(B current_time $B$r4^$`(B INSERT $BJ8$N%Q!<%9$,$G$-$k$h$&$K=$@5$7$^$7$?!#(B</li>
+
+<li>SimpleForwardToBackend() $B$r=$@5$7$^$7$?!#(B
+$B$3$l$K$h$j!"3HD%%W%m%H%3%k$r;H$C$?%/%i%$%"%s%H$,(B bind $B%(%i!<$N$h$&$J%(%i!<$rH/@8$5$;$?$H$-$K!"(B
+pgpool $B$,%P%C%/%(%s%I$N1~Ez$rBT$AB3$1$J$/$J$j$^$9!#(B
+$B$3$N%P%0$O!"%^%9%?!&%9%l!<%V%b!<%I!"(Braw $B%b!<%I!"%3%M%/%7%g%s%W!<%k%b!<%I$GH/@8$7$F$$$^$7$?!#(B
+$B$3$l$r=$@5$7$?$3$H$K$h$C$F!"%3%^%s%I$,%(%i!<$K$J$C$?$"$H!"%(%i!<$r2sI|$5$;$k$?$a$K(B SYNC $B%a%C%;!<%8$rAw$k$h$&$K$J$j$^$9!#(B(Kitagawa)</li>
+
+<li>select() $B$r<B9TCf$N(B pgpool $B;R%W%m%;%9$,!"(BSIGINT/SIGQUIT $B%7%0%J%k$rL5;k$9$k$h$&$K=$@5$7$^$7$?!#(B
+$B%7%0%J%k$,Aw$i$l$F$b(B pgpool $B$O(B select() $B$r:F<B9T$7$h$&$H$9$k$N$G!"7k2LE*$K%7%0%J%k$,L5;k$5$l$^$9!#(B(Tatsuo)</li>
+
+<li>connect_inet_domain_socket_by_port/connect_unix_domain_socket_by_port $B$,(B SIGTERM/SIGINT/SIGQUIT $B%7%0%J%k$r(B
+$B<u$1<h$C$F$$$J$$$+%A%'%C%/$9$k$h$&$K=$@5$7$^$7$?!#(B Daniel Codina $B$5$s$+$i$N%P%0Js9p$K4p$E$-$^$9!#(B(Tatsuo)</li>
+
+<li>"kind mismatch" $B$H$$$&%(%i!<%a%C%;!<%8$r@8@.$9$k:]$K%/%i%C%7%e$9$k2DG=@-$,$"$C$?$N$G!"$3$l$r=$@5$7$^$7$?!#(B
+$B0JA0$OLdBj$J$+$C$?$N$G$9$,!"(B2.3.2$B$G%(%s%P%0$7$^$7$?!#(B(Tatsuo)</li>
+
+<li>$B%X%k%9%A%'%C%/$K$*$1$k%P%0$r=$@5$7$^$7$?!#(B
+$B%3!<%I$,H4$1$?$J$I$G%M%C%H%o!<%/>c32$,H/@8$7$?$H$-$K!"(Bconnect() $B$r8F$s$G$$$k4V$O%X%k%9%A%'%C%/$,9T$J$o$l$F$$$^$;$s$G$7$?!#(B
+$B$3$l$O!"(Bconnect() $B$,(B ALARM $B%7%0%J%k$K$h$C$F3d$j9~$^$l$?:]$K!"(Bconnect_unix_domain_socket()/connect_inet_domain_socket() $B$,:F;n9T$7$F$$$?$?$a$G$9!#(B
+$B$3$N=$@5$G$O!">e5-$N4X?t$KBP$7$F:F;n9T$r%3%s%H%m!<%k$9$k$h$&$J0z?t$rDI2C$7$F$$$^$9!#(B
+$B$3$l$O!"(BDaniel Codina $B$5$s$N%P%0Js9p$HJ,@O$K4p$E$/=$@5$G$9!#(B(Tatsuo)</li>
+
+<li>2.3.2.2 $B$G!"(BSimpleForwardToBackend $B$G$N%?%$%`%9%?%s%W$N=q$-49$($K$*$$$F%(%s%P%0$7$F$$(B
+$B$?$N$G!"$3$l$r=$@5$7$^$7$?!#$3$l$O!"%P%0%H%i%C%/(B #1010771 $B$K$"$k(B Peter Pramberge $B$5$s$i$NJs9p$K4p$E$-$^$9!#(B(Tatsuo)</li>
+
+<li>$B%Q%i%l%k%/%(%j$K$*$1$k(B "*" $B$N=q$-49$($r=$@5$7$^$7$?!#(Bsho $B$5$s$+$iDs6!$$$?$@$$$?%Q%C%A$r<h$j9~$_$^$7$?!#(B(Kitagawa)</li>
+
+<li>connect_inet_domain_socket_by_port() $B$G%(%i!<%a%C%;!<%8$r=PNO$9$k:]$K!"(B
+strerror() $B$G$O$J$/(B hstrerror() $B$r;H$&$h$&$K=$@5$7$^$7$?!#(B (Tatsuo)</li>
+</ul>
 
 <h2>2.3.2.2 (tomiteboshi) 2010/02/22</h2>
 <h3>$B35MW(B</h3>

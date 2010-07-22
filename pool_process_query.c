@@ -1063,6 +1063,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 //	char kind1;
 //	POOL_STATUS ret;
 	POOL_SESSION_CONTEXT *session_context;
+	bool mismatch_ntuples = false;
 
 	/* Get session context */
 	session_context = pool_get_session_context();
@@ -1146,6 +1147,11 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 		command_ok_row_count = extract_ntuples(p);
 
 		/*
+		 * Save number of affcted tuples of master node.
+		 */
+		session_context->ntuples[MASTER_NODE_ID] = 	command_ok_row_count;
+
+		/*
 		 * if we are in the parallel mode, we have to sum up the number
 		 * of affected rows
 		 */
@@ -1158,8 +1164,14 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
-		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
+		if (!IS_MASTER_NODE_ID(i))
 		{
+			if (!VALID_BACKEND(i))
+			{
+				session_context->ntuples[i] = -1;
+				continue;
+			}
+
 			status = pool_read(CONNECTION(backend, i), &len, sizeof(len));
 			if (status < 0)
 			{
@@ -1185,6 +1197,11 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 				int n = extract_ntuples(p);
 
 				/*
+				 * Save number of affcted tuples.
+				 */
+				session_context->ntuples[i] = n;
+
+				/*
 				 * if we are in the parallel mode, we have to sum up the number
 				 * of affected rows
 				 */
@@ -1194,7 +1211,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 				}
 				else if (command_ok_row_count != n) /* mismatch update rows */
 				{
-					mismatch_ntuples = 1;
+					mismatch_ntuples = true;
 				}
 			}
 		}
@@ -1202,6 +1219,8 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 
 	if (mismatch_ntuples)
 	{
+		char msgbuf[128];
+
 		String *msg = init_string("pgpool detected difference of the number of inserted, updated or deleted tuples. Possible last query was: \"");
 		string_append_char(msg, query_string_buffer);
 		string_append_char(msg, "\"");
@@ -1210,6 +1229,22 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 								"check data consistency between master and other db node",  __FILE__, __LINE__);
 		pool_error(msg->data);
 		free_string(msg);
+
+		msg = init_string("SimpleForwardToFrontend: Number of affected tuples are:");
+
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			snprintf(msgbuf, sizeof(msgbuf), " %d", session_context->ntuples[i]);
+			string_append_char(msg, msgbuf);
+		}
+		pool_log("%s", msg->data);
+		free_string(msg);
+
+		/*
+		 * Remember that we have different number of UPDATE/DELETE
+		 * affcted tuples in backends.
+		 */
+		session_context->mismatch_ntuples = true;
 	}
 	else
 	{
@@ -1720,7 +1755,6 @@ void reset_variables(void)
 	pool_unset_query_in_progress();
 
 	internal_transaction_started = 0;
-	mismatch_ntuples = 0;
 	select_in_transaction = 0;
 	execute_select = 0;
 	receive_extended_begin = 0;
@@ -3433,30 +3467,6 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 		else
 			kind_list[i] = 0;
 	}
-
-#ifdef NOT_USED
-	/* register kind map */
-	for (i = 0; i < NUM_BACKENDS; i++)
-	{
-		/* initialize degenerate record */
-		degenerate_node[i] = 0;
-
-		/* kind is signed char.
-		 * We must check negative number.
-		 */
-		int id = kind_list[i] + 128;
-
-		if (kind_list[i] == -1)
-			continue;
-
-		kind_map[id]++;
-		if (kind_map[id] > max_count)
-		{
-			max_kind = kind_list[i];
-			max_count = kind_map[id];
-		}
-	}
-#endif
 
 	if (max_count != num_executed_nodes)
 	{

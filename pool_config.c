@@ -1881,6 +1881,7 @@ int pool_init_config(void)
 	pool_config->replication_mode = 0;
 	pool_config->load_balance_mode = 0;
 	pool_config->replication_stop_on_mismatch = 0;
+	pool_config->failover_if_affected_tuples_mismatch = 0;
 	pool_config->replicate_select = 0;
 	pool_config->reset_query_list = default_reset_query_list;
 	pool_config->num_reset_queries = sizeof(default_reset_query_list)/sizeof(char *);
@@ -2342,6 +2343,20 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			pool_debug("replication_stop_on_mismatch: %d", v);
 			pool_config->replication_stop_on_mismatch = v;
+		}
+		else if (!strcmp(key, "failover_if_affected_tuples_mismatch") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			int v = eval_logical(yytext);
+
+			if (v < 0)
+			{
+				pool_error("pool_config: invalid value %s for %s", yytext, key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_debug("failover_if_affected_tuples_mismatch: %d", v);
+			pool_config->failover_if_affected_tuples_mismatch = v;
 		}
 		else if (!strcmp(key, "replicate_select") &&
 				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
