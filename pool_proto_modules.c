@@ -1580,8 +1580,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		return POOL_END;
 	}
 
-	if (session_context->query_context != NULL &&
-		pool_is_doing_extended_query_message())
+	if (session_context->query_context != NULL)
 	{
 		Node *node = session_context->query_context->parse_tree;
 
