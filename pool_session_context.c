@@ -52,7 +52,10 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 	/* Set connection info */
 	session_context->frontend = frontend;
 	session_context->backend = backend;
-	
+
+	/* Initialize query context */
+	session_context->query_context = NULL;
+
 	/* Initialize local session id */
 	pool_incremnet_local_session_id();
 
