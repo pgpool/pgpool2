@@ -114,6 +114,15 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 }
 
 /*
+ * Destroy session context.
+ */
+void pool_session_context_destroy(void)
+{
+	/* XXX For now, just zap memory */
+	memset(&session_context_d, 0, sizeof(session_context_d));
+}
+
+/*
  * Return session context
  */
 POOL_SESSION_CONTEXT *pool_get_session_context(void)

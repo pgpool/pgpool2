@@ -449,6 +449,9 @@ static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *time
 
 	set_ps_display("wait for connection request", false);
 
+	/* Destroy session context for just in case... */
+	pool_session_context_destroy();
+
 	FD_ZERO(&readmask);
 	FD_SET(unix_fd, &readmask);
 	if (inet_fd)
