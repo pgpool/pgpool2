@@ -2760,6 +2760,7 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 		pool_error("do_query: malloc failed");
 		return POOL_ERROR;
 	}
+	memset(res->data, 0, DO_QUERY_ALLOC_NUM*sizeof(char *));
 
 	/* send a query to the backend */
 	if (send_simplequery_message(backend, strlen(query) + 1, query, major) != POOL_CONTINUE)
