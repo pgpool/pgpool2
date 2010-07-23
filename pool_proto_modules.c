@@ -393,6 +393,8 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		}
 	}
 
+	string = query_context->original_query;
+
 	if (!RAW_MODE)
 	{
 		/* check if query is "COMMIT" or "ROLLBACK" */
@@ -429,9 +431,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 			}
 
-			if (query_context->rewritten_query == NULL)
-				string = query_context->original_query;
-			else
+			if (query_context->rewritten_query != NULL)
 				string = query_context->rewritten_query;
 
 			/*
@@ -1908,6 +1908,10 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 
 	switch (fkind)
 	{
+		POOL_QUERY_CONTEXT *query_context;
+		char *query;
+		Node *node;
+		List *parse_tree_list;
 
 		case 'X':	/* Terminate */
 			return POOL_END;
@@ -1964,30 +1968,21 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			break;
 
 		case 'F':	/* FunctionCall */
-			if (MASTER_SLAVE)
+			/*
+			 * Create dummy query context as if it were an INSERT.
+			 */
+			query_context = pool_init_query_context();
+			if (!query_context)
 			{
-				/*
-				 * Send to primary/master node only.
-				 * For this we treat function call as if INSERT.
-				 */
-				POOL_QUERY_CONTEXT *query_context;
-				char *query = "INSERT INTO foo VALUES(1)";
-				Node *node;
-				List *parse_tree_list;
-
-				/* Create query context */
-				query_context = pool_init_query_context();
-				if (!query_context)
-				{
-					pool_error("ProcessFrontendResponse: pool_init_query_context failed");
-					return POOL_END;
-				}
-				parse_tree_list = raw_parser(query);
-				node = (Node *) lfirst(list_head(parse_tree_list));
-				pool_start_query(query_context, query, node);
-				pool_where_to_send(query_context, query_context->original_query,
-								   query_context->parse_tree);
+				pool_error("ProcessFrontendResponse: pool_init_query_context failed");
+				return POOL_END;
 			}
+			query = "INSERT INTO foo VALUES(1)";
+			parse_tree_list = raw_parser(query);
+			node = (Node *) lfirst(list_head(parse_tree_list));
+			pool_start_query(query_context, query, node);
+			pool_where_to_send(query_context, query_context->original_query,
+							   query_context->parse_tree);
 
 			if (MAJOR(backend) == PROTO_MAJOR_V3)
 				status = FunctionCall3(frontend, backend, len, contents);

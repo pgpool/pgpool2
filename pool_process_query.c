@@ -1781,6 +1781,8 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 	char *query;
 	int qn;
 	POOL_SESSION_CONTEXT *session_context;
+	int i;
+	bool need_to_abort;
 
 	/* Get session context */
 	session_context = pool_get_session_context();
@@ -1789,6 +1791,9 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 		pool_error("reset_backend: cannot get session context");
 		return POOL_END;
 	}
+
+	/* Set reset context */
+	session_context->reset_context = true;
 
 	/*
 	 * Reset all state variables
@@ -1842,9 +1847,20 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 
 	query = pool_config->reset_query_list[qcnt];
 
-	/* if transaction state is idle, we don't need to issue ABORT */
-	if (TSTATE(backend, MASTER_NODE_ID) == 'I' && !strcmp("ABORT", query))
-		return 0;
+	if (!strcmp("ABORT", query))
+	{
+		/* If transaction state are all idle, we don't need to issue ABORT */
+		need_to_abort = false;
+
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (TSTATE(backend, i) != 'I')
+				need_to_abort = true;
+		}
+
+		if (!need_to_abort)
+			return 0;
+	}
 
 	pool_set_timeout(10);
 
