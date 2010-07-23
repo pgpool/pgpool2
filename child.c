@@ -391,6 +391,9 @@ void do_child(int unix_fd, int inet_fd)
 					break;
 			}
 
+			/* Destroy session context */
+			pool_session_context_destroy();
+
 			if (status != POOL_CONTINUE)
 				break;
 		}
