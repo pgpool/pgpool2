@@ -744,18 +744,32 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 				char code[] = "CommandComplete";
 				int r;
 
-				if (!REPLICATION)
+				node_id = atoi(buf);
+
+				if ((!REPLICATION &&
+					 !(MASTER_SLAVE &&
+					   !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))) ||
+					(MASTER_SLAVE &&
+					 !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP) &&
+					 node_id == REAL_MASTER_NODE_ID))
 				{
-					int len = strlen("recovery request is accepted only in replication mode. ") + 1;
+					int len;
+					char *msg;
+
+					if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
+						msg = "primary server cannot be recovered by online recovery.";
+					else
+						msg = "recovery request is accepted only in replication mode or stereaming replication mode. ";
+
+					len = strlen(msg)+1;
 					pcp_write(frontend, "e", 1);
 					wsize = htonl(sizeof(int) + len);
 					pcp_write(frontend, &wsize, sizeof(int));
-					pcp_write(frontend, "recovery request is accepted only in replication mode. ", len);
+					pcp_write(frontend, msg, len);
 				}
 				else
 				{
 					pool_debug("pcp_child: start online recovery");
-					node_id = atoi(buf);
 
 					r = start_recovery(node_id);
 					finish_recovery();

@@ -76,14 +76,16 @@ int start_recovery(int recovery_node)
 	}
 
 	/* 1st stage */
-	if (exec_checkpoint(conn) != 0)
+	if (REPLICATION)
 	{
-		PQfinish(conn);
-		pool_error("start_recovery: CHECKPOINT failed");
-		return 1;
+		if (exec_checkpoint(conn) != 0)
+		{
+			PQfinish(conn);
+			pool_error("start_recovery: CHECKPOINT failed");
+			return 1;
+		}
+		pool_log("CHECKPOINT in the 1st stage done");
 	}
-
-	pool_log("CHECKPOINT in the 1st stage done");
 
 	if (exec_recovery(conn, recovery_backend, FIRST_STAGE) != 0)
 	{
@@ -93,33 +95,37 @@ int start_recovery(int recovery_node)
 
 	pool_log("1st stage is done");
 
-	pool_log("starting 2nd stage");
-
-	/* 2nd stage */
-	*InRecovery = 1;
-	if (wait_connection_closed() != 0)
+	if (REPLICATION)
 	{
-		PQfinish(conn);
-		pool_error("start_recovery: timeover for waiting connection closed");
-		return 1;
+		pool_log("starting 2nd stage");
+
+		/* 2nd stage */
+		*InRecovery = 1;
+		if (wait_connection_closed() != 0)
+		{
+			PQfinish(conn);
+			pool_error("start_recovery: timeover for waiting connection closed");
+			return 1;
+		}
+
+		pool_log("all connections from clients have been closed");
+
+		if (exec_checkpoint(conn) != 0)
+		{
+			PQfinish(conn);
+			pool_error("start_recovery: CHECKPOINT failed");
+			return 1;
+		}
+
+		pool_log("CHECKPOINT in the 2nd stage done");
+
+		if (exec_recovery(conn, recovery_backend, SECOND_STAGE) != 0)
+		{
+			PQfinish(conn);
+			return 1;
+		}
 	}
 
-	pool_log("all connections from clients have been closed");
-
-	if (exec_checkpoint(conn) != 0)
-	{
-		PQfinish(conn);
-		pool_error("start_recovery: CHECKPOINT failed");
-		return 1;
-	}
-
-	pool_log("CHECKPOINT in the 2nd stage done");
-
-	if (exec_recovery(conn, recovery_backend, SECOND_STAGE) != 0)
-	{
-		PQfinish(conn);
-		return 1;
-	}
 	if (exec_remote_start(conn, recovery_backend) != 0)
 	{
 		PQfinish(conn);
