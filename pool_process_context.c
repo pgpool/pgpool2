@@ -49,6 +49,8 @@ void pool_init_process_context(void)
 	}
 	process_context->backend_desc = pool_config->backend_desc;
 
+	process_context->proc_id = my_proc_id;
+
 	process_context->local_session_id = 0;		/* initialize local session counter */
 }
 
