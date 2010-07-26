@@ -313,9 +313,12 @@ int main(int argc, char **argv)
 	if (strcmp("", pool_config->pool_passwd))
 	{
 		char pool_passwd[POOLMAXPATHLEN+1];
+		char dirnamebuf[POOLMAXPATHLEN+1];
 
+		strncpy(dirnamebuf, conf_file, sizeof(dirnamebuf));
+		dirname(dirnamebuf);
 		snprintf(pool_passwd, sizeof(pool_passwd), "%s/%s",
-				 dirname(conf_file), pool_config->pool_passwd);
+				 dirnamebuf, pool_config->pool_passwd);
 		pool_init_pool_passwd(pool_passwd);
 	}
 
