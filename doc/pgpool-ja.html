@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Thu Jul 22 13:07:52 JST 2010
+Last modified: Sun Jul 25 20:49:41 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -522,6 +522,7 @@ pgpool $B$,I,MW$J>pJs$KCV$-49$($F%3%^%s%I$r<B9T$7$^$9!#(B
 </td></tr>
 <tr><td>%M</td><td>$B8E$$%^%9%?!<$N%N!<%IHV9f(B</td></tr>
 <tr><td>%m</td><td>$B?7$7$$%^%9%?!<$N%N!<%IHV9f(B</td></tr>
+<tr><td>%H</td><td>$B?7$7$$%^%9%?!<$N%[%9%HL>(B</td></tr>
 <tr><td>%%</td><td>'%'$BJ8;z(B</td></tr>
 </table>
 </center>
@@ -702,7 +703,7 @@ backend_data_directory $B$O?7$7$/DI2C$7$?9T$r@_Dj%U%!%$%k:FFI$_9~$_$GDI2C$9$k(
       <p>
 	 $B%G%P%C%0%a%C%;!<%8$N>\:Y%l%Y%k!#(B0$B$G%G%P%C%0%a%C%;!<%8$N=PNO$J$7!#(B
 	 1$B0J>e$G%G%P%C%0%a%C%;!<%8$r=PNO$7$^$9!#(B
-	 $B?t;z$,Bg$-$1$l$P$h$j>\:Y$J%a%C%;!<%8$,=PNO$5$l$k$h$&$K$J$j$^$9!#(B
+	 $B?t;z$,Bg$-$1$l$P$h$j>\:Y$J%a%C%;!<%8$,=PNO$5$l$k$h$&$K$J$j$^$9(B(3.0$B$G$O:#$N$H$3$m%a%C%;!<%8$N>\:YEY$OJQ$j$^$;$s(B)$B!#(B
 	 $B%G%U%)%k%HCM$O(B0$B$G$9!#(B
       </p>
   </dd>
@@ -1177,14 +1178,21 @@ PostgreSQL$B%5!<%P$N$&$A!"(B1$BBf$,%@%&%s$9$k$H!"$=$N%5!<%P$r@Z$jN%$7$F=LB`1?
 
 <h4><p>$B%l%W%j%1!<%7%g%s%b!<%I8GM-$N%(%i!<$K$D$$$F(B</p></h4>
 <p>
-$B%G!<%?$N@09g@-$rJ]$D$?$a$K!"(Bpgpool$B$O%l%W%j%1!<%7%g%s;~$K(B INSERT, UPDATE,
-DELETE $B$N99?77o?t$,$9$Y$F$N%N!<%I$,F1$8$G$J$$>l9g!"0U?^E*$K9=J8%(%i!<$r5/$9(BSQL$B$rAw?.$9$k$3$H$K$h$C$F!"%H%i%s%6%/%7%g%s$r%"%\!<%H$5$;$^$9(B($B%U%'%$%k%*!<%P$O5/$-$^$;$s(B)$B!#0J2<$N$h$&$J46$8$K$J$j$^$9!#(B
+pgpool$B$O%l%W%j%1!<%7%g%s;~$K(B UPDATE$B!"(BDELETE $B$N99?77o?t$,$9$Y$F$N%N!<%I$,F1$8$G$J$$>l9g!"(Bfailover_if_affected_tuples_mismatch $B$,(B false$B$J$i$P!"(B
+$B0U?^E*$K9=J8%(%i!<$r5/$9(BSQL$B$rAw?.$9$k$3$H$K$h$C$F!"%H%i%s%6%/%7%g%s$r%"%\!<%H$5$;$^$9!#(B
+true$B$J$i$P!"%U%'%$%k%*!<%P$,5/$-$^$9!#$=$N:]!"0J2<$N$h$&$J%(%i!<%a%C%;!<%8$,I=<($5$l$^$9!#(B
+
 <pre>
    =# UPDATE t SET a = a + 1;
-   ERROR: pgpool detected difference of the number of update tuples
+   ERROR: pgpool detected difference of the number of update tuples Possible last query was: "update t1 set i = 1;"
    HINT: check data consistency between master and other db node
 </pre>
-
+$B%m%0$K$O99$K0J2<$N$h$&$K!"99?79T?t$,5-O?$5$l$^$9(B($B$3$N>l9g$O(BDB$B%N!<%I(B0$B$,(B0$B9T!"(BDB$B%N!<%I(B1$B$,(B1$B9T(B)$B!#(B
+<pre>
+2010-07-22 13:23:25 LOG:   pid 5490: SimpleForwardToFrontend: Number of affected tuples are: 0 1
+2010-07-22 13:23:25 LOG:   pid 5490: ReadyForQuery: Degenerate backends: 1
+2010-07-22 13:23:25 LOG:   pid 5490: ReadyForQuery: Number of affected tuples are: 0 1
+</pre>
 </p>
 
 <h3>$B%^%9%?!<%9%l!<%V%b!<%I(B</h3>
@@ -1199,13 +1207,12 @@ DELETE $B$N99?77o?t$,$9$Y$F$N%N!<%I$,F1$8$G$J$$>l9g!"0U?^E*$K9=J8%(%i!<$r5/$9(
 </p>
 
 <p>
-$B%^%9%?%9%l!<%V%b!<%I$G$O!"0l;~%F!<%V%k$N:n@.!"99?7$O%^%9%?%N!<%I$G$N$_<B9T$5$l$^$9!#(B
-$B0l;~%F!<%V%k$X$N8!:w$O!"(BSELECT$BJ8$NA0$K(B/*NO LOAD BALANCE*/$B$H$$$&%3%a%s%H$r=q$/$3$H$K$h$C$F<B9T$G$-$^$9!#(B
+$B%^%9%?%9%l!<%V%b!<%I$G$O!"0l;~%F!<%V%k$N:n@.!"99?7!"8!:w$O%^%9%?%N!<%I$G$N$_<B9T$5$l$^$9!#(B
 </p>
 <p>
 $B%^%9%?!<%9%l!<%V%b!<%I$G$O!"(Bpgpool.conf$B$N(Breplication_mode$B$r(Bfalse$B$K!"(Bmaster_slave_mode
-$B$r(Btrue$B$K$7$^$9!#(B
-$B$^$?!"(B'master_slave_sub_mode'$B$r;XDj$9$k$3$H$,$G$-$^$9!#$3$l$O!"(B'slony'($B%G%U%)%k%H(B)$B$+!"(B'stream'$B$G$9!#(B
+$B$r(Btrue$B$K$7$^$9(B($BF1;~$K(Btrue$B$K$O$G$-$^$;$s(B)$B!#(B
+$B$^$?!"(B'master_slave_sub_mode'$B$r;XDj$7$^$9!#$3$l$O!"(B'slony'($B%G%U%)%k%H(B)$B$+!"(B'stream'$B$G$9!#(B
 'slony'$B$O(BSlony-I$B$rMxMQ$9$k;~$K;XDj$7$^$9!#(B
 'stream'$B$O!"(BPostgreSQL$BAH$_9~$_$N(BStreaming Replication$B$rMxMQ$9$k$H$-$K;XDj$7$^$9!#(B
 </p>
@@ -1213,9 +1220,9 @@ DELETE $B$N99?77o?t$,$9$Y$F$N%N!<%I$,F1$8$G$J$$>l9g!"0U?^E*$K9=J8%(%i!<$r5/$9(
 $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O(B pgpool-II $B$r:F5/F0$7$F$/$@$5$$!#(B
 </p>
 
-<h4>Streaming Replication$B$X$NBP1~(B</h4>
+<h4><a name="stream">Streaming Replication$B$X$NBP1~(B</h4>
 <p>
-$BA0=R$N$h$&$K!"%^%9%?%9%l!<%V%b!<%I$G!"(B'master_slave_sub mode'$B$K(B'stream'$B$r;XDj$9$k$H!"(BPostgreSQL 9.0$B$+$iMxMQ2DG=$K$J$C$?(Btreaming Replication$B$KBP1~$7$^$9(B
+$BA0=R$N$h$&$K!"%^%9%?%9%l!<%V%b!<%I$G!"(B'master_slave_sub mode'$B$K(B'stream'$B$r;XDj$9$k$H!"(BPostgreSQL 9.0$B$+$iMxMQ2DG=$K$J$C$?(BStreaming Replication$B$KBP1~$7$^$9(B
 (pgpool-II$B$G$O!":#$N$H$3$m!"(BStreaming Replication$B$H(BHot Standby$B$rJ;MQ$9$k$3$H$rA0Ds$K$7$F$$$^$9(B)$B!#(B
 $B$3$N%b!<%I$G$O!"0J2<$N@_DjCM$,MxMQ$G$-$^$9!#(B
 <ul>
@@ -1241,8 +1248,112 @@ delay_threshold$B$,(B0$B$N>l9g$O!"CY1d$N%A%'%C%/$r9T$J$$$^$;$s!#(B
 </p>
 <p>
 $B$J$*!"%l%W%j%1!<%7%g%s$NCY1d>u67$O(B show pool_status $B%3%^%s%I$G$b3NG'$G$-$^$9!#(B
+$B9`L\L>$O(B"standby_delay#"$B$G$9(B(#$B$O(BDB$B%N!<%I(BID$B$G$9(B)$B!#(B
 </p>
 </ul>
+</p>
+
+<h4>Streaming Replication$B$G$N%U%'%$%k%*!<%P(B</h4>
+<p>
+Streaming replication$B$rMxMQ$7$?%^%9%?%9%l!<%V%b!<%I$G$O!"(BPrimary$B$d(BStandby$B%N!<%I$,Dd;_$7$?>l9g$K!"%l%W%j%1!<%7%g%s%b!<%I$HF1$8$h$&$K<+F0%U%'%$%k%*!<%P$r9T$J$o$;$k$3$H$,$G$-$^$9!#(B
+$BFC$K2?$b@_Dj$7$J$/$F$b!"Dd;_$7$?%N!<%I$r<+F0E*$K@Z$jJ|$9$3$H$,$G$-$^$9$,!"(BStreaming replication$B$G$O!"(B
+$B!V%H%j%,%U%!%$%k!W$r:n@.$9$k$3$H$K$h$j!"(BStandby$B%N!<%I$r!"%j%+%P%j%b!<%I$+$i99?7Ld$$9g$o$;$r<u$1IU$1$kDL>o$N(BPostgreSQL$B$NF0:n%b!<%I$K<+F0JQ99$9$k$3$H$,$G$-$^$9!#(B
+$B$3$l$rMxMQ$7$F!"%U%'%$%k%*!<%P%3%^%s%I$rJ;MQ$7$F!"(BPrimary$B%N!<%I$,%@%&%s$7$?$H$-$K!"(BStandby$B%N!<%I$,<+F0E*$K$H$C$FBe$k$h$&$J@_Dj$r9T$J$&$3$H$,$G$-$^$9!#(B
+$B$=$N<j=g$r<($7$^$9!#(B
+</p>
+<p>
+<ol>
+ <li>$B%U%!%$%k%*!<%PMQ$N%9%/%j%W%H$rE,Ev$J>l=j(B($B$3$3$G$O(B/usr/local/pgsql/bin)$B$KG[CV$7$F!"<B9T8"8B$rM?$($F$*$-$^$9!#(B
+<pre>
+$ cd /usr/loca/pgsql/bin
+$ cat failover_stream.sh
+#! /bin/sh
+# Failover command for streming replication.
+# This script assumes that DB node 0 is primary, and 1 is standby.
+# 
+# If standby goes down, does nothing. If primary goes down, create a
+# trigger file so that standby take over primary node.
+#
+# Arguments: $1: failed node id. $2: new master hostname. $3: path to
+# trigger file.
+
+failed_node=$1
+new_master=$2
+trigger_file=$3
+
+# Do nothing if standby goes down.
+if [ $failed_node = 1 ]; then
+	exit 0;
+fi
+
+# Create trigger file.
+/usr/bin/ssh -T $new_master /bin/touch $trigger_file
+
+exit 0;
+
+chmod 755 failover_stream.sh
+</pre>
+<li>pgpool.conf$B$N!"(Bfailover_commmand$B$r@_Dj$7$^$9!#(B
+<pre>
+failover_command = '/usr/local/src/pgsql/9.0-beta/bin/failover_stream.sh %d %H /tmp/trigger_file0'
+</pre>
+</ol>
+<p>
+$B$3$l$G!"(Bprimary$B%N!<%I$,%@%&%s$7$?$H$-$K!"<+F0E*$K(Bstandby$B%N!<%I$,DL>o$N(BPostgreSQL$B$H$7$FN)$A>e$,$j!"99?7Ld$$9g$o$;$r<u$1IU$1$k$h$&$K$J$j$^$9!#(B
+</p>
+
+<h4>Streaming Replication$B$G$N%*%s%i%$%s%j%+%P%j(B</h4>
+<p>
+Streaming replication$B$rMxMQ$7$?%^%9%?%9%l!<%V%b!<%I$G$O!"%l%W%j%1!<%7%g%s%b!<%I$HF1$8$h$&$K%*%s%i%$%s%j%+%P%j$,MxMQ$G$-$^$9!#(B
+$B$?$@$7!"%*%s%i%$%s%j%+%P%j$G$-$k$N$O(BStandby$B%N!<%I$N$_$G$9!#(B
+$B%^%9%?%N!<%I$NI|5l$O!"$9$Y$F$N(BDB$B%N!<%I$H(Bpgpool-II$B$rDd;_$5$;$F<jF0$G(B($B$"$k$$$O%9%/%j%W%H$r:n@.$7$F!K<B;\$7$J$1$l$P$J$j$^$;$s!#(B
+</p>
+
+<p>
+<ol>
+ <li>recovery_user $B$r@_Dj$7$^$9!#DL>o!"(Bpostgres$B%f!<%6$H$J$j$^$9!#(B
+<pre>
+recovery_user = 'postgres'
+</pre>
+<li>recovery_password $B$r@_Dj$7$^$9!#$3$l$O!"(Brecovery_user $B$,(BDB$B$K%m%0%$%s$9$k$H$-$K;H$&%Q%9%o!<%I$G$9!#(B
+<pre>
+recovery_password = 't-ishii'
+</pre>
+
+<li> recovery_1st_stage_command $B$r@_Dj$7$^$9!#$3$N%U%!%$%k$O!"%G!<%?%Y!<%9%/%i%9%?2<$KG[CV$7!"<B9T8"8B$rM?$($F$*$-$^$9!#(B
+$B$3$N%9%/%j%W%H$K$D$$$F$O$"$H$G@bL@$7$^$9!#(B
+<pre>
+recovery_1st_stage_command = 'basebackup.sh'
+</pre>
+<li>recovery_2nd_stage_command $B$O!"6u$N$^$^$G9=$$$^$;$s!#(B
+<pre>
+recovery_2nd_stage_command = ''
+</pre>
+</ol>
+
+<p>
+basebackup.sh$B$O0J2<$N$h$&$K$J$j$^$9!#(B
+<pre>
+#! /bin/sh
+# Recovery script for streaming replication.
+# This script assumes that DB node 0 is primary, and 1 is standby.
+#
+datadir=$1
+desthost=$2
+destdir=$3
+
+psql -c "SELECT pg_start_backup('Streaming Replication', true)" postgres
+
+rsync -C -a --delete -e ssh --exclude postgresql.conf --exclude postmaster.pid \
+--exclude postmaster.opts --exclude pg_log --exclude pg_xlog \
+--exclude recovery.conf $datadir/ $desthost:$destdir/
+
+ssh -T localhost mv $destdir/recovery.done $destdir/recovery.conf
+
+psql -c "SELECT pg_stop_backup()" postgres
+</pre>
+
+$B$3$N%9%/%j%W%H$G$O!"(Brecovery_user $B$,%Q%9%o!<%I$J$7$G%j%+%P%jBP>]$N(Bstandby$B%N!<%I$K%m%0%$%s$G$-$k$3$H$rA0Ds$K$7$F$$$k$N$G!"$"$i$+$8$a(Bssh$B$N@_Dj$r9T$J$C$F$*$/I,MW$,$"$j$^$9!#(B
 
 </p>
 
@@ -2914,17 +3025,75 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
 <h2>3.0(umiyameboshi) 2010/08/xx</h2>
 <p>
 $B$3$N%P!<%8%g%s$O(B3.0$B7ONs$N:G=i$NHG$G!"(B2.2$B7O$d(B2.3$B7O$+$i$N!V%a%8%c!<%P!<%8%g%s%"%C%W!W$K$"$?$j$^$9!#(B
-$BB?$/$N5!G=2~NI$,$J$5$l!"?75!G=$,DI2C$5$l$k$H6&$K!"FbIt9=B$$,@0M}$5$l$F8+DL$7$,NI$/$J$C$FJ]<i@-$,8~>e$7$F$$$^$9!#(B
+PostgreSQL 9.0$B$N?75!G=$G$"$k(BStreaming Replication/Hot Standby$B9=@.$KBP1~$9$k$J$I!"B?$/$N5!G=$,DI2C$5$l$k$H6&$K!"FbIt9=B$$,@0M}$5$l$F8+DL$7$,NI$/$J$C$FJ]<i@-$,8~>e$7$F$$$^$9!#(B
 </p>
 
 <h3>$B?75!G=(B</h3>
 <p>
 <ul>
- <li>pgpool$B$N5/F0;~$K!"%9%F!<%?%9%U%!%$%k$rL5;k$9$k%*%W%7%g%s$,DI2C$5$l$^$7$?!#(B
+ <li>PostgreSQL 9.0$B$N?75!G=$G$"$k(BStreaming Replication/Hot Standby(SR+HS)$B9=@.$KBP1~$7$^$7$?(B(Tatsuo, Kitagawa)$B!#(B
+pgpool-II$B$O4pK\E*$K$O(Bmaster/slave mode$B$H$7$FF0:n$7$^$9$,!"$=$N:]$K(B "master_slave_sub_mode" $B$H$$$&?7$7$$@_Dj9`L\$K(B"stream"$B$r@_Dj$9$k$3$H$K$h$j!"(BSR+HS$B9=@.$K:GE,$JF0:n$r$7$^$9!#(B
+$B$?$H$($P!"99?7%/%(%j$O(BPrimary$B%5!<%P$K$N$_Aw?.$7!"(BSELECT$B$O(BPrimary$B$H(BStandby$B%5!<%P$KIi2YJ,;6$9$k$3$H$,2DG=$G$9!#(B
+$B$=$N$[$+!"(BStandby$B%5!<%P$r%*%s%i%$%s%j%+%P%j$GI|5l$7$?$j!"(BPrimary$B$H(BStandby$B$N%l%W%j%1!<%7%g%sF14|$r4F;k$7!"CY$l$,Bg$-$$$h$&$J$i(BPrimary$B$K$N$_(BSELECT$B$rAw?.$5$;$k$h$&$K$9$k$3$H$b2DG=$G$9!#(B
+$B>\:Y$O(B<a href="#stream">Streaming Replication$B$X$NBP1~(B"</a>$B$r$4Mw2<$5$$!#(B
+</p>
 
- <li>failover_if_affected_tuples_mismatch $B$H$$$&@_Dj9`L\$,DI2C$5$l$^$7$?!#(B
+<ul>
+ <li>$B%*%s%i%$%s%j%+%P%j$,(BStreaming Replication$BBP1~$GF0:n$7$F$$$k(Bmaster/slave$B%b!<%I$KBP1~$7$^$7$?(B(Tatsuo)$B!#(B
+
+ <li>Streaming Replication$B%b!<%IMQ$N?7$7$$@_Dj9`L\(B "delay_threshold" $B$,DI2C$5$l!"%l%W%j%1!<%7%g%s$NCY$l$,4F;k$G$-$k$h$&$K$J$j$^$7$?(B(Tatsuo)$B!#(B
+
+ <li>show pool_status$B$G!"(BStreaming Replication$B$K$*$1$k%l%W%j%1!<%7%g%s$NCY1d$,3NG'$G$-$k$h$&$K$J$j$^$7$?(B(Tatsuo)$B!#(B
+
+ <li>Streaming Replication$B$K$*$1$k%l%W%j%1!<%7%g%s$NCY1d$N%m%0$r@)8f$9$k?7$7$$@_Dj9`L\(B"log_standby_delay"$B$,DI2C$5$l$^$7$?(B(Tatsuo)$B!#(B
+
+</ul>
+
+ <li>$B%^%9%?%9%l!<%V%b!<%I$G!"L@<(E*$J%H%i%s%6%/%7%g%sFb$G<B9T$5$l$k(BSQL$B%3%^%s%I$K$*$$$F!"<+F0E*$K%H%i%s%6%/%7%g%s$r3+;O$9$k$3$H$r;_$a$^$7$?!#$3$l$OITI,MW$G$7$?!#$3$l$K$h$C$F!"%Q%U%)!<%^%s%9$,8~>e$7$F$$$^$9(B(Tatsuo)
+
+ <li>$B%^%9%?%9%l!<%V%b!<%I$G!"L@<(E*$J%H%i%s%6%/%7%g%sFb$G<B9T$5$l$k(BSELECT$B%3%^%s%I$,Ii2YJ,;6$G$-$k$h$&$K$J$j$^$7$?(B(Tatsuo, Kitagawa)
+
+ <li>$B%^%9%?%9%l!<%V%b!<%I$G!"I,MW$J(BDB$B%N!<%I$K$N$_%3%^%s%I$,Aw$i$l$k$h$&$K$J$j$^$7$?!#(B
+$B$3$l$K$h$j!"$?$H$($P%Q!<%9%3%^%s%I$,ITI,MW$J(BDB$B%N!<%I$K$*$$$F$b%m%C%/$r<h$C$F$7$^$&$h$&$J$3$H$,$J$/$J$j$^$7$?(B(Tatsuo, Kitagawa)
+
+ <li>pgpool$B$N5/F0;~$K!"%9%F!<%?%9%U%!%$%k$rL5;k$9$k%*%W%7%g%s$,DI2C$5$l$^$7$?(B(Tatsuo)$B!#(B
+
+ <li>PostgreSQL 9.0$B$N(BVACUUM$B$N?7$7$$=q<0$r(Bpgpool-II$B$N%Q!<%5$,%5%]!<%H$7$^$7$?(B(Tatsuo)
+
+ <li>$B%U%!%$%*!<%P(B/$B%U%'%$%k%P%C%/%3%^%s%I$G!"(B"%H"$B$H$$$&FC<lJQ?t$,MxMQ$G$-$k$h$&$K$J$j$^$7$?!#(B
+$B$3$l$O!"?7$7$$%^%9%?!<%N!<%I$N%[%9%HL>$rI=$7$^$9(B(Tatsuo)
+
+ <li>failover_if_affected_tuples_mismatch $B$H$$$&@_Dj9`L\$,DI2C$5$l$^$7$?(B(Tatsuo)$B!#(B
 $B=>Mh!"%l%W%j%1!<%7%g%s%b!<%I$G(BUPDATE/DELETE$B$N7k2L9T?t$,0[$J$k$H!"%H%i%s%6%/%7%g%s$r%"%\!<%H$7$F%;%C%7%g%s$r6/@)@ZCG$7$F$$$^$7$?!#(B
 failover_if_affected_tuples_mismatch $B$r(B true$B$K@_Dj$9$k$H!"$3$N8=>]$,5/$-$?$H$-$K!"IT0lCW$N$"$C$?(BDB$B%N!<%I$r@Z$jJ|$7$F=LB`1?E>$KF~$k$h$&$K$J$j$^$9!#(B
+
+ <li>$B%l%W%j%1!<%7%g%s%b!<%I$G(BDB$B%N!<%I4V$G(BUPDATE/DELETE$B$N7k2L9T?t$NIT0lCW$,8!=P$5$l$?:]$K!"3F(BDB$B%N!<%I$K$*$1$k7k2L9T?t$,%m%0$K5-O?$5$l$k$h$&$K$J$j$^$7$?(B(Tatsuo)
+
+ <li>$B%l%W%j%1!<%7%g%s%b!<%I$H%^%9%?%9%l!<%V%b!<%I$G!"(Bmd5$BG'>Z$,%5%]!<%H$5$l$^$7$?(B(Tatsuo)
+
+ <li>$B%*%s%i%$%s%j%+%P%j$G!"6/@)E*$K%U%m%s%H%(%s%I$X$N@\B3$r@ZCG$7$FD>$A$K%;%+%s%I%9%F!<%8$KF~$k$3$H$,$G$-$k$h$&$K$J$j$^$7$?!#$=$N$?$a$K$O!"(Bclient_idle_limit_in_recovery $B$K(B -1 $B$r@_Dj$7$^$9(B(Tatsuo)
+
+ <li>RAW$B%b!<%I$K$*$$$F!"(BDB$B%N!<%I$,(B1$B8D$@$1$7$+B8:_$7$J$$>uBV$G(BDB$B$,%(%i!<$r5/$7$?$?$a$K(BDB$B%N!<%I$r@Z$jJ|$7$?$"$H$G(BDB$B%N!<%I$,2sI|$7$?>l9g$K!"(Bpgpool-II$B$r:F5/F0$9$k$3$H$K$J$7$K(BDB$B%N!<%I$rMxMQ$G$-$k$h$&$K$J$j$^$7$?!#(B
+
+ <li>pcp$B%3%^%s%I$K$*$$$F!"%m%s%0%*%W%7%g%s$,%5%]!<%H$5$l$^$7$?(B(Guillaume Lelarge)
+
+ <li>debug_level $B$H$$$&@_Dj9`L\$,DI2C$5$l!"(Bpgpool.conf$B$N:FFI$_9~$_$K$h$C$F%G%P%C%0%a%C%;!<%8$N=PNO$r%*%s!?%*%U$G$-$k$h$&$K$J$j$^$7$?(B(Tatsuo)$B!#(B
+
+</ul>
+</p>
+
+<p>
+<h3>$B%P%0=$@5(B</h3>
+</p>
+<p>
+<ul>
+
+ <li>pcp$B%3%^%s%I$N%?%$%`%"%&%H$N07$$$K$*$1$k%P%0$,=$@5$5$l$^$7$?(B(Tatsuo)
+
+ <li>SSL$B$,M-8z$J>uBV$G!"BgNL$N%G!<%?DL?.$,5/$k$H%O%s%0$9$kLdBj$,=$@5$5$l$^$7$?(B(Tatsuo)
+
+ <li>DB$B%N!<%I$,(B1$B8D$@$1$7$+B8:_$7$J$$>uBV$G(BDB$B$,%(%i!<$r5/$7$?$?:]$K!"4V0c$C$?(BDB$B%N!<%I$,%U%'%$%k%*!<%P$9$k%P%0$r=$@5$7$^$7$?(B(Tatsuo)$B!#(B
+
 </ul>
 </p>
 
