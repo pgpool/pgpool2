@@ -1854,7 +1854,7 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
-			if (TSTATE(backend, i) != 'I')
+			if (VALID_BACKEND(i) && TSTATE(backend, i) != 'I')
 				need_to_abort = true;
 		}
 
