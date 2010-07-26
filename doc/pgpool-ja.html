@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Mon Jul 26 16:47:55 JST 2010
+Last modified: Mon Jul 26 19:16:28 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -30,7 +30,9 @@ Last modified: Mon Jul 26 16:47:55 JST 2010
         <li><a href="#config">pgpool-II$B$N@_Dj(B</a></li>
         <li><a href="#start">pgpool-II$B$N5/F0$HDd;_(B</a></li>
         <li><a href="#reload">pgpool-II$B$N@_Dj%U%!%$%k$N:FFI$_9~$_(B</a></li>
-	<li><a href="#online-recovery">$B%*%s%i%$%s%j%+%P%j(B</a></li>
+	    <li><a href="#online-recovery">$B%*%s%i%$%s%j%+%P%j(B</a></li>
+	    <li><a href="#deploy">pgpool-II$B$NG[CV$K$D$$$F(B</a></li>
+	    <li><a href="#troubleshooting">$B%H%i%V%k%7%e!<%F%#%s%0(B</a></li>
         <li><a href="#restriction">$B@)8B;v9`(B</a></li>
         <li><a href="#reference">$B%j%U%!%l%s%9(B</a></li>
         <li><a href="#internal">$BFbIt>pJs(B</a></li>
@@ -1866,6 +1868,11 @@ pgpool [-f config_file][-a hba_file][-F pcp_config_file] reload
 <h1><a name="online-recovery"></a>$B%*%s%i%$%s%j%+%P%j(B</h1>
 <h2> $B%*%s%i%$%s%j%+%P%j35MW(B</h2>
 <p>
+$B$3$N>O$G$O!"%l%W%j%1!<%7%g%s%b!<%I$GMxMQ$9$k>l9g$N%*%s%i%$%s%j%+%P%j5!G=(B
+   $B$K$D$$$F@bL@$7$^$9!#(B
+$B%^%9%?!?%9%l!<%V%b!<%I(B(Streaming Replication)$B$G$N%*%s%i%$%s%j%+%P%j$NMx(B
+   $BMQJ}K!$K$D$$$F$O!"(B<a href="#stream">Streaming Replication$B$X$NBP1~(B
+   </a>$B$r$4Mw2<$5$$!#(B
    $B%l%W%j%1!<%7%g%s%b!<%I$G(B pgpool $B$,F0:n$7$F$$$k>l9g!"%@%&%s$7$?%N!<(B
    $B%I$N%G!<%?$r:FF14|$5$;$?>e$G!"%N!<%I$rI|5"$5$;$k$3$H$,$G$-$^$9!#$3(B
    $B$N5!G=$r!V%*%s%i%$%s%j%+%P%j!W$H8F$S$^$9!#(B
@@ -2188,9 +2195,144 @@ pgpool $B4IM}%D!<%k$+$i<B9T$7$F$/$@$5$$!#(B
 _PGPOOL2_PCP_TIMEOUT $B$rBg$-$/$7$F$/$@$5$$!#(B
 </p>
 
+<h1><a name="deploy"></a>pgpool-II$B$NG[CV$K$D$$$F(B</a></h1>
+<p>
+pgpool-II$B$O!"FHN)$7$?%5!<%P$KG[CV$9$k$3$H$b$G$-$^$9$7!"%"%W%j%1!<%7%g%s%5!<%P$HF15o$5$;$k$3$H$b$G$-$^$9$7!"$=$NB>$NG[CV$b9M$($i$l$^$9!#(B
+$B$3$3$G$O$=$l$>$l$NG[CVJ}K!$r>R2p$7!"$=$l$>$l$NFCD'!"%a%j%C%H!"%G%a%j%C%H$r8!F$$7$^$9!#(B
+</p>
+
+<p>
+<ul>
+<dt>$B@lMQ$N%5!<%P$KG[CV(B
+<dd>
+<p>
+pgpool-II$B$rJ*M}E*$KFHN)$7$?@lMQ$N%5!<%P$KG[CV$9$kJ}K!$G$9!#(B
+$BJ,$+$j$d$9$$J}K!$G$9$7!"B>$N%5!<%P%=%U%H%&%'%"$N1F6A$r<u$1$J$$$N$G(Bpgpool-II$B$r$b$C$H$b0BA4$K1?1D$G$-$^$9$,!"%5!<%PAuCV$r(B1$BBfM>7W$KA}$d$9I,MW$,$"$k$N$,7gE@$G$9!#(B
+$B$^$?!"$=$N%5!<%P$,C10l>c32E@$K$J$j$^$9(B(pgpool-II$B$,C10l>c32E@$K$J$k$3$H$r2sHr$9$k$K$O!"8e=R$N(Bpgpool-HA$B$rJ;MQ$7$^$9(B)$B!#(B
+</p>
+
+<dt>Web$B%5!<%P$d%"%W%j%1!<%7%g%s%5!<%P$HF15o(B
+<dd>
+<p>
+Apache$B!"(BJBoss$B!"(BTomcat$B$J$I$N(BWeb$B%5!<%P$d%"%W%j%1!<%7%g%s%5!<%P$,2TF/$7$F$$$k%5!<%P$K(Bpgpool-II$B$rF15o$5$;$kJ}K!$G$9!#(B
+$B$3$NJ}K!$G$O!"(BWeb$B%5!<%P$d%"%W%j%1!<%7%g%s%5!<%P$H(Bpgpool-II$B$NDL?.$,%m!<%+%k%^%7%sFb$K$J$k$N$G!"%=%1%C%HDL?.$,%^%7%s4V$GDL?.$9$k$h$j$b9bB.$K$J$k%a%j%C%H$,$"$j$^$9!#(B
+$B$^$?!"J#?t$N(BWeb$B%5!<%P!?%"%W%j%1!<%7%g%s%5!<%P$,$"$l$P!"<+A3$HC10l>c32E@$r2sHr$G$-$k$h$&$K$J$j$^$9!#(B
+($B$3$N>l9g!"J#?t$N(Bpgpool-II$B$N@_Dj$OF1$8$K$7$F$/$@$5$$(B)$B!#(B
+$B$J$*!"J#?t$N(Bpgpool-II$B$,F0:n$7$F$$$k%1!<%9$G$O0J2<$NE@$KCm0U$7$F$/$@$5$$!#(B
+</p>
+<ul>
+ <li>pgpool-II$B$H(BDB$B%5!<%P$N4V$N%M%C%H%o!<%/$,IT0BDj$@$H!"(Bpgpool-II$B$+$i8+$F(BDB$B%N!<%I(B#1$B$,%@%&%s!"B>$N(Bpgpool-II$B$+$i8+$F@5>o!"$H$$$&$h$&$J>uBV$K$J$C$F$7$^$&$3$H$,$"$j$^$9!#(B
+$B%M%C%H%o!<%/$rFs=E2=$9$k$J$I$7$F!"%M%C%H%o!<%/>c32$,5/$-$J$$$h$&$K$7$F$/$@$5$$!#(B
+<li>$B%l%W%j%1!<%7%g%s%b!<%I$G!"%*%s%i%$%s%j%+%P%j<B9TCf$O!"0l$D$N(Bpgpool-II$B$@$1;D$7$FB>$N(Bpgpool-II$B$rMn$7$F$/$@$5$$!#(B
+$B$5$b$J$$$H!"%j%+%P%j8e$N7k2L$K@09g@-$,$J$/$J$k2DG=@-$,$"$j$^$9!#(B
+$B%^%9%?!<!?%9%l!<%V%b!<%I(B+Streaming Replication$B%b!<%I$G$O!"F1;~$KJ#?t$N(Bpgpool-II$B$G%*%s%i%$%s%j%+%P%j$r<B9T$7$J$$8B$j!"LdBj$"$j$^$;$s!#(B
+</ul>
+</p>
+
+<dt>DB$B%5!<%P$HF15o(B
+<dd>
+<p>
+PostgreSQL$B$N2TF/$7$F$$$k(BDB$B%5%P$HF15o$5$;$kJ}K!$G$9!#(B
+$B$3$NJ}K!$G$O!"(Bpgpool-II$B$,C10l>c32E@$K$J$k$3$H$,$J$/!"M>7W$J%5!<%P$rDI2C$9$kI,MW$b$J$$E@$,M%$l$F$$$^$9$,!"%"%W%j%1!<%7%g%s$,$I$N(BDB$B%5!<%P$K@\B3$9$k$N$+$r<+$iH=CG$9$kI,MW$,$"$k$N$,7gE@$G$9!#(B
+$B$3$NLdBj$r2r7h$9$k$K$O!"(Bpgpool-HA$B$HAH$_9g$o$;$F2>A[(BIP$B$rMxMQ$7$^$9!#(B
+</ul>
+</p>
+
+<h2>pgpool-HA$B$K$D$$$F(B</h2>
+<p>
+pgpool-HA$B$O!"(Bheartbeat$B$J$I$rMxMQ$7$F(Bpgpool-II$B$rFs=E2=$7!"(Bpgpool-II$B<+BN$N2DMQ@-$r>e$2$k%=%U%H%&%'%"$G$9!#(B
+pgpool-II$B$HF1MM!"(Bpgpool$B%W%m%8%'%/%H$N%5%V%W%m%8%'%/%H$G$"$j!"(Bpgpool$B$N3+H/%5%$%H$G(BOSS$B$H$7$F8x3+$5$l$F$$$^$9!#(B
+
+<h1><a name="troubleshooting"></a>$B%H%i%V%k%7%e!<%F%#%s%0(B</h1>
+<p>
+$B$3$N>O$G$O!"(Bpgpool-II$B$r1?MQCf$KD>LL$7$d$9$$>c32$H!"$=$NBP:vJ}K!$r%1!<%9JL$K@bL@$7$^$9!#(B
+</p>
+<p>
+<ul>
+
+<dt>health check failed
+<dd>
+<p>
+$B%X%k%9%A%'%C%/$G(Bpgpool-II$B$,(BDB$B%N!<%I$N>c32$r8!=P$7$^$7$?!#(B
+</p>
+<p>
+<pre>
+2010-07-23 16:42:57 ERROR: pid 20031: health check failed. 1 th host foo at port 5432 is down
+2010-07-23 16:42:57 LOG:   pid 20031: set 1 th backend down status
+2010-07-23 16:42:57 LOG:   pid 20031: starting degeneration. shutdown host foot(5432)
+2010-07-23 16:42:58 LOG:   pid 20031: failover_handler: set new master node: 0
+2010-07-23 16:42:58 LOG:   pid 20031: failover done. shutdown host foo(5432)
+</pre>
+</p>
+<p>
+$B$3$N%m%0$O!"(BDB$B%N!<%I(B1($B%[%9%HL>(B foo)$B$,%@%&%s$7$F@Z$jN%$5$l!"?7$7$/(BDB$B%N!<%I(B0$B$,%^%9%?$H$7$F07$o$l=P$7$?$3$H$r<($7$F$$$^$9!#(B
+DB$B%N!<%I(B1$B$r%A%'%C%/$7!"0[>o860x$r<h$j=|$$$?8e$K!"2DG=$G$"$l$P%*%s%i%$%s%j%+%P%j5!G=$r;H$C$F(BDB$B%N!<%I(B1$B$rI|5"$5$;$F$/$@$5$$!#(B
+
+<dt>failed to read kind from frontend
+<dd>
+<p>
+<pre>
+2010-07-26 18:43:24 LOG:   pid 24161: ProcessFrontendResponse: failed to read kind from frontend. frontend abnormally exited
+</pre>
+<p>
+pgpool-II$B$+$i8+$F%/%i%$%"%s%H$,FMA3%;%C%7%g%s$r@ZCG$7$?:]$K$3$N$h$&$J%m%0$,;D$j$^$9!#(B
+$B860x$H$7$F$O!"%"%W%j%1!<%7%g%s$N%P%0!"%"%W%j%1!<%7%g%s$,6/@)=*N;$5$l$?!"$d%M%C%H%o!<%/$N0l;~E*$J>c32$,9M$($i$l$^$9!#(B
+$B$3$N%m%0$,=P$F$b!"(BDB$B$,2u$l$k$H$+0l4S@-$,$J$/$J$k$h$&$JLdBj$O5/$-$^$;$s$,!"(B
+$B7QB3$7$F$3$N%m%0$,=PNO$5$l$k$h$&$G$"$l$P!"%"%W%j%1!<%7%g%s$d%M%C%H%o!<%/$N>c32$rD4::$9$k$3$H$r$*$9$9$a$7$^$9!#(B
+</p>
+
+<dt>kind mismatch$B%(%i!<(B
+<dd>
+<p>
+$B%l%W%j%1!<%7%g%s%b!<%I$G1?MQ$7$F$$$k>l9g$K=P$k$3$H$,$"$k%(%i!<$G$9!#(B
+</p>
+<pre>
+2010-07-22 14:18:32 ERROR: pid 9966: kind mismatch among backends. Possible last query was: "FETCH ALL FROM c;" kind details are: 0[T] 1[E: cursor "c" does not exist]
+</pre>
+<p>
+pgpool-II$B$O!"(BSQL$B%3%^%s%I$r3F(BDB$B%N!<%I$KAw?.$7$?$i!"3F(BDB$B%N!<%I$+$iF1$8%l%9%]%s%9$,JV$C$F$/$k$3$H$r4|BT$7$^$9!#(B
+$B$3$N%(%i!<$O!"0[$J$k%l%9%]%s%9$,JV$C$F$-$?$3$H$r<($7$^$9!#(B
+Possible last query was:$B$N$"$H$K!"$3$N%(%i!<$rJV$9860x$H$J$C$?Ld$$9g$o$;$N(BSQL$BJ8$,I=<($5$l$^$9!#(B
+$B$=$N$"$H$G!"3F(BDB$B%N!<%I$+$i$N%l%9%]%s%9$N<oN`$H!"%l%9%]%s%9$,%(%i!<$N>l9g$O!"(BPostgreSQL$B$N%(%i!<%a%C%;!<%8$,I=<($5$l$^$9!#(B
+$B$3$3$G$O!"(B"0[T]"$B$K$h$j!"(B0$BHVL\$N(BDB$B%N!<%I$,(B"T"($B9T>pJs$N3+;O(B)$B$H$$$&1~Ez$rJV$7$?$3$H!"0lJ}(B"1[E"$B$G!"(BDB$B%N!<%I(B1$B$,%(%i!<$rJV$7$?$H$3$H!"$=$N%(%i!<%a%C%;!<%8$O!V(Bcursor "c" does not exist$B!W$G$"$C$?$3$H$,$o$+$j$^$9!#(B
+<p>
+$BCm0U(B: $B$3$N%(%i!<$O!"%^%9%?!<%9%l!<%V%b!<%I$G$b=P$k$3$H$,$"$j$^$9!#(B
+$B$?$H$($P!"(BSET$B%3%^%s%I$O!"3F%;%C%7%g%s$N>uBV$rF1$8$K$9$k$?$a$K!"4pK\E*$K$9$Y$F$N(BDB$B%N!<%I$KAw?.$5$l$k$+$i$G$9!#(B
+</p>
+<p>
+$B%G!<%?%Y!<%9$rD4$Y$F860x$rFCDj$7!"$b$7(BDB$B$NF14|$,Jx$l$F$$$k$h$&$G$"$l$P!"%*%s%i%$%s%j%+%P%j$r;H$C$F@5$7$$%G!<%?$HF14|$5$;$F$/$@$5$$!#(B
+</p>
+
+<p>
+<dt>pgpool detected difference of the number of inserted, updated or deleted tuples
+<dd>
+<p>
+$B%l%W%j%1!<%7%g%s%b!<%I$K$*$$$F!"(Bpgpool-II$B$,!"(BDB$B%N!<%I4V$G(BINSERT/UPDATE/DELETE$B$,JV$97k2L9T$N0c$$$r8!=P$7$^$7$?!#(B
+</p>
+<p>
+<pre>
+2010-07-22 11:49:28 ERROR: pid 30710: pgpool detected difference of the number of inserted, updated or deleted tuples. Possible last query was: "update t1 set i = 1;"
+2010-07-22 11:49:28 LOG:   pid 30710: ReadyForQuery: Degenerate backends: 1
+2010-07-22 11:49:28 LOG:   pid 30710: ReadyForQuery: Affected tuples are: 0 1
+</pre>
+<p>
+$B$3$NNc$G$O!"(Bupdate t1 set i = 1$B$K$h$C$F99?7$5$l$?9T?t$,!"(BDB$B%N!<%I$G0[$J$C$F$$$^$9!#(B
+$B$^$?!"<!$N9T$G$O!"(BDB$B%N!<%I(B1$B$r@Z$jN%$7$?$3$H!"99$K(BDB$B%N!<%I(B0$B$G$N7k2L9T?t$,(B0$B$@$C$?$N$KBP$7$F!"(BDB$B%N!<%I(B1$B$G$O!"(B1$B9T$@$C$?$3$H$rI=$7$F$$$^$9!#(B
+</p>
+<p>
+$B@5$7$/$J$$%G!<%?$r;}$C$F$$$k$H;W$o$l$k(BDB$B%N!<%I$rDd;_$7!"%*%s%i%$%s%j%+%P%j$r;H$C$F@5$7$$%G!<%?$HF14|$5$;$F$/$@$5$$!#(B
+</ul>
 
 <h1>$B@)8B;v9`(B<a name="restriction"></a></h1>
 <p>
+<h2>PostgreSQL$B$N5!G=(B</h2>
+<p>
+<ul>
+<li>pg_terminate_backend()$B$G%P%C%/%(%s%I$r=*N;$5$;$k$H%U%'%$%k%*!<%P$7$F$7$^$$$^$9!#(B
+$B$3$l$O!"(BPostgreSQL$B$,(Bpostmaster$B$r%7%c%C%H%@%&%s$7$?$H$-$HF1$8%a%C%;!<%8$r(Bpgpool$B$KAw$k$?$a$G$9!#(B
+$B:#$N$H$3$mBP1~J}K!$O$J$$$N$G!"$3$N4X?t$r;H$o$J$$$h$&$K$7$F$/$@$5$$!#(B
+</ul>
+
 <h2><a name="md5"></a>$BG'>Z!&%"%/%;%9@)8fJ}<0(B</h2>
 <p>
 <ul>
@@ -3152,7 +3294,7 @@ PostgreSQL 9.0$B$N?75!G=$G$"$k(BStreaming Replication/Hot Standby$B9=@.$KBP1~
 <p>
 <ul>
  <li>PostgreSQL 9.0$B$N?75!G=$G$"$k(BStreaming Replication/Hot Standby(SR+HS)$B9=@.$KBP1~$7$^$7$?(B(Tatsuo, Kitagawa)$B!#(B
-pgpool-II$B$O4pK\E*$K$O(Bmaster/slave mode$B$H$7$FF0:n$7$^$9$,!"$=$N:]$K(B "master_slave_sub_mode" $B$H$$$&?7$7$$@_Dj9`L\$K(B"stream"$B$r@_Dj$9$k$3$H$K$h$j!"(BSR+HS$B9=@.$K:GE,$JF0:n$r$7$^$9!#(B
+pgpool-II$B$O4pK\E*$K$O(Bmaster/slave mode$B$H$7$FF0:n$7$^$9$,!"$=$N:]$K(B "master_slve_sub_mode" $B$H$$$&?7$7$$@_Dj9`L\$K(B"stream"$B$r@_Dj$9$k$3$H$K$h$j!"(BSR+HS$B9=@.$K:GE,$JF0:n$r$7$^$9!#(B
 $B$?$H$($P!"99?7%/%(%j$O(BPrimary$B%5!<%P$K$N$_Aw?.$7!"(BSELECT$B$O(BPrimary$B$H(BStandby$B%5!<%P$KIi2YJ,;6$9$k$3$H$,2DG=$G$9!#(B
 $B$=$N$[$+!"(BStandby$B%5!<%P$r%*%s%i%$%s%j%+%P%j$GI|5l$7$?$j!"(BPrimary$B$H(BStandby$B$N%l%W%j%1!<%7%g%sF14|$r4F;k$7!"CY$l$,Bg$-$$$h$&$J$i(BPrimary$B$K$N$_(BSELECT$B$rAw?.$5$;$k$h$&$K$9$k$3$H$b2DG=$G$9!#(B
 $B>\:Y$O(B<a href="#stream">Streaming Replication$B$X$NBP1~(B"</a>$B$r$4Mw2<$5$$!#(B
