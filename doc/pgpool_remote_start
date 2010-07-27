@@ -1,0 +1,13 @@
+#! /bin/sh
+
+if [ $# -ne 2 ]
+then
+    echo "pgpool_remote_start remote_host remote_datadir"
+    exit 1
+fi
+
+DEST=$1
+DESTDIR=$2
+PGCTL=/usr/local/pgsql/bin/pg_ctl
+
+ssh -T $DEST $PGCTL -w -D $DESTDIR start 2>/dev/null 1>/dev/null < /dev/null &
