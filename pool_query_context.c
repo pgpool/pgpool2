@@ -337,7 +337,6 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					is_select_query(node, query) &&
 					MAJOR(backend) == PROTO_MAJOR_V3)
 				{
-#ifdef NOT_USED
 					/* 
 					 * If (we are outside of an explicit transaction) OR
 					 * (the transaction has not issued a write query yet, AND
@@ -347,7 +346,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					if (TSTATE(backend, MASTER_NODE_ID) == 'I' ||
 						(!pool_is_writing_transaction() &&
 						 pool_get_transaction_isolation() != POOL_SERIALIZABLE))
-#endif
+#ifdef NOT_USED
 					/* 
 					 * If we are outside of an explicit transaction OR
 					 * the transaction has not issued a write query yet,
@@ -355,6 +354,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					 */
 					if (TSTATE(backend, MASTER_NODE_ID) == 'I' ||
 						!pool_is_writing_transaction())
+#endif
 					{
 						BackendInfo *bkinfo = pool_get_node_info(session_context->load_balance_node_id);
 
@@ -1023,6 +1023,7 @@ char *pool_get_query_string(void)
  * SET TRANSACTION ISOLATION LEVEL SERIALIZABLE or
  * SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE or
  * SET transaction_isolation TO 'serializable'
+ * SET default_transaction_isolation TO 'serializable'
  */
 bool is_set_transaction_serializable(Node *node, char *query)
 {
@@ -1060,7 +1061,8 @@ bool is_set_transaction_serializable(Node *node, char *query)
 		foreach(list_item, options)
 		{
 			DefElem *opt = (DefElem *) lfirst(list_item);
-			if (!strcmp("transaction_isolation", opt->defname))
+			if (!strcmp("transaction_isolation", opt->defname) ||
+				!strcmp("default_transaction_isolation", opt->defname))
 			{
 				A_Const *v = (A_Const *)opt->arg;
  

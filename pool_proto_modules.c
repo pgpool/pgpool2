@@ -1316,44 +1316,6 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		if ((len = pool_read_message_length(backend)) < 0)
 			return POOL_END;
 
-#ifdef NOT_USED
-		pool_debug("ReadyForQuery: message length: %d", len);
-
-		/*
-		 * Do not check transaction state in master/slave mode.
-		 * Because SET, PREPARE, DEALLOCATE are replicated.
-		 * If these queries are executed inside a transaction block,
-		 * transation state will be inconsistent. But it is no problem.
-		 */
-		if (master_slave_dml)
-		{
-			char kind, kind1;
-
-			if (pool_read(MASTER(backend), &kind, sizeof(kind)))
-				return POOL_END;
-
-			for (i = 0; i < NUM_BACKENDS; i++)
-			{
-				if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
-					continue;
-
-				if (pool_read(CONNECTION(backend, i), &kind1, sizeof(kind)))
-					return POOL_END;
-			}
-			state = kind;
-		}
-		else
-		{
-			state = pool_read_kind(backend);
-			if (state < 0)
-				return POOL_END;
-		}
-
-		/* set transaction state */
-		pool_debug("ReadyForQuery: transaction state: %c", state);
-
-#endif
-
 		/*
 		 * Set transaction state for each node
 		 */
@@ -1393,10 +1355,10 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		pool_flush(frontend);
 	}
 
-#ifdef NOT_USED
 	if (pool_is_query_in_progress() && pool_is_command_success())
-#endif
+#ifdef NOT_USED
 	if (pool_is_query_in_progress())
+#endif
 	{
 		Node *node;
 		char *query;
@@ -1417,7 +1379,6 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				pool_unset_transaction_isolation();
 			}
 
-#ifdef NOT_USED
 			/*
 			 * SET TRANSACTION ISOLATION LEVEL SERIALIZABLE or SET
 			 * SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL
@@ -1427,7 +1388,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			{
 				pool_set_transaction_isolation(POOL_SERIALIZABLE);
 			}
-#endif
+
 			/*
 			 * If 2PC commands, automatically close transaction on standbys since
 			 * 2PC commands close transaction on primary.

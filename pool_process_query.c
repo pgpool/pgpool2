@@ -1073,6 +1073,14 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 		return POOL_END;
 	}
 
+	/*
+	 * Check if packet kind == 'C'(Command complete), '1'(Parse
+	 * complete), '3'(Close complete). If so, remember that we
+	 * succeeded in executing command.
+	 */
+	if (kind == 'C' || kind == '1' || kind == '2' || kind == '3')
+		pool_set_command_success();
+
 #ifdef NOT_USED
 	/*
 	 * Check if packet kind == 'C'(Command complete), '1'(Parse
