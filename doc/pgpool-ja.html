@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Tue Jul 27 11:20:55 JST 2010
+Last modified: Wed Jul 28 16:28:54 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -28,6 +28,11 @@ Last modified: Tue Jul 27 11:20:55 JST 2010
         <li><a href="#platform">pgpool-II$B$N2TF/4D6-(B</a></li>
         <li><a href="#install">pgpool-II$B$N%$%s%9%H!<%k(B</a></li>
         <li><a href="#config">pgpool-II$B$N@_Dj(B</a></li>
+        <li><a href="#raw_mode">raw$B%b!<%I(B</a></li>
+        <li><a href="#connection_pool_mode">$B%3%M%/%7%g%s%W!<%k%b!<%I(B</a></li>
+        <li><a href="#replication_mode">$B%l%W%j%1!<%7%g%s%b!<%I(B</a></li>
+        <li><a href="#master_slave_mode">$B%^%9%?!<%9%l!<%V%b!<%I(B</a></li>
+        <li><a href="#stream">Streaming Replication$B$X$NBP1~(B</a></li>
         <li><a href="#start">pgpool-II$B$N5/F0$HDd;_(B</a></li>
         <li><a href="#reload">pgpool-II$B$N@_Dj%U%!%$%k$N:FFI$_9~$_(B</a></li>
 	    <li><a href="#online-recovery">$B%*%s%i%$%s%j%+%P%j(B</a></li>
@@ -305,7 +310,7 @@ cp $prefix/etc/pgpool.conf.sample $prefix/etc/pgpool.conf
 pgpool.conf$B$G$O6uGr9T$d(B#$B$G;O$^$k9T$O%3%a%s%H$H8+$J$5$l$^$9!#(B
 </p>
 
-<h1>raw$B%b!<%I(B</h1>
+<h1><a name="raw_mode"></a>raw$B%b!<%I(B</h1>
 <p>
 $BC1$K(Bpgpool-II$B$r7PM3$7$F@\B3$9$k$@$1$N%b!<%I$G$9!#(BPostgreSQL$B%5!<%P$X$N@\(B
 $BB3%;%C%7%g%s?t$r@)8B$7$?$j!"(B2$BBf0J>e$N(BPostgreSQL$B%5!<%P$rMQ0U$7$F%U%'%$%k(B
@@ -751,7 +756,7 @@ backend_hostname2...$B$G$bF1MM$K$J$j$^$9!#(B
 
 </p>
 
-<h1>$B%3%M%/%7%g%s%W!<%k%b!<%I(B</h1>
+<h1><a name="connection_pool_mode"></a>$B%3%M%/%7%g%s%W!<%k%b!<%I(B</h1>
 <p>
 raw$B%b!<%I$K2C$(!"%3%M%/%7%g%s%W!<%j%s%0$,MxMQ$G$-$k$h$&$K$J$j$^$9!#(B
 $B@_Dj9`L\$O!"(Braw$B%b!<%I$G$N@_Dj9`L\$NB>$K0J2<$r@_Dj$7$^$9!#(B
@@ -829,7 +834,7 @@ raw$B%b!<%I$K2C$(!"%3%M%/%7%g%s%W!<%j%s%0$,MxMQ$G$-$k$h$&$K$J$j$^$9!#(B
 raw$B%b!<%I$HF1MM$NF0:n$r$7$^$9!#(B
 </p>
 
-<h1>$B%l%W%j%1!<%7%g%s%b!<%I(B</h1>
+<h1><a name="replication_mode"></a>$B%l%W%j%1!<%7%g%s%b!<%I(B</h1>
 <p>
 $B%l%W%j%1!<%7%g%s$rM-8z$K$9$k%b!<%I$G$9!#(B
 raw$B%b!<%I!"%3%M%/%7%g%s%W!<%k%b!<%I$K2C$(!"0J2<$r@_Dj$7$^$9!#(B
@@ -1219,7 +1224,7 @@ true$B$J$i$P!"%U%'%$%k%*!<%P$,5/$-$^$9!#$=$N:]!"0J2<$N$h$&$J%(%i!<%a%C%;!<%8$,I
 </pre>
 </p>
 
-<h1>$B%^%9%?!<%9%l!<%V%b!<%I(B</h1>
+<h1><a name="master_slave_mode"></a>$B%^%9%?!<%9%l!<%V%b!<%I(B</h1>
 <p>
   master/slave$B%b!<%I$O!"(BSlony-I$B$d(BStreaming Replication$B$N$h$&$J!"(Bmaster/slave$B<0$N%l%W%j%1!<%7%g(B
   $B%s%=%U%H$K%l%W%j%1!<%7%g%s$r$^$+$;$k%b!<%I$G$9!#$3$N%b!<%I$G;H$&$?$a$K(B
@@ -1283,7 +1288,13 @@ Streaming replication$B$rMxMQ$7$?%^%9%?%9%l!<%V%b!<%I$G$O!"(BPrimary$B$d(BSt
 $BFC$K2?$b@_Dj$7$J$/$F$b!"Dd;_$7$?%N!<%I$r<+F0E*$K@Z$jJ|$9$3$H$,$G$-$^$9$,!"(BStreaming replication$B$G$O!"(B
 $B!V%H%j%,%U%!%$%k!W$r:n@.$9$k$3$H$K$h$j!"(BStandby$B%N!<%I$r!"%j%+%P%j%b!<%I$+$i99?7Ld$$9g$o$;$r<u$1IU$1$kDL>o$N(BPostgreSQL$B$NF0:n%b!<%I$K<+F0JQ99$9$k$3$H$,$G$-$^$9!#(B
 $B$3$l$rMxMQ$7$F!"%U%'%$%k%*!<%P%3%^%s%I$rJ;MQ$7$F!"(BPrimary$B%N!<%I$,%@%&%s$7$?$H$-$K!"(BStandby$B%N!<%I$,<+F0E*$K$H$C$FBe$k$h$&$J@_Dj$r9T$J$&$3$H$,$G$-$^$9!#(B
-$B$=$N<j=g$r<($7$^$9!#(B
+</p>
+<p>
+<strong>$BCm0U(B: $BJ#?t$N(BStandby$B%N!<%I$rMxMQ$7$F$$$k>l9g!"$3$N@_Dj$r9T$J$&$H$-$O!"(Bdelay_threshold$B$r@_Dj$7$F!"B>$N(BStandby$B$K?6$jJ,$1$i$l$?(BSELECT$B$,8E$$%G!<%?$r<hF@$7$J$$$h$&$K$7$F$*$/$3$H$r$*4+$a$7$^$9!#(B
+$B$^$?!"(B1$BBfL\$N(BStandby$B%N!<%I$,(BPrimary$B$K$H$C$FBe$C$?$N$A$K%@%&%s$7$F$7$^$C$?%1!<%9$G!"(B2$BBfL\$N(BStandby$B$,99$K<h$C$FBe$o$k$H%G!<%?$KIT@09g$,$*$-$k$N$G!"$=$N$h$&$J@_Dj$O9T$J$o$J$$$h$&$K$7$F$/$@$5$$!#(B</strong>
+</p>
+<p>
+$B%U%'%$%k%*!<%P$N@_Dj<j=g$r<($7$^$9!#(B
 </p>
 <p>
 <ol>
@@ -1358,7 +1369,7 @@ primary$B$H(Bstandby$B$N(BPostgreSQL$B$r5/F0$9$l$P!"(BStreaming replicatio
 <p>
 Streaming replication$B$rMxMQ$7$?%^%9%?%9%l!<%V%b!<%I$G$O!"%l%W%j%1!<%7%g%s%b!<%I$HF1$8$h$&$K%*%s%i%$%s%j%+%P%j$,MxMQ$G$-$^$9!#(B
 $B$?$@$7!"%*%s%i%$%s%j%+%P%j$G$-$k$N$O(BStandby$B%N!<%I$N$_$G$9!#(B
-$B%^%9%?%N!<%I$NI|5l$O!"$9$Y$F$N(BDB$B%N!<%I$H(Bpgpool-II$B$rDd;_$5$;$F<jF0$G(B($B$"$k$$$O%9%/%j%W%H$r:n@.$7$F!K<B;\$7$J$1$l$P$J$j$^$;$s!#(B
+$B%^%9%?%N!<%I$NI|5l$O!"$9$Y$F$N(BDB$B%N!<%I$H(Bpgpool-II$B$rDd;_$5$;$F<jF0$G<B;\$7$J$1$l$P$J$j$^$;$s!#(B
 </p>
 
 <p>
@@ -1424,6 +1435,7 @@ pgpool-II$B$N(BStreaming Replication$B%b!<%I$O!"$3$&$7$??6$jJ,$1$r<+F0E*$K9T$
 	  <ul>
 	   <li>INSERT, UPDATE, DELETE, COPY FROM, TRUNCATE, CREATE, DROP, ALTER, COMMENT
 	   <li>SELECT ... FOR SHARE | UPDATE
+	   <li>$B%H%i%s%6%/%7%g%s$NJ,N%%l%Y%k$,%7%j%"%i%$%6%V%k$N>l9g$N(BSELECT
 	   <li>ROW EXCLUSIVE MODE$B$h$j$b6/$$(BLOCK
 	   <li>$B%H%i%s%6%/%7%g%s%3%^%s%I$N0lIt(B
 			<ul>
@@ -1458,21 +1470,27 @@ pgpool-II$B$N(BStreaming Replication$B%b!<%I$O!"$3$&$7$??6$jJ,$1$r<+F0E*$K9T$
 </p>
 
 <p>
-$BLd$$9g$o$;$,L@<(E*$J%H%i%s%6%/%7%g%s$K$J$k>l9g$O!"0J2<$N$h$&$K$J$j$^$9!#(B
+$BL@<(E*$J%H%i%s%6%/%7%g%s$G$O!"0J2<$N$h$&$K$J$j$^$9!#(B
 <ul>
  <li>BEGIN$B$J$I$N%H%i%s%6%/%7%g%s3+;O%3%^%s%I$O!"(BPrimary$B%5!<%P$KAw$i$l$^$9!#(B
  <li>$BB3$/(BSELECT$B$J$I!"(BPrimary/Standby$B$I$A$i$K$bAw$k$3$H$N$G$-$kLd$$9g$o$;$O!"(BPrimary$B$N%H%i%s%6%/%7%g%sFb$G$=$N$^$^<B9T$5$l$k$+!"(BStandby$B%5!<%P$G<B9T$5$l$^$9!#(B
- <li>INSERT$B$J$I!"(BStandby$B$KAw$k$3$H$N$G$-$J$$Ld$$9g$o$;$,8=$o$l$?>l9g$O!"(BPrimary$B%5!<%P$G<B9T$5$l$^$9!#(B
+ <li><p>
+INSERT$B$J$I!"(BStandby$B$KAw$k$3$H$N$G$-$J$$Ld$$9g$o$;$,8=$o$l$?>l9g$O!"(BPrimary$B%5!<%P$G<B9T$5$l$^$9!#(B
 $B0J8e!"(BSELECT$B$J$I!"K\Mh(BStandby$B$KAw?.$7$F$b9=$o$J$$%3%^%s%I$b(BPrimary$B%5!<%P$G<B9T$5$l$^$9!#(B
 $B$3$l$O!"%H%i%s%6%/%7%g%s$NCf$G<B9T$5$l$?(BINSERT$B$J$I$NLd$$9g$o$;$N7k2L$r(BSELECT$B$,D>$A$K;2>H$G$-$k$h$&$K$9$k$?$a$G$9!#(B
 $B$3$N>uBV$O!"%H%i%s%6%/%7%g%s$,JD$8$k$+!"%"%\!<%H$9$k$^$GB3$-$^$9!#(B
+</p>
 </ul>
 </p>
 
 <p>
-$BLd$$9g$o$;$,!"3HD%Ld$$9g$o$;%b!<%I$G<B9T$5$l$k>l9g$O!"Ld$$9g$o$;$N(Bparse$BCJ3,$G!"Ld$$9g$o$;$,Ii2YJ,;62DG=$+$I$&$+$GAw?.@h$,7h$^$j$^$9!#(B
+$BLd$$9g$o$;$,!"3HD%Ld$$9g$o$;%b!<%I$G<B9T$5$l$k>l9g$O!"Ld$$9g$o$;$N(Bparse$BCJ3,$G!"Ld$$9g$o$;$,Ii2YJ,;62DG=$+$I$&$+$GAw?.@h$,7h$^$j$^$9!#$=$N:]$NH=CG%k!<%k$O!"DL>o$N(BSQL$B$HF1$8$G$9!#(B
 $B$?$H$($PLd$$9g$o$;$,(BINSERT$B$J$i$P!"(BPrimary$B%5!<%P$G<B9T$5$l$k!"$H$$$&6q9g$G$9!#(B
 parse$B$KB3$/(Bbind, describe, execute$B$bF1$8(BDB$B%N!<%I$G<B9T$5$l$^$9!#(B
+</p>
+
+<p>
+[$BCm(B: SELECT$B$,Ii2YJ,;6$5$l$F(B Standby $B%N!<%I$G(B parse$B$,<B9T$5$l$F$+$i99?7%/%(%j$,Mh$?>l9g$O!"$=$N(BSELECT$B$O(BPrimary$B%N!<%I$G<B9T$5$l$J$1$l$P$J$j$^$;$s!#$=$N$?$a!"F1$8(BSELECT$B$,:FEY(BPrimary$B%N!<%I$G%Q!<%9$5$l$k$3$H$K$J$j$^$9!#(B]
 </p>
 
 <p>
