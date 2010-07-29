@@ -19,7 +19,8 @@ pgpool_SOURCES = pool.h pool_type.h version.h pgpool.conf.sample \
 	pool_query_context.c pool_query_context.h \
 	pool_worker_child.c \
 	pool_passwd.c pool_passwd.h \
-	pool_globals.c
+	pool_globals.c \
+	pool_select_walker.c pool_select_walker.h
 
 pg_md5_SOURCES = pg_md5.c md5.c md5.h \
 	pool.h \

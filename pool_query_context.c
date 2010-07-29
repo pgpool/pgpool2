@@ -25,6 +25,7 @@
 #include "pool_proto_modules.h"
 #include "pool_session_context.h"
 #include "pool_query_context.h"
+#include "pool_select_walker.h"
 #include "parser/nodes.h"
 
 #include <string.h>
@@ -367,6 +368,15 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 						 */
 						if (pool_config->delay_threshold &&
 							bkinfo->standby_delay > pool_config->delay_threshold)
+						{
+							pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
+						}
+
+						/*
+						 * If temporary table is used in the SELECT,
+						 * we prefer to send to the primary.
+						 */
+						else if (pool_has_temp_table(node))
 						{
 							pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
 						}
