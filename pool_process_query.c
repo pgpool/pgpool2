@@ -355,10 +355,13 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 					if (status != POOL_CONTINUE)
 						return status;
 
-//					continue;
+#ifdef NOT_USED
+					continue;
 				}
-//				if (kind == 0)
-//					continue;
+				if (kind == 0)
+					continue;
+#endif
+				}
 			}
 
 			if (FD_ISSET(MASTER(backend)->fd, &exceptmask))
@@ -384,7 +387,9 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				if (status != POOL_CONTINUE)
 					return status;
 
-//				continue;
+#ifdef NOT_USED
+				continue;
+#endif
 			}
 		}
 
@@ -1060,8 +1065,6 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	int i;
 	int command_ok_row_count = 0;
 	int delete_or_update = 0;
-//	char kind1;
-//	POOL_STATUS ret;
 	POOL_SESSION_CONTEXT *session_context;
 	bool mismatch_ntuples = false;
 
@@ -1414,10 +1417,6 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend,
 {
 	int sendlen;
 	int i;
-//	char *rewrite_msg = NULL;
-//	POOL_STATUS ret;
-//	PreparedStatement *pstmt;
-//	Portal *portal;
 	POOL_SESSION_CONTEXT *session_context;
 
 	/* Get session context */
@@ -1475,10 +1474,8 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend,
 			{
 				if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 				{
-//#ifdef NOT_USED
 					snprintf(msgbuf, sizeof(msgbuf), "%c message", kind);
 					per_node_statement_log(backend, i, msgbuf);
-//#endif
 
 					/* Forward to other nodes */
 					if (send_extended_protocol_message(backend, i, &kind, len, contents))
@@ -1501,22 +1498,28 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend,
 
 				if (pool_write(CONNECTION(backend, i), &kind, 1))
 				{
-//					if (rewrite_msg)
-//						free(rewrite_msg);
+#ifdef NOT_USED
+					if (rewrite_msg)
+						free(rewrite_msg);
+#endif
 					return POOL_END;
 				}
 
 				if (pool_write(CONNECTION(backend,i), &sendlen, sizeof(sendlen)))
 				{
-//					if (rewrite_msg)
-//						free(rewrite_msg);
+#ifdef NOT_USED
+					if (rewrite_msg)
+						free(rewrite_msg);
+#endif
 					return POOL_END;
 				}
 
 				if (pool_write_and_flush(CONNECTION(backend, i), contents, len))
 				{
-//					if (rewrite_msg)
-//						free(rewrite_msg);
+#ifdef NOT_USED
+					if (rewrite_msg)
+						free(rewrite_msg);
+#endif
 					return POOL_END;
 				}
 			}
@@ -1824,7 +1827,9 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 			 * were executed.  The latter causes call to
 			 * reset_prepared_list which removes all prepared objects.
 			 */
-//			reset_prepared_list(&prepared_list);
+#ifdef NOT_USED
+			reset_prepared_list(&prepared_list);
+#endif
 			return 2;
 		}
 
@@ -1836,7 +1841,9 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 			/* Deallocate failed. We are in unknown state. Ask caller
 			 * to reset backend connection.
 			 */
-//			reset_prepared_list(&prepared_list);
+#ifdef NOT_USED
+			reset_prepared_list(&prepared_list);
+#endif
 			pool_remove_prepared_statement_by_pstmt_name(name);
 			return -1;
 		}
@@ -1848,7 +1855,9 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 		 * del_prepared_list() again. This is harmless since trying to
 		 * remove same prepared object will be ignored.
 		 */
-//		del_prepared_list(&prepared_list, prepared_list.portal_list[0]);
+#ifdef NOT_USED
+		del_prepared_list(&prepared_list, prepared_list.portal_list[0]);
+#endif
 		pool_remove_prepared_statement_by_pstmt_name(name);
 		return 1;
 	}
@@ -3259,7 +3268,9 @@ static int is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 	if (pool_ssl_pending(frontend))
 		return 0;
 
-//	if (!pool_read_buffer_is_empty(frontend) && !pool_is_query_in_progress())
+#ifdef NOT_USED
+	if (!pool_read_buffer_is_empty(frontend) && !pool_is_query_in_progress())
+#endif
 	if (!pool_read_buffer_is_empty(frontend))
 		return 0;
 

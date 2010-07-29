@@ -499,15 +499,10 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 					int len, char *contents)
 {
-//	char kind;
-//	int status;
 	int commit = 0;
-//	PreparedStatement *ps;
 	Portal *portal;
 	char *query = NULL;
 	Node *node;
-//	PrepareStmt *p_stmt;
-//	POOL_STATUS ret;
 	int specific_error = 0;
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_QUERY_CONTEXT *query_context;
@@ -550,7 +545,9 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	pool_debug("Execute: query: %s", query);
 	strncpy(query_string_buffer, query, sizeof(query_string_buffer));
 
-//	pool_set_query_in_progress();
+#ifdef NOT_USED
+	pool_set_query_in_progress();
+#endif
 
 	/*
 	 * Decide where to send query
@@ -620,11 +617,15 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			if (pool_send_and_wait(query_context, msg, len, -1, MASTER_NODE_ID, "E") != POOL_CONTINUE)
 				return POOL_END;
 		}
-//		else
-//		{
+#ifdef NOT_USED
+		else
+		{
+#endif
 			if (pool_send_and_wait(query_context, contents, len, -1, MASTER_NODE_ID, "E") != POOL_CONTINUE)
 				return POOL_END;
-//		}
+#ifdef NOT_USED
+		}
+#endif
 		
 		/* send "COMMIT" or "ROLLBACK" to only master node if query is "COMMIT" or "ROLLBACK" */
 		if (commit)
@@ -684,7 +685,6 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	char *stmt;
 	List *parse_tree_list;
 	Node *node = NULL;
-//	PrepareStmt *p_stmt;
 	PreparedStatement *ps;
 	POOL_STATUS status;
 	POOL_MEMORY_POOL *old_context;
@@ -801,13 +801,13 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			kind = pool_read_kind(backend);
 			if (kind != 'Z')
 			{
-//				free_parser();
+				/* free_parser(); */
 				return POOL_END;
 			}
 
 			if (ReadyForQuery(frontend, backend, 0) != POOL_CONTINUE)
 			{
-//				free_parser();
+				/* free_parser(); */
 				return POOL_END;
 			}
 		}
@@ -821,7 +821,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			status = insert_lock(frontend, backend, stmt, (InsertStmt *)query_context->parse_tree);
 			if (status != POOL_CONTINUE)
 			{
-//				free_parser();
+				/* free_parser(); */
 				return status;
 			}
 		}
@@ -841,7 +841,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_debug("Parse: waiting for master completing the query");
 		if (pool_send_and_wait(query_context, contents, len, 1, MASTER_NODE_ID, "P") != POOL_CONTINUE)
 		{
-//			free_parser();
+			/* free_parser(); */
 			return POOL_END;
 		}
 
@@ -854,7 +854,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		deadlock_detected = detect_deadlock_error(MASTER(backend), MAJOR(backend));
 		if (deadlock_detected < 0)
 		{
-//			free_parser();
+			/* free_parser(); */
 			return POOL_END;
 		}
 		else
@@ -875,7 +875,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 								   strlen(POOL_ERROR_QUERY)+1, -1,
 								   MASTER_NODE_ID, "") != POOL_CONTINUE)
 			{
-//				free_parser();
+				/* free_parser(); */
 				return POOL_END;
 			}
 		}
@@ -883,7 +883,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		{
 			if (pool_send_and_wait(query_context, contents, len, -1, MASTER_NODE_ID, "P") != POOL_CONTINUE)
 			{
-//				free_parser();
+				/* free_parser(); */
 				return POOL_END;
 			}
 		}
@@ -892,7 +892,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	{
 		if (pool_send_and_wait(query_context, contents, len, 1, MASTER_NODE_ID, "P") != POOL_CONTINUE)
 		{
-//			free_parser();
+			/* free_parser(); */
 			return POOL_END;
 		}
 	}
@@ -900,7 +900,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	/*
 	 * Ok. we are safe to call free_parser();
 	 */
-//	free_parser();
+	/* free_parser(); */
 
 #ifdef NOT_USED
 	for (;;)
@@ -998,21 +998,27 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	if (pool_send_and_wait(query_context, contents, len, 1, MASTER_NODE_ID, "B")
 		!= POOL_CONTINUE)
 	{
-//		if (rewrite_msg != NULL)
-//			free(rewrite_msg);
+#ifdef NOT_USED
+		if (rewrite_msg != NULL)
+			free(rewrite_msg);
+#endif
 		return POOL_END;
 	}
 
 	if (pool_send_and_wait(query_context, contents, len, -1, MASTER_NODE_ID, "B")
 		!= POOL_CONTINUE)
 	{
-//		if (rewrite_msg != NULL)
-//			free(rewrite_msg);
+#ifdef NOT_USED
+		if (rewrite_msg != NULL)
+			free(rewrite_msg);
+#endif
 		return POOL_END;
 	}
 
-//	if (rewrite_msg != NULL)
-//		free(rewrite_msg);
+#ifdef NOT_USED
+	if (rewrite_msg != NULL)
+		free(rewrite_msg);
+#endif
 
 	return POOL_CONTINUE;
 }
@@ -1304,7 +1310,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	 * if a transaction is started for insert lock, we need to close
 	 * the transaction.
 	 */
-//	if (pool_is_query_in_progress() && allow_close_transaction)
+	/* if (pool_is_query_in_progress() && allow_close_transaction) */
 	if (allow_close_transaction)
 	{
 		if (end_internal_transaction(frontend, backend) != POOL_CONTINUE)
@@ -1595,12 +1601,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 POOL_STATUS ErrorResponse3(POOL_CONNECTION *frontend,
 						   POOL_CONNECTION_POOL *backend)
 {
-//	int i;
 	int ret;
-//	int res1;
-//	int status;
-//	char *p1;
-//	char kind1;
 
 	/* An error occurred with PREPARE or DEALLOCATE command.
 	 * Free pending portal object.
@@ -1799,10 +1800,8 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 									POOL_CONNECTION_POOL *backend)
 {
 	char fkind;
-//	char kind;
 	char *contents = NULL;
 	POOL_STATUS status;
-//	int i;
 	int len;
 	POOL_SESSION_CONTEXT *session_context;
 

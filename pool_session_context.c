@@ -579,7 +579,6 @@ PreparedStatement *pool_create_prepared_statement(const char *name,
 												  POOL_QUERY_CONTEXT *qc)
 {
 	PreparedStatement *ps;
-//	POOL_QUERY_CONTEXT *q;
 
 	if (!session_context)
 	{
