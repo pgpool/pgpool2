@@ -436,6 +436,17 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 						/* Inherit same map from PREPARE */
 						pool_copy_prep_where(wts, query_context->where_to_send);
 					}
+					else
+					{
+						PreparedStatement *ps;
+
+						ps = pool_get_prepared_statement_by_pstmt_name(d->name);
+						if (ps)
+						{
+							if (ps->qctxt)
+								pool_copy_prep_where(ps->qctxt->where_to_send, query_context->where_to_send);
+						}
+					}
 				}
 			}
 		}
