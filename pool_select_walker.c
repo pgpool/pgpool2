@@ -23,17 +23,100 @@
 #include <string.h>
 
 #include "pool.h"
+#include "pool_config.h"
 #include "pool_select_walker.h"
 #include "pool_relcache.h"
 #include "parser/parsenodes.h"
 #include "pool_session_context.h"
 
 typedef struct {
-	bool		has_temp_table;		/* True if temporary table is used */
+	bool	has_temp_table;		/* True if temporary table is used */
+	bool	has_function_call;	/* True if write function call is used */	
+
 } SelectContext;
 
+static bool function_call_walker(Node *node, void *context);
 static bool temp_table_walker(Node *node, void *context);
 static bool is_temp_table(char *table_name);
+
+/*
+ * Return true if this SELECT has function calls.
+ */
+bool pool_has_function_call(Node *node)
+{
+
+	SelectContext	ctx;
+
+	if (!IsA(node, SelectStmt))
+		return false;
+
+	ctx.has_function_call = false;
+
+	raw_expression_tree_walker(node, function_call_walker, &ctx);
+
+	return ctx.has_function_call;
+}
+
+/*
+ * Walker function to find a function call
+ */
+static bool function_call_walker(Node *node, void *context)
+{
+	SelectContext	*ctx = (SelectContext *) context;
+	int i;
+
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, FuncCall))
+	{
+		FuncCall *fcall = (FuncCall *)node;
+		char *fname;
+
+		if (list_length(fcall->funcname))
+		{
+			fname = strVal(linitial(fcall->funcname));
+
+			pool_debug("function_call_walker: function name: %s", fname);
+
+			/*
+			 * Check white list if any.
+			 */
+			if (pool_config->num_white_function_list > 0)
+			{
+				for (i=0;i<pool_config->num_white_function_list;i++)
+				{
+					/* If the function is found in the white list, we can ignore it */
+					if (!strcasecmp(pool_config->white_function_list[i], fname))
+					{
+						return raw_expression_tree_walker(node, function_call_walker, context);
+					}
+				}
+				/*
+				 * Since the function was not found in white list, we
+				 * have found a writing function.
+				 */
+				ctx->has_function_call = true;
+				return false;
+			}
+
+			/*
+			 * Check black list if any.
+			 */
+			for (i=0;i<pool_config->num_black_function_list;i++)
+			{
+				/* Is the function found in the black list? */
+				if (!strcasecmp(pool_config->black_function_list[i], fname))
+				{
+					/* Found. */
+					ctx->has_function_call = true;
+					return false;
+				}
+			}
+		}
+	}
+	return raw_expression_tree_walker(node, function_call_walker, context);
+}
 
 /*
  * Return true if this SELECT has temporary table.

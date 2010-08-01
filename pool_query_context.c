@@ -373,6 +373,15 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 						}
 
 						/*
+						 * If a writing function call is used, 
+						 * we prefer to send to the primary.
+						 */
+						else if (pool_has_function_call(node))
+						{
+							pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
+						}
+
+						/*
 						 * If temporary table is used in the SELECT,
 						 * we prefer to send to the primary.
 						 */

@@ -74,7 +74,8 @@ typedef struct {
 
 	int replicate_select; /* if non 0, replicate SELECT statement when load balancing is disabled. */
 	char **reset_query_list;		/* comma separated list of quries to be issued at the end of session */
-
+	char **white_function_list;		/* list of functions with no side effetcs */
+	char **black_function_list;		/* list of functions with side effetcs */
 	int print_timestamp;		/* if non 0, print time stamp to each log line */
 	int master_slave_mode;		/* if non 0, operate in master/slave mode */
 	char *master_slave_sub_mode;		/* either "slony" or "stream" */
@@ -139,6 +140,8 @@ typedef struct {
 	int replication_enabled;		/* replication mode enabled */
 	int master_slave_enabled;		/* master/slave mode enabled */
 	int num_reset_queries;		/* number of queries in reset_query_list */
+	int num_white_function_list;		/* number of functions in white_function_list */
+	int num_black_function_list;		/* number of functions in black_function_list */
 
 	/* ssl configuration */
 	int ssl;	/* if non 0, activate ssl support (frontend+backend) */

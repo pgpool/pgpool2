@@ -87,6 +87,28 @@ reset_query_list = 'ABORT; DISCARD ALL'
 # for 8.2 or older this should be as follows. 
 #reset_query_list = 'ABORT; RESET ALL; SET SESSION AUTHORIZATION DEFAULT'
 
+# white_function_list is a comma separated list of function names
+# those do not write to database. Any functions not listed here
+# are regarded to write to database and SELECTs including such 
+# writer-functions will be executed on master(primary) in master/slave
+# mode, or executed on all DB nodes in replication mode.
+#
+# black_function_list is a comma separated list of function names
+# those write to database. Any functions not listed here
+# are regarded not to write to database and SELECTs including such 
+# read-only-functions will be executed on any DB nodes.
+#
+# You cannot make full both white_function_list and
+# black_function_list at the same time. If you specify something in
+# one of them, you should make empty other.
+#
+# Pre 3.0 pgpool-II recognizes nextval and setval in hard coded
+# way. Following setting will do the same as the previous version.
+# white_function_list = ''
+# black_function_list = 'nextval,setval'
+white_function_list = ''
+black_function_list = 'nextval,setval'
+
 # If true print timestamp on each log line.
 print_timestamp = true
 
