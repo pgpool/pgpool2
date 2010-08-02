@@ -1231,6 +1231,12 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	if (mismatch_ntuples)
 	{
 		char msgbuf[128];
+		POOL_MEMORY_POOL *old_context = pool_memory;
+
+		if (session_context->query_context)
+			pool_memory = session_context->query_context->memory_context;
+		else
+			pool_memory = session_context->memory_context;
 
 		String *msg = init_string("pgpool detected difference of the number of inserted, updated or deleted tuples. Possible last query was: \"");
 		string_append_char(msg, query_string_buffer);
@@ -1250,6 +1256,8 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 		}
 		pool_log("%s", msg->data);
 		free_string(msg);
+
+		pool_memory = old_context;
 
 		/*
 		 * Remember that we have different number of UPDATE/DELETE
@@ -3240,7 +3248,21 @@ bool is_partition_table(POOL_CONNECTION_POOL *backend, Node *node)
  */
 static char *get_insert_command_table_name(InsertStmt *node)
 {
+	POOL_SESSION_CONTEXT *session_context;
+	POOL_MEMORY_POOL *old_context = pool_memory;
+
+	session_context = pool_get_session_context();
+	if (!session_context)
+		return NULL;
+
+	if (session_context->query_context)
+		pool_memory = session_context->query_context->memory_context;
+	else
+		pool_memory = session_context->memory_context;
+
 	char *table = nodeToString(node->relation);
+
+	pool_memory = old_context;
 
 	pool_debug("get_insert_command_table_name: extracted table name: %s", table);
 	return table;

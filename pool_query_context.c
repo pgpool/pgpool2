@@ -314,8 +314,12 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 		if (!strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
 		{
 			POOL_DEST dest;
+			POOL_MEMORY_POOL *old_context = pool_memory;
 
+			pool_memory = query_context->memory_context;
 			dest = send_to_where(node, query);
+			pool_memory = old_context;
+
 			pool_debug("send_to_where: %d query: %s", dest, query);
 
 			/* Should be sent to primary only? */

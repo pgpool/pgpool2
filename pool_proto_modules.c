@@ -1231,8 +1231,16 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 											 MASTER_NODE_ID, &number_of_nodes);
 			if (victim_nodes)
 			{
-				String *msg = init_string("ReadyForQuery: Degenerate backends:");
 				int i;
+				String *msg;
+				POOL_MEMORY_POOL *old_context = pool_memory;
+
+				if (session_context->query_context)
+					pool_memory = session_context->query_context->memory_context;
+				else
+					pool_memory = session_context->memory_context;
+
+				msg = init_string("ReadyForQuery: Degenerate backends:");
 
 				for (i=0;i<number_of_nodes;i++)
 				{
@@ -1251,6 +1259,8 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				}
 				pool_log("%s", msg->data);
 				free_string(msg);
+
+				pool_memory = old_context;
 
 				degenerate_backend_set(victim_nodes, number_of_nodes);
 				child_exit(1);
@@ -2470,6 +2480,13 @@ static int check_errors(POOL_CONNECTION_POOL *backend, int backend_id)
 
 static void generate_error_message(char *prefix, int specific_error, char *query)
 {
+	POOL_SESSION_CONTEXT *session_context;
+	POOL_MEMORY_POOL *old_context = pool_memory;
+
+	session_context = pool_get_session_context();
+	if (!session_context)
+		return;
+
 	static char *error_messages[] = {
 		"received deadlock error message from master node. query: %s",
 		"received serialization failure error message from master node. query: %s",
@@ -2487,10 +2504,17 @@ static void generate_error_message(char *prefix, int specific_error, char *query
 
 	specific_error--;
 
+	if (session_context->query_context)
+		pool_memory = session_context->query_context->memory_context;
+	else
+		pool_memory = session_context->memory_context;
+
 	msg = init_string(prefix);
 	string_append_char(msg, error_messages[specific_error]);
 	pool_error(msg->data, query);
 	free_string(msg);
+
+	pool_memory = old_context;
 }
 
 /*
