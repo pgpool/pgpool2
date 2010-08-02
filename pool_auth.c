@@ -819,7 +819,7 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 	static char password[MAX_PASSWORD_SIZE];
 	int kind;
 	char encbuf[POOL_PASSWD_LEN+1];
-	char *pool_passwd;
+	char *pool_passwd = NULL;
 
 	if (!RAW_MODE && NUM_BACKENDS > 1)
 	{
