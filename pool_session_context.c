@@ -488,7 +488,7 @@ void pool_remove_prepared_statement(void)
 	}
 	else
 	{
-		pool_error("pool_remove_prepared_statement: pending prepared statement is NULL");
+		pool_debug("pool_remove_prepared_statement: pending prepared statement is NULL");
 	}
 }
 
@@ -649,7 +649,7 @@ void pool_add_prepared_statement(void)
 
 	if (!session_context->pending_pstmt)
 	{
-		pool_error("pool_add_prepared_statement: pending prepared statement is NULL");
+		pool_debug("pool_add_prepared_statement: pending prepared statement is NULL");
 		return;
 	}
 
@@ -709,7 +709,7 @@ void pool_add_portal(void)
 
 	if (!session_context->pending_portal)
 	{
-		pool_error("pool_add_portal: pending portal is NULL");
+		pool_debug("pool_add_portal: pending portal is NULL");
 		return;
 	}
 
