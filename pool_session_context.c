@@ -1046,7 +1046,7 @@ void pool_delete_prep_where(char *name)
 	{
 		if (!strcmp(session_context->prep_where.name[i], name))
 		{
-			memcpy(&session_context->prep_where.where_to_send[i], 0, sizeof(bool)*MAX_NUM_BACKENDS);
+			memset(&session_context->prep_where.where_to_send[i], 0, sizeof(bool)*MAX_NUM_BACKENDS);
 			*session_context->prep_where.name[i] = '\0';
 			return;
 		}
