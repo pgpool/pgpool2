@@ -184,9 +184,6 @@ extern POOL_STATUS send_extended_protocol_message(POOL_CONNECTION_POOL *backend,
 												  int node_id, char *kind,
 												  int len, char *string);
 
-extern POOL_STATUS send_execute_message(POOL_CONNECTION_POOL *backend,
-										int node_id, int len, char *string);
-
 extern int synchronize(POOL_CONNECTION *cp);
 extern POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *decided_kind);
 extern POOL_STATUS read_kind_from_one_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *kind, int node);

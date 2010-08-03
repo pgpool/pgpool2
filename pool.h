@@ -249,8 +249,8 @@ typedef struct {
 } Interval;
 
 
-/* NUM_BACKENDS now always returns actual number of backends if not in_load_balance */
-#define NUM_BACKENDS (in_load_balance ? (selected_slot+1) : pool_config->backend_desc->num_backends)
+/* NUM_BACKENDS now always returns actual number of backends */
+#define NUM_BACKENDS (pool_config->backend_desc->num_backends)
 #define BACKEND_INFO(backend_id) (pool_config->backend_desc->backend_info[(backend_id)])
 #define LOAD_BALANCE_STATUS(backend_id) (pool_config->load_balance_status[(backend_id)])
 
@@ -374,9 +374,7 @@ extern int my_proc_id;  /* process table id (!= UNIX's PID) */
 extern POOL_SYSTEMDB_CONNECTION_POOL *system_db_info; /* systemdb */
 extern ProcessInfo *process_info; /* shmem process information table */
 extern ConnectionInfo *con_info; /* shmem connection info table */
-extern int in_load_balance;		/* non 0 if in load balance mode */
 extern int selected_slot;		/* selected DB node for load balance */
-extern int master_slave_dml;	/* non 0 if master/slave mode is specified in config file */
 extern POOL_REQUEST_INFO *Req_info;
 extern volatile sig_atomic_t *InRecovery;
 extern char remote_ps_data[];		/* used for set_ps_display */

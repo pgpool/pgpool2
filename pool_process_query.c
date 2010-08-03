@@ -78,9 +78,7 @@ static bool is_internal_transaction_needed(Node *node);
 /* timeout sec for pool_check_fd */
 static int timeoutsec;
 
-int in_load_balance;	/* non 0 if in load balance mode */
 int selected_slot;		/* selected DB node */
-int master_slave_dml;	/* non 0 if master/slave mode is specified in config file */
 
 /*
  * Main module for query processing
@@ -91,7 +89,6 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 							   int reset_request)
 {
 	char kind;	/* packet kind (backend) */
-	char fkind;	/* packet kind (frontend) */
 	fd_set	readmask;
 	fd_set	writemask;
 	fd_set	exceptmask;
@@ -115,7 +112,6 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 	for (;;)
 	{
 		kind = 0;
-		fkind = 0;
 
 		/* Are we requested to send reset queries? */
 		if (state == 0 && reset_request)
@@ -312,8 +308,8 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 					 */
 					if (CONNECTION_SLOT(backend, i) == 0)
 					{
-						pool_log("FATAL ERROR: VALID_BACKEND returns non 0 but connection slot is empty. backend id:%d RAW_MODE:%d in_load_balance:%d LOAD_BALANCE_STATUS:%d status:%d",
-								 i, RAW_MODE, in_load_balance, LOAD_BALANCE_STATUS(i), BACKEND_INFO(i).backend_status);
+						pool_log("FATAL ERROR: VALID_BACKEND returns non 0 but connection slot is empty. backend id:%d RAW_MODE:%d LOAD_BALANCE_STATUS:%d status:%d",
+								 i, RAW_MODE, LOAD_BALANCE_STATUS(i), BACKEND_INFO(i).backend_status);
 						was_error = 1;
 						break;
 					}
@@ -865,14 +861,6 @@ POOL_STATUS send_extended_protocol_message(POOL_CONNECTION_POOL *backend,
 	return POOL_CONTINUE;
 }
 
-#ifdef NOT_USED
-POOL_STATUS send_execute_message(POOL_CONNECTION_POOL *backend,
-										int node_id, int len, char *string)
-{
-	return send_extended_protocol_message(backend, node_id, "E", len, string);
-}
-#endif
-
 /*
  * wait until read data is ready
  */
@@ -1076,47 +1064,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 		return POOL_END;
 	}
 
-	/*
-	 * Check if packet kind == 'C'(Command complete), '1'(Parse
-	 * complete), '3'(Close complete). If so, remember that we
-	 * succeeded in executing command.
-	 */
-	if (kind == 'C' || kind == '1' || kind == '2' || kind == '3')
-		pool_set_command_success();
-
 #ifdef NOT_USED
-	/*
-	 * Check if packet kind == 'C'(Command complete), '1'(Parse
-	 * complete), '3'(Close complete). If so, then register or
-	 * unregister pending prepared statement.
-	 */
-	if ((kind == 'C' || kind == '1' || kind == '2' || kind == '3') &&
-		session_context->pending_function)
-	{
-		Node *parse_tree;
-
-		session_context->pending_function();
-
-		if (session_context->pending_pstmt)
-		{
-			parse_tree = session_context->pending_pstmt->qctxt->parse_tree;
-
-			if (IsA(parse_tree, DeallocateStmt))
-				pool_remove_pending_objects();
-		}
-
-		session_context->pending_function = NULL;
-		session_context->pending_pstmt = NULL;
-		session_context->pending_portal = NULL;
-	}
-	else if (kind == 'E' && session_context->pending_function)
-	{
-		/* An error occurred with PREPARE or DEALLOCATE command.
-		 * Free pending portal object.
-		 */
-		pool_remove_pending_objects();
-	}
-
 	/* 
 	 * The response of Execute command will be EmptyQueryResponse(I),
 	 * if Bind error occurs.
@@ -1125,15 +1073,6 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	{
 		select_in_transaction = 0;
 		execute_select = 0;
-	}
-
-	/*
-	 * Remove a pending function if a received message is not
-	 * NoticeResponse.
-	 */
-	if (kind != 'N')
-	{
-		pool_remove_pending_objects();
 	}
 #endif
 
@@ -1303,20 +1242,8 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	if (status)
 		return POOL_END;
 
-#ifdef NOT_USED
-	if (kind == 'A')	/* notification response */
-	{
-		pool_flush(frontend);	/* we need to immediately notice to frontend */
-	}
-#endif
 	if (kind == 'E')		/* error response? */
 	{
-#ifdef NOT_USED
-		int i;
-		int res1;
-		char *p1;
-#endif
-
 		/*
 		 * check if the error was PANIC or FATAL. If so, we just flush
 		 * the message and exit since the backend will close the
@@ -1328,91 +1255,6 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 			return POOL_END;
 		}
 	}
-
-#ifdef NOT_USED
-		if (select_in_transaction)
-		{
-			int i;
-
-			in_load_balance = 0;
-			REPLICATION = 1;
-			for (i = 0; i < NUM_BACKENDS; i++)
-			{
-				if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
-				{
-					/*
-					 * We must abort transaction to sync transaction state.
-					 * If the error was caused by an Execute message,
-					 * we must send invalid Execute message to abort
-					 * transaction.
-					 *
-					 * Because extended query protocol ignores all
-					 * messages before receiving Sync message inside error state.
-					 */
-					if (execute_select)
-						do_error_execute_command(backend, i, PROTO_MAJOR_V3);
-					else
-						do_error_command(CONNECTION(backend, i), PROTO_MAJOR_V3);
-				}
-			}
-			select_in_transaction = 0;
-			execute_select = 0;
-		}
-
-		for (i = 0;i < NUM_BACKENDS; i++)
-		{
-			if (VALID_BACKEND(i))
-			{
-				POOL_CONNECTION *cp = CONNECTION(backend, i);
-
-				/* We need to send "sync" message to backend in extend mode
-				 * so that it accepts next command.
-				 * Note that this may be overkill since client may send
-				 * it by itself. Moreover we do not need it in non-extend mode.
-				 * At this point we regard it is not harmful since error response
-				 * will not be sent too frequently.
-				 */
-				pool_write(cp, "S", 1);
-				res1 = htonl(4);
-				if (pool_write_and_flush(cp, &res1, sizeof(res1)) < 0)
-				{
-					return POOL_END;
-				}
-			}
-		}
-
-		while ((ret = read_kind_from_backend(frontend, backend, &kind1)) == POOL_CONTINUE)
-		{
-			if (kind1 == 'Z') /* ReadyForQuery? */
-				break;
-
-			ret = SimpleForwardToFrontend(kind1, frontend, backend);
-			if (ret != POOL_CONTINUE)
-				return ret;
-			pool_flush(frontend);
-		}
-
-		if (ret != POOL_CONTINUE)
-			return ret;
-
-		for (i = 0; i < NUM_BACKENDS; i++)
-		{
-			if (VALID_BACKEND(i))
-			{
-				status = pool_read(CONNECTION(backend, i), &res1, sizeof(res1));
-				if (status < 0)
-				{
-					pool_error("SimpleForwardToFrontend: error while reading message length");
-					return POOL_END;
-				}
-				res1 = ntohl(res1) - sizeof(res1);
-				p1 = pool_read2(CONNECTION(backend, i), res1);
-				if (p1 == NULL)
-					return POOL_END;
-			}
-		}
-	}
-#endif
 
 	pool_flush(frontend);
 
@@ -1465,245 +1307,23 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend,
 		return POOL_END;
 	}
 
-#ifdef NOT_USED
-	/* Bind, Describe or Close message? */
-	if (kind == 'B' || kind == 'D' || kind == 'C')
+	for (i=0;i<NUM_BACKENDS;i++)
 	{
-		/* Forward to the master node */
-		snprintf(msgbuf, sizeof(msgbuf), "%c message", kind);
-		per_node_statement_log(backend, MASTER_NODE_ID, msgbuf);
-
-		if (send_extended_protocol_message(backend, MASTER_NODE_ID, &kind, len, contents))
-			return POOL_END;
-
-		if (REPLICATION || PARALLEL_MODE || MASTER_SLAVE)
+		if (VALID_BACKEND(i))
 		{
-			for (i=0;i<NUM_BACKENDS;i++)
-			{
-				if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
-				{
-					snprintf(msgbuf, sizeof(msgbuf), "%c message", kind);
-					per_node_statement_log(backend, i, msgbuf);
+#ifdef NOT_USED
+			snprintf(msgbuf, sizeof(msgbuf), "%c message", kind);
+			per_node_statement_log(backend, i, msgbuf);
+#endif
 
-					/* Forward to other nodes */
-					if (send_extended_protocol_message(backend, i, &kind, len, contents))
-						return POOL_END;
-				}
-			}
+			if (pool_write(CONNECTION(backend, i), &kind, 1))
+				return POOL_END;
+			if (pool_write(CONNECTION(backend,i), &sendlen, sizeof(sendlen)))
+				return POOL_END;
+			if (pool_write_and_flush(CONNECTION(backend, i), contents, len))
+				return POOL_END;
 		}
 	}
-	else	/* Other than Bind, Describe or Close message */
-	{
-#endif
-		for (i=0;i<NUM_BACKENDS;i++)
-		{
-			if (VALID_BACKEND(i))
-			{
-#ifdef NOT_USED
-				snprintf(msgbuf, sizeof(msgbuf), "%c message", kind);
-				per_node_statement_log(backend, i, msgbuf);
-#endif
-
-				if (pool_write(CONNECTION(backend, i), &kind, 1))
-				{
-#ifdef NOT_USED
-					if (rewrite_msg)
-						free(rewrite_msg);
-#endif
-					return POOL_END;
-				}
-
-				if (pool_write(CONNECTION(backend,i), &sendlen, sizeof(sendlen)))
-				{
-#ifdef NOT_USED
-					if (rewrite_msg)
-						free(rewrite_msg);
-#endif
-					return POOL_END;
-				}
-
-				if (pool_write_and_flush(CONNECTION(backend, i), contents, len))
-				{
-#ifdef NOT_USED
-					if (rewrite_msg)
-						free(rewrite_msg);
-#endif
-					return POOL_END;
-				}
-			}
-		}
-#ifdef NOT_USED
-	}
-
-	/* Close message with prepared statement name. */
-	else if (kind == 'C' && *contents == 'S' && *(contents + 1))
-	{
-		POOL_MEMORY_POOL *old_context = pool_memory;
-		DeallocateStmt *deallocate_stmt;
-
-		pending_prepared_portal = create_portal();
-		if (pending_prepared_portal == NULL)
-		{
-			pool_error("SimpleForwardToBackend: malloc failed: %s", strerror(errno));
-			return POOL_END;
-		}
-
-		pool_memory = pending_prepared_portal->prepare_ctxt;
-		name = pstrdup(p+1);
-		if (name == NULL)
-		{
-			pool_error("SimpleForwardToBackend: malloc failed: %s", strerror(errno));
-			pool_memory = old_context;
-			return POOL_END;
-		}
-
-		/* Translate from Close message to DEALLOCATE statement.*/
-		deallocate_stmt = palloc(sizeof(DeallocateStmt));
-		if (deallocate_stmt == NULL)
-		{
-			pool_error("SimpleForwardToBackend: malloc failed: %s", strerror(errno));
-			pool_memory = old_context;
-			return POOL_END;
-		}
-		deallocate_stmt->name = name;
-		pending_prepared_portal->stmt = (Node *)deallocate_stmt;
-		pending_prepared_portal->portal_name = NULL;
-		pending_function = del_prepared_list;
-		pool_memory = old_context;
-
-		pstmt = pool_get_prepared_statement_by_pstmt_name(contents+1);
-		session_context->pending_pstmt = pstmt;
-		session_context->pending_function = pool_remove_prepared_statement;
-	}
-
-	/* Bind, Describe or Close message? */
-	if (kind == 'B' || kind == 'D' || kind == 'C')
-	{
-		int i;
-		char kind1;
-
-		/*
-		 * Send "Flush" message so that backend notices us
-		 * the completion of the command
-		 */
-		pool_write(MASTER(backend), "H", 1);
-		sendlen = htonl(4);
-		if (pool_write_and_flush(MASTER(backend), &sendlen, sizeof(sendlen)) < 0)
-		{
-			return POOL_END;
-		}
-
-		if (REPLICATION || PARALLEL_MODE || MASTER_SLAVE)
-		{
-			for (i=0;i<NUM_BACKENDS;i++)
-			{
-				if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
-				{
-					/* Send to other nodes */
-					POOL_CONNECTION *cp = CONNECTION(backend, i);
-
-					pool_write(cp, "H", 1);
-					sendlen = htonl(4);
-					if (pool_write_and_flush(cp, &sendlen, sizeof(sendlen)) < 0)
-					{
-						return POOL_END;
-					}
-				}
-			}
-		}
-
-		/*
-		 * After sending describe message with a portal name, two
-		 * messages will be received.
-		 * 1. ParameterDescription
-		 * 2. RowDescriptions or NoData
-		 * So we read one message here.
-		 */
-		if (kind == 'D' && *contents == 'S')
-		{
-			if (REPLICATION || PARALLEL_MODE || MASTER_SLAVE)
-			{
-				ret = read_kind_from_backend(frontend, backend, &kind1);
-				if (ret != POOL_CONTINUE)
-					return POOL_END;
-				SimpleForwardToFrontend(kind1, frontend, backend);
-				if (pool_flush(frontend))
-					return POOL_END;
-			}
-			else
-			{
-				if (pool_read(MASTER(backend), &kind1, 1))
-					return POOL_END;
-				if (pool_write(frontend, &kind1, 1))
-					return POOL_END;
-				if (pool_read(MASTER(backend), &sendlen, sizeof(sendlen)))
-					return POOL_END;
-				if (pool_write(frontend, &sendlen, sizeof(sendlen)))
-					return POOL_END;
-				len = ntohl(sendlen) - 4;
-				contents = pool_read2(MASTER(backend), len);
-				if (contents == NULL)
-					return POOL_END;
-				if (pool_write_and_flush(frontend, contents, len))
-					return POOL_END;
-
-				if (kind1 == 'E')
-				{
-					if (is_panic_or_fatal_error(contents))
-						return POOL_END;
-					ret = send_sync_to_recover(frontend, MASTER(backend));
-					if (ret != POOL_CONTINUE)
-						return ret;
-				}
-			}
-		}
-
-		/*
-		 * Forward to frontend until a NOTICE message received.
-		 */
-		for (;;)
-		{
-			if (REPLICATION || PARALLEL_MODE || MASTER_SLAVE)
-			{
-				ret = read_kind_from_backend(frontend, backend, &kind1);
-				if (ret != POOL_CONTINUE)
-					return ret;
-				SimpleForwardToFrontend(kind1, frontend, backend);
-				pool_flush(frontend);
-			}
-			else
-			{
-				if (pool_read(MASTER(backend), &kind1, 1))
-					return POOL_END;
-				if (pool_write(frontend, &kind1, 1))
-					return POOL_END;
-				if (pool_read(MASTER(backend), &sendlen, sizeof(sendlen)))
-					return POOL_END;
-				if (pool_write(frontend, &sendlen, sizeof(sendlen)))
-					return POOL_END;
-				len = ntohl(sendlen) - 4;
-				contents = pool_read2(MASTER(backend), len);
-				if (contents == NULL)
-					return POOL_END;
-				if (pool_write_and_flush(frontend, contents, len))
-					return POOL_END;
-
-				if (kind1 == 'E')
-				{
-					if (is_panic_or_fatal_error(contents))
-						return POOL_END;
-					ret = send_sync_to_recover(frontend, MASTER(backend));
-					if (ret != POOL_CONTINUE)
-						return ret;
-				}
-			}
-
-			if (kind1 != 'N')
-				break;
-		}
-	}
-#endif
-	pool_flush(frontend);
 
 	return POOL_CONTINUE;
 }
@@ -1828,18 +1448,7 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 	if (qcnt >= qn)
 	{
 		if (session_context->pstmt_list.size == 0)
-		{
-			/*
-			 * Either no prepared objects were created or DISCARD ALL
-			 * or DEALLOCATE ALL is on the reset_query_list and they
-			 * were executed.  The latter causes call to
-			 * reset_prepared_list which removes all prepared objects.
-			 */
-#ifdef NOT_USED
-			reset_prepared_list(&prepared_list);
-#endif
 			return 2;
-		}
 
 		char *name = session_context->pstmt_list.pstmts[0]->name;
 
@@ -3275,9 +2884,7 @@ int is_drop_database(Node *node)
 }
 
 /*
- * check if any pending data remains.  Also if there's some pending data in
- * frontend AND no processing any Query, then returns 0.
- * XXX: is this correct thing?
+ * check if any pending data remains.
 */
 static int is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 {
@@ -3290,9 +2897,6 @@ static int is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 	if (pool_ssl_pending(frontend))
 		return 0;
 
-#ifdef NOT_USED
-	if (!pool_read_buffer_is_empty(frontend) && !pool_is_query_in_progress())
-#endif
 	if (!pool_read_buffer_is_empty(frontend))
 		return 0;
 
@@ -3607,12 +3211,6 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 						List *parse_tree_list;
 						Node *node;
 
-#ifdef NOT_USED
-						/* Switch to parser memory context */
-						old_context = pool_memory;
-						pool_memory = parser_context;
-#endif
-
 						parse_tree_list = raw_parser(query_string_buffer);
 
 						if (parse_tree_list != NIL)
@@ -3633,13 +3231,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 								}
 							}
 						}
-						free_parser();
-
-#ifdef NOT_USED
-						/* Switch to old memory context */
-						parser_context = pool_memory;
-						pool_memory = old_context;
-#endif
+						/* free_parser(); */
 					}
 				}
 				else
@@ -3672,28 +3264,6 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 
 	return POOL_CONTINUE;
 }
-
-#ifdef NOT_USED
-/*
- * Create portal object
- * Return object is allocated from heap memory.
- */
-Portal *create_portal(void)
-{
-	Portal *p;
-
-	if ((p = malloc(sizeof(Portal))) == NULL)
-		return NULL;
-
-	p->prepare_ctxt = pool_memory_create(PREPARE_BLOCK_SIZE);
-	if (p->prepare_ctxt == NULL)
-	{
-		free(p);
-		return NULL;
-	}
-	return p;
-}
-#endif
 
 /*
  * Send DEALLOCATE message to backend by using SimpleQuery.
@@ -4181,59 +3751,6 @@ static bool is_panic_or_fatal_error(const char *message)
 	}
 	return false;
 }
-
-#ifdef NOT_USED
-/*
- * Send a "Sync"(S) message to a backend in extended query 
- * protocol so that it accepts next command.
- * This function is called in raw Mode or Connection Pool Mode.
- */
-static POOL_STATUS send_sync_to_recover(POOL_CONNECTION *frontend, POOL_CONNECTION *backend)
-{
-	int res;
-	int ret;
-	int len;
-	int sendlen;
-	char kind;
-	char *p;
-
-	pool_write(backend, "S", 1);
-	res = htonl(4);
-	if (pool_write_and_flush(backend, &res, sizeof(res)) < 0)
-		return POOL_END;
-
-	/*
-	 * We don't send "ReadyForQuery"(Z) message to frontend,
-	 * because "Sync"(S) message is sent by pgpool.
-	 */
-	while ((ret = pool_read(backend, &kind, 1)) == 0)
-	{
-		pool_debug("send_sync_to_recover: kind from backend: %c", kind);
-
-		if (pool_read(backend, &sendlen, sizeof(sendlen)))
-			return POOL_END;
-		len = ntohl(sendlen) - 4;
-		p = pool_read2(backend, len);
-		if (p == NULL)
-			return POOL_END;
-
-		if (kind == 'Z')
-			break;
-
-		if (pool_write(frontend, &kind, 1))
-			return POOL_END;
-		if (pool_write(frontend, &sendlen, sizeof(sendlen)))
-			return POOL_END;
-		if (pool_write_and_flush(frontend, p, len))
-			return POOL_END;
-	}
-
-	if (ret != 0)
-		return POOL_END;
-
-	return POOL_CONTINUE;
-}
-#endif
 
 static int detect_postmaster_down_error(POOL_CONNECTION *backend, int major)
 {

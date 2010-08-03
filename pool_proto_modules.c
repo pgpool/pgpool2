@@ -1552,7 +1552,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	session_context = pool_get_session_context();
 	if (!session_context)
 	{
-		pool_error("BindComplete: cannot get session context");
+		pool_error("CommandComplete: cannot get session context");
 		return POOL_END;
 	}
 
@@ -1625,7 +1625,7 @@ POOL_STATUS ErrorResponse3(POOL_CONNECTION *frontend,
 	{
 		int i;
 
-		in_load_balance = 0;
+		/* in_load_balance = 0; */
 		REPLICATION = 1;
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
@@ -2039,16 +2039,19 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 
 			case '1':	/* ParseComplete */
 				status = ParseComplete(frontend, backend);
+				pool_set_command_success();
 				pool_unset_query_in_progress();
 				break;
 
 			case '2':	/* BindComplete */
 				status = BindComplete(frontend, backend);
+				pool_set_command_success();
 				pool_unset_query_in_progress();
 				break;
 
 			case '3':	/* CloseComplete */
 				status = CloseComplete(frontend, backend);
+				pool_set_command_success();
 				pool_unset_query_in_progress();
 				break;
 
@@ -2063,6 +2066,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 
 			case 'C':	/* CommandComplete */				
 				status = CommandComplete(frontend, backend);
+				pool_set_command_success();
 				if (pool_is_doing_extended_query_message())
 					pool_unset_query_in_progress();
 				break;
