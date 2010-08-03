@@ -311,7 +311,8 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	else if (MASTER_SLAVE)
 	{
 		/* Streaming Replication+Hot Standby? */
-		if (!strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
+		if (!strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP) ||
+			!strcmp(pool_config->master_slave_sub_mode, MODE_SLONY))
 		{
 			POOL_DEST dest;
 			POOL_MEMORY_POOL *old_context = pool_memory;
@@ -351,15 +352,6 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					if (TSTATE(backend, MASTER_NODE_ID) == 'I' ||
 						(!pool_is_writing_transaction() &&
 						 pool_get_transaction_isolation() != POOL_SERIALIZABLE))
-#ifdef NOT_USED
-					/* 
-					 * If we are outside of an explicit transaction OR
-					 * the transaction has not issued a write query yet,
-					 * we might be able to load balance.
-					 */
-					if (TSTATE(backend, MASTER_NODE_ID) == 'I' ||
-						!pool_is_writing_transaction())
-#endif
 					{
 						BackendInfo *bkinfo = pool_get_node_info(session_context->load_balance_node_id);
 
@@ -473,6 +465,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 				}
 			}
 		}
+#ifdef SLONY
 		else	/* Slony-I case */
 		{
 			/*
@@ -512,6 +505,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 				}
 			}
 		}
+#endif
 	}
 	else if (REPLICATION|PARALLEL_MODE)
 	{
