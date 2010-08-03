@@ -157,7 +157,7 @@ usage(void)
 	fprintf(stderr, "  -d       - enable debug message (optional)\n");
 	fprintf(stderr, "  timeout  - connection timeout value in seconds. command exits on timeout\n");
 	fprintf(stderr, "  hostname - pgpool-II hostname\n");
-	fprintf(stderr, "  port#    - pgpool-II port number\n");
+	fprintf(stderr, "  port#    - PCP port number\n");
 	fprintf(stderr, "  username - username for PCP authentication\n");
 	fprintf(stderr, "  password - password for PCP authentication\n");
 	fprintf(stderr, "  nodeID   - ID of a node to get information for\n");
