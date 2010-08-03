@@ -1010,27 +1010,40 @@ void cancel_request(CancelPacket *sp)
 	int	len;
 	int fd;
 	POOL_CONNECTION *con;
-	int i;
+	int i,j,k;
 	ConnectionInfo *c = NULL;
 	CancelPacket cp;
-	int loop_num = pool_config->num_init_children*pool_config->max_pool*MAX_NUM_BACKENDS;
+	bool found = false;
 
 	pool_debug("Cancel request received");
 
 	/* look for cancel key from shmem info */
-	for (i=0;i<loop_num;i++)
+	for (i=0;i<pool_config->num_init_children;i++)
 	{
-		c = &con_info[i];
-
-		if (c->pid == sp->pid && c->key == sp->key)
+		for (j=0;j<pool_config->max_pool;j++)
 		{
-			pool_debug("found pid:%d key:%d i:%d",c->pid, c->key,i);
-			c = &con_info[i/(pool_config->max_pool * pool_config->max_pool)];
-			break;
+			for (k=0;k<NUM_BACKENDS;k++)
+			{
+				c = pool_coninfo(i, j, k);
+				pool_debug("con_info: address:%x pid:%d key:%d i:%d", c, ntohl(c->pid), ntohl(c->key),i);
+
+				if (c->pid == sp->pid && c->key == sp->key)
+				{
+					pool_debug("found pid:%d key:%d i:%d",ntohl(c->pid), ntohl(c->key),i);
+					c = pool_coninfo(i, j, 0);
+					found = true;
+					goto found;
+				}
+			}
 		}
 	}
-	if (i == loop_num)
+
+ found:
+	if (!found)
+	{
+		pool_error("cancel_request: invalid cancel key: pid:%d key:%d",ntohl(sp->pid), ntohl(sp->key));
 		return;	/* invalid key */
+	}
 
 	for (i=0;i<NUM_BACKENDS;i++,c++)
 	{
@@ -1059,7 +1072,7 @@ void cancel_request(CancelPacket *sp)
 		cp.pid = c->pid;
 		cp.key = c->key;
 
-		pool_debug("pid:%d key: %d",cp.pid,cp.key);
+		pool_log("cancel_request: canceling backend pid:%d key: %d", ntohl(cp.pid),ntohl(cp.key));
 
 		if (pool_write_and_flush(con, &cp, sizeof(CancelPacket)) < 0)
 			pool_error("Could not send cancel request packet for backend %d", i);

@@ -52,5 +52,8 @@ extern void pool_init_process_context(void);
 extern POOL_PROCESS_CONTEXT *pool_get_process_context(void);
 extern ProcessInfo *pool_get_my_process_info(void);
 extern void pool_incremnet_local_session_id(void);
+extern int pool_coninfo_size(void);
+extern int pool_coninfo_num(void);
+extern ConnectionInfo *pool_coninfo(int child, int connection_pool, int backend);
 
 #endif /* POOL_PROCESS_CONTEXT_H */
