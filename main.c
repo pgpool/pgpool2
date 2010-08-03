@@ -20,6 +20,7 @@
  */
 #include "pool.h"
 #include "pool_config.h"
+#include "pool_process_context.h"
 
 #include <ctype.h>
 #include <sys/types.h>
@@ -452,7 +453,7 @@ int main(int argc, char **argv)
 	 * corresponds to pgpool child process, j corresponds to
 	 * connection pool in each process. Of course this was wrong.
 	 */
-	size = pool_config->num_init_children * pool_config->max_pool * MAX_NUM_BACKENDS * sizeof(ConnectionInfo);
+	size = pool_coninfo_size();
 	con_info = pool_shared_memory_create(size);
 	if (con_info == NULL)
 	{
@@ -471,7 +472,7 @@ int main(int argc, char **argv)
 	memset(process_info, 0, size);
 	for (i = 0; i < pool_config->num_init_children; i++)
 	{
-		process_info[i].connection_info = &con_info[i * pool_config->max_pool * MAX_NUM_BACKENDS];
+		process_info[i].connection_info = pool_coninfo(i,0,0);
 	}
 
 	/* create fail over/switch over event area */
