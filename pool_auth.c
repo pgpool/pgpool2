@@ -345,6 +345,8 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 				return -1;
 			}
 
+			pool_debug("pool_do_auth: cp->info[i]:%x pid:%d", &cp->info[i], ntohl(pid));
+
 			CONNECTION_SLOT(cp, i)->pid = cp->info[i].pid = pid;
 
 			/* read key */
