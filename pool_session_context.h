@@ -167,9 +167,6 @@ typedef struct {
 
 #ifdef NOT_USED
 /* We need to override these gotchas... */
-	int force_replication;
-	int replication_was_enabled;		/* replication mode was enabled */
-	int master_slave_was_enabled;	/* master/slave mode was enabled */
 	int internal_transaction_started;		/* to issue table lock command a transaction
 											   has been started internally */
 	int mismatch_ntuples;	/* number of updated tuples */

@@ -56,9 +56,6 @@
 #include "pool_query_context.h"
 #include "pool_lobj.h"
 
-int force_replication;
-int replication_was_enabled;		/* replication mode was enabled */
-int master_slave_was_enabled;	/* master/slave mode was enabled */
 int internal_transaction_started;		/* to issue table lock command a transaction
 												   has been started internally */
 char *copy_table = NULL;  /* copy table name */
@@ -257,83 +254,6 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			pool_query_context_destroy(query_context);
 			pool_set_pool_status_stmt();
 			return POOL_CONTINUE;
-		}
-
-		if (IsA(node, PrepareStmt) || IsA(node, DeallocateStmt) ||
-			IsA(node, VariableSetStmt) || IsA(node, DiscardStmt))
-		{
-			/*
-			 * Before we did followings only when frontend != NULL,
-			 * which was wrong since if, for example, reset_query_list
-			 * contains "DISCARD ALL", then it does not register
-			 * pending function and it causes trying to DEALLOCATE non
-			 * existing prepared statment(2009/4/3 Tatsuo).
-			 */
-			if (IsA(node, PrepareStmt))
-			{
-#ifdef NOT_USED
-				PreparedStatement *ps;
-
-				ps = pool_create_prepared_statement(((PrepareStmt *)node)->name, 
-													0, 0, NULL, query_context);
-				if (ps == NULL)
-				{
-					pool_error("SimpleQuery: failed to create prepared statement: %s", strerror(errno));
-					return POOL_END;
-				}
-
-				session_context->pending_pstmt = ps;
-#endif
-			}
-			else if (IsA(node, DeallocateStmt))
-			{
-#ifdef NOT_USED
-				char *name;
-				PreparedStatement *ps;
-
-				name = ((DeallocateStmt *)node)->name;
-				if (name == NULL)
-					ps = pool_create_prepared_statement("", 0, 0, NULL, query_context);
-				else
-					ps = pool_create_prepared_statement(name, 0, 0, NULL, query_context);
-				if (ps == NULL)
-				{
-					pool_error("SimpleQuery: failed to create prepared statement: %s", strerror(errno));
-					return POOL_END;
-				}
-
-				session_context->pending_pstmt = ps;
-
-				if (name == NULL)
-					session_context->pending_function = pool_clear_prepared_statement_list;
-				else
-					session_context->pending_function = pool_remove_prepared_statement;
-#endif
-			}
-			else if (IsA(node, DiscardStmt))
-			{
-				DiscardStmt *stmt = (DiscardStmt *)node;
-				if (stmt->target == DISCARD_ALL || stmt->target == DISCARD_PLANS)
-				{
-					session_context->pending_pstmt = NULL;
-					session_context->pending_portal = NULL;
-				}
-			}
-		}
-
-		if (frontend && IsA(node, ExecuteStmt))
-		{
-#ifdef NOT_USED
-			PreparedStatement *ps;
-
-			ps = pool_get_prepared_statement_by_pstmt_name(((ExecuteStmt *)node)->name);
-			if (ps)
-			{
-				free_parser();
-				pool_query_context_destroy(query_context);
-				query_context = ps->qctxt;
-			}
-#endif
 		}
 
 		/*
@@ -544,10 +464,6 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	pool_debug("Execute: query: %s", query);
 	strncpy(query_string_buffer, query, sizeof(query_string_buffer));
 
-#ifdef NOT_USED
-	pool_set_query_in_progress();
-#endif
-
 	/*
 	 * Decide where to send query
 	 */
@@ -557,27 +473,6 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	if (IsA(query_context->parse_tree, DeallocateStmt))
 		overwrite_map_for_deallocate(query_context);
-
-#ifdef NOT_USED
-	/*
-	 * JDBC driver sends "BEGIN" query internally if
-	 * setAutoCommit(false).  But it does not send Sync message
-	 * after "BEGIN" query.  In extended query protocol,
-	 * PostgreSQL returns ReadyForQuery when a client sends Sync
-	 * message.  Problem is, pgpool can't know the transaction
-	 * state without receiving ReadyForQuery. So we remember that
-	 * we need to send Sync message internally afterward, whenever
-	 * we receive BEGIN in extended protocol.
-	 */
-	if (IsA(node, TransactionStmt) && MASTER_SLAVE)
-	{
-		TransactionStmt *stmt = (TransactionStmt *) node;
-
-		if (stmt->kind == TRANS_STMT_BEGIN || stmt->kind == TRANS_STMT_START)
-			/* Remember we need to send sync later in extended protocol */
-			receive_extended_begin = 1;
-	}
-#endif
 
 	/* check if query is "COMMIT" or "ROLLBACK" */
 	commit = is_commit_query(node);
@@ -616,15 +511,11 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			if (pool_send_and_wait(query_context, msg, len, -1, MASTER_NODE_ID, "E") != POOL_CONTINUE)
 				return POOL_END;
 		}
-#ifdef NOT_USED
 		else
 		{
-#endif
 			if (pool_send_and_wait(query_context, contents, len, -1, MASTER_NODE_ID, "E") != POOL_CONTINUE)
 				return POOL_END;
-#ifdef NOT_USED
 		}
-#endif
 		
 		/* send "COMMIT" or "ROLLBACK" to only master node if query is "COMMIT" or "ROLLBACK" */
 		if (commit)
@@ -646,28 +537,6 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			return POOL_END;
 		}
 	}
-
-#ifdef NOT_USED
-	while ((ret = read_kind_from_backend(frontend, backend, &kind)) == POOL_CONTINUE)
-	{
-		/*
-		 * forward message until receiving CommandComplete,
-		 * ErrorResponse, EmptyQueryResponse or PortalSuspend.
-		 */
-		if (kind == 'C' || kind == 'E' || kind == 'I' || kind == 's')
-			break;
-
-		status = SimpleForwardToFrontend(kind, frontend, backend);
-		if (status != POOL_CONTINUE)
-			return status;
-	}
-	if (ret != POOL_CONTINUE)
-		return ret;
-
-	status = SimpleForwardToFrontend(kind, frontend, backend);
-	if (status != POOL_CONTINUE)
-		return status;
-#endif
 
 	return POOL_CONTINUE;
 }
@@ -901,25 +770,6 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	 */
 	/* free_parser(); */
 
-#ifdef NOT_USED
-	for (;;)
-	{
-		char kind;
-		POOL_STATUS ret;
-		ret = read_kind_from_backend(frontend, backend, &kind);
-
-		if (ret != POOL_CONTINUE)
-			return ret;
-
-		SimpleForwardToFrontend(kind, frontend, backend);
-		pool_flush(frontend);
-
-		/* Ignore warning messages */
-		if (kind != 'N')
-			break;
-	}
-#endif
-
 	return POOL_CONTINUE;
 
 }
@@ -997,27 +847,21 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	if (pool_send_and_wait(query_context, contents, len, 1, MASTER_NODE_ID, "B")
 		!= POOL_CONTINUE)
 	{
-#ifdef NOT_USED
 		if (rewrite_msg != NULL)
-			free(rewrite_msg);
-#endif
+			/* free(rewrite_msg) */;
 		return POOL_END;
 	}
 
 	if (pool_send_and_wait(query_context, contents, len, -1, MASTER_NODE_ID, "B")
 		!= POOL_CONTINUE)
 	{
-#ifdef NOT_USED
 		if (rewrite_msg != NULL)
-			free(rewrite_msg);
-#endif
+			/* free(rewrite_msg) */;
 		return POOL_END;
 	}
 
-#ifdef NOT_USED
 	if (rewrite_msg != NULL)
-		free(rewrite_msg);
-#endif
+		/* free(rewrite_msg) */;
 
 	return POOL_CONTINUE;
 }
@@ -1371,9 +1215,6 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	}
 
 	if (pool_is_query_in_progress() && pool_is_command_success())
-#ifdef NOT_USED
-	if (pool_is_query_in_progress())
-#endif
 	{
 		Node *node;
 		char *query;
@@ -1585,6 +1426,16 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 				pool_clear_prepared_statement_list();
 			}
 		}
+		/*
+		 * JDBC driver sends "BEGIN" query internally if
+		 * setAutoCommit(false).  But it does not send Sync message
+		 * after "BEGIN" query.  In extended query protocol,
+		 * PostgreSQL returns ReadyForQuery when a client sends Sync
+		 * message.  Problem is, pgpool can't know the transaction
+		 * state without receiving ReadyForQuery. So we remember that
+		 * we need to send Sync message internally afterward, whenever
+		 * we receive BEGIN in extended protocol.
+		 */
 		else if (IsA(node, TransactionStmt))
 		{
 			TransactionStmt *stmt = (TransactionStmt *) node;
@@ -1853,26 +1704,6 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 	if (fkind != 'S' && pool_is_ignore_till_sync())
 		return POOL_CONTINUE;
 
-#ifdef NOT_USED
-	/*
-	 * If we have received BEGIN in extended protocol before, we need
-	 * to send a sync message to know the transaction stare.
-	 */
-	if (receive_extended_begin)
-	{
-		receive_extended_begin = 0;
-
-		/* send sync message */
-		send_extended_protocol_message(backend, MASTER_NODE_ID, "S", 0, "");
-
-		kind = pool_read_kind(backend);
-		if (kind != 'Z')
-			return POOL_END;
-		if (ReadyForQuery(frontend, backend, 0) != POOL_CONTINUE)
-			return POOL_END;
-	}
-#endif
-
 	pool_unset_doing_extended_query_message();
 
 	switch (fkind)
@@ -2071,6 +1902,12 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 					pool_unset_query_in_progress();
 				break;
 
+			case 'I':	/* EmptyQueryResponse */
+				status = SimpleForwardToFrontend(kind, frontend, backend);
+				if (pool_is_doing_extended_query_message())
+					pool_unset_query_in_progress();
+				break;
+
 			case 'T':	/* RowDescription */
 				status = SimpleForwardToFrontend(kind, frontend, backend);
 				if (pool_is_doing_extended_query_message())
@@ -2079,7 +1916,14 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 
 			case 'n':	/* NoData */
 				status = SimpleForwardToFrontend(kind, frontend, backend);
-				pool_unset_query_in_progress();
+				if (pool_is_doing_extended_query_message())
+					pool_unset_query_in_progress();
+				break;
+
+			case 's':	/* PortalSuspended */
+				status = SimpleForwardToFrontend(kind, frontend, backend);
+				if (pool_is_doing_extended_query_message())
+					pool_unset_query_in_progress();
 				break;
 
 			default:
