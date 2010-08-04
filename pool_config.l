@@ -1625,6 +1625,20 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 #endif
 	}
 
+	if (strcmp(pool_config->recovery_1st_stage_command, "") || 
+		strcmp(pool_config->recovery_2nd_stage_command, ""))
+	{
+		for (i=0;i<MAX_CONNECTION_SLOTS;i++)
+		{
+			if (pool_config->backend_desc->backend_info[i].backend_port != 0 &&
+				!strcmp(pool_config->backend_desc->backend_info[i].backend_data_directory, ""))
+			{
+				pool_error("pool_config: recovery_1st_stage_command and recovery_2nd_stage_command requires backend_data_directory to be set");
+				return -1;
+			}
+		}
+	}
+
 	return 0;
 }
 
