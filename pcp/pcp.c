@@ -733,6 +733,10 @@ pcp_process_info(int pid, int *array_size)
 				if (index != NULL)
 					process_info->connection_info[offset].pid = atoi(index);
 
+				index = (char *) memchr(index, '\0', rsize) + 1;
+				if (index != NULL)
+					process_info->connection_info[offset].connected = atoi(index);
+
 				offset++;
 			}
 			else if (strcmp(buf, "CommandComplete") == 0)

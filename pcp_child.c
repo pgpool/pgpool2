@@ -467,11 +467,11 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 							char minorversion[5];
 							char pool_counter[16];
 							char backend_pid[16];
+							char connected[2];
+
 							ConnectionInfo *connection_info;
 
 							connection_info = pool_coninfo_pid(proc_id, i, j);
-
-							pool_debug("pcp_child: i:%d j:%d connection_info:%x", i, j, connection_info);
 
 							snprintf(proc_start_time, sizeof(proc_start_time), "%ld", pi->start_time);
 							snprintf(proc_create_time, sizeof(proc_create_time), "%ld", connection_info->create_time);
@@ -479,6 +479,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 							snprintf(minorversion, sizeof(minorversion), "%d", connection_info->minor);
 							snprintf(pool_counter, sizeof(pool_counter), "%d", connection_info->counter);
 							snprintf(backend_pid, sizeof(backend_pid), "%d", ntohl(connection_info->pid));
+							snprintf(connected, sizeof(connected), "%d", connection_info->connected);
 
 							pcp_write(frontend, "p", 1);
 							wsize = htonl(sizeof(code) +
@@ -490,6 +491,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 										  strlen(minorversion)+1 +
 										  strlen(pool_counter)+1 +
 										  strlen(backend_pid)+1 +
+										  strlen(connected)+1 +
 										  sizeof(int));
 							pcp_write(frontend, &wsize, sizeof(int));
 							pcp_write(frontend, code, sizeof(code));
@@ -501,6 +503,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 							pcp_write(frontend, minorversion, strlen(minorversion)+1);
 							pcp_write(frontend, pool_counter, strlen(pool_counter)+1);
 							pcp_write(frontend, backend_pid, strlen(backend_pid)+1);
+							pcp_write(frontend, connected, strlen(connected)+1);
 							if (pcp_flush(frontend) < 0)
 							{
 								pool_error("pcp_child: pcp_flush() failed. reason: %s", strerror(errno));

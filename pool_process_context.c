@@ -197,3 +197,45 @@ ConnectionInfo *pool_coninfo_pid(int pid, int connection_pool, int backend)
 					 connection_pool*MAX_NUM_BACKENDS+
 					 backend];
 }
+
+/*
+ * Set frontend connected flag
+ */
+void pool_coninfo_set_frontend_connected(int proc_id, int pool_index)
+{
+	ConnectionInfo *con;
+	int i;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		con = pool_coninfo(proc_id, pool_index, i);
+
+		if (con == NULL)
+		{
+			pool_error("pool_coninfo_set_frontend_connected: cannot get ConnectionInfo");
+			return;
+		}
+		con->connected = true;
+	}
+}
+
+/*
+ * Unset frontend connected flag
+ */
+void pool_coninfo_unset_frontend_connected(int proc_id, int pool_index)
+{
+	ConnectionInfo *con;
+	int i;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		con = pool_coninfo(proc_id, pool_index, i);
+
+		if (con == NULL)
+		{
+			pool_error("pool_coninfo_unset_frontend_connected: cannot get ConnectionInfo");
+			return;
+		}
+		con->connected = false;
+	}
+}

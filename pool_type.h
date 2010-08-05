@@ -128,6 +128,7 @@ typedef struct {
 	int			counter; /* used counter */
 	time_t 		create_time; /* connection creation time */
 	int load_balancing_node; /* load balancing node */
+	bool		connected;	/* true if frontend connected */
 } ConnectionInfo;
 
 /*
