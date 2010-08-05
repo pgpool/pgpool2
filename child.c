@@ -1025,7 +1025,8 @@ void cancel_request(CancelPacket *sp)
 			for (k=0;k<NUM_BACKENDS;k++)
 			{
 				c = pool_coninfo(i, j, k);
-				pool_debug("con_info: address:%x pid:%d key:%d i:%d", c, ntohl(c->pid), ntohl(c->key),i);
+				pool_debug("con_info: address:%x database:%s user:%s pid:%d key:%d i:%d",
+						   c, c->database, c->user, ntohl(c->pid), ntohl(c->key),i);
 
 				if (c->pid == sp->pid && c->key == sp->key)
 				{
