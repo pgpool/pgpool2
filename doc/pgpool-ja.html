@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Sun Aug  1 17:11:12 JST 2010
+Last modified: Thu Aug  5 11:40:10 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -3018,7 +3018,7 @@ configure に失敗します。必ず libpq 3.0 (PostgreSQL 7.4) をリンクするよ
 <pre>
    ex)
    $ pcp_proc_info 10 localhost 9898 postgres hogehoge 3815
-   postgres_db postgres 1150769932 1150767351 3 0 1
+   postgres_db postgres 1150769932 1150767351 3 0 1 14067
 
    $B結果は以下の順の通りです。
    1. 接続しているデータベース名
@@ -3028,6 +3028,7 @@ configure に失敗します。必ず libpq 3.0 (PostgreSQL 7.4) をリンクするよ
    5. $Bプロトコルメジャーバージョン
    6. プロトコルマイナーバージョン
    7. コネクション使用回数
+   8. PostgreSQLバックエンドプロセスID
 
    コネクションがバックエンドに対して張られていない場合、データは表示されません。
    コネクション情報が複数ある場合、複数行に1行1コネクション情報で表示されます。

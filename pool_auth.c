@@ -334,6 +334,8 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 	/*
 	 * OK, read pid and secret key
 	 */
+	sp = MASTER_CONNECTION(cp)->sp;
+
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
 		if (VALID_BACKEND(i))
@@ -345,7 +347,7 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 				return -1;
 			}
 
-			pool_debug("pool_do_auth: cp->info[i]:%x pid:%d", &cp->info[i], ntohl(pid));
+			pool_debug("pool_do_auth: cp->info[i]:%x pid:%u", &cp->info[i], ntohl(pid));
 
 			CONNECTION_SLOT(cp, i)->pid = cp->info[i].pid = pid;
 
@@ -357,16 +359,22 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 			}
 			CONNECTION_SLOT(cp, i)->key = cp->info[i].key = key;
 
+			cp->info[i].major = sp->major;
+			cp->info[i].minor = sp->minor;
+			strncpy(cp->info[i].database, sp->database, sizeof(cp->info[i].database) - 1);
+			strncpy(cp->info[i].user, sp->user, sizeof(cp->info[i].user) - 1);
+			cp->info[i].counter = 1;
 		}
 	}
 
+#ifdef NOT_USED
 	sp = MASTER_CONNECTION(cp)->sp;
 	cp->info->major = sp->major;
 	cp->info->minor = sp->minor;
 	strncpy(cp->info->database, sp->database, sizeof(cp->info->database) - 1);
 	strncpy(cp->info->user, sp->user, sizeof(cp->info->user) - 1);
 	cp->info->counter = 1;
-
+#endif
 	return pool_send_backend_key_data(frontend, pid, key, protoMajor);
 }
 

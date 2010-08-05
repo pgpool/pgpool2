@@ -55,5 +55,6 @@ extern void pool_incremnet_local_session_id(void);
 extern int pool_coninfo_size(void);
 extern int pool_coninfo_num(void);
 extern ConnectionInfo *pool_coninfo(int child, int connection_pool, int backend);
+extern ConnectionInfo *pool_coninfo_pid(int pid, int connection_pool, int backend);
 
 #endif /* POOL_PROCESS_CONTEXT_H */

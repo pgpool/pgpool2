@@ -150,3 +150,50 @@ ConnectionInfo *pool_coninfo(int child, int connection_pool, int backend)
 					 connection_pool*MAX_NUM_BACKENDS+
 					 backend];
 }
+
+/*
+ * Return pointer to child which has OS process id pid, j th connection
+ * pool and k th backend of connection info on shmem.
+ */
+ConnectionInfo *pool_coninfo_pid(int pid, int connection_pool, int backend)
+{
+	int child = -1;
+	int		i;
+
+	for (i = 0; i < pool_config->num_init_children; i++)
+	{
+		if (process_info[i].pid == pid)
+		{
+			child = i;
+			break;
+		}
+	}
+
+	if (child < 0)
+	{
+		pool_error("pool_coninfo_pid: invalid child pid: %d", pid);
+		return NULL;
+	}
+
+	if (child < 0 || child >= pool_config->num_init_children)
+	{
+		pool_error("pool_coninfo_pid: invalid child number: %d", child);
+		return NULL;
+	}
+
+	if (connection_pool < 0 || connection_pool >= pool_config->max_pool)
+	{
+		pool_error("pool_coninfo_pid: invalid connection_pool number: %d", connection_pool);
+		return NULL;
+	}
+
+	if (backend < 0 || backend >= MAX_NUM_BACKENDS)
+	{
+		pool_error("pool_coninfo: invalid backend number: %d", backend);
+		return NULL;
+	}
+
+	return &con_info[child*pool_config->max_pool*MAX_NUM_BACKENDS+
+					 connection_pool*MAX_NUM_BACKENDS+
+					 backend];
+}

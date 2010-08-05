@@ -54,6 +54,7 @@
 #include "pcp/pcp.h"
 #include "md5.h"
 #include "pool_config.h"
+#include "pool_process_context.h"
 
 #define MAX_FILE_LINE_LEN    512
 #define MAX_USER_PASSWD_LEN  128
@@ -108,6 +109,9 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 	signal(SIGUSR2, wakeup_handler);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGALRM, SIG_IGN);
+
+	/* Initialize process context */
+	pool_init_process_context();
 
 	for(;;)
 	{
@@ -433,7 +437,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 					/* Finally, indicate that all data is sent */
 					char fin_code[] = "CommandComplete";
 
-					snprintf(con_info_size, sizeof(con_info_size), "%d", pool_config->max_pool);
+					snprintf(con_info_size, sizeof(con_info_size), "%d", pool_config->max_pool*NUM_BACKENDS);
 
 					pcp_write(frontend, "p", 1);
 					wsize = htonl(sizeof(arr_code) +
@@ -449,45 +453,58 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 					}
 
 					/* Second, send process information for all connection_info */
-
 					for (i = 0; i < pool_config->max_pool; i++)
 					{
-						char code[] = "ProcessInfo";
-						char proc_start_time[20];
-						char proc_create_time[20];
-						char majorversion[5];
-						char minorversion[5];
-						char pool_counter[16];
+						int j;
 
-						snprintf(proc_start_time, sizeof(proc_start_time), "%ld", pi->start_time);
-						snprintf(proc_create_time, sizeof(proc_create_time), "%ld", pi->connection_info[i].create_time);
-						snprintf(majorversion, sizeof(majorversion), "%d", pi->connection_info[i].major);
-						snprintf(minorversion, sizeof(minorversion), "%d", pi->connection_info[i].minor);
-						snprintf(pool_counter, sizeof(pool_counter), "%d", pi->connection_info[i].counter);
-
-						pcp_write(frontend, "p", 1);
-						wsize = htonl(sizeof(code) +
-									  strlen(pi->connection_info[i].database)+1 +
-									  strlen(pi->connection_info[i].user)+1 +
-									  strlen(proc_start_time)+1 +
-									  strlen(proc_create_time)+1 +
-									  strlen(majorversion)+1 +
-									  strlen(minorversion)+1 +
-									  strlen(pool_counter)+1 +
-									  sizeof(int));
-						pcp_write(frontend, &wsize, sizeof(int));
-						pcp_write(frontend, code, sizeof(code));
-						pcp_write(frontend, pi->connection_info[i].database, strlen(pi->connection_info[i].database)+1);
-						pcp_write(frontend, pi->connection_info[i].user, strlen(pi->connection_info[i].user)+1);
-						pcp_write(frontend, proc_start_time, strlen(proc_start_time)+1);
-						pcp_write(frontend, proc_create_time, strlen(proc_create_time)+1);
-						pcp_write(frontend, majorversion, strlen(majorversion)+1);
-						pcp_write(frontend, minorversion, strlen(minorversion)+1);
-						pcp_write(frontend, pool_counter, strlen(pool_counter)+1);
-						if (pcp_flush(frontend) < 0)
+						for (j=0;j<NUM_BACKENDS;j++)
 						{
-							pool_error("pcp_child: pcp_flush() failed. reason: %s", strerror(errno));
-							exit(1);
+							char code[] = "ProcessInfo";
+							char proc_start_time[20];
+							char proc_create_time[20];
+							char majorversion[5];
+							char minorversion[5];
+							char pool_counter[16];
+							char backend_pid[16];
+							ConnectionInfo *connection_info;
+
+							connection_info = pool_coninfo_pid(proc_id, i, j);
+
+							pool_debug("pcp_child: i:%d j:%d connection_info:%x", i, j, connection_info);
+
+							snprintf(proc_start_time, sizeof(proc_start_time), "%ld", pi->start_time);
+							snprintf(proc_create_time, sizeof(proc_create_time), "%ld", connection_info->create_time);
+							snprintf(majorversion, sizeof(majorversion), "%d", connection_info->major);
+							snprintf(minorversion, sizeof(minorversion), "%d", connection_info->minor);
+							snprintf(pool_counter, sizeof(pool_counter), "%d", connection_info->counter);
+							snprintf(backend_pid, sizeof(backend_pid), "%d", ntohl(connection_info->pid));
+
+							pcp_write(frontend, "p", 1);
+							wsize = htonl(sizeof(code) +
+										  strlen(connection_info->database)+1 +
+										  strlen(connection_info->user)+1 +
+										  strlen(proc_start_time)+1 +
+										  strlen(proc_create_time)+1 +
+										  strlen(majorversion)+1 +
+										  strlen(minorversion)+1 +
+										  strlen(pool_counter)+1 +
+										  strlen(backend_pid)+1 +
+										  sizeof(int));
+							pcp_write(frontend, &wsize, sizeof(int));
+							pcp_write(frontend, code, sizeof(code));
+							pcp_write(frontend, connection_info->database, strlen(connection_info->database)+1);
+							pcp_write(frontend, connection_info->user, strlen(connection_info->user)+1);
+							pcp_write(frontend, proc_start_time, strlen(proc_start_time)+1);
+							pcp_write(frontend, proc_create_time, strlen(proc_create_time)+1);
+							pcp_write(frontend, majorversion, strlen(majorversion)+1);
+							pcp_write(frontend, minorversion, strlen(minorversion)+1);
+							pcp_write(frontend, pool_counter, strlen(pool_counter)+1);
+							pcp_write(frontend, backend_pid, strlen(backend_pid)+1);
+							if (pcp_flush(frontend) < 0)
+							{
+								pool_error("pcp_child: pcp_flush() failed. reason: %s", strerror(errno));
+								exit(1);
+							}
 						}
 					}
 

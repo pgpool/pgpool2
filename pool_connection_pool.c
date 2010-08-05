@@ -71,7 +71,7 @@ int pool_init_cp(void)
 
 	for (i = 0; i < pool_config->max_pool; i++)
 	{
-		pool_connection_pool[i].info = &(pool_get_my_process_info()->connection_info[i]);
+		pool_connection_pool[i].info = pool_coninfo(pool_get_process_context()->proc_id, i, 0);
 		memset(pool_connection_pool[i].info, 0, sizeof(ConnectionInfo) * MAX_NUM_BACKENDS);
 	}
 	return 0;
@@ -88,7 +88,7 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, in
 	int	oldmask;
 #endif
 
-	int i, j, freed = 0;
+	int i, freed = 0;
 	ConnectionInfo *info;
 
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
@@ -111,10 +111,14 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, in
 			strcmp(MASTER_CONNECTION(p)->sp->database, database) == 0)
 		{
 			int sock_broken = 0;
+			int j;
 
 			/* mark this connection is under use */
 			MASTER_CONNECTION(p)->closetime = 0;
-			p->info->counter++;
+			for (j=0;j<NUM_BACKENDS;j++)
+			{
+				p->info[j].counter++;
+			}
 			POOL_SETMASK(&oldmask);
 
 			if (check_socket)
@@ -633,6 +637,7 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 			child_exit(1);
 		}
 
+		p->info[i].create_time = time(NULL);
 		p->slots[i] = s;
 
 		if (pool_init_params(&s->con->params))
@@ -646,7 +651,6 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 
 	if (active_backend_count > 0)
 	{
-		p->info->create_time = time(NULL);
 		return p;
 	}
 
