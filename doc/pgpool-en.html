@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Thu Jul 22 12:55:49 JST 2010
+Last modified: Thu Aug  5 12:08:51 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2311,7 +2311,7 @@ output example is as follows:
 </p>
 <pre>
 $ pcp_proc_info 10 localhost 9898 postgres hogehoge 3815
-postgres_db postgres 1150769932 1150767351 3 0 1
+postgres_db postgres 1150769932 1150767351 3 0 1 1467
 
 The result is in the following order:
 1. connected database name
@@ -2321,6 +2321,7 @@ The result is in the following order:
 5. protocol major version
 6. protocol minor version
 7. connection-reuse counter
+8. PostgreSQL backend process id
 </pre>
 <p>
 If there is no connection to the backends, nothing will be
