@@ -68,6 +68,7 @@ static void unset_nonblock(int fd);
 static int user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len);
 static RETSIGTYPE wakeup_handler(int sig);
 static RETSIGTYPE reload_config_handler(int sig);
+static int pool_detach_node(int node_id, bool gracefully);
 
 extern int myargc;
 extern char **myargv;
@@ -683,14 +684,21 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 			}
 
 			case 'D':			/* detach node */
+			case 'd':			/* detach node gracefully */
 			{
 				int node_id;
 				int wsize;
 				char code[] = "CommandComplete";
+				bool gracefully;
+
+				if (tos == 'D')
+					gracefully = false;
+				else
+					gracefully = true;
 
 				node_id = atoi(buf);
 				pool_debug("pcp_child: detaching Node ID %d", node_id);
-				notice_backend_error(node_id);
+				pool_detach_node(node_id, gracefully);
 
 				pcp_write(frontend, "d", 1);
 				wsize = htonl(sizeof(code) + sizeof(int));
@@ -1086,4 +1094,54 @@ user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len)
 static RETSIGTYPE reload_config_handler(int sig)
 {
 	pcp_got_sighup = 1;
+}
+
+/* Dedatch a node */
+static int pool_detach_node(int node_id, bool gracefully)
+{
+	pool_log("gracefully: %d", gracefully);
+
+	if (!gracefully)
+	{
+		notice_backend_error(node_id);	/* send failover request */
+		return 0;
+	}
+		
+	/*
+	 * Wait until all frontends exit
+	 */
+	*InRecovery = 1;	/* This wiil ensure that new incoming
+						 * connection requests are blocked */
+
+	if (wait_connection_closed())
+	{
+		/* wait timed out */
+		finish_recovery();
+		return -1;
+	}
+
+	/*
+	 * Now all frontends have gone. Let's do failover.
+	 */
+	notice_backend_error(node_id);		/* send failover request */
+
+	/*
+	 * Wait for failover completed.
+	 */
+	pcp_wakeup_request = 0;
+
+	while (!pcp_wakeup_request)
+	{
+		struct timeval t = {1, 0};
+		select(0, NULL, NULL, NULL, &t);
+	}
+	pcp_wakeup_request = 0;
+
+	/*
+	 * Start to accept incoming connections and send SIGUSR2 to pgpool
+	 * parent to distribute SIGUSR2 all pgpool children.
+	 */
+	finish_recovery();
+
+	return 0;
 }

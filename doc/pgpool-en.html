@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Thu Aug  5 12:08:51 JST 2010
+Last modified: Thu Aug  5 16:59:08 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2383,10 +2383,12 @@ BackendError will be displayed.</p>
 <h3>pcp_detach_node</h3>
 <pre>
 Format:
-pcp_detach_node  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
+pcp_detach_node  [-g] _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
 </pre>
 <p>
 Detaches the given node from pgpool-II.
+If -g is given, wait until all clients are disconnected (unless
+client_idle_limit_in_recovery is -1 or recovery_timeout is expired).
 </p>
 
 

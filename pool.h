@@ -551,6 +551,7 @@ extern const char *get_ps_display(int *displen);
 /* recovery.c */
 extern int start_recovery(int recovery_node);
 extern void finish_recovery(void);
+extern int wait_connection_closed(void);
 
 /* child.c */
 extern void cancel_request(CancelPacket *sp);

@@ -8,7 +8,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2008	PgPool Global Development Group
+ * Copyright (c) 2003-2010	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -48,6 +48,8 @@ static int debug = 1;
 static int debug = 0;
 #endif
 static int pcp_authorize(char *username, char *password);
+
+static int _pcp_detach_node(int nid, bool gracefully);
 
 /* --------------------------------
  * pcp_connect - open connection to pgpool using given arguments
@@ -1079,11 +1081,30 @@ free_systemdb_info(SystemDBInfo * si)
 int
 pcp_detach_node(int nid)
 {
+  return _pcp_detach_node(nid, FALSE);
+}
+
+/* --------------------------------
+
+ * and dettach a node given by the argument from pgpool's control
+ *
+ * return 0 on success, -1 otherwise
+ * --------------------------------
+ */
+int
+pcp_detach_node_gracefully(int nid)
+{
+  return _pcp_detach_node(nid, TRUE);
+}
+
+static int _pcp_detach_node(int nid, bool gracefully)
+{
 	int wsize;
 	char node_id[16];
 	char tos;
 	char *buf = NULL;
 	int rsize;
+	char *sendchar;
 
 	if (pc == NULL)
 	{
@@ -1094,7 +1115,12 @@ pcp_detach_node(int nid)
 
 	snprintf(node_id, sizeof(node_id), "%d", nid);
 
-	pcp_write(pc, "D", 1);
+	if (gracefully)
+	  sendchar = "d";
+	else
+	  sendchar = "D";
+
+	pcp_write(pc, sendchar, 1);
 	wsize = htonl(strlen(node_id)+1 + sizeof(int));
 	pcp_write(pc, &wsize, sizeof(int));
 	pcp_write(pc, node_id, strlen(node_id)+1);

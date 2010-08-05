@@ -41,7 +41,6 @@ static int exec_checkpoint(PGconn *conn);
 static int exec_recovery(PGconn *conn, BackendInfo *backend, char stage);
 static int exec_remote_start(PGconn *conn, BackendInfo *backend);
 static PGconn *connect_backend_libpq(BackendInfo *backend);
-static int wait_connection_closed(void);
 static int check_postmaster_started(BackendInfo *backend);
 
 static char recovery_command[1024];
@@ -347,7 +346,7 @@ static PGconn *connect_backend_libpq(BackendInfo *backend)
 /*
  * Wait all connections are closed.
  */
-static int wait_connection_closed(void)
+int wait_connection_closed(void)
 {
 	int i = 0;
 

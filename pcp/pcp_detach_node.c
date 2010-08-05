@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2008	PgPool Global Development Group
+ * Copyright (c) 2003-2010	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -42,18 +42,25 @@ main(int argc, char **argv)
 	int nodeID;
 	int ch;
 	int	optindex;
+ 	bool gracefully = false;
+ 	int sts;
 
 	static struct option long_options[] = {
 		{"debug", no_argument, NULL, 'd'},
+		{"gracefully", no_argument, NULL, 'g'},
 		{"help", no_argument, NULL, 'h'},
 		{NULL, 0, NULL, 0}
 	};
 	
-    while ((ch = getopt_long(argc, argv, "hd", long_options, &optindex)) != -1) {
+    while ((ch = getopt_long(argc, argv, "hdg", long_options, &optindex)) != -1) {
 		switch (ch) {
 		case 'd':
 			pcp_enable_debug();
 			break;
+
+ 		case 'g':
+ 			gracefully = true;
+ 			break;
 
 		case 'h':
 		case '?':
@@ -127,7 +134,12 @@ main(int argc, char **argv)
 		myexit(errorcode);
 	}
 
-	if (pcp_detach_node(nodeID))
+	if (gracefully)
+		sts = pcp_detach_node_gracefully(nodeID);
+	else
+		sts = pcp_detach_node(nodeID);
+
+	if (sts)
 	{
 		pcp_errorstr(errorcode);
 		pcp_disconnect();
@@ -143,9 +155,10 @@ static void
 usage(void)
 {
 	fprintf(stderr, "pcp_detach_node - detach a node from pgpool-II\n\n");
-	fprintf(stderr, "Usage: pcp_detach_node [-d] timeout hostname port# username password nodeID\n");
+	fprintf(stderr, "Usage: pcp_detach_node [-d][-g] timeout hostname port# username password nodeID\n");
 	fprintf(stderr, "Usage: pcp_detach_node -h\n\n");
 	fprintf(stderr, "  -d       - enable debug message (optional)\n");
+	fprintf(stderr, "  -g       - detach gracefully(optional)\n");
 	fprintf(stderr, "  timeout  - connection timeout value in seconds. command exits on timeout\n");
 	fprintf(stderr, "  hostname - pgpool-II hostname\n");
 	fprintf(stderr, "  port#    - PCP port number\n");
