@@ -1099,8 +1099,6 @@ static RETSIGTYPE reload_config_handler(int sig)
 /* Dedatch a node */
 static int pool_detach_node(int node_id, bool gracefully)
 {
-	pool_log("gracefully: %d", gracefully);
-
 	if (!gracefully)
 	{
 		notice_backend_error(node_id);	/* send failover request */
