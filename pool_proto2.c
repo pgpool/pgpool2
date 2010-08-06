@@ -367,6 +367,7 @@ POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend,
 	char *string = NULL;
 	int len;
 	int i;
+	POOL_STATUS ret;
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -398,7 +399,9 @@ POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend,
 		}
 	}
 
-	return POOL_CONTINUE;
+	ret = raise_intentional_error_if_need(backend);
+
+	return ret;
 }
 
 POOL_STATUS FunctionResultResponse(POOL_CONNECTION *frontend,

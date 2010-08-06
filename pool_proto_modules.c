@@ -1232,6 +1232,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			if (is_start_transaction_query(node))
 			{
 				pool_unset_writing_transaction();
+				pool_unset_failed_transaction();
 				pool_unset_transaction_isolation();
 			}
 
@@ -1451,6 +1452,9 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 
 					TSTATE(backend, i) = 'T';
 				}
+				pool_unset_writing_transaction();
+				pool_unset_failed_transaction();
+				pool_unset_transaction_isolation();
 			}
 		}
 	}
@@ -1461,7 +1465,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 POOL_STATUS ErrorResponse3(POOL_CONNECTION *frontend,
 						   POOL_CONNECTION_POOL *backend)
 {
-	int ret;
+	POOL_STATUS ret;
 
 	/* An error occurred with PREPARE or DEALLOCATE command.
 	 * Free pending portal object.
@@ -1472,6 +1476,10 @@ POOL_STATUS ErrorResponse3(POOL_CONNECTION *frontend,
 	if (ret != POOL_CONTINUE)
 		return ret;
 
+	ret = raise_intentional_error_if_need(backend);
+	if (ret != POOL_CONTINUE)
+		return ret;
+	
 	if (select_in_transaction)
 	{
 		int i;
@@ -1888,6 +1896,8 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 
 			case 'E':	/* ErrorResponse */
 				status = ErrorResponse3(frontend, backend);
+				if (TSTATE(backend, REAL_MASTER_NODE_ID) != 'I')
+					pool_set_failed_transaction();
 				if (pool_is_doing_extended_query_message())
 				{
 					pool_set_ignore_till_sync();
@@ -1955,6 +1965,8 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 
 			case 'E':	/* ErrorResponse */
 				status = ErrorResponse(frontend, backend);
+				if (TSTATE(backend, REAL_MASTER_NODE_ID) != 'I')
+					pool_set_failed_transaction();
 				break;
 
 			case 'G':	/* CopyInResponse */
@@ -2260,6 +2272,51 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 	else
 		if (pool_flush(frontend) <0)
 			return POOL_END;
+
+	return POOL_CONTINUE;
+}
+
+/*
+ * This function raises intentional error to make backends the same 
+ * transaction state.
+ */
+POOL_STATUS raise_intentional_error_if_need(POOL_CONNECTION_POOL *backend)
+{
+	POOL_STATUS ret;
+	POOL_SESSION_CONTEXT *session_context;
+	POOL_QUERY_CONTEXT *query_context;
+
+	/* Get session context */
+	session_context = pool_get_session_context();
+	if (!session_context)
+	{
+		pool_error("ErrorResponse3: cannot get session context");
+		return POOL_END;
+	}
+
+	query_context = session_context->query_context;
+
+	if (MASTER_SLAVE &&
+		TSTATE(backend, REAL_MASTER_NODE_ID) == 'T' &&
+		REAL_MASTER_NODE_ID != MASTER_NODE_ID &&
+		query_context &&
+		is_select_query(query_context->parse_tree, query_context->original_query))
+	{
+		pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
+		if (pool_is_doing_extended_query_message())
+		{
+			ret = do_error_execute_command(backend, REAL_MASTER_NODE_ID, PROTO_MAJOR_V3);
+			if (ret != POOL_CONTINUE)
+				return ret;
+		}
+		else
+		{
+			ret = do_error_command(CONNECTION(backend, REAL_MASTER_NODE_ID), PROTO_MAJOR_V3);
+			if (ret != POOL_CONTINUE)
+				return ret;
+		}
+		pool_debug("raise_intentional_error: intentional error occurred");
+	}
 
 	return POOL_CONTINUE;
 }

@@ -113,8 +113,11 @@ typedef struct {
 	/* If true, the command in progress has finished sucessfully. */
 	bool command_success;
 
-	/* If true write query has been appeared in this transaction */
+	/* If true, write query has been appeared in this transaction */
 	bool writing_transaction;
+
+	/* If true, error occurred in this transaction */
+	bool failed_transaction;
 
 	/* If true, "SHOW pool_status" is in progress */
 	bool pool_status_stmt;
@@ -247,6 +250,9 @@ extern Portal *pool_get_portal_by_portal_name(const char *name);
 extern void pool_unset_writing_transaction(void);
 extern void pool_set_writing_transaction(void);
 extern bool pool_is_writing_transaction(void);
+extern void pool_unset_failed_transaction(void);
+extern void pool_set_failed_transaction(void);
+extern bool pool_is_failed_transaction(void);
 extern void pool_unset_transaction_isolation(void);
 extern void pool_set_transaction_isolation(POOL_TRANSACTION_ISOLATION isolation_level);
 extern POOL_TRANSACTION_ISOLATION pool_get_transaction_isolation(void);
