@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Thu Aug  5 16:59:41 JST 2010
+Last modified: Fri Aug  6 13:54:08 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2878,7 +2878,7 @@ OR 条件などといったものには対応していません。
 <h3>libpq</h3>
 <p>
 pgpool-II では libpq をリンクします。libpq のバージョンは 2.0 の場合、
-configure に失敗します。必ず libpq 3.0 (PostgreSQL 7.4) をリンクするよ
+configure に失敗します。必ず libpq 3.0 以降(PostgreSQL 7.4以降) をリンクするよ
 うにしてください。また、SystemDB のバージョンも PostgreSQL 7.4 以降が
 必須になります。
 </p>
@@ -3018,7 +3018,8 @@ configure に失敗します。必ず libpq 3.0 (PostgreSQL 7.4) をリンクするよ
 <pre>
    ex)
    $ pcp_proc_info 10 localhost 9898 postgres hogehoge 3815
-   postgres_db postgres 1150769932 1150767351 3 0 1 14067
+   postgres_db postgres 1150769932 1150767351 3 0 1 14067 1
+   postgres_db postgres 1150769932 1150767351 3 0 1 14068 1
 
    $B結果は以下の順の通りです。
    1. 接続しているデータベース名
@@ -3029,6 +3030,7 @@ configure に失敗します。必ず libpq 3.0 (PostgreSQL 7.4) をリンクするよ
    6. $Bプロトコルマイナーバージョン
    7. コネクション使用回数
    8. PostgreSQLバックエンドプロセスID
+   9. フロントエンドから接続がある場合は1、そうでなければ0
 
    コネクションがバックエンドに対して張られていない場合、データは表示されません。
    コネクション情報が複数ある場合、複数行に1行1コネクション情報で表示されます。
