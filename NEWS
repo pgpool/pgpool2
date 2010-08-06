@@ -1,4 +1,114 @@
-2.3.3 (tomiteboshi) 2010/04/XX
+3.0(umiyameboshi) 2010/08/xx
+
+	  * Version 3.0
+
+	  This version is the first version of pgpool-II 3.0 series.
+	  That is, a "major version up" from 2.2 or 2.3 series.
+
+	  The biggest news is, this version adapts to PostgreSQL 9.0's new
+	  feature: Streaming Replication/Hot Standby. Streaming
+	  replication can be used as a sub mode of master slave
+	  mode. Master slave mode itself heavily enhanced:
+
+	  - SELECTs in explicit transactions can be load balanced
+
+	  - In extended protocol, PARSE/BIND/DESCRIBE messages are sent to
+        the node which execute EXECUTE message. This will reduce lock
+        contention.
+
+	  - Auto start of transaction happens only when it needed.
+
+	  - Temporary tables can be used safely.
+
+	  - SELECT calling functions possibly write to database executes
+        on master(primary)
+	  
+	  Also many new features are added and major refactoring has been
+	  made to the internal structure of pgpoo-II. For example, in
+	  replication mode, SELECTs calling functions possibly write to
+	  database will not allow to load balance.
+
+	  * New features
+
+	  - Online recovery can be used with master/slave/streaming
+        replication mode(Tatsuo)
+
+	  - New directive "delay_threshold" is added to monitor
+        replication delay in master/slave/streaming replication
+        mode. If replication delay is too much, SELECTs are not load
+        balanced(Tatsuo)
+
+	  - show pool_status shows replication delay in
+        master/slave/streaming replication mode(Tatsuo)
+
+	  - New directive "log_standby_delay" is added to control logging of
+        replication delay in master/slave/streaming replication
+        mode(Tatsuo)
+
+	  - Backend process id and whether frontend connects to this
+        connection pool or not are added to pcp_proc_info's
+        output(Tatsuo)
+
+	  - "Gracefuly detach" option is added to pcp_detatch_node. With
+        this option, pcp_detatch_node waits until all frontends
+        disconnected(Tatsuo)
+
+      - New directive "white_function_list" and "black_function_list"
+        are added to register functions those do not or do write to
+        database(Tatsuo)
+
+      - In master/slave mode, SELECTs to temporary table executes only
+        on master/primary(Tatsuo)
+
+	  - In master/slave mode, write queries outside of explicit
+        transactions no longer trigger to start internal
+        transaction(Tatsuo)
+
+	  - In master/slave mode, SELECTs inside explicit transactions are
+        load balanced(Tatsuo, Kitagawa)
+
+	  - In master/slave mode, commands are no longer sent to all DB
+        nodes. This will prevent unnecessary locking(Tatsuo, Kitagawa)
+
+	  - New command option adds to ignore the status file when
+        starting up(Tatsuo)
+
+	  - Supports PostgreSQL 9.0's new VACUUM syntax(Tatsuo)
+
+	  - New directive "failover_if_affected_tuples_mismatch" controls
+        the behavior when number of result rows of
+        INSERT/UPDATE/DELETE are differ(Tatsuo)
+
+	  - When number of result rows of INSERT/UPDATE/DELETE are
+        differ, each number are logged(Tatsuo)
+
+	  - md5 authentication is supported in replication mode and
+        master/slave mode(Tatsuo)
+
+	  - Allow to force to move to online recovery second stage even
+        there are connecting frontends(Tatsuo)
+
+	  - If there's only one DB node and it triggers failover,
+        pgpool-II will automatically connects if the DB node coming
+        up(Tatsuo)
+
+	  - Pcp commands supports long options(Guillaume Lelarge)
+
+	  - New directive "debug_level" added to control the debug message
+        logging(Tatsuo)
+
+	  - Allow to use various boolean representations as PostgreSQL in
+        pgpool.conf(Kitagawa)
+
+	  * Bug fixes
+
+	  - Fix bug with timeout handling in pcp commands(Tatsuo)
+
+	  - Fix SSL hang when large amount of data transfered(Tatsuo)
+
+	  - Fix failover when there's only one DB node(Tatsuo)
+
+2.3.3 (tomiteboshi) 2010/04/23
 
 	  * Version 2.3.3
 
