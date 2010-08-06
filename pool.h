@@ -212,7 +212,6 @@ typedef struct {
 } POOL_CONNECTION_POOL_SLOT;
 
 typedef struct {
-	int pool_index;		/* currentlt used index(0 start) of pool */
 	ConnectionInfo *info;		/* connection info on shmem */
     POOL_CONNECTION_POOL_SLOT	*slots[MAX_NUM_BACKENDS];
 } POOL_CONNECTION_POOL;
@@ -412,12 +411,6 @@ extern POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 extern int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 extern int pool_do_reauth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp);
 
-extern int pool_init_cp(void);
-extern POOL_CONNECTION_POOL *pool_create_cp(void);
-extern POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, int check_socket);
-extern void pool_discard_cp(char *user, char *database, int protoMajor);
-extern void pool_backend_timer(void);
-
 /* SSL functionality */
 extern void pool_ssl_negotiate_serverclient(POOL_CONNECTION *cp);
 extern void pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp);
@@ -436,13 +429,6 @@ extern void notice_backend_error(int node_id);
 extern void degenerate_backend_set(int *node_id_set, int count);
 extern void send_failback_request(int node_id);
 
-extern void pool_connection_pool_timer(POOL_CONNECTION_POOL *backend);
-extern RETSIGTYPE pool_backend_timer_handler(int sig);
-
-extern int connect_inet_domain_socket(int slot, bool retry);
-extern int connect_unix_domain_socket(int slot, bool retry);
-extern int connect_inet_domain_socket_by_port(char *host, int port, bool retry);
-extern int connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry);
 
 extern void pool_set_timeout(int timeoutval);
 extern int pool_check_fd(POOL_CONNECTION *cp);
@@ -578,9 +564,23 @@ extern void pool_random_salt(char *md5Salt);
 extern void pool_sleep(unsigned int second);
 
 /* pool_worker_child.c */
-void do_worker_child(void);
+extern void do_worker_child(void);
 
 /* md5.c */
-bool pg_md5_encrypt(const char *passwd, const char *salt, size_t salt_len, char *buf);
+extern bool pg_md5_encrypt(const char *passwd, const char *salt, size_t salt_len, char *buf);
+
+/* pool_connection_pool.c */
+extern int pool_init_cp(void);
+extern POOL_CONNECTION_POOL *pool_create_cp(void);
+extern POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, int check_socket);
+extern void pool_discard_cp(char *user, char *database, int protoMajor);
+extern void pool_backend_timer(void);
+extern void pool_connection_pool_timer(POOL_CONNECTION_POOL *backend);
+extern RETSIGTYPE pool_backend_timer_handler(int sig);
+extern int connect_inet_domain_socket(int slot, bool retry);
+extern int connect_unix_domain_socket(int slot, bool retry);
+extern int connect_inet_domain_socket_by_port(char *host, int port, bool retry);
+extern int connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry);
+extern int pool_pool_index(void);
 
 #endif /* POOL_H */

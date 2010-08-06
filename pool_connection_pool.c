@@ -47,6 +47,7 @@
 #include "pool_config.h"
 #include "pool_process_context.h"
 
+static int pool_index;	/* Active pool index */
 POOL_CONNECTION_POOL *pool_connection_pool;	/* connection pool */
 volatile sig_atomic_t backend_timer_expired = 0; /* flag for connection closed timer is expired */
 
@@ -167,7 +168,7 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, in
 				}
 			}
 			POOL_SETMASK(&oldmask);
-			p->pool_index = i;
+			pool_index = i;
 			return p;
 		}
 		p++;
@@ -223,7 +224,6 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 	POOL_CONNECTION_POOL *oldestp;
 	POOL_CONNECTION_POOL *ret;
 	ConnectionInfo *info;
-	int pool_index;
 
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
 
@@ -239,7 +239,7 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 		{
 			ret = new_connection(p);
 			if (ret)
-				ret->pool_index = i;
+				pool_index = i;
 			return ret;
 		}
 		p++;
@@ -298,9 +298,6 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 	memset(p->info, 0, sizeof(ConnectionInfo) * MAX_NUM_BACKENDS);
 
 	ret = new_connection(p);
-	if (ret)
-		ret->pool_index = pool_index;
-
 	return ret;
 }
 
@@ -686,4 +683,12 @@ static int check_socket_status(int fd)
 	}
 
 	return -1;
+}
+
+/*
+ * Return current used index (i.e. frontend connected)
+ */
+int pool_pool_index(void)
+{
+	return pool_index;
 }
