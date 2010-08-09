@@ -2106,9 +2106,9 @@ C $B8@8l4X?t$N%b%8%e!<%k$r%$%s%9%H!<%k$7$?$i!"B3$$$F(B C $B8@8l4X?t$r8F$S$@(
 
 <h3>PITR $B$K$h$k%j%+%P%j(B</h3>
 <p>
-$B$3$3$G$O(B PostgreSQL $B$N(B PITR $B5!G=$r;H$C$F%j%+%P%j$r$9$k@_DjNc$r@bL@$7$^(B
-$B$9!#(BPITR $B$K$h$k%j%+%P%j$r$9$k>l9g$K$O$"$i$+$8$a(B PostgreSQL $B$N@_Dj$G%m(B
-$B%0$r%"!<%+%$%V$5$;$k$h$&$K$7$F$*$$$F$/$@$5$$!#(B
+$B$3$3$G$O(B PostgreSQL 8.2 $B0J9_$G(B PITR $B5!G=$r;H$C$F%j%+%P%j$r$9$k@_DjNc$r(B
+$B@bL@$7$^$9!#(BPITR $B$K$h$k%j%+%P%j$r$9$k>l9g$K$O$"$i$+$8$a(B PostgreSQL $B$N(B
+$B@_Dj$G%m%0$r%"!<%+%$%V$5$;$k$h$&$K$7$F$*$$$F$/$@$5$$!#(B
 </p>
 
 <p>
@@ -2143,7 +2143,17 @@ restore_command = 'scp master:/data/archive_log/%f %p'
 <p>
 $B%;%+%s%I%9%F!<%8$G$O:G?7$N>uBV$^$G(B PITR $B$K$h$k%j%+%P%j$r<B;\$G$-$k$h$&(B
 $B$K$9$k$?$a$K!"(Bpgpool_recovery_pitr $B%9%/%j%W%H$r(B$PGDATA $B$K%3%T!<$7$^$9!#(B
-$B$3$N%9%/%j%W%H$G$O(B XLOG $B$r6/@)E*$K%9%$%C%A$5$;$k$h$&$K$7$^$9!#(B
+$B$3$N%9%/%j%W%H$G$O%H%i%s%6%/%7%g%s%m%0$r6/@)E*$K@Z$jBX$($k$h$&$K$7$^$9!#(B
+$BDL>o!"%H%i%s%6%/%7%g%s%m%0$r@Z$jBX$($k$K$O!"(Bpg_switch_xlog $B4X?t$rMxMQ(B
+$B$7$^$9$,!"$3$N4X?t$O!"%"!<%+%$%V%m%0%U%!%$%k$,@8@.$5$l$kA0$K=*N;$7$F(B
+$B$7$^$&2DG=@-$,$"$j$^$9!#(B
+$B$=$3$G!"$h$j0BA4$K%*%s%i%$%s%j%+%P%j$r9T$&$?$a$K(B
+pgpool_switch_xlog $B4X?t$,MQ0U$5$l$F$$$^$9!#(B
+pgpool_switch_xlog $B4X?t$N4pK\F0:n$O(B pg_switch_xlog $B4X?t$HF1$8$G$9$,!"(B
+$B%H%i%s%6%/%7%g%s%m%0$N@Z$jBX$($K$h$k%"!<%+%$%V%m%0%U%!%$%k$N@8@.$r(B
+$BBT$C$F$+$i=*N;$7$^$9!#(B
+$B$3$N4X?t$O!"A0=R$N!V(BC$B8@8l4X?t$N%$%s%9%H!<%k!W$r<B;\$9$k$H%$%s%9%H!<%k(B
+$B$5$l!"0z?t$K$O%"!<%+%$%V%m%0$N=PNO@h%G%#%l%/%H%j$r;XDj$7$^$9!#(B
 </p>
 <p>
 <pre>
@@ -2154,6 +2164,7 @@ datadir=$1		# master dabatase cluster
 DEST=$2			# hostname of the DB node to be recovered
 DESTDIR=$3		# database cluster of the DB node to be recovered
 port=5432		# PostgreSQL port number
+archdir=/data/archive_log	# archive log directory
 
 # Force to flush current value of sequences to xlog 
 psql -p $port -t -c 'SELECT datname FROM pg_database WHERE NOT datistemplate AND datallowconn' template1|
@@ -2164,7 +2175,7 @@ do
   fi
 done
 
-psql -p $port -c 'SELECT pg_switch_xlog()' postgres
+psql -p $port -c "SELECT pgpool_switch_xlog('$archdir')" postgres
 </pre>
 </p>
 
@@ -2225,11 +2236,12 @@ ssh -T $DEST $PGCTL -w -D $DESTDIR start 2>/dev/null 1>/dev/null < /dev/null &
 
 <h3>rsync $B$K$h$k%j%+%P%j(B </h3>
 <p>
-7.4 $B0JA0$N>l9g$O(B PITR $B5!G=$,$"$j$^$;$s!#$=$3$G(B PITR $B$r;H$o$:$K(B rsync
-$B$r;H$C$?%j%+%P%jJ}K!$r@bL@$7$^$9!#(Bsample $B%G%#%l%/%H%j$K(B
-pgpool_recovery $B$H$$$&%U%!%$%k$,$"$j$^$9!#%^%9%?$+$iI|5"$5$;$k%N!<%I$X(B
-$B$N%G!<%?$NJ*M}%3%T!<$r9T$&%9%/%j%W%H$G$9!#(Bpgpool $B$+$i$O0J2<$N7A<0$G%9(B
-$B%/%j%W%H$r<B9T$7$^$9!#(B
+7.4 $B0JA0$N>l9g$O(B PITR $B5!G=$,$"$j$^$;$s!#$^$?!"(B8.0 $B$H(B 8.1 $B$N>l9g$O(B
+$B%H%i%s%6%/%7%g%s%m%0$r6/@)E*$K@Z$jBX$($k4X?t$,MQ0U$5$l$F$$$^$;$s!#(B
+$B$=$3$G(B PITR $B$r;H$o$:$K(Brsync $B$r;H$C$?%j%+%P%jJ}K!$r@bL@$7$^$9!#(B
+sample $B%G%#%l%/%H%j$K(B pgpool_recovery $B$H$$$&%U%!%$%k$,$"$j$^$9!#(B
+$B%^%9%?$+$iI|5"$5$;$k%N!<%I$X$N%G!<%?$NJ*M}%3%T!<$r9T$&%9%/%j%W%H$G$9!#(B
+pgpool $B$+$i$O0J2<$N7A<0$G%9%/%j%W%H$r<B9T$7$^$9!#(B
 </p>
 
 <pre>
