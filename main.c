@@ -726,6 +726,7 @@ static void daemonize(void)
 	int			i;
 	pid_t		pid;
 	int			fdlimit;
+    int         rc_chdir;
 
 	pid = fork();
 	if (pid == (pid_t) -1)
@@ -752,7 +753,7 @@ static void daemonize(void)
 
 	mypid = getpid();
 
-	chdir("/");
+	rc_chdir = chdir("/");
 
 	i = open("/dev/null", O_RDWR);
 	dup2(i, 0);
@@ -1158,7 +1159,7 @@ static int create_unix_domain_socket(struct sockaddr_un un_addr_tmp)
 	}
 	memset((char *) &addr, 0, sizeof(addr));
 	addr.sun_family = AF_UNIX;
-	snprintf(addr.sun_path, sizeof(addr.sun_path), un_addr_tmp.sun_path);
+	snprintf(addr.sun_path, sizeof(addr.sun_path), "%s", un_addr_tmp.sun_path);
 	len = sizeof(struct sockaddr_un);
 	status = bind(fd, (struct sockaddr *)&addr, len);
 	if (status == -1)

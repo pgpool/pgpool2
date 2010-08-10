@@ -1217,7 +1217,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 		pool_send_error_message(frontend, MAJOR(backend),
 								"XX001", msg->data, "",
 								"check data consistency between master and other db node",  __FILE__, __LINE__);
-		pool_error(msg->data);
+		pool_error("%s", msg->data);
 		free_string(msg);
 
 		msg = init_string("SimpleForwardToFrontend: Number of affected tuples are:");
@@ -3278,7 +3278,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 								msg->data, "",
 								"check data consistency among db nodes",
 								__FILE__, __LINE__);
-		pool_error(msg->data);
+		pool_error("%s", msg->data);
 
 		free_string(msg);
 

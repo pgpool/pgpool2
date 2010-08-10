@@ -42,6 +42,7 @@ void pool_error(const char *fmt,...)
 	va_list		ap;
 #ifdef HAVE_ASPRINTF
 	char		*fmt2;
+    int         len;
 #endif
 
 #ifdef HAVE_SIGPROCMASK
@@ -54,11 +55,11 @@ void pool_error(const char *fmt,...)
 
 	if (pool_config->print_timestamp)
 #ifdef HAVE_ASPRINTF
-	  asprintf(&fmt2, "%s ERROR: pid %d: %s\n", nowsec(), (int)getpid(), fmt);
+	  len = asprintf(&fmt2, "%s ERROR: pid %d: %s\n", nowsec(), (int)getpid(), fmt);
 	else
-	  asprintf(&fmt2, "ERROR: pid %d: %s\n", (int)getpid(), fmt);
+	  len = asprintf(&fmt2, "ERROR: pid %d: %s\n", (int)getpid(), fmt);
 
-   if (fmt2)
+   if (len >= 0 && fmt2)
    {
      va_start(ap, fmt);
      vfprintf(stderr, fmt2, ap);
@@ -85,6 +86,7 @@ void pool_debug(const char *fmt,...)
 	va_list		ap;
 #ifdef HAVE_ASPRINTF
 	char		*fmt2;
+    int         len;
 #endif
 
 #ifdef HAVE_SIGPROCMASK
@@ -108,11 +110,11 @@ void pool_debug(const char *fmt,...)
 
 	if (pool_config->print_timestamp)
 #ifdef HAVE_ASPRINTF
-	  asprintf(&fmt2, "%s DEBUG: pid %d: %s\n", nowsec(), (int)getpid(), fmt);
+	  len = asprintf(&fmt2, "%s DEBUG: pid %d: %s\n", nowsec(), (int)getpid(), fmt);
 	else
-	  asprintf(&fmt2, "DEBUG: pid %d: %s\n", (int)getpid(), fmt);
+	  len = asprintf(&fmt2, "DEBUG: pid %d: %s\n", (int)getpid(), fmt);
 
-   if (fmt2)
+   if (len >= 0 && fmt2)
    {
      va_start(ap, fmt);
      vfprintf(stderr, fmt2, ap);
@@ -139,6 +141,7 @@ void pool_log(const char *fmt,...)
 	va_list		ap;
 #ifdef HAVE_ASPRINTF
 	char		*fmt2;
+    int         len;
 #endif
 
 #ifdef HAVE_SIGPROCMASK
@@ -151,11 +154,11 @@ void pool_log(const char *fmt,...)
 
 	if (pool_config->print_timestamp)
 #ifdef HAVE_ASPRINTF
-	  asprintf(&fmt2, "%s LOG:   pid %d: %s\n", nowsec(), (int)getpid(), fmt);
+	  len = asprintf(&fmt2, "%s LOG:   pid %d: %s\n", nowsec(), (int)getpid(), fmt);
 	else
-	  asprintf(&fmt2, "LOG:   pid %d: %s\n", (int)getpid(), fmt);
+	  len = asprintf(&fmt2, "LOG:   pid %d: %s\n", (int)getpid(), fmt);
 
-   if (fmt2)
+   if (len >= 0 && fmt2)
    {
      va_start(ap, fmt);
      vfprintf(stderr, fmt2, ap);
