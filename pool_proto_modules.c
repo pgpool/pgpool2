@@ -62,8 +62,6 @@ char *copy_table = NULL;  /* copy table name */
 char *copy_schema = NULL;  /* copy table name */
 char copy_delimiter; /* copy delimiter char */
 char *copy_null = NULL; /* copy null string */
-int select_in_transaction = 0; /* non 0 if select query is in transaction */
-int execute_select = 0; /* non 0 if select query is in transaction */
 
 /* non 0 if "BEGIN" query with extended query protocol received */
 int receive_extended_begin = 0;
@@ -1480,35 +1478,6 @@ POOL_STATUS ErrorResponse3(POOL_CONNECTION *frontend,
 	if (ret != POOL_CONTINUE)
 		return ret;
 	
-	if (select_in_transaction)
-	{
-		int i;
-
-		/* in_load_balance = 0; */
-		REPLICATION = 1;
-		for (i = 0; i < NUM_BACKENDS; i++)
-		{
-			if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
-			{
-				/*
-				 * We must abort transaction to sync transaction state.
-				 * If the error was caused by an Execute message,
-				 * we must send invalid Execute message to abort
-				 * transaction.
-				 *
-				 * Because extended query protocol ignores all
-				 * messages before receiving Sync message inside error state.
-				 */
-				if (execute_select)
-					do_error_execute_command(backend, i, PROTO_MAJOR_V3);
-				else
-					do_error_command(CONNECTION(backend, i), PROTO_MAJOR_V3);
-			}
-		}
-		select_in_transaction = 0;
-		execute_select = 0;
-	}
-
 #ifdef NOT_USED
 	for (i = 0;i < NUM_BACKENDS; i++)
 	{
@@ -2282,6 +2251,7 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
  */
 POOL_STATUS raise_intentional_error_if_need(POOL_CONNECTION_POOL *backend)
 {
+	int i;
 	POOL_STATUS ret;
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_QUERY_CONTEXT *query_context;
@@ -2290,7 +2260,7 @@ POOL_STATUS raise_intentional_error_if_need(POOL_CONNECTION_POOL *backend)
 	session_context = pool_get_session_context();
 	if (!session_context)
 	{
-		pool_error("ErrorResponse3: cannot get session context");
+		pool_error("raise_intentional_error_if_need: cannot get session context");
 		return POOL_END;
 	}
 
@@ -2316,6 +2286,42 @@ POOL_STATUS raise_intentional_error_if_need(POOL_CONNECTION_POOL *backend)
 				return ret;
 		}
 		pool_debug("raise_intentional_error: intentional error occurred");
+	}
+
+	if (REPLICATION &&
+		TSTATE(backend, REAL_MASTER_NODE_ID) == 'T' &&
+		!pool_config->replicate_select &&
+		query_context &&
+		is_select_query(query_context->parse_tree, query_context->original_query))
+	{
+		pool_setall_node_to_be_sent(query_context);
+		for (i = 0; i < NUM_BACKENDS; i++)
+		{
+			if (VALID_BACKEND(i) && REAL_MASTER_NODE_ID != i)
+			{
+				/*
+				 * We must abort transaction to sync transaction state.
+				 * If the error was caused by an Execute message,
+				 * we must send invalid Execute message to abort
+				 * transaction.
+				 *
+				 * Because extended query protocol ignores all
+				 * messages before receiving Sync message inside error state.
+				 */
+				if (pool_is_doing_extended_query_message())
+				{
+					ret = do_error_execute_command(backend, i, PROTO_MAJOR_V3);
+					if (ret != POOL_CONTINUE)
+						return ret;
+				}
+				else
+				{
+					ret = do_error_command(CONNECTION(backend, i), PROTO_MAJOR_V3);
+					if (ret != POOL_CONTINUE)
+						return ret;
+				}
+			}
+		}
 	}
 
 	return POOL_CONTINUE;

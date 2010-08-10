@@ -177,8 +177,6 @@ typedef struct {
 	char *copy_schema = NULL;  /* copy table name */
 	char copy_delimiter; /* copy delimiter char */
 	char *copy_null = NULL; /* copy null string */
-	int select_in_transaction = 0; /* non 0 if select query is in transaction */
-	int execute_select = 0; /* non 0 if select query is in transaction */
 
 /* non 0 if "BEGIN" query with extended query protocol received */
 	int receive_extended_begin = 0;

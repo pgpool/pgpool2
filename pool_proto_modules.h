@@ -43,8 +43,6 @@ extern char *copy_table;  /* copy table name */
 extern char *copy_schema;  /* copy table name */
 extern char copy_delimiter; /* copy delimiter char */
 extern char *copy_null; /* copy null string */
-extern int select_in_transaction; /* non 0 if select query is in transaction */
-extern int execute_select; /* non 0 if select query is in transaction */
 
 /* non 0 if "BEGIN" query with extended query protocol received */
 extern int receive_extended_begin;

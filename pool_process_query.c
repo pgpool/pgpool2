@@ -1394,8 +1394,6 @@ void reset_variables(void)
 	pool_unset_query_in_progress();
 
 	internal_transaction_started = 0;
-	select_in_transaction = 0;
-	execute_select = 0;
 	receive_extended_begin = 0;
 }
 
