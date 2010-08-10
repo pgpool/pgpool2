@@ -104,7 +104,11 @@ static int* find_victim_nodes(int *ntuples, int nmembers, int master_node, int *
 POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 						POOL_CONNECTION_POOL *backend, int len, char *contents)
 {
-	static char *sq = "show pool_status";
+	static char *sq_config = "show pool_status";
+	static char *sq_pools = "show pool_pools";
+	static char *sq_processes = "show pool_processes";
+ 	static char *sq_nodes = "show pool_nodes";
+ 	static char *sq_version = "show pool_version";
 	int commit;
 	List *parse_tree_list;
 	Node *node = NULL;
@@ -233,14 +237,41 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			}
 		}
 
-		/* process status reporting? */
-		if (IsA(node, VariableShowStmt) && strncasecmp(sq, contents, strlen(sq)) == 0)
+		/* status reporting? */
+		if ((IsA(node, VariableShowStmt) && strncasecmp(sq_config, contents, strlen(sq_config)) == 0)
+         || (IsA(node, VariableShowStmt) && strncasecmp(sq_pools, contents, strlen(sq_pools)) == 0)
+         || (IsA(node, VariableShowStmt) && strncasecmp(sq_processes, contents, strlen(sq_processes)) == 0)
+         || (IsA(node, VariableShowStmt) && strncasecmp(sq_nodes, contents, strlen(sq_nodes)) == 0)
+         || (IsA(node, VariableShowStmt) && strncasecmp(sq_version, contents, strlen(sq_version)) == 0))
 		{
 			StartupPacket *sp;
 			char psbuf[1024];
 
-			pool_debug("process reporting");
-			process_reporting(frontend, backend);
+			if (strncasecmp(sq_config, contents, strlen(sq_config)) == 0)
+            {
+                pool_debug("config reporting");
+                config_reporting(frontend, backend);
+            }
+			else if (strncasecmp(sq_pools, contents, strlen(sq_pools)) == 0)
+            {
+                pool_debug("pools reporting");
+                pools_reporting(frontend, backend);
+            }
+			else if (strncasecmp(sq_processes, contents, strlen(sq_processes)) == 0)
+            {
+                pool_debug("processes reporting");
+                processes_reporting(frontend, backend);
+            }
+			else if (strncasecmp(sq_nodes, contents, strlen(sq_nodes)) == 0)
+            {
+                pool_debug("nodes reporting");
+                nodes_reporting(frontend, backend);
+            }
+			else if (strncasecmp(sq_version, contents, strlen(sq_version)) == 0)
+            {
+                pool_debug("version reporting");
+                version_reporting(frontend, backend);
+            }
 
 			/* show ps status */
 			sp = MASTER_CONNECTION(backend)->sp;

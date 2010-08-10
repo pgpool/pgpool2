@@ -172,7 +172,11 @@ extern bool is_partition_table(POOL_CONNECTION_POOL *backend, Node *node);
 extern POOL_STATUS pool_discard_packet(POOL_CONNECTION_POOL *cp);
 
 extern int is_drop_database(Node *node);		/* returns non 0 if this is a DROP DATABASE command */
-extern void process_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
+extern void config_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
+extern void pools_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
+extern void processes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
+extern void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
+extern void version_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 
 extern POOL_STATUS send_simplequery_message(POOL_CONNECTION *backend, int len, char *string, int major);
 extern POOL_STATUS send_extended_protocol_message(POOL_CONNECTION_POOL *backend,

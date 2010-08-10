@@ -459,7 +459,11 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 	fd_set writemask;
 	fd_set exceptmask;
 	unsigned long donemask[FD_SETSIZE / BITS];
-	static char *sq = "show pool_status";
+ 	static char *sq_config = "show pool_status";
+ 	static char *sq_pools = "show pool_pools";
+ 	static char *sq_processes = "show pool_processes";
+ 	static char *sq_nodes = "show pool_nodes";
+ 	static char *sq_version = "show pool_version";
 	POOL_STATUS status;
 	struct timeval timeout;
 	int num_fds;
@@ -486,14 +490,46 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 	}
 
 	/* process status reporting? */
-	if (strncasecmp(sq, string, strlen(sq)) == 0)
+ 	if (strncasecmp(sq_config, string, strlen(sq_config)) == 0)
+ 	{
+ 		pool_debug("config reporting");
+ 		config_reporting(frontend, backend);
+ 		pool_unset_query_in_progress();
+ 		return POOL_CONTINUE;
+ 	}
+ 
+ 	if (strncasecmp(sq_pools, string, strlen(sq_pools)) == 0)
 	{
-		pool_debug("process reporting");
-		process_reporting(frontend, backend);
+		pool_debug("pools reporting");
+		pools_reporting(frontend, backend);
 		pool_unset_query_in_progress();
 		return POOL_CONTINUE;
 	}
 
+ 	if (strncasecmp(sq_processes, string, strlen(sq_processes)) == 0)
+	{
+		pool_debug("process reporting");
+		processes_reporting(frontend, backend);
+		pool_unset_query_in_progress();
+		return POOL_CONTINUE;
+	}
+
+ 	if (strncasecmp(sq_nodes, string, strlen(sq_nodes)) == 0)
+ 	{
+ 		pool_debug("nodes reporting");
+ 		nodes_reporting(frontend, backend);
+ 		pool_unset_query_in_progress();
+ 		return POOL_CONTINUE;
+ 	}
+ 
+ 	if (strncasecmp(sq_version, string, strlen(sq_version)) == 0)
+ 	{
+ 		pool_debug("version reporting");
+ 		version_reporting(frontend, backend);
+ 		pool_unset_query_in_progress();
+ 		return POOL_CONTINUE;
+ 	}
+ 
 	/* In this loop,forward the query to the all backends */
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
