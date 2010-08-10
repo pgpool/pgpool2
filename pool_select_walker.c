@@ -184,7 +184,7 @@ static bool is_temp_table(char *table_name)
  * Query to know if the target table is a temporary one.
  * This query is valid PostgreSQL 8.4 or later.
  */
-#define ISTEMPQUERY84 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.relname = '%s' AND c.relistemp"
+#define ISTEMPQUERY84 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = '%s'::regclass::oid AND c.relistemp"
 
 	int hasrelistemp;
 	bool result;
