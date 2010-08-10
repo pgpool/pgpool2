@@ -178,7 +178,7 @@ static bool is_temp_table(char *table_name)
  * Query to know if the target table is a temporary one.
  * This query is valid through PostgreSQL 7.3 to 8.3.
  */
-#define ISTEMPQUERY83 "SELECT count(*) FROM pg_class AS c, pg_namespace AS n WHERE c.relname = '%s' AND c.relnamespace = n.oid AND n.nspname ~ '^pg_temp_'"
+#define ISTEMPQUERY83 "SELECT count(*) FROM pg_class AS c, pg_namespace AS n WHERE c.oid = '%s'::regclass::oid AND c.relnamespace = n.oid AND n.nspname ~ '^pg_temp_'"
 
 /*
  * Query to know if the target table is a temporary one.
