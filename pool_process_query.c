@@ -78,8 +78,6 @@ static bool is_internal_transaction_needed(Node *node);
 /* timeout sec for pool_check_fd */
 static int timeoutsec;
 
-int selected_slot;		/* selected DB node */
-
 /*
  * Main module for query processing
  * reset_request: if non 0, call reset_backend to execute reset queries

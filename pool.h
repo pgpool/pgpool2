@@ -373,7 +373,6 @@ extern int my_proc_id;  /* process table id (!= UNIX's PID) */
 extern POOL_SYSTEMDB_CONNECTION_POOL *system_db_info; /* systemdb */
 extern ProcessInfo *process_info; /* shmem process information table */
 extern ConnectionInfo *con_info; /* shmem connection info table */
-extern int selected_slot;		/* selected DB node for load balance */
 extern POOL_REQUEST_INFO *Req_info;
 extern volatile sig_atomic_t *InRecovery;
 extern char remote_ps_data[];		/* used for set_ps_display */

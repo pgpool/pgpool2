@@ -1760,6 +1760,7 @@ static RETSIGTYPE wakeup_handler(int sig)
  */
 int select_load_balancing_node(void)
 {
+	int selected_slot;
 	double total_weight,r;
 	int i;
 
