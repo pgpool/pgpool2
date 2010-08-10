@@ -2172,7 +2172,7 @@ do
   fi
 done
 
-psql -p $port -c "SELECT pgpool_switch_xlog('$archdir')" postgres
+psql -p $port -c "SELECT pgpool_switch_xlog('$archdir')" template1
 </pre>
 </p>
 
