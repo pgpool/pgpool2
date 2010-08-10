@@ -376,6 +376,23 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					}
 
 					/*
+					 * If system catalog is used in the SELECT, we
+					 * prefer to send to the primary. Example: SELECT
+					 * * FROM pg_class WHERE relname = 't1'; Because
+					 * 't1' is a constant, it's hard to recognize as
+					 * table name.  Most use case such query is
+					 * against system catalog, and the table name can
+					 * be a temporary table, it's best to query
+					 * against primary system catalog.
+					 * Please note that this test must be done *before*
+					 * test using pool_has_temp_table.
+					 */
+					else if (pool_has_system_catalog(node))
+					{
+						pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
+					}
+
+					/*
 					 * If temporary table is used in the SELECT,
 					 * we prefer to send to the primary.
 					 */
@@ -383,6 +400,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					{
 						pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
 					}
+
 					else
 					{
 						pool_set_node_to_be_sent(query_context,

@@ -30,6 +30,7 @@
 #include "parser/nodes.h"
 
 extern bool pool_has_function_call(Node *node);
+extern bool pool_has_system_catalog(Node *node);
 extern bool pool_has_temp_table(Node *node);
 extern bool raw_expression_tree_walker(Node *node, bool (*walker) (), void *context);
 

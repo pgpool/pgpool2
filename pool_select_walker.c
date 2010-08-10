@@ -30,12 +30,15 @@
 #include "pool_session_context.h"
 
 typedef struct {
+	bool	has_system_catalog;		/* True if system catalog table is used */
 	bool	has_temp_table;		/* True if temporary table is used */
 	bool	has_function_call;	/* True if write function call is used */	
 
 } SelectContext;
 
 static bool function_call_walker(Node *node, void *context);
+static bool system_catalog_walker(Node *node, void *context);
+static bool is_system_catalog(char *table_name);
 static bool temp_table_walker(Node *node, void *context);
 static bool is_temp_table(char *table_name);
 
@@ -55,6 +58,42 @@ bool pool_has_function_call(Node *node)
 	raw_expression_tree_walker(node, function_call_walker, &ctx);
 
 	return ctx.has_function_call;
+}
+
+/*
+ * Return true if this SELECT has system catalog table.
+ */
+bool pool_has_system_catalog(Node *node)
+{
+
+	SelectContext	ctx;
+
+	if (!IsA(node, SelectStmt))
+		return false;
+
+	ctx.has_system_catalog = false;
+
+	raw_expression_tree_walker(node, system_catalog_walker, &ctx);
+
+	return ctx.has_system_catalog;
+}
+
+/*
+ * Return true if this SELECT has temporary table.
+ */
+bool pool_has_temp_table(Node *node)
+{
+
+	SelectContext	ctx;
+
+	if (!IsA(node, SelectStmt))
+		return false;
+
+	ctx.has_temp_table = false;
+
+	raw_expression_tree_walker(node, temp_table_walker, &ctx);
+
+	return ctx.has_temp_table;
 }
 
 /*
@@ -119,21 +158,29 @@ static bool function_call_walker(Node *node, void *context)
 }
 
 /*
- * Return true if this SELECT has temporary table.
+ * Walker function to find a system catalog
  */
-bool pool_has_temp_table(Node *node)
+static bool
+system_catalog_walker(Node *node, void *context)
 {
+	SelectContext	*ctx = (SelectContext *) context;
 
-	SelectContext	ctx;
-
-	if (!IsA(node, SelectStmt))
+	if (node == NULL)
 		return false;
 
-	ctx.has_temp_table = false;
+	if (IsA(node, RangeVar))
+	{
+		RangeVar *rgv = (RangeVar *)node;
 
-	raw_expression_tree_walker(node, temp_table_walker, &ctx);
+		pool_debug("system_catalog_walker: relname: %s", rgv->relname);
 
-	return ctx.has_temp_table;
+		if (is_system_catalog(rgv->relname))
+		{
+			ctx->has_system_catalog = true;
+			return false;
+		}
+	}
+	return raw_expression_tree_walker(node, system_catalog_walker, context);
 }
 
 /*
@@ -160,6 +207,81 @@ temp_table_walker(Node *node, void *context)
 		}
 	}
 	return raw_expression_tree_walker(node, temp_table_walker, context);
+}
+
+/*
+ * Judge the table used in a query represented by node is a system
+ * catalog or not.
+ */
+static bool is_system_catalog(char *table_name)
+{
+/*
+ * Query to know if pg_namespace exists. PostgreSQL 7.2 or before doesn't have.
+ */
+#define HASPGNAMESPACEQUERY "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.relname = '%s'"
+
+/*
+ * Query to know if the target table belongs pg_catalog schema.
+ */
+#define ISBELONGTOPGCATALOGQUERY "SELECT count(*) FROM pg_class AS c, pg_namespace AS n WHERE c.oid = '%s'::regclass::oid AND c.relnamespace = n.oid AND n.nspname = 'pg_catalog'"
+
+	int hasreliscatalog;
+	bool result;
+	static POOL_RELCACHE *hasreliscatalog_cache;
+	static POOL_RELCACHE *relcache;
+	POOL_CONNECTION_POOL *backend;
+
+	if (table_name == NULL)
+	{
+			return false;
+	}
+
+	backend = pool_get_session_context()->backend;
+
+	/*
+	 * Check if pg_namespace exists
+	 */
+	if (!hasreliscatalog_cache)
+	{
+		hasreliscatalog_cache = pool_create_relcache(32, HASPGNAMESPACEQUERY,
+										int_register_func, int_unregister_func,
+										false);
+		if (hasreliscatalog_cache == NULL)
+		{
+			pool_error("is_system_catalog: pool_create_relcache error");
+			return false;
+		}
+	}
+
+	hasreliscatalog = pool_search_relcache(hasreliscatalog_cache, backend, "pg_namespace")==0?0:1;
+
+	if (hasreliscatalog)
+	{
+		/*
+		 * If relcache does not exist, create it.
+		 */
+		if (!relcache)
+		{
+			relcache = pool_create_relcache(32, ISBELONGTOPGCATALOGQUERY,
+											int_register_func, int_unregister_func,
+											true);
+			if (relcache == NULL)
+			{
+				pool_error("is_system_catalog: pool_create_relcache error");
+				return false;
+			}
+		}
+		/*
+		 * Search relcache.
+		 */
+		result = pool_search_relcache(relcache, backend, table_name)==0?false:true;
+		return result;
+	}
+
+	/*
+	 * Pre 7.3. Just check whether the table starts with "pg_".
+	 */
+	return (strcasecmp(table_name, "pg_") == 0);
 }
 
 /*
