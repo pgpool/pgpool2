@@ -310,92 +310,83 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	}
 	else if (MASTER_SLAVE)
 	{
-		/* Streaming Replication+Hot Standby? */
-		if (!strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP) ||
-			!strcmp(pool_config->master_slave_sub_mode, MODE_SLONY))
+		POOL_DEST dest;
+		POOL_MEMORY_POOL *old_context = pool_memory;
+
+		pool_memory = query_context->memory_context;
+		dest = send_to_where(node, query);
+		pool_memory = old_context;
+
+		pool_debug("send_to_where: %d query: %s", dest, query);
+
+		/* Should be sent to primary only? */
+		if (dest == POOL_PRIMARY)
 		{
-			POOL_DEST dest;
-			POOL_MEMORY_POOL *old_context = pool_memory;
+			pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
+		}
+		/* Should be sent to both primary and standby? */
+		else if (dest == POOL_BOTH)
+		{
+			pool_setall_node_to_be_sent(query_context);
+		}
 
-			pool_memory = query_context->memory_context;
-			dest = send_to_where(node, query);
-			pool_memory = old_context;
-
-			pool_debug("send_to_where: %d query: %s", dest, query);
-
-			/* Should be sent to primary only? */
-			if (dest == POOL_PRIMARY)
+		/*
+		 * Ok, we might be able to load balance the SELECT query.
+		 */
+		else
+		{
+			if (pool_config->load_balance_mode &&
+				is_select_query(node, query) &&
+				MAJOR(backend) == PROTO_MAJOR_V3)
 			{
-				pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
-			}
-			/* Should be sent to both primary and standby? */
-			else if (dest == POOL_BOTH)
-			{
-				pool_setall_node_to_be_sent(query_context);
-			}
-
-			/*
-			 * Ok, we might be able to load balance the SELECT query.
-			 */
-			else
-			{
-				if (pool_config->load_balance_mode &&
-					is_select_query(node, query) &&
-					MAJOR(backend) == PROTO_MAJOR_V3)
+				/* 
+				 * If (we are outside of an explicit transaction) OR
+				 * (the transaction has not issued a write query yet, AND
+				 *	transaction isolation level is not SERIALIZABLE)
+				 * we might be able to load balance.
+				 */
+				if (TSTATE(backend, MASTER_NODE_ID) == 'I' ||
+					(!pool_is_writing_transaction() &&
+					 !pool_is_failed_transaction() &&
+					 pool_get_transaction_isolation() != POOL_SERIALIZABLE))
 				{
-					/* 
-					 * If (we are outside of an explicit transaction) OR
-					 * (the transaction has not issued a write query yet, AND
-					 *	transaction isolation level is not SERIALIZABLE)
-					 * we might be able to load balance.
+					BackendInfo *bkinfo = pool_get_node_info(session_context->load_balance_node_id);
+
+					/*
+					 * Load balance if possible
 					 */
-					if (TSTATE(backend, MASTER_NODE_ID) == 'I' ||
-						(!pool_is_writing_transaction() &&
-						 !pool_is_failed_transaction() &&
-						 pool_get_transaction_isolation() != POOL_SERIALIZABLE))
+
+					/*
+					 * If replication delay is too much, we prefer to send to the primary.
+					 */
+					if (!strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP) &&
+						pool_config->delay_threshold &&
+						bkinfo->standby_delay > pool_config->delay_threshold)
 					{
-						BackendInfo *bkinfo = pool_get_node_info(session_context->load_balance_node_id);
+						pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
+					}
 
-						/*
-						 * Load balance if possible
-						 */
+					/*
+					 * If a writing function call is used, 
+					 * we prefer to send to the primary.
+					 */
+					else if (pool_has_function_call(node))
+					{
+						pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
+					}
 
-						/*
-						 * If replication delay is too much, we prefer to send to the primary.
-						 */
-						if (pool_config->delay_threshold &&
-							bkinfo->standby_delay > pool_config->delay_threshold)
-						{
-							pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
-						}
-
-						/*
-						 * If a writing function call is used, 
-						 * we prefer to send to the primary.
-						 */
-						else if (pool_has_function_call(node))
-						{
-							pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
-						}
-
-						/*
-						 * If temporary table is used in the SELECT,
-						 * we prefer to send to the primary.
-						 */
-						else if (pool_has_temp_table(node))
-						{
-							pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
-						}
-						else
-						{
-							pool_set_node_to_be_sent(query_context,
-													 session_context->load_balance_node_id);
-						}
+					/*
+					 * If temporary table is used in the SELECT,
+					 * we prefer to send to the primary.
+					 */
+					else if (pool_has_temp_table(node))
+					{
+						pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
 					}
 					else
 					{
-						/* Send to the primary only */
-						pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
+						pool_set_node_to_be_sent(query_context,
+												 session_context->load_balance_node_id);
 					}
 				}
 				else
@@ -404,109 +395,73 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
 				}
 			}
-
-			/* PREPARE? */
-			if (IsA(node, PrepareStmt))
+			else
 			{
-				/* Make sure that same prepared statement does not exist */
-				if (pool_get_prep_where(((PrepareStmt *)node)->name) == NULL)
-				{
-					/* Save the send map */
-					pool_add_prep_where(((PrepareStmt *)node)->name, query_context->where_to_send);
-				}
-			}
-
-			/*
-			 * EXECUTE?
-			 */
-			else if (IsA(node, ExecuteStmt))
-			{
-				bool *wts;
-
-				wts = pool_get_prep_where(((ExecuteStmt *)node)->name);
-				if (wts)
-				{
-					/* Inherit same map from PREPARE */
-					pool_copy_prep_where(wts, query_context->where_to_send);
-				}
-			}
-
-			/*
-			 * DEALLOCATE?
-			 */
-			else if (IsA(node, DeallocateStmt))
-			{
-				DeallocateStmt *d = (DeallocateStmt *)node;
-				bool *wts;
-
-				/* DELLOCATE ALL? */
-				if (d->name == NULL)
-				{
-					pool_setall_node_to_be_sent(query_context);
-				}
-				else
-				{
-					wts = pool_get_prep_where(d->name);
-					if (wts)
-					{
-						/* Inherit same map from PREPARE */
-						pool_copy_prep_where(wts, query_context->where_to_send);
-					}
-					else
-					{
-						PreparedStatement *ps;
-
-						ps = pool_get_prepared_statement_by_pstmt_name(d->name);
-						if (ps)
-						{
-							if (ps->qctxt)
-								pool_copy_prep_where(ps->qctxt->where_to_send, query_context->where_to_send);
-						}
-					}
-				}
-			}
-		}
-#ifdef SLONY
-		else	/* Slony-I case */
-		{
-			/*
-			 * DMLs msut be sent to master
-			 */
-			if (IsA(node, InsertStmt) || IsA(node, DeleteStmt) ||
-				IsA(node, UpdateStmt))
-			{
-				/* only send to master node */
+				/* Send to the primary only */
 				pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
 			}
-			/*
-			 * PREPARE, SET, DEALLOCATE and DISCARD statements must be
-			 * replicated even if we are in master/slave mode.
-			 */
-			if (IsA(node, PrepareStmt) || IsA(node, DeallocateStmt) ||
-				IsA(node, VariableSetStmt) || IsA(node, DiscardStmt))
+		}
+
+		/* PREPARE? */
+		if (IsA(node, PrepareStmt))
+		{
+			/* Make sure that same prepared statement does not exist */
+			if (pool_get_prep_where(((PrepareStmt *)node)->name) == NULL)
+			{
+				/* Save the send map */
+				pool_add_prep_where(((PrepareStmt *)node)->name, query_context->where_to_send);
+			}
+		}
+
+		/*
+		 * EXECUTE?
+		 */
+		else if (IsA(node, ExecuteStmt))
+		{
+			bool *wts;
+
+			wts = pool_get_prep_where(((ExecuteStmt *)node)->name);
+			if (wts)
+			{
+				/* Inherit same map from PREPARE */
+				pool_copy_prep_where(wts, query_context->where_to_send);
+			}
+		}
+
+		/*
+		 * DEALLOCATE?
+		 */
+		else if (IsA(node, DeallocateStmt))
+		{
+			DeallocateStmt *d = (DeallocateStmt *)node;
+			bool *wts;
+
+			/* DELLOCATE ALL? */
+			if (d->name == NULL)
 			{
 				pool_setall_node_to_be_sent(query_context);
 			}
 			else
 			{
-				if (pool_config->load_balance_mode &&
-					MAJOR(backend) == PROTO_MAJOR_V3 &&
-					TSTATE(backend, MASTER_NODE_ID) == 'I' &&
-					is_select_query(node, query) &&
-					!is_sequence_query(node))
+				wts = pool_get_prep_where(d->name);
+				if (wts)
 				{
-					/* load balance */
-					pool_set_node_to_be_sent(query_context,
-											 session_context->load_balance_node_id);
+					/* Inherit same map from PREPARE */
+					pool_copy_prep_where(wts, query_context->where_to_send);
 				}
 				else
 				{
-					/* only send to master node */
-					pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
+					PreparedStatement *ps;
+
+					ps = pool_get_prepared_statement_by_pstmt_name(d->name);
+					if (ps)
+					{
+						if (ps->qctxt)
+							pool_copy_prep_where(ps->qctxt->where_to_send, query_context->where_to_send);
+					}
 				}
 			}
 		}
-#endif
 	}
 	else if (REPLICATION|PARALLEL_MODE)
 	{
