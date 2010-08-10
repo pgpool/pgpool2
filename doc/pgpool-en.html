@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Fri Aug  6 13:55:03 JST 2010
+Last modified: Tue Aug 10 12:00:20 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -27,6 +27,10 @@ Last modified: Fri Aug  6 13:55:03 JST 2010
         <li><a href="#platform">Platforms</a></li>
         <li><a href="#install">pgpool-II Installation</a></li>
         <li><a href="#config">Configuring pgpool-II</a></li>
+        <li><a href="#common">Configuring common part</a></li>
+        <li><a href="#connection_pool_mode">Connection pool mode</a></li>
+        <li><a href="#replication_mode">Replication mode</a></li>
+        <li><a href="#master_slave_mode">Master slave mode</a></li>
         <li><a href="#start">Starting/Stopping pgpool-II</a></li>
         <li><a href="#reload">Reloading pgpool-II configuration files</a></li>
         <li><a href="#online-recovery">Online recovery</a></li>
@@ -101,6 +105,10 @@ pgpool-II is transparent to both the server and the client, an
 existing database application can be used with pgpool-II almost
 without a change to its sources.</p>
 
+<p>
+<strong>There is some restrictions of using SQL via pgpool-II.
+See <a href="#restriction">Restrictions</a> for more details.</strong>
+</p>
 
 <h1>Supported Platforms<a name="platform"></a></h1>
 
@@ -109,12 +117,22 @@ UNIX-like architectures. Windows is not supported. Supported
 PostgreSQL server's versions are 6.4 and higher. To use the parallel
 query, however, 7.4 and higher must be used.</p>
 
+<p>If you are using PostgreSQL 7.3 or before, there are some restrictions of functionalities of pgpool-II.</p>
+
+<p>Also you must make sure that all of PostgreSQL servers's major versions are identical.
+In addition this, hardware architectures and OSs must be identical if you want to use online recovery.
+</p>
 
 <h1>pgpool-II Installation<a name="install"></a></h1>
 
 <p>
 pgpool-II can be downloaded from <a href="http://pgfoundry.org/projects/pgpool/">pgpool Development page</a>.
 Also packages are provided for various platforms including CentOS, RedHat Enterprise Linux, Fedora and Debian.
+</p>
+
+<p>
+The source code of pgpool-II can be downloaded from:
+href="http://pgfoundry.org/projects/pgpool/">pgpool development page</a>
 </p>
 
 <p>Installing pgpool-II from source code requires gcc 2.9 or higher, and GNU
@@ -156,7 +174,7 @@ installed. Default value is obtained by <code>pg_config</code></li>
 make
 make install
 </pre>
-will install pgpool-II. (If you use FreeBSD, replace make with gmake)
+will install pgpool-II. (If you use Solaris or FreeBSD, replace make with gmake)
 </p>
 </dd>
 </dl>
@@ -175,7 +193,6 @@ control their behaviors.</p>
   <tr>
     <th>Function/Mode</th>
     <th>raw Mode</th>
-    <th>Connection Pool Mode</th>
     <th>Replication Mode</th>
     <th>Master/Slave Mode</th>
     <th>Parallel Query Mode</th>
@@ -186,34 +203,38 @@ control their behaviors.</p>
 	<td align="center">X</td>
 	<td align="center">O</td>
 	<td align="center">O</td>
-	<td align="center">O</td>
 	<td align="center">0</td>
   </tr>
 
   <tr>
     <td>Replication</td>
 	<td align="center">X</td>
-	<td align="center">X</td>
 	<td align="center">O</td>
 	<td align="center">X</td>
-	<td align="center">(*)</td>
+	<td align="center">(*1)</td>
   </tr>
 
   <tr>
     <td>Load Balance</td>
 	<td align="center">X</td>
-	<td align="center">X</td>
 	<td align="center">O</td>
 	<td align="center">O</td>
-	<td align="center">(*)</td>
+	<td align="center">(*1)</td>
   </tr>
 
   <tr>
     <td>Failover</td>
 	<td align="center">O</td>
 	<td align="center">O</td>
+	<td align="center">O</td>
 	<td align="center">X</td>
+  </tr>
+
+  <tr>
+    <td>Online recovery</td>
 	<td align="center">X</td>
+	<td align="center">0</td>
+	<td align="center">(*2)</td>
 	<td align="center">X</td>
   </tr>
 
@@ -222,13 +243,11 @@ control their behaviors.</p>
 	<td align="center">X</td>
 	<td align="center">X</td>
 	<td align="center">X</td>
-	<td align="center">X</td>
 	<td align="center">O</td>
   </tr>
 
   <tr>
     <td>Required # of Servers</td>
-	<td align="center">1 or higher</td>
 	<td align="center">1 or higher</td>
 	<td align="center">2 or higher</td>
 	<td align="center">2 or higher</td>
@@ -240,12 +259,22 @@ control their behaviors.</p>
 	<td align="center">no</td>
 	<td align="center">no</td>
 	<td align="center">no</td>
-	<td align="center">no</td>
 	<td align="center">yes</td>
   </tr>
 
 </table>
-(*)Parallel Query Mode requires the replication or the load-balancing turned on, however the function of the replication and the load-balancing cannot be used for the table preserved by dividing data in Parallel Query Mode.
+
+<p>
+<ul>
+ <li>(*1)Parallel Query Mode requires the replication or the load-balancing turned on, however the function of the replication and the load-balancing cannot be used for the table preserved by dividing data in Parallel Query Mode.
+ <li>(*2)Online recovery can be used with Master slave+Streaming replication.
+ <li>(*3)Clients simply connect to the PostgreSQL servers
+via pgpool-II. This mode is useful for simply limiting excess
+connections to the servers, or enabling failover with multiple
+servers.
+</ul>
+</p>
+
 <h2>Configuring <code>pcp.conf</code></h2>
 
 <p>pgpool-II provides the control interface where an administrator
@@ -304,12 +333,7 @@ cp $prefix/etc/pgpool.conf.sample $prefix/etc/pgpool.conf
 An empty line or a line starting with "#" is treated as a
 comment and will be ignored.</p>
 </p>
-<h3>raw Mode</h3>
-
-<p>In the raw mode, clients simply connect to the PostgreSQL servers
-via pgpool-II. This mode is useful for simply limiting excess
-connections to the servers, or enabling failover with multiple
-servers.</p>
+<h3><a name="common"></a>Common settings</h3>
 
 <dl>
   <dt>listen_addresses</dt>
@@ -748,7 +772,7 @@ backend_hostname0 fails for some reason, pgpool-II tries to access the
 backend specified by backend_hostname1. If that fails, pgpool-II tries
 the backend_hostname2, 3 and so on.</p>
 
-<h3>Connection Pool Mode</h3>
+<h3><a name="connection_pool_mode"></a>Connection Pool Mode</h3>
 
 <p>In the connection pool mode, all functions in raw mode and the
 connection pool function can be used. To enable this mode, set
@@ -814,7 +838,7 @@ You need to re-read pgpool.conf upon modification of this direrctive.
 
 <p>Failover in the connection pool mode is the same as in the raw mode.</p>
 
-<h3>Replication Mode</h3>
+<h3><a name="replication_mode"></a>Replication Mode</h3>
 
 <p>This mode enables data replication between the backends. The
 configuration parameters below must be set in addtion to everything above.</p>
@@ -836,7 +860,7 @@ configuration parameters below must be set in addtion to everything above.</p>
   <dt>failover_if_affected_tuples_mismatch</dt>
   <dd>
 	  <p>When set to true, if a backend returns number of affected
-      tuples by UPDATE/DELETE 
+      tuples by INSERT/UPDATE/DELETE 
 	  different between the backends, the backends that differ from most
 	  frequent result set are degenerated.
 	  If set to false, the session is terminated and the backends are not
@@ -858,6 +882,35 @@ configuration parameters below must be set in addtion to everything above.</p>
 	  If set to false, the session is terminated and the backends are not
 	  degenerated. Default is false.</p>
   </dd>
+
+<a name="white_function_list"></a>
+<dt>white_function_list
+<dd>
+<p>
+Specify comma separated function name list, those <strong>do not</strong> update database.
+SELECTs use functions not specified in this list are not load balanced, replicated if in replication mode.
+In master slave mode, SELECTs are sent to master(primary) only.
+</p>
+
+<a name="black_function_list"></a>
+<dt>black_function_list
+<dd>
+<p>
+Specify comma separated function name list, those <strong>do</strong> update database.
+SELECTs use functions specified in this list are not load balanced, replicated if in replication mode.
+In master slave mode, SELECTs are sent to master(primary) only.
+</p>
+<p>
+You should not make those lists nonempty at the same time.
+</p>
+<p>
+Prior to pgpool-II 3.0, nextval() and setval() are the functions those do writes to database.
+You can emulate this by using white_function_list and black_function_list:
+</p>
+<pre>
+white_function_list = ''
+black_function_list = 'upper,lower'
+</pre>
 
 <a name="replicate_select">
   <dt>replicate_select</dt>
@@ -1163,7 +1216,7 @@ You need to call setAutoCommit(true) to enable autocommit.
 service. The service can be continued if there is at least one backend
 alive.</p>
 
-<h3>Master/Slave Mode</h3>
+<h3><a name="master_slave_mode"></a>Master/Slave Mode</h3>
 
 <p>This mode is for using pgpool-II with another master/slave
 replication software (like Slony-I and Streaming replication), so it really does the actual data
