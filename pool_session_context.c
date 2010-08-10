@@ -29,7 +29,7 @@
 #include "pool_session_context.h"
 
 static POOL_SESSION_CONTEXT session_context_d;
-static POOL_SESSION_CONTEXT *session_context;
+static POOL_SESSION_CONTEXT *session_context = NULL;
 
 static void init_prepared_statement_list(void);
 static void init_portal_list(void);
@@ -121,8 +121,15 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
  */
 void pool_session_context_destroy(void)
 {
+	if (session_context)
+	{
+		free(session_context->pstmt_list.pstmts);
+		free(session_context->portal_list.portals);
+		pool_memory_delete(session_context->memory_context, 0);
+	}
 	/* XXX For now, just zap memory */
 	memset(&session_context_d, 0, sizeof(session_context_d));
+	session_context = NULL;
 }
 
 /*
