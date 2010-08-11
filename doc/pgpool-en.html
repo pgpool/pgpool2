@@ -1704,11 +1704,12 @@ benchs2=# show pool_processes;
 their name, value, and description. Here is an excerpt of the result:
 </p>
 <p>
-It has 10 columns:
+It has 11 columns:
 <ul>
 <li>pool_pid is the PID of the pgPool-II process</li>
 <li>start_time is the time and date when this process was launched (in a number of seconds since 1970-01-01)</li>
 <li>pool_id is the pool identifier (should be between 0 and max_pool-1)</li>
+<li>backend_id is the backend identifier (should be between 0 and the number of configured backends minus one)</li>
 <li>database is the database name for the pool id of this process</li>
 <li>username is the user name used in the connection for the pool id of this process</li>
 <li>create_time is the creation time and date of the connection</li>

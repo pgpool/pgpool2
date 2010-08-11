@@ -70,6 +70,7 @@ typedef struct {
 	char pool_pid[POOLCONFIG_MAXCOUNTLEN+1];
 	char start_time[POOLCONFIG_MAXDATELEN+1];
 	char pool_id[POOLCONFIG_MAXCOUNTLEN+1];
+	char backend_id[POOLCONFIG_MAXCOUNTLEN+1];
 	char database[POOLCONFIG_MAXIDENTLEN+1];
 	char username[POOLCONFIG_MAXIDENTLEN+1];
 	char create_time[POOLCONFIG_MAXDATELEN+1];
@@ -789,14 +790,14 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 void pools_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 {
 	static char *cursorname = "blank";
-	static short num_fields = 11;
-	static char *field_names[] = {"pool_pid", "start_time", "pool_id", "database", "username", "create_time",
+	static short num_fields = 12;
+	static char *field_names[] = {"pool_pid", "start_time", "pool_id", "backend_id", "database", "username", "create_time",
                                   "majorversion", "minorversion", "pool_counter", "pool_backendpid", "pool_connected"};
 	static int oid = 0;
 	static short fsize = -1;
 	static int mod = 0;
 	short n;
-	int child, pool, poolBE;
+	int child, pool, poolBE, backend_id;
 	short s;
 	int len;
 	short colnum;
@@ -805,7 +806,7 @@ void pools_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	static unsigned char nullmap[2] = {0xff, 0xff};
 	int nbytes = (num_fields + 7)/8;
 
-	POOL_REPORT_POOLS pools[MAX_NUM_BACKENDS * pool_config->max_pool];
+	POOL_REPORT_POOLS pools[pool_config->num_init_children * pool_config->max_pool * NUM_BACKENDS];
 
 	short nrows;
 	int size;
@@ -822,20 +823,23 @@ void pools_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
     
         for (pool = 0; pool < pool_config->max_pool; pool++)
         {
-            poolBE = pool*MAX_NUM_BACKENDS;
-            snprintf(pools[lines].pool_pid, POOLCONFIG_MAXCOUNTLEN, "%d", proc_id);
-            snprintf(pools[lines].start_time, POOLCONFIG_MAXDATELEN, "%ld", pi->start_time);
-            snprintf(pools[lines].pool_id, POOLCONFIG_MAXCOUNTLEN, "%d", pool);
-            strncpy(pools[lines].database, pi->connection_info[poolBE].database, POOLCONFIG_MAXIDENTLEN);
-	        strncpy(pools[lines].username, pi->connection_info[poolBE].user, POOLCONFIG_MAXIDENTLEN);
-            snprintf(pools[lines].create_time, POOLCONFIG_MAXDATELEN, "%ld", pi->connection_info[poolBE].create_time);
-            snprintf(pools[lines].pool_counter, POOLCONFIG_MAXCOUNTLEN, "%d", pi->connection_info[poolBE].counter);
-            snprintf(pools[lines].pool_majorversion, POOLCONFIG_MAXCOUNTLEN, "%d", pi->connection_info[poolBE].major);
-            snprintf(pools[lines].pool_minorversion, POOLCONFIG_MAXCOUNTLEN, "%d", pi->connection_info[poolBE].minor);
-            snprintf(pools[lines].pool_counter, POOLCONFIG_MAXCOUNTLEN, "%d", pi->connection_info[poolBE].counter);
-            snprintf(pools[lines].pool_backendpid, POOLCONFIG_MAXCOUNTLEN, "%d", ntohl(pi->connection_info[poolBE].pid));
-            snprintf(pools[lines].pool_connected, POOLCONFIG_MAXCOUNTLEN, "%d", pi->connection_info[poolBE].connected);
-            lines++;
+			for (backend_id = 0; backend_id < NUM_BACKENDS; backend_id++)
+			{
+                poolBE = pool*MAX_NUM_BACKENDS+backend_id;
+                snprintf(pools[lines].pool_pid, POOLCONFIG_MAXCOUNTLEN, "%d", proc_id);
+                snprintf(pools[lines].start_time, POOLCONFIG_MAXDATELEN, "%ld", pi->start_time);
+                snprintf(pools[lines].pool_id, POOLCONFIG_MAXCOUNTLEN, "%d", pool);
+                snprintf(pools[lines].backend_id, POOLCONFIG_MAXCOUNTLEN, "%d", backend_id);
+                strncpy(pools[lines].database, pi->connection_info[poolBE].database, POOLCONFIG_MAXIDENTLEN);
+	            strncpy(pools[lines].username, pi->connection_info[poolBE].user, POOLCONFIG_MAXIDENTLEN);
+                snprintf(pools[lines].create_time, POOLCONFIG_MAXDATELEN, "%ld", pi->connection_info[poolBE].create_time);
+                snprintf(pools[lines].pool_majorversion, POOLCONFIG_MAXCOUNTLEN, "%d", pi->connection_info[poolBE].major);
+                snprintf(pools[lines].pool_minorversion, POOLCONFIG_MAXCOUNTLEN, "%d", pi->connection_info[poolBE].minor);
+                snprintf(pools[lines].pool_counter, POOLCONFIG_MAXCOUNTLEN, "%d", pi->connection_info[poolBE].counter);
+                snprintf(pools[lines].pool_backendpid, POOLCONFIG_MAXCOUNTLEN, "%d", ntohl(pi->connection_info[poolBE].pid));
+                snprintf(pools[lines].pool_connected, POOLCONFIG_MAXCOUNTLEN, "%d", pi->connection_info[poolBE].connected);
+                lines++;
+            }
         }
     }
 
@@ -923,6 +927,11 @@ void pools_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, pools[i].pool_id, size);
 
+			size = strlen(pools[i].backend_id);
+			hsize = htonl(size+4);
+			pool_write(frontend, &hsize, sizeof(hsize));
+			pool_write(frontend, pools[i].backend_id, size);
+
 			size = strlen(pools[i].database);
 			hsize = htonl(size+4);
 			pool_write(frontend, &hsize, sizeof(hsize));
@@ -974,6 +983,7 @@ void pools_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 			len += sizeof(int) + strlen(pools[i].pool_pid);
 			len += sizeof(int) + strlen(pools[i].start_time);
 			len += sizeof(int) + strlen(pools[i].pool_id);
+			len += sizeof(int) + strlen(pools[i].backend_id);
 			len += sizeof(int) + strlen(pools[i].database);
 			len += sizeof(int) + strlen(pools[i].username);
 			len += sizeof(int) + strlen(pools[i].create_time);
@@ -998,6 +1008,10 @@ void pools_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 			len = htonl(strlen(pools[i].pool_id));
 			pool_write(frontend, &len, sizeof(len));
 			pool_write(frontend, pools[i].pool_id, strlen(pools[i].pool_id));
+
+			len = htonl(strlen(pools[i].backend_id));
+			pool_write(frontend, &len, sizeof(len));
+			pool_write(frontend, pools[i].backend_id, strlen(pools[i].backend_id));
 
 			len = htonl(strlen(pools[i].database));
 			pool_write(frontend, &len, sizeof(len));
