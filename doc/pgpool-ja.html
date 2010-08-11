@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Tue Aug 10 11:34:57 JST 2010
+Last modified: Wed Aug 11 12:01:54 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -35,6 +35,7 @@ Last modified: Tue Aug 10 11:34:57 JST 2010
         <li><a href="#stream">Streaming Replicationへの対応</a></li>
         <li><a href="#start">pgpool-IIの起動と停止</a></li>
         <li><a href="#reload">pgpool-IIの設定ファイルの再読み込み</a></li>
+        <li><a href="#show-commands">SHOWコマンド</a></li>
 	    <li><a href="#online-recovery">オンラインリカバリ</a></li>
 	    <li><a href="#backup">バックアップ</a></li>
 	    <li><a href="#deploy">pgpool-IIの配置について</a></li>
@@ -1947,6 +1948,133 @@ pgpool [-f config_file][-a hba_file][-F pcp_config_file] reload
 また、設定の変更はすでに接続中のセッションには反映されません。次回、クライアントがpgpool-IIに接続したときから反映されます。
 </p>
 
+<h1><a name="show-commands"></a>SHOWコマンド</h1>
+<h2>概要</h2>
+<p>
+pgpool-IIでは、SHOWコマンドを使って情報を参照することができます。
+SHOWはSQLコマンドですが、pgpool-IIは一部のSHOWコマンドを独自に解釈して、pgpool-IIが管理する情報を返却します。
+以下のようなものがあります。
+<ul>
+  <li>pool_status 構成情報</li>
+  <li>pool_nodes DBノード情報</li>
+  <li>pool_processes pgpool-IIプロセスの内部情報</li>
+  <li>pool_pools コネクションプール情報</li>
+  <li>pool_version pgpool-IIのバージョン</li>
+</ul>
+</p>
+<p>"pool_status" SQL は以前からありますが、他のSQLはpgpool-II 3.0から追加されました。
+
+<h2>pool_status</h2>
+<p>"SHOW pool_status" は設定パラメータの名前と値、説明を表示します。出力の一部を示します。
+<pre>
+benchs2=# show pool_status;
+             item              |              value              |                           description                            
+-------------------------------+---------------------------------+------------------------------------------------------------------
+ listen_addresses              | 127.0.0.1                       | host name(s) or IP address(es) to listen to
+ port                          | 9999                            | pgpool accepting port number
+ socket_dir                    | /tmp                            | pgpool socket directory
+ num_init_children             | 5                               | # of children initially pre-forked
+ child_life_time               | 300                             | if idle for this seconds, child exits
+</pre>
+</p>
+<h2>pool_nodes</h2>
+<p>"SHOW pool_nodes"は、DBノードのリストを表示します。
+ホスト名、ポート番号、状態、重み(ロードバランスモードで運用しているときにのみ意味があります)が表示されます。
+状態(status)の意味については、<a href="#pcp_node_info">pcp_node_infoリファレンス</a>で説明されています。
+<pre>
+benchs2=# show pool_nodes;
+  hostname   | port | status |     lb_weight     
+-------------+------+--------+-------------------
+ 127.0.0.1   | 5432 | 2      | 1073741823.500000
+ 192.168.1.7 | 5432 | 3      | 1073741823.500000
+(2 lignes)
+</pre>
+</p>
+<h2>pool_processes</h2>
+<p>"SHOW pool_processes"は、接続待ち、あるいは接続中pgpool-IIの子プロセスの状態を表示します。
+</p>
+<p>
+6つのカラムがあります。
+<ul>
+<li>pool_pid はpgpool-IIプロセスのプロセスIDです。</li>
+<li>start_timeはこのプロセスが起動された時刻です(1970年1月1日からの経過秒で表示されます)。</li>
+<li>databaseはこのプロセスが接続しているデータベース名です。</li>
+<li>usernameはこのプロセスの接続で使用しているユーザ名です。</li>
+<li>create_time isはこの接続が作成された時刻です。</li>
+<li>pool_counter はこの接続が使用された回数です。</li>
+</ul>
+</p>
+<p>返却行数は常にnum_init_childrenになります。
+また、データベース名などが表示されるのは、そのプロセスにフロントエンドからの接続がある場合に限ります。</p>
+<pre>
+benchs2=# show pool_processes;
+ pool_pid | start_time | database  | username  | create_time | pool_counter
+----------+------------+-----------+-----------+-------------+--------------
+ 4318     | 1281433036 |           |           |             |
+ 4319     | 1281433036 |           |           |             |
+ 4320     | 1281433036 | benchs2   | guillaume | 1281433038  | 1
+ 4321     | 1281433036 |           |           |             |
+ 4322     | 1281433036 |           |           |             |
+(5 lines)
+</pre>
+<h2>pool_pools</h2>
+<p>"SHOW pool_pools"は、pgpool-IIのコネクションプールの状態を表示します。
+</p>
+<p>
+10のカラムがあります。
+<ul>
+<li>pool_pid はpgpool-IIプロセスのプロセスIDです。</li>
+<li>start_timeはこのプロセスが起動された時刻です(1970年1月1日からの経過秒で表示されます)。</li>
+<li>pool_id はコネクションプールIDです。(0からmax_pool-1の値です)</li>
+<li>databaseはこのプロセスが接続しているデータベース名です。</li>
+<li>usernameはこのプロセスの接続で使用しているユーザ名です。</li>
+<li>create_time isはこの接続が作成された時刻です。</li>
+<li>majorversion と minorversion はこの接続で使用されているプロトコルバージョン番号です。</li>
+<li>pool_counter はこの接続が使用された回数です。</li>
+<li>pool_backendpid は PostgreSQL のバックエンドプロセスのプロセスIDです。</li>
+<li>pool_connected は真偽値で、0ならフロントエンドからの接続無し、1なら接続ありを表します。</li>
+</ul>
+</p>
+<p>返却行数は常にnum_init_children*max_poolになります。
+<pre>
+benchs2=# show pool_pools;
+ pool_pid | start_time | pool_id | database | username  | create_time | majorversion | minorversion | pool_counter | pool_backendpid | pool_connected 
+----------+------------+---------+----------+-----------+-------------+--------------+--------------+--------------+-----------------+----------------
+ 4318     | 1281433036 | 0       |          |           | 0           | 0            | 0            | 0            | 0               | 0
+ 4318     | 1281433036 | 1       |          |           | 0           | 0            | 0            | 0            | 0               | 0
+ 4318     | 1281433036 | 2       |          |           | 0           | 0            | 0            | 0            | 0               | 0
+ 4318     | 1281433036 | 3       |          |           | 0           | 0            | 0            | 0            | 0               | 0
+ 4319     | 1281433036 | 0       |          |           | 0           | 0            | 0            | 0            | 0               | 0
+ 4319     | 1281433036 | 1       |          |           | 0           | 0            | 0            | 0            | 0               | 0
+ 4319     | 1281433036 | 2       |          |           | 0           | 0            | 0            | 0            | 0               | 0
+ 4319     | 1281433036 | 3       |          |           | 0           | 0            | 0            | 0            | 0               | 0
+ 4320     | 1281433036 | 0       | benchs2  | guillaume | 1281433038  | 3            | 0            | 1            | 4327            | 1
+ 4320     | 1281433036 | 1       |          |           | 0           | 0            | 0            | 0            | 0               | 1
+ 4320     | 1281433036 | 2       |          |           | 0           | 0            | 0            | 0            | 0               | 0
+ 4320     | 1281433036 | 3       |          |           | 0           | 0            | 0            | 0            | 0               | 0
+ 4321     | 1281433036 | 0       |          |           | 0           | 0            | 0            | 0            | 0               | 0
+ 4321     | 1281433036 | 1       |          |           | 0           | 0            | 0            | 0            | 0               | 0
+ 4321     | 1281433036 | 2       |          |           | 0           | 0            | 0            | 0            | 0               | 0
+ 4321     | 1281433036 | 3       |          |           | 0           | 0            | 0            | 0            | 0               | 0
+ 4322     | 1281433036 | 0       |          |           | 0           | 0            | 0            | 0            | 0               | 0
+ 4322     | 1281433036 | 1       |          |           | 0           | 0            | 0            | 0            | 0               | 0
+ 4322     | 1281433036 | 2       |          |           | 0           | 0            | 0            | 0            | 0               | 0
+ 4322     | 1281433036 | 3       |          |           | 0           | 0            | 0            | 0            | 0               | 0
+(20 lines)
+</pre>
+</p>
+<h2>pool_version</h2>
+<p>"SHOW pool_version" はpgpool-IIのバージョン情報を表示します。
+例を示します。
+<pre>
+benchs2=# show pool_version;
+      pool_version      
+------------------------
+ 3.0-dev (umiyameboshi)
+(1 line)
+</pre>
+</p>
+
 <h1><a name="online-recovery"></a>オンラインリカバリ</h1>
 <h2> オンラインリカバリ概要</h2>
 <p>
@@ -2994,7 +3122,7 @@ configure に失敗します。必ず libpq 3.0 以降(PostgreSQL 7.4以降
 </p>
 
 
-<h3>pcp_node_info</h3>
+<h3><a name="pcp_node_info"></a>pcp_node_info</h3>
 <pre>
    書式：
 	pcp_node_info  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
