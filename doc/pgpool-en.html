@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Wed Aug 11 12:02:12 JST 2010
+Last modified: Wed Aug 11 17:11:10 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -35,6 +35,7 @@ Last modified: Wed Aug 11 12:02:12 JST 2010
         <li><a href="#reload">Reloading pgpool-II configuration files</a></li>
         <li><a href="#show-commands">SHOW commands</a></li>
         <li><a href="#online-recovery">Online recovery</a></li>
+        <li><a href="#troubleshooting">Troubleshooting</a></li>
         <li><a href="#restriction">Restrictions</a></li>
         <li><a href="#reference">References</a></li>
 		<li><a href="#internal">internal</a></li>
@@ -2070,8 +2071,118 @@ set "_PGPOOL2_PCP_TIMEOUT " parameter to a greater number in
 pgmgt.conf.php.
 </p>
 
+<h1><a name="troubleshooting"></a>Troubleshooting</h1>
+<p>
+This section describes troubles and their workarounds while you are using pgpool-II.
+</p>
+<p>
+<ul>
+
+<dt>Health check failed
+<dd>
+<p>
+Health checking of pgpool-II detects DB nodes failure.
+</p>
+<p>
+<pre>
+2010-07-23 16:42:57 ERROR: pid 20031: health check failed. 1 th host foo at port 5432 is down
+2010-07-23 16:42:57 LOG:   pid 20031: set 1 th backend down status
+2010-07-23 16:42:57 LOG:   pid 20031: starting degeneration. shutdown host foot(5432)
+2010-07-23 16:42:58 LOG:   pid 20031: failover_handler: set new master node: 0
+2010-07-23 16:42:58 LOG:   pid 20031: failover done. shutdown host foo(5432)
+</pre>
+</p>
+<p>
+The log shows that DB node 1(host foo) goes down and disconnected then
+DB node 0 becomes new master.
+Check DB node 1 and remove the cause of failure. After that do online
+recovery against DB node 1 if possible.
+</p>
+
+<dt>Failed to read kind from frontend
+<dd>
+<p>
+<pre>
+2010-07-26 18:43:24 LOG:   pid 24161: ProcessFrontendResponse: failed to read kind from frontend. frontend abnormally exited
+</pre>
+<p>
+This log indicates that the frontend program disconnected pgpool-II
+without proper procedure.
+The possible causes are: bugs of applications, applications are forced
+to be terminated, or temporary network failure.
+Even such kind of events happen, there's no possibility of DB
+destruction or breaking data consistency.
+It is advised that you check the applications and networks if the
+message keeps on logging.
+</p>
+
+<dt>Kind mismatch errors
+<dd>
+<p>
+It is possible that you have this error when pgpool-II operates in
+replication mode.
+</p>
+<pre>
+2010-07-22 14:18:32 ERROR: pid 9966: kind mismatch among backends. Possible last query was: "FETCH ALL FROM c;" kind details are: 0[T] 1[E: cursor "c" does not exist]
+</pre>
+<p>
+Pgpool-II waits for reponses from DB nodes after sending SQL command to them.
+The message indicates that each DB nodes return back different kind of response.
+You see SQL which possibly caused the error after "Possible last query
+was:".
+Then kind of response follows. If the response indicates an error, the
+error message from PostgreSQL is shown.
+Here you see "0[T]" saying that the 0the DB node responses "T"(starting
+to send row description), and "1[E" indicates that DB node 1 returns
+error with message "cursor "c" does not exist".
+<p>
+Caution: You will see this error when operating in master/slave mode as
+well.
+For example, even in the mode, SET command will be basically sent to all
+DB nodes to keep all the DB node in same condition.
+</p>
+<p>
+Check the database and resync them using online recovery if you find
+databases are out of sync.
+</p>
+
+<p>
+<dt>Pgpool detected difference of the number of inserted, updated or deleted tuples
+<dd>
+<p>
+In replication mode, pgpool-II detects the difference of number of
+INSERT/UPDATE/DELETE rows.
+</p>
+<p>
+<pre>
+2010-07-22 11:49:28 ERROR: pid 30710: pgpool detected difference of the number of inserted, updated or deleted tuples. Possible last query was: "update t1 set i = 1;"
+2010-07-22 11:49:28 LOG:   pid 30710: ReadyForQuery: Degenerate backends: 1
+2010-07-22 11:49:28 LOG:   pid 30710: ReadyForQuery: Affected tuples are: 0 1
+</pre>
+<p>
+In the example above, number of updated rows by "update t1 set i = 1"
+was differe among DB nodes.
+Also in the next line indicates that DB 1 is disconnected, and number of
+affected rows of DB node 0 was 0, while in DB node 1 that was 1.
+</p>
+<p>
+Stop the DB node which suppposed to have wrong data and do online recovery.
+</ul>
+
 
 <h1>Restrictions<a name="restriction"></a></h1>
+
+<p>
+<h2>Functionalities of PostgreSQL</h2>
+<p>
+<ul>
+<li>If you use pg_terminate_backend() to stop backend, this will trigger
+	 failover.
+	 The reason why this happens is, PostgreSQL sends exactly same
+	 message as postmaster shutdown. There is no workaround as for now.
+	 Please do not use the function.
+</ul>
+
 <p>
 <h2><a name="md5"></a>Authentication / Access Controls</h2>
 
