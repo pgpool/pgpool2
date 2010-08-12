@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Thu Aug 12 08:36:10 JST 2010
+Last modified: Thu Aug 12 10:02:46 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1878,7 +1878,7 @@ Set the following parameters for online recovery in pgpool.conf.
 </p>
 
 
-<h2> Installation of C language function</h2>
+<h2><a name="installing-c-functions"></a>Installing C language functions</h2>
 <p>
 You need to install the C language function for online recovery to
 "template1" database of all backend nodes.
@@ -1891,7 +1891,7 @@ Source code is in pgpool-II tar ball.
 </pre>
 
 <p>
-Change the directory and do "make install".
+Change directory there and do "make install".
 </p>
 
 <pre>
@@ -1918,7 +1918,7 @@ pgpool-II-x.x.x/sample directory.
 
 <h3>Online recovery by PITR</h3>
 <p>
-We explain how to do online recovery by Point In Time Recovery(PITR).
+We explain how to do online recovery by Point In Time Recovery(PITR), which is available PostgreSQL 8.2 or later.
 Note that all PostgreSQL servers need to enable PITR.
 </p>
 
@@ -1953,8 +1953,15 @@ restore_command = 'scp master:/data/archive_log/%f %p'
 
 <p>
 Then, we prepare a script to switch XLOG on the second stage.
-The script is named "pgpool_recovery_pitr" for example. Here is the sample script.
-
+The script is named "pgpool_recovery_pitr" for example.
+This script forces to switch the transaction log.
+For this purpose, pg_switch_xlog can be used.
+However it may return *before* actually the switcing has been done and this might lead to failre of online recovery.
+Pgpool-II provides safer function called "pgpool_switch_xlog" which will wait until the transaction log switching actually done.
+pgpool_switch_xlog is installed in the procedure <a href="#installing-c-functions">Installing C functions</a>section.
+</p>
+<p>
+Here is the sample script.
 </p>
 <p>
 <pre>
@@ -1975,7 +1982,7 @@ do
   fi
 done
 
-psql -p $port -c 'SELECT pg_switch_xlog()' postgres
+psql -p $port -c 'SELECT pgpool_switch_xlog()' postgres
 </pre>
 </p>
 
