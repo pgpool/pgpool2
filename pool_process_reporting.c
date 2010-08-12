@@ -212,9 +212,38 @@ void config_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
 		strncat(status[i].value, pool_config->reset_query_list[j], len);
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
-		strncat(status[i].value, ";", len);
+		if (j != pool_config->num_reset_queries-1)
+			strncat(status[i].value, ";", len);
 	}
 	strncpy(status[i].desc, "queries issued at the end of session", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "white_function_list", POOLCONFIG_MAXNAMELEN);
+	*(status[i].value) = '\0';
+	for (j=0;j<pool_config->num_white_function_list;j++)
+	{
+		int len;
+		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
+		strncat(status[i].value, pool_config->white_function_list[j], len);
+		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
+		if (j != pool_config->num_white_function_list-1)
+			strncat(status[i].value, ",", len);
+	}
+	strncpy(status[i].desc, "functions those do not write to database", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "black_function_list", POOLCONFIG_MAXNAMELEN);
+	*(status[i].value) = '\0';
+	for (j=0;j<pool_config->num_black_function_list;j++)
+	{
+		int len;
+		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
+		strncat(status[i].value, pool_config->black_function_list[j], len);
+		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
+		if (j != pool_config->num_black_function_list-1)
+			strncat(status[i].value, ",", len);
+	}
+	strncpy(status[i].desc, "functions those write to database", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "print_timestamp", POOLCONFIG_MAXNAMELEN);

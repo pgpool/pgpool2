@@ -41,6 +41,7 @@ POOL_CONFIG *pool_config;	/* configuration values */
 POOL_SYSTEMDB_CONNECTION_POOL *system_db_info;
 static unsigned Lineno;
 static char *default_reset_query_list[] = {"ABORT", "DISCARD ALL"};
+static char *default_black_function_list[] = {"nextval", "setval"};
 
 typedef enum {
   POOL_KEY = 1,
@@ -162,8 +163,8 @@ int pool_init_config(void)
 	pool_config->num_reset_queries = sizeof(default_reset_query_list)/sizeof(char *);
 	pool_config->white_function_list = NULL;
 	pool_config->num_white_function_list = 0;
-	pool_config->black_function_list = NULL;
-	pool_config->num_black_function_list = 0;
+	pool_config->black_function_list = default_black_function_list;
+	pool_config->num_black_function_list = sizeof(default_black_function_list)/sizeof(char *);
 	pool_config->print_timestamp = 1;
 	pool_config->master_slave_mode = 0;
 	pool_config->master_slave_sub_mode = "slony";
