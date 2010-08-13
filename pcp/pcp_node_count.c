@@ -134,13 +134,13 @@ usage(void)
 	fprintf(stderr, "pcp_node_count - display the total number of nodes under pgpool-II's control\n\n");
 	fprintf(stderr, "Usage: pcp_node_count [-d] timeout hostname port# username password\n");
 	fprintf(stderr, "Usage: pcp_node_count -h\n\n");
-	fprintf(stderr, "  -d       - enable debug message (optional)\n");
-	fprintf(stderr, "  timeout  - connection timeout value in seconds. command exits on timeout\n");
-	fprintf(stderr, "  hostname - pgpool-II hostname\n");
-	fprintf(stderr, "  port#    - PCP port number\n");
-	fprintf(stderr, "  username - username for PCP authentication\n");
-	fprintf(stderr, "  password - password for PCP authentication\n");
-	fprintf(stderr, "  -h       - print this help\n");
+	fprintf(stderr, "  -d, --debug : enable debug message (optional)\n");
+	fprintf(stderr, "  timeout     : connection timeout value in seconds. command exits on timeout\n");
+	fprintf(stderr, "  hostname    : pgpool-II hostname\n");
+	fprintf(stderr, "  port#       : PCP port number\n");
+	fprintf(stderr, "  username    : username for PCP authentication\n");
+	fprintf(stderr, "  password    : password for PCP authentication\n");
+	fprintf(stderr, "  -h, --help  : print this help\n");
 }
 
 static void

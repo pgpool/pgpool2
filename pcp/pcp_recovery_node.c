@@ -145,14 +145,14 @@ usage(void)
 	fprintf(stderr, "pcp_recovery_node - recovery a node\n\n");
 	fprintf(stderr, "Usage: pcp_recovery_node [-d] timeout hostname port# username password nodeID\n");
 	fprintf(stderr, "Usage: pcp_recovery_node -h\n\n");
-	fprintf(stderr, "  -d       - enable debug message (optional)\n");
-	fprintf(stderr, "  timeout  - connection timeout value in seconds. command exits on timeout\n");
-	fprintf(stderr, "  hostname - pgpool-II hostname\n");
-	fprintf(stderr, "  port#    - PCP port number\n");
-	fprintf(stderr, "  username - username for PCP authentication\n");
-	fprintf(stderr, "  password - password for PCP authentication\n");
-	fprintf(stderr, "  nodeID   - ID of a node to recover\n");
-	fprintf(stderr, "  -h       - print this help\n");
+	fprintf(stderr, "  -d, --debug : enable debug message (optional)\n");
+	fprintf(stderr, "  timeout     : connection timeout value in seconds. command exits on timeout\n");
+	fprintf(stderr, "  hostname    : pgpool-II hostname\n");
+	fprintf(stderr, "  port#       : PCP port number\n");
+	fprintf(stderr, "  username    : username for PCP authentication\n");
+	fprintf(stderr, "  password    : password for PCP authentication\n");
+	fprintf(stderr, "  nodeID      : ID of a node to recover\n");
+	fprintf(stderr, "  -h, --help  : print this help\n");
 }
 
 static void
