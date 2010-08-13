@@ -1819,11 +1819,11 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 }
 
 POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
-								   POOL_CONNECTION_POOL *backend, int *state)
+								   POOL_CONNECTION_POOL *backend,
+								   int *state, short *num_fields)
 {
 	int status;
 	char kind;
-	short num_fields = 0;
 	POOL_SESSION_CONTEXT *session_context;
 
 	/* Get session context */
@@ -1952,7 +1952,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 				break;
 
 			case 'B':	/* BinaryRow */
-				status = BinaryRow(frontend, backend, num_fields);
+				status = BinaryRow(frontend, backend, *num_fields);
 				break;
 
 			case 'C':	/* CompletedResponse */
@@ -1960,7 +1960,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 				break;
 
 			case 'D':	/* AsciiRow */
-				status = AsciiRow(frontend, backend, num_fields);
+				status = AsciiRow(frontend, backend, *num_fields);
 				break;
 
 			case 'E':	/* ErrorResponse */
@@ -1990,7 +1990,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 				break;
 
 			case 'T':	/* RowDescription */
-				status = RowDescription(frontend, backend, &num_fields);
+				status = RowDescription(frontend, backend, num_fields);
 				break;
 
 			case 'V':	/* FunctionResultResponse and FunctionVoidResponse */

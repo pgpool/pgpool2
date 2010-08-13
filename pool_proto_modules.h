@@ -117,7 +117,8 @@ extern POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 										   POOL_CONNECTION_POOL *backend);
 
 extern POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend, 
-										  POOL_CONNECTION_POOL *backend, int *state);
+										  POOL_CONNECTION_POOL *backend,
+										  int *state, short *num_fields);
 
 /*
  * modules defined in pool_proto2.c

@@ -87,6 +87,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 							   int reset_request)
 {
 	char kind;	/* packet kind (backend) */
+	short num_fields = 0;	/* the number of fields in a row (V2 protocol) */
 	fd_set	readmask;
 	fd_set	writemask;
 	fd_set	exceptmask;
@@ -328,7 +329,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 							sleep(5);
 							break;
 						}
-						status = ProcessBackendResponse(frontend, backend, &state);
+						status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
 						if (status != POOL_CONTINUE)
 							return status;
 						break;
@@ -398,7 +399,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 			got_sighup = 0;
 		}
 
-		status = ProcessBackendResponse(frontend, backend, &state);
+		status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
 		if (status != POOL_CONTINUE)
 			return status;
 
