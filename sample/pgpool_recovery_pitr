@@ -5,6 +5,7 @@ datadir=$1		# master dabatase cluster
 DEST=$2			# hostname of the DB node to be recovered
 DESTDIR=$3		# database cluster of the DB node to be recovered
 port=5432		# PostgreSQL port number
+archdir=/data/archive_log	# archive log directory
 
 # Force to flush current value of sequences to xlog 
 psql -p $port -t -c 'SELECT datname FROM pg_database WHERE NOT datistemplate AND datallowconn' template1|
@@ -15,4 +16,4 @@ do
   fi
 done
 
-psql -p $port -c 'SELECT pg_switch_xlog()' postgres
+psql -p $port -c "SELECT pgpool_switch_xlog('$archdir')" template1
