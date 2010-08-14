@@ -26,6 +26,7 @@
 #include "pool_config.h"
 #include "version.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include <netinet/in.h>
 
@@ -487,7 +488,7 @@ void config_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 		i++;
 
 		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "backend_weight%d", j);
-		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%f", BACKEND_INFO(j).backend_weight);
+		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%f", BACKEND_INFO(j).backend_weight/RAND_MAX);
 		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "weight of backend #%d", j);
 		i++;
 
@@ -668,7 +669,7 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	    strncpy(nodes[i].hostname, bi->backend_hostname, strlen(bi->backend_hostname)+1);
 		snprintf(nodes[i].port, POOLCONFIG_MAXIDENTLEN, "%d", bi->backend_port);
 		snprintf(nodes[i].status, POOLCONFIG_MAXSTATLEN, "%d", bi->backend_status);
-		snprintf(nodes[i].lb_weight, POOLCONFIG_MAXWEIGHTLEN, "%f", bi->backend_weight);
+		snprintf(nodes[i].lb_weight, POOLCONFIG_MAXWEIGHTLEN, "%f", bi->backend_weight/RAND_MAX);
 	}
 
 	nrows = i;

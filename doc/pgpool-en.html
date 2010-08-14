@@ -1690,10 +1690,10 @@ if you use the load balancing mode). The possible values in the status column
 are explained in the <a href="#pcp_node_info">pcp_node_info reference</a>.
 <pre>
 benchs2=# show pool_nodes;
-  hostname   | port | status |     lb_weight     
--------------+------+--------+-------------------
- 127.0.0.1   | 5432 | 2      | 1073741823.500000
- 192.168.1.7 | 5432 | 3      | 1073741823.500000
+  hostname   | port | status | lb_weight     
+-------------+------+--------+-----------
+ 127.0.0.1   | 5432 | 2      | 0.5
+ 192.168.1.7 | 5432 | 3      | 0.5
 (2 lignes)
 </pre>
 </p>
