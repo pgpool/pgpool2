@@ -2613,6 +2613,18 @@ Status is represented by a digit from [0 to 3].
 The load balance weight is displayed in normalized format.
 </p>
 
+<p>
+The --verbose option can help understand the output. For example:
+</p>
+
+<pre>
+$ pcp_node_info --verbose 10 localhost 9898 postgres hogehoge 0
+Hostname: host1
+Port    : 5432
+Status  : 1
+Weight  : 0.5
+</pre>
+
 <p>Specifying an invalid node ID will result in an error with exit
 status 12, and BackendError will be displayed.</p>
 
@@ -2658,6 +2670,32 @@ displayed. If there are multiple connections, one connection's
 information will be displayed on each line multiple
 times. Timestamps are displayed in EPOCH format.
 </p>
+
+<p>
+The --verbose option can help understand the output. For example:
+</p>
+
+<pre>
+$ pcp_proc_info --verbose 10 localhost 9898 postgres hogehoge 3815
+Database     : postgres_db
+Username     : postgres
+Start time   : 1150769932
+Creation time: 1150767351
+Major        : 3
+Minor        : 0
+Counter      : 1
+PID          : 1467
+Connected    : 1
+Database     : postgres_db
+Username     : postgres
+Start time   : 1150769932
+Creation time: 1150767351
+Major        : 3
+Minor        : 0
+Counter      : 1
+PID          : 1468
+Connected    : 1
+</pre>
 
 <p>Specifying an invalid node ID will result in an error with exit
 status 12, and BackendError will be displayed.</p>

@@ -43,17 +43,23 @@ main(int argc, char **argv)
 	BackendInfo *backend_info;
 	int ch;
 	int	optindex;
+    bool verbose = false;
 
 	static struct option long_options[] = {
 		{"debug", no_argument, NULL, 'd'},
 		{"help", no_argument, NULL, 'h'},
+		{"verbose", no_argument, NULL, 'v'},
 		{NULL, 0, NULL, 0}
 	};
 	
-    while ((ch = getopt_long(argc, argv, "hd", long_options, &optindex)) != -1) {
+    while ((ch = getopt_long(argc, argv, "hdv", long_options, &optindex)) != -1) {
 		switch (ch) {
 		case 'd':
 			pcp_enable_debug();
+			break;
+
+		case 'v':
+			verbose = true;
 			break;
 
 		case 'h':
@@ -134,11 +140,20 @@ main(int argc, char **argv)
 		pcp_disconnect();
 		myexit(errorcode);
 	} else {
-		printf("%s %d %d %f\n", 
-			   backend_info->backend_hostname,
-			   backend_info->backend_port,
-			   backend_info->backend_status,
-			   backend_info->backend_weight);
+        if (verbose)
+        {
+		    printf("Hostname: %s\nPort    : %d\nStatus  : %d\nWeight  : %f\n", 
+		    	   backend_info->backend_hostname,
+		    	   backend_info->backend_port,
+		    	   backend_info->backend_status,
+		    	   backend_info->backend_weight/RAND_MAX);
+        } else {
+		    printf("%s %d %d %f\n", 
+		    	   backend_info->backend_hostname,
+		    	   backend_info->backend_port,
+		    	   backend_info->backend_status,
+		    	   backend_info->backend_weight/RAND_MAX);
+        }
 
 		free(backend_info);
 	}
