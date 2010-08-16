@@ -275,6 +275,13 @@ POOL_STATUS CompletedResponse(POOL_CONNECTION *frontend,
 		{
 			pool_debug("CompletedResponse: message length does not match between master(%d \"%s\",) and %d th server (%d \"%s\",)",
 					   len, string, i, len1, string1);
+
+			/* we except INSERT, because INSERT response has OID */
+			if (strncmp(string1, "INSERT", 6))
+			{
+				free(string1);
+				return POOL_END;
+			}
 		}
 	}
 	/* forward to the frontend */
