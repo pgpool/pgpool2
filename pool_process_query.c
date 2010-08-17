@@ -471,6 +471,23 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 	int used_count = 0;
 	int error_flag = 0;
 	unsigned long datacount = 0;
+	POOL_SESSION_CONTEXT *session_context;
+
+	/* Get session context */
+	session_context = pool_get_session_context();
+	if (!session_context)
+	{
+		pool_error("pool_parallel_exec: cannot get session context");
+		return POOL_END;
+	}
+
+	if (!session_context->query_context)
+	{
+		pool_error("pool_parallel_exec: cannot get query context");
+		return POOL_END;
+	}
+
+	pool_setall_node_to_be_sent(session_context->query_context);
 
 	timeout.tv_sec = 1;
 	timeout.tv_usec = 0;

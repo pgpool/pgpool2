@@ -699,6 +699,7 @@ POOL_STATUS pool_do_parallel_query(POOL_CONNECTION *frontend,
 
 			if(r_query->r_code != INSERT_DIST_NO_RULE) {
 				pool_unset_query_in_progress();
+				pool_set_skip_reading_from_backends();
 				return r_query->status;
 			}
 		}
@@ -706,6 +707,7 @@ POOL_STATUS pool_do_parallel_query(POOL_CONNECTION *frontend,
 		{
 			free_parser();
 			pool_unset_query_in_progress();
+			pool_set_skip_reading_from_backends();
 			return r_query->status;
 		}
 	}

@@ -100,8 +100,8 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 	/* Forget transaction isolation mode */
 	pool_unset_transaction_isolation();
 
-	/* "SHOW pool_status" has not executed yet */
-	pool_unset_pool_status_stmt();
+	/* We don't skip reading from backends */
+	pool_unset_skip_reading_from_backends();
 
 	/* Backends have not ignored messages yet */
 	pool_unset_ignore_till_sync();
@@ -206,49 +206,49 @@ void pool_unset_query_in_progress(void)
 }
 
 /*
- * Return true if "SHOW pool_status" is in progress
+ * Return true if we skip reading from backends
  */
-bool pool_is_pool_status_stmt(void)
+bool pool_is_skip_reading_from_backends(void)
 {
 	if (!session_context)
 	{
-		pool_error("pool_is_pool_status_stmt: session context is not initialized");
+		pool_error("pool_is_skip_reading_from_backends: session context is not initialized");
 		return false;
 	}
 
-	return session_context->pool_status_stmt;
+	return session_context->skip_reading_from_backends;
 }
 
 /*
- * Set pool_status_stmt
+ * Set skip_reading_from_backends
  */
-void pool_set_pool_status_stmt(void)
+void pool_set_skip_reading_from_backends(void)
 {
 	if (!session_context)
 	{
-		pool_error("pool_set_pool_status_stmt: session context is not initialized");
+		pool_error("pool_set_skip_reading_from_backends: session context is not initialized");
 		return;
 	}
 
-	pool_debug("pool_set_pool_status_stmt: done");
+	pool_debug("pool_set_skip_reading_from_backends: done");
 
-	session_context->pool_status_stmt = true;
+	session_context->skip_reading_from_backends = true;
 }
 
 /*
- * Unset pool_status_stmt
+ * Unset skip_reading_from_backends
  */
-void pool_unset_pool_status_stmt(void)
+void pool_unset_skip_reading_from_backends(void)
 {
 	if (!session_context)
 	{
-		pool_error("pool_unset_pool_status_stmt: session context is not initialized");
+		pool_error("pool_unset_skip_reading_from_backends: session context is not initialized");
 		return;
 	}
 
-	pool_debug("pool_unset_pool_status_stmt: done");
+	pool_debug("pool_unset_skip_reading_from_backends: done");
 
-	session_context->pool_status_stmt = false;
+	session_context->skip_reading_from_backends = false;
 }
 
 /*

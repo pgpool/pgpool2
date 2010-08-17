@@ -281,7 +281,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 			free_parser();
 			pool_query_context_destroy(query_context);
-			pool_set_pool_status_stmt();
+			pool_set_skip_reading_from_backends();
 			return POOL_CONTINUE;
 		}
 
@@ -1839,9 +1839,9 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 		return POOL_CONTINUE;
 	}
 
-	if (pool_is_pool_status_stmt())
+	if (pool_is_skip_reading_from_backends())
 	{
-		pool_unset_pool_status_stmt();
+		pool_unset_skip_reading_from_backends();
 		return POOL_CONTINUE;
 	}
 

@@ -119,8 +119,8 @@ typedef struct {
 	/* If true, error occurred in this transaction */
 	bool failed_transaction;
 
-	/* If true, "SHOW pool_status" is in progress */
-	bool pool_status_stmt;
+	/* If true, we skip reading from backends */
+	bool skip_reading_from_backends;
 
 	/* ignore any command until Sync message */
 	bool ignore_till_sync;
@@ -222,9 +222,9 @@ extern int pool_get_local_session_id(void);
 extern bool pool_is_query_in_progress(void);
 extern void pool_set_query_in_progress(void);
 extern void pool_unset_query_in_progress(void);
-extern bool pool_is_pool_status_stmt(void);
-extern void pool_set_pool_status_stmt(void);
-extern void pool_unset_pool_status_stmt(void);
+extern bool pool_is_skip_reading_from_backends(void);
+extern void pool_set_skip_reading_from_backends(void);
+extern void pool_unset_skip_reading_from_backends(void);
 extern bool pool_is_doing_extended_query_message(void);
 extern void pool_set_doing_extended_query_message(void);
 extern void pool_unset_doing_extended_query_message(void);
