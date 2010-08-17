@@ -1404,7 +1404,7 @@ failover_command = '/usr/local/src/pgsql/9.0-beta/bin/failover_stream.sh %d %H /
 <a href="recovery.conf.sample">recovery.confのサンプル</a>は PostgreSQLのインストールディレクトリ下の"share/recovery.conf.sample"にあります。
 これをstanndbyノードのデータベースクラスタ下に"recovery.conf"としてコピーしておきます。
 そして、以下の項目を設定します。
-</pre>
+<pre>
 standby_mode = 'on'
 primary_conninfo = 'host=primary_hostのホスト名 user=postgres'
 trigger_file = '/tmp/trigger_file0'
