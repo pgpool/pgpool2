@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Tue Aug 17 14:20:50 JST 2010
+Last modified: Tue Aug 17 15:34:08 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1306,7 +1306,7 @@ true$B$J$i$P!"%U%'%$%k%*!<%P$,5/$-$^$9!#$=$N:]!"0J2<$N$h$&$J%(%i!<%a%C%;!<%8$,I
 'slony'$B$O(BSlony-I$B$rMxMQ$9$k;~$K;XDj$7$^$9!#(B
 'stream'$B$O!"(BPostgreSQL$BAH$_9~$_$N(BStreaming Replication$B$rMxMQ$9$k$H$-$K;XDj$7$^$9!#(B
 Slony-I$B$r;H$&>l9g$N@_Dj%U%!%$%k$N?w7A$O(Bpgpool.conf.sample-master-slave$B$G$9!#(B
-Streaming Replication$B$r;H$&>l9g$N?w7A$O(B@gpool.con.sample-stream$B$G$9!#(B
+Streaming Replication$B$r;H$&>l9g$N?w7A$O(Bpgpool.conf.sample-stream$B$G$9!#(B
 </p>
 <p>
 $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O(B pgpool-II $B$r:F5/F0$7$F$/$@$5$$!#(B
@@ -1400,7 +1400,7 @@ chmod 755 failover_stream.sh
 failover_command = '/usr/local/src/pgsql/9.0-beta/bin/failover_stream.sh %d %H /tmp/trigger_file0'
 </pre>
 
-<li>standby$B%N!<%I$N(Brecovery.con$B$r@_Dj$7$^$9!#(B
+<li>standby$B%N!<%I$N(Brecovery.conf$B$r@_Dj$7$^$9!#(B
 <a href="recovery.conf.sample">recovery.conf$B$N%5%s%W%k(B</a>$B$O(B PostgreSQL$B$N%$%s%9%H!<%k%G%#%l%/%H%j2<$N(B"share/recovery.conf.sample"$B$K$"$j$^$9!#(B
 $B$3$l$r(Bstanndby$B%N!<%I$N%G!<%?%Y!<%9%/%i%9%?2<$K(B"recovery.conf"$B$H$7$F%3%T!<$7$F$*$-$^$9!#(B
 $B$=$7$F!"0J2<$N9`L\$r@_Dj$7$^$9!#(B
@@ -1452,7 +1452,7 @@ recovery_password = 't-ishii'
 
 <li> recovery_1st_stage_command $B$r@_Dj$7$^$9!#(B
 $B$3$3$G;XDj$9$k%U%!%$%k$O!"(Bprimary$B%5!<%P$+$i%Y!<%9%P%C%/%"%C%W$r<hF@$7!"(Bstandby$B%5!<%P$K%j%9%H%"$9$k$b$N$G$J$1$l$P$J$j$^$;$s!#(B
-$B$3$N%9%/%j%W%H%U%!%$%k$O!"%G!<%?%Y!<%9%/%i%9%?2<$KG[CV$7!"<B9T8"8B$rM?$($F$*$-$^$9!#(B
+$B$3$N%9%/%j%W%H%U%!%$%k$O!"(Bprimary$B$N%G!<%?%Y!<%9%/%i%9%?2<$KG[CV$7!"<B9T8"8B$rM?$($F$*$-$^$9!#(B
 $B%5%s%W%k$H$7$F!"(Bprimary/standby$B$=$l$>$l0lBf9=@.$N>l9g$N%9%/%j%W%H(B<a href="basebackup.sh">(basebackup.sh)</a>$B$r<($7$^$9!#(B
 $B$3$N%9%/%j%W%H$G$O!"(Brecovery_user $B$,%Q%9%o!<%I$J$7$G%j%+%P%jBP>]$N(Bstandby$B%N!<%I$K%m%0%$%s$G$-$k$3$H$rA0Ds$K$7$F$$$k$N$G!"$"$i$+$8$a(Bssh$B$N@_Dj$r9T$J$C$F$*$/I,MW$,$"$j$^$9!#(B
 <pre>
@@ -3779,6 +3779,9 @@ failover_if_affected_tuples_mismatch $B$r(B true$B$K@_Dj$9$k$H!"$3$N8=>]$,5/$
 </p>
 <p>
 <ul>
+
+ <li>$B7?$,;~9o%G!<%?0J30$NNs$N>l9g!"%G%U%)%k%HCM$K(Bnow()$B$,4^$^$l$F$$$F$b=q$-49$($r9T$J$o$J$$$h$&$K$7$^$7$?!#(B
+$B:#$^$G$OL5>r7o$K=q$-49$($r9T$J$C$F$$$?$?$a!"=q$-49$($N7k2L!"(BINSERT$BJ8$J$I$,%(%i!<$K$J$C$F$$$^$7$?(B(Tatsuo)
 
  <li>$B%?%$%`%9%?%s%W$N=q$-49$(=hM}BP>]$H$J$k%F!<%V%k$N%9%-!<%^$,L5;k$5$l$J$$$h$&$K$7$^$7$?(B(Tatsuo)
 
