@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Tue Aug 17 14:23:15 JST 2010
+Last modified: Tue Aug 17 15:40:48 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1261,8 +1261,19 @@ to false, and <code>master_slave_mode</code> to true.</p>
 <p>master/slave mode has 'master_slave_sub mode'.
 The default is 'slony' which is
 suitable for Slony-I. You can also set it to 'stream', which should be
-set if you want to work with PostgreSQL's buil-in replication system
+set if you want to work with PostgreSQL's built-in replication system
 (Streaming Replication).
+The sample configuration file for using Slony-I is
+pgpool.conf.sample-master-slave and pgpool.conf.sample-stream is for
+streaming replication.
+</p>
+<p>
+Please retart pgpool-II if you change above parameters.
+</p>
+<p>
+You can use white_function_list and black_function_list to control load
+balancing in master/slave mode.
+See <a href="#white_function_list">white_function_list</a> for more details.
 </p>
 
 <h4>Streaming Replication</h4>
@@ -1304,6 +1315,163 @@ You could check the replication delay by using "show pool_status"
 command as well.
 </p>
 </ul>
+</p>
+
+<h4>Failover with Streaming Replication</h4>
+<p>
+In master/slave mode with streaming replication, if primary or standby
+node go dowm, you can use failover functionality of pgpool-II.
+Automatical detatching node can be used without any additional settings.
+In streaming replication the standby node checks "trigger file" and if
+it exists, the standby stops continuos recovery and goes into normal
+PostgreSQL mode. By using this, you can let the standby take over when
+the primary goes down.
+</p>
+<p>
+<strong>Caution: If you plan to use multiple standby nodes, we recommend
+to set delay_threshold to prevent any query directed to other standby
+node from retrieving older data.</strong>
+</p>
+<p>
+If the second standy take over when the first standby which already
+took over primary, you would get bogus from the second standby.
+We recommend not to plan this kind of configration.
+</p>
+<p>
+How to prepare failover configuration is as follows.
+</p>
+<p>
+<ol>
+ <li>Put a failover script somewhere (for example
+	  /usr/local/pgsql/bin)and give it execute permission.
+<pre>
+$ cd /usr/loca/pgsql/bin
+$ cat failover_stream.sh
+#! /bin/sh
+# Failover command for streming replication.
+# This script assumes that DB node 0 is primary, and 1 is standby.
+# 
+# If standby goes down, does nothing. If primary goes down, create a
+# trigger file so that standby take over primary node.
+#
+# Arguments: $1: failed node id. $2: new master hostname. $3: path to
+# trigger file.
+
+failed_node=$1
+new_master=$2
+trigger_file=$3
+
+# Do nothing if standby goes down.
+if [ $failed_node = 1 ]; then
+	exit 0;
+fi
+
+# Create trigger file.
+/usr/bin/ssh -T $new_master /bin/touch $trigger_file
+
+exit 0;
+
+chmod 755 failover_stream.sh
+</pre>
+<li>Set failover_commmand in pgpool.conf.
+<pre>
+failover_command = '/usr/local/src/pgsql/9.0-beta/bin/failover_stream.sh %d %H /tmp/trigger_file0'
+</pre>
+
+<li>Set recovery.conf on the standby node.
+<a href="recovery.conf.sample">A sample recovery.conf</a>can be found
+	  under PostgreSQL installion directory
+	  "share/recovery.conf.sample".
+Copy recovery.conf.sample as recovgery.conf under database cluster
+	  directory and edit it.
+<pre>
+standby_mode = 'on'
+primary_conninfo = 'host=name of primary_host user=postgres'
+trigger_file = '/tmp/trigger_file0'
+</pre>
+
+<li>Set postgresql.conf on the primary node.
+Below is just an example. You will need to tweak for your environment.
+<pre>
+wal_level = hot_standby
+max_wal_senders = 1
+</pre>
+
+<li>Set pg_hba.conf on the primary node.
+Below is just an example. You will need to tweak for your environment.
+<pre>
+host	replication	postgres		192.168.0.10/32		trust
+</pre>
+
+</ol>
+
+<p>
+Start primary and secondary PostgreSQL to initiate Streaming replication.
+If the primary node goes dhown, standby will automatically start as a
+normal PostgreSQL and will be ready to accept write queries.
+</p>
+
+<h4>Online recovery with Streaming Replication</h4>
+<p>
+In master/slave mode with streaming replication, you can use online recovery.
+Only the standby node can be recovered. You cannot recover the primary node.
+To recover the primary node, you have to stop all DB nodes and pgpool-II
+then restore from the backup.
+</p>
+
+<p>
+<ol>
+ <li>Set recovery_user. Usualy it's "postgres".
+<pre>
+recovery_user = 'postgres'
+</pre>
+<li>Set recovery_password for recovery_user to login database.
+<pre>
+recovery_password = 't-ishii'
+</pre>
+
+<li> Set recovery_1st_stage_command.
+The script for this should make base backup from the primaruy and
+restore on the standby node.
+Place the script under primary database cluster directory and give it
+execute permission.
+Here is the sample script<a href="basebackup.sh">(basebackup.sh)</a> for
+a configuraton of one primary and one standby.
+You need to set ssh so that recovery_user can login from the primary to
+the standby without being asked password.
+<pre>
+recovery_1st_stage_command = 'basebackup.sh'
+</pre>
+<li>Leave recovery_2nd_stage_command be empty.
+<pre>
+recovery_2nd_stage_command = ''
+</pre>
+
+<li>Install C functions and SQL functions to perform online recovery
+	  into each DB nodes.
+</p>
+
+<pre>
+# cd pgpool-II-x.x.x/sql/pgpool-recovery
+# make
+# make install
+# psql -f pgpool-recovery.sql template1
+</pre>
+
+<li>After completing online recovery, pgpool-II will start PostgreSQL on
+the standby node.
+Install the script for this puropose on each DB nodes.
+<a href="pgpool_remote_start">Sample script</a> is included in "sample"
+	  directory of source code.
+This script uses ssh. You need to allow recovery_user to login from the
+primary node to the standby node without being asked password.
+</ol>
+</p>
+
+<p>
+Thhat's it.
+Now you should be able to use pcp_recovery_node (as long as the standby
+node stops) or push "recovery" button of pgpoolAdmin to perform online recovery.
 </p>
 
 <h3>Parallel Mode</h3>
