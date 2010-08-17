@@ -1945,6 +1945,14 @@ POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
 				pool_error("do_command: error while reading rest of message");
 				return POOL_END;
 			}
+			if (kind == 'C')
+			{
+				if (!strncmp(string, "BEGIN", 5))
+					backend->tstate = 'T';
+				if (!strncmp(string, "COMMIT", 6) ||
+					!strncmp(string, "ROLLBACK", 8))
+					backend->tstate = 'I';
+			}
 		}
 	}
 
@@ -3672,7 +3680,7 @@ POOL_STATUS end_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTION_
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
 		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i) &&
-			TSTATE(backend, i) == 'T' &&
+			TSTATE(backend, i) != 'I' &&
 			INTERNAL_TRANSACTION_STARTED(backend, i))
 		{
 			if (MAJOR(backend) == PROTO_MAJOR_V3)
@@ -3707,21 +3715,24 @@ POOL_STATUS end_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTION_
 	}
 
 	/* Commit on master */
-	if (TSTATE(backend, MASTER_NODE_ID) == 'T' &&
+	if (TSTATE(backend, MASTER_NODE_ID) != 'I' &&
 			INTERNAL_TRANSACTION_STARTED(backend, MASTER_NODE_ID))
 	{
-		/*
-		 * Skip rest of Ready for Query packet
-		 */
-		if (pool_read(CONNECTION(backend, MASTER_NODE_ID), &len, sizeof(len)))
+		if (MAJOR(backend) == PROTO_MAJOR_V3)
 		{
-			POOL_SETMASK(&oldmask);
-			return POOL_END;
-		}
-		if (pool_read(CONNECTION(backend, MASTER_NODE_ID), &tstate, sizeof(tstate)))
-		{
-			POOL_SETMASK(&oldmask);
-			return POOL_END;
+			/*
+			 * Skip rest of Ready for Query packet
+			 */
+			if (pool_read(CONNECTION(backend, MASTER_NODE_ID), &len, sizeof(len)))
+			{
+				POOL_SETMASK(&oldmask);
+				return POOL_END;
+			}
+			if (pool_read(CONNECTION(backend, MASTER_NODE_ID), &tstate, sizeof(tstate)))
+			{
+				POOL_SETMASK(&oldmask);
+				return POOL_END;
+			}
 		}
 
 		per_node_statement_log(backend, MASTER_NODE_ID, "COMMIT");

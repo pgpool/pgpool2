@@ -258,6 +258,11 @@ POOL_STATUS CompletedResponse(POOL_CONNECTION *frontend,
 	string = pool_read_string(MASTER(backend), &len, 0);
 	if (string == NULL)
 		return POOL_END;
+	else if (!strncmp(string, "BEGIN", 5))
+		TSTATE(backend, MASTER_NODE_ID) = 'T';
+	else if (!strncmp(string, "COMMIT", 6) || !strncmp(string, "ROLLBACK", 8))
+		TSTATE(backend, MASTER_NODE_ID) = 'I';
+
 	len1 = len;
 	string1 = strdup(string);
 
@@ -270,6 +275,10 @@ POOL_STATUS CompletedResponse(POOL_CONNECTION *frontend,
 		string = pool_read_string(CONNECTION(backend, i), &len, 0);
 		if (string == NULL)
 			return POOL_END;
+		else if (!strncmp(string, "BEGIN", 5))
+			TSTATE(backend, i) = 'T';
+		else if (!strncmp(string, "COMMIT", 6) || !strncmp(string, "ROLLBACK", 8))
+			TSTATE(backend, i) = 'I';
  
 		if (len != len1)
 		{
@@ -389,6 +398,8 @@ POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend,
 	if (pool_write_and_flush(frontend, string, len) < 0)
 		return POOL_END;
 
+	ret = raise_intentional_error_if_need(backend);
+
 	/* change transaction state */
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -397,13 +408,7 @@ POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend,
 			if (TSTATE(backend, i) == 'T')
 				TSTATE(backend, i) = 'E';
 		}
-		else
-		{
-			TSTATE(backend, i) = 'I';
-		}
 	}
-
-	ret = raise_intentional_error_if_need(backend);
 
 	return ret;
 }
