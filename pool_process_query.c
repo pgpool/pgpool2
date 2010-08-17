@@ -1443,7 +1443,8 @@ POOL_STATUS ParameterStatus(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
  */
 void reset_variables(void)
 {
-	pool_unset_query_in_progress();
+	if(pool_get_session_context())
+		pool_unset_query_in_progress();
 
 	internal_transaction_started = 0;
 	receive_extended_begin = 0;
