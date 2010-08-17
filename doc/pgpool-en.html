@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Thu Aug 12 10:02:46 JST 2010
+Last modified: Tue Aug 17 14:23:15 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1147,7 +1147,7 @@ It can be changed on service.
   <p>
    You need to reload pgpool.conf if you change client_idle_limit_in_recovery.</p>
 
-<dt>lobj_lock_table
+<dt><a name="lobj_lock_table"></a>lobj_lock_table
 <dd>
 <p>
 Specify table name used for large object replication control. If
@@ -2249,11 +2249,33 @@ Stop the DB node which suppposed to have wrong data and do online recovery.
 	   </ul>
 </p>
 
-<h2>Large object</h2>
+<h2>Large objects</h2>
 <p>
-pgpool-II 2.3.2 or later supports large object replication. For this, you need to
-enable lobj_lock_table directive in pgpool.conf. Proper large object
+pgpool-II 2.3.2 or later supports large object replication if backend is PostgreSQL 8.1 or later.
+For this, you need to
+enable <a href="#lobj_lock_table">lobj_lock_table</a> directive in pgpool.conf. Large object
 replication using backend function lo_import is not supported, however.
+</p>
+
+<h2>Temporary tables in master/slave mode</h2>
+<p>
+Creating/inserting/updating/deleting temporary tables are always executed on master(primary).
+With pgpool-II 3.0 or later, SELECT to it is executed on master as well.
+However if the temporary table name is used as a literal in SELECT, there's no way to detect it, and the SELECT will be load balanced.
+That will cause "not found the table" or finding another table having same name.
+To avoid the problem, use /*NO LOAD BALANCE*/ SQL comment.
+</p>
+<p>
+<pre>
+Sample SELECT which causes a problem:
+SELECT 't1'::regclass::oid;
+</pre>
+</p>
+<p>
+psql's \d command uses literal table names.
+pgpool-II 3.0 or later checks if the SELECT includes access to system catalogs and
+such queries are always sent to master.
+Thus we avoid the problem.
 </p>
 
 <h2>Functions, etc. In Replication Mode</h2>
@@ -2282,6 +2304,13 @@ CREATE TABLE rel1(
   d1 date DEFAULT CURRENT_DATE
 )
 </pre>
+<p>
+Please note that if the column type is not a temporal one, rewriting is
+not performed. Such example:
+<pre>
+foo bigint default (date_part('epoch'::text,('now'::text)::timestamp(3) with time zone) * (1000)::double precision)
+</pre>
+</p>
 <li>Suppose we have following table:
 <pre>
 CREATE TABLE rel1(
