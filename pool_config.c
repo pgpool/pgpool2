@@ -3255,8 +3255,8 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 		}
 	}
 
-	pool_debug("num_backends: %d num_backends: %d total_weight: %f",
-			   pool_config->backend_desc->num_backends, pool_config->backend_desc->num_backends, total_weight);
+	pool_debug("num_backends: %d total_weight: %f",
+			   pool_config->backend_desc->num_backends, total_weight);
 	/*
 	 * Normalize load balacing weights. What we are doing here is,
 	 * assign 0 to RAND_MAX to each backend's weight according to the
