@@ -2743,7 +2743,7 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
  * Query to know if the target table has SERIAL column or not.
  * This query is valid through PostgreSQL 7.3 to 8.3.
  */
-#define NEXTVALQUERY "SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.relname = '%s'"
+#define NEXTVALQUERY "SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.oid = '%s'::regclass::oid"
 
 	char *str;
 	int result;
