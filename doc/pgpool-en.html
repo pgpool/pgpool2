@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Tue Aug 17 15:40:48 JST 2010
+Last modified: Wed Aug 18 08:57:54 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1409,6 +1409,93 @@ host	replication	postgres		192.168.0.10/32		trust
 Start primary and secondary PostgreSQL to initiate Streaming replication.
 If the primary node goes dhown, standby will automatically start as a
 normal PostgreSQL and will be ready to accept write queries.
+</p>
+
+<h4>Streaming Replicationでのクエリ振り分け</h4>
+<p>
+While using Streaming replication and Hot Standby, it is important to
+determine which query is good to be sent to the primary or the standby,
+and which one should not be sent to the standby.
+pgpool-II's Streaming Replication mode carefully takes care of this.
+In this we explain how chapter how pgpool-II accomplishes this.
+</p>
+<p>
+We distinguish which query should be sent to which node by looking
+at query.
+</p>
+<p>
+<ul>
+ <li>Queries should be sent to the primary node only
+	  <ul>
+	   <li>INSERT, UPDATE, DELETE, COPY FROM, TRUNCATE, CREATE, DROP, ALTER, COMMENT
+	   <li>SELECT ... FOR SHARE | UPDATE
+	   <li>SELECT in transaction isolation level SERIALIZABLE
+	   <li>LOCK command more strict than ROW EXCLUSIVE MODE
+	   <li>Some of transaction commands
+			<ul>
+			 <li>BEGIN READ WRITE, START TRANSACTION READ WRITE
+			 <li>SET TRANSACTION READ WRITE, SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE
+			 <li>SET transaction_read_only = off
+			</ul>
+	   <li>Two phase commit commands: PREPARE TRANSACTION, COMMIT PREPARED, ROLLBACK PREPARED
+	   <li>LISTEN, UNLISTEN, NOTIFY
+	   <li>VACUUM
+	   <li>Some of sequence functions(nextval and setval)
+	   <li>Creating large objects
+	  </ul>
+ <li>Queries can be sent to both the primary node or the standby node.
+If load balancing is enabled, these type of queries are sent to the
+standby node.
+However, if delay_threshold is set and replication delay is higher than
+its value, they are sent to the primay node.
+	  <ul>
+	   <li>SELECT not listed above
+	   <li>COPY TO
+	   <li>DECLARE, FETCH, CLOSE
+	   <li>SHOW
+	  </ul>
+ <li>Queries sent to both the primary node and the standby node
+	  <ul>
+	   <li>SET
+	   <li>DISCARD
+	   <li>DEALLOCATE ALL
+	  </ul>
+</ul>
+</p>
+
+<p>
+In an explicit transaction:
+<ul>
+ <li>Transaction starting commands such as BEGIN are sent to the primary node.
+ <li>Following SELECT and some other queries that can be sent to both
+	  primary or standby are executed in the transaction or on
+	  the standby node.
+ <li><p>
+Commands which cannot be executed on the standby such as INSERT are sent
+to the primary.
+After that even SELECTs are sent to the primary node,
+This is because the SELECT might want to see the result of INSERT immediately.
+These are continuing until the transaction closes or aborts.
+</p>
+</ul>
+</p>
+
+<p>
+In the extended protocol, it is possible to determine if the query can
+be sen to standby or not in load balance mode while parsing the query.
+The rule is same as non extended protocol.
+For example, INSERTs are sent to the primary node.
+Following bind, describe and execute are sent to the primary node as well.
+</p>
+
+<p>
+[Note: If parse of SELECT is sent to the standby node due to load
+balance then DMLs(such as INSERT) are sent to pgpool-II, then the SELECT
+must be executed on the primary node. For this we re-parese the SELECT
+on the primary node.
+<p>
+Finally queries pgpool-II's parser finds to be an error are sent to the
+primary node.
 </p>
 
 <h4>Online recovery with Streaming Replication</h4>
