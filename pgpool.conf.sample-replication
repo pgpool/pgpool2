@@ -66,8 +66,9 @@ replication_mode = true
 # This is ignored if replication_mode is false.
 load_balance_mode = true
 
-# if there's a data mismatch between master and secondary
-# start degeneration to stop replication mode
+# If there's a disagreement with the packet kind sent from backend,
+# then degenrate the node which is most likely "minority".  If false,
+# just force to exit this session.
 replication_stop_on_mismatch = false
 
 # If there's a disagreement with the number of affected tuples in
@@ -124,8 +125,10 @@ master_slave_sub_mode = 'slony'
 # to enable the functionality.
 delay_threshold = 0
 
-# if true, log the delay between the primary and the standby.
-log_standby_delay = false
+# 'always' logs the standby delay whenever health check runs.
+# 'if_over_threshold' logs only if the delay exceeds delay_threshold.
+# 'none' disables the delay log.
+log_standby_delay = 'none'
 
 # If true, cache connection pool.
 connection_cache = true
