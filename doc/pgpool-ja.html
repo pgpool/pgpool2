@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Wed Aug 18 08:43:08 JST 2010
+Last modified: Thu Aug 19 18:16:20 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -935,7 +935,7 @@ pgpool-II 3.0$B$h$jA0$N%P!<%8%g%s$G$O!"8GDj$G(Bnextval$B$H(Bsetval$B$,=q$-9
 </p>
 <pre>
 white_function_list = ''
-black_function_list = 'upper,lower'
+black_function_list = 'nextval,setval'
 </pre>
 
 <a name="replicate_select"></a>
@@ -3725,6 +3725,11 @@ pgpool-II$B$O4pK\E*$K$O(Bmaster/slave mode$B$H$7$FF0:n$7$^$9$,!"$=$N:]$K(B "
  <li>Streaming Replication$B$K$*$1$k%l%W%j%1!<%7%g%s$NCY1d$N%m%0$r@)8f$9$k?7$7$$@_Dj9`L\(B"log_standby_delay"$B$,DI2C$5$l$^$7$?(B(Tatsuo)
 
 </ul>
+
+ <li>insert_lock$B$,M-8z$G!"%F!<%V%k$K%7%j%"%k7?$,4^$^$l$F$$$k>l9g!"%F!<%V%k%m%C%/$G$O$J$/!"3:Ev%7!<%1%s%9$r9T%m%C%/$9$k$h$&$K$7$^$7$?!#(B
+$B0JA0$O%F!<%V%k%m%C%/$r$7$F$$$^$7$?$,!"(Bauto vacuum$B$H%m%C%/$,>WFM$7$?$j$7$F@-G=$,Dc2<$9$kLdBj$,$"$j$^$7$?(B(Tatsuo)
+
+ <li>$B?7$7$$(B"SHOW"$B%3%^%s%I$,DI2C$5$l$^$7$?!#$9$J$o$A!"(Bpool_nodes, pool_processes, pool_version$B$G$9(B(Guillaume Lelarge)
 
  <li>pcp_proc_info$B%3%^%s%I$N=PNO7k2L$K!"(BPostgreSQL$B%P%C%/%(%s%I%W%m%;%9$N%W%m%;%9(BID$B$H%U%m%s%H%(%s%I$+$i$N@\B3$,$"$k$+$I$&$+$,DI2C$5$l$^$7$?(B(Tatsuo)
 

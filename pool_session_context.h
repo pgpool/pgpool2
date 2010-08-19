@@ -167,52 +167,6 @@ typedef struct {
 	 * If true, we are executing reset query list.
 	 */
 	bool reset_context;
-
-#ifdef NOT_USED
-/* We need to override these gotchas... */
-	int internal_transaction_started;		/* to issue table lock command a transaction
-											   has been started internally */
-	int mismatch_ntuples;	/* number of updated tuples */
-	char *copy_table = NULL;  /* copy table name */
-	char *copy_schema = NULL;  /* copy table name */
-	char copy_delimiter; /* copy delimiter char */
-	char *copy_null = NULL; /* copy null string */
-
-/* non 0 if "BEGIN" query with extended query protocol received */
-	int receive_extended_begin = 0;
-
-/*
- * Non 0 if allow to close internal transaction.  This variable was
- * introduced on 2008/4/3 not to close an internal transaction when
- * Sync message is received after receiving Parse message. This hack
- * is for PHP-PDO.
- */
-	static int allow_close_transaction = 1;
-
-	PreparedStatementList prepared_list; /* prepared statement name list */
-
-	int is_select_pgcatalog = 0;
-	int is_select_for_update = 0; /* 1 if SELECT INTO or SELECT FOR UPDATE */
-	bool is_parallel_table = false;
-
-/*
- * last query string sent to simpleQuery()
- */
-	char query_string_buffer[QUERY_STRING_BUFFER_LEN];
-
-/*
- * query string produced by nodeToString() in simpleQuery().
- * this variable only usefull when enable_query_cache is true.
- */
-	char *parsed_query = NULL;
-
-
-	int load_balance_node_id;	/* selected load balance node id */
-	bool received_write_query;	/* have we recived a write query in this transaction? */
-	bool send_ready_for_query;	/* ok to send ReadyForQuery */
-	LOAD_BALANCE_STATUS	load_balance_status[MAX_NUM_BACKENDS];	/* to remember which DB node is selected for load balancing */
-#endif
-
 } POOL_SESSION_CONTEXT;
 
 extern void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);

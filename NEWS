@@ -2,7 +2,7 @@
 
 	  * Version 3.0
 
-	  This version is the first version of pgpool-II 3.0 series.
+	  This is the first version of pgpool-II 3.0 series.
 	  That is, a "major version up" from 2.2 or 2.3 series.
 
 	  The biggest news is, this version adapts to PostgreSQL 9.0's new
@@ -13,15 +13,15 @@
 	  - SELECTs in explicit transactions can be load balanced
 
 	  - In extended protocol, PARSE/BIND/DESCRIBE messages are sent to
-        the node which execute EXECUTE message. This will reduce lock
-        contention.
+        the node which execute EXECUTE message, not all node. This
+        will reduce lock contentions.
 
 	  - Auto start of transaction happens only when it needed.
 
 	  - Temporary tables can be used safely.
 
-	  - SELECT calling functions possibly write to database executes
-        on master(primary)
+	  - SELECT which calls functions possibly write to database
+        executes on master(primary)
 	  
 	  Also many new features are added and major refactoring has been
 	  made to the internal structure of pgpoo-II. For example, in
@@ -45,6 +45,14 @@
         replication delay in master/slave/streaming replication
         mode(Tatsuo)
 
+	  - When insert_lock is enabled and the table includes SERIAL data
+        type, issue row lock on the sequence table. Before we issues
+        table lock. Problem is, the table lock conflicts with auto
+        vacuum and sometimes caused excessive lock waiting(Tatsuo)
+
+	  - Add support for more "SHOW" commands: pool_nodes,
+		pool_processes, and pool_version(Guillaume Lelarge)
+
 	  - Backend process id and whether frontend connects to this
         connection pool or not are added to pcp_proc_info's
         output(Tatsuo)
@@ -56,6 +64,9 @@
       - New directive "white_function_list" and "black_function_list"
         are added to register functions those do not or do write to
         database(Tatsuo)
+
+      - In master/slave mode, SELECTs to system catalogs executes only
+        on master/primary(Tatsuo)
 
       - In master/slave mode, SELECTs to temporary table executes only
         on master/primary(Tatsuo)
@@ -101,6 +112,12 @@
         pgpool.conf(Kitagawa)
 
 	  * Bug fixes
+
+	  - Do not rewrite statement which accesses columns having now()
+		etc. as the default value but the data type are not timestamp
+		etc.  Otherwise we have an error in DMLs(Tatsuo)
+
+	  - Fix timestamp rewriting not to omit schema qualification(Tatsuo)
 
 	  - Fix bug with timeout handling in pcp commands(Tatsuo)
 

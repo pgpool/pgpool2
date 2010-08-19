@@ -56,8 +56,6 @@
 #include "pool_query_context.h"
 #include "pool_lobj.h"
 
-int internal_transaction_started;		/* to issue table lock command a transaction
-												   has been started internally */
 char *copy_table = NULL;  /* copy table name */
 char *copy_schema = NULL;  /* copy table name */
 char copy_delimiter; /* copy delimiter char */
@@ -114,6 +112,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	Node *node = NULL;
 	POOL_STATUS status;
 	char *string;
+	int lock_kind;
 
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_QUERY_CONTEXT *query_context;
@@ -313,10 +312,11 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 					return POOL_END;
 
 				/* check if need lock */
-				if (need_insert_lock(backend, contents, node))
+				lock_kind = need_insert_lock(backend, contents, node);
+				if (lock_kind)
 				{
 					/* if so, issue lock command */
-					status = insert_lock(frontend, backend, contents, (InsertStmt *)node);
+					status = insert_lock(frontend, backend, contents, (InsertStmt *)node, lock_kind);
 					if (status != POOL_CONTINUE)
 					{
 						free_parser();
@@ -715,7 +715,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		if (insert_stmt_with_lock)
 		{
 			/* start a transaction if needed and lock the table */
-			status = insert_lock(frontend, backend, stmt, (InsertStmt *)query_context->parse_tree);
+			status = insert_lock(frontend, backend, stmt, (InsertStmt *)query_context->parse_tree, insert_stmt_with_lock);
 			if (status != POOL_CONTINUE)
 			{
 				/* free_parser(); */

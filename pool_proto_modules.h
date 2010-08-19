@@ -37,8 +37,6 @@
 #define SPECIFIED_ERROR 1
 #define POOL_ERROR_QUERY "send invalid query from pgpool to abort transaction"
 
-extern int internal_transaction_started;		/* to issue table lock command a transaction
-												   has been started internally */
 extern char *copy_table;  /* copy table name */
 extern char *copy_schema;  /* copy table name */
 extern char copy_delimiter; /* copy delimiter char */
@@ -159,7 +157,7 @@ extern int is_commit_query(Node *node);
 extern int is_strict_query(Node *node); /* returns non 0 if this is strict query */
 extern int load_balance_enabled(POOL_CONNECTION_POOL *backend, Node* node, char *sql);
 extern int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node);
-extern POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *query, InsertStmt *node);
+extern POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *query, InsertStmt *node, int lock_kind);
 extern char *parse_copy_data(char *buf, int len, char delimiter, int col_id);
 extern int check_copy_from_stdin(Node *node); /* returns non 0 if this is a COPY FROM STDIN */
 extern void query_ps_status(char *query, POOL_CONNECTION_POOL *backend);		/* show ps status */

@@ -1446,7 +1446,6 @@ void reset_variables(void)
 	if(pool_get_session_context())
 		pool_unset_query_in_progress();
 
-	internal_transaction_started = 0;
 	receive_extended_begin = 0;
 }
 
@@ -2736,12 +2735,16 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 /*
  * Judge if we need to lock the table
  * to keep SERIAL consistency among servers
+ * Return values are:
+ * 0: lock is not neccessary
+ * 1: table lock is required
+ * 2: row lock is required (SERIAL is used)
  */
 int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 {
 /*
  * Query to know if the target table has SERIAL column or not.
- * This query is valid through PostgreSQL 7.3 to 8.3.
+ * This query is valid through PostgreSQL 7.3 or higher.
  */
 #define NEXTVALQUERY "SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.oid = '%s'::regclass::oid"
 
@@ -2803,20 +2806,29 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 	/*
 	 * Search relcache.
 	 */
-	result = pool_search_relcache(relcache, backend, str)==0?0:1;
+	result = pool_search_relcache(relcache, backend, str)==0?0:2;
 	return result;
 }
 
 /*
- * if a transaction has not already started, start a new one.
- * issue LOCK TABLE IN SHARE ROW EXCLUSIVE MODE
+ * If a transaction has not already started, start a new one.
+ * issue LOCK TABLE IN SHARE ROW EXCLUSIVE MODE if lock_kind == 1.
+ * Issue row lock if lock_kind == 2.
  */
-POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *query, InsertStmt *node)
+POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *query, InsertStmt *node, int lock_kind)
 {
 	char *table;
 	char qbuf[1024];
 	POOL_STATUS status;
 	int i, deadlock_detected = 0;
+
+#define SEQUENCETABLEQUERY "SELECT attname FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_attrdef d ON (a.attrelid = d.adrelid AND a.attnum = d.adnum) WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.oid = '%s'::regclass::oid AND d.adsrc ~ 'nextval'"
+
+#define MAX_SEQ_NAME 128
+
+	char *atrname;
+	char seq_rel_name[MAX_SEQ_NAME+1];
+	static POOL_RELCACHE *relcache;
 
 	/* insert_lock can be used in V3 only */
 	if (MAJOR(backend) != PROTO_MAJOR_V3)
@@ -2831,16 +2843,59 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 		return POOL_CONTINUE;
 	}
 
-	/* issue lock table command */
-	snprintf(qbuf, sizeof(qbuf), "LOCK TABLE %s IN SHARE ROW EXCLUSIVE MODE", table);
+	/* row lock for sequence table? */
+	if (lock_kind == 2)
+	{
+		/*
+		 * If relcache does not exist, create it.
+		 */
+		if (!relcache)
+		{
+			relcache = pool_create_relcache(32, SEQUENCETABLEQUERY,
+											string_register_func, string_unregister_func,
+											false);
+			if (relcache == NULL)
+			{
+				pool_error("insert_lock: pool_create_relcache error");
+				return false;
+			}
+		}
+
+		/*
+		 * Search relcache.
+		 */
+		atrname = pool_search_relcache(relcache, backend, table);
+		if (atrname == NULL)
+		{
+			/* could not get attribute namme */
+			return POOL_CONTINUE;
+		}
+		snprintf(seq_rel_name, MAX_SEQ_NAME, "%s_%s_seq", table, atrname);
+		pool_debug("seq rel name:%s", seq_rel_name);
+		snprintf(qbuf, sizeof(qbuf), "SELECT 1 FROM %s FOR UPDATE", seq_rel_name);
+	}
+	else
+	{
+		/* Issue lock table command */
+		snprintf(qbuf, sizeof(qbuf), "LOCK TABLE %s IN SHARE ROW EXCLUSIVE MODE", table);
+	}
 
 	per_node_statement_log(backend, MASTER_NODE_ID, qbuf);
 
-	status = do_command(frontend, MASTER(backend), qbuf, MAJOR(backend), MASTER_CONNECTION(backend)->pid,
-						MASTER_CONNECTION(backend)->key, 0);
+	if (lock_kind == 1)
+	{
+		status = do_command(frontend, MASTER(backend), qbuf, MAJOR(backend), MASTER_CONNECTION(backend)->pid,
+							MASTER_CONNECTION(backend)->key, 0);
+	}
+	else
+	{
+		POOL_SELECT_RESULT *result;
+		status = do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
+		if (result)
+			free_select_result(result);
+	}
 	if (status == POOL_END)
 	{
-		internal_transaction_started = 0;
 		return POOL_END;
 	}
 	else if (status == POOL_DEADLOCK)
@@ -2859,7 +2914,6 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 
 			if (status != POOL_CONTINUE)
 			{
-				internal_transaction_started = 0;
 				return POOL_END;
 			}
 		}
