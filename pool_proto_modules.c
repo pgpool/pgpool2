@@ -337,7 +337,8 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
-			TSTATE(backend, i) = 'T';
+			if(VALID_BACKEND(i))
+				TSTATE(backend, i) = 'T';
 		}
 	}
 
