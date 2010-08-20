@@ -69,7 +69,7 @@ static int is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 static POOL_STATUS ParallelForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *database, bool send_to_frontend);
 static void query_cache_register(char kind, POOL_CONNECTION *frontend, char *database, char *data, int data_len);
 static int extract_ntuples(char *message);
-static bool is_panic_or_fatal_error(const char *message);
+static bool is_panic_or_fatal_error(const char *message, int major);
 static int detect_error(POOL_CONNECTION *master, char *error_code, int major, char class, bool unread);
 static int detect_postmaster_down_error(POOL_CONNECTION *master, int major);
 
@@ -1301,7 +1301,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 		 * the message and exit since the backend will close the
 		 * channel immediately.
 		 */
-		if (is_panic_or_fatal_error(p))
+		if (is_panic_or_fatal_error(p, MAJOR(backend)))
 		{
 			pool_flush(frontend);
 			return POOL_END;
@@ -1969,6 +1969,15 @@ POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
 				if (!strncmp(string, "COMMIT", 6) ||
 					!strncmp(string, "ROLLBACK", 8))
 					backend->tstate = 'I';
+			}
+		}
+
+		if(kind == 'E')
+		{
+			if (is_panic_or_fatal_error(string, protoMajor))
+			{
+				pool_error("do_command: %s", string);
+				return POOL_END;
 			}
 		}
 	}
@@ -3835,26 +3844,33 @@ static int extract_ntuples(char *message)
 
 /*
  * Returns true if error message contains PANIC or FATAL.
- * This function works for V3 only.
  */
-static bool is_panic_or_fatal_error(const char *message)
+static bool is_panic_or_fatal_error(const char *message, int major)
 {
-	for (;;)
+	if (major == PROTO_MAJOR_V3)
 	{
-		char id;
-
-		id = *message++;
-		if (id == '\0')
-			break;
-
-		if (id == 'S' && (strcasecmp("PANIC", message) == 0 || strcasecmp("FATAL", message) == 0))
-			return true;
-		else
+		for (;;)
 		{
-			while (*message++)
-				;
-			continue;
+			char id;
+
+			id = *message++;
+			if (id == '\0')
+				break;
+
+			if (id == 'S' && (strcasecmp("PANIC", message) == 0 || strcasecmp("FATAL", message) == 0))
+				return true;
+			else
+			{
+				while (*message++)
+					;
+				continue;
+			}
 		}
+	}
+	else
+	{
+		if (strncmp(message, "PANIC", 5) == 0 || strncmp(message, "FATAL", 5) == 0)
+			return true;
 	}
 	return false;
 }
