@@ -481,25 +481,31 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 			}
 		}
 	}
-	else if (REPLICATION|PARALLEL_MODE)
+	else if (REPLICATION || PARALLEL_MODE)
 	{
-		if (pool_config->load_balance_mode &&
-			MAJOR(backend) == PROTO_MAJOR_V3 &&
-			TSTATE(backend, MASTER_NODE_ID) == 'I' &&
-			is_select_query(node, query) &&
-			!is_sequence_query(node))
+		if (is_select_query(node, query) && !is_sequence_query(node))
 		{
-			/* load balance */
-			pool_set_node_to_be_sent(query_context,
-									 session_context->load_balance_node_id);
-		}
-		else if (REPLICATION &&
-				 !pool_config->replicate_select &&
-				 is_select_query(node, query) &&
-				 !is_sequence_query(node))
-		{
-			/* only send to master node */
-			pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
+			/*
+			 * If a writing function call is used or replicate_select is true,
+			 * we prefer to send to all nodes.
+			 */
+			if (pool_has_function_call(node) || pool_config->replicate_select)
+			{
+				pool_setall_node_to_be_sent(query_context);
+			}
+			else if (pool_config->load_balance_mode &&
+					 MAJOR(backend) == PROTO_MAJOR_V3 &&
+					 TSTATE(backend, MASTER_NODE_ID) == 'I')
+			{
+				/* load balance */
+				pool_set_node_to_be_sent(query_context,
+										 session_context->load_balance_node_id);
+			}
+			else
+			{
+				/* only send to master node */
+				pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
+			}
 		}
 		else
 		{
