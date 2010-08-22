@@ -35,7 +35,7 @@
  */
 
 #include <stdio.h>
-
+#include <string.h>
 #include "getopt_long.h"
 
 #ifndef HAVE_INT_OPTRESET
