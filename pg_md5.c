@@ -34,6 +34,8 @@
 #include <termios.h>
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
+#else
+#include "getopt_long.h"
 #endif
 #include <pwd.h>
 #include <libgen.h>
