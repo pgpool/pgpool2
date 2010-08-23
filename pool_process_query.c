@@ -1942,9 +1942,10 @@ POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
 			}
 			len = ntohl(len) - 4;
 			
-			if (kind != 'N' && kind != 'E' && kind != 'S' && kind != 'C')
+			if (kind != 'C' && kind != 'T' && kind != 'D' && kind != 'N' &&
+				kind != 'E' && kind != 'S' )
 			{
-				pool_error("do_command: error, kind is not N, E, S or C(%02x)", kind);
+				pool_error("do_command: unexpected kind from backend %c(%02x)", kind, kind);
 				return POOL_END;
 			}
 			string = pool_read2(backend, len);
