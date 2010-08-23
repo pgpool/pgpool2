@@ -1942,10 +1942,9 @@ POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
 			}
 			len = ntohl(len) - 4;
 			
-			if (kind != 'C' && kind != 'T' && kind != 'D' && kind != 'N' &&
-				kind != 'E' && kind != 'S' )
+			if (kind != 'N' && kind != 'E' && kind != 'S' && kind != 'C')
 			{
-				pool_error("do_command: unexpected kind from backend %c(%02x)", kind, kind);
+				pool_error("do_command: error, kind is not N, E, S or C(%02x)", kind);
 				return POOL_END;
 			}
 			string = pool_read2(backend, len);
@@ -2919,8 +2918,20 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 				status = do_command(frontend, CONNECTION(backend, i), POOL_ERROR_QUERY, PROTO_MAJOR_V3,
 									MASTER_CONNECTION(backend)->pid, MASTER_CONNECTION(backend)->key, 0);
 			else
-				status = do_command(frontend, CONNECTION(backend, i), qbuf, PROTO_MAJOR_V3, 
-									MASTER_CONNECTION(backend)->pid, MASTER_CONNECTION(backend)->key, 0);
+			{
+				if (lock_kind == 1)
+				{
+					status = do_command(frontend, CONNECTION(backend, i), qbuf, PROTO_MAJOR_V3, 
+										MASTER_CONNECTION(backend)->pid, MASTER_CONNECTION(backend)->key, 0);
+				}
+				else
+				{
+					POOL_SELECT_RESULT *result;
+					status = do_query(CONNECTION(backend,i), qbuf, &result, MAJOR(backend));
+					if (result)
+						free_select_result(result);
+				}
+			}
 
 			if (status != POOL_CONTINUE)
 			{
