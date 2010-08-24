@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Wed Aug 18 08:57:54 JST 2010
+Last modified: Tue Aug 24 14:35:48 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1028,8 +1028,14 @@ be lost). To achieve this, however, the following change must be made:
       ....).
 
       As of pgpool-II 2.2, it automatically detects if the table has a
-      SERIAL columns or not, so only tables having SERIAL columns are locked.
-
+      SERIAL columns or not, so only tables having SERIAL columns are
+      locked.
+	   <p>
+	   pgpool-II 3.0 or later uses row lock against the sequence
+	   relation, rather than table lock. This will minimize lock
+	   conflict with VACUUM(including autovacuum).
+	   </p>
+	   <p>
       Also you might want to make a fine control:
       </p>
 
