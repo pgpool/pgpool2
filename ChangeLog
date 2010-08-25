@@ -1,9 +1,113 @@
+2010-08-25 13:31  kitagawa
+
+	* NEWS: Hopefully 3.0 to be released in September.
+
+2010-08-25 13:22  kitagawa
+
+	* configure.in, configure: Prepare 3.0-beta2
+
+2010-08-25 12:05  t-ishii
+
+	* doc/pgpool-ja.html: Hopefullly 3.0 to be released in September.
+
+2010-08-24 14:37  t-ishii
+
+	* doc/: pgpool-en.html, pgpool-ja.html: Add metiontion about using
+	  row lock, rather than table lock  when inser_lock is enabled.
+
+2010-08-23 22:58  t-ishii
+
+	* pool_process_query.c: Revert previous fix for insert_lock.
+	  SELECT FOR UPDATE must be issued by do_query, rather than
+	  do_command.
+
+2010-08-23 15:43  kitagawa
+
+	* pool_process_query.c: Fix do_command so that it allows kinds "T"
+	  and "D".  This fix is because insert_lock came to send SELECT
+	  command.
+
+2010-08-23 13:42  kitagawa
+
+	* sql/pgpool-recovery/pgpool-recovery.c: Fix pgpool_switch_xlog so
+	  that it checks the size of archived log file.
+
+2010-08-22 19:52  gleu
+
+	* getopt_long.c: Add a header I forgot. Thanks to Tatsuo for the
+	  idea.
+
+2010-08-22 17:24  gleu
+
+	* Makefile.am, Makefile.in, getopt_long.c, getopt_long.h, main.c,
+	  pg_md5.c, pcp/pcp_attach_node.c, pcp/pcp_detach_node.c,
+	  pcp/pcp_node_count.c, pcp/pcp_node_info.c, pcp/pcp_proc_count.c,
+	  pcp/pcp_proc_info.c, pcp/pcp_recovery_node.c,
+	  pcp/pcp_stop_pgpool.c, pcp/pcp_systemdb_info.c: Add getopt_long.h
+	  and getopt_long.c source code files from PostgreSQL source code, so
+	  that platforms without getopt_long function can still use long
+	  options.
+
+2010-08-20 17:05  kitagawa
+
+	* pool_query_context.c: Fix where_to_send so that it considers
+	  white_function_list and black_function_list in replication mode.
+	  Adjust rules in replication mode and parallel mode.
+
+2010-08-20 11:04  kitagawa
+
+	* pool_process_query.c: Fix do_command so that it doesn't call
+	  pool_read function after it detects PANIC or FATAL error.  Change
+	  is_panic_or_fatal_error so that it supports V2 protocol.
+
+2010-08-20 10:57  kitagawa
+
+	* pool_proto_modules.c: Fix SimpleQuery so that it checks backend
+	  status when using V2 protocol.
+
+2010-08-19 18:25  t-ishii
+
+	* NEWS, pool_process_query.c, pool_proto_modules.c,
+	  pool_proto_modules.h, pool_relcache.c, pool_relcache.h,
+	  pool_session_context.h, doc/pgpool-ja.html: When insert_lock is
+	  enabled and the table includes SERIAL data type, issue row lock on
+	  the sequence table. Before we issues table lock. Problem is, the
+	  table lock conflicts with auto vacuum and sometimes caused excessive
+	  lock waiting.
+
+	  Remove unnused global variable start_internal_transaction
+
+	  Remove #ifdef out comments in pool_session_context.h
+
+2010-08-19 16:35  t-ishii
+
+	* pool_process_query.c: Remove unnecessary restriction(with version
+	  2 protoocl it always returns 0) of need_insert_lock. do_query has
+	  already supports v2 protocol.
+
+2010-08-18 22:33  tom-sato
+
+	* doc/: pgpool-en.html, pgpool-ja.css, pgpool-ja.html, pgpool.css,
+	  tutorial-en.html, tutorial-ja.html:
+	  - Update copyright for the year 2010
+	  - Fix typo: PgPool -> pgpool
+	  - Enlarge the font size of <pre></pre>
+	  - Add closing tag </a>
+
+2010-08-18 16:12  t-ishii
+
+	* pool_process_query.c: Fix insert_lock to be schema aware.
+
+2010-08-18 10:53  kitagawa
+
+	* ChangeLog (tags: V3_0_0_BETA1): Prepare 3.0-beta1
+
 2010-08-18 10:33  kitagawa
 
 	* pgpool.conf.sample-master-slave, pgpool.conf.sample-replication,
-	  pgpool.conf.sample-stream: Fix default value of log_standby_delay
-	  in pgpool.conf.sample-replication.  Update comment of
-	  replication_stop_on_mismatch.
+	  pgpool.conf.sample-stream (utags: V3_0_0_BETA1): Fix default
+	  value of log_standby_delay in pgpool.conf.sample-replication.
+	  Update comment of replication_stop_on_mismatch.
 
 2010-08-18 09:28  t-ishii
 
@@ -11,14 +115,14 @@
 
 2010-08-18 09:22  t-ishii
 
-	* doc/: pgpool-en.html, pgpool-ja.html: Add description about load
-	  balaning in streaming replication mode to English doc.  Fix Japanese
-	  doc in unnecessary restriction regarding load balaning in streaming
-	  replication mode.
+	* doc/: pgpool-en.html, pgpool-ja.html (utags: V3_0_0_BETA1): Add
+	  description about load balaning in streaming replication mode to
+	  English doc.  Fix Japanese doc in unnecessary restriction regarding
+	  load balaning in streaming replication mode.
 
 2010-08-17 20:20  kitagawa
 
-	* ChangeLog (tags: V3_0_0_BETA1): Prepare 3.0-beta1
+	* ChangeLog: Prepare 3.0-beta1
 
 2010-08-17 20:17  kitagawa
 
@@ -41,12 +145,12 @@
 
 2010-08-17 15:43  t-ishii
 
-	* doc/pgpool-ja.html (tags: V3_0_0_BETA1): Fix typo.
+	* doc/pgpool-ja.html: Fix typo.
 
 2010-08-17 15:43  t-ishii
 
-	* doc/pgpool-en.html (tags: V3_0_0_BETA1): Add description of
-	  failover and online recover in master/slave streaming mode.
+	* doc/pgpool-en.html: Add description of failover and online
+	  recover in master/slave streaming mode.
 
 2010-08-17 14:33  t-ishii
 
@@ -417,15 +521,14 @@
 2010-08-01 17:38  t-ishii
 
 	* pgpool.conf.sample (tags: V3_0_0_BETA1),
-	  pgpool.conf.sample-master-slave (tags: V3_0_0_BETA1),
-	  pgpool.conf.sample-replication (tags: V3_0_0_BETA1),
-	  pgpool.conf.sample-stream (tags: V3_0_0_BETA1), pool_config.c,
-	  pool_config.h (tags: V3_0_0_BETA1), pool_config.l,
-	  pool_query_context.c, pool_select_walker.c, pool_select_walker.h,
-	  doc/pgpool-ja.html: Allow to specify functions those are writing
-	  to DB in SELECT.  For this purpose, new directive
-	  "white_function_lis" and "black_function_list" added.  Such SELECT
-	  are not load balanced in replication mode and master slave mode.
+	  pgpool.conf.sample-master-slave, pgpool.conf.sample-replication,
+	  pgpool.conf.sample-stream, pool_config.c, pool_config.h (tags:
+	  V3_0_0_BETA1), pool_config.l, pool_query_context.c,
+	  pool_select_walker.c, pool_select_walker.h, doc/pgpool-ja.html:
+	  Allow to specify functions those are writing to DB in SELECT.  For
+	  this purpose, new directive "white_function_lis" and
+	  "black_function_list" added.  Such SELECT are not load balanced in
+	  replication mode and master slave mode.
 
 2010-07-29 19:05  t-ishii
 
