@@ -67,8 +67,6 @@ static char *get_insert_command_table_name(InsertStmt *node);
 static int send_deallocate(POOL_CONNECTION_POOL *backend, PreparedStatementList p, int n);
 static int is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 static POOL_STATUS ParallelForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *database, bool send_to_frontend);
-static void query_cache_register(char kind, POOL_CONNECTION *frontend, char *database, char *data, int data_len);
-static int extract_ntuples(char *message);
 static bool is_panic_or_fatal_error(const char *message, int major);
 static int detect_error(POOL_CONNECTION *master, char *error_code, int major, char class, bool unread);
 static int detect_postmaster_down_error(POOL_CONNECTION *master, int major);
@@ -1099,22 +1097,9 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	int len, len1 = 0;
 	char *p = NULL;
 	char *p1 = NULL;
-	char *p2 = NULL;
 	int status;
 	int sendlen;
 	int i;
-	int command_ok_row_count = 0;
-	int delete_or_update = 0;
-	POOL_SESSION_CONTEXT *session_context;
-	bool mismatch_ntuples = false;
-
-	/* Get session context */
-	session_context = pool_get_session_context();
-	if (!session_context)
-	{
-		pool_error("SimpleForwardToFrontend: cannot get session context");
-		return POOL_END;
-	}
 
 #ifdef NOT_USED
 	/* 
@@ -1129,6 +1114,12 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 #endif
 
 	status = pool_read(MASTER(backend), &len, sizeof(len));
+	if (status < 0)
+	{
+		pool_error("SimpleForwardToFrontend: error while reading message length");
+		return POOL_END;
+	}
+
 	len = ntohl(len);
 	len -= 4;
 	len1 = len;
@@ -1144,36 +1135,10 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	}
 	memcpy(p1, p, len);
 
-	if (kind == 'C')	/* packet kind is "Command Complete"? */
-	{
-		command_ok_row_count = extract_ntuples(p);
-
-		/*
-		 * Save number of affcted tuples of master node.
-		 */
-		session_context->ntuples[MASTER_NODE_ID] = 	command_ok_row_count;
-
-		/*
-		 * if we are in the parallel mode, we have to sum up the number
-		 * of affected rows
-		 */
-		if (PARALLEL_MODE && is_parallel_table &&
-			(strstr(p, "UPDATE") || strstr(p, "DELETE")))
-		{
-			delete_or_update = 1;
-		}
-	}
-
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
-		if (!IS_MASTER_NODE_ID(i))
+		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 		{
-			if (!VALID_BACKEND(i))
-			{
-				session_context->ntuples[i] = -1;
-				continue;
-			}
-
 			status = pool_read(CONNECTION(backend, i), &len, sizeof(len));
 			if (status < 0)
 			{
@@ -1193,96 +1158,13 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 				pool_debug("SimpleForwardToFrontend: length does not match between backends master(%d) %d th backend(%d) kind:(%c)",
  						   len, i, len1, kind);
 			}
-
-			if (kind == 'C')	/* packet kind is "Command Complete"? */
-			{
-				int n = extract_ntuples(p);
-
-				/*
-				 * Save number of affcted tuples.
-				 */
-				session_context->ntuples[i] = n;
-
-				/*
-				 * if we are in the parallel mode, we have to sum up the number
-				 * of affected rows
-				 */
-				if (delete_or_update)
-				{
-					command_ok_row_count += n;
-				}
-				else if (command_ok_row_count != n) /* mismatch update rows */
-				{
-					mismatch_ntuples = true;
-				}
-			}
 		}
 	}
 
-	if (mismatch_ntuples)
-	{
-		char msgbuf[128];
-		POOL_MEMORY_POOL *old_context = pool_memory;
-
-		if (session_context->query_context)
-			pool_memory = session_context->query_context->memory_context;
-		else
-			pool_memory = session_context->memory_context;
-
-		String *msg = init_string("pgpool detected difference of the number of inserted, updated or deleted tuples. Possible last query was: \"");
-		string_append_char(msg, query_string_buffer);
-		string_append_char(msg, "\"");
-		pool_send_error_message(frontend, MAJOR(backend),
-								"XX001", msg->data, "",
-								"check data consistency between master and other db node",  __FILE__, __LINE__);
-		pool_error("%s", msg->data);
-		free_string(msg);
-
-		msg = init_string("SimpleForwardToFrontend: Number of affected tuples are:");
-
-		for (i=0;i<NUM_BACKENDS;i++)
-		{
-			snprintf(msgbuf, sizeof(msgbuf), " %d", session_context->ntuples[i]);
-			string_append_char(msg, msgbuf);
-		}
-		pool_log("%s", msg->data);
-		free_string(msg);
-
-		pool_memory = old_context;
-
-		/*
-		 * Remember that we have different number of UPDATE/DELETE
-		 * affcted tuples in backends.
-		 */
-		session_context->mismatch_ntuples = true;
-	}
-	else
-	{
-		if (delete_or_update)
-		{
-			char tmp[32];
-
-			strncpy(tmp, p1, 7);
-			sprintf(tmp+7, "%d", command_ok_row_count);
-
-			p2 = strdup(tmp);
-			if (p2 == NULL)
-			{
-				pool_error("SimpleForwardToFrontend: malloc failed");
-				free(p1);
-				return POOL_ERROR;
-			}
-
-			free(p1);
-			p1 = p2;
-			len1 = strlen(p2) + 1;
-		}
-
-		pool_write(frontend, &kind, 1);
-		sendlen = htonl(len1+4);
-		pool_write(frontend, &sendlen, sizeof(sendlen));
-		pool_write(frontend, p1, len1);
-	}
+	pool_write(frontend, &kind, 1);
+	sendlen = htonl(len1+4);
+	pool_write(frontend, &sendlen, sizeof(sendlen));
+	pool_write_and_flush(frontend, p1, len1);
 
 	/* save the received result for each kind */
 	if (pool_config->enable_query_cache && SYSDB_STATUS == CON_UP)
@@ -1290,25 +1172,22 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 		query_cache_register(kind, frontend, backend->info->database, p1, len1);
 	}
 
-	free(p1);
-	if (status)
-		return POOL_END;
-
-	if (kind == 'E')		/* error response? */
+	/* error response? */
+	if (kind == 'E')
 	{
 		/*
 		 * check if the error was PANIC or FATAL. If so, we just flush
 		 * the message and exit since the backend will close the
 		 * channel immediately.
 		 */
-		if (is_panic_or_fatal_error(p, MAJOR(backend)))
+		if (is_panic_or_fatal_error(p1, MAJOR(backend)))
 		{
-			pool_flush(frontend);
+			free(p1);
 			return POOL_END;
 		}
 	}
 
-	pool_flush(frontend);
+	free(p1);
 
 	return POOL_CONTINUE;
 }
@@ -3493,45 +3372,6 @@ parse_copy_data(char *buf, int len, char delimiter, int col_id)
 	return p;
 }
 
-static void
-query_cache_register(char kind, POOL_CONNECTION *frontend, char *database, char *data, int data_len)
-{
-	static int inside_T;			/* flag to see the result data sequence */
-	int result;
-
-	if (is_select_pgcatalog || is_select_for_update)
-		return;
-
-	if (kind == 'T' && parsed_query)
-	{
-		result = pool_query_cache_register(kind, frontend, database, data, data_len, parsed_query);
-		if (result < 0)
-		{
-			pool_error("pool_query_cache_register: query cache registration failed");
-			inside_T = 0;
-		}
-		else
-		{
-			inside_T = 1;
-		}
-	}
-	else if ((kind == 'D' || kind == 'C' || kind == 'E') && inside_T)
-	{
-		result = pool_query_cache_register(kind, frontend, database, data, data_len, NULL);
-		if (kind == 'C' || kind == 'E' || result < 0)
-		{
-			if (result < 0)
-				pool_error("pool_query_cache_register: query cache registration failed");
-			else
-				pool_debug("pool_query_cache_register: query cache saved");
-
-			inside_T = 0;
-			free(parsed_query);
-			parsed_query = NULL;
-		}
-	}
-}
-
 void query_ps_status(char *query, POOL_CONNECTION_POOL *backend)
 {
 	StartupPacket *sp;
@@ -3832,26 +3672,6 @@ POOL_STATUS end_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTION_
 
 	POOL_SETMASK(&oldmask);
 	return POOL_CONTINUE;
-}
-
-/*
- * Extract the number of tuples from CommandComplete message
- */
-static int extract_ntuples(char *message)
-{
-	char *rows;
-
-	if ((rows = strstr(message, "UPDATE")) || (rows = strstr(message, "DELETE")))
-		rows +=7;
-	else if ((rows = strstr(message, "INSERT")))
-	{
-		rows += 7;
-		while (*rows && *rows != ' ') rows++;
-	}
-	else
-		return 0;
-
-	return atoi(rows);
 }
 
 /*
