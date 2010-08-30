@@ -183,10 +183,15 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			IsA(node, SelectStmt) &&
 			!(is_select_pgcatalog = IsSelectpgcatalog(node, backend)))
 		{
-			if (pool_execute_query_cache_lookup(frontend, backend, node) != POOL_CONTINUE)
+			/*
+			 * POOL_CONTINUE of here represent cache found, and messages were
+			 * sent to frontend already.
+			 */
+			if (pool_execute_query_cache_lookup(frontend, backend, node) == POOL_CONTINUE)
 			{
 				pool_query_context_destroy(query_context);
-				return POOL_ERROR;
+				pool_set_skip_reading_from_backends();
+				return POOL_CONTINUE;
 			}
 		}
 

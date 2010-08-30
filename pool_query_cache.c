@@ -801,6 +801,9 @@ init_query_cache_info(POOL_CONNECTION *pc, char *database, char *query)
 		return -1;
 	strcpy(query_cache_info->db_name, database);
 
+	/* initialize create_timestamp */
+	query_cache_info->create_time = NULL;
+
 	return 0;
 }
 
@@ -818,7 +821,8 @@ free_query_cache_info(void)
 	free(query_cache_info->query);
 	free(query_cache_info->cache);
 	free(query_cache_info->db_name);
-	free(query_cache_info->create_time);
+	if (query_cache_info->create_time)
+		free(query_cache_info->create_time);
 	free(query_cache_info);
 	query_cache_info = NULL;
 }
@@ -993,6 +997,7 @@ define_prepared_statements(void)
 POOL_STATUS pool_execute_query_cache_lookup(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, Node *node)
 {
 	SelectStmt *select = (SelectStmt *)node;
+	POOL_STATUS status = POOL_END;	/* cache not found */
 
 	if (! (select->intoClause || select->lockingClause))
 	{
@@ -1003,14 +1008,14 @@ POOL_STATUS pool_execute_query_cache_lookup(POOL_CONNECTION *frontend, POOL_CONN
 			return POOL_ERROR;
 		}
 
-
-		if (pool_query_cache_lookup(frontend, parsed_query, backend->info->database, TSTATE(backend, MASTER_NODE_ID)) == POOL_CONTINUE)
+		status = pool_query_cache_lookup(frontend, parsed_query, backend->info->database, TSTATE(backend, MASTER_NODE_ID));
+		if (status == POOL_CONTINUE)
 		{
 			free(parsed_query);
 			parsed_query = NULL;
 			free_parser();
-			return POOL_CONTINUE;
 		}
 	}
-	return POOL_CONTINUE;
+
+	return status;
 }
