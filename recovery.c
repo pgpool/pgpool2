@@ -275,21 +275,21 @@ static int check_postmaster_started(BackendInfo *backend)
 	int i = 0;
 	char port_str[16];
 	PGconn *conn;
-	static bool is_first = true;
-	static char *dbname;
+	char *dbname;
 
-	snprintf(port_str, sizeof(port_str),
-			 "%d", backend->backend_port);
+	snprintf(port_str, sizeof(port_str),"%d", backend->backend_port);
 
- Retry:
 	/*
 	 * First we try with "postgres" database.
 	 */
-	if (is_first)
-		dbname = "postgres";
+	dbname = "postgres";
 
 	do {
 		ConnStatusType r;
+
+		pool_log("check_postmaster_started: try to connect to postmaster on hostname:%s database:%s user:%s (retry %d times)",
+				 backend->backend_hostname, dbname, pool_config->recovery_user, i);
+
 		conn = PQsetdbLogin(backend->backend_hostname,
 							port_str,
 							NULL,
@@ -298,19 +298,44 @@ static int check_postmaster_started(BackendInfo *backend)
 							pool_config->recovery_user,
 							pool_config->recovery_password);
 
-		if (is_first)
-			is_first = false;
+		r = PQstatus(conn);
+		PQfinish(conn);
+		if (r == CONNECTION_OK)
+			return 0;
+
+		pool_log("check_postmaster_started: failed to connect to postmaster on hostname:%s database:%s user:%s",
+			 backend->backend_hostname, dbname, pool_config->recovery_user);
+		
+		sleep(3);
+	} while (i++ < 3);	/* XXX Hard coded retry (9 seconds) */
+
+	/*
+	 * Retry with "template1" database.
+	 */
+	dbname = "template1";
+	i = 0;
+
+	do {
+		ConnStatusType r;
+
+		pool_log("check_postmaster_started: try to connect to postmaster on hostname:%s database:%s user:%s (retry %d times)",
+				 backend->backend_hostname, dbname, pool_config->recovery_user, i);
+
+		conn = PQsetdbLogin(backend->backend_hostname,
+							port_str,
+							NULL,
+							NULL,
+							dbname,
+							pool_config->recovery_user,
+							pool_config->recovery_password);
 
 		r = PQstatus(conn);
 		PQfinish(conn);
 		if (r == CONNECTION_OK)
 			return 0;
 
-		/*
-		 * Retry with template1
-		 */
-		dbname = "template1";
-		goto Retry;
+		pool_log("check_postmaster_started: failed to connect to postmaster on hostname:%s database:%s user:%s",
+			 backend->backend_hostname, dbname, pool_config->recovery_user);
 
 		if (WAIT_RETRY_COUNT != 0)
 			sleep(3);
