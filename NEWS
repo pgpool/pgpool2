@@ -51,7 +51,7 @@
         vacuum and sometimes caused excessive lock waiting(Tatsuo)
 
 	  - Add support for more "SHOW" commands: pool_nodes,
-		pool_processes, and pool_version(Guillaume Lelarge)
+		pool_processes, pool_pools, and pool_version(Guillaume Lelarge)
 
 	  - Backend process id and whether frontend connects to this
         connection pool or not are added to pcp_proc_info's
@@ -124,6 +124,10 @@
 	  - Fix SSL hang when large amount of data transfered(Tatsuo)
 
 	  - Fix failover when there's only one DB node(Tatsuo)
+
+	  - Fix bug with postmaster start check in online recovery.
+		Before it continued infinitely to try to connect to postmaster
+		if the first attempt failed(Tatsuo)
 
 2.3.3 (tomiteboshi) 2010/04/23
 
