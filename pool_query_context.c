@@ -43,6 +43,7 @@ typedef enum {
 } POOL_DEST;
 
 static POOL_DEST send_to_where(Node *node, char *query);
+static void where_to_send_deallocate(POOL_QUERY_CONTEXT *query_context, Node *node);
 
 /*
  * Create and initialize per query session context
@@ -451,34 +452,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 		 */
 		else if (IsA(node, DeallocateStmt))
 		{
-			DeallocateStmt *d = (DeallocateStmt *)node;
-			bool *wts;
-
-			/* DELLOCATE ALL? */
-			if (d->name == NULL)
-			{
-				pool_setall_node_to_be_sent(query_context);
-			}
-			else
-			{
-				wts = pool_get_prep_where(d->name);
-				if (wts)
-				{
-					/* Inherit same map from PREPARE */
-					pool_copy_prep_where(wts, query_context->where_to_send);
-				}
-				else
-				{
-					PreparedStatement *ps;
-
-					ps = pool_get_prepared_statement_by_pstmt_name(d->name);
-					if (ps)
-					{
-						if (ps->qctxt)
-							pool_copy_prep_where(ps->qctxt->where_to_send, query_context->where_to_send);
-					}
-				}
-			}
+			where_to_send_deallocate(query_context, node);
 		}
 	}
 	else if (REPLICATION || PARALLEL_MODE)
@@ -506,6 +480,13 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 				/* only send to master node */
 				pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
 			}
+		}
+		/*
+		 * DEALLOCATE?
+		 */
+		else if (IsA(node, DeallocateStmt))
+		{
+			where_to_send_deallocate(query_context, node);
 		}
 		else
 		{
@@ -986,6 +967,43 @@ static POOL_DEST send_to_where(Node *node, char *query)
 	 * All unknown statements are sent to primary
 	 */
 	return POOL_PRIMARY;
+}
+
+static
+void where_to_send_deallocate(POOL_QUERY_CONTEXT *query_context, Node *node)
+{
+	DeallocateStmt *d = (DeallocateStmt *)node;
+	bool *wts;
+
+	/* DELLOCATE ALL? */
+	if (d->name == NULL)
+	{
+		pool_setall_node_to_be_sent(query_context);
+		return;
+	}
+	else
+	{
+		wts = pool_get_prep_where(d->name);
+		if (wts)
+		{
+			/* Inherit same map from PREPARE */
+			pool_copy_prep_where(wts, query_context->where_to_send);
+			return;
+		}
+		else
+		{
+			PreparedStatement *ps;
+
+			ps = pool_get_prepared_statement_by_pstmt_name(d->name);
+			if (ps && ps->qctxt)
+			{
+				pool_copy_prep_where(ps->qctxt->where_to_send, query_context->where_to_send);
+				return;
+			}
+		}
+	}
+	/* prepared statement was not found */
+	pool_setall_node_to_be_sent(query_context);
 }
 
 /*
