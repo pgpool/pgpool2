@@ -23,7 +23,7 @@ pcp_socket_dir = '/tmp'
 # Unix domain socket path for the backend. Debian package defaults to /var/run/postgresql!
 backend_socket_dir = '/tmp'
 
-# pgpool communication manager timeout. 0 means no timeout, but strongly not recommended!
+# pgpool communication manager timeout. 0 means no timeout. This parameter is ignored now.
 pcp_timeout = 10
 
 # number of pre-forked child process
@@ -63,7 +63,6 @@ pid_file_name = '/var/run/pgpool/pgpool.pid'
 replication_mode = false
 
 # Load balancing mode, i.e., all SELECTs are load balanced.
-# This is ignored if replication_mode is false.
 load_balance_mode = true
 
 # If there's a disagreement with the packet kind sent from backend,
@@ -77,8 +76,8 @@ replication_stop_on_mismatch = false
 # If false, just abort the transaction to keep the consistency.
 failover_if_affected_tuples_mismatch = false
 
-# If true, replicate SELECT statement when load balancing is disabled.
-# If false, it is only sent to the master node.
+# If true, replicate SELECT statement when replication_mode or parallel_mode is enabled.
+# A priority of replicate_select is higher than load_balance_mode.
 replicate_select = false
 
 # Semicolon separated list of queries to be issued at the end of a
@@ -229,9 +228,7 @@ backend_data_directory1 = '/data1'
 
 # - HBA -
 
-# If true, use pool_hba.conf for client authentication. In pgpool-II
-# 1.1, the default value is false. The default value will be true in
-# 1.2.
+# If true, use pool_hba.conf for client authentication.
 enable_pool_hba = false
 
 # - online recovery -
