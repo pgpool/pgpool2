@@ -286,7 +286,7 @@ man_MANS = pgpool.8
 CLEANFILES = pgpool.8
 EXTRA_DIST = pgpool.8.in sql/system_db.sql sample/pgpool.pam doc/pgpool-ja.html doc/pgpool-en.html \
 		doc/tutorial-ja.html doc/tutorial-en.html doc/pgpool.css \
-		doc/load_balance.png doc/load_balance.odp doc/pgpool-ja.css \
+		doc/where_to_send_queries.pdf doc/where_to_send_queries.odg doc/pgpool-ja.css \
 		sample/pgpool_remote_start sample/pgpool_recovery sample/pgpool_recovery_pitr \
 		sample/dist_def_pgbench.sql sample/replicate_def_pgbench.sql \
 		sql/pgpool-recovery/pgpool-recovery.c \
