@@ -942,10 +942,7 @@ black_function_list = 'nextval,setval'
 <dt>replicate_select
 <dd>
 <p>
-   true $B$r@_Dj$9$k$H%m!<%I%P%i%s%9$5$l$J$$(B SELECT $BJ8$r%l%W%j%1!<%7%g%s(B
-   $B$5$;$^$9!#$3$l$O(B pgpool-II 1.0 $B$^$G$N5sF0$HF1$8$K$J$j$^$9!#(Bfalse $B$r(B
-   $B@_Dj$9$k$H(B SELECT $BJ8$r%^%9%?$N$_$KAw?.$7$^$9!#%G%U%)%k%HCM$O(B false
-   $B$G$9!#(B
+true $B$r@_Dj$9$k$H!"%l%W%j%1!<%7%g%s%b!<%I$G$O(B SELECT $BJ8$r%l%W%j%1!<%7%g%s$7$^$9!#$3$l$O(B pgpool-II 1.0 $B$^$G$N5sF0$HF1$8$K$J$j$^$9!#(Bfalse $B$r@_Dj$9$k$H(B SELECT $BJ8$r%^%9%?$N$_$KAw?.$7$^$9!#%G%U%)%k%HCM$O(B false $B$G$9!#(B
 </p>
 <p>
 replicate_select$B!"(Bload_balance_mode$B!"(BSELECT$BLd9g$o$;$,L@<(E*$J%H%i%s%6%/%7%g%s%V%m%C%/$NFbB&$K$"$k$+$I$&$+$I$&$+$G!"%l%W%j%1!<%7%g%s%b!<%I$NF0:n$,JQ2=$7$^$9!#>\:Y$rI=$K<($7$^$9!#(B
@@ -991,12 +988,12 @@ replicate_select$B!"(Bload_balance_mode$B!"(BSELECT$BLd9g$o$;$,L@<(E*$J%H%i
 </tr>
 
 <tr>
-<td>$B7k2L(B(R:$B%l%W%j%1!<%7%g%s(B, M: $B%^%9%?$N$_$KAw?.!"(BL: $B%m!<%I%P%i%s%9$5$l$k(B</td>
+<td>$B7k2L(B(R:$B%l%W%j%1!<%7%g%s(B, M: $B%^%9%?$N$_$KAw?.(B, L: $B%m!<%I%P%i%s%9$5$l$k(B)</td>
 <td>R</td>
 <td>R</td>
 <td>M</td>
 <td>M</td>
-<td>L</td>
+<td>R</td>
 <td>R</td>
 <td>M</td>
 <td>L</td>
@@ -1241,7 +1238,7 @@ load_balance_mode = true $B$r@_Dj$7$?>l9g!"0J2<$N>r7o$N$9$Y$F$rK~$?$7$?;~$K(BS
 <p>
 
 (<a href="#replicate_select">replicate_select$B$N9`L\(B</a>$B$b;29M$K$7$F$/$@$5$$(B)
-$B$^$?!"(B<a href="load_balance.png">$B>\:Y$JH=Dj>r7o$r%U%m!<%A%c!<%H$K$7$?$b$N(B</a>$B$b$4Mw2<$5$$!#(B
+$B$^$?!"(B<a href="where_to_send_queries.pdf">$B>\:Y$JH=Dj>r7o$r%U%m!<%A%c!<%H$K$7$?$b$N(B</a>$B$b$4Mw2<$5$$!#(B
 
 $B$J$*!"(B
 <pre>
@@ -3774,6 +3771,13 @@ failover_if_affected_tuples_mismatch $B$r(B true$B$K@_Dj$9$k$H!"$3$N8=>]$,5/$
 
  <li>pgpool.conf$B$G!"(Bpostgresql.conf$B$HF1$8??56CMI=8=$,MxMQ$G$-$k$h$&$K$J$j$^$7$?!#=>Mh$O!"(Btrue/false, 1/0$B$7$+;H$($^$;$s$G$7$?(B(Kitagawa)
 
+</ul>
+</p>
+
+<h3>$B8_49@-$N$J$$JQ99(B</h3>
+<p>
+<ul>
+<li>replicate_select$B$H(Bload_balance_mode$B$r6&$K(Btrue$B$K@_Dj$7$?>l9g!"%H%i%s%6%/%7%g%s%V%m%C%/$N30B&$G<B9T$5$l$k(BSELECT$BJ8$O!"(Breplicate_select$B$K=>$&$h$&$K$J$j$^$7$?!#0JA0$O!"(Bload_balance_mode$B$K=>$&$h$&$K$J$C$F$$$^$7$?!#$b$7%/%i%$%"%s%H$,$3$NF0:n$rMxMQ$7$F$$$k>l9g$O!"(Breplicate_select$B$r(Bfalse$B$K$7$F(Bback_function_list$B$r@_Dj$9$k$3$H$GF1$8F0:n$r<B8=$G$-$^$9!#(B</li>
 </ul>
 </p>
 
