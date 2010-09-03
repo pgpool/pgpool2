@@ -939,7 +939,7 @@ black_function_list = 'upper,lower'
 <a name="replicate_select">
   <dt>replicate_select</dt>
   <dd>
-      <p>When set to true, pgpool-II replicate SELECTs. If false,
+      <p>When set to true, pgpool-II replicates SELECTs in replication mode. If false,
          pgpool-II only sends them to Master DB. Default is false.</p>
   </dd>
 
@@ -989,12 +989,12 @@ are shown below.
 </tr>
 
 <tr>
-<td>results(R:replication, M: send only to master，L: load balance</td>
+<td>results(R:replication, M: send only to master, L: load balance)</td>
 <td>R</td>
 <td>R</td>
 <td>M</td>
 <td>M</td>
-<td>L</td>
+<td>R</td>
 <td>R</td>
 <td>M</td>
 <td>L</td>
@@ -1229,7 +1229,7 @@ comments just in front of the SELECT query:
 
 <p>
 Please refer to <a href="#replicate_select">replicate_select</a> as well.
-See also a <a href="load_balance.png">flow chart</a>.
+See also a <a href="where_to_send_queries.pdf">flow chart</a>.
 </p>
 
 <p>
