@@ -50,6 +50,7 @@
 #include "pool_stream.h"
 #include "pool_session_context.h"
 #include "pool_query_context.h"
+#include "pool_select_walker.h"
 
 #ifndef FD_SETSIZE
 #define FD_SETSIZE 512
@@ -2634,7 +2635,9 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
  * Query to know if the target table has SERIAL column or not.
  * This query is valid through PostgreSQL 7.3 or higher.
  */
-#define NEXTVALQUERY "SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.oid = '%s'::regclass::oid"
+#define NEXTVALQUERY "SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.relname = '%s'"
+
+#define NEXTVALQUERY2 "SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.oid = pgpool_regclass('%s')"
 
 	char *str;
 	int result;
@@ -2681,7 +2684,18 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 	 */
 	if (!relcache)
 	{
-		relcache = pool_create_relcache(32, NEXTVALQUERY,
+		char *query;
+
+		if (pool_has_pgpool_regclass())
+		{
+			query = NEXTVALQUERY2;
+		}
+		else
+		{
+			query = NEXTVALQUERY;
+		}
+
+		relcache = pool_create_relcache(32, query,
 										int_register_func, int_unregister_func,
 										false);
 		if (relcache == NULL)
@@ -2710,7 +2724,9 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 	POOL_STATUS status;
 	int i, deadlock_detected = 0;
 
-#define SEQUENCETABLEQUERY "SELECT attname FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_attrdef d ON (a.attrelid = d.adrelid AND a.attnum = d.adnum) WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.oid = '%s'::regclass::oid AND d.adsrc ~ 'nextval'"
+#define SEQUENCETABLEQUERY "SELECT attname FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_attrdef d ON (a.attrelid = d.adrelid AND a.attnum = d.adnum) WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.relname = '%s' AND d.adsrc ~ 'nextval'"
+
+#define SEQUENCETABLEQUERY2 "SELECT attname FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_attrdef d ON (a.attrelid = d.adrelid AND a.attnum = d.adnum) WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.oid = pgpool_regclass('%s') AND d.adsrc ~ 'nextval'"
 
 #define MAX_SEQ_NAME 128
 
@@ -2739,7 +2755,18 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 		 */
 		if (!relcache)
 		{
-			relcache = pool_create_relcache(32, SEQUENCETABLEQUERY,
+			char *query;
+
+			if (pool_has_pgpool_regclass())
+			{
+				query = SEQUENCETABLEQUERY2;
+			}
+			else
+			{
+				query = SEQUENCETABLEQUERY;
+			}
+
+			relcache = pool_create_relcache(32, query,
 											string_register_func, string_unregister_func,
 											false);
 			if (relcache == NULL)

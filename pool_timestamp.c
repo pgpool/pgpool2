@@ -26,6 +26,7 @@
 #include "pool.h"
 #include "pool_timestamp.h"
 #include "pool_relcache.h"
+#include "pool_select_walker.h"
 #include "pool_config.h"
 #include "parser/parsenodes.h"
 #include "parser/gramparse.h"
@@ -118,8 +119,31 @@ relcache_lookup(TSRewriteContext *ctx)
     " , false)" \
 	" FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a " \
 	" LEFT JOIN pg_catalog.pg_attrdef d ON (a.attrelid = d.adrelid AND a.attnum = d.adnum)" \
-	" WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.oid = '%s'::regclass::oid" \
+	" WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.relname = '%s'" \
 	" ORDER BY a.attnum"
+
+#define ATTRDEFQUERY2 "SELECT attname, coalesce((d.adsrc = 'now()' OR d.adsrc LIKE '%%''now''::text%%')" \
+	" AND (a.atttypid = 'timestamp'::regtype::oid OR" \
+	" a.atttypid = 'timestamp with time zone'::regtype::oid OR" \
+	" a.atttypid = 'date'::regtype::oid OR" \
+	" a.atttypid = 'time'::regtype::oid OR" \
+	" a.atttypid = 'time with time zone'::regtype::oid)" \
+    " , false)" \
+	" FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a " \
+	" LEFT JOIN pg_catalog.pg_attrdef d ON (a.attrelid = d.adrelid AND a.attnum = d.adnum)" \
+	" WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.oid = pgpool_regclass('%s')" \
+	" ORDER BY a.attnum"
+
+	char *query;
+
+	if (pool_has_pgpool_regclass())
+	{
+		query = ATTRDEFQUERY2;
+	}
+	else
+	{
+		query = ATTRDEFQUERY;
+	}
 
 	if (!ts_relcache)
 	{

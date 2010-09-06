@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Tue Aug 24 14:35:48 JST 2010
+Last modified: Mon Sep  6 13:48:47 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -179,6 +179,30 @@ make install
 will install pgpool-II. (If you use Solaris or FreeBSD, replace make with gmake)
 </p>
 </dd>
+
+<dt>Installing pgpool_regclass</dt>
+<dd>
+<p>
+If you are using PostgreSQL 8.0 or later, we strongly recommend to
+intall pgpool_regclass, which is used internally by pgpool-II.
+Without this, handling of duplicate table names in different schema
+might cause a trouble(temporary tables do not count on this).
+</p>
+<p>
+<pre>
+# cd pgpool-II-x.x.x/sql/pgpool-regclass
+# make
+# make install
+# psql -f pgpool-regclass.sql template1
+</pre>
+</p>
+<p>
+Executing pgpool-regclass.sql should be performed on every databases you
+want to use through pgpool-II.
+You do not need to do this if the database is created after the
+execution of "psql -f pgpool-regclass.sql template1".
+</p>
+
 </dl>
 
 <h1>Configuring pgpool-II<a name="config"></a></h1>

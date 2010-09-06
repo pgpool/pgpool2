@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Wed Aug 25 09:58:55 JST 2010
+Last modified: Mon Sep  6 13:45:53 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -159,9 +159,31 @@ PostgreSQLのクライアントライブラリなどがインストールされているトップディ
 make
 make install
 </pre>
-でインストールが完了します(GNU makeが必要なので、SolarisやFreeBSDなどでは
-makeをgmakeに読み替えてください)。
+</p>
+
+<dt>pgpool_regclassのインストール
+<dd>
+<p>
+PostgreSQL 8.0以降を使用している場合は、pgpool-IIが内部で使用するC関数pgpool_regclassをインストールします。
+この関数がインストールされていなくてもpgpool-IIは動作しますが、違うスキーマで同じテーブル名を定義していて、SQL文の中でスキーマ名を省略している場合に、不具合が生じることがあります(一時テーブルを除く)。
+したがって、可能ならばpgpool_regclassをインストールすることをお勧めします。
+
+<pre>
+# cd pgpool-II-x.x.x/sql/pgpool-regclass
+# make
+# make install
+# psql -f pgpool-regclass.sql template1
+</pre>
+
+pgpool-regclass.sqlの実行は、pgpool-II経由で利用するデータベース毎に必要になります。
+ただし、"psql -f pgpool-regclass.sql template1"を実行後に作成されたデータベースでは自動的にpgpool-regclass.sqlの内容が反映されているので、新たにpgpool-regclass.sqlを実行する必要はありません。
+</p>
+
 </dl>
+<p>
+以上でインストールが完了します(GNU makeが必要なので、SolarisやFreeBSDなどでは
+makeをgmakeに読み替えてください)。
+</p>
 
 <h1>pgpool-IIの設定<a name="config"></a></h1>
 <p>

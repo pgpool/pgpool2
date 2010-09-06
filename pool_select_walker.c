@@ -223,7 +223,9 @@ static bool is_system_catalog(char *table_name)
 /*
  * Query to know if the target table belongs pg_catalog schema.
  */
-#define ISBELONGTOPGCATALOGQUERY "SELECT count(*) FROM pg_class AS c, pg_namespace AS n WHERE c.oid = '%s'::regclass::oid AND c.relnamespace = n.oid AND n.nspname = 'pg_catalog'"
+#define ISBELONGTOPGCATALOGQUERY "SELECT count(*) FROM pg_class AS c, pg_namespace AS n WHERE c.relname = '%s' AND c.relnamespace = n.oid AND n.nspname = 'pg_catalog'"
+
+#define ISBELONGTOPGCATALOGQUERY2 "SELECT count(*) FROM pg_class AS c, pg_namespace AS n WHERE c.oid = pgpool_regclass('%s') AND c.relnamespace = n.oid AND n.nspname = 'pg_catalog'"
 
 	int hasreliscatalog;
 	bool result;
@@ -243,7 +245,19 @@ static bool is_system_catalog(char *table_name)
 	 */
 	if (!hasreliscatalog_cache)
 	{
-		hasreliscatalog_cache = pool_create_relcache(32, HASPGNAMESPACEQUERY,
+		char *query;
+
+		/* pgpool_regclass has been installed */
+		if (pool_has_pgpool_regclass())
+		{
+			query = ISBELONGTOPGCATALOGQUERY2;
+		}
+		else
+		{
+			query = ISBELONGTOPGCATALOGQUERY;
+		}
+
+		hasreliscatalog_cache = pool_create_relcache(32, query,
 										int_register_func, int_unregister_func,
 										false);
 		if (hasreliscatalog_cache == NULL)
@@ -297,16 +311,20 @@ static bool is_temp_table(char *table_name)
 #define HASRELITEMPPQUERY "SELECT count(*) FROM pg_catalog.pg_class AS c, pg_attribute AS a WHERE c.relname = 'pg_class' AND a.attrelid = c.oid AND a.attname = 'relistemp'"
 
 /*
- * Query to know if the target table is a temporary one.
- * This query is valid through PostgreSQL 7.3 to 8.3.
+ * Query to know if the target table is a temporary one.  This query
+ * is valid through PostgreSQL 7.3 to 8.3.  We do not use regclass (or
+ * its variant) here, because temporary tables never have schema
+ * qualified name.
  */
-#define ISTEMPQUERY83 "SELECT count(*) FROM pg_class AS c, pg_namespace AS n WHERE c.oid = '%s'::regclass::oid AND c.relnamespace = n.oid AND n.nspname ~ '^pg_temp_'"
+#define ISTEMPQUERY83 "SELECT count(*) FROM pg_class AS c, pg_namespace AS n WHERE c.relname = '%s' AND c.relnamespace = n.oid AND n.nspname ~ '^pg_temp_'"
 
 /*
- * Query to know if the target table is a temporary one.
- * This query is valid PostgreSQL 8.4 or later.
+ * Query to know if the target table is a temporary one.  This query
+ * is valid PostgreSQL 8.4 or later. We do not use regclass (or its
+ * variant) here, because temporary tables never have schema qualified
+ * name.
  */
-#define ISTEMPQUERY84 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = '%s'::regclass::oid AND c.relistemp"
+#define ISTEMPQUERY84 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.relname = '%s' AND c.relistemp"
 
 	int hasrelistemp;
 	bool result;
@@ -362,5 +380,36 @@ static bool is_temp_table(char *table_name)
 	 * Search relcache.
 	 */
 	result = pool_search_relcache(relcache, backend, table_name)==0?false:true;
+	return result;
+}
+
+/*
+ * Judge if we have pgpool_regclass or not.
+ */
+bool pool_has_pgpool_regclass(void)
+{
+/*
+ * Query to know if pgpool_regclass exists.
+ */
+#define HASPGPOOL_REGCLASSQUERY "SELECT count(*) FROM pg_catalog.pg_proc AS p WHERE p.proname = '%s'"
+	bool result;
+	static POOL_RELCACHE *relcache;
+	POOL_CONNECTION_POOL *backend;
+
+	backend = pool_get_session_context()->backend;
+
+	if (!relcache)
+	{
+		relcache = pool_create_relcache(32, HASPGPOOL_REGCLASSQUERY,
+										int_register_func, int_unregister_func,
+										false);
+		if (relcache == NULL)
+		{
+			pool_error("has_pgpool_regclass: pool_create_relcache error");
+			return false;
+		}
+	}
+
+	result = pool_search_relcache(relcache, backend, "pgpool_regclass")==0?0:1;
 	return result;
 }
