@@ -147,7 +147,7 @@ relcache_lookup(TSRewriteContext *ctx)
 
 	if (!ts_relcache)
 	{
-		ts_relcache = pool_create_relcache(MAX_RELCACHE, ATTRDEFQUERY, ts_register_func, ts_unregister_func, false);
+		ts_relcache = pool_create_relcache(MAX_RELCACHE, query, ts_register_func, ts_unregister_func, false);
 
 		if (ts_relcache == NULL)
 		{
