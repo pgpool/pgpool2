@@ -111,6 +111,12 @@
 	  - Allow to use various boolean representations as PostgreSQL in
         pgpool.conf(Kitagawa)
 
+	  - New C language function pgpool_switch_xlog for online recovery
+	    added(Kitagawa)
+
+	  - New C language function pgpool_regclass added to avoid a trouble
+	    about handling of duplicate table names in different schema(Tatsuo)
+
 	  * Bug fixes
 
 	  - Do not rewrite statement which accesses columns having now()
