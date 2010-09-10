@@ -64,6 +64,8 @@ EXTRA_DIST = pgpool.8.in sql/system_db.sql sample/pgpool.pam doc/pgpool-ja.html 
 		sample/dist_def_pgbench.sql sample/replicate_def_pgbench.sql \
 		sql/pgpool-recovery/pgpool-recovery.c \
 		sql/pgpool-recovery/pgpool-recovery.sql.in sql/pgpool-recovery/Makefile \
+		sql/pgpool-regclass/pgpool-regclass.c \
+		sql/pgpool-regclass/pgpool-regclass.sql.in sql/pgpool-regclass/Makefile \
 		test/parser/expected/copy.out test/parser/expected/create.out \
 		test/parser/expected/cursor.out test/parser/expected/delete.out \
 		test/parser/expected/drop.out test/parser/expected/insert.out \
