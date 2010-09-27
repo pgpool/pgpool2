@@ -164,10 +164,8 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		 * The command will be sent to all backends in replication mode
 		 * or master/primary in master/slave mode.
 		 */
-		char *p = "DELETE FROM foo WHERE col = 'pgpool: unable to parse the query'";
-
 		pool_log("SimpleQuery: Unable to parse the query: %s", contents);
-		parse_tree_list = raw_parser(p);
+		parse_tree_list = raw_parser(POOL_DUMMY_QUERY);
 	}
 
 	if (parse_tree_list != NIL)
@@ -615,13 +613,25 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	old_context = pool_memory;
 	pool_memory = query_context->memory_context;
 
+	/* parse SQL string */
 	parse_tree_list = raw_parser(stmt);
+
 	if (parse_tree_list == NIL)
 	{
-		/* free_parser(); */
-		;
+		/*
+		 * Unable to parse the query. Probably syntax error or the
+		 * query is too new and our parser cannot understand. Treat as
+		 * if it were an DELETE command. Note that the DELETE command
+		 * does not execute, instead the original query will be sent
+		 * to backends, which may or may not cause an actual syntax errors.
+		 * The command will be sent to all backends in replication mode
+		 * or master/primary in master/slave mode.
+		 */
+		pool_log("Parse: Unable to parse the query: %s", contents);
+		parse_tree_list = raw_parser(POOL_DUMMY_QUERY);
 	}
-	else
+
+	if (parse_tree_list != NIL)
 	{
 		/* Save last query string for logging purpose */
 		snprintf(query_string_buffer, sizeof(query_string_buffer), "Parse: %s", stmt);

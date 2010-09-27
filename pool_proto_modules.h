@@ -35,6 +35,7 @@
 #include "pool_session_context.h"
 
 #define SPECIFIED_ERROR 1
+#define POOL_DUMMY_QUERY "DELETE FROM foo WHERE col = 'pgpool: unable to parse the query'"
 #define POOL_ERROR_QUERY "send invalid query from pgpool to abort transaction"
 
 extern char *copy_table;  /* copy table name */
