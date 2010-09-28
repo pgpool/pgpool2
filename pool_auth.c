@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2009	PgPool Global Development Group
+ * Copyright (c) 2003-2010	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -130,6 +130,8 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 	}
 
 	authkind = ntohl(authkind);
+
+	pool_debug("pool_do_auth: auth kind:%d", authkind);
 
 	/* trust? */
 	if (authkind == 0)
@@ -833,6 +835,14 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 
 	if (!RAW_MODE && NUM_BACKENDS > 1)
 	{
+		/* Read password entry from pool_passwd */
+		pool_passwd = pool_get_passwd(frontend->username);
+		if (!pool_passwd)
+		{
+			pool_debug("do_md5: %s does not exist in pool_passwd", frontend->username);
+			return -1;
+		}
+
 		/* master? */
 		if (IS_MASTER_NODE_ID(backend->db_node_id))
 		{
@@ -852,13 +862,6 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 			}
 
 			/* Check the password using my salt + pool_passwd */
-			pool_passwd = pool_get_passwd(frontend->username);
-			if (!pool_passwd)
-			{
-				pool_debug("do_md5: %s does not exist in pool_passwd", frontend->username);
-				return -1;
-			}
-
 			pg_md5_encrypt(pool_passwd+strlen("md5"), salt, sizeof(salt), encbuf);
 			if (strcmp(password, encbuf))
 			{
