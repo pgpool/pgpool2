@@ -42,10 +42,12 @@
 
 /* Maximum number of characters allowed for input. */
 #define MAX_INPUT_SIZE	32
+/* Maximum length of a user name */
+#define MAX_USERNAME_LEN 128
 
 static void	print_usage(const char prog[], int exit_code);
 static void	set_tio_attr(int enable);
-static void update_pool_passwd(char *conf_file, char *password);
+static void update_pool_passwd(char *conf_file, char *username,  char *password);
 
 int
 main(int argc, char *argv[])
@@ -53,6 +55,7 @@ main(int argc, char *argv[])
 #define PRINT_USAGE(exit_code)	print_usage(argv[0], exit_code)
 
 	char conf_file[POOLMAXPATHLEN+1];
+	char username[MAX_USERNAME_LEN+1] = "";
 	int opt;
 	int optindex;
 	bool md5auth = false;
@@ -62,14 +65,14 @@ main(int argc, char *argv[])
 		{"help", no_argument, NULL, 'h'},
 		{"prompt", no_argument, NULL, 'p'},
 		{"md5auth", no_argument, NULL, 'm'},
-		{"md5auth", no_argument, NULL, 'm'},
+		{"username", required_argument, NULL, 'U'},
 		{"config-file", required_argument, NULL, 'f'},
 		{NULL, 0, NULL, 0}
 	};
 
 	snprintf(conf_file, sizeof(conf_file), "%s/%s", DEFAULT_CONFIGDIR, POOL_CONF_FILE_NAME);
 
-    while ((opt = getopt_long(argc, argv, "hpmf:", long_options, &optindex)) != -1)
+    while ((opt = getopt_long(argc, argv, "hpmU:f:", long_options, &optindex)) != -1)
 	{
 		switch (opt)
 		{
@@ -79,6 +82,14 @@ main(int argc, char *argv[])
 
 			case 'm':	/* produce md5 authentication password */
 				md5auth = true;
+				break;
+
+			case 'U':	/* specify user name */
+				if (!optarg)
+				{
+					PRINT_USAGE(EXIT_SUCCESS);
+				}
+				strncpy(username, optarg, sizeof(username));
 				break;
 
 			case 'f':	/* specify configuration file */
@@ -125,12 +136,12 @@ main(int argc, char *argv[])
 
 		if (md5auth)
 		{
-			update_pool_passwd(conf_file, buf);
+			update_pool_passwd(conf_file, username, buf);
 		}
 		else
 		{
 			pool_md5_hash(buf, len, md5);
-			printf("%s\n", md5);
+			printf("\n%s\n", md5);
 		}
 	}
 
@@ -155,7 +166,7 @@ main(int argc, char *argv[])
 
 		if (md5auth)
 		{
-			update_pool_passwd(conf_file, argv[optind]);
+			update_pool_passwd(conf_file, username, argv[optind]);
 		}
 		else
 		{
@@ -167,7 +178,7 @@ main(int argc, char *argv[])
 	return EXIT_SUCCESS;
 }
 
-static void update_pool_passwd(char *conf_file, char *password)
+static void update_pool_passwd(char *conf_file, char *username, char *password)
 {
 	struct passwd *pw;
 	char	 md5[MD5_PASSWD_LEN+1];
@@ -188,14 +199,19 @@ static void update_pool_passwd(char *conf_file, char *password)
 			 dirname(conf_file), pool_config->pool_passwd);
 	pool_init_pool_passwd(pool_passwd);
 
-	pw = getpwuid(getuid());
-	if (!pw)
+	if (*username == '\0')
 	{
-		fprintf(stderr, "getpwuid() failed\n\n");
-		exit(EXIT_FAILURE);
+		pw = getpwuid(getuid());
+		if (!pw)
+		{
+			fprintf(stderr, "getpwuid() failed\n\n");
+			exit(EXIT_FAILURE);
+		}
+		strncpy(username, pw->pw_name, sizeof(username));
 	}
-	pg_md5_encrypt(password, pw->pw_name, strlen(pw->pw_name), md5);
-	pool_create_passwdent(pw->pw_name, md5);
+	pg_md5_encrypt(password, username, strlen(username), md5);
+	pool_create_passwdent(username, md5);
+
 	pool_finish_pool_passwd();
 }
 
@@ -204,19 +220,19 @@ print_usage(const char prog[], int exit_code)
 {
 	fprintf(((exit_code == EXIT_SUCCESS) ? stdout : stderr),
 			"Usage:\n\
+  %s [OPTIONS]... [PASSWORD]\n\
 \n\
-  %s [OPTIONS]\n\
-  %s <PASSWORD>\n\
-\n\
-  --prompt, -p    Prompt password using standard input.\n\
-  --md5auth, -m   Produce md5 authentication password.\n\
-  --help, -h      This help menu.\n\
+Options:\n\
+  -p, --prompt         Prompt password using standard input.\n\
+  -m, --md5auth        Produce md5 authentication password.\n\
+  -U, --username=NAME  Database user name for md5 authentication.\n\
+  -h, --help           This help menu.\n\
 \n\
 Warning: At most %d characters are allowed for input.\n\
 Warning: Plain password argument is deprecated for security concerns\n\
          and kept for compatibility. Please prefer using password\n\
          prompt.\n",
-			prog, prog, MAX_INPUT_SIZE);
+			prog, MAX_INPUT_SIZE);
 
 	exit(exit_code);
 }
