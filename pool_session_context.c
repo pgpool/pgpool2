@@ -33,6 +33,8 @@ static POOL_SESSION_CONTEXT *session_context = NULL;
 
 static void init_prepared_statement_list(void);
 static void init_portal_list(void);
+static bool can_prepared_statement_destroy(POOL_QUERY_CONTEXT *qc);
+static bool can_portal_destroy(POOL_QUERY_CONTEXT *qc);
 
 /*
  * Initialize per session context
@@ -368,6 +370,8 @@ static void pool_remove_portal_by_portal_name(const char *name)
 	{
 		if (strcmp(plist->portals[i]->name, name) == 0)
 		{
+			if (can_portal_destroy(plist->portals[i]->qctxt))
+				pool_query_context_destroy(plist->portals[i]->qctxt);
 			pool_memory_free(session_context->memory_context, plist->portals[i]);
 			break;
 		}
@@ -389,6 +393,7 @@ static void pool_remove_portal_by_portal_name(const char *name)
  * Remove portals by prepared statement name
  * prepared statement : portal = 1 : N
  */
+#ifdef NOT_USED
 static void pool_remove_portal_by_pstmt_name(const char *name)
 {
 	int i;
@@ -413,6 +418,7 @@ static void pool_remove_portal_by_pstmt_name(const char *name)
 			pool_remove_portal_by_portal_name(plist->portals[i]->name);
 	}
 }
+#endif
 
 /*
  * Remove a prepared statement by prepared statement name
@@ -451,7 +457,8 @@ void pool_remove_prepared_statement_by_pstmt_name(const char *name)
 	{
 		if (strcmp(pslist->pstmts[i]->name, name) == 0)
 		{
-			pool_query_context_destroy(pslist->pstmts[i]->qctxt);
+			if (can_prepared_statement_destroy(pslist->pstmts[i]->qctxt))
+				pool_query_context_destroy(pslist->pstmts[i]->qctxt);
 			pool_memory_free(session_context->memory_context, pslist->pstmts[i]);
 			break;
 		}
@@ -472,7 +479,11 @@ void pool_remove_prepared_statement_by_pstmt_name(const char *name)
 	}
 	pslist->size--;
 
-	pool_remove_portal_by_pstmt_name(name);
+	/*
+	 * prepared statements and portals are closed separately
+	 * by a frontend.
+	 */
+	/* pool_remove_portal_by_pstmt_name(name); */
 
 	if (in_progress)
 		pool_set_query_in_progress();
@@ -639,6 +650,7 @@ Portal *pool_create_portal(const char *name, int num_tsparams, PreparedStatement
 	portal->name = pool_memory_strdup(session_context->memory_context, name);
 	portal->num_tsparams = num_tsparams;
 	portal->pstmt = pstmt;
+	portal->qctxt = pstmt->qctxt;
 
 	return portal;
 }
@@ -1136,4 +1148,42 @@ static void init_portal_list(void)
 		pool_error("init_portal_list: malloc failed: %s", strerror(errno));
 		exit(1);
 	}
+}
+
+static bool can_prepared_statement_destroy(POOL_QUERY_CONTEXT *qc)
+{
+	int i;
+	PortalList *plist;
+
+	plist = &session_context->portal_list;
+
+	for (i = 0; i < plist->size; i++)
+	{
+		if (plist->portals[i]->qctxt == qc)
+		{
+			pool_debug("can_prepared_statement_destroy: query context is still used.");
+			return false;
+		}
+	}
+
+	return true;
+}
+
+static bool can_portal_destroy(POOL_QUERY_CONTEXT *qc)
+{
+	int i;
+	PreparedStatementList *pslist;
+
+	pslist = &session_context->pstmt_list;
+
+	for (i = 0; i < pslist->size; i++)
+	{
+		if (pslist->pstmts[i]->qctxt == qc)
+		{
+			pool_debug("can_portal_destroy: query context is still used.");
+			return false;
+		}
+	}
+
+	return true;
 }

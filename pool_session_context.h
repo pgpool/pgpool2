@@ -61,6 +61,7 @@ typedef struct {
 	char *name;		/* portal name */
 	int num_tsparams;
 	PreparedStatement *pstmt;
+	POOL_QUERY_CONTEXT *qctxt;
 } Portal;
 
 /*
