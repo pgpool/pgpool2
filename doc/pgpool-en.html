@@ -1298,7 +1298,7 @@ pgpool.conf.sample-master-slave and pgpool.conf.sample-stream is for
 streaming replication.
 </p>
 <p>
-Please retart pgpool-II if you change above parameters.
+Please restart pgpool-II if you change above parameters.
 </p>
 <p>
 You can use white_function_list and black_function_list to control load
@@ -1350,7 +1350,7 @@ command as well.
 <h4>Failover with Streaming Replication</h4>
 <p>
 In master/slave mode with streaming replication, if primary or standby
-node go dowm, you can use failover functionality of pgpool-II.
+node go down, you can use failover functionality of pgpool-II.
 Automatical detatching node can be used without any additional settings.
 In streaming replication the standby node checks "trigger file" and if
 it exists, the standby stops continuos recovery and goes into normal
@@ -1437,17 +1437,17 @@ host	replication	postgres		192.168.0.10/32		trust
 
 <p>
 Start primary and secondary PostgreSQL to initiate Streaming replication.
-If the primary node goes dhown, standby will automatically start as a
+If the primary node goes down, standby will automatically start as a
 normal PostgreSQL and will be ready to accept write queries.
 </p>
 
-<h4>Streaming Replicationでのクエリ振り分け</h4>
+<h4>Streaming Replication</h4>
 <p>
 While using Streaming replication and Hot Standby, it is important to
 determine which query is good to be sent to the primary or the standby,
 and which one should not be sent to the standby.
 pgpool-II's Streaming Replication mode carefully takes care of this.
-In this we explain how chapter how pgpool-II accomplishes this.
+In this chapter we explain how pgpool-II accomplishes this.
 </p>
 <p>
 We distinguish which query should be sent to which node by looking
