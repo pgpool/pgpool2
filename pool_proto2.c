@@ -380,7 +380,7 @@ POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend,
 	char *string = NULL;
 	int len;
 	int i;
-	POOL_STATUS ret;
+	POOL_STATUS ret = POOL_CONTINUE;
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -398,7 +398,12 @@ POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend,
 	if (pool_write_and_flush(frontend, string, len) < 0)
 		return POOL_END;
 
-	ret = raise_intentional_error_if_need(backend);
+	/* 
+	 * check session context, because this function is called 
+	 * by pool_do_auth too.
+	 */
+	if (pool_get_session_context())
+		ret = raise_intentional_error_if_need(backend);
 
 	/* change transaction state */
 	for (i=0;i<NUM_BACKENDS;i++)
