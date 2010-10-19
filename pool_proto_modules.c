@@ -1679,11 +1679,6 @@ POOL_STATUS ErrorResponse3(POOL_CONNECTION *frontend,
 {
 	POOL_STATUS ret;
 
-	/* An error occurred with PREPARE or DEALLOCATE command.
-	 * Free pending portal object.
-	 */
-	pool_remove_pending_objects();
-
 	ret = SimpleForwardToFrontend('E', frontend, backend);
 	if (ret != POOL_CONTINUE)
 		return ret;
@@ -1746,6 +1741,11 @@ POOL_STATUS ErrorResponse3(POOL_CONNECTION *frontend,
 		}
 	}
 #endif
+
+	/* An error occurred with PREPARE or DEALLOCATE command.
+	 * Free pending portal object.
+	 */
+	pool_remove_pending_objects();
 
 	return POOL_CONTINUE;
 }
