@@ -1,4 +1,26 @@
-3.0(umiyameboshi) 2010/09/10
+3.0.1 (umiyameboshi) 2010/10/19
+
+	  * Version 3.0.1
+
+	  This version fixes various bug in 3.0.
+
+	  * Bug fixes
+
+	  - Fix bug with md5 auth. If there's more than 1 servers to be
+		authenticated, it segfaults(Tatsuo)
+
+	  - Fix bug that a child process crashes when clients execute a query
+		contains syntax error in extended query protocol(Kitagawa)
+
+	  - Fix bug with handling of portal information, it terminates
+		a child process(Kitagawa)
+
+	  - Fix hungup when a query sent to one node caused an error
+		in extended query protocol(Kitagawa)
+
+	  - Fix typo in English doc. Patch contributed by Asaf Ohaion(Tatsuo)
+
+3.0 (umiyameboshi) 2010/09/10
 
 	  * Version 3.0
 
