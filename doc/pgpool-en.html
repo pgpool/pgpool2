@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Thu Sep  9 11:17:41 JST 2010
+Last modified: Tue Oct 19 07:59:36 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -936,8 +936,8 @@ configuration parameters below must be set in addtion to everything above.</p>
 <dd>
 <p>
 Specify comma separated function name list, those <strong>do not</strong> update database.
-SELECTs use functions not specified in this list are not load balanced, replicated if in replication mode.
-In master slave mode, SELECTs are sent to master(primary) only.
+SELECTs using functions not specified in this list are not load balanced, replicated if in replication mode.
+In master slave mode, such SELECTs are sent to master(primary) only.
 </p>
 
 <a name="black_function_list"></a>
@@ -945,8 +945,8 @@ In master slave mode, SELECTs are sent to master(primary) only.
 <dd>
 <p>
 Specify comma separated function name list, those <strong>do</strong> update database.
-SELECTs use functions specified in this list are not load balanced, replicated if in replication mode.
-In master slave mode, SELECTs are sent to master(primary) only.
+SELECTs using functions specified in this list are not load balanced, replicated if in replication mode.
+In master slave mode, such SELECTs are sent to master(primary) only.
 </p>
 <p>
 You should not make those lists nonempty at the same time.
