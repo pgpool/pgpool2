@@ -31,7 +31,7 @@
 #include <netinet/in.h>
 
 /* some length definitions */
-#define POOLCONFIG_MAXNAMELEN 32
+#define POOLCONFIG_MAXNAMELEN 64
 #define POOLCONFIG_MAXVALLEN 512
 #define POOLCONFIG_MAXDESCLEN 64
 #define POOLCONFIG_MAXIDENTLEN 63
@@ -198,6 +198,11 @@ void config_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	strncpy(status[i].name, "replication_stop_on_mismatch", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->replication_stop_on_mismatch);
 	strncpy(status[i].desc, "stop replication mode on fatal error", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "failover_if_affected_tuples_mismatch", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->failover_if_affected_tuples_mismatch);
+	strncpy(status[i].desc, "failover if affected tuples are mismatch", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "replicate_select", POOLCONFIG_MAXNAMELEN);
