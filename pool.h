@@ -276,6 +276,20 @@ extern int pool_virtual_master_db_node_id(void);
 #define REAL_MASTER_NODE_ID (Req_info->master_node_id)
 
 /*
+ * The primary node id in streaming replication mode. If not in the
+ * mode or there's no primary node, this macro returns
+ * REAL_MASTER_NODE_ID.
+ */
+#define PRIMARY_NODE_ID (Req_info->primary_node_id >=0?\
+						 Req_info->primary_node_id:REAL_MASTER_NODE_ID)
+
+/*
+ * Real primary node id. If not in the mode or there's no primary
+ * node, this macro returns -1.
+ */
+#define REAL_PRIMARY_NODE_ID (Req_info->primary_node_id)
+
+/*
  * "Virtual" master node id. It's same as REAL_MASTER_NODE_ID if not
  * in load balance mode. If in load balance, it's the first load
  * balance node.
@@ -335,6 +349,7 @@ typedef struct {
 	POOL_REQUEST_KIND	kind;	/* request kind */
 	int node_id[MAX_NUM_BACKENDS];		/* request node id */
 	int master_node_id;	/* the youngest node id which is not in down status */
+	int primary_node_id;	/* the primary node id in streaming replication mode */
 	int conn_counter;
 } POOL_REQUEST_INFO;
 
@@ -496,8 +511,10 @@ extern ProcessInfo *pool_get_process_info(pid_t pid);
 extern SystemDBInfo *pool_get_system_db_info(void);
 extern POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *query, char *database);
 
+/* child.c */
 extern POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	char *hostname, int port, char *dbname, char *user, char *password);
+extern void discard_persistent_db_connection(POOL_CONNECTION_POOL_SLOT *cp);
 
 /* define pool_system.c */
 extern POOL_CONNECTION_POOL_SLOT *pool_system_db_connection(void);

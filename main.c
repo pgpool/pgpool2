@@ -120,6 +120,8 @@ static void stop_me(void);
 
 static int trigger_failover_command(int node, const char *command_line);
 
+static int find_primary_node(void);
+
 static struct sockaddr_un un_addr;		/* unix domain socket path */
 static struct sockaddr_un pcp_un_addr;  /* unix domain socket path for PCP */
 
@@ -548,6 +550,9 @@ int main(int argc, char **argv)
 
 	retrycnt = 0;		/* reset health check retry counter */
 	sys_retrycnt = 0;	/* reset SystemDB health check retry counter */
+
+	/* Save primary node id */
+	Req_info->primary_node_id = find_primary_node();
 
 	/*
 	 * This is the main loop
@@ -1608,6 +1613,9 @@ static void failover(void)
 				 BACKEND_INFO(node_id).backend_port);
 	}
 
+	/* Save primary node id */
+	Req_info->primary_node_id = find_primary_node();
+
 	switching = 0;
 
 	/* kick wakeup_handler in pcp_child to notice that
@@ -2239,4 +2247,95 @@ static int trigger_failover_command(int node, const char *command_line)
 	pool_memory = NULL;
 
 	return r;
+}
+
+/*
+ * Find the primary node (i.e. not standby node) and returns its node
+ * id. If no primary node is found, returns -1.
+ */
+static int find_primary_node(void)
+{
+	BackendInfo *bkinfo;
+	POOL_CONNECTION_POOL_SLOT *s;
+	POOL_CONNECTION *con; 
+	POOL_STATUS status;
+	POOL_SELECT_RESULT *res;
+	bool is_standby;
+	int i;
+
+	/* Streaming replication mode? */
+	if (pool_config->master_slave_mode == 0 ||
+		strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
+	{
+		/* No point to look for primary node if not in streaming
+		 * replication mode.
+		 */
+		pool_debug("find_primary_node: not in streaming replication mode");
+		return -1;
+	}
+
+	for(i=0;i<NUM_BACKENDS;i++)
+	{
+		if (!VALID_BACKEND(i))
+			continue;
+		/*
+		 * Check to see if this is a standby node or not
+		 */
+		is_standby = false;
+
+		bkinfo = pool_get_node_info(i);
+		s = make_persistent_db_connection(bkinfo->backend_hostname, 
+										  bkinfo->backend_port,
+										  "postgres",
+										  pool_config->health_check_user,
+										  "");
+		if (!s)
+		{
+			pool_error("find_primary_node: make_persistent_connetcion failed");
+			break;
+		}
+		con = s->con;
+
+		status = do_query(con, "SELECT pg_is_in_recovery() AND pgpool_walrecrunning()",
+						  &res, PROTO_MAJOR_V3);
+		if (res->numrows <= 0)
+		{
+			pool_log("find_primary_node: do_query returns no rows");
+		}
+		if (res->data[0] == NULL)
+		{
+			pool_log("find_primary_node: do_query returns no data");
+		}
+		if (res->nullflags[0] == -1)
+		{
+			pool_log("find_primary_node: do_query returns NULL");
+		}
+		if (!strcmp(res->data[0], "t"))
+		{
+			is_standby = true;
+		}   
+		free_select_result(res);
+		discard_persistent_db_connection(s);
+
+		/*
+		 * If this is a standby, we continue to look for primary node.
+		 */
+		if (is_standby)
+		{
+			pool_log("find_primary_node: %d node is standby", i);
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	if (i == NUM_BACKENDS)
+	{
+		pool_log("find_primary_node: no primary node found");
+		return -1;
+	}
+
+	pool_log("find_primary_node: primary node id is %d", i);
+	return i;
 }

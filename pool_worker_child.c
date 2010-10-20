@@ -206,7 +206,7 @@ static void check_replication_time_lag(void)
 			return;
 		}
 
-		if (REAL_MASTER_NODE_ID == i)
+		if (PRIMARY_NODE_ID == i)
 		{
 			query = "SELECT pg_current_xlog_location()";
 		}
@@ -260,9 +260,9 @@ static void check_replication_time_lag(void)
 
 		/* Set standby delay value */
 		bkinfo = pool_get_node_info(i);
-		lag = lsn[REAL_MASTER_NODE_ID] - lsn[i];
+		lag = lsn[PRIMARY_NODE_ID] - lsn[i];
 
-		if (REAL_MASTER_NODE_ID == i)
+		if (PRIMARY_NODE_ID == i)
 		{
 			bkinfo->standby_delay = 0;
 		}
@@ -276,7 +276,7 @@ static void check_replication_time_lag(void)
 				 !strcmp(pool_config->log_standby_delay, "if_over_threshold") &&
 				 lag > pool_config->delay_threshold))
 			{
-				pool_log("Replication of node:%d is behind %lld bytes from the primary server (node:%d)", i, lsn[REAL_MASTER_NODE_ID] - lsn[i], REAL_MASTER_NODE_ID);
+				pool_log("Replication of node:%d is behind %lld bytes from the primary server (node:%d)", i, lsn[PRIMARY_NODE_ID] - lsn[i], PRIMARY_NODE_ID);
 			}
 		}
 	}

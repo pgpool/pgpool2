@@ -1,0 +1,4 @@
+CREATE OR REPLACE FUNCTION pgpool_walrecrunning()
+RETURNS bool
+AS 'MODULE_PATHNAME', 'pgpool_walrecrunning'
+LANGUAGE C VOLATILE STRICT;

@@ -1466,6 +1466,22 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 }
 
 /*
+ * Discard connection and memroy allocated by
+ * make_persistent_db_connection().
+ */
+void discard_persistent_db_connection(POOL_CONNECTION_POOL_SLOT *cp)
+{
+	if(cp == NULL)
+		return;
+
+	pool_close(cp->con);
+	free(cp->sp->startup_packet);
+	free(cp->sp->database);
+	free(cp->sp->user);
+	free(cp);
+}
+
+/*
  * do authentication for cp
  */
 static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
