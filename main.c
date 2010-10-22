@@ -320,11 +320,12 @@ int main(int argc, char **argv)
 	{
 		char pool_passwd[POOLMAXPATHLEN+1];
 		char dirnamebuf[POOLMAXPATHLEN+1];
+		char *dirp;
 
 		strncpy(dirnamebuf, conf_file, sizeof(dirnamebuf));
-		dirname(dirnamebuf);
+		dirp = dirname(dirnamebuf);
 		snprintf(pool_passwd, sizeof(pool_passwd), "%s/%s",
-				 dirnamebuf, pool_config->pool_passwd);
+				 dirp, pool_config->pool_passwd);
 		pool_init_pool_passwd(pool_passwd);
 	}
 
