@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Sat Oct 30 12:20:41 JST 2010
+Last modified: Sat Oct 30 20:06:26 JST 2010
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -568,12 +568,12 @@ pgpool-II replaces special characters to backend information.
 <tr><td>Special character</td><td>Description</td></tr>
 <tr><td>%d</td><td>Backend ID of a detached node.</td></tr>
 <tr><td>%h</td><td>Hostname of a detached node.</td></tr>
-<tr><td>%H</td><td>Hostname of the new master node.</td></tr>
 <tr><td>%p</td><td>Port number of a detached node.</td></tr>
-<tr><td>%D</td><td>Database cluster directory of a detached node.
-</td></tr>
+<tr><td>%D</td><td>Database cluster directory of a detached node.</td></tr>
 <tr><td>%M</td><td>Old master node ID.</td></tr>
 <tr><td>%m</td><td>New master node ID.</td></tr>
+<tr><td>%H</td><td>Hostname of the new master node.</td></tr>
+<tr><td>%P</td><td>Old primary node ID.</td></tr>
 <tr><td>%%</td><td>'%' character</td></tr>
 </table>
 </center>
@@ -600,10 +600,11 @@ pgpool-II replaces special characters to backend information.
 <tr><td>%d</td><td>Backend ID of an attached node.</td></tr>
 <tr><td>%h</td><td>Hostname of an attached node.</td></tr>
 <tr><td>%p</td><td>Port number of an attached node.</td></tr>
-<tr><td>%D</td><td>Database cluster path of an attached node.
-</td></tr>
-<tr><td>%M</td><td>Old master node</td></tr>
-<tr><td>%m</td><td>New master node</td></tr>
+<tr><td>%D</td><td>Database cluster path of an attached node.</td></tr>
+<tr><td>%M</td><td>Old master node.</td></tr>
+<tr><td>%m</td><td>New master node.</td></tr>
+<tr><td>%H</td><td>Hostname of the new master node.</td></tr>
+<tr><td>%P</td><td>Old primary node ID.</td></tr>
 <tr><td>%%</td><td>'%' character</td></tr>
 </table>
 </center>
