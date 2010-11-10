@@ -42,6 +42,9 @@ pkgdata_DATA = sql/system_db.sql sample/pgpool.pam
 
 AM_CPPFLAGS = -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
 
+# suggested by libtoolize
+ACLOCAL_AMFLAGS = -I m4
+
 pgpool_LDADD = -L@PGSQL_LIB_DIR@ -lpq parser/libsql-parser.a pcp/libpcp.la parser/nodes.o
 if enable_rpath
   pgpool_LDFLAGS = -rpath @PGSQL_LIB_DIR@ -rpath $(libdir)

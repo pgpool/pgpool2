@@ -4,12 +4,15 @@ AC_INIT
 dnl Checks for programs.
 AC_PROG_CC
 
-AM_INIT_AUTOMAKE(pgpool-II, 3.0.1)
+AM_INIT_AUTOMAKE(pgpool-II, 3.1.0-alpha1)
 AC_PROG_RANLIB
 AC_PROG_LIBTOOL
 
 AM_PROG_LEX
 AC_PROG_YACC
+
+dnl suggested by libtoolize --force
+AC_CONFIG_MACRO_DIR([m4])
 
 dnl Check compiler option
 dnl check -Wall option
