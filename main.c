@@ -2316,7 +2316,7 @@ static int find_primary_node(void)
 		{
 			pool_log("find_primary_node: do_query returns NULL");
 		}
-		if (!strcmp(res->data[0], "t"))
+		if (res->data[0] && !strcmp(res->data[0], "t"))
 		{
 			is_standby = true;
 		}   
