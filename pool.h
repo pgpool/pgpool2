@@ -534,7 +534,7 @@ extern int pool_clear_cache_by_time(Interval *interval, int size);
 extern POOL_STATUS pool_execute_query_cache_lookup(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, Node *node);
 
 /* pool_hba.c */
-extern void load_hba(char *hbapath);
+extern int load_hba(char *hbapath);
 extern void ClientAuthentication(POOL_CONNECTION *frontend);
 
 /* pool_ip.c */
