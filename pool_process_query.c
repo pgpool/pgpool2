@@ -2720,6 +2720,7 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *query, InsertStmt *node, int lock_kind)
 {
 	char *table;
+	int len;
 	char qbuf[1024];
 	POOL_STATUS status;
 	int i, deadlock_detected = 0;
@@ -2732,6 +2733,7 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 
 	char *atrname;
 	char seq_rel_name[MAX_SEQ_NAME+1];
+	char stripped_table_name[MAX_SEQ_NAME+1];
 	static POOL_RELCACHE *relcache;
 
 	/* insert_lock can be used in V3 only */
@@ -2785,7 +2787,17 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 			/* could not get attribute namme */
 			return POOL_CONTINUE;
 		}
-		snprintf(seq_rel_name, MAX_SEQ_NAME, "%s_%s_seq", table, atrname);
+
+		/* strip head and tail double quotes from table name */
+		if (*table == '"')
+			table++;
+		len = strlen(table);
+		if (*(table + len -1) == '"')
+			len--;
+		strncpy(stripped_table_name, table, len);
+		*(stripped_table_name + len) = '\0';
+
+		snprintf(seq_rel_name, MAX_SEQ_NAME, "\"%s_%s_seq\"", stripped_table_name, atrname);
 		pool_debug("seq rel name:%s", seq_rel_name);
 		snprintf(qbuf, sizeof(qbuf), "SELECT 1 FROM %s FOR UPDATE", seq_rel_name);
 	}
