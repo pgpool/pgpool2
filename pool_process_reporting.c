@@ -50,6 +50,7 @@ typedef struct {
 
 /* nodes report struct */
 typedef struct {
+        char node_id[POOLCONFIG_MAXSTATLEN+1];
 	char hostname[POOLCONFIG_MAXIDENTLEN+1];
 	char port[POOLCONFIG_MAXIDENTLEN+1];
 	char status[POOLCONFIG_MAXSTATLEN+1];
@@ -646,8 +647,8 @@ void config_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 {
 	static char *cursorname = "blank";
-	static short num_fields = 4;
-	static char *field_names[] = {"hostname", "port", "status", "lb_weight"};
+	static short num_fields = 5;
+	static char *field_names[] = {"node_id","hostname", "port", "status", "lb_weight"};
 	static int oid = 0;
 	static short fsize = -1;
 	static int mod = 0;
@@ -671,10 +672,11 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	{
 	    bi = pool_get_node_info(i);
 
-	    strncpy(nodes[i].hostname, bi->backend_hostname, strlen(bi->backend_hostname)+1);
-		snprintf(nodes[i].port, POOLCONFIG_MAXIDENTLEN, "%d", bi->backend_port);
-		snprintf(nodes[i].status, POOLCONFIG_MAXSTATLEN, "%d", bi->backend_status);
-		snprintf(nodes[i].lb_weight, POOLCONFIG_MAXWEIGHTLEN, "%f", bi->backend_weight/RAND_MAX);
+            snprintf(nodes[i].node_id, 	POOLCONFIG_MAXSTATLEN, 	"%d", 	i);
+	    strncpy(nodes[i].hostname, 	bi->backend_hostname, 		strlen(bi->backend_hostname)+1);
+	    snprintf(nodes[i].port, 	POOLCONFIG_MAXIDENTLEN, "%d", 	bi->backend_port);
+	    snprintf(nodes[i].status, 	POOLCONFIG_MAXSTATLEN, 	"%d", 	bi->backend_status);
+	    snprintf(nodes[i].lb_weight, POOLCONFIG_MAXWEIGHTLEN, "%f", bi->backend_weight/RAND_MAX);
 	}
 
 	nrows = i;
@@ -746,6 +748,11 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 			pool_write(frontend, "D", 1);
 			pool_write_and_flush(frontend, nullmap, nbytes);
 
+			size = strlen(nodes[i].node_id);
+			hsize = htonl(size+4);
+			pool_write(frontend, &hsize, sizeof(hsize));
+			pool_write(frontend, nodes[i].node_id, size);
+
 			size = strlen(nodes[i].hostname);
 			hsize = htonl(size+4);
 			pool_write(frontend, &hsize, sizeof(hsize));
@@ -774,6 +781,7 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 		{
 			pool_write(frontend, "D", 1);
 			len = sizeof(len) + sizeof(nrows);
+			len += sizeof(int) + strlen(nodes[i].node_id);
 			len += sizeof(int) + strlen(nodes[i].hostname);
 			len += sizeof(int) + strlen(nodes[i].port);
 			len += sizeof(int) + strlen(nodes[i].status);
@@ -782,6 +790,10 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 			pool_write(frontend, &len, sizeof(len));
 			s = htons(num_fields);
 			pool_write(frontend, &s, sizeof(s));
+
+			len = htonl(strlen(nodes[i].node_id));
+			pool_write(frontend, &len, sizeof(len));
+			pool_write(frontend, nodes[i].node_id, strlen(nodes[i].node_id));
 
 			len = htonl(strlen(nodes[i].hostname));
 			pool_write(frontend, &len, sizeof(len));
