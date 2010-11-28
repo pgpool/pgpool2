@@ -147,7 +147,7 @@ int pool_create_passwdent(char *username, char *passwd)
 char *pool_get_passwd(char *username)
 {
 	int c;
-	char name[32];
+	char name[33];
 	static char passwd[POOL_PASSWD_LEN+1];
 	char *p;
 	int readlen;
@@ -166,7 +166,7 @@ char *pool_get_passwd(char *username)
 		p = name;
 		readlen = 0;
 
-		while (readlen < sizeof(name))
+		while (readlen < (sizeof(name)-1))
 		{
 			c = fgetc(passwd_fd);
 			if (c == EOF)
