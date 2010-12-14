@@ -1063,6 +1063,7 @@ static int read_password_packet(POOL_CONNECTION *frontend, int protoMajor, 	char
  * Send password packet to backend and receive authentication response
  * packet.  Return value is the last field of authentication
  * response. If it's 0, authentication was successfull.
+ * "password" must be null-terminated.
  */
 static int send_password_packet(POOL_CONNECTION *backend, int protoMajor, char *password)
 {
