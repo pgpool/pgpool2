@@ -92,6 +92,7 @@ static void _outAConst(String *str, A_Const *node);
 static void _outA_Indices(String *str, A_Indices *node);
 static void _outA_Indirection(String *str, A_Indirection *node);
 static void _outResTarget(String *str, ResTarget *node);
+static void _outA_ArrayExpr(String *str, A_ArrayExpr *node);
 static void _outWindowDef(String *str, WindowDef *node);
 static void _outConstraint(String *str, Constraint *node);
 static void _outFkConstraint(String *str, FkConstraint *node);
@@ -1149,6 +1150,23 @@ _outTypeName(String *str, TypeName *node)
 		_outList(str, node->typmods);
 		string_append_char(str, ")");
 	}
+
+	if (node->arrayBounds != NIL)
+	{
+		ListCell *lc;
+
+		foreach (lc, node->arrayBounds)
+		{
+			if (intVal(lfirst(lc)) == -1)
+				string_append_char(str, "[]");
+			else
+			{
+				string_append_char(str, "[");
+				_outNode(str, lfirst(lc));
+				string_append_char(str, "]");
+			}
+		}
+	}
 }
 
 static void
@@ -1443,8 +1461,48 @@ _outA_Indices(String *str, A_Indices *node)
 static void
 _outA_Indirection(String *str, A_Indirection *node)
 {
-	_outNode(str, node->arg);
-	_outNode(str, node->indirection);
+	ListCell	*lc;
+
+	if (node->indirection != NIL)
+	{
+		if (IsA(node->arg, ParamRef))
+			/* "$1[1]" OR "$1.foo" */
+			_outParamRef(str, (ParamRef *) node->arg);
+		else
+		{
+			/* "(ARRAY[1])[1]" */
+			string_append_char(str, "(");
+			_outNode(str, node->arg);
+			string_append_char(str, ")");
+		}
+
+		foreach (lc, node->indirection)
+		{
+			Node	*ind = lfirst(lc);
+
+			if (IsA(ind, A_Star))
+				/* foo.* */
+				string_append_char(str, ".*");
+			else if (IsA(ind, String))
+			{
+				/* foo.bar */
+				string_append_char(str, ".\"");
+				string_append_char(str, strVal(ind));
+				string_append_char(str, "\"");
+			}
+			else
+				/* foo[1] (A_Indices)*/
+				_outNode(str, ind);
+		}
+	}
+}
+
+static void
+_outA_ArrayExpr(String *str, A_ArrayExpr *node)
+{
+	string_append_char(str, "ARRAY [");
+	_outNode(str, node->elements);
+	string_append_char(str,"]");
 }
 
 static void
@@ -1739,6 +1797,8 @@ static void _outInsertStmt(String *str, InsertStmt *node)
 		foreach (lc, node->cols)
 		{
 			ResTarget *node = lfirst(lc);
+			ListCell  *lc_ind;
+
 			if (comma == 0)
 				comma = 1;
 			else
@@ -1747,6 +1807,22 @@ static void _outInsertStmt(String *str, InsertStmt *node)
 			string_append_char(str, "\"");
 			string_append_char(str, node->name);
 			string_append_char(str, "\"");
+
+			foreach (lc_ind, node->indirection)
+			{
+				Node	*ind = lfirst(lc_ind);
+
+				if (IsA(ind, String))
+				{
+					/* foo.bar */
+					string_append_char(str, ".\"");
+					string_append_char(str, strVal(ind));
+					string_append_char(str, "\"");
+				}
+				else
+					/* foo[1] (A_Indices) */
+					_outNode(str, ind);
+			}
 		}
 		string_append_char(str, ")");
 	}
@@ -1776,6 +1852,8 @@ static void _outUpdateStmt(String *str, UpdateStmt *node)
 	foreach (lc, node->targetList)
 	{
 		ResTarget *node = lfirst(lc);
+		ListCell  *lc_ind;
+
 		if (comma == 0)
 			comma = 1;
 		else
@@ -1783,7 +1861,24 @@ static void _outUpdateStmt(String *str, UpdateStmt *node)
 
 		string_append_char(str, "\"");
 		string_append_char(str, node->name);
-		string_append_char(str, "\" = ");
+		string_append_char(str, "\"");
+
+		foreach (lc_ind, node->indirection)
+		{
+			Node	*ind = lfirst(lc_ind);
+
+			if (IsA(ind, String))
+			{
+				string_append_char(str, ".\"");
+				string_append_char(str, strVal(ind));
+				string_append_char(str, "\"");
+			}
+			else
+				/* foo[1] (A_Indices) */
+				_outNode(str, ind);
+		}
+
+		string_append_char(str, " = ");
 		_outNode(str, node->val);
 	}
 
@@ -5069,11 +5164,9 @@ _outNode(String *str, void *obj)
 			case T_A_Indirection:
 				_outA_Indirection(str, obj);
 				break;
-				/*
 			case T_A_ArrayExpr:
 				_outA_ArrayExpr(str, obj);
 				break;
-				*/
 			case T_ResTarget:
 				_outResTarget(str, obj);
 				break;
