@@ -26,16 +26,18 @@
 #include "gramparse.h"	/* required before parser/gram.h! */
 #include "gram.h"
 #include "parser.h"
+#include "pg_wchar.h"
 
 
 List	   *parsetree;			/* result of parsing is left here */
 jmp_buf    jmpbuffer;
+int			server_version_num = 0;
 
-static bool have_lookahead;		/* is lookahead info valid? */
-static int	lookahead_token;	/* one-token lookahead */
-static YYSTYPE lookahead_yylval;	/* yylval for lookahead token */
-static YYLTYPE lookahead_yylloc;	/* yylloc for lookahead token */
+static pg_enc		server_encoding = PG_SQL_ASCII;
+static	bool		in_parser_context = false;
 
+static int
+parse_version(const char *versionString);
 
 /*
  * raw_parser
@@ -46,32 +48,43 @@ static YYLTYPE lookahead_yylloc;	/* yylloc for lookahead token */
 List *
 raw_parser(const char *str)
 {
+	core_yyscan_t yyscanner;
+	base_yy_extra_type yyextra;
 	int			yyresult;
 
 	if (pool_memory == NULL)
 		pool_memory = pool_memory_create(PARSER_BLOCK_SIZE);
 
 	parsetree = NIL;			/* in case grammar forgets to set it */
-	have_lookahead = false;
 
-	scanner_init(str);
-	parser_init();
+	/* initialize the flex scanner */
+	yyscanner = scanner_init(str, &yyextra.core_yy_extra,
+							 ScanKeywords, NumScanKeywords);
 
+	/* base_yylex() only needs this much initialization */
+	yyextra.have_lookahead = false;
+
+	/* initialize the bison parser */
+	parser_init(&yyextra);
+
+	in_parser_context = true;
 	if (setjmp(jmpbuffer) != 0)
 	{
-		scanner_finish();
+		scanner_finish(yyscanner);
+		in_parser_context = false;
 		return NIL; /* error */
 	}
 	else
 	{
-		yyresult = base_yyparse();
+		yyresult = base_yyparse(yyscanner);
 
-		scanner_finish();
+		scanner_finish(yyscanner);
 
+		in_parser_context = false;
 		if (yyresult)				/* error */
 			return NIL;
 	}
-	return parsetree;
+	return yyextra.parsetree;
 }
 
 void free_parser(void)
@@ -91,25 +104,30 @@ void free_parser(void)
  * words.  Furthermore it's not clear how to do it without re-introducing
  * scanner backtrack, which would cost more performance than this filter
  * layer does.
+ *
+ * The filter also provides a convenient place to translate between
+ * the core_YYSTYPE and YYSTYPE representations (which are really the
+ * same thing anyway, but notationally they're different).
  */
 int
-filtered_base_yylex(void)
+base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 {
+	base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
 	int			cur_token;
 	int			next_token;
-	YYSTYPE		cur_yylval;
+	core_YYSTYPE cur_yylval;
 	YYLTYPE		cur_yylloc;
 
 	/* Get next token --- we might already have it */
-	if (have_lookahead)
+	if (yyextra->have_lookahead)
 	{
-		cur_token = lookahead_token;
-		base_yylval = lookahead_yylval;
-		base_yylloc = lookahead_yylloc;
-		have_lookahead = false;
+		cur_token = yyextra->lookahead_token;
+		lvalp->core_yystype = yyextra->lookahead_yylval;
+		*llocp = yyextra->lookahead_yylloc;
+		yyextra->have_lookahead = false;
 	}
 	else
-		cur_token = base_yylex();
+		cur_token = core_yylex(&(lvalp->core_yystype), llocp, yyscanner);
 
 	/* Do we need to look ahead for a possible multiword token? */
 	switch (cur_token)
@@ -119,9 +137,9 @@ filtered_base_yylex(void)
 			/*
 			 * NULLS FIRST and NULLS LAST must be reduced to one token
 			 */
-			cur_yylval = base_yylval;
-			cur_yylloc = base_yylloc;
-			next_token = base_yylex();
+			cur_yylval = lvalp->core_yystype;
+			cur_yylloc = *llocp;
+			next_token = core_yylex(&(lvalp->core_yystype), llocp, yyscanner);
 			switch (next_token)
 			{
 				case FIRST_P:
@@ -132,13 +150,13 @@ filtered_base_yylex(void)
 					break;
 				default:
 					/* save the lookahead token for next time */
-					lookahead_token = next_token;
-					lookahead_yylval = base_yylval;
-					lookahead_yylloc = base_yylloc;
-					have_lookahead = true;
+					yyextra->lookahead_token = next_token;
+					yyextra->lookahead_yylval = lvalp->core_yystype;
+					yyextra->lookahead_yylloc = *llocp;
+					yyextra->have_lookahead = true;
 					/* and back up the output info to cur_token */
-					base_yylval = cur_yylval;
-					base_yylloc = cur_yylloc;
+					lvalp->core_yystype = cur_yylval;
+					*llocp = cur_yylloc;
 					break;
 			}
 			break;
@@ -148,9 +166,9 @@ filtered_base_yylex(void)
 			/*
 			 * WITH TIME must be reduced to one token
 			 */
-			cur_yylval = base_yylval;
-			cur_yylloc = base_yylloc;
-			next_token = base_yylex();
+			cur_yylval = lvalp->core_yystype;
+			cur_yylloc = *llocp;
+			next_token = core_yylex(&(lvalp->core_yystype), llocp, yyscanner);
 			switch (next_token)
 			{
 				case TIME:
@@ -158,13 +176,13 @@ filtered_base_yylex(void)
 					break;
 				default:
 					/* save the lookahead token for next time */
-					lookahead_token = next_token;
-					lookahead_yylval = base_yylval;
-					lookahead_yylloc = base_yylloc;
-					have_lookahead = true;
+					yyextra->lookahead_token = next_token;
+					yyextra->lookahead_yylval = lvalp->core_yystype;
+					yyextra->lookahead_yylloc = *llocp;
+					yyextra->have_lookahead = true;
 					/* and back up the output info to cur_token */
-					base_yylval = cur_yylval;
-					base_yylloc = cur_yylloc;
+					lvalp->core_yystype = cur_yylval;
+					*llocp = cur_yylloc;
 					break;
 			}
 			break;
@@ -174,4 +192,71 @@ filtered_base_yylex(void)
 	}
 
 	return cur_token;
+}
+
+
+void
+pool_parser_error(int level, const char *file, int line)
+{
+#ifdef PARSER_DEBUG
+	fprintf(stderr, "error: %d %s %d\n", level, file, line);
+#endif
+	if (level < ERROR)
+		return;
+	if (in_parser_context)
+		longjmp(jmpbuffer, 1);
+}
+
+static int
+parse_version(const char *versionString)
+{
+	int			cnt;
+	int			vmaj,
+				vmin,
+				vrev;
+
+	cnt = sscanf(versionString, "%d.%d.%d", &vmaj, &vmin, &vrev);
+
+	if (cnt < 2)
+		return -1;
+
+	if (cnt == 2)
+		vrev = 0;
+
+	return (100 * vmaj + vmin) * 100 + vrev;
+}
+
+void
+parser_set_param(const char *name, const char *value)
+{
+	if (strcmp(name, "server_version") == 0)
+	{
+		server_version_num = parse_version(value);
+	}
+	else if (strcmp(name, "server_encoding") == 0)
+	{
+		if (strcmp(value, "UTF8") == 0)
+			server_encoding = PG_UTF8;
+		else
+			server_encoding = PG_SQL_ASCII;
+	}
+	else if (strcmp(name, "standard_conforming_strings") == 0)
+	{
+		if (strcmp(value, "on") == 0)
+			standard_conforming_strings = true;
+		else
+			standard_conforming_strings = false;
+	}
+}
+
+int
+GetDatabaseEncoding(void)
+{
+	return server_encoding;
+}
+
+int
+pg_mblen(const char *mbstr)
+{
+	return pg_utf_mblen((const unsigned char *) mbstr);
 }

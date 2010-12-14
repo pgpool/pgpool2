@@ -11,4 +11,6 @@ cursor
 prepare
 create
 drop
+scanner
 v84
+v90

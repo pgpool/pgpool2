@@ -20,8 +20,6 @@
 #include "pool_memory.h"
 #include "pg_list.h"
 
-#define ereport(a,b)
-#define elog(a,b)
 
 
 /*

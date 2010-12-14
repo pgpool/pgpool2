@@ -5,12 +5,12 @@
  *	  the most frequently created nodes.
  *
  * Portions Copyright (c) 2003-2009, PgPool Global Development Group
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.64 2009/04/04 21:12:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.66 2010/01/02 16:57:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,9 +21,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define Assert(expr)	((void) 0)
-#define ereport(a,b)	((void) 0)
-#define elog(a,b)		((void) 0)
 
 #define BOOLOID 16		/* XXX */
 
@@ -327,11 +324,11 @@ makeTypeNameFromNameList(List *names)
  *	build a TypeName node to represent a type already known by OID/typmod.
  */
 TypeName *
-makeTypeNameFromOid(Oid typeid, int32 typmod)
+makeTypeNameFromOid(Oid typeOid, int32 typmod)
 {
 	TypeName   *n = makeNode(TypeName);
 
-	n->typeid = typeid;
+	n->typeOid = typeOid;
 	n->typemod = typmod;
 	n->location = -1;
 	return n;
@@ -384,12 +381,12 @@ makeDefElem(char *name, Node *arg)
  *	build a DefElem node with all fields available to be specified
  */
 DefElem *
-makeDefElemExtended(char *namespace, char *name, Node *arg,
+makeDefElemExtended(char *nameSpace, char *name, Node *arg,
 					DefElemAction defaction)
 {
 	DefElem    *res = makeNode(DefElem);
 
-	res->defnamespace = namespace;
+	res->defnamespace = nameSpace;
 	res->defname = name;
 	res->arg = arg;
 	res->defaction = defaction;

@@ -7,5 +7,5 @@ UPDATE "t" SET "a" = 1
 UPDATE "foo" SET "a" = 1 RETURNING *
 UPDATE "foo" SET "a" = 1 RETURNING "a"
 UPDATE "foo" SET "a" = 1 RETURNING "a","b"
-UPDATE "foo" SET "a" = 1 WHERE CURRENT OF $1
+syntax error: UPDATE foo SET a = 1 WHERE CURRENT OF $1
 UPDATE "foo" SET "a" = 1 WHERE CURRENT OF cur

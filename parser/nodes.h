@@ -5,10 +5,10 @@
  *
  *
  * Portions Copyright (c) 2003-2009, PgPool Global Development Group
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.222 2009/04/04 21:12:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.234 2010/03/28 22:59:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@ typedef enum NodeTag
 	 */
 	T_Plan = 100,
 	T_Result,
+	T_ModifyTable,
 	T_Append,
 	T_RecursiveUnion,
 	T_BitmapAnd,
@@ -71,8 +72,10 @@ typedef enum NodeTag
 	T_Unique,
 	T_Hash,
 	T_SetOp,
+	T_LockRows,
 	T_Limit,
-	/* this one isn't a subclass of Plan: */
+	/* these aren't subclasses of Plan: */
+	T_PlanRowMark,
 	T_PlanInvalItem,
 
 	/*
@@ -82,6 +85,7 @@ typedef enum NodeTag
 	 */
 	T_PlanState = 200,
 	T_ResultState,
+	T_ModifyTableState,
 	T_AppendState,
 	T_RecursiveUnionState,
 	T_BitmapAndState,
@@ -109,6 +113,7 @@ typedef enum NodeTag
 	T_UniqueState,
 	T_HashState,
 	T_SetOpState,
+	T_LockRowsState,
 	T_LimitState,
 
 	/*
@@ -124,6 +129,7 @@ typedef enum NodeTag
 	T_WindowFunc,
 	T_ArrayRef,
 	T_FuncExpr,
+	T_NamedArgExpr,
 	T_OpExpr,
 	T_DistinctExpr,
 	T_ScalarArrayOpExpr,
@@ -261,6 +267,7 @@ typedef enum NodeTag
 	T_SetOperationStmt,
 	T_GrantStmt,
 	T_GrantRoleStmt,
+	T_AlterDefaultPrivilegesStmt,
 	T_ClosePortalStmt,
 	T_ClusterStmt,
 	T_CopyStmt,
@@ -274,6 +281,7 @@ typedef enum NodeTag
 	T_CreateFunctionStmt,
 	T_AlterFunctionStmt,
 	T_RemoveFuncStmt,
+	T_DoStmt,
 	T_RenameStmt,
 	T_RuleStmt,
 	T_NotifyStmt,
@@ -338,6 +346,7 @@ typedef enum NodeTag
 	T_CreateUserMappingStmt,
 	T_AlterUserMappingStmt,
 	T_DropUserMappingStmt,
+	T_AlterTableSpaceOptionsStmt,
 
 	/*
 	 * TAGS FOR PARSE TREE NODES (parsenodes.h)
@@ -365,7 +374,6 @@ typedef enum NodeTag
 	T_RangeTblEntry,
 	T_SortGroupClause,
 	T_WindowClause,
-	T_FkConstraint,
 	T_PrivGrantee,
 	T_FuncWithArgs,
 	T_AccessPriv,
@@ -389,7 +397,8 @@ typedef enum NodeTag
 	T_TriggerData = 950,		/* in commands/trigger.h */
 	T_ReturnSetInfo,			/* in nodes/execnodes.h */
 	T_WindowObjectData,			/* private in nodeWindowAgg.c */
-	T_TIDBitmap					/* in nodes/tidbitmap.h */
+	T_TIDBitmap,				/* in nodes/tidbitmap.h */
+	T_InlineCodeBlock			/* in nodes/parsenodes.h */
 } NodeTag;
 
 /*
@@ -444,7 +453,6 @@ extern PGDLLIMPORT Node *newNodeMacroHolder;
 	newNodeMacroHolder->type = (tag), \
 	newNodeMacroHolder \
 )
-
 #endif   /* __GNUC__ */
 
 
@@ -524,8 +532,8 @@ typedef enum CmdType
 typedef enum JoinType
 {
 	/*
-	 * The canonical kinds of joins according to the SQL JOIN syntax.
-	 * Only these codes can appear in parser output (e.g., JoinExpr nodes).
+	 * The canonical kinds of joins according to the SQL JOIN syntax. Only
+	 * these codes can appear in parser output (e.g., JoinExpr nodes).
 	 */
 	JOIN_INNER,					/* matching tuple pairs only */
 	JOIN_LEFT,					/* pairs + unmatched LHS tuples */
@@ -533,13 +541,13 @@ typedef enum JoinType
 	JOIN_RIGHT,					/* pairs + unmatched RHS tuples */
 
 	/*
-	 * Semijoins and anti-semijoins (as defined in relational theory) do
-	 * not appear in the SQL JOIN syntax, but there are standard idioms for
-	 * representing them (e.g., using EXISTS).  The planner recognizes these
+	 * Semijoins and anti-semijoins (as defined in relational theory) do not
+	 * appear in the SQL JOIN syntax, but there are standard idioms for
+	 * representing them (e.g., using EXISTS).	The planner recognizes these
 	 * cases and converts them to joins.  So the planner and executor must
 	 * support these codes.  NOTE: in JOIN_SEMI output, it is unspecified
-	 * which matching RHS row is joined to.  In JOIN_ANTI output, the row
-	 * is guaranteed to be null-extended.
+	 * which matching RHS row is joined to.  In JOIN_ANTI output, the row is
+	 * guaranteed to be null-extended.
 	 */
 	JOIN_SEMI,					/* 1 copy of each LHS row that has match(es) */
 	JOIN_ANTI,					/* 1 copy of each LHS row that has no match */
@@ -559,7 +567,7 @@ typedef enum JoinType
 /*
  * OUTER joins are those for which pushed-down quals must behave differently
  * from the join's own quals.  This is in fact everything except INNER and
- * SEMI joins.  However, this macro must also exclude the JOIN_UNIQUE symbols
+ * SEMI joins.	However, this macro must also exclude the JOIN_UNIQUE symbols
  * since those are temporary proxies for what will eventually be an INNER
  * join.
  *

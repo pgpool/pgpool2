@@ -42,6 +42,7 @@ static void _outParam(String *str, Param *node);
 static void _outAggref(String *str, Aggref *node);
 static void _outArrayRef(String *str, ArrayRef *node);
 static void _outFuncExpr(String *str, FuncExpr *node);
+static void _outNamedArgExpr(String *str, NamedArgExpr *node);
 static void _outOpExpr(String *str, OpExpr *node);
 static void _outDistinctExpr(String *str, DistinctExpr *node);
 static void _outScalarArrayOpExpr(String *str, ScalarArrayOpExpr *node);
@@ -95,7 +96,6 @@ static void _outResTarget(String *str, ResTarget *node);
 static void _outA_ArrayExpr(String *str, A_ArrayExpr *node);
 static void _outWindowDef(String *str, WindowDef *node);
 static void _outConstraint(String *str, Constraint *node);
-static void _outFkConstraint(String *str, FkConstraint *node);
 
 static void _outSortBy(String *str, SortBy *node);
 static void _outInsertStmt(String *str, InsertStmt *node);
@@ -337,6 +337,14 @@ static void
 _outFuncExpr(String *str, FuncExpr *node)
 {
 
+}
+
+static void
+_outNamedArgExpr(String *str, NamedArgExpr *node)
+{
+	string_append_char(str, node->name);
+	string_append_char(str, " := ");
+	_outNode(str, node->arg);
 }
 
 static void
@@ -621,7 +629,7 @@ _outJoinExpr(String *str, JoinExpr *node)
 
 	if (node->jointype == JOIN_INNER)
 	{
-		if (node->using == NIL && node->quals == NULL && !node->isNatural)
+		if (node->usingClause == NIL && node->quals == NULL && !node->isNatural)
 			string_append_char(str, " CROSS JOIN ");
 		else
 			string_append_char(str, " JOIN ");
@@ -637,14 +645,14 @@ _outJoinExpr(String *str, JoinExpr *node)
 
 	_outNode(str, node->rarg);
 
-	if (node->using != NIL && IsA(node->using, List))
+	if (node->usingClause != NIL && IsA(node->usingClause, List))
 	{
 		ListCell *lc;
 		char comma = 0;
 
 		string_append_char(str, " USING(");
 
-		foreach (lc, node->using)
+		foreach (lc, node->usingClause)
 		{
 			Value *value;
 
@@ -738,11 +746,16 @@ _outIndexStmt(String *str, IndexStmt *node)
 		string_append_char(str, "UNIQUE ");
 
 	if (node->concurrent == true)
-		string_append_char(str, "INDEX CONCURRENTLY \"");
+		string_append_char(str, "INDEX CONCURRENTLY ");
 	else
-		string_append_char(str, "INDEX \"");		
-	string_append_char(str, node->idxname);
-	string_append_char(str, "\" ON ");
+		string_append_char(str, "INDEX ");		
+	if (node->idxname)
+	{
+		string_append_char(str, "\"");
+		string_append_char(str, node->idxname);
+		string_append_char(str, "\" ");
+	}
+	string_append_char(str, "ON ");
 	_outNode(str, node->relation);
 	
 	if (strcmp(node->accessMethod, DEFAULT_INDEX_TYPE))
@@ -991,6 +1004,9 @@ _outFuncCall(String *str, FuncCall *node)
 
 	string_append_char(str, "(");
 
+	if (node->func_variadic == TRUE)
+		string_append_char(str, "VARIADIC ");
+
 	if (node->agg_distinct == TRUE)
 		string_append_char(str, "DISTINCT ");
 
@@ -998,6 +1014,12 @@ _outFuncCall(String *str, FuncCall *node)
 		string_append_char(str, "*");
 	else
 		_outNode(str, node->args);
+
+	if (node->agg_order != NIL)
+	{
+		string_append_char(str, " ORDER BY ");
+		_outNode(str, node->agg_order);
+	}
 
 	string_append_char(str, ")");
 
@@ -1044,7 +1066,7 @@ _outColumnDef(String *str, ColumnDef *node)
 	string_append_char(str, "\"");
 	string_append_char(str, node->colname);
 	string_append_char(str, "\" ");
-	_outNode(str, node->typename);
+	_outNode(str, node->typeName);
 	_outNode(str, node->constraints);
 }
 
@@ -1174,7 +1196,7 @@ _outTypeCast(String *str, TypeCast *node)
 {
 	_outNode(str, node->arg);
 	string_append_char(str, "::");
-	_outNode(str, node->typename);
+	_outNode(str, node->typeName);
 
 }
 
@@ -1575,6 +1597,18 @@ _outWindowDef(String *str, WindowDef *node)
 			string_append_char(str, " UNBOUNDED FOLLOWING");
 		else if (node->frameOptions & FRAMEOPTION_START_CURRENT_ROW)
 			string_append_char(str, " UNBOUNDED CURRENT ROW");
+		else if (node->frameOptions & FRAMEOPTION_START_VALUE_PRECEDING)
+		{
+			string_append_char(str, " ");
+			_outNode(str, node->startOffset);
+			string_append_char(str, " PRECEDING");
+		}
+		else if (node->frameOptions & FRAMEOPTION_START_VALUE_FOLLOWING)
+		{
+			string_append_char(str, " ");
+			_outNode(str, node->startOffset);
+			string_append_char(str, " FOLLOWING");
+		}
 
 		if (node->frameOptions & FRAMEOPTION_BETWEEN)
 		{
@@ -1585,6 +1619,18 @@ _outWindowDef(String *str, WindowDef *node)
 				string_append_char(str, " UNBOUNDED FOLLOWING");
 			else if (node->frameOptions & FRAMEOPTION_END_CURRENT_ROW)
 				string_append_char(str, " UNBOUNDED CURRENT ROW");
+			else if (node->frameOptions & FRAMEOPTION_END_VALUE_PRECEDING)
+			{
+				string_append_char(str, " ");
+				_outNode(str, node->endOffset);
+				string_append_char(str, " PRECEDING");
+			}
+			else if (node->frameOptions & FRAMEOPTION_END_VALUE_FOLLOWING)
+			{
+				string_append_char(str, " ");
+				_outNode(str, node->endOffset);
+				string_append_char(str, " FOLLOWING");
+			}
 		}
 	}
 	string_append_char(str, ")");
@@ -1593,10 +1639,10 @@ _outWindowDef(String *str, WindowDef *node)
 static void
 _outConstraint(String *str, Constraint *node)
 {
-	if (node->name)
+	if (node->conname)
 	{
 		string_append_char(str, "CONSTRAINT \"");
-		string_append_char(str, node->name);
+		string_append_char(str, node->conname);
 		string_append_char(str, "\"");
 	}
 
@@ -1621,7 +1667,7 @@ _outConstraint(String *str, Constraint *node)
 			{
 				_outWithDefinition(str, node->options);
 			}
-			
+
 			if (node->indexspace)
 			{
 				string_append_char(str, " USING INDEX TABLESPACE \"");
@@ -1649,6 +1695,89 @@ _outConstraint(String *str, Constraint *node)
 			}
 			break;
 
+		case CONSTR_FOREIGN:
+			if (node->fk_attrs != NIL)
+			{
+				string_append_char(str, " FOREIGN KEY(");
+				_outIdList(str, node->fk_attrs);
+				string_append_char(str, ")");
+			}
+
+			string_append_char(str, " REFERENCES ");
+			_outNode(str, node->pktable);
+
+			if (node->pk_attrs != NIL)
+			{
+				string_append_char(str, "(");
+				_outIdList(str, node->pk_attrs);
+				string_append_char(str, ")");
+			}
+
+			switch (node->fk_matchtype)
+			{
+				case FKCONSTR_MATCH_FULL:
+					string_append_char(str, " MATCH FULL");
+					break;
+
+				case FKCONSTR_MATCH_PARTIAL:
+					string_append_char(str, " MATCH PARTIAL");
+					break;
+
+				default:
+					break;
+			}
+
+			switch (node->fk_upd_action)
+			{
+				case FKCONSTR_ACTION_RESTRICT:
+					string_append_char(str, " ON UPDATE RESTRICT");
+					break;
+
+				case FKCONSTR_ACTION_CASCADE:
+					string_append_char(str, " ON UPDATE CASCADE");
+					break;
+
+				case FKCONSTR_ACTION_SETNULL:
+					string_append_char(str, " ON UPDATE SET NULL");
+					break;
+
+				case FKCONSTR_ACTION_SETDEFAULT:
+					string_append_char(str, " ON UPDATE SET DEFAULT");
+					break;
+
+				default:
+					break;
+			}
+
+			switch (node->fk_del_action)
+			{
+				case FKCONSTR_ACTION_RESTRICT:
+					string_append_char(str, " ON DELETE RESTRICT");
+					break;
+
+				case FKCONSTR_ACTION_CASCADE:
+					string_append_char(str, " ON DELETE CASCADE");
+					break;
+
+				case FKCONSTR_ACTION_SETNULL:
+					string_append_char(str, " ON DELETE SET NULL");
+					break;
+
+				case FKCONSTR_ACTION_SETDEFAULT:
+					string_append_char(str, " ON DELETE SET DEFAULT");
+					break;
+
+				default:
+					break;
+			}
+
+			if (node->deferrable)
+				string_append_char(str, " DEFERRABLE");
+
+			if (node->initdeferred)
+				string_append_char(str, " INITIALLY DEFERRED");
+			break;
+
 		case CONSTR_NOTNULL:
 			string_append_char(str, " NOT NULL");
 			break;
@@ -1665,98 +1794,6 @@ _outConstraint(String *str, Constraint *node)
 		default:
 			break;
 	}
-}
-
-static void
-_outFkConstraint(String *str, FkConstraint *node)
-{
-	if (node->constr_name)
-	{
-		string_append_char(str, "CONSTRAINT \"");
-		string_append_char(str, node->constr_name);
-		string_append_char(str, "\"");
-	}
-
-	if (node->fk_attrs != NIL)
-	{
-		string_append_char(str, " FOREIGN KEY (");
-		_outIdList(str, node->fk_attrs);
-		string_append_char(str, ")" );
-	}
-
-	string_append_char(str, " REFERENCES ");
-	_outNode(str, node->pktable);
-
-	if (node->pk_attrs != NIL)
-	{
-		string_append_char(str, "(");
-		_outIdList(str, node->pk_attrs);
-		string_append_char(str, ")");
-	}
-
-	switch (node->fk_matchtype)
-	{
-		case FKCONSTR_MATCH_FULL:
-			string_append_char(str, " MATCH FULL");
-			break;
-
-		case FKCONSTR_MATCH_PARTIAL:
-			string_append_char(str, " MATCH PARTIAL");
-			break;
-
-		default:
-			break;
-	}
-
-	switch (node->fk_upd_action)
-	{
-		case FKCONSTR_ACTION_RESTRICT:
-			string_append_char(str, " ON UPDATE RESTRICT");
-			break;
-
-		case FKCONSTR_ACTION_CASCADE:
-			string_append_char(str, " ON UPDATE CASCADE");
-			break;
-
-		case FKCONSTR_ACTION_SETNULL:
-			string_append_char(str, " ON UPDATE SET NULL");
-			break;
-
-		case FKCONSTR_ACTION_SETDEFAULT:
-			string_append_char(str, " ON UPDATE SET DEFAULT");
-			break;
-
-		default:
-			break;
-	}
-
-	switch (node->fk_del_action)
-	{
-		case FKCONSTR_ACTION_RESTRICT:
-			string_append_char(str, " ON DELETE RESTRICT");
-			break;
-
-		case FKCONSTR_ACTION_CASCADE:
-			string_append_char(str, " ON DELETE CASCADE");
-			break;
-
-		case FKCONSTR_ACTION_SETNULL:
-			string_append_char(str, " ON DELETE SET NULL");
-			break;
-
-		case FKCONSTR_ACTION_SETDEFAULT:
-			string_append_char(str, " ON DELETE SET DEFAULT");
-			break;
-
-		default:
-			break;
-	}
-
-	if (node->deferrable)
-		string_append_char(str, " DEFERRABLE");
-
-	if (node->initdeferred)
-		string_append_char(str, " INITIALLY DEFERRED");
 }
 
 
@@ -2021,12 +2058,42 @@ static void _outVacuumStmt(String *str, VacuumStmt *node)
 
 static void _outExplainStmt(String *str, ExplainStmt *node)
 {
+	ListCell   *lc;
+
 	string_append_char(str, "EXPLAIN ");
 	
-	if (node->analyze == TRUE)
-		string_append_char(str, "ANALYZE ");
-	if (node->verbose == TRUE)
-		string_append_char(str, "VERBOSE ");
+	if (server_version_num < 90000)
+	{
+		foreach(lc, node->options)
+		{
+			DefElem    *opt = (DefElem *) lfirst(lc);
+
+			if (strcmp(opt->defname, "analyze") == 0)
+				string_append_char(str, "ANALYZE ");
+			else if (strcmp(opt->defname, "verbose") == 0)
+				string_append_char(str, "VERBOSE ");
+		}
+	}
+	else
+	{
+		if (node->options)
+		{
+			string_append_char(str, "(");
+			foreach(lc, node->options)
+			{
+				DefElem    *opt = (DefElem *) lfirst(lc);
+
+				if (list_head(node->options) != lc)
+					string_append_char(str, ", ");
+
+				string_append_char(str, opt->defname);
+				string_append_char(str, " ");
+				if (opt->arg)
+					_outValue(str, (Value *) opt->arg);
+			}
+			string_append_char(str, ")");
+		}
+	}
 
 	_outNode(str, node->query);
 }
@@ -2087,43 +2154,7 @@ static void _outLoadStmt(String *str, LoadStmt *node)
 
 static void _outCopyStmt(String *str, CopyStmt *node)
 {
-	int binary = FALSE;
-	int oids = FALSE;
-	char *delimiter = NULL;
-	char *null = NULL;
-	int csv = FALSE;
-	int header = FALSE;
-	char *quote = NULL;
-	char *escape = NULL;
-	Node *force_quote = NULL;
-	Node *force_notnull = NULL;
 	ListCell *lc;
-
-	foreach (lc, node->options)
-	{
-		DefElem *e = lfirst(lc);
-
-		if (strcmp(e->defname, "binary") == 0)
-			binary = TRUE;
-		else if (strcmp(e->defname, "oids") == 0)
-			oids = TRUE;
-		else if (strcmp(e->defname, "delimiter") == 0)
-			delimiter = ((Value *) e->arg)->val.str;
-		else if (strcmp(e->defname, "null") == 0)
-			null = ((Value *) e->arg)->val.str;
-		else if (strcmp(e->defname, "csv") == 0)
-			csv = TRUE;
-		else if (strcmp(e->defname, "header") == 0)
-			header = TRUE;
-		else if (strcmp(e->defname, "quote") == 0)
-			quote = ((Value *) e->arg)->val.str;
-		else if (strcmp(e->defname, "escape") == 0)
-			escape = ((Value *) e->arg)->val.str;
-		else if (strcmp(e->defname, "force_quote") == 0)
-			force_quote = e->arg;
-		else if (strcmp(e->defname, "force_notnull") == 0)
-			force_notnull = e->arg;
-	}
 
 	string_append_char(str, "COPY ");
 
@@ -2140,7 +2171,7 @@ static void _outCopyStmt(String *str, CopyStmt *node)
 	{
 		string_append_char(str, "(");
 		_outIdList(str, node->attlist);
-		string_append_char(str, ") ");
+		string_append_char(str, ")");
 	}
 
 	if (node->is_from == TRUE)
@@ -2152,61 +2183,113 @@ static void _outCopyStmt(String *str, CopyStmt *node)
 	{
 		string_append_char(str, "'");
 		string_append_char(str, node->filename);
-		string_append_char(str, "'");
+		string_append_char(str, "' ");
 	}
 	else
-		string_append_char(str, node->is_from == TRUE ? "STDIN" : "STDOUT");
+		string_append_char(str, node->is_from == TRUE ? "STDIN " : "STDOUT ");
 
-	if (binary == TRUE)
-		string_append_char(str, " BINARY ");
-
-	if (oids == TRUE)
-		string_append_char(str, " OIDS ");
-
-	if (delimiter)
+	if (server_version_num < 90000)
 	{
-		string_append_char(str, " DELIMITERS '");
-		string_append_char(str, delimiter);
-		string_append_char(str, "'");
+		foreach (lc, node->options)
+		{
+			DefElem *e = lfirst(lc);
+
+			if (strcmp(e->defname, "format") == 0)
+			{
+				char *fmt = strVal(e->arg);
+				
+				if (strcmp(fmt, "text") == 0)
+					;
+				else if (strcmp(fmt, "binary") == 0)
+					string_append_char(str, "BINARY ");
+				else if (strcmp(fmt, "csv") == 0)
+					string_append_char(str, "CSV ");
+			}
+			else if (strcmp(e->defname, "oids") == 0)
+				string_append_char(str, "OIDS ");
+			else if (strcmp(e->defname, "delimiter") == 0)
+			{
+				string_append_char(str, "DELIMITERS ");
+				_outValue(str, (Value *) e->arg);
+				string_append_char(str, " ");
+			}
+			else if (strcmp(e->defname, "null") == 0)
+			{
+				string_append_char(str, "NULL ");
+				_outValue(str, (Value *) e->arg);
+				string_append_char(str, " ");
+			}
+			else if (strcmp(e->defname, "header") == 0)
+				string_append_char(str, "HEADER ");
+			else if (strcmp(e->defname, "quote") == 0)
+			{
+				string_append_char(str, "QUOTE ");
+				_outValue(str, (Value *) e->arg);
+				string_append_char(str, " ");
+			}
+			else if (strcmp(e->defname, "escape") == 0)
+			{
+				string_append_char(str, "ESCAPE ");
+				_outValue(str, (Value *) e->arg);
+				string_append_char(str, " ");
+			}
+			else if (strcmp(e->defname, "force_quote") == 0)
+			{
+				string_append_char(str, "FORCE QUOTE ");
+				_outIdList(str, (List *) e->arg);
+			}
+			else if (strcmp(e->defname, "force_not_null") == 0)
+			{
+				string_append_char(str, "FORCE NOT NULL ");
+				_outIdList(str, (List *) e->arg);
+			}
+		}
 	}
-
-	if (null)
+	else
 	{
-		string_append_char(str, " NULL '");
-		string_append_char(str, null);
-		string_append_char(str, "' ");
-	}
+		/* version_num >= 90000 */
+		if (node->options)
+		{
+			string_append_char(str, "(");
 
-	if (csv == TRUE)
-		string_append_char(str, "CSV ");
+			foreach (lc, node->options)
+			{
+				DefElem *e = lfirst(lc);
 
-	if (header == TRUE)
-		string_append_char(str, "HEADER ");
+				if (list_head(node->options) != lc)
+					string_append_char(str, ", ");
 
-	if (quote)
-	{
-		string_append_char(str, "QUOTE '");
-		string_append_char(str, quote);
-		string_append_char(str, "' ");
-	}
+				string_append_char(str, e->defname);
+				string_append_char(str, " ");
 
-	if (escape)
-	{
-		string_append_char(str, "ESCAPE '");
-		string_append_char(str, escape);
-		string_append_char(str, "' ");
-	}
-
-	if (force_quote)
-	{
-		string_append_char(str, "FORCE QUOTE ");
-		_outNode(str, force_quote);
-	}
-
-	if (force_notnull)
-	{
-		string_append_char(str, " FORCE NOT NULL ");
-		_outNode(str, force_notnull);
+				if (strcmp(e->defname, "format") == 0
+					|| strcmp(e->defname, "oids") == 0
+					|| strcmp(e->defname, "delimiter") == 0
+					|| strcmp(e->defname, "null") == 0
+					|| strcmp(e->defname, "header") == 0
+					|| strcmp(e->defname, "quote") == 0
+					|| strcmp(e->defname, "escape") == 0)
+					_outValue(str, (Value *) e->arg);
+				else if (strcmp(e->defname, "force_not_null") == 0)
+				{
+					string_append_char(str, "(");
+					_outIdList(str, (List *) e->arg);
+					string_append_char(str, ")");
+				}
+				else if (strcmp(e->defname, "force_quote") == 0)
+				{
+					if (IsA(e->arg, A_Star))
+						string_append_char(str, "*");
+					else if (IsA(e->arg, List))
+					{
+						string_append_char(str, "(");
+						_outIdList(str, (List *) e->arg);
+						string_append_char(str, ")");
+					}
+				}
+			}
+			string_append_char(str, ")");
+		}
 	}
 }
 
@@ -4289,7 +4372,7 @@ _outCreateDomainStmt(String *str, CreateDomainStmt *node)
 	string_append_char(str, "CREATE DOMAIN ");
 	_outFuncName(str, node->domainname);
 	string_append_char(str, " ");
-	_outNode(str, node->typename);
+	_outNode(str, node->typeName);
 
 
 	foreach (lc, node->constraints)
@@ -4303,7 +4386,7 @@ static void
 _outAlterDomainStmt(String *str, AlterDomainStmt *node)
 {
 	string_append_char(str, "ALTER DOMAIN ");
-	_outFuncName(str, node->typename);
+	_outFuncName(str, node->typeName);
 
 	switch (node->subtype)
 	{
@@ -4696,7 +4779,7 @@ static void
 _outCreateEnumStmt(String *str, CreateEnumStmt *node)
 {
 	string_append_char(str, "CREATE TYPE ");
-	_outIdList(str, node->typename);
+	_outIdList(str, node->typeName);
 	string_append_char(str, " AS ENUM (");
 	_outNode(str, node->vals);
 	string_append_char(str, ")");
@@ -4855,43 +4938,25 @@ _outXmlSerialize(String *str, XmlSerialize *node)
 static void
 _outInhRelation(String *str, InhRelation *node)
 {
-	ListCell *lc;
-
 	string_append_char(str, "LIKE ");
 	_outNode(str, node->relation);
-	foreach (lc, node->options)
+
+	if (node->options == CREATE_TABLE_LIKE_ALL)
+		string_append_char(str, " INCLUDING ALL");
+	else
 	{
-		CreateStmtLikeOption v;
-		v = (CreateStmtLikeOption)lfirst(lc);
-
-		switch (v)
+		if (node->options & CREATE_TABLE_LIKE_DEFAULTS)
+			string_append_char(str, " INCLUDING DEFAULTS");
+		if (node->options & CREATE_TABLE_LIKE_CONSTRAINTS)
+			string_append_char(str, " INCLUDING CONSTRAINTS");
+		if (node->options & CREATE_TABLE_LIKE_INDEXES)
+			string_append_char(str, " INCLUDING INDEXES");
+		if (server_version_num >= 90000)
 		{
-			case CREATE_TABLE_LIKE_INCLUDING_DEFAULTS:
-				string_append_char(str, " INCLUDING DEFAULTS");
-				break;
-
-			case CREATE_TABLE_LIKE_EXCLUDING_DEFAULTS:
-				string_append_char(str, " EXCLUDING DEFAULTS");
-				break;
-
-			case CREATE_TABLE_LIKE_INCLUDING_CONSTRAINTS:
-				string_append_char(str, " INCLUDING CONSTRAINTS");
-				break;
-
-			case CREATE_TABLE_LIKE_EXCLUDING_CONSTRAINTS:
-				string_append_char(str, " EXCLUDING CONSTRAINTS");
-				break;
-
-			case CREATE_TABLE_LIKE_INCLUDING_INDEXES:
-				string_append_char(str, " INCLUDING INDEXES");
-				break;
-
-			case CREATE_TABLE_LIKE_EXCLUDING_INDEXES:
-				string_append_char(str, " EXCLUDING INDEXES");
-				break;
-
-			default:
-				break;
+			if (node->options & CREATE_TABLE_LIKE_STORAGE)
+				string_append_char(str, " INCLUDING STORAGE");
+			if (node->options & CREATE_TABLE_LIKE_COMMENTS)
+				string_append_char(str, " INCLUDING COMMENTS");
 		}
 	}
 }
@@ -4997,6 +5062,9 @@ _outNode(String *str, void *obj)
 			case T_FuncExpr:
 				_outFuncExpr(str, obj);
 				break;
+			case T_NamedArgExpr:
+				_outNamedArgExpr(str, obj);
+				break;
 			case T_OpExpr:
 				_outOpExpr(str, obj);
 				break;
@@ -5066,6 +5134,9 @@ _outNode(String *str, void *obj)
 			case T_MinMaxExpr:
 				_outMinMaxExpr(str, obj);
 				break;
+			case T_XmlExpr:
+				_outXmlExpr(str, obj);
+				break;
 			case T_NullIfExpr:
 				_outNullIfExpr(str, obj);
 				break;
@@ -5083,6 +5154,9 @@ _outNode(String *str, void *obj)
 				break;
 			case T_SetToDefault:
 				_outSetToDefault(str, obj);
+				break;
+			case T_CurrentOfExpr:
+				_outCurrentOfExpr(str, obj);
 				break;
 			case T_TargetEntry:
 				_outTargetEntry(str, obj);
@@ -5125,6 +5199,15 @@ _outNode(String *str, void *obj)
 				_outIndexElem(str, obj);
 				break;
 				/*
+			case T_Query:
+				_outQuery(str, obj);
+				break;
+			case T_SortGroupClause:
+				_outSortGroupClause(str, obj);
+				break;
+			case T_WindowClause:
+				_outWindowClause(str, obj);
+				break;
 			case T_RowMarkClause:
 				_outRowMarkClause(str, obj);
 				break;
@@ -5138,9 +5221,11 @@ _outNode(String *str, void *obj)
 			case T_SetOperationStmt:
 				_outSetOperationStmt(str, obj);
 				break;
-/*			case T_RangeTblEntry:
+/*
+			case T_RangeTblEntry:
 				_outRangeTblEntry(str, obj);
-				break;*/
+				break;
+*/
 			case T_A_Expr:
 				_outAExpr(str, obj);
 				break;
@@ -5170,14 +5255,20 @@ _outNode(String *str, void *obj)
 			case T_ResTarget:
 				_outResTarget(str, obj);
 				break;
+			case T_SortBy:
+				_outSortBy(str, obj);
+				break;
 			case T_WindowDef:
 				_outWindowDef(str, obj);
 				break;
+			case T_RangeSubselect:
+				_outRangeSubselect(str, obj);
+				break;
+			case T_RangeFunction:
+				_outRangeFunction(str, obj);
+				break;
 			case T_Constraint:
 				_outConstraint(str, obj);
-				break;
-			case T_FkConstraint:
-				_outFkConstraint(str, obj);
 				break;
 			case T_FuncCall:
 				_outFuncCall(str, obj);
@@ -5188,9 +5279,8 @@ _outNode(String *str, void *obj)
 			case T_LockingClause:
 				_outLockingClause(str, obj);
 				break;
-
-			case T_SortBy:
-				_outSortBy(str, obj);
+			case T_XmlSerialize:
+				_outXmlSerialize(str, obj);
 				break;
 
 			case T_InsertStmt:
@@ -5461,13 +5551,7 @@ _outNode(String *str, void *obj)
 				_outCommentStmt(str, obj);
 				break;
 
-			case T_RangeSubselect:
-				_outRangeSubselect(str, obj);
-				break;
 
-			case T_RangeFunction:
-				_outRangeFunction(str, obj);
-				break;
 
 			case T_DiscardStmt:
 				_outDiscardStmt(str, obj);
@@ -5505,21 +5589,12 @@ _outNode(String *str, void *obj)
 				_outAlterTSConfigurationStmt(str, obj);
 				break;
 
-			case T_XmlExpr:
-				_outXmlExpr(str, obj);
-				break;
 
-			case T_XmlSerialize:
-				_outXmlSerialize(str, obj);
-				break;
 
 			case T_InhRelation:
 				_outInhRelation(str, obj);
 				break;
 
-			case T_CurrentOfExpr:
-				_outCurrentOfExpr(str, obj);
-				break;
 
 			default:
 				break;

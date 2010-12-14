@@ -49,11 +49,11 @@ LIBRARIES = $(noinst_LIBRARIES)
 ARFLAGS = cru
 libsql_parser_a_AR = $(AR) $(ARFLAGS)
 libsql_parser_a_LIBADD =
-am_libsql_parser_a_OBJECTS = gram.$(OBJEXT) list.$(OBJEXT) \
-	makefuncs.$(OBJEXT) nodes.$(OBJEXT) parser.$(OBJEXT) \
-	pool_memory.$(OBJEXT) pool_string.$(OBJEXT) value.$(OBJEXT) \
-	keywords.$(OBJEXT) outfuncs.$(OBJEXT) copyfuncs.$(OBJEXT) \
-	kwlookup.$(OBJEXT)
+am_libsql_parser_a_OBJECTS = copyfuncs.$(OBJEXT) gram.$(OBJEXT) \
+	keywords.$(OBJEXT) kwlookup.$(OBJEXT) list.$(OBJEXT) \
+	makefuncs.$(OBJEXT) nodes.$(OBJEXT) outfuncs.$(OBJEXT) \
+	parser.$(OBJEXT) pool_memory.$(OBJEXT) pool_string.$(OBJEXT) \
+	scansup.$(OBJEXT) value.$(OBJEXT) wchar.$(OBJEXT)
 libsql_parser_a_OBJECTS = $(am_libsql_parser_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -195,7 +195,39 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libsql-parser.a
-libsql_parser_a_SOURCES = gram.y gramparse.h list.c makefuncs.c makefuncs.h memnodes.h nodes.h nodes.c parsenodes.h parser.c parser.h pg_list.h pool_memory.c pool_memory.h pool_string.c pool_string.h primnodes.h  scansup.h value.c value.h keywords.h keywords.c pool_parser.h outfuncs.c copyfuncs.c kwlist.h kwlookup.c
+libsql_parser_a_SOURCES = \
+	copyfuncs.c \
+	gram.y \
+	gramparse.h \
+	keywords.c \
+	keywords.h \
+	kwlist.h \
+	kwlookup.c \
+	list.c \
+	makefuncs.c \
+	makefuncs.h \
+	memnodes.h \
+	nodes.c \
+	nodes.h \
+	outfuncs.c \
+	parsenodes.h \
+	parser.c \
+	parser.h \
+	pg_list.h \
+	pg_wchar.h \
+	pool_memory.c \
+	pool_memory.h \
+	pool_parser.h \
+	pool_string.c \
+	pool_string.h \
+	primnodes.h \
+	scanner.h \
+	scansup.c \
+	scansup.h \
+	value.c \
+	value.h \
+	wchar.c
+
 EXTRA_DIST = scan.c scan.l
 AM_CPPFLAGS = -D_GNU_SOURCE -I .. -I @PGSQL_INCLUDE_DIR@
 AM_YFLAGS = -d
@@ -262,7 +294,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_memory.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_string.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scansup.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/value.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wchar.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

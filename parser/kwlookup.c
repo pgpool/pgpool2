@@ -6,11 +6,8 @@
  * NB - this file is also used by ECPG and several frontend programs in
  * src/bin/ including pg_dump and psql
  *
- * Note that this file expects that the ScanKeywords array is defined
- * and that LastScanKeyword points to its element one past the last.
- *
  * Portions Copyright (c) 2003-2009, PgPool Global Development Group
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -38,7 +35,9 @@
  * receive a different case-normalization mapping.
  */
 const ScanKeyword *
-ScanKeywordLookup(const char *text)
+ScanKeywordLookup(const char *text,
+				  const ScanKeyword *keywords,
+				  int num_keywords)
 {
 	int			len,
 				i;
@@ -68,8 +67,8 @@ ScanKeywordLookup(const char *text)
 	/*
 	 * Now do a binary search using plain strcmp() comparison.
 	 */
-	low = &ScanKeywords[0];
-	high = LastScanKeyword - 1;
+	low = keywords;
+	high = keywords + (num_keywords - 1);
 	while (low <= high)
 	{
 		const ScanKeyword *middle;

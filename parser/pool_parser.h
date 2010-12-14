@@ -23,9 +23,12 @@
 #include <setjmp.h>
 
 extern jmp_buf jmpbuffer;
+extern int	server_version_num;
 
 #define AssertMacro
+#define Assert(expr)	((void) 0)
 
+/* include/c.h */
 /* integer */
 
 /* 
@@ -35,6 +38,16 @@ extern jmp_buf jmpbuffer;
  * typedef signed short int16;
  */
 
+/*
+ * bitsN
+ *		Unit of bitwise operation, AT LEAST N BITS IN SIZE.
+ */
+typedef uint8 bits8;			/* >= 8 bits */
+typedef uint16 bits16;			/* >= 16 bits */
+typedef uint32 bits32;			/* >= 32 bits */
+
+
+typedef size_t Size;
 typedef unsigned int PoolOid;
 typedef unsigned int Index;
 typedef short AttrNumber;
@@ -52,7 +65,29 @@ typedef unsigned long Datum;	/* XXX sizeof(long) >= sizeof(void *) */
  */
 #define NAMEDATALEN 64
 
+/*
+ * Max
+ *		Return the maximum of two numbers.
+ */
+#define Max(x, y)		((x) > (y) ? (x) : (y))
 
+/*
+ * Min
+ *		Return the minimum of two numbers.
+ */
+#define Min(x, y)		((x) < (y) ? (x) : (y))
+/* array */
+#define lengthof(array) (sizeof(array) / sizeof(((array)[0])))
+#define endof(array) (&(array)[lengthof(array)])
+
+/* msb for char */
+#define HIGHBIT					(0x80)
+#define IS_HIGHBIT_SET(ch)		((unsigned char)(ch) & HIGHBIT)
+
+#define PGDLLIMPORT
+
+
+/* include/utils/datetime.h */
 /* date and datetime */
 #define RESERV	0
 #define MONTH	1
@@ -93,6 +128,7 @@ typedef unsigned long Datum;	/* XXX sizeof(long) >= sizeof(void *) */
 #define INTERVAL_RANGE(t) (((t) >> 16) & INTERVAL_RANGE_MASK)
 
 
+/* include/storage/lock.h */
 /* lock */
 /* NoLock is not a lock mode, but a flag value meaning "don't get a lock" */
 #define NoLock					0
@@ -118,9 +154,6 @@ typedef unsigned long Datum;	/* XXX sizeof(long) >= sizeof(void *) */
 #define BITS_PER_BYTE		8
 #define MAX_TIME_PRECISION 6
 
-/* array */
-#define lengthof(array) (sizeof(array) / sizeof(((array)[0])))
-#define endof(array) (&(array)[lengthof(array)])
 
 /* from include/catalog/pg_trigger.h  start */
 /* Bits within tgtype */
@@ -131,5 +164,20 @@ typedef unsigned long Datum;	/* XXX sizeof(long) >= sizeof(void *) */
 #define TRIGGER_TYPE_UPDATE             (1 << 4)
 #define TRIGGER_TYPE_TRUNCATE           (1 << 5)
 /* from include/catalog/pg_trigger.h  end */
+
+
+/* include/utils/elog.h */
+#define NOTICE 18
+#define WARNING 19
+#define ERROR 20
+
+extern void pool_parser_error(int level, const char *file, int line);
+#ifndef ereport
+#define ereport(elevel, rest) pool_parser_error(elevel, __FILE__, __LINE__)
+#endif
+#ifndef elog
+#define elog(elevel, fmt, ...) pool_parser_error(elevel, __FILE__, __LINE__)
+#endif
+
 
 #endif /* POOL_PARSER_H */

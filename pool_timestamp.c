@@ -29,10 +29,9 @@
 #include "pool_select_walker.h"
 #include "pool_config.h"
 #include "parser/parsenodes.h"
-#include "parser/gramparse.h"
+#include "parser/parser.h"
 #include "parser/pool_memory.h"
 
-#define Assert(x)
 
 typedef struct {
 	char	*attrname;
@@ -221,7 +220,7 @@ isSystemTypeCast(Node *node, const char *name)
 		return false;
 
 	typecast = (TypeCast *) node;
-	return isSystemType((Node *) typecast->typename, name);
+	return isSystemType((Node *) typecast->typeName, name);
 }
 
 /*
@@ -245,7 +244,7 @@ rewrite_timestamp_walker(Node *node, void *context)
 		{
 			TypeCast	*tc = makeNode(TypeCast);
 			tc->arg = makeTsExpr(ctx);
-			tc->typename = SystemTypeName("text");
+			tc->typeName = SystemTypeName("text");
 
 			fcall->funcname = SystemFuncName("timestamptz");
 			fcall->args = list_make1(tc);
@@ -257,11 +256,11 @@ rewrite_timestamp_walker(Node *node, void *context)
 		/* CURRENT_DATE, CURRENT_TIME, LOCALTIMESTAMP, LOCALTIME etc.*/
 		TypeCast	*tc = (TypeCast *) node;
 
-		if ((isSystemType((Node *) tc->typename, "date") ||
-			 isSystemType((Node *) tc->typename, "timestamp") ||
-			 isSystemType((Node *) tc->typename, "timestamptz") ||
-			 isSystemType((Node *) tc->typename, "time") ||
-			 isSystemType((Node *) tc->typename, "timetz")))
+		if ((isSystemType((Node *) tc->typeName, "date") ||
+			 isSystemType((Node *) tc->typeName, "timestamp") ||
+			 isSystemType((Node *) tc->typeName, "timestamptz") ||
+			 isSystemType((Node *) tc->typeName, "time") ||
+			 isSystemType((Node *) tc->typeName, "timetz")))
 		{
 			/* rewrite `'now'::timestamp' and `'now'::text::timestamp' both */
 			if (isSystemTypeCast(tc->arg, "text"))
@@ -1050,7 +1049,7 @@ bool
 
 				if (walker(tc->arg, context))
 					return true;
-				if (walker(tc->typename, context))
+				if (walker(tc->typeName, context))
 					return true;
 			}
 			break;
@@ -1101,7 +1100,7 @@ bool
 			{
 				ColumnDef  *coldef = (ColumnDef *) node;
 
-				if (walker(coldef->typename, context))
+				if (walker(coldef->typeName, context))
 					return true;
 				if (walker(coldef->raw_default, context))
 					return true;
@@ -1116,7 +1115,7 @@ bool
 
 				if (walker(xs->expr, context))
 					return true;
-				if (walker(xs->typename, context))
+				if (walker(xs->typeName, context))
 					return true;
 			}
 			break;

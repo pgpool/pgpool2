@@ -29,3 +29,4 @@ const ScanKeyword ScanKeywords[] = {
 
 /* End of ScanKeywords, for use in kwlookup.c and elsewhere */
 const ScanKeyword *LastScanKeyword = endof(ScanKeywords);
+const int	NumScanKeywords = lengthof(ScanKeywords);

@@ -1509,15 +1509,19 @@ int is_select_query(Node *node, char *sql)
 	else if (IsA(node, ExplainStmt))
 	{
 		ExplainStmt * explain_stmt = (ExplainStmt *)node;
+		Node *query = explain_stmt->query;
+		ListCell *lc;
 
-		if (explain_stmt->analyze)
+		if (IsA(query, SelectStmt))
 		{
-			Node *query = explain_stmt->query;
+			foreach (lc, explain_stmt->options)
+			{
+				DefElem    *opt = (DefElem *) lfirst(lc);
 
-			return (IsA(query, SelectStmt));
+				if (strcmp(opt->defname, "analyze") == 0)
+					return 1;
+			}
 		}
-		else
-			return 1;
 	}
 	return 0;
 }
@@ -3144,6 +3148,8 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 				}
 				value = p + strlen(p) + 1;
 				pool_debug("read_kind_from_backend: parameter name: %s value: %s", p, value);
+				if (IS_MASTER_NODE_ID(i))
+					pool_add_param(&CONNECTION(backend, i)->params, p, value);
 			} while (kind == 'S');
 
 #ifdef DEALLOCATE_ERROR_TEST

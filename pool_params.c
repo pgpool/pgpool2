@@ -147,6 +147,7 @@ int pool_add_param(ParamStatus *params, char *name, char *value)
 		}
 		params->num++;
     }
+	parser_set_param(name, value);
 	return 0;
 }
 
