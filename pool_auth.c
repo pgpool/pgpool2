@@ -48,7 +48,7 @@ static void pool_send_auth_fail(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL 
 static int do_crypt(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reauth, int protoMajor);
 static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reauth, int protoMajor);
 static int send_md5auth_request(POOL_CONNECTION *frontend, int protoMajor, char *salt);
-static int read_password_packet(POOL_CONNECTION *frontend, int protoMajor, 	char *password);
+static int read_password_packet(POOL_CONNECTION *frontend, int protoMajor, 	char *password, int *pwdSize);
 static int send_password_packet(POOL_CONNECTION *backend, int protoMajor, char *password);
 static int send_auth_ok(POOL_CONNECTION *frontend, int protoMajor);
 
@@ -833,7 +833,7 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 	char encbuf[POOL_PASSWD_LEN+1];
 	char *pool_passwd = NULL;
 
-	if (!RAW_MODE && NUM_BACKENDS > 1)
+	if (NUM_BACKENDS > 1)
 	{
 		/* Read password entry from pool_passwd */
 		pool_passwd = pool_get_passwd(frontend->username);
@@ -855,7 +855,7 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 			}
 
 			/* Read password packet */
-			if (read_password_packet(frontend, protoMajor, password))
+			if (read_password_packet(frontend, protoMajor, password, &size))
 			{
 				pool_error("do_md5: read_password_packet failed");
 				return -1;
@@ -914,23 +914,24 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 		}
 		return kind;
 	}
+
+	/*
+	 * Followings are NUM_BACKEND == 1 case.
+	 */
+	if (!reauth)
+	{
+		/* read salt */
+		if (pool_read(backend, salt, sizeof(salt)))
+		{
+			pool_error("do_md5: failed to read salt");
+			return -1;
+		}
+		pool_debug("DB node id: %d salt: %hhx%hhx%hhx%hhx", backend->db_node_id,
+				   salt[0], salt[1], salt[2], salt[3]);
+	}
 	else
 	{
-		if (!reauth)
-		{
-			/* read salt */
-			if (pool_read(backend, salt, sizeof(salt)))
-			{
-				pool_error("do_md5: failed to read salt");
-				return -1;
-			}
-			pool_debug("DB node id: %d salt: %hhx%hhx%hhx%hhx", backend->db_node_id,
-					   salt[0], salt[1], salt[2], salt[3]);
-		}
-		else
-		{
-			memcpy(salt, backend->salt, sizeof(salt));
-		}
+		memcpy(salt, backend->salt, sizeof(salt));
 	}
 
 	/* master? */
@@ -944,7 +945,7 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 		}
 
 		/* Read password packet */
-		if (read_password_packet(frontend, protoMajor, password))
+		if (read_password_packet(frontend, protoMajor, password, &size))
 		{
 			pool_error("do_md5: read_password_packet failed");
 			return -1;
@@ -954,7 +955,7 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 	/* connection reusing? */
 	if (reauth)
 	{
-		if ((ntohl(size) - 4) != backend->pwd_size)
+		if (size != backend->pwd_size)
 		{
 			pool_debug("do_md5; password size does not match in re-authentication");
 			return -1;
@@ -986,7 +987,7 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 		}
 
 		backend->auth_kind = 5;
-		backend->pwd_size = ntohl(size) - 4;
+		backend->pwd_size = size;
 		memcpy(backend->password, password, backend->pwd_size);
 		memcpy(backend->salt, salt, sizeof(salt));
 	}
@@ -1017,7 +1018,7 @@ static int send_md5auth_request(POOL_CONNECTION *frontend, int protoMajor, char 
 /*
  * Read password packet from frontend
  */
-static int read_password_packet(POOL_CONNECTION *frontend, int protoMajor, 	char *password)
+static int read_password_packet(POOL_CONNECTION *frontend, int protoMajor, 	char *password, int *pwdSize)
 {
 	int size;
 
@@ -1051,11 +1052,30 @@ static int read_password_packet(POOL_CONNECTION *frontend, int protoMajor, 	char
 		}
 	}
 
-	if (pool_read(frontend, password, ntohl(size) - 4))
+	*pwdSize = ntohl(size) - 4;
+	if (*pwdSize > MAX_PASSWORD_SIZE)
 	{
-		pool_error("read_password_packet: failed to read password (size: %d)", ntohl(size) - 4);
+		pool_error("read_password_packet: too long password string (size: %d)", *pwdSize);
+		/*
+		 * We do not read to throw away packet here. Since it is possible that
+		 * it's a denial of service attack.
+		 */
 		return -1;
 	}
+	else if (*pwdSize <= 0)
+	{
+		pool_error("read_password_packet: invalid password string size (size: %d)", *pwdSize);
+		return -1;
+	}
+
+	if (pool_read(frontend, password, *pwdSize))
+	{
+		pool_error("read_password_packet: failed to read password (size: %d)", *pwdSize);
+		return -1;
+	}
+	
+	password[*pwdSize] = '\0';
+
 	return 0;
 }
 
@@ -1075,9 +1095,9 @@ static int send_password_packet(POOL_CONNECTION *backend, int protoMajor, char *
 	/* Send password packet to backend */
 	if (protoMajor == PROTO_MAJOR_V3)
 		pool_write(backend, "p", 1);
-	size = htonl(sizeof(size) + strlen(password));
+	size = htonl(sizeof(size) + strlen(password)+1);
 	pool_write(backend, &size, sizeof(size));
-	pool_write_and_flush(backend, password, strlen(password));
+	pool_write_and_flush(backend, password, strlen(password)+1);
 
 	if (pool_read(backend, &response, sizeof(response)))
 	{
