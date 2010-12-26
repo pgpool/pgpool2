@@ -33,6 +33,21 @@
 #define MODE_SLONY "slony"		/* Slony-I */
 
 /*
+ *  Regex support in white and black list function
+ */
+#include <regex.h>
+#define BLACKLIST	0
+#define WHITELIST	1
+#define PATTERN_ARR_SIZE 16     /* Default length of regex array: 16 patterns */
+typedef struct {
+  char *pattern;
+  int type;
+  int flag;
+  regex_t regexv;
+} RegPattern;
+
+
+/*
  * configuration paramters
  */
 typedef struct {
@@ -149,6 +164,11 @@ typedef struct {
 	char *ssl_key;	/* path to ssl key (frontend only) */
 	char *ssl_ca_cert;	/* path to root (CA) certificate */
 	char *ssl_ca_cert_dir;	/* path to directory containing CA certificates */
+
+	/* followings are for regex support and do not exist in the configuration file */
+	RegPattern *lists_patterns; /* Precompiled regex patterns for black/white lists */
+	int pattc; /* number of regexp pattern */
+	int current_pattern_size; /* size of the regex pattern array */
 } POOL_CONFIG;
 
 typedef enum {
@@ -161,5 +181,10 @@ extern POOL_CONFIG *pool_config;	/* configuration values */
 extern int pool_init_config(void);
 extern int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context);
 extern int eval_logical(char *str);
+
+/* methods used for regexp support */
+extern int add_regex_pattern(char *type, char *s);
+extern int growPatternArray (RegPattern item);
+extern int pattern_compare(char *str, const int type);
 
 #endif /* POOL_CONFIG_H */

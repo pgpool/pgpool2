@@ -97,12 +97,47 @@ bool pool_has_temp_table(Node *node)
 }
 
 /*
+ * Search function name in whilelist or blacklist regex array
+ * Return 1 on success (found in list)
+ * Return 0 when not found in list
+ * Return -1 if the given search type doesn't exist.
+ * Search type supported are: WHITELIST and BLACKLIST 
+ */
+int pattern_compare(char *str, const int type)
+{
+	int i = 0;
+
+	/* pass througth all regex pattern unless pattern is found */
+	for (i = 0; i < pool_config->pattc; i++) {
+		if ( (pool_config->lists_patterns[i].type == type) && (regexec(&pool_config->lists_patterns[i].regexv, str, 0, 0, 0) == 0) ) {
+			switch(type) {
+			/* return 1 if string matches whitelist pattern */
+			case WHITELIST:
+				if (pool_config->debug_level > 0)
+					pool_debug("pattern_compare: white_function_list (%s) matched: %s", pool_config->lists_patterns[i].pattern, str);
+				return 1;
+			/* return 1 if string matches blacklist pattern */
+			case BLACKLIST:
+				if (pool_config->debug_level > 0)
+					pool_debug("pattern_compare: black_function_list (%s) matched: %s", pool_config->lists_patterns[i].pattern, str);
+				return 1;
+			default:
+				pool_error("pattern_compare: unknown pattern match type: %s", str);
+				return -1;
+			}
+		}
+	}
+
+	/* return 0 otherwise */
+	return 0;
+}
+
+/*
  * Walker function to find a function call
  */
 static bool function_call_walker(Node *node, void *context)
 {
 	SelectContext	*ctx = (SelectContext *) context;
-	int i;
 
 	if (node == NULL)
 		return false;
@@ -123,13 +158,10 @@ static bool function_call_walker(Node *node, void *context)
 			 */
 			if (pool_config->num_white_function_list > 0)
 			{
-				for (i=0;i<pool_config->num_white_function_list;i++)
-				{
+				/* Search function in the white list regex patterns */
+				if (pattern_compare(fname, WHITELIST) == 1) {
 					/* If the function is found in the white list, we can ignore it */
-					if (!strcasecmp(pool_config->white_function_list[i], fname))
-					{
-						return raw_expression_tree_walker(node, function_call_walker, context);
-					}
+					return raw_expression_tree_walker(node, function_call_walker, context);
 				}
 				/*
 				 * Since the function was not found in white list, we
@@ -142,11 +174,10 @@ static bool function_call_walker(Node *node, void *context)
 			/*
 			 * Check black list if any.
 			 */
-			for (i=0;i<pool_config->num_black_function_list;i++)
+			if (pool_config->num_black_function_list > 0)
 			{
-				/* Is the function found in the black list? */
-				if (!strcasecmp(pool_config->black_function_list[i], fname))
-				{
+				/* Search function in the black list regex patterns */
+				if (pattern_compare(fname, BLACKLIST) == 1) {
 					/* Found. */
 					ctx->has_function_call = true;
 					return false;

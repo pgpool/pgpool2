@@ -1926,6 +1926,9 @@ int pool_init_config(void)
 	pool_config->ssl_ca_cert = "";
 	pool_config->ssl_ca_cert_dir = "";
 	pool_config->debug_level = 0;
+    pool_config->lists_patterns = NULL;
+    pool_config->pattc = 0;
+    pool_config->current_pattern_size = 0;
 
 	res = gethostname(localhostname,sizeof(localhostname));
 	if(res !=0 )
@@ -1939,6 +1942,98 @@ int pool_init_config(void)
 		clear_host_entry(i);
 	}
 	return 0;
+}
+
+/* 
+ * Add regex expression to patterns array
+ * The supported type are: black_function_list and white_function_list
+ * Return 0 on error, 1 on success
+ */
+int add_regex_pattern(char *type, char *s)
+{
+	int regex_flags = REG_NOSUB;
+	RegPattern currItem;
+	/* force case insensitive pattern matching */
+	regex_flags |= REG_ICASE;
+	/* Add extended regex search */
+	regex_flags |= REG_EXTENDED;
+	/* Fill the pattern type */
+	if (strcmp(type, "black_function_list") == 0)
+	{
+		currItem.type = BLACKLIST;
+	}
+	else if (strcmp(type, "white_function_list") == 0)
+	{
+		currItem.type = WHITELIST;
+	}
+	else
+	{
+		pool_error("add_to_patterns: bad pattern type %s", type);
+		return 0;
+	}
+	/* Fill the pattern flag */
+	currItem.flag = regex_flags;
+
+	/* Fill pattern array */
+	currItem.pattern = malloc(sizeof(char)*(strlen(s)+1));
+	if (currItem.pattern == NULL)
+	{
+		pool_error("add_to_patterns: unable to allocate new pattern");
+		return 0;
+	}
+	/* Force exact matching of function name with ^ and $ on the regex
+	   if required to prevent partial matching. It also allow backward
+	   compatibility.
+	 */
+	if (strncmp(s, "^", 1) != 0) {
+		strncpy(currItem.pattern, "^", 2);
+		strncat(currItem.pattern, s, strlen(s) + 1);
+	} else {
+		strncpy(currItem.pattern, s, strlen(s) + 1);
+	}
+	if (s[strlen(s)-1] != '$') {
+		strncat(currItem.pattern, "$", 2);
+	}
+	pool_debug("add_to_patterns: regex pattern: %s", currItem.pattern);
+	/* compile our regex */
+	if (regcomp(&currItem.regexv, currItem.pattern, currItem.flag) != 0)
+	{
+		pool_error("add_to_patterns: invalid regex pattern: %s", currItem.pattern);
+	}
+	else
+	{
+		if (growPatternArray(currItem) < 0)
+		{
+			pool_error("add_to_patterns: unable to allocate new pattern");
+			return 0;
+		}
+	}
+	return 1;
+}
+
+/* 
+ * Dynamically grow the regex pattern array
+ * The array start with PATTERN_ARR_SIZE storage place, if required
+ * it will grow of PATTERN_ARR_SIZE more each time.
+ */
+int growPatternArray (RegPattern item)
+{
+	void *_tmp = NULL;
+	if (pool_config->pattc == pool_config->current_pattern_size)
+	{
+		pool_config->current_pattern_size += PATTERN_ARR_SIZE;
+		_tmp = realloc(pool_config->lists_patterns, (pool_config->current_pattern_size * sizeof(RegPattern)));
+		if (!_tmp)
+		{
+			return(-1);
+		}
+
+		pool_config->lists_patterns = (RegPattern*)_tmp;
+	}
+	pool_config->lists_patterns[pool_config->pattc] = item;
+	pool_config->pattc++;
+
+	return(pool_config->pattc);
 }
 
 int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
