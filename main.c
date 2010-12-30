@@ -343,7 +343,8 @@ int main(int argc, char **argv)
 	/*
 	 * Override debug level
 	 */
-	pool_config->debug_level = debug_level;
+	if (pool_config->debug_level == 0)
+		pool_config->debug_level = debug_level;
 
 	if (pool_config->enable_pool_hba)
 		load_hba(hba_file);
