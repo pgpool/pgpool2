@@ -50,6 +50,13 @@ void pool_error(const char *fmt,...)
 #else
 	int	oldmask;
 #endif
+	/* Write error message to syslog */
+	if (pool_config->logsyslog == 1) {
+	   va_start(ap, fmt);
+	   vsyslog(pool_config->syslog_facility | LOG_ERR, fmt, ap);
+	   va_end(ap);
+	   return;
+	}
 
 	POOL_SETMASK2(&BlockSig, &oldmask);
 
@@ -105,6 +112,13 @@ void pool_debug(const char *fmt,...)
 		if (pool_config->debug_level <= 0)
 			return;
 	}
+	/* Write debug message to syslog */
+	if (pool_config->logsyslog == 1) {
+	   va_start(ap, fmt);
+	   vsyslog(pool_config->syslog_facility | LOG_DEBUG, fmt, ap);
+	   va_end(ap);
+	   return;
+	}
 
 	POOL_SETMASK2(&BlockSig, &oldmask);
 
@@ -149,6 +163,13 @@ void pool_log(const char *fmt,...)
 #else
 	int	oldmask;
 #endif
+	/* Write log message to syslog */
+	if (pool_config->logsyslog == 1) {
+	   va_start(ap, fmt);
+	   vsyslog(pool_config->syslog_facility | LOG_NOTICE, fmt, ap);
+	   va_end(ap);
+	   return;
+	}
 
 	POOL_SETMASK2(&BlockSig, &oldmask);
 

@@ -314,6 +314,17 @@ int main(int argc, char **argv)
 	}
 
 	/*
+	 * Open syslog connection if required
+	 */
+	if (!strcmp(pool_config->log_destination, "syslog")) {
+		openlog(pool_config->syslog_ident, LOG_PID|LOG_NDELAY|LOG_NOWAIT, pool_config->syslog_facility);
+		/* set a flag to allow pool_error.c to begin writing to syslog
+		   instead of stdout now that pool_get_config() is done */
+		pool_config->logsyslog = 1;
+	}
+
+
+	/*
 	 * Locate pool_passwd
 	 */
 	if (strcmp("", pool_config->pool_passwd))

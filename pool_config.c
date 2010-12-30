@@ -1871,6 +1871,10 @@ int pool_init_config(void)
 	pool_config->child_max_connections = 0;
 	pool_config->authentication_timeout = 60;
 	pool_config->logdir = DEFAULT_LOGDIR;
+        pool_config->logsyslog = 0;
+        pool_config->log_destination = "stderr";
+        pool_config->syslog_facility = LOG_LOCAL0;
+        pool_config->syslog_ident = "pgpool";
 	pool_config->pid_file_name = DEFAULT_PID_FILE_NAME;
  	pool_config->log_statement = 0;
  	pool_config->log_per_node_statement = 0;
@@ -1926,9 +1930,9 @@ int pool_init_config(void)
 	pool_config->ssl_ca_cert = "";
 	pool_config->ssl_ca_cert_dir = "";
 	pool_config->debug_level = 0;
-    pool_config->lists_patterns = NULL;
-    pool_config->pattc = 0;
-    pool_config->current_pattern_size = 0;
+	pool_config->lists_patterns = NULL;
+	pool_config->pattc = 0;
+	pool_config->current_pattern_size = 0;
 
 	res = gethostname(localhostname,sizeof(localhostname));
 	if(res !=0 )
@@ -2043,6 +2047,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 	char key[1024];
 	double total_weight;
 	int i;
+    bool log_destination_changed = false;
 
 #define PARSE_ERROR()		pool_error("pool_config: parse error at line %d '%s'", Lineno, yytext)
 
@@ -2303,6 +2308,64 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			pool_config->logdir = str;
 		}
+		else if (!strcmp(key, "log_destination") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+            log_destination_changed = pool_config->log_destination != str;
+			pool_config->log_destination = str;
+		}
+		else if (!strcmp(key, "syslog_facility") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->syslog_facility = set_syslog_facility(str);
+		}
+		else if (!strcmp(key, "syslog_ident") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+            log_destination_changed = log_destination_changed || pool_config->syslog_ident != str;
+			pool_config->syslog_ident = str;
+		}
 		else if (!strcmp(key, "pid_file_name") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			char *str;
@@ -2521,6 +2584,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
+			for (i=0;i<pool_config->num_white_function_list;i++)
+			{
+				add_regex_pattern("white_function_list", pool_config->white_function_list[i]);
+			}
 		}
 
 		else if (!strcmp(key, "black_function_list") &&
@@ -2547,6 +2614,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			{
 				fclose(fd);
 				return(-1);
+			}
+			for (i=0;i<pool_config->num_black_function_list;i++)
+			{
+				add_regex_pattern("black_function_list", pool_config->black_function_list[i]);
 			}
 		}
 
@@ -3332,6 +3403,21 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 	fclose(fd);
 
+    if (log_destination_changed)
+    {
+        // log_destination has changed, we need to open syslog or close it
+		if (!strcmp(pool_config->log_destination, "stderr"))
+        {
+	        closelog();
+    	   	pool_config->logsyslog = 0;
+        }
+        else
+        {
+    	   	openlog(pool_config->syslog_ident, LOG_PID|LOG_NDELAY|LOG_NOWAIT, pool_config->syslog_facility);
+    	   	pool_config->logsyslog = 1;
+        }
+    }
+
 	pool_config->backend_desc->num_backends = 0;
 	total_weight = 0.0;
 
@@ -3633,5 +3719,44 @@ static void print_host_entry(int slot)
 			   pool_config->server_weights[slot]);
 }
 #endif
+
+/* Use to set the syslog facility level if logsyslog is activated */
+int set_syslog_facility(char *value)
+{
+   int facility = LOG_LOCAL0;
+
+   if (value == NULL)
+     return facility;
+
+   if (strncmp(value, "LOCAL", 5) == 0 && strlen(value) == 6) {
+	  switch (value[5]) {
+	  case '0':
+	       facility = LOG_LOCAL0;
+	       break;
+	  case '1':
+	       facility = LOG_LOCAL1;
+	       break;
+	  case '2':
+	       facility = LOG_LOCAL2;
+	       break;
+	  case '3':
+	       facility = LOG_LOCAL3;
+	       break;
+	  case '4':
+	       facility = LOG_LOCAL4;
+	       break;
+	  case '5':
+	       facility = LOG_LOCAL5;
+	       break;
+	  case '6':
+	       facility = LOG_LOCAL6;
+	       break;
+	  case '7':
+	       facility = LOG_LOCAL7;
+	       break;
+	  }
+     }
+     return facility;
+}
 
 

@@ -248,6 +248,8 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 	 */
 	for (;;)
 	{
+		char *message;
+
 		kind = pool_read_kind(cp);
 		if (kind < 0)
 		{
@@ -269,6 +271,10 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 					break;
 
 				case 'N':
+					if (pool_extract_error_message(true, MASTER(cp), protoMajor, true, &message) == 1)
+					{
+						pool_log("pool_do_auth: notice message from backend:%s", message);
+					}
 					/* process notice message */
 					if (SimpleForwardToFrontend(kind, frontend, cp))
 						return -1;
@@ -277,6 +283,10 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 
 					/* process error message */
 				case 'E':
+					if (pool_extract_error_message(true, MASTER(cp), protoMajor, true, &message) == 1)
+					{
+						pool_log("pool_do_auth: error message from backend:%s", message);
+					}
 					SimpleForwardToFrontend(kind, frontend, cp);
 					pool_flush(frontend);
 					return -1;
@@ -1296,8 +1306,24 @@ signed char pool_read_kind(POOL_CONNECTION_POOL *cp)
 		{
 			if (kind != kind0)
 			{
+				char *message;
+
 				pool_error("pool_read_kind: kind does not match between master(%x) slot[%d] (%x)",
 						   kind0, i, kind);
+				if (kind0 == 'E')
+				{
+					if (pool_extract_error_message(false, MASTER(cp), MAJOR(cp), true, &message) == 1)
+					{
+						pool_log("pool_read_kind: error message from master backend:%s", message);
+					}
+				}
+				else if (kind == 'E')
+				{
+					if (pool_extract_error_message(false, CONNECTION(cp, i), MAJOR(cp), true, &message) == 1)
+					{
+						pool_log("pool_read_kind: error message from %d th backend:%s", i, message);
+					}
+				}
 				return -1;
 			}
 		}

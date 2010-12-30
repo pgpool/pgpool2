@@ -127,6 +127,8 @@ void
 pool_shmem_exit(int code)
 {
 	shmem_exit(code);
+	/* Close syslog connection here as this function is always called on exit */
+	closelog();
 }
 
 /*

@@ -66,6 +66,9 @@ typedef struct {
 	int authentication_timeout; /* maximum time in seconds to complete client authentication */
     int	max_pool;	/* max # of connection pool per child */
     char *logdir;		/* logging directory */
+    char *log_destination;      /* log destination: stderr or syslog */
+    int syslog_facility;        /* syslog facility: LOCAL0, LOCAL1, ... */
+    char *syslog_ident;         /* syslog ident string: pgpool */
     char *pid_file_name;		/* pid file name */
     char *backend_socket_dir;	/* Unix domain socket directory for the PostgreSQL server */
 	int replication_mode;		/* replication mode */
@@ -157,6 +160,7 @@ typedef struct {
 	int num_reset_queries;		/* number of queries in reset_query_list */
 	int num_white_function_list;		/* number of functions in white_function_list */
 	int num_black_function_list;		/* number of functions in black_function_list */
+	int logsyslog;		/* flag used to start logging to syslog */
 
 	/* ssl configuration */
 	int ssl;	/* if non 0, activate ssl support (frontend+backend) */
@@ -181,6 +185,9 @@ extern POOL_CONFIG *pool_config;	/* configuration values */
 extern int pool_init_config(void);
 extern int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context);
 extern int eval_logical(char *str);
+
+/* method use for syslog support */
+extern int set_syslog_facility (char *);
 
 /* methods used for regexp support */
 extern int add_regex_pattern(char *type, char *s);

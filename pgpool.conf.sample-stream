@@ -53,8 +53,17 @@ client_idle_limit = 0
 # 0 means no timeout.
 authentication_timeout = 60
 
-# Logging directory
+# PgPool status file logging directory
 logdir = '/tmp'
+
+# Where to Log. Valid values are stderr and syslog. Default to stderr.
+log_destination = 'stderr'
+
+# Select syslog local facility for logging. Default: LOCAL0
+syslog_facility = 'LOCAL0'
+
+# Set the syslog program ident string. Default to 'pgpool'
+syslog_ident = 'pgpool'
 
 # pid file name
 pid_file_name = '/var/run/pgpool/pgpool.pid'
