@@ -591,6 +591,7 @@ static POOL_CONNECTION_POOL_SLOT *create_cp(POOL_CONNECTION_POOL_SLOT *cp, int s
 		return NULL;
 	}
 
+	cp->sp = NULL;
 	cp->con = pool_open(fd);
 	cp->closetime = 0;
 	return cp;

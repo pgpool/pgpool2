@@ -1303,6 +1303,7 @@ void pool_free_startup_packet(StartupPacket *sp)
 			free(sp->user);
 		free(sp);
 	}
+	sp = NULL;
 }
 
 /*
