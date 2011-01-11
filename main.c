@@ -909,7 +909,10 @@ static int read_status_file(bool discard_status)
 	for (i=0;i< pool_config->backend_desc->num_backends;i++)
 	{
 		if (backend_rec.status[i] == CON_DOWN)
+		{
 			BACKEND_INFO(i).backend_status = CON_DOWN;
+			pool_log("read_status_file: %d th backend is set to down status", i);
+		}
 		else
 		{
 			BACKEND_INFO(i).backend_status = CON_CONNECT_WAIT;
