@@ -172,6 +172,8 @@ static void update_pool_passwd(char *conf_file, char *password)
 	struct passwd *pw;
 	char	 md5[MD5_PASSWD_LEN+1];
 	char pool_passwd[POOLMAXPATHLEN+1];
+	char dirnamebuf[POOLMAXPATHLEN+1];
+	char *dirp;
 
 	if (pool_init_config())
 	{
@@ -184,8 +186,10 @@ static void update_pool_passwd(char *conf_file, char *password)
 		exit(EXIT_FAILURE);
 	}
 
+	strncpy(dirnamebuf, conf_file, sizeof(dirnamebuf));
+	dirp = dirname(dirnamebuf);
 	snprintf(pool_passwd, sizeof(pool_passwd), "%s/%s",
-			 dirname(conf_file), pool_config->pool_passwd);
+			 dirp, pool_config->pool_passwd);
 	pool_init_pool_passwd(pool_passwd);
 
 	pw = getpwuid(getuid());
