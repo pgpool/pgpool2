@@ -80,7 +80,7 @@ main(int argc, char **argv)
 	POOL_CONNECTION_POOL_SLOT slot;
 	backend.slots[0] = &slot;
 
-	pool_config->replication_enabled = 1;
+	pool_config->replication_mode = 1;
 
 	if (argc != 2)
 	{

@@ -338,16 +338,6 @@ void config_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	strncpy(status[i].desc, "ignore leading white spaces", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "replication_enabled", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->replication_enabled);
-	strncpy(status[i].desc, "non 0 if actually operating in replication mode", POOLCONFIG_MAXDESCLEN);
-	i++;
-
-	strncpy(status[i].name, "master_slave_enabled", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->master_slave_enabled);
-	strncpy(status[i].desc, "non 0 if actually operating in master/slave", POOLCONFIG_MAXDESCLEN);
-	i++;
-
 	strncpy(status[i].name, "num_reset_queries", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->num_reset_queries);
 	strncpy(status[i].desc, "number of queries in reset_query_list", POOLCONFIG_MAXDESCLEN);

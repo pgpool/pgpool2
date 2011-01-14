@@ -155,8 +155,6 @@ typedef struct {
 	LOAD_BALANCE_STATUS	load_balance_status[MAX_NUM_BACKENDS];	/* to remember which DB node is selected for load balancing */
 
 	/* followings do not exist in the configuration file */
-	int replication_enabled;		/* replication mode enabled */
-	int master_slave_enabled;		/* master/slave mode enabled */
 	int num_reset_queries;		/* number of queries in reset_query_list */
 	int num_white_function_list;		/* number of functions in white_function_list */
 	int num_black_function_list;		/* number of functions in black_function_list */
