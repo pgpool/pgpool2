@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2009	PgPool Global Development Group
+ * Copyright (c) 2003-2011	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -28,6 +28,7 @@
 #include "pool.h"
 #include "pool_relcache.h"
 #include "pool_session_context.h"
+#include "pool_config.h"
 
 /*
  * Create relation cache
@@ -99,6 +100,7 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 	POOL_SELECT_RESULT *res = NULL;
 	int index = 0;
 	int local_session_id;
+	time_t now;
 
 	/* Eliminate double quotes */
 	rel = malloc(strlen(table)+1);
@@ -125,6 +127,8 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 	/* Obtain database name */
 	dbname = MASTER_CONNECTION(backend)->sp->database;
 
+	now = time(NULL);
+
 	/* Look for cache first */
 	for (i=0;i<relcache->num;i++)
 	{
@@ -140,6 +144,16 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 		if (strcasecmp(relcache->cache[i].dbname, dbname) == 0 &&
 			strcasecmp(relcache->cache[i].relname, rel) == 0)
 		{
+			if (relcache->cache[i].expire > 0)
+			{
+				if (now > relcache->cache[i].expire)
+				{
+					pool_debug("pool_search_relcache: relcache for database:%s table:%s expired. now:%d expiration time:%d", dbname, rel, now, relcache->cache[i].expire);
+					relcache->cache[i].refcnt = 0;
+					break;
+				}
+			}
+
 			/* Found */
 			if (relcache->cache[i].refcnt < INT_MAX)
 				relcache->cache[i].refcnt++;
@@ -197,6 +211,14 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 	strncpy(relcache->cache[index].relname, rel, MAX_ITEM_LENGTH);
 	relcache->cache[index].refcnt = 1;
 	relcache->cache[index].session_id = local_session_id;
+	if (pool_config->relcache_expire > 0)
+	{
+		relcache->cache[index].expire = now + pool_config->relcache_expire;
+	}
+	else
+	{
+		relcache->cache[index].expire = 0;
+	}
 	free(rel);
 
 	/*

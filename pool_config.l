@@ -205,6 +205,7 @@ int pool_init_config(void)
 	pool_config->ssl_ca_cert = "";
 	pool_config->ssl_ca_cert_dir = "";
 	pool_config->debug_level = 0;
+	pool_config->relcache_expire = 0;
 	pool_config->lists_patterns = NULL;
 	pool_config->pattc = 0;
 	pool_config->current_pattern_size = 0;
@@ -339,8 +340,15 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 	yyin = fd;
 	Lineno = 1;
 
-	while ((token = yylex()))
+	for(;;)
 	{
+		token = yylex();
+		if (token == 0)
+		{
+			pool_log("pool_get_config: no token available. parsing pgpool.conf done");
+			break;
+		}
+
 		if (token == POOL_PARSE_ERROR)
 		{
 			PARSE_ERROR();
@@ -1674,6 +1682,20 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			pool_config->debug_level = v;
 		}
+
+		else if (!strcmp(key, "relcache_expire") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			int v = atoi(yytext);
+
+			if (token != POOL_INTEGER || v < 0)
+			{
+				pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->relcache_expire = v;
+		}
+
 	}
 
 	fclose(fd);

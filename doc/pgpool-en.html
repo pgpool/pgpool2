@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Tue Oct 19 07:59:36 JST 2010
+Last modified: Sun Jan 16 19:27:59 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -811,6 +811,21 @@ postmaster. You need to reload pgpool.conf if you change this value.
       <p>
 	   Debug message verbosity level. 0 means no message, greater than 1
 	   means more verbose message. Default value is 0.
+      </p>
+  </dd>
+
+  <dt>relcache_expire</dt>
+  <dd>
+      <p>
+	   Life time of relation cache in seconds. 0 means no cache
+	   expiration(the default).
+	   The relation cache is used for cache the query result against PostgreSQL
+	   system catalog to obtain various information including table structures
+	   or if it's a temporary table or not. The cache is maintained in a pgpool
+	   child local memory and being kept as long as it survives.
+	   If someone modify the table by using ALTER TABLE or some such, the relcache
+	   is not consistent anymore.
+	   For this purpose, relcache_expiration controls the life time of the cache.
       </p>
   </dd>
 

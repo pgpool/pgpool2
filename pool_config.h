@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2010	PgPool Global Development Group
+ * Copyright (c) 2003-2011	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -166,6 +166,8 @@ typedef struct {
 	char *ssl_key;	/* path to ssl key (frontend only) */
 	char *ssl_ca_cert;	/* path to root (CA) certificate */
 	char *ssl_ca_cert_dir;	/* path to directory containing CA certificates */
+
+	time_t relcache_expire;		/* relation cache life time in seconds */
 
 	/* followings are for regex support and do not exist in the configuration file */
 	RegPattern *lists_patterns; /* Precompiled regex patterns for black/white lists */

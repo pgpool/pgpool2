@@ -42,6 +42,7 @@ typedef struct {
 	void *data;	/* user data */
 	int refcnt;		/* reference count */
 	int session_id;		/* LocalSessionId */
+	time_t expire;		/* cache expiration absolute time in seconds */
 } PoolRelCache;
 
 typedef struct {
