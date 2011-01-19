@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2010	PgPool Global Development Group
+ * Copyright (c) 2003-2011	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -111,10 +111,18 @@ static bool function_call_walker(Node *node, void *context)
 	{
 		FuncCall *fcall = (FuncCall *)node;
 		char *fname;
+		int length = list_length(fcall->funcname);
 
-		if (list_length(fcall->funcname))
+		if (length > 0)
 		{
-			fname = strVal(linitial(fcall->funcname));
+			if (length == 1)	/* no schema qualification? */
+			{
+				fname = strVal(linitial(fcall->funcname));
+			}
+			else
+			{
+				fname = strVal(lsecond(fcall->funcname));		/* with schema qualification */
+			}
 
 			pool_debug("function_call_walker: function name: %s", fname);
 
