@@ -61,9 +61,6 @@ char *copy_schema = NULL;  /* copy table name */
 char copy_delimiter; /* copy delimiter char */
 char *copy_null = NULL; /* copy null string */
 
-/* non 0 if "BEGIN" query with extended query protocol received */
-int receive_extended_begin = 0;
-
 /*
  * Non 0 if allow to close internal transaction.  This variable was
  * introduced on 2008/4/3 not to close an internal transaction when
@@ -1954,7 +1951,6 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 
 		case 'S':  /* Sync */
 			pool_set_doing_extended_query_message();
-			receive_extended_begin = 0;
 			if (pool_is_ignore_till_sync())
 				pool_unset_ignore_till_sync();
 			if (!pool_is_query_in_progress())
