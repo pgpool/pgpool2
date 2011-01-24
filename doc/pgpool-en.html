@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Sun Jan 16 19:27:59 JST 2011
+Last modified: Mon Jan 24 13:30:13 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -338,9 +338,9 @@ username:[password encrypted in md5]
 pg_md5 -p
 password: &lt;your password&gt;
 </pre>
-
+<p>
 or
-
+</p>
 <pre>
 ./pg_md5 foo
 acbd18db4cc2f85cedef654fccc4a4d8
@@ -502,6 +502,31 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
       directory.
        </p>
   </dd>
+  <dt>log_destination</dt>
+  <dd>
+      <p>PgPool II supports several methods for logging server messages,
+	including stderr and syslog. The default is to log to stderr.
+       </p>
+      <p>Note: you will need to alter the configuration of your system's syslog daemon in order to make use of the syslog option for log_destination. PgPool can log to syslog facilities LOCAL0 through LOCAL7 (see syslog_facility), but the default syslog configuration on most platforms will discard all such messages. You will need to add something like
+	</p>
+	<pre>
+	local0.*    /var/log/pgpool.log
+	</pre>
+      <p>to the syslog daemon's configuration file to make it work.
+	</p>
+  </dd>
+
+  <dt>syslog_facility</dt>
+  <dd>
+      <p>When logging to syslog is enabled, this parameter determines the syslog "facility" to be used. You can choose from LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7; the default is LOCAL0. See also the documentation of your system's syslog daemon.
+	</p>
+  </dd>
+
+  <dt>syslog_ident</dt>
+  <dd>
+      <p>When logging to syslog is enabled, this parameter determines the program name used to identify PgPool messages in syslog logs. The default is pgpool.
+	</p>
+  </dd>
 
   <dt>pid_file_name</dt>
   <dd>
@@ -565,12 +590,12 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
 <dt>failover_command
 <dd>
 <p>
-
 This parameter specifies a command to run when a node is detached.
 pgpool-II replaces the following special characters with backend specific 
 information.
+</p>
 
-<center>
+<blockquote>
 <table border>
 <tr><td>Special character</td><td>Description</td></tr>
 <tr><td>%d</td><td>Backend ID of a detached node.</td></tr>
@@ -583,7 +608,8 @@ information.
 <tr><td>%P</td><td>Old primary node ID.</td></tr>
 <tr><td>%%</td><td>'%' character</td></tr>
 </table>
-</center>
+</blockquote>
+<p>
 You need to reload pgpool.conf if you change failover_command.
 </p>
 
@@ -601,8 +627,8 @@ connections from clients.
 This parameter specifies a command to run when a node is attached.
 pgpool-II replaces special the following characters with backend specific 
 information.
-
-<center>
+</p>
+<blockquote>
 <table border>
 <tr><td>Special character</td><td>Description</td></tr>
 <tr><td>%d</td><td>Backend ID of an attached node.</td></tr>
@@ -615,7 +641,8 @@ information.
 <tr><td>%P</td><td>Old primary node ID.</td></tr>
 <tr><td>%%</td><td>'%' character</td></tr>
 </table>
-</center>
+</blockquote>
+<p>
       You need to reload pgpool.conf if you change failback_command.
 </p>
 
@@ -828,19 +855,18 @@ postmaster. You need to reload pgpool.conf if you change this value.
 	   For this purpose, relcache_expiration controls the life time of the cache.
       </p>
   </dd>
-
   </dl>
-
 </dl>
 
 <h4>Generating SSL certificates</h4>
-
+<p>
 Certificate handling is outside the scope of this document.  The
 <a href="http://developer.postgresql.org/pgdocs/postgres/ssl-tcp.html">
 Secure TCP/IP Connections with SSL</a> page at postgresql.org has pointers
 with sample commands for how to generate self-signed certificates.
+</p>
 
-<h4><p>Failover in the raw Mode</p></h4>
+<h4>Failover in the raw Mode</h4>
 
 <p>Failover can be performed in raw mode if multiple servers are
 defined. pgpool-II usually accesses the backend specified by
@@ -968,6 +994,12 @@ update the database. SELECTs using functions not specified in this list are
 neither load balanced, nor replicated if in replication mode.
 In master slave mode, such SELECTs are sent to master (primary) only.
 </p>
+<p>You can use regular expression into the list to match function name, for example if you have prefixed all your read only function with 'get_' or 'select_'
+</p>
+<pre>
+white_function_list = 'get_.*,select_.*'
+</pre>
+</dd>
 
 <a name="black_function_list"></a>
 <dt>black_function_list
@@ -978,6 +1010,11 @@ update the database. SELECTs using functions specified in this list are neither
 load balanced, nor replicated if in replication mode.
 In master slave mode, such SELECTs are sent to master(primary) only.
 </p>
+<p>You can use regular expression into the list to match function name, for example if you have prefixed all your updating functions with 'set_', 'update_', 'delete_' or 'insert_':
+</p>
+<pre>
+black_function_list = 'nextval,setval,set_.*,update_.*,delete_.*,insert_.*'
+</pre>
 <p>
 Only one of these two lists can be filled in a configuration.
 </p>
@@ -986,17 +1023,24 @@ Prior to pgpool-II 3.0, nextval() and setval() were known to do
 writes to the database. You can emulate this by using white_function_list and
 black_function_list:
 </p>
+<p>
 <pre>
 white_function_list = ''
-black_function_list = 'nextval,setval'
+black_function_list = 'nextval,setval,lastval,currval'
 </pre>
+</p>
+<p>
+Please notice that we have lastval, currval in addition to nextval and setval.
+Though lastval() and currval() are not writing functions, it is wise to add lastval() and currval() to avoid errors in the case when these functions are accidentaly load balanced to other DB node.
+Adding to black_function_list will prevent load balancing.
+</p>
+</dd>
 
-<a name="replicate_select">
+<a name="replicate_select"></a>
   <dt>replicate_select</dt>
   <dd>
       <p>When set to true, pgpool-II replicates SELECTs in replication mode. If false,
          pgpool-II only sends them to the Master DB. Default is false.</p>
-  </dd>
 
 <p>
 If a SELECT query is inside an explicit transaction block, replicate_select and 
@@ -1056,6 +1100,7 @@ Details are shown below.
 </tr>
 </table>
 </p>
+  </dd>
 
   <dt>insert_lock</dt>
   <dd>
@@ -1068,9 +1113,9 @@ made:
       <pre>
       INSERT INTO ...
       </pre>
-
+      <p>
       to
-
+      </p>
       <pre>
       BEGIN;
       LOCK TABLE ...
@@ -1078,14 +1123,15 @@ made:
       COMMIT;
       </pre>
 
-      When <code>insert_lock</code> is true, pgpool-II
+      <p>When <code>insert_lock</code> is true, pgpool-II
       automatically adds the above queries each time an INSERT is
       executed (if already in transaction, it simply adds LOCK TABLE
       ....).
-
-      As of pgpool-II 2.2, it automatically detects if the table has a
+	</p>
+      <p>As of pgpool-II 2.2, it automatically detects if the table has a
       SERIAL columns or not, so only tables having SERIAL columns are
       locked.
+	</p>
 	   <p>
 	   pgpool-II 3.0 or later uses a row lock against the sequence
 	   relation, rather than table lock. This will minimize lock
@@ -1111,14 +1157,14 @@ made:
       the regression tests for PostgreSQL 8.0 will fail in transactions,
       privileges, rules, and alter_table. The reason for this is that
       pgpool-II tries to LOCK the VIEW for the rule test, and will
-      produce the following error message:
+      produce the following error message:</p>
 
       <pre>
       ! ERROR: current transaction is aborted, commands ignored until
       end of transaction block
       </pre>
 
-      For example, the transactions test tries an INSERT into a table
+      <p>For example, the transactions test tries an INSERT into a table
 which does not exist, and pgpool-II causes PostgreSQL to acquire the
 lock before that. The transaction will be aborted, and the following
 INSERT statement produces the above error message.</p>
@@ -1451,7 +1497,7 @@ failover_command = '/usr/local/src/pgsql/9.0-beta/bin/failover_stream.sh %d %H /
 </pre>
 
 <li>Set recovery.conf on the standby node.
-<a href="recovery.conf.sample">A sample recovery.conf</a>can be found
+<a href="recovery.conf.sample">A sample recovery.conf</a> can be found
 	  under the PostgreSQL installation directory. Its name is
 	  "share/recovery.conf.sample".
 Copy recovery.conf.sample as recovery.conf inside the database cluster
@@ -2037,15 +2083,15 @@ benchs2=# show pool_status;
 </p>
 <h2>pool_nodes</h2>
 <p>"SHOW pool_nodes" sends back a list of all configured nodes. It
-displays the hostname, the port, the status, and the weight (only meaningful
+displays the node id, the hostname, the port, the status, and the weight (only meaningful
 if you use the load balancing mode). The possible values in the status column
 are explained in the <a href="#pcp_node_info">pcp_node_info reference</a>.
 <pre>
 benchs2=# show pool_nodes;
-  hostname   | port | status | lb_weight     
--------------+------+--------+-----------
- 127.0.0.1   | 5432 | 2      | 0.5
- 192.168.1.7 | 5432 | 3      | 0.5
+  id  |  hostname   | port | status | lb_weight     
+------+-------------+------+--------+-----------
+   0  | 127.0.0.1   | 5432 | 2      | 0.5
+   1  | 192.168.1.7 | 5432 | 3      | 0.5
 (2 lignes)
 </pre>
 </p>
