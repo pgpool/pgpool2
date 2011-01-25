@@ -216,30 +216,6 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		 */
 		check_copy_from_stdin(node);
 
-		/*
-		 * if this is DROP DATABASE command, send USR1 signal to parent and
-		 * ask it to close all idle connections.
-		 * XXX This is overkill. It would be better to close the idle
-		 * connection for the database which DROP DATABASE command tries
-		 * to drop. This is impossible at this point, since we have no way
-		 * to pass such info to other processes.
-		 */
-		if (is_drop_database(node))
-		{
-			int stime = 5;	/* XXX give arbitrary time to allow closing idle connections */
-
-			pool_debug("Query: sending SIGUSR1 signal to parent");
-
-			Req_info->kind = CLOSE_IDLE_REQUEST;
-			kill(getppid(), SIGUSR1);		/* send USR1 signal to parent */
-
-			/* we need to loop over here since we will get USR1 signal while sleeping */
-			while (stime > 0)
-			{
-				stime = sleep(stime);
-			}
-		}
-
 		/* status reporting? */
 		if ((IsA(node, VariableShowStmt) && strncasecmp(sq_config, contents, strlen(sq_config)) == 0)
          || (IsA(node, VariableShowStmt) && strncasecmp(sq_pools, contents, strlen(sq_pools)) == 0)
@@ -293,6 +269,30 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		 */
 		pool_where_to_send(query_context, query_context->original_query,
 						   query_context->parse_tree);
+
+		/*
+		 * if this is DROP DATABASE command, send USR1 signal to parent and
+		 * ask it to close all idle connections.
+		 * XXX This is overkill. It would be better to close the idle
+		 * connection for the database which DROP DATABASE command tries
+		 * to drop. This is impossible at this point, since we have no way
+		 * to pass such info to other processes.
+		 */
+		if (is_drop_database(node))
+		{
+			int stime = 5;	/* XXX give arbitrary time to allow closing idle connections */
+
+			pool_debug("Query: sending SIGUSR1 signal to parent");
+
+			Req_info->kind = CLOSE_IDLE_REQUEST;
+			kill(getppid(), SIGUSR1);		/* send USR1 signal to parent */
+
+			/* we need to loop over here since we will get USR1 signal while sleeping */
+			while (stime > 0)
+			{
+				stime = sleep(stime);
+			}
+		}
 
 		/*
 		 * determine if we need to lock the table
