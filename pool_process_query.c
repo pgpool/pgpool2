@@ -1325,8 +1325,6 @@ void reset_variables(void)
 {
 	if(pool_get_session_context())
 		pool_unset_query_in_progress();
-
-	receive_extended_begin = 0;
 }
 
 

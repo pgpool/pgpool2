@@ -43,9 +43,6 @@ extern char *copy_schema;  /* copy table name */
 extern char copy_delimiter; /* copy delimiter char */
 extern char *copy_null; /* copy null string */
 
-/* non 0 if "BEGIN" query with extended query protocol received */
-extern int receive_extended_begin;
-
 extern int is_select_pgcatalog;
 extern int is_select_for_update; /* also for SELECT ... INTO */
 extern bool is_parallel_table;
