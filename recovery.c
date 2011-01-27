@@ -201,7 +201,7 @@ static int exec_recovery(PGconn *conn, BackendInfo *backend, char stage)
 	char *script;
 	int r;
 
-	if (strlen(backend->backend_hostname) == 0)
+	if (strlen(backend->backend_hostname) == 0 || *(backend->backend_hostname) == '/')
 		hostname = "localhost";
 	else
 		hostname = backend->backend_hostname;
@@ -247,7 +247,7 @@ static int exec_remote_start(PGconn *conn, BackendInfo *backend)
 	char *hostname;
 	int r;
 
-	if (strlen(backend->backend_hostname) == 0)
+	if (strlen(backend->backend_hostname) == 0 || *(backend->backend_hostname) == '/')
 		hostname = "localhost";
 	else
 		hostname = backend->backend_hostname;

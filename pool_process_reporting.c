@@ -196,10 +196,13 @@ void config_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	strncpy(status[i].desc, "path to pid file", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "backend_socket_dir", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->backend_socket_dir);
-	strncpy(status[i].desc, "Unix domain socket directory for the PostgreSQL server", POOLCONFIG_MAXDESCLEN);
-	i++;
+	/* backend_socket_dir is deprecated. backend_hostname should be used instead */
+	if (pool_config->backend_socket_dir != NULL) {
+		strncpy(status[i].name, "backend_socket_dir", POOLCONFIG_MAXNAMELEN);
+		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->backend_socket_dir);
+		strncpy(status[i].desc, "DEPRECATED, use backend_hostname parameter instead", POOLCONFIG_MAXDESCLEN);
+		i++;
+	}
 
 	strncpy(status[i].name, "replication_mode", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->replication_mode);

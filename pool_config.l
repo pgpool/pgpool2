@@ -136,7 +136,7 @@ int pool_init_config(void)
 	pool_config->pcp_port = 9898;
 	pool_config->socket_dir = DEFAULT_SOCKET_DIR;
 	pool_config->pcp_socket_dir = DEFAULT_SOCKET_DIR;
-	pool_config->backend_socket_dir = DEFAULT_SOCKET_DIR;
+	pool_config->backend_socket_dir = NULL;
 	pool_config->pcp_timeout = 10;
 	pool_config->num_init_children = 32;
 	pool_config->max_pool = 4;
@@ -728,6 +728,8 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 		else if (!strcmp(key, "backend_socket_dir") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			char *str;
+			
+			pool_log("pool_config: backend_socket_dir is deprecated, please use backend_hostname");
 
 			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
 			{
@@ -1730,7 +1732,22 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 		{
 			total_weight += BACKEND_INFO(i).unnormalized_weight;
 			pool_config->backend_desc->num_backends = i+1;
-		}
+			
+			/* intialize backend_hostname with a default socket path if empty */
+			if (*(BACKEND_INFO(i).backend_hostname) == '\0') 
+			{
+				if (pool_config->backend_socket_dir == NULL)
+				{
+					pool_debug("pool_config: empty backend_hostname%d, use PostgreSQL's default unix socket path (%s)", i, DEFAULT_SOCKET_DIR);
+					strncpy(BACKEND_INFO(i).backend_hostname, DEFAULT_SOCKET_DIR, MAX_DB_HOST_NAMELEN);
+				}
+				else /* DEPRECATED. backward compatibility with older version. Use backend_socket_dir*/ 
+				{
+					pool_debug("pool_config: empty backend_hostname%d, use backend_socket_dir as unix socket path (%s)", i, pool_config->backend_socket_dir);
+					strncpy(BACKEND_INFO(i).backend_hostname, pool_config->backend_socket_dir, MAX_DB_HOST_NAMELEN);
+				}
+			}
+		}	
 	}
 
 	pool_debug("num_backends: %d total_weight: %f",

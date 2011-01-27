@@ -1699,7 +1699,7 @@ int health_check(void)
 			BACKEND_INFO(i).backend_status == CON_DOWN)
 			continue;
 
-		if (*(BACKEND_INFO(i).backend_hostname) == '\0')
+		if (*(BACKEND_INFO(i).backend_hostname) == '/')
 			fd = connect_unix_domain_socket(i, FALSE);
 		else
 			fd = connect_inet_domain_socket(i, FALSE);
@@ -1811,8 +1811,8 @@ system_db_health_check(void)
 	if (SYSDB_STATUS == CON_UNUSED || SYSDB_STATUS == CON_DOWN)
 		return 0;
 
-	if (*SYSDB_INFO->hostname == '\0')
-		fd = connect_unix_domain_socket_by_port(SYSDB_INFO->port, pool_config->backend_socket_dir, FALSE);
+	if (*SYSDB_INFO->hostname == '/')
+		fd = connect_unix_domain_socket_by_port(SYSDB_INFO->port, SYSDB_INFO->hostname, FALSE);
 	else
 		fd = connect_inet_domain_socket_by_port(SYSDB_INFO->hostname, SYSDB_INFO->port, FALSE);
 

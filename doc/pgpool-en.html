@@ -410,9 +410,11 @@ comment and will be ignored.</p>
       
   <dt>backend_socket_dir</dt>
   <dd>
-      <p>PostgreSQL server's UNIX domain socket directory. It is used by 
-      pgpool-II to communicate with the server. Default is <code>'/tmp'</code>.
-      This parameter can only be set at server start.<p>
+      <font color="red"><em>DEPRECATED</em><br>
+      This parameter is deprecated for consistency with the default libpq policy. 
+      See the backend_hostname parameter definition to adapt your configuration accordingly.
+      </font>
+      <p>This parameter was defining the PostgreSQL server's UNIX domain socket directory.<p>
   </dd>
 
   <dt>pcp_timeout</dt>
@@ -714,9 +716,16 @@ postmaster. You need to reload pgpool.conf if you change this value.
 
   <dt>backend_hostname</dt>
   <dd>
-      <p>Specifies the host name of the PostgreSQL backend. The empty
-      string (<code>''</code>) means pgpool-II uses a UNIX domain
-      socket.
+      <p>Specifies where to connect with the PostgreSQL backend. It can 
+      It is used by pgpool-II to communicate with the server.
+      This parameter can only be set at server start.
+      </p>
+      <p>
+      For TCP/IP communication, this parameter can take a hostname or an IP address.
+      If this begins with a slash, it specifies Unix-domain communication
+      rather than TCP/IP; the value is the name of the directory
+      in which the socket file is stored. The default behavior when backend_hostname 
+      is empty (<code>''</code>) is to connect to a Unix-domain socket in <code>/tmp</code>. 
       </p>
       <p>
       Multiple backends can be specified by adding a number at the end

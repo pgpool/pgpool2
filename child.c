@@ -1371,9 +1371,9 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	/*
 	 * create socket
 	 */
-	if (*hostname == '\0')
+	if (*hostname == '/')
 	{
-		fd = connect_unix_domain_socket_by_port(port, pool_config->backend_socket_dir, TRUE);
+		fd = connect_unix_domain_socket_by_port(port, hostname, TRUE);
 	}
 	else
 	{
