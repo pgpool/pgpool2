@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2010	PgPool Global Development Group
+ * Copyright (c) 2003-2011	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -560,7 +560,7 @@ rewrite_timestamp_update(UpdateStmt *u_stmt, TSRewriteContext *ctx)
  */
 char *
 rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
-				  bool rewrite_to_params, PreparedStatement *pstmt)
+				  bool rewrite_to_params, POOL_SENT_MESSAGE *message)
 {
 	TSRewriteContext	ctx;
 	Node			*stmt;
@@ -630,11 +630,11 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 		rewrite = ctx.rewrite;
 
 		/* add params */
-		if (pstmt)
+		if (message)
 		{
 			int		i;
 
-			for (i = 0; i < pstmt->num_tsparams; i++)
+			for (i = 0; i < message->num_tsparams; i++)
 			{
 				e_stmt->params = lappend(e_stmt->params, ctx.ts_const);
 				rewrite = true;
@@ -647,7 +647,7 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 	if (!rewrite)
 		return NULL;
 
-	if (ctx.rewrite_to_params && pstmt)
+	if (ctx.rewrite_to_params && message)
 	{
 		ListCell	*lc;
 		int			 num = ctx.num_params + 1;
@@ -660,7 +660,7 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 		}
 
 		/* save to portal */
-		pstmt->num_tsparams = list_length(ctx.params);
+		message->num_tsparams = list_length(ctx.params);
 
 		/* add param type */
 		if (IsA(node, PrepareStmt))
@@ -668,7 +668,7 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 			int				 i;
 			PrepareStmt		*p_stmt = (PrepareStmt *) node;
 
-			for (i = 0; i < pstmt->num_tsparams; i++)
+			for (i = 0; i < message->num_tsparams; i++)
 				p_stmt->argtypes =
 				   	lappend(p_stmt->argtypes, SystemTypeName("timestamptz"));
 		}
@@ -694,8 +694,9 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
  * rewrite Bind message to add parameter
  */
 char *
-bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend, Portal *portal,
-		const char *orig_msg, int *len)
+bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend,
+					   POOL_SENT_MESSAGE *message,
+					   const char *orig_msg, int *len)
 {
 	int16		 tmp2,
 				 num_params,
@@ -726,8 +727,8 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend, Portal *portal,
 
 	ts_len = strlen(ts);
 
-	*len += (strlen(ts) + sizeof(int32)) * portal->num_tsparams;
-	new_msg = copy_to = (char *) malloc(*len + portal->num_tsparams * sizeof(int16));
+	*len += (strlen(ts) + sizeof(int32)) * message->num_tsparams;
+	new_msg = copy_to = (char *) malloc(*len + message->num_tsparams * sizeof(int16));
 	copy_from = orig_msg;
 
 	/* portal_name */
@@ -748,8 +749,8 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend, Portal *portal,
 	if (num_formats > 1)
 	{
 		/* enlarge message length */
-		*len += portal->num_tsparams * sizeof(int16);
-		tmp2 += portal->num_tsparams;
+		*len += message->num_tsparams * sizeof(int16);
+		tmp2 += message->num_tsparams;
 	}
 	tmp2 = htons(tmp2);
 	memcpy(copy_to, &tmp2, copy_len);	/* copy number of format codes */
@@ -763,15 +764,15 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend, Portal *portal,
 	if (num_formats > 1)
 	{
 		/* set format codes to zero(text) */
-		memset(copy_to, 0, portal->num_tsparams * 2);
-		copy_to += sizeof(int16) * portal->num_tsparams;
+		memset(copy_to, 0, message->num_tsparams * 2);
+		copy_to += sizeof(int16) * message->num_tsparams;
 	}
 
 	/* num params */
 	memcpy(&tmp2, copy_from, sizeof(int16));
 	copy_len = sizeof(int16);
 	num_params = ntohs(tmp2);
-	tmp2 = htons(num_params + portal->num_tsparams);
+	tmp2 = htons(num_params + message->num_tsparams);
 	memcpy(copy_to, &tmp2, sizeof(int16));
 	copy_to += copy_len; copy_from += copy_len;
 
@@ -795,7 +796,7 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend, Portal *portal,
 	copy_to += copy_len; copy_from += copy_len;
 
 	tmp4 = htonl(ts_len);
-	for (i = 0; i < portal->num_tsparams; i++)
+	for (i = 0; i < message->num_tsparams; i++)
 	{
 		memcpy(copy_to, &tmp4, sizeof(int32));
 		copy_to += sizeof(int32);

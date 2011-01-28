@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2010	PgPool Global Development Group
+ * Copyright (c) 2003-2011	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -34,46 +34,6 @@
 #include "parser/pool_memory.h"
 
 /*
- * Prepared Statement:
- */
-typedef struct {
-	char *name;	/* prepared statement name */
-	int num_tsparams;
-	int parse_len;	/* the length of parse message which is 
-					   not network byte order */
-	char *parse_contents;	/* contents of parse message */
-	POOL_QUERY_CONTEXT *qctxt;
-} PreparedStatement;
-
-/*
- * Prepared statement list:
- */
-typedef struct {
-	int capacity;	/* capacity of list */
-	int size;		/* number of PreparedStatement */
-	PreparedStatement **pstmts;	/* prepared statement list */
-} PreparedStatementList;
-
-/* 
- * Portal:
- */
-typedef struct {
-	char *name;		/* portal name */
-	int num_tsparams;
-	PreparedStatement *pstmt;
-	POOL_QUERY_CONTEXT *qctxt;
-} Portal;
-
-/*
- * Portal list:
- */
-typedef struct {
-	int capacity;	/* capacity of list */
-	int size;		/* number of portal */
-	Portal **portals;	/* portal list */
-} PortalList;
-
-/*
  * Transaction isolation mode
  */
 typedef enum {
@@ -81,7 +41,7 @@ typedef enum {
 	POOL_READ_COMMITTED,		/* Read committed */
 	POOL_SERIALIZABLE			/* Serializable */
 } POOL_TRANSACTION_ISOLATION;
-
+#ifdef NOT_USED
 /*
  * where to send map for PREPARE/EXECUTE/DEALLOCATE
  */
@@ -93,7 +53,22 @@ typedef struct {
 	char name[POOL_MAX_PREPARED_STATEMENTS][POOL_MAX_PREPARED_NAME];		/* Prepared statement name */
 	bool where_to_send[POOL_MAX_PREPARED_STATEMENTS][MAX_NUM_BACKENDS];
 } POOL_PREPARED_SEND_MAP;
-	
+#endif /* NOT_USED */
+typedef struct {
+	char kind;	/* one of 'P':Parse, 'B':Bind or 'Q':Query(PREPARE) */
+	int len;	/* not network byte order */
+	char *contents;
+	int num_tsparams;
+	char *name;		/* object name of prepared statement or portal */
+	POOL_QUERY_CONTEXT *query_context;
+} POOL_SENT_MESSAGE;
+
+typedef struct {
+	int capacity;	/* capacity of list */
+	int size;		/* number of elements */
+	POOL_SENT_MESSAGE **sent_messages;
+} POOL_SENT_MESSAGE_LIST;
+
 /*
  * Per session context:
  */
@@ -137,17 +112,16 @@ typedef struct {
 	 * "PreparedStatementList *pstmt_list" (see below).
 	 */
 	POOL_QUERY_CONTEXT *query_context;
-
+#ifdef NOT_USED
 	/* where to send map for PREPARE/EXECUTE/DEALLOCATE */
 	POOL_PREPARED_SEND_MAP prep_where;
-
+#endif /* NOT_USED */
 	POOL_MEMORY_POOL *memory_context;	/* memory context for session */
-	PreparedStatement *unnamed_pstmt;	/* unnamed statement */
-	PreparedStatement *pending_pstmt;	/* used until receive backend response */
-	Portal *unnamed_portal;	/* unnamed portal */
-	Portal *pending_portal;	/* used until receive backend response */
-	PreparedStatementList pstmt_list;	/* named statement list */
-	PortalList portal_list;	/* named portal list */
+
+	/* message which does'nt receive complete message */
+	POOL_SENT_MESSAGE *uncompleted_message;
+
+	POOL_SENT_MESSAGE_LIST message_list;
 
 	int load_balance_node_id;	/* selected load balance node id */
 
@@ -186,20 +160,15 @@ extern void pool_unset_doing_extended_query_message(void);
 extern bool pool_is_ignore_till_sync(void);
 extern void pool_set_ignore_till_sync(void);
 extern void pool_unset_ignore_till_sync(void);
-extern void pool_remove_prepared_statement_by_pstmt_name(const char *name);
-extern void pool_remove_prepared_statement(void);
-extern void pool_remove_portal(void);
-extern void pool_remove_pending_objects(void);
-extern void pool_clear_prepared_statement_list(void);
-extern PreparedStatement *pool_create_prepared_statement(const char *name, int num_tsparams,
-														 int len, char *contents,
-														 POOL_QUERY_CONTEXT *qc);
-extern Portal *pool_create_portal(const char *name, int num_tsparams, PreparedStatement *pstmt);
-extern void pool_add_prepared_statement(void);
-extern void pool_add_portal(void);
-extern PreparedStatement *pool_get_prepared_statement_by_pstmt_name(const char *name);
-extern Portal *pool_get_portal_by_portal_name(const char *name);
-
+extern POOL_SENT_MESSAGE *pool_create_sent_message(char kind, int len, char *contents,
+												   int num_tsparams, const char *name,
+												   POOL_QUERY_CONTEXT *query_context);
+extern void pool_add_sent_message(POOL_SENT_MESSAGE *message);
+extern bool pool_remove_sent_message(char kind, const char *name);
+extern void pool_remove_sent_messages(char kind);
+extern void pool_clear_sent_message_list(void);
+extern void pool_sent_message_destroy(POOL_SENT_MESSAGE *message);
+extern POOL_SENT_MESSAGE *pool_get_sent_message(char kind, const char *name);
 extern void pool_unset_writing_transaction(void);
 extern void pool_set_writing_transaction(void);
 extern bool pool_is_writing_transaction(void);
@@ -213,8 +182,9 @@ extern void pool_unset_command_success(void);
 extern void pool_set_command_success(void);
 extern bool pool_is_command_success(void);
 extern void pool_copy_prep_where(bool *src, bool *dest);
+#ifdef NOT_USED
 extern void pool_add_prep_where(char *name, bool *map);
 extern bool *pool_get_prep_where(char *name);
 extern void pool_delete_prep_where(char *name);
-
+#endif /* NOT_USED */
 #endif /* POOL_SESSION_CONTEXT_H */

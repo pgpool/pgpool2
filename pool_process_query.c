@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2010	PgPool Global Development Group
+ * Copyright (c) 2003-2011	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -65,7 +65,7 @@
 
 static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt);
 static char *get_insert_command_table_name(InsertStmt *node);
-static int send_deallocate(POOL_CONNECTION_POOL *backend, PreparedStatementList p, int n);
+static int send_deallocate(POOL_CONNECTION_POOL *backend, POOL_SENT_MESSAGE_LIST msglist, int n);
 static int is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 static POOL_STATUS ParallelForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *database, bool send_to_frontend);
 static bool is_panic_or_fatal_error(const char *message, int major);
@@ -1335,7 +1335,7 @@ void reset_variables(void)
 void reset_connection(void)
 {
 	reset_variables();
-	pool_clear_prepared_statement_list();
+	pool_clear_sent_message_list();
 }
 
 
@@ -1375,36 +1375,45 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 	 */
 	if (qcnt >= qn)
 	{
-		if (session_context->pstmt_list.size == 0)
+		if (session_context->message_list.size == 0)
 			return 2;
 
-		char *name = session_context->pstmt_list.pstmts[0]->name;
+		char kind = session_context->message_list.sent_messages[0]->kind;
+		char *name = session_context->message_list.sent_messages[0]->name;
 
-		/* Delete from prepared list */
-		if (send_deallocate(backend, session_context->pstmt_list, 0))
+		if ((kind == 'P' || kind == 'Q') && *name != '\0')
 		{
-			/* Deallocate failed. We are in unknown state. Ask caller
-			 * to reset backend connection.
+			/* Deallocate a prepared statement */
+			if (send_deallocate(backend, session_context->message_list, 0))
+			{
+				/* Deallocate failed. We are in unknown state. Ask caller
+				 * to reset backend connection.
+				 */
+#ifdef NOT_USED
+				reset_prepared_list(&prepared_list);
+#endif
+				pool_remove_sent_message(kind, name);
+				return -1;
+			}
+			/*
+			 * If DEALLOCATE returns ERROR response, instead of
+			 * CommandComplete, del_prepared_list is not called and the
+			 * prepared object keeps on sitting on the prepared list. This
+			 * will cause infinite call to reset_backend.  So we call
+			 * del_prepared_list() again. This is harmless since trying to
+			 * remove same prepared object will be ignored.
 			 */
 #ifdef NOT_USED
-			reset_prepared_list(&prepared_list);
+			del_prepared_list(&prepared_list, prepared_list.portal_list[0]);
 #endif
-			pool_remove_prepared_statement_by_pstmt_name(name);
-			return -1;
+			pool_remove_sent_message(kind, name);
+			return 1;
 		}
-		/*
-		 * If DEALLOCATE returns ERROR response, instead of
-		 * CommandComplete, del_prepared_list is not called and the
-		 * prepared object keeps on sitting on the prepared list. This
-		 * will cause infinite call to reset_backend.  So we call
-		 * del_prepared_list() again. This is harmless since trying to
-		 * remove same prepared object will be ignored.
-		 */
-#ifdef NOT_USED
-		del_prepared_list(&prepared_list, prepared_list.portal_list[0]);
-#endif
-		pool_remove_prepared_statement_by_pstmt_name(name);
-		return 1;
+		else
+		{
+			pool_remove_sent_message(kind, name);
+			return 0;
+		}
 	}
 
 	query = pool_config->reset_query_list[qcnt];
@@ -3261,15 +3270,20 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 
 							if (IsA(node, DeallocateStmt))
 							{
-								PreparedStatement *ps;
+								POOL_SENT_MESSAGE *sent_msg;
 								DeallocateStmt *d = (DeallocateStmt *)node;
 
-								ps = pool_get_prepared_statement_by_pstmt_name(d->name);
-								if (ps && ps->qctxt->original_query)
+								sent_msg = pool_get_sent_message('Q', d->name);
+								if (!sent_msg)
+									sent_msg = pool_get_sent_message('P', d->name);
+								if (sent_msg)
 								{
-									string_append_char(msg, "[");
-									string_append_char(msg, ps->qctxt->original_query);
-									string_append_char(msg, "]");
+									if (sent_msg->query_context->original_query)
+									{
+										string_append_char(msg, "[");
+										string_append_char(msg, sent_msg->query_context->original_query);
+										string_append_char(msg, "]");
+									}
 								}
 							}
 						}
@@ -3310,25 +3324,26 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 /*
  * Send DEALLOCATE message to backend by using SimpleQuery.
  */
-static int send_deallocate(POOL_CONNECTION_POOL *backend, PreparedStatementList p,
-					int n)
+static int send_deallocate(POOL_CONNECTION_POOL *backend,
+						   POOL_SENT_MESSAGE_LIST msglist, int n)
 {
-	char *query;
 	int len;
-	PrepareStmt *p_stmt;
+	char *name;
+	char *query;
 
-	if (p.size <= n)
+	if (msglist.size <= n)
 		return 1;
 
-	p_stmt = (PrepareStmt *)p.pstmts[n]->qctxt->parse_tree;
-	len = strlen(p_stmt->name) + 14; /* "DEALLOCATE \"" + "\"" + '\0' */
+	name = msglist.sent_messages[n]->name;
+
+	len = strlen(name) + 14; /* "DEALLOCATE \"" + "\"" + '\0' */
 	query = malloc(len);
 	if (query == NULL)
 	{
 		pool_error("send_deallocate: malloc failed");
 		return -1;
 	}
-	sprintf(query, "DEALLOCATE \"%s\"", p_stmt->name);
+	sprintf(query, "DEALLOCATE \"%s\"", name);
 
 	if (SimpleQuery(NULL, backend, strlen(query)+1, query) != POOL_CONTINUE)
 	{
