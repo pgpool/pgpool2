@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Sun Jan 16 19:27:15 JST 2011
+Last modified: Sun Jan 30 09:23:45 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -167,16 +167,31 @@ make install
 PostgreSQL 8.0以降を使用している場合は、pgpool-IIが内部で使用するC関数pgpool_regclassをインストールします。
 この関数がインストールされていなくてもpgpool-IIは動作しますが、違うスキーマで同じテーブル名を定義していて、SQL文の中でスキーマ名を省略している場合に、不具合が生じることがあります(一時テーブルを除く)。
 したがって、可能ならばpgpool_regclassをインストールすることをお勧めします。
-
+このインストールは、pgpool-IIがアクセスする予定のすべてのPostgreSQLサーバで実施してください。
 <pre>
-# cd pgpool-II-x.x.x/sql/pgpool-regclass
-# make
-# make install
-# psql -f pgpool-regclass.sql template1
+cd pgpool-II-x.x.x/sql/pgpool-regclass
+make
+make install
+psql -f pgpool-regclass.sql template1
 </pre>
 
 pgpool-regclass.sqlの実行は、pgpool-II経由で利用するデータベース毎に必要になります。
 ただし、"psql -f pgpool-regclass.sql template1"を実行後に作成されたデータベースでは自動的にpgpool-regclass.sqlの内容が反映されているので、新たにpgpool-regclass.sqlを実行する必要はありません。
+</p>
+
+<dt>pgpool_walrecunningのインストール
+<dd>
+<p>
+PostgreSQL 9.0以降を使用していて、ストリーミングレプリケーションを利用したい場合は、C関数pgpool_walrecrunningをインストールします。
+このインストールは、pgpool-IIがアクセスする予定のすべてのPostgreSQLサーバで実施してください。
+<pre>
+cd pgpool-II-x.x.x/sql/pgpool-walrecrunning
+make
+make install
+psql -f pgpool-walrecrunning.sql template1
+</pre>
+pgpool-walrecrunning.sqlの実行は、pgpool-II経由で利用するデータベース毎に必要になります。
+ただし、"psql -f pgpool-walrecrunning.sql template1"を実行後に作成されたデータベースでは自動的にpgpool-walrecrunning.sqlの内容が反映されているので、新たにpgpool-walrecrunning.sqlを実行する必要はありません。
 </p>
 
 </dl>
