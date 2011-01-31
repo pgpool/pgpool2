@@ -148,7 +148,7 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 			{
 				if (now > relcache->cache[i].expire)
 				{
-					pool_debug("pool_search_relcache: relcache for database:%s table:%s expired. now:%d expiration time:%d", dbname, rel, now, relcache->cache[i].expire);
+					pool_debug("pool_search_relcache: relcache for database:%s table:%s expired. now:%ld expiration time:%ld", dbname, rel, now, relcache->cache[i].expire);
 					relcache->cache[i].refcnt = 0;
 					break;
 				}
