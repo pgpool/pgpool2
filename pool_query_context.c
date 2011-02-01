@@ -239,6 +239,9 @@ bool pool_is_node_to_be_sent_in_current_query(int node_id)
 {
 	POOL_SESSION_CONTEXT *sc;
 
+	if (RAW_MODE)
+		return node_id == REAL_MASTER_NODE_ID;
+
 	sc = pool_get_session_context();
 	if (!sc)
 		return true;
