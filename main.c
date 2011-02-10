@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2010	PgPool Global Development Group
+ * Copyright (c) 2003-2011	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1960,7 +1960,7 @@ static void reaper(void)
 BackendInfo *
 pool_get_node_info(int node_number)
 {
-	if (node_number >= NUM_BACKENDS)
+	if (node_number < 0 || node_number >= NUM_BACKENDS)
 		return NULL;
 
 	return &BACKEND_INFO(node_number);
@@ -2224,7 +2224,11 @@ static int trigger_failover_command(int node, const char *command_line)
 
 					case 'H': /* new master host name */
 						newmaster = pool_get_node_info(get_next_master_node());
-						string_append_char(exec_cmd, newmaster->backend_hostname);
+						if (newmaster)
+							string_append_char(exec_cmd, newmaster->backend_hostname);
+						else
+							/* no vaid new master */
+							string_append_char(exec_cmd, "");
 						break;
 
 					case 'm': /* new master node id */
