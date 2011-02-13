@@ -1,6 +1,241 @@
+2011-02-01 18:58  kitagawa
+
+	* COPYING, configure, configure.in (V3_0_STABLE): Prepare 3.0.2
+
+2011-02-01 17:18  kitagawa
+
+	* pool_query_context.c (V3_0_STABLE): Fix bug that failover fails
+	  in raw mode.  This used to work but was broken in 3.0.
+
+2011-01-28 13:46  kitagawa
+
+	* pool_process_query.c, pool_proto_modules.c, pool_query_context.c,
+	  pool_query_context.h, pool_session_context.c,
+	  pool_session_context.h, pool_timestamp.c, pool_timestamp.h
+	  (V3_0_STABLE): Change session information to integrate Portal and
+	  PreparedStatement structure into POOL_SENT_MESSAGE structure.
+
+	  Portal and PreparedStatement structure were used by only extended
+	  query protocol before. but POOL_SENT_MESSAGE is used by simple query
+	  protocol too.
+
+	  This change fixes issues that happen when two protocols were mixed
+	  in one session.
+
+	  PHP example)
+
+	  // PREPARE using simple query protocol pg_query($dbconn, 'PREPARE
+	  my_query(TEXT) AS SELECT $1::TEXT');
+
+	  // EXECUTE using exetended query protocol pg_execute($dbconn,
+	  "my_query", array('test'));
+
+2011-01-26 10:38  kitagawa
+
+	* pool_process_reporting.c (V3_0_STABLE): Remove parameters from
+	  pool_status: recovery_password, system_db_password.
+
+2011-01-26 10:36  kitagawa
+
+	* pool_process_query.c, pool_proto_modules.c, pool_proto_modules.h
+	  (V3_0_STABLE): Remove unnecessary variable:
+	  receive_extended_begin.
+
+2011-01-26 10:28  t-ishii
+
+	* sql/pgpool-regclass/pgpool-regclass.c (V3_0_STABLE): Fix
+	  pgpool-regclass().  It appeared that using PG_TRY/CATCH is not safe,
+	  sometimes backend dies with PANIC:  ERRORDATA_STACK_SIZE exceeded.
+	  The only solution is stealing some functions from PostgreSQL and
+	  modify it not to throw errors.  This is not elegant at all but
+	  PostgreSQL developers do not allow to add such that built-in
+	  functions. Sigh.
+
+2011-01-25 18:25  kitagawa
+
+	* pool_proto_modules.c (V3_0_STABLE): Fix bug that DROP DATABASE
+	  fails.  This used to work but was broken in 3.0.
+
+2011-01-19 11:57  t-ishii
+
+	* pool_select_walker.c (V3_0_STABLE): Fix bug with
+	  function_call_walker().  It always regarded the first element is the
+	  function name, which is not true if the function has schema
+	  qualification. In this case we should use lsecond() rather than
+	  lfirst() to extract the function name because the first element is
+	  the schema name.
+
+2011-01-13 15:08  t-ishii
+
+	* pg_md5.c (V3_0_STABLE): Fix update_pool_passwd()'s lack of
+	  dirname() usage portability.
+
+2011-01-11 09:47  t-ishii
+
+	* main.c (V3_0_STABLE): Emit log if particular backend is down
+	  status while reading the status file.  This will make users less
+	  confusing.
+
+2011-01-07 10:24  kitagawa
+
+	* child.c, pool_connection_pool.c (V3_0_STABLE): Fix the bug which
+	  makes a child process crash while doing failover.  This bug has been
+	  there since pgpool-II 3.0.
+
+2011-01-06 18:17  gleu
+
+	* doc/pgpool-en.html (V3_0_STABLE): Documentation rewrite by Marc
+	  Cousin. Reviewed by me.
+
+2011-01-04 13:45  kitagawa
+
+	* pool_process_reporting.c (V3_0_STABLE): Fix pool_status so that
+	  failback_command and fail_over_on_backend_error show correct values.
+
+2010-12-30 22:06  t-ishii
+
+	* main.c (V3_0_STABLE): Fix bug with debug_level directive. Patch
+	  contributed by Gilles Darold. Followings are his explanation.
+
+	  I found a bug when playing with pgpool yesterday. The problem is
+	  that enabling debug_level to 1 into pgpool.conf doesn't has any
+	  effect as it is overriden in the main.c file after getting
+	  configuration so that it is only enabled when the -d command line
+	  option is present.
+
+2010-12-16 17:47  t-ishii
+
+	* pool_auth.c (V3_0_STABLE): Fix do_md5(). If raw mode or number of
+	  backend is 1, pgpool child segfaults.  patch contributed by Rob
+	  Shepherd, slight editing by Tatsuo Ishii.
+
+	  Fix read_password_packet(). Guard against invalid password lenghth.
+
+	  Fix send_password_packet(). password string in a password packet
+	  must be a "string" message type, which must has a null termination.
+	  Otherwise you will see "invalid passoword packet size" error message
+	  in backend.
+
+2010-12-16 10:48  t-ishii
+
+	* parser/outfuncs.c (V3_0_STABLE): Fix long standing bug with
+	  timestamp rewriting against array and complex types. Failed examples
+	  are:
+
+	  INSERT INTO r1(col[1], col2.foo) VALUES (1, 2); --
+	  insert_column_item UPDATE r1 SET col1[1] = 1, col2.foo = 1; --
+	  set_target PREPARE "p" (int4[]) AS  SELECT $1[1]; -- c_expr SELECT
+	  (ARRAY[1,2,3])[1]; SELECT (ARRAY[ARRAY[1]])[1][1]; SELECT
+	  ('{1,2,3}'::int[])[1]; SELECT ('{1,2,3}'::int[3])[1]; SELECT
+	  r1.col[1], (r1.col1).bar, (r1.col1).* FROM r1; -- columnref SELECT
+	  (r1.col1).baz[1], (r1.col1).baz[1][2] FROM r1;
+
+	  Patch provided by Akio Ishida.
+
+2010-11-28 20:04  t-ishii
+
+	* pool_passwd.c (V3_0_STABLE): Fix pool_get_passwd() in the case
+	  when user name is 32 bytes long.
+
+2010-11-17 15:57  t-ishii
+
+	* pool_process_query.c (V3_0_STABLE): Fix insert_lock().  Comment
+	  for this function was not correct. It did not issue BEGIN.
+	  per_node_statement was not called for nodes other than master.
+
+2010-11-14 20:22  t-ishii
+
+	* pool_process_query.c (V3_0_STABLE): Fix insert_lock() to obtain
+	  proper sequence name by considering that
+	  get_insert_command_table_name() returns double-qutation-added table
+	  name. Without this, pgpool tries to execute SELECT * FROM
+	  "foo"_bar_seq FOR UPDATED, which interepreted as SELECT * FROM "foo"
+	  AS _bar_seq FOR UPDATED.
+
+2010-11-04 19:04  kitagawa
+
+	* pool.h (V3_0_STABLE): Fix bug in raw mode.
+
+	  The following change has not worked since pgpool-II 3.0.
+
+	  Subject: [Pgpool-committers] pgpool...  Date: Sun, 16 May 2010
+	  08:38:16 +0000 (UTC)
+
+	  - In row mode and if there's only one DB node, if a problem occurs
+	    with the DB node, it will be brought to down status. However if
+	    the DB node goes into good condition again, you can use the DB
+	    node without restarting pgpool.
+
+2010-10-30 12:23  t-ishii
+
+	* doc/pgpool-en.html, doc/pgpool-ja.html, sample/pgpool_recovery
+	  (tags: V3_1_0_ALPHA1): Add -c (checksum) option to ensure
+	  reliable file transmittion.
+
+2010-10-23 08:53  t-ishii
+
+	* main.c: Fix in-portability of the way to use dirname(3) in
+	  locating pool_passwd. Bug report from a FreeBSD user.
+
+2010-10-20 10:08  t-ishii
+
+	* child.c (tags: V3_1_0_ALPHA1), main.c, pool.h (tags:
+	  V3_1_0_ALPHA1), pool_query_context.c (tags: V3_1_0_ALPHA1),
+	  pool_worker_child.c (tags: V3_1_0_ALPHA1),
+	  sql/pgpool-walrecvrunning/Makefile (tags: V3_1_0_ALPHA1),
+	  sql/pgpool-walrecvrunning/pgpool-walrecrunning.c (tags:
+	  V3_1_0_ALPHA1),
+	  sql/pgpool-walrecvrunning/pgpool-walrecrunning.sql.in (tags:
+	  V3_1_0_ALPHA1): Fix bug when primary node is not the youngest.
+	  Before pgpool-II unconditionally assumed the master node(the
+	  youngest live node) is a primary server, which is apprently wrong
+	  assumption. To fix the problem, now pgpool-II have info on
+	  shmem(Req_info) to know which is the primary. The info is set when
+	  1)pgpool-II started 2)failover occurs. The work is done by new
+	  function find_primary_node(main.c). It does SELECT
+	  pg_is_in_recovery() AND pgpool_walrecrunning() to know the node in
+	  question is actually standby. pgpool_walrecrunning() is new
+	  PostgreSQL C function, to check if walreceiver is in running status.
+	  This is neccessary when failover occurs. Unfortunately
+	  pg_is_in_recovery() returns true even if standby is promoting
+	  because it found a trigger file. Installing pgpool_walrecrunning()
+	  is annoying but no way.  Also where_to_send() is modified to use
+	  PRIMARY_NODE_ID, rather than MASTER_NODE_ID.  CVS:
+
+	  ----------------------------------------------------------------------main.c pool.h pool_query_context.c pool_worker_child.c CVS: Added
+	  Files: CVS: sql/pgpool-walrecvrunning/Makefile CVS:
+	  sql/pgpool-walrecvrunning/pgpool-walrecrunning.c CVS:
+	  sql/pgpool-walrecvrunning/pgpool-walrecrunning.sql.in CVS:
+
+	  ----------------------------------------------------------------------
+
+2010-10-20 09:34  t-ishii
+
+	* pool_proto_modules.c (tags: V3_1_0_ALPHA1): Fix bug with
+	  find_victim_node. If the number of inserted/updated/deleted tuples
+	  at a victim node is 0, no failover event happens.  See:
+
+	  Subject: Re: [Pgpool-general] Replication failover problem Date:
+	  Wed, 20 Oct 2010 09:24:30 +0900 (JST)
+
+	  For mode details.
+
+2010-10-20 08:47  t-ishii
+
+	* pool_process_reporting.c (tags: V3_1_0_ALPHA1): Add entry for
+	  failover_if_affected_tuples_mismatch.  I seem to forgot to add this
+	  for 3.0 release. Sigh.  Also expand column name from 34 to 64, since
+	  failover_if_affected_tuples_mismatch.  is longer than 32.
+
+2010-10-19 23:36  kitagawa
+
+	* ChangeLog (tags: V3_1_0_ALPHA1, V3_0_1): Prepare 3.0.1
+
 2010-10-19 23:32  kitagawa
 
-	* NEWS, configure, configure.in, doc/pgpool-ja.html: Prepare 3.0.1
+	* NEWS (tags: V3_1_0_ALPHA1), configure (tags: V3_1_0_ALPHA1),
+	  configure.in (tags: V3_1_0_ALPHA1), doc/pgpool-ja.html (utags:
+	  V3_0_1): Prepare 3.0.1
 
 2010-10-19 20:22  t-ishii
 
@@ -8,17 +243,18 @@
 
 2010-10-19 20:17  t-ishii
 
-	* doc/pgpool-en.html: Fix typo.
+	* doc/pgpool-en.html (tags: V3_0_1): Fix typo.
 
 2010-10-19 17:57  kitagawa
 
-	* pool_proto_modules.c, pool_session_context.c: Fix hungup when a
-	  query sent to one node caused an error.
+	* pool_proto_modules.c, pool_session_context.c (tags:
+	  V3_1_0_ALPHA1) (utags: V3_0_1): Fix hungup when a query sent to
+	  one node caused an error.
 
 2010-10-15 12:10  kitagawa
 
-	* pool_proto2.c: Fix ErrorResponse so that it checks existence of a
-	  session context.
+	* pool_proto2.c (tags: V3_1_0_ALPHA1, V3_0_1): Fix ErrorResponse so
+	  that it checks existence of a session context.
 
 2010-10-14 19:42  t-ishii
 
@@ -32,14 +268,14 @@
 2010-10-12 20:39  kitagawa
 
 	* pool_proto_modules.c, pool_session_context.c,
-	  pool_session_context.h: Fix portal handling in extended query
-	  protocol.  Now, prepared statements and portals are closed
-	  separately.  This issue is possible to reappear by a program using
-	  setFetchSize(1) of JDBC.
+	  pool_session_context.h (tags: V3_1_0_ALPHA1, V3_0_1): Fix portal
+	  handling in extended query protocol.  Now, prepared statements and
+	  portals are closed separately.  This issue is possible to reappear
+	  by a program using setFetchSize(1) of JDBC.
 
 2010-10-12 20:05  kitagawa
 
-	* pg_md5.c: Cancel previous commit.
+	* pg_md5.c (tags: V3_1_0_ALPHA1, V3_0_1): Cancel previous commit.
 
 2010-10-01 15:15  kitagawa
 
@@ -48,24 +284,25 @@
 
 2010-09-28 17:00  t-ishii
 
-	* pool_auth.c: Fix bug with md5 auth. If there's more than 1
-	  servers to be authenticated, it sefaults.
+	* pool_auth.c (tags: V3_1_0_ALPHA1, V3_0_1): Fix bug with md5 auth.
+	  If there's more than 1 servers to be authenticated, it sefaults.
 
 2010-09-27 11:01  kitagawa
 
-	* pool_proto_modules.c, pool_proto_modules.h: Fix the bug that
-	  causes segfault of a child process when syntax error occurred in
-	  extended query protocol.
+	* pool_proto_modules.c, pool_proto_modules.h (tags: V3_1_0_ALPHA1,
+	  V3_0_1): Fix the bug that causes segfault of a child process when
+	  syntax error occurred in extended query protocol.
 
 2010-09-10 09:39  kitagawa
 
-	* configure, configure.in, Makefile.am, Makefile.in, NEWS,
+	* configure, configure.in, Makefile.am (tags: V3_1_0_ALPHA1,
+	  V3_0_1), Makefile.in (tags: V3_1_0_ALPHA1, V3_0_1), NEWS,
 	  ChangeLog (utags: V3_0_0): Prepare 3.0
 
 2010-09-09 13:15  kitagawa
 
 	* doc/: where_to_send_queries.odg, where_to_send_queries.pdf
-	  (utags: V3_0_0): Update flow charts.
+	  (utags: V3_0_0, V3_0_1, V3_1_0_ALPHA1): Update flow charts.
 
 2010-09-09 11:41  t-ishii
 
@@ -83,31 +320,32 @@
 
 2010-09-06 17:33  kitagawa
 
-	* pool_timestamp.c (tags: V3_0_0, V3_0_0_RC1): Fix the bug with
-	  previous fix.
+	* pool_timestamp.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1): Fix the bug with previous fix.
 
 2010-09-06 14:03  t-ishii
 
-	* pool_process_query.c (tags: V3_0_0, V3_0_0_RC1),
-	  pool_select_walker.c (tags: V3_0_0, V3_0_0_RC1),
-	  pool_select_walker.h (tags: V3_0_0, V3_0_0_RC1),
-	  pool_timestamp.c, doc/pgpool-en.html (tags: V3_0_0_RC1),
-	  doc/pgpool-ja.html: Use custom function pgpool_regclass() instead
-	  of regclass to convert table name to oid. Problem with regclass is,
-	  it throws an error if the table does not exist. pgpool_regclass is
-	  just a wrapper of regclass by using PG_TRY()/PG_CATCH().  If user
-	  does not install pgpool_regclass(), pgpool-II falls back to pre 3.0
-	  behavior, i.e. ignores schema qualification.
+	* pool_process_query.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1), pool_select_walker.c (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1), pool_select_walker.h (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1), pool_timestamp.c, doc/pgpool-en.html
+	  (tags: V3_0_0_RC1), doc/pgpool-ja.html: Use custom function
+	  pgpool_regclass() instead of regclass to convert table name to oid.
+	  Problem with regclass is, it throws an error if the table does not
+	  exist. pgpool_regclass is just a wrapper of regclass by using
+	  PG_TRY()/PG_CATCH().  If user does not install pgpool_regclass(),
+	  pgpool-II falls back to pre 3.0 behavior, i.e. ignores schema
+	  qualification.
 
 2010-09-06 11:39  t-ishii
 
 	* sql/pgpool-regclass/: Makefile, pgpool-regclass.c,
-	  pgpool-regclass.sql.in (utags: V3_0_0, V3_0_0_RC1): Add
-	  pgpool_regclass function. This is an alternative for regclassin.
-	  Problem is, regclassin throws an error if invalid table name is
-	  specified and pgpool's internal query fails.  Someday we might have
-	  such a builtin function but until that day we use pgpool_regclass
-	  instead...
+	  pgpool-regclass.sql.in (utags: V3_0_0, V3_0_0_RC1, V3_0_1,
+	  V3_1_0_ALPHA1): Add pgpool_regclass function. This is an
+	  alternative for regclassin.  Problem is, regclassin throws an error
+	  if invalid table name is specified and pgpool's internal query
+	  fails.  Someday we might have such a builtin function but until that
+	  day we use pgpool_regclass instead...
 
 2010-09-03 16:02  kitagawa
 
@@ -120,10 +358,6 @@
 	* doc/: where_to_send_queries.odg, where_to_send_queries.pdf
 	  (utags: V3_0_0_RC1): A destination node decision logic
 	  explanation figure
-
-2010-09-03 15:58  kitagawa
-
-	* doc/: load_balance.odp, load_balance.png: Remove
 
 2010-09-03 15:58  kitagawa
 
@@ -155,15 +389,16 @@
 
 2010-09-01 15:10  kitagawa
 
-	* pool_query_context.c (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3):
-	  Fix where_to_send so that DEALLOCATE works properly in replication
-	  mode or parallel mode.
+	* pool_query_context.c (tags: V3_0_1, V3_0_0, V3_0_0_RC1,
+	  V3_0_0_BETA3): Fix where_to_send so that DEALLOCATE works
+	  properly in replication mode or parallel mode.
 
 2010-09-01 13:58  kitagawa
 
 	* pgpool.conf.sample, pgpool.conf.sample-master-slave,
 	  pgpool.conf.sample-replication, pgpool.conf.sample-stream (utags:
-	  V3_0_0, V3_0_0_BETA3, V3_0_0_RC1): Update parameter's comments.
+	  V3_0_0, V3_0_0_BETA3, V3_0_0_RC1, V3_0_1): Update parameter's
+	  comments.
 	  - pcp_timeout
 	  - load_balance_mode
 	  - replicate_select
@@ -171,19 +406,19 @@
 
 2010-08-31 08:09  t-ishii
 
-	* recovery.c (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3): Fix
-	  check_postmaster_started. Before it continued inifinitly to try to
-	  connect to postmaster if the first attempt failed.  Now it firstly
-	  tries "postgres" database 3 times (hard coded!) then retries with
-	  template1.
+	* recovery.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1,
+	  V3_0_0_BETA3): Fix check_postmaster_started. Before it continued
+	  inifinitly to try to connect to postmaster if the first attempt
+	  failed.  Now it firstly tries "postgres" database 3 times (hard
+	  coded!) then retries with template1.
 
 2010-08-30 12:55  kitagawa
 
-	* pool_proto_modules.c, pool_query_cache.c (utags: V3_0_0,
-	  V3_0_0_BETA3, V3_0_0_RC1): Fix the bug that pgpool using
-	  query_cache sent both cache contents and backend response to
-	  frontend.  Fix possible crash when query_cache is true and error
-	  response is returned.
+	* pool_proto_modules.c, pool_query_cache.c (tags: V3_1_0_ALPHA1,
+	  V3_0_1) (utags: V3_0_0, V3_0_0_BETA3, V3_0_0_RC1): Fix the bug
+	  that pgpool using query_cache sent both cache contents and backend
+	  response to frontend.  Fix possible crash when query_cache is true
+	  and error response is returned.
 
 2010-08-26 18:23  kitagawa
 
@@ -238,37 +473,41 @@
 
 2010-08-23 13:42  kitagawa
 
-	* sql/pgpool-recovery/pgpool-recovery.c (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2): Fix pgpool_switch_xlog so that it
-	  checks the size of archived log file.
+	* sql/pgpool-recovery/pgpool-recovery.c (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2): Fix
+	  pgpool_switch_xlog so that it checks the size of archived log file.
 
 2010-08-22 19:52  gleu
 
-	* getopt_long.c (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2): Add a header I forgot. Thanks to Tatsuo for the
-	  idea.
+	* getopt_long.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1,
+	  V3_0_0_BETA3, V3_0_0_BETA2): Add a header I forgot. Thanks to
+	  Tatsuo for the idea.
 
 2010-08-22 17:24  gleu
 
 	* Makefile.am (tags: V3_0_0_BETA3, V3_0_0_BETA2), Makefile.in
 	  (tags: V3_0_0_BETA3, V3_0_0_BETA2), getopt_long.c, getopt_long.h
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2), main.c
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2), pg_md5.c
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2),
-	  pcp/pcp_attach_node.c (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2), pcp/pcp_detach_node.c (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2), pcp/pcp_node_count.c (tags: V3_0_0,
+	  (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2), main.c (tags: V3_0_1, V3_0_0, V3_0_0_RC1,
+	  V3_0_0_BETA3, V3_0_0_BETA2), pg_md5.c (tags: V3_0_0, V3_0_0_RC1,
+	  V3_0_0_BETA3, V3_0_0_BETA2), pcp/pcp_attach_node.c (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2), pcp/pcp_detach_node.c (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2),
+	  pcp/pcp_node_count.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
 	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2), pcp/pcp_node_info.c
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2),
-	  pcp/pcp_proc_count.c (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2), pcp/pcp_proc_info.c (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2), pcp/pcp_recovery_node.c (tags:
+	  (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2), pcp/pcp_proc_count.c (tags: V3_1_0_ALPHA1, V3_0_1,
 	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2),
-	  pcp/pcp_stop_pgpool.c (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2), pcp/pcp_systemdb_info.c (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2): Add getopt_long.h and getopt_long.c
-	  source code files from PostgreSQL source code, so that platforms
-	  without getopt_long function can still use long options.
+	  pcp/pcp_proc_info.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2), pcp/pcp_recovery_node.c
+	  (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2), pcp/pcp_stop_pgpool.c (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2),
+	  pcp/pcp_systemdb_info.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2): Add getopt_long.h and
+	  getopt_long.c source code files from PostgreSQL source code, so that
+	  platforms without getopt_long function can still use long options.
 
 2010-08-20 17:05  kitagawa
 
@@ -292,8 +531,9 @@
 
 	* NEWS, pool_process_query.c, pool_proto_modules.c,
 	  pool_proto_modules.h (tags: V3_0_0_BETA2), pool_relcache.c (tags:
-	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2), pool_relcache.h
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2),
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2), pool_relcache.h (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2),
 	  pool_session_context.h (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
 	  V3_0_0_BETA2), doc/pgpool-ja.html: When insert_lock is enabled
 	  and the table includes SERIAL data type, issue row lock on the
@@ -313,12 +553,13 @@
 
 2010-08-18 22:33  tom-sato
 
-	* doc/: pgpool-en.html, pgpool-ja.css (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2), pgpool-ja.html, pgpool.css (tags:
-	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2), tutorial-en.html
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2),
-	  tutorial-ja.html (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2):
+	* doc/: pgpool-en.html, pgpool-ja.css (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2), pgpool-ja.html,
+	  pgpool.css (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1,
+	  V3_0_0_BETA3, V3_0_0_BETA2), tutorial-en.html (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2), tutorial-ja.html (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2):
 	  - Update copyright for the year 2010
 	  - Fix typo: PgPool -> pgpool
 	  - Enlarge the font size of <pre></pre>
@@ -357,8 +598,9 @@
 
 2010-08-17 20:17  kitagawa
 
-	* COPYING (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2),
-	  configure, configure.in (utags: V3_0_0_BETA1): Prepare 3.0-beta1
+	* COPYING (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1,
+	  V3_0_0_BETA3, V3_0_0_BETA2), configure, configure.in (utags:
+	  V3_0_0_BETA1): Prepare 3.0-beta1
 
 2010-08-17 18:51  kitagawa
 
@@ -368,12 +610,13 @@
 2010-08-17 18:23  kitagawa
 
 	* pool_process_query.c, pool_proto_modules.c (tags: V3_0_0_BETA1),
-	  pool_rewrite_query.c (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1), pool_session_context.c (tags:
-	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1),
-	  pool_session_context.h (tags: V3_0_0_BETA1): Fix
-	  pool_do_parallel_query and pool_parallel_exec so that parallel mode
-	  works.  Rename pool_status_stmt flag to skip_reading_from_backends.
+	  pool_rewrite_query.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1),
+	  pool_session_context.c (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1), pool_session_context.h (tags:
+	  V3_0_0_BETA1): Fix pool_do_parallel_query and pool_parallel_exec
+	  so that parallel mode works.  Rename pool_status_stmt flag to
+	  skip_reading_from_backends.
 
 2010-08-17 15:43  t-ishii
 
@@ -413,14 +656,14 @@
 
 2010-08-17 11:22  kitagawa
 
-	* child.c, pool_auth.c (utags: V3_0_0, V3_0_0_BETA1, V3_0_0_BETA2,
-	  V3_0_0_BETA3, V3_0_0_RC1): Fix compiler warnings.
+	* child.c (tags: V3_0_1), pool_auth.c (utags: V3_0_0, V3_0_0_BETA1,
+	  V3_0_0_BETA2, V3_0_0_BETA3, V3_0_0_RC1): Fix compiler warnings.
 
 2010-08-17 11:09  kitagawa
 
 	* pool_config.c, pool_config.l (utags: V3_0_0, V3_0_0_BETA1,
-	  V3_0_0_BETA2, V3_0_0_BETA3, V3_0_0_RC1): Fix typo in debug
-	  message.
+	  V3_0_0_BETA2, V3_0_0_BETA3, V3_0_0_RC1, V3_0_1, V3_1_0_ALPHA1):
+	  Fix typo in debug message.
 
 2010-08-17 10:51  kitagawa
 
@@ -450,8 +693,8 @@
 
 2010-08-14 15:42  gleu
 
-	* pool_process_reporting.c (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1), doc/pgpool-en.html,
+	* pool_process_reporting.c (tags: V3_0_1, V3_0_0, V3_0_0_RC1,
+	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1), doc/pgpool-en.html,
 	  pcp/pcp_proc_info.c: Show start_time and create_time in a more
 	  friendly way. For both pcp and SHOW commands.
 
@@ -476,9 +719,10 @@
 
 2010-08-13 09:28  kitagawa
 
-	* doc/pgpool-en.html, sample/pgpool_recovery_pitr (tags: V3_0_0,
-	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1): Update
-	  sample file pgpool_recovery_pitr.
+	* doc/pgpool-en.html, sample/pgpool_recovery_pitr (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1): Update sample file
+	  pgpool_recovery_pitr.
 
 2010-08-13 09:09  kitagawa
 
@@ -532,10 +776,11 @@
 
 2010-08-11 00:08  gleu
 
-	* main.c (tags: V3_0_0_BETA1), pool_error.c (tags: V3_0_0,
-	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1), pool_hba.c
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1), pool_process_query.c: Fix some warnings on gcc.
+	* main.c (tags: V3_0_0_BETA1), pool_error.c (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
+	  V3_0_0_BETA1), pool_hba.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1),
+	  pool_process_query.c: Fix some warnings on gcc.
 
 2010-08-10 22:21  gleu
 
@@ -571,7 +816,7 @@
 
 2010-08-10 14:09  t-ishii
 
-	* child.c, pool.h (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	* child.c, pool.h (tags: V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
 	  V3_0_0_BETA2, V3_0_0_BETA1), pool_process_query.c: Remove
 	  unnecessary global variable.
 
@@ -608,11 +853,11 @@
 
 	* doc/pgpool-ja.html, sql/pgpool-recovery/pgpool-recovery.c (tags:
 	  V3_0_0_BETA1), sql/pgpool-recovery/pgpool-recovery.sql.in (tags:
-	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1):
-	  Add pgpool_switch_xlog function.  pgpool_switch_log is the same as
-	  pg_switch_xlog except that it wait till archiving is completed.  Fix
-	  pgpool_recovery and pgpool_remote_start so that they can compile
-	  with PostgreSQL 7.3.
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1): Add pgpool_switch_xlog function.
+	  pgpool_switch_log is the same as pg_switch_xlog except that it wait
+	  till archiving is completed.  Fix pgpool_recovery and
+	  pgpool_remote_start so that they can compile with PostgreSQL 7.3.
 
 2010-08-06 22:17  kitagawa
 
@@ -648,22 +893,25 @@
 
 2010-08-06 11:09  t-ishii
 
-	* child.c, pool.h, pool_connection_pool.c (tags: V3_0_0,
-	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1): Remove
-	  pool_index member from POOL_CONNECTION_POOL.  Instead has pool_index
-	  in pool_connection_pool as a static data.
+	* child.c, pool.h, pool_connection_pool.c (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
+	  V3_0_0_BETA1): Remove pool_index member from
+	  POOL_CONNECTION_POOL.  Instead has pool_index in
+	  pool_connection_pool as a static data.
 
 2010-08-06 08:37  t-ishii
 
-	* child.c, pcp_child.c (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1), pool_process_context.c (tags:
-	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1),
-	  pool_process_context.h (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1), pool_type.h (tags: V3_0_0,
-	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1), pcp/pcp.c
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1), pcp/pcp_proc_info.c: Add 1/0 field to
-	  pcp_proc_info7s output to indicate that this connection pool is
+	* child.c, pcp_child.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1),
+	  pool_process_context.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1),
+	  pool_process_context.h (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1),
+	  pool_type.h (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1,
+	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1), pcp/pcp.c (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1), pcp/pcp_proc_info.c: Add 1/0 field
+	  to pcp_proc_info7s output to indicate that this connection pool is
 	  connected from frontend or not.
 
 2010-08-05 17:10  t-ishii
@@ -674,9 +922,10 @@
 
 	* pcp_child.c, pool.h, recovery.c (tags: V3_0_0_BETA2,
 	  V3_0_0_BETA1), doc/pgpool-en.html, doc/pgpool-ja.html, pcp/pcp.c,
-	  pcp/pcp.h (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1), pcp/pcp_detach_node.c: Implement pcp_detatch_node
-	  gracefull mode.  i.e. wait until all clients disconnected.
+	  pcp/pcp.h (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1,
+	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1), pcp/pcp_detach_node.c:
+	  Implement pcp_detatch_node gracefull mode.  i.e. wait until all
+	  clients disconnected.
 
 2010-08-05 12:10  t-ishii
 
@@ -768,13 +1017,13 @@
 	* pgpool.conf.sample (tags: V3_0_0_BETA2, V3_0_0_BETA1),
 	  pgpool.conf.sample-master-slave, pgpool.conf.sample-replication,
 	  pgpool.conf.sample-stream, pool_config.c, pool_config.h (tags:
-	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1),
-	  pool_config.l, pool_query_context.c, pool_select_walker.c,
-	  pool_select_walker.h, doc/pgpool-ja.html: Allow to specify
-	  functions those are writing to DB in SELECT.  For this purpose, new
-	  directive "white_function_lis" and "black_function_list" added.
-	  Such SELECT are not load balanced in replication mode and master
-	  slave mode.
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1), pool_config.l, pool_query_context.c,
+	  pool_select_walker.c, pool_select_walker.h, doc/pgpool-ja.html:
+	  Allow to specify functions those are writing to DB in SELECT.  For
+	  this purpose, new directive "white_function_lis" and
+	  "black_function_list" added.  Such SELECT are not load balanced in
+	  replication mode and master slave mode.
 
 2010-07-29 19:05  t-ishii
 
@@ -816,12 +1065,13 @@
 
 2010-07-28 08:24  t-ishii
 
-	* doc/: basebackup.sh (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1), pgpool-ja.html, pgpool_remote_start
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1), recovery.conf.sample (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1): More doc updation for
-	  3.0.
+	* doc/: basebackup.sh (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1),
+	  pgpool-ja.html, pgpool_remote_start (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1),
+	  recovery.conf.sample (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1): More doc
+	  updation for 3.0.
 
 2010-07-26 21:48  t-ishii
 
@@ -874,9 +1124,9 @@
 
 2010-07-23 15:22  t-ishii
 
-	* pool_worker_child.c (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1): Fix in case of health_check period
-	  is 0.
+	* pool_worker_child.c (tags: V3_0_1, V3_0_0, V3_0_0_RC1,
+	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1): Fix in case of
+	  health_check period is 0.
 
 2010-07-23 15:08  t-ishii
 
@@ -995,11 +1245,12 @@
 
 2010-07-21 13:33  kitagawa
 
-	* pool_query_context.c, pool_query_context.h (tags: V3_0_0,
-	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1): Add
-	  memory_context variable.  Add query_state variable that represent
-	  state of extended query.  Add function pool_set_query_state().  Add
-	  support for "NO LOAD BALANCE" comment.  Remove unused variables.
+	* pool_query_context.c, pool_query_context.h (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
+	  V3_0_0_BETA1): Add memory_context variable.  Add query_state
+	  variable that represent state of extended query.  Add function
+	  pool_set_query_state().  Add support for "NO LOAD BALANCE" comment.
+	  Remove unused variables.
 
 2010-07-21 11:59  t-ishii
 
@@ -1019,14 +1270,16 @@
 
 2010-07-20 17:52  t-ishii
 
-	* pool_rewrite_outfuncs.c (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1): Support 9.0's new VACUUM syntax.
+	* pool_rewrite_outfuncs.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1): Support
+	  9.0's new VACUUM syntax.
 
 2010-07-20 17:07  t-ishii
 
 	* parser/: copyfuncs.c, gram.c, gram.y, outfuncs.c, parsenodes.h
 	  (utags: V3_0_0, V3_0_0_BETA1, V3_0_0_BETA2, V3_0_0_BETA3,
-	  V3_0_0_RC1): Support 9.0's new VACUUM syntax.
+	  V3_0_0_RC1, V3_0_1, V3_1_0_ALPHA1): Support 9.0's new VACUUM
+	  syntax.
 
 2010-07-20 17:04  t-ishii
 
@@ -1083,11 +1336,11 @@
 2010-07-14 16:40  t-ishii
 
 	* Makefile.am, Makefile.in, pool_config.c, pool_config.l,
-	  pool_config_md5.c (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1): pgpool links shared memory version
-	  of pool_config.l On the other hand pg_md5 links private memory
-	  version of pool_config.l.  This commit does some dirty tricks by
-	  creating a fake source file.
+	  pool_config_md5.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1): pgpool
+	  links shared memory version of pool_config.l On the other hand
+	  pg_md5 links private memory version of pool_config.l.  This commit
+	  does some dirty tricks by creating a fake source file.
 
 2010-07-14 16:37  t-ishii
 
@@ -1156,12 +1409,12 @@
 
 2010-07-10 20:18  t-ishii
 
-	* child.c, pool.h, pool_lobj.c (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1), pool_process_query.c,
-	  pool_proto2.c, pool_proto_modules.c, pool_proto_modules.h,
-	  pool_query_cache.c (tags: V3_0_0_BETA2, V3_0_0_BETA1),
-	  pool_query_context.c, pool_rewrite_query.c: Now transaction state
-	  is per backend.  Change TSTATE macro.  Add new
+	* child.c, pool.h, pool_lobj.c (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1),
+	  pool_process_query.c, pool_proto2.c, pool_proto_modules.c,
+	  pool_proto_modules.h, pool_query_cache.c (tags: V3_0_0_BETA2,
+	  V3_0_0_BETA1), pool_query_context.c, pool_rewrite_query.c: Now
+	  transaction state is per backend.  Change TSTATE macro.  Add new
 	  INTERNAL_TRANSACTION_STARTED macro.  Made appropreate changes to
 	  other modules.
 
@@ -1172,16 +1425,16 @@
 
 2010-07-10 20:10  t-ishii
 
-	* pool_hba.c, pool_hba.conf.sample (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1), doc/pgpool-en.html,
-	  doc/pgpool-ja.html: Add md5 checking in pool_hba.conf.  Also add
-	  description about pg_md5's md5 support.
+	* pool_hba.c, pool_hba.conf.sample (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1),
+	  doc/pgpool-en.html, doc/pgpool-ja.html: Add md5 checking in
+	  pool_hba.conf.  Also add description about pg_md5's md5 support.
 
 2010-07-09 10:14  kitagawa
 
-	* pool_timestamp.c, pool_timestamp.h (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1): Fix
-	  rewrite_timestamp() so that it use PreparedStatement instead of
+	* pool_timestamp.c, pool_timestamp.h (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1):
+	  Fix rewrite_timestamp() so that it use PreparedStatement instead of
 	  Portal.
 
 2010-07-09 10:08  kitagawa
@@ -1218,10 +1471,11 @@
 
 2010-06-28 08:18  t-ishii
 
-	* pg_md5.c, pool_passwd.c (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2), pool_passwd.h (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2) (utags: V3_0_0_BETA1): Forgot to add
-	  pool_passwd.c pool_passwd.h.  Modulaize pool_passwd update function.
+	* pg_md5.c, pool_passwd.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2), pool_passwd.h (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2) (utags: V3_0_0_BETA1): Forgot to add pool_passwd.c
+	  pool_passwd.h.  Modulaize pool_passwd update function.
 
 2010-06-28 07:39  t-ishii
 
@@ -1229,15 +1483,16 @@
 
 2010-06-27 22:02  t-ishii
 
-	* Makefile.am, Makefile.in, main.c, md5.c (tags: V3_0_0,
-	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1),
-	  pcp_child.c, pg_md5.c, pool.h, pool_auth.c, pool_config.c,
-	  pool_config.h, pool_config.l, pool_globals.c (tags: V3_0_0,
-	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1),
-	  pool_hba.c, pool_type.h, pcp/md5.c (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1): Implement md5
-	  authentication using pool_passwd.  Still need to rewrite documents
-	  and pgpool.config samples.
+	* Makefile.am, Makefile.in, main.c, md5.c (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
+	  V3_0_0_BETA1), pcp_child.c, pg_md5.c, pool.h, pool_auth.c,
+	  pool_config.c, pool_config.h, pool_config.l, pool_globals.c
+	  (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1), pool_hba.c, pool_type.h, pcp/md5.c
+	  (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1): Implement md5 authentication using
+	  pool_passwd.  Still need to rewrite documents and pgpool.config
+	  samples.
 
 2010-06-21 14:54  t-ishii
 
@@ -1380,10 +1635,11 @@
 2010-06-06 19:17  t-ishii
 
 	* pool_process_query.c, pool_proto_modules.c, pool_stream.h (tags:
-	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1): To
-	  avoid direct access to stream buffer from abstraction point of view,
-	  add two macros: #define pool_read_buffer_is_empty(connection)
-	  #define pool_discard_read_buffer(connection)
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1): To avoid direct access to stream
+	  buffer from abstraction point of view, add two macros: #define
+	  pool_read_buffer_is_empty(connection) #define
+	  pool_discard_read_buffer(connection)
 
 2010-06-04 16:39  t-ishii
 
@@ -1400,10 +1656,10 @@
 2010-06-02 19:06  t-ishii
 
 	* pool_proto_modules.c, pool_rewrite_query.c, pool_rewrite_query.h
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1): Refactoring simpleQuery part 1. Move some parallel
-	  query processing to pool_rewrite_query.c.  Also fix sloppy coding
-	  (no "#ifdef...") of pool_rewrite_query.h.
+	  (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1): Refactoring simpleQuery part 1. Move
+	  some parallel query processing to pool_rewrite_query.c.  Also fix
+	  sloppy coding (no "#ifdef...") of pool_rewrite_query.h.
 
 2010-06-02 19:04  t-ishii
 
@@ -1443,14 +1699,15 @@
 	* Makefile.am, Makefile.in, child.c, main.c, pcp_child.c, pool.h,
 	  pool_auth.c, pool_config.c, pool_config.l,
 	  pool_connection_pool.c, pool_error.c, pool_hba.c, pool_ip.c
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1), pool_lobj.c, pool_process_query.c, pool_config.h,
-	  pool_process_reporting.c, pool_proto_modules.c,
+	  (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1), pool_lobj.c, pool_process_query.c,
+	  pool_config.h, pool_process_reporting.c, pool_proto_modules.c,
 	  pool_query_cache.c, pool_relcache.h (tags: V3_0_0_BETA1),
-	  pool_rewrite_query.c, pool_ssl.c (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1), pool_stream.c (tags:
+	  pool_rewrite_query.c, pool_ssl.c (tags: V3_1_0_ALPHA1, V3_0_1,
 	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1),
-	  pool_system.c (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  pool_stream.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1,
+	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1), pool_system.c (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
 	  V3_0_0_BETA2, V3_0_0_BETA1), pool_timestamp.c, recovery.c: Create
 	  pool_config.h and move pool_config.l related declarations there.
 
@@ -1465,9 +1722,9 @@
 
 2010-05-31 15:58  t-ishii
 
-	* config.h.in (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1), configure: Fix to add linking
-	  neccesary libraries when SSL enabled.
+	* config.h.in (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1,
+	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1), configure: Fix to add
+	  linking neccesary libraries when SSL enabled.
 
 2010-05-30 12:42  t-ishii
 
@@ -1477,7 +1734,8 @@
 2010-05-27 15:17  t-ishii
 
 	* test/C/: Makefile, test_extended.c (utags: V3_0_0, V3_0_0_BETA1,
-	  V3_0_0_BETA2, V3_0_0_BETA3, V3_0_0_RC1): Add C test program
+	  V3_0_0_BETA2, V3_0_0_BETA3, V3_0_0_RC1, V3_0_1, V3_1_0_ALPHA1):
+	  Add C test program
 
 2010-05-26 16:59  t-ishii
 
@@ -1491,19 +1749,19 @@
 
 2010-05-26 15:21  t-ishii
 
-	* pool.h, pool_lobj.c, pool_lobj.h (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1), pool_process_query.c,
-	  pool_proto_modules.c, pool_relcache.c, pool_relcache.h,
-	  pool_timestamp.c: Refactoring pool.h
+	* pool.h, pool_lobj.c, pool_lobj.h (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1),
+	  pool_process_query.c, pool_proto_modules.c, pool_relcache.c,
+	  pool_relcache.h, pool_timestamp.c: Refactoring pool.h
 	  - Remove long standing comment out lines
 	  - Move pool_relcache.c pool_lobj extern declarations to separate
 	    header files
 
 2010-05-24 16:25  t-ishii
 
-	* pcp/pcp_stream.c (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1): Fix bug with pcp_check_fd()'s
-	  timeout handling.  Per erboles.
+	* pcp/pcp_stream.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1): Fix bug
+	  with pcp_check_fd()'s timeout handling.  Per erboles.
 
 	  Subject: [Pgpool-general] question about pcp_check_fd Date: Sun, 23
 	  May 2010 18:21:41 -0500 To: pgpool <pgpool-general@pgfoundry.org>
@@ -1580,17 +1838,18 @@
 
 2010-04-23 15:53  t-ishii
 
-	* test/parser/expected/v84.out (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1): Add missing file
+	* test/parser/expected/v84.out (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1):
+	  Add missing file
 
 2010-04-22 17:10  t-ishii
 
 	* main.c, pool_connection_pool.c, pool_ip.c, pool_lobj.c,
 	  pool_process_query.c, parser/copyfuncs.c, parser/gram.c,
-	  parser/gram.y, parser/makefuncs.c (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1), parser/outfuncs.c,
-	  pcp/pcp.c: Fix compiler warnings. Patch contributed by Takahiro
-	  Itagaki.
+	  parser/gram.y, parser/makefuncs.c (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1),
+	  parser/outfuncs.c, pcp/pcp.c: Fix compiler warnings. Patch
+	  contributed by Takahiro Itagaki.
 
 2010-04-20 13:43  t-ishii
 
@@ -1606,8 +1865,9 @@
 
 2010-04-17 17:56  t-ishii
 
-	* configure, configure.in, version.h (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1): Version 2.4-CURRENT
+	* configure, configure.in, version.h (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1):
+	  Version 2.4-CURRENT
 
 2010-04-16 13:16  kitagawa
 
@@ -1746,9 +2006,9 @@
 
 2010-02-28 21:39  t-ishii
 
-	* README.online-recovery (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3): Internal document for online
-	  recovery
+	* README.online-recovery (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3):
+	  Internal document for online recovery
 
 2010-02-28 18:22  t-ishii
 
@@ -1862,9 +2122,9 @@
 
 2010-02-02 14:45  t-ishii
 
-	* TODO (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2): Sync TODO with
-	  2.3.2
+	* TODO (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1,
+	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2,
+	  V2_3_2_1, V2_3_2): Sync TODO with 2.3.2
 
 2010-02-02 14:44  t-ishii
 
@@ -1880,13 +2140,14 @@
 
 	* child.c (tags: V2_3_2_2, V2_3_2_1, V2_3_2), pool.h,
 	  pool_process_query.c, pool_timestamp.c (tags: V2_3_2_1, V2_3_2),
-	  test/timestamp/expected/insert.out (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2,
-	  V2_3_2_1, V2_3_2), test/timestamp/input/insert.sql (tags: V3_0_0,
-	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
-	  V2_3_2_2, V2_3_2_1, V2_3_2): Fix timestamp rewritting.  Fix
-	  number of parameters of Prepare.  Fix prepared statement list to be
-	  reset when connection_cache = false.  Patch contributed by Akio
+	  test/timestamp/expected/insert.out (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2),
+	  test/timestamp/input/insert.sql (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2): Fix timestamp rewritting.
+	  Fix number of parameters of Prepare.  Fix prepared statement list to
+	  be reset when connection_cache = false.  Patch contributed by Akio
 	  Ishida.
 
 2010-01-31 22:28  t-ishii
@@ -1975,14 +2236,14 @@
 
 	* pool.h, pool_lobj.c, pool_process_query.c, pool_relcache.c (tags:
 	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2), pool_timestamp.c,
-	  test/timestamp/main.c (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2):
-	  Teach do_query to support V2 protocol. This will solve the problem
-	  with pgpool-II 2.3 user who are experiencing error while using V2
-	  dirvers (for example unixODBC). See [Pgpool-general] Bug report
-	  pgpool-II-2.3.1 plus ODBC submitted on Tue, 12 Jan 2010 12:46:35
-	  -0500 for this kind of use case.  Patch contributed by Toshihiro
-	  Kitagawa.
+	  test/timestamp/main.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
+	  V2_3_2_2, V2_3_2_1, V2_3_2): Teach do_query to support V2
+	  protocol. This will solve the problem with pgpool-II 2.3 user who
+	  are experiencing error while using V2 dirvers (for example
+	  unixODBC). See [Pgpool-general] Bug report pgpool-II-2.3.1 plus ODBC
+	  submitted on Tue, 12 Jan 2010 12:46:35 -0500 for this kind of use
+	  case.  Patch contributed by Toshihiro Kitagawa.
 
 2010-01-24 00:21  t-ishii
 
@@ -2094,16 +2355,18 @@
 
 2009-12-18 16:09  t-ishii
 
-	* Makefile.am, Makefile.in, c-compiler.m4 (tags: V3_0_0,
-	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
-	  V2_3_2_2, V2_3_2_1, V2_3_2), c-library.m4 (tags: V3_0_0,
-	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
-	  V2_3_2_2, V2_3_2_1, V2_3_2), config.h.in, configure,
-	  configure.in, general.m4 (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	* Makefile.am, Makefile.in, c-compiler.m4 (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
+	  V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2), c-library.m4
+	  (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
 	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2),
-	  parser/Makefile.in (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  config.h.in, configure, configure.in, general.m4 (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
 	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2),
-	  pcp/Makefile.in (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  parser/Makefile.in (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
+	  V2_3_2_2, V2_3_2_1, V2_3_2), pcp/Makefile.in (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
 	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2)
 	  (utags: V2_3_1): Fix bugtrack [#1010740] BigInt distortion in
 	  pgpool-II 2.3 version, when NOW() use. This bug only exists on 64bit
@@ -2306,9 +2569,10 @@
 2009-11-14 08:35  t-ishii
 
 	* pool_timestamp.c, test/timestamp/expected/insert.out,
-	  test/timestamp/expected/misc.out (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2,
-	  V2_3_2_1, V2_3_2), test/timestamp/expected/update.out (tags:
+	  test/timestamp/expected/misc.out (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2),
+	  test/timestamp/expected/update.out (tags: V3_1_0_ALPHA1, V3_0_1,
 	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
 	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2) (utags: V2_3, V2_3_1): Fix
 	  some query rewriting cases.
@@ -2335,25 +2599,27 @@
 	* Makefile.am, Makefile.in, pool_process_query.c,
 	  pool_proto_modules.c, pool_proto_modules.h, pool_timestamp.c,
 	  pool_timestamp.h (tags: V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2,
-	  V2_3_1, V2_3), test/timestamp/Makefile (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2,
-	  V2_3_2_1, V2_3_2, V2_3_1, V2_3), test/timestamp/main.c (tags:
-	  V2_3_1, V2_3), test/timestamp/parse_schedule (tags: V3_0_0,
+	  V2_3_1, V2_3), test/timestamp/Makefile (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
+	  V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
+	  test/timestamp/main.c (tags: V2_3_1, V2_3),
+	  test/timestamp/parse_schedule (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
+	  test/timestamp/run-test (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
 	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
 	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
-	  test/timestamp/run-test (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2,
-	  V2_3_1, V2_3), test/timestamp/expected/insert.out,
+	  test/timestamp/expected/insert.out,
 	  test/timestamp/expected/misc.out,
 	  test/timestamp/expected/update.out,
 	  test/timestamp/input/insert.sql (tags: V2_3_1, V2_3),
-	  test/timestamp/input/misc.sql (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2,
-	  V2_3_2_1, V2_3_2, V2_3_1, V2_3), test/timestamp/input/update.sql
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3):
-	  Add support for CURRENT_TIMESTAMP and friends.  Patch provided by
-	  Akio Ishida.
+	  test/timestamp/input/misc.sql (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
+	  test/timestamp/input/update.sql (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3): Add support
+	  for CURRENT_TIMESTAMP and friends.  Patch provided by Akio Ishida.
 
 2009-11-10 11:24  t-ishii
 
@@ -2368,20 +2634,22 @@
 
 	* ChangeLog, TODO (tags: V2_3_1, V2_3), parser/outfuncs.c (tags:
 	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
-	  test/parser/expected/insert.out (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2,
-	  V2_3_2_1, V2_3_2, V2_3_1, V2_3), test/parser/expected/select.out
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
-	  test/parser/input/insert.sql (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2,
-	  V2_3_2_1, V2_3_2, V2_3_1, V2_3), test/parser/input/select.sql
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3):
-	  Fix nodeToString() bug. example test case: If nodeToString() is
-	  given the parse tree of "insert into r1 values(1,2), (3,4)", it
-	  returns "insert into r1 values(1,2), values(3,4)", which is
-	  apparently wrong.  Patch provided by Akio Ishida.
+	  test/parser/expected/insert.out (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
+	  test/parser/expected/select.out (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
+	  test/parser/input/insert.sql (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
+	  test/parser/input/select.sql (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3): Fix
+	  nodeToString() bug. example test case: If nodeToString() is given
+	  the parse tree of "insert into r1 values(1,2), (3,4)", it returns
+	  "insert into r1 values(1,2), values(3,4)", which is apparently
+	  wrong.  Patch provided by Akio Ishida.
 
 2009-11-04 22:59  t-ishii
 
@@ -2390,9 +2658,9 @@
 
 2009-11-03 20:14  devrim
 
-	* pgpool.spec (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2,
-	  V2_3_1, V2_3):
+	* pgpool.spec (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1,
+	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2,
+	  V2_3_2_1, V2_3_2, V2_3_1, V2_3):
 	  - Remove init script from all runlevels before uninstall. Per #RH
 	    Bugzilla 532177
 
@@ -2440,14 +2708,14 @@
 	* test/jdbc/: CreateTempTableTest.java, expected/CreateTempTable,
 	  RunTest.java (utags: V2_3, V2_3_1, V2_3_2, V2_3_2_1, V2_3_2_2,
 	  V2_3_3, V3_0_0, V3_0_0_BETA1, V3_0_0_BETA2, V3_0_0_BETA3,
-	  V3_0_0_RC1): Add temp table test
+	  V3_0_0_RC1, V3_0_1, V3_1_0_ALPHA1): Add temp table test
 
 2009-10-22 20:52  devrim
 
 	* redhat/: pgpool.init, pgpool.sysconfig (utags: V2_3, V2_3_1,
 	  V2_3_2, V2_3_2_1, V2_3_2_2, V2_3_3, V3_0_0, V3_0_0_BETA1,
-	  V3_0_0_BETA2, V3_0_0_BETA3, V3_0_0_RC1): Fix logging, per report
-	  from Toshihiro Kitagawa.
+	  V3_0_0_BETA2, V3_0_0_BETA3, V3_0_0_RC1, V3_0_1, V3_1_0_ALPHA1):
+	  Fix logging, per report from Toshihiro Kitagawa.
 
 2009-10-21 23:39  t-ishii
 
@@ -2463,9 +2731,10 @@
 
 2009-10-12 11:21  t-ishii
 
-	* pgpool.8.in (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2,
-	  V2_3_1, V2_3): Fix typo in man page. Patch provided by Rodolphe.
+	* pgpool.8.in (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1,
+	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2,
+	  V2_3_2_1, V2_3_2, V2_3_1, V2_3): Fix typo in man page. Patch
+	  provided by Rodolphe.
 
 2009-10-12 10:54  t-ishii
 
@@ -2622,28 +2891,31 @@
 	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3), pool_hba.c
 	  (tags: V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
 	  pool_ip.c (tags: V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
-	  V2_3), pool_params.c (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2,
-	  V2_3_1, V2_3), pool_path.c (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2,
-	  V2_3_2_1, V2_3_2, V2_3_1, V2_3), pool_process_query.c,
-	  pool_proto_modules.c, pool_query_cache.c (tags: V2_3_3, V2_3_2_2,
-	  V2_3_2_1, V2_3_2, V2_3_1, V2_3), pool_rewrite_outfuncs.c (tags:
-	  V2_3_1, V2_3), pool_rewrite_query.c (tags: V2_3_2_2, V2_3_2_1,
-	  V2_3_2, V2_3_1, V2_3), pool_sema.c (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2,
-	  V2_3_2_1, V2_3_2, V2_3_1, V2_3), pool_shmem.c (tags: V3_0_0,
+	  V2_3), pool_params.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
 	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3), pool_signal.c (tags:
+	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3), pool_path.c (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2,
+	  V2_3_1, V2_3), pool_process_query.c, pool_proto_modules.c,
+	  pool_query_cache.c (tags: V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2,
+	  V2_3_1, V2_3), pool_rewrite_outfuncs.c (tags: V2_3_1, V2_3),
+	  pool_rewrite_query.c (tags: V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
+	  V2_3), pool_sema.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
+	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3), pool_shmem.c (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2,
+	  V2_3_1, V2_3), pool_signal.c (tags: V3_1_0_ALPHA1, V3_0_1,
 	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
 	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3), pool_stream.c,
 	  pool_system.c (tags: V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
-	  V2_3), ps_status.c (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2,
-	  V2_3_1, V2_3), recovery.c (tags: V2_3_1, V2_3), strlcpy.c (tags:
-	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
-	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3), pcp/md5.c
-	  (tags: V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3): Remove
+	  V2_3), ps_status.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
+	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3), recovery.c (tags:
+	  V2_3_1, V2_3), strlcpy.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
+	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3), pcp/md5.c (tags:
+	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3): Remove
 	  unnecessary spaces and tabs at end of line.  Patch conributed by Jun
 	  Kuriyama.
 
@@ -2713,8 +2985,9 @@
 
 	* parser/: kwlist.h, kwlookup.c (utags: V2_3, V2_3_1, V2_3_2,
 	  V2_3_2_1, V2_3_2_2, V2_3_3, V3_0_0, V3_0_0_BETA1, V3_0_0_BETA2,
-	  V3_0_0_BETA3, V3_0_0_RC1): Missing files for PostgreSQL 8.4
-	  paraser adaoptation.  Patch contributed by Akio Ishida.
+	  V3_0_0_BETA3, V3_0_0_RC1, V3_0_1, V3_1_0_ALPHA1): Missing files
+	  for PostgreSQL 8.4 paraser adaoptation.  Patch contributed by Akio
+	  Ishida.
 
 2009-08-01 20:41  t-ishii
 
@@ -2734,69 +3007,78 @@
 
 	* test/parser/: parse_schedule, input/v84.sql (utags: V2_3, V2_3_1,
 	  V2_3_2, V2_3_2_1, V2_3_2_2, V2_3_3, V3_0_0, V3_0_0_BETA1,
-	  V3_0_0_BETA2, V3_0_0_BETA3, V3_0_0_RC1): parser test for
-	  PostgreSQL 8.4 or later.  Patch contributed by Akio Ishida.
+	  V3_0_0_BETA2, V3_0_0_BETA3, V3_0_0_RC1, V3_0_1, V3_1_0_ALPHA1):
+	  parser test for PostgreSQL 8.4 or later.  Patch contributed by Akio
+	  Ishida.
 
 2009-07-30 23:44  t-ishii
 
 	* pool_process_query.c, pool_rewrite_outfuncs.c, pool_type.h,
-	  parser/Makefile.am (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  parser/Makefile.am (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
+	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3), parser/Makefile.in
+	  (tags: V2_3), parser/copyfuncs.c (tags: V2_3_3, V2_3_2_2,
+	  V2_3_2_1, V2_3_2, V2_3_1, V2_3), parser/gram.c (tags: V2_3_3,
+	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3), parser/gram.h (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
 	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2,
-	  V2_3_1, V2_3), parser/Makefile.in (tags: V2_3),
-	  parser/copyfuncs.c (tags: V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2,
-	  V2_3_1, V2_3), parser/gram.c (tags: V2_3_3, V2_3_2_2, V2_3_2_1,
-	  V2_3_2, V2_3_1, V2_3), parser/gram.h (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2,
-	  V2_3_2_1, V2_3_2, V2_3_1, V2_3), parser/gram.y (tags: V2_3_3,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3), parser/keywords.c
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
+	  V2_3_1, V2_3), parser/gram.y (tags: V2_3_3, V2_3_2_2, V2_3_2_1,
+	  V2_3_2, V2_3_1, V2_3), parser/keywords.c (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
 	  V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
-	  parser/keywords.h (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  parser/keywords.h (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
+	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3), parser/makefuncs.c
+	  (tags: V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
+	  parser/makefuncs.h (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
+	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3), parser/nodes.c (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
 	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2,
-	  V2_3_1, V2_3), parser/makefuncs.c (tags: V2_3_3, V2_3_2_2,
-	  V2_3_2_1, V2_3_2, V2_3_1, V2_3), parser/makefuncs.h (tags:
-	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
-	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3), parser/nodes.c
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
-	  parser/nodes.h (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2,
-	  V2_3_1, V2_3), parser/outfuncs.c, parser/parsenodes.h (tags:
-	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
-	  parser/parser.c (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2,
-	  V2_3_1, V2_3), parser/pool_memory.h (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2,
-	  V2_3_2_1, V2_3_2, V2_3_1, V2_3), parser/pool_parser.h (tags:
+	  V2_3_1, V2_3), parser/nodes.h (tags: V3_1_0_ALPHA1, V3_0_1,
 	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
 	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
-	  parser/primnodes.h (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  parser/outfuncs.c, parser/parsenodes.h (tags: V2_3_3, V2_3_2_2,
+	  V2_3_2_1, V2_3_2, V2_3_1, V2_3), parser/parser.c (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
 	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2,
-	  V2_3_1, V2_3), test/parser/Makefile (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2,
-	  V2_3_2_1, V2_3_2, V2_3_1, V2_3), test/parser/expected/copy.out
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
-	  test/parser/expected/create.out (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2,
-	  V2_3_2_1, V2_3_2, V2_3_1, V2_3), test/parser/expected/cursor.out
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
-	  test/parser/expected/delete.out (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2,
-	  V2_3_2_1, V2_3_2, V2_3_1, V2_3), test/parser/expected/insert.out,
-	  test/parser/expected/misc.out (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2,
-	  V2_3_2_1, V2_3_2, V2_3_1, V2_3), test/parser/expected/prepare.out
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
-	  test/parser/expected/privileges.out (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2,
-	  V2_3_2_1, V2_3_2, V2_3_1, V2_3), test/parser/expected/select.out,
-	  test/parser/expected/update.out (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2,
-	  V2_3_2_1, V2_3_2, V2_3_1, V2_3): Adopt PostgreSQL 8.4 parser.
-	  Patch contributed by Akio Ishida.
+	  V2_3_1, V2_3), parser/pool_memory.h (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
+	  parser/pool_parser.h (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
+	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3), parser/primnodes.h
+	  (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2,
+	  V2_3_1, V2_3), test/parser/Makefile (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
+	  test/parser/expected/copy.out (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
+	  test/parser/expected/create.out (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
+	  test/parser/expected/cursor.out (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
+	  test/parser/expected/delete.out (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3),
+	  test/parser/expected/insert.out, test/parser/expected/misc.out
+	  (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2,
+	  V2_3_1, V2_3), test/parser/expected/prepare.out (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2,
+	  V2_3_1, V2_3), test/parser/expected/privileges.out (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2,
+	  V2_3_1, V2_3), test/parser/expected/select.out,
+	  test/parser/expected/update.out (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3): Adopt
+	  PostgreSQL 8.4 parser. Patch contributed by Akio Ishida.
 
 2009-07-28 09:34  t-ishii
 
@@ -2966,11 +3248,11 @@
 
 2009-05-24 17:43  t-ishii
 
-	* sql/pgpool-recovery/Makefile (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2,
-	  V2_3_2_1, V2_3_2, V2_3_1, V2_3): Support pre 8.0 PostgreSQL which
-	  does not have pg_config --pgxs option.  Patch provided by Enrico
-	  Pirozzi with slight modification by Tatsuo Ishii
+	* sql/pgpool-recovery/Makefile (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3): Support pre
+	  8.0 PostgreSQL which does not have pg_config --pgxs option.  Patch
+	  provided by Enrico Pirozzi with slight modification by Tatsuo Ishii
 
 2009-05-12 10:01  t-ishii
 
@@ -3041,10 +3323,10 @@
 
 2009-03-23 10:13  devrim
 
-	* redhat/pgpool.conf.sample.patch (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_3_2_2,
-	  V2_3_2_1, V2_3_2, V2_3_1, V2_3): Add a patch which configures
-	  sample conf file to match RPM and Red Hat defaults.
+	* redhat/pgpool.conf.sample.patch (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_3): Add a patch
+	  which configures sample conf file to match RPM and Red Hat defaults.
 
 2009-03-14 12:39  t-ishii
 
@@ -3115,13 +3397,6 @@
 2009-02-21 18:56  t-ishii
 
 	* configure.in (tags: V2_2_0_RC2): pgpool 2.2 RC2
-
-2009-02-21 18:52  t-ishii
-
-	* doc/load_balance.png (tags: V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
-	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
-	  V2_2_0_RC2): A load balance logic explanation figure
 
 2009-02-21 18:47  t-ishii
 
@@ -3239,11 +3514,11 @@
 
 2009-01-30 17:15  t-ishii
 
-	* test/jdbc/README.euc_jp (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
-	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
-	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2): Add
-	  comment how to add CLASSPATH
+	* test/jdbc/README.euc_jp (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
+	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
+	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	  V2_2_0_BETA2): Add comment how to add CLASSPATH
 
 2009-01-30 09:06  y-mori
 
@@ -3586,28 +3861,19 @@
 
 2008-11-07 18:20  t-ishii
 
-	* ChangeLog, Makefile.in, aclocal.m4 (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1), configure, pgpool.conf.sample,
-	  pool.h, pool_config.c, pool_config.l, pool_process_query.c,
-	  pool_stream.c, doc/pgpool-en.html, doc/pgpool-ja.html,
-	  parser/Makefile.in (tags: V2_2_7, V2_2_6, V2_2_5, V2_2_4, V2_2_3,
-	  V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
-	  V2_2_0_BETA1), pcp/Makefile.in (tags: V2_2_7, V2_2_6, V2_3,
+	* ChangeLog, Makefile.in, aclocal.m4 (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3,
 	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
-	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1): Add
+	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1), configure,
+	  pgpool.conf.sample, pool.h, pool_config.c, pool_config.l,
+	  pool_process_query.c, pool_stream.c, doc/pgpool-en.html,
+	  doc/pgpool-ja.html, parser/Makefile.in (tags: V2_2_7, V2_2_6,
+	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
+	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1), pcp/Makefile.in (tags:
+	  V2_2_7, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1,
+	  V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1): Add
 	  client_idle_limit_in_recovery
-
-2008-10-31 14:21  t-ishii
-
-	* doc/load_balance.odp (tags: V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
-	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
-	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1): Add a flow
-	  chart which explains load balance/replication/send to master only is
-	  decided.
 
 2008-10-31 10:31  t-ishii
 
@@ -3741,20 +4007,21 @@
 
 2008-04-09 16:03  y-asaba
 
-	* sample/replicate_def_pgbench.sql (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1): Fix SQL error.
+	* sample/replicate_def_pgbench.sql (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3,
+	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
+	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1): Fix
+	  SQL error.
 
 2008-04-09 16:01  y-asaba
 
-	* sql/system_db.sql (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
-	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
-	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
-	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1): Drop replicate_def table if
-	  exists.
+	* sql/system_db.sql (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
+	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
+	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1): Drop
+	  replicate_def table if exists.
 
 2008-04-09 15:26  devrim
 
@@ -3984,12 +4251,12 @@
 
 2008-03-13 12:46  y-asaba
 
-	* ylwrap (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
-	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
-	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
-	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1): Add ylwrap generated by
-	  automake 1.10.
+	* ylwrap (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1,
+	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
+	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
+	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
+	  V2_1_0_BETA1): Add ylwrap generated by automake 1.10.
 
 2008-03-13 03:22  devrim
 
@@ -4282,22 +4549,23 @@
 	  V2_1_0_BETA2, V2_1_0_BETA1), pool_hba.c (tags: V2_1_0_BETA1),
 	  pool_ip.c (tags: V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
 	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
-	  V2_1_0_BETA2, V2_1_0_BETA1), pool_ip.h (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1), pool_ipc.h (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1), pool_params.c (tags: V2_2_3, V2_2_2, V2_2_1,
-	  V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1,
-	  V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1), pool_path.c
-	  (tags: V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1), pool_path.h (tags: V3_0_0, V3_0_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1), pool_ip.h (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
+	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
+	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
+	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
+	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1), pool_ipc.h (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
+	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
+	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
+	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1),
+	  pool_params.c (tags: V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
+	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1), pool_path.c (tags: V2_2_3, V2_2_2,
+	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
+	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1),
+	  pool_path.h (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1,
 	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
 	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
 	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
@@ -4313,46 +4581,47 @@
 	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1),
 	  pool_signal.c (tags: V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
 	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
-	  V2_1_0_BETA2, V2_1_0_BETA1), pool_signal.h (tags: V3_0_0,
-	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
-	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
-	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1), pool_stream.c, pool_system.c (tags: V2_2_3,
-	  V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
-	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1),
-	  pool_type.h (tags: V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1), ps_status.c (tags: V2_1_0, V2_1_0_RC1,
-	  V2_1_0_BETA2, V2_1_0_BETA1), recovery.c, strlcpy.c (tags: V2_2_3,
-	  V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
-	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1),
-	  COPYING (tags: V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1), pcp/Makefile.in, pcp/pcp.c, pcp/pcp.h (tags:
-	  V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1),
-	  pcp/pcp_attach_node.c (tags: V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1), parser/Makefile.in, parser/copyfuncs.c (tags:
-	  V2_2_7, V2_2_6, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
+	  V2_1_0_BETA2, V2_1_0_BETA1), pool_signal.h (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
+	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
+	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
 	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
-	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1), parser/gram.c (tags:
-	  V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1),
-	  pcp/pcp_detach_node.c (tags: V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1), pcp/pcp_error.c (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1), pcp/pcp_node_count.c (tags: V2_1_0, V2_1_0_RC1,
-	  V2_1_0_BETA2, V2_1_0_BETA1), pcp/pcp_node_info.c (tags: V2_1_0,
-	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1), pcp/pcp_proc_count.c
-	  (tags: V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1),
-	  pcp/pcp_proc_info.c (tags: V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1), pcp/pcp_recovery_node.c, pcp/pcp_stop_pgpool.c
-	  (tags: V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1),
-	  pcp/pcp_stream.c (tags: V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
+	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1), pool_stream.c,
+	  pool_system.c (tags: V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
+	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1), pool_type.h (tags: V2_1_0,
+	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1), ps_status.c (tags:
+	  V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1), recovery.c,
+	  strlcpy.c (tags: V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
+	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1), COPYING (tags: V2_2_0_BETA1, V2_1_0,
+	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1), pcp/Makefile.in,
+	  pcp/pcp.c, pcp/pcp.h (tags: V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
+	  V2_1_0_BETA1), pcp/pcp_attach_node.c (tags: V2_1_0, V2_1_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1), parser/Makefile.in,
+	  parser/copyfuncs.c (tags: V2_2_7, V2_2_6, V2_2_5, V2_2_4, V2_2_3,
+	  V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
+	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1),
+	  parser/gram.c (tags: V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
+	  V2_1_0_BETA1), pcp/pcp_detach_node.c (tags: V2_1_0, V2_1_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1), pcp/pcp_error.c (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
 	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
 	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
 	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1),
-	  pcp/pcp_stream.h (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  pcp/pcp_node_count.c (tags: V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
+	  V2_1_0_BETA1), pcp/pcp_node_info.c (tags: V2_1_0, V2_1_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1), pcp/pcp_proc_count.c (tags: V2_1_0,
+	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1), pcp/pcp_proc_info.c
+	  (tags: V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1),
+	  pcp/pcp_recovery_node.c, pcp/pcp_stop_pgpool.c (tags: V2_1_0,
+	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1), pcp/pcp_stream.c (tags:
+	  V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3,
+	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
+	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1), pcp/pcp_stream.h (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
 	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
 	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
 	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
@@ -4369,21 +4638,22 @@
 	  V2_1_0_BETA1), parser/keywords.h (tags: V2_2_7, V2_2_6, V2_2_5,
 	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
 	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1), parser/list.c (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1), parser/makefuncs.c (tags: V2_2_7, V2_2_6, V2_2_5,
+	  V2_1_0_BETA1), parser/list.c (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3,
+	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
+	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1), parser/makefuncs.c (tags: V2_2_7,
+	  V2_2_6, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
+	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
+	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1), parser/makefuncs.h
+	  (tags: V2_2_7, V2_2_6, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1,
+	  V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1,
+	  V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1),
+	  parser/memnodes.h (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
+	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
 	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1), parser/makefuncs.h (tags: V2_2_7, V2_2_6, V2_2_5,
-	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1), parser/memnodes.h (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
 	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
 	  V2_1_0_BETA1), parser/nodes.c (tags: V2_2_7, V2_2_6, V2_2_5,
 	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
@@ -4397,20 +4667,21 @@
 	  parser/parsenodes.h (tags: V2_2_7, V2_2_6, V2_2_5, V2_2_4,
 	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
 	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1), parser/parser.h (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1), parser/pg_list.h (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1), parser/pool_memory.c (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	  V2_1_0_BETA1), parser/parser.h (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3,
+	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
+	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1), parser/pg_list.h (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
+	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
+	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
+	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1),
+	  parser/pool_memory.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
+	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
+	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
 	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
 	  V2_1_0_BETA1), parser/pool_memory.h (tags: V2_2_7, V2_2_6,
 	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
@@ -4419,44 +4690,46 @@
 	  V2_2_6, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
 	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
 	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1), parser/pool_string.c
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
-	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
-	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
-	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1), parser/pool_string.h
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
-	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
-	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
-	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1), parser/primnodes.h
-	  (tags: V2_2_7, V2_2_6, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1,
-	  V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1,
-	  V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1), parser/scan.c
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
-	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
-	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
-	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1), parser/scan.l (tags:
-	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
-	  V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3,
-	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
-	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
-	  V2_1_0_BETA2, V2_1_0_BETA1), parser/scansup.h (tags: V3_0_0,
+	  (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
+	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
+	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
+	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1),
+	  parser/pool_string.h (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
 	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
 	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
 	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
 	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1), parser/value.c (tags: V3_0_0, V3_0_0_RC1,
+	  V2_1_0_BETA1), parser/primnodes.h (tags: V2_2_7, V2_2_6, V2_2_5,
+	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
+	  V2_1_0_BETA1), parser/scan.c (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3,
+	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
+	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1), parser/scan.l (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
+	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
+	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
+	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
+	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1), parser/scansup.h (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
+	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
+	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
+	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1),
+	  parser/value.c (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1,
 	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
 	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
 	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
 	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1), parser/value.h (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1): Update copyright.
+	  V2_1_0_BETA1), parser/value.h (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3,
+	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
+	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1): Update copyright.
 
 2008-01-28 11:31  y-asaba
 
@@ -4806,33 +5079,33 @@
 
 2007-11-06 16:07  y-asaba
 
-	* test/jdbc/InsertTest.java (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	* test/jdbc/InsertTest.java (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
+	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
+	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
 	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
 	  V2_1_0_BETA1, V2_0_1, V2_0_0), test/jdbc/RunTest.java (tags:
 	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
 	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
 	  V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0),
-	  test/jdbc/pgpool.properties (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	  test/jdbc/pgpool.properties (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
+	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
+	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
 	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
 	  V2_1_0_BETA1, V2_0_1, V2_0_0), test/jdbc/prepare.sql (tags:
-	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
-	  V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3,
-	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
-	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
-	  V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0),
-	  test/jdbc/expected/insert (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0), Makefile.am: Add INSERT statement
-	  test.
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
+	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
+	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
+	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1,
+	  V2_0_1, V2_0_0), test/jdbc/expected/insert (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
+	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
+	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
+	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
+	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0),
+	  Makefile.am: Add INSERT statement test.
 
 2007-11-05 14:26  y-asaba
 
@@ -4867,12 +5140,12 @@
 	  V2_2_7, V2_2_6, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
 	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
 	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0),
-	  pcp/Makefile.am (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
-	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
-	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
-	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1,
-	  V2_0_1, V2_0_0): Fix compile error with SUN's cc.
+	  pcp/Makefile.am (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1,
+	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
+	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
+	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
+	  V2_1_0_BETA1, V2_0_1, V2_0_0): Fix compile error with SUN's cc.
 
 2007-11-01 17:17  y-asaba
 
@@ -4907,10 +5180,10 @@
 
 2007-10-31 18:41  y-mori
 
-	* test/pdo-test/README.euc_jp (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	* test/pdo-test/README.euc_jp (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
+	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
+	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
 	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
 	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1): ADD: pdo test
 	  program manual(Japanese)
@@ -5062,12 +5335,12 @@
 
 2007-10-22 17:59  y-asaba
 
-	* test/jdbc/.cvsignore (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
-	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
-	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
-	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1,
-	  V2_0_1, V2_0_0, V2_0_0_BETA1): Add .cvsignore file.
+	* test/jdbc/.cvsignore (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
+	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
+	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
+	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1): Add .cvsignore file.
 
 2007-10-22 17:55  y-asaba
 
@@ -5075,80 +5348,86 @@
 
 2007-10-22 17:47  y-asaba
 
-	* test/jdbc/: AutoCommitTest.java (tags: V3_0_0, V3_0_0_RC1,
+	* test/jdbc/: AutoCommitTest.java (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3,
+	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
+	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0), BatchTest.java
+	  (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
+	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
+	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
+	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1,
+	  V2_0_1, V2_0_0), ColumnTest.java (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3,
+	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
+	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0), LockTest.java (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
+	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
+	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
+	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1,
+	  V2_0_1, V2_0_0), PgpoolTest.java (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3,
+	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
+	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0), RunTest.java,
+	  SelectTest.java (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1,
 	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
 	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
 	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
 	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0), BatchTest.java (tags: V3_0_0,
-	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
-	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
-	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0), ColumnTest.java (tags: V3_0_0,
-	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
-	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
-	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0), LockTest.java (tags: V3_0_0,
-	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
-	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
-	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0), PgpoolTest.java (tags: V3_0_0,
-	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
-	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
-	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0), RunTest.java, SelectTest.java
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
-	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
-	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
-	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0),
-	  UpdateTest.java (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V2_1_0_BETA1, V2_0_1, V2_0_0), UpdateTest.java (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
 	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
 	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
 	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
 	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1,
 	  V2_0_1, V2_0_0), pgpool.properties, prepare.sql, run.sh (tags:
-	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
-	  V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3,
-	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
-	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
-	  V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0), expected/autocommit
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
-	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
-	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
-	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0),
-	  expected/batch (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
 	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
 	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
 	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
 	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1,
-	  V2_0_1, V2_0_0), expected/column (tags: V3_0_0, V3_0_0_RC1,
+	  V2_0_1, V2_0_0), expected/autocommit (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
+	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
+	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
+	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
+	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0),
+	  expected/batch (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1,
 	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
 	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
 	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
 	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0), expected/lock (tags: V3_0_0,
-	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
-	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
-	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0), expected/select (tags: V3_0_0,
-	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
-	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
-	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0), expected/update (tags: V3_0_0,
-	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
-	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
-	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0) (utags: V2_0_0_BETA1): Add test
-	  program using Java+JDBC driver.
+	  V2_1_0_BETA1, V2_0_1, V2_0_0), expected/column (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
+	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
+	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
+	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1,
+	  V2_0_1, V2_0_0), expected/lock (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3,
+	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
+	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0), expected/select
+	  (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
+	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
+	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
+	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1,
+	  V2_0_1, V2_0_0), expected/update (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3,
+	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
+	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0) (utags:
+	  V2_0_0_BETA1): Add test program using Java+JDBC driver.
 
 2007-10-22 13:23  y-asaba
 
@@ -5170,17 +5449,18 @@
 	  V2_1_0_RC1, V2_2_0, V2_2_0_BETA1, V2_2_0_BETA2, V2_2_0_RC1,
 	  V2_2_0_RC2, V2_2_1, V2_2_2, V2_2_3, V2_2_4, V2_2_5, V2_2_6,
 	  V2_2_7, V2_3, V2_3_1, V2_3_2, V2_3_2_1, V2_3_2_2, V2_3_3, V3_0_0,
-	  V3_0_0_BETA1, V3_0_0_BETA2, V3_0_0_BETA3, V3_0_0_RC1): ADD:
-	  extend protocol test tool
+	  V3_0_0_BETA1, V3_0_0_BETA2, V3_0_0_BETA3, V3_0_0_RC1, V3_0_1,
+	  V3_1_0_ALPHA1): ADD: extend protocol test tool
 
 2007-10-18 17:24  y-asaba
 
-	* sample/pgpool_recovery (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
-	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
-	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
-	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1,
-	  V2_0_1, V2_0_0, V2_0_0_BETA1): execute rsync as background jobs.
+	* sample/pgpool_recovery (tags: V3_0_1, V3_0_0, V3_0_0_RC1,
+	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
+	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
+	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
+	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1): execute rsync as
+	  background jobs.
 
 2007-10-18 13:48  y-asaba
 
@@ -5372,54 +5652,56 @@
 	  V2_2_0_BETA1, V2_2_0_BETA2, V2_2_0_RC1, V2_2_0_RC2, V2_2_1,
 	  V2_2_2, V2_2_3, V2_2_4, V2_2_5, V2_2_6, V2_2_7, V2_3, V2_3_1,
 	  V2_3_2, V2_3_2_1, V2_3_2_2, V2_3_3, V3_0_0, V3_0_0_BETA1,
-	  V3_0_0_BETA2, V3_0_0_BETA3, V3_0_0_RC1): Translate from Japanese
-	  into English.
+	  V3_0_0_BETA2, V3_0_0_BETA3, V3_0_0_RC1, V3_0_1, V3_1_0_ALPHA1):
+	  Translate from Japanese into English.
 
 2007-10-03 13:47  y-asaba
 
-	* Makefile.am, Makefile.in, test/parser/.cvsignore (tags: V3_0_0,
-	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
-	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
-	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1), test/parser/Makefile
-	  (tags: V2_2_7, V2_2_6, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1,
-	  V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1,
-	  V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0,
+	* Makefile.am, Makefile.in, test/parser/.cvsignore (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
+	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
+	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
+	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1,
+	  V2_0_1, V2_0_0, V2_0_0_BETA1), test/parser/Makefile (tags:
+	  V2_2_7, V2_2_6, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
+	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
+	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0,
 	  V2_0_0_BETA1), test/parser/README, test/parser/main.c (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
+	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
+	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
+	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1,
+	  V2_0_1, V2_0_0, V2_0_0_BETA1), test/parser/parse_schedule (tags:
+	  V2_2_7, V2_2_6, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
+	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
+	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0,
+	  V2_0_0_BETA1), test/parser/pool.h (tags: V3_1_0_ALPHA1, V3_0_1,
 	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
 	  V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3,
 	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
 	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
 	  V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1),
-	  test/parser/parse_schedule (tags: V2_2_7, V2_2_6, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1), test/parser/pool.h
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
-	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
+	  test/parser/run-test, test/parser/expected/copy.out (tags:
+	  V2_2_7, V2_2_6, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
 	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
 	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0,
-	  V2_0_0_BETA1), test/parser/run-test,
-	  test/parser/expected/copy.out (tags: V2_2_7, V2_2_6, V2_2_5,
+	  V2_0_0_BETA1), test/parser/expected/create.out,
+	  test/parser/expected/cursor.out (tags: V2_2_7, V2_2_6, V2_2_5,
 	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
 	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
 	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1),
-	  test/parser/expected/create.out, test/parser/expected/cursor.out
-	  (tags: V2_2_7, V2_2_6, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1,
-	  V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1,
-	  V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0,
-	  V2_0_0_BETA1), test/parser/expected/delete.out (tags: V2_2_7,
-	  V2_2_6, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
-	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
-	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0,
-	  V2_0_0_BETA1), test/parser/expected/drop.out (tags: V3_0_0,
-	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
-	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
+	  test/parser/expected/delete.out (tags: V2_2_7, V2_2_6, V2_2_5,
 	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
 	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
 	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1),
+	  test/parser/expected/drop.out (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3,
+	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
+	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1),
 	  test/parser/expected/insert.out (tags: V2_2_5, V2_2_4, V2_2_3,
 	  V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
 	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1,
@@ -5436,116 +5718,119 @@
 	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
 	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0,
 	  V2_0_0_BETA1), test/parser/expected/select.out,
-	  test/parser/expected/transaction.out (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1),
-	  test/parser/expected/update.out (tags: V2_2_7, V2_2_6, V2_2_5,
-	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1),
-	  test/parser/expected/var.out (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1),
-	  test/parser/input/alter.sql (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1),
-	  test/parser/input/copy.sql (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1),
-	  test/parser/input/create.sql (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1),
-	  test/parser/input/cursor.sql (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1),
-	  test/parser/input/delete.sql (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1),
-	  test/parser/input/drop.sql (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1),
-	  test/parser/input/insert.sql (tags: V2_2_5, V2_2_4, V2_2_3,
-	  V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
-	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1,
-	  V2_0_1, V2_0_0, V2_0_0_BETA1), test/parser/input/misc.sql (tags:
-	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
-	  V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3,
-	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
-	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
-	  V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1),
-	  test/parser/input/prepare.sql (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1),
-	  test/parser/input/privileges.sql (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1),
-	  test/parser/input/select.sql, test/parser/input/transaction.sql
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
+	  test/parser/expected/transaction.out (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
 	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
 	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
 	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
 	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0,
-	  V2_0_0_BETA1), test/parser/input/update.sql (tags: V3_0_0,
+	  V2_0_0_BETA1), test/parser/expected/update.out (tags: V2_2_7,
+	  V2_2_6, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
+	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
+	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0,
+	  V2_0_0_BETA1), test/parser/expected/var.out (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
+	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
+	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
+	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
+	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0,
+	  V2_0_0_BETA1), test/parser/input/alter.sql (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
+	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
+	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
+	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
+	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0,
+	  V2_0_0_BETA1), test/parser/input/copy.sql (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
+	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
+	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
+	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
+	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0,
+	  V2_0_0_BETA1), test/parser/input/create.sql (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
+	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
+	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
+	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
+	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0,
+	  V2_0_0_BETA1), test/parser/input/cursor.sql (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
+	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
+	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
+	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
+	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0,
+	  V2_0_0_BETA1), test/parser/input/delete.sql (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
+	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
+	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
+	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
+	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0,
+	  V2_0_0_BETA1), test/parser/input/drop.sql (tags: V3_1_0_ALPHA1,
+	  V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
+	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
+	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
+	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
+	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0,
+	  V2_0_0_BETA1), test/parser/input/insert.sql (tags: V2_2_5,
+	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
+	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1),
+	  test/parser/input/misc.sql (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
 	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
 	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
 	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
 	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
 	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1),
-	  test/parser/input/var.sql (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
-	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1): Add SQL parser test.
+	  test/parser/input/prepare.sql (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3,
+	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
+	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1),
+	  test/parser/input/privileges.sql (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3,
+	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
+	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1),
+	  test/parser/input/select.sql, test/parser/input/transaction.sql
+	  (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
+	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
+	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
+	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1,
+	  V2_0_1, V2_0_0, V2_0_0_BETA1), test/parser/input/update.sql
+	  (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
+	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
+	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
+	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1,
+	  V2_0_1, V2_0_0, V2_0_0_BETA1), test/parser/input/var.sql (tags:
+	  V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
+	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
+	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
+	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
+	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1,
+	  V2_0_1, V2_0_0, V2_0_0_BETA1): Add SQL parser test.
 
 2007-10-03 13:25  y-asaba
 
-	* Makefile.in, aclocal.m4, config.sub (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	* Makefile.in, aclocal.m4, config.sub (tags: V3_1_0_ALPHA1, V3_0_1,
+	  V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1,
+	  V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3,
+	  V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2,
+	  V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1,
+	  V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1),
+	  configure, ltmain.sh (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
+	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
+	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
 	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
-	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1), configure, ltmain.sh
-	  (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
-	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
-	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
-	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0,
-	  V2_0_0_BETA1), pool_hba.c (tags: V2_0_1, V2_0_0, V2_0_0_BETA1),
-	  pool_process_query.c, pool_rewrite_outfuncs.c,
-	  pool_rewrite_query.c, parser/Makefile.in, parser/copyfuncs.c
-	  (tags: V2_0_1, V2_0_0, V2_0_0_BETA1), parser/gram.c,
-	  parser/gram.h, parser/gram.y, parser/gramparse.h (tags: V3_0_0,
+	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1), pool_hba.c (tags:
+	  V2_0_1, V2_0_0, V2_0_0_BETA1), pool_process_query.c,
+	  pool_rewrite_outfuncs.c, pool_rewrite_query.c,
+	  parser/Makefile.in, parser/copyfuncs.c (tags: V2_0_1, V2_0_0,
+	  V2_0_0_BETA1), parser/gram.c, parser/gram.h, parser/gram.y,
+	  parser/gramparse.h (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
 	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
 	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
 	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
@@ -5884,15 +6169,15 @@
 
 2007-07-09 10:29  y-asaba
 
-	* config.guess (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
-	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
-	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
-	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1,
-	  V2_0_1, V2_0_0, V2_0_0_BETA1, ROOT_OF_V2_0_PARALLEL_UNSTABLE),
-	  config.h.in (tags: V2_0_1, V2_0_0, V2_0_0_BETA1,
-	  ROOT_OF_V2_0_PARALLEL_UNSTABLE), configure (tags:
-	  ROOT_OF_V2_0_PARALLEL_UNSTABLE), configure.in (tags:
+	* config.guess (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1,
+	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
+	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
+	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
+	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE), config.h.in (tags: V2_0_1,
+	  V2_0_0, V2_0_0_BETA1, ROOT_OF_V2_0_PARALLEL_UNSTABLE), configure
+	  (tags: ROOT_OF_V2_0_PARALLEL_UNSTABLE), configure.in (tags:
 	  ROOT_OF_V2_0_PARALLEL_UNSTABLE), ltmain.sh (tags:
 	  ROOT_OF_V2_0_PARALLEL_UNSTABLE), aclocal.m4 (tags:
 	  ROOT_OF_V2_0_PARALLEL_UNSTABLE), child.c (tags:
@@ -5968,10 +6253,10 @@
 
 2007-06-27 18:04  y-asaba
 
-	* sample/pgpool_remote_start (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	* sample/pgpool_remote_start (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
+	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
+	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
 	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
 	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1,
 	  ROOT_OF_V2_0_PARALLEL_UNSTABLE): Fix checking the number of
@@ -6165,10 +6450,10 @@
 
 2007-05-23 10:59  yamaguti
 
-	* ac_func_accept_argtypes.m4 (tags: V3_0_0, V3_0_0_RC1,
-	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
-	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
-	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	* ac_func_accept_argtypes.m4 (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
+	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
+	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
 	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
 	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1), pool_hba.c,
 	  pool_hba.conf.sample (tags: V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
@@ -6214,12 +6499,12 @@
 	  V1_1_1, V1_1), parser/gram.h (tags: V1_1_1, V1_1),
 	  parser/pool_parser.h (tags: V1_2_1, V1_2,
 	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1), pcp/Makefile.in,
-	  sample/pgpool.pam (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
-	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
-	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
-	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1,
-	  V2_0_1, V2_0_0, V2_0_0_BETA1, V1_3, V1_2_1, V1_2,
+	  sample/pgpool.pam (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0,
+	  V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3,
+	  V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5,
+	  V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
+	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1, V1_3, V1_2_1, V1_2,
 	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1):
 	  * Support HBA authentication.
 	  * Support log_connections
@@ -6601,20 +6886,20 @@
 
 2006-09-11 15:47  y-asaba
 
-	* doc/: tutorial-ja.html (tags: V2_0_0_BETA1, V1_3, V1_2_1, V1_2,
-	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
-	  tutorial.html: Rename `tutorial.html' to `tutorial-ja.html'.
+	* doc/tutorial-ja.html (tags: V2_0_0_BETA1, V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1):
+	  Rename `tutorial.html' to `tutorial-ja.html'.
 
 2006-09-11 15:42  y-asaba
 
-	* README.euc_jp (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3,
-	  V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1,
-	  V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2,
-	  V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2,
-	  V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1,
-	  V2_0_1, V2_0_0, V2_0_0_BETA1, V1_3, V1_2_1, V1_2,
+	* README.euc_jp (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1,
+	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
+	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
+	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
+	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1, V1_3, V1_2_1, V1_2,
 	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1),
-	  doc/pgpool-ja.html, doc/pgpool.html:
+	  doc/pgpool-ja.html:
 	  * Rename `doc/pgpool.html' to `doc/pgpool-ja.html'.
 
 	  * Merge Devrim's patch.
@@ -6631,13 +6916,14 @@
 
 2006-09-11 14:53  y-asaba
 
-	* README (tags: V3_0_0, V3_0_0_RC1, V3_0_0_BETA3, V3_0_0_BETA2,
-	  V3_0_0_BETA1, V2_3_3, V2_2_7, V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1,
-	  V2_2_6, V2_3, V2_2_5, V2_2_4, V2_2_3, V2_2_2, V2_2_1, V2_2_0,
-	  V2_2_0_RC2, V2_2_0_RC1, V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0,
-	  V2_1_0_RC1, V2_1_0_BETA2, V2_1_0_BETA1, V2_0_1, V2_0_0,
-	  V2_0_0_BETA1, V1_3, V1_2_1, V1_2, ROOT_OF_V2_0_PARALLEL_UNSTABLE,
-	  V1_1_1, V1_1, V1_0_2, V1_0_1): Update README.
+	* README (tags: V3_1_0_ALPHA1, V3_0_1, V3_0_0, V3_0_0_RC1,
+	  V3_0_0_BETA3, V3_0_0_BETA2, V3_0_0_BETA1, V2_3_3, V2_2_7,
+	  V2_3_2_2, V2_3_2_1, V2_3_2, V2_3_1, V2_2_6, V2_3, V2_2_5, V2_2_4,
+	  V2_2_3, V2_2_2, V2_2_1, V2_2_0, V2_2_0_RC2, V2_2_0_RC1,
+	  V2_2_0_BETA2, V2_2_0_BETA1, V2_1_0, V2_1_0_RC1, V2_1_0_BETA2,
+	  V2_1_0_BETA1, V2_0_1, V2_0_0, V2_0_0_BETA1, V1_3, V1_2_1, V1_2,
+	  ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_1_1, V1_1, V1_0_2, V1_0_1):
+	  Update README.
 
 2006-09-08 21:01  devrim
 
@@ -6646,8 +6932,7 @@
 
 2006-09-08 20:09  devrim
 
-	* doc/: pgpool-en.html, pgpool.html: comment last modified line for
-	  a better look
+	* doc/pgpool-en.html: comment last modified line for a better look
 
 2006-09-08 20:05  devrim
 
@@ -6658,40 +6943,49 @@
 
 2006-09-08 19:16  devrim
 
-	* doc/: pgpool-en.html, pgpool.html.en, tutorial-en.html,
-	  tutorial.html.en:
+	* doc/: pgpool-en.html, tutorial-en.html:
 
 	  Renamed files so that some browsers won't complain.
 
 2006-09-08 12:35  t-ishii
 
 	* README, configure.in, Makefile.am, aclocal.m4, Makefile.in,
-	  config.h.in, AUTHORS, configure, COPYING, ChangeLog, INSTALL,
-	  NEWS, TODO, config.guess, config.sub, depcomp, install-sh,
-	  ltmain.sh, missing, mkinstalldirs, pg_md5.c, pool_config.c,
-	  README.euc_jp, main.c, md5.c, md5.h, pgpool.conf.sample,
-	  pgpool.spec, pool.h, pool_type.h, version.h, child.c,
-	  pool_auth.c, pool_config.l, pool_error.c, pool_connection_pool.c,
+	  config.h.in, configure, COPYING, ChangeLog, NEWS, TODO,
+	  config.guess, config.sub, ltmain.sh, pg_md5.c, pool_config.c,
+	  README.euc_jp, main.c, md5.c, pgpool.conf.sample, pgpool.spec,
+	  pool.h, pool_type.h, version.h, child.c, pool_auth.c,
+	  pool_config.l, pool_error.c, pool_connection_pool.c,
 	  pool_params.c, pool_process_query.c, pool_signal.c,
-	  pool_signal.h, pool_stream.c, pcp.conf.sample, pcp_child.c,
-	  pool_ipc.h, pool_sema.c, pool_shmem.c, pool_system.c,
-	  pool_rewrite_query.c, pool_rewrite_query.h,
-	  pool_rewrite_outfuncs.c, pgpool.8.in, pool_query_cache.c,
-	  doc/pgpool.html, doc/pgpool.html.en, doc/tutorial.html,
-	  doc/tutorial.html.en, parser/Makefile.am, parser/Makefile.in,
-	  sample/dist_def_pgbench.sql, sql/system_db.sql, parser/gram.c,
-	  parser/gram.h, parser/gram.y, parser/gramparse.h, parser/list.c,
-	  parser/makefuncs.c, parser/makefuncs.h, parser/memnodes.h,
-	  parser/nodes.c, parser/nodes.h, parser/parsenodes.h,
-	  parser/parser.c, parser/parser.h, parser/pg_list.h,
-	  parser/pool_memory.c, parser/pool_memory.h, parser/pool_string.c,
-	  parser/pool_string.h, parser/keywords.c, parser/keywords.h,
-	  parser/pool_parser.h, parser/primnodes.h, parser/scansup.h,
-	  parser/value.c, parser/value.h, parser/outfuncs.c, parser/scan.c,
-	  parser/scan.l, pcp/Makefile.am, pcp/Makefile.in, pcp/md5.h,
-	  pcp/pcp.h, pcp/md5.c, pcp/pcp.c, pcp/pcp_attach_node.c,
-	  pcp/pcp_detach_node.c, pcp/pcp_error.c, pcp/pcp_node_count.c,
-	  pcp/pcp_stream.c, pcp/pcp_stream.h, pcp/pcp_node_info.c,
-	  pcp/pcp_proc_count.c, pcp/pcp_proc_info.c, pcp/pcp_stop_pgpool.c,
+	  pool_signal.h, pool_stream.c, pcp_child.c, pool_ipc.h,
+	  pool_sema.c, pool_shmem.c, pool_system.c, pool_rewrite_query.c,
+	  pool_rewrite_query.h, pool_rewrite_outfuncs.c, pgpool.8.in,
+	  pool_query_cache.c, parser/Makefile.am, parser/Makefile.in,
+	  sql/system_db.sql, parser/gram.c, parser/gram.h, parser/gram.y,
+	  parser/gramparse.h, parser/list.c, parser/makefuncs.c,
+	  parser/makefuncs.h, parser/memnodes.h, parser/nodes.c,
+	  parser/nodes.h, parser/parsenodes.h, parser/parser.c,
+	  parser/parser.h, parser/pg_list.h, parser/pool_memory.c,
+	  parser/pool_memory.h, parser/pool_string.c, parser/pool_string.h,
+	  parser/keywords.c, parser/keywords.h, parser/pool_parser.h,
+	  parser/primnodes.h, parser/scansup.h, parser/value.c,
+	  parser/value.h, parser/outfuncs.c, parser/scan.c, parser/scan.l,
+	  pcp/Makefile.am, pcp/Makefile.in, pcp/pcp.h, pcp/md5.c,
+	  pcp/pcp.c, pcp/pcp_attach_node.c, pcp/pcp_detach_node.c,
+	  pcp/pcp_error.c, pcp/pcp_node_count.c, pcp/pcp_stream.c,
+	  pcp/pcp_stream.h, pcp/pcp_node_info.c, pcp/pcp_proc_count.c,
+	  pcp/pcp_proc_info.c, pcp/pcp_stop_pgpool.c,
 	  pcp/pcp_systemdb_info.c: Initial revision
+
+2006-09-08 12:35  t-ishii
+
+	* AUTHORS, INSTALL, depcomp, install-sh, missing, mkinstalldirs,
+	  md5.h, pcp.conf.sample, sample/dist_def_pgbench.sql, pcp/md5.h
+	  (utags: ROOT_OF_V2_0_PARALLEL_UNSTABLE, V1_0_0, V1_0_1, V1_0_2,
+	  V1_1, V1_1_1, V1_2, V1_2_1, V1_3, V2_0_0, V2_0_0_BETA1, V2_0_1,
+	  V2_1_0, V2_1_0_BETA1, V2_1_0_BETA2, V2_1_0_RC1, V2_2_0,
+	  V2_2_0_BETA1, V2_2_0_BETA2, V2_2_0_RC1, V2_2_0_RC2, V2_2_1,
+	  V2_2_2, V2_2_3, V2_2_4, V2_2_5, V2_2_6, V2_2_7, V2_3, V2_3_1,
+	  V2_3_2, V2_3_2_1, V2_3_2_2, V2_3_3, V3_0_0, V3_0_0_BETA1,
+	  V3_0_0_BETA2, V3_0_0_BETA3, V3_0_0_RC1, V3_0_1, V3_1_0_ALPHA1):
+	  pgpool-II initial release
 
