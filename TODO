@@ -2,126 +2,20 @@ $Header$
 
 * General
 
-- Add backend id to statement log(this item was reolved in 2.3)
+- Reset application name to "pgppol" when client disconnects
 
-- Show PostgreSQL backend process ids in process status
-
-- Prepare for changing postgresql.conf directives which produce 'S'
-  message. Othewise we get:
-
-  pool_process_query: 1 th kind S does not match with master or majority
-  connection kind C
-
-  ERROR: pid 26122: kind mismatch
-  among backends. Possible last query was: "UPDATE branches SET bbalance
-  = bbalance + -3820 WHERE bid = 1;" kind details are: 0[C] 1[S]
-
-  It seems PostgreSQL sends following parameter status at the *first* pgpool.conf reload only.
-
-2009-02-23 23:06:21 LOG:   pid 5611: name: is_superuser value: on
-2009-02-23 23:06:31 LOG:   pid 5627: name: DateStyle value: ISO, MDY
-2009-02-23 23:06:31 LOG:   pid 5626: name: DateStyle value: ISO, MDY
-2009-02-23 23:06:31 LOG:   pid 5622: name: DateStyle value: ISO, MDY
-
-  (this item was resolved in 2.2)
-
-- Drop table should be in a transactin block? It is judged here:
-  (this item was resolved in 2.2)
-
-POOL_STATUS start_internal_transaction(POOL_CONNECTION_POOL *backend, Node *node)
-{
-	int i;
-
-	/* if we are not in a transaction block,
-	 * start a new transaction
-	 */
-	if (TSTATE(backend) == 'I' &&
-		(IsA(node, InsertStmt) || IsA(node, UpdateStmt) ||
-		 IsA(node, DeleteStmt) || IsA(node, SelectStmt)))
-
-  example session log:
-
-2009-01-09 00:22:20 JST t-ishii test 853 LOG:  statement: begin;
-2009-01-09 00:22:23 JST t-ishii test 853 LOG:  statement: lock table t1;
-2009-01-09 00:22:23 JST t-ishii test 853 LOG:  unexpected EOF on client connection
-2009-01-09 00:22:45 JST t-ishii test 860 LOG:  statement: drop table t1;
-2009-01-09 00:22:46 JST t-ishii test 860 LOG:  unexpected EOF on client connection
-2009-01-09 00:22:49 JST t-ishii test 877 LOG:  statement: drop table t1;
-2009-01-09 00:22:49 JST t-ishii test 877 ERROR:  table "t1" does not exist
-2009-01-09 00:22:49 JST t-ishii test 877 STATEMENT:  drop table t1;
-
-
-?????????
-2009-01-09 00:22:23 JST t-ishii test 854 LOG:  unexpected EOF on client connection
-2009-01-09 00:22:46 JST t-ishii test 861 LOG:  statement: drop table t1;
-2009-01-09 00:22:46 JST t-ishii test 861 ERROR:  cache lookup failed for constraint 1857934
-2009-01-09 00:22:46 JST t-ishii test 861 STATEMENT:  drop table t1;
-2009-01-09 00:22:46 JST t-ishii test 861 LOG:  could not send data to client: ???????????
-2009-01-09 00:22:46 JST t-ishii test 861 LOG:  unexpected EOF on client connection
-2009-01-09 00:22:49 JST t-ishii test 878 LOG:  statement: drop table t1;
-2009-01-09 00:22:49 JST t-ishii test 878 ERROR:  cache lookup failed for constraint 1857934
-2009-01-09 00:22:49 JST t-ishii test 878 STATEMENT:  drop table t1;
-2009-01-09 00:25:51 JST t-ishii test 878 LOG:  statement: create table t1(i int);
-2009-01-09 00:25:52 JST t-ishii test 878 ERROR:  relation "t1" already exists
-2009-01-09 00:25:52 JST t-ishii test 878 STATEMENT:  create table t1(i int);
-2009-01-09 00:25:52 JST t-ishii test 878 LOG:  could not send data to client: ???????????
-2009-01-09 00:25:52 JST t-ishii test 878 LOG:  unexpected EOF on client connection
-
-- BEGIN; BEGIN; causes:
-  (this item was resolved in 2.2)
-
-  ERROR:  kind mismatch among backends 0[N] 1[E]
-
-  detect_error() checks following  NOTICE(ERRRO¤Î25001 means /* SET
-  TRANSACTION ISOLATION LEVEL must be called before any query */)
-
-  WARNING:  25001: there is already a transaction in progress
-
-  this will send an error query to abort a transaction.
-
-- regression failres:
-
-     triggers             ... FAILED
-test sanity_check         ... FAILED
-     portals              ... FAILED
-test misc                 ... FAILED
-     plpgsql              ... FAILED
-     largeobject          ... FAILED
-test tablespace           ... FAILED
-
-========================
- 7 of 114 tests failed. 
-========================
-
-  this happens when replication true, insert_lock true, replicate_select false,
-  load_balance false.
-
-  if replicate_select is true, prepared_xacts fails(because \d fails)
-  and prepared transactio remain, which keep a lock on pg_class in
-  access share mode. And alter table pg_class cannot obtain exclusive
-  lock, which causes all SELECTs suspend and regression cannot contiunue.
+- Allow to call pcp commands/show commands as a stored procedures of
+  PostgreSQL
 
 - Allow client encoding conversion. This was possible in pgpool-I
-
-- Allow special comment such as "/* STRICT */". This was possible in pgpool-I
-
-- Allow multi statement
-
-- Sometimes query is sent to a DB node despite its weight is 0
 
 - Avoid cross pgpool process deadlock situation. This is a long
   standing problem since pgpool-II was born (pgpool-I avoids this by
   setting timeout)
 
-- Allow to stop PostgeSQL from pgpoolAdmin to make the on-line
-  recovery more convenient. This requires something like
-  pgpool_remote_stop to be specified in pgpool.conf.
-
 - If DISCARD ALL is specified in the reset_query_list and transaction
   is not closed when client disconnects, automatically issue ABORT
   before issuing DISCARD ALL
-
-- Add SSL support(this item was resolved in 2.3.2)
 
 - Allow to specify queries issued when starting sessions
 
@@ -129,41 +23,41 @@ test tablespace           ... FAILED
 
 - Make accept queue
 
-- Graceful shutdown, attach, detach
+- Graceful attaching a node
 
 * Query handling
+
+- Allow multi statement
 
 - Enhance DROP DATABASE handling (not disconnect all idle connections)
 
 * Replication
 
-- Allow to replicate timestamp value (this item was resolved in 2.3)
-
 - Allow per table replication
 
 - Allow per session level and query level load balancing
 
-- Allow replication of SEQUENCE
+- More reliable way to replicate SEQUENCES
 
-- Allow replication of OID
-
-- Allow to specify functions to be replicated other than nextval(),
-  setval()
+- Allow to replicate OIDs, XIDs
 
 * Master/slave mode
 
-- Send query to master only if SELECT uses temp tables
+- Allow to use more than 1 standbys
 
 * On line recovery
-
-- Allow recovery_1st_stage_command to get PostgreSQL listen port,
-  database cluster directory etc. info
 
 * Query cache
 
 - Cache invalidation
 
 - More effcient cache (memcache?)
+
+* Log
+
+- Mutiple log levels
+
+- Multiple log destinations
 
 * Parallel query
 
@@ -184,6 +78,20 @@ LINE 1: SELECT pool_parallel("SELECT d1.id, d1.aaaa, d1.bbbb...
 
 - process USING clause in JOIN
 
+* pgpoolAdmin
+
+- German messages
+
+- Allow to run pgpoolAdmin on a host different from a host which
+  pgpool-II is running on
+
+- Allow to stop PostgeSQL from pgpoolAdmin to make the on-line
+  recovery more convenient
+
 * Docs
 
 - Write libpcp API docs
+
+- French documentations
+
+- German documentations
