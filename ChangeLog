@@ -1,3 +1,130 @@
+2011-02-10 11:14  t-ishii
+
+	* main.c: Fix pool_get_node_info() so that it deals with
+	  node_number == -1 case.  This could happen get_next_master_node()
+	  returns -1 because there's no master node available (all nodes down
+	  case).  Also tweak trigger_failover_command() to deal with
+	  pool_get_node_info() returns NULL case.  Per report from Wouter
+	  D'Haeseleer.  Subject: [Pgpool-general] PGpool crashes when all DB
+	  servers go down To: "pgpool-general@pgfoundry.org"
+	  <pgpool-general@pgfoundry.org> Date: Mon, 07 Feb 2011 09:35:50 +0100
+
+2011-02-10 11:08  t-ishii
+
+	* pool_query_context.c: Update copyright years.
+
+2011-02-01 18:58  kitagawa
+
+	* COPYING, configure, configure.in: Prepare 3.0.2
+
+2011-02-01 17:18  kitagawa
+
+	* pool_query_context.c: Fix bug that failover fails in raw mode.
+	  This used to work but was broken in 3.0.
+
+2011-01-31 23:47  t-ishii
+
+	* pool_process_reporting.c, pool_relcache.c: Fix warning of
+	  printf() and time_t.
+
+2011-01-31 01:16  gleu
+
+	* pgpool.conf.sample, pgpool.conf.sample-master-slave,
+	  pgpool.conf.sample-replication, pgpool.conf.sample-stream:
+	  Reorganize pgpool.conf sample files so that they are easier to read.
+
+2011-01-31 01:09  gleu
+
+	* Makefile.in: Add understandable "make" and "make install" end
+	  messages.
+
+2011-01-30 09:23  t-ishii
+
+	* doc/: pgpool-en.html, pgpool-ja.html: Add mention about
+	  pgpool-walrecrunning.
+
+2011-01-30 09:17  t-ishii
+
+	* sql/: pgpool-walrecrunning/Makefile,
+	  pgpool-walrecrunning/pgpool-walrecrunning.c,
+	  pgpool-walrecrunning/pgpool-walrecrunning.sql.in,
+	  pgpool-walrecvrunning/Makefile,
+	  pgpool-walrecvrunning/pgpool-walrecrunning.c,
+	  pgpool-walrecvrunning/pgpool-walrecrunning.sql.in: Rename
+	  pgpool-walrecvrunning, which was mistakenly named to
+	  pgpool-walrecrunning.
+
+2011-01-28 13:46  kitagawa
+
+	* pool_process_query.c, pool_proto_modules.c, pool_query_context.c,
+	  pool_query_context.h, pool_session_context.c,
+	  pool_session_context.h, pool_timestamp.c, pool_timestamp.h:
+	  Change session information to integrate Portal and PreparedStatement
+	  structure into POOL_SENT_MESSAGE structure.
+
+	  Portal and PreparedStatement structure were used by only extended
+	  query protocol before. but POOL_SENT_MESSAGE is used by simple query
+	  protocol too.
+
+	  This change fixes issues that happen when two protocols were mixed
+	  in one session.
+
+	  PHP example)
+
+	  // PREPARE using simple query protocol pg_query($dbconn, 'PREPARE
+	  my_query(TEXT) AS SELECT $1::TEXT');
+
+	  // EXECUTE using exetended query protocol pg_execute($dbconn,
+	  "my_query", array('test'));
+
+2011-01-27 16:55  t-ishii
+
+	* child.c, main.c, pool_config.c, pool_config.l,
+	  pool_connection_pool.c, pool_process_reporting.c, recovery.c,
+	  doc/pgpool-en.html: Deprecate backend_socket_dir. Instead, if
+	  backend_hostname starts with '/' it is regarded the as path to Unix
+	  domain.  If backend_hostname is left empty, then default Unix domain
+	  path(/tmp) is used. This follows the convention of libpq interface.
+	  Patch contributed by Jehan-Guillaume de Rorthais.  Additional fixes
+	  to main.c and recovery.c by me.
+
+2011-01-26 10:38  kitagawa
+
+	* pool_process_reporting.c: Remove parameters from pool_status:
+	  recovery_password, system_db_password.
+
+2011-01-26 10:36  kitagawa
+
+	* pool_process_query.c, pool_proto_modules.c, pool_proto_modules.h:
+	  Remove unnecessary variable: receive_extended_begin.
+
+2011-01-26 10:28  t-ishii
+
+	* sql/pgpool-regclass/pgpool-regclass.c: Fix pgpool-regclass().  It
+	  appeared that using PG_TRY/CATCH is not safe, sometimes backend dies
+	  with PANIC:  ERRORDATA_STACK_SIZE exceeded.  The only solution is
+	  stealing some functions from PostgreSQL and modify it not to throw
+	  errors.  This is not elegant at all but PostgreSQL developers do not
+	  allow to add such that built-in functions. Sigh.
+
+2011-01-26 10:11  t-ishii
+
+	* sql/pgpool-regclass/pgpool-regclass.c: Fix pgpool-regclass().  It
+	  appeared that using PG_TRY/CATCH is not safe, sometimes backend dies
+	  with PANIC:  ERRORDATA_STACK_SIZE exceeded.  The only solution is
+	  stealing some functions from PostgreSQL and modify it not to throw
+	  errors.  This is not elegant at all but PostgreSQL developers do not
+	  allow to add such that built-in functions. Sigh.
+
+2011-01-25 18:25  kitagawa
+
+	* pool_proto_modules.c: Fix bug that DROP DATABASE fails.  This
+	  used to work but was broken in 3.0.
+
+2011-01-24 13:44  t-ishii
+
+	* ChangeLog: Update ChangeLog by using cvs2cl.pl -t --fsf.
+
 2011-01-24 13:36  t-ishii
 
 	* doc/pgpool-en.html: Update English documentation.
