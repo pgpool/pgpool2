@@ -349,7 +349,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 				 *	transaction isolation level is not SERIALIZABLE)
 				 * we might be able to load balance.
 				 */
-				if (TSTATE(backend, MASTER_NODE_ID) == 'I' ||
+				if (TSTATE(backend, REAL_MASTER_NODE_ID) == 'I' ||
 					(!pool_is_writing_transaction() &&
 					 !pool_is_failed_transaction() &&
 					 pool_get_transaction_isolation() != POOL_SERIALIZABLE))
