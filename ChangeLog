@@ -1,3 +1,12 @@
+2011-02-15 11:15  kitagawa
+
+	* NEWS, doc/pgpool-ja.html (V3_0_STABLE): Prepare 3.0.2
+
+2011-02-13 20:46  t-ishii
+
+	* ChangeLog (V3_0_STABLE): Run cvs2cl.pl -t --fsf -b --follow-only
+	  V3_0_STABLE.
+
 2011-02-01 18:58  kitagawa
 
 	* COPYING, configure, configure.in (V3_0_STABLE): Prepare 3.0.2

@@ -3707,6 +3707,48 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
 
 <h1>$B%j%j!<%9%N!<%H(B<a name="release"></a></h1>
 
+<h2>3.0.2 (umiyameboshi) 2011/02/15</h2>
+<h3>$B35MW(B</h3>
+<p>
+$B$3$N%P!<%8%g%s$G$O!"(B3.0.1$B$K$*$1$kMM!9$J%P%0$,=$@5$5$l$F$$$^$9!#(B
+</p>
+
+<h3>$B8_49@-$N$J$$JQ99(B</h3>
+<p>
+<ul>
+ <li>raw$B%b!<%I$G(BDB$B%N!<%I$,$R$H$D$@$1$N>l9g!"(BDB$B%N!<%I$KLdBj$,H/@8$9$k$H%@%&%s>uBV$K$J$j$^$9$,!"(BDB$B%N!<%I$,I|5l$7$?$i(Bpgpool$B$N:F5/F0$J$7$K(BDB$B%N!<%I$r;HMQ$G$-$k$h$&$K$7$^$7$?!#$3$NJQ99$O(B3.0$B$K4^$^$l$F$$$^$7$?$,!"F0:n$7$F$$$^$;$s$G$7$?(B(Tatsuo, Kitagawa)
+</ul>
+</p>
+
+<h3>$B%P%0=$@5(B</h3>
+<p>
+<ul>
+ <li>$B%Q%9%o!<%IG'>Z$K$*$1$k0\?"@-$rB;$J$&%3!<%I$r=$@5$7$^$7$?!#$3$l$O(BFreeBSD$B%f!<%6$+$i$N%P%0Js9p$K4p$E$-$^$9(B(Tatsuo)
+ <li>insert_lock$B$,%f!<%6%F!<%V%k$NA49T$r%m%C%/$9$k%P%0$r=$@5$7$^$7$?(B(Tatsuo)
+ <li>$B%f!<%6L>$ND9$5$,(B32$B%P%$%H$N$H$-$K(Bpgpool$B;R%W%m%;%9$,%/%i%C%7%e$9$k%Q%9%o!<%IG'>Z$N%P%0$r=$@5$7$^$7$?(B(Tatsuo)
+ <li>raw$B%b!<%I$^$?$O%P%C%/%(%s%I%N!<%I?t$,(B1$B$N$H$-$K!"(Bpgpool$B;R%W%m%;%9$,%/%i%C%7%e$9$k(Bmd5$BG'>Z$N%P%0$r=$@5$7$^$7$?!#%Q%C%A$O(BRob Shepherd$B$5$s$+$iD:$-$^$7$?(B(Tatsuo)
+ <li>$B0JA0$+$i$"$C$?G[Ns$HJ#9g7?$KBP$9$k%?%$%`%9%?%s%W=q$-49$($N%P%0$r=$@5$7$^$7$?!#%Q%C%A$O(BAkio Ishida$B$5$s$+$iD:$-$^$7$?(B(Tatsuo)
+ <li>debug_level$B%Q%i%a!<%?$,F0:n$7$J$$%P%0$r=$@5$7$^$7$?!#%Q%C%A$O(BGilles Darold$B$5$s$+$iD:$-$^$7$?(B(Tatsuo)
+ <li>$B%U%'%$%k%*!<%P!<Cf$K5/$3$j$&$k(Bpgpool$B;R%W%m%;%9$N%/%i%C%7%e$r=$@5$7$^$7$?(B(Kitagawa)
+ <li>$B%f!<%6$,%9%-!<%^L>$NIU$$$?4X?t$r8F$s$@$H$-$K(Bwhite/black_function_list$B$,@5$7$/F0:n$9$k$h$&$K=$@5$7$^$7$?(B(Tatsuo)
+ <li>$B%3%M%/%7%g%s%-%c%C%7%e$K$h$C$F(BDROP DATABASE$B$,<:GT$9$k%P%0$r=$@5$7$^$7$?(B(Kitagawa)
+ <li>raw$B%b!<%I$G%U%'%$%k%*!<%P$,<:GT$9$k%P%0$r=$@5$7$^$7$?(B(Kitagawa)
+ <li>1$B%;%C%7%g%s$G4J0WLd$$9g$o$;%W%m%H%3%k$H3HD%Ld$$9g$o$;%W%m%H%3%k$NN>J}$,;H$o$l$?$H$-$K5/$3$j$&$k(Bpgpool$B;R%W%m%;%9$N=*N;$r=$@5$7$^$7$?(B(Kitagawa)
+ <li>$B3HD%Ld$$9g$o$;%W%m%H%3%k$r;HMQCf$K%(%i!<$,H/@8$9$k$H5/$3$j$&$k%O%s%0%"%C%W$r=$@5$7$^$7$?(B(Kitagawa)
+ <li>PG_TRY/CATCH$B$r;HMQ$7$J$$$h$&$K(Bpgpool-regclass()$B$r=$@5$7$^$7$?!#(BPG_TRY/CATCH$B$O!";~!9%P%C%/%(%s%I$,!V(BPANIC:  ERRORDATA_STACK_SIZE exceeded.$B!W$H$$$&%a%C%;!<%8$H$H$b$K=*N;$9$k$N$G0BA4$G$J$$$h$&$K8+$($^$9(B(Tatsuo)
+ <li>failback_command$B$H(Bfail_over_on_backend_error$B$,@5$7$$CM$rI=<($9$k$h$&$K(Bpool_status$B$r=$@5$7$^$7$?(B(Kitagawa)
+ <li>pool_status$B$+$i(Brecovery_password$B$H(Bsystem_db_password$B$r:o=|$7$^$7$?(B(Kitagawa)
+ <li>$B1Q8l%I%-%e%a%s%H$r=q$-D>$7$F%l%S%e!<$7$^$7$?(B(Marc Cousin, Gleu)
+</ul>
+</p>
+
+<h3>$B2~NI(B</h3>
+<p>
+<ul>
+ <li>$B%9%F!<%?%9%U%!%$%k$rFI$s$G$$$k$H$-$K!"FCDj$N%P%C%/%(%s%I$,%@%&%s>uBV$J$i$P%m%0$r=PNO$9$k$h$&$K$7$^$7$?(B(Tatsuo)
+</ul>
+</p>
+
 <h2>3.0.1 (umiyameboshi) 2010/10/19</h2>
 <h3>$B35MW(B</h3>
 <p>
@@ -4582,7 +4624,7 @@ INSERT/UPDATE/DELETE$B$O<+F0E*$K%^%9%?$N$_$KAw$i$l$^$9!#(BSELECT$B$K4X$7$F$OL
 <div class="copyright">
 <hr>
 <copyright>
-Copyright &copy; 2003 &ndash; 2010 pgpool Global Development Group
+Copyright &copy; 2003 &ndash; 2011 pgpool Global Development Group
 </copyright>
 </div>
 </body>

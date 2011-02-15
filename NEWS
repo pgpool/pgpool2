@@ -1,3 +1,70 @@
+3.0.2 (umiyameboshi) 2011/02/15
+
+	  * Version 3.0.2
+
+	  This version fixes various bug in 3.0.1.
+
+	  * Incompatible changes
+
+	  - In raw mode if there's only one DB node and if a problem arises
+		with the DB node, it will be brought to down status. However if
+		the DB node goes into good condition again, you can use the DB
+		node without restarting pgpool. This change has been included in
+		3.0, but did not work(Tatsuo, Kitagawa)
+
+	  * Bug fixes
+
+	  - Fix non portable code in password authentication.
+		Bug report from a FreeBSD user(Tatsuo)
+
+	  - Fix bug that insert_lock locks all rows in user table(Tatsuo)
+
+	  - Fix bug with password authentication. If user name is 32 bytes
+		long, pgpool child segfaults.(Tatsuo)
+
+	  - Fix bug with md5 authentication. If raw mode or number of
+		backend is 1, pgpool child segfaults. Patch contributed by
+		Rob Shepherd(Tatsuo)
+
+	  - Fix long standing bug with timestamp rewriting against array
+		and complex types. Patch contributed by Akio Ishida(Tatsuo)
+
+	  - Fix bug that debug_level directive doesn't work. Patch
+		contributed by Gilles Darold(Tatsuo)
+
+	  - Fix possible crash of pgpool child while doing failover(Kitagawa)
+
+	  - Fix white/black_function_list so that it works correctly when user
+		calls function with schema name(Tatsuo)
+
+	  - Fix bug that DROP DATABASE fails by connection cache(Kitagawa)
+
+	  - Fix bug that failover fails in raw mode(Kitagawa)
+
+	  - Fix possible termination of pgpool child when both simple query
+		protocol and extended query protocol are used in one session
+		(Kitagawa)
+
+	  - Fix possible hang up when an error occurs while using extended
+		query protocol(Kitagawa)
+
+	  - Fix pgpool-regclass() so that it doesn't use PG_TRY/CATCH.
+		It appeared that using PG_TRY/CATCH is not safe, sometimes backend
+		dies with PANIC:  ERRORDATA_STACK_SIZE exceeded.(Tatsuo)
+
+	  - Fix pool_status so that failback_command and fail_over_on_backend_error
+		show correct values(Kitagawa)
+
+	  - Remove parameters from pool_status: recovery_password,
+		system_db_password(Kitagawa)
+
+	  - Rewrite and review english document(Marc Cousin, Gleu)
+
+	  * Enhancements
+
+	  - Emit log if particular backend is down status while reading
+		the status file(Tatsuo)
+
 3.0.1 (umiyameboshi) 2010/10/19
 
 	  * Version 3.0.1
