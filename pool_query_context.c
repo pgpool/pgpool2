@@ -1134,6 +1134,9 @@ int statecmp(POOL_QUERY_STATE s1, POOL_QUERY_STATE s2)
 		case POOL_EXECUTE_COMPLETE:
 			ret = (s1 == s2) ? 0 : -1;
 			break;
+		default:
+			ret = -2;
+			break;
 	}
 
 	return ret;
