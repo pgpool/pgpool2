@@ -65,6 +65,7 @@ EXTRA_DIST = pgpool.8.in sql/system_db.sql sample/pgpool.pam doc/pgpool-ja.html 
 		doc/where_to_send_queries.pdf doc/where_to_send_queries.odg doc/pgpool-ja.css \
 		sample/pgpool_remote_start sample/pgpool_recovery sample/pgpool_recovery_pitr \
 		sample/dist_def_pgbench.sql sample/replicate_def_pgbench.sql \
+		sql/Makefile \
 		sql/pgpool-recovery/pgpool-recovery.c \
 		sql/pgpool-recovery/pgpool-recovery.sql.in sql/pgpool-recovery/Makefile \
 		sql/pgpool-regclass/pgpool-regclass.c \
