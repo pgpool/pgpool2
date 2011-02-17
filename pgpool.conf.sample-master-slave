@@ -147,7 +147,9 @@ health_check_user = 'nobody'
 #                  %p = port number
 #                  %D = database cluster path
 #                  %m = new master node id
+#                  %H = hostname of the new master node
 #                  %M = old master node id
+#                  %P = old primary node id
 #                  %% = '%' character
 #
 failover_command = ''
@@ -158,7 +160,9 @@ failover_command = ''
 #                  %p = port number
 #                  %D = database cluster path
 #                  %m = new master node id
+#                  %H = hostname of the new master node
 #                  %M = old master node id
+#                  %P = old primary node id
 #                  %% = '%' character
 #
 failback_command = ''

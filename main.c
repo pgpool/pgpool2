@@ -2193,21 +2193,21 @@ static int trigger_failover_command(int node, const char *command_line)
 				char val = *(command_line + 1);
 				switch (val)
 				{
-					case 'p': /* port */
+					case 'p': /* failed node port */
 						snprintf(port_buf, sizeof(port_buf), "%d", info->backend_port);
 						string_append_char(exec_cmd, port_buf);
 						break;
 
-					case 'D': /* database directory */
+					case 'D': /* failed node database directory */
 						string_append_char(exec_cmd, info->backend_data_directory);
 						break;
 
-					case 'd': /* node id */
+					case 'd': /* failed node id */
 						snprintf(port_buf, sizeof(port_buf), "%d", node);
 						string_append_char(exec_cmd, port_buf);
 						break;
 
-					case 'h': /* host name */
+					case 'h': /* failed host name */
 						string_append_char(exec_cmd, info->backend_hostname);
 						break;
 
@@ -2223,6 +2223,11 @@ static int trigger_failover_command(int node, const char *command_line)
 
 					case 'M': /* old master node id */
 						snprintf(port_buf, sizeof(port_buf), "%d", MASTER_NODE_ID);
+						string_append_char(exec_cmd, port_buf);
+						break;
+
+					case 'P': /* old primary node id */
+						snprintf(port_buf, sizeof(port_buf), "%d", PRIMARY_NODE_ID);
 						string_append_char(exec_cmd, port_buf);
 						break;
 
