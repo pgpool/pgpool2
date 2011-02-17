@@ -3707,7 +3707,7 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
 
 <h1>$B%j%j!<%9%N!<%H(B<a name="release"></a></h1>
 
-<h2>3.0.2 (umiyameboshi) 2011/02/15</h2>
+<h2>3.0.2 (umiyameboshi) 2011/02/17</h2>
 <h3>$B35MW(B</h3>
 <p>
 $B$3$N%P!<%8%g%s$G$O!"(B3.0.1$B$K$*$1$kMM!9$J%P%0$,=$@5$5$l$F$$$^$9!#(B
@@ -3724,7 +3724,7 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
 <p>
 <ul>
  <li>$B%Q%9%o!<%IG'>Z$K$*$1$k0\?"@-$rB;$J$&%3!<%I$r=$@5$7$^$7$?!#$3$l$O(BFreeBSD$B%f!<%6$+$i$N%P%0Js9p$K4p$E$-$^$9(B(Tatsuo)
- <li>insert_lock$B$,%f!<%6%F!<%V%k$NA49T$r%m%C%/$9$k%P%0$r=$@5$7$^$7$?(B(Tatsuo)
+ <li>insert_lock$B$,%f!<%6%F!<%V%k$NA49T$r%m%C%/$9$k%P%0$r=$@5$7$^$7$?(B(Tatsuo, Kitagawa)
  <li>$B%f!<%6L>$ND9$5$,(B32$B%P%$%H$N$H$-$K(Bpgpool$B;R%W%m%;%9$,%/%i%C%7%e$9$k%Q%9%o!<%IG'>Z$N%P%0$r=$@5$7$^$7$?(B(Tatsuo)
  <li>raw$B%b!<%I$^$?$O%P%C%/%(%s%I%N!<%I?t$,(B1$B$N$H$-$K!"(Bpgpool$B;R%W%m%;%9$,%/%i%C%7%e$9$k(Bmd5$BG'>Z$N%P%0$r=$@5$7$^$7$?!#%Q%C%A$O(BRob Shepherd$B$5$s$+$iD:$-$^$7$?(B(Tatsuo)
  <li>$B0JA0$+$i$"$C$?G[Ns$HJ#9g7?$KBP$9$k%?%$%`%9%?%s%W=q$-49$($N%P%0$r=$@5$7$^$7$?!#%Q%C%A$O(BAkio Ishida$B$5$s$+$iD:$-$^$7$?(B(Tatsuo)
@@ -3736,9 +3736,17 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
  <li>1$B%;%C%7%g%s$G4J0WLd$$9g$o$;%W%m%H%3%k$H3HD%Ld$$9g$o$;%W%m%H%3%k$NN>J}$,;H$o$l$?$H$-$K5/$3$j$&$k(Bpgpool$B;R%W%m%;%9$N=*N;$r=$@5$7$^$7$?(B(Kitagawa)
  <li>$B3HD%Ld$$9g$o$;%W%m%H%3%k$r;HMQCf$K%(%i!<$,H/@8$9$k$H5/$3$j$&$k%O%s%0%"%C%W$r=$@5$7$^$7$?(B(Kitagawa)
  <li>PG_TRY/CATCH$B$r;HMQ$7$J$$$h$&$K(Bpgpool-regclass()$B$r=$@5$7$^$7$?!#(BPG_TRY/CATCH$B$O!";~!9%P%C%/%(%s%I$,!V(BPANIC:  ERRORDATA_STACK_SIZE exceeded.$B!W$H$$$&%a%C%;!<%8$H$H$b$K=*N;$9$k$N$G0BA4$G$J$$$h$&$K8+$($^$9(B(Tatsuo)
+ <li>JDBC$B%I%i%$%P$,%^%9%?%N!<%I$K2?EY$b(BBEGIN$B$rH/9T$9$k%m!<%I%P%i%s%9$N%P%0$r=$@5$7$^$7$?(B(Kitagawa)
  <li>failback_command$B$H(Bfail_over_on_backend_error$B$,@5$7$$CM$rI=<($9$k$h$&$K(Bpool_status$B$r=$@5$7$^$7$?(B(Kitagawa)
  <li>pool_status$B$+$i(Brecovery_password$B$H(Bsystem_db_password$B$r:o=|$7$^$7$?(B(Kitagawa)
  <li>$B1Q8l%I%-%e%a%s%H$r=q$-D>$7$F%l%S%e!<$7$^$7$?(B(Marc Cousin, Gleu)
+ <li>$B0J2<$N>r7o$rK~$?$9$H$-(B SELECT $B%/%(%j$,%^%9%?%N!<%I$KAw?.$5$l$J$$%P%0$r=$@5$7$^$7$?(B(Kitagawa)
+ <ul>
+  <li>$B%^%9%?!<%9%l!<%V%b!<%I$G$"$k(B
+  <li>$B3HD%Ld$$9g$o$;%W%m%H%3%k$r;HMQ$7$F$$$k(B
+  <li>$BL@<(E*$K%H%i%s%6%/%7%g%s$r3+;O$7$F$$$k(B
+  <li>$B99?7%/%(%j$r<B9T$7$?8e$G$"$k(B
+ </ul>
 </ul>
 </p>
 

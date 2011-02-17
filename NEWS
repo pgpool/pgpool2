@@ -1,4 +1,4 @@
-3.0.2 (umiyameboshi) 2011/02/15
+3.0.2 (umiyameboshi) 2011/02/17
 
 	  * Version 3.0.2
 
@@ -17,7 +17,8 @@
 	  - Fix non portable code in password authentication.
 		Bug report from a FreeBSD user(Tatsuo)
 
-	  - Fix bug that insert_lock locks all rows in user table(Tatsuo)
+	  - Fix bug that insert_lock locks all rows in user table
+		(Tatsuo, Kitagawa)
 
 	  - Fix bug with password authentication. If user name is 32 bytes
 		long, pgpool child segfaults.(Tatsuo)
@@ -51,6 +52,16 @@
 	  - Fix pgpool-regclass() so that it doesn't use PG_TRY/CATCH.
 		It appeared that using PG_TRY/CATCH is not safe, sometimes backend
 		dies with PANIC:  ERRORDATA_STACK_SIZE exceeded.(Tatsuo)
+
+	  - Fix bug that select query isn't sent to master node when it meets
+		the following conditions(Kitagawa)
+		- in MASTER/SLAVE mode
+		- use extended query protocol
+		- started transaction explicitly
+		- after write queries
+
+	  - Fix bug with load_balance that JDBC driver sends BEGIN to master node
+		many times(Kitagawa)
 
 	  - Fix pool_status so that failback_command and fail_over_on_backend_error
 		show correct values(Kitagawa)
