@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Sat Oct 30 12:19:52 JST 2010
+Last modified: Thu Feb 17 20:05:39 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -577,6 +577,7 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
 </td></tr>
 <tr><td>%M</td><td>$B8E$$%^%9%?!<$N%N!<%IHV9f(B</td></tr>
 <tr><td>%m</td><td>$B?7$7$$%^%9%?!<$N%N!<%IHV9f(B</td></tr>
+<tr><td>%P</td><td>$B8E$$%W%i%$%^%j%N!<%IHV9f(B</td></tr>
 <tr><td>%%</td><td>'%'$BJ8;z(B</td></tr>
 </table>
 </center>
@@ -604,6 +605,7 @@ pgpool $B$,I,MW$J>pJs$KCV$-49$($F%3%^%s%I$r<B9T$7$^$9!#(B
 <tr><td>%M</td><td>$B8E$$%^%9%?!<$N%N!<%IHV9f(B</td></tr>
 <tr><td>%m</td><td>$B?7$7$$%^%9%?!<$N%N!<%IHV9f(B</td></tr>
 <tr><td>%H</td><td>$B?7$7$$%^%9%?!<$N%[%9%HL>(B</td></tr>
+<tr><td>%P</td><td>$B8E$$%W%i%$%^%j%N!<%IHV9f(B</td></tr>
 <tr><td>%%</td><td>'%'$BJ8;z(B</td></tr>
 </table>
 </center>
@@ -954,10 +956,11 @@ white_function_list$B$H(Bblack_function_list$B$NN>J}$r6u0J30$K$9$k$3$H$O$G$-$
 <p>
 pgpool-II 3.0$B$h$jA0$N%P!<%8%g%s$G$O!"8GDj$G(Bnextval$B$H(Bsetval$B$,=q$-9~$_$r9T$J$&4X?t$H$7$FG'<1$5$l$F$$$^$7$?!#(B
 $B$=$l$HF1$8F0:n$r9T$J$o$;$k$K$O!"0J2<$N$h$&$K(Bwhite_function_list$B$H(Bblack_function_list$B$r;XDj$7$^$9!#(B
+currval$B$H(Blastval$B$O!"=q$-9~$_$r9T$&4X?t$G$O$"$j$^$;$s$,!"(Bblack_function_list$B$KEPO?$7$F$*$+$J$$$H!"Ii2YJ,;6$5$l!"(Bnextval$B$J$7$K8F$S=P$5$l$F$7$^$C$F%(%i!<$K$J$C$F$7$^$&$N$G!"(Bblack_function_list$B$KEPO?$7$F$*$/J}$,NI$$$G$7$g$&!#(B
 </p>
 <pre>
 white_function_list = ''
-black_function_list = 'nextval,setval'
+black_function_list = 'nextval,setval,currval,lastval'
 </pre>
 
 <a name="replicate_select"></a>
