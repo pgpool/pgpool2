@@ -40,6 +40,7 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <ctype.h>
+#include <regex.h>
 
 #include "pool.h"
 #include "pool_config.h"
@@ -2726,20 +2727,22 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *query, InsertStmt *node, int lock_kind)
 {
 	char *table;
-	int len;
+	int len = 0;
 	char qbuf[1024];
 	POOL_STATUS status;
 	int i, deadlock_detected = 0;
 
-#define SEQUENCETABLEQUERY "SELECT attname FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_attrdef d ON (a.attrelid = d.adrelid AND a.attnum = d.adnum) WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.relname = '%s' AND d.adsrc ~ 'nextval'"
+#define SEQUENCETABLEQUERY "SELECT d.adsrc FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_attrdef d ON (a.attrelid = d.adrelid AND a.attnum = d.adnum) WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.relname = '%s' AND d.adsrc ~ 'nextval'"
 
-#define SEQUENCETABLEQUERY2 "SELECT attname FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_attrdef d ON (a.attrelid = d.adrelid AND a.attnum = d.adnum) WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.oid = pgpool_regclass('%s') AND d.adsrc ~ 'nextval'"
+#define SEQUENCETABLEQUERY2 "SELECT d.adsrc FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_attrdef d ON (a.attrelid = d.adrelid AND a.attnum = d.adnum) WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.oid = pgpool_regclass('%s') AND d.adsrc ~ 'nextval'"
 
 #define MAX_SEQ_NAME 128
 
-	char *atrname;
+	char *adsrc;
 	char seq_rel_name[MAX_SEQ_NAME+1];
-	char stripped_table_name[MAX_SEQ_NAME+1];
+	regex_t preg;
+	size_t nmatch = 2;
+	regmatch_t pmatch[nmatch];
 	static POOL_RELCACHE *relcache;
 
 	/* insert_lock can be used in V3 only */
@@ -2787,24 +2790,39 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 		/*
 		 * Search relcache.
 		 */
-		atrname = pool_search_relcache(relcache, backend, table);
-		if (atrname == NULL)
+		adsrc = pool_search_relcache(relcache, backend, table);
+		if (adsrc == NULL)
 		{
-			/* could not get attribute namme */
+			/* could not get adsrc */
 			return POOL_CONTINUE;
 		}
+		pool_debug("adsrc: %s", adsrc);
 
-		/* strip head and tail double quotes from table name */
-		if (*table == '"')
-			table++;
-		len = strlen(table);
-		if (*(table + len -1) == '"')
-			len--;
-		strncpy(stripped_table_name, table, len);
-		*(stripped_table_name + len) = '\0';
+		if (regcomp(&preg, "nextval\\('(.+)'", REG_EXTENDED|REG_NEWLINE) != 0)
+		{
+			pool_error("insert_lock: regex compile failed");
+			return POOL_END;
+		}
 
-		snprintf(seq_rel_name, MAX_SEQ_NAME, "\"%s_%s_seq\"", stripped_table_name, atrname);
-		pool_debug("seq rel name:%s", seq_rel_name);
+		if (regexec(&preg, adsrc, nmatch, pmatch, 0) == 0)
+		{
+			/* pmatch[0] is "nextval('...'", pmatch[1] is sequence name */
+			if (pmatch[1].rm_so >= 0 && pmatch[1].rm_eo >= 0)
+			{
+				len = pmatch[1].rm_eo - pmatch[1].rm_so;
+				strncpy(seq_rel_name, adsrc + pmatch[1].rm_so, len);
+				*(seq_rel_name + len) = '\0';
+			}
+		}
+		regfree(&preg);
+
+		if (len == 0)
+		{
+			pool_error("insert_lock: regex no match: pg_attrdef is %s", adsrc);
+			return POOL_END;
+		}
+
+		pool_debug("seq rel name: %s", seq_rel_name);
 		snprintf(qbuf, sizeof(qbuf), "SELECT 1 FROM %s FOR UPDATE", seq_rel_name);
 	}
 	else
