@@ -1447,20 +1447,6 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 }
 
 /*
- * return non 0 if load balance is possible
- */
-int load_balance_enabled(POOL_CONNECTION_POOL *backend, Node* node, char *sql)
-{
-	return (pool_config->load_balance_mode &&
-			(DUAL_MODE || pool_config->parallel_mode) &&
-			MAJOR(backend) == PROTO_MAJOR_V3 &&
-			TSTATE(backend, MASTER_NODE_ID) == 'I' &&
-			is_select_query(node, sql) &&
-			!is_sequence_query(node));
-}
-
-
-/*
  * returns non 0 if the SQL statement can be load
  * balanced. Followings are statemnts go into this category.
  *

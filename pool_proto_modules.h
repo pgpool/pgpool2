@@ -153,7 +153,6 @@ extern int is_sequence_query(Node *node);
 extern int is_start_transaction_query(Node *node);
 extern int is_commit_query(Node *node);
 extern int is_strict_query(Node *node); /* returns non 0 if this is strict query */
-extern int load_balance_enabled(POOL_CONNECTION_POOL *backend, Node* node, char *sql);
 extern int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node);
 extern POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *query, InsertStmt *node, int lock_kind);
 extern char *parse_copy_data(char *buf, int len, char delimiter, int col_id);
