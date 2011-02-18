@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Thu Feb 17 20:05:39 JST 2011
+Last modified: Fri Feb 18 12:09:05 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -179,11 +179,27 @@ pgpool-regclass.sql$B$N<B9T$O!"(Bpgpool-II$B7PM3$GMxMQ$9$k%G!<%?%Y!<%9Kh$KI,M
 $B$?$@$7!"(B"psql -f pgpool-regclass.sql template1"$B$r<B9T8e$K:n@.$5$l$?%G!<%?%Y!<%9$G$O<+F0E*$K(Bpgpool-regclass.sql$B$NFbMF$,H?1G$5$l$F$$$k$N$G!"?7$?$K(Bpgpool-regclass.sql$B$r<B9T$9$kI,MW$O$"$j$^$;$s!#(B
 </p>
 
+<dt>pgpool_walrecunning$B$N%$%s%9%H!<%k(B
+<dd>
+<p>
+PostgreSQL 9.0$B0J9_$r;HMQ$7$F$$$F!"%9%H%j!<%_%s%0%l%W%j%1!<%7%g%s$rMxMQ$7$?$$>l9g$O!"(BC$B4X?t(Bpgpool_walrecrunning$B$r%$%s%9%H!<%k$7$^$9!#(B
+$B$3$N%$%s%9%H!<%k$O!"(Bpgpool-II$B$,%"%/%;%9$9$kM=Dj$N$9$Y$F$N(BPostgreSQL$B%5!<%P$G<B;\$7$F$/$@$5$$!#(B
+<pre>
+cd pgpool-II-x.x.x/sql/pgpool-walrecrunning
+make
+make install
+psql -f pgpool-walrecrunning.sql template1
+</pre>
+pgpool-walrecrunning.sql$B$N<B9T$O!"(Bpgpool-II$B7PM3$GMxMQ$9$k%G!<%?%Y!<%9Kh$KI,MW$K$J$j$^$9!#(B
+$B$?$@$7!"(B"psql -f pgpool-walrecrunning.sql template1"$B$r<B9T8e$K:n@.$5$l$?%G!<%?%Y!<%9$G$O<+F0E*$K(Bpgpool-walrecrunning.sql$B$NFbMF$,H?1G$5$l$F$$$k$N$G!"?7$?$K(Bpgpool-walrecrunning.sql$B$r<B9T$9$kI,MW$O$"$j$^$;$s!#(B
+</p>
+
 </dl>
 <p>
 $B0J>e$G%$%s%9%H!<%k$,40N;$7$^$9(B(GNU make$B$,I,MW$J$N$G!"(BSolaris$B$d(BFreeBSD$B$J$I$G$O(B
 make$B$r(Bgmake$B$KFI$_BX$($F$/$@$5$$(B)$B!#(B
 </p>
+
 
 <h1>pgpool-II$B$N@_Dj(B<a name="config"></a></h1>
 <p>
@@ -3710,7 +3726,7 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
 
 <h1>$B%j%j!<%9%N!<%H(B<a name="release"></a></h1>
 
-<h2>3.0.2 (umiyameboshi) 2011/02/17</h2>
+<h2>3.0.3 (umiyameboshi) 2011/02/18</h2>
 <h3>$B35MW(B</h3>
 <p>
 $B$3$N%P!<%8%g%s$G$O!"(B3.0.1$B$K$*$1$kMM!9$J%P%0$,=$@5$5$l$F$$$^$9!#(B
@@ -3719,6 +3735,7 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
 <h3>$B8_49@-$N$J$$JQ99(B</h3>
 <p>
 <ul>
+ <li>PostgreSQL 9.0$B0J9_$G%9%H%j!<%_%s%0%l%W%j%1!<%7%g%s%b!<%I$r;HMQ$9$k>l9g$K$O!"(BPostgreSQL$B%5!<%P$K(BC$B4X?t!V(Bpgpool-walrecrunning()$B!W$r%$%s%9%H!<%k$9$kI,MW$,$"$j$^$9(B(Tatsuo)
  <li>raw$B%b!<%I$G(BDB$B%N!<%I$,$R$H$D$@$1$N>l9g!"(BDB$B%N!<%I$KLdBj$,H/@8$9$k$H%@%&%s>uBV$K$J$j$^$9$,!"(BDB$B%N!<%I$,I|5l$7$?$i(Bpgpool$B$N:F5/F0$J$7$K(BDB$B%N!<%I$r;HMQ$G$-$k$h$&$K$7$^$7$?!#$3$NJQ99$O(B3.0$B$K4^$^$l$F$$$^$7$?$,!"F0:n$7$F$$$^$;$s$G$7$?(B(Tatsuo, Kitagawa)
 </ul>
 </p>
@@ -3750,6 +3767,16 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
   <li>$BL@<(E*$K%H%i%s%6%/%7%g%s$r3+;O$7$F$$$k(B
   <li>$B99?7%/%(%j$r<B9T$7$?8e$G$"$k(B
  </ul>
+ <li>$B%9%H%j!<%_%s%0%l%W%j%1!<%7%g%s%b!<%I$K$*$$$F!"0J2<$N%7%J%j%*$,$&$^$/F0:n$7$J$$LdBj$r=$@5$7$^$7$?!#0J2<$N%7%J%j%*$G$O!"%N!<%I(B0$B$r:G=i$N%W%i%$%^%j%5!<%P!"%N!<%I(B1$B$r:G=i$N%9%?%s%P%$%5!<%P$H$7$^$9!#(B
+	  <p>
+	  <ol>
+	   <li>$B%N!<%I(B0$B%W%i%$%^%j%5!<%P$,%@%&%s$7!"%N!<%I(B1$B%9%?%s%P%$%5!<%P$,?7$7$$%W%i%$%^%j%5!<%P$K$J$k(B
+	   <li>$B%N!<%I(B0$B$N5l%W%i%$%^%j%5!<%P$O!"%*%s%i%$%s%j%+%P%j$G?7%9%?%s%P%$%5!<%P$K$J$k(B
+	   <li>$B$3$N$H$-(Bpgpool-II$B$O!"%N!<%I(B0$B$N?7%9%?%s%P%$%5!<%P$r!"%W%i%$%^%j%5!<%P$H$_$J$7$F$7$^$&(B
+	  </ol>
+	  </p>
+	  $B$3$l$O!"@8$-$F$$$k%N!<%IHV9f$N0lHV<c$$%5!<%P$r%W%i%$%^%j%5!<%P$H8+$J$7$F$$$?$?$a$G$9!#(B
+	  pgpool-II 3.0.3$B$G$O!"(Bpgpool-walrecrunning()$B$r;H$C$F!"<B:]$K$=$N%N!<%I$,%W%i%$%^%j%5!<%P$+$I$&$+H=Dj$9$k$?$a!"$3$N$h$&$JLdBj$O5/$-$^$;$s!#(B
 </ul>
 </p>
 
@@ -3758,6 +3785,12 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
 <ul>
  <li>$B%9%F!<%?%9%U%!%$%k$rFI$s$G$$$k$H$-$K!"FCDj$N%P%C%/%(%s%I$,%@%&%s>uBV$J$i$P%m%0$r=PNO$9$k$h$&$K$7$^$7$?(B(Tatsuo)
 </ul>
+</p>
+
+<h2>3.0.2 (umiyameboshi) 2011/02/17</h2>
+<h3>$B35MW(B</h3>
+<p>
+$B$3$N%P!<%8%g%s$OLdBj$,$"$C$?$?$a$K!"%j%j!<%9$,<h$j>C$5$l$^$7$?!#(B
 </p>
 
 <h2>3.0.1 (umiyameboshi) 2010/10/19</h2>
