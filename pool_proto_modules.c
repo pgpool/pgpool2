@@ -1227,7 +1227,8 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		/*
 		 * Set transaction state for each node
 		 */
-		state = TSTATE(backend, MASTER_NODE_ID);
+		state = TSTATE(backend,
+					   MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID);
 
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
@@ -1243,7 +1244,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			 * The transaction state to be returned to frontend is
 			 * master's.
 			 */
-			if (i == MASTER_NODE_ID)
+			if (i == (MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID))
 			{
 				state = kind;
 			}
