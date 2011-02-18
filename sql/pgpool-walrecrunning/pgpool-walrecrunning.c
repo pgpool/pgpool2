@@ -15,7 +15,7 @@
  * suitability of this software for any purpose.  It is provided "as
  * is" without express or implied warranty.
  *
- * pgpool-walrecvrunning checks the walreceiver state to it's running.
+ * pgpool-walrecrunning checks the walreceiver state to it's running.
  * pgpool needs to know if the backend is running as a standby by
  * using pg_is_in_recover(). Problem is, it returns true even if
  * walreceiver is going to shutdown. This function checks the internal
