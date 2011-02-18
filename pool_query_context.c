@@ -301,7 +301,8 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	 */
 	if (!strncasecmp(query, NO_LOAD_BALANCE, NO_LOAD_BALANCE_COMMENT_SZ))
 	{
-		pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
+		pool_set_node_to_be_sent(query_context,
+								 MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID);
 		return;
 	}
 
@@ -349,7 +350,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 				 *	transaction isolation level is not SERIALIZABLE)
 				 * we might be able to load balance.
 				 */
-				if (TSTATE(backend, REAL_MASTER_NODE_ID) == 'I' ||
+				if (TSTATE(backend, PRIMARY_NODE_ID) == 'I' ||
 					(!pool_is_writing_transaction() &&
 					 !pool_is_failed_transaction() &&
 					 pool_get_transaction_isolation() != POOL_SERIALIZABLE))
