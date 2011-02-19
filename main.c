@@ -2303,8 +2303,9 @@ static int find_primary_node(void)
 	{
 		if (!VALID_BACKEND(i))
 			continue;
+
 		/*
-		 * Check to see if this is a standby node or not
+		 * Check to see if this is a standby node or not.
 		 */
 		is_standby = false;
 
@@ -2320,6 +2321,28 @@ static int find_primary_node(void)
 			break;
 		}
 		con = s->con;
+
+		status = do_query(con, "SELECT count(*) FROM pg_catalog.pg_proc AS p WHERE p.proname = 'pgpool_walrecrunning'",
+						  &res, PROTO_MAJOR_V3);
+		if (res->numrows <= 0)
+		{
+			pool_log("find_primary_node: do_query returns no rows");
+		}
+		if (res->data[0] == NULL)
+		{
+			pool_log("find_primary_node: do_query returns no data");
+		}
+		if (res->nullflags[0] == -1)
+		{
+			pool_log("find_primary_node: do_query returns NULL");
+		}
+		if (res->data[0] && !strcmp(res->data[0], "0"))
+		{
+			pool_log("find_primary_node: pgpool_walrecrunning does not exist");
+			free_select_result(res);
+			discard_persistent_db_connection(s);
+			return -1;
+		}
 
 		status = do_query(con, "SELECT pg_is_in_recovery() AND pgpool_walrecrunning()",
 						  &res, PROTO_MAJOR_V3);
