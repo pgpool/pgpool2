@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2010	PgPool Global Development Group
+ * Copyright (c) 2003-2011	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1472,8 +1472,25 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
  */
 void discard_persistent_db_connection(POOL_CONNECTION_POOL_SLOT *cp)
 {
+	int len;
+
 	if(cp == NULL)
 		return;
+
+	pool_write(cp->con, "X", 1);
+	len = htonl(4);
+	pool_write(cp->con, &len, sizeof(len));
+
+	/*
+	 * XXX we cannot call pool_flush() here since backend may already
+	 * close the socket and pool_flush() automatically invokes fail
+	 * over handler. This could happen in copy command (remember the
+	 * famous "lost synchronization with server, resetting
+	 * connection" message)
+	 */
+	pool_set_nonblock(cp->con->fd);
+	pool_flush_it(cp->con);
+	pool_unset_nonblock(cp->con->fd);
 
 	pool_close(cp->con);
 	free(cp->sp->startup_packet);
