@@ -1,3 +1,120 @@
+2011-02-21 11:01  t-ishii
+
+	* doc/pgpool-ja.html (V3_0_STABLE): Prepare 3.0.3.
+
+2011-02-21 10:58  t-ishii
+
+	* NEWS (V3_0_STABLE): Prepare for 3.0.3.
+
+2011-02-21 10:35  t-ishii
+
+	* configure, configure.in (V3_0_STABLE): pgpool-II 3.0.3 beta1
+
+2011-02-20 16:06  t-ishii
+
+	* child.c (V3_0_STABLE): Fix discard_persistent_db_connection() so
+	  that it sends a terminate packet to backend befoe closing the
+	  connection to the backend.  Without this, backend complains
+	  "unexpected EOF on client connection".
+
+2011-02-19 21:43  t-ishii
+
+	* main.c (V3_0_STABLE): Enhance find_primary_node() not to fail if
+	  pgpool_walrecrunning() is not installed. In this case it returns -1,
+	  which means pgpool-II assumes the youngest node to be the primary.
+
+2011-02-18 22:45  kitagawa
+
+	* pool_proto_modules.c (V3_0_STABLE): Fix ReadyForQuery() so that
+	  it considers stream mode.
+
+2011-02-18 22:35  kitagawa
+
+	* pool_query_context.c (V3_0_STABLE): Fix bug that /*NO LOAD
+	  BALANCE*/ doesn't work in stream mode.  Reported by Hadadi Peter.
+	  Fix bug with load balance in stream mode.
+
+2011-02-18 20:45  kitagawa
+
+	* pool_process_query.c, pool_proto_modules.h (V3_0_STABLE): Remove
+	  unnecessary function: load_balance_enabled().
+
+2011-02-18 14:17  t-ishii
+
+	* doc/: pgpool-en.html, pgpool-ja.html (V3_0_STABLE): Add mention
+	  about pgpool-walrecrunning.
+
+2011-02-18 12:10  kitagawa
+
+	* sql/pgpool-walrecrunning/pgpool-walrecrunning.c (V3_0_STABLE):
+	  Fix typo in comment.
+
+2011-02-18 11:13  t-ishii
+
+	* configure.in, configure (V3_0_STABLE): Add
+	  AC_CONFIG_MACRO_DIR([m4]).
+
+2011-02-18 11:11  t-ishii
+
+	* ltmain.sh (V3_0_STABLE): Rerun libtoolize to adopt newer
+	  developping environment.
+
+2011-02-18 10:39  t-ishii
+
+	* Makefile.in, aclocal.m4, config.h.in, configure, configure.in,
+	  parser/Makefile.in, pcp/Makefile.in (V3_0_STABLE): Rerun aclocal,
+	  autoheader, automake , autoconf.
+
+2011-02-17 20:27  t-ishii
+
+	* main.c (V3_0_STABLE): Fix pool_get_node_info() so that it deals
+	  with node_number == -1 case.  This could happen
+	  get_next_master_node() returns -1 because there's no master node
+	  available (all nodes down case).  Also tweak
+	  trigger_failover_command() to deal with pool_get_node_info() returns
+	  NULL case.  Per report from Wouter D'Haeseleer.  Subject:
+	  [Pgpool-general] PGpool crashes when all DB servers go down To:
+	  "pgpool-general@pgfoundry.org" <pgpool-general@pgfoundry.org> Date:
+	  Mon, 07 Feb 2011 09:35:50 +0100
+
+2011-02-17 20:23  t-ishii
+
+	* main.c (V3_0_STABLE): Fix find_primary_node to avoid segfault
+	  when pool_walrecrunning() is not installed.
+
+2011-02-17 20:21  t-ishii
+
+	* doc/: pgpool-en.html, pgpool-ja.html (V3_0_STABLE): Allow to use
+	  %P(old primary node id) to failover/failback script.  This is
+	  neccessary for failover script in streaming replication mode.
+
+2011-02-17 20:20  t-ishii
+
+	* Makefile.am (V3_0_STABLE): Add sql/Makefile as a dist file.
+
+2011-02-17 20:14  t-ishii
+
+	* sql/Makefile (V3_0_STABLE): Add sql directories main Makefile.
+
+2011-02-17 20:11  t-ishii
+
+	* sql/pgpool-walrecrunning/: Makefile, pgpool-walrecrunning.c,
+	  pgpool-walrecrunning.sql.in (V3_0_STABLE): Rename
+	  pgpool-walrecvrunning, which was mistakenly named to
+	  pgpool-walrecrunning.
+
+2011-02-17 20:07  t-ishii
+
+	* main.c, pgpool.conf.sample, pgpool.conf.sample-master-slave,
+	  pgpool.conf.sample-replication, pgpool.conf.sample-stream
+	  (V3_0_STABLE): Allow to use %P(old primary node id) to
+	  failover/failback script.  This is neccessary for failover script in
+	  streaming replication mode.
+
+2011-02-17 14:40  kitagawa
+
+	* ChangeLog (V3_0_STABLE): Prepare 3.0.2
+
 2011-02-17 14:29  kitagawa
 
 	* NEWS, doc/pgpool-ja.html (V3_0_STABLE) (utags: V3_0_2): Prepare
@@ -7,6 +124,15 @@
 
 	* pool_process_query.c (tags: V3_0_2) (V3_0_STABLE): Fix
 	  insert_lock() so that it extracts sequence name directly.
+
+2011-02-16 14:51  t-ishii
+
+	* sql/Makefile: Add sql directories main Makefile.
+
+2011-02-16 14:51  t-ishii
+
+	* sql/Makefile (V3_0_STABLE): file Makefile was added on branch
+	  V3_0_STABLE on 2011-02-17 11:14:04 +0000
 
 2011-02-16 11:11  kitagawa
 
@@ -55,6 +181,29 @@
 
 	* pool_query_context.c (V3_0_STABLE): Fix bug that failover fails
 	  in raw mode.  This used to work but was broken in 3.0.
+
+2011-01-30 09:17  t-ishii
+
+	* sql/pgpool-walrecrunning/: Makefile, pgpool-walrecrunning.c,
+	  pgpool-walrecrunning.sql.in: Rename pgpool-walrecvrunning, which
+	  was mistakenly named to pgpool-walrecrunning.
+
+2011-01-30 09:17  t-ishii
+
+	* sql/pgpool-walrecrunning/Makefile (V3_0_STABLE): file Makefile
+	  was added on branch V3_0_STABLE on 2011-02-17 11:11:25 +0000
+
+2011-01-30 09:17  t-ishii
+
+	* sql/pgpool-walrecrunning/pgpool-walrecrunning.c (V3_0_STABLE):
+	  file pgpool-walrecrunning.c was added on branch V3_0_STABLE on
+	  2011-02-17 11:11:25 +0000
+
+2011-01-30 09:17  t-ishii
+
+	* sql/pgpool-walrecrunning/pgpool-walrecrunning.sql.in
+	  (V3_0_STABLE): file pgpool-walrecrunning.sql.in was added on
+	  branch V3_0_STABLE on 2011-02-17 11:11:25 +0000
 
 2011-01-28 13:46  kitagawa
 
@@ -231,18 +380,13 @@
 
 	* child.c (tags: V3_1_0_ALPHA1), main.c, pool.h (tags:
 	  V3_1_0_ALPHA1), pool_query_context.c (tags: V3_1_0_ALPHA1),
-	  pool_worker_child.c (tags: V3_0_2, V3_1_0_ALPHA1),
-	  sql/pgpool-walrecvrunning/Makefile (tags: V3_0_2, V3_1_0_ALPHA1),
-	  sql/pgpool-walrecvrunning/pgpool-walrecrunning.c (tags: V3_0_2,
-	  V3_1_0_ALPHA1),
-	  sql/pgpool-walrecvrunning/pgpool-walrecrunning.sql.in (tags:
-	  V3_0_2, V3_1_0_ALPHA1): Fix bug when primary node is not the
-	  youngest. Before pgpool-II unconditionally assumed the master
-	  node(the youngest live node) is a primary server, which is apprently
-	  wrong assumption. To fix the problem, now pgpool-II have info on
-	  shmem(Req_info) to know which is the primary. The info is set when
-	  1)pgpool-II started 2)failover occurs. The work is done by new
-	  function find_primary_node(main.c). It does SELECT
+	  pool_worker_child.c (tags: V3_0_2, V3_1_0_ALPHA1): Fix bug when
+	  primary node is not the youngest. Before pgpool-II unconditionally
+	  assumed the master node(the youngest live node) is a primary server,
+	  which is apprently wrong assumption. To fix the problem, now
+	  pgpool-II have info on shmem(Req_info) to know which is the primary.
+	  The info is set when 1)pgpool-II started 2)failover occurs. The work
+	  is done by new function find_primary_node(main.c). It does SELECT
 	  pg_is_in_recovery() AND pgpool_walrecrunning() to know the node in
 	  question is actually standby. pgpool_walrecrunning() is new
 	  PostgreSQL C function, to check if walreceiver is in running status.
