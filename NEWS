@@ -1,10 +1,17 @@
-3.0.2 (umiyameboshi) 2011/02/17
+3.0.3 (umiyameboshi) 2011/02/23
 
-	  * Version 3.0.2
+	  * Version 3.0.3
 
-	  This version fixes various bug in 3.0.1.
+	  This version fixes various bugs since 3.0.1. Please note that
+	  3.0.2 was canceled due to a packaging problem.
 
 	  * Incompatible changes
+
+	  - Now installing C function "pgpool-walrecrunning()" is recommended
+	  	if you plan to use streaming replication mode.
+	  	This is necessary for better use of online recovery in the mode.
+		Also new variable "%P" can be used in the online recovery script.
+		If you do not install the function, these functionalities cannot be used(Tatsuo).
 
 	  - In raw mode if there's only one DB node and if a problem arises
 		with the DB node, it will be brought to down status. However if
@@ -68,6 +75,26 @@
 
 	  - Remove parameters from pool_status: recovery_password,
 		system_db_password(Kitagawa)
+
+	  - Fix online recovery problem in the streaming replication
+        mode(Tatsuo). Consider following scenario. Suppose node 0 is
+        the initial primary server and 1 is the initial standby
+        server.
+		
+		1) Node 0 going down and node 1 promotes to new primary.
+		2) Recover node 0 as new standby.
+		3) pgpool-II assumes that node 0 is the new primary.
+
+		This problem happens because pgpool-II regarded unconditionally
+		the youngest node to be the primary. pgpool-II 3.0.3 now checks
+		each node by using pgpool-walrecrunning() to see if it is a
+		actually primary or not and is able to avoid the problem and
+		regards node as standby correctly. Also you can use new
+		variable "%P" to be used in the recovery script.  If you do
+		not install the function, the above problem is not resolved.
+
+	  - Fix backend complaining "unexpected EOF on client connection"
+        while doing failover in streaming replication mode(Tatsuo)
 
 	  - Rewrite and review english document(Marc Cousin, Gleu)
 
