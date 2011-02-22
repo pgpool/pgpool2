@@ -176,7 +176,7 @@ fail_over_on_backend_error = true
 # If true, automatically locks a table with INSERT statements to keep
 # SERIAL data consistency.  If the data does not have SERIAL data
 # type, no lock will be issued. An /*INSERT LOCK*/ comment has the
-# same effect.  A /NO INSERT LOCK*/ comment disables the effect.
+# same effect.  A /*NO INSERT LOCK*/ comment disables the effect.
 insert_lock = false
 
 # If true, ignore leading white spaces of each query while pgpool judges
