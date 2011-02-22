@@ -762,7 +762,9 @@ static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *time
 }
 
 /*
-* read startup packet
+* Read startup packet
+*
+* Read the startup packet and parse the contents.
 */
 static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 {
@@ -889,6 +891,24 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 						return NULL;
 					}
 				}
+
+				/*
+				 * From 9.0, the start up packet may include
+				 * application name. After receiving such that packet,
+				 * backend sends parameter status of application_name.
+				 * Upon reusing connection to backend, we need to
+				 * emulate this behavior of backend. So we remember
+				 * this and send parameter status packet to frontend
+				 * instead of backend in
+				 * connect_using_existing_connection().
+				 */
+				else if (!strcmp("application_name", p))
+				{
+					p += (strlen(p) + 1);
+					sp->application_name = p;
+					pool_debug("read_startup_packet: application_name: %s", p);
+				}
+
 				p += (strlen(p) + 1);
 			}
 			break;
@@ -951,7 +971,7 @@ static bool connect_using_existing_connection(POOL_CONNECTION *frontend,
 {
 	int i, freed = 0;
 	/*
-	 * save startup packet info
+	 * Save startup packet info
 	 */
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
@@ -966,7 +986,7 @@ static bool connect_using_existing_connection(POOL_CONNECTION *frontend,
 		}
 	}
 
-	/* reuse existing connection to backend */
+	/* Reuse existing connection to backend */
 
 	if (pool_do_reauth(frontend, backend))
 	{
@@ -977,6 +997,32 @@ static bool connect_using_existing_connection(POOL_CONNECTION *frontend,
 
 	if (MAJOR(backend) == 3)
 	{
+		char command_buf[1024];
+
+		/* If we have received application_name in the start up
+		 * packet, we send SET command to backend. Also we add or
+		 * replace existing application_name data.
+		 */
+		if (sp->application_name)
+		{
+			snprintf(command_buf, sizeof(command_buf), "SET application_name TO '%s'", sp->application_name);
+
+			for (i=0;i<NUM_BACKENDS;i++)
+			{
+				if (VALID_BACKEND(i))
+					if (do_command(frontend, CONNECTION(backend, i),
+							   command_buf, MAJOR(backend),
+								   MASTER_CONNECTION(backend)->pid,
+								   MASTER_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
+					{
+						pool_error("connect_using_existing_connection: do_command failed. command: %s", command_buf);
+						return false;
+					}
+			}
+
+			pool_add_param(&MASTER(backend)->params, "application_name", sp->application_name);
+		}
+
 		if (send_params(frontend, backend))
 		{
 			pool_close(frontend);
@@ -985,7 +1031,7 @@ static bool connect_using_existing_connection(POOL_CONNECTION *frontend,
 		}
 	}
 
-	/* send ReadyForQuery to frontend */
+	/* Send ReadyForQuery to frontend */
 	pool_write(frontend, "Z", 1);
 
 	if (MAJOR(backend) == 3)
