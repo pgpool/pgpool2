@@ -781,7 +781,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 
 
 /*
- * send SimpleQuery message to a node.
+ * send simple query message to a node.
  */
 POOL_STATUS send_simplequery_message(POOL_CONNECTION *backend, int len, char *string, int major)
 {
@@ -796,6 +796,7 @@ POOL_STATUS send_simplequery_message(POOL_CONNECTION *backend, int len, char *st
 
 	if (pool_write_and_flush(backend, string, len) < 0)
 	{
+		pool_error("send_simplequery_message: failed to send query: %s", string);
 		return POOL_END;
 	}
 
@@ -2354,6 +2355,16 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 		}
 
 		pool_debug("do_query: kind: %c", kind);
+
+		if (kind ==  'E')
+		{
+			char *message;
+
+			if (pool_extract_error_message(false, backend, major, true, &message))
+			{
+				pool_log("do_query: error message from backend %s", message);
+			}
+		}
 
 		if (major == PROTO_MAJOR_V3)
 		{
