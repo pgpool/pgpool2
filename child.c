@@ -1513,7 +1513,7 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 }
 
 /*
- * Discard connection and memroy allocated by
+ * Discard connection and memory allocated by
  * make_persistent_db_connection().
  */
 void discard_persistent_db_connection(POOL_CONNECTION_POOL_SLOT *cp)
