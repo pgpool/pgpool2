@@ -2,10 +2,14 @@ $Header$
 
 * General
 
-- Reset application name to "pgppol" when client disconnects
+- Reset application name to "pgppol" when client disconnects(3.1. why
+  not use set command?) -> Done.
+  - Use reset_query_list to reset to "pgpool" for client disconnection
+  - Reset to client specified application name when reusing existing
+    connection.
 
 - Allow to call pcp commands/show commands as a stored procedures of
-  PostgreSQL
+  PostgreSQL(3.1 SRAOSS)
 
 - Allow client encoding conversion. This was possible in pgpool-I
 
@@ -43,7 +47,7 @@ $Header$
 
 * Master/slave mode
 
-- Allow to use more than 1 standbys
+- Allow to use more than 1 standbys(3.1)
 
 * On line recovery
 
@@ -55,9 +59,9 @@ $Header$
 
 * Log
 
-- Mutiple log levels
+- Mutiple log levels(3.1, but low priority)
 
-- Multiple log destinations
+- Multiple log destinations(3.1, but low priority)
 
 * Parallel query
 
@@ -80,18 +84,20 @@ LINE 1: SELECT pool_parallel("SELECT d1.id, d1.aaaa, d1.bbbb...
 
 * pgpoolAdmin
 
+- Allow to use double quotation in reset_query_list
+
 - German messages
 
 - Allow to run pgpoolAdmin on a host different from a host which
-  pgpool-II is running on
+  pgpool-II is running on(3.2?)
 
 - Allow to stop PostgeSQL from pgpoolAdmin to make the on-line
-  recovery more convenient
+  recovery more convenient(pgpool_stop()?)
 
 * Docs
 
 - Write libpcp API docs
 
-- French documentations
+- French documentations(3.1)
 
-- German documentations
+- German documentations(3.1)
