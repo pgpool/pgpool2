@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2010	PgPool Global Development Group
+ * Copyright (c) 2003-2011	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -65,6 +65,7 @@ static POOL_CONNECTION_POOL_SLOT	*slots[MAX_NUM_BACKENDS];
 static volatile sig_atomic_t reload_config_request = 0;
 
 static void establish_persistent_connection(void);
+static void discard_persistent_connection(void);
 static void check_replication_time_lag(void);
 static long text_to_lsn(char *text);
 static RETSIGTYPE my_signal_handler(int sig);
@@ -125,6 +126,9 @@ void do_worker_child(void)
 
 			/* Do replication time lag checking */
 			check_replication_time_lag();
+
+			/* Discard persistent connections */
+			discard_persistent_connection();
 		}
 		sleep(pool_config->health_check_period);
 	}
@@ -157,6 +161,23 @@ static void establish_persistent_connection(void)
 				slots[i] = s;
 			else
 				slots[i] = NULL;
+		}
+	}
+}
+
+/*
+ * Discard persistent connection to backend
+ */
+static void discard_persistent_connection(void)
+{
+	int i;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (slots[i])
+		{
+			discard_persistent_db_connection(slots[i]);
+			slots[i] = NULL;
 		}
 	}
 }
@@ -219,7 +240,6 @@ static void check_replication_time_lag(void)
 		if (sts != POOL_CONTINUE)
 		{
 			pool_error("check_replication_time_lag: %s failed", query);
-			slots[i] = NULL;
 			return;
 		}
 		if (!res)
