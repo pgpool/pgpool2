@@ -1322,7 +1322,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 					if (CONNECTION_SLOT(backend, i) &&
 						TSTATE(backend, i) == 'T' &&
 						BACKEND_INFO(i).backend_status == CON_UP &&
-						REAL_MASTER_NODE_ID != i)
+						(MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) != i)
 					{
 						per_node_statement_log(backend, i, "COMMIT");
 						if (do_command(frontend, CONNECTION(backend, i), "COMMIT", MAJOR(backend), 

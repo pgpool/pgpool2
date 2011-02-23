@@ -779,7 +779,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 					   !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))) ||
 					(MASTER_SLAVE &&
 					 !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP) &&
-					 node_id == REAL_MASTER_NODE_ID))
+					 node_id == PRIMARY_NODE_ID))
 				{
 					int len;
 					char *msg;
