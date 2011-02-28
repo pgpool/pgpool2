@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include "postgres.h"
 #include "utils/builtins.h"
+#include "utils/syscache.h"
 #include "utils/elog.h"
 #include "catalog/namespace.h"
 #include "nodes/makefuncs.h"
@@ -49,6 +50,9 @@ static RangeVar *
 MymakeRangeVarFromNameList(List *names);
 
 extern Oid			MyDatabaseId;
+
+static Oid
+get_namespace_oid(const char *nspname, bool missing_ok);
 
 Datum
 pgpool_regclass(PG_FUNCTION_ARGS)
@@ -86,7 +90,7 @@ pgpool_regclass(PG_FUNCTION_ARGS)
 	 */
 	if (rel->schemaname)
 	{
-		if (LookupNamespaceNoError(rel->schemaname) == InvalidOid)
+		if (get_namespace_oid(rel->schemaname, true) == InvalidOid)
 			PG_RETURN_OID(InvalidOid);
 	}
 
@@ -137,7 +141,15 @@ MystringToQualifiedNameList(const char *string)
 static RangeVar *
 MymakeRangeVarFromNameList(List *names)
 {
+/*
+ * Number of arguments of makeRangeVar() has been increased in 8.4 or
+ * later.
+ */
+#if PG_VERSION_NUM >= 80400
 	RangeVar   *rel = makeRangeVar(NULL, NULL, -1);
+#else
+	RangeVar   *rel = makeRangeVar(NULL, NULL);
+#endif
 
 	switch (list_length(names))
 	{
@@ -159,4 +171,27 @@ MymakeRangeVarFromNameList(List *names)
 	}
 
 	return rel;
+}
+
+/*
+ * get_namespace_oid - given a namespace name, look up the OID
+ *
+ * If missing_ok is false, throw an error if namespace name not found.  If
+ * true, just return InvalidOid.
+ *
+ * This function was stolen from PostgreSQL 9.0 and modified to not
+ * use GetSysCacheOid1. Since it is new in 9.0.
+ */
+static Oid
+get_namespace_oid(const char *nspname, bool missing_ok)
+{
+	Oid			oid;
+
+	oid = GetSysCacheOid(NAMESPACENAME, CStringGetDatum(nspname), 0, 0, 0);
+	if (!OidIsValid(oid) && !missing_ok)
+        ereport(ERROR,
+                (errcode(ERRCODE_UNDEFINED_SCHEMA),
+                 errmsg("schema \"%s\" does not exist", nspname)));
+
+	return oid;
 }
