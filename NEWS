@@ -96,12 +96,24 @@
 	  - Fix backend complaining "unexpected EOF on client connection"
         while doing failover in streaming replication mode(Tatsuo)
 
+	  - Fix pgpool crashes when all backends go down(Tatsuo)
+
+	  - Fix replication delay checking so that it does not keep persistent
+		connection to backends. Because the persistent connection may
+		become bogus if a node down and then wake up between replication
+		delay checking period(Tatsuo)
+
 	  - Rewrite and review english document(Marc Cousin, Gleu)
 
 	  * Enhancements
 
 	  - Emit log if particular backend is down status while reading
 		the status file(Tatsuo)
+
+	  - Emit error message if an error occurred by the query that
+		pgpool executed(Tatsuo)
+
+	  - Add sql directories main Makefile(Tatsuo)
 
 3.0.1 (umiyameboshi) 2010/10/19
 
