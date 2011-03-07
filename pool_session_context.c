@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2010	PgPool Global Development Group
+ * Copyright (c) 2003-2011	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -31,10 +31,8 @@
 static POOL_SESSION_CONTEXT session_context_d;
 static POOL_SESSION_CONTEXT *session_context = NULL;
 
-static void init_prepared_statement_list(void);
-static void init_portal_list(void);
-static bool can_prepared_statement_destroy(POOL_QUERY_CONTEXT *qc);
-static bool can_portal_destroy(POOL_QUERY_CONTEXT *qc);
+static void init_sent_message_list(void);
+static bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc);
 
 /*
  * Initialize per session context
@@ -61,11 +59,8 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 	/* Initialize local session id */
 	pool_incremnet_local_session_id();
 
-	/* Initialize prepared statement list */
-	init_prepared_statement_list();
-
-	/* Initialize portal list */
-	init_portal_list();
+	/* Initialize sent message list */
+	init_sent_message_list();
 
 	/* Create memory context */
 	session_context->memory_context = pool_memory_create(PREPARE_BLOCK_SIZE);
@@ -109,9 +104,10 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 	pool_unset_ignore_till_sync();
 
 	/* Initialize where to send map for PREPARE statemets */
+#ifdef NOT_USED
 	memset(&session_context->prep_where, 0, sizeof(session_context->prep_where));
 	session_context->prep_where.nelem = POOL_MAX_PREPARED_STATEMENTS;
-
+#endif /* NOT_USED */
 	/* Reset flag to indicate difference in number of affected tuples
 	 * in UPDATE/DELETE.
 	 */
@@ -125,8 +121,8 @@ void pool_session_context_destroy(void)
 {
 	if (session_context)
 	{
-		free(session_context->pstmt_list.pstmts);
-		free(session_context->portal_list.portals);
+		pool_clear_sent_message_list();
+		free(session_context->message_list.sent_messages);
 		pool_memory_delete(session_context->memory_context, 0);
 	}
 	/* XXX For now, just zap memory */
@@ -346,496 +342,252 @@ void pool_unset_ignore_till_sync(void)
 }
 
 /*
- * Remove a portal by portal name
+ * Remove a sent message
  */
-static void pool_remove_portal_by_portal_name(const char *name)
+bool pool_remove_sent_message(char kind, const char *name)
 {
 	int i;
-	PortalList *plist;
+	POOL_SENT_MESSAGE_LIST *msglist;
 
-	if (*name == '\0')
+	if (!session_context)
 	{
-		if (session_context->unnamed_portal)
-		{
-			pool_memory_free(session_context->memory_context,
-							 session_context->unnamed_portal);
-			session_context->unnamed_portal = NULL;
-		}
-		return;
+		pool_error("pool_remove_sent_message: session context is not initialized");
+		return false;
 	}
 
-	plist = &session_context->portal_list;
+	msglist = &session_context->message_list;
 
-	for (i = 0; i < plist->size; i++)
+	for (i = 0; i < msglist->size; i++)
 	{
-		if (strcmp(plist->portals[i]->name, name) == 0)
+		if (msglist->sent_messages[i]->kind == kind &&
+			!strcmp(msglist->sent_messages[i]->name, name))
 		{
-			if (can_portal_destroy(plist->portals[i]->qctxt))
-				pool_query_context_destroy(plist->portals[i]->qctxt);
-			pool_memory_free(session_context->memory_context, plist->portals[i]);
+			pool_sent_message_destroy(msglist->sent_messages[i]);
 			break;
 		}
 	}
-		
-	/* portal not found */
-	if (i == plist->size)
-		return;
-	
-	if (i != plist->size - 1)
+
+	/* sent message not found */
+	if (i == msglist->size)
+		return false;
+
+	if (i != msglist->size - 1)
 	{
-		memmove(&plist->portals[i], &plist->portals[i+1],
-				sizeof(Portal *) * (plist->size - i - 1));
+		memmove(&msglist->sent_messages[i], &msglist->sent_messages[i+1],
+				sizeof(POOL_SENT_MESSAGE *) * (msglist->size - i - 1));
 	}
-	plist->size--;
+
+	msglist->size--;
+
+	return true;
 }
 
 /*
- * Remove portals by prepared statement name
- * prepared statement : portal = 1 : N
+ * Remove same kind of sent messages
  */
-#ifdef NOT_USED
-static void pool_remove_portal_by_pstmt_name(const char *name)
+void pool_remove_sent_messages(char kind)
 {
 	int i;
-	PortalList *plist;
+	POOL_SENT_MESSAGE_LIST *msglist;
 
-	if (*name == '\0')
+	if (!session_context)
 	{
-		if (session_context->unnamed_portal)
+		pool_error("pool_remove_sent_messages: session context is not initialized");
+		return;
+	}
+
+	msglist = &session_context->message_list;
+
+	for (i = 0; i < msglist->size; i++)
+	{
+		if (msglist->sent_messages[i]->kind == kind)
 		{
-			pool_memory_free(session_context->memory_context,
-							 session_context->unnamed_portal);
-			session_context->unnamed_portal = NULL;
+			if (pool_remove_sent_message(kind, msglist->sent_messages[i]->name))
+				i--;	/* for relocation by removing */
 		}
-		return;
-	}
-
-	plist = &session_context->portal_list;
-
-	for (i = 0; i < plist->size; i++)
-	{
-		if (strcmp(plist->portals[i]->pstmt->name, name) == 0)
-			pool_remove_portal_by_portal_name(plist->portals[i]->name);
 	}
 }
-#endif
 
 /*
- * Remove a prepared statement by prepared statement name
+ * Destroy sent message
  */
-void pool_remove_prepared_statement_by_pstmt_name(const char *name)
+void pool_sent_message_destroy(POOL_SENT_MESSAGE *message)
 {
-	int i;
-	PreparedStatementList *pslist;
 	bool in_progress;
+	POOL_QUERY_CONTEXT *qc = NULL;
+
+	if (!session_context)
+	{
+		pool_error("pool_sent_message_destroy: session context is not initialized");
+		return;
+	}
 
 	in_progress = pool_is_query_in_progress();
 
-	if (!session_context)
+	if (message)
 	{
-		pool_error("pool_remove_prepared_statement_by_pstmt_name: session context is not initialized");
-		return;
-	}
+		if (message->contents)
+			pool_memory_free(session_context->memory_context, message->contents);
+		
+		if (message->name)
+			pool_memory_free(session_context->memory_context, message->name);
 
-	if (*name == '\0')
-	{
-		if (session_context->unnamed_pstmt)
+		if (message->query_context)
 		{
-			pool_query_context_destroy(session_context->unnamed_pstmt->qctxt);
-			pool_memory_free(session_context->memory_context,
-							 session_context->unnamed_pstmt);
-			session_context->unnamed_pstmt = NULL;
+			if (session_context->query_context != message->query_context)
+				qc = session_context->query_context;
+
+			if (can_query_context_destroy(message->query_context))
+			{
+				pool_query_context_destroy(message->query_context);
+				/*
+				 * set in_progress flag, because pool_query_context_destroy()
+				 * unsets in_progress flag
+				 */
+				if (in_progress)
+					pool_set_query_in_progress();
+				/*
+				 * set query_context of session_context, because
+				 * pool_query_context_destroy() sets it to NULL.
+				 */
+				if (qc)
+					session_context->query_context = qc;
+			}
 		}
-		if (in_progress)
-			pool_set_query_in_progress();
-		return;
+
+		if (session_context->memory_context)
+			pool_memory_free(session_context->memory_context, message);
 	}
-
-	pslist = &session_context->pstmt_list;
-
-	for (i = 0; i < pslist->size; i++)
-	{
-		if (strcmp(pslist->pstmts[i]->name, name) == 0)
-		{
-			if (can_prepared_statement_destroy(pslist->pstmts[i]->qctxt))
-				pool_query_context_destroy(pslist->pstmts[i]->qctxt);
-			pool_memory_free(session_context->memory_context, pslist->pstmts[i]);
-			break;
-		}
-	}
-
-	/* prepared statement not found */
-	if (i == pslist->size)
-	{
-		if (in_progress)
-			pool_set_query_in_progress();
-		return;
-	}
-
-	if (i != pslist->size - 1)
-	{
-		memmove(&pslist->pstmts[i], &pslist->pstmts[i+1],
-				sizeof(PreparedStatement *) * (pslist->size - i - 1));
-	}
-	pslist->size--;
-
-	/*
-	 * prepared statements and portals are closed separately
-	 * by a frontend.
-	 */
-	/* pool_remove_portal_by_pstmt_name(name); */
-
-	if (in_progress)
-		pool_set_query_in_progress();
 }
 
 /*
- * Remove a pending prepared statement from prepared statement list
+ * Clear sent message list
  */
-void pool_remove_prepared_statement(void)
+void pool_clear_sent_message_list(void)
 {
-	char *name;
+	POOL_SENT_MESSAGE_LIST *msglist;
 
 	if (!session_context)
 	{
-		pool_error("pool_remove_prepared_statement: session context is not initialized");
+		pool_error("pool_clear_sent_message_list: session context is not initialized");
 		return;
 	}
 
-	if (session_context->pending_pstmt)
+	msglist = &session_context->message_list;
+
+	while (msglist->size > 0)
 	{
-		name = session_context->pending_pstmt->name;
-		pool_remove_prepared_statement_by_pstmt_name(name);
-	}
-	else
-	{
-		pool_debug("pool_remove_prepared_statement: pending prepared statement is NULL");
+		pool_remove_sent_messages(msglist->sent_messages[0]->kind);
 	}
 }
 
-
 /*
- * Remove a pending portal from portal list
+ * Create a sent message
+ * kind: one of 'P':Parse, 'B':Bind or'Q':Query(PREPARE)
+ * len: message length that is not network byte order
+ * contents: message contents
+ * num_tsparams: number of timestamp parameters
+ * name: prepared statement name or portal name
  */
-void pool_remove_portal(void)
+POOL_SENT_MESSAGE *pool_create_sent_message(char kind, int len, char *contents,
+											int num_tsparams, const char *name,
+											POOL_QUERY_CONTEXT *query_context)
 {
-	char *name;
+	POOL_SENT_MESSAGE *msg;
 
 	if (!session_context)
 	{
-		pool_error("pool_remove_portal: session context is not initialized");
-		return;
-	}
-
-	if (session_context->pending_portal)
-	{
-		name = session_context->pending_portal->name;
-		pool_remove_portal_by_portal_name(name);
-	}
-}
-
-/*
- * Remove pending objects
- */
-void pool_remove_pending_objects(void)
-{
-	PreparedStatement *ps;
-	Portal *p;
-
-	ps = session_context->pending_pstmt;
-
-	if (ps && ps->name)
-		pool_memory_free(session_context->memory_context, ps->name);
-
-	if (ps && ps->qctxt)
-	{
-		if (can_prepared_statement_destroy(ps->qctxt) &&
-			can_portal_destroy(ps->qctxt))
-			pool_query_context_destroy(ps->qctxt);
-	}
-
-	if (ps)
-		pool_memory_free(session_context->memory_context, ps);
-
-	p = session_context->pending_portal;
-
-	if (p && p->name)
-		pool_memory_free(session_context->memory_context, p->name);
-
-	if (p && p->pstmt)
-		pool_memory_free(session_context->memory_context, p->pstmt);
-
-	if (p && p->qctxt)
-	{
-		if (can_portal_destroy(p->qctxt) &&
-			can_prepared_statement_destroy(p->qctxt))
-			pool_query_context_destroy(p->qctxt);
-	}
-
-	if (p)
-		pool_memory_free(session_context->memory_context, p);
-
-	session_context->pending_pstmt = NULL;
-	session_context->pending_portal = NULL;
-}
-
-/*
- * Clear prepared statement list and portal list
- */
-void pool_clear_prepared_statement_list(void)
-{
-	PreparedStatementList *pslist;
-
-	if (!session_context)
-	{
-		pool_error("pool_clear_prepared_statement_list: session context is not initialized");
-		return;
-	}
-
-	pslist = &session_context->pstmt_list;
-
-	while (pslist->size > 0)
-	{
-		pool_remove_prepared_statement_by_pstmt_name(pslist->pstmts[0]->name);
-	}
-}
-
-/*
- * Create a prepared statement
- * len: the length of parse message which is not network byte order
- * contents: the contents of parse message
- */
-PreparedStatement *pool_create_prepared_statement(const char *name,
-												  int num_tsparams,
-												  int len, char *contents,
-												  POOL_QUERY_CONTEXT *qc)
-{
-	PreparedStatement *ps;
-
-	if (!session_context)
-	{
-		pool_error("pool_create_prepared_statement: session context is not initialized");
+		pool_error("pool_create_sent_message: session context is not initialized");
 		return NULL;
 	}
 
-	ps = pool_memory_alloc(session_context->memory_context,
-						   sizeof(PreparedStatement));
-	ps->name = pool_memory_strdup(session_context->memory_context, name);
-	ps->num_tsparams = num_tsparams;
-	ps->parse_len = len;
-	ps->parse_contents = pool_memory_alloc(session_context->memory_context, len);
-	memcpy(ps->parse_contents, contents, len);
+	msg = pool_memory_alloc(session_context->memory_context,
+							sizeof(POOL_SENT_MESSAGE));
+	msg->kind = kind;
+	msg->len = len;
+	msg->contents = pool_memory_alloc(session_context->memory_context, len);
+	memcpy(msg->contents, contents, len);
+	msg->num_tsparams = num_tsparams;
+	msg->name = pool_memory_strdup(session_context->memory_context, name);
+	msg->query_context = query_context;
 
-#ifdef NOT_USED
-	/* 
-	 * duplicate query_context because session_context->query_context is 
-	 * freed by pool_query_context_destroy()
-	 */
-	q = malloc(sizeof(POOL_QUERY_CONTEXT));
-	if (q == NULL)
-	{
-		pool_error("pool_create_prepared_statement: malloc failed: %s", strerror(errno));
-		exit(1);
-	}
-	ps->qctxt = memcpy(q, qc, sizeof(POOL_QUERY_CONTEXT));
-#endif
-	ps->qctxt = qc;
-
-	return ps;
-}
-
-/* 
- * Create a portal
- */
-Portal *pool_create_portal(const char *name, int num_tsparams, PreparedStatement *pstmt)
-{
-	Portal *portal;
-
-	if (!session_context)
-	{
-		pool_error("pool_create_portal: session context is not initialized");
-		return NULL;
-	}
-
-	portal = pool_memory_alloc(session_context->memory_context, sizeof(Portal));
-	portal->name = pool_memory_strdup(session_context->memory_context, name);
-	portal->num_tsparams = num_tsparams;
-	portal->pstmt = pstmt;
-	portal->qctxt = pstmt->qctxt;
-
-	return portal;
+	return msg;
 }
 
 /*
- * Add a prepared statement to prepared statement list
+ * Add a sent message to sent message list
  */
-void pool_add_prepared_statement(void)
+void pool_add_sent_message(POOL_SENT_MESSAGE *message)
 {
-	PreparedStatement *ps;
-	PreparedStatementList *pslist;
+	POOL_SENT_MESSAGE *old_msg;
+	POOL_SENT_MESSAGE_LIST *msglist;
 
 	if (!session_context)
 	{
-		pool_error("pool_add_prepared_statement: session context is not initialized");
+		pool_error("pool_add_sent_message: session context is not initialized");
 		return;
 	}
 
-	if (!session_context->pending_pstmt)
+	if (!message)
 	{
-		pool_debug("pool_add_prepared_statement: pending prepared statement is NULL");
+		pool_debug("pool_add_sent_message: message is NULL");
 		return;
 	}
 
-	ps = pool_get_prepared_statement_by_pstmt_name(session_context->pending_pstmt->name);
-	pslist = &session_context->pstmt_list;
+	old_msg = pool_get_sent_message(message->kind, message->name);
+	msglist = &session_context->message_list;
 
-	if (ps)
+	if (old_msg)
 	{
-		pool_remove_prepared_statement_by_pstmt_name(ps->name);
-		if (*session_context->pending_pstmt->name == '\0')
-		{
-			session_context->unnamed_pstmt = session_context->pending_pstmt;
-			session_context->query_context = session_context->pending_pstmt->qctxt;
-		}
+		if (message->kind == 'B')
+			pool_debug("pool_add_sent_message: portal \"%s\" already exists",
+					   message->name);
 		else
+			pool_debug("pool_add_sent_message: prepared statement \"%s\" already exists",
+					   message->name);
+
+		if (*message->name == '\0')
+			pool_remove_sent_message(old_msg->kind, old_msg->name);
+		else
+			return;
+	}
+
+	if (msglist->size == msglist->capacity)
+	{
+		msglist->capacity *= 2;
+		msglist->sent_messages = realloc(msglist->sent_messages,
+										 sizeof(POOL_SENT_MESSAGE *) * msglist->capacity);
+		if (!msglist->sent_messages)
 		{
-			pool_error("pool_add_prepared_statement: prepared statement \"%s\" already exists",
-					   session_context->pending_pstmt->name);
+			pool_error("pool_add_sent_message: realloc failed: %s", strerror(errno));
+			exit(1);
 		}
 	}
-	else
-	{
-		if (*session_context->pending_pstmt->name == '\0')
-		{
-			session_context->unnamed_pstmt = session_context->pending_pstmt;
-		}
-		else
-		{
-			if (pslist->size == pslist->capacity)
-			{
-				pslist->capacity *= 2;
-				pslist->pstmts = realloc(pslist->pstmts, sizeof(PreparedStatement *) * pslist->capacity);
-				if (pslist->pstmts == NULL)
-				{
-					pool_error("pool_add_prepared_statement: realloc failed: %s", strerror(errno));
-					exit(1);
-				}
-			}
-			pslist->pstmts[pslist->size++] = session_context->pending_pstmt;
-		}
-	}
+
+	msglist->sent_messages[msglist->size++] = message;
 }
 
 /*
- * Add a portal to portal list
+ * Get a sent message
  */
-void pool_add_portal(void)
-{
-	Portal *p;
-	PortalList *plist;
-
-	if (!session_context)
-	{
-		pool_error("pool_add_portal: session context is not initialized");
-		return;
-	}
-
-	if (!session_context->pending_portal)
-	{
-		pool_debug("pool_add_portal: pending portal is NULL");
-		return;
-	}
-
-	p = pool_get_portal_by_portal_name(session_context->pending_portal->name);
-	plist = &session_context->portal_list;
-
-	if (p)
-	{
-		pool_remove_portal_by_portal_name(p->name);
-		if (*session_context->pending_portal->name == '\0')
-		{
-			session_context->unnamed_portal = session_context->pending_portal;
-		}
-		else
-		{
-			pool_error("pool_add_portal: portal \"%s\" already exists",
-					   session_context->pending_portal->name);
-		}
-	}
-	else
-	{
-		if (*session_context->pending_portal->name == '\0')
-		{
-			session_context->unnamed_portal = session_context->pending_portal;
-		}
-		else
-		{
-			if (plist->size == plist->capacity)
-			{
-				plist->capacity *= 2;
-				plist->portals = realloc(plist->portals, sizeof(Portal *) * plist->capacity);
-				if (plist->portals == NULL)
-				{
-					pool_error("pool_add_portal: realloc failed: %s", strerror(errno));
-					exit(1);
-				}
-			}
-			plist->portals[plist->size++] = session_context->pending_portal;
-		}
-	}
-}
-
-/*
- * Get a prepared statement by prepared statement name
- */
-PreparedStatement *pool_get_prepared_statement_by_pstmt_name(const char *name)
+POOL_SENT_MESSAGE *pool_get_sent_message(char kind, const char *name)
 {
 	int i;
-	PreparedStatementList *pslist;
+	POOL_SENT_MESSAGE_LIST *msglist;
 
 	if (!session_context)
 	{
-		pool_error("pool_get_prepared_statement_by_pstmt_name: session context is not initialized");
+		pool_error("pool_get_sent_message: session context is not initialized");
 		return NULL;
 	}
 
-	if (*name == '\0')
-		return session_context->unnamed_pstmt;
+	msglist = &session_context->message_list;
 
-	pslist = &session_context->pstmt_list;
-
-	for (i = 0; i < pslist->size; i++)
+	for (i = 0; i < msglist->size; i++)
 	{
-		if (strcmp(pslist->pstmts[i]->name, name) == 0)
-			return pslist->pstmts[i];
-	}
-
-	return NULL;
-}
-
-/*
- * Get a portal by portal name
- */
-Portal *pool_get_portal_by_portal_name(const char *name)
-{
-	int i;
-	PortalList *plist;
-
-	if (!session_context)
-	{
-		pool_error("pool_get_portal_by_portal_name: session context is not initialized");
-		return NULL;
-	}
-
-	if (*name == '\0')
-		return session_context->unnamed_portal;
-
-	plist = &session_context->portal_list;
-
-	for (i = 0; i < plist->size; i++)
-	{
-		if (strcmp(plist->portals[i]->name, name) == 0)
-			return plist->portals[i];
+		if (msglist->sent_messages[i]->kind == kind &&
+			!strcmp(msglist->sent_messages[i]->name, name))
+			return msglist->sent_messages[i];
 	}
 
 	return NULL;
@@ -1052,7 +804,7 @@ void pool_copy_prep_where(bool *src, bool *dest)
 {
 	memcpy(dest, src, sizeof(bool)*MAX_NUM_BACKENDS);
 }
-
+#ifdef NOT_USED
 /*
  * Add to send map a PREPARED statement
  */
@@ -1124,76 +876,42 @@ void pool_delete_prep_where(char *name)
 		}
 	}
 }
-
+#endif /* NOT_USED */
 /*
- * Initialize prepared statement list
+ * Initialize sent message list
  */
-static void init_prepared_statement_list(void)
+static void init_sent_message_list(void)
 {
-	PreparedStatementList *pslist;
+	POOL_SENT_MESSAGE_LIST *msglist;
 
-	pslist = &session_context->pstmt_list;
-	pslist->size = 0;
-	pslist->capacity = INIT_LIST_SIZE;
-	pslist->pstmts = malloc(sizeof(PreparedStatement *) * INIT_LIST_SIZE);
-	if (pslist->pstmts == NULL)
+	msglist = &session_context->message_list;
+	msglist->size = 0;
+	msglist->capacity = INIT_LIST_SIZE;
+	msglist->sent_messages = malloc(sizeof(POOL_SENT_MESSAGE *) * INIT_LIST_SIZE);
+	if (!msglist->sent_messages)
 	{
-		pool_error("init_prepared_statement_list: malloc failed: %s", strerror(errno));
+		pool_error("init_sent_message_list: malloc failed: %s", strerror(errno));
 		exit(1);
 	}
 }
 
-/*
- * Initialize portal list
- */
-static void init_portal_list(void)
-{
-	PortalList *plist;
-
-	plist = &session_context->portal_list;
-	plist->size = 0;
-	plist->capacity = INIT_LIST_SIZE;
-	plist->portals = malloc(sizeof(Portal *) * INIT_LIST_SIZE);
-	if (plist->portals == NULL)
-	{
-		pool_error("init_portal_list: malloc failed: %s", strerror(errno));
-		exit(1);
-	}
-}
-
-static bool can_prepared_statement_destroy(POOL_QUERY_CONTEXT *qc)
+static bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc)
 {
 	int i;
-	PortalList *plist;
+	int count = 0;
+	POOL_SENT_MESSAGE_LIST *msglist;
 
-	plist = &session_context->portal_list;
+	msglist = &session_context->message_list;
 
-	for (i = 0; i < plist->size; i++)
+	for (i = 0; i < msglist->size; i++)
 	{
-		if (plist->portals[i]->qctxt == qc)
-		{
-			pool_debug("can_prepared_statement_destroy: query context is still used.");
-			return false;
-		}
+		if (msglist->sent_messages[i]->query_context == qc)
+			count++;
 	}
-
-	return true;
-}
-
-static bool can_portal_destroy(POOL_QUERY_CONTEXT *qc)
-{
-	int i;
-	PreparedStatementList *pslist;
-
-	pslist = &session_context->pstmt_list;
-
-	for (i = 0; i < pslist->size; i++)
+	if (count > 1)
 	{
-		if (pslist->pstmts[i]->qctxt == qc)
-		{
-			pool_debug("can_portal_destroy: query context is still used.");
-			return false;
-		}
+		pool_debug("can_query_context_destroy: query context is still used.");
+		return false;
 	}
 
 	return true;

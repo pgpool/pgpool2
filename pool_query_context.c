@@ -424,40 +424,6 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 				pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
 			}
 		}
-
-		/* PREPARE? */
-		if (IsA(node, PrepareStmt))
-		{
-			/* Make sure that same prepared statement does not exist */
-			if (pool_get_prep_where(((PrepareStmt *)node)->name) == NULL)
-			{
-				/* Save the send map */
-				pool_add_prep_where(((PrepareStmt *)node)->name, query_context->where_to_send);
-			}
-		}
-
-		/*
-		 * EXECUTE?
-		 */
-		else if (IsA(node, ExecuteStmt))
-		{
-			bool *wts;
-
-			wts = pool_get_prep_where(((ExecuteStmt *)node)->name);
-			if (wts)
-			{
-				/* Inherit same map from PREPARE */
-				pool_copy_prep_where(wts, query_context->where_to_send);
-			}
-		}
-
-		/*
-		 * DEALLOCATE?
-		 */
-		else if (IsA(node, DeallocateStmt))
-		{
-			where_to_send_deallocate(query_context, node);
-		}
 	}
 	else if (REPLICATION || PARALLEL_MODE)
 	{
@@ -485,13 +451,6 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 				pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
 			}
 		}
-		/*
-		 * DEALLOCATE?
-		 */
-		else if (IsA(node, DeallocateStmt))
-		{
-			where_to_send_deallocate(query_context, node);
-		}
 		else
 		{
 			/* send to all nodes */
@@ -504,6 +463,29 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 		return;
 	}
 
+	/*
+	 * EXECUTE?
+	 */
+	if (IsA(node, ExecuteStmt))
+	{
+		POOL_SENT_MESSAGE *msg;
+
+		msg = pool_get_sent_message('Q', ((ExecuteStmt *)node)->name);
+		if (!msg)
+			msg = pool_get_sent_message('P', ((ExecuteStmt *)node)->name);
+		if (msg)
+			pool_copy_prep_where(msg->query_context->where_to_send,
+								 query_context->where_to_send);
+	}
+
+	/*
+	 * DEALLOCATE?
+	 */
+	else if (IsA(node, DeallocateStmt))
+	{
+		where_to_send_deallocate(query_context, node);
+	}
+
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
 		if (query_context->where_to_send[i])
@@ -512,9 +494,9 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 			break;
 		}
 	}
+
 	return;
 }
-
 
 /*
  * Send query and wait for response
@@ -977,7 +959,7 @@ static
 void where_to_send_deallocate(POOL_QUERY_CONTEXT *query_context, Node *node)
 {
 	DeallocateStmt *d = (DeallocateStmt *)node;
-	bool *wts;
+	POOL_SENT_MESSAGE *msg;
 
 	/* DELLOCATE ALL? */
 	if (d->name == NULL)
@@ -987,24 +969,16 @@ void where_to_send_deallocate(POOL_QUERY_CONTEXT *query_context, Node *node)
 	}
 	else
 	{
-		wts = pool_get_prep_where(d->name);
-		if (wts)
+		msg = pool_get_sent_message('Q', d->name);
+		if (!msg)
+			msg = pool_get_sent_message('P', d->name);
+		if (msg)
 		{
-			/* Inherit same map from PREPARE */
-			pool_copy_prep_where(wts, query_context->where_to_send);
-			return;
+			/* Inherit same map from PREPARE or PARSE */
+			pool_copy_prep_where(msg->query_context->where_to_send,
+								 query_context->where_to_send);
 		}
-		else
-		{
-			PreparedStatement *ps;
-
-			ps = pool_get_prepared_statement_by_pstmt_name(d->name);
-			if (ps && ps->qctxt)
-			{
-				pool_copy_prep_where(ps->qctxt->where_to_send, query_context->where_to_send);
-				return;
-			}
-		}
+		return;
 	}
 	/* prepared statement was not found */
 	pool_setall_node_to_be_sent(query_context);
@@ -1118,12 +1092,9 @@ bool is_2pc_transaction_query(Node *node, char *query)
 }
 
 /*
- * Set query state, if specified state less than current state
- * state:
- *  0: before parse   1: parse done     2: bind done
- *  3: describe done  4: execute done  -1: in error
+ * Set query state, if a current state is before it than the specified state.
  */
-void pool_set_query_state(POOL_QUERY_CONTEXT *query_context, short state)
+void pool_set_query_state(POOL_QUERY_CONTEXT *query_context, POOL_QUERY_STATE state)
 {
 	int i;
 
@@ -1133,16 +1104,41 @@ void pool_set_query_state(POOL_QUERY_CONTEXT *query_context, short state)
 		return;
 	}
 
-	if (state < -1 || state > 4)
-	{
-		pool_error("pool_set_query_state: invalid query state: %d", state);
-		return;
-	}
-
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
 		if (query_context->where_to_send[i] &&
-			query_context->query_state[i] < state)
+			statecmp(query_context->query_state[i], state) < 0)
 			query_context->query_state[i] = state;
 	}
+}
+
+int statecmp(POOL_QUERY_STATE s1, POOL_QUERY_STATE s2)
+{
+	int ret;
+
+	switch (s2) {
+		case POOL_UNPARSED:
+			ret = (s1 == s2) ? 0 : 1;
+			break;
+		case POOL_PARSE_COMPLETE:
+			if (s1 == POOL_UNPARSED)
+				ret = -1;
+			else
+				ret = (s1 == s2) ? 0 : 1;
+			break;
+		case POOL_BIND_COMPLETE:
+			if (s1 == POOL_UNPARSED || s1 == POOL_PARSE_COMPLETE)
+				ret = -1;
+			else
+				ret = (s1 == s2) ? 0 : 1;
+			break;
+		case POOL_EXECUTE_COMPLETE:
+			ret = (s1 == s2) ? 0 : -1;
+			break;
+		default:
+			ret = -2;
+			break;
+	}
+
+	return ret;
 }
