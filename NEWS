@@ -7,7 +7,7 @@
 
 	  * Incompatible changes
 
-	  - Now installing C function "pgpool-walrecrunning()" is recommended
+	  - Now installing C function "pgpool_walrecrunning()" is recommended
 	  	if you plan to use streaming replication mode.
 	  	This is necessary for better use of online recovery in the mode.
 		Also new variable "%P" can be used in the online recovery script.
@@ -87,7 +87,7 @@
 
 		This problem happens because pgpool-II regarded unconditionally
 		the youngest node to be the primary. pgpool-II 3.0.3 now checks
-		each node by using pgpool-walrecrunning() to see if it is a
+		each node by using pgpool_walrecrunning() to see if it is a
 		actually primary or not and is able to avoid the problem and
 		regards node as standby correctly. Also you can use new
 		variable "%P" to be used in the recovery script.  If you do
