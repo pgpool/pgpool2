@@ -2117,7 +2117,8 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 			case 'E':	/* ErrorResponse */
 				status = ErrorResponse3(frontend, backend);
 				pool_set_command_success();
-				if (TSTATE(backend, REAL_MASTER_NODE_ID) != 'I')
+				if (TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID :
+						   REAL_MASTER_NODE_ID) != 'I')
 					pool_set_failed_transaction();
 				if (pool_is_doing_extended_query_message())
 				{
@@ -2186,7 +2187,8 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 
 			case 'E':	/* ErrorResponse */
 				status = ErrorResponse(frontend, backend);
-				if (TSTATE(backend, REAL_MASTER_NODE_ID) != 'I')
+				if (TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID :
+						   REAL_MASTER_NODE_ID) != 'I')
 					pool_set_failed_transaction();
 				break;
 
@@ -2519,21 +2521,21 @@ POOL_STATUS raise_intentional_error_if_need(POOL_CONNECTION_POOL *backend)
 	query_context = session_context->query_context;
 
 	if (MASTER_SLAVE &&
-		TSTATE(backend, REAL_MASTER_NODE_ID) == 'T' &&
-		REAL_MASTER_NODE_ID != MASTER_NODE_ID &&
+		TSTATE(backend, PRIMARY_NODE_ID) == 'T' &&
+		PRIMARY_NODE_ID != MASTER_NODE_ID &&
 		query_context &&
 		is_select_query(query_context->parse_tree, query_context->original_query))
 	{
-		pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
+		pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
 		if (pool_is_doing_extended_query_message())
 		{
-			ret = do_error_execute_command(backend, REAL_MASTER_NODE_ID, PROTO_MAJOR_V3);
+			ret = do_error_execute_command(backend, PRIMARY_NODE_ID, PROTO_MAJOR_V3);
 			if (ret != POOL_CONTINUE)
 				return ret;
 		}
 		else
 		{
-			ret = do_error_command(CONNECTION(backend, REAL_MASTER_NODE_ID), MAJOR(backend));
+			ret = do_error_command(CONNECTION(backend, PRIMARY_NODE_ID), MAJOR(backend));
 			if (ret != POOL_CONTINUE)
 				return ret;
 		}
