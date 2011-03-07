@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2010	PgPool Global Development Group
+ * Copyright (c) 2003-2011	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -779,7 +779,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 					   !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))) ||
 					(MASTER_SLAVE &&
 					 !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP) &&
-					 node_id == REAL_MASTER_NODE_ID))
+					 node_id == PRIMARY_NODE_ID))
 				{
 					int len;
 					char *msg;

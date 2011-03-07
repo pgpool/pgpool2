@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2010	PgPool Global Development Group
+ * Copyright (c) 2003-2011	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -49,6 +49,7 @@ extern volatile sig_atomic_t pcp_wakeup_request;
 
 int start_recovery(int recovery_node)
 {
+	int node_id;
 	BackendInfo *backend;
 	BackendInfo *recovery_backend;
 	PGconn *conn;
@@ -63,7 +64,8 @@ int start_recovery(int recovery_node)
 
 	Req_info->kind = NODE_RECOVERY_REQUEST;
 
-	backend = &pool_config->backend_desc->backend_info[MASTER_NODE_ID];
+	node_id = MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID;
+	backend = &pool_config->backend_desc->backend_info[node_id];
 	recovery_backend = &pool_config->backend_desc->backend_info[recovery_node];
 
 	conn = connect_backend_libpq(backend);
