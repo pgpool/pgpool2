@@ -303,6 +303,14 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	{
 		pool_set_node_to_be_sent(query_context,
 								 MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID);
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (query_context->where_to_send[i])
+			{
+				query_context->virtual_master_node_id = i;
+				break;
+			}
+		}
 		return;
 	}
 
