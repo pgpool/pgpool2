@@ -27,6 +27,7 @@
 #include <string.h>
 
 #include "pool.h"
+#include "parser/parser.h"
 
 #define MAX_PARAM_ITEMS 128
 
