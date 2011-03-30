@@ -321,6 +321,11 @@ void config_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	strncpy(status[i].desc, "failover command", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	strncpy(status[i].name, "follow_master_command", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->follow_master_command);
+	strncpy(status[i].desc, "follow master command", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	strncpy(status[i].name, "failback_command", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->failback_command);
 	strncpy(status[i].desc, "failback command", POOLCONFIG_MAXDESCLEN);

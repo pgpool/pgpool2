@@ -279,6 +279,17 @@ failback_command = ''              # Executes this command at failback.
                                    #   %M = old master node id
                                    #   %P = old primary node id
                                    #   %% = '%' character
+follow_master_command = ''         # Executes this command after master failover.
+                                   # Special values:
+                                   #   %d = node id
+                                   #   %h = host name
+                                   #   %p = port number
+                                   #   %D = database cluster path
+                                   #   %m = new master node id
+                                   #   %H = hostname of the new master node
+                                   #   %M = old master node id
+                                   #   %P = old primary node id
+                                   #   %% = '%' character
 
 fail_over_on_backend_error = on    # Initiates failover when writing to the
                                    # backend communication socket fails

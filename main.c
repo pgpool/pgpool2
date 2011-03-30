@@ -106,6 +106,7 @@ static void reload_config(void);
 static int pool_pause(struct timeval *timeout);
 static void kill_all_children(int sig);
 static int get_next_master_node(void);
+static pid_t fork_follow_child(int old_master, int new_master, int old_primary);
 
 static RETSIGTYPE exit_handler(int sig);
 static RETSIGTYPE reap_handler(int sig);
@@ -118,7 +119,8 @@ static void usage(void);
 static void show_version(void);
 static void stop_me(void);
 
-static int trigger_failover_command(int node, const char *command_line);
+static int trigger_failover_command(int node, const char *command_line,
+									int old_master, int new_master, int old_primary);
 
 static int find_primary_node(void);
 
@@ -137,6 +139,7 @@ ConnectionInfo *con_info;
 static int unix_fd;	/* unix domain socket fd */
 static int inet_fd;	/* inet domain socket fd */
 
+static int follow_pid; /* pid for child process handling follow command */
 static int pcp_pid; /* pid for child process handling PCP */
 static int pcp_unix_fd; /* unix domain socket fd for PCP (not used) */
 static int pcp_inet_fd; /* inet domain socket fd for PCP */
@@ -1412,6 +1415,7 @@ static void failover(void)
 	int i;
 	int node_id;
 	int new_master;
+	int new_primary;
 	int nodes[MAX_NUM_BACKENDS];
 
 	pool_debug("failover_handler called");
@@ -1486,7 +1490,8 @@ static void failover(void)
 				 BACKEND_INFO(node_id).backend_hostname,
 				 BACKEND_INFO(node_id).backend_port);
 		BACKEND_INFO(node_id).backend_status = CON_CONNECT_WAIT;	/* unset down status */
-		trigger_failover_command(node_id, pool_config->failback_command);
+		trigger_failover_command(node_id, pool_config->failback_command,
+								 MASTER_NODE_ID, get_next_master_node(), PRIMARY_NODE_ID);
 	}
 	else
 	{
@@ -1588,13 +1593,45 @@ static void failover(void)
 	for (i = 0; i < pool_config->backend_desc->num_backends; i++)
 	{
 		if (nodes[i])
-			trigger_failover_command(i, pool_config->failover_command);
+			trigger_failover_command(i, pool_config->failover_command,
+									 MASTER_NODE_ID, new_master, PRIMARY_NODE_ID);
 	}
 
-	if (new_master >= 0)
+	/* 
+	 * In master/slave streaming replication we start degenerating
+	 * all backends as they are not replicated anymore
+	 */
+	int follow_cnt = 0;
+	new_primary =  find_primary_node();
+	if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
 	{
-		pool_log("failover_handler: set new master node: %d", new_master);
-		Req_info->master_node_id = new_master;
+		/* only if the failover is against the current primary */
+		if ((Req_info->kind == NODE_DOWN_REQUEST) &&
+			(nodes[Req_info->primary_node_id])) {
+
+			for (i = 0; i < pool_config->backend_desc->num_backends; i++)
+			{
+				/* do not degenerate the new primary */
+				if ((new_primary >= 0) && (i != new_primary)) {
+					BackendInfo *bkinfo;
+					bkinfo = pool_get_node_info(i);
+					pool_log("starting follow degeneration. shutdown host %s(%d)",
+							 bkinfo->backend_hostname,
+							 bkinfo->backend_port);
+					bkinfo->backend_status = CON_DOWN;	/* set down status */
+					follow_cnt++;
+				}
+			}
+
+			if (follow_cnt == 0)
+			{
+				pool_log("failover: no follow backends are degenerated");
+			}
+			else
+			{
+				pool_log("failover: %d follow backends have been degenerated", follow_cnt);
+			}
+		}
 	}
 
 /* no need to wait since it will be done in reap_handler */
@@ -1608,6 +1645,27 @@ static void failover(void)
 
 	memset(Req_info->node_id, -1, sizeof(int) * MAX_NUM_BACKENDS);
 	pool_semaphore_unlock(REQUEST_INFO_SEM);
+
+	/* exec follow_master_command */
+	if ((follow_cnt > 0) && (pool_config->follow_master_command))
+	{
+		follow_pid = fork_follow_child(Req_info->master_node_id, new_primary,
+									   Req_info->primary_node_id);
+	}
+
+	/* Save primary node id */
+	Req_info->primary_node_id = new_primary;
+	pool_log("failover: set new primary node: %d", Req_info->primary_node_id);
+
+	if (new_master >= 0)
+	{
+		Req_info->master_node_id = new_master;
+	}
+	if (Req_info->primary_node_id >= 0)
+	{
+		Req_info->master_node_id = new_primary;
+	}
+	pool_log("failover: set new master node: %d", Req_info->master_node_id);
 
 	/* fork the children */
 	for (i=0;i<pool_config->num_init_children;i++)
@@ -1629,13 +1687,10 @@ static void failover(void)
 				 BACKEND_INFO(node_id).backend_port);
 	}
 
-	/* Save primary node id */
-	Req_info->primary_node_id = find_primary_node();
-
 	switching = 0;
 
 	/* kick wakeup_handler in pcp_child to notice that
-	 * faiover/failback done
+	 * failover/failback done
 	 */
 	kill(pcp_pid, SIGUSR2);
 }
@@ -2166,7 +2221,8 @@ char *get_hba_file_name(void)
  * trigger_failover_command: execute specified command at failover.
  *                           command_line is null-terminated string.
  */
-static int trigger_failover_command(int node, const char *command_line)
+static int trigger_failover_command(int node, const char *command_line,
+									int old_master, int new_master, int old_primary)
 {
 	int r = 0;
 	String *exec_cmd;
@@ -2232,17 +2288,17 @@ static int trigger_failover_command(int node, const char *command_line)
 						break;
 
 					case 'm': /* new master node id */
-						snprintf(port_buf, sizeof(port_buf), "%d", get_next_master_node());
+						snprintf(port_buf, sizeof(port_buf), "%d", new_master);
 						string_append_char(exec_cmd, port_buf);
 						break;
 
 					case 'M': /* old master node id */
-						snprintf(port_buf, sizeof(port_buf), "%d", MASTER_NODE_ID);
+						snprintf(port_buf, sizeof(port_buf), "%d", old_master);
 						string_append_char(exec_cmd, port_buf);
 						break;
 
 					case 'P': /* old primary node id */
-						snprintf(port_buf, sizeof(port_buf), "%d", PRIMARY_NODE_ID);
+						snprintf(port_buf, sizeof(port_buf), "%d", old_primary);
 						string_append_char(exec_cmd, port_buf);
 						break;
 
@@ -2386,4 +2442,35 @@ static int find_primary_node(void)
 
 	pool_log("find_primary_node: primary node id is %d", i);
 	return i;
+}
+
+/*
+* fork a follow child
+*/
+pid_t fork_follow_child(int old_master, int new_master, int old_primary)
+{
+	pid_t pid;
+	int i;
+
+	pid = fork();
+
+	if (pid == 0)
+	{
+		pool_log("start triggering follow command.");
+		for (i = 0; i < pool_config->backend_desc->num_backends; i++)
+		{
+			BackendInfo *bkinfo;
+			bkinfo = pool_get_node_info(i);
+			if (bkinfo->backend_status == CON_DOWN)
+				trigger_failover_command(i, pool_config->follow_master_command,
+										 old_master, new_master, old_primary);
+		}
+		exit(0);
+	}
+	else if (pid == -1)
+	{
+		pool_error("follow fork() failed. reason: %s", strerror(errno));
+		exit(1);
+	}
+	return pid;
 }
