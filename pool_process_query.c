@@ -86,7 +86,6 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 							   POOL_CONNECTION_POOL *backend,
 							   int reset_request)
 {
-	char kind;	/* packet kind (backend) */
 	short num_fields = 0;	/* the number of fields in a row (V2 protocol) */
 	fd_set	readmask;
 	fd_set	writemask;
@@ -110,8 +109,6 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 
 	for (;;)
 	{
-		kind = 0;
-
 		/* Are we requested to send reset queries? */
 		if (state == 0 && reset_request)
 		{
@@ -172,8 +169,8 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 		}
 
 		/*
-		 * if all backends do not have any pending data in the
-		 * receiving data cache, then issue select(2) to wait for new
+		 * if a frontend and all backends do not have any pending data in
+		 * the receiving data cache, then issue select(2) to wait for new
 		 * data arrival
 		 */
 		if (is_cache_empty(frontend, backend) && !pool_is_query_in_progress())
@@ -196,10 +193,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 
 			num_fds = 0;
 
-			/*
-			 * Do not read a message from frontend while backends process a query.
-			 */
-			if (!reset_request && !pool_is_query_in_progress())
+			if (!reset_request)
 			{
 				FD_SET(frontend->fd, &readmask);
 				FD_SET(frontend->fd, &exceptmask);
@@ -263,7 +257,8 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 
 					if (idle_count > pool_config->client_idle_limit)
 					{
-						pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit(%d) reached", pool_config->client_idle_limit);
+						pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit(%d) reached",
+								 pool_config->client_idle_limit);
 						pool_send_error_message(frontend, MAJOR(backend),
 												"57000", "connection terminated due to online recovery",
 												"","",  __FILE__, __LINE__);
@@ -276,7 +271,8 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 
 					if (idle_count_in_recovery > pool_config->client_idle_limit_in_recovery)
 					{
-						pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit_in_recovery(%d) reached", pool_config->client_idle_limit_in_recovery);
+						pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit_in_recovery(%d) reached",
+								 pool_config->client_idle_limit_in_recovery);
 						pool_send_error_message(frontend, MAJOR(backend),
 												"57000", "connection terminated due to online recovery",
 												"","",  __FILE__, __LINE__);
@@ -329,10 +325,6 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 							sleep(5);
 							break;
 						}
-						status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
-						if (status != POOL_CONTINUE)
-							return status;
-						break;
 					}
 				}
 			}
@@ -340,7 +332,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 			if (was_error)
 				continue;
 
-			if (!reset_request && !pool_is_query_in_progress())
+			if (!reset_request)
 			{
 				if (FD_ISSET(frontend->fd, &exceptmask))
 					return POOL_END;
@@ -349,19 +341,16 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 					status = ProcessFrontendResponse(frontend, backend);
 					if (status != POOL_CONTINUE)
 						return status;
-
-#ifdef NOT_USED
-					continue;
-				}
-				if (kind == 0)
-					continue;
-#endif
 				}
 			}
 
 			if (FD_ISSET(MASTER(backend)->fd, &exceptmask))
-			{
 				return POOL_ERROR;
+			else if (FD_ISSET(MASTER(backend)->fd, &readmask))
+			{
+				status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
+				if (status != POOL_CONTINUE)
+					return status;
 			}
 		}
 		else
@@ -375,16 +364,20 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				{
 					pool_log("pool_process_query: garbage data from frontend after receiving terminate message ignored");
 					pool_discard_read_buffer(frontend);
-					continue;
 				}
+				else
+				{
+					status = ProcessFrontendResponse(frontend, backend);
+					if (status != POOL_CONTINUE)
+						return status;
+				}
+			}
 
-				status = ProcessFrontendResponse(frontend, backend);
+			if (!pool_read_buffer_is_empty(MASTER(backend)) || pool_is_query_in_progress())
+			{
+				status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
 				if (status != POOL_CONTINUE)
 					return status;
-
-#ifdef NOT_USED
-				continue;
-#endif
 			}
 		}
 
@@ -398,11 +391,6 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				pool_memset_system_db_info(system_db_info->info);
 			got_sighup = 0;
 		}
-
-		status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
-		if (status != POOL_CONTINUE)
-			return status;
-
 	}
 	return POOL_CONTINUE;
 }
