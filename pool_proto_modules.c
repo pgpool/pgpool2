@@ -1424,6 +1424,7 @@ POOL_STATUS BindComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backen
 POOL_STATUS CloseComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 {
 	POOL_SESSION_CONTEXT *session_context;
+	POOL_STATUS status;
 
 	/* Get session context */
 	session_context = pool_get_session_context();
@@ -1433,6 +1434,10 @@ POOL_STATUS CloseComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 		return POOL_END;
 	}
 
+	/* Send CloseComplete(3) to frontend before removing the target message */
+	status = SimpleForwardToFrontend('3', frontend, backend);
+
+	/* Remove the target message */
 	if (session_context->uncompleted_message)
 	{
 		pool_remove_sent_message(session_context->uncompleted_message->kind,
@@ -1445,7 +1450,7 @@ POOL_STATUS CloseComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 		return POOL_END;
 	}
 
-	return SimpleForwardToFrontend('3', frontend, backend);
+	return status;
 }
 
 POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
