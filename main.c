@@ -153,8 +153,6 @@ static int switching = 0;		/* non 0 if I'm fail overing or degenerating */
 static int clear_cache = 0;		/* non 0 if clear chache option (-c) is given */
 static int not_detach = 0;		/* non 0 if non detach option (-n) is given */
 
-long int weight_master;	/* normalized weight of master (0-RAND_MAX range) */
-
 static int stop_sig = SIGTERM;	/* stopping signal default value */
 
 static volatile sig_atomic_t health_check_timer_expired;		/* non 0 if health check timer expired */
