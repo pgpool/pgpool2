@@ -3169,6 +3169,7 @@ configure に失敗します。必ず libpq 3.0 以降(PostgreSQL 7.4以降
    * pcp_systemdb_info	- システムDB情報を取得する
    * pcp_detach_node	- ノードを切り離す
    * pcp_attach_node	- ノードを復帰させる
+   * pcp_promote_node	- ノードをマスターに昇格させる
    * pcp_stop_pgpool	- pgpool-IIを停止させる
    * pcp_recovery_node  - マスタノードを使ってノードのデータを再同期、ノード起動させる
 </pre>
@@ -3369,6 +3370,21 @@ configure に失敗します。必ず libpq 3.0 以降(PostgreSQL 7.4以降
    pgpool-IIのノードを復帰させます。
 </pre>
 </p>
+
+
+<h3>pcp_promote_node</h3>
+<p>
+<pre>
+   書式:
+	pcp_promote_node  [-g] _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
+
+   pgpool-IIのノードをマスターに昇格させます。これは、マスタースレーブモードでストリーミング
+レプリケーション構成の場合のみ使用できます。
+-gを指定すると、すべてのクライアントが接続を終了するまでノードをマスターに昇格しません。
+(ただし、client_idle_limit_in_recovery が -1 あるいは、recovery_timeout が設定されている場合を除く)
+</pre>
+</p>
+
 
 <h3>pcp_stop_pgpool</h3>
 <p>
