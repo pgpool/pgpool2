@@ -329,4 +329,4 @@ system_db_password = ''             # (change requires restart)
 # If someone modify the table by using ALTER TABLE or some such, the relcache
 # is not consistent anymore.
 # For this purpose, cache_expiration controls the life time of the cache.
-relcache_expire = 0;
+relcache_expire = 0
