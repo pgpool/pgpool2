@@ -1642,35 +1642,38 @@ static void failover(void)
 	 * all backends as they are not replicated anymore
 	 */
 	int follow_cnt = 0;
-	if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
+	if (*pool_config->follow_master_command != '\0')
 	{
-		/* only if the failover is against the current primary */
-		if (((Req_info->kind == NODE_DOWN_REQUEST) &&
-			 (nodes[Req_info->primary_node_id])) ||
-			((Req_info->kind == PROMOTE_NODE_REQUEST) &&
-			 (VALID_BACKEND(Req_info->node_id[0])))) {
+		if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
+		{
+			/* only if the failover is against the current primary */
+			if (((Req_info->kind == NODE_DOWN_REQUEST) &&
+				 (nodes[Req_info->primary_node_id])) ||
+				((Req_info->kind == PROMOTE_NODE_REQUEST) &&
+				 (VALID_BACKEND(Req_info->node_id[0])))) {
 
-			for (i = 0; i < pool_config->backend_desc->num_backends; i++)
-			{
-				/* do not degenerate the new primary */
-				if ((new_primary >= 0) && (i != new_primary)) {
-					BackendInfo *bkinfo;
-					bkinfo = pool_get_node_info(i);
-					pool_log("starting follow degeneration. shutdown host %s(%d)",
-							 bkinfo->backend_hostname,
-							 bkinfo->backend_port);
-					bkinfo->backend_status = CON_DOWN;	/* set down status */
-					follow_cnt++;
+				for (i = 0; i < pool_config->backend_desc->num_backends; i++)
+				{
+					/* do not degenerate the new primary */
+					if ((new_primary >= 0) && (i != new_primary)) {
+						BackendInfo *bkinfo;
+						bkinfo = pool_get_node_info(i);
+						pool_log("starting follow degeneration. shutdown host %s(%d)",
+								 bkinfo->backend_hostname,
+								 bkinfo->backend_port);
+						bkinfo->backend_status = CON_DOWN;	/* set down status */
+						follow_cnt++;
+					}
 				}
-			}
 
-			if (follow_cnt == 0)
-			{
-				pool_log("failover: no follow backends are degenerated");
-			}
-			else
-			{
-				pool_log("failover: %d follow backends have been degenerated", follow_cnt);
+				if (follow_cnt == 0)
+				{
+					pool_log("failover: no follow backends are degenerated");
+				}
+				else
+				{
+					pool_log("failover: %d follow backends have been degenerated", follow_cnt);
+				}
 			}
 		}
 	}
@@ -1688,7 +1691,7 @@ static void failover(void)
 	pool_semaphore_unlock(REQUEST_INFO_SEM);
 
 	/* exec follow_master_command */
-	if ((follow_cnt > 0) && (pool_config->follow_master_command))
+	if ((follow_cnt > 0) && (*pool_config->follow_master_command != '\0'))
 	{
 		follow_pid = fork_follow_child(Req_info->master_node_id, new_primary,
 									   Req_info->primary_node_id);
