@@ -38,7 +38,7 @@ bin_PROGRAMS = pcp_stop_pgpool$(EXEEXT) pcp_node_count$(EXEEXT) \
 	pcp_node_info$(EXEEXT) pcp_proc_count$(EXEEXT) \
 	pcp_proc_info$(EXEEXT) pcp_systemdb_info$(EXEEXT) \
 	pcp_detach_node$(EXEEXT) pcp_attach_node$(EXEEXT) \
-	pcp_recovery_node$(EXEEXT)
+	pcp_recovery_node$(EXEEXT) pcp_promote_node$(EXEEXT)
 subdir = pcp
 DIST_COMMON = $(include_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
@@ -88,6 +88,9 @@ pcp_proc_info_DEPENDENCIES = libpcp.la
 am_pcp_recovery_node_OBJECTS = pcp_recovery_node.$(OBJEXT)
 pcp_recovery_node_OBJECTS = $(am_pcp_recovery_node_OBJECTS)
 pcp_recovery_node_DEPENDENCIES = libpcp.la
+am_pcp_promote_node_OBJECTS = pcp_promote_node.$(OBJEXT)
+pcp_promote_node_OBJECTS = $(am_pcp_promote_node_OBJECTS)
+pcp_promote_node_DEPENDENCIES = libpcp.la
 am_pcp_stop_pgpool_OBJECTS = pcp_stop_pgpool.$(OBJEXT)
 pcp_stop_pgpool_OBJECTS = $(am_pcp_stop_pgpool_OBJECTS)
 pcp_stop_pgpool_DEPENDENCIES = libpcp.la
@@ -113,12 +116,14 @@ SOURCES = $(libpcp_la_SOURCES) $(pcp_attach_node_SOURCES) \
 	$(pcp_detach_node_SOURCES) $(pcp_node_count_SOURCES) \
 	$(pcp_node_info_SOURCES) $(pcp_proc_count_SOURCES) \
 	$(pcp_proc_info_SOURCES) $(pcp_recovery_node_SOURCES) \
-	$(pcp_stop_pgpool_SOURCES) $(pcp_systemdb_info_SOURCES)
+	$(pcp_stop_pgpool_SOURCES) $(pcp_systemdb_info_SOURCES) \
+	$(pcp_promote_node_SOURCES)
 DIST_SOURCES = $(libpcp_la_SOURCES) $(pcp_attach_node_SOURCES) \
 	$(pcp_detach_node_SOURCES) $(pcp_node_count_SOURCES) \
 	$(pcp_node_info_SOURCES) $(pcp_proc_count_SOURCES) \
 	$(pcp_proc_info_SOURCES) $(pcp_recovery_node_SOURCES) \
-	$(pcp_stop_pgpool_SOURCES) $(pcp_systemdb_info_SOURCES)
+	$(pcp_stop_pgpool_SOURCES) $(pcp_systemdb_info_SOURCES) \
+	$(pcp_promote_node_SOURCES)
 includeHEADERS_INSTALL = $(INSTALL_HEADER)
 HEADERS = $(include_HEADERS)
 ETAGS = etags
@@ -266,6 +271,8 @@ pcp_attach_node_SOURCES = pcp_attach_node.c pcp.h
 pcp_attach_node_LDADD = libpcp.la
 pcp_recovery_node_SOURCES = pcp_recovery_node.c pcp.h
 pcp_recovery_node_LDADD = libpcp.la
+pcp_promote_node_SOURCES = pcp_promote_node.c pcp.h
+pcp_promote_node_LDADD = libpcp.la
 all: all-am
 
 .SUFFIXES:
@@ -383,6 +390,9 @@ pcp_stop_pgpool$(EXEEXT): $(pcp_stop_pgpool_OBJECTS) $(pcp_stop_pgpool_DEPENDENC
 pcp_systemdb_info$(EXEEXT): $(pcp_systemdb_info_OBJECTS) $(pcp_systemdb_info_DEPENDENCIES) 
 	@rm -f pcp_systemdb_info$(EXEEXT)
 	$(LINK) $(pcp_systemdb_info_OBJECTS) $(pcp_systemdb_info_LDADD) $(LIBS)
+pcp_promote_node$(EXEEXT): $(pcp_promote_node_OBJECTS) $(pcp_promote_node_DEPENDENCIES) 
+	@rm -f pcp_promote_node$(EXEEXT)
+	$(LINK) $(pcp_promote_node_OBJECTS) $(pcp_promote_node_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -403,6 +413,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_stop_pgpool.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_stream.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_systemdb_info.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_promote_node.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

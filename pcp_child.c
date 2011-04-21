@@ -69,6 +69,7 @@ static int user_authenticate(char *buf, char *passwd_file, char *salt, int salt_
 static RETSIGTYPE wakeup_handler(int sig);
 static RETSIGTYPE reload_config_handler(int sig);
 static int pool_detach_node(int node_id, bool gracefully);
+static int pool_promote_node(int node_id, bool gracefully);
 
 extern int myargc;
 extern char **myargv;
@@ -826,6 +827,83 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 			}
 				break;
 
+			case 'J':			/* promote node */
+			case 'j':			/* promote node gracefully */
+			{
+				int node_id;
+				int wsize;
+				char code[] = "CommandComplete";
+				bool gracefully;
+
+				if (tos == 'J')
+					gracefully = false;
+				else
+					gracefully = true;
+
+				node_id = atoi(buf);
+				if ( (node_id < 0) || (node_id >= pool_config->backend_desc->num_backends) )
+				{
+					char code[] = "NodeIdOutOfRange";
+					pool_error("pcp_child: node id %d is not valid", node_id);
+					pcp_write(frontend, "e", 1);
+					wsize = htonl(sizeof(code) + sizeof(int));
+					pcp_write(frontend, &wsize, sizeof(int));
+					pcp_write(frontend, code, sizeof(code));
+					if (pcp_flush(frontend) < 0)
+					{
+						pool_error("pcp_child: pcp_flush() failed. reason: %s", strerror(errno));
+						exit(1);
+					}
+					exit(1);
+				}
+				/* promoting node is reserved to Streaming Replication */
+				if (!MASTER_SLAVE || (strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP) != 0))
+				{
+					char code[] = "NotInStreamingReplication";
+					pool_error("pcp_child: not in streaming replication mode, can't promote node id %d", node_id);
+					pcp_write(frontend, "e", 1);
+					wsize = htonl(sizeof(code) + sizeof(int));
+					pcp_write(frontend, &wsize, sizeof(int));
+					pcp_write(frontend, code, sizeof(code));
+					if (pcp_flush(frontend) < 0)
+					{
+						pool_error("pcp_child: pcp_flush() failed. reason: %s", strerror(errno));
+						exit(1);
+					}
+					exit(1);
+				}
+
+				if (node_id == PRIMARY_NODE_ID)
+				{
+					char code[] = "NodeIdAlreadyPrimary";
+					pool_error("pcp_child: specified node is already primary node, can't promote node id %d", node_id);
+					pcp_write(frontend, "e", 1);
+					wsize = htonl(sizeof(code) + sizeof(int));
+					pcp_write(frontend, &wsize, sizeof(int));
+					pcp_write(frontend, code, sizeof(code));
+					if (pcp_flush(frontend) < 0)
+					{
+						pool_error("pcp_child: pcp_flush() failed. reason: %s", strerror(errno));
+						exit(1);
+					}
+					exit(1);
+				}
+
+				pool_debug("pcp_child: promoting Node ID %d", node_id);
+				pool_promote_node(node_id, gracefully);
+
+				pcp_write(frontend, "d", 1);
+				wsize = htonl(sizeof(code) + sizeof(int));
+				pcp_write(frontend, &wsize, sizeof(int));
+				pcp_write(frontend, code, sizeof(code));
+				if (pcp_flush(frontend) < 0)
+				{
+					pool_error("pcp_child: pcp_flush() failed. reason: %s", strerror(errno));
+					exit(1);
+				}
+				break;
+			}
+
 			case 'F':
 				pool_debug("pcp_child: stop online recovery");
 				break;
@@ -1125,6 +1203,54 @@ static int pool_detach_node(int node_id, bool gracefully)
 	 * Now all frontends have gone. Let's do failover.
 	 */
 	notice_backend_error(node_id);		/* send failover request */
+
+	/*
+	 * Wait for failover completed.
+	 */
+	pcp_wakeup_request = 0;
+
+	while (!pcp_wakeup_request)
+	{
+		struct timeval t = {1, 0};
+		select(0, NULL, NULL, NULL, &t);
+	}
+	pcp_wakeup_request = 0;
+
+	/*
+	 * Start to accept incoming connections and send SIGUSR2 to pgpool
+	 * parent to distribute SIGUSR2 all pgpool children.
+	 */
+	finish_recovery();
+
+	return 0;
+}
+
+/* Promote a node */
+static int pool_promote_node(int node_id, bool gracefully)
+{
+	if (!gracefully)
+	{
+		promote_backend(node_id);	/* send promote request */
+		return 0;
+	}
+		
+	/*
+	 * Wait until all frontends exit
+	 */
+	*InRecovery = 1;	/* This wiil ensure that new incoming
+						 * connection requests are blocked */
+
+	if (wait_connection_closed())
+	{
+		/* wait timed out */
+		finish_recovery();
+		return -1;
+	}
+
+	/*
+	 * Now all frontends have gone. Let's do failover.
+	 */
+	promote_backend(node_id);		/* send promote request */
 
 	/*
 	 * Wait for failover completed.

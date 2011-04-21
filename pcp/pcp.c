@@ -50,6 +50,7 @@ static int debug = 0;
 static int pcp_authorize(char *username, char *password);
 
 static int _pcp_detach_node(int nid, bool gracefully);
+static int _pcp_promote_node(int nid, bool gracefully);
 
 /* --------------------------------
  * pcp_connect - open connection to pgpool using given arguments
@@ -1331,3 +1332,100 @@ pcp_disable_debug(void)
 {
 	debug = 0;
 }
+
+/* --------------------------------
+ * pcp_promote_node - promote a node given by the argument as new pgpool's master
+ *
+ * return 0 on success, -1 otherwise
+ * --------------------------------
+ */
+int
+pcp_promote_node(int nid)
+{
+  return _pcp_promote_node(nid, FALSE);
+}
+
+/* --------------------------------
+
+ * and promote a node given by the argument as new pgpool's master
+ *
+ * return 0 on success, -1 otherwise
+ * --------------------------------
+ */
+int
+pcp_promote_node_gracefully(int nid)
+{
+  return _pcp_promote_node(nid, TRUE);
+}
+
+static int _pcp_promote_node(int nid, bool gracefully)
+{
+	int wsize;
+	char node_id[16];
+	char tos;
+	char *buf = NULL;
+	int rsize;
+	char *sendchar;
+
+	if (pc == NULL)
+	{
+		if (debug) fprintf(stderr, "DEBUG: connection does not exist\n");
+		errorcode = NOCONNERR;
+		return -1;
+	}
+
+	snprintf(node_id, sizeof(node_id), "%d", nid);
+
+	if (gracefully)
+	  sendchar = "j";
+	else
+	  sendchar = "J";
+
+	pcp_write(pc, sendchar, 1);
+	wsize = htonl(strlen(node_id)+1 + sizeof(int));
+	pcp_write(pc, &wsize, sizeof(int));
+	pcp_write(pc, node_id, strlen(node_id)+1);
+	if (pcp_flush(pc) < 0)
+	{
+		if (debug) fprintf(stderr, "DEBUG: could not send data to backend\n");
+		return -1;
+	}
+	if (debug) fprintf(stderr, "DEBUG: send: tos=\"E\", len=%d\n", ntohl(wsize));
+
+	if (pcp_read(pc, &tos, 1))
+		return -1;
+	if (pcp_read(pc, &rsize, sizeof(int)))
+		return -1;
+	rsize = ntohl(rsize);
+	buf = (char *)malloc(rsize);
+	if (buf == NULL)
+	{
+		errorcode = NOMEMERR;
+		return -1;
+	}
+	if (pcp_read(pc, buf, rsize - sizeof(int)))
+	{
+		free(buf);
+		return -1;
+	}
+	if (debug) fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
+
+	if (tos == 'e')
+	{
+		if (debug) fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
+		errorcode = BACKENDERR;
+	}
+	else if (tos == 'd')
+	{
+		/* strcmp() for success message, or fail */
+		if(strcmp(buf, "CommandComplete") == 0)
+		{
+			free(buf);
+			return 0;
+		}
+	}
+
+	free(buf);
+	return -1;
+}
+

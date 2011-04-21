@@ -349,7 +349,8 @@ typedef enum {
 	NODE_UP_REQUEST = 0,
 	NODE_DOWN_REQUEST,
 	NODE_RECOVERY_REQUEST,
-	CLOSE_IDLE_REQUEST
+	CLOSE_IDLE_REQUEST,
+	PROMOTE_NODE_REQUEST
 } POOL_REQUEST_KIND;
 
 typedef struct {
@@ -448,6 +449,7 @@ extern POOL_STATUS NoticeResponse(POOL_CONNECTION *frontend,
 
 extern void notice_backend_error(int node_id);
 extern void degenerate_backend_set(int *node_id_set, int count);
+extern void promote_backend(int node_id);
 extern void send_failback_request(int node_id);
 
 

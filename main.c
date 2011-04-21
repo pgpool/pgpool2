@@ -1285,6 +1285,24 @@ void degenerate_backend_set(int *node_id_set, int count)
 	pool_semaphore_unlock(REQUEST_INFO_SEM);
 }
 
+/* send promote node request using SIGUSR1 */
+void promote_backend(int node_id)
+{
+	pid_t parent = getppid();
+
+	if (pool_config->parallel_mode)
+	{
+		return;
+	}
+
+	pool_semaphore_lock(REQUEST_INFO_SEM);
+	Req_info->kind = PROMOTE_NODE_REQUEST;
+	Req_info->node_id[0] = node_id;
+	pool_log("promote_backend: %d promote node request from pid %d", node_id, getpid());
+	kill(parent, SIGUSR1);
+	pool_semaphore_unlock(REQUEST_INFO_SEM);
+}
+
 /* send failback request using SIGUSR1 */
 void send_failback_request(int node_id)
 {
@@ -1491,6 +1509,24 @@ static void failover(void)
 		trigger_failover_command(node_id, pool_config->failback_command,
 								 MASTER_NODE_ID, get_next_master_node(), PRIMARY_NODE_ID);
 	}
+	else if (Req_info->kind == PROMOTE_NODE_REQUEST)
+	{
+		if (Req_info->node_id[0] != -1 &&
+			VALID_BACKEND(Req_info->node_id[0]))
+		{
+			pool_log("starting promotion. promotion host %s(%d)",
+					 BACKEND_INFO(Req_info->node_id[0]).backend_hostname,
+					 BACKEND_INFO(Req_info->node_id[0]).backend_port);
+		}
+		else
+		{
+			pool_log("failover: no backends are promoted");
+			pool_semaphore_unlock(REQUEST_INFO_SEM);
+			kill(pcp_pid, SIGUSR2);
+			switching = 0;
+			return;
+		}
+	}
 	else
 	{
 		int cnt = 0;
@@ -1595,17 +1631,24 @@ static void failover(void)
 									 MASTER_NODE_ID, new_master, PRIMARY_NODE_ID);
 	}
 
+	if (Req_info->kind == PROMOTE_NODE_REQUEST &&
+		VALID_BACKEND(Req_info->node_id[0]))
+		new_primary = Req_info->node_id[0];
+	else
+		new_primary =  find_primary_node();
+
 	/* 
 	 * In master/slave streaming replication we start degenerating
 	 * all backends as they are not replicated anymore
 	 */
 	int follow_cnt = 0;
-	new_primary =  find_primary_node();
 	if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
 	{
 		/* only if the failover is against the current primary */
-		if ((Req_info->kind == NODE_DOWN_REQUEST) &&
-			(nodes[Req_info->primary_node_id])) {
+		if (((Req_info->kind == NODE_DOWN_REQUEST) &&
+			 (nodes[Req_info->primary_node_id])) ||
+			((Req_info->kind == PROMOTE_NODE_REQUEST) &&
+			 (VALID_BACKEND(Req_info->node_id[0])))) {
 
 			for (i = 0; i < pool_config->backend_desc->num_backends; i++)
 			{
