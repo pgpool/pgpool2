@@ -609,7 +609,7 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
        </p>
   </dd>
 
-<dt>failover_command
+<dt>failover_command</dt>
 <dd>
 <p>
 This parameter specifies a command to run when a node is detached.
@@ -643,7 +643,7 @@ After this, pgpool starts new child processes and is ready again to accept
 connections from clients.
 </p>
 
-<dt>failback_command
+<dt>failback_command</dt>
 <dd>
 <p>
 This parameter specifies a command to run when a node is attached.
@@ -666,6 +666,39 @@ information.
 </blockquote>
 <p>
       You need to reload pgpool.conf if you change failback_command.
+</p>
+
+<dt>follow_master_command</dt>
+<dd>
+<p>
+This parameter specifies a command to run in master/slave streaming replication mode only after a master failover.
+pgpool-II replaces the following special characters with backend specific information.
+</p>
+
+<blockquote>
+<table border>
+<tr><td>Special character</td><td>Description</td></tr>
+<tr><td>%d</td><td>Backend ID of a detached node.</td></tr>
+<tr><td>%h</td><td>Hostname of a detached node.</td></tr>
+<tr><td>%p</td><td>Port number of a detached node.</td></tr>
+<tr><td>%D</td><td>Database cluster directory of a detached node.</td></tr>
+<tr><td>%M</td><td>Old master node ID.</td></tr>
+<tr><td>%m</td><td>New master node ID.</td></tr>
+<tr><td>%H</td><td>Hostname of the new master node.</td></tr>
+<tr><td>%P</td><td>Old primary node ID.</td></tr>
+<tr><td>%%</td><td>'%' character</td></tr>
+</table>
+</blockquote>
+<p>
+You need to reload pgpool.conf if you change follow_master_command.
+</p>
+
+<p>
+If follow_master_command is not empty, when a master failover is completed in master/slave streaming replication,
+pgpool degenerate all nodes excepted the new master and starts new child processes to be ready again to accept
+connections from clients. After this, pgpool run the command set into the 'follow_master_command' for each
+degenerated nodes. Typically the command should be used to recover the slave from the new master by call the
+pcp_recovery_node command for example.
 </p>
 
   <dt>fail_over_on_backend_error</dt>
