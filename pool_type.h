@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2009	PgPool Global Development Group
+ * Copyright (c) 2003-2011	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -275,5 +275,66 @@ UserAuth;
 #define AUTH_REQ_SCM_CREDS  6   /* transfer SCM credentials */
 
 typedef unsigned int AuthRequest;
+
+/*
+ * reporting types
+ */
+/* some length definitions */
+#define POOLCONFIG_MAXNAMELEN 64
+#define POOLCONFIG_MAXVALLEN 512
+#define POOLCONFIG_MAXDESCLEN 64
+#define POOLCONFIG_MAXIDENTLEN 63
+#define POOLCONFIG_MAXPORTLEN 6
+#define POOLCONFIG_MAXSTATLEN 2
+#define POOLCONFIG_MAXWEIGHTLEN 20
+#define POOLCONFIG_MAXDATELEN 128
+#define POOLCONFIG_MAXCOUNTLEN 16
+
+/* config report struct*/
+typedef struct {
+	char name[POOLCONFIG_MAXNAMELEN+1];
+	char value[POOLCONFIG_MAXVALLEN+1];
+	char desc[POOLCONFIG_MAXDESCLEN+1];
+} POOL_REPORT_CONFIG;
+
+/* nodes report struct */
+typedef struct {
+        char node_id[POOLCONFIG_MAXSTATLEN+1];
+	char hostname[POOLCONFIG_MAXIDENTLEN+1];
+	char port[POOLCONFIG_MAXIDENTLEN+1];
+	char status[POOLCONFIG_MAXSTATLEN+1];
+	char lb_weight[POOLCONFIG_MAXWEIGHTLEN+1];
+} POOL_REPORT_NODES;
+
+/* processes report struct */
+typedef struct {
+	char pool_pid[POOLCONFIG_MAXCOUNTLEN+1];
+	char start_time[POOLCONFIG_MAXDATELEN+1];
+	char database[POOLCONFIG_MAXIDENTLEN+1];
+	char username[POOLCONFIG_MAXIDENTLEN+1];
+	char create_time[POOLCONFIG_MAXDATELEN+1];
+	char pool_counter[POOLCONFIG_MAXCOUNTLEN+1];
+} POOL_REPORT_PROCESSES;
+
+/* pools reporting struct */
+typedef struct {
+	char pool_pid[POOLCONFIG_MAXCOUNTLEN+1];
+	char start_time[POOLCONFIG_MAXDATELEN+1];
+	char pool_id[POOLCONFIG_MAXCOUNTLEN+1];
+	char backend_id[POOLCONFIG_MAXCOUNTLEN+1];
+	char database[POOLCONFIG_MAXIDENTLEN+1];
+	char username[POOLCONFIG_MAXIDENTLEN+1];
+	char create_time[POOLCONFIG_MAXDATELEN+1];
+	char pool_majorversion[POOLCONFIG_MAXCOUNTLEN+1];
+	char pool_minorversion[POOLCONFIG_MAXCOUNTLEN+1];
+	char pool_counter[POOLCONFIG_MAXCOUNTLEN+1];
+	char pool_backendpid[POOLCONFIG_MAXCOUNTLEN+1];
+    char pool_connected[POOLCONFIG_MAXCOUNTLEN+1];
+} POOL_REPORT_POOLS;
+
+/* version struct */
+typedef struct {
+	char version[POOLCONFIG_MAXVALLEN+1];
+} POOL_REPORT_VERSION;
 
 #endif /* POOL_TYPE_H */

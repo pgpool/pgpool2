@@ -55,6 +55,7 @@
 #include "md5.h"
 #include "pool_config.h"
 #include "pool_process_context.h"
+#include "pool_process_reporting.h"
 
 #define MAX_FILE_LINE_LEN    512
 #define MAX_USER_PASSWD_LEN  128
@@ -826,6 +827,63 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 				}
 			}
 				break;
+
+			case 'B': /* status request*/
+			{
+				int nrows = 0;
+				POOL_REPORT_CONFIG *status = get_config(&nrows);
+				int len = 0;
+				/* First, send array size of connection_info */
+				char arr_code[] = "ArraySize";
+				char code[] = "ProcessConfig";
+				/* Finally, indicate that all data is sent */
+				char fin_code[] = "CommandComplete";
+
+				pcp_write(frontend, "b", 1);
+				len = htonl(sizeof(arr_code) + sizeof(int) + sizeof(int));
+				pcp_write(frontend, &len, sizeof(int));
+				pcp_write(frontend, arr_code, sizeof(arr_code));
+				len = htonl(nrows);
+				pcp_write(frontend, &len, sizeof(int));
+
+				if (pcp_flush(frontend) < 0)
+				{
+					pool_error("pcp_child: pcp_flush() failed. reason: %s", strerror(errno));
+					exit(1);
+				}
+
+				for (i = 0; i < nrows; i++)
+				{
+					pcp_write(frontend, "b", 1);
+					len = htonl(sizeof(int)
+						+ sizeof(code)
+						+ strlen(status[i].name) + 1
+						+ strlen(status[i].value) + 1
+						+ strlen(status[i].desc) + 1
+					);
+
+					pcp_write(frontend, &len, sizeof(int));
+					pcp_write(frontend, code, sizeof(code));
+					pcp_write(frontend, status[i].name, strlen(status[i].name)+1);
+					pcp_write(frontend, status[i].value, strlen(status[i].value)+1);
+					pcp_write(frontend, status[i].desc, strlen(status[i].desc)+1);
+				}
+
+				pcp_write(frontend, "b", 1);
+				len = htonl(sizeof(fin_code) + sizeof(int));
+				pcp_write(frontend, &len, sizeof(int));
+				pcp_write(frontend, fin_code, sizeof(fin_code));
+				if (pcp_flush(frontend) < 0)
+				{
+					pool_error("pcp_child: pcp_flush() failed. reason: %s", strerror(errno));
+					exit(1);
+				}
+
+				free(status);
+
+				pool_debug("pcp_child: retrieved status information");
+				break;
+			}
 
 			case 'J':			/* promote node */
 			case 'j':			/* promote node gracefully */

@@ -35,9 +35,12 @@
 #include <netdb.h>
 #include <unistd.h>
 
+#include "pool.h"
 #include "pcp.h"
 #include "pcp_stream.h"
+#include "pool_process_reporting.h"
 #include "md5.h"
+
 
 struct timeval pcp_timeout;
 
@@ -1244,6 +1247,114 @@ pcp_attach_node(int nid)
 
 	free(buf);
 	return -1;
+}
+
+/* --------------------------------
+ * pcp_pool_status - return setup parameters and status
+ *
+ * returns and array of POOL_REPORT_CONFIG, NULL otherwise
+ * --------------------------------
+ */
+POOL_REPORT_CONFIG*
+pcp_pool_status(int *array_size)
+{
+	char tos;
+	char *buf = NULL;
+	int wsize;
+	int rsize;
+	POOL_REPORT_CONFIG *status = NULL;
+	int ci_size = 0;
+	int offset = 0;
+
+	if (pc == NULL)
+	{
+		if (debug) fprintf(stderr, "DEBUG: connection does not exist\n");
+		errorcode = NOCONNERR;
+		return NULL;
+	}
+
+	pcp_write(pc, "B", 1);
+	wsize = htonl(sizeof(int));
+	pcp_write(pc, &wsize, sizeof(int));
+	if (pcp_flush(pc) < 0)
+	{
+		if (debug) fprintf(stderr, "DEBUG: could not send data to backend\n");
+		return NULL;
+	}
+	if (debug) fprintf(stderr, "DEBUG pcp_pool_status: send: tos=\"B\", len=%d\n", ntohl(wsize));
+
+	while (1) {
+		if (pcp_read(pc, &tos, 1))
+			return NULL;
+		if (pcp_read(pc, &rsize, sizeof(int)))
+			return NULL;
+		rsize = ntohl(rsize);
+		buf = (char *)malloc(rsize);
+		if (buf == NULL)
+		{
+			errorcode = NOMEMERR;
+			return NULL;
+		}
+		if (pcp_read(pc, buf, rsize - sizeof(int)))
+		{
+			free(buf);
+			return NULL;
+		}
+		if (debug) fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
+
+		if (tos == 'e')
+		{
+			if (debug) fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
+			free(buf);
+			errorcode = BACKENDERR;
+			return NULL;
+		}
+		else if (tos == 'b')
+		{
+			char *index;
+
+			if (strcmp(buf, "ArraySize") == 0)
+			{
+				index = (char *) memchr(buf, '\0', rsize) + 1;
+				//if (index != NULL)
+				ci_size = ntohl(*((int *)index));
+
+				*array_size = ci_size;
+
+				status = (POOL_REPORT_CONFIG *) malloc(ci_size * sizeof(POOL_REPORT_CONFIG));
+
+				continue;
+			}
+			else if (strcmp(buf, "ProcessConfig") == 0)
+			{
+				index = (char *) memchr(buf, '\0', rsize) + 1;
+				if (index != NULL)
+					strcpy(status[offset].name, index);
+
+				index = (char *) memchr(index, '\0', rsize) + 1;
+				if (index != NULL)
+					strcpy(status[offset].value, index);
+
+				index = (char *) memchr(index, '\0', rsize) + 1;
+				if (index != NULL)
+					strcpy(status[offset].desc, index);
+
+				offset++;
+			}
+			else if (strcmp(buf, "CommandComplete") == 0)
+			{
+				free(buf);
+				return status;
+			}
+			else
+			{
+				// never reached
+			}
+		}
+	}
+
+	free(buf);
+	return NULL;
 }
 
 void

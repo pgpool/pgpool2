@@ -33,6 +33,7 @@
 #include "parser/parsenodes.h"
 #include "pool_rewrite_query.h"
 #include "pool_session_context.h"
+#include "pool_process_reporting.h"
 
 #define SPECIFIED_ERROR 1
 #define POOL_DUMMY_QUERY "DELETE FROM foo WHERE col = 'pgpool: unable to parse the query'"
@@ -167,13 +168,7 @@ extern int detect_query_cancel_error(POOL_CONNECTION *backend, int major);
 extern bool is_partition_table(POOL_CONNECTION_POOL *backend, Node *node);
 extern POOL_STATUS pool_discard_packet(POOL_CONNECTION_POOL *cp);
 extern void query_cache_register(char kind, POOL_CONNECTION *frontend, char *database, char *data, int data_len);
-
 extern int is_drop_database(Node *node);		/* returns non 0 if this is a DROP DATABASE command */
-extern void config_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
-extern void pools_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
-extern void processes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
-extern void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
-extern void version_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 
 extern POOL_STATUS send_simplequery_message(POOL_CONNECTION *backend, int len, char *string, int major);
 extern POOL_STATUS send_extended_protocol_message(POOL_CONNECTION_POOL *backend,
