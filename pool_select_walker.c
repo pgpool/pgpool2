@@ -265,7 +265,7 @@ static bool is_system_catalog(char *table_name)
 			query = ISBELONGTOPGCATALOGQUERY;
 		}
 
-		hasreliscatalog_cache = pool_create_relcache(32, query,
+		hasreliscatalog_cache = pool_create_relcache(128, query,
 										int_register_func, int_unregister_func,
 										false);
 		if (hasreliscatalog_cache == NULL)
@@ -284,7 +284,7 @@ static bool is_system_catalog(char *table_name)
 		 */
 		if (!relcache)
 		{
-			relcache = pool_create_relcache(32, ISBELONGTOPGCATALOGQUERY,
+			relcache = pool_create_relcache(128, ISBELONGTOPGCATALOGQUERY,
 											int_register_func, int_unregister_func,
 											true);
 			if (relcache == NULL)
@@ -353,7 +353,7 @@ static bool is_temp_table(char *table_name)
 	 */
 	if (!hasrelistemp_cache)
 	{
-		hasrelistemp_cache = pool_create_relcache(32, HASRELITEMPPQUERY,
+		hasrelistemp_cache = pool_create_relcache(128, HASRELITEMPPQUERY,
 										int_register_func, int_unregister_func,
 										false);
 		if (hasrelistemp_cache == NULL)
@@ -374,7 +374,7 @@ static bool is_temp_table(char *table_name)
 	 */
 	if (!relcache)
 	{
-		relcache = pool_create_relcache(32, query,
+		relcache = pool_create_relcache(128, query,
 										int_register_func, int_unregister_func,
 										true);
 		if (relcache == NULL)
