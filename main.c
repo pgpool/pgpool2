@@ -123,6 +123,7 @@ static int trigger_failover_command(int node, const char *command_line,
 									int old_master, int new_master, int old_primary);
 
 static int find_primary_node(void);
+static int find_primary_node_repeatedly(void);
 
 static struct sockaddr_un un_addr;		/* unix domain socket path */
 static struct sockaddr_un pcp_un_addr;  /* unix domain socket path for PCP */
@@ -1635,7 +1636,7 @@ static void failover(void)
 		VALID_BACKEND(Req_info->node_id[0]))
 		new_primary = Req_info->node_id[0];
 	else
-		new_primary =  find_primary_node();
+		new_primary =  find_primary_node_repeatedly();
 
 	/* 
 	 * In master/slave streaming replication we start degenerating
@@ -2418,7 +2419,7 @@ static int find_primary_node(void)
 		if (!s)
 		{
 			pool_error("find_primary_node: make_persistent_connetcion failed");
-			break;
+			return -1;
 		}
 		con = s->con;
 
@@ -2444,7 +2445,7 @@ static int find_primary_node(void)
 			return -1;
 		}
 
-		status = do_query(con, "SELECT pg_is_in_recovery() AND pgpool_walrecrunning()",
+		status = do_query(con, "SELECT pg_is_in_recovery()",
 						  &res, PROTO_MAJOR_V3);
 		if (res->numrows <= 0)
 		{
@@ -2486,6 +2487,32 @@ static int find_primary_node(void)
 
 	pool_log("find_primary_node: primary node id is %d", i);
 	return i;
+}
+
+static int find_primary_node_repeatedly(void)
+{
+	int sec;
+	int node_id = -1;
+
+	/* Streaming replication mode? */
+	if (pool_config->master_slave_mode == 0 ||
+		strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
+	{
+		/* No point to look for primary node if not in streaming
+		 * replication mode.
+		 */
+		pool_debug("find_primary_node: not in streaming replication mode");
+		return -1;
+	}
+
+	for (sec = 0; sec < pool_config->recovery_timeout; sec++)
+	{
+		node_id = find_primary_node();
+		if (node_id != -1)
+			break;
+		pool_sleep(1);
+	}
+	return node_id;
 }
 
 /*
