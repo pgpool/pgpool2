@@ -71,8 +71,7 @@ int start_recovery(int recovery_node)
 	conn = connect_backend_libpq(backend);
 	if (conn == NULL)
 	{
-		PQfinish(conn);
-		pool_error("start_recover: could not connect master node.");
+		pool_error("start_recovery: could not connect master node (%d)", node_id);
 		return 1;
 	}
 
