@@ -1,3 +1,208 @@
+3.1 (hatsuiboshi) xxxx/xx/xx
+
+	  * Version 3.1
+
+	  This is the first version of pgpool-II 3.1 series.
+	  That is, a "major version up" from 3.0 series.
+
+	  * Incompatible changes
+
+	  - Deprecate backend_socket_dir. Instead, if backend_hostname starts
+		with '/' it is regarded the as path to Unix domain. If backend_hostname
+		is left empty, then default Unix domain path(/tmp) is used. This
+		follows the convention of libpq interface. Patch contributed by
+		Jehan-Guillaume (ioguix) de Rorthais. Additional fixes by me(Tatsuo)
+
+	  - Now "pgpool_walrecrunning()" was not used. pgpool-II used to consider
+		the node that is promoted a primary node using the function. Now,
+		pgpool-II waits for completing of the promotion to primary node
+		because it did not work as we intended. But we still have a problem
+		that pgpool-II waits while recovery_timeout, when there is no primary
+		node(Kitagawa)
+
+	  - Add node_id to each PostgreSQL DB node info in the output of
+		show pool_nodes. Patch contributed by Jean-Paul Argudo(Gleu)
+
+	  * New features
+
+	  - Add syslog support. Patch contributed by Gilles Darold. Review and
+		editing by Guillaume Lelarge(Tatsuo)
+
+	  - Adapt application_name introduced in PostgreSQL 9.0. When reusing
+		connection, send application_name in the startup packet to backend
+		and send parameter status to frontend(Tatsuo)
+
+	  - Add relcache_expire directive to control the expiration of the
+		internal system catalog cache. ALTER TABLE might make these
+		cache values obsoleted and the new directive will make the risk
+		lower(Tatsuo).
+
+	  - Add follow_master_command directive. This directive specifies a
+		command to run in master/slave streaming replication only after
+		a master failover. Patch contributed by Gilles Darold(Kitagawa)
+
+	  - Add pcp_promote_node command. This command promotes a new master
+		node to pgpool-II. This can use in master/slave streaming replication
+		only. Patch contributed by Gilles Darold(Kitagawa)
+
+	  - Add pcp_pool_status command which produces similar output of show
+		pool_status. Also C API for this command is added. Patch
+		contributed by Jehan-Guillaume (ioguix) de Rorthais(Tatsuo)
+
+	  * Bug fixes
+
+	  - Fix pgpool-regclass() to be compiled in PostgreSQL 8.0 or later.
+		7.4 still produces errors(Tatsuo)
+
+	  - Fix possible hangup when using /*NO LOAD BALANCE*/ comment in
+		streaming replication(Kitagawa)
+
+	  - Fix hangup when received Flush(H) message or CloseComplete(C)
+		message(Kitagawa)
+
+	  - Fix possible hangup that happen for the receiving timing of
+		ReadyForQuery(Z) message after pgpool-II connects to backends(Kitagawa)
+
+	  - Add description about parameters for recovery_1st_stage_command and
+		recovery_2nd_stage_command(Tatsuo)
+
+	  - Increase size of the internal system catalog cache from 32 to 128.
+		This has the effect of reducing "unnamed prepared statement does not
+		exist" error(Tatsuo, Kitagawa)
+
+	  - Fix bug with pcp_connect() which causes double free. Patch contributed 
+		by Jehan-Guillaume (ioguix) de Rorthais(Tatsuo)
+
+	  * Enhancements
+
+	  - Import PostgreSQL 9.0 parser. This allows to use CREATE INDEX with
+		implicit index name, which is new in 9.0. Patch contributed by
+		Akio Ishida(Tatsuo)
+
+	  - Allow to use regular expressions in black and white function list.
+		Patch contributed by Gilles Darold. Patch reviewd by Guillaume Lelarge
+		(Tatsuo)
+
+	  - Reorganize pgpool.conf sample files so that they are easier to read
+		(Gleu)
+
+3.0.3 (umiyameboshi) 2011/02/23
+
+	  * Version 3.0.3
+
+	  This version fixes various bugs since 3.0.1. Please note that
+	  3.0.2 was canceled due to a packaging problem.
+
+	  * Incompatible changes
+
+	  - Now installing C function "pgpool_walrecrunning()" is recommended
+		if you plan to use streaming replication mode.
+		This is necessary for better use of online recovery in the mode.
+		Also new variable "%P" can be used in the online recovery script.
+		If you do not install the function, these functionalities cannot be used(Tatsuo).
+
+	  - In raw mode if there's only one DB node and if a problem arises
+		with the DB node, it will be brought to down status. However if
+		the DB node goes into good condition again, you can use the DB
+		node without restarting pgpool. This change has been included in
+		3.0, but did not work(Tatsuo, Kitagawa)
+
+	  * Bug fixes
+
+	  - Fix non portable code in password authentication.
+		Bug report from a FreeBSD user(Tatsuo)
+
+	  - Fix bug that insert_lock locks all rows in user table
+		(Tatsuo, Kitagawa)
+
+	  - Fix bug with password authentication. If user name is 32 bytes
+		long, pgpool child segfaults.(Tatsuo)
+
+	  - Fix bug with md5 authentication. If raw mode or number of
+		backend is 1, pgpool child segfaults. Patch contributed by
+		Rob Shepherd(Tatsuo)
+
+	  - Fix long standing bug with timestamp rewriting against array
+		and complex types. Patch contributed by Akio Ishida(Tatsuo)
+
+	  - Fix bug that debug_level directive doesn't work. Patch
+		contributed by Gilles Darold(Tatsuo)
+
+	  - Fix possible crash of pgpool child while doing failover(Kitagawa)
+
+	  - Fix white/black_function_list so that it works correctly when user
+		calls function with schema name(Tatsuo)
+
+	  - Fix bug that DROP DATABASE fails by connection cache(Kitagawa)
+
+	  - Fix bug that failover fails in raw mode(Kitagawa)
+
+	  - Fix possible termination of pgpool child when both simple query
+		protocol and extended query protocol are used in one session
+		(Kitagawa)
+
+	  - Fix possible hang up when an error occurs while using extended
+		query protocol(Kitagawa)
+
+	  - Fix pgpool-regclass() so that it doesn't use PG_TRY/CATCH.
+		It appeared that using PG_TRY/CATCH is not safe, sometimes backend
+		dies with PANIC:  ERRORDATA_STACK_SIZE exceeded.(Tatsuo)
+
+	  - Fix bug that select query isn't sent to master node when it meets
+		the following conditions(Kitagawa)
+		- in MASTER/SLAVE mode
+		- use extended query protocol
+		- started transaction explicitly
+		- after write queries
+
+	  - Fix bug with load_balance that JDBC driver sends BEGIN to master node
+		many times(Kitagawa)
+
+	  - Fix pool_status so that failback_command and fail_over_on_backend_error
+		show correct values(Kitagawa)
+
+	  - Remove parameters from pool_status: recovery_password,
+		system_db_password(Kitagawa)
+
+	  - Fix online recovery problem in the streaming replication
+		mode(Tatsuo). Consider following scenario. Suppose node 0 is
+		the initial primary server and 1 is the initial standby
+		server.
+
+		1) Node 0 going down and node 1 promotes to new primary.
+		2) Recover node 0 as new standby.
+		3) pgpool-II assumes that node 0 is the new primary.
+
+		This problem happens because pgpool-II regarded unconditionally
+		the youngest node to be the primary. pgpool-II 3.0.3 now checks
+		each node by using pgpool_walrecrunning() to see if it is a
+		actually primary or not and is able to avoid the problem and
+		regards node as standby correctly. Also you can use new
+		variable "%P" to be used in the recovery script.  If you do
+		not install the function, the above problem is not resolved.
+
+	  - Fix backend complaining "unexpected EOF on client connection"
+        while doing failover in streaming replication mode(Tatsuo)
+
+	  - Fix pgpool crashes when all backends go down(Tatsuo)
+
+	  - Fix replication delay checking so that it does not keep persistent
+		connection to backends. Because the persistent connection may
+		become bogus if a node down and then wake up between replication
+		delay checking period(Tatsuo)
+
+	  - Rewrite and review english document(Marc Cousin, Gleu)
+
+	  * Enhancements
+
+	  - Emit log if particular backend is down status while reading
+		the status file(Tatsuo)
+
+	  - Emit error message if an error occurred by the query that
+		pgpool executed(Tatsuo)
+
+	  - Add sql directories main Makefile(Tatsuo)
+
 3.0.1 (umiyameboshi) 2010/10/19
 
 	  * Version 3.0.1
