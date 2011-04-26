@@ -387,7 +387,7 @@ comment and will be ignored.</p>
 <h3><a name="common"></a>Common settings</h3>
 
 <dl>
-  <dt>listen_addresses</dt>
+  <dt><a name="LISTEN_ADDRESS"></a>listen_addresses</dt>
   <dd>
       <p>Specifies the hostname or IP address, on which pgpool-II will accept
       TCP/IP connections. <code>'*'</code> accepts
@@ -397,13 +397,13 @@ comment and will be ignored.</p>
       server start.</p>
   </dd>
       
-  <dt>port</dt>
+  <dt><a name="PORT"></a>port</dt>
   <dd>
       <p>The port number used by pgpool-II to listen for connections. Default
       is 9999. This parameter can only be set at server start.</p>
   </dd>
 
-  <dt>socket_dir</dt>
+  <dt><a name="SOCKET_DIR"></a>socket_dir</dt>
   <dd>
       <p>The directory where the UNIX domain socket accepting connections for 
       pgpool-II will be created. Default is <code>'/tmp'</code>. Be
@@ -412,14 +412,14 @@ comment and will be ignored.</p>
       This parameter can only be set at server start.</p>
   </dd>
 
-  <dt>pcp_port</dt>
+  <dt><a name="PCP_PORT"></a>pcp_port</dt>
   <dd>
       <p>The port number where PCP process accepts
       connections. Default is 9898. This parameter can only be set at
       server start.</p>
   </dd>
 
-  <dt>pcp_socket_dir</dt>
+  <dt><a name="PCP_SOCKET_DIR"></a>pcp_socket_dir</dt>
   <dd>
       <p>The directory path of the UNIX domain socket accepting
       connections for the PCP process. Default is <code>'/tmp'</code>. Be
@@ -428,7 +428,7 @@ comment and will be ignored.</p>
       directory. This parameter can only be set at server start.</p>
   </dd>
       
-  <dt>backend_socket_dir</dt>
+  <dt><a name="BACKEND_SOCKET_DIR"></a>backend_socket_dir</dt>
   <dd>
       <font color="red"><em>DEPRECATED</em><br>
       This parameter is deprecated for consistency with the default libpq policy. 
@@ -437,7 +437,7 @@ comment and will be ignored.</p>
       <p>This parameter was defining the PostgreSQL server's UNIX domain socket directory.<p>
   </dd>
 
-  <dt>pcp_timeout</dt>
+  <dt><a name="PCP_TIMEOUT"></a>pcp_timeout</dt>
   <dd>
       <p>PCP connection's timeout value in seconds. If a client does not
       respond within the set seconds, PCP closes the connection with
@@ -445,7 +445,7 @@ comment and will be ignored.</p>
       with a reload.</p>
   </dd>
 
-  <dt>num_init_children</dt>
+  <dt><a name="NUM_INIT_CHILDREN"></a>num_init_children</dt>
   <dd>
       <p>The number of preforked pgpool-II server processes. Default
       is 32. num_init_children is also the concurrent connections limit to
@@ -479,7 +479,7 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
 	   This parameter can only be set at server start.</p>
 	   </dd>
 
-  <dt>child_life_time</dt>
+  <dt><a name="CHILD_LIFE_TIME"></a>child_life_time</dt>
   <dd>
       <p>A pgpool-II child process' life time in seconds. When a child
       is idle for that many seconds, it is terminated and a new child
@@ -491,7 +491,7 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
       </p>
   </dd>
 
-  <dt>child_max_connections</dt>
+  <dt><a name="CHILD_MAX_CONNECTIONS"></a>child_max_connections</dt>
   <dd>
       <p>A pgpool-II child process will be terminated after this many
       connections from clients. This parameter is useful on a server
@@ -501,7 +501,7 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
       </p>
   </dd>
 
-  <dt>client_idle_limit
+  <dt><a name="CLIENT_IDLE_LIMIT"></a>client_idle_limit</dt>
   <dd>
   <p> Disconnect a client if it has been idle for
 			client_idle_limit seconds after the last query has completed.
@@ -512,19 +512,19 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
 			second stage of online recovery. You need to reload pgpool.conf if you 
 			change client_idle_limit.</p>
 
-  <dt>authentication_timeout
+  <dt><a name="AUTHENTICATION_TIMEOUT"></a>authentication_timeout</dt>
   <dd>
   <p>Specify the timeout for pgpool authentication. 0 disables the time
       out, which is the default. You need to restart pgpool-II if you
       change authentication_timeout.</p>
 
-  <dt>logdir</dt>
+  <dt><a name="LOGDIR"></a>logdir</dt>
   <dd>
       <p>The directory used for the logs. pgpool_status is written into this 
       directory.
        </p>
   </dd>
-  <dt>log_destination</dt>
+  <dt><a name="LOG_DESTINATION"></a>log_destination</dt>
   <dd>
       <p>PgPool II supports several methods for logging server messages,
 	including stderr and syslog. The default is to log to stderr.
@@ -538,19 +538,19 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
 	</p>
   </dd>
 
-  <dt>syslog_facility</dt>
+  <dt><a name="SYSLOG_FACILITY"></a>syslog_facility</dt>
   <dd>
       <p>When logging to syslog is enabled, this parameter determines the syslog "facility" to be used. You can choose from LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7; the default is LOCAL0. See also the documentation of your system's syslog daemon.
 	</p>
   </dd>
 
-  <dt>syslog_ident</dt>
+  <dt><a name="SYSLOG_IDENT"></a>syslog_ident</dt>
   <dd>
       <p>When logging to syslog is enabled, this parameter determines the program name used to identify PgPool messages in syslog logs. The default is pgpool.
 	</p>
   </dd>
 
-  <dt>pid_file_name</dt>
+  <dt><a name="PID_FILE_NAME"></a>pid_file_name</dt>
   <dd>
       <p>Full path to a file which contains pgpool's process id.
 	    Default is "/var/run/pgpool/pgpool.pid".
@@ -558,7 +558,7 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
        </p>
   </dd>
 
-  <dt>print_timestamp</dt>
+  <dt><a name="PRINT_TIMESTAMP"></a>print_timestamp</dt>
   <dd>
       <p>Add timestamps to the logs when set to true. Default is
       true.
@@ -566,13 +566,13 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
       </p>
   </dd>
 
-  <dt>connection_cache</dt>
+  <dt><a name="CONNECTION_CACHE"></a>connection_cache</dt>
   <dd>
       <p>Caches connections to backends when set to true. Default is
       true.</p>
   </dd>
 
-  <dt>health_check_timeout</dt>
+  <dt><a name="HEALTH_CHECK_TIMEOUT"></a>health_check_timeout</dt>
   <dd>
       <p>pgpool-II periodically tries to connect to the backends to
       detect any error on the servers or networks. This error check
@@ -592,7 +592,7 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
      </p>
   </dd>
 
-  <dt>health_check_period</dt>
+  <dt><a name="HEALTH_CHECK_PERIOD"></a>health_check_period</dt>
   <dd>
       <p>This parameter specifies the interval between the health
       checks in seconds. Default is 0, which means health check is
@@ -601,7 +601,7 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
        </p>
   </dd>
       
-  <dt>health_check_user</dt>
+  <dt><a name="HEALTH_CHECK_USER"></a>health_check_user</dt>
   <dd>
       <p>The user name to perform health check. This user must exist
       in all the PostgreSQL backends.
@@ -609,7 +609,7 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
        </p>
   </dd>
 
-<dt>failover_command</dt>
+<dt><a name="FAILOVER_COMMAND"></a>failover_command</dt>
 <dd>
 <p>
 This parameter specifies a command to run when a node is detached.
@@ -643,7 +643,7 @@ After this, pgpool starts new child processes and is ready again to accept
 connections from clients.
 </p>
 
-<dt>failback_command</dt>
+<dt><a name="FAILBACK_COMMAND"></a>failback_command</dt>
 <dd>
 <p>
 This parameter specifies a command to run when a node is attached.
@@ -668,7 +668,7 @@ information.
       You need to reload pgpool.conf if you change failback_command.
 </p>
 
-<dt>follow_master_command</dt>
+<dt><a name="FOLLOW_MASTER_COMMAND"></a>follow_master_command</dt>
 <dd>
 <p>
 This parameter specifies a command to run in master/slave streaming replication mode only after a master failover.
@@ -701,7 +701,7 @@ degenerated nodes. Typically the command should be used to recover the slave fro
 pcp_recovery_node command for example.
 </p>
 
-  <dt>fail_over_on_backend_error</dt>
+  <dt><a name="FAIL_OVER_ON_BACKEND_ERROR"></a>fail_over_on_backend_error</dt>
   <dd>
       <p>
 If true, and an error occurs when writing to the backend communication,
@@ -714,7 +714,7 @@ postmaster. You need to reload pgpool.conf if you change this value.
 </p>
 </dd>
 
-  <dt>ignore_leading_white_space</dt>
+  <dt><a name="IGNORE_LEADING_WHITE_SPACE"></a>ignore_leading_white_space</dt>
   <dd>
       <p>pgpool-II ignores white spaces at the beginning of SQL
       queries while in the load balance mode. It is useful if used with
@@ -724,7 +724,7 @@ postmaster. You need to reload pgpool.conf if you change this value.
        </p>
   </dd>
 
-  <dt>log_statement</dt>
+  <dt><a name="LOG_STATEMENT"></a>log_statement</dt>
   <dd>
       <p>Produces SQL log messages when true. This is similar to the
       log_statement parameter in PostgreSQL. It produces logs even if the
@@ -733,7 +733,7 @@ postmaster. You need to reload pgpool.conf if you change this value.
        </p>
   </dd>
 
-  <dt>log_per_node_statement</dt>
+  <dt><a name="LOG_PER_NODE_STATEMENT"></a>log_per_node_statement</dt>
   <dd>
       <p>Similar to log_statement, except that it prints logs for each DB node separately.
       It can be useful to make sure that replication is working, for example.
@@ -741,7 +741,7 @@ postmaster. You need to reload pgpool.conf if you change this value.
        </p>
   </dd>
 
-  <dt>log_hostname</dt>
+  <dt><a name="LOG_HOSTNAME"></a>log_hostname</dt>
   <dd>
     <p>
     If true, ps command status will show the client's hostname instead
@@ -750,7 +750,7 @@ postmaster. You need to reload pgpool.conf if you change this value.
     </p>
   </dd>
     
-  <dt>log_connections</dt>
+  <dt><a name="LOG_CONNECTIONS"></a>log_connections</dt>
   <dd>
     <p>
     If true, all incoming connections will be printed to the log.
@@ -758,7 +758,7 @@ postmaster. You need to reload pgpool.conf if you change this value.
     </p>
   </dd>
     
-  <dt>enable_pool_hba</dt>
+  <dt><a name="ENABLE_POOL_HBA"></a>enable_pool_hba</dt>
   <dd>
     <p>
     If true, use pool_hba.conf for client authentication. See <a href="#hba">
@@ -767,7 +767,7 @@ postmaster. You need to reload pgpool.conf if you change this value.
     </p>
   </dd>
 
-  <dt>backend_hostname</dt>
+  <dt><a name="BACKEND_HOSTNAME"></a>backend_hostname</dt>
   <dd>
       <p>Specifies where to connect with the PostgreSQL backend. It can 
       It is used by pgpool-II to communicate with the server.
@@ -799,7 +799,7 @@ postmaster. You need to reload pgpool.conf if you change this value.
       </p>
   </dd>
 
-  <dt>backend_port</dt>
+  <dt><a name="BACKEND_PORT"></a>backend_port</dt>
   <dd>
       <p>Specifies the port number of the backends. Multiple backends
       can be specified by adding a number at the end of the parameter
@@ -814,7 +814,7 @@ postmaster. You need to reload pgpool.conf if you change this value.
       </p>
   </dd>
 
-  <dt>backend_weight</dt>
+  <dt><a name="BACKEND_WEIGHT"></a>backend_weight</dt>
   <dd>
       <p>Specifies the load balance ratio for the backends. Multiple
       backends can be specified by adding a number at the end of the
@@ -834,7 +834,7 @@ postmaster. You need to reload pgpool.conf if you change this value.
       </p>
   </dd>
 
-  <dt>backend_data_directory</dt>
+  <dt><a name="BACKEND_DATA_DIRECTORY"></a>backend_data_directory</dt>
   <dd>
       <p>Specifies the database cluster directory of the
       backends. Multiple backends can be specified by adding a number
@@ -851,7 +851,7 @@ postmaster. You need to reload pgpool.conf if you change this value.
       </p>
   </dd>
 
-  <dt><a name="ssl">ssl</a></dt>
+  <dt><a name="SSL">ssl</a></dt>
   <dd>
       <p>
       If true, enable SSL support for both the frontend and backend
@@ -870,7 +870,7 @@ postmaster. You need to reload pgpool.conf if you change this value.
       </p>
   </dd>
 
-  <dt>ssl_key</dt>
+  <dt><a name="SSL_KEY"></a>ssl_key</dt>
   <dd>
       <p>
       The path to the private key file to use for incoming frontend connections.
@@ -882,7 +882,7 @@ postmaster. You need to reload pgpool.conf if you change this value.
       </p>
   </dd>
 
-  <dt>ssl_cert</dt>
+  <dt><a name="SSL_CERT"></a>ssl_cert</dt>
   <dd>
       <p>
       The path to the public x509 certificate file to use for incoming 
@@ -895,7 +895,7 @@ postmaster. You need to reload pgpool.conf if you change this value.
       </p>
   </dd>
 
-  <dt>debug_level</dt>
+  <dt><a name="DEBUG_LEVEL"></a>debug_level</dt>
   <dd>
       <p>
 	   Debug message verbosity level. 0 means no message, greater than 1
@@ -903,7 +903,7 @@ postmaster. You need to reload pgpool.conf if you change this value.
       </p>
   </dd>
 
-  <dt>relcache_expire</dt>
+  <dt><a name="RELCACHE_EXPIRE"></a>relcache_expire</dt>
   <dd>
       <p>
 	   Life time of relation cache in seconds. 0 means no cache
@@ -944,7 +944,7 @@ connection pool function can be used. To enable this mode, set
 raw mode configuration parameters and parameters below.</p>
 
 <dl>
-  <dt>max_pool</dt>
+  <dt><a name="MAX_POOL"></a>max_pool</dt>
   <dd>
       <p>The maximum number of cached connections in pgpool-II
       children processes. pgpool-II reuses the cached connection if an
@@ -960,14 +960,14 @@ raw mode configuration parameters and parameters below.</p>
       This parameter can only be set at server start. </p>
   </dd>
 
-  <dt>connection_life_time</dt>
+  <dt><a name="CONNECTION_LIFE_TIME"></a>connection_life_time</dt>
   <dd>
       <p>Cached connections expiration time in seconds. An expired
       cached connection will be disconnected. Default is 0, which
       means the cached connections will not be disconnected.</p>
   </dd>
 
-  <dt>reset_query_list</dt>
+  <dt><a name="RESET_QUERY_LIST"></a>reset_query_list</dt>
   <dd>
       <p>Specifies the SQL commands sent to reset the connection
       to the backend when exiting a session. Multiple commands can be
@@ -1009,20 +1009,20 @@ You need to reload pgpool.conf upon modification of this directive.
 configuration parameters below must be set in addition to everything above.</p>
 
 <dl>
-  <dt>replication_mode
+  <dt><a name="REPLICATION_MODE"></a>replication_mode</dt>
   <dd>
       <p>Setting to true enables replication mode. Default
       is false.</p>
   </dd>
 
-  <dt>load_balance_mode</dt>
+  <dt><a name="LOAD_BALANCE_MODE"></a>load_balance_mode</dt>
   <dd>
       <p>When set to true, SELECT queries will be
       distributed to each backend for load balancing. Default is
       false.</p>
   </dd>
 
-  <dt>failover_if_affected_tuples_mismatch</dt>
+  <dt><a name="FAILOVER_IF_AFFECTED_TUPLES_MISMATCH"></a>failover_if_affected_tuples_mismatch</dt>
   <dd>
 	  <p>When set to true, if backends don't return the same number of affected
     tuples during an INSERT/UPDATE/DELETE, 
@@ -1031,7 +1031,7 @@ configuration parameters below must be set in addition to everything above.</p>
 	  degenerated. Default is false.</p>
   </dd>
 
-  <dt>replication_stop_on_mismatch</dt>
+  <dt><a name="REPLICATION_STOP_ON_MISMATCH"></a>replication_stop_on_mismatch</dt>
   <dd>
 	  <p>When set to true, if all backends don't return the same packet kind,
 		the backends that differ from most
@@ -1047,8 +1047,7 @@ configuration parameters below must be set in addition to everything above.</p>
 	  degenerated. Default is false.</p>
   </dd>
 
-<a name="white_function_list"></a>
-<dt>white_function_list
+<dt><a name="WHITE_FUNCTION_LIST"></a>white_function_list</dt>
 <dd>
 <p>
 Specify a comma separated list of function names that <strong>do not</strong> 
@@ -1063,8 +1062,7 @@ white_function_list = 'get_.*,select_.*'
 </pre>
 </dd>
 
-<a name="black_function_list"></a>
-<dt>black_function_list
+<dt><a name="BLACK_FUNCTION_LIST"></a>black_function_list
 <dd>
 <p>
 Specify a comma separated list of function names that <strong>do</strong>
@@ -1098,12 +1096,11 @@ Adding to black_function_list will prevent load balancing.
 </p>
 </dd>
 
-<a name="replicate_select"></a>
-  <dt>replicate_select</dt>
-  <dd>
-      <p>When set to true, pgpool-II replicates SELECTs in replication mode. If false,
-         pgpool-II only sends them to the Master DB. Default is false.</p>
-
+<dt><a name="REPLICATE_SELECT"></a>replicate_select</dt>
+<dd>
+<p>When set to true, pgpool-II replicates SELECTs in replication mode. If false,
+pgpool-II only sends them to the Master DB. Default is false.
+</p>
 <p>
 If a SELECT query is inside an explicit transaction block, replicate_select and 
 load_balance_mode will have an effect on how replication works.
@@ -1164,7 +1161,7 @@ Details are shown below.
 </p>
   </dd>
 
-  <dt>insert_lock</dt>
+  <dt><a name="INSERT_LOCK"></a>insert_lock</dt>
   <dd>
       <p>If replicating a table with SERIAL data type, the SERIAL column
 value may differ between the backends. This problem is avoidable by
@@ -1232,21 +1229,21 @@ lock before that. The transaction will be aborted, and the following
 INSERT statement produces the above error message.</p>
 
 
-<dt>recovery_user
+<dt><a name="RECOVERY_USER"></a>recovery_user</dt>
 <dd>
 <p>
 This parameter specifies a PostgreSQL username for online recovery.
 It can be changed without restarting.
 </p>
 
-<dt>recovery_password
+<dt><a name="RECOVERY_PASSWORD"></a>recovery_password</dt>
 <dd>
 <p>
 This parameter specifies a PostgreSQL password for online recovery.
 It can be changed without restarting.
 </p>
 
-<dt>recovery_1st_stage_command
+<dt><a name="RECOVERY_1ST_STAGE_COMMAND"></a>recovery_1st_stage_command</dt>
 <dd>
 <p>
 This parameter specifies a command to be run at the first stage of online
@@ -1273,7 +1270,7 @@ data during this stage.
 This parameter can be changed without restarting.
 </p>
 
-<dt>recovery_2nd_stage_command
+<dt><a name="RECOVERY_2ND_STAGE_COMMAND"></a>recovery_2nd_stage_command</dt>
 <dd>
 <p>
 This parameter specifies a command to be run at the second stage of online
@@ -1303,7 +1300,7 @@ client is connected to pgpool-II anymore.
 This parameter can be changed without restarting.
 </p>
 
-<dt>recovery_timeout
+<dt><a name="RECOVERY_TIMEOUT"></a>recovery_timeout</dt>
 <dd>
 <p>
 pgpool does not accept new connections during the second stage. If a client
@@ -1318,7 +1315,7 @@ pgpool cancels online recovery and accepts connections. 0 means no wait.
 This parameter can be changed without restarting.
 </p>
 
-  <dt>client_idle_limit_in_recovery
+  <dt><a name="CLIENT_IDLE_LIMIT_IN_RECOVERY"></a>client_idle_limit_in_recovery</dt>
   <dd>
   <p> Similar to client_idle_limit but only takes effect in the second
 	   stage of recovery. A client being idle for client_idle_limit_in_recovery
@@ -1339,7 +1336,7 @@ This parameter can be changed without restarting.
   <p>
    You need to reload pgpool.conf if you change client_idle_limit_in_recovery.</p>
 
-<dt><a name="lobj_lock_table"></a>lobj_lock_table
+<dt><a name="LOBJ_LOCK_TABLE"></a>lobj_lock_table</dt>
 <dd>
 <p>
 This parameter specifies a table name used for large object replication control. 
@@ -1780,44 +1777,44 @@ pgpool-II. The System DB's configuration is done in
 <code>pgpool.conf</code>.</p>
 
 <dl>
-  <dt>system_db_hostname</dt>
+  <dt><a name="SYSTEM_DB_HOSTNAME"></a>system_db_hostname</dt>
   <dd>
       <p>The hostname where the System DB is. Specifying the
       empty string ('') means the System DB is on the same host as
       pgpool-II, and will be accessed via a UNIX domain socket.</p>
   </dd>
 
-  <dt>system_db_port</dt>
+  <dt><a name="SYSTEM_DB_PORT"></a>system_db_port</dt>
   <dd>
       <p>The port number for the System DB</p>
   </dd>
 
-  <dt>system_dbname</dt>
+  <dt><a name="SYSTEM_DBNAME"></a>system_dbname</dt>
   <dd>
       <p>The partitioning rules and other information will be defined
       in the database specified here. Default value is:
       <code>'pgpool'</code>.</p>
   </dd>
 
-  <dt>system_db_schema</dt>
+  <dt><a name="SYSTEM_DB_SCHEMA"></a>system_db_schema</dt>
   <dd>
       <p>The partitioning rules and other information will be defined
       in the schema specified here. Default value is:
       <code>'pgpool_catalog'</code>.</p>
   </dd>
 
-  <dt>system_db_user</dt>
+  <dt><a name="SYSTEM_DB_USER"></a>system_db_user</dt>
   <dd>
       <p>The username to connect to the System DB.</p>
   </dd>
 
-  <dt>system_db_password</dt>
+  <dt><a name="SYSTEM_DB_PASSWORD"></a>system_db_password</dt>
   <dd>
       <p>The password for the System DB. If no password is necessary,
       set the empty string ('').</p>
   </dd>
 
-  <dt>ssl_ca_cert</dt>
+  <dt><a name="SSL_CA_CERT"></a>ssl_ca_cert</dt>
   <dd>
       <p>
       The path to a PEM format file containing one or more CA root
@@ -1834,7 +1831,7 @@ pgpool-II. The System DB's configuration is done in
       </p>
   </dd>
 
-  <dt>ssl_ca_cert_dir</dt>
+  <dt><a name="SSL_CA_CERT_DIR"></a>ssl_ca_cert_dir</dt>
   <dd>
       <p>
       The path to a directory containing PEM format CA certficate
