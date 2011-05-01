@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Mon Apr 11 17:08:40 JST 2011
+Last modified: Sun May  1 18:34:53 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1246,7 +1246,7 @@ It can be changed without restarting.
 <dt><a name="RECOVERY_1ST_STAGE_COMMAND"></a>recovery_1st_stage_command</dt>
 <dd>
 <p>
-This parameter specifies a command to be run at the first stage of online
+This parameter specifies a command to be run by master(primary) PostgreSQL server at the first stage of online
 recovery. The command file must be put in the database cluster directory
 for security reasons.
 For example, if recovery_1st_stage_command = 'sync-command', then
@@ -1273,7 +1273,7 @@ This parameter can be changed without restarting.
 <dt><a name="RECOVERY_2ND_STAGE_COMMAND"></a>recovery_2nd_stage_command</dt>
 <dd>
 <p>
-This parameter specifies a command to be run at the second stage of online
+This parameter specifies a command to be run by master(primary) PostgreSQL server at the second stage of online
 recovery. The command file must be put in the database cluster directory
 for security reasons.
 
@@ -1698,9 +1698,10 @@ primary node.
 <p>
 In master/slave mode with streaming replication, online recovery can be 
 performed.
-Only a standby node can be recovered. You cannot recover the primary node.
-To recover the primary node, you have to stop all DB nodes and pgpool-II, and
-then restore it from a backup.
+In the online recovery procedure, primary server acts as a master server and recoveres specified standby server.
+Thus the recovery procedure requires that the primary server is up and running.
+If the primary server goes down, and no standby server is promoted, you need to stop
+pgpool-II and all PostgreSQL servers and recover them manually.
 </p>
 
 <p>
@@ -1756,6 +1757,27 @@ primary node to the standby node without being asked password.
 That's it.
 Now you should be able to use pcp_recovery_node (as long as the standby
 node stops) or push "recovery" button of pgpoolAdmin to perform online recovery.
+If something goes wrong, please examin pgpool-II log, primary server log and standby server log(s).
+</p>
+<p>
+For your reference, here are the steps taken in the recovery procedure.
+<ol>
+<li>Pgpool-II connects to primary server's template1 database as user = recovery_user, password = recovery_password.
+<li>Primary server executes pgpool_recovery function.
+<li>pgpool_recovery function executes recovery_1st_stage_command.
+Note that PostgreSQL executes functions with database cluster as the current directory.
+Thus recovery_1st_stage_command is executed in the database cluster directory.
+<li>Primary server executes pgpool_remote_start function.
+This function executes a script named "pgpool_remote_start" in the database cluster directory, and it executes pg_ctl command on the standby server to be recovered via ssh.
+pg_ctl will start postmaster in background.
+So we need to make sure that postmaster on the standby actually starts.
+<li>pgpool-II tries to connect to the standby PostgreSQL as user = recovery_user and password = recovery_password.
+The database to be connected is "postgres" if possible. Otherwise "template1" is used.
+pgpool-II retries for <a href="#RECOVERY_TIMEOUT">recovery_timeout</a> seconds.
+If success, go to next step.
+<li>If <a href="#FAILBACK_COMMAND">failback_command</a> is not empty, pgpool-II parent process executes the script.
+<li>After failback_command finishes, pgpool-II restart all child processes.
+</ol>
 </p>
 
 <h3>Parallel Mode</h3>

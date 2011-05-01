@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Mon Apr 11 17:24:54 JST 2011
+Last modified: Sun May  1 18:23:46 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1165,10 +1165,9 @@ replicate_select$B!"(Bload_balance_mode$B!"(BSELECT$BLd9g$o$;$,L@<(E*$J%H%i
 <dt><a name="RECOVERY_1ST_STAGE_COMMAND"></a>recovery_1st_stage_command</dt>
 <dd>
 <p>
-  $B:G=i$K%*%s%i%$%s%j%+%P%jCf$K5/F0$9$k%3%^%s%IL>$r;XDj$7$^$9!#%3%^%s%I(B
-  $B%U%!%$%k$O%;%-%e%j%F%#>e$N4QE@$+$i%G!<%?%Y!<%9%/%i%9%?0J2<$K$"$k%3%^(B
-  $B%s%I$d%9%/%j%W%H$N$_$r8F$S=P$7$^$9!#(B
-
+  $B%*%s%i%$%s%j%+%P%jCf$K5/F0$9$k%3%^%s%IL>$r;XDj$7$^$9!#(B
+  $B$3$N%9%/%j%W%H$O(BPostgreSQL$B$N%^%9%?%5!<%P(B($B%W%i%$%^%j%5!<%P(B)$B$,5/F0$7$^$9!#(B
+  $B%3%^%s%I%U%!%$%k$O%;%-%e%j%F%#>e$N4QE@$+$i%G!<%?%Y!<%9%/%i%9%?0J2<$K$"$k%3%^%s%I$d%9%/%j%W%H$N$_$r8F$S=P$7$^$9!#(B
   $BNc$($P!"(Brecovery_1st_stage_command = 'sync-command' $B$H@_Dj$7$F$"$k>l(B
   $B9g!"(B$PGDATA/sync-command $B$r5/F0$7$h$&$H$7$^$9!#(B
 </p>
@@ -1192,10 +1191,9 @@ recovery_1st_stage_command $B$O<!$N(B3$B$D$N0z?t$r<u$1$H$j$^$9!#(B
 <dt><a name="RECOVERY_2ND_STAGE_COMMAND"></a>recovery_2nd_stage_command</dt>
 <dd>
 <p>
-  2 $B2sL\$N%*%s%i%$%s%j%+%P%jCf$K5/F0$9$k%3%^%s%IL>$r;XDj$7$^$9!#%3%^%s(B
-  $B%I%U%!%$%k$O%;%-%e%j%F%#>e$N4QE@$+$i%G!<%?%Y!<%9%/%i%9%?0J2<$K$"$k%3(B
-  $B%^%s%I$d%9%/%j%W%H$N$_$r8F$S=P$7$^$9!#(B
-
+  2 $B2sL\$N%*%s%i%$%s%j%+%P%jCf$K5/F0$9$k%3%^%s%IL>$r;XDj$7$^$9!#(B
+  $B$3$N%9%/%j%W%H$O(BPostgreSQL$B$N%^%9%?%5!<%P(B($B%W%i%$%^%j%5!<%P(B)$B$,5/F0$7$^$9!#(B
+  $B%3%^%s%I%U%!%$%k$O%;%-%e%j%F%#>e$N4QE@$+$i%G!<%?%Y!<%9%/%i%9%?0J2<$K$"$k%3%^%s%I$d%9%/%j%W%H$N$_$r8F$S=P$7$^$9!#(B
   $BNc$($P!"(Brecovery_2nd_stage_command = 'sync-command' $B$H@_Dj$7$F$"$k>l(B
   $B9g!"(B$PGDATA/sync-command $B$r5/F0$7$h$&$H$7$^$9!#(B
 </p>
@@ -1527,8 +1525,10 @@ primary$B$H(Bstandby$B$N(BPostgreSQL$B$r5/F0$9$l$P!"(BStreaming replicatio
 <h2>Streaming Replication$B$G$N%*%s%i%$%s%j%+%P%j(B</h2>
 <p>
 Streaming replication$B$rMxMQ$7$?%^%9%?%9%l!<%V%b!<%I$G$O!"%l%W%j%1!<%7%g%s%b!<%I$HF1$8$h$&$K%*%s%i%$%s%j%+%P%j$,MxMQ$G$-$^$9!#(B
-$B$?$@$7!"%*%s%i%$%s%j%+%P%j$G$-$k$N$O(BStandby$B%N!<%I$N$_$G$9!#(B
-$B%^%9%?%N!<%I$NI|5l$O!"$9$Y$F$N(BDB$B%N!<%I$H(Bpgpool-II$B$rDd;_$5$;$F<jF0$G<B;\$7$J$1$l$P$J$j$^$;$s!#(B
+primary$B%5!<%P$r%^%9%?$H$7!"(Bstandby$B%5!<%P$r%j%+%P%j$7$^$9!#(B
+primary$B%5!<%P$,F0:n$7$F$$$k$N$,$3$NJ}K!$NA0Ds>r7o$G$9$N$G!"(B
+primary$B%5!<%P$,Dd;_$7$F$$$k>uBV$G$O%*%s%i%$%s%j%+%P%j$O$G$-$^$;$s!#(B
+primary$B%5!<%,Dd;_$7$F$$$k>uBV$+$i$NI|5l$O!"$9$Y$F$N(BDB$B%N!<%I$H(Bpgpool-II$B$rDd;_$5$;$F<jF0$G<B;\$7$J$1$l$P$J$j$^$;$s!#(B
 </p>
 
 <p>
@@ -1544,6 +1544,8 @@ recovery_password = 't-ishii'
 
 <li> recovery_1st_stage_command $B$r@_Dj$7$^$9!#(B
 $B$3$3$G;XDj$9$k%U%!%$%k$O!"(Bprimary$B%5!<%P$+$i%Y!<%9%P%C%/%"%C%W$r<hF@$7!"(Bstandby$B%5!<%P$K%j%9%H%"$9$k$b$N$G$J$1$l$P$J$j$^$;$s!#(B
+recovery_1st_stage_command $B$O!"(Bprimary$B$N(BPostgreSQL$B$+$i!"(Brecovery_user$B$N8"8B$G5/F0$5$l!"$=$N;~$K0z?t$r<u$1$H$j$^$9!#(B
+$B>\:Y$O!"(B<a href="#RECOVERY_1ST_STAGE_COMMAND">recovery_1st_stage_command</a>$B$N@_Dj9`L\$r$4Mw$/$@$5$$!#(B
 $B$3$N%9%/%j%W%H%U%!%$%k$O!"(Bprimary$B$N%G!<%?%Y!<%9%/%i%9%?2<$KG[CV$7!"<B9T8"8B$rM?$($F$*$-$^$9!#(B
 $B%5%s%W%k$H$7$F!"(Bprimary/standby$B$=$l$>$l0lBf9=@.$N>l9g$N%9%/%j%W%H(B<a href="basebackup.sh">(basebackup.sh)</a>$B$r<($7$^$9!#(B
 $B$3$N%9%/%j%W%H$G$O!"(Brecovery_user $B$,%Q%9%o!<%I$J$7$G%j%+%P%jBP>]$N(Bstandby$B%N!<%I$K%m%0%$%s$G$-$k$3$H$rA0Ds$K$7$F$$$k$N$G!"$"$i$+$8$a(Bssh$B$N@_Dj$r9T$J$C$F$*$/I,MW$,$"$j$^$9!#(B
@@ -1568,6 +1570,8 @@ recovery_2nd_stage_command = ''
 <li>$B%*%s%i%$%s%j%+%P%j$,=*N;$7$?$"$H!"(Bpgpool-II$B$O!"Dd;_$7$F$$$?(BDB$B%N!<%I$N(BPostgreSQL$B$r5/F0$7$^$9!#(B
 $B$=$N$?$a$N%9%/%j%W%H$r!"3F(BDB$B%N!<%I$N(BDB$B%/%i%9%?$K%$%s%9%H!<%k$7$^$9!#(B
 <a href="pgpool_remote_start">$B%9%/%j%W%H$N%5%s%W%k(B</a>$B$,%=!<%9%3!<%I$N(B"sample"$B%G%#%l%/%H%j$K4^$^$l$F$$$k$N$G!"$=$l$rMxMQ$7$F$/$@$5$$!#(B
+$B$3$N%5%s%W%k$NCf$G$O!"(BPostgreSQL$B$N5/F0$r(Bpg_ctl$B%3%^%s%I$G9T$C$F$*$j!"(Bpg_ctl$B%3%^%s%I$X$N%Q%9$,5-=R$5$l$F$$$^$9!#(B
+$B%G%U%)%k%H$G$O(B/usr/local/pgsql/bin/pg_ctl$B$H$J$C$F$$$k$N$G!"$*;H$$$N4D6-$K9g$o$;$F=$@5$7$F$/$@$5$$!#(B
 $B$J$*!"$3$N%9%/%j%W%H$O(Bssh$B$r;HMQ$7$^$9$N$G!">/$/$H$b!"(Bprimary$B$N(BDB$B%N!<%I$+$i!"(Bstandby$B$N(BDB$B%N!<%I$KBP$7$F!"(Brecovery_user$B$G%Q%9%o!<%I$J$7$G(Bssh$B$,MxMQ$G$-$k$3$H$,I,MW$G$9!#(B
 $BI,MW$J$i$P$"$i$+$8$a@_Dj$7$F$*$$$F$/$@$5$$!#(B
 </ol>
@@ -1576,7 +1580,25 @@ recovery_2nd_stage_command = ''
 <p>
 $B0J>e$G%*%s%i%$%s%j%+%P%j$N@_Dj$,=*N;$7$^$7$?!#(B
 standby$B%N!<%I$rDd;_$7$?>uBV$G!"(Bpcp_recovery_node$B$rMxMQ$9$k$+!"(BpgpoolAdmin$B$N!V%j%+%P%j!W%\%?%s$G%*%s%i%$%s%j%+%P%j$,=PMh$k$h$&$K$J$C$?$O$:$G$9!#(B
-
+$B$&$^$/$$$+$J$$>l9g$O!"(Bpgpool-II$B$N%m%0!"(Bprimary$B%5!<%P!"(Bstandby$B%5!<%P$N%m%0$r3NG'$7$F$/$@$5$$!#(B
+</p>
+<p>
+$B;29M$^$G$K!"%9%H%j!<%_%s%0%l%W%j%1!<%7%g%s$G$N%*%s%i%$%s%j%+%P%j$NFbIt=hM}$NN.$l$r@bL@$7$^$9!#(B
+<ol>
+<li>pgpool-II$B$O!"(Bprimary$B%5!<%P$K%f!<%6(B: recovery_user, $B%Q%9%o!<%I(B: recovery_password $B$G(Btemplate1$B%G!<%?%Y!<%9$K@\B3$7$^$9(B
+<li>primary$B%5!<%P$G!"(Bpgpool_recovery$B4X?t$r<B9T$7$^$9(B
+<li>pgpool_recovery$B4X?t$O!"(Brecovery_1st_stage_command $B$G;XDj$5$l$?%9%/%j%W%H$r<B9T$7$^$9!#(B
+$B$J$*!"(BPostgreSQL$B$O!"%G!<%?%Y!<%9%/%i%9%?%G%#%l%/%H%jCf$G4X?t$r<B9T$7$^$9!#(B
+$B$h$C$F!"(Bpgpool_recovery$B4X?t$b(Bprimary$B%5!<%P$N%G!<%?%Y!<%9%/%i%9%?%G%#%l%/%H%jCf$G4X?t$r<B9T$5$l$k$3$H$KCm0U$7$F$/$@$5$$!#(B
+<li>primary$B%5!<%P$G!"(Bpgpool_remote_start$B4X?t$r<B9T$7$^$9!#(B
+$B$3$N4X?t$O!"(Bprimary$B%5!<%P$N%G!<%?%Y!<%9%/%i%9%?%G%#%l%/%H%jCf$K$"$k(Bpgpool_remote_start$B$H$$$&L>A0$N%9%/%j%W%H$r5/F0$7!"$3$3$+$i(Bssh$B7PM3$G%j%+%P%jBP>]$N(Bstandby$B%5!<%P$N(BPostgreSQL$B$r(Bpg_ctl$B%3%^%s%I$r;H$C$F5/F0$7$^$9!#(B
+$B5/F0$O%P%C%/%0%i%&%s%I$G9T$o$l!"5/F0$G$-$?$+$I$&$+$O<!$N%9%F%C%W$G3NG'$5$l$^$9!#(B
+<li>pgpool-II$B$+$i!"(Bstandby$B%5!<%P$N(BPostgreSQL$B$N(Bpostgres$B%G!<%?%Y!<%9(B(postgres$B%G!<%?%Y!<%9$,$J$$>l9g$O(Btemplate1$B%G!<%?%Y!<%9(B)$B$K!"%f!<%6(B: recovery_user, $B%Q%9%o!<%I(B: recovery_password $B$G(Btemplate1$B%G!<%?%Y!<%9$K@\B3$r;n$_$^$9!#(B
+$B%j%H%i%$$O!"(B<a href="#RECOVERY_TIMEOUT">recovery_timeout</a>$BIC4V9T$o$l$^$9!#(B
+PostgreSQL$B$N5/F0$K@.8y$7$?$i!"<!$N%9%F%C%W$K0\$j$^$9!#(B
+<li><a href="#FAILBACK_COMMAND">failback_command</a>$B$,6u$G$J$$>l9g$O!"(Bpgpool-II$B$N?F%W%m%;%9$O;XDj$5$l$?%9%/%j%W%H$r5/F0$7$^$9!#(B
+<li>failback_command$B$,=*N;$7$?$i!"(Bpgpool-II$B$N;R%W%m%;%9$r$9$Y$F:F5/F0$7$^$9!#(B
+</ol>
 </p>
 
 <h2>Streaming Replication$B$G$N%/%(%j?6$jJ,$1(B</h2>
