@@ -173,6 +173,8 @@ static BackendStatusRecord backend_rec;	/* Backend status record */
 
 static pid_t worker_pid; /* pid of worker process */
 
+BACKEND_STATUS* my_backend_status[MAX_NUM_BACKENDS];		/* Backend status buffer */
+
 int myargc;
 char **myargv;
 
@@ -501,6 +503,17 @@ int main(int argc, char **argv)
 	{
 		pool_error("failed to allocate Req_info");
 		myexit(1);
+	}
+
+	/*
+	 * Initialize backend status area.
+	 * From now on, VALID_BACKEND macro can be used.
+	 * (get_next_master_node() uses VALID_BACKEND)
+	 */
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		my_backend_status[i] = &(BACKEND_INFO(i).backend_status);
 	}
 
 	/* initialize Req_info */
@@ -1440,6 +1453,7 @@ static void failover(void)
 	int new_master;
 	int new_primary;
 	int nodes[MAX_NUM_BACKENDS];
+	bool need_to_restart_children;
 
 	pool_debug("failover_handler called");
 
@@ -1583,7 +1597,6 @@ static void failover(void)
  * "TCP connections are *not* closed when a backend timeout" on Jul 13
  * 2008 for more details.
  */
-
 #ifdef NOT_USED
 	else
 	{
@@ -1618,18 +1631,42 @@ static void failover(void)
 		}
 	}
 #endif
-	/* kill all children */
-	for (i = 0; i < pool_config->num_init_children; i++)
+
+
+   /* On 2011/5/2 Tatsuo Ishii says: if mode is streaming replication
+	* and request is NODE_UP_REQUEST(failback case) we don't need to
+	* restart all children. Existing session will not use newly
+	* attached node, but load balanced node is not changed util this
+	* session ends, so it's not harmless anyway.
+	*/
+	if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP)	&&
+		Req_info->kind == NODE_UP_REQUEST)
 	{
-		pid_t pid = process_info[i].pid;
-		if (pid)
+		pool_log("Do not restart children because we are failbacking node id %d host%s port:%d and we are in streaming replication mode", node_id, 
+				 BACKEND_INFO(node_id).backend_hostname,
+				 BACKEND_INFO(node_id).backend_port);
+
+		need_to_restart_children = false;
+	}
+	else
+	{
+		pool_log("Restart all children");
+
+		/* kill all children */
+		for (i = 0; i < pool_config->num_init_children; i++)
 		{
-			kill(pid, SIGQUIT);
-			pool_debug("failover_handler: kill %d", pid);
+			pid_t pid = process_info[i].pid;
+			if (pid)
+			{
+				kill(pid, SIGQUIT);
+				pool_debug("failover_handler: kill %d", pid);
+			}
 		}
+
+		need_to_restart_children = true;
 	}
 
-	/* exec failover_command */
+	/* Exec failover_command if needed */
 	for (i = 0; i < pool_config->backend_desc->num_backends; i++)
 	{
 		if (nodes[i])
@@ -1652,8 +1689,9 @@ static void failover(void)
 		new_primary =  find_primary_node_repeatedly();
 
 	/* 
-	 * In master/slave streaming replication we start degenerating
-	 * all backends as they are not replicated anymore
+	 * If follow_master_command is provided and in master/slave
+	 * streaming replication mode, we start degenerating all backends
+	 * as they are not replicated anymore.
 	 */
 	int follow_cnt = 0;
 	if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
@@ -1715,11 +1753,25 @@ static void failover(void)
 		pool_log("failover: set new master node: %d", Req_info->master_node_id);
 	}
 
-	/* fork the children */
-	for (i=0;i<pool_config->num_init_children;i++)
+
+	/* Fork the children if needed */
+	if (need_to_restart_children)
 	{
-		process_info[i].pid = fork_a_child(unix_fd, inet_fd, i);
-		process_info[i].start_time = time(NULL);
+		for (i=0;i<pool_config->num_init_children;i++)
+		{
+			process_info[i].pid = fork_a_child(unix_fd, inet_fd, i);
+			process_info[i].start_time = time(NULL);
+		}
+	}
+	else
+	{
+		/* Set restart request to each child. Children will exit(1)
+		 * whenever they are idle to restart.
+		 */
+		for (i=0;i<pool_config->num_init_children;i++)
+		{
+			process_info[i].need_to_restart = 1;
+		}
 	}
 
 	if (Req_info->kind == NODE_UP_REQUEST)

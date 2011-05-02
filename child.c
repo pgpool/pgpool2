@@ -74,6 +74,8 @@ static void init_system_db_connection(void);
 static bool connect_using_existing_connection(POOL_CONNECTION *frontend,
 											  POOL_CONNECTION_POOL *backend,
 											  StartupPacket *sp);
+static void initialize_private_backend_status(void);
+
 /*
  * non 0 means SIGTERM(smart shutdown) or SIGINT(fast shutdown) has arrived
  */
@@ -88,6 +90,11 @@ extern char **myargv;
 char remote_ps_data[NI_MAXHOST];		/* used for set_ps_display */
 
 volatile sig_atomic_t got_sighup = 0;
+
+/*
+ * Private copy of backend status
+ */
+static BACKEND_STATUS private_backend_status[MAX_NUM_BACKENDS];
 
 /*
 * child main loop
@@ -129,6 +136,9 @@ void do_child(int unix_fd, int inet_fd)
 	}
 #endif
 
+	/* Initialize my backend status */
+	initialize_private_backend_status();
+
 	/* Initialize per process context */
 	pool_init_process_context();
 
@@ -156,6 +166,17 @@ void do_child(int unix_fd, int inet_fd)
 
 		/* pgpool stop request already sent? */
 		check_stop_request();
+
+		/* Check if restart request is set because of failback event
+		 * happend.  If so, exit myself with exit code 1 to be
+		 * restarted by pgpool parent.
+		 */
+		if (pool_get_my_process_info()->need_to_restart)
+		{
+			pool_log("do_child: failback event found. restart myself.");
+			pool_get_my_process_info()->need_to_restart = 0;
+			child_exit(1);
+		}
 
 		accepted = 0;
 
@@ -250,6 +271,18 @@ void do_child(int unix_fd, int inet_fd)
 		 * connection which can be reused by this frontend.
 		 * Authentication is also done in this step.
 		 */
+
+		/* Check if restart request is set because of failback event
+		 * happend.  If so, exit myself with exit code 1 to be
+		 * restarted by pgpool parent.
+		 */
+		if (pool_get_my_process_info()->need_to_restart)
+		{
+			pool_log("do_child: failback event found. discard existing connections");
+			pool_get_my_process_info()->need_to_restart = 0;
+			close_idle_connection(0);
+			initialize_private_backend_status();
+		}
 
 		/*
 		 * if there's no connection associated with user and database,
@@ -1920,5 +1953,22 @@ static void init_system_db_connection(void)
 		{
 			pool_error("Could not make persistent system DB connection");
 		}
+	}
+}
+
+/*
+ * Initialize my backend status.
+ * We copy the backend status to private area so that
+ * they are not changed while I am alive.
+ */
+static void initialize_private_backend_status(void)
+{
+	int i;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		private_backend_status[i] = BACKEND_INFO(i).backend_status;
+		/* my_backend_status is referred to by VALID_BACKEND macro. */
+		my_backend_status[i] = &private_backend_status[i];
 	}
 }

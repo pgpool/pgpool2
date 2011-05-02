@@ -77,7 +77,7 @@ typedef struct {
 	int			counter; /* used counter */
 	time_t 		create_time; /* connection creation time */
 	int load_balancing_node; /* load balancing node */
-	char		connected;	/* true if frontend connected Please note
+	char		connected;	/* True if frontend connected. Please note
 							 * that we use "char" instead of "bool".
 							 * Since 3.1, we need to export this
 							 * structure so that PostgreSQL C
@@ -97,6 +97,12 @@ typedef struct {
 	pid_t pid; /* OS's process id */
 	time_t start_time; /* fork() time */
 	ConnectionInfo *connection_info; /* head of the connection info for this process */
+	char need_to_restart;		/* If non 0, exit this child process
+								 * as soon as current session ends.
+								 * Typical case this flag being set is
+								 * failback a node in streaming
+								 * replication mode.
+								 */
 } ProcessInfo;
 
 /*

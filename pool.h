@@ -266,12 +266,13 @@ typedef struct {
  */
 extern bool pool_is_node_to_be_sent_in_current_query(int node_id);
 extern int pool_virtual_master_db_node_id(void);
+extern BACKEND_STATUS* my_backend_status[];
 
 #define VALID_BACKEND(backend_id) \
-	((RAW_MODE && (backend_id) == REAL_MASTER_NODE_ID) || \
-	 (pool_is_node_to_be_sent_in_current_query((backend_id)) && \
-	  ((BACKEND_INFO((backend_id)).backend_status == CON_UP) || \
-	   (BACKEND_INFO((backend_id)).backend_status == CON_CONNECT_WAIT))))
+	((RAW_MODE && (backend_id) == REAL_MASTER_NODE_ID) ||		\
+	(pool_is_node_to_be_sent_in_current_query((backend_id)) &&	\
+	 ((*(my_backend_status[(backend_id)]) == CON_UP) ||			\
+	  (*(my_backend_status[(backend_id)]) == CON_CONNECT_WAIT))))
 
 #define CONNECTION_SLOT(p, slot) ((p)->slots[(slot)])
 #define CONNECTION(p, slot) (CONNECTION_SLOT(p, slot)->con)
