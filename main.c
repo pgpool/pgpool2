@@ -1291,8 +1291,14 @@ void promote_backend(int node_id)
 {
 	pid_t parent = getppid();
 
-	if (pool_config->parallel_mode)
+	if (!MASTER_SLAVE || strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
 	{
+		return;
+	}
+
+	if (node_id < 0 || node_id >= MAX_NUM_BACKENDS || !VALID_BACKEND(node_id))
+	{
+		pool_error("promote_backend: node %d is not valid backend.", node_id);
 		return;
 	}
 
@@ -1512,12 +1518,11 @@ static void failover(void)
 	}
 	else if (Req_info->kind == PROMOTE_NODE_REQUEST)
 	{
-		if (Req_info->node_id[0] != -1 &&
-			VALID_BACKEND(Req_info->node_id[0]))
+		if (node_id != -1 && VALID_BACKEND(node_id))
 		{
-			pool_log("starting promotion. promotion host %s(%d)",
-					 BACKEND_INFO(Req_info->node_id[0]).backend_hostname,
-					 BACKEND_INFO(Req_info->node_id[0]).backend_port);
+			pool_log("starting promotion. promote host %s(%d)",
+					 BACKEND_INFO(node_id).backend_hostname,
+					 BACKEND_INFO(node_id).backend_port);
 		}
 		else
 		{
@@ -1632,9 +1637,17 @@ static void failover(void)
 									 MASTER_NODE_ID, new_master, PRIMARY_NODE_ID);
 	}
 
-	if (Req_info->kind == PROMOTE_NODE_REQUEST &&
-		VALID_BACKEND(Req_info->node_id[0]))
-		new_primary = Req_info->node_id[0];
+/* no need to wait since it will be done in reap_handler */
+#ifdef NOT_USED
+	while (wait(NULL) > 0)
+		;
+
+	if (errno != ECHILD)
+		pool_error("failover_handler: wait() failed. reason:%s", strerror(errno));
+#endif
+
+	if (Req_info->kind == PROMOTE_NODE_REQUEST && VALID_BACKEND(node_id))
+		new_primary = node_id;
 	else
 		new_primary =  find_primary_node_repeatedly();
 
@@ -1643,15 +1656,16 @@ static void failover(void)
 	 * all backends as they are not replicated anymore
 	 */
 	int follow_cnt = 0;
-	if (*pool_config->follow_master_command != '\0')
+	if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
 	{
-		if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
+		if (*pool_config->follow_master_command != '\0' ||
+			Req_info->kind == PROMOTE_NODE_REQUEST)
 		{
 			/* only if the failover is against the current primary */
 			if (((Req_info->kind == NODE_DOWN_REQUEST) &&
 				 (nodes[Req_info->primary_node_id])) ||
 				((Req_info->kind == PROMOTE_NODE_REQUEST) &&
-				 (VALID_BACKEND(Req_info->node_id[0])))) {
+				 (VALID_BACKEND(node_id)))) {
 
 				for (i = 0; i < pool_config->backend_desc->num_backends; i++)
 				{
@@ -1673,20 +1687,13 @@ static void failover(void)
 				}
 				else
 				{
+					/* update new master node */
+					new_master = get_next_master_node();
 					pool_log("failover: %d follow backends have been degenerated", follow_cnt);
 				}
 			}
 		}
 	}
-
-/* no need to wait since it will be done in reap_handler */
-#ifdef NOT_USED
-	while (wait(NULL) > 0)
-		;
-
-	if (errno != ECHILD)
-		pool_error("failover_handler: wait() failed. reason:%s", strerror(errno));
-#endif
 
 	memset(Req_info->node_id, -1, sizeof(int) * MAX_NUM_BACKENDS);
 	pool_semaphore_unlock(REQUEST_INFO_SEM);
@@ -1694,7 +1701,7 @@ static void failover(void)
 	/* exec follow_master_command */
 	if ((follow_cnt > 0) && (*pool_config->follow_master_command != '\0'))
 	{
-		follow_pid = fork_follow_child(Req_info->master_node_id, new_primary,
+		follow_pid = fork_follow_child(Req_info->master_node_id, new_master,
 									   Req_info->primary_node_id);
 	}
 
@@ -1705,12 +1712,8 @@ static void failover(void)
 	if (new_master >= 0)
 	{
 		Req_info->master_node_id = new_master;
+		pool_log("failover: set new master node: %d", Req_info->master_node_id);
 	}
-	if (Req_info->primary_node_id >= 0)
-	{
-		Req_info->master_node_id = new_primary;
-	}
-	pool_log("failover: set new master node: %d", Req_info->master_node_id);
 
 	/* fork the children */
 	for (i=0;i<pool_config->num_init_children;i++)
@@ -1722,6 +1725,12 @@ static void failover(void)
 	if (Req_info->kind == NODE_UP_REQUEST)
 	{
 		pool_log("failback done. reconnect host %s(%d)",
+				 BACKEND_INFO(node_id).backend_hostname,
+				 BACKEND_INFO(node_id).backend_port);
+	}
+	else if (Req_info->kind == PROMOTE_NODE_REQUEST)
+	{
+		pool_log("promotion done. promoted host %s(%d)",
 				 BACKEND_INFO(node_id).backend_hostname,
 				 BACKEND_INFO(node_id).backend_port);
 	}
@@ -2422,7 +2431,7 @@ static int find_primary_node(void)
 			return -1;
 		}
 		con = s->con;
-
+#ifdef NOT_USED
 		status = do_query(con, "SELECT count(*) FROM pg_catalog.pg_proc AS p WHERE p.proname = 'pgpool_walrecrunning'",
 						  &res, PROTO_MAJOR_V3);
 		if (res->numrows <= 0)
@@ -2444,7 +2453,7 @@ static int find_primary_node(void)
 			discard_persistent_db_connection(s);
 			return -1;
 		}
-
+#endif
 		status = do_query(con, "SELECT pg_is_in_recovery()",
 						  &res, PROTO_MAJOR_V3);
 		if (res->numrows <= 0)
@@ -2471,7 +2480,7 @@ static int find_primary_node(void)
 		 */
 		if (is_standby)
 		{
-			pool_log("find_primary_node: %d node is standby", i);
+			pool_debug("find_primary_node: %d node is standby", i);
 		}
 		else
 		{
@@ -2481,7 +2490,7 @@ static int find_primary_node(void)
 
 	if (i == NUM_BACKENDS)
 	{
-		pool_log("find_primary_node: no primary node found");
+		pool_debug("find_primary_node: no primary node found");
 		return -1;
 	}
 
@@ -2505,6 +2514,7 @@ static int find_primary_node_repeatedly(void)
 		return -1;
 	}
 
+	pool_log("find_primary_node_repeatedly: waiting for finding a primary node");
 	for (sec = 0; sec < pool_config->recovery_timeout; sec++)
 	{
 		node_id = find_primary_node();
