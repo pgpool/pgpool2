@@ -1,3 +1,60 @@
+2011-05-03 18:18  kitagawa
+
+	* NEWS, doc/pgpool-ja.html: Prepare 3.1-alpha2.
+
+2011-05-02 22:31  t-ishii
+
+	* child.c, main.c, pool.h, pcp/libpcp_ext.h: Enhance online
+	  recovery in streaming replication mode.  Now restarting pgpool-II
+	  children is avoided when recovery finished.  So existing sessions
+	  can be continued while doing online recovery.  For this
+	  VALID_BACKEND macro is modified. pgpool-II main looks into status in
+	  shared memory are as it were. pgpool-II child now looks into local
+	  cache space. Pgpool-II child recognizes same number of backends
+	  before failback util existing session ends. Then the process exits
+	  with status 1, so that new process starts, which will recognizes
+	  failback node. For this purpose "need_to_restart" flag added to
+	  ProcessInfo structure.
+
+2011-05-02 21:45  kitagawa
+
+	* main.c: Fix failover() so that it does not cause "kind does not
+	  match" error.  Add ifdef not to check pgpool_walrecrunning().
+	  Adjust error messages.
+
+2011-05-01 18:40  t-ishii
+
+	* doc/: pgpool-en.html, pgpool-ja.html: Enhance online recovery
+	  documents in streaming replication.
+
+2011-04-26 20:33  harukat
+
+	* doc/: pgpool-en.html, pgpool-ja.html:
+
+	  - add <a name="..."> tags into all parameter in the pgpool-ii user
+	  manual.
+
+2011-04-26 09:44  kitagawa
+
+	* pcp/: Makefile.am, Makefile.in: Add pool_process_reporting.h to
+	  be installed.
+
+2011-04-26 07:58  t-ishii
+
+	* recovery.c: Fix bug with start_recoery().  It calls
+	  connect_backend() and then calls PQfinish(NULL) if connect_backend()
+	  returns NULL, which is apparently wrong usage of PQfinish().
+	  Actually PQfinish() has been called in connect_backend() in this
+	  case.  Also fix typo and enhance error message.
+
+2011-04-25 22:56  t-ishii
+
+	* pcp/: Makefile.am, Makefile.in: Add libpcp_ext.h to be installed.
+
+2011-04-25 20:43  kitagawa
+
+	* ChangeLog: Prepare 3.1-alpha2.
+
 2011-04-25 20:33  kitagawa
 
 	* pool_process_reporting.h, pcp/pcp_pool_status.c: Forgot to add
