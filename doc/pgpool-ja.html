@@ -3828,8 +3828,9 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
 <h3>$B8_49@-$N$J$$JQ99(B</h3>
 <p>
 <ul>
- <li>backend_socket_dir$B%Q%i%a!<%?$rGQ;_$7$^$7$?!#$=$NBe$o$j$K!"(Bbackend_hostname$B$,(B'/'$B$G;O$^$k$J$i$P!"$=$l$r(BUNIX$B%I%a%$%s$X$N%Q%9$H$_$J$7$^$9!#(Bbackend_hostname$B$,6u$J$i$P!"%G%U%)%k%H$N(BUNIX$B%I%a%$%s%Q%9(B(/tmp)$B$,;H$o$l$^$9!#$3$l$O!"(Blibpq$B%$%s%?%U%'!<%9$N5,Ls$K=>$$$^$9!#%Q%C%A$O(BJehan-Guillaume (ioguix) de Rorthais$B$5$s$+$iD:$-!"DI2C$N=$@5$r;d$,9T$$$^$7$?(B(Tatsuo)
- <li>$B8=:_(Bpgpool_walrecrunning()$B$O;H$o$l$:!"(Bpgpool-II$B$O%U%'%$%k%*!<%P!<;~$K%W%i%$%^%j%N!<%I$X$N>:3J$,40N;$9$k$^$GBT$A$^$9!#$=$N4X?t$r;HMQ$7$J$$M}M3$O%W%i%$%^%j%N!<%I$r3N<B$K8+$D$1$k$3$H$,$G$-$J$$$?$a$G$9!#$7$+$7!"$3$N=$@5$K$O%W%i%$%^%j%N!<%I$,8=$l$J$$$H$-$K(Brecovery_timeout$B$N4V(Bpgpool-II$B$,BT$C$F$7$^$&LdBj$,$^$@;D$C$F$$$^$9(B(Kitagawa)
+ <li>backend_socket_dir$B%Q%i%a!<%?$rGQ;_$7$^$7$?!#$=$NBe$o$j$K!"(Bbackend_hostname$B$,(B'/'$B$G;O$^$k$J$i$P!"$=$l$r(BUNIX$B%I%a%$%s$X$N%Q%9$H$_$J$7$^$9!#(Bbackend_hostname$B$,6u$J$i$P!"%G%U%)%k%H$N(BUNIX$B%I%a%$%s%Q%9(B(/tmp)$B$,;H$o$l$^$9!#$3$l$O!"(Blibpq$B%$%s%?%U%'!<%9$N5,Ls$K=>$$$^$9!#%Q%C%A$O(BJehan-Guillaume (ioguix) de Rorthais$B$5$s$+$iD:$-!"DI2C$N=$@5$r9T$$$^$7$?(B(Tatsuo)
+ <li>$B%9%H%j!<%_%s%0%l%W%j%1!<%7%g%s9=@.$G$N%*%s%i%$%s%j%+%P%j$K$*$$$F!"%j%+%P%j=*N;;~$K;R%W%m%;%9$r:F5/F0$7$J$$$h$&$K$7$^$7$?!#$=$N$?$a!"4{B8$N%;%C%7%g%s$O%*%s%i%$%s%j%+%P%jCf$b7QB3$9$k$3$H$,$G$-$^$9(B(Tatsuo)
+ <li>$B%U%'%$%k%*!<%P!<;~$K(Bpgpool_walrecrunning()$B$r;HMQ$;$:!"%W%i%$%^%j%N!<%I$X$N>:3J$,40N;$9$k$^$GBT$D$h$&$K$J$j$^$7$?!#4X?t$r;HMQ$7$J$$M}M3$O%W%i%$%^%j%N!<%I$r3N<B$K8+$D$1$k$3$H$,$G$-$J$$$?$a$G$9!#$7$+$7!"$3$N=$@5$K$O%W%i%$%^%j%N!<%I$,8=$l$J$$$H$-$K(Brecovery_timeout$B$N4V(Bpgpool-II$B$,BT$C$F$7$^$&LdBj$,$^$@;D$C$F$$$^$9(B(Kitagawa)
  <li>PostgreSQL DB$B%N!<%I>pJs$r=PNO$9$k(Bpool_nodes$B$K!V%N!<%I(BID$B!W$rDI2C$7$^$7$?!#%Q%C%A$O(BJean-Paul Argudo$B$5$s$+$iD:$-$^$7$?(B(Gleu)
 </ul>
 </p>
@@ -3856,6 +3857,7 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
  <li>recovery_1st_stage_command$B$H(Brecovery_2nd_stage_command$B%Q%i%a!<%?$N@bL@$rDI2C$7$^$7$?(B(Tatsuo)
  <li>pgpool-II$BFbIt$G;HMQ$9$k%7%9%F%`%+%?%m%0%-%c%C%7%e$N%5%$%:$r(B32$B$+$i(B128$B$KA}$d$7$^$7$?!#$3$l$O(B&quot;unnamed prepared statement does not exist&quot;$B%(%i!<$r7Z8:$9$k8z2L$,$"$j$^$9(B(Tatsuo, Kitagawa)
  <li>pcp_connect()$B4X?t$GFs=E(Bfree()$B$r9T$&%P%0$r=$@5$7$^$7$?!#%Q%C%A$O(BJehan-Guillaume (ioguix) de Rorthais$B$5$s$+$iD:$-$^$7$?(B(Tatsuo)
+ <li>PQfinish()$B4X?t$r8m$C$F;HMQ$7$F$$$k(Bstart_recoery()$B$N%P%0$r=$@5$7$^$7$?(B(Tatsuo)
 </ul>
 </p>
 
@@ -3865,6 +3867,8 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
  <li>PostgreSQL 9.0$B$N%Q!<%5$r0\?"$7$^$7$?!#$3$l$K$h$j(BPostgreSQL 9.0$B$G?7$7$/F3F~$5$l$?0EL[$N%$%s%G%C%/%9L>$r;HMQ$7$?(BCREATE INDEX$B$,<B9T$G$-$k$h$&$K$J$j$^$7$?!#%Q%C%A$O@PED$5$s$+$iD:$-$^$7$?(B(Tatsuo)
  <li>black_function_list$B$H(Bwhite_function_list$B%Q%i%a!<%?$K@55,I=8=$,;H$($k$h$&$K$J$j$^$7$?!#%Q%C%A$O(BGilles Darold$B$5$s$+$iD:$-!"(BGuillaume Lelarge$B$5$s$,%l%S%e!<$7$^$7$?(B(Tatsuo)
  <li>$BFI$_$d$9$$$h$&$K(Bpgpool.conf$B$N%5%s%W%k%U%!%$%k$r:F9=@.$7$^$7$?(B(Gleu)
+ <li>pgpool-II$B%^%K%e%"%k$N$9$Y$F$N%Q%i%a!<%?$K(B&lsaquo;a name=&quot;...&quot;&rsaquo;$B%?%0$rDI2C$7$^$7$?(B(Haruka Takatsuka)
+ <li>pgpool-II$B%^%K%e%"%k$N%9%H%j!<%_%s%0%l%W%j%1!<%7%g%s$K$*$1$k%*%s%i%$%s%j%+%P%j$N@bL@$r2~A1$7$^$7$?(B(Tatsuo)
 </ul>
 </p>
 

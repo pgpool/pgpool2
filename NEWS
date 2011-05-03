@@ -13,6 +13,10 @@
 		follows the convention of libpq interface. Patch contributed by
 		Jehan-Guillaume (ioguix) de Rorthais. Additional fixes by me(Tatsuo)
 
+	  - Enhance online recovery in streaming replication mode.
+		Now restarting pgpool-II children is avoided when recovery finished. So
+		existing sessions can be continued while doing online recovery(Tatsuo)
+
 	  - Now "pgpool_walrecrunning()" was not used. pgpool-II used to consider
 		the node that is promoted a primary node using the function. Now,
 		pgpool-II waits for completing of the promotion to primary node
@@ -73,6 +77,9 @@
 	  - Fix bug with pcp_connect() which causes double free. Patch contributed 
 		by Jehan-Guillaume (ioguix) de Rorthais(Tatsuo)
 
+	  - Fix bug with start_recoery() which is apparently wrong usage of
+		PQfinish()(Tatsuo)
+
 	  * Enhancements
 
 	  - Import PostgreSQL 9.0 parser. This allows to use CREATE INDEX with
@@ -85,6 +92,11 @@
 
 	  - Reorganize pgpool.conf sample files so that they are easier to read
 		(Gleu)
+
+	  - Add <a name="..."> tags into all parameters in the pgpool-II user
+		manual(Haruka Takatsuka)
+
+	  - Enhance online recovery documents in streaming replication(Tatsuo)
 
 3.0.3 (umiyameboshi) 2011/02/23
 
