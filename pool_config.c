@@ -2069,6 +2069,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 	for(;;)
 	{
 		token = yylex();
+		if (token == 0)
+		{
+			break; 	 
+		}
 		if (token == POOL_PARSE_ERROR)
 		{
 			PARSE_ERROR();
