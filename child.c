@@ -1136,7 +1136,7 @@ void cancel_request(CancelPacket *sp)
 		if (!VALID_BACKEND(i))
 			continue;
 
-		if (*(BACKEND_INFO(i).backend_hostname) == '\0')
+		if (*(BACKEND_INFO(i).backend_hostname) == '/')
 			fd = connect_unix_domain_socket(i, TRUE);
 		else
 			fd = connect_inet_domain_socket(i, TRUE);
