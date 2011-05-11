@@ -106,7 +106,7 @@ reset_query_list = 'ABORT; DISCARD ALL'
 # white_function_list = ''
 # black_function_list = 'nextval,setval'
 white_function_list = ''
-black_function_list = 'nextval,setval'
+black_function_list = 'currval,lastval,nextval,setval'
 
 # If true print timestamp on each log line.
 print_timestamp = true
