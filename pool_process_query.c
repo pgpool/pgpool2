@@ -260,7 +260,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 						pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit(%d) reached",
 								 pool_config->client_idle_limit);
 						pool_send_error_message(frontend, MAJOR(backend),
-												"57000", "connection terminated due to online recovery",
+												"57000", "connection terminated due to client idle limit reached",
 												"","",  __FILE__, __LINE__);
 						return POOL_END;
 					}
