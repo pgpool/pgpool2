@@ -119,7 +119,7 @@ void do_worker_child(void)
 		 * If streaming replication mode, do time lag checking
 		 */
 
-		if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
+		if (pool_config->health_check_period > 0 && MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
 		{
 			/* Check and establish persistent connections to the backend */
 			establish_persistent_connection();
