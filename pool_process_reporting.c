@@ -534,7 +534,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "weight of backend #%d", j);
 		i++;
 
-		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "backend status%d", j);
+		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "backend_status%d", j);
 		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", BACKEND_INFO(j).backend_status);
 		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "status of backend #%d", j);
 		i++;
