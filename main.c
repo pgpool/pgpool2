@@ -327,23 +327,6 @@ int main(int argc, char **argv)
 		pool_config->logsyslog = 1;
 	}
 
-
-	/*
-	 * Locate pool_passwd
-	 */
-	if (strcmp("", pool_config->pool_passwd))
-	{
-		char pool_passwd[POOLMAXPATHLEN+1];
-		char dirnamebuf[POOLMAXPATHLEN+1];
-		char *dirp;
-
-		strncpy(dirnamebuf, conf_file, sizeof(dirnamebuf));
-		dirp = dirname(dirnamebuf);
-		snprintf(pool_passwd, sizeof(pool_passwd), "%s/%s",
-				 dirp, pool_config->pool_passwd);
-		pool_init_pool_passwd(pool_passwd);
-	}
-
 	/*
 	 * Override debug level
 	 */
@@ -425,6 +408,22 @@ int main(int argc, char **argv)
 		write_pid_file();
 	else
 		daemonize();
+
+	/*
+	 * Locate pool_passwd
+	 */
+	if (strcmp("", pool_config->pool_passwd))
+	{
+		char pool_passwd[POOLMAXPATHLEN+1];
+		char dirnamebuf[POOLMAXPATHLEN+1];
+		char *dirp;
+
+		strncpy(dirnamebuf, conf_file, sizeof(dirnamebuf));
+		dirp = dirname(dirnamebuf);
+		snprintf(pool_passwd, sizeof(pool_passwd), "%s/%s",
+				 dirp, pool_config->pool_passwd);
+		pool_init_pool_passwd(pool_passwd);
+	}
 
 	if (pool_semaphore_create(MAX_NUM_SEMAPHORES))
 	{
