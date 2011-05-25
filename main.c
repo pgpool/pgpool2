@@ -2478,7 +2478,7 @@ static int find_primary_node(void)
 										  "");
 		if (!s)
 		{
-			pool_error("find_primary_node: make_persistent_connetcion failed");
+			pool_error("find_primary_node: make_persistent_connection failed");
 			return -1;
 		}
 		con = s->con;
