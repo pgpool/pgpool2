@@ -700,6 +700,8 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 				msg->len = len;
 				msg->contents = contents;
+
+				query_context->rewritten_query = rewrite_query;
 			}
 		}
 	}
