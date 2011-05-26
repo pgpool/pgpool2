@@ -566,15 +566,41 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context, char *string,
 			continue;
 		}
 
-		per_node_statement_log(backend, i, string);
-
 		if (*kind == '\0')
 		{
+			per_node_statement_log(backend, i, string);
+
 			if (send_simplequery_message(CONNECTION(backend, i), len, string, MAJOR(backend)) != POOL_CONTINUE)
 				return POOL_END;
 		}			
 		else
 		{
+			if (pool_config->log_per_node_statement)
+			{
+				char msgbuf[QUERY_STRING_BUFFER_LEN];
+
+				if (*kind == 'P' || *kind == 'E')
+				{
+					char *stmt;
+
+					if (query_context->rewritten_query)
+						stmt = query_context->rewritten_query;
+					else
+						stmt = query_context->original_query;
+
+					if (*kind == 'P')
+						snprintf(msgbuf, sizeof(msgbuf), "Parse: %s", stmt);
+					else
+						snprintf(msgbuf, sizeof(msgbuf), "Execute: %s", stmt);
+				}
+				else
+				{
+					snprintf(msgbuf, sizeof(msgbuf), "%c message", *kind);
+				}
+
+				per_node_statement_log(backend, i, msgbuf);
+			}
+
 			if (send_extended_protocol_message(backend, i, kind, len, string) != POOL_CONTINUE)
 				return POOL_END;
 		}
