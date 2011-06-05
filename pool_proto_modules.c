@@ -91,6 +91,8 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 									 POOL_SENT_MESSAGE *message);
 static int* find_victim_nodes(int *ntuples, int nmembers, int master_node, int *number_of_nodes);
 static int extract_ntuples(char *message);
+static POOL_STATUS close_standby_transactions(POOL_CONNECTION *frontend,
+											  POOL_CONNECTION_POOL *backend);
 
 /*
  * Process Query('Q') message
@@ -1314,27 +1316,15 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			}
 
 			/*
-			 * If 2PC commands, automatically close transaction on standbys since
-			 * 2PC commands close transaction on primary.
+			 * If 2PC commands has been executed, automatically close
+			 * transactions on standbys if there is any open
+			 * transaction since 2PC commands close transaction on
+			 * primary.
 			 */
 			else if (is_2pc_transaction_query(node, query))
 			{
-				for (i=0;i<NUM_BACKENDS;i++)
-				{
-					if (CONNECTION_SLOT(backend, i) &&
-						TSTATE(backend, i) == 'T' &&
-						BACKEND_INFO(i).backend_status == CON_UP &&
-						(MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) != i)
-					{
-						per_node_statement_log(backend, i, "COMMIT");
-						if (do_command(frontend, CONNECTION(backend, i), "COMMIT", MAJOR(backend), 
-									   MASTER_CONNECTION(backend)->pid,
-									   MASTER_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
-						{
-							return POOL_END;
-						}
-					}
-				}
+				if (close_standby_transactions(frontend, backend) != POOL_CONTINUE)
+					return POOL_END;
 			}
 
 			/*
@@ -1364,6 +1354,33 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				 sp->user, sp->database, remote_ps_data);
 	set_ps_display(psbuf, false);
 
+	return POOL_CONTINUE;
+}
+
+/*
+ * Close running transactions on standbys.
+ */
+static POOL_STATUS close_standby_transactions(POOL_CONNECTION *frontend,
+											  POOL_CONNECTION_POOL *backend)
+{
+	int i;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (CONNECTION_SLOT(backend, i) &&
+			TSTATE(backend, i) == 'T' &&
+			BACKEND_INFO(i).backend_status == CON_UP &&
+			(MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) != i)
+		{
+			per_node_statement_log(backend, i, "COMMIT");
+			if (do_command(frontend, CONNECTION(backend, i), "COMMIT", MAJOR(backend), 
+						   MASTER_CONNECTION(backend)->pid,
+						   MASTER_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
+			{
+				return POOL_END;
+			}
+		}
+	}
 	return POOL_CONTINUE;
 }
 
