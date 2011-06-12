@@ -2741,7 +2741,7 @@ recovery.
 	   md5 authentication:
 	   <ol>
 		<li>Login as the database's operating system user and type 
-		   "pg_md5 --md5auth <your_passwd>"
+		   "pg_md5 --md5auth --username=<your_username> <your_passwd>"
 			 user name and md5 encrypted password are registered into
 			 pool_passwd.
 			 If pool_passwd does not exist yet, pg_md5 command will

@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Sun May  1 18:23:46 JST 2011
+Last modified: Sun Jun 12 18:17:02 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2827,8 +2827,9 @@ Possible last query was:のあとに、このエラーを返す原因となった問い合わせの
 crypt認証は利用できません。
 md5認証に関しては、PostgreSQLに該当ユーザをmd5認証付でPostgreSQLに登録し、次にpgpoolに付属するpg_md5コマンドを使って、pool_passwdという認証ファイルを作成することにより利用できるようになります。
 <ol>
-<li>DBユーザのアカウントでログインし、"pg_md5 --md5auth パスワード" を実行します。
-<li>md5により暗号化されたパスワードがpool_passwdに登録されます。
+<li>DBユーザのアカウントでログインし、"pg_md5 --md5auth パスワード" 
+または "pg_md5 --md5auth --username=ユーザ名 パスワード" を実行します。
+<li>md5により暗号化されたユーザ名とパスワードがpool_passwdに登録されます。
 pool_passwdがまだ存在しなければ、pgpool.confと同じディレクトリ内に作成されます。
 <li>pool_passwdのフォーマットは、"ユーザ名:パスワード"となっています。
 <li>pool_hba.confにmd5認証のエントリを作成します。

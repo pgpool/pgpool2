@@ -41,11 +41,11 @@
 #include <libgen.h>
 
 /* Maximum number of characters allowed for input. */
-#define MAX_INPUT_SIZE	32
+#define MAX_INPUT_SIZE	128
 
 static void	print_usage(const char prog[], int exit_code);
 static void	set_tio_attr(int enable);
-static void update_pool_passwd(char *conf_file, char *password);
+static void update_pool_passwd(char *conf_file, char *username, char *password);
 
 int
 main(int argc, char *argv[])
@@ -53,6 +53,7 @@ main(int argc, char *argv[])
 #define PRINT_USAGE(exit_code)	print_usage(argv[0], exit_code)
 
 	char conf_file[POOLMAXPATHLEN+1];
+	char username[MAX_INPUT_SIZE+1];
 	int opt;
 	int optindex;
 	bool md5auth = false;
@@ -62,14 +63,19 @@ main(int argc, char *argv[])
 		{"help", no_argument, NULL, 'h'},
 		{"prompt", no_argument, NULL, 'p'},
 		{"md5auth", no_argument, NULL, 'm'},
-		{"md5auth", no_argument, NULL, 'm'},
+		{"username", required_argument, NULL, 'u'},
 		{"config-file", required_argument, NULL, 'f'},
 		{NULL, 0, NULL, 0}
 	};
 
 	snprintf(conf_file, sizeof(conf_file), "%s/%s", DEFAULT_CONFIGDIR, POOL_CONF_FILE_NAME);
 
-    while ((opt = getopt_long(argc, argv, "hpmf:", long_options, &optindex)) != -1)
+	/* initialize username buffer with zeros so that we can use strlen on it later
+	   to check if a username was given on the command line
+	 */
+	memset(username, 0, MAX_INPUT_SIZE+1);
+
+    while ((opt = getopt_long(argc, argv, "hpmf:u:", long_options, &optindex)) != -1)
 	{
 		switch (opt)
 		{
@@ -87,6 +93,20 @@ main(int argc, char *argv[])
 					PRINT_USAGE(EXIT_SUCCESS);
 				}
 				strncpy(conf_file, optarg, sizeof(conf_file));
+				break;
+
+			case 'u':
+				if (!optarg)
+				{
+					PRINT_USAGE(EXIT_SUCCESS);
+				}
+				/* check the input limit early */
+				if (strlen(optarg) > MAX_INPUT_SIZE)
+				{
+					fprintf(stderr, "Error: input exceeds maximum username length!\n\n");
+					exit(EXIT_FAILURE);
+				}
+				strncpy(username, optarg, sizeof(username));
 				break;
 
 			default:
@@ -125,7 +145,7 @@ main(int argc, char *argv[])
 
 		if (md5auth)
 		{
-			update_pool_passwd(conf_file, buf);
+			update_pool_passwd(conf_file, username, buf);
 		}
 		else
 		{
@@ -155,7 +175,7 @@ main(int argc, char *argv[])
 
 		if (md5auth)
 		{
-			update_pool_passwd(conf_file, argv[optind]);
+			update_pool_passwd(conf_file, username, argv[optind]);
 		}
 		else
 		{
@@ -167,7 +187,7 @@ main(int argc, char *argv[])
 	return EXIT_SUCCESS;
 }
 
-static void update_pool_passwd(char *conf_file, char *password)
+static void update_pool_passwd(char *conf_file, char *username, char *password)
 {
 	struct passwd *pw;
 	char	 md5[MD5_PASSWD_LEN+1];
@@ -192,14 +212,24 @@ static void update_pool_passwd(char *conf_file, char *password)
 			 dirp, pool_config->pool_passwd);
 	pool_init_pool_passwd(pool_passwd);
 
-	pw = getpwuid(getuid());
-	if (!pw)
+	if (strlen(username))
 	{
-		fprintf(stderr, "getpwuid() failed\n\n");
-		exit(EXIT_FAILURE);
+		/* generate the hash for the given username */
+		pg_md5_encrypt(password, username, strlen(username), md5);
+		pool_create_passwdent(username, md5);
 	}
-	pg_md5_encrypt(password, pw->pw_name, strlen(pw->pw_name), md5);
-	pool_create_passwdent(pw->pw_name, md5);
+	else
+	{
+		/* get the user information from the current uid */
+		pw = getpwuid(getuid());
+		if (!pw)
+		{
+			fprintf(stderr, "getpwuid() failed\n\n");
+			exit(EXIT_FAILURE);
+		}
+		pg_md5_encrypt(password, pw->pw_name, strlen(pw->pw_name), md5);
+		pool_create_passwdent(pw->pw_name, md5);
+	}
 	pool_finish_pool_passwd();
 }
 
@@ -212,9 +242,11 @@ print_usage(const char prog[], int exit_code)
   %s [OPTIONS]\n\
   %s <PASSWORD>\n\
 \n\
-  --prompt, -p    Prompt password using standard input.\n\
-  --md5auth, -m   Produce md5 authentication password.\n\
-  --help, -h      This help menu.\n\
+  --prompt, -p         Prompt password using standard input.\n\
+  --md5auth, -m        Produce md5 authentication password.\n\
+  --username, -u USER  When producing a md5 authentication password,\n\
+                       create the pool_passwd entry for USER.\n\
+  --help, -h           This help menu.\n\
 \n\
 Warning: At most %d characters are allowed for input.\n\
 Warning: Plain password argument is deprecated for security concerns\n\
