@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2010	PgPool Global Development Group
+ * Copyright (c) 2003-2011	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -467,7 +467,7 @@ int connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry)
 	fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (fd == -1)
 	{
-		pool_error("connect_unix_domain_socket_by_port: setsockopt() failed: %s", strerror(errno));
+		pool_error("connect_unix_domain_socket_by_port: socket() failed: %s", strerror(errno));
 		return -1;
 	}
 
