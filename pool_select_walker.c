@@ -33,7 +33,6 @@ typedef struct {
 	bool	has_system_catalog;		/* True if system catalog table is used */
 	bool	has_temp_table;		/* True if temporary table is used */
 	bool	has_function_call;	/* True if write function call is used */	
-
 } SelectContext;
 
 static bool function_call_walker(Node *node, void *context);
@@ -43,11 +42,12 @@ static bool temp_table_walker(Node *node, void *context);
 static bool is_temp_table(char *table_name);
 
 /*
- * Return true if this SELECT has function calls.
+ * Return true if this SELECT has function calls *and* supposed to
+ * modify database.  We check black/white function list to determine
+ * whether the function modifies database.
  */
 bool pool_has_function_call(Node *node)
 {
-
 	SelectContext	ctx;
 
 	if (!IsA(node, SelectStmt))
@@ -133,7 +133,8 @@ int pattern_compare(char *str, const int type)
 }
 
 /*
- * Walker function to find a function call
+ * Walker function to find a function call which is supposed to write
+ * database.
  */
 static bool function_call_walker(Node *node, void *context)
 {
