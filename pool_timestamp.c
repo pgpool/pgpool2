@@ -239,8 +239,9 @@ rewrite_timestamp_walker(Node *node, void *context)
 		/* `now()' FuncCall */
 		FuncCall	*fcall = (FuncCall *) node;
 
-		if (list_length(fcall->funcname) == 1 &&
-			strcmp("now", strVal(linitial(fcall->funcname))) == 0)
+		if (list_length(fcall->funcname) == 2 &&
+			strcmp("pg_catalog", strVal(linitial(fcall->funcname))) == 0 &&
+			strcmp("now", strVal(lsecond(fcall->funcname))) == 0)
 		{
 			TypeCast	*tc = makeNode(TypeCast);
 			tc->arg = makeTsExpr(ctx);
