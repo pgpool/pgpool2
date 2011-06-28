@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Sun May  1 18:34:53 JST 2011
+Last modified: Wed Jun 29 08:06:46 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2814,7 +2814,7 @@ This is done by replacing those functions by constants fetched from master at
 query execution time.
 There are a few limitations however:
 <ul>
-<li>The calculation of temporal data in table default value is not accurate in 
+<li>In pgpool-II 3.0 or before, the calculation of temporal data in table default value is not accurate in 
 some cases. For example, the following table definition:
 <pre>
 CREATE TABLE rel1(
@@ -2827,6 +2827,11 @@ CREATE TABLE rel1(
   d1 date DEFAULT CURRENT_DATE
 )
 </pre>
+<p>
+pgpool-II 3.1 or later handles these cases correctly.
+Thus the column "d1" will have tomorrow as the default value.
+However this enhancement does not apply if extended protocols(used in JDBC, PHP PDO for example) or PREPARE are used.
+</p>
 <p>
 Please note that if the column type is not a temporal one, rewriting is
 not performed. Such example:

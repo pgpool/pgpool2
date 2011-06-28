@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Sun Jun 12 18:17:02 JST 2011
+Last modified: Wed Jun 29 08:03:01 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2879,13 +2879,15 @@ pgpool-II 2.3以降では、テーブルのデフォルト値での利用も含め、CURRENT_TIMES
 </p>
 <p>
 <ul>
-<li>DEFAULTにタイムスタンプを返す式が含まれているかどうかの判定は正確ではありません。例えば
+<li>pgpool-II 3.1より前のバージョンではDEFAULTにタイムスタンプを返す式が含まれているかどうかの判定は正確ではありません。例えば
 <pre>
 CREATE TABLE rel1(
   d1 date DEFAULT CURRENT_DATE + 1
 )
 </pre>
 のようなものも現在のタイムスタンプとして書き換えを行います。
+pgpool-II 3.1以降では、拡張プロトコルとPREPARE以外の場合にこの点が改善されており、上記の例にあるような例も正しく処理されます(つまり、デフォルト値として明日の日付がセットされます)。
+
 なお、列の定義が、
 <pre>
 foo bigint default (date_part('epoch'::text,('now'::text)::timestamp(3) with time zone) * (1000)::double precision)
