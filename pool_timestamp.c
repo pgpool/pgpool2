@@ -34,7 +34,8 @@
 
 
 typedef struct {
-	char	*attrname;
+	char	*attrname;	/* attribute name */
+	char	*adsrc;		/* default value expression */
 	int		 use_timestamp;
 } TSAttr;
 
@@ -63,6 +64,7 @@ static bool rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext *ctx);
 static bool rewrite_timestamp_update(UpdateStmt *u_stmt, TSRewriteContext *ctx);
 static char *get_current_timestamp(POOL_CONNECTION_POOL *backend);
 static Node *makeTsExpr(TSRewriteContext *ctx);
+static A_Const *makeStringConstFromQuery(POOL_CONNECTION_POOL *backend, char *expression);
 bool raw_expression_tree_walker(Node *node, bool (*walker) (), void *context);
 
 #define		MAX_RELCACHE 32
@@ -72,6 +74,9 @@ POOL_RELCACHE	*ts_relcache;
 static void *
 ts_register_func(POOL_SELECT_RESULT *res)
 {
+/* Number of result columns included in res */
+#define NUM_COLS		3
+
 	TSRel	*rel;
 	int		 i;
 
@@ -82,10 +87,22 @@ ts_register_func(POOL_SELECT_RESULT *res)
 
 	for (i = 0; i < res->numrows; i++)
 	{
-		rel->attr[i].attrname = strdup(res->data[i * 2]);
-		rel->attr[i].use_timestamp = *(res->data[i * 2 + 1]) == 't';
-		pool_debug("attrname %s use_timestamp = %d",
-			rel->attr[i].attrname, rel->attr[i].use_timestamp);
+		int index = 0;
+
+		rel->attr[i].attrname = strdup(res->data[i * NUM_COLS + index]);
+		index++;
+
+		if (res->data[i * NUM_COLS + index])
+			rel->attr[i].adsrc = strdup(res->data[i * NUM_COLS + index]);
+		else
+			rel->attr[i].adsrc = NULL;
+
+		index++;
+
+		rel->attr[i].use_timestamp = *(res->data[i * NUM_COLS + index]) == 't';
+		pool_debug("attrname %s adsrc %s use_timestamp = %d",
+				   rel->attr[i].attrname, (rel->attr[i].adsrc? rel->attr[i].adsrc:"NULL"),
+										   rel->attr[i].use_timestamp);
 	}
 
 	rel->relnatts = res->numrows;
@@ -109,7 +126,7 @@ ts_unregister_func(void *data)
 static TSRel*
 relcache_lookup(TSRewriteContext *ctx)
 {
-#define ATTRDEFQUERY "SELECT attname, coalesce((d.adsrc = 'now()' OR d.adsrc LIKE '%%''now''::text%%')" \
+#define ATTRDEFQUERY "SELECT attname, d.adsrc, coalesce((d.adsrc LIKE '%%now()%%' OR d.adsrc LIKE '%%''now''::text%%')" \
 	" AND (a.atttypid = 'timestamp'::regtype::oid OR" \
 	" a.atttypid = 'timestamp with time zone'::regtype::oid OR" \
 	" a.atttypid = 'date'::regtype::oid OR" \
@@ -121,7 +138,7 @@ relcache_lookup(TSRewriteContext *ctx)
 	" WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.relname = '%s'" \
 	" ORDER BY a.attnum"
 
-#define ATTRDEFQUERY2 "SELECT attname, coalesce((d.adsrc = 'now()' OR d.adsrc LIKE '%%''now''::text%%')" \
+#define ATTRDEFQUERY2 "SELECT attname, d.adsrc, coalesce((d.adsrc LIKE '%%now()%%' OR d.adsrc LIKE '%%''now''::text%%')" \
 	" AND (a.atttypid = 'timestamp'::regtype::oid OR" \
 	" a.atttypid = 'timestamp with time zone'::regtype::oid OR" \
 	" a.atttypid = 'date'::regtype::oid OR" \
@@ -348,7 +365,11 @@ rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext *ctx)
 			if (relcache->attr[i].use_timestamp)
 			{
 				rewrite = true;
-				values = lappend(values, makeTsExpr(ctx));
+				if (ctx->rewrite_to_params)
+					values = lappend(values, makeTsExpr(ctx));
+				else
+					values = lappend(values,
+									 makeStringConstFromQuery(ctx->backend, relcache->attr[i].adsrc));
 			}
 			else
 				values = lappend(values, makeNode(SetToDefault));
@@ -411,7 +432,10 @@ rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext *ctx)
 					if (relcache->attr[i].use_timestamp == true && IsA(lfirst(lc_val), SetToDefault))
 					{
 						rewrite = true;
-						lfirst(lc_val) = makeTsExpr(ctx);
+						if (ctx->rewrite_to_params)
+							lfirst(lc_val) = makeTsExpr(ctx);
+						else
+							lfirst(lc_val) = makeStringConstFromQuery(ctx->backend, relcache->attr[i].adsrc);
 					}
 					i++;
 				}
@@ -422,7 +446,11 @@ rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext *ctx)
 					if (relcache->attr[i].use_timestamp == true)
 					{
 						rewrite = true;
-						values = lappend(values, makeTsExpr(ctx));
+						if (ctx->rewrite_to_params)
+							values = lappend(values, makeTsExpr(ctx));
+						else
+							values = lappend(values,
+											 makeStringConstFromQuery(ctx->backend, relcache->attr[i].adsrc));
 					}
 					else
 						values = lappend(values, makeNode(SetToDefault));
@@ -434,11 +462,14 @@ rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext *ctx)
 			/*
 			 * INSERT INTO rel(col1, col2) VALUES (val, val2)
 			 *
-			 * if timestamp column does not given by column list
+			 * if timestamp column is not given by column list
 			 * add colname to column list and add timestamp to values list.
 			 */
 			int			append_columns = 0;
+			int			*append_columns_list;
 			ResTarget	*col;
+
+			append_columns_list = (int *)malloc(sizeof(int)*relcache->relnatts);
 
 			for (i = 0; i < relcache->relnatts; i++)
 			{
@@ -462,7 +493,7 @@ rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext *ctx)
 					col->indirection = NIL;
 					col->val = NULL;
 					i_stmt->cols = lappend(i_stmt->cols, col);
-					append_columns++;
+					append_columns_list[append_columns++] = i;
 				}
 			}
 
@@ -483,15 +514,23 @@ rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext *ctx)
 					if (relcache->attr[i].use_timestamp == true && IsA(lfirst(lc_val), SetToDefault))
 					{
 						rewrite = true;
-						lfirst(lc_val) = makeTsExpr(ctx);
+						if (ctx->rewrite_to_params)
+							lfirst(lc_val) = makeTsExpr(ctx);
+						else
+							lfirst(lc_val) = makeStringConstFromQuery(ctx->backend, relcache->attr[i].adsrc);
 					}
 				}
 
 				/* add ts_const to values list */
 				for (i = 0; i < append_columns; i++)
 				{
-					values = lappend(values, makeTsExpr(ctx));
+					if (ctx->rewrite_to_params)
+						values = lappend(values, makeTsExpr(ctx));
+					else
+						values = lappend(values,
+										 makeStringConstFromQuery(ctx->backend, relcache->attr[append_columns_list[i]].adsrc));
 				}
+				free(append_columns_list);
 			}
 		}
 	}
@@ -543,7 +582,10 @@ rewrite_timestamp_update(UpdateStmt *u_stmt, TSRewriteContext *ctx)
 				{
 					if (relcache->attr[i].use_timestamp)
 					{
-						res->val = (Node *) makeTsExpr(ctx);
+						if (ctx->rewrite_to_params)
+							res->val = (Node *) makeTsExpr(ctx);
+						else
+							res->val = (Node *)makeStringConstFromQuery(ctx->backend, relcache->attr[i].adsrc);
 						rewrite = true;
 					}
 					break;
@@ -813,6 +855,39 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend,
 	return new_msg;
 }
 
+static A_Const *makeStringConstFromQuery(POOL_CONNECTION_POOL *backend, char *expression)
+{
+	A_Const *con;
+	POOL_SELECT_RESULT *res;
+	POOL_STATUS		 status;
+	char query[1024];
+	int len;
+	char *str;
+
+	snprintf(query, sizeof(query), "SELECT %s", expression);
+	status = do_query(MASTER(backend), query, &res, MAJOR(backend));
+	if (status != POOL_CONTINUE)
+	{
+		pool_error("makeStringConstFromQuery: do_query faild");
+		return NULL;
+	}
+
+	if (res->numrows != 1)
+	{
+		free_select_result(res);
+		return NULL;
+	}
+
+	len = strlen(res->data[0]) + 1;
+	str = palloc(len);
+	strcpy(str, res->data[0]);
+	free_select_result(res);
+
+	con = makeNode(A_Const);
+	con->val.type = T_String;
+	con->val.val.str = str;
+	return con;
+}
 
 /* from nodeFuncs.c start */
 
