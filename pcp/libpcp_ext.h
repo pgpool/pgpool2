@@ -57,6 +57,7 @@ typedef struct {
 	double backend_weight;	/* normalized backend load balance ratio */
 	double unnormalized_weight; /* descripted parameter */
 	char backend_data_directory[MAX_PATH_LENGTH];
+	unsigned short flag;		/* various flags */
 	unsigned long long int standby_delay;		/* The replication delay against the primary */
 } BackendInfo;
 

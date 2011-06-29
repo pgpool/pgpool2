@@ -543,6 +543,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%lld", BACKEND_INFO(j).standby_delay);
 		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "standby delay of backend #%d", j);
 		i++;
+
+		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "flag%d", j);
+		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_flag_to_str(BACKEND_INFO(j).flag));
+		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "backend flag #%d", j);
+		i++;
 	}
 
 	*nrows = i;

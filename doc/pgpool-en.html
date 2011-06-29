@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Wed Jun 29 08:06:46 JST 2011
+Last modified: Wed Jun 29 09:50:01 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -850,6 +850,35 @@ postmaster. You need to reload pgpool.conf if you change this value.
       pgpool-II in that case.
       </p>
   </dd>
+
+  <dt><a name="BACKEND_FLAG"></a>backend_flag</dt>
+  <dd>
+      <p>Controls various backend behavior.
+      Multiple backends can be specified by adding a number
+      at the end of the parameter name
+      (e.g. <code>backend_flag0</code>).
+      </p>
+	   <p>
+	   Currently followings are allowed.
+	   Multiple falgs can be specified by using "|".
+	   </p>
+	   <dl>
+		<dt>ALLOW_TO_FAILOVER</dt>
+			 <dd>
+			 Allow to failover or detaching backend.
+			 This is the default.
+			 You cannot specify with DISALLOW_TO_FAILOVER at a same time.
+			 </dd>
+		<dt>DISALLOW_TO_FAILOVER</dt>
+			 <dd>
+			 Disallow to failover or detaching backend.
+			 This is usefull when you protect backend by using HA(High Availability) softwares
+			 such as Heartbeat or Pacemaker.
+			 You cannot specify with ALLOW_TO_FAILOVER at a same time.
+			 </dd>
+	   </dl>
+
+  </dt>
 
   <dt><a name="SSL">ssl</a></dt>
   <dd>

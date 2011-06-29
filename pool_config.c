@@ -3236,8 +3236,8 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (context == INIT_CONFIG || context == RELOAD_CONFIG)
 			{
-				double old_v = pool_config->backend_desc->backend_info[slot].unnormalized_weight;
-				pool_config->backend_desc->backend_info[slot].unnormalized_weight = v;
+				double old_v = BACKEND_INFO(slot).unnormalized_weight;
+				BACKEND_INFO(slot).unnormalized_weight = v;
 
 				/*
 				 * Log weight change event only when context is
@@ -3277,6 +3277,82 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				(context == RELOAD_CONFIG && (status == CON_UNUSED || status == CON_DOWN)))
 				strncpy(BACKEND_INFO(slot).backend_data_directory, str, MAX_PATH_LENGTH);
 		}
+		else if (!strncmp(key, "backend_flag", 12) &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context) &&
+				 mypid == getpid()) /* this parameter must be modified by parent pid */
+		{
+			char *str;
+			char **flags;
+			int n;
+			int i;
+			int slot;
+			unsigned short flag = 0;
+			bool allow_to_failover_is_specified = 0;
+			bool disallow_to_failover_is_specified = 0;
+
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				pool_error("pool_config: extract_string failed: %s", yytext);
+				fclose(fd);
+				return(-1);
+			}
+
+			flags = extract_string_tokens(str, "|", &n);
+			if (!flags || n < 0)
+			{
+				pool_debug("pool_config: unable to get backend flags");
+				fclose(fd);
+				return(-1);
+			}
+
+			for (i=0;i<n;i++)
+			{
+				if (!strcmp(flags[i], "ALLOW_TO_FAILOVER"))
+				{
+					if (disallow_to_failover_is_specified)
+					{
+						pool_error("pool_config: cannot set ALLOW_TO_FAILOVER and DISALLOW_TO_FAILOVER at the same time");
+						fclose(fd);
+						return(-1);
+					}
+					flag &= ~POOL_FAILOVER;
+					allow_to_failover_is_specified = true;
+					pool_debug("pool_config: allow_to_failover on");
+				}
+
+				else if (!strcmp(flags[i], "DISALLOW_TO_FAILOVER"))
+				{
+					if (allow_to_failover_is_specified)
+					{
+						pool_error("pool_config: cannot set ALLOW_TO_FAILOVER and DISALLOW_TO_FAILOVER at the same time");
+						fclose(fd);
+						return(-1);
+					}
+					flag |= POOL_FAILOVER;
+					disallow_to_failover_is_specified = true;
+					pool_debug("pool_config: disallow_to_failover on");
+				}
+
+				else
+				{
+					pool_error("pool_config: invalid backend flag:%s", flags[i]);
+				}
+			}
+
+			slot = atoi(key + 12);
+			if (slot < 0 || slot >= MAX_CONNECTION_SLOTS)
+			{
+				pool_error("pool_config: slot number %s for flag out of range", key);
+				fclose(fd);
+				return(-1);
+			}
+
+			BACKEND_INFO(slot).flag = flag;
+
+			pool_debug("pool_config: slot number %d flag: %04x", slot, flag);
+		}
+
        	else if (!strcmp(key, "log_statement") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			int v = eval_logical(yytext);
@@ -3508,11 +3584,12 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 		print_host_entry(i);
 #endif
 
-		if (pool_config->backend_desc->backend_info[i].backend_port != 0)
+		if (BACKEND_INFO(i).backend_port != 0)
 		{
-			pool_config->backend_desc->backend_info[i].backend_weight =
-				(RAND_MAX) * pool_config->backend_desc->backend_info[i].unnormalized_weight / total_weight;
-			pool_debug("backend %d weight: %f", i, pool_config->backend_desc->backend_info[i].backend_weight);
+			BACKEND_INFO(i).backend_weight =
+				(RAND_MAX) * BACKEND_INFO(i).unnormalized_weight / total_weight;
+			pool_debug("backend %d weight: %f", i, BACKEND_INFO(i).backend_weight);
+			pool_debug("backend %d flag: %04x", i, BACKEND_INFO(i).flag);
 		}
 	}
 
@@ -3817,4 +3894,19 @@ int set_syslog_facility(char *value)
      return facility;
 }
 
+/*
+ * Translate binary form of backend flag to string.
+ * The returned data is in static buffer, and it will be destroyed
+ * at the next call to this function.
+ */
+char *pool_flag_to_str(unsigned short flag)
+{
+	static char buf[1024];		/* should be large enough */
+
+	if (POOL_ALLOW_TO_FAILOVER(flag))
+		snprintf(buf, sizeof(buf), "ALLOW_TO_FAILOVER");
+	else if (POOL_DISALLOW_TO_FAILOVER(flag))
+		snprintf(buf, sizeof(buf), "DISALLOW_TO_FAILOVER");
+	return buf;
+}
 

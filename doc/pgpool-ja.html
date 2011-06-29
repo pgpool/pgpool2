@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Wed Jun 29 08:03:01 JST 2011
+Last modified: Wed Jun 29 09:46:36 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -778,12 +778,40 @@ pgpool-II 2.2.6/2.3$B0J9_$G$O!"@_Dj%U%!%$%k$N:FFI9~$G(Bbackend_weight$BCM$rJQ
 $B$3$N%Q%i%a!<%?$O%*%s%i%$%s%j%+%P%j$N:]$K;HMQ$7$^$9!#%*%s%i%$%s%j%+%P%j(B
 $B$r;HMQ$7$J$$>l9g$K$O@_Dj$9$kI,MW$O$"$j$^$;$s!#(B
 </p>
-
 <p>
 backend_data_directory $B$O?7$7$/DI2C$7$?9T$r@_Dj%U%!%$%k:FFI$_9~$_$GDI2C$9$k(B
 $B$3$H$,$G$-$^$9!#$9$G$K$"$k>pJs$rESCf$GJQ99$9$k$3$H$O$G$-$^$;$s!#JQ99$9(B
 $B$k>l9g$K$O(B pgpool-II $B$r:F5/F0$7$F$/$@$5$$!#(B
 </p>
+</dd>
+
+<dt><a name="BACKEND_FLAG"></a>backend_flag</dt>
+<dd>
+<p>
+$B%P%C%/%(%s%IC10L$G$NMM!9$J5sF0$r@)8f$9$k%U%i%0$G$9!#(B
+$B<B:]$K$O!"(B"backend_flag"$B$N8e$K?t;z$rIU$1$F!"$I$N%P%C%/%(%s%I$N%U%i%0$+;XDj$7$^$9!#Nc(B: <code>backend_flag0</code>
+$BJ#?t$N%U%i%0$r(B"|"$B$GO"7k$7$F;XDj$9$k$3$H$,$G$-$^$9!#(B
+$B8=:_0J2<$N$b$N$,$"$j$^$9!#(B
+</p>
+<dl>
+<dt>ALLOW_TO_FAILOVER</dt>
+<dd>
+$B%U%'%$%k%*!<%P$d%G%?%C%A$,2DG=$K$J$j$^$9!#$3$l$,%G%U%)%k%H$NF0:n$G$9!#(B
+DISALLOW_TO_FAILOVER$B$HF1;~$K$O;XDj$G$-$^$;$s!#(B
+</dd>
+<dt>DISALLOW_TO_FAILOVER</dt>
+<dd>
+$B%U%'%$%k%*!<%P$d%G%?%C%A$,9T$o$l$^$;$s!#(B
+Hheartbeat$B$d(BPacemaker$B$J$I$N(BHA(High Availability)$B%=%U%H$G%P%C%/%(%s%I$rFs=E2=$7$F$$$k$J$I$N;v>p$G!"(B
+pgpool-II$BB&$G%U%'%$%k%*!<%P$N@)8f$r$7$FM_$7$/$J$$$H$-$J$I$K;XDj$7$^$9!#(B
+ALLOW_TO_FAILOVER$B$HF1;~$K$O;XDj$G$-$^$;$s!#(B
+</dd>
+</dl>
+</p>
+<p>
+$B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O(B pgpool-II $B$r:F5/F0$7$F$/$@$5$$!#(B
+</p>
+</dd>
 
   <dt><a name="SSL">ssl</a></dt>
   <dd>

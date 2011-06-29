@@ -46,6 +46,12 @@ typedef struct {
   regex_t regexv;
 } RegPattern;
 
+/*
+ * Flags for backendN_flag
+ */
+#define POOL_FAILOVER	0x0001	/* allow or disallow failover */
+#define POOL_DISALLOW_TO_FAILOVER(x) ((unsigned short)(x) & POOL_FAILOVER)
+#define POOL_ALLOW_TO_FAILOVER(x) (!(POOL_DISALLOW_TO_FAILOVER(x)))
 
 /*
  * configuration paramters
@@ -186,6 +192,7 @@ extern POOL_CONFIG *pool_config;	/* configuration values */
 extern int pool_init_config(void);
 extern int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context);
 extern int eval_logical(char *str);
+extern char *pool_flag_to_str(unsigned short flag);
 
 /* method use for syslog support */
 extern int set_syslog_facility (char *);

@@ -634,11 +634,18 @@ int main(int argc, char **argv)
 
 					if (!pool_config->parallel_mode)
 					{
-						pool_log("set %d th backend down status", sts);
-						Req_info->kind = NODE_DOWN_REQUEST;
-						Req_info->node_id[0] = sts;
-						failover();
-						/* need to distribute this info to children */
+						if (POOL_DISALLOW_TO_FAILOVER(BACKEND_INFO(sts).flag))
+						{
+							pool_log("health_check: %d failover is canceld because failover is disallowed", sts);
+						}
+						else
+						{
+							pool_log("set %d th backend down status", sts);
+							Req_info->kind = NODE_DOWN_REQUEST;
+							Req_info->node_id[0] = sts;
+							failover();
+							/* need to distribute this info to children */
+						}
 					}
 					else
 					{
@@ -1274,6 +1281,7 @@ void degenerate_backend_set(int *node_id_set, int count)
 {
 	pid_t parent = getppid();
 	int i;
+	bool need_signal = false;
 
 	if (pool_config->parallel_mode)
 	{
@@ -1291,10 +1299,20 @@ void degenerate_backend_set(int *node_id_set, int count)
 			continue;
 		}
 
+		if (POOL_DISALLOW_TO_FAILOVER(BACKEND_INFO(node_id_set[i]).flag))
+		{
+			pool_log("degenerate_backend_set: %d failover request from pid %d is canceld because failover is disallowed", node_id_set[i], getpid());
+			continue;
+		}
+
 		pool_log("degenerate_backend_set: %d fail over request from pid %d", node_id_set[i], getpid());
 		Req_info->node_id[i] = node_id_set[i];
+		need_signal = true;
 	}
-	kill(parent, SIGUSR1);
+
+	if (need_signal)
+		kill(parent, SIGUSR1);
+
 	pool_semaphore_unlock(REQUEST_INFO_SEM);
 }
 
