@@ -173,8 +173,9 @@ replicate_select = off             # Replicate SELECT statements
                                    # replicate_select is higher priority than
                                    # load_balance_mode.
 
-insert_lock = off                  # Automatically locks a table with INSERT
-                                   # statements to keep SERIAL data consistency
+insert_lock = off                  # Automatically locks a dummy row or a table
+                                   # with INSERT statements to keep SERIAL data
+                                   # consistency
                                    # Without SERIAL, no lock will be issued
 lobj_lock_table = ''               # When rewriting lo_creat command in
                                    # replication mode, specify table name to

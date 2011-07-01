@@ -38,7 +38,7 @@ DEFS = @DEFS@ \
 sysconf_DATA = pgpool.conf.sample pcp.conf.sample pool_hba.conf.sample \
 				pgpool.conf.sample-replication pgpool.conf.sample-master-slave \
 				pgpool.conf.sample-stream
-pkgdata_DATA = sql/system_db.sql sample/pgpool.pam
+pkgdata_DATA = sql/insert_lock.sql sql/system_db.sql sample/pgpool.pam
 
 AM_CPPFLAGS = -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
 
@@ -60,13 +60,14 @@ pgpool.8: pgpool.8.in
 	sed 's,@sysconfdir\@,$(sysconfdir),g' $? >$@
 
 CLEANFILES = pgpool.8
-EXTRA_DIST = pgpool.8.in sql/system_db.sql sample/pgpool.pam doc/pgpool-ja.html doc/pgpool-en.html \
+EXTRA_DIST = pgpool.8.in sample/pgpool.pam doc/pgpool-ja.html doc/pgpool-en.html \
 		doc/tutorial-ja.html doc/tutorial-en.html doc/pgpool.css \
 		doc/where_to_send_queries.pdf doc/where_to_send_queries.odg doc/pgpool-ja.css \
 		doc/basebackup.sh doc/pgpool_remote_start doc/recovery.conf.sample \
 		sample/pgpool_remote_start sample/pgpool_recovery sample/pgpool_recovery_pitr \
 		sample/dist_def_pgbench.sql sample/replicate_def_pgbench.sql \
 		sql/Makefile \
+		sql/insert_lock.sql sql/system_db.sql \
 		sql/pgpool-recovery/pgpool-recovery.c \
 		sql/pgpool-recovery/pgpool-recovery.sql.in sql/pgpool-recovery/Makefile \
 		sql/pgpool-regclass/pgpool-regclass.c \

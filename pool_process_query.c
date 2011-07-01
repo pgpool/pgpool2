@@ -72,8 +72,11 @@ static POOL_STATUS ParallelForwardToFrontend(char kind, POOL_CONNECTION *fronten
 static bool is_panic_or_fatal_error(const char *message, int major);
 static int detect_error(POOL_CONNECTION *master, char *error_code, int major, char class, bool unread);
 static int detect_postmaster_down_error(POOL_CONNECTION *master, int major);
-
 static bool is_internal_transaction_needed(Node *node);
+static bool pool_has_insert_lock(void);
+static POOL_STATUS add_lock_target(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char* table);
+static bool has_lock_target(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char* table, bool for_update);
+static POOL_STATUS insert_oid_into_insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char* table);
 
 /* timeout sec for pool_check_fd */
 static int timeoutsec;
@@ -2296,6 +2299,7 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 	static char nullmap[8192];
 	unsigned char mask = 0;
 
+	*result = NULL;
 	res = malloc(sizeof(*res));
 	if (!res)
 	{
@@ -2305,6 +2309,8 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 	rowdesc = malloc(sizeof(*rowdesc));
 	if (!rowdesc)
 	{
+		if (res)
+			free(res);
 		pool_error("pool_query: malloc failed");
 		return POOL_ERROR;
 	}
@@ -2624,7 +2630,8 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
  * Return values are:
  * 0: lock is not neccessary
  * 1: table lock is required
- * 2: row lock is required (SERIAL is used)
+ * 2: row lock against sequence table is required
+ * 3: row lock against insert_lock table is required
  */
 int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 {
@@ -2705,17 +2712,31 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 	/*
 	 * Search relcache.
 	 */
+#ifdef USE_TABLE_LOCK
+	result = pool_search_relcache(relcache, backend, str)==0?0:1;
+#elif USE_SEQUENCE_LOCK
 	result = pool_search_relcache(relcache, backend, str)==0?0:2;
+#else
+	result = pool_search_relcache(relcache, backend, str)==0?0:3;
+#endif
 	return result;
 }
 
 /*
- * Issue LOCK TABLE IN SHARE ROW EXCLUSIVE MODE if lock_kind == 1.
- * Issue row lock if lock_kind == 2.
+ * insert lock to synchronize sequence number
+ * lock_kind are:
+ * 1: Issue LOCK TABLE IN SHARE ROW EXCLUSIVE MODE
+ * 2: Issue row lock against sequence table
+ * 3: Issue row lock against pgpool_catalog.insert_lock table
+ * "lock_kind == 2" is deprecated because PostgreSQL disallows 
+ * SELECT FOR UPDATE/SHARE on sequence tables since 2011/06/03.
+ * See following threads for more details: 
+ * [HACKERS] pgpool versus sequences
+ * [ADMIN] 'SGT DETAIL: Could not open file "pg_clog/05DC": ...
  */
 POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *query, InsertStmt *node, int lock_kind)
 {
-	char *table;
+	char *table, *p;
 	int len = 0;
 	char qbuf[1024];
 	POOL_STATUS status;
@@ -2725,10 +2746,16 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 
 #define SEQUENCETABLEQUERY2 "SELECT d.adsrc FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_attrdef d ON (a.attrelid = d.adrelid AND a.attnum = d.adnum) WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.oid = pgpool_regclass('%s') AND d.adsrc ~ 'nextval'"
 
-#define MAX_SEQ_NAME 128
+/* query to lock a row by only the specified table name without regard to the schema */
+#define ROWLOCKQUERY "SELECT 1 FROM pgpool_catalog.insert_lock WHERE reloid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = '%s' ORDER BY oid LIMIT 1) FOR UPDATE"
+
+#define ROWLOCKQUERY2 "SELECT 1 FROM pgpool_catalog.insert_lock WHERE reloid = pgpool_regclass('%s') FOR UPDATE"
+
+#define MAX_NAME_LEN 128
 
 	char *adsrc;
-	char seq_rel_name[MAX_SEQ_NAME+1];
+	char seq_rel_name[MAX_NAME_LEN+1];
+	char rel_name[MAX_NAME_LEN+1];
 	regex_t preg;
 	size_t nmatch = 2;
 	regmatch_t pmatch[nmatch];
@@ -2741,14 +2768,29 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 	/* get table name */
 	table = get_insert_command_table_name(node);
 
+	/* trim quotes */
+	p = table;
+	for (i=0; *p; p++)
+	{
+		if (*p != '"')
+			rel_name[i++] = *p;
+	}
+	rel_name[i] = '\0';
+
 	/* could not get table name. probably wrong SQL command */
 	if (table == NULL)
 	{
 		return POOL_CONTINUE;
 	}
 
+	/* table lock for insert target table? */
+	if (lock_kind == 1)
+	{
+		/* Issue lock table command */
+		snprintf(qbuf, sizeof(qbuf), "LOCK TABLE %s IN SHARE ROW EXCLUSIVE MODE", table);
+	}
 	/* row lock for sequence table? */
-	if (lock_kind == 2)
+	else if (lock_kind == 2)
 	{
 		/*
 		 * If relcache does not exist, create it.
@@ -2814,10 +2856,22 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 		pool_debug("seq rel name: %s", seq_rel_name);
 		snprintf(qbuf, sizeof(qbuf), "SELECT 1 FROM %s FOR UPDATE", seq_rel_name);
 	}
+	/* row lock for insert_lock table? */
 	else
 	{
-		/* Issue lock table command */
-		snprintf(qbuf, sizeof(qbuf), "LOCK TABLE %s IN SHARE ROW EXCLUSIVE MODE", table);
+		if (pool_has_insert_lock())
+		{
+			if (pool_has_pgpool_regclass())
+				snprintf(qbuf, sizeof(qbuf), ROWLOCKQUERY2, rel_name);
+			else
+				snprintf(qbuf, sizeof(qbuf), ROWLOCKQUERY, rel_name);
+		}
+		else
+		{
+			/* issue lock table command if insert_lock table does not exist */
+			lock_kind = 1;
+			snprintf(qbuf, sizeof(qbuf), "LOCK TABLE %s IN SHARE ROW EXCLUSIVE MODE", table);
+		}
 	}
 
 	per_node_statement_log(backend, MASTER_NODE_ID, qbuf);
@@ -2827,13 +2881,57 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 		status = do_command(frontend, MASTER(backend), qbuf, MAJOR(backend), MASTER_CONNECTION(backend)->pid,
 							MASTER_CONNECTION(backend)->key, 0);
 	}
-	else
+	else if (lock_kind == 2)
 	{
 		POOL_SELECT_RESULT *result;
 		status = do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
 		if (result)
 			free_select_result(result);
 	}
+	else
+	{
+		POOL_SELECT_RESULT *result;
+		/* issue row lock command */
+		status = do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
+		if (status == POOL_CONTINUE)
+		{
+			/* does oid exist in insert_lock table? */
+			if (result && result->numrows == 0)
+			{
+				free_select_result(result);
+				result = NULL;
+
+				/* insert a lock target row into insert_lock table */
+				status = add_lock_target(frontend, backend, rel_name);
+				if (status == POOL_CONTINUE)
+				{
+					per_node_statement_log(backend, MASTER_NODE_ID, qbuf);
+
+					/* issue row lock command */
+					status = do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
+					if (status == POOL_CONTINUE)
+					{
+						if (!(result && result->data[0] && !strcmp(result->data[0], "1")))
+							status = POOL_ERROR;
+					}
+				}
+			}
+		}
+
+		if (result)
+			free_select_result(result);
+
+		if (status != POOL_CONTINUE)
+		{
+			/* try to lock table finally, if row lock failed */
+			lock_kind = 1;
+			snprintf(qbuf, sizeof(qbuf), "LOCK TABLE %s IN SHARE ROW EXCLUSIVE MODE", table);
+			per_node_statement_log(backend, MASTER_NODE_ID, qbuf);
+			status = do_command(frontend, MASTER(backend), qbuf, MAJOR(backend), MASTER_CONNECTION(backend)->pid,
+								MASTER_CONNECTION(backend)->key, 0);
+		}
+	}
+
 	if (status == POOL_END)
 	{
 		return POOL_END;
@@ -2850,16 +2948,16 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 									MASTER_CONNECTION(backend)->pid, MASTER_CONNECTION(backend)->key, 0);
 			else
 			{
-				per_node_statement_log(backend, i, qbuf);
-
 				if (lock_kind == 1)
 				{
+					per_node_statement_log(backend, i, qbuf);
 					status = do_command(frontend, CONNECTION(backend, i), qbuf, PROTO_MAJOR_V3, 
 										MASTER_CONNECTION(backend)->pid, MASTER_CONNECTION(backend)->key, 0);
 				}
-				else
+				else if (lock_kind == 2)
 				{
 					POOL_SELECT_RESULT *result;
+					per_node_statement_log(backend, i, qbuf);
 					status = do_query(CONNECTION(backend,i), qbuf, &result, MAJOR(backend));
 					if (result)
 						free_select_result(result);
@@ -2874,6 +2972,167 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 	}
 
 	return POOL_CONTINUE;
+}
+
+/*
+ * Judge if we have insert_lock table or not.
+ */
+static bool pool_has_insert_lock(void)
+{
+/*
+ * Query to know if insert_lock table exists.
+ */
+#define HASINSERT_LOCKQUERY "SELECT count(*) FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON (c.relnamespace = n.oid) WHERE nspname = 'pgpool_catalog' AND relname = '%s'"
+	bool result;
+	static POOL_RELCACHE *relcache;
+	POOL_CONNECTION_POOL *backend;
+
+	backend = pool_get_session_context()->backend;
+
+	if (!relcache)
+	{
+		relcache = pool_create_relcache(32, HASINSERT_LOCKQUERY,
+										int_register_func, int_unregister_func,
+										false);
+		if (relcache == NULL)
+		{
+			pool_error("pool_has_insert_lock: pool_create_relcache error");
+			return false;
+		}
+	}
+
+	result = pool_search_relcache(relcache, backend, "insert_lock")==0?0:1;
+	return result;
+}
+
+/*
+ * Insert a lock target row into insert_lock table.
+ * This function is called after the transaction has been started.
+ * Protocol is V3 only.
+ * Return POOL_CONTINUE if the row is inserted successfully
+ * or the row already exists, the others return POOL_ERROR.
+ */
+static POOL_STATUS add_lock_target(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char* table)
+{
+	POOL_STATUS status;
+
+	/* lock the row where reloid is 0 to avoid "duplicate key violates..." error when insert new oid */
+	if (!has_lock_target(frontend, backend, NULL, true))
+	{
+		pool_log("add_lock_target: could not lock the row where reloid is 0");
+
+		per_node_statement_log(backend, MASTER_NODE_ID, "LOCK TABLE pgpool_catalog.insert_lock IN SHARE ROW EXCLUSIVE MODE");
+		status = do_command(frontend, MASTER(backend), "LOCK TABLE pgpool_catalog.insert_lock IN SHARE ROW EXCLUSIVE MODE",
+							PROTO_MAJOR_V3, MASTER_CONNECTION(backend)->pid, MASTER_CONNECTION(backend)->key, 0);
+		if (status == POOL_CONTINUE)
+		{
+			if (has_lock_target(frontend, backend, NULL, false))
+			{
+				pool_debug("add_lock_target: reloid 0 already exists in insert_lock table");
+			}
+			else
+			{
+				if (insert_oid_into_insert_lock(frontend, backend, NULL) != POOL_CONTINUE)
+				{
+					pool_log("add_lock_target: could not insert 0 into insert_lock table");
+					return POOL_ERROR;
+				}
+			}
+		}
+		else
+		{
+			return POOL_ERROR;
+		}
+	}
+
+	/* does insert_lock table contain the oid of the table? */
+	if (has_lock_target(frontend, backend, table, false))
+	{
+		pool_debug("add_lock_target: \"%s\" oid already exists in insert_lock table", table);
+		return POOL_CONTINUE;
+	}
+
+	/* insert the oid of the table into insert_lock table */
+	if (insert_oid_into_insert_lock(frontend, backend, table) != POOL_CONTINUE)
+	{
+		pool_log("add_lock_target: could not insert \"%s\" oid into insert_lock table", table);
+		return POOL_ERROR;
+	}
+
+	return POOL_CONTINUE;
+}
+
+/*
+ * Judge if insert_lock table contains the oid of the specified table or not.
+ * If the table name is NULL, this function checks whether oid 0 exists.
+ * If lock is true, this function locks the row of the table oid.
+ */
+static bool has_lock_target(POOL_CONNECTION *frontend,
+							POOL_CONNECTION_POOL *backend,
+							char* table, bool lock)
+{
+	char *suffix;
+	char qbuf[QUERY_STRING_BUFFER_LEN];
+	POOL_STATUS status;
+	POOL_SELECT_RESULT *result;
+
+	suffix = lock ? " FOR UPDATE" : "";
+
+	if (table)
+	{
+		if (pool_has_pgpool_regclass())
+			snprintf(qbuf, sizeof(qbuf), "SELECT 1 FROM pgpool_catalog.insert_lock WHERE reloid = pgpool_regclass('%s')%s", table, suffix);
+		else
+			snprintf(qbuf, sizeof(qbuf), "SELECT 1 FROM pgpool_catalog.insert_lock WHERE reloid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = '%s' ORDER BY oid LIMIT 1)%s", table, suffix);
+	}
+	else
+	{
+		snprintf(qbuf, sizeof(qbuf), "SELECT 1 FROM pgpool_catalog.insert_lock WHERE reloid = 0%s", suffix);
+	}
+
+	per_node_statement_log(backend, MASTER_NODE_ID, qbuf);
+	status = do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
+	if (status == POOL_CONTINUE)
+	{
+		if (result && result->data[0] && !strcmp(result->data[0], "1"))
+		{
+			free_select_result(result);
+			return true;
+		}
+	}
+
+	if (result)
+		free_select_result(result);
+
+	return false;
+}
+
+/*
+ * Insert the oid of the specified table into insert_lock table.
+ */
+static POOL_STATUS insert_oid_into_insert_lock(POOL_CONNECTION *frontend,
+											   POOL_CONNECTION_POOL *backend,
+											   char* table)
+{
+	char qbuf[QUERY_STRING_BUFFER_LEN];
+	POOL_STATUS status;
+
+	if (table)
+	{
+		if (pool_has_pgpool_regclass())
+			snprintf(qbuf, sizeof(qbuf), "INSERT INTO pgpool_catalog.insert_lock VALUES (pgpool_regclass('%s'))", table);
+		else
+			snprintf(qbuf, sizeof(qbuf), "INSERT INTO pgpool_catalog.insert_lock SELECT oid FROM pg_catalog.pg_class WHERE relname = '%s' ORDER BY oid LIMIT 1", table);
+	}
+	else
+	{
+		snprintf(qbuf, sizeof(qbuf), "INSERT INTO pgpool_catalog.insert_lock VALUES (0)");
+	}
+
+	per_node_statement_log(backend, MASTER_NODE_ID, qbuf);
+	status = do_command(frontend, MASTER(backend), qbuf, PROTO_MAJOR_V3,
+						MASTER_CONNECTION(backend)->pid, MASTER_CONNECTION(backend)->key, 0);
+	return status;
 }
 
 bool is_partition_table(POOL_CONNECTION_POOL *backend, Node *node)

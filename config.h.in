@@ -292,8 +292,16 @@
 /* Use replacement snprintf() functions. */
 #undef USE_REPL_SNPRINTF
 
+/* Define to 1 if you want to use row lock against the sequence table for
+   insert_lock. (--enable-sequence-lock) */
+#undef USE_SEQUENCE_LOCK
+
 /* Define to 1 to build with SSL support. (--with-openssl) */
 #undef USE_SSL
+
+/* Define to 1 if you want to use table lock against the target table for
+   insert_lock. (--enable-table-lock) */
+#undef USE_TABLE_LOCK
 
 /* Version number of package */
 #undef VERSION
