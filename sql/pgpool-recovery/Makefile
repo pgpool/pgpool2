@@ -1,5 +1,6 @@
 MODULES = pgpool-recovery
 DATA_built = pgpool-recovery.sql
+DATA = uninstall_pgpool-recovery.sql
 
 # if you are using PostgreSQL 8.0 or later,
 # using pg_config is recommended.

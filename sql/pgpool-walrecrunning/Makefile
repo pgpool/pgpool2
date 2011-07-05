@@ -1,5 +1,6 @@
 MODULES = pgpool-walrecrunning
 DATA_built = pgpool-walrecrunning.sql
+DATA = uninstall_pgpool-walrecrunning.sql
 
 # if you are using PostgreSQL 8.0 or later,
 # using pg_config is recommended.
