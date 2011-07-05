@@ -361,7 +361,6 @@ EXTRA_DIST = pgpool.8.in sample/pgpool.pam doc/pgpool-ja.html doc/pgpool-en.html
 SUBDIRS = parser pcp
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
-	+@echo "All of pgPool-II successfully made. Ready to install."
 
 .SUFFIXES:
 .SUFFIXES: .c .l .lo .o .obj
@@ -897,7 +896,6 @@ installdirs-am:
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-recursive
-	+@echo "pgPool-II installation complete."
 install-exec: install-exec-recursive
 install-data: install-data-recursive
 uninstall: uninstall-recursive

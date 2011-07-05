@@ -49,7 +49,9 @@ main(int argc, char **argv)
 	int array_size;
 	int ch;
 	int	optindex;
-    bool verbose = false;
+	char * frmt;
+	bool verbose = false;
+	bool all = false;
 
 	static struct option long_options[] = {
 		{"debug", no_argument, NULL, 'd'},
@@ -58,7 +60,7 @@ main(int argc, char **argv)
 		{NULL, 0, NULL, 0}
 	};
 	
-    while ((ch = getopt_long(argc, argv, "hdv", long_options, &optindex)) != -1) {
+	while ((ch = getopt_long(argc, argv, "hdva", long_options, &optindex)) != -1) {
 		switch (ch) {
 		case 'd':
 			pcp_enable_debug();
@@ -66,6 +68,10 @@ main(int argc, char **argv)
 
 		case 'v':
 			verbose = true;
+			break;
+
+		case 'a':
+			all = true;
 			break;
 
 		case 'h':
@@ -78,7 +84,40 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 6)
+	if (verbose)
+	{
+		if (all)
+			frmt =	"Database     : %s\n"
+					"Username     : %s\n"
+					"Start time   : %s\n"
+					"Creation time: %s\n"
+					"Major        : %d\n"
+					"Minor        : %d\n"
+					"Counter      : %d\n"
+					"Backend PID  : %d\n"
+					"Connected    : %d\n"
+					"PID          : %d\n"
+					"Backend ID   : %d\n";
+		else
+			frmt =	"Database     : %s\n"
+					"Username     : %s\n"
+					"Start time   : %s\n"
+					"Creation time: %s\n"
+					"Major        : %d\n"
+					"Minor        : %d\n"
+					"Counter      : %d\n"
+					"Backend PID  : %d\n"
+					"Connected    : %d\n";
+	}
+	else
+	{
+		if (all)
+			frmt = "%s %s %s %s %d %d %d %d %d %d %d\n";
+		else
+			frmt = "%s %s %s %s %d %d %d %d %d\n";
+	}
+
+	if (!(argc == 5 || argc == 6))
 	{
 		errorcode = INVALERR;
 		pcp_errorstr(errorcode);
@@ -123,13 +162,19 @@ main(int argc, char **argv)
 		myexit(errorcode);
 	}
 	strcpy(pass, argv[4]);
+	
+	if (argc == 6) {
 
-	processID = atoi(argv[5]);
-	if (processID < 0)
-	{
-		errorcode = INVALERR;
-		pcp_errorstr(errorcode);
-		myexit(errorcode);
+		processID = atoi(argv[5]);
+		if (processID < 0)
+		{
+			errorcode = INVALERR;
+			pcp_errorstr(errorcode);
+			myexit(errorcode);
+		}
+	}
+	else {
+		processID = 0;
 	}
 
 	pcp_set_timeout(timeout);
@@ -147,40 +192,35 @@ main(int argc, char **argv)
 		myexit(errorcode);
 	} else {
 		int i;
-        char strcreatetime[128];
-        char strstarttime[128];
-	    strftime(strstarttime, 128, "%Y-%m-%d %H:%M:%S", localtime(&process_info->start_time));
+		char strcreatetime[128];
+		char strstarttime[128];
+
 		for (i = 0; i < array_size; i++)
 		{
-			if (process_info->connection_info[i].database[0] == '\0')
+			if ((!all) && (process_info[i].connection_info->database[0] == '\0'))
 				continue;
-			
-	        strftime(strcreatetime, 128, "%Y-%m-%d %H:%M:%S", localtime(&process_info->connection_info[i].create_time));
-            if (verbose)
-            {
-		    	printf("Database     : %s\nUsername     : %s\nStart time   : %s\nCreation time: %s\nMajor        : %d\nMinor        : %d\nCounter      : %d\nPID          : %d\nConnected    : %d\n",
-		    		   process_info->connection_info[i].database,
-		    		   process_info->connection_info[i].user,
-		    		   strstarttime,
-		    		   strcreatetime,
-		    		   process_info->connection_info[i].major,
-		    		   process_info->connection_info[i].minor,
-		    		   process_info->connection_info[i].counter,
-		    		   process_info->connection_info[i].pid,
-		    		   process_info->connection_info[i].connected);
-            } else {
-		    	printf("%s %s %s %s %d %d %d %d %d\n",
-		    		   process_info->connection_info[i].database,
-		    		   process_info->connection_info[i].user,
-		    		   strstarttime,
-		    		   strcreatetime,
-		    		   process_info->connection_info[i].major,
-		    		   process_info->connection_info[i].minor,
-		    		   process_info->connection_info[i].counter,
-		    		   process_info->connection_info[i].pid,
-		    		   process_info->connection_info[i].connected);
-		    }
+
+			*strcreatetime = *strstarttime = '\0';
+
+			if (process_info[i].start_time)
+				strftime(strstarttime, 128, "%Y-%m-%d %H:%M:%S", localtime(&process_info[i].start_time));
+			if (process_info[i].connection_info->create_time)
+				strftime(strcreatetime, 128, "%Y-%m-%d %H:%M:%S", localtime(&process_info[i].connection_info->create_time));
+
+			printf(frmt,
+				process_info[i].connection_info->database,
+				process_info[i].connection_info->user,
+				strstarttime,
+				strcreatetime,
+				process_info[i].connection_info->major,
+				process_info[i].connection_info->minor,
+				process_info[i].connection_info->counter,
+				process_info[i].connection_info->pid,
+				process_info[i].connection_info->connected,
+				process_info[i].pid,
+				process_info[i].connection_info->backend_id);
         }
+		free(process_info->connection_info);
 		free(process_info);
 	}
 
@@ -193,18 +233,19 @@ static void
 usage(void)
 {
 	fprintf(stderr, "pcp_proc_info - display a pgpool-II child process' information\n\n");
-	fprintf(stderr, "Usage: pcp_proc_info [-d] timeout hostname port# username password PID\n");
+	fprintf(stderr, "Usage: pcp_proc_info [-d] timeout hostname port# username password [PID]\n");
 	fprintf(stderr, "  -d, --debug    : enable debug message (optional)\n");
 	fprintf(stderr, "  timeout        : connection timeout value in seconds. command exits on timeout\n");
 	fprintf(stderr, "  hostname       : pgpool-II hostname\n");
 	fprintf(stderr, "  port#          : PCP port number\n");
 	fprintf(stderr, "  username       : username for PCP authentication\n");
 	fprintf(stderr, "  password       : password for PCP authentication\n");
-	fprintf(stderr, "  PID            : PID of a child process to get information for\n\n");
+	fprintf(stderr, "  PID            : if given, PID of the only child process to get information for\n\n");
 	fprintf(stderr, "Usage: pcp_proc_info [options]\n");
-    fprintf(stderr, "  Options available are:\n");
+	fprintf(stderr, "  Options available are:\n");
 	fprintf(stderr, "  -h, --help     : print this help\n");
 	fprintf(stderr, "  -v, --verbose  : display one line per information with a header\n");
+	fprintf(stderr, "  -a, --all      : display all child processes and their available connection slots.\n");
 }
 
 static void

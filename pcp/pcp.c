@@ -624,6 +624,7 @@ pcp_process_info(int pid, int *array_size)
 	int rsize;
 
 	ProcessInfo *process_info = NULL;
+	ConnectionInfo *conn_info = NULL;
 	int ci_size = 0;
 	int offset = 0;
 
@@ -685,19 +686,20 @@ pcp_process_info(int pid, int *array_size)
 					ci_size = atoi(index);
 
 				*array_size = ci_size;
-				
-				process_info = (ProcessInfo *)malloc(sizeof(ProcessInfo));
+
+				process_info = (ProcessInfo *)malloc(sizeof(ProcessInfo) * ci_size);
 				if (process_info == NULL)
 				{
 					free(buf);
 					errorcode = NOMEMERR;
 					return NULL;
 				}
-				process_info->connection_info = NULL;
-				process_info->connection_info = (ConnectionInfo *)malloc(sizeof(ConnectionInfo)*ci_size);
-				if (process_info->connection_info == NULL)
+
+				conn_info = (ConnectionInfo *)malloc(sizeof(ConnectionInfo) * ci_size);
+				if  (conn_info == NULL)
 				{
 					free(buf);
+					free(process_info);
 					errorcode = NOMEMERR;
 					return NULL;
 				}
@@ -706,41 +708,51 @@ pcp_process_info(int pid, int *array_size)
 			}
 			else if (strcmp(buf, "ProcessInfo") == 0)
 			{
+				process_info[offset].connection_info = &conn_info[offset];
+
 				index = (char *) memchr(buf, '\0', rsize) + 1;
 				if (index != NULL)
-					strcpy(process_info->connection_info[offset].database, index);
+					process_info[offset].pid = atoi(index);
 			
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					strcpy(process_info->connection_info[offset].user, index);
+					strcpy(process_info[offset].connection_info->database, index);
 			
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					process_info->start_time = atol(index);
+					strcpy(process_info[offset].connection_info->user, index);
+			
+				index = (char *) memchr(index, '\0', rsize) + 1;
+				if (index != NULL)
+					process_info[offset].start_time = atol(index);
 
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					process_info->connection_info[offset].create_time = atol(index);
+					process_info[offset].connection_info->create_time = atol(index);
 
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					process_info->connection_info[offset].major = atoi(index);
+					process_info[offset].connection_info->major = atoi(index);
 
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					process_info->connection_info[offset].minor = atoi(index);
+					process_info[offset].connection_info->minor = atoi(index);
 
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					process_info->connection_info[offset].counter = atoi(index);
+					process_info[offset].connection_info->counter = atoi(index);
 
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					process_info->connection_info[offset].pid = atoi(index);
+					process_info[offset].connection_info->backend_id = atoi(index);
 
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					process_info->connection_info[offset].connected = atoi(index);
+					process_info[offset].connection_info->pid = atoi(index);
+
+				index = (char *) memchr(index, '\0', rsize) + 1;
+				if (index != NULL)
+					process_info[offset].connection_info->connected = atoi(index);
 
 				offset++;
 			}
