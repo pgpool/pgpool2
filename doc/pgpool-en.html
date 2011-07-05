@@ -167,6 +167,14 @@ installed. Default value is provided by <code>pg_config</code></li>
   <li><code>--with-openssl</code><br/>
       pgpool-II binaries will be built with OpenSSL support.  OpenSSL support 
       is disabled by default.</li>
+  <li><code>--enable-sequence-lock</code><br/>
+      Use insert_lock compatible with pgpool-II 3.0 series(until 3.0.4).
+      pgpool-II locks against a row in the sequence table.
+      PostgreSQL 8.2 or later which was released after June 2011 cannot use this lock method. 
+  <li><code>--enable-table-lock</code><br/>
+      Use insert_lock compatible with pgpool-II 2.2 and 2.3 series.
+      pgpool-II locks against the insert target table.
+      This lock method is deprecated because it causes a lock conflict with VACUUM.
 </ul>
 </p>
 </dd>
@@ -199,7 +207,7 @@ might cause trouble (temporary tables aren't a problem).
 </pre>
 </p>
 <p>
-Executing pgpool-regclass.sql should be performed on every database accessed
+Executing pgpool-regclass.sql should be performed on every databases accessed
 with pgpool-II.
 You do not need to do this for a database created after the
 execution of "psql -f pgpool-regclass.sql template1", as this template database
@@ -220,11 +228,35 @@ psql -f pgpool-walrecrunning.sql template1
 </pre>
 </p>
 <p>
-Executing pgpool-walrecrunning.sql should be performed on every database accessed
+Executing pgpool-walrecrunning.sql should be performed on every databases accessed
 with pgpool-II.
 You do not need to do this for a database created after the
 execution of "psql -f pgpool-regclass.sql template1", as this template database
 will be cloned to create new databases.
+</p>
+
+<dt>Creating insert_lock table</dt>
+<dd>
+<p>
+If you use insert_lock in replication mode, creating pgpool_catalog.insert_lock
+table for mutual exclusion is strongly recommended.
+Without this, insert_lock works so far. However in that case pgpool-II locks
+against the insert target table. This behavior is same as pgpool-II 2.2 and 2.3
+series. The table lock conflicts with VACUUM. So INSERT processing may be thereby
+kept waiting for a long time.
+</p>
+<p>
+<pre>
+cd pgpool-II-x.x.x/sql
+psql -f insert_lock.sql template1
+</pre>
+</p>
+<p>
+Executing insert_lock.sql should be performed on every databases accessed
+with pgpool-II.
+You do not need to do this for a database created after the execution of
+&quot;psql -f insert_lock.sql template1&quot;, as this template database will be
+cloned to create new databases.
 </p>
 
 </dl>
@@ -1088,16 +1120,36 @@ made:
       automatically adds the above queries each time an INSERT is
       executed (if already in transaction, it simply adds LOCK TABLE
       ....).
-
-      As of pgpool-II 2.2, it automatically detects if the table has a
-      SERIAL columns or not, so only tables having SERIAL columns are
-      locked.
-	   <p>
-	   pgpool-II 3.0 or later uses a row lock against the sequence
-	   relation, rather than table lock. This will minimize lock
-	   conflict with VACUUM (including autovacuum).
-	   </p>
-	   <p>
+      </p>
+      <p>pgpool-II 2.2 or later, it automatically detects whether the table
+      has a SERIAL columns or not, so it will never lock the table if it does
+      not use SERIAL columns.
+      </p>
+      <p>
+      pgpool-II 3.0 series until 3.0.4 uses a row lock against the sequence
+      relation, rather than table lock. This is intended to minimize lock
+      conflict with VACUUM (including autovacuum). However this will lead to
+      another problem. After transaction wraparound happens, row locking
+      against the sequence relation causes PostgreSQL internal error (more
+      precisely, access error on pg_clog, which keeps transaction status).
+      To prevent this, PostgreSQL core developers decided to disallow row
+      locking against sequences and this will break pgpool-II of course (the
+      &quot;fixed&quot; version of PostgreSQL will be released as 9.0.5,
+      8.4.9, 8.3.16 and 8.2.22).
+      </p>
+      <p>
+      pgpool-II 3.0.5 or later uses a row lock against pgpool_catalog.insert_lock
+      table because new PostgreSQL disallows a row lock against the sequence
+      relation. So creating insert_lock table in all databases which are
+      accessed via pgpool-II beforehand is required. See <a href="#install">
+      Creating insert_lock table</a> for more details. If does not
+      exist insert_lock table, pgpool-II locks the insert target
+      table. This behavior is same as pgpool-II 2.2 and 2.3 series.
+      If you want to use insert_lock which is compatible with older
+      releases, you can specify lock method by configure script. See
+      <a href="#install">configure</a> for more details.
+      </p>
+      <p>
       You might want to have a finer (per statement) control:
       </p>
 

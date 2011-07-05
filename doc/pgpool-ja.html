@@ -147,7 +147,14 @@ PostgreSQL$B$N%/%i%$%"%s%H%i%$%V%i%j$J$I$,%$%s%9%H!<%k$5$l$F$$$k%H%C%W%G%#(B
   <li><code>--with-openssl</code><br/>
 	 pgpool-II$B$r(BOpenSSL$B%5%]!<%HIU$G:n@.$7$^$9!#(B
 	 $B%G%U%)%k%H$G$O(BOpenSSL$B%5%]!<%H$OL58z$G$9!#(B</li>
-
+  <li><code>--enable-sequence-lock</code><br/>
+	 pgpool-II 3.0$B%7%j!<%:(B(3.0.4$B$^$G(B)$B8_49$N(Binsert_lock$B$r;HMQ$7$^$9!#(B
+	 pgpool-II$B$O!"%7!<%1%s%9%F!<%V%k$N9T$KBP$7$F%m%C%/$r9T$$$^$9!#(B
+	 $B$3$l$O!"(B2011$BG/(B06$B7n$h$j8e$K%j%j!<%9$5$l$?(BPostgreSQL 8.2$B0J9_$G$O;HMQ$G$-$^$;$s!#(B</li>
+  <li><code>--enable-table-lock</code><br/>
+	 pgpool-II 2.2$B$H(B2.3$B%7%j!<%:8_49$N(Binsert_lock$B$r;HMQ$7$^$9!#(B
+	 pgpool-II$B$O!"A^F~BP>]$N%F!<%V%k$KBP$7$F%m%C%/$r9T$$$^$9!#(B
+	 $B$3$l$O!"%m%C%/$,(BVACUUM$B$H6%9g$9$k$?$aHs?d>)$G$9!#(B</li>
 </ul>
 </p>
 
@@ -192,6 +199,21 @@ psql -f pgpool-walrecrunning.sql template1
 </pre>
 pgpool-walrecrunning.sql$B$N<B9T$O!"(Bpgpool-II$B7PM3$GMxMQ$9$k%G!<%?%Y!<%9Kh$KI,MW$K$J$j$^$9!#(B
 $B$?$@$7!"(B"psql -f pgpool-walrecrunning.sql template1"$B$r<B9T8e$K:n@.$5$l$?%G!<%?%Y!<%9$G$O<+F0E*$K(Bpgpool-walrecrunning.sql$B$NFbMF$,H?1G$5$l$F$$$k$N$G!"?7$?$K(Bpgpool-walrecrunning.sql$B$r<B9T$9$kI,MW$O$"$j$^$;$s!#(B
+</p>
+
+<dt>insert_lock$B%F!<%V%k$N:n@.(B
+<dd>
+<p>
+$B%l%W%j%1!<%7%g%s%b!<%I$G(Binsert_lock$B$rMxMQ$7$?$$>l9g$O!"GSB>@)8fMQ$N%F!<%V%k(Bpgpool_catalog.insert_lock$B$r:n@.$7$^$9!#(B
+insert_lock$B%F!<%V%k$,B8:_$7$J$/$F$b:#$N$H$3$m(Binsert_lock$B$OF0:n$7$^$9$,!"$=$N>l9g$O!"A^F~BP>]$N%F!<%V%k$KBP$7$F%m%C%/$,9T$o$l$^$9!#$3$l$O(Bpgpool-II 2.2$B$H(B2.3$B%7%j!<%:$NF0:n$HF1$8$G$9!#A^F~BP>]$N%F!<%V%k$KBP$9$k%m%C%/$O!"(BVACUUM$B$H6%9g$7$F(BINSERT$B=hM}$,D9;~4V$,BT$?$5$l$k2DG=@-$,$"$j$^$9!#(B
+$B$7$?$,$C$F!"(Binsert_lock$B%F!<%V%k$r:n@.$9$k$3$H$r$*4+$a$7$^$9!#(B
+$B%F!<%V%k$N:n@.$O!"(Bpgpool-II$B$,%"%/%;%9$9$kM=Dj$N$9$Y$F$N(BPostgreSQL$B%5!<%P$G<B;\$7$F$/$@$5$$!#(B
+<pre>
+cd pgpool-II-x.x.x/sql
+psql -f insert_lock.sql template1
+</pre>
+insert_lock.sql$B$N<B9T$O!"(Bpgpool-II$B7PM3$GMxMQ$9$k%G!<%?%Y!<%9Kh$KI,MW$K$J$j$^$9!#(B
+$B$?$@$7!"(B&quot;psql -f insert_lock.sql template1&quot;$B$r<B9T8e$K:n@.$5$l$?%G!<%?%Y!<%9$G$O<+F0E*$K(Binsert_lock.sql$B$NFbMF$,H?1G$5$l$F$$$k$N$G!"?7$?$K(Binsert_lock.sql$B$r<B9T$9$kI,MW$O$"$j$^$;$s!#(B
 </p>
 
 </dl>
@@ -1072,10 +1094,15 @@ replicate_select$B!"(Bload_balance_mode$B!"(BSELECT$BLd9g$o$;$,L@<(E*$J%H%i
    $B%s$,3+;O$5$l$F$$$k>l9g$O(BLOCK TABLE...$B$@$1$,<B9T$5$l$^$9!K!#(B
 </p>
 <p>
-$B$J$*!"(Bpgpool-II 3.0$B0J9_$G$O!"BP1~$9$k%7!<%1%s%9%F!<%V%k$KBP$7$F9T%m%C%/$r9T$J$&$3$H$K$h$C$FGSB>@)8f$r9T$J$$$^$9!#$=$l0JA0$N%P!<%8%g%s$HHf$Y$k$H!"(BVACUUM(autovacuum$B$r4^$`(B)$B$H$N%m%C%/6%9g$,$J$/$J$k%a%j%C%H$,$"$j$^$9!#(B
+   pgpool-II 2.2$B0J9_$O!"%F!<%V%k$,(BSERIAL$BNs$r;}$D$+$I$&$+<+F0H=JL$9$k$?$a!"(BSERIAL$BNs$,$J$1$l$P7h$7$F%F!<%V%k$r%m%C%/$7$^$;$s!#(B
 </p>
 <p>
-   $B%F!<%V%k$G(BSERIAL$B7?$,;H$o$l$F$$$J$$>l9g$K$O!"%F!<%V%k$N%m%C%/$O9T$J$o$l$^$;$s!#(B
+   pgpool-II 3.0.4$B$^$G$N(B3.0$B%7%j!<%:$O!"BP1~$9$k%7!<%1%s%9%F!<%V%k$KBP$7$F9T%m%C%/$r$+$1$k$3$H$GGSB>@)8f$r9T$J$$$^$9!#$=$l0JA0$N%P!<%8%g%s$HHf$Y$k$H!"(BVACUUM(autovacuum$B$r4^$`(B)$B$H$N%m%C%/6%9g$,$J$/$J$k%a%j%C%H$,$"$j$^$9!#$7$+$7!"$3$l$OB>$NLdBj$r0z$-5/$3$7$^$9!#%H%i%s%6%/%7%g%s<~2s$,5/$-$?8e!"%7!<%1%s%9%F!<%V%k$KBP$9$k9T%m%C%/$O(BPostgreSQL$B$NFbIt%(%i!<(B($B>\:Y$K$O!"%H%i%s%6%/%7%g%s>uBV$rJ];}$9$k(Bpg_clog$B$X$N%"%/%;%9%(%i!<(B)$B$r5/$3$7$^$9!#$3$l$rKI$0$?$a!"(BPostgreSQL$B$N%3%"3+H/<T$O%7!<%1%s%9%F!<%V%k$KBP$9$k9T%m%C%/$r5v2D$7$J$$$3$H$r7hDj$7$^$7$?!#$3$l$O$b$A$m$s(Bpgpool-II$B$rF0:nITG=$K$7$^$9(B($B=$@5$5$l$?(BPostgreSQL$B$O%P!<%8%g%s(B9.0.5, 8.4.9, 8.3.16$B$=$7$F(B8.2.22$B$H$7$F%j%j!<%9$5$l$k$G$7$g$&(B)$B!#(B
+</p>
+<p>
+   pgpool-II 3.0.5$B0J9_$G$O!"?7$7$$(BPostgreSQL$B$,%7!<%1%s%9%F!<%V%k$KBP$9$k%m%C%/$r5v2D$7$J$/$J$C$?$?$a!"(Bpgpool_catalog.insert_lock$B%F!<%V%k$KBP$7$F9T%m%C%/$r$+$1$k$3$H$GGSB>@)8f$r9T$J$$$^$9!#$7$?$,$C$F!"(Bpgpool-II$B7PM3$G%"%/%;%9$9$k$9$Y$F$N%G!<%?%Y!<%9$K(Binsert_lock$B%F!<%V%k$r$"$i$+$8$a:n@.$7$F$*$/I,MW$,$"$j$^$9!#>\:Y$O(B<a href="#install">insert_lock$B%F!<%V%k$N:n@.(B</a>$B$N9`L\$r$4Mw$/$@$5$$!#$b$7!"(Binsert_lock$B%F!<%V%k$,B8:_$7$J$$>l9g$O!"A^F~BP>]$N%F!<%V%k$KBP$7$F%m%C%/$r9T$$$^$9!#$3$l$O!"(Bpgpool-II 2.2$B$H(B2.3$B%7%j!<%:$N(Binsert_lock$B$HF1$8F0:n$G$9!#$^$?!"2a5n$N%P!<%8%g%s$H8_49@-$N$"$k(Binsert_lock$B$r;HMQ$7$?$$>l9g$O!"(Bconfigure$B%9%/%j%W%H$G@_Dj$G$-$^$9!#>\:Y$O(B<a href="#install">configure$B$N<B9T(B</a>$B$N9`L\$r$4Mw2<$5$$!#(B
+</p>
+<p>
    $B$J$*!"$"$^$jI,MW$J$$$+$bCN$l$^$;$s$,!"%3%a%s%H$rMxMQ$7$F!"$3$N5sF0$r(B
    $B:Y$+$/@)8f$9$k$3$H$b$G$-$^$9!#(B
 </p>

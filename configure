@@ -917,6 +917,8 @@ with_pgsql_libdir
 with_openssl
 with_pam
 enable_rpath
+enable_sequence_lock
+enable_table_lock
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1567,6 +1569,10 @@ Optional Features:
   --disable-float4-byval  disable float4 passed by value
   --disable-float8-byval  disable float8 passed by value
   --disable-rpath     do not embed shared library search path in executables
+  --enable-sequence-lock  insert_lock compatible with pgpool-II 3.0 series
+                          (until 3.0.4)
+  --enable-table-lock     insert_lock compatible with pgpool-II 2.2 and 2.3
+                          series
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -4423,13 +4429,13 @@ if test "${lt_cv_nm_interface+set}" = set; then
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:4426: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:4432: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4429: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:4435: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4432: output\"" >&5)
+  (eval echo "\"\$as_me:4438: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -5635,7 +5641,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 5638 "configure"' > conftest.$ac_ext
+  echo '#line 5644 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7488,11 +7494,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7491: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7497: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7495: \$? = $ac_status" >&5
+   echo "$as_me:7501: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7827,11 +7833,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7830: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7836: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7834: \$? = $ac_status" >&5
+   echo "$as_me:7840: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7932,11 +7938,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7935: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7941: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:7939: \$? = $ac_status" >&5
+   echo "$as_me:7945: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -7987,11 +7993,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7990: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7996: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:7994: \$? = $ac_status" >&5
+   echo "$as_me:8000: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10790,7 +10796,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10793 "configure"
+#line 10799 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10886,7 +10892,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10889 "configure"
+#line 10895 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -17407,6 +17413,96 @@ else
   enable_rpath_FALSE=
 fi
 
+
+# Decide whether to use row lock against the sequence table for insert_lock.
+# This lock method is compatible with pgpool-II 3.0 series(until 3.0.4).
+{ $as_echo "$as_me:$LINENO: checking whether to use row lock against the sequence table for insert_lock" >&5
+$as_echo_n "checking whether to use row lock against the sequence table for insert_lock... " >&6; }
+
+pgac_args="$pgac_args enable_sequence_lock"
+
+# Check whether --enable-sequence-lock was given.
+if test "${enable_sequence_lock+set}" = set; then
+  enableval=$enable_sequence_lock;
+  case $enableval in
+    yes)
+      :
+      ;;
+    no)
+      :
+      ;;
+    *)
+      { { $as_echo "$as_me:$LINENO: error: no argument expected for --enable-sequence-lock option" >&5
+$as_echo "$as_me: error: no argument expected for --enable-sequence-lock option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+  esac
+
+else
+  enable_sequence_lock=no
+
+fi
+
+
+if test "$enable_sequence_lock" = yes && test "$enable_table_lock" = yes ; then
+    { { $as_echo "$as_me:$LINENO: error: --enable-table-lock cannot be enabled at the same time." >&5
+$as_echo "$as_me: error: --enable-table-lock cannot be enabled at the same time." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test "$enable_sequence_lock" = yes ; then
+
+cat >>confdefs.h <<\_ACEOF
+#define USE_SEQUENCE_LOCK 1
+_ACEOF
+
+fi
+{ $as_echo "$as_me:$LINENO: result: $enable_sequence_lock" >&5
+$as_echo "$enable_sequence_lock" >&6; }
+
+# Decide whether to use table lock against the target table for insert_lock.
+# This lock method is compatible with pgpool-II 2.2 and 2.3 series.
+{ $as_echo "$as_me:$LINENO: checking whether to use table lock against the target table for insert_lock" >&5
+$as_echo_n "checking whether to use table lock against the target table for insert_lock... " >&6; }
+
+pgac_args="$pgac_args enable_table_lock"
+
+# Check whether --enable-table-lock was given.
+if test "${enable_table_lock+set}" = set; then
+  enableval=$enable_table_lock;
+  case $enableval in
+    yes)
+      :
+      ;;
+    no)
+      :
+      ;;
+    *)
+      { { $as_echo "$as_me:$LINENO: error: no argument expected for --enable-table-lock option" >&5
+$as_echo "$as_me: error: no argument expected for --enable-table-lock option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+  esac
+
+else
+  enable_table_lock=no
+
+fi
+
+
+if test "$enable_table_lock" = yes && test "$enable_sequence_lock" = yes ; then
+    { { $as_echo "$as_me:$LINENO: error: --enable-sequence-lock cannot be enabled at the same time." >&5
+$as_echo "$as_me: error: --enable-sequence-lock cannot be enabled at the same time." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test "$enable_table_lock" = yes ; then
+
+cat >>confdefs.h <<\_ACEOF
+#define USE_TABLE_LOCK 1
+_ACEOF
+
+fi
+{ $as_echo "$as_me:$LINENO: result: $enable_table_lock" >&5
+$as_echo "$enable_table_lock" >&6; }
 
 ac_config_headers="$ac_config_headers config.h"
 
