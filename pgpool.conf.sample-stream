@@ -255,6 +255,7 @@ health_check_period = 0            # Health check period
 health_check_timeout = 20          # Health check timeout
                                    # 0 means no timeout
 health_check_user = 'nobody'       # Health check user
+health_check_password = ''         # Password for health check user
 
 # - Special commands -
 

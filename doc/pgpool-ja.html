@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Wed Jun 29 09:46:36 JST 2011
+Last modified: Wed Jul  6 22:55:53 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -594,6 +594,13 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
 <dd>
 <p>
    ヘルスチェックを行うためのPostgreSQLユーザ名です。
+このパラメータを変更した時には設定ファイルを再読み込みしてください。
+</p>
+
+<dt><a name="HEALTH_CHECK_PASSWORD"></a>health_check_password</dt>
+<dd>
+<p>
+   ヘルスチェックを行うためのPostgreSQLパスワードです。
 このパラメータを変更した時には設定ファイルを再読み込みしてください。
 </p>
 
