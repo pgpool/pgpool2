@@ -50,11 +50,14 @@ backend_hostname0 = 'host1'        # Host name or IP address to connect to for b
 backend_port0 = 5432               # Port number for backend 0
 backend_weight0 = 1                # Weight for backend 0 (only in load balancing mode)
 backend_data_directory0 = '/data'  # Data directory for backend 0
-
+backend_flag0 = 'ALLOW_TO_FAILOVER'
+                                   # Controls various backend behavior
+                                   # ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
 backend_hostname1 = 'host2'
-backend_port1 = 5432
+backend_port1 = 5433
 backend_weight1 = 1
 backend_data_directory1 = '/data1'
+backend_flag1 = 'ALLOW_TO_FAILOVER'
 
 # - Authentication -
 
@@ -148,7 +151,7 @@ logdir = '/tmp'                    # Directory of pgPool status file
 
 
 #------------------------------------------------------------------------------
-# CONNECTION POOLING MODE
+# CONNECTION POOLING
 #------------------------------------------------------------------------------
 
 connection_cache = on              # Activate connection pools
@@ -187,30 +190,15 @@ replication_stop_on_mismatch = off
                                    # On disagreement with the packet kind
                                    # sent from backend, degenerate the node
                                    # which is most likely "minority"
-                                   # If false, just force to exit this session
+                                   # If off, just force to exit this session
 
 failover_if_affected_tuples_mismatch = off
                                    # On disagreement with the number of affected
                                    # tuples in UPDATE/DELETE queries, then
                                    # degenerate the node which is most likely
                                    # "minority".
-                                   # If false, just abort the transaction to
+                                   # If off, just abort the transaction to
                                    # keep the consistency
-
-# - Online recovery -
-
-recovery_user = 'nobody'           # Online recovery user
-recovery_password = ''             # Online recovery password
-recovery_1st_stage_command = ''    # Executes a command in first stage
-recovery_2nd_stage_command = ''    # Executes a command in second stage
-recovery_timeout = 90              # Timeout in seconds to wait for the
-                                   # recovering node's postmaster to start up
-                                   # 0 means no wait
-client_idle_limit_in_recovery = 0  # Client is disconnected after being idle
-                                   # for that many seconds in the second stage
-                                   # of online recovery
-                                   # 0 means no disconnection
-                                   # -1 means immediate disconnection
 
 
 #------------------------------------------------------------------------------
@@ -247,7 +235,46 @@ delay_threshold = 0                # Threshold before detaching node
                                    # Disabled (0) by default
                                    # Health check should be enabled
 
-# - Health check -
+# - Special commands -
+
+follow_master_command = ''         # Executes this command after master failover
+                                   # Special values:
+                                   #   %d = node id
+                                   #   %h = host name
+                                   #   %p = port number
+                                   #   %D = database cluster path
+                                   #   %m = new master node id
+                                   #   %H = hostname of the new master node
+                                   #   %M = old master node id
+                                   #   %P = old primary node id
+                                   #   %% = '%' character
+
+
+#------------------------------------------------------------------------------
+# PARALLEL MODE AND QUERY CACHE
+#------------------------------------------------------------------------------
+
+parallel_mode = off                # Activates parallel query mode
+                                   # (change requires restart)
+enable_query_cache = off           # Activates query cache
+                                   # (change requires restart)
+
+pgpool2_hostname = ''              # Set pgpool2 hostname 
+                                   # (change requires restart)
+
+# - System DB info -
+
+system_db_hostname  = 'localhost'   # (change requires restart)
+system_db_port = 5432               # (change requires restart)
+system_db_dbname = 'pgpool'         # (change requires restart)
+system_db_schema = 'pgpool_catalog' # (change requires restart)
+system_db_user = 'pgpool'           # (change requires restart)
+system_db_password = ''             # (change requires restart)
+
+
+#------------------------------------------------------------------------------
+# HEALTH CHECK
+#------------------------------------------------------------------------------
 
 health_check_period = 0            # Health check period
                                    # Disabled (0) by default
@@ -256,7 +283,10 @@ health_check_timeout = 20          # Health check timeout
 health_check_user = 'nobody'       # Health check user
 health_check_password = ''         # Password for health check user
 
-# - Special commands -
+
+#------------------------------------------------------------------------------
+# FAILOVER AND FAILBACK
+#------------------------------------------------------------------------------
 
 failover_command = ''              # Executes this command at failover
                                    # Special values:
@@ -280,54 +310,49 @@ failback_command = ''              # Executes this command at failback.
                                    #   %M = old master node id
                                    #   %P = old primary node id
                                    #   %% = '%' character
-follow_master_command = ''         # Executes this command after master failover.
-                                   # Special values:
-                                   #   %d = node id
-                                   #   %h = host name
-                                   #   %p = port number
-                                   #   %D = database cluster path
-                                   #   %m = new master node id
-                                   #   %H = hostname of the new master node
-                                   #   %M = old master node id
-                                   #   %P = old primary node id
-                                   #   %% = '%' character
 
 fail_over_on_backend_error = on    # Initiates failover when writing to the
                                    # backend communication socket fails
                                    # This is the same behaviour of pgpool-II
                                    # 2.2.x and previous releases
-                                   # If set to false, pgpool will report an
+                                   # If set to off, pgpool will report an
                                    # error and disconnect the session.
 
 
 #------------------------------------------------------------------------------
-# PARALLEL AND QUERY CACHE MODE
+# ONLINE RECOVERY
 #------------------------------------------------------------------------------
 
-parallel_mode = off                # Activates parallel query mode
-                                   # (change requires restart)
-enable_query_cache = off           # Activates query cache
-                                   # (change requires restart)
+recovery_user = 'nobody'           # Online recovery user
+recovery_password = ''             # Online recovery password
+recovery_1st_stage_command = ''    # Executes a command in first stage
+recovery_2nd_stage_command = ''    # Executes a command in second stage
+recovery_timeout = 90              # Timeout in seconds to wait for the
+                                   # recovering node's postmaster to start up
+                                   # 0 means no wait
+client_idle_limit_in_recovery = 0  # Client is disconnected after being idle
+                                   # for that many seconds in the second stage
+                                   # of online recovery
+                                   # 0 means no disconnection
+                                   # -1 means immediate disconnection
 
-pgpool2_hostname = ''              # Set pgpool2 hostname 
-                                   # (change requires restart)
 
-# - System DB info -
+#------------------------------------------------------------------------------
+# OTHERS
+#------------------------------------------------------------------------------
 
-system_db_hostname  = 'localhost'   # (change requires restart)
-system_db_port = 5432               # (change requires restart)
-system_db_dbname = 'pgpool'         # (change requires restart)
-system_db_schema = 'pgpool_catalog' # (change requires restart)
-system_db_user = 'pgpool'           # (change requires restart)
-system_db_password = ''             # (change requires restart)
+relcache_expire = 0                # Life time of relation cache in seconds.
+                                   # 0 means no cache expiration(the default).
+                                   # The relation cache is used for cache the
+                                   # query result against PostgreSQL system
+                                   # catalog to obtain various information
+                                   # including table structures or if it's a
+                                   # temporary table or not. The cache is
+                                   # maintained in a pgpool child local memory
+                                   # and being kept as long as it survives.
+                                   # If someone modify the table by using
+                                   # ALTER TABLE or some such, the relcache is
+                                   # not consistent anymore.
+                                   # For this purpose, cache_expiration
+                                   # controls the life time of the cache.
 
-# Life time of relation cache in seconds. 0 means no cache
-# expiration(the default).
-# The relation cache is used for cache the query result against PostgreSQL
-# system catalog to obtain various information including table structures
-# or if it's a temporary table or not. The cache is maintained in a pgpool
-# child local memory and being kept as long as it survives.
-# If someone modify the table by using ALTER TABLE or some such, the relcache
-# is not consistent anymore.
-# For this purpose, cache_expiration controls the life time of the cache.
-relcache_expire = 0
