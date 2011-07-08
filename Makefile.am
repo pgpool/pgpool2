@@ -69,11 +69,21 @@ EXTRA_DIST = pgpool.8.in sample/pgpool.pam doc/pgpool-ja.html doc/pgpool-en.html
 		sql/Makefile \
 		sql/insert_lock.sql sql/system_db.sql \
 		sql/pgpool-recovery/pgpool-recovery.c \
-		sql/pgpool-recovery/pgpool-recovery.sql.in sql/pgpool-recovery/Makefile \
+		sql/pgpool-recovery/pgpool-recovery.sql.in \
+		sql/pgpool-recovery/uninstall_pgpool-recovery.sql \
+		sql/pgpool-recovery/Makefile \
 		sql/pgpool-regclass/pgpool-regclass.c \
-		sql/pgpool-regclass/pgpool-regclass.sql.in sql/pgpool-regclass/Makefile \
-		sql/pgpool-walrecrunning/README sql/pgpool-walrecrunning/pgpool-walrecrunning.c \
-		sql/pgpool-walrecrunning/pgpool-walrecrunning.sql.in sql/pgpool-walrecrunning/Makefile \
+		sql/pgpool-regclass/pgpool-regclass.sql.in \
+		sql/pgpool-regclass/uninstall_pgpool-regclass.sql \
+		sql/pgpool-regclass/Makefile \
+		sql/pgpool-walrecrunning/README \
+		sql/pgpool-walrecrunning/pgpool-walrecrunning.c \
+		sql/pgpool-walrecrunning/pgpool-walrecrunning.sql.in \
+		sql/pgpool-walrecrunning/uninstall_pgpool-walrecrunning.sql \
+		sql/pgpool-walrecrunning/Makefile \
+		pgpool_adm/Makefile pgpool_adm/TODO pgpool_adm/pgpool_adm--1.0.sql \
+		pgpool_adm/pgpool_adm.c pgpool_adm/pgpool_adm.control \
+		pgpool_adm/pgpool_adm.h pgpool_adm/pgpool_adm.sql.in \
 		test/parser/expected/copy.out test/parser/expected/create.out \
 		test/parser/expected/cursor.out test/parser/expected/delete.out \
 		test/parser/expected/drop.out test/parser/expected/insert.out \
