@@ -7,6 +7,25 @@
 
 	  * Incompatible changes
 
+	  - Change the lock method of insert_lock. The previous insert_lock uses
+		row locking against the sequence relation, but The current one uses
+		row locking against pgpool_catalog.insert_lock table. The reason is
+		that PostgreSQL core developers decided to disallow row locking
+		against the sequence relation to avoid an internal error which it
+		leads. So creating insert_lock table in all databases which are
+		accessed via pgpool-II beforehand is required. If does not exist
+		insert_lock table, pgpool-II locks the insert target table. This
+		behavior is same as pgpool-II 2.2 and 2.3 series. If you want to use
+		insert_lock which is compatible with older releases, you can specify
+		lock method by configure options: --enable-sequence-lock,
+		--enable-table-lock(Kitagawa)
+
+	  - In streaming replication, if delay_threshold is 0 or health checking
+		is disabled, the delay checking is not performed. This is the behaviour
+		according to a description of the pgpool-II manual. But, so far the
+		delay checking was performed even if health checking was disabled
+		(Guillaume Lelarge)
+
 	  - Deprecate backend_socket_dir. Instead, if backend_hostname starts
 		with '/' it is regarded the as path to Unix domain. If backend_hostname
 		is left empty, then default Unix domain path(/tmp) is used. This
@@ -25,7 +44,8 @@
 		node(Kitagawa)
 
 	  - Add node_id to each PostgreSQL DB node info in the output of
-		show pool_nodes. Patch contributed by Jean-Paul Argudo(Gleu)
+		show pool_nodes. Patch contributed by Jean-Paul Argudo
+		(Guillaume Lelarge)
 
 	  * New features
 
@@ -52,6 +72,24 @@
 	  - Add pcp_pool_status command which produces similar output of show
 		pool_status. Also C API for this command is added. Patch
 		contributed by Jehan-Guillaume (ioguix) de Rorthais(Tatsuo)
+
+	  - Add new per backend directive "backend_flag". This controls per
+		backend behavior. Currently "ALLOW_TO_FAILOVER" or
+		"DISALLOW_TO_FAILOVER" are allowed(Tatsuo)
+
+	  - Add health_check_password directive because the directives of
+		helthcheck are used to check replication delay in streaming
+		replication mode(Nicolas Thauvin)
+
+	  - Add --username(or -u) option to pg_md5 command. This allows to manage
+		users which do not have UNIX accounts. Japanese document change by
+		Tatsuo Ishii(Nicolas Thauvin)
+
+	  - Add pgpool_adm functions to pgpool_adm/. These are user-defined
+		functions written in C language which work like pcp commands
+		(Jehan-Guillaume (ioguix) de Rorthais)
+
+	  - Add SQL files to uninstall functions to sql/(Nicolas Thauvin)
 
 	  * Bug fixes
 
@@ -80,6 +118,30 @@
 	  - Fix bug with start_recoery() which is apparently wrong usage of
 		PQfinish()(Tatsuo)
 
+	  - Fix bug which does not update the node status when reattaching the
+		node in raw mode(Guillaume Lelarge)
+
+	  - Fix incorrect calculation of the replication delay in streaming
+		replication mode(Tatsuo)
+
+	  - Replace wrong function name "notice_backend_error" with correct one
+		"degenerate_backend_set" in the failover log message(Tatsuo)
+
+	  - Remove unnecessary logging at the end of pgpool.conf parsing(Tatsuo)
+
+	  - Fix hangup when using md5 authentication method and running as
+		daemon. Patch contributed by Nicolas Thauvin(Tatsuo)
+
+	  - Fix log_per_node_statement so that it prints statements in the
+		extended query protocol. This used to work but was broken in 3.0
+		(Kitagawa)
+
+	  - Fix incorrect error message which is sent to the frontend when
+		client idle time reached client_idle_limit(Tatsuo)
+
+	  - Fix "backend status" variable name correctly in pool_status.
+		Replace the space with a '_'(Guillaume Lelarge)
+
 	  * Enhancements
 
 	  - Import PostgreSQL 9.0 parser. This allows to use CREATE INDEX with
@@ -97,6 +159,31 @@
 		manual(Haruka Takatsuka)
 
 	  - Enhance online recovery documents in streaming replication(Tatsuo)
+
+	  - Change the function to check the replication delay in streaming
+		replication mode. Currently, pgpool uses
+		pg_last_xlog_replay_location() instead of
+		pg_last_xlog_receive_location(). Fix suggested by Anton Yuzhaninov
+		(Tatsuo)
+
+	  - Allow time stamp rewriting to work with arbitrary expression in
+		default value of a column. Before we detected anything including
+		now() then simply replaced it to now(). This will lead to wrong
+		rewriting of default value. for example, timezone('utc'::text, now()).
+		Note that, however, this only adopts to simple queries. Extended
+		protocols(for example Java, PHP PDO) or SQL "PREPARE" still remain
+		same(Tatsuo)
+
+	  - Enhance the error message which is emitted when failed to check
+		replication delay(Nicolas Thauvin)
+
+	  - Change error message "do_md5: read_password_packet failed" into debug
+		level(Kitagawa)
+
+	  - Add currval() and lastval() to black_function_list of sample
+		configuration files. If they are load balanced, currval() or
+		lastval() may be called before the result of nextval() or setval()
+		is propagated to slaves(Tatsuo)
 
 3.0.3 (umiyameboshi) 2011/02/23
 
