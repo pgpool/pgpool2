@@ -528,7 +528,7 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context, char *string,
 	bool is_commit;
 	int i;
 
-	is_commit = is_commit_query(query_context->parse_tree);
+	is_commit = is_commit_or_rollback_query(query_context->parse_tree);
 
 	session_context = pool_get_session_context();
 	frontend = session_context->frontend;

@@ -1513,16 +1513,16 @@ int is_select_query(Node *node, char *sql)
 }
 
 /*
- * returns non 0 if SQL is SELECT statement including nextval() or
+ * returns true if SQL is SELECT statement including nextval() or
  * setval() call
  */
-int is_sequence_query(Node *node)
+bool is_sequence_query(Node *node)
 {
 	SelectStmt *select_stmt;
 	ListCell *lc;
 
 	if (node == NULL || !IsA(node, SelectStmt))
-		return 0;
+		return false;
 
 	select_stmt = (SelectStmt *)node;
 	foreach (lc, select_stmt->targetList)
@@ -1541,45 +1541,69 @@ int is_sequence_query(Node *node)
 				{
 					Value *v = lfirst(c);
 					if (strncasecmp(v->val.str, "NEXTVAL", 7) == 0)
-						return 1;
+						return true;
 					else if (strncasecmp(v->val.str, "SETVAL", 6) == 0)
-						return 1;
+						return true;
 				}
 			}
 		}
 	}
 
-	return 0;
+	return false;
 }
 
 /*
- * returns non 0 if SQL is transaction starting command (START
+ * Returns true if SQL is transaction starting command (START
  * TRANSACTION or BEGIN)
  */
-int is_start_transaction_query(Node *node)
+bool is_start_transaction_query(Node *node)
 {
 	TransactionStmt *stmt;
 
 	if (node == NULL || !IsA(node, TransactionStmt))
-		return 0;
+		return false;
 
 	stmt = (TransactionStmt *)node;
 	return stmt->kind == TRANS_STMT_START || stmt->kind == TRANS_STMT_BEGIN;
 }
 
 /*
- * returns non 0 if SQL is transaction commit or abort command (END
- * TRANSACTION or ROLLBACK or ABORT)
+ * Returns true if SQL is transaction commit or rollback command (COMMIT,
+ * END TRANSACTION, ROLLBACK or ABORT)
  */
-int is_commit_query(Node *node)
+bool is_commit_or_rollback_query(Node *node)
+{
+	return is_commit_query(node) || is_rollback_query(node);
+}
+
+/*
+ * Returns true if SQL is transaction commit command (COMMIT or END
+ * TRANSACTION)
+ */
+bool is_commit_query(Node *node)
 {
 	TransactionStmt *stmt;
 
 	if (node == NULL || !IsA(node, TransactionStmt))
-		return 0;
+		return false;
 
 	stmt = (TransactionStmt *)node;
-	return stmt->kind == TRANS_STMT_COMMIT || stmt->kind == TRANS_STMT_ROLLBACK;
+	return stmt->kind == TRANS_STMT_COMMIT;
+}
+
+/*
+ * Returns true if SQL is transaction rollback command (ROLLBACK or
+ * ABORT)
+ */
+bool is_rollback_query(Node *node)
+{
+	TransactionStmt *stmt;
+
+	if (node == NULL || !IsA(node, TransactionStmt))
+		return false;
+
+	stmt = (TransactionStmt *)node;
+	return stmt->kind == TRANS_STMT_ROLLBACK;
 }
 
 /*
@@ -3239,27 +3263,27 @@ static int is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 /*
  * check if query is needed to wait completion
  */
-int is_strict_query(Node *node)
+bool is_strict_query(Node *node)
 {
 	switch (node->type)
 	{
 		case T_SelectStmt:
 		{
 			SelectStmt *stmt = (SelectStmt *)node;
-			return (stmt->intoClause || stmt->lockingClause) ? 1 : 0;
+			return stmt->intoClause != NULL|| stmt->lockingClause != NIL;
 		}
 
 		case T_UpdateStmt:
 		case T_InsertStmt:
 		case T_DeleteStmt:
 		case T_LockStmt:
-			return 1;
+			return true;
 
 		default:
-			return 0;
+			return false;
 	}
 
-	return 0;
+	return false;
 }
 
 int check_copy_from_stdin(Node *node)

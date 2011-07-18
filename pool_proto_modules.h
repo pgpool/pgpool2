@@ -150,10 +150,12 @@ extern int RowDescription(POOL_CONNECTION *frontend,
 
 extern POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *string, int protoVersion);
 extern int is_select_query(Node *node, char *sql);
-extern int is_sequence_query(Node *node);
-extern int is_start_transaction_query(Node *node);
-extern int is_commit_query(Node *node);
-extern int is_strict_query(Node *node); /* returns non 0 if this is strict query */
+extern bool is_sequence_query(Node *node);
+extern bool is_start_transaction_query(Node *node);
+extern bool is_commit_query(Node *node);
+extern bool is_rollback_query(Node *node);
+extern bool is_commit_or_rollback_query(Node *node);
+extern bool is_strict_query(Node *node); /* returns non 0 if this is strict query */
 extern int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node);
 extern POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *query, InsertStmt *node, int lock_kind);
 extern char *parse_copy_data(char *buf, int len, char delimiter, int col_id);

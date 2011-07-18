@@ -368,7 +368,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	if (!RAW_MODE)
 	{
 		/* check if query is "COMMIT" or "ROLLBACK" */
-		commit = is_commit_query(node);
+		commit = is_commit_or_rollback_query(node);
 
 		/*
 		 * Query is not commit/rollback
@@ -519,7 +519,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	pool_where_to_send(query_context, query, node);
 
 	/* check if query is "COMMIT" or "ROLLBACK" */
-	commit = is_commit_query(node);
+	commit = is_commit_or_rollback_query(node);
 
 	if (REPLICATION || PARALLEL_MODE)
 	{
@@ -1262,6 +1262,8 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 
 			TSTATE(backend, i) = kind;
 
+			pool_log("ReadyForQuery: transaction state:%c", state);
+
 			/*
 			 * The transaction state to be returned to frontend is
 			 * master's.
@@ -1295,7 +1297,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		{
 			/*
 			 * If the query was BEGIN/START TRANSACTION, clear the
-			 * history that we had writing command in the transaction
+			 * history that we had a writing command in the transaction
 			 * and forget the transaction isolation level.
 			 */
 			if (is_start_transaction_query(node))
