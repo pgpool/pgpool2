@@ -2142,7 +2142,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 
 			case 'E':	/* ErrorResponse */
 				status = ErrorResponse3(frontend, backend);
-				pool_set_command_success();
+				pool_unset_command_success();
 				if (TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID :
 						   REAL_MASTER_NODE_ID) != 'I')
 					pool_set_failed_transaction();
