@@ -1288,54 +1288,57 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		pool_flush(frontend);
 	}
 
-	if (pool_is_query_in_progress() && pool_is_command_success())
+	if (pool_is_query_in_progress())
 	{
-		node = pool_get_parse_tree();
-		query = pool_get_query_string();
-
-		if (node)
+		if (pool_is_command_success())
 		{
-			/*
-			 * If the query was BEGIN/START TRANSACTION, clear the
-			 * history that we had a writing command in the transaction
-			 * and forget the transaction isolation level.
-			 */
-			if (is_start_transaction_query(node))
-			{
-				pool_unset_writing_transaction();
-				pool_unset_failed_transaction();
-				pool_unset_transaction_isolation();
-			}
+			node = pool_get_parse_tree();
+			query = pool_get_query_string();
 
-			/*
-			 * SET TRANSACTION ISOLATION LEVEL SERIALIZABLE or SET
-			 * SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL
-			 * SERIALIZABLE, remember it.
-			 */
-			else if (is_set_transaction_serializable(node, query))
+			if (node)
 			{
-				pool_set_transaction_isolation(POOL_SERIALIZABLE);
-			}
+				/*
+				 * If the query was BEGIN/START TRANSACTION, clear the
+				 * history that we had a writing command in the transaction
+				 * and forget the transaction isolation level.
+				 */
+				if (is_start_transaction_query(node))
+				{
+					pool_unset_writing_transaction();
+					pool_unset_failed_transaction();
+					pool_unset_transaction_isolation();
+				}
 
-			/*
-			 * If 2PC commands has been executed, automatically close
-			 * transactions on standbys if there is any open
-			 * transaction since 2PC commands close transaction on
-			 * primary.
-			 */
-			else if (is_2pc_transaction_query(node, query))
-			{
-				if (close_standby_transactions(frontend, backend) != POOL_CONTINUE)
-					return POOL_END;
-			}
+				/*
+				 * SET TRANSACTION ISOLATION LEVEL SERIALIZABLE or SET
+				 * SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL
+				 * SERIALIZABLE, remember it.
+				 */
+				else if (is_set_transaction_serializable(node, query))
+				{
+					pool_set_transaction_isolation(POOL_SERIALIZABLE);
+				}
 
-			/*
-			 * If the query was not READ SELECT, remember that we had
-			 * a write query in this transaction.
-			 */
-			else if (!is_select_query(node, query))
-			{
-				pool_set_writing_transaction();
+				/*
+				 * If 2PC commands has been executed, automatically close
+				 * transactions on standbys if there is any open
+				 * transaction since 2PC commands close transaction on
+				 * primary.
+				 */
+				else if (is_2pc_transaction_query(node, query))
+				{
+					if (close_standby_transactions(frontend, backend) != POOL_CONTINUE)
+						return POOL_END;
+				}
+
+				/*
+				 * If the query was not READ SELECT, remember that we had
+				 * a write query in this transaction.
+				 */
+				else if (!is_select_query(node, query))
+				{
+					pool_set_writing_transaction();
+				}
 			}
 		}
 		pool_unset_query_in_progress();
