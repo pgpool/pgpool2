@@ -507,7 +507,7 @@ stored.</p>
 must rewrite queries so that the results sent back from the backend
 nodes can be merged into one result.</p>
 
-<h4><p>3.2.2. Defining replicate_def table</p></h4>
+<h4><p>3.2.3. Defining replicate_def table</p></h4>
 <p>
 When the table that does the replication to one SQL sentence with the table 
 registered in dist_def by uniting tables is specified, information on the 
@@ -527,7 +527,15 @@ CREATE TABLE pgpool_catalog.replicate_def (
     PRIMARY KEY (dbname, schema_name, table_name)
 );
 </pre>
-
+<p>
+replicate_def includes table's meta data information(dbname、schema_name、table_name、col_list、type_list).
+</p>
+<p>
+All the query analysis and query rewriting process are depending on the
+information (table, column and type) stored in dist_def and/or
+replicate_def table.  If the information is not correct, analysis and
+query rewriting process will produce wrong results.
+</p>
 
 <h3>3.3. <a name="dist-def">Defining Distribution Rules</a></h3>
 
