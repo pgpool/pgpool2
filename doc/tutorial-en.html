@@ -344,7 +344,9 @@ branches, tellers, accounts, and history tables on all the nodes (5432,
 
 <h2>3. <a name="parallel">Your First Parallel Query</a></h2>
 <p>
-Data within the different range is stored in two or more data base nodes in a parallel Query. This is called a partitioning. Moreover, the same data as two or more data base nodes can be reproduced with partitioning.  
+Data within the different range is stored in two or more data base nodes in a parallel Query. This is called a partitioning. 
+Moreover you could replicate some of tables among database nodes even
+in the parallel query mode.
 </p>
 
 <p>To enable parallel query in pgpool-II, you must set up another
@@ -379,10 +381,13 @@ configured so that pgpool-II accepts those connections.</p>
 <p>
 Attention: The replication is not done for the table that does the partitioning
 though a parallel Query and the replication can be made effective at the same time. 
-The data base made by Moreover, because the composition of the data stored in 
-the data base is different in a parallel Query and the replication, that is, 
-"bench_replication" created in section "2. <a href="#replication">Your
-First Replication</a>" cannot be reused.</p>
+
+Attention: You can have both partitioned tables and replicated
+tables. However a table cannot be a partioned and replicated one at
+the same time. Because the data structure of partioned tables and
+replicated tables are different, "bench_replication" database created
+in section "2. <a href="#replication">Your First Replication</a>"
+cannot be reused in parallel query mode.</p>
 
 <pre>
 replication_mode = true
@@ -401,13 +406,12 @@ load_balance_mode = true
 
 <h3>3.2. <a name="system-db">Configuring SystemDB</a></h3>
 
-<p>
-There is no difference in the data base the system data base and usually. 
-However, the function of dblink is defined in the system data base, and 
-the table that stores a distribution rule.. It is necessary to define dist_def. Moreover,
-the data base node One can make the system data base, and pgpool-II can be 
-distributed in the load by connecting the cascade. 
-</p>
+<p> "System database" is just an ordinaly database. The only
+requirement is, dblink functions and the dist_def table, which
+describes partioning rule, must be installed in the system
+database. You could have system database on a database node, or you
+could have multiple node having system database by using cascade
+configuration of pgpool-II.  </p>
 
 <p>In this section, we will create SystemDB within the 5432 port
 node. The following list is the configuration parameters for
@@ -454,20 +458,18 @@ following command to define dblink functions.</p>
 <pre>$ psql -f /usr/local/pgsql/share/contrib/dblink.sql -p 5432 pgpool</pre>
 
 <h4><p>3.2.2. Defining dist_def table</p></h4>
-
-<p>Next, we will define a table called "dist_def" to hold the
-distribution rules. When pgpool-II was installed, a file called
-<code>system_db.sql</code> should have been installed in
-<code>/usr/local/share/system_db.sql</code> (note that in this
-tutorial, we are using the default installation directory,
-<code>/usr/local</code>). <code>systeym_db.sql</code> contains
-definitions to create special tables including "dist_def"
-table. Execute the following command to define "dist_def" table.</p>
-
-<pre>$ psql -f /usr/local/share/system_db.sql -p 5432 -U pgpool pgpool</pre>
-
-<p>In <code>system_db.sql</code>, tables including "dist_def" are
-installed in "pgpool_catalog" schema. If you have configured
+<p>
+Define a table called "dist_def", which has the partitioning rule, in
+database called "pgpool".
+After installing pgpool-II, you will have <code>system_db.sql</code>,
+which is the <code>psql</code> script to generate the system database.
+</p>
+<pre>
+$ psql -f /usr/local/share/system_db.sql -p 5432 -U pgpool pgpool
+</pre>
+<p>
+dist_def table is created in pgpool_catalog schema.
+If you have configured
 <code>system_db_schema</code> to use other schema, you need to edit
 <code>system_db.sql</code> accordingly.</p>
 
