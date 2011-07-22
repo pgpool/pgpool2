@@ -1,0 +1,525 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+<title>pgpool-II 入门教程</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link href="pgpool.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+<h1>pgpool-II 入门教程</h1>
+<p>欢迎阅读 pgpool-II 入门教程。从本教程中，你将学会如何安装，设置 pgpool-II 以及使用 pgpool-II 运行并行查询和复制。我们假设你已经知道PostgreSQL的基础操作，所以如果有需要，请先参考 PostgreSQL 的文档。</p>
+
+<dl>
+  <dt><em>目录</em></dt>
+  <dt>1. <a href="#start">让我们开始吧！</a></dt>
+  <dd>1.1. <a href="#install">安装 pgpool-II</a></dd>
+  <dd>1.2. <a href="#config">配置文件</a></dd>
+  <dd>1.3. <a href="#pcp-config">配置 PCP 命令</a></dd>
+  <dd>1.4. <a href="#db-node">准备数据库节点</a></dd>
+  <dd>1.5. <a href="#start-shutdown">启动/停止 pgpool-II</a></dd>
+  <dt>2. <a href="#replication">你的第一个复制</a></dt>
+  <dd>2.1. <a href="#replication-config">配置复制</a></dd>
+  <dd>2.2. <a href="#replication-check">检查复制</a></dd>
+  <dt>3. <a href="#parallel">你的第一个并行查询</a></dt>
+  <dd>3.1. <a href="#parallel-config">配置并行查询</a></dd>
+  <dd>3.2. <a href="#system-db">配置系统数据库</a></dd>
+  <dd>3.3. <a href="#dist-def">定义分发规则</a></dd>
+  <dd>3.4. <a href="#replicate-def">定义复制规则</a></dd>
+  <dd>3.5. <a href="#parallel-check">检查并行查询</a></dd>
+</dl>
+
+
+<h2>1. <a name="start">让我们开始吧！</a></h2>
+
+<p>首先，在使用复制和并行查询前，我们必须学习如何安装、配置 pgpool-II 和数据库节点。</p>
+
+<h3>1.1. <a name="install">安装 pgpool-II</a></h3>
+
+<p>安装 pgpool-II 非常简单。在你解压源码 tar 包的目录中，执行以下命令。</p>
+
+<pre>
+$ ./configure
+$ make
+$ make install
+</pre>
+
+<p><code>configure</code> 脚本收集你的系统信息并用于编译过程。你可以通过传递命令行参数到 <code>configure</code> 脚本来改变它的默认行为，例如安装目录。默认情况下，pgpool-II将安装到 <code>/usr/local</code> 目录。</p>
+
+<p><code>make</code> 命令编译源码，<code>make install</code> 命令将安装执行文件。你必须对安装目录有写入权限。</p>
+
+<p>在本教材中，我们将安装 pgpool-II 到默认的 <code>/usr/local</code> 目录中。</p>
+
+<p><em>注</em>: pgpool-II 需要 PostgreSQL 7.4 或更高版本（版本 3 的协议）的 libpq 。如果 <code>configure</code> 脚本显示以下的错误信息，则可能是 libpq 库没有被安装或者它不是版本 3 的。</p>
+
+<pre>configure: error: libpq is not installed or libpq is old</pre>
+
+<p>如果是版本 3 的库，但还是显示了以上消息，则你的 libpq 库可能无法被 <code>configure</code> 脚本识别。</p>
+
+<p><code>configure</code> 脚本会在 <code>/usr/local/pgsql</code> 目录搜索 libpq 库。如果你安装 PostgreSQL 到 <code>/usr/local/pgsql</code> 之外的其他目录，在执行 <code>configure</code> 时，请使用 <code>--with-pgsql</code> ，或者同时使用 <code>--with-pgsql-includedir</code> 和 <code>--with-pgsql-libdir</code> 的命令行选项。</p>
+
+<h3>1.2. <a name="config">配置文件</a></h3>
+
+<p>pgpool-II 的配置参数保存在 <code>pgpool.conf</code> 文件中。文件以每行 “<code>parameter = value</code>” 的格式保存。当你安装 pgpool-II 后， <code>pgpool.conf.sample</code> 被自动建立。我们建议拷贝或者重命名它为 <code>pgpool.conf</code> ，然后你可以随意编辑它。</p>
+
+<pre>$ cp /usr/local/etc/pgpool.conf.sample /usr/local/etc/pgpool.conf</pre>
+
+<p>pgpool-II 默认只接受到 9999 端口的本地连接。如果你希望从其他主机接受连接，请设置 <code>listen_addresses</code> 为 '*'.</code></p>
+
+<pre>
+listen_addresses = 'localhost'
+port = 9999
+</pre>
+
+<p>在本教程中我们将使用默认参数。</p>
+
+<h3>1.3. <a name="pcp-config">配置 PCP 命令</a></h3>
+
+<p>pgpool-II 有一个用于管理功能的接口，用于通过网络获取数据库节点信息、关闭 pgpool-II 等。要使用 PCP 命令，必须进行用户认证。这种认证和 PostgreSQL 的用户认证不同。这需要在 <code>pcp.conf<code> 文件中定义一个用户和密码。在这个文件中，一个用户名和密码成对地出现在每一行中，它们用冒号（:）隔开。密码为用 md5 哈希加密的格式。</p>
+
+<pre>postgres:e8a48653851e28c69d0506508fb27fc5</pre>
+<p>在你安装 pgpool-II时， <code>pcp.conf.sample</code> 被自动建立。我们建议复制一份并重命名为 <code>pcp.conf</code> 并且编辑它。</p>
+<pre>$ cp /usr/local/etc/pcp.conf.sample /usr/local/etc/pcp.conf</pre>
+
+<p>为了加密你的密码为 md5 哈希格式，请使用 pg_md5 命令，它作为 pgpool-II 执行文件套件的一部分被安装。<code>pg_md5</code> 使用一个命令行参数，并显示它的 md5 哈希文本。</p>
+
+<p>例如，使用 “postgres” 作为命令行参数，<code>pg_md5</code> 会显示 md5 哈希的文本到标准输出。</p>
+
+<pre>
+$ /usr/bin/pg_md5 postgres
+e8a48653851e28c69d0506508fb27fc5
+</pre>
+
+<p>PCP 命令通过网络执行，所以必须在 <code>pgpool.conf</code> 文件中配置 <code>pcp_port</code> 端口。</p>
+
+<p>在本教程中，我们将使用默认的 9898 作为 <code>pcp_port</code> 的参数。</p>
+
+<pre>pcp_port = 9898</pre>
+
+<h3>1.4. <a name="db-node">准备数据库节点</a></h3>
+
+<p>现在，我们需要设置用于 pgpool-II 的后台 PostgreSQL 服务器了。这些服务器可以与 pgpool-II 在同一台主机上，也可以在独立的主机上。如果你决定将所有服务器都放在同一台主机上，必须为每个服务分配不同的端口。如果服务器被安置在不同的机器上，他们必须被正确以便可以通过网络接受 pgpool-II 的连接。</p>
+
+<p>在本教程中，我们将三台服务器放在与 pgpool-II 相同的机器上，分别给它们分配端口号 5432，5433，5434。要配置 pgpool-II，请如下编辑 <code>pgpool.conf</code>。<pre>
+backend_hostname0 = 'localhost'
+backend_port0 = 5432
+backend_weight0 = 1
+backend_hostname1 = 'localhost'
+backend_port1 = 5433
+backend_weight1 = 1
+backend_hostname2 = 'localhost'
+backend_port2 = 5434
+backend_weight2 = 1
+</pre>
+
+<p>
+分别为 <code>backend_hostname</code>，<code>backend_port</code>，<code>backend_weight</code> 设置节点的主机名，端口号和负载均衡系数。在每个参数串的后面，必须通过添加从0开始（例如 0，1，2，&hellip;）的整数来指出节点编号。
+</p>
+
+<p><code>backend_weight</code> 参数都为 1 ，这意味着 SELECT 查询被平均分配到三台服务器上。</p>
+
+<h3>1.5. <a name="start-shutdown">启动/停止 pgpool-II</a></h3>
+
+<p>要启动 pgpool-II，在终端中执行以下命令。</p>
+
+<pre>$ pgpool</pre>
+
+<p>
+然而，以上的命令不打印日志信息，因为 pgpool 脱离终端了。如果你想显示 pgpool 日志信息，你需要传递 <code>-n</code> 到 pgpool 命令。此时 pgpool-II 作为非守护进程模式运行，也就不会脱离终端了。
+</p>
+
+<pre>
+$ pgpool -n &
+</pre>
+
+<p>日志消息会打印到终端，所以推荐使用如下的选项。</p>
+
+<pre>$ pgpool -n -d &gt; /tmp/pgpool.log 2&gt;&1 &</pre>
+
+<p><code>-d</code> 选项启用调试信息生成。</p>
+
+<p>
+以上命令持续追加日志消息到 <code>/tmp/pgpool.log</code> 中。如果你需要切换日志文件，可以将日志传递到一个支持日志轮换功能的外部命令。例如，你可以使用 Apache2 带的 rotatelogs 工具。
+</p>
+
+<pre>
+$ pgpool -n 2>&1 | /usr/local/apache2/bin/rotatelogs \
+  -l -f /var/log/pgpool/pgpool.log.%A 86400 &
+</pre>
+<p>这将生成名称类似于 “<code>pgpool.log.Thursday</code>” 的日志文件，然后在每天午夜 00:00 轮换日志文件。如果日志文件已经存在，rotatelogs 将追加日志到这个文件中。如果想在轮换前删除旧日志文件，你可以使用 cron：</p>
+<pre>
+55 23 * * * /usr/bin/find /var/log/pgpool -type f -mtime +5 -exec /bin/rm -f '{}' \;
+</pre>
+<p>
+请注意 rotatelogs 在某些发行版中可能存在于 <code> /usr/sbin/rotatelogs2 </code> 。-f 选项让 rotatelogs 在启动的时候生成一个日志文件，这个功能随 apache 2.2.9 或更高版本提供。
+</p>
+
+<p> 
+而且 <a href="http://www.cronolog.org"><code>cronolog</code></a> 对你可能有用。
+</p>
+
+<pre>
+$ pgpool -n 2>&1 | /usr/sbin/cronolog \
+  --hardlink=/var/log/pgsql/pgpool.log \
+  '/var/log/pgsql/%Y-%m-%d-pgpool.log' &
+</pre>
+
+<p>要停止 pgpool-II 进程，执行以下的命令。</p>
+
+<pre>$ pgpool stop</pre>
+
+<p>
+如果还有客户端连接着， pgpool-II 等待它们断开连接，然后才结束运行。如果你想强制关闭 pgpool-II ，执行以下的命令来代替之前的命令。
+</p>
+
+<pre>$ pgpool -m fast stop</pre>
+
+<h2>2. <a name="replication">你的第一个复制</a></h2>
+
+<p>复制可以让相同的数据拷贝到多个数据库节点。</p>
+
+<p>
+在本节中，我们将使用三个已经在“1. <a href="#start">让我们开始吧！</a>”小节中设置好了的数据库节点，一步步建立数据库复制系统。用于复制的示例数据将由 pgbench 基准测试程序生成。
+</p>
+
+<h3>2.1. <a name="replication-config">配置复制</a></h3>
+
+<p>要启用数据库复制功能，需要设置 <code>pgpool.conf</code> 文件中的 <code>replication_mode</code> 为 true 。</p>
+
+<pre>replication_mode = true</pre>
+
+<p>当 <code>replication_mode</code> 被设置为 true，pgpool-II 将发送一份接收到的查询的拷贝到所有的数据库节点。</p>
+
+<p>当 <code>load_balance_mode</code> 被设置为 true，pgpool-II 将在数据库节点之间分发 SELECT 查询。</p>
+
+<pre>load_balance_mode = true</pre>
+
+<p>在本章中，我们将同时启用 <code>replication_mode</code> 和 <code>load_balance_mode</code> 。</p>
+
+<h3>2.2. <a name="replication-check">检查复制</a></h3>
+
+<p>要使 <code>pgpool.conf</code> 中的改动生效，必须重启 pgpool-II 。请参考“1.5 <a href="#start-shutdown">启动/停止 pgpool-II</a>”小节。</p>
+
+<p>在配置完 <code>pgpool.conf</code> 且重新启动 pgpool-II 后，让我们试试复制，检查它是否工作正常。</p>
+
+<p>首先，我们需要建立一个用于复制的数据库。我们将给它命名为“bench_replication”。这个数据库需要被建立在所有的节点中。在 pgpool-II 中使用 <code>createdb</code> 命令，数据库将被在所有节点中建立。</p>
+
+<pre>$ createdb -p 9999 bench_replication</pre>
+
+<p>然后，使用 <code>-i</code> 选项执行 pgbench。<code>-i</code> 使用预设的表和数据初始化这个数据库。</p>
+
+<pre>$ pgbench -i -p 9999 bench_replication</pre>
+
+<p>下表是通过 <code>pgbench -i</code> 建立的表和数据的摘要。如果在所有的节点中，列出的表和数据都被建立了，则说明复制运行正常。</p>
+
+<table border="1" align="center">
+<tr>
+<th>表名</th>
+<th>行数</th>
+</tr>
+<tr>
+<td>branches</td>
+<td>1</td>
+</tr>
+<tr>
+<td>tellers</td>
+<td>10</td>
+</tr>
+<tr>
+<td>accounts</td>
+<td>100000</td>
+</tr>
+<tr>
+<td>history</td>
+<td>0</td>
+</tr>
+</table>
+
+<p>让我们使用一个简单的 shell 脚本在所有节点中检查以上内容。以下脚本将显示所有的节点中 branches，tellers，accounts 和 history 表的行数。</p>
+
+<pre>$ for port in 5432 5433 5434; do
+&gt;     echo $port
+&gt;     for table_name in branches tellers accounts history; do
+&gt;         echo $table_name
+&gt;         psql -c &quot;SELECT count(*) FROM $table_name&quot; -p $port bench_replication
+&gt;     done
+&gt; done
+</pre>
+
+<h2>3. <a name="parallel">你的第一个并行查询</a></h2>
+<p>
+在并行查询中，不同范围的数据存储在两个或更多数据库节点中。这叫做分区。而且，即使在并行查询模式中，你也可以在数据库节点之间对一些表进行复制。
+</p>
+
+<p>为了在 pgpool-II 中启用并行查询，你必须设置另一个叫做“系统数据库”的数据库（本系统数据库为 pgpool-II 使用的用于存放信息的数据库）。</p>
+
+<p>系统数据库包含用户定义的用来确定数据将包含到哪个数据库中的规则。另一个系统数据库的用途是使用 dblink 将从数据库节点发回的数据合并。</p>
+
+<p>
+在本章，我们将使用我们在“1. <a href="#start">让我们开始吧！</a>”小节中设置好的三个数据库节点，并带领你一步步建立一个并行查询数据库系统。我们同样会再次使用 pgbench 来创建示例数据。
+</p>
+
+<h3>3.1. <a name="parallel-config">配置并行查询</a></h3>
+
+<p>要启用并行查询功能，请设置 <code>pgpool.conf</code> 文件中的<code>parallel_mode</code> 为 true 。</p>
+
+<pre>parallel_mode = true</pre>
+
+<p>仅仅设置 <code>paralle_mode</code> 为 true 不会自动启动并行查询。pgpool-II 需要系统数据库和用于分发数据到数据库节点的规则。</p>
+
+<p>而且，系统数据库使用的 dblink 需要连接到 pgpool-II。因此，需要设置 <code>listen_addresses</code> 以便 pgpool-II 接受这些连接。</p>
+
+<pre>listen_addresses = '*'</pre>
+
+<p>
+注意：你可以同时拥有分区表和复制表。但是一个表不能同时被分区和复制。因为分区表和复制表的结构不同，“2. <a href="#replication">你的第一个复制</a>”小节中建立的“bench_replication”数据库无法用于并行查询模式。
+</p>
+<pre>
+replication_mode = true
+load_balance_mode = false
+</pre>
+<p>
+或者
+</p>
+<pre>
+replication_mode = false
+load_balance_mode = true
+</pre>
+
+<p>在本小节，我们将设置 <code>parallel_mode</code> 和 <code>load_balance_mode</code> 为 true，<code>listen_addresses</code> 为 '*'，<code>replication_mode</code>为 false 。</p>
+
+<h3>3.2. <a name="system-db">配置系统数据库</a></h3>
+
+<p>
+“系统数据库”实际上就是一个普通的数据库。只是必须在系统数据库中安装 dblink 函数和用于描述分区规则的 dist_def 表。你可以让系统数据库存放于某个数据库节点中，也可以通过级联的方式配置 pgpool-II，让多个数据库节点拥有系统数据库。
+</p>
+
+<p>在本小节，我们将在 5432 端口的节点建立 SystemDB。以下列出了系统数据库的配置参数。</p>
+
+<pre>
+system_db_hostname = 'localhost'
+system_db_port = 5432
+system_db_dbname = 'pgpool'
+system_db_schema = 'pgpool_catalog'
+system_db_user = 'pgpool'
+system_db_password = ''
+</pre>
+
+<p>实际上，以上为 <code>pgpool.conf</code> 的默认设置。现在，我们必须建立一个叫做“pgpool”的用户，并建立一个属主为“pgpool”的名为“pgpool”的数据库。</p>
+
+<pre>
+$ createuser -p 5432 pgpool
+$ createdb -p 5432 -O pgpool pgpool
+</pre>
+
+<h4><p>3.2.1. 安装 dblink</p></h4>
+
+<p>然后，我们必须在“pgpool”数据库中安装 dblink。dblink 是包含在 PostgreSQL 源码包 <code>contrib</code> 目录中包含的一个工具。</p>
+
+<p>要在你的系统中安装 dblink，请执行以下命令。</p>
+
+<pre>
+$ USE_PGXS=1 make -C contrib/dblink
+$ USE_PGXS=1 make -C contrib/dblink install
+</pre>
+
+<p>在 dblink 被安装到你的系统中后，我们将在“pgpool”数据库中定义 dblink 函数。如果 PostgreSQL 被安装到 <code>/usr/local/pgsql</code>，<code>dblink.sql</code>（一个包含函数定义的文件）应该被安装到了 <code>/usr/local/pgsql/share/contrib</code>。那么，执行以下的命令来定义 dblink 函数。</p>
+
+<pre>$ psql -f /usr/local/pgsql/share/contrib/dblink.sql -p 5432 pgpool</pre>
+
+<h4><p>3.2.2. 定义 dist_def 表</p></h4>
+
+<p>
+在数据库“pgpool”中定义一个“dist_def”表，用于保存分区规则。在 pgpool-II 安装后，你会得到一个 <code>system_db.sql</code>，它是一个可用于生成系统数据库的 <code>psql</code> 脚本。
+</p>
+<pre>
+$ psql -f /usr/local/share/system_db.sql -p 5432 -U pgpool pgpool
+</pre>
+<p> dist_def 表被建立到 pgpool_catalog 这个 schema 中。如果你配置 <code>system_db_schema</code> 使用了其他的 schema，你需要相应地编辑 <code>system_db.sql</code>。</p>
+
+<p>“dist_def的定义如下，且表名不能被改变。</p>
+
+<pre>
+CREATE TABLE pgpool_catalog.dist_def (
+    dbname text, -- database name
+    schema_name text, -- schema name
+    table_name text, -- table name
+    col_name text NOT NULL CHECK (col_name = ANY (col_list)), -- distribution key-column
+    col_list text[] NOT NULL, -- list of column names
+    type_list text[] NOT NULL, -- list of column types
+    dist_def_func text NOT NULL, -- distribution function name
+    PRIMARY KEY (dbname, schema_name, table_name)
+);
+</pre>
+
+<p>“dist_def”中保存的 tuple 可以被分为两类。</p>
+
+<ul>
+<li>分发规则 (col_name, dist_def_func)</li>
+<li>表的元信息 (dbname, schema_name, table_name, col_list, type_list)</li>
+</ul>
+
+<p>
+分发规则确定如何分发数据到特定节点。数据将依赖“col_name”的值来进行分发。“dist_def_func”是一个函数，它使用“col_name”列的值做参数，返回一个指出数据将要存储的数据库节点 ID 的适当整数。
+</p>
+
+<p>元信息用于重写查询。并行查询必须重写查询比便让从后台节点返回的数据可以被合并为一个结果集。</p>
+
+<h4><p>3.2.2. 定义 replicate_def 表</p></h4>
+<p>
+如果你想在 SELECT 语句的并行模式中使用复制的表，你需要在一个叫做 replicate_def 的表中注册这些表的信息（复制规则）。replicate_def 表在定义 dist_def 表的时候已经由 system_db.sql 创建。replicate_def 表的定义如下。
+</p>
+<pre>
+CREATE TABLE pgpool_catalog.replicate_def (
+    dbname text, -- database name
+    schema_name text, -- schema name
+    table_name text, -- table name
+    col_list text[] NOT NULL, -- list of column names
+    type_list text[] NOT NULL, -- list of column types
+    PRIMARY KEY (dbname, schema_name, table_name)
+);
+</pre>
+
+<h3>3.3. <a name="dist-def">定义分发规则</a></h3>
+
+<p>
+在本教材中，我们将定义规则用于分发 pgbench 的示例数据到三个数据库节点中。示例数据将通过“<code>pgbench -i -s 3</code>”（例如比例因子为3）建立。在本小节，我们将建立一个叫“bench_parallel”的新数据库。
+</p>
+
+<p>
+在 pgpool-II 的源码中在，你可以在 <code>sample</code> 目录中找到 <code>dist_def_pgbench.sql</code> 文件。我们将使用这个示例文件来为 pgbench 建立分发规则。在解压后的 pgpool-II 的源码目录中执行以下命令。
+</p>
+
+<pre>$ psql -f sample/dist_def_pgbench.sql -p 5432 pgpool</pre>
+
+<p>以下为 <code>dist_def_pgbench.sql</code> 的说明。</p>
+
+<p>在 <code>dist_def_pgbench.sql</code>中，我们往“dist_def”表中插入一行。这里有一个为 accounts 表准备的分发函数。作为关键列，aid 被定义在每个 accounts 表中（也是主键）。</p>
+
+<pre>
+INSERT INTO pgpool_catalog.dist_def VALUES (
+    'bench_parallel',
+    'public',
+    'accounts',
+    'aid',
+    ARRAY['aid', 'bid', 'abalance', 'filler'],
+    ARRAY['integer', 'integer', 'integer', 'character(84)'],
+    'pgpool_catalog.dist_def_accounts'
+);
+</pre>
+
+<p>
+现在，我们必须为 accounts 表定义分发函数。注意你可以对不同的表使用相同的函数。而且，你可以使用 SQL 之外的语言定义函数（例如 PL/pgSQL，PL/Tcl 等等）。
+</p>
+
+<p>accounts 表在初始化时指定了比例因子为 3，aid 的值为 1 到 300000。函数被定义为使数据平均分布到三个数据库节点中。</p>
+
+<p>
+SQL 函数将定义为返回数据库节点的编号。</p>
+
+</p>
+<pre>CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_branches(anyelement)
+RETURNS integer AS $$
+    SELECT CASE WHEN $1 &gt; 0 AND $1 &lt;= 1 THEN 0
+        WHEN $1 &gt; 1 AND $1 &lt;= 2 THEN 1
+        ELSE 2
+    END;
+$$ LANGUAGE sql;
+</pre>
+
+<h3>3.4. <a name="replicate-def">定义复制规则</a></h3>
+<p>复制规则是定义某个表是否被复制的规则。</p>
+
+<p>
+以下表是 pgbench 生成的。branches 表和 tellers 表已经注册。作为结果，accounts 表和使用 branches 表和 tellers 表的查询已经可用。
+</p>
+<pre>
+INSERT INTO pgpool_catalog.replicate_def VALUES (
+    'bench_parallel',
+    'public',
+    'branches',
+    ARRAY['bid', 'bbalance', 'filler'],
+    ARRAY['integer', 'integer', 'character(88)']
+);
+
+INSERT INTO pgpool_catalog.replicate_def VALUES (
+    'bench_parallel',
+    'public',
+    'tellers',
+    ARRAY['tid', 'bid', 'tbalance', 'filler'],
+    ARRAY['integer', 'integer', 'integer', 'character(84)']
+);
+</pre>
+<p>
+在 sample 目录中已经准备好了 replicate_def_pgbench.sql 文件。在源码目录中使用以下方法来定义一个复制规则。执行以下 psql 命令。
+</p>
+
+<pre>
+$ psql -f sample/replicate_def_pgbench.sql -p 5432 pgpool
+</pre>
+
+<h3>3.5. <a name="parallel-check">检查并行</a></h3>
+
+<p>要使 <code>pgpool.conf</code> 中的改动生效，pgpool-II 必须重启。请参考“1.5 <a href="#start-shutdown">启动/停止 pgpool-II</a>”小节。</p>
+
+<p>在配置好 <code>pgpool.conf</code> 并重启 pgpool-II 后，让我们试试并查看并行查询是否运行正常。</p>
+
+<p>
+首先，我们需要建立一个用于分发的数据库。我们将给它命名为“bench_parallel”。这个数据库需要在所有节点上被建立。通过 pgpool-II 使用 <code>createdb</code> 命令，则数据库将被奖励在所有节点上。
+</p>
+
+<pre>$ createdb -p 9999 bench_parallel</pre>
+
+<p>然后，我们将使用 <code>-i -s 3</code> 选项执行 pgbench 。<code>-i</code> 选项使用预定义的表和数据初始化数据库。 <code>-s</code> 选项指出用于初始化的比例因子。</p>
+
+<pre>$ pgbench -i -s 3 -p 9999 bench_parallel</pre>
+
+<p>建立的表和数据在 “3.3. <a href="#dist-def">定义分发规则</a>”小节中列出来了。</p>
+
+<p>
+检查数据是否被正确分发的一个方法是通过 pgpool-II 和直接在后台节点执行一个 SELECT 查询，然后比较两个结果。如果所有都配置正确，“bench_parallel”应该按以下样子分布。
+</p>
+
+<table border="1" align ="center">
+<tr>
+<th >表名</th>
+<th >行数</th>
+</tr>
+<tr>
+		<td>branches</td>
+		<td>3</td>
+</tr>
+<tr>
+		<td>tellers</td>
+		<td>30</td>
+</tr>
+<tr>
+		<td>accounts</td>
+		<td>300000</td>
+</tr>
+<tr>
+		<td>history</td>
+		<td>0</td>
+</tr>
+</table>
+
+<p>
+让我们使用一段简单的 shell 脚本来在所有的节点上和通过 pgpool-II 检查以上的内容。以下脚本将使用 5432，5433,5434 和 9999 端口显示 accounts 表中最小和最大的值。
+</p>
+
+<pre>$ for port in 5432 5433 5434 9999; do
+&gt;     echo $port
+&gt;     psql -c &quot;SELECT min(aid), max(aid) FROM accounts&quot; -p $port bench_parallel
+&gt; done
+</pre>
+
+<div class="copyright">
+<hr>
+<copyright>
+Copyright &copy; 2003 &ndash; 2011 pgpool Global Development Group
+</copyright>
+</div>
+</body>
+</html>
