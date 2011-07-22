@@ -509,10 +509,9 @@ nodes can be merged into one result.</p>
 
 <h4><p>3.2.3. Defining replicate_def table</p></h4>
 <p>
-When the table that does the replication to one SQL sentence with the table 
-registered in dist_def by uniting tables is specified, information on the 
-table that does the replication (replication rule) is registered in the table
-named replicate_def beforehand. 
+If you want to use replicated tables in SELECT in parallel mode, you
+need to register information of such tables(replication rule) to a table
+called replicate_def.
 The replicate_def table has already been made when making it from the 
 system_db.sql file when dist_def is defined. 
 The replicate_def table is defined as follows.
@@ -528,7 +527,7 @@ CREATE TABLE pgpool_catalog.replicate_def (
 );
 </pre>
 <p>
-replicate_def includes table's meta data information(dbname、schema_name、table_name、col_list、type_list).
+replicate_def includes table's meta data information(dbname, schema_name, table_name, col_list, type_list).
 </p>
 <p>
 All the query analysis and query rewriting process are depending on the
