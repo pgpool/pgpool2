@@ -637,7 +637,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		 * The command will be sent to all backends in replication mode
 		 * or master/primary in master/slave mode.
 		 */
-		pool_log("Parse: Unable to parse the query: %s", contents);
+		pool_log("Parse: Unable to parse the query: %s", stmt);
 		parse_tree_list = raw_parser(POOL_DUMMY_QUERY);
 	}
 
