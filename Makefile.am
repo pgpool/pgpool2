@@ -61,7 +61,7 @@ pgpool.8: pgpool.8.in
 
 CLEANFILES = pgpool.8
 EXTRA_DIST = pgpool.8.in sample/pgpool.pam doc/pgpool-ja.html doc/pgpool-en.html \
-		doc/tutorial-ja.html doc/tutorial-en.html doc/pgpool.css \
+		doc/tutorial-ja.html doc/tutorial-en.html doc/tutorial-zh_cn.html doc/pgpool.css \
 		doc/where_to_send_queries.pdf doc/where_to_send_queries.odg doc/pgpool-ja.css \
 		doc/basebackup.sh doc/pgpool_remote_start doc/recovery.conf.sample \
 		sample/pgpool_remote_start sample/pgpool_recovery sample/pgpool_recovery_pitr \

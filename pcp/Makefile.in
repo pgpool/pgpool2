@@ -68,40 +68,51 @@ am_libpcp_la_OBJECTS = pcp.lo pcp_stream.lo pcp_error.lo md5.lo
 libpcp_la_OBJECTS = $(am_libpcp_la_OBJECTS)
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am_pcp_attach_node_OBJECTS = pcp_attach_node.$(OBJEXT)
+am_pcp_attach_node_OBJECTS = pcp_attach_node.$(OBJEXT) \
+	getopt_long.$(OBJEXT)
 pcp_attach_node_OBJECTS = $(am_pcp_attach_node_OBJECTS)
 pcp_attach_node_DEPENDENCIES = libpcp.la
-am_pcp_detach_node_OBJECTS = pcp_detach_node.$(OBJEXT)
+am_pcp_detach_node_OBJECTS = pcp_detach_node.$(OBJEXT) \
+	getopt_long.$(OBJEXT)
 pcp_detach_node_OBJECTS = $(am_pcp_detach_node_OBJECTS)
 pcp_detach_node_DEPENDENCIES = libpcp.la
-am_pcp_node_count_OBJECTS = pcp_node_count.$(OBJEXT)
+am_pcp_node_count_OBJECTS = pcp_node_count.$(OBJEXT) \
+	getopt_long.$(OBJEXT)
 pcp_node_count_OBJECTS = $(am_pcp_node_count_OBJECTS)
 pcp_node_count_DEPENDENCIES = libpcp.la
-am_pcp_node_info_OBJECTS = pcp_node_info.$(OBJEXT)
+am_pcp_node_info_OBJECTS = pcp_node_info.$(OBJEXT) \
+	getopt_long.$(OBJEXT)
 pcp_node_info_OBJECTS = $(am_pcp_node_info_OBJECTS)
 pcp_node_info_DEPENDENCIES = libpcp.la
-am_pcp_pool_status_OBJECTS = pcp_pool_status.$(OBJEXT)
+am_pcp_pool_status_OBJECTS = pcp_pool_status.$(OBJEXT) \
+	getopt_long.$(OBJEXT)
 pcp_pool_status_OBJECTS = $(am_pcp_pool_status_OBJECTS)
 pcp_pool_status_DEPENDENCIES = libpcp.la
-am_pcp_proc_count_OBJECTS = pcp_proc_count.$(OBJEXT)
+am_pcp_proc_count_OBJECTS = pcp_proc_count.$(OBJEXT) \
+	getopt_long.$(OBJEXT)
 pcp_proc_count_OBJECTS = $(am_pcp_proc_count_OBJECTS)
 pcp_proc_count_DEPENDENCIES = libpcp.la
-am_pcp_proc_info_OBJECTS = pcp_proc_info.$(OBJEXT)
+am_pcp_proc_info_OBJECTS = pcp_proc_info.$(OBJEXT) \
+	getopt_long.$(OBJEXT)
 pcp_proc_info_OBJECTS = $(am_pcp_proc_info_OBJECTS)
 pcp_proc_info_DEPENDENCIES = libpcp.la
-am_pcp_promote_node_OBJECTS = pcp_promote_node.$(OBJEXT)
+am_pcp_promote_node_OBJECTS = pcp_promote_node.$(OBJEXT) \
+	getopt_long.$(OBJEXT)
 pcp_promote_node_OBJECTS = $(am_pcp_promote_node_OBJECTS)
 pcp_promote_node_DEPENDENCIES = libpcp.la
-am_pcp_recovery_node_OBJECTS = pcp_recovery_node.$(OBJEXT)
+am_pcp_recovery_node_OBJECTS = pcp_recovery_node.$(OBJEXT) \
+	getopt_long.$(OBJEXT)
 pcp_recovery_node_OBJECTS = $(am_pcp_recovery_node_OBJECTS)
 pcp_recovery_node_DEPENDENCIES = libpcp.la
-am_pcp_stop_pgpool_OBJECTS = pcp_stop_pgpool.$(OBJEXT)
+am_pcp_stop_pgpool_OBJECTS = pcp_stop_pgpool.$(OBJEXT) \
+	getopt_long.$(OBJEXT)
 pcp_stop_pgpool_OBJECTS = $(am_pcp_stop_pgpool_OBJECTS)
 pcp_stop_pgpool_DEPENDENCIES = libpcp.la
 pcp_stop_pgpool_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(pcp_stop_pgpool_LDFLAGS) $(LDFLAGS) -o $@
-am_pcp_systemdb_info_OBJECTS = pcp_systemdb_info.$(OBJEXT)
+am_pcp_systemdb_info_OBJECTS = pcp_systemdb_info.$(OBJEXT) \
+	getopt_long.$(OBJEXT)
 pcp_systemdb_info_OBJECTS = $(am_pcp_systemdb_info_OBJECTS)
 pcp_systemdb_info_DEPENDENCIES = libpcp.la
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
@@ -256,28 +267,28 @@ lib_LTLIBRARIES = libpcp.la
 libpcp_la_SOURCES = pcp.h ../pool_type.h md5.h pcp.c pcp_stream.h pcp_stream.c pcp_error.c md5.c
 libpcp_la_LIBS = 
 include_HEADERS = pcp.h libpcp_ext.h ../pool_type.h ../pool_process_reporting.h
-pcp_stop_pgpool_SOURCES = pcp_stop_pgpool.c pcp.h
+pcp_stop_pgpool_SOURCES = pcp_stop_pgpool.c pcp.h ../getopt_long.c ../getopt_long.h
 pcp_stop_pgpool_LDADD = libpcp.la
 pcp_stop_pgpool_LDFLAGS = 
-pcp_node_count_SOURCES = pcp_node_count.c pcp.h
+pcp_node_count_SOURCES = pcp_node_count.c pcp.h ../getopt_long.c ../getopt_long.h
 pcp_node_count_LDADD = libpcp.la
-pcp_node_info_SOURCES = pcp_node_info.c pcp.h
+pcp_node_info_SOURCES = pcp_node_info.c pcp.h ../getopt_long.c ../getopt_long.h
 pcp_node_info_LDADD = libpcp.la
-pcp_proc_count_SOURCES = pcp_proc_count.c pcp.h
+pcp_proc_count_SOURCES = pcp_proc_count.c pcp.h ../getopt_long.c ../getopt_long.h
 pcp_proc_count_LDADD = libpcp.la
-pcp_proc_info_SOURCES = pcp_proc_info.c pcp.h
+pcp_proc_info_SOURCES = pcp_proc_info.c pcp.h ../getopt_long.c ../getopt_long.h
 pcp_proc_info_LDADD = libpcp.la
-pcp_systemdb_info_SOURCES = pcp_systemdb_info.c pcp.h
+pcp_systemdb_info_SOURCES = pcp_systemdb_info.c pcp.h ../getopt_long.c ../getopt_long.h
 pcp_systemdb_info_LDADD = libpcp.la
-pcp_detach_node_SOURCES = pcp_detach_node.c pcp.h
+pcp_detach_node_SOURCES = pcp_detach_node.c pcp.h ../getopt_long.c ../getopt_long.h
 pcp_detach_node_LDADD = libpcp.la
-pcp_attach_node_SOURCES = pcp_attach_node.c pcp.h
+pcp_attach_node_SOURCES = pcp_attach_node.c pcp.h ../getopt_long.c ../getopt_long.h
 pcp_attach_node_LDADD = libpcp.la
-pcp_recovery_node_SOURCES = pcp_recovery_node.c pcp.h
+pcp_recovery_node_SOURCES = pcp_recovery_node.c pcp.h ../getopt_long.c ../getopt_long.h
 pcp_recovery_node_LDADD = libpcp.la
-pcp_pool_status_SOURCES = pcp_pool_status.c pcp.h
+pcp_pool_status_SOURCES = pcp_pool_status.c pcp.h ../getopt_long.c ../getopt_long.h
 pcp_pool_status_LDADD = libpcp.la
-pcp_promote_node_SOURCES = pcp_promote_node.c pcp.h
+pcp_promote_node_SOURCES = pcp_promote_node.c pcp.h ../getopt_long.c ../getopt_long.h
 pcp_promote_node_LDADD = libpcp.la
 all: all-am
 
@@ -409,6 +420,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getopt_long.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_attach_node.Po@am__quote@
@@ -445,6 +457,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+
+getopt_long.o: ../getopt_long.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT getopt_long.o -MD -MP -MF $(DEPDIR)/getopt_long.Tpo -c -o getopt_long.o `test -f '../getopt_long.c' || echo '$(srcdir)/'`../getopt_long.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/getopt_long.Tpo $(DEPDIR)/getopt_long.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='../getopt_long.c' object='getopt_long.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o getopt_long.o `test -f '../getopt_long.c' || echo '$(srcdir)/'`../getopt_long.c
+
+getopt_long.obj: ../getopt_long.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT getopt_long.obj -MD -MP -MF $(DEPDIR)/getopt_long.Tpo -c -o getopt_long.obj `if test -f '../getopt_long.c'; then $(CYGPATH_W) '../getopt_long.c'; else $(CYGPATH_W) '$(srcdir)/../getopt_long.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/getopt_long.Tpo $(DEPDIR)/getopt_long.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='../getopt_long.c' object='getopt_long.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o getopt_long.obj `if test -f '../getopt_long.c'; then $(CYGPATH_W) '../getopt_long.c'; else $(CYGPATH_W) '$(srcdir)/../getopt_long.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
