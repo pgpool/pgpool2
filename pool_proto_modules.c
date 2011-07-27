@@ -153,17 +153,31 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 	if (parse_tree_list == NIL)
 	{
-		/*
-		 * Unable to parse the query. Probably syntax error or the
-		 * query is too new and our parser cannot understand. Treat as
-		 * if it were an DELETE command. Note that the DELETE command
-		 * does not execute, instead the original query will be sent
-		 * to backends, which may or may not cause an actual syntax errors.
-		 * The command will be sent to all backends in replication mode
-		 * or master/primary in master/slave mode.
-		 */
-		pool_log("SimpleQuery: Unable to parse the query: %s", contents);
-		parse_tree_list = raw_parser(POOL_DUMMY_QUERY);
+		/* is the query empty? */
+		if (*contents == '\0' || *contents == ';')
+		{
+			/*
+			 * JBoss sends empty queries for checking connections.
+			 * We replace the empty query with SELECT command not
+			 * to affect load balance.
+			 * [Pgpool-general] Confused about JDBC and load balancing
+			 */
+			parse_tree_list = raw_parser(POOL_DUMMY_READ_QUERY);
+		}
+		else
+		{
+			/*
+			 * Unable to parse the query. Probably syntax error or the
+			 * query is too new and our parser cannot understand. Treat as
+			 * if it were an DELETE command. Note that the DELETE command
+			 * does not execute, instead the original query will be sent
+			 * to backends, which may or may not cause an actual syntax errors.
+			 * The command will be sent to all backends in replication mode
+			 * or master/primary in master/slave mode.
+			 */
+			pool_log("SimpleQuery: Unable to parse the query: %s", contents);
+			parse_tree_list = raw_parser(POOL_DUMMY_WRITE_QUERY);
+		}
 	}
 
 	if (parse_tree_list != NIL)
@@ -628,17 +642,31 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	if (parse_tree_list == NIL)
 	{
-		/*
-		 * Unable to parse the query. Probably syntax error or the
-		 * query is too new and our parser cannot understand. Treat as
-		 * if it were an DELETE command. Note that the DELETE command
-		 * does not execute, instead the original query will be sent
-		 * to backends, which may or may not cause an actual syntax errors.
-		 * The command will be sent to all backends in replication mode
-		 * or master/primary in master/slave mode.
-		 */
-		pool_log("Parse: Unable to parse the query: %s", stmt);
-		parse_tree_list = raw_parser(POOL_DUMMY_QUERY);
+		/* is the query empty? */
+		if (*stmt == '\0' || *stmt == ';')
+		{
+			/*
+			 * JBoss sends empty queries for checking connections.
+			 * We replace the empty query with SELECT command not
+			 * to affect load balance.
+			 * [Pgpool-general] Confused about JDBC and load balancing
+			 */
+			parse_tree_list = raw_parser(POOL_DUMMY_READ_QUERY);
+		}
+		else
+		{
+			/*
+			 * Unable to parse the query. Probably syntax error or the
+			 * query is too new and our parser cannot understand. Treat as
+			 * if it were an DELETE command. Note that the DELETE command
+			 * does not execute, instead the original query will be sent
+			 * to backends, which may or may not cause an actual syntax errors.
+			 * The command will be sent to all backends in replication mode
+			 * or master/primary in master/slave mode.
+			 */
+			pool_log("Parse: Unable to parse the query: %s", stmt);
+			parse_tree_list = raw_parser(POOL_DUMMY_WRITE_QUERY);
+		}
 	}
 
 	if (parse_tree_list != NIL)

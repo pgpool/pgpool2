@@ -1483,8 +1483,10 @@ int is_select_query(Node *node, char *sql)
 		if (select_stmt->intoClause || select_stmt->lockingClause)
 			return 0;
 
+		/* '\0' and ';' signify empty query */
 		return (*sql == 's' || *sql == 'S' || *sql == '(' ||
-				*sql == 'w' || *sql == 'W' || *sql == 't' || *sql == 'T');
+				*sql == 'w' || *sql == 'W' || *sql == 't' || *sql == 'T' ||
+				*sql == '\0' || *sql == ';');
 	}
 	else if (IsA(node, CopyStmt))
 	{
