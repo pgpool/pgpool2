@@ -600,9 +600,10 @@ void pool_unset_writing_transaction(void)
 {
 	if (!session_context)
 	{
-		pool_error("pool_unset_writing_query: session context is not initialized");
+		pool_error("pool_unset_writing_transaction: session context is not initialized");
 		return;
 	}
+	pool_debug("pool_unset_writing_transaction: done");
 	session_context->writing_transaction = false;
 }
 
@@ -613,9 +614,10 @@ void pool_set_writing_transaction(void)
 {
 	if (!session_context)
 	{
-		pool_error("pool_set_writing_query: session context is not initialized");
+		pool_error("pool_set_writing_transaction: session context is not initialized");
 		return;
 	}
+	pool_debug("pool_set_writing_transaction: done");
 	session_context->writing_transaction = true;
 }
 
@@ -626,7 +628,7 @@ bool pool_is_writing_transaction(void)
 {
 	if (!session_context)
 	{
-		pool_error("pool_is_writing_query: session context is not initialized");
+		pool_error("pool_is_writing_transaction: session context is not initialized");
 		return false;
 	}
 	return session_context->writing_transaction;
@@ -639,9 +641,10 @@ void pool_unset_failed_transaction(void)
 {
 	if (!session_context)
 	{
-		pool_error("pool_unset_failed_query: session context is not initialized");
+		pool_error("pool_unset_failed_transaction: session context is not initialized");
 		return;
 	}
+	pool_debug("pool_unset_failed_transaction: done");
 	session_context->failed_transaction = false;
 }
 
@@ -652,9 +655,10 @@ void pool_set_failed_transaction(void)
 {
 	if (!session_context)
 	{
-		pool_error("pool_set_failed_query: session context is not initialized");
+		pool_error("pool_set_failed_transaction: session context is not initialized");
 		return;
 	}
+	pool_debug("pool_set_failed_transaction: done");
 	session_context->failed_transaction = true;
 }
 
@@ -665,7 +669,7 @@ bool pool_is_failed_transaction(void)
 {
 	if (!session_context)
 	{
-		pool_error("pool_is_failed_query: session context is not initialized");
+		pool_error("pool_is_failed_transaction: session context is not initialized");
 		return false;
 	}
 	return session_context->failed_transaction;
@@ -681,6 +685,7 @@ void pool_unset_transaction_isolation(void)
 		pool_error("pool_unset_transaction_isolation: session context is not initialized");
 		return;
 	}
+	pool_debug("pool_unset_transaction_isolation: done");
 	session_context->transaction_isolation = POOL_UNKNOWN;
 }
 
@@ -694,6 +699,7 @@ void pool_set_transaction_isolation(POOL_TRANSACTION_ISOLATION isolation_level)
 		pool_error("pool_set_transaction_isolation: session context is not initialized");
 		return;
 	}
+	pool_debug("pool_set_transaction_isolation: done");
 	session_context->transaction_isolation = isolation_level;
 }
 
@@ -768,6 +774,7 @@ void pool_unset_command_success(void)
 		pool_error("pool_unset_command_success: session context is not initialized");
 		return;
 	}
+	pool_debug("pool_unset_command_success: done");
 	session_context->command_success = false;
 }
 
@@ -781,6 +788,7 @@ void pool_set_command_success(void)
 		pool_error("pool_set_command_success: session context is not initialized");
 		return;
 	}
+	pool_debug("pool_set_command_success: done");
 	session_context->command_success = true;
 }
 
