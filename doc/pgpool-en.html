@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Wed Jun 29 09:50:01 JST 2011
+Last modified: Fri Aug  5 19:49:00 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -72,7 +72,7 @@ more PostgreSQL clusters, so that the service can continue without interruption
 if one of those clusters fails.</p>
 
 <li>Load Balance</li>
-    <p>If a database is replicated, performing a SELECT query on any
+    <p>If a database is replicated(because running in either replcation mode or master/slave mode), performing a SELECT query on any
 server will return the same result. pgpool-II takes advantage of
 the replication feature in order to reduce the load on each PostgreSQL server.
 It does that by distributing SELECT queries among available servers, improving
@@ -133,6 +133,7 @@ want to use online recovery.
 <p>
 pgpool-II can be downloaded from the <a href="http://pgfoundry.org/projects/pgpool/">pgpool Development page</a>.
 Packages are also provided for various platforms including CentOS, RedHat Enterprise Linux, Fedora and Debian.
+Check appropriate repository.
 </p>
 
 <p>
@@ -259,6 +260,10 @@ cloned to create new databases.
 </p>
 
 </dl>
+
+<p>
+Installing is done. If you are using Solaris or FreeBSD, you need to replace "make" with "gmake" in the above description because those operating systems requires GNU make.
+</p>
 
 <h1>Configuring pgpool-II<a name="config"></a></h1>
 
@@ -412,6 +417,33 @@ installation of pgpool-II. Rename the file to
 <pre>
 cp $prefix/etc/pgpool.conf.sample $prefix/etc/pgpool.conf
 </pre>
+
+<p>
+There are additional sample pgpool.conf for each mode.
+</p>
+<p>
+<table border>
+<tr>
+<th>Mode</th>
+<th>sample file</th>
+</tr>
+
+<tr>
+<td>replication mode</td>
+<td>pgpool.conf.sample-replication</td>
+</tr>
+
+<tr>
+<td>master/slave mode(Slony-I)</td>
+<td>pgpool.conf.sample-master-slave</td>
+</tr>
+
+<tr>
+<td>master/slave mode(Streaming replication)</td>
+<td>pgpool.conf.sample-stream</td>
+</tr>
+</table>
+
 <p>
 An empty line or a line starting with "#" is treated as a
 comment and will be ignored.</p>
@@ -466,7 +498,9 @@ comment and will be ignored.</p>
       This parameter is deprecated for consistency with the default libpq policy. 
       See the backend_hostname parameter definition to adapt your configuration accordingly.
       </font>
-      <p>This parameter was defining the PostgreSQL server's UNIX domain socket directory.<p>
+      <p>This parameter was defining the PostgreSQL server's UNIX domain socket directory.
+	   Default is <code>'/tmp'</code>. 
+	   This parameter can only be set at server start.</p>
   </dd>
 
   <dt><a name="PCP_TIMEOUT"></a>pcp_timeout</dt>
@@ -484,7 +518,8 @@ comment and will be ignored.</p>
       pgpool-II from clients. If more than num_init_children clients
       try to connect to pgpool-II, they are blocked (not rejected)
       until a connection to any pgpool-II process is closed.
-      Up to 2*num_init_children can be queued.</p>
+      Up to 2*num_init_children can be queued.
+	   Number of connections to each PostgreSQL is roughly max_pool*num_init_children</p>
       
 	  <p>Some hints in addition to above:</p>
 	   <p>
@@ -528,7 +563,7 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
       <p>A pgpool-II child process will be terminated after this many
       connections from clients. This parameter is useful on a server
       if it is so busy that child_life_time and connection_life_time
-      are never triggered.
+      are never triggered. Thus this is also usefull to prevent PostgreSQL servers from getting too big.
       You need to reload pgpool.conf if you change this value.
       </p>
   </dd>
@@ -547,13 +582,12 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
   <dt><a name="AUTHENTICATION_TIMEOUT"></a>authentication_timeout</dt>
   <dd>
   <p>Specify the timeout for pgpool authentication. 0 disables the time
-      out, which is the default. You need to restart pgpool-II if you
+      out. Default value is 60. You need to restart pgpool-II if you
       change authentication_timeout.</p>
 
   <dt><a name="LOGDIR"></a>logdir</dt>
   <dd>
-      <p>The directory used for the logs. pgpool_status is written into this 
-      directory.
+      <p>pgpool_status is written into this directory.
        </p>
   </dd>
   <dt><a name="LOG_DESTINATION"></a>log_destination</dt>
@@ -601,7 +635,7 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
   <dt><a name="CONNECTION_CACHE"></a>connection_cache</dt>
   <dd>
       <p>Caches connections to backends when set to true. Default is
-      true.</p>
+      true. You need to restart pgpool-II if you change this value.</p>
   </dd>
 
   <dt><a name="HEALTH_CHECK_TIMEOUT"></a>health_check_timeout</dt>
@@ -637,6 +671,7 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
   <dd>
       <p>The user name to perform health check. This user must exist
       in all the PostgreSQL backends.
+	  Otherwise, health check causes an error.
       You need to reload pgpool.conf if you change health_check_user.
        </p>
   </dd>
@@ -747,7 +782,8 @@ If true, and an error occurs when writing to the backend communication,
 pgpool-II will trigger the fail over procedure . This is the same behavior as of 
 pgpool-II 2.2.x or earlier. If set to false, pgpool will report an error and 
 disconnect the session. 
-Please note that if set, however, pgpool will also do the fail over when 
+If you set this parameter to off, it is recommended that you turn on health checking.
+Please note that even if this parameter is set to off, however, pgpool will also do the fail over when 
 connecting to a backend fails or pgpool detects the administrative shutdown of 
 postmaster. You need to reload pgpool.conf if you change this value.
 </p>
@@ -808,9 +844,8 @@ postmaster. You need to reload pgpool.conf if you change this value.
 
   <dt><a name="BACKEND_HOSTNAME"></a>backend_hostname</dt>
   <dd>
-      <p>Specifies where to connect with the PostgreSQL backend. It can 
+      <p>Specifies where to connect with the PostgreSQL backend.
       It is used by pgpool-II to communicate with the server.
-      This parameter can only be set at server start.
       </p>
       <p>
       For TCP/IP communication, this parameter can take a hostname or an IP address.
@@ -828,6 +863,12 @@ postmaster. You need to reload pgpool.conf if you change this value.
       be continued even if the Master DB is down (not true in some
       modes). In this case, the youngest DB node ID alive will be the
       new Master DB.</p>
+	  <p>
+	  Please note that the DB node which has id 0 has no special meaming
+	  if operated in streaming replication mode.
+	  Rather, you should care about if the DB node is the "primary node" or not.
+	  See <a href="#stream">Streaming Replication</a> for more details.
+	  </p>
       <p>If you plan to use only one PostgreSQL server, specify it by
       <code>backend_hostname0</code>.</p>
 
@@ -1008,8 +1049,9 @@ the backend_hostname2, 3 and so on.</p>
 <h3><a name="connection_pool_mode"></a>Connection Pool Mode</h3>
 
 <p>In connection pool mode, all functions in raw mode and the
-connection pool function can be used. To enable this mode, set
-raw mode configuration parameters and parameters below.</p>
+connection pool function can be used.
+To enable this mode, you need to turn on "connection_cache".
+Following parameters take effect to connection pool.</p>
 
 <dl>
   <dt><a name="MAX_POOL"></a>max_pool</dt>
@@ -1088,6 +1130,7 @@ configuration parameters below must be set in addition to everything above.</p>
       <p>When set to true, SELECT queries will be
       distributed to each backend for load balancing. Default is
       false.</p>
+      <p>This parameter can only be set at server start. </p>
   </dd>
 
   <dt><a name="FAILOVER_IF_AFFECTED_TUPLES_MISMATCH"></a>failover_if_affected_tuples_mismatch</dt>
@@ -1095,6 +1138,9 @@ configuration parameters below must be set in addition to everything above.</p>
 	  <p>When set to true, if backends don't return the same number of affected
     tuples during an INSERT/UPDATE/DELETE, 
 		the backends that differ from most frequent result set are degenerated.
+		If the frequencies are same, the group which includes master DB node(a DB node having the youngest node id) is remained and other groups are degenerated.
+		</p>
+	   <p>
 	  If set to false, the session is terminated and the backends are not
 	  degenerated. Default is false.</p>
   </dd>
@@ -1104,7 +1150,7 @@ configuration parameters below must be set in addition to everything above.</p>
 	  <p>When set to true, if all backends don't return the same packet kind,
 		the backends that differ from most
 	  frequent result set are degenerated. A typical use case is a SELECT
-	  statement part of a transaction, replicate_select set to
+	  statement being part of a transaction, replicate_select set to
 	  true, and SELECT returning a different number of rows among backends.
 	  Non-SELECT statements might trigger this though.
 	  For example, a backend succeeded in an UPDATE, while others
@@ -1158,9 +1204,9 @@ black_function_list = 'nextval,setval,lastval,currval'
 </pre>
 </p>
 <p>
-Please notice that we have lastval, currval in addition to nextval and setval.
+Please note that we have lastval and currval in addition to nextval and setval.
 Though lastval() and currval() are not writing functions, it is wise to add lastval() and currval() to avoid errors in the case when these functions are accidentaly load balanced to other DB node.
-Adding to black_function_list will prevent load balancing.
+Because adding to black_function_list will prevent load balancing.
 </p>
 </dd>
 
@@ -1517,13 +1563,31 @@ balancing. You need to call setAutoCommit(true) to enable autocommit.
 service. The service can be continued if there is at least one backend
 alive.</p>
 
+<h4><p>Specific errors in replication mode</p></h2>
+<p>
+In replication mode, if pgpool finds that the number of affected tuples by INSERT, UPDATE, DELETE are not same, it sends erroneous SQL statement to all DB nodes to abort the transaction if failover_if_affected_tuples_mismatch is set to false
+(degeneration occurs if it is set to true).
+In this case you will see following error messages on client terminal:
+<pre>
+   =# UPDATE t SET a = a + 1;
+   ERROR: pgpool detected difference of the number of update tuples Possible last query was: "update t1 set i = 1;"
+   HINT: check data consistency between master and other db node
+</pre>
+You will see number of updated rows in PostgreSQL log(in this case DB node 0 has 0 updated row and DB node 1 has 1 updated row)
+<pre>
+2010-07-22 13:23:25 LOG:   pid 5490: SimpleForwardToFrontend: Number of affected tuples are: 0 1
+2010-07-22 13:23:25 LOG:   pid 5490: ReadyForQuery: Degenerate backends: 1
+2010-07-22 13:23:25 LOG:   pid 5490: ReadyForQuery: Number of affected tuples are: 0 1
+</pre>
+</p>
+
 <h3><a name="master_slave_mode"></a>Master/Slave Mode</h3>
 
 <p>This mode is used to couple pgpool-II with another master/slave
 replication software (like Slony-I and Streaming replication), which is responsible
 for doing the actual data replication.
 DB nodes' information (backend_hostname, backend_port,
-backend_weight, and backend_data_directory you need the
+backend_weight, backend_flag and backend_data_directory if you need the
 online recovery fonctionality) must be set, in the same way as in the replication mode.
 In addition to that, set
 <code>master_slave_mode</code> and <code>load_balance_mode</code> to
@@ -1559,7 +1623,7 @@ balancing in master/slave mode.
 See <a href="#white_function_list">white_function_list</a> for more details.
 </p>
 
-<h4>Streaming Replication</h4>
+<h4><a name="stream">Streaming Replication</h4>
 <p>
 As stated above, pgpool-II can work together with Streaming Replication, which
 is available since PostgreSQL 9.0. To use it, enable 'master_slave' and
@@ -1596,6 +1660,7 @@ You need to reload pgpool.conf if you change this directive.
 <p>
 You could monitor the replication delay by using the "show pool_status"
 command as well.
+The column name is "standby_delay#"(where '#' should be replaced by DB node id).
 </p>
 </ul>
 </p>
@@ -1613,12 +1678,13 @@ when the primary goes down.
 <p>
 <strong>Caution: If you plan to use multiple standby nodes, we recommend
 to set a delay_threshold to prevent any query directed to other standby
-nodes from retrieving older data.</strong>
+nodes from retrieving older data.
 </p>
 <p>
 If a second standby took over primary when the first standby has already
 taken over too, you would get bogus data from the second standby.
 We recommend not to plan this kind of configuration.
+</strong>
 </p>
 <p>
 How to setup a failover configuration is as follows.
@@ -2137,7 +2203,9 @@ See <a href="#md5">Authentication / Access Controls</a> for more details.
 </p>
 
 <h2>Setting Query cache method</h2>
-<p>The Query cache can be used in all modes in pgpool-II. Activating it in  
+<p>The Query cache can be used in all modes in pgpool-II.
+The query cache allow to reuse the SELECT result to boost the performance.
+Activating it in  
 pgpool.conf is done as follows:</p>
 <pre>
 enable_query_cache = true
@@ -2159,6 +2227,13 @@ CREATE TABLE pgpool_catalog.query_cache (
 <p>
 However, you may have to modify the schema in this statement, if you don't use
 "pgpool_catalog".
+</p>
+<p>
+<strong>Caution: Current query cache implementation creates cache data on database.
+Thus enabling query cache may not contribute to boost performance.
+Contents of query cache is not updated even if the underlying table is get updated.
+You need to delete the cache data from the cache table or restart pgpool-II with -c (delete cache) option.
+</strong>
 </p>
 
 <h1>Starting/Stopping pgpool-II<a name="start"></a></h1>
@@ -2247,6 +2322,8 @@ pgPool-II information. Available options are:
   <li>pool_pools, to get information on pgPool-II pools</li>
   <li>pool_version, to get the pgPool_II release version</li>
 </ul>
+</p>
+<p>Other than "pool_status" are added since pgpool-II 3.0.
 <p>
 <u>Note</u> : The term 'pool' refers to the pool of PostgreSQL sessions owned by one pgpool process,
 not the whole sessions owned by pgpool.
@@ -2642,8 +2719,10 @@ ssh -T $DEST $PGCTL -w -D $DESTDIR start 2>/dev/null 1>/dev/null < /dev/null &
 
 <h3>Online recovery with rsync.</h3>
 <p>
-PostgreSQL 7.4 does not have PITR. rsync can be used to do online
-recovery. In the "sample" directory of pgpool-II's tarball,
+PostgreSQL 7.4 does not have PITR.
+PostgreSQL 8.0 and 8.1 cannot force to switch transaction log.
+So rsync can be used to do online recovery.
+In the "sample" directory of pgpool-II's tarball,
 there is a recovery script named "pgpool_recovery". It uses the rsync
 command. pgpool-II calls the script with three arguments.
 </p>
@@ -2697,6 +2776,220 @@ Note that you need to pass a large number to the first argument of
 pcp_recovery_node. It is the timeout parameter in seconds. If you use 
 pgpoolAdmin, set "_PGPOOL2_PCP_TIMEOUT " parameter to a large number in
 pgmgt.conf.php.
+</p>
+
+<h1>PostgreSQL version up using online recovery</h1>
+<h2>replication mode case</h2>
+<p>
+You can update PostgreSQL on each node without stopping pgpool-II if pgpool-II operated in replication mode.
+Please note that active sessions from clients to pgpool-II will be disconnected while disconnecting and attaching DB nodes.
+Also please note that you cannot do major version up in the method described below
+(i.e. the version up should not require dump/restore).
+</p>
+
+<p>
+<ol>
+<li><p>
+Prepare online recovery.</p>
+<li><p>Version up should perform nodes which are not master node first.
+Stop PostgreSQL on a non-master node.
+Pgpool-II will detect PostgreSQL termination and degenerate emitting logs below.
+At this point all sessions connected to pgpool-II disconnected.
+<pre>
+2010-07-27 16:32:29 LOG:   pid 10215: set 1 th backend down status
+2010-07-27 16:32:29 LOG:   pid 10215: starting degeneration. shutdown host localhost(5433)
+2010-07-27 16:32:29 LOG:   pid 10215: failover_handler: set new master node: 0
+2010-07-27 16:32:29 LOG:   pid 10215: failover done. shutdown host localhost(5433)
+</pre>
+</p>
+
+<li><p>
+Version up PostgreSQL on the stopping node.
+You can overwrite old PostgreSQL, we recommend move old PostgreSQL somewhere so that you could recover it just in case however.
+</p>
+
+<li><p>
+If you install new PostgreSQL in different location from the old one and do not want to update your recovery script, you need to match the path by using tools including symbolic link.
+If you choose to overwrite, you can skip following steps till installation of C function step.
+You can execute online recovery immediately.
+</p>
+
+<li><p>
+Change installation directory of old PostgreSQL.
+Installting directory of PostgreSQL is supposed to be /usr/local/pgsql in following description.
+<pre>
+$ mv /usr/local/pgsql /usr/local/pgsql-old
+</pre>
+</p>
+
+<li><p>
+Create a symblic link to the localtion where newer version of PostgreSQL installed.
+This allow you to continue to use command search path you currently use.
+Installting directory of newer PostgreSQL is supposed to be /usr/local/pgsql-new in following description.
+<pre>
+$ ln -s /usr/local/pgsql-new /usr/local/pgsql
+</pre>
+</p>
+
+<li><p>
+If database directory is located under older PostgreSQL installation directory, you should create or copy so that newer PostgreSQL can access it.
+We use symbolic link in the following example.
+<pre>
+$ ln -s /usr/local/pgsql-old/data /usr/local/pgsql/data
+</pre>
+</p>
+
+<li><p>
+Install C functions into PostgreSQL. "Installing C functions" section may help you.
+Because online recovery copies database cluster, the last step installing functions using psql is not neccessary.
+Do make install.
+</p>
+
+<li><p>
+Do online recovery. You are done with one node version up.
+To execute online recovery, you can use pcp_recovery_node or pgpoolAdmin.
+</p>
+
+<li><p>
+Repeat steps above on each node. In the very last master node should be updated.
+You are done.
+</p>
+</ol>
+
+<h2>If you are using streaming replication</h2>
+<p>
+You can update standby PostgreSQL server without stopping pgpool-II.
+</p>
+
+<p>
+The procedure to update standby PostgreSQL servers are same as the one of replication mode.
+Please refer to "Online recovery with Streaming Replication" to set up recovery_1st_stage_command and recovery_2nd_stage_command.
+</p>
+
+<p>
+You cannot version up primary server without stopping pgpool-II.
+You need to stop pgpool-II while updating primary server.
+The procedure to update primary PostgreSQL server is same as the one standby server.
+The procedure to update primary PostgreSQL server is as follows:
+<ol>
+<li>Stop pgpool-II
+<li>Stop primary PostgreSQL
+<li>Update primary PostgreSQl
+<li>Start primary PostgreSQL
+<li>Start pgpool-II
+</ol>
+</p>
+
+<h1><a name="backup"></a>Backup</h1>
+<p>
+To back up backend PostgreSQL servers and system DB, you can physical
+backup, logical backup (pg_dump, pg_dumpall) and PITR in the same manner as PostgreSQL.
+Please note that using logical backup and PITR should be performed directory PostgreSQL,
+rather than via pgpool-II to avoid errors caused by load_balance_mode and replicate_select.
+</p>
+
+<h2>replication mode and master/slave mode</h2>
+<p>
+If pgpool-II is operated in replication mode or master/slave mode, take a backup on one DB nodes in the cluster.
+</p>
+
+<p>
+If you are using master/slave mode and asynchronous replication
+systems(Slony-I and streaming replication) and need the latest backup, you should take a backup on the master node.
+</p>
+
+<p>
+pg_dump takes ACCESS SHARE lock on database. Commands taking ACCESS
+EXECUTE lock, such as ALTER TABLE, DROP TABLE, TRUNCATE, REINDEX,
+CLUSTER and VACUUM FULL will wait for the completion of pg_dump because
+of lock conflict. Also this may affect the primary node even if you are
+doing pg_dump on standby.
+</p>
+
+<h2>Parallel mode</h2>
+<p>
+If you are using parallel mode and need to take a consistent backup, you need to stop pgpool-II.
+</p>
+
+<p>
+To use logical backup, stop applications and pgpool-II then perform pg_dump or pg_dumpall on all nodes.
+After finishing backup, start pgpool-II then start applications.
+</p>
+
+<p>
+To use PITR, please make sure that system times are identical on all
+nodes.  Prepare archive logging and take base backup.  After finishing
+backup, stop and restart applications or pgpool-II.  Record the time of
+stop and start.  This temporary stop will make consistent state among
+all over cluster.  If you need to restore form the base backup and
+archive log, set recovery_target_time of recovery.conf in the middle of
+the start/stop time.
+</p>
+
+<h2>Backuping of system DB</h2>
+<p>
+You need to backup system DB if pgpool-II is operated in parallel query
+mode or if you are using query cache.
+Backup database specified by system_db_dbname in pgpool.conf.
+
+<h1><a name="deploy"></a>Deploying pgpool-II</a></h1>
+<p>
+pgpool-II can run on a dedicated server, on the server where application
+server is running on or other servers.  In this section we discuss how
+to make those deployments and pros and cons.
+</p>
+
+<p>
+<ul>
+<dt>Dedicated server
+<dd>
+<p>
+Pgpool-II is running on a dedicated server.
+It's simple and pgpool-II is not affected by other server softwares.
+Obvious cons is you need to by more hardware.
+Also pgpool-II can be a single point of failure with this configuration
+(you can avoid this by using pgpool-HA described somewhere below).
+</p>
+
+<dt>Deploying on a web server or application server
+<dd>
+<p>
+Deploying pgpool-II on a server where Apache, JBoss, Tomcat or other web
+server and application servers.
+Since communication between pgpool-II and web servers and application servers
+is within a local machine, socket communication can be faster than inter sever communication.
+Also if you are using multiple web serves or application servers, you can avoid
+the single point of failure problem
+(in this case you must have identical pgpool.conf on each pgpool-II instanace).
+There are seveal things you should care about in this configuration:
+</p>
+<ul>
+<li>If the communication between pgpool-II and DB servers is not stable, it is possible
+that DB node #1 is down from a point of a pgpool-II instance, while it is up from other pgpool-II instance's point of view.
+To avoid this, you can multiplex the network connection.
+<li>While executing online recovery in replication mode, you need to stop all pgpool-II instances except the one which is doing online recovery.
+Othewise DB can be running into inconsistent state.
+In master slave mode+streaming replication mode, you do not need to stop other pgpool-II instances.
+You should not execute online recovery at the same time on multiple pgpool-II instances however.
+</ul>
+</p>
+
+<dt>Running pgpool-II on DB server
+<dd>
+<p>
+Running pgpool-II on the server as PostgreSQL is running on.
+You can avoid the single point of failure problem of pgpool-II with configuration.
+And obviously you do need to buy additional dedicated server.
+Problem with this configuration is, application need to aware that which DB server they should connect to.
+To solve the problem you can use virtual IP with pgpool-HA.
+</ul>
+</p>
+
+<h2>About pgpool-HA</h2>
+<p>
+Pgpool-HA is a high availability software for pgpool-II using hearbeat.
+Pgpool-HA is a sub probject of pgpool project as well as pgpool-II.
+Pgpool-HA can be available from pgpool development site as an open source softeware.
 </p>
 
 <h1><a name="troubleshooting"></a>Troubleshooting</h1>
@@ -3842,7 +4135,7 @@ parallel fashion, they are fast.</td></tr>
 <div class="copyright">
 <hr>
 <copyright>
-Copyright &copy; 2003 &ndash; 2010 pgpool Global Development Group
+Copyright &copy; 2003 &ndash; 2011 pgpool Global Development Group
 </copyright>
 </div>
 </body>
