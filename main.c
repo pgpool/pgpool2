@@ -2494,8 +2494,8 @@ static int find_primary_node(void)
 		s = make_persistent_db_connection(bkinfo->backend_hostname, 
 										  bkinfo->backend_port,
 										  "postgres",
-										  pool_config->health_check_user,
-										  "");
+										  pool_config->sr_check_user,
+										  pool_config->sr_check_password);
 		if (!s)
 		{
 			pool_error("find_primary_node: make_persistent_connection failed");

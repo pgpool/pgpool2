@@ -142,7 +142,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
  * In addition, we need MAX_NUM_BACKENDS*4
  * for backend descriptions.
  */
-#define MAXITEMS (128 + MAX_NUM_BACKENDS*4)		
+#define MAXITEMS (256 + MAX_NUM_BACKENDS*4)		
 
 	POOL_REPORT_CONFIG* status = malloc(MAXITEMS * sizeof(POOL_REPORT_CONFIG));
 
@@ -314,6 +314,21 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].desc, "master/slave sub mode", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	strncpy(status[i].name, "sr_check_period", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->sr_check_period);
+	strncpy(status[i].desc, "sr check period", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "sr_check_user", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->sr_check_user);
+	strncpy(status[i].desc, "sr check user", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "sr_check_password", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->sr_check_password);
+	strncpy(status[i].desc, "sr check password", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	strncpy(status[i].name, "delay_threshold", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%lld", pool_config->delay_threshold);
 	strncpy(status[i].desc, "standby delay threshold", POOLCONFIG_MAXDESCLEN);
@@ -342,6 +357,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].name, "health_check_user", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->health_check_user);
 	strncpy(status[i].desc, "health check user", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "health_check_password", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->health_check_password);
+	strncpy(status[i].desc, "health check password", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "failover_command", POOLCONFIG_MAXNAMELEN);

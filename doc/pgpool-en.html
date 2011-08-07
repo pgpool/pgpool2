@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Fri Aug  5 19:49:00 JST 2011
+Last modified: Sun Aug  7 18:45:28 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1641,10 +1641,35 @@ primary server in WAL bytes.
 If the delay exceeds delay_threshold, pgpool-II does not send SELECT queries to
 the standby server anymore. Everything is sent to the primary server
 even if load balance mode is enabled, until the standby has caught-up.
-If delay_threshold is 0 or health checking is disabled, the delay
-checking is not performed. This check is performed every 'health_check_period'.
+If delay_threshold is 0 or sr checking is disabled, the delay
+checking is not performed. This check is performed every 'sr_check_period'.
 The default value for delay_threshold is 0.
 You need to reload pgpool.conf if you change this directive.
+</p>
+
+<li>sr_check_period
+<p>
+This parameter specifies the interval between the streaming replication
+delay checks in seconds. Default is 0, which means the check is disabled.
+You need to reload pgpool.conf if you change sr_check_period.
+</p>
+
+<li>sr_check_user</dt>
+<p>
+The user name to perform streaming replication check. This user must
+exist in all the PostgreSQL backends.  Otherwise, the check causes
+an error.  Note that sr_check_user and sr_check_password are used
+even sr_check_period is 0.  To identify the primary server,
+pgpool-II sends function call request to each backend.
+sr_check_user and sr_check_password are used for this session.  You
+need to reload pgpool.conf if you change sr_check_user.
+</p>
+
+<li>sr_check_password</dt>
+<p>
+The password of the user to perform streaming replication check.
+If no password is required, specify empty string('').
+You need to reload pgpool.conf if you change sr_check_password.
 </p>
 
 <li>log_standby_delay

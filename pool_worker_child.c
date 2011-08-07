@@ -110,7 +110,7 @@ void do_worker_child(void)
 	{
 		CHECK_REQUEST;
 
-		if (pool_config->health_check_period <= 0)
+		if (pool_config->sr_check_period <= 0)
 		{
 			sleep(30);
 		}
@@ -119,7 +119,7 @@ void do_worker_child(void)
 		 * If streaming replication mode, do time lag checking
 		 */
 
-		if (pool_config->health_check_period > 0 && MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
+		if (pool_config->sr_check_period > 0 && MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
 		{
 			/* Check and establish persistent connections to the backend */
 			establish_persistent_connection();
@@ -130,7 +130,7 @@ void do_worker_child(void)
 			/* Discard persistent connections */
 			discard_persistent_connection();
 		}
-		sleep(pool_config->health_check_period);
+		sleep(pool_config->sr_check_period);
 	}
 	exit(0);
 }
@@ -155,8 +155,8 @@ static void establish_persistent_connection(void)
 			s = make_persistent_db_connection(bkinfo->backend_hostname, 
 											  bkinfo->backend_port,
 											  "postgres",
-											  pool_config->health_check_user,
-											  pool_config->health_check_password);
+											  pool_config->sr_check_user,
+											  pool_config->sr_check_password);
 			if (s)
 				slots[i] = s;
 			else

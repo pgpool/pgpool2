@@ -231,10 +231,15 @@ master_slave_sub_mode = 'stream'   # Master/slave sub mode
 
 # - Streaming -
 
-delay_threshold = 10000000         # Threshold before detaching node
+sr_check_period = 10	           # Streaming replication check period
+					  			   # Disabled (0) by default
+sr_check_user = 'nobody'		   # Streaming replication check user
+			  					   # This is neccessary even if you disable streaming
+								   # replication delay check by sr_check_period = 0
+sr_check_password = ''			   # Password for streaming replication check user
+delay_threshold = 10000000         # Threshold before not dispatching query to standby node
                                    # Unit is in bytes
                                    # Disabled (0) by default
-                                   # Health check should be enabled
 
 # - Special commands -
 

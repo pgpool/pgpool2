@@ -1904,6 +1904,9 @@ int pool_init_config(void)
 	pool_config->health_check_period = 0;
 	pool_config->health_check_user = "nobody";
 	pool_config->health_check_password = "";
+	pool_config->sr_check_period = 0;
+	pool_config->sr_check_user = "nobody";
+	pool_config->sr_check_password = "";
 	pool_config->failover_command = "";
 	pool_config->follow_master_command = "";
 	pool_config->failback_command = "";
@@ -2809,6 +2812,60 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->health_check_password = str;
+		}
+
+		else if (!strcmp(key, "sr_check_period") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			int v = atoi(yytext);
+
+			if (token != POOL_INTEGER || v < 0)
+			{
+				pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->sr_check_period = v;
+		}
+
+		else if (!strcmp(key, "sr_check_user") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->sr_check_user = str;
+		}
+
+		else if (!strcmp(key, "sr_check_password") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->sr_check_password = str;
 		}
 
 		else if (!strcmp(key, "failover_command") &&

@@ -114,6 +114,9 @@ typedef struct {
 	int health_check_period;	/* health check period */
 	char *health_check_user;		/* PostgreSQL user name for health check */
 	char *health_check_password; /* password for health check username */
+	int sr_check_period;		/* streming replication check period */
+	char *sr_check_user;		/* PostgreSQL user name streaming replication check */
+	char *sr_check_password;	/* password for sr_check_user */
 	char *failover_command;     /* execute command when failover happens */
 	char *follow_master_command; /* execute command when failover is ended */
 	char *failback_command;     /* execute command when failback happens */

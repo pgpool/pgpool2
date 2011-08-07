@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Fri Aug  5 19:42:30 JST 2011
+Last modified: Sun Aug  7 18:45:07 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1560,8 +1560,34 @@ Streaming Replication$B$r;H$&>l9g$N?w7A$O(Bpgpool.conf.sample-stream$B$G$9!#
 pgpool-II$B$O!"%9%?%s%P%$%5!<%P$NCY1d$,$3$NCM$rD6$($?>l9g$K$O!"(B
 $BIi2YJ,;6$,M-8z$G$"$C$F$b$=$N(BDB$B%N!<%I$K(BSELECT$B$rAw?.$;$:!"%W%i%$%^%j%5!<%P$KAw$k$h$&$K$7$^$9!#(B
 delay_threshold$B$,(B0$B$N>l9g$O!"CY1d$N%A%'%C%/$r9T$J$$$^$;$s!#(B
-$B$^$?!"(Bdelay_threshold$B$,;XDj$5$l$F$$$F$b!"%X%k%9%A%'%C%/$,L58z$J$i$P!"$d$O$j$3$N5!G=$OF/$-$^$;$s!#(B
+$B$^$?!"(Bdelay_threshold$B$,;XDj$5$l$F$$$F$b!"(Bsr_check_period$B$,L58z(B(=0)$B$J$i$P!"$d$O$j$3$N5!G=$OF/$-$^$;$s!#(B
 $B%G%U%)%k%HCM$O(B0$B$G$9!#(B
+$B$3$N%Q%i%a!<%?$O@_Dj%U%!%$%k$N:FFI9~$K$h$C$FJQ99$G$-$^$9!#(B
+</p>
+
+<li>sr_check_period
+<p>
+$B%9%H%j!<%_%s%0%l%W%j%1!<%7%g%s$NCY1d%A%'%C%/$N4V3V$rICC10L$G;XDj$7$^$9!#(B
+$B%G%U%)%k%HCM$O(B0$B$G!"$3$l$O%A%'%C%/$r9T$o$J$$$3$H$r0UL#$7$^$9!#(B
+$B$3$N%Q%i%a!<%?$O@_Dj%U%!%$%k$N:FFI9~$K$h$C$FJQ99$G$-$^$9!#(B
+</p>
+
+<li>sr_check_user
+<p>
+$B%9%H%j!<%_%s%0%l%W%j%1!<%7%g%s$NCY1d%A%'%C%/$r9T$&%f!<%6L>$r;XDj$7$^$9!#(B
+$B$3$N%f!<%6$O!"$9$Y$F$N%P%C%/%(%s%I$KB8:_$7$J$1$l$P$J$j$^$;$s!#(B
+$B$5$b$J$1$l$P%(%i!<$K$J$j$^$9!#(B
+sr_check_user$B$H(Bsr_check_password$B$O!"(Bsr_check_period$B$,(B0$B$G$"$C$F$b(B
+$B;XDj$,I,MW$G$9!#(Bpgpool-II$B$O!"$I$N%5!<%P$,(Bprimary$B%5!<%P$G$"$k$N$+$rD4$Y$k$?$a$K!"(B
+PostgreSQL$B%P%C%/%(%s%I$K4X?t8F$S=P$7$N%j%/%(%9%H$rAw$j$^$9!#$=$N%;%C%7%g%s$G(B
+sr_check_user$B$H(Bsr_check_password$B$,;H$o$l$k$+$i$G$9!#(B
+$B$3$N%Q%i%a!<%?$O@_Dj%U%!%$%k$N:FFI9~$K$h$C$FJQ99$G$-$^$9!#(B
+</p>
+
+<li>sr_check_password
+<p>
+$B%9%H%j!<%_%s%0%l%W%j%1!<%7%g%s$NCY1d%A%'%C%/$r9T$&%f!<%6$KBP$9$k%Q%9%o!<%I$r$r;XDj$7$^$9!#(B
+$B%Q%9%o!<%I$,I,MW$J$1$l$P6uJ8;z(B('')$B$r;XDj$7$^$9!#(B
 $B$3$N%Q%i%a!<%?$O@_Dj%U%!%$%k$N:FFI9~$K$h$C$FJQ99$G$-$^$9!#(B
 </p>
 
