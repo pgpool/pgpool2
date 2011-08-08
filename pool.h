@@ -271,7 +271,7 @@ extern int pool_virtual_master_db_node_id(void);
 #define CONNECTION(p, slot) (CONNECTION_SLOT(p, slot)->con)
 
 /*
- * The first DB ndoe id appears in pgpool.conf or the first "live" DB
+ * The first DB node id appears in pgpool.conf or the first "live" DB
  * node otherwise.
  */
 #define REAL_MASTER_NODE_ID (Req_info->master_node_id)

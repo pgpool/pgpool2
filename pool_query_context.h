@@ -69,7 +69,7 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context, char *query, i
 							   int send_type, int node_id, char *kind);
 extern Node *pool_get_parse_tree(void);
 extern char *pool_get_query_string(void);
-extern bool is_set_transaction_serializable(Node *ndoe, char *query);
+extern bool is_set_transaction_serializable(Node *node, char *query);
 extern bool is_2pc_transaction_query(Node *node, char *query);
 extern void pool_set_query_state(POOL_QUERY_CONTEXT *query_context, POOL_QUERY_STATE state);
 extern int statecmp(POOL_QUERY_STATE s1, POOL_QUERY_STATE s2);
