@@ -2827,7 +2827,7 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 		}
 		pool_debug("adsrc: %s", adsrc);
 
-		if (regcomp(&preg, "nextval\\('(.+)'", REG_EXTENDED|REG_NEWLINE) != 0)
+		if (regcomp(&preg, "nextval\\(+'(.+)'", REG_EXTENDED|REG_NEWLINE) != 0)
 		{
 			pool_error("insert_lock: regex compile failed");
 			return POOL_END;
