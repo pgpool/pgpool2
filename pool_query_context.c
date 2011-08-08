@@ -114,7 +114,7 @@ void pool_set_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id)
 
 	if (node_id < 0 || node_id > MAX_NUM_BACKENDS)
 	{
-		pool_error("pool_set_node_to_be_sent: invalid ndoe id:%d", node_id);
+		pool_error("pool_set_node_to_be_sent: invalid node id:%d", node_id);
 		return;
 	}
 
@@ -136,7 +136,7 @@ void pool_unset_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id)
 
 	if (node_id < 0 || node_id > MAX_NUM_BACKENDS)
 	{
-		pool_error("pool_unset_node_to_be_sent: invalid ndoe id:%d", node_id);
+		pool_error("pool_unset_node_to_be_sent: invalid node id:%d", node_id);
 		return;
 	}
 
@@ -224,7 +224,7 @@ bool pool_is_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id)
 
 	if (node_id < 0 || node_id > MAX_NUM_BACKENDS)
 	{
-		pool_error("pool_is_node_to_be_sent: invalid ndoe id:%d", node_id);
+		pool_error("pool_is_node_to_be_sent: invalid node id:%d", node_id);
 		return false;
 	}
 
