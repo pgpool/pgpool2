@@ -32,10 +32,6 @@
 		follows the convention of libpq interface. Patch contributed by
 		Jehan-Guillaume (ioguix) de Rorthais. Additional fixes by me(Tatsuo)
 
-	  - Enhance online recovery in streaming replication mode.
-		Now restarting pgpool-II children is avoided when recovery finished. So
-		existing sessions can be continued while doing online recovery(Tatsuo)
-
 	  - Now "pgpool_walrecrunning()" was not used. pgpool-II used to consider
 		the node that is promoted a primary node using the function. Now,
 		pgpool-II waits for completing of the promotion to primary node
@@ -143,6 +139,14 @@
 		Replace the space with a '_'(Guillaume Lelarge)
 
 	  * Enhancements
+
+	  - Enhance online recovery in streaming replication mode.
+		Now restarting pgpool-II children is avoided when recovery finished. So
+		existing sessions can be continued while doing online recovery(Tatsuo)
+
+	  - pcp_attach_node does not diconnect existing sessions in
+        streaming replication mode. In other mode, pcp_attache_node
+        still disconnects existing sessions(Tatsuo).
 
 	  - Import PostgreSQL 9.0 parser. This allows to use CREATE INDEX with
 		implicit index name, which is new in 9.0. Patch contributed by
