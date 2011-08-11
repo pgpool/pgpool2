@@ -1461,7 +1461,7 @@ static void failover(void)
 	{
 		if (node_id >= MAX_NUM_BACKENDS ||
 			(Req_info->kind == NODE_UP_REQUEST && !(RAW_MODE &&
-            BACKEND_INFO(i).backend_status == CON_DOWN) && VALID_BACKEND(node_id)) ||
+            BACKEND_INFO(node_id).backend_status == CON_DOWN) && VALID_BACKEND(node_id)) ||
 			(Req_info->kind == NODE_DOWN_REQUEST && !VALID_BACKEND(node_id)))
 		{
 			pool_semaphore_unlock(REQUEST_INFO_SEM);
