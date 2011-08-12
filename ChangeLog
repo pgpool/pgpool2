@@ -1,7 +1,11 @@
+2011-08-13 02:40  kitagawa
+
+	* pool_query_context.c: Fix compiler warnings.
+
 2011-08-13 02:15  kitagawa
 
-	* NEWS, configure, configure.in, doc/pgpool-ja.html: Prepare
-	  3.1-beta1.
+	* NEWS, configure, configure.in, doc/pgpool-ja.html, ChangeLog:
+	  Prepare 3.1-beta1.
 
 2011-08-13 01:37  kitagawa
 
