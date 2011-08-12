@@ -1350,9 +1350,10 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 
 	if (pool_is_query_in_progress())
 	{
+		node = pool_get_parse_tree();
+
 		if (pool_is_command_success())
 		{
-			node = pool_get_parse_tree();
 			query = pool_get_query_string();
 
 			if (node)
