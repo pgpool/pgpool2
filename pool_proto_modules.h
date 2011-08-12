@@ -149,7 +149,7 @@ extern int RowDescription(POOL_CONNECTION *frontend,
 						  short *result);
 
 
-extern POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *string, int protoVersion);
+extern POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, int protoVersion);
 extern int is_select_query(Node *node, char *sql);
 extern bool is_sequence_query(Node *node);
 extern bool is_start_transaction_query(Node *node);

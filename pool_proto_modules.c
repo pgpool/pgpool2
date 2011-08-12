@@ -1353,7 +1353,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				 * transaction since 2PC commands close transaction on
 				 * primary.
 				 */
-				else if (is_2pc_transaction_query(node, query))
+				else if (is_2pc_transaction_query(node))
 				{
 					if (close_standby_transactions(frontend, backend) != POOL_CONTINUE)
 						return POOL_END;
