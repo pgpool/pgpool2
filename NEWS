@@ -77,6 +77,10 @@
 		helthcheck are used to check replication delay in streaming
 		replication mode(Nicolas Thauvin)
 
+	  - Add sr_check_period, sr_check_user and sr_check_password directives.
+		These are used for streaming replication delay checking and
+		determining primary node(Tatsuo)
+
 	  - Add --username(or -u) option to pg_md5 command. This allows to manage
 		users which do not have UNIX accounts. Japanese document change by
 		Tatsuo Ishii(Nicolas Thauvin)
@@ -85,9 +89,36 @@
 		functions written in C language which work like pcp commands
 		(Jehan-Guillaume (ioguix) de Rorthais)
 
+	  - Add Simplified Chinese version of tutorial document(Huang Bambo)
+
 	  - Add SQL files to uninstall functions to sql/(Nicolas Thauvin)
 
 	  * Bug fixes
+
+	  - Fix bug which cannot use the cursors of JDBC driver on standby
+		node. The transaction commands come to be sent to all nodes by
+		this fix in master/slave mode(Kitagawa)
+
+	  - Fix bug with the handling of empty queries. The empty queries
+		come to be handled the same as SELECT queries. This fix allows
+		load-balance after the empty query(Kitagawa)
+
+	  - Fix insert_lock so that it works correctly even if the column
+		definition such as "DEFAULT nextval(('"x_seq"'::text)::regclass)"
+		(Kitagawa)
+
+	  - Fix pcp_attach_node command so that it emits error message while
+		doing failover(Kitagawa)
+
+	  - Fix log message which is emitted when pgpool-II cannot parse the
+		query in the extended query protocol so that it shows the query
+		(Kitagawa)
+
+	  - Fix description about backend_weight inpgpool-II manual. It can
+		be changed by reloading pgpool.conf(Tatsuo)
+
+	  - Fix and enhance wording in English tutorial document.
+		Fix suggested by Huang Bambo(Tatsuo)
 
 	  - Fix pgpool-regclass() to be compiled in PostgreSQL 8.0 or later.
 		7.4 still produces errors(Tatsuo)
@@ -188,6 +219,11 @@
 		configuration files. If they are load balanced, currval() or
 		lastval() may be called before the result of nextval() or setval()
 		is propagated to slaves(Tatsuo)
+
+	  - Allow to compile pgpool-regclass() against PostgreSQL 9.1(Tatsuo)
+
+	  - Update and sync pgpool-II manuals of English version and Japanese
+		version(Tatsuo)
 
 3.0.3 (umiyameboshi) 2011/02/23
 

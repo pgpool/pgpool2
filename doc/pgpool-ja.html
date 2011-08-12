@@ -4031,8 +4031,10 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
  <li>pcp_pool_status$B%3%^%s%I$rDI2C$7$^$7$?!#$^$?!"BP1~$9$k(BC API$B$bDI2C$5$l$F$$$^$9!#%Q%C%A$O(BJehan-Guillaume (ioguix) de Rorthais$B$5$s$+$iD:$-$^$7$?(B(Tatsuo)
  <li>$B%P%C%/%(%s%I$4$H$N%Q%i%a!<%?(B&quot;backend_flag&quot;$B$rDI2C$7$^$7$?!#$3$l$O!"%P%C%/%(%s%I$4$H$NF0:n$r@)8f$7$^$9!#:#$O(B&quot;ALLOW_TO_FAILOVER&quot;$B$^$?$O(B&quot;DISALLOW_TO_FAILOVER&quot;$B$,;XDj$G$-$^$9(B(Tatsuo)
  <li>$B%9%H%j!<%_%s%0%l%W%j%1!<%7%g%s%b!<%I$N%l%W%j%1!<%7%g%sCY1d%A%'%C%/$G%X%k%9%A%'%C%/$N%Q%i%a!<%?$,;HMQ$5$l$k$?$a!"(Bhealth_check_password$B%Q%i%a!<%?$rDI2C$7$^$7$?(B(Nicolas Thauvin)
+ <li>sr_check_period$B!"(Bsr_check_user$B!"(Bsr_check_password$B%Q%i%a!<%?$rDI2C$7$^$7$?!#$3$l$i$O!"%9%H%j!<%_%s%0%l%W%j%1!<%7%g%s$NCY1d%A%'%C%/$H%W%i%$%^%j%N!<%I$N7hDj$K;HMQ$5$l$^$9(B(Tatsuo)
  <li>pg_md5$B%3%^%s%I$K(B--username($B$^$?$O(B-u)$B%*%W%7%g%s$rDI2C$7$^$7$?!#$3$l$O!"(BUNIX$B%"%+%&%s%H$r;}$?$J$$%f!<%6$N4IM}$r2DG=$K$7$^$9!#F|K\8l%I%-%e%a%s%H$O(BTatsuo Ishii$B$5$s$,=$@5$7$^$7$?(B(Nicolas Thauvin)
  <li>pgpool_adm$B4X?t$r(Bpgpool_adm/$B$KDI2C$7$^$7$?!#$3$l$i$O!"(Bpcp$B%3%^%s%I$N$h$&$KF0:n$9$k(BC$B8@8l$G=q$+$l$?%f!<%6Dj5A4X?t$G$9(B(Jehan-Guillaume (ioguix) de Rorthais)
+ <li>$B4JBN;zCf9q8lHG$N%A%e!<%H%j%"%k%I%-%e%a%s%H$rDI2C$7$^$7$?(B(Huang Bambo)
  <li>$B4X?t$r%"%s%$%s%9%H!<%k$9$k$?$a$N(BSQL$B%U%!%$%k$r(Bsql/$B$KDI2C$7$^$7$?(B(Nicolas Thauvin)
 </ul>
 </p>
@@ -4040,6 +4042,13 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
 <h3>$B%P%0=$@5(B</h3>
 <p>
 <ul>
+ <li>$B%9%?%s%P%$%N!<%I$G(BJDBC$B%I%i%$%P$N%+!<%=%k$,;HMQ$G$-$J$$%P%0$r=$@5$7$^$7$?!#$3$N=$@5$K$h$C$F!"%^%9%?!<%9%l!<%V%b!<%I$G$O%H%i%s%6%/%7%g%s%3%^%s%I$,$9$Y$F$N%N!<%I$KAw$i$l$k$h$&$K$J$j$^$9(B(Kitagawa)
+ <li>$B6u$N%/%(%j$N=hM}$K4X$9$k%P%0$r=$@5$7$^$7$?!#6u$N%/%(%j$O(BSELECT$B%/%(%j$HF1$807$$$K$J$j$^$9!#$3$N=$@5$O!"6u$N%/%(%j$N$"$H$N%m!<%I%P%i%s%9$r2DG=$K$7$^$9(B(Kitagawa)
+ <li>$B%+%i%`Dj5A$,(B&quot;DEFAULT nextval(('&quot;x_seq&quot;'::text)::regclass)&quot;$B$N$h$&$K$J$C$F$$$F$b(Binsert_lock$B$,@5$7$/F0:n$9$k$h$&$K=$@5$7$^$7$?(B(Kitagawa)
+ <li>$B%U%'%$%k%*!<%P!<Cf$O%(%i!<%a%C%;!<%8$r=PNO$9$k$h$&$K(Bpcp_attach_node$B%3%^%s%I$r=$@5$7$^$7$?(B(Kitagawa)
+ <li>$B3HD%Ld$$9g$o$;%W%m%H%3%k$G(Bpgpool-II$B$,%/%(%j$r2r@O$G$-$J$$$H$-$K=PNO$5$l$k%m%0%a%C%;!<%8$,%/%(%j$rI=<($9$k$h$&=$@5$7$^$7$?(B(Kitagawa)
+ <li>pgpool-II$B%^%K%e%"%k$N(Bbackend_weight$B$K4X$9$k@bL@$r=$@5$7$^$7$?!#$=$l$O!"(Bpgpool.conf$B$N:FFI$_9~$_$GJQ99$G$-$^$9(B(Tatsuo)
+ <li>$B1Q8l$N%A%e!<%H%j%"%k%I%-%e%a%s%HFb$NI=8=$N2~A1$H=$@5$r9T$$$^$7$?!#=$@5$NDs0F$O(BHuang Bambo$B$5$s$K$h$k$b$N$G$9(B(Tatsuo)
  <li>pgpool-regclass()$B$r(BPostgreSQL 8.0$B0J9_$G%3%s%Q%$%k$G$-$k$h$&$K=$@5$7$^$7$?!#(B7.4$B$O$^$@%(%i!<$,=P$^$9(B(Tatsuo)
  <li>$B%9%H%j!<%_%s%0%l%W%j%1!<%7%g%s9=@.$G(B/*NO LOAD BALANCE*/$B%3%a%s%H$r;HMQ$7$?$H$-$K%O%s%0%"%C%W$9$k2DG=@-$r=$@5$7$^$7$?(B(kitagawa)
  <li>Flush(H)$B%a%C%;!<%8$d(BCloseComplete(C)$B%a%C%;!<%8$r<u?.$7$?$H$-$N%O%s%0%"%C%W$r=$@5$7$^$7$?(B(Kitagawa)
@@ -4074,6 +4083,8 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
  <li>$B%l%W%j%1!<%7%g%sCY1d$N%A%'%C%/$K<:GT$7$?$H$-$K=PNO$5$l$k%(%i!<%a%C%;!<%8$r2~NI$7$^$7$?(B(Nicolas Thauvin)
  <li>$B%(%i!<%a%C%;!<%8(B&quot;do_md5: read_password_packet failed&quot;$B$r%G%P%C%0%l%Y%k$K$7$^$7$?(B(Kitagawa)
  <li>$B%5%s%W%k$N@_Dj%U%!%$%k$N(Bblack_function_list$B$K(Bcurrval()$B$H(Blastval()$B$rDI2C$7$^$7$?!#$b$7$=$l$i$,%m!<%I%P%i%s%9$5$l$k$H!"(Bnextval()$B$d(Bsetval()$B$N7k2L$,%9%l!<%V$KH?1G$5$l$kA0$K(Bcurrval()$B$^$?$O(Blastval()$B$,8F$P$l$k$3$H$,$"$j$^$9(B(Tatsuo)
+ <li>pgpool-regclass()$B$r(BPostgreSQL 9.1$B$G%3%s%Q%$%k$G$-$k$h$&$K$7$^$7$?(B(Tatsuo)
+ <li>$B1Q8lHG$HF|K\8lHG$N(Bpgpool-II$B%^%K%e%"%k$r99?7!"F14|$7$^$7$?(B(Tatsuo)
 </ul>
 </p>
 
