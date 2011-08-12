@@ -533,6 +533,8 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 	backend = session_context->backend;
 	is_commit = is_commit_or_rollback_query(query_context->parse_tree);
 	is_begin_read_write = false;
+	len = 0;
+	string = NULL;
 
 	/*
 	 * If the query is BEGIN READ WRITE in master/slave mode,
@@ -695,6 +697,9 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 	backend = session_context->backend;
 	is_commit = is_commit_or_rollback_query(query_context->parse_tree);
 	is_begin_read_write = false;
+	str_len = 0;
+	rewritten_len = 0;
+	str = NULL;
 	rewritten_begin = NULL;
 
 	/*
