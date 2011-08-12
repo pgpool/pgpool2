@@ -1555,21 +1555,6 @@ bool is_sequence_query(Node *node)
 }
 
 /*
- * Returns true if SQL is transaction starting command (START
- * TRANSACTION or BEGIN)
- */
-bool is_start_transaction_query(Node *node)
-{
-	TransactionStmt *stmt;
-
-	if (node == NULL || !IsA(node, TransactionStmt))
-		return false;
-
-	stmt = (TransactionStmt *)node;
-	return stmt->kind == TRANS_STMT_START || stmt->kind == TRANS_STMT_BEGIN;
-}
-
-/*
  * Returns true if SQL is transaction commit or rollback command (COMMIT,
  * END TRANSACTION, ROLLBACK or ABORT)
  */

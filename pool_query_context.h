@@ -29,6 +29,7 @@
 #include "pool.h"
 #include "pool_process_context.h"
 #include "parser/nodes.h"
+#include "parser/parsenodes.h"
 #include "parser/pool_memory.h"
 
 typedef enum {
@@ -45,6 +46,8 @@ typedef enum {
 typedef struct {
 	char *original_query;		/* original query string */
 	char *rewritten_query;		/* rewritten query string if any */
+	int original_length;	   	/* original query length which contains '\0' */
+	int rewritten_length;	   	/* rewritten query length which contains '\0' if any */
 	Node *parse_tree;			/* raw parser output if any */
 	Node *rewritten_parse_tree;	/* rewritten raw parser output if any */
 	bool where_to_send[MAX_NUM_BACKENDS];	/* DB node map to send query */
@@ -55,7 +58,7 @@ typedef struct {
 
 extern POOL_QUERY_CONTEXT *pool_init_query_context(void);
 extern void pool_query_context_destroy(POOL_QUERY_CONTEXT *query_context);
-extern void pool_start_query(POOL_QUERY_CONTEXT *query_context, char *query, Node *node);
+extern void pool_start_query(POOL_QUERY_CONTEXT *query_context, char *query, int len, Node *node);
 extern void pool_set_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id);
 extern void pool_unset_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id);
 extern bool pool_is_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id);
@@ -65,11 +68,14 @@ extern void pool_clear_node_to_be_sent(POOL_QUERY_CONTEXT *query_context);
 extern void pool_setall_node_to_be_sent(POOL_QUERY_CONTEXT *query_context);
 extern bool pool_multi_node_to_be_sent(POOL_QUERY_CONTEXT *query_context);
 extern void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *node);
-POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context, char *query, int len,
-							   int send_type, int node_id, char *kind);
+extern POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context, int send_type, int node_id);
+extern POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context, char *kind, int len, char *contents, int send_type, int node_id);
 extern Node *pool_get_parse_tree(void);
 extern char *pool_get_query_string(void);
 extern bool is_set_transaction_serializable(Node *node, char *query);
+extern bool is_start_transaction_query(Node *node);
+extern bool is_read_write(TransactionStmt *node);
+extern bool is_savepoint_query(Node *node);
 extern bool is_2pc_transaction_query(Node *node);
 extern void pool_set_query_state(POOL_QUERY_CONTEXT *query_context, POOL_QUERY_STATE state);
 extern int statecmp(POOL_QUERY_STATE s1, POOL_QUERY_STATE s2);
