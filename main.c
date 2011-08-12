@@ -520,6 +520,7 @@ int main(int argc, char **argv)
 	memset(Req_info->node_id, -1, sizeof(int) * MAX_NUM_BACKENDS);
 	Req_info->master_node_id = get_next_master_node();
 	Req_info->conn_counter = 0;
+	Req_info->switching = false;
 
 	InRecovery = pool_shared_memory_create(sizeof(int));
 	if (InRecovery == NULL)
@@ -1524,6 +1525,7 @@ static void failover(void)
 	 */
 	pool_debug("failover_handler: starting to select new master node");
 	switching = 1;
+	Req_info->switching = true;
 	node_id = Req_info->node_id[0];
 
 	/* failback request? */
@@ -1539,6 +1541,7 @@ static void failover(void)
 					   BACKEND_INFO(node_id).backend_status, MAX_NUM_BACKENDS);
 			kill(pcp_pid, SIGUSR2);
 			switching = 0;
+			Req_info->switching = false;
 			return;
 		}
 
@@ -1563,6 +1566,7 @@ static void failover(void)
 			pool_semaphore_unlock(REQUEST_INFO_SEM);
 			kill(pcp_pid, SIGUSR2);
 			switching = 0;
+			Req_info->switching = false;
 			return;
 		}
 	}
@@ -1593,6 +1597,7 @@ static void failover(void)
 			pool_semaphore_unlock(REQUEST_INFO_SEM);
 			kill(pcp_pid, SIGUSR2);
 			switching = 0;
+			Req_info->switching = false;
 			return;
 		}
 	}
@@ -1644,8 +1649,10 @@ static void failover(void)
 
 			pool_semaphore_unlock(REQUEST_INFO_SEM);
 			switching = 0;
+			Req_info->switching = false;
 			kill(pcp_pid, SIGUSR2);
 			switching = 0;
+			Req_info->switching = false;
 			return;
 		}
 	}
@@ -1813,6 +1820,7 @@ static void failover(void)
 	}
 
 	switching = 0;
+	Req_info->switching = false;
 
 	/* kick wakeup_handler in pcp_child to notice that
 	 * failover/failback done

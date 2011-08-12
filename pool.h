@@ -360,6 +360,7 @@ typedef struct {
 	int master_node_id;	/* the youngest node id which is not in down status */
 	int primary_node_id;	/* the primary node id in streaming replication mode */
 	int conn_counter;
+	bool switching;	/* it true, failover or failback is in progress */
 } POOL_REQUEST_INFO;
 
 /* description of row. corresponding to RowDescription message */

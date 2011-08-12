@@ -198,6 +198,32 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 
 		set_ps_display("PCP: processing a request", false);
 
+		if (tos == 'C' || tos == 'd' || tos == 'D' || tos == 'j' ||
+			tos == 'J' || tos == 'O' || tos == 'T')
+		{
+			if (Req_info->switching)
+			{
+				int len;
+				int wsize;
+				char *msg;
+
+				if (Req_info->kind == NODE_UP_REQUEST)
+					msg = "FailbackInProgress";
+				else if (Req_info->kind == NODE_DOWN_REQUEST)
+					msg = "FailoverInProgress";
+				else if (Req_info->kind == PROMOTE_NODE_REQUEST)
+					msg = "PromotionInProgress";
+				else
+					msg = "OperationInProgress";
+
+				len = strlen(msg) + 1;
+				pcp_write(frontend, "e", 1);
+				wsize = htonl(sizeof(int) + len);
+				pcp_write(frontend, &wsize, sizeof(int));
+				pcp_write(frontend, msg, len);
+			}
+		}
+
 		switch (tos)
 		{
 			case 'R':			/* authentication */
