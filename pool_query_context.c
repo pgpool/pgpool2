@@ -625,7 +625,7 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context, char *string,
 			continue;
 		}
 
-		if (wait_for_query_response(frontend, CONNECTION(backend, i), string, MAJOR(backend)) != POOL_CONTINUE)
+		if (wait_for_query_response(frontend, CONNECTION(backend, i), MAJOR(backend)) != POOL_CONTINUE)
 		{
 			/* Cancel current transaction */
 			CancelPacket cancel_packet;
@@ -856,7 +856,7 @@ static POOL_DEST send_to_where(Node *node, char *query)
 			/*
 			 * 2PC commands
 			 */
-			else if (is_2pc_transaction_query(node, query))
+			else if (is_2pc_transaction_query(node))
 				return POOL_PRIMARY;
 			else
 				/* COMMIT etc. */
@@ -1115,7 +1115,7 @@ bool is_set_transaction_serializable(Node *node, char *query)
 /*
  * Return true if the query is 2PC transaction query.
  */
-bool is_2pc_transaction_query(Node *node, char *query)
+bool is_2pc_transaction_query(Node *node)
 {
 	if (((TransactionStmt *)node)->kind == TRANS_STMT_PREPARE ||
 		((TransactionStmt *)node)->kind == TRANS_STMT_COMMIT_PREPARED ||

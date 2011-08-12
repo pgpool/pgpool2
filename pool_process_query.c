@@ -801,7 +801,7 @@ POOL_STATUS send_simplequery_message(POOL_CONNECTION *backend, int len, char *st
  * seccond, and if the connection broke, returns error since there's
  * no point in that waiting until backend returns response.
  */
-POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *string, int protoVersion)
+POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, int protoVersion)
 {
 #define DUMMY_PARAMETER "pgpool_dummy_param"
 #define DUMMY_VALUE "pgpool_dummy_value"
@@ -1751,7 +1751,7 @@ POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
 	 * Wait for response from badckend while polling frontend connection is ok.
 	 * If not, cancel the transaction.
 	 */
-	if (wait_for_query_response(frontend, backend, query, protoMajor) != POOL_CONTINUE)
+	if (wait_for_query_response(frontend, backend, protoMajor) != POOL_CONTINUE)
 	{
 		/* Cancel current transaction */
 		CancelPacket cancel_packet;
