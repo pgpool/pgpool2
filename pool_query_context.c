@@ -1243,7 +1243,7 @@ Node *pool_get_parse_tree(void)
 
 /*
  * Returns raw query string for current query.
- * Preconition: the query is in progress state.
+ * Precondition: the query is in progress state.
  */
 char *pool_get_query_string(void)
 {
