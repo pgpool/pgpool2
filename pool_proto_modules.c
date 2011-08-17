@@ -393,7 +393,11 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		   	{
 				POOL_SENT_MESSAGE *msg = NULL;
 
-				if (IsA(node, ExecuteStmt))
+				if (IsA(node, PrepareStmt))
+				{
+					msg = session_context->uncompleted_message;
+				}
+				else if (IsA(node, ExecuteStmt))
 				{
 					msg = pool_get_sent_message('Q', ((ExecuteStmt *)node)->name);
 					if (!msg)
