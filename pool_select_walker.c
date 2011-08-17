@@ -32,6 +32,7 @@
 typedef struct {
 	bool	has_system_catalog;		/* True if system catalog table is used */
 	bool	has_temp_table;		/* True if temporary table is used */
+	bool	has_unlogged_table;	/* True if unlogged table is used */
 	bool	has_function_call;	/* True if write function call is used */	
 } SelectContext;
 
@@ -39,7 +40,9 @@ static bool function_call_walker(Node *node, void *context);
 static bool system_catalog_walker(Node *node, void *context);
 static bool is_system_catalog(char *table_name);
 static bool temp_table_walker(Node *node, void *context);
+static bool unlogged_table_walker(Node *node, void *context);
 static bool is_temp_table(char *table_name);
+static bool is_unlogged_table(char *table_name);
 
 /*
  * Return true if this SELECT has function calls *and* supposed to
@@ -94,6 +97,24 @@ bool pool_has_temp_table(Node *node)
 	raw_expression_tree_walker(node, temp_table_walker, &ctx);
 
 	return ctx.has_temp_table;
+}
+
+/*
+ * Return true if this SELECT has unlogged table.
+ */
+bool pool_has_unlogged_table(Node *node)
+{
+
+	SelectContext	ctx;
+
+	if (!IsA(node, SelectStmt))
+		return false;
+
+	ctx.has_unlogged_table = false;
+
+	raw_expression_tree_walker(node, unlogged_table_walker, &ctx);
+
+	return ctx.has_unlogged_table;
 }
 
 /*
@@ -247,6 +268,32 @@ temp_table_walker(Node *node, void *context)
 		}
 	}
 	return raw_expression_tree_walker(node, temp_table_walker, context);
+}
+
+/*
+ * Walker function to find a unlogged table
+ */
+static bool
+unlogged_table_walker(Node *node, void *context)
+{
+	SelectContext	*ctx = (SelectContext *) context;
+
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, RangeVar))
+	{
+		RangeVar *rgv = (RangeVar *)node;
+
+		pool_debug("unlogged_table_walker: relname: %s", rgv->relname);
+
+		if (is_unlogged_table(rgv->relname))
+		{
+			ctx->has_unlogged_table = true;
+			return false;
+		}
+	}
+	return raw_expression_tree_walker(node, unlogged_table_walker, context);
 }
 
 /*
@@ -421,6 +468,96 @@ static bool is_temp_table(char *table_name)
 	 */
 	result = pool_search_relcache(relcache, backend, table_name)==0?false:true;
 	return result;
+}
+
+/*
+ * Judge the table used in a query represented by node is a unlogged
+ * table or not.
+ */
+static bool is_unlogged_table(char *table_name)
+{
+/*
+ * Query to know if pg_class has relpersistence column or not.
+ * PostgreSQL 9.1 or later has this.
+ */
+#define HASRELPERSISTENCEQUERY "SELECT count(*) FROM pg_catalog.pg_class AS c, pg_catalog.pg_attribute AS a WHERE c.relname = 'pg_class' AND a.attrelid = c.oid AND a.attname = 'relpersistence'"
+
+/*
+ * Query to know if the target table is a unlogged one.  This query
+ * is valid in PostgreSQL 9.1 or later.
+ */
+#define ISUNLOGGEDQUERY "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.relname = '%s' AND c.relpersistence = 'u'"
+
+#define ISUNLOGGEDQUERY2 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = pgpool_regclass('%s') AND c.relpersistence = 'u'"
+
+	int hasrelpersistence;
+	static POOL_RELCACHE *hasrelpersistence_cache;
+	static POOL_RELCACHE *relcache;
+	POOL_CONNECTION_POOL *backend;
+
+	if (table_name == NULL)
+	{
+			return false;
+	}
+
+	backend = pool_get_session_context()->backend;
+
+	/*
+	 * Check backend version
+	 */
+	if (!hasrelpersistence_cache)
+	{
+		hasrelpersistence_cache = pool_create_relcache(128, HASRELPERSISTENCEQUERY,
+													   int_register_func, int_unregister_func,
+													   false);
+		if (hasrelpersistence_cache == NULL)
+		{
+			pool_error("is_unlogged_table: pool_create_relcache error");
+			return false;
+		}
+	}
+
+	hasrelpersistence = pool_search_relcache(hasrelpersistence_cache, backend, "pg_class")==0?0:1;
+	if (hasrelpersistence)
+	{
+		bool result;
+		char *query;
+
+		/* pgpool_regclass has been installed */
+		if (pool_has_pgpool_regclass())
+		{
+			query = ISUNLOGGEDQUERY2;
+		}
+		else
+		{
+			query = ISUNLOGGEDQUERY;
+		}
+
+		/*
+		 * If relcache does not exist, create it.
+		 */
+		if (!relcache)
+		{
+			relcache = pool_create_relcache(128, query,
+											int_register_func, int_unregister_func,
+											true);
+			if (relcache == NULL)
+			{
+				pool_error("is_unlogged_table: pool_create_relcache error");
+				return false;
+			}
+		}
+
+		/*
+		 * Search relcache.
+		 */
+		result = pool_search_relcache(relcache, backend, table_name)==0?false:true;
+		return result;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 /*

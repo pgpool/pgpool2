@@ -417,6 +417,15 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 						pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
 					}
 
+					/*
+					 * If unlogged table is used in the SELECT,
+					 * we prefer to send to the primary.
+					 */
+					else if (pool_has_unlogged_table(node))
+					{
+						pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
+					}
+
 					else
 					{
 						pool_set_node_to_be_sent(query_context,
