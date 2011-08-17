@@ -89,7 +89,7 @@
 		functions written in C language which work like pcp commands
 		(Jehan-Guillaume (ioguix) de Rorthais)
 
-	  - Add Simplified Chinese version of tutorial document(Huang Bambo)
+	  - Add Simplified Chinese version of documents(Huang Jian, Sun Peng)
 
 	  - Add SQL files to uninstall functions to sql/(Nicolas Thauvin)
 

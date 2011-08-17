@@ -60,9 +60,11 @@ pgpool.8: pgpool.8.in
 	sed 's,@sysconfdir\@,$(sysconfdir),g' $? >$@
 
 CLEANFILES = pgpool.8
-EXTRA_DIST = pgpool.8.in sample/pgpool.pam doc/pgpool-ja.html doc/pgpool-en.html \
-		doc/tutorial-ja.html doc/tutorial-en.html doc/tutorial-zh_cn.html doc/pgpool.css \
-		doc/where_to_send_queries.pdf doc/where_to_send_queries.odg doc/pgpool-ja.css \
+EXTRA_DIST = pgpool.8.in sample/pgpool.pam \
+		doc/pgpool-ja.html doc/pgpool-en.html doc/pgpool-zh_cn.html \
+		doc/tutorial-ja.html doc/tutorial-en.html doc/tutorial-zh_cn.html \
+	    doc/pgpool.css doc/pgpool-ja.css \
+		doc/where_to_send_queries.pdf doc/where_to_send_queries.odg \
 		doc/basebackup.sh doc/pgpool_remote_start doc/recovery.conf.sample \
 		sample/pgpool_remote_start sample/pgpool_recovery sample/pgpool_recovery_pitr \
 		sample/dist_def_pgbench.sql sample/replicate_def_pgbench.sql \
