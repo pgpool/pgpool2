@@ -314,21 +314,21 @@ static bool is_temp_table(char *table_name)
 {
 /*
  * Query to know if pg_class has relistemp column or not.
- * PostgreSQL 8.4 or later has this.
+ * PostgreSQL 8.4 and 9.0 have this.
  */
 #define HASRELITEMPPQUERY "SELECT count(*) FROM pg_catalog.pg_class AS c, pg_attribute AS a WHERE c.relname = 'pg_class' AND a.attrelid = c.oid AND a.attname = 'relistemp'"
 
 /*
  * Query to know if the target table is a temporary one.  This query
- * is valid through PostgreSQL 7.3 to 8.3.  We do not use regclass (or
- * its variant) here, because temporary tables never have schema
- * qualified name.
+ * is valid in PostgreSQL 7.3 to 8.3 and 9.1 or later.  We do not use
+ * regclass (or its variant) here, because temporary tables never have
+ * schema qualified name.
  */
 #define ISTEMPQUERY83 "SELECT count(*) FROM pg_class AS c, pg_namespace AS n WHERE c.relname = '%s' AND c.relnamespace = n.oid AND n.nspname ~ '^pg_temp_'"
 
 /*
  * Query to know if the target table is a temporary one.  This query
- * is valid PostgreSQL 8.4 or later. We do not use regclass (or its
+ * is valid in PostgreSQL 8.4 and 9.0. We do not use regclass (or its
  * variant) here, because temporary tables never have schema qualified
  * name.
  */
