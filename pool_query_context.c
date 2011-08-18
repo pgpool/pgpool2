@@ -781,14 +781,9 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		 */
 		if (IsA(node, SelectStmt))
 		{
-			/* SELECT INTO? */
-			if (((SelectStmt *)node)->intoClause)
+			/* SELECT INTO or SELECT FOR SHARE or UPDATE ? */
+			if (pool_has_insertinto_or_locking_clause(node))
 				return POOL_PRIMARY;
-
-			/* SELECT FOR SHARE or UPDATE */
-			else if (((SelectStmt *)node)->lockingClause)
-				return POOL_PRIMARY;
-
 			/*
 			 * SELECT nextval(), setval()
 			 * XXX: We do not search in subquery.

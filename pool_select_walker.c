@@ -33,7 +33,7 @@ typedef struct {
 	bool	has_system_catalog;		/* True if system catalog table is used */
 	bool	has_temp_table;		/* True if temporary table is used */
 	bool	has_function_call;	/* True if write function call is used */	
-
+ 	bool	has_insertinto_or_locking_clause;	/* True if it has SELECT INTO or FOR SHARE/UPDATE */
 } SelectContext;
 
 static bool function_call_walker(Node *node, void *context);
@@ -41,6 +41,7 @@ static bool system_catalog_walker(Node *node, void *context);
 static bool is_system_catalog(char *table_name);
 static bool temp_table_walker(Node *node, void *context);
 static bool is_temp_table(char *table_name);
+static bool	insertinto_or_locking_clause_walker(Node *node, void *context);
 
 /*
  * Return true if this SELECT has function calls.
@@ -94,6 +95,26 @@ bool pool_has_temp_table(Node *node)
 	raw_expression_tree_walker(node, temp_table_walker, &ctx);
 
 	return ctx.has_temp_table;
+}
+
+ /*
+ * Return true if this SELECT has INSERT INTO or FOR SHARE or FOR UDPATE.
+ */
+bool pool_has_insertinto_or_locking_clause(Node *node)
+{
+	SelectContext	ctx;
+
+	if (!IsA(node, SelectStmt))
+		return false;
+
+	ctx.has_insertinto_or_locking_clause = false;
+
+	raw_expression_tree_walker(node, insertinto_or_locking_clause_walker, &ctx);
+
+	pool_debug("pool_has_insertinto_or_locking_clause: returns %d",
+			   ctx.has_insertinto_or_locking_clause);
+
+	return ctx.has_insertinto_or_locking_clause;
 }
 
 /*
@@ -420,4 +441,22 @@ bool pool_has_pgpool_regclass(void)
 
 	result = pool_search_relcache(relcache, backend, "pgpool_regclass")==0?0:1;
 	return result;
+}
+
+/*
+ * Walker function to find intoClause or lockingClause.
+ */
+static bool	insertinto_or_locking_clause_walker(Node *node, void *context)
+{
+	SelectContext	*ctx = (SelectContext *) context;
+
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, IntoClause) || IsA(node, LockingClause))
+	{
+		ctx->has_insertinto_or_locking_clause = true;
+		return false;
+	}
+	return raw_expression_tree_walker(node, insertinto_or_locking_clause_walker, ctx);
 }
