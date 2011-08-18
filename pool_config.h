@@ -204,6 +204,5 @@ extern int set_syslog_facility (char *);
 /* methods used for regexp support */
 extern int add_regex_pattern(char *type, char *s);
 extern int growPatternArray (RegPattern item);
-extern int pattern_compare(char *str, const int type);
 
 #endif /* POOL_CONFIG_H */

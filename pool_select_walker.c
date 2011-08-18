@@ -34,6 +34,7 @@ typedef struct {
 	bool	has_temp_table;		/* True if temporary table is used */
 	bool	has_unlogged_table;	/* True if unlogged table is used */
 	bool	has_function_call;	/* True if write function call is used */	
+	bool	has_insertinto_or_locking_clause;	/* True if it has SELECT INTO or FOR SHARE/UPDATE */
 } SelectContext;
 
 static bool function_call_walker(Node *node, void *context);
@@ -43,6 +44,8 @@ static bool temp_table_walker(Node *node, void *context);
 static bool unlogged_table_walker(Node *node, void *context);
 static bool is_temp_table(char *table_name);
 static bool is_unlogged_table(char *table_name);
+static bool	insertinto_or_locking_clause_walker(Node *node, void *context);
+static int pattern_compare(char *str, const int type);
 
 /*
  * Return true if this SELECT has function calls *and* supposed to
@@ -118,13 +121,33 @@ bool pool_has_unlogged_table(Node *node)
 }
 
 /*
+ * Return true if this SELECT has INSERT INTO or FOR SHARE or FOR UDPATE.
+ */
+bool pool_has_insertinto_or_locking_clause(Node *node)
+{
+	SelectContext	ctx;
+
+	if (!IsA(node, SelectStmt))
+		return false;
+
+	ctx.has_insertinto_or_locking_clause = false;
+
+	raw_expression_tree_walker(node, insertinto_or_locking_clause_walker, &ctx);
+
+	pool_debug("pool_has_insertinto_or_locking_clause: returns %d",
+			   ctx.has_insertinto_or_locking_clause);
+
+	return ctx.has_insertinto_or_locking_clause;
+}
+
+/*
  * Search function name in whilelist or blacklist regex array
  * Return 1 on success (found in list)
  * Return 0 when not found in list
  * Return -1 if the given search type doesn't exist.
  * Search type supported are: WHITELIST and BLACKLIST 
  */
-int pattern_compare(char *str, const int type)
+static int pattern_compare(char *str, const int type)
 {
 	int i = 0;
 
@@ -589,4 +612,22 @@ bool pool_has_pgpool_regclass(void)
 
 	result = pool_search_relcache(relcache, backend, "pgpool_regclass")==0?0:1;
 	return result;
+}
+
+/*
+ * Walker function to find intoClause or lockingClause.
+ */
+static bool	insertinto_or_locking_clause_walker(Node *node, void *context)
+{
+	SelectContext	*ctx = (SelectContext *) context;
+
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, IntoClause) || IsA(node, LockingClause))
+	{
+		ctx->has_insertinto_or_locking_clause = true;
+		return false;
+	}
+	return raw_expression_tree_walker(node, insertinto_or_locking_clause_walker, ctx);
 }
