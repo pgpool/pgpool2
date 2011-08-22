@@ -1473,7 +1473,7 @@ load_balance_mode = true を設定した場合、以下の条件のすべてを満たした時にS
 <p>
 <font color="red">
 注意: JDBC ドライバなどのように、ドライバ内で autocommit の有効・無効のオプションがある場合、
-autocommit を無効にすると、JDBCが内部で BEGIN コマンドを実行する関係上、正しくロードバランスされない可能性があります。
+autocommit を無効にすると、ドライバが内部で BEGIN コマンドを実行する関係上、正しくロードバランスされない可能性があります。
 クエリをロードバランスさせたい場合は autocommit を有効にしてください。
 たとえばJDBCであれば setAutoCommit(true) を実行してください。
 </font>
