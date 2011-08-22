@@ -214,27 +214,6 @@ execution of "psql -f pgpool-regclass.sql template1", as this template database
 will be cloned to create new databases.
 </p>
 
-<dt>Installing pgpool_walrecrunning</dt>
-<dd>
-<p>
-If you are using PostgreSQL 9.0 or later along with streaming replication, you need to install pgpool_walrecrunning function on all PostgreSQL to be accessed by pgpool-II.
-</p>
-<p>
-<pre>
-cd pgpool-II-x.x.x/sql/pgpool-walrecrunning
-make
-make install
-psql -f pgpool-walrecrunning.sql template1
-</pre>
-</p>
-<p>
-Executing pgpool-walrecrunning.sql should be performed on every databases accessed
-with pgpool-II.
-You do not need to do this for a database created after the
-execution of "psql -f pgpool-regclass.sql template1", as this template database
-will be cloned to create new databases.
-</p>
-
 <dt>Creating insert_lock table</dt>
 <dd>
 <p>

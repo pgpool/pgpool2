@@ -158,23 +158,6 @@ psql -f pgpool-regclass.sql template1
 应在在每台通过 pgpool-II 访问的数据库中执行 pgpool-regclass.sql。你不需要在你执行“psql -f pgpool-regclass.sql template1”后建立的数据库中这么做，因为这个模板数据库将被克隆成新建的数据库。
 </p>
 
-<dt>安装 pgpool_walrecrunning</dt>
-<dd>
-<p>
-如果你在 PostgreSQL 9.0 或更高的版本中使用了流复制，你需要在所有的通过 pgpool-II 访问的 PostgreSQL 中安装 pgpool_walrecrunning 函数。
-</p>
-<p>
-<pre>
-cd pgpool-II-x.x.x/sql/pgpool-walrecrunning
-make
-make install
-psql -f pgpool-walrecrunning.sql template1
-</pre>
-</p>
-<p>
-应在在每台通过 pgpool-II 访问的数据库中执行 pgpool-walrecrunning.sql。你不需要在你执行“psql -f pgpool-walrecrunning.sql template1”后建立的数据库中这么做，因为这个模板数据库将被克隆成新建的数据库。
-</p>
-
 <dt>建立 insert_lock 表</dt>
 <dd>
 <p>

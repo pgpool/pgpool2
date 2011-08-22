@@ -188,21 +188,6 @@ pgpool-regclass.sql$B$N<B9T$O!"(Bpgpool-II$B7PM3$GMxMQ$9$k%G!<%?%Y!<%9Kh$KI,M
 $B$?$@$7!"(B"psql -f pgpool-regclass.sql template1"$B$r<B9T8e$K:n@.$5$l$?%G!<%?%Y!<%9$G$O<+F0E*$K(Bpgpool-regclass.sql$B$NFbMF$,H?1G$5$l$F$$$k$N$G!"?7$?$K(Bpgpool-regclass.sql$B$r<B9T$9$kI,MW$O$"$j$^$;$s!#(B
 </p>
 
-<dt>pgpool_walrecunning$B$N%$%s%9%H!<%k(B
-<dd>
-<p>
-PostgreSQL 9.0$B0J9_$r;HMQ$7$F$$$F!"%9%H%j!<%_%s%0%l%W%j%1!<%7%g%s$rMxMQ$7$?$$>l9g$O!"(BC$B4X?t(Bpgpool_walrecrunning$B$r%$%s%9%H!<%k$7$^$9!#(B
-$B$3$N%$%s%9%H!<%k$O!"(Bpgpool-II$B$,%"%/%;%9$9$kM=Dj$N$9$Y$F$N(BPostgreSQL$B%5!<%P$G<B;\$7$F$/$@$5$$!#(B
-<pre>
-cd pgpool-II-x.x.x/sql/pgpool-walrecrunning
-make
-make install
-psql -f pgpool-walrecrunning.sql template1
-</pre>
-pgpool-walrecrunning.sql$B$N<B9T$O!"(Bpgpool-II$B7PM3$GMxMQ$9$k%G!<%?%Y!<%9Kh$KI,MW$K$J$j$^$9!#(B
-$B$?$@$7!"(B"psql -f pgpool-walrecrunning.sql template1"$B$r<B9T8e$K:n@.$5$l$?%G!<%?%Y!<%9$G$O<+F0E*$K(Bpgpool-walrecrunning.sql$B$NFbMF$,H?1G$5$l$F$$$k$N$G!"?7$?$K(Bpgpool-walrecrunning.sql$B$r<B9T$9$kI,MW$O$"$j$^$;$s!#(B
-</p>
-
 <dt>insert_lock$B%F!<%V%k$N:n@.(B
 <dd>
 <p>
@@ -1488,7 +1473,7 @@ load_balance_mode = true $B$r@_Dj$7$?>l9g!"0J2<$N>r7o$N$9$Y$F$rK~$?$7$?;~$K(BS
 <p>
 <font color="red">
 $BCm0U(B: JDBC $B%I%i%$%P$J$I$N$h$&$K!"%I%i%$%PFb$G(B autocommit $B$NM-8z!&L58z$N%*%W%7%g%s$,$"$k>l9g!"(B
-autocommit $B$rL58z$K$9$k$H!"(Bpgpool$B$,FbIt$G(B BEGIN $B%3%^%s%I$r<B9T$9$k4X78>e!"@5$7$/%m!<%I%P%i%s%9$5$l$J$$2DG=@-$,$"$j$^$9!#(B
+autocommit $B$rL58z$K$9$k$H!"(BJDBC$B$,FbIt$G(B BEGIN $B%3%^%s%I$r<B9T$9$k4X78>e!"@5$7$/%m!<%I%P%i%s%9$5$l$J$$2DG=@-$,$"$j$^$9!#(B
 $B%/%(%j$r%m!<%I%P%i%s%9$5$;$?$$>l9g$O(B autocommit $B$rM-8z$K$7$F$/$@$5$$!#(B
 $B$?$H$($P(BJDBC$B$G$"$l$P(B setAutoCommit(true) $B$r<B9T$7$F$/$@$5$$!#(B
 </font>
