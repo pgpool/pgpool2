@@ -93,6 +93,9 @@
 
 	  - Add SQL files to uninstall functions to sql/(Nicolas Thauvin)
 
+	  - In master/slave mode, SELECTs to unlogged table execute only on
+		master/primary(Kitagawa)
+
 	  * Bug fixes
 
 	  - Fix bug which cannot use the cursors of JDBC driver on standby
@@ -118,7 +121,7 @@
 		be changed by reloading pgpool.conf(Tatsuo)
 
 	  - Fix and enhance wording in English tutorial document.
-		Fix suggested by Huang Bambo(Tatsuo)
+		Fix suggested by Huang Jian(Tatsuo)
 
 	  - Fix pgpool-regclass() to be compiled in PostgreSQL 8.0 or later.
 		7.4 still produces errors(Tatsuo)
@@ -168,6 +171,18 @@
 
 	  - Fix "backend status" variable name correctly in pool_status.
 		Replace the space with a '_'(Guillaume Lelarge)
+
+	  - Fix possible crash of pgpool/worker child after attaching new backend.
+		Fix suggested by Gurjeet Singh(Tatsuo)
+
+	  - Fix bug that SELECTs which have subquery with FOR SHARE/UPDATE clause
+		are sent to slave/standby(Tatsuo)
+
+	  - Fix bug which rewriting timestamp of default value fails in PREPARE
+		statements. This used to work but was broken in 3.0(Kitagawa)
+
+	  - Fix fail to compile pcp commands on the environment without
+		getopt_long()(Tatsuo)
 
 	  * Enhancements
 

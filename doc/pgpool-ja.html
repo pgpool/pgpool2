@@ -4021,6 +4021,7 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
  <li>pgpool_adm$B4X?t$r(Bpgpool_adm/$B$KDI2C$7$^$7$?!#$3$l$i$O!"(Bpcp$B%3%^%s%I$N$h$&$KF0:n$9$k(BC$B8@8l$G=q$+$l$?%f!<%6Dj5A4X?t$G$9(B(Jehan-Guillaume (ioguix) de Rorthais)
  <li>$B4JBN;zCf9q8lHG$N%I%-%e%a%s%H$rDI2C$7$^$7$?(B(Huang Jian, Sun Peng)
  <li>$B4X?t$r%"%s%$%s%9%H!<%k$9$k$?$a$N(BSQL$B%U%!%$%k$r(Bsql/$B$KDI2C$7$^$7$?(B(Nicolas Thauvin)
+ <li>$B%^%9%?!<%9%l!<%V%b!<%I$K$*$$$F!"(Bunlogged$B%F!<%V%k$KBP$9$k(BSELECT$B$O!">o$K%^%9%?!<(B(primary)$B$G<B9T$5$l$k$h$&$K$J$j$^$7$?(B(Kitagawa)
 </ul>
 </p>
 
@@ -4033,7 +4034,7 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
  <li>$B%U%'%$%k%*!<%P!<Cf$O%(%i!<%a%C%;!<%8$r=PNO$9$k$h$&$K(Bpcp_attach_node$B%3%^%s%I$r=$@5$7$^$7$?(B(Kitagawa)
  <li>$B3HD%Ld$$9g$o$;%W%m%H%3%k$G(Bpgpool-II$B$,%/%(%j$r2r@O$G$-$J$$$H$-$K=PNO$5$l$k%m%0%a%C%;!<%8$,%/%(%j$rI=<($9$k$h$&=$@5$7$^$7$?(B(Kitagawa)
  <li>pgpool-II$B%^%K%e%"%k$N(Bbackend_weight$B$K4X$9$k@bL@$r=$@5$7$^$7$?!#$=$l$O!"(Bpgpool.conf$B$N:FFI$_9~$_$GJQ99$G$-$^$9(B(Tatsuo)
- <li>$B1Q8l$N%A%e!<%H%j%"%k%I%-%e%a%s%HFb$NI=8=$N2~A1$H=$@5$r9T$$$^$7$?!#=$@5$NDs0F$O(BHuang Bambo$B$5$s$K$h$k$b$N$G$9(B(Tatsuo)
+ <li>$B1Q8l$N%A%e!<%H%j%"%k%I%-%e%a%s%HFb$NI=8=$N2~A1$H=$@5$r9T$$$^$7$?!#=$@5$NDs0F$O(BHuang Jian$B$5$s$K$h$k$b$N$G$9(B(Tatsuo)
  <li>pgpool-regclass()$B$r(BPostgreSQL 8.0$B0J9_$G%3%s%Q%$%k$G$-$k$h$&$K=$@5$7$^$7$?!#(B7.4$B$O$^$@%(%i!<$,=P$^$9(B(Tatsuo)
  <li>$B%9%H%j!<%_%s%0%l%W%j%1!<%7%g%s9=@.$G(B/*NO LOAD BALANCE*/$B%3%a%s%H$r;HMQ$7$?$H$-$K%O%s%0%"%C%W$9$k2DG=@-$r=$@5$7$^$7$?(B(kitagawa)
  <li>Flush(H)$B%a%C%;!<%8$d(BCloseComplete(C)$B%a%C%;!<%8$r<u?.$7$?$H$-$N%O%s%0%"%C%W$r=$@5$7$^$7$?(B(Kitagawa)
@@ -4050,6 +4051,10 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
  <li>$B3HD%Ld$$9g$o$;%W%m%H%3%k$G(BSQL$BJ8$,=PNO$5$l$k$h$&$K!"(Blog_per_node_statement$B$r=$@5$7$^$7$?!#$3$l$O0JA0$OF0:n$7$F$$$^$7$?$,!"(B3.0$B$GF0:n$7$J$/$J$C$F$$$^$7$?(B(Kitagawa)
  <li>$B%/%i%$%"%s%H$N%"%$%I%k;~4V$,(Bclient_idle_limit$B$KC#$7$?$H$-$K!"%U%m%s%H%(%s%I$KAw?.$5$l$k@5$7$/$J$$%(%i!<%a%C%;!<%8$r=$@5$7$^$7$?(B(Tatsuo)
  <li>pool_status$B$N(B&quot;backend status&quot;$B%Q%i%a!<%?$NL>A0$r@5$7$/=$@5$7$^$7$?!#%9%Z!<%9$r(B'_'$B$KCV$-49$($^$7$?(B(Guillaume Lelarge)
+ <li>$B%P%C%/%(%s%I$r?75,DI2C$7$?8e$K5/$3$jF@$k(Bpgpool/worker$B;R%W%m%;%9$N%/%i%C%7%e$r=$@5$7$^$7$?!#=$@5$O(BGurjeet Singh$B$5$s$NDs0F$K$h$k$b$N$G$9(B(Tatsuo)
+ <li>FOR SHARE/UPDATE$B6g$N$"$k%5%V%/%(%j$r4^$`(BSELECT$B$,%9%l!<%V(B(standby)$B$KAw$i$l$k%P%0$r=$@5$7$^$7$?(B(Tatsuo)
+ <li>PREPARE$BJ8$G%G%U%)%k%HCM$N%?%$%`%9%?%s%W=q$-49$($K<:GT$9$k%P%0$r=$@5$7$^$7$?!#$3$l$O0JA0$OF0:n$7$F$$$^$7$?$,!"(B3.0$B$GF0:n$7$J$/$J$C$F$$$^$7$?(B(Kitagawa)
+ <li>getopt_long()$B$,$J$$4D6-$G(Bpcp$B%3%^%s%I$N%3%s%Q%$%k$,<:GT$9$k$N$r=$@5$7$^$7$?(B(Tatsuo)
 </ul>
 </p>
 
