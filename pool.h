@@ -407,6 +407,8 @@ extern volatile sig_atomic_t exit_request;
 #define QUERY_STRING_BUFFER_LEN 1024
 extern char query_string_buffer[];		/* last query string sent to simpleQuery() */
 
+extern BACKEND_STATUS private_backend_status[MAX_NUM_BACKENDS];
+
 /*
  * public functions
  */
@@ -569,6 +571,7 @@ extern int wait_connection_closed(void);
 /* child.c */
 extern void cancel_request(CancelPacket *sp);
 extern void check_stop_request(void);
+extern void pool_initialize_private_backend_status(void);
 
 /* pool_process_query.c */
 extern void reset_variables(void);

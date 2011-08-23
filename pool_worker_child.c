@@ -63,6 +63,7 @@ extern char **myargv;
 char remote_ps_data[NI_MAXHOST];		/* used for set_ps_display */
 static POOL_CONNECTION_POOL_SLOT	*slots[MAX_NUM_BACKENDS];
 static volatile sig_atomic_t reload_config_request = 0;
+static volatile sig_atomic_t restart_request = 0;
 
 static void establish_persistent_connection(void);
 static void discard_persistent_connection(void);
@@ -78,6 +79,10 @@ static void reload_config(void);
 		{ \
 			reload_config(); \
 			reload_config_request = 0; \
+		} else if (restart_request) \
+		{ \
+		  pool_log("worker process received restart request"); \
+		  exit(1); \
 		} \
     } while (0)
 
@@ -99,9 +104,12 @@ void do_worker_child(void)
 	signal(SIGHUP, reload_config_handler);
 	signal(SIGQUIT, my_signal_handler);
 	signal(SIGCHLD, SIG_IGN);
-	signal(SIGUSR1, SIG_IGN);
+	signal(SIGUSR1, my_signal_handler);
 	signal(SIGUSR2, SIG_IGN);
 	signal(SIGPIPE, SIG_IGN);
+
+	/* Initialize my backend status */
+	pool_initialize_private_backend_status();
 
 	/* Initialize per process context */
 	pool_init_process_context();
@@ -341,6 +349,13 @@ static RETSIGTYPE my_signal_handler(int sig)
 		case SIGINT:
 		case SIGQUIT:
 			exit(0);
+			break;
+
+			/* Failback or new node added */
+		case SIGUSR1:
+			restart_request = 1;
+			break;
+
 		default:
 			exit(1);
 			break;

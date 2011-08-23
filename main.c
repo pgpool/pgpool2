@@ -131,6 +131,11 @@ static struct sockaddr_un pcp_un_addr;  /* unix domain socket path for PCP */
 ProcessInfo *process_info;	/* Per child info table on shmem */
 
 /*
+ * Private copy of backend status
+ */
+BACKEND_STATUS private_backend_status[MAX_NUM_BACKENDS];
+
+/*
  * shmem connection info table
  * this is a three dimension array. i.e.:
  * con_info[pool_config->num_init_children][pool_config->max_pool][MAX_NUM_BACKENDS]
@@ -510,7 +515,7 @@ int main(int argc, char **argv)
 	 * (get_next_master_node() uses VALID_BACKEND)
 	 */
 
-	for (i=0;i<NUM_BACKENDS;i++)
+	for (i=0;i<MAX_NUM_BACKENDS;i++)
 	{
 		my_backend_status[i] = &(BACKEND_INFO(i).backend_status);
 	}
@@ -1798,6 +1803,11 @@ static void failover(void)
 		{
 			process_info[i].need_to_restart = 1;
 		}
+
+		/*
+		 * Send restart request to worker child.
+		 */
+		kill(worker_pid, SIGUSR1);
 	}
 
 	if (Req_info->kind == NODE_UP_REQUEST)
@@ -1826,6 +1836,13 @@ static void failover(void)
 	 * failover/failback done
 	 */
 	kill(pcp_pid, SIGUSR2);
+
+	sleep(1);
+
+	/*
+	 * Send restart request to pcp child.
+	 */
+	kill(pcp_pid, SIGUSR1);
 }
 
 /*

@@ -69,6 +69,7 @@ static void unset_nonblock(int fd);
 static int user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len);
 static RETSIGTYPE wakeup_handler(int sig);
 static RETSIGTYPE reload_config_handler(int sig);
+static RETSIGTYPE restart_handler(int sig);
 static int pool_detach_node(int node_id, bool gracefully);
 static int pool_promote_node(int node_id, bool gracefully);
 
@@ -77,6 +78,16 @@ extern char **myargv;
 
 static volatile sig_atomic_t pcp_got_sighup = 0;
 volatile sig_atomic_t pcp_wakeup_request = 0;
+static volatile sig_atomic_t pcp_restart_request = 0;
+
+#define CHECK_RESTART_REQUEST \
+	do { \
+		if (pcp_restart_request) \
+		{ \
+		  pool_log("pcp child process received restart request"); \
+		  exit(1); \
+		} \
+    } while (0)
 
 void
 pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
@@ -108,10 +119,13 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 	signal(SIGHUP, reload_config_handler);
 	signal(SIGQUIT, die);
 	signal(SIGCHLD, SIG_DFL);
-	signal(SIGUSR1, SIG_DFL);
+	signal(SIGUSR1, restart_handler);
 	signal(SIGUSR2, wakeup_handler);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGALRM, SIG_IGN);
+
+	/* Initialize my backend status */
+	pool_initialize_private_backend_status();
 
 	/* Initialize process context */
 	pool_init_process_context();
@@ -119,6 +133,8 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 	for(;;)
 	{
 		errno = 0;
+
+		CHECK_RESTART_REQUEST;
 
 		if (frontend == NULL)
 		{
@@ -1054,6 +1070,12 @@ static RETSIGTYPE
 wakeup_handler(int sig)
 {
 	pcp_wakeup_request = 1;
+}
+
+static RETSIGTYPE
+restart_handler(int sig)
+{
+	pcp_restart_request = 1;
 }
 
 static PCP_CONNECTION *
