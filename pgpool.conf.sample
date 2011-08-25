@@ -24,12 +24,15 @@
 
 # - pgpool Connection Settings -
 
-listen_addresses = 'localhost'     # Host name or IP address to listen on:
+listen_addresses = 'localhost'
+                                   # Host name or IP address to listen on:
                                    # '*' for all, '' for no TCP/IP connections
                                    # (change requires restart)
-port = 9999                        # Port number
+port = 9999
+                                   # Port number
                                    # (change requires restart)
-socket_dir = '/tmp'                # Unix domain socket path
+socket_dir = '/tmp'
+                                   # Unix domain socket path
                                    # The Debian package defaults to
                                    # /var/run/postgresql
                                    # (change requires restart)
@@ -37,19 +40,25 @@ socket_dir = '/tmp'                # Unix domain socket path
 
 # - pgpool Communication Manager Connection Settings -
 
-pcp_port = 9898                    # Port number for pcp
+pcp_port = 9898
+                                   # Port number for pcp
                                    # (change requires restart)
-pcp_socket_dir = '/tmp'            # Unix domain socket path for pcp
+pcp_socket_dir = '/tmp'
+                                   # Unix domain socket path for pcp
                                    # The Debian package defaults to
                                    # /var/run/postgresql
                                    # (change requires restart)
 
 # - Backend Connection Settings -
 
-#backend_hostname0 = 'host1'       # Host name or IP address to connect to for backend 0
-#backend_port0 = 5432              # Port number for backend 0
-#backend_weight0 = 1               # Weight for backend 0 (only in load balancing mode)
-#backend_data_directory0 = '/data' # Data directory for backend 0
+#backend_hostname0 = 'host1'
+                                   # Host name or IP address to connect to for backend 0
+#backend_port0 = 5432
+                                   # Port number for backend 0
+#backend_weight0 = 1
+                                   # Weight for backend 0 (only in load balancing mode)
+#backend_data_directory0 = '/data'
+                                   # Data directory for backend 0
 #backend_flag0 = 'ALLOW_TO_FAILOVER'
                                    # Controls various backend behavior
                                    # ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
@@ -61,22 +70,29 @@ pcp_socket_dir = '/tmp'            # Unix domain socket path for pcp
 
 # - Authentication -
 
-enable_pool_hba = off              # Use pool_hba.conf for client authentication
-authentication_timeout = 60        # Delay in seconds to complete client authentication
+enable_pool_hba = off
+                                   # Use pool_hba.conf for client authentication
+authentication_timeout = 60
+                                   # Delay in seconds to complete client authentication
                                    # 0 means no timeout.
 
 # - SSL Connections -
 
-ssl = off                          # Enable SSL support
+ssl = off
+                                   # Enable SSL support
                                    # (change requires restart)
-#ssl_key = './server.key'          # Path to the SSL private key file
+#ssl_key = './server.key'
+                                   # Path to the SSL private key file
                                    # (change requires restart)
-#ssl_cert = './server.cert'        # Path to the SSL public certificate file
+#ssl_cert = './server.cert'
+                                   # Path to the SSL public certificate file
                                    # (change requires restart)
-#ssl_ca_cert = ''                  # Path to a single PEM format file
+#ssl_ca_cert = ''
+                                   # Path to a single PEM format file
                                    # containing CA root certificate(s)
                                    # (change requires restart)
-#ssl_ca_cert_dir = ''              # Directory containing CA root certificate(s)
+#ssl_ca_cert_dir = ''
+                                   # Directory containing CA root certificate(s)
                                    # (change requires restart)
 
 
@@ -86,19 +102,25 @@ ssl = off                          # Enable SSL support
 
 # - Pool size -
 
-num_init_children = 32             # Number of pools
+num_init_children = 32
+                                   # Number of pools
                                    # (change requires restart)
-max_pool = 4                       # Number of connections per pool
+max_pool = 4
+                                   # Number of connections per pool
                                    # (change requires restart)
 
 # - Life time -
 
-child_life_time = 300              # Pool exits after being idle for this many seconds
-child_max_connections = 0          # Pool exits after receiving that many connections
+child_life_time = 300
+                                   # Pool exits after being idle for this many seconds
+child_max_connections = 0
+                                   # Pool exits after receiving that many connections
                                    # 0 means no exit
-connection_life_time = 0           # Connection to backend closes after being idle for this many seconds
+connection_life_time = 0
+                                   # Connection to backend closes after being idle for this many seconds
                                    # 0 means no close
-client_idle_limit = 0              # Client is disconnected after being idle for that many seconds
+client_idle_limit = 0
+                                   # Client is disconnected after being idle for that many seconds
                                    # (even inside an explicit transactions!)
                                    # 0 means no disconnection
 
@@ -109,34 +131,44 @@ client_idle_limit = 0              # Client is disconnected after being idle for
 
 # - Where to log -
 
-log_destination = 'stderr'         # Where to log
+log_destination = 'stderr'
+                                   # Where to log
                                    # Valid values are combinations of stderr,
                                    # and syslog. Default to stderr.
 
 # - What to log -
 
-print_timestamp = on               # Print timestamp on each line
+print_timestamp = on
+                                   # Print timestamp on each line
                                    # (change requires restart)
 
-log_connections = off              # Log connections
-log_hostname = off                 # Hostname will be shown in ps status
+log_connections = off
+                                   # Log connections
+log_hostname = off
+                                   # Hostname will be shown in ps status
                                    # and in logs if connections are logged
-log_statement = off                # Log all statements
-log_per_node_statement = off       # Log all statements
+log_statement = off
+                                   # Log all statements
+log_per_node_statement = off
+                                   # Log all statements
                                    # with node and backend informations
-log_standby_delay = 'none'         # Log standby delay
+log_standby_delay = 'none'
+                                   # Log standby delay
                                    # Valid values are combinations of always,
                                    # if_over_threshold, none
 
 # - Syslog specific -
 
-syslog_facility = 'LOCAL0'         # Syslog local facility. Default to LOCAL0
-syslog_ident = 'pgpool'            # Syslog program identification string
+syslog_facility = 'LOCAL0'
+                                   # Syslog local facility. Default to LOCAL0
+syslog_ident = 'pgpool'
+                                   # Syslog program identification string
                                    # Default to 'pgpool'
 
 # - Debug -
 
-debug_level = 0                    # Debug message verbosity level
+debug_level = 0
+                                   # Debug message verbosity level
                                    # 0 means no message, 1 or more mean verbose
 
 
@@ -144,9 +176,11 @@ debug_level = 0                    # Debug message verbosity level
 # FILE LOCATIONS
 #------------------------------------------------------------------------------
 
-pid_file_name = '/var/run/pgpool/pgpool.pid' # PID file name
+pid_file_name = '/var/run/pgpool/pgpool.pid'
+                                   # PID file name
                                    # (change requires restart)
-logdir = '/tmp'                    # Directory of pgPool status file
+logdir = '/tmp'
+                                   # Directory of pgPool status file
                                    # (change requires restart)
 
 
@@ -154,7 +188,8 @@ logdir = '/tmp'                    # Directory of pgPool status file
 # CONNECTION POOLING
 #------------------------------------------------------------------------------
 
-connection_cache = on              # Activate connection pools
+connection_cache = on
+                                   # Activate connection pools
                                    # (change requires restart)
 
                                    # Semicolon separated list of queries
@@ -169,18 +204,22 @@ reset_query_list = 'ABORT; DISCARD ALL'
 # REPLICATION MODE
 #------------------------------------------------------------------------------
 
-replication_mode = off             # Activate replication mode
+replication_mode = off
+                                   # Activate replication mode
                                    # (change requires restart)
-replicate_select = off             # Replicate SELECT statements
+replicate_select = off
+                                   # Replicate SELECT statements
                                    # when in replication or parallel mode
                                    # replicate_select is higher priority than
                                    # load_balance_mode.
 
-insert_lock = on                   # Automatically locks a dummy row or a table
+insert_lock = on
+                                   # Automatically locks a dummy row or a table
                                    # with INSERT statements to keep SERIAL data
                                    # consistency
                                    # Without SERIAL, no lock will be issued
-lobj_lock_table = ''               # When rewriting lo_creat command in
+lobj_lock_table = ''
+                                   # When rewriting lo_creat command in
                                    # replication mode, specify table name to
                                    # lock
 
@@ -205,10 +244,13 @@ failover_if_affected_tuples_mismatch = off
 # LOAD BALANCING MODE
 #------------------------------------------------------------------------------
 
-load_balance_mode = off            # Activate load balancing mode
+load_balance_mode = off
+                                   # Activate load balancing mode
                                    # (change requires restart)
-ignore_leading_white_space = on    # Ignore leading white spaces of each query
-white_function_list = ''           # Comma separated list of function names
+ignore_leading_white_space = on
+                                   # Ignore leading white spaces of each query
+white_function_list = ''
+                                   # Comma separated list of function names
                                    # that don't write to database
                                    # Regexp are accepted
 black_function_list = 'nextval,setval'
@@ -221,28 +263,36 @@ black_function_list = 'nextval,setval'
 # MASTER/SLAVE MODE
 #------------------------------------------------------------------------------
 
-master_slave_mode = off            # Activate master/slave mode
+master_slave_mode = off
+                                   # Activate master/slave mode
                                    # (change requires restart)
-master_slave_sub_mode = 'slony'    # Master/slave sub mode
+master_slave_sub_mode = 'slony'
+                                   # Master/slave sub mode
                                    # Valid values are combinations slony or
                                    # stream. Default is slony.
                                    # (change requires restart)
 
 # - Streaming -
 
-sr_check_period = 0		           # Streaming replication check period
-					  			   # Disabled (0) by default
-sr_check_user = 'nobody'		   # Streaming replication check user
-			  					   # This is neccessary even if you disable streaming
-								   # replication delay check by sr_check_period = 0
-sr_check_password = ''			   # Password for streaming replication check user
-delay_threshold = 0                # Threshold before not dispatching query to standby node
+sr_check_period = 0
+                                   # Streaming replication check period
+                                   # Disabled (0) by default
+sr_check_user = 'nobody'
+                                   # Streaming replication check user
+                                   # This is necessary even if you disable
+                                   # streaming replication delay check with
+                                   # sr_check_period = 0
+sr_check_password = ''
+                                   # Password for streaming replication check user
+delay_threshold = 0
+                                   # Threshold before not dispatching query to standby node
                                    # Unit is in bytes
                                    # Disabled (0) by default
 
 # - Special commands -
 
-follow_master_command = ''         # Executes this command after master failover
+follow_master_command = ''
+                                   # Executes this command after master failover
                                    # Special values:
                                    #   %d = node id
                                    #   %h = host name
@@ -259,41 +309,55 @@ follow_master_command = ''         # Executes this command after master failover
 # PARALLEL MODE AND QUERY CACHE
 #------------------------------------------------------------------------------
 
-parallel_mode = off                # Activates parallel query mode
+parallel_mode = off
+                                   # Activates parallel query mode
                                    # (change requires restart)
-enable_query_cache = off           # Activates query cache
+enable_query_cache = off
+                                   # Activates query cache
                                    # (change requires restart)
 
-pgpool2_hostname = ''              # Set pgpool2 hostname 
+pgpool2_hostname = ''
+                                   # Set pgpool2 hostname 
                                    # (change requires restart)
 
 # - System DB info -
 
-system_db_hostname  = 'localhost'   # (change requires restart)
-system_db_port = 5432               # (change requires restart)
-system_db_dbname = 'pgpool'         # (change requires restart)
-system_db_schema = 'pgpool_catalog' # (change requires restart)
-system_db_user = 'pgpool'           # (change requires restart)
-system_db_password = ''             # (change requires restart)
+system_db_hostname  = 'localhost'
+                                   # (change requires restart)
+system_db_port = 5432 
+                                   # (change requires restart)
+system_db_dbname = 'pgpool'
+                                   # (change requires restart)
+system_db_schema = 'pgpool_catalog'
+                                   # (change requires restart)
+system_db_user = 'pgpool'
+                                   # (change requires restart)
+system_db_password = ''
+                                   # (change requires restart)
 
 
 #------------------------------------------------------------------------------
 # HEALTH CHECK
 #------------------------------------------------------------------------------
 
-health_check_period = 0            # Health check period
+health_check_period = 0
+                                   # Health check period
                                    # Disabled (0) by default
-health_check_timeout = 20          # Health check timeout
+health_check_timeout = 20
+                                   # Health check timeout
                                    # 0 means no timeout
-health_check_user = 'nobody'       # Health check user
-health_check_password = ''         # Password for health check user
+health_check_user = 'nobody'
+                                   # Health check user
+health_check_password = ''
+                                   # Password for health check user
 
 
 #------------------------------------------------------------------------------
 # FAILOVER AND FAILBACK
 #------------------------------------------------------------------------------
 
-failover_command = ''              # Executes this command at failover
+failover_command = ''
+                                   # Executes this command at failover
                                    # Special values:
                                    #   %d = node id
                                    #   %h = host name
@@ -304,7 +368,8 @@ failover_command = ''              # Executes this command at failover
                                    #   %M = old master node id
                                    #   %P = old primary node id
                                    #   %% = '%' character
-failback_command = ''              # Executes this command at failback.
+failback_command = ''
+                                   # Executes this command at failback.
                                    # Special values:
                                    #   %d = node id
                                    #   %h = host name
@@ -316,7 +381,8 @@ failback_command = ''              # Executes this command at failback.
                                    #   %P = old primary node id
                                    #   %% = '%' character
 
-fail_over_on_backend_error = on    # Initiates failover when writing to the
+fail_over_on_backend_error = on
+                                   # Initiates failover when writing to the
                                    # backend communication socket fails
                                    # This is the same behaviour of pgpool-II
                                    # 2.2.x and previous releases
@@ -328,14 +394,20 @@ fail_over_on_backend_error = on    # Initiates failover when writing to the
 # ONLINE RECOVERY
 #------------------------------------------------------------------------------
 
-recovery_user = 'nobody'           # Online recovery user
-recovery_password = ''             # Online recovery password
-recovery_1st_stage_command = ''    # Executes a command in first stage
-recovery_2nd_stage_command = ''    # Executes a command in second stage
-recovery_timeout = 90              # Timeout in seconds to wait for the
+recovery_user = 'nobody'
+                                   # Online recovery user
+recovery_password = ''
+                                   # Online recovery password
+recovery_1st_stage_command = ''
+                                   # Executes a command in first stage
+recovery_2nd_stage_command = ''
+                                   # Executes a command in second stage
+recovery_timeout = 90
+                                   # Timeout in seconds to wait for the
                                    # recovering node's postmaster to start up
                                    # 0 means no wait
-client_idle_limit_in_recovery = 0  # Client is disconnected after being idle
+client_idle_limit_in_recovery = 0
+                                   # Client is disconnected after being idle
                                    # for that many seconds in the second stage
                                    # of online recovery
                                    # 0 means no disconnection
@@ -346,7 +418,8 @@ client_idle_limit_in_recovery = 0  # Client is disconnected after being idle
 # OTHERS
 #------------------------------------------------------------------------------
 
-relcache_expire = 0                # Life time of relation cache in seconds.
+relcache_expire = 0
+                                   # Life time of relation cache in seconds.
                                    # 0 means no cache expiration(the default).
                                    # The relation cache is used for cache the
                                    # query result against PostgreSQL system
