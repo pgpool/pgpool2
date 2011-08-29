@@ -1514,6 +1514,7 @@ int is_select_query(Node *node, char *sql)
 	return 0;
 }
 
+#ifdef NOT_USED
 /*
  * returns true if SQL is SELECT statement including nextval() or
  * setval() call
@@ -1553,6 +1554,7 @@ bool is_sequence_query(Node *node)
 
 	return false;
 }
+#endif
 
 /*
  * Returns true if SQL is transaction commit or rollback command (COMMIT,

@@ -447,7 +447,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	}
 	else if (REPLICATION || PARALLEL_MODE)
 	{
-		if (is_select_query(node, query) && !is_sequence_query(node))
+		if (is_select_query(node, query))
 		{
 			/*
 			 * If a writing function call is used or replicate_select is true,
@@ -1012,12 +1012,6 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		{
 			/* SELECT INTO or SELECT FOR SHARE or UPDATE ? */
 			if (pool_has_insertinto_or_locking_clause(node))
-				return POOL_PRIMARY;
-			/*
-			 * SELECT nextval(), setval()
-			 * XXX: We do not search in subquery.
-			 */
-			else if (is_sequence_query(node))
 				return POOL_PRIMARY;
 
 			return POOL_EITHER;

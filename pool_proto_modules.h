@@ -151,7 +151,6 @@ extern int RowDescription(POOL_CONNECTION *frontend,
 
 extern POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, int protoVersion);
 extern int is_select_query(Node *node, char *sql);
-extern bool is_sequence_query(Node *node);
 extern bool is_commit_query(Node *node);
 extern bool is_rollback_query(Node *node);
 extern bool is_commit_or_rollback_query(Node *node);
