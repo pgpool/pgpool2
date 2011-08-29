@@ -2285,6 +2285,8 @@ void free_select_result(POOL_SELECT_RESULT *result)
 		}
 		free(result->rowdesc);
 	}
+
+	free(result);
 }
 
 /*
