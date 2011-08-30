@@ -236,9 +236,7 @@ void *string_register_func(POOL_SELECT_RESULT *res)
 
 	for (i = 0; i < res->numrows; i++)
 	{
-		ret = malloc(strlen(res->data[i])+1);
-		if (ret)
-			ret = strdup(res->data[i]);
+		ret = strdup(res->data[i]);
 		break;
 	}
 
