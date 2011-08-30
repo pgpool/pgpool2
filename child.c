@@ -1568,6 +1568,7 @@ void discard_persistent_db_connection(POOL_CONNECTION_POOL_SLOT *cp)
 	free(cp->sp->startup_packet);
 	free(cp->sp->database);
 	free(cp->sp->user);
+	free(cp->sp);
 	free(cp);
 }
 
