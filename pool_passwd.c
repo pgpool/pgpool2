@@ -152,6 +152,12 @@ char *pool_get_passwd(char *username)
 	char *p;
 	int readlen;
 
+	if (!username)
+	{
+		pool_error("pool_get_passwd: username is NULL");
+		return NULL;
+	}
+
 	if (!passwd_fd)
 	{
 		pool_error("pool_get_passwd: passwd_fd is NULL");
