@@ -530,8 +530,8 @@ rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext *ctx)
 						values = lappend(values,
 										 makeStringConstFromQuery(ctx->backend, relcache->attr[append_columns_list[i]].adsrc));
 				}
-				free(append_columns_list);
 			}
+			free(append_columns_list);
 		}
 	}
 
