@@ -1,3 +1,68 @@
+2011-09-04 15:52  kitagawa
+
+	* NEWS, configure, configure.in, doc/pgpool-ja.html: Prepare
+	  3.1-RC1.
+
+2011-09-03 23:48  kitagawa
+
+	* Makefile.am, Makefile.in, doc/pgpool-fr.html: Add French version
+	  of documents.  Contributed by Jean-Paul Argudo.
+
+2011-09-03 18:52  kitagawa
+
+	* pool_timestamp.c: Fix double free in rewrite_timestamp_insert().
+	  This caused the failure in trigger of regression test.
+
+2011-08-31 19:27  kitagawa
+
+	* pool_process_reporting.c: Change directive name in pool_status.
+	  flag -> backend_flag.
+
+2011-08-31 17:31  kitagawa
+
+	* pool_passwd.c: Fix crash of pgpool child when frontend connects
+	  if in raw mode, enable_hba=off and more than 2 backends.
+
+2011-08-30 20:28  kitagawa
+
+	* child.c: Fix memory leak in discard_persistent_db_connection()
+
+2011-08-30 20:02  kitagawa
+
+	* pool_relcache.c: Fix memory leak in string_register_func().
+
+2011-08-29 22:03  kitagawa
+
+	* pool_config.c: Fix invalid memory write in add_regex_pattern().
+
+2011-08-29 21:44  kitagawa
+
+	* pool_process_query.c: Fix memory leak in free_select_result().
+
+2011-08-29 16:09  kitagawa
+
+	* pool_process_query.c, pool_proto_modules.h, pool_query_context.c:
+	  Change the handling of sequence functions(nextval, setval) so that
+	  they completely obey setting of black/white_function_list.  They
+	  were always handled as write functions before. The checking whether
+	  it is a sequence function was verbosity.
+
+2011-08-26 06:04  gleu
+
+	* pgpool.conf.sample, pgpool.conf.sample-master-slave,
+	  pgpool.conf.sample-replication, pgpool.conf.sample-stream: Update
+	  pgpool.conf so that pgpoolAdmin could work
+
+2011-08-24 20:24  markus
+
+	* doc/pgpool-de.html: Add the current state of the German
+	  translation of the manual, should match revision 1.100 of
+	  pgpool-en.html.
+
+2011-08-23 18:39  kitagawa
+
+	* ChangeLog: Prepare 3.1-beta2.
+
 2011-08-23 18:25  kitagawa
 
 	* configure, configure.in, NEWS, doc/pgpool-ja.html: Prepare

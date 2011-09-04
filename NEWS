@@ -43,6 +43,10 @@
 		show pool_nodes. Patch contributed by Jean-Paul Argudo
 		(Guillaume Lelarge)
 
+	  - Change the handling of sequence functions(nextval, setval) so that
+		they completely obey setting of black/white_function_list. They were
+		always handled as write functions before(Kitagawa)
+
 	  * New features
 
 	  - Add syslog support. Patch contributed by Gilles Darold. Review and
@@ -184,6 +188,11 @@
 	  - Fix fail to compile pcp commands on the environment without
 		getopt_long()(Tatsuo)
 
+	  - Fix crash of pgpool child when frontend connects if in raw mode,
+		enable_hba is off and more than 2 backends(Kitagawa)
+
+	  - Fix some memory leaks(Kitagawa)
+
 	  * Enhancements
 
 	  - Enhance online recovery in streaming replication mode.
@@ -203,7 +212,7 @@
 		(Tatsuo)
 
 	  - Reorganize pgpool.conf sample files so that they are easier to read
-		(Gleu)
+		(Guillaume Lelarge)
 
 	  - Add <a name="..."> tags into all parameters in the pgpool-II user
 		manual(Haruka Takatsuka)
