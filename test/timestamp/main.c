@@ -2,15 +2,14 @@
 #include <string.h>
 #include <stdio.h>
 #include "pool.h"
-#include "pool_proto_modules.h"
+#include "pool_config.h"
+#include "pool_relcache.h"
 #include "pool_timestamp.h"
 #include "parser/parser.h"
 
 /* for get_current_timestamp() (MASTER() macro) */
 POOL_REQUEST_INFO		_req_info;
 POOL_REQUEST_INFO *Req_info = &_req_info;
-int selected_slot = 0;		/* selected DB node */
-int in_load_balance = 1;	/* non 0 if in load balance mode */
 POOL_CONFIG _pool_config;
 POOL_CONFIG *pool_config = &_pool_config;
 
@@ -39,6 +38,16 @@ TSRel	 rc[2] = {
 		{ "c4", 0 }
 	} }
 };
+
+int pool_virtual_master_db_node_id(void)
+{
+	return 0;
+}
+
+bool pool_has_pgpool_regclass(void)
+{
+	return false;
+}
 
 POOL_RELCACHE *
 pool_create_relcache(int cachesize, char *sql, func_ptr register_func, func_ptr unregister_func, bool issessionlocal)
@@ -75,12 +84,14 @@ main(int argc, char **argv)
 	char		*query;
 	List 		*tree;
 	ListCell 	*l;
-	Portal		 portal;
+	StartupPacket	 sp;
 	POOL_CONNECTION_POOL	backend;
 	POOL_CONNECTION_POOL_SLOT slot;
+	POOL_SENT_MESSAGE	msg;
 	backend.slots[0] = &slot;
+	slot.sp = &sp;
 
-	pool_config->replication_enabled = 1;
+	pool_config->replication_mode = 1;
 
 	if (argc != 2)
 	{
@@ -97,9 +108,9 @@ main(int argc, char **argv)
 	{
 		foreach(l, tree)
 		{
-			portal.num_tsparams = 0;
+			msg.num_tsparams = 0;
 			Node *node = (Node *) lfirst(l);
-			query = rewrite_timestamp(&backend, node, false, &portal);
+			query = rewrite_timestamp(&backend, node, false, &msg);
 			if (query)
 				printf("%s\n", query);
 			else
