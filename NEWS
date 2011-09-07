@@ -1,4 +1,4 @@
-3.1 (hatsuiboshi) xxxx/xx/xx
+3.1 (hatsuiboshi) 2011/09/08
 
 	  * Version 3.1
 
@@ -19,12 +19,6 @@
 		insert_lock which is compatible with older releases, you can specify
 		lock method by configure options: --enable-sequence-lock,
 		--enable-table-lock(Kitagawa)
-
-	  - In streaming replication, if delay_threshold is 0 or health checking
-		is disabled, the delay checking is not performed. This is the behaviour
-		according to a description of the pgpool-II manual. But, so far the
-		delay checking was performed even if health checking was disabled
-		(Guillaume Lelarge)
 
 	  - Deprecate backend_socket_dir. Instead, if backend_hostname starts
 		with '/' it is regarded the as path to Unix domain. If backend_hostname
@@ -127,31 +121,6 @@
 	  - Fix and enhance wording in English tutorial document.
 		Fix suggested by Huang Jian(Tatsuo)
 
-	  - Fix pgpool-regclass() to be compiled in PostgreSQL 8.0 or later.
-		7.4 still produces errors(Tatsuo)
-
-	  - Fix possible hangup when using /*NO LOAD BALANCE*/ comment in
-		streaming replication(Kitagawa)
-
-	  - Fix hangup when received Flush(H) message or CloseComplete(C)
-		message(Kitagawa)
-
-	  - Fix possible hangup that happen for the receiving timing of
-		ReadyForQuery(Z) message after pgpool-II connects to backends(Kitagawa)
-
-	  - Add description about parameters for recovery_1st_stage_command and
-		recovery_2nd_stage_command(Tatsuo)
-
-	  - Increase size of the internal system catalog cache from 32 to 128.
-		This has the effect of reducing "unnamed prepared statement does not
-		exist" error(Tatsuo, Kitagawa)
-
-	  - Fix bug with pcp_connect() which causes double free. Patch contributed 
-		by Jehan-Guillaume (ioguix) de Rorthais(Tatsuo)
-
-	  - Fix bug with start_recoery() which is apparently wrong usage of
-		PQfinish()(Tatsuo)
-
 	  - Fix bug which does not update the node status when reattaching the
 		node in raw mode(Guillaume Lelarge)
 
@@ -162,19 +131,6 @@
 		"degenerate_backend_set" in the failover log message(Tatsuo)
 
 	  - Remove unnecessary logging at the end of pgpool.conf parsing(Tatsuo)
-
-	  - Fix hangup when using md5 authentication method and running as
-		daemon. Patch contributed by Nicolas Thauvin(Tatsuo)
-
-	  - Fix log_per_node_statement so that it prints statements in the
-		extended query protocol. This used to work but was broken in 3.0
-		(Kitagawa)
-
-	  - Fix incorrect error message which is sent to the frontend when
-		client idle time reached client_idle_limit(Tatsuo)
-
-	  - Fix "backend status" variable name correctly in pool_status.
-		Replace the space with a '_'(Guillaume Lelarge)
 
 	  - Fix possible crash of pgpool/worker child after attaching new backend.
 		Fix suggested by Gurjeet Singh(Tatsuo)
@@ -208,7 +164,7 @@
 		Akio Ishida(Tatsuo)
 
 	  - Allow to use regular expressions in black and white function list.
-		Patch contributed by Gilles Darold. Patch reviewd by Guillaume Lelarge
+		Patch contributed by Gilles Darold. Patch reviewed by Guillaume Lelarge
 		(Tatsuo)
 
 	  - Reorganize pgpool.conf sample files so that they are easier to read
@@ -239,15 +195,71 @@
 	  - Change error message "do_md5: read_password_packet failed" into debug
 		level(Kitagawa)
 
-	  - Add currval() and lastval() to black_function_list of sample
-		configuration files. If they are load balanced, currval() or
-		lastval() may be called before the result of nextval() or setval()
-		is propagated to slaves(Tatsuo)
-
 	  - Allow to compile pgpool-regclass() against PostgreSQL 9.1(Tatsuo)
 
 	  - Update and sync pgpool-II manuals of English version and Japanese
 		version(Tatsuo)
+
+3.0.4 (umiyameboshi) 2011/06/01
+
+	  * Version 3.0.4
+
+	  This version fixes various bugs since 3.0.3.
+
+	  * Incompatible changes
+
+	  - In streaming replication, if delay_threshold is 0 or health
+		checking is disabled, the delay checking is not performed. 
+		This is the behaviour according to a description of the
+		pgpool-II manual. But, so far the delay checking was performed
+		even if health checking was disabled(Guillaume Lelarge)
+
+	  * Bug fixes
+
+	  - Fix pgpool-regclass() to be compiled in PostgreSQL 8.0 or later.
+		7.4 still produces errors(Tatsuo)
+
+	  - Fix possible hangup when using /*NO LOAD BALANCE*/ comment in
+		streaming replication(Kitagawa)
+
+	  - Fix hangup when received Flush(H) message or CloseComplete(C)
+		message(Kitagawa)
+
+	  - Fix possible hangup that happen for the receiving timing of
+		ReadyForQuery(Z) message after pgpool-II connects to backends(Kitagawa)
+
+	  - Add description about parameters for recovery_1st_stage_command
+		and recovery_2nd_stage_command(Tatsuo)
+
+	  - Increase size of the internal system catalog cache from 32 to 128.
+		This has the effect of reducing "unnamed prepared statement does
+		not exist" error(Tatsuo, Kitagawa)
+
+	  - Fix bug with pcp_connect() which causes double free. Patch
+		contributed by Jehan-Guillaume (ioguix) de Rorthais(Tatsuo)
+
+	  - Fix bug with start_recoery() which is apparently wrong usage of
+		PQfinish()(Tatsuo)
+
+	  - Fix incorrect error message which is sent to the frontend when
+		client idle time reached client_idle_limit(Tatsuo)
+
+	  - Fix "backend status" variable name correctly in pool_status.
+		Replace the space with a '_'(Guillaume Lelarge)
+
+	  - Fix hangup when using md5 authentication method and running as
+		daemon. Patch contributed by Nicolas Thauvin(Tatsuo)
+
+	  - Fix log_per_node_statement so that it prints statements in the
+		extended query protocol. This used to work but was broken in 3.0
+		(Kitagawa)
+
+	  * Enhancements
+
+	  - Add currval() and lastval() to black_function_list of sample
+		configuration files. If they are load balanced, currval() or
+		lastval() may be called before the result of nextval() or setval()
+		is propagated to slaves(Tatsuo)
 
 3.0.3 (umiyameboshi) 2011/02/23
 
