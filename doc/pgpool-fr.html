@@ -14,7 +14,7 @@ Last modified: Sun Jan 30 09:14:28 JST 2011
 <a name="top"></a>
 <table border="0" cellpadding="2" cellspacing="1">
   <tr>
-    <td colspan="2" valign="top"><div class="header_text">Bievenue sur la page de pgpool-II</div></td>
+    <td colspan="2" valign="top"><div class="header_text">Bienvenue sur la page de pgpool-II</div></td>
   </tr>
   <tr>
     <td valign="top" style="border-right:1px dotted #cccccc;">
@@ -22,7 +22,7 @@ Last modified: Sun Jan 30 09:14:28 JST 2011
 
 	<div id="navcontainer">
       <ul id="navlist">
-        <li id="active"><a href="#Whatis" id="current">Qu'est ce que pgpool</a></li>
+        <li id="active"><a href="#Whatis" id="current">pgpool-II</a></li>
         <li><a href="#platform">Plates-formes</a></li>
         <li><a href="#install">Installation de pgpool-II</a></li>
         <li><a href="#config">Configuration de pgpool-II</a></li>
@@ -50,7 +50,7 @@ Last modified: Sun Jan 30 09:14:28 JST 2011
 
 
 
-<h1>Qu'est-ce que pgpool-II?<a name="whatis"></a></h1>
+<h1>pgpool-II<a name="whatis"></a></h1>
 
 <p>pgpool-II est un middleware qui se place entre les serveurs PostgreSQL
 et les clients de ces derniers. Voici ses différentes fonctionalités:</p>
@@ -58,53 +58,53 @@ et les clients de ces derniers. Voici ses différentes fonctionalités:</p>
 <ul>
 
 <li>Pooling de connexions</li>
-    <p>pgpool-II maintiens les connections établies aux serveurs PostgreSQL
-    et les réutilise dès qu'une nouvelle connexion avec les mêmes propriétés
-    (c'est à dire même utilisateur, même base de données et même version de
-    protocoles) arrive. Il réduit ainsi le coût de la connexion, et améliore
+    <p>pgpool-II maintient les connexions établies aux serveurs PostgreSQL
+    et les réutilise dès qu'une nouvelle connexion partageant les mêmes propriétés
+    (c'est-à-dire même utilisateur, même base de données et même version de
+    protocole) arrive. Il réduit ainsi le coût de la connexion et améliore
     les performances générales du système.</p>
 
 <li>Réplication</li>
     <p>pgpool-II peut gérer plusieurs serveurs PostgreSQL. En activant le
-    mode réplication, il devient possible de créer un backup continu sur
-    d'autres clusters PostgreSQL, afin que le service puisse continuer sans
-    interruption si l'un de ces clusters était défaillant.</p>
+    mode réplication, il devient possible de créer une sauvegarde continue sur
+    d'autres instances PostgreSQL, afin que le service puisse continuer sans
+    interruption si l'une de ces instances était défaillante.</p>
 
-<li>Load-Balancing</li>
+<li>Répartition de charge</li>
     <p>Si une base de données est répliquée, exécuter une requête en SELECT
     sur n'importe lequel de ceux-ci retournera le même résultat. pgpool-II
     profite ainsi avantageusement de la réplication pour réduire la charge
     sur chacun des serveurs PostgreSQL. Il parvient à cela en distribuant
-    les requêtes SELECT ente tous les serveurs disponibles, ce qui qui 
+    les requêtes SELECT entre tous les serveurs disponibles, ce qui qui 
     améliore les performances générales du système. Dans un scénario
     idéal, les performances en lecture s'améliorent proportionnellement au
-    nombre de serveurs PostgreSQL. Le load-balancing avec pgpool-II 
+    nombre de serveurs PostgreSQL. La répartition de charge avec pgpool-II 
     fonctionne au mieux dans un scénario où il y a beaucoup d'utilisateurs
     qui exécutent beaucoup de requêtes en lecture au même moment.</p>
 
-<li>Limitation des connections excédentaires</li>
+<li>Limitation des connexions excédentaires</li>
     <p>Dans PostgreSQL, il y a une limite maximum du nombre de connexions 
     concurrentes au serveur (NDT: paramètre max_connections), et toutes les
     nouvelles connexions sont rejettées une fois que ce nombre est atteint.
-    Augmenter ce nombre est possible, mais accroît la consommation de 
+    Augmenter ce nombre est possible mais accroît la consommation de 
     ressources par le serveur et a un impact négatif sur les performances
     générales du système. Bien que pgpool-II ait aussi une limite sur le
     nombre de connexions maximum, il va mettre toute connexion excédentaire
-    dans une file d'attente au lieu de retourner une erreur immédiatement.</p>
+    dans une file d'attente au lieu de retourner immédiatement une erreur.</p>
 
-<li>Requêtes parallèles</li>
-    <p>En utilisant la fonctionalité des requêtes parallèles, les données
-    peuvent être réparties sur plusieurs serveurs, afin que les requêtes
+<li>Requêtes parallèlisées</li>
+    <p>En utilisant la fonctionalité des requêtes parallèlisées, les données
+    peuvent être réparties sur plusieurs serveurs afin que les requêtes
     puissent être exécutées sur tous les serveurs à la fois, en réduisant
     ainsi le temps d'exécution global de la requête. Cette fonctionalité 
-    a les meilleurs résultats lorsqu'on requête un très grand ensemble de 
+    donne les meilleurs résultats lorsqu'on cherche à extraire un très grand ensemble de 
     données.</p>
 
 </ul>
 </p>
 
 <p>
-pgpool-II dialogue dans le même protocole que le serveur et les clients 
+pgpool-II utilise le même protocole que le serveur et les clients 
 PostgreSQL, et relaie les messages entre les deux. Ainsi, une application
 cliente va prendre pgpool-II pour le serveur, et ce dernier va voir 
 pgpool-II comme une application cliente. Puisque pgpool-II est 
@@ -119,46 +119,46 @@ plus de détails.</strong>
 
 <h1>Plates-formes supportées<a name="platform"></a></h1>
 
-<p>pgpool-II fonctionne sous Linux, Solaris, FreeBSD, et la
+<p>pgpool-II fonctionne sous Linux, Solaris, FreeBSD et la
 plupart des architectures UNIX. <b>Windows n'est pas supporté</b>.
-Les versions supportées de PostgreSQL sont la 6.4 et au-delà.
+Les versions 6.4 et ultérieures de PostgreSQL sont supportées.
 Cependant, pour utiliser la fonctionalité de requêtage en 
 parallèle, vous devez avoir un serveur en version 7.4 ou 
 supérieure.</p>
 
 <p>Si vous utilisez PostgreSQL en version 7.3 ou inférieure, certaines
-fonctionalités de pgpool-II ne seront pas disponibles. Cependant, vous
+fonctionnalités de pgpool-II ne seront pas disponibles. Cependant, vous
 ne devriez pas utiliser une si vieille version de toute façons.</p>
 
 <p>
-Vous devez aussi être certains que vos serveurs PostgreSQL sont tous dans la même 
-version majeure. De plus, les architectures matérièles et logicielles (systèmes
-d'exploitation) doivent-être identiques si vous voulez utiliser le online recovery.
+Vous devez aussi être certain que vos serveurs PostgreSQL sont tous dans la même 
+version majeure. De plus, les architectures matérielles et logicielles (systèmes
+d'exploitation) doivent-être identiques si vous voulez utiliser la technologie
+« online recovery ».
 </p>
 
 <h1>Installation de pgpool-II<a name="install"></a></h1>
 
 <p>
-pgpool-II peut-être téléchargé sur<a href="http://pgfoundry.org/projects/pgpool/">la page de développement 
+pgpool-II est téléchargeable sur la <a href="http://pgfoundry.org/projects/pgpool/">page de développement 
 de pgpool</a>. Plusieurs packages sont aussi fournis pour diverses plates-formes incluant
 CentOS, RedHat Enterprise Linux, Fedora et Debian.
 </p>
 
 <p>
-le code source de pgpool-II peut-être téléchargé sur <a href="http://pgfoundry.org/projects/pgpool/">la page de développement 
-de pgpool</a>
+Le code source de pgpool-II est téléchargeable sur la <a href="http://pgfoundry.org/projects/pgpool/">page de développement de pgpool</a>.
 </p>
 
-<p>Pour installer pgpool-II depuis son code source, vous aurez besoin de gcc
-en version 2.9 ou supérieure, et de GNU make. pgpool-II se linkant avec la
-librairie libpq de PostgreSQL, celle-ci doit-être aussi installée ainsi 
-que ses headers de développement sur la machine utilisée pour compiler
+<p>Pour installer pgpool-II depuis son code source, vous aurez besoin de gcc,
+en version 2.9 ou supérieure, et de GNU make. pgpool-II utilisant la
+bibliothèque libpq de PostgreSQL, celle-ci doit aussi être installée ainsi 
+que les fichiers d'en-tête sur la machine utilisée pour compiler
 pgpool-II. Si vous souhaitez activer le support d'OpenSSL dans pgpool-II,
-il vous faudra aussi avoir cette librairie ainsi que ses headers 
-d'installés sur la machine.</p>
+il vous faudra aussi avoir cette bibliothèque ainsi que les fichiers d'en-tête
+relatifs installés sur la machine de compilation.</p>
 
 <dl>
-<dt>configuration</dt>
+<dt>Configuration</dt>
 <dd>
 <p>
 Après avoir extrait les sources depuis l'archive, exécutez le script de 
@@ -167,41 +167,41 @@ configuration comme suit.
 ./configure
 </pre>
 
-Plusieurs valeurs de configuration ont des valeurs par défaut,
-mais vous pouvez cependant les modifier comme suit:
+Plusieurs options de configuration ont des valeurs par défaut,
+mais vous pouvez cependant les surcharger comme suit&nbsp;:
 
 <ul>
   <li><code>--prefix=path</code><br/>
-      les binaires de pgpool-II ainsi que sa documentation seront 
-      installés dans ce répertoire. La valeur par défaut est <code>/usr/local</code></li>
+      Les binaires de pgpool-II ainsi que sa documentation seront 
+      installés dans ce répertoire. La valeur par défaut est <code>/usr/local</code>.</li>
   <li><code>--with-pgsql=path</code><br/>
-      répertoire sous lequel les librairies clientes de PostgreSQL
+      Répertoire sous lequel les bibliothèques de PostgreSQL
       sont installées. La valeur par défaut est fournie par
-      l'utilitaire <code>pg_config</code></li>
+      l'utilitaire <code>pg_config</code>.</li>
   <li><code>--with-openssl</code><br/>
-      avec cette option, les binaires de pgpool-II seront compilés
-      avec le support d'OpenSSL. Par défautn le support d'OpenSSL
+      Avec cette option, les binaires de pgpool-II seront compilés
+      avec le support d'OpenSSL. Par défaut, le support d'OpenSSL
       est désactivé.</li>
 </ul>
 </p>
 </dd>
 
-<dt>compilation</dt>
+<dt>Compilation</dt>
 <dd>
 <p>
 <pre>
 make
 make install
 </pre>
-installera pgpool-II. Si vous utiliser Solaris ou FreeBSD, remplacez
-make par gmake.
+Ces deux commandes suffisent pour compiler et installer pgpool-II. Si vous
+utilisez Solaris ou FreeBSD, remplacez make par gmake.
 </p>
 </dd>
 
 <dt>Installation de pgpool_regclass</dt>
 <dd>
 <p>
-Si vous utiliser PostgreSQL 8.0 ou supérieur, l'installation des 
+Si vous utilisez PostgreSQL 8.0 ou supérieur, l'installation des 
 fonctions pgpool_regclass, utiles à pgpool-II, est fortement
 recommandée. Sans celles-ci, le support de tables homonymes mais
 figurant dans des schémas différents pourrait ne pas fonctionner
@@ -221,16 +221,16 @@ L'exécution du script pgpool-regclass.sql doit être faite sur toutes les
 bases qui sont accédées via pgpool-II.
 
 Vous n'avez pas besoin de le faire pour toutes les bases de données
-créés après l'exécution de "psql -f pgpool-regclass.sql template1", car 
-c'est la base template1 qui est en fait clonée pour créer de nouvelles
-bases de données sous PostgreSQL.
+créées après l'exécution des commandes ci-dessus car la base template1
+est la base utilisée comme modèle par défaut pour les nouvelles bases
+de données sous PostgreSQL.
 </p>
 
-<dt>Installing pgpool_regclass</dt>
+<dt>Installation de pgpool_walrecrunning</dt>
 <dd>
 <p>
-Si vous utilisez PostgreSQL 9.0 ou supérieur avec le streamint replication,
-vous aurez besoin d'installer la fonction pgpool_walrecrunning surtous les 
+Si vous utilisez PostgreSQL 9.0 ou supérieur avec le « streaming replication »,
+vous aurez besoin d'installer la fonction pgpool_walrecrunning sur tous les
 serveurs PostgreSQL accedées par pgpool-II.
 </p>
 <p>
@@ -245,10 +245,11 @@ psql -f pgpool-walrecrunning.sql template1
 L'exécution du script pgpool-walrecrunning.sql doit-être faite sur 
 toutes les bases de données accedées par pgpool-II.
 
-Comme précedemment, vous n'avez pas besoin de le faire pour les
-bases créés ultérieurement à l'exécution de "psql -f pgpool-regclass.sql template1", 
-car c'est cette base qui est en fait clonée lorsqu'on crée une 
-nouvelle base dans un serveur PostgreSQL.
+Comme précedemment, vous n'avez pas besoin de le faire pour toutes les bases de données
+créées après l'exécution des commandes ci-dessus car la base template1
+est la base utilisée comme modèle par défaut pour les nouvelles bases
+de données sous PostgreSQL.
+
 </p>
 
 </dl>
@@ -259,21 +260,21 @@ nouvelle base dans un serveur PostgreSQL.
 <code>/usr/local/etc/pgpool.conf</code> et
 <code>/usr/local/etc/pcp.conf</code>. Plusieurs modes de fonctionnement 
 sont disponibles sous pgpool-II. Chaque mode a des fonctionnalités 
-associées qui peuvent-être activées ou désactivées, et il existe
-des paramètres spécifiques pour contrôler leur comportement.</p>
+associées qui peuvent être activées ou désactivées, mais aussi configurées
+pour contrôler leur comportement.</p>
 
 <table border>
 
   <tr>
     <th>Fonction/Mode</th>
     <th>Raw Mode (*3)</th>
-    <th>Mode Réplication</th>
-    <th>Mode Maître/Esclave</th>
-    <th>Mode de Requêtage en Parallèle</th>
+    <th>Mode réplication</th>
+    <th>Mode maître/esclave</th>
+    <th>Mode de requêtage en parallèle</th>
   </tr>
 
   <tr>
-    <td>Pooling de Connexions</td>
+    <td>Pooling de connexions</td>
 	<td align="center">X</td>
 	<td align="center">O</td>
 	<td align="center">O</td>
@@ -289,7 +290,7 @@ des paramètres spécifiques pour contrôler leur comportement.</p>
   </tr>
 
   <tr>
-    <td>Load-Balancing</td>
+    <td>Répartition de charge</td>
 	<td align="center">X</td>
 	<td align="center">O</td>
 	<td align="center">O</td>
@@ -313,7 +314,7 @@ des paramètres spécifiques pour contrôler leur comportement.</p>
   </tr>
 
   <tr>
-    <td>Requêtage en Parallèle</td>
+    <td>Requêtage en parallèle</td>
 	<td align="center">X</td>
 	<td align="center">X</td>
 	<td align="center">X</td>
@@ -340,16 +341,16 @@ des paramètres spécifiques pour contrôler leur comportement.</p>
 
 <p>
 <ul>
- <li>0 signigie 'disponible' et X 'indisponible'
- <li>(*1) Le mode de requêtage en parallèle nécessite que la réplication et le
-     load-balancing soient activés, cependant la réplication et le
-     load-balancing ne peuvent pas être utilisés pour les tables distribuées en
-     mode de requêtage parallèle.
- <li>(*2) Le online recovery peut-être utilisé en mode Maître/Esclave avec
-     Streaming Replication.
+ <li>0 signifie 'disponible' et X 'indisponible'
+ <li>(*1) Le mode de requêtage en parallèle nécessite que la réplication et la
+     répartition de charge soient activés, cependant la réplication et la
+     répartition de charge ne peuvent pas être utilisés pour les tables distribuées en
+     mode de requêtage parallèlisé.
+ <li>(*2) Le online recovery peut-être utilisé en mode maître/esclave avec
+     la « Streaming Replication ».
  <li>(*3) Les clients se connectent simplement aux serveurs PostgreSQL via 
      pgpool-II. Ce mode est utile pour limiter simplement les connexions 
-     exédentaires au serveurs, ou activer le failover avec de multiples
+     excédentaires aux serveurs, ou activer le failover avec de multiples
      serveurs.
 </ul>
 </p>
@@ -357,11 +358,11 @@ des paramètres spécifiques pour contrôler leur comportement.</p>
 <h2>Configuration de <code>pcp.conf</code></h2>
 
 <p>Une interface de contrôle est fournie avec pgpool-II et permet à 
-l'administrateur de vérifier l'état de pgpool-II et arrêter les processus
+l'administrateur de vérifier l'état de pgpool-II et d'arrêter les processus
 de pgpool-II à distance. <code>pcp.conf</code> est le fichier contenant 
 la définition des utilisateurs et de leurs mots de passe pour accéder
 à cette interface. Tous les modes d'utilisation de pgpool-II nécessitent
-que le fichier <code>pcp.conf</conf> soit renseigné. Un fichier d'exemple
+que le fichier <code>pcp.conf</code> soit renseigné. Un fichier d'exemple
 <code>$prefix/etc/pcp.conf.sample</code> est créé lors de l'installation
 de pgpool-II. Renommez ce fichier en <code>pcp.conf</code>, ajoutez-y votre
 nom d'utilisateur ainsi que votre mot de passe.
@@ -371,15 +372,15 @@ nom d'utilisateur ainsi que votre mot de passe.
 cp $prefix/etc/pcp.conf.sample $prefix/etc/pcp.conf
 </pre>
 <p>
-Une ligne vide ou commençant par "<code>#</code>" est traitée comme un 
+Une ligne vide ou commençant par un dièse (<code>#</code>) est traitée comme un 
 commentaire et sera ignorée. Un nom d'utilisateur et son mot de passe
-doivent-être écrits sur une seule ligne et respecter le format suivant:
+doivent être écrits sur une seule ligne et respecter le format suivant&nbsp;:
 </p>
 <pre>
 nom_d_utilisateur:[mot de passe crypté en md5]
 </pre>
 <p>
-Le <code>[mot de passe crypté en md5]</code> peut-être obtenu avec la 
+Le <code>[mot de passe crypté en md5]</code> peut être obtenu avec la 
 commande <code>$prefix/bin/pg_md5</code>.
 </p>
 
@@ -395,7 +396,7 @@ ou
 acbd18db4cc2f85cedef654fccc4a4d8
 </pre>
 <p>
-Le fichier <code>pcp.conf</code> doit-être lisible par l'utilisateur qui 
+Le fichier <code>pcp.conf</code> doit être lisible par l'utilisateur qui 
 exécute pgpool-II.</p>
 
 <h2>Configuration de <code>pgpool.conf</code></h2>
@@ -430,24 +431,24 @@ donc ignorée.</p>
   <dd>
       <p>Spécifie le numéro de port sur lequel pgpool-II écoute les 
       connexions. La valeur par défaut est <code>9999</code>. Ce paramètre
-      ne peut-être modifié qu'au démarrage du serveur.
+      ne peut être modifié qu'au démarrage du serveur.
   </dd>
 
   <dt>socket_dir</dt>
   <dd>
       <p>Répertoire dans lequel sera créé le socket UNIX de pgpool-II
       pour les connexions entrantes. La valeur par défaut est
-      <code>'/tmp'</code>. Faites attention au fait que cette socket
-      pourrait-être effacée par une tâche programmée en <code>cron</code>.
-      Aussi, nous vous reccomandons de configurer cette valeur à 
+      <code>'/tmp'</code>. Faites attention au fait que ce socket
+      pourrait être effacé par une tâche programmée en <code>cron</code>.
+      Aussi, nous vous recommandons de configurer cette valeur à 
       <code>'/var/run'</code> ou un répertoire de ce type. Ce paramètre ne 
-      peut-être modifié qu'au démarrage du serveur.</p>
+      peut être modifié qu'au démarrage du serveur.</p>
   </dd>
 
   <dt>pcp_port</dt>
   <dd>
       <p>Numéro de port sur lequel le processus PCP accepte les connexions.
-      La valeur par défaut est <code>9898</code>. Ce paramètre ne peut-être
+      La valeur par défaut est <code>9898</code>. Ce paramètre ne peut être
       modifié qu'au démarrage du serveur.</p>
   </dd>
 
@@ -455,18 +456,18 @@ donc ignorée.</p>
   <dd>
       <p>Chemin du répertoire UNIX où le socket UNIX acceptant les connexions
       pour les commandes PCP est créé. La valeur par défaut est
-      <code>'/tmp'</code>. Faites attention au fait que cette socket
-      pourrait-être effacée par une tâche programmée en <code>cron</code>.
-      Aussi, nous vous reccomandons de configurer cette valeur à 
+      <code>'/tmp'</code>. Faites attention au fait que cet socket
+      pourrait être effacé par une tâche programmée en <code>cron</code>.
+      Aussi, nous vous recommandons de configurer cette valeur à 
       <code>'/var/run'</code> ou un répertoire de ce type. Ce paramètre ne 
-      peut-être modifié qu'au démarrage du serveur.</p>
+      peut être modifié qu'au démarrage du serveur.</p>
   </dd>
       
   <dt>backend_socket_dir</dt>
   <dd>
       <p><font color="red"><em>À NE PLUS UTILISER</em>
-      Ce paramètre n'est présent que pour garantir la consistence avec la
-      politique par défaut de la libpq. Reportez-vous à la définition du 
+      Ce paramètre n'est présent que pour garantir la cohérence avec la
+      politique par défaut de la bibliothèque libpq. Reportez-vous à la définition du 
       paramètre <code>backend_hostname</code> pour adapter votre configuration.
       </font></p>
       <p>Ce paramètre permettait de définir le répertoire UNIX servant au 
@@ -475,72 +476,76 @@ donc ignorée.</p>
 
   <dt>pcp_timeout</dt>
   <dd>
-      <p>Timout en secondes pour une connexion PCP. Si un client ne répond plus
+      <p>Délai maximum en secondes pour l'établissement d'une connexion PCP.
+      Si un client ne répond plus
       au bout de cette valeur en secondes, le processus PCP ferme la connexion
-      avec le client. La valeur par défaut est 10 Secondes. 0 signifie qu'il n'y
-      a aucun timeout. Ce paramètre peut-être pris en compte avec rechargement
-      des fichiers de configuration.</p>
+      avec le client. La valeur par défaut est de 10 secondes. 0 signifie que la
+      vérification du délai est désactivée. Ce paramètre est pris en compte lors
+      du rechargement des fichiers de configuration.</p>
   </dd>
 
   <dt>num_init_children</dt>
   <dd>
       <p>Nombre de processus pré-forkés de pgpool-II. La valeur par défaut
-      est de 32. <code>num_init_children</code> est aussi la lmite du nombre
+      est de 32. <code>num_init_children</code> est aussi la limite du nombre
       de connexions clientes concurrentes à pgpool-II. Si plus de
       <code>num_init_children</code> clients essaient de se connecter à
       pgpool-II, ceux-ci sont bloqués (mais pas rejettés), jusqu'à ce qu'une
-      connexion à l'un des des processus de pgpool-II soit fermé. On peut avoir
+      connexion à l'un des processus de pgpool-II soit fermé. On peut avoir
       ansi jusqu'à <b>deux fois <code>num_init_children</code></b> clients 
       dans la queue de connexion.
-	  <p>Quelques précisions et astuces:</p>
+	  <p>Quelques précisions et astuces&nbsp;:</p>
 	   <p>
 	   <ul>
 		<li>L'annulation d'une requête crée une autre connexion au 
-                backed; ainsi, une requête ne peut-être annulée si toutes les
+                processus serveur PostgreSQL&nbsp;; ainsi, une requête ne
+                peut pas être annulée si toutes les
                 connexions sont utilisées. Si vous voulez vous assurer que les
-                requêtes puissent-être annulées, positionnez cette valeur au 
+                requêtes puissent être annulées, positionnez cette valeur au 
                 double des connexions attendues.</li>
 
 		<li>PostgreSQL permet un certain nombre de connexions pour les
                 utilisateurs qui ne sont pas superutilisateurs. On le calcule
-                comme suit:<code>max_connections - superuser_reserved_connections</code></li>
+                ainsi&nbsp;:<code>max_connections - superuser_reserved_connections</code></li>
 	   </ul>
 	   </p>
 	   <p>Pour résumer, <code>max_pool</code>,<code>num_init_children</code>,
               <code>max_connections</code> et
               <code>superuser_reserved_connections</code> doivent satisfaire
-              la formule suivante:
+              la formule suivante&nbsp;:
 	   </p>
-	   <p>
-Si on n'a pas besoin de l'annulation de requêtes:
-	   <pre>max_pool*num_init_children <= (max_connections - superuser_reserved_connections)</pre>
-Si on a besoin de l'annulation de requêtes:
+           <ul>
+	   <li>Si on n'a pas besoin de l'annulation de requêtes&nbsp;:
+	   <pre>max_pool*num_init_children <= (max_connections - superuser_reserved_connections)</pre></li>
+           <li>Si on a besoin de l'annulation de requêtes&nbsp;:
 <pre>max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connections)</pre>
-	   <p>
-           Ce paramètre ne peut-être modifié qu'au démarrage du serveur.</p>
+	   </li>
+           </ul>
+           Ce paramètre ne peut être modifié qu'au démarrage du serveur.</p>
 	   </dd>
 
   <dt>child_life_time</dt>
   <dd>
-      <p>Durée de vie en secondes d'un processus enfant de pgpool-II. Lorsqu'un 
-      processus enfant est sans activité depuis ce nombre de secondes, il se
-      termine et un nouveau processus enfant est créé. Ce paramètre est une
+      <p>Durée de vie en secondes d'un processus fils de pgpool-II. Lorsqu'un 
+      processus fils est sans activité depuis ce nombre de secondes, il se
+      termine et un nouveau processus fils est créé. Ce paramètre est une
       mesure pour prévenir tout problème de mémoire et autres erreurs 
-      inattendues. La valeur par défaut est 300 (5 minutes). 0 désactive cette
-      fonctionalité. Notez que cela ne s'applique qu'aux processus qui n'ont
-      pas encore été utilisés, soit, qui n'ont pas encore accepté de connexions.
-      Vous devrez recharger le fichier de configuration <code>pgpool.conf</code>
+      inattendues. La valeur par défaut est 300 (5 minutes). Cette
+      fonctionalité est désactivée si cette option a une valeur de 0. Notez
+      que cela ne s'applique qu'aux processus qui n'ont
+      pas encore été utilisés ou qui n'ont pas encore accepté de connexions.
+      Vous devez recharger le fichier de configuration <code>pgpool.conf</code>
       si vous changez cette valeur.
       </p>
   </dd>
 
   <dt>child_max_connections</dt>
   <dd>
-      <p>Un processus enfant de pgpool-II sera terminé après ce 
-      nombre de connexions clientes acceptées. Ce paramètre est 
+      <p>Un processus fils de pgpool-II sera terminé après avoir accepté ce
+      nombre de connexions clientes. Ce paramètre est 
       utile sur un serveur à ce point chargé que ni
       <code>child_life_time</code>, ni <code>connection_life_time</code>
-      ne sont jamais déclenchés. Vous devrez recharger pgpool-II si vous
+      ne sont déclenchés. Vous devez recharger pgpool-II si vous
       changez cette valeur.
       </p>
   </dd>
@@ -548,8 +553,8 @@ Si on a besoin de l'annulation de requêtes:
   <dt>client_idle_limit
   <dd>
   <p>Déconnecte un client s'il est resté inactif pendant ce nombre de secondes
-     après que la dernière requête ait été complétée. Ceci est utile pour
-     empêcher qu'un processus enfant de pgpool-II ne soit occupé par un 
+     après que la dernière requête ne se soit terminée. Ceci est utile pour
+     empêcher qu'un processus fils de pgpool-II ne soit occupé par un 
      client inactif ou une connexion TCP/IP rompue entre le client et 
      pgpool-II. La valeur par défaut de <code>client_idle_limit</code> est 
      de 0, ce qui signifie que cette fonctionalité est désactivée. Ce paramètre
@@ -558,8 +563,8 @@ Si on a besoin de l'annulation de requêtes:
 
   <dt>authentication_timeout
   <dd>
-  <p>Spécifie le timeout en secondes pour une authentification. 0 désactive 
-  ce dernier. Vous aurez besoin de redémarrer pgpool-II si vous changez cette
+  <p>Spécifie le délai maximum en secondes pour terminer une authentification. 0 désactive 
+  cette fonctionnalité. Vous aurez besoin de redémarrer pgpool-II si vous changez cette
   valeur.</p>
 
   <dt>logdir</dt>
@@ -575,12 +580,12 @@ Si on a besoin de l'annulation de requêtes:
          d'envoyer les messages à stderr.</p>
       <p>Note: vous aurez besoin de modifier la configuration du serveur
          syslog de votre système pour que l'écriture des messages vers 
-         syslog fonctionne si vous configurez <code>log_destination</code>
-         en ce sens. pgpool-II peut logguer vers les facilités LOCAL0 à 
+         syslog fonctionne. pgpool-II peut envoyer les traces à syslog en
+         utilisant les niveaux LOCAL0 à 
          LOCAL7 (voir la documentation de syslog), mais la valeur par 
          défaut de syslog sur la plupart des plates-formes ignorera de 
-         tels messages. Vous aurez donc besoind d'ajouter quelque chose
-         comme 
+         tels messages. Vous aurez donc besoin d'ajouter quelque-chose
+         comme
 	</p>
 	<pre>
 	local0.*    /var/log/pgpool.log
@@ -593,7 +598,7 @@ Si on a besoin de l'annulation de requêtes:
   <dt>syslog_facility</dt>
   <dd>
       <p>Lorsque la sortie des messages vers syslog est configurée, ce paramètre
-         détermine quelle "facility" syslog est à utiliser. Vous pouvez choisir 
+         détermine le niveau syslog à utiliser. Vous pouvez choisir 
          toute valeur entre LOCAL0 et LOCAL7. La valeur par défaut est LOCAL0.
          Veillez à vous reporter à la documentation système au sujet de syslog.
 	</p>
@@ -601,9 +606,9 @@ Si on a besoin de l'annulation de requêtes:
 
   <dt>syslog_ident</dt>
   <dd>
-      <p>Lorsque la sortie vers syslog est configurée, ce paramèter permet de
+      <p>Lorsque la sortie vers syslog est configurée, ce paramètre permet de
          déterminer le nom du programme utilisé pour identifier les messages
-         de pgpool-II dans les logs de syslog. La valeur par défaut est pgpool.
+         de pgpool-II dans les traces enregistrées par syslog. La valeur par défaut est pgpool.
 	</p>
   </dd>
 
@@ -619,7 +624,7 @@ Si on a besoin de l'annulation de requêtes:
 
   <dt>print_timestamp</dt>
   <dd>
-      <p>Ajoute un timestamp dans les logs lorsque cette valeur
+      <p>Ajoute un horodatage dans les traces lorsque cette valeur
          est à true. La valeur par défaut est true. Vous aurez
          besoin de recharger pgpool-II si vous changez cette valeur
          afin qu'elle soit prise en compte.
@@ -628,29 +633,30 @@ Si on a besoin de l'annulation de requêtes:
 
   <dt>connection_cache</dt>
   <dd>
-      <p>Cache les connexions aux backends PostgreSQL lorsque 
+      <p>Cache les connexions à PostgreSQL lorsque 
          cette valeur est configurée à true. La valeur par défaut 
          est true.</p>
   </dd>
 
   <dt>health_check_timeout</dt>
   <dd>
-      <p>pgpool-II essaie périodiquement de se connecter aux 
-         backends afin de détecter toute erreur sur les serveurs
+      <p>pgpool-II essaie périodiquement de se connecter à PostgreSQL
+         afin de détecter toute erreur sur les serveurs
          ou sur le réseau. Cette procédure de vérification d'erreurs
-         est appelée "health check". Si une erreur est détectée, 
-         pgpool-II essaie de compléter un failover ou une dégénération.
+         est appelée « health check ». Si une erreur est détectée, 
+         pgpool-II essaie d'exécuter un failover ou une dégénération.
 
          Ce paramètre permet d'empêcher qu'un "health check" n'attende 
          trop longtemps dans les cas où un câble réseau est débranché
          par exemple. La valeur du paramètre est en secondes. La valeur
-         par défaut est de 20. 0 désactive ce timeout (on attend donc 
-         alors jusqu'au timeout TCP/IP).
+         par défaut est de 20 secondes. 0 désactive cette fonctionnalité
+         (dans ce cas, pgpool-II attend jusqu'à la fin du délai maximum
+         configuré au niveau TCP/IP).
 
-         Ce health check nécessite une connexion supplémentaire à 
-         chacun des backends, ainsi, <code>max_connections</code>
-         dans le <code>postgresql.conf</code> doit être augmenté
-         en conséquence. 
+         Cette vérification nécessite une connexion supplémentaire à 
+         chacun des serveurs PostgreSQL. Du coup, il faut le prendre en
+         compte dans la configuration du paramètre <code>max_connections</code>
+         de chaque serveur PostgreSQL. 
 
          Vous aurez besoin de recharger pgpool-II après toute modification
          de ce paramètre.
@@ -659,9 +665,9 @@ Si on a besoin de l'annulation de requêtes:
 
   <dt>health_check_period</dt>
   <dd>
-      <p>Ce paramètre spécifie l'intervale de temps entre deux
-       "health check", en secondes. La valeur par défaut est de 0,
-       ce qui signifie que le "health check" est désactivé. 
+      <p>Ce paramètre précise l'intervalle de temps entre deux
+       vérifications en secondes. La valeur par défaut est de 0,
+       ce qui a pour effet de désactiver la vérification. 
        Vous aurez besoin de recharger pgpool-II après tout changement
        de ce paramétrage. 
        </p>
@@ -669,9 +675,9 @@ Si on a besoin de l'annulation de requêtes:
       
   <dt>health_check_user</dt>
   <dd>
-      <p>Nom de l'utilisateur de bases de données utilisé pour 
-         exécuter le "health check". Cet utilisateur doit exister
-         dans tous les backends PostgreSQL. Vous aurez besoin de 
+      <p>Nom de l'utilisateur PostgreSQL utilisé pour 
+         exécuter la vérification. Cet utilisateur doit exister
+         dans tous les serveurs PostgreSQL. Vous aurez besoin de 
          recharger pgpool-II après tout changement de la valeur de 
          ce paramètre.
        </p>
@@ -680,27 +686,27 @@ Si on a besoin de l'annulation de requêtes:
 <dt>failover_command
 <dd>
 <p>
-Ce paramètre spécifie la commande à exécuter lorsqu'un noeud est détaché. 
+Ce paramètre spécifie la commande à exécuter lorsqu'un nœud est détaché. 
 pgpool-II remplace les caractères spéciaux suivants avec les informations 
-en provenance des backends.
+associées.
 </p>
 
 <blockquote>
 <table border>
 <tr><td>Caractère spécial</td><td>Description</td></tr>
-<tr><td>%d</td><td>ID du backend correspondant au noeud détaché</td></tr>
-<tr><td>%h</td><td>Nom d'hôte du noeud détaché</td></tr>
-<tr><td>%p</td><td>Numéro de port du noeud détaché</td></tr>
-<tr><td>%D</td><td>Répertoire du cluster PostgreSQL du noeud détaché</td></tr>
-<tr><td>%M</td><td>ID du noeud de l'ancien Maître</td></tr>
-<tr><td>%m</td><td>ID du noeud du nouveau Maître</td></tr>
-<tr><td>%H</td><td>Nom d'hôte du nouveau noeud Maître</td></tr>
-<tr><td>%P</td><td>ID de l'ancien noeud primaire</td></tr>
-<tr><td>%%</td><td>caractère '%'</td></tr>
+<tr><td>%d</td><td>ID du processus serveur correspondant au nœud détaché</td></tr>
+<tr><td>%h</td><td>Nom d'hôte du nœud détaché</td></tr>
+<tr><td>%p</td><td>Numéro de port du nœud détaché</td></tr>
+<tr><td>%D</td><td>Répertoire de l'instance PostgreSQL du nœud détaché</td></tr>
+<tr><td>%M</td><td>ID du nœud de l'ancien maître</td></tr>
+<tr><td>%m</td><td>ID du nœud du nouveau maître</td></tr>
+<tr><td>%H</td><td>Nom d'hôte du nouveau nœud maître</td></tr>
+<tr><td>%P</td><td>ID de l'ancien nœud primaire</td></tr>
+<tr><td>%%</td><td>Caractère '%'</td></tr>
 </table>
 </blockquote>
 <p>
-Vous devrez recharger pgpool.conf si vous changez la valeur de 
+Vous devez recharger pgpool.conf si vous changez la valeur de 
 <code>failover_command</code>.
 </p>
 
@@ -715,52 +721,53 @@ disponible pour accepter des connexions depuis les clients.
 <dt>failback_command
 <dd>
 <p>
-Ce paramètre contient une commande à exécuter lors qu'un noeud est attaché.
-pgpool-II remplace les caractères spéciaux suivants avec les informations en
-provenance des backends.
+Ce paramètre contient une commande à exécuter lors qu'un nœud est attaché.
+pgpool-II remplace les caractères spéciaux suivants avec les informations
+associées.
 </p>
 <blockquote>
 <table border>
 <tr><td>Caractère spécial</td><td>Description</td></tr>
-<tr><td>%d</td><td>ID du backend d'un noeud attaché</td></tr>
-<tr><td>%h</td><td>Nom d'hôte d'un noeud attaché</td></tr>
-<tr><td>%p</td><td>Numéro de port d'un noeud attaché</td></tr>
-<tr><td>%D</td><td>Répertoire du cluster PostgreSQL d'un noeud attaché</td></tr>
-<tr><td>%M</td><td>Ancien noeud Maître</td></tr>
-<tr><td>%m</td><td>Nouveau noeud Maître</td></tr>
-<tr><td>%H</td><td>Nom d'hôte du nouveau noeud Maître</td></tr>
-<tr><td>%P</td><td>ID de l'ancien noeud primaire</td></tr>
-<tr><td>%%</td><td>caractère '%'</td></tr>
+<tr><td>%d</td><td>ID du processus serveur d'un nœud attaché</td></tr>
+<tr><td>%h</td><td>Nom d'hôte d'un nœud attaché</td></tr>
+<tr><td>%p</td><td>Numéro de port d'un nœud attaché</td></tr>
+<tr><td>%D</td><td>Répertoire de l'instance PostgreSQL d'un nœud attaché</td></tr>
+<tr><td>%M</td><td>Ancien nœud maître</td></tr>
+<tr><td>%m</td><td>Nouveau nœud maître</td></tr>
+<tr><td>%H</td><td>Nom d'hôte du nouveau nœud maître</td></tr>
+<tr><td>%P</td><td>ID de l'ancien nœud primaire</td></tr>
+<tr><td>%%</td><td>Caractère '%'</td></tr>
 </table>
 </blockquote>
 <p>
-Vous devrez recharger pgpool.conf si vous changez le contenu de la
+Vous devez recharger pgpool.conf si vous changez le contenu de la
 commande <code>failback_command</code>.
 </p>
 
   <dt>fail_over_on_backend_error</dt>
   <dd>
       <p>
-Si ce paramètre est à true, et qu'une erreur apparaît lorsqu'on écrit sur le
-canal de communication d'un backend, pgpool-II déclenchera une procédure de 
+Si ce paramètre est à true et qu'une erreur apparaît lors d'une écriture sur le
+canal de communication d'un processus serveur, pgpool-II déclenchera une procédure de 
 failover. C'est le même comportement qu'avec les versions 2.2.x ou précédentes
 de pgpool-II. Si ce paramètre est à false, pgpool reportera une erreur dans ses
 fichiers de traces et déconnectera la session.
 Notez cependant que si ce paramètre est activé, pgpool effectuera aussi un
-failover lorsque la connexion à un backend échoue ou lorsqu'il détecte l'arrêt
-du postmaster par un administrateur. Vous devrez recharger pgpool.conf si vous
+failover lorsque la connexion à un processus serveur échoue ou lorsqu'il détecte l'arrêt
+du serveur PostgreSQL par un administrateur. Vous devez recharger pgpool.conf si vous
 changez cette valeur.
 </p>
 </dd>
 
   <dt>ignore_leading_white_space</dt>
   <dd>
-      <p>pgpool-II ignorera les espaces en début de requête SQL lorsqu'il 
-      est dans le mode load balancing si ce paramètre est activé. C'est 
-      particulièrement intéressant lorsqu'il est utilisé avec des APIs 
+      <p>Si ce paramètre est activé, pgpool-II ignorera les espaces en début
+      de requête SQL lorsqu'il 
+      est dans le mode de répartition de charge. C'est 
+      particulièrement intéressant lorsqu'il est utilisé avec des API
       comme DBI/DBD::Pg qui ajoutent des espaces sans que l'utilisateur
-      le demande. Vous aurez besoin de recharger le pgpool.conf pour que
-      ce paramètre soit pris en compte.
+      le demande. Vous aurez besoin de demander à pgpool-II de recharger
+      sa configuration pour que ce paramètre soit pris en compte.
        </p>
   </dd>
 
@@ -776,9 +783,9 @@ changez cette valeur.
 
   <dt>log_per_node_statement</dt>
   <dd>
-      <p>Similaire à log_statement, à l'exception qu'il écrit les logs 
-      de manière séparée par noeud. Cela peut-être très utile si vous
-      voulez par exemple vous assurer que votre réplication fonctionne. 
+      <p>Similaire à log_statement, à l'exception qu'il écrit les traces
+      de manière séparée par nœud. Cela peut se révéler très utile si vous
+      voulez vous assurer, par exemple, que votre réplication fonctionne. 
       Vous aurez besoin de recharger pgpool.conf pour que ce paramètre
       soit pris en compte.
        </p>
@@ -788,10 +795,10 @@ changez cette valeur.
   <dd>
     <p>
     Si ce paramètre est positionné à true, le nom de la commande affichée
-    dans la sortie de ps sera le nom d'hôte plutôt que son IP. De même, si
-    log_connections est activé, le nom d'hôte sera écrit dans les fichiers 
+    dans la sortie de ps sera le nom de l'hôte plutôt que son IP. De même, si
+    log_connections est activé, le nom de l'hôte sera écrit dans les fichiers 
     de trace plutôt que son IP. Ce paramètre est pris en compte au 
-    rechargement de pgpool.conf. 
+    rechargement de pgpool.conf.
     </p>
   </dd>
     
@@ -799,7 +806,7 @@ changez cette valeur.
   <dd>
     <p>
     Si ce paramètre est à true, toutes les connexions entrantes seront
-    écrites dans les fichiers de trace. Ce paramètre est pris en compte
+    tracées dans les journaux applicatifs. Ce paramètre est pris en compte
     au rechargement de pgpool.conf.
     </p>
   </dd>
@@ -816,51 +823,51 @@ de pool_hba.conf pour l'authentification des clients</a>. Ce paramètre
 
   <dt>backend_hostname</dt>
   <dd>
-      <p>Permet de spécifier à quel backend PostgreSQL on se connecte.
+      <p>Permet de spécifier à quel serveur PostgreSQL on se connecte.
       C'est utilisé par pgpool-II pour communiquer avec le serveur.
       Ce paramètre n'est lu qu'au démarrage du serveur pgpool-II.    
       </p>
       <p>
       Pour les communications TCP/IP, ce paramètre accepte soit un nom
       d'hôte, soit une adresse IP. Si ce dernier commence avec un slash,
-      il spécifie une communication UNIX plutôt que TCP/IP; la valeur est
+      il spécifie un socket Unix plutôt qu'une adresse IP&nbsp;; la valeur est
       alors le nom du répertoire dans lequel le fichier de socket UNIX est
       stocké. Si ce paramètre est vide (<code>''</code>), le comportement par
       défaut de pgpool-II est de se connecter à un socket UNIX stocké dans le
       répertoire <code>/tmp</code>.
       </p>
       <p>
-      On peut spécifier ici plusieurs backends en ajoutant un nombre à la
+      On peut spécifier ici plusieurs serveurs en ajoutant un nombre à la
       fin du nom du paramète (par exemple <code>backend_hostname0</code>).
-      Ce nombre est l'identifiant du noeud au sein de pgpool-II. Le premier
-      noeud est toujours le noeud 0. Le backend PostgreSQL a qui a été
-      attribué l'ID 0 sera appelé le "Master DB". Lorsque plusieurs backends
-      sont définis, le service peut continuer même si le Master DB est arrêté
-      (ce n'est cependant pas vrai pour certains modes de pgpool-II). Dans ce
-      cas, c'est toujours le backend qui a le plus petit identifiant de noeud
-      et qui est encore disponible qui sera alors promu Master DB.</p>
+      Ce nombre est l'identifiant du nœud au sein de pgpool-II. Le premier
+      nœud est toujours le nœud 0. Le serveur PostgreSQL qui se voit
+      attribuer l'identifiant 0 sera appelé le serveur maître. Lorsque plusieurs
+      serveurs sont définis et seulement pour certains modes, le service peut
+      continuer même si le serveur maître est arrêté. Dans ce
+      cas, c'est toujours le serveur qui a le plus petit identifiant de nœud
+      et qui est encore disponible qui est alors promu serveur maître.</p>
 
       <p>Si vous pensez n'utiliser qu'un seul serveur PostgreSQL, spécifiez-le
       avec <code>backend_hostname0</code>.</p>
       <p>
-      De nouveaux backends PostgreSQL peuvent-être ajoutés grâce à ce paramètre
-      mais vous devrez recharger le fichier de configuration. Par contre, les 
-      valeurs de ces paramètres ne pouvant-être mises à jour, si vous les
+      De nouveaux serveurs PostgreSQL peuvent être ajoutés grâce à ce paramètre
+      mais Vous devez recharger le fichier de configuration. Par contre, les 
+      valeurs de ces paramètres ne pouvant être mises à jour, si vous les
       changez, vous devrez alors redémarrer pgpool-II.
       </p>
   </dd>
 
   <dt>backend_port</dt>
   <dd>
-      <p>Spécifie le numéro de port des backends. Comme précédemment, on peut
-      spécifier le port de plusieurs backends en ajoutant à la fin du nom du 
-      paramètre l'identifiant du noeud (par exemple <code>backend_port0</code>).
-      Si vous n'utilisez qu'un seul serveur, vous devrez le spécifier donc par
+      <p>Spécifie le numéro de port des serveurs. Comme précédemment, on peut
+      spécifier le port de plusieurs serveurs en ajoutant à la fin du nom du 
+      paramètre l'identifiant du nœud (par exemple <code>backend_port0</code>).
+      Si vous n'utilisez qu'un seul serveur, vous devrez le spécifier par
       <code>backend_port0</code>.</p>
 
       <p>
       Comme précédemment, vous pouvez ajouter de nouveaux paramètres concernant
-      de nouveaux noeuds, et alors, un rechargement de la configuration suffira.
+      de nouveaux nœuds, et alors, un rechargement de la configuration suffira.
       Cependant, si vous mettez à jour des valeurs de paramètres existant, vous 
       devrez redémarrer le serveur pgpool-II. 
       </p>
@@ -868,16 +875,16 @@ de pool_hba.conf pour l'authentification des clients</a>. Ce paramètre
 
   <dt>backend_weight</dt>
   <dd>
-      <p>Spécifie le ratio de load balancing entre les backends. 
-      On peut spéficier une valeur pour chacun des backends, il suffit
-      pour cela d'ajouter le numéro de backend à la fin du nom du 
+      <p>Spécifie le poids des serveurs pour la répartition de charge. 
+      On peut indiquer une valeur pour chacun des serveurs. Il suffit
+      pour cela d'ajouter le numéro du serveur à la fin du nom du 
       paramètre (par exemple <code>backend_weight0</code>). Si vous 
-      n'utilisez qu'un seul serveur PostgreSQL, spécifiez le en utilisant
+      n'utilisez qu'un seul serveur PostgreSQL, utilisez le paramètre
       <code>backend_weight0</code>. Si vous êtes dans le mode RAW de pgpool-II,
       mettez toujours cette valeur à 1.</p>
       <p>
-      De nouveaux poids pour les backends peuvent-être ajoutés pour de nouveaux
-      noeuds. Cependant, si vous mettez à jour des valeurs de paramètres existant, vous 
+      De nouveaux poids pour les backends peuvent être ajoutés pour de nouveaux
+      nœuds. Cependant, si vous mettez à jour des valeurs de paramètres existant, vous 
       devrez redémarrer le serveur pgpool-II. 
       </p>
       <p>
@@ -893,30 +900,30 @@ de pool_hba.conf pour l'authentification des clients</a>. Ce paramètre
 
   <dt>backend_data_directory</dt>
   <dd>
-      <p>Précise le répertoire où se trouve le cluster PostgreSQL 
-      des backends. Plusieurs backends peuvent-être spécifiés en ajoutant
-      un nombre à la fin du nom de paramètre. (par exemple 
+      <p>Précise le répertoire des données des serveurs PostgreSQL.
+      Plusieurs serveurs peuvent être spécifiés en ajoutant
+      un nombre à la fin du nom de paramètre (par exemple 
       <code>backend_data_directory0</code>).
-      Si vous ne pensez pas utiliser le "online recovery", vous n'avez pas
+      Si vous ne pensez pas utiliser « online recovery », vous n'avez pas
       besoin de spécifier ce paramètre.
       </p>
 
       <p>
-      Des spécifications d'emplacement de cluster PostgreSQL additionnels 
-      peuvent-être ajoutés par rechargement du fichier de configuration.
-      En revanche, leur valeur ne peut pas être mise à jour de cette façon,
-      ainsi, vous devrez redémarrer pgpool-II si vous modifiez la valeur du 
-      paramètre.
+      Des spécifications de répertoires de données PostgreSQL additionnels 
+      peuvent être ajoutés par rechargement du fichier de configuration.
+      En revanche, leur valeur ne peut pas être mise à jour de cette façon.
+      Du coup, vous devrez redémarrer pgpool-II si vous modifiez la valeur d'un
+      paramètre déjà configuré.
       </p>
   </dd>
 
   <dt><a name="ssl">ssl</a></dt>
   <dd>
       <p>
-      Si ce paramètre est à "true", autorise le support de SSL à la fois pour
+      Si ce paramètre est à "true", le support de SSL est activé à la fois pour
       les connexions clientes et les connexions aux serveurs PostgreSQL.
       Notez que <code>ssl_key</code> et <code>ssl_cert</code>
-      doivent-être aussi renseignés pour que les connexions clientes puissent
+      doivent être renseignés pour que les connexions clientes puissent
       fonctionner en SSL.
       </p>
 
@@ -939,8 +946,8 @@ de pool_hba.conf pour l'authentification des clients</a>. Ce paramètre
       </p>
 
       <p>
-      Il n'y a aucune valeur par défaut pour ce paramètre, et si on le laisse
-      ainsi, le support de SSL sera désactivé pour les connexions clientes
+      Il n'y a aucune valeur par défaut pour ce paramètre. S'il n'est pas modifié,
+      le support de SSL sera désactivé pour les connexions clientes
       entrantes.
       </p>
   </dd>
@@ -953,8 +960,8 @@ de pool_hba.conf pour l'authentification des clients</a>. Ce paramètre
       </p>
 
       <p>
-      Il n'y a aucune valeur par défaut pour ce paramètre, et si on le laisse
-      ainsi, le support de SSL sera désactivé pour les connexions clientes
+      Il n'y a aucune valeur par défaut pour ce paramètre. S'il n'est pas modifié,
+      le support de SSL sera désactivé pour les connexions clientes
       entrantes.
       </p>
   </dd>
@@ -962,7 +969,7 @@ de pool_hba.conf pour l'authentification des clients</a>. Ce paramètre
   <dt>debug_level</dt>
   <dd>
       <p>
-      Niveau de verbosité des messages de débogage.0 signifie aucun message,
+      Niveau de verbosité des messages de débogage. 0 signifie aucun message,
       plus grand que 1 engendre des messages plus verbeux. La valeur par défaut
       est 0.
       </p>
@@ -971,16 +978,16 @@ de pool_hba.conf pour l'authentification des clients</a>. Ce paramètre
   <dt>relcache_expire</dt>
   <dd>
       <p>
-      Duré de vie en secondes d'une relation en cache. 0 signifie qu'il n'y 
+      Durée de vie en secondes d'une relation en cache. 0 signifie qu'il n'y 
       a pas d'expiration (valeur par défaut).
       Ce cache de relations est utilisé pour cacher le résultat de requêtes effectuées
       sur le catalogue système de PostgreSQL pour obtenir diverses informations
-      comme la structure des tables, ou savoir si telle ou telle table est temporaire.
-      Ce cache est maintenu dans une mémoire locale au processus fils de pgpool,
+      comme la structure des tables ou pour savoir si telle ou telle table est temporaire.
+      Ce cache est maintenu dans une mémoire locale au processus fils de pgpool
       et est gardé aussi longtemps que le processus est en vie.
       Si un utilisateur modifie une table avec un ALTER TABLE, par exemple,
-      ce cache n'est alors plus consistent.
-      A cet effet, le paramète relcache_expiration contrôle la durée de vie du 
+      ce cache n'est alors plus cohérent.
+      À cet effet, le paramète relcache_expiration contrôle la durée de vie du 
       cache.
       </p>
   </dd>
@@ -989,26 +996,26 @@ de pool_hba.conf pour l'authentification des clients</a>. Ce paramètre
 
 <h4>Génération de certificats SSL</h4>
 <p>
-La manipulation des certificats est hors scope de ce document. La page
+La manipulation des certificats n'est pas couvert dans ce document. La page
 <a href="http://developer.postgresql.org/pgdocs/postgres/ssl-tcp.html">
 Secure TCP/IP Connections with SSL</a> (en anglais) sur le site 
-PostgreSQL.org référence des documents qui expliquent de détails
+PostgreSQL.org référence des documents qui expliquent en détail
 les commandes à taper pour engendrer des certificats auto-signés.
 </p>
 
 <h4>Failover dans le mode Raw</h4>
 
-<p>Le Failover peut-être accompli dans le mode raw si plusieurs serveurs
-sont définis. pgpool-II accède en général au backend spécifié par
+<p>Le failover peut être accompli dans le mode Raw si plusieurs serveurs
+sont définis. pgpool-II accède en général au serveur spécifié par
 <code>backend_hostname0</code> pendant son fonctionnement normal.
-Si le backend_hostname0 est en échec, quelle que soit la raison, pgpool-II
-essaie d'accéder au backend spécifié par backend_hostname1. Si cela 
-échoue, pgpool-II essaie alors le backend_hostname2, et ainsi de suite.
+Si le backend_hostname0 est en échec, quel que soit la raison, pgpool-II
+essaie d'accéder au serveur spécifié par backend_hostname1. En cas d'échec,
+pgpool-II essaie alors backend_hostname2, et ainsi de suite.
 </p>
 
 <h3><a name="connection_pool_mode"></a>Mode pooling de connexions</h3>
 
-<p>Dans le mode de pooling de connexions, toutes les fonctions du mode 
+<p>Dans le mode pooling de connexions, toutes les fonctions du mode 
 raw et du mode pooling de connexions peuvent être utilisées. Pour activer ce
 mode, configurez les paramètres du mode raw ainsi que les autres
 paramètres ci-après.</p>
@@ -1020,13 +1027,13 @@ paramètres ci-après.</p>
       fils de pgpool-II. pgpool-II réutilise les connexions en cache si une 
       connexion entrante se connecte à la même base de données avec le
       même nom d'utilisateur. Sinon, pgpool-II crée une nouvelle connexion
-      au backend PostgreSQL. Si le nombre de connexions en cache dépasse
+      au serveur PostgreSQL. Si le nombre de connexions en cache dépasse
       max_pool, la plus vieille des connexions sera supprimée et on utilisera
       cet emplacement ainsi libéré pour la nouvelle connexion.
       
       La valeur par défaut est 4. Faites bien attention au fait que le nombre
-      total de connexions des processus pgpool-II aux backend PostgreSQL
-      poruraient atteindre ainsi:
+      total de connexions des processus pgpool-II aux serveurs PostgreSQL
+      pourraient atteindre ainsi&nbsp;:
       <code>num_init_children</code> * <code>max_pool</code>.
       
       Ce paramètre n'est pris en compte qu'au démarrage du serveur 
@@ -1047,9 +1054,9 @@ paramètres ci-après.</p>
   <dd>
       <p>Spécifie les requêtes SQL envoyées à la connexion au serveur 
       PostgreSQL lorsqu'une session se termine, côté client de pgpool-II.
-      Plusieurs commandes peuvent-être spécifiées, en les séparant par
+      Plusieurs commandes peuvent être spécifiées en les séparant par
       un point-virgule. La valeur ci-dessous est la valeur par défault, 
-      mais elle peut-être adaptée pour satisfaire vos besoins.
+      mais elle peut être adaptée pour satisfaire vos besoins.
 
       <pre>
       reset_query_list = 'ABORT; DISCARD ALL'
@@ -1057,24 +1064,23 @@ paramètres ci-après.</p>
 
 <p>
       Les commandes diffèrent dans chaque version de PostgreSQL. Voici les 
-      paramètres reccomandés par version.
+      paramètres recommandés par version.
       </p>
 <p>
 <table border>
 <tr><th>Version de PostgreSQL</th><th>reset_query_list value</th></tr>
-<tr><td>7.1 ou précédent</td><td>ABORT</td></tr>
+<tr><td>7.1 ou précédentes</td><td>ABORT</td></tr>
 <tr><td>7.2 à 8.2</td><td>ABORT; RESET ALL; SET SESSION AUTHORIZATION DEFAULT</td></tr>
 <tr><td>8.3 et suivantes</td><td>ABORT; DISCARD ALL</td></tr>
 </table>
 </p>
 <ul>
-<li>"ABORT" n'est pas envoyé lorsqu'on n'est pas dansun bloc de transactions, 
-à partir ce la 7.4.
+<li>"ABORT" n'est pas envoyé en dehors d'un bloc de transactions à partir de la 7.4.
 </ul>
 
 <p>
 Vous aurez besoin de recharger pgpool.conf après toute modification de
-ce paramètre, pour qu'il soit pris en compte.
+ce paramètre pour que sa nouvelle valeur soit prise en compte.
 </p>
 </dd>
 </dl>
@@ -1084,10 +1090,10 @@ ce paramètre, pour qu'il soit pris en compte.
 <p>Le failover dans le mode pooling de connexions est identique à celui du
 mode raw.</p>
 
-<h3><a name="replication_mode"></a>Mode Réplication</h3>
+<h3><a name="replication_mode"></a>Mode réplication</h3>
 
-<p>Ce mode permet la réplication des données entre les backends PostgreSQL.
-Les paramètres de configuration ci-desous doivent être renseignés, en plus
+<p>Ce mode permet la réplication des données entre les serveurs PostgreSQL.
+Les paramètres de configuration ci-dessous doivent être renseignés, en plus
 de tout ce qui a été vu plus haut.
 </p>
 
@@ -1102,42 +1108,42 @@ de tout ce qui a été vu plus haut.
   <dt>load_balance_mode</dt>
   <dd>
       <p>Lorsque ce paramètre est à <code>true</code>, les requêtes de 
-      type SELECT seront ditribuées à chaque backend PostgreSQL pour 
-      obtenir un "load balancing". La valeur par défaut est 
-      <code>false</code>.
+      type SELECT sont distribuées à chaque serveur PostgreSQL pour 
+      obtenir une répartition de la charge entre les serveurs. La valeur
+      par défaut est  <code>false</code>.
       </p>
   </dd>
 
   <dt>failover_if_affected_tuples_mismatch</dt>
   <dd>
 	  <p>Lorsque ce paramètre est positionné à <code>true</code>,
-	  si les backends PostgreSQL ne retournent pas le même nombre de 
-	  tuples affectés lors d'un INSERT, UPDATE ou DELETE, les backends
-	  qui diffèrent de la valeur la plus fréquente sont "dégénérés" 
+	  si les serveurs PostgreSQL ne retournent pas le même nombre de 
+	  lignes affectées lors d'un INSERT, UPDATE ou DELETE, les serveurs
+	  qui diffèrent de la valeur la plus fréquente sont « dégénérés »
 	  (NDT: ils ne sont alors plus jamais utilisés par pgpool-II, qui les 
-	  considère inconsistents).
+	  considère comme incohérents).
 	  Si ce paramètre est à <code>false</code>, la session est terminée
-	  et les backends PostgreSQL ne sont pas "dégénérés". La valeur par
+	  et les serveurs PostgreSQL ne sont pas « dégénérés ». La valeur par
 	  défaut est à <code>false</code>.
 	  </p>
   </dd>
 
   <dt>replication_stop_on_mismatch</dt>
   <dd>
-	  <p>Si ce paramètre est à <code>true</code>, si tous les backends
-	  PostgreSQL ne retournent pas le même type de paquet, les backends
-	  dont la valeur diffère du résultat le plus fréquent sont "dégénérés".
-	  Un cas d'utilisation typoque est une requête SELECT dans une
+	  <p>Si ce paramètre est à <code>true</code> et si tous les serveurs
+	  PostgreSQL ne retournent pas le même type de paquet, les serveurs
+	  dont la valeur diffère du résultat le plus fréquent sont « dégénérés ».
+	  Un cas d'utilisation typique est une requête SELECT dans une
 	  transaction, avec replicate_select à <code>true</code>, qui 
-	  retournerait un nombre d'enregistrements différent entre les 
-	  backend PostgreSQL.
+	  retournerait un nombre d'enregistrements différent suivant les 
+	  serveurs PostgreSQL.
 	  Les requêtes qui ne sont pas en SELECT pourraient aussi déclencher
-	  cela cependant. Par exemple, si un backend PostgreSQL réussit un 
+	  cette action. Par exemple, si un serveur PostgreSQL réussit un 
 	  UPDATE alors que les autres échouent.
 	  Notez que pgpool-II n'examine <b>pas</b> le contenu des
 	  enregistrements retournés par un SELECT.
 	  Si ce paramètre est à <code>false</code>, la session est terminée
-	  et les backends PostgreSQL ne sont pas "dégénérés". La valeur par
+	  et les serveurs PostgreSQL ne sont pas « dégénérés ». La valeur par
 	  défaut est <code>false</code>.
 	  </p>
   </dd>
@@ -1149,17 +1155,17 @@ de tout ce qui a été vu plus haut.
 Permet de spécifier une liste de noms de fonctions, séparées par des virgules,
 qui ne font <strong>pas</strong> d'écritures dans la base de données.
 Tous les SELECTs qui font appel à des fonctions qui ne sont pas spécifiées 
-dans cette liste ne seront ainsi jamais balancés entre les serveurs PostgreSQL,
+dans cette liste ne seront ainsi jamais répartis entre les serveurs PostgreSQL,
 ni même répliqués dans le mode réplication.
 Dans le mode maître/esclave, de tels SELECTs sont envoyés au maître
 (ou primaire) uniquement.
 </p>
 <p>
-Vous pouvez utiliser des expressions régulières dans la liste pour faire 
-correspondre à une famille de fonctions. Par exemple, si vous avez eu la
+Vous pouvez utiliser des expressions régulières dans la liste pour établir
+une correspondance à une famille de fonctions. Par exemple, si vous avez eu la
 bonne idée de préfixer toutes les fonctions de votre base qui ne font que
 des lectures avec 'get_' ou 'select_' par exemple, vous pourrez ainsi vous
-limiter à n'écrire que les deux expressions régulières dans ce paramètre:
+limiter à n'écrire que les deux expressions régulières dans ce paramètre&nbsp;:
 
 </p>
 <pre>
@@ -1173,40 +1179,39 @@ white_function_list = 'get_.*,select_.*'
 <p>
 Permet de spécifier une liste de noms de fonctions, séparées par des virgules,
 qui <strong>font</strong> des écritures dans la base de données.
-Les SELECTs qui utilisent les fonctions spécifiées dans cette liste ne seront 
-jamais balancés entre les backends PostgreSQL, ni répliqués dans le mode
+Les SELECT qui utilisent les fonctions spécifiées dans cette liste ne seront 
+jamais répartis entre les serveurs PostgreSQL, ni répliqués dans le mode
 de réplication.
-Dans le mode maître/esclave, de tels SELECTs sont envoyés uniquement au 
+Dans le mode maître/esclave, de tels SELECT sont envoyés uniquement au 
 maître.
 </p>
 <p>
-Vous pouvez utiliser des expressions régulières dans la liste pour faire 
-correspondre à une famille de fonctions. Par exemple, si vous avez eu la
+Vous pouvez utiliser des expressions régulières dans la liste pour établir une 
+correspondance avec une famille de fonctions. Par exemple, si vous avez eu la
 bonne idée de préfixer toutes les fonctions de votre base qui font 
 des écritures avec 'set_','update_','delete_' ou 'insert_' 
 par exemple, vous pourrez ainsi vous limiter à n'écrire que les
-expressions régulières suivantes dans ce paramètre:
+expressions régulières suivantes dans ce paramètre&nbsp;:
 </p>
 <pre>
 black_function_list = 'nextval,setval,set_.*,update_.*,delete_.*,insert_.*'
 </pre>
 <p>
-<b>Attention</b>, une seule de ces deux listes ne peut-être renseignée
-dans la configuration de pgpool-II. (NDT: autrement dit,
-vous devez opter pour l'un ou 
-l'autre des fonctionnements: autoriser de manière explicite, ou interdire
+<b>Attention</b>, une seule de ces deux listes ne peut être renseignée
+dans la configuration de pgpool-II. Autrement dit, vous devez opter pour l'un ou
+l'autre des paramètres&nbsp;: autoriser de manière explicite, ou interdire
 de manière explicite. De préférence, optez pour la sécurité d'autoriser
-explicitement, c'est à dire, utiliser la "white list". 
+explicitement, c'est-à-dire utiliser le paramètre white_function_list.
 En effet, en cas 
-d'oubli d'une fonction en écriture dans la "black list", vous risquez de 
-demander l'exécution d'une fonction en écriture sur un serveur 
-en lecture seule, dans le mode maître/esclave par exemple!).
+d'oubli d'une fonction en écriture dans le paramètre black_function_list,
+vous risquez de  demander l'exécution d'une fonction en écriture sur un serveur 
+en lecture seule, dans le mode maître/esclave par exemple.
 </p>
 <p>
 Avant la version 3.0 de pgpool-II, les fonctions nextval() et setval() 
 étaient connues pour leurs écritures dans la base de données.
 Vous pouvez émuler ce comportement en utilisant les deux paramètres vus
-précédemment de la façon suivante:
+précédemment de la façon suivante&nbsp;:
 </p>
 <p>
 <pre>
@@ -1218,9 +1223,9 @@ black_function_list = 'nextval,setval,lastval,currval'
 Notez que l'on a lastval() et currval() en plus des nextval() et setval().
 Bien que lastval() et currval() ne soient pas des fonctions qui provoquent des
 écritures, il vaux mieux les ajouter pour éviter toute erreur dans le cas où
-ces fonctions seraient accidentellement balancées entre les différents noeuds.
+ces fonctions seraient accidentellement réparties entre les différents nœuds.
 Ainsi, les ajouter à la black_function_list permettra d'éviter qu'elles soient
-load-balancées.
+réparties.
 </p>
 </dd>
 
@@ -1228,13 +1233,13 @@ load-balancées.
   <dt>replicate_select</dt>
   <dd>
       <p>Lorsque ce paramètre est à <code>true</code>, pgpool-II va répliquer
-      les SELECTs dans le mode de réplication. Si c'est à <code>false</code>,
+      les SELECT dans le mode de réplication. Si c'est à <code>false</code>,
       pgpool-II va les envoyer uniquement au serveur maître (primaire). La valeur
       par défaut est <code>false</code>.</p>
 
 <p>
 Si une requête SELECT est à l'intérieur d'un bloc de transaction explicite, 
-replicate_select et load_balance_mode auront un effet sur comment fonctionne
+replicate_select et load_balance_mode auront un effet sur le fonctionnement de
 la réplication. Les détails sont expliqués ci-dessous.
 </p>
 
@@ -1242,7 +1247,7 @@ la réplication. Les détails sont expliqués ci-dessous.
 <table border>
 
 <tr>
-<td>Le SELECT est à l'intérieur d'une block de transaction</td>
+<td>Le SELECT est à l'intérieur d'un bloc de transaction</td>
 <td>O</td>
 <td>O</td>
 <td>O</td>
@@ -1278,7 +1283,7 @@ la réplication. Les détails sont expliqués ci-dessous.
 </tr>
 
 <tr>
-<td>resultats(R:réplication, M: envoyé au maître uniquement, L: load-balancé)</td>
+<td>resultats (R:réplication, M:envoyé au maître uniquement, L:réparti)</td>
 <td>R</td>
 <td>R</td>
 <td>M</td>
@@ -1295,17 +1300,17 @@ la réplication. Les détails sont expliqués ci-dessous.
   <dt>insert_lock</dt>
   <dd>
       <p>Si on réplique une table qui utilise le type de données SERIAL,
-      la valeur du SERIAL pourraît être différente entre les backends
-      PostgreSQL. On peut éviter ce problème en vérouillant la table
+      la valeur du SERIAL pourrait être différente entre les serveurs
+      PostgreSQL. On peut éviter ce problème en verrouillant la table
       de manière explicite (bien que le parallélisme des transactions sera
-      alors sévèrement dégradé). Pour arriver à cela, cependant les 
-      changements suivants doivent êter faits:
+      alors sévèrement dégradé). Pour arriver à cela, les 
+      changements suivants doivent être faits&nbsp;:
 
       <pre>
       INSERT INTO ...
       </pre>
       <p>
-      to
+      à
       </p>
       <pre>
       BEGIN;
@@ -1322,45 +1327,45 @@ la réplication. Les détails sont expliqués ci-dessous.
 	</p>
       <p>À partir de pgpool-II 2.2, la détection des tables qui ont 
       un SERIAL ou non est automatique. Ainsi, seules les tables qui
-      ont un SERIAL sont vérouillés de manière exclusive.
+      ont un SERIAL sont verrouillées de manière exclusive.
 	</p>
 	   <p>
-	   pgpool-II 3.0 utilise désormais un lock de ligne sur la relation
-	   de la séquence, plutôt qu'un vérouillage de table exclusif. Cela
-	   minimise les conflits sur les vérouillages, comme par exemple
+	   pgpool-II 3.0 utilise désormais un verrou de ligne sur la relation
+	   de la séquence, plutôt qu'un verrou de table exclusif. Cela
+	   minimise les conflits sur les verrous, comme par exemple
 	   VACUUM (direct ou via autovacuum).
 	   </p>
 	   <p>
-	   Peut-être souhaiterez vous avoir un contrôle plus fin (par 
-	   requête):
+	   Si vous souhaitez un contrôle plus fin (par 
+	   requête)&nbsp;:
       </p>
 
       <ol>
 	<li>positionnez <code>insert_lock</code> à <code>true</code>,  et 
 	    ajoutez <code>/*NO INSERT LOCK*/</code> au début d'une requête
-	    INSERT pour laquelle vous ne voulez pas qu'un vérouillage exclusive de 
-	    table soit provoqué.</li>
+	    INSERT pour laquelle vous ne voulez pas qu'un verrou exclusif de 
+	    table ne soit ajouté.</li>
 
 	<li>positionnez <code>insert_lock</code> à <code>false</code>, et
 	     ajoutez <code>/*INSERT LOCK*/</code> au début d'une requête
-	     INSERT pour laquelle vous voulez provoquer un vérouillage 
+	     INSERT pour laquelle vous voulez provoquer un verrouillage 
 	     exclusif de la table.</li>
       </ol>
 
       <p>
       La valeur par défaut est <code>false</code>. Si 
       <code>insert_lock</code> est activé, les tests de régression pour
-      PostgreSQL 8.0 échoueront dans les transactions, privilèges, règles 
-      (rules) et alter_table. La raison à cela est que pgpool-II essaie de 
-      vérouiller une vue pour le test sur les règles, et produira donc le
-      message d'erreur suivant:</p>
+      PostgreSQL 8.0 échoueront dans les transactions, droits, règles 
+      (rules) et ALTER TABLE. La raison en est que pgpool-II essaie de 
+      verrouiller une vue pour le test sur les règles, ce qui a pour conséquence
+      l'erreur suivante&nbsp;:</p>
       <pre>
       ! ERROR: current transaction is aborted, commands ignored until
       end of transaction block
       </pre>
 
       <p>Par exemple, le test sur les transactions essaie un INSERT dans une
-      table qui n'existe pas, et pgpool-II essaie d'acquérir un vérouillage
+      table qui n'existe pas, et pgpool-II essaie d'acquérir un verrou
       exclusif avant cela. La transaction sera alors interrompue et la requête
       d'INSERT qui suit produira le message ci-dessus.</p>
 
@@ -1368,7 +1373,7 @@ la réplication. Les détails sont expliqués ci-dessous.
 <dd>
 <p>
 Ce paramètre permet de spécifier l'utilisateur PostgreSQL à utiliser pour 
-le online recovery. Il peut être changé sans avoir besoin de redémarrer
+le « online recovery ». Il peut être changé sans avoir besoin de redémarrer
 pgpool-II.
 </p>
 
@@ -1377,7 +1382,7 @@ pgpool-II.
 <p>
 Ce paramètre permet de spécifier le mot de passe de l'utilisateur spécifié dans
 le paramètre ci-dessus, à savoir <code>recovery_user</code>, qui est utilisé
-lors du online recovery. Comme le paramètre précédent, il peut être changé 
+lors du « online recovery ». Comme le paramètre précédent, il peut être changé 
 sans avoir à redémarrer le serveur pgpool-II.
 </p>
 
@@ -1385,8 +1390,8 @@ sans avoir à redémarrer le serveur pgpool-II.
 <dd>
 <p>
 Ce paramètre permet de préciser une commande à exécuter pour la première
-phase du online recovery. Le fichier de commandes spécifié ici doit être placé
-dans le cluster de PostgreSQL (le répertoire racine de PostgreSQL), pour des
+phase du « online recovery ». Le fichier de commandes spécifié ici doit être placé
+à la racine du répertoire des données de l'instance PostgreSQL, pour des
 raisons de sécurité.
 
 Par exemple, si <code>recovery_1st_stage_command = 'sync-command'</code>, 
@@ -1395,18 +1400,18 @@ alors pgpool-II exécute <code>$PGDATA/sync-command</code>.
 Notez que pgpool-II <b>accepte</b> les connexions et les requêtes alors que
 <code>recovery_1st_stage command</code> est en cours d'exécution. On peut 
 ainsi lire et écrire dans la base de données pendant cette première phase du 
-online recovery.
+« online recovery ».
 </p>
 <p>
-Ce paramèter peut-être changé sans avoir à redémarrer pgpool-II.
+Ce paramètre peut être changé sans avoir à redémarrer pgpool-II.
 </p>
 
 <dt>recovery_2nd_stage_command
 <dd>
 <p>
-Ce paramètre spécifie une commande à exécuter lors de la seconde phase
-du online recovery. Ce fichier de commandes doit être placé dans le cluster
-de PostgreSQL pour des raisons de sécurité.
+Ce paramètre spécifie une commande à exécuter lors de la deuxième phase
+du « online recovery ». Ce fichier de commandes doit être placé à la racine
+du répertoire des données de l'instance PostgreSQL pour des raisons de sécurité.
 
 Par exemple, si <code>recovery_2nd_stage_command = 'sync-command'</code>,
 alors pgpool-II exécute <code>$PGDATA/sync-command</code>.
@@ -1415,26 +1420,25 @@ Notez que pgpool-II <b>n'accepte pas</b> de connexions ou d'exécution de
 requêtes pendant que <code>recovery_2nd_stage_command</code> est en
 cours d'exécution. Ainsi, si un client reste connecté pendant une longue période,
 rien ne sera exécuté. En effet, pgpool-II attends que tous les clients aient
-fermé leurs connexions pour exécuter cette seconde phase du online recovery.
+fermé leurs connexions pour exécuter cette seconde phase du « online recovery ».
 La commande n'est donc exécutée que lorsqu'il n'y a plus aucun client de
 connecté.
 </p>
 <p>
-Ce paramètre peut-être changé sans redémarrer pgpool-II.
+Ce paramètre peut être changé sans redémarrer pgpool-II.
 </p>
 
 <dt>recovery_timeout
 <dd>
 <p>
 pgpool n'accepte plus de nouvelle connexion pendant la seconde phase du
-online recovery. Si un client essaie de se connecter à pgpool-II pendant un 
-online recovery, il devra attendre la fin de ce dernier.
+« online recovery ». Si un client essaie de se connecter à pgpool-II pendant un 
+« online recovery », il devra attendre la fin de ce dernier.
 </p>
 <p>
-Ce paramètre spécifie un temps au delà duquel le online recovery sera annulé
+Ce paramètre spécifie un délai au terme duquel le « online recovery » sera annulé
 s'il n'est pas terminé. Après l'annulation, pgpool-II acceptera alors de nouveau
-les connexions. La valeur <code>0</code> signifie qu'il n'y a pas de
-paramétrage de ce temps.
+les connexions. La valeur <code>0</code> désactive cette fonctionnalité.
 </p>
 <p>
 Ce paramètre peut être changé sans avoir à redémarrer pgpool-II.
@@ -1442,11 +1446,11 @@ Ce paramètre peut être changé sans avoir à redémarrer pgpool-II.
 
   <dt>client_idle_limit_in_recovery
   <dd>
-  <p>Similaire à <code>client_idle_limit</code>, cependant, n'agit 
-         que lors de la seconde phase du online recovery. Un client qui aura 
+  <p>Similaire à <code>client_idle_limit</code>. Cependant, il n'agit 
+         que lors de la seconde phase du « online recovery ». Un client qui aura 
 	 été inactif pendant <code>client_idle_limit_in_recovery</code> 
 	 secondes depuis sa dernière requête sera déconnecté.
-	 Ce paramètre permet d'éviter que le le online recovery soit perturbé
+	 Ce paramètre permet d'éviter que le « online recovery » ne soit perturbé
 	 par un client inactif, ou si la connexion TCP/IP entre le client et 
 	 pgpool tombe de manière accidentelle (un câble réseau défectueux
 	 par exemple). Si ce paramètre est à <code>-1</code>, le client 
@@ -1455,52 +1459,52 @@ Ce paramètre peut être changé sans avoir à redémarrer pgpool-II.
 	 désactivée.
   </p>
   <p>  Si vos clients sont très actifs, pgpool-II ne pourra jamais entrer dans
-           la seconde phase du online recovery, quelle que soit la valeur de 
+           la seconde phase du « online recovery », quelle que soit la valeur de 
 	   <code>client_idle_limit_in_recovery</code> que vous aurez choisie.
 	   Dans ce cas, vous pouvez paramétrer <code>client_idle_limit_in_recovery</code>
-	   à <code>-1</code>, afin que pgpool-II puisse déconnecter immédiatement
-	   des clients aussi actifs avant de passer à la seconde phase du online
-	   recovery.
+	   à <code>-1</code> afin que pgpool-II puisse déconnecter immédiatement
+	   des clients aussi actifs avant de passer à la seconde phase du « online
+	   recovery ».
   </p>
   <p>
-   Vous devrez recharger la configuration de pgpool-II si vous changer la
+   Vous devez recharger la configuration de pgpool-II si vous changer la
    valeur de <code>client_idle_limit_in_recovery</code>.</p>
 
 <dt><a name="lobj_lock_table"></a>lobj_lock_table
 <dd>
 <p>
 Ce paramètre spécifie un nom de table utilisé pour le contrôle de la
-réplication des "large objects". Si elle est spécifiée, pgpool-II vérouillera
-cette table-là, et génèrera un identifiant de "large object" en regardant
+réplication des « large objects ». Si elle est spécifiée, pgpool-II verrouillera
+cette table, et génèrera un identifiant de « large object » en regardant
 dans la table pg_largeobject du catalogue système, et enfin, appellera 
-"lo_create" pour créer le "large object".
+lo_create pour créer le « large object ».
 Cette procédure garantie que pgpool-II obtiendra le même identifiant de
-"large object" dans tous les backends PostgreSQL lorsque pgpool-II est dans
-le mode réplication. Notez que PostgreSQL 8.0 ou ultérieur n'a plus de 
-"lo_create", aussi, cette fonctionalité ne fonctionnera pas.
+« large object » sur tous les serveurs PostgreSQL lorsque pgpool-II est dans
+le mode réplication. Notez que PostgreSQL 8.0 et ultérieur n'a plus de fonction
+lo_create. Du coup, cette fonctionalité est pas utilisable pour ces versions.
 </p>
 <p>
 Un appel à la fonction de la libpq lo_creat() utilisera cette fonctionalité. De
-même, la création de large objects via l'API Java (driver JDBC) devrait
+même, la création de « large objects » via l'API Java (driver JDBC) devrait
 fonctionner, tout comme l'API PHP (pg_lo_create, ou API similaire dans 
-la librairie de PHP, comme PDO), et ce genre d'APIs similaires dans 
+la bibliothèque de PHP, comme PDO), et ce genre d'API similaires dans 
 plusieurs langages de programmation qui sont réputées pour utiliser un 
 protocole similaire.
 </p>
 <p>
-Les opérations suivantes de création d'un large object ne fonctionnera pas:
+Les opérations suivantes de création d'un « large object » ne fonctionneront pas&nbsp;:
 <p>
 <ul>
 <li>lo_create de la libpq
 <li>l'API d'un langage qui utilise lo_create
-<li>la fonction lo_import dans le backend PostgreSQL
+<li>la fonction lo_import dans le serveur PostgreSQL
 <li>SELECT lo_creat
 </ul>
 </p>
 <p>
 Peu importe le schéma où est stockée la table <code>lobj_lock_table</code>, 
 celle-ci doit en revanche être accessible en écriture à tous les utilisateurs.
-Voici un exemple de création d'une telle table:
+Voici un exemple de création d'une telle table&nbsp;:
 </p>
 <p>
 <pre>
@@ -1510,40 +1514,40 @@ GRANT ALL ON public.my_lock_table TO PUBLIC;
 </p>
 <p>
 La table spécifiée par <code>lobj_lock_table</code> doit être créée à 
-l'avance. Vous pouvez par exemple la créer dans la base <code>template1</code>,
+l'avance. Vous pouvez par exemple la créer dans la base <code>template1</code>
 afin que toute base de données créée par la suite en dispose.
 </p>
 <p>
 Si <code>lobj_lock_table</code> contient une chaîne vide (<code>''</code>),
-la fonctionalité est désactivée, et ainsi, la réplication des large objects ne fonctionnera
-pas.
+la fonctionalité est désactivée. Du coup, la réplication des « large objects »
+ne fonctionnera pas.
 
 La valeur par défaut de ce paramètre est justement la chaîne vide (<code>''</code>).
 </p>
 
 </dl>
 
-<h4><p>pré-requis au load-balancing</p></h4>
+<h4><p>Pré-requis pour la répartition de charge</p></h4>
 <p>
-Pour qu'une requête soit load-balancée, les pre-requis suivants 
-doivent-être respectés:
+Pour qu'une requête soit répartie, les pré-requis suivants 
+doivent être respectés&nbsp;:
 <ul>
-	<li>Version 7.4 de PostgreSQL ou plus récente</li>
-	<li>la requête ne doit pas être déclarée explicitement 
-	(c'est à dire qu'on ne doit pas être dans un block 
+	<li>Version 7.4 ou ultérieure de PostgreSQL</li>
+	<li>La requête ne doit pas être déclarée explicitement 
+	(c'est-à-dire qu'on ne doit pas être dans un bloc
 	BEGIN ~ END)</li>
-    <li>il ne s'agit pas d'un SELECT nextval ou d'un SELECT setval
-    <li>il ne s'agit pas d'un SELECT INTO
-    <li>il ne s'agit pas d'un SELECT FOR UPDATE ou FOR SHARE
-    <li>la requête commence par un "SELECT" ou COPY TO STDOUT, EXPLAIN, EXPLAIN ANALYZE SELECT...
+    <li>Il ne s'agit pas d'un SELECT nextval ou d'un SELECT setval
+    <li>Il ne s'agit pas d'un SELECT INTO
+    <li>Il ne s'agit pas d'un SELECT FOR UPDATE ou FOR SHARE
+    <li>La requête commence par un SELECT ou COPY TO STDOUT, EXPLAIN, EXPLAIN ANALYZE SELECT...
     le paramètre <code>ignore_leading_white_space = true</code> permettra 
     d'ignorer tous les éventuels espaces présents avant la requête.
 </ul>
 </p>
 <p>
-Notez que vous pouvez interdire de manière explicite le balancement d'une requête
-SELECT en ajoutant un commentaire au début de la requête SELECT (quel que ce
-soit ce commentaireà. Par exemple:
+Notez que vous pouvez interdire de manière explicite la répartition d'une charge sur
+une requête SELECT en ajoutant un commentaire au début de la requête SELECT (quel que ce
+soit ce commentaire). Par exemple&nbsp;:
 <pre>
   /*REPLICATION*/ SELECT ...
 </pre>
@@ -1551,17 +1555,17 @@ soit ce commentaireà. Par exemple:
 
 <p>
 Merci de lire attentivement la page 
-<a href="#replicate_select">replicate_select</a>, au sujet de la réplication.
-De même, étudiez attentivement 
-<a href="where_to_send_queries.pdf">ce schéma</a>, qui explique comment
-pgpool-II détermine à quel backend PostgreSQL envoyer telle ou telle requête.
+<a href="#replicate_select">replicate_select</a> au sujet de la réplication.
+De même, étudiez attentivement ce 
+<a href="where_to_send_queries.pdf">schéma</a> qui explique comment
+pgpool-II détermine à quel serveur PostgreSQL envoyer telle ou telle requête.
 </p>
 
 <p>
 <font color="red">
-Attention: le driver JDBC a une option autocommit. Si autocommit est à
-<code>false</code>, le driver JDBC envoie un "BEGIN" et un "COMMIT" 
-lui-même. Ainsi, pgpool-II ne pourra faire aucun load-balancing. Vous devez
+Attention&nbsp;: le connecteur JDBC a une option autocommit. Si autocommit est à
+<code>false</code>, le connecteur JDBC envoie un BEGIN et un COMMIT
+lui-même. Ainsi, pgpool-II ne pourra faire aucune répartition de charge. Vous devez
 alors appeler <code>setAutoCommit(true)</code> pour activer 
 l'autocommit.
 </font>
@@ -1569,62 +1573,63 @@ l'autocommit.
 
 <h4><p>Failover dans le mode Réplication</p></h4>
 
-<p> pgpool-II désactive un backend "mort" et le service continue,  à condition
-qu'il y ait au moins un backend PostgreSQL en vie.
+<p> pgpool-II désactive un serveur « mort » et le service continue,  à condition
+qu'il y ait au moins un serveur PostgreSQL en vie.
 </p>
 
 <h3><a name="master_slave_mode"></a>Mode Maître-Esclave</h3>
 
-<p>Ce mode est utilisé pour lorsque pgpool-II est couplé avec un autre outil
+<p>Ce mode est utilisé lorsque pgpool-II est couplé avec un autre outil
 de réplication de type maître/esclave(s) (comme Slony-I ou le Streaming
-Réplication intégré à PostgreSQL), qui est alors responsable de la 
+Réplication intégré à PostgreSQL). Cet outil est alors responsable de la 
 réplication des données.
 
-L'information sur les backends PostgreSQL doit être renseignée (les paramètres
-backend_hostname, backend_port, backend_weight, and backend_data_directory), 
+L'information sur les serveurs PostgreSQL doit être renseignée (les paramètres
+backend_hostname, backend_port, backend_weight et backend_data_directory), 
 de la même façon que dans le mode réplication.
 
 De plus, il faut paramétrer <code>master_slave_mode</code> et 
 <code>load_balance_mode</code> à <code>true</code>.
 
-pgpool-II enverra alors les requêtes qui doivent-être répliquées au backend 
-PostgreSQL maître, et les autres requêtes seront load-balancées, si possible.
+pgpool-II enverra alors les requêtes qui doivent être répliquées au serveur
+PostgreSQL maître, et les autres requêtes seront réparties parmi les différents
+serveurs lorsque c'est possible.
 
-L'algorithme de pgpool-II prend bien sûr en compte les requêtes qui ne peuvent-être
-balancées ; elles sont alors systématiquement envoyées au serveur maître.</p>
+L'algorithme de pgpool-II prend bien sûr en compte les requêtes qui ne peuvent être
+réparties&nbsp;; elles sont alors systématiquement envoyées au serveur maître.</p>
 
-<p>Dans le mode Maître-Esclave, les DDL et DML pour une table temporaire ne
-peuvent-être exécutées que sur le serveur maître.
+<p>Dans le mode maître-esclave, les DDL et DML pour une table temporaire ne
+peuvent être exécutées que sur le serveur maître.
 
-Vous pouvez forcer un SELECT à ne s'exécuter que sur le maître en rajoutant un 
+Vous pouvez forcer un SELECT à ne s'exécuter que sur le maître en ajoutant un 
 commentaire <code>/*NO LOAD BALANCE*/</code> devant le SELECT.</p>
 
-<p>Dans le mode Maître-Esclave, vous devez positionner 
+<p>Dans le mode maître-esclave, vous devez positionner 
 <code>replication_mode</code> à <code>false</code> et 
 <code>master_slave_mode</code> à <code>true</code>.</p>
 
-<p>Le mode Maître-Esclave a un sous-mode
-(<code>'master_slave_sub_mode'</code>), qui est par défaut
-<code>slony</code> et qui convient si vous utilisez Slony-I.
+<p>Le mode maître-esclave a un sous-mode piloté par le paramètre
+<code>'master_slave_sub_mode'</code>. Il vaut par défaut
+<code>slony</code> et convient si vous utilisez Slony-I.
 
-Vous pouvez aussi le paramétrer sur <code>stream</code>, si 
+Vous pouvez aussi le paramétrer à <code>stream</code> si 
 vous utilisez le système de réplication intégré à PostgreSQL (le 
 Streaming Replication).
 
 Le fichier de configuration d'exemple pour le sous-mode Slony-I
 est <code>pgpool.conf.sample-master-slave</code>, et celui
-concernant le Streaming Replication est 
+concernant la Streaming Replication est 
 <code>pgpool.conf.sample-stream</code>.
 </p>
 <p>
-Vous devrez redémarrer pgpool-II si vous changez l'un des paramètres
+Vous devez redémarrer pgpool-II si vous changez l'un des paramètres
 vu précédemment.
 </p>
 <p>
 Vous devrez probablement aussi renseigner les paramètres
 <code>white_function_list</code> et 
 <code>black_function_list</code> si vous voulez contrôler plus finement
-le load-balancing dans le mode Maître-Esclave.
+la répartition de charge dans le mode maître-esclave.
 Reportez-vous à <a href="#white_function_list">white_function_list</a> 
 pour plus de détails.
 </p>
@@ -1632,38 +1637,40 @@ pour plus de détails.
 <h4>Streaming Replication</h4>
 <p>
 Comme nous l'avons vu précédemment, pgpool-II peut fonctionner de pair avec
-le Streaming Replication, qui est disponible depuis la version 9.0 de PostgreSQL.
-Pour l'utiliser, il faut activer "master_slave" et positionner "master_slave_sub_mode"
-sur "stream". pgpool-II suppose que le Streaming Replication fonctionne et que les 
-backend PostgreSQL esclaves sont en Hot Standby, ce qui signifie que les bases
-de données sont ouvertes en lecture seule sur ces derniers.
+la Streaming Replication, qui est disponible depuis la version 9.0 de PostgreSQL.
+Pour l'utiliser, il faut activer le paramètre master_slave et positionner le
+paramètre master_slave_sub_mode1 à stream. pgpool-II suppose que le Streaming
+Replication fonctionne et que les serveurs PostgreSQL esclaves sont en Hot
+Standby, ce qui signifie que les bases de données sont ouvertes en lecture
+seule sur ces derniers.
 
-Les directives suivantes peuvent-être utilisées dans ce mode:
+Les directives suivantes peuvent être utilisées dans ce mode&nbsp;:
 </p>
 <p>
 <ul>
 <li>delay_threshold
 <p>
 Permet de spécifier le décalage maximum toléré entre le serveur maître et 
-un serveur esclave dans une réplication, exprimé en octets de WAL.
+un serveur esclave dans une réplication, exprimé en octets de journaux de
+transactions.
 Si le décalage dépasse <code>delay_threshold</code>, pgpool-II n'envoie
 alors plus de SELECT au serveur(s) esclave(s). Tout est alors envoyé au serveur
-maître, même si le load-balancing est activé, jusqu'à ce que le(s) serveur(s) 
+maître, même si la répartition de charge est activée, jusqu'à ce que le(s) serveur(s) 
 esclave(s) soit(soient) en deçà du décalage maximum autorisé.
 
-Si <code>delay_threshold</code> est à <code>0</code>, ou si le test 
+Si <code>delay_threshold</code> est à <code>0</code> ou si le test 
 de vie est désactivé, ce test de décalage n'est jamais fait. Ce dernier est 
 effectué tous les <code>health_check_period</code>. La valeur par défaut
 pour <code>delay_threshold</code> est <code>0</code>.
 
-Vous devrez recharger la configuration de pgpool-II si vous changez cette 
+Vous devez recharger la configuration de pgpool-II si vous changez cette 
 directive.
 </p>
 
 <li>log_standby_delay
 <p>
 Permet de spécifier comment le décalage de réplication est tracé dans le 
-fichier de traces de pgpool-II. Si <code>none</code> est spécifié ici, 
+journal applicatif de pgpool-II. Si <code>none</code> est spécifié ici, 
 rien n'est écrit. Si <code>always</code> est spécifié, alors le décalage 
 sera tracé à chaque fois que le test est effectué.
 Si <code>if_over_threshold</code> est spécifié, alors le décalage est 
@@ -1671,41 +1678,41 @@ tracé uniquement lorsqu'il dépasse le <code>delay_threshold</code>.
 La valeur par défaut pour <code>log_standby_delay</code> est 
 <code>none</code>.
 
-Vous devrez recharger la configuration de pgool-II si vous changez ce 
+Vous devez recharger la configuration de pgool-II si vous changez ce 
 paramètre.
 </p>
 <p>
-Vous pouvez aussi monitorer le décalage éventuel de la réplication en 
+Vous pouvez aussi superviser le décalage éventuel de la réplication en 
 utilisant la commande "show pool_status".
 </p>
 </ul>
 </p>
 
-<h4>Le failover avec Streaming Replication</h4>
+<h4>Le failover avec la Streaming Replication</h4>
 <p>
-Dans le mode maître/esclave avec le Streaming Replication, si le 
-noeud primaire ou le noeud en attente s'arrête, pgpool-II peut-être 
-configuré pour lancer un Failover.
-Les noeuds peuvent alors être attachés automatiquement sans 
+Dans le mode maître/esclave avec la Streaming Replication, si le 
+nœud primaire ou le nœud en attente s'arrête, pgpool-II peut être 
+configuré pour exécuter un Failover.
+Les nœuds peuvent alors être attachés automatiquement sans 
 configuration ou opérations complémentaires.
-Alors qu'il est en pleine réplication [~], le noeud en attente vérifie 
-régulièrement si un fichier de "trigger file" existe, et s'il le trouve,
-le noeud en attente sort de son mode recovery et s'ouvre en mode 
+Alors qu'il est en pleine réplication [~], le nœud en attente vérifie 
+régulièrement si un fichier de déclenchement existe. S'il le trouve,
+le nœud en attente sort de son mode réplication et s'ouvre en mode 
 lecture/écriture. En utilisant ce mécanisme, on peut avoir une base 
-de données en attente qui prends le relais quand le noeud primaire
-vient à tomber.
+de données en attente qui prends le relais quand le nœud primaire
+tombe.
 </p>
 <p>
-<strong>Attention: si vous pensez utiliser plusieurs noeuds en mode
-standby, il est reccomandé de définir un "delay_threshold" pour 
-empêcher tout requête dirigée vers d'autres noeuds en standby de 
+<strong>Attention&nbsp;: si vous pensez utiliser plusieurs nœuds en mode
+standby, il est recommandé de définir le paramètre delay_threshold pour 
+empêcher tout requête dirigée vers d'autres nœuds en standby de
 récupérer des données plus vieilles.</strong>
 </p>
 <p>
-Si un second noeud en standby prends le relais quand le premier
-noeud en standby avait déjà pris le relais, vous pourriez avoir 
+Si un second nœud en standby prends le relais quand le premier
+nœud en standby avait déjà pris le relais, vous pourriez avoir 
 des données erronnées en provenance du second standby. 
-Nous vous reccomandons de ne pas utiliser ce genre de configuration.
+Nous vous recommandons de ne pas utiliser ce genre de configuration.
 </p>
 <p>
 Voici commment configurer un mécanisme de Failover.
@@ -1720,14 +1727,14 @@ $ cd /usr/loca/pgsql/bin
 $ cat failover_stream.sh
 #! /bin/sh
 # Commandes pour faire un Failover en mode Streaming Replication
-# Ce script présuppose que le noeud Maitre est le 0 et 1 le standby
+# Ce script suppose que le nœud Maitre est le 0 et 1 le standby
 # 
 # Si le Standby s'arrête, ne rien faire. Si le Primaire s'arrête, créer
-# un fichier de trigger afin que le standby prenne le relais sur le 
-# noeud Primaire.
+# un fichier de déclenchement afin que le standby prenne le relais sur le 
+# nœud Primaire.
 #
 # Arguments: 
-#   $1: identifiant du noeud qui ne répond plus
+#   $1: identifiant du nœud qui ne répond plus
 #   $2: nom d'hôte du nouveau maître 
 #   $3: chemin vers le fichier trigger 
 
@@ -1740,7 +1747,7 @@ if [ $failed_node = 1 ]; then
 	exit 0;
 fi
 
-# Creer un fichier de trigger
+# Créer un fichier de déclenchement
 /usr/bin/ssh -T $new_master /bin/touch $trigger_file
 
 exit 0;
@@ -1748,24 +1755,24 @@ exit 0;
 chmod 755 failover_stream.sh
 </pre>
 <li>Il faut à présent définir la commande failover_commmand 
-dans le fichier pgpool.conf.
+dans le fichier pgpool.conf&nbsp;:
 <pre>
 failover_command = '/usr/local/src/pgsql/9.0-beta/bin/failover_stream.sh %d %H /tmp/trigger_file0'
 </pre>
 
-<li>Et créer le recovery.conf sur le noeud en standby
-<a href="recovery.conf.sample">Un fichier recovery.conf d'exemple</a> 
-peut-être trouvé dans le répertoire d'installation de PostgreSQL. 
-Son nom est "share/recovery.conf.sample".
+<li>Et créer le fichier recovery.conf sur le nœud en standby. Un
+<a href="recovery.conf.sample">exemple de fichier recovery.conf</a> 
+est disponible dans le répertoire d'installation de PostgreSQL. 
+Son nom complet est "share/recovery.conf.sample".
 Copier recovery.conf.sample en recovery.conf dans le répertoire de base
 de PostgreSQL et l'éditer comme suit.
 <pre>
 standby_mode = 'on'
-primary_conninfo = 'host=nom_du_noeud_primaire user=postgres'
+primary_conninfo = 'host=nom_du_nœud_primaire user=postgres'
 trigger_file = '/tmp/trigger_file0'
 </pre>
 
-<li>Ajuster le postgresql.conf sur le noeud Primaire. La configuration
+<li>Ajuster le postgresql.conf sur le nœud primaire. La configuration
 ci-dessous est donneé à titre indicatif, vous devrez probablement
 l'ajuster pour votre environnement.
 <pre>
@@ -1773,8 +1780,8 @@ wal_level = hot_standby
 max_wal_senders = 1
 </pre>
 
-<li>Définir pg_hba.conf sur le noeud Primaire. La configuration
-ci-dessous est donneé à titre indicatif, vous devrez probablement
+<li>Définir pg_hba.conf sur le nœud Primaire. La configuration
+ci-dessous est donnée à titre indicatif, vous devrez probablement
 l'ajuster pour votre environnement.
 <pre>
 host	replication	postgres		192.168.0.10/32		trust
@@ -1783,59 +1790,58 @@ host	replication	postgres		192.168.0.10/32		trust
 </ol>
 
 <p>
-Démarrez PostgreSQL sur les noeuds Primaire et Secondaire pour initialiser
-la réplication. Si le noeud Primaire venait à tomber, le noeud Secondaire
-prendra automatiquement le relais, en tant que nouveau noeud Primaire, et
+Démarrez PostgreSQL sur les nœuds primaire et secondaire pour initialiser
+la réplication. Si le nœud primaire venait à tomber, le nœud secondaire
+prendra automatiquement le relais, en tant que nouveau nœud primaire, et
 sera alors prêt à recevoir les requêtes en écriture.
 </p>
 
 <h4>Streaming Replication</h4>
 <p>
-Lorsqu'on utilise le Streaming Replication et le Hot Standby, il est important
-de déterminer quelle requête peut-être envoyée sur le noeud Principal ou 
-sur le noeud en Standby (Secondaire), et quelle requête ne devraît pas 
-être envoyée au Standby.
+Lorsqu'on utilise la Streaming Replication et le Hot Standby, il est important
+de déterminer les requêtes pouvant être envoyées sur le nœud principal ou 
+sur le nœud en standby (secondaire), et les requêtes qui ne peuvent pas l'être.
 Le mode Streaming Replication de pgpool-II se charge complètement de
 cette problématique.
 Dans ce chapitre, nous expliquerons comment pgpool-II parvient à cela.
 </p>
 <p>
 Nous distinguons les requêtes qui devraient être envoyées à tel ou tel
-noeud en les examinant elles-même.
+nœud en les examinant.
 </p>
 <p>
 <ul>
- <li>Les requêtes suivantes devraient être envoyées au noeud Primaire uniquement:
+ <li>Les requêtes suivantes devraient être envoyées au nœud primaire uniquement&nbsp;:
 	  <ul>
 	   <li>INSERT, UPDATE, DELETE, COPY FROM, TRUNCATE, CREATE, DROP, ALTER, COMMENT
 	   <li>SELECT ... FOR SHARE | UPDATE
 	   <li>SELECT dans un niveau d'isolation transactionnel de type SERIALIZABLE
 	   <li>LOCK, commande plus stricte que ROW EXCLUSIVE MODE
-	   <li>Quelques commandes transactionnelles:
+	   <li>Quelques commandes transactionnelles&nbsp;:
 			<ul>
 			 <li>BEGIN READ WRITE, START TRANSACTION READ WRITE
 			 <li>SET TRANSACTION READ WRITE, SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE
 			 <li>SET transaction_read_only = off
 			</ul>
-	   <li>Les commandes relatives au commit en deux phases: PREPARE TRANSACTION, COMMIT PREPARED, ROLLBACK PREPARED
+	   <li>Les commandes relatives à la validation en deux phases&nbsp;: PREPARE TRANSACTION, COMMIT PREPARED, ROLLBACK PREPARED
 	   <li>LISTEN, UNLISTEN, NOTIFY
 	   <li>VACUUM
 	   <li>Quelques fonctions liées aux séquences (nextval et setval)
-	   <li>Les commandes de création de "Large Objects"
+	   <li>Les commandes de création de « Large Objects »
 	  </ul>
- <li>Ces requêtes peuvent-être envoyées à la fois au noeud Primaire et au
- noeud en Standby. Si le Load-Balancing est activé, ce type de requêtes
- peut-être envoyé au noeud en Standby.
- Cependant, si "delay_threshold" est défini et que le délai dans la 
- réplication est supérieur au "delay_threshold", les requêtes sont envoyées au
- noeud Primaire.
+ <li>Ces requêtes peuvent être envoyées à la fois au nœud primaire et au
+ nœud en standby. Si la répartition de charge est activée, ce type de requêtes
+ peut être envoyé au nœud en standby.
+ Cependant, si le paramètre delay_threshold est défini et que le délai dans la 
+ réplication est supérieur au delay_threshold, les requêtes sont envoyées au
+ nœud primaire.
 	  <ul>
 	   <li>tout SELECT non listé ci-dessus
 	   <li>COPY TO
 	   <li>DECLARE, FETCH, CLOSE
 	   <li>SHOW
 	  </ul>
- <li>Les requêtes suivantes sont envoyées à la fois au noeud Primaire et Secondaire:
+ <li>Les requêtes suivantes sont envoyées à la fois au nœud primaire et secondaire&nbsp;:
 	  <ul>
 	   <li>SET
 	   <li>DISCARD
@@ -1845,18 +1851,18 @@ noeud en les examinant elles-même.
 </p>
 
 <p>
-Dans une transaction explicite:
+Dans une transaction explicite&nbsp;:
 <ul>
  <li>Toute transaction commençant par une commande comme BEGIN est envoyée
- au noeud Primaire.
+ au nœud primaire.
  <li>Tout SELECT qui survient immédiatement après, ainsi que toutes les requêtes
- qui peuvent-être envoyées aussi bien au Primaire qu'au Secondaire, sont balancés
- entre les noeuds.
+ qui peuvent être envoyées aussi bien au primaire qu'au secondaire, sont réparties
+ entre les nœuds.
  <li><p>
- Toute commande qui ne peut-être exécutée sur un noeud en Standby (Secondaire)
- comme un INSERT sont envoyées uniquement au Primaire.
+ Toute commande qui ne peut être exécutée sur un nœud en standby (secondaire)
+ comme un INSERT sont envoyées uniquement au primaire.
  Après toute commande de ce type, absolument tous les ordres SQL sont envoyés
- au noeud Primaire. En effet, les SELECTs suivant pourraient vouloir voir les 
+ au nœud primaire. En effet, les SELECT suivant pourraient vouloir voir les 
  résultats d'un INSERT immédiatement. 
 Ce comportement continue jusqu'à ce que la transaction se ferme ou soit 
 interrompue.
@@ -1866,37 +1872,38 @@ interrompue.
 
 <p>
 Dans le protocole étendu, il est possible de déterminer si la requête
-peut-être envoyée au noeud en Standby ou pas dans le mode Load-Balancing
-au moment où on parse la requête. Les rêgles sont les mêmes que dans le
+peut être envoyée au nœud en standby ou pas dans le mode de répartition de charge
+au moment où on analyse la requête. Les rêgles sont les mêmes que dans le
 protocole non-étendu.
-Par exemple, les INSERTs sont envoyés au Primaire, ainsi que toute requête
+Par exemple, les INSERT sont envoyés au primaire, ainsi que toute requête
 qui suivra.
 </p>
 
 <p>
-[Note: si le parsing d'une requête en SELECT est envoyée sur le Standby à 
-cause du load-balancing, et qu'une requête en modification de données, comme
-un INSERT est envoyé à pgpool-II, alors le SELECT parsé devra être exécuté
-sur le noeud Primaire. Cependant, on re-parse le SELECT sur le noeud primaire.]
+Note&nbsp;: si l'analyse d'une requête en SELECT est envoyée sur le standby à 
+cause de la répartition de charge et qu'une requête en modification de données, comme
+un INSERT est envoyé à pgpool-II, alors le SELECT analysé devra être exécuté
+sur le nœud primaire. Cependant, on analyse de nouveau le SELECT sur le nœud primaire.
+
 <p>
 Enfin, les requêtes qui semblent douteuses ou possiblement en erreur sont 
-envoyées sur le noeud Primaire.
+envoyées sur le nœud primaire.
 </p>
 
-<h4>Online recovery avec Streaming Replication</h4>
+<h4>Online recovery avec la Streaming Replication</h4>
 <p>
-Dans le mode Maître/Esclave avec Streaming Replication, on peut procéder à une
-récupération à chaud (Online recovery).
-Cependant, seul un noeud en Standby peut-être ainsi récupéré. On ne peut pas
-reconstruire un noeud Primaire. Pour ce faire, il faudra stoper toutes les
-bases de données, ainsi que pgpool-II, puis restaurer le noeud Primaire à 
+Dans le mode maître/esclave avec la Streaming Replication, on peut procéder à une
+restauration à chaud (« Online recovery »).
+Cependant, seul un nœud en standby peut être ainsi récupéré. On ne peut pas
+reconstruire un nœud primaire. Pour ce faire, il faudra stopper toutes les
+bases de données, ainsi que pgpool-II, puis restaurer le nœud primaire à 
 partir d'une sauvegarde.
 </p>
 
 <p>
 Voici les étapes.
 <ol>
- <li>Définir le paramètre recovery_user. C'est souvent "postgres".
+ <li>Définir le paramètre recovery_user. C'est souvent postgres.
 <pre>
 recovery_user = 'postgres'
 </pre>
@@ -1907,14 +1914,15 @@ recovery_password = 't-ishii'
 </pre>
 
 <li> Définir le paramètre recovery_1st_stage_command.
-Le script pour cette étape (stage) devrait procéder à une sauvegarde 
-du noeud Primaire et à sa restauration sur le noeud en Standby.
-Placer ce script à l'intérieur du répertoire de données du noeud Primaire
+Le script pour cette étape doit procéder à une sauvegarde 
+du nœud primaire et à sa restauration sur le nœud en standby.
+Placez ce script à l'intérieur du répertoire de données du nœud primaire
 et donnez-lui les droits nécessaires pour être exécutable.
-Voici un script d'exemple <a href="basebackup.sh">(basebackup.sh)</a>,
-avec une configuration simple d'un Primaire et d'un Standby.
-il faut configurer SSH pour que le recovery_user puisse se logguer depuis
-le Primaire vers le Standby sans qu'on lui demande de mot de passe.
+Un script d'exemple est disponible&nbsp;: <a href="basebackup.sh">basebackup.sh</a>,
+avec une configuration simple d'un primaire et d'un standby.
+Il faut configurer SSH pour que l'utilisateur indiqué dans le paramètre
+recovery_user puisse se connecter depuis le primaire vers le standby sans
+qu'un mot de passe ne soit demandé.
 <pre>
 recovery_1st_stage_command = 'basebackup.sh'
 </pre>
@@ -1924,7 +1932,7 @@ recovery_2nd_stage_command = ''
 </pre>
 
 <li>Installer à présent les fonctions C et SQL nécessaires dans chacune 
-des bases de données pour que le online reconvery fonctionne.
+des bases de données pour que le « online recovery » fonctionne.
 </p>
 
 <pre>
@@ -1934,40 +1942,40 @@ des bases de données pour que le online reconvery fonctionne.
 # psql -f pgpool-recovery.sql template1
 </pre>
 
-<li>Après avoir terminé le Online recovery, pgpool-II démarre PostgreSQL
-sur le noeud Standby.
-À cet effet, il faut installer un script sur chacun des noeuds.
-<a href="pgpool_remote_start">Un script d'exemple</a> est inclus dans le
-répertoire "sample", dans le code source.
-Ce script utilise SSH. Il faudra permettre à recovery_user de se logguer
-depuis le noeud Primaire vers le noeud Standby sans qu'on lui demande un 
-mot de passe.
+<li>Après avoir terminé le « online recovery », pgpool-II démarre PostgreSQL
+sur le nœud standby.
+À cet effet, il faut installer un script sur chacun des nœuds.
+Un <a href="pgpool_remote_start">script d'exemple</a> est inclus dans le
+répertoire sample du répertoire des sources.
+Ce script utilise SSH. Il faudra permettre à l'utilisateur indiqué dans
+le paramètre recovery_user de se connecter depuis le primaire vers le standby
+sans qu'un mot de passe ne soit demandé.
 </ol>
 </p>
 
 <p>
 C'est tout.
-On peut à présent utiliser pcp_recovery_node (dès qu'un noeud en Standby
-s'arrête) ou alors cliquer sur le bouton "recovery" dans l'interface de 
-pgpoolAdmin pour exécuter un Online Recovery.
+On peut à présent utiliser pcp_recovery_node (dès qu'un nœud en standby
+s'arrête) ou alors cliquer sur le bouton « recovery » dans l'interface de 
+pgpoolAdmin pour exécuter un « Online Recovery ».
 </p>
 
-<h3>Mode Parallele</h3>
+<h3>Mode parallèle</h3>
 
 <p>Ce mode permet l'exécution en parallèle de requêtes. Les tables 
-peuvent-être découpées, et les données distribuées sur chaque noeud. De plus,
-les fonctionalités de réplication et de load-balancing peuvent être utilisées
-avec ce mode, en même temps. Dans le mode parall-le, replication_mode et 
-load_balance_mode sont positionnés à "true" dans le fichier pgpool.conf, alors
-que master_slae est positionné à "false", et que "parallel_mode" est positionné
-à "true". Si ce paramètre est changé, il faut redémarrer pgpool-II pour qu'il
+peuvent être découpées, et les données distribuées sur chaque nœud. De plus,
+les fonctionnalités de réplication et de répartition de charge peuvent être utilisées
+avec ce mode, en même temps. Dans le mode parallèle, replication_mode et 
+load_balance_mode sont positionnés à true dans le fichier pgpool.conf, alors
+que master_slave est positionné à false, et que parallel_mode est positionné
+à true. Si ce paramètre est changé, il faut redémarrer pgpool-II pour qu'il
 soit pris en compte. 
 </p>
 
-<h4><p>Configuration de la base Système</p></h4>
+<h4><p>Configuration de la base système</p></h4>
 
-<p>Pour utiliser le mode parallèle, la base Système doit-être configurée
-correctement. La base Système contient des règles, stockées dans une table,
+<p>Pour utiliser le mode parallèle, la base système doit être configurée
+correctement. La base système contient des règles, stockées dans une table,
 pour choisir le nœud PostgreSQL approprié auquel envoyer les données.
 La base de données système n'a pas besoin d'être créée sur le même nœud que
 pgpool-II. La configuration de cette dernière est faite dans
@@ -1977,7 +1985,7 @@ pgpool-II. La configuration de cette dernière est faite dans
   <dt>system_db_hostname</dt>
   <dd>
       <p>Nom de l'hôte où la base de données système réside. Une chaîne vide
-      dans ce paramètre ('') signigie que celle-ci est sur le même nœud que
+      dans ce paramètre ('') signifie que celle-ci est sur le même nœud que
       pgpool-II, et sera alors accédée via un socket UNIX.</p>
   </dd>
 
@@ -1989,14 +1997,14 @@ pgpool-II. La configuration de cette dernière est faite dans
   <dt>system_dbname</dt>
   <dd>
       <p>Les règles de partitionnement et autres informations seront définies
-      dans la base de données spécifiée ici. La valeur par défaut est:
+      dans la base de données spécifiée ici. La valeur par défaut est
       <code>'pgpool'</code>.</p>
   </dd>
 
   <dt>system_db_schema</dt>
   <dd>
       <p>Les règles de partitionnement et autres informations seront stockées
-      dans le schéma spécifié ici. La valeur par défaut est:
+      dans le schéma spécifié ici. La valeur par défaut est
       <code>'pgpool_catalog'</code>.</p>
   </dd>
 
@@ -2007,7 +2015,7 @@ pgpool-II. La configuration de cette dernière est faite dans
 
   <dt>system_db_password</dt>
   <dd>
-      <p>Mot de passe pour la base de données système. Si aucun mot de passe
+      <p>Mot de passe pour l'utilisateur de la base de données système. Si aucun mot de passe
       n'est nécessaire, laissez une chaîne vide dans ce paramètre ('').</p>
   </dd>
 
@@ -2015,16 +2023,15 @@ pgpool-II. La configuration de cette dernière est faite dans
   <dd>
       <p>
       Chemin complet vers un fichier au format PEM contenant un ou plusieurs
-      certificats CA, qui peuvent-être utilisés pour vérifier le certificat du 
-      backend. C'est analogue à l'option <code>-CAfile</code> de la
+      certificats CA, qui doivent être utilisés pour vérifier le certificat du 
+      serveur. C'est analogue à l'option <code>-CAfile</code> de la
       commande <code>verify(1)</code> d'OpenSSL.
       </p>
 
       <p>
-      Il n'y a pas de valeur par défaut pour cette option, ainsi, aucune
-      vérification n'a lieu. Une vérification aura toujours lieu si cette 
-      option reste ainsi, mais qu'on a défini une valeur pour 
-      <code>ssl_ca_cert_dir</code>.
+      Il n'y a pas de valeur par défaut pour cette option. Du coup, aucune
+      vérification n'a lieu par défaut. Par contre, une vérification sera réalisée
+      si une valeur a été définie pour <code>ssl_ca_cert_dir</code>.
       </p>
   </dd>
 
@@ -2032,16 +2039,15 @@ pgpool-II. La configuration de cette dernière est faite dans
   <dd>
       <p>
       Chemin vers un répertoire qui contient les certificats CA au format PEM,
-      qui peuvent être utilisés pour vérifier le certificat du backend. 
+      qui peuvent être utilisés pour vérifier le certificat du serveur. 
       C'est analogue à l'option <code>-CAfile</code> de la commande
       <code>verify(1)</code> d'OpenSSL.
       </p>
 
       <p>
-      Il n'y a pas de valeur par défaut pour cette option, ainsi, aucune
-      vérification n'a lieu. Une vérification aura toujours lieu si cette 
-      option reste ainsi, mais qu'on a défini une valeur pour 
-      <code>ssl_ca_cert</code>.
+      Il n'y a pas de valeur par défaut pour cette option. Du coup, aucune
+      vérification n'a lieu par défaut. Par contre, une vérification sera réalisée
+      si une valeur a été définie pour <code>ssl_ca_cert</code>.
       </p>
   </dd>
 
@@ -2049,9 +2055,9 @@ pgpool-II. La configuration de cette dernière est faite dans
 
 <h4><p>Configuration initiale de la base de données système</p></h4>
 
-<p>Il faut d'abord créer la base de données et le schéma spécifié dans le
-fichier <code>pgpool.conf</code>. Un script d'exemple peut-être trouvé dansun
-<code>$prefix/share/system_db.sql</code>. Si vous avez spécifié un nom 
+<p>Il faut d'abord créer la base de données et le schéma spécifiés dans le
+fichier <code>pgpool.conf</code>. Un script d'exemple peut être trouvé dans
+<code>$prefix/share/system_db.sql</code>. Si vous avez indiqué un nom
 différent pour la base de données ou le schéma, adaptez ce script en 
 conséquence.
 <pre>
@@ -2067,7 +2073,7 @@ dans la table <code>pgpool_catalog.dist_def</code>.</p>
 
 <pre>
 CREATE TABLE pgpool_catalog.dist_def(
-dbname TEXT,                                              -- nom de la BD
+dbname TEXT,                                              -- nom de la base
 schema_name TEXT,                                         -- nom du schéma
 table_name TEXT,                                          -- nom de la table
 col_name TEXT NOT NULL CHECK (col_name = ANY (col_list)), -- nom de la colonne 
@@ -2077,7 +2083,7 @@ attributs de la table
 type_list TEXT[] NOT NULL,                                -- types de
 données de la table des attributs
 dist_def_func TEXT NOT NULL,                              -- nom de la
-fonction de la règle de partitionnement
+fonction pour la règle de partitionnement
 PRIMARY KEY (dbname,schema_name,table_name)
 );
 </pre>
@@ -2085,16 +2091,15 @@ PRIMARY KEY (dbname,schema_name,table_name)
 
 <h4><p>Enregistrement d'une règle de réplication</p></h4>
 <p>
-Les tables qui ne sont pas distribuées doivent-être répliquées. Lorsqu'une 
+Les tables qui ne sont pas distribuées doivent être répliquées. Lorsqu'une 
 requête fait la jointure d'une table distribuée avec une autre table, pgpool
-récupère l'information de réplication dans la table 
-pgpool_catalog.replicate_def. Ainsi, une table doit-être soit répliquée, soit
-ditribuée.
+récupère l'information de réplication dans la table  pgpool_catalog.replicate_def.
+Ainsi, une table est soit répliquée, soit ditribuée.
 </p>
 
 <pre>
 CREATE TABLE pgpool_catalog.replicate_def(
-	dbname TEXT,	    --nom de la base de données
+	dbname TEXT,	    --nom de la base
 	schema_name TEXT,	--nom du schéma
 	table_name TEXT,	--nom de la table
 	col_list TEXT[] NOT NULL,	-- nom des attributs de la table
@@ -2106,19 +2111,19 @@ la table
 
 <h4><p>Exemple basé sur le partitionnement des tables de pgbench</p></h4>
 
-<p>[NDT: pgbench est un outil de benchmark simple de PostgreSQL, disponible 
-dans le répertoire "contrib" de PostgreSQL]</p>
+<p>pgbench est un outil simple de tests de performance de PostgreSQL, disponible 
+dans le répertoire contrib de PostgreSQL.</p>
 
 <p>
-Dans cet exemple, la table "accounts" est partitionnée, les tables
-"branches" et "tellers" sont répliquées.
-Les tables "accounts" et "branches" sont jointes sur la colonne "bid".
-La table "branches" est enregistrée dans la table de réplication.
-Si les trois tables ("accounts", "branches" et "tellers") doivent-être jointes,
+Dans cet exemple, la table accounts est partitionnée, les tables
+branches et tellers sont répliquées.
+Les tables accounts et branches sont jointes sur la colonne bid.
+La table branches est enregistrée dans la table de réplication.
+Si les trois tables (accounts, branches et tellers) doivent être jointes,
 il est nécessaire d'enregistrer aussi une règle de réplication pour la table 
-"tellers".
-
+tellers.
 </p>
+
 <pre>
 INSERT INTO pgpool_catalog.dist_def VALUES (
 	'pgpool',
@@ -2139,7 +2144,7 @@ INSERT INTO pgpool_catalog.replicate_def VALUES (
 );
 </pre>
 
-<p>La règle de partitionnement (ici, "pgpool_catalog.dist_def_accounts") prends
+<p>La règle de partitionnement (ici, pgpool_catalog.dist_def_accounts) prends
 une valeur pour la colonne qui sert de clé de partitionnement, et retourne le
 numéro du nœud de la base de données correspondante. Notez que l'identifiant
 des nœuds doit commencer par 0. Voici un exemple de cette fonction pour 
@@ -2152,50 +2157,50 @@ WHEN $1 > 30000 and $1 <= 60000 THEN 1
 ELSE 2
 </pre>
 
-<h2><a name="hba"></a>Configuiration de pool_hba.conf pour l'authentification
+<h2><a name="hba"></a>Configuration de pool_hba.conf pour l'authentification
 des clients (HBA)</h2>
 <p>
-  Tout comme le fichier "pg_hba.conf" pour PostgreSQL, pgpool a la même 
-  fonction d'authentification des clients, qui est basée sur un fichier 
-  appelé "pool_hba.conf".
+  Tout comme le fichier pg_hba.conf pour PostgreSQL, pgpool a la même 
+  fonctionnalité d'authentification des clients, qui est basée sur un fichier 
+  appelé pool_hba.conf.
 </p>
 <p>
-  Lorsqu'on installe pgpool, le fichier "pool_hba.conf.sample" est installé 
-  dans "/usr/local/etc", qui est le répertoire par défaut des fichiers de 
-  configuration. Il faut copier "pool_hba.conf.sample" en "pool_hba.conf" puis
-  éditer si nécessaire. Par défaut, l'authentification par "pool_hba" est 
-  activée. Se reporter à "6. Configuration de pgpool.conf" pour plus de détails.
+  Lorsque pgpool est installé, le fichier pool_hba.conf.sample est installé 
+  dans /usr/local/etc, qui est le répertoire par défaut des fichiers de 
+  configuration. Il faut copier pool_hba.conf.sample en pool_hba.conf puis
+  l'éditer si nécessaire. Par défaut, l'authentification par pool_hba est 
+  activée. Se reporter à « 6. Configuration de pgpool.conf » pour plus de détails.
 </p>
 <p>
-  Le format du fichier "pool_hba.conf" est très similaire à celui du fichier
-  "pg_hba.conf" de PostgreSQL.
+  Le format du fichier pool_hba.conf est très similaire à celui du fichier
+  pg_hba.conf de PostgreSQL.
 </p>
 <pre>
     local      DATABASE  USER  METHOD  [OPTION]
     host       DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTION]
 </pre>
 <p>
-  Voir "pool_hba.conf.sample" pour une explication détaillée de chaque champ.
+  Voir pool_hba.conf.sample pour une explication détaillée de chaque champ.
 </p>
 <p>
-  Voici les limitations de "pool_hba".
+  Voici les limitations de pool_hba.
 <ul>
-<li>la connexion de type "hostssl" n'est pas supportée</li>
+<li>la connexion de type hostssl n'est pas supportée</li>
 <p>
-    Bien que "hostssl" soit invalide, pgpool-II 2.3 et supérieur supporte
+    Bien que hostssl soit invalide, pgpool-II 2.3 et supérieur supporte
     SSL. Voir <a href="#ssl">SSL</a> pour plus de détails.
 </p>
-<li>"samegroup" dans la colonne DATABASE n'est pas supporté</li>
+<li>samegroup dans la colonne DATABASE n'est pas supporté</li>
 <p>
     Comme pgpool ne sait rien à propos des utilisateurs déclarés dans le 
-    backend PostgreSQL, le nom de la base de données est testé simplement 
+    serveur PostgreSQL, le nom de la base de données est testé simplement 
     par rapport aux entrées de la colonne DATABASE dans le fichier 
     pool_hba.conf.
 </p>
-<li>les noms de groupes suivis de "+" pour la colonne USER ne sont pas
+<li>les noms de groupes suivis du signe + pour la colonne USER ne sont pas
 supportés</li>
 <p>  
-    Cela est dû à la même raison que pour "samegroup" décrit ci-dessus. 
+    Cela est dû à la même raison que pour samegroup décrit ci-dessus. 
     Un nom d'utilisateur est testé simplement par rapport aux entrées
     dans la colonne USER du fichier pool_hba.conf.
 </p>
@@ -2203,33 +2208,34 @@ supportés</li>
 <p>
     À ce jour, pgpool ne supporte pas l'IPv6.
 </p>
-<li>Seules les méthodes "trust", "reject", "md5" et "pam" sont supportées
+<li>Seules les méthodes trust, reject, md5 et pam sont supportées
 dans la colonne METHOD</li>
 <p>
-    Encore une fois, c'est pour la même raison que pour "samegroup" décrit
-    ci-dessus: pgpool n'a pas accès aux informations sur les utilisateurs et 
-    mots de passes stockés dans le backend PostgreSQL.
+    Encore une fois, c'est pour la même raison que pour samegroup (décrit
+    ci-dessus)&nbsp;: pgpool n'a pas accès aux informations sur les utilisateurs et 
+    mots de passes stockés dans le serveur PostgreSQL.
 </p>
 <p>
 Pour utiliser l'authentification md5, il faudra enregistrer votre nom 
-d'utilisateur et son mot de passe dans "pool_passwd".
+d'utilisateur et son mot de passe dans pool_passwd.
 Voir <a href="#md5">Authentification / Contrôle d'accès</a> pour plus de 
 détails.
 </ul>
 <p>
   Notez que tout ce qui est décrit dans cette section concerne
-  l'authentification entre un client et pgpool; un client doit toujours 
+  l'authentification entre un client et pgpool&nbsp;; un client doit toujours 
   passer à travers le processus d'authentification de PostgreSQL. Bien que 
   pool_hba soit concerné, cela n'a pas d'importance si un nom d'utilisateur
   et/ou de base de données donné par un client (i.e. psql -U testuser testdb)
-  existe ou non dans le backend. pool_hba ne regarde en effet que si une 
-  correspondance est trouvée dans le pool_hba.conf ou pas.
+  existe ou non dans le serveur. pool_hba ne regarde en effet que si une 
+  correspondance est trouvée dans le fichier pool_hba.conf.
 </p>
 
 <p>
   L'authentification PAM fonctionne grâce à l'information sur l'utilisateur
   trouvée sur le serveur où pgpool est exécuté. Pour activer le support de PAM
-  dans pgpool, spécifier l'option "--with-pam" lors de la phase du "configure":
+  dans pgpool, spécifier l'option "--with-pam" lors de la phase de configuration
+  de la compilation&nbsp;:
 </p>
 <pre>
     configure --with-pam
@@ -2237,20 +2243,20 @@ détails.
 <p>
   Pour activer l'authentification PAM, on a besoin de créer un fichier de 
   configuration du service pour pgpool dans le répertoire de configuration de
-  PAM sur le système (qui est en général "/etc/pam.d"). Un fichier d'exemple
-  nommé "share/pgpool.pam" est présent dans le répertoire d'installation.
+  PAM sur le système (qui est en général /etc/pam.d). Un fichier d'exemple
+  nommé share/pgpool.pam est présent dans le répertoire d'installation.
 </p>
 
 <h2>Configuration de la méthode de cache de requêtes</h2>
-<p>Le cache de requêtes peut-être utilisé dans tous les modes de pgpool-II.
-Son activation dans le fichier pgpool.conf est faite de la manière suivante:
+<p>Le cache de requêtes est utilisable dans tous les modes de pgpool-II.
+Son activation dans le fichier pgpool.conf se fait de la manière suivante&nbsp;:
 <pre>
 enable_query_cache = true
 </pre>
 
 <p>
-On aura cependant besoin de créer aussi la table suivante dans la base de
-données système de pgpool-II:
+Cependant, il faut aussi créer la table suivante dans la base de
+données système de pgpool-II&nbsp;:
 </p>
 <pre>
 CREATE TABLE pgpool_catalog.query_cache (
@@ -2263,16 +2269,15 @@ CREATE TABLE pgpool_catalog.query_cache (
 );
 </pre>
 <p>
-Cependant, il faudra peut-être modifier le nom de schéma dans l'exemple
-ci-dessus si le "pgpool_catalog" n'est pas utilisé.
+Notez qu'il peut aussi être nécessaire de modifier le nom du schéma dans l'exemple
+ci-dessus si pgpool_catalog n'est pas utilisé.
 </p>
 
 <h1>Démarrage et arrêt de pgpool-II<a name="start"></a></h1>
 
-<p>Tous les backends PostgreSQL doivent-être démarrés, y compris celui qui 
+<p>Tous les serveurs PostgreSQL doivent être démarrés, y compris celui qui 
 contient la base de données système de pgpool-II (si le mode utilisé l'impose),
-avant de démarrer pgpool-II.
-</p>
+avant de démarrer pgpool-II.</p>
 
 <pre>
 pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-D][-d]
@@ -2288,13 +2293,13 @@ fichier pool_hba.conf</tr>
 le fichier pcp.conf</tr>
   <tr><td>-n<br/>--no-daemon</td><td>ne pas fonctionner en mode démon
 (le terminal n'est alors pas détaché)</tr>
-  <tr><td>-D<br/>--discard-status</td><td>Ignore le fichier de statut
+  <tr><td>-D<br/>--discard-status</td><td>ignore le fichier de statut
 précédent</tr>
   <tr><td>-d<br/>--debug</td><td>mode de débogage</tr>
 </table>
 pgpool-II peut être arrêté de deux façons. La première est d'utiliser une
-commande PCP (détaillé plus loin dans ce document). La seconde est d'utiliser
-une commande pgpool-II, dont voici un exemple:
+commande PCP (détaillée plus loin dans ce document). La seconde est d'utiliser
+une commande pgpool-II, dont voici un exemple&nbsp;:
 </p>
 
 <pre>
@@ -2303,7 +2308,7 @@ pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] st
 <p>
 <table>
   <tr><td><code>-m s[mart]</code><br/><code>--mode s[mart]</code></td>
-      <td>attends que les clients se déconnecte avant de s'arrêter (mode par
+      <td>attends que les clients se déconnectent avant de s'arrêter (mode par
 défaut)</td></tr>
   <tr><td><code>-m f[ast]</code><br/><code>--mode f[ast]</code></td>
       <td>n'attend pas la déconnexion des clients, et s'arrête
@@ -2313,12 +2318,12 @@ immédiatement</td></tr>
 </p>
 <p>
 pgpool enregistre son état dans le fichier [logdir]/pgpool_status. Lorsque
-pgpool redémarre, il lit ce fichier et restaure le statut du backend (tel qu'il
+pgpool redémarre, il lit ce fichier et restaure le statut de chaque serveur (tel qu'il
 était à l'arrêt de pgpool). Cela permettra d'éviter une différence au niveau
 des données dans les différents nœuds PostgreSQL, qui pourrait être causée
-selon le scénario suivant:
+selon le scénario suivant&nbsp;:
 <ol>
-<li>Un backend s'arrête inopinément et pgpool exécute la procédure de fail-over
+<li>Un serveur s'arrête inopinément et pgpool exécute la procédure de fail-over
 <li>Une mise à jour est effectuée sur l'une des bases de données actives, via
 pgpool
 <li>L'administrateur décide d'arrêter pgpool
@@ -2335,7 +2340,7 @@ avec la base de données active d'une autre manière, pgpool_status peut alors
 
 <h1>Rechargement des fichiers de configuration de pgpool-II<a
 name="reload"></a></h1>
-<p>pgpool-II peut recharger ses fichiers de configuration, et se mettre alors à
+<p>pgpool-II peut recharger ses fichiers de configuration et se mettre alors à
 jour par rapport à ces derniers, sans avoir à être redémarré.
 </p>
 
@@ -2359,11 +2364,11 @@ configuration ne prend effet qu'à partir des nouvelles sessions créées.
 </p>
 
 <h1><a name="show-commands"></a>Commandes SHOW</h1>
-<h2>Overview</h2>
+<h2>Aperçu</h2>
 <p>
 pgpool-II donne quelques informations via les commandes SHOW. SHOW est une
 commande SQL existante, mais pgpool-II l'intercepte si la requête concerne des
-informations spécifiques à pgpool-II. Voici les options spécifiques à pgpool-II:
+informations spécifiques à pgpool-II. Voici les options spécifiques à pgpool-II&nbsp;:
 <ul>
   <li>pool_status, pour avoir la configuration</li>
   <li>pool_nodes, pour avoir des informations sur les nœuds</li>
@@ -2373,16 +2378,16 @@ pgpool-II</li>
   <li>pool_version, pour avoir la version de pgpool-II</li>
 </ul>
 <p>
-<u>Note</u> : Le terme 'pool' réfère au nombre de sessions PostgreSQL détenues
+<u>Note</u>&nbsp;: Le terme 'pool' réfère au nombre de sessions PostgreSQL détenues
 par un processus pgpool, et non le nombre total de sessions détenues par pgpool.
-</p> 
 </p>
-<p>l'option "pool_status" était disponible dans les versions précédentes, mais
-les autres sont apparues avec la version 3.0</p>
+</p>
+<p>L'option pool_status était disponible dans les versions précédentes, mais
+les autres sont apparues avec la version 3.0.</p>
 <h2>pool_status</h2>
 <p>"SHOW pool_status" renvoie la liste des paramètres de configuration avec
 leur nom, leur valeur et leur description. Voici un exemple du résultat obtenu
-avec cette commande:
+avec cette commande&nbsp;:
 <pre>
 benchs2=# show pool_status;
              item              |              value              |                           description                            
@@ -2396,14 +2401,13 @@ benchs2=# show pool_status;
 </p>
 <h2>pool_nodes</h2>
 <p>"SHOW pool_nodes" renvoie une liste de nœuds configurés. Il affiche
-l'identifiant du nœud, son nom d'hôte (ou son ip), son port, son statut et le
-poids (qui n'a d'intérêt que si on utilise le mode de load-balancing de
+l'identifiant du nœud, son nom d'hôte (ou son adresse IP), son port, son statut et le
+poids (qui n'a d'intérêt que si on utilise le mode de répartition de charge des
 requêtes en lecture). Les valeurs possibles pour la colonne status
-sont explicitées dans <a href="#pcp_node_info">la partie dédiée à
+sont explicitées dans la <a href="#pcp_node_info">partie dédiée à
 pcp_node_info</a>.
+
 <pre>
-
-
 benchs2=# show pool_nodes;
   id  |  hostname   | port | status | lb_weight     
 ------+-------------+------+--------+-----------
@@ -2414,25 +2418,25 @@ benchs2=# show pool_nodes;
 </p>
 <h2>pool_processes</h2>
 <p>"SHOW pool_processes" renvoie une liste de tous les processus qui attendent
-une connexion ou interragissent avec une connexion.
+une connexion ou interagissent avec une connexion.
 </p>
 <p>
-Cette liste a 6 colonnes:
+Cette liste a 6 colonnes&nbsp;:
 <ul>
-<li>pool_pid est le PID du process pgpool affiché</li>
-<li>start_time est le timestamp correspondant au démarrage du processus</li>
-<li>database est le nom de la base de données où le backend est actuellement
+<li>pool_pid est le PID du processus pgpool affiché</li>
+<li>start_time est l'horodatage correspondant au démarrage du processus</li>
+<li>database est le nom de la base de données où le serveur est actuellement
 connecté</li>
-<li>username est le nom de l'utilisateur utilisé dans la connexion au backend
+<li>username est le nom de l'utilisateur utilisé dans la connexion au serveur
 pour ce processus</li>
-<li>create_time est le timestamp correspondant à la création de la
+<li>create_time est l'horodatage correspondant à la création de la
 connexion</li>
 <li>pool_counter compte le nombre de fois que ce pool de connexions (le
 processus) a été utilisé par les clients</li>
 </ul>
 </p>
 <p>Cette vue retournera toujours un nombre de lignes
-équivalent à "num_init_children".</p>
+équivalent à num_init_children.</p>
 <pre>
 benchs2=# show pool_processes;
    pool_pid |     start_time      | database | username  |     create_time     | pool_counter 
@@ -2446,23 +2450,23 @@ benchs2=# show pool_processes;
 </pre>
 <h2>pool_pools</h2>
 <p>"SHOW pool_pools" renvoie une liste de pools détenus par pgpool-II, avec
-leurs noms, valeurs et description. Voici un exemple de résultat:
+leurs noms, valeurs et description. Voici un exemple de résultat&nbsp;:
 </p>
 <p>
-Cette liste a 11 colonnes:
+Cette liste a 11 colonnes&nbsp;:
 <ul>
 <li>pool_pid est le PID du processus pgpool-II</li>
-<li>start_time est le timestamp qui correspond au lancement du processus</li>
-<li>pool_id est l'identifiant du pool (qui devraît être entre 0 et
-"max_pool"-1)</li>
-<li>backend_id est l'identifiant du backend (qui devraît être entre 0 et le
-nombre de backends configurés moins un).</li>
+<li>start_time est l'horodatage qui correspond au lancement du processus</li>
+<li>pool_id est l'identifiant du pool (qui doit être entre 0 et
+max_pool-1)</li>
+<li>backend_id est l'identifiant du serveur (qui doit être entre 0 et le
+nombre de serveurs configurés moins un).</li>
 <li>database est le nom de la base de données utilisée dans cette connexion</li>
 <li>username est le nom d'utilisateur utilisé dans cette connexion</li>
-<li>create_time est le timestamp de création de cette connexion</li>
-<li>majorversion et minorversion sont les versions de protocole utilisés par
+<li>create_time est l'horodatage de création de cette connexion</li>
+<li>majorversion et minorversion sont les versions de protocole utilisées par
 cette connexion</li>
-<li>pool_counter compte le nombre de vois que cette connexion a été utilisée
+<li>pool_counter compte le nombre de fois que cette connexion a été utilisée
 par les clients</li>
 <li>pool_backendpid et le PID du processus PostgreSQL</li>
 <li>pool_connected et à vrai (1) si un client utilise actuellement cette
@@ -2470,7 +2474,7 @@ connexion</li>
 </ul>
 </p>
 <p>Cette vue retournera toujours le même nombre de lignes que
-"num_init_children" * "max_pool"</p>
+num_init_children * max_pool</p>
 <pre>
   pool_pid |     start_time      | pool_id | backend_id | database | username  |     create_time     | majorversion | minorversion | pool_counter | pool_backendpid | pool_connected 
 ----------+---------------------+---------+------------+----------+-----------+---------------------+--------------+--------------+--------------+-----------------+----------------
@@ -2498,7 +2502,7 @@ connexion</li>
 </pre>
 </p>
 <h2>pool_version</h2>
-<p>"SHOW pool_version" affiche la version de pgpool-II. En voici un exemple:
+<p>"SHOW pool_version" affiche la version de pgpool-II. En voici un exemple&nbsp;:
 <pre>
 benchs2=# show pool_version;
       pool_version      
@@ -2511,75 +2515,75 @@ benchs2=# show pool_version;
 <h2>Aperçu</h2>
 <p>
 pgpool-II, alors qu'il est en mode réplication, peut synchroniser une base de
-données et attacher un nœud tout en rendant le service au clients. Cette
-fonctionnalité est appelée "online recovery".
+données et attacher un nœud tout en continuant à répondre aux clients. Cette
+fonctionnalité est appelée « online recovery ».
 </p>
 
 <p>
-Le nœud cible de cette restauration doit être dans un état "détaché" avant de
-lancer le online recovery.
+Le nœud cible de cette restauration doit être dans l'état détaché avant de
+lancer le « online recovery ».
 
-Si on veut ajouter un serveur PostgreSQL dynamiquement, ajouter un
-"backend_hostname" et ces paramètres associés et recharger pgpool.conf.
+Si on veut ajouter un serveur PostgreSQL dynamiquement, ajoutez un
+paramètre backend_hostname et ces paramètres associés, et rechargez pgpool.conf.
 pgpool-II va alors enregistrer ce nouveau serveur et l'afficher dans l'état
-"détaché".
+détaché.
 </p>
 
 <p>
-<font color="red">Attention: Penser à arrêter l'autovacuum sur le nœud maître
-(soit le premier qui est ouvert et en fonctionnement). En effet, autovacuum
+<font color="red">Attention&nbsp;: Penser à arrêter l'autovacuum sur le nœud maître
+(autrement dit le premier qui est ouvert et en fonctionnement). En effet, autovacuum
 pourrait changer le contenu d'une base de données et alors causer une
-inconsistance après un online recovery. Cela s'applique uniquement si on fait
+incohérence après un « online recovery ». Cela s'applique uniquement si on fait
 la restauration avec un mécanisme simple tel que la
 technique rsync détaillée plus bas. Cela ne s'applique bien sûr pas si on
 utilise la technique basée sur le PITR de PostgreSQL.</font>
 </p>
 
 <p>
-   Si le serveur PostgreSQL a déjà été démarré, il faut tout l'arrêter.
+   Si le serveur PostgreSQL a déjà été démarré, il faut l'arrêter.
 </p>
 
 <p>
-pgpool-II effectue le online recovery en deux phase séparées. Il y a quelques
+pgpool-II effectue le « online recovery » en deux phase séparées. Il y a quelques
 secondes ou minutes pendant lesquelles un client sera en attente de connexion à
 pgpool-II, lorsque la restauration et la synchronisation du nœud a lieu. Ce
-mécanisme suit les étapes suivantes: 
+mécanisme suit les étapes suivantes&nbsp;:
   <ol>
     <li> CHECKPOINT
-    <li> Première phase du online recovery
+    <li> Première phase du « online recovery »
     <li> Attendre que tous les clients soient déconnectés
     <li> CHECKPOINT
-    <li> Seconde phase du online recovery
+    <li> Seconde phase du « online recovery »
     <li> Démarrage du nouveau postmaster (effectué par pgpool_remote_start)
     <li> Attachement du nœud
   </ol>
 </p>
 
 <p>
-   La première étape de la synchronisation des données et appelée "première 
-   phase". Les données sont en effet synchronisées pendant cette étape. 
+   La première étape de la synchronisation des données est appelée première 
+   phase. Les données sont en effet synchronisées pendant cette étape. 
    Pendant cette dernière, les données <b>peuvent</b> être mises à jour ou 
-   récupérées par les client, sur toutes les tables, de manière concurrente.
+   récupérées par les clients, sur toutes les tables, de manière concurrente.
 </p>
 
 <p>
   On peut spécifier un script qui sera exécuté pendant cette première phase.
-  pgpool-II passe alors trois arguments à ce dernier:
+  pgpool-II passe alors trois arguments à ce dernier&nbsp;:
 
   <ol>
-    <li> le chemin complet du cluster PostgreSQL du noeud maître 
+    <li> le chemin complet vers le répertoire des données de l'instance PostgreSQL du nœud maître 
     <li> le nom d'hôte (ou IP) du serveur à restaurer
-    <li> le chemin complet du cluster PostgreSQL du serveur à restaurer
+    <li> le chemin complet vers le répertoire des données de l'instance PostgreSQL du serveur à restaurer
   </ol>
 </p>
 
 <p>
   La synchronisation des données est finalisée dans ce qui est appelé la
-  "seconde phase". Avant d'entrer dans cette dernière, pgpool-II attend que 
+  seconde phase. Avant d'entrer dans cette dernière, pgpool-II attend que 
   tous les clients soient déconnectés. Il bloque alors toute nouvelle connexion
   jusqu'à ce que cette seconde phase soit terminée.
 
-  Après que toutes les connexions soit terminées, pgpool-II applique toutes les
+  Après que toutes les connexions soient terminées, pgpool-II applique toutes les
   données mises à jour pendant la première et la seconde phase sur le nœud en 
   cours de restauration. Cela achève ainsi la dernière phase de synchronisation
   des données.
@@ -2587,18 +2591,18 @@ mécanisme suit les étapes suivantes:
 
 <p>
  <font color="red">
-  Il est à noter qu'il y a une restriction sur le online recovery. Si pgpool-II
-  lui-même est installé sur plusieurs serveurs, le online recovery ne 
+  Il est à noter qu'il y a une restriction sur le « online recovery ». Si pgpool-II
+  lui-même est installé sur plusieurs serveurs, le « online recovery » ne 
   fonctionnera pas correctement car pgpool-II doit arrêter tous les clients
-  pendant la seconde phase du online recovery. Ainsi, s'il y a plusieurs 
-  serveurs pgpool, un seul aura reçu la commande de online recovery et bloquera
+  pendant la seconde phase du « online recovery ». Ainsi, s'il y a plusieurs 
+  serveurs pgpool, un seul aura reçu la commande de « online recovery » et bloquera
   les connexions.
 </font>
 </p>
 
-<h2>Configuration du online recovery</h2>
+<h2>Configuration du « online recovery »</h2>
 <p>
-Il convient de configurer les paramètres suivants pour le online recovery
+Il convient de configurer les paramètres suivants pour le « online recovery »
 dans le fichier pgpool.conf.
    <ul>
     <li> backend_data_directory
@@ -2613,11 +2617,11 @@ dans le fichier pgpool.conf.
 <h2><a name="installing-c-functions"></a>Installation des fonctions en
 langage C</h2>
 <p>
-Les fonctions en langage C suivants doivent-être installées dans la base
-"template1" de tous les backends PostgreSQL pour que le online recovery
+Les fonctions en langage C suivantes doivent être installées dans la base
+template1 de tous les serveurs PostgreSQL pour que le « online recovery »
 fonctionne.
 
-Leur code source est dans l'archive de pgpool-II dans le répertoire suivant:
+Leur code source est dans le répertoire suivant de l'archive de pgpool-II&nbsp;:
 </p>
 
 <pre>
@@ -2628,7 +2632,7 @@ Leur code source est dans l'archive de pgpool-II dans le répertoire suivant:
 Il convient de changer le nom du répertoire ci-dessus pour l'ajuster à votre
 version précise de pgpool-II.
 
-On se place dans ce dernier et on tape "make install":
+On se place dans ce dernier et on lance la commande « make install »&nbsp;:
 
 </p>
 
@@ -2638,7 +2642,7 @@ On se place dans ce dernier et on tape "make install":
 </pre>
 
 <p>
-À présent, il faut installer les fonctions SQL correspondantes
+À présent, il faut installer les fonctions SQL correspondantes&nbsp;:
 </p>
 
 <pre>
@@ -2649,17 +2653,17 @@ On se place dans ce dernier et on tape "make install":
 
 <h2>Déploiement du script de restauration</h2>
 <p>
-Des scripts de synchronisation de données doivent-être déployés ainsi qu'un
+Des scripts de synchronisation de données doivent être déployés ainsi qu'un
 script qui permet de démarrer PostgreSQL à distance, et tout ceci, dans le
-répertoire du cluster de PostgreSQL ($PGDATA). Plusieurs scripts d'exemple sont
-disponibles dans le répertoire "pgpool-II-x.x.x/sample". 
+répertoire des données de l'instance de PostgreSQL ($PGDATA). Plusieurs scripts d'exemple sont
+disponibles dans le répertoire pgpool-II-x.x.x/sample. 
 </p>
 
-<h3>Online recovery grâce au PITR</h3>
+<h3>« Online recovery » grâce au PITR</h3>
 <p>
-Voici comment faire un online recovery grâce au Point In Time Recovery (PITR),
+Voici comment faire un « online recovery » grâce au Point In Time Recovery (PITR),
 qui est disponible à partir de la version 8.2 de PostgreSQL.
-Attention, tous les serveurs impliqués doivent avoir le PITR d'activé et dûment
+Attention, tous les serveurs impliqués doivent avoir le PITR d'activé et correctement
 configuré.
 </p>
 
@@ -2667,7 +2671,7 @@ configuré.
 Il est nécessaire d'avoir un script qui se charge d'effectuer une
 sauvegarde complète du serveur PostgreSQL sur un nœud maître et de l'envoyer sur
 un nœud cible pour la restauration lors de la première phase. Ce script
-peut-être nommé "copy-base-backup" par exemple. Voici un exemple de ce script.
+peut être nommé copy-base-backup par exemple. Voici un exemple de ce script&nbsp;:
 </p>
 
 <pre>
@@ -2685,34 +2689,32 @@ peut-être nommé "copy-base-backup" par exemple. Voici un exemple de ce script.
 
 <p>
 Ce script place le serveur maître en mode sauvegarde à chaud, puis génère le
-fichier recovery.conf suivant:
+fichier recovery.conf suivant&nbsp;:
 </p>
 <pre>
 restore_command = 'scp master:/data/archive_log/%f %p'
 </pre>
-Ensuite, il effectue la sauvegarde, puis sors le serveur maître du mode backup
+Ensuite, il effectue la sauvegarde, puis sort le serveur maître du mode sauvegarde à chaud
 et copie enfin la sauvegarde sur le nœud désiré.
 </p>
 
 <p>
 La seconde phase de cette procédure est un script qui va forcer un changement
-de fichier wal (XLOG). Ce script est nommé "pgpool_recovery_pitr" ici.
-Il provoque un changement de journal de transactions.
-À cet effet, pg_switch_xlog peut être utilisé.
-Cependant, il pourrait rendre la main <b>avant</b> que le changement de fichier
-wal ne soit fait, ce qui pourrait alors provoquer à un échec de la procédure
-d'online recovery.
+de journal de transactions (XLOG). Ce script est nommé pgpool_recovery_pitr ici.
+Il utilise pg_switch_xlog. Cependant, il pourrait rendre la main <b>avant</b>
+que le changement de journal ne soit fait, ce qui pourrait alors provoquer un
+échec de la procédure d'« online recovery ».
 
-pgpool-II fournit une méthode plus sûre avec la fonction "pgpool_swich_xlog",
+pgpool-II fournit une méthode plus sûre avec la fonction pgpool_swich_xlog,
 qui attend que le changement effectif de journal de transaction
 ait eu lieu.
 
-Cette fonction est installée lors de la procédure explicitée dans la section
+Cette fonction est installée avec la procédure explicitée dans la section
 <a href="#installing-c-functions">Installation des fonctions en
 langage C</a>.
 </p>
 <p>
-Voici un script d'exemple:
+Voici un script d'exemple&nbsp;:
 </p>
 <p>
 <pre>
@@ -2739,7 +2741,7 @@ psql -p $port -c "SELECT pgpool_switch_xlog('$archdir')" template1
 </p>
 
 <p>
-Cette mise à jour des séquences est uniquement utile dans le mode réplication:
+Cette mise à jour des séquences est uniquement utile dans le mode réplication&nbsp;:
 dans ce cas, les séquences doivent avoir le même numéro de démarrage sur tous
 les nœuds. Ça n'est pas utile dans le mode maître-esclave.
 
@@ -2750,8 +2752,8 @@ restauration.
 </p>
 
 <p>
-Ces scripts doivent-être déployés dans le répertoire du cluster PostgreSQL (le
-$PGDATA).
+Ces scripts doivent être déployés dans le répertoire des données de l'instance PostgreSQL
+(autrement dit $PGDATA).
 </p>
 <p>
 Enfin, on édite le fichier pgpool.conf.
@@ -2764,7 +2766,7 @@ recovery_2nd_stage_command = 'pgpool_recovery_pitr'
 </p>
 
 <p>
-Cette opération termine la préparation du online recovery via le PITR.
+Cette opération termine la préparation du « online recovery » via le PITR.
 </p>
 
 <h4><p>pgpool_remote_start</p></h4>
@@ -2776,18 +2778,17 @@ pgpool-II l'exécute de la manière suivante.
 <pre>
   % pgpool_remote_start remote_host remote_datadir
   remote_host:    Nom d'hôte de la machine cible à restaurer
-  remote_datadir: Chemin du cluster PostgreSQL sur une machine en
+  remote_datadir: Chemin vers le répertoire des données de l'instance PostgreSQL sur une machine en
 restauration
 </pre>
 
 <p>
 Dans ce script d'exemple, on démarre le processus postmaster via ssh.
-Afin qu'il fonctionne, on doit pouvoir se connecter via ssh sans mot de passe
-pour que cela fonctionne.
+Afin qu'il fonctionne, on doit pouvoir se connecter via ssh sans mot de passe.
 </p>
 
 <p>
-Si la restauration se fait avec PIRT, on doit déployer le script de backup de
+Si la restauration se fait avec PITR, il faut déployer le script de sauvegarde de
 base. PostgreSQL démarrera alors automatiquement en effectuant une restauration
 via le PITR. Il acceptera ensuite les connexions.
 </p>
@@ -2799,25 +2800,25 @@ DESTDIR=$2
 PGCTL=/usr/local/pgsql/bin/pg_ctl
 
 # Déploiement du script de backup
-ssh -T $DEST 'cd /data/; tar zxf pgsql.tar.gz' 2>/dev/null 1>/dev/null < /dev/null
+ssh -T $DEST 'cd /data/; tar zxf pgsql.tar.gz' 2>/dev/null 1>/dev/null &lt; /dev/null
 # Démarrage du serveur PostgreSQL
-ssh -T $DEST $PGCTL -w -D $DESTDIR start 2>/dev/null 1>/dev/null < /dev/null &
+ssh -T $DEST $PGCTL -w -D $DESTDIR start 2>/dev/null 1>/dev/null &lt; /dev/null &
 </pre>
 
-<h3>Online recovery avec rsync</h3>
+<h3>« Online recovery » avec rsync</h3>
 <p>
-PostgreSQL 7.4 n'a pas le PITR, apparu en version 8.0. rsync peut alors être
-utilisé pour effectuer le online recovery. Dans le script d'exemple qu'on
-trouve dans les sources de pgpool-II, il y a un script de recovery qui est
-nommé "pgpool_recovery". Ce dernier utilise la commande rsync. pgpool-II
+PostgreSQL 7.4 n'a pas le PITR, qui n'est apparu qu'en version 8.0. rsync peut alors être
+utilisé pour effectuer le « online recovery ». Dans le script d'exemple disponible
+dans les sources de pgpool-II, il y a un script de restauration qui est
+nommé pgpool_recovery. Ce dernier utilise la commande rsync. pgpool-II
 appelle ce script avec trois arguments.
 </p>
 
 <pre>
   % pgpool_recovery datadir remote_host remote_datadir
-  datadir:        Répertoire du cluster PostgreSQL sur un serveur maître
+  datadir:        Répertoire des données de l'instance PostgreSQL sur un serveur maître
   remote_host:    Nom d'hôte (ou IP) du serveur cible à restaurer
-  remote_datadir: Répertoire du cluster PostgreSQL du serveur cible à
+  remote_datadir: Répertoire des données de l'instance PostgreSQL du serveur cible à
 restaurer
 </pre>
 
@@ -2827,12 +2828,12 @@ Comme précédemment, on doit pouvoir se connecter via ssh sans mot de passe.
 </p>
 
 <p>
-Note à propos de rsync:
+Note à propos de rsync&nbsp;:
 <ul>
- <li>-c (or --checksum) : cette option est requise pour assurer une
+ <li>-c (ou --checksum) : cette option est requise pour assurer une
 transmission fiable
 
- <li>-z (or --compress) : cette option fait de la compression des fichiers lors
+ <li>-z (ou --compress) : cette option fait de la compression des fichiers lors
 de leur transmission. Cela sera fort utile pour les connexions réseau lentes,
 mais pourrait ajouter une grosse surcharge inutile sur le CPU (à cause de la
 compression) pour des réseaux à 100 Mbits voire supérieurs. Dans ces derniers
@@ -2847,7 +2848,7 @@ discussion pgpool-general)
 
 <p>
 Si on utilise pgpool_recovery, il convient d'ajouter les lignes suivantes au
-ficher pgpool.conf.
+ficher pgpool.conf&nbsp;:
 
 <pre>
 recovery_1st_stage_command = 'pgpool_recovery'
@@ -2855,15 +2856,15 @@ recovery_2nd_stage_command = 'pgpool_recovery'
 </pre>
 </p>
 
-<h2>Comment effectuer un online recovery</h2>
+<h2>Comment effectuer un « online recovery »</h2>
 <p>
-Afin de réaliser un online recovery, on peut utiliser la commande
+Afin de réaliser un « online recovery », on peut utiliser la commande
 pcp_recovery_node ou bien pgpoolAdmin.
 </p>
 
 <p>
 Il est à noter qu'on doit positionner un nombre important dans le tout premier
-argument de pcp_recovery_node. Il s'agit d'un timeout en secondes. Si on
+argument de pcp_recovery_node. Il s'agit d'un délai maximum en secondes. Si on
 utilise pgpoolAdmin, il convient aussi de mettre un grand nombre au paramètre
 "_PGPOOL2_PCP_TIMEOUT" dans le fichier de configuration pgmgt.conf.php.
 </p>
@@ -2892,12 +2893,12 @@ correctement.
 </pre>
 </p>
 <p>
-Ici, la trace mointre que le serveur 1 (nom d'hôte "foo") s'arrête puis est
-déconnecté (shutdown) de pgppol. ensuite, le serveur 0 devient le nouveau
+Ici, la trace montre que le serveur 1 (nom d'hôte "foo") s'arrête puis est
+déconnecté (shutdown) de pgpool. Ensuite, le serveur 0 devient le nouveau
 maître.
 
 Il convient donc de vérifier le serveur 1 et corriger la cause de l'erreur.
-Ensuite, il faudra effectuer un online recovery sur le serveur 1, si c'est
+Ensuite, il faudra effectuer un « online recovery » sur le serveur 1 si c'est
 possible.
 </p>
 
@@ -2911,11 +2912,11 @@ possible.
 Cette trace indique simplement que le programme client ne s'est pas connecté
 correctement à pgpool-II.
 
-Les causes possibles sont: un bug dans les applications clientes, la
+Les causes possibles sont&nbsp;: un bug dans les applications clientes, la
 déconnexion forcée d'une application cliente (un "kill" par exemple) ou bien
 une erreur réseau temporaire.
 
-Ce genre d'évènements ne mènent pas à la destruction d'une base de données, ou
+Ce genre d'évènements ne mène pas à la destruction d'une base de données ou
 même à une corruption de données. Il s'agit juste d'un avertissement sur le
 fait qu'il y a eu une violation du protocole utilisé par pgpool-II.
 
@@ -2937,23 +2938,23 @@ une commande SQL.
 Ce message indique que tous les serveurs de données ne retournent pas le même
 type de réponse.
 
-La requête SQL qui a causé l'erreur se trouve après "Possible last query was:".
+La requête SQL qui a causé l'erreur se trouve après « Possible last query was: ».
 
 Ensuite, le type de réponse suit.
 
-Ici, on peut lire que "0[T]" affiche la réponse du serveur de données:
-"0[T]"(renvoi de la description de l'enregistrement), et que "1[E" affiche que
-le serveur 1 retourne une erreur avec le message "cursor c does not exist",
+Ici, on peut lire que « 0[T] » affiche la réponse du serveur de données:
+« 0[T] » (renvoi de la description de l'enregistrement), et que « 1[E » affiche que
+le serveur 1 retourne une erreur avec le message « cursor c does not exist »,
 alors que le serveur 0 renvoie bien la description de l'enregistrement.
 <p>
-Attention: on pourrait avoir aussi cette erreur dans le mode maître-esclave.
+Attention, on pourrait aussi avoir cette erreur dans le mode maître-esclave.
 
 Par exemple, même dans le mode maître-esclave, la commande SET sera envoyée à
 tous les serveurs de données pour qu'ils soient dans le même état.
 </p>
 <p>
 Il convient de vérifier alors les serveurs de données et éventuellement les
-resynchroniser en utilisant le online recovery, quand c'est possible, et si
+resynchroniser en utilisant le « online recovery », quand c'est possible et si
 nécessaire.
 </p>
 
@@ -2961,8 +2962,8 @@ nécessaire.
 <dt>Pgpool detected difference of the number of inserted, updated or deleted tuples
 <dd>
 <p>
-Dans le mode réplication, pgpool-II détecte un nombre différent
-d'enregistrements mis à jour (en INSERT, UPDATE ou DELETE) dans les différents
+Dans le mode réplication, pgpool-II a détecté un nombre différent
+d'enregistrements mis à jour (en INSERT, UPDATE ou DELETE) sur les différents
 serveurs.
 </p>
 <p>
@@ -2972,32 +2973,32 @@ serveurs.
 2010-07-22 11:49:28 LOG:   pid 30710: ReadyForQuery: Affected tuples are: 0 1
 </pre>
 <p>
-Dans l'exemple ci-dessus, le nombre d'enregistrements mis à jour grace à
-"update t1 set i = 1" est différent à travers les différents serveurs de
+Dans l'exemple ci-dessus, le nombre d'enregistrements mis à jour grâce à
+« UPDATE t1 SET i = 1 » est différent à travers les différents serveurs de
 données.
 
-La ligne qui suit indique que le serveur 1 a alors été dégénéré (déconnecté):
+La ligne qui suit indique que le serveur 1 a été dégénéré (déconnecté)&nbsp;:
 c'est la conséquence du fait que pour le serveur 0 le nombre d'enregistrement
 mis à jours a été de 0, alors que pour le serveur 1 le nombre d'enregistrements
 modifiés a été de 1.
 </p>
 <p>
-Il convient alors d'arrêter le serveur que l'on suspecte désynchronisé (ou
-simplement ne pas avoir les bonnes données), puis de procéder à un online
-recovery.
+Il convient alors d'arrêter le serveur que l'on suspecte être désynchronisé (ou
+simplement ne pas avoir les bonnes données), puis de procéder à un « online
+recovery ».
 </ul>
 
 
 <h1>Restrictions<a name="restriction"></a></h1>
 
 <p>
-<h2>Fonctionalités de PostgreSQL</h2>
+<h2>Fonctionnalités de PostgreSQL</h2>
 <p>
 <ul>
-<li>Si on utilise pg_terminate_backend() pour arrêter un backend PostgreSQL,
+<li>Si on utilise pg_terminate_backend() pour arrêter un processus serveur PostgreSQL,
 cela provoquera un failover. La raison de ce comportement est que PostgreSQL
 envoie alors exactement le même message que si c'était le postmaster lui-même
-qui s'arrêtait complètement. Il n'y a pas de contournement de ce problème à ce
+qui s'arrêtait complètement. Il n'existe pas de contournement à ce problème à ce
 jour. Aussi, il faut veiller à ne pas utiliser cette fonction pour le moment.
 </ul>
 
@@ -3007,21 +3008,21 @@ jour. Aussi, il faut veiller à ne pas utiliser cette fonction pour le moment.
 <p>
 <ul>
   <li>Dans le mode réplication ou maître-esclave, les méthode
-d'authentification supportées sont trust, clear text password et pam. md5 est
+d'authentification supportées sont trust, mot de passe en clair et pam. md5 est
 aussi supporté depuis la version 3.0 de pgpool-II.
-md5 est supporté en utilisant "pool_passwd". Voici les étapes à respecter pour
-autoriser l'authentification md5:
+md5 est supporté en utilisant pool_passwd. Voici les étapes à respecter pour
+autoriser l'authentification md5&nbsp;:
 	   <ol>
 		<li>Se connecter au système d'exploitation du serveur de
-données, avec l'utilisateur qui a les droits (postgres) et entrer:
-		   "pg_md5 --md5auth <mot_de_passe>"
-                    le nom d'utilisateur et son mot de passe encrypté md5 sont
-alors enregistrés dans "pool_passwd". Si ce dernier n'existe pas encore, la
-commande pg_md5 va le créer automatiquement..</li>
-		<li>Le format utilisé par "pool_passwd" est
+données, avec l'utilisateur qui a les droits (postgres) et entrer&nbsp;:
+		   pg_md5 --md5auth &lt;mot_de_passe&gt;<br/>
+                    le nom d'utilisateur et son mot de passe chiffré en md5 sont
+alors enregistrés dans pool_passwd. Si ce dernier n'existe pas encore, la
+commande pg_md5 va le créer automatiquement.</li>
+		<li>Le format utilisé par pool_passwd est
 "nom_d_utilisateur:mot_de_passe_encrypté_md5"</li>
-		<li>Il faudra bien sur aussi une entrée appropriée md5 dans le
-fichier pool_hba.conf. A cet effet, voir <a href="#hba">Configuration de pool_hba.conf
+		<li>Il faudra aussi une entrée appropriée md5 dans le
+fichier pool_hba.conf. À cet effet, voir <a href="#hba">Configuration de pool_hba.conf
 pour l'authentification des clients</a> pour plus de détails</li>
 		<li>Il faut bien veiller à ce que le nom d'utilisateur et son
 mot de passe soient strictement identiques à ce qui se trouvent dans le serveur
@@ -3029,12 +3030,12 @@ PostgreSQL pour que cela fonctionne</li>
 	   </ol>
 
 	   </li>
-  <li>Dans tous les autres modes, les méthodes trust, clear text password,
+  <li>Dans tous les autres modes, les méthodes trust, mot de passe en clair,
 crypt, md5 et pam sont supportées.</li>
-  <li>pgpool-II ne supporte pas les controles d'accès comme pg_hba.conf de
+  <li>pgpool-II ne supporte pas les contrôles d'accès comme pg_hba.conf de
 PostgreSQL. Par exemple, si les connexions TCP/IP sont activées, pgpool-II
-accepte toutes les connexions TCP/IP, quelles que soient leurs origines. Si
-c'est absolument requis dans les contexte, il convient d'utiliser un programme
+accepte toutes les connexions TCP/IP, quel que soient leurs origines. Si
+c'est absolument requis dans le contexte, il convient d'utiliser un programme
 comme iptables afin de contrôler les accès TCP/IP. Bien sûr, les serveurs
 PostgreSQL qui acceptent les connexions pgpool-II peuvent utiliser leur
 configuration pg_hba.conf propre.</li>
@@ -3043,13 +3044,13 @@ configuration pg_hba.conf propre.</li>
 
 <h2>Large objects</h2>
 <p>
-pgpool-II 2.3.2 et suivants supportent la réplication des large objects si le
-backend PostgreSQL est au moins en version 8.1.
+pgpool-II 2.3.2 et suivants supportent la réplication des « large objects » si le
+serveur PostgreSQL est au moins en version 8.1.
 
-Pour que cela fonctionne, il faut autoriser la directive de configuration <a
+Pour que cela fonctionne, il faut activer la directive de configuration <a
 href="#lobj_lock_table">lobj_lock_table</a> dans le fichier pgpool.conf.
 
-Cependant, la réplication des large objects en utilisant la fonction PostgreSQL
+Cependant, la réplication des « large objects » utilisant la fonction PostgreSQL
 lo_import n'est pas supportée.
 </p>
 
@@ -3057,44 +3058,44 @@ lo_import n'est pas supportée.
 <p>
 Tout ce qui concerne les tables temporaires est toujours exécuté sur le maître.
 
-À partir de la version 3.0 de pgpool-II, les SELECT sur ces tables sont eux
-aussi exécutés sur le maître.
+À partir de la version 3.0 de pgpool-II, les SELECT sur ces tables sont
+eux-aussi exécutés sur le maître.
 
 Cependant, si le nom de la table temporaire est utilisé comme un littéral dans
-le SELECT, il n'y a aucun moyen de le détecter, et alors, les SELECT seront
-balancés entre les serveurs PostgreSQL.
+le SELECT, il n'y a aucun moyen de le détecter. Du coup, les SELECT seront
+répartis entre les serveurs PostgreSQL.
 
 Cela amènera à une erreur, la table n'existant que sur le maître ("not found
 the table...").
 
-Pour éviter ce problème, il faut utiliser le commentaire /*NO LOAD BALANCE*/
+Pour éviter ce problème, il faut utiliser le commentaire « /*NO LOAD BALANCE*/ »
 dans le corps de la requête SQL contenant l'appel en SELECT sur la table
 temporaire.
 </p>
 <p>
 <pre>
-Voici en exemple de SELECT qui cause problème:
+Voici en uxemple de SELECT qui pose problème&nbsp;:
 SELECT 't1'::regclass::oid;
 </pre>
 </p>
 <p>
-la commande "\d" de psql utilise les tables de nom en littéral. À partir de la
+La commande "\d" de psql utilise les tables de nom en littéral. À partir de la
 version 3.0 de pgpool-II, ce dernier va tester si le SELECT contient un accès
-au catalogue système, et enverra alors les requêtes au maître dans
+au catalogue système et enverra alors les requêtes au maître dans
 l'affirmative.
 
 Cela permet de contourner le problème.
 </p>
 
-<h2>Fonctions et autres en mode Réplication</h2>
+<h2>Fonctions et autres en mode réplication</h2>
 
 <p>
 Il n'y a aucune garantie que toute donnée obtenue via un mécanisme dépendant du
-contexte (par exemple: un nombre au hasard, un numéro de transaction, un OID,
+contexte (par exemple un nombre au hasard, un numéro de transaction, un OID,
 un SERIAL ou une sequence) sera répliquée correctement sur plusieurs serveurs
 PostgreSQL.
 </p>
-<p>Pour SERIAL, l'activation de la directive de configuration "insert_lock"
+<p>Pour SERIAL, l'activation de la directive de configuration insert_lock
 permettra de répliquer correctement la donnée. Cela permettra aussi un bon
 fonctionnement de "SELECT setval()" et "SELECT nextval()".</p>
 
@@ -3102,22 +3103,22 @@ fonctionnement de "SELECT setval()" et "SELECT nextval()".</p>
 À partir de la version 2.3 de pgpool, les INSERT et UPDATE qui utilisent
 CURRENT_TIMESTAMP, CURRENT_DATE et now() seront répliqués correctement. De
 même, les INSERT et UPDATE pour les tables qui utilisent CURRENT_TIMESTAMP,
-CURRENT_DATE et now() comme leur valeur par défaut (DEFAULT value) seront aussi
+CURRENT_DATE et now() comme leur valeur par défaut (DEFAULT valeur) seront aussi
 répliqués correctement.
 
 Cela est obtenu en remplaçant ces fonctions par des constantes qui sont
 récupérées sur le maître au moment de l'exécution de la requête.
 
-Il y a cependant quelques limitations:
+Il y a cependant quelques limitations&nbsp;:
 <ul>
 <li>Le calcul de la donnée temporelle n'est pas correct dans quelques cas. Par
-exemple, voici une définition de table:
+exemple, voici une définition de table&nbsp;:
 <pre>
 CREATE TABLE rel1(
   d1 date DEFAULT CURRENT_DATE + 1
 )
 </pre>
-Ceci est traité de la même façon que:
+Ceci est traité de la même façon que&nbsp;:
 <pre>
 CREATE TABLE rel1(
   d1 date DEFAULT CURRENT_DATE
@@ -3125,31 +3126,31 @@ CREATE TABLE rel1(
 </pre>
 <p>
 Il est à noter que si le type de la colonne n'est pas temporel, la réécriture
-n'est pas effectuée. En voici un exemple:
+n'est pas effectuée. En voici un exemple&nbsp;:
 <pre>
 foo bigint default (date_part('epoch'::text,('now'::text)::timestamp(3) with time zone) * (1000)::double precision)
 </pre>
 </p>
-<li>Supposons à présent que nous ayons la table suivante:
+<li>Supposons à présent que nous ayons la table suivante&nbsp;:
 <pre>
 CREATE TABLE rel1(
   c1 int,
   c2 timestamp default now()
 )
 </pre>
-On peut répliquer:
+On peut répliquer&nbsp;:
 <pre>
 INSERT INTO rel1(c1) VALUES(1) 
 </pre>
-puis que cela se transforme en:
+puis que cela se transforme en&nbsp;:
 <pre>
 INSERT INTO rel1(c1, c2) VALUES(1, '2009-01-01 23:59:59.123456+09')
 </pre>
-Cependant:
+Cependant&nbsp;:
 <pre>
 INSERT INTO rel1(c1) SELECT 1
 </pre>
-ne peut pas être transformé, et donc, ne sera pas correctement répliqué avec
+ne peut pas être transformé. Il ne sera donc pas correctement répliqué avec
 l'implémentation actuelle. Les valeurs seront cependant insérées, mais sans
 aucune transformation.
 </ul>
@@ -3157,13 +3158,13 @@ aucune transformation.
 <p>
 Les tables créées avec <code>CREATE TEMP TABLE</code> seront supprimées à la
 fin de la session en spécifiant DISCARD ALL dans le paramètre de configuration
-"reset_query_list" si on utilise la version 8.3 ou supérieure de PostgreSQL.
+reset_query_list si on utilise la version 8.3 ou supérieure de PostgreSQL.
 </p>
 <p>
 Pour les version 8.2.X et précédentes, <code>CREATE TEMP TABLE</code> ne
 sera pas supprimé à la sortie de la session.
 
-Ceci est dû au pooling de connexion, qui, du point de vue du backend
+Ceci est dû au pooling de connexion, qui, du point de vue du serveur
 PostgreSQL, garde la session en vie.
 
 Pour éviter cela, on doit supprimer explicitement la table dans le bloc de
@@ -3172,13 +3173,13 @@ table temporaire avec <code>CREATE TEMP TABLE ... ON COMMIT DROP</code>.
 
 <h2>Requêtes</h2>
 
-<p>Voici les requêtes qui ne peuvent pas être traitées par pgpool-II</p>
+<p>Voici les requêtes qui ne peuvent pas être traitées par pgpool-II&nbsp;:</p>
 
 <h3>INSERT (en mode parallèle)</h3>
 
 <p>On ne peut pas utiliser <code>DEFAULT</code> avec la colonne qui sert de clé
 de partitionnement. Par exemple, si la colonne x dans la table t est la colonne
-qui sert de clé de partitionnement:
+qui sert de clé de partitionnement&nbsp;:
 
 <pre>
 INSERT INTO t(x) VALUES (DEFAULT);
@@ -3191,7 +3192,7 @@ valeur non plus.</p>
 INSERT INTO t(x) VALUES (func());
 </pre>
 <p>
-Les valeurs constantes doivent-être utilisées pour un INSERT avec la clé de
+Les valeurs constantes doivent être utilisées pour un INSERT avec la clé de
 partitionnement.
 
 <code>SELECT INTO</code> et <code>INSERT INTO ... SELECT</code>
@@ -3200,17 +3201,17 @@ ne sont pas supportés non plus.
 
 <h3>UPDATE (en mode parallèle)</h3>
 
-<p>La consistence des données entre les backends pourraît être perdue si la
+<p>La cohérence des données entre les serveurs pourrait être perdue si la
 colonne qui sert de clé de partitionnement subit des mises à jour. En effet,
-pgpool-II ne re-partitionnement pas les données ainsi mises à jour.</p>
+pgpool-II ne re-partitionne pas les données ainsi mises à jour.</p>
 
 <p>Une transaction ne peut pas être annulée (ROLLBACK) si la requête qui a
-causé l'erreur sur un ou plusieurs backends postgreSQL est due à une violation
+causé l'erreur sur un ou plusieurs serveurs PostgreSQL est due à une violation
 de contrainte.</p>
 
 <p>
 Si une fonction est appelée dans la clause <code>WHERE</code>, la requête
-pourrait ne pas être correctement exécutée. Par exemple:
+pourrait ne pas être correctement exécutée. Par exemple&nbsp;:
 <pre>
 UPDATE branches set bid = 100 where bid = (select max(bid) from beances);
 </pre>
@@ -3219,7 +3220,7 @@ UPDATE branches set bid = 100 where bid = (select max(bid) from beances);
 <h3>SELECT ... FOR UPDATE (en mode parallèle)</h3>
 
 <p>Si une fonction est appelée dans la clause <code>WHERE</code>, la requête
-pourrait ne pas être correctement exécutée. Par exemple:
+pourrait ne pas être correctement exécutée. Par exemple&nbsp;:
 <pre>
 SELECT * FROM  branches where bid = (select max(bid) from beances) FOR UPDATE;
 </pre>
@@ -3230,31 +3231,31 @@ SELECT * FROM  branches where bid = (select max(bid) from beances) FOR UPDATE;
 <p><code>COPY BINARY</code> n'est pas supporté.
 
 COPY à partir de fichiers n'est pas non plus supporté. Seuls <code>COPY FROM
-STDIN</code> et <code>COPY TO STDOUT</code> sont supportés</p>
+STDIN</code> et <code>COPY TO STDOUT</code> sont supportés.</p>
 
 <h3>ALTER/CREATE TABLE (en mode parallèle)</h3>
 
-<p>Pour mettre à jour une règle de partitionnement, pgpool-II doit-être
-redémarré pour qu'il puisse les relire dans sa base de données système.</p>
+<p>Pour mettre à jour une règle de partitionnement, pgpool-II doit être
+redémarré pour qu'il puisse relire les règles dans sa base de données système.</p>
 
 <h3>Transactions (en mode parallèle)</h3>
 
 <p>Les requêtes <code>SELECT</code> exécutées à l'intérieur d'un bloc
 de transactions seront exécutés dans des transactions séparées. Voici un
-exemple:
+exemple&nbsp;:
 
 <pre>
 BEGIN;
 INSERT INTO t(a) VALUES (1);
-SELECT * FROM t ORDER BY a; << l'INSERT ci-dessus n'est pas visible pour
+SELECT * FROM t ORDER BY a; &lt;&lt; l'INSERT ci-dessus n'est pas visible pour
                                cette requête SELECT
 END;
 </pre>
 
-<h3>Vues et Règles (en mode parallèle)</h3>
+<h3>Vues et règles (en mode parallèle)</h3>
 
 <p>
-La même définition de vue ou de règle (RULE) sera créé sur tous les backends.
+La même définition de vue ou de règle (RULE) sera créée sur tous les serveurs.
 </p>
 
 <pre>
@@ -3262,20 +3263,20 @@ SELECT * FROM a, b where a.i = b.i
 </pre>
 <p>
 Les <code>jointures</code> comme celles ci-dessus seront exécutées sur chaque
-backend, et le résultat de chaque backend sera intégré pour être retourné au
+serveur, et le résultat de chaque serveur sera intégré pour être retourné au
 client. Les vues et règles ne peuvent pas faire de jointures à travers les
-différents serveurs. 
+différents serveurs.
 
 Cependant, pour faire une jointure entre des tables dont les données sont
 présentes sur un même serveur, une vue peut être utilisée.
 
-Cette vue doit-être enregistrée dans la table du catalogue
-"pgpool_catalog.dist_def". De même un "col_name" et un "dist_def_func" devront
+Cette vue doit être enregistrée dans la table du catalogue
+pgpool_catalog.dist_def. De même, un col_name et un dist_def_func devront
 être enregistrés. Ces derniers sont utilisés lors qu'une insertion est réalisée
 sur la vue.
 </p>
 
-<h3>Fonctions et Triggers (en mode parallèle)</h3>
+<h3>Fonctions et triggers (en mode parallèle)</h3>
 
 <p>Pour les fonctions, c'est la même définition qui sera utilisée pour leur
 création dans les différents serveurs de données. Comme précédemment, on ne
@@ -3284,25 +3285,24 @@ fonction.</p>
 
 <h3>Protocole étendu de requêtage (en mode parallèle)</h3>
 
-<p>Le protocole étendu de requêtage ("extended query protocol") utilisé par les
-drivers JDBC, entre autres, n'est pas supporté.
+<p>Le protocole étendu de requêtage (« extended query protocol ») utilisé par les
+connecteurs JDBC, entre autres, n'est pas supporté.
 
-Le protocole simple doit-être utilisé à la place. Cela veut dire entre autres
-qu'on ne peut pas utiliser les requêtes préparées ("prepared statments").</p>
+Le protocole simple doit être utilisé à la place. Cela veut dire, entre autres,
+qu'on ne peut pas utiliser les requêtes préparées.</p>
 
-<h3>Jointure Naturelle (en mode parallèle)</h3>
+<h3>Jointure naturelle (en mode parallèle)</h3>
 
-<p>Il n'est pas supporté non plus. "ON join condition" et "USING (join_column)"
-doivent être utilisés à la place.</p>
+<p>Ce n'est pas supporté non plus. Les clauses ON et USING
+doivent être utilisées à la place.</p>
 
 <h3>Clause USING (en mode parallèle)</h3>
 
-
 <p>La clause USING est convertie en une clause ON par le processus qui réécrit
-les requêtes. Ainsi, lorsque "*" est utilisé comme liste cible, les colonnes
+les requêtes. Ainsi, lorsque * est utilisé comme liste cible, les colonnes
 jointes apparaissent deux fois.</p>
 <p>
-Voici un exemple:
+Voici un exemple&nbsp;:
 </p>
 <p><pre>
   =# SELECT * FROM t1 JOIN t2 USING(id);
@@ -3312,8 +3312,8 @@ Voici un exemple:
   (1 row)
 </pre></p>
 <p>
-Le processus de réécriture de requêtes va réécrire "USING" en "ON". Le résultat
-est alors:
+Le processus de réécriture de requêtes va réécrire USING en ON. Le résultat
+est alors&nbsp;:
 </p><p><pre>
   =# SELECT * FROM t1 JOIN t2 ON t1.id = t2.id;
    id |  t  | id |   t
@@ -3323,26 +3323,26 @@ est alors:
 </pre>
 </p>
 <p>
-On remarque que la colonne "t" est dupliquée.
+On remarque que la colonne t est dupliquée.
 </p>
 
-<h3>Caractères Multi-octets (pour tous les modes)</h3>
+<h3>Caractères multi-octets (pour tous les modes)</h3>
 
 <p>pgpool-II n'opère pas de traduction entre les différents caractères
-multi-octets. L'encodage utilisé le client, le backend et la base de données
+multi-octets. L'encodage utilisé par le client, le serveur et la base de données
 système doit donc être identique.
 </p>
 
-<h3>Les requêtes multiples (tous modes)</h3>
+<h3>Requêtes multiples (tous modes)</h3>
 <p>
-pgpool-II ne peut pas prendre en charge les requêtes multiples. (NDT: par
-exemple, plusieurs requêtes séparées par un point-virgule).
+pgpool-II ne peut pas prendre en charge les requêtes multiples (plusieurs requêtes
+séparées par un point-virgule, exécutées en un coup).
 </p>
 
 <h3>Deadlocks (en mode parallèle)</h3>
 
-<p>Les deadlocks à travers plusieurs backends ne peuvent pas être
-détectés. Par exemple:
+<p>Les deadlocks à travers plusieurs serveurs ne peuvent pas être
+détectés. Par exemple&nbsp;:
 </p>
 <pre>
 (la table "tellers" est partitionnée avec la règle suivante)
@@ -3357,29 +3357,29 @@ A) SELECT * FROM tellers WHERE tid = 1 FOR UPDATE;
 B) SELECT * FROM tellers WHERE tid = 11 FOR UPDATE;
 </pre>
 <p>
-Dans le cas ci-dessus, un serveur seul ne peut pas détecter de deadlock, ainsi,
+Dans le cas ci-dessus, un serveur seul ne peut pas détecter de deadlock. Du coup,
 pgpool-II attendra une réponse indéfiniment. Ce phénomène peut apparaître avec
-toute requête qui acquiert un lock au niveau de l'enregistrement.
+toute requête qui acquiert un verrou au niveau de l'enregistrement.
 </p>
 <p>Aussi, si un deadlock arrive sur un serveur, l'état de la transaction sur
-chaque serveur ne sera pas consistent. Ainsi, pgpool-II arrête le processus si
+chaque serveur ne sera pas cohérent. Ainsi, pgpool-II arrête le processus si
 un deadlock est détecté.
 </p>
 <pre>
 pool_read_kind: kind does not match between master(84) slot[1] (69)
 </pre>
 
-<h3>Schemas (en mode parallèle)</h3>
+<h3>Schémas (en mode parallèle)</h3>
 
 <p>Les objets qui se trouve dans un autre schéma que public doivent être
-préfixés par le nom du schéma dans lequel ils se trouvent:
+préfixés par le nom du schéma dans lequel ils se trouvent&nbsp;:
 </p>
 <pre>
-schema.objet
+schéma.objet
 </pre>
 <p>
 pgpool-II ne peut pas résoudre le nom de schéma correct lorsque le chemin est
-configuré comme suit:
+configuré comme suit&nbsp;:
 </p>
 <pre>
 set search_path = xxx
@@ -3387,38 +3387,39 @@ set search_path = xxx
 <p>
 et que le nom du schéma n'est pas précisé dans la requête.
 </p>
+
 <h3>nom de table - nom de colonne (en mode parallèle)</h3>
+
 <p>
-Une table ou un nom de colonne ne peut pas être préfixé par "pool_"
+Une table ou un nom de colonne ne peut pas être préfixé par « pool_ ».
 
 En effet, lors de la réécriture des requêtes, ces noms sont utilisés par des
 processus internes à pgpool-II.
 </p>
 
-</p>
 <h2>Base de données système</h2>
 
 <h3>Règles de partitionnement</h3>
 
 <p>On ne peut définir qu'une seule clé de partitionnement par règle de
-partitionnement. Les condition comme 'x ou y' ne sont pas supportées.
+partitionnement. Les condition comme « x ou y » ne sont pas supportées.
 </p>
 
 <h2>Pré-requis de l'environnement</h2>
 
 <h3>libpq</h3>
 
-<p>La librairie <code>libpq</code> est linkée lors de la compilation de
+<p>La bibliothèque <code>libpq</code> est liée lors de la compilation de
 pgpool-II. La version de la libpq doit être la 3.0.
 
 Toute tentative de compilation de pgpool-II avec la version 2.0 de la libpq
-sera un échec. De même, la base de données système doit être au minimum dans
+finira par un échec. De même, la base de données système doit être au minimum dans
 une version 7.4 de PostgreSQL.
 </p>
 
 <h2>Cache de requêtes</h2>
 
-<p>Actuellement, le cache de requêtes doit-être supprimé manuellement.
+<p>Actuellement, le cache de requêtes doit être supprimé manuellement.
 pgpool-II n'a pas de mécanisme d'invalidation de cache automatique lorsque les
 données sont mises à jour.
 </p>
@@ -3430,12 +3431,12 @@ données sont mises à jour.
 
 <h3>Liste des commandes PCP</h3>
 
-<p>les commandes PCP sont des commandes UNIX qui interagissent avec pgpool-II à
+<p>Les commandes PCP sont des commandes UNIX qui interagissent avec pgpool-II à
 travers le réseau.
 
 <pre>
-* pcp_node_count    - retourne le nombre de noeuds (serveurs PostgreSQL)
-* pcp_node_info     - retourne l'inforation sur un nœud
+* pcp_node_count    - retourne le nombre de nœuds (serveurs PostgreSQL)
+* pcp_node_info     - retourne l'information sur un nœud
 * pcp_proc_count    - retourne la liste des processus
 * pcp_proc_info     - retourne l'information sur un processus
 * pcp_systemdb_info - retourne l'information sur la base de donnée système
@@ -3448,26 +3449,27 @@ travers le réseau.
 
 <h2>Arguments communs aux outils en ligne de commande</h2>
 
-<p>Il y a cinq arguments qui sont communs à toutes les commandes PCP. Ils donne
+<p>Il y a cinq arguments qui sont communs à toutes les commandes PCP. Ils donnent
 l'information relative à l'authentification et à pgpool-II. Des arguments
-complémentaires peuvent-être nécessaires pour quelques commandes.
+complémentaires peuvent être nécessaires pour quelques commandes.
 
 <pre>
-e.g.)  $ pcp_node_count 10 localhost 9898 postgres hogehoge
+$ pcp_node_count 10 localhost 9898 postgres hogehoge
 
-1er argument  - valeur de timeout en secondes. PCP se déconnecte si 
-                pgpool-II ne répond pas dans le temps imparti ici 
-2nd argument  - nom d'hôte (ou IP) du serveur pgpool-II
+1er argument  - délai maximum en secondes (PCP se déconnecte si 
+                pgpool-II ne répond pas dans le temps imparti ici)
+2nd argument  - nom d'hôte (ou adresse IP) du serveur pgpool-II
 3ème argument - numéro de port de PCP
 4ème argument - nom d'utilisateur de PCP
 5ème argument - mot de passe de l'utilisateur de PCP
 </pre>
 
-<p>Les noms d'utilisateurs et mot de passe PCP doivent-être déclarés
-dans <code>pcp.conf</code> dans le répertoire <code>$prefix/etc</code>.
+<p>Les noms d'utilisateurs et mot de passe PCP doivent être déclarés
+dans le fichier <code>pcp.conf</code> installé dans le répertoire
+<code>$prefix/etc</code>.
 
-L'option <code>-F</code> peut-être utilisée lors du démarrage de pgpool-II si
-<code>pcp.conf</code> est placé ailleurs. Les mots de passe n'ont pas besoin
+L'option <code>-F</code> peut être utilisée lors du démarrage de pgpool-II si
+le fichier <code>pcp.conf</code> est placé ailleurs. Les mots de passe n'ont pas besoin
 d'être au format md5 lorsqu'on les passe aux commandes PCP.
 </p>
 
@@ -3480,13 +3482,13 @@ d'être au format md5 lorsqu'on les passe aux commandes PCP.
 <h3>pcp_node_count</h3>
 
 <pre>
-Format:
+Format :
 pcp_node_count  _timeout_  _hôte_  _port_  _userid_ _passwd_
 </pre>
 
 <p>
-Affiche le nombre total de nœuds définis dans <code>pgpool.conf</code>. Il ne
-fait aucun distingo entre le statut des différents nœuds. Ainsi, TOUS les nœuds
+Affiche le nombre total de nœuds définis dans le fichier <code>pgpool.conf</code>. Il ne
+fait aucune distinction entre le statut des différents nœuds. Ainsi, tous les nœuds
 sont comptés ici.
 </p>
 
@@ -3494,13 +3496,13 @@ sont comptés ici.
 <h3><a name="pcp_node_info"/>pcp_node_info</h3>
 
 <pre>
-Format:
+Format :
 pcp_node_info  _timeout_  _hôte_  _port_  _userid_  _passwd_  _nodeid_
 </pre>
 
 <p>
 Affiche l'information relative au numéro de nœud donné. Voici un exemple de
-sortie:
+sortie&nbsp;:
 </p>
 
 <pre>
@@ -3511,9 +3513,9 @@ Le résultat est dans l'ordre suivant:
 1. nom d'hôte
 2. numéro de port
 3. statut
-4. poids configuré pour le load-balancing
+4. poids configuré pour la répartition de charge
 
-Le statut est représenté par un chiffre de 0 à 3:
+Le statut est représenté par un chiffre de 0 à 3 :
 
 0 - Cet état est uniquement utilisé pendant l'initialisation. PCP ne l'affichera jamais
 1 - Le nœud est en ligne, mais aucune connexion n'est encore faite dessus
@@ -3521,11 +3523,11 @@ Le statut est représenté par un chiffre de 0 à 3:
 3 - Le nœud est arrêté 
 </pre>
 <p>
-Le poids configuré pour le load-balancing est affiché dans un format normalisé.
+Le poids configuré pour la répartition de charge est affiché dans un format normalisé.
 </p>
 
 <p>
-L'option --verbose peut permettre une meilleure compréhension. Par exemple:
+L'option --verbose peut permettre une meilleure compréhension. Par exemple&nbsp;:
 </p>
 
 <pre>
@@ -3537,12 +3539,12 @@ Weight  : 0.5
 </pre>
 
 <p>La spécification d'un identifiant de nœud invalide résultera dans une erreur
-avec un code de sortie 12, et "BackendError" sera alors affiché.</p>
+avec un code de sortie 12, et « BackendError » sera alors affiché.</p>
 
 <h3>pcp_proc_count</h3>
 <p>
 <pre>
-Format:
+Format :
 pcp_proc_count  _timeout_  _host_  _port_  _userid_  _passwd_
 </pre>
 <p>
@@ -3556,34 +3558,34 @@ Format:
 pcp_proc_info  _timeout_  _host_  _port_  _userid_  _passwd_  _processid_
 </pre>
 <p>
-Affiche l'information d'un processus fils de pgpool-II, désigné par son ID de
-processus. Voici un exemple de retour de cette commande:
+Affiche l'information d'un processus fils de pgpool-II, désigné par son identifiant de
+processus. Voici un exemple de retour de cette commande&nbsp;:
 </p>
 <pre>
 $ pcp_proc_info 10 localhost 9898 postgres hogehoge 3815
 postgres_db postgres 1150769932 1150767351 3 0 1 1467 1
 postgres_db postgres 1150769932 1150767351 3 0 1 1468 1
 
-Le résultat est affiché dans l'ordre suivant:
+Le résultat est affiché dans l'ordre suivant :
 1. nom de la base de données connectée
 2. nom de l'utilisateur connecté
-3. timestamp correspondant au démarrage du processus
-4. timestamp correspondant au démarrage de la connexion
+3. horodatage correspondant au démarrage du processus
+4. horodatage correspondant au démarrage de la connexion
 5. numéro de version majeure du protocole
 6. numéro de version mineure du protocole
 7. compteur du nombre de réutilisations de cette connexion
-8. numéro d'ID du backend PostgreSQL
+8. numéro d'identifiant du processus serveur PostgreSQL
 9. 1 si le client est connecté, 0 sinon
 </pre>
 <p>
-S'il n'y a aucune connexion aux backends, rien ne sera affiché. S'il y a de
-multiples connexions, les informations seront affichées sur plusieurs lignes et
-plusieurs fois. Les timestamp sont affichés au format EPOCH.
+S'il n'y a aucune connexion aux processus serveurs, rien ne sera affiché. S'il y a
+plusieurs connexions, les informations seront affichées sur plusieurs lignes et
+plusieurs fois. Les horodatages sont affichés au format EPOCH.
 </p>
 
 <p>
 L'option --verbose permet de mieux comprendre la sortie de la commande. Par
-exemple:
+exemple&nbsp;:
 </p>
 
 <pre>
@@ -3609,17 +3611,17 @@ Connected    : 1
 </pre>
 
 <p>La spécification d'un identifiant de nœud invalide résultera dans une erreur
-avec un code de sortie 12, et "BackendError" sera alors affiché.</p>
+avec un code de sortie 12, et « BackendError » sera alors affiché.</p>
 
 <h3>pcp_systemdb_info</h3>
 <p>
 <pre>
-Format:
+Format :
 pcp_systemdb_info  _timeout_  _host_  _port_  _userid_  _passwd_
 </pre>
 <p>
 Affiche des informations sur la base de données système. Voici un exemple de
-sortie:
+sortie :
 </p>
 <pre>
 $ pcp_systemdb_info 10 localhost 9898 postgres hogehoge
@@ -3629,12 +3631,12 @@ yamaguti public branches bid 3 bid bbalance filler integer integer character(84)
 yamaguti public tellers bid 4 tid bid tbalance filler integer integer integer character(84) dist_def_tellers
 
 L'information sur la base de donnée système sera affichée sur la toute première
-ligne. Voici l'ordre des résultats:
+ligne. Voici l'ordre des résultats :
 
 1. nom d'hôte
 2. numéro de port
 3. nom d'utilisateur
-4. mot de passe. '' s'il n'y en a pas
+4. mot de passe (une chaîne vide s'il n'y en a pas)
 5. nom de schéma
 6. nom de la base de données
 7. nombre de règles de partitionnement définies
@@ -3643,7 +3645,7 @@ ligne. Voici l'ordre des résultats:
 
 Ensuite, les règles de partitionnement sont affichées sur les lignes suivantes.
 S'il y a de multiples définitions, elles seront affichées sur autant de lignes
-multiples. Le résultat s'affiche dans l'ordre suivant:
+que nécessaire. Le résultat s'affiche dans l'ordre suivant&nbsp;:
 </p>
 <pre>
 1. le nom de la base de données cible du partitionnement
@@ -3656,76 +3658,74 @@ multiples. Le résultat s'affiche dans l'ordre suivant:
 8. le nom de la fonction utilisée pour la règle de partitionnement
 </pre>
 <p>
-Si la base de données système n'est pas définie (i.e. on n'est pas dans un mode
+Si la base de données système n'est pas définie (autrement dit, on n'est pas dans un mode
 pgpool-II, et le cache de requêtes est désactivé), on a une erreur avec un
-statut de sortie à 12, et le message "BackendError" est affiché.</p>
+statut de sortie à 12, et le message « BackendError » est affiché.</p>
 
 
 <h3>pcp_detach_node</h3>
 <pre>
-Format:
+Format :
 pcp_detach_node  [-g] _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
 </pre>
 <p>
 Détache le nœud spécifié de pgpool-II.
 Si l'option -g est donnée, la commande attend que tous les clients soient
-déconnectés (à moins que "client_idle_limit_in_recovery" soit à -1 ou que le
-"recovery_timeout" soit expiré).
+déconnectés (à moins que le paramètre client_idle_limit_in_recovery soit configuré
+à -1 ou que le paramètre recovery_timeout soit expiré).
 </p>
 
 
 <h3>pcp_attach_node</h3>
 <p>
 <pre>
-Format:
+Format :
 pcp_attach_node  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
 
-Attche le nœud spécifié à pgpool-II.
+Attache le nœud spécifié à pgpool-II.
 </pre>
 </p>
 
 <h3>pcp_stop_pgpool</h3>
 <pre>
-Format:
+Format :
 pcp_stop_pgpool  _timeout_  _host_  _port_  _userid_  _passwd_  _mode_
 </pre>
 
 <p>
-Arrête le processus de pgpool-II dans le mode d'arrêt spécifié. Les
-différents modes d'arrêt sont les suivants:
+Arrête le processus pgpool-II dans le mode d'arrêt spécifié. Les
+différents modes d'arrêt sont les suivants&nbsp;:
 </p>
 
 <pre>
-s	- mode smart
-f	- mode fast
-i	- mode immediate 
+s	- mode intelligent
+f	- mode rapide
+i	- mode immédiat
 </pre>
 <p>
 Si le processus pgpool-II n'existe pas, on a une erreur avec un statut de
-sortie à 8, et le message "ConnectionError" sera affiché.
+sortie à 8, et le message « ConnectionError » sera affiché.
 </p>
 <p>
-En fait, il n'y a pas de différence  entre les modes "fast" et "immediate".
+En fait, il n'y a pas de différence  entre les modes rapide et immédiat.
 pgpool-II arrête tous les processus, qu'il y ait des clients connectés aux
-backends ou pas.</p>
+processus serveurs ou pas.</p>
 
 
 <h2>Statuts de sortie</h2>
 
-<p>Les commandes PCP on un statut de sortie à 0 lorsque tout se passe bien. Si
-une erreur arrive, ces dernières ont un statue de sortie différent, dont voici
-la liste.
+<p>Les commandes PCP on un code de sortie à 0 lorsque tout se passe bien. Si
+une erreur arrive, ces dernières ont un code de sortie différent, dont voici
+la liste&nbsp;:
 
 <pre>
 UNKNOWNERR      1      Erreur inconnue (ne devrait pas arriver)
 EOFERR          2      Erreur de fin de fichier
 NOMEMERR        3      Erreur liée à une insuffisance de mémoire disponible
 READERR         4      Erreur alors qu'une lecture sur le serveur était en cours
-WRITEERR        5      Erreur alors qu'une écriture sur le serveur était en
-cours
+WRITEERR        5      Erreur alors qu'une écriture sur le serveur était en cours
 TIMEOUTERR      6      Timeout
-INVALERR        7      Les arguments passés à une commande PCP sont
-invalides
+INVALERR        7      Les arguments passés à une commande PCP sont invalides
 CONNERR         8      Erreur de connexion au serveur
 NOCONNERR       9      Aucune connexion n'existe
 SOCKERR         10     Erreur de socket unix
@@ -3756,11 +3756,11 @@ pgpool-II en mode parallèle.
 </p>
 <p>
 En mode parallèle, une requête transmise par les clients passe par deux étapes
-de traitements:
+de traitements&nbsp;:
 </p>
 <ul>
-<li>Analyse de la requête
-<li>Réécriture de la requête
+<li>analyse de la requête&nbsp;;
+<li>réécriture de la requête&nbsp;;
 </ul>
 <p>
 Ce qui suit détaille ces deux étapes.
@@ -3768,20 +3768,20 @@ Ce qui suit détaille ces deux étapes.
 <h3>Analyse de la requête</h3>
 <h4><p>Introduction</p></h4>
 <p>
-La récupération de la requête soumise par le client passe par le parseur SQL.
+La récupération de la requête soumise par le client passe par l'analyseur SQL.
 Elle est alors analysée grâce aux informations stockées dans la base de données
 système. Le statut d'exécution stocke alors sur quel(s) nœud(s) la requête
-peut-être traitée. Par exemple, si les données d'une table sont distribuées sur
-plusieurs serveurs (comme déclaré dans la table "pgpool_catalog.dist_def" du
-catalogue), ces dernières doivent-être récupérées de plusieurs serveurs. 
+peut être traitée. Par exemple, si les données d'une table sont distribuées sur
+plusieurs serveurs (comme déclaré dans la table pgpool_catalog.dist_def du
+catalogue), ces dernières doivent être récupérées de plusieurs serveurs. 
 
-Ainsi, cette étape retourne le statut 'P' lors que les données doivent être
-récupérées sur tous les serveurs, 'L' quand elles peuvent être récupérées sur
-un seul serveur. Le statut spécial 'S' intervient dans un cas particulier: ce
-dernier signifie qu'il doit y avoir au moins une autre étape d'exécutée avant
+Ainsi, cette étape retourne le statut P lors que les données doivent être
+récupérées sur tous les serveurs, L quand elles peuvent être récupérées sur
+un seul serveur. Le statut spécial S intervient dans un cas particulier&nbsp;: ce
+dernier signifie qu'il doit y avoir au moins une autre étape exécutée avant
 de pouvoir récupérer les données de tous les serveurs. Par exemple, trier les
 données en provenance d'une table enregistrée dans la table catalogue
-"pgpool_catalog.dist_def".
+pgpool_catalog.dist_def.
 </p>
 
 <p>
@@ -3791,20 +3791,20 @@ du statut final de la requête principale.
 </p>
 
 <ol>
-  <li>Est-ce que UNION, EXTRACT, ou INTERSECT sont utilisées?
-  <li>Quel est le statut d'exécution de la clause FROM?
+  <li>Est-ce que UNION, EXTRACT ou INTERSECT sont utilisées&nbsp;?
+  <li>Quel est le statut d'exécution de la clause FROM&nbsp;?
   <li>Changer le statut d'exécution par TARGETLIST
   <li>Changer le statut d'exécution en fonction de la clause WHERE
   <li>Changer le statut d'exécution en fonction de la clause GROUP BY
   <li>Changer le statut d'exécution en fonction de la clause HAVING
   <li>Changer le statut d'exécution en fonction de la clause ORDER BY
-  <li>Changer le statut d'exécution en fonction de la du prédicat LIMIT OFFSET
+  <li>Changer le statut d'exécution en fonction du prédicat LIMIT OFFSET
   <li>Acquisition du statut final d'exécution du SELECT
 </ol>
 
 <p>
 La relation entre le statut d'exécution final du SELECT et l'endroit où il est
-exécuté est comme suit:
+exécuté est comme suit&nbsp;:
 </p>
 
 <p>
@@ -3813,7 +3813,7 @@ exécuté est comme suit:
 		<tr><td align=center>L</td><td>La requête peut-être
 exécutée sur n'importe quel serveur</td></tr>
 		<tr><td align=center>P</td><td>Retourne les données au client
-en exécutant la même requêtes sur tous les serveurs en utilisant le moteur
+en exécutant la même requête sur tous les serveurs en utilisant le moteur
 d'exécution en parallèle.</td></tr>
 		<tr><td align=center>S</td><td>Après traitement dans la base de
 données système, les données sont renvoyées au client.</td></tr>
@@ -3823,7 +3823,7 @@ données système, les données sont renvoyées au client.</td></tr>
 <p>
 Ces règles s'appliquent aussi aux sous-requêtes. Dans l'exemple simple
 ci-dessous, si la table P1-table est enregistrée dans la table catalogue
-"pgpool_catalog.dist_def" sur la base de données système (p1-table est alors
+pgpool_catalog.dist_def sur la base de données système (P1-table est alors
 distribuée), le statut d'exécution final de la sous-requête est alors P, et
 comme résultat, la requête parent du SELECT devient alors obligatoirement P.
 </p>
@@ -3842,11 +3842,11 @@ la clause FROM.
 
 <h4><p>Statut d'exécution de la clause FROM</p></h4>
 <p>
-Ceci est une requête qui récupère des données (SELECT). Le set de données et
+Ceci est une requête qui récupère des données (SELECT). L'ensemble de données et
 son statut (P, L et S) sont définis en fonction de la clause FROM.
 
-Le statut d'exécution de la table est comme suit: lorsqu'il n'y a qu'une seule
-table dans la clause from, le statut d'exécution du set de données entier et le
+Le statut d'exécution de la table est comme suit&nbsp;: lorsqu'il n'y a qu'une seule
+table dans la clause FROM, le statut d'exécution de l'ensemble de données entier est le
 même que celui de cette table. Lorsqu'il y a deux ou plusieurs tables ou des
 sous-requêtes dans la clause FROM, l'exécution est décidée en fonction de la
 méthode de jointure et des statuts d'exécutions, comme précisé dans la table
@@ -3855,7 +3855,7 @@ suivante.
 
 <p>
 <table border>
-<tr><td>type de JOINture</td><td align = center colspan = 3> LEFT OUTER JOIN
+<tr><td>Type de jointure</td><td align = center colspan = 3> LEFT OUTER JOIN
 </td><td align = center colspan = 3> RIGHT OUTER JOIN </td><td align = center
 colspan = 3>FULL OUTER JOIN</td><td align = center colspan = 3>Other</td></tr>
 		<tr><td align = center>left/right</td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td></tr>
@@ -3878,9 +3878,9 @@ SELECT * FROM P1-table,L1-table,L2-table;
 </pre>
 
 
-P1-table (left) et L1-table (right) sont jointes, et en fonction du tableau
-ci-dessus, prennent le statut P. Avec ce statut P, elles sont jointes avec les
-tables L2-table, qui est de statut L, qui devient alors en statut P aussi.
+P1-table (gauche) et L1-table (droite) sont jointes, et en fonction du tableau
+ci-dessus, prennent le statut P. Avec ce statut P, elles sont jointes avec la
+table L2-table, qui est de statut L et qui devient alors en statut P aussi.
 </p>
 
 
@@ -3889,14 +3889,14 @@ WHERE</p></h4>
 <p>
 Dans une requête simple, le statut d'exécution est le même que celui de la
 clause FROM. Cependant, s'il y a une TARGETLIST, le statut d'exécution de la
-clause WHERE peut changer dans les cas suivants:
+clause WHERE peut changer dans les cas suivants&nbsp;:
 </p>
 <ol>
-	<li>Lorsqu'il y a une sous-requête
-	<li>Lorsqu'il y a une fonction d'agrégat ou un DISTINCT dans la
-TARGETLIST marquée 'P'
-	<li>Losqu'une colonne qui n'existe pas dans la table (le
-set de données) est utilisée dans la clause FROM
+	<li>lorsqu'il y a une sous-requête&nbsp;
+	<li>lorsqu'il y a une fonction d'agrégat ou un DISTINCT dans la
+TARGETLIST marquée P&nbsp;
+	<li>lorsqu'une colonne qui n'existe pas dans la table
+(l'ensemble de données) est utilisée dans la clause FROM.
 </ol>
 <p>
 Dans ces cas, le statut d'exécution final de la sous-requête, le statut
@@ -3912,14 +3912,14 @@ données système.
 	SELECT * FROM L1-table where L1-table.column IN (SELECT * FROM P1-table);
 </pre>
 <p>
-La clause FROM passe au statut S lorsqu'il y a une fonction d'agrégat maquée P
+La clause FROM passe au statut S lorsqu'il y a une fonction d'agrégat marquée P
 dans la TARGETLIST, afin de faire cet agrégat après que toutes les données
 aient été récupérées.
-Certaines optimisations sur la fonction d'agrégat sont faites, dans des cas
+Certaines optimisations sur la fonction d'agrégat sont faites dans des cas
 spécifiques.</p>
 <p>
-Une colonne qui n'existe pas dans la table peut-être utilisée dans la requête.
-Par exemple, dans une sous-requête corrélée:
+Une colonne qui n'existe pas dans la table peut être utilisée dans la requête.
+Par exemple, dans une sous-requête corrélée&nbsp;:
 </p>
 <pre>
 	SELECT * FROM L1-table WHERE L1-table.col1 IN (SELECT * FROM
@@ -3927,15 +3927,16 @@ P1-table WHERE P1-table.col = L1-table.col1);
 </pre>
 <p>
 Cette sous-requête fait référence à L1-table.col1, dans la table L1-table. Le
-statut d'exécution de la clause WHERE de la sous-requête est 'S'.
+statut d'exécution de la clause WHERE de la sous-requête est S.
 </p>
+
 <h4><p>Changement de statuts d'exécution provoqués par GROUP BY, HAVING, ORDER
 BY et LIMIT/OFFSET</p></h4>
 
 <p>
-Le statut d'exécution de la lcause WHERE est changé à 'S' lorsqu'il y a une
+Le statut d'exécution de la cause WHERE est changé à S lorsqu'il y a une
 clause GROUP BY, HAVING, ORDER BY ou bien un prédicat LIMIT/OFFSET avec un
-statut 'P'. Une requête sans la clause GROUP BY prend le statut d'exécution de
+statut P. Une requête sans la clause GROUP BY prend le statut d'exécution de
 la clause WHERE.
 
 De même, le statut d'exécution de la clause GROUP BY est utilisé lorsqu'il n'y
@@ -3946,16 +3947,16 @@ aussi le même comportement.
 <h4><p>Lorsque UNION, EXTRACT et INTERSECT sont utilisés</p></h4>
 <p>
 Le statut des requêtes avec UNION, EXTRACT, ou INTERSECT dépend des deux statuts
-d'exécution finaux des requêtes gauches et droites à la fois. Si les deux sont
-en P, et que la requête est un UNION ALL, le statut d'exécution combiné est P.
+d'exécution finaux des requêtes gauche et droite à la fois. Si les deux sont
+en P et que la requête est un UNION ALL, le statut d'exécution combiné est P.
 Dans toutes les autres combinaisons, le statut final sera S.
 </p>
-<h4><p>Acquisition du statut d'exécution final d'un requête SELECT</p></h4>
+<h4><p>Acquisition du statut d'exécution final d'une requête SELECT</p></h4>
 <p>
 Si tout ce qui est dans le SELECT est de statut L, alors le statut d'exécution
 final est L. La même règle s'applique pour P. Pour toutes les autres
 combinaisons, le statut final est S. Si le statut est L, la charge est
-distribuée sur tous les serveurs lorsque "loadbalance_mode" est vrai (true),
+distribuée sur tous les serveurs lorsque le paramètre loadbalance_mode vaut true,
 sinon elle est envoyée sur le maître (false). Pour P, un traitement parallèle
 est fait grâce au moteur d'exécution parallèle. Pour S, la réécriture de la
 requête est présentée ci-dessous est effectuée.
@@ -3972,33 +3973,33 @@ de statut L.
 <pre>
 SELECT P1-table.col, L1-table.col 
 FROM P1-table,L1-table 
-where P1-table.col = L1-table.col 
-order by P1-table.col;
+WHERE P1-table.col = L1-table.col 
+ORDER BY P1-table.col;
 </pre>
 
 <p>
 Dans cette requête, le statut est S à cause de la clause ORDER BY.
 Les clauses FROM, WHERE et TARGETLIST sont de statut P.
-La requête est alors réécrite en quelque chose comme ceci:
+La requête est alors réécrite en quelque chose ressemblant à ceci&nbsp;:
 </p>
 
 <pre>
 SELECT P1-table.col, L1-table.col FROM
 	dblink(select pool_parallel(SELECT P1-table.col, L1-table.col FROM P1-table,L1-table where P1-table.col = L1-table.col)) 
-  	order by P1-table.col;
+  	ORDER BY P1-table.col;
 </pre>
 <p>
 dblink transmet ici la requête à pgpool-II.
-La fonction "pool_parallel" a la responsabilité de transmettre la requête au
+La fonction pool_parallel a la responsabilité de transmettre la requête au
 moteur d'exécution parallèle.
 </p>
-<p>Dans cet exemple, les clauses FROM et WHERE, ainsi que la TARGETLIST sont
-exécutés en mod parallèle. Ceci n'est pas la requête réellement réécrite, mais
+<p>Dans cet exemple, les clauses FROM et WHERE, ainsi que la TARGETLIST, sont
+exécutés en mode parallèle. Ceci n'est pas la requête réellement réécrite, mais
 juste fournie en guise d'exemple, par soucis de lisibilité et de
 compréhension.
 </p>
 <p>
-Voici un autre cas:
+Voici un autre cas&nbsp;:
 </p>
 
 <pre>
@@ -4008,7 +4009,7 @@ SELECT L1-table.col FROM L1-table WHERE L1-table.col % 2 = 0 AND L1-table.col IN
 <p>
 Dans cet exemple, les clauses FROM, WHERE et la TARGETLIST sont en statut L, à
 cause de la sous-requête qui est de statut P. La requête elle-même est de
-statut S. En conséquence, une réécrite est effectuée comme suit:
+statut S. En conséquence, une réécrite est effectuée comme suit&nbsp;:
 </p>
 <pre>
 	SELECT L1-table.col 
@@ -4025,8 +4026,8 @@ statut S. En conséquence, une réécrite est effectuée comme suit:
 		  ) ;
 </pre>
 <p>
-La fonction pool_loadbalance is a la responsabilité de répartir les requêtes
-sur les différents noeuds.  
+La fonction pool_loadbalance a la responsabilité de répartir les requêtes
+sur les différents nœuds.
 </p>
 
 
@@ -4045,39 +4046,39 @@ la TARGETLIST.
 Aussi, la réécriture est faite comme suit.
 </p>
 <pre>
-  select count(*) from P1-table;
+  SELECT count(*) from P1-table;
 
 	-> réécriture
 
     SELECT
-        sum(pool_c$1) as count
+        sum(pool_c$1) AS count
     FROM
-        dblink(select pool_parallel('select count(*) from  P1-table'))
+        dblink(select pool_parallel('SELECT count(*) FROM  P1-table'))
 					AS pool_$1g (pool_c$1 bigint);
 </pre>
 <p>
 Une réécriture comme ci-dessus est faite dans les conditions suivantes.
 </p>
 <ol>
-		<li>La clause FROM est de statut P
-		<li>La colonne spécifiée est dans la fonction d'agrégat
+		<li>la clause FROM est de statut P&nbsp;;
+		<li>la colonne spécifiée est dans la fonction d'agrégat
 (seulement COUNT, SUM, MIN, MAX et AVG) et GROUP BY est utilisé dans la
-TARGETLIST 
-		<li>La clause WHERE est de statut P
-		<li>Seules les colonnes définies dans la fonction d'agrégat
+TARGETLIST&nbsp;;
+		<li>la clause WHERE est de statut P&nbsp;;
+		<li>seules les colonnes définies dans la fonction d'agrégat
 (seulement COUNT, SUM, MIN, MAX et AVG), utilisées dans la clause HAVING et la
-clause FROM, et la colonne spécifiée pour le GROUP BY sont utilisées
+clause FROM, et la colonne spécifiée pour le GROUP BY sont utilisées.
 </ol>
 <h3>Notes sur le mode parallèle</h3>
 <p>
-Le nom des colonnes et leur type de données doivent-être connus lorsqu'une
+Le nom des colonnes et leur type de données doivent être connus lorsqu'une
 requête est analysée en mode parallèle. Ainsi, lorsqu'une expression ou une
 fonction est utilisée dans la TARGETLIST d'une sous-requête, l'alias et le type
 (via un CAST) sont nécessaires. Si aucun cast n'est défini explicitement dans
 une expression ou une fonction, le type TEXT sera choisi par défaut. Pour
 count(), le type BIGINT est celui par défaut, et pour sum(), NUMERIC. Pour
 min()/max(), si l'argument est de type DATE, le type de données retournée est
-DATE, sinon, NUMERIC est utilisé. avg() est traité comme sum()/count() (sum
+DATE, sinon NUMERIC est utilisé. avg() est traité comme sum()/count() (sum
 divisé par count).
 
 <h3>À propos des performances du mode parallèle</h3>
@@ -4087,12 +4088,12 @@ statut d'exécution</p>
 <table border>
 		<tr><td>Statut d'exécution</td><td>Performances</td></tr>
 <tr><td align = center>L</td><td>Il n'y a aucune déterioration de performance
-avec un unique serveur, mis à part l'overhead provoqué par pgpool-II,
+avec un unique serveur, mis à part la sucharge provoquée par pgpool-II,
 parce qu'aucune exécution en parallèle n'est possible.</td></tr>
 <tr><td align = center>P</td><td>Le traitement parallélisé est rapide, en
-particulier, pour les scans séquentiels. Il est alors aisé d'avoir de grandes
-améliorations de performances car le scan séquentiel d'une grosse table devient
-un scan en parallèle sur des tables bien plus petites, distribuées sur
+particulier, pour les parcours séquentiels. Il est alors aisé d'avoir de grandes
+améliorations de performances car le parcours séquentiel d'une grosse table devient
+un parcours en parallèle sur des tables bien plus petites, distribuées sur
 plusieurs serveurs.
 <tr><td align = center>S</td><td>Lorsque les fonctions d'agrégat peuvent être
 réécrites pour être compatibles avec une exécution en parallèle, elles
@@ -4103,7 +4104,7 @@ deviennent rapides.</td></tr>
 
 <h1>Tutoriel</h1>
 <p>
-<a href="tutorial-en.html">Un tutoriel (en anglais) pour pgpool-II</a> est
+Un <a href="tutorial-en.html">tutoriel (en anglais) pour pgpool-II</a> est
 disponible.
 </p>
 
