@@ -323,12 +323,12 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->sr_check_user);
 	strncpy(status[i].desc, "sr check user", POOLCONFIG_MAXDESCLEN);
 	i++;
-
+#ifdef NOT_USED	/* for security reason */
 	strncpy(status[i].name, "sr_check_password", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->sr_check_password);
 	strncpy(status[i].desc, "sr check password", POOLCONFIG_MAXDESCLEN);
 	i++;
-
+#endif
 	strncpy(status[i].name, "delay_threshold", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%lld", pool_config->delay_threshold);
 	strncpy(status[i].desc, "standby delay threshold", POOLCONFIG_MAXDESCLEN);
@@ -358,12 +358,12 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->health_check_user);
 	strncpy(status[i].desc, "health check user", POOLCONFIG_MAXDESCLEN);
 	i++;
-
+#ifdef NOT_USED	/* for security reason */
 	strncpy(status[i].name, "health_check_password", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->health_check_password);
 	strncpy(status[i].desc, "health check password", POOLCONFIG_MAXDESCLEN);
 	i++;
-
+#endif
 	strncpy(status[i].name, "failover_command", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->failover_command);
 	strncpy(status[i].desc, "failover command", POOLCONFIG_MAXDESCLEN);

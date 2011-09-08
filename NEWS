@@ -71,9 +71,7 @@
 		backend behavior. Currently "ALLOW_TO_FAILOVER" or
 		"DISALLOW_TO_FAILOVER" are allowed(Tatsuo)
 
-	  - Add health_check_password directive because the directives of
-		helthcheck are used to check replication delay in streaming
-		replication mode(Nicolas Thauvin)
+	  - Add health_check_password directive(Nicolas Thauvin)
 
 	  - Add sr_check_period, sr_check_user and sr_check_password directives.
 		These are used for streaming replication delay checking and
