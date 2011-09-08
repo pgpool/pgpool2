@@ -8,7 +8,7 @@
 	  * Incompatible changes
 
 	  - Change the lock method of insert_lock. The previous insert_lock uses
-		row locking against the sequence relation, but The current one uses
+		row locking against the sequence relation, but the current one uses
 		row locking against pgpool_catalog.insert_lock table. The reason is
 		that PostgreSQL core developers decided to disallow row locking
 		against the sequence relation to avoid an internal error which it
@@ -24,7 +24,7 @@
 		with '/' it is regarded the as path to Unix domain. If backend_hostname
 		is left empty, then default Unix domain path(/tmp) is used. This
 		follows the convention of libpq interface. Patch contributed by
-		Jehan-Guillaume (ioguix) de Rorthais. Additional fixes by me(Tatsuo)
+		Jehan-Guillaume (ioguix) de Rorthais.
 
 	  - Now "pgpool_walrecrunning()" was not used. pgpool-II used to consider
 		the node that is promoted a primary node using the function. Now,
@@ -34,8 +34,7 @@
 		node(Kitagawa)
 
 	  - Add node_id to each PostgreSQL DB node info in the output of
-		show pool_nodes. Patch contributed by Jean-Paul Argudo
-		(Guillaume Lelarge)
+		show pool_nodes(Jean-Paul Argudo)
 
 	  - Change the handling of sequence functions(nextval, setval) so that
 		they completely obey setting of black/white_function_list. They were
@@ -44,7 +43,7 @@
 	  * New features
 
 	  - Add syslog support. Patch contributed by Gilles Darold. Review and
-		editing by Guillaume Lelarge(Tatsuo)
+		editing by Guillaume Lelarge.
 
 	  - Adapt application_name introduced in PostgreSQL 9.0. When reusing
 		connection, send application_name in the startup packet to backend
@@ -57,15 +56,15 @@
 
 	  - Add follow_master_command directive. This directive specifies a
 		command to run in master/slave streaming replication only after
-		a master failover. Patch contributed by Gilles Darold(Kitagawa)
+		a master failover. Patch contributed by Gilles Darold.
 
 	  - Add pcp_promote_node command. This command promotes a new master
 		node to pgpool-II. This can use in master/slave streaming replication
-		only. Patch contributed by Gilles Darold(Kitagawa)
+		only. Patch contributed by Gilles Darold.
 
 	  - Add pcp_pool_status command which produces similar output of show
 		pool_status. Also C API for this command is added. Patch
-		contributed by Jehan-Guillaume (ioguix) de Rorthais(Tatsuo)
+		contributed by Jehan-Guillaume (ioguix) de Rorthais.
 
 	  - Add new per backend directive "backend_flag". This controls per
 		backend behavior. Currently "ALLOW_TO_FAILOVER" or
@@ -159,11 +158,10 @@
 
 	  - Import PostgreSQL 9.0 parser. This allows to use CREATE INDEX with
 		implicit index name, which is new in 9.0. Patch contributed by
-		Akio Ishida(Tatsuo)
+		Akio Ishida.
 
 	  - Allow to use regular expressions in black and white function list.
-		Patch contributed by Gilles Darold. Patch reviewed by Guillaume Lelarge
-		(Tatsuo)
+		Patch contributed by Gilles Darold. Patch reviewed by Guillaume Lelarge.
 
 	  - Reorganize pgpool.conf sample files so that they are easier to read
 		(Guillaume Lelarge)
