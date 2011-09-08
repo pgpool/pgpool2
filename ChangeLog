@@ -1,7 +1,11 @@
+2011-09-08 21:04  kitagawa
+
+	* configure, configure.in: Prepare 3.1.
+
 2011-09-08 19:33  kitagawa
 
 	* Makefile.am, Makefile.in, NEWS, configure, configure.in,
-	  doc/pgpool-ja.html: Prepare 3.1.
+	  doc/pgpool-ja.html, ChangeLog: Prepare 3.1.
 
 2011-09-08 17:12  kitagawa
 
