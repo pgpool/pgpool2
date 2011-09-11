@@ -59,6 +59,7 @@
 #include "parser/pool_memory.h"
 #include "parser/pool_string.h"
 #include "pool_passwd.h"
+#include "pool_memqcache.h"
 
 /*
  * Process pending signal actions.
@@ -534,6 +535,34 @@ int main(int argc, char **argv)
 		myexit(1);
 	}
 	*InRecovery = 0;
+
+	/*
+	 * Initialize shared memory cache
+	 */
+	if (pool_config->memory_cache_enabled && pool_is_shmem_cache())
+	{
+		size_t size;
+		
+		size = pool_shared_memory_cache_size();
+		if (size < 0)
+		{
+			pool_error("pool_shared_memory_cache_size error");
+			myexit(1);
+		}
+		pool_init_memory_cache(size);
+
+		size = pool_shared_memory_fsmm_size();
+		if (size < 0)
+		{
+			pool_error("pool_shared_memory_fsmm_size error");
+			myexit(1);
+		}
+		pool_init_fsmm(size);
+
+		pool_allocate_fsmm_clock_hand();
+
+		pool_discard_oid_maps();
+	}
 
 	/*
 	 * We need to block signal here. Otherwise child might send some

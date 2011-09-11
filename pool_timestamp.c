@@ -58,7 +58,6 @@ static void *ts_register_func(POOL_SELECT_RESULT *res);
 static void *ts_unregister_func(void *data);
 static TSRel *relcache_lookup(TSRewriteContext *ctx);
 static bool isStringConst(Node *node, const char *str);
-static bool isSystemType(Node *node, const char *name);
 static bool rewrite_timestamp_walker(Node *node, void *context);
 static bool rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext *ctx);
 static bool rewrite_timestamp_update(UpdateStmt *u_stmt, TSRewriteContext *ctx);
@@ -210,7 +209,7 @@ isStringConst(Node *node, const char *str)
 }
 
 
-static bool
+bool
 isSystemType(Node *node, const char *name)
 {
 	TypeName	*typename;

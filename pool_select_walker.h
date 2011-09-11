@@ -28,13 +28,19 @@
 
 #include "pool.h"
 #include "parser/nodes.h"
+#include "parser/primnodes.h"
+#include "parser/makefuncs.h"
 
 extern bool pool_has_function_call(Node *node);
+extern bool pool_has_non_immutable_function_call(Node *node);
 extern bool pool_has_system_catalog(Node *node);
 extern bool pool_has_temp_table(Node *node);
 extern bool pool_has_unlogged_table(Node *node);
 extern bool pool_has_insertinto_or_locking_clause(Node *node);
 extern bool pool_has_pgpool_regclass(void);
 extern bool raw_expression_tree_walker(Node *node, bool (*walker) (), void *context);
+extern int pool_table_name_to_oid(char *table_name);
+extern int pool_extract_table_oids_from_select_stmt(Node *node, int **oids);
+extern RangeVar *makeRangeVarFromNameList(List *names);
 
 #endif /* POOL_SELECT_WALKER_H */

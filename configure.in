@@ -243,9 +243,8 @@ else
   PGSQL_LIB_DIR=`pg_config --libdir`
 fi
 
-
 AC_ARG_WITH(pgsql,
-    [  --with-pgsql=DIR     site header files for PostgreSQL in DIR],
+    [  --with-pgsqla=DIR     site header files for PostgreSQL in DIR],
     [
 	case "$withval" in
 	"" | y | ye | yes | n | no)
@@ -277,6 +276,18 @@ AC_ARG_WITH(pgsql-libdir,
 	esac
 	PGSQL_LIB_DIR="$withval"
     ])
+
+AC_ARG_WITH(memcached,
+    [--with-memcache=DIR : site library files for Memcached in DIR],
+    [
+    case "$withval" in
+    "" | y | ye | yes | n | no)
+        AC_MSG_ERROR([*** You must supply an argument to the --with-memcache option.])
+      ;;
+    esac
+    MEMCACHED_DIR="$withval"
+    ])
+
 
 
 AC_ARG_WITH(openssl,
@@ -310,6 +321,36 @@ if test "$with_pam" = yes ; then
                                       [AC_MSG_ERROR([header file <security/pam_appl.h> or <pam/pam_appl.h> is required for PAM.])])])
 fi
 
+AC_ARG_WITH(memcached,
+    [  --with-memcached=DIR     site header files for libmemcached in DIR],
+    [
+  case "$withval" in
+  "" | y | ye | yes | n | no)
+      AC_MSG_ERROR([*** You must supply an argument to the --with-memcached option.])
+    ;;
+    *)
+
+  MEMCACHED_INCLUDE_DIR="$withval"/include
+  MEMCACHED_LIB_DIR="$withval"/lib
+  OLD_CFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS -I$MEMCACHED_INCLUDE_DIR"
+    AC_CHECK_HEADERS(
+      [libmemcached/memcached.h],
+        [AC_DEFINE([USE_MEMCACHED], 1, [Define to 1 to build with memcached support])],
+        [AC_MSG_ERROR([header file <libmemcached/memcached.h> is required for memcached support])])
+  CFLAGS=$OLD_CFLAGS
+  AC_CHECK_LIB(memcached, memcached_create, [], [AC_MSG_ERROR(libmemcached is not installed)])
+  MEMCACHED_INCLUDE_OPT="-I $MEMCACHED_INCLUDE_DIR"
+  MEMCACHED_LINK_OPT="-L$MEMCACHED_LIB_DIR"
+  MEMCACHED_RPATH_OPT="-rpath $MEMCACHED_LIB_DIR"
+  ;;
+  esac
+  ])
+
+AC_SUBST(MEMCACHED_INCLUDE_OPT)
+AC_SUBST(MEMCACHED_LINK_OPT)
+AC_SUBST(MEMCACHED_RPATH_OPT)
+
 OLD_LDFLAGS="$LDFLAGS"
 LDFLAGS="-L$PGSQL_LIB_DIR"
 OLD_LIBS="$LIBS"
@@ -320,6 +361,7 @@ LIBS="$OLD_LIBS"
 
 AC_SUBST(PGSQL_INCLUDE_DIR)
 AC_SUBST(PGSQL_LIB_DIR)
+AC_SUBST(MEMCACHED_DIR)
 
 # --enable(disable)-rpath option
 AC_ARG_ENABLE(rpath,

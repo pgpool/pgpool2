@@ -184,6 +184,16 @@ typedef struct {
 	RegPattern *lists_patterns; /* Precompiled regex patterns for black/white lists */
 	int pattc; /* number of regexp pattern */
 	int current_pattern_size; /* size of the regex pattern array */
+
+	int memory_cache_enabled;   /* if true, use the memory cache functionality, false by default */
+	char *memqcache_method;   /* Cache store method. Either 'shmem'(shared memory) or 'memcached'. 'shmem' by default */
+	char *memqcache_memcached_host;   /* Memcached host name. Mandatory if memqcache_method=memcached. */
+	int memqcache_memcached_port;   /* Memcached port number. Mondatory if memqcache_method=memcached. */
+	int memqcache_total_size;   /* Total memory size in bytes for storing memory cache. Mandatory if memqcache_method=shmem. */
+	int memqcache_expire;   /* Memory cache entry life time specified in seconds. 60 by default. */
+	int memqcache_maxcache;   /* Maximum SELECT result size in bytes. */
+	int memqcache_cache_block_size;   /* Cache block size in bytes. 8192 by default */
+	char *memqcache_oiddir;		/* Tempory work directory to record table oids */
 } POOL_CONFIG;
 
 typedef enum {

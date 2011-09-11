@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Thu Aug 11 09:10:34 JST 2011
+Last modified: Thu Aug 11 11:05:54 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2239,6 +2239,147 @@ You need to delete the cache data from the cache table or restart pgpool-II with
 </strong>
 </p>
 
+<h3>Using Shared memory or Memcached</h3>
+
+<p>
+To enable the memory cache functionality, set this to true (default is false)
+</p>
+
+<pre>
+memory_cache_enabled = true
+</pre>
+
+<p>
+Memory cache behavior can be specified by cache_param directive:<br>
+Cache store method. Either "shmem"(shared memory) or "memcached". Default is shmem. 
+</p>
+<pre>
+
+memqcache_method = 'shmem'
+</pre>
+
+<p>
+Memcached host name. Mandatory if memqcache_method=memcached. If this parameter is starting with "/", UNIX domain socket is assumed.
+</p>
+<pre>
+memqcache_memcached_host = 'foo.com'
+</pre>
+
+<p>
+Memcached port number. Mondatory if memqcache_method=memcached.
+</p>
+<pre>
+memqcache_memcached_port = 11211
+</pre>
+
+<p>
+Total memory size in bytes for storing memory cache. Mandatory if memqcache_method=shmem.
+</p>
+<pre>
+memqcache_total_size = 10240
+</pre>
+
+<p>
+Memory cache entry life time specified in seconds. Default is 60.
+</p>
+<pre>
+memqcache_expire = 60
+</pre>
+
+<p>
+Maximum SELECT result size in bytes. If exceeds this value, the result is not cached.
+</p>
+
+<pre>
+memqcache_maxcache = 512
+</pre>
+
+<p>
+Cache block size in bytes<br>
+Only meaning full when memqcache_method=shmem. Memory cache is devided into fixed size of block.<br>
+If the block size is small, memory usage is efficient, but processing might be slow. On the other hand,<br>
+if the block size is large, memory usage is not efficient but processing might be fast. Default is 8192. <br>
+
+</p>
+<pre>
+memqcache_cache_block_size= 8192
+
+</pre>
+
+<h3>memcached Installation</h3>
+
+<p>
+If you want to use memcached based query, you need to install memcached.
+</p>
+
+<p>
+memcached's source code can be downloaded from:
+<a href="http://memcached.org/">memcached development page</a>
+</p>
+
+<dl>
+<dt>configure</dt>
+
+<dd>
+<p>
+After extracting the source tarball, execute the configure script.
+</p>
+<pre>
+./configure
+</pre>
+</dd>
+<dt>make</dt>
+<dd>
+<pre>
+make
+make install
+</pre>
+</dd>
+</dl>
+
+<h3>libmemcached Installation</h3>
+
+<p>
+C client library used is libmemcached.
+You need to install libmemcached after installing memcached.
+</p>
+
+<p>
+libmemcached's source code can be downloaded from:
+<a href="http://libmemcached.org/libMemcached.html">libmemcached development page</a>
+</p>
+
+<dl>
+<dt>configure</dt>
+<dd>
+
+<p>
+After extracting the source tarball, execute the configure script.
+</p>
+<pre>
+./configure
+</pre>
+
+<p>
+If you want non-default values, some options can be set:
+</p>
+
+<ul>
+  <li><code>--with-memcached=path</code><br/>
+      The top directory where Memcached are installed.</li>
+
+</ul>
+
+</dd>
+<dt>make</dt>
+<dd>
+<pre>
+make
+make install
+</pre>
+</dd>
+</dl>
+
 <h1>Starting/Stopping pgpool-II<a name="start"></a></h1>
 
 <p>All the backends and the System DB (if necessary) must be started
@@ -3967,7 +4108,7 @@ A column that does not exist in a table can be used in a query. For instance, in
 the following correlated subquery:
 </p>
 <pre>
-	SELECT * FROM L1-table WHERE L1-table.col1 IN (SELECT * FROM P1-table WHERE P1-table.col = L1-table.col1);
+	SELECT * FROM L1-table WHEREﾂ�1-table.col1 IN (SELECT * FROM P1-table WHERE P1-table.col = L1-table.col1);
 </pre>
 <p>
 This subquery refers to L1-table.col1, from the L1-table. The execution status 
@@ -4044,7 +4185,7 @@ SELECT L1-table.col FROM L1-table WHERE L1-table.col % 2 = 0 AND L1-table.col IN
 </pre>
 
 <p>
-In this example, the FROM and WHERE clause and the TARGETLIST are in the L 
+In this example, the FROM and WHEREﾂ�lause and the TARGETLIST are in the L 
 status. Because the subquery is in the P status, the query itself is in the S status.
 The rewriting is, as a consequence, performed as follows.
 </p>

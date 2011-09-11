@@ -31,6 +31,7 @@
 #include "parser/nodes.h"
 #include "parser/parsenodes.h"
 #include "parser/pool_memory.h"
+#include "pool_memqcache.h"
 
 typedef enum {
 	POOL_UNPARSED,
@@ -54,6 +55,8 @@ typedef struct {
 	int  virtual_master_node_id;	   		/* the 1st DB node to send query */
 	POOL_MEMORY_POOL *memory_context;		/* memory context for query */
 	POOL_QUERY_STATE query_state[MAX_NUM_BACKENDS];	/* for extended query protocol */
+	bool is_cache_safe;	/* true if SELECT is safe to cache */
+	POOL_TEMP_QUERY_CACHE *temp_cache;	/* temporary cache */
 } POOL_QUERY_CONTEXT;
 
 extern POOL_QUERY_CONTEXT *pool_init_query_context(void);
@@ -79,5 +82,8 @@ extern bool is_savepoint_query(Node *node);
 extern bool is_2pc_transaction_query(Node *node);
 extern void pool_set_query_state(POOL_QUERY_CONTEXT *query_context, POOL_QUERY_STATE state);
 extern int statecmp(POOL_QUERY_STATE s1, POOL_QUERY_STATE s2);
+extern bool pool_is_cache_safe(void);
+extern void pool_set_cache_safe(void);
+extern void pool_unset_cache_safe(void);
 
 #endif /* POOL_QUERY_CONTEXT_H */

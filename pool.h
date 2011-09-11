@@ -332,6 +332,7 @@ extern BACKEND_STATUS* my_backend_status[];
 #define MAX_NUM_SEMAPHORES		3
 #define CONN_COUNTER_SEM 0
 #define REQUEST_INFO_SEM 1
+#define SHM_CACHE_SEM	2
 
 /*
  * number specified when semaphore is locked/unlocked

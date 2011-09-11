@@ -628,7 +628,7 @@ static int input (void );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO fwrite( yytext, yyleng, 1, yyout )
+#define ECHO do { if (fwrite( yytext, yyleng, 1, yyout )) {} } while (0)
 #endif
 
 /* Gets input and stuffs it into "buf".  number of characters read, or YY_NULL,
@@ -639,7 +639,7 @@ static int input (void );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		int n; \
+		unsigned n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -1871,10 +1871,10 @@ int pool_init_config(void)
 	pool_config->child_max_connections = 0;
 	pool_config->authentication_timeout = 60;
 	pool_config->logdir = DEFAULT_LOGDIR;
-        pool_config->logsyslog = 0;
-        pool_config->log_destination = "stderr";
-        pool_config->syslog_facility = LOG_LOCAL0;
-        pool_config->syslog_ident = "pgpool";
+    pool_config->logsyslog = 0;
+    pool_config->log_destination = "stderr";
+    pool_config->syslog_facility = LOG_LOCAL0;
+    pool_config->syslog_ident = "pgpool";
 	pool_config->pid_file_name = DEFAULT_PID_FILE_NAME;
  	pool_config->log_statement = 0;
  	pool_config->log_per_node_statement = 0;
@@ -1940,6 +1940,16 @@ int pool_init_config(void)
 	pool_config->pattc = 0;
 	pool_config->current_pattern_size = 0;
 
+    pool_config->memory_cache_enabled = 0;
+    pool_config->memqcache_method = "shmem";
+    pool_config->memqcache_memcached_host = "";
+    pool_config->memqcache_memcached_port = 11211;
+    pool_config->memqcache_total_size = 10240;
+    pool_config->memqcache_expire = 60;
+    pool_config->memqcache_maxcache = 512;
+    pool_config->memqcache_cache_block_size = 8192;
+    pool_config->memqcache_oiddir = "/var/log/pgpool/oiddir";
+
 	res = gethostname(localhostname,sizeof(localhostname));
 	if(res !=0 )
 	{
@@ -1985,7 +1995,7 @@ int add_regex_pattern(char *type, char *s)
 	currItem.flag = regex_flags;
 
 	/* Fill pattern array */
-	currItem.pattern = malloc(sizeof(char)*(strlen(s)+3)); /* '\0'+'^'+'$' */
+	currItem.pattern = malloc(sizeof(char)*(strlen(s)+1));
 	if (currItem.pattern == NULL)
 	{
 		pool_error("add_to_patterns: unable to allocate new pattern");
@@ -2054,6 +2064,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 	double total_weight;
 	int i;
     bool log_destination_changed = false;
+#ifdef USE_MEMCACHED
+	bool use_memcached = true;
+#else
+	bool use_memcached = false;
+#endif
 
 #define PARSE_ERROR()		pool_error("pool_config: parse error at line %d '%s'", Lineno, yytext)
 
@@ -3595,7 +3610,148 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			pool_config->relcache_expire = v;
 		}
+        else if (!strcmp(key, "memory_cache_enabled") &&
+                 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+        {
+            int v = eval_logical(yytext);
 
+            if (v < 0)
+            {
+                pool_error("pool_config: invalid value %s for %s", yytext, key);
+                fclose(fd);
+                return(-1);
+            }
+            pool_config->memory_cache_enabled = v;
+        }
+        else if (!strcmp(key, "memqcache_method") && CHECK_CONTEXT(INIT_CONFIG, context))
+        {
+            char *str;
+
+            if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+            {
+                PARSE_ERROR();
+                fclose(fd);
+                return(-1);
+            }
+            str = extract_string(yytext, token);
+            if (str == NULL)
+            {
+                fclose(fd);
+                return(-1);
+            }
+
+			if (!strcmp(str, "memcached") && !use_memcached)
+			{
+				pool_error("memqcached_method cannot be memcached because pgpool-II is not built with MEMCACHED enabled");
+				fclose(fd);
+				return -1;
+			}
+
+			if (strcmp(str, "memcached") && strcmp(str, "shmem"))
+			{
+				pool_error("memqcached_method must be either shmem or memcached");
+				fclose(fd);
+				return -1;
+			}
+
+            pool_config->memqcache_method = str;
+        }
+        else if (!strcmp(key, "memqcache_memcached_host") && CHECK_CONTEXT(INIT_CONFIG, context))
+        {
+            char *str;
+
+            if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+            {
+                PARSE_ERROR();
+                fclose(fd);
+                return(-1);
+            }
+            str = extract_string(yytext, token);
+            if (str == NULL)
+            {
+                fclose(fd);
+                return(-1);
+            }
+            pool_config->memqcache_memcached_host = str;
+        }
+        else if (!strcmp(key, "memqcache_memcached_port") && CHECK_CONTEXT(INIT_CONFIG, context))
+        {
+            int v = atoi(yytext);
+
+            if (token != POOL_INTEGER || v < 0)
+            {
+                pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
+                fclose(fd);
+                return(-1);
+            }
+            pool_config->memqcache_memcached_port = v;
+        }
+        else if (!strcmp(key, "memqcache_total_size") && CHECK_CONTEXT(INIT_CONFIG, context))
+        {
+            int v = atoi(yytext);
+
+            if (token != POOL_INTEGER || v < 0)
+            {
+                pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
+                fclose(fd);
+                return(-1);
+            }
+            pool_config->memqcache_total_size = v;
+        }
+        else if (!strcmp(key, "memqcache_expire") && CHECK_CONTEXT(INIT_CONFIG, context))
+        {
+            int v = atoi(yytext);
+
+            if (token != POOL_INTEGER || v < 0)
+            {
+                pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
+                fclose(fd);
+                return(-1);
+            }
+            pool_config->memqcache_expire = v;
+        }
+        else if (!strcmp(key, "memqcache_maxcache") && CHECK_CONTEXT(INIT_CONFIG, context))
+        {
+            int v = atoi(yytext);
+
+            if (token != POOL_INTEGER || v < 0)
+            {
+                pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
+                fclose(fd);
+                return(-1);
+            }
+            pool_config->memqcache_maxcache = v;
+        }
+        else if (!strcmp(key, "memqcache_cache_block_size") && CHECK_CONTEXT(INIT_CONFIG, context))
+        {
+            int v = atoi(yytext);
+
+            if (token != POOL_INTEGER || v < 0)
+            {
+                pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
+                fclose(fd);
+                return(-1);
+            }
+            pool_config->memqcache_cache_block_size = v;
+        }
+        else if (!strcmp(key, "memqcache_oiddir") && CHECK_CONTEXT(INIT_CONFIG, context))
+        {
+            char *str;
+
+            if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+            {
+                PARSE_ERROR();
+                fclose(fd);
+                return(-1);
+            }
+            str = extract_string(yytext, token);
+            if (str == NULL)
+            {
+                fclose(fd);
+                return(-1);
+            }
+            pool_config->memqcache_oiddir = str;
+        }
 	}
 
 	fclose(fd);

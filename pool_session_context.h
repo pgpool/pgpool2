@@ -32,6 +32,7 @@
 #include "pool_session_context.h"
 #include "pool_query_context.h"
 #include "parser/pool_memory.h"
+#include "pool_memqcache.h"
 
 /*
  * Transaction isolation mode
@@ -142,6 +143,11 @@ typedef struct {
 	 * If true, we are executing reset query list.
 	 */
 	bool reset_context;
+
+	/*
+	 * Query cache management area
+	 */
+	POOL_QUERY_CACHE_ARRAY *query_cache_array;
 } POOL_SESSION_CONTEXT;
 
 extern void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);

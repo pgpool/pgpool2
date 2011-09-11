@@ -99,6 +99,9 @@ void pool_start_query(POOL_QUERY_CONTEXT *query_context, char *query, int len, N
 		query_context->rewritten_query = NULL;
 		query_context->parse_tree = node;
 		query_context->virtual_master_node_id = REAL_MASTER_NODE_ID;
+		query_context->is_cache_safe = false;
+		if (pool_config->memory_cache_enabled)
+			query_context->temp_cache = pool_create_temp_query_cache(query);
 		pool_set_query_in_progress();
 		session_context->query_context = query_context;
 	}
@@ -1469,4 +1472,56 @@ char* remove_read_write(int len, const char* contents, int *rewritten_len)
 		   len - (strlen(name) + strlen(stmt) + 2));
 
 	return rewritten_contents;
+}
+
+/*
+ * Return true if current query is safe to cache.
+ */
+bool pool_is_cache_safe(void)
+{
+	POOL_SESSION_CONTEXT *sc;
+
+	sc = pool_get_session_context();
+	if (!sc)
+		return false;
+
+	if (pool_is_query_in_progress() && sc->query_context)
+	{
+		return sc->query_context->is_cache_safe;
+	}
+	return false;
+}
+
+/*
+ * Set safe to cache.
+ */
+void pool_set_cache_safe(void)
+{
+	POOL_SESSION_CONTEXT *sc;
+
+	sc = pool_get_session_context();
+	if (!sc)
+		return;
+
+	if (sc->query_context)
+	{
+		sc->query_context->is_cache_safe = true;
+	}
+}
+
+/*
+ * Unset safe to cache.
+ */
+void pool_unset_cache_safe(void)
+{
+	POOL_SESSION_CONTEXT *sc;
+
+	sc = pool_get_session_context();
+	if (!sc)
+		return;
+
+	if (sc->query_context)
+	{
+		sc->query_context->is_cache_safe = false;
+	}
 }

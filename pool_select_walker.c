@@ -21,6 +21,7 @@
  */
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "pool.h"
 #include "pool_config.h"
@@ -28,13 +29,19 @@
 #include "pool_relcache.h"
 #include "parser/parsenodes.h"
 #include "pool_session_context.h"
+#include "pool_timestamp.h"
+
+#define POOL_MAX_SELECT_OIDS 128
 
 typedef struct {
 	bool	has_system_catalog;		/* True if system catalog table is used */
 	bool	has_temp_table;		/* True if temporary table is used */
 	bool	has_unlogged_table;	/* True if unlogged table is used */
 	bool	has_function_call;	/* True if write function call is used */	
+	bool	has_non_immutable_function_call;	/* True if non immutable functions are used */
 	bool	has_insertinto_or_locking_clause;	/* True if it has SELECT INTO or FOR SHARE/UPDATE */
+	int		num_oids;	/* number of oids */
+	int		*table_oids;	/* table oids */
 } SelectContext;
 
 static bool function_call_walker(Node *node, void *context);
@@ -46,6 +53,9 @@ static bool is_temp_table(char *table_name);
 static bool is_unlogged_table(char *table_name);
 static bool	insertinto_or_locking_clause_walker(Node *node, void *context);
 static int pattern_compare(char *str, const int type);
+static bool is_immutable_function(char *fname);
+static bool select_table_walker(Node *node, void *context);
+static bool non_immutable_function_call_walker(Node *node, void *context);
 
 /*
  * Return true if this SELECT has function calls *and* supposed to
@@ -630,4 +640,252 @@ static bool	insertinto_or_locking_clause_walker(Node *node, void *context)
 		return false;
 	}
 	return raw_expression_tree_walker(node, insertinto_or_locking_clause_walker, ctx);
+}
+
+/*
+ * Return true if this SELECT has non immutable function calls.
+ */
+bool pool_has_non_immutable_function_call(Node *node)
+{
+	SelectContext	ctx;
+
+	if (!IsA(node, SelectStmt))
+		return false;
+
+ 	ctx.has_non_immutable_function_call = false;
+
+	raw_expression_tree_walker(node, non_immutable_function_call_walker, &ctx);
+
+	pool_debug("pool_has_non_immutable_function_call: %d", ctx.has_non_immutable_function_call);
+	return ctx.has_non_immutable_function_call;
+}
+
+/*
+ * Walker function to find non immutable function call.
+ */
+static bool non_immutable_function_call_walker(Node *node, void *context)
+{
+	SelectContext	*ctx = (SelectContext *) context;
+
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, FuncCall))
+	{
+		FuncCall *fcall = (FuncCall *)node;
+		char *fname;
+		int length = list_length(fcall->funcname);
+
+		if (length > 0)
+		{
+			if (length == 1)	/* no schema qualification? */
+			{
+				fname = strVal(linitial(fcall->funcname));
+			}
+			else
+			{
+				fname = strVal(lsecond(fcall->funcname));		/* with schema qualification */
+			}
+
+			pool_debug("non_immutable_function_call_walker: function name: %s", fname);
+
+			/* Check system catalog if the function is immutable */
+			if (is_immutable_function(fname) == false)
+			{
+				/* Non immutable function call found */
+				ctx->has_non_immutable_function_call = true;
+				return false;
+			}
+		}
+	}
+	else if (IsA(node, TypeCast))
+	{
+		/* CURRENT_DATE, CURRENT_TIME, LOCALTIMESTAMP, LOCALTIME etc.*/
+		TypeCast	*tc = (TypeCast *) node;
+
+		if ((isSystemType((Node *) tc->typeName, "date") ||
+			 isSystemType((Node *) tc->typeName, "timestamp") ||
+			 isSystemType((Node *) tc->typeName, "timestamptz") ||
+			 isSystemType((Node *) tc->typeName, "time") ||
+			 isSystemType((Node *) tc->typeName, "timetz")))
+		{
+			ctx->has_non_immutable_function_call = true;
+			return false;
+		}
+	}
+
+	return raw_expression_tree_walker(node, non_immutable_function_call_walker, context);
+}
+
+/*
+ * Check if the function is stable.
+ */
+static bool is_immutable_function(char *fname)
+{
+/*
+ * Query to know if the function is IMMUTABLE
+ */
+#define IS_STABLE_FUNCTION_QUERY "SELECT count(*) FROM pg_catalog.pg_proc AS p WHERE p.proname = '%s' AND p.provolatile = 'i'"
+	bool result;
+	static POOL_RELCACHE *relcache;
+	POOL_CONNECTION_POOL *backend;
+
+	backend = pool_get_session_context()->backend;
+
+	if (!relcache)
+	{
+		relcache = pool_create_relcache(128, IS_STABLE_FUNCTION_QUERY,
+										int_register_func, int_unregister_func,
+										false);
+		if (relcache == NULL)
+		{
+			pool_error("is_immutable_function: pool_create_relcache error");
+			return false;
+		}
+		pool_debug("is_immutable_function: relcache created");
+	}
+
+	result = pool_search_relcache(relcache, backend, fname)==0?0:1;
+	pool_debug("is_immutable_function: search result:%d", result);
+	return result;
+}
+
+/*
+ * Convert table_name(possibly including schema name) to oid
+ */
+int pool_table_name_to_oid(char *table_name)
+{
+/*
+ * Query to convert table name to oid
+ */
+/*
+ * We use standard regclass() instead of pgpool_regclass().  Since we
+ * don't want to cache oid 0 (table not found).  If table is not
+ * found, pool_search_relcache() do not cache the result.
+ */
+#define TABLE_TO_OID_QUERY "SELECT regclass('%s')::oid"
+
+	int oid = 0;
+	static POOL_RELCACHE *relcache;
+	POOL_CONNECTION_POOL *backend;
+
+	if (table_name == NULL)
+	{
+		return oid;
+	}
+
+	backend = pool_get_session_context()->backend;
+
+	/*
+	 * If relcache does not exist, create it.
+	 */
+	if (!relcache)
+	{
+		relcache = pool_create_relcache(128, TABLE_TO_OID_QUERY,
+										int_register_func, int_unregister_func,
+										true);
+		if (relcache == NULL)
+		{
+			pool_error("table_name_to_oid: pool_create_relcache error");
+			return oid;
+		}
+	}
+
+	/*
+	 * Search relcache.
+	 */
+	oid = (int)(intptr_t)pool_search_relcache(relcache, backend, table_name);
+	return oid;
+}
+
+/*
+ * Extract table oids from SELECT statement. Returns number of oids.
+ * Oids are returned as an int array. The contents of oid array are
+ * discarded by next call to this function.
+ */
+int pool_extract_table_oids_from_select_stmt(Node *node, int **oids)
+{
+	static int myoids[POOL_MAX_SELECT_OIDS];
+	SelectContext	ctx;
+
+	if (!IsA(node, SelectStmt))
+		return 0;
+
+	ctx.num_oids = 0;
+	ctx.table_oids = myoids;
+
+	raw_expression_tree_walker(node, select_table_walker, &ctx);
+
+	*oids = myoids;
+
+	return ctx.num_oids;
+}
+
+/*
+ * Walker function to extract table oids from SELECT statement.
+ */
+static bool
+select_table_walker(Node *node, void *context)
+{
+	SelectContext	*ctx = (SelectContext *) context;
+
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, RangeVar))
+	{
+		RangeVar *rgv = (RangeVar *)node;
+		char *table;
+		int oid;
+
+		table = nodeToString(rgv);
+
+		pool_debug("select_table_walker: table name: %s", table);
+
+		oid = pool_table_name_to_oid(table);
+		if (oid)
+		{
+			if (ctx->num_oids >= POOL_MAX_SELECT_OIDS)
+			{
+				pool_error("select_table_walker: number of oids exceeds");
+				return false;
+			}
+			ctx->table_oids[ctx->num_oids++] = oid;
+		}
+	}
+	return raw_expression_tree_walker(node, select_table_walker, context);
+}
+
+
+/*
+ * makeRangeVarFromNameList
+ *		Utility routine to convert a qualified-name list into RangeVar form.
+ *
+ * Copied from backend/catalog/namespace.c
+ */
+RangeVar *
+makeRangeVarFromNameList(List *names)
+{
+	RangeVar   *rel = makeRangeVar(NULL, NULL, -1);
+
+	switch (list_length(names))
+	{
+		case 1:
+			rel->relname = strVal(linitial(names));
+			break;
+		case 2:
+			rel->schemaname = strVal(linitial(names));
+			rel->relname = strVal(lsecond(names));
+			break;
+		case 3:
+			rel->catalogname = strVal(linitial(names));
+			rel->schemaname = strVal(lsecond(names));
+			rel->relname = strVal(lthird(names));
+			break;
+		default:
+			pool_error("improper relation name (too many dotted names)");
+			break;
+	}
+
+	return rel;
 }

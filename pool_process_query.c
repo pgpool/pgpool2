@@ -52,6 +52,7 @@
 #include "pool_session_context.h"
 #include "pool_query_context.h"
 #include "pool_select_walker.h"
+#include "pool_memqcache.h"
 
 #ifndef FD_SETSIZE
 #define FD_SETSIZE 512
@@ -109,6 +110,12 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 	frontend->no_forward = reset_request;
 	qcnt = 0;
 	state = 0;
+
+	/* Try to connect memcached */
+	if (pool_config->memory_cache_enabled && !pool_is_shmem_cache())
+	{
+		memcached_connect();
+	}
 
 	for (;;)
 	{
@@ -1164,6 +1171,15 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	if (pool_config->enable_query_cache && SYSDB_STATUS == CON_UP)
 	{
 		query_cache_register(kind, frontend, backend->info->database, p1, len1);
+	}
+
+	/* save the received result to buffer for each kind */
+	if (pool_config->memory_cache_enabled)
+	{
+		if (pool_is_cache_safe())
+		{
+				memqcache_register(kind, frontend, p1, len1);
+		}
 	}
 
 	/* error response? */

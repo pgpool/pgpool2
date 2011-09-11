@@ -416,7 +416,6 @@ client_idle_limit_in_recovery = 0
 #------------------------------------------------------------------------------
 # OTHERS
 #------------------------------------------------------------------------------
-
 relcache_expire = 0
                                    # Life time of relation cache in seconds.
                                    # 0 means no cache expiration(the default).
@@ -433,3 +432,35 @@ relcache_expire = 0
                                    # For this purpose, cache_expiration
                                    # controls the life time of the cache.
 
+#------------------------------------------------------------------------------
+# MEMORY CACHE
+#------------------------------------------------------------------------------
+# If true, use the memory cache functionality, false by default
+memory_cache_enabled = false
+
+# Cache store method. either shmem(shared memory) or Memcached. shmem by default
+memqcache_method = 'shmem'
+
+# Memcached host name. Mandatory if memqcache_method=memcached.
+# Default to localhost
+memqcache_memcached_host = 'localhost'
+
+# Memcached port number. Mondatory if memqcache_method=memcached.
+# Default to 11211
+memqcache_memcached_port=11211
+
+# Total memory size in bytes for storing memory cache. Mandatory if memqcache_method=shmem.
+# 128MB by default.
+memqcache_total_size=134217728
+
+# Memory cache entry life time specified in seconds. 60 by default.
+memqcache_expire=60
+
+# Maximum SELECT result size in bytes.
+memqcache_maxcache=1024
+
+# Cache block size in bytes. 1MB by default
+memqcache_cache_block_size=1048576
+
+# Temporary work directory to record table oids
+memqcache_oiddir = '/var/log/pgpool/oiddir'

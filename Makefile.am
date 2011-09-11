@@ -16,6 +16,7 @@ pgpool_SOURCES = pool.h pool_type.h version.h pgpool.conf.sample \
 	pool_proto2.c pool_proto_modules.c pool_proto_modules.h \
 	pool_lobj.c pool_lobj.h \
 	pool_process_context.c pool_process_context.h \
+    pool_memqcache.c pool_memqcache.h \
 	pool_session_context.c pool_session_context.h \
 	pool_query_context.c pool_query_context.h \
 	pool_worker_child.c \

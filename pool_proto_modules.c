@@ -55,6 +55,8 @@
 #include "pool_session_context.h"
 #include "pool_query_context.h"
 #include "pool_lobj.h"
+#include "pool_select_walker.h"
+#include "pool_memqcache.h"
 
 char *copy_table = NULL;  /* copy table name */
 char *copy_schema = NULL;  /* copy table name */
@@ -146,6 +148,25 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	{
 		pool_error("SimpleQuery: pool_init_query_context failed");
 		return POOL_END;
+	}
+
+	/*
+	 * Fetch memory cache if possible
+	 */
+	if (pool_config->memory_cache_enabled && pool_is_likely_select(contents))
+	{
+		bool foundp;
+
+		status = pool_fetch_from_memory_cache(frontend,backend, contents, &foundp);
+
+		if (status != POOL_CONTINUE)
+			return status;
+
+		if (foundp)
+		{
+			pool_set_skip_reading_from_backends();
+			return POOL_CONTINUE;
+		}
 	}
 
 	/* parse SQL string */
@@ -274,6 +295,36 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			pool_query_context_destroy(query_context);
 			pool_set_skip_reading_from_backends();
 			return POOL_CONTINUE;
+		}
+
+		if (pool_config->memory_cache_enabled)
+		{
+			int num_oids;
+			int *oids;
+			int i;
+
+			/* Check if the SELECT can be cached */
+			if (pool_is_allow_to_cache(query_context->parse_tree,
+									   query_context->original_query))
+			{
+				pool_set_cache_safe();
+			}
+			else
+			{
+				pool_unset_cache_safe();
+			}
+
+			/* Extract table oid if the query is DML */
+			num_oids = pool_extract_table_oids(node, &oids);
+
+			if (num_oids > 0)
+			{
+				/* Save to oid buffer */
+				for (i=0;i<num_oids;i++)
+				{
+					pool_add_dml_table_oid(oids[i]);
+				}
+			}
 		}
 
 		/*
@@ -539,6 +590,28 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	query = msg->query_context->original_query;
 	pool_debug("Execute: query: %s", query);
 	strncpy(query_string_buffer, query, sizeof(query_string_buffer));
+
+	pool_debug("Execute: query string = <%s>", query);
+
+	/*
+	 * Fetch memory cache if possible
+	 */
+	if (pool_config->memory_cache_enabled && pool_is_likely_select(query))
+	{
+		bool foundp;
+		POOL_STATUS status;
+
+		status = pool_fetch_from_memory_cache(frontend,backend, query, &foundp);
+
+		if (status != POOL_CONTINUE)
+			return status;
+
+		if (foundp)
+		{
+			pool_set_skip_reading_from_backends();
+			return POOL_CONTINUE;
+		}
+	}
 
 	/*
 	 * Decide where to send query
@@ -1405,7 +1478,14 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 					pool_set_writing_transaction();
 				}
 			}
+
+			/* Memory cache enabled? */
+			if (pool_config->memory_cache_enabled)
+			{
+				pool_handle_query_cache(backend, query, node, state);
+			}
 		}
+
 		pool_unset_query_in_progress();
 	}
 
@@ -1632,6 +1712,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 				pool_unset_transaction_isolation();
 			}
 		}
+
 	}
 
 	status = pool_read(MASTER(backend), &len, sizeof(len));
@@ -1788,6 +1869,15 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	if (pool_config->enable_query_cache && SYSDB_STATUS == CON_UP)
 	{
 		query_cache_register('C', frontend, backend->info->database, p1, len1);
+	}
+
+	/* Save the received result to buffer for each kind */
+	if (pool_config->memory_cache_enabled)
+	{
+		if (pool_is_cache_safe())
+		{
+			memqcache_register('C', frontend, p1, len1);
+		}
 	}
 
 	free(p1);
@@ -2188,6 +2278,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 
 			case 'Z':	/* ReadyForQuery */
 				status = ReadyForQuery(frontend, backend, 1);
+				pool_debug("ProcessBackendResponse: Ready For Query");
 				break;
 
 			case '1':	/* ParseComplete */
