@@ -85,6 +85,21 @@ static POOL_TEMP_QUERY_CACHE *pool_get_current_cache(void);
 static char *pool_get_current_cache_buffer(size_t *len);
 static void pool_check_and_discard_cache_buffer(int num_oids, int *oids);
 
+static void pool_set_memqcache_blocks(int num_blocks);
+static int pool_get_memqcache_blocks(void);
+static void *pool_memory_cache_address(void);
+static void *pool_fsmm_address(void);
+static void pool_update_fsmm(POOL_CACHE_BLOCKID blockid, size_t free_space);
+static POOL_CACHE_BLOCKID pool_get_block(size_t free_space);
+static POOL_CACHE_ITEM_HEADER *pool_cache_item_header(POOL_CACHEID *cacheid);
+static int pool_init_cache_block(POOL_CACHE_BLOCKID blockid);
+static int pool_delete_item_shmem_cache(POOL_CACHEID *cacheid);
+static char *block_address(int blockid);
+static POOL_CACHE_ITEM_POINTER *item_pointer(char *block, int i);
+static POOL_CACHE_ITEM_HEADER *item_header(char *block, int i);
+static POOL_CACHE_BLOCKID pool_reuse_block(void);
+static void dump_shmem_cache(POOL_CACHE_BLOCKID blockid);
+
 /*
  * Connect Memcached
  */
@@ -484,45 +499,6 @@ static int delete_cache_on_memcached(const char *key)
 #endif
 }
 
-
-/* -*-pgsql-c-*- */
-/*
- * $Header$
- * 
- * pgpool: a language independent connection pool server for PostgreSQL 
- * written by Tatsuo Ishii
- *
- * Copyright (c) 2003-2011	PgPool Global Development Group
- *
- * Permission to use, copy, modify, and distribute this software and
- * its documentation for any purpose and without fee is hereby
- * granted, provided that the above copyright notice appear in all
- * copies and that both that copyright notice and this permission
- * notice appear in supporting documentation, and that the name of the
- * author not be used in advertising or publicity pertaining to
- * distribution of the software without specific, written prior
- * permission. The author makes no representations about the
- * suitability of this software for any purpose.  It is provided "as
- * is" without express or implied warranty.
- *
- *---------------------------------------------------------------------
- * pool_memqcache2.c: modules corresponding to memory cache invalidation
- *---------------------------------------------------------------------
- */
-static void pool_set_memqcache_blocks(int num_blocks);
-static int pool_get_memqcache_blocks(void);
-static void *pool_memory_cache_address(void);
-static void *pool_fsmm_address(void);
-static void pool_update_fsmm(POOL_CACHE_BLOCKID blockid, size_t free_space);
-static POOL_CACHE_BLOCKID pool_get_block(size_t free_space);
-static POOL_CACHE_ITEM_HEADER *pool_cache_item_header(POOL_CACHEID *cacheid);
-static int pool_init_cache_block(POOL_CACHE_BLOCKID blockid);
-static int pool_delete_item_shmem_cache(POOL_CACHEID *cacheid);
-static char *block_address(int blockid);
-static POOL_CACHE_ITEM_POINTER *item_pointer(char *block, int i);
-static POOL_CACHE_ITEM_HEADER *item_header(char *block, int i);
-static POOL_CACHE_BLOCKID pool_reuse_block(void);
-static void dump_shmem_cache(POOL_CACHE_BLOCKID blockid);
 
 /*
  * Fetch SELECT data from cache if possible.
