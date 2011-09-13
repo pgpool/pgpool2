@@ -489,7 +489,7 @@ int connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry)
 			if ((errno == EINTR && retry) || errno == EAGAIN)
 				continue;
 
-			pool_error("connect_unix_domain_socket_by_port: connect() failed: %s", strerror(errno));
+			pool_error("connect_unix_domain_socket_by_port: connect() failed to %s: %s", addr.sun_path, strerror(errno));
 			close(fd);
 			return -1;
 		}
