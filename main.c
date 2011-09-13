@@ -544,15 +544,20 @@ int main(int argc, char **argv)
 		size_t size;
 		
 		size = pool_shared_memory_cache_size();
-		if (size < 0)
+		if (size == 0)
 		{
 			pool_error("pool_shared_memory_cache_size error");
 			myexit(1);
 		}
-		pool_init_memory_cache(size);
+
+		if (pool_init_memory_cache(size) < 0)
+		{
+			pool_error("pool_shared_memory_cache_size error");
+			myexit(1);
+		}
 
 		size = pool_shared_memory_fsmm_size();
-		if (size < 0)
+		if (size == 0)
 		{
 			pool_error("pool_shared_memory_fsmm_size error");
 			myexit(1);
@@ -1886,23 +1891,15 @@ static RETSIGTYPE health_check_timer_handler(int sig)
 
 
 /*
- * check if we can connect to the backend
+ * Check if we can connect to the backend
  * returns 0 for ok. otherwise returns backend id + 1
  */
 int health_check(void)
 {
-	int fd;
-	int sts;
+	POOL_CONNECTION_POOL_SLOT *slot;
+	BackendInfo *bkinfo;
 	static bool is_first = true;
 	static char *dbname;
-
-	/* V2 startup packet */
-	typedef struct {
-		int len;		/* startup packet length */
-		StartupPacket_v2 sp;
-	} MySp;
-	MySp mysp;
-	char kind;
 	int i;
 
 	/* Do not execute health check during recovery */
@@ -1916,79 +1913,26 @@ int health_check(void)
 	if (is_first)
 		dbname = "postgres";
 
-	memset(&mysp, 0, sizeof(mysp));
-	mysp.len = htonl(296);
-	mysp.sp.protoVersion = htonl(PROTO_MAJOR_V2 << 16);
-	strcpy(mysp.sp.database, dbname);
-	strncpy(mysp.sp.user, pool_config->health_check_user, sizeof(mysp.sp.user) - 1);
-	*mysp.sp.options = '\0';
-	*mysp.sp.unused = '\0';
-	*mysp.sp.tty = '\0';
-
 	for (i=0;i<pool_config->backend_desc->num_backends;i++)
 	{
-		pool_debug("health_check: %d th DB node status: %d", i, BACKEND_INFO(i).backend_status);
+		bkinfo = pool_get_node_info(i);
 
-		if (BACKEND_INFO(i).backend_status == CON_UNUSED ||
-			BACKEND_INFO(i).backend_status == CON_DOWN)
+		pool_debug("health_check: %d th DB node status: %d", i, bkinfo->backend_status);
+
+		if (bkinfo->backend_status == CON_UNUSED ||
+			bkinfo->backend_status == CON_DOWN)
 			continue;
 
-		if (*(BACKEND_INFO(i).backend_hostname) == '/')
-			fd = connect_unix_domain_socket(i, FALSE);
-		else
-			fd = connect_inet_domain_socket(i, FALSE);
-
-		if (fd < 0)
-		{
-			pool_error("health check failed. %d th host %s at port %d is down",
-					   i,
-					   BACKEND_INFO(i).backend_hostname,
-					   BACKEND_INFO(i).backend_port);
-
-			return i+1;
-		}
-
-		if (write(fd, &mysp, sizeof(mysp)) < 0)
-		{
-			pool_error("health check failed during write. host %s at port %d is down. reason: %s",
-					   BACKEND_INFO(i).backend_hostname,
-					   BACKEND_INFO(i).backend_port,
-					   strerror(errno));
-			close(fd);
-			return i+1;
-		}
-
-		/*
-		 * Don't bother to be blocked by read(2). It will be
-		 * interrupted by ALRAM anyway.
-		 */
-		sts = read(fd, &kind, 1);
-		if (sts == -1)
-		{
-			pool_error("health check failed during read. host %s at port %d is down. reason: %s",
-					   BACKEND_INFO(i).backend_hostname,
-					   BACKEND_INFO(i).backend_port,
-					   strerror(errno));
-			close(fd);
-			return i+1;
-		}
-		else if (sts == 0)
-		{
-			pool_error("health check failed. EOF encountered. host %s at port %d is down",
-					   BACKEND_INFO(i).backend_hostname,
-					   BACKEND_INFO(i).backend_port);
-			close(fd);
-			return i+1;
-		}
+		slot = make_persistent_db_connection(bkinfo->backend_hostname, 
+											 bkinfo->backend_port,
+											 dbname,
+											 pool_config->health_check_user,
+											 pool_config->health_check_password);
 
 		if (is_first)
 			is_first = false;
 
-		/*
-		 * If a backend raised a FATAL error(max connections error or
-		 * starting up error?), do not send a Terminate message.
-		 */
-		if ((kind != 'E') && (write(fd, "X", 1) < 0))
+		if (!slot)
 		{
 			if (!strcmp(dbname, "postgres"))
 			{
@@ -1998,16 +1942,19 @@ int health_check(void)
 				dbname = "template1";
 				goto Retry;
 			}
-
-			pool_error("health check failed during write. host %s at port %d is down. reason: %s. Perhaps wrong health check user?",
-					   BACKEND_INFO(i).backend_hostname,
-					   BACKEND_INFO(i).backend_port,
-					   strerror(errno));
-			close(fd);
-			return i+1;
+			else
+			{
+				pool_error("health check failed. %d th host %s at port %d is down",
+						   i,
+						   bkinfo->backend_hostname,
+						   bkinfo->backend_port);
+				return i+1;
+			}
 		}
-
-		close(fd);
+		else
+		{
+			discard_persistent_db_connection(slot);
+		}
 	}
 
 	return 0;

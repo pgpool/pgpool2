@@ -154,9 +154,9 @@ extern void pool_add_dml_table_oid(int oid);
 extern void pool_discard_oid_maps(void);
 extern bool pool_is_shmem_cache(void);
 extern size_t pool_shared_memory_cache_size(void);
-extern void pool_init_memory_cache(size_t size);
+extern int pool_init_memory_cache(size_t size);
 extern size_t pool_shared_memory_fsmm_size(void);
-extern void pool_init_fsmm(size_t size);
+extern int pool_init_fsmm(size_t size);
 extern void pool_allocate_fsmm_clock_hand(void);
 
 extern POOL_QUERY_CACHE_ARRAY *pool_create_query_cache_array(void);

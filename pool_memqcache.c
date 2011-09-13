@@ -1234,7 +1234,7 @@ size_t pool_shared_memory_cache_size(void)
 	{
 		pool_error("pool_shared_memory_cache_size: wrong memqcache_total_size %d or memqcache_cache_block_size %d",
 				   pool_config->memqcache_total_size, pool_config->memqcache_cache_block_size);
-		return -1;
+		return 0;
 	}
 
 	/* Remenber # of blocks */
@@ -1245,17 +1245,19 @@ size_t pool_shared_memory_cache_size(void)
 
 /*
  * Aquire and initialize shared memory cache. This should be called
- * only once from pgpool main process at the proces staring up time.
+ * only once from pgpool main process at the process staring up time.
  */
 static void *shmem;
-void pool_init_memory_cache(size_t size)
+int pool_init_memory_cache(size_t size)
 {
 	pool_debug("pool_init_memory_cache: request size:%zd", size);
 	shmem = pool_shared_memory_create(size);
 	if (shmem == NULL)
 	{
 		pool_error("pool_init_memory_cache: failed to allocate shared memory cache. request size: %zd", size);
+		return -1;
 	}
+	return 0;
 }
 
 /*
@@ -1307,7 +1309,7 @@ size_t pool_shared_memory_fsmm_size(void)
  * main process at the proces staring up time.
  */
 static void *fsmm;
-void pool_init_fsmm(size_t size)
+int pool_init_fsmm(size_t size)
 {
 	int maxblock = 	pool_get_memqcache_blocks();
 	int encode_value;
@@ -1316,10 +1318,12 @@ void pool_init_fsmm(size_t size)
 	if (fsmm == NULL)
 	{
 		pool_error("pool_init_fsmm: failed to allocate shared memory cache. request size: %zd", size);
+		return -1;
 	}
 
 	encode_value = POOL_MAX_FREE_SPACE/POOL_FSMM_RATIO;
 	memset(fsmm, encode_value, maxblock);
+	return 0;
 }
 
 /*
