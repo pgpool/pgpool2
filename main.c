@@ -566,6 +566,12 @@ int main(int argc, char **argv)
 
 		pool_allocate_fsmm_clock_hand();
 
+		if (pool_init_memqcache_stats() < 0)
+		{
+			pool_error("pool_init_memqcache_stats error");
+			myexit(1);
+		}
+
 		pool_discard_oid_maps();
 	}
 

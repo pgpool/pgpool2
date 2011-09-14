@@ -1396,7 +1396,7 @@ void child_exit(int code)
 			pool_close(pool_system_db_connection()->con);
 	}
 
-	if (pool_config->memory_cache_enabled && !pool_is_shmem_cache)
+	if (pool_config->memory_cache_enabled && !pool_is_shmem_cache())
 	{
 		memcached_disconnect();
 	}

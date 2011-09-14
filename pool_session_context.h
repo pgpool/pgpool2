@@ -147,7 +147,8 @@ typedef struct {
 	/*
 	 * Query cache management area
 	 */
-	POOL_QUERY_CACHE_ARRAY *query_cache_array;
+	POOL_QUERY_CACHE_ARRAY *query_cache_array;	/* pending SELECT results */
+	long long int num_selects;	/* number of successfull SELECTs in this transaction */
 } POOL_SESSION_CONTEXT;
 
 extern void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);

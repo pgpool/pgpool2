@@ -165,6 +165,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		if (foundp)
 		{
 			pool_set_skip_reading_from_backends();
+			pool_stats_count_up_num_cache_hits();
 			return POOL_CONTINUE;
 		}
 	}

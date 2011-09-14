@@ -55,12 +55,16 @@ memcached_st *memc;
 #endif
 
 static char* encode_key(const char *s, char *buf, POOL_CONNECTION_POOL *backend);
+#ifdef DEBU
 static void dump_cache_data(const char *data, size_t len);
+#endif
 static int pool_commit_cache(POOL_CONNECTION_POOL *backend, char *query, char *data, size_t datalen, int num_oids, int *oids);
 static int pool_fetch_cache(POOL_CONNECTION_POOL *backend, const char *query, char **buf, size_t *len);
 static int send_cached_messages(POOL_CONNECTION *frontend, const char *qcache, int qcachelen);
 static void send_message(POOL_CONNECTION *conn, char kind, int len, const char *data);
+#ifdef USE_MEMCACHED
 static int delete_cache_on_memcached(const char *key);
+#endif
 static int pool_get_dml_table_oid(int **oid);
 static void pool_discard_dml_table_oid(void);
 static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlink);
@@ -98,7 +102,9 @@ static char *block_address(int blockid);
 static POOL_CACHE_ITEM_POINTER *item_pointer(char *block, int i);
 static POOL_CACHE_ITEM_HEADER *item_header(char *block, int i);
 static POOL_CACHE_BLOCKID pool_reuse_block(void);
+#ifdef SHMEMCACHE_DEBUG
 static void dump_shmem_cache(POOL_CACHE_BLOCKID blockid);
+#endif
 
 /*
  * Connect to Memcached
@@ -110,13 +116,13 @@ int memcached_connect (void)
 #ifdef USE_MEMCACHED
 	memcached_server_st *servers;
 	memcached_return rc;
-#endif
 
 	/* Already connected? */
 	if (memc)
 	{
 		return 0;
 	}
+#endif
 
 	memqcache_memcached_host = pool_config->memqcache_memcached_host;
 	memqcache_memcached_port = pool_config->memqcache_memcached_port;
@@ -150,12 +156,11 @@ int memcached_connect (void)
  */
 void memcached_disconnect (void)
 {
+#ifdef USE_MEMCACHED
 	if (!memc)
 	{
 		return;
 	}
-
-#ifdef USE_MEMCACHED
 	memcached_free(memc);
 #else
 	pool_error("memcached_disconnect: memcached support is not enabled");
@@ -395,6 +400,7 @@ static char* encode_key(const char *s, char *buf, POOL_CONNECTION_POOL *backend)
 	return buf;
 }
 
+#ifdef DEBUG
 /*
  * dump cache data
  */
@@ -426,6 +432,7 @@ static void dump_cache_data(const char *data, size_t len)
 		fprintf(stderr, "\n");
 	}
 }
+#endif
 
 /*
  * send cached messages
@@ -494,18 +501,18 @@ static void send_message(POOL_CONNECTION *conn, char kind, int len, const char *
 	pool_write(conn, (void *)data, len-sizeof(len));
 }
 
+#ifdef USE_MEMCACHED
 /*
  * delete query cache on memcached
  */
 static int delete_cache_on_memcached(const char *key)
 {
-#ifdef USE_MEMCACHED
+
 	memcached_return rc;
-#endif
 
 	pool_debug("delete_cache_on_memcached: key: %s", key);
 
-#ifdef USE_MEMCACHED
+
 	/* delete cache data on memcached. key is md5 hash query */
     rc= memcached_delete(memc, key, 32, (time_t)0);
 
@@ -516,12 +523,9 @@ static int delete_cache_on_memcached(const char *key)
         return 0;
     }
     return 1;
-#else
-	pool_error("delete_cache_on_memcached: memecahced support is not enabled");
-	return 0;
-#endif
-}
 
+}
+#endif
 
 /*
  * Fetch SELECT data from cache if possible.
@@ -1181,6 +1185,7 @@ static void pool_reset_memqcache_buffer(void)
 		session_context->query_cache_array = pool_create_query_cache_array();
 	}
 	pool_discard_dml_table_oid();
+	pool_tmp_stats_reset_num_selects();
 }
 
 /*
@@ -2007,6 +2012,7 @@ static POOL_CACHE_ITEM_HEADER *item_header(char *block, int i)
 	return (POOL_CACHE_ITEM_HEADER *)(block + cip->offset);
 }
 
+#ifdef SHMEMCACHE_DEBUG
 /*
  * Dump shmem cache block
  */
@@ -2030,6 +2036,7 @@ static void dump_shmem_cache(POOL_CACHE_BLOCKID blockid)
 				blockid, i, sizeof(*cih), cih->timestamp, cih->total_length);
 	}
 }
+#endif
 
 /*
  * SELECT query result array modules
@@ -2450,6 +2457,11 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 				free(cache_buffer);
 			}
 			pool_shmem_unlock();
+
+			/* Count up SELECT stats */
+			pool_stats_count_up_num_selects(1);
+
+			/* Reset temp buffer */
 			pool_reset_memqcache_buffer();
 		}
 		else
@@ -2459,6 +2471,9 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 			/* In transaction. Keep to temp query cache array */
 			pool_add_oids_temp_query_cache(cache, num_oids, oids);
 			pool_add_query_cache_array(session_context->query_cache_array, cache);
+
+			/* Count up temporary SELECT stats */
+			pool_tmp_stats_count_up_num_selects();
 		}
 	}
 	else if (is_rollback_query(node))	/* Rollback? */
@@ -2503,39 +2518,164 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 			free(cache_buffer);
 		}
 		pool_shmem_unlock();
+
+		/* Count up number of SELECT stats */
+		pool_stats_count_up_num_selects(pool_tmp_stats_get_num_selects());
+
 		pool_reset_memqcache_buffer();
 	}
 	else		/* Non cache safe queries */
 	{
-		/*
-		 * DML/DCL/DDL/non cache safe SELECT case
-		 */
-
-		/* Extract table oids from buffer */
-		num_oids = pool_get_dml_table_oid(&oids);
-		if (num_oids > 0)
+		/* Non cachable SELECT */
+		if (IsA(node, SelectStmt))
 		{
-			/*
-			 * If we are not inside a transaction, we can
-			 * immediately invalidate query cache.
-			 */
 			if (state == 'I')
 			{
-				pool_shmem_lock();
-				pool_invalidate_query_cache(num_oids, oids, true);
-				pool_shmem_unlock();
+				/* Count up SELECT stats */
+				pool_stats_count_up_num_selects(1);
 				pool_reset_memqcache_buffer();
 			}
 			else
 			{
+				/* Count up temporary SELECT stats */
+				pool_tmp_stats_count_up_num_selects();
+			}
+		}
+		else
+		{
+			/*
+			 * DML/DCL/DDL case
+			 */
+
+			/* Extract table oids from buffer */
+			num_oids = pool_get_dml_table_oid(&oids);
+			if (num_oids > 0)
+			{
 				/*
-				 * If we are inside a transaction, we
-				 * cannot invalidate query cache
-				 * yet. However we can clear cache buffer,
-				 * if DML/DDL modifies the TABLE which SELECT uses.
+				 * If we are not inside a transaction, we can
+				 * immediately invalidate query cache.
 				 */
-				pool_check_and_discard_cache_buffer(num_oids, oids);
-			} 
+				if (state == 'I')
+				{
+					pool_shmem_lock();
+					pool_invalidate_query_cache(num_oids, oids, true);
+					pool_shmem_unlock();
+					pool_reset_memqcache_buffer();
+				}
+				else
+				{
+					/*
+					 * If we are inside a transaction, we
+					 * cannot invalidate query cache
+					 * yet. However we can clear cache buffer,
+					 * if DML/DDL modifies the TABLE which SELECT uses.
+					 */
+					pool_check_and_discard_cache_buffer(num_oids, oids);
+				} 
+			}
 		}
 	}
+}
+
+/*
+ * Create and initialize query cache stats
+ */
+static POOL_QUERY_CACHE_STATS *stats;
+int pool_init_memqcache_stats(void)
+{
+	stats = pool_shared_memory_create(sizeof(POOL_QUERY_CACHE_STATS));
+	if (stats == NULL)
+	{
+		pool_error("pool_init_meqcache_stats: failed to allocate shared memory stats. request size: %zd",
+				   sizeof(POOL_QUERY_CACHE_STATS));
+			return -1;
+	}
+
+	pool_reset_memqcache_stats();
+
+	return 0;
+}
+
+/*
+ * Returns copy of stats area. The copy is in static area and will be
+ * overwritten by next call to this function.
+ */
+POOL_QUERY_CACHE_STATS *pool_get_memqcache_stats(void)
+{
+	static POOL_QUERY_CACHE_STATS mystats;
+
+	pool_semaphore_lock(QUERY_CACHE_STATS_SEM);
+	memcpy(&mystats, stats, sizeof(POOL_QUERY_CACHE_STATS));
+	pool_semaphore_unlock(QUERY_CACHE_STATS_SEM);
+
+	return &mystats;
+}
+
+/*
+ * Reset query cache stats. Caller must lock QUERY_CACHE_STATS_SEM if
+ * neccessary.
+ */
+void pool_reset_memqcache_stats(void)
+{
+	memset(stats, 0, sizeof(POOL_QUERY_CACHE_STATS));
+	stats->start_time = time(NULL);
+}
+
+/*
+ * Count up number of successfull SELECTs and returns the number.
+ * QUERY_CACHE_STATS_SEM lock is aquired in this function.
+ */
+long long int pool_stats_count_up_num_selects(long long int num)
+{
+	pool_semaphore_lock(QUERY_CACHE_STATS_SEM);
+	stats->num_selects += num;
+	pool_semaphore_unlock(QUERY_CACHE_STATS_SEM);
+	return stats->num_selects;
+}
+
+/*
+ * Count up number of successfull SELECTs in temporary area and returns
+ * the number.
+ */
+long long int pool_tmp_stats_count_up_num_selects(void)
+{
+	POOL_SESSION_CONTEXT *session_context;
+
+	session_context = pool_get_session_context();
+	session_context->num_selects++;
+	return 	session_context->num_selects;
+}
+
+/*
+ * Return number of successfull SELECTs in temporary area.
+ */
+long long int pool_tmp_stats_get_num_selects(void)
+{
+	POOL_SESSION_CONTEXT *session_context;
+
+	session_context = pool_get_session_context();
+	return session_context->num_selects;
+}
+
+/*
+ * Reset number of successfull SELECTs in temporary area.
+ */
+void pool_tmp_stats_reset_num_selects(void)
+{
+	POOL_SESSION_CONTEXT *session_context;
+
+	session_context = pool_get_session_context();
+	session_context->num_selects = 0;
+}
+
+/*
+ * Count up number of SELECTs extracted from cache returns the number.
+ * QUERY_CACHE_STATS_SEM lock is aquired in this function.
+ */
+long long int pool_stats_count_up_num_cache_hits(void)
+{
+	pool_semaphore_lock(QUERY_CACHE_STATS_SEM);
+	stats->num_cache_hits++;
+	pool_semaphore_unlock(QUERY_CACHE_STATS_SEM);
+	return stats->num_cache_hits;
 }

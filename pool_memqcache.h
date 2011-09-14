@@ -114,12 +114,18 @@ extern int memcached_connect(void);
 extern void memcached_disconnect(void);
 extern void memqcache_register(char kind, POOL_CONNECTION *frontend, char *data, int data_len);
 
+/*
+ * Cache key
+ */
 typedef union
 {
 	POOL_CACHEID		cacheid;		/* cache key (shmem configuration) */
 	char hashkey[32];	/* cache key (memcached configuration) */
 } POOL_CACHEKEY;
 
+/*
+ * Internal buffer structure
+ */
 typedef struct
 {
 	size_t bufsize;		/* buffer size */
@@ -127,6 +133,9 @@ typedef struct
 	char *buf;	/* buffer */
 } POOL_INTERNAL_BUFFER;
 
+/*
+ * Temporary query cache buffer
+ */
 typedef struct
 {
 	bool is_exceeded;		/* true if data size exceeds memqcache_maxcache */
@@ -137,12 +146,26 @@ typedef struct
 	POOL_INTERNAL_BUFFER *oids;
 } POOL_TEMP_QUERY_CACHE;
 
+/*
+ * Temporary query cache buffer array
+ */
 typedef struct
 {
 	int num_caches;
 	int array_size;
 	POOL_TEMP_QUERY_CACHE *caches[1];	/* actual data continues... */
 } POOL_QUERY_CACHE_ARRAY;
+
+/*
+ * Query cache statistics structure. This area must be placed on shared
+ * memory and protected by QUERY_CACHE_STATS_SEM.
+ */
+typedef struct
+{
+	time_t		start_time;		/* start time when the statistics begins */
+	long long int num_selects;	/* number of successfull SELECTs */
+	long long int num_cache_hits;		/* number of SELECTs extracted from cache */
+} POOL_QUERY_CACHE_STATS;
 
 extern POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 												POOL_CONNECTION_POOL *backend,
@@ -165,5 +188,14 @@ extern void pool_discard_query_cache_array(POOL_QUERY_CACHE_ARRAY *cache_array);
 
 extern POOL_TEMP_QUERY_CACHE *pool_create_temp_query_cache(char *query);
 extern void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *node, char state);
+
+extern int pool_init_memqcache_stats(void);
+extern POOL_QUERY_CACHE_STATS *pool_get_memqcache_stats(void);
+extern void pool_reset_memqcache_stats(void);
+extern long long int pool_stats_count_up_num_selects(long long int num);
+extern long long int pool_stats_count_up_num_cache_hits(void);
+extern long long int pool_tmp_stats_count_up_num_selects(void);
+extern long long int pool_tmp_stats_get_num_selects(void);
+extern void pool_tmp_stats_reset_num_selects(void);
 
 #endif /* POOL_MEMQCACHE_H */

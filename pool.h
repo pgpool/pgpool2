@@ -329,10 +329,11 @@ extern BACKEND_STATUS* my_backend_status[];
 #define NO_LOAD_BALANCE "/*NO LOAD BALANCE*/"
 #define NO_LOAD_BALANCE_COMMENT_SZ (sizeof(NO_LOAD_BALANCE)-1)
 
-#define MAX_NUM_SEMAPHORES		3
+#define MAX_NUM_SEMAPHORES		4
 #define CONN_COUNTER_SEM 0
 #define REQUEST_INFO_SEM 1
 #define SHM_CACHE_SEM	2
+#define QUERY_CACHE_STATS_SEM	3
 
 /*
  * number specified when semaphore is locked/unlocked

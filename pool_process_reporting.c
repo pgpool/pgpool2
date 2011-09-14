@@ -579,6 +579,21 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].desc, "Tempory work directory to record table oids", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	strncpy(status[i].name, "memqcache_stats_start_time", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", ctime(&pool_get_memqcache_stats()->start_time));
+	strncpy(status[i].desc, "Start time of query cache stats", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "memqcache_no_cache_hits", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%lld", pool_get_memqcache_stats()->num_selects);
+	strncpy(status[i].desc, "Number of SELECTs not hitting query cache", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "memqcache_cache_hits", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%lld", pool_get_memqcache_stats()->num_cache_hits);
+	strncpy(status[i].desc, "Number of SELECTs hitting query cache", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	for (j = 0; j < NUM_BACKENDS; j++)
 	{
 		if (BACKEND_INFO(j).backend_port == 0)
