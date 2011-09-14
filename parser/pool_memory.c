@@ -232,7 +232,6 @@ POOL_MEMORY_POOL *pool_memory_create(int blocksize)
 		pool_error("pool_memory_create: malloc failed: %s", strerror(errno));
 		child_exit(1);
 	}
-	pool_debug("memory_trace: allocate: %x", pool);
 	pool->blocks = NULL;
 	pool->largeblocks = NULL;
 	pool->blocksize = blocksize;
@@ -252,8 +251,6 @@ POOL_MEMORY_POOL *pool_memory_create(int blocksize)
 void pool_memory_delete(POOL_MEMORY_POOL *pool_memory, int reuse)
 {
 	POOL_BLOCK *block, *ptr;
-
-	pool_debug("memory_trace: delete: %x", pool_memory);
 
 	/* Reuse the first memory block */
 	if (reuse && pool_memory->blocks)
