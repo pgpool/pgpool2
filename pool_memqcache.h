@@ -111,6 +111,7 @@ typedef struct {
 #define MAX_KEY 256
 
 extern int memcached_connect(void);
+extern void memcached_disconnect(void);
 extern void memqcache_register(char kind, POOL_CONNECTION *frontend, char *data, int data_len);
 
 typedef union

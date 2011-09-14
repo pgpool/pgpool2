@@ -101,7 +101,7 @@ static POOL_CACHE_BLOCKID pool_reuse_block(void);
 static void dump_shmem_cache(POOL_CACHE_BLOCKID blockid);
 
 /*
- * Connect Memcached
+ * Connect to Memcached
  */
 int memcached_connect (void)
 {
@@ -111,6 +111,12 @@ int memcached_connect (void)
 	memcached_server_st *servers;
 	memcached_return rc;
 #endif
+
+	/* Already connected? */
+	if (memc)
+	{
+		return 0;
+	}
 
 	memqcache_memcached_host = pool_config->memqcache_memcached_host;
 	memqcache_memcached_port = pool_config->memqcache_memcached_port;
@@ -136,7 +142,24 @@ int memcached_connect (void)
 	pool_error("memcached_connect: memcached support is not enabled");
 	return -1;
 #endif
-	return 1;
+	return 0;
+}
+
+/*
+ * Disconnect to Memcached
+ */
+void memcached_disconnect (void)
+{
+	if (!memc)
+	{
+		return;
+	}
+
+#ifdef USE_MEMCACHED
+	memcached_free(memc);
+#else
+	pool_error("memcached_disconnect: memcached support is not enabled");
+#endif
 }
 
 /*
