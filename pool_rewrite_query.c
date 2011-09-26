@@ -676,7 +676,7 @@ POOL_STATUS pool_do_parallel_query(POOL_CONNECTION *frontend,
 			/* change query length */
 			*len = strlen(*string)+1;
 		}
-		pool_debug("SimpleQuery: loadbalance_query =%s",*string);
+		pool_debug("pool_do_parallel_query: load balancing query: %s",*string);
 	}
 	else if (r_query->is_parallel)
 	{
