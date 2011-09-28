@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2008	PgPool Global Development Group
+ * Copyright (c) 2003-2011	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -967,7 +967,7 @@ user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len)
 	char packet_password[MAX_USER_PASSWD_LEN+1];
 	char encrypt_buf[(MD5_PASSWD_LEN+1)*2];
 	char file_username[MAX_USER_PASSWD_LEN+1];
-	char file_password[MD5_PASSWD_LEN+1];
+	char file_password[MAX_USER_PASSWD_LEN+1];
 	char *index = NULL;
 	static char line[MAX_FILE_LINE_LEN+1];
 	int i, len;
