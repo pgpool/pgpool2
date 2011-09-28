@@ -1009,7 +1009,7 @@ user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len)
 	char packet_password[MAX_USER_PASSWD_LEN+1];
 	char encrypt_buf[(MD5_PASSWD_LEN+1)*2];
 	char file_username[MAX_USER_PASSWD_LEN+1];
-	char file_password[MD5_PASSWD_LEN+1];
+	char file_password[MAX_USER_PASSWD_LEN+1];
 	char *index = NULL;
 	static char line[MAX_FILE_LINE_LEN+1];
 	int i, len;
