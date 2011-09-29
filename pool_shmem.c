@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Portions Copyright (c) 2003-2009, PgPool Global Development Group
+ * Portions Copyright (c) 2003-2011, PgPool Global Development Group
  * Portions Copyright (c) 2003-2004, PostgreSQL Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
@@ -36,7 +36,7 @@
 #endif
 
 
-#define MAX_ON_EXITS 20
+#define MAX_ON_EXITS 64
 
 static struct ONEXIT
 {
