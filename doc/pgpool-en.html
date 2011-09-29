@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Thu Aug 11 11:05:54 JST 2011
+Last modified: Thu Sep 29 17:27:50 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -3276,6 +3276,7 @@ recovery.
 			 authentication (HBA)</a> for more details.</li>
 		<li>Please note that the user name and password must be
 			 identical to those registered in PostgreSQL.</li>
+		<li>After changing md5 password(in both pool_passwd and PostgreSQL of course), you need to execute "pgpool reload" or restart pgpool(if your pgoool is 3.1 or before).</li>
 	   </ol>
 
 	   </li>
