@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Thu Sep 29 17:27:50 JST 2011
+Last modified: Mon Oct  3 15:14:24 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2277,6 +2277,14 @@ Total memory size in bytes for storing memory cache. Mandatory if memqcache_meth
 </p>
 <pre>
 memqcache_total_size = 10240
+</pre>
+
+<p>
+Total number of cache entries. Mandatory if memqcache_method=shmem.
+A cache entry consumes 48 bytes.
+</p>
+<pre>
+memqcache_max_num_cache = 100
 </pre>
 
 <p>

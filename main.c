@@ -417,6 +417,8 @@ int main(int argc, char **argv)
 
 	/*
 	 * Locate pool_passwd
+	 * The default file name "pool_passwd" can be changed by setting
+	 * pgpool.conf's "pool_passwd" directive.
 	 */
 	if (strcmp("", pool_config->pool_passwd))
 	{
@@ -567,6 +569,8 @@ int main(int argc, char **argv)
 		pool_allocate_fsmm_clock_hand();
 
 		pool_discard_oid_maps();
+
+		pool_hash_init(pool_config->memqcache_max_num_cache);
 	}
 
 	if (pool_config->memory_cache_enabled)

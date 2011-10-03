@@ -190,6 +190,7 @@ typedef struct {
 	char *memqcache_memcached_host;   /* Memcached host name. Mandatory if memqcache_method=memcached. */
 	int memqcache_memcached_port;   /* Memcached port number. Mondatory if memqcache_method=memcached. */
 	int memqcache_total_size;   /* Total memory size in bytes for storing memory cache. Mandatory if memqcache_method=shmem. */
+	int memqcache_max_num_cache;   /* Total number of cache entries. Mandatory if memqcache_method=shmem. */
 	int memqcache_expire;   /* Memory cache entry life time specified in seconds. 60 by default. */
 	int memqcache_maxcache;   /* Maximum SELECT result size in bytes. */
 	int memqcache_cache_block_size;   /* Cache block size in bytes. 8192 by default */

@@ -29,6 +29,8 @@
 #include "pool.h"
 #include <sys/time.h>
 
+#define POOL_MD5_HASHKEYLEN		32		/* MD5 hash key length */
+
 /*
  * On memory query cache on shmem is devided into fixed length "cache
  * block". Each block is assigned a "cache block id", which is
@@ -60,7 +62,7 @@ typedef struct {
 } POOL_CACHE_BLOCK_HEADER;
 
 typedef struct {
-	char query_hash[32];
+	char query_hash[POOL_MD5_HASHKEYLEN];
 } POOL_QUERY_HASH;
 
 #define POOL_ITEM_USED	0x0001		/* is this item used? */
@@ -120,7 +122,7 @@ extern void memqcache_register(char kind, POOL_CONNECTION *frontend, char *data,
 typedef union
 {
 	POOL_CACHEID		cacheid;		/* cache key (shmem configuration) */
-	char hashkey[32];	/* cache key (memcached configuration) */
+	char hashkey[POOL_MD5_HASHKEYLEN];	/* cache key (memcached configuration) */
 } POOL_CACHEKEY;
 
 /*
@@ -166,6 +168,41 @@ typedef struct
 	long long int num_selects;	/* number of successfull SELECTs */
 	long long int num_cache_hits;		/* number of SELECTs extracted from cache */
 } POOL_QUERY_CACHE_STATS;
+
+/*--------------------------------------------------------------------------------
+ * On shared memory hsah table implementation
+ *--------------------------------------------------------------------------------
+ */
+
+/* Hash element */
+typedef struct POOL_HASH_ELEMENT
+{
+	struct POOL_HASH_ELEMENT *next;		/* link to next entry */
+	POOL_QUERY_HASH		hashkey;		/* MD5 hash key */
+	POOL_CACHEID		cacheid;		/* logical location of this cache element */
+} POOL_HASH_ELEMENT;
+
+typedef uint32 POOL_HASH_KEY;
+
+/* Hash header element */
+typedef struct
+{
+	POOL_HASH_KEY hashkey;		/* hash key */
+	POOL_HASH_ELEMENT *element;	/* hash element */
+} POOL_HEADER_ELEMENT;
+
+/* Hash header */
+typedef struct
+{
+	long nhash;			/* number of hash keys (power of 2) */
+	uint32 mask;		/* mask for hash function */
+	POOL_HEADER_ELEMENT elements[1];	/* actual hash elements follows */
+} POOL_HASH_HEADER;
+
+extern int pool_hash_init(int nelements);
+extern POOL_CACHEID *pool_hash_search(POOL_QUERY_HASH *key);
+extern int pool_hash_delete(POOL_QUERY_HASH *key);
+extern uint32 hash_any(unsigned char *k, int keylen);
 
 extern POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 												POOL_CONNECTION_POOL *backend,

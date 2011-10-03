@@ -454,6 +454,10 @@ memqcache_memcached_port=11211
 # 128MB by default.
 memqcache_total_size=134217728
 
+# Total number of cache entries. Mandatory if memqcache_method=shmem.
+# a cache entry consumes 48 bytes.
+memqcache_max_num_cache=131072
+
 # Memory cache entry life time specified in seconds. 60 by default.
 memqcache_expire=60
 

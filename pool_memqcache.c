@@ -55,7 +55,7 @@ memcached_st *memc;
 #endif
 
 static char* encode_key(const char *s, char *buf, POOL_CONNECTION_POOL *backend);
-#ifdef DEBU
+#ifdef DEBUG
 static void dump_cache_data(const char *data, size_t len);
 #endif
 static int pool_commit_cache(POOL_CONNECTION_POOL *backend, char *query, char *data, size_t datalen, int num_oids, int *oids);
@@ -97,6 +97,7 @@ static void pool_update_fsmm(POOL_CACHE_BLOCKID blockid, size_t free_space);
 static POOL_CACHE_BLOCKID pool_get_block(size_t free_space);
 static POOL_CACHE_ITEM_HEADER *pool_cache_item_header(POOL_CACHEID *cacheid);
 static int pool_init_cache_block(POOL_CACHE_BLOCKID blockid);
+static void pool_wipe_out_cache_block(POOL_CACHE_BLOCKID blockid);
 static int pool_delete_item_shmem_cache(POOL_CACHEID *cacheid);
 static char *block_address(int blockid);
 static POOL_CACHE_ITEM_POINTER *item_pointer(char *block, int i);
@@ -105,6 +106,11 @@ static POOL_CACHE_BLOCKID pool_reuse_block(void);
 #ifdef SHMEMCACHE_DEBUG
 static void dump_shmem_cache(POOL_CACHE_BLOCKID blockid);
 #endif
+
+static int pool_hash_insert(POOL_QUERY_HASH *key, POOL_CACHEID *cacheid, bool update);
+static uint32 create_hash_key(POOL_QUERY_HASH *key);
+static POOL_HASH_ELEMENT *get_new_hash_element(void);
+static void put_back_hash_element(POOL_HASH_ELEMENT *element);
 
 /*
  * Connect to Memcached
@@ -209,7 +215,7 @@ static int pool_commit_cache(POOL_CONNECTION_POOL *backend, char *query, char *d
 	}
 
 	pool_debug("pool_commit_cache: Query=%s", query);
-#ifdef SHMEMCACHE_DEBUG
+#ifdef DEBUG
 	dump_cache_data(data, datalen);
 #endif
 
@@ -344,7 +350,7 @@ static int pool_fetch_cache(POOL_CONNECTION_POOL *backend, const char *query, ch
 	}
 
 	pool_debug("pool_fetch_cache: query=%s len:%zd", query, *len);
-#ifdef SHMEMCACHE_DEBUG
+#ifdef DEBUG
 	dump_cache_data(p, *len);
 #endif
 
@@ -1473,7 +1479,6 @@ static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char
 	POOL_CACHE_BLOCKID blockid;
 	POOL_CACHE_BLOCK_HEADER *bh;
 	POOL_CACHE_ITEM_POINTER *cip;
-	POOL_CACHE_ITEM_POINTER *cip2;
 
 	POOL_CACHE_ITEM ci;
 	POOL_CACHE_ITEM_POINTER cip_body;
@@ -1481,12 +1486,15 @@ static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char
 
 	int request_size;
 	char *p;
-	int i, j;
+	int i;
 	char *src;
 	char *dst;
-	int movelen;
-	int num_deleted = 0;
-	char *flags;
+	int num_deleted;
+	char *dcip;
+	char *dci;
+	bool need_pack;
+	char *work_buffer;
+	int index;
 
 	if (query_hash == NULL)
 	{
@@ -1525,90 +1533,106 @@ static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char
 	pool_init_cache_block(blockid);
 
 	/* Get block address on shmem */
-	p = pool_memory_cache_address() + blockid *	pool_config->memqcache_cache_block_size;
+	p = block_address(blockid);
 	bh = (POOL_CACHE_BLOCK_HEADER *)p;
 
 	/*
 	 * Create contiguous free space. We assume that item bodies are
 	 * ordered from bottom to top of the block, and corresponding item
 	 * pointers are ordered from the youngest to the oldest in the
-	 * begging of the block.
+	 * beggining of the block.
 	 */
 
-	/* First, pack cache items */
+	/*
+	 * Optimization. If there's no deleted items, we don't need to
+	 * pack it to create contiguous free space.
+	 */
+	need_pack = false;
 	for (i=0;i<bh->num_items;i++)
 	{
-		int total_length;
-
 		cip = item_pointer(p, i);
 
 		if (POOL_ITEM_DELETED & cip->flags)		/* Deleted item? */
 		{
-			/* Pack the unsed space */
-			src = p + item_pointer(p, bh->num_items-1)->offset;
-			movelen = cip->offset - item_pointer(p, bh->num_items-1)->offset;
-			total_length = item_header(p, i)->total_length;
-			dst = src + total_length;
-			pool_debug("i:%d src:%lu dst:%lu movelen:%d", i, (unsigned long int)src, (unsigned long int)dst, movelen);
-			memmove(dst, src, movelen);
-
-			for (j=i+1;j<bh->num_items;j++)
-			{
-				/* Rewrite pointer to cache item */
-				cip2 = item_pointer(p, j);
-				cip2->offset += total_length;
-			}
+			need_pack = true;
+			pool_debug("pool_add_item_shmem_cache: start creating contiguous space");
+			break;
 		}
 	}
 
-	/* Second, pack cache item pointers */
-	flags = malloc(bh->num_items);
-	if (flags == NULL)
+	if (need_pack)
 	{
-		pool_error("pool_add_item_shmem_cache: malloc failed");
-		return NULL;
-	}
-
-	for (i=0;i<bh->num_items;i++)
-	{
-		flags[i] = item_pointer(p, i)->flags;
-	}
-
-	cip = item_pointer(p, 0);
-
-	for (i=0;i<bh->num_items;i++)
-	{
-		if (POOL_ITEM_DELETED & flags[i])		/* Deleted item? */
+		/*
+		 * Pack and create contiguous free space.
+		 */
+		dcip = calloc(1, pool_config->memqcache_cache_block_size);
+		if (!dcip)
 		{
-			num_deleted++;
-
-			movelen = sizeof(POOL_CACHE_ITEM_POINTER)*(bh->num_items - i -1);
-
-			if (movelen <= 0)
-				break;
-
-			src = (char *)(cip+1);
-			dst = (char *)cip;
-			memmove(dst, src, movelen);
-			pool_debug("i:%d src:%lu dst:%lu movelen:%d num_deleted:%d", i, (unsigned long int)src, (unsigned long int)dst, movelen, num_deleted);
+			pool_error("pool_add_item_shmem_cache: calloc failed");
+			return NULL;
 		}
-		movelen -= sizeof(POOL_CACHE_ITEM_POINTER);
-		cip++;
-	}
 
-	free(flags);
+		work_buffer = dcip;
+		dci = dcip + pool_config->memqcache_cache_block_size;
+		num_deleted = 0;
+		index = 0;
 
-	/* All items deleted? */
-	if (num_deleted > 0 && num_deleted == bh->num_items)
-	{
-		pool_debug("all items deleted num_deleted:%d", num_deleted);
-		bh->flags = 0;
-		pool_init_cache_block(blockid);
-		pool_update_fsmm(blockid, POOL_MAX_FREE_SPACE);
-	}
-	else
-	{
-		bh->num_items -= num_deleted;
+		for (i=0;i<bh->num_items;i++)
+		{
+			int total_length;
+			POOL_CACHEID cid;
+
+			cip = item_pointer(p, i);
+
+			if (POOL_ITEM_DELETED & cip->flags)		/* Deleted item? */
+			{
+				num_deleted++;
+				continue;
+			}
+
+			/* Copy item body */
+			src = p + cip->offset;
+			total_length = item_header(p, i)->total_length;
+			dst = dci - total_length;
+			cip->offset = dst - work_buffer;
+			memcpy(dst, src, total_length);
+
+			dci -= total_length;
+
+			/* Copy item pointer */
+			src = (char *)cip;
+			dst = (char *)item_pointer(dcip, index);
+			memcpy(dst, src, sizeof(POOL_CACHE_ITEM_POINTER));
+
+			/* Update hash index */
+			cid.blockid = blockid;
+			cid.itemid = index;
+			pool_hash_insert(&cip->query_hash, &cid, true);
+			pool_debug("pool_add_item_shmem_cache: item cid updated. old:%d %d new:%d %d",
+					   blockid, i, blockid, index);
+
+			index++;
+		}
+	
+		/* All items deleted? */
+		if (num_deleted > 0 && num_deleted == bh->num_items)
+		{
+			pool_debug("pool_add_item_shmem_cache: all items deleted num_deleted:%d", num_deleted);
+			bh->flags = 0;
+			pool_init_cache_block(blockid);
+			pool_update_fsmm(blockid, POOL_MAX_FREE_SPACE);
+		}
+		else
+		{
+			/* Update number of items */
+			bh->num_items -= num_deleted;
+
+			/* Copy back the packed block except block header */
+			memcpy(p+sizeof(POOL_CACHE_BLOCK_HEADER),
+				   work_buffer+sizeof(POOL_CACHE_BLOCK_HEADER),
+				   pool_config->memqcache_cache_block_size-sizeof(POOL_CACHE_BLOCK_HEADER));
+		}
+		free(work_buffer);
 	}
 
 	/*
@@ -1667,11 +1691,14 @@ static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char
 
 	cacheid.blockid = blockid;
 	cacheid.itemid = bh->num_items;
-	pool_debug("pool_add_item_shmem_cache: blockid: %d itemid:%d", 
+	pool_debug("pool_add_item_shmem_cache: new item inseted. blockid: %d itemid:%d", 
 			   cacheid.blockid, cacheid.itemid);
 
 	/* Add up number of items */
 	bh->num_items++;
+
+	/* Update hash table */
+	pool_hash_insert(query_hash, &cacheid, false);
 
 #ifdef SHMEMCACHE_DEBUG
 	dump_shmem_cache(blockid);
@@ -1732,60 +1759,32 @@ static char *pool_get_item_shmem_cache(POOL_QUERY_HASH *query_hash, int *size, i
 static POOL_CACHEID *pool_find_item_on_shmem_cache(POOL_QUERY_HASH *query_hash)
 {
 	static POOL_CACHEID cacheid;
-	POOL_CACHE_BLOCK_HEADER *bh;
-	POOL_CACHE_ITEM_POINTER *cip;
+	POOL_CACHEID *c;
 	POOL_CACHE_ITEM_HEADER *cih;
 	time_t now;
-	int maxblock = pool_get_memqcache_blocks();
-	char *p;
-	int i, j;
 
-	/* XXX Sequential scan. Need hash table for faster access */
-	for (i=0;i<maxblock;i++)
+	c = pool_hash_search(query_hash);
+	if (!c)
 	{
-		p = block_address(i);
-		bh = (POOL_CACHE_BLOCK_HEADER *)p;
-		if (!(bh->flags & POOL_BLOCK_USED))
-		{
-			/* Unused block */
-			continue;
-		}
-
-		for (j=0;j<bh->num_items;j++)
-		{
-			cip = item_pointer(p, j);
-
-			if (!(cip->flags & POOL_ITEM_USED) || cip->flags & POOL_ITEM_DELETED)
-			{
-				/* Item not used */
-				continue;
-			}
-
-			if (!memcmp(cip->query_hash.query_hash, query_hash, sizeof(POOL_QUERY_HASH)))
-			{
-				cih = item_header(p, j);
-				pool_debug("pool_find_item_on_shmem_cache: found in cache blockid:%d itemid:%d",
-						   i, j);
-				/* Check cache expiration */
-				now = time(NULL);
-				if (now > (cih->timestamp + pool_config->memqcache_expire))
-				{
-					pool_debug("pool_find_item_on_shmem_cache: cache expired");
-					pool_debug("pool_find_item_on_shmem_cache: now: %ld timestamp: %ld",
-							   now, cih->timestamp + pool_config->memqcache_expire);
-					cacheid.blockid = i;
-					cacheid.itemid = j;
-					pool_delete_item_shmem_cache(&cacheid);
-					return NULL;
-				}
-
-				cacheid.blockid = i;
-				cacheid.itemid = j;
-				return &cacheid;
-			}
-		}
+		return NULL;
 	}
-	return NULL;
+
+	cih = item_header(block_address(c->blockid), c->itemid);
+
+	/* Check cache expiration */
+	now = time(NULL);
+	if (now > (cih->timestamp + pool_config->memqcache_expire))
+	{
+		pool_debug("pool_find_item_on_shmem_cache: cache expired");
+		pool_debug("pool_find_item_on_shmem_cache: now: %ld timestamp: %ld",
+				   now, cih->timestamp + pool_config->memqcache_expire);
+		pool_delete_item_shmem_cache(c);
+		return NULL;
+	}
+
+	cacheid.blockid = c->blockid;
+	cacheid.itemid = c->itemid;
+	return &cacheid;
 }
 
 /*
@@ -1799,6 +1798,7 @@ static int pool_delete_item_shmem_cache(POOL_CACHEID *cacheid)
 	POOL_CACHE_BLOCK_HEADER *bh;
 	POOL_CACHE_ITEM_POINTER *cip;
 	POOL_CACHE_ITEM_HEADER *cih;
+	POOL_QUERY_HASH key;
 	int size;
 
 	pool_debug("pool_delete_item_shmem_cache: cacheid:%d itemid:%d",
@@ -1845,6 +1845,9 @@ static int pool_delete_item_shmem_cache(POOL_CACHEID *cacheid)
 		return -1;
 	}
 
+	/* Save cache key */
+	memcpy(&key, &cip->query_hash, sizeof(POOL_QUERY_HASH));
+
 	cih = pool_cache_item_header(cacheid);
 	size = cih->total_length + sizeof(POOL_CACHE_ITEM_POINTER);
 
@@ -1866,6 +1869,9 @@ static int pool_delete_item_shmem_cache(POOL_CACHEID *cacheid)
 		bh->flags = 0;
 		pool_init_cache_block(cacheid->blockid);
 	}
+
+	/* Remove hash index */
+	pool_hash_delete(&key);
 
 	/* Update FSMM */
 	pool_update_fsmm(cacheid->blockid, bh->free_bytes);
@@ -1897,17 +1903,12 @@ static POOL_CACHE_ITEM_HEADER *pool_cache_item_header(POOL_CACHEID *cacheid)
 }
 
 /*
- * Initialize the block if neccessary. If no live items are
- * remained, we also initialize the block. If there's contiguous
- * deleted items, we turn them into free space as well.
+ * Initialize specified block.
  */
 static int pool_init_cache_block(POOL_CACHE_BLOCKID blockid)
 {
 	char *p;
 	POOL_CACHE_BLOCK_HEADER *bh;
-	POOL_CACHE_ITEM_POINTER *cip;
-	int i;
-	int contiguous;
 
 	if (blockid < 0 || blockid >= pool_get_memqcache_blocks())
 	{
@@ -1915,7 +1916,7 @@ static int pool_init_cache_block(POOL_CACHE_BLOCKID blockid)
 		return -1;
 	}
 
-	p = pool_memory_cache_address() + blockid *	pool_config->memqcache_cache_block_size;
+	p = block_address(blockid);
 	bh = (POOL_CACHE_BLOCK_HEADER *)p;
 
 	/* Is this block used? */
@@ -1926,40 +1927,39 @@ static int pool_init_cache_block(POOL_CACHE_BLOCKID blockid)
 		bh->free_bytes = pool_config->memqcache_cache_block_size -
 			sizeof(POOL_CACHE_BLOCK_HEADER);
 	}
+	return 0;
+}
 
-	/* Find contiguous deleted items and turn them into free space */
-	contiguous = -1;
+/*
+ * Delete all items in the block.
+ */
+static void pool_wipe_out_cache_block(POOL_CACHE_BLOCKID blockid)
+{
+	char *p;
+	POOL_CACHE_BLOCK_HEADER *bh;
+	POOL_CACHE_ITEM_POINTER *cip;
+	POOL_CACHEID cacheid;
+	int i;
+
+	/* Get block address on shmem */
+	p = block_address(blockid);
+	bh = (POOL_CACHE_BLOCK_HEADER *)p;
+	cacheid.blockid = blockid;
+
 	for (i=0;i<bh->num_items;i++)
 	{
-		cip = (POOL_CACHE_ITEM_POINTER *)(p + sizeof(POOL_CACHE_BLOCK_HEADER) +
-										  sizeof(POOL_CACHE_ITEM_POINTER) * i);
+		cip = item_pointer(p, i);
 
-		if (cip->flags & POOL_ITEM_USED)
+		if ((POOL_ITEM_DELETED & cip->flags) == 0)		/* Not deleted item? */
 		{
-			contiguous = -1;
-		}
-		else
-		{
-			if (contiguous == -1)
-			{
-				contiguous = i;
-			}
+			cacheid.itemid = i;
+			pool_delete_item_shmem_cache(&cacheid);
 		}
 	}
 
-	if (contiguous >= 0)
-	{
-		/* There are contiguous deleted items starting from
-		 * "contiguous".
-		 */
-		for (i=contiguous;i<bh->num_items;i++)
-		{
-			cip = (POOL_CACHE_ITEM_POINTER *)(p + sizeof(POOL_CACHE_BLOCK_HEADER) +
-											  sizeof(POOL_CACHE_ITEM_POINTER) * i);
-			memset(cip, 0, sizeof(POOL_CACHE_ITEM_POINTER));
-		}
-	}
-	return 0;
+	bh->flags = 0;
+	pool_init_cache_block(blockid);
+	pool_update_fsmm(blockid, POOL_MAX_FREE_SPACE);
 }
 
 /*
@@ -2678,4 +2678,295 @@ long long int pool_stats_count_up_num_cache_hits(void)
 	stats->num_cache_hits++;
 	pool_semaphore_unlock(QUERY_CACHE_STATS_SEM);
 	return stats->num_cache_hits;
+}
+
+/*
+ * On shared memory hash table implementation.  We use sub part of md5
+ * hash key as hash function.  The experiment has shown that has_any()
+ * of PostgreSQL is a little bit better than the method using part of
+ * md5 hash value, but it seems adding some cpu cycles to call
+ * hash_any() is not worth the trouble.
+ */
+
+static POOL_HASH_HEADER *hash_header;
+static POOL_HASH_ELEMENT *hash_elements;
+static POOL_HASH_ELEMENT hash_free_body;
+static volatile POOL_HASH_ELEMENT *hash_free;
+
+/*
+ * Initialize hash table on shared memory "nelements" is max number of
+ * hash keys. The actual number of hash key is rounded up to power of
+ * 2.
+ */
+int pool_hash_init(int nelements)
+{
+	size_t size;
+	int nelements2;		/* number of rounded up hash keys */
+	int shift;
+	uint32 mask;
+	POOL_HASH_HEADER hh;
+	int i;
+
+	if (nelements <= 0)
+	{
+		pool_error("pool_hash_init: invalid nelements:%d", nelements);
+		return -1;
+	}
+
+	/* Round up to power of 2 */
+	shift = 32;
+	nelements2 = 1;
+	do
+	{
+		nelements2 <<= 1;
+		shift--;
+	} while (nelements2 < nelements);
+
+	mask = ~0;
+	mask >>= shift;
+	size = (char *)&hh.elements - (char *)&hh + sizeof(POOL_HEADER_ELEMENT)*nelements2;
+	hash_header = pool_shared_memory_create(size);
+	if (hash_header == NULL)
+	{
+		pool_error("pool_hash_init: failed to allocate shared memory cache for hash header. request size: %zd", size);
+		return -1;
+	}
+	hash_header->nhash = nelements2;
+    hash_header->mask = mask;
+
+	size = sizeof(POOL_HASH_ELEMENT)*nelements2;
+	hash_elements = pool_shared_memory_create(size);
+	if (hash_elements == NULL)
+	{
+		pool_error("pool_hash_init: failed to allocate shared memory cache for free list. request size: %zd", size);
+		return -1;
+	}
+
+	for (i=0;i<nelements2-1;i++)
+	{
+		hash_elements[i].next = &hash_elements[i+1];
+	}
+	hash_elements[nelements2-1].next = NULL;
+	hash_free = &hash_free_body;
+	hash_free->next = hash_elements;
+
+	return 0;
+}
+
+/*
+ * Search cacheid by MD5 hash key string
+ * If found, returns cache id, otherwise NULL.
+ */
+POOL_CACHEID *pool_hash_search(POOL_QUERY_HASH *key)
+{
+	volatile POOL_HASH_ELEMENT *element;
+
+	uint32 hash_key = create_hash_key(key);
+
+	if (hash_key >= hash_header->nhash)
+	{
+		pool_error("pool_hash_search: invalid hash key: %uld nhash: %ld",
+				   hash_key, hash_header->nhash);
+		return NULL;
+	}
+
+	{
+		char md5[POOL_MD5_HASHKEYLEN+1];
+		memcpy(md5, key->query_hash, POOL_MD5_HASHKEYLEN);
+		md5[POOL_MD5_HASHKEYLEN] = '\0';
+		pool_log("pool_hash_search: hash_key:%d md5:%s", hash_key, md5);
+	}
+
+	element = hash_header->elements[hash_key].element;
+	while (element)
+	{
+		if (memcmp((const void *)element->hashkey.query_hash,
+				   (const void *)key->query_hash, sizeof(key->query_hash)) == 0)
+		{
+			return (POOL_CACHEID *)&element->cacheid;
+		}
+		element = element->next;
+	}
+	return NULL;
+}
+
+/*
+ * Insert MD5 key and associated cache id into shmem hash table.  If
+ * "update" is true, replace cacheid associated with the MD5 key,
+ * rather than throw an error.
+ */
+static int pool_hash_insert(POOL_QUERY_HASH *key, POOL_CACHEID *cacheid, bool update)
+{
+	volatile POOL_HASH_ELEMENT *element;
+	volatile POOL_HASH_ELEMENT *new_element;
+	volatile POOL_HASH_ELEMENT **insertion_point;
+
+	uint32 hash_key = create_hash_key(key);
+
+	if (hash_key >= hash_header->nhash)
+	{
+		pool_error("pool_hash_insert: invalid hash key: %uld nhash: %ld",
+				   hash_key, hash_header->nhash);
+		return -1;
+	}
+
+	{
+		char md5[POOL_MD5_HASHKEYLEN+1];
+		memcpy(md5, key->query_hash, POOL_MD5_HASHKEYLEN);
+		md5[POOL_MD5_HASHKEYLEN] = '\0';
+		pool_log("pool_hash_insert: hash_key:%d md5:%s block:%d item:%d", hash_key, md5, cacheid->blockid, cacheid->itemid);
+	}
+
+	/*
+	 * Look for insert location
+	 */
+	insertion_point = (volatile POOL_HASH_ELEMENT **)&(hash_header->elements[hash_key].element);
+	element = hash_header->elements[hash_key].element;
+
+	while (element)
+	{
+		if (memcmp((const void *)element->hashkey.query_hash,
+				   (const void *)key->query_hash, sizeof(key->query_hash)) == 0)
+		{
+			/* Hash key found. If "update" is false, just throw an error. */
+			char md5[POOL_MD5_HASHKEYLEN+1];
+
+			if (!update)
+			{
+				memcpy(md5, key->query_hash, POOL_MD5_HASHKEYLEN);
+				md5[POOL_MD5_HASHKEYLEN] = '\0';
+				pool_error("pool_hash_insert: the key:==%s== already exists", md5);
+				return -1;
+			}
+			else
+			{
+				/* Update cache id */
+				memcpy((void *)&element->cacheid, cacheid, sizeof(POOL_CACHEID));
+				return 0;
+			}
+		}
+		*insertion_point = (volatile POOL_HASH_ELEMENT *)&element->next;
+		element = element->next;
+	}
+
+	/*
+	 * Get new element from free list
+	 */
+	new_element = get_new_hash_element();
+	if (!new_element)
+	{
+		pool_error("pool_hash_insert: could not get new element");
+		return -1;
+	}
+
+	*insertion_point = new_element;
+	new_element->next = NULL;
+	memcpy((void *)new_element->hashkey.query_hash, key->query_hash, POOL_MD5_HASHKEYLEN);
+	memcpy((void *)&new_element->cacheid, cacheid, sizeof(POOL_CACHEID));
+
+	return 0;
+}
+
+/*
+ * Delete MD5 key and associated cache id into shmem hash table.
+ */
+int pool_hash_delete(POOL_QUERY_HASH *key)
+{
+	POOL_HASH_ELEMENT *element;
+	POOL_HASH_ELEMENT **delete_point;
+	bool found;
+
+	uint32 hash_key = create_hash_key(key);
+
+	if (hash_key >= hash_header->nhash)
+	{
+		pool_error("pool_hash_delete: invalid hash key: %uld nhash: %ld",
+				   hash_key, hash_header->nhash);
+		return -1;
+	}
+
+	/*
+	 * Look for delete location
+	 */
+	found = false;
+	delete_point = &(hash_header->elements[hash_key].element);
+	element = hash_header->elements[hash_key].element;
+
+	while (element)
+	{
+		if (memcmp(element->hashkey.query_hash, key->query_hash, sizeof(key->query_hash)) == 0)
+		{
+			found = true;
+			break;
+		}
+		delete_point = &element->next;
+		element = element->next;
+	}
+
+	if (!found)
+	{
+		char md5[POOL_MD5_HASHKEYLEN+1];
+
+		memcpy(md5, key->query_hash, POOL_MD5_HASHKEYLEN);
+		md5[POOL_MD5_HASHKEYLEN] = '\0';
+		pool_error("pool_hash_delete: the key:==%s== not found", md5);
+		return -1;
+	}
+
+	/*
+	 * Put back the element to free list
+	 */
+	*delete_point = element->next;
+	put_back_hash_element(element);
+
+	return 0;
+}
+
+/* 
+ * Calculate 32bit binary hash key(i.e. location in hash header) from MD5
+ * string. We use top most 8 characters of MD5 string for calculation.
+*/
+static uint32 create_hash_key(POOL_QUERY_HASH *key)
+{
+#define POOL_HASH_NCHARS 8
+
+	char md5[POOL_HASH_NCHARS+1];
+	uint32 mask;
+
+	memcpy(md5, key->query_hash, POOL_HASH_NCHARS);
+	md5[POOL_HASH_NCHARS] = '\0';
+	mask = strtoul(md5, NULL, 16);
+	mask &= hash_header->mask;
+	return mask;
+}
+
+/*
+ * Get new free hash element from free list.
+ */
+static POOL_HASH_ELEMENT *get_new_hash_element(void)
+{
+	POOL_HASH_ELEMENT *elm;
+
+	if (!hash_free->next)
+	{
+		/* No free element */
+		return NULL;
+	}
+
+	elm = hash_free->next;
+	hash_free->next = elm->next;
+
+	return elm;
+}
+
+/*
+ * Put back hash element to free list.
+ */
+static void put_back_hash_element(POOL_HASH_ELEMENT *element)
+{
+	POOL_HASH_ELEMENT *elm;
+
+	elm = hash_free->next;
+	hash_free->next = element;
+	element->next = elm;
 }

@@ -559,6 +559,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].desc, "Total memory size in bytes for storing memory cache. Mandatory if memqcache_method=shmem", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	strncpy(status[i].name, "memqcache_max_num_cache", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->memqcache_max_num_cache);
+	strncpy(status[i].desc, "Total number of cache entries", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	strncpy(status[i].name, "memqcache_expire", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->memqcache_expire);
 	strncpy(status[i].desc, "Memory cache entry life time specified in seconds. 60 by default", POOLCONFIG_MAXDESCLEN);

@@ -1945,6 +1945,7 @@ int pool_init_config(void)
     pool_config->memqcache_memcached_host = "";
     pool_config->memqcache_memcached_port = 11211;
     pool_config->memqcache_total_size = 10240;
+    pool_config->memqcache_max_num_cache = 100;
     pool_config->memqcache_expire = 60;
     pool_config->memqcache_maxcache = 512;
     pool_config->memqcache_cache_block_size = 8192;
@@ -3698,7 +3699,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
             }
             pool_config->memqcache_total_size = v;
         }
-        else if (!strcmp(key, "memqcache_expire") && CHECK_CONTEXT(INIT_CONFIG, context))
+        else if (!strcmp(key, "memqcache_total_size") && CHECK_CONTEXT(INIT_CONFIG, context))
         {
             int v = atoi(yytext);
 
@@ -3708,7 +3709,19 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
                 fclose(fd);
                 return(-1);
             }
-            pool_config->memqcache_expire = v;
+            pool_config->memqcache_total_size = v;
+        }
+        else if (!strcmp(key, "memqcache_max_num_cache") && CHECK_CONTEXT(INIT_CONFIG, context))
+        {
+            int v = atoi(yytext);
+
+            if (token != POOL_INTEGER || v < 0)
+            {
+                pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
+                fclose(fd);
+                return(-1);
+            }
+            pool_config->memqcache_max_num_cache = v;
         }
         else if (!strcmp(key, "memqcache_maxcache") && CHECK_CONTEXT(INIT_CONFIG, context))
         {
