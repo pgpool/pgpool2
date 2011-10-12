@@ -87,6 +87,10 @@ static volatile sig_atomic_t pcp_restart_request = 0;
 		  pool_log("pcp child process received restart request"); \
 		  exit(1); \
 		} \
+		else \
+		{ \
+		  pool_initialize_private_backend_status(); \
+		} \
     } while (0)
 
 void
