@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2010	PgPool Global Development Group
+ * Copyright (c) 2003-2011	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -209,3 +209,15 @@ static char *nowsec(void)
 	strftime(strbuf, MAXSTRFTIME, "%Y-%m-%d %H:%M:%S", localtime(&now));
 	return strbuf;
 }
+
+#ifndef HAVE_VSYSLOG
+void vsyslog (int priority, const char *format, va_list ap)
+{
+	char *msg = NULL;
+	vasprintf(&msg, format, ap);
+	if (!msg)
+		return;
+	syslog(priority, "%s", msg);
+	free(msg);
+}
+#endif /* HAVE_VSYSLOG */

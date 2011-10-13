@@ -233,6 +233,9 @@
 /* Define to 1 if you have the `vprintf' function. */
 #undef HAVE_VPRINTF
 
+/* Define to 1 if you have the `vsyslog' function. */
+#undef HAVE_VSYSLOG
+
 /* Define to 1 if you have the `wait3' system call. Deprecated, you should no
    longer depend upon `wait3'. */
 #undef HAVE_WAIT3
