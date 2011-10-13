@@ -61,7 +61,7 @@ PROGRAMS = $(bin_PROGRAMS)
 am_pg_md5_OBJECTS = pg_md5.$(OBJEXT) md5.$(OBJEXT) \
 	pool_config_md5.$(OBJEXT) pool_error.$(OBJEXT) \
 	pool_signal.$(OBJEXT) pool_passwd.$(OBJEXT) \
-	pool_globals.$(OBJEXT)
+	pool_globals.$(OBJEXT) strlcpy.$(OBJEXT)
 pg_md5_OBJECTS = $(am_pg_md5_OBJECTS)
 pg_md5_LDADD = $(LDADD)
 am_pgpool_OBJECTS = main.$(OBJEXT) child.$(OBJEXT) pool_auth.$(OBJEXT) \
@@ -339,7 +339,7 @@ pg_md5_SOURCES = pg_md5.c md5.c md5.h \
 	pool_error.c \
 	pool_signal.h pool_signal.c \
 	pool_passwd.c pool_passwd.h \
-	pool_globals.c
+	pool_globals.c strlcpy.c
 
 sysconf_DATA = pgpool.conf.sample pcp.conf.sample pool_hba.conf.sample \
 				pgpool.conf.sample-replication pgpool.conf.sample-master-slave \
