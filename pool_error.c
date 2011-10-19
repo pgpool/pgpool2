@@ -213,10 +213,24 @@ static char *nowsec(void)
 #ifndef HAVE_VSYSLOG
 void vsyslog (int priority, const char *format, va_list ap)
 {
+#define MAXSYSLOGMSGLEN 1024
+
 	char *msg = NULL;
+
+#ifdef HAVE_VASPRINTF
 	vasprintf(&msg, format, ap);
 	if (!msg)
 		return;
+#else
+	msg = malloc(MAXSYSLOGMSGLEN);
+	if (!msg)
+		return;
+
+	va_start(ap, format);
+	vsnprintf(msg, MAXSYSLOGMSGLEN, format, ap);
+	va_end(ap);
+#endif
+
 	syslog(priority, "%s", msg);
 	free(msg);
 }
