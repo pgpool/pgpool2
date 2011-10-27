@@ -229,7 +229,7 @@ int main(int argc, char **argv)
 					usage();
 					exit(1);
 				}
-				strncpy(hba_file, optarg, sizeof(hba_file));
+				strlcpy(hba_file, optarg, sizeof(hba_file));
 				break;
 
 			case 'c':			/* clear cache option */
@@ -246,7 +246,7 @@ int main(int argc, char **argv)
 					usage();
 					exit(1);
 				}
-				strncpy(conf_file, optarg, sizeof(conf_file));
+				strlcpy(conf_file, optarg, sizeof(conf_file));
 				break;
 
 			case 'F':   /* specify PCP password file */
@@ -255,7 +255,7 @@ int main(int argc, char **argv)
 					usage();
 					exit(1);
 				}
-				strncpy(pcp_conf_file, optarg, sizeof(pcp_conf_file));
+				strlcpy(pcp_conf_file, optarg, sizeof(pcp_conf_file));
 				break;
 
 			case 'h':
@@ -423,7 +423,7 @@ int main(int argc, char **argv)
 		char dirnamebuf[POOLMAXPATHLEN+1];
 		char *dirp;
 
-		strncpy(dirnamebuf, conf_file, sizeof(dirnamebuf));
+		strlcpy(dirnamebuf, conf_file, sizeof(dirnamebuf));
 		dirp = dirname(dirnamebuf);
 		snprintf(pool_passwd, sizeof(pool_passwd), "%s/%s",
 				 dirp, pool_config->pool_passwd);

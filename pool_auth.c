@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2010	PgPool Global Development Group
+ * Copyright (c) 2003-2011	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -373,8 +373,8 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 
 			cp->info[i].major = sp->major;
 			cp->info[i].minor = sp->minor;
-			strncpy(cp->info[i].database, sp->database, sizeof(cp->info[i].database) - 1);
-			strncpy(cp->info[i].user, sp->user, sizeof(cp->info[i].user) - 1);
+			strlcpy(cp->info[i].database, sp->database, sizeof(cp->info[i].database));
+			strlcpy(cp->info[i].user, sp->user, sizeof(cp->info[i].user));
 			cp->info[i].counter = 1;
 		}
 	}

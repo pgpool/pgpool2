@@ -628,7 +628,7 @@ static int input (void );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO fwrite( yytext, yyleng, 1, yyout )
+#define ECHO do { if (fwrite( yytext, yyleng, 1, yyout )) {} } while (0)
 #endif
 
 /* Gets input and stuffs it into "buf".  number of characters read, or YY_NULL,
@@ -639,7 +639,7 @@ static int input (void );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		int n; \
+		unsigned n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -1985,7 +1985,7 @@ int add_regex_pattern(char *type, char *s)
 	currItem.flag = regex_flags;
 
 	/* Fill pattern array */
-	currItem.pattern = malloc(sizeof(char)*(strlen(s)+3)); /* '\0'+'^'+'$' */
+	currItem.pattern = malloc(sizeof(char)*(strlen(s)+1));
 	if (currItem.pattern == NULL)
 	{
 		pool_error("add_to_patterns: unable to allocate new pattern");
@@ -2093,7 +2093,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			return(-1);
 		}
 
-		strncpy(key, yytext, sizeof(key));
+		strlcpy(key, yytext, sizeof(key));
 
 		pool_debug("key: %s", key);
 
@@ -3255,7 +3255,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			if (context == INIT_CONFIG ||
 				(context == RELOAD_CONFIG && BACKEND_INFO(slot).backend_status == CON_UNUSED))
-				strncpy(BACKEND_INFO(slot).backend_hostname, str, MAX_DB_HOST_NAMELEN);
+				strlcpy(BACKEND_INFO(slot).backend_hostname, str, MAX_DB_HOST_NAMELEN);
 		}
 
 		else if (!strncmp(key, "backend_port", 12) &&
@@ -3353,7 +3353,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			status = BACKEND_INFO(slot).backend_status;
 			if (context == INIT_CONFIG ||
 				(context == RELOAD_CONFIG && (status == CON_UNUSED || status == CON_DOWN)))
-				strncpy(BACKEND_INFO(slot).backend_data_directory, str, MAX_PATH_LENGTH);
+				strlcpy(BACKEND_INFO(slot).backend_data_directory, str, MAX_PATH_LENGTH);
 		}
 		else if (!strncmp(key, "backend_flag", 12) &&
 				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context) &&
@@ -3637,12 +3637,12 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				if (pool_config->backend_socket_dir == NULL)
 				{
 					pool_debug("pool_config: empty backend_hostname%d, use PostgreSQL's default unix socket path (%s)", i, DEFAULT_SOCKET_DIR);
-					strncpy(BACKEND_INFO(i).backend_hostname, DEFAULT_SOCKET_DIR, MAX_DB_HOST_NAMELEN);
+					strlcpy(BACKEND_INFO(i).backend_hostname, DEFAULT_SOCKET_DIR, MAX_DB_HOST_NAMELEN);
 				}
 				else /* DEPRECATED. backward compatibility with older version. Use backend_socket_dir*/ 
 				{
 					pool_debug("pool_config: empty backend_hostname%d, use backend_socket_dir as unix socket path (%s)", i, pool_config->backend_socket_dir);
-					strncpy(BACKEND_INFO(i).backend_hostname, pool_config->backend_socket_dir, MAX_DB_HOST_NAMELEN);
+					strlcpy(BACKEND_INFO(i).backend_hostname, pool_config->backend_socket_dir, MAX_DB_HOST_NAMELEN);
 				}
 			}
 		}	

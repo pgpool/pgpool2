@@ -92,7 +92,7 @@ main(int argc, char *argv[])
 				{
 					PRINT_USAGE(EXIT_SUCCESS);
 				}
-				strncpy(conf_file, optarg, sizeof(conf_file));
+				strlcpy(conf_file, optarg, sizeof(conf_file));
 				break;
 
 			case 'u':
@@ -106,7 +106,7 @@ main(int argc, char *argv[])
 					fprintf(stderr, "Error: input exceeds maximum username length!\n\n");
 					exit(EXIT_FAILURE);
 				}
-				strncpy(username, optarg, sizeof(username));
+				strlcpy(username, optarg, sizeof(username));
 				break;
 
 			default:
@@ -206,7 +206,7 @@ static void update_pool_passwd(char *conf_file, char *username, char *password)
 		exit(EXIT_FAILURE);
 	}
 
-	strncpy(dirnamebuf, conf_file, sizeof(dirnamebuf));
+	strlcpy(dirnamebuf, conf_file, sizeof(dirnamebuf));
 	dirp = dirname(dirnamebuf);
 	snprintf(pool_passwd, sizeof(pool_passwd), "%s/%s",
 			 dirp, pool_config->pool_passwd);

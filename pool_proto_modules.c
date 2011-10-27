@@ -125,7 +125,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	}
 
 	/* save last query string for logging purpose */
-	strncpy(query_string_buffer, contents, sizeof(query_string_buffer));
+	strlcpy(query_string_buffer, contents, sizeof(query_string_buffer));
 
 	/* show ps status */
 	query_ps_status(contents, backend);
@@ -538,7 +538,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	node = msg->query_context->parse_tree;
 	query = msg->query_context->original_query;
 	pool_debug("Execute: query: %s", query);
-	strncpy(query_string_buffer, query, sizeof(query_string_buffer));
+	strlcpy(query_string_buffer, query, sizeof(query_string_buffer));
 
 	/*
 	 * Decide where to send query
@@ -2543,7 +2543,7 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 			return POOL_END;
 
 #ifdef DEBUG
-		strncpy(buf, string, len);
+		strlcpy(buf, string, sizeof(buf));
 		pool_debug("copy line %d %d bytes :%s:", j++, len, buf);
 #endif
 

@@ -63,7 +63,7 @@ POOL_RELCACHE *pool_create_relcache(int cachesize, char *sql,
 	}
 
 	p->num = cachesize;
-	strncpy(p->sql, sql, sizeof(p->sql)-1);
+	strlcpy(p->sql, sql, sizeof(p->sql));
 	p->register_func = register_func;
 	p->unregister_func = unregister_func;
 	p->cache_is_session_local = issessionlocal;
@@ -207,8 +207,8 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 	}
 
 	/* Register cache */
-	strncpy(relcache->cache[index].dbname, dbname, MAX_ITEM_LENGTH);
-	strncpy(relcache->cache[index].relname, rel, MAX_ITEM_LENGTH);
+	strlcpy(relcache->cache[index].dbname, dbname, MAX_ITEM_LENGTH);
+	strlcpy(relcache->cache[index].relname, rel, MAX_ITEM_LENGTH);
 	relcache->cache[index].refcnt = 1;
 	relcache->cache[index].session_id = local_session_id;
 	if (pool_config->relcache_expire > 0)
