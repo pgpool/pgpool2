@@ -1,4 +1,0 @@
-CREATE OR REPLACE FUNCTION pgpool_regclass(cstring)
-RETURNS oid
-AS 'MODULE_PATHNAME', 'pgpool_regclass'
-LANGUAGE C STRICT;

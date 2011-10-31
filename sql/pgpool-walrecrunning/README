@@ -1,3 +1,0 @@
-If you are planning to use the streaming replication mode, you need to
-install this function.  Please note that This function needs to be
-installed in "postgres" database.
