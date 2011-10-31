@@ -328,7 +328,7 @@ static bool pool_is_chunk_in_pool(POOL_MEMORY_POOL *pool, POOL_CHUNK *chunk)
 			return true;
 	}
 
-	pool_debug("An adress \"%p\" does not exist in memory pool.", chunk);
+	pool_error("An adress \"%p\" does not exist in memory pool.", chunk);
 
 	return false;
 }
