@@ -1,3 +1,53 @@
+3.0.5 (umiyameboshi) 2011/10/31
+
+	  * Version 3.0.5
+
+	  This version fixes various bugs since 3.0.4.
+
+	  * Bug fixes
+
+	  - Fix bug with the handling of empty queries. The empty queries
+		come to be handled the same as SELECT queries. This fix allows
+		load-balance after the empty query(Kitagawa)
+
+	  - Fix insert_lock so that it works correctly even if the column
+		definition such as "DEFAULT nextval(('"x_seq"'::text)::regclass)"
+		(Kitagawa)
+
+	  - Fix log message which is emitted when pgpool-II cannot parse the
+		query in the extended query protocol so that it shows the query
+		(Kitagawa)
+
+	  - Fix description about backend_weight inpgpool-II manual. It can
+		be changed by reloading pgpool.conf(Tatsuo)
+
+	  - Fix bug which does not update the node status when reattaching the
+		node in raw mode(Guillaume Lelarge)
+
+	  - Fix bug that SELECTs which have subquery with FOR SHARE/UPDATE clause
+		are sent to slave/standby(Tatsuo)
+
+	  - Fix bug which rewriting timestamp of default value fails in PREPARE
+		statements. This used to work but was broken in 3.0(Kitagawa)
+
+	  - Fix crash of pgpool child when frontend connects if in raw mode,
+		enable_hba is off and more than 2 backends(Kitagawa)
+
+	  - Fix some memory leaks(Kitagawa)
+
+	  * Enhancements
+
+	  - Allow time stamp rewriting to work with arbitrary expression in
+		default value of a column. Before we detected anything including
+		now() then simply replaced it to now(). This will lead to wrong
+		rewriting of default value. for example, timezone('utc'::text, now()).
+		Note that, however, this only adopts to simple queries. Extended
+		protocols(for example Java, PHP PDO) or SQL "PREPARE" still remain
+		same(Tatsuo)
+
+	  - Change error message "do_md5: read_password_packet failed" into debug
+		level(Kitagawa)
+
 3.0.4 (umiyameboshi) 2011/06/01
 
 	  * Version 3.0.4
