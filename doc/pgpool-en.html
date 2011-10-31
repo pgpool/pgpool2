@@ -392,7 +392,7 @@ pg_md5 -p
 password: &lt;your password&gt;
 </pre>
 
-or
+<p>or</p>
 
 <pre>
 ./pg_md5 foo
@@ -503,8 +503,8 @@ comment and will be ignored.</p>
 	   </p>
 	   <p>
 	   <pre>
-max_pool*num_init_children <= (max_connections - superuser_reserved_connections) (no query canceling needed)
-max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connections) (query canceling needed)
+max_pool*num_init_children &lt;= (max_connections - superuser_reserved_connections) (no query canceling needed)
+max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connections) (query canceling needed)
 	   </pre>
 	   <p>
 	   This parameter can only be set at server start.</p>
@@ -615,13 +615,13 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
        </p>
   </dd>
 
-<dt>failover_command
+<dt>failover_command</dt>
 <dd>
 <p>
-
 This parameter specifies a command to run when a node is detached.
 pgpool-II replaces the following special characters with backend specific 
 information.
+</p>
 
 <center>
 <table border>
@@ -637,6 +637,7 @@ information.
 <tr><td>%%</td><td>'%' character</td></tr>
 </table>
 </center>
+<p>
 You need to reload pgpool.conf if you change failover_command.
 </p>
 
@@ -648,7 +649,7 @@ After this, pgpool starts new child processes and is ready again to accept
 connections from clients.
 </p>
 
-<dt>failback_command
+<dt>failback_command</dt>
 <dd>
 <p>
 This parameter specifies a command to run when a node is attached.
@@ -872,12 +873,14 @@ postmaster. You need to reload pgpool.conf if you change this value.
 
 <h4>Generating SSL certificates</h4>
 
+<p>
 Certificate handling is outside the scope of this document.  The
 <a href="http://developer.postgresql.org/pgdocs/postgres/ssl-tcp.html">
 Secure TCP/IP Connections with SSL</a> page at postgresql.org has pointers
 with sample commands for how to generate self-signed certificates.
+</p>
 
-<h4><p>Failover in the raw Mode</p></h4>
+<h4>Failover in the raw Mode</h4>
 
 <p>Failover can be performed in raw mode if multiple servers are
 defined. pgpool-II usually accesses the backend specified by
@@ -923,13 +926,11 @@ raw mode configuration parameters and parameters below.</p>
       specified by delimiting each by ";". Default is
       the following, but can be changed to suit your system.
 
-      <pre>
-      reset_query_list = 'ABORT; DISCARD ALL'
-      </pre>
+      <pre>reset_query_list = 'ABORT; DISCARD ALL'</pre>
 
-<p>
+      <p>
       Commands differ in each PostgreSQL versions. Here are the recommended settings.
-</p>
+      </p>
 <p>
 <table border>
 <tr><th>PostgreSQL version</th><th>reset_query_list value</th></tr>
@@ -948,7 +949,7 @@ You need to reload pgpool.conf upon modification of this directive.
 </dd>
 </dl>
 
-<h4><p>Failover in the Connection Pool Mode</p></h4>
+<h4>Failover in the Connection Pool Mode</h4>
 
 <p>Failover in the connection pool mode is the same as in the raw mode.</p>
 
@@ -958,7 +959,7 @@ You need to reload pgpool.conf upon modification of this directive.
 configuration parameters below must be set in addition to everything above.</p>
 
 <dl>
-  <dt>replication_mode
+  <dt>replication_mode</dt>
   <dd>
       <p>Setting to true enables replication mode. Default
       is false.</p>
@@ -1007,7 +1008,7 @@ In master slave mode, such SELECTs are sent to master (primary) only.
 </p>
 
 <a name="black_function_list"></a>
-<dt>black_function_list
+<dt>black_function_list</dt>
 <dd>
 <p>
 Specify a comma separated list of function names that <strong>do</strong>
@@ -1027,13 +1028,12 @@ black_function_list:
 white_function_list = ''
 black_function_list = 'nextval,setval'
 </pre>
+</dd>
 
-<a name="replicate_select">
-  <dt>replicate_select</dt>
+  <dt>replicate_select<a name="replicate_select"></a></dt>
   <dd>
       <p>When set to true, pgpool-II replicates SELECTs in replication mode. If false,
          pgpool-II only sends them to the Master DB. Default is false.</p>
-  </dd>
 
 <p>
 If a SELECT query is inside an explicit transaction block, replicate_select and 
@@ -1093,6 +1093,7 @@ Details are shown below.
 </tr>
 </table>
 </p>
+  </dd>
 
   <dt>insert_lock</dt>
   <dd>
@@ -1102,20 +1103,17 @@ locking the table explicitly (although, transactions' parallelism will
 be severely degraded). To achieve this, however, the following change must be 
 made:
 
-      <pre>
-      INSERT INTO ...
-      </pre>
+<pre>INSERT INTO ...</pre>
 
-      to
+      <p>to</p>
 
-      <pre>
-      BEGIN;
-      LOCK TABLE ...
-      INSERT INTO ...
-      COMMIT;
-      </pre>
+<pre>
+BEGIN;
+LOCK TABLE ...
+INSERT INTO ...
+COMMIT;</pre>
 
-      When <code>insert_lock</code> is true, pgpool-II
+      <p>When <code>insert_lock</code> is true, pgpool-II
       automatically adds the above queries each time an INSERT is
       executed (if already in transaction, it simply adds LOCK TABLE
       ....).
@@ -1175,27 +1173,28 @@ made:
       end of transaction block
       </pre>
 
-      For example, the transactions test tries an INSERT into a table
+      <p>For example, the transactions test tries an INSERT into a table
 which does not exist, and pgpool-II causes PostgreSQL to acquire the
 lock before that. The transaction will be aborted, and the following
 INSERT statement produces the above error message.</p>
+    </dd>
 
 
-<dt>recovery_user
+<dt>recovery_user</dt>
 <dd>
 <p>
 This parameter specifies a PostgreSQL username for online recovery.
 It can be changed without restarting.
 </p>
 
-<dt>recovery_password
+<dt>recovery_password</dt>
 <dd>
 <p>
 This parameter specifies a PostgreSQL password for online recovery.
 It can be changed without restarting.
 </p>
 
-<dt>recovery_1st_stage_command
+<dt>recovery_1st_stage_command</dt>
 <dd>
 <p>
 This parameter specifies a command to be run by master(primary) PostgreSQL server at the first stage of online
@@ -1222,7 +1221,7 @@ data during this stage.
 This parameter can be changed without restarting.
 </p>
 
-<dt>recovery_2nd_stage_command
+<dt>recovery_2nd_stage_command</dt>
 <dd>
 <p>
 This parameter specifies a command to be run by master(primary) PostgreSQL server at the second stage of online
@@ -1252,7 +1251,7 @@ client is connected to pgpool-II anymore.
 This parameter can be changed without restarting.
 </p>
 
-<dt>recovery_timeout
+<dt>recovery_timeout</dt>
 <dd>
 <p>
 pgpool does not accept new connections during the second stage. If a client
@@ -1267,7 +1266,7 @@ pgpool cancels online recovery and accepts connections. 0 means no wait.
 This parameter can be changed without restarting.
 </p>
 
-  <dt>client_idle_limit_in_recovery
+  <dt>client_idle_limit_in_recovery</dt>
   <dd>
   <p> Similar to client_idle_limit but only takes effect in the second
 	   stage of recovery. A client being idle for client_idle_limit_in_recovery
@@ -1288,7 +1287,7 @@ This parameter can be changed without restarting.
   <p>
    You need to reload pgpool.conf if you change client_idle_limit_in_recovery.</p>
 
-<dt><a name="lobj_lock_table"></a>lobj_lock_table
+<dt><a name="lobj_lock_table"></a>lobj_lock_table</dt>
 <dd>
 <p>
 This parameter specifies a table name used for large object replication control. 
@@ -1913,8 +1912,8 @@ must start from 0. Below is an example of this function for pgbench.
 </p>
 <pre>
 CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_accounts (val ANYELEMENT) RETURNS INTEGER AS '
-SELECT CASE WHEN $1 >= 1 and $1 <= 30000 THEN 0
-WHEN $1 > 30000 and $1 <= 60000 THEN 1
+SELECT CASE WHEN $1 &gt;= 1 and $1 &lt;= 30000 THEN 0
+WHEN $1 &gt; 30000 and $1 &lt;= 60000 THEN 1
 ELSE 2
 </pre>
 
@@ -2388,7 +2387,7 @@ recovery target node on the first stage is needed. The script can be named
   RECOVERY_DATA=$3
 
   psql -c "select pg_start_backup('pgpool-recovery')" postgres
-  echo "restore_command = 'scp $HOSTNAME:/data/archive_log/%f %p'" > /data/recovery.conf
+  echo "restore_command = 'scp $HOSTNAME:/data/archive_log/%f %p'" &gt; /data/recovery.conf
   tar -C /data -zcf pgsql.tar.gz pgsql
   psql -c 'select pg_stop_backup()' postgres
   scp pgsql.tar.gz $RECOVERY_TARGET:$RECOVERY_DATA
@@ -2470,7 +2469,7 @@ recovery_2nd_stage_command = 'pgpool_recovery_pitr'
 We have finished preparing online recovery by PITR.
 </p>
 
-<h4><p>pgpool_remote_start</p></h4>
+<h4>pgpool_remote_start</h4>
 <p>
 This script starts up the remote host's postmaster process.
 pgpool-II executes it the following way.
@@ -2500,9 +2499,9 @@ DESTDIR=$2
 PGCTL=/usr/local/pgsql/bin/pg_ctl
 
 # Deploy a base backup
-ssh -T $DEST 'cd /data/; tar zxf pgsql.tar.gz' 2>/dev/null 1>/dev/null < /dev/null
+ssh -T $DEST 'cd /data/; tar zxf pgsql.tar.gz' 2&gt;/dev/null 1&gt;/dev/null &lt; /dev/null
 # Startup PostgreSQL server
-ssh -T $DEST $PGCTL -w -D $DESTDIR start 2>/dev/null 1>/dev/null < /dev/null &
+ssh -T $DEST $PGCTL -w -D $DESTDIR start 2&gt;/dev/null 1&gt;/dev/null &lt; /dev/null &amp;
 </pre>
 
 <h3>Online recovery with rsync.</h3>
@@ -2890,7 +2889,7 @@ will be executed in a separate transaction. Here is an example:
 <pre>
 BEGIN;
 INSERT INTO t(a) VALUES (1);
-SELECT * FROM t ORDER BY a; <-- INSERT above is not visible from this SELECT statement
+SELECT * FROM t ORDER BY a; &lt;-- INSERT above is not visible from this SELECT statement
 END;
 </pre>
 
@@ -2976,8 +2975,8 @@ pgpool-II cannot process multi-statement queries.
 </p>
 <pre>
 (tellers table is partitioned using the following rule)
-  tid <= 10  --> node 0
-  tid >= 10  --> node 1
+  tid &lt;= 10  --&gt; node 0
+  tid &gt;= 10  --&gt; node 1
 
 A) BEGIN;
 B) BEGIN;
@@ -3110,7 +3109,7 @@ not distinguish between nodes status, ie attached/detached. ALL nodes are counte
 </p>
 
 
-<h3><a name="pcp_node_info"/>pcp_node_info</h3>
+<h3><a name="pcp_node_info"></a>pcp_node_info</h3>
 
 <pre>
 Format:
@@ -3631,7 +3630,7 @@ So the rewriting is done as follows.
 <pre>
   select count(*) from P1-table;
 
-	-> rewrite
+	-&gt; rewrite
 
     SELECT
         sum(pool_c$1) as count
@@ -3688,7 +3687,7 @@ parallel fashion, they are fast.</td></tr>
 <div class="copyright">
 <hr>
 <copyright>
-Copyright &copy; 2003 &ndash; 2010 pgpool Global Development Group
+Copyright &copy; 2003 &ndash; 2011 pgpool Global Development Group
 </copyright>
 </div>
 </body>
