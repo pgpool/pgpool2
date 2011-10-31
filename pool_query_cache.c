@@ -1013,7 +1013,6 @@ POOL_STATUS pool_execute_query_cache_lookup(POOL_CONNECTION *frontend, POOL_CONN
 		{
 			free(parsed_query);
 			parsed_query = NULL;
-			free_parser();
 		}
 	}
 
