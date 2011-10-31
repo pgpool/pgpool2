@@ -34,7 +34,6 @@
 POOL_MEMORY_POOL *pool_memory = NULL;
 
 static int get_free_index(unsigned int size);
-static bool pool_is_chunk_in_pool(POOL_MEMORY_POOL *pool, POOL_CHUNK *chunk);
 
 static int get_free_index(unsigned int size)
 {
@@ -91,12 +90,9 @@ void *pool_memory_alloc(POOL_MEMORY_POOL *pool, unsigned int size)
 		if (pool->freelist[fidx] != NULL)
 		{
 			chunk = pool->freelist[fidx];
-			if (pool_is_chunk_in_pool(pool, chunk))
-			{
-				pool->freelist[fidx] = chunk->header.next;
-				chunk->header.size = allocsize;
-				return chunk->data;
-			}
+			pool->freelist[fidx] = chunk->header.next;
+			chunk->header.size = allocsize;
+			return chunk->data;
 		}
 		
 		block = pool->blocks;
@@ -185,9 +181,6 @@ void pool_memory_free(POOL_MEMORY_POOL *pool, void *ptr)
 	}
 	else
 	{
-		if (!pool_is_chunk_in_pool(pool, chunk))
-			return;
-
 		fidx = get_free_index(chunk->header.size);
 		chunk->header.next = pool->freelist[fidx];
 		pool->freelist[fidx] = chunk;
@@ -316,19 +309,4 @@ char *pool_memory_strdup(POOL_MEMORY_POOL *pool_memory, const char *string)
 	memmove(str, string, len);
 	str[len] = '\0';
 	return str;
-}
-
-static bool pool_is_chunk_in_pool(POOL_MEMORY_POOL *pool, POOL_CHUNK *chunk)
-{
-	POOL_BLOCK *block;
-
-	for (block = pool->blocks; block; block = block->next)
-	{
-		if (block->block == chunk)
-			return true;
-	}
-
-	pool_error("An adress \"%p\" does not exist in memory pool.", chunk);
-
-	return false;
 }
