@@ -713,6 +713,20 @@ int pool_extract_table_oids(Node *node, int **oidsp)
 		AlterTableStmt *stmt = (AlterTableStmt *)node;
 		table = nodeToString(stmt->relation);
 	}
+
+	else if (IsA(node, CopyStmt))
+	{
+		CopyStmt *stmt = (CopyStmt *)node;
+		if (stmt->is_from)		/* COPY FROM? */
+		{
+			table = nodeToString(stmt->relation);
+		}
+		else
+		{
+			return 0;
+		}
+	}
+
 	else if (IsA(node, DropStmt))
 	{
 		ListCell *cell;
