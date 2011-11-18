@@ -2618,9 +2618,14 @@ POOL_QUERY_CACHE_STATS *pool_get_memqcache_stats(void)
 {
 	static POOL_QUERY_CACHE_STATS mystats;
 
-	pool_semaphore_lock(QUERY_CACHE_STATS_SEM);
-	memcpy(&mystats, stats, sizeof(POOL_QUERY_CACHE_STATS));
-	pool_semaphore_unlock(QUERY_CACHE_STATS_SEM);
+	memset(&mystats, 0, sizeof(POOL_QUERY_CACHE_STATS));
+
+	if (stats)
+	{
+		pool_semaphore_lock(QUERY_CACHE_STATS_SEM);
+		memcpy(&mystats, stats, sizeof(POOL_QUERY_CACHE_STATS));
+		pool_semaphore_unlock(QUERY_CACHE_STATS_SEM);
+	}
 
 	return &mystats;
 }
