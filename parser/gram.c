@@ -1,10 +1,9 @@
-
-/* A Bison parser, made by GNU Bison 2.4.1.  */
+/* A Bison parser, made by GNU Bison 2.4.3.  */
 
 /* Skeleton implementation for Bison's Yacc-like parsers in C
    
-      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-   Free Software Foundation, Inc.
+      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
+   2009, 2010 Free Software Foundation, Inc.
    
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -46,7 +45,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "2.4.1"
+#define YYBISON_VERSION "2.4.3"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -223,7 +222,7 @@ static DefElem *defWithOids(bool value);
 
 
 /* Line 189 of yacc.c  */
-#line 227 "gram.c"
+#line 226 "gram.c"
 
 /* Enabling traces.  */
 #ifndef YYDEBUG
@@ -1124,7 +1123,7 @@ typedef union YYSTYPE
 
 
 /* Line 214 of yacc.c  */
-#line 1128 "gram.c"
+#line 1127 "gram.c"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -1149,7 +1148,7 @@ typedef struct YYLTYPE
 
 
 /* Line 264 of yacc.c  */
-#line 1153 "gram.c"
+#line 1152 "gram.c"
 
 #ifdef short
 # undef short
@@ -1199,7 +1198,7 @@ typedef short int yytype_int16;
 #define YYSIZE_MAXIMUM ((YYSIZE_T) -1)
 
 #ifndef YY_
-# if YYENABLE_NLS
+# if defined YYENABLE_NLS && YYENABLE_NLS
 #  if ENABLE_NLS
 #   include <libintl.h> /* INFRINGES ON USER NAME SPACE */
 #   define YY_(msgid) dgettext ("bison-runtime", msgid)
@@ -17213,9 +17212,18 @@ static const yytype_uint16 yystos[] =
 
 /* Like YYERROR except do call yyerror.  This remains here temporarily
    to ease the transition to the new meaning of YYERROR, for GCC.
-   Once GCC version 2 has supplanted version 1, this can go.  */
+   Once GCC version 2 has supplanted version 1, this can go.  However,
+   YYFAIL appears to be in use.  Nevertheless, it is formally deprecated
+   in Bison 2.4.2's NEWS entry, where a plan to phase it out is
+   discussed.  */
 
 #define YYFAIL		goto yyerrlab
+#if defined YYFAIL
+  /* This is here to suppress warnings from the GCC cpp's
+     -Wunused-macros.  Normally we don't worry about that warning, but
+     some users do, and we want to make it easy for users to remove
+     YYFAIL uses, which will produce warnings from Bison 2.5.  */
+#endif
 
 #define YYRECOVERING()  (!!yyerrstatus)
 
@@ -17272,7 +17280,7 @@ while (YYID (0))
    we won't break user code: when these are the locations we know.  */
 
 #ifndef YY_LOCATION_PRINT
-# if YYLTYPE_IS_TRIVIAL
+# if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
 #  define YY_LOCATION_PRINT(File, Loc)			\
      fprintf (File, "%d.%d-%d.%d",			\
 	      (Loc).first_line, (Loc).first_column,	\
@@ -17814,7 +17822,7 @@ YYLTYPE yylloc;
     YYLTYPE *yylsp;
 
     /* The locations where the error started and ended.  */
-    YYLTYPE yyerror_range[2];
+    YYLTYPE yyerror_range[3];
 
     YYSIZE_T yystacksize;
 
@@ -17861,7 +17869,7 @@ YYLTYPE yylloc;
   yyvsp = yyvs;
   yylsp = yyls;
 
-#if YYLTYPE_IS_TRIVIAL
+#if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
   /* Initialize the default location before parsing starts.  */
   yylloc.first_line   = yylloc.last_line   = 1;
   yylloc.first_column = yylloc.last_column = 1;
@@ -18051,7 +18059,7 @@ yyreduce:
     {
         case 2:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 633 "gram.y"
     {
 				pg_yyget_extra(yyscanner)->parsetree = (yyvsp[(1) - (1)].list);
@@ -18060,7 +18068,7 @@ yyreduce:
 
   case 3:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 640 "gram.y"
     {
 					if ((yyvsp[(3) - (3)].node) != NULL)
@@ -18072,7 +18080,7 @@ yyreduce:
 
   case 4:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 647 "gram.y"
     {
 					if ((yyvsp[(1) - (1)].node) != NULL)
@@ -18084,14 +18092,14 @@ yyreduce:
 
   case 107:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 759 "gram.y"
     { (yyval.node) = NULL; }
     break;
 
   case 108:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 770 "gram.y"
     {
 					CreateRoleStmt *n = makeNode(CreateRoleStmt);
@@ -18104,49 +18112,49 @@ yyreduce:
 
   case 109:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 780 "gram.y"
     {}
     break;
 
   case 110:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 781 "gram.y"
     {}
     break;
 
   case 111:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 790 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].defelt)); }
     break;
 
   case 112:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 791 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 113:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 795 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].defelt)); }
     break;
 
   case 114:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 796 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 115:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 801 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("password",
@@ -18156,7 +18164,7 @@ yyreduce:
 
   case 116:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 806 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("password", NULL);
@@ -18165,7 +18173,7 @@ yyreduce:
 
   case 117:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 810 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("encryptedPassword",
@@ -18175,7 +18183,7 @@ yyreduce:
 
   case 118:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 815 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("unencryptedPassword",
@@ -18185,7 +18193,7 @@ yyreduce:
 
   case 119:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 820 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("superuser", (Node *)makeInteger(TRUE));
@@ -18194,7 +18202,7 @@ yyreduce:
 
   case 120:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 824 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("superuser", (Node *)makeInteger(FALSE));
@@ -18203,7 +18211,7 @@ yyreduce:
 
   case 121:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 828 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("inherit", (Node *)makeInteger(TRUE));
@@ -18212,7 +18220,7 @@ yyreduce:
 
   case 122:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 832 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("inherit", (Node *)makeInteger(FALSE));
@@ -18221,7 +18229,7 @@ yyreduce:
 
   case 123:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 836 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("createdb", (Node *)makeInteger(TRUE));
@@ -18230,7 +18238,7 @@ yyreduce:
 
   case 124:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 840 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("createdb", (Node *)makeInteger(FALSE));
@@ -18239,7 +18247,7 @@ yyreduce:
 
   case 125:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 844 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("createrole", (Node *)makeInteger(TRUE));
@@ -18248,7 +18256,7 @@ yyreduce:
 
   case 126:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 848 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("createrole", (Node *)makeInteger(FALSE));
@@ -18257,7 +18265,7 @@ yyreduce:
 
   case 127:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 852 "gram.y"
     {
 					/* For backwards compatibility, synonym for SUPERUSER */
@@ -18267,7 +18275,7 @@ yyreduce:
 
   case 128:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 857 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("superuser", (Node *)makeInteger(FALSE));
@@ -18276,7 +18284,7 @@ yyreduce:
 
   case 129:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 861 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("canlogin", (Node *)makeInteger(TRUE));
@@ -18285,7 +18293,7 @@ yyreduce:
 
   case 130:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 865 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("canlogin", (Node *)makeInteger(FALSE));
@@ -18294,7 +18302,7 @@ yyreduce:
 
   case 131:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 869 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("connectionlimit", (Node *)makeInteger((yyvsp[(3) - (3)].ival)));
@@ -18303,7 +18311,7 @@ yyreduce:
 
   case 132:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 873 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("validUntil", (Node *)makeString((yyvsp[(3) - (3)].str)));
@@ -18312,7 +18320,7 @@ yyreduce:
 
   case 133:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 878 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("rolemembers", (Node *)(yyvsp[(2) - (2)].list));
@@ -18321,14 +18329,14 @@ yyreduce:
 
   case 134:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 884 "gram.y"
     { (yyval.defelt) = (yyvsp[(1) - (1)].defelt); }
     break;
 
   case 135:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 887 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("sysid", (Node *)makeInteger((yyvsp[(2) - (2)].ival)));
@@ -18337,7 +18345,7 @@ yyreduce:
 
   case 136:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 891 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("adminmembers", (Node *)(yyvsp[(2) - (2)].list));
@@ -18346,7 +18354,7 @@ yyreduce:
 
   case 137:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 895 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("rolemembers", (Node *)(yyvsp[(2) - (2)].list));
@@ -18355,7 +18363,7 @@ yyreduce:
 
   case 138:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 899 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("addroleto", (Node *)(yyvsp[(3) - (3)].list));
@@ -18364,7 +18372,7 @@ yyreduce:
 
   case 139:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 903 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("addroleto", (Node *)(yyvsp[(3) - (3)].list));
@@ -18373,7 +18381,7 @@ yyreduce:
 
   case 140:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 917 "gram.y"
     {
 					CreateRoleStmt *n = makeNode(CreateRoleStmt);
@@ -18386,7 +18394,7 @@ yyreduce:
 
   case 141:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 935 "gram.y"
     {
 					AlterRoleStmt *n = makeNode(AlterRoleStmt);
@@ -18399,21 +18407,21 @@ yyreduce:
 
   case 142:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 945 "gram.y"
     { (yyval.str) = NULL; }
     break;
 
   case 143:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 946 "gram.y"
     { (yyval.str) = (yyvsp[(3) - (3)].str); }
     break;
 
   case 144:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 951 "gram.y"
     {
 					AlterRoleSetStmt *n = makeNode(AlterRoleSetStmt);
@@ -18426,7 +18434,7 @@ yyreduce:
 
   case 145:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 969 "gram.y"
     {
 					AlterRoleStmt *n = makeNode(AlterRoleStmt);
@@ -18439,7 +18447,7 @@ yyreduce:
 
   case 146:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 981 "gram.y"
     {
 					AlterRoleSetStmt *n = makeNode(AlterRoleSetStmt);
@@ -18452,7 +18460,7 @@ yyreduce:
 
   case 147:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1002 "gram.y"
     {
 					DropRoleStmt *n = makeNode(DropRoleStmt);
@@ -18464,7 +18472,7 @@ yyreduce:
 
   case 148:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1009 "gram.y"
     {
 					DropRoleStmt *n = makeNode(DropRoleStmt);
@@ -18476,7 +18484,7 @@ yyreduce:
 
   case 149:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1028 "gram.y"
     {
 					DropRoleStmt *n = makeNode(DropRoleStmt);
@@ -18488,7 +18496,7 @@ yyreduce:
 
   case 150:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1035 "gram.y"
     {
 					DropRoleStmt *n = makeNode(DropRoleStmt);
@@ -18500,7 +18508,7 @@ yyreduce:
 
   case 151:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1052 "gram.y"
     {
 					CreateRoleStmt *n = makeNode(CreateRoleStmt);
@@ -18513,7 +18521,7 @@ yyreduce:
 
   case 152:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1070 "gram.y"
     {
 					AlterRoleStmt *n = makeNode(AlterRoleStmt);
@@ -18527,21 +18535,21 @@ yyreduce:
 
   case 153:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1080 "gram.y"
     { (yyval.ival) = +1; }
     break;
 
   case 154:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1081 "gram.y"
     { (yyval.ival) = -1; }
     break;
 
   case 155:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1094 "gram.y"
     {
 					DropRoleStmt *n = makeNode(DropRoleStmt);
@@ -18553,7 +18561,7 @@ yyreduce:
 
   case 156:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1101 "gram.y"
     {
 					DropRoleStmt *n = makeNode(DropRoleStmt);
@@ -18565,7 +18573,7 @@ yyreduce:
 
   case 157:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1118 "gram.y"
     {
 					CreateSchemaStmt *n = makeNode(CreateSchemaStmt);
@@ -18582,7 +18590,7 @@ yyreduce:
 
   case 158:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1130 "gram.y"
     {
 					CreateSchemaStmt *n = makeNode(CreateSchemaStmt);
@@ -18596,35 +18604,35 @@ yyreduce:
 
   case 159:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1141 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 160:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1142 "gram.y"
     { (yyval.str) = NULL; }
     break;
 
   case 161:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1146 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].node)); }
     break;
 
   case 162:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1147 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 169:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1175 "gram.y"
     {
 					VariableSetStmt *n = (yyvsp[(2) - (2)].vsetstmt);
@@ -18635,7 +18643,7 @@ yyreduce:
 
   case 170:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1181 "gram.y"
     {
 					VariableSetStmt *n = (yyvsp[(3) - (3)].vsetstmt);
@@ -18646,7 +18654,7 @@ yyreduce:
 
   case 171:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1187 "gram.y"
     {
 					VariableSetStmt *n = (yyvsp[(3) - (3)].vsetstmt);
@@ -18657,7 +18665,7 @@ yyreduce:
 
   case 172:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1196 "gram.y"
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -18670,7 +18678,7 @@ yyreduce:
 
   case 173:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1204 "gram.y"
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -18683,7 +18691,7 @@ yyreduce:
 
   case 174:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1212 "gram.y"
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -18695,7 +18703,7 @@ yyreduce:
 
   case 175:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1219 "gram.y"
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -18707,7 +18715,7 @@ yyreduce:
 
   case 176:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1226 "gram.y"
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -18719,7 +18727,7 @@ yyreduce:
 
   case 177:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1234 "gram.y"
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -18735,7 +18743,7 @@ yyreduce:
 
   case 178:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1245 "gram.y"
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -18748,7 +18756,7 @@ yyreduce:
 
   case 179:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1253 "gram.y"
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -18761,7 +18769,7 @@ yyreduce:
 
   case 180:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1261 "gram.y"
     {
 					ereport(ERROR,
@@ -18774,7 +18782,7 @@ yyreduce:
 
   case 181:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1269 "gram.y"
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -18787,7 +18795,7 @@ yyreduce:
 
   case 182:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1277 "gram.y"
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -18803,7 +18811,7 @@ yyreduce:
 
   case 183:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1288 "gram.y"
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -18816,7 +18824,7 @@ yyreduce:
 
   case 184:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1296 "gram.y"
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -18829,7 +18837,7 @@ yyreduce:
 
   case 185:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1304 "gram.y"
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -18841,7 +18849,7 @@ yyreduce:
 
   case 186:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1311 "gram.y"
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -18854,14 +18862,14 @@ yyreduce:
 
   case 187:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1320 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 188:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1322 "gram.y"
     {
 					(yyval.str) = palloc(strlen((yyvsp[(1) - (3)].str)) + strlen((yyvsp[(3) - (3)].str)) + 2);
@@ -18871,98 +18879,98 @@ yyreduce:
 
   case 189:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1328 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
     break;
 
   case 190:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1329 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node)); }
     break;
 
   case 191:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1333 "gram.y"
     { (yyval.node) = makeStringConst((yyvsp[(1) - (1)].str), (yylsp[(1) - (1)])); }
     break;
 
   case 192:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1335 "gram.y"
     { (yyval.node) = makeStringConst((yyvsp[(1) - (1)].str), (yylsp[(1) - (1)])); }
     break;
 
   case 193:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1337 "gram.y"
     { (yyval.node) = makeAConst((yyvsp[(1) - (1)].value), (yylsp[(1) - (1)])); }
     break;
 
   case 194:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1340 "gram.y"
     { (yyval.str) = "read uncommitted"; }
     break;
 
   case 195:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1341 "gram.y"
     { (yyval.str) = "read committed"; }
     break;
 
   case 196:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1342 "gram.y"
     { (yyval.str) = "repeatable read"; }
     break;
 
   case 197:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1343 "gram.y"
     { (yyval.str) = "serializable"; }
     break;
 
   case 198:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1347 "gram.y"
     { (yyval.str) = "true"; }
     break;
 
   case 199:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1348 "gram.y"
     { (yyval.str) = "false"; }
     break;
 
   case 200:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1349 "gram.y"
     { (yyval.str) = "on"; }
     break;
 
   case 201:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1350 "gram.y"
     { (yyval.str) = "off"; }
     break;
 
   case 202:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1363 "gram.y"
     {
 					(yyval.node) = makeStringConst((yyvsp[(1) - (1)].str), (yylsp[(1) - (1)]));
@@ -18971,7 +18979,7 @@ yyreduce:
 
   case 203:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1367 "gram.y"
     {
 					(yyval.node) = makeStringConst((yyvsp[(1) - (1)].str), (yylsp[(1) - (1)]));
@@ -18980,7 +18988,7 @@ yyreduce:
 
   case 204:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1371 "gram.y"
     {
 					TypeName *t = (yyvsp[(1) - (3)].typnam);
@@ -19000,7 +19008,7 @@ yyreduce:
 
   case 205:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1386 "gram.y"
     {
 					TypeName *t = (yyvsp[(1) - (6)].typnam);
@@ -19028,63 +19036,63 @@ yyreduce:
 
   case 206:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1408 "gram.y"
     { (yyval.node) = makeAConst((yyvsp[(1) - (1)].value), (yylsp[(1) - (1)])); }
     break;
 
   case 207:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1409 "gram.y"
     { (yyval.node) = NULL; }
     break;
 
   case 208:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1410 "gram.y"
     { (yyval.node) = NULL; }
     break;
 
   case 209:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1414 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 210:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1415 "gram.y"
     { (yyval.str) = NULL; }
     break;
 
   case 211:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1416 "gram.y"
     { (yyval.str) = NULL; }
     break;
 
   case 212:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1420 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 213:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1421 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 214:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1426 "gram.y"
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -19096,7 +19104,7 @@ yyreduce:
 
   case 215:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1433 "gram.y"
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -19108,7 +19116,7 @@ yyreduce:
 
   case 216:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1440 "gram.y"
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -19120,7 +19128,7 @@ yyreduce:
 
   case 217:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1447 "gram.y"
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -19132,7 +19140,7 @@ yyreduce:
 
   case 218:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1454 "gram.y"
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -19143,21 +19151,21 @@ yyreduce:
 
   case 219:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1463 "gram.y"
     { (yyval.vsetstmt) = (yyvsp[(2) - (2)].vsetstmt); }
     break;
 
   case 220:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1464 "gram.y"
     { (yyval.vsetstmt) = (VariableSetStmt *) (yyvsp[(1) - (1)].node); }
     break;
 
   case 221:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1470 "gram.y"
     {
 					VariableShowStmt *n = makeNode(VariableShowStmt);
@@ -19168,7 +19176,7 @@ yyreduce:
 
   case 222:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1476 "gram.y"
     {
 					VariableShowStmt *n = makeNode(VariableShowStmt);
@@ -19179,7 +19187,7 @@ yyreduce:
 
   case 223:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1482 "gram.y"
     {
 					VariableShowStmt *n = makeNode(VariableShowStmt);
@@ -19190,7 +19198,7 @@ yyreduce:
 
   case 224:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1488 "gram.y"
     {
 					VariableShowStmt *n = makeNode(VariableShowStmt);
@@ -19201,7 +19209,7 @@ yyreduce:
 
   case 225:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1494 "gram.y"
     {
 					VariableShowStmt *n = makeNode(VariableShowStmt);
@@ -19212,7 +19220,7 @@ yyreduce:
 
   case 226:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1504 "gram.y"
     {
 					ConstraintsSetStmt *n = makeNode(ConstraintsSetStmt);
@@ -19224,35 +19232,35 @@ yyreduce:
 
   case 227:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1513 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 228:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1514 "gram.y"
     { (yyval.list) = (yyvsp[(1) - (1)].list); }
     break;
 
   case 229:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1518 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 230:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1519 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 231:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1528 "gram.y"
     {
 					CheckPointStmt *n = makeNode(CheckPointStmt);
@@ -19262,7 +19270,7 @@ yyreduce:
 
   case 232:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1543 "gram.y"
     {
 					DiscardStmt *n = makeNode(DiscardStmt);
@@ -19273,7 +19281,7 @@ yyreduce:
 
   case 233:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1549 "gram.y"
     {
 					DiscardStmt *n = makeNode(DiscardStmt);
@@ -19284,7 +19292,7 @@ yyreduce:
 
   case 234:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1555 "gram.y"
     {
 					DiscardStmt *n = makeNode(DiscardStmt);
@@ -19295,7 +19303,7 @@ yyreduce:
 
   case 235:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1561 "gram.y"
     {
 					DiscardStmt *n = makeNode(DiscardStmt);
@@ -19306,7 +19314,7 @@ yyreduce:
 
   case 236:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1579 "gram.y"
     {
 					AlterTableStmt *n = makeNode(AlterTableStmt);
@@ -19319,7 +19327,7 @@ yyreduce:
 
   case 237:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1587 "gram.y"
     {
 					AlterTableStmt *n = makeNode(AlterTableStmt);
@@ -19332,7 +19340,7 @@ yyreduce:
 
   case 238:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1595 "gram.y"
     {
 					AlterTableStmt *n = makeNode(AlterTableStmt);
@@ -19345,7 +19353,7 @@ yyreduce:
 
   case 239:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1603 "gram.y"
     {
 					AlterTableStmt *n = makeNode(AlterTableStmt);
@@ -19358,21 +19366,21 @@ yyreduce:
 
   case 240:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1613 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
     break;
 
   case 241:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1614 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node)); }
     break;
 
   case 242:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1620 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19384,7 +19392,7 @@ yyreduce:
 
   case 243:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1628 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19396,7 +19404,7 @@ yyreduce:
 
   case 244:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1636 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19409,7 +19417,7 @@ yyreduce:
 
   case 245:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1645 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19421,7 +19429,7 @@ yyreduce:
 
   case 246:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1653 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19433,7 +19441,7 @@ yyreduce:
 
   case 247:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1661 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19446,7 +19454,7 @@ yyreduce:
 
   case 248:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1670 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19459,7 +19467,7 @@ yyreduce:
 
   case 249:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1679 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19472,7 +19480,7 @@ yyreduce:
 
   case 250:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1688 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19485,7 +19493,7 @@ yyreduce:
 
   case 251:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1697 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19499,7 +19507,7 @@ yyreduce:
 
   case 252:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1707 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19513,7 +19521,7 @@ yyreduce:
 
   case 253:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1720 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19527,7 +19535,7 @@ yyreduce:
 
   case 254:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1730 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19539,7 +19547,7 @@ yyreduce:
 
   case 255:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1738 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19553,7 +19561,7 @@ yyreduce:
 
   case 256:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1748 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19567,7 +19575,7 @@ yyreduce:
 
   case 257:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1758 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19578,7 +19586,7 @@ yyreduce:
 
   case 258:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1765 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19589,7 +19597,7 @@ yyreduce:
 
   case 259:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1772 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19601,7 +19609,7 @@ yyreduce:
 
   case 260:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1780 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19613,7 +19621,7 @@ yyreduce:
 
   case 261:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1788 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19625,7 +19633,7 @@ yyreduce:
 
   case 262:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1796 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19637,7 +19645,7 @@ yyreduce:
 
   case 263:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1804 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19649,7 +19657,7 @@ yyreduce:
 
   case 264:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1812 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19660,7 +19668,7 @@ yyreduce:
 
   case 265:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1819 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19671,7 +19679,7 @@ yyreduce:
 
   case 266:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1826 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19683,7 +19691,7 @@ yyreduce:
 
   case 267:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1834 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19694,7 +19702,7 @@ yyreduce:
 
   case 268:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1841 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19705,7 +19713,7 @@ yyreduce:
 
   case 269:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1848 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19717,7 +19725,7 @@ yyreduce:
 
   case 270:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1856 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19729,7 +19737,7 @@ yyreduce:
 
   case 271:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1864 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19741,7 +19749,7 @@ yyreduce:
 
   case 272:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1872 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19753,7 +19761,7 @@ yyreduce:
 
   case 273:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1880 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19765,7 +19773,7 @@ yyreduce:
 
   case 274:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1888 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19777,7 +19785,7 @@ yyreduce:
 
   case 275:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1896 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19789,7 +19797,7 @@ yyreduce:
 
   case 276:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1904 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19801,7 +19809,7 @@ yyreduce:
 
   case 277:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1912 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19813,7 +19821,7 @@ yyreduce:
 
   case 278:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1920 "gram.y"
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -19825,91 +19833,91 @@ yyreduce:
 
   case 279:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1929 "gram.y"
     { (yyval.node) = (yyvsp[(3) - (3)].node); }
     break;
 
   case 280:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1930 "gram.y"
     { (yyval.node) = NULL; }
     break;
 
   case 281:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1934 "gram.y"
     { (yyval.dbehavior) = DROP_CASCADE; }
     break;
 
   case 282:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1935 "gram.y"
     { (yyval.dbehavior) = DROP_RESTRICT; }
     break;
 
   case 283:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1936 "gram.y"
     { (yyval.dbehavior) = DROP_RESTRICT; /* default */ }
     break;
 
   case 284:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1940 "gram.y"
     { (yyval.node) = (yyvsp[(2) - (2)].node); }
     break;
 
   case 285:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1941 "gram.y"
     { (yyval.node) = NULL; }
     break;
 
   case 286:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1945 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (3)].list); }
     break;
 
   case 287:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1948 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (2)].list); }
     break;
 
   case 288:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1949 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 289:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1953 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].defelt)); }
     break;
 
   case 290:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1954 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].defelt)); }
     break;
 
   case 291:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1960 "gram.y"
     {
 					(yyval.defelt) = makeDefElem((yyvsp[(1) - (3)].str), (Node *) (yyvsp[(3) - (3)].node));
@@ -19918,7 +19926,7 @@ yyreduce:
 
   case 292:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1964 "gram.y"
     {
 					(yyval.defelt) = makeDefElem((yyvsp[(1) - (1)].str), NULL);
@@ -19927,7 +19935,7 @@ yyreduce:
 
   case 293:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1968 "gram.y"
     {
 					(yyval.defelt) = makeDefElemExtended((yyvsp[(1) - (5)].str), (yyvsp[(3) - (5)].str), (Node *) (yyvsp[(5) - (5)].node),
@@ -19937,7 +19945,7 @@ yyreduce:
 
   case 294:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1973 "gram.y"
     {
 					(yyval.defelt) = makeDefElemExtended((yyvsp[(1) - (3)].str), (yyvsp[(3) - (3)].str), NULL, DEFELEM_UNSPEC);
@@ -19946,7 +19954,7 @@ yyreduce:
 
   case 295:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1988 "gram.y"
     {
 					ClosePortalStmt *n = makeNode(ClosePortalStmt);
@@ -19957,7 +19965,7 @@ yyreduce:
 
   case 296:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 1994 "gram.y"
     {
 					ClosePortalStmt *n = makeNode(ClosePortalStmt);
@@ -19968,7 +19976,7 @@ yyreduce:
 
   case 297:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2022 "gram.y"
     {
 					CopyStmt *n = makeNode(CopyStmt);
@@ -19994,7 +20002,7 @@ yyreduce:
 
   case 298:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2043 "gram.y"
     {
 					CopyStmt *n = makeNode(CopyStmt);
@@ -20010,70 +20018,70 @@ yyreduce:
 
   case 299:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2056 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 300:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2057 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 301:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2066 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 302:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2067 "gram.y"
     { (yyval.str) = NULL; }
     break;
 
   case 303:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2068 "gram.y"
     { (yyval.str) = NULL; }
     break;
 
   case 304:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2071 "gram.y"
     { (yyval.list) = (yyvsp[(1) - (1)].list); }
     break;
 
   case 305:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2072 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (3)].list); }
     break;
 
   case 306:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2077 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].defelt)); }
     break;
 
   case 307:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2078 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 308:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2083 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("format", (Node *)makeString("binary"));
@@ -20082,7 +20090,7 @@ yyreduce:
 
   case 309:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2087 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("oids", (Node *)makeInteger(TRUE));
@@ -20091,7 +20099,7 @@ yyreduce:
 
   case 310:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2091 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("delimiter", (Node *)makeString((yyvsp[(3) - (3)].str)));
@@ -20100,7 +20108,7 @@ yyreduce:
 
   case 311:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2095 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("null", (Node *)makeString((yyvsp[(3) - (3)].str)));
@@ -20109,7 +20117,7 @@ yyreduce:
 
   case 312:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2099 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("format", (Node *)makeString("csv"));
@@ -20118,7 +20126,7 @@ yyreduce:
 
   case 313:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2103 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("header", (Node *)makeInteger(TRUE));
@@ -20127,7 +20135,7 @@ yyreduce:
 
   case 314:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2107 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("quote", (Node *)makeString((yyvsp[(3) - (3)].str)));
@@ -20136,7 +20144,7 @@ yyreduce:
 
   case 315:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2111 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("escape", (Node *)makeString((yyvsp[(3) - (3)].str)));
@@ -20145,7 +20153,7 @@ yyreduce:
 
   case 316:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2115 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("force_quote", (Node *)(yyvsp[(3) - (3)].list));
@@ -20154,7 +20162,7 @@ yyreduce:
 
   case 317:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2119 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("force_quote", (Node *)makeNode(A_Star));
@@ -20163,7 +20171,7 @@ yyreduce:
 
   case 318:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2123 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("force_not_null", (Node *)(yyvsp[(4) - (4)].list));
@@ -20172,7 +20180,7 @@ yyreduce:
 
   case 319:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2132 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("format", (Node *)makeString("binary"));
@@ -20181,14 +20189,14 @@ yyreduce:
 
   case 320:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2135 "gram.y"
     { (yyval.defelt) = NULL; }
     break;
 
   case 321:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2140 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("oids", (Node *)makeInteger(TRUE));
@@ -20197,14 +20205,14 @@ yyreduce:
 
   case 322:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2143 "gram.y"
     { (yyval.defelt) = NULL; }
     break;
 
   case 323:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2148 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("delimiter", (Node *)makeString((yyvsp[(3) - (3)].str)));
@@ -20213,28 +20221,28 @@ yyreduce:
 
   case 324:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2151 "gram.y"
     { (yyval.defelt) = NULL; }
     break;
 
   case 325:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2155 "gram.y"
     {}
     break;
 
   case 326:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2156 "gram.y"
     {}
     break;
 
   case 327:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2162 "gram.y"
     {
 					(yyval.list) = list_make1((yyvsp[(1) - (1)].defelt));
@@ -20243,7 +20251,7 @@ yyreduce:
 
   case 328:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2166 "gram.y"
     {
 					(yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].defelt));
@@ -20252,7 +20260,7 @@ yyreduce:
 
   case 329:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2173 "gram.y"
     {
 					(yyval.defelt) = makeDefElem((yyvsp[(1) - (2)].str), (yyvsp[(2) - (2)].node));
@@ -20261,49 +20269,49 @@ yyreduce:
 
   case 330:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2179 "gram.y"
     { (yyval.node) = (Node *) makeString((yyvsp[(1) - (1)].str)); }
     break;
 
   case 331:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2180 "gram.y"
     { (yyval.node) = (Node *) makeString((yyvsp[(1) - (1)].str)); }
     break;
 
   case 332:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2181 "gram.y"
     { (yyval.node) = (Node *) (yyvsp[(1) - (1)].value); }
     break;
 
   case 333:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2182 "gram.y"
     { (yyval.node) = (Node *) makeNode(A_Star); }
     break;
 
   case 334:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2183 "gram.y"
     { (yyval.node) = (Node *) (yyvsp[(2) - (3)].list); }
     break;
 
   case 335:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2184 "gram.y"
     { (yyval.node) = NULL; }
     break;
 
   case 336:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2189 "gram.y"
     {
 					(yyval.list) = list_make1((yyvsp[(1) - (1)].node));
@@ -20312,7 +20320,7 @@ yyreduce:
 
   case 337:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2193 "gram.y"
     {
 					(yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node));
@@ -20321,21 +20329,21 @@ yyreduce:
 
   case 338:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2200 "gram.y"
     { (yyval.node) = (Node *) makeString((yyvsp[(1) - (1)].str)); }
     break;
 
   case 339:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2201 "gram.y"
     { (yyval.node) = (Node *) makeString((yyvsp[(1) - (1)].str)); }
     break;
 
   case 340:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2214 "gram.y"
     {
 					CreateStmt *n = makeNode(CreateStmt);
@@ -20353,7 +20361,7 @@ yyreduce:
 
   case 341:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2228 "gram.y"
     {
 					CreateStmt *n = makeNode(CreateStmt);
@@ -20372,84 +20380,84 @@ yyreduce:
 
   case 342:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2250 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 343:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2251 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 344:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2252 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 345:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2253 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 346:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2254 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 347:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2255 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 348:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2256 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 349:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2260 "gram.y"
     { (yyval.list) = (yyvsp[(1) - (1)].list); }
     break;
 
   case 350:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2261 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 351:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2265 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (3)].list); }
     break;
 
   case 352:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2266 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 353:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2271 "gram.y"
     {
 					(yyval.list) = list_make1((yyvsp[(1) - (1)].node));
@@ -20458,7 +20466,7 @@ yyreduce:
 
   case 354:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2275 "gram.y"
     {
 					(yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node));
@@ -20467,7 +20475,7 @@ yyreduce:
 
   case 355:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2282 "gram.y"
     {
 					(yyval.list) = list_make1((yyvsp[(1) - (1)].node));
@@ -20476,7 +20484,7 @@ yyreduce:
 
   case 356:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2286 "gram.y"
     {
 					(yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node));
@@ -20485,42 +20493,42 @@ yyreduce:
 
   case 357:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2292 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 358:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2293 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 359:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2294 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 360:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2298 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 361:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2299 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 362:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2303 "gram.y"
     {
 					ColumnDef *n = makeNode(ColumnDef);
@@ -20534,7 +20542,7 @@ yyreduce:
 
   case 363:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2314 "gram.y"
     {
 					ColumnDef *n = makeNode(ColumnDef);
@@ -20547,21 +20555,21 @@ yyreduce:
 
   case 364:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2324 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].node)); }
     break;
 
   case 365:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2325 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 366:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2330 "gram.y"
     {
 					Constraint *n = (Constraint *) (yyvsp[(3) - (3)].node);
@@ -20574,21 +20582,21 @@ yyreduce:
 
   case 367:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2337 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 368:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2338 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 369:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2358 "gram.y"
     {
 					Constraint *n = makeNode(Constraint);
@@ -20600,7 +20608,7 @@ yyreduce:
 
   case 370:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2365 "gram.y"
     {
 					Constraint *n = makeNode(Constraint);
@@ -20612,7 +20620,7 @@ yyreduce:
 
   case 371:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2372 "gram.y"
     {
 					Constraint *n = makeNode(Constraint);
@@ -20627,7 +20635,7 @@ yyreduce:
 
   case 372:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2382 "gram.y"
     {
 					Constraint *n = makeNode(Constraint);
@@ -20642,7 +20650,7 @@ yyreduce:
 
   case 373:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2392 "gram.y"
     {
 					Constraint *n = makeNode(Constraint);
@@ -20656,7 +20664,7 @@ yyreduce:
 
   case 374:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2401 "gram.y"
     {
 					Constraint *n = makeNode(Constraint);
@@ -20670,7 +20678,7 @@ yyreduce:
 
   case 375:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2410 "gram.y"
     {
 					Constraint *n = makeNode(Constraint);
@@ -20689,7 +20697,7 @@ yyreduce:
 
   case 376:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2439 "gram.y"
     {
 					Constraint *n = makeNode(Constraint);
@@ -20701,7 +20709,7 @@ yyreduce:
 
   case 377:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2446 "gram.y"
     {
 					Constraint *n = makeNode(Constraint);
@@ -20713,7 +20721,7 @@ yyreduce:
 
   case 378:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2453 "gram.y"
     {
 					Constraint *n = makeNode(Constraint);
@@ -20725,7 +20733,7 @@ yyreduce:
 
   case 379:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2460 "gram.y"
     {
 					Constraint *n = makeNode(Constraint);
@@ -20737,7 +20745,7 @@ yyreduce:
 
   case 380:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2479 "gram.y"
     {
 					InhRelation *n = makeNode(InhRelation);
@@ -20749,70 +20757,70 @@ yyreduce:
 
   case 381:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2488 "gram.y"
     { (yyval.ival) = (yyvsp[(1) - (3)].ival) | (yyvsp[(3) - (3)].ival); }
     break;
 
   case 382:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2489 "gram.y"
     { (yyval.ival) = (yyvsp[(1) - (3)].ival) & ~(yyvsp[(3) - (3)].ival); }
     break;
 
   case 383:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2490 "gram.y"
     { (yyval.ival) = 0; }
     break;
 
   case 384:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2494 "gram.y"
     { (yyval.ival) = CREATE_TABLE_LIKE_DEFAULTS; }
     break;
 
   case 385:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2495 "gram.y"
     { (yyval.ival) = CREATE_TABLE_LIKE_CONSTRAINTS; }
     break;
 
   case 386:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2496 "gram.y"
     { (yyval.ival) = CREATE_TABLE_LIKE_INDEXES; }
     break;
 
   case 387:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2497 "gram.y"
     { (yyval.ival) = CREATE_TABLE_LIKE_STORAGE; }
     break;
 
   case 388:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2498 "gram.y"
     { (yyval.ival) = CREATE_TABLE_LIKE_COMMENTS; }
     break;
 
   case 389:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2499 "gram.y"
     { (yyval.ival) = CREATE_TABLE_LIKE_ALL; }
     break;
 
   case 390:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2509 "gram.y"
     {
 					Constraint *n = (Constraint *) (yyvsp[(3) - (3)].node);
@@ -20825,14 +20833,14 @@ yyreduce:
 
   case 391:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2516 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 392:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2521 "gram.y"
     {
 					Constraint *n = makeNode(Constraint);
@@ -20851,7 +20859,7 @@ yyreduce:
 
   case 393:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2536 "gram.y"
     {
 					Constraint *n = makeNode(Constraint);
@@ -20868,7 +20876,7 @@ yyreduce:
 
   case 394:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2549 "gram.y"
     {
 					Constraint *n = makeNode(Constraint);
@@ -20885,7 +20893,7 @@ yyreduce:
 
   case 395:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2563 "gram.y"
     {
 					Constraint *n = makeNode(Constraint);
@@ -20904,7 +20912,7 @@ yyreduce:
 
   case 396:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2578 "gram.y"
     {
 					Constraint *n = makeNode(Constraint);
@@ -20925,35 +20933,35 @@ yyreduce:
 
   case 397:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2596 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (3)].list); }
     break;
 
   case 398:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2597 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 399:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2601 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
     break;
 
   case 400:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2602 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node)); }
     break;
 
   case 401:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2606 "gram.y"
     {
 					(yyval.node) = (Node *) makeString((yyvsp[(1) - (1)].str));
@@ -20962,7 +20970,7 @@ yyreduce:
 
   case 402:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2612 "gram.y"
     {
 				(yyval.ival) = FKCONSTR_MATCH_FULL;
@@ -20971,7 +20979,7 @@ yyreduce:
 
   case 403:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2616 "gram.y"
     {
 				ereport(ERROR,
@@ -20984,7 +20992,7 @@ yyreduce:
 
   case 404:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2624 "gram.y"
     {
 				(yyval.ival) = FKCONSTR_MATCH_UNSPECIFIED;
@@ -20993,7 +21001,7 @@ yyreduce:
 
   case 405:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2628 "gram.y"
     {
 				(yyval.ival) = FKCONSTR_MATCH_UNSPECIFIED;
@@ -21002,21 +21010,21 @@ yyreduce:
 
   case 406:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2634 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].list)); }
     break;
 
   case 407:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2636 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].list)); }
     break;
 
   case 408:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2640 "gram.y"
     {
 				(yyval.list) = list_make2((yyvsp[(1) - (3)].ielem), (yyvsp[(3) - (3)].list));
@@ -21025,7 +21033,7 @@ yyreduce:
 
   case 409:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2645 "gram.y"
     {
 				(yyval.list) = list_make2((yyvsp[(1) - (6)].ielem), (yyvsp[(5) - (6)].list));
@@ -21034,203 +21042,203 @@ yyreduce:
 
   case 410:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2651 "gram.y"
     { (yyval.node) = (yyvsp[(3) - (4)].node); }
     break;
 
   case 411:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2652 "gram.y"
     { (yyval.node) = NULL; }
     break;
 
   case 412:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2663 "gram.y"
     { (yyval.ival) = ((yyvsp[(1) - (1)].ival) << 8) | (FKCONSTR_ACTION_NOACTION & 0xFF); }
     break;
 
   case 413:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2665 "gram.y"
     { (yyval.ival) = (FKCONSTR_ACTION_NOACTION << 8) | ((yyvsp[(1) - (1)].ival) & 0xFF); }
     break;
 
   case 414:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2667 "gram.y"
     { (yyval.ival) = ((yyvsp[(1) - (2)].ival) << 8) | ((yyvsp[(2) - (2)].ival) & 0xFF); }
     break;
 
   case 415:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2669 "gram.y"
     { (yyval.ival) = ((yyvsp[(2) - (2)].ival) << 8) | ((yyvsp[(1) - (2)].ival) & 0xFF); }
     break;
 
   case 416:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2671 "gram.y"
     { (yyval.ival) = (FKCONSTR_ACTION_NOACTION << 8) | (FKCONSTR_ACTION_NOACTION & 0xFF); }
     break;
 
   case 417:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2674 "gram.y"
     { (yyval.ival) = (yyvsp[(3) - (3)].ival); }
     break;
 
   case 418:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2677 "gram.y"
     { (yyval.ival) = (yyvsp[(3) - (3)].ival); }
     break;
 
   case 419:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2681 "gram.y"
     { (yyval.ival) = FKCONSTR_ACTION_NOACTION; }
     break;
 
   case 420:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2682 "gram.y"
     { (yyval.ival) = FKCONSTR_ACTION_RESTRICT; }
     break;
 
   case 421:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2683 "gram.y"
     { (yyval.ival) = FKCONSTR_ACTION_CASCADE; }
     break;
 
   case 422:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2684 "gram.y"
     { (yyval.ival) = FKCONSTR_ACTION_SETNULL; }
     break;
 
   case 423:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2685 "gram.y"
     { (yyval.ival) = FKCONSTR_ACTION_SETDEFAULT; }
     break;
 
   case 424:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2688 "gram.y"
     { (yyval.list) = (yyvsp[(3) - (4)].list); }
     break;
 
   case 425:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2689 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 426:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2694 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (2)].list); }
     break;
 
   case 427:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2695 "gram.y"
     { (yyval.list) = list_make1(defWithOids(true)); }
     break;
 
   case 428:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2696 "gram.y"
     { (yyval.list) = list_make1(defWithOids(false)); }
     break;
 
   case 429:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2697 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 430:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2700 "gram.y"
     { (yyval.oncommit) = ONCOMMIT_DROP; }
     break;
 
   case 431:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2701 "gram.y"
     { (yyval.oncommit) = ONCOMMIT_DELETE_ROWS; }
     break;
 
   case 432:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2702 "gram.y"
     { (yyval.oncommit) = ONCOMMIT_PRESERVE_ROWS; }
     break;
 
   case 433:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2703 "gram.y"
     { (yyval.oncommit) = ONCOMMIT_NOOP; }
     break;
 
   case 434:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2706 "gram.y"
     { (yyval.str) = (yyvsp[(2) - (2)].str); }
     break;
 
   case 435:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2707 "gram.y"
     { (yyval.str) = NULL; }
     break;
 
   case 436:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2710 "gram.y"
     { (yyval.str) = (yyvsp[(4) - (4)].str); }
     break;
 
   case 437:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2711 "gram.y"
     { (yyval.str) = NULL; }
     break;
 
   case 438:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2722 "gram.y"
     {
 					/*
@@ -21257,7 +21265,7 @@ yyreduce:
 
   case 439:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2747 "gram.y"
     {
 					(yyval.into) = makeNode(IntoClause);
@@ -21271,35 +21279,35 @@ yyreduce:
 
   case 440:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2758 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (3)].list); }
     break;
 
   case 441:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2759 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 442:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2763 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
     break;
 
   case 443:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2764 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node)); }
     break;
 
   case 444:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2769 "gram.y"
     {
 					ColumnDef *n = makeNode(ColumnDef);
@@ -21317,28 +21325,28 @@ yyreduce:
 
   case 445:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2784 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 446:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2785 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 447:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2786 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 448:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2800 "gram.y"
     {
 					CreateSeqStmt *n = makeNode(CreateSeqStmt);
@@ -21352,7 +21360,7 @@ yyreduce:
 
   case 449:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2812 "gram.y"
     {
 					AlterSeqStmt *n = makeNode(AlterSeqStmt);
@@ -21364,35 +21372,35 @@ yyreduce:
 
   case 450:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2820 "gram.y"
     { (yyval.list) = (yyvsp[(1) - (1)].list); }
     break;
 
   case 451:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2821 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 452:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2824 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].defelt)); }
     break;
 
   case 453:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2825 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].defelt)); }
     break;
 
   case 454:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2829 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("cache", (Node *)(yyvsp[(2) - (2)].value));
@@ -21401,7 +21409,7 @@ yyreduce:
 
   case 455:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2833 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("cycle", (Node *)makeInteger(TRUE));
@@ -21410,7 +21418,7 @@ yyreduce:
 
   case 456:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2837 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("cycle", (Node *)makeInteger(FALSE));
@@ -21419,7 +21427,7 @@ yyreduce:
 
   case 457:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2841 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("increment", (Node *)(yyvsp[(3) - (3)].value));
@@ -21428,7 +21436,7 @@ yyreduce:
 
   case 458:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2845 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("maxvalue", (Node *)(yyvsp[(2) - (2)].value));
@@ -21437,7 +21445,7 @@ yyreduce:
 
   case 459:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2849 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("minvalue", (Node *)(yyvsp[(2) - (2)].value));
@@ -21446,7 +21454,7 @@ yyreduce:
 
   case 460:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2853 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("maxvalue", NULL);
@@ -21455,7 +21463,7 @@ yyreduce:
 
   case 461:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2857 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("minvalue", NULL);
@@ -21464,7 +21472,7 @@ yyreduce:
 
   case 462:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2861 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("owned_by", (Node *)(yyvsp[(3) - (3)].list));
@@ -21473,7 +21481,7 @@ yyreduce:
 
   case 463:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2865 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("start", (Node *)(yyvsp[(3) - (3)].value));
@@ -21482,7 +21490,7 @@ yyreduce:
 
   case 464:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2869 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("restart", NULL);
@@ -21491,7 +21499,7 @@ yyreduce:
 
   case 465:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2873 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("restart", (Node *)(yyvsp[(3) - (3)].value));
@@ -21500,28 +21508,28 @@ yyreduce:
 
   case 466:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2878 "gram.y"
     {}
     break;
 
   case 467:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2879 "gram.y"
     {}
     break;
 
   case 468:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2883 "gram.y"
     { (yyval.value) = makeFloat((yyvsp[(1) - (1)].str)); }
     break;
 
   case 469:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2885 "gram.y"
     {
 					(yyval.value) = makeFloat((yyvsp[(2) - (2)].str));
@@ -21531,28 +21539,28 @@ yyreduce:
 
   case 470:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2889 "gram.y"
     { (yyval.value) = makeInteger((yyvsp[(1) - (1)].ival)); }
     break;
 
   case 471:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2892 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].value)); }
     break;
 
   case 472:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2893 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].value)); }
     break;
 
   case 473:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2906 "gram.y"
     {
 				CreatePLangStmt *n = makeNode(CreatePLangStmt);
@@ -21569,7 +21577,7 @@ yyreduce:
 
   case 474:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2919 "gram.y"
     {
 				CreatePLangStmt *n = makeNode(CreatePLangStmt);
@@ -21585,77 +21593,77 @@ yyreduce:
 
   case 475:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2932 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 476:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2933 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 477:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2941 "gram.y"
     { (yyval.list) = list_make1(makeString((yyvsp[(1) - (1)].str))); }
     break;
 
   case 478:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2942 "gram.y"
     { (yyval.list) = lcons(makeString((yyvsp[(1) - (2)].str)), (yyvsp[(2) - (2)].list)); }
     break;
 
   case 479:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2946 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (2)].list); }
     break;
 
   case 480:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2947 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 481:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2951 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (2)].list); }
     break;
 
   case 482:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2952 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 483:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2956 "gram.y"
     { (yyval.list) = (yyvsp[(1) - (1)].list); }
     break;
 
   case 484:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2957 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 485:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2962 "gram.y"
     {
 					DropPLangStmt *n = makeNode(DropPLangStmt);
@@ -21668,7 +21676,7 @@ yyreduce:
 
   case 486:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2970 "gram.y"
     {
 					DropPLangStmt *n = makeNode(DropPLangStmt);
@@ -21681,21 +21689,21 @@ yyreduce:
 
   case 487:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2980 "gram.y"
     {}
     break;
 
   case 488:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2981 "gram.y"
     {}
     break;
 
   case 489:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 2992 "gram.y"
     {
 					CreateTableSpaceStmt *n = makeNode(CreateTableSpaceStmt);
@@ -21708,21 +21716,21 @@ yyreduce:
 
   case 490:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3001 "gram.y"
     { (yyval.str) = (yyvsp[(2) - (2)].str); }
     break;
 
   case 491:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3002 "gram.y"
     { (yyval.str) = NULL; }
     break;
 
   case 492:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3016 "gram.y"
     {
 					DropTableSpaceStmt *n = makeNode(DropTableSpaceStmt);
@@ -21734,7 +21742,7 @@ yyreduce:
 
   case 493:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3023 "gram.y"
     {
 					DropTableSpaceStmt *n = makeNode(DropTableSpaceStmt);
@@ -21746,7 +21754,7 @@ yyreduce:
 
   case 494:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3039 "gram.y"
     {
 					CreateFdwStmt *n = makeNode(CreateFdwStmt);
@@ -21759,7 +21767,7 @@ yyreduce:
 
   case 495:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3056 "gram.y"
     {
 					DropFdwStmt *n = makeNode(DropFdwStmt);
@@ -21772,7 +21780,7 @@ yyreduce:
 
   case 496:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3064 "gram.y"
     {
 					DropFdwStmt *n = makeNode(DropFdwStmt);
@@ -21785,7 +21793,7 @@ yyreduce:
 
   case 497:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3081 "gram.y"
     {
 					AlterFdwStmt *n = makeNode(AlterFdwStmt);
@@ -21799,7 +21807,7 @@ yyreduce:
 
   case 498:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3090 "gram.y"
     {
 					AlterFdwStmt *n = makeNode(AlterFdwStmt);
@@ -21812,7 +21820,7 @@ yyreduce:
 
   case 499:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3098 "gram.y"
     {
 					AlterFdwStmt *n = makeNode(AlterFdwStmt);
@@ -21824,21 +21832,21 @@ yyreduce:
 
   case 500:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3108 "gram.y"
     { (yyval.list) = (yyvsp[(3) - (4)].list); }
     break;
 
   case 501:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3109 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 502:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3114 "gram.y"
     {
 					(yyval.list) = list_make1((yyvsp[(1) - (1)].defelt));
@@ -21847,7 +21855,7 @@ yyreduce:
 
   case 503:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3118 "gram.y"
     {
 					(yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].defelt));
@@ -21856,14 +21864,14 @@ yyreduce:
 
   case 504:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3125 "gram.y"
     { (yyval.list) = (yyvsp[(3) - (4)].list); }
     break;
 
   case 505:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3130 "gram.y"
     {
 					(yyval.list) = list_make1((yyvsp[(1) - (1)].defelt));
@@ -21872,7 +21880,7 @@ yyreduce:
 
   case 506:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3134 "gram.y"
     {
 					(yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].defelt));
@@ -21881,7 +21889,7 @@ yyreduce:
 
   case 507:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3141 "gram.y"
     {
 					(yyval.defelt) = (yyvsp[(1) - (1)].defelt);
@@ -21890,7 +21898,7 @@ yyreduce:
 
   case 508:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3145 "gram.y"
     {
 					(yyval.defelt) = (yyvsp[(2) - (2)].defelt);
@@ -21900,7 +21908,7 @@ yyreduce:
 
   case 509:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3150 "gram.y"
     {
 					(yyval.defelt) = (yyvsp[(2) - (2)].defelt);
@@ -21910,7 +21918,7 @@ yyreduce:
 
   case 510:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3155 "gram.y"
     {
 					(yyval.defelt) = makeDefElemExtended(NULL, (yyvsp[(2) - (2)].str), NULL, DEFELEM_DROP);
@@ -21919,7 +21927,7 @@ yyreduce:
 
   case 511:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3162 "gram.y"
     {
 					(yyval.defelt) = makeDefElem((yyvsp[(1) - (2)].str), (yyvsp[(2) - (2)].node));
@@ -21928,21 +21936,21 @@ yyreduce:
 
   case 512:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3168 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 513:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3173 "gram.y"
     { (yyval.node) = (Node *) makeString((yyvsp[(1) - (1)].str)); }
     break;
 
   case 514:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3185 "gram.y"
     {
 					CreateForeignServerStmt *n = makeNode(CreateForeignServerStmt);
@@ -21957,49 +21965,49 @@ yyreduce:
 
   case 515:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3197 "gram.y"
     { (yyval.str) = (yyvsp[(2) - (2)].str); }
     break;
 
   case 516:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3198 "gram.y"
     { (yyval.str) = NULL; }
     break;
 
   case 517:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3203 "gram.y"
     { (yyval.str) = (yyvsp[(2) - (2)].str); }
     break;
 
   case 518:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3204 "gram.y"
     { (yyval.str) = NULL; }
     break;
 
   case 519:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3208 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 520:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3209 "gram.y"
     { (yyval.str) = NULL; }
     break;
 
   case 521:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3220 "gram.y"
     {
 					DropForeignServerStmt *n = makeNode(DropForeignServerStmt);
@@ -22012,7 +22020,7 @@ yyreduce:
 
   case 522:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3228 "gram.y"
     {
 					DropForeignServerStmt *n = makeNode(DropForeignServerStmt);
@@ -22025,7 +22033,7 @@ yyreduce:
 
   case 523:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3245 "gram.y"
     {
 					AlterForeignServerStmt *n = makeNode(AlterForeignServerStmt);
@@ -22039,7 +22047,7 @@ yyreduce:
 
   case 524:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3254 "gram.y"
     {
 					AlterForeignServerStmt *n = makeNode(AlterForeignServerStmt);
@@ -22052,7 +22060,7 @@ yyreduce:
 
   case 525:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3262 "gram.y"
     {
 					AlterForeignServerStmt *n = makeNode(AlterForeignServerStmt);
@@ -22064,7 +22072,7 @@ yyreduce:
 
   case 526:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3278 "gram.y"
     {
 					CreateUserMappingStmt *n = makeNode(CreateUserMappingStmt);
@@ -22077,28 +22085,28 @@ yyreduce:
 
   case 527:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3289 "gram.y"
     { (yyval.str) = "current_user"; }
     break;
 
   case 528:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3290 "gram.y"
     { (yyval.str) = "current_user"; }
     break;
 
   case 529:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3291 "gram.y"
     { (yyval.str) = (strcmp((yyvsp[(1) - (1)].str), "public") == 0) ? NULL : (yyvsp[(1) - (1)].str); }
     break;
 
   case 530:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3302 "gram.y"
     {
 					DropUserMappingStmt *n = makeNode(DropUserMappingStmt);
@@ -22111,7 +22119,7 @@ yyreduce:
 
   case 531:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3310 "gram.y"
     {
 					DropUserMappingStmt *n = makeNode(DropUserMappingStmt);
@@ -22124,7 +22132,7 @@ yyreduce:
 
   case 532:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3327 "gram.y"
     {
 					AlterUserMappingStmt *n = makeNode(AlterUserMappingStmt);
@@ -22137,7 +22145,7 @@ yyreduce:
 
   case 533:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3348 "gram.y"
     {
 					CreateTrigStmt *n = makeNode(CreateTrigStmt);
@@ -22160,7 +22168,7 @@ yyreduce:
 
   case 534:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3369 "gram.y"
     {
 					CreateTrigStmt *n = makeNode(CreateTrigStmt);
@@ -22183,28 +22191,28 @@ yyreduce:
 
   case 535:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3389 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 536:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3390 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 537:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3395 "gram.y"
     { (yyval.list) = (yyvsp[(1) - (1)].list); }
     break;
 
   case 538:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3397 "gram.y"
     {
 					int		events1 = intVal(linitial((yyvsp[(1) - (3)].list)));
@@ -22228,42 +22236,42 @@ yyreduce:
 
   case 539:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3419 "gram.y"
     { (yyval.list) = list_make2(makeInteger(TRIGGER_TYPE_INSERT), NIL); }
     break;
 
   case 540:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3421 "gram.y"
     { (yyval.list) = list_make2(makeInteger(TRIGGER_TYPE_DELETE), NIL); }
     break;
 
   case 541:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3423 "gram.y"
     { (yyval.list) = list_make2(makeInteger(TRIGGER_TYPE_UPDATE), NIL); }
     break;
 
   case 542:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3425 "gram.y"
     { (yyval.list) = list_make2(makeInteger(TRIGGER_TYPE_UPDATE), (yyvsp[(3) - (3)].list)); }
     break;
 
   case 543:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3427 "gram.y"
     { (yyval.list) = list_make2(makeInteger(TRIGGER_TYPE_TRUNCATE), NIL); }
     break;
 
   case 544:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3432 "gram.y"
     {
 					(yyval.boolean) = (yyvsp[(3) - (3)].boolean);
@@ -22272,7 +22280,7 @@ yyreduce:
 
   case 545:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3436 "gram.y"
     {
 					/*
@@ -22285,70 +22293,70 @@ yyreduce:
 
   case 546:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3446 "gram.y"
     {}
     break;
 
   case 547:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3447 "gram.y"
     {}
     break;
 
   case 548:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3451 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 549:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3452 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 550:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3456 "gram.y"
     { (yyval.node) = (yyvsp[(3) - (4)].node); }
     break;
 
   case 551:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3457 "gram.y"
     { (yyval.node) = NULL; }
     break;
 
   case 552:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3461 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].value)); }
     break;
 
   case 553:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3462 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].value)); }
     break;
 
   case 554:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3463 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 555:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3468 "gram.y"
     {
 					char buf[64];
@@ -22359,63 +22367,63 @@ yyreduce:
 
   case 556:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3473 "gram.y"
     { (yyval.value) = makeString((yyvsp[(1) - (1)].str)); }
     break;
 
   case 557:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3474 "gram.y"
     { (yyval.value) = makeString((yyvsp[(1) - (1)].str)); }
     break;
 
   case 558:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3475 "gram.y"
     { (yyval.value) = makeString((yyvsp[(1) - (1)].str)); }
     break;
 
   case 559:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3476 "gram.y"
     { (yyval.value) = makeString((yyvsp[(1) - (1)].str)); }
     break;
 
   case 560:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3477 "gram.y"
     { (yyval.value) = makeString((yyvsp[(1) - (1)].str)); }
     break;
 
   case 561:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3481 "gram.y"
     { (yyval.range) = (yyvsp[(2) - (2)].range); }
     break;
 
   case 562:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3482 "gram.y"
     { (yyval.range) = NULL; }
     break;
 
   case 563:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3487 "gram.y"
     { (yyval.ival) = (yyvsp[(1) - (1)].ival); }
     break;
 
   case 564:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3489 "gram.y"
     {
 					if ((yyvsp[(1) - (2)].ival) == 0 && (yyvsp[(2) - (2)].ival) != 0)
@@ -22429,7 +22437,7 @@ yyreduce:
 
   case 565:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3498 "gram.y"
     {
 					if ((yyvsp[(1) - (1)].ival) != 0)
@@ -22441,7 +22449,7 @@ yyreduce:
 
   case 566:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3505 "gram.y"
     {
 					if ((yyvsp[(2) - (2)].ival) == 0 && (yyvsp[(1) - (2)].ival) != 0)
@@ -22455,42 +22463,42 @@ yyreduce:
 
   case 567:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3514 "gram.y"
     { (yyval.ival) = 0; }
     break;
 
   case 568:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3518 "gram.y"
     { (yyval.ival) = 0; }
     break;
 
   case 569:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3519 "gram.y"
     { (yyval.ival) = 1; }
     break;
 
   case 570:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3523 "gram.y"
     { (yyval.ival) = 0; }
     break;
 
   case 571:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3524 "gram.y"
     { (yyval.ival) = 2; }
     break;
 
   case 572:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3530 "gram.y"
     {
 					DropPropertyStmt *n = makeNode(DropPropertyStmt);
@@ -22505,7 +22513,7 @@ yyreduce:
 
   case 573:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3540 "gram.y"
     {
 					DropPropertyStmt *n = makeNode(DropPropertyStmt);
@@ -22520,7 +22528,7 @@ yyreduce:
 
   case 574:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3563 "gram.y"
     {
 					CreateTrigStmt *n = makeNode(CreateTrigStmt);
@@ -22540,7 +22548,7 @@ yyreduce:
 
   case 575:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3581 "gram.y"
     {
 					DropPropertyStmt *n = makeNode(DropPropertyStmt);
@@ -22557,7 +22565,7 @@ yyreduce:
 
   case 576:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3604 "gram.y"
     {
 					DefineStmt *n = makeNode(DefineStmt);
@@ -22572,7 +22580,7 @@ yyreduce:
 
   case 577:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3614 "gram.y"
     {
 					/* old-style (pre-8.2) syntax for CREATE AGGREGATE */
@@ -22588,7 +22596,7 @@ yyreduce:
 
   case 578:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3625 "gram.y"
     {
 					DefineStmt *n = makeNode(DefineStmt);
@@ -22603,7 +22611,7 @@ yyreduce:
 
   case 579:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3635 "gram.y"
     {
 					DefineStmt *n = makeNode(DefineStmt);
@@ -22618,7 +22626,7 @@ yyreduce:
 
   case 580:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3645 "gram.y"
     {
 					/* Shell type (identified by lack of definition) */
@@ -22634,7 +22642,7 @@ yyreduce:
 
   case 581:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3656 "gram.y"
     {
 					CompositeTypeStmt *n = makeNode(CompositeTypeStmt);
@@ -22675,7 +22683,7 @@ yyreduce:
 
   case 582:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3692 "gram.y"
     {
 					CreateEnumStmt *n = makeNode(CreateEnumStmt);
@@ -22687,7 +22695,7 @@ yyreduce:
 
   case 583:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3699 "gram.y"
     {
 					DefineStmt *n = makeNode(DefineStmt);
@@ -22701,7 +22709,7 @@ yyreduce:
 
   case 584:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3708 "gram.y"
     {
 					DefineStmt *n = makeNode(DefineStmt);
@@ -22715,7 +22723,7 @@ yyreduce:
 
   case 585:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3717 "gram.y"
     {
 					DefineStmt *n = makeNode(DefineStmt);
@@ -22729,7 +22737,7 @@ yyreduce:
 
   case 586:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3726 "gram.y"
     {
 					DefineStmt *n = makeNode(DefineStmt);
@@ -22743,28 +22751,28 @@ yyreduce:
 
   case 587:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3736 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (3)].list); }
     break;
 
   case 588:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3739 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].defelt)); }
     break;
 
   case 589:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3740 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].defelt)); }
     break;
 
   case 590:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3744 "gram.y"
     {
 					(yyval.defelt) = makeDefElem((yyvsp[(1) - (3)].str), (Node *) (yyvsp[(3) - (3)].node));
@@ -22773,7 +22781,7 @@ yyreduce:
 
   case 591:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3748 "gram.y"
     {
 					(yyval.defelt) = makeDefElem((yyvsp[(1) - (1)].str), NULL);
@@ -22782,77 +22790,77 @@ yyreduce:
 
   case 592:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3754 "gram.y"
     { (yyval.node) = (Node *)(yyvsp[(1) - (1)].typnam); }
     break;
 
   case 593:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3755 "gram.y"
     { (yyval.node) = (Node *)makeString(pstrdup((yyvsp[(1) - (1)].keyword))); }
     break;
 
   case 594:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3756 "gram.y"
     { (yyval.node) = (Node *)(yyvsp[(1) - (1)].list); }
     break;
 
   case 595:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3757 "gram.y"
     { (yyval.node) = (Node *)(yyvsp[(1) - (1)].value); }
     break;
 
   case 596:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3758 "gram.y"
     { (yyval.node) = (Node *)makeString((yyvsp[(1) - (1)].str)); }
     break;
 
   case 597:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3761 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (3)].list); }
     break;
 
   case 598:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3762 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 599:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3765 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (3)].list); }
     break;
 
   case 600:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3768 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].defelt)); }
     break;
 
   case 601:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3769 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].defelt)); }
     break;
 
   case 602:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3778 "gram.y"
     {
 					(yyval.defelt) = makeDefElem((yyvsp[(1) - (3)].str), (Node *)(yyvsp[(3) - (3)].node));
@@ -22861,35 +22869,35 @@ yyreduce:
 
   case 603:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3784 "gram.y"
     { (yyval.list) = (yyvsp[(1) - (1)].list); }
     break;
 
   case 604:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3785 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 605:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3789 "gram.y"
     { (yyval.list) = list_make1(makeString((yyvsp[(1) - (1)].str))); }
     break;
 
   case 606:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3791 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), makeString((yyvsp[(3) - (3)].str))); }
     break;
 
   case 607:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3809 "gram.y"
     {
 					CreateOpClassStmt *n = makeNode(CreateOpClassStmt);
@@ -22905,21 +22913,21 @@ yyreduce:
 
   case 608:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3822 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
     break;
 
   case 609:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3823 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node)); }
     break;
 
   case 610:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3828 "gram.y"
     {
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
@@ -22933,7 +22941,7 @@ yyreduce:
 
   case 611:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3837 "gram.y"
     {
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
@@ -22947,7 +22955,7 @@ yyreduce:
 
   case 612:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3846 "gram.y"
     {
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
@@ -22961,7 +22969,7 @@ yyreduce:
 
   case 613:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3855 "gram.y"
     {
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
@@ -22976,7 +22984,7 @@ yyreduce:
 
   case 614:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3865 "gram.y"
     {
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
@@ -22988,35 +22996,35 @@ yyreduce:
 
   case 615:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3873 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 616:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3874 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 617:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3877 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (2)].list); }
     break;
 
   case 618:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3878 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 619:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3882 "gram.y"
     {
 					/*
@@ -23035,14 +23043,14 @@ yyreduce:
 
   case 620:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3895 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 621:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3901 "gram.y"
     {
 					CreateOpFamilyStmt *n = makeNode(CreateOpFamilyStmt);
@@ -23054,7 +23062,7 @@ yyreduce:
 
   case 622:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3911 "gram.y"
     {
 					AlterOpFamilyStmt *n = makeNode(AlterOpFamilyStmt);
@@ -23068,7 +23076,7 @@ yyreduce:
 
   case 623:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3920 "gram.y"
     {
 					AlterOpFamilyStmt *n = makeNode(AlterOpFamilyStmt);
@@ -23082,21 +23090,21 @@ yyreduce:
 
   case 624:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3931 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
     break;
 
   case 625:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3932 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node)); }
     break;
 
   case 626:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3937 "gram.y"
     {
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
@@ -23109,7 +23117,7 @@ yyreduce:
 
   case 627:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3945 "gram.y"
     {
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
@@ -23122,7 +23130,7 @@ yyreduce:
 
   case 628:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3957 "gram.y"
     {
 					RemoveOpClassStmt *n = makeNode(RemoveOpClassStmt);
@@ -23136,7 +23144,7 @@ yyreduce:
 
   case 629:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3966 "gram.y"
     {
 					RemoveOpClassStmt *n = makeNode(RemoveOpClassStmt);
@@ -23150,7 +23158,7 @@ yyreduce:
 
   case 630:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3978 "gram.y"
     {
 					RemoveOpFamilyStmt *n = makeNode(RemoveOpFamilyStmt);
@@ -23164,7 +23172,7 @@ yyreduce:
 
   case 631:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 3987 "gram.y"
     {
 					RemoveOpFamilyStmt *n = makeNode(RemoveOpFamilyStmt);
@@ -23178,7 +23186,7 @@ yyreduce:
 
   case 632:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4008 "gram.y"
     {
 					DropOwnedStmt *n = makeNode(DropOwnedStmt);
@@ -23190,7 +23198,7 @@ yyreduce:
 
   case 633:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4018 "gram.y"
     {
 					ReassignOwnedStmt *n = makeNode(ReassignOwnedStmt);
@@ -23202,7 +23210,7 @@ yyreduce:
 
   case 634:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4036 "gram.y"
     {
 					DropStmt *n = makeNode(DropStmt);
@@ -23216,7 +23224,7 @@ yyreduce:
 
   case 635:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4045 "gram.y"
     {
 					DropStmt *n = makeNode(DropStmt);
@@ -23230,133 +23238,133 @@ yyreduce:
 
   case 636:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4056 "gram.y"
     { (yyval.objtype) = OBJECT_TABLE; }
     break;
 
   case 637:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4057 "gram.y"
     { (yyval.objtype) = OBJECT_SEQUENCE; }
     break;
 
   case 638:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4058 "gram.y"
     { (yyval.objtype) = OBJECT_VIEW; }
     break;
 
   case 639:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4059 "gram.y"
     { (yyval.objtype) = OBJECT_INDEX; }
     break;
 
   case 640:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4060 "gram.y"
     { (yyval.objtype) = OBJECT_TYPE; }
     break;
 
   case 641:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4061 "gram.y"
     { (yyval.objtype) = OBJECT_DOMAIN; }
     break;
 
   case 642:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4062 "gram.y"
     { (yyval.objtype) = OBJECT_CONVERSION; }
     break;
 
   case 643:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4063 "gram.y"
     { (yyval.objtype) = OBJECT_SCHEMA; }
     break;
 
   case 644:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4064 "gram.y"
     { (yyval.objtype) = OBJECT_TSPARSER; }
     break;
 
   case 645:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4065 "gram.y"
     { (yyval.objtype) = OBJECT_TSDICTIONARY; }
     break;
 
   case 646:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4066 "gram.y"
     { (yyval.objtype) = OBJECT_TSTEMPLATE; }
     break;
 
   case 647:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4067 "gram.y"
     { (yyval.objtype) = OBJECT_TSCONFIGURATION; }
     break;
 
   case 648:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4071 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].list)); }
     break;
 
   case 649:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4072 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].list)); }
     break;
 
   case 650:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4075 "gram.y"
     { (yyval.list) = list_make1(makeString((yyvsp[(1) - (1)].str))); }
     break;
 
   case 651:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4076 "gram.y"
     { (yyval.list) = lcons(makeString((yyvsp[(1) - (2)].str)), (yyvsp[(2) - (2)].list)); }
     break;
 
   case 652:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4080 "gram.y"
     { (yyval.list) = list_make1(makeString((yyvsp[(2) - (2)].str))); }
     break;
 
   case 653:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4082 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), makeString((yyvsp[(3) - (3)].str))); }
     break;
 
   case 654:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4095 "gram.y"
     {
 					TruncateStmt *n = makeNode(TruncateStmt);
@@ -23369,28 +23377,28 @@ yyreduce:
 
   case 655:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4105 "gram.y"
     { (yyval.boolean) = false; }
     break;
 
   case 656:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4106 "gram.y"
     { (yyval.boolean) = true; }
     break;
 
   case 657:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4107 "gram.y"
     { (yyval.boolean) = false; }
     break;
 
   case 658:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4133 "gram.y"
     {
 					CommentStmt *n = makeNode(CommentStmt);
@@ -23404,7 +23412,7 @@ yyreduce:
 
   case 659:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4142 "gram.y"
     {
 					CommentStmt *n = makeNode(CommentStmt);
@@ -23418,7 +23426,7 @@ yyreduce:
 
   case 660:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4151 "gram.y"
     {
 					CommentStmt *n = makeNode(CommentStmt);
@@ -23432,7 +23440,7 @@ yyreduce:
 
   case 661:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4160 "gram.y"
     {
 					CommentStmt *n = makeNode(CommentStmt);
@@ -23446,7 +23454,7 @@ yyreduce:
 
   case 662:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4169 "gram.y"
     {
 					CommentStmt *n = makeNode(CommentStmt);
@@ -23460,7 +23468,7 @@ yyreduce:
 
   case 663:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4178 "gram.y"
     {
 					CommentStmt *n = makeNode(CommentStmt);
@@ -23474,7 +23482,7 @@ yyreduce:
 
   case 664:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4187 "gram.y"
     {
 					/* Obsolete syntax supported for awhile for compatibility */
@@ -23489,7 +23497,7 @@ yyreduce:
 
   case 665:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4197 "gram.y"
     {
 					CommentStmt *n = makeNode(CommentStmt);
@@ -23503,7 +23511,7 @@ yyreduce:
 
   case 666:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4206 "gram.y"
     {
 					CommentStmt *n = makeNode(CommentStmt);
@@ -23517,7 +23525,7 @@ yyreduce:
 
   case 667:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4215 "gram.y"
     {
 					CommentStmt *n = makeNode(CommentStmt);
@@ -23531,7 +23539,7 @@ yyreduce:
 
   case 668:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4224 "gram.y"
     {
 					CommentStmt *n = makeNode(CommentStmt);
@@ -23545,7 +23553,7 @@ yyreduce:
 
   case 669:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4233 "gram.y"
     {
 					CommentStmt *n = makeNode(CommentStmt);
@@ -23559,7 +23567,7 @@ yyreduce:
 
   case 670:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4242 "gram.y"
     {
 					CommentStmt *n = makeNode(CommentStmt);
@@ -23573,7 +23581,7 @@ yyreduce:
 
   case 671:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4251 "gram.y"
     {
 					CommentStmt *n = makeNode(CommentStmt);
@@ -23586,7 +23594,7 @@ yyreduce:
 
   case 672:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4259 "gram.y"
     {
 					CommentStmt *n = makeNode(CommentStmt);
@@ -23599,7 +23607,7 @@ yyreduce:
 
   case 673:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4267 "gram.y"
     {
 					CommentStmt *n = makeNode(CommentStmt);
@@ -23612,7 +23620,7 @@ yyreduce:
 
   case 674:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4275 "gram.y"
     {
 					CommentStmt *n = makeNode(CommentStmt);
@@ -23625,105 +23633,105 @@ yyreduce:
 
   case 675:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4285 "gram.y"
     { (yyval.objtype) = OBJECT_COLUMN; }
     break;
 
   case 676:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4286 "gram.y"
     { (yyval.objtype) = OBJECT_DATABASE; }
     break;
 
   case 677:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4287 "gram.y"
     { (yyval.objtype) = OBJECT_SCHEMA; }
     break;
 
   case 678:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4288 "gram.y"
     { (yyval.objtype) = OBJECT_INDEX; }
     break;
 
   case 679:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4289 "gram.y"
     { (yyval.objtype) = OBJECT_SEQUENCE; }
     break;
 
   case 680:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4290 "gram.y"
     { (yyval.objtype) = OBJECT_TABLE; }
     break;
 
   case 681:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4291 "gram.y"
     { (yyval.objtype) = OBJECT_TYPE; }
     break;
 
   case 682:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4292 "gram.y"
     { (yyval.objtype) = OBJECT_TYPE; }
     break;
 
   case 683:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4293 "gram.y"
     { (yyval.objtype) = OBJECT_VIEW; }
     break;
 
   case 684:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4294 "gram.y"
     { (yyval.objtype) = OBJECT_CONVERSION; }
     break;
 
   case 685:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4295 "gram.y"
     { (yyval.objtype) = OBJECT_TABLESPACE; }
     break;
 
   case 686:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4296 "gram.y"
     { (yyval.objtype) = OBJECT_ROLE; }
     break;
 
   case 687:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4300 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 688:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4301 "gram.y"
     { (yyval.str) = NULL; }
     break;
 
   case 689:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4312 "gram.y"
     {
 					FetchStmt *n = (FetchStmt *) (yyvsp[(2) - (2)].node);
@@ -23734,7 +23742,7 @@ yyreduce:
 
   case 690:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4318 "gram.y"
     {
 					FetchStmt *n = (FetchStmt *) (yyvsp[(2) - (2)].node);
@@ -23745,7 +23753,7 @@ yyreduce:
 
   case 691:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4326 "gram.y"
     {
 					FetchStmt *n = makeNode(FetchStmt);
@@ -23758,7 +23766,7 @@ yyreduce:
 
   case 692:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4334 "gram.y"
     {
 					FetchStmt *n = makeNode(FetchStmt);
@@ -23771,7 +23779,7 @@ yyreduce:
 
   case 693:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4342 "gram.y"
     {
 					FetchStmt *n = makeNode(FetchStmt);
@@ -23784,7 +23792,7 @@ yyreduce:
 
   case 694:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4350 "gram.y"
     {
 					FetchStmt *n = makeNode(FetchStmt);
@@ -23797,7 +23805,7 @@ yyreduce:
 
   case 695:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4358 "gram.y"
     {
 					FetchStmt *n = makeNode(FetchStmt);
@@ -23810,7 +23818,7 @@ yyreduce:
 
   case 696:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4366 "gram.y"
     {
 					FetchStmt *n = makeNode(FetchStmt);
@@ -23823,7 +23831,7 @@ yyreduce:
 
   case 697:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4374 "gram.y"
     {
 					FetchStmt *n = makeNode(FetchStmt);
@@ -23836,7 +23844,7 @@ yyreduce:
 
   case 698:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4382 "gram.y"
     {
 					FetchStmt *n = makeNode(FetchStmt);
@@ -23849,7 +23857,7 @@ yyreduce:
 
   case 699:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4390 "gram.y"
     {
 					FetchStmt *n = makeNode(FetchStmt);
@@ -23862,7 +23870,7 @@ yyreduce:
 
   case 700:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4398 "gram.y"
     {
 					FetchStmt *n = makeNode(FetchStmt);
@@ -23875,7 +23883,7 @@ yyreduce:
 
   case 701:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4406 "gram.y"
     {
 					FetchStmt *n = makeNode(FetchStmt);
@@ -23888,7 +23896,7 @@ yyreduce:
 
   case 702:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4414 "gram.y"
     {
 					FetchStmt *n = makeNode(FetchStmt);
@@ -23901,7 +23909,7 @@ yyreduce:
 
   case 703:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4422 "gram.y"
     {
 					FetchStmt *n = makeNode(FetchStmt);
@@ -23914,7 +23922,7 @@ yyreduce:
 
   case 704:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4430 "gram.y"
     {
 					FetchStmt *n = makeNode(FetchStmt);
@@ -23927,7 +23935,7 @@ yyreduce:
 
   case 705:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4438 "gram.y"
     {
 					FetchStmt *n = makeNode(FetchStmt);
@@ -23940,7 +23948,7 @@ yyreduce:
 
   case 706:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4446 "gram.y"
     {
 					FetchStmt *n = makeNode(FetchStmt);
@@ -23953,35 +23961,35 @@ yyreduce:
 
   case 707:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4455 "gram.y"
     {}
     break;
 
   case 708:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4456 "gram.y"
     {}
     break;
 
   case 709:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4459 "gram.y"
     {}
     break;
 
   case 710:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4460 "gram.y"
     {}
     break;
 
   case 711:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4472 "gram.y"
     {
 					GrantStmt *n = makeNode(GrantStmt);
@@ -23998,7 +24006,7 @@ yyreduce:
 
   case 712:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4488 "gram.y"
     {
 					GrantStmt *n = makeNode(GrantStmt);
@@ -24016,7 +24024,7 @@ yyreduce:
 
   case 713:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4502 "gram.y"
     {
 					GrantStmt *n = makeNode(GrantStmt);
@@ -24034,28 +24042,28 @@ yyreduce:
 
   case 714:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4527 "gram.y"
     { (yyval.list) = (yyvsp[(1) - (1)].list); }
     break;
 
   case 715:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4529 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 716:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4531 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 717:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4533 "gram.y"
     {
 					AccessPriv *n = makeNode(AccessPriv);
@@ -24067,7 +24075,7 @@ yyreduce:
 
   case 718:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4540 "gram.y"
     {
 					AccessPriv *n = makeNode(AccessPriv);
@@ -24079,21 +24087,21 @@ yyreduce:
 
   case 719:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4548 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].accesspriv)); }
     break;
 
   case 720:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4549 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].accesspriv)); }
     break;
 
   case 721:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4553 "gram.y"
     {
 				AccessPriv *n = makeNode(AccessPriv);
@@ -24105,7 +24113,7 @@ yyreduce:
 
   case 722:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4560 "gram.y"
     {
 				AccessPriv *n = makeNode(AccessPriv);
@@ -24117,7 +24125,7 @@ yyreduce:
 
   case 723:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4567 "gram.y"
     {
 				AccessPriv *n = makeNode(AccessPriv);
@@ -24129,7 +24137,7 @@ yyreduce:
 
   case 724:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4574 "gram.y"
     {
 				AccessPriv *n = makeNode(AccessPriv);
@@ -24141,7 +24149,7 @@ yyreduce:
 
   case 725:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4588 "gram.y"
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
@@ -24154,7 +24162,7 @@ yyreduce:
 
   case 726:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4596 "gram.y"
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
@@ -24167,7 +24175,7 @@ yyreduce:
 
   case 727:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4604 "gram.y"
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
@@ -24180,7 +24188,7 @@ yyreduce:
 
   case 728:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4612 "gram.y"
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
@@ -24193,7 +24201,7 @@ yyreduce:
 
   case 729:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4620 "gram.y"
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
@@ -24206,7 +24214,7 @@ yyreduce:
 
   case 730:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4628 "gram.y"
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
@@ -24219,7 +24227,7 @@ yyreduce:
 
   case 731:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4636 "gram.y"
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
@@ -24232,7 +24240,7 @@ yyreduce:
 
   case 732:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4644 "gram.y"
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
@@ -24245,7 +24253,7 @@ yyreduce:
 
   case 733:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4652 "gram.y"
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
@@ -24258,7 +24266,7 @@ yyreduce:
 
   case 734:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4660 "gram.y"
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
@@ -24271,7 +24279,7 @@ yyreduce:
 
   case 735:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4668 "gram.y"
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
@@ -24284,7 +24292,7 @@ yyreduce:
 
   case 736:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4676 "gram.y"
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
@@ -24297,7 +24305,7 @@ yyreduce:
 
   case 737:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4684 "gram.y"
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
@@ -24310,7 +24318,7 @@ yyreduce:
 
   case 738:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4692 "gram.y"
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
@@ -24323,21 +24331,21 @@ yyreduce:
 
   case 739:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4703 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
     break;
 
   case 740:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4704 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node)); }
     break;
 
   case 741:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4708 "gram.y"
     {
 					PrivGrantee *n = makeNode(PrivGrantee);
@@ -24352,7 +24360,7 @@ yyreduce:
 
   case 742:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4718 "gram.y"
     {
 					PrivGrantee *n = makeNode(PrivGrantee);
@@ -24367,35 +24375,35 @@ yyreduce:
 
   case 743:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4731 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 744:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4732 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 745:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4736 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].funwithargs)); }
     break;
 
   case 746:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4738 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].funwithargs)); }
     break;
 
   case 747:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4743 "gram.y"
     {
 					FuncWithArgs *n = makeNode(FuncWithArgs);
@@ -24407,7 +24415,7 @@ yyreduce:
 
   case 748:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4759 "gram.y"
     {
 					GrantRoleStmt *n = makeNode(GrantRoleStmt);
@@ -24422,7 +24430,7 @@ yyreduce:
 
   case 749:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4772 "gram.y"
     {
 					GrantRoleStmt *n = makeNode(GrantRoleStmt);
@@ -24437,7 +24445,7 @@ yyreduce:
 
   case 750:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4782 "gram.y"
     {
 					GrantRoleStmt *n = makeNode(GrantRoleStmt);
@@ -24452,35 +24460,35 @@ yyreduce:
 
   case 751:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4793 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 752:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4794 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 753:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4797 "gram.y"
     { (yyval.str) = (yyvsp[(3) - (3)].str); }
     break;
 
   case 754:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4798 "gram.y"
     { (yyval.str) = NULL; }
     break;
 
   case 755:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4809 "gram.y"
     {
 					AlterDefaultPrivilegesStmt *n = makeNode(AlterDefaultPrivilegesStmt);
@@ -24492,21 +24500,21 @@ yyreduce:
 
   case 756:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4818 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].defelt)); }
     break;
 
   case 757:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4819 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 758:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4824 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("schemas", (Node *)(yyvsp[(3) - (3)].list));
@@ -24515,7 +24523,7 @@ yyreduce:
 
   case 759:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4828 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("roles", (Node *)(yyvsp[(3) - (3)].list));
@@ -24524,7 +24532,7 @@ yyreduce:
 
   case 760:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4832 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("roles", (Node *)(yyvsp[(3) - (3)].list));
@@ -24533,7 +24541,7 @@ yyreduce:
 
   case 761:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4844 "gram.y"
     {
 					GrantStmt *n = makeNode(GrantStmt);
@@ -24550,7 +24558,7 @@ yyreduce:
 
   case 762:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4857 "gram.y"
     {
 					GrantStmt *n = makeNode(GrantStmt);
@@ -24568,7 +24576,7 @@ yyreduce:
 
   case 763:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4871 "gram.y"
     {
 					GrantStmt *n = makeNode(GrantStmt);
@@ -24586,28 +24594,28 @@ yyreduce:
 
   case 764:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4886 "gram.y"
     { (yyval.ival) = ACL_OBJECT_RELATION; }
     break;
 
   case 765:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4887 "gram.y"
     { (yyval.ival) = ACL_OBJECT_FUNCTION; }
     break;
 
   case 766:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4888 "gram.y"
     { (yyval.ival) = ACL_OBJECT_SEQUENCE; }
     break;
 
   case 767:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4903 "gram.y"
     {
 					IndexStmt *n = makeNode(IndexStmt);
@@ -24626,77 +24634,77 @@ yyreduce:
 
   case 768:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4919 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 769:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4920 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 770:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4924 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 771:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4925 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 772:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4929 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 773:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4930 "gram.y"
     { (yyval.str) = NULL; }
     break;
 
   case 774:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4934 "gram.y"
     { (yyval.str) = (yyvsp[(2) - (2)].str); }
     break;
 
   case 775:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4935 "gram.y"
     { (yyval.str) = DEFAULT_INDEX_TYPE; }
     break;
 
   case 776:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4938 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].ielem)); }
     break;
 
   case 777:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4939 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].ielem)); }
     break;
 
   case 778:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4948 "gram.y"
     {
 					(yyval.ielem) = makeNode(IndexElem);
@@ -24711,7 +24719,7 @@ yyreduce:
 
   case 779:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4958 "gram.y"
     {
 					(yyval.ielem) = makeNode(IndexElem);
@@ -24726,7 +24734,7 @@ yyreduce:
 
   case 780:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4968 "gram.y"
     {
 					(yyval.ielem) = makeNode(IndexElem);
@@ -24741,70 +24749,70 @@ yyreduce:
 
   case 781:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4979 "gram.y"
     { (yyval.list) = (yyvsp[(1) - (1)].list); }
     break;
 
   case 782:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4980 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (2)].list); }
     break;
 
   case 783:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4981 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 784:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4984 "gram.y"
     { (yyval.ival) = SORTBY_ASC; }
     break;
 
   case 785:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4985 "gram.y"
     { (yyval.ival) = SORTBY_DESC; }
     break;
 
   case 786:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4986 "gram.y"
     { (yyval.ival) = SORTBY_DEFAULT; }
     break;
 
   case 787:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4989 "gram.y"
     { (yyval.ival) = SORTBY_NULLS_FIRST; }
     break;
 
   case 788:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4990 "gram.y"
     { (yyval.ival) = SORTBY_NULLS_LAST; }
     break;
 
   case 789:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 4991 "gram.y"
     { (yyval.ival) = SORTBY_NULLS_DEFAULT; }
     break;
 
   case 790:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5009 "gram.y"
     {
 					CreateFunctionStmt *n = makeNode(CreateFunctionStmt);
@@ -24820,7 +24828,7 @@ yyreduce:
 
   case 791:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5021 "gram.y"
     {
 					CreateFunctionStmt *n = makeNode(CreateFunctionStmt);
@@ -24837,7 +24845,7 @@ yyreduce:
 
   case 792:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5034 "gram.y"
     {
 					CreateFunctionStmt *n = makeNode(CreateFunctionStmt);
@@ -24853,77 +24861,77 @@ yyreduce:
 
   case 793:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5047 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 794:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5048 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 795:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5051 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (3)].list); }
     break;
 
   case 796:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5052 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 797:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5056 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].fun_param)); }
     break;
 
   case 798:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5057 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].fun_param)); }
     break;
 
   case 799:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5065 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (3)].list); }
     break;
 
   case 800:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5066 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 801:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5070 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].fun_param)); }
     break;
 
   case 802:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5072 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].fun_param)); }
     break;
 
   case 803:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5087 "gram.y"
     {
 					FunctionParameter *n = makeNode(FunctionParameter);
@@ -24937,7 +24945,7 @@ yyreduce:
 
   case 804:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5096 "gram.y"
     {
 					FunctionParameter *n = makeNode(FunctionParameter);
@@ -24951,7 +24959,7 @@ yyreduce:
 
   case 805:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5105 "gram.y"
     {
 					FunctionParameter *n = makeNode(FunctionParameter);
@@ -24965,7 +24973,7 @@ yyreduce:
 
   case 806:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5114 "gram.y"
     {
 					FunctionParameter *n = makeNode(FunctionParameter);
@@ -24979,7 +24987,7 @@ yyreduce:
 
   case 807:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5123 "gram.y"
     {
 					FunctionParameter *n = makeNode(FunctionParameter);
@@ -24993,42 +25001,42 @@ yyreduce:
 
   case 808:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5134 "gram.y"
     { (yyval.fun_param_mode) = FUNC_PARAM_IN; }
     break;
 
   case 809:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5135 "gram.y"
     { (yyval.fun_param_mode) = FUNC_PARAM_OUT; }
     break;
 
   case 810:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5136 "gram.y"
     { (yyval.fun_param_mode) = FUNC_PARAM_INOUT; }
     break;
 
   case 811:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5137 "gram.y"
     { (yyval.fun_param_mode) = FUNC_PARAM_INOUT; }
     break;
 
   case 812:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5138 "gram.y"
     { (yyval.fun_param_mode) = FUNC_PARAM_VARIADIC; }
     break;
 
   case 814:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5149 "gram.y"
     {
 					/* We can catch over-specified results here if we want to,
@@ -25041,14 +25049,14 @@ yyreduce:
 
   case 815:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5163 "gram.y"
     { (yyval.typnam) = (yyvsp[(1) - (1)].typnam); }
     break;
 
   case 816:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5165 "gram.y"
     {
 					(yyval.typnam) = makeTypeNameFromNameList(lcons(makeString((yyvsp[(1) - (4)].str)), (yyvsp[(2) - (4)].list)));
@@ -25059,7 +25067,7 @@ yyreduce:
 
   case 817:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5171 "gram.y"
     {
 					(yyval.typnam) = makeTypeNameFromNameList(lcons(makeString((yyvsp[(2) - (5)].str)), (yyvsp[(3) - (5)].list)));
@@ -25071,7 +25079,7 @@ yyreduce:
 
   case 818:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5181 "gram.y"
     {
 				    (yyval.fun_param) = (yyvsp[(1) - (1)].fun_param);
@@ -25080,7 +25088,7 @@ yyreduce:
 
   case 819:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5185 "gram.y"
     {
 				    (yyval.fun_param) = (yyvsp[(1) - (3)].fun_param);
@@ -25090,7 +25098,7 @@ yyreduce:
 
   case 820:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5190 "gram.y"
     {
 				    (yyval.fun_param) = (yyvsp[(1) - (3)].fun_param);
@@ -25100,21 +25108,21 @@ yyreduce:
 
   case 821:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5199 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].defelt)); }
     break;
 
   case 822:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5200 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].defelt)); }
     break;
 
   case 823:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5208 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("strict", (Node *)makeInteger(FALSE));
@@ -25123,7 +25131,7 @@ yyreduce:
 
   case 824:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5212 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("strict", (Node *)makeInteger(TRUE));
@@ -25132,7 +25140,7 @@ yyreduce:
 
   case 825:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5216 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("strict", (Node *)makeInteger(TRUE));
@@ -25141,7 +25149,7 @@ yyreduce:
 
   case 826:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5220 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("volatility", (Node *)makeString("immutable"));
@@ -25150,7 +25158,7 @@ yyreduce:
 
   case 827:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5224 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("volatility", (Node *)makeString("stable"));
@@ -25159,7 +25167,7 @@ yyreduce:
 
   case 828:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5228 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("volatility", (Node *)makeString("volatile"));
@@ -25168,7 +25176,7 @@ yyreduce:
 
   case 829:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5232 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("security", (Node *)makeInteger(TRUE));
@@ -25177,7 +25185,7 @@ yyreduce:
 
   case 830:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5236 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("security", (Node *)makeInteger(FALSE));
@@ -25186,7 +25194,7 @@ yyreduce:
 
   case 831:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5240 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("security", (Node *)makeInteger(TRUE));
@@ -25195,7 +25203,7 @@ yyreduce:
 
   case 832:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5244 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("security", (Node *)makeInteger(FALSE));
@@ -25204,7 +25212,7 @@ yyreduce:
 
   case 833:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5248 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("cost", (Node *)(yyvsp[(2) - (2)].value));
@@ -25213,7 +25221,7 @@ yyreduce:
 
   case 834:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5252 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("rows", (Node *)(yyvsp[(2) - (2)].value));
@@ -25222,7 +25230,7 @@ yyreduce:
 
   case 835:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5256 "gram.y"
     {
 					/* we abuse the normal content of a DefElem here */
@@ -25232,7 +25240,7 @@ yyreduce:
 
   case 836:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5264 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("as", (Node *)(yyvsp[(2) - (2)].list));
@@ -25241,7 +25249,7 @@ yyreduce:
 
   case 837:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5268 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("language", (Node *)makeString((yyvsp[(2) - (2)].str)));
@@ -25250,7 +25258,7 @@ yyreduce:
 
   case 838:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5272 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("window", (Node *)makeInteger(TRUE));
@@ -25259,7 +25267,7 @@ yyreduce:
 
   case 839:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5276 "gram.y"
     {
 					(yyval.defelt) = (yyvsp[(1) - (1)].defelt);
@@ -25268,14 +25276,14 @@ yyreduce:
 
   case 840:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5281 "gram.y"
     { (yyval.list) = list_make1(makeString((yyvsp[(1) - (1)].str))); }
     break;
 
   case 841:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5283 "gram.y"
     {
 					(yyval.list) = list_make2(makeString((yyvsp[(1) - (3)].str)), makeString((yyvsp[(3) - (3)].str)));
@@ -25284,21 +25292,21 @@ yyreduce:
 
   case 842:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5289 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (2)].list); }
     break;
 
   case 843:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5290 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 844:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5294 "gram.y"
     {
 					FunctionParameter *n = makeNode(FunctionParameter);
@@ -25312,7 +25320,7 @@ yyreduce:
 
   case 845:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5306 "gram.y"
     {
 					(yyval.list) = list_make1((yyvsp[(1) - (1)].fun_param));
@@ -25321,7 +25329,7 @@ yyreduce:
 
   case 846:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5310 "gram.y"
     {
 					(yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].fun_param));
@@ -25330,7 +25338,7 @@ yyreduce:
 
   case 847:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5325 "gram.y"
     {
 					AlterFunctionStmt *n = makeNode(AlterFunctionStmt);
@@ -25342,21 +25350,21 @@ yyreduce:
 
   case 848:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5335 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].defelt)); }
     break;
 
   case 849:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5336 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].defelt)); }
     break;
 
   case 852:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5358 "gram.y"
     {
 					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
@@ -25371,7 +25379,7 @@ yyreduce:
 
   case 853:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5368 "gram.y"
     {
 					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
@@ -25386,7 +25394,7 @@ yyreduce:
 
   case 854:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5381 "gram.y"
     {
 					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
@@ -25401,7 +25409,7 @@ yyreduce:
 
   case 855:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5391 "gram.y"
     {
 					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
@@ -25416,7 +25424,7 @@ yyreduce:
 
   case 856:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5404 "gram.y"
     {
 					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
@@ -25431,7 +25439,7 @@ yyreduce:
 
   case 857:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5414 "gram.y"
     {
 					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
@@ -25446,7 +25454,7 @@ yyreduce:
 
   case 858:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5427 "gram.y"
     {
 				   ereport(ERROR,
@@ -25459,42 +25467,42 @@ yyreduce:
 
   case 859:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5435 "gram.y"
     { (yyval.list) = list_make2((yyvsp[(2) - (5)].typnam), (yyvsp[(4) - (5)].typnam)); }
     break;
 
   case 860:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5437 "gram.y"
     { (yyval.list) = list_make2(NULL, (yyvsp[(4) - (5)].typnam)); }
     break;
 
   case 861:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5439 "gram.y"
     { (yyval.list) = list_make2((yyvsp[(2) - (5)].typnam), NULL); }
     break;
 
   case 862:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5444 "gram.y"
     { (yyval.list) = list_make1(makeString((yyvsp[(1) - (1)].str))); }
     break;
 
   case 863:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5446 "gram.y"
     { (yyval.list) = lcons(makeString((yyvsp[(1) - (3)].str)), (yyvsp[(3) - (3)].list)); }
     break;
 
   case 864:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5459 "gram.y"
     {
 					DoStmt *n = makeNode(DoStmt);
@@ -25505,21 +25513,21 @@ yyreduce:
 
   case 865:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5467 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].defelt)); }
     break;
 
   case 866:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5468 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].defelt)); }
     break;
 
   case 867:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5473 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("as", (Node *)makeString((yyvsp[(1) - (1)].str)));
@@ -25528,7 +25536,7 @@ yyreduce:
 
   case 868:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5477 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("language", (Node *)makeString((yyvsp[(2) - (2)].str)));
@@ -25537,7 +25545,7 @@ yyreduce:
 
   case 869:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5490 "gram.y"
     {
 					CreateCastStmt *n = makeNode(CreateCastStmt);
@@ -25552,7 +25560,7 @@ yyreduce:
 
   case 870:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5501 "gram.y"
     {
 					CreateCastStmt *n = makeNode(CreateCastStmt);
@@ -25567,7 +25575,7 @@ yyreduce:
 
   case 871:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5512 "gram.y"
     {
 					CreateCastStmt *n = makeNode(CreateCastStmt);
@@ -25582,28 +25590,28 @@ yyreduce:
 
   case 872:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5523 "gram.y"
     { (yyval.ival) = COERCION_IMPLICIT; }
     break;
 
   case 873:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5524 "gram.y"
     { (yyval.ival) = COERCION_ASSIGNMENT; }
     break;
 
   case 874:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5525 "gram.y"
     { (yyval.ival) = COERCION_EXPLICIT; }
     break;
 
   case 875:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5530 "gram.y"
     {
 					DropCastStmt *n = makeNode(DropCastStmt);
@@ -25617,21 +25625,21 @@ yyreduce:
 
   case 876:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5540 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 877:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5541 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 878:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5556 "gram.y"
     {
 					ReindexStmt *n = makeNode(ReindexStmt);
@@ -25644,7 +25652,7 @@ yyreduce:
 
   case 879:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5564 "gram.y"
     {
 					ReindexStmt *n = makeNode(ReindexStmt);
@@ -25659,7 +25667,7 @@ yyreduce:
 
   case 880:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5574 "gram.y"
     {
 					ReindexStmt *n = makeNode(ReindexStmt);
@@ -25674,35 +25682,35 @@ yyreduce:
 
   case 881:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5586 "gram.y"
     { (yyval.objtype) = OBJECT_INDEX; }
     break;
 
   case 882:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5587 "gram.y"
     { (yyval.objtype) = OBJECT_TABLE; }
     break;
 
   case 883:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5590 "gram.y"
     {  (yyval.boolean) = TRUE; }
     break;
 
   case 884:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5591 "gram.y"
     {  (yyval.boolean) = FALSE; }
     break;
 
   case 885:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5602 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -25716,7 +25724,7 @@ yyreduce:
 
   case 886:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5611 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -25729,7 +25737,7 @@ yyreduce:
 
   case 887:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5619 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -25742,7 +25750,7 @@ yyreduce:
 
   case 888:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5627 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -25756,7 +25764,7 @@ yyreduce:
 
   case 889:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5636 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -25769,7 +25777,7 @@ yyreduce:
 
   case 890:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5644 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -25782,7 +25790,7 @@ yyreduce:
 
   case 891:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5652 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -25796,7 +25804,7 @@ yyreduce:
 
   case 892:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5661 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -25810,7 +25818,7 @@ yyreduce:
 
   case 893:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5670 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -25823,7 +25831,7 @@ yyreduce:
 
   case 894:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5678 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -25837,7 +25845,7 @@ yyreduce:
 
   case 895:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5687 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -25851,7 +25859,7 @@ yyreduce:
 
   case 896:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5696 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -25865,7 +25873,7 @@ yyreduce:
 
   case 897:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5705 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -25879,7 +25887,7 @@ yyreduce:
 
   case 898:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5714 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -25893,7 +25901,7 @@ yyreduce:
 
   case 899:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5723 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -25907,7 +25915,7 @@ yyreduce:
 
   case 900:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5732 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -25920,7 +25928,7 @@ yyreduce:
 
   case 901:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5740 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -25933,7 +25941,7 @@ yyreduce:
 
   case 902:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5748 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -25946,7 +25954,7 @@ yyreduce:
 
   case 903:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5756 "gram.y"
     {
 					AlterTableSpaceOptionsStmt *n =
@@ -25960,7 +25968,7 @@ yyreduce:
 
   case 904:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5765 "gram.y"
     {
 					AlterTableSpaceOptionsStmt *n =
@@ -25974,7 +25982,7 @@ yyreduce:
 
   case 905:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5774 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -25987,7 +25995,7 @@ yyreduce:
 
   case 906:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5782 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -26000,7 +26008,7 @@ yyreduce:
 
   case 907:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5790 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -26013,7 +26021,7 @@ yyreduce:
 
   case 908:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5798 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -26026,7 +26034,7 @@ yyreduce:
 
   case 909:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5806 "gram.y"
     {
 					RenameStmt *n = makeNode(RenameStmt);
@@ -26039,35 +26047,35 @@ yyreduce:
 
   case 910:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5815 "gram.y"
     { (yyval.ival) = COLUMN; }
     break;
 
   case 911:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5816 "gram.y"
     { (yyval.ival) = 0; }
     break;
 
   case 912:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5819 "gram.y"
     { (yyval.ival) = 1; }
     break;
 
   case 913:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5820 "gram.y"
     { (yyval.ival) = 0; }
     break;
 
   case 914:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5831 "gram.y"
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
@@ -26081,7 +26089,7 @@ yyreduce:
 
   case 915:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5840 "gram.y"
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
@@ -26094,7 +26102,7 @@ yyreduce:
 
   case 916:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5848 "gram.y"
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
@@ -26108,7 +26116,7 @@ yyreduce:
 
   case 917:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5857 "gram.y"
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
@@ -26121,7 +26129,7 @@ yyreduce:
 
   case 918:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5865 "gram.y"
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
@@ -26134,7 +26142,7 @@ yyreduce:
 
   case 919:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5873 "gram.y"
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
@@ -26147,7 +26155,7 @@ yyreduce:
 
   case 920:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5881 "gram.y"
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
@@ -26160,7 +26168,7 @@ yyreduce:
 
   case 921:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5897 "gram.y"
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
@@ -26174,7 +26182,7 @@ yyreduce:
 
   case 922:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5906 "gram.y"
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
@@ -26187,7 +26195,7 @@ yyreduce:
 
   case 923:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5914 "gram.y"
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
@@ -26200,7 +26208,7 @@ yyreduce:
 
   case 924:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5922 "gram.y"
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
@@ -26213,7 +26221,7 @@ yyreduce:
 
   case 925:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5930 "gram.y"
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
@@ -26227,7 +26235,7 @@ yyreduce:
 
   case 926:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5939 "gram.y"
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
@@ -26240,7 +26248,7 @@ yyreduce:
 
   case 927:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5947 "gram.y"
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
@@ -26253,7 +26261,7 @@ yyreduce:
 
   case 928:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5955 "gram.y"
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
@@ -26267,7 +26275,7 @@ yyreduce:
 
   case 929:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5964 "gram.y"
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
@@ -26281,7 +26289,7 @@ yyreduce:
 
   case 930:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5973 "gram.y"
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
@@ -26295,7 +26303,7 @@ yyreduce:
 
   case 931:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5982 "gram.y"
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
@@ -26308,7 +26316,7 @@ yyreduce:
 
   case 932:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5990 "gram.y"
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
@@ -26321,7 +26329,7 @@ yyreduce:
 
   case 933:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 5998 "gram.y"
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
@@ -26334,7 +26342,7 @@ yyreduce:
 
   case 934:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6006 "gram.y"
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
@@ -26347,7 +26355,7 @@ yyreduce:
 
   case 935:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6014 "gram.y"
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
@@ -26360,7 +26368,7 @@ yyreduce:
 
   case 936:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6022 "gram.y"
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
@@ -26373,7 +26381,7 @@ yyreduce:
 
   case 937:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6030 "gram.y"
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
@@ -26386,7 +26394,7 @@ yyreduce:
 
   case 938:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6049 "gram.y"
     {
 					RuleStmt *n = makeNode(RuleStmt);
@@ -26403,28 +26411,28 @@ yyreduce:
 
   case 939:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6063 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 940:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6064 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
     break;
 
   case 941:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6065 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (3)].list); }
     break;
 
   case 942:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6071 "gram.y"
     { if ((yyvsp[(3) - (3)].node) != NULL)
 					(yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node));
@@ -26435,7 +26443,7 @@ yyreduce:
 
   case 943:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6077 "gram.y"
     { if ((yyvsp[(1) - (1)].node) != NULL)
 					(yyval.list) = list_make1((yyvsp[(1) - (1)].node));
@@ -26446,70 +26454,70 @@ yyreduce:
 
   case 949:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6093 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 950:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6094 "gram.y"
     { (yyval.node) = NULL; }
     break;
 
   case 951:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6097 "gram.y"
     { (yyval.ival) = CMD_SELECT; }
     break;
 
   case 952:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6098 "gram.y"
     { (yyval.ival) = CMD_UPDATE; }
     break;
 
   case 953:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6099 "gram.y"
     { (yyval.ival) = CMD_DELETE; }
     break;
 
   case 954:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6100 "gram.y"
     { (yyval.ival) = CMD_INSERT; }
     break;
 
   case 955:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6104 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 956:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6105 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 957:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6106 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 958:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6112 "gram.y"
     {
 					DropPropertyStmt *n = makeNode(DropPropertyStmt);
@@ -26524,7 +26532,7 @@ yyreduce:
 
   case 959:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6122 "gram.y"
     {
 					DropPropertyStmt *n = makeNode(DropPropertyStmt);
@@ -26539,7 +26547,7 @@ yyreduce:
 
   case 960:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6143 "gram.y"
     {
 					NotifyStmt *n = makeNode(NotifyStmt);
@@ -26551,21 +26559,21 @@ yyreduce:
 
   case 961:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6152 "gram.y"
     { (yyval.str) = (yyvsp[(2) - (2)].str); }
     break;
 
   case 962:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6153 "gram.y"
     { (yyval.str) = NULL; }
     break;
 
   case 963:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6157 "gram.y"
     {
 					ListenStmt *n = makeNode(ListenStmt);
@@ -26576,7 +26584,7 @@ yyreduce:
 
   case 964:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6166 "gram.y"
     {
 					UnlistenStmt *n = makeNode(UnlistenStmt);
@@ -26587,7 +26595,7 @@ yyreduce:
 
   case 965:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6172 "gram.y"
     {
 					UnlistenStmt *n = makeNode(UnlistenStmt);
@@ -26598,7 +26606,7 @@ yyreduce:
 
   case 966:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6191 "gram.y"
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
@@ -26610,7 +26618,7 @@ yyreduce:
 
   case 967:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6198 "gram.y"
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
@@ -26622,7 +26630,7 @@ yyreduce:
 
   case 968:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6205 "gram.y"
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
@@ -26634,7 +26642,7 @@ yyreduce:
 
   case 969:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6212 "gram.y"
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
@@ -26646,7 +26654,7 @@ yyreduce:
 
   case 970:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6219 "gram.y"
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
@@ -26658,7 +26666,7 @@ yyreduce:
 
   case 971:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6226 "gram.y"
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
@@ -26670,7 +26678,7 @@ yyreduce:
 
   case 972:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6233 "gram.y"
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
@@ -26683,7 +26691,7 @@ yyreduce:
 
   case 973:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6241 "gram.y"
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
@@ -26696,7 +26704,7 @@ yyreduce:
 
   case 974:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6249 "gram.y"
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
@@ -26709,7 +26717,7 @@ yyreduce:
 
   case 975:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6257 "gram.y"
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
@@ -26722,7 +26730,7 @@ yyreduce:
 
   case 976:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6265 "gram.y"
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
@@ -26735,7 +26743,7 @@ yyreduce:
 
   case 977:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6273 "gram.y"
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
@@ -26747,7 +26755,7 @@ yyreduce:
 
   case 978:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6280 "gram.y"
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
@@ -26759,7 +26767,7 @@ yyreduce:
 
   case 979:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6287 "gram.y"
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
@@ -26771,28 +26779,28 @@ yyreduce:
 
   case 980:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6295 "gram.y"
     {}
     break;
 
   case 981:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6296 "gram.y"
     {}
     break;
 
   case 982:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6297 "gram.y"
     {}
     break;
 
   case 983:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6302 "gram.y"
     { (yyval.defelt) = makeDefElem("transaction_isolation",
 									   makeStringConst((yyvsp[(3) - (3)].str), (yylsp[(3) - (3)]))); }
@@ -26800,7 +26808,7 @@ yyreduce:
 
   case 984:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6305 "gram.y"
     { (yyval.defelt) = makeDefElem("transaction_read_only",
 									   makeIntConst(TRUE, (yylsp[(1) - (2)]))); }
@@ -26808,7 +26816,7 @@ yyreduce:
 
   case 985:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6308 "gram.y"
     { (yyval.defelt) = makeDefElem("transaction_read_only",
 									   makeIntConst(FALSE, (yylsp[(1) - (2)]))); }
@@ -26816,35 +26824,35 @@ yyreduce:
 
   case 986:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6315 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].defelt)); }
     break;
 
   case 987:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6317 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].defelt)); }
     break;
 
   case 988:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6319 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].defelt)); }
     break;
 
   case 990:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6325 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 991:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6339 "gram.y"
     {
 					ViewStmt *n = makeNode(ViewStmt);
@@ -26859,7 +26867,7 @@ yyreduce:
 
   case 992:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6350 "gram.y"
     {
 					ViewStmt *n = makeNode(ViewStmt);
@@ -26874,7 +26882,7 @@ yyreduce:
 
   case 993:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6363 "gram.y"
     {
 					ereport(ERROR,
@@ -26885,7 +26893,7 @@ yyreduce:
 
   case 994:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6369 "gram.y"
     {
 					ereport(ERROR,
@@ -26896,7 +26904,7 @@ yyreduce:
 
   case 995:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6375 "gram.y"
     {
 					ereport(ERROR,
@@ -26907,14 +26915,14 @@ yyreduce:
 
   case 996:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6380 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 997:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6391 "gram.y"
     {
 					LoadStmt *n = makeNode(LoadStmt);
@@ -26925,7 +26933,7 @@ yyreduce:
 
   case 998:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6407 "gram.y"
     {
 					CreatedbStmt *n = makeNode(CreatedbStmt);
@@ -26937,21 +26945,21 @@ yyreduce:
 
   case 999:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6416 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].defelt)); }
     break;
 
   case 1000:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6417 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1001:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6422 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("tablespace", (Node *)makeString((yyvsp[(3) - (3)].str)));
@@ -26960,7 +26968,7 @@ yyreduce:
 
   case 1002:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6426 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("tablespace", NULL);
@@ -26969,7 +26977,7 @@ yyreduce:
 
   case 1003:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6430 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("location", (Node *)makeString((yyvsp[(3) - (3)].str)));
@@ -26978,7 +26986,7 @@ yyreduce:
 
   case 1004:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6434 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("location", NULL);
@@ -26987,7 +26995,7 @@ yyreduce:
 
   case 1005:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6438 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("template", (Node *)makeString((yyvsp[(3) - (3)].str)));
@@ -26996,7 +27004,7 @@ yyreduce:
 
   case 1006:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6442 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("template", NULL);
@@ -27005,7 +27013,7 @@ yyreduce:
 
   case 1007:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6446 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("encoding", (Node *)makeString((yyvsp[(3) - (3)].str)));
@@ -27014,7 +27022,7 @@ yyreduce:
 
   case 1008:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6450 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("encoding", (Node *)makeInteger((yyvsp[(3) - (3)].ival)));
@@ -27023,7 +27031,7 @@ yyreduce:
 
   case 1009:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6454 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("encoding", NULL);
@@ -27032,7 +27040,7 @@ yyreduce:
 
   case 1010:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6458 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("lc_collate", (Node *)makeString((yyvsp[(3) - (3)].str)));
@@ -27041,7 +27049,7 @@ yyreduce:
 
   case 1011:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6462 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("lc_collate", NULL);
@@ -27050,7 +27058,7 @@ yyreduce:
 
   case 1012:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6466 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("lc_ctype", (Node *)makeString((yyvsp[(3) - (3)].str)));
@@ -27059,7 +27067,7 @@ yyreduce:
 
   case 1013:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6470 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("lc_ctype", NULL);
@@ -27068,7 +27076,7 @@ yyreduce:
 
   case 1014:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6474 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("connectionlimit", (Node *)makeInteger((yyvsp[(4) - (4)].ival)));
@@ -27077,7 +27085,7 @@ yyreduce:
 
   case 1015:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6478 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("owner", (Node *)makeString((yyvsp[(3) - (3)].str)));
@@ -27086,7 +27094,7 @@ yyreduce:
 
   case 1016:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6482 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("owner", NULL);
@@ -27095,21 +27103,21 @@ yyreduce:
 
   case 1017:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6491 "gram.y"
     {}
     break;
 
   case 1018:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6492 "gram.y"
     {}
     break;
 
   case 1019:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6504 "gram.y"
     {
 					AlterDatabaseStmt *n = makeNode(AlterDatabaseStmt);
@@ -27121,7 +27129,7 @@ yyreduce:
 
   case 1020:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6511 "gram.y"
     {
 					AlterDatabaseStmt *n = makeNode(AlterDatabaseStmt);
@@ -27134,7 +27142,7 @@ yyreduce:
 
   case 1021:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6522 "gram.y"
     {
 					AlterDatabaseSetStmt *n = makeNode(AlterDatabaseSetStmt);
@@ -27146,21 +27154,21 @@ yyreduce:
 
   case 1022:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6532 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].defelt)); }
     break;
 
   case 1023:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6533 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1024:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6538 "gram.y"
     {
 					(yyval.defelt) = makeDefElem("connectionlimit", (Node *)makeInteger((yyvsp[(4) - (4)].ival)));
@@ -27169,7 +27177,7 @@ yyreduce:
 
   case 1025:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6552 "gram.y"
     {
 					DropdbStmt *n = makeNode(DropdbStmt);
@@ -27181,7 +27189,7 @@ yyreduce:
 
   case 1026:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6559 "gram.y"
     {
 					DropdbStmt *n = makeNode(DropdbStmt);
@@ -27193,7 +27201,7 @@ yyreduce:
 
   case 1027:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6576 "gram.y"
     {
 					CreateDomainStmt *n = makeNode(CreateDomainStmt);
@@ -27206,7 +27214,7 @@ yyreduce:
 
   case 1028:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6588 "gram.y"
     {
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
@@ -27219,7 +27227,7 @@ yyreduce:
 
   case 1029:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6597 "gram.y"
     {
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
@@ -27231,7 +27239,7 @@ yyreduce:
 
   case 1030:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6605 "gram.y"
     {
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
@@ -27243,7 +27251,7 @@ yyreduce:
 
   case 1031:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6613 "gram.y"
     {
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
@@ -27256,7 +27264,7 @@ yyreduce:
 
   case 1032:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6622 "gram.y"
     {
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
@@ -27270,21 +27278,21 @@ yyreduce:
 
   case 1033:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6632 "gram.y"
     {}
     break;
 
   case 1034:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6633 "gram.y"
     {}
     break;
 
   case 1035:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6645 "gram.y"
     {
 					AlterTSDictionaryStmt *n = makeNode(AlterTSDictionaryStmt);
@@ -27296,7 +27304,7 @@ yyreduce:
 
   case 1036:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6655 "gram.y"
     {
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
@@ -27311,7 +27319,7 @@ yyreduce:
 
   case 1037:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6665 "gram.y"
     {
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
@@ -27326,7 +27334,7 @@ yyreduce:
 
   case 1038:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6675 "gram.y"
     {
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
@@ -27341,7 +27349,7 @@ yyreduce:
 
   case 1039:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6685 "gram.y"
     {
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
@@ -27356,7 +27364,7 @@ yyreduce:
 
   case 1040:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6695 "gram.y"
     {
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
@@ -27369,7 +27377,7 @@ yyreduce:
 
   case 1041:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6703 "gram.y"
     {
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
@@ -27382,7 +27390,7 @@ yyreduce:
 
   case 1042:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6725 "gram.y"
     {
 			  CreateConversionStmt *n = makeNode(CreateConversionStmt);
@@ -27397,7 +27405,7 @@ yyreduce:
 
   case 1043:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6747 "gram.y"
     {
 			       ClusterStmt *n = makeNode(ClusterStmt);
@@ -27410,7 +27418,7 @@ yyreduce:
 
   case 1044:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6755 "gram.y"
     {
 				   ClusterStmt *n = makeNode(ClusterStmt);
@@ -27423,7 +27431,7 @@ yyreduce:
 
   case 1045:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6764 "gram.y"
     {
 				   ClusterStmt *n = makeNode(ClusterStmt);
@@ -27436,21 +27444,21 @@ yyreduce:
 
   case 1046:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6774 "gram.y"
     { (yyval.str) = (yyvsp[(2) - (2)].str); }
     break;
 
   case 1047:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6775 "gram.y"
     { (yyval.str) = NULL; }
     break;
 
   case 1048:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6788 "gram.y"
     {
 					VacuumStmt *n = makeNode(VacuumStmt);
@@ -27469,7 +27477,7 @@ yyreduce:
 
   case 1049:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6802 "gram.y"
     {
 					VacuumStmt *n = makeNode(VacuumStmt);
@@ -27488,7 +27496,7 @@ yyreduce:
 
   case 1050:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6816 "gram.y"
     {
 					VacuumStmt *n = (VacuumStmt *) (yyvsp[(5) - (5)].node);
@@ -27505,7 +27513,7 @@ yyreduce:
 
   case 1051:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6828 "gram.y"
     {
 					VacuumStmt *n = makeNode(VacuumStmt);
@@ -27522,7 +27530,7 @@ yyreduce:
 
   case 1052:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6840 "gram.y"
     {
 					VacuumStmt *n = makeNode(VacuumStmt);
@@ -27541,49 +27549,49 @@ yyreduce:
 
   case 1053:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6856 "gram.y"
     { (yyval.ival) = (yyvsp[(1) - (1)].ival); }
     break;
 
   case 1054:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6857 "gram.y"
     { (yyval.ival) = (yyvsp[(1) - (3)].ival) | (yyvsp[(3) - (3)].ival); }
     break;
 
   case 1055:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6861 "gram.y"
     { (yyval.ival) = VACOPT_ANALYZE; }
     break;
 
   case 1056:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6862 "gram.y"
     { (yyval.ival) = VACOPT_VERBOSE; }
     break;
 
   case 1057:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6863 "gram.y"
     { (yyval.ival) = VACOPT_FREEZE; }
     break;
 
   case 1058:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6864 "gram.y"
     { (yyval.ival) = VACOPT_FULL; }
     break;
 
   case 1059:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6869 "gram.y"
     {
 					VacuumStmt *n = makeNode(VacuumStmt);
@@ -27600,7 +27608,7 @@ yyreduce:
 
   case 1060:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6881 "gram.y"
     {
 					VacuumStmt *n = makeNode(VacuumStmt);
@@ -27617,77 +27625,77 @@ yyreduce:
 
   case 1061:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6895 "gram.y"
     {}
     break;
 
   case 1062:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6896 "gram.y"
     {}
     break;
 
   case 1063:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6900 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 1064:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6901 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 1065:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6904 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 1066:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6905 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 1067:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6908 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 1068:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6909 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 1069:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6913 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (3)].list); }
     break;
 
   case 1070:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6914 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1071:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6928 "gram.y"
     {
 					ExplainStmt *n = makeNode(ExplainStmt);
@@ -27699,7 +27707,7 @@ yyreduce:
 
   case 1072:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6935 "gram.y"
     {
 					ExplainStmt *n = makeNode(ExplainStmt);
@@ -27714,7 +27722,7 @@ yyreduce:
 
   case 1073:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6945 "gram.y"
     {
 					ExplainStmt *n = makeNode(ExplainStmt);
@@ -27726,7 +27734,7 @@ yyreduce:
 
   case 1074:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6952 "gram.y"
     {
 					ExplainStmt *n = makeNode(ExplainStmt);
@@ -27738,7 +27746,7 @@ yyreduce:
 
   case 1082:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6972 "gram.y"
     {
 					(yyval.list) = list_make1((yyvsp[(1) - (1)].defelt));
@@ -27747,7 +27755,7 @@ yyreduce:
 
   case 1083:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6976 "gram.y"
     {
 					(yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].defelt));
@@ -27756,7 +27764,7 @@ yyreduce:
 
   case 1084:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6983 "gram.y"
     {
 					(yyval.defelt) = makeDefElem((yyvsp[(1) - (2)].str), (yyvsp[(2) - (2)].node));
@@ -27765,56 +27773,56 @@ yyreduce:
 
   case 1085:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6989 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 1086:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6990 "gram.y"
     { (yyval.str) = "analyze"; }
     break;
 
   case 1087:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6991 "gram.y"
     { (yyval.str) = "verbose"; }
     break;
 
   case 1088:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6995 "gram.y"
     { (yyval.node) = (Node *) makeString((yyvsp[(1) - (1)].str)); }
     break;
 
   case 1089:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6996 "gram.y"
     { (yyval.node) = (Node *) makeString((yyvsp[(1) - (1)].str)); }
     break;
 
   case 1090:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6997 "gram.y"
     { (yyval.node) = (Node *) (yyvsp[(1) - (1)].value); }
     break;
 
   case 1091:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 6998 "gram.y"
     { (yyval.node) = NULL; }
     break;
 
   case 1092:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7009 "gram.y"
     {
 					PrepareStmt *n = makeNode(PrepareStmt);
@@ -27827,21 +27835,21 @@ yyreduce:
 
   case 1093:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7018 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (3)].list); }
     break;
 
   case 1094:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7019 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1099:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7037 "gram.y"
     {
 					ExecuteStmt *n = makeNode(ExecuteStmt);
@@ -27854,7 +27862,7 @@ yyreduce:
 
   case 1100:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7046 "gram.y"
     {
 					ExecuteStmt *n = makeNode(ExecuteStmt);
@@ -27873,21 +27881,21 @@ yyreduce:
 
   case 1101:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7061 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (3)].list); }
     break;
 
   case 1102:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7062 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1103:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7073 "gram.y"
     {
 						DeallocateStmt *n = makeNode(DeallocateStmt);
@@ -27898,7 +27906,7 @@ yyreduce:
 
   case 1104:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7079 "gram.y"
     {
 						DeallocateStmt *n = makeNode(DeallocateStmt);
@@ -27909,7 +27917,7 @@ yyreduce:
 
   case 1105:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7085 "gram.y"
     {
 						DeallocateStmt *n = makeNode(DeallocateStmt);
@@ -27920,7 +27928,7 @@ yyreduce:
 
   case 1106:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7091 "gram.y"
     {
 						DeallocateStmt *n = makeNode(DeallocateStmt);
@@ -27931,7 +27939,7 @@ yyreduce:
 
   case 1107:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7107 "gram.y"
     {
 					(yyvsp[(4) - (5)].istmt)->relation = (yyvsp[(3) - (5)].range);
@@ -27942,7 +27950,7 @@ yyreduce:
 
   case 1108:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7116 "gram.y"
     {
 					(yyval.istmt) = makeNode(InsertStmt);
@@ -27953,7 +27961,7 @@ yyreduce:
 
   case 1109:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7122 "gram.y"
     {
 					(yyval.istmt) = makeNode(InsertStmt);
@@ -27964,7 +27972,7 @@ yyreduce:
 
   case 1110:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7128 "gram.y"
     {
 					(yyval.istmt) = makeNode(InsertStmt);
@@ -27975,21 +27983,21 @@ yyreduce:
 
   case 1111:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7137 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].target)); }
     break;
 
   case 1112:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7139 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].target)); }
     break;
 
   case 1113:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7144 "gram.y"
     {
 					(yyval.target) = makeNode(ResTarget);
@@ -28002,21 +28010,21 @@ yyreduce:
 
   case 1114:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7154 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (2)].list); }
     break;
 
   case 1115:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7155 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1116:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7168 "gram.y"
     {
 					DeleteStmt *n = makeNode(DeleteStmt);
@@ -28030,21 +28038,21 @@ yyreduce:
 
   case 1117:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7179 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (2)].list); }
     break;
 
   case 1118:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7180 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1119:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7192 "gram.y"
     {
 					LockStmt *n = makeNode(LockStmt);
@@ -28058,91 +28066,91 @@ yyreduce:
 
   case 1120:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7202 "gram.y"
     { (yyval.ival) = (yyvsp[(2) - (3)].ival); }
     break;
 
   case 1121:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7203 "gram.y"
     { (yyval.ival) = AccessExclusiveLock; }
     break;
 
   case 1122:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7206 "gram.y"
     { (yyval.ival) = AccessShareLock; }
     break;
 
   case 1123:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7207 "gram.y"
     { (yyval.ival) = RowShareLock; }
     break;
 
   case 1124:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7208 "gram.y"
     { (yyval.ival) = RowExclusiveLock; }
     break;
 
   case 1125:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7209 "gram.y"
     { (yyval.ival) = ShareUpdateExclusiveLock; }
     break;
 
   case 1126:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7210 "gram.y"
     { (yyval.ival) = ShareLock; }
     break;
 
   case 1127:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7211 "gram.y"
     { (yyval.ival) = ShareRowExclusiveLock; }
     break;
 
   case 1128:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7212 "gram.y"
     { (yyval.ival) = ExclusiveLock; }
     break;
 
   case 1129:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7213 "gram.y"
     { (yyval.ival) = AccessExclusiveLock; }
     break;
 
   case 1130:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7216 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 1131:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7217 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 1132:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7233 "gram.y"
     {
 					UpdateStmt *n = makeNode(UpdateStmt);
@@ -28157,35 +28165,35 @@ yyreduce:
 
   case 1133:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7245 "gram.y"
     { (yyval.list) = (yyvsp[(1) - (1)].list); }
     break;
 
   case 1134:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7246 "gram.y"
     { (yyval.list) = list_concat((yyvsp[(1) - (3)].list),(yyvsp[(3) - (3)].list)); }
     break;
 
   case 1135:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7250 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].target)); }
     break;
 
   case 1136:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7251 "gram.y"
     { (yyval.list) = (yyvsp[(1) - (1)].list); }
     break;
 
   case 1137:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7256 "gram.y"
     {
 					(yyval.target) = (yyvsp[(1) - (3)].target);
@@ -28195,7 +28203,7 @@ yyreduce:
 
   case 1138:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7264 "gram.y"
     {
 					ListCell *col_cell;
@@ -28225,7 +28233,7 @@ yyreduce:
 
   case 1139:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7292 "gram.y"
     {
 					(yyval.target) = makeNode(ResTarget);
@@ -28238,21 +28246,21 @@ yyreduce:
 
   case 1140:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7302 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].target)); }
     break;
 
   case 1141:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7303 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list),(yyvsp[(3) - (3)].target)); }
     break;
 
   case 1142:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7314 "gram.y"
     {
 					DeclareCursorStmt *n = makeNode(DeclareCursorStmt);
@@ -28266,91 +28274,91 @@ yyreduce:
 
   case 1143:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7324 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 1144:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7327 "gram.y"
     { (yyval.ival) = 0; }
     break;
 
   case 1145:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7328 "gram.y"
     { (yyval.ival) = (yyvsp[(1) - (3)].ival) | CURSOR_OPT_NO_SCROLL; }
     break;
 
   case 1146:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7329 "gram.y"
     { (yyval.ival) = (yyvsp[(1) - (2)].ival) | CURSOR_OPT_SCROLL; }
     break;
 
   case 1147:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7330 "gram.y"
     { (yyval.ival) = (yyvsp[(1) - (2)].ival) | CURSOR_OPT_BINARY; }
     break;
 
   case 1148:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7331 "gram.y"
     { (yyval.ival) = (yyvsp[(1) - (2)].ival) | CURSOR_OPT_INSENSITIVE; }
     break;
 
   case 1149:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7334 "gram.y"
     { (yyval.ival) = 0; }
     break;
 
   case 1150:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7335 "gram.y"
     { (yyval.ival) = CURSOR_OPT_HOLD; }
     break;
 
   case 1151:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7336 "gram.y"
     { (yyval.ival) = 0; }
     break;
 
   case 1154:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7389 "gram.y"
     { (yyval.node) = (yyvsp[(2) - (3)].node); }
     break;
 
   case 1155:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7390 "gram.y"
     { (yyval.node) = (yyvsp[(2) - (3)].node); }
     break;
 
   case 1156:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7404 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 1157:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7406 "gram.y"
     {
 					insertSelectOptions((SelectStmt *) (yyvsp[(1) - (2)].node), (yyvsp[(2) - (2)].list), NIL,
@@ -28362,7 +28370,7 @@ yyreduce:
 
   case 1158:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7413 "gram.y"
     {
 					insertSelectOptions((SelectStmt *) (yyvsp[(1) - (4)].node), (yyvsp[(2) - (4)].list), (yyvsp[(3) - (4)].list),
@@ -28375,7 +28383,7 @@ yyreduce:
 
   case 1159:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7421 "gram.y"
     {
 					insertSelectOptions((SelectStmt *) (yyvsp[(1) - (4)].node), (yyvsp[(2) - (4)].list), (yyvsp[(4) - (4)].list),
@@ -28388,7 +28396,7 @@ yyreduce:
 
   case 1160:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7429 "gram.y"
     {
 					insertSelectOptions((SelectStmt *) (yyvsp[(2) - (2)].node), NULL, NIL,
@@ -28401,7 +28409,7 @@ yyreduce:
 
   case 1161:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7437 "gram.y"
     {
 					insertSelectOptions((SelectStmt *) (yyvsp[(2) - (3)].node), (yyvsp[(3) - (3)].list), NIL,
@@ -28414,7 +28422,7 @@ yyreduce:
 
   case 1162:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7445 "gram.y"
     {
 					insertSelectOptions((SelectStmt *) (yyvsp[(2) - (5)].node), (yyvsp[(3) - (5)].list), (yyvsp[(4) - (5)].list),
@@ -28427,7 +28435,7 @@ yyreduce:
 
   case 1163:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7453 "gram.y"
     {
 					insertSelectOptions((SelectStmt *) (yyvsp[(2) - (5)].node), (yyvsp[(3) - (5)].list), (yyvsp[(5) - (5)].list),
@@ -28440,21 +28448,21 @@ yyreduce:
 
   case 1164:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7463 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 1165:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7464 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 1166:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7494 "gram.y"
     {
 					SelectStmt *n = makeNode(SelectStmt);
@@ -28472,14 +28480,14 @@ yyreduce:
 
   case 1167:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7506 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 1168:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7508 "gram.y"
     {
 					/* same as SELECT * FROM relation_expr */
@@ -28503,7 +28511,7 @@ yyreduce:
 
   case 1169:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7527 "gram.y"
     {
 					(yyval.node) = makeSetOp(SETOP_UNION, (yyvsp[(3) - (4)].boolean), (yyvsp[(1) - (4)].node), (yyvsp[(4) - (4)].node));
@@ -28512,7 +28520,7 @@ yyreduce:
 
   case 1170:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7531 "gram.y"
     {
 					(yyval.node) = makeSetOp(SETOP_INTERSECT, (yyvsp[(3) - (4)].boolean), (yyvsp[(1) - (4)].node), (yyvsp[(4) - (4)].node));
@@ -28521,7 +28529,7 @@ yyreduce:
 
   case 1171:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7535 "gram.y"
     {
 					(yyval.node) = makeSetOp(SETOP_EXCEPT, (yyvsp[(3) - (4)].boolean), (yyvsp[(1) - (4)].node), (yyvsp[(4) - (4)].node));
@@ -28530,7 +28538,7 @@ yyreduce:
 
   case 1172:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7550 "gram.y"
     {
 				(yyval.with) = makeNode(WithClause);
@@ -28542,7 +28550,7 @@ yyreduce:
 
   case 1173:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7557 "gram.y"
     {
 				(yyval.with) = makeNode(WithClause);
@@ -28554,21 +28562,21 @@ yyreduce:
 
   case 1174:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7566 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
     break;
 
   case 1175:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7567 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node)); }
     break;
 
   case 1176:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7571 "gram.y"
     {
 				CommonTableExpr *n = makeNode(CommonTableExpr);
@@ -28582,7 +28590,7 @@ yyreduce:
 
   case 1177:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7583 "gram.y"
     {
 					(yyval.into) = makeNode(IntoClause);
@@ -28596,14 +28604,14 @@ yyreduce:
 
   case 1178:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7592 "gram.y"
     { (yyval.into) = NULL; }
     break;
 
   case 1179:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7601 "gram.y"
     {
 					(yyval.range) = (yyvsp[(3) - (3)].range);
@@ -28613,7 +28621,7 @@ yyreduce:
 
   case 1180:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7606 "gram.y"
     {
 					(yyval.range) = (yyvsp[(3) - (3)].range);
@@ -28623,7 +28631,7 @@ yyreduce:
 
   case 1181:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7611 "gram.y"
     {
 					(yyval.range) = (yyvsp[(4) - (4)].range);
@@ -28633,7 +28641,7 @@ yyreduce:
 
   case 1182:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7616 "gram.y"
     {
 					(yyval.range) = (yyvsp[(4) - (4)].range);
@@ -28643,7 +28651,7 @@ yyreduce:
 
   case 1183:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7621 "gram.y"
     {
 					(yyval.range) = (yyvsp[(4) - (4)].range);
@@ -28653,7 +28661,7 @@ yyreduce:
 
   case 1184:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7626 "gram.y"
     {
 					(yyval.range) = (yyvsp[(4) - (4)].range);
@@ -28663,7 +28671,7 @@ yyreduce:
 
   case 1185:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7631 "gram.y"
     {
 					(yyval.range) = (yyvsp[(2) - (2)].range);
@@ -28673,7 +28681,7 @@ yyreduce:
 
   case 1186:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7636 "gram.y"
     {
 					(yyval.range) = (yyvsp[(1) - (1)].range);
@@ -28683,105 +28691,105 @@ yyreduce:
 
   case 1187:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7642 "gram.y"
     {}
     break;
 
   case 1188:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7643 "gram.y"
     {}
     break;
 
   case 1189:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7646 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 1190:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7647 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 1191:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7648 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 1192:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7655 "gram.y"
     { (yyval.list) = list_make1(NIL); }
     break;
 
   case 1193:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7656 "gram.y"
     { (yyval.list) = (yyvsp[(4) - (5)].list); }
     break;
 
   case 1194:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7657 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1195:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7658 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1196:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7662 "gram.y"
     { (yyval.list) = (yyvsp[(1) - (1)].list);}
     break;
 
   case 1197:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7663 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1198:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7667 "gram.y"
     { (yyval.list) = (yyvsp[(3) - (3)].list); }
     break;
 
   case 1199:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7671 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].sortby)); }
     break;
 
   case 1200:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7672 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].sortby)); }
     break;
 
   case 1201:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7676 "gram.y"
     {
 					(yyval.sortby) = makeNode(SortBy);
@@ -28795,7 +28803,7 @@ yyreduce:
 
   case 1202:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7685 "gram.y"
     {
 					(yyval.sortby) = makeNode(SortBy);
@@ -28809,56 +28817,56 @@ yyreduce:
 
   case 1203:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7697 "gram.y"
     { (yyval.list) = list_make2((yyvsp[(2) - (2)].node), (yyvsp[(1) - (2)].node)); }
     break;
 
   case 1204:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7698 "gram.y"
     { (yyval.list) = list_make2((yyvsp[(1) - (2)].node), (yyvsp[(2) - (2)].node)); }
     break;
 
   case 1205:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7699 "gram.y"
     { (yyval.list) = list_make2(NULL, (yyvsp[(1) - (1)].node)); }
     break;
 
   case 1206:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7700 "gram.y"
     { (yyval.list) = list_make2((yyvsp[(1) - (1)].node), NULL); }
     break;
 
   case 1207:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7704 "gram.y"
     { (yyval.list) = (yyvsp[(1) - (1)].list); }
     break;
 
   case 1208:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7705 "gram.y"
     { (yyval.list) = list_make2(NULL,NULL); }
     break;
 
   case 1209:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7710 "gram.y"
     { (yyval.node) = (yyvsp[(2) - (2)].node); }
     break;
 
   case 1210:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7712 "gram.y"
     {
 					/* Disabled because it was too confusing, bjm 2002-02-18 */
@@ -28872,35 +28880,35 @@ yyreduce:
 
   case 1211:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7722 "gram.y"
     { (yyval.node) = (yyvsp[(3) - (5)].node); }
     break;
 
   case 1212:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7727 "gram.y"
     { (yyval.node) = (yyvsp[(2) - (2)].node); }
     break;
 
   case 1213:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7730 "gram.y"
     { (yyval.node) = (yyvsp[(2) - (3)].node); }
     break;
 
   case 1214:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7734 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 1215:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7736 "gram.y"
     {
 					/* LIMIT ALL is represented as a NULL constant */
@@ -28910,140 +28918,140 @@ yyreduce:
 
   case 1216:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7743 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 1217:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7753 "gram.y"
     { (yyval.node) = makeIntConst((yyvsp[(1) - (1)].ival), (yylsp[(1) - (1)])); }
     break;
 
   case 1218:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7754 "gram.y"
     { (yyval.node) = (yyvsp[(2) - (3)].node); }
     break;
 
   case 1219:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7755 "gram.y"
     { (yyval.node) = makeIntConst(1, -1); }
     break;
 
   case 1220:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7763 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 1221:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7767 "gram.y"
     { (yyval.ival) = 0; }
     break;
 
   case 1222:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7768 "gram.y"
     { (yyval.ival) = 0; }
     break;
 
   case 1223:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7771 "gram.y"
     { (yyval.ival) = 0; }
     break;
 
   case 1224:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7772 "gram.y"
     { (yyval.ival) = 0; }
     break;
 
   case 1225:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7777 "gram.y"
     { (yyval.list) = (yyvsp[(3) - (3)].list); }
     break;
 
   case 1226:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7778 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1227:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7782 "gram.y"
     { (yyval.node) = (yyvsp[(2) - (2)].node); }
     break;
 
   case 1228:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7783 "gram.y"
     { (yyval.node) = NULL; }
     break;
 
   case 1229:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7787 "gram.y"
     { (yyval.list) = (yyvsp[(1) - (1)].list); }
     break;
 
   case 1230:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7788 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1231:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7792 "gram.y"
     { (yyval.list) = (yyvsp[(1) - (1)].list); }
     break;
 
   case 1232:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7793 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1233:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7797 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
     break;
 
   case 1234:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7798 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].node)); }
     break;
 
   case 1235:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7803 "gram.y"
     {
 					LockingClause *n = makeNode(LockingClause);
@@ -29056,7 +29064,7 @@ yyreduce:
 
   case 1236:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7811 "gram.y"
     {
 					LockingClause *n = makeNode(LockingClause);
@@ -29069,21 +29077,21 @@ yyreduce:
 
   case 1237:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7821 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (2)].list); }
     break;
 
   case 1238:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7822 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1239:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7828 "gram.y"
     {
 					SelectStmt *n = makeNode(SelectStmt);
@@ -29094,7 +29102,7 @@ yyreduce:
 
   case 1240:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7834 "gram.y"
     {
 					SelectStmt *n = (SelectStmt *) (yyvsp[(1) - (3)].node);
@@ -29105,35 +29113,35 @@ yyreduce:
 
   case 1241:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7851 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (2)].list); }
     break;
 
   case 1242:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7852 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1243:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7856 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
     break;
 
   case 1244:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7857 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node)); }
     break;
 
   case 1245:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7868 "gram.y"
     {
 					(yyval.node) = (Node *) (yyvsp[(1) - (1)].range);
@@ -29142,7 +29150,7 @@ yyreduce:
 
   case 1246:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7872 "gram.y"
     {
 					(yyvsp[(1) - (2)].range)->alias = (yyvsp[(2) - (2)].alias);
@@ -29152,7 +29160,7 @@ yyreduce:
 
   case 1247:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7877 "gram.y"
     {
 					RangeFunction *n = makeNode(RangeFunction);
@@ -29164,7 +29172,7 @@ yyreduce:
 
   case 1248:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7884 "gram.y"
     {
 					RangeFunction *n = makeNode(RangeFunction);
@@ -29177,7 +29185,7 @@ yyreduce:
 
   case 1249:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7892 "gram.y"
     {
 					RangeFunction *n = makeNode(RangeFunction);
@@ -29189,7 +29197,7 @@ yyreduce:
 
   case 1250:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7899 "gram.y"
     {
 					RangeFunction *n = makeNode(RangeFunction);
@@ -29204,7 +29212,7 @@ yyreduce:
 
   case 1251:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7909 "gram.y"
     {
 					RangeFunction *n = makeNode(RangeFunction);
@@ -29219,7 +29227,7 @@ yyreduce:
 
   case 1252:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7919 "gram.y"
     {
 					/*
@@ -29252,7 +29260,7 @@ yyreduce:
 
   case 1253:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7947 "gram.y"
     {
 					RangeSubselect *n = makeNode(RangeSubselect);
@@ -29264,7 +29272,7 @@ yyreduce:
 
   case 1254:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7954 "gram.y"
     {
 					(yyval.node) = (Node *) (yyvsp[(1) - (1)].jexpr);
@@ -29273,7 +29281,7 @@ yyreduce:
 
   case 1255:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7958 "gram.y"
     {
 					(yyvsp[(2) - (4)].jexpr)->alias = (yyvsp[(4) - (4)].alias);
@@ -29283,7 +29291,7 @@ yyreduce:
 
   case 1256:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7984 "gram.y"
     {
 					(yyval.jexpr) = (yyvsp[(2) - (3)].jexpr);
@@ -29292,7 +29300,7 @@ yyreduce:
 
   case 1257:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 7988 "gram.y"
     {
 					/* CROSS JOIN is same as unqualified inner join */
@@ -29309,7 +29317,7 @@ yyreduce:
 
   case 1258:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8000 "gram.y"
     {
 					JoinExpr *n = makeNode(JoinExpr);
@@ -29327,7 +29335,7 @@ yyreduce:
 
   case 1259:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8013 "gram.y"
     {
 					/* letting join_type reduce to empty doesn't work */
@@ -29346,7 +29354,7 @@ yyreduce:
 
   case 1260:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8027 "gram.y"
     {
 					JoinExpr *n = makeNode(JoinExpr);
@@ -29362,7 +29370,7 @@ yyreduce:
 
   case 1261:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8038 "gram.y"
     {
 					/* letting join_type reduce to empty doesn't work */
@@ -29379,7 +29387,7 @@ yyreduce:
 
   case 1262:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8053 "gram.y"
     {
 					(yyval.alias) = makeNode(Alias);
@@ -29390,7 +29398,7 @@ yyreduce:
 
   case 1263:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8059 "gram.y"
     {
 					(yyval.alias) = makeNode(Alias);
@@ -29400,7 +29408,7 @@ yyreduce:
 
   case 1264:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8064 "gram.y"
     {
 					(yyval.alias) = makeNode(Alias);
@@ -29411,7 +29419,7 @@ yyreduce:
 
   case 1265:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8070 "gram.y"
     {
 					(yyval.alias) = makeNode(Alias);
@@ -29421,63 +29429,63 @@ yyreduce:
 
   case 1266:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8076 "gram.y"
     { (yyval.jtype) = JOIN_FULL; }
     break;
 
   case 1267:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8077 "gram.y"
     { (yyval.jtype) = JOIN_LEFT; }
     break;
 
   case 1268:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8078 "gram.y"
     { (yyval.jtype) = JOIN_RIGHT; }
     break;
 
   case 1269:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8079 "gram.y"
     { (yyval.jtype) = JOIN_INNER; }
     break;
 
   case 1270:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8083 "gram.y"
     { (yyval.node) = NULL; }
     break;
 
   case 1271:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8084 "gram.y"
     { (yyval.node) = NULL; }
     break;
 
   case 1272:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8096 "gram.y"
     { (yyval.node) = (Node *) (yyvsp[(3) - (4)].list); }
     break;
 
   case 1273:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8097 "gram.y"
     { (yyval.node) = (yyvsp[(2) - (2)].node); }
     break;
 
   case 1274:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8103 "gram.y"
     {
 					/* default inheritance */
@@ -29489,7 +29497,7 @@ yyreduce:
 
   case 1275:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8110 "gram.y"
     {
 					/* inheritance query */
@@ -29501,7 +29509,7 @@ yyreduce:
 
   case 1276:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8117 "gram.y"
     {
 					/* no inheritance */
@@ -29513,7 +29521,7 @@ yyreduce:
 
   case 1277:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8124 "gram.y"
     {
 					/* no inheritance, SQL99-style syntax */
@@ -29525,21 +29533,21 @@ yyreduce:
 
   case 1278:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8134 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].range)); }
     break;
 
   case 1279:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8135 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].range)); }
     break;
 
   case 1280:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8149 "gram.y"
     {
 					(yyval.range) = (yyvsp[(1) - (1)].range);
@@ -29548,7 +29556,7 @@ yyreduce:
 
   case 1281:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8153 "gram.y"
     {
 					Alias *alias = makeNode(Alias);
@@ -29560,7 +29568,7 @@ yyreduce:
 
   case 1282:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8160 "gram.y"
     {
 					Alias *alias = makeNode(Alias);
@@ -29572,35 +29580,35 @@ yyreduce:
 
   case 1283:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8169 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 1284:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8174 "gram.y"
     { (yyval.node) = (yyvsp[(2) - (2)].node); }
     break;
 
   case 1285:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8175 "gram.y"
     { (yyval.node) = NULL; }
     break;
 
   case 1286:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8180 "gram.y"
     { (yyval.node) = (yyvsp[(2) - (2)].node); }
     break;
 
   case 1287:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8182 "gram.y"
     {
 					CurrentOfExpr *n = makeNode(CurrentOfExpr);
@@ -29613,14 +29621,14 @@ yyreduce:
 
   case 1288:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8189 "gram.y"
     { (yyval.node) = NULL; }
     break;
 
   case 1289:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8195 "gram.y"
     {
 					(yyval.list) = list_make1((yyvsp[(1) - (1)].node));
@@ -29629,7 +29637,7 @@ yyreduce:
 
   case 1290:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8199 "gram.y"
     {
 					(yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node));
@@ -29638,7 +29646,7 @@ yyreduce:
 
   case 1291:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8205 "gram.y"
     {
 					ColumnDef *n = makeNode(ColumnDef);
@@ -29652,7 +29660,7 @@ yyreduce:
 
   case 1292:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8226 "gram.y"
     {
 					(yyval.typnam) = (yyvsp[(1) - (2)].typnam);
@@ -29662,7 +29670,7 @@ yyreduce:
 
   case 1293:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8231 "gram.y"
     {
 					(yyval.typnam) = (yyvsp[(2) - (3)].typnam);
@@ -29673,7 +29681,7 @@ yyreduce:
 
   case 1294:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8238 "gram.y"
     {
 					(yyval.typnam) = (yyvsp[(1) - (5)].typnam);
@@ -29683,7 +29691,7 @@ yyreduce:
 
   case 1295:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8243 "gram.y"
     {
 					(yyval.typnam) = (yyvsp[(2) - (6)].typnam);
@@ -29694,7 +29702,7 @@ yyreduce:
 
   case 1296:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8249 "gram.y"
     {
 					(yyval.typnam) = (yyvsp[(1) - (2)].typnam);
@@ -29704,7 +29712,7 @@ yyreduce:
 
   case 1297:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8254 "gram.y"
     {
 					(yyval.typnam) = (yyvsp[(2) - (3)].typnam);
@@ -29715,63 +29723,63 @@ yyreduce:
 
   case 1298:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8263 "gram.y"
     {  (yyval.list) = lappend((yyvsp[(1) - (3)].list), makeInteger(-1)); }
     break;
 
   case 1299:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8265 "gram.y"
     {  (yyval.list) = lappend((yyvsp[(1) - (4)].list), makeInteger((yyvsp[(3) - (4)].ival))); }
     break;
 
   case 1300:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8267 "gram.y"
     {  (yyval.list) = NIL; }
     break;
 
   case 1301:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8271 "gram.y"
     { (yyval.typnam) = (yyvsp[(1) - (1)].typnam); }
     break;
 
   case 1302:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8272 "gram.y"
     { (yyval.typnam) = (yyvsp[(1) - (1)].typnam); }
     break;
 
   case 1303:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8273 "gram.y"
     { (yyval.typnam) = (yyvsp[(1) - (1)].typnam); }
     break;
 
   case 1304:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8274 "gram.y"
     { (yyval.typnam) = (yyvsp[(1) - (1)].typnam); }
     break;
 
   case 1305:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8275 "gram.y"
     { (yyval.typnam) = (yyvsp[(1) - (1)].typnam); }
     break;
 
   case 1306:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8277 "gram.y"
     {
 					(yyval.typnam) = (yyvsp[(1) - (2)].typnam);
@@ -29781,7 +29789,7 @@ yyreduce:
 
   case 1307:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8282 "gram.y"
     {
 					(yyval.typnam) = (yyvsp[(1) - (5)].typnam);
@@ -29802,35 +29810,35 @@ yyreduce:
 
   case 1308:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8311 "gram.y"
     { (yyval.typnam) = (yyvsp[(1) - (1)].typnam); }
     break;
 
   case 1309:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8312 "gram.y"
     { (yyval.typnam) = (yyvsp[(1) - (1)].typnam); }
     break;
 
   case 1310:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8313 "gram.y"
     { (yyval.typnam) = (yyvsp[(1) - (1)].typnam); }
     break;
 
   case 1311:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8314 "gram.y"
     { (yyval.typnam) = (yyvsp[(1) - (1)].typnam); }
     break;
 
   case 1312:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8326 "gram.y"
     {
 					(yyval.typnam) = makeTypeName((yyvsp[(1) - (2)].str));
@@ -29841,7 +29849,7 @@ yyreduce:
 
   case 1313:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8332 "gram.y"
     {
 					(yyval.typnam) = makeTypeNameFromNameList(lcons(makeString((yyvsp[(1) - (3)].str)), (yyvsp[(2) - (3)].list)));
@@ -29852,21 +29860,21 @@ yyreduce:
 
   case 1314:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8339 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (3)].list); }
     break;
 
   case 1315:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8340 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1316:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8347 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("int4");
@@ -29876,7 +29884,7 @@ yyreduce:
 
   case 1317:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8352 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("int4");
@@ -29886,7 +29894,7 @@ yyreduce:
 
   case 1318:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8357 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("int2");
@@ -29896,7 +29904,7 @@ yyreduce:
 
   case 1319:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8362 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("int8");
@@ -29906,7 +29914,7 @@ yyreduce:
 
   case 1320:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8367 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("float4");
@@ -29916,7 +29924,7 @@ yyreduce:
 
   case 1321:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8372 "gram.y"
     {
 					(yyval.typnam) = (yyvsp[(2) - (2)].typnam);
@@ -29926,7 +29934,7 @@ yyreduce:
 
   case 1322:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8377 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("float8");
@@ -29936,7 +29944,7 @@ yyreduce:
 
   case 1323:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8382 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("numeric");
@@ -29947,7 +29955,7 @@ yyreduce:
 
   case 1324:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8388 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("numeric");
@@ -29958,7 +29966,7 @@ yyreduce:
 
   case 1325:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8394 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("numeric");
@@ -29969,7 +29977,7 @@ yyreduce:
 
   case 1326:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8400 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("bool");
@@ -29979,7 +29987,7 @@ yyreduce:
 
   case 1327:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8407 "gram.y"
     {
 					/*
@@ -30005,7 +30013,7 @@ yyreduce:
 
   case 1328:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8428 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("float8");
@@ -30014,7 +30022,7 @@ yyreduce:
 
   case 1329:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8438 "gram.y"
     {
 					(yyval.typnam) = (yyvsp[(1) - (1)].typnam);
@@ -30023,7 +30031,7 @@ yyreduce:
 
   case 1330:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8442 "gram.y"
     {
 					(yyval.typnam) = (yyvsp[(1) - (1)].typnam);
@@ -30032,7 +30040,7 @@ yyreduce:
 
   case 1331:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8450 "gram.y"
     {
 					(yyval.typnam) = (yyvsp[(1) - (1)].typnam);
@@ -30041,7 +30049,7 @@ yyreduce:
 
   case 1332:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8454 "gram.y"
     {
 					(yyval.typnam) = (yyvsp[(1) - (1)].typnam);
@@ -30051,7 +30059,7 @@ yyreduce:
 
   case 1333:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8462 "gram.y"
     {
 					char *typname;
@@ -30065,7 +30073,7 @@ yyreduce:
 
   case 1334:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8474 "gram.y"
     {
 					/* bit defaults to bit(1), varbit to no limit */
@@ -30084,7 +30092,7 @@ yyreduce:
 
   case 1335:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8495 "gram.y"
     {
 					(yyval.typnam) = (yyvsp[(1) - (1)].typnam);
@@ -30093,7 +30101,7 @@ yyreduce:
 
   case 1336:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8499 "gram.y"
     {
 					(yyval.typnam) = (yyvsp[(1) - (1)].typnam);
@@ -30102,7 +30110,7 @@ yyreduce:
 
   case 1337:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8505 "gram.y"
     {
 					(yyval.typnam) = (yyvsp[(1) - (1)].typnam);
@@ -30111,7 +30119,7 @@ yyreduce:
 
   case 1338:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8509 "gram.y"
     {
 					/* Length was not specified so allow to be unrestricted.
@@ -30127,7 +30135,7 @@ yyreduce:
 
   case 1339:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8522 "gram.y"
     {
 					if (((yyvsp[(5) - (5)].str) != NULL) && (strcmp((yyvsp[(5) - (5)].str), "sql_text") != 0))
@@ -30149,7 +30157,7 @@ yyreduce:
 
   case 1340:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8541 "gram.y"
     {
 					if (((yyvsp[(2) - (2)].str) != NULL) && (strcmp((yyvsp[(2) - (2)].str), "sql_text") != 0))
@@ -30175,77 +30183,77 @@ yyreduce:
 
   case 1341:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8564 "gram.y"
     { (yyval.str) = (yyvsp[(2) - (2)].boolean) ? "varchar": "char"; }
     break;
 
   case 1342:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8566 "gram.y"
     { (yyval.str) = (yyvsp[(2) - (2)].boolean) ? "varchar": "char"; }
     break;
 
   case 1343:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8568 "gram.y"
     { (yyval.str) = "varchar"; }
     break;
 
   case 1344:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8570 "gram.y"
     { (yyval.str) = (yyvsp[(3) - (3)].boolean) ? "varchar": "char"; }
     break;
 
   case 1345:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8572 "gram.y"
     { (yyval.str) = (yyvsp[(3) - (3)].boolean) ? "varchar": "char"; }
     break;
 
   case 1346:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8574 "gram.y"
     { (yyval.str) = (yyvsp[(2) - (2)].boolean) ? "varchar": "char"; }
     break;
 
   case 1347:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8578 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 1348:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8579 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 1349:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8583 "gram.y"
     { (yyval.str) = (yyvsp[(3) - (3)].str); }
     break;
 
   case 1350:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8584 "gram.y"
     { (yyval.str) = NULL; }
     break;
 
   case 1351:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8592 "gram.y"
     {
 					if ((yyvsp[(5) - (5)].boolean))
@@ -30259,7 +30267,7 @@ yyreduce:
 
   case 1352:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8601 "gram.y"
     {
 					if ((yyvsp[(2) - (2)].boolean))
@@ -30272,7 +30280,7 @@ yyreduce:
 
   case 1353:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8609 "gram.y"
     {
 					if ((yyvsp[(5) - (5)].boolean))
@@ -30286,7 +30294,7 @@ yyreduce:
 
   case 1354:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8618 "gram.y"
     {
 					if ((yyvsp[(2) - (2)].boolean))
@@ -30299,7 +30307,7 @@ yyreduce:
 
   case 1355:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8629 "gram.y"
     {
 					(yyval.typnam) = SystemTypeName("interval");
@@ -30309,70 +30317,70 @@ yyreduce:
 
   case 1356:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8636 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 1357:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8637 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 1358:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8638 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 1359:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8643 "gram.y"
     { (yyval.list) = list_make1(makeIntConst(INTERVAL_MASK(YEAR), (yylsp[(1) - (1)]))); }
     break;
 
   case 1360:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8645 "gram.y"
     { (yyval.list) = list_make1(makeIntConst(INTERVAL_MASK(MONTH), (yylsp[(1) - (1)]))); }
     break;
 
   case 1361:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8647 "gram.y"
     { (yyval.list) = list_make1(makeIntConst(INTERVAL_MASK(DAY), (yylsp[(1) - (1)]))); }
     break;
 
   case 1362:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8649 "gram.y"
     { (yyval.list) = list_make1(makeIntConst(INTERVAL_MASK(HOUR), (yylsp[(1) - (1)]))); }
     break;
 
   case 1363:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8651 "gram.y"
     { (yyval.list) = list_make1(makeIntConst(INTERVAL_MASK(MINUTE), (yylsp[(1) - (1)]))); }
     break;
 
   case 1364:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8653 "gram.y"
     { (yyval.list) = (yyvsp[(1) - (1)].list); }
     break;
 
   case 1365:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8655 "gram.y"
     {
 					(yyval.list) = list_make1(makeIntConst(INTERVAL_MASK(YEAR) |
@@ -30382,7 +30390,7 @@ yyreduce:
 
   case 1366:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8660 "gram.y"
     {
 					(yyval.list) = list_make1(makeIntConst(INTERVAL_MASK(DAY) |
@@ -30392,7 +30400,7 @@ yyreduce:
 
   case 1367:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8665 "gram.y"
     {
 					(yyval.list) = list_make1(makeIntConst(INTERVAL_MASK(DAY) |
@@ -30403,7 +30411,7 @@ yyreduce:
 
   case 1368:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8671 "gram.y"
     {
 					(yyval.list) = (yyvsp[(3) - (3)].list);
@@ -30416,7 +30424,7 @@ yyreduce:
 
   case 1369:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8679 "gram.y"
     {
 					(yyval.list) = list_make1(makeIntConst(INTERVAL_MASK(HOUR) |
@@ -30426,7 +30434,7 @@ yyreduce:
 
   case 1370:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8684 "gram.y"
     {
 					(yyval.list) = (yyvsp[(3) - (3)].list);
@@ -30438,7 +30446,7 @@ yyreduce:
 
   case 1371:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8691 "gram.y"
     {
 					(yyval.list) = (yyvsp[(3) - (3)].list);
@@ -30449,14 +30457,14 @@ yyreduce:
 
   case 1372:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8697 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1373:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8702 "gram.y"
     {
 					(yyval.list) = list_make1(makeIntConst(INTERVAL_MASK(SECOND), (yylsp[(1) - (1)])));
@@ -30465,7 +30473,7 @@ yyreduce:
 
   case 1374:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8706 "gram.y"
     {
 					(yyval.list) = list_make2(makeIntConst(INTERVAL_MASK(SECOND), (yylsp[(1) - (4)])),
@@ -30475,21 +30483,21 @@ yyreduce:
 
   case 1375:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8735 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 1376:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8737 "gram.y"
     { (yyval.node) = makeTypeCast((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].typnam), (yylsp[(2) - (3)])); }
     break;
 
   case 1377:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8739 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -30507,133 +30515,133 @@ yyreduce:
 
   case 1378:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8761 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", NULL, (yyvsp[(2) - (2)].node), (yylsp[(1) - (2)])); }
     break;
 
   case 1379:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8763 "gram.y"
     { (yyval.node) = doNegate((yyvsp[(2) - (2)].node), (yylsp[(1) - (2)])); }
     break;
 
   case 1380:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8765 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1381:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8767 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "-", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1382:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8769 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "*", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1383:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8771 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "/", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1384:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8773 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "%", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1385:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8775 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "^", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1386:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8777 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "<", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1387:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8779 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, ">", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1388:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8781 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "=", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1389:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8784 "gram.y"
     { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[(2) - (3)].list), (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1390:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8786 "gram.y"
     { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[(1) - (2)].list), NULL, (yyvsp[(2) - (2)].node), (yylsp[(1) - (2)])); }
     break;
 
   case 1391:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8788 "gram.y"
     { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[(2) - (2)].list), (yyvsp[(1) - (2)].node), NULL, (yylsp[(2) - (2)])); }
     break;
 
   case 1392:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8791 "gram.y"
     { (yyval.node) = (Node *) makeA_Expr(AEXPR_AND, NIL, (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1393:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8793 "gram.y"
     { (yyval.node) = (Node *) makeA_Expr(AEXPR_OR, NIL, (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1394:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8795 "gram.y"
     { (yyval.node) = (Node *) makeA_Expr(AEXPR_NOT, NIL, NULL, (yyvsp[(2) - (2)].node), (yylsp[(1) - (2)])); }
     break;
 
   case 1395:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8798 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1396:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8800 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -30651,14 +30659,14 @@ yyreduce:
 
   case 1397:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8813 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~", (yyvsp[(1) - (4)].node), (yyvsp[(4) - (4)].node), (yylsp[(2) - (4)])); }
     break;
 
   case 1398:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8815 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -30676,14 +30684,14 @@ yyreduce:
 
   case 1399:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8828 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~*", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1400:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8830 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -30701,14 +30709,14 @@ yyreduce:
 
   case 1401:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8843 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~*", (yyvsp[(1) - (4)].node), (yyvsp[(4) - (4)].node), (yylsp[(2) - (4)])); }
     break;
 
   case 1402:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8845 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -30726,7 +30734,7 @@ yyreduce:
 
   case 1403:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8859 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -30744,7 +30752,7 @@ yyreduce:
 
   case 1404:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8872 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -30762,7 +30770,7 @@ yyreduce:
 
   case 1405:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8885 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -30780,7 +30788,7 @@ yyreduce:
 
   case 1406:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8898 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -30798,7 +30806,7 @@ yyreduce:
 
   case 1407:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8921 "gram.y"
     {
 					NullTest *n = makeNode(NullTest);
@@ -30810,7 +30818,7 @@ yyreduce:
 
   case 1408:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8928 "gram.y"
     {
 					NullTest *n = makeNode(NullTest);
@@ -30822,7 +30830,7 @@ yyreduce:
 
   case 1409:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8935 "gram.y"
     {
 					NullTest *n = makeNode(NullTest);
@@ -30834,7 +30842,7 @@ yyreduce:
 
   case 1410:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8942 "gram.y"
     {
 					NullTest *n = makeNode(NullTest);
@@ -30846,7 +30854,7 @@ yyreduce:
 
   case 1411:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8949 "gram.y"
     {
 					(yyval.node) = (Node *)makeOverlaps((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].list), (yylsp[(2) - (3)]), yyscanner);
@@ -30855,7 +30863,7 @@ yyreduce:
 
   case 1412:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8953 "gram.y"
     {
 					BooleanTest *b = makeNode(BooleanTest);
@@ -30867,7 +30875,7 @@ yyreduce:
 
   case 1413:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8960 "gram.y"
     {
 					BooleanTest *b = makeNode(BooleanTest);
@@ -30879,7 +30887,7 @@ yyreduce:
 
   case 1414:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8967 "gram.y"
     {
 					BooleanTest *b = makeNode(BooleanTest);
@@ -30891,7 +30899,7 @@ yyreduce:
 
   case 1415:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8974 "gram.y"
     {
 					BooleanTest *b = makeNode(BooleanTest);
@@ -30903,7 +30911,7 @@ yyreduce:
 
   case 1416:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8981 "gram.y"
     {
 					BooleanTest *b = makeNode(BooleanTest);
@@ -30915,7 +30923,7 @@ yyreduce:
 
   case 1417:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8988 "gram.y"
     {
 					BooleanTest *b = makeNode(BooleanTest);
@@ -30927,7 +30935,7 @@ yyreduce:
 
   case 1418:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8995 "gram.y"
     {
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_DISTINCT, "=", (yyvsp[(1) - (5)].node), (yyvsp[(5) - (5)].node), (yylsp[(2) - (5)]));
@@ -30936,7 +30944,7 @@ yyreduce:
 
   case 1419:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 8999 "gram.y"
     {
 					(yyval.node) = (Node *) makeA_Expr(AEXPR_NOT, NIL, NULL,
@@ -30949,7 +30957,7 @@ yyreduce:
 
   case 1420:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9007 "gram.y"
     {
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OF, "=", (yyvsp[(1) - (6)].node), (Node *) (yyvsp[(5) - (6)].list), (yylsp[(2) - (6)]));
@@ -30958,7 +30966,7 @@ yyreduce:
 
   case 1421:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9011 "gram.y"
     {
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OF, "<>", (yyvsp[(1) - (7)].node), (Node *) (yyvsp[(6) - (7)].list), (yylsp[(2) - (7)]));
@@ -30967,7 +30975,7 @@ yyreduce:
 
   case 1422:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9021 "gram.y"
     {
 					(yyval.node) = (Node *) makeA_Expr(AEXPR_AND, NIL,
@@ -30979,7 +30987,7 @@ yyreduce:
 
   case 1423:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9028 "gram.y"
     {
 					(yyval.node) = (Node *) makeA_Expr(AEXPR_OR, NIL,
@@ -30991,7 +30999,7 @@ yyreduce:
 
   case 1424:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9035 "gram.y"
     {
 					(yyval.node) = (Node *) makeA_Expr(AEXPR_OR, NIL,
@@ -31009,7 +31017,7 @@ yyreduce:
 
   case 1425:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9048 "gram.y"
     {
 					(yyval.node) = (Node *) makeA_Expr(AEXPR_AND, NIL,
@@ -31027,7 +31035,7 @@ yyreduce:
 
   case 1426:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9061 "gram.y"
     {
 					/* in_expr returns a SubLink or a list of a_exprs */
@@ -31051,7 +31059,7 @@ yyreduce:
 
   case 1427:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9080 "gram.y"
     {
 					/* in_expr returns a SubLink or a list of a_exprs */
@@ -31077,7 +31085,7 @@ yyreduce:
 
   case 1428:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9101 "gram.y"
     {
 					SubLink *n = makeNode(SubLink);
@@ -31092,7 +31100,7 @@ yyreduce:
 
   case 1429:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9111 "gram.y"
     {
 					if ((yyvsp[(3) - (6)].ival) == ANY_SUBLINK)
@@ -31104,7 +31112,7 @@ yyreduce:
 
   case 1430:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9118 "gram.y"
     {
 					/* Not sure how to get rid of the parentheses
@@ -31125,7 +31133,7 @@ yyreduce:
 
   case 1431:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9134 "gram.y"
     {
 					(yyval.node) = makeXmlExpr(IS_DOCUMENT, NULL, NIL,
@@ -31135,7 +31143,7 @@ yyreduce:
 
   case 1432:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9139 "gram.y"
     {
 					(yyval.node) = (Node *) makeA_Expr(AEXPR_NOT, NIL, NULL,
@@ -31147,119 +31155,119 @@ yyreduce:
 
   case 1433:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9157 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 1434:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9159 "gram.y"
     { (yyval.node) = makeTypeCast((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].typnam), (yylsp[(2) - (3)])); }
     break;
 
   case 1435:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9161 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", NULL, (yyvsp[(2) - (2)].node), (yylsp[(1) - (2)])); }
     break;
 
   case 1436:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9163 "gram.y"
     { (yyval.node) = doNegate((yyvsp[(2) - (2)].node), (yylsp[(1) - (2)])); }
     break;
 
   case 1437:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9165 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1438:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9167 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "-", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1439:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9169 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "*", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1440:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9171 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "/", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1441:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9173 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "%", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1442:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9175 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "^", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1443:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9177 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "<", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1444:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9179 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, ">", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1445:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9181 "gram.y"
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "=", (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1446:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9183 "gram.y"
     { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[(2) - (3)].list), (yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node), (yylsp[(2) - (3)])); }
     break;
 
   case 1447:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9185 "gram.y"
     { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[(1) - (2)].list), NULL, (yyvsp[(2) - (2)].node), (yylsp[(1) - (2)])); }
     break;
 
   case 1448:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9187 "gram.y"
     { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[(2) - (2)].list), (yyvsp[(1) - (2)].node), NULL, (yylsp[(2) - (2)])); }
     break;
 
   case 1449:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9189 "gram.y"
     {
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_DISTINCT, "=", (yyvsp[(1) - (5)].node), (yyvsp[(5) - (5)].node), (yylsp[(2) - (5)]));
@@ -31268,7 +31276,7 @@ yyreduce:
 
   case 1450:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9193 "gram.y"
     {
 					(yyval.node) = (Node *) makeA_Expr(AEXPR_NOT, NIL,
@@ -31278,7 +31286,7 @@ yyreduce:
 
   case 1451:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9198 "gram.y"
     {
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OF, "=", (yyvsp[(1) - (6)].node), (Node *) (yyvsp[(5) - (6)].list), (yylsp[(2) - (6)]));
@@ -31287,7 +31295,7 @@ yyreduce:
 
   case 1452:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9202 "gram.y"
     {
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OF, "<>", (yyvsp[(1) - (7)].node), (Node *) (yyvsp[(6) - (7)].list), (yylsp[(2) - (7)]));
@@ -31296,7 +31304,7 @@ yyreduce:
 
   case 1453:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9206 "gram.y"
     {
 					(yyval.node) = makeXmlExpr(IS_DOCUMENT, NULL, NIL,
@@ -31306,7 +31314,7 @@ yyreduce:
 
   case 1454:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9211 "gram.y"
     {
 					(yyval.node) = (Node *) makeA_Expr(AEXPR_NOT, NIL, NULL,
@@ -31318,21 +31326,21 @@ yyreduce:
 
   case 1455:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9227 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 1456:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9228 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 1457:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9230 "gram.y"
     {
 					ParamRef *p = makeNode(ParamRef);
@@ -31352,7 +31360,7 @@ yyreduce:
 
   case 1458:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9245 "gram.y"
     {
 					if ((yyvsp[(4) - (4)].list))
@@ -31369,21 +31377,21 @@ yyreduce:
 
   case 1459:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9257 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 1460:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9259 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 1461:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9261 "gram.y"
     {
 					SubLink *n = makeNode(SubLink);
@@ -31398,7 +31406,7 @@ yyreduce:
 
   case 1462:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9271 "gram.y"
     {
 					SubLink *n = makeNode(SubLink);
@@ -31413,7 +31421,7 @@ yyreduce:
 
   case 1463:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9281 "gram.y"
     {
 					SubLink *n = makeNode(SubLink);
@@ -31428,7 +31436,7 @@ yyreduce:
 
   case 1464:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9291 "gram.y"
     {
 					A_ArrayExpr *n = (A_ArrayExpr *) (yyvsp[(2) - (2)].node);
@@ -31441,7 +31449,7 @@ yyreduce:
 
   case 1465:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9299 "gram.y"
     {
 					RowExpr *r = makeNode(RowExpr);
@@ -31454,7 +31462,7 @@ yyreduce:
 
   case 1466:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9317 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -31472,7 +31480,7 @@ yyreduce:
 
   case 1467:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9330 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -31490,7 +31498,7 @@ yyreduce:
 
   case 1468:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9343 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -31508,7 +31516,7 @@ yyreduce:
 
   case 1469:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9356 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -31526,7 +31534,7 @@ yyreduce:
 
   case 1470:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9369 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -31544,7 +31552,7 @@ yyreduce:
 
   case 1471:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9382 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -31566,7 +31574,7 @@ yyreduce:
 
   case 1472:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9399 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -31584,7 +31592,7 @@ yyreduce:
 
   case 1473:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9412 "gram.y"
     {
 					/*
@@ -31612,7 +31620,7 @@ yyreduce:
 
   case 1474:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9435 "gram.y"
     {
 					/*
@@ -31638,7 +31646,7 @@ yyreduce:
 
   case 1475:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9456 "gram.y"
     {
 					/*
@@ -31653,7 +31661,7 @@ yyreduce:
 
   case 1476:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9466 "gram.y"
     {
 					/*
@@ -31671,7 +31679,7 @@ yyreduce:
 
   case 1477:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9479 "gram.y"
     {
 					/*
@@ -31693,7 +31701,7 @@ yyreduce:
 
   case 1478:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9496 "gram.y"
     {
 					/*
@@ -31711,7 +31719,7 @@ yyreduce:
 
   case 1479:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9509 "gram.y"
     {
 					/*
@@ -31726,7 +31734,7 @@ yyreduce:
 
   case 1480:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9519 "gram.y"
     {
 					/*
@@ -31744,7 +31752,7 @@ yyreduce:
 
   case 1481:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9532 "gram.y"
     {
 					/*
@@ -31759,7 +31767,7 @@ yyreduce:
 
   case 1482:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9542 "gram.y"
     {
 					/*
@@ -31777,7 +31785,7 @@ yyreduce:
 
   case 1483:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9555 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -31795,7 +31803,7 @@ yyreduce:
 
   case 1484:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9568 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -31813,7 +31821,7 @@ yyreduce:
 
   case 1485:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9581 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -31831,7 +31839,7 @@ yyreduce:
 
   case 1486:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9594 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -31849,7 +31857,7 @@ yyreduce:
 
   case 1487:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9607 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -31867,7 +31875,7 @@ yyreduce:
 
   case 1488:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9620 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -31885,14 +31893,14 @@ yyreduce:
 
   case 1489:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9633 "gram.y"
     { (yyval.node) = makeTypeCast((yyvsp[(3) - (6)].node), (yyvsp[(5) - (6)].typnam), (yylsp[(1) - (6)])); }
     break;
 
   case 1490:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9635 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -31910,7 +31918,7 @@ yyreduce:
 
   case 1491:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9648 "gram.y"
     {
 					/* overlay(A PLACING B FROM C FOR D) is converted to
@@ -31933,7 +31941,7 @@ yyreduce:
 
   case 1492:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9666 "gram.y"
     {
 					/* position(A in B) is converted to position(B, A) */
@@ -31952,7 +31960,7 @@ yyreduce:
 
   case 1493:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9680 "gram.y"
     {
 					/* substring(A from B for C) is converted to
@@ -31973,7 +31981,7 @@ yyreduce:
 
   case 1494:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9696 "gram.y"
     {
 					/* TREAT(expr AS target) converts expr of a particular type to target,
@@ -32000,7 +32008,7 @@ yyreduce:
 
   case 1495:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9718 "gram.y"
     {
 					/* various trim expressions are defined in SQL92
@@ -32021,7 +32029,7 @@ yyreduce:
 
   case 1496:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9734 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -32039,7 +32047,7 @@ yyreduce:
 
   case 1497:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9747 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -32057,7 +32065,7 @@ yyreduce:
 
   case 1498:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9760 "gram.y"
     {
 					FuncCall *n = makeNode(FuncCall);
@@ -32075,7 +32083,7 @@ yyreduce:
 
   case 1499:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9773 "gram.y"
     {
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_NULLIF, "=", (yyvsp[(3) - (6)].node), (yyvsp[(5) - (6)].node), (yylsp[(1) - (6)]));
@@ -32084,7 +32092,7 @@ yyreduce:
 
   case 1500:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9777 "gram.y"
     {
 					CoalesceExpr *c = makeNode(CoalesceExpr);
@@ -32096,7 +32104,7 @@ yyreduce:
 
   case 1501:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9784 "gram.y"
     {
 					MinMaxExpr *v = makeNode(MinMaxExpr);
@@ -32109,7 +32117,7 @@ yyreduce:
 
   case 1502:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9792 "gram.y"
     {
 					MinMaxExpr *v = makeNode(MinMaxExpr);
@@ -32122,7 +32130,7 @@ yyreduce:
 
   case 1503:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9800 "gram.y"
     {
 					(yyval.node) = makeXmlExpr(IS_XMLCONCAT, NULL, NIL, (yyvsp[(3) - (4)].list), (yylsp[(1) - (4)]));
@@ -32131,7 +32139,7 @@ yyreduce:
 
   case 1504:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9804 "gram.y"
     {
 					(yyval.node) = makeXmlExpr(IS_XMLELEMENT, (yyvsp[(4) - (5)].str), NIL, NIL, (yylsp[(1) - (5)]));
@@ -32140,7 +32148,7 @@ yyreduce:
 
   case 1505:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9808 "gram.y"
     {
 					(yyval.node) = makeXmlExpr(IS_XMLELEMENT, (yyvsp[(4) - (7)].str), (yyvsp[(6) - (7)].list), NIL, (yylsp[(1) - (7)]));
@@ -32149,7 +32157,7 @@ yyreduce:
 
   case 1506:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9812 "gram.y"
     {
 					(yyval.node) = makeXmlExpr(IS_XMLELEMENT, (yyvsp[(4) - (7)].str), NIL, (yyvsp[(6) - (7)].list), (yylsp[(1) - (7)]));
@@ -32158,7 +32166,7 @@ yyreduce:
 
   case 1507:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9816 "gram.y"
     {
 					(yyval.node) = makeXmlExpr(IS_XMLELEMENT, (yyvsp[(4) - (9)].str), (yyvsp[(6) - (9)].list), (yyvsp[(8) - (9)].list), (yylsp[(1) - (9)]));
@@ -32167,7 +32175,7 @@ yyreduce:
 
   case 1508:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9820 "gram.y"
     {
 					(yyval.node) = makeXmlExpr(IS_XMLFOREST, NULL, (yyvsp[(3) - (4)].list), NIL, (yylsp[(1) - (4)]));
@@ -32176,7 +32184,7 @@ yyreduce:
 
   case 1509:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9824 "gram.y"
     {
 					XmlExpr *x = (XmlExpr *)
@@ -32190,7 +32198,7 @@ yyreduce:
 
   case 1510:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9833 "gram.y"
     {
 					(yyval.node) = makeXmlExpr(IS_XMLPI, (yyvsp[(4) - (5)].str), NULL, NIL, (yylsp[(1) - (5)]));
@@ -32199,7 +32207,7 @@ yyreduce:
 
   case 1511:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9837 "gram.y"
     {
 					(yyval.node) = makeXmlExpr(IS_XMLPI, (yyvsp[(4) - (7)].str), NULL, list_make1((yyvsp[(6) - (7)].node)), (yylsp[(1) - (7)]));
@@ -32208,7 +32216,7 @@ yyreduce:
 
   case 1512:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9841 "gram.y"
     {
 					(yyval.node) = makeXmlExpr(IS_XMLROOT, NULL, NIL,
@@ -32218,7 +32226,7 @@ yyreduce:
 
   case 1513:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9846 "gram.y"
     {
 					XmlSerialize *n = makeNode(XmlSerialize);
@@ -32232,70 +32240,70 @@ yyreduce:
 
   case 1514:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9860 "gram.y"
     { (yyval.node) = (yyvsp[(2) - (2)].node); }
     break;
 
   case 1515:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9862 "gram.y"
     { (yyval.node) = makeNullAConst(-1); }
     break;
 
   case 1516:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9866 "gram.y"
     { (yyval.node) = makeIntConst(XML_STANDALONE_YES, -1); }
     break;
 
   case 1517:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9868 "gram.y"
     { (yyval.node) = makeIntConst(XML_STANDALONE_NO, -1); }
     break;
 
   case 1518:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9870 "gram.y"
     { (yyval.node) = makeIntConst(XML_STANDALONE_NO_VALUE, -1); }
     break;
 
   case 1519:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9872 "gram.y"
     { (yyval.node) = makeIntConst(XML_STANDALONE_OMITTED, -1); }
     break;
 
   case 1520:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9875 "gram.y"
     { (yyval.list) = (yyvsp[(3) - (4)].list); }
     break;
 
   case 1521:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9878 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].target)); }
     break;
 
   case 1522:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9879 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].target)); }
     break;
 
   case 1523:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9883 "gram.y"
     {
 					(yyval.target) = makeNode(ResTarget);
@@ -32308,7 +32316,7 @@ yyreduce:
 
   case 1524:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9891 "gram.y"
     {
 					(yyval.target) = makeNode(ResTarget);
@@ -32321,70 +32329,70 @@ yyreduce:
 
   case 1525:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9900 "gram.y"
     { (yyval.ival) = XMLOPTION_DOCUMENT; }
     break;
 
   case 1526:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9901 "gram.y"
     { (yyval.ival) = XMLOPTION_CONTENT; }
     break;
 
   case 1527:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9904 "gram.y"
     { (yyval.boolean) = TRUE; }
     break;
 
   case 1528:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9905 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 1529:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9906 "gram.y"
     { (yyval.boolean) = FALSE; }
     break;
 
   case 1530:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9913 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (2)].list); }
     break;
 
   case 1531:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9914 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1532:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9918 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].windef)); }
     break;
 
   case 1533:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9920 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].windef)); }
     break;
 
   case 1534:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9925 "gram.y"
     {
 					WindowDef *n = (yyvsp[(3) - (3)].windef);
@@ -32395,14 +32403,14 @@ yyreduce:
 
   case 1535:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9933 "gram.y"
     { (yyval.windef) = (yyvsp[(2) - (2)].windef); }
     break;
 
   case 1536:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9935 "gram.y"
     {
 					WindowDef *n = makeNode(WindowDef);
@@ -32420,14 +32428,14 @@ yyreduce:
 
   case 1537:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9948 "gram.y"
     { (yyval.windef) = NULL; }
     break;
 
   case 1538:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9953 "gram.y"
     {
 					WindowDef *n = makeNode(WindowDef);
@@ -32446,35 +32454,35 @@ yyreduce:
 
   case 1539:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9978 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 1540:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9979 "gram.y"
     { (yyval.str) = NULL; }
     break;
 
   case 1541:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9982 "gram.y"
     { (yyval.list) = (yyvsp[(3) - (3)].list); }
     break;
 
   case 1542:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9983 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1543:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 9995 "gram.y"
     {
 					WindowDef *n = (yyvsp[(2) - (2)].windef);
@@ -32497,7 +32505,7 @@ yyreduce:
 
   case 1544:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10013 "gram.y"
     {
 					WindowDef *n = (yyvsp[(2) - (2)].windef);
@@ -32508,7 +32516,7 @@ yyreduce:
 
   case 1545:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10019 "gram.y"
     {
 					WindowDef *n = makeNode(WindowDef);
@@ -32521,7 +32529,7 @@ yyreduce:
 
   case 1546:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10029 "gram.y"
     {
 					WindowDef *n = (yyvsp[(1) - (1)].windef);
@@ -32543,7 +32551,7 @@ yyreduce:
 
   case 1547:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10046 "gram.y"
     {
 					WindowDef *n1 = (yyvsp[(2) - (4)].windef);
@@ -32585,7 +32593,7 @@ yyreduce:
 
   case 1548:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10091 "gram.y"
     {
 					WindowDef *n = makeNode(WindowDef);
@@ -32598,7 +32606,7 @@ yyreduce:
 
   case 1549:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10099 "gram.y"
     {
 					WindowDef *n = makeNode(WindowDef);
@@ -32611,7 +32619,7 @@ yyreduce:
 
   case 1550:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10107 "gram.y"
     {
 					WindowDef *n = makeNode(WindowDef);
@@ -32624,7 +32632,7 @@ yyreduce:
 
   case 1551:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10115 "gram.y"
     {
 					WindowDef *n = makeNode(WindowDef);
@@ -32637,7 +32645,7 @@ yyreduce:
 
   case 1552:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10123 "gram.y"
     {
 					WindowDef *n = makeNode(WindowDef);
@@ -32650,196 +32658,196 @@ yyreduce:
 
   case 1553:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10143 "gram.y"
     { (yyval.list) = (yyvsp[(3) - (4)].list); }
     break;
 
   case 1554:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10144 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1555:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10145 "gram.y"
     { (yyval.list) = lappend((yyvsp[(2) - (5)].list), (yyvsp[(4) - (5)].node)); }
     break;
 
   case 1556:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10148 "gram.y"
     { (yyval.ival) = ANY_SUBLINK; }
     break;
 
   case 1557:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10149 "gram.y"
     { (yyval.ival) = ANY_SUBLINK; }
     break;
 
   case 1558:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10150 "gram.y"
     { (yyval.ival) = ALL_SUBLINK; }
     break;
 
   case 1559:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10153 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 1560:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10154 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 1561:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10157 "gram.y"
     { (yyval.str) = "+"; }
     break;
 
   case 1562:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10158 "gram.y"
     { (yyval.str) = "-"; }
     break;
 
   case 1563:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10159 "gram.y"
     { (yyval.str) = "*"; }
     break;
 
   case 1564:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10160 "gram.y"
     { (yyval.str) = "/"; }
     break;
 
   case 1565:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10161 "gram.y"
     { (yyval.str) = "%"; }
     break;
 
   case 1566:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10162 "gram.y"
     { (yyval.str) = "^"; }
     break;
 
   case 1567:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10163 "gram.y"
     { (yyval.str) = "<"; }
     break;
 
   case 1568:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10164 "gram.y"
     { (yyval.str) = ">"; }
     break;
 
   case 1569:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10165 "gram.y"
     { (yyval.str) = "="; }
     break;
 
   case 1570:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10169 "gram.y"
     { (yyval.list) = list_make1(makeString((yyvsp[(1) - (1)].str))); }
     break;
 
   case 1571:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10171 "gram.y"
     { (yyval.list) = (yyvsp[(3) - (4)].list); }
     break;
 
   case 1572:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10176 "gram.y"
     { (yyval.list) = list_make1(makeString((yyvsp[(1) - (1)].str))); }
     break;
 
   case 1573:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10178 "gram.y"
     { (yyval.list) = (yyvsp[(3) - (4)].list); }
     break;
 
   case 1574:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10183 "gram.y"
     { (yyval.list) = list_make1(makeString((yyvsp[(1) - (1)].str))); }
     break;
 
   case 1575:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10185 "gram.y"
     { (yyval.list) = (yyvsp[(3) - (4)].list); }
     break;
 
   case 1576:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10187 "gram.y"
     { (yyval.list) = list_make1(makeString("~~")); }
     break;
 
   case 1577:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10189 "gram.y"
     { (yyval.list) = list_make1(makeString("!~~")); }
     break;
 
   case 1578:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10191 "gram.y"
     { (yyval.list) = list_make1(makeString("~~*")); }
     break;
 
   case 1579:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10193 "gram.y"
     { (yyval.list) = list_make1(makeString("!~~*")); }
     break;
 
   case 1580:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10205 "gram.y"
     {
 					(yyval.list) = list_make1((yyvsp[(1) - (1)].node));
@@ -32848,7 +32856,7 @@ yyreduce:
 
   case 1581:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10209 "gram.y"
     {
 					(yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node));
@@ -32857,7 +32865,7 @@ yyreduce:
 
   case 1582:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10216 "gram.y"
     {
 					(yyval.list) = list_make1((yyvsp[(1) - (1)].node));
@@ -32866,7 +32874,7 @@ yyreduce:
 
   case 1583:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10220 "gram.y"
     {
 					(yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node));
@@ -32875,7 +32883,7 @@ yyreduce:
 
   case 1584:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10226 "gram.y"
     {
 					(yyval.node) = (yyvsp[(1) - (1)].node);
@@ -32884,7 +32892,7 @@ yyreduce:
 
   case 1585:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10230 "gram.y"
     {
 					NamedArgExpr *na = makeNode(NamedArgExpr);
@@ -32898,21 +32906,21 @@ yyreduce:
 
   case 1586:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10240 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].typnam)); }
     break;
 
   case 1587:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10241 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].typnam)); }
     break;
 
   case 1588:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10245 "gram.y"
     {
 					(yyval.node) = makeAArrayExpr((yyvsp[(2) - (3)].list), (yylsp[(1) - (3)]));
@@ -32921,7 +32929,7 @@ yyreduce:
 
   case 1589:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10249 "gram.y"
     {
 					(yyval.node) = makeAArrayExpr((yyvsp[(2) - (3)].list), (yylsp[(1) - (3)]));
@@ -32930,7 +32938,7 @@ yyreduce:
 
   case 1590:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10253 "gram.y"
     {
 					(yyval.node) = makeAArrayExpr(NIL, (yylsp[(1) - (2)]));
@@ -32939,21 +32947,21 @@ yyreduce:
 
   case 1591:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10258 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
     break;
 
   case 1592:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10259 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node)); }
     break;
 
   case 1593:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10265 "gram.y"
     {
 					(yyval.list) = list_make2(makeStringConst((yyvsp[(1) - (3)].str), (yylsp[(1) - (3)])), (yyvsp[(3) - (3)].node));
@@ -32962,70 +32970,70 @@ yyreduce:
 
   case 1594:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10268 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1595:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10275 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 1596:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10276 "gram.y"
     { (yyval.str) = "year"; }
     break;
 
   case 1597:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10277 "gram.y"
     { (yyval.str) = "month"; }
     break;
 
   case 1598:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10278 "gram.y"
     { (yyval.str) = "day"; }
     break;
 
   case 1599:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10279 "gram.y"
     { (yyval.str) = "hour"; }
     break;
 
   case 1600:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10280 "gram.y"
     { (yyval.str) = "minute"; }
     break;
 
   case 1601:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10281 "gram.y"
     { (yyval.str) = "second"; }
     break;
 
   case 1602:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10282 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 1603:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10293 "gram.y"
     {
 					(yyval.list) = list_make4((yyvsp[(1) - (4)].node), (yyvsp[(2) - (4)].node), (yyvsp[(3) - (4)].node), (yyvsp[(4) - (4)].node));
@@ -33034,7 +33042,7 @@ yyreduce:
 
   case 1604:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10297 "gram.y"
     {
 					(yyval.list) = list_make3((yyvsp[(1) - (3)].node), (yyvsp[(2) - (3)].node), (yyvsp[(3) - (3)].node));
@@ -33043,28 +33051,28 @@ yyreduce:
 
   case 1605:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10304 "gram.y"
     { (yyval.node) = (yyvsp[(2) - (2)].node); }
     break;
 
   case 1606:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10310 "gram.y"
     { (yyval.list) = list_make2((yyvsp[(3) - (3)].node), (yyvsp[(1) - (3)].node)); }
     break;
 
   case 1607:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10311 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1608:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10328 "gram.y"
     {
 					(yyval.list) = list_make3((yyvsp[(1) - (3)].node), (yyvsp[(2) - (3)].node), (yyvsp[(3) - (3)].node));
@@ -33073,7 +33081,7 @@ yyreduce:
 
   case 1609:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10332 "gram.y"
     {
 					/* not legal per SQL99, but might as well allow it */
@@ -33083,7 +33091,7 @@ yyreduce:
 
   case 1610:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10337 "gram.y"
     {
 					(yyval.list) = list_make2((yyvsp[(1) - (2)].node), (yyvsp[(2) - (2)].node));
@@ -33092,7 +33100,7 @@ yyreduce:
 
   case 1611:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10341 "gram.y"
     {
 					/*
@@ -33112,7 +33120,7 @@ yyreduce:
 
   case 1612:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10356 "gram.y"
     {
 					(yyval.list) = (yyvsp[(1) - (1)].list);
@@ -33121,49 +33129,49 @@ yyreduce:
 
   case 1613:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10360 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1614:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10364 "gram.y"
     { (yyval.node) = (yyvsp[(2) - (2)].node); }
     break;
 
   case 1615:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10367 "gram.y"
     { (yyval.node) = (yyvsp[(2) - (2)].node); }
     break;
 
   case 1616:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10370 "gram.y"
     { (yyval.list) = lappend((yyvsp[(3) - (3)].list), (yyvsp[(1) - (3)].node)); }
     break;
 
   case 1617:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10371 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (2)].list); }
     break;
 
   case 1618:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10372 "gram.y"
     { (yyval.list) = (yyvsp[(1) - (1)].list); }
     break;
 
   case 1619:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10376 "gram.y"
     {
 					SubLink *n = makeNode(SubLink);
@@ -33175,14 +33183,14 @@ yyreduce:
 
   case 1620:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10382 "gram.y"
     { (yyval.node) = (Node *)(yyvsp[(2) - (3)].list); }
     break;
 
   case 1621:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10393 "gram.y"
     {
 					CaseExpr *c = makeNode(CaseExpr);
@@ -33197,21 +33205,21 @@ yyreduce:
 
   case 1622:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10406 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
     break;
 
   case 1623:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10407 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].node)); }
     break;
 
   case 1624:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10412 "gram.y"
     {
 					CaseWhen *w = makeNode(CaseWhen);
@@ -33224,35 +33232,35 @@ yyreduce:
 
   case 1625:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10422 "gram.y"
     { (yyval.node) = (yyvsp[(2) - (2)].node); }
     break;
 
   case 1626:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10423 "gram.y"
     { (yyval.node) = NULL; }
     break;
 
   case 1627:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10426 "gram.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 1628:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10427 "gram.y"
     { (yyval.node) = NULL; }
     break;
 
   case 1629:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10431 "gram.y"
     {
 					(yyval.node) = makeColumnRef((yyvsp[(1) - (1)].str), NIL, (yylsp[(1) - (1)]), yyscanner);
@@ -33261,7 +33269,7 @@ yyreduce:
 
   case 1630:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10435 "gram.y"
     {
 					(yyval.node) = makeColumnRef((yyvsp[(1) - (2)].str), (yyvsp[(2) - (2)].list), (yylsp[(1) - (2)]), yyscanner);
@@ -33270,7 +33278,7 @@ yyreduce:
 
   case 1631:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10442 "gram.y"
     {
 					(yyval.node) = (Node *) makeString((yyvsp[(2) - (2)].str));
@@ -33279,7 +33287,7 @@ yyreduce:
 
   case 1632:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10446 "gram.y"
     {
 					(yyval.node) = (Node *) makeNode(A_Star);
@@ -33288,7 +33296,7 @@ yyreduce:
 
   case 1633:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10450 "gram.y"
     {
 					A_Indices *ai = makeNode(A_Indices);
@@ -33300,7 +33308,7 @@ yyreduce:
 
   case 1634:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10457 "gram.y"
     {
 					A_Indices *ai = makeNode(A_Indices);
@@ -33312,42 +33320,42 @@ yyreduce:
 
   case 1635:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10466 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
     break;
 
   case 1636:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10467 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].node)); }
     break;
 
   case 1637:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10471 "gram.y"
     { (yyval.list) = NIL; }
     break;
 
   case 1638:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10472 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].node)); }
     break;
 
   case 1641:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10487 "gram.y"
     { (yyval.node) = (Node *) (yyvsp[(1) - (1)].node); }
     break;
 
   case 1642:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10489 "gram.y"
     {
 					SetToDefault *n = makeNode(SetToDefault);
@@ -33358,42 +33366,42 @@ yyreduce:
 
   case 1643:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10497 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].node)); }
     break;
 
   case 1644:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10498 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].node)); }
     break;
 
   case 1645:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10506 "gram.y"
     { (yyval.list) = (yyvsp[(2) - (3)].list); }
     break;
 
   case 1646:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10517 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].target)); }
     break;
 
   case 1647:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10518 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].target)); }
     break;
 
   case 1648:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10522 "gram.y"
     {
 					(yyval.target) = makeNode(ResTarget);
@@ -33406,7 +33414,7 @@ yyreduce:
 
   case 1649:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10538 "gram.y"
     {
 					(yyval.target) = makeNode(ResTarget);
@@ -33419,7 +33427,7 @@ yyreduce:
 
   case 1650:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10546 "gram.y"
     {
 					(yyval.target) = makeNode(ResTarget);
@@ -33432,7 +33440,7 @@ yyreduce:
 
   case 1651:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10554 "gram.y"
     {
 					ColumnRef *n = makeNode(ColumnRef);
@@ -33449,21 +33457,21 @@ yyreduce:
 
   case 1652:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10575 "gram.y"
     { (yyval.list) = list_make1((yyvsp[(1) - (1)].range)); }
     break;
 
   case 1653:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10576 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), (yyvsp[(3) - (3)].range)); }
     break;
 
   case 1654:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10588 "gram.y"
     {
 					(yyval.range) = makeNode(RangeVar);
@@ -33476,7 +33484,7 @@ yyreduce:
 
   case 1655:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10596 "gram.y"
     {
 					check_qualified_name((yyvsp[(2) - (2)].list), yyscanner);
@@ -33507,70 +33515,70 @@ yyreduce:
 
   case 1656:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10624 "gram.y"
     { (yyval.list) = list_make1(makeString((yyvsp[(1) - (1)].str))); }
     break;
 
   case 1657:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10626 "gram.y"
     { (yyval.list) = lappend((yyvsp[(1) - (3)].list), makeString((yyvsp[(3) - (3)].str))); }
     break;
 
   case 1658:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10630 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 1659:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10633 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 1660:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10636 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 1661:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10638 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 1662:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10640 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 1663:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10642 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 1664:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10653 "gram.y"
     { (yyval.list) = list_make1(makeString((yyvsp[(1) - (1)].str))); }
     break;
 
   case 1665:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10655 "gram.y"
     {
 						(yyval.list) = check_func_name(lcons(makeString((yyvsp[(1) - (2)].str)), (yyvsp[(2) - (2)].list)),
@@ -33580,7 +33588,7 @@ yyreduce:
 
   case 1666:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10666 "gram.y"
     {
 					(yyval.node) = makeIntConst((yyvsp[(1) - (1)].ival), (yylsp[(1) - (1)]));
@@ -33589,7 +33597,7 @@ yyreduce:
 
   case 1667:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10670 "gram.y"
     {
 					(yyval.node) = makeFloatConst((yyvsp[(1) - (1)].str), (yylsp[(1) - (1)]));
@@ -33598,7 +33606,7 @@ yyreduce:
 
   case 1668:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10674 "gram.y"
     {
 					(yyval.node) = makeStringConst((yyvsp[(1) - (1)].str), (yylsp[(1) - (1)]));
@@ -33607,7 +33615,7 @@ yyreduce:
 
   case 1669:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10678 "gram.y"
     {
 					(yyval.node) = makeBitStringConst((yyvsp[(1) - (1)].str), (yylsp[(1) - (1)]));
@@ -33616,7 +33624,7 @@ yyreduce:
 
   case 1670:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10682 "gram.y"
     {
 					/* This is a bit constant per SQL99:
@@ -33630,7 +33638,7 @@ yyreduce:
 
   case 1671:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10691 "gram.y"
     {
 					/* generic type 'literal' syntax */
@@ -33642,7 +33650,7 @@ yyreduce:
 
   case 1672:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10698 "gram.y"
     {
 					/* generic syntax with a type modifier */
@@ -33672,7 +33680,7 @@ yyreduce:
 
   case 1673:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10723 "gram.y"
     {
 					(yyval.node) = makeStringConstCast((yyvsp[(2) - (2)].str), (yylsp[(2) - (2)]), (yyvsp[(1) - (2)].typnam));
@@ -33681,7 +33689,7 @@ yyreduce:
 
   case 1674:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10727 "gram.y"
     {
 					TypeName *t = (yyvsp[(1) - (3)].typnam);
@@ -33692,7 +33700,7 @@ yyreduce:
 
   case 1675:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10733 "gram.y"
     {
 					TypeName *t = (yyvsp[(1) - (6)].typnam);
@@ -33714,7 +33722,7 @@ yyreduce:
 
   case 1676:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10750 "gram.y"
     {
 					(yyval.node) = makeBoolAConst(TRUE, (yylsp[(1) - (1)]));
@@ -33723,7 +33731,7 @@ yyreduce:
 
   case 1677:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10754 "gram.y"
     {
 					(yyval.node) = makeBoolAConst(FALSE, (yylsp[(1) - (1)]));
@@ -33732,7 +33740,7 @@ yyreduce:
 
   case 1678:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10758 "gram.y"
     {
 					(yyval.node) = makeNullAConst((yylsp[(1) - (1)]));
@@ -33741,127 +33749,127 @@ yyreduce:
 
   case 1679:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10763 "gram.y"
     { (yyval.ival) = (yyvsp[(1) - (1)].ival); }
     break;
 
   case 1680:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10764 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 1681:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10765 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 1682:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10767 "gram.y"
     { (yyval.ival) = (yyvsp[(1) - (1)].ival); }
     break;
 
   case 1683:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10768 "gram.y"
     { (yyval.ival) = + (yyvsp[(2) - (2)].ival); }
     break;
 
   case 1684:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10769 "gram.y"
     { (yyval.ival) = - (yyvsp[(2) - (2)].ival); }
     break;
 
   case 1685:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10785 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 1686:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10786 "gram.y"
     { (yyval.str) = pstrdup((yyvsp[(1) - (1)].keyword)); }
     break;
 
   case 1687:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10787 "gram.y"
     { (yyval.str) = pstrdup((yyvsp[(1) - (1)].keyword)); }
     break;
 
   case 1688:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10792 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 1689:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10793 "gram.y"
     { (yyval.str) = pstrdup((yyvsp[(1) - (1)].keyword)); }
     break;
 
   case 1690:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10794 "gram.y"
     { (yyval.str) = pstrdup((yyvsp[(1) - (1)].keyword)); }
     break;
 
   case 1691:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10800 "gram.y"
     { (yyval.str) = (yyvsp[(1) - (1)].str); }
     break;
 
   case 1692:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10801 "gram.y"
     { (yyval.str) = pstrdup((yyvsp[(1) - (1)].keyword)); }
     break;
 
   case 1693:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10802 "gram.y"
     { (yyval.str) = pstrdup((yyvsp[(1) - (1)].keyword)); }
     break;
 
   case 1694:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10803 "gram.y"
     { (yyval.str) = pstrdup((yyvsp[(1) - (1)].keyword)); }
     break;
 
   case 1695:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 10804 "gram.y"
     { (yyval.str) = pstrdup((yyvsp[(1) - (1)].keyword)); }
     break;
 
 
 
-/* Line 1455 of yacc.c  */
-#line 33865 "gram.c"
+/* Line 1464 of yacc.c  */
+#line 33873 "gram.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -33933,7 +33941,7 @@ yyerrlab:
 #endif
     }
 
-  yyerror_range[0] = yylloc;
+  yyerror_range[1] = yylloc;
 
   if (yyerrstatus == 3)
     {
@@ -33970,7 +33978,7 @@ yyerrorlab:
   if (/*CONSTCOND*/ 0)
      goto yyerrorlab;
 
-  yyerror_range[0] = yylsp[1-yylen];
+  yyerror_range[1] = yylsp[1-yylen];
   /* Do not reclaim the symbols of the rule which action triggered
      this YYERROR.  */
   YYPOPSTACK (yylen);
@@ -34004,7 +34012,7 @@ yyerrlab1:
       if (yyssp == yyss)
 	YYABORT;
 
-      yyerror_range[0] = *yylsp;
+      yyerror_range[1] = *yylsp;
       yydestruct ("Error: popping",
 		  yystos[yystate], yyvsp, yylsp, yyscanner);
       YYPOPSTACK (1);
@@ -34014,10 +34022,10 @@ yyerrlab1:
 
   *++yyvsp = yylval;
 
-  yyerror_range[1] = yylloc;
+  yyerror_range[2] = yylloc;
   /* Using YYLLOC is tempting, but would change the location of
      the lookahead.  YYLOC is available though.  */
-  YYLLOC_DEFAULT (yyloc, (yyerror_range - 1), 2);
+  YYLLOC_DEFAULT (yyloc, yyerror_range, 2);
   *++yylsp = yyloc;
 
   /* Shift the error token.  */
@@ -34079,7 +34087,7 @@ yyreturn:
 
 
 
-/* Line 1675 of yacc.c  */
+/* Line 1684 of yacc.c  */
 #line 11256 "gram.y"
 
 
