@@ -1,0 +1,35 @@
+# emacs autosave files. You need to change to "#:#" if you are using git
+# 1.6.1 or before.
+\#*#
+*~
+*.o
+*.a
+*.so
+*.lo
+*.la
+.deps/
+.libs/
+Makefile
+TAGS
+autom4te.cache/
+config.h
+config.log
+config.status
+libtool
+pcp/pcp_attach_node
+pcp/pcp_detach_node
+pcp/pcp_node_count
+pcp/pcp_node_info
+pcp/pcp_pool_status
+pcp/pcp_proc_count
+pcp/pcp_proc_info
+pcp/pcp_promote_node
+pcp/pcp_recovery_node
+pcp/pcp_stop_pgpool
+pcp/pcp_systemdb_info
+pg_md5
+pgpool
+pgpool.8
+sql/pgpool-recovery/pgpool-recovery.sql
+sql/pgpool-regclass/pgpool-regclass.sql
+stamp-h1
