@@ -114,6 +114,8 @@ typedef struct {
 	int health_check_period;	/* health check period */
 	char *health_check_user;		/* PostgreSQL user name for health check */
 	char *health_check_password; /* password for health check username */
+	int health_check_max_retries;	/* health check max retries */
+	int health_check_retry_delay;	/* amount of time to wait between retries */
 	int sr_check_period;		/* streming replication check period */
 	char *sr_check_user;		/* PostgreSQL user name streaming replication check */
 	char *sr_check_password;	/* password for sr_check_user */
