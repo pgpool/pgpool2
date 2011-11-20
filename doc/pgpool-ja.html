@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Mon Oct  3 15:16:43 JST 2011
+Last modified: Sun Nov 20 15:36:40 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -636,6 +636,26 @@ LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7$B$+$iA*Br$7$^$9!
 $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O@_Dj%U%!%$%k$r:FFI$_9~$_$7$F$/$@$5$$!#(B
 </p>
 
+<dt><a name="HEALTH_CHECK_MAX_RETRIES"></a>health_check_max_retries</dt>
+<dd>
+<p>
+$B%X%k%9%A%'%C%/$K<:GT$7$?8e(B($B$7$?$,$C$F%U%'%$%k%*!<%P$9$kA0$K(B)$B%j%H%i%$$9$k2s?t$r;XDj$7$^$9!#(B
+$B$3$N@_Dj$OF0:n$K$`$i$N$"$k%M%C%H%o!<%/4D6-$K$*$$$F!"%^%9%?$,@5>o$G$"$k$K$b4X$o$i$:$?$^$K%X%k%9%A%'%C%/$,<:GT$9$k$3$H$,M=A[$5$l$k>l9g$KM-MQ$G$9!#(B
+$B%G%U%)%k%HCM$O(B0$B$G!"$3$N>l9g$O%j%H%i%$$r$7$^$;$s!#(B
+$B$3$N@_Dj$rM-8z$K$9$k>l9g$O!"J;$;$F(B<a href="#FAIL_OVER_ON_BACKEND_ERROR">fail_over_on_backend_error</a>$B$r(Boff$B$K$9$k$3$H$r$*4+$a$7$^$9!#(B
+health_check_max_retries$B$rJQ99$7$?>l9g$O!"(Bpgpool.conf$B$N:FFI9~$,I,MW$G$9!#(B
+</p>
+</dd>
+
+<dt><a name="HEALTH_CHECK_RETRY_DELAY"></a>health_check_retry_delay</dt>
+<dd>
+<p>
+$B%X%k%9%A%'%C%/$N%j%H%i%$$N4V$NIC?t$r;XDj$7$^$9(B(health_check_max_retries > 0$B$G$J$1$l$PM-8z$K$J$j$^$;$s(B)$B!#(B
+0$B$r;XDj$9$k$H!"BT$A$J$7$KD>$A$K%j%H%i%$$7$^$9!#(B	
+health_check_retry_delay$B$rJQ99$7$?>l9g$O!"(Bpgpool.conf$B$N:FFI9~$,I,MW$G$9!#(B
+</p>
+</dd>
+	
 <dt><a name="FAILOVER_COMMAND"></a>failover_command</dt>
 <dd>
 <p>
@@ -723,7 +743,7 @@ pgpool $B$,I,MW$J>pJs$KCV$-49$($F%3%^%s%I$r<B9T$7$^$9!#(B
    $B$3$l$O(Bpgpool-II 2.2.x$B$^$G$N5sF0$HF1$8$G$9!#(B
 false$B$K$9$k$H!"%U%'%$%k%*!<%P$;$:!"C1$K%(%i!<$,%l%]!<%H$5$l$F%;%C%7%g%s$,@ZCG$5$l$^$9!#(B
 $B$3$N%Q%i%a!<%?$r(Bfalse$B$K$9$k>l9g$K$O!"(Bhealth check$B$rM-8z$K$9$k$3$H$r$*4+$a$7$^$9!#(B
-$B$J$*!"$3$N%Q%i%a!<%?$,(Bfalse$B$N>l9g$G$b!"%/%i%$%"%s%H$,(Bpgpool$B$K@\B3$9$k:]$K%P%C%/%(%s%I$X$N@\B3$K<:GT$7$?>l9g!"$"$k$$$O%P%C%/%(%s%I$,%7%c%C%H%@%&%s$5$l$?$3$H$r(Bpgpool-II$B$,8!CN$7$?>l9g$K$O%U%'%$%k%*!<%P$,5/$-$k$3$H$KCm0U$7$F$/$@$5$$!#(B
+$B$J$*!"$3$N%Q%i%a!<%?$,(Bfalse$B$N>l9g$G$b!"%P%C%/%(%s%I$,%7%c%C%H%@%&%s$5$l$?$3$H$r(Bpgpool-II$B$,8!CN$7$?>l9g$K$O%U%'%$%k%*!<%P$,5/$-$k$3$H$KCm0U$7$F$/$@$5$$!#(B
 $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O@_Dj%U%!%$%k$r:FFI$_9~$_$7$F$/$@$5$$!#(B
 </p>
 

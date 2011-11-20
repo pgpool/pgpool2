@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Mon Oct  3 15:14:24 JST 2011
+Last modified: Sun Nov 20 15:33:45 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -662,6 +662,27 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
        </p>
   </dd>
 
+  <dt><a name="HEALTH_CHECK_MAX_RETRIES"></a>health_check_max_retries</dt>
+  <dd>
+      <p>The maximum number of times to retry a failed health check
+      before giving up and initiating failover.  This setting can
+      be useful in spotty networks, when it is expected that health
+      checks will fail occasionally even when the master is fine.
+      Default is 0, which means do not retry.
+	  It is advised that you disable<a href="#FAIL_OVER_ON_BACKEND_ERROR">fail_over_on_backend_error</a> if you want to enable health_check_max_retries</dt>.
+      You need to reload pgpool.conf if you change health_check_max_retries.
+      </p>
+  </dd>
+
+  <dt><a name="HEALTH_CHECK_RETRY_DELAY"></a>health_check_retry_delay</dt>
+  <dd> 
+      <p>The amount of time (in seconds) to sleep between failed health check
+      retries (not used unless health_check_max_retries is > 0).
+      If 0, then retries are immediate (no delay).
+      You need to reload pgpool.conf if you change health_check_retry_delay.
+      </p>
+  </dd>
+
 <dt><a name="FAILOVER_COMMAND"></a>failover_command</dt>
 <dd>
 <p>
@@ -763,7 +784,7 @@ pgpool-II 2.2.x or earlier. If set to false, pgpool will report an error and
 disconnect the session. 
 If you set this parameter to off, it is recommended that you turn on health checking.
 Please note that even if this parameter is set to off, however, pgpool will also do the fail over when 
-connecting to a backend fails or pgpool detects the administrative shutdown of 
+pgpool detects the administrative shutdown of 
 postmaster. You need to reload pgpool.conf if you change this value.
 </p>
 </dd>
