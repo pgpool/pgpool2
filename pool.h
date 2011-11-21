@@ -412,6 +412,9 @@ extern char query_string_buffer[];		/* last query string sent to simpleQuery() *
 
 extern BACKEND_STATUS private_backend_status[MAX_NUM_BACKENDS];
 
+extern char remote_host[];	/* client host */
+extern char remote_port[];	/* client port */
+
 /*
  * public functions
  */

@@ -197,7 +197,14 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			 * The command will be sent to all backends in replication mode
 			 * or master/primary in master/slave mode.
 			 */
-			pool_log("SimpleQuery: Unable to parse the query: %s", contents);
+			if (!strcmp(remote_host, "[local]"))
+			{
+				pool_log("SimpleQuery: Unable to parse the query: \"%s\" from local client", contents);
+			}
+			else
+			{
+				pool_log("SimpleQuery: Unable to parse the query: \"%s\" from client %s(%s)", contents, remote_host, remote_port);
+			}
 			parse_tree_list = raw_parser(POOL_DUMMY_WRITE_QUERY);
 		}
 	}
@@ -752,7 +759,14 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			 * The command will be sent to all backends in replication mode
 			 * or master/primary in master/slave mode.
 			 */
-			pool_log("Parse: Unable to parse the query: %s", stmt);
+			if (!strcmp(remote_host, "[local]"))
+			{
+				pool_log("Parse: Unable to parse the query: \"%s\" from local client", stmt);
+			}
+			else
+			{
+				pool_log("Parse: Unable to parse the query: \"%s\" from client %s(%s)", stmt, remote_host, remote_port);
+			}
 			parse_tree_list = raw_parser(POOL_DUMMY_WRITE_QUERY);
 		}
 	}

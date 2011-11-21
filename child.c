@@ -90,6 +90,9 @@ char remote_ps_data[NI_MAXHOST];		/* used for set_ps_display */
 
 volatile sig_atomic_t got_sighup = 0;
 
+char remote_host[NI_MAXHOST];	/* client host */
+char remote_port[NI_MAXSERV];	/* client port */
+
 /*
 * child main loop
 */
@@ -479,9 +482,6 @@ static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *time
 #endif
 	struct timeval *timeoutval;
 	struct timeval tv1, tv2, tmback = {0, 0};
-
-	char remote_host[NI_MAXHOST];
-	char remote_port[NI_MAXSERV];
 
 	set_ps_display("wait for connection request", false);
 
