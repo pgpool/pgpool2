@@ -685,7 +685,6 @@ POOL_STATUS pool_do_parallel_query(POOL_CONNECTION *frontend,
 		 * Call parallel exe engine and return status to the upper layer.
 		 */
 		POOL_STATUS stats = pool_parallel_exec(frontend,backend,r_query->rewrite_query, node,true);
-		free_parser();
 		pool_unset_query_in_progress();
 		return stats;
 	}
@@ -695,7 +694,7 @@ POOL_STATUS pool_do_parallel_query(POOL_CONNECTION *frontend,
 		r_query = rewrite_query_stmt(node,frontend,backend,r_query);
 		if(r_query->type == T_InsertStmt)
 		{
-			free_parser();
+			/* free_parser(); */
 
 			if(r_query->r_code != INSERT_DIST_NO_RULE) {
 				pool_unset_query_in_progress();
@@ -705,7 +704,6 @@ POOL_STATUS pool_do_parallel_query(POOL_CONNECTION *frontend,
 		}
 		else if(r_query->type == T_SelectStmt)
 		{
-			free_parser();
 			pool_unset_query_in_progress();
 			pool_set_skip_reading_from_backends();
 			return r_query->status;
