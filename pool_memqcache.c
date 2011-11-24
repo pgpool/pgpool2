@@ -1712,7 +1712,16 @@ static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char
 	bh->num_items++;
 
 	/* Update hash table */
-	pool_hash_insert(query_hash, &cacheid, false);
+	if (pool_hash_insert(query_hash, &cacheid, false) < 0)
+	{
+		pool_error("pool_add_item_shmem_cache: pool_hash_insert failed");
+
+		/* Since we have failed to insert hash index entry, we need to
+		 * undo the addition of cache entry.
+		 */
+		pool_delete_item_shmem_cache(&cacheid);
+		return NULL;
+	}
 
 #ifdef SHMEMCACHE_DEBUG
 	dump_shmem_cache(blockid);
