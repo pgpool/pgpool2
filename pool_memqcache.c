@@ -657,7 +657,7 @@ bool pool_is_allow_to_cache(Node *node, char *query)
 
 /*
  * Extract table oid from INSERT/UPDATE/DELETE/TRUNCATE/
- * DROP TABLE/ALTER TABLE statement.
+ * DROP TABLE/ALTER TABLE/COPY FROM statement.
  * Returns number of oids.
  * In case of error, returns 0(InvalidOid).
  * oids buffer(oidsp) will be discarded by subsequent call.
@@ -713,6 +713,20 @@ int pool_extract_table_oids(Node *node, int **oidsp)
 		AlterTableStmt *stmt = (AlterTableStmt *)node;
 		table = nodeToString(stmt->relation);
 	}
+
+	else if (IsA(node, CopyStmt))
+	{
+		CopyStmt *stmt = (CopyStmt *)node;
+		if (stmt->is_from)		/* COPY FROM? */
+		{
+			table = nodeToString(stmt->relation);
+		}
+		else
+		{
+			return 0;
+		}
+	}
+
 	else if (IsA(node, DropStmt))
 	{
 		ListCell *cell;
@@ -2604,9 +2618,14 @@ POOL_QUERY_CACHE_STATS *pool_get_memqcache_stats(void)
 {
 	static POOL_QUERY_CACHE_STATS mystats;
 
-	pool_semaphore_lock(QUERY_CACHE_STATS_SEM);
-	memcpy(&mystats, stats, sizeof(POOL_QUERY_CACHE_STATS));
-	pool_semaphore_unlock(QUERY_CACHE_STATS_SEM);
+	memset(&mystats, 0, sizeof(POOL_QUERY_CACHE_STATS));
+
+	if (stats)
+	{
+		pool_semaphore_lock(QUERY_CACHE_STATS_SEM);
+		memcpy(&mystats, stats, sizeof(POOL_QUERY_CACHE_STATS));
+		pool_semaphore_unlock(QUERY_CACHE_STATS_SEM);
+	}
 
 	return &mystats;
 }

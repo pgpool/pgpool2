@@ -629,9 +629,13 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 			/* connection failed. mark this backend down */
 			pool_error("new_connection: create_cp() failed");
 
-			/* send failover request to parent if operated in pgpool-I mode */
-			/* notice_backend_error() returns immediately if in pgpool-II */
-			notice_backend_error(i);
+			/* If fail_over_on_backend_error is true, do failover.
+			 * Otherwise, just exit this session.
+			 */
+			if (pool_config->fail_over_on_backend_error)
+			{
+				notice_backend_error(i);
+			}
 			child_exit(1);
 		}
 

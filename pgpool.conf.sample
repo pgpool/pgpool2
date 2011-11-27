@@ -350,6 +350,10 @@ health_check_user = 'nobody'
                                    # Health check user
 health_check_password = ''
                                    # Password for health check user
+health_check_max_retries = 0
+                                   # Maximum number of times to retry a failed health check before giving up.
+health_check_retry_delay = 1
+                                   # Amount of time to wait (in seconds) between retries.
 
 
 #------------------------------------------------------------------------------

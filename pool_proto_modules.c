@@ -117,6 +117,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_QUERY_CONTEXT *query_context;
+	POOL_MEMORY_POOL *old_context;
 
 	/* Get session context */
 	session_context = pool_get_session_context();
@@ -170,6 +171,10 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		}
 	}
 
+	/* switch memory context */
+	old_context = pool_memory;
+	pool_memory = query_context->memory_context;
+
 	/* parse SQL string */
 	parse_tree_list = raw_parser(contents);
 
@@ -197,7 +202,14 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			 * The command will be sent to all backends in replication mode
 			 * or master/primary in master/slave mode.
 			 */
-			pool_log("SimpleQuery: Unable to parse the query: %s", contents);
+			if (!strcmp(remote_host, "[local]"))
+			{
+				pool_log("SimpleQuery: Unable to parse the query: \"%s\" from local client", contents);
+			}
+			else
+			{
+				pool_log("SimpleQuery: Unable to parse the query: \"%s\" from client %s(%s)", contents, remote_host, remote_port);
+			}
 			parse_tree_list = raw_parser(POOL_DUMMY_WRITE_QUERY);
 		}
 	}
@@ -292,7 +304,6 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 					 sp->user, sp->database, remote_ps_data);
 			set_ps_display(psbuf, false);
 
-			free_parser();
 			pool_query_context_destroy(query_context);
 			pool_set_skip_reading_from_backends();
 			return POOL_CONTINUE;
@@ -387,7 +398,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 					status = insert_lock(frontend, backend, contents, (InsertStmt *)node, lock_kind);
 					if (status != POOL_CONTINUE)
 					{
-						free_parser();
+						pool_query_context_destroy(query_context);
 						return status;
 					}
 				}
@@ -395,7 +406,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		}
 		else if (REPLICATION && contents == NULL && start_internal_transaction(frontend, backend, node))
 		{
-			free_parser();
+			pool_query_context_destroy(query_context);
 			return POOL_ERROR;
 		}
 	}
@@ -490,16 +501,14 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			{
 				/* Send query to all DB nodes at once */
 				status = pool_send_and_wait(query_context, 0, 0);
-				/*
-				free_parser();
-				*/
+				/* free_parser(); */
 				return status;
 			}
 
 			/* Send the query to master node */
 			if (pool_send_and_wait(query_context, 1, MASTER_NODE_ID) != POOL_CONTINUE)
 			{
-				free_parser();
+				pool_query_context_destroy(query_context);
 				return POOL_END;
 			}
 		}
@@ -509,7 +518,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		 */
 		if (pool_send_and_wait(query_context, -1, MASTER_NODE_ID) != POOL_CONTINUE)
 		{
-			free_parser();
+			pool_query_context_destroy(query_context);
 			return POOL_END;
 		}
 
@@ -518,25 +527,25 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		{
 			if (pool_send_and_wait(query_context, 1, MASTER_NODE_ID) != POOL_CONTINUE)
 			{
-/*
-				free_parser();
-*/
+				pool_query_context_destroy(query_context);
 				return POOL_END;
 			}
 		}
-		free_parser();
+		/* free_parser(); */
 	}
 	else
 	{
 		if (pool_send_and_wait(query_context, 1, MASTER_NODE_ID) != POOL_CONTINUE)
 		{
-			free_parser();
+			pool_query_context_destroy(query_context);
 			return POOL_END;
 		}
-/*
-		free_parser();
-*/
+		/* free_parser(); */
 	}
+
+	/* switch memory context */
+	pool_memory = old_context;
+
 	return POOL_CONTINUE;
 }
 
@@ -752,7 +761,14 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			 * The command will be sent to all backends in replication mode
 			 * or master/primary in master/slave mode.
 			 */
-			pool_log("Parse: Unable to parse the query: %s", stmt);
+			if (!strcmp(remote_host, "[local]"))
+			{
+				pool_log("Parse: Unable to parse the query: \"%s\" from local client", stmt);
+			}
+			else
+			{
+				pool_log("Parse: Unable to parse the query: \"%s\" from client %s(%s)", stmt, remote_host, remote_port);
+			}
 			parse_tree_list = raw_parser(POOL_DUMMY_WRITE_QUERY);
 		}
 	}
@@ -859,13 +875,13 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			kind = pool_read_kind(backend);
 			if (kind != 'Z')
 			{
-				/* free_parser(); */
+				pool_query_context_destroy(query_context);
 				return POOL_END;
 			}
 
 			if (ReadyForQuery(frontend, backend, 0) != POOL_CONTINUE)
 			{
-				/* free_parser(); */
+				pool_query_context_destroy(query_context);
 				return POOL_END;
 			}
 
@@ -886,7 +902,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			status = insert_lock(frontend, backend, stmt, (InsertStmt *)query_context->parse_tree, insert_stmt_with_lock);
 			if (status != POOL_CONTINUE)
 			{
-				/* free_parser(); */
+				pool_query_context_destroy(query_context);
 				return status;
 			}
 		}
@@ -906,7 +922,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_debug("Parse: waiting for master completing the query");
 		if (pool_extended_send_and_wait(query_context, "P", len, contents, 1, MASTER_NODE_ID) != POOL_CONTINUE)
 		{
-			/* free_parser(); */
+			pool_query_context_destroy(query_context);
 			return POOL_END;
 		}
 
@@ -919,7 +935,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		deadlock_detected = detect_deadlock_error(MASTER(backend), MAJOR(backend));
 		if (deadlock_detected < 0)
 		{
-			/* free_parser(); */
+			pool_query_context_destroy(query_context);
 			return POOL_END;
 		}
 		else
@@ -945,7 +961,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 			if (pool_send_and_wait(error_qc, -1, MASTER_NODE_ID) != POOL_CONTINUE)
 			{
-				/* free_parser(); */
+				pool_query_context_destroy(query_context);
 				return POOL_END;
 			}
 
@@ -957,7 +973,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		{
 			if (pool_extended_send_and_wait(query_context, "P", len, contents, -1, MASTER_NODE_ID) != POOL_CONTINUE)
 			{
-				/* free_parser(); */
+				pool_query_context_destroy(query_context);
 				return POOL_END;
 			}
 		}
@@ -966,7 +982,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	{
 		if (pool_extended_send_and_wait(query_context, "P", len, contents, 1, MASTER_NODE_ID) != POOL_CONTINUE)
 		{
-			/* free_parser(); */
+			pool_query_context_destroy(query_context);
 			return POOL_END;
 		}
 	}

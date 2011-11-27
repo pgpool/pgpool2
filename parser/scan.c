@@ -1394,6 +1394,10 @@ int core_yyget_lineno (yyscan_t yyscanner );
 
 void core_yyset_lineno (int line_number ,yyscan_t yyscanner );
 
+int core_yyget_column  (yyscan_t yyscanner );
+
+void core_yyset_column (int column_no ,yyscan_t yyscanner );
+
 YYSTYPE * core_yyget_lval (yyscan_t yyscanner );
 
 void core_yyset_lval (YYSTYPE * yylval_param ,yyscan_t yyscanner );
@@ -1442,7 +1446,7 @@ static int input (yyscan_t yyscanner );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO fwrite( yytext, yyleng, 1, yyout )
+#define ECHO do { if (fwrite( yytext, yyleng, 1, yyout )) {} } while (0)
 #endif
 
 /* Gets input and stuffs it into "buf".  number of characters read, or YY_NULL,
@@ -1453,7 +1457,7 @@ static int input (yyscan_t yyscanner );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		int n; \
+		unsigned n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -1541,7 +1545,7 @@ YY_DECL
 #line 381 "scan.l"
 
 
-#line 1545 "scan.c"
+#line 1549 "scan.c"
 
     yylval = yylval_param;
 
@@ -2457,7 +2461,7 @@ YY_RULE_SETUP
 #line 938 "scan.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 2461 "scan.c"
+#line 2465 "scan.c"
 
 	case YY_END_OF_BUFFER:
 		{

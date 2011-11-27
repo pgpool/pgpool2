@@ -364,6 +364,16 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].desc, "health check password", POOLCONFIG_MAXDESCLEN);
 	i++;
 #endif
+        strncpy(status[i].name, "health_check_max_retries", POOLCONFIG_MAXNAMELEN);
+        snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->health_check_max_retries);
+        strncpy(status[i].desc, "health check max retries", POOLCONFIG_MAXDESCLEN);
+        i++;
+
+        strncpy(status[i].name, "health_check_retry_delay", POOLCONFIG_MAXNAMELEN);
+        snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->health_check_retry_delay);
+        strncpy(status[i].desc, "health check retry delay", POOLCONFIG_MAXDESCLEN);
+        i++;
+
 	strncpy(status[i].name, "failover_command", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->failover_command);
 	strncpy(status[i].desc, "failover command", POOLCONFIG_MAXDESCLEN);

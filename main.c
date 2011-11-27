@@ -198,6 +198,7 @@ int main(int argc, char **argv)
 	int debug_level = 0;
 	int	optindex;
 	bool discard_status = false;
+	bool retrying;
 
 	static struct option long_options[] = {
 		{"hba-file", required_argument, NULL, 'a'},
@@ -637,6 +638,9 @@ int main(int argc, char **argv)
 	/*
 	 * This is the main loop
 	 */
+
+	retrying = false;
+
 	for (;;)
 	{
 		CHECK_REQUEST;
@@ -676,6 +680,7 @@ int main(int argc, char **argv)
 			POOL_SETMASK(&UnBlockSig);
 			sts = health_check();
 			POOL_SETMASK(&BlockSig);
+
 			if (pool_config->parallel_mode || pool_config->enable_query_cache)
 				sys_sts = system_db_health_check();
 
@@ -685,14 +690,27 @@ int main(int argc, char **argv)
 				{
 					sts--;
 
+					retrycnt++;
+					pool_signal(SIGALRM, SIG_IGN);	/* Cancel timer */
+
 					if (!pool_config->parallel_mode)
 					{
 						if (POOL_DISALLOW_TO_FAILOVER(BACKEND_INFO(sts).flag))
 						{
 							pool_log("health_check: %d failover is canceld because failover is disallowed", sts);
 						}
+						else if (retrycnt <= pool_config->health_check_max_retries)
+						{
+							/* continue to retry */
+							sleep_time = pool_config->health_check_retry_delay;
+							pool_log("health check retry sleep time: %d second(s)", sleep_time);
+							pool_sleep(sleep_time);
+							retrying = true;
+							continue;
+						}
 						else
 						{
+							/* retry count over */
 							pool_log("set %d th backend down status", sts);
 							Req_info->kind = NODE_DOWN_REQUEST;
 							Req_info->node_id[0] = sts;
@@ -702,9 +720,6 @@ int main(int argc, char **argv)
 					}
 					else
 					{
-						retrycnt++;
-						pool_signal(SIGALRM, SIG_IGN);	/* Cancel timer */
-
 						if (retrycnt > NUM_BACKENDS)
 						{
 							/* retry count over */
@@ -742,6 +757,16 @@ int main(int argc, char **argv)
 						pool_sleep(sleep_time);
 						continue;
 					}
+				}
+			}
+			else
+			{
+				/* success. reset retry count */
+				retrycnt = 0;
+				if (retrying)
+				{
+					pool_log("after some retrying backend returned to healthy state");
+					retrying = false;
 				}
 			}
 
