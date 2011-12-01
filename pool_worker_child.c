@@ -332,7 +332,7 @@ static long text_to_lsn(char *text)
 		pool_error("text_to_lsn: wrong log location format: %s", text);
 		return 0;
 	}
-	lsn = xlogid * ((unsigned long long int)0xff000000 - WALSEGMENTSIZE) + xrecoff;
+	lsn = xlogid * ((unsigned long long int)0xffffffff - WALSEGMENTSIZE) + xrecoff;
 #ifdef DEBUG
 	pool_log("lsn: %X %X %llX", xlogid, xrecoff, lsn);
 #endif
