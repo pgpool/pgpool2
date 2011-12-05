@@ -1,3 +1,40 @@
+3.1.1 (hatsuiboshi) 2011/12/05
+
+	  * Version 3.1.1
+
+	  This is a bugfix release against pgpool-II 3.1.
+
+	  * Bug fixes
+
+	  - Fix error message of check_replication_time_lag(Tatsuo
+	    Ishii). It emitted wrong error message when it failed to
+	    connect to PostgreSQL while checking streaming replication
+	    delay. Because it does not use health_check_user anymore.
+
+      - Fix memory leak(Toshihiro Kitagawa). This is essentially same
+      	as the fix made for 3.0.5(commit
+      	19a4ea9215da0b61728741fc0da2271958b09238).
+
+      - Major cleanup for strncpy(Tatsuo Ishii). There are several
+      	places where strncpy() is used. Problem is some of them do not
+      	consider the case when copy lengh == buffer size. In this case
+      	copied buffer is not null terminated and may cause tons of
+      	problems later.  To fix this, most of them are replaced by
+      	strlcpy().
+
+      - Update cached backend status whenever possible(Tatsuo Ishii).
+      	This solves the problem of follow_master_command not being
+      	able to lookup backend status correctly which was reported by
+      	Jeff Frost: Subject: [Pgpool-general] diagnosing BackendError
+      	from pcp_recovery_node To: pgpool-general@pgfoundry.org Date:
+      	Wed, 05 Oct 2011 15:15:07 -0700
+
+      - Fix buffer overrun problem when pcp password is longer than
+        32(Tatsuo Ishii).
+
+      - Remove PGDLLIMPORTI which is only neccessary for Windows
+      	and cause a problem for non gcc. Patch contributed by Ibrar Ahmed.
+
 3.1 (hatsuiboshi) 2011/09/08
 
 	  * Version 3.1

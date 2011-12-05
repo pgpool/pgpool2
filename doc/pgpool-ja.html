@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Wed Aug 17 13:26:28 JST 2011
+Last modified: Mon Dec  5 16:55:28 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -3987,6 +3987,31 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
 </p>
 
 <h1>$B%j%j!<%9%N!<%H(B<a name="release"></a></h1>
+
+<h2><a name="release3.1.1"></a>3.1.1 (hatsuiboshi) 2011/12/05</h2>
+<h3>$B35MW(B</h3>
+<p>
+$B$3$N%P!<%8%g%s$O(B3.1$B$KBP$9$k%P%0=$@5%j%j!<%9$G$9!#(B
+</p>
+<h3>$B%P%0=$@5(B</h3>
+<p>
+<ul>
+ <li>check_replication_time_lag$B$N8m$C$?%(%i!<%a%C%;!<%8$r=$@5$7$^$7$?(B(Tatsuo Ishii)$B!#(B
+	  $B%9%H%j!<%_%s%0%l%W%j%1!<%7%g%s$NCY$l$N%A%'%C%/$N$?$a$K(BPostgreSQL$B$K@\B3$G$-$J$+$C$?;~$K8m$C$?%a%C%;!<%8$r=P$7$F$$$^$7$?!#(B3.1$B0J9_$G$O(B health_check_user$B$O$3$NL\E*$N$?$a$K;H$o$l$F$$$J$$$N$G!"$3$l$O8m$j$G$9!#(B
+ <li>$B%a%b%j!<%j!<%/$r=$@5$7$^$7$?(B(Toshihiro Kitagawa)$B!#$3$l$O!"4pK\E*$K(B3.0.5(commit
+      	19a4ea9215da0b61728741fc0da2271958b09238)$B$G9T$o$l$?=$@5$HF1$8$b$N$G$9!#(B
+ <li>strncpy()$B$r;H$C$?=$@5$rB??t9T$$$^$7$?(B(Tatsuo Ishii)$B!#(Bstrncpy()$B$,;H$o$l$F$$$k2U=j$,J#?t$"$j!"$=$3$G$O%3%T!<D9$H%P%C%U%!%5%$%:$,F1$8$G$"$k%1!<%9$,9MN8$5$l$F$$$^$;$s!#$3$N$?$a!"%3%T!<8e$NJ8;zNs$,(BNULL$B=*C<$5$l$F$$$J$$2DG=@-$,$"$j!"B?$/$NLdBj$r8e$G0z$-5/$3$9$3$H$K$J$j$^$9!#$3$NLdBj$r=$@5$9$k$?$a$K!"$[$H$s$I$N2U=j$r(Bstrlcpy()$B$GCV$-49$($^$7$?!#(B
+ <li>$B2DG=$J>l9g$K$O%-%c%C%7%e$5$l$?%P%C%/%(%s%I$N>uBV>pJs$r99?7$9$k$h$&$K$7$^$7$?(B(Tatsuo Ishii)$B!#(B
+	 $B$3$l$K$h$j!"(BJeff Frost$B$+$i0J2<$N%a!<%k$GJs9p$5$l$?LdBj$,2r7h$5$l$^$7$?!#(B
+	 $B$9$J$o$A!"(B follow_master_command $B$,@5$7$/%P%C%/%(%s%I$N>uBV$rFI$_<h$l$J$$LdBj$G$9!#(B
+	 <pre>
+	 Subject: [Pgpool-general] diagnosing BackendError from pcp_recovery_node
+	 To: pgpool-general@pgfoundry.org
+	 Date: Wed, 05 Oct 2011 15:15:07 -0700
+	 </pre>
+ <li>Windows$B4D6-$G$N$_I,MW$J(BPGDLLIMPORTI$B$r:o=|$7$^$7$?!#$3$l$O(Bgcc$B$r;H$o$J$$4D6-$GLdBj$r0z$-5/$3$7$^$9!#(B
+	 $B%Q%C%A$O(BIbrar Ahmed$B$5$s$,Ds6!$7$^$7$?!#(B
+</ul>
 
 <h2><a name="release3.1.0"></a>3.1.0 (hatsuiboshi) 2011/09/08</h2>
 <h3>$B35MW(B</h3>
