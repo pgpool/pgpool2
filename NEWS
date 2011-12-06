@@ -1,10 +1,17 @@
-3.1.1 (hatsuiboshi) 2011/12/05
+3.1.1 (hatsuiboshi) 2011/12/06
 
 	  * Version 3.1.1
 
 	  This is a bugfix release against pgpool-II 3.1.
 
 	  * Bug fixes
+
+	  - Fix add_regex_pattern(). It does not allocate enough memory
+	   	for each black/white_function_list items. The function adds
+	   	"^" and "$" to each function items which do not contain those
+	   	characters. Unfortunately the function forgot to add extra 2
+	   	bytes for those characters. This may lead to memory corruption
+	   	errors when pgpool starting up.
 
 	  - Fix error message of check_replication_time_lag(Tatsuo
 	    Ishii). It emitted wrong error message when it failed to
