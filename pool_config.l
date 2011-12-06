@@ -260,7 +260,7 @@ int add_regex_pattern(char *type, char *s)
 	currItem.flag = regex_flags;
 
 	/* Fill pattern array */
-	currItem.pattern = malloc(sizeof(char)*(strlen(s)+1));
+	currItem.pattern = malloc(sizeof(char)*(strlen(s)+3));
 	if (currItem.pattern == NULL)
 	{
 		pool_error("add_to_patterns: unable to allocate new pattern");
