@@ -68,7 +68,7 @@
 static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt);
 static char *get_insert_command_table_name(InsertStmt *node);
 static int send_deallocate(POOL_CONNECTION_POOL *backend, POOL_SENT_MESSAGE_LIST msglist, int n);
-static int is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
+static bool is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 static POOL_STATUS ParallelForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *database, bool send_to_frontend);
 static bool is_panic_or_fatal_error(const char *message, int major);
 static int detect_error(POOL_CONNECTION *master, char *error_code, int major, char class, bool unread);
@@ -179,7 +179,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 		}
 
 		/*
-		 * if a frontend and all backends do not have any pending data in
+		 * If frontend and all backends do not have any pending data in
 		 * the receiving data cache, then issue select(2) to wait for new
 		 * data arrival
 		 */
@@ -3234,7 +3234,7 @@ int is_drop_database(Node *node)
 /*
  * check if any pending data remains.
 */
-static int is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+static bool is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 {
 	int i;
 
@@ -3243,10 +3243,10 @@ static int is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 	 * is empty or not first.
 	 */
 	if (pool_ssl_pending(frontend))
-		return 0;
+		return false;
 
 	if (!pool_read_buffer_is_empty(frontend))
-		return 0;
+		return false;
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -3258,13 +3258,13 @@ static int is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 		 * is empty or not first.
 		 */
 		if (pool_ssl_pending(CONNECTION(backend, i)))
-			return 0;
+			return false;
 
-		if (CONNECTION(backend, i)->len > 0)
-			return 0;
+		if (!pool_read_buffer_is_empty(CONNECTION(backend, i)))
+			return false;
 	}
 
-	return 1;
+	return true;
 }
 
 /*
