@@ -38,8 +38,11 @@ subdir = parser
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in gram.c \
 	gram.h
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/c-compiler.m4 \
-	$(top_srcdir)/c-library.m4 $(top_srcdir)/general.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
+	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
+	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
+	$(top_srcdir)/c-compiler.m4 $(top_srcdir)/c-library.m4 \
+	$(top_srcdir)/general.m4 \
 	$(top_srcdir)/ac_func_accept_argtypes.m4 \
 	$(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
