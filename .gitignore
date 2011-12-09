@@ -34,3 +34,4 @@ pgpool.8
 sql/pgpool-recovery/pgpool-recovery.sql
 sql/pgpool-regclass/pgpool-regclass.sql
 stamp-h1
+m4
