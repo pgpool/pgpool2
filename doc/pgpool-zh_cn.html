@@ -492,7 +492,18 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
       <p>用于执行健康检查的用户的密码。如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
        </p>
   </dd>
+  <dt><a name="HEALTH_CHECK_MAX_RETRIES"></a>health_check_max_retries</dt>
+  <dd>
+      <p>在执行失效故障切换前尝试的最大失效健康检查次数。这个参数对于网络不稳定的时，健康检查失败但主节点依旧正常的情况下非常有效。默认值为 0，也就是不重试。如果你想启用 health_check_max_retries，建议你禁用 <a href="#FAIL_OVER_ON_BACKEND_ERROR">fail_over_on_backend_error</a> </dt>。
+      	如果你改变了 health_check_max_retries，需要重新加载 pgpool.conf。
+      </p>
+  </dd>
 
+  <dt><a name="HEALTH_CHECK_RETRY_DELAY"></a>health_check_retry_delay</dt>
+  <dd> 
+      <p>失效健康检查重试的间隔时间（单位为秒）（ health_check_max_retries > 0 时有效 ）。如果为 0 则立即重试（不延迟）。如果你改变了 health_check_retry_delay，需要重新加载 pgpool.conf。
+      </p>
+  </dd>
 <dt><a name="FAILOVER_COMMAND"></a>failover_command</dt>
 <dd>
 <p>本参数指定当一个节点断开连接时执行的命令。pgpool-II 使用后台对应的信息代替以下的特别字符。
@@ -1575,7 +1586,149 @@ CREATE TABLE pgpool_catalog.query_cache (
 <p>
 	然而，如果你不使用"pgpool_catalog"的话，你可能需要修改该语句中的 schema。
 </p>
+<p>
+<strong>注意：当前的查询缓存的实现方法为在数据库中建立缓存数据。因此启用查询缓存可能会导致达不到最高的性能。即使相关的表被更新了，查询缓存的内容不会更新。你需要从缓存的表中删除缓存的数据或者通过 -c（删除缓存） 参数重启 pgpool-II。
+</strong>
+</p>
 
+<h3>使用共享内存或者 Memcached</h3>
+
+<p>要启用内存缓存功能，需要设置以下项目为 true （默认为 false）
+</p>
+
+<pre>
+memory_cache_enabled = true
+</pre>
+
+<p>
+内存缓存的行为可以通过以下参数设置：<br>
+缓存存储方式。可以为“shmem”（共享内存）或“memcached”。默认为shmem。
+</p>
+<pre>
+
+memqcache_method = 'shmem'
+</pre>
+
+<p>
+Memcached 主机名。memqcache_method=memcached 时要求设置。如果本参数以“/”开始，则使用 UNIX 域套接字。
+</p>
+<pre>
+memqcache_memcached_host = 'foo.com'
+</pre>
+
+<p>
+Memcached 端口。port number. memqcache_method=memcached 时要求设置。
+</p>
+<pre>
+memqcache_memcached_port = 11211
+</pre>
+
+<p>
+内存缓存使用的内存字节数。memqcache_method=shmem 时要求设置。
+</p>
+<pre>
+memqcache_total_size = 10240
+</pre>
+
+<p>总共的缓存项目数。memqcache_method=shmem 时要求设置。每个缓存项目消耗 48 字节。
+</p>
+<pre>
+memqcache_max_num_cache = 100
+</pre>
+
+<p>
+内存缓存的生命周期，单位为秒。默认为 60。
+</p>
+<pre>
+memqcache_expire = 60
+</pre>
+
+<p>允许的 SELECT 的最大结果数，单位为字节。如果超出这个值，则不缓存结果。
+</p>
+
+<pre>
+memqcache_maxcache = 512
+</pre>
+
+<p>缓存块的大小，单位为字节<br>
+当 memqcache_method=shmem 时有意义。内存缓存被分割成固定大小的块。如果块大小较小，则内存使用率较高，<br>
+但处理速度可能较慢。但是，如果块大小较大，则内存使用率不高，但处理速度快。默认值为 8192。<br>
+
+</p>
+<pre>
+memqcache_cache_block_size= 8192
+
+</pre>
+
+<h3>memcached 的安装</h3>
+
+<p>
+如果你想使用基于 memcached 的查询，你需要安装 memcached。
+</p>
+
+<p>
+可以从 <a href="http://memcached.org/">memcached 开发主页</a> 获取到 memcached 的源码。
+</p>
+
+<dl>
+<dt>configure</dt>
+
+<dd>
+<p>
+在解压源码包后，执行 configure 脚本。
+</p>
+<pre>
+./configure
+</pre>
+</dd>
+<dt>make</dt>
+<dd>
+<pre>
+make
+make install
+</pre>
+</dd>
+</dl>
+
+<h3>libmemcached 的安装</h3>
+
+<p>
+C 客户端程序使用的库为 libmemcached。你需在安装 memcached 后安装 libmemcached。
+</p>
+
+<p>
+可以从 <a href="http://libmemcached.org/libMemcached.html">libmemcached 开发主页</a> 获取到 libmemcached 的源码。
+</p>
+
+<dl>
+<dt>configure</dt>
+<dd>
+
+<p>
+在解压源码包后，执行 configure 脚本。
+</p>
+<pre>
+./configure
+</pre>
+
+<p>
+如果你想使用非默认的参数，有以下参数可以设置：
+</p>
+
+<ul>
+  <li><code>--with-memcached=path</code><br/>
+  	Memcached 安装的顶级目录。</li>
+</ul>
+
+</dd>
+<dt>make</dt>
+<dd>
+<pre>
+make
+make install
+</pre>
+</dd>
+</dl>
 <h1>启动/关闭 pgpool-II<a name="start"></a></h1>
 
 <p>所有后端服务器和System DB(若需要)都必须在启动 pgpool-II 之前启动。

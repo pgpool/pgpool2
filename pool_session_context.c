@@ -756,8 +756,12 @@ POOL_TRANSACTION_ISOLATION pool_get_transaction_isolation(void)
 		return POOL_UNKNOWN;
 	}
 
-	if (!strcmp(res->data[0], "read committed"))
+	if (!strcmp(res->data[0], "read uncommitted"))
+		ret = POOL_READ_UNCOMMITTED;
+	else if (!strcmp(res->data[0], "read committed"))
 		ret = POOL_READ_COMMITTED;
+	else if (!strcmp(res->data[0], "repeatable read"))
+		ret = POOL_REPEATABLE_READ;
 	else if (!strcmp(res->data[0], "serializable"))
 		ret = POOL_SERIALIZABLE;
 	else
