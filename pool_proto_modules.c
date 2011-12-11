@@ -172,6 +172,8 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	}
 
 	/* switch memory context */
+	if (pool_memory == NULL)
+		pool_memory = pool_memory_create(PARSER_BLOCK_SIZE);
 	old_context = pool_memory;
 	pool_memory = query_context->memory_context;
 
@@ -731,6 +733,8 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	stmt = contents + strlen(contents) + 1;
 
 	/* switch memory context */
+	if (pool_memory == NULL)
+		pool_memory = pool_memory_create(PARSER_BLOCK_SIZE);
 	old_context = pool_memory;
 	pool_memory = query_context->memory_context;
 
