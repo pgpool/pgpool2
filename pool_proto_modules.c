@@ -220,7 +220,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	{
 		/*
 		 * XXX: Currently we only process the first element of the parse tree.
-		 * rest of multiple statements are silently dicarded.
+		 * rest of multiple statements are silently discarded.
 		 */
 		node = (Node *) lfirst(list_head(parse_tree_list));
 
