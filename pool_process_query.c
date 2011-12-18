@@ -78,6 +78,7 @@ static bool pool_has_insert_lock(void);
 static POOL_STATUS add_lock_target(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char* table);
 static bool has_lock_target(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char* table, bool for_update);
 static POOL_STATUS insert_oid_into_insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char* table);
+static POOL_STATUS read_packets_and_process(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, int reset_request, int *state, short *num_fields, bool *cont);
 
 /* timeout sec for pool_check_fd */
 static int timeoutsec;
@@ -91,10 +92,6 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 							   int reset_request)
 {
 	short num_fields = 0;	/* the number of fields in a row (V2 protocol) */
-	fd_set	readmask;
-	fd_set	writemask;
-	fd_set	exceptmask;
-	int fds;
 	POOL_STATUS status;
 	int qcnt;
 	int i;
@@ -179,193 +176,32 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 		}
 
 		/*
+		 * If we are prcessing query, process it.
+		 */
+		if (pool_is_query_in_progress())
+		{
+			status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
+			if (status != POOL_CONTINUE)
+				return status;
+		}
+
+		/*
 		 * If frontend and all backends do not have any pending data in
 		 * the receiving data cache, then issue select(2) to wait for new
 		 * data arrival
 		 */
-		if (is_cache_empty(frontend, backend) && !pool_is_query_in_progress())
+		else if (is_cache_empty(frontend, backend))
 		{
-			struct timeval timeoutdata;
-			struct timeval *timeout;
-			int num_fds, was_error = 0;
-
-		    /*
-			 * frontend idle counters. depends on the following
-			 * select(2) call's time out is 1 second.
-			 */
-			int idle_count = 0;	/* for other than in recovery */
-			int idle_count_in_recovery = 0;	/* for in recovery */
-
-		SELECT_RETRY:
-			FD_ZERO(&readmask);
-			FD_ZERO(&writemask);
-			FD_ZERO(&exceptmask);
-
-			num_fds = 0;
-
-			if (!reset_request)
-			{
-				FD_SET(frontend->fd, &readmask);
-				FD_SET(frontend->fd, &exceptmask);
-				num_fds = Max(frontend->fd + 1, num_fds);
-			}
-
-			/*
-			 * If we are in load balance mode and the selected node is
-			 * down, we need to re-select load_balancing_node.  Note
-			 * that we cannnot use VALID_BACKEND macro here.  If
-			 * in_load_balance == 1, VALID_BACKEND macro may return 0.
-			 */
-			if (pool_config->load_balance_mode &&
-				BACKEND_INFO(backend->info->load_balancing_node).backend_status == CON_DOWN)
-			{
-				/* select load balancing node */
-				backend->info->load_balancing_node = select_load_balancing_node();
-			}
-
-			for (i=0;i<NUM_BACKENDS;i++)
-			{
-				if (VALID_BACKEND(i))
-				{
-					num_fds = Max(CONNECTION(backend, i)->fd + 1, num_fds);
-					FD_SET(CONNECTION(backend, i)->fd, &readmask);
-					FD_SET(CONNECTION(backend, i)->fd, &exceptmask);
-				}
-			}
-
-			/*
-			 * wait for data arriving from frontend and backend
-			 */
-			if (pool_config->client_idle_limit > 0 ||
-				pool_config->client_idle_limit_in_recovery > 0 ||
-				pool_config->client_idle_limit_in_recovery == -1)
-			{
-				timeoutdata.tv_sec = 1;
-				timeoutdata.tv_usec = 0;
-				timeout = &timeoutdata;
-			}
-			else
-				timeout = NULL;
-
-			fds = select(num_fds, &readmask, &writemask, &exceptmask, timeout);
-
-			if (fds == -1)
-			{
-				if (errno == EINTR)
-					continue;
-
-				pool_error("select() failed. reason: %s", strerror(errno));
-				return POOL_ERROR;
-			}
-
-			/* select timeout */
-			if (fds == 0)
-			{
-				if (*InRecovery == 0 && pool_config->client_idle_limit > 0)
-				{
-					idle_count++;
-
-					if (idle_count > pool_config->client_idle_limit)
-					{
-						pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit(%d) reached",
-								 pool_config->client_idle_limit);
-						pool_send_error_message(frontend, MAJOR(backend),
-												"57000", "connection terminated due to client idle limit reached",
-												"","",  __FILE__, __LINE__);
-						return POOL_END;
-					}
-				}
-				else if (*InRecovery > 0 && pool_config->client_idle_limit_in_recovery > 0)
-				{
-					idle_count_in_recovery++;
-
-					if (idle_count_in_recovery > pool_config->client_idle_limit_in_recovery)
-					{
-						pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit_in_recovery(%d) reached",
-								 pool_config->client_idle_limit_in_recovery);
-						pool_send_error_message(frontend, MAJOR(backend),
-												"57000", "connection terminated due to online recovery",
-												"","",  __FILE__, __LINE__);
-						return POOL_END;
-					}
-				}
-				else if (*InRecovery > 0 && pool_config->client_idle_limit_in_recovery == -1)
-				{
-					/*
-					 * If we are in recovery and client_idle_limit_in_recovery is -1, then
-					 * exit immediately.
-					 */
-					pool_log("pool_process_query: child connection forced to terminate due to client_idle_limitis -1");
-					pool_send_error_message(frontend, MAJOR(backend),
-											"57000", "connection terminated due to online recovery",
-											"","",  __FILE__, __LINE__);
-					return POOL_END;
-				}
-				goto SELECT_RETRY;
-			}
-
-			for (i = 0; i < NUM_BACKENDS; i++)
-			{
-				if (VALID_BACKEND(i))
-				{
-					/*
-					 * make sure that connection slot exists
-					 */
-					if (CONNECTION_SLOT(backend, i) == 0)
-					{
-						pool_log("FATAL ERROR: VALID_BACKEND returns non 0 but connection slot is empty. backend id:%d RAW_MODE:%d LOAD_BALANCE_STATUS:%d status:%d",
-								 i, RAW_MODE, LOAD_BALANCE_STATUS(i), BACKEND_INFO(i).backend_status);
-						was_error = 1;
-						break;
-					}
-
-					if (FD_ISSET(CONNECTION(backend, i)->fd, &readmask))
-					{
-						/*
-						 * admin shutdown postmaster or postmaster goes down
-						 */
-						if (detect_postmaster_down_error(CONNECTION(backend, i), MAJOR(backend)) == SPECIFIED_ERROR)
-						{
-							pool_log("postmaster on DB node %d was shutdown by administrative command", i);
-							/* detach backend node. */
-							was_error = 1;
-							if (!VALID_BACKEND(i))
-								break;
-							notice_backend_error(i);
-							sleep(5);
-							break;
-						}
-					}
-				}
-			}
-
-			if (was_error)
-				continue;
-
-			if (!reset_request)
-			{
-				if (FD_ISSET(frontend->fd, &exceptmask))
-					return POOL_END;
-				else if (FD_ISSET(frontend->fd, &readmask))
-				{
-					status = ProcessFrontendResponse(frontend, backend);
-					if (status != POOL_CONTINUE)
-						return status;
-				}
-			}
-
-			if (FD_ISSET(MASTER(backend)->fd, &exceptmask))
-				return POOL_ERROR;
-			else if (FD_ISSET(MASTER(backend)->fd, &readmask))
-			{
-				status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
-				if (status != POOL_CONTINUE)
-					return status;
-			}
+			bool cont = true;
+			status = read_packets_and_process(frontend, backend, reset_request, &state, &num_fields, &cont);
+			if (status != POOL_CONTINUE)
+				return status;
+			else if (!cont)		/* Detected admin shutdown */
+				return status;
 		}
 		else
 		{
-			if (!pool_read_buffer_is_empty(frontend) && !pool_is_query_in_progress())
+			if (!pool_ssl_pending(frontend) && !pool_read_buffer_is_empty(frontend))
 			{
 				/* We do not read anything from frontend after receiving X packet.
 				 * Just emit log message. This will guard us from buggy frontend.
@@ -383,11 +219,93 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				}
 			}
 
-			if (!pool_read_buffer_is_empty(MASTER(backend)) || pool_is_query_in_progress())
+			/*
+			 * ProcessFrontendResponse() may start query
+			 * processing. We need to recheck
+			 * pool_is_query_in_progress() here.
+			 */
+			if (pool_is_query_in_progress())
 			{
 				status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
 				if (status != POOL_CONTINUE)
 					return status;
+			}
+			else
+			{
+				/* Ok, query is not in progress. To make sure that we
+				 * have any pending data in backends. */
+
+				/* If we have pending data in master, we need to process it */
+				if (!pool_ssl_pending(MASTER(backend)) &&
+					!pool_read_buffer_is_empty(MASTER(backend)))
+				{
+					status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
+					if (status != POOL_CONTINUE)
+						return status;
+				}
+				else
+				{
+					for (i=0;i<NUM_BACKENDS;i++)
+					{
+						if (!VALID_BACKEND(i))
+							continue;
+
+						if (pool_ssl_pending(CONNECTION(backend, i)) ||
+							pool_read_buffer_is_empty(CONNECTION(backend, i)))
+						{
+							/* If we have pending data in master, we need to process it */
+							if (IS_MASTER_NODE_ID(i))
+							{
+								status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
+								if (status != POOL_CONTINUE)
+									return status;
+								break;
+							}
+							else
+							{
+								char kind;
+								int len;
+								char *string;
+
+								/* If master does not have pending
+								 * data, we discard one packet from
+								 * other backend */
+								status = pool_read(CONNECTION(backend, i), &kind, sizeof(kind));
+								if (status < 0)
+								{
+									pool_error("pool_process_query: error while reading message kind from backend %d", i);
+									return POOL_END;
+								}
+								pool_log("pool_process_query: discard %c packet from backend %d", kind, i);
+
+								if (MAJOR(backend) == PROTO_MAJOR_V3)
+								{
+									if (pool_read(CONNECTION(backend, i), &len, sizeof(len)) < 0)
+									{
+										pool_error("pool_process_query: error while reading message length from backend %d", i);
+										return POOL_END;
+									}
+									len = ntohl(len) - 4;
+									string = pool_read2(CONNECTION(backend, i), len);
+									if (string == NULL)
+									{
+										pool_error("pool_process_query: error while reading rest of message from backend %d", i);
+										return POOL_END;
+									}
+								}
+								else
+								{
+									string = pool_read_string(CONNECTION(backend, i), &len, 0);
+									if (string == NULL)
+									{
+										pool_error("pool_process_query: error while reading rest of message from backend %d", i);
+										return POOL_END;
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 
@@ -4399,6 +4317,200 @@ POOL_STATUS pool_discard_packet_contents(POOL_CONNECTION_POOL *cp)
 				return POOL_END;
 			}
 		}
+	}
+	return POOL_CONTINUE;
+}
+
+/*
+ * Read packet from either frontend or backend and process it.
+ */
+static POOL_STATUS read_packets_and_process(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, int reset_request, int *state, short *num_fields, bool *cont)
+{
+	fd_set	readmask;
+	fd_set	writemask;
+	fd_set	exceptmask;
+	int fds;
+	struct timeval timeoutdata;
+	struct timeval *timeout;
+	int num_fds, was_error = 0;
+	POOL_STATUS status;
+	int i;
+
+	/*
+	 * frontend idle counters. depends on the following
+	 * select(2) call's time out is 1 second.
+	 */
+	int idle_count = 0;	/* for other than in recovery */
+	int idle_count_in_recovery = 0;	/* for in recovery */
+
+SELECT_RETRY:
+	FD_ZERO(&readmask);
+	FD_ZERO(&writemask);
+	FD_ZERO(&exceptmask);
+
+	num_fds = 0;
+
+	if (!reset_request)
+	{
+		FD_SET(frontend->fd, &readmask);
+		FD_SET(frontend->fd, &exceptmask);
+		num_fds = Max(frontend->fd + 1, num_fds);
+	}
+
+	/*
+	 * If we are in load balance mode and the selected node is
+	 * down, we need to re-select load_balancing_node.  Note
+	 * that we cannnot use VALID_BACKEND macro here.  If
+	 * in_load_balance == 1, VALID_BACKEND macro may return 0.
+	 */
+	if (pool_config->load_balance_mode &&
+		BACKEND_INFO(backend->info->load_balancing_node).backend_status == CON_DOWN)
+	{
+		/* select load balancing node */
+		backend->info->load_balancing_node = select_load_balancing_node();
+	}
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			num_fds = Max(CONNECTION(backend, i)->fd + 1, num_fds);
+			FD_SET(CONNECTION(backend, i)->fd, &readmask);
+			FD_SET(CONNECTION(backend, i)->fd, &exceptmask);
+		}
+	}
+
+	/*
+	 * wait for data arriving from frontend and backend
+	 */
+	if (pool_config->client_idle_limit > 0 ||
+		pool_config->client_idle_limit_in_recovery > 0 ||
+		pool_config->client_idle_limit_in_recovery == -1)
+	{
+		timeoutdata.tv_sec = 1;
+		timeoutdata.tv_usec = 0;
+		timeout = &timeoutdata;
+	}
+	else
+		timeout = NULL;
+
+	fds = select(num_fds, &readmask, &writemask, &exceptmask, timeout);
+
+	if (fds == -1)
+	{
+		if (errno == EINTR)
+			goto SELECT_RETRY;
+
+		pool_error("select() failed. reason: %s", strerror(errno));
+		return POOL_ERROR;
+	}
+
+	/* select timeout */
+	if (fds == 0)
+	{
+		if (*InRecovery == 0 && pool_config->client_idle_limit > 0)
+		{
+			idle_count++;
+
+			if (idle_count > pool_config->client_idle_limit)
+			{
+				pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit(%d) reached",
+						 pool_config->client_idle_limit);
+				pool_send_error_message(frontend, MAJOR(backend),
+										"57000", "connection terminated due to client idle limit reached",
+										"","",  __FILE__, __LINE__);
+				return POOL_END;
+			}
+		}
+		else if (*InRecovery > 0 && pool_config->client_idle_limit_in_recovery > 0)
+		{
+			idle_count_in_recovery++;
+
+			if (idle_count_in_recovery > pool_config->client_idle_limit_in_recovery)
+			{
+				pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit_in_recovery(%d) reached",
+						 pool_config->client_idle_limit_in_recovery);
+				pool_send_error_message(frontend, MAJOR(backend),
+										"57000", "connection terminated due to online recovery",
+										"","",  __FILE__, __LINE__);
+				return POOL_END;
+			}
+		}
+		else if (*InRecovery > 0 && pool_config->client_idle_limit_in_recovery == -1)
+		{
+			/*
+			 * If we are in recovery and client_idle_limit_in_recovery is -1, then
+			 * exit immediately.
+			 */
+			pool_log("pool_process_query: child connection forced to terminate due to client_idle_limitis -1");
+			pool_send_error_message(frontend, MAJOR(backend),
+									"57000", "connection terminated due to online recovery",
+									"","",  __FILE__, __LINE__);
+			return POOL_END;
+		}
+		goto SELECT_RETRY;
+	}
+
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			/*
+			 * make sure that connection slot exists
+			 */
+			if (CONNECTION_SLOT(backend, i) == 0)
+			{
+				pool_log("FATAL ERROR: VALID_BACKEND returns non 0 but connection slot is empty. backend id:%d RAW_MODE:%d LOAD_BALANCE_STATUS:%d status:%d",
+						 i, RAW_MODE, LOAD_BALANCE_STATUS(i), BACKEND_INFO(i).backend_status);
+				was_error = 1;
+				break;
+			}
+
+			if (FD_ISSET(CONNECTION(backend, i)->fd, &readmask))
+			{
+				/*
+				 * admin shutdown postmaster or postmaster goes down
+				 */
+				if (detect_postmaster_down_error(CONNECTION(backend, i), MAJOR(backend)) == SPECIFIED_ERROR)
+				{
+					pool_log("postmaster on DB node %d was shutdown by administrative command", i);
+					/* detach backend node. */
+					was_error = 1;
+					if (!VALID_BACKEND(i))
+						break;
+					notice_backend_error(i);
+					sleep(5);
+					break;
+				}
+			}
+		}
+	}
+
+	if (was_error)
+	{
+		*cont = false;
+		return POOL_CONTINUE;
+	}
+
+	if (!reset_request)
+	{
+		if (FD_ISSET(frontend->fd, &exceptmask))
+			return POOL_END;
+		else if (FD_ISSET(frontend->fd, &readmask))
+		{
+			status = ProcessFrontendResponse(frontend, backend);
+			if (status != POOL_CONTINUE)
+				return status;
+		}
+	}
+
+	if (FD_ISSET(MASTER(backend)->fd, &exceptmask))
+		return POOL_ERROR;
+	else if (FD_ISSET(MASTER(backend)->fd, &readmask))
+	{
+		status = ProcessBackendResponse(frontend, backend, state, num_fields);
+		if (status != POOL_CONTINUE)
+			return status;
 	}
 	return POOL_CONTINUE;
 }
