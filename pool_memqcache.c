@@ -803,8 +803,9 @@ int pool_extract_table_oids(Node *node, int **oidsp)
 }
 
 #define POOL_OIDBUF_SIZE 1024
-static int oidbuf[POOL_OIDBUF_SIZE];
+static int* oidbuf;
 static int oidbufp;
+static int oidbuf_size;
 
 /*
  * Add table oid to internal buffer
@@ -812,12 +813,20 @@ static int oidbufp;
 void pool_add_dml_table_oid(int oid)
 {
 	int i;
+	int* tmp;
 
 	if (oid == 0)
 		return;
 
-	if (oidbufp >= POOL_OIDBUF_SIZE)
-		return;
+	if (oidbufp >= oidbuf_size)
+	{
+		oidbuf_size += POOL_OIDBUF_SIZE;
+		tmp = realloc(oidbuf, sizeof(int) * oidbuf_size);
+		if (tmp == NULL)
+			return;
+
+		oidbuf = tmp;
+	}
 
 	for (i=0;i<oidbufp;i++)
 	{
