@@ -1895,7 +1895,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	/* Save the received result to buffer for each kind */
 	if (pool_config->memory_cache_enabled)
 	{
-		if (pool_is_cache_safe())
+		if (pool_is_cache_safe() && !pool_is_cache_exceeded())
 		{
 			memqcache_register('C', frontend, p1, len1);
 		}

@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -139,9 +139,9 @@ int memcached_connect (void)
 #ifdef USE_MEMCACHED
 	memc = memcached_create(NULL);
 	servers = memcached_server_list_append(NULL,
-			memqcache_memcached_host,
-			memqcache_memcached_port,
-			&rc);
+										   memqcache_memcached_host,
+										   memqcache_memcached_port,
+										   &rc);
 
 	rc = memcached_server_push(memc, servers);
 	if (rc != MEMCACHED_SUCCESS)
@@ -1159,7 +1159,7 @@ static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool
 				if (pool_is_shmem_cache())
 				{
 					pool_debug("pool_invalidate_query_cache: deleting cacheid:%d itemid:%d",
-							 buf.cacheid.blockid, buf.cacheid.itemid);
+							   buf.cacheid.blockid, buf.cacheid.itemid);
 					pool_delete_item_shmem_cache(&buf.cacheid);
 				}
 #ifdef USE_MEMCACHED
@@ -2240,6 +2240,8 @@ static void pool_add_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache, char ki
 	send_len = htonl(data_len + sizeof(int));
 	pool_add_buffer(buffer, (char *)&send_len, sizeof(int));
 	pool_add_buffer(buffer, data, data_len);
+
+	return;
 }
 
 /*
@@ -2473,22 +2475,28 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 		if (state == 'I')		/* Not inside a transaction? */
 		{
 			/*
-			 * If we are not inside a transaction, we can
-			 * immediately register to cache storage.
+			 * Make sure that temporary cache is not exceeded.
 			 */
-			/* Register to memcached or shmem */
-			pool_shmem_lock();
-
-			cache_buffer =  pool_get_current_cache_buffer(&len);
-			if (cache_buffer)
+			if (!pool_is_cache_exceeded())
 			{
-				if (pool_commit_cache(backend, query, cache_buffer, len, num_oids, oids) != 0)
+				/*
+				 * If we are not inside a transaction, we can
+				 * immediately register to cache storage.
+				 */
+				/* Register to memcached or shmem */
+				pool_shmem_lock();
+
+				cache_buffer =  pool_get_current_cache_buffer(&len);
+				if (cache_buffer)
 				{
-					pool_error("ReadyForQuery: pool_commit_cache failed");
+					if (pool_commit_cache(backend, query, cache_buffer, len, num_oids, oids) != 0)
+					{
+						pool_error("ReadyForQuery: pool_commit_cache failed");
+					}
+					free(cache_buffer);
 				}
-				free(cache_buffer);
+				pool_shmem_unlock();
 			}
-			pool_shmem_unlock();
 
 			/* Count up SELECT stats */
 			pool_stats_count_up_num_selects(1);
@@ -2502,7 +2510,11 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 
 			/* In transaction. Keep to temp query cache array */
 			pool_add_oids_temp_query_cache(cache, num_oids, oids);
-			pool_add_query_cache_array(session_context->query_cache_array, cache);
+
+			if (!pool_is_cache_exceeded())
+			{
+				pool_add_query_cache_array(session_context->query_cache_array, cache);
+			}
 
 			/* Count up temporary SELECT stats */
 			pool_tmp_stats_count_up_num_selects();

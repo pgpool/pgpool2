@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1094,7 +1094,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	/* save the received result to buffer for each kind */
 	if (pool_config->memory_cache_enabled)
 	{
-		if (pool_is_cache_safe())
+		if (pool_is_cache_safe() && !pool_is_cache_exceeded())
 		{
 				memqcache_register(kind, frontend, p1, len1);
 		}

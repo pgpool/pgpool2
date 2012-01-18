@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1523,5 +1523,57 @@ void pool_unset_cache_safe(void)
 	if (sc->query_context)
 	{
 		sc->query_context->is_cache_safe = false;
+	}
+}
+
+/*
+ * Return true if current temporary query cache is exceeded
+ */
+bool pool_is_cache_exceeded(void)
+{
+	POOL_SESSION_CONTEXT *sc;
+
+	sc = pool_get_session_context();
+	if (!sc)
+		return false;
+
+	if (pool_is_query_in_progress() && sc->query_context)
+	{
+		return sc->query_context->temp_cache->is_exceeded;
+	}
+	return false;
+}
+
+/*
+ * Set current temporary query cache is exceeded
+ */
+void pool_set_cache_exceeded(void)
+{
+	POOL_SESSION_CONTEXT *sc;
+
+	sc = pool_get_session_context();
+	if (!sc)
+		return;
+
+	if (sc->query_context)
+	{
+		sc->query_context->temp_cache->is_exceeded = true;
+	}
+}
+
+/*
+ * Unset current temporary query cache is exceeded
+ */
+void pool_unset_cache_exceeded(void)
+{
+	POOL_SESSION_CONTEXT *sc;
+
+	sc = pool_get_session_context();
+	if (!sc)
+		return;
+
+	if (sc->query_context)
+	{
+		sc->query_context->temp_cache->is_exceeded = false;
 	}
 }

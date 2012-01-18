@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -85,5 +85,8 @@ extern int statecmp(POOL_QUERY_STATE s1, POOL_QUERY_STATE s2);
 extern bool pool_is_cache_safe(void);
 extern void pool_set_cache_safe(void);
 extern void pool_unset_cache_safe(void);
+extern bool pool_is_cache_exceeded(void);
+extern void pool_set_cache_exceeded(void);
+extern void pool_unset_cache_exceeded(void);
 
 #endif /* POOL_QUERY_CONTEXT_H */
