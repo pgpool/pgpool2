@@ -231,20 +231,32 @@ static int pool_commit_cache(POOL_CONNECTION_POOL *backend, char *query, char *d
 	{
 		POOL_CACHEID *cacheid;
 		POOL_QUERY_HASH query_hash;
+
 		memcpy(query_hash.query_hash, tmpkey, sizeof(query_hash.query_hash));
-		cacheid = pool_add_item_shmem_cache(&query_hash, data, datalen);
-		if (cacheid == NULL)
+
+		cacheid = pool_hash_search(&query_hash);
+
+		if (cacheid != NULL)
 		{
-			pool_error("pool_commit_cache: pool_add_item_shmem_cache failed");
-			return -1;
+			pool_debug("pool_commit_cache: the item already exists");
+			return 0;
 		}
 		else
 		{
-			pool_debug("pool_commit_cache: blockid: %d itemid: %d",
-					   cacheid->blockid, cacheid->itemid);
+			cacheid = pool_add_item_shmem_cache(&query_hash, data, datalen);
+			if (cacheid == NULL)
+			{
+				pool_error("pool_commit_cache: pool_add_item_shmem_cache failed");
+				return -1;
+			}
+			else
+			{
+				pool_debug("pool_commit_cache: blockid: %d itemid: %d",
+						   cacheid->blockid, cacheid->itemid);
+			}
+			cachekey.cacheid.blockid = cacheid->blockid;
+			cachekey.cacheid.itemid = cacheid->itemid;
 		}
-		cachekey.cacheid.blockid = cacheid->blockid;
-		cachekey.cacheid.itemid = cacheid->itemid;
 	}
 
 #ifdef USE_MEMCACHED
@@ -2511,7 +2523,21 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 			/* In transaction. Keep to temp query cache array */
 			pool_add_oids_temp_query_cache(cache, num_oids, oids);
 
-			if (!pool_is_cache_exceeded())
+			/* 
+			 * If temp cache has been overflowed, just trash the half
+			 * baked temp cache.
+			 */
+			if (pool_is_cache_exceeded())
+			{
+				POOL_TEMP_QUERY_CACHE *cache;
+
+				cache = pool_get_current_cache();
+				pool_discard_temp_query_cache(cache);
+			}
+			/*
+			 * Otherwise add to the temp cache array.
+			 */
+			else
 			{
 				pool_add_query_cache_array(session_context->query_cache_array, cache);
 			}
@@ -2829,6 +2855,13 @@ POOL_CACHEID *pool_hash_search(POOL_QUERY_HASH *key)
 	element = hash_header->elements[hash_key].element;
 	while (element)
 	{
+		{
+			char md5[POOL_MD5_HASHKEYLEN+1];
+			memcpy(md5, key->query_hash, POOL_MD5_HASHKEYLEN);
+			md5[POOL_MD5_HASHKEYLEN] = '\0';
+			pool_log("pool_hash_search: element md5:%s", md5);
+		}
+
 		if (memcmp((const void *)element->hashkey.query_hash,
 				   (const void *)key->query_hash, sizeof(key->query_hash)) == 0)
 		{
