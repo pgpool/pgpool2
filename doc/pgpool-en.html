@@ -2226,7 +2226,7 @@ See <a href="#md5">Authentication / Access Controls</a> for more details.
   the install directory.
 </p>
 
-<h2>Setting Query cache method</h2>
+<h2 id="memqcache">Setting Query cache method</h2>
 <p>The Query cache can be used in all modes in pgpool-II.
 The query cache allow to reuse the SELECT result to boost the performance.
 Activating it in  
@@ -2275,7 +2275,6 @@ Memory cache behavior can be specified by cache_param directive:<br>
 Cache store method. Either "shmem"(shared memory) or "memcached". Default is shmem. 
 </p>
 <pre>
-
 memqcache_method = 'shmem'
 </pre>
 
@@ -2328,11 +2327,19 @@ Cache block size in bytes<br>
 Only meaning full when memqcache_method=shmem. Memory cache is devided into fixed size of block.<br>
 If the block size is small, memory usage is efficient, but processing might be slow. On the other hand,<br>
 if the block size is large, memory usage is not efficient but processing might be fast. Default is 8192. <br>
-
 </p>
 <pre>
 memqcache_cache_block_size= 8192
+</pre>
 
+<p>
+In white_memqcache_table_list specify a comma separated list of table names to be cached, and<br>
+in black_memqcache_table_list specify the ones not to be cached.
+</p>
+<p>You can use regular expression into the list to match table names.</p>
+<pre>
+white_memqcache_table_list = ''
+black_memqcache_table_list = ''
 </pre>
 
 <h3>memcached Installation</h3>
