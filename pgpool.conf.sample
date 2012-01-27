@@ -473,3 +473,12 @@ memqcache_cache_block_size=1048576
 
 # Temporary work directory to record table oids
 memqcache_oiddir = '/var/log/pgpool/oiddir'
+
+white_memqcache_table_list = ''
+                                   # Comma separated list of table names to memcache
+                                   # that don't write to database
+                                   # Regexp are accepted
+black_memqcache_table_list = ''
+                                   # Comma separated list of table names not to memcache
+                                   # that don't write to database
+                                   # Regexp are accepted

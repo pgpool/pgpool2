@@ -227,6 +227,13 @@ int pool_init_config(void)
     pool_config->memqcache_maxcache = 512;
     pool_config->memqcache_cache_block_size = 8192;
     pool_config->memqcache_oiddir = "/var/log/pgpool/oiddir";
+	pool_config->white_memqcache_table_list = NULL;
+	pool_config->num_white_memqcache_table_list = 0;
+	pool_config->black_memqcache_table_list = NULL;
+	pool_config->num_black_memqcache_table_list = 0;
+    pool_config->lists_memqcache_table_patterns = NULL;
+    pool_config->memqcache_table_pattc = 0;
+    pool_config->current_memqcache_table_pattern_size = 0;
 
 	res = gethostname(localhostname,sizeof(localhostname));
 	if(res !=0 )
@@ -256,11 +263,13 @@ int add_regex_pattern(char *type, char *s)
 	/* Add extended regex search */
 	regex_flags |= REG_EXTENDED;
 	/* Fill the pattern type */
-	if (strcmp(type, "black_function_list") == 0)
+	if (strcmp(type, "black_function_list") == 0 ||
+        strcmp(type, "black_memqcache_table_list") == 0)
 	{
 		currItem.type = BLACKLIST;
 	}
-	else if (strcmp(type, "white_function_list") == 0)
+	else if (strcmp(type, "white_function_list") == 0 ||
+	         strcmp(type, "white_memqcache_table_list") == 0)
 	{
 		currItem.type = WHITELIST;
 	}
@@ -298,14 +307,21 @@ int add_regex_pattern(char *type, char *s)
 	{
 		pool_error("add_to_patterns: invalid regex pattern: %s", currItem.pattern);
 	}
-	else
-	{
-		if (growPatternArray(currItem) < 0)
-		{
-			pool_error("add_to_patterns: unable to allocate new pattern");
-			return 0;
-		}
-	}
+    else if ((strcmp(type, "white_function_list") == 0 ||
+	          strcmp(type, "black_function_list") == 0) &&
+             growFunctionPatternArray(currItem) < 0)
+    {
+        pool_error("add_to_patterns: unable to allocate new pattern");
+        return 0;
+    }
+    else if ((strcmp(type, "white_memqcache_table_list") == 0 ||
+	          strcmp(type, "black_memqcache_table_list") == 0) &&
+             growMemqcacheTablePatternArray(currItem) < 0)
+    {
+        pool_error("add_to_patterns: unable to allocate new pattern");
+        return 0;
+    }
+
 	return 1;
 }
 
@@ -314,13 +330,14 @@ int add_regex_pattern(char *type, char *s)
  * The array start with PATTERN_ARR_SIZE storage place, if required
  * it will grow of PATTERN_ARR_SIZE more each time.
  */
-int growPatternArray (RegPattern item)
+int growFunctionPatternArray(RegPattern item)
 {
 	void *_tmp = NULL;
 	if (pool_config->pattc == pool_config->current_pattern_size)
 	{
 		pool_config->current_pattern_size += PATTERN_ARR_SIZE;
-		_tmp = realloc(pool_config->lists_patterns, (pool_config->current_pattern_size * sizeof(RegPattern)));
+		_tmp = realloc(pool_config->lists_patterns,
+		               (pool_config->current_pattern_size * sizeof(RegPattern)));
 		if (!_tmp)
 		{
 			return(-1);
@@ -332,6 +349,27 @@ int growPatternArray (RegPattern item)
 	pool_config->pattc++;
 
 	return(pool_config->pattc);
+}
+
+int growMemqcacheTablePatternArray(RegPattern item)
+{
+	void *_tmp = NULL;
+	if (pool_config->memqcache_table_pattc == pool_config->current_memqcache_table_pattern_size)
+	{
+		pool_config->current_memqcache_table_pattern_size += PATTERN_ARR_SIZE;
+		_tmp = realloc(pool_config->lists_memqcache_table_patterns,
+		               (pool_config->current_memqcache_table_pattern_size * sizeof(RegPattern)));
+		if (!_tmp)
+		{
+			return(-1);
+		}
+
+		pool_config->lists_memqcache_table_patterns = (RegPattern*)_tmp;
+	}
+	pool_config->lists_memqcache_table_patterns[pool_config->memqcache_table_pattc] = item;
+	pool_config->memqcache_table_pattc++;
+
+	return(pool_config->memqcache_table_pattc);
 }
 
 int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
@@ -2070,6 +2108,67 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
             }
             pool_config->memqcache_oiddir = str;
         }
+		else if (!strcmp(key, "white_memqcache_table_list") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->white_memqcache_table_list =
+				extract_string_tokens(str, ",", &pool_config->num_white_memqcache_table_list);
+
+			if (pool_config->white_memqcache_table_list == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			for (i=0;i<pool_config->num_white_memqcache_table_list;i++)
+			{
+				add_regex_pattern("white_memqcache_table_list", pool_config->white_memqcache_table_list[i]);
+			}
+		}
+
+		else if (!strcmp(key, "black_memqcache_table_list") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->black_memqcache_table_list =
+				extract_string_tokens(str, ",", &pool_config->num_black_memqcache_table_list);
+
+			if (pool_config->black_memqcache_table_list == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			for (i=0;i<pool_config->num_black_memqcache_table_list;i++)
+			{
+				add_regex_pattern("black_memqcache_table_list", pool_config->black_memqcache_table_list[i]);
+			}
+		}
 	}
 
 	fclose(fd);

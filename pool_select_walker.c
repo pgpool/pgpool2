@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -31,19 +31,6 @@
 #include "pool_session_context.h"
 #include "pool_timestamp.h"
 
-#define POOL_MAX_SELECT_OIDS 128
-
-typedef struct {
-	bool	has_system_catalog;		/* True if system catalog table is used */
-	bool	has_temp_table;		/* True if temporary table is used */
-	bool	has_unlogged_table;	/* True if unlogged table is used */
-	bool	has_function_call;	/* True if write function call is used */	
-	bool	has_non_immutable_function_call;	/* True if non immutable functions are used */
-	bool	has_insertinto_or_locking_clause;	/* True if it has SELECT INTO or FOR SHARE/UPDATE */
-	int		num_oids;	/* number of oids */
-	int		*table_oids;	/* table oids */
-} SelectContext;
-
 static bool function_call_walker(Node *node, void *context);
 static bool system_catalog_walker(Node *node, void *context);
 static bool is_system_catalog(char *table_name);
@@ -52,10 +39,10 @@ static bool unlogged_table_walker(Node *node, void *context);
 static bool is_temp_table(char *table_name);
 static bool is_unlogged_table(char *table_name);
 static bool	insertinto_or_locking_clause_walker(Node *node, void *context);
-static int pattern_compare(char *str, const int type);
 static bool is_immutable_function(char *fname);
 static bool select_table_walker(Node *node, void *context);
 static bool non_immutable_function_call_walker(Node *node, void *context);
+static char *strip_quote(char *str);
 
 /*
  * Return true if this SELECT has function calls *and* supposed to
@@ -157,29 +144,54 @@ bool pool_has_insertinto_or_locking_clause(Node *node)
  * Return -1 if the given search type doesn't exist.
  * Search type supported are: WHITELIST and BLACKLIST 
  */
-static int pattern_compare(char *str, const int type)
+int pattern_compare(char *str, const int type, const char *param_name)
 {
 	int i = 0;
 
-	/* pass througth all regex pattern unless pattern is found */
-	for (i = 0; i < pool_config->pattc; i++) {
-		if ( (pool_config->lists_patterns[i].type == type) && (regexec(&pool_config->lists_patterns[i].regexv, str, 0, 0, 0) == 0) ) {
+	RegPattern *lists_patterns;
+	int *pattc;
+
+	if (strcmp(param_name, "white_function_list") == 0 ||
+	    strcmp(param_name, "black_function_list") == 0)
+	{
+		lists_patterns = pool_config->lists_patterns;
+		pattc = &pool_config->pattc;
+
+	} else if (strcmp(param_name, "white_memqcache_table_list") == 0 ||
+	           strcmp(param_name, "black_memqcache_table_list") == 0)
+	{
+		lists_patterns = pool_config->lists_memqcache_table_patterns;
+		pattc = &pool_config->memqcache_table_pattc;
+
+	} else {
+		pool_error("pattern_compare: unknown paramname %s", param_name);
+		return -1;
+	}
+
+	for (i = 0; i < *pattc; i++) {
+		if (lists_patterns[i].type != type)
+			continue;
+
+		if (regexec(&lists_patterns[i].regexv, str, 0, 0, 0) == 0)
+		{
 			switch(type) {
 			/* return 1 if string matches whitelist pattern */
 			case WHITELIST:
-				if (pool_config->debug_level > 0)
-					pool_debug("pattern_compare: white_function_list (%s) matched: %s", pool_config->lists_patterns[i].pattern, str);
+				pool_debug("pattern_compare: %s (%s) matched: %s",
+			               param_name, lists_patterns[i].pattern, str);
 				return 1;
 			/* return 1 if string matches blacklist pattern */
 			case BLACKLIST:
-				if (pool_config->debug_level > 0)
-					pool_debug("pattern_compare: black_function_list (%s) matched: %s", pool_config->lists_patterns[i].pattern, str);
+				pool_debug("pattern_compare: %s (%s) matched: %s",
+			               param_name, lists_patterns[i].pattern, str);
 				return 1;
 			default:
-				pool_error("pattern_compare: unknown pattern match type: %s", str);
+				pool_error("pattern_compare: %s unknown pattern match type: %s", param_name, str);
 				return -1;
 			}
 		}
+		pool_debug("pattern_compare: %s (%s) not matched: %s",
+	               param_name, lists_patterns[i].pattern, str);
 	}
 
 	/* return 0 otherwise */
@@ -222,7 +234,7 @@ static bool function_call_walker(Node *node, void *context)
 			if (pool_config->num_white_function_list > 0)
 			{
 				/* Search function in the white list regex patterns */
-				if (pattern_compare(fname, WHITELIST) == 1) {
+				if (pattern_compare(fname, WHITELIST, "white_function_list") == 1) {
 					/* If the function is found in the white list, we can ignore it */
 					return raw_expression_tree_walker(node, function_call_walker, context);
 				}
@@ -240,7 +252,7 @@ static bool function_call_walker(Node *node, void *context)
 			if (pool_config->num_black_function_list > 0)
 			{
 				/* Search function in the black list regex patterns */
-				if (pattern_compare(fname, BLACKLIST) == 1) {
+				if (pattern_compare(fname, BLACKLIST, "black_function_list") == 1) {
 					/* Found. */
 					ctx->has_function_call = true;
 					return false;
@@ -803,22 +815,15 @@ int pool_table_name_to_oid(char *table_name)
  * Oids are returned as an int array. The contents of oid array are
  * discarded by next call to this function.
  */
-int pool_extract_table_oids_from_select_stmt(Node *node, int **oids)
+int pool_extract_table_oids_from_select_stmt(Node *node, SelectContext *ctx)
 {
-	static int myoids[POOL_MAX_SELECT_OIDS];
-	SelectContext	ctx;
-
 	if (!IsA(node, SelectStmt))
 		return 0;
 
-	ctx.num_oids = 0;
-	ctx.table_oids = myoids;
+	ctx->num_oids = 0;
+	raw_expression_tree_walker(node, select_table_walker, ctx);
 
-	raw_expression_tree_walker(node, select_table_walker, &ctx);
-
-	*oids = myoids;
-
-	return ctx.num_oids;
+	return ctx->num_oids;
 }
 
 /*
@@ -828,6 +833,7 @@ static bool
 select_table_walker(Node *node, void *context)
 {
 	SelectContext	*ctx = (SelectContext *) context;
+	int num_oids;
 
 	if (node == NULL)
 		return false;
@@ -839,23 +845,49 @@ select_table_walker(Node *node, void *context)
 		int oid;
 
 		table = nodeToString(rgv);
-
-		pool_debug("select_table_walker: table name: %s", table);
-
 		oid = pool_table_name_to_oid(table);
+
 		if (oid)
 		{
-			if (ctx->num_oids >= POOL_MAX_SELECT_OIDS)
+			if (POOL_MAX_SELECT_OIDS <= ctx->num_oids)
 			{
-				pool_error("select_table_walker: number of oids exceeds");
+				pool_debug("select_table_walker: number of oids exceeds");
 				return false;
 			}
-			ctx->table_oids[ctx->num_oids++] = oid;
+
+			num_oids = ctx->num_oids++;
+
+			ctx->table_oids[num_oids] = oid;
+			strcpy(ctx->table_names[num_oids], strip_quote(table));
+
+			pool_debug("select_table_walker: ctx->table_names[%d] = %s",
+			           num_oids, ctx->table_names[num_oids]);
 		}
 	}
+
 	return raw_expression_tree_walker(node, select_table_walker, context);
 }
 
+static char *strip_quote(char *str)
+{
+	char *after;
+	int i = 0;
+
+	after = malloc(sizeof(char) * strlen(str) + 1);
+
+	do {
+		if (*str != '"')
+		{
+			after[i] = *str;
+			i++;
+		}
+		str++;
+	} while (*str != '\0');
+
+	after[i] = '\0';
+
+	return after;
+}
 
 /*
  * makeRangeVarFromNameList
