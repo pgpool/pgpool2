@@ -171,6 +171,8 @@ typedef struct {
 	int num_reset_queries;		/* number of queries in reset_query_list */
 	int num_white_function_list;		/* number of functions in white_function_list */
 	int num_black_function_list;		/* number of functions in black_function_list */
+	int num_white_memqcache_table_list;		/* number of functions in white_memqcache_table_list */
+	int num_black_memqcache_table_list;		/* number of functions in black_memqcache_table_list */
 	int logsyslog;		/* flag used to start logging to syslog */
 
 	/* ssl configuration */
@@ -197,6 +199,12 @@ typedef struct {
 	int memqcache_maxcache;   /* Maximum SELECT result size in bytes. */
 	int memqcache_cache_block_size;   /* Cache block size in bytes. 8192 by default */
 	char *memqcache_oiddir;		/* Tempory work directory to record table oids */
+	char **white_memqcache_table_list;		/* list of tables to memqcache */
+	char **black_memqcache_table_list;		/* list of tables not to memqcache */
+
+	RegPattern *lists_memqcache_table_patterns; /* Precompiled regex patterns for black/white lists */
+	int memqcache_table_pattc; /* number of regexp pattern */
+	int current_memqcache_table_pattern_size; /* size of the regex pattern array */
 } POOL_CONFIG;
 
 typedef enum {
@@ -216,6 +224,7 @@ extern int set_syslog_facility (char *);
 
 /* methods used for regexp support */
 extern int add_regex_pattern(char *type, char *s);
-extern int growPatternArray (RegPattern item);
+extern int growFunctionPatternArray(RegPattern item);
+extern int growMemqcacheTablePatternArray(RegPattern item);
 
 #endif /* POOL_CONFIG_H */

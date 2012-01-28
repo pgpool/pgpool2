@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -114,6 +114,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	POOL_STATUS status;
 	char *string;
 	int lock_kind;
+	bool is_likely_select = false;
 
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_QUERY_CONTEXT *query_context;
@@ -154,11 +155,13 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	/*
 	 * Fetch memory cache if possible
 	 */
-	if (pool_config->memory_cache_enabled && pool_is_likely_select(contents))
+	is_likely_select = pool_is_likely_select(contents);
+	if (pool_config->memory_cache_enabled && is_likely_select)
 	{
 		bool foundp;
 
-		status = pool_fetch_from_memory_cache(frontend,backend, contents, &foundp);
+		/* If the query is SELECT from table to cache, try to fetch cached result. */
+		status = pool_fetch_from_memory_cache(frontend, backend, contents, &foundp);
 
 		if (status != POOL_CONTINUE)
 			return status;
@@ -265,60 +268,77 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		check_copy_from_stdin(node);
 
 		/* status reporting? */
-		if ((IsA(node, VariableShowStmt) && strncasecmp(sq_config, contents, strlen(sq_config)) == 0)
-         || (IsA(node, VariableShowStmt) && strncasecmp(sq_pools, contents, strlen(sq_pools)) == 0)
-         || (IsA(node, VariableShowStmt) && strncasecmp(sq_processes, contents, strlen(sq_processes)) == 0)
-         || (IsA(node, VariableShowStmt) && strncasecmp(sq_nodes, contents, strlen(sq_nodes)) == 0)
-         || (IsA(node, VariableShowStmt) && strncasecmp(sq_version, contents, strlen(sq_version)) == 0))
+		if (IsA(node, VariableShowStmt))
 		{
-			StartupPacket *sp;
-			char psbuf[1024];
+			bool is_valid_show_command = false;
 
 			if (strncasecmp(sq_config, contents, strlen(sq_config)) == 0)
             {
+				is_valid_show_command = true;
                 pool_debug("config reporting");
                 config_reporting(frontend, backend);
             }
 			else if (strncasecmp(sq_pools, contents, strlen(sq_pools)) == 0)
             {
+				is_valid_show_command = true;
                 pool_debug("pools reporting");
                 pools_reporting(frontend, backend);
             }
 			else if (strncasecmp(sq_processes, contents, strlen(sq_processes)) == 0)
             {
+				is_valid_show_command = true;
                 pool_debug("processes reporting");
                 processes_reporting(frontend, backend);
             }
 			else if (strncasecmp(sq_nodes, contents, strlen(sq_nodes)) == 0)
             {
+				is_valid_show_command = true;
                 pool_debug("nodes reporting");
                 nodes_reporting(frontend, backend);
             }
 			else if (strncasecmp(sq_version, contents, strlen(sq_version)) == 0)
             {
+				is_valid_show_command = true;
                 pool_debug("version reporting");
                 version_reporting(frontend, backend);
             }
 
-			/* show ps status */
-			sp = MASTER_CONNECTION(backend)->sp;
-			snprintf(psbuf, sizeof(psbuf), "%s %s %s idle",
-					 sp->user, sp->database, remote_ps_data);
-			set_ps_display(psbuf, false);
+			if (is_valid_show_command)
+			{
+				StartupPacket *sp;
+				char psbuf[1024];
 
-			pool_query_context_destroy(query_context);
-			pool_set_skip_reading_from_backends();
-			return POOL_CONTINUE;
+				/* show ps status */
+				sp = MASTER_CONNECTION(backend)->sp;
+				snprintf(psbuf, sizeof(psbuf), "%s %s %s idle",
+						 sp->user, sp->database, remote_ps_data);
+				set_ps_display(psbuf, false);
+
+				pool_query_context_destroy(query_context);
+				pool_set_skip_reading_from_backends();
+				return POOL_CONTINUE;
+			}
 		}
 
+		/*
+		 * If the table is to be cached, set is_cache_safe TRUE and register table oids.
+		 */ 
 		if (pool_config->memory_cache_enabled)
 		{
+			bool is_select_query = false;
 			int num_oids;
 			int *oids;
 			int i;
 
-			/* Check if the SELECT can be cached */
-			if (pool_is_allow_to_cache(query_context->parse_tree,
+			/* Check if the query is actually SELECT */
+			if (is_likely_select && IsA(node, SelectStmt))
+			{
+				is_select_query = true;
+			}
+
+			/* Switch the flag of is_cache_safe in session_context */
+			if (is_select_query &&
+				pool_is_allow_to_cache(query_context->parse_tree,
 									   query_context->original_query))
 			{
 				pool_set_cache_safe();
@@ -328,15 +348,18 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 				pool_unset_cache_safe();
 			}
 
-			/* Extract table oid if the query is DML */
-			num_oids = pool_extract_table_oids(node, &oids);
-
-			if (num_oids > 0)
+			/* If table is to be cached and the query is DML, save the table oid */
+			if (!is_select_query)
 			{
-				/* Save to oid buffer */
-				for (i=0;i<num_oids;i++)
+				num_oids = pool_extract_table_oids(node, &oids);
+
+				if (num_oids > 0)
 				{
-					pool_add_dml_table_oid(oids[i]);
+					/* Save to oid buffer */
+					for (i=0;i<num_oids;i++)
+					{
+						pool_add_dml_table_oid(oids[i]);
+					}
 				}
 			}
 		}

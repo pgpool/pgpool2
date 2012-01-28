@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -68,7 +68,7 @@ typedef struct {
 #define POOL_ITEM_USED	0x0001		/* is this item used? */
 #define POOL_ITEM_HAS_NEXT	0x0002		/* is this item has "next" item? */
 #define POOL_ITEM_DELETED	0x0004		/* is this item deleted? */
-	
+
 typedef struct {
 	POOL_QUERY_HASH query_hash;	/* md5 hashed query signature */
 	POOL_CACHEID next;			/* next cache item if any */
@@ -209,6 +209,7 @@ extern POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 												char *contents, bool *foundp);
 
 extern bool pool_is_likely_select(char *query);
+extern bool pool_is_table_to_cache(const char *table_name);
 extern bool pool_is_allow_to_cache(Node *node, char *query);
 extern int pool_extract_table_oids(Node *node, int **oidsp);
 extern void pool_add_dml_table_oid(int oid);

@@ -609,6 +609,32 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].desc, "Number of SELECTs hitting query cache", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	strncpy(status[i].name, "white_memqcache_table_list", POOLCONFIG_MAXNAMELEN);
+	*(status[i].value) = '\0';
+	for (j=0;j<pool_config->num_white_memqcache_table_list;j++)
+	{
+		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
+		strncat(status[i].value, pool_config->white_memqcache_table_list[j], len);
+		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
+		if (j != pool_config->num_white_memqcache_table_list - 1)
+			strncat(status[i].value, ",", len);
+	}
+	strncpy(status[i].desc, "tables to memqcache", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "black_memqcache_table_list", POOLCONFIG_MAXNAMELEN);
+	*(status[i].value) = '\0';
+	for (j=0;j<pool_config->num_black_memqcache_table_list;j++)
+	{
+		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
+		strncat(status[i].value, pool_config->black_memqcache_table_list[j], len);
+		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
+		if (j != pool_config->num_black_memqcache_table_list - 1)
+			strncat(status[i].value, ",", len);
+	}
+	strncpy(status[i].desc, "tables not to memqcache", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	for (j = 0; j < NUM_BACKENDS; j++)
 	{
 		if (BACKEND_INFO(j).backend_port == 0)

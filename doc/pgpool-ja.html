@@ -2138,7 +2138,7 @@ md5$B$K4X$7$F$O!"(Bpool_passwd$B$H$$$&%Q%9%o!<%I%U%!%$%k$rJ;MQ$9$k$3$H$K$h$C$
    $B$@$5$$!#(B
 </p>
 
-<h2>$B%/%(%j%-%c%C%7%e$N@_DjJ}K!(B</h2>
+<h2 id="memqcache">$B%/%(%j%-%c%C%7%e$N@_DjJ}K!(B</h2>
 
 <p>
 	pgpool-II$B$G$O!"$9$Y$F$N%b!<%I$G%/%(%j%-%c%C%7%e$rMxMQ$9$k$3$H$,$G$-$^$9!#(B
@@ -2199,7 +2199,6 @@ Memcached$B$r;HMQ$9$k>l9g$O!"(BMemcached$B$N%]!<%HHV9f$r0J2<$N$h$&$K@_Dj$7$^$
 </p>
 <pre>
 memqcache_memcached_port = 11211
-
 </pre>
 
 <p>
@@ -2239,8 +2238,17 @@ memqcache_maxcache = 512
 $B%-%c%C%7%e%V%m%C%/%5%$%:$O0J2<$N$h$&$K@_Dj$7$^$9!#C10L$O%P%$%H$G!"%G%U%)%k%H$O(B8192$B$G$9!#(B
 </p>
 <pre>
-
 memqcache_cache_block_size= 8192
+</pre>
+
+<p>
+white_memqcache_table_list $B$K$O(B SELECT $B7k2L$r%-%c%C%7%e$7$?$$%F!<%V%kL>$r!"(B
+black_memqcache_table_list $B$K$O%-%c%C%7%e$7$?$/$J$$%F!<%V%kL>$r;XDj$7$^$9!#(B
+</p>
+<p>$B$3$3$G$O@55,I=8=$r;H$&$3$H$,$G$-$^$9!#(B</p>
+<pre>
+white_memqcache_table_list = ''
+black_memqcache_table_list = ''
 </pre>
 
 <h3>memcached$B$N%$%s%9%H!<%k(B</h3>

@@ -97,7 +97,9 @@ static void pool_update_fsmm(POOL_CACHE_BLOCKID blockid, size_t free_space);
 static POOL_CACHE_BLOCKID pool_get_block(size_t free_space);
 static POOL_CACHE_ITEM_HEADER *pool_cache_item_header(POOL_CACHEID *cacheid);
 static int pool_init_cache_block(POOL_CACHE_BLOCKID blockid);
+#if NOT_USED
 static void pool_wipe_out_cache_block(POOL_CACHE_BLOCKID blockid);
+#endif
 static int pool_delete_item_shmem_cache(POOL_CACHEID *cacheid);
 static char *block_address(int blockid);
 static POOL_CACHE_ITEM_POINTER *item_pointer(char *block, int i);
@@ -639,16 +641,13 @@ bool pool_is_likely_select(char *query)
 
 /*
  * Return true if SELECT can be cached.
+ * (before called this function, already checked if the query is SELECT)
  */
 bool pool_is_allow_to_cache(Node *node, char *query)
 {
 	SelectStmt	*stmt;
-
-	if (!pool_is_likely_select(query))
-		return false;
-
-	if (!IsA(node, SelectStmt))
-		return false;
+	int i = 0;
+	int num_oids;
 
 	stmt = (SelectStmt *)node;
 
@@ -664,7 +663,58 @@ bool pool_is_allow_to_cache(Node *node, char *query)
 		pool_has_temp_table(node))
 		return false;
 
+	/* Cache any tables in the case that both of list are empty  */
+	if (pool_config->num_white_memqcache_table_list == 0 &&
+		pool_config->num_black_memqcache_table_list == 0)
+		return true;
+
+	/* Extract oids in from clause of SELECT, and check if SELECT to them could be cached. */
+	SelectContext ctx;
+	num_oids = pool_extract_table_oids_from_select_stmt(node, &ctx);
+	if (num_oids == 0)
+		return false;
+
+	for (i = 0; i < num_oids; i++)
+	{
+		pool_debug("pool_is_allow_to_cache: check table_names[%d] = %s", i, ctx.table_names[i]);
+		if (pool_is_table_to_cache(ctx.table_names[i]) == false)
+		{
+			pool_debug("pool_is_allow_to_cache: false");
+			return false;
+		}
+	}
+
+	pool_debug("pool_is_allow_to_cache: true");
 	return true;
+}
+
+/*
+ * Return true If the SELECTed table is in white list or is not in black list,
+ * and table is to be cached.
+ */
+bool pool_is_table_to_cache(const char *table_name)
+{
+	// Cache in case of the table in white list
+	if (pool_config->num_white_memqcache_table_list > 0)
+	{
+		if (pattern_compare((char *)table_name, WHITELIST, "white_memqcache_table_list") == 1)
+			return true;
+		else
+			return false;
+	}
+
+	// No cache in case of the table in black list
+	else if (pool_config->num_black_memqcache_table_list > 0)
+	{
+		if (pattern_compare((char *)table_name, BLACKLIST, "black_memqcache_table_list") == 1)
+			return false;
+		else
+			return true;
+	}
+
+	// No cache otherwise
+	pool_error("pool_is_table_to_cache: unknown case");
+	return false;
 }
 
 /*
@@ -1974,6 +2024,7 @@ static int pool_init_cache_block(POOL_CACHE_BLOCKID blockid)
 	return 0;
 }
 
+#if NOT_USED
 /*
  * Delete all items in the block.
  */
@@ -2005,6 +2056,7 @@ static void pool_wipe_out_cache_block(POOL_CACHE_BLOCKID blockid)
 	pool_init_cache_block(blockid);
 	pool_update_fsmm(blockid, POOL_MAX_FREE_SPACE);
 }
+#endif
 
 /*
  * Aquire lock: XXX giant lock
@@ -2481,7 +2533,9 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 	/* Ok to cache SELECT result? */
 	if (pool_is_cache_safe())
 	{
-		num_oids = pool_extract_table_oids_from_select_stmt(node, &oids);
+		SelectContext ctx;
+		num_oids = pool_extract_table_oids_from_select_stmt(node, &ctx);
+		oids = ctx.table_oids;;
 		pool_debug("num_oids: %d oid: %d", num_oids, *oids);
 
 		if (state == 'I')		/* Not inside a transaction? */
@@ -2849,7 +2903,9 @@ POOL_CACHEID *pool_hash_search(POOL_QUERY_HASH *key)
 		char md5[POOL_MD5_HASHKEYLEN+1];
 		memcpy(md5, key->query_hash, POOL_MD5_HASHKEYLEN);
 		md5[POOL_MD5_HASHKEYLEN] = '\0';
+#if 0
 		pool_log("pool_hash_search: hash_key:%d md5:%s", hash_key, md5);
+#endif
 	}
 
 	element = hash_header->elements[hash_key].element;
