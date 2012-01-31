@@ -1,3 +1,23 @@
+3.1.2 (hatsuiboshi) 2012/01/31
+
+	  * Version 3.1.2
+
+	  This is a bugfix release against pgpool-II 3.1.1.
+
+	  * Bug fixes
+
+      - Fix to recognize READ UNCOMMITTED and REPEATABLE READ of transaction
+        isolation levels. (Tatsuo Ishii)
+
+      - Fix infinite loop reported in this thread (Tatsuo Ishii):
+        http://www.pgpool.net/pipermail/pgpool-general/2011-December/000099.html
+
+        It was not considered the case that, when received buffer in primary was
+        empty but the one in a standby was not, the standby spontaneously sent
+        packet to pgpool.
+        This could happen when, for example, reloading postgresql.conf.
+        The fix is that such buffer in standby is discarded.
+
 3.1.1 (hatsuiboshi) 2011/12/06
 
 	  * Version 3.1.1
