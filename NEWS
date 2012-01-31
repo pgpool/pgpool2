@@ -1,3 +1,18 @@
+3.0.6 (umiyameboshi) 2012/01/31
+
+	  * Version 3.0.6
+
+	  This version fixes various bugs since 3.0.5.
+
+      - Fix infinite loop reported in this thread (Tatsuo Ishii):
+        http://www.pgpool.net/pipermail/pgpool-general/2011-December/000099.html
+
+        It was not considered the case that, when received buffer in primary was
+        empty but the one in a standby was not, the standby spontaneously sent
+        packet to pgpool.
+        This could happen when, for example, reloading postgresql.conf.
+        The fix is that such buffer in standby is discarded.
+
 3.0.5 (umiyameboshi) 2011/10/31
 
 	  * Version 3.0.5
