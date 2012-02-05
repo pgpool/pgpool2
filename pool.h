@@ -275,6 +275,13 @@ extern BACKEND_STATUS* my_backend_status[];
 	 ((*(my_backend_status[(backend_id)]) == CON_UP) ||			\
 	  (*(my_backend_status[(backend_id)]) == CON_CONNECT_WAIT))))
 
+/*
+ * For raw mode failover control
+ */
+#define VALID_BACKEND_RAW(backend_id) \
+	((*(my_backend_status[(backend_id)]) == CON_UP) ||			\
+	 (*(my_backend_status[(backend_id)]) == CON_CONNECT_WAIT))
+
 #define CONNECTION_SLOT(p, slot) ((p)->slots[(slot)])
 #define CONNECTION(p, slot) (CONNECTION_SLOT(p, slot)->con)
 

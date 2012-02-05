@@ -716,6 +716,7 @@ int main(int argc, char **argv)
 							Req_info->node_id[0] = sts;
 							failover();
 							/* need to distribute this info to children */
+							retrying = false;
 						}
 					}
 					else
@@ -1508,12 +1509,10 @@ static int get_next_master_node(void)
 		 * Do not use VALID_BACKEND macro in raw mode.
 		 * VALID_BACKEND return true only if the argument is master
 		 * node id. In other words, standby nodes are false. So need
-		 * to check backend status without VALID_BACKEND.
+		 * to check backend status with VALID_BACKEND_RAW.
 		 */
-		if (RAW_MODE)
+		if (RAW_MODE && VALID_BACKEND_RAW(i))
 		{
-			/* if in raw mode, we can switch to a standby node */
-			if (BACKEND_INFO(i).backend_status == CON_CONNECT_WAIT)
 				break;
 		}
 		else if (VALID_BACKEND(i))
@@ -1654,12 +1653,12 @@ static void failover(void)
 		for (i = 0; i < MAX_NUM_BACKENDS; i++)
 		{
 			if (Req_info->node_id[i] != -1 &&
-				VALID_BACKEND(Req_info->node_id[i]))
+				((RAW_MODE && VALID_BACKEND_RAW(Req_info->node_id[i])) ||
+				 VALID_BACKEND(Req_info->node_id[i])))
 			{
 				pool_log("starting degeneration. shutdown host %s(%d)",
 						 BACKEND_INFO(Req_info->node_id[i]).backend_hostname,
 						 BACKEND_INFO(Req_info->node_id[i]).backend_port);
-
 
 				BACKEND_INFO(Req_info->node_id[i]).backend_status = CON_DOWN;	/* set down status */
 				/* save down node */
