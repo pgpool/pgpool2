@@ -881,9 +881,19 @@ static void daemonize(void)
 	dup2(i, 1);
 	dup2(i, 2);
 
+	/* close syslog connection for daemonizing */
+	if (pool_config->logsyslog) {
+		closelog();
+	}
+
     fdlimit = sysconf(_SC_OPEN_MAX);
     for (i = 3; i < fdlimit; i++)
 		close(i);
+
+	/* reopen syslog connection after daemonizing */
+	if (pool_config->logsyslog) {
+		openlog(pool_config->syslog_ident, LOG_PID|LOG_NDELAY|LOG_NOWAIT, pool_config->syslog_facility);
+	}
 
 	write_pid_file();
 }
