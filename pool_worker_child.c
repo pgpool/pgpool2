@@ -164,7 +164,7 @@ static void establish_persistent_connection(void)
 											  bkinfo->backend_port,
 											  "postgres",
 											  pool_config->sr_check_user,
-											  pool_config->sr_check_password);
+											  pool_config->sr_check_password, true);
 			if (s)
 				slots[i] = s;
 			else

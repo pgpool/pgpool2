@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -50,7 +50,7 @@
 static int pool_index;	/* Active pool index */
 POOL_CONNECTION_POOL *pool_connection_pool;	/* connection pool */
 volatile sig_atomic_t backend_timer_expired = 0; /* flag for connection closed timer is expired */
-
+volatile sig_atomic_t health_check_timer_expired;		/* non 0 if health check timer expired */
 static POOL_CONNECTION_POOL_SLOT *create_cp(POOL_CONNECTION_POOL_SLOT *cp, int slot);
 static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p);
 static int check_socket_status(int fd);
@@ -481,6 +481,7 @@ int connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry)
 		if (exit_request)		/* exit request already sent */
 		{
 			pool_log("connect_unix_domain_socket_by_port: exit request has been sent");
+			close(fd);
 			return -1;
 		}
 
@@ -545,17 +546,31 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 			(char *) hp->h_addr,
 			hp->h_length);
 
+	pool_set_nonblock(fd);
+
 	for (;;)
 	{
 		if (exit_request)		/* exit request already sent */
 		{
 			pool_log("connect_inet_domain_socket_by_port: exit request has been sent");
+			close(fd);
+			return -1;
+		}
+
+		if (health_check_timer_expired)		/* has health check timer expired */
+		{
+			pool_log("connect_inet_domain_socket_by_port: health check timer expired");
+			close(fd);
 			return -1;
 		}
 
 		if (connect(fd, (struct sockaddr *)&addr, len) < 0)
 		{
 			if ((errno == EINTR && retry) || errno == EAGAIN)
+				continue;
+
+			/* Non block fd could return these */
+			if (errno == EINPROGRESS || errno == EALREADY)
 				continue;
 
 			pool_error("connect_inet_domain_socket: connect() failed: %s",strerror(errno));
@@ -565,6 +580,7 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 		break;
 	}
 
+	pool_unset_nonblock(fd);
 	return fd;
 }
 

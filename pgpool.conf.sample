@@ -386,10 +386,8 @@ failback_command = ''
                                    #   %% = '%' character
 
 fail_over_on_backend_error = on
-                                   # Initiates failover when writing to the
+                                   # Initiates failover when reading/writing to the
                                    # backend communication socket fails
-                                   # This is the same behaviour of pgpool-II
-                                   # 2.2.x and previous releases
                                    # If set to off, pgpool will report an
                                    # error and disconnect the session.
 

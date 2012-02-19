@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Sun Nov 20 15:33:45 JST 2011
+Last modified: Sun Feb 19 20:58:54 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -778,10 +778,9 @@ pcp_recovery_node command for example.
   <dt><a name="FAIL_OVER_ON_BACKEND_ERROR"></a>fail_over_on_backend_error</dt>
   <dd>
       <p>
-If true, and an error occurs when writing to the backend communication,
-pgpool-II will trigger the fail over procedure . This is the same behavior as of 
-pgpool-II 2.2.x or earlier. If set to false, pgpool will report an error and 
-disconnect the session. 
+If true, and an error occurs when reading/writing to the backend communication,
+pgpool-II will trigger the fail over procedure.
+If set to false, pgpool will report an error and disconnect the session. 
 If you set this parameter to off, it is recommended that you turn on health checking.
 Please note that even if this parameter is set to off, however, pgpool will also do the fail over when 
 pgpool detects the administrative shutdown of 

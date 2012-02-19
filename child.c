@@ -1415,7 +1415,7 @@ void child_exit(int code)
  * create a persistent connection
  */
 POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
-	char *hostname, int port, char *dbname, char *user, char *password)
+	char *hostname, int port, char *dbname, char *user, char *password, bool retry)
 {
 	POOL_CONNECTION_POOL_SLOT *cp;
 	int fd;
@@ -1454,11 +1454,11 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	 */
 	if (*hostname == '/')
 	{
-		fd = connect_unix_domain_socket_by_port(port, hostname, TRUE);
+		fd = connect_unix_domain_socket_by_port(port, hostname, retry);
 	}
 	else
 	{
-		fd = connect_inet_domain_socket_by_port(hostname, port, TRUE);
+		fd = connect_inet_domain_socket_by_port(hostname, port, retry);
 	}
 
 	if (fd < 0)
@@ -1951,7 +1951,7 @@ static void init_system_db_connection(void)
 																   pool_config->system_db_port,
 																   pool_config->system_db_dbname,
 																   pool_config->system_db_user,
-																   pool_config->system_db_password);
+																   pool_config->system_db_password, false);
 		if (system_db_info->connection == NULL)
 		{
 			pool_error("Could not make persistent system DB connection");

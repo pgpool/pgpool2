@@ -5,7 +5,7 @@
 * pgpool: a language independent connection pool server for PostgreSQL
 * written by Tatsuo Ishii
 *
-* Copyright (c) 2003-2010	PgPool Global Development Group
+* Copyright (c) 2003-2012	PgPool Global Development Group
 *
 * Permission to use, copy, modify, and distribute this software and
 * its documentation for any purpose and without fee is hereby
@@ -168,9 +168,14 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 
 			if (cp->isbackend)
 			{
-			    /* fatal error, notice to parent and exit */
-				notice_backend_error(cp->db_node_id);
-				child_exit(1);
+				/* if fail_over_on_backend_erro is true, then trigger failover */
+				if (pool_config->fail_over_on_backend_error)
+				{
+					notice_backend_error(cp->db_node_id);
+					child_exit(1);
+				}
+				else
+					return -1;
 			}
 			else
 			{
@@ -283,9 +288,14 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 
 			if (cp->isbackend)
 			{
-			    /* fatal error, notice to parent and exit */
-				notice_backend_error(cp->db_node_id);
-				child_exit(1);
+				/* if fail_over_on_backend_erro is true, then trigger failover */
+				if (pool_config->fail_over_on_backend_error)
+				{
+					notice_backend_error(cp->db_node_id);
+					child_exit(1);
+				}
+				else
+					return NULL;
 			}
 			else
 			{

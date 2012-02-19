@@ -116,6 +116,9 @@ static RETSIGTYPE reload_config_handler(int sig);
 static RETSIGTYPE health_check_timer_handler(int sig);
 static RETSIGTYPE wakeup_handler(int sig);
 
+static int health_check(void);
+static int system_db_health_check(void);
+
 static void usage(void);
 static void show_version(void);
 static void stop_me(void);
@@ -161,8 +164,6 @@ static int clear_cache = 0;		/* non 0 if clear chache option (-c) is given */
 static int not_detach = 0;		/* non 0 if non detach option (-n) is given */
 
 static int stop_sig = SIGTERM;	/* stopping signal default value */
-
-static volatile sig_atomic_t health_check_timer_expired;		/* non 0 if health check timer expired */
 
 POOL_REQUEST_INFO *Req_info;		/* request info area in shared memory */
 volatile sig_atomic_t *InRecovery; /* non 0 if recovery is started */
@@ -714,6 +715,7 @@ int main(int argc, char **argv)
 							pool_log("set %d th backend down status", sts);
 							Req_info->kind = NODE_DOWN_REQUEST;
 							Req_info->node_id[0] = sts;
+							health_check_timer_expired = 0;
 							failover();
 							/* need to distribute this info to children */
 							retrying = false;
@@ -727,8 +729,10 @@ int main(int argc, char **argv)
 							pool_log("set %d th backend down status", sts);
 							Req_info->kind = NODE_DOWN_REQUEST;
 							Req_info->node_id[0] = sts;
+							health_check_timer_expired = 0;
 							failover();
 							retrycnt = 0;
+							retrying = false;
 						}
 						else
 						{
@@ -1941,7 +1945,7 @@ static RETSIGTYPE health_check_timer_handler(int sig)
  * Check if we can connect to the backend
  * returns 0 for ok. otherwise returns backend id + 1
  */
-int health_check(void)
+static int health_check(void)
 {
 	POOL_CONNECTION_POOL_SLOT *slot;
 	BackendInfo *bkinfo;
@@ -1962,6 +1966,18 @@ int health_check(void)
 
 	for (i=0;i<pool_config->backend_desc->num_backends;i++)
 	{
+		/*
+		 * Make sure that health check timer has not been expired.
+		 * Before called health_check(), health_check_timer_expired is
+		 * set to 0.  However it is possible that while processing DB
+		 * nodes health check timer expired.
+		 */
+		if (health_check_timer_expired)
+		{
+			pool_log("health_check: health check timer has been already expired before attempting to connect to %d th backend", i);
+			return i+1;
+		}
+
 		bkinfo = pool_get_node_info(i);
 
 		pool_debug("health_check: %d th DB node status: %d", i, bkinfo->backend_status);
@@ -1974,7 +1990,7 @@ int health_check(void)
 											 bkinfo->backend_port,
 											 dbname,
 											 pool_config->health_check_user,
-											 pool_config->health_check_password);
+											 pool_config->health_check_password, false);
 
 		if (is_first)
 			is_first = false;
@@ -2011,7 +2027,7 @@ int health_check(void)
  * check if we can connect to the SystemDB
  * returns 0 for ok. otherwise returns -1
  */
-int
+static int
 system_db_health_check(void)
 {
 	int fd;
@@ -2543,7 +2559,7 @@ static int find_primary_node(void)
 										  bkinfo->backend_port,
 										  "postgres",
 										  pool_config->sr_check_user,
-										  pool_config->sr_check_password);
+										  pool_config->sr_check_password, true);
 		if (!s)
 		{
 			pool_error("find_primary_node: make_persistent_connection failed");
