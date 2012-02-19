@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Sun Nov 20 15:36:40 JST 2011
+Last modified: Mon Feb 20 07:53:48 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -739,8 +739,7 @@ pgpool が必要な情報に置き換えてコマンドを実行します。
 <dt><a name="FAIL_OVER_ON_BACKEND_ERROR"></a>fail_over_on_backend_error</dt>
 <dd>
 <p>
-   trueならば、バックエンドのソケットへの書き込みに失敗するとフェイルオーバします。
-   これはpgpool-II 2.2.xまでの挙動と同じです。
+   trueならば、バックエンドのソケットへからの読み出し、書き込みに失敗するとフェイルオーバします。
 falseにすると、フェイルオーバせず、単にエラーがレポートされてセッションが切断されます。
 このパラメータをfalseにする場合には、health checkを有効にすることをお勧めします。
 なお、このパラメータがfalseの場合でも、バックエンドがシャットダウンされたことをpgpool-IIが検知した場合にはフェイルオーバが起きることに注意してください。
