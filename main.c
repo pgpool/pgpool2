@@ -1753,7 +1753,7 @@ static void failover(void)
 	* and request is NODE_UP_REQUEST(failback case) we don't need to
 	* restart all children. Existing session will not use newly
 	* attached node, but load balanced node is not changed util this
-	* session ends, so it's not harmless anyway.
+	* session ends, so it's harmless anyway.
 	*/
 	if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP)	&&
 		Req_info->kind == NODE_UP_REQUEST)
