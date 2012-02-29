@@ -1529,6 +1529,20 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				pool_handle_query_cache(backend, query, node, state);
 			}
 		}
+		/*
+		 * If PREPARE or extended query protocol commands caused error,
+		 * remove the temporary saved message.
+		 */
+		else
+		{
+			if (session_context->uncompleted_message)
+			{
+				pool_add_sent_message(session_context->uncompleted_message);
+				pool_remove_sent_message(session_context->uncompleted_message->kind,
+										 session_context->uncompleted_message->name);
+				session_context->uncompleted_message = NULL;
+			}
+		}
 
 		pool_unset_query_in_progress();
 	}
@@ -1933,7 +1947,6 @@ POOL_STATUS ErrorResponse3(POOL_CONNECTION *frontend,
 						   POOL_CONNECTION_POOL *backend)
 {
 	POOL_STATUS ret;
-	POOL_SESSION_CONTEXT *session_context;
 
 	ret = SimpleForwardToFrontend('E', frontend, backend);
 	if (ret != POOL_CONTINUE)
@@ -1997,21 +2010,6 @@ POOL_STATUS ErrorResponse3(POOL_CONNECTION *frontend,
 		}
 	}
 #endif
-
-	/* An error occurred with PREPARE or DEALLOCATE command.
-	 * Free pending portal object.
-	 */
-	session_context = pool_get_session_context();
-	if (session_context)
-	{
-		if (session_context->uncompleted_message)
-		{
-			pool_add_sent_message(session_context->uncompleted_message);
-			pool_remove_sent_message(session_context->uncompleted_message->kind,
-									 session_context->uncompleted_message->name);
-			session_context->uncompleted_message = NULL;
-		}
-	}
 
 	return POOL_CONTINUE;
 }
@@ -2159,7 +2157,15 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 		return POOL_END;
 
 	if (fkind != 'S' && pool_is_ignore_till_sync())
+	{
+		/*
+		 * Flag setting for calling ProcessBackendResponse()
+		 * in pool_process_query().
+		 */
+		if (!pool_is_query_in_progress())
+			pool_set_query_in_progress();
 		return POOL_CONTINUE;
+	}
 
 	pool_unset_doing_extended_query_message();
 
@@ -2284,6 +2290,8 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 
 	if (pool_is_ignore_till_sync())
 	{
+		if (pool_is_query_in_progress())
+			pool_unset_query_in_progress();
 		return POOL_CONTINUE;
 	}
 
