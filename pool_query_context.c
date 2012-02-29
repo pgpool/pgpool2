@@ -276,7 +276,11 @@ int pool_virtual_master_db_node_id(void)
 	{
 		return sc->query_context->virtual_master_node_id;
 	}
-	return REAL_MASTER_NODE_ID;
+
+	/*
+	 * No query context exists. Returns master node id in private buffer.
+	 */
+	return my_master_node_id;
 }
 
 /*

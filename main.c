@@ -181,6 +181,7 @@ static BackendStatusRecord backend_rec;	/* Backend status record */
 static pid_t worker_pid; /* pid of worker process */
 
 BACKEND_STATUS* my_backend_status[MAX_NUM_BACKENDS];		/* Backend status buffer */
+int my_master_node_id;		/* Master node id buffer */
 
 int myargc;
 char **myargv;
