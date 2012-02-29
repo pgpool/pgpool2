@@ -88,7 +88,7 @@ typedef struct {
 	/* If true, we are doing extended query message */
 	bool doing_extended_query_message;
 
-	/* If true, the command in progress has finished sucessfully. */
+	/* If true, the command in progress has finished successfully. */
 	bool command_success;
 
 	/* If true, write query has been appeared in this transaction */
