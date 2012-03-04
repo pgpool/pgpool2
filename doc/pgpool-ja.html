@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Mon Feb 20 07:53:48 JST 2012
+Last modified: Sun Mar  4 11:19:30 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2437,14 +2437,14 @@ benchs2=# show pool_status;
 </p>
 <h2>pool_nodes</h2>
 <p>"SHOW pool_nodes"は、DBノードのリストを表示します。
-ホスト名、ポート番号、状態、重み(ロードバランスモードで運用しているときにのみ意味があります)が表示されます。
+ホスト名、ポート番号、状態、重み(ロードバランスモードで運用しているときにのみ意味があります)、ノードの役割が表示されます。
 状態(status)の意味については、<a href="#pcp_node_info">pcp_node_infoリファレンス</a>で説明されています。
 <pre>
 benchs2=# show pool_nodes;
-  id  |  hostname   | port | status | lb_weight     
-------+-------------+------+--------+-----------
-   0  | 127.0.0.1   | 5432 | 2      | 0.5
-   1  | 192.168.1.7 | 5432 | 3      | 0.5
+  id  |  hostname   | port | status | lb_weight |  role       
+------+-------------+------+--------+-----------+---------
+   0  | 127.0.0.1   | 5432 | 2      | 0.5       | primary
+   1  | 192.168.1.7 | 5432 | 3      | 0.5       | standby
 (2 lignes)
 </pre>
 </p>

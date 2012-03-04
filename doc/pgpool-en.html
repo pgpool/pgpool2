@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Sun Feb 19 20:58:54 JST 2012
+Last modified: Sun Mar  4 11:18:24 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2526,15 +2526,15 @@ benchs2=# show pool_status;
 </p>
 <h2>pool_nodes</h2>
 <p>"SHOW pool_nodes" sends back a list of all configured nodes. It
-displays the node id, the hostname, the port, the status, and the weight (only meaningful
-if you use the load balancing mode). The possible values in the status column
+displays the node id, the hostname, the port, the status, the weight (only meaningful
+if you use the load balancing mode) and the role. The possible values in the status column
 are explained in the <a href="#pcp_node_info">pcp_node_info reference</a>.
 <pre>
 benchs2=# show pool_nodes;
-  id  |  hostname   | port | status | lb_weight     
-------+-------------+------+--------+-----------
-   0  | 127.0.0.1   | 5432 | 2      | 0.5
-   1  | 192.168.1.7 | 5432 | 3      | 0.5
+  id  |  hostname   | port | status | lb_weight |  role       
+------+-------------+------+--------+-----------+---------
+   0  | 127.0.0.1   | 5432 | 2      | 0.5       | primary
+   1  | 192.168.1.7 | 5432 | 3      | 0.5       | standby
 (2 lignes)
 </pre>
 </p>

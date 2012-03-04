@@ -179,11 +179,12 @@ typedef struct {
 
 /* nodes report struct */
 typedef struct {
-        char node_id[POOLCONFIG_MAXSTATLEN+1];
+	char node_id[POOLCONFIG_MAXSTATLEN+1];
 	char hostname[POOLCONFIG_MAXIDENTLEN+1];
 	char port[POOLCONFIG_MAXIDENTLEN+1];
 	char status[POOLCONFIG_MAXSTATLEN+1];
 	char lb_weight[POOLCONFIG_MAXWEIGHTLEN+1];
+	char role[POOLCONFIG_MAXWEIGHTLEN+1];
 } POOL_REPORT_NODES;
 
 /* processes report struct */

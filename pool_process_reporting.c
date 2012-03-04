@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -760,22 +760,35 @@ POOL_REPORT_NODES* get_nodes(int *nrows)
 	{
 	    bi = pool_get_node_info(i);
 
-            snprintf(nodes[i].node_id, 	POOLCONFIG_MAXSTATLEN, 	"%d", 	i);
+		snprintf(nodes[i].node_id, 	POOLCONFIG_MAXSTATLEN, 	"%d", 	i);
 	    strncpy(nodes[i].hostname, 	bi->backend_hostname, 		strlen(bi->backend_hostname)+1);
 	    snprintf(nodes[i].port, 	POOLCONFIG_MAXIDENTLEN, "%d", 	bi->backend_port);
 	    snprintf(nodes[i].status, 	POOLCONFIG_MAXSTATLEN, 	"%d", 	bi->backend_status);
 	    snprintf(nodes[i].lb_weight, POOLCONFIG_MAXWEIGHTLEN, "%f", bi->backend_weight/RAND_MAX);
+
+		if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
+			if (i == REAL_PRIMARY_NODE_ID)
+				snprintf(nodes[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "primary");
+			else
+				snprintf(nodes[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "standby");
+		else
+		{
+			if (i == REAL_MASTER_NODE_ID)
+				snprintf(nodes[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "master");
+			else
+				snprintf(nodes[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "slave");
+		}
 	}
 
 	*nrows = i;
 
 	return nodes;
-	}
+}
 
 void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
-		{
-	static short num_fields = 5;
-	static char *field_names[] = {"node_id","hostname", "port", "status", "lb_weight"};
+{
+	static char *field_names[] = {"node_id","hostname", "port", "status", "lb_weight", "role"};
+	short num_fields = sizeof(field_names)/sizeof(char *);
 	int i;
 	short s;
 	int len;
@@ -821,6 +834,11 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 			hsize = htonl(size+4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, nodes[i].lb_weight, size);
+
+			size = strlen(nodes[i].role);
+			hsize = htonl(size+4);
+			pool_write(frontend, &hsize, sizeof(hsize));
+			pool_write(frontend, nodes[i].role, size);
 		}
 	}
 	else
@@ -835,6 +853,7 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 			len += 4 + strlen(nodes[i].port);      /* int32 + data; */
 			len += 4 + strlen(nodes[i].status);    /* int32 + data; */
 			len += 4 + strlen(nodes[i].lb_weight); /* int32 + data; */
+			len += 4 + strlen(nodes[i].role);      /* int32 + data; */
 			len = htonl(len);
 			pool_write(frontend, &len, sizeof(len));
 			s = htons(num_fields);
@@ -859,6 +878,10 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 			len = htonl(strlen(nodes[i].lb_weight));
 			pool_write(frontend, &len, sizeof(len));
 			pool_write(frontend, nodes[i].lb_weight, strlen(nodes[i].lb_weight));
+
+			len = htonl(strlen(nodes[i].role));
+			pool_write(frontend, &len, sizeof(len));
+			pool_write(frontend, nodes[i].role, strlen(nodes[i].role));
 		}
 	}
 
