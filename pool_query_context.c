@@ -180,8 +180,8 @@ void pool_setall_node_to_be_sent(POOL_QUERY_CONTEXT *query_context)
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
-		if ((BACKEND_INFO(i)).backend_status == CON_UP ||
-			(BACKEND_INFO((i)).backend_status == CON_CONNECT_WAIT))
+		if (private_backend_status[i] == CON_UP ||
+			(private_backend_status[i] == CON_CONNECT_WAIT))
 			query_context->where_to_send[i] = true;
 	}
 	return;
