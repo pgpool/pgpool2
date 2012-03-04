@@ -1889,12 +1889,12 @@ static void failover(void)
 		{
 			process_info[i].need_to_restart = 1;
 		}
-
-		/*
-		 * Send restart request to worker child.
-		 */
-		kill(worker_pid, SIGUSR1);
 	}
+
+	/*
+	 * Send restart request to worker child.
+	 */
+	kill(worker_pid, SIGUSR1);
 
 	if (Req_info->kind == NODE_UP_REQUEST)
 	{
