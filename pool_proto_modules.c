@@ -177,8 +177,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	/* switch memory context */
 	if (pool_memory == NULL)
 		pool_memory = pool_memory_create(PARSER_BLOCK_SIZE);
-	old_context = pool_memory;
-	pool_memory = query_context->memory_context;
+	old_context = pool_memory_context_switch_to(query_context->memory_context);
 
 	/* parse SQL string */
 	parse_tree_list = raw_parser(contents);
@@ -240,6 +239,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			{
 				pool_query_context_destroy(query_context);
 				pool_set_skip_reading_from_backends();
+				pool_memory_context_switch_to(old_context);
 				return POOL_CONTINUE;
 			}
 		}
@@ -258,6 +258,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			if (parallel)
 			{
 				pool_query_context_destroy(query_context);
+				pool_memory_context_switch_to(old_context);
 				return status;
 			}
 		}
@@ -571,7 +572,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	}
 
 	/* switch memory context */
-	pool_memory = old_context;
+	pool_memory_context_switch_to(old_context);
 
 	return POOL_CONTINUE;
 }
@@ -760,8 +761,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	/* switch memory context */
 	if (pool_memory == NULL)
 		pool_memory = pool_memory_create(PARSER_BLOCK_SIZE);
-	old_context = pool_memory;
-	pool_memory = query_context->memory_context;
+	old_context = pool_memory_context_switch_to(query_context->memory_context);
 
 	/* parse SQL string */
 	parse_tree_list = raw_parser(stmt);
@@ -881,7 +881,8 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			query_context->rewritten_query = pstrdup("BEGIN");
 		}
 	}
-	pool_memory = old_context;
+
+	pool_memory_context_switch_to(old_context);
 
 	if (REPLICATION)
 	{
@@ -1327,12 +1328,12 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			{
 				int i;
 				String *msg;
-				POOL_MEMORY_POOL *old_context = pool_memory;
+				POOL_MEMORY_POOL *old_context;
 
 				if (session_context->query_context)
-					pool_memory = session_context->query_context->memory_context;
+					old_context = pool_memory_context_switch_to(session_context->query_context->memory_context);
 				else
-					pool_memory = session_context->memory_context;
+					old_context = pool_memory_context_switch_to(session_context->memory_context);
 
 				msg = init_string("ReadyForQuery: Degenerate backends:");
 
@@ -1354,7 +1355,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				pool_log("%s", msg->data);
 				free_string(msg);
 
-				pool_memory = old_context;
+				pool_memory_context_switch_to(old_context);
 
 				degenerate_backend_set(victim_nodes, number_of_nodes);
 				child_exit(1);
@@ -1869,12 +1870,12 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	if (session_context->mismatch_ntuples)
 	{
 		char msgbuf[128];
-		POOL_MEMORY_POOL *old_context = pool_memory;
+		POOL_MEMORY_POOL *old_context;
 
 		if (session_context->query_context)
-			pool_memory = session_context->query_context->memory_context;
+			old_context = pool_memory_context_switch_to(session_context->query_context->memory_context);
 		else
-			pool_memory = session_context->memory_context;
+			old_context = pool_memory_context_switch_to(session_context->memory_context);
 
 		String *msg = init_string("pgpool detected difference of the number of inserted, updated or deleted tuples. Possible last query was: \"");
 		string_append_char(msg, query_string_buffer);
@@ -1895,7 +1896,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		pool_log("%s", msg->data);
 		free_string(msg);
 
-		pool_memory = old_context;
+		pool_memory_context_switch_to(old_context);
 	}
 	else
 	{
@@ -2924,7 +2925,7 @@ static int check_errors(POOL_CONNECTION_POOL *backend, int backend_id)
 static void generate_error_message(char *prefix, int specific_error, char *query)
 {
 	POOL_SESSION_CONTEXT *session_context;
-	POOL_MEMORY_POOL *old_context = pool_memory;
+	POOL_MEMORY_POOL *old_context;
 
 	session_context = pool_get_session_context();
 	if (!session_context)
@@ -2948,16 +2949,16 @@ static void generate_error_message(char *prefix, int specific_error, char *query
 	specific_error--;
 
 	if (session_context->query_context)
-		pool_memory = session_context->query_context->memory_context;
+		old_context = pool_memory_context_switch_to(session_context->query_context->memory_context);
 	else
-		pool_memory = session_context->memory_context;
+		old_context = pool_memory_context_switch_to(session_context->memory_context);
 
 	msg = init_string(prefix);
 	string_append_char(msg, error_messages[specific_error]);
 	pool_error(msg->data, query);
 	free_string(msg);
 
-	pool_memory = old_context;
+	pool_memory_context_switch_to(old_context);
 }
 
 /*

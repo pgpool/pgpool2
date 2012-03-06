@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Portions Copyright (c) 2003-2010	PgPool Global Development Group
+ * Portions Copyright (c) 2003-2012	PgPool Global Development Group
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California                                          *
  * Permission to use, copy, modify, and distribute this software and
@@ -114,8 +114,7 @@ int load_hba(char *hbapath)
 		}
 	}
 	/* switch memory context */
-	old_context = pool_memory;
-	pool_memory = hba_memory_context;
+	old_context = pool_memory_context_switch_to(hba_memory_context);
 
 	if (hba_lines || hba_line_nums)
 		free_lines(&hba_lines, &hba_line_nums);
@@ -128,7 +127,7 @@ int load_hba(char *hbapath)
 		pool_memory_delete(hba_memory_context, 0);
 
 		/* switch to old memory context */
-		pool_memory = old_context;
+		pool_memory_context_switch_to(old_context);
 
 		return -1;
 	}
@@ -142,7 +141,7 @@ int load_hba(char *hbapath)
 	hbaFileName = pstrdup(hbapath);
 
 	/* switch to old memory context */
-	pool_memory = old_context;
+	pool_memory_context_switch_to(old_context);
 
 	return 0;
 }

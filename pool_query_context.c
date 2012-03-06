@@ -334,11 +334,11 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	else if (MASTER_SLAVE)
 	{
 		POOL_DEST dest;
-		POOL_MEMORY_POOL *old_context = pool_memory;
+		POOL_MEMORY_POOL *old_context;
 
-		pool_memory = query_context->memory_context;
+		old_context = pool_memory_context_switch_to(query_context->memory_context);
 		dest = send_to_where(node, query);
-		pool_memory = old_context;
+		pool_memory_context_switch_to(old_context);
 
 		pool_debug("send_to_where: %d query: %s", dest, query);
 

@@ -3124,20 +3124,20 @@ bool is_partition_table(POOL_CONNECTION_POOL *backend, Node *node)
 static char *get_insert_command_table_name(InsertStmt *node)
 {
 	POOL_SESSION_CONTEXT *session_context;
-	POOL_MEMORY_POOL *old_context = pool_memory;
+	POOL_MEMORY_POOL *old_context;
 
 	session_context = pool_get_session_context();
 	if (!session_context)
 		return NULL;
 
 	if (session_context->query_context)
-		pool_memory = session_context->query_context->memory_context;
+		old_context = pool_memory_context_switch_to(session_context->query_context->memory_context);
 	else
-		pool_memory = session_context->memory_context;
+		old_context = pool_memory_context_switch_to(session_context->memory_context);
 
 	char *table = nodeToString(node->relation);
 
-	pool_memory = old_context;
+	pool_memory_context_switch_to(old_context);
 
 	pool_debug("get_insert_command_table_name: extracted table name: %s", table);
 	return table;
@@ -3312,7 +3312,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 	int degenerate_node_num = 0;		/* number of backends degeneration requested */
 	int degenerate_node[MAX_NUM_BACKENDS];		/* degeneration requested backend list */
 
-	POOL_MEMORY_POOL *old_context = NULL;
+	POOL_MEMORY_POOL *old_context;
 
 	POOL_SESSION_CONTEXT *session_context = pool_get_session_context();
 	POOL_QUERY_CONTEXT *query_context = session_context->query_context;
@@ -3435,11 +3435,10 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 
 	if (degenerate_node_num)
 	{
-		old_context = pool_memory;
 		if (query_context)
-			pool_memory = query_context->memory_context;
+			old_context = pool_memory_context_switch_to(query_context->memory_context);
 		else
-			pool_memory = session_context->memory_context;
+			old_context = pool_memory_context_switch_to(session_context->memory_context);
 
 		String *msg = init_string("kind mismatch among backends. ");
 
@@ -3524,7 +3523,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 		free_string(msg);
 
 		/* Switch to old memory context */
-		pool_memory = old_context;
+		pool_memory_context_switch_to(old_context);
 
 		if (pool_config->replication_stop_on_mismatch)
 		{
