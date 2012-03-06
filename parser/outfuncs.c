@@ -5611,8 +5611,12 @@ char *
 nodeToString(void *obj)
 {
 	String *str;
+	char *p;
 
 	str = init_string("");
 	_outNode(str, obj);
-	return str->data;
+	p = palloc(str->len+1);
+	memcpy(p, str->data, str->len);
+	*(p+str->len) = '\0';
+	return p;
 }
