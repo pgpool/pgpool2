@@ -316,6 +316,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 				pool_query_context_destroy(query_context);
 				pool_set_skip_reading_from_backends();
+				pool_memory_context_switch_to(old_context);
 				return POOL_CONTINUE;
 			}
 		}
