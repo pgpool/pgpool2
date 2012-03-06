@@ -103,11 +103,11 @@ static POOL_STATUS close_standby_transactions(POOL_CONNECTION *frontend,
 POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 						POOL_CONNECTION_POOL *backend, int len, char *contents)
 {
-	static char *sq_config = "show pool_status";
-	static char *sq_pools = "show pool_pools";
-	static char *sq_processes = "show pool_processes";
- 	static char *sq_nodes = "show pool_nodes";
- 	static char *sq_version = "show pool_version";
+	static char *sq_config = "pool_status";
+	static char *sq_pools = "pool_pools";
+	static char *sq_processes = "pool_processes";
+ 	static char *sq_nodes = "pool_nodes";
+ 	static char *sq_version = "pool_version";
 	int commit;
 	List *parse_tree_list;
 	Node *node = NULL;
@@ -271,32 +271,33 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		if (IsA(node, VariableShowStmt))
 		{
 			bool is_valid_show_command = false;
+			VariableShowStmt *vnode = (VariableShowStmt *)node;
 
-			if (strncasecmp(sq_config, contents, strlen(sq_config)) == 0)
+			if (!strcmp(sq_config, vnode->name))
             {
 				is_valid_show_command = true;
                 pool_debug("config reporting");
                 config_reporting(frontend, backend);
             }
-			else if (strncasecmp(sq_pools, contents, strlen(sq_pools)) == 0)
+			else if (!strcmp(sq_pools, vnode->name))
             {
 				is_valid_show_command = true;
                 pool_debug("pools reporting");
                 pools_reporting(frontend, backend);
             }
-			else if (strncasecmp(sq_processes, contents, strlen(sq_processes)) == 0)
+			else if (!strcmp(sq_processes, vnode->name))
             {
 				is_valid_show_command = true;
                 pool_debug("processes reporting");
                 processes_reporting(frontend, backend);
             }
-			else if (strncasecmp(sq_nodes, contents, strlen(sq_nodes)) == 0)
+			else if (!strcmp(sq_nodes, vnode->name))
             {
 				is_valid_show_command = true;
                 pool_debug("nodes reporting");
                 nodes_reporting(frontend, backend);
             }
-			else if (strncasecmp(sq_version, contents, strlen(sq_version)) == 0)
+			else if (!strcmp(sq_version, vnode->name))
             {
 				is_valid_show_command = true;
                 pool_debug("version reporting");
