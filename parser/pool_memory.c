@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2008	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -21,6 +21,8 @@
  * pool_memory.c: Memory pooling module for SQL parser.
  *
  */
+
+#undef POOL_MEMORY_DEBUG
 
 #include "pool.h"
 #include "pool_memory.h"
@@ -59,6 +61,10 @@ void *pool_memory_alloc(POOL_MEMORY_POOL *pool, unsigned int size)
 {
 	POOL_BLOCK *block;
 	POOL_CHUNK *chunk;
+
+#ifdef POOL_MEMORY_DEBUG
+	pool_log("pool_memory_alloc: pool:%p size:%d", pool, size);
+#endif
 
 	if ((size + POOL_HEADER_SIZE) > pool->blocksize)
 	{
@@ -149,6 +155,10 @@ void pool_memory_free(POOL_MEMORY_POOL *pool, void *ptr)
 	POOL_CHUNK *chunk = ptr - POOL_HEADER_SIZE;
 	int fidx;
 
+#ifdef POOL_MEMORY_DEBUG
+	pool_log("pool_memory_free: pool:%p ptr:%p", pool, ptr);
+#endif
+
 	if (ptr == NULL)
 		return;
 
@@ -232,6 +242,11 @@ POOL_MEMORY_POOL *pool_memory_create(int blocksize)
 		pool_error("pool_memory_create: malloc failed: %s", strerror(errno));
 		child_exit(1);
 	}
+
+#ifdef POOL_MEMORY_DEBUG
+	pool_log("pool_memory_create: blocksize: %d pool:%p", blocksize, pool);
+#endif
+
 	pool->blocks = NULL;
 	pool->largeblocks = NULL;
 	pool->blocksize = blocksize;
@@ -251,6 +266,10 @@ POOL_MEMORY_POOL *pool_memory_create(int blocksize)
 void pool_memory_delete(POOL_MEMORY_POOL *pool_memory, int reuse)
 {
 	POOL_BLOCK *block, *ptr;
+
+#ifdef POOL_MEMORY_DEBUG
+	pool_log("pool_memory_delete: pool:%p reuse:%d", pool_memory, reuse);
+#endif
 
 	/* Reuse the first memory block */
 	if (reuse && pool_memory->blocks)
@@ -310,3 +329,14 @@ char *pool_memory_strdup(POOL_MEMORY_POOL *pool_memory, const char *string)
 	str[len] = '\0';
 	return str;
 }
+
+/*
+ * Switch memory context from pool_meory to pm
+ */
+POOL_MEMORY_POOL *pool_memory_context_switch_to(POOL_MEMORY_POOL *pm)
+{
+	POOL_MEMORY_POOL *old = pool_memory;
+	pool_memory = pm;
+	return old;
+}
+
