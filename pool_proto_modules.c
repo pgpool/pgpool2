@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -204,6 +204,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			{
 				pool_query_context_destroy(query_context);
 				pool_set_skip_reading_from_backends();
+				pool_memory = old_context;
 				return POOL_CONTINUE;
 			}
 		}
@@ -222,6 +223,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			if (parallel)
 			{
 				pool_query_context_destroy(query_context);
+				pool_memory = old_context;
 				return status;
 			}
 		}
@@ -275,6 +277,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 			pool_query_context_destroy(query_context);
 			pool_set_skip_reading_from_backends();
+			pool_memory = old_context;
 			return POOL_CONTINUE;
 		}
 
