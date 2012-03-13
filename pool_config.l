@@ -130,6 +130,17 @@ int pool_init_config(void)
 	}
 #endif
 
+	/*
+	 * add for watchdog
+	 */
+	pool_config->other_wd = malloc(sizeof(WdDesc));
+	if (pool_config->other_wd == NULL)
+	{
+		pool_error("failed to allocate pool_config->cwother_wd");
+		return -1;
+	}
+	memset(pool_config->other_wd,0,sizeof(WdDesc));
+
 	/* set hardcoded default values */
 	pool_config->listen_addresses = "localhost";
 	pool_config->port = 9999;
@@ -216,6 +227,20 @@ int pool_init_config(void)
 	pool_config->lists_patterns = NULL;
 	pool_config->pattc = 0;
 	pool_config->current_pattern_size = 0;
+	/*
+	 * add for watchdog
+	 */
+	pool_config->trusted_servers = NULL;
+	pool_config->delegate_IP = NULL;
+	pool_config->wd_port = 9000;
+	pool_config->other_wd->num_wd = 0;
+	pool_config->wd_interval = 10;
+	pool_config->ping_path = "/bin";
+	pool_config->ifconfig_path = "/sbin";
+	pool_config->if_up_cmd = "ifconfig eth0:0 inet $_IP_$ netmask 255.255.255.0";
+	pool_config->if_down_cmd = "ifconfig eth0:0 down";
+	pool_config->wd_life_point = 3;
+
 
     pool_config->memory_cache_enabled = 0;
     pool_config->memqcache_method = "shmem";
@@ -1842,6 +1867,206 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			pool_config->lobj_lock_table = str;
 		}
+		/*
+		 * add for watchdog
+		 */
+		else if (!strncmp(key, "other_pgpool_hostname", 21) &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context) &&
+				 mypid == getpid()) /* this parameter must be modified by parent pid */
+		{
+			int slot;
+			char *str;
+
+			slot = atoi(key + 21) ;
+			if (slot < 0 || slot >= MAX_CONNECTION_SLOTS)
+			{
+				pool_error("pool_config: pgpool number %s for other_pgpool_hostname out of range", key);
+				fclose(fd);
+				return(-1);
+			}
+
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			if (context == INIT_CONFIG || (context == RELOAD_CONFIG ))
+				strlcpy(WD_INFO(slot).hostname, str, WD_MAX_HOST_NAMELEN);
+		}
+
+		else if (!strncmp(key, "other_pgpool_port", 17) &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context) &&
+				 mypid == getpid()) /* this parameter must be modified by parent pid */
+		{
+			int slot;
+
+			slot = atoi(key + 17);
+			if (slot < 0 || slot >= MAX_CONNECTION_SLOTS)
+			{
+				pool_error("pool_config: pgpool number %s for other_pgpool_port out of range", key);
+				fclose(fd);
+				return(-1);
+			}
+
+			if (context == INIT_CONFIG || (context == RELOAD_CONFIG ))
+				WD_INFO(slot).pgpool_port = atoi(yytext);
+		}
+
+		else if (!strncmp(key, "other_pgpool_wd_port", 20) &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context) &&
+				 mypid == getpid()) /* this parameter must be modified by parent pid */
+		{
+			int slot;
+
+			slot = atoi(key + 20);
+			if (slot < 0 || slot >= MAX_CONNECTION_SLOTS)
+			{
+				pool_error("pool_config: pgpool number %s for other_pgpool_wd_port out of range", key);
+				fclose(fd);
+				return(-1);
+			}
+
+			if (context == INIT_CONFIG || (context == RELOAD_CONFIG ))
+			{
+				WD_INFO(slot).wd_port = atoi(yytext);
+				WD_INFO(slot).status = WD_INIT;
+				pool_config->other_wd->num_wd = slot+1;
+			}
+		}
+		else if (!strcmp(key, "trusted_servers") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->trusted_servers = str;
+		}
+		else if (!strcmp(key, "delegate_IP") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->delegate_IP = str;
+		}
+		else if (!strcmp(key, "wd_interval") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			int v = atoi(yytext);
+
+			if (token != POOL_INTEGER || v <= 0)
+			{
+				pool_error("pool_config: %s must be higher than 1 numeric value", key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->wd_interval = v;
+		}
+		else if (!strcmp(key, "ping_path") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->ping_path = str;
+		}
+		else if (!strcmp(key, "ifconfig_path") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->ifconfig_path = str;
+		}
+		else if (!strcmp(key, "if_up_cmd") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->if_up_cmd = str;
+		}
+		else if (!strcmp(key, "if_down_cmd") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->if_down_cmd = str;
+		}
+		else if (!strcmp(key, "wd_life_point") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			int v = atoi(yytext);
+
+			if (token != POOL_INTEGER || v <= 0)
+			{
+				pool_error("pool_config: %s must be higher than 1 numeric value", key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->wd_life_point = v;
+		}
+
 
         else if (!strcmp(key, "ssl") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{

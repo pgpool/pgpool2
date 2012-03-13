@@ -13566,7 +13566,7 @@ $as_echo "$enable_table_lock" >&6; }
 ac_config_headers="$ac_config_headers config.h"
 
 
-ac_config_files="$ac_config_files Makefile parser/Makefile pcp/Makefile"
+ac_config_files="$ac_config_files Makefile parser/Makefile pcp/Makefile watchdog/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -14543,6 +14543,7 @@ do
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "parser/Makefile") CONFIG_FILES="$CONFIG_FILES parser/Makefile" ;;
     "pcp/Makefile") CONFIG_FILES="$CONFIG_FILES pcp/Makefile" ;;
+    "watchdog/Makefile") CONFIG_FILES="$CONFIG_FILES watchdog/Makefile" ;;
 
   *) as_fn_error "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

@@ -60,7 +60,7 @@
 #include "parser/pool_string.h"
 #include "pool_passwd.h"
 #include "pool_memqcache.h"
-
+#include "watchdog/wd_ext.h"
 /*
  * Process pending signal actions.
  */
@@ -412,6 +412,9 @@ int main(int argc, char **argv)
 
 	/* set signal masks */
 	poolinitmask();
+
+	/* start watchdog */
+	wd_main(1);
 
 	if (not_detach)
 		write_pid_file();

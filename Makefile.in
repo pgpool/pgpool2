@@ -87,7 +87,7 @@ am_pgpool_OBJECTS = main.$(OBJEXT) child.$(OBJEXT) pool_auth.$(OBJEXT) \
 	getopt_long.$(OBJEXT)
 pgpool_OBJECTS = $(am_pgpool_OBJECTS)
 pgpool_DEPENDENCIES = parser/libsql-parser.a pcp/libpcp.la \
-	parser/nodes.o
+	parser/nodes.o watchdog/lib-watchdog.a
 pgpool_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(pgpool_LDFLAGS) \
 	$(LDFLAGS) -o $@
@@ -353,7 +353,7 @@ AM_CPPFLAGS = -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
 
 # suggested by libtoolize
 ACLOCAL_AMFLAGS = -I m4
-pgpool_LDADD = -L@PGSQL_LIB_DIR@ -lpq parser/libsql-parser.a pcp/libpcp.la parser/nodes.o
+pgpool_LDADD = -L@PGSQL_LIB_DIR@ -lpq parser/libsql-parser.a pcp/libpcp.la parser/nodes.o watchdog/lib-watchdog.a -lpthread
 @enable_rpath_FALSE@pgpool_LDFLAGS = 
 @enable_rpath_TRUE@pgpool_LDFLAGS = -rpath @PGSQL_LIB_DIR@ -rpath $(libdir)
 AM_YFLAGS = -d
@@ -425,7 +425,7 @@ EXTRA_DIST = pgpool.8.in sample/pgpool.pam \
 		test/timestamp/parse_schedule test/timestamp/run-test \
 		redhat/pgpool.init redhat/pgpool.sysconfig redhat/pgpool.conf.sample.patch
 
-SUBDIRS = parser pcp
+SUBDIRS = parser pcp watchdog
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
