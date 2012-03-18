@@ -111,8 +111,8 @@ static void dump_shmem_cache(POOL_CACHE_BLOCKID blockid);
 
 static int pool_hash_insert(POOL_QUERY_HASH *key, POOL_CACHEID *cacheid, bool update);
 static uint32 create_hash_key(POOL_QUERY_HASH *key);
-static POOL_HASH_ELEMENT *get_new_hash_element(void);
-static void put_back_hash_element(POOL_HASH_ELEMENT *element);
+static volatile POOL_HASH_ELEMENT *get_new_hash_element(void);
+static void put_back_hash_element(volatile POOL_HASH_ELEMENT *element);
 
 /*
  * Connect to Memcached
@@ -2817,9 +2817,9 @@ long long int pool_stats_count_up_num_cache_hits(void)
  * hash_any() is not worth the trouble.
  */
 
-static POOL_HASH_HEADER *hash_header;
-static POOL_HASH_ELEMENT *hash_elements;
-static POOL_HASH_ELEMENT hash_free_body;
+static volatile POOL_HASH_HEADER *hash_header;
+static volatile POOL_HASH_ELEMENT *hash_elements;
+static volatile POOL_HASH_ELEMENT hash_free_body;
 static volatile POOL_HASH_ELEMENT *hash_free;
 
 /*
@@ -2827,6 +2827,8 @@ static volatile POOL_HASH_ELEMENT *hash_free;
  * hash keys. The actual number of hash key is rounded up to power of
  * 2.
  */
+#undef POOL_HASH_DEBUG
+
 int pool_hash_init(int nelements)
 {
 	size_t size;
@@ -2863,6 +2865,10 @@ int pool_hash_init(int nelements)
 	hash_header->nhash = nelements2;
     hash_header->mask = mask;
 
+#ifdef POOL_HASH_DEBUG
+	pool_log("pool_hash_init: size:%zd nelements2:%d", size, nelements2);
+#endif
+
 	size = sizeof(POOL_HASH_ELEMENT)*nelements2;
 	hash_elements = pool_shared_memory_create(size);
 	if (hash_elements == NULL)
@@ -2871,13 +2877,16 @@ int pool_hash_init(int nelements)
 		return -1;
 	}
 
+#ifdef POOL_HASH_DEBUG
+	pool_log("pool_hash_init: size:%zd nelements2:%d", size, nelements2);
+#endif
+
 	for (i=0;i<nelements2-1;i++)
 	{
-		hash_elements[i].next = &hash_elements[i+1];
+		hash_elements[i].next = (POOL_HASH_ELEMENT *)&hash_elements[i+1];
 	}
 	hash_elements[nelements2-1].next = NULL;
-	hash_free = &hash_free_body;
-	hash_free->next = hash_elements;
+	hash_free = hash_elements;
 
 	return 0;
 }
@@ -2935,9 +2944,8 @@ POOL_CACHEID *pool_hash_search(POOL_QUERY_HASH *key)
  */
 static int pool_hash_insert(POOL_QUERY_HASH *key, POOL_CACHEID *cacheid, bool update)
 {
-	volatile POOL_HASH_ELEMENT *element;
-	volatile POOL_HASH_ELEMENT *new_element;
-	volatile POOL_HASH_ELEMENT **insertion_point;
+	POOL_HASH_ELEMENT *element;
+	POOL_HASH_ELEMENT *new_element;
 
 	uint32 hash_key = create_hash_key(key);
 
@@ -2956,9 +2964,8 @@ static int pool_hash_insert(POOL_QUERY_HASH *key, POOL_CACHEID *cacheid, bool up
 	}
 
 	/*
-	 * Look for insert location
+	 * Look for hash key.
 	 */
-	insertion_point = (volatile POOL_HASH_ELEMENT **)&(hash_header->elements[hash_key].element);
 	element = hash_header->elements[hash_key].element;
 
 	while (element)
@@ -2983,22 +2990,24 @@ static int pool_hash_insert(POOL_QUERY_HASH *key, POOL_CACHEID *cacheid, bool up
 				return 0;
 			}
 		}
-		*insertion_point = (volatile POOL_HASH_ELEMENT *)&element->next;
 		element = element->next;
 	}
 
 	/*
-	 * Get new element from free list
+	 * Ok, same key did not exist. Just insert new hash key.
 	 */
-	new_element = get_new_hash_element();
+	new_element = (POOL_HASH_ELEMENT *)get_new_hash_element();
 	if (!new_element)
 	{
 		pool_error("pool_hash_insert: could not get new element");
 		return -1;
 	}
 
-	*insertion_point = new_element;
-	new_element->next = NULL;
+	element = hash_header->elements[hash_key].element;
+
+	hash_header->elements[hash_key].element = new_element;
+	new_element->next = element;
+
 	memcpy((void *)new_element->hashkey.query_hash, key->query_hash, POOL_MD5_HASHKEYLEN);
 	memcpy((void *)&new_element->cacheid, cacheid, sizeof(POOL_CACHEID));
 
@@ -3027,7 +3036,7 @@ int pool_hash_delete(POOL_QUERY_HASH *key)
 	 * Look for delete location
 	 */
 	found = false;
-	delete_point = &(hash_header->elements[hash_key].element);
+	delete_point = (POOL_HASH_ELEMENT **)&(hash_header->elements[hash_key].element);
 	element = hash_header->elements[hash_key].element;
 
 	while (element)
@@ -3081,15 +3090,20 @@ static uint32 create_hash_key(POOL_QUERY_HASH *key)
 /*
  * Get new free hash element from free list.
  */
-static POOL_HASH_ELEMENT *get_new_hash_element(void)
+static volatile POOL_HASH_ELEMENT *get_new_hash_element(void)
 {
-	POOL_HASH_ELEMENT *elm;
+	volatile POOL_HASH_ELEMENT *elm;
 
 	if (!hash_free->next)
 	{
 		/* No free element */
 		return NULL;
 	}
+
+#ifdef POOL_HASH_DEBUG
+	pool_log("get_new_hash_element: hash_free->next:%p hash_free->next->next:%p",
+			 hash_free->next, hash_free->next->next);
+#endif
 
 	elm = hash_free->next;
 	hash_free->next = elm->next;
@@ -3100,11 +3114,16 @@ static POOL_HASH_ELEMENT *get_new_hash_element(void)
 /*
  * Put back hash element to free list.
  */
-static void put_back_hash_element(POOL_HASH_ELEMENT *element)
+static void put_back_hash_element(volatile POOL_HASH_ELEMENT *element)
 {
 	POOL_HASH_ELEMENT *elm;
 
+#ifdef POOL_HASH_DEBUG
+	pool_log("put_back_hash_element: hash_free->next:%p hash_free->next->next:%p",
+			 hash_free->next, hash_free->next->next);
+#endif
+
 	elm = hash_free->next;
-	hash_free->next = element;
+	hash_free->next = (POOL_HASH_ELEMENT *)element;
 	element->next = elm;
 }
