@@ -995,7 +995,7 @@ static void pool_add_table_oid_map(POOL_CACHEKEY *cachekey, int num_table_oids, 
 	{
 		if (errno != EEXIST)
 		{
-			pool_error("pool_add_table_oid_map: failed to create %s", dir);
+			pool_error("pool_add_table_oid_map: failed to create %s. Reason:%s", dir, strerror(errno));
 			return;
 		}
 	}
@@ -1056,6 +1056,7 @@ static void pool_add_table_oid_map(POOL_CACHEKEY *cachekey, int num_table_oids, 
 			return;
 		}
 
+#ifdef NOT_USED
 		for (;;)
 		{
 			sts = read(fd, (char *)&buf, len);
@@ -1086,6 +1087,15 @@ static void pool_add_table_oid_map(POOL_CACHEKEY *cachekey, int num_table_oids, 
 				return;
 			}
 			break;
+		}
+#endif
+
+		if (lseek(fd, 0, SEEK_END) == -1)
+		{
+			pool_error("pool_add_table_oid_map: failed to lseek %s. reason:%s",
+					   path, strerror(errno));
+			close(fd);
+			return;
 		}
 
 		/*
