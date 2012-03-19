@@ -1383,10 +1383,10 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		pool_unset_query_in_progress();
 	}
 
-	if (!pool_is_doing_extended_query_message())
+	if (session_context->query_context && !pool_is_doing_extended_query_message())
 	{
 		if (!(node && IsA(node, PrepareStmt)))
-			pool_query_context_destroy(pool_get_session_context()->query_context);
+			pool_query_context_destroy(session_context->query_context);
 	}
 
 	sp = MASTER_CONNECTION(backend)->sp;
