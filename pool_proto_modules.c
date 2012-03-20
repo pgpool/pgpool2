@@ -1450,7 +1450,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 
 			TSTATE(backend, i) = kind;
 
-			pool_debug("ReadyForQuery: transaction state:%c", state);
+			pool_debug("ReadyForQuery: transaction state:%c", kind);
 
 			/*
 			 * The transaction state to be returned to frontend is
