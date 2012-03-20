@@ -709,8 +709,6 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			return POOL_END;
 		}
 
-		session_context->uncompleted_message = msg;
-
 		/*
 		 * Decide where to send query
 		 */
@@ -822,6 +820,12 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			}
 		}
 	}
+
+	/*
+	 * need to set uncompleted_message after calling ReadyForQuery(),
+	 * because the function destroys query context of uncompleted_message.
+	 */
+	session_context->uncompleted_message = msg;
 
 	/*
 	 * Cannot call free_parser() here. Since "string" might be allocated in parser context.
