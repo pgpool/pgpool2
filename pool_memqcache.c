@@ -694,7 +694,7 @@ bool pool_is_allow_to_cache(Node *node, char *query)
  */
 bool pool_is_table_to_cache(const char *table_name)
 {
-	// Cache in case of the table in white list
+	/* Cache in case of the table in white list */
 	if (pool_config->num_white_memqcache_table_list > 0)
 	{
 		if (pattern_compare((char *)table_name, WHITELIST, "white_memqcache_table_list") == 1)
@@ -703,7 +703,7 @@ bool pool_is_table_to_cache(const char *table_name)
 			return false;
 	}
 
-	// No cache in case of the table in black list
+	/* No cache in case of the table in black list */
 	else if (pool_config->num_black_memqcache_table_list > 0)
 	{
 		if (pattern_compare((char *)table_name, BLACKLIST, "black_memqcache_table_list") == 1)
@@ -712,7 +712,7 @@ bool pool_is_table_to_cache(const char *table_name)
 			return true;
 	}
 
-	// No cache otherwise
+	/* No cache otherwise */
 	pool_error("pool_is_table_to_cache: unknown case");
 	return false;
 }
@@ -984,7 +984,6 @@ static void pool_add_table_oid_map(POOL_CACHEKEY *cachekey, int num_table_oids, 
 	char path[1024];
 	int i;
 	int len;
-	POOL_CACHEKEY buf;
 
 	/*
 	 * Create memqcache_oiddir
@@ -2922,7 +2921,7 @@ POOL_CACHEID *pool_hash_search(POOL_QUERY_HASH *key)
 		char md5[POOL_MD5_HASHKEYLEN+1];
 		memcpy(md5, key->query_hash, POOL_MD5_HASHKEYLEN);
 		md5[POOL_MD5_HASHKEYLEN] = '\0';
-#if 0
+#ifdef POOL_HASH_DEBUG
 		pool_log("pool_hash_search: hash_key:%d md5:%s", hash_key, md5);
 #endif
 	}
@@ -2934,7 +2933,9 @@ POOL_CACHEID *pool_hash_search(POOL_QUERY_HASH *key)
 			char md5[POOL_MD5_HASHKEYLEN+1];
 			memcpy(md5, key->query_hash, POOL_MD5_HASHKEYLEN);
 			md5[POOL_MD5_HASHKEYLEN] = '\0';
+#ifdef POOL_HASH_DEBUG
 			pool_log("pool_hash_search: element md5:%s", md5);
+#endif
 		}
 
 		if (memcmp((const void *)element->hashkey.query_hash,
@@ -2970,7 +2971,9 @@ static int pool_hash_insert(POOL_QUERY_HASH *key, POOL_CACHEID *cacheid, bool up
 		char md5[POOL_MD5_HASHKEYLEN+1];
 		memcpy(md5, key->query_hash, POOL_MD5_HASHKEYLEN);
 		md5[POOL_MD5_HASHKEYLEN] = '\0';
+#ifdef POOL_HASH_DEBUG
 		pool_log("pool_hash_insert: hash_key:%d md5:%s block:%d item:%d", hash_key, md5, cacheid->blockid, cacheid->itemid);
+#endif
 	}
 
 	/*
