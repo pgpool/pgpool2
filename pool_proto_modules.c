@@ -823,8 +823,6 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			return POOL_END;
 		}
 
-		session_context->uncompleted_message = msg;
-
 		/*
 		 * Decide where to send query
 		 */
@@ -937,6 +935,12 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			}
 		}
 	}
+
+	/*
+	 * need to set uncompleted_message after calling ReadyForQuery(),
+	 * because the function destroys query context of uncompleted_message.
+	 */
+	session_context->uncompleted_message = msg;
 
 	/*
 	 * Cannot call free_parser() here. Since "string" might be allocated in parser context.
@@ -1446,7 +1450,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 
 			TSTATE(backend, i) = kind;
 
-			pool_debug("ReadyForQuery: transaction state:%c", state);
+			pool_debug("ReadyForQuery: transaction state:%c", kind);
 
 			/*
 			 * The transaction state to be returned to frontend is
@@ -1550,10 +1554,10 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		pool_unset_query_in_progress();
 	}
 
-	if (!pool_is_doing_extended_query_message())
+	if (session_context->query_context && !pool_is_doing_extended_query_message())
 	{
 		if (!(node && IsA(node, PrepareStmt)))
-			pool_query_context_destroy(pool_get_session_context()->query_context);
+			pool_query_context_destroy(session_context->query_context);
 	}
 
 	sp = MASTER_CONNECTION(backend)->sp;
