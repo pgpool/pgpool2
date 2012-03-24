@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1951,7 +1951,7 @@ static void init_system_db_connection(void)
 }
 
 /*
- * Initialize my backend status.
+ * Initialize my backend status and master node id.
  * We copy the backend status to private area so that
  * they are not changed while I am alive.
  */
@@ -1967,4 +1967,6 @@ void pool_initialize_private_backend_status(void)
 		/* my_backend_status is referred to by VALID_BACKEND macro. */
 		my_backend_status[i] = &private_backend_status[i];
 	}
+
+	my_master_node_id = REAL_MASTER_NODE_ID;
 }

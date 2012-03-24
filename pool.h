@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -267,6 +267,7 @@ typedef struct {
 extern bool pool_is_node_to_be_sent_in_current_query(int node_id);
 extern int pool_virtual_master_db_node_id(void);
 extern BACKEND_STATUS* my_backend_status[];
+extern int my_master_node_id;
 
 #define VALID_BACKEND(backend_id) \
 	((RAW_MODE && (backend_id) == REAL_MASTER_NODE_ID) ||		\

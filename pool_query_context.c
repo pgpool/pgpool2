@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -98,7 +98,7 @@ void pool_start_query(POOL_QUERY_CONTEXT *query_context, char *query, int len, N
 		query_context->original_query = query;
 		query_context->rewritten_query = NULL;
 		query_context->parse_tree = node;
-		query_context->virtual_master_node_id = REAL_MASTER_NODE_ID;
+		query_context->virtual_master_node_id = my_master_node_id;
 		pool_set_query_in_progress();
 		session_context->query_context = query_context;
 	}
@@ -177,8 +177,8 @@ void pool_setall_node_to_be_sent(POOL_QUERY_CONTEXT *query_context)
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
-		if ((BACKEND_INFO(i)).backend_status == CON_UP ||
-			(BACKEND_INFO((i)).backend_status == CON_CONNECT_WAIT))
+		if (private_backend_status[i] == CON_UP ||
+			(private_backend_status[i] == CON_CONNECT_WAIT))
 			query_context->where_to_send[i] = true;
 	}
 	return;
@@ -273,7 +273,11 @@ int pool_virtual_master_db_node_id(void)
 	{
 		return sc->query_context->virtual_master_node_id;
 	}
-	return REAL_MASTER_NODE_ID;
+
+	/*
+	 * No query context exists. Returns master node id in private buffer.
+	 */
+	return my_master_node_id;
 }
 
 /*
