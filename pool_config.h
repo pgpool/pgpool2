@@ -27,6 +27,11 @@
 #define POOL_CONFIG_H
 
 /*
+ * watchdog
+ */
+#include "watchdog/watchdog.h"
+
+/*
  * Master/slave sub mode
  */
 #define MODE_STREAMREP "stream"		/* Streaming Replication */
@@ -205,6 +210,20 @@ typedef struct {
 	RegPattern *lists_memqcache_table_patterns; /* Precompiled regex patterns for black/white lists */
 	int memqcache_table_pattc; /* number of regexp pattern */
 	int current_memqcache_table_pattern_size; /* size of the regex pattern array */
+
+	/*
+	 * add for watchdog
+	 */
+	int wd_port;				/* watchdog port */
+	WdDesc * other_wd; /* watchdog lists */ 
+	char * trusted_servers;	/* icmp reachable server list (A,B,C) */
+	char * delegate_IP;		/* delegate IP address */
+	int  wd_interval;		/* lifecheck interval (sec) */
+	char * ping_path;		/* path to ping command */
+	char * ifconfig_path;	/* path to ifconfig command */
+	char * if_up_cmd;		/* ifup command */
+	char * if_down_cmd;		/* ifdown command */
+	int  wd_life_point;		/* life point (retry times at lifecheck) */
 } POOL_CONFIG;
 
 typedef enum {

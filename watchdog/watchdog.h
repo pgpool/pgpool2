@@ -51,7 +51,9 @@ typedef enum {
 	WD_MASTER_EXIST,		/* disagree to the candidacy */
 	WD_DECLARE_NEW_MASTER,	/* announce assumption */
 	WD_SERVER_DOWN,			/* announce server down */
-	WD_READY				/* answer to the announce */
+	WD_READY,				/* answer to the announce */
+	WD_START_RECOVERY,		/* announce start online recovery */
+	WD_END_RECOVERY			/* announce end online recovery */
 } WD_PACKET_NO;
 
 /*

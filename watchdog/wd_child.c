@@ -30,11 +30,12 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include "pool.h"
 #include "watchdog.h"
 #include "wd_ext.h"
 
 int wd_child(int fork_wait_time);
-static void child_exit(int exit_signo);
+static void wd_child_exit(int exit_signo);
 static int send_response(int sock, WdPacket * recv_pack);
 
 int
@@ -53,10 +54,10 @@ wd_child(int fork_wait_time)
 		return WD_OK;
 	}
 
-	signal(SIGTERM, child_exit);
-	signal(SIGINT, child_exit);
-	signal(SIGQUIT, child_exit);
-	signal(SIGCHLD, child_exit);
+	signal(SIGTERM, wd_child_exit);
+	signal(SIGINT, wd_child_exit);
+	signal(SIGQUIT, wd_child_exit);
+	signal(SIGCHLD, wd_child_exit);
 	signal(SIGHUP, SIG_IGN);
 	signal(SIGUSR1, SIG_IGN);
 	signal(SIGUSR2, SIG_IGN);
@@ -71,13 +72,13 @@ wd_child(int fork_wait_time)
 	if (WD_List == NULL)
 	{
 		/* memory allocate is not ready */
-		child_exit(15);
+		wd_child_exit(15);
 	}
 	sock = wd_create_recv_socket(WD_List->wd_port);
 	if (sock < 0)
 	{
 		/* socket create failed */
-		child_exit(15);
+		wd_child_exit(15);
 	}
 	/* child loop */
 	for(;;)
@@ -98,7 +99,7 @@ wd_child(int fork_wait_time)
 }
 
 static void
-child_exit(int exit_signo)
+wd_child_exit(int exit_signo)
 {
 	sigset_t mask;
 
@@ -186,6 +187,18 @@ send_response(int sock, WdPacket * recv_pack)
 			{
 				wd_escalation();
 			}
+			break;
+		case WD_START_RECOVERY:
+			p = &(recv_pack->wd_info);	
+			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, &(p->tv), WD_DOWN);
+			send_packet.packet_no = WD_READY;
+			*InRecovery = RECOVERY_ONLINE;
+			break;
+		case WD_END_RECOVERY:
+			p = &(recv_pack->wd_info);	
+			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, &(p->tv), WD_DOWN);
+			send_packet.packet_no = WD_READY;
+			*InRecovery = RECOVERY_INIT;
 			break;
 		default:
 			send_packet.packet_no = WD_INVALID;

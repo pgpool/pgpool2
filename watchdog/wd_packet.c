@@ -54,6 +54,9 @@ int wd_accept(int sock);
 int wd_send_packet(int sock, WdPacket * snd_pack);
 int wd_recv_packet(int sock, WdPacket * buf);
 int wd_escalation(void);
+int wd_start_recovery(void);
+int wd_end_recovery(void);
+static int wd_send_packet_no(WD_PACKET_NO packet_no );
 static void * wd_negotiation(void * arg);
 static int send_packet_4_all(WdPacket *packet);
 static int hton_wd_packet(WdPacket * to, WdPacket * from);
@@ -63,13 +66,9 @@ int
 wd_startup(void)
 {
 	int rtn;
-	WdPacket packet;
 
-	/* set add request packet */
-	packet.packet_no = WD_ADD_REQ;
-	memcpy(&(packet.wd_info),WD_List,sizeof(WdInfo));
-	/* send packet to all watchdogs */	
-	rtn = send_packet_4_all(&packet);
+	/* send add request packet */
+	rtn = wd_send_packet_no(WD_ADD_REQ);
 	return rtn;
 }
 
@@ -77,13 +76,9 @@ int
 wd_declare(void)
 {
 	int rtn;
-	WdPacket packet;
 
-	/* set declare new master packet */
-	packet.packet_no = WD_DECLARE_NEW_MASTER;
-	memcpy(&(packet.wd_info),WD_List,sizeof(WdInfo));
-	/* send packet to all watchdogs */	
-	rtn = send_packet_4_all(&packet);
+	/* send declare new master packet */
+	rtn = wd_send_packet_no(WD_DECLARE_NEW_MASTER);
 	return rtn;
 }
 
@@ -91,13 +86,9 @@ int
 wd_stand_for_master(void)
 {
 	int rtn;
-	WdPacket packet;
 
-	/* set staqnd for master packet */
-	packet.packet_no = WD_STAND_FOR_MASTER;
-	memcpy(&(packet.wd_info),WD_List,sizeof(WdInfo));
-	/* send packet to all watchdogs */	
-	rtn = send_packet_4_all(&packet);
+	/* send staqnd for master packet */
+	rtn = wd_send_packet_no(WD_STAND_FOR_MASTER);
 	return rtn;
 }
 
@@ -105,11 +96,21 @@ int
 wd_notice_server_down(void)
 {
 	int rtn;
-	WdPacket packet;
 
 	wd_IP_down();
-	/* set notice server down packet */
-	packet.packet_no = WD_SERVER_DOWN;
+	/* send notice server down packet */
+	rtn = wd_send_packet_no(WD_SERVER_DOWN);
+	return rtn;
+}
+
+static int
+wd_send_packet_no(WD_PACKET_NO packet_no )
+{
+	int rtn;
+	WdPacket packet;
+
+	/* set add request packet */
+	packet.packet_no = packet_no;
 	memcpy(&(packet.wd_info),WD_List,sizeof(WdInfo));
 	/* send packet to all watchdogs */	
 	rtn = send_packet_4_all(&packet);
@@ -408,13 +409,11 @@ wd_send_packet(int sock, WdPacket * snd_pack)
 int
 wd_recv_packet(int sock, WdPacket * recv_pack)
 {
-	int cnt = 0;
 	int r = 0;
 	WdPacket buf;
 	char * read_ptr = (char *)&buf;
 	int read_size = 0;
 	int len = sizeof(WdPacket);
-	cnt = 0;
 
 	memset(&buf,0,sizeof(WdPacket));
 	for (;;)
@@ -628,3 +627,24 @@ wd_escalation(void)
 
 	return rtn;
 }
+
+int
+wd_start_recovery(void)
+{
+	int rtn;
+
+	/* send staqnd for master packet */
+	rtn = wd_send_packet_no(WD_START_RECOVERY);
+	return rtn;
+}
+
+int
+wd_end_recovery(void)
+{
+	int rtn;
+
+	/* send staqnd for master packet */
+	rtn = wd_send_packet_no(WD_END_RECOVERY);
+	return rtn;
+}
+

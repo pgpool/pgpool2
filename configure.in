@@ -402,4 +402,4 @@ AC_MSG_RESULT([$enable_table_lock])
 
 AM_CONFIG_HEADER(config.h)
 
-AC_OUTPUT([Makefile parser/Makefile pcp/Makefile])
+AC_OUTPUT([Makefile parser/Makefile pcp/Makefile watchdog/Makefile])

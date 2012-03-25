@@ -60,7 +60,7 @@
 #include "parser/pool_string.h"
 #include "pool_passwd.h"
 #include "pool_memqcache.h"
-
+#include "watchdog/wd_ext.h"
 /*
  * Process pending signal actions.
  */
@@ -413,6 +413,9 @@ int main(int argc, char **argv)
 	/* set signal masks */
 	poolinitmask();
 
+	/* start watchdog */
+	wd_main(1);
+
 	if (not_detach)
 		write_pid_file();
 	else
@@ -539,7 +542,7 @@ int main(int argc, char **argv)
 		pool_error("failed to allocate InRecovery");
 		myexit(1);
 	}
-	*InRecovery = 0;
+	*InRecovery = RECOVERY_INIT;
 
 	/*
 	 * Initialize shared memory cache
@@ -1715,7 +1718,7 @@ static void failover(void)
 #ifdef NOT_USED
 	else
 	{
-		if (Req_info->master_node_id == new_master && *InRecovery == 0)
+		if (Req_info->master_node_id == new_master && *InRecovery == RECOVERY_INIT)
 		{
 			pool_log("failover_handler: do not restart pgpool. same master node %d was selected", new_master);
 			if (Req_info->kind == NODE_UP_REQUEST)
