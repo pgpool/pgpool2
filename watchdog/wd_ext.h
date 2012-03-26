@@ -6,7 +6,11 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
+<<<<<<< HEAD
  * Copyright (c) 2003-2012	PgPool Global Development Group
+=======
+ * Copyright (c) 2003-2011	PgPool Global Development Group
+>>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -25,7 +29,10 @@
 
 #ifndef WD_EXT_H
 #define WD_EXT_H
+<<<<<<< HEAD
 
+=======
+>>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
 /* watchdog.c */
 extern int wd_main(int fork_wait_time);
 
@@ -54,8 +61,11 @@ extern int wd_accept(int sock);
 extern int wd_send_packet(int sock, WdPacket * snd_pack);
 extern int wd_recv_packet(int sock, WdPacket * buf);
 extern int wd_escalation(void);
+<<<<<<< HEAD
 extern int wd_start_recovery(void);
 extern int wd_end_recovery(void);
+=======
+>>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
 
 /* wd_ping.c */
 extern int wd_is_upper_ok(char * server_list);

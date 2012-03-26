@@ -6,7 +6,11 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
+<<<<<<< HEAD
  * Copyright (c) 2003-2012	PgPool Global Development Group
+=======
+ * Copyright (c) 2003-2011	PgPool Global Development Group
+>>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -54,9 +58,12 @@ int wd_accept(int sock);
 int wd_send_packet(int sock, WdPacket * snd_pack);
 int wd_recv_packet(int sock, WdPacket * buf);
 int wd_escalation(void);
+<<<<<<< HEAD
 int wd_start_recovery(void);
 int wd_end_recovery(void);
 static int wd_send_packet_no(WD_PACKET_NO packet_no );
+=======
+>>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
 static void * wd_negotiation(void * arg);
 static int send_packet_4_all(WdPacket *packet);
 static int hton_wd_packet(WdPacket * to, WdPacket * from);
@@ -66,9 +73,19 @@ int
 wd_startup(void)
 {
 	int rtn;
+<<<<<<< HEAD
 
 	/* send add request packet */
 	rtn = wd_send_packet_no(WD_ADD_REQ);
+=======
+	WdPacket packet;
+
+	/* set add request packet */
+	packet.packet_no = WD_ADD_REQ;
+	memcpy(&(packet.wd_info),WD_List,sizeof(WdInfo));
+	/* send packet to all watchdogs */	
+	rtn = send_packet_4_all(&packet);
+>>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
 	return rtn;
 }
 
@@ -76,9 +93,19 @@ int
 wd_declare(void)
 {
 	int rtn;
+<<<<<<< HEAD
 
 	/* send declare new master packet */
 	rtn = wd_send_packet_no(WD_DECLARE_NEW_MASTER);
+=======
+	WdPacket packet;
+
+	/* set declare new master packet */
+	packet.packet_no = WD_DECLARE_NEW_MASTER;
+	memcpy(&(packet.wd_info),WD_List,sizeof(WdInfo));
+	/* send packet to all watchdogs */	
+	rtn = send_packet_4_all(&packet);
+>>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
 	return rtn;
 }
 
@@ -86,9 +113,19 @@ int
 wd_stand_for_master(void)
 {
 	int rtn;
+<<<<<<< HEAD
 
 	/* send staqnd for master packet */
 	rtn = wd_send_packet_no(WD_STAND_FOR_MASTER);
+=======
+	WdPacket packet;
+
+	/* set staqnd for master packet */
+	packet.packet_no = WD_STAND_FOR_MASTER;
+	memcpy(&(packet.wd_info),WD_List,sizeof(WdInfo));
+	/* send packet to all watchdogs */	
+	rtn = send_packet_4_all(&packet);
+>>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
 	return rtn;
 }
 
@@ -96,6 +133,7 @@ int
 wd_notice_server_down(void)
 {
 	int rtn;
+<<<<<<< HEAD
 
 	wd_IP_down();
 	/* send notice server down packet */
@@ -111,6 +149,13 @@ wd_send_packet_no(WD_PACKET_NO packet_no )
 
 	/* set add request packet */
 	packet.packet_no = packet_no;
+=======
+	WdPacket packet;
+
+	wd_IP_down();
+	/* set notice server down packet */
+	packet.packet_no = WD_SERVER_DOWN;
+>>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
 	memcpy(&(packet.wd_info),WD_List,sizeof(WdInfo));
 	/* send packet to all watchdogs */	
 	rtn = send_packet_4_all(&packet);
@@ -409,11 +454,19 @@ wd_send_packet(int sock, WdPacket * snd_pack)
 int
 wd_recv_packet(int sock, WdPacket * recv_pack)
 {
+<<<<<<< HEAD
+=======
+	int cnt = 0;
+>>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
 	int r = 0;
 	WdPacket buf;
 	char * read_ptr = (char *)&buf;
 	int read_size = 0;
 	int len = sizeof(WdPacket);
+<<<<<<< HEAD
+=======
+	cnt = 0;
+>>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
 
 	memset(&buf,0,sizeof(WdPacket));
 	for (;;)
@@ -627,6 +680,7 @@ wd_escalation(void)
 
 	return rtn;
 }
+<<<<<<< HEAD
 
 int
 wd_start_recovery(void)
@@ -648,3 +702,5 @@ wd_end_recovery(void)
 	return rtn;
 }
 
+=======
+>>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
