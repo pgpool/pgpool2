@@ -5,11 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
-<<<<<<< HEAD
  * Copyright (c) 2003-2012	PgPool Global Development Group
-=======
- * Copyright (c) 2003-2011	PgPool Global Development Group
->>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -34,19 +30,12 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/time.h>
-<<<<<<< HEAD
 #include "pool.h"
-=======
->>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
 #include "watchdog.h"
 #include "wd_ext.h"
 
 int wd_child(int fork_wait_time);
-<<<<<<< HEAD
 static void wd_child_exit(int exit_signo);
-=======
-static void child_exit(int exit_signo);
->>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
 static int send_response(int sock, WdPacket * recv_pack);
 
 int
@@ -65,17 +54,10 @@ wd_child(int fork_wait_time)
 		return WD_OK;
 	}
 
-<<<<<<< HEAD
 	signal(SIGTERM, wd_child_exit);
 	signal(SIGINT, wd_child_exit);
 	signal(SIGQUIT, wd_child_exit);
 	signal(SIGCHLD, wd_child_exit);
-=======
-	signal(SIGTERM, child_exit);
-	signal(SIGINT, child_exit);
-	signal(SIGQUIT, child_exit);
-	signal(SIGCHLD, child_exit);
->>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
 	signal(SIGHUP, SIG_IGN);
 	signal(SIGUSR1, SIG_IGN);
 	signal(SIGUSR2, SIG_IGN);
@@ -90,21 +72,13 @@ wd_child(int fork_wait_time)
 	if (WD_List == NULL)
 	{
 		/* memory allocate is not ready */
-<<<<<<< HEAD
 		wd_child_exit(15);
-=======
-		child_exit(15);
->>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
 	}
 	sock = wd_create_recv_socket(WD_List->wd_port);
 	if (sock < 0)
 	{
 		/* socket create failed */
-<<<<<<< HEAD
 		wd_child_exit(15);
-=======
-		child_exit(15);
->>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
 	}
 	/* child loop */
 	for(;;)
@@ -125,11 +99,7 @@ wd_child(int fork_wait_time)
 }
 
 static void
-<<<<<<< HEAD
 wd_child_exit(int exit_signo)
-=======
-child_exit(int exit_signo)
->>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
 {
 	sigset_t mask;
 
@@ -218,7 +188,6 @@ send_response(int sock, WdPacket * recv_pack)
 				wd_escalation();
 			}
 			break;
-<<<<<<< HEAD
 		case WD_START_RECOVERY:
 			p = &(recv_pack->wd_info);	
 			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, &(p->tv), WD_DOWN);
@@ -232,9 +201,6 @@ send_response(int sock, WdPacket * recv_pack)
 			*InRecovery = RECOVERY_INIT;
 			break;
 		default:
-=======
-		defalt:
->>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
 			send_packet.packet_no = WD_INVALID;
 			memcpy(&(send_packet.wd_info), WD_List, sizeof(WdInfo));
 			break;

@@ -6,11 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
-<<<<<<< HEAD
  * Copyright (c) 2003-2012	PgPool Global Development Group
-=======
- * Copyright (c) 2003-2011	PgPool Global Development Group
->>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -46,10 +42,7 @@ WdInfo * WD_List = NULL;		/* watchdog server list */
 int wd_main(int fork_wait_time);
 static void child_wait(int signo);
 static void wd_exit(int exit_status);
-<<<<<<< HEAD
 static int wd_check_config(void);
-=======
->>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
 
 static void
 child_wait(int signo)
@@ -83,7 +76,6 @@ wd_exit(int exit_signo)
 	exit(0);
 }
 
-<<<<<<< HEAD
 static int
 wd_check_config(void)
 {
@@ -106,8 +98,6 @@ wd_check_config(void)
 	
 }
 
-=======
->>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
 int
 wd_main(int fork_wait_time)
 {
@@ -115,7 +105,6 @@ wd_main(int fork_wait_time)
 	pid_t pgid = 0;
 	pid_t pid = 0;
 
-<<<<<<< HEAD
 	/* check pool_config data */
 	status = wd_check_config();
 	if (status < 0)
@@ -123,8 +112,6 @@ wd_main(int fork_wait_time)
 		return WD_NG;
 	}
 
-=======
->>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
 	/* initialize */
 	status = wd_init();
 	if (status < 0)

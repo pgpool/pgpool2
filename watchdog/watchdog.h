@@ -6,11 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
-<<<<<<< HEAD
  * Copyright (c) 2003-2012	PgPool Global Development Group
-=======
- * Copyright (c) 2003-2011	PgPool Global Development Group
->>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -55,13 +51,9 @@ typedef enum {
 	WD_MASTER_EXIST,		/* disagree to the candidacy */
 	WD_DECLARE_NEW_MASTER,	/* announce assumption */
 	WD_SERVER_DOWN,			/* announce server down */
-<<<<<<< HEAD
 	WD_READY,				/* answer to the announce */
 	WD_START_RECOVERY,		/* announce start online recovery */
 	WD_END_RECOVERY			/* announce end online recovery */
-=======
-	WD_READY				/* answer to the announce */
->>>>>>> 5fb22fa044700b511711f8808d2988c2147ff331
 } WD_PACKET_NO;
 
 /*
