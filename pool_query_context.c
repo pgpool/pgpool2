@@ -328,6 +328,27 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	{
 		pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
 	}
+	else if (MASTER_SLAVE && query_context->is_multi_statement)
+	{
+		/*
+		 * If we are in master/slave mode and we have multi stametemt
+		 * query, we should send it to primary server only. Otherwise
+		 * it is possible to send a write query to standby servers
+		 * because we only use the first element of the multi
+		 * statement query and don't care about the rest.  Typical
+		 * situation where we are bugged by this is, "BEGIN;DELETE
+		 * FROM table;END". Note that from pgpool-II 3.1.0
+		 * transactional statements such as "BEGIN" is unconditionaly
+		 * sent to all nodes(see send_to_where() for more details).
+		 * Someday we might be able to understand all part of multi
+		 * statement queries, but until that day we need this band
+		 * aid.
+		 */
+		if (query_context->is_multi_statement)
+		{
+			pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
+		}
+	}
 	else if (MASTER_SLAVE)
 	{
 		POOL_DEST dest;

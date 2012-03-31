@@ -54,6 +54,7 @@ typedef struct {
 	int  virtual_master_node_id;	   		/* the 1st DB node to send query */
 	POOL_MEMORY_POOL *memory_context;		/* memory context for query */
 	POOL_QUERY_STATE query_state[MAX_NUM_BACKENDS];	/* for extended query protocol */
+	bool is_multi_statement;	/* true if multi statement query */
 } POOL_QUERY_CONTEXT;
 
 extern POOL_QUERY_CONTEXT *pool_init_query_context(void);
