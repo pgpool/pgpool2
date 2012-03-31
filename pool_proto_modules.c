@@ -249,6 +249,18 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		 */
 		pool_start_query(query_context, contents, len, node);
 
+		/*
+		 * Check if multi statement query
+		 */
+		if (parse_tree_list && list_length(parse_tree_list) > 1)
+		{
+			query_context->is_multi_statement = true;
+		}
+		else
+		{
+			query_context->is_multi_statement = false;
+		}
+
 		if (PARALLEL_MODE)
 		{
 			bool parallel = true;
