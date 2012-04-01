@@ -61,6 +61,10 @@ static void * wd_negotiation(void * arg);
 static int send_packet_4_all(WdPacket *packet);
 static int hton_wd_packet(WdPacket * to, WdPacket * from);
 static int ntoh_wd_packet(WdPacket * to, WdPacket * from);
+static int hton_wd_node_packet(WdPacket * to, WdPacket * from);
+static int ntoh_wd_node_packet(WdPacket * to, WdPacket * from);
+static int wd_send_node_packet(WD_PACKET_NO packet_no, int *node_id_set, int count);
+static int wd_chk_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count);
 
 int
 wd_startup(void)
@@ -109,9 +113,10 @@ wd_send_packet_no(WD_PACKET_NO packet_no )
 	int rtn;
 	WdPacket packet;
 
+	memset(&packet, 0, sizeof(WdPacket));
 	/* set add request packet */
 	packet.packet_no = packet_no;
-	memcpy(&(packet.wd_info),WD_List,sizeof(WdInfo));
+	memcpy(&(packet.wd_body.wd_info),WD_List,sizeof(WdInfo));
 	/* send packet to all watchdogs */	
 	rtn = send_packet_4_all(&packet);
 	return rtn;
@@ -354,7 +359,15 @@ wd_send_packet(int sock, WdPacket * snd_pack)
 	WdPacket buf;
 
 	memset(&buf,0,sizeof(WdPacket));
-	hton_wd_packet((WdPacket *)&buf,snd_pack);
+	if ((snd_pack->packet_no >= WD_INVALID) &&
+		(snd_pack->packet_no <= WD_READY ))
+	{
+		hton_wd_packet((WdPacket *)&buf,snd_pack);
+	}
+	else
+	{
+		hton_wd_node_packet((WdPacket *)&buf,snd_pack);
+	}
 	send_ptr = (char*)&buf;
 	buf_size = sizeof(WdPacket);
 
@@ -433,7 +446,16 @@ wd_recv_packet(int sock, WdPacket * recv_pack)
 			read_size += r;
 			if (read_size == len)
 			{
-				ntoh_wd_packet(recv_pack,&buf);
+				
+				if ((ntohl(buf.packet_no) >= WD_INVALID) &&
+					(ntohl(buf.packet_no) <= WD_READY ))
+				{
+					ntoh_wd_packet(recv_pack,&buf);
+				}
+				else
+				{
+					ntoh_wd_node_packet(recv_pack,&buf);
+				}
 				return WD_OK;
 			}
 		}
@@ -479,7 +501,7 @@ wd_negotiation(void * arg)
 		case WD_ADD_REQ:
 			if (recv_packet.packet_no == WD_ADD_ACCEPT)
 			{
-				memcpy(thread_arg->target, &(recv_packet.wd_info),sizeof(WdInfo));
+				memcpy(thread_arg->target, &(recv_packet.wd_body.wd_info),sizeof(WdInfo));
 			}
 			else
 			{
@@ -489,7 +511,7 @@ wd_negotiation(void * arg)
 		case WD_STAND_FOR_MASTER:
 			if (recv_packet.packet_no == WD_MASTER_EXIST)
 			{
-				p = &(recv_packet.wd_info);
+				p = &(recv_packet.wd_body.wd_info);
 				wd_set_wd_info(p);
 				rtn = WD_NG;
 			}
@@ -581,34 +603,85 @@ send_packet_4_all(WdPacket *packet)
 static int
 hton_wd_packet(WdPacket * to, WdPacket * from)
 {
+	WdInfo * to_info = NULL;
+	WdInfo * from_info = NULL;
 	if ((to == NULL) || (from == NULL))
 	{
 		return WD_NG;
 	}
+	to_info = &(to->wd_body.wd_info);
+	from_info = &(from->wd_body.wd_info);
 	to->packet_no = htonl(from->packet_no);
-	to->wd_info.status = htonl(from->wd_info.status);
-	to->wd_info.tv.tv_sec = htonl(from->wd_info.tv.tv_sec);
-	to->wd_info.tv.tv_usec = htonl(from->wd_info.tv.tv_usec);
-	to->wd_info.pgpool_port = htonl(from->wd_info.pgpool_port);
-	to->wd_info.wd_port = htonl(from->wd_info.wd_port);
-	memcpy(to->wd_info.hostname,from->wd_info.hostname,sizeof(to->wd_info.hostname));
+	to_info->status = htonl(from_info->status);
+	to_info->tv.tv_sec = htonl(from_info->tv.tv_sec);
+	to_info->tv.tv_usec = htonl(from_info->tv.tv_usec);
+	to_info->pgpool_port = htonl(from_info->pgpool_port);
+	to_info->wd_port = htonl(from_info->wd_port);
+	memcpy(to_info->hostname,from_info->hostname,sizeof(to_info->hostname));
 	return WD_OK;
 }
 
 static int
 ntoh_wd_packet(WdPacket * to, WdPacket * from)
 {
+	WdInfo * to_info = NULL;
+	WdInfo * from_info = NULL;
 	if ((to == NULL) || (from == NULL))
 	{
 		return WD_NG;
 	}
+	to_info = &(to->wd_body.wd_info);
+	from_info = &(from->wd_body.wd_info);
 	to->packet_no = ntohl(from->packet_no);
-	to->wd_info.status = ntohl(from->wd_info.status);
-	to->wd_info.tv.tv_sec = ntohl(from->wd_info.tv.tv_sec);
-	to->wd_info.tv.tv_usec = ntohl(from->wd_info.tv.tv_usec);
-	to->wd_info.pgpool_port = ntohl(from->wd_info.pgpool_port);
-	to->wd_info.wd_port = ntohl(from->wd_info.wd_port);
-	memcpy(to->wd_info.hostname,from->wd_info.hostname,sizeof(to->wd_info.hostname));
+	to_info->status = ntohl(from_info->status);
+	to_info->tv.tv_sec = ntohl(from_info->tv.tv_sec);
+	to_info->tv.tv_usec = ntohl(from_info->tv.tv_usec);
+	to_info->pgpool_port = ntohl(from_info->pgpool_port);
+	to_info->wd_port = ntohl(from_info->wd_port);
+	memcpy(to_info->hostname,from_info->hostname,sizeof(to_info->hostname));
+	return WD_OK;
+}
+
+static int
+hton_wd_node_packet(WdPacket * to, WdPacket * from)
+{
+	WdNodeInfo * to_info = NULL;
+	WdNodeInfo * from_info = NULL;
+	int i;
+	if ((to == NULL) || (from == NULL))
+	{
+		return WD_NG;
+	}
+	to_info = &(to->wd_body.wd_node_info);
+	from_info = &(from->wd_body.wd_node_info);
+	to->packet_no = htonl(from->packet_no);
+	for (i = 0 ; i < to_info->node_num ; i ++)
+	{
+		to_info->node_id_set[i] = htonl(from_info->node_id_set[i]);
+	}
+	to_info->node_num = htonl(from_info->node_num);
+	return WD_OK;
+}
+
+static int
+ntoh_wd_node_packet(WdPacket * to, WdPacket * from)
+{
+
+	WdNodeInfo * to_info = NULL;
+	WdNodeInfo * from_info = NULL;
+	int i;
+	if ((to == NULL) || (from == NULL))
+	{
+		return WD_NG;
+	}
+	to_info = &(to->wd_body.wd_node_info);
+	from_info = &(from->wd_body.wd_node_info);
+	to->packet_no = htonl(from->packet_no);
+	to_info->node_num = ntohl(from_info->node_num);
+	for (i = 0 ; i < to_info->node_num ; i ++)
+	{
+		to_info->node_id_set[i] = ntohl(from_info->node_id_set[i]);
+	}
 	return WD_OK;
 }
 
@@ -633,7 +706,7 @@ wd_start_recovery(void)
 {
 	int rtn;
 
-	/* send staqnd for master packet */
+	/* send start recovery packet */
 	rtn = wd_send_packet_no(WD_START_RECOVERY);
 	return rtn;
 }
@@ -643,8 +716,106 @@ wd_end_recovery(void)
 {
 	int rtn;
 
-	/* send staqnd for master packet */
+	/* send end recovery packet */
 	rtn = wd_send_packet_no(WD_END_RECOVERY);
+	return rtn;
+}
+
+int
+wd_send_failback_request(int node_id)
+{
+	int rtn = 0;
+	int n = node_id;
+
+	if (wd_chk_node_mask(WD_FAILBACK_REQUEST,&n,1))
+	{
+		return rtn;
+	}
+
+	/* send failback packet */
+	rtn = wd_send_node_packet(WD_FAILBACK_REQUEST, &n, 1);
+	return rtn;
+}
+
+int
+wd_degenerate_backend_set(int *node_id_set, int count)
+{
+	int rtn = 0;
+
+	if (wd_chk_node_mask(WD_DEGENERATE_BACKEND,node_id_set,count))
+	{
+		return rtn;
+	}
+	/* send degenerate packet */
+	rtn = wd_send_node_packet(WD_DEGENERATE_BACKEND, node_id_set, count);
+	return rtn;
+}
+
+int
+wd_promote_backend(int node_id)
+{
+	int rtn = 0;
+	int n = node_id;
+
+	if (wd_chk_node_mask(WD_PROMOTE_BACKEND,&n,1))
+	{
+		return rtn;
+	}
+	/* send promote packet */
+	rtn = wd_send_node_packet(WD_PROMOTE_BACKEND, &n, 1);
+	return rtn;
+}
+
+static int
+wd_send_node_packet(WD_PACKET_NO packet_no, int *node_id_set, int count)
+{
+	int rtn = 0;
+	WdPacket packet;
+
+	memset(&packet, 0, sizeof(WdPacket));
+	/* set add request packet */
+	packet.packet_no = packet_no;
+	memcpy(packet.wd_body.wd_node_info.node_id_set,node_id_set,sizeof(int)*count);
+	packet.wd_body.wd_node_info.node_num = count;
+
+	/* send packet to all watchdogs */	
+	rtn = send_packet_4_all(&packet);
+	return rtn;
+}
+
+static int
+wd_chk_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count)
+{
+	int rtn = 0;
+	unsigned char mask = 0;
+	int i;
+	int offset = 0;
+	mask = 1 << (packet_no - WD_START_RECOVERY);
+	for ( i = 0 ; i < count ; i ++)
+	{
+		offset = *(node_id_set+i);
+		if ((*(WD_Node_List + offset) & mask) != 0)
+		{
+			*(WD_Node_List + offset) ^= mask;
+			rtn = 1;
+		}
+	}
+	return rtn;
+}
+
+int
+wd_set_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count)
+{
+	int rtn = 0;
+	unsigned char mask = 0;
+	int i;
+	int offset = 0;
+	mask = 1 << (packet_no - WD_START_RECOVERY);
+	for ( i = 0 ; i < count ; i ++)
+	{
+		offset = *(node_id_set+i);
+		*(WD_Node_List + offset) |= mask;
+	}
 	return rtn;
 }
 

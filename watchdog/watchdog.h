@@ -53,7 +53,11 @@ typedef enum {
 	WD_SERVER_DOWN,			/* announce server down */
 	WD_READY,				/* answer to the announce */
 	WD_START_RECOVERY,		/* announce start online recovery */
-	WD_END_RECOVERY			/* announce end online recovery */
+	WD_END_RECOVERY,		/* announce end online recovery */
+	WD_FAILBACK_REQUEST,	/* announce failback request */
+	WD_DEGENERATE_BACKEND,	/* announce degenerate backend */
+	WD_PROMOTE_BACKEND,		/* announce promote backend */
+	WD_NODE_READY			/* answer to the node announce */
 } WD_PACKET_NO;
 
 /*
@@ -80,6 +84,16 @@ typedef struct {
 }WdInfo;
 
 typedef struct {
+	int node_id_set[MAX_NUM_BACKENDS];	/* node sets */
+	int node_num;						/* node number */
+}WdNodeInfo;
+
+typedef union {
+	WdInfo wd_info;
+	WdNodeInfo wd_node_info;
+} WD_PACKET_BODY;
+
+typedef struct {
 	int num_wd;		/* number of watchdogs */
 	WdInfo wd_info[MAX_WATCHDOG_NUM];
 } WdDesc;
@@ -89,7 +103,7 @@ typedef struct {
  */
 typedef struct {
 	WD_PACKET_NO packet_no;	/* packet number */
-	WdInfo wd_info;			/* watchdog information */
+	WD_PACKET_BODY wd_body;			/* watchdog information */
 } WdPacket;
 
 /*
@@ -110,5 +124,6 @@ typedef struct {
 } WdPgpoolThreadArg;
 
 extern WdInfo * WD_List;
+extern unsigned char * WD_Node_List;
 
 #endif /* WATCHDOG_H */

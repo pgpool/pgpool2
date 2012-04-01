@@ -56,7 +56,10 @@ extern int wd_recv_packet(int sock, WdPacket * buf);
 extern int wd_escalation(void);
 extern int wd_start_recovery(void);
 extern int wd_end_recovery(void);
-
+extern int wd_send_failback_request(int node_id);
+extern int wd_degenerate_backend_set(int *node_id_set, int count);
+extern int wd_promote_backend(int node_id);
+extern int wd_set_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count);
 /* wd_ping.c */
 extern int wd_is_upper_ok(char * server_list);
 

@@ -118,6 +118,7 @@ send_response(int sock, WdPacket * recv_pack)
 {
 	int rtn = WD_NG;
 	WdInfo * p;
+	WdNodeInfo * node;
 	WdPacket send_packet;
 	struct timeval tv;
 
@@ -126,13 +127,13 @@ send_response(int sock, WdPacket * recv_pack)
 		return rtn;
 	}
 	memset(&send_packet, 0, sizeof(WdPacket));
-	p = &(recv_pack->wd_info);	
+	p = &(recv_pack->wd_body.wd_info);	
 
 	/* set response packet no */
 	switch (recv_pack->packet_no)
 	{
 		case WD_ADD_REQ:
-			p = &(recv_pack->wd_info);	
+			p = &(recv_pack->wd_body.wd_info);	
 			if (wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, &(p->tv), p->status) > 0)
 			{
 				send_packet.packet_no = WD_ADD_ACCEPT;
@@ -141,17 +142,17 @@ send_response(int sock, WdPacket * recv_pack)
 			{
 				send_packet.packet_no = WD_ADD_REJECT;
 			}
-			memcpy(&(send_packet.wd_info), WD_List, sizeof(WdInfo));
+			memcpy(&(send_packet.wd_body.wd_info), WD_List, sizeof(WdInfo));
 			break;
 		case WD_STAND_FOR_MASTER:
-			p = &(recv_pack->wd_info);	
+			p = &(recv_pack->wd_body.wd_info);	
 			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, &(p->tv), p->status);
 			/* check exist master */
 			if ((p = wd_is_exist_master()) != NULL)
 			{
 				/* vote against the candidate */
 				send_packet.packet_no = WD_MASTER_EXIST;
-				memcpy(&(send_packet.wd_info), p, sizeof(WdInfo));
+				memcpy(&(send_packet.wd_body.wd_info), p, sizeof(WdInfo));
 			}
 			else
 			{
@@ -163,11 +164,11 @@ send_response(int sock, WdPacket * recv_pack)
 				}
 				/* vote for the candidate */
 				send_packet.packet_no = WD_VOTE_YOU;
-				memcpy(&(send_packet.wd_info), WD_List, sizeof(WdInfo));
+				memcpy(&(send_packet.wd_body.wd_info), WD_List, sizeof(WdInfo));
 			}
 			break;
 		case WD_DECLARE_NEW_MASTER:
-			p = &(recv_pack->wd_info);	
+			p = &(recv_pack->wd_body.wd_info);	
 			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, &(p->tv), p->status);
 			if (WD_List->status == WD_MASTER)
 			{
@@ -176,33 +177,47 @@ send_response(int sock, WdPacket * recv_pack)
 				wd_set_myself(NULL, WD_NORMAL);
 			}
 			send_packet.packet_no = WD_READY;
-			memcpy(&(send_packet.wd_info), WD_List, sizeof(WdInfo));
+			memcpy(&(send_packet.wd_body.wd_info), WD_List, sizeof(WdInfo));
 			break;
 		case WD_SERVER_DOWN:
-			p = &(recv_pack->wd_info);	
+			p = &(recv_pack->wd_body.wd_info);	
 			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, &(p->tv), WD_DOWN);
 			send_packet.packet_no = WD_READY;
-			memcpy(&(send_packet.wd_info), WD_List, sizeof(WdInfo));
+			memcpy(&(send_packet.wd_body.wd_info), WD_List, sizeof(WdInfo));
 			if (wd_am_I_oldest() == WD_OK)
 			{
 				wd_escalation();
 			}
 			break;
 		case WD_START_RECOVERY:
-			p = &(recv_pack->wd_info);	
-			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, &(p->tv), WD_DOWN);
-			send_packet.packet_no = WD_READY;
+			send_packet.packet_no = WD_NODE_READY;
 			*InRecovery = RECOVERY_ONLINE;
 			break;
 		case WD_END_RECOVERY:
-			p = &(recv_pack->wd_info);	
-			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, &(p->tv), WD_DOWN);
-			send_packet.packet_no = WD_READY;
+			send_packet.packet_no = WD_NODE_READY;
 			*InRecovery = RECOVERY_INIT;
+			break;
+		case WD_FAILBACK_REQUEST:
+			node = &(recv_pack->wd_body.wd_node_info);	
+			wd_set_node_mask(WD_FAILBACK_REQUEST,node->node_id_set, node->node_num);
+			send_failback_request(node->node_id_set[0]);
+			send_packet.packet_no = WD_NODE_READY;
+			break;
+		case WD_DEGENERATE_BACKEND:
+			node = &(recv_pack->wd_body.wd_node_info);	
+			wd_set_node_mask(WD_DEGENERATE_BACKEND,node->node_id_set, node->node_num);
+			degenerate_backend_set(node->node_id_set, node->node_num);
+			send_packet.packet_no = WD_NODE_READY;
+			break;
+		case WD_PROMOTE_BACKEND:
+			node = &(recv_pack->wd_body.wd_node_info);	
+			wd_set_node_mask(WD_PROMOTE_BACKEND,node->node_id_set, node->node_num);
+			promote_backend(node->node_id_set[0]);
+			send_packet.packet_no = WD_NODE_READY;
 			break;
 		default:
 			send_packet.packet_no = WD_INVALID;
-			memcpy(&(send_packet.wd_info), WD_List, sizeof(WdInfo));
+			memcpy(&(send_packet.wd_body.wd_info), WD_List, sizeof(WdInfo));
 			break;
 	}
 

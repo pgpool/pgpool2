@@ -53,6 +53,17 @@ wd_init(void)
 		}
 		memset(WD_List, 0, sizeof(WdInfo) * MAX_WATCHDOG_NUM);
 	}
+	/* allocate node list */
+	if (WD_Node_List == NULL)
+	{
+		WD_Node_List = pool_shared_memory_create(sizeof(unsigned char) * MAX_NUM_BACKENDS);
+		if (WD_Node_List == NULL)
+		{
+			pool_error("failed to allocate node list");
+			return WD_NG;
+		}
+		memset(WD_Node_List, 0, sizeof(unsigned char) * MAX_NUM_BACKENDS);
+	}
 	/* set myself to watchdog list */
 	wd_set_wd_list(pool_config->pgpool2_hostname, pool_config->port, pool_config->wd_port, &tv, WD_NORMAL);
 	/* set other pgpools to watchdog list */

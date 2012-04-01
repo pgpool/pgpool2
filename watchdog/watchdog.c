@@ -37,7 +37,8 @@
 #include "watchdog.h"
 #include "wd_ext.h"
 
-WdInfo * WD_List = NULL;		/* watchdog server list */
+WdInfo * WD_List = NULL;					/* watchdog server list */
+unsigned char * WD_Node_List = NULL;		/* node list */
 
 int wd_main(int fork_wait_time);
 static void child_wait(int signo);
