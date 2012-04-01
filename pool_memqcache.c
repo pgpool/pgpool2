@@ -176,7 +176,7 @@ void memcached_disconnect (void)
 }
 
 /*
- * Regist buffer data for query cache on memory cache
+ * Register buffer data for query cache on memory cache
  */
 void memqcache_register(char kind,
                         POOL_CONNECTION *frontend,
@@ -1645,6 +1645,8 @@ static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char
 		}
 	}
 
+	need_pack = false;
+
 	if (need_pack)
 	{
 		/*
@@ -1776,7 +1778,7 @@ static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char
 
 	cacheid.blockid = blockid;
 	cacheid.itemid = bh->num_items;
-	pool_debug("pool_add_item_shmem_cache: new item inseted. blockid: %d itemid:%d", 
+	pool_debug("pool_add_item_shmem_cache: new item inserted. blockid: %d itemid:%d", 
 			   cacheid.blockid, cacheid.itemid);
 
 	/* Add up number of items */
@@ -1831,6 +1833,9 @@ static char *pool_get_item_shmem_cache(POOL_QUERY_HASH *query_hash, int *size, i
 		return NULL;
 	}
 
+	/*
+	 * Find cache header by using hash table
+	 */
 	cacheid = pool_find_item_on_shmem_cache(query_hash);
 	if (cacheid == NULL)
 	{
@@ -1948,14 +1953,14 @@ static int pool_delete_item_shmem_cache(POOL_CACHEID *cacheid)
 	/* Delete item pointer */
 	cip->flags |= POOL_ITEM_DELETED;
 
-	bh->free_bytes += size;
-	pool_debug("pool_delete_item_shmem_cache: after deleting %d bytes, free_bytes is %d",
-			   size, bh->free_bytes);
-
 	/*
 	 * We do NOT count down bh->num_items here. The deleted space will be recycled
 	 * by pool_add_item_shmem_cache(). However, if this is the last item, we can
 	 * recyle whole block.
+	 *
+	 * 2012/4/1: Now we do not pack data in
+	 * pool_add_item_shmem_cache() for performance reason. Also we
+	 * count down num_items if it is the last one.
 	 */
 	if ((bh->num_items -1) == 0)
 	{
@@ -1966,6 +1971,17 @@ static int pool_delete_item_shmem_cache(POOL_CACHEID *cacheid)
 
 	/* Remove hash index */
 	pool_hash_delete(&key);
+
+	/*
+	 * If the deleted item is last one in the block, we add it to the free space.
+	 */
+	if (cacheid->itemid == (bh->num_items -1))
+	{
+		bh->free_bytes += size;
+		pool_debug("pool_delete_item_shmem_cache: after deleting %d bytes, free_bytes is %d",
+				   size, bh->free_bytes);
+		bh->num_items--;
+	}
 
 	/* Update FSMM */
 	pool_update_fsmm(cacheid->blockid, bh->free_bytes);

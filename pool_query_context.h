@@ -57,6 +57,7 @@ typedef struct {
 	POOL_QUERY_STATE query_state[MAX_NUM_BACKENDS];	/* for extended query protocol */
 	bool is_cache_safe;	/* true if SELECT is safe to cache */
 	POOL_TEMP_QUERY_CACHE *temp_cache;	/* temporary cache */
+	bool is_multi_statement;	/* true if multi statement query */
 } POOL_QUERY_CONTEXT;
 
 extern POOL_QUERY_CONTEXT *pool_init_query_context(void);

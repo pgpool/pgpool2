@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -50,15 +50,16 @@ void pool_error(const char *fmt,...)
 #else
 	int	oldmask;
 #endif
+	POOL_SETMASK2(&BlockSig, &oldmask);
+
 	/* Write error message to syslog */
 	if (pool_config->logsyslog == 1) {
 	   va_start(ap, fmt);
 	   vsyslog(pool_config->syslog_facility | LOG_ERR, fmt, ap);
 	   va_end(ap);
+	   POOL_SETMASK(&oldmask);
 	   return;
 	}
-
-	POOL_SETMASK2(&BlockSig, &oldmask);
 
 	if (pool_config->print_timestamp)
 #ifdef HAVE_ASPRINTF
@@ -112,15 +113,17 @@ void pool_debug(const char *fmt,...)
 		if (pool_config->debug_level <= 0)
 			return;
 	}
+
+	POOL_SETMASK2(&BlockSig, &oldmask);
+
 	/* Write debug message to syslog */
 	if (pool_config->logsyslog == 1) {
 	   va_start(ap, fmt);
 	   vsyslog(pool_config->syslog_facility | LOG_DEBUG, fmt, ap);
 	   va_end(ap);
+	   POOL_SETMASK(&oldmask);
 	   return;
 	}
-
-	POOL_SETMASK2(&BlockSig, &oldmask);
 
 	if (pool_config->print_timestamp)
 #ifdef HAVE_ASPRINTF
@@ -163,15 +166,17 @@ void pool_log(const char *fmt,...)
 #else
 	int	oldmask;
 #endif
+
+	POOL_SETMASK2(&BlockSig, &oldmask);
+
 	/* Write log message to syslog */
 	if (pool_config->logsyslog == 1) {
 	   va_start(ap, fmt);
 	   vsyslog(pool_config->syslog_facility | LOG_NOTICE, fmt, ap);
 	   va_end(ap);
+	   POOL_SETMASK(&oldmask);
 	   return;
 	}
-
-	POOL_SETMASK2(&BlockSig, &oldmask);
 
 	if (pool_config->print_timestamp)
 #ifdef HAVE_ASPRINTF
