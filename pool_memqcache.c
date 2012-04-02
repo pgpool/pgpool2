@@ -663,6 +663,12 @@ bool pool_is_allow_to_cache(Node *node, char *query)
 		pool_has_temp_table(node))
 		return false;
 
+	/*
+	 * If SELECT uses system catalogs, it's not allowed to cache.
+	 */
+	if (pool_has_system_catalog(node))
+		return false;
+
 	/* Cache any tables in the case that both of list are empty  */
 	if (pool_config->num_white_memqcache_table_list == 0 &&
 		pool_config->num_black_memqcache_table_list == 0)
