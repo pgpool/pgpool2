@@ -1342,10 +1342,12 @@ size_t pool_shared_memory_cache_size(void)
 		pool_config->memqcache_cache_block_size;
 	if (num_blocks == 0)
 	{
-		pool_error("pool_shared_memory_cache_size: wrong memqcache_total_size %d or memqcache_cache_block_size %d",
+		pool_error("pool_shared_memory_cache_size: memqcache_total_size %d should be greater or equal to memqcache_cache_block_size %d",
 				   pool_config->memqcache_total_size, pool_config->memqcache_cache_block_size);
 		return 0;
 	}
+
+	pool_log("pool_shared_memory_cache_size: number of blocks: %d", num_blocks);
 
 	/* Remenber # of blocks */
 	pool_set_memqcache_blocks(num_blocks);
@@ -1445,7 +1447,7 @@ static void *pool_fsmm_address(void)
 }
 
 /*
- * Clock algorythm shared query cache management modules.
+ * Clock algorithm shared query cache management modules.
  */
 
 /*
@@ -1472,9 +1474,25 @@ static POOL_CACHE_BLOCKID pool_reuse_block(void)
 	char *block = block_address(*pool_fsmm_clock_hand);
 	POOL_CACHE_BLOCK_HEADER *bh = (POOL_CACHE_BLOCK_HEADER *)block;
 	POOL_CACHE_BLOCKID reused_block;
+	POOL_CACHE_ITEM_POINTER *cip;
+	char *p;
+	int i;
 
 	bh->flags = 0;
 	reused_block = *pool_fsmm_clock_hand;
+	p = block_address(reused_block);
+
+	for (i=0;i<bh->num_items;i++)
+	{
+		cip = item_pointer(p, i);
+
+		if (!(POOL_ITEM_DELETED & cip->flags))
+		{
+			pool_hash_delete(&cip->query_hash);
+			pool_debug("pool_reuse_block: blockid: %d item: %d", reused_block, i);
+		}
+	}
+
 	pool_init_cache_block(reused_block);
 	pool_update_fsmm(reused_block, POOL_MAX_FREE_SPACE);
 
@@ -1482,7 +1500,7 @@ static POOL_CACHE_BLOCKID pool_reuse_block(void)
 	if (*pool_fsmm_clock_hand >= maxblock)
 		*pool_fsmm_clock_hand = 0;
 
-	pool_debug("pool_reuse_block: blockid: %d", reused_block);
+	pool_log("pool_reuse_block: blockid: %d", reused_block);
 
 	return reused_block;
 }
@@ -1660,6 +1678,10 @@ static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char
 		}
 	}
 
+	/*
+	 * We disable packing for now.
+	 * Revisit and remove following code fragment later.
+	 */
 	need_pack = false;
 
 	if (need_pack)
@@ -1810,6 +1832,8 @@ static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char
 		pool_delete_item_shmem_cache(&cacheid);
 		return NULL;
 	}
+
+	pool_debug("pool_add_item_shmem_cache: block: %d item: %d", cacheid.blockid, cacheid.itemid);
 
 #ifdef SHMEMCACHE_DEBUG
 	dump_shmem_cache(blockid);
