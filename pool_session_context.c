@@ -124,7 +124,11 @@ void pool_session_context_destroy(void)
 		pool_clear_sent_message_list();
 		free(session_context->message_list.sent_messages);
 		pool_memory_delete(session_context->memory_context, 0);
+
+		if (session_context->query_context)
+			pool_query_context_destroy(session_context->query_context);
 	}
+
 	/* XXX For now, just zap memory */
 	memset(&session_context_d, 0, sizeof(session_context_d));
 	session_context = NULL;
