@@ -144,14 +144,6 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		pool_debug("statement2: %s", contents);
 	}
 
-	/* Create query context */
-	query_context = pool_init_query_context();
-	if (!query_context)
-	{
-		pool_error("SimpleQuery: pool_init_query_context failed");
-		return POOL_END;
-	}
-
 	/*
 	 * Fetch memory cache if possible
 	 */
@@ -172,6 +164,14 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			pool_stats_count_up_num_cache_hits();
 			return POOL_CONTINUE;
 		}
+	}
+
+	/* Create query context */
+	query_context = pool_init_query_context();
+	if (!query_context)
+	{
+		pool_error("SimpleQuery: pool_init_query_context failed");
+		return POOL_END;
 	}
 
 	/* switch memory context */
