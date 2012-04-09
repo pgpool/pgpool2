@@ -379,44 +379,35 @@ static int pool_fetch_cache(POOL_CONNECTION_POOL *backend, const char *query, ch
  */
 static char* encode_key(const char *s, char *buf, POOL_CONNECTION_POOL *backend)
 {
-	char key[34];
-	char* username;
-	char* database_name;
 	char* strkey;
-	int u_length = 0;
-	int d_length = 0;
-	int q_length = 0;
-	int length = 0;
+	int u_length;
+	int d_length;
+	int q_length;
+	int length;
 
 	u_length = strlen(backend->info->user);
-	username = (char*)malloc(sizeof(char) * (u_length+1));
-	strcpy(username, backend->info->user);
-
-	pool_debug("encode_key: username %s",username);
+	pool_debug("encode_key: username %s", backend->info->user);
 
 	d_length = strlen(backend->info->database);
-	database_name = (char*)malloc(sizeof(char) * (d_length+1));
-	strcpy(database_name, backend->info->database);
-
-	pool_debug("encode_key: database_name %s",database_name);
+	pool_debug("encode_key: database_name %s", backend->info->database);
 
 	q_length = strlen(s);
+	pool_debug("encode_key: query %s", s);
+
 	length = u_length + d_length + q_length;
 
-	pool_debug("encode_key: username length %d",u_length);
-	pool_debug("encode_key: database length %d",d_length);
-	pool_debug("encode_key: query length %d",q_length);
-	pool_debug("encode_key: length %d",length);
-
 	strkey = (char*)malloc(sizeof(char) * (length+1));
+	if (!strkey)
+	{
+		pool_error("encode_key: malloc failed");
+		return NULL;
+	}
 
-	sprintf(strkey, "%s%s%s", username, s, database_name);
+	snprintf(strkey, length, "%s%s%s", backend->info->user, s, backend->info->database);
 
-	pool_md5_hash(strkey, strlen(strkey), key);
-	pool_debug("encode_key: strkey %s",strkey);
-	pool_debug("encode_key: key %s",key);
-	strcpy(buf, key);
-	pool_debug("encode_key: `%s' -> `%s'", s, buf);
+	pool_md5_hash(strkey, strlen(strkey), buf);
+	pool_debug("encode_key: `%s' -> `%s'", strkey, buf);
+	free(strkey);
 	return buf;
 }
 
