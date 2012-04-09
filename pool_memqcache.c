@@ -77,16 +77,14 @@ static char *pool_get_item_shmem_cache(POOL_QUERY_HASH *query_hash, int *size, i
 static void pool_shmem_lock(void);
 static void pool_shmem_unlock(void);
 static void pool_add_query_cache_array(POOL_QUERY_CACHE_ARRAY *cache_array, POOL_TEMP_QUERY_CACHE *cache);
-static void pool_discard_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache);
 static void pool_add_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache, char kind, char *data, int data_len);
 static void pool_add_oids_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache, int num_oids, int *oids);
 static POOL_INTERNAL_BUFFER *pool_create_buffer(void);
 static void pool_discard_buffer(POOL_INTERNAL_BUFFER *buffer);
 static void pool_add_buffer(POOL_INTERNAL_BUFFER *buffer, void *data, size_t len);
 static void *pool_get_buffer(POOL_INTERNAL_BUFFER *buffer, size_t *len);
-static size_t pool_get_buffer_length(POOL_INTERNAL_BUFFER *buffer);
-static POOL_TEMP_QUERY_CACHE *pool_get_current_cache(void);
 static char *pool_get_current_cache_buffer(size_t *len);
+static size_t pool_get_buffer_length(POOL_INTERNAL_BUFFER *buffer);
 static void pool_check_and_discard_cache_buffer(int num_oids, int *oids);
 
 static void pool_set_memqcache_blocks(int num_blocks);
@@ -1278,8 +1276,13 @@ static void pool_reset_memqcache_buffer(void)
 
 	if (session_context && session_context->query_cache_array)
 	{
+		POOL_TEMP_QUERY_CACHE *cache;
+
 		pool_discard_query_cache_array(session_context->query_cache_array);
 		session_context->query_cache_array = pool_create_query_cache_array();
+
+		cache = pool_get_current_cache();
+		pool_discard_temp_query_cache(cache);
 	}
 	pool_discard_dml_table_oid();
 	pool_tmp_stats_reset_num_selects();
@@ -2289,7 +2292,7 @@ POOL_TEMP_QUERY_CACHE *pool_create_temp_query_cache(char *query)
 /*
  * Discard temp query cache
  */
-static void pool_discard_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache)
+void pool_discard_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache)
 {
 	if (!temp_cache)
 		return;
@@ -2478,7 +2481,7 @@ static size_t pool_get_buffer_length(POOL_INTERNAL_BUFFER *buffer)
 /*
  * Get query cache buffer struct of current query context
  */
-static POOL_TEMP_QUERY_CACHE *pool_get_current_cache(void)
+POOL_TEMP_QUERY_CACHE *pool_get_current_cache(void)
 {
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_QUERY_CONTEXT *query_context;

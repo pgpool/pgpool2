@@ -1277,6 +1277,7 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 	POOL_SESSION_CONTEXT *session_context;
 	int i;
 	bool need_to_abort;
+	POOL_TEMP_QUERY_CACHE *cache;
 
 	/* Get session context */
 	session_context = pool_get_session_context();
@@ -1369,6 +1370,13 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 	}
 
 	pool_set_timeout(0);
+
+	cache = pool_get_current_cache();
+	if (cache)
+	{
+		pool_discard_temp_query_cache(cache);
+	}
+		
 	return 1;
 }
 

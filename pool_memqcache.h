@@ -235,5 +235,8 @@ extern long long int pool_stats_count_up_num_cache_hits(void);
 extern long long int pool_tmp_stats_count_up_num_selects(void);
 extern long long int pool_tmp_stats_get_num_selects(void);
 extern void pool_tmp_stats_reset_num_selects(void);
+extern POOL_TEMP_QUERY_CACHE *pool_get_current_cache(void);
+extern POOL_TEMP_QUERY_CACHE *pool_get_current_cache(void);
+extern void pool_discard_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache);
 
 #endif /* POOL_MEMQCACHE_H */
