@@ -135,6 +135,9 @@ void pool_session_context_destroy(void)
 			pool_discard_query_cache_array(session_context->query_cache_array);
 			session_context->num_selects = 0;
 		}
+
+		if (session_context->query_context)
+			pool_query_context_destroy(session_context->query_context);
 	}
 	/* XXX For now, just zap memory */
 	memset(&session_context_d, 0, sizeof(session_context_d));
