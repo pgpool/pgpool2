@@ -843,6 +843,7 @@ select_table_walker(Node *node, void *context)
 		RangeVar *rgv = (RangeVar *)node;
 		char *table;
 		int oid;
+		char *s;
 
 		table = nodeToString(rgv);
 		oid = pool_table_name_to_oid(table);
@@ -858,7 +859,9 @@ select_table_walker(Node *node, void *context)
 			num_oids = ctx->num_oids++;
 
 			ctx->table_oids[num_oids] = oid;
-			strcpy(ctx->table_names[num_oids], strip_quote(table));
+			s = strip_quote(table);
+			strcpy(ctx->table_names[num_oids], s);
+			free(s);
 
 			pool_debug("select_table_walker: ctx->table_names[%d] = %s",
 			           num_oids, ctx->table_names[num_oids]);
