@@ -36,8 +36,10 @@ static bool system_catalog_walker(Node *node, void *context);
 static bool is_system_catalog(char *table_name);
 static bool temp_table_walker(Node *node, void *context);
 static bool unlogged_table_walker(Node *node, void *context);
+static bool view_walker(Node *node, void *context);
 static bool is_temp_table(char *table_name);
 static bool is_unlogged_table(char *table_name);
+static bool is_view(char *table_name);
 static bool	insertinto_or_locking_clause_walker(Node *node, void *context);
 static bool is_immutable_function(char *fname);
 static bool select_table_walker(Node *node, void *context);
@@ -115,6 +117,24 @@ bool pool_has_unlogged_table(Node *node)
 	raw_expression_tree_walker(node, unlogged_table_walker, &ctx);
 
 	return ctx.has_unlogged_table;
+}
+
+/*
+ * Return true if this SELECT has a view.
+ */
+bool pool_has_view(Node *node)
+{
+
+	SelectContext	ctx;
+
+	if (!IsA(node, SelectStmt))
+		return false;
+
+	ctx.has_view = false;
+
+	raw_expression_tree_walker(node, view_walker, &ctx);
+
+	return ctx.has_view;
 }
 
 /*
@@ -339,6 +359,32 @@ unlogged_table_walker(Node *node, void *context)
 		}
 	}
 	return raw_expression_tree_walker(node, unlogged_table_walker, context);
+}
+
+/*
+ * Walker function to find a view
+ */
+static bool
+view_walker(Node *node, void *context)
+{
+	SelectContext	*ctx = (SelectContext *) context;
+
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, RangeVar))
+	{
+		RangeVar *rgv = (RangeVar *)node;
+
+		pool_debug("view_walker: relname: %s", rgv->relname);
+
+		if (is_view(rgv->relname))
+		{
+			ctx->has_view = true;
+			return false;
+		}
+	}
+	return raw_expression_tree_walker(node, view_walker, context);
 }
 
 /*
@@ -603,6 +649,60 @@ static bool is_unlogged_table(char *table_name)
 	{
 		return false;
 	}
+}
+
+/*
+ * Judge the table used in a query is a view or not.
+ */
+static bool is_view(char *table_name)
+{
+/*
+ * Query to know if the target table is a view.
+ */
+#define ISVIEWQUERY "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.relname = '%s' AND c.relkind = 'v'"
+
+#define ISVIEWQUERY2 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = pgpool_regclass('%s') AND c.relkind = 'v'"
+
+	static POOL_RELCACHE *relcache;
+	POOL_CONNECTION_POOL *backend;
+	bool result;
+	char *query;
+
+	if (table_name == NULL)
+	{
+			return false;
+	}
+
+	backend = pool_get_session_context()->backend;
+
+	/* pgpool_regclass has been installed */
+	if (pool_has_pgpool_regclass())
+	{
+		query = ISVIEWQUERY;
+	}
+	else
+	{
+		query = ISVIEWQUERY2;
+	}
+
+	if (!relcache)
+	{
+		relcache = pool_create_relcache(128, query,
+										int_register_func, int_unregister_func,
+										false);
+		if (relcache == NULL)
+		{
+			pool_error("is_view: pool_create_relcache error");
+			return false;
+		}
+
+	}
+
+	/*
+	 * Search relcache.
+	 */
+	result = pool_search_relcache(relcache, backend, table_name)==0?false:true;
+	return result;
 }
 
 /*
