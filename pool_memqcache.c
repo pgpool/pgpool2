@@ -1338,6 +1338,13 @@ size_t pool_shared_memory_cache_size(void)
 	int num_blocks;
 	size_t size;
 
+	if (pool_config->memqcache_maxcache > pool_config->memqcache_cache_block_size)
+	{
+		pool_error("pool_shared_memory_cache_size: memqcache_cache_block_size %d should be greater or equal to memqcache_maxcache %d",
+				   pool_config->memqcache_cache_block_size, pool_config->memqcache_maxcache);
+		return 0;
+	}
+
 	num_blocks = pool_config->memqcache_total_size/
 		pool_config->memqcache_cache_block_size;
 	if (num_blocks == 0)
