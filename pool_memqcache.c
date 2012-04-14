@@ -54,6 +54,12 @@
 memcached_st *memc;
 #endif
 
+#ifdef HAVE_SIGPROCMASK
+static sigset_t shmem_oldmask;
+#else
+static	int	shmem_oldmask;
+#endif
+
 static char* encode_key(const char *s, char *buf, POOL_CONNECTION_POOL *backend);
 #ifdef DEBUG
 static void dump_cache_data(const char *data, size_t len);
@@ -550,8 +556,6 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 	*foundp = false;
 
 	pool_shmem_lock();
-
-
 	sts = pool_fetch_cache(backend, contents, &qcache, &qcachelen);
 	pool_shmem_unlock();
 
@@ -2126,7 +2130,10 @@ static void pool_wipe_out_cache_block(POOL_CACHE_BLOCKID blockid)
 static void pool_shmem_lock(void)
 {
 	if (pool_is_shmem_cache())
+	{
+		POOL_SETMASK2(&BlockSig, &shmem_oldmask);
 		pool_semaphore_lock(SHM_CACHE_SEM);
+	}
 }
 
 /*
@@ -2135,7 +2142,10 @@ static void pool_shmem_lock(void)
 static void pool_shmem_unlock(void)
 {
 	if (pool_is_shmem_cache())
+	{
 		pool_semaphore_unlock(SHM_CACHE_SEM);
+		POOL_SETMASK2(&BlockSig, &shmem_oldmask);
+	}
 }
 
 /*
@@ -2789,14 +2799,21 @@ int pool_init_memqcache_stats(void)
 POOL_QUERY_CACHE_STATS *pool_get_memqcache_stats(void)
 {
 	static POOL_QUERY_CACHE_STATS mystats;
+#ifdef HAVE_SIGPROCMASK
+	sigset_t oldmask;
+#else
+	int	oldmask;
+#endif
 
 	memset(&mystats, 0, sizeof(POOL_QUERY_CACHE_STATS));
 
 	if (stats)
 	{
+		POOL_SETMASK2(&BlockSig, &oldmask);
 		pool_semaphore_lock(QUERY_CACHE_STATS_SEM);
 		memcpy(&mystats, stats, sizeof(POOL_QUERY_CACHE_STATS));
 		pool_semaphore_unlock(QUERY_CACHE_STATS_SEM);
+		POOL_SETMASK(&oldmask);
 	}
 
 	return &mystats;
@@ -2818,9 +2835,17 @@ void pool_reset_memqcache_stats(void)
  */
 long long int pool_stats_count_up_num_selects(long long int num)
 {
+#ifdef HAVE_SIGPROCMASK
+	sigset_t oldmask;
+#else
+	int	oldmask;
+#endif
+
+	POOL_SETMASK2(&BlockSig, &oldmask);
 	pool_semaphore_lock(QUERY_CACHE_STATS_SEM);
 	stats->num_selects += num;
 	pool_semaphore_unlock(QUERY_CACHE_STATS_SEM);
+	POOL_SETMASK(&oldmask);
 	return stats->num_selects;
 }
 
@@ -2865,9 +2890,17 @@ void pool_tmp_stats_reset_num_selects(void)
  */
 long long int pool_stats_count_up_num_cache_hits(void)
 {
+#ifdef HAVE_SIGPROCMASK
+	sigset_t oldmask;
+#else
+	int	oldmask;
+#endif
+
+	POOL_SETMASK2(&BlockSig, &oldmask);
 	pool_semaphore_lock(QUERY_CACHE_STATS_SEM);
 	stats->num_cache_hits++;
 	pool_semaphore_unlock(QUERY_CACHE_STATS_SEM);
+	POOL_SETMASK(&oldmask);
 	return stats->num_cache_hits;
 }
 

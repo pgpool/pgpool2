@@ -1837,9 +1837,17 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
  */
 static void connection_count_up(void)
 {
+#ifdef HAVE_SIGPROCMASK
+	sigset_t oldmask;
+#else
+	int	oldmask;
+#endif
+
+	POOL_SETMASK2(&BlockSig, &oldmask);
 	pool_semaphore_lock(CONN_COUNTER_SEM);
 	Req_info->conn_counter++;
 	pool_semaphore_unlock(CONN_COUNTER_SEM);
+	POOL_SETMASK(&oldmask);
 }
 
 /*
@@ -1848,6 +1856,13 @@ static void connection_count_up(void)
  */
 static void connection_count_down(void)
 {
+#ifdef HAVE_SIGPROCMASK
+	sigset_t oldmask;
+#else
+	int	oldmask;
+#endif
+
+	POOL_SETMASK2(&BlockSig, &oldmask);
 	pool_semaphore_lock(CONN_COUNTER_SEM);
 	/*
 	 * Make sure that we do not decrement too much.  If failed to read
@@ -1860,6 +1875,7 @@ static void connection_count_down(void)
 	if (Req_info->conn_counter > 0)
 		Req_info->conn_counter--;
 	pool_semaphore_unlock(CONN_COUNTER_SEM);
+	POOL_SETMASK(&oldmask);
 }
 
 /*
