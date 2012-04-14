@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1248,12 +1248,18 @@ void degenerate_backend_set(int *node_id_set, int count)
 {
 	pid_t parent = getppid();
 	int i;
+#ifdef HAVE_SIGPROCMASK
+	 sigset_t oldmask;
+#else
+	 int	oldmask;
+#endif
 
 	if (pool_config->parallel_mode)
 	{
 		return;
 	}
 
+	POOL_SETMASK2(&BlockSig, &oldmask);
 	pool_semaphore_lock(REQUEST_INFO_SEM);
 	Req_info->kind = NODE_DOWN_REQUEST;
 	for (i = 0; i < count; i++)
@@ -1270,6 +1276,7 @@ void degenerate_backend_set(int *node_id_set, int count)
 	}
 	kill(parent, SIGUSR1);
 	pool_semaphore_unlock(REQUEST_INFO_SEM);
+	POOL_SETMASK(&oldmask);
 }
 
 /* send failback request using SIGUSR1 */
