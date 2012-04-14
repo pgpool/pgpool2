@@ -3987,6 +3987,11 @@ static bool is_panic_or_fatal_error(const char *message, int major)
 static int detect_postmaster_down_error(POOL_CONNECTION *backend, int major)
 {
 	int r =  detect_error(backend, ADMIN_SHUTDOWN_ERROR_CODE, major, 'E', false);
+	if (r < 0)
+	{
+		pool_log("detect_stop_postmaster_error: detect_error error");
+		return r;
+	}
 	if (r == SPECIFIED_ERROR)
 	{
 		pool_debug("detect_stop_postmaster_error: receive admin shutdown error from a node.");
@@ -3994,6 +3999,11 @@ static int detect_postmaster_down_error(POOL_CONNECTION *backend, int major)
 	}
 
 	r = detect_error(backend, CRASH_SHUTDOWN_ERROR_CODE, major, 'N', false);
+	if (r < 0)
+	{
+		pool_log("detect_stop_postmaster_error: detect_error error");
+		return r;
+	}
 	if (r == SPECIFIED_ERROR)
 	{
 		pool_debug("detect_stop_postmaster_error: receive crash shutdown error from a node.");
@@ -4047,7 +4057,7 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 	char *p, *str;
 
 	if (pool_read(backend, &kind, sizeof(kind)))
-		return POOL_END;
+		return -1;
 	readlen += sizeof(kind);
 	p = buf;
 	memcpy(p, &kind, sizeof(kind));
@@ -4064,7 +4074,7 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 			char *e;
 
 			if (pool_read(backend, &len, sizeof(len)) < 0)
-				return POOL_END;
+				return -1;
 			readlen += sizeof(len);
 			memcpy(p, &len, sizeof(len));
 			p += sizeof(len);
@@ -4075,7 +4085,7 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 			if (!str)
 			{
 				pool_error("detect_error: malloc failed");
-				return POOL_END;
+				return -1;
 			}
 
 			pool_read(backend, str, len);
@@ -4085,7 +4095,7 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 			{
 				pool_error("detect_error: not enough buffer space");
 				free(str);
-				return POOL_END;
+				return -1;
 			}
 
 			memcpy(p, str, len);
@@ -4115,7 +4125,7 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 			if (readlen >= sizeof(buf))
 			{
 				pool_error("detect_error: not enough buffer space");
-				return POOL_END;
+				return -1;
 			}
 
 			memcpy(p, str, len);
@@ -4475,10 +4485,12 @@ SELECT_RETRY:
 
 			if (FD_ISSET(CONNECTION(backend, i)->fd, &readmask))
 			{
+				int r;
 				/*
 				 * admin shutdown postmaster or postmaster goes down
 				 */
-				if (detect_postmaster_down_error(CONNECTION(backend, i), MAJOR(backend)) == SPECIFIED_ERROR)
+				r = detect_postmaster_down_error(CONNECTION(backend, i), MAJOR(backend));
+				if (r == SPECIFIED_ERROR)
 				{
 					pool_log("postmaster on DB node %d was shutdown by administrative command", i);
 					/* detach backend node. */
@@ -4488,6 +4500,16 @@ SELECT_RETRY:
 					notice_backend_error(i);
 					sleep(5);
 					break;
+				}
+				else if (r < 0)
+				{
+					/*
+					 * This could happen after detecting backend errors and before actually
+					 * detaching the backend. In this case reading from backend socket will
+					 * return EOF and it's better to close this session. So returns POOL_END.
+					 */ 
+					pool_log("detect_postmaster_down_error returns error on backend %d. Going to close this session.", i);
+					return POOL_END;
 				}
 			}
 		}
