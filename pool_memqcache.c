@@ -19,6 +19,8 @@
  * pool_memqcache.c: query cache on shmem or memcached
  *
  */
+#define DATABASE_TO_OID_QUERY "SELECT oid FROM pg_database WHERE datname = '%s'"
+
 #include "pool.h"
 
 #include <stdio.h>
@@ -33,6 +35,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <arpa/inet.h>
+#include <dirent.h>
 
 #ifdef USE_MEMCACHED
 #include <libmemcached/memcached.h>
@@ -72,8 +75,9 @@ static void send_message(POOL_CONNECTION *conn, char kind, int len, const char *
 static int delete_cache_on_memcached(const char *key);
 #endif
 static int pool_get_dml_table_oid(int **oid);
+static int pool_get_dropdb_table_oids(int **oids, int dboid);
 static void pool_discard_dml_table_oid(void);
-static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlink);
+static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlink, int dboid);
 static int pool_get_database_oid(void);
 static void pool_add_table_oid_map(POOL_CACHEKEY *cachkey, int num_table_oids, int *table_oids);
 static void pool_reset_memqcache_buffer(void);
@@ -913,6 +917,51 @@ static int pool_get_dml_table_oid(int **oid)
 	return oidbufp;
 }
 
+static int pool_get_dropdb_table_oids(int **oids, int dboid)
+{
+	int *rtn = 0;
+	int oids_size = 0;
+	int *tmp;
+
+	int num_oids = 0;
+	DIR *dir;
+	struct dirent *dp;
+	char path[1024];
+
+	snprintf(path, sizeof(path), "%s/%d", pool_config->memqcache_oiddir, dboid);
+	if ((dir = opendir(path)) == NULL)
+	{
+		pool_debug("pool_get_dropdb_table_oids: Failed to open dir: %s", path);
+		return 0;
+	}
+
+	while ((dp = readdir(dir)) != NULL)
+	{
+		if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0)
+			continue;
+
+		if (num_oids >= oids_size)
+		{
+			oids_size += POOL_OIDBUF_SIZE;
+			tmp = realloc(rtn, sizeof(int) * oids_size);
+			if (tmp == NULL)
+			{
+				closedir(dir);
+				return 0;
+			}
+			rtn = tmp;
+		}
+
+		rtn[num_oids] = atol(dp->d_name);
+		num_oids++;
+	}
+
+	closedir(dir);
+	*oids = rtn;
+
+	return num_oids;
+}
+
 /* Discard oid internal buffer */
 static void pool_discard_dml_table_oid(void)
 {
@@ -948,8 +997,6 @@ static int pool_get_database_oid(void)
 /*
  * Query to convert table name to oid
  */
-#define DATABASE_TO_OID_QUERY "SELECT oid FROM pg_database WHERE datname = '%s'"
-
 	int oid = 0;
 	static POOL_RELCACHE *relcache;
 	POOL_CONNECTION_POOL *backend;
@@ -977,6 +1024,42 @@ static int pool_get_database_oid(void)
 	oid = (int)(intptr_t)pool_search_relcache(relcache, backend,
 											  MASTER_CONNECTION(backend)->sp->database);
 	return oid;
+}
+
+/*
+ * Get oid of current database for discarding cache files
+ * after executing DROP DATABASE
+ */
+int pool_get_database_oid_from_dbname(char *dbname)
+{
+	int dboid = 0;
+	POOL_SELECT_RESULT *res;
+	POOL_STATUS status;
+	char query[1024];
+
+	POOL_CONNECTION_POOL *backend;
+	backend = pool_get_session_context()->backend;
+
+	snprintf(query, sizeof(query), DATABASE_TO_OID_QUERY, dbname); 
+	status = do_query(MASTER(backend), query, &res, MAJOR(backend));
+
+	if (status != POOL_CONTINUE)
+	{    
+		pool_debug("pool_discard_oid_maps_by_db: Failed.");
+		return 0;
+	}    
+
+	if (res->numrows != 1)
+	{    
+		pool_debug("pool_discard_oid_maps_by_db: Failed. Received %d rows", res->numrows);
+		free_select_result(res);
+		return 0;
+	}    
+
+	dboid = atol(res->data[0]);
+	free_select_result(res);
+
+	return dboid;
 }
 
 /*
@@ -1133,16 +1216,28 @@ void pool_discard_oid_maps(void)
 	}
 }
 
+void pool_discard_oid_maps_by_db(int dboid)
+{
+	char command[1024];
+
+	if (pool_is_shmem_cache())
+	{
+		snprintf(command, sizeof(command), "/bin/rm -fr %s/%d/",
+				 pool_config->memqcache_oiddir, dboid);
+		system(command);
+		pool_debug("command: %s", command);
+	}
+}
+
 /*
  * Reading cache id(shmem case) or hash key(memcached case) from table
  * oid map file according to table_oids and discard cache entries.  If
  * unlink is true, the file will be unlinked after successfull cache
  * removal.
  */
-static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlinkp)
+static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlinkp, int dboid)
 {
 	char *dir;
-	int dboid;
 	char path[1024];
 	int i;
 	int len;
@@ -1164,13 +1259,15 @@ static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool
 	/*
 	 * Create memqcache_oiddir/database_oid
 	 */
-	dboid = pool_get_database_oid();
+	if (dboid == 0) {
+		dboid = pool_get_database_oid();
 
-	pool_debug("pool_invalidate_query_cache: dboid %d", dboid);
-	if (dboid <= 0)
-	{
-		pool_error("pool_invalidate_query_cache: could not get database oid");
-		return;
+		pool_debug("pool_invalidate_query_cache: dboid %d", dboid);
+		if (dboid <= 0)
+		{
+			pool_error("pool_invalidate_query_cache: could not get database oid");
+			return;
+		}
 	}
 
 	snprintf(path, sizeof(path), "%s/%d", dir, dboid);
@@ -2684,7 +2781,7 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 		/* Invalidate query cache */
 		num_oids = pool_get_dml_table_oid(&oids);
 		pool_shmem_lock();
-		pool_invalidate_query_cache(num_oids, oids, true);
+		pool_invalidate_query_cache(num_oids, oids, true, 0);
 
 		/*
 		 * If we have something in the query cache buffer, that means
@@ -2737,6 +2834,27 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 				pool_tmp_stats_count_up_num_selects();
 			}
 		}
+		/*
+		 * If the query is DROP DATABASE, discard both of caches in shmem/memcached and
+		 * oidmap in memqcache_oiddir.
+		 */
+		else if (is_drop_database(node) && session_context->query_context->dboid != 0)
+		{
+			int dboid = session_context->query_context->dboid;
+			num_oids = pool_get_dropdb_table_oids(&oids, dboid);
+
+			if (num_oids > 0)
+			{
+				pool_shmem_lock();
+				pool_invalidate_query_cache(num_oids, oids, true, dboid);
+				pool_discard_oid_maps_by_db(dboid);
+				pool_shmem_unlock();
+				pool_reset_memqcache_buffer();
+
+				free(oids);
+				pool_debug("ReadyForQuery: deleted all cache files for the DROPped DB");
+			}
+		}
 		else
 		{
 			/*
@@ -2754,7 +2872,7 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 				if (state == 'I')
 				{
 					pool_shmem_lock();
-					pool_invalidate_query_cache(num_oids, oids, true);
+					pool_invalidate_query_cache(num_oids, oids, true, 0);
 					pool_shmem_unlock();
 					pool_reset_memqcache_buffer();
 				}

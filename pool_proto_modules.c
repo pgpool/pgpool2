@@ -250,6 +250,20 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		pool_start_query(query_context, contents, len, node);
 
 		/*
+		 * If the query is DROP DATABASE, after executing it, cache files directory must be discarded.
+		 * So we have to get the DB's oid before it will be DROPped.
+		 */
+		if (pool_config->memory_cache_enabled && is_drop_database(node))
+		{
+			DropdbStmt *stmt = (DropdbStmt *)node;
+			query_context->dboid = pool_get_database_oid_from_dbname(stmt->dbname);
+			if (query_context->dboid != 0)
+			{
+				pool_debug("DB's oid to discard its cache directory: dboid = %d", query_context->dboid);
+			}
+		}
+
+		/*
 		 * Check if multi statement query
 		 */
 		if (parse_tree_list && list_length(parse_tree_list) > 1)

@@ -58,6 +58,7 @@ typedef struct {
 	bool is_cache_safe;	/* true if SELECT is safe to cache */
 	POOL_TEMP_QUERY_CACHE *temp_cache;	/* temporary cache */
 	bool is_multi_statement;	/* true if multi statement query */
+	int dboid;	/* DB oid which is used at DROP DATABASE */
 } POOL_QUERY_CONTEXT;
 
 extern POOL_QUERY_CONTEXT *pool_init_query_context(void);

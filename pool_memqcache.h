@@ -214,6 +214,8 @@ extern bool pool_is_allow_to_cache(Node *node, char *query);
 extern int pool_extract_table_oids(Node *node, int **oidsp);
 extern void pool_add_dml_table_oid(int oid);
 extern void pool_discard_oid_maps(void);
+extern int pool_get_database_oid_from_dbname(char *dbname);
+extern void pool_discard_oid_maps_by_db(int dboid);
 extern bool pool_is_shmem_cache(void);
 extern size_t pool_shared_memory_cache_size(void);
 extern int pool_init_memory_cache(size_t size);
