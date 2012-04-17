@@ -54,12 +54,6 @@
 memcached_st *memc;
 #endif
 
-#ifdef HAVE_SIGPROCMASK
-static sigset_t shmem_oldmask;
-#else
-static	int	shmem_oldmask;
-#endif
-
 static char* encode_key(const char *s, char *buf, POOL_CONNECTION_POOL *backend);
 #ifdef DEBUG
 static void dump_cache_data(const char *data, size_t len);
@@ -552,12 +546,19 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 	char *qcache;
 	size_t qcachelen;
 	int sts;
+#ifdef HAVE_SIGPROCMASK
+	sigset_t oldmask;
+#else
+	int	oldmask;
+#endif
 
 	*foundp = false;
 
+	POOL_SETMASK2(&BlockSig, &oldmask);
 	pool_shmem_lock();
 	sts = pool_fetch_cache(backend, contents, &qcache, &qcachelen);
 	pool_shmem_unlock();
+	POOL_SETMASK(&oldmask);
 
 	if (sts == 0)
 	{
@@ -2131,7 +2132,6 @@ static void pool_shmem_lock(void)
 {
 	if (pool_is_shmem_cache())
 	{
-		POOL_SETMASK2(&BlockSig, &shmem_oldmask);
 		pool_semaphore_lock(SHM_CACHE_SEM);
 	}
 }
@@ -2144,7 +2144,6 @@ static void pool_shmem_unlock(void)
 	if (pool_is_shmem_cache())
 	{
 		pool_semaphore_unlock(SHM_CACHE_SEM);
-		POOL_SETMASK2(&BlockSig, &shmem_oldmask);
 	}
 }
 
@@ -2599,6 +2598,11 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 	int num_oids;
 	int *oids;
 	int i;
+#ifdef HAVE_SIGPROCMASK
+	sigset_t oldmask;
+#else
+	int	oldmask;
+#endif
 
 	session_context = pool_get_session_context();
 
@@ -2622,6 +2626,7 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 				 * immediately register to cache storage.
 				 */
 				/* Register to memcached or shmem */
+				POOL_SETMASK2(&BlockSig, &oldmask);
 				pool_shmem_lock();
 
 				cache_buffer =  pool_get_current_cache_buffer(&len);
@@ -2634,6 +2639,7 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 					free(cache_buffer);
 				}
 				pool_shmem_unlock();
+				POOL_SETMASK(&oldmask);
 			}
 
 			/* Count up SELECT stats */
@@ -2683,6 +2689,7 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 
 		/* Invalidate query cache */
 		num_oids = pool_get_dml_table_oid(&oids);
+		POOL_SETMASK2(&BlockSig, &oldmask);
 		pool_shmem_lock();
 		pool_invalidate_query_cache(num_oids, oids, true);
 
@@ -2714,6 +2721,7 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 			free(cache_buffer);
 		}
 		pool_shmem_unlock();
+		POOL_SETMASK(&oldmask);
 
 		/* Count up number of SELECT stats */
 		pool_stats_count_up_num_selects(pool_tmp_stats_get_num_selects());
@@ -2753,9 +2761,11 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 				 */
 				if (state == 'I')
 				{
+					POOL_SETMASK2(&BlockSig, &oldmask);
 					pool_shmem_lock();
 					pool_invalidate_query_cache(num_oids, oids, true);
 					pool_shmem_unlock();
+					POOL_SETMASK(&oldmask);
 					pool_reset_memqcache_buffer();
 				}
 				else
