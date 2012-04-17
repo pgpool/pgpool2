@@ -1429,6 +1429,11 @@ void pool_set_query_state(POOL_QUERY_CONTEXT *query_context, POOL_QUERY_STATE st
 	}
 }
 
+/*
+ * Return -1, 0 or 1 according to s1 is "before, equal or after" s2 in terms of state
+ * transition order. 
+ * The State transiton order is defined as: UNPARSED < PARSE_COMPLETE < BIND_COMPLETE < EXECUTE_COMPLETE
+ */
 int statecmp(POOL_QUERY_STATE s1, POOL_QUERY_STATE s2)
 {
 	int ret;
