@@ -33,6 +33,11 @@
 #include "parser/pool_memory.h"
 #include "pool_memqcache.h"
 
+/*
+ * Parse state transition.
+ * transition order is:
+ * UNPARSED < PARSE_COMPLETE < BIND_COMPLETE < EXECUTE_COMPLETE
+ */
 typedef enum {
 	POOL_UNPARSED,
 	POOL_PARSE_COMPLETE,
