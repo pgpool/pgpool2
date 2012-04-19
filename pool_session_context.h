@@ -55,7 +55,14 @@ typedef struct {
 	int num_tsparams;
 	char *name;		/* object name of prepared statement or portal */
 	POOL_QUERY_CONTEXT *query_context;
+	/*
+	 * Following members are only used when memcache is enabled.
+	 */
 	bool is_cache_safe;	/* true if the query can be cached */
+	int param_offset;		/* Offset from contents where actual bind
+							 * paramters are stored.
+							 * This is meaningful only when is_cache_safe is true.
+							 */
 } POOL_SENT_MESSAGE;
 
 /*
