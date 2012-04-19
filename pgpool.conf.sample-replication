@@ -348,6 +348,7 @@ health_check_timeout = 20
 health_check_user = 'nobody'
                                    # Health check user
 health_check_password = ''
+                                   # This parameter is not yet implemented.
                                    # Password for health check user
 
 
