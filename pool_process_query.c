@@ -1375,6 +1375,11 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 	if (cache)
 	{
 		pool_discard_temp_query_cache(cache);
+		/*
+		 * Reset temp_cache pointer in the current query context
+		 * so that we don't double free memory.
+		 */
+		session_context->query_context->temp_cache = NULL;
 	}
 		
 	return 1;
