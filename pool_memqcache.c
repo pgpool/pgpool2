@@ -579,10 +579,10 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 		{
 			signed char state;
 
-			state = 'I';
-
-			/* set transaction state */
-			MASTER(backend)->tstate = state;
+			/*
+			 * We keep previous transaction state.
+			 */
+			state = MASTER(backend)->tstate;
 			send_message(frontend, 'Z', 5, (char *)&state);
 		}
 		else
