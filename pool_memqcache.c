@@ -2784,11 +2784,15 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 	{
 		int num_caches;
 
-		/* Invalidate query cache */
-		num_oids = pool_get_dml_table_oid(&oids);
 		POOL_SETMASK2(&BlockSig, &oldmask);
 		pool_shmem_lock();
-		pool_invalidate_query_cache(num_oids, oids, true, 0);
+
+		/* Invalidate query cache */
+		if (pool_config->memqcache_auto_cache_invalidation)
+		{
+			num_oids = pool_get_dml_table_oid(&oids);
+			pool_invalidate_query_cache(num_oids, oids, true, 0);
+		}
 
 		/*
 		 * If we have something in the query cache buffer, that means
@@ -2851,7 +2855,7 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 			int dboid = session_context->query_context->dboid;
 			num_oids = pool_get_dropdb_table_oids(&oids, dboid);
 
-			if (num_oids > 0)
+			if (num_oids > 0 && pool_config->memqcache_auto_cache_invalidation)
 			{
 				pool_shmem_lock();
 				pool_invalidate_query_cache(num_oids, oids, true, dboid);
@@ -2871,7 +2875,7 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 
 			/* Extract table oids from buffer */
 			num_oids = pool_get_dml_table_oid(&oids);
-			if (num_oids > 0)
+			if (num_oids > 0 && pool_config->memqcache_auto_cache_invalidation)
 			{
 				/*
 				 * If we are not inside a transaction, we can

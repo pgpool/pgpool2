@@ -458,6 +458,11 @@ memqcache_max_num_cache=131072
 # Memory cache entry life time specified in seconds. 60 by default.
 memqcache_expire=60
 
+# If true, invalidation of query cache is triggered by corresponding
+# DDL/DML/DCL(and memqcache_expire).  If false, it is only triggered
+# by memqcache_expire.  True by default.
+memqcache_auto_cache_invalidation = true
+
 # Maximum SELECT result size in bytes.
 memqcache_maxcache=1024
 

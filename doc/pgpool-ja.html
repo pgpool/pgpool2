@@ -2222,6 +2222,14 @@ memqcache_expire = 60
 </pre>
 
 <p>
+DDL/DML/DCL が実行された場合（と寿命が過ぎた場合）にクエリキャッシュの無効化をする場合は、以下のように設定します。<br />
+false に設定すると、寿命を過ぎた場合にのみクエリキャッシュを無効化します。デフォルトは true です。
+</p>
+<pre>
+memqcache_auto_cache_invalidation = true
+</pre>
+
+<p>
 
 キャッシュを許容するSELECT文の実行結果の最大サイズは、以下のように設定します。単位はバイトです。
 </p>

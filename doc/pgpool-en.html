@@ -2314,6 +2314,15 @@ memqcache_expire = 60
 </pre>
 
 <p>
+If true, invalidation of query cache is triggered by corresponding
+DDL/DML/DCL(and memqcache_expire).  If false, it is only triggered
+by memqcache_expire.  True by default.
+</p>
+<pre>
+memqcache_auto_cache_invalidation = true
+</pre>
+
+<p>
 Maximum SELECT result size in bytes. If exceeds this value, the result is not cached.
 </p>
 
