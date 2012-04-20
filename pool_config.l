@@ -224,6 +224,7 @@ int pool_init_config(void)
     pool_config->memqcache_total_size = 10240;
     pool_config->memqcache_max_num_cache = 100;
     pool_config->memqcache_expire = 60;
+    pool_config->memqcache_auto_cache_invalidation = true;
     pool_config->memqcache_maxcache = 512;
     pool_config->memqcache_cache_block_size = 8192;
     pool_config->memqcache_oiddir = "/var/log/pgpool/oiddir";
@@ -2065,6 +2066,18 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
                 return(-1);
             }
             pool_config->memqcache_max_num_cache = v;
+        }
+        else if (!strcmp(key, "memqcache_auto_cache_invalidation") && CHECK_CONTEXT(INIT_CONFIG, context))
+        {
+            int v = eval_logical(yytext);
+
+            if (v < 0)
+            {
+                pool_error("pool_config: invalid value %s for %s", yytext, key);
+                fclose(fd);
+                return(-1);
+            }
+            pool_config->memqcache_auto_cache_invalidation = v;
         }
         else if (!strcmp(key, "memqcache_maxcache") && CHECK_CONTEXT(INIT_CONFIG, context))
         {
