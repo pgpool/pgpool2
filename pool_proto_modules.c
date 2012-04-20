@@ -160,6 +160,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 		if (foundp)
 		{
+			pool_ps_idle_display(backend);
 			pool_set_skip_reading_from_backends();
 			pool_stats_count_up_num_cache_hits();
 			return POOL_CONTINUE;
@@ -333,15 +334,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 			if (is_valid_show_command)
 			{
-				StartupPacket *sp;
-				char psbuf[1024];
-
-				/* show ps status */
-				sp = MASTER_CONNECTION(backend)->sp;
-				snprintf(psbuf, sizeof(psbuf), "%s %s %s idle",
-						 sp->user, sp->database, remote_ps_data);
-				set_ps_display(psbuf, false);
-
+				pool_ps_idle_display(backend);
 				pool_query_context_destroy(query_context);
 				pool_set_skip_reading_from_backends();
 				pool_memory_context_switch_to(old_context);
@@ -672,7 +665,9 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 		if (foundp)
 		{
+			pool_ps_idle_display(backend);
 			pool_set_skip_reading_from_backends();
+			pool_stats_count_up_num_cache_hits();
 			return POOL_CONTINUE;
 		}
 	}
@@ -1310,8 +1305,6 @@ POOL_STATUS FunctionCall3(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 						  POOL_CONNECTION_POOL *backend, int send_ready)
 {
-	StartupPacket *sp;
-	char psbuf[1024];
 	int i;
 	int len;
 	signed char kind;
@@ -1586,14 +1579,10 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			pool_query_context_destroy(session_context->query_context);
 	}
 
-	sp = MASTER_CONNECTION(backend)->sp;
-	if (MASTER(backend)->tstate == 'T')
-		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle in transaction",
-				 sp->user, sp->database, remote_ps_data);
-	else
-		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle",
-				 sp->user, sp->database, remote_ps_data);
-	set_ps_display(psbuf, false);
+	/*
+	 * Show ps idle status
+	 */
+	pool_ps_idle_display(backend);
 
 	return POOL_CONTINUE;
 }
