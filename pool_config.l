@@ -2067,6 +2067,18 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
             }
             pool_config->memqcache_max_num_cache = v;
         }
+        else if (!strcmp(key, "memqcache_expire") && CHECK_CONTEXT(INIT_CONFIG, context))
+        {
+            int v = atoi(yytext);
+
+            if (token != POOL_INTEGER || v < 0)
+            {
+                pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
+                fclose(fd);
+                return(-1);
+            }
+            pool_config->memqcache_expire = v;
+        }
         else if (!strcmp(key, "memqcache_auto_cache_invalidation") && CHECK_CONTEXT(INIT_CONFIG, context))
         {
             int v = eval_logical(yytext);
