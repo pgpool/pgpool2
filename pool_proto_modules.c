@@ -148,7 +148,20 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	 * Fetch memory cache if possible
 	 */
 	is_likely_select = pool_is_likely_select(contents);
-	if (pool_config->memory_cache_enabled && is_likely_select)
+
+	/*
+	 * If memory query cache enabled and the query seems to be a
+	 * SELECT use query cache if possible. However if we are in an
+	 * explicit transaction and we had writing query before, we should
+	 * not use query cache. This means that even the writing query is
+	 * not anything related to the table which is used the SELECT, we
+	 * do not use cache. Of course we could analyze the SELECT to see
+	 * if it uses the table modified in the transaction, but it will
+	 * need parsing query and accessing to system catalog, which will
+	 * add significant overhead.
+	 */
+	if (pool_config->memory_cache_enabled && is_likely_select &&
+		!pool_is_writing_transaction())
 	{
 		bool foundp;
 
