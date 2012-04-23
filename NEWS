@@ -1,3 +1,35 @@
+3.0.7 (hatsuiboshi) 2012/04/23
+
+      * Version 3.0.7
+
+      This is a bugfix release against pgpool-II 3.0.6.
+
+      * Bug fixes
+
+      - Add m4Add m4 files. This should prevent compiling problem on older
+        OS's. (Tatsuo Ishii)
+
+      - Fix bug that the process exits before unlocking semaphore by a
+        signal interrupt. (Tatsuo Ishii)
+
+      - Fix a memory leak in case of reset_query. (Tatsuo Ishii)
+
+      - Fix SimpleQuery() so that it restores parser memory context when:
+         1) Builtin show commands are used
+         2) Parallel query mode
+         3) Query cache is used
+       (Tatsuo Ishii)
+
+      - Fix pool_ssl_read() to deal with large data reading. (Tatsuo Ishii)
+
+        Original complain is here:
+        http://www.pgpool.net/pipermail/pgpool-general/2012-March/000299.html
+
+      - Fix hangup when PREPARE statement causes error. (Toshihiro Kitagawa)
+
+        This issue was reported by Tomonari Katsumata:
+        Subject: [pgpool-general: 121] question of pgpool's behavior
+
 3.0.6 (umiyameboshi) 2012/01/31
 
 	  * Version 3.0.6

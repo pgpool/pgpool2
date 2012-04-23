@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Sun May  1 18:24:35 JST 2011
+Last modified: Fri Apr 20 15:59:44 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -3303,6 +3303,32 @@ avgはsum/countとして処理されます。</p>
 
 
 <h1>リリースノート<a name="release"></a></h1>
+
+<h2>3.0.7 (umiyameboshi) 2012/04/23</h2>
+<h3>概要</h3>
+<p>
+このバージョンでは、3.0.6におけるバグが修正されています。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+<li>m4Add m4 ファイルを追加しました。これにより古い OS で起こるコンパイルの問題を回避できます。(Tatsuo Ishii)</li>
+<li>シグナル割り込みによって、セマフォが解放されないままプロセスが終了することがあるバグを修正しました。(Tatsuo Ishii)</li>
+<li>reset_query 時のメモリリークを修正しました。 (Tatsuo Ishii)</li>
+<li>以下の場合に parser memory をリストアするよう SimpleQuery() 関数を修正しました。(Tatsuo Ishii)
+    <ol>
+    <li>組み込み show コマンド使用時</li>
+    <li>パラレルクエリモード</li>
+    <li>クエリキャッシュ使用時</li>
+    </ol>
+    さもないと、後で不正な palloc を発生する障害が起きるからです。
+</li>
+<li>pool_ssl_read() 関数が大きいサイズのデータを読み込めるよう修正しました。以下の報告によるものです。(Tatsuo Ishii)<br />
+    <a href=http://www.pgpool.net/pipermail/pgpool-general/2012-March/000299.html">
+    http://www.pgpool.net/pipermail/pgpool-general/2012-March/000299.html</a></li>
+
+<li>PREPARE 文でエラーが起きた際に発生するハングアップを修正しました。Tominari Katsumata さんの報告に基づきます。(Toshihiro Kitagagwa)</li>
+</ul>
 
 <h2>3.0.6 (umiyameboshi) 2012/01/31</h2>
 <h3>概要</h3>
