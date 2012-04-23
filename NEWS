@@ -6,7 +6,7 @@
 
       * Bug fixes
 
-      - Add m4Add m4 files. This should prevent compiling problem on older
+      - Add m4 files. This should prevent compiling problem on older
         OS's. (Tatsuo Ishii)
 
       - Fix to handle failover properly in detect_postmaster_down_error().
