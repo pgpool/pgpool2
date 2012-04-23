@@ -1,3 +1,95 @@
+3.1.3 (hatsuiboshi) 2012/04/23
+
+      * Version 3.1.3
+
+      This is a bugfix release against pgpool-II 3.1.2.
+
+      * Bug fixes
+
+      - Add m4Add m4 files. This should prevent compiling problem on older
+        OS's. (Tatsuo Ishii)
+
+      - Fix to handle failover properly in detect_postmaster_down_error().
+        (Tatsuo Ishii)
+
+        It is possible that it fails to read backend socket after detecting
+        backend errors and before actually detaching the backend. 
+
+      - Fix bug that the process exits before unlocking semaphore by a
+        signal interrupt. (Tatsuo Ishii)
+
+      - Fix a memory leak in case of reset_query. (Tatsuo Ishii)
+
+      - Fix pool_ssl_read() to deal with large data reading. (Tatsuo Ishii)
+
+        Original complain is here:
+        http://www.pgpool.net/pipermail/pgpool-general/2012-March/000299.html
+
+      - Fix deadlock by enabling log_destination = syslog. (Tatsuo Ishii)
+      
+        Reported in bug tracker http://www.pgpool.net/mantisbt/view.php?id=9.
+        Patch provided by Gilles Darold.
+
+      - Allow to use multi statement in master/slave mode. (Tatsuo Ishii)
+
+        From 3.1 transactional statements such as "BEGIN" are sent to not only
+        primary but also standbys. This brings an unfortunate side effect: if
+        the multi statement is "BEGIN;DELETE FROM table;END", this will be
+        sent to standy as well and cause an error because standby does notallow
+        write SQL. So fix is, if a query is a multi statement one, then send it
+        to primary only.
+
+      - Allow to have private cache of master node id. (Tatsuo Ishii)
+        
+        When master goes down running pgpool children look into NULL pointer
+        because the process does not connect to the new master yet. The private
+        cache returns the old master node id and will avoid the situation.
+       
+        Per bug reported in http://www.pgpool.net/mantisbt/view.php?id=51
+
+      - Fix pool_start_query() so that it uses my_master_node_id instead of 
+        REAL_MASTER_NODE_ID for initial virtual_master_node_id. (Tatsuo Ishii)
+
+        Real master node could be changed while pgpool is running in streaming
+        replication mode. Previously it is assigned REAL_MASTER_NODE_ID, which
+        could have no connections after fail over and cause segafult.
+        
+      - Fix pool_setall_node_to_be_sent() to use private_backend_status instead
+        of BACKEND_INFO macro. (Tatsuo Ishii)
+      
+        It is possible that while processing, the node returned by BACKEND_INFO
+        is not usable any more.
+
+      - Fix failover(). (Tatsuo Ishii) 
+
+        Before it only restarts worker child only when pgpool child do not need
+        restart. This is wrong. We need to restart worker child in any case. 
+        Otherwise it continues to send replication time lag check request to down
+        the node.
+
+      - Fix debug log message so that it does not contain null characters.
+        (Toshihiro Kitagawa)
+
+      - Fix SimpleQuery() so that it restores parser memory context when:
+          1) Builtin show commands are used
+          2) Parallel query mode
+          3) Query cache is used
+        (Tatsuo Ishii)
+
+      - Fix hangup when PREPARE statement causes error. (Toshihiro Kitagawa)
+
+        This issue was reported by Tomonari Katsumata:
+        Subject: [pgpool-general: 121] question of pgpool's behavior
+
+      - Add doc/pgpool-fr.html to Makefile.am. (Tatsuo Ishii)
+
+        This had been forgotten when the doc was added.
+
+      - Fix  hangup during md5 authentication that occurs in daemon mode
+        and log_destination is 'syslog'. (Yugo Nagata)
+
+        Reported in bug tracker http://www.pgpool.net/mantisbt/view.php?id=2.
+
 3.1.2 (hatsuiboshi) 2012/01/31
 
 	  * Version 3.1.2

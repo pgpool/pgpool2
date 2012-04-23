@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Tue Dec  6 10:42:47 JST 2011
+Last modified: Fri Apr 20 15:56:23 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -3988,6 +3988,50 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
 </p>
 
 <h1>$B%j%j!<%9%N!<%H(B<a name="release"></a></h1>
+
+<h2><a name="release3.1.2"></a>3.1.3 (hatsuiboshi) 2012/01/31</h2>
+<h3>$B35MW(B</h3>
+<p>
+$B$3$N%P!<%8%g%s$O(B3.1.2$B$KBP$9$k%P%0=$@5%j%j!<%9$G$9!#(B
+</p>
+<h3>$B%P%0=$@5(B</h3>
+<ul>
+<li>m4Add m4 $B%U%!%$%k$rDI2C$7$^$7$?!#$3$l$K$h$j8E$$(B OS $B$G5/$3$k%3%s%Q%$%k$NLdBj$r2sHr$G$-$^$9!#(B(Tatsuo Ishii)</li>
+<li>$B%U%'!<%k%*!<%P$rE,@Z$K=hM}$9$k$h$&(B detect_postmaster_down_error() $B4X?t$r=$@5$7$^$7$?!#(B<br />
+    $B0JA0$O%P%C%/%(%s%I%=%1%C%H$NFI$_9~$_$K<:GT$9$k$3$H$,$"$j$^$7$?!#(B(Tatsuo Ishii)</li>
+<li>$B%7%0%J%k3d$j9~$_$K$h$C$F!"%;%^%U%)$,2rJ|$5$l$J$$$^$^%W%m%;%9$,=*N;$9$k$3$H$,$"$k%P%0$r=$@5$7$^$7$?!#(B(Tatsuo Ishii)</li>
+<li>reset_query $B;~$N%a%b%j%j!<%/$r=$@5$7$^$7$?!#(B (Tatsuo Ishii)</li>
+<li>pool_ssl_read() $B4X?t$,Bg$-$$%5%$%:$N%G!<%?$rFI$_9~$a$k$h$&=$@5$7$^$7$?!#0J2<$NJs9p$K$h$k$b$N$G$9!#(B(Tatsuo Ishii)<br />
+    <a href=http://www.pgpool.net/pipermail/pgpool-general/2012-March/000299.html">
+    http://www.pgpool.net/pipermail/pgpool-general/2012-March/000299.html</a></li>
+<li> syslog $B$rM-8z$K$7$?$H$-$K5/$3$k%G%C%I%m%C%/$r=$@5$7$^$7$?!#$3$N%P%0$O0J2<$GJs9p$5$l!"%Q%C%A$O(B Gilles Darold $B$5$s$K$h$jDs6!D:$-$^$7$?!#(B(Tatsuo Ishii)<br />
+   <a href="http://www.pgpool.net/mantisbt/view.php?id=9">
+   http://www.pgpool.net/mantisbt/view.php?id=9</a></li>
+<li>$B%^%9%?!<!&%9%l!<%V%b!<%I$GJ#?t$NJ8$r07$($k$h$&$K=$@5$7$^$7$?!#(B
+    $B0JA0$O(B BEGIN, END $BEy$rMQ$$$?J#?tJ8$+$i$J$k%/%(%j$O%(%i!<$H$J$C$F$$$^$7$?!#(B(Tatsuo Ishii)</li>
+<li>$B%^%9%?%5!<%P$,%@%&%s$7$?:]$K!";R%W%m%;%9$,(B NULL $B%]%$%s%?$r;2>H$7$h$&$H$9$k%P%0$r=$@5$7$^$7$?!#$3$N%P%0$O0J2<$GJs9p$5$l$^$7$?!#(B(Tatsuo Ishii)</br>
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=51">
+    http://www.pgpool.net/mantisbt/view.php?id=51</a></li>
+<li>$B%^%9%?!<%N!<%I(BID$B$N=i4|CM$,@5$7$/@_Dj$5$l$k$h$&$K(B pool_start_query() $B4X?t$r=$@5$7$^$7$?!#(B(Tatsuo Ishii)</br>
+    $B$3$N%P%0$N$?$a$K%;%0%a%s%H%U%)%k%H$,H/@8$9$k$3$H$,$"$j$^$7$?!#(B(Tatsuo Ishii)</li> 
+<li>pool_setall_node_to_be_sent() $B4X?t$K$*$$$F(B BACKEND_INFO $B%^%/%m$NBe$o$j$K(B private_backend_status $BJQ?t$rMxMQ$9$k$h$&=$@5$7$^$7$?!#(B<br />
+    $B$3$l$O>u67$K$h$j(B BACKEND_INFO $B$,MxMQ$G$-$J$/$J$k>l9g$,$"$C$?$?$a$G$9!#(B(Tatsuo Ishii)</li>
+<li>$B;R%W%m%;%9$,%l%W%j%1!<%7%g%sCY1d%A%'%C%/MW5a$rAw$jB3$1$k$3$H$,$"$k%P%0$r=$@5$7$^$7$?!#(B</br>
+    $B0JA0$O%U%'%$%k%*!<%P;~$K%l%W%j%1!<%7%g%sCY1d$r%A%'%C%/$9$k(B worker $B%W%m%;%9$r8BDj$7$?>r7o$G$7$+5/F0$7$F$$$^$;$s$G$7$?$,!"(B<br/>
+	$B$3$l$O4V0c$$$G!">o$K:F5/F0$9$kI,MW$,$"$j$^$9!#(B(Tatsuo Ishii)</li>
+<li>$B%G%P%C%0%a%C%;!<%8$K%L%kJ8;z$,4^$^$l$J$$$h$&$K=$@5$7$^$7$?!#%L%kJ8;z$,4^$^$l$k%m%0$O!"%P%$%J%j%U%!%$%k$G$"$k$HG'<1$5$l$k$3$H$,$"$j$^$9!#(B(Toshihiro Kitagawa)</li>
+<li>$B0J2<$N>l9g$K(B parser memory $B$r%j%9%H%"$9$k$h$&(B SimpleQuery() $B4X?t$r=$@5$7$^$7$?!#(B(Tatsuo Ishii)
+    <ol>
+    <li>$BAH$_9~$_(B show $B%3%^%s%I;HMQ;~(B</li>
+    <li>$B%Q%i%l%k%/%(%j%b!<%I(B</li>
+    <li>$B%/%(%j%-%c%C%7%e;HMQ;~(B</li>
+    </ol>
+    $B$5$b$J$$$H!"8e$GIT@5$J(B palloc $B$rH/@8$9$k>c32$,5/$-$k$+$i$G$9!#(B
+</li>
+<li>PREPARE $BJ8$G%(%i!<$,5/$-$?:]$KH/@8$9$k%O%s%0%"%C%W$r=$@5$7$^$7$?!#(BTominari Katsumata $B$5$s$NJs9p$K4p$E$-$^$9!#(B(Toshihiro Kitagagwa)</li>
+<li>doc/pgpool-fr.html $B$r(B Makefile.am $B$KDI2C$7$^$7$?!#$3$l$O%U%i%s%98l$N%I%-%e%a%s%H$rDI2C$7$?:]$K!"DI2C$7K:$l$?$b$N$G$9!#(B(Tatsuo Ishii)</li>
+<li>$B%G!<%b%s%b!<%I$G(B syslog $B$rM-8z$K$7$F$$$k:]$K(B md5 $BG'>Z$GH/@8$9$k%O%s%0%"%C%W$r=$@5$7$^$7$?!#(B(Yugo Nagata)</li>
+</ul>
 
 <h2><a name="release3.1.2"></a>3.1.2 (hatsuiboshi) 2012/01/31</h2>
 <h3>$B35MW(B</h3>
