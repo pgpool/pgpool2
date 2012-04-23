@@ -2019,14 +2019,17 @@ static POOL_CACHEID *pool_find_item_on_shmem_cache(POOL_QUERY_HASH *query_hash)
 	cih = item_header(block_address(c->blockid), c->itemid);
 
 	/* Check cache expiration */
-	now = time(NULL);
-	if (now > (cih->timestamp + pool_config->memqcache_expire))
+	if (pool_config->memqcache_expire > 0)
 	{
-		pool_debug("pool_find_item_on_shmem_cache: cache expired");
-		pool_debug("pool_find_item_on_shmem_cache: now: %ld timestamp: %ld",
-				   now, cih->timestamp + pool_config->memqcache_expire);
-		pool_delete_item_shmem_cache(c);
-		return NULL;
+		now = time(NULL);
+		if (now > (cih->timestamp + pool_config->memqcache_expire))
+		{
+			pool_debug("pool_find_item_on_shmem_cache: cache expired");
+			pool_debug("pool_find_item_on_shmem_cache: now: %ld timestamp: %ld",
+					   now, cih->timestamp + pool_config->memqcache_expire);
+			pool_delete_item_shmem_cache(c);
+			return NULL;
+		}
 	}
 
 	cacheid.blockid = c->blockid;
