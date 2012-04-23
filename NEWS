@@ -1,4 +1,4 @@
-3.0.7 (hatsuiboshi) 2012/04/23
+3.0.7 (umiyameboshi) 2012/04/23
 
       * Version 3.0.7
 
@@ -6,7 +6,7 @@
 
       * Bug fixes
 
-      - Add m4Add m4 files. This should prevent compiling problem on older
+      - Add m4 files. This should prevent compiling problem on older
         OS's. (Tatsuo Ishii)
 
       - Fix bug that the process exits before unlocking semaphore by a
