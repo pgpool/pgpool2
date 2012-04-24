@@ -158,10 +158,13 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	 * do not use cache. Of course we could analyze the SELECT to see
 	 * if it uses the table modified in the transaction, but it will
 	 * need parsing query and accessing to system catalog, which will
-	 * add significant overhead.
+	 * add significant overhead. Moreover if we are in aborted 
+	 * transaction, commands should be ignored, so we should not use
+	 * query cache. 
 	 */
 	if (pool_config->memory_cache_enabled && is_likely_select &&
-		!pool_is_writing_transaction())
+		!pool_is_writing_transaction() &&
+		TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) != 'E')
 	{
 		bool foundp;
 
