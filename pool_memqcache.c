@@ -396,9 +396,9 @@ static char* encode_key(const char *s, char *buf, POOL_CONNECTION_POOL *backend)
 	q_length = strlen(s);
 	pool_debug("encode_key: query %s", s);
 
-	length = u_length + d_length + q_length;
+	length = u_length + d_length + q_length + 1;
 
-	strkey = (char*)malloc(sizeof(char) * (length+1));
+	strkey = (char*)malloc(sizeof(char) * length);
 	if (!strkey)
 	{
 		pool_error("encode_key: malloc failed");
@@ -1391,6 +1391,11 @@ static void pool_reset_memqcache_buffer(void)
 
 		cache = pool_get_current_cache();
 		pool_discard_temp_query_cache(cache);
+		/*
+		 * Reset temp_cache pointer in the current query context
+		 * so that we don't double free memory.
+		 */
+		session_context->query_context->temp_cache = NULL;
 	}
 	pool_discard_dml_table_oid();
 	pool_tmp_stats_reset_num_selects();
@@ -2314,7 +2319,7 @@ POOL_QUERY_CACHE_ARRAY *pool_create_query_cache_array(void)
 	size_t size;
 	POOL_QUERY_CACHE_ARRAY *p;
 
-	size = sizeof(int) + POOL_QUERY_CACHE_ARRAY_ALLOCATE_NUM *
+	size = sizeof(int) + sizeof(int) + POOL_QUERY_CACHE_ARRAY_ALLOCATE_NUM *
 		sizeof(POOL_TEMP_QUERY_CACHE *);
 	p = malloc(size);
 	if (!p)
@@ -2521,8 +2526,8 @@ static void pool_discard_buffer(POOL_INTERNAL_BUFFER *buffer)
 	{
 		if (buffer->buf)
 			free(buffer->buf);
+		free(buffer);
 	}
-	free(buffer);
 }
 
 /*
