@@ -921,6 +921,10 @@ static void init_sent_message_list(void)
 	}
 }
 
+/*
+ * Look for extended message list to check if given query context qc
+ * is used. Returns true if it is not used.
+ */
 static bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc)
 {
 	int i;
@@ -932,11 +936,16 @@ static bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc)
 	for (i = 0; i < msglist->size; i++)
 	{
 		if (msglist->sent_messages[i]->query_context == qc)
+		{
+			pool_debug("can_query_context_destroy: query context %p is still used. query:%s",
+					   qc, qc->original_query);
 			count++;
+		}
 	}
 	if (count > 1)
 	{
-		pool_debug("can_query_context_destroy: query context is still used.");
+		pool_debug("can_query_context_destroy: query context %p is still used for %d times.",
+				   qc, count);
 		return false;
 	}
 
