@@ -2715,7 +2715,10 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 	if (pool_is_cache_safe())
 	{
 		SelectContext ctx;
+		POOL_MEMORY_POOL *old_context;
+		old_context = pool_memory_context_switch_to(session_context->memory_context);
 		num_oids = pool_extract_table_oids_from_select_stmt(node, &ctx);
+		pool_memory_context_switch_to(old_context);
 		oids = ctx.table_oids;;
 		pool_debug("num_oids: %d oid: %d", num_oids, *oids);
 
