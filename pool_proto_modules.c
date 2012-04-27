@@ -624,7 +624,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	int specific_error = 0;
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_QUERY_CONTEXT *query_context;
-	POOL_SENT_MESSAGE *msg;
+	POOL_SENT_MESSAGE *bind_msg;
 
 	/* Get session context */
 	session_context = pool_get_session_context();
@@ -636,32 +636,33 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	pool_debug("Execute: portal name <%s>", contents);
 
-	msg = pool_get_sent_message('B', contents);
-	if (!msg)
+	bind_msg = pool_get_sent_message('B', contents);
+	if (!bind_msg)
 	{
 		pool_error("Execute: cannot get bind message");
 		return POOL_END;
 	}
-	if(!msg->query_context)
+	if(!bind_msg->query_context)
 	{
 		pool_error("Execute: cannot get query context");
 		return POOL_END;
 	}
-	if (!msg->query_context->original_query)
+	if (!bind_msg->query_context->original_query)
 	{
 		pool_error("Execute: cannot get original query");
 		return POOL_END;
 	}
-	if (!msg->query_context->parse_tree)
+	if (!bind_msg->query_context->parse_tree)
 	{
 		pool_error("Execute: cannot get parse tree");
 		return POOL_END;
 	}
 
-	query_context = msg->query_context;
-	node = msg->query_context->parse_tree;
-	query = msg->query_context->original_query;
+	query_context = bind_msg->query_context;
+	node = bind_msg->query_context->parse_tree;
+	query = bind_msg->query_context->original_query;
 	pool_debug("Execute: query: %s", query);
+
 	strlcpy(query_string_buffer, query, sizeof(query_string_buffer));
 
 	pool_debug("Execute: query string = <%s>", query);
@@ -673,8 +674,50 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	{
 		bool foundp;
 		POOL_STATUS status;
+		char *search_query = NULL;
 
-		status = pool_fetch_from_memory_cache(frontend,backend, query, &foundp);
+		search_query = (char *)malloc(sizeof(char) * strlen(query) + 1);
+		if (search_query == NULL)
+		{
+			return POOL_END;
+		}
+		strcpy(search_query, query);
+
+		/*
+		 * Add bind message's info to query to search.
+		 */
+		if (bind_msg->param_offset && bind_msg->contents)
+		{
+			/* Extract binary contents from bind message */
+			char *query_in_bind_msg = bind_msg->contents + bind_msg->param_offset;
+			char hex_str[4];  // 02X chars + white space + null end
+			int max_search_query_size = 0;
+			int i = 0;
+			char *tmp;
+
+			for (i = 0; i < bind_msg->len - bind_msg->param_offset; i++)
+			{
+				while (max_search_query_size <= sizeof(char) * strlen(search_query))
+				{
+					max_search_query_size += 1024;
+					tmp =(char *)realloc(search_query, sizeof(char) * max_search_query_size);
+					if (tmp == NULL)
+					{
+						return POOL_END;
+					}
+					search_query = tmp;
+					tmp = NULL;
+				}
+
+				sprintf(hex_str, (i == 0) ? " %02X" : "%02X", (unsigned int)query_in_bind_msg[i]);
+				strcat(search_query, hex_str);
+			}
+
+			query_context->query_w_hex = search_query;
+		}
+
+		/* If the query is SELECT from table to cache, try to fetch cached result. */
+		status = pool_fetch_from_memory_cache(frontend, backend, search_query, &foundp);
 
 		if (status != POOL_CONTINUE)
 			return status;
@@ -709,7 +752,6 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			{
 				return POOL_END;
 			}
-
 
 			/* Check specific errors */
 			specific_error = check_errors(backend, MASTER_NODE_ID);
@@ -858,6 +900,52 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		{
 			pool_error("Parse: cannot create parse message: %s", strerror(errno));
 			return POOL_END;
+		}
+
+		/*
+		 * If the table is to be cached, set is_cache_safe TRUE and register table oids.
+		 */
+		if (pool_config->memory_cache_enabled)
+		{
+			bool is_likely_select = false;
+			bool is_select_query = false;
+			int num_oids;
+			int *oids;
+			int i;
+
+			/* Check if the query is actually SELECT */
+			is_likely_select = pool_is_likely_select(query_context->original_query);
+			if (is_likely_select && IsA(node, SelectStmt))
+			{
+				is_select_query = true;
+			}
+
+			/* Switch the flag of is_cache_safe in session_context */
+			if (is_select_query &&
+				pool_is_allow_to_cache(query_context->parse_tree,
+									   query_context->original_query))
+			{
+				pool_set_cache_safe();
+			}
+			else
+			{
+				pool_unset_cache_safe();
+			}
+
+			/* If table is to be cached and the query is DML, save the table oid */
+			if (!is_select_query)
+			{
+				num_oids = pool_extract_table_oids(node, &oids);
+
+				if (num_oids > 0)
+				{
+					/* Save to oid buffer */
+					for (i=0;i<num_oids;i++)
+					{
+						pool_add_dml_table_oid(oids[i]);
+					}
+				}
+			}
 		}
 
 		/*
@@ -1117,6 +1205,14 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		return POOL_END;
 	}
 
+	/*
+	 * If the query can ce cached, save its offset of query text in bind message's content.
+	 */
+	if (query_context->is_cache_safe)
+	{
+		bind_msg->param_offset = sizeof(int) + sizeof(char) * (strlen(portal_name) + strlen(pstmt_name));
+	}
+
 	session_context->uncompleted_message = bind_msg;
 
 	/* rewrite bind message */
@@ -1133,7 +1229,7 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	if (pool_config->load_balance_mode && pool_is_writing_transaction())
 	{
-		if(parse_before_bind(frontend, backend, parse_msg) != POOL_CONTINUE)
+		if (parse_before_bind(frontend, backend, parse_msg) != POOL_CONTINUE)
 			return POOL_END;
 	}
 
@@ -1568,7 +1664,15 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			/* Memory cache enabled? */
 			if (pool_config->memory_cache_enabled)
 			{
-				pool_handle_query_cache(backend, query, node, state);
+				if (pool_is_doing_extended_query_message())
+				{
+					pool_handle_query_cache(backend, session_context->query_context->query_w_hex, node, state);
+					free(session_context->query_context->query_w_hex); // malloced in Execute().
+				}
+				else
+				{
+					pool_handle_query_cache(backend, query, node, state);
+				}
 			}
 		}
 		/*

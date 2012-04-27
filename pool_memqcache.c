@@ -1,3 +1,4 @@
+#define DEBUG
 /* -*-pgsql-c-*- */
 /*
  * pgpool: a language independent connection pool server for PostgreSQL
@@ -463,6 +464,7 @@ static int send_cached_messages(POOL_CONNECTION *frontend, const char *qcache, i
 		char tmpbuf[MAX_VALUE];
 
 		tmpkind = qcache[i];
+
 		i += 1;
 
 		memcpy(&tmplen, qcache+i, sizeof(tmplen));
@@ -490,6 +492,7 @@ static int send_cached_messages(POOL_CONNECTION *frontend, const char *qcache, i
 		}
 
 		/* send message to frontend */
+		pool_log("send_cached_messages: %c len: %d", tmpkind, tmplen);
 		send_message(frontend, tmpkind, tmplen, tmpbuf);
 
 		msg++;
@@ -1389,13 +1392,22 @@ static void pool_reset_memqcache_buffer(void)
 		pool_discard_query_cache_array(session_context->query_cache_array);
 		session_context->query_cache_array = pool_create_query_cache_array();
 
-		cache = pool_get_current_cache();
-		pool_discard_temp_query_cache(cache);
 		/*
-		 * Reset temp_cache pointer in the current query context
-		 * so that we don't double free memory.
+		 * if the query context is still under use, we cannot discard
+		 * temporary cache.
 		 */
-		session_context->query_context->temp_cache = NULL;
+		if (can_query_context_destroy(session_context->query_context))
+		{
+			pool_debug("pool_reset_memqcache_buffer: discard temp buffer of %p (%s)",
+					   session_context->query_context, session_context->query_context->original_query);
+			cache = pool_get_current_cache();
+			pool_discard_temp_query_cache(cache);
+			/*
+			 * Reset temp_cache pointer in the current query context
+			 * so that we don't double free memory.
+			 */
+			session_context->query_context->temp_cache = NULL;
+		}
 	}
 	pool_discard_dml_table_oid();
 	pool_tmp_stats_reset_num_selects();
@@ -2456,10 +2468,10 @@ static void pool_add_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache, char ki
 	}
 
 	/*
-	 * We only store T(Table Description), D(Data row), C(Command
-	 * Complete)
+	 * We only store T(Table Description), D(Data row), C(Command Complete),
+	 * 1(ParseComplete), 2(BindComplete)
 	 */
-    if (kind != 'T' && kind != 'D' && kind != 'C')
+    if (kind != 'T' && kind != 'D' && kind != 'C' && kind != '1' && kind != '2')
     {
 		return;
 	}
