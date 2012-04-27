@@ -32,7 +32,6 @@ static POOL_SESSION_CONTEXT session_context_d;
 static POOL_SESSION_CONTEXT *session_context = NULL;
 
 static void init_sent_message_list(void);
-static bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc);
 
 /*
  * Initialize per session context
@@ -925,7 +924,7 @@ static void init_sent_message_list(void)
  * Look for extended message list to check if given query context qc
  * is used. Returns true if it is not used.
  */
-static bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc)
+bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc)
 {
 	int i;
 	int count = 0;
