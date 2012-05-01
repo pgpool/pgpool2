@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Sun Mar  4 11:19:30 JST 2012
+Last modified: Tue May  1 16:39:07 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -33,6 +33,10 @@ Last modified: Sun Mar  4 11:19:30 JST 2012
         <li><a href="#replication_mode">$B%l%W%j%1!<%7%g%s%b!<%I(B</a></li>
         <li><a href="#master_slave_mode">$B%^%9%?!<%9%l!<%V%b!<%I(B</a></li>
         <li><a href="#stream">Streaming Replication$B$X$NBP1~(B</a></li>
+		<li><a href="#parallel">$B%Q%i%l%k%b!<%I(B</a></li>
+		<li><a href="#hba">$B%/%i%$%"%s%HG'>Z(B(HBA)$B$N$?$a$N(B pool_hba.conf $B@_DjJ}K!(B</a></li>
+		<li><a href="#query_cache">$B%/%(%j%-%c%C%7%e$N@_DjJ}K!(B</a></li>
+		<li><a href="#memqcache">$B%*%s%a%b%j%/%(%j%-%c%C%7%e$N@_DjJ}K!(B</a></li>
         <li><a href="#start">pgpool-II$B$N5/F0$HDd;_(B</a></li>
         <li><a href="#reload">pgpool-II$B$N@_Dj%U%!%$%k$N:FFI$_9~$_(B</a></li>
         <li><a href="#show-commands">SHOW$B%3%^%s%I(B</a></li>
@@ -1850,7 +1854,7 @@ PostgreSQL$B$N5/F0$K@.8y$7$?$i!"<!$N%9%F%C%W$K0\$j$^$9!#(B
 </p>
 
 
-<h1>$B%Q%i%l%k%b!<%I(B</h1>
+<h1><a name=parallel"></a>$B%Q%i%l%k%b!<%I(B</h1>
 <p>
 $B%Q%i%l%k%/%(%j5!G=$,MxMQ$G$-$k%b!<%I$G$9!#%F!<%V%k$rJ,3d$5$;!"3F%N!<%I$K%G!<%?(B
 $B$r;}$?$;$k$3$H$,$G$-$^$9!#$^$?%l%W%j%1!<%7%g%s$dIi2YJ,;65!G=$bF1;~$K;H$&$3$H$,(B
@@ -2137,7 +2141,7 @@ md5$B$K4X$7$F$O!"(Bpool_passwd$B$H$$$&%Q%9%o!<%I%U%!%$%k$rJ;MQ$9$k$3$H$K$h$C$
    $B$@$5$$!#(B
 </p>
 
-<h2 id="memqcache">$B%/%(%j%-%c%C%7%e$N@_DjJ}K!(B</h2>
+<h1><a name="query_cache"></a>$B%/%(%j%-%c%C%7%e$N@_DjJ}K!(B</h1>
 
 <p>
 	pgpool-II$B$G$O!"$9$Y$F$N%b!<%I$G%/%(%j%-%c%C%7%e$rMxMQ$9$k$3$H$,$G$-$^$9!#(B
@@ -2162,108 +2166,205 @@ CREATE TABLE pgpool_catalog.query_cache (
 <p>
 $B$?$@$7!"$3$NNc$G$O%9%-!<%^L>$,(B"pgpool_catalog"$B$H$J$C$F$$$k$N$G!"0c$&%9%-!<%^$r;H$&>l9g$OE,Ev$K=q$-49$($F$/$@$5$$!#(B
 </p>
-
-<h3>$B6&M-%a%b%j!&(BMemcached$B$r;HMQ$7$?%/%(%j%-%c%C%7%e(B</h3>
-
 <p>
-$BMxMQ$9$k>l9g$K$O!"(Bpgpool.conf$B$N@_Dj$r0J2<$N$h$&$K@_Dj$7$^$9!#%G%U%)%k%H$O(Bfalse$B$G$9!#(B
+<strong>$BCm0U(B: $B8=:_$N%/%(%j%-%c%C%7%e$N<BAu$G$O!"%-%c%C%7%e$,%G!<%?%Y!<%9>e$K:n@.$5$l$^$9!#(B
+$B$=$N$?$a!"<B9T$K$"$^$j;~4V$N$+$+$i$J$$$h$&$J(BSELECT$B$G$O!"%/%(%j%-%c%C%7%e$rM-8z$K$9$k$3$H$K$h$C$F!"$+$($C$FCY$/$J$k$3$H$,$"$j$^$9!#$^$?!"%/%(%j%-%c%C%7%e$NFbMF$O!"%F!<%V%k$,99?7$5$l$F$b$=$N$^$^$G$9!#(B
+$B<jF0$G>e5-%F!<%V%k$+$i:o=|$9$k$+!"(B-c $B%*%W%7%g%s(B($B%/%(%j%-%c%C%7%e$N%/%j%"(B)$B$rDI2C$7$F(Bpgpool-II$B$r:F5/F0$9$kI,MW$,$"$j$^$9!#(B</strong>
 </p>
 
+<h1><a name="memqcache"></a>$B%*%s%a%b%j%/%(%j%-%c%C%7%e$N@_DjJ}K!(B</h2>
+
+<p>
+pgpool-II$B$G$O!"$9$Y$F$N%b!<%I$G%*%s%a%b%j%/%(%j%-%c%C%7%e$rMxMQ$9$k$3$H$,$G$-$^$9!#(B
+$B>e5-$N%/%(%j%-%c%C%7%e$H0c$$!"%a%b%j>e$K%-%c%C%7%e$,CV$+$l$k$N$G9bB.$G$"$k$P$+$j$G$J$/!"%G!<%?$,99?7$5$l$k$H<+F0E*$K%-%c%C%7%e$,L58z$K$J$j!"(Bpgpool-II$B$N:F5/F0$NI,MW$,$"$j$^$;$s!#(B
+</p>
+<p>
+$B%*%s%a%b%j%/%(%j%-%c%C%7%e$O!"Ld$$9g$o$;$N(BSELECT$BJ8(B($B3HD%Ld$$9g$o$;$N>l9g$O99$K%P%$%s%I%Q%i%a!<%?(B)$B$H8!:w7k2L$r%Z%"$G5-O?$7!"(B2$B2sL\0J9_$KF1$8(BSELECT$BJ8$,H/9T$5$l$?>l9g$K!"%-%c%C%7%e$+$i7k2L$rJV$7$^$9!#(B
+$BDL>o$N(BSELECT$BJ8=hM}$H0c$C$F!"(BPostgreSQL$B$K%"%/%;%9$7$J$$$@$1$G$J$/!"(Bpgpool$BFbIt$N(BSQL$B%Q!<%9=hM}$J$I$r7PM3$7$J$$$?$a!"Hs>o$K9bB.$G$9!#(B
+</p>
+<p>
+$BH?LL!"%-%c%C%7%e$K%R%C%H$7$J$$>l9g$ODL>o$N(BSELECT$BJ8$N=hM}$K2C$($F%-%c%C%7%e=hM}$N%*!<%P%X%C%I$,@8$8$k$N$G!"$+$($C$FCY$/$J$j$^$9!#(B
+$B$^$?!"$"$k%F!<%V%k$,99?7$5$l$?>l9g!"$=$N%F!<%V%k$r;2>H$7$F$$$k$9$Y$F$N%-%c%C%7%e$,<+F0:o=|$5$l$k$?$a(B($B<+F0:o=|$7$J$$@_Dj$b2DG=(B)$B!"99?7=hM}$,B?$$%7%9%F%`$G$O%*%s%a%b%j%/%(%j%-%c%C%7%e$rM-8z$K$7$F$$$k$3$H$G$+$($C$FCY$/$J$j$^$9!#(B
+$B%-%c%C%7%e$N%R%C%HN($,(B70%$B0J2<$N>l9g$O!"%*%s%a%b%j%/%(%j%-%c%C%7%e$N@_Dj$rM-8z$K$7$J$$$[$&$,NI$$$G$7$g$&!#(B
+</p>
+
+<h2>$B%*%s%a%b%j%/%(%j%-%c%C%7%e$NM-8z2=(B</h2>
+<p>
+$B%*%s%a%b%j%/%(%j%-%c%C%7%e$rM-8z$K$9$k$K$O!"(Bpgpool.conf$B$N(B"memory_cache_enabled"$B$rM-8z$K$7$^$9!#(B
 <pre>
 memory_cache_enabled = true
 </pre>
-
-<p>
-$B6&M-%a%b%j!"$^$?$O(BMemcached$B$r;HMQ$7$?%/%(%j%-%c%C%7%e$N?6$kIq$$$O!"0J2<$N@_Dj$r9T$$$^$9!#(B
 </p>
 
+<h2>$B%-%c%C%7%e%9%H%l!<%8$NA*Br(B</h2>
 <p>
-$B%/%(%j%-%c%C%7%e$NJ}K!$O0J2<$N$h$&$K@_Dj$7$^$9!#(B<br>
+$B%a%b%j%-%c%C%7%e$N%9%H%l!<%8$K$O!"6&M-%a%b%j$H(B<a href="http://memcached.org">memcached</a>$B$N$I$A$i$+$rA*Br$9$k$3$H$,$G$-$^$9(B($BJ;MQ$O$G$-$^$;$s(B)$B!#(B
+<p>
+$B6&M-%a%b%j$r;HMQ$9$k%/%(%j%-%c%C%7%e$O9bB.$G!"(Bmemcached$B$NN)$A>e$2$bI,MW$J$/!"<j7Z$KMxMQ$G$-$^$9!#(B
+$B$?$@$7!"6&M-%a%b%j%5%$%:$N>e8B$K$h$C$FJ]B8$G$-$k%-%c%C%7%e$NNL$K@)8B$,$"$j$^$9!#(B
+memcached$B$r%-%c%C%7%e%9%H%l!<%8$K;HMQ$9$k>l9g$O!"%M%C%H%o!<%/%"%/%;%9$N%*!<%P%X%C%I$,$"$k$b$N$N!"Hf3SE*<+M3$K%-%c%C%7%e%a%b%j$NBg$-$5$r@_Dj$G$-$^$9!#(B
+</p>
+<p>
 $B6&M-%a%b%j$rMxMQ$9$k>l9g$O(B'shmem'$B!"(BMemcached$B$rMxMQ$9$k>l9g$O(B'memcached'$B$H@_Dj$7$^$9!#%G%U%)%k%H$O!"(B'shmem'$B$G$9!#(B
-
 </p>
-<pre>
-memqcache_method = 'shmem'
-</pre>
+
+<h2>$B%-%c%C%7%e$,:n@.$5$l$k>l9g$H:n@.$5$l$J$$>l9g(B</h2>
+<p>
+$B$9$Y$F$N(BSELECT($B$b$7$/$O(BWITH)$B$,%*%s%a%b%j%/%(%j%-%c%C%7%e$NBP>]$K$J$k$o$1$G$O$"$j$^$;$s!#(B
+$B%-%c%C%7%e$H(BDB$B$N0l4S@-$r6KNOJ]$D$?$a$K!"%-%c%C%7%e$5$l$J$$%1!<%9$,$"$j$^$9!#0J2<$=$l$rNs5s$7$^$9!#(B
+</p>
+<ul>
+  <li>SELECT FOR SHARE$B$^$?$O(BUPDATE
+  <li>IMMUTABLE$B$G$J$$4X?t$r;H$C$F$$$k(BSELECT
+  <li>$B0l;~%F!<%V%k$r;H$C$F$$$k(BSELECT
+  <li>$B%7%9%F%`%+%?%m%0$r8!:w$7$F$$$k(BSELECT
+  <li>VIEW$B$r;H$C$F$$$k(BSELECT
+  <li>$BL@<(E*$J%H%i%s%6%/%7%g%sFb$G(BSELECT$B$,H/9T$5$l!"$=$N%H%i%s%6%/%7%g%s$,%"%\!<%H$7$?;~(B
+  <li>white_memqcache_table_list$B!"(Bblack_memqcache_table_list$B$,;XDj$5$l$F$$F@$k>l9g(B
+  <li>SELECT$B7k2L$,Bg$-$$>l9g(B(memqcache_maxcache$B$N9`;2>H(B)
+</ul>
+
+<h2>$B%-%c%C%7%e$,$"$C$F$b;2>H$5$l$J$$>l9g(B</h2>
+<p>
+$B%*%s%a%b%j%/%(%j%-%c%C%7%e$,B8:_$7$F$b!"$=$N%-%c%C%7%e$,MxMQ$5$l$J$$%1!<%9$,$"$j$^$9!#(B
+$B0J2<$=$l$rNs5s$7$^$9!#(B
+</p>
+<ul>
+  <li>$BL@<(E*$J%H%i%s%6%/%7%g%sFb$G99?7%/%(%j$,H/9T$5$l$F$$$k>l9g$O!"$=$N%H%i%s%6%/%7%g%sFb$G$O0l@Z%/%(%j%-%c%C%7%e$O;2>H$5$l$^$;$s(B
+  <li>$B$=$N%-%c%C%7%e$r0c$&%f!<%6$,:n@.$7$F$$$?>l9g(B($B%;%-%e%j%F%#>e$NM}M3(B)
+  <li>$B%-%c%C%7%e$N<wL?$rD6$($F$$$?>l9g(B(memqcache_expire$B$N9`$r;2>H(B)
+</ul>
+
+<h2>$B6&DL@_Dj9`L\(B</h2>
+<p>
+$B%-%c%C%7%e%9%H%l!<%8$r6&M-%a%b%j$K$9$k>l9g$G$b!"(Bmemcached$B$K$9$k>l9g$G$b!"6&DL$G@_Dj$9$k9`L\$r@bL@$7$^$9!#(B
+</p>
 
 <p>
-Memcached$B$r;HMQ$9$k>l9g$O!"(BMemcached$B$N%[%9%HL>$r0J2<$N$h$&$K@_Dj$7$^$9!#(B
-</p>
-<pre>
-memqcache_memcached_host = 'foo.com'
-</pre>
+<ul>
+  <li>memqcache_expire
+	  <p>
+	  $B%/%(%j%-%c%C%7%e$N<wL?$rICC10L$G@_Dj$7$^$9!#%G%U%)%k%H$O(B60$B$G$9!#(B0$B$r;XDj$9$k$H<wL?$,L58BBg$K$J$j!"4XO"%F!<%V%k$,99?7$5$l$k$^$G$O%-%c%C%7%e$,M-8z$K$J$j$^$9!#$J$*!"$3$N@_Dj$O!"(Bmemqcache_auto_cache_invalidation$B$H$OFHN)$G$9!#(B
+	  </p>
+	  
+  <li>memqcache_auto_cache_invalidation
+	  <p>
+	  true$B$J$i$P4XO"$9$k%F!<%V%k$,99?7$5$l$k$H%-%c%C%7%e$rL58z2=$7$^$9!#(B
+	  false$B$J$i$P%F!<%V%k$,99?7$5$l$F$b%-%c%C%7%e$rL58z2=$7$^$;$s!#(B
+	  $B%G%U%)%k%HCM$O(Btrue$B$G$9!#(B
+	  $B$J$*!"$3$N@_Dj$O(Bmemqcache_expire$B$N@_Dj$H$OFHN)$G$9!#(B
+	  </p>
+	  
+  <li>white_memqcache_table_list
+	  <p>
+	  SELECT$B7k2L$r%-%c%C%7%e$7$?$$%F!<%V%kL>$r%+%s%^6h@Z$j$G;XDj$7$^$9!#@55,I=8=$bMxMQ$G$-$^$9!#(B
+	  white_memqcache_table_list$B$b(Bblack_memqcache_table_list$B$b=i4|CM$N(B''$B$G$"$k>l9g$O!"$9$Y$F$N%F!<%V%k$,%-%c%C%7%e$NBP>]$K$J$j$^$9!#(B
+	  </p>
 
+  <li>black_memqcache_table_list
+	  <p>
+	  SELECT$B7k2L$r%-%c%C%7%e$7$?$/$J$$%F!<%V%kL>$r%+%s%^6h@Z$j$G;XDj$7$^$9!#@55,I=8=$bMxMQ$G$-$^$9!#(B
+	  white_memqcache_table_list$B$b(Bblack_memqcache_table_list$B$b=i4|CM$N(B''$B$G$"$k>l9g$O!"$9$Y$F$N%F!<%V%k$,%-%c%C%7%e$NBP>]$K$J$j$^$9!#(B
+	  </p>
+
+  <li>memqcache_maxcache
+	  <p>
+	  SELECT$BJ8$N<B9T7k2L$,(Bmemqcache_maxcache$B$rD6$($k$H!"%-%c%C%7%e$5$l$^$;$s!#C10L$O%P%$%H$G$9!#(B
+	  </p>
+
+  <li>memqcache_oiddir
+	  <p>
+	  SELECT$BJ8$,;HMQ$9$k%F!<%V%k$K(BOID$B$r3JG<$9$k0l;~%U%!%$%kNN0h$N%H%C%W%G%#%l%/%H%j$r%U%k%Q%9$G;XDj$7$^$9!#(B
+	  memqcache_oiddir$B0J2<$K$O!"%G!<%?%Y!<%9(BOID$BL>$N%G%#%l%/%H%j$,:n@.$5$l!"99$K$=$N2<$K$O%F!<%V%k(BOID$BL>$N%U%!%$%k$,:n@.$5$l$^$9!#(B
+	  $B%F!<%V%k(BOID$BL>%U%!%$%k$NCf$K$O!"%/%(%j%-%c%C%7%e$X$N%]%$%s%?$,3JG<$5$l$F$*$j!"%F!<%V%k$N99?7$,$"$C$?:]$K%-%c%C%7%e$r:o=|$9$k%-!<$H$J$j$^$9!#(B
+	  $B$3$NNN0h$O(Bpgpool$B$,:F5/F0$5$l$k$H<+F0E*$K:o=|$5$l$^$9!#(B
+	  </p>
+</ul>
+		  
+<h2>$B%-%c%C%7%e$N%b%K%?%j%s%0(B</h2>
 <p>
-Memcached$B$r;HMQ$9$k>l9g$O!"(BMemcached$B$N%]!<%HHV9f$r0J2<$N$h$&$K@_Dj$7$^$9!#(B
-</p>
+$B%*%s%a%b%j%/%(%j%-%c%C%7%e$r%b%K%?$9$kJ}K!$r@bL@$7$^$9!#(B
+$B%-%c%C%7%e$+$i8!:w7k2L$,<hF@$5$l$?$+$I$&$+$O!"(Blog_per_node_statement $B$rM-8z$K$9$k$3$H$G3NG'$G$-$^$9!#(B
 <pre>
-memqcache_memcached_port = 11211
+2012-05-01 15:42:09 LOG:   pid 20181: query result fetched from cache. statement: select * from t1;
 </pre>
-
+</p>
 <p>
-$B6&M-%a%b%j$r;HMQ$9$k>l9g$O!"%-%c%C%7%e$rC_$($k%a%b%j%5%$%:$r0J2<$N$h$&$K@_Dj$7$^$9!#C10L$O%P%$%H$G$9!#(B
+$B%/%(%j%-%c%C%7%e$N%R%C%HN($O!"(Bshow pool_status$B%3%^%s%I$G3NG'$G$-$^$9!#(B
 </p>
-<pre>
-memqcache_total_size = 10240
-</pre>
-
 <p>
-$B6&M-%a%b%j$r;HMQ$9$k>l9g$O!"%-%c%C%7%e$N?t$r;XDj$7$^$9!#%-%c%C%7%e4IM}NN0h$O%-%c%C%7%e(B1$B8D$"$?$j(B48$B%P%$%H$r>CHq$7$^$9!#(B
-</p>
 <pre>
-memqcache_max_num_cache = 100
+ memqcache_stats_start_time           | Tue May  1 15:41:59 2012 | Start time of query cache stats
+ memqcache_no_cache_hits              | 80471                    | Number of SELECTs not hitting query cache
+ memqcache_cache_hits                 | 36717                    | Number of SELECTs hitting query cache
 </pre>
-
+</p>
 <p>
-$B%/%(%j%-%c%C%7%e$N<wL?$O!"0J2<$N$h$&$K@_Dj$7$^$9!#C10L$OIC!"%G%U%)%k%H$O(B60$B$G$9!#(B
+$B$3$NNc$G$O!"(B
 </p>
-<pre>
-memqcache_expire = 60
-</pre>
-
 <p>
-DDL/DML/DCL $B$,<B9T$5$l$?>l9g!J$H<wL?$,2a$.$?>l9g!K$K%/%(%j%-%c%C%7%e$NL58z2=$r$9$k>l9g$O!"0J2<$N$h$&$K@_Dj$7$^$9!#(B<br />
-false $B$K@_Dj$9$k$H!"<wL?$r2a$.$?>l9g$K$N$_%/%(%j%-%c%C%7%e$rL58z2=$7$^$9!#%G%U%)%k%H$O(B true $B$G$9!#(B
-</p>
 <pre>
-memqcache_auto_cache_invalidation = true
+memqcache_cache_hits)/(memqcache_no_cache_hits+memqcache_cache_hits) = 36717/(36717+80471) = 31.3%
 </pre>
-
+</p>
 <p>
-
-$B%-%c%C%7%e$r5vMF$9$k(BSELECT$BJ8$N<B9T7k2L$N:GBg%5%$%:$O!"0J2<$N$h$&$K@_Dj$7$^$9!#C10L$O%P%$%H$G$9!#(B
+$B$,%-%c%C%7%e%R%C%HN($H$$$&$3$H$K$J$j$^$9!#(B
 </p>
-<pre>
-memqcache_maxcache = 512
-</pre>
 
+<h2>$B6&M-%a%b%j@_Dj9`L\(B</h2>
 <p>
-$B6&M-%a%b%j$r;HMQ$9$k>l9g$O!"%a%b%j%-%c%C%7%e$r8GDjD9$N%V%m%C%/$KJ,3d$7$^$9!#(B<br>
-$B%V%m%C%/%5%$%:$r>.$5$/$9$k$H!"8zN(E*$J%a%b%j;HMQ$,=PMh$^$9$,!"=hM}B.EY$OCY$/$J$k62$l$,$"$j$^$9!#(B<br>
-$B0lJ}!"%V%m%C%/%5%$%:$rBg$-$/$9$k$H!"8zN(E*$J%a%b%j;HMQ$O=PMh$^$;$s$,!"=hM}B.EY$N8~>e$,4|BT$G$-$^$9!#(B<br><br>
-
-$B%-%c%C%7%e%V%m%C%/%5%$%:$O0J2<$N$h$&$K@_Dj$7$^$9!#C10L$O%P%$%H$G!"%G%U%)%k%H$O(B8192$B$G$9!#(B
+$B%-%c%C%7%e%9%H%l!<%8$H$7$F6&M-%a%b%j$r;HMQ$9$k>l9g$N@_Dj9`L\$r@bL@$7$^$9!#(B
 </p>
-<pre>
-memqcache_cache_block_size= 8192
-</pre>
 
+<ul>
+  <li>memqcache_total_size
+	  <p>
+	  $B%-%c%C%7%e%9%H%l!<%8$K;HMQ$9$k6&M-%a%b%jNN0h$N%5%$%:$r;XDj$7$^$9!#C10L$O%P%$%H$G$9!#(B
+	  </p>
+
+  <li>memqcache_max_num_cache
+	  <p>
+	  $B%-%c%C%7%e$N?t$r;XDj$7$^$9!#(B
+	  $B$3$N@_Dj9`L\$O!"%-%c%C%7%e$N4IM}NN0h$NBg$-$5$r7h$a$k$?$a$K;HMQ$7$^$9(B
+	  (memqcache_total_size$B$H$OJL$K<h$i$l$^$9(B)$B!#(B
+	  $B4IM}NN0h$NBg$-$5$O!"(Bmemqcache_max_num_cache*48($B%P%$%H(B)$B$K$J$j$^$9!#(B
+	  $B$3$N?t$O>/$J$9$.$k$H%-%c%C%7%e$rEPO?$9$k$3$H$,$G$-$:$K%(%i!<$K$J$j$^$9!#(B
+	  $B5U$KB?$9$.$k$HL5BL$K$J$j$^$9!#(B
+	  </p>
+
+  <li>memqcache_cache_block_size
+	  <p>
+	  $B%-%c%C%7%e%9%H%l!<%8$H$7$F6&M-%a%b%j$r;HMQ$9$k>l9g$O!"%a%b%j$r(B
+	  memqcache_cache_block_size $B$N%V%m%C%/$KJ,$1$FMxMQ$7$^$9!#8!:w7k2L(B
+	  $B$N%-%c%C%7%e$O$3$N%V%m%C%/$KF~$k$@$15M$a9~$^$l$^$9!#$?$@$7!"%-%c%C(B
+	  $B%7%e$OJ#?t$N%V%m%C%/$K$^$?$,$C$F3JG<$5$l$J$$$N$G!"(B
+	  memqcache_cache_block_size$B$r8!:w7k2L$,D6$($k$H!"%-%c%C%7%e$K3JG<(B
+	  $B$G$-$J$/$J$j$^$9!#(B
+	  </p>
+</ul>
+
+<h2>memcached$B@_Dj9`L\(B</h2>
 <p>
-white_memqcache_table_list $B$K$O(B SELECT $B7k2L$r%-%c%C%7%e$7$?$$%F!<%V%kL>$r!"(B
-black_memqcache_table_list $B$K$O%-%c%C%7%e$7$?$/$J$$%F!<%V%kL>$r;XDj$7$^$9!#(B
-</p>
-<p>$B$3$3$G$O@55,I=8=$r;H$&$3$H$,$G$-$^$9!#(B</p>
-<pre>
-white_memqcache_table_list = ''
-black_memqcache_table_list = ''
-</pre>
+$B%-%c%C%7%e%9%H%l!<%8$H$7$F(Bmemcached$B$r;HMQ$9$k>l9g$N@_Dj9`L\$r@bL@$7$^$9!#(B
+
+<ul>
+  <li>memqcache_memcached_host
+	  <p>
+	  memcached$B$,F0$$$F$$$k%[%9%HL>$^$?$O(BIP$B%"%I%l%9$r;XDj$7$^$9!#(B
+	  pgpool-II$B$HF1$8%^%7%s$G(Bmemcached$B$rF0$+$9>l9g$O!"(B'localhost'$B$H$7$^$9!#(B
+	  </p>
+
+  <li>memqcache_memcached_port
+	  <p>
+	  memcached$B$N%]!<%HHV9f$r;XDj$7$^$9!#%G%U%)%k%HCM$O(B 11211 $B$G$9!#(B
+	  </p>
+</ul>
 
 <h3>memcached$B$N%$%s%9%H!<%k(B</h3>
-
 <p>
-$B%/%(%j%-%c%C%7%e$K$*$$$F!"(Bmemcached$B$r;HMQ$9$k>l9g$O!"(Bmemcached$B$r%$%s%9%H!<%k$7$F$*$/I,MW$,$"$j$^$9!#(B
+pgpool-II$B$N%/%(%j%-%c%C%7%e%9%H%l!<%8$H$7$F(Bmemcached$B$r;HMQ$9$k>l9g$O!"F0:n$7$F$$$k(Bmemcached$B$H!"(Blibmemcached$B$H$$$&%/%i%$%"%s%H%i%$%V%i%j$N%$%s%9%H!<%k$,I,MW$G$9!#(B
+rpm$B$J$I$+$i%$%s%9%H!<%k$9$k$N$,$*$9$9$a$G$9$,!"$3$3$G$O%=!<%9%3!<%I$+$i%$%s%9%H!<%k$9$kJ}K!$r@bL@$7$^$9!#(B
 </p>
-
 <p>
 memcached$B$N%=!<%9%3!<%I$O(B<a href="http://memcached.org/">memcached$B3+H/%Z!<%8(B</a>$B$+$i%@%&%s%m!<%I$G$-$^$9!#(B
 </p>
@@ -2330,12 +2431,6 @@ make install
 </pre>
 </dd>
 </dl>
-
-<p>
-<strong>$BCm0U(B: $B8=:_$N%/%(%j%-%c%C%7%e$N<BAu$G$O!"%-%c%C%7%e$,%G!<%?%Y!<%9>e$K:n@.$5$l$^$9!#(B
-$B$=$N$?$a!"<B9T$K$"$^$j;~4V$N$+$+$i$J$$$h$&$J(BSELECT$B$G$O!"%/%(%j%-%c%C%7%e$rM-8z$K$9$k$3$H$K$h$C$F!"$+$($C$FCY$/$J$k$3$H$,$"$j$^$9!#$^$?!"%/%(%j%-%c%C%7%e$NFbMF$O!"%F!<%V%k$,99?7$5$l$F$b$=$N$^$^$G$9!#(B
-$B<jF0$G>e5-%F!<%V%k$+$i:o=|$9$k$+!"(B-c $B%*%W%7%g%s(B($B%/%(%j%-%c%C%7%e$N%/%j%"(B)$B$rDI2C$7$F(Bpgpool-II$B$r:F5/F0$9$kI,MW$,$"$j$^$9!#(B</strong>
-</p>
 
 <h1>pgpool-II$B$N5/F0$HDd;_(B<a name="start"></a></h1>
 <p>
