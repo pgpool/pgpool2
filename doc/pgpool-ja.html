@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Wed May  2 15:24:17 JST 2012
+Last modified: Wed May  2 16:22:29 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -192,6 +192,11 @@ pgpool-II$B$N%=!<%9%3!<%I$+$i$N%$%s%9%H!<%k$K$O!"(Bgcc 2.9$B0J>e!"$*$h$S(BGN
         pgpool-II$B$O!"A^F~BP>]$N%F!<%V%k$KBP$7$F%m%C%/$r9T$$$^$9!#(B
         $B$3$l$O!"%m%C%/$,(BVACUUM$B$H6%9g$9$k$?$aHs?d>)$G$9!#(B
         </li>
+		<li><code>--with-memcached=path</code><br/>
+		$B%-%c%C%7%e%9%H%l!<%8$K(Bmemcached$B$rMxMQ$7!"(B<a href="#memqcache">$B%*%s%a%b%j%/%(%j%-%c%C%7%e(B</a>$B5!G=$rMxMQ$7$?$$>l9g$K;XDj$7$^$9!#(B
+			<a href="http://libmemcached.org/libMemcached.html">libMemcached</a>$B$N%$%s%9%H!<%k$,I,MW$G$9!#(B
+        </li>
+
     </ul>
     </dd>
 
@@ -2641,9 +2646,19 @@ memcached$B$r%-%c%C%7%e%9%H%l!<%8$K;HMQ$9$k>l9g$O!"%M%C%H%o!<%/%"%/%;%9$N%*!<%P
 
 <dt id="MEMQCACHE_MAXCACHE">memqcache_maxcache</dt>
     <dd>
-    <p>
-    SELECT$BJ8$N<B9T7k2L$,(Bmemqcache_maxcache$B$rD6$($k$H!"%-%c%C%7%e$5$l$^$;$s!#C10L$O%P%$%H$G$9!#(B
-    </p>
+		<p>
+		SELECT$BJ8$N<B9T7k2L$,(Bmemqcache_maxcache$B%P%$%H$rD6$($k$H!"%-%c%C%7%e$5$l$^$;$s!#(B
+		$B$3$N>l9g!"0J2<$N$h$&$J%a%C%;!<%8$,I=<($5$l$^$9!#(B
+		</p>
+		<p>
+		<pre>
+		2012-05-02 15:08:17 LOG:   pid 13756: pool_add_temp_query_cache: data size exceeds memqcache_maxcache. current:4095 requested:111 memq_maxcache:4096
+		</pre>
+		</p>
+		<p>
+		$B$3$NLdBj$r2sHr$9$k$?$a$K$O!"(Bmemqcache_maxcache$B$rBg$-$/$9$l$PNI$$$N$G$9$,!"(B
+		$B%-%c%C%7%e%9%H%l!<%8$H$7$F6&M-%a%b%j$r;HMQ$9$k>l9g$O!"(B<a fref="#MEMQCACHE_CACHE_BLOCK_SIZE">memqcache_cache_block_size</a>$B$rD6$($J$$$h$&$K$7$F$/$@$5$$!#(B
+		$B%-%c%C%7%e%9%H%l!<%8$H$7$F(Bmemcached$B$r;HMQ$9$k>l9g$O!"(Bmemcached$B$N%9%i%V%5%$%:(B($B%G%U%)%k%H$G(B1MB)$B$rD6$($J$$$h$&$K$7$F$/$@$5$$!#(B
     </dd>
 
 <dt id="MEMQCACHE_OIDDIR">memqcache_oiddir</dt>
@@ -2723,13 +2738,7 @@ memqcache_cache_hits                 | 36717                    | Number of SELE
     $B$N%-%c%C%7%e$O$3$N%V%m%C%/$KF~$k$@$15M$a9~$^$l$^$9!#(B
     $B$?$@$7!"%-%c%C%7%e$OJ#?t$N%V%m%C%/$K$^$?$,$C$F3JG<$5$l$J$$$N$G!"(B
     memqcache_cache_block_size$B$r8!:w7k2L$,D6$($k$H!"%-%c%C%7%e$K3JG<$G$-$J$/$J$j$^$9!#(B
-		$B$3$N>l9g!"0J2<$N$h$&$J%a%C%;!<%8$,I=<($5$l$^$9!#(B
     </p>
-		<p>
-		<pre>
-		2012-05-02 15:08:17 LOG:   pid 13756: pool_add_temp_query_cache: data size exceeds memqcache_maxcache. current:4095 requested:111 memq_maxcache:4096
-		</pre>
-		</p>
     </dd>
 </dl>
 
