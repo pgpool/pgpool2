@@ -877,9 +877,9 @@ enable_float8_byval
 with_pgsql
 with_pgsql_includedir
 with_pgsql_libdir
-with_memcached
 with_openssl
 with_pam
+with_memcached
 enable_rpath
 enable_sequence_lock
 enable_table_lock
@@ -1536,7 +1536,6 @@ Optional Packages:
   --with-pgsqla=DIR     site header files for PostgreSQL in DIR
   --with-pgsql-includedir=DIR     site header files for PostgreSQL in DIR
   --with-pgsql-libdir=DIR     site library files for PostgreSQL in DIR
---with-memcache=DIR : site library files for Memcached in DIR
   --with-openssl     build with OpenSSL support
   --with-pam     build with PAM support
   --with-memcached=DIR     site header files for libmemcached in DIR
@@ -4878,13 +4877,13 @@ if test "${lt_cv_nm_interface+set}" = set; then :
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:4881: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:4880: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4884: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:4883: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4887: output\"" >&5)
+  (eval echo "\"\$as_me:4886: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -6090,7 +6089,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 6093 "configure"' > conftest.$ac_ext
+  echo '#line 6092 "configure"' > conftest.$ac_ext
   if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7620,11 +7619,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7623: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7622: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7627: \$? = $ac_status" >&5
+   echo "$as_me:7626: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7959,11 +7958,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7962: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7961: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7966: \$? = $ac_status" >&5
+   echo "$as_me:7965: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -8064,11 +8063,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8067: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8066: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:8071: \$? = $ac_status" >&5
+   echo "$as_me:8070: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -8119,11 +8118,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8122: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8121: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:8126: \$? = $ac_status" >&5
+   echo "$as_me:8125: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10489,7 +10488,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10492 "configure"
+#line 10491 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10585,7 +10584,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10588 "configure"
+#line 10587 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13072,21 +13071,6 @@ if test "${with_pgsql_libdir+set}" = set; then :
 	PGSQL_LIB_DIR="$withval"
 
 fi
-
-
-
-# Check whether --with-memcached was given.
-if test "${with_memcached+set}" = set; then :
-  withval=$with_memcached;
-    case "$withval" in
-    "" | y | ye | yes | n | no)
-        as_fn_error "*** You must supply an argument to the --with-memcache option." "$LINENO" 5
-      ;;
-    esac
-    MEMCACHED_DIR="$withval"
-
-fi
-
 
 
 
