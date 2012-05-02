@@ -2289,7 +2289,7 @@ psql pgpool &lt; $POSTGRES_SRC/contrib/dblink/dblink.sql
 num_init_children = $BA[Dj$5$l$kF1;~@\B3?t(B * ( 1 + $B%/%(%j$NCf$G;H$o$l$F$$$k%F!<%V%k$N:GBg?t(B)
 </pre>
 
-<h2 id="distdef">$B%G!<%?J,3d%k!<%k$NEPO?(B</h2>
+<h3 id="distdef">$B%G!<%?J,3d%k!<%k$NEPO?(B</h3>
 <p>
 $B%G!<%?J,3d$r9T$&%F!<%V%k$KBP$7$F$O!"%F!<%V%k>pJs$r$"$i$+$8$a(B pgpool_catalog.dist_def
 $B$H$$$&%F!<%V%k$KEPO?$7$F$*$-$^$9!#(B
@@ -2308,7 +2308,7 @@ CREATE TABLE pgpool_catalog.dist_def(
     );
 </pre>
 
-<h4 id="replicate_def">$B%l%W%j%1!<%7%g%s%F!<%V%k$N%k!<%kEPO?(B</h4>
+<h3 id="replicate_def">$B%l%W%j%1!<%7%g%s%F!<%V%k$N%k!<%kEPO?(B</h3>
 <p>
 $B0l$D$N(BSQL$BJ8$K(BJOIN$BEy$G%G!<%?J,3d%k!<%k$KEPO?$7$?%F!<%V%k$H6&$K(B
 $B%l%W%j%1!<%7%g%s$r9T$&%F!<%V%k$r;XDj$9$k>l9g$K$O!"%l%W%j%1!<%7%g%s$r9T$&%F!<%V%k$N>pJs$r(B
@@ -2325,6 +2325,8 @@ CREATE TABLE pgpool_catalog.replicate_def(
     PRIMARY KEY (dbname,schema_name,table_name)
 );
 </pre>
+
+<h2 id="example_partitioning">pgbench $B%F!<%V%k$G$NJ,3d%k!<%kNc(B</h2>
 
 <p>
 pgbench$B$N%F!<%V%k$rJ,3d$9$k%k!<%k$NNc$r<($7$^$9!#(B
@@ -3161,7 +3163,7 @@ pgpool $B$G$O%;%+%s%I%9%F!<%8$KF~$kA0$K@\B3Cf$N%/%i%$%"%s%H$,$9$Y$F@\B3$,=*N;$5
     <li><a href="#RECOVERY_2ND_STAGE_COMMAND">recovery_2nd_stage_command></a></li>
 </ul>
 
-<h2 id="online_recovery_functions">C $B8@8l4X?t$N%$%s%9%H!<%k(B</h2>
+<h2 id="installing-c-functions">C $B8@8l4X?t$N%$%s%9%H!<%k(B</h2>
 <p>
 $B<!$K!"%j%+%P%j$r<B;\$9$k$?$a$N(B PostgreSQL $B$N(B C $B8@8l4X?t$r3F%N!<%I$N(B
 template1 $B%G!<%?%Y!<%9$K%$%s%9%H!<%k$7$^$9!#%=!<%9%3!<%I$O(B
@@ -3290,7 +3292,7 @@ recovery_2nd_stage_command = 'pgpool_recovery_pitr'
 $B$3$l$G(B PITR $B$K$h$k%*%s%i%$%s%j%+%P%j$N=`Hw$,40N;$G$9!#(B
 </p>
 
-<h4 id="pool_remote_start"><p>pgpool_remote_start</p></h4>
+<h4 id="pool_remote_start">pgpool_remote_start</h4>
 <p>
 $B%G!<%?:FF14|8e$K(B postmaster $B$r5/F0$5$;$k%9%/%j%W%H$G$9!#(B
 pgpool $B$+$i$O0J2<$N7A<0$G%9%/%j%W%H$r<B9T$7$^$9!#(B
@@ -3372,7 +3374,7 @@ recovery_1st_stage_command = 'pgpool_recovery'
 recovery_2nd_stage_command = 'pgpool_recovery'
 </pre>
 
-<h2 id="execute_recovery">$B%j%+%P%j$N<B9T(B</h2>
+<h2 id="perform_online_recovery">$B%j%+%P%j$N<B9T(B</h2>
 <p>
 $B0J>e$G%*%s%i%$%s%j%+%P%j$N=`Hw$,@0$$$^$7$?!#(B
 $B%*%s%i%$%s%j%+%P%j$r<B9T$9$k$K$O(B <a href="#pcp_recovery_node">pcp_recovery_node</a> $B%3%^%s%I$r;H$&$+!"(B
@@ -3860,7 +3862,7 @@ PostgreSQL 8.3$B0J9_$G$O!"(Breset_query_list$B$K(BDISCARD ALL$B$r;XDj$9$l$P
 pgpool-II $B$G$O07$&$3$H$,$G$-$J$$%/%(%j$K$D$$$F@bL@$7$^$9!#(B
 </p>
 
-<h3>$B%^%k%A%P%$%HJ8;z$K$D$$$F(B</h3>
+<h3 id="ng_multibyte_chars">$B%^%k%A%P%$%HJ8;z$K$D$$$F(B</h3>
 <p>
 $B@)8BBP>](B:$BA4%b!<%I(B
 </p>
@@ -4275,7 +4277,7 @@ postgres_db postgres 1150769932 1150767351 3 0 1 14068 1
 $B%3%M%/%7%g%s>pJs$,J#?t$"$k>l9g!"J#?t9T$K(B1$B9T(B1$B%3%M%/%7%g%s>pJs$GI=<($5$l$^$9!#(B
 $B;~9o$O(BEPOCH$B%?%$%`$+$i$NIC?t$GI=$o$5$l$^$9!#(B
 
-$BDj5A$5$l$F$$$J$$%W%m%;%9(BID$B$r;XDj$9$k$H(BBackendError$B$HI=<($5$l!"(B<a href="#end_status">$B=*N;%3!<%I(B12</a>$B$G=*N;$7$^$9!#(B
+$BDj5A$5$l$F$$$J$$%W%m%;%9(BID$B$r;XDj$9$k$H(BBackendError$B$HI=<($5$l!"(B<a href="#exit_status">$B=*N;%3!<%I(B12</a>$B$G=*N;$7$^$9!#(B
 </pre>
 
 <h3 id="pcp_systemdb_info">pcp_systemdb_info</h3>
@@ -4377,7 +4379,7 @@ pgpool-II$B$N%N!<%I$r%G!<%?$r:FF14|$5$;$?>e$GI|5"$5$;$^$9!#(B
 </pre>
 </p>
 
-<h2 id="end_status">$B=*N;%9%F!<%?%9(B</h2>
+<h2 id="exit_status">$B=*N;%9%F!<%?%9(B</h2>
 <p>
 PCP$B%3%^%s%I$O@5>o$K=hM}$r=*N;$7$?>l9g!"%9%F!<%?%9(B'0'$B$G=*N;$7$^$9!#%(%i!<$,5/(B
 $B$-$?>l9g$O0J2<$N%9%F!<%?%9$K$h$j=*N;$7$^$9!#(B
@@ -4434,7 +4436,7 @@ pgpool-II$B$K$O%Q%i%l%k<B9T%(%s%8%s$,AH$_9~$^$l$F$$$^$9!#(B
 $B$3$l$i#2$D$N=hM}$K$D$$$F=g$K@bL@CW$7$^$9!#(B
 </p>
 
-<h3 id="parse_query">$B%/%(%j$N2r@O(B</h3>
+<h3 id="analyze_query">$B%/%(%j$N2r@O(B</h3>
 <h4>$B$O$8$a$K(B</h4>
 <p>
 $B%/%i%$%"%s%H$,Aw?.$7$?8!:w7O$NLd$$9g$o$;$O!"(BSQL$B%Q!<%5$rDL$7$F$+$i%7%9%F%`(BDB$B$KEPO?$5$l$F$$$k>pJs$r(B
@@ -4556,7 +4558,7 @@ TARGETLIST$B!"(BWHERE$B6g$N<B9T%9%F!<%?%9$O!"(BS $B>uBV$H$J$j$^$9!#(B
 $B$3$N%/%(%j$N<B9T>l=j$O%7%9%F%`(BDB$B$H$J$j$^$9!#(B
 </p>
 <pre>
-SELECT * FROM L1-table where L1-table.column IN (SELECT * FROM P1-table);
+SELECT * FROM L1-table WHERE L1-table.column IN (SELECT * FROM P1-table);
 </pre>
 
 <p>
@@ -4570,7 +4572,7 @@ FROM$B6g$GDj5A$7$?%F!<%V%k!"%5%V%/%(%j$K$OB8:_$7$J$$%+%i%`$,(BWHERE$B6g$K;H$o
 $B$3$l$O0J2<$N$h$&$JAj4X%5%V%/%(%jFb$GH/@8$7$^$9!#(B
 </p>
 <pre>
-SELECT * FROM L1-table FROM L1-table.col1 IN (SELECT * FROM P1-table WHERE P1-table.col = L1-table.col1);
+SELECT * FROM L1-table WHERE L1-table.col1 IN (SELECT * FROM P1-table WHERE P1-table.col = L1-table.col1);
 </pre>
 <p>$B>e5-$N%5%V%/%(%j$K;H$o$l$F$$$k(B L1-table.col1$B$O!"(BL1-table$B$r30It;2>H$7$F$$$^$9!#(B
 $B$3$N>l9g$K%5%V%/%(%j$N(BWHERE$B6g$N<B9T%9%F!<%?%9$O(B S $B>uBV$H$J$j$^$9!#(B
