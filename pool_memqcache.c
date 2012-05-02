@@ -1,4 +1,3 @@
-#define DEBUG
 /* -*-pgsql-c-*- */
 /*
  * pgpool: a language independent connection pool server for PostgreSQL
@@ -492,7 +491,7 @@ static int send_cached_messages(POOL_CONNECTION *frontend, const char *qcache, i
 		}
 
 		/* send message to frontend */
-		pool_log("send_cached_messages: %c len: %d", tmpkind, tmplen);
+		pool_debug("send_cached_messages: %c len: %d", tmpkind, tmplen);
 		send_message(frontend, tmpkind, tmplen, tmpbuf);
 
 		msg++;
@@ -1067,7 +1066,12 @@ int pool_get_database_oid_from_dbname(char *dbname)
 }
 
 /*
- * Add cache id(shmem case) or hash key(memcached case) to table oid map file.
+ * Add cache id(shmem case) or hash key(memcached case) to table oid
+ * map file.  Caller must hold shmem lock before calling this function
+ * to avoid file extention conflict among different pgpool child
+ * process.
+ * As of pgpool-II 3.2, pool_handle_query_cache is responsible for that.
+ * (pool_handle_query_cache -> pool_commit_cache -> pool_add_table_oid_map)
  */
 static void pool_add_table_oid_map(POOL_CACHEKEY *cachekey, int num_table_oids, int *table_oids)
 {
@@ -1147,6 +1151,12 @@ static void pool_add_table_oid_map(POOL_CACHEKEY *cachekey, int num_table_oids, 
 			return;
 		}
 
+		/*
+		 * Below was ifdef-out because of a performance reason.
+		 * Looking for duplicate cache entries in a file needed
+		 * unacceptably high cost. So we gave up this and decieded not
+		 * to care about duplicate entries in the file.
+		 */
 #ifdef NOT_USED
 		for (;;)
 		{
@@ -3380,4 +3390,88 @@ static void put_back_hash_element(volatile POOL_HASH_ELEMENT *element)
 	elm = hash_free->next;
 	hash_free->next = (POOL_HASH_ELEMENT *)element;
 	element->next = elm;
+}
+
+/*
+ * Returns shared memory cache stats.
+ * Subsequent call to this function will break return value
+ * because its in static memory.
+ * Caller must hold shmem_lock before calling this function.
+ */
+POOL_SHMEM_STATS * pool_get_shmem_storage_stats(void)
+{
+	static POOL_SHMEM_STATS mystats;
+	POOL_HASH_ELEMENT *element;
+	int nblocks;
+	int i;
+
+	memset(&mystats, 0, sizeof(POOL_SHMEM_STATS));
+
+	/* number of total hash entries */
+	mystats.num_hash_entries = hash_header->nhash;
+
+	/* number of used hash entries */
+	for (i=0;i<hash_header->nhash;i++)
+	{
+		element = hash_header->elements[i].element;
+		while (element)
+		{
+			mystats.used_hash_entries++;
+			element = element->next;
+		}
+	}
+
+	nblocks = pool_get_memqcache_blocks();
+
+	for (i=0;i<nblocks;i++)
+	{
+		POOL_CACHE_BLOCK_HEADER *bh;
+		POOL_CACHE_ITEM_POINTER *cip;
+		char *p = block_address(i);
+		bh = (POOL_CACHE_BLOCK_HEADER *)p;
+		int j;
+
+		if (bh->flags & POOL_BLOCK_USED)
+		{
+			for (j=0;j<bh->num_items;j++)
+			{
+				cip = item_pointer(p, j);
+				if (POOL_ITEM_DELETED & cip->flags)
+				{
+					mystats.fragment_cache_entries_size += item_header(p, j)->total_length;
+				}
+				else
+				{
+					/* number of used cache entries */
+					mystats.num_cache_entries++;
+					/* total size of used cache entries */
+					mystats.used_cache_entries_size += (item_header(p, j)->total_length + sizeof(POOL_CACHE_ITEM_POINTER));
+				}
+			}
+			mystats.used_cache_entries_size += sizeof(POOL_CACHE_BLOCK_HEADER);
+			/* total size of free(usable) cache entries */
+			mystats.free_cache_entries_size += bh->free_bytes;
+		}
+		else
+		{
+			mystats.free_cache_entries_size += pool_config->memqcache_cache_block_size;
+		}
+	}
+
+	/*
+	 * Copy POOL_QUERY_CACHE_STATS
+	 */
+	memcpy(&mystats.cache_stats, stats, sizeof(mystats.cache_stats));
+
+	pool_debug("num_hash_entries: %d used_hash_entries:%d", 
+			 mystats.num_hash_entries,
+			 mystats.used_hash_entries);
+
+	pool_debug("num_cache_entries: %d used_cache_entries_size:%ld fragment_cache_entries_size: %ld free_cache_entries_size:%ld", 
+			 mystats.num_cache_entries,
+			 mystats.used_cache_entries_size,
+			 mystats.fragment_cache_entries_size,
+			 mystats.free_cache_entries_size);
+
+	return &mystats;
 }
