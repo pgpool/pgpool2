@@ -1,6 +1,6 @@
 ul#navlist
 	{
-	width: 158px;
+	width: 158px>;
 	\width: 160px;
 	w\idth: 158px;
 	padding: 0px;
@@ -46,6 +46,19 @@ ul#navlist
 	}
 	
 /* --------------------------- */
+#menu {
+	border-right:1px dotted #cccccc;
+	float: left;
+	padding-top: 20px;
+}
+#navcontainer {
+	margin-bottom: 20px;
+}
+#manual {
+	border-left:1px dotted #cccccc;
+	width: 800px;
+	float: left;
+}
 body {
 	font-family:Verdana, Arial, Helvetica, sans-serif;
 	font-size:9pt;
@@ -66,6 +79,9 @@ pre {
 	padding: 5px;
 	margin-left:40px;
 	margin-right:30px;
+ 	word-wrap: break-word;
+ 	word-break: break-all;
+	overflow: auto;
 }
 h1 {
 	border-bottom: 2px solid #6699CC;
@@ -90,16 +106,17 @@ h3 {
 h4 {
 	border-bottom: 2px solid #669966;
 	padding: 5px;
-	margin-left:50px;
+	margin-left:40px;
 	background: #F4F8F1;
 }
 
 p {
 	padding-left: 15px;
-	padding-right: 150px;
 	margin-left:25px;
 	margin-right:25px;
-
+}
+table {
+	margin-left:40px;
 }
 
 ul, ol,dl {
