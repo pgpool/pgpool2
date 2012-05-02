@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Tue May  1 16:39:07 JST 2012
+Last modified: Wed May  2 15:24:17 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2530,6 +2530,19 @@ pgpool$BFbIt$N(BSQL$B%Q!<%9=hM}$J$I$r7PM3$7$J$$$?$a!"Hs>o$K9bB.$G$9!#(B
 $B%-%c%C%7%e$N%R%C%HN($,(B70%$B0J2<$N>l9g$O!"%*%s%a%b%j%/%(%j%-%c%C%7%e$N@_Dj$rM-8z$K$7$J$$$[$&$,NI$$$G$7$g$&!#(B
 </p>
 
+<h2 id="MEMORY_CACHE_RESTRICTIONS">$B%*%s%a%b%j%/%(%j%-%c%C%7%e$N@)8B;v9`(B</h2>
+<p>
+<ul>
+  <li>$B%*%s%a%b%j%/%(%j%-%c%C%7%e$G$O!"%F!<%V%k$KJQ99$,$"$k$H!"4XO"$9$k%-%c%C%7%e$r<+F0E*$K:o=|$7$F8E$$%G!<%?$,JV5Q$5$l$J$$$h$&$K$9$k5!G=$,$"$j$^$9!#(B
+	  $B$3$N$?$a!"(Bpgpool$B$O>o$K(BUPDATE$B$d(BINSERT$B$d(BALTER TABLE$B$J$I$N%3%^%s%I$,H/9T$5$l$?$+$I$&$+$r%b%K%?$7$F$$$^$9!#(B
+	  $B$7$+$7!"%H%j%,!"30It%-!<$d(BDROP TABLE CASCADE$B$J$I$NF/$-$K$h$C$F0EL[E*$K%F!<%V%k$,99?7$5$l$?$3$H$O(Bpgpool-II$B$+$i$O$o$+$i$J$$$?$a!"$3$N5!G=$,F/$-$^$;$s!#(B
+	  $B$3$NLdBj$r2sHr$9$k$?$a$K$O!"(B<a href="#MEMQCACHE_EXPIRE">memqcache_expire</a>$B$r;H$C$F0lDj;~4V7P2a$7$?%-%c%C%7%e$r:o=|$9$k$h$&$K$9$k$+!"(B<a href="#WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</a>$B$+(B
+	  <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a>$B$r;H$C$F!"3:Ev%F!<%V%k$,%-%c%C%7%e$5$l$J$$$h$&$K$7$F$/$@$5$$!#(B</li>
+  <li>$BJ#?t$N(Bpgpool-II$B$rF0$+$94D6-$G6&M-%a%b%j$r;H$C$?%*%s%a%b%j%/%(%j%-%c%C%7%e$r;HMQ$9$k$H!"$"$k(Bpgpool-II$B7PM3$G%F!<%V%k$,99?7$5$l$?;~$K!"B>$N(Bpgpool-II$B$N%-%c%C%7%e$,:o=|$5$l$:!"8E$$%G!<%?$rFI$_$@$7$F$7$^$&$3$H$,$"$j$^$9!#(B
+	  $B$3$N$h$&$J4D6-$G$O!"%-%c%C%7%e%9%H%l!<%8$K(Bmemcached$B$r;H$C$F$/$@$5$$!#(B</li>
+</ul>
+</p>
+
 <h2 id="MEMORY_CACHE_ENABLED">$B%*%s%a%b%j%/%(%j%-%c%C%7%e$NM-8z2=(B</h2>
 <p>
 $B%*%s%a%b%j%/%(%j%-%c%C%7%e$rM-8z$K$9$k$K$O!"(Bpgpool.conf$B$N(B"memory_cache_enabled"$B$rM-8z$K$7$^$9!#(B
@@ -2579,7 +2592,7 @@ memcached$B$r%-%c%C%7%e%9%H%l!<%8$K;HMQ$9$k>l9g$O!"%M%C%H%o!<%/%"%/%;%9$N%*!<%P
   <li>$BL@<(E*$J%H%i%s%6%/%7%g%sFb$G99?7%/%(%j$,H/9T$5$l$F$$$k>l9g$O!"$=$N%H%i%s%6%/%7%g%sFb$G$O(B
       $B0l@Z%/%(%j%-%c%C%7%e$O;2>H$5$l$^$;$s!#(B</li>
   <li>$B$=$N%-%c%C%7%e$r0c$&%f!<%6$,:n@.$7$F$$$?>l9g(B($B%;%-%e%j%F%#>e$NM}M3(B)</li>
-  <li>$B%-%c%C%7%e$N<wL?$rD6$($F$$$?>l9g(B(memqcache_expire$B$N9`$r;2>H(B)</li>
+  <li>$B%-%c%C%7%e$N<wL?$rD6$($F$$$?>l9g(B(<a href="#MEMQCACHE_EXPIRE">memqcache_expire$B$N9`(B</a>$B$r;2>H(B)</li>
 </ul>
 
 <h2 id="memqcache_params">$B6&DL@_Dj9`L\(B</h2>
@@ -2710,7 +2723,13 @@ memqcache_cache_hits                 | 36717                    | Number of SELE
     $B$N%-%c%C%7%e$O$3$N%V%m%C%/$KF~$k$@$15M$a9~$^$l$^$9!#(B
     $B$?$@$7!"%-%c%C%7%e$OJ#?t$N%V%m%C%/$K$^$?$,$C$F3JG<$5$l$J$$$N$G!"(B
     memqcache_cache_block_size$B$r8!:w7k2L$,D6$($k$H!"%-%c%C%7%e$K3JG<$G$-$J$/$J$j$^$9!#(B
+		$B$3$N>l9g!"0J2<$N$h$&$J%a%C%;!<%8$,I=<($5$l$^$9!#(B
     </p>
+		<p>
+		<pre>
+		2012-05-02 15:08:17 LOG:   pid 13756: pool_add_temp_query_cache: data size exceeds memqcache_maxcache. current:4095 requested:111 memq_maxcache:4096
+		</pre>
+		</p>
     </dd>
 </dl>
 
