@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Wed May  2 16:22:29 JST 2012
+Last modified: Tue May  8 16:25:59 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2706,6 +2706,9 @@ memqcache_cache_hits                 | 36717                    | Number of SELE
 <p>
 がキャッシュヒット率ということになります。
 </p>
+<p>
+<a href="#pool_cache">show pool_cache</a>コマンドでも同様の内容が確認できます。
+</p>
 
 <h2 id="shmem_params">共有メモリ設定項目</h2>
 <p>
@@ -3058,6 +3061,47 @@ benchs2=# show pool_version;
 (1 line)
 </pre>
 
+<h2 id="pool_cache">pool_cache</h2>
+<p>"SHOW pool_cache" は<a href="#memqcache">オンメモリクエリキャッシュ</a>が有効である場合に、クエリキャッシュのヒット率や、キャッシュストレージの状況を表示します。
+例を示します。
+</p>
+<p>
+<pre>
+test=# \x
+\x
+Expanded display is on.
+test=# show pool_cache;
+show pool_cache;
+-[ RECORD 1 ]---------------+---------
+num_cache_hits              | 891703
+num_selects                 | 99995
+cache_hit_ratio             | 0.90
+num_hash_entries            | 131072
+used_hash_entries           | 99992
+num_cache_entries           | 99992
+used_cache_enrties_size     | 12482600
+free_cache_entries_size     | 54626264
+fragment_cache_entries_size | 0
+</pre>
+</p>
+<p>
+num_cache_hits は、キャッシュにヒットした検索件数を表示します。
+num_selects は、キャッシュにヒットしなかった検索件数を表示します。
+cache_hit_ratio は、キャッシュヒット率で、num_cache_hits/(num_cache_hits+num_selects)
+から計算されています。
+num_hash_entries 以下は、キャッシュストレージが共有メモリの時だけ有効です。
+num_hash_entries は、キャッシュの検索インデックスであるハッシュテーブルのエントリ数を表し、pgpool.confの memqcache_max_num_cache と一致します。
+この値が登録できるキャッシュ件数の最大値になります。
+used_hash_entries は、num_hash_entries のうち、使用済みのエントリ数です。
+num_cache_entries は、キャッシュ本体の登録件数で、used_hash_entries と一致します。
+used_cache_enrties_size は、使用済みのキャッシュ領域の合計サイズです。
+単位はバイトです。
+free_cache_entries_size は、キャッシュ領域のうち、未使用または最利用可能な領域の合計サイズです。
+単位はバイトです。
+fragment_cache_entries_size は、空き領域ではあるが、断片化していて利用できないキャッシュ領域の合計サイズです。
+単位はバイトです。
+断片化した領域は、利用できるキャッシュ領域を使い果たした時に自動的に再利用できるようになります。
+</p>
 
 <!-- ================================================================================ -->
 

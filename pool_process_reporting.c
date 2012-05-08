@@ -24,6 +24,7 @@
 #include "pool_proto_modules.h"
 #include "pool_stream.h"
 #include "pool_config.h"
+#include "pool_memqcache.h"
 #include "version.h"
 
 #include <stdlib.h>
@@ -895,6 +896,7 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	free(nodes);
 	}
 
+
 POOL_REPORT_POOLS* get_pools(int *nrows)
 {
 	int child, pool, poolBE, backend_id;
@@ -1296,3 +1298,123 @@ void version_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 
 	free(version);
 	}
+
+/*
+ * Show on memory cache reporting
+ */
+void cache_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+{
+	static char *field_names[] = {"num_cache_hits", "num_selects", "cache_hit_ratio", "num_hash_entries", "used_hash_entries", "num_cache_entries", "used_cache_enrties_size", "free_cache_entries_size", "fragment_cache_entries_size"};
+	short num_fields = sizeof(field_names)/sizeof(char *);
+	int i;
+	short s;
+	int len;
+	int size;
+	int hsize;
+	static unsigned char nullmap[2] = {0xff, 0xff};
+	int nbytes = (num_fields + 7)/8;
+	volatile POOL_SHMEM_STATS *mystats;
+#ifdef HAVE_SIGPROCMASK
+	sigset_t oldmask;
+#else
+	int	oldmask;
+#endif
+	double ratio;
+
+#define POOL_CACHE_STATS_MAX_STRING_LEN 32
+	typedef struct {
+		int len;		/* length of string excluding null terminate */
+		char string[POOL_CACHE_STATS_MAX_STRING_LEN+1];
+	} MY_STRING_CACHE_STATS;
+
+	MY_STRING_CACHE_STATS *strp;
+
+	strp = malloc(num_fields*sizeof(MY_STRING_CACHE_STATS));
+	if (!strp)
+	{
+		pool_error("cache_reporting: malloc failed");
+		return;
+	}
+
+	/*
+	 * Get raw cache stat data
+	 */
+	POOL_SETMASK2(&BlockSig, &oldmask);
+	pool_shmem_lock();
+	mystats = pool_get_shmem_storage_stats();
+	pool_shmem_unlock();
+	POOL_SETMASK(&oldmask);
+
+	/*
+	 * Convert to string
+	 */
+	i = 0;
+	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN+1, "%lld", mystats->cache_stats.num_cache_hits);
+	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN+1, "%lld", mystats->cache_stats.num_selects);
+	if ((mystats->cache_stats.num_cache_hits + mystats->cache_stats.num_selects) == 0)
+	{
+		ratio = 0.0;
+	}
+	else
+	{
+		ratio = (double)mystats->cache_stats.num_cache_hits/(mystats->cache_stats.num_selects + mystats->cache_stats.num_cache_hits);
+	}
+	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN+1, "%.2f", ratio);
+	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN+1, "%d", mystats->num_hash_entries);
+	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN+1, "%d", mystats->used_hash_entries);
+	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN+1, "%d", mystats->num_cache_entries);
+	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN+1, "%ld", mystats->used_cache_entries_size);
+	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN+1, "%ld", mystats->free_cache_entries_size);
+	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN+1, "%ld", mystats->fragment_cache_entries_size);
+
+	/*
+	 * Calculate total data length
+	 */
+	len = 2;	/* number of fields (int16) */
+	for (i=0;i<num_fields;i++)
+	{
+		strp[i].len = strlen(strp[i].string);
+		len += 4 /* length of string (int32) */
+			+ strp[i].len;
+	}
+
+	/* Send row description */
+	send_row_description(frontend, backend, num_fields, field_names);
+
+	/* Send each field */
+	if (MAJOR(backend) == PROTO_MAJOR_V2)
+	{
+		pool_write(frontend, "D", 1);
+		pool_write(frontend, nullmap, nbytes);
+
+		for (i=0;i<num_fields;i++)
+		{
+			size = strp[i].len + 1;
+			hsize = htonl(size+4);
+			pool_write(frontend, &hsize, sizeof(hsize));
+			pool_write(frontend, strp[i].string, size);
+		}
+	}
+	else
+	{
+		/* Kind */
+		pool_write(frontend, "D", 1);
+		/* Packet length */
+		len = htonl(len+sizeof(int32));
+		pool_write(frontend, &len, sizeof(len));
+		/* Number of fields */
+		s = htons(num_fields);
+		pool_write(frontend, &s, sizeof(s));
+
+		for (i=0;i<num_fields;i++)
+		{
+			hsize = htonl(strp[i].len);
+			pool_write(frontend, &hsize, sizeof(hsize));
+			pool_write(frontend, strp[i].string, strp[i].len);
+		}
+	}
+
+	send_complete_and_ready(frontend, backend, 1);
+
+	free(strp);
+}

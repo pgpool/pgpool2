@@ -78,8 +78,6 @@ static void pool_reset_memqcache_buffer(void);
 static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char *data, int size);
 static POOL_CACHEID *pool_find_item_on_shmem_cache(POOL_QUERY_HASH *query_hash);
 static char *pool_get_item_shmem_cache(POOL_QUERY_HASH *query_hash, int *size, int *sts);
-static void pool_shmem_lock(void);
-static void pool_shmem_unlock(void);
 static void pool_add_query_cache_array(POOL_QUERY_CACHE_ARRAY *cache_array, POOL_TEMP_QUERY_CACHE *cache);
 static void pool_add_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache, char kind, char *data, int data_len);
 static void pool_add_oids_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache, int num_oids, int *oids);
@@ -2255,7 +2253,7 @@ static void pool_wipe_out_cache_block(POOL_CACHE_BLOCKID blockid)
 /*
  * Aquire lock: XXX giant lock
  */
-static void pool_shmem_lock(void)
+void pool_shmem_lock(void)
 {
 	if (pool_is_shmem_cache())
 	{
@@ -2266,7 +2264,7 @@ static void pool_shmem_lock(void)
 /*
  * Release lock
  */
-static void pool_shmem_unlock(void)
+void pool_shmem_unlock(void)
 {
 	if (pool_is_shmem_cache())
 	{
@@ -3397,8 +3395,9 @@ static void put_back_hash_element(volatile POOL_HASH_ELEMENT *element)
  * Subsequent call to this function will break return value
  * because its in static memory.
  * Caller must hold shmem_lock before calling this function.
+ * If on mememory query cache is not enabled, all stats are 0.
  */
-POOL_SHMEM_STATS * pool_get_shmem_storage_stats(void)
+POOL_SHMEM_STATS *pool_get_shmem_storage_stats(void)
 {
 	static POOL_SHMEM_STATS mystats;
 	POOL_HASH_ELEMENT *element;
@@ -3406,6 +3405,18 @@ POOL_SHMEM_STATS * pool_get_shmem_storage_stats(void)
 	int i;
 
 	memset(&mystats, 0, sizeof(POOL_SHMEM_STATS));
+
+	if (!pool_config-> memory_cache_enabled)
+		return &mystats;
+
+	/*
+	 * Cop cache hit data
+	 */
+	mystats.cache_stats.num_selects = stats->num_selects;
+	mystats.cache_stats.num_cache_hits = stats->num_cache_hits;
+
+	if (strcmp(pool_config-> memqcache_method, "shmem"))
+		return &mystats;
 
 	/* number of total hash entries */
 	mystats.num_hash_entries = hash_header->nhash;
@@ -3462,16 +3473,6 @@ POOL_SHMEM_STATS * pool_get_shmem_storage_stats(void)
 	 * Copy POOL_QUERY_CACHE_STATS
 	 */
 	memcpy(&mystats.cache_stats, stats, sizeof(mystats.cache_stats));
-
-	pool_debug("num_hash_entries: %d used_hash_entries:%d", 
-			 mystats.num_hash_entries,
-			 mystats.used_hash_entries);
-
-	pool_debug("num_cache_entries: %d used_cache_entries_size:%ld fragment_cache_entries_size: %ld free_cache_entries_size:%ld", 
-			 mystats.num_cache_entries,
-			 mystats.used_cache_entries_size,
-			 mystats.fragment_cache_entries_size,
-			 mystats.free_cache_entries_size);
 
 	return &mystats;
 }

@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Sun Mar  4 11:18:24 JST 2012
+Last modified: Tue May  8 16:42:49 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2410,8 +2410,8 @@ memory_cache_enabled = true
 </pre>
 
 <p id="MEMQCACHE_METHOD">
-Memory cache behavior can be specified by cache_param directive:<br>
-Cache store method. Either "shmem"(shared memory) or "memcached". Default is shmem. 
+Memory cache behavior can be specified by memqcache_method directive.
+Either "shmem"(shared memory) or "memcached". Default is shmem. 
 </p>
 <pre>
 memqcache_method = 'shmem'
@@ -2786,6 +2786,46 @@ benchs2=# show pool_version;
  3.0-dev (umiyameboshi)
 (1 line)
 </pre>
+</p>
+
+<h2 id="pool_cache">pool_cache</h2>
+<p>"SHOW pool_cache" displays cache storage statistics if <a href="#memqcache">on memory query cache</a> is enabled.
+Here is an example of it:
+</p>
+<p>
+<pre>
+test=# \x
+\x
+Expanded display is on.
+test=# show pool_cache;
+show pool_cache;
+-[ RECORD 1 ]---------------+---------
+num_cache_hits              | 891703
+num_selects                 | 99995
+cache_hit_ratio             | 0.90
+num_hash_entries            | 131072
+used_hash_entries           | 99992
+num_cache_entries           | 99992
+used_cache_enrties_size     | 12482600
+free_cache_entries_size     | 54626264
+fragment_cache_entries_size | 0
+</pre>
+</p>
+<p>
+num_cache_hits means the number of SELECTs which hit cache.
+num_selects  means the number of SELECTs which do not hit cache.
+cache_hit_ratio means cache hit ratio, calculated from num_cache_hits/(num_cache_hits+num_selects)
+Anything below num_hash_entries are valid only when cache storage is on shared memory.
+num_hash_entries means number of entries in hash table, which is used for index to cache storage
+and should be equal to memqcache_max_num_cache in pgpool.conf.
+This is the upper limit for number of cache entries.
+used_hash_entries means number of already used entries in num_hash_entries.
+num_cache_entries means number of valid cache entries in the cache storage and
+should be equal to used_hash_entries.
+used_cache_entries_size means total size of cache storage in bytes which is already used.
+free_cache_entries_size means total size of cache storage in bytes which is not used yet or can be usable.
+fragment_cache_entries_size means total size of cache storage in bytes which cannot be used because of fragmentation.
+The fragmented area can be reused later if free_cache_entries_size becomes 0 (or there's no enough space for the SELECT result).
 </p>
 
 <!-- ================================================================================ -->

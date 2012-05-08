@@ -108,6 +108,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	static char *sq_processes = "pool_processes";
  	static char *sq_nodes = "pool_nodes";
  	static char *sq_version = "pool_version";
+ 	static char *sq_cache = "pool_cache";
 	int commit;
 	List *parse_tree_list;
 	Node *node = NULL;
@@ -346,6 +347,12 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 				is_valid_show_command = true;
                 pool_debug("version reporting");
                 version_reporting(frontend, backend);
+            }
+			else if (!strcmp(sq_cache, vnode->name))
+            {
+				is_valid_show_command = true;
+                pool_debug("cache reporting");
+                cache_reporting(frontend, backend);
             }
 
 			if (is_valid_show_command)
