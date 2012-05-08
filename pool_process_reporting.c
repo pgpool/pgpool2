@@ -32,7 +32,7 @@
 #include <netinet/in.h>
 
 void send_row_description(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
-							short num_fields, char **field_names)
+						  short num_fields, char **field_names)
 {
 	static char *cursorname = "blank";
 	static int oid = 0;
@@ -365,15 +365,15 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].desc, "health check password", POOLCONFIG_MAXDESCLEN);
 	i++;
 #endif
-        strncpy(status[i].name, "health_check_max_retries", POOLCONFIG_MAXNAMELEN);
-        snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->health_check_max_retries);
-        strncpy(status[i].desc, "health check max retries", POOLCONFIG_MAXDESCLEN);
-        i++;
+	strncpy(status[i].name, "health_check_max_retries", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->health_check_max_retries);
+	strncpy(status[i].desc, "health check max retries", POOLCONFIG_MAXDESCLEN);
+	i++;
 
-        strncpy(status[i].name, "health_check_retry_delay", POOLCONFIG_MAXNAMELEN);
-        snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->health_check_retry_delay);
-        strncpy(status[i].desc, "health check retry delay", POOLCONFIG_MAXDESCLEN);
-        i++;
+	strncpy(status[i].name, "health_check_retry_delay", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->health_check_retry_delay);
+	strncpy(status[i].desc, "health check retry delay", POOLCONFIG_MAXDESCLEN);
+	i++;
 
 	strncpy(status[i].name, "failover_command", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->failover_command);
@@ -679,10 +679,10 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 
 	*nrows = i;
 	return status;
-	}
+}
 
 void config_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
-		{
+{
 	static char *field_names[] = {"item", "value", "description"};
 	static unsigned char nullmap[2] = {0xff, 0xff};
 	static short num_fields = 3;
@@ -894,7 +894,7 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	send_complete_and_ready(frontend, backend, nrows);
 
 	free(nodes);
-	}
+}
 
 
 POOL_REPORT_POOLS* get_pools(int *nrows)
@@ -908,7 +908,7 @@ POOL_REPORT_POOLS* get_pools(int *nrows)
 
     POOL_REPORT_POOLS* pools = malloc(
 		pool_config->num_init_children * pool_config->max_pool * NUM_BACKENDS * sizeof(POOL_REPORT_POOLS)
-	);
+		);
 
 	for (child = 0; child < pool_config->num_init_children; child++)
 	{
@@ -983,114 +983,114 @@ void pools_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	if (MAJOR(backend) == PROTO_MAJOR_V2) hsize = 4;
 	else hsize = 0;
 
-		/* ascii row */
-		for (i=0;i<nrows;i++)
+	/* ascii row */
+	for (i=0;i<nrows;i++)
+	{
+		snprintf(proc_pid, sizeof(proc_pid), "%d", pools[i].pool_pid);
+		snprintf(pool_id, sizeof(pool_id), "%d", pools[i].pool_id);
+		if (pools[i].start_time)
+			strftime(proc_start_time, POOLCONFIG_MAXDATELEN, "%Y-%m-%d %H:%M:%S", localtime(&pools[i].start_time));
+		else
+			*proc_start_time = '\0';
+		if (pools[i].create_time)
+			strftime(proc_create_time, POOLCONFIG_MAXDATELEN, "%Y-%m-%d %H:%M:%S", localtime(&pools[i].create_time));
+		else
+			*proc_create_time = '\0';
+		snprintf(majorversion, sizeof(majorversion), "%d", pools[i].pool_majorversion);
+		snprintf(minorversion, sizeof(minorversion), "%d", pools[i].pool_minorversion);
+		snprintf(pool_counter, sizeof(pool_counter), "%d", pools[i].pool_counter);
+		snprintf(backend_id, sizeof(backend_pid), "%d", pools[i].backend_id);
+		snprintf(backend_pid, sizeof(backend_pid), "%d", pools[i].pool_backendpid);
+		snprintf(connected, sizeof(connected), "%d", pools[i].pool_connected);
+
+		if (MAJOR(backend) == PROTO_MAJOR_V2)
 		{
-			snprintf(proc_pid, sizeof(proc_pid), "%d", pools[i].pool_pid);
-			snprintf(pool_id, sizeof(pool_id), "%d", pools[i].pool_id);
-			if (pools[i].start_time)
-				strftime(proc_start_time, POOLCONFIG_MAXDATELEN, "%Y-%m-%d %H:%M:%S", localtime(&pools[i].start_time));
-			else
-				*proc_start_time = '\0';
-			if (pools[i].create_time)
-				strftime(proc_create_time, POOLCONFIG_MAXDATELEN, "%Y-%m-%d %H:%M:%S", localtime(&pools[i].create_time));
-			else
-				*proc_create_time = '\0';
-			snprintf(majorversion, sizeof(majorversion), "%d", pools[i].pool_majorversion);
-			snprintf(minorversion, sizeof(minorversion), "%d", pools[i].pool_minorversion);
-			snprintf(pool_counter, sizeof(pool_counter), "%d", pools[i].pool_counter);
-			snprintf(backend_id, sizeof(backend_pid), "%d", pools[i].backend_id);
-			snprintf(backend_pid, sizeof(backend_pid), "%d", pools[i].pool_backendpid);
-			snprintf(connected, sizeof(connected), "%d", pools[i].pool_connected);
-
-			if (MAJOR(backend) == PROTO_MAJOR_V2)
-			{
-				pool_write(frontend, "D", 1);
-				pool_write_and_flush(frontend, nullmap, nbytes);
-			}
-			else
-			{
-				pool_write(frontend, "D", 1);
-				len = 6; /* int32 + int16; */
-				len += 4 + strlen(proc_pid);          /* int32 + data */
-				len += 4 + strlen(proc_start_time);        /* int32 + data */
-				len += 4 + strlen(pool_id);           /* int32 + data */
-				len += 4 + strlen(backend_id);        /* int32 + data */
-				len += 4 + strlen(pools[i].database);          /* int32 + data */
-				len += 4 + strlen(pools[i].username);          /* int32 + data */
-				len += 4 + strlen(proc_create_time);       /* int32 + data */
-				len += 4 + strlen(majorversion); /* int32 + data */
-				len += 4 + strlen(minorversion); /* int32 + data */
-				len += 4 + strlen(pool_counter);      /* int32 + data */
-				len += 4 + strlen(backend_pid);   /* int32 + data */
-				len += 4 + strlen(connected);    /* int32 + data */
-			
-				len = htonl(len);
-				pool_write(frontend, &len, sizeof(len));
-				s = htons(num_fields);
-				pool_write(frontend, &s, sizeof(s));
-			}
-
-			len = strlen(proc_pid);
-			size = htonl(len+hsize);
-			pool_write(frontend, &size, sizeof(size));
-			pool_write(frontend, proc_pid, len);
-
-			len = strlen(proc_start_time);
-			size = htonl(len+hsize);
-			pool_write(frontend, &size, sizeof(size));
-			pool_write(frontend, proc_start_time, len);
-
-			len = strlen(pool_id);
-			size = htonl(len+hsize);
-			pool_write(frontend, &size, sizeof(size));
-			pool_write(frontend, pool_id, len);
-
-			len = strlen(backend_id);
-			size = htonl(len+hsize);
-			pool_write(frontend, &size, sizeof(size));
-			pool_write(frontend, backend_id, len);
-
-			len = strlen(pools[i].database);
-			size = htonl(len+hsize);
-			pool_write(frontend, &size, sizeof(size));
-			pool_write(frontend, pools[i].database, len);
-
-			len = strlen(pools[i].username);
-			size = htonl(len+hsize);
-			pool_write(frontend, &size, sizeof(size));
-			pool_write(frontend, pools[i].username, len);
-
-			len = strlen(proc_create_time);
-			size = htonl(len+hsize);
-			pool_write(frontend, &size, sizeof(size));
-			pool_write(frontend, proc_create_time, len);
-
-			len = strlen(majorversion);
-			size = htonl(len+hsize);
-			pool_write(frontend, &size, sizeof(size));
-			pool_write(frontend, majorversion, len);
-
-			len = strlen(minorversion);
-			size = htonl(len+hsize);
-			pool_write(frontend, &size, sizeof(size));
-			pool_write(frontend, minorversion, len);
-
-			len = strlen(pool_counter);
-			size = htonl(len+hsize);
-			pool_write(frontend, &size, sizeof(size));
-			pool_write(frontend, pool_counter, len);
-
-			len = strlen(backend_pid);
-			size = htonl(len+hsize);
-			pool_write(frontend, &size, sizeof(size));
-			pool_write(frontend, backend_pid, len);
-
-			len = strlen(connected);
-			size = htonl(len+hsize);
-			pool_write(frontend, &size, sizeof(size));
-			pool_write(frontend, connected, len);
+			pool_write(frontend, "D", 1);
+			pool_write_and_flush(frontend, nullmap, nbytes);
 		}
+		else
+		{
+			pool_write(frontend, "D", 1);
+			len = 6; /* int32 + int16; */
+			len += 4 + strlen(proc_pid);          /* int32 + data */
+			len += 4 + strlen(proc_start_time);        /* int32 + data */
+			len += 4 + strlen(pool_id);           /* int32 + data */
+			len += 4 + strlen(backend_id);        /* int32 + data */
+			len += 4 + strlen(pools[i].database);          /* int32 + data */
+			len += 4 + strlen(pools[i].username);          /* int32 + data */
+			len += 4 + strlen(proc_create_time);       /* int32 + data */
+			len += 4 + strlen(majorversion); /* int32 + data */
+			len += 4 + strlen(minorversion); /* int32 + data */
+			len += 4 + strlen(pool_counter);      /* int32 + data */
+			len += 4 + strlen(backend_pid);   /* int32 + data */
+			len += 4 + strlen(connected);    /* int32 + data */
+			
+			len = htonl(len);
+			pool_write(frontend, &len, sizeof(len));
+			s = htons(num_fields);
+			pool_write(frontend, &s, sizeof(s));
+		}
+
+		len = strlen(proc_pid);
+		size = htonl(len+hsize);
+		pool_write(frontend, &size, sizeof(size));
+		pool_write(frontend, proc_pid, len);
+
+		len = strlen(proc_start_time);
+		size = htonl(len+hsize);
+		pool_write(frontend, &size, sizeof(size));
+		pool_write(frontend, proc_start_time, len);
+
+		len = strlen(pool_id);
+		size = htonl(len+hsize);
+		pool_write(frontend, &size, sizeof(size));
+		pool_write(frontend, pool_id, len);
+
+		len = strlen(backend_id);
+		size = htonl(len+hsize);
+		pool_write(frontend, &size, sizeof(size));
+		pool_write(frontend, backend_id, len);
+
+		len = strlen(pools[i].database);
+		size = htonl(len+hsize);
+		pool_write(frontend, &size, sizeof(size));
+		pool_write(frontend, pools[i].database, len);
+
+		len = strlen(pools[i].username);
+		size = htonl(len+hsize);
+		pool_write(frontend, &size, sizeof(size));
+		pool_write(frontend, pools[i].username, len);
+
+		len = strlen(proc_create_time);
+		size = htonl(len+hsize);
+		pool_write(frontend, &size, sizeof(size));
+		pool_write(frontend, proc_create_time, len);
+
+		len = strlen(majorversion);
+		size = htonl(len+hsize);
+		pool_write(frontend, &size, sizeof(size));
+		pool_write(frontend, majorversion, len);
+
+		len = strlen(minorversion);
+		size = htonl(len+hsize);
+		pool_write(frontend, &size, sizeof(size));
+		pool_write(frontend, minorversion, len);
+
+		len = strlen(pool_counter);
+		size = htonl(len+hsize);
+		pool_write(frontend, &size, sizeof(size));
+		pool_write(frontend, pool_counter, len);
+
+		len = strlen(backend_pid);
+		size = htonl(len+hsize);
+		pool_write(frontend, &size, sizeof(size));
+		pool_write(frontend, backend_pid, len);
+
+		len = strlen(connected);
+		size = htonl(len+hsize);
+		pool_write(frontend, &size, sizeof(size));
+		pool_write(frontend, connected, len);
+	}
 
 	send_complete_and_ready(frontend, backend, nrows);
 
@@ -1135,10 +1135,10 @@ POOL_REPORT_PROCESSES* get_processes(int *nrows)
 	*nrows = child;
 
 	return processes;
-	}
+}
 
 void processes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
-		{
+{
 	static short num_fields = 6;
 	static char *field_names[] = {"pool_pid", "start_time", "database", "username", "create_time", "pool_counter"};
 	short s;
@@ -1240,10 +1240,10 @@ void processes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backen
 	send_complete_and_ready(frontend, backend, nrows);
 
 	free(processes);
-	}
+}
 
 POOL_REPORT_VERSION* get_version(void)
-	{
+{
 	POOL_REPORT_VERSION *version = malloc(sizeof(POOL_REPORT_VERSION));
 
 	snprintf(version[0].version, POOLCONFIG_MAXVALLEN, "%s (%s)", VERSION, PGPOOLVERSION);
@@ -1270,34 +1270,34 @@ void version_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	if (MAJOR(backend) == PROTO_MAJOR_V2)
 	{
 		/* ascii row */
-			pool_write(frontend, "D", 1);
-			pool_write_and_flush(frontend, nullmap, nbytes);
+		pool_write(frontend, "D", 1);
+		pool_write_and_flush(frontend, nullmap, nbytes);
 
 		size = strlen(version[0].version);
-			hsize = htonl(size+4);
-			pool_write(frontend, &hsize, sizeof(hsize));
+		hsize = htonl(size+4);
+		pool_write(frontend, &hsize, sizeof(hsize));
 		pool_write(frontend, version[0].version, size);
 	}
 	else
 	{
 		/* data row */
-			pool_write(frontend, "D", 1);
+		pool_write(frontend, "D", 1);
 		len = 6; /* int32 + int16; */
 		len += 4 + strlen(version[0].version); /* int32 + data */
-			len = htonl(len);
-			pool_write(frontend, &len, sizeof(len));
-			s = htons(num_fields);
-			pool_write(frontend, &s, sizeof(s));
+		len = htonl(len);
+		pool_write(frontend, &len, sizeof(len));
+		s = htons(num_fields);
+		pool_write(frontend, &s, sizeof(s));
 
 		len = htonl(strlen(version[0].version));
-			pool_write(frontend, &len, sizeof(len));
+		pool_write(frontend, &len, sizeof(len));
 		pool_write(frontend, version[0].version, strlen(version[0].version));
 	}
 
 	send_complete_and_ready(frontend, backend, 1);
 
 	free(version);
-	}
+}
 
 /*
  * Show on memory cache reporting
