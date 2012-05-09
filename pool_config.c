@@ -490,7 +490,7 @@ char *yytext;
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1944,14 +1944,14 @@ int pool_init_config(void)
 
     pool_config->memory_cache_enabled = 0;
     pool_config->memqcache_method = "shmem";
-    pool_config->memqcache_memcached_host = "";
+    pool_config->memqcache_memcached_host = "localhost";
     pool_config->memqcache_memcached_port = 11211;
-    pool_config->memqcache_total_size = 10240;
-    pool_config->memqcache_max_num_cache = 100;
-    pool_config->memqcache_expire = 60;
-    pool_config->memqcache_auto_cache_invalidation = true;
-    pool_config->memqcache_maxcache = 512;
-    pool_config->memqcache_cache_block_size = 8192;
+    pool_config->memqcache_total_size = 67108864;
+    pool_config->memqcache_max_num_cache = 1000000;
+    pool_config->memqcache_expire = 0;
+    pool_config->memqcache_auto_cache_invalidation = 1;
+    pool_config->memqcache_maxcache = 409600;
+    pool_config->memqcache_cache_block_size = 1048576;
     pool_config->memqcache_oiddir = "/var/log/pgpool/oiddir";
 	pool_config->white_memqcache_table_list = NULL;
 	pool_config->num_white_memqcache_table_list = 0;
