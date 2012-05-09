@@ -17,7 +17,7 @@ Last modified: Tue May  8 16:42:49 JST 2012
     <div id="navcontainer">
       <ul id="navlist">
         <li id="active"><a href="#Whatis" id="current">What is pgpool</a></li>
-        <li><a href="#platform">Platforms</a></li>
+        <li><a href="#platform">Supported Platforms</a></li>
         <li><a href="#install">pgpool-II Installation</a></li>
         <li><a href="#config">Configuring pgpool-II</a></li>
         <li><a href="#common">Configuring common part</a></li>
@@ -46,7 +46,7 @@ Last modified: Tue May  8 16:42:49 JST 2012
 
 <!-- ================================================================================ -->
 
-<h1>What is pgpool-II?<a name="whatis"></a></h1>
+<h1 style="margin-top: 20px">What is pgpool-II?<a name="whatis"></a></h1>
 
 <p> pgpool-II is a middleware that sits between PostgreSQL servers
 and a PostgreSQL database client. It provides the following features:</p>
@@ -108,6 +108,8 @@ without a change to its source code.</p>
 See <a href="#restriction">Restrictions</a> for more details.</strong>
 </p>
 
+<p class="top_link"><a href="#Top">back to top</a></p>
+
 <!-- ================================================================================ -->
 
 <h1>Supported Platforms<a name="platform"></a></h1>
@@ -125,6 +127,8 @@ major PostgreSQL version.
 In addition to this, hardware architectures and OSes must be identical if you 
 want to use online recovery.
 </p>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
 
 <!-- ================================================================================ -->
 
@@ -156,25 +160,25 @@ enable OpenSSL support in pgpool-II</p>
 </pre>
 
     <p>If you want non-default values, some options can be set:</p>
-    <ul>
-      <li><code>--prefix=path</code><br/>
-          pgpool-II binaries and docs will be installed in this
-          directory. Default value is <code>/usr/local</code></li>
-      <li><code>--with-pgsql=path</code><br/>
-          The top directory where PostgreSQL's client libraries are
-          installed. Default value is provided by <code>pg_config</code></li>
-      <li><code>--with-openssl</code><br/>
-          pgpool-II binaries will be built with OpenSSL support.  OpenSSL support 
-          is disabled by default.</li>
-      <li><code>--enable-sequence-lock</code><br/>
-          Use insert_lock compatible with pgpool-II 3.0 series(until 3.0.4).
+    <table border>
+      <tr><th class="nodec"><code>--prefix=path</code></th>
+      <td>pgpool-II binaries and docs will be installed in this
+          directory. Default value is <code>/usr/local</code></td></tr>
+      <tr><th class="nodec"><code>--with-pgsql=path</code></th>
+      <td>The top directory where PostgreSQL's client libraries are
+          installed. Default value is provided by <code>pg_config</code></td></tr>
+      <tr><th class="nodec"><code>--with-openssl</code></th>
+      <td>pgpool-II binaries will be built with OpenSSL support.  OpenSSL support
+          is disabled by default.</td></tr>
+      <tr><th class="nodec"><code>--enable-sequence-lock</code></th>
+      <td>Use insert_lock compatible with pgpool-II 3.0 series(until 3.0.4).
           pgpool-II locks against a row in the sequence table.
-          PostgreSQL 8.2 or later which was released after June 2011 cannot use this lock method. 
-      <li><code>--enable-table-lock</code><br/>
-          Use insert_lock compatible with pgpool-II 2.2 and 2.3 series.
+          PostgreSQL 8.2 or later which was released after June 2011 cannot use this lock method.</td></tr>
+      <tr><th class="nodec"><code>--enable-table-lock</code></th>
+      <td>Use insert_lock compatible with pgpool-II 2.2 and 2.3 series.
           pgpool-II locks against the insert target table.
-          This lock method is deprecated because it causes a lock conflict with VACUUM.
-    </ul>
+          This lock method is deprecated because it causes a lock conflict with VACUUM.</td></tr>
+      </table>
     </dd>
 
 <dt>make</dt>
@@ -243,6 +247,8 @@ you need to replace "make" with "gmake" in the above description
 because those operating systems requires GNU make.
 </p>
 
+<p class="top_link"><a href="#Top">back to top</a></p>
+
 <!-- ================================================================================ -->
 
 <h1>Configuring pgpool-II<a name="config"></a></h1>
@@ -256,7 +262,7 @@ control their behaviors.</p>
 
 <table border>
 
-  <tr>
+  <tr class="header">
     <th>Function/Mode</th>
     <th>Raw Mode (*3)</th>
     <th>Replication Mode</th>
@@ -265,7 +271,7 @@ control their behaviors.</p>
   </tr>
 
   <tr>
-    <td>Connection Pool</td>
+    <th>Connection Pool</th>
     <td align="center">X</td>
     <td align="center">O</td>
     <td align="center">O</td>
@@ -273,7 +279,7 @@ control their behaviors.</p>
   </tr>
 
   <tr>
-    <td>Replication</td>
+    <th>Replication</th>
     <td align="center">X</td>
     <td align="center">O</td>
     <td align="center">X</td>
@@ -281,7 +287,7 @@ control their behaviors.</p>
   </tr>
 
   <tr>
-    <td>Load Balance</td>
+    <th>Load Balance</th>
     <td align="center">X</td>
     <td align="center">O</td>
     <td align="center">O</td>
@@ -289,7 +295,7 @@ control their behaviors.</p>
   </tr>
 
   <tr>
-    <td>Failover</td>
+    <th>Failover</th>
     <td align="center">O</td>
     <td align="center">O</td>
     <td align="center">O</td>
@@ -297,7 +303,7 @@ control their behaviors.</p>
   </tr>
 
   <tr>
-    <td>Online recovery</td>
+    <th>Online recovery</th>
     <td align="center">X</td>
     <td align="center">0</td>
     <td align="center">(*2)</td>
@@ -305,7 +311,7 @@ control their behaviors.</p>
   </tr>
 
   <tr>
-    <td>Parallel Query</td>
+    <th>Parallel Query</th>
     <td align="center">X</td>
     <td align="center">X</td>
     <td align="center">X</td>
@@ -313,7 +319,7 @@ control their behaviors.</p>
   </tr>
 
   <tr>
-    <td>Required # of Servers</td>
+    <th>Required # of Servers</th>
     <td align="center">1 or higher</td>
     <td align="center">2 or higher</td>
     <td align="center">2 or higher</td>
@@ -321,7 +327,7 @@ control their behaviors.</p>
   </tr>
 
   <tr>
-    <td>System DB required?</td>
+    <th>System DB required?</th>
     <td align="center">no</td>
     <td align="center">no</td>
     <td align="center">no</td>
@@ -400,9 +406,9 @@ cp $prefix/etc/pgpool.conf.sample $prefix/etc/pgpool.conf
 <p>
 There are additional sample pgpool.conf for each mode.
 </p>
-<p>
+
 <table border>
-<tr>
+<tr class="header">
 <th>Mode</th>
 <th>sample file</th>
 </tr>
@@ -487,7 +493,7 @@ comment and will be ignored.</p>
     See the backend_hostname parameter definition to adapt your configuration accordingly.
     </font>
     <p>This parameter was defining the PostgreSQL server's UNIX domain socket directory.
-    Default is <code>'/tmp'</code>. 
+    Default is <code>'/tmp'</code>.
     </p>
     <p>
     This parameter can only be set at server start.</p>
@@ -709,7 +715,7 @@ local0.*    /var/log/pgpool.log
     This setting can be useful in spotty networks, when it is expected that health
     checks will fail occasionally even when the master is fine.
     Default is 0, which means do not retry.
-    It is advised that you disable<a href="#FAIL_OVER_ON_BACKEND_ERROR">fail_over_on_backend_error</a>
+    It is advised that you disable <a href="#FAIL_OVER_ON_BACKEND_ERROR">fail_over_on_backend_error</a>
     if you want to enable health_check_max_retries</dt>.
     </p>
     <p>
@@ -736,9 +742,8 @@ local0.*    /var/log/pgpool.log
     information.
     </p>
 
-    <blockquote>
     <table border>
-    <tr><td>Special character</td><td>Description</td></tr>
+    <tr class="header"><th>Special character</th><th>Description</th></tr>
     <tr><td>%d</td><td>Backend ID of a detached node.</td></tr>
     <tr><td>%h</td><td>Hostname of a detached node.</td></tr>
     <tr><td>%p</td><td>Port number of a detached node.</td></tr>
@@ -749,7 +754,7 @@ local0.*    /var/log/pgpool.log
     <tr><td>%P</td><td>Old primary node ID.</td></tr>
     <tr><td>%%</td><td>'%' character</td></tr>
     </table>
-    </blockquote>
+
     <p>
     You need to reload pgpool.conf if you change failover_command.
     </p>
@@ -770,9 +775,9 @@ local0.*    /var/log/pgpool.log
     pgpool-II replaces special the following characters with backend specific 
     information.
     </p>
-    <blockquote>
+
     <table border>
-    <tr><td>Special character</td><td>Description</td></tr>
+    <tr class="header"><th>Special character</th><th>Description</th></tr>
     <tr><td>%d</td><td>Backend ID of an attached node.</td></tr>
     <tr><td>%h</td><td>Hostname of an attached node.</td></tr>
     <tr><td>%p</td><td>Port number of an attached node.</td></tr>
@@ -783,7 +788,7 @@ local0.*    /var/log/pgpool.log
     <tr><td>%P</td><td>Old primary node ID.</td></tr>
     <tr><td>%%</td><td>'%' character</td></tr>
     </table>
-    </blockquote>
+
     <p>
     You need to reload pgpool.conf if you change failback_command.
     </p>
@@ -797,9 +802,8 @@ local0.*    /var/log/pgpool.log
     pgpool-II replaces the following special characters with backend specific information.
     </p>
 
-    <blockquote>
     <table border>
-    <tr><td>Special character</td><td>Description</td></tr>
+    <tr class="header"><th>Special character</th><th>Description</th></tr>
     <tr><td>%d</td><td>Backend ID of a detached node.</td></tr>
     <tr><td>%h</td><td>Hostname of a detached node.</td></tr>
     <tr><td>%p</td><td>Port number of a detached node.</td></tr>
@@ -810,7 +814,7 @@ local0.*    /var/log/pgpool.log
     <tr><td>%P</td><td>Old primary node ID.</td></tr>
     <tr><td>%%</td><td>'%' character</td></tr>
     </table>
-    </blockquote>
+
     <p>
     You need to reload pgpool.conf if you change follow_master_command.
     </p>
@@ -1000,21 +1004,19 @@ local0.*    /var/log/pgpool.log
     Multiple falgs can be specified by using "|".
     </p>
 
-   <dl>
-    <dt>ALLOW_TO_FAILOVER</dt>
-        <dd>
-        Allow to failover or detaching backend. This is the default.
-        You cannot specify with DISALLOW_TO_FAILOVER at a same time.
-        </dd>
-    <dt>DISALLOW_TO_FAILOVER</dt>
-        <dd>
-         Disallow to failover or detaching backend.
-         This is usefull when you protect backend by using HA(High Availability) softwares
-         such as Heartbeat or Pacemaker.
-         You cannot specify with ALLOW_TO_FAILOVER at a same time.
-         </dd>
-     </dl>
-     </dt>
+    <table border>
+    <tr><th class="nodec">ALLOW_TO_FAILOVER</th>
+        <td>Allow to failover or detaching backend. This is the default.
+            You cannot specify with DISALLOW_TO_FAILOVER at a same time.
+        </td></tr>
+    <tr><th class="nodec">DISALLOW_TO_FAILOVER</th>
+    <td>Disallow to failover or detaching backend.
+        This is usefull when you protect backend by using HA(High Availability) softwares
+        such as Heartbeat or Pacemaker.
+        You cannot specify with ALLOW_TO_FAILOVER at a same time.
+    </td></tr>
+    </table>
+    </dt>
 
 <dt><a name="SSL">ssl</a></dt>
     <dd>
@@ -1101,6 +1103,8 @@ If the backend_hostname0 fails for some reason, pgpool-II tries to access the
 backend specified by backend_hostname1.
 If that fails, pgpool-II tries the backend_hostname2, 3 and so on.</p>
 
+<p class="top_link"><a href="#Top">back to top</a></p>
+
 <!-- ================================================================================ -->
 
 <h1><a name="connection_pool_mode"></a>Connection Pool Mode</h1>
@@ -1153,10 +1157,10 @@ reset_query_list = 'ABORT; DISCARD ALL'
     </p>
 
     <table border>
-    <tr><th>PostgreSQL version</th><th>reset_query_list value</th></tr>
-    <tr><td>7.1 or before</td><td>ABORT</td></tr>
-    <tr><td>7.2 to 8.2</td><td>ABORT; RESET ALL; SET SESSION AUTHORIZATION DEFAULT</td></tr>
-    <tr><td>8.3 or later</td><td>ABORT; DISCARD ALL</td></tr>
+    <tr class="header"><th>PostgreSQL version</th><th>reset_query_list value</th></tr>
+    <tr><th>7.1 or before</th><td>ABORT</td></tr>
+    <tr><th>7.2 to 8.2</th><td>ABORT; RESET ALL; SET SESSION AUTHORIZATION DEFAULT</td></tr>
+    <tr><th>8.3 or later</th><td>ABORT; DISCARD ALL</td></tr>
     </table>
 
     <ul>
@@ -1172,6 +1176,8 @@ reset_query_list = 'ABORT; DISCARD ALL'
 <h2 id="failover_in_cp_mode">Failover in the Connection Pool Mode</h2>
 
 <p>Failover in the connection pool mode is the same as in the raw mode.</p>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
 
 <!-- ================================================================================ -->
 
@@ -1213,7 +1219,8 @@ configuration parameters below must be set in addition to everything above.</p>
     </p>
     <p>
     A typical use case is a SELECT statement being part of a transaction,
-    replicate_select set to true, and SELECT returning a different number of rows among backends.
+    <a href="#REPLICATE_SELECT">replicate_select</a> set to true,
+    and SELECT returning a different number of rows among backends.
     Non-SELECT statements might trigger this though.
     For example, a backend succeeded in an UPDATE, while others failed.
     Note that pgpool does NOT examine the content of records returned by SELECT.
@@ -1289,7 +1296,7 @@ black_function_list = 'nextval,setval,lastval,currval'
     <table border>
 
     <tr>
-    <td>SELECT is inside a transaction block</td>
+    <th class="nodec">SELECT is inside a transaction block</th>
     <td>Y</td>
     <td>Y</td>
     <td>Y</td>
@@ -1301,7 +1308,7 @@ black_function_list = 'nextval,setval,lastval,currval'
     </tr>
 
     <tr>
-    <td>replicate_select is true</td>
+    <th class="nodec">replicate_select is true</th>
     <td>Y</td>
     <td>Y</td>
     <td>N</td>
@@ -1313,7 +1320,7 @@ black_function_list = 'nextval,setval,lastval,currval'
     </tr>
 
     <tr>
-    <td>load_balance_mode is true</td>
+    <th class="nodec">load_balance_mode is true</th>
     <td>Y</td>
     <td>N</td>
     <td>N</td>
@@ -1325,7 +1332,7 @@ black_function_list = 'nextval,setval,lastval,currval'
     </tr>
 
     <tr>
-    <td>results(R:replication, M: send only to master, L: load balance)</td>
+    <th class="nodec">results(R:replication, M: send only to master, L: load balance)</th>
     <td>R</td>
     <td>R</td>
     <td>M</td>
@@ -1650,6 +1657,8 @@ You will see number of updated rows in PostgreSQL log
 </pre>
 </p>
 
+<p class="top_link"><a href="#Top">back to top</a></p>
+
 <!-- ================================================================================ -->
 
 <h1><a name="master_slave_mode"></a>Master/Slave Mode</h1>
@@ -1695,6 +1704,8 @@ You can set white_function_list and black_function_list to control load
 balancing in master/slave mode.
 See <a href="#white_function_list">white_function_list</a> for more details.
 </p>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
 
 <!-- ================================================================================ -->
 
@@ -2084,6 +2095,8 @@ For your reference, here are the steps taken in the recovery procedure.
 </ol>
 </p>
 
+<p class="top_link"><a href="#Top">back to top</a></p>
+
 <!-- ================================================================================ -->
 
 <h1 id="parallel">Parallel Mode</h1>
@@ -2199,14 +2212,14 @@ psql -f $prefix/share/system_db.sql pgpool
 
 <pre>
 CREATE TABLE pgpool_catalog.dist_def(
-dbname TEXT,                                              -- database name
-schema_name TEXT,                                         -- schema name
-table_name TEXT,                                          -- table name
-col_name TEXT NOT NULL CHECK (col_name = ANY (col_list)), -- partitioning key column name
-col_list TEXT[] NOT NULL,                                 -- names of table attributes
-type_list TEXT[] NOT NULL,                                -- types of table attributes
-dist_def_func TEXT NOT NULL,                              -- name of the partitioning rule function
-PRIMARY KEY (dbname,schema_name,table_name)
+    dbname TEXT,                                              -- database name
+    schema_name TEXT,                                         -- schema name
+    table_name TEXT,                                          -- table name
+    col_name TEXT NOT NULL CHECK (col_name = ANY (col_list)), -- partitioning key column name
+    col_list TEXT[] NOT NULL,                                 -- names of table attributes
+    type_list TEXT[] NOT NULL,                                -- types of table attributes
+    dist_def_func TEXT NOT NULL,                              -- name of the partitioning rule function
+    PRIMARY KEY (dbname,schema_name,table_name)
 );
 </pre>
 
@@ -2272,6 +2285,8 @@ SELECT CASE WHEN $1 &gt;= 1 and $1 &lt;= 30000 THEN 0
 WHEN $1 &gt; 30000 and $1 &lt;= 60000 THEN 1
 ELSE 2
 </pre>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
 
 <!-- ================================================================================ -->
 
@@ -2362,6 +2377,8 @@ configuration directory (which is usually at "/etc/pam.d").
 A sample service-configuration file is installed as "share/pgpool.pam" under the install directory.
 </p>
 
+<p class="top_link"><a href="#Top">back to top</a></p>
+
 <!-- ================================================================================ -->
 
 <h1 id="query_cache">Setting Query cache method</h1>
@@ -2396,6 +2413,8 @@ Contents of query cache is not updated even if the underlying table is get updat
 You need to delete the cache data from the cache table or restart pgpool-II with -c (delete cache) option.
 </strong>
 </p>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
 
 <!-- ================================================================================ -->
 
@@ -2563,9 +2582,13 @@ make install
     </dd>
 </dl>
 
+<p class="top_link"><a href="#Top">back to top</a></p>
+
 <!-- ================================================================================ -->
 
 <h1>Starting/Stopping pgpool-II<a name="start"></a></h1>
+
+<h2 id="start_pgpool">Start pgpool-II</h2>
 
 <p>All the backends and the System DB (if necessary) must be started
 before starting pgpool-II.
@@ -2575,15 +2598,17 @@ before starting pgpool-II.
 pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-D][-d]
 </pre>
 
-<table>
-  <tr><td>-c<br/>--clear-cache</td><td>deletes query cache</tr>
-  <tr><td>-f config_file<br/>--config-file config-file</td><td>specifies pgpool.conf</tr>
-  <tr><td>-a hba_file<br/>--hba-file hba_file</td><td>specifies pool_hba.conf</tr>
-  <tr><td>-F pcp_config_file<br/>--pcp-password-file</td><td>specifies pcp.conf</tr>
-  <tr><td>-n<br/>--no-daemon</td><td>no daemon mode (terminal is not detached)</tr>
-  <tr><td>-D<br/>--discard-status</td><td>Discard pgpool_status file and do not restore previous status</tr>
-  <tr><td>-d<br/>--debug</td><td>debug mode</tr>
+<table border>
+  <tr><td>-c</td><td>--clear-cache</td><td>deletes query cache</tr>
+  <tr><td>-f config_file</td><td>--config-file config-file</td><td>specifies pgpool.conf</tr>
+  <tr><td>-a hba_file</td><td>--hba-file hba_file</td><td>specifies pool_hba.conf</tr>
+  <tr><td>-F pcp_config_file</td><td>--pcp-password-file</td><td>specifies pcp.conf</tr>
+  <tr><td>-n</td><td>--no-daemon</td><td>no daemon mode (terminal is not detached)</tr>
+  <tr><td>-D</td><td>--discard-status</td><td>Discard pgpool_status file and do not restore previous status</tr>
+  <tr><td>-d</td><td>--debug</td><td>debug mode</tr>
 </table>
+
+<h2 id="stop_pgpool">Stop pgpool-II</h2>
 
 <p>
 There are two ways to stop pgpool-II. One is using a PCP command
@@ -2595,12 +2620,12 @@ pgpool-II command.
 pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] stop
 </pre>
 
-<table>
-  <tr><td><code>-m s[mart]</code><br/><code>--mode s[mart]</code></td>
+<table border>
+  <tr><td><code>-m s[mart]</code></td><td><code>--mode s[mart]</code></td>
       <td>waits for clients to disconnect, and shutdown (default)</td></tr>
-  <tr><td><code>-m f[ast]</code><br/><code>--mode f[ast]</code></td>
+  <tr><td><code>-m f[ast]</code></td><td><code>--mode f[ast]</code></td>
       <td>does not wait for clients; shutdown immediately</td></tr>
-  <tr><td><code>-m i[mmediate]</code><br/><code>--mode i[mmediate]</code></td>
+  <tr><td><code>-m i[mmediate]</code></td><td><code>--mode i[mmediate]</code></td>
       <td>the same as <code>'-m f'</code></td></tr>
 </table>
 
@@ -2623,6 +2648,8 @@ active DB by another means, pgpool_status can be removed safely before
 starting pgpool.
 </p>
 
+<p class="top_link"><a href="#Top">back to top</a></p>
+
 <!-- ================================================================================ -->
 
 <h1>Reloading pgpool-II configuration files<a name="reload"></a></h1>
@@ -2633,16 +2660,18 @@ starting pgpool.
 pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file] reload
 </pre>
 <p>
-<table>
-  <tr><td>-f config_file<br/>--config-file config-file</td><td>specifies pgpool.conf</tr>
-  <tr><td>-a hba_file<br/>--hba-file hba_file</td><td>specifies pool_hba.conf</tr>
-  <tr><td>-F pcp_config_file<br/>--pcp-password-file</td><td>specifies pcp.conf</tr>
+<table border>
+  <tr><td>-f config_file</td><td>--config-file config-file</td><td>specifies pgpool.conf</tr>
+  <tr><td>-a hba_file</td><td>--hba-file hba_file</td><td>specifies pool_hba.conf</tr>
+  <tr><td>-F pcp_config_file</td><td>--pcp-password-file</td><td>specifies pcp.conf</tr>
 </table>
 
 <p>
 Please note that some configuration items cannot be changed by
 reloading. New configuration takes effect after a change for new sessions.
 </p>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
 
 <!-- ================================================================================ -->
 
@@ -2786,13 +2815,12 @@ benchs2=# show pool_version;
  3.0-dev (umiyameboshi)
 (1 line)
 </pre>
-</p>
 
 <h2 id="pool_cache">pool_cache</h2>
 <p>"SHOW pool_cache" displays cache storage statistics if <a href="#memqcache">on memory query cache</a> is enabled.
 Here is an example of it:
 </p>
-<p>
+
 <pre>
 test=# \x
 \x
@@ -2810,23 +2838,31 @@ used_cache_enrties_size     | 12482600
 free_cache_entries_size     | 54626264
 fragment_cache_entries_size | 0
 </pre>
-</p>
-<p>
-num_cache_hits means the number of SELECTs which hit cache.
-num_selects  means the number of SELECTs which do not hit cache.
+
+<ul>
+<li>num_cache_hits means the number of SELECTs which hit cache.</li>
+<li>num_selects  means the number of SELECTs which do not hit cache.</li>
+<li>
 cache_hit_ratio means cache hit ratio, calculated from num_cache_hits/(num_cache_hits+num_selects)
 Anything below num_hash_entries are valid only when cache storage is on shared memory.
+</li>
+<li>
 num_hash_entries means number of entries in hash table, which is used for index to cache storage
-and should be equal to memqcache_max_num_cache in pgpool.conf.
+and should be equal to <a href="#MEMQCACHE_MAX_NUM_CACHE">memqcache_max_num_cache</a> in pgpool.conf.
 This is the upper limit for number of cache entries.
-used_hash_entries means number of already used entries in num_hash_entries.
+</li>
+<li>used_hash_entries means number of already used entries in num_hash_entries.</li>
+<li>
 num_cache_entries means number of valid cache entries in the cache storage and
 should be equal to used_hash_entries.
-used_cache_entries_size means total size of cache storage in bytes which is already used.
-free_cache_entries_size means total size of cache storage in bytes which is not used yet or can be usable.
-fragment_cache_entries_size means total size of cache storage in bytes which cannot be used because of fragmentation.
-The fragmented area can be reused later if free_cache_entries_size becomes 0 (or there's no enough space for the SELECT result).
-</p>
+</li>
+<li>used_cache_entries_size means total size of cache storage in bytes which is already used.</li>
+<li>free_cache_entries_size means total size of cache storage in bytes which is not used yet or can be usable.</li>
+<li>fragment_cache_entries_size means total size of cache storage in bytes which cannot be used because of fragmentation.</li>
+<li>The fragmented area can be reused later if free_cache_entries_size becomes 0 (or there's no enough space for the SELECT result).</li>
+</ul>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
 
 <!-- ================================================================================ -->
 
@@ -2972,6 +3008,8 @@ available in PostgreSQL 8.2 and later versions.
 Note that all PostgreSQL servers involved need to have PITR enabled.
 </p>
 
+<h4>1st stage</h4>
+
 <p>
 A script to get a base backup on a master node and copy it to a
 recovery target node on the first stage is needed. The script can be named
@@ -3002,6 +3040,8 @@ restore_command = 'scp master:/data/archive_log/%f %p'
 performs the backup, then puts the master database out of backup mode and copies
 the backup on the chosen target node.
 </p>
+
+<h4>2nd stage</h4>
 
 <p>
 The second stage of the procedure is a script to force an XLOG file switch.
@@ -3283,6 +3323,8 @@ The procedure to update primary PostgreSQL server is as follows:
     <li>Start pgpool-II</li>
 </ol>
 
+<p class="top_link"><a href="#Top">back to top</a></p>
+
 <!-- ================================================================================ -->
 
 <h1><a name="backup"></a>Backup</h1>
@@ -3290,7 +3332,8 @@ The procedure to update primary PostgreSQL server is as follows:
 To back up backend PostgreSQL servers and system DB, you can physical
 backup, logical backup (pg_dump, pg_dumpall) and PITR in the same manner as PostgreSQL.
 Please note that using logical backup and PITR should be performed directory PostgreSQL,
-rather than via pgpool-II to avoid errors caused by load_balance_mode and replicate_select.
+rather than via pgpool-II to avoid errors caused by <a href="#LOAD_BALANCE_MODE">load_balance_mode</a> and
+<a href="#REPLICATE_SELECT">replicate_select</a>.
 </p>
 
 <h2 id="backup_rep_or_ms_mode">replication mode and master/slave mode</h2>
@@ -3338,6 +3381,8 @@ You need to backup system DB if pgpool-II is operated in parallel query
 mode or if you are using query cache.
 Backup database specified by system_db_dbname in pgpool.conf.
 </p>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
 
 <!-- ================================================================================ -->
 
@@ -3406,6 +3451,8 @@ Pgpool-HA is a high availability software for pgpool-II using hearbeat.
 Pgpool-HA is a sub probject of pgpool project as well as pgpool-II.
 Pgpool-HA can be available from pgpool development site as an open source softeware.
 </p>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
 
 <!-- ================================================================================ -->
 
@@ -3508,6 +3555,8 @@ pgpool-II.
     </p>
     </dd>
 </dl>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
 
 
 <!-- ================================================================================ -->
@@ -3907,6 +3956,8 @@ invalidate old query cache automatically when the data is updated.</p>
 
 <h2>Compatibility with pgpool</h2>
 
+<p class="top_link"><a href="#Top">back to top</a></p>
+
 <!-- ================================================================================ -->
 
 <h1>References<a name="reference"></a></h1>
@@ -3916,18 +3967,26 @@ invalidate old query cache automatically when the data is updated.</p>
 
 <p>PCP commands are UNIX commands which manipulate pgpool-II via the network.
 
-<pre>
-* pcp_node_count        - retrieves the number of nodes
-* pcp_node_info         - retrieves the node information
-* pcp_proc_count        - retrieves the process list
-* pcp_proc_info         - retrieves the process information
-* pcp_systemdb_info     - retrieves the System DB information
-* pcp_detach_node       - detaches a node from pgpool-II
-* pcp_attach_node       - attaches a node to pgpool-II
-* pcp_promote_node      - promote a new master node to pgpool-II
-* pcp_stop_pgpool       - stops pgpool-II
-</pre>
-</p>
+<table border>
+<tr><th><a href="#pcp_node_count">pcp_node_count</a></th>
+    <td>retrieves the number of nodes</td></tr>
+<tr><th><a href="#pcp_node_info">pcp_node_info</a></th>
+    <td>retrieves the node information</td></tr>
+<tr><th><a href="#pcp_proc_count">pcp_proc_count</a></th>
+    <td>retrieves the process list</td></tr>
+<tr><th><a href="#pcp_proc_info">pcp_proc_info</a></th>
+    <td>retrieves the process information</td></tr>
+<tr><th><a href="#pcp_systemdb_info">pcp_systemdb_info</a></th>
+    <td>retrieves the System DB information</td></tr>
+<tr><th><a href="#pcp_detach_node">pcp_detach_node</a></th>
+    <td>detaches a node from pgpool-II</td></tr>
+<tr><th><a href="#pcp_attach_node">pcp_attach_node</a></th>
+    <td>attaches a node to pgpool-II</td></tr>
+<tr><th><a href="#pcp_promote_node">pcp_promote_node</a></th>
+    <td>promote a new master node to pgpool-II</td></tr>
+<tr><th><a href="#pcp_stop_pgpool">pcp_stop_pgpool</a></th>
+    <td>stops pgpool-II</td></tr>
+</table>
 
 
 <h2 id="pcp_comand_args">Common Command-line Arguments</h2>
@@ -4203,22 +4262,36 @@ connected to the backends or not.</p>
 <p>PCP commands exits with status 0 when everything goes well. If any
 error had occurred, it will exit with the following error status.
 
-<pre>
-UNKNOWNERR      1      Unknown Error (should not occur)
-EOFERR          2      EOF Error
-NOMEMERR        3      Memory shortage
-READERR         4      Error while reading from the server
-WRITEERR        5      Error while writing to the server
-TIMEOUTERR      6      Timeout
-INVALERR        7      Argument(s) to the PCP command was invalid
-CONNERR         8      Server connection error
-NOCONNERR       9      No connection exists
-SOCKERR         10     Socket error
-HOSTERR         11     Hostname resolution error
-BACKENDERR      12     PCP process error on the server (specifying an invalid ID, etc.)
-AUTHERR         13     Authorization failure
-</pre>
-</p>
+<table border>
+<tr><th>UNKNOWNERR</th>
+    <td>1</td><td>Unknown Error (should not occur)</td></tr>
+<tr><th>EOFERR</th>
+    <td>2</td><td>EOF Error</td></tr>
+<tr><th>NOMEMERR</th>
+    <td>3</td><td>Memory shortage</td></tr>
+<tr><th>READERR</th>
+    <td>4</td><td>Error while reading from the server</td></tr>
+<tr><th>WRITEERR</th>
+    <td>5</td><td>Error while writing to the server</td></tr>
+<tr><th>TIMEOUTERR</th>
+    <td>6</td><td>Timeout</td></tr>
+<tr><th>INVALERR</th>
+    <td>7</td><td>Argument(s) to the PCP command was invalid</td></tr>
+<tr><th>CONNERR</th>
+    <td>8</td><td>Server connection error</td></tr>
+<tr><th>NOCONNERR</th>
+    <td>9</td><td>No connection exists</td></tr>
+<tr><th>SOCKERR</th>
+    <td>10</td><td>Socket error</td></tr>
+<tr><th>HOSTERR</th>
+    <td>11</td><td>Hostname resolution error</td></tr>
+<tr><th>BACKENDERR</th>
+    <td>12</td><td>PCP process error on the server (specifying an invalid ID, etc.)</td></tr>
+<tr><th>AUTHERR</th>
+    <td>13</td><td>Authorization failure</td></tr>
+</table>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
 
 <!-- ================================================================================ -->
 
@@ -4299,11 +4372,11 @@ place is as follows.
 
 <p>
 <table border>
-<tr><td>Execution status</td><td>Processed place</td></tr>
-<tr><td align=center>L</td><td>Query issued on either node. </td></tr>
-<tr><td align=center>P</td><td>Returns data to the client by running the
+<tr class="header"><th>Execution status</th><th>Processed place</th></tr>
+<tr><th>L</th><td>Query issued on either node. </td></tr>
+<tr><th>P</th><td>Returns data to the client by running the
 same query on all nodes and using the parallel execution engine.</td></tr>
-<tr><td align=center>S</td><td>After processing using the system DB, data
+<tr><th>S</th><td>After processing using the system DB, data
 is returned to the client. </td></tr>
 </table>
 </p>
@@ -4338,18 +4411,18 @@ statuses, as show in the following table.
 
 <p>
 <table border>
-<tr><td>JOIN type</td>
-<td align = center colspan = 3> LEFT OUTER JOIN </td>
-<td align = center colspan = 3> RIGHT OUTER JOIN </td>
-<td align = center colspan = 3>FULL OUTER JOIN</td>
-<td align = center colspan = 3>Other</td></tr>
-<tr><td align = center>left/right</td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td></tr>
+<tr class="header"><th>JOIN type</th>
+<th colspan="3"> LEFT OUTER JOIN </th>
+<th colspan="3"> RIGHT OUTER JOIN </th>
+<th colspan="3">FULL OUTER JOIN</th>
+<th colspan="3">Other</th></tr>
+<tr class="center"><th>left/right</th><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td></tr>
 
-<tr><td align = center> P </td><td> S </td><td> P </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> P </td><td> S </td></tr>
+<tr class="center"><th> P </th><td> S </td><td> P </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> P </td><td> S </td></tr>
 
-<tr><td align = center> L </td><td> S </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> S </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td></tr>
+<tr class="center"><th> L </th><td> S </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> S </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td></tr>
 
-<tr><td align = center> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td></tr>
+<tr class="center"><th> S </th><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td></tr>
 
 </table>
 </p>
@@ -4489,15 +4562,15 @@ The rewriting is, as a consequence, performed as follows.
 </p>
 <pre>
 SELECT L1-table.col 
-  FROM dblink(SELECT loadbalance(SELECT L1-table.col 
+  FROM dblink(SELECT loadbalance(SELECT L1-table.col
               FROM L1-table 
-              WHERE L1-table.col % 2 = 0 
+              WHERE L1-table.col % 2 = 0
                 AND TRUE))
     WHERE
-        L1-table.col %2 = 0 AND 
-      L1-table.col IN 
+        L1-table.col %2 = 0 AND
+      L1-table.col IN
       (
-          SELECT P1-Table FROM 
+          SELECT P1-Table FROM
           dblink(select pool_parallel(SELECT P1-table FROM P1-table))
       ) ;
 </pre>
@@ -4554,21 +4627,24 @@ else, it is assumed numeric. avg() is processed as sum()/count() (sum divided by
 <h3 id="performance_parallel_mode">About the performance of a parallel mode</h3>
 <p>Here is a rough estimate of the query performance versus execution status:
 </p>
-<p>
+
 <table border>
-        <tr><td>Execution status</td><td>Performance</td></tr>
-<tr><td align = center>L</td><td>There is no performance deterioration with a
-single node, excluding the overhead of pgpool-II, because there is no parallel
-querying done at all.</td></tr>
-<tr><td align = center>P</td><td>Parallel processing is fast, especially the
-sequential scans. It's easy to get speedups because the scan of a big table
-becomes the parallel scan of much smaller ones by being distributed on several
-nodes.
-<tr><td align = center>S</td><td>When aggregate functions can be rewritten in a
-parallel fashion, they are fast.</td></tr>
+<tr class="header"><th>Execution status</th><th>Performance</th></tr>
+<tr><th>L</th>
+<td>There is no performance deterioration with a single node,
+    excluding the overhead of pgpool-II, because there is no parallel querying done at all.
+</td></tr>
+<tr><th>P</th>
+<td>Parallel processing is fast, especially the sequential scans.
+    It's easy to get speedups because the scan of a big table becomes the parallel scan
+    of much smaller ones by being distributed on several nodes.
+</td></tr>
+<tr><th>S</th>
+<td>When aggregate functions can be rewritten in a parallel fashion, they are fast.
 </td></tr>
 </table>
-</p>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
 
 <!-- ================================================================================ -->
 
@@ -4577,9 +4653,11 @@ parallel fashion, they are fast.</td></tr>
 <a href="tutorial-en.html">A tutorial for pgpool-II</a> is available.
 </p>
 
+<p class="top_link"><a href="#Top">back to top</a></p>
+
 </div>
 
-<div class="copyright">
+<div class="copyright" style="clear: both">
 <hr>
 <copyright>
 Copyright &copy; 2003 &ndash; 2012 pgpool Global Development Group
