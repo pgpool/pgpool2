@@ -141,7 +141,11 @@ void do_child(int unix_fd, int inet_fd)
 
 	/* initialize random seed */
 	gettimeofday(&now, &tz);
+#if defined(sun) || defined(__sun)
+	srand((unsigned int) now.tv_usec);
+#else
 	srandom((unsigned int) now.tv_usec);
+#endif
 
 	/* initialize system db connection */
 	init_system_db_connection();
@@ -1907,7 +1911,13 @@ int select_load_balancing_node(void)
 			total_weight += BACKEND_INFO(i).backend_weight;
 		}
 	}
+
+#if defined(sun) || defined(__sun)
+	r = (((double)rand())/RAND_MAX) * total_weight;
+#else
 	r = (((double)random())/RAND_MAX) * total_weight;
+#endif
+
 	total_weight = 0.0;
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
