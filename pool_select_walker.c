@@ -678,11 +678,11 @@ static bool is_view(char *table_name)
 	/* pgpool_regclass has been installed */
 	if (pool_has_pgpool_regclass())
 	{
-		query = ISVIEWQUERY;
+		query = ISVIEWQUERY2;
 	}
 	else
 	{
-		query = ISVIEWQUERY2;
+		query = ISVIEWQUERY;
 	}
 
 	if (!relcache)
