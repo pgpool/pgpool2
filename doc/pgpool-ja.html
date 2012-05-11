@@ -198,7 +198,8 @@ pgpool-II$B$N%=!<%9%3!<%I$+$i$N%$%s%9%H!<%k$K$O!"(Bgcc 2.9$B0J>e!"$*$h$S(BGN
         $B$3$l$O!"%m%C%/$,(BVACUUM$B$H6%9g$9$k$?$aHs?d>)$G$9!#(B
 	</td></tr>
 	<tr><th class="nodec"><code>--with-memcached=path</code></th>
-	<td>$B%-%c%C%7%e%9%H%l!<%8$K(Bmemcached$B$rMxMQ$7!"(B<a href="#memqcache">$B%*%s%a%b%j%/%(%j%-%c%C%7%e(B</a>$B5!G=$r(B
+	<td>$B%-%c%C%7%e%9%H%l!<%8$K(B <a href="memcached_params">memcached</a> $B$rMxMQ$7!"(B
+    <a href="#memqcache">$B%*%s%a%b%j%/%(%j%-%c%C%7%e(B</a>$B5!G=$r(B
 		$BMxMQ$7$?$$>l9g$K;XDj$7$^$9!#(B
 		<a href="http://libmemcached.org/libMemcached.html">libMemcached</a>$B$N%$%s%9%H!<%k$,I,MW$G$9!#(B
 	</td></tr>
@@ -1691,7 +1692,8 @@ SELECT$B$J$I$NLd$$9g$o$;$,%m!<%I%P%i%s%9$5$l$^$9!#(B
 <ul>
     <li>PostgreSQL$B$N%P!<%8%g%s$,(B7.4$B0J9_$G$"$k(B</li>
     <li>$BLd$$9g$o$;$,L@<(E*$J%H%i%s%/%6%7%g%s%V%m%C%/$NFbB&$K$J$$(B($B$D$^$j!"(BBEGIN$B$rH/9T$7$F$$$J$$(B)</li>
-    <li>SELECT$BJ8(B(WITH$BIU$b4^$`!#(Bblack_list$B$^$?$O(Bwhite_list$B$G;XDj$5$l$?=q$-9~$_$r4^$`(BSELECT$B$r=|$/(B)
+    <li>SELECT$BJ8(B(WITH$BIU$b4^$`!#(B<a href="#BLACK_FUNCTION_LIST">black_list</a> $B$^$?$O(B
+        <a href="#WHITE_FUNCTION_LIST">white_list</a> $B$G;XDj$5$l$?=q$-9~$_$r4^$`(BSELECT$B$r=|$/(B)
         $B$^$?$O(BCOPY TO STDOUT, EXPLAIN, EXPLAIN ANALYZE SELECT... $B$N$$$:$l$+$G$"$k(B</li>
     <li>SELECT INTO $BJ8$G$O$J$$(B</li>
     <li>SELECT FOR UPDATE/SELECT FOR SHARE$BJ8$G$O$J$$(B</li>
@@ -2593,7 +2595,6 @@ pgpool$BFbIt$N(BSQL$B%Q!<%9=hM}$J$I$r7PM3$7$J$$$?$a!"Hs>o$K9bB.$G$9!#(B
 </p>
 
 <h2 id="MEMORY_CACHE_RESTRICTIONS">$B%*%s%a%b%j%/%(%j%-%c%C%7%e$N@)8B;v9`(B</h2>
-<p>
 <ul>
   <li>$B%*%s%a%b%j%/%(%j%-%c%C%7%e$G$O!"%F!<%V%k$KJQ99$,$"$k$H!"4XO"$9$k%-%c%C%7%e$r<+F0E*$K:o=|$7$F8E$$%G!<%?$,JV5Q$5$l$J$$$h$&$K$9$k5!G=$,$"$j$^$9!#(B
 	  $B$3$N$?$a!"(Bpgpool$B$O>o$K(BUPDATE$B$d(BINSERT$B$d(BALTER TABLE$B$J$I$N%3%^%s%I$,H/9T$5$l$?$+$I$&$+$r%b%K%?$7$F$$$^$9!#(B
@@ -2603,7 +2604,6 @@ pgpool$BFbIt$N(BSQL$B%Q!<%9=hM}$J$I$r7PM3$7$J$$$?$a!"Hs>o$K9bB.$G$9!#(B
   <li>$BJ#?t$N(Bpgpool-II$B$rF0$+$94D6-$G6&M-%a%b%j$r;H$C$?%*%s%a%b%j%/%(%j%-%c%C%7%e$r;HMQ$9$k$H!"$"$k(Bpgpool-II$B7PM3$G%F!<%V%k$,99?7$5$l$?;~$K!"B>$N(Bpgpool-II$B$N%-%c%C%7%e$,:o=|$5$l$:!"8E$$%G!<%?$rFI$_$@$7$F$7$^$&$3$H$,$"$j$^$9!#(B
 	  $B$3$N$h$&$J4D6-$G$O!"%-%c%C%7%e%9%H%l!<%8$K(Bmemcached$B$r;H$C$F$/$@$5$$!#(B</li>
 </ul>
-</p>
 
 <h2 id="MEMORY_CACHE_ENABLED">$B%*%s%a%b%j%/%(%j%-%c%C%7%e$NM-8z2=(B</h2>
 <p>
@@ -2641,7 +2641,7 @@ memcached$B$r%-%c%C%7%e%9%H%l!<%8$K;HMQ$9$k>l9g$O!"%M%C%H%o!<%/%"%/%;%9$N%*!<%P
   <li>VIEW$B$r;H$C$F$$$k(BSELECT</li>
   <li>$BL@<(E*$J%H%i%s%6%/%7%g%sFb$G(BSELECT$B$,H/9T$5$l!"$=$N%H%i%s%6%/%7%g%s$,%"%\!<%H$7$?;~(B</li>
   <li><a href="#WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</a>$B!"(B
-      <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a>$B$,;XDj$5$l$F$$F@$k>l9g(B</li>
+      <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a>$B$,;XDj$5$l$F$$$k>l9g(B</li>
   <li>SELECT$B7k2L$,Bg$-$$>l9g(B(<a href="#MEMQCACHE_MAXCACHE">memqcache_maxcache</a>$B$N9`;2>H(B)</li>
 </ul>
 
