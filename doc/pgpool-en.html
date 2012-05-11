@@ -24,10 +24,17 @@ Last modified: Tue May  8 16:42:49 JST 2012
         <li><a href="#connection_pool_mode">Connection pool mode</a></li>
         <li><a href="#replication_mode">Replication mode</a></li>
         <li><a href="#master_slave_mode">Master slave mode</a></li>
+        <li><a href="#stream">Streaming Replication</a></li>
+        <li><a href="#parallel">Parallel Mode</a></li>
+        <li><a href="#hba">Client authentication</a></li>
+        <li><a href="#query_cache">Setting Query cache method</a></li>
+        <li><a href="#memqcache">On memory query Cache</a></li>
         <li><a href="#start">Starting/Stopping pgpool-II</a></li>
         <li><a href="#reload">Reloading pgpool-II configuration files</a></li>
         <li><a href="#show-commands">SHOW commands</a></li>
         <li><a href="#online-recovery">Online recovery</a></li>
+        <li><a href="#backup">Backup</a></li>
+        <li><a href="#deploy">Deploying pgpool-II</a></li>
         <li><a href="#troubleshooting">Troubleshooting</a></li>
         <li><a href="#restriction">Restrictions</a></li>
         <li><a href="#reference">References</a></li>
@@ -55,7 +62,7 @@ and a PostgreSQL database client. It provides the following features:</p>
 <ul>
 
 <li>Connection Pooling</li>
-    <p>pgpool-II maintains established connections to the PostgreSQL servers, and 
+    <p>pgpool-II maintains established connections to the PostgreSQL servers, and
     reuses them whenever a new connection with the same properties
     (i.e. username, database, protocol version) comes in. It reduces the
     connection overhead, and improves system's overall throughput.</p>
@@ -72,7 +79,7 @@ and a PostgreSQL database client. It provides the following features:</p>
     server will return the same result. pgpool-II takes advantage of
     the replication feature in order to reduce the load on each PostgreSQL server.
     It does that by distributing SELECT queries among available servers, improving
-    the system's overall throughput. In an ideal scenario, read performance could 
+    the system's overall throughput. In an ideal scenario, read performance could
     improve proportionally to the number of PostgreSQL servers. Load balancing works
     best in a scenario where there are a lot of users executing many read-only
     queries at the same time.</p>
@@ -124,7 +131,7 @@ won't be available. But you shouldn't use such an old release anyway.</p>
 
 <p>You must also make sure that all of your PostgreSQL servers are using the same
 major PostgreSQL version.
-In addition to this, hardware architectures and OSes must be identical if you 
+In addition to this, hardware architectures and OSes must be identical if you
 want to use online recovery.
 </p>
 
@@ -178,6 +185,11 @@ enable OpenSSL support in pgpool-II</p>
       <td>Use insert_lock compatible with pgpool-II 2.2 and 2.3 series.
           pgpool-II locks against the insert target table.
           This lock method is deprecated because it causes a lock conflict with VACUUM.</td></tr>
+      <tr><th class="nodec"><code>--with-memcached=path</code></th>
+      <td>pgpool-II binaries will use <a href="#memcached_params">memcached</a>
+          for <a href="#memqcache">on memory query cache</a>.
+          You have to install <a href="http://libmemcached.org/libMemcached.html">libmemcached</a>.</td>
+      </tr>
       </table>
     </dd>
 
@@ -255,7 +267,7 @@ because those operating systems requires GNU make.
 
 <p>Default configuration files for pgpool-II are
 <code>/usr/local/etc/pgpool.conf</code> and
-<code>/usr/local/etc/pcp.conf</code>. Several operation modes are available 
+<code>/usr/local/etc/pcp.conf</code>. Several operation modes are available
 in pgpool-II. Each mode has associated features which
 can be enabled or disabled, and specific configuration parameters to
 control their behaviors.</p>
@@ -356,7 +368,7 @@ can collect pgpool-II status, and terminate pgpool-II processes remotely.
 <code>pcp.conf</code> is the user/password file used for
 authentication by this interface. All operation modes require the
 <code>pcp.conf</code> file to be set. A <code>$prefix/etc/pcp.conf.sample</code>
-file is created during the installation of pgpool-II. Rename the file to 
+file is created during the installation of pgpool-II. Rename the file to
 <code>pcp.conf</code> and add your username and password to it.
 </p>
 
@@ -396,7 +408,7 @@ executes pgpool-II.</p>
 <p>As already explained, each operation mode has its specific
 configuration parameters in <code>pgpool.conf</code>. A
 <code>$prefix/etc/pgpool.conf.sample</code> file is created during the
-installation of pgpool-II. Rename the file to 
+installation of pgpool-II. Rename the file to
 <code>pgpool.conf</code> and edit its contents.
 
 <pre>
@@ -489,7 +501,7 @@ comment and will be ignored.</p>
 <dt><a name="BACKEND_SOCKET_DIR"></a>backend_socket_dir</dt>
     <dd>
     <font color="red"><em>DEPRECATED</em><br>
-    This parameter is deprecated for consistency with the default libpq policy. 
+    This parameter is deprecated for consistency with the default libpq policy.
     See the backend_hostname parameter definition to adapt your configuration accordingly.
     </font>
     <p>This parameter was defining the PostgreSQL server's UNIX domain socket directory.
@@ -574,7 +586,7 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
     after the last query has completed.
     This is useful to prevent pgpool childs from being
     occupied by a lazy client or a broken TCP/IP connection between client and pgpool.
-    The default value for client_idle_limit is 0, which means 
+    The default value for client_idle_limit is 0, which means
     the feature is turned off. this value.
     This parameter is ignored in the second stage of online recovery.
     </p>
@@ -772,7 +784,7 @@ local0.*    /var/log/pgpool.log
     <dd>
     <p>
     This parameter specifies a command to run when a node is attached.
-    pgpool-II replaces special the following characters with backend specific 
+    pgpool-II replaces special the following characters with backend specific
     information.
     </p>
 
@@ -826,7 +838,7 @@ local0.*    /var/log/pgpool.log
     to be ready again to accept connections from clients.
     After this, pgpool run the command set into the 'follow_master_command' for each
     degenerated nodes. Typically the command should be used to recover the slave from the new master
-    by call the <a href="pcp_recovery_node">pcp_recovery_node</a> command for example.
+    by call the <a href="#pcp_recovery_node">pcp_recovery_node</a> command for example.
     </p>
     </dd>
 
@@ -837,7 +849,7 @@ local0.*    /var/log/pgpool.log
     pgpool-II will trigger the fail over procedure.
     If set to false, pgpool will report an error and disconnect the session.
     If you set this parameter to off, it is recommended that you turn on health checking.
-    Please note that even if this parameter is set to off, however, pgpool will also do the fail over when 
+    Please note that even if this parameter is set to off, however, pgpool will also do the fail over when
     pgpool detects the administrative shutdown of postmaster.
     </p>
     <p>
@@ -1288,7 +1300,7 @@ black_function_list = 'nextval,setval,lastval,currval'
     pgpool-II only sends them to the Master DB. Default is false.
     </p>
     <p>
-    If a SELECT query is inside an explicit transaction block, replicate_select and 
+    If a SELECT query is inside an explicit transaction block, replicate_select and
     <a href="#LOAD_BALANCE_MODE">load_balance_mode</a> will have an effect on how replication works.
     Details are shown below.
     </p>
@@ -1524,7 +1536,7 @@ end of transaction block
     stage of recovery. A client being idle for client_idle_limit_in_recovery
     seconds since its last query will get disconnected.
     This is useful for preventing the pgpool recovery from being
-    disturbed by a lazy client or if the TCP/IP connection between the client 
+    disturbed by a lazy client or if the TCP/IP connection between the client
     and pgpool is accidentally down (a cut cable for instance).
     If set to -1, disconnect the client immediately.
     The default value for client_idle_limit_in_recovery is 0,
@@ -1599,11 +1611,12 @@ must be met:
     <li>PostgreSQL version 7.4 or later</li>
     <li>the query must not be in an explicitly declared
         transaction (i.e. not in a BEGIN ~ END block)</li>
-    <li>it's not SELECT nextval or SELECT setval
     <li>it's not SELECT INTO
     <li>it's not SELECT FOR UPDATE nor FOR SHARE
     <li>it starts with "SELECT" or one of COPY TO STDOUT, EXPLAIN, EXPLAIN ANALYZE SELECT...
      ignore_leading_white_space = true will ignore leading white space.
+     (Except for writing queries in <a href="#BLACK_FUNCTION_LIST">black_list</a> or
+     <a href="#WHITE_FUNCTION_LIST">white_list</a>)
 </ul>
 
 <p>
@@ -1700,9 +1713,10 @@ sub-module is pgpool.conf.sample-stream.
 Please restart pgpool-II if you change any of the above parameters.
 </p>
 <p>
-You can set white_function_list and black_function_list to control load
+You can set <a href="#WHITE_FUNCTION_LIST">white_function_list</a> and
+<a href="#BLACK_FUNCTION_LIST">black_function_list</a> to control load
 balancing in master/slave mode.
-See <a href="#white_function_list">white_function_list</a> for more details.
+See <a href="#WHITE_FUNCTION_LIST">white_function_list</a> for more details.
 </p>
 
 <p class="top_link"><a href="#Top">back to top</a></p>
@@ -1782,12 +1796,12 @@ The following directives can be used with this mode:
     If 'none' is specified, no log is written.
     If 'always', log the delay every time health checking is performed.
     If 'if_over_threshold' is specified, the log is written when the delay
-    exceeds delay_threshold.
+    exceeds <a href="#DELAY_THRESHOLD">delay_threshold</a>.
     The default value for log_standby_delay is 'none'.
     You need to reload pgpool.conf if you change this directive.
     </p>
     <p>
-    You could monitor the replication delay by using the "show pool_status"
+    You could monitor the replication delay by using the "<a href="#pool_status">show pool_status</a>"
     command as well.
     The column name is "standby_delay#"(where '#' should be replaced by DB node id).
     </p>
@@ -1959,13 +1973,12 @@ In an explicit transaction:
     <li>Following SELECT and some other queries that can be sent to both
         primary or standby are executed in the transaction or on the standby node.
     </li>
-    <li><p>
+    <li>
         Commands which cannot be executed on the standby such as INSERT are sent
         to the primary.
         After one of these commands, even SELECTs are sent to the primary node,
         This is because these SELECTs might want to see the result of an INSERT immediately.
         This behavior continues until the transaction closes or aborts.
-        </p>
     </li>
 </ul>
 
@@ -2056,7 +2069,7 @@ recovery_2nd_stage_command = ''
 
 <p>
 That's it.
-Now you should be able to use pcp_recovery_node (as long as the standby
+Now you should be able to use <a href="#pcp_recovery_node">pcp_recovery_node</a> (as long as the standby
 node stops) or push "recovery" button of pgpoolAdmin to perform online recovery.
 If something goes wrong, please examin pgpool-II log, primary server log and standby server log(s).
 </p>
@@ -2114,7 +2127,7 @@ When you change this parameter, restart pgpool-II.
 <h2 id="system_db">Configuring the System DB</h2>
 
 <p>To use the parallel mode, the System DB must be configured
-properly. The System DB contains rules, stored in a table, to choose an 
+properly. The System DB contains rules, stored in a table, to choose an
 appropriate backend to send partitioned
 data to. The System DB does not need to be created on the same host as
 pgpool-II. The System DB's configuration is done in
@@ -2246,12 +2259,12 @@ CREATE TABLE pgpool_catalog.replicate_def(
 <h2 id="example_partitioning">Example for partitioning the pgbench tables</h2>
 
 <p>
-In this example, the accounts table is partitioned, and the branches and tellers 
+In this example, the accounts table is partitioned, and the branches and tellers
 table are replicated.
 The accounts table and the branches table are joined by bid.
 The branches table is registered into the replication table.
 If the three tables (accounts, branches, and tellers)
-are to be joined, it is necessary to register a replication rule for 
+are to be joined, it is necessary to register a replication rule for
 the tellers table too.
 </p>
 <pre>
@@ -2303,7 +2316,7 @@ By default, pool_hba authentication is enabled. See "6. Setting up
 pgpool.conf" for more detail.
 </p>
 <p>
-The format of the pool_hba.conf file follows very closely PostgreSQL's 
+The format of the pool_hba.conf file follows very closely PostgreSQL's
 pg_hba.conf format.
 </p>
 <pre>
@@ -2418,102 +2431,288 @@ You need to delete the cache data from the cache table or restart pgpool-II with
 
 <!-- ================================================================================ -->
 
-<h1 id="memqcache">Using Shared memory or Memcached</h1>
+<h1><a name="memqcache"></a>On memory query Cache</h1>
 
-<p id="MEMORY_CACHE_ENABLED">
-To enable the memory cache functionality, set this to true (default is false)
+<p>
+You can use on memory query cache in any mode.
+It is diffrent from the above query cache on the point that
+on memory query cache is faster because cache storage is on memory.
+Moreover you don't need to restart pgpool-II when the cache is outdated
+because the underlying table gets updated.
+</p>
+
+<p>
+On memory cache saves pair of SELECT statements
+(with its Bind parameters if the SELECT is an extended query).
+If the same SELECTs comes in, it returns the value from cache.
+Since no SQL parsing nor access to PostgreSQL are involed, it's extremely fast.
+</p>
+
+<p>
+On the other hand, it might be slower than the normal path because it adds some overhead to store cache.
+Moreover when a table is updated, pgpool automatically deletes all the caches related to the table.
+So the prformace will be degraded by a system with a lot of updates.
+If the cache_hit_ratio is lower than 70%, you might want to disable onl memory cache.
+</p>
+
+<h2 id="MEMORY_CACHE_RESTRICTIONS">Restrictions</h2>
+<ul>
+    <li>
+    On memory query cache deletes the all cache of an updated table automatically
+    with monitoring if the executed query is UPDATE, INSERT, ALTER TABLE and so on.
+    But pgpool-II isn't able to recognize implicit updates due to trigers, foreign keys and
+    DROP TABLE CASCADE.
+    You can avoid this problem with <a href="#MEMQCACHE_EXPIRE">memqcache_expire</a>
+    by which pgpool deletes old cache in a fixed time automatically, or with
+    <a href="#WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</a> or
+    <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a>
+    by which pgpool's memory cache flow ignores the tables.
+    </li>
+
+    <li>
+    If you want to use multiple instances of pgpool-II with online memory cache which uses shared memory,
+    it could happen that one pgpool deletes cache,
+    and the other one doesn't do it thus finds old cached result when a table gets updated.
+    Memcached is the better cache strage in this case.
+    </li>
+</ul>
+
+<h2 id="MEMORY_CACHE_ENABLED">Enabling on memory query cache</h2>
+<p>
+To enable the memory cache functionality, set this to on (default is off).
 </p>
 
 <pre>
-memory_cache_enabled = true
+memory_cache_enabled = on
 </pre>
 
-<p id="MEMQCACHE_METHOD">
+<h2 id="MEMQCACHE_METHOD">Choosing cache strage</h2>
+<p>
+You can choose a cache strage: shared memory or <a href="http://memcached.org">memcached</a>
+(you can't use the both).
+Query cache with shared memory is fast and easy because you don't have to install and config memcached,
+but restricted the max size of cache by the one of shared memory.
+Query cache with memcached needs a overhead to access network, but you can set the size as you like.
+</p>
+<p>
 Memory cache behavior can be specified by memqcache_method directive.
-Either "shmem"(shared memory) or "memcached". Default is shmem. 
+Either "shmem"(shared memory) or "memcached". Default is shmem.
 </p>
 <pre>
 memqcache_method = 'shmem'
 </pre>
 
-<p id="MEMQCACHE_MEMCACHED_HOST">
-Memcached host name. Mandatory if memqcache_method=memcached.
-If this parameter is starting with "/", UNIX domain socket is assumed.
+
+<h2 id="memqcache_cases">When on memory query cache is prohibited</h2>
+<p>
+
+Not All of SELECTs and WITH can be cached. In some cases including followings,
+cache is avoided to keep consistency between caches and databases.
 </p>
-<pre>
-memqcache_memcached_host = 'foo.com'
-</pre>
+<ul>
+    <li>SELECT FOR SHARE / UPDATE</li>
+    <li>SELECT including un-immutable funcsions</li>
+    <li>SELECT including TEMP TABLE</li>
+    <li>SELECT including system catalogs</li>
+    <li>SELECT including VIEWs</li>
+    <li>SELECT in an aborted explicit transaction</li>
+    <li>SELECT including tables in <a href="#WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</a> or
+        <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a></li>
+    <li>SELECT with the result larger than <a href="#MEMQCACHE_MAXCACHE">memqcache_maxcache</a></li>
+</ul>
 
-<p id="MEMQCACHE_MEMCACHED_PORT">
-Memcached port number. Mondatory if memqcache_method=memcached.
+<h2 id="non_memqcache_case">When cache is not used</h2>
+<p>
+It can happen that even if the matched query cache exists, pgpool doesn't return it.
 </p>
-<pre>
-memqcache_memcached_port = 11211
-</pre>
+<ul>
+    <li>If an updating query is executed in an explicit transaction, during the transaction,
+        pgpool doesn't use any query cache.</li>
+    <li>The matched query cache is made by the other user (for security reason)</li>
+    <li>The matched query cache has to be deleted due to <a href="#MEMQCACHE_EXPIRE">memqcache_expire</a>.</li>
+</ul>
 
-<p id="MEMQCACHE_TOTAL_SIZE">
-Total memory size in bytes for storing memory cache. Mandatory if memqcache_method=shmem.
-</p>
-<pre>
-memqcache_total_size = 10240
-</pre>
-
-<p id="MEMQCACHE_MAX_NUM_CACHE">
-Total number of cache entries. Mandatory if memqcache_method=shmem.
-A cache entry consumes 48 bytes.
-</p>
-<pre>
-memqcache_max_num_cache = 100
-</pre>
-
-<p id="MEMQCACHE_EXPIRE">
-Memory cache entry life time specified in seconds. Default is 60.
-</p>
-<pre>
-memqcache_expire = 60
-</pre>
-
-<p id="MEMQCACHE_AUTO_CACHE_INVALIDATION">
-If true, invalidation of query cache is triggered by corresponding
-DDL/DML/DCL(and memqcache_expire).  If false, it is only triggered
-by memqcache_expire.  True by default.
-</p>
-<pre>
-memqcache_auto_cache_invalidation = true
-</pre>
-
-<p id="MEMQCACHE_MAXCACHE">
-Maximum SELECT result size in bytes. If exceeds this value, the result is not cached.
-</p>
-
-<pre>
-memqcache_maxcache = 512
-</pre>
-
-<p id="MEMQCACHE_CACHE_BLOCK_SIZE">
-Cache block size in bytes<br>
-Only meaning full when memqcache_method=shmem. Memory cache is devided into fixed size of block.<br>
-If the block size is small, memory usage is efficient, but processing might be slow. On the other hand,<br>
-if the block size is large, memory usage is not efficient but processing might be fast. Default is 8192. <br>
-</p>
-<pre>
-memqcache_cache_block_size= 8192
-</pre>
-
-<p id="WHITE_MEMQCACHE_TABLE_LIST">
-In white_memqcache_table_list specify a comma separated list of table names to be cached, and<br>
-in black_memqcache_table_list specify the ones not to be cached.
-</p>
-<p>You can use regular expression into the list to match table names.</p>
-<pre>
-white_memqcache_table_list = ''
-black_memqcache_table_list = ''
-</pre>
-
-<h2 id="install_memcached">memcached Installation</h2>
+<h2 id="memqcache_params">Configuring</h2>
 
 <p>
-If you want to use memcached based query, you need to install memcached.
+These are the parameters used with both of shmem and memcached.
+</p>
+
+<dl>
+<dt id="MEMQCACHE_EXPIRE">memqcache_expire</dt>
+    <dd>
+    <p>
+    Life time of query cache in seconds. Default is 60.
+    0 means no cache expiration, and cache have been enabled until a table is updated.
+    This parameter and <a href="#MEMQCACHE_AUTO_CACHE_INVALIDATION">memqcache_auto_cache_invalidation</a>
+    are orthogonal.
+    </p>
+    </dd>
+
+<dt id="MEMQCACHE_AUTO_CACHE_INVALIDATION">memqcache_auto_cache_invalidation</dt>
+    <dd>
+    <p>
+    If on, automatically deletes cache realted to the updated tables.
+    If off, does not delete caches. Default is on.
+    This parameter and <a href="#MEMQCACHE_EXPIRE">memqcache_expire</a>. are orthogonal.
+    </p>
+    </dd>
+
+<dt id="MEMQCACHE_MAXCACHE">memqcache_maxcache</dt>
+    <dd>
+        <p>
+        If the size of a SELECT result is larger than memqcache_maxcache bytes,
+        it is not cached and the messages is shown:
+        </p>
+<pre>
+2012-05-02 15:08:17 LOG:   pid 13756: pool_add_temp_query_cache: data size exceeds memqcache_maxcache. current:4095 requested:111 memq_maxcache:4096
+</pre>
+        <p>
+        To avoid this problem, you have to set memqcache_maxcache larger.
+        But if you use shared memory as the cache strage,
+        it must be lower than <a href="#MEMQCACHE_CACHE_BLOCK_SIZE">memqcache_cache_block_size</a>.
+        If memqcached, it must be lower than the size of slab (default is 1 MB).
+        </p>
+    </dd>
+
+<dt id="WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</dt>
+    <dd>
+    <p>
+    Specify a comma separated list of table names whose SELECT results are to be cached.
+    You can use regular expression.
+    </p>
+    <p>
+    If both of white_memqcache_table_list and black_memqcache_table_list are '' (as default),
+    SELECT results of any tables are to be cached.
+    </p>
+    </dd>
+
+<dt id="BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</dt>
+    <dd>
+    <p>
+    Specify a comma separated list of table names whose SELECT results are <strong>NOT</strong> to be cached.
+    You can use regular expression.
+    </p>
+    <p>
+    If both of white_memqcache_table_list and black_memqcache_table_list are '' (as default),
+    SELECT results of any tables are to be cached.
+    </p>
+    </dd>
+
+<dt id="MEMQCACHE_OIDDIR">memqcache_oiddir</dt>
+    <dd>
+    <p>
+    Full path to the directory where oids of tables used by SELECTs are stored.
+    Under memqcache_oiddir there are directories named database oids,
+    and under each of them there are files named table oids used by SELECTs.
+    In the file pointers to query cache are stored.
+    They are used as keys to delete caches.
+    </p>
+    <p>
+    Directories and files under memqcache_oiddir are deleted whenever pgpool-II restarts.
+    </p>
+    </dd>
+</dl>
+
+<h2 id="monitoring_memqcache">Monitoring caches</h2>
+<p>
+This explains how to monitor on memory query cache.
+To know if a SELECT result is from query cache or not,
+enable <a href="#LOG_PER_NODE_STATEMENT">log_per_node_statement</a>.
+</p>
+<pre>
+2012-05-01 15:42:09 LOG:   pid 20181: query result fetched from cache. statement: select * from t1;
+</pre>
+
+<p>
+<a href="#pool_status">pool_status</a> command shows the cache hit ratio.
+</p>
+<pre>
+memqcache_stats_start_time           | Tue May  1 15:41:59 2012 | Start time of query cache stats
+memqcache_no_cache_hits              | 80471                    | Number of SELECTs not hitting query cache
+memqcache_cache_hits                 | 36717                    | Number of SELECTs hitting query cache
+</pre>
+
+
+<p>
+In this example, you can calculate like the below:
+</p>
+<p>
+<pre>
+(memqcache_cache_hits) / (memqcache_no_cache_hits+memqcache_cache_hits) = 36717 / (36717 + 80471) = 31.3%
+</pre>
+
+<p>
+<a href="#pool_cache">show pool_cache</a> commands shows the same one.
+</p>
+
+<h2 id="shmem_params">Configuring to use shared memory</h2>
+<p>
+These are the parameters used with shared memory as the cache strage.
+</p>
+
+<dl>
+<dt id="MEMQCACHE_TOTAL_SIZE">memqcache_total_size</dt>
+    <dd>
+    <p>
+    Specify the size of shared memory as cache strage in bytes.
+    </p>
+    </dd>
+
+<dt id="MEMQCACHE_MAX_NUM_CACHE">memqcache_max_num_cache</dt>
+    <dd>
+    <p>
+    Specify the number of cache which is used for the whole size of the cache space.
+    (except for <a href="MEMQCACHE_TOTAL_SIZE">memqcache_total_size</a>):
+    It is memqcache_max_num_cache * 48 byte.
+    A too small number makes registing cache a error, and a large number will be too much.
+    </p>
+    </dd>
+
+<dt id="MEMQCACHE_CACHE_BLOCK_SIZE">memqcache_cache_block_size</dt>
+    <dd>
+    <p>
+    Specify the number of cache entries.
+    This is used to define the size of cache management space
+    (you need this in addition to <a href="#MEMQCACHE_TOTAL_SIZE">memqcache_total_size</a>).
+    The management space size can be calculated by:
+    <a href="#MEMQCACHE_MAX_NUM_CACHE">memqcache_max_num_cache</a> * 48 bytes.
+    Too small number will cause an error while registering cache.
+    On the other hand too large number is just a waste of space.
+    </p>
+    </dd>
+</dl>
+
+<h2 id="memcached_params">Configuring to use memcached</h2>
+
+<p>
+These are the parameters used with memcached as the cache strage.
+</p>
+
+<dl>
+<dt id="MEMQCACHE_MEMCACHED_HOST">memqcache_memcached_host</dt>
+    <dd>
+    <p>
+    Specify the host name or the IP adddress in which memcached works.
+    If it is the same one as pgpool-II, set 'localhost'.
+    </p>
+    </dd>
+
+<dt id="MEMQCACHE_MEMCACHED_PORT">memqcache_memcached_port</dt>
+    <dd>
+    <p>
+    Specify the port number of memcached. Default is 11211.
+    </p>
+    </dd>
+</dl>
+
+
+<h3 id="install_memcached">memcached Installation</h3>
+
+<p>
+To use memcached as cache strage, pgpool-II needs a working memcached and
+the client library: libmemcached.
+It is easy to install them by rpms. This explains how to install from source codes.
 </p>
 
 <p>
@@ -2541,10 +2740,10 @@ make install
     </dd>
 </dl>
 
-<h2 id="install_libmemcached">libmemcached Installation</h2>
+<h3 id="install_libmemcached">libmemcached Installation</h3>
 
 <p>
-C client library used is libmemcached.
+Libmemcached is a client library for memcached.
 You need to install libmemcached after installing memcached.
 </p>
 
@@ -2630,8 +2829,8 @@ pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] st
 </table>
 
 <p>
-pgpool records backend status into the [logdir]/pgpool_status file. When pgpool 
-restarts, it reads this file and restores the backend status. This will prevent 
+pgpool records backend status into the [logdir]/pgpool_status file. When pgpool
+restarts, it reads this file and restores the backend status. This will prevent
 a difference in data among DB nodes which might be caused by following scenario:
 </p>
 <ol>
@@ -2643,8 +2842,8 @@ a difference in data among DB nodes which might be caused by following scenario:
 </ol>
 
 <p>
-If for some reason, for example, the stopped DB has been synced with the 
-active DB by another means, pgpool_status can be removed safely before 
+If for some reason, for example, the stopped DB has been synced with the
+active DB by another means, pgpool_status can be removed safely before
 starting pgpool.
 </p>
 
@@ -2779,28 +2978,28 @@ It has 11 columns:
 </p>
 <p>It'll always return <a href="#NUM_INIT_CHILDREN">num_init_children</a> * <a href="#MAX_POOL">max_pool</a> lines.</p>
 <pre>
-  pool_pid |     start_time      | pool_id | backend_id | database | username  |     create_time     | majorversion | minorversion | pool_counter | pool_backendpid | pool_connected 
+  pool_pid |     start_time      | pool_id | backend_id | database | username  |     create_time     | majorversion | minorversion | pool_counter | pool_backendpid | pool_connected
 ----------+---------------------+---------+------------+----------+-----------+---------------------+--------------+--------------+--------------+-----------------+----------------
- 8465     | 2010-08-14 08:35:40 | 0       | 0          |          |           |                     |              |              |              |                 | 
- 8465     | 2010-08-14 08:35:40 | 1       | 0          |          |           |                     |              |              |              |                 | 
- 8465     | 2010-08-14 08:35:40 | 2       | 0          |          |           |                     |              |              |              |                 | 
- 8465     | 2010-08-14 08:35:40 | 3       | 0          |          |           |                     |              |              |              |                 | 
+ 8465     | 2010-08-14 08:35:40 | 0       | 0          |          |           |                     |              |              |              |                 |
+ 8465     | 2010-08-14 08:35:40 | 1       | 0          |          |           |                     |              |              |              |                 |
+ 8465     | 2010-08-14 08:35:40 | 2       | 0          |          |           |                     |              |              |              |                 |
+ 8465     | 2010-08-14 08:35:40 | 3       | 0          |          |           |                     |              |              |              |                 |
  8466     | 2010-08-14 08:35:40 | 0       | 0          | benchs   | guillaume | 2010-08-14 08:35:43 | 3            | 0            | 1            | 8473            | 1
- 8466     | 2010-08-14 08:35:40 | 1       | 0          |          |           |                     |              |              |              |                 | 
- 8466     | 2010-08-14 08:35:40 | 2       | 0          |          |           |                     |              |              |              |                 | 
- 8466     | 2010-08-14 08:35:40 | 3       | 0          |          |           |                     |              |              |              |                 | 
- 8467     | 2010-08-14 08:35:40 | 0       | 0          |          |           |                     |              |              |              |                 | 
- 8467     | 2010-08-14 08:35:40 | 1       | 0          |          |           |                     |              |              |              |                 | 
- 8467     | 2010-08-14 08:35:40 | 2       | 0          |          |           |                     |              |              |              |                 | 
- 8467     | 2010-08-14 08:35:40 | 3       | 0          |          |           |                     |              |              |              |                 | 
- 8468     | 2010-08-14 08:35:40 | 0       | 0          |          |           |                     |              |              |              |                 | 
- 8468     | 2010-08-14 08:35:40 | 1       | 0          |          |           |                     |              |              |              |                 | 
- 8468     | 2010-08-14 08:35:40 | 2       | 0          |          |           |                     |              |              |              |                 | 
- 8468     | 2010-08-14 08:35:40 | 3       | 0          |          |           |                     |              |              |              |                 | 
- 8469     | 2010-08-14 08:35:40 | 0       | 0          |          |           |                     |              |              |              |                 | 
- 8469     | 2010-08-14 08:35:40 | 1       | 0          |          |           |                     |              |              |              |                 | 
- 8469     | 2010-08-14 08:35:40 | 2       | 0          |          |           |                     |              |              |              |                 | 
- 8469     | 2010-08-14 08:35:40 | 3       | 0          |          |           |                     |              |              |              |                 | 
+ 8466     | 2010-08-14 08:35:40 | 1       | 0          |          |           |                     |              |              |              |                 |
+ 8466     | 2010-08-14 08:35:40 | 2       | 0          |          |           |                     |              |              |              |                 |
+ 8466     | 2010-08-14 08:35:40 | 3       | 0          |          |           |                     |              |              |              |                 |
+ 8467     | 2010-08-14 08:35:40 | 0       | 0          |          |           |                     |              |              |              |                 |
+ 8467     | 2010-08-14 08:35:40 | 1       | 0          |          |           |                     |              |              |              |                 |
+ 8467     | 2010-08-14 08:35:40 | 2       | 0          |          |           |                     |              |              |              |                 |
+ 8467     | 2010-08-14 08:35:40 | 3       | 0          |          |           |                     |              |              |              |                 |
+ 8468     | 2010-08-14 08:35:40 | 0       | 0          |          |           |                     |              |              |              |                 |
+ 8468     | 2010-08-14 08:35:40 | 1       | 0          |          |           |                     |              |              |              |                 |
+ 8468     | 2010-08-14 08:35:40 | 2       | 0          |          |           |                     |              |              |              |                 |
+ 8468     | 2010-08-14 08:35:40 | 3       | 0          |          |           |                     |              |              |              |                 |
+ 8469     | 2010-08-14 08:35:40 | 0       | 0          |          |           |                     |              |              |              |                 |
+ 8469     | 2010-08-14 08:35:40 | 1       | 0          |          |           |                     |              |              |              |                 |
+ 8469     | 2010-08-14 08:35:40 | 2       | 0          |          |           |                     |              |              |              |                 |
+ 8469     | 2010-08-14 08:35:40 | 3       | 0          |          |           |                     |              |              |              |                 |
 (20 lines)
 </pre>
 </p>
@@ -2874,7 +3073,7 @@ while still servicing clients. We call this feature "online recovery".
 </p>
 
 <p>
-A recovery target node must be in the detached state before doing online 
+A recovery target node must be in the detached state before doing online
 recovery.
 
 If you wish to add a PostgreSQL server dynamically, add 'backend_hostname' and
@@ -2896,8 +3095,8 @@ PITR mechanism.</font>
 </p>
 
 <p>
-pgpool-II performs online recovery in two separated phases. There are a few 
-seconds or minutes when client will be waiting to connect to pgpool-II while a 
+pgpool-II performs online recovery in two separated phases. There are a few
+seconds or minutes when client will be waiting to connect to pgpool-II while a
 recovery node synchronizes database. It follows these steps:
 </p>
 
@@ -2934,7 +3133,7 @@ Before entering the second stage, pgpool-II waits until all clients have disconn
 It blocks any new incoming connection until the second stage is over.
 </p>
 <p>
-After all connections have terminated, pgpool-II merges updated data between 
+After all connections have terminated, pgpool-II merges updated data between
 the first stage and the second stage. This is the final data
 synchronization step.
 </p>
@@ -3071,7 +3270,7 @@ DESTDIR=$3       # database cluster of the DB node to be recovered
 port=5432        # PostgreSQL port number
 archdir=/data/archive_log    # archive log directory
 
-# Force to flush current value of sequences to xlog 
+# Force to flush current value of sequences to xlog
 psql -p $port -t -c 'SELECT datname FROM pg_database WHERE NOT datistemplate AND datallowconn' template1|
 while read i
 do
@@ -3193,13 +3392,13 @@ recovery_2nd_stage_command = 'pgpool_recovery'
 
 <h2 id="perform_online_recovery">How to perform online recovery</h2>
 <p>
-In order to do online recovery, use the pcp_recovery_node command or
+In order to do online recovery, use the <a href="pcp_recovery_node">pcp_recovery_node</a> command or
 pgpoolAdmin.
 </p>
 
 <p>
 Note that you need to pass a large number to the first argument of
-pcp_recovery_node. It is the timeout parameter in seconds. If you use 
+<a href="#pcp_recovery_node">pcp_recovery_node</a>. It is the timeout parameter in seconds. If you use
 pgpoolAdmin, set "_PGPOOL2_PCP_TIMEOUT " parameter to a large number in
 pgmgt.conf.php.
 </p>
@@ -3288,7 +3487,7 @@ $ ln -s /usr/local/pgsql-old/data /usr/local/pgsql/data
 
     <li><p>
     Do online recovery. You are done with one node version up.
-    To execute online recovery, you can use pcp_recovery_node or pgpoolAdmin.
+    To execute online recovery, you can use <a href="#pcp_recovery_node">pcp_recovery_node</a> or pgpoolAdmin.
     </p>
     </li>
 
@@ -3492,9 +3691,9 @@ pgpool-II.
 2010-07-26 18:43:24 LOG:   pid 24161: ProcessFrontendResponse: failed to read kind from frontend. frontend abnormally exited
 </pre>
     <p>
-    This log indicates that the frontend program didn't disconnect properly from 
+    This log indicates that the frontend program didn't disconnect properly from
     pgpool-II.
-    The possible causes are: bugs of client applications, forced termination (kill) 
+    The possible causes are: bugs of client applications, forced termination (kill)
     of a client application, or temporary network failure.
     This kind of events don't lead to a DB destruction or data consistency problem.
     It's only a warning about a protocol violation.
@@ -3584,7 +3783,7 @@ pgpool-II.
         and pam methods are supported. md5 in also supported since pgpool-II 3.0.
         md5 is supported by using "pool_passwd". Here are the steps to enable md5 authentication:
         <ol>
-            <li>Login as the database's operating system user and type 
+            <li>Login as the database's operating system user and type
                 "pg_md5 --md5auth --username=<your_username> <your_passwd>"
                  user name and md5 encrypted password are registered into pool_passwd.
                  If pool_passwd does not exist yet, pg_md5 command will
@@ -3610,7 +3809,7 @@ pgpool-II.
 
 <h2>Large objects</h2>
 <p>
-pgpool-II 2.3.2 or later supports large object replication if the backend is 
+pgpool-II 2.3.2 or later supports large object replication if the backend is
 PostgreSQL 8.1 or later.
 For this, you need to
 enable <a href="#lobj_lock_table">lobj_lock_table</a> directive in pgpool.conf.
@@ -3622,9 +3821,9 @@ Large object replication using backend function lo_import is not supported, howe
 Creating/inserting/updating/deleting temporary tables are always executed on the
 master(primary).
 With pgpool-II 3.0 or later, SELECT on these tables is executed on master as well.
-However if the temporary table name is used as a literal in SELECT, there's no 
+However if the temporary table name is used as a literal in SELECT, there's no
 way to detect it, and the SELECT will be load balanced.
-That will trigger a "not found the table" error or will find another table 
+That will trigger a "not found the table" error or will find another table
 having same name.
 To avoid the problem, use /*NO LOAD BALANCE*/ SQL comment.
 </p>
@@ -3636,14 +3835,14 @@ SELECT 't1'::regclass::oid;
 
 <p>
 psql's \d command uses literal table names.
-pgpool-II 3.0 or later checks if the SELECT includes any access to system 
+pgpool-II 3.0 or later checks if the SELECT includes any access to system
 catalogs and always send these queries to the master.
 Thus we avoid the problem.
 </p>
 
 <h2 id="caution_in_replication_mode">Functions, etc. In Replication Mode</h2>
 
-<p>There is no guarantee that any data provided using a context-dependent 
+<p>There is no guarantee that any data provided using a context-dependent
 mechanism (e.g. random number, transaction ID, OID, SERIAL, sequence), will be
 replicated correctly on multiple backends.</p>
 <p>For SERIAL, enabling insert_lock will help replicating data.
@@ -3653,7 +3852,7 @@ insert_lock also helps SELECT setval() and SELECT nextval().</p>
 CURRENT_DATE, now() will be replicated correctly. INSERT/UPDATE for tables
 using CURRENT_TIMESTAMP, CURRENT_DATE, now() as their DEFAULT values will also
 be replicated correctly.
-This is done by replacing those functions by constants fetched from master at 
+This is done by replacing those functions by constants fetched from master at
 query execution time.
 There are a few limitations however:
 </p>
@@ -3715,7 +3914,7 @@ INSERT INTO rel1(c1) SELECT 1
 </ul>
 
 <p>Tables created by <code>CREATE TEMP TABLE</code> will be deleted at the end of
-the session by specifying DISCARD ALL in reset_query_list if you are using 
+the session by specifying DISCARD ALL in reset_query_list if you are using
 PostgreSQL 8.3 or later.
 </p>
 <p>
@@ -3815,7 +4014,7 @@ SELECT * FROM a, b where a.i = b.i
 then merged with the results returned by each backend. Views and Rules
 that join across the nodes cannot be created.
 However, to JOIN tables that access data only in the same node, a VIEW can be made.
-This VIEW has to be registered in the pgpool_catalog.dist_def table. A col_name and 
+This VIEW has to be registered in the pgpool_catalog.dist_def table. A col_name and
 a dist_def_func will have to be registered too. These are used when an insert is
 performed on the view.
 </p>
@@ -3931,7 +4130,7 @@ Limitation object:Parallel mode
 </p>
 <p>
 A table or a column name cannot start by pool_.
-When rewriting queries, these names are used by internal processing. 
+When rewriting queries, these names are used by internal processing.
 </p>
 
 <h2 id="caution_system_db">System DB</h2>
@@ -4026,7 +4225,7 @@ pcp_node_count  _timeout_  _host_  _port_  _userid_  _passwd_
 </pre>
 
 <p>
-Displays the total number of nodes defined in <code>pgpool.conf</code>. It does 
+Displays the total number of nodes defined in <code>pgpool.conf</code>. It does
 not distinguish between nodes status, ie attached/detached. ALL nodes are counted.
 </p>
 
@@ -4231,7 +4430,7 @@ client_idle_limit_in_recovery is -1 or recovery_timeout is expired).
 </pre>
 </p>
 
-<h3>pcp_stop_pgpool</h3>
+<h3 id="pcp_stop_pgpool">pcp_stop_pgpool</h3>
 <pre>
 Format:
 pcp_stop_pgpool  _timeout_  _host_  _port_  _userid_  _passwd_  _mode_
@@ -4256,6 +4455,14 @@ status 8, and ConnectionError will be displayed.
 mode. pgpool-II terminates all the processes whether there are clients
 connected to the backends or not.</p>
 
+<h3 id="pcp_recovery_node">pcp_recovery_node</h3>
+
+<pre>
+書式：
+pcp_recovery_node  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
+
+Attaches the given backend node with recovery.
+</pre>
 
 <h2 id="exit_status">Exit Status</h2>
 
@@ -4297,20 +4504,20 @@ error had occurred, it will exit with the following error status.
 
 <h1>Inside information<a name="internal"></a></h1>
 <p>
-pgpool-II version 2.0.x brings extensive modifications, compared with the version 1.x 
+pgpool-II version 2.0.x brings extensive modifications, compared with the version 1.x
 Please note that what follows doesn't apply to version 1.x.
 </p>
 
 <h2 id="parallel_execute_engine">Parallel execution engine</h2>
 <p>
-The parallel execution engine is built into pgpool-II. 
+The parallel execution engine is built into pgpool-II.
 This engine performs the same Query on each node, and drives the engine that
 transmits the result to the front end, depending on the nodes' answers.
 </p>
 
 <h2 id="rewrite_query">Query Rewriting</h2>
 <p>
-This explains the Query rewriting that pgpool-II does in parallel mode. 
+This explains the Query rewriting that pgpool-II does in parallel mode.
 </p>
 <p>
 In parallel mode, a query transmitted by the client goes through two stages of
@@ -4343,7 +4550,7 @@ be retrieved from any node.
 These states are 'P' when data has to be processed by all nodes,
 'L' when it should be processed by one node.
 The 'S' status is a special case: it means that there is another step to be performed
-on the data after retrieving it from all nodes. For example, sorting data coming from a table 
+on the data after retrieving it from all nodes. For example, sorting data coming from a table
 registered in the pgpool_catalog.dist_def table.
 </p>
 
@@ -4366,7 +4573,7 @@ final status of the main select.
 </ol>
 
 <p>
-The relation between the final execution status of SELECT and the processing 
+The relation between the final execution status of SELECT and the processing
 place is as follows.
 </p>
 
@@ -4382,9 +4589,9 @@ is returned to the client. </td></tr>
 </p>
 
 <p>
-The above-mentioned rule also applies to Sub-Query. In the simple following 
-Query, if p1-table is registered in pgpool_catalog.dist_def table of the system 
-DB (p1-table is distributed), the final execution status of the subquery 
+The above-mentioned rule also applies to Sub-Query. In the simple following
+Query, if p1-table is registered in pgpool_catalog.dist_def table of the system
+DB (p1-table is distributed), the final execution status of the subquery
 becomes P, and as a result, the parent of the subquery, SELECT, also becomes P.
 </p>
 
@@ -4399,14 +4606,14 @@ Let's start with an example, to explain the FROM status.
 
 <h4>Execution status of FROM clause</h4>
 <p>
-This is a retrieval Query (SELECT). The data set and its status (P,L and S) is 
+This is a retrieval Query (SELECT). The data set and its status (P,L and S) is
 defined according to the FROM clause
 
 The execution status of the table is as follows: when there is only one table in
 the from clause, the execution status of the entire dataset is this table's
 execution status. When there are two or more tables or sub-queries in the FROM
 clause, the execution is decided according to the join method and the execution
-statuses, as show in the following table. 
+statuses, as show in the following table.
 </p>
 
 <p>
@@ -4469,10 +4676,10 @@ whatever the execution status of L1 is, and this query is run in the system DB.
 SELECT * FROM L1-table where L1-table.column IN (SELECT * FROM P1-table);
 </pre>
 <p>
-The FROM clause changes to the S status when there is an aggregate function in 
+The FROM clause changes to the S status when there is an aggregate function in
 a 'P' TARGETLIST, in order to perform the aggregate after all data has been
 acquired.
-Some optimization on the aggregate function is done under specific conditions. 
+Some optimization on the aggregate function is done under specific conditions.
 </p>
 <p>
 A column that does not exist in a table can be used in a query. For instance, in
@@ -4482,24 +4689,24 @@ the following correlated subquery:
 SELECT * FROM L1-table WHERE L1-table.col1 IN (SELECT * FROM P1-table WHERE P1-table.col = L1-table.col1);
 </pre>
 <p>
-This subquery refers to L1-table.col1, from the L1-table. The execution status 
+This subquery refers to L1-table.col1, from the L1-table. The execution status
 of the WHERE clause of the subquery is 'S'.
 </p>
 
 <h4>Change in execution status because of GROUP BY, HAVING, ORDER BY and LIMIT/OFFSET</h4>
 
 <p>
-The execution status of the WHERE clause is changed to 'S' when there is any GROUP 
+The execution status of the WHERE clause is changed to 'S' when there is any GROUP
 BY, HAVING, or ORDER BY clause, or LIMIT/OFFSET predicate and status is 'P'. A
 query with no GROUP BY clause gets the execution status of the WHERE clause.
-In the same way, the execution status of the GROUP BY clause is 
+In the same way, the execution status of the GROUP BY clause is
 used when there is no HAVING clause. The ORDER BY clause and the LIMIT/OFFSET
 predicate are also similar in this behavior.
 </p>
 
 <h4>When UNION, EXTRACT, and INTERSECT are used</h4>
 <p>
-UNION, EXTRACT, and INTERSECT queries' status depends on the final execution 
+UNION, EXTRACT, and INTERSECT queries' status depends on the final execution
 status of both the left and right SELECT statements. If both statements are L, the
 combined statement is L. If both statements are P, and the query is a UNION ALL
 the combined statement is P. For any other combination, the resulting status is S.
@@ -4556,14 +4763,14 @@ SELECT L1-table.col FROM L1-table WHERE L1-table.col % 2 = 0 AND L1-table.col IN
 </pre>
 
 <p>
-In this example, the FROM and WHEREﾂ�lause and the TARGETLIST are in the L 
+In this example, the FROM and WHEREﾂ�lause and the TARGETLIST are in the L
 status. Because the subquery is in the P status, the query itself is in the S status.
 The rewriting is, as a consequence, performed as follows.
 </p>
 <pre>
-SELECT L1-table.col 
+SELECT L1-table.col
   FROM dblink(SELECT loadbalance(SELECT L1-table.col
-              FROM L1-table 
+              FROM L1-table
               WHERE L1-table.col % 2 = 0
                 AND TRUE))
     WHERE
@@ -4575,12 +4782,12 @@ SELECT L1-table.col
       ) ;
 </pre>
 <p>
-pool_loadbalance is a function responsible for dispatching queries to either node. 
+pool_loadbalance is a function responsible for dispatching queries to either node.
 </p>
 
 <h3>Query rewriting for aggregate functions</h3>
 <p>
-For grouping queries (aggregate functions and GROUP BY), rewriting tries to 
+For grouping queries (aggregate functions and GROUP BY), rewriting tries to
 reduce the load on the system DB by performing a first aggregate on each node.
 </p>
 <p>
