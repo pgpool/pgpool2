@@ -734,6 +734,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			pool_ps_idle_display(backend);
 			pool_set_skip_reading_from_backends();
 			pool_stats_count_up_num_cache_hits();
+			pool_unset_query_in_progress();
 			return POOL_CONTINUE;
 		}
 	}
@@ -1014,6 +1015,9 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	pool_memory_context_switch_to(old_context);
 
+	/*
+	 * If in replication mode, send "SYNC" message if not in a transaction.
+	 */
 	if (REPLICATION)
 	{
 		char kind;
@@ -1039,7 +1043,10 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 				return POOL_END;
 			}
 
-			if (ReadyForQuery(frontend, backend, 0) != POOL_CONTINUE)
+			/*
+			 * SYNC message returns "Ready for Query" message.
+			 */
+			if (ReadyForQuery(frontend, backend, 0, false) != POOL_CONTINUE)
 			{
 				pool_query_context_destroy(query_context);
 				return POOL_END;
@@ -1416,13 +1423,16 @@ POOL_STATUS FunctionCall3(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 
 /*
  * Process ReadyForQuery('Z') message.
+ * If send_ready is true, send 'Z' message to frontend.
+ * If cache_commit is true, commit or discard query cache according to
+ * transaction state.
  *
  * - if the error status "mismatch_ntuples" is set, send an error query
  *	 to all DB nodes to abort transaction or do failover.
  * - internal transaction is closed
  */
 POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
-						  POOL_CONNECTION_POOL *backend, int send_ready)
+						  POOL_CONNECTION_POOL *backend, bool send_ready, bool cache_commit)
 {
 	int i;
 	int len;
@@ -1669,7 +1679,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			}
 
 			/* Memory cache enabled? */
-			if (pool_config->memory_cache_enabled)
+			if (cache_commit && pool_config->memory_cache_enabled)
 			{
 				if (pool_is_doing_extended_query_message())
 				{
@@ -1700,6 +1710,10 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		pool_unset_query_in_progress();
 	}
 
+	/*
+	 * If we ared doing extended query, we cannot destroy query context now.
+	 * We postpone it until the portal is deleted.
+	 */
 	if (session_context->query_context && !pool_is_doing_extended_query_message())
 	{
 		if (!(node && IsA(node, PrepareStmt)))
@@ -2478,7 +2492,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 				break;
 
 			case 'Z':	/* ReadyForQuery */
-				status = ReadyForQuery(frontend, backend, 1);
+				status = ReadyForQuery(frontend, backend, true, true);
 				pool_debug("ProcessBackendResponse: Ready For Query");
 				break;
 
@@ -2607,7 +2621,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 				break;
 
 			case 'Z':	/* ReadyForQuery */
-				status = ReadyForQuery(frontend, backend, 1);
+				status = ReadyForQuery(frontend, backend, true, true);
 				break;
 
 			default:

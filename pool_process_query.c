@@ -232,74 +232,89 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 			}
 			else
 			{
-				/* Ok, query is not in progress. To make sure that we
-				 * have any pending data in backends. */
-
-				/* If we have pending data in master, we need to process it */
-				if (!pool_ssl_pending(MASTER(backend)) &&
-					!pool_read_buffer_is_empty(MASTER(backend)))
+				/* Ok, query is not in progress.
+				 * ProcessFrontendResponse() may consume all pending
+				 * data.  Check if we have any pending data. If no,
+				 * call read_packets_and_process() and wait for data
+				 * arrival.
+				 */
+				if (is_cache_empty(frontend, backend))
 				{
-					status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
+					bool cont = true;
+					status = read_packets_and_process(frontend, backend, reset_request, &state, &num_fields, &cont);
 					if (status != POOL_CONTINUE)
+						return status;
+					else if (!cont)		/* Detected admin shutdown */
 						return status;
 				}
 				else
 				{
-					for (i=0;i<NUM_BACKENDS;i++)
+					/* If we have pending data in master, we need to process it */
+					if (!pool_ssl_pending(MASTER(backend)) &&
+						!pool_read_buffer_is_empty(MASTER(backend)))
 					{
-						if (!VALID_BACKEND(i))
-							continue;
-
-						if (pool_ssl_pending(CONNECTION(backend, i)) ||
-							pool_read_buffer_is_empty(CONNECTION(backend, i)))
+						status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
+						if (status != POOL_CONTINUE)
+							return status;
+					}
+					else
+					{
+						for (i=0;i<NUM_BACKENDS;i++)
 						{
-							/* If we have pending data in master, we need to process it */
-							if (IS_MASTER_NODE_ID(i))
-							{
-								status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
-								if (status != POOL_CONTINUE)
-									return status;
-								break;
-							}
-							else
-							{
-								char kind;
-								int len;
-								char *string;
+							if (!VALID_BACKEND(i))
+								continue;
 
-								/* If master does not have pending
-								 * data, we discard one packet from
-								 * other backend */
-								status = pool_read(CONNECTION(backend, i), &kind, sizeof(kind));
-								if (status < 0)
+							if (pool_ssl_pending(CONNECTION(backend, i)) ||
+								pool_read_buffer_is_empty(CONNECTION(backend, i)))
+							{
+								/* If we have pending data in master, we need to process it */
+								if (IS_MASTER_NODE_ID(i))
 								{
-									pool_error("pool_process_query: error while reading message kind from backend %d", i);
-									return POOL_END;
-								}
-								pool_log("pool_process_query: discard %c packet from backend %d", kind, i);
-
-								if (MAJOR(backend) == PROTO_MAJOR_V3)
-								{
-									if (pool_read(CONNECTION(backend, i), &len, sizeof(len)) < 0)
-									{
-										pool_error("pool_process_query: error while reading message length from backend %d", i);
-										return POOL_END;
-									}
-									len = ntohl(len) - 4;
-									string = pool_read2(CONNECTION(backend, i), len);
-									if (string == NULL)
-									{
-										pool_error("pool_process_query: error while reading rest of message from backend %d", i);
-										return POOL_END;
-									}
+									status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
+									if (status != POOL_CONTINUE)
+										return status;
+									break;
 								}
 								else
 								{
-									string = pool_read_string(CONNECTION(backend, i), &len, 0);
-									if (string == NULL)
+									char kind;
+									int len;
+									char *string;
+
+									/* If master does not have pending
+									 * data, we discard one packet from
+									 * other backend */
+									status = pool_read(CONNECTION(backend, i), &kind, sizeof(kind));
+									if (status < 0)
 									{
-										pool_error("pool_process_query: error while reading rest of message from backend %d", i);
+										pool_error("pool_process_query: error while reading message kind from backend %d", i);
 										return POOL_END;
+									}
+									pool_log("pool_process_query: discard %c packet from backend %d", kind, i);
+
+									if (MAJOR(backend) == PROTO_MAJOR_V3)
+									{
+										if (pool_read(CONNECTION(backend, i), &len, sizeof(len)) < 0)
+										{
+											pool_error("pool_process_query: error while reading message length from backend %d", i);
+											return POOL_END;
+										}
+										len = ntohl(len) - 4;
+										string = pool_read2(CONNECTION(backend, i), len);
+										if (string == NULL)
+										{
+											pool_error("pool_process_query: error while reading rest of message from backend %d", i);
+											return POOL_END;
+										}
+									}
+									else
+									{
+										string = pool_read_string(CONNECTION(backend, i), &len, 0);
+										if (string == NULL)
+										{
+											pool_error("pool_process_query: error while reading rest of message from backend %d", i);
+											return POOL_END;
+										}
 									}
 								}
 							}
@@ -3357,6 +3372,8 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 					pool_error("read_kind_from_backend: failed to read kind from %d th backend", i);
 					return POOL_ERROR;
 				}
+
+				pool_debug("read_kind_from_backend: kind: %c from %d th backend", kind, i);
 
 				/*
 				 * Read and discard parameter status

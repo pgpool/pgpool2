@@ -573,6 +573,25 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 		free(qcache);
 
 		/*
+		 * If we are doing extended query, wait and discard Sync
+		 * message from frontend. This is neccessary to prevent
+		 * receiving Sync message after Sending Ready for query.
+		 */
+		if (pool_is_doing_extended_query_message())
+		{
+			char kind;
+			int32 len;
+
+			if (pool_flush(frontend))
+				return POOL_END;
+			if (pool_read(frontend, &kind, 1))
+				return POOL_END;
+			pool_debug("pool_fetch_from_memory_cache: expecting sync: %c", kind);
+			if (pool_read(frontend, &len, sizeof(len)))
+				return POOL_END;
+		}
+
+		/*
 		 * send a "READY FOR QUERY"
 		 */
 		if (MAJOR(backend) == PROTO_MAJOR_V3)
