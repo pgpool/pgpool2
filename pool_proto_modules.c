@@ -1638,8 +1638,27 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				 * If the query was BEGIN/START TRANSACTION, clear the
 				 * history that we had a writing command in the transaction
 				 * and forget the transaction isolation level.
+				 *
+				 * XXX If BEGIN is received while we are already in an
+				 * explicit transaction, the command *successes*
+				 * (just with a NOTICE message). In this case we lose
+				 * "writing_transaction" etc. info.
 				 */
 				if (is_start_transaction_query(node))
+				{
+					pool_unset_writing_transaction();
+					pool_unset_failed_transaction();
+					pool_unset_transaction_isolation();
+				}
+
+				/*
+				 * If the query was COMMIT/ABORT, clear the history
+				 * that we had a writing command in the transaction
+				 * and forget the transaction isolation level.  This
+				 * is neccessary if succeeding transaction is not an
+				 * explicit one.
+				 */
+				else if (is_commit_or_rollback_query(node))
 				{
 					pool_unset_writing_transaction();
 					pool_unset_failed_transaction();
@@ -1669,10 +1688,12 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				}
 
 				/*
-				 * If the query was not READ SELECT, remember that we had
-				 * a write query in this transaction.
+				 * If the query was not READ SELECT, and we are in an
+				 * explicit transaction, remember that we had a write
+				 * query in this transaction.
 				 */
-				else if (!is_select_query(node, query))
+				else if (!is_select_query(node, query) &&
+						 TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) == 'T')
 				{
 					pool_set_writing_transaction();
 				}
