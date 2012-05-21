@@ -3832,9 +3832,9 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
         {
             int v = atoi(yytext);
 
-            if (token != POOL_INTEGER || v < 0)
+            if (token != POOL_INTEGER || v < 512)
             {
-                pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
+                pool_error("pool_config: %s must be equal or higher than 512 numeric value", key);
                 fclose(fd);
                 return(-1);
             }

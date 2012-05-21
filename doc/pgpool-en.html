@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Tue May  8 16:42:49 JST 2012
+Last modified: Mon May 21 19:43:37 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2662,16 +2662,6 @@ These are the parameters used with shared memory as the cache strage.
 <dt id="MEMQCACHE_MAX_NUM_CACHE">memqcache_max_num_cache</dt>
     <dd>
     <p>
-    Specify the number of cache which is used for the whole size of the cache space.
-    (except for <a href="MEMQCACHE_TOTAL_SIZE">memqcache_total_size</a>):
-    It is memqcache_max_num_cache * 48 byte.
-    A too small number makes registing cache a error, and a large number will be too much.
-    </p>
-    </dd>
-
-<dt id="MEMQCACHE_CACHE_BLOCK_SIZE">memqcache_cache_block_size</dt>
-    <dd>
-    <p>
     Specify the number of cache entries.
     This is used to define the size of cache management space
     (you need this in addition to <a href="#MEMQCACHE_TOTAL_SIZE">memqcache_total_size</a>).
@@ -2679,6 +2669,17 @@ These are the parameters used with shared memory as the cache strage.
     <a href="#MEMQCACHE_MAX_NUM_CACHE">memqcache_max_num_cache</a> * 48 bytes.
     Too small number will cause an error while registering cache.
     On the other hand too large number is just a waste of space.
+    </p>
+    </dd>
+
+<dt id="MEMQCACHE_CACHE_BLOCK_SIZE">memqcache_cache_block_size</dt>
+    <dd>
+    <p>
+	If cache storage is shared memory, pgpool uses the memory devided by memqcache_cache_block_size.
+	SELECT result is packed into the block.
+	However because the SELECT result cannot be placed in several blocks, it cannot be cached if it is larger
+	than memqcache_cache_block_size.
+	memqcache_cache_block_size must be greater or equal to 512.
     </p>
     </dd>
 </dl>

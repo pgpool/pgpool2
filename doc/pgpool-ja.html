@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Tue May  8 16:25:59 JST 2012
+Last modified: Mon May 21 19:40:49 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2799,6 +2799,7 @@ memqcache_cache_hits                 | 36717                    | Number of SELE
     のキャッシュはこのブロックに入るだけ詰め込まれます。
     ただし、キャッシュは複数のブロックにまたがって格納されないので、
     memqcache_cache_block_sizeを検索結果が超えると、キャッシュに格納できなくなります。
+	memqcache_cache_block_sizeは、512以上の値でなければなりません。
     </p>
     </dd>
 </dl>
