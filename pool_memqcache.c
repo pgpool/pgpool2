@@ -657,8 +657,9 @@ bool pool_is_likely_select(char *query)
 }
 
 /*
- * Return true if SELECT can be cached.
- * (before called this function, already checked if the query is SELECT)
+ * Return true if SELECT can be cached.  "node" is the parse tree for
+ * the query and "query" is the query string.
+ * The query must be SELECT or WITH.
  */
 bool pool_is_allow_to_cache(Node *node, char *query)
 {
@@ -1559,6 +1560,7 @@ static void *pool_memory_cache_address(void)
 
 /*
  * Calculate necessary shared memory size for FSMM. Should be called after 
+ * pool_shared_memory_cache_size.
  */
 size_t pool_shared_memory_fsmm_size(void)
 {
