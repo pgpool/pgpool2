@@ -38,8 +38,6 @@ static bool temp_table_walker(Node *node, void *context);
 static bool unlogged_table_walker(Node *node, void *context);
 static bool view_walker(Node *node, void *context);
 static bool is_temp_table(char *table_name);
-static bool is_unlogged_table(char *table_name);
-static bool is_view(char *table_name);
 static bool	insertinto_or_locking_clause_walker(Node *node, void *context);
 static bool is_immutable_function(char *fname);
 static bool select_table_walker(Node *node, void *context);
@@ -565,7 +563,7 @@ static bool is_temp_table(char *table_name)
  * Judge the table used in a query represented by node is a unlogged
  * table or not.
  */
-static bool is_unlogged_table(char *table_name)
+bool is_unlogged_table(char *table_name)
 {
 /*
  * Query to know if pg_class has relpersistence column or not.
@@ -654,7 +652,7 @@ static bool is_unlogged_table(char *table_name)
 /*
  * Judge the table used in a query is a view or not.
  */
-static bool is_view(char *table_name)
+bool is_view(char *table_name)
 {
 /*
  * Query to know if the target table is a view.

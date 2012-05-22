@@ -665,9 +665,31 @@ bool pool_is_allow_to_cache(Node *node, char *query)
 {
 	SelectStmt	*stmt;
 	int i = 0;
-	int num_oids;
+	int num_oids = -1;
+	SelectContext ctx;
 
 	stmt = (SelectStmt *)node;
+
+	/*
+	 * Check black table list first.
+	 */
+	if (pool_config->num_black_memqcache_table_list > 0)
+	{
+		/* Extract oids in from clause of SELECT, and check if SELECT to them could be cached. */
+		num_oids = pool_extract_table_oids_from_select_stmt(node, &ctx);
+		if (num_oids > 0)
+		{
+			for (i = 0; i < num_oids; i++)
+			{
+				pool_debug("pool_is_allow_to_cache: check table_names[%d] = %s", i, ctx.table_names[i]);
+				if (pool_is_table_to_cache(ctx.table_names[i]) == false)
+				{
+					pool_debug("pool_is_allow_to_cache: false");
+					return false;
+				}
+			}
+		}
+	}
 
 	/* SELECT INTO or SELECT FOR SHARE or UPDATE cannot be cached */
 	if (pool_has_insertinto_or_locking_clause(node))
@@ -688,33 +710,44 @@ bool pool_is_allow_to_cache(Node *node, char *query)
 		return false;
 
 	/*
-	 * If SELECT uses views, it's not allowed to cache.
+	 * If the table is in the while list, allow to cache even if it is
+	 * VIEW or unlogged table.
 	 */
-	if (pool_has_view(node))
-		return false;
-
-	/* Cache any tables in the case that both of list are empty  */
-	if (pool_config->num_white_memqcache_table_list == 0 &&
-		pool_config->num_black_memqcache_table_list == 0)
-		return true;
-
-	/* Extract oids in from clause of SELECT, and check if SELECT to them could be cached. */
-	SelectContext ctx;
-	num_oids = pool_extract_table_oids_from_select_stmt(node, &ctx);
-	if (num_oids == 0)
-		return false;
-
-	for (i = 0; i < num_oids; i++)
+	if (pool_config->num_white_memqcache_table_list > 0)
 	{
-		pool_debug("pool_is_allow_to_cache: check table_names[%d] = %s", i, ctx.table_names[i]);
-		if (pool_is_table_to_cache(ctx.table_names[i]) == false)
+		if (num_oids < 0)
+			num_oids = pool_extract_table_oids_from_select_stmt(node, &ctx);
+	}
+	if (num_oids > 0)
+	{
+		for (i = 0; i < num_oids; i++)
 		{
-			pool_debug("pool_is_allow_to_cache: false");
-			return false;
+			char *table = ctx.table_names[i];
+			pool_debug("pool_is_allow_to_cache: check table_names[%d] = %s", i, table);
+			if (is_view(table) || is_unlogged_table(table))
+			{
+				if (pool_is_table_to_cache(table) == false)
+				{
+					pool_debug("pool_is_allow_to_cache: false");
+					return false;
+				}
+			}
 		}
 	}
+	else
+	{
+		/*
+		 * If SELECT uses views, it's not allowed to cache.
+		 */
+		if (pool_has_view(node))
+			return false;
 
-	pool_debug("pool_is_allow_to_cache: true");
+		/*
+		 * If SELECT uses unlogged tables, it's not allowed to cache.
+		 */
+		if (pool_has_unlogged_table(node))
+			return false;
+	}
 	return true;
 }
 
