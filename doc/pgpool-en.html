@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Mon May 21 19:43:37 JST 2012
+Last modified: Wed May 23 18:04:56 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2464,7 +2464,6 @@ If the cache_hit_ratio is lower than 70%, you might want to disable onl memory c
     DROP TABLE CASCADE.
     You can avoid this problem with <a href="#MEMQCACHE_EXPIRE">memqcache_expire</a>
     by which pgpool deletes old cache in a fixed time automatically, or with
-    <a href="#WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</a> or
     <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a>
     by which pgpool's memory cache flow ignores the tables.
     </li>
@@ -2510,14 +2509,16 @@ Not All of SELECTs and WITH can be cached. In some cases including followings,
 cache is avoided to keep consistency between caches and databases.
 </p>
 <ul>
+    <li>SELECT including tables in <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a></li>
     <li>SELECT FOR SHARE / UPDATE</li>
     <li>SELECT including un-immutable funcsions</li>
     <li>SELECT including TEMP TABLE</li>
     <li>SELECT including system catalogs</li>
+	<li>SELECT including VIEWs or unlogged tables.
+		However if the table is in <a href="#WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</a>, the result will be cached.</li>
+
     <li>SELECT including VIEWs</li>
     <li>SELECT in an aborted explicit transaction</li>
-    <li>SELECT including tables in <a href="#WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</a> or
-        <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a></li>
     <li>SELECT with the result larger than <a href="#MEMQCACHE_MAXCACHE">memqcache_maxcache</a></li>
 </ul>
 
@@ -2578,12 +2579,8 @@ These are the parameters used with both of shmem and memcached.
 <dt id="WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</dt>
     <dd>
     <p>
-    Specify a comma separated list of table names whose SELECT results are to be cached.
-    You can use regular expression.
-    </p>
-    <p>
-    If both of white_memqcache_table_list and black_memqcache_table_list are '' (as default),
-    SELECT results of any tables are to be cached.
+    Specify a comma separated list of table names whose SELECT results are to be cached even if
+		they are VIEWs or unlogged tables. You can use regular expression.
     </p>
     </dd>
 
@@ -2592,10 +2589,6 @@ These are the parameters used with both of shmem and memcached.
     <p>
     Specify a comma separated list of table names whose SELECT results are <strong>NOT</strong> to be cached.
     You can use regular expression.
-    </p>
-    <p>
-    If both of white_memqcache_table_list and black_memqcache_table_list are '' (as default),
-    SELECT results of any tables are to be cached.
     </p>
     </dd>
 

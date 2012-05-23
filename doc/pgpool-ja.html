@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Mon May 21 19:40:49 JST 2012
+Last modified: Wed May 23 17:58:25 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2599,8 +2599,7 @@ pgpool$BFbIt$N(BSQL$B%Q!<%9=hM}$J$I$r7PM3$7$J$$$?$a!"Hs>o$K9bB.$G$9!#(B
   <li>$B%*%s%a%b%j%/%(%j%-%c%C%7%e$G$O!"%F!<%V%k$KJQ99$,$"$k$H!"4XO"$9$k%-%c%C%7%e$r<+F0E*$K:o=|$7$F8E$$%G!<%?$,JV5Q$5$l$J$$$h$&$K$9$k5!G=$,$"$j$^$9!#(B
 	  $B$3$N$?$a!"(Bpgpool$B$O>o$K(BUPDATE$B$d(BINSERT$B$d(BALTER TABLE$B$J$I$N%3%^%s%I$,H/9T$5$l$?$+$I$&$+$r%b%K%?$7$F$$$^$9!#(B
 	  $B$7$+$7!"%H%j%,!"30It%-!<$d(BDROP TABLE CASCADE$B$J$I$NF/$-$K$h$C$F0EL[E*$K%F!<%V%k$,99?7$5$l$?$3$H$O(Bpgpool-II$B$+$i$O$o$+$i$J$$$?$a!"$3$N5!G=$,F/$-$^$;$s!#(B
-	  $B$3$NLdBj$r2sHr$9$k$?$a$K$O!"(B<a href="#MEMQCACHE_EXPIRE">memqcache_expire</a>$B$r;H$C$F0lDj;~4V7P2a$7$?%-%c%C%7%e$r:o=|$9$k$h$&$K$9$k$+!"(B<a href="#WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</a>$B$+(B
-	  <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a>$B$r;H$C$F!"3:Ev%F!<%V%k$,%-%c%C%7%e$5$l$J$$$h$&$K$7$F$/$@$5$$!#(B</li>
+	  $B$3$NLdBj$r2sHr$9$k$?$a$K$O!"(B<a href="#MEMQCACHE_EXPIRE">memqcache_expire</a>$B$r;H$C$F0lDj;~4V7P2a$7$?%-%c%C%7%e$r:o=|$9$k$h$&$K$9$k$+!"(B<a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a>$B$r;H$C$F!"3:Ev%F!<%V%k$,%-%c%C%7%e$5$l$J$$$h$&$K$7$F$/$@$5$$!#(B</li>
   <li>$BJ#?t$N(Bpgpool-II$B$rF0$+$94D6-$G6&M-%a%b%j$r;H$C$?%*%s%a%b%j%/%(%j%-%c%C%7%e$r;HMQ$9$k$H!"$"$k(Bpgpool-II$B7PM3$G%F!<%V%k$,99?7$5$l$?;~$K!"B>$N(Bpgpool-II$B$N%-%c%C%7%e$,:o=|$5$l$:!"8E$$%G!<%?$rFI$_$@$7$F$7$^$&$3$H$,$"$j$^$9!#(B
 	  $B$3$N$h$&$J4D6-$G$O!"%-%c%C%7%e%9%H%l!<%8$K(Bmemcached$B$r;H$C$F$/$@$5$$!#(B</li>
 </ul>
@@ -2634,14 +2633,14 @@ memcached$B$r%-%c%C%7%e%9%H%l!<%8$K;HMQ$9$k>l9g$O!"%M%C%H%o!<%/%"%/%;%9$N%*!<%P
 $B%-%c%C%7%e$H(BDB$B$N0l4S@-$r6KNOJ]$D$?$a$K!"%-%c%C%7%e$5$l$J$$%1!<%9$,$"$j$^$9!#0J2<$=$l$rNs5s$7$^$9!#(B
 </p>
 <ul>
+  <li> <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a>$B$G;XDj$5$l$F$$$k%F!<%V%k$r;H$C$F$$$k(BSELECT</li>
   <li>SELECT FOR SHARE$B$^$?$O(BUPDATE</li>
   <li>IMMUTABLE$B$G$J$$4X?t$r;H$C$F$$$k(BSELECT</li>
   <li>$B0l;~%F!<%V%k$r;H$C$F$$$k(BSELECT</li>
   <li>$B%7%9%F%`%+%?%m%0$r8!:w$7$F$$$k(BSELECT</li>
-  <li>VIEW$B$r;H$C$F$$$k(BSELECT</li>
+  <li>VIEW$B$r$^$?$O(Bunlogged$B%F!<%V%k;H$C$F$$$k(BSELECT$B!#(B
+	  $B$?$@$7!"$=$l$i$N%F!<%V%k$,(B<a href="#WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</a>$B$G;XDj$5$l$F$$$k>l9g$O%-%c%C%7%e$NBP>]$K$J$j$^$9!#(B</li>
   <li>$BL@<(E*$J%H%i%s%6%/%7%g%sFb$G(BSELECT$B$,H/9T$5$l!"$=$N%H%i%s%6%/%7%g%s$,%"%\!<%H$7$?;~(B</li>
-  <li><a href="#WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</a>$B!"(B
-      <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a>$B$,;XDj$5$l$F$$$k>l9g(B</li>
   <li>SELECT$B7k2L$,Bg$-$$>l9g(B(<a href="#MEMQCACHE_MAXCACHE">memqcache_maxcache</a>$B$N9`;2>H(B)</li>
 </ul>
 
@@ -2686,9 +2685,7 @@ memcached$B$r%-%c%C%7%e%9%H%l!<%8$K;HMQ$9$k>l9g$O!"%M%C%H%o!<%/%"%/%;%9$N%*!<%P
 <dt id="WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</dt>
     <dd>
     <p>
-    SELECT$B7k2L$r%-%c%C%7%e$7$?$$%F!<%V%kL>$r%+%s%^6h@Z$j$G;XDj$7$^$9!#@55,I=8=$bMxMQ$G$-$^$9!#(B
-    white_memqcache_table_list$B$b(Bblack_memqcache_table_list$B$b=i4|CM$N(B''$B$G$"$k>l9g$O!"(B
-    $B$9$Y$F$N%F!<%V%k$,%-%c%C%7%e$NBP>]$K$J$j$^$9!#(B
+    VIEW$B$d(Bunlogged$B%F!<%V%k$r;H$C$F$$$k(BSELECT$B$ODL>o%-%c%C%7%e$NBP>]$K$J$j$^$;$s$,!"(Bwhite_memqcache_table_list$B$K5-=R$7$F$*$/$3$H$G!"%-%c%C%7%e$5$l$k$h$&$K$J$j$^$9!#%F!<%V%kL>$O%+%s%^6h@Z$j$G;XDj$7$^$9!#@55,I=8=$bMxMQ$G$-$^$9!#(B
     </p>
     </dd>
 
@@ -2696,8 +2693,6 @@ memcached$B$r%-%c%C%7%e%9%H%l!<%8$K;HMQ$9$k>l9g$O!"%M%C%H%o!<%/%"%/%;%9$N%*!<%P
     <dd>
     <p>
     SELECT$B7k2L$r%-%c%C%7%e$7$?$/$J$$%F!<%V%kL>$r%+%s%^6h@Z$j$G;XDj$7$^$9!#@55,I=8=$bMxMQ$G$-$^$9!#(B
-    white_memqcache_table_list$B$b(Bblack_memqcache_table_list$B$b=i4|CM$N(B''$B$G$"$k>l9g$O!"(B
-    $B$9$Y$F$N%F!<%V%k$,%-%c%C%7%e$NBP>]$K$J$j$^$9!#(B
     </p>
     </dd>
 
