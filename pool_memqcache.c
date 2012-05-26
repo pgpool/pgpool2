@@ -717,19 +717,20 @@ bool pool_is_allow_to_cache(Node *node, char *query)
 	{
 		if (num_oids < 0)
 			num_oids = pool_extract_table_oids_from_select_stmt(node, &ctx);
-	}
-	if (num_oids > 0)
-	{
-		for (i = 0; i < num_oids; i++)
+
+		if (num_oids > 0)
 		{
-			char *table = ctx.table_names[i];
-			pool_debug("pool_is_allow_to_cache: check table_names[%d] = %s", i, table);
-			if (is_view(table) || is_unlogged_table(table))
+			for (i = 0; i < num_oids; i++)
 			{
-				if (pool_is_table_to_cache(table) == false)
+				char *table = ctx.table_names[i];
+				pool_debug("pool_is_allow_to_cache: check table_names[%d] = %s", i, table);
+				if (is_view(table) || is_unlogged_table(table))
 				{
-					pool_debug("pool_is_allow_to_cache: false");
-					return false;
+					if (pool_is_table_to_cache(table) == false)
+					{
+						pool_debug("pool_is_allow_to_cache: false");
+						return false;
+					}
 				}
 			}
 		}
