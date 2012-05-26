@@ -2,7 +2,7 @@
 /*
  * $Header$
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -51,8 +51,10 @@ MymakeRangeVarFromNameList(List *names);
 
 extern Oid			MyDatabaseId;
 
+#if !defined(PG_VERSION_NUM) || (PG_VERSION_NUM < 90100)
 static Oid
 get_namespace_oid(const char *nspname, bool missing_ok);
+#endif
 
 Datum
 pgpool_regclass(PG_FUNCTION_ARGS)
@@ -93,9 +95,14 @@ pgpool_regclass(PG_FUNCTION_ARGS)
 		if (get_namespace_oid(rel->schemaname, true) == InvalidOid)
 			PG_RETURN_OID(InvalidOid);
 	}
-
+#if !defined(PG_VERSION_NUM) || (PG_VERSION_NUM < 90200)
 	result = RangeVarGetRelid(rel, true);
-
+#else
+	/* RangeVarGetRelid() of PostgreSQL 9.2 or later, has third
+	 * argument "missing_ok" which suppresses ERROR exception, but
+	 * returns invlaid_oid. See include/catalog/namespace.h */
+	result = RangeVarGetRelid(rel, true, true);
+#endif
 	PG_RETURN_OID(result);
 }
 
@@ -173,6 +180,7 @@ MymakeRangeVarFromNameList(List *names)
 	return rel;
 }
 
+#if !defined(PG_VERSION_NUM) || (PG_VERSION_NUM < 90100)
 /*
  * get_namespace_oid - given a namespace name, look up the OID
  *
@@ -195,3 +203,4 @@ get_namespace_oid(const char *nspname, bool missing_ok)
 
 	return oid;
 }
+#endif
