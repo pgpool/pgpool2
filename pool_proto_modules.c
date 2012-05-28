@@ -233,6 +233,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 				pool_log("SimpleQuery: Unable to parse the query: \"%s\" from client %s(%s)", contents, remote_host, remote_port);
 			}
 			parse_tree_list = raw_parser(POOL_DUMMY_WRITE_QUERY);
+			query_context->is_parse_error = true;
 		}
 	}
 
@@ -382,7 +383,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			}
 
 			/* Switch the flag of is_cache_safe in session_context */
-			if (is_select_query &&
+			if (is_select_query && !query_context->is_parse_error &&
 				pool_is_allow_to_cache(query_context->parse_tree,
 									   query_context->original_query))
 			{
@@ -394,7 +395,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			}
 
 			/* If table is to be cached and the query is DML, save the table oid */
-			if (!is_select_query)
+			if (!is_select_query && !query_context->is_parse_error)
 			{
 				num_oids = pool_extract_table_oids(node, &oids);
 
@@ -886,6 +887,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 				pool_log("Parse: Unable to parse the query: \"%s\" from client %s(%s)", stmt, remote_host, remote_port);
 			}
 			parse_tree_list = raw_parser(POOL_DUMMY_WRITE_QUERY);
+			query_context->is_parse_error = true;
 		}
 	}
 
@@ -929,7 +931,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			}
 
 			/* Switch the flag of is_cache_safe in session_context */
-			if (is_select_query &&
+			if (is_select_query && !query_context->is_parse_error &&
 				pool_is_allow_to_cache(query_context->parse_tree,
 									   query_context->original_query))
 			{
@@ -941,7 +943,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			}
 
 			/* If table is to be cached and the query is DML, save the table oid */
-			if (!is_select_query)
+			if (!is_select_query && !query_context->is_parse_error)
 			{
 				num_oids = pool_extract_table_oids(node, &oids);
 

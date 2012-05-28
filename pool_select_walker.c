@@ -868,16 +868,13 @@ int pool_table_name_to_oid(char *table_name)
 /*
  * Query to convert table name to oid
  */
-/*
- * We use standard regclass() instead of pgpool_regclass().  Since we
- * don't want to cache oid 0 (table not found).  If table is not
- * found, pool_search_relcache() do not cache the result.
- */
-#define TABLE_TO_OID_QUERY "SELECT regclass('%s')::oid"
+#define TABLE_TO_OID_QUERY "SELECT pgpool_regclass('%s')"
+#define TABLE_TO_OID_QUERY2 "SELECT oid FROM pg_class WHERE relname = '%s'"
 
 	int oid = 0;
 	static POOL_RELCACHE *relcache;
 	POOL_CONNECTION_POOL *backend;
+	char *query;
 
 	if (table_name == NULL)
 	{
@@ -886,12 +883,21 @@ int pool_table_name_to_oid(char *table_name)
 
 	backend = pool_get_session_context()->backend;
 
+	if (pool_has_pgpool_regclass())
+	{
+		query = TABLE_TO_OID_QUERY;
+	}
+	else
+	{
+		query = TABLE_TO_OID_QUERY2;
+	}
+
 	/*
 	 * If relcache does not exist, create it.
 	 */
 	if (!relcache)
 	{
-		relcache = pool_create_relcache(128, TABLE_TO_OID_QUERY,
+		relcache = pool_create_relcache(128, query,
 										int_register_func, int_unregister_func,
 										true);
 		if (relcache == NULL)
@@ -899,6 +905,12 @@ int pool_table_name_to_oid(char *table_name)
 			pool_error("table_name_to_oid: pool_create_relcache error");
 			return oid;
 		}
+
+		/* Se do not cache if pgpool_regclass() returns 0, which indicates
+		 * there's no such a table. In this case we do not want to cache the
+		 * state because the table might be created later in this session.
+		 */
+		relcache->no_cache_if_zero = true;	
 	}
 
 	/*

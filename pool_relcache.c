@@ -101,6 +101,7 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 	int index = 0;
 	int local_session_id;
 	time_t now;
+	void *result;
 
 	/* Eliminate double quotes */
 	rel = malloc(strlen(table)+1);
@@ -207,28 +208,32 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 	}
 
 	/* Register cache */
-	strlcpy(relcache->cache[index].dbname, dbname, MAX_ITEM_LENGTH);
-	strlcpy(relcache->cache[index].relname, rel, MAX_ITEM_LENGTH);
-	relcache->cache[index].refcnt = 1;
-	relcache->cache[index].session_id = local_session_id;
-	if (pool_config->relcache_expire > 0)
+	result = (*relcache->register_func)(res);
+
+	if (!relcache->no_cache_if_zero || result)
 	{
-		relcache->cache[index].expire = now + pool_config->relcache_expire;
-	}
-	else
-	{
-		relcache->cache[index].expire = 0;
+		strlcpy(relcache->cache[index].dbname, dbname, MAX_ITEM_LENGTH);
+		strlcpy(relcache->cache[index].relname, rel, MAX_ITEM_LENGTH);
+		relcache->cache[index].refcnt = 1;
+		relcache->cache[index].session_id = local_session_id;
+		if (pool_config->relcache_expire > 0)
+		{
+			relcache->cache[index].expire = now + pool_config->relcache_expire;
+		}
+		else
+		{
+			relcache->cache[index].expire = 0;
+		}
+		/*
+		 * Call user defined unregister/register fuction.
+		 */
+		(*relcache->unregister_func)(relcache->cache[index].data);
+		relcache->cache[index].data = result;
 	}
 	free(rel);
-
-	/*
-	 * Call user defined unregister/register fuction.
-	 */
-	(*relcache->unregister_func)(relcache->cache[index].data);
-	relcache->cache[index].data = (*relcache->register_func)(res);
 	free_select_result(res);
 
-	return 	relcache->cache[index].data;
+	return 	result;
 }
 
 /*

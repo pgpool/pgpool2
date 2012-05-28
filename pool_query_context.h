@@ -65,6 +65,9 @@ typedef struct {
 	bool is_multi_statement;	/* true if multi statement query */
 	int dboid;	/* DB oid which is used at DROP DATABASE */
 	char *query_w_hex;	/* original_query with bind message hex which used for committing cache of extended query */
+	bool is_parse_error;		/* if true, we could not parse the original
+								 * query and parsed node is actually a dummy query.
+								 */
 } POOL_QUERY_CONTEXT;
 
 extern POOL_QUERY_CONTEXT *pool_init_query_context(void);
