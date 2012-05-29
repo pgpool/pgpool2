@@ -2606,7 +2606,8 @@ These are the parameters used with both of shmem and memcached.
     They are used as keys to delete caches.
     </p>
     <p>
-    Directories and files under memqcache_oiddir are deleted whenever pgpool-II restarts.
+    Directories and files under memqcache_oiddir are not deleted whenever pgpool-II restarts.
+    If you start pgpool by "<a href="#start">pgpool -C</a>", pgppol starts without the old oidmap.
     </p>
     </dd>
 </dl>
@@ -2802,6 +2803,10 @@ pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-D][-d]
   <tr><td>-F pcp_config_file</td><td>--pcp-password-file</td><td>specifies pcp.conf</tr>
   <tr><td>-n</td><td>--no-daemon</td><td>no daemon mode (terminal is not detached)</tr>
   <tr><td>-D</td><td>--discard-status</td><td>Discard pgpool_status file and do not restore previous status</tr>
+  <tr><td>-C</td><td>--clear-oidmaps</td>
+  <td>Discard oid maps in <a href="#MEMQCACHE_OIDDIR">memqcache_oiddir</a> for on memory query cache
+  (only when <a href="#MEMQCACHE_METHOD">memqcache_strage</a> is 'shmem')</td>
+  </tr>
   <tr><td>-d</td><td>--debug</td><td>debug mode</tr>
 </table>
 
