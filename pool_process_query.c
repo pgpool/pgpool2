@@ -232,74 +232,89 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 			}
 			else
 			{
-				/* Ok, query is not in progress. To make sure that we
-				 * have any pending data in backends. */
-
-				/* If we have pending data in master, we need to process it */
-				if (!pool_ssl_pending(MASTER(backend)) &&
-					!pool_read_buffer_is_empty(MASTER(backend)))
+				/* Ok, query is not in progress.
+				 * ProcessFrontendResponse() may consume all pending
+				 * data.  Check if we have any pending data. If no,
+				 * call read_packets_and_process() and wait for data
+				 * arrival.
+				 */
+				if (is_cache_empty(frontend, backend))
 				{
-					status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
+					bool cont = true;
+					status = read_packets_and_process(frontend, backend, reset_request, &state, &num_fields, &cont);
 					if (status != POOL_CONTINUE)
+						return status;
+					else if (!cont)		/* Detected admin shutdown */
 						return status;
 				}
 				else
 				{
-					for (i=0;i<NUM_BACKENDS;i++)
+					/* If we have pending data in master, we need to process it */
+					if (!pool_ssl_pending(MASTER(backend)) &&
+						!pool_read_buffer_is_empty(MASTER(backend)))
 					{
-						if (!VALID_BACKEND(i))
-							continue;
-
-						if (pool_ssl_pending(CONNECTION(backend, i)) ||
-							pool_read_buffer_is_empty(CONNECTION(backend, i)))
+						status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
+						if (status != POOL_CONTINUE)
+							return status;
+					}
+					else
+					{
+						for (i=0;i<NUM_BACKENDS;i++)
 						{
-							/* If we have pending data in master, we need to process it */
-							if (IS_MASTER_NODE_ID(i))
-							{
-								status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
-								if (status != POOL_CONTINUE)
-									return status;
-								break;
-							}
-							else
-							{
-								char kind;
-								int len;
-								char *string;
+							if (!VALID_BACKEND(i))
+								continue;
 
-								/* If master does not have pending
-								 * data, we discard one packet from
-								 * other backend */
-								status = pool_read(CONNECTION(backend, i), &kind, sizeof(kind));
-								if (status < 0)
+							if (pool_ssl_pending(CONNECTION(backend, i)) ||
+								pool_read_buffer_is_empty(CONNECTION(backend, i)))
+							{
+								/* If we have pending data in master, we need to process it */
+								if (IS_MASTER_NODE_ID(i))
 								{
-									pool_error("pool_process_query: error while reading message kind from backend %d", i);
-									return POOL_END;
-								}
-								pool_log("pool_process_query: discard %c packet from backend %d", kind, i);
-
-								if (MAJOR(backend) == PROTO_MAJOR_V3)
-								{
-									if (pool_read(CONNECTION(backend, i), &len, sizeof(len)) < 0)
-									{
-										pool_error("pool_process_query: error while reading message length from backend %d", i);
-										return POOL_END;
-									}
-									len = ntohl(len) - 4;
-									string = pool_read2(CONNECTION(backend, i), len);
-									if (string == NULL)
-									{
-										pool_error("pool_process_query: error while reading rest of message from backend %d", i);
-										return POOL_END;
-									}
+									status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
+									if (status != POOL_CONTINUE)
+										return status;
+									break;
 								}
 								else
 								{
-									string = pool_read_string(CONNECTION(backend, i), &len, 0);
-									if (string == NULL)
+									char kind;
+									int len;
+									char *string;
+
+									/* If master does not have pending
+									 * data, we discard one packet from
+									 * other backend */
+									status = pool_read(CONNECTION(backend, i), &kind, sizeof(kind));
+									if (status < 0)
 									{
-										pool_error("pool_process_query: error while reading rest of message from backend %d", i);
+										pool_error("pool_process_query: error while reading message kind from backend %d", i);
 										return POOL_END;
+									}
+									pool_log("pool_process_query: discard %c packet from backend %d", kind, i);
+
+									if (MAJOR(backend) == PROTO_MAJOR_V3)
+									{
+										if (pool_read(CONNECTION(backend, i), &len, sizeof(len)) < 0)
+										{
+											pool_error("pool_process_query: error while reading message length from backend %d", i);
+											return POOL_END;
+										}
+										len = ntohl(len) - 4;
+										string = pool_read2(CONNECTION(backend, i), len);
+										if (string == NULL)
+										{
+											pool_error("pool_process_query: error while reading rest of message from backend %d", i);
+											return POOL_END;
+										}
+									}
+									else
+									{
+										string = pool_read_string(CONNECTION(backend, i), &len, 0);
+										if (string == NULL)
+										{
+											pool_error("pool_process_query: error while reading rest of message from backend %d", i);
+											return POOL_END;
+										}
 									}
 								}
 							}
@@ -1277,6 +1292,7 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 	POOL_SESSION_CONTEXT *session_context;
 	int i;
 	bool need_to_abort;
+	POOL_TEMP_QUERY_CACHE *cache;
 
 	/* Get session context */
 	session_context = pool_get_session_context();
@@ -1369,6 +1385,18 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 	}
 
 	pool_set_timeout(0);
+
+	cache = pool_get_current_cache();
+	if (cache)
+	{
+		pool_discard_temp_query_cache(cache);
+		/*
+		 * Reset temp_cache pointer in the current query context
+		 * so that we don't double free memory.
+		 */
+		session_context->query_context->temp_cache = NULL;
+	}
+		
 	return 1;
 }
 
@@ -3345,6 +3373,8 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 					return POOL_ERROR;
 				}
 
+				pool_debug("read_kind_from_backend: kind: %c from %d th backend", kind, i);
+
 				/*
 				 * Read and discard parameter status
 				 */
@@ -3979,6 +4009,11 @@ static bool is_panic_or_fatal_error(const char *message, int major)
 static int detect_postmaster_down_error(POOL_CONNECTION *backend, int major)
 {
 	int r =  detect_error(backend, ADMIN_SHUTDOWN_ERROR_CODE, major, 'E', false);
+	if (r < 0)
+	{
+		pool_log("detect_stop_postmaster_error: detect_error error");
+		return r;
+	}
 	if (r == SPECIFIED_ERROR)
 	{
 		pool_debug("detect_stop_postmaster_error: receive admin shutdown error from a node.");
@@ -3986,6 +4021,11 @@ static int detect_postmaster_down_error(POOL_CONNECTION *backend, int major)
 	}
 
 	r = detect_error(backend, CRASH_SHUTDOWN_ERROR_CODE, major, 'N', false);
+	if (r < 0)
+	{
+		pool_log("detect_stop_postmaster_error: detect_error error");
+		return r;
+	}
 	if (r == SPECIFIED_ERROR)
 	{
 		pool_debug("detect_stop_postmaster_error: receive crash shutdown error from a node.");
@@ -4039,7 +4079,7 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 	char *p, *str;
 
 	if (pool_read(backend, &kind, sizeof(kind)))
-		return POOL_END;
+		return -1;
 	readlen += sizeof(kind);
 	p = buf;
 	memcpy(p, &kind, sizeof(kind));
@@ -4056,7 +4096,7 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 			char *e;
 
 			if (pool_read(backend, &len, sizeof(len)) < 0)
-				return POOL_END;
+				return -1;
 			readlen += sizeof(len);
 			memcpy(p, &len, sizeof(len));
 			p += sizeof(len);
@@ -4067,7 +4107,7 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 			if (!str)
 			{
 				pool_error("detect_error: malloc failed");
-				return POOL_END;
+				return -1;
 			}
 
 			pool_read(backend, str, len);
@@ -4077,7 +4117,7 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 			{
 				pool_error("detect_error: not enough buffer space");
 				free(str);
-				return POOL_END;
+				return -1;
 			}
 
 			memcpy(p, str, len);
@@ -4107,7 +4147,7 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 			if (readlen >= sizeof(buf))
 			{
 				pool_error("detect_error: not enough buffer space");
-				return POOL_END;
+				return -1;
 			}
 
 			memcpy(p, str, len);
@@ -4467,10 +4507,12 @@ SELECT_RETRY:
 
 			if (FD_ISSET(CONNECTION(backend, i)->fd, &readmask))
 			{
+				int r;
 				/*
 				 * admin shutdown postmaster or postmaster goes down
 				 */
-				if (detect_postmaster_down_error(CONNECTION(backend, i), MAJOR(backend)) == SPECIFIED_ERROR)
+				r = detect_postmaster_down_error(CONNECTION(backend, i), MAJOR(backend));
+				if (r == SPECIFIED_ERROR)
 				{
 					pool_log("postmaster on DB node %d was shutdown by administrative command", i);
 					/* detach backend node. */
@@ -4480,6 +4522,16 @@ SELECT_RETRY:
 					notice_backend_error(i);
 					sleep(5);
 					break;
+				}
+				else if (r < 0)
+				{
+					/*
+					 * This could happen after detecting backend errors and before actually
+					 * detaching the backend. In this case reading from backend socket will
+					 * return EOF and it's better to close this session. So returns POOL_END.
+					 */ 
+					pool_log("detect_postmaster_down_error returns error on backend %d. Going to close this session.", i);
+					return POOL_END;
 				}
 			}
 		}

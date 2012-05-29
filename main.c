@@ -201,6 +201,7 @@ int main(int argc, char **argv)
 	int	optindex;
 	bool discard_status = false;
 	bool retrying;
+	bool clear_memcache_oidmaps = false;
 
 	static struct option long_options[] = {
 		{"hba-file", required_argument, NULL, 'a'},
@@ -212,6 +213,7 @@ int main(int argc, char **argv)
 		{"mode", required_argument, NULL, 'm'},
 		{"dont-detach", no_argument, NULL, 'n'},
 		{"discard-status", no_argument, NULL, 'D'},
+		{"clear-oidmaps", no_argument, NULL, 'C'},
 		{"version", no_argument, NULL, 'v'},
 		{NULL, 0, NULL, 0}
 	};
@@ -223,7 +225,7 @@ int main(int argc, char **argv)
 	snprintf(pcp_conf_file, sizeof(pcp_conf_file), "%s/%s", DEFAULT_CONFIGDIR, PCP_PASSWD_FILE_NAME);
 	snprintf(hba_file, sizeof(hba_file), "%s/%s", DEFAULT_CONFIGDIR, HBA_CONF_FILE_NAME);
 
-    while ((opt = getopt_long(argc, argv, "a:cdf:F:hm:nDv", long_options, &optindex)) != -1)
+    while ((opt = getopt_long(argc, argv, "a:cdf:F:hm:nDCv", long_options, &optindex)) != -1)
 	{
 		switch (opt)
 		{
@@ -292,6 +294,10 @@ int main(int argc, char **argv)
 
 			case 'D':	/* discard pgpool_status */
 				discard_status = true;
+				break;
+
+			case 'C': /* discard caches in memcached */
+				clear_memcache_oidmaps = true;
 				break;
 
 			case 'v':
@@ -574,7 +580,15 @@ int main(int argc, char **argv)
 
 		pool_allocate_fsmm_clock_hand();
 
-		pool_discard_oid_maps();
+		if (clear_memcache_oidmaps)
+		{
+			pool_discard_oid_maps();
+			pool_log("pool_discard_oid_maps: discarded memqcache oid maps");
+		}
+		else
+		{
+			pool_debug("skipped discarding memqcache oid maps");
+		}
 
 		pool_hash_init(pool_config->memqcache_max_num_cache);
 	}
@@ -835,6 +849,8 @@ static void usage(void)
 	fprintf(stderr, "  -h, --help          Prints this help\n\n");
 	fprintf(stderr, "Start options:\n");
 	fprintf(stderr, "  -c, --clear         Clears query cache (enable_query_cache must be on)\n");
+	fprintf(stderr, "  -C, --clear-oidmaps Clears query cache oidmaps\n");
+	fprintf(stderr, "                      (enable_query_cache must be on and memqcache_method must be shmem)\n");
 	fprintf(stderr, "  -n, --dont-detach   Don't run in daemon mode, does not detach control tty\n");
 	fprintf(stderr, "  -D, --discard-status Discard pgpool_status file and do not restore previous status\n");
 	fprintf(stderr, "  -d, --debug         Debug mode\n\n");
@@ -1379,12 +1395,18 @@ void degenerate_backend_set(int *node_id_set, int count)
 	pid_t parent = getppid();
 	int i;
 	bool need_signal = false;
+#ifdef HAVE_SIGPROCMASK
+	sigset_t oldmask;
+#else
+	int	oldmask;
+#endif
 
 	if (pool_config->parallel_mode)
 	{
 		return;
 	}
 
+	POOL_SETMASK2(&BlockSig, &oldmask);
 	pool_semaphore_lock(REQUEST_INFO_SEM);
 	Req_info->kind = NODE_DOWN_REQUEST;
 	for (i = 0; i < count; i++)
@@ -1414,6 +1436,7 @@ void degenerate_backend_set(int *node_id_set, int count)
 	}
 
 	pool_semaphore_unlock(REQUEST_INFO_SEM);
+	POOL_SETMASK(&oldmask);
 }
 
 /* send promote node request using SIGUSR1 */

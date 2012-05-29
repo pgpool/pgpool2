@@ -169,6 +169,20 @@ typedef struct
 	long long int num_cache_hits;		/* number of SELECTs extracted from cache */
 } POOL_QUERY_CACHE_STATS;
 
+/*
+ * Shared memory cache stats interface.
+ */
+typedef struct
+{
+	int num_hash_entries;		/* number of total hash entries */
+	int used_hash_entries;	/* number of used hash entries */
+	int num_cache_entries;	/* number of used cache entries */
+	long used_cache_entries_size;	/* total size of used cache entries */
+	long free_cache_entries_size;	/* total size of free(usable) cache entries */
+	long fragment_cache_entries_size;	/* total size of fragment(unsable) cache entries */
+	POOL_QUERY_CACHE_STATS cache_stats;
+} POOL_SHMEM_STATS;
+
 /*--------------------------------------------------------------------------------
  * On shared memory hsah table implementation
  *--------------------------------------------------------------------------------
@@ -214,6 +228,8 @@ extern bool pool_is_allow_to_cache(Node *node, char *query);
 extern int pool_extract_table_oids(Node *node, int **oidsp);
 extern void pool_add_dml_table_oid(int oid);
 extern void pool_discard_oid_maps(void);
+extern int pool_get_database_oid_from_dbname(char *dbname);
+extern void pool_discard_oid_maps_by_db(int dboid);
 extern bool pool_is_shmem_cache(void);
 extern size_t pool_shared_memory_cache_size(void);
 extern int pool_init_memory_cache(size_t size);
@@ -235,5 +251,13 @@ extern long long int pool_stats_count_up_num_cache_hits(void);
 extern long long int pool_tmp_stats_count_up_num_selects(void);
 extern long long int pool_tmp_stats_get_num_selects(void);
 extern void pool_tmp_stats_reset_num_selects(void);
+extern POOL_SHMEM_STATS *pool_get_shmem_storage_stats(void);
+
+extern POOL_TEMP_QUERY_CACHE *pool_get_current_cache(void);
+extern POOL_TEMP_QUERY_CACHE *pool_get_current_cache(void);
+extern void pool_discard_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache);
+
+extern void pool_shmem_lock(void);
+extern void pool_shmem_unlock(void);
 
 #endif /* POOL_MEMQCACHE_H */

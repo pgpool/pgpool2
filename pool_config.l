@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -244,13 +244,14 @@ int pool_init_config(void)
 
     pool_config->memory_cache_enabled = 0;
     pool_config->memqcache_method = "shmem";
-    pool_config->memqcache_memcached_host = "";
+    pool_config->memqcache_memcached_host = "localhost";
     pool_config->memqcache_memcached_port = 11211;
-    pool_config->memqcache_total_size = 10240;
-    pool_config->memqcache_max_num_cache = 100;
-    pool_config->memqcache_expire = 60;
-    pool_config->memqcache_maxcache = 512;
-    pool_config->memqcache_cache_block_size = 8192;
+    pool_config->memqcache_total_size = 67108864;
+    pool_config->memqcache_max_num_cache = 1000000;
+    pool_config->memqcache_expire = 0;
+    pool_config->memqcache_auto_cache_invalidation = 1;
+    pool_config->memqcache_maxcache = 409600;
+    pool_config->memqcache_cache_block_size = 1048576;
     pool_config->memqcache_oiddir = "/var/log/pgpool/oiddir";
 	pool_config->white_memqcache_table_list = NULL;
 	pool_config->num_white_memqcache_table_list = 0;
@@ -2291,6 +2292,30 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
             }
             pool_config->memqcache_max_num_cache = v;
         }
+        else if (!strcmp(key, "memqcache_expire") && CHECK_CONTEXT(INIT_CONFIG, context))
+        {
+            int v = atoi(yytext);
+
+            if (token != POOL_INTEGER || v < 0)
+            {
+                pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
+                fclose(fd);
+                return(-1);
+            }
+            pool_config->memqcache_expire = v;
+        }
+        else if (!strcmp(key, "memqcache_auto_cache_invalidation") && CHECK_CONTEXT(INIT_CONFIG, context))
+        {
+            int v = eval_logical(yytext);
+
+            if (v < 0)
+            {
+                pool_error("pool_config: invalid value %s for %s", yytext, key);
+                fclose(fd);
+                return(-1);
+            }
+            pool_config->memqcache_auto_cache_invalidation = v;
+        }
         else if (!strcmp(key, "memqcache_maxcache") && CHECK_CONTEXT(INIT_CONFIG, context))
         {
             int v = atoi(yytext);
@@ -2307,9 +2332,9 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
         {
             int v = atoi(yytext);
 
-            if (token != POOL_INTEGER || v < 0)
+            if (token != POOL_INTEGER || v < 512)
             {
-                pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
+                pool_error("pool_config: %s must be equal or higher than 512 numeric value", key);
                 fclose(fd);
                 return(-1);
             }

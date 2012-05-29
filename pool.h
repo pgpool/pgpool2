@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -584,6 +584,7 @@ extern void init_ps_display(const char *username, const char *dbname,
 							const char *host_info, const char *initial_str);
 extern void set_ps_display(const char *activity, bool force);
 extern const char *get_ps_display(int *displen);
+extern void pool_ps_idle_display(POOL_CONNECTION_POOL *backend);
 
 /* recovery.c */
 extern int start_recovery(int recovery_node);

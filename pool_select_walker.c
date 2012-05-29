@@ -36,8 +36,8 @@ static bool system_catalog_walker(Node *node, void *context);
 static bool is_system_catalog(char *table_name);
 static bool temp_table_walker(Node *node, void *context);
 static bool unlogged_table_walker(Node *node, void *context);
+static bool view_walker(Node *node, void *context);
 static bool is_temp_table(char *table_name);
-static bool is_unlogged_table(char *table_name);
 static bool	insertinto_or_locking_clause_walker(Node *node, void *context);
 static bool is_immutable_function(char *fname);
 static bool select_table_walker(Node *node, void *context);
@@ -115,6 +115,24 @@ bool pool_has_unlogged_table(Node *node)
 	raw_expression_tree_walker(node, unlogged_table_walker, &ctx);
 
 	return ctx.has_unlogged_table;
+}
+
+/*
+ * Return true if this SELECT has a view.
+ */
+bool pool_has_view(Node *node)
+{
+
+	SelectContext	ctx;
+
+	if (!IsA(node, SelectStmt))
+		return false;
+
+	ctx.has_view = false;
+
+	raw_expression_tree_walker(node, view_walker, &ctx);
+
+	return ctx.has_view;
 }
 
 /*
@@ -342,6 +360,32 @@ unlogged_table_walker(Node *node, void *context)
 }
 
 /*
+ * Walker function to find a view
+ */
+static bool
+view_walker(Node *node, void *context)
+{
+	SelectContext	*ctx = (SelectContext *) context;
+
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, RangeVar))
+	{
+		RangeVar *rgv = (RangeVar *)node;
+
+		pool_debug("view_walker: relname: %s", rgv->relname);
+
+		if (is_view(rgv->relname))
+		{
+			ctx->has_view = true;
+			return false;
+		}
+	}
+	return raw_expression_tree_walker(node, view_walker, context);
+}
+
+/*
  * Judge the table used in a query represented by node is a system
  * catalog or not.
  */
@@ -519,7 +563,7 @@ static bool is_temp_table(char *table_name)
  * Judge the table used in a query represented by node is a unlogged
  * table or not.
  */
-static bool is_unlogged_table(char *table_name)
+bool is_unlogged_table(char *table_name)
 {
 /*
  * Query to know if pg_class has relpersistence column or not.
@@ -603,6 +647,60 @@ static bool is_unlogged_table(char *table_name)
 	{
 		return false;
 	}
+}
+
+/*
+ * Judge the table used in a query is a view or not.
+ */
+bool is_view(char *table_name)
+{
+/*
+ * Query to know if the target table is a view.
+ */
+#define ISVIEWQUERY "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.relname = '%s' AND c.relkind = 'v'"
+
+#define ISVIEWQUERY2 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = pgpool_regclass('%s') AND c.relkind = 'v'"
+
+	static POOL_RELCACHE *relcache;
+	POOL_CONNECTION_POOL *backend;
+	bool result;
+	char *query;
+
+	if (table_name == NULL)
+	{
+			return false;
+	}
+
+	backend = pool_get_session_context()->backend;
+
+	/* pgpool_regclass has been installed */
+	if (pool_has_pgpool_regclass())
+	{
+		query = ISVIEWQUERY2;
+	}
+	else
+	{
+		query = ISVIEWQUERY;
+	}
+
+	if (!relcache)
+	{
+		relcache = pool_create_relcache(128, query,
+										int_register_func, int_unregister_func,
+										false);
+		if (relcache == NULL)
+		{
+			pool_error("is_view: pool_create_relcache error");
+			return false;
+		}
+
+	}
+
+	/*
+	 * Search relcache.
+	 */
+	result = pool_search_relcache(relcache, backend, table_name)==0?false:true;
+	return result;
 }
 
 /*
@@ -770,16 +868,13 @@ int pool_table_name_to_oid(char *table_name)
 /*
  * Query to convert table name to oid
  */
-/*
- * We use standard regclass() instead of pgpool_regclass().  Since we
- * don't want to cache oid 0 (table not found).  If table is not
- * found, pool_search_relcache() do not cache the result.
- */
-#define TABLE_TO_OID_QUERY "SELECT regclass('%s')::oid"
+#define TABLE_TO_OID_QUERY "SELECT pgpool_regclass('%s')"
+#define TABLE_TO_OID_QUERY2 "SELECT oid FROM pg_class WHERE relname = '%s'"
 
 	int oid = 0;
 	static POOL_RELCACHE *relcache;
 	POOL_CONNECTION_POOL *backend;
+	char *query;
 
 	if (table_name == NULL)
 	{
@@ -788,12 +883,21 @@ int pool_table_name_to_oid(char *table_name)
 
 	backend = pool_get_session_context()->backend;
 
+	if (pool_has_pgpool_regclass())
+	{
+		query = TABLE_TO_OID_QUERY;
+	}
+	else
+	{
+		query = TABLE_TO_OID_QUERY2;
+	}
+
 	/*
 	 * If relcache does not exist, create it.
 	 */
 	if (!relcache)
 	{
-		relcache = pool_create_relcache(128, TABLE_TO_OID_QUERY,
+		relcache = pool_create_relcache(128, query,
 										int_register_func, int_unregister_func,
 										true);
 		if (relcache == NULL)
@@ -801,6 +905,12 @@ int pool_table_name_to_oid(char *table_name)
 			pool_error("table_name_to_oid: pool_create_relcache error");
 			return oid;
 		}
+
+		/* Se do not cache if pgpool_regclass() returns 0, which indicates
+		 * there's no such a table. In this case we do not want to cache the
+		 * state because the table might be created later in this session.
+		 */
+		relcache->no_cache_if_zero = true;	
 	}
 
 	/*
@@ -843,6 +953,7 @@ select_table_walker(Node *node, void *context)
 		RangeVar *rgv = (RangeVar *)node;
 		char *table;
 		int oid;
+		char *s;
 
 		table = nodeToString(rgv);
 		oid = pool_table_name_to_oid(table);
@@ -858,7 +969,9 @@ select_table_walker(Node *node, void *context)
 			num_oids = ctx->num_oids++;
 
 			ctx->table_oids[num_oids] = oid;
-			strcpy(ctx->table_names[num_oids], strip_quote(table));
+			s = strip_quote(table);
+			strcpy(ctx->table_names[num_oids], s);
+			free(s);
 
 			pool_debug("select_table_walker: ctx->table_names[%d] = %s",
 			           num_oids, ctx->table_names[num_oids]);

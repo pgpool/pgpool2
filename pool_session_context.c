@@ -32,7 +32,6 @@ static POOL_SESSION_CONTEXT session_context_d;
 static POOL_SESSION_CONTEXT *session_context = NULL;
 
 static void init_sent_message_list(void);
-static bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc);
 
 /*
  * Initialize per session context
@@ -135,6 +134,9 @@ void pool_session_context_destroy(void)
 			pool_discard_query_cache_array(session_context->query_cache_array);
 			session_context->num_selects = 0;
 		}
+
+		if (session_context->query_context)
+			pool_query_context_destroy(session_context->query_context);
 	}
 	/* XXX For now, just zap memory */
 	memset(&session_context_d, 0, sizeof(session_context_d));
@@ -918,7 +920,11 @@ static void init_sent_message_list(void)
 	}
 }
 
-static bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc)
+/*
+ * Look for extended message list to check if given query context qc
+ * is used. Returns true if it is not used.
+ */
+bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc)
 {
 	int i;
 	int count = 0;
@@ -929,11 +935,16 @@ static bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc)
 	for (i = 0; i < msglist->size; i++)
 	{
 		if (msglist->sent_messages[i]->query_context == qc)
+		{
+			pool_debug("can_query_context_destroy: query context %p is still used. query:%s",
+					   qc, qc->original_query);
 			count++;
+		}
 	}
 	if (count > 1)
 	{
-		pool_debug("can_query_context_destroy: query context is still used.");
+		pool_debug("can_query_context_destroy: query context %p is still used for %d times.",
+				   qc, count);
 		return false;
 	}
 

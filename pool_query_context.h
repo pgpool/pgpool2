@@ -33,6 +33,11 @@
 #include "parser/pool_memory.h"
 #include "pool_memqcache.h"
 
+/*
+ * Parse state transition.
+ * transition order is:
+ * UNPARSED < PARSE_COMPLETE < BIND_COMPLETE < EXECUTE_COMPLETE
+ */
 typedef enum {
 	POOL_UNPARSED,
 	POOL_PARSE_COMPLETE,
@@ -58,6 +63,11 @@ typedef struct {
 	bool is_cache_safe;	/* true if SELECT is safe to cache */
 	POOL_TEMP_QUERY_CACHE *temp_cache;	/* temporary cache */
 	bool is_multi_statement;	/* true if multi statement query */
+	int dboid;	/* DB oid which is used at DROP DATABASE */
+	char *query_w_hex;	/* original_query with bind message hex which used for committing cache of extended query */
+	bool is_parse_error;		/* if true, we could not parse the original
+								 * query and parsed node is actually a dummy query.
+								 */
 } POOL_QUERY_CONTEXT;
 
 extern POOL_QUERY_CONTEXT *pool_init_query_context(void);

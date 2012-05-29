@@ -9,7 +9,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Portions Copyright (c) 2003-2009	PgPool Global Development Group
+ * Portions Copyright (c) 2003-2012	PgPool Global Development Group
  *
  */
 /*--------------------------------------------------------------------
@@ -383,4 +383,22 @@ get_ps_display(int *displen)
 #endif
 
 	return ps_buffer + ps_buffer_fixed_size;
+}
+
+/*
+ * Show ps idle status
+ */
+void pool_ps_idle_display(POOL_CONNECTION_POOL *backend)
+{
+	StartupPacket *sp;
+	char psbuf[1024];
+
+	sp = MASTER_CONNECTION(backend)->sp;
+	if (MASTER(backend)->tstate == 'T')
+		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle in transaction",
+				 sp->user, sp->database, remote_ps_data);
+	else
+		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle",
+				 sp->user, sp->database, remote_ps_data);
+	set_ps_display(psbuf, false);
 }

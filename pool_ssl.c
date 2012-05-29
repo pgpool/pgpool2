@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2010	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -139,8 +139,6 @@ int pool_ssl_read(POOL_CONNECTION *cp, void *buf, int size) {
 		case SSL_ERROR_NONE:
 			break;
 		case SSL_ERROR_WANT_READ:
-			n = 0;
-			break;
 		case SSL_ERROR_WANT_WRITE:
 
 			/*

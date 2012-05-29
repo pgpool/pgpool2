@@ -61,6 +61,7 @@ typedef struct {
 	 */
 	func_ptr	unregister_func;
 	bool cache_is_session_local;		/* True if cache life time is session local */
+	bool no_cache_if_zero;		/* if register func returns 0, do not cache the data */
 	PoolRelCache *cache;	/* cache data */
 } POOL_RELCACHE;
 

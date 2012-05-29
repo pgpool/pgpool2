@@ -749,9 +749,9 @@ enable_float8_byval
 with_pgsql
 with_pgsql_includedir
 with_pgsql_libdir
-with_memcached
 with_openssl
 with_pam
+with_memcached
 enable_rpath
 enable_sequence_lock
 enable_table_lock
@@ -1411,7 +1411,6 @@ Optional Packages:
   --with-pgsqla=DIR     site header files for PostgreSQL in DIR
   --with-pgsql-includedir=DIR     site header files for PostgreSQL in DIR
   --with-pgsql-libdir=DIR     site library files for PostgreSQL in DIR
---with-memcache=DIR : site library files for Memcached in DIR
   --with-openssl     build with OpenSSL support
   --with-pam     build with PAM support
   --with-memcached=DIR     site header files for libmemcached in DIR

@@ -108,6 +108,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	static char *sq_processes = "pool_processes";
  	static char *sq_nodes = "pool_nodes";
  	static char *sq_version = "pool_version";
+ 	static char *sq_cache = "pool_cache";
 	int commit;
 	List *parse_tree_list;
 	Node *node = NULL;
@@ -144,19 +145,27 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		pool_debug("statement2: %s", contents);
 	}
 
-	/* Create query context */
-	query_context = pool_init_query_context();
-	if (!query_context)
-	{
-		pool_error("SimpleQuery: pool_init_query_context failed");
-		return POOL_END;
-	}
-
 	/*
 	 * Fetch memory cache if possible
 	 */
 	is_likely_select = pool_is_likely_select(contents);
-	if (pool_config->memory_cache_enabled && is_likely_select)
+
+	/*
+	 * If memory query cache enabled and the query seems to be a
+	 * SELECT use query cache if possible. However if we are in an
+	 * explicit transaction and we had writing query before, we should
+	 * not use query cache. This means that even the writing query is
+	 * not anything related to the table which is used the SELECT, we
+	 * do not use cache. Of course we could analyze the SELECT to see
+	 * if it uses the table modified in the transaction, but it will
+	 * need parsing query and accessing to system catalog, which will
+	 * add significant overhead. Moreover if we are in aborted 
+	 * transaction, commands should be ignored, so we should not use
+	 * query cache. 
+	 */
+	if (pool_config->memory_cache_enabled && is_likely_select &&
+		!pool_is_writing_transaction() &&
+		TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) != 'E')
 	{
 		bool foundp;
 
@@ -168,10 +177,19 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 		if (foundp)
 		{
+			pool_ps_idle_display(backend);
 			pool_set_skip_reading_from_backends();
 			pool_stats_count_up_num_cache_hits();
 			return POOL_CONTINUE;
 		}
+	}
+
+	/* Create query context */
+	query_context = pool_init_query_context();
+	if (!query_context)
+	{
+		pool_error("SimpleQuery: pool_init_query_context failed");
+		return POOL_END;
 	}
 
 	/* switch memory context */
@@ -215,6 +233,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 				pool_log("SimpleQuery: Unable to parse the query: \"%s\" from client %s(%s)", contents, remote_host, remote_port);
 			}
 			parse_tree_list = raw_parser(POOL_DUMMY_WRITE_QUERY);
+			query_context->is_parse_error = true;
 		}
 	}
 
@@ -248,6 +267,20 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		 * Start query context
 		 */
 		pool_start_query(query_context, contents, len, node);
+
+		/*
+		 * If the query is DROP DATABASE, after executing it, cache files directory must be discarded.
+		 * So we have to get the DB's oid before it will be DROPped.
+		 */
+		if (pool_config->memory_cache_enabled && is_drop_database(node))
+		{
+			DropdbStmt *stmt = (DropdbStmt *)node;
+			query_context->dboid = pool_get_database_oid_from_dbname(stmt->dbname);
+			if (query_context->dboid != 0)
+			{
+				pool_debug("DB's oid to discard its cache directory: dboid = %d", query_context->dboid);
+			}
+		}
 
 		/*
 		 * Check if multi statement query
@@ -316,18 +349,16 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
                 pool_debug("version reporting");
                 version_reporting(frontend, backend);
             }
+			else if (!strcmp(sq_cache, vnode->name))
+            {
+				is_valid_show_command = true;
+                pool_debug("cache reporting");
+                cache_reporting(frontend, backend);
+            }
 
 			if (is_valid_show_command)
 			{
-				StartupPacket *sp;
-				char psbuf[1024];
-
-				/* show ps status */
-				sp = MASTER_CONNECTION(backend)->sp;
-				snprintf(psbuf, sizeof(psbuf), "%s %s %s idle",
-						 sp->user, sp->database, remote_ps_data);
-				set_ps_display(psbuf, false);
-
+				pool_ps_idle_display(backend);
 				pool_query_context_destroy(query_context);
 				pool_set_skip_reading_from_backends();
 				pool_memory_context_switch_to(old_context);
@@ -352,7 +383,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			}
 
 			/* Switch the flag of is_cache_safe in session_context */
-			if (is_select_query &&
+			if (is_select_query && !query_context->is_parse_error &&
 				pool_is_allow_to_cache(query_context->parse_tree,
 									   query_context->original_query))
 			{
@@ -364,7 +395,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			}
 
 			/* If table is to be cached and the query is DML, save the table oid */
-			if (!is_select_query)
+			if (!is_select_query && !query_context->is_parse_error)
 			{
 				num_oids = pool_extract_table_oids(node, &oids);
 
@@ -601,7 +632,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	int specific_error = 0;
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_QUERY_CONTEXT *query_context;
-	POOL_SENT_MESSAGE *msg;
+	POOL_SENT_MESSAGE *bind_msg;
 
 	/* Get session context */
 	session_context = pool_get_session_context();
@@ -613,32 +644,33 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	pool_debug("Execute: portal name <%s>", contents);
 
-	msg = pool_get_sent_message('B', contents);
-	if (!msg)
+	bind_msg = pool_get_sent_message('B', contents);
+	if (!bind_msg)
 	{
 		pool_error("Execute: cannot get bind message");
 		return POOL_END;
 	}
-	if(!msg->query_context)
+	if(!bind_msg->query_context)
 	{
 		pool_error("Execute: cannot get query context");
 		return POOL_END;
 	}
-	if (!msg->query_context->original_query)
+	if (!bind_msg->query_context->original_query)
 	{
 		pool_error("Execute: cannot get original query");
 		return POOL_END;
 	}
-	if (!msg->query_context->parse_tree)
+	if (!bind_msg->query_context->parse_tree)
 	{
 		pool_error("Execute: cannot get parse tree");
 		return POOL_END;
 	}
 
-	query_context = msg->query_context;
-	node = msg->query_context->parse_tree;
-	query = msg->query_context->original_query;
+	query_context = bind_msg->query_context;
+	node = bind_msg->query_context->parse_tree;
+	query = bind_msg->query_context->original_query;
 	pool_debug("Execute: query: %s", query);
+
 	strlcpy(query_string_buffer, query, sizeof(query_string_buffer));
 
 	pool_debug("Execute: query string = <%s>", query);
@@ -650,15 +682,60 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	{
 		bool foundp;
 		POOL_STATUS status;
+		char *search_query = NULL;
 
-		status = pool_fetch_from_memory_cache(frontend,backend, query, &foundp);
+		search_query = (char *)malloc(sizeof(char) * strlen(query) + 1);
+		if (search_query == NULL)
+		{
+			return POOL_END;
+		}
+		strcpy(search_query, query);
+
+		/*
+		 * Add bind message's info to query to search.
+		 */
+		if (bind_msg->param_offset && bind_msg->contents)
+		{
+			/* Extract binary contents from bind message */
+			char *query_in_bind_msg = bind_msg->contents + bind_msg->param_offset;
+			char hex_str[4];  // 02X chars + white space + null end
+			int max_search_query_size = 0;
+			int i = 0;
+			char *tmp;
+
+			for (i = 0; i < bind_msg->len - bind_msg->param_offset; i++)
+			{
+				while (max_search_query_size <= sizeof(char) * strlen(search_query))
+				{
+					max_search_query_size += 1024;
+					tmp =(char *)realloc(search_query, sizeof(char) * max_search_query_size);
+					if (tmp == NULL)
+					{
+						return POOL_END;
+					}
+					search_query = tmp;
+					tmp = NULL;
+				}
+
+				sprintf(hex_str, (i == 0) ? " %02X" : "%02X", (unsigned int)query_in_bind_msg[i]);
+				strcat(search_query, hex_str);
+			}
+
+			query_context->query_w_hex = search_query;
+		}
+
+		/* If the query is SELECT from table to cache, try to fetch cached result. */
+		status = pool_fetch_from_memory_cache(frontend, backend, search_query, &foundp);
 
 		if (status != POOL_CONTINUE)
 			return status;
 
 		if (foundp)
 		{
+			pool_ps_idle_display(backend);
 			pool_set_skip_reading_from_backends();
+			pool_stats_count_up_num_cache_hits();
+			pool_unset_query_in_progress();
 			return POOL_CONTINUE;
 		}
 	}
@@ -684,7 +761,6 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			{
 				return POOL_END;
 			}
-
 
 			/* Check specific errors */
 			specific_error = check_errors(backend, MASTER_NODE_ID);
@@ -811,6 +887,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 				pool_log("Parse: Unable to parse the query: \"%s\" from client %s(%s)", stmt, remote_host, remote_port);
 			}
 			parse_tree_list = raw_parser(POOL_DUMMY_WRITE_QUERY);
+			query_context->is_parse_error = true;
 		}
 	}
 
@@ -836,6 +913,52 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		}
 
 		session_context->uncompleted_message = msg;
+
+		/*
+		 * If the table is to be cached, set is_cache_safe TRUE and register table oids.
+		 */
+		if (pool_config->memory_cache_enabled)
+		{
+			bool is_likely_select = false;
+			bool is_select_query = false;
+			int num_oids;
+			int *oids;
+			int i;
+
+			/* Check if the query is actually SELECT */
+			is_likely_select = pool_is_likely_select(query_context->original_query);
+			if (is_likely_select && IsA(node, SelectStmt))
+			{
+				is_select_query = true;
+			}
+
+			/* Switch the flag of is_cache_safe in session_context */
+			if (is_select_query && !query_context->is_parse_error &&
+				pool_is_allow_to_cache(query_context->parse_tree,
+									   query_context->original_query))
+			{
+				pool_set_cache_safe();
+			}
+			else
+			{
+				pool_unset_cache_safe();
+			}
+
+			/* If table is to be cached and the query is DML, save the table oid */
+			if (!is_select_query && !query_context->is_parse_error)
+			{
+				num_oids = pool_extract_table_oids(node, &oids);
+
+				if (num_oids > 0)
+				{
+					/* Save to oid buffer */
+					for (i=0;i<num_oids;i++)
+					{
+						pool_add_dml_table_oid(oids[i]);
+					}
+				}
+			}
+		}
 
 		/*
 		 * Decide where to send query
@@ -896,6 +1019,9 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	pool_memory_context_switch_to(old_context);
 
+	/*
+	 * If in replication mode, send "SYNC" message if not in a transaction.
+	 */
 	if (REPLICATION)
 	{
 		char kind;
@@ -921,7 +1047,10 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 				return POOL_END;
 			}
 
-			if (ReadyForQuery(frontend, backend, 0) != POOL_CONTINUE)
+			/*
+			 * SYNC message returns "Ready for Query" message.
+			 */
+			if (ReadyForQuery(frontend, backend, 0, false) != POOL_CONTINUE)
 			{
 				pool_query_context_destroy(query_context);
 				return POOL_END;
@@ -1088,6 +1217,14 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		return POOL_END;
 	}
 
+	/*
+	 * If the query can ce cached, save its offset of query text in bind message's content.
+	 */
+	if (query_context->is_cache_safe)
+	{
+		bind_msg->param_offset = sizeof(int) + sizeof(char) * (strlen(portal_name) + strlen(pstmt_name));
+	}
+
 	session_context->uncompleted_message = bind_msg;
 
 	/* rewrite bind message */
@@ -1104,7 +1241,7 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	if (pool_config->load_balance_mode && pool_is_writing_transaction())
 	{
-		if(parse_before_bind(frontend, backend, parse_msg) != POOL_CONTINUE)
+		if (parse_before_bind(frontend, backend, parse_msg) != POOL_CONTINUE)
 			return POOL_END;
 	}
 
@@ -1284,16 +1421,17 @@ POOL_STATUS FunctionCall3(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 
 /*
  * Process ReadyForQuery('Z') message.
+ * If send_ready is true, send 'Z' message to frontend.
+ * If cache_commit is true, commit or discard query cache according to
+ * transaction state.
  *
  * - if the error status "mismatch_ntuples" is set, send an error query
  *	 to all DB nodes to abort transaction or do failover.
  * - internal transaction is closed
  */
 POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
-						  POOL_CONNECTION_POOL *backend, int send_ready)
+						  POOL_CONNECTION_POOL *backend, bool send_ready, bool cache_commit)
 {
-	StartupPacket *sp;
-	char psbuf[1024];
 	int i;
 	int len;
 	signed char kind;
@@ -1498,8 +1636,27 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				 * If the query was BEGIN/START TRANSACTION, clear the
 				 * history that we had a writing command in the transaction
 				 * and forget the transaction isolation level.
+				 *
+				 * XXX If BEGIN is received while we are already in an
+				 * explicit transaction, the command *successes*
+				 * (just with a NOTICE message). In this case we lose
+				 * "writing_transaction" etc. info.
 				 */
 				if (is_start_transaction_query(node))
+				{
+					pool_unset_writing_transaction();
+					pool_unset_failed_transaction();
+					pool_unset_transaction_isolation();
+				}
+
+				/*
+				 * If the query was COMMIT/ABORT, clear the history
+				 * that we had a writing command in the transaction
+				 * and forget the transaction isolation level.  This
+				 * is neccessary if succeeding transaction is not an
+				 * explicit one.
+				 */
+				else if (is_commit_or_rollback_query(node))
 				{
 					pool_unset_writing_transaction();
 					pool_unset_failed_transaction();
@@ -1529,19 +1686,29 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				}
 
 				/*
-				 * If the query was not READ SELECT, remember that we had
-				 * a write query in this transaction.
+				 * If the query was not READ SELECT, and we are in an
+				 * explicit transaction, remember that we had a write
+				 * query in this transaction.
 				 */
-				else if (!is_select_query(node, query))
+				else if (!is_select_query(node, query) &&
+						 TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) == 'T')
 				{
 					pool_set_writing_transaction();
 				}
 			}
 
 			/* Memory cache enabled? */
-			if (pool_config->memory_cache_enabled)
+			if (cache_commit && pool_config->memory_cache_enabled)
 			{
-				pool_handle_query_cache(backend, query, node, state);
+				if (pool_is_doing_extended_query_message())
+				{
+					pool_handle_query_cache(backend, session_context->query_context->query_w_hex, node, state);
+					free(session_context->query_context->query_w_hex); // malloced in Execute().
+				}
+				else
+				{
+					pool_handle_query_cache(backend, query, node, state);
+				}
 			}
 		}
 		/*
@@ -1568,14 +1735,10 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			pool_query_context_destroy(pool_get_session_context()->query_context);
 	}
 
-	sp = MASTER_CONNECTION(backend)->sp;
-	if (MASTER(backend)->tstate == 'T')
-		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle in transaction",
-				 sp->user, sp->database, remote_ps_data);
-	else
-		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle",
-				 sp->user, sp->database, remote_ps_data);
-	set_ps_display(psbuf, false);
+	/*
+	 * Show ps idle status
+	 */
+	pool_ps_idle_display(backend);
 
 	return POOL_CONTINUE;
 }
@@ -2344,7 +2507,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 				break;
 
 			case 'Z':	/* ReadyForQuery */
-				status = ReadyForQuery(frontend, backend, 1);
+				status = ReadyForQuery(frontend, backend, true, true);
 				pool_debug("ProcessBackendResponse: Ready For Query");
 				break;
 
@@ -2473,7 +2636,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 				break;
 
 			case 'Z':	/* ReadyForQuery */
-				status = ReadyForQuery(frontend, backend, 1);
+				status = ReadyForQuery(frontend, backend, true, true);
 				break;
 
 			default:

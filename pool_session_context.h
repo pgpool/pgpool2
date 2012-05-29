@@ -44,28 +44,30 @@ typedef enum {
 	POOL_REPEATABLE_READ,		/* Rpeatable read */
 	POOL_SERIALIZABLE			/* Serializable */
 } POOL_TRANSACTION_ISOLATION;
-#ifdef NOT_USED
-/*
- * where to send map for PREPARE/EXECUTE/DEALLOCATE
- */
-#define POOL_MAX_PREPARED_STATEMENTS 128
-#define POOL_MAX_PREPARED_NAME 64
 
-typedef struct {
-	int nelem;	/* Number of elements */
-	char name[POOL_MAX_PREPARED_STATEMENTS][POOL_MAX_PREPARED_NAME];		/* Prepared statement name */
-	bool where_to_send[POOL_MAX_PREPARED_STATEMENTS][MAX_NUM_BACKENDS];
-} POOL_PREPARED_SEND_MAP;
-#endif /* NOT_USED */
+/*
+ * Message content of extended query
+ */
 typedef struct {
 	char kind;	/* one of 'P':Parse, 'B':Bind or 'Q':Query(PREPARE) */
-	int len;	/* not network byte order */
+	int len;	/* in host byte order */
 	char *contents;
 	int num_tsparams;
 	char *name;		/* object name of prepared statement or portal */
 	POOL_QUERY_CONTEXT *query_context;
+	/*
+	 * Following members are only used when memcache is enabled.
+	 */
+	bool is_cache_safe;	/* true if the query can be cached */
+	int param_offset;		/* Offset from contents where actual bind
+							 * paramters are stored.
+							 * This is meaningful only when is_cache_safe is true.
+							 */
 } POOL_SENT_MESSAGE;
 
+/*
+ * List of POOL_SENT_MESSAGE
+ */
 typedef struct {
 	int capacity;	/* capacity of list */
 	int size;		/* number of elements */
@@ -191,6 +193,8 @@ extern void pool_unset_command_success(void);
 extern void pool_set_command_success(void);
 extern bool pool_is_command_success(void);
 extern void pool_copy_prep_where(bool *src, bool *dest);
+extern bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc);
+
 #ifdef NOT_USED
 extern void pool_add_prep_where(char *name, bool *map);
 extern bool *pool_get_prep_where(char *name);

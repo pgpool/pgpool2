@@ -471,38 +471,46 @@ relcache_expire = 0
                                    # controls the life time of the cache.
 
 #------------------------------------------------------------------------------
-# MEMORY CACHE
+# ON MEMORY QUERY MEMORY CACHE
 #------------------------------------------------------------------------------
-# If true, use the memory cache functionality, false by default
-memory_cache_enabled = false
+# If on, use the memory cache functionality, off by default
+memory_cache_enabled = off
 
-# Cache store method. either shmem(shared memory) or Memcached. shmem by default
+# Cache storage method. either 'shmem'(shared memory) or 'memcached'. 'shmem' by default
 memqcache_method = 'shmem'
 
-# Memcached host name. Mandatory if memqcache_method=memcached.
-# Default to localhost
+# Memcached host name or IP address. Mandatory if memqcache_method = 'memcached'.
+# Defaults to localhost
 memqcache_memcached_host = 'localhost'
 
-# Memcached port number. Mondatory if memqcache_method=memcached.
-# Default to 11211
-memqcache_memcached_port=11211
+# Memcached port number. Mondatory if memqcache_method = 'memcached'.
+# Defaults to 11211
+memqcache_memcached_port = 11211
 
-# Total memory size in bytes for storing memory cache. Mandatory if memqcache_method=shmem.
-# 128MB by default.
-memqcache_total_size=134217728
+# Total memory size in bytes for storing memory cache. Mandatory if memqcache_method = 'shmem'.
+# Defaults to 64MB.
+memqcache_total_size = 67108864
 
-# Total number of cache entries. Mandatory if memqcache_method=shmem.
-# a cache entry consumes 48 bytes.
-memqcache_max_num_cache=131072
+# Total number of cache entries. Mandatory if memqcache_method = 'shmem'.
+# Each cache entry consumes 48 bytes on shared memory. Defaults to 1,000,000(45.8MB).
+memqcache_max_num_cache = 1000000
 
-# Memory cache entry life time specified in seconds. 60 by default.
-memqcache_expire=60
+# Memory cache entry life time specified in seconds.
+# 0 means infinite life time. 0 by default.
+memqcache_expire = 0
+
+# If on, invalidation of query cache is triggered by corresponding
+# DDL/DML/DCL(and memqcache_expire).  If off, it is only triggered
+# by memqcache_expire.  on by default.
+memqcache_auto_cache_invalidation = on
 
 # Maximum SELECT result size in bytes.
-memqcache_maxcache=1024
+# Must be smaller than memqcache_cache_block_size. Defaults to 400KB.
+memqcache_maxcache = 409600
 
-# Cache block size in bytes. 1MB by default
-memqcache_cache_block_size=1048576
+# Cache block size in bytes. Mandatory if memqcache_method = 'shmem'.
+# Defaults to 1MB.
+memqcache_cache_block_size = 1048576
 
 # Temporary work directory to record table oids
 memqcache_oiddir = '/var/log/pgpool/oiddir'

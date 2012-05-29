@@ -141,7 +141,11 @@ void do_child(int unix_fd, int inet_fd)
 
 	/* initialize random seed */
 	gettimeofday(&now, &tz);
+#if defined(sun) || defined(__sun)
+	srand((unsigned int) now.tv_usec);
+#else
 	srandom((unsigned int) now.tv_usec);
+#endif
 
 	/* initialize system db connection */
 	init_system_db_connection();
@@ -1837,9 +1841,17 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
  */
 static void connection_count_up(void)
 {
+#ifdef HAVE_SIGPROCMASK
+	sigset_t oldmask;
+#else
+	int	oldmask;
+#endif
+
+	POOL_SETMASK2(&BlockSig, &oldmask);
 	pool_semaphore_lock(CONN_COUNTER_SEM);
 	Req_info->conn_counter++;
 	pool_semaphore_unlock(CONN_COUNTER_SEM);
+	POOL_SETMASK(&oldmask);
 }
 
 /*
@@ -1848,6 +1860,13 @@ static void connection_count_up(void)
  */
 static void connection_count_down(void)
 {
+#ifdef HAVE_SIGPROCMASK
+	sigset_t oldmask;
+#else
+	int	oldmask;
+#endif
+
+	POOL_SETMASK2(&BlockSig, &oldmask);
 	pool_semaphore_lock(CONN_COUNTER_SEM);
 	/*
 	 * Make sure that we do not decrement too much.  If failed to read
@@ -1860,6 +1879,7 @@ static void connection_count_down(void)
 	if (Req_info->conn_counter > 0)
 		Req_info->conn_counter--;
 	pool_semaphore_unlock(CONN_COUNTER_SEM);
+	POOL_SETMASK(&oldmask);
 }
 
 /*
@@ -1891,7 +1911,13 @@ int select_load_balancing_node(void)
 			total_weight += BACKEND_INFO(i).backend_weight;
 		}
 	}
+
+#if defined(sun) || defined(__sun)
+	r = (((double)rand())/RAND_MAX) * total_weight;
+#else
 	r = (((double)random())/RAND_MAX) * total_weight;
+#endif
+
 	total_weight = 0.0;
 	for (i=0;i<NUM_BACKENDS;i++)
 	{

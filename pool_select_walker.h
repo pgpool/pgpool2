@@ -38,6 +38,7 @@ typedef struct {
 	bool    has_system_catalog;     /* True if system catalog table is used */
 	bool    has_temp_table;     /* True if temporary table is used */
 	bool    has_unlogged_table; /* True if unlogged table is used */
+	bool    has_view; /* True if view is used */
 	bool    has_function_call;  /* True if write function call is used */
 	bool    has_non_immutable_function_call;    /* True if non immutable functions are used */
 	bool    has_insertinto_or_locking_clause;   /* True if it has SELECT INTO or FOR SHARE/UPDATE */
@@ -51,6 +52,7 @@ extern bool pool_has_non_immutable_function_call(Node *node);
 extern bool pool_has_system_catalog(Node *node);
 extern bool pool_has_temp_table(Node *node);
 extern bool pool_has_unlogged_table(Node *node);
+extern bool pool_has_view(Node *node);
 extern bool pool_has_insertinto_or_locking_clause(Node *node);
 extern bool pool_has_pgpool_regclass(void);
 extern bool raw_expression_tree_walker(Node *node, bool (*walker) (), void *context);
@@ -58,5 +60,7 @@ extern int pool_table_name_to_oid(char *table_name);
 extern int pool_extract_table_oids_from_select_stmt(Node *node, SelectContext *ctx);
 extern RangeVar *makeRangeVarFromNameList(List *names);
 extern int pattern_compare(char *str, const int type, const char *param_name);
+extern bool is_unlogged_table(char *table_name);
+extern bool is_view(char *table_name);
 
 #endif /* POOL_SELECT_WALKER_H */
