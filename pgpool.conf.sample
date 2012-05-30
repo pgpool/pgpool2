@@ -306,16 +306,12 @@ follow_master_command = ''
 
 
 #------------------------------------------------------------------------------
-# PARALLEL MODE AND QUERY CACHE
+# PARALLEL MODE
 #------------------------------------------------------------------------------
 
 parallel_mode = off
                                    # Activates parallel query mode
                                    # (change requires restart)
-enable_query_cache = off
-                                   # Activates query cache
-                                   # (change requires restart)
-
 pgpool2_hostname = ''
                                    # Set pgpool2 hostname 
                                    # (change requires restart)

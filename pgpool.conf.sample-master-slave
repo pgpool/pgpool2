@@ -305,33 +305,29 @@ follow_master_command = ''
 
 
 #------------------------------------------------------------------------------
-# PARALLEL MODE AND QUERY CACHE
+# PARALLEL MODE
 #------------------------------------------------------------------------------
 
 parallel_mode = off
                                    # Activates parallel query mode
                                    # (change requires restart)
-enable_query_cache = off
-                                   # Activates query cache
-                                   # (change requires restart)
-
 pgpool2_hostname = ''
                                    # Set pgpool2 hostname 
                                    # (change requires restart)
 
 # - System DB info -
 
-system_db_hostname  = 'localhost'
+#system_db_hostname  = 'localhost'
                                    # (change requires restart)
-system_db_port = 5432
+#system_db_port = 5432
                                    # (change requires restart)
-system_db_dbname = 'pgpool'
+#system_db_dbname = 'pgpool'
                                    # (change requires restart)
-system_db_schema = 'pgpool_catalog'
+#system_db_schema = 'pgpool_catalog'
                                    # (change requires restart)
-system_db_user = 'pgpool'
+#system_db_user = 'pgpool'
                                    # (change requires restart)
-system_db_password = ''
+#system_db_password = ''
                                    # (change requires restart)
 
 
