@@ -484,6 +484,16 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].desc, "path to the SSL public certificate file", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	strncpy(status[i].name, "ssl_ca_cert", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ssl_ca_cert);
+	strncpy(status[i].desc, "aath to a single PEM format file", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "ssl_ca_cert_dir", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ssl_ca_cert_dir);
+	strncpy(status[i].desc, "Directory containing CA root certificate(s)", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	strncpy(status[i].name, "debug_level", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->debug_level);
 	strncpy(status[i].desc, "debug message level", POOLCONFIG_MAXDESCLEN);
@@ -552,6 +562,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "backend_weight%d", j);
 		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%f", BACKEND_INFO(j).backend_weight/RAND_MAX);
 		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "weight of backend #%d", j);
+		i++;
+
+		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "backend_data_directory%d", j);
+		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", BACKEND_INFO(j).backend_data_directory);
+		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "data directory of backend #%d", j);
 		i++;
 
 		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "backend_status%d", j);
