@@ -4314,6 +4314,8 @@ pgpool-IIを操作するUNIXコマンドとして、以下のものがあります。
 	<td>プロセス一覧を取得する</td></tr>
 <tr><th><a href="#pcp_proc_info">pcp_proc_info</a></th>
 	<td>プロセス情報を取得する</td></tr>
+<tr><th><a href="#pcp_pool_status">pcp_pool_status</a></th>
+	<td>pgpool.conf のパラメータ設定値を取得する</td></tr>
 <tr><th><a href="#pcp_systemdb_info">pcp_systemdb_info</a></th>
 	<td>システムDB情報を取得する</td></tr>
 <tr><th><a href="#pcp_detach_node">pcp_detach_node</a></th>
@@ -4452,13 +4454,41 @@ postgres_db postgres 1150769932 1150767351 3 0 1 14068 1
 定義されていないプロセスIDを指定するとBackendErrorと表示され、<a href="#exit_status">終了コード12</a>で終了します。
 </pre>
 
+<h3 id="pcp_pool_status">pcp_pool_status</h3>
+<pre>
+書式:
+pcp_pool_status _timeout_  _host_  _port_  _userid_  _passwd_
+</pre>
+<p>pgpool.conf のパラメータ設定値を取得します。出力結果は以下の通りです。</p>
+<pre>
+$ pcp_pool_status 10 localhost 9898 postgres hogehoge
+name : listen_addresses
+value: localhost
+desc : host name(s) or IP address(es) to listen to
+
+name : port 
+value: 9999 
+desc : pgpool accepting port number
+
+name : socket_dir
+value: /tmp 
+desc : pgpool socket directory
+
+name : pcp_port
+value: 9898 
+desc : PCP port # to bind 
+</pre>
+
+
 <h3 id="pcp_systemdb_info">pcp_systemdb_info</h3>
 <pre>
 書式：
 pcp_systemdb_info  _timeout_  _host_  _port_  _userid_  _passwd_
+</pre>
 
-pgpool-IIのシステムDB情報を表示します。出力結果は以下の通りです。
+<p>pgpool-IIのシステムDB情報を表示します。出力結果は以下の通りです。</p>
 
+<pre>
 $ pcp_systemdb_info 10 localhost 9898 postgres hogehoge
 localhost 5432 yamaguti '' pgpool_catalog pgpool 3
 yamaguti public accounts aid 4 aid bid abalance filler integer integer integer character(84) dist_def_accounts
