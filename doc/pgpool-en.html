@@ -3498,6 +3498,7 @@ invalidate old query cache automatically when the data is updated.</p>
 * pcp_node_info         - retrieves the node information
 * pcp_proc_count        - retrieves the process list
 * pcp_proc_info         - retrieves the process information
+* pcp_pool_status       - retrieves parameters in pgpool.conf
 * pcp_systemdb_info     - retrieves the System DB information
 * pcp_detach_node       - detaches a node from pgpool-II
 * pcp_attach_node       - attaches a node to pgpool-II
@@ -3666,6 +3667,31 @@ Connected    : 1
 
 <p>Specifying an invalid node ID will result in an error with exit
 status 12, and BackendError will be displayed.</p>
+
+<h3 id="pcp_pool_status">pcp_pool_status</h3>
+<pre>Format:
+pcp_pool_status _timeout_  _host_  _port_  _userid_  _passwd_
+</pre>
+<p>
+Displays parameters in pgpool.conf. The output example is as follows:
+</p>
+<pre>$ pcp_pool_status 10 localhost 9898 postgres hogehoge
+name : listen_addresses
+value: localhost
+desc : host name(s) or IP address(es) to listen to
+
+name : port
+value: 9999
+desc : pgpool accepting port number
+
+name : socket_dir
+value: /tmp
+desc : pgpool socket directory
+
+name : pcp_port
+value: 9898
+desc : PCP port # to bind
+</pre>
 
 <h3>pcp_systemdb_info</h3>
 <p>

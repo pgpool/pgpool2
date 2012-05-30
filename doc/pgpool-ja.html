@@ -3383,6 +3383,7 @@ configure に失敗します。必ず libpq 3.0 以降(PostgreSQL 7.4以降
    * pcp_node_info	- ノード情報を取得する
    * pcp_proc_count	- プロセス一覧を取得する
    * pcp_proc_info	- プロセス情報を取得する
+   * pcp_pool_status    pgpool.conf のパラメータ設定値を取得する
    * pcp_systemdb_info	- システムDB情報を取得する
    * pcp_detach_node	- ノードを切り離す
    * pcp_attach_node	- ノードを復帰させる
@@ -3522,6 +3523,31 @@ configure に失敗します。必ず libpq 3.0 以降(PostgreSQL 7.4以降
    終了します。
 </pre>
 </p>
+
+<h3 id="pcp_pool_status">pcp_pool_status</h3>
+<pre>
+書式:
+pcp_pool_status _timeout_  _host_  _port_  _userid_  _passwd_
+</pre>
+<p>pgpool.conf のパラメータ設定値を取得します。出力結果は以下の通りです。</p>
+<pre>
+$ pcp_pool_status 10 localhost 9898 postgres hogehoge
+name : listen_addresses
+value: localhost
+desc : host name(s) or IP address(es) to listen to
+
+name : port
+value: 9999
+desc : pgpool accepting port number
+
+name : socket_dir
+value: /tmp
+desc : pgpool socket directory
+
+name : pcp_port
+value: 9898
+desc : PCP port # to bind
+</pre>
 
 <h3>pcp_systemdb_info</h3>
 <p>
