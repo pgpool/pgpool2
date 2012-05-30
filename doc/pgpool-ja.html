@@ -3029,13 +3029,13 @@ pgpoolによって所有されるセッション全体ではありません。
 <p>"SHOW pool_status" は設定パラメータの名前と値、説明を表示します。出力の一部を示します。</p>
 <pre>
 benchs2=# show pool_status;
-             item              |              value              |                           description
--------------------------------+---------------------------------+------------------------------------------------------------------
- listen_addresses              | 127.0.0.1                       | host name(s) or IP address(es) to listen to
- port                          | 9999                            | pgpool accepting port number
- socket_dir                    | /tmp                            | pgpool socket directory
- num_init_children             | 5                               | # of children initially pre-forked
- child_life_time               | 300                             | if idle for this seconds, child exits
+                 item                 |             value              |                           description
+--------------------------------------+--------------------------------+------------------------------------------------------------------
+ listen_addresses                     | localhost                      | host name(s) or IP address(es) to listen to
+ port                                 | 9999                           | pgpool accepting port number
+ socket_dir                           | /tmp                           | pgpool socket directory
+ pcp_port                             | 9898                           | PCP port # to bind 
+ pcp_socket_dir                       | /tmp                           | PCP socket directory
 </pre>
 
 <h2 id="pool_nodes">pool_nodes</h2>
