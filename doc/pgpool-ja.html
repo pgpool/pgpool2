@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="content-type" content="text/html;charset=iso-2022-jp">
-<link rel="stylesheet" href="./pgpool-ja.css" type="text/css">
+<link rel="stylesheet" href="./pgpool.css" type="text/css">
 <title>pgpool-II $B%f!<%6%^%K%e%"%k(B</title>
 </head>
 <body>
@@ -186,22 +186,27 @@ pgpool-II$B$N%=!<%9%3!<%I$+$i$N%$%s%9%H!<%k$K$O!"(Bgcc 2.9$B0J>e!"$*$h$S(BGN
     <tr><th class="nodec"><code>--with-openssl</code></th>
     <td>pgpool-II$B$r(BOpenSSL$B%5%]!<%HIU$G:n@.$7$^$9!#(B
         $B%G%U%)%k%H$G$O(BOpenSSL$B%5%]!<%H$OL58z$G$9!#(B
+        <span class="version">V2.3 $B!A(B</span>
 	</td></tr>
     <tr><th class="nodec"><code>--enable-sequence-lock</code></th>
     <td>pgpool-II 3.0$B%7%j!<%:(B(3.0.4$B$^$G(B)$B8_49$N(Binsert_lock$B$r;HMQ$7$^$9!#(B
         pgpool-II$B$O!"%7!<%1%s%9%F!<%V%k$N9T$KBP$7$F%m%C%/$r9T$$$^$9!#(B
         $B$3$l$O!"(B2011$BG/(B06$B7n$h$j8e$K%j%j!<%9$5$l$?(BPostgreSQL 8.2$B0J9_$G$O;HMQ$G$-$^$;$s!#(B
+        <span class="version">V3.1 $B!A(B</span>
 	</td></tr>
     <tr><th class="nodec"><code>--enable-table-lock</code></th>
     <td>pgpool-II 2.2$B$H(B2.3$B%7%j!<%:8_49$N(Binsert_lock$B$r;HMQ$7$^$9!#(B
         pgpool-II$B$O!"A^F~BP>]$N%F!<%V%k$KBP$7$F%m%C%/$r9T$$$^$9!#(B
         $B$3$l$O!"%m%C%/$,(BVACUUM$B$H6%9g$9$k$?$aHs?d>)$G$9!#(B
+        <span class="version">V3.1 $B!A(B</span>
 	</td></tr>
-	<tr><th class="nodec"><code>--with-memcached=path</code></th>
+	<tr><th class="nodec"><code>--with-memcached=path</code>
+    </th>
 	<td>$B%-%c%C%7%e%9%H%l!<%8$K(B <a href="memcached_params">memcached</a> $B$rMxMQ$7!"(B
     <a href="#memqcache">$B%*%s%a%b%j%/%(%j%-%c%C%7%e(B</a>$B5!G=$r(B
 		$BMxMQ$7$?$$>l9g$K;XDj$7$^$9!#(B
 		<a href="http://libmemcached.org/libMemcached.html">libMemcached</a>$B$N%$%s%9%H!<%k$,I,MW$G$9!#(B
+        <span class="version">V3.2 $B!A(B</span>
 	</td></tr>
 	</table>
 	</dd>
@@ -214,7 +219,7 @@ make install
 </pre>
     </dd>
 
-<dt>pgpool_regclass$B$N%$%s%9%H!<%k(B</dt>
+<dt>pgpool_regclass$B$N%$%s%9%H!<%k(B <span class="version">V3.0 $B!A(B</span></dt>
     <dd>
     <p>
     PostgreSQL 8.0$B0J9_$r;HMQ$7$F$$$k>l9g$O!"(Bpgpool-II$B$,FbIt$G;HMQ$9$k(BC$B4X?t(Bpgpool_regclass$B$r%$%s%9%H!<%k$7$^$9!#(B
@@ -239,7 +244,7 @@ psql -f pgpool-regclass.sql template1
     </p>
     </dd>
 
-<dt>insert_lock$B%F!<%V%k$N:n@.(B</dt>
+<dt>insert_lock$B%F!<%V%k$N:n@.(B <span class="version">V3.0 $B!A(B</span></dt>
 <dd>
     <p>
     $B%l%W%j%1!<%7%g%s%b!<%I$G(Binsert_lock$B$rMxMQ$7$?$$>l9g$O!"GSB>@)8fMQ$N%F!<%V%k(B
@@ -393,7 +398,7 @@ pcp.conf$B$O!"(Bpgpool-II$B$rF0:n$5$;$k%f!<%6(BID$B$GFI$_<h$j2DG=$K$J$C$F$$
 <!-- ================================================================================ -->
 
 <h1 id="pgpool_conf">pgpool.conf$B$N@_Dj(B</h1>
-<h2 id="pgpool_conf_sample">$B%5%s%W%k%U%!%$%k(B</h2>
+<h2 id="pgpool_conf_sample">$B%5%s%W%k%U%!%$%k(B <span class="version">2.3 $B!A(B</span></h2>
 <p>
 pgpool-II$B$r%$%s%9%H!<%k$9$k$H!"%$%s%9%H!<%k@h%G%#%l%/%H%j(B($B%G%U%)%k%H$G$O(B/usr/local)
 /etc/pgpool.conf.sample$B$,$G$-$k$N$G!"$=$l$r(B
@@ -430,6 +435,8 @@ pgpool.conf$B$G$O6uGr9T$d(B#$B$G;O$^$k9T$O%3%a%s%H$H8+$J$5$l$^$9!#(B
 <p>
 $B3FF0:n%b!<%I$G6&DL$9$k@_Dj9`L\$r@bL@$7$^$9!#(B
 </p>
+
+<h3>Connections</h3>
 
 <dl>
 <dt><a name="LISTEN_ADDRESS"></a>listen_addresses</dt>
@@ -490,10 +497,10 @@ pgpool.conf$B$G$O6uGr9T$d(B#$B$G;O$^$k9T$O%3%a%s%H$H8+$J$5$l$^$9!#(B
     </p>
     </dd>
 
-<dt><a name="BACKEND_SOCKET_DIR"></a>backend_socket_dir</dt>
+<dt><a name="BACKEND_SOCKET_DIR"></a>backend_socket_dir <span class="version">$B!A(B V3.0</dt>
     <dd>
-    <font color="red"><em>DEPRECATED</em></font><br>
-    <p>
+    <p class="version_notice">
+    <em class="caution">DEPRECATED$B!J!A(B 3.0$B!K(B</em>
     $B$3$N%Q%i%a!<%?$O!"(Blibpq$B$N%]%j%7!<$K9g$o$;$F:o=|$5$l$^$9!#(B
     $BBe$o$j$K(B <a href=#BACKEND_HOSTNAME">backend_hostname</a> $B%Q%i%a!<%?$r;H$C$F$/$@$5$$!#(B
     </p>
@@ -516,7 +523,11 @@ pgpool.conf$B$G$O6uGr9T$d(B#$B$G;O$^$k9T$O%3%a%s%H$H8+$J$5$l$^$9!#(B
     $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O@_Dj%U%!%$%k$r:FFI$_9~$_$7$F$/$@$5$$!#(B
     </p>
     </dd>
+</dl>
 
+<h3>Pools</h3>
+
+<dl>
 <dt><a name="NUM_INIT_CHILDREN"></a>num_init_children</dt>
     <dd>
     <p>
@@ -606,6 +617,17 @@ pgpool.conf$B$G$O6uGr9T$d(B#$B$G;O$^$k9T$O%3%a%s%H$H8+$J$5$l$^$9!#(B
     </p>
     </dd>
 
+<dt><a name="ENABLE_POOL_HBA"></a>enable_pool_hba</dt>
+    <dd>
+    <p>
+    true$B$J$i$P!"(Bpool_hba.conf$B$K=>$C$F%/%i%$%"%s%HG'>Z$r9T$$$^$9!#(B
+    $B>\:Y$O(B<a href="#hba">$B%/%i%$%"%s%HG'>Z(B(HBA)$B$N$?$a$N(Bpool_hba.conf$B@_DjJ}K!(B</a>$B$r;2>H$7$F$/$@$5$$!#(B
+    </p>
+    <p>
+    $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O(B pgpool-II $B$r:F5/F0$7$F$/$@$5$$!#(B
+    </p>
+    </dd>
+
 <dt><a name="AUTHENTICATION_TIMEOUT"></a>authentication_timeout</dt>
     <dd>
     <p>
@@ -616,15 +638,12 @@ pgpool.conf$B$G$O6uGr9T$d(B#$B$G;O$^$k9T$O%3%a%s%H$H8+$J$5$l$^$9!#(B
     $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O@_Dj%U%!%$%k$r:FFI$_9~$_$7$F$/$@$5$$!#(B
     </p>
     </dd>
+</dl>
 
-<dt><a name="LOGDIR"></a>logdir</dt>
-    <dd>
-    <p>
-    $B$3$N%G%#%l%/%H%j2<$K!"(Bpgpool-II$B$N(BDB$B%N!<%I$N>uBV$r5-O?$9$k(Bpgpool_status$B%U%!%$%k$,=q$+$l$^$9!#(B
-    </p>
-    </dd>
+<h3>Logs</h3>
 
-<dt><a name="LOG_DESTINATION"></a>log_destination</dt>
+<dl>
+<dt><a name="LOG_DESTINATION"></a>log_destination <span class="version">V3.1 $B!A(B</span></dt>
     <dd>
     <p>
     pgpool-II$B$O!"(Bstderr$B$+(Bsyslog$B$N$I$A$i$+$K%m%0$r=q$/$3$H$,$G$-$^$9!#%G%U%)%k%H$O(Bstderr$B$G$9!#(B
@@ -643,35 +662,6 @@ local0.*    /var/log/pgpool.log
 </pre>
     </dd>
 
-  <dt><a name="SYSLOG_FACILITY"></a>syslog_facility</dt>
-    <dd>
-    <p>
-    syslog$B$,M-8z$J>l9g!"$3$N%Q%i%a!<%?$K$h$C$F(Bsyslog$B$N!V%U%!%7%j%F%#!W$r@_Dj$7$^$9!#(B
-    LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7$B$+$iA*Br$7$^$9!#(B
-    $B%G%U%)%k%H$O(B LOCAL0 $B$G$9!#(B
-    $BJ;$;$F(Bsyslog$B%G!<%b%s$N%I%-%e%a%s%H$b$4Mw$/$@$5$$!#(B
-    </p>
-    </dd>
-
-<dt><a name="SYSLOG_IDENT"></a>syslog_ident</dt>
-    <dd>
-    <p>
-    syslog$B$,M-8z$J>l9g!"$3$N%Q%i%a!<%?$K$h$C$F(Bsyslog$B$N%a%C%;!<%8$K$"$i$o$l$k%W%m%0%i%`L>$r@_Dj$7$^$9!#(B
-    $B%G%U%)%k%H$O(B"pgpool"$B$G$9!#(B
-    </p>
-    </dd>
-
-<dt><a name="PID_FILE_NAME"></a>pid_file_name</dt>
-    <dd>
-    <p>
-    pgpool-II$B$N(Bpid file($B%W%m%;%9(BID$B$r3JG<$7$?%U%!%$%k(B)$B$N%U%k%Q%9L>$G$9!#(B
-    $B%G%U%)%k%HCM$O(B'/var/run/pgpool/pgpool.pid'$B$G$9!#(B
-    </p>
-    <p>
-    $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O(B pgpool-II $B$r:F5/F0$7$F$/$@$5$$!#(B
-    </p>
-    </dd>
-
 <dt><a name="PRINT_TIMESTAMP"></a>print_timestamp</dt>
     <dd>
     <p>
@@ -682,6 +672,103 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
+<dt><a name="LOG_CONNECTIONS"></a>log_connections</dt>
+    <dd>
+    <p>
+    true$B$J$i$P!"A4$F$N%/%i%$%"%s%H@\B3$r%m%0$X=PNO$7$^$9!#(B
+    </p>
+    <p>
+    $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O@_Dj%U%!%$%k$r:FFI$_9~$_$7$F$/$@$5$$!#(B
+    </p>
+    </dd>
+
+<dt><a name="LOG_HOSTNAME"></a>log_hostname</dt>
+    <dd>
+    <p>
+    true$B$J$i$P!"(Bps$B%3%^%s%I$G$N>uBVI=<(;~$K(BIP$B%"%I%l%9$G$O$J$/!"%[%9%HL>$rI=<($7$^$9!#(B
+    $B$^$?!"(B<a href="#LOG_CONNECTIONS">log_connections</a>$B$,M-8z$J>l9g$K$O%m%0$K%[%9%HL>$r=PNO$7$^$9!#(B
+    </p>
+    <p>
+    $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O@_Dj%U%!%$%k$r:FFI$_9~$_$7$F$/$@$5$$!#(B
+    </p>
+
+<dt><a name="LOG_STATEMENT"></a>log_statement</dt>
+    <dd>
+    <p>
+    true$B$J$i$P(BSQL$BJ8$r%m%0=PNO$7$^$9!#$3$NLrL\$O(BPostgreSQL$B$N(Blog_statement$B%*%W%7%g%s$H;w$F$$$F!"(B
+    $B%G%P%C%0%*%W%7%g%s$,$J$$$H$-$G$bLd$$9g$o$;$r%m%0=PNO$7$FD4$Y$k$3$H$,$G$-$k$N$GJXMx$G$9!#(B
+    </p>
+    <p>
+    $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O@_Dj%U%!%$%k$r:FFI$_9~$_$7$F$/$@$5$$!#(B
+    </p>
+    </dd>
+
+<dt><a name="LOG_PER_NODE_STATEMENT"></a>log_per_node_statement <span class="version">V2.3 $B!A(B</span></dt>
+    <dd>
+    <p>
+    <a href="#LOG_STATEMENT">log_statement</a>$B$H;w$F$$$^$9$,!"(BDB$B%N!<%IC10L$G%m%0$,=PNO$5$l$k$N$G!"(B
+    $B%l%W%j%1!<%7%g%s$dIi2YJ,;6$N3NG'$,MF0W$G$9!#(B
+    </p>
+    <p>
+    $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O@_Dj%U%!%$%k$r:FFI$_9~$_$7$F$/$@$5$$!#(B
+    </p>
+    </dd>
+
+<dt><a name="SYSLOG_FACILITY"></a>syslog_facility <span class="version">V3.1 $B!A(B</span></dt>
+    <dd>
+    <p>
+    syslog$B$,M-8z$J>l9g!"$3$N%Q%i%a!<%?$K$h$C$F(Bsyslog$B$N!V%U%!%7%j%F%#!W$r@_Dj$7$^$9!#(B
+    LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7$B$+$iA*Br$7$^$9!#(B
+    $B%G%U%)%k%H$O(B LOCAL0 $B$G$9!#(B
+    $BJ;$;$F(Bsyslog$B%G!<%b%s$N%I%-%e%a%s%H$b$4Mw$/$@$5$$!#(B
+    </p>
+    </dd>
+
+<dt><a name="SYSLOG_IDENT"></a>syslog_ident <span class="version">V3.1 $B!A(B</span></dt>
+    <dd>
+    <p>
+    syslog$B$,M-8z$J>l9g!"$3$N%Q%i%a!<%?$K$h$C$F(Bsyslog$B$N%a%C%;!<%8$K$"$i$o$l$k%W%m%0%i%`L>$r@_Dj$7$^$9!#(B
+    $B%G%U%)%k%H$O(B"pgpool"$B$G$9!#(B
+    </p>
+    </dd>
+
+<dt><a name="DEBUG_LEVEL"></a>debug_level <span class="version">V3.0 $B!A(B</span></dt>
+    <dd>
+    <p>
+    $B%G%P%C%0%a%C%;!<%8$N>\:Y%l%Y%k!#(B0$B$G%G%P%C%0%a%C%;!<%8$N=PNO$J$7!#(B
+    1$B0J>e$G%G%P%C%0%a%C%;!<%8$r=PNO$7$^$9!#(B
+    $B?t;z$,Bg$-$1$l$P$h$j>\:Y$J%a%C%;!<%8$,=PNO$5$l$k$h$&$K$J$j$^$9(B
+    (3.0$B$G$O:#$N$H$3$m%a%C%;!<%8$N>\:YEY$OJQ$j$^$;$s(B)$B!#(B
+    $B%G%U%)%k%HCM$O(B0$B$G$9!#(B
+    </p>
+    </dd>
+</dl>
+
+<h3>File locations</h3>
+
+<dl>
+<dt><a name="PID_FILE_NAME"></a>pid_file_name <span class="version">V2.2 $B!A(B</span></dt>
+    <dd>
+    <p>
+    pgpool-II$B$N(Bpid file($B%W%m%;%9(BID$B$r3JG<$7$?%U%!%$%k(B)$B$N%U%k%Q%9L>$G$9!#(B
+    $B%G%U%)%k%HCM$O(B'/var/run/pgpool/pgpool.pid'$B$G$9!#(B
+    </p>
+    <p>
+    $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O(B pgpool-II $B$r:F5/F0$7$F$/$@$5$$!#(B
+    </p>
+    </dd>
+
+<dt><a name="LOGDIR"></a>logdir</dt>
+    <dd>
+    <p>
+    $B$3$N%G%#%l%/%H%j2<$K!"(Bpgpool-II$B$N(BDB$B%N!<%I$N>uBV$r5-O?$9$k(Bpgpool_status$B%U%!%$%k$,=q$+$l$^$9!#(B
+    </p>
+    </dd>
+</dl>
+
+<h3>Connction pooling</h3>
+
+<dl>
 <dt><a name="CONNECTION_CACHE"></a>connection_cache</dt>
     <dd>
     <p>
@@ -691,7 +778,11 @@ local0.*    /var/log/pgpool.log
     $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O(B pgpool-II $B$r:F5/F0$7$F$/$@$5$$!#(B
     </p>
     </dd>
+</dl>
 
+<h3>Health check</h3>
+
+<dl>
 <dt><a name="HEALTH_CHECK_TIMEOUT"></a>health_check_timeout</dt>
     <dd>
     <p>
@@ -734,7 +825,7 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
-<dt><a name="HEALTH_CHECK_PASSWORD"></a>health_check_password</dt>
+<dt><a name="HEALTH_CHECK_PASSWORD"></a>health_check_password <span class="version">V3.1 $B!A(B</span></dt>
     <dd>
     <p>
     $B%X%k%9%A%'%C%/$r9T$&$?$a$N(BPostgreSQL$B%Q%9%o!<%I$G$9!#(B
@@ -744,7 +835,7 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
-<dt><a name="HEALTH_CHECK_MAX_RETRIES"></a>health_check_max_retries</dt>
+<dt><a name="HEALTH_CHECK_MAX_RETRIES"></a>health_check_max_retries <span class="version">V3.2 $B!A(B</span></dt>
     <dd>
     <p>
     $B%X%k%9%A%'%C%/$K<:GT$7$?8e(B($B$7$?$,$C$F%U%'%$%k%*!<%P$9$kA0$K(B)$B%j%H%i%$$9$k2s?t$r;XDj$7$^$9!#(B
@@ -759,7 +850,7 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
-<dt><a name="HEALTH_CHECK_RETRY_DELAY"></a>health_check_retry_delay</dt>
+<dt><a name="HEALTH_CHECK_RETRY_DELAY"></a>health_check_retry_delay <span class="version">V3.2 $B!A(B</span></dt>
     <dd>
     <p>
     $B%X%k%9%A%'%C%/$N%j%H%i%$$N4V$NIC?t$r;XDj$7$^$9(B(health_check_max_retries &gt; 0$B$G$J$1$l$PM-8z$K$J$j$^$;$s(B)$B!#(B
@@ -769,7 +860,11 @@ local0.*    /var/log/pgpool.log
     <a href="#HEALTH_CHECK_RETRY_DELAY">health_check_retry_delay</a>$B$rJQ99$7$?>l9g$O!"(Bpgpool.conf$B$N:FFI9~$,I,MW$G$9!#(B
     </p>
     </dd>
+</dl>
 
+<h3>Failover and failback</h3>
+
+<dl>
 <dt><a name="FAILOVER_COMMAND"></a>failover_command</dt>
     <dd>
     <p>
@@ -831,7 +926,7 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
-<dt><a name="FOLLOW_MASTER_COMMAND"></a>follow_master_command</dt>
+<dt><a name="FOLLOW_MASTER_COMMAND"></a>follow_master_command <span class="version">V3.1 $B!A(B</span></dt>
     <dd>
     <p>
     $B%^%9%?!<%N!<%I$N%U%'%$%k%*!<%P!<8e$K<B9T$9$k%3%^%s%I$r;XDj$7$^$9!#(B
@@ -867,7 +962,7 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
-<dt><a name="FAIL_OVER_ON_BACKEND_ERROR"></a>fail_over_on_backend_error</dt>
+<dt><a name="FAIL_OVER_ON_BACKEND_ERROR"></a>fail_over_on_backend_error <span class="version">V2.3 $B!A(B</span></dt>
     <dd>
     <p>
     true$B$J$i$P!"%P%C%/%(%s%I$N%=%1%C%H$X$+$i$NFI$_=P$7!"=q$-9~$_$K<:GT$9$k$H%U%'%$%k%*!<%P$7$^$9!#(B
@@ -880,7 +975,11 @@ local0.*    /var/log/pgpool.log
     $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O@_Dj%U%!%$%k$r:FFI$_9~$_$7$F$/$@$5$$!#(B
     </p>
     </dd>
+</dl>
 
+<h3>Load balancing mode</h3>
+
+<dl>
 <dt><a name="IGNORE_LEADING_WHITE_SPACE"></a>ignore_leading_white_space</dt>
     <dd>
     <p>
@@ -892,60 +991,11 @@ local0.*    /var/log/pgpool.log
     $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O@_Dj%U%!%$%k$r:FFI$_9~$_$7$F$/$@$5$$!#(B
     </p>
     </dd>
+</dl>
 
-<dt><a name="LOG_STATEMENT"></a>log_statement</dt>
-    <dd>
-    <p>
-    true$B$J$i$P(BSQL$BJ8$r%m%0=PNO$7$^$9!#$3$NLrL\$O(BPostgreSQL$B$N(Blog_statement$B%*%W%7%g%s$H;w$F$$$F!"(B
-    $B%G%P%C%0%*%W%7%g%s$,$J$$$H$-$G$bLd$$9g$o$;$r%m%0=PNO$7$FD4$Y$k$3$H$,$G$-$k$N$GJXMx$G$9!#(B
-    </p>
-    <p>
-    $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O@_Dj%U%!%$%k$r:FFI$_9~$_$7$F$/$@$5$$!#(B
-    </p>
-    </dd>
+<h3>Backends</h3>
 
-<dt><a name="LOG_PER_NODE_STATEMENT"></a>log_per_node_statement</dt>
-    <dd>
-    <p>
-    <a href="#LOG_STATEMENT">log_statement</a>$B$H;w$F$$$^$9$,!"(BDB$B%N!<%IC10L$G%m%0$,=PNO$5$l$k$N$G!"(B
-    $B%l%W%j%1!<%7%g%s$dIi2YJ,;6$N3NG'$,MF0W$G$9!#(B
-    </p>
-    <p>
-    $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O@_Dj%U%!%$%k$r:FFI$_9~$_$7$F$/$@$5$$!#(B
-    </p>
-    </dd>
-
-<dt><a name="LOG_HOSTNAME"></a>log_hostname</dt>
-    <dd>
-    <p>
-    true$B$J$i$P!"(Bps$B%3%^%s%I$G$N>uBVI=<(;~$K(BIP$B%"%I%l%9$G$O$J$/!"%[%9%HL>$rI=<($7$^$9!#(B
-    $B$^$?!"(B<a href="#LOG_CONNECTIONS">log_connections</a>$B$,M-8z$J>l9g$K$O%m%0$K%[%9%HL>$r=PNO$7$^$9!#(B
-    </p>
-    <p>
-    $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O@_Dj%U%!%$%k$r:FFI$_9~$_$7$F$/$@$5$$!#(B
-    </p>
-
-<dt><a name="LOG_CONNECTIONS"></a>log_connections</dt>
-    <dd>
-    <p>
-    true$B$J$i$P!"A4$F$N%/%i%$%"%s%H@\B3$r%m%0$X=PNO$7$^$9!#(B
-    </p>
-    <p>
-    $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O@_Dj%U%!%$%k$r:FFI$_9~$_$7$F$/$@$5$$!#(B
-    </p>
-    </dd>
-
-<dt><a name="ENABLE_POOL_HBA"></a>enable_pool_hba</dt>
-    <dd>
-    <p>
-    true$B$J$i$P!"(Bpool_hba.conf$B$K=>$C$F%/%i%$%"%s%HG'>Z$r9T$$$^$9!#(B
-    $B>\:Y$O(B<a href="#hba">$B%/%i%$%"%s%HG'>Z(B(HBA)$B$N$?$a$N(Bpool_hba.conf$B@_DjJ}K!(B</a>$B$r;2>H$7$F$/$@$5$$!#(B
-    </p>
-    <p>
-    $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O(B pgpool-II $B$r:F5/F0$7$F$/$@$5$$!#(B
-    </p>
-    </dd>
-
+<dl>
 <dt><a name="BACKEND_HOSTNAME"></a>backend_hostname</dt>
     <dd>
     <p>
@@ -1024,7 +1074,7 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
-<dt><a name="BACKEND_FLAG"></a>backend_flag</dt>
+<dt><a name="BACKEND_FLAG"></a>backend_flag <span class="version">V3.1 $B!A(B</span></dt>
     <dd>
     <p>
     $B%P%C%/%(%s%IC10L$G$NMM!9$J5sF0$r@)8f$9$k%U%i%0$G$9!#(B
@@ -1055,8 +1105,12 @@ local0.*    /var/log/pgpool.log
     $B$3$N%Q%i%a!<%?$rJQ99$7$?;~$K$O(B pgpool-II $B$r:F5/F0$7$F$/$@$5$$!#(B
     </p>
     </dd>
+</dl>
 
-<dt><a name="SSL">ssl</a></dt>
+<h3>SSL</h3>
+
+<dl>
+<dt><a name="SSL">ssl</a> <span class="version">V2.3 $B!A(B</span></dt>
     <dd>
     <p>
     true$B$J$i$P(Bpgpool-II$B$H%U%m%s%H%(%s%I!"(Bpgpool-II$B$H%P%C%/%(%s%I$N4V$N(BSSL$B@\B3$,2DG=$K$J$j$^$9!#(B
@@ -1073,7 +1127,7 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
-<dt><a name="SSL_KEY"></a>ssl_key</dt>
+<dt><a name="SSL_KEY"></a>ssl_key <span class="version">V2.3 $B!A(B</span></dt>
     <dd>
     <p>
     $B%U%m%s%H%(%s%I$H$N@\B3$K;HMQ$9$k%W%i%$%Y!<%H%-!<%U%!%$%k$N%U%k%Q%9$r;XDj$7$^$9!#(B
@@ -1084,7 +1138,7 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
-    <dt><a name="SSL_CERT"></a>ssl_cert</dt>
+    <dt><a name="SSL_CERT"></a>ssl_cert <span class="version">V2.3 $B!A(B</span></dt>
     <dd>
     <p>
     $B%U%m%s%H%(%s%I$H$N@\B3$K;HMQ$9$k8x3+(Bx509$B>ZL@=q$N%U%k%Q%9$r;XDj$7$^$9!#(B
@@ -1094,19 +1148,12 @@ local0.*    /var/log/pgpool.log
     ssl_cert$B$N@_Dj$,$J$$>l9g$O!"%U%m%s%H%(%s%I$H$N@\B3$G(BSSL$B$,;HMQ$5$l$J$/$J$j$^$9!#(B
     </p>
     </dd>
+</dl>
 
-<dt><a name="DEBUG_LEVEL"></a>debug_level</dt>
-    <dd>
-    <p>
-    $B%G%P%C%0%a%C%;!<%8$N>\:Y%l%Y%k!#(B0$B$G%G%P%C%0%a%C%;!<%8$N=PNO$J$7!#(B
-    1$B0J>e$G%G%P%C%0%a%C%;!<%8$r=PNO$7$^$9!#(B
-    $B?t;z$,Bg$-$1$l$P$h$j>\:Y$J%a%C%;!<%8$,=PNO$5$l$k$h$&$K$J$j$^$9(B
-    (3.0$B$G$O:#$N$H$3$m%a%C%;!<%8$N>\:YEY$OJQ$j$^$;$s(B)$B!#(B
-    $B%G%U%)%k%HCM$O(B0$B$G$9!#(B
-    </p>
-    </dd>
+<h3>Other</h3>
 
-<dt><a name="RELCACHE_EXPIRE"></a>relcache_expire</dt>
+<dl>
+<dt><a name="RELCACHE_EXPIRE"></a>relcache_expire <span class="version">V3.1 $B!A(B</span></dt>
     <dd>
     <p>
     $B%j%l!<%7%g%s%-%c%C%7%e$N<wL?$rICC10L$G;XDj$7$^$9!#(B
@@ -1154,7 +1201,7 @@ raw$B%b!<%I$K2C$(!"%3%M%/%7%g%s%W!<%j%s%0$,MxMQ$G$-$k$h$&$K$J$j$^$9!#(B
 </p>
 
 <dl>
-<dt><a name="MAX_POOL"></a>max_pool</dt>
+<dt><a name="MOtherAX_POOL"></a>max_pool</dt>
 <dd>
     <p>
     pgpool-II$B$N3F%5!<%P%W%m%;%9$,%-!<%W$9$k(BPostgreSQL$B$X$N:GBg%3%M%/%7%g%s?t$G$9!#(B
@@ -1282,7 +1329,7 @@ raw$B%b!<%I!"%3%M%/%7%g%s%W!<%k%b!<%I$K2C$(!"0J2<$r@_Dj$7$^$9!#(B
     $B%G%U%)%k%HCM$O(Bfalse$B$G$9!#(B
     </p>
 
-<dt><a name="FAILOVER_IF_AFFECTED_TUPLES_MISMATCH"></a>failover_if_affected_tuples_mismatch</dt>
+<dt><a name="FAILOVER_IF_AFFECTED_TUPLES_MISMATCH"></a>failover_if_affected_tuples_mismatch <span class="version">V3.0 $B!A(B</span></dt>
     <dd>
     <p>
     $B3F(BDB$B%N!<%I$G<B9T$5$l$?(BINSERT/UPDATE/DELETE$B$N7k2L9T?t$,IT0lCW$K$J$C$?>l9g$K!"(B
@@ -1299,7 +1346,7 @@ raw$B%b!<%I!"%3%M%/%7%g%s%W!<%k%b!<%I$K2C$(!"0J2<$r@_Dj$7$^$9!#(B
     </p>
     </dd>
 
-<dt><a name="WHITE_FUNCTION_LIST"></a>white_function_list</dt>
+<dt><a name="WHITE_FUNCTION_LIST"></a>white_function_list <span class="version">V3.0 $B!A(B</span></dt>
     <dd>
     <p>
     $B%G!<%?%Y!<%9$KBP$7$F(B<strong>$B99?7$r9T$J$o$J$$4X?tL>(B</strong>$B$r%3%s%^6h@Z$j$G;XDj$7$^$9!#(B
@@ -1316,7 +1363,7 @@ white_function_list = 'get_.*,select_.*'
 </pre>
     </dd>
 
-<dt><a name="BLACK_FUNCTION_LIST"></a>black_function_list</dt>
+<dt><a name="BLACK_FUNCTION_LIST"></a>black_function_list <span class="version">V3.0 $B!A(B</span></dt>
     <dd>
     <p>
     $B%G!<%?%Y!<%9$KBP$7$F(B<strong>$B99?7$r9T$J$&4X?tL>(B</strong>$B$r%3%s%^6h@Z$j$G;XDj$7$^$9!#(B
@@ -1598,7 +1645,7 @@ COMMIT;
     </p>
     </dd>
 
-<dt><a name="CLIENT_IDLE_LIMIT_IN_RECOVERY"></a>client_idle_limit_in_recovery</dt>
+<dt><a name="CLIENT_IDLE_LIMIT_IN_RECOVERY"></a>client_idle_limit_in_recovery <span class="version">V2.2 $B!A(B</span></dt>
     <dd>
     <p>
     client_idle_limit$B$H;w$F$$$^$9$,!"$3$N%Q%i%a!<%?$O%j%+%P%j$N%;%+%s%I%9%F!<%8$G$N$_8zNO$,$"$j$^$9!#(B
@@ -1618,7 +1665,7 @@ COMMIT;
     </p>
     </dd>
 
-<dt><a name="LOBJ_LOCK_TABLE"></a>lobj_lock_table</dt>
+<dt><a name="LOBJ_LOCK_TABLE"></a>lobj_lock_table <span class="version">V2.3 $B!A(B</span></dt>
     <dd>
     <p>
     $B%i!<%8%*%V%8%'%/%H$N%l%W%j%1!<%7%g%s$r9T$$$?$$$H$-$K%m%C%/4IM}$K;H$&$?$a$N%F!<%V%kL>$r;XDj$7$^$9!#(B
@@ -1812,7 +1859,7 @@ Streaming Replication$B$r;H$&>l9g$N?w7A$O(Bpgpool.conf.sample-stream$B$G$9!#
 
 <!-- ================================================================================ -->
 
-<h1><a name="stream"></a>Streaming Replication$B$X$NBP1~(B</h1>
+<h1><a name="stream"></a>Streaming Replication$B$X$NBP1~(B <span class="version">V3.1 $B!A(B</span></h1>
 <p>
 $BA0=R$N$h$&$K!"%^%9%?%9%l!<%V%b!<%I$G!"(B'<a href="#MASTER_SLAVE_SUB_MODE">master_slave_sub mode</a>'$B$K(B
 'stream'$B$r;XDj$9$k$H!"(BPostgreSQL 9.0$B$+$iMxMQ2DG=$K$J$C$?(BStreaming Replication$B$KBP1~$7$^$9(B
@@ -1820,7 +1867,7 @@ Streaming Replication$B$r;H$&>l9g$N?w7A$O(Bpgpool.conf.sample-stream$B$G$9!#
 $B$3$N%b!<%I$G$O!"0J2<$N@_Dj9`L\$bMxMQ$G$-$^$9!#(B
 
 <dl id="params_for_stream_mode">
-<dt id="DELAY_THRESHOLD">delay_threshold</dt>
+<dt id="DELAY_THRESHOLD">delay_threshold <span class="version">V3.0 $B!A(B</span></dt>
 	<dd>
     <p>
     $B%9%?%s%P%$%5!<%P$X$N%l%W%j%1!<%7%g%s$NCY1d5vMFEY$r%P%$%HC10L$G;XDj$7$^$9!#(B
@@ -1836,7 +1883,7 @@ Streaming Replication$B$r;H$&>l9g$N?w7A$O(Bpgpool.conf.sample-stream$B$G$9!#
     </p>
 </li>
 
-<dt id="SR_CHECK_PERIOD">sr_check_period</dt>
+<dt id="SR_CHECK_PERIOD">sr_check_period <span class="version">V3.1 $B!A(B</span></dt>
 	<dd>
     <p>
     $B%9%H%j!<%_%s%0%l%W%j%1!<%7%g%s$NCY1d%A%'%C%/$N4V3V$rICC10L$G;XDj$7$^$9!#(B
@@ -1847,7 +1894,7 @@ Streaming Replication$B$r;H$&>l9g$N?w7A$O(Bpgpool.conf.sample-stream$B$G$9!#
     </p>
 	</dd>
 
-<dt id="SR_CHECK_USER">sr_check_user</dt>
+<dt id="SR_CHECK_USER">sr_check_user <span class="version">V3.1 $B!A(B</span></dt>
 	<dd>
     <p>
     $B%9%H%j!<%_%s%0%l%W%j%1!<%7%g%s$NCY1d%A%'%C%/$r9T$&%f!<%6L>$r;XDj$7$^$9!#(B
@@ -1863,7 +1910,7 @@ Streaming Replication$B$r;H$&>l9g$N?w7A$O(Bpgpool.conf.sample-stream$B$G$9!#
     </p>
 	</dd>
 
-<dt id="SR_CHECK_PASSWORD">sr_check_password</dt>
+<dt id="SR_CHECK_PASSWORD">sr_check_password <span class="version">V3.1 $B!A(B</span></dt>
 	<dd>
     <p>
     $B%9%H%j!<%_%s%0%l%W%j%1!<%7%g%s$NCY1d%A%'%C%/$r9T$&%f!<%6$KBP$9$k%Q%9%o!<%I$r$r;XDj$7$^$9!#(B
@@ -1874,7 +1921,7 @@ Streaming Replication$B$r;H$&>l9g$N?w7A$O(Bpgpool.conf.sample-stream$B$G$9!#
     </p>
 	</dd>
 
-<dt id="LOG_STANDBY_DELAY">log_standby_delay</dt>
+<dt id="LOG_STANDBY_DELAY">log_standby_delay <span class="version">V3.0 $B!A(B</span></dt>
 	<dd>
     <p>
     $B%l%W%j%1!<%7%g%s$NCY1d>u67$r%m%0$9$k>r7o$r;XDj$7$^$9!#(B
@@ -1888,7 +1935,7 @@ Streaming Replication$B$r;H$&>l9g$N?w7A$O(Bpgpool.conf.sample-stream$B$G$9!#
     $B$3$N%Q%i%a!<%?$O@_Dj%U%!%$%k$N:FFI9~$K$h$C$FJQ99$G$-$^$9!#(B
     </p>
     <p>
-    $B$J$*!"%l%W%j%1!<%7%g%s$NCY1d>u67$O(B show pool_status $B%3%^%s%I$G$b3NG'$G$-$^$9!#(B
+    $B$J$*!"%l%W%j%1!<%7%g%s$NCY1d>u67$O(B <a href="#pool_status">show pool_status</a> $B%3%^%s%I$G$b3NG'$G$-$^$9!#(B
     $B9`L\L>$O(B"standby_delay#"$B$G$9(B(#$B$O(BDB$B%N!<%I(BID$B$G$9(B)$B!#(B
     </p>
 	</dd>
@@ -2531,7 +2578,7 @@ pgpool$B$N%5!<%S%9@_Dj%U%!%$%k$r%7%9%F%`$N(BPAM$B@_Dj%G%#%l%/%H%j!JDL>o$O(B 
 
 <!-- ================================================================================ -->
 
-<h1><a name="query_cache"></a>$B%/%(%j%-%c%C%7%e$N@_DjJ}K!(B</h1>
+<h1><a name="query_cache"></a>$B%/%(%j%-%c%C%7%e$N@_DjJ}K!(B <span class="version">$B!A(B V3.1 (DEPRECATED)</span></h1>
 
 <p>
 pgpool-II$B$G$O!"$9$Y$F$N%b!<%I$G%/%(%j%-%c%C%7%e$rMxMQ$9$k$3$H$,$G$-$^$9!#(B
@@ -2572,7 +2619,7 @@ pgpool-II$B$r:F5/F0$9$kI,MW$,$"$j$^$9!#(B</strong>
 
 <!-- ================================================================================ -->
 
-<h1><a name="memqcache"></a>$B%*%s%a%b%j%/%(%j%-%c%C%7%e$N@_DjJ}K!(B</h1>
+<h1><a name="memqcache"></a>$B%*%s%a%b%j%/%(%j%-%c%C%7%e$N@_DjJ}K!(B <span class="version">V3.2 $B!A(B</span></h1>
 
 <p>
 pgpool-II$B$G$O!"$9$Y$F$N%b!<%I$G%*%s%a%b%j%/%(%j%-%c%C%7%e$rMxMQ$9$k$3$H$,$G$-$^$9!#(B
@@ -2662,7 +2709,7 @@ memcached$B$r%-%c%C%7%e%9%H%l!<%8$K;HMQ$9$k>l9g$O!"%M%C%H%o!<%/%"%/%;%9$N%*!<%P
 </p>
 
 <dl>
-<dt id="MEMQCACHE_EXPIRE">memqcache_expire</dt>
+<dt id="MEMQCACHE_EXPIRE">memqcache_expire <span class="version">V3.2 $B!A(B</span></dt>
     <dd>
     <p>
     $B%/%(%j%-%c%C%7%e$N<wL?$rICC10L$G@_Dj$7$^$9!#%G%U%)%k%H$O(B60$B$G$9!#(B
@@ -2672,7 +2719,7 @@ memcached$B$r%-%c%C%7%e%9%H%l!<%8$K;HMQ$9$k>l9g$O!"%M%C%H%o!<%/%"%/%;%9$N%*!<%P
     </p>
     </dd>
 
-<dt id="MEMQCACHE_AUTO_CACHE_INVALIDATION">memqcache_auto_cache_invalidation</dt>
+<dt id="MEMQCACHE_AUTO_CACHE_INVALIDATION">memqcache_auto_cache_invalidation <span class="version">V3.2 $B!A(B</span></dt>
     <dd>
     <p>
     true$B$J$i$P4XO"$9$k%F!<%V%k$,99?7$5$l$k$H%-%c%C%7%e$rL58z2=$7$^$9!#(B
@@ -2682,7 +2729,7 @@ memcached$B$r%-%c%C%7%e%9%H%l!<%8$K;HMQ$9$k>l9g$O!"%M%C%H%o!<%/%"%/%;%9$N%*!<%P
     </p>
     </dd>
 
-<dt id="WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</dt>
+<dt id="WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list <span class="version">V3.2 $B!A(B</span></dt>
     <dd>
     <p>
     VIEW $B$d(Bunlogged$B%F!<%V%k$r;H$C$F$$$k(BSELECT$B$ODL>o%-%c%C%7%e$NBP>]$K$J$j$^$;$s$,!"(B
@@ -2694,14 +2741,14 @@ memcached$B$r%-%c%C%7%e%9%H%l!<%8$K;HMQ$9$k>l9g$O!"%M%C%H%o!<%/%"%/%;%9$N%*!<%P
     </p>
     </dd>
 
-<dt id="BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</dt>
+<dt id="BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list <span class="version">V3.2 $B!A(B</span></dt>
     <dd>
     <p>
     SELECT$B7k2L$r%-%c%C%7%e$7$?$/$J$$%F!<%V%kL>$r%+%s%^6h@Z$j$G;XDj$7$^$9!#@55,I=8=$bMxMQ$G$-$^$9!#(B
     </p>
     </dd>
 
-<dt id="MEMQCACHE_MAXCACHE">memqcache_maxcache</dt>
+<dt id="MEMQCACHE_MAXCACHE">memqcache_maxcache <span class="version">V3.2 $B!A(B</span></dt>
     <dd>
 		<p>
 		SELECT$BJ8$N<B9T7k2L$,(Bmemqcache_maxcache$B%P%$%H$rD6$($k$H!"%-%c%C%7%e$5$l$^$;$s!#(B
@@ -2719,7 +2766,7 @@ memcached$B$r%-%c%C%7%e%9%H%l!<%8$K;HMQ$9$k>l9g$O!"%M%C%H%o!<%/%"%/%;%9$N%*!<%P
         </p>
     </dd>
 
-<dt id="MEMQCACHE_OIDDIR">memqcache_oiddir</dt>
+<dt id="MEMQCACHE_OIDDIR">memqcache_oiddir <span class="version">V3.2 $B!A(B</span></dt>
     <dd>
     <p>
     SELECT$BJ8$,;HMQ$9$k%F!<%V%k$K(BOID$B$r3JG<$9$k0l;~%U%!%$%kNN0h$N%H%C%W%G%#%l%/%H%j$r%U%k%Q%9$G;XDj$7$^$9!#(B
@@ -2775,14 +2822,14 @@ memqcache_cache_hits                 | 36717                    | Number of SELE
 </p>
 
 <dl>
-<dt id="MEMQCACHE_TOTAL_SIZE">memqcache_total_size</dt>
+<dt id="MEMQCACHE_TOTAL_SIZE">memqcache_total_size <span class="version">V3.2 $B!A(B</span></dt>
     <dd>
     <p>
     $B%-%c%C%7%e%9%H%l!<%8$K;HMQ$9$k6&M-%a%b%jNN0h$N%5%$%:$r;XDj$7$^$9!#C10L$O%P%$%H$G$9!#(B
     </p>
     </dd>
 
-<dt id="MEMQCACHE_MAX_NUM_CACHE">memqcache_max_num_cache</dt>
+<dt id="MEMQCACHE_MAX_NUM_CACHE">memqcache_max_num_cache <span class="version">V3.2 $B!A(B</span></dt>
     <dd>
     <p>
     $B%-%c%C%7%e$N?t$r;XDj$7$^$9!#(B
@@ -2794,7 +2841,7 @@ memqcache_cache_hits                 | 36717                    | Number of SELE
     </p>
     </dd>
 
-<dt id="MEMQCACHE_CACHE_BLOCK_SIZE">memqcache_cache_block_size</dt>
+<dt id="MEMQCACHE_CACHE_BLOCK_SIZE">memqcache_cache_block_size <span class="version">V3.2 $B!A(B</span></dt>
     <dd>
     <p>
     $B%-%c%C%7%e%9%H%l!<%8$H$7$F6&M-%a%b%j$r;HMQ$9$k>l9g$O!"%a%b%j$r(B
@@ -2813,7 +2860,7 @@ memqcache_cache_hits                 | 36717                    | Number of SELE
 </p>
 
 <dl>
-<dt id="MEMQCACHE_MEMCACHED_HOST">memqcache_memcached_host</dt>
+<dt id="MEMQCACHE_MEMCACHED_HOST">memqcache_memcached_host <span class="version">V3.2 $B!A(B</span></dt>
     <dd>
     <p>
     memcached$B$,F0$$$F$$$k%[%9%HL>$^$?$O(BIP$B%"%I%l%9$r;XDj$7$^$9!#(B
@@ -2821,7 +2868,7 @@ memqcache_cache_hits                 | 36717                    | Number of SELE
     </p>
     </dd>
 
-<dt id="MEMQCACHE_MEMCACHED_PORT">memqcache_memcached_port</dt>
+<dt id="MEMQCACHE_MEMCACHED_PORT">memqcache_memcached_port <span class="version">V3.2 $B!A(B</span></dt>
     <dd>
     <p>
     memcached$B$N%]!<%HHV9f$r;XDj$7$^$9!#%G%U%)%k%HCM$O(B 11211 $B$G$9!#(B
@@ -2924,13 +2971,15 @@ pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-D][-d]
 <tr><td>-F pcp_config_file</td><td>--pcp-password-file</td>
 	<td>pcp$B$N@_Dj%U%!%$%k$r;XDj$7$^$9(B</td></tr>
 <tr><td>-n</td><td>--no-daemon</td>
-	<td>$B%G!<%b%s%b!<%I$G5/F0$7$^$;$s(B($B@)8fC<Kv$r@Z$jN%$7$^$;$s(B</td></tr>
+	<td>$B%G!<%b%s%b!<%I$G5/F0$7$^$;$s!J@)8fC<Kv$r@Z$jN%$7$^$;$s!K(B</td></tr>
 <tr><td>-D</td><td>--discard-status</td>
-	<td>pgpool_status$B$r:o=|$7!"0JA0$N>uBV$rI|85$7$^$;$s(B</td></tr>
+	<td>pgpool_status$B$r:o=|$7!"0JA0$N>uBV$rI|85$7$^$;$s(B
+        <span class="version">V3.0 $B!A(B</span></td></tr>
 <tr><td>-C</td><td>--clear-oidmaps</td>
 	<td>$B%*%s%a%b%j%/%(%j%-%c%C%7%e$N(B <a href="#MEMQCACHE_OIDDIR">memqcache_oiddir</a> $B$N(B
         $B%G%#%l%/%H%j$NCf?H$r>C5n$7$^$9(B
-        $B!J(B<a href="#MEMQCACHE_METHOD">memqcache_method</a> $B$,(B 'shmem' $B$N$H$-$N$_!K(B</td></tr>
+        $B!J(B<a href="#MEMQCACHE_METHOD">memqcache_method</a> $B$,(B 'shmem' $B$N$H$-$N$_!K(B
+         <span class="version">V3.2 $B!A(B</span></td></tr>
 <tr><td>-d</td><td>--debug</td>
 	<td>$B%G%P%C%0%b!<%I$G5/F0$7$^$9(B</td></tr>
 </table>
@@ -3013,10 +3062,14 @@ SHOW$B$O(BSQL$B%3%^%s%I$G$9$,!"(Bpgpool-II$B$O0lIt$N(BSHOW$B%3%^%s%I$rFH<
 
 <table border>
 <tr><th><a href="#pool_status">pool_status</a></th><td>$B9=@.>pJs(B</td></tr>
-<tr><th><a href="#pool_nodes">pool_nodes</a></th><td>DB$B%N!<%I>pJs(B</td></tr>
-<tr><th><a href="#pool_processes">pool_processes</a></th><td>pgpool-II$B%W%m%;%9$NFbIt>pJs(B</td></tr>
-<tr><th><a href="#pool_pools">pool_pools</a></th><td>$B%3%M%/%7%g%s%W!<%k>pJs(B</td></tr>
-<tr><th><a href="#pool_version">pool_version</a></th><td>pgpool-II$B$N%P!<%8%g%s(B</td></tr>
+<tr><th><a href="#pool_nodes">pool_nodes</a></th>
+    <td>DB$B%N!<%I>pJs(B <span class="version">V3.0 $B!A(B</span></td></tr>
+<tr><th><a href="#pool_processes">pool_processes</a></th>
+    <td>pgpool-II$B%W%m%;%9$NFbIt>pJs(B <span class="version">V3.0 $B!A(B</span></td></tr>
+<tr><th><a href="#pool_pools">pool_pools</a></th>
+    <td>$B%3%M%/%7%g%s%W!<%k>pJs(B <span class="version">V3.0 $B!A(B</span></td></tr>
+<tr><th><a href="#pool_version">pool_version</a></th>
+    <td>pgpool-II$B$N%P!<%8%g%s(B <span class="version">V3.0 $B!A(B</span></td></tr>
 </table>
 
 <p>"pool_status" SQL $B$O0JA0$+$i$"$j$^$9$,!"B>$N(BSQL$B$O(Bpgpool-II 3.0$B$+$iDI2C$5$l$^$7$?!#(B</p>
@@ -3038,7 +3091,7 @@ benchs2=# show pool_status;
  pcp_socket_dir                       | /tmp                           | PCP socket directory
 </pre>
 
-<h2 id="pool_nodes">pool_nodes</h2>
+<h2 id="pool_nodes">pool_nodes <span class="version">V3.0 $B!A(B</span></h2>
 <p>"SHOW pool_nodes"$B$O!"(BDB$B%N!<%I$N%j%9%H$rI=<($7$^$9!#(B
 $B%[%9%HL>!"%]!<%HHV9f!">uBV!"=E$_(B($B%m!<%I%P%i%s%9%b!<%I$G1?MQ$7$F$$$k$H$-$K$N$_0UL#$,$"$j$^$9(B)$B!"(B
 $B%N!<%I$NLr3d$,I=<($5$l$^$9!#(B
@@ -3053,7 +3106,7 @@ benchs2=# show pool_nodes;
 (2 lignes)
 </pre>
 
-<h2 id="pool_processes">pool_processes</h2>
+<h2 id="pool_processes">pool_processes <span class="version">V3.0 $B!A(B</span></h2>
 <p>"SHOW pool_processes"$B$O!"@\B3BT$A!"$"$k$$$O@\B3Cf(Bpgpool-II$B$N;R%W%m%;%9$N>uBV$rI=<($7$^$9!#(B
 </p>
 <p>
@@ -3082,7 +3135,7 @@ benchs2=# show pool_processes;
 (5 lines)
 </pre>
 
-<h2 id="pool_pools">pool_pools</h2>
+<h2 id="pool_pools">pool_pools <span class="version">V3.0 $B!A(B</span></h2>
 <p>"SHOW pool_pools"$B$O!"(Bpgpool-II$B$N%3%M%/%7%g%s%W!<%k$N>uBV$rI=<($7$^$9!#(B
 </p>
 <p>
@@ -3131,7 +3184,7 @@ benchs2=# show pool_pools;
 (20 lines)
 </pre>
 
-<h2 id="pool_version">pool_version</h2>
+<h2 id="pool_version">pool_version <span class="version">V3.0 $B!A(B</span></h2>
 <p>"SHOW pool_version" $B$O(Bpgpool-II$B$N%P!<%8%g%s>pJs$rI=<($7$^$9!#(B
 $BNc$r<($7$^$9!#(B
 </p>
@@ -3143,7 +3196,7 @@ benchs2=# show pool_version;
 (1 line)
 </pre>
 
-<h2 id="pool_cache">pool_cache</h2>
+<h2 id="pool_cache">pool_cache <span class="version">V3.1 $B!A(B</span></h2>
 <p>"SHOW pool_cache" $B$O(B<a href="#memqcache">$B%*%s%a%b%j%/%(%j%-%c%C%7%e(B</a>$B$,M-8z$G$"$k>l9g$K!"%/%(%j%-%c%C%7%e$N%R%C%HN($d!"%-%c%C%7%e%9%H%l!<%8$N>u67$rI=<($7$^$9!#(B
 $BNc$r<($7$^$9!#(B
 </p>
@@ -3394,7 +3447,7 @@ pgpool_recovery_pitr $B%9%/%j%W%H$r(B$PGDATA $B$K%3%T!<$7$^$9!#(B
 $BDL>o!"%H%i%s%6%/%7%g%s%m%0$r@Z$jBX$($k$K$O!"(Bpg_switch_xlog $B4X?t$rMxMQ$7$^$9$,!"(B
 $B$3$N4X?t$O!"%"!<%+%$%V%m%0%U%!%$%k$,@8@.$5$l$kA0$K=*N;$7$F$7$^$&2DG=@-$,$"$j$^$9!#(B
 </p>
-<p>
+<p><span class="version">V3.1 $B!A(B</span>
 $B$=$3$G!"$h$j0BA4$K%*%s%i%$%s%j%+%P%j$r9T$&$?$a$K(B
 pgpool_switch_xlog $B4X?t$,MQ0U$5$l$F$$$^$9!#(B
 pgpool_switch_xlog $B4X?t$N4pK\F0:n$O(B pg_switch_xlog $B4X?t$HF1$8$G$9$,!"(B
@@ -4315,7 +4368,7 @@ pgpool-II$B$rA`:n$9$k(BUNIX$B%3%^%s%I$H$7$F!"0J2<$N$b$N$,$"$j$^$9!#(B
 <tr><th><a href="#pcp_proc_info">pcp_proc_info</a></th>
 	<td>$B%W%m%;%9>pJs$r<hF@$9$k(B</td></tr>
 <tr><th><a href="#pcp_pool_status">pcp_pool_status</a></th>
-	<td>pgpool.conf $B$N%Q%i%a!<%?@_DjCM$r<hF@$9$k(B</td></tr>
+	<td>pgpool.conf $B$N%Q%i%a!<%?@_DjCM$r<hF@$9$k(B <span class="version">V3.1 $B!A(B</span></td></tr>
 <tr><th><a href="#pcp_systemdb_info">pcp_systemdb_info</a></th>
 	<td>$B%7%9%F%`(BDB$B>pJs$r<hF@$9$k(B</td></tr>
 <tr><th><a href="#pcp_detach_node">pcp_detach_node</a></th>
@@ -4323,7 +4376,7 @@ pgpool-II$B$rA`:n$9$k(BUNIX$B%3%^%s%I$H$7$F!"0J2<$N$b$N$,$"$j$^$9!#(B
 <tr><th><a href="#pcp_attach_node">pcp_attach_node</a></th>
 	<td>$B%N!<%I$rI|5"$5$;$k(B</td></tr>
 <tr><th><a href="#pcp_promote_node">pcp_promote_node</a></th>
-	<td>$B%N!<%I$r%^%9%?!<$K>:3J$5$;$k(B</td></tr>
+	<td>$B%N!<%I$r%^%9%?!<$K>:3J$5$;$k(B <span class="version">V3.1 $B!A(B</span></td></tr>
 <tr><th><a href="#pcp_stop_pgpool">pcp_stop_pgpool</a></th>
 	<td>pgpool-II$B$rDd;_$5$;$k(B</td></tr>
 <tr><th><a href="#pcp_recovery_node">pcp_recovery_node</a></th>
@@ -4454,7 +4507,7 @@ postgres_db postgres 1150769932 1150767351 3 0 1 14068 1
 $BDj5A$5$l$F$$$J$$%W%m%;%9(BID$B$r;XDj$9$k$H(BBackendError$B$HI=<($5$l!"(B<a href="#exit_status">$B=*N;%3!<%I(B12</a>$B$G=*N;$7$^$9!#(B
 </pre>
 
-<h3 id="pcp_pool_status">pcp_pool_status</h3>
+<h3 id="pcp_pool_status">pcp_pool_status <span class="version">V3.1 $B!A(B</span></h3>
 <pre>
 $B=q<0(B:
 pcp_pool_status _timeout_  _host_  _port_  _userid_  _passwd_
@@ -4539,7 +4592,7 @@ pcp_attach_node  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
 pgpool-II$B$N%N!<%I$rI|5"$5$;$^$9!#(B
 </pre>
 
-<h3 id="pcp_promote_node">pcp_promote_node</h3>
+<h3 id="pcp_promote_node">pcp_promote_node <span class="version">V3.1 $B!A(B</span></h3>
 <pre>
 $B=q<0(B:
 pcp_promote_node  [-g] _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
