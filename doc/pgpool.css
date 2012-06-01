@@ -108,8 +108,13 @@ h4 {
 }
 
 p {
-	margin-left:40px;
-	margin-right:25px;
+	margin: 3px 25px 3px 40px;
+	text-indent: 1em;
+}
+
+li p, dd p {
+	text-indent: 0em;
+	color: black;
 }
 
 ul, ol,dl {
@@ -125,6 +130,15 @@ ul li {
 	list-style:square;
 	color: #663333;
 }
+
+ul li ul li {
+	list-style: circle;
+}
+
+ul li ol li {
+	list-style: decimal;
+}
+
 
 ol li {
 	padding-right: 30px;
