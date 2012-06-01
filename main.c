@@ -2447,7 +2447,7 @@ static int trigger_failover_command(int node, const char *command_line,
 	if (command_line == NULL || (strlen(command_line) == 0))
 		return 0;
 
-	/* check nodeID */
+	/* check failed nodeID */
 	if (node < 0 || node > NUM_BACKENDS)
 		return -1;
 
@@ -2503,6 +2503,27 @@ static int trigger_failover_command(int node, const char *command_line,
 					case 'm': /* new master node id */
 						snprintf(port_buf, sizeof(port_buf), "%d", new_master);
 						string_append_char(exec_cmd, port_buf);
+						break;
+
+					case 'r': /* new master port */
+						newmaster = pool_get_node_info(get_next_master_node());
+						if (newmaster)
+						{
+							snprintf(port_buf, sizeof(port_buf), "%d", newmaster->backend_port);
+							string_append_char(exec_cmd, port_buf);
+						}
+						else
+							/* no vaid new master */
+							string_append_char(exec_cmd, "");
+						break;
+
+					case 'R': /* new master database directory */
+						newmaster = pool_get_node_info(get_next_master_node());
+						if (newmaster)
+							string_append_char(exec_cmd, newmaster->backend_data_directory);
+						else
+							/* no vaid new master */
+							string_append_char(exec_cmd, "");
 						break;
 
 					case 'M': /* old master node id */

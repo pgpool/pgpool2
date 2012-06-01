@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Wed May 23 17:58:25 JST 2012
+Last modified: Fri Jun  1 14:15:06 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -879,11 +879,12 @@ local0.*    /var/log/pgpool.log
     <tr><td>%h</td><td>切り離されたノードのホスト名</td></tr>
     <tr><td>%H</td><td>新しいマスターのホスト名</td></tr>
     <tr><td>%p</td><td>切り離されたノードのポート番号</td></tr>
-    <tr><td>%D</td><td>切り離されたノードのデータベースクラスタパス
-    </td></tr>
+    <tr><td>%D</td><td>切り離されたノードのデータベースクラスタパス</td></tr>
     <tr><td>%M</td><td>古いマスターのノード番号</td></tr>
     <tr><td>%m</td><td>新しいマスターのノード番号</td></tr>
     <tr><td>%P</td><td>古いプライマリノード番号</td></tr>
+	<tr><td>%r</td><td>新しいマスターのポート番号</td></tr>
+    <tr><td>%R</td><td>新しいマスターのデータベースクラスタパス</td></tr>
     <tr><td>%%</td><td>'%'文字</td></tr>
     </table>
     </center>
@@ -911,12 +912,13 @@ local0.*    /var/log/pgpool.log
     <tr><td>%d</td><td>復帰したノード番号</td></tr>
     <tr><td>%h</td><td>復帰したノードのホスト名</td></tr>
     <tr><td>%p</td><td>復帰したノードのポート番号</td></tr>
-    <tr><td>%D</td><td>復帰したノードのデータベースクラスタパス
-    </td></tr>
+    <tr><td>%D</td><td>復帰したノードのデータベースクラスタパス</td></tr>
     <tr><td>%M</td><td>古いマスターのノード番号</td></tr>
     <tr><td>%m</td><td>新しいマスターのノード番号</td></tr>
     <tr><td>%H</td><td>新しいマスターのホスト名</td></tr>
     <tr><td>%P</td><td>古いプライマリノード番号</td></tr>
+	<tr><td>%r</td><td>新しいマスターのポート番号</td></tr>
+    <tr><td>%R</td><td>新しいマスターのデータベースクラスタパス</td></tr>
     <tr><td>%%</td><td>'%'文字</td></tr>
     </table>
     </center>
@@ -945,6 +947,8 @@ local0.*    /var/log/pgpool.log
     <tr><td>%m</td><td>新しいマスターのノード番号</td></tr>
     <tr><td>%H</td><td>新しいマスターのホスト名</td></tr>
     <tr><td>%P</td><td>古いプライマリノード番号</td></tr>
+	<tr><td>%r</td><td>新しいマスターのポート番号</td></tr>
+    <tr><td>%R</td><td>新しいマスターのデータベースクラスタパス</td></tr>
     <tr><td>%%</td><td>'%'文字</td></tr>
     </table>
     </center>

@@ -301,6 +301,8 @@ follow_master_command = ''
                                    #   %H = hostname of the new master node
                                    #   %M = old master node id
                                    #   %P = old primary node id
+								   #   %r = new master port number
+								   #   %R = new master database cluster path
                                    #   %% = '%' character
 
 
@@ -362,6 +364,8 @@ failover_command = ''
                                    #   %H = hostname of the new master node
                                    #   %M = old master node id
                                    #   %P = old primary node id
+								   #   %r = new master port number
+								   #   %R = new master database cluster path
                                    #   %% = '%' character
 failback_command = ''
                                    # Executes this command at failback.
@@ -374,6 +378,8 @@ failback_command = ''
                                    #   %H = hostname of the new master node
                                    #   %M = old master node id
                                    #   %P = old primary node id
+								   #   %r = new master port number
+								   #   %R = new master database cluster path
                                    #   %% = '%' character
 
 fail_over_on_backend_error = on
