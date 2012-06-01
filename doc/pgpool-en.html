@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="content-type" content="text/html">
-<link rel="stylesheet" href="./pgpool-ja.css" type="text/css">
+<link rel="stylesheet" href="./pgpool.css" type="text/css">
 <title>pgpool-II user manual</title>
 </head>
 
@@ -176,19 +176,22 @@ enable OpenSSL support in pgpool-II</p>
           installed. Default value is provided by <code>pg_config</code></td></tr>
       <tr><th class="nodec"><code>--with-openssl</code></th>
       <td>pgpool-II binaries will be built with OpenSSL support.  OpenSSL support
-          is disabled by default.</td></tr>
+          is disabled by default. <span class="version">V2.3 -</span></td></tr>
       <tr><th class="nodec"><code>--enable-sequence-lock</code></th>
       <td>Use insert_lock compatible with pgpool-II 3.0 series(until 3.0.4).
           pgpool-II locks against a row in the sequence table.
-          PostgreSQL 8.2 or later which was released after June 2011 cannot use this lock method.</td></tr>
+          PostgreSQL 8.2 or later which was released after June 2011 cannot use this lock method.
+          <span class="version">V3.1 -</span></td></tr>
       <tr><th class="nodec"><code>--enable-table-lock</code></th>
       <td>Use insert_lock compatible with pgpool-II 2.2 and 2.3 series.
           pgpool-II locks against the insert target table.
-          This lock method is deprecated because it causes a lock conflict with VACUUM.</td></tr>
+          This lock method is deprecated because it causes a lock conflict with VACUUM.
+          <span class="version">V3.1 -</span></td></tr>
       <tr><th class="nodec"><code>--with-memcached=path</code></th>
       <td>pgpool-II binaries will use <a href="#memcached_params">memcached</a>
           for <a href="#memqcache">on memory query cache</a>.
-          You have to install <a href="http://libmemcached.org/libMemcached.html">libmemcached</a>.</td>
+          You have to install <a href="http://libmemcached.org/libMemcached.html">libmemcached</a>.
+          <span class="version">V3.2 -</span></td>
       </tr>
       </table>
     </dd>
@@ -204,7 +207,7 @@ make install
     </p>
     </dd>
 
-<dt>Installing pgpool_regclass</dt>
+<dt>Installing pgpool_regclass <span class="version">V3.0 -</span></dt>
     <dd>
     <p>
     If you are using PostgreSQL 8.0 or later, installing pgpool_regclass function on all PostgreSQL
@@ -229,7 +232,7 @@ psql -f pgpool-regclass.sql template1
     </p>
     </dd>
 
-<dt>Creating insert_lock table</dt>
+<dt>Creating insert_lock table <span class="version">V3.0 -</span></dt>
     <dd>
     <p>
     If you use insert_lock in replication mode, creating pgpool_catalog.insert_lock
@@ -416,7 +419,7 @@ cp $prefix/etc/pgpool.conf.sample $prefix/etc/pgpool.conf
 </pre>
 
 <p>
-There are additional sample pgpool.conf for each mode.
+There are additional sample pgpool.conf for each mode.  <span class="version">V2.3 -</span>
 </p>
 
 <table border>
@@ -445,7 +448,8 @@ There are additional sample pgpool.conf for each mode.
 An empty line or a line starting with "#" is treated as a
 comment and will be ignored.</p>
 </p>
-<h3><a name="common"></a>Common settings</h3>
+
+<h3>Connections</h3>
 
 <dl>
 <dt><a name="LISTEN_ADDRESS"></a>listen_addresses</dt>
@@ -498,12 +502,13 @@ comment and will be ignored.</p>
     This parameter can only be set at server start.</p>
     </dd>
 
-<dt><a name="BACKEND_SOCKET_DIR"></a>backend_socket_dir</dt>
+<dt><a name="BACKEND_SOCKET_DIR"></a>backend_socket_dir  <span class="version">- V3.0</span></dt>
     <dd>
-    <font color="red"><em>DEPRECATED</em><br>
+    <p class="version_notice">
+    <em class="caution">DEPRECATED</em> :
     This parameter is deprecated for consistency with the default libpq policy.
     See the backend_hostname parameter definition to adapt your configuration accordingly.
-    </font>
+    </p>
     <p>This parameter was defining the PostgreSQL server's UNIX domain socket directory.
     Default is <code>'/tmp'</code>.
     </p>
@@ -520,7 +525,11 @@ comment and will be ignored.</p>
     <p>
     This can be changed with a reload.</p>
     </dd>
+</dl>
 
+<h3>Pools</h3>
+
+<dl>
 <dt><a name="NUM_INIT_CHILDREN"></a>num_init_children</dt>
     <dd>
     <p>The number of preforked pgpool-II server processes. Default is 32.
@@ -594,6 +603,17 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
     You need to reload pgpool.conf if you change client_idle_limit.</p>
     </dd>
 
+<dt><a name="ENABLE_POOL_HBA"></a>enable_pool_hba</dt>
+    <dd>
+    <p>
+    If true, use pool_hba.conf for client authentication.
+    See <a href="#hba">setting up pool_hba.conf for client authentication</a>.
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
+    </dd>
+
 <dt><a name="AUTHENTICATION_TIMEOUT"></a>authentication_timeout</dt>
     <dd>
     <p>Specify the timeout for pgpool authentication. 0 disables the time out.
@@ -602,13 +622,12 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
     <p>
     You need to restart pgpool-II if you change authentication_timeout.</p>
     </dd>
+</dl>
 
-<dt><a name="LOGDIR"></a>logdir</dt>
-    <dd>
-    <p>pgpool_status is written into this directory.</p>
-    </dd>
+<h3>Logs</h3>
 
-<dt><a name="LOG_DESTINATION"></a>log_destination</dt>
+<dl>
+<dt><a name="LOG_DESTINATION"></a>log_destination <span class="version">V3.1 -</span></dt>
     <dd>
     <p>PgPool II supports several methods for logging server messages,
     including stderr and syslog. The default is to log to stderr.
@@ -625,7 +644,60 @@ local0.*    /var/log/pgpool.log
       <p>to the syslog daemon's configuration file to make it work.</p>
     </dd>
 
-<dt><a name="SYSLOG_FACILITY"></a>syslog_facility</dt>
+<dt><a name="PRINT_TIMESTAMP"></a>print_timestamp</dt>
+    <dd>
+    <p>Add timestamps to the logs when set to true. Default is true.
+    </p>
+    <p>
+    You need to reload pgpool.conf if you change print_timestamp.
+    </p>
+    </dd>
+
+<dt><a name="LOG_CONNECTIONS"></a>log_connections</dt>
+    <dd>
+    <p>
+    If true, all incoming connections will be printed to the log.
+    </p>
+    <p>
+    You need to reload pgpool.conf if you change this value.
+    </p>
+    </dd>
+
+<dt><a name="LOG_HOSTNAME"></a>log_hostname</dt>
+    <dd>
+    <p>
+    If true, ps command status will show the client's hostname instead
+    of an IP address. Also, if <a href="#LOG_CONNECTIONS">log_connections</a> is enabled,
+    hostname will be logged.
+    </p>
+    <p>
+    You need to reload pgpool.conf if you change this value.
+    </p>
+    </dd>
+
+<dt><a name="LOG_STATEMENT"></a>log_statement</dt>
+    <dd>
+    <p>Produces SQL log messages when true. This is similar to the
+    log_statement parameter in PostgreSQL. It produces logs even if the
+    debug option was not passed to pgpool-II at startup.
+    </p>
+    <p>
+    You need to reload pgpool.conf if you change this value.
+    </p>
+    </dd>
+
+<dt><a name="LOG_PER_NODE_STATEMENT"></a>log_per_node_statement <span class="version">V2.3 -</span></dt>
+    <dd>
+    <p>Similar to <a href="#LOG_PER_NODE_STATEMENT">log_statement</a>,
+    except that it prints logs for each DB node separately.
+    It can be useful to make sure that replication is working, for example.
+    </p>
+    <p>
+    You need to reload pgpool.conf if you change this value.
+    </p>
+    </dd>
+
+<dt><a name="SYSLOG_FACILITY"></a>syslog_facility <span class="version">V3.1 -</span></dt>
     <dd>
     <p>When logging to syslog is enabled, this parameter determines the syslog "facility" to be used.
     You can choose from LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7;
@@ -633,13 +705,25 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
-<dt><a name="SYSLOG_IDENT"></a>syslog_ident</dt>
+<dt><a name="SYSLOG_IDENT"></a>syslog_ident <span class="version">V3.1 -</span></dt>
     <dd>
     <p>When logging to syslog is enabled, this parameter determines the program name
     used to identify PgPool messages in syslog logs. The default is pgpool.
     </p>
     </dd>
 
+<dt><a name="DEBUG_LEVEL"></a>debug_level <span class="version">V3.0 -</span></dt>
+    <dd>
+    <p>
+    Debug message verbosity level. 0 means no message, greater than 1
+    means more verbose message. Default value is 0.
+    </p>
+    </dd>
+</dl>
+
+<h3>File locations</h3>
+
+<dl>
 <dt><a name="PID_FILE_NAME"></a>pid_file_name</dt>
     <dd>
     <p>Full path to a file which contains pgpool's process id.
@@ -650,15 +734,15 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
-<dt><a name="PRINT_TIMESTAMP"></a>print_timestamp</dt>
+<dt><a name="LOGDIR"></a>logdir</dt>
     <dd>
-    <p>Add timestamps to the logs when set to true. Default is true.
-    </p>
-    <p>
-    You need to reload pgpool.conf if you change print_timestamp.
-    </p>
+    <p>pgpool_status is written into this directory.</p>
     </dd>
+</dl>
 
+<h3>Connection pooling</h3>
+
+<dl>
 <dt><a name="CONNECTION_CACHE"></a>connection_cache</dt>
     <dd>
     <p>Caches connections to backends when set to true. Default is true.
@@ -666,7 +750,11 @@ local0.*    /var/log/pgpool.log
     <p>
     You need to restart pgpool-II if you change this value.</p>
     </dd>
+</dl>
 
+<h3>Health check</h3>
+
+<dl>
 <dt><a name="HEALTH_CHECK_TIMEOUT"></a>health_check_timeout</dt>
     <dd>
     <p>pgpool-II periodically tries to connect to the backends
@@ -711,7 +799,7 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
-<dt><a name="HEALTH_CHECK_PASSWORD"></a>health_check_password</dt>
+<dt><a name="HEALTH_CHECK_PASSWORD"></a>health_check_password <span class="version">V3.1 -</span></dt>
     <dd>
     <p>The password of the user to perform health check.
     </p>
@@ -720,7 +808,7 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
-<dt><a name="HEALTH_CHECK_MAX_RETRIES"></a>health_check_max_retries</dt>
+<dt><a name="HEALTH_CHECK_MAX_RETRIES"></a>health_check_max_retries <span class="version">V3.2 -</span></dt>
     <dd>
     <p>The maximum number of times to retry a failed health check
     before giving up and initiating failover.
@@ -735,7 +823,7 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
-<dt><a name="HEALTH_CHECK_RETRY_DELAY"></a>health_check_retry_delay</dt>
+<dt><a name="HEALTH_CHECK_RETRY_DELAY"></a>health_check_retry_delay <span class="version">V3.2 -</span></dt>
     <dd>
       <p>The amount of time (in seconds) to sleep between failed health check
       retries (not used unless health_check_max_retries is &gt; 0).
@@ -745,7 +833,11 @@ local0.*    /var/log/pgpool.log
       You need to reload pgpool.conf if you change health_check_retry_delay.
       </p>
     </dd>
+</dl>
 
+<h3>Failover and failback</h3>
+
+<dl>
 <dt><a name="FAILOVER_COMMAND"></a>failover_command</dt>
     <dd>
     <p>
@@ -806,7 +898,7 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
-<dt><a name="FOLLOW_MASTER_COMMAND"></a>follow_master_command</dt>
+<dt><a name="FOLLOW_MASTER_COMMAND"></a>follow_master_command <span class="version">V3.1 -</span></dt>
     <dd>
     <p>
     This parameter specifies a command to run in master/slave streaming replication mode
@@ -842,7 +934,7 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
-<dt><a name="FAIL_OVER_ON_BACKEND_ERROR"></a>fail_over_on_backend_error</dt>
+<dt><a name="FAIL_OVER_ON_BACKEND_ERROR"></a>fail_over_on_backend_error <span class="version">V2.3 -</span></dt>
     <dd>
     <p>
     If true, and an error occurs when reading/writing to the backend communication,
@@ -856,7 +948,11 @@ local0.*    /var/log/pgpool.log
     You need to reload pgpool.conf if you change this value.
     </p>
    </dd>
+</dl>
 
+<h3>Load balancing mode</h3>
+
+<dl>
 <dt><a name="IGNORE_LEADING_WHITE_SPACE"></a>ignore_leading_white_space</dt>
     <dd>
     <p>pgpool-II ignores white spaces at the beginning of SQL
@@ -867,62 +963,11 @@ local0.*    /var/log/pgpool.log
     You need to reload pgpool.conf if you change this value.
     </p>
     </dd>
+</dl>
 
-<dt><a name="LOG_STATEMENT"></a>log_statement</dt>
-    <dd>
-    <p>Produces SQL log messages when true. This is similar to the
-    log_statement parameter in PostgreSQL. It produces logs even if the
-    debug option was not passed to pgpool-II at startup.
-    </p>
-    <p>
-    You need to reload pgpool.conf if you change this value.
-    </p>
-    </dd>
+<h3>Backends</h3>
 
-<dt><a name="LOG_PER_NODE_STATEMENT"></a>log_per_node_statement</dt>
-    <dd>
-    <p>Similar to <a href="#LOG_PER_NODE_STATEMENT">log_statement</a>,
-    except that it prints logs for each DB node separately.
-    It can be useful to make sure that replication is working, for example.
-    </p>
-    <p>
-    You need to reload pgpool.conf if you change this value.
-    </p>
-    </dd>
-
-<dt><a name="LOG_HOSTNAME"></a>log_hostname</dt>
-    <dd>
-    <p>
-    If true, ps command status will show the client's hostname instead
-    of an IP address. Also, if <a href="#LOG_CONNECTIONS">log_connections</a> is enabled,
-    hostname will be logged.
-    </p>
-    <p>
-    You need to reload pgpool.conf if you change this value.
-    </p>
-    </dd>
-
-<dt><a name="LOG_CONNECTIONS"></a>log_connections</dt>
-    <dd>
-    <p>
-    If true, all incoming connections will be printed to the log.
-    </p>
-    <p>
-    You need to reload pgpool.conf if you change this value.
-    </p>
-    </dd>
-
-<dt><a name="ENABLE_POOL_HBA"></a>enable_pool_hba</dt>
-    <dd>
-    <p>
-    If true, use pool_hba.conf for client authentication.
-    See <a href="#hba">setting up pool_hba.conf for client authentication</a>.
-    </p>
-    <p>
-    You need to restart pgpool-II if you change this value.
-    </p>
-    </dd>
-
+<dl>
 <dt><a name="BACKEND_HOSTNAME"></a>backend_hostname</dt>
     <dd>
     <p>Specifies where to connect with the PostgreSQL backend.
@@ -1005,7 +1050,7 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
-<dt><a name="BACKEND_FLAG"></a>backend_flag</dt>
+<dt><a name="BACKEND_FLAG"></a>backend_flag <span class="version">V3.1 -</span></dt>
     <dd>
     <p>Controls various backend behavior.
     Multiple backends can be specified by adding a number at the end of the parameter name
@@ -1029,8 +1074,12 @@ local0.*    /var/log/pgpool.log
     </td></tr>
     </table>
     </dt>
+</dl>
 
-<dt><a name="SSL">ssl</a></dt>
+<h3>SSL</h3>
+
+<dl>
+<dt><a name="SSL">ssl</a> <span class="version">V2.3 -</span></dt>
     <dd>
     <p>
     If true, enable SSL support for both the frontend and backend connections.
@@ -1049,7 +1098,7 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
-<dt><a name="SSL_KEY"></a>ssl_key</dt>
+<dt><a name="SSL_KEY"></a>ssl_key <span class="version">V2.3 -</span></dt>
     <dd>
     <p>
     The path to the private key file to use for incoming frontend connections.
@@ -1061,7 +1110,7 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
-<dt><a name="SSL_CERT"></a>ssl_cert</dt>
+<dt><a name="SSL_CERT"></a>ssl_cert <span class="version">V2.3 -</span></dt>
     <dd>
     <p>
     The path to the public x509 certificate file to use for incoming
@@ -1073,16 +1122,12 @@ local0.*    /var/log/pgpool.log
     be disabled for incoming frontend connections.
     </p>
     </dd>
+</dl>
 
-<dt><a name="DEBUG_LEVEL"></a>debug_level</dt>
-    <dd>
-    <p>
-    Debug message verbosity level. 0 means no message, greater than 1
-    means more verbose message. Default value is 0.
-    </p>
-    </dd>
+<h3>Other</h3>
 
-  <dt><a name="RELCACHE_EXPIRE"></a>relcache_expire</dt>
+<dl>
+  <dt><a name="RELCACHE_EXPIRE"></a>relcache_expire <span class="version">V3.1 -</span></dt>
     <dd>
     <p>
      Life time of relation cache in seconds. 0 means no cache
@@ -1098,7 +1143,7 @@ local0.*    /var/log/pgpool.log
     </dd>
 </dl>
 
-<h4>Generating SSL certificates</h4>
+<h2>Generating SSL certificates</h2>
 <p>
 Certificate handling is outside the scope of this document.  The
 <a href="http://developer.postgresql.org/pgdocs/postgres/ssl-tcp.html">
@@ -1106,7 +1151,7 @@ Secure TCP/IP Connections with SSL</a> page at postgresql.org has pointers
 with sample commands for how to generate self-signed certificates.
 </p>
 
-<h4 id="failover_in_raw_mode">Failover in the raw Mode</h4>
+<h2 id="failover_in_raw_mode">Failover in the raw Mode</h2>
 
 <p>Failover can be performed in raw mode if multiple servers are
 defined. pgpool-II usually accesses the backend specified by
@@ -1211,19 +1256,6 @@ configuration parameters below must be set in addition to everything above.</p>
     <p>This parameter can only be set at server start. </p>
     </dd>
 
-<dt><a name="FAILOVER_IF_AFFECTED_TUPLES_MISMATCH"></a>failover_if_affected_tuples_mismatch</dt>
-    <dd>
-    <p>When set to true, if backends don't return the same number of affected
-    tuples during an INSERT/UPDATE/DELETE,
-    the backends that differ from most frequent result set are degenerated.
-    If the frequencies are same, the group which includes master DB node
-    (a DB node having the youngest node id) is remained and other groups are degenerated.
-    </p>
-    <p>
-    If set to false, the session is terminated and the backends are not
-    degenerated. Default is false.</p>
-    </dd>
-
 <dt><a name="REPLICATION_STOP_ON_MISMATCH"></a>replication_stop_on_mismatch</dt>
     <dd>
     <p>When set to true, if all backends don't return the same packet kind,
@@ -1242,7 +1274,21 @@ configuration parameters below must be set in addition to everything above.</p>
     Default is false.</p>
     </dd>
 
-<dt><a name="WHITE_FUNCTION_LIST"></a>white_function_list</dt>
+<dt><a name="FAILOVER_IF_AFFECTED_TUPLES_MISMATCH"></a>failover_if_affected_tuples_mismatch
+    <span class="version">V3.0 -</span></dt>
+    <dd>
+    <p>When set to true, if backends don't return the same number of affected
+    tuples during an INSERT/UPDATE/DELETE,
+    the backends that differ from most frequent result set are degenerated.
+    If the frequencies are same, the group which includes master DB node
+    (a DB node having the youngest node id) is remained and other groups are degenerated.
+    </p>
+    <p>
+    If set to false, the session is terminated and the backends are not
+    degenerated. Default is false.</p>
+    </dd>
+
+<dt><a name="WHITE_FUNCTION_LIST"></a>white_function_list <span class="version">V3.0 -</span></dt>
     <dd>
     <p>
     Specify a comma separated list of function names that <strong>do not</strong>
@@ -1258,7 +1304,7 @@ white_function_list = 'get_.*,select_.*'
 </pre>
     </dd>
 
-<dt><a name="BLACK_FUNCTION_LIST"></a>black_function_list
+<dt><a name="BLACK_FUNCTION_LIST"></a>black_function_list <span class="version">V3.0 -</span></dt>
     <dd>
     <p>
     Specify a comma separated list of function names that <strong>do</strong>
@@ -1530,7 +1576,8 @@ end of transaction block
     </p>
     </dd>
 
-<dt><a name="CLIENT_IDLE_LIMIT_IN_RECOVERY"></a>client_idle_limit_in_recovery</dt>
+<dt><a name="CLIENT_IDLE_LIMIT_IN_RECOVERY"></a>client_idle_limit_in_recovery
+    <span class="version">V2.2 -</span></dt>
     <dd>
     <p> Similar to client_idle_limit but only takes effect in the second
     stage of recovery. A client being idle for client_idle_limit_in_recovery
@@ -1552,7 +1599,7 @@ end of transaction block
     You need to reload pgpool.conf if you change client_idle_limit_in_recovery.</p>
     </dd>
 
-<dt><a name="LOBJ_LOCK_TABLE"></a>lobj_lock_table</dt>
+<dt><a name="LOBJ_LOCK_TABLE"></a>lobj_lock_table <span class="version">V2.2 -</span></dt>
     <dd>
     <p>
     This parameter specifies a table name used for large object replication control.
@@ -1723,7 +1770,7 @@ See <a href="#WHITE_FUNCTION_LIST">white_function_list</a> for more details.
 
 <!-- ================================================================================ -->
 
-<h1><a name="stream"></a>Streaming Replication</h1>
+<h1><a name="stream"></a>Streaming Replication <span class="version">V3.1 -</span></h1>
 <p>
 As stated above, pgpool-II can work together with Streaming Replication, which
 is available since PostgreSQL 9.0. To use it, enable '<a href="#MASTER_SLAVE_MODE">master_slave</a>' and
@@ -1735,7 +1782,7 @@ The following directives can be used with this mode:
 <p>
 
 <dl>
-<dt id="DELAY_THRESHOLD">delay_threshold</dt>
+<dt id="DELAY_THRESHOLD">delay_threshold <span class="version">V3.0 -</span></dt>
     <dd>
     <p>
     Specifies the maximum tolerated replication delay of the standby against the
@@ -1752,7 +1799,7 @@ The following directives can be used with this mode:
     </p>
     </dd>
 
-<dt id="SR_CHECK_PERIOD">sr_check_period</dt>
+<dt id="SR_CHECK_PERIOD">sr_check_period <span class="version">V3.1 -</span></dt>
     <dd>
     <p>
     This parameter specifies the interval between the streaming replication
@@ -1763,7 +1810,7 @@ The following directives can be used with this mode:
     </p>
     </dd>
 
-<dt id="SR_CHECK_USER">sr_check_user</dt>
+<dt id="SR_CHECK_USER">sr_check_user <span class="version">V3.1 -</span></dt>
     <dd>
     <p>
     The user name to perform streaming replication check. This user must
@@ -1778,7 +1825,7 @@ The following directives can be used with this mode:
     </p>
     </dd>
 
-<dt id="SR_CHECK_PASSWORD">sr_check_password</dt>
+<dt id="SR_CHECK_PASSWORD">sr_check_password <span class="version">V3.1 -</span></dt>
     <dd>
     <p>
     The password of the user to perform streaming replication check.
@@ -1789,7 +1836,7 @@ The following directives can be used with this mode:
     </p>
     </dd>
 
-<dt id="LOG_STANDBY_DELAY">log_standby_delay</dt>
+<dt id="LOG_STANDBY_DELAY">log_standby_delay <span class="version">V3.1 -</span></dt>
     <dd>
     <p>
     Specifies how to log the replication delay.
@@ -2394,7 +2441,7 @@ A sample service-configuration file is installed as "share/pgpool.pam" under the
 
 <!-- ================================================================================ -->
 
-<h1 id="query_cache">Setting Query cache method</h1>
+<h1 id="query_cache">Setting Query cache method <span class="version">- V3.1 (DEPRECATED)</span></h1>
 <p>The Query cache can be used in all modes in pgpool-II.
 The query cache allow to reuse the SELECT result to boost the performance.
 Activating it in pgpool.conf is done as follows:</p>
@@ -2431,7 +2478,7 @@ You need to delete the cache data from the cache table or restart pgpool-II with
 
 <!-- ================================================================================ -->
 
-<h1><a name="memqcache"></a>On memory query Cache</h1>
+<h1><a name="memqcache"></a>On memory query Cache <span class="version">V3.2 -</span></h1>
 
 <p>
 You can use on memory query cache in any mode.
@@ -2540,7 +2587,7 @@ These are the parameters used with both of shmem and memcached.
 </p>
 
 <dl>
-<dt id="MEMQCACHE_EXPIRE">memqcache_expire</dt>
+<dt id="MEMQCACHE_EXPIRE">memqcache_expire <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
     Life time of query cache in seconds. Default is 60.
@@ -2550,7 +2597,8 @@ These are the parameters used with both of shmem and memcached.
     </p>
     </dd>
 
-<dt id="MEMQCACHE_AUTO_CACHE_INVALIDATION">memqcache_auto_cache_invalidation</dt>
+<dt id="MEMQCACHE_AUTO_CACHE_INVALIDATION">memqcache_auto_cache_invalidation
+<span class="version">V3.2 -</span></dt>
     <dd>
     <p>
     If on, automatically deletes cache realted to the updated tables.
@@ -2559,7 +2607,7 @@ These are the parameters used with both of shmem and memcached.
     </p>
     </dd>
 
-<dt id="MEMQCACHE_MAXCACHE">memqcache_maxcache</dt>
+<dt id="MEMQCACHE_MAXCACHE">memqcache_maxcache <span class="version">V3.2 -</span></dt>
     <dd>
         <p>
         If the size of a SELECT result is larger than memqcache_maxcache bytes,
@@ -2576,7 +2624,7 @@ These are the parameters used with both of shmem and memcached.
         </p>
     </dd>
 
-<dt id="WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</dt>
+<dt id="WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
     Specify a comma separated list of table names whose SELECT results are to be cached even if
@@ -2588,7 +2636,7 @@ These are the parameters used with both of shmem and memcached.
     </p>
     </dd>
 
-<dt id="BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</dt>
+<dt id="BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
     Specify a comma separated list of table names whose SELECT results are <strong>NOT</strong> to be cached.
@@ -2596,7 +2644,7 @@ These are the parameters used with both of shmem and memcached.
     </p>
     </dd>
 
-<dt id="MEMQCACHE_OIDDIR">memqcache_oiddir</dt>
+<dt id="MEMQCACHE_OIDDIR">memqcache_oiddir <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
     Full path to the directory where oids of tables used by SELECTs are stored.
@@ -2650,14 +2698,14 @@ These are the parameters used with shared memory as the cache strage.
 </p>
 
 <dl>
-<dt id="MEMQCACHE_TOTAL_SIZE">memqcache_total_size</dt>
+<dt id="MEMQCACHE_TOTAL_SIZE">memqcache_total_size <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
     Specify the size of shared memory as cache strage in bytes.
     </p>
     </dd>
 
-<dt id="MEMQCACHE_MAX_NUM_CACHE">memqcache_max_num_cache</dt>
+<dt id="MEMQCACHE_MAX_NUM_CACHE">memqcache_max_num_cache <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
     Specify the number of cache entries.
@@ -2670,7 +2718,7 @@ These are the parameters used with shared memory as the cache strage.
     </p>
     </dd>
 
-<dt id="MEMQCACHE_CACHE_BLOCK_SIZE">memqcache_cache_block_size</dt>
+<dt id="MEMQCACHE_CACHE_BLOCK_SIZE">memqcache_cache_block_size <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
 	If cache storage is shared memory, pgpool uses the memory devided by memqcache_cache_block_size.
@@ -2689,7 +2737,7 @@ These are the parameters used with memcached as the cache strage.
 </p>
 
 <dl>
-<dt id="MEMQCACHE_MEMCACHED_HOST">memqcache_memcached_host</dt>
+<dt id="MEMQCACHE_MEMCACHED_HOST">memqcache_memcached_host <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
     Specify the host name or the IP adddress in which memcached works.
@@ -2697,7 +2745,7 @@ These are the parameters used with memcached as the cache strage.
     </p>
     </dd>
 
-<dt id="MEMQCACHE_MEMCACHED_PORT">memqcache_memcached_port</dt>
+<dt id="MEMQCACHE_MEMCACHED_PORT">memqcache_memcached_port <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
     Specify the port number of memcached. Default is 11211.
@@ -2797,16 +2845,23 @@ pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-D][-d]
 </pre>
 
 <table border>
-  <tr><td>-c</td><td>--clear-cache</td><td>deletes query cache</tr>
-  <tr><td>-f config_file</td><td>--config-file config-file</td><td>specifies pgpool.conf</tr>
-  <tr><td>-a hba_file</td><td>--hba-file hba_file</td><td>specifies pool_hba.conf</tr>
-  <tr><td>-F pcp_config_file</td><td>--pcp-password-file</td><td>specifies pcp.conf</tr>
-  <tr><td>-n</td><td>--no-daemon</td><td>no daemon mode (terminal is not detached)</tr>
-  <tr><td>-D</td><td>--discard-status</td><td>Discard pgpool_status file and do not restore previous status</tr>
+  <tr><td>-c</td><td>--clear-cache</td>
+      <td>deletes query cache</td></tr>
+  <tr><td>-f config_file</td><td>--config-file config-file</td>
+      <td>specifies pgpool.conf</td></tr>
+  <tr><td>-a hba_file</td><td>--hba-file hba_file</td>
+       <td>specifies pool_hba.conf</tr>
+  <tr><td>-F pcp_config_file</td><td>--pcp-password-file</td>
+      <td>specifies pcp.conf</td></tr>
+  <tr><td>-n</td><td>--no-daemon</td>
+      <td>no daemon mode (terminal is not detached)</td></tr>
+  <tr><td>-D</td><td>--discard-status</td>
+      <td>Discard pgpool_status file and do not restore previous status
+      <span class="version">V3.0 -</span></td></tr>
   <tr><td>-C</td><td>--clear-oidmaps</td>
-  <td>Discard oid maps in <a href="#MEMQCACHE_OIDDIR">memqcache_oiddir</a> for on memory query cache
-  (only when <a href="#MEMQCACHE_METHOD">memqcache_strage</a> is 'shmem')</td>
-  </tr>
+      <td>Discard oid maps in <a href="#MEMQCACHE_OIDDIR">memqcache_oiddir</a> for on memory query cache
+      (only when <a href="#MEMQCACHE_METHOD">memqcache_strage</a> is 'shmem')
+      <span class="version">V3.2 -</span></td></tr>
   <tr><td>-d</td><td>--debug</td><td>debug mode</tr>
 </table>
 
@@ -2886,10 +2941,10 @@ pgPool-II information. Available options are:
 </p>
 <ul>
   <li>pool_status, to get the configuration</li>
-  <li>pool_nodes, to get the nodes information</li>
-  <li>pool_processes, to get information on pgPool-II processes</li>
-  <li>pool_pools, to get information on pgPool-II pools</li>
-  <li>pool_version, to get the pgPool_II release version</li>
+  <li>pool_nodes, to get the nodes information <span class="version">V3.0 -</span></li>
+  <li>pool_processes, to get information on pgPool-II processes <span class="version">V3.0 -</span></li>
+  <li>pool_pools, to get information on pgPool-II pools <span class="version">V3.0 -</span></li>
+  <li>pool_version, to get the pgPool_II release version <span class="version">V3.0 -</span></li>
 </ul>
 
 <p>Other than "pool_status" are added since pgpool-II 3.0.
@@ -2904,6 +2959,7 @@ but the other ones have appeared in release 3.0.</p>
 <h2 id="pool_status">pool_status</h2>
 <p>"SHOW pool_status" sends back the list of configuration parameters with
 their name, value, and description. Here is an excerpt of the result:
+</p>
 <pre>
 benchs2=# show pool_status;
                  item                 |             value              |                           description
@@ -2914,13 +2970,13 @@ benchs2=# show pool_status;
  pcp_port                             | 9898                           | PCP port # to bind
  pcp_socket_dir                       | /tmp                           | PCP socket directory
 </pre>
-</p>
 
-<h2 id="pool_nodes">pool_nodes</h2>
+<h2 id="pool_nodes">pool_nodes <span class="version">V3.0 -</span></h2>
 <p>"SHOW pool_nodes" sends back a list of all configured nodes. It
 displays the node id, the hostname, the port, the status, the weight (only meaningful
 if you use the load balancing mode) and the role. The possible values in the status column
 are explained in the <a href="#pcp_node_info">pcp_node_info reference</a>.
+</p>
 <pre>
 benchs2=# show pool_nodes;
   id  |  hostname   | port | status | lb_weight |  role
@@ -2929,8 +2985,8 @@ benchs2=# show pool_nodes;
    1  | 192.168.1.7 | 5432 | 3      | 0.5       | standby
 (2 lignes)
 </pre>
-</p>
-<h2>pool_processes</h2>
+
+<h2>pool_processes <span class="version">V3.0 -</span></h2>
 <p>"SHOW pool_processes" sends back a list of all pgPool-II processes waiting
 for connections and dealing with a connection.
 </p>
@@ -2958,7 +3014,7 @@ benchs2=# show pool_processes;
 (5 lines)
 </pre>
 
-<h2 id="pool_pools">pool_pools</h2>
+<h2 id="pool_pools">pool_pools <span class="version">V3.0 -</span></h2>
 <p>"SHOW pool_pools" sends back a list of pools handled by pgPool-II.
 their name, value, and description. Here is an excerpt of the result:
 </p>
@@ -3007,7 +3063,7 @@ It has 11 columns:
 </pre>
 </p>
 
-<h2 id="pool_version">pool_version</h2>
+<h2 id="pool_version">pool_version <span class="version">V3.0 -</span></h2>
 <p>"SHOW pool_version" displays a string containing the pgPool-II release
 number. Here is an example of it:
 <pre>
@@ -3018,7 +3074,7 @@ benchs2=# show pool_version;
 (1 line)
 </pre>
 
-<h2 id="pool_cache">pool_cache</h2>
+<h2 id="pool_cache">pool_cache <span class="version">V3.0 -</span></h2>
 <p>"SHOW pool_cache" displays cache storage statistics if <a href="#memqcache">on memory query cache</a> is enabled.
 Here is an example of it:
 </p>
@@ -3251,7 +3307,7 @@ This script is named "pgpool_recovery_pitr" here.
 It enforces a switch of the transaction log.
 For this purpose, pg_switch_xlog could be used.
 </p>
-<p>
+<p><span class="version">V3.1 -</span>
 However it may return <b>before</b> the switch is done and this might lead to
 failure of the online recovery procedure.
 Pgpool-II provides a safer function called "pgpool_switch_xlog" which will wait
@@ -4178,7 +4234,7 @@ invalidate old query cache automatically when the data is updated.</p>
     <td>retrieves the process list</td></tr>
 <tr><th><a href="#pcp_proc_info">pcp_proc_info</a></th>
     <td>retrieves the process information</td></tr>
-<tr><th><a href="#pcp_pool_status ">pcp_pool_status</a></th>
+<tr><th><a href="#pcp_pool_status ">pcp_pool_status</a> <span class="version">V3.1 -</span></th>
     <td>retrieves parameters in pgpool.conf</td></tr>
 <tr><th><a href="#pcp_systemdb_info">pcp_systemdb_info</a></th>
     <td>retrieves the System DB information</td></tr>
@@ -4186,7 +4242,7 @@ invalidate old query cache automatically when the data is updated.</p>
     <td>detaches a node from pgpool-II</td></tr>
 <tr><th><a href="#pcp_attach_node">pcp_attach_node</a></th>
     <td>attaches a node to pgpool-II</td></tr>
-<tr><th><a href="#pcp_promote_node">pcp_promote_node</a></th>
+<tr><th><a href="#pcp_promote_node">pcp_promote_node</a> <span class="version">V3.1 -</span></th>
     <td>promote a new master node to pgpool-II</td></tr>
 <tr><th><a href="#pcp_stop_pgpool">pcp_stop_pgpool</a></th>
     <td>stops pgpool-II</td></tr>
@@ -4354,7 +4410,7 @@ Connected    : 1
 <p>Specifying an invalid node ID will result in an error with exit
 status 12, and BackendError will be displayed.</p>
 
-<h3 id="pcp_pool_status">pcp_pool_status</h3>
+<h3 id="pcp_pool_status">pcp_pool_status <span class="version">V3.1 -</span></h3>
 <pre>
 Format:
 pcp_pool_status _timeout_  _host_  _port_  _userid_  _passwd_
@@ -4450,7 +4506,7 @@ Attaches the given node to pgpool-II.
 </pre>
 </p>
 
-<h3 id="pcp_promote_node">pcp_promote_node</h3>
+<h3 id="pcp_promote_node">pcp_promote_node <span class="version">V3.1 -</span></h3>
 <p>
 <pre>
 Format:
