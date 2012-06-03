@@ -2276,6 +2276,8 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 	static char nullmap[8192];
 	unsigned char mask = 0;
 
+	pool_debug("do_query: extended:%d query:%s", pool_get_session_context() && pool_is_doing_extended_query_message(), query);
+
 	*result = NULL;
 	res = malloc(sizeof(*res));
 	if (!res)
@@ -2313,10 +2315,110 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 	}
 	memset(res->data, 0, DO_QUERY_ALLOC_NUM*sizeof(char *));
 
-	/* send a query to the backend */
-	if (send_simplequery_message(backend, strlen(query) + 1, query, major) != POOL_CONTINUE)
+	/*
+	 * Send a query to the backend. We use extended query proctocol
+	 * with named statement/portal if we are processing exetended
+	 * query since simple query breaks unnamed statements/portals.
+	 * The name of named statment/unamed statement are "pgpool_PID"
+	 * where PID is the process id of itself.
+	 */
+	if (pool_get_session_context() && pool_is_doing_extended_query_message())
 	{
-		return POOL_END;
+		static char prepared_name[256];
+		static int pname_len;
+		int qlen;
+
+		if (pname_len == 0)
+		{
+			snprintf(prepared_name, sizeof(prepared_name), "pgpool%d", getpid());
+			pname_len = strlen(prepared_name)+1;
+		}
+
+		qlen = strlen(query)+1;
+
+		/*
+		 * Send parse message
+		 */
+		pool_write(backend, "P", 1);
+		len = 4 + pname_len + qlen + sizeof(int16);
+		len = htonl(len);
+		pool_write(backend, &len, sizeof(len));
+		pool_write(backend, prepared_name, pname_len);	/* statement */
+		pool_write(backend, query, qlen);		/* query */
+		shortval = 0;
+		pool_write(backend, &shortval, sizeof(shortval));		/* num parameters */
+
+		/*
+		 * Send bind message
+		 */
+		pool_write(backend, "B", 1);
+		len = 4 + pname_len + pname_len + sizeof(int16) + sizeof(int16) + sizeof(int16) + sizeof(int16);
+		len = htonl(len);
+		pool_write(backend, &len, sizeof(len));
+		pool_write(backend, prepared_name, pname_len);	/* portal */
+		pool_write(backend, prepared_name, pname_len);	/* statement */
+		shortval = 0;
+		pool_write(backend, &shortval, sizeof(shortval));		/* num parameter format code */
+		pool_write(backend, &shortval, sizeof(shortval));		/* num parameter values */
+		shortval = htons(1);
+		pool_write(backend, &shortval, sizeof(shortval));		/* num result format */
+		shortval = 0;
+		pool_write(backend, &shortval, sizeof(shortval));		/* result format (text) */
+
+		/*
+		 * Send close statement message
+		 */
+		pool_write(backend, "C", 1);
+		len = 4 + 1 + pname_len;
+		len = htonl(len);
+		pool_write(backend, &len, sizeof(len));
+		pool_write(backend, "S", 1);
+		pool_write(backend, prepared_name, pname_len);
+
+		/*
+		 * Send descrive message
+		 */
+		pool_write(backend, "D", 1);
+		len = 4 + 1 + pname_len;
+		len = htonl(len);
+		pool_write(backend, &len, sizeof(len));
+		pool_write(backend, "P", 1);
+		pool_write(backend, prepared_name, pname_len);
+
+		/*
+		 * Send execute message
+		 */
+		pool_write(backend, "E", 1);
+		len = 4 + pname_len + 4;
+		len = htonl(len);
+		pool_write(backend, &len, sizeof(len));
+		pool_write(backend, prepared_name, pname_len);
+		len = htonl(0);
+		pool_write(backend, &len, sizeof(len));
+
+		/*
+		 * Send close portal message
+		 */
+		pool_write(backend, "C", 1);
+		len = 4 + 1 + pname_len;
+		len = htonl(len);
+		pool_write(backend, &len, sizeof(len));
+		pool_write(backend, "P", 1);
+		pool_write(backend, prepared_name, pname_len);
+
+		/*
+		 * Send sync message
+		 */
+		pool_write(backend, "S", 1);
+		len = htonl(sizeof(len));
+		pool_write_and_flush(backend, &len, sizeof(len));
+	}
+	else
+	{
+		if (send_simplequery_message(backend, strlen(query) + 1, query, major) != POOL_CONTINUE)
+		{
+			return POOL_END;
+		}
 	}
 
 	/*
@@ -2355,11 +2457,15 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 				return POOL_END;
 			}
 			len = ntohl(len) - 4;
-			packet = pool_read2(backend, len);
-			if (packet == NULL)
+
+			if (len > 0)
 			{
-				pool_error("do_query: error while reading rest of message");
-				return POOL_END;
+				packet = pool_read2(backend, len);
+				if (packet == NULL)
+				{
+					pool_error("do_query: error while reading rest of message");
+					return POOL_END;
+				}
 			}
 		}
 		else
@@ -2378,7 +2484,21 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 		switch (kind)
 		{
 			case 'Z':	/* Ready for query */
+				pool_debug("do_query: Ready for query");
 				return POOL_CONTINUE;
+				break;
+
+			case 'C':	/* Command Complete */
+				pool_debug("do_query: Command complete received");
+				break;
+
+			case '1':	/* Parse complete */
+			case '2':	/* Bind complete */
+				pool_debug("do_query: %c complete received", kind);
+				break;
+
+			case '3':	/* Close complete */
+				pool_debug("do_query: Close complete received");
 				break;
 
 			case 'T':	/* Row Description */
