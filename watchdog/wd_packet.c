@@ -44,6 +44,12 @@
 #include "watchdog.h"
 #include "wd_ext.h"
 
+typedef enum {
+	WD_SEND_TO_MASTER = 0,
+	WD_SEND_WITHOUT_MASTER,
+	WD_SEND_ALL_NODES
+} WD_SEND_TYPE;
+
 int wd_startup(void);
 int wd_declare(void);
 int wd_stand_for_master(void);
@@ -58,7 +64,7 @@ int wd_start_recovery(void);
 int wd_end_recovery(void);
 static int wd_send_packet_no(WD_PACKET_NO packet_no );
 static void * wd_negotiation(void * arg);
-static int send_packet_4_all(WdPacket *packet);
+static int send_packet_4_nodes(WdPacket *packet, WD_SEND_TYPE type);
 static int hton_wd_packet(WdPacket * to, WdPacket * from);
 static int ntoh_wd_packet(WdPacket * to, WdPacket * from);
 static int hton_wd_node_packet(WdPacket * to, WdPacket * from);
@@ -118,7 +124,11 @@ wd_send_packet_no(WD_PACKET_NO packet_no )
 	packet.packet_no = packet_no;
 	memcpy(&(packet.wd_body.wd_info),WD_List,sizeof(WdInfo));
 	/* send packet to all watchdogs */	
-	rtn = send_packet_4_all(&packet);
+	rtn = send_packet_4_nodes(&packet, WD_SEND_TO_MASTER );
+	if (rtn == WD_OK)
+	{
+		rtn = send_packet_4_nodes(&packet, WD_SEND_WITHOUT_MASTER);
+	}
 	return rtn;
 }
 
@@ -522,6 +532,12 @@ wd_negotiation(void * arg)
 				rtn = WD_NG;
 			}
 			break;
+		case WD_START_RECOVERY:
+		case WD_FAILBACK_REQUEST:
+		case WD_DEGENERATE_BACKEND:
+		case WD_PROMOTE_BACKEND:
+			rtn = (recv_packet.packet_no == WD_NODE_FAILED)?WD_NG:WD_OK;
+			break;
 		default:
 			break;
 	}
@@ -530,7 +546,7 @@ wd_negotiation(void * arg)
 }
 
 static int
-send_packet_4_all(WdPacket *packet)
+send_packet_4_nodes(WdPacket *packet, WD_SEND_TYPE type)
 {
 	int rtn;
 	WdInfo * p = WD_List;
@@ -554,6 +570,22 @@ send_packet_4_all(WdPacket *packet)
 	cnt = 0;
 	while (p->status != WD_END)
 	{
+		if (type == WD_SEND_TO_MASTER )
+		{
+			if (p->status != WD_MASTER)
+			{
+				p++;
+				continue;
+			}
+		}
+		else if (type == WD_SEND_WITHOUT_MASTER )
+		{
+			if (p->status == WD_MASTER)
+			{
+				p++;
+				continue;
+			}
+		}
 		sock = wd_create_send_socket(p->hostname, p->wd_port);
 		if (sock == -1)
 		{
@@ -779,7 +811,11 @@ wd_send_node_packet(WD_PACKET_NO packet_no, int *node_id_set, int count)
 	packet.wd_body.wd_node_info.node_num = count;
 
 	/* send packet to all watchdogs */	
-	rtn = send_packet_4_all(&packet);
+	rtn = send_packet_4_nodes(&packet, WD_SEND_TO_MASTER );
+	if (rtn == WD_OK)
+	{
+		rtn = send_packet_4_nodes(&packet, WD_SEND_WITHOUT_MASTER);
+	}
 	return rtn;
 }
 

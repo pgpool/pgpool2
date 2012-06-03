@@ -57,7 +57,8 @@ typedef enum {
 	WD_FAILBACK_REQUEST,	/* announce failback request */
 	WD_DEGENERATE_BACKEND,	/* announce degenerate backend */
 	WD_PROMOTE_BACKEND,		/* announce promote backend */
-	WD_NODE_READY			/* answer to the node announce */
+	WD_NODE_READY,			/* answer to the node announce */
+	WD_NODE_FAILED			/* fail answer to the node announce */
 } WD_PACKET_NO;
 
 /*

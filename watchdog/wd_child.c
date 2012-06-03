@@ -190,8 +190,15 @@ send_response(int sock, WdPacket * recv_pack)
 			}
 			break;
 		case WD_START_RECOVERY:
-			send_packet.packet_no = WD_NODE_READY;
-			*InRecovery = RECOVERY_ONLINE;
+			if (*InRecovery != WD_NODE_READY)
+			{
+				send_packet.packet_no = WD_NODE_FAILED;
+			}
+			else
+			{
+				send_packet.packet_no = WD_NODE_READY;
+				*InRecovery = RECOVERY_ONLINE;
+			}
 			break;
 		case WD_END_RECOVERY:
 			send_packet.packet_no = WD_NODE_READY;

@@ -1431,8 +1431,10 @@ void degenerate_backend_set(int *node_id_set, int count)
 
 	if (need_signal)
 	{
-		wd_degenerate_backend_set(node_id_set, count);
-		kill(parent, SIGUSR1);
+		if (WD_OK == wd_degenerate_backend_set(node_id_set, count))
+		{
+			kill(parent, SIGUSR1);
+		}
 	}
 
 	pool_semaphore_unlock(REQUEST_INFO_SEM);
@@ -1460,8 +1462,10 @@ void promote_backend(int node_id)
 	Req_info->node_id[0] = node_id;
 	pool_log("promote_backend: %d promote node request from pid %d", node_id, getpid());
 
-	wd_promote_backend(node_id);
-	kill(parent, SIGUSR1);
+	if (WD_OK == wd_promote_backend(node_id))
+	{
+		kill(parent, SIGUSR1);
+	}
 	pool_semaphore_unlock(REQUEST_INFO_SEM);
 }
 
@@ -1481,7 +1485,10 @@ void send_failback_request(int node_id)
 		return;
 	}
 
-	wd_send_failback_request(node_id);
+	if (WD_OK != wd_send_failback_request(node_id))
+	{
+		return;
+	}
 	kill(parent, SIGUSR1);
 }
 

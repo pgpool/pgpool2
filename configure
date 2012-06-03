@@ -8070,6 +8070,10 @@ _lt_linker_boilerplate=`cat conftest.err`
 $RM -r conftest*
 
 
+## CAVEAT EMPTOR:
+## There is no encapsulation within the following macros, do not change
+## the running order or otherwise move them around unless you know exactly
+## what you are doing...
 if test -n "$compiler"; then
 
 lt_prog_compiler_no_builtin_flag=
@@ -13863,21 +13867,6 @@ if test "${with_pgsql_libdir+set}" = set; then :
 	PGSQL_LIB_DIR="$withval"
 
 fi
-
-
-
-# Check whether --with-memcached was given.
-if test "${with_memcached+set}" = set; then :
-  withval=$with_memcached;
-    case "$withval" in
-    "" | y | ye | yes | n | no)
-        as_fn_error $? "*** You must supply an argument to the --with-memcache option." "$LINENO" 5
-      ;;
-    esac
-    MEMCACHED_DIR="$withval"
-
-fi
-
 
 
 
