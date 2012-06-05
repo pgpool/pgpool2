@@ -454,7 +454,7 @@ static bool is_system_catalog(char *table_name)
 		{
 			relcache = pool_create_relcache(pool_config->relcache_size, ISBELONGTOPGCATALOGQUERY,
 											int_register_func, int_unregister_func,
-											true);
+											false);
 			if (relcache == NULL)
 			{
 				pool_error("is_system_catalog: pool_create_relcache error");
