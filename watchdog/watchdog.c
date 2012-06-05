@@ -80,19 +80,19 @@ wd_exit(int exit_signo)
 static int
 wd_check_config(void)
 {
-	int status = 1;
+	int status = WD_OK;
 	if ((pool_config->other_wd->num_wd == 0)	||
 		(pool_config->trusted_servers == NULL)	||
 		(pool_config->delegate_IP == NULL))
 	{
-		status = 0;
+		status = WD_NG;
 	}
 	else
 	{
 		if ((strlen(pool_config->trusted_servers) == 0) ||
 			(strlen(pool_config->delegate_IP) == 0))
 		{
-			status = 0;
+			status = WD_NG;
 		}
 	}
 	return status;
@@ -108,15 +108,17 @@ wd_main(int fork_wait_time)
 
 	/* check pool_config data */
 	status = wd_check_config();
-	if (status < 0)
+	if (status != WD_OK)
 	{
+		pool_error("wd_check_config failed");
 		return WD_NG;
 	}
 
 	/* initialize */
 	status = wd_init();
-	if (status < 0)
+	if (status != WD_OK)
 	{
+		pool_error("wd_init failed");
 		return WD_NG;
 	}
 
@@ -124,6 +126,7 @@ wd_main(int fork_wait_time)
 	status = wd_child(1);
 	if (status != WD_OK)
 	{
+		pool_error("lunch wd_child failed");
 		return WD_NG;
 	}
 

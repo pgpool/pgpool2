@@ -380,6 +380,7 @@ int main(int argc, char **argv)
 		if (!strcmp(argv[optind], "stop"))
 		{
 			stop_me();
+			unlink(pool_config->pid_file_name);
 			pool_shmem_exit(0);
 			exit(0);
 		}
@@ -897,7 +898,7 @@ static void daemonize(void)
 #endif
 
 	mypid = getpid();
-
+	write_pid_file();
 	rc_chdir = chdir("/");
 
 	i = open("/dev/null", O_RDWR);
@@ -919,7 +920,6 @@ static void daemonize(void)
 		openlog(pool_config->syslog_ident, LOG_PID|LOG_NDELAY|LOG_NOWAIT, pool_config->syslog_facility);
 	}
 
-	write_pid_file();
 }
 
 
@@ -997,6 +997,7 @@ static void write_pid_file(void)
 	}
 	snprintf(pidbuf, sizeof(pidbuf), "%d", (int)getpid());
 	fwrite(pidbuf, strlen(pidbuf)+1, 1, fd);
+	fflush(fd);
 	if (fclose(fd))
 	{
 		pool_error("could not write pid file as %s. reason: %s",
