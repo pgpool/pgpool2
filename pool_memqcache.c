@@ -1063,7 +1063,7 @@ static int pool_get_database_oid(void)
 	 */
 	if (!relcache)
 	{
-		relcache = pool_create_relcache(128, DATABASE_TO_OID_QUERY,
+		relcache = pool_create_relcache(pool_config->relcache_size, DATABASE_TO_OID_QUERY,
 										int_register_func, int_unregister_func,
 										true);
 		if (relcache == NULL)

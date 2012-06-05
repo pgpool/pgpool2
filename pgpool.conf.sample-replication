@@ -431,6 +431,12 @@ relcache_expire = 0
                                    # not consistent anymore.
                                    # For this purpose, cache_expiration
                                    # controls the life time of the cache.
+relcache_size = 256
+                                   # Number of relation cache
+                                   # entry. If you see frequently:
+								   # "pool_search_relcache: cache replacement happend"
+								   # in the pgpool log, you might want to increate this number.
+
 
 #------------------------------------------------------------------------------
 # MEMORY CACHE

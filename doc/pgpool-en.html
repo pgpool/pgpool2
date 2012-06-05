@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Fri Jun  1 14:17:36 JST 2012
+Last modified: Tue Jun  5 14:58:30 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1145,6 +1145,18 @@ local0.*    /var/log/pgpool.log
      If someone modify the table by using ALTER TABLE or some such, the relcache
      is not consistent anymore.
      For this purpose, relcache_expiration controls the life time of the cache.
+    </p>
+    </dd>
+
+ <dt><a name="RELCACHE_SIZE"></a>relcache_size <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+     Size of relation cache in seconds. Default is 256.	If you see following message frequently, increase the number.
+				<pre>
+	"pool_search_relcache: cache replacement happend"
+		</pre>
+    </p>
+
     </p>
     </dd>
 </dl>

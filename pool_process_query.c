@@ -2796,7 +2796,7 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 			query = NEXTVALQUERY;
 		}
 
-		relcache = pool_create_relcache(32, query,
+		relcache = pool_create_relcache(pool_config->relcache_size, query,
 										int_register_func, int_unregister_func,
 										false);
 		if (relcache == NULL)
@@ -2905,7 +2905,7 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 				query = SEQUENCETABLEQUERY;
 			}
 
-			relcache = pool_create_relcache(32, query,
+			relcache = pool_create_relcache(pool_config->relcache_size, query,
 											string_register_func, string_unregister_func,
 											false);
 			if (relcache == NULL)
@@ -3088,7 +3088,7 @@ static bool pool_has_insert_lock(void)
 
 	if (!relcache)
 	{
-		relcache = pool_create_relcache(32, HASINSERT_LOCKQUERY,
+		relcache = pool_create_relcache(pool_config->relcache_size, HASINSERT_LOCKQUERY,
 										int_register_func, int_unregister_func,
 										false);
 		if (relcache == NULL)

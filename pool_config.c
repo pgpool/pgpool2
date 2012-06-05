@@ -1938,6 +1938,7 @@ int pool_init_config(void)
 	pool_config->ssl_ca_cert_dir = "";
 	pool_config->debug_level = 0;
 	pool_config->relcache_expire = 0;
+	pool_config->relcache_size = 256;
 	pool_config->lists_patterns = NULL;
 	pool_config->pattc = 0;
 	pool_config->current_pattern_size = 0;
@@ -3680,6 +3681,20 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			pool_config->relcache_expire = v;
 		}
+
+		else if (!strcmp(key, "relcache_size") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			int v = atoi(yytext);
+
+			if (token != POOL_INTEGER || v < 1)
+			{
+				pool_error("pool_config: %s must be equal or higher than 1 numeric value", key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->relcache_size = v;
+		}
+
         else if (!strcmp(key, "memory_cache_enabled") &&
                  CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
         {

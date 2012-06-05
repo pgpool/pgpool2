@@ -183,6 +183,7 @@ typedef struct {
 	char *ssl_ca_cert_dir;	/* path to directory containing CA certificates */
 
 	time_t relcache_expire;		/* relation cache life time in seconds */
+	int relcache_size;		/* number of relation cache life entry */
 
 	/* followings are for regex support and do not exist in the configuration file */
 	RegPattern *lists_patterns; /* Precompiled regex patterns for black/white lists */

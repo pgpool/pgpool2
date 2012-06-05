@@ -66,7 +66,6 @@ static Node *makeTsExpr(TSRewriteContext *ctx);
 static A_Const *makeStringConstFromQuery(POOL_CONNECTION_POOL *backend, char *expression);
 bool raw_expression_tree_walker(Node *node, bool (*walker) (), void *context);
 
-#define		MAX_RELCACHE 32
 POOL_RELCACHE	*ts_relcache;
 
 
@@ -162,7 +161,7 @@ relcache_lookup(TSRewriteContext *ctx)
 
 	if (!ts_relcache)
 	{
-		ts_relcache = pool_create_relcache(MAX_RELCACHE, query, ts_register_func, ts_unregister_func, false);
+		ts_relcache = pool_create_relcache(pool_config->relcache_size, query, ts_register_func, ts_unregister_func, false);
 
 		if (ts_relcache == NULL)
 		{

@@ -433,7 +433,7 @@ static bool is_system_catalog(char *table_name)
 			query = ISBELONGTOPGCATALOGQUERY;
 		}
 
-		hasreliscatalog_cache = pool_create_relcache(128, query,
+		hasreliscatalog_cache = pool_create_relcache(pool_config->relcache_size, query,
 										int_register_func, int_unregister_func,
 										false);
 		if (hasreliscatalog_cache == NULL)
@@ -452,7 +452,7 @@ static bool is_system_catalog(char *table_name)
 		 */
 		if (!relcache)
 		{
-			relcache = pool_create_relcache(128, ISBELONGTOPGCATALOGQUERY,
+			relcache = pool_create_relcache(pool_config->relcache_size, ISBELONGTOPGCATALOGQUERY,
 											int_register_func, int_unregister_func,
 											true);
 			if (relcache == NULL)
@@ -521,7 +521,7 @@ static bool is_temp_table(char *table_name)
 	 */
 	if (!hasrelistemp_cache)
 	{
-		hasrelistemp_cache = pool_create_relcache(128, HASRELITEMPPQUERY,
+		hasrelistemp_cache = pool_create_relcache(pool_config->relcache_size, HASRELITEMPPQUERY,
 										int_register_func, int_unregister_func,
 										false);
 		if (hasrelistemp_cache == NULL)
@@ -542,7 +542,7 @@ static bool is_temp_table(char *table_name)
 	 */
 	if (!relcache)
 	{
-		relcache = pool_create_relcache(128, query,
+		relcache = pool_create_relcache(pool_config->relcache_size, query,
 										int_register_func, int_unregister_func,
 										true);
 		if (relcache == NULL)
@@ -596,7 +596,7 @@ bool is_unlogged_table(char *table_name)
 	 */
 	if (!hasrelpersistence_cache)
 	{
-		hasrelpersistence_cache = pool_create_relcache(128, HASRELPERSISTENCEQUERY,
+		hasrelpersistence_cache = pool_create_relcache(pool_config->relcache_size, HASRELPERSISTENCEQUERY,
 													   int_register_func, int_unregister_func,
 													   false);
 		if (hasrelpersistence_cache == NULL)
@@ -627,7 +627,7 @@ bool is_unlogged_table(char *table_name)
 		 */
 		if (!relcache)
 		{
-			relcache = pool_create_relcache(128, query,
+			relcache = pool_create_relcache(pool_config->relcache_size, query,
 											int_register_func, int_unregister_func,
 											true);
 			if (relcache == NULL)
@@ -685,7 +685,7 @@ bool is_view(char *table_name)
 
 	if (!relcache)
 	{
-		relcache = pool_create_relcache(128, query,
+		relcache = pool_create_relcache(pool_config->relcache_size, query,
 										int_register_func, int_unregister_func,
 										false);
 		if (relcache == NULL)
@@ -844,7 +844,7 @@ static bool is_immutable_function(char *fname)
 
 	if (!relcache)
 	{
-		relcache = pool_create_relcache(128, IS_STABLE_FUNCTION_QUERY,
+		relcache = pool_create_relcache(pool_config->relcache_size, IS_STABLE_FUNCTION_QUERY,
 										int_register_func, int_unregister_func,
 										false);
 		if (relcache == NULL)
@@ -897,7 +897,7 @@ int pool_table_name_to_oid(char *table_name)
 	 */
 	if (!relcache)
 	{
-		relcache = pool_create_relcache(128, query,
+		relcache = pool_create_relcache(pool_config->relcache_size, query,
 										int_register_func, int_unregister_func,
 										true);
 		if (relcache == NULL)

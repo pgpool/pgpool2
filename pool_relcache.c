@@ -207,7 +207,7 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 		}
 	}
 
-	if (maxrefcnt != INT_MAX)
+	if (relcache->cache[index].refcnt != 0)
 	{
 		pool_log("pool_search_relcache: cache replacement happend");
 	}

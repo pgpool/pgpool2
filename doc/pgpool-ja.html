@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Fri Jun  1 14:15:06 JST 2012
+Last modified: Tue Jun  5 14:55:32 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1172,6 +1172,20 @@ local0.*    /var/log/pgpool.log
     もしALTER TABLEが発行されると、テーブルの構造が変わる場合があり、
     リレーションキャッシュの内容と一致しなくなる恐れがあります。
     relcache_expireにより、その危険性をコントロールできるようになります。
+    </p>
+    </dd>
+
+<dt><a name="RELCACHE_SIZE"></a>relcache_size <span class="version">V3.2 〜</span></dt>
+    <dd>
+    <p>
+    リレーションキャッシュのサイズを指定します。
+    デフォルトは256です。
+    </p>
+    <p>
+		<pre>
+	"pool_search_relcache: cache replacement happend"
+		</pre>
+		のようなメッセージがログに頻繁に出る場合は、この数字を大きくしてください。
     </p>
     </dd>
 
