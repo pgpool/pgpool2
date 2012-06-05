@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -205,6 +205,11 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 			maxrefcnt = relcache->cache[i].refcnt;
 			index = i;
 		}
+	}
+
+	if (maxrefcnt != INT_MAX)
+	{
+		pool_log("pool_search_relcache: cache replacement happend");
 	}
 
 	/* Register cache */
