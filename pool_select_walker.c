@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -354,7 +354,7 @@ static bool is_system_catalog(char *table_name)
 		{
 			relcache = pool_create_relcache(128, ISBELONGTOPGCATALOGQUERY,
 											int_register_func, int_unregister_func,
-											true);
+											false);
 			if (relcache == NULL)
 			{
 				pool_error("is_system_catalog: pool_create_relcache error");
