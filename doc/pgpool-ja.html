@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Tue Jun  5 14:55:32 JST 2012
+Last modified: Wed Jun  6 11:00:32 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1180,6 +1180,22 @@ local0.*    /var/log/pgpool.log
     <p>
     リレーションキャッシュのサイズを指定します。
     デフォルトは256です。
+    </p>
+    <p>
+		<pre>
+	"pool_search_relcache: cache replacement happend"
+		</pre>
+		のようなメッセージがログに頻繁に出る場合は、この数字を大きくしてください。
+    </p>
+    </dd>
+
+<dt><a name="CHECK_TEMP_TABLE"></a>check_temp_table <span class="version">V3.2 〜</span></dt>
+    <dd>
+    <p>
+    もしonなら、SELECTに含まれるテーブルが一時テーブルかどうかのチェックを行います。
+	このチェックは、primary/masterのシステムカタログへのアクセスを発生させ、それなりに負荷を上げます。
+	もし一時テーブルを使っていないということが確かで、primary/masterの負荷を少しでも下げたいのであれば、
+	offにすることができます。デフォルトはonです。
     </p>
     <p>
 		<pre>

@@ -440,7 +440,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					 * If temporary table is used in the SELECT,
 					 * we prefer to send to the primary.
 					 */
-					else if (pool_has_temp_table(node))
+					else if (pool_config->check_temp_table && pool_has_temp_table(node))
 					{
 						pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
 					}

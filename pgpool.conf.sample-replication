@@ -437,6 +437,14 @@ relcache_size = 256
 								   # "pool_search_relcache: cache replacement happend"
 								   # in the pgpool log, you might want to increate this number.
 
+check_temp_table = on
+                                   # If on, enable temporary table check in SELECT statements.
+                                   # This initiates queries against system catalog of primary/master
+								   # thus increases load of master.
+								   # If you are absolutely sure that your system never uses temporary tables
+								   # and you want to save access to primary/master, you could turn this off.
+								   # Default is on.
+
 
 #------------------------------------------------------------------------------
 # MEMORY CACHE
