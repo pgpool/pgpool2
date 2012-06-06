@@ -696,11 +696,16 @@ bool pool_is_allow_to_cache(Node *node, char *query)
 		return false;
 
 	/*
-	 * If SELECT uses non immutable functions or temporary tables
-	 * it's not allowed to cache.
+	 * If SELECT uses non immutable functions, it's not allowed to
+	 * cache.
 	 */
-	if (pool_has_non_immutable_function_call(node) ||
-		pool_has_temp_table(node))
+	if (pool_has_non_immutable_function_call(node))
+		return false;
+
+	/*
+	 * If SELECT uses temporary tables it's not allowed to cache.
+	 */
+	if (pool_config->check_temp_table && pool_has_temp_table(node))
 		return false;
 
 	/*
