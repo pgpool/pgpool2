@@ -112,6 +112,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	POOL_STATUS status;
 	char *string;
 	int lock_kind;
+	int specific_error = 0;
 
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_QUERY_CONTEXT *query_context;
@@ -467,15 +468,39 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 				pool_query_context_destroy(query_context);
 				return POOL_END;
 			}
+
+			/* Check specific errors */
+			specific_error = check_errors(backend, MASTER_NODE_ID);
+			if (specific_error)
+			{
+				/* log error message */
+				generate_error_message("SimpleQuery: ", specific_error, contents);
+			}
 		}
 
-		/*
-		 * Send the query to other than master node.
-		 */
-		if (pool_send_and_wait(query_context, -1, MASTER_NODE_ID) != POOL_CONTINUE)
+		if (specific_error)
 		{
-			pool_query_context_destroy(query_context);
-			return POOL_END;
+			char msg[1024] = POOL_ERROR_QUERY; /* large enough */
+			int len = strlen(msg);
+
+			memset(msg + len, 0, sizeof(int));
+
+			/* send query to other nodes */
+			query_context->rewritten_query = msg;
+			query_context->rewritten_length = len;
+			if (pool_send_and_wait(query_context, -1, MASTER_NODE_ID) != POOL_CONTINUE)
+				return POOL_END;
+		}
+		else
+		{
+			/*
+			 * Send the query to other than master node.
+			 */
+			if (pool_send_and_wait(query_context, -1, MASTER_NODE_ID) != POOL_CONTINUE)
+			{
+				pool_query_context_destroy(query_context);
+				return POOL_END;
+			}
 		}
 
 		/* Send "COMMIT" or "ROLLBACK" to only master node if query is "COMMIT" or "ROLLBACK" */
@@ -2780,7 +2805,7 @@ static int check_errors(POOL_CONNECTION_POOL *backend, int backend_id)
 	 * M:S2:ERROR:  could not serialize access due to concurrent update
 	 * S:S2:UPDATE t1 SET i = i + 1; <-- success in UPDATE and data becomes inconsistent!
 	 */
-	if (detect_serialization_error(CONNECTION(backend, backend_id), MAJOR(backend)) == SPECIFIED_ERROR)
+	if (detect_serialization_error(CONNECTION(backend, backend_id), MAJOR(backend), true) == SPECIFIED_ERROR)
 		return 2;
 
 	/*

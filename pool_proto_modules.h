@@ -163,7 +163,7 @@ extern void query_ps_status(char *query, POOL_CONNECTION_POOL *backend);		/* sho
 extern POOL_STATUS start_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, Node *node);
 extern POOL_STATUS end_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 extern int detect_deadlock_error(POOL_CONNECTION *master, int major);
-extern int detect_serialization_error(POOL_CONNECTION *master, int major);
+extern int detect_serialization_error(POOL_CONNECTION *master, int major, bool unread);
 extern int detect_active_sql_transaction_error(POOL_CONNECTION *backend, int major);
 extern int detect_query_cancel_error(POOL_CONNECTION *backend, int major);
 extern bool is_partition_table(POOL_CONNECTION_POOL *backend, Node *node);

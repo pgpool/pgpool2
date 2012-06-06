@@ -316,6 +316,16 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 					{
 						int r;
 						/*
+						 * connection was terminated due to confilct with recovery
+						 */
+						r = detect_serialization_error(CONNECTION(backend, i), MAJOR(backend), false);
+						if (r == SPECIFIED_ERROR)
+						{
+							pool_log("connection on node %d was terminated due to conflict with recovery", i);
+							return POOL_ERROR;
+						}
+
+						/*
 						 * admin shutdown postmaster or postmaster goes down
 						 */
 						r = detect_postmaster_down_error(CONNECTION(backend, i), MAJOR(backend));
@@ -4302,9 +4312,9 @@ int detect_deadlock_error(POOL_CONNECTION *backend, int major)
 	return r;
 }
 
-int detect_serialization_error(POOL_CONNECTION *backend, int major)
+int detect_serialization_error(POOL_CONNECTION *backend, int major, bool unread)
 {
-	int r =  detect_error(backend, SERIALIZATION_FAIL_ERROR_CODE, major, 'E', true);
+	int r =  detect_error(backend, SERIALIZATION_FAIL_ERROR_CODE, major, 'E', unread);
 	if (r == SPECIFIED_ERROR)
 		pool_debug("detect_serialization_error: received serialization failure message from backend");
 	return r;
