@@ -1181,11 +1181,11 @@ local0.*    /var/log/pgpool.log
     リレーションキャッシュのサイズを指定します。
     デフォルトは256です。
     </p>
+<pre>
+"pool_search_relcache: cache replacement happend"
+</pre>
     <p>
-		<pre>
-	"pool_search_relcache: cache replacement happend"
-		</pre>
-		のようなメッセージがログに頻繁に出る場合は、この数字を大きくしてください。
+    のようなメッセージがログに頻繁に出る場合は、この数字を大きくしてください。
     </p>
     </dd>
 
@@ -1196,12 +1196,6 @@ local0.*    /var/log/pgpool.log
 	このチェックは、primary/masterのシステムカタログへのアクセスを発生させ、それなりに負荷を上げます。
 	もし一時テーブルを使っていないということが確かで、primary/masterの負荷を少しでも下げたいのであれば、
 	offにすることができます。デフォルトはonです。
-    </p>
-    <p>
-		<pre>
-	"pool_search_relcache: cache replacement happend"
-		</pre>
-		のようなメッセージがログに頻繁に出る場合は、この数字を大きくしてください。
     </p>
     </dd>
 

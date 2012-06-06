@@ -1151,14 +1151,15 @@ local0.*    /var/log/pgpool.log
  <dt><a name="RELCACHE_SIZE"></a>relcache_size <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
-     Size of relation cache in seconds. Default is 256.	If you see following message frequently, increase the number.
-				<pre>
-	"pool_search_relcache: cache replacement happend"
-		</pre>
+     Size of relation cache in seconds. Default is 256.
+     If you see following message frequently, increase the number.
     </p>
+<pre>
+"pool_search_relcache: cache replacement happend"
+</pre>
     </dd>
 
-<dt><a name="temp_table_check"></a>temp_table_check <span class="version">V3.1 -</span></dt>
+<dt><a name="CHECK_TEMP_TABLE"></a>check_temp_table <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
 	If on, enable temporary table check in SELECT statements. This
