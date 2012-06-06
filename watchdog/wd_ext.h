@@ -68,6 +68,7 @@ extern int wd_IP_up(void);
 extern int wd_IP_down(void);
 
 /* wd_lifecheck.c */
+extern int is_wd_lifecheck_ready(void);
 extern int wd_lifecheck(void);
 
 #endif /* WD_EXT_H */

@@ -419,6 +419,8 @@ client_idle_limit_in_recovery = 0
 #------------------------------------------------------------------------------
 # WATCHDOG
 #------------------------------------------------------------------------------
+use_watchdog = on
+                                    # Activates watchdog
 trusted_servers = ''
 									# trusted server list which are used
 									# to confirm network connection
@@ -439,6 +441,8 @@ if_down_cmd = 'ifconfig eth0:0 down'
 									# shutdown delegate IP command
 wd_life_point = 3
 									# lifecheck retry times
+wd_lifecheck_query = 'SELECT 1'
+									# lifecheck query to pgpool from watchdog
 # Other pgpool Connection Settings
 
 #other_pgpool_hostname0 = 'host0'

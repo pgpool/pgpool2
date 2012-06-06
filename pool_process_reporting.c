@@ -548,6 +548,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	/*
 	 * add for watchdog
 	 */
+	strncpy(status[i].name, "use_watchdog", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->use_watchdog);
+	strncpy(status[i].desc, "non 0 if operating in use_watchdog", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	strncpy(status[i].name, "trusted_servers", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->trusted_servers);
 	strncpy(status[i].desc, "upper server list to observe connection", POOLCONFIG_MAXDESCLEN);
@@ -591,6 +596,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].name, "wd_life_point", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_life_point);
 	strncpy(status[i].desc, "retry times of life check", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "wd_lifecheck_query", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->wd_lifecheck_query);
+	strncpy(status[i].desc, "lifecheck query to pgpool from watchdog", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/*

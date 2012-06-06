@@ -217,8 +217,9 @@ typedef struct {
 	/*
 	 * add for watchdog
 	 */
-	int wd_port;				/* watchdog port */
-	WdDesc * other_wd; /* watchdog lists */ 
+	int use_watchdog;		/* if non 0, use watchdog */
+	int wd_port;			/* watchdog port */
+	WdDesc * other_wd;		/* watchdog lists */ 
 	char * trusted_servers;	/* icmp reachable server list (A,B,C) */
 	char * delegate_IP;		/* delegate IP address */
 	int  wd_interval;		/* lifecheck interval (sec) */
@@ -227,6 +228,7 @@ typedef struct {
 	char * if_up_cmd;		/* ifup command */
 	char * if_down_cmd;		/* ifdown command */
 	int  wd_life_point;		/* life point (retry times at lifecheck) */
+	char * wd_lifecheck_query;	/* lifecheck query */
 } POOL_CONFIG;
 
 typedef enum {

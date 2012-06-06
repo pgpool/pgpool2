@@ -70,7 +70,8 @@ wd_init(void)
 	wd_add_wd_list(pool_config->other_wd);
 
 	/* check upper connection */
-	if (wd_is_upper_ok(pool_config->trusted_servers) != WD_OK)
+	if ((pool_config->trusted_servers != NULL) &&
+		(wd_is_upper_ok(pool_config->trusted_servers) != WD_OK))
 	{
 		pool_error("failed to connect trusted server");
 		return WD_NG;

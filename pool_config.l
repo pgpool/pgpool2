@@ -230,6 +230,7 @@ int pool_init_config(void)
 	/*
 	 * add for watchdog
 	 */
+	pool_config->use_watchdog = 0;
 	pool_config->trusted_servers = NULL;
 	pool_config->delegate_IP = NULL;
 	pool_config->wd_port = 9000;
@@ -240,6 +241,7 @@ int pool_init_config(void)
 	pool_config->if_up_cmd = "ifconfig eth0:0 inet $_IP_$ netmask 255.255.255.0";
 	pool_config->if_down_cmd = "ifconfig eth0:0 down";
 	pool_config->wd_life_point = 3;
+	pool_config->wd_lifecheck_query = "SELECT 1";
 
 
     pool_config->memory_cache_enabled = 0;
@@ -1935,6 +1937,18 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				pool_config->other_wd->num_wd = slot+1;
 			}
 		}
+		else if (!strcmp(key, "use_watchdog") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			int v = eval_logical(yytext);
+
+			if (v < 0)
+			{
+				pool_error("pool_config: invalid value %s for %s", yytext, key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->use_watchdog = v;
+		}
 		else if (!strcmp(key, "trusted_servers") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			char *str;
@@ -2066,6 +2080,24 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->wd_life_point = v;
+		}
+		else if (!strcmp(key, "wd_lifecheck_query") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->wd_lifecheck_query = str;
 		}
 
 

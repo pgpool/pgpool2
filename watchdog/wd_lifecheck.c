@@ -37,10 +37,46 @@
 
 #include "libpq-fe.h"
 
+int is_wd_lifecheck_ready(void);
 int wd_lifecheck(void);
 static void * ping_pgpool(void * arg);
 static PGconn * create_conn(char * hostname, int port);
 static int pgpool_down(WdInfo * pool);
+
+int
+is_wd_lifecheck_ready(void)
+{
+	PGconn * conn = NULL;
+	PGresult * res = (PGresult *)NULL;
+	int status = WD_OK;
+	WdInfo * p = WD_List;
+	while (p->status != WD_END)
+	{
+		conn = create_conn(p->hostname, p->pgpool_port);
+		if (conn != NULL)
+		{
+			res = PQexec(conn, pool_config->wd_lifecheck_query );
+
+			status = PQresultStatus(res);
+			if (res != NULL)
+			{
+				PQclear(res);
+			}
+			if ((status == PGRES_NONFATAL_ERROR )|| 
+				(status == PGRES_FATAL_ERROR ))
+			{
+				status = WD_NG;
+			}
+			PQfinish(conn);
+		}
+		else
+		{
+			status = WD_NG;
+		}
+		p ++;
+	}
+	return status;
+}
 
 int
 wd_lifecheck(void)
@@ -57,7 +93,8 @@ wd_lifecheck(void)
 	gettimeofday(&tv, NULL);
 
 	/* check upper connection */
-	if (wd_is_upper_ok(pool_config->trusted_servers) != WD_OK)
+	if ((pool_config->trusted_servers != NULL) &&
+		(wd_is_upper_ok(pool_config->trusted_servers) != WD_OK))
 	{
 		pool_error("failed to connect trusted server");
 		/* This server connection may be downwd */
@@ -83,7 +120,7 @@ wd_lifecheck(void)
 		cnt ++;
 		if (cnt >= MAX_WATCHDOG_NUM)
 		{
-			pool_error("trusted server num is out of range(%d)",cnt);	
+			pool_error("pgpool num is out of range(%d)",cnt);	
 			break;
 		}
 	}
@@ -152,7 +189,7 @@ ping_pgpool(void * arg)
 	thread_arg = (WdPgpoolThreadArg *)arg;
 	conn = thread_arg->conn;
 
-	res = PQexec(conn, "SELECT 1" );
+	res = PQexec(conn, pool_config->wd_lifecheck_query );
 
 	status = PQresultStatus(res);
 	if (res != NULL)

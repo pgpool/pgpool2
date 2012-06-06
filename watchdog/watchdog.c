@@ -82,18 +82,10 @@ wd_check_config(void)
 {
 	int status = WD_OK;
 	if ((pool_config->other_wd->num_wd == 0)	||
-		(pool_config->trusted_servers == NULL)	||
-		(pool_config->delegate_IP == NULL))
+		(pool_config->delegate_IP == NULL)		||
+		(strlen(pool_config->delegate_IP) == 0))
 	{
 		status = WD_NG;
-	}
-	else
-	{
-		if ((strlen(pool_config->trusted_servers) == 0) ||
-			(strlen(pool_config->delegate_IP) == 0))
-		{
-			status = WD_NG;
-		}
 	}
 	return status;
 	
@@ -106,6 +98,10 @@ wd_main(int fork_wait_time)
 	pid_t pgid = 0;
 	pid_t pid = 0;
 
+	if (!pool_config->use_watchdog)
+	{
+		return WD_NG;
+	}
 	/* check pool_config data */
 	status = wd_check_config();
 	if (status != WD_OK)
@@ -147,6 +143,12 @@ wd_main(int fork_wait_time)
 
 	if (fork_wait_time > 0) {
 		sleep(fork_wait_time);
+	}
+
+	/* wait until ready to go */
+	while (WD_OK != is_wd_lifecheck_ready())
+	{
+		sleep(pool_config->wd_interval * 10);
 	}
 
 	/* watchdog loop */
