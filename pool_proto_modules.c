@@ -110,6 +110,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	POOL_STATUS status;
 	char *string;
 	int lock_kind;
+	int specific_error = 0;
 
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_QUERY_CONTEXT *query_context;
@@ -443,15 +444,37 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 				pool_query_context_destroy(query_context);
 				return POOL_END;
 			}
+
+			/* Check specific errors */
+			specific_error = check_errors(backend, MASTER_NODE_ID);
+			if (specific_error)
+			{
+				/* log error message */
+				generate_error_message("SimpleQuery: ", specific_error, contents);
+			}
 		}
 
-		/*
-		 * Send the query to other than master node.
-		 */
-		if (pool_send_and_wait(query_context, string, len, -1, MASTER_NODE_ID, "") != POOL_CONTINUE)
+		if (specific_error)
 		{
-			pool_query_context_destroy(query_context);
-			return POOL_END;
+			char msg[1024] = POOL_ERROR_QUERY; /* large enough */
+			int msglen = strlen(msg);
+
+			memset(msg + msglen, 0, sizeof(int));
+
+			/* send query to other nodes */
+			if (pool_send_and_wait(query_context, msg, msglen, -1, MASTER_NODE_ID, "") != POOL_CONTINUE)
+				return POOL_END;
+		}
+		else
+		{
+			/*
+			 * Send the query to other than master node.
+			 */
+			if (pool_send_and_wait(query_context, string, len, -1, MASTER_NODE_ID, "") != POOL_CONTINUE)
+			{
+				pool_query_context_destroy(query_context);
+				return POOL_END;
+			}
 		}
 
 		/* Send "COMMIT" or "ROLLBACK" to only master node if query is "COMMIT" or "ROLLBACK" */
