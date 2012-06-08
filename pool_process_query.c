@@ -321,7 +321,13 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 						r = detect_serialization_error(CONNECTION(backend, i), MAJOR(backend), false);
 						if (r == SPECIFIED_ERROR)
 						{
-							pool_log("connection on node %d was terminated due to conflict with recovery", i);
+							pool_error("connection on node %d was terminated due to conflict with recovery", i);
+							pool_send_fatal_message(frontend, MAJOR(backend),
+													SERIALIZATION_FAIL_ERROR_CODE,
+													"connection was terminated due to confilict with recovery",
+													"User was holding a relation lock for too long.",
+													"In a moment you should be able to reconnect to the database and repeat your command.",
+													__FILE__, __LINE__);
 							return POOL_ERROR;
 						}
 
