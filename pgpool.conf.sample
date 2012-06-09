@@ -302,8 +302,8 @@ follow_master_command = ''
                                    #   %H = hostname of the new master node
                                    #   %M = old master node id
                                    #   %P = old primary node id
-								   #   %r = new master port number
-								   #   %R = new master database cluster path
+                                   #   %r = new master port number
+                                   #   %R = new master database cluster path
                                    #   %% = '%' character
 
 
@@ -369,8 +369,8 @@ failover_command = ''
                                    #   %H = hostname of the new master node
                                    #   %M = old master node id
                                    #   %P = old primary node id
-								   #   %r = new master port number
-								   #   %R = new master database cluster path
+                                   #   %r = new master port number
+                                   #   %R = new master database cluster path
                                    #   %% = '%' character
 failback_command = ''
                                    # Executes this command at failback.
@@ -383,8 +383,8 @@ failback_command = ''
                                    #   %H = hostname of the new master node
                                    #   %M = old master node id
                                    #   %P = old primary node id
-								   #   %r = new master port number
-								   #   %R = new master database cluster path
+                                   #   %r = new master port number
+                                   #   %R = new master database cluster path
                                    #   %% = '%' character
 
 fail_over_on_backend_error = on
@@ -424,27 +424,27 @@ client_idle_limit_in_recovery = 0
 use_watchdog = on
                                     # Activates watchdog
 trusted_servers = ''
-									# trusted server list which are used
-									# to confirm network connection
-									# (hostA,hostB,hostC,...)
+                                    # trusted server list which are used
+                                    # to confirm network connection
+                                    # (hostA,hostB,hostC,...)
 delegate_IP = ''
-									# delegate IP address
+                                    # delegate IP address
 wd_port = 9000
-									# port number for watchdog service
-wd_interval = 10;
-									# lifecheck interval (sec) > 0
+                                    # port number for watchdog service
+wd_interval = 10
+                                    # lifecheck interval (sec) > 0
 ping_path = '/bin'
-									# ping command path
+                                    # ping command path
 ifconfig_path = '/sbin'
-									# ifconfig command path
+                                    # ifconfig command path
 if_up_cmd = 'ifconfig eth0:0 inet $_IP_$ netmask 255.255.255.0'
-									# startup delegate IP command
+                                    # startup delegate IP command
 if_down_cmd = 'ifconfig eth0:0 down'
-									# shutdown delegate IP command
+                                    # shutdown delegate IP command
 wd_life_point = 3
-									# lifecheck retry times
+                                    # lifecheck retry times
 wd_lifecheck_query = 'SELECT 1'
-									# lifecheck query to pgpool from watchdog
+                                    # lifecheck query to pgpool from watchdog
 # Other pgpool Connection Settings
 
 #other_pgpool_hostname0 = 'host0'
@@ -479,16 +479,16 @@ relcache_expire = 0
 relcache_size = 256
                                    # Number of relation cache
                                    # entry. If you see frequently:
-								   # "pool_search_relcache: cache replacement happend"
-								   # in the pgpool log, you might want to increate this number.
+                                   # "pool_search_relcache: cache replacement happend"
+                                   # in the pgpool log, you might want to increate this number.
 
 check_temp_table = on
                                    # If on, enable temporary table check in SELECT statements.
                                    # This initiates queries against system catalog of primary/master
-								   # thus increases load of master.
-								   # If you are absolutely sure that your system never uses temporary tables
-								   # and you want to save access to primary/master, you could turn this off.
-								   # Default is on.
+                                   # thus increases load of master.
+                                   # If you are absolutely sure that your system never uses temporary tables
+                                   # and you want to save access to primary/master, you could turn this off.
+                                   # Default is on.
 
 
 #------------------------------------------------------------------------------
