@@ -577,7 +577,107 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].desc, "relation cache expiration time in seconds", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	/* ON MEMORY QUERY MEMORY CACHE */
+	strncpy(status[i].name, "parallel_mode", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->parallel_mode);
+	strncpy(status[i].desc, "if non 0, run in parallel query mode", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "enable_query_cache", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->enable_query_cache);
+	strncpy(status[i].desc, "if non 0, use query cache", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "pgpool2_hostname", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->pgpool2_hostname);
+	strncpy(status[i].desc, "pgpool2 hostname", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "system_db_hostname", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->system_db_hostname);
+	strncpy(status[i].desc, "system DB hostname", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "system_db_port", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->system_db_port);
+	strncpy(status[i].desc, "system DB port number", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "system_db_dbname", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->system_db_dbname);
+	strncpy(status[i].desc, "system DB name", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "system_db_schema", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->system_db_schema);
+	strncpy(status[i].desc, "system DB schema name", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "system_db_user", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->system_db_user);
+	strncpy(status[i].desc, "user name to access system DB", POOLCONFIG_MAXDESCLEN);
+	i++;
+	
+	/*
+	 * add for watchdog
+	 */
+	strncpy(status[i].name, "use_watchdog", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->use_watchdog);
+	strncpy(status[i].desc, "non 0 if operating in use_watchdog", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "trusted_servers", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->trusted_servers);
+	strncpy(status[i].desc, "upper server list to observe connection", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "delegate_IP", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->delegate_IP);
+	strncpy(status[i].desc, "delegate IP address of master pgpool", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "wd_port", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_port);
+	strncpy(status[i].desc, "watchdog port number", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "wd_interval", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_interval);
+	strncpy(status[i].desc, "life check interval (second)", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "ping_path", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ping_path);
+	strncpy(status[i].desc, "path to ping command", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "ifconfig_path", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ifconfig_path);
+	strncpy(status[i].desc, "path to ifconfig command", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "if_up_cmd", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->if_up_cmd);
+	strncpy(status[i].desc, "virtual interface up command with full parameters", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "if_down_cmd", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->if_down_cmd);
+	strncpy(status[i].desc, "virtual interface down command with full parameters", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "wd_life_point", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_life_point);
+	strncpy(status[i].desc, "retry times of life check", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "wd_lifecheck_query", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->wd_lifecheck_query);
+	strncpy(status[i].desc, "lifecheck query to pgpool from watchdog", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	/*
+	 * end of watchdog
+	 */
 
 	strncpy(status[i].name, "memory_cache_enabled", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->memory_cache_enabled);
@@ -716,6 +816,28 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_flag_to_str(BACKEND_INFO(j).flag));
 		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "backend #%d flag", j);
 		i++;
+	}
+
+	for (j = 0; j < MAX_WATCHDOG_NUM; j++)
+	{
+		if (WD_INFO(j).pgpool_port == 0)
+			continue;
+
+		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "other_pgpool_hostname%d", j);
+		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", WD_INFO(j).hostname);
+		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "pgpool #%d hostname", j);
+		i++;
+
+		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "other_pgpool_port%d", j);
+		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", WD_INFO(j).pgpool_port);
+		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "pgpool #%d port number", j);
+		i++;
+
+		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "other_pgpool_wd_port%d", j);
+		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", WD_INFO(j).wd_port);
+		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "pgpool #%d watchdog port number", j);
+		i++;
+
 	}
 
 	*nrows = i;

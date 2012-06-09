@@ -32,6 +32,9 @@
 
 #include "libpq-fe.h"
 
+#include "watchdog/watchdog.h"
+#include "watchdog/wd_ext.h"
+
 #define WAIT_RETRY_COUNT (pool_config->recovery_timeout / 3)
 
 #define FIRST_STAGE 0
@@ -99,8 +102,11 @@ int start_recovery(int recovery_node)
 	{
 		pool_log("starting 2nd stage");
 
+		/* announce start recovery */
+		wd_start_recovery();
+
 		/* 2nd stage */
-		*InRecovery = 1;
+		*InRecovery = RECOVERY_ONLINE;
 		if (wait_connection_closed() != 0)
 		{
 			PQfinish(conn);
@@ -172,7 +178,13 @@ int start_recovery(int recovery_node)
  */
 void finish_recovery(void)
 {
-	*InRecovery = 0;
+	/* announce end recovery */
+	if (*InRecovery == RECOVERY_ONLINE)
+	{
+		wd_end_recovery();
+	}
+
+	*InRecovery = RECOVERY_INIT;
 	kill(getppid(), SIGUSR2);
 }
 

@@ -60,7 +60,7 @@
 #include "parser/pool_string.h"
 #include "pool_passwd.h"
 #include "pool_memqcache.h"
-
+#include "watchdog/wd_ext.h"
 /*
  * Process pending signal actions.
  */
@@ -380,6 +380,7 @@ int main(int argc, char **argv)
 		if (!strcmp(argv[optind], "stop"))
 		{
 			stop_me();
+			unlink(pool_config->pid_file_name);
 			pool_shmem_exit(0);
 			exit(0);
 		}
@@ -418,6 +419,9 @@ int main(int argc, char **argv)
 
 	/* set signal masks */
 	poolinitmask();
+
+	/* start watchdog */
+	wd_main(1);
 
 	if (not_detach)
 		write_pid_file();
@@ -545,7 +549,7 @@ int main(int argc, char **argv)
 		pool_error("failed to allocate InRecovery");
 		myexit(1);
 	}
-	*InRecovery = 0;
+	*InRecovery = RECOVERY_INIT;
 
 	/*
 	 * Initialize shared memory cache
@@ -894,7 +898,7 @@ static void daemonize(void)
 #endif
 
 	mypid = getpid();
-
+	write_pid_file();
 	rc_chdir = chdir("/");
 
 	i = open("/dev/null", O_RDWR);
@@ -916,7 +920,6 @@ static void daemonize(void)
 		openlog(pool_config->syslog_ident, LOG_PID|LOG_NDELAY|LOG_NOWAIT, pool_config->syslog_facility);
 	}
 
-	write_pid_file();
 }
 
 
@@ -994,6 +997,7 @@ static void write_pid_file(void)
 	}
 	snprintf(pidbuf, sizeof(pidbuf), "%d", (int)getpid());
 	fwrite(pidbuf, strlen(pidbuf)+1, 1, fd);
+	fflush(fd);
 	if (fclose(fd))
 	{
 		pool_error("could not write pid file as %s. reason: %s",
@@ -1427,7 +1431,12 @@ void degenerate_backend_set(int *node_id_set, int count)
 	}
 
 	if (need_signal)
-		kill(parent, SIGUSR1);
+	{
+		if (WD_OK == wd_degenerate_backend_set(node_id_set, count))
+		{
+			kill(parent, SIGUSR1);
+		}
+	}
 
 	pool_semaphore_unlock(REQUEST_INFO_SEM);
 	POOL_SETMASK(&oldmask);
@@ -1453,7 +1462,11 @@ void promote_backend(int node_id)
 	Req_info->kind = PROMOTE_NODE_REQUEST;
 	Req_info->node_id[0] = node_id;
 	pool_log("promote_backend: %d promote node request from pid %d", node_id, getpid());
-	kill(parent, SIGUSR1);
+
+	if (WD_OK == wd_promote_backend(node_id))
+	{
+		kill(parent, SIGUSR1);
+	}
 	pool_semaphore_unlock(REQUEST_INFO_SEM);
 }
 
@@ -1473,6 +1486,10 @@ void send_failback_request(int node_id)
 		return;
 	}
 
+	if (WD_OK != wd_send_failback_request(node_id))
+	{
+		return;
+	}
 	kill(parent, SIGUSR1);
 }
 
@@ -1738,7 +1755,7 @@ static void failover(void)
 #ifdef NOT_USED
 	else
 	{
-		if (Req_info->master_node_id == new_master && *InRecovery == 0)
+		if (Req_info->master_node_id == new_master && *InRecovery == RECOVERY_INIT)
 		{
 			pool_log("failover_handler: do not restart pgpool. same master node %d was selected", new_master);
 			if (Req_info->kind == NODE_UP_REQUEST)

@@ -397,6 +397,16 @@ typedef struct {
 } POOL_SELECT_RESULT;
 
 /*
+ * recovery mode
+ */
+typedef enum {
+	RECOVERY_INIT = 0,
+	RECOVERY_ONLINE,
+	RECOVERY_DETACH,
+	RECOVERY_PROMOTE
+} POOL_RECOVERY_MODE;
+
+/*
  * global variables
  */
 extern pid_t mypid; /* parent pid */

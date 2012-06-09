@@ -46,7 +46,7 @@ AM_CPPFLAGS = -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
 # suggested by libtoolize
 ACLOCAL_AMFLAGS = -I m4
 
-pgpool_LDADD = -L@PGSQL_LIB_DIR@ -lpq parser/libsql-parser.a pcp/libpcp.la parser/nodes.o
+pgpool_LDADD = -L@PGSQL_LIB_DIR@ -lpq parser/libsql-parser.a pcp/libpcp.la parser/nodes.o watchdog/lib-watchdog.a -lpthread
 if enable_rpath
   pgpool_LDFLAGS = -rpath @PGSQL_LIB_DIR@ -rpath $(libdir)
 else
@@ -128,4 +128,4 @@ EXTRA_DIST = pgpool.8.in sample/pgpool.pam \
 		redhat/pgpool.init redhat/pgpool.sysconfig redhat/pgpool.conf.sample.patch
 
 
-SUBDIRS = parser pcp
+SUBDIRS = parser pcp watchdog

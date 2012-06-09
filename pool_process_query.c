@@ -166,7 +166,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 		 * If we are in recovery and client_idle_limit_in_recovery is -1, then
 		 * exit immediately.
 		 */
-		if (*InRecovery > 0 && pool_config->client_idle_limit_in_recovery == -1)
+		if (*InRecovery > RECOVERY_INIT && pool_config->client_idle_limit_in_recovery == -1)
 		{
 			pool_log("pool_process_query: child connection forced to terminate due to client_idle_limitis -1");
 			pool_send_error_message(frontend, MAJOR(backend),
@@ -4567,7 +4567,7 @@ SELECT_RETRY:
 	/* select timeout */
 	if (fds == 0)
 	{
-		if (*InRecovery == 0 && pool_config->client_idle_limit > 0)
+		if (*InRecovery == RECOVERY_INIT && pool_config->client_idle_limit > 0)
 		{
 			idle_count++;
 
@@ -4581,7 +4581,7 @@ SELECT_RETRY:
 				return POOL_END;
 			}
 		}
-		else if (*InRecovery > 0 && pool_config->client_idle_limit_in_recovery > 0)
+		else if (*InRecovery > RECOVERY_INIT && pool_config->client_idle_limit_in_recovery > 0)
 		{
 			idle_count_in_recovery++;
 
@@ -4595,7 +4595,7 @@ SELECT_RETRY:
 				return POOL_END;
 			}
 		}
-		else if (*InRecovery > 0 && pool_config->client_idle_limit_in_recovery == -1)
+		else if (*InRecovery > RECOVERY_INIT && pool_config->client_idle_limit_in_recovery == -1)
 		{
 			/*
 			 * If we are in recovery and client_idle_limit_in_recovery is -1, then

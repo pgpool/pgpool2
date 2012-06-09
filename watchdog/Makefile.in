@@ -34,9 +34,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = parser
-DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in gram.c \
-	gram.h
+subdir = watchdog
+DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
@@ -53,14 +52,12 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 LIBRARIES = $(noinst_LIBRARIES)
 ARFLAGS = cru
-libsql_parser_a_AR = $(AR) $(ARFLAGS)
-libsql_parser_a_LIBADD =
-am_libsql_parser_a_OBJECTS = copyfuncs.$(OBJEXT) gram.$(OBJEXT) \
-	keywords.$(OBJEXT) kwlookup.$(OBJEXT) list.$(OBJEXT) \
-	makefuncs.$(OBJEXT) nodes.$(OBJEXT) outfuncs.$(OBJEXT) \
-	parser.$(OBJEXT) pool_memory.$(OBJEXT) pool_string.$(OBJEXT) \
-	scansup.$(OBJEXT) value.$(OBJEXT) wchar.$(OBJEXT)
-libsql_parser_a_OBJECTS = $(am_libsql_parser_a_OBJECTS)
+lib_watchdog_a_AR = $(AR) $(ARFLAGS)
+lib_watchdog_a_LIBADD =
+am_lib_watchdog_a_OBJECTS = watchdog.$(OBJEXT) wd_child.$(OBJEXT) \
+	wd_if.$(OBJEXT) wd_init.$(OBJEXT) wd_lifecheck.$(OBJEXT) \
+	wd_list.$(OBJEXT) wd_packet.$(OBJEXT) wd_ping.$(OBJEXT)
+lib_watchdog_a_OBJECTS = $(am_lib_watchdog_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -74,12 +71,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-YACCCOMPILE = $(YACC) $(YFLAGS) $(AM_YFLAGS)
-LTYACCCOMPILE = $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(YACC) $(YFLAGS) $(AM_YFLAGS)
-YLWRAP = $(top_srcdir)/ylwrap
-SOURCES = $(libsql_parser_a_SOURCES)
-DIST_SOURCES = $(libsql_parser_a_SOURCES)
+SOURCES = $(lib_watchdog_a_SOURCES)
+DIST_SOURCES = $(lib_watchdog_a_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -208,47 +201,24 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-noinst_LIBRARIES = libsql-parser.a
-libsql_parser_a_SOURCES = \
-	copyfuncs.c \
-	gram.y \
-	gramparse.h \
-	keywords.c \
-	keywords.h \
-	kwlist.h \
-	kwlookup.c \
-	list.c \
-	makefuncs.c \
-	makefuncs.h \
-	memnodes.h \
-	nodes.c \
-	nodes.h \
-	outfuncs.c \
-	parsenodes.h \
-	parser.c \
-	parser.h \
-	pg_list.h \
-	pg_wchar.h \
-	pool_memory.c \
-	pool_memory.h \
-	pool_parser.h \
-	pool_string.c \
-	pool_string.h \
-	primnodes.h \
-	scanner.h \
-	scansup.c \
-	scansup.h \
-	value.c \
-	value.h \
-	wchar.c
+noinst_LIBRARIES = lib-watchdog.a
+lib_watchdog_a_SOURCES = \
+	watchdog.c \
+	watchdog.h \
+	wd_child.c \
+	wd_ext.h \
+	wd_if.c \
+	wd_init.c \
+	wd_lifecheck.c \
+	wd_list.c \
+	wd_packet.c \
+	wd_ping.c
 
-EXTRA_DIST = scan.c scan.l
 AM_CPPFLAGS = -D_GNU_SOURCE -I .. -I @PGSQL_INCLUDE_DIR@
-AM_YFLAGS = -d
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .lo .o .obj .y
+.SUFFIXES: .c .lo .o .obj
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -258,9 +228,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu parser/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu watchdog/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu parser/Makefile
+	  $(AUTOMAKE) --gnu watchdog/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -282,15 +252,10 @@ $(am__aclocal_m4_deps):
 
 clean-noinstLIBRARIES:
 	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
-gram.h: gram.c
-	@if test ! -f $@; then \
-	  rm -f gram.c; \
-	  $(MAKE) $(AM_MAKEFLAGS) gram.c; \
-	else :; fi
-libsql-parser.a: $(libsql_parser_a_OBJECTS) $(libsql_parser_a_DEPENDENCIES) 
-	-rm -f libsql-parser.a
-	$(libsql_parser_a_AR) libsql-parser.a $(libsql_parser_a_OBJECTS) $(libsql_parser_a_LIBADD)
-	$(RANLIB) libsql-parser.a
+lib-watchdog.a: $(lib_watchdog_a_OBJECTS) $(lib_watchdog_a_DEPENDENCIES) 
+	-rm -f lib-watchdog.a
+	$(lib_watchdog_a_AR) lib-watchdog.a $(lib_watchdog_a_OBJECTS) $(lib_watchdog_a_LIBADD)
+	$(RANLIB) lib-watchdog.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -298,20 +263,14 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/copyfuncs.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gram.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/keywords.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kwlookup.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/list.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/makefuncs.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nodes.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/outfuncs.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parser.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_memory.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_string.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scansup.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/value.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wchar.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/watchdog.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_child.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_if.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_init.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_lifecheck.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_list.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_packet.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_ping.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -333,9 +292,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
-
-.y.c:
-	$(am__skipyacc) $(SHELL) $(YLWRAP) $< y.tab.c $@ y.tab.h $*.h y.output $*.output -- $(YACCCOMPILE)
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -454,8 +410,6 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-	-rm -f gram.c
-	-rm -f gram.h
 clean: clean-am
 
 clean-am: clean-generic clean-libtool clean-noinstLIBRARIES \
@@ -542,10 +496,6 @@ uninstall-am:
 	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
 	pdf pdf-am ps ps-am tags uninstall uninstall-am
 
-
-gram.c: gram.y scan.c
-scan.c: scan.l
-	$(LEX) -o'scan.c' $<
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

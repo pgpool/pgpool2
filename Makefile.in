@@ -87,7 +87,7 @@ am_pgpool_OBJECTS = main.$(OBJEXT) child.$(OBJEXT) pool_auth.$(OBJEXT) \
 	getopt_long.$(OBJEXT)
 pgpool_OBJECTS = $(am_pgpool_OBJECTS)
 pgpool_DEPENDENCIES = parser/libsql-parser.a pcp/libpcp.la \
-	parser/nodes.o
+	parser/nodes.o watchdog/lib-watchdog.a
 pgpool_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(pgpool_LDFLAGS) \
 	$(LDFLAGS) -o $@
@@ -203,6 +203,7 @@ DEFS = @DEFS@ \
 	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\"
 
 DEPDIR = @DEPDIR@
+DLLTOOL = @DLLTOOL@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
@@ -229,6 +230,7 @@ LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
+MANIFEST_TOOL = @MANIFEST_TOOL@
 MEMCACHED_DIR = @MEMCACHED_DIR@
 MEMCACHED_INCLUDE_OPT = @MEMCACHED_INCLUDE_OPT@
 MEMCACHED_LINK_OPT = @MEMCACHED_LINK_OPT@
@@ -263,6 +265,7 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__include = @am__include@
@@ -295,7 +298,6 @@ libdir = @libdir@
 libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
-lt_ECHO = @lt_ECHO@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
@@ -353,7 +355,7 @@ AM_CPPFLAGS = -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
 
 # suggested by libtoolize
 ACLOCAL_AMFLAGS = -I m4
-pgpool_LDADD = -L@PGSQL_LIB_DIR@ -lpq parser/libsql-parser.a pcp/libpcp.la parser/nodes.o
+pgpool_LDADD = -L@PGSQL_LIB_DIR@ -lpq parser/libsql-parser.a pcp/libpcp.la parser/nodes.o watchdog/lib-watchdog.a -lpthread
 @enable_rpath_FALSE@pgpool_LDFLAGS = 
 @enable_rpath_TRUE@pgpool_LDFLAGS = -rpath @PGSQL_LIB_DIR@ -rpath $(libdir)
 AM_YFLAGS = -d
@@ -425,7 +427,7 @@ EXTRA_DIST = pgpool.8.in sample/pgpool.pam \
 		test/timestamp/parse_schedule test/timestamp/run-test \
 		redhat/pgpool.init redhat/pgpool.sysconfig redhat/pgpool.conf.sample.patch
 
-SUBDIRS = parser pcp
+SUBDIRS = parser pcp watchdog
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
