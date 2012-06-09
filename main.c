@@ -997,7 +997,7 @@ static void write_pid_file(void)
 	}
 	snprintf(pidbuf, sizeof(pidbuf), "%d", (int)getpid());
 	fwrite(pidbuf, strlen(pidbuf)+1, 1, fd);
-	fflush(fd);
+	fsync(fd);
 	if (fclose(fd))
 	{
 		pool_error("could not write pid file as %s. reason: %s",
