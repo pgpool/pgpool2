@@ -960,22 +960,22 @@ static void stop_me(void)
 */
 static int read_pid_file(void)
 {
-	FILE *fd;
+	int fd;
 	char pidbuf[128];
 
-	fd = fopen(pool_config->pid_file_name, "r");
-	if (!fd)
+	fd = open(pool_config->pid_file_name, O_RDONLY);
+	if (fd == -1)
 	{
 		return -1;
 	}
-	if (fread(pidbuf, 1, sizeof(pidbuf), fd) <= 0)
+	if (read(fd, pidbuf, sizeof(pidbuf)) == -1)
 	{
 		pool_error("could not read pid file as %s. reason: %s",
 				   pool_config->pid_file_name, strerror(errno));
-		fclose(fd);
+		close(fd);
 		return -1;
 	}
-	fclose(fd);
+	close(fd);
 	return(atoi(pidbuf));
 }
 
@@ -984,11 +984,11 @@ static int read_pid_file(void)
 */
 static void write_pid_file(void)
 {
-	FILE *fd;
+	int fd;
 	char pidbuf[128];
 
-	fd = fopen(pool_config->pid_file_name, "w");
-	if (!fd)
+	fd = open(pool_config->pid_file_name, O_CREAT|O_WRONLY);
+	if (fd == -1)
 	{
 		pool_error("could not open pid file as %s. reason: %s",
 				   pool_config->pid_file_name, strerror(errno));
@@ -996,11 +996,25 @@ static void write_pid_file(void)
 		exit(1);
 	}
 	snprintf(pidbuf, sizeof(pidbuf), "%d", (int)getpid());
-	fwrite(pidbuf, strlen(pidbuf)+1, 1, fd);
-	fsync(fd);
-	if (fclose(fd))
+	if (write(fd, pidbuf, strlen(pidbuf)+1) == -1)
 	{
 		pool_error("could not write pid file as %s. reason: %s",
+				   pool_config->pid_file_name, strerror(errno));
+		close(fd);
+		pool_shmem_exit(1);
+		exit(1);
+	}
+	if (fsync(fd) == -1)
+	{
+		pool_error("could not fsync pid file as %s. reason: %s",
+				   pool_config->pid_file_name, strerror(errno));
+		close(fd);
+		pool_shmem_exit(1);
+		exit(1);
+	}	
+	if (close(fd) == -1)
+	{
+		pool_error("could not close pid file as %s. reason: %s",
 				   pool_config->pid_file_name, strerror(errno));
 		pool_shmem_exit(1);
 		exit(1);
