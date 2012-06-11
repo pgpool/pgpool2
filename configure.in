@@ -5,7 +5,7 @@ dnl Checks for programs.
 AC_PROG_CC
 
 AM_INIT_AUTOMAKE(pgpool-II, 3.2alpha1)
-#AC_PROG_RANLIB
+# AC_PROG_RANLIB
 AC_PROG_LIBTOOL
 
 AM_PROG_LEX
