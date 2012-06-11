@@ -961,6 +961,7 @@ static void stop_me(void)
 static int read_pid_file(void)
 {
 	int fd;
+	int readlen;
 	char pidbuf[128];
 
 	fd = open(pool_config->pid_file_name, O_RDONLY);
@@ -968,9 +969,16 @@ static int read_pid_file(void)
 	{
 		return -1;
 	}
-	if (read(fd, pidbuf, sizeof(pidbuf)) == -1)
+	if ((readlen = read(fd, pidbuf, sizeof(pidbuf))) == -1)
 	{
 		pool_error("could not read pid file as %s. reason: %s",
+				   pool_config->pid_file_name, strerror(errno));
+		close(fd);
+		return -1;
+	}
+	else if (readlen == 0)
+	{
+		pool_error("EOF detected while reading pid file as %s. reason: %s",
 				   pool_config->pid_file_name, strerror(errno));
 		close(fd);
 		return -1;
@@ -987,7 +995,7 @@ static void write_pid_file(void)
 	int fd;
 	char pidbuf[128];
 
-	fd = open(pool_config->pid_file_name, O_CREAT|O_WRONLY);
+	fd = open(pool_config->pid_file_name, O_CREAT|O_WRONLY, S_IRUSR|S_IWUSR);
 	if (fd == -1)
 	{
 		pool_error("could not open pid file as %s. reason: %s",
