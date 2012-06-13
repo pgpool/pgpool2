@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Wed Jun  6 11:03:08 JST 2012
+Last modified: Wed Jun 13 17:13:22 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -131,8 +131,9 @@ won't be available. But you shouldn't use such an old release anyway.</p>
 
 <p>You must also make sure that all of your PostgreSQL servers are using the same
 major PostgreSQL version.
-In addition to this, hardware architectures and OSes must be identical if you
-want to use online recovery.
+In addition to this, we do not recommend mixing different PostgreSQL installation with different build options: including supporting SSL or not, to use --disable-integer-datetimes or not, different block size.
+These might affect part of functionality of pgpool-II.
+The difference of PostgreSQL minor versions is not usually a problem. However we do not test every occurrence of minor versions and we recommend to use exact same minor version of PostgreSQL.
 </p>
 
 <p class="top_link"><a href="#Top">back to top</a></p>
