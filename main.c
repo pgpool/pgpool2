@@ -1560,7 +1560,10 @@ static RETSIGTYPE exit_handler(int sig)
 
 	kill(pcp_pid, sig);
 	kill(worker_pid, sig);
+	pool_log("watchdog_pid: %d", watchdog_pid);
+/*
 	kill(watchdog_pid, sig);
+*/
 
 	POOL_SETMASK(&UnBlockSig);
 
