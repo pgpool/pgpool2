@@ -179,6 +179,7 @@ int my_proc_id;
 static BackendStatusRecord backend_rec;	/* Backend status record */
 
 static pid_t worker_pid; /* pid of worker process */
+static pid_t watchdog_pid; /* pid of watchdog process */
 
 BACKEND_STATUS* my_backend_status[MAX_NUM_BACKENDS];		/* Backend status buffer */
 int my_master_node_id;		/* Master node id buffer */
@@ -417,11 +418,11 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
+	/* start watchdog */
+	watchdog_pid = wd_main(1);
+
 	/* set signal masks */
 	poolinitmask();
-
-	/* start watchdog */
-	wd_main(1);
 
 	if (not_detach)
 		write_pid_file();
@@ -1559,6 +1560,7 @@ static RETSIGTYPE exit_handler(int sig)
 
 	kill(pcp_pid, sig);
 	kill(worker_pid, sig);
+	kill(watchdog_pid, sig);
 
 	POOL_SETMASK(&UnBlockSig);
 
