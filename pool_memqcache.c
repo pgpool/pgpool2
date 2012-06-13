@@ -1279,12 +1279,9 @@ void pool_discard_oid_maps(void)
 {
 	char command[1024];
 
-	if (pool_is_shmem_cache())
-	{
-		snprintf(command, sizeof(command), "/bin/rm -fr %s/[0-9]*",
-				 pool_config->memqcache_oiddir);
-		system(command);
-	}
+	snprintf(command, sizeof(command), "/bin/rm -fr %s/[0-9]*",
+			 pool_config->memqcache_oiddir);
+	system(command);
 }
 
 void pool_discard_oid_maps_by_db(int dboid)
