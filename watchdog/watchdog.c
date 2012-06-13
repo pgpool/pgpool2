@@ -39,8 +39,9 @@
 
 WdInfo * WD_List = NULL;					/* watchdog server list */
 unsigned char * WD_Node_List = NULL;		/* node list */
+static pid_t child_pid;
 
-int wd_main(int fork_wait_time);
+pid_t wd_main(int fork_wait_time);
 static void child_wait(int signo);
 static void wd_exit(int exit_status);
 static int wd_check_config(void);
@@ -70,6 +71,7 @@ wd_exit(int exit_signo)
 
 	wd_notice_server_down();
 
+	kill (child_pid, exit_signo);
 	kill (0, exit_signo);
 
 	child_wait(0);
@@ -91,7 +93,7 @@ wd_check_config(void)
 	
 }
 
-int
+pid_t
 wd_main(int fork_wait_time)
 {
 	int status = WD_INIT;
@@ -100,14 +102,14 @@ wd_main(int fork_wait_time)
 
 	if (!pool_config->use_watchdog)
 	{
-		return WD_NG;
+		return 0;
 	}
 	/* check pool_config data */
 	status = wd_check_config();
 	if (status != WD_OK)
 	{
 		pool_error("wd_check_config failed");
-		return WD_NG;
+		return 0;
 	}
 
 	/* initialize */
@@ -115,23 +117,31 @@ wd_main(int fork_wait_time)
 	if (status != WD_OK)
 	{
 		pool_error("wd_init failed");
-		return WD_NG;
+		return 0;
 	}
 
 	/* launch child process */
-	status = wd_child(1);
-	if (status != WD_OK)
+	child_pid = wd_child(1);
+	if (child_pid < 0 )
 	{
 		pool_error("lunch wd_child failed");
-		return WD_NG;
+		return child_pid;
 	}
 
 	pgid = getpgid(0);
 	pid = fork();
 	if (pid != 0)
 	{
-		return WD_OK;
+		return pid;
 	}
+
+	if (fork_wait_time > 0) {
+		sleep(fork_wait_time);
+	}
+	
+	myargv = save_ps_display_args(myargc, myargv);
+
+	init_ps_display("", "", "", "");
 
 	signal(SIGCHLD, SIG_DFL);
 	signal(SIGHUP, SIG_IGN);	
@@ -141,10 +151,7 @@ wd_main(int fork_wait_time)
 	signal(SIGPIPE, SIG_IGN);	
 	setpgid(0,pgid);
 
-	if (fork_wait_time > 0) {
-		sleep(fork_wait_time);
-	}
-
+	set_ps_display("lifecheck",false);
 	/* wait until ready to go */
 	while (WD_OK != is_wd_lifecheck_ready())
 	{
@@ -158,4 +165,5 @@ wd_main(int fork_wait_time)
 		wd_lifecheck();
 		sleep(pool_config->wd_interval);
 	}
+	return pid;
 }

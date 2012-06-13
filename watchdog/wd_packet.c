@@ -561,6 +561,10 @@ send_packet_4_nodes(WdPacket *packet, WD_SEND_TYPE type)
 	{
 		return WD_NG;
 	}
+	if ((type == WD_SEND_TO_MASTER) && (p->status == WD_MASTER))
+	{
+		return WD_OK;
+	}
 
 	/* thread init */
 	pthread_attr_init(&attr);
@@ -600,6 +604,10 @@ send_packet_4_nodes(WdPacket *packet, WD_SEND_TYPE type)
 		p++;
 	}
 
+	if ((type == WD_SEND_TO_MASTER) && (cnt == 0))
+	{
+		return WD_OK;
+	}
 	pthread_attr_destroy(&attr);
 	rtn = (packet->packet_no == WD_STAND_FOR_MASTER)?WD_OK:WD_NG;
 	for (i=0; i<cnt; )

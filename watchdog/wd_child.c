@@ -34,11 +34,11 @@
 #include "watchdog.h"
 #include "wd_ext.h"
 
-int wd_child(int fork_wait_time);
+pid_t wd_child(int fork_wait_time);
 static void wd_child_exit(int exit_signo);
 static int send_response(int sock, WdPacket * recv_pack);
 
-int
+pid_t
 wd_child(int fork_wait_time)
 {
 	int sock;
@@ -51,8 +51,15 @@ wd_child(int fork_wait_time)
 	pid = fork();
 	if (pid != 0)
 	{
-		return WD_OK;
+		return pid;
 	}
+
+	if (fork_wait_time > 0)
+	{
+		sleep(fork_wait_time);
+	}
+
+	myargv = save_ps_display_args(myargc, myargv);
 
 	signal(SIGTERM, wd_child_exit);
 	signal(SIGINT, wd_child_exit);
@@ -65,10 +72,8 @@ wd_child(int fork_wait_time)
 	signal(SIGALRM, SIG_IGN);
 	setpgid(0,pgid);
 
-	if (fork_wait_time > 0)
-	{
-		sleep(fork_wait_time);
-	}
+	init_ps_display("", "", "", "");
+
 	if (WD_List == NULL)
 	{
 		/* memory allocate is not ready */
@@ -80,6 +85,7 @@ wd_child(int fork_wait_time)
 		/* socket create failed */
 		wd_child_exit(15);
 	}
+	set_ps_display("watchdog",false);
 	/* child loop */
 	for(;;)
 	{
@@ -96,6 +102,7 @@ wd_child(int fork_wait_time)
 		}
 		close(fd);
 	}
+	return pid;
 }
 
 static void

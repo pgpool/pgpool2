@@ -27,10 +27,10 @@
 #define WD_EXT_H
 
 /* watchdog.c */
-extern int wd_main(int fork_wait_time);
+extern pid_t wd_main(int fork_wait_time);
 
 /* wd_child.c */
-extern int wd_child(int fork_wait_time);
+extern pid_t wd_child(int fork_wait_time);
 
 /* wd_init.c */
 extern int wd_init(void);
@@ -71,4 +71,7 @@ extern int wd_IP_down(void);
 extern int is_wd_lifecheck_ready(void);
 extern int wd_lifecheck(void);
 
+/* main.c */
+extern int myargc;
+extern char **myargv;
 #endif /* WD_EXT_H */

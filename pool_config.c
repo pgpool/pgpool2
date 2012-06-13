@@ -1861,7 +1861,7 @@ int pool_init_config(void)
 	pool_config->other_wd = malloc(sizeof(WdDesc));
 	if (pool_config->other_wd == NULL)
 	{
-		pool_error("failed to allocate pool_config->other_wd");
+		pool_error("failed to allocate pool_config->cwother_wd");
 		return -1;
 	}
 	memset(pool_config->other_wd,0,sizeof(WdDesc));

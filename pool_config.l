@@ -1918,16 +1918,16 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				WD_INFO(slot).pgpool_port = atoi(yytext);
 		}
 
-		else if (!strncmp(key, "other_pgpool_wd_port", 20) &&
+		else if (!strncmp(key, "other_wd_port", 13) &&
 				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context) &&
 				 mypid == getpid()) /* this parameter must be modified by parent pid */
 		{
 			int slot;
 
-			slot = atoi(key + 20);
+			slot = atoi(key + 13);
 			if (slot < 0 || slot >= MAX_CONNECTION_SLOTS)
 			{
-				pool_error("pool_config: pgpool number %s for other_pgpool_wd_port out of range", key);
+				pool_error("pool_config: pgpool number %s for other_wd_port out of range", key);
 				fclose(fd);
 				return(-1);
 			}
