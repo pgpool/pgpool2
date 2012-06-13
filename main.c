@@ -555,48 +555,56 @@ int main(int argc, char **argv)
 	/*
 	 * Initialize shared memory cache
 	 */
-	if (pool_config->memory_cache_enabled && pool_is_shmem_cache())
-	{
-		size_t size;
-		
-		size = pool_shared_memory_cache_size();
-		if (size == 0)
-		{
-			pool_error("pool_shared_memory_cache_size error");
-			myexit(1);
-		}
-
-		if (pool_init_memory_cache(size) < 0)
-		{
-			pool_error("pool_shared_memory_cache_size error");
-			myexit(1);
-		}
-
-		size = pool_shared_memory_fsmm_size();
-		if (size == 0)
-		{
-			pool_error("pool_shared_memory_fsmm_size error");
-			myexit(1);
-		}
-		pool_init_fsmm(size);
-
-		pool_allocate_fsmm_clock_hand();
-
-		if (clear_memcache_oidmaps)
-		{
-			pool_discard_oid_maps();
-			pool_log("pool_discard_oid_maps: discarded memqcache oid maps");
-		}
-		else
-		{
-			pool_debug("skipped discarding memqcache oid maps");
-		}
-
-		pool_hash_init(pool_config->memqcache_max_num_cache);
-	}
-
 	if (pool_config->memory_cache_enabled)
 	{
+		if (pool_is_shmem_cache())
+		{
+			size_t size;
+			
+			size = pool_shared_memory_cache_size();
+			if (size == 0)
+			{
+				pool_error("pool_shared_memory_cache_size error");
+				myexit(1);
+			}
+
+			if (pool_init_memory_cache(size) < 0)
+			{
+				pool_error("pool_shared_memory_cache_size error");
+				myexit(1);
+			}
+
+			size = pool_shared_memory_fsmm_size();
+			if (size == 0)
+			{
+				pool_error("pool_shared_memory_fsmm_size error");
+				myexit(1);
+			}
+			pool_init_fsmm(size);
+
+			pool_allocate_fsmm_clock_hand();
+
+			pool_discard_oid_maps();
+			pool_log("pool_discard_oid_maps: discarded memqcache oid maps");
+
+			pool_hash_init(pool_config->memqcache_max_num_cache);
+		}
+
+#ifdef USE_MEMCACHED
+		else
+		{
+			if (clear_memcache_oidmaps)
+			{
+				pool_discard_oid_maps();
+				pool_log("pool_discard_oid_maps: discarded memqcache oid maps");
+			}
+			else
+			{
+				pool_debug("skipped discarding memqcache oid maps");
+			}
+		}
+#endif
+
 		if (pool_init_memqcache_stats() < 0)
 		{
 			pool_error("pool_init_memqcache_stats error");
@@ -851,8 +859,8 @@ static void usage(void)
 	fprintf(stderr, "  -h, --help          Prints this help\n\n");
 	fprintf(stderr, "Start options:\n");
 	fprintf(stderr, "  -c, --clear         Clears query cache (enable_query_cache must be on)\n");
-	fprintf(stderr, "  -C, --clear-oidmaps Clears query cache oidmaps\n");
-	fprintf(stderr, "                      (enable_query_cache must be on and memqcache_method must be shmem)\n");
+	fprintf(stderr, "  -C, --clear-oidmaps Clears query cache oidmaps when memqcache_method is memcached\n");
+	fprintf(stderr, "                      (If shmem, discards whenever pgpool starts.)\n");
 	fprintf(stderr, "  -n, --dont-detach   Don't run in daemon mode, does not detach control tty\n");
 	fprintf(stderr, "  -D, --discard-status Discard pgpool_status file and do not restore previous status\n");
 	fprintf(stderr, "  -d, --debug         Debug mode\n\n");
