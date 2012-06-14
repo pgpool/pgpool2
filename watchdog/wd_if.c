@@ -38,19 +38,28 @@
 int wd_IP_up(void);
 int wd_IP_down(void);
 static int exec_ifconfig(char * command);
+static int ip_flg = 0;
 
 int
 wd_IP_up(void)
 {
 	int rtn;
-	rtn = exec_ifconfig(pool_config->if_up_cmd);
+	if (ip_flg == 0)
+	{
+		rtn = exec_ifconfig(pool_config->if_up_cmd);
+	}
+	ip_flg = 1;
 	return rtn;
 }
 int
 wd_IP_down(void)
 {
 	int rtn;
-	rtn = exec_ifconfig(pool_config->if_down_cmd);
+	if (ip_flg == 1)
+	{
+		rtn = exec_ifconfig(pool_config->if_down_cmd);
+	}
+	ip_flg = 0;
 	return rtn;
 }
 
