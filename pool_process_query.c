@@ -1407,7 +1407,7 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
  * - SELECT/WITH without FOR UPDATE/SHARE
  * - COPY TO STDOUT
  * - EXPLAIN
- * - EXPLAIN ANALYZE and query is SELECT
+ * - EXPLAIN ANALYZE and query is SELECT not including writing functions
  *
  * note that for SELECT INTO, this function returns 0
  */
@@ -1461,16 +1461,43 @@ int is_select_query(Node *node, char *sql)
 		ExplainStmt * explain_stmt = (ExplainStmt *)node;
 		Node *query = explain_stmt->query;
 		ListCell *lc;
+		bool analyze = false;
+
+		/* Check to see if this is EXPLAIN ANALYZE */
+		foreach (lc, explain_stmt->options)
+		{
+			DefElem    *opt = (DefElem *) lfirst(lc);
+
+			if (strcmp(opt->defname, "analyze") == 0)
+			{
+				analyze = true;
+				break;
+			}
+		}
 
 		if (IsA(query, SelectStmt))
 		{
-			foreach (lc, explain_stmt->options)
-			{
-				DefElem    *opt = (DefElem *) lfirst(lc);
-
-				if (strcmp(opt->defname, "analyze") == 0)
-					return 1;
-			}
+			/*
+			 * If query is SELECT and there's no ANALYZE option, we
+			 * can always load balance.
+			 */
+			if (!analyze)
+				return 1;
+			/*
+			 * If ANALYZE, we need to check function calls.
+			 */
+			if (pool_has_function_call(query))
+				return 0;
+			return 1;
+		}
+		else
+		{
+			/*
+			 * Other than SELECT can be load balance only if ANALYZE
+			 * is not specified.
+			 */
+			if (!analyze)
+				return 1;
 		}
 	}
 	return 0;
