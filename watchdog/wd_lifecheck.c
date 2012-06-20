@@ -48,7 +48,8 @@ is_wd_lifecheck_ready(void)
 {
 	PGconn * conn = NULL;
 	PGresult * res = (PGresult *)NULL;
-	int status = WD_OK;
+	int status;
+	int rtn = WD_OK;
 	WdInfo * p = WD_List;
 	while (p->status != WD_END)
 	{
@@ -65,17 +66,17 @@ is_wd_lifecheck_ready(void)
 			if ((status == PGRES_NONFATAL_ERROR )|| 
 				(status == PGRES_FATAL_ERROR ))
 			{
-				status = WD_NG;
+				rtn = WD_NG;
 			}
 			PQfinish(conn);
 		}
 		else
 		{
-			status = WD_NG;
+			rtn = WD_NG;
 		}
 		p ++;
 	}
-	return status;
+	return rtn;
 }
 
 int

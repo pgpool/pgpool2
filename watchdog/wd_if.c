@@ -37,44 +37,47 @@
 
 int wd_IP_up(void);
 int wd_IP_down(void);
-static int exec_ifconfig(char * command);
-static int ip_flg = 0;
+static int exec_ifconfig(char * path,char * command);
 
 int
 wd_IP_up(void)
 {
 	int rtn;
-	if (ip_flg == 0)
+	char path[128];
+	if (WD_List->delegate_ip == 0)
 	{
-		rtn = exec_ifconfig(pool_config->if_up_cmd);
+		WD_List->delegate_ip = 1;
+		sprintf(path,"%s/ifconfig",pool_config->ifconfig_path);
+		rtn = exec_ifconfig(path,pool_config->if_up_cmd);
+		sprintf(path,"%s/arping",pool_config->arping_path);
+		rtn = exec_ifconfig(path,pool_config->arping_cmd);
 	}
-	ip_flg = 1;
 	return rtn;
 }
 int
 wd_IP_down(void)
 {
 	int rtn;
-	if (ip_flg == 1)
+	char path[128];
+	if (WD_List->delegate_ip == 1)
 	{
-		rtn = exec_ifconfig(pool_config->if_down_cmd);
+		WD_List->delegate_ip = 0;
+		sprintf(path,"%s/ifconfig",pool_config->ifconfig_path);
+		rtn = exec_ifconfig(path,pool_config->if_down_cmd);
 	}
-	ip_flg = 0;
 	return rtn;
 }
 
 static int
-exec_ifconfig(char * command)
+exec_ifconfig(char * path,char * command)
 {
 	int pfd[2];
 	int status;
 	char * args[24];
 	int pid, i = 0;
-	char ifconfig_path[128];
 	char buf[256];
 	char *bp, *ep;
 
-	sprintf(ifconfig_path,"%s/ifconfig",pool_config->ifconfig_path);
 	if (pipe(pfd) == -1)
 	{
 		pool_error("pipe open error:%s",strerror(errno));
@@ -123,7 +126,7 @@ exec_ifconfig(char * command)
 		close(STDOUT_FILENO);
 		dup2(pfd[1], STDOUT_FILENO);
 		close(pfd[0]);
-		status = execv(ifconfig_path,args);
+		status = execv(path,args);
 		exit(0);
 	}
 	else

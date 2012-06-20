@@ -242,6 +242,8 @@ int pool_init_config(void)
 	pool_config->ifconfig_path = "/sbin";
 	pool_config->if_up_cmd = "ifconfig eth0:0 inet $_IP_$ netmask 255.255.255.0";
 	pool_config->if_down_cmd = "ifconfig eth0:0 down";
+	pool_config->arping_path = "/usr/sbin";
+	pool_config->arping_cmd = "arping -U $_IP_$ -w 1";
 	pool_config->wd_life_point = 3;
 	pool_config->wd_lifecheck_query = "SELECT 1";
 

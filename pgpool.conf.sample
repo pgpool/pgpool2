@@ -441,6 +441,11 @@ if_up_cmd = 'ifconfig eth0:0 inet $_IP_$ netmask 255.255.255.0'
                                     # startup delegate IP command
 if_down_cmd = 'ifconfig eth0:0 down'
                                     # shutdown delegate IP command
+
+arping_path = '/usr/sbin'           # arping command path
+
+arping_cmd = 'arping -U $_IP_$ -w 1'
+                                    # arping command
 wd_life_point = 3
                                     # lifecheck retry times
 wd_lifecheck_query = 'SELECT 1'

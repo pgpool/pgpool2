@@ -229,6 +229,8 @@ typedef struct {
 	char * ifconfig_path;	/* path to ifconfig command */
 	char * if_up_cmd;		/* ifup command */
 	char * if_down_cmd;		/* ifdown command */
+	char * arping_path;	/* path to arping command */
+	char * arping_cmd;		/* arping command */
 	int  wd_life_point;		/* life point (retry times at lifecheck) */
 	char * wd_lifecheck_query;	/* lifecheck query */
 } POOL_CONFIG;

@@ -64,7 +64,7 @@ wd_child(int fork_wait_time)
 	signal(SIGTERM, wd_child_exit);
 	signal(SIGINT, wd_child_exit);
 	signal(SIGQUIT, wd_child_exit);
-	signal(SIGCHLD, wd_child_exit);
+	signal(SIGCHLD, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 	signal(SIGUSR1, SIG_IGN);
 	signal(SIGUSR2, SIG_IGN);

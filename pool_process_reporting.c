@@ -665,6 +665,16 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].desc, "virtual interface down command with full parameters", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	strncpy(status[i].name, "arping_path", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->arping_path);
+	strncpy(status[i].desc, "path to arping command", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "arping_cmd", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->arping_cmd);
+	strncpy(status[i].desc, "send ARP REQUESTi to neighbour host", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	strncpy(status[i].name, "wd_life_point", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_life_point);
 	strncpy(status[i].desc, "retry times of life check", POOLCONFIG_MAXDESCLEN);

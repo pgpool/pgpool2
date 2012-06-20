@@ -81,7 +81,8 @@ typedef struct {
 	char hostname[WD_MAX_HOST_NAMELEN];	/* host name */
 	int pgpool_port;	/* pgpool port */
 	int wd_port;		/* watchdog port */
-	int life;			/* life point */
+	int life;		/* life point */
+	int delegate_ip;	/* delegate IP flag */
 }WdInfo;
 
 typedef struct {
