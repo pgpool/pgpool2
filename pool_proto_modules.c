@@ -1725,10 +1725,21 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			/* Memory cache enabled? */
 			if (cache_commit && pool_config->memory_cache_enabled)
 			{
+				/* If we are doing extended query and the state is after EXECUTE,
+				 * then we can commit cache.
+				 * We check latter condition by looking at query_context->query_w_hex.
+				 * This check is neccessary for certain flame work such as PHP PDO.
+				 * It sends Sync message right after PARSE and it produces
+				 * "Ready for query" message from backend.
+				 */
 				if (pool_is_doing_extended_query_message())
 				{
-					pool_handle_query_cache(backend, session_context->query_context->query_w_hex, node, state);
-					free(session_context->query_context->query_w_hex); // malloced in Execute().
+					if (session_context->query_context->query_w_hex)
+					{
+						pool_handle_query_cache(backend, session_context->query_context->query_w_hex, node, state);
+						free(session_context->query_context->query_w_hex);
+						session_context->query_context->query_w_hex = NULL;
+					}
 				}
 				else
 				{
