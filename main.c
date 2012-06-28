@@ -1463,7 +1463,7 @@ void degenerate_backend_set(int *node_id_set, int count)
 
 	if (need_signal)
 	{
-		if (WD_OK == wd_degenerate_backend_set(node_id_set, count))
+		if (!pool_config->use_watchdog || WD_OK == wd_degenerate_backend_set(node_id_set, count))
 		{
 			kill(parent, SIGUSR1);
 		}
@@ -1494,7 +1494,7 @@ void promote_backend(int node_id)
 	Req_info->node_id[0] = node_id;
 	pool_log("promote_backend: %d promote node request from pid %d", node_id, getpid());
 
-	if (WD_OK == wd_promote_backend(node_id))
+	if (!pool_config->use_watchdog || WD_OK == wd_promote_backend(node_id))
 	{
 		kill(parent, SIGUSR1);
 	}
@@ -1517,7 +1517,7 @@ void send_failback_request(int node_id)
 		return;
 	}
 
-	if (WD_OK != wd_send_failback_request(node_id))
+	if (pool_config->use_watchdog && WD_OK != wd_send_failback_request(node_id))
 	{
 		return;
 	}
@@ -1568,10 +1568,14 @@ static RETSIGTYPE exit_handler(int sig)
 
 	kill(pcp_pid, sig);
 	kill(worker_pid, sig);
-	pool_log("watchdog_pid: %d", watchdog_pid);
-/*
-	kill(watchdog_pid, sig);
-*/
+
+	if (pool_config->use_watchdog)
+	{
+		pool_log("watchdog_pid: %d", watchdog_pid);
+	/*
+		kill(watchdog_pid, sig);
+	*/
+	}
 
 	POOL_SETMASK(&UnBlockSig);
 
