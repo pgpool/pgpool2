@@ -63,7 +63,8 @@ pgpool.8: pgpool.8.in
 CLEANFILES = pgpool.8
 EXTRA_DIST = pgpool.8.in sample/pgpool.pam \
 		doc/pgpool-ja.html doc/pgpool-en.html doc/pgpool-zh_cn.html \
-		doc/pgpool-fr.html doc/wd-ja.html doc/wd-en.html \
+		doc/pgpool-fr.html \
+		doc/wd-ja.html doc/wd-en.html doc/wd-ja.jpg doc/wd-en.jpg \
 		doc/tutorial-ja.html doc/tutorial-en.html doc/tutorial-zh_cn.html \
 	    doc/pgpool.css doc/pgpool-ja.css \
 		doc/where_to_send_queries.pdf doc/where_to_send_queries.odg \
