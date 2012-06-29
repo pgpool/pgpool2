@@ -48,6 +48,7 @@ watchdogプロセスを含むpgpool-IIサーバは以下の図のようなシス
 <img src="wd-ja.jpg" alt="watchdog server composition" hight=70% width=70%>
 </td></tr>
 </table>
+
 <h2>watchdogの起動と停止</h2>
 <p>
 watchdogプロセスはpgpool-IIから自動的に起動・停止されますので、固有の起動・停止コマンドはありません。
@@ -57,13 +58,24 @@ pgpool-IIの起動は
 root権限で
 </font>行う必要があります。
 </p>
+
 <h2>pgpool.confの設定</h2>
 <p>
 	watchdogプロセスの設定項目はpgpool.confに記述します。
 	pgpool.conf.sampleファイルのWATCHDOGセクションにサンプルを記述していますので、参照してください。
 	watchdogプロセスは以下の項目すべてを指定する必要があります。
 </p>
+
 <h3>基本設定セクション</h3>
+<dl>
+
+<dt><a name="USE_WATCHDOG"></a>use_watchdog</dt>
+<dd>
+<p>
+	watchdog を有効にするには on にします。デフォルトは off です。
+</p>
+</dd>
+
 <dt><a name="TRUSTED_SERVERS"></a>trusted_servers</dt>
 <dd>
 <p>
@@ -71,35 +83,47 @@ root権限で
 	pingの応答が得られる必要があります。
 	hostA,hostB,hostC...のようにカンマで区切って複数のサーバを指定できます。
 </p>
+</dd>
+
 <dt><a name="DELEGATE_IP"></a>delegate_IP</dt>
 <dd>
 <p>
 	（アプリケーションサーバなど）外部からの接続されるpgpool-IIの仮想IPアドレスです。
 	スタンバイからアクティブに切り替わる際、pgpoolはこの仮想IPを引き継ぎます。
 </p>
+</dd>
+
 <dt><a name="WD_PORT"></a>wd_port</dt>
 <dd>
 <p>
 	watchdogプロセスが相互監視を受信する為のポート番号です。
 </p>
+</dd>
+
 <dt><a name="WD_INTERVAL"></a>wd_interval</dt>
 <dd>
 <p>
 	pgpool-IIへの生存監視の間隔（秒）です。
 	(1以上の数値)
 </p>
+</dd>
+
 <dt><a name="PING_PATH"></a>ping_path</dt>
 <dd>
 <p>
 	上位サーバへの接続監視に利用するpingコマンドのパスです。
 	/bin　のようにパスだけを指定します。
 </p>
+</dd>
+
 <dt><a name="IFCONFIG_PATH"></a>ifconfig_path</dt>
 <dd>
 <p>
 	IPアドレス切り替えに利用するコマンドのパスです。
 	/sbin　のようにパスだけを指定します。
 </p>
+</dd>
+
 <dt><a name="IF_UP_CMD"></a>if_up_cmd</dt>
 <dd>
 <p>
@@ -108,6 +132,8 @@ root権限で
 	のようにコマンドとパラメータを指定します。
 	$_IP_$　はdelegate_IPで指定されたIPアドレスに置換されます。
 </p>
+</dd>
+
 <dt><a name="IF_DOWN_CMD"></a>if_down_cmd</dt>
 <dd>
 <p>
@@ -115,13 +141,45 @@ root権限で
 	ifconfig eth0:0 down
 	のようにコマンドとパラメータを指定します。
 </p>
+</dd>
+
+<dt><a name="ARPING_PATH"></a>arping_path</dt>
+<dd>
+<p>
+	IPアドレス切り替え後にARPリクエストを送信するコマンドのパスです。
+	/usr/sbin　のようにパスだけを指定します。
+</p>
+</dd>
+
+<dt><a name="ARPING_CMD"></a>arping_cmd</dt>
+<dd>
+<p>
+	IPアドレス切り替え後にARPリクエストを送信するコマンドです。
+	arping -U $_IP_$ -w 1
+	のようにコマンドとパラメータを指定します。
+	$_IP_$　はdelegate_IPで指定されたIPアドレスに置換されます。
+</p>
+</dd>
+
 <dt><a name="WD_LIFE_POINT"></a>wd_life_point</dt>
 <dd>
 <p>
 	pgpool-IIの生死監視で応答が得られなかった場合のリトライ回数です。
 	(1以上の数値)
 </p>
-<h4>監視対象サーバ指定セクション</h4>
+</dd>
+</dl>
+
+<dt><a name="WD_LIFECHECK_QUERY"></a>wd_lifecheck_query</dt>
+<dd>
+<p>
+	pgpool-II の死活監視のために発行されるクエリです。
+	デフォルトは "SELECT 1" です。
+</p>
+</dd>
+
+<h3>監視対象サーバ指定セクション</h3>
+<dl>
 <dt><a name="OTHER_PGPOOL_HOSTNAME"></a>other_pgpool_hostname<font color="red">0</font></dt>
 <dd>
 <p>
@@ -129,6 +187,8 @@ root権限で
 	数値の部分は監視対象サーバの番号です。
 	監視対象のサーバ毎に０からの連番にします。
 </p>
+</dd>
+
 <dt><a name="OTHER_PGPOOL_PORT"></a>other_pgpool_port<font color="red">0</font></dt>
 <dd>
 <p>
@@ -136,6 +196,8 @@ root権限で
 	数値の部分は監視対象サーバの番号です。
 	監視対象のサーバ毎に０からの連番にします。
 </p>
+</dd>
+
 <dt><a name="OTHER_WD_PORT"></a>other_wd_port<font color="red">0</font></dt>
 <dd>
 <p>
@@ -143,5 +205,8 @@ root権限で
 	数値の部分は監視対象サーバの番号です。
 	監視対象のサーバ毎に０からの連番にします。
 </p>
+</dd>
+</dl>
+
 </body>
 </html>
