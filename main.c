@@ -418,9 +418,6 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	/* start watchdog */
-	watchdog_pid = wd_main(1);
-
 	/* set signal masks */
 	poolinitmask();
 
@@ -611,6 +608,9 @@ int main(int argc, char **argv)
 			myexit(1);
 		}
 	}
+
+	/* start watchdog */
+	watchdog_pid = wd_main(1);
 
 	/*
 	 * We need to block signal here. Otherwise child might send some
@@ -1572,9 +1572,7 @@ static RETSIGTYPE exit_handler(int sig)
 	if (pool_config->use_watchdog)
 	{
 		pool_log("watchdog_pid: %d", watchdog_pid);
-	/*
 		kill(watchdog_pid, sig);
-	*/
 	}
 
 	POOL_SETMASK(&UnBlockSig);

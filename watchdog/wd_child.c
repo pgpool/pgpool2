@@ -124,7 +124,7 @@ static int
 send_response(int sock, WdPacket * recv_pack)
 {
 	int rtn = WD_NG;
-	WdInfo * p;
+	WdInfo * p, *q;
 	WdNodeInfo * node;
 	WdPacket send_packet;
 	struct timeval tv;
@@ -155,11 +155,11 @@ send_response(int sock, WdPacket * recv_pack)
 			p = &(recv_pack->wd_body.wd_info);	
 			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, &(p->tv), p->status);
 			/* check exist master */
-			if ((p = wd_is_exist_master()) != NULL)
+			if ((q = wd_is_alive_master()) != NULL)
 			{
 				/* vote against the candidate */
 				send_packet.packet_no = WD_MASTER_EXIST;
-				memcpy(&(send_packet.wd_body.wd_info), p, sizeof(WdInfo));
+				memcpy(&(send_packet.wd_body.wd_info), q, sizeof(WdInfo));
 			}
 			else
 			{
@@ -197,7 +197,7 @@ send_response(int sock, WdPacket * recv_pack)
 			}
 			break;
 		case WD_START_RECOVERY:
-			if (*InRecovery != WD_NODE_READY)
+			if (*InRecovery != RECOVERY_INIT)
 			{
 				send_packet.packet_no = WD_NODE_FAILED;
 			}

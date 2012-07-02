@@ -574,6 +574,11 @@ send_packet_4_nodes(WdPacket *packet, WD_SEND_TYPE type)
 	cnt = 0;
 	while (p->status != WD_END)
 	{
+		if (p->status == WD_DOWN)
+		{
+			p++;
+			continue;
+		}
 		if (type == WD_SEND_TO_MASTER )
 		{
 			if (p->status != WD_MASTER)

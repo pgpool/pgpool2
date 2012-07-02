@@ -29,6 +29,7 @@
 #include "pool.h"
 #include "pool_config.h"
 #include "watchdog.h"
+#include "wd_ext.h"
 
 int wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, struct timeval * tv, int status);
 int wd_add_wd_list(WdDesc * other_wd);
@@ -36,6 +37,7 @@ int wd_set_wd_info(WdInfo * info);
 WdInfo * wd_is_exist_master(void);
 int wd_am_I_oldest(void);
 int wd_set_myself(struct timeval * tv, int status);
+WdInfo * wd_is_alive_master(void);
 
 int
 wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, struct timeval * tv, int status)
@@ -167,3 +169,20 @@ wd_set_myself(struct timeval * tv, int status)
 	WD_List->status = status;
 	return WD_OK;
 }
+
+WdInfo *
+wd_is_alive_master(void)
+{
+	WdInfo * master = NULL;
+
+	master = wd_is_exist_master();
+	if (master != NULL)
+	{
+		if (wd_ping_pgpool(master) != WD_OK)
+		{
+			master = NULL;
+		}
+	}
+	return master;
+}
+
