@@ -42,6 +42,7 @@ extern int wd_set_wd_info(WdInfo * info);
 extern WdInfo * wd_is_exist_master(void);
 extern int wd_am_I_oldest(void);
 extern int wd_set_myself(struct timeval * tv, int status);
+extern WdInfo * wd_is_alive_master(void);
 
 /* wd_packet.c */
 extern int wd_startup(void);
@@ -70,6 +71,7 @@ extern int wd_IP_down(void);
 /* wd_lifecheck.c */
 extern int is_wd_lifecheck_ready(void);
 extern int wd_lifecheck(void);
+extern int wd_ping_pgpool(WdInfo * pgpool);
 
 /* main.c */
 extern int myargc;

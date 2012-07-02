@@ -39,6 +39,7 @@
 
 int is_wd_lifecheck_ready(void);
 int wd_lifecheck(void);
+int wd_ping_pgpool(WdInfo * pgpool);
 static void * ping_pgpool(void * arg);
 static PGconn * create_conn(char * hostname, int port);
 static int pgpool_down(WdInfo * pool);
@@ -145,7 +146,7 @@ wd_lifecheck(void)
 				wd_set_myself(&tv, WD_NORMAL);
 				wd_startup();
 				/* check existence of master pgpool */
-				if (wd_is_exist_master() == NULL )
+				if (wd_is_alive_master() == NULL )
 				{
 					/* escalate to delegate_IP holder */
 					wd_escalation();
@@ -209,19 +210,17 @@ ping_pgpool(void * arg)
 static PGconn *
 create_conn(char * hostname, int port)
 {
-	char port_str[16];
+	static char conninfo[1024];
 	PGconn *conn;
 
-	snprintf(port_str, sizeof(port_str),
-			 "%d", port);
-	conn = PQsetdbLogin(hostname,
-						port_str,
-						NULL,
-						NULL,
-						"template1",
-						pool_config->recovery_user,
-						pool_config->recovery_password);
-
+	snprintf(conninfo,sizeof(conninfo),
+		"host='%s' port='%d' dbname='template1' user='%s' password='%s' connect_timeout='%d'",
+		hostname, 
+		port, 
+		pool_config->recovery_user,
+		pool_config->recovery_password,
+		pool_config->wd_interval / 2 + 1);
+	conn = PQconnectdb(conninfo);
 	if (PQstatus(conn) != CONNECTION_OK)
 	{
 		PQfinish(conn);
@@ -250,5 +249,31 @@ pgpool_down(WdInfo * pool)
 		}
 	}
 	pool->status = WD_DOWN;
+	return rtn;
+}
+
+int
+wd_ping_pgpool(WdInfo * pgpool)
+{
+	int rtn = WD_NG;
+	PGconn * conn;
+	int status = PGRES_FATAL_ERROR;
+	PGresult * res = (PGresult *)NULL;
+
+	conn = create_conn(pgpool->hostname, pgpool->pgpool_port);
+	res = PQexec(conn, pool_config->wd_lifecheck_query );
+
+	status = PQresultStatus(res);
+	if (res != NULL)
+	{
+		PQclear(res);
+	}
+	if ((status != PGRES_NONFATAL_ERROR ) &&
+		(status != PGRES_FATAL_ERROR ))
+	{
+		rtn = WD_OK;
+	}
+	PQfinish(conn);
+
 	return rtn;
 }
