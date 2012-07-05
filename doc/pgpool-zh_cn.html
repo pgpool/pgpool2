@@ -11,17 +11,10 @@ Last modified: Wed Jun 29 09:50:01 JST 2011
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
-<a name="top"></a>
-<table border="0" cellpadding="2" cellspacing="1">
-  <tr>
+<div id="top" class="header_text">欢迎使用 pgpool-II 手册</div>
 
-    <td colspan="2" valign="top"><div class="header_text">欢迎来到 pgpool -II 页面</div></td>
-  </tr>
-  <tr>
-    <td valign="top" style="border-right:1px dotted #cccccc;">
-	<br />
-
-	<div id="navcontainer">
+<div id="menu">
+	 <div id="navcontainer">
       <ul id="navlist">
         <li id="active"><a href="#Whatis" id="current">什么是 pgpool</a></li>
         <li><a href="#platform">平台</a></li>
@@ -31,30 +24,35 @@ Last modified: Wed Jun 29 09:50:01 JST 2011
         <li><a href="#connection_pool_mode">连接池模式</a></li>
         <li><a href="#replication_mode">复制模式</a></li>
         <li><a href="#master_slave_mode">主备模式</a></li>
+        <li><a href="#stream">流复制</a></li>
+        <li><a href="#parallel">并行模式</a></li>
+        <li><a href="#hba">客户端认证</a></li>
+        <li><a href="#query_cache">设置查询缓存方法</a></li>
+        <li><a href="#memqcache">基于内存的查询缓存</a></li>
         <li><a href="#start">启动/停止 pgpool-II</a></li>
         <li><a href="#reload">重新加载 pgpool-II 配置文件</a></li>
         <li><a href="#show-commands">显示命令</a></li>
         <li><a href="#online-recovery">在线恢复</a></li>
+        <li><a href="#backup">备份</a></li>
+        <li><a href="#deploy">部署 pgpool-II</a></li>
         <li><a href="#troubleshooting">故障排除</a></li>
         <li><a href="#restriction">限制</a></li>
         <li><a href="#reference">参考信息</a></li>
-		<li><a href="#internal">内部信息</a></li>
+        <li><a href="#internal">内部信息</a></li>
       </ul>
     </div>
-	<br />
+	 <br />
 
-		<div class="header_small" align="center">
+    <div class="header_small" align="center">
+    [<a href="pgpool-en.html">英文页面</a>]
+    </div>
+</div>
 
-			[<a href="pgpool-en.html">英语页面</a>]		</div>
-		<div class="header_small" align="center">
+<div id="manual">
 
-			[<a href="pgpool-ja.html">日语页面</a>]		</div>	</td>
-    <td valign="top" style="border-left:1px dotted #cccccc;">
-	
+<!-- ================================================================================ -->
 
-
-
-<h1>什么是 pgpool-II?<a name="whatis"></a></h1>
+<h1 style="margin-top: 20px">什么是 pgpool-II?<a name="whatis"></a></h1>
 
 <p> pgpool-II 是一个位于 PostgreSQL 服务器和 PostgreSQL 数据库客户端之间的中间件，它提供以下功能：</p>
 
@@ -85,21 +83,28 @@ Last modified: Wed Jun 29 09:50:01 JST 2011
 <strong>通过 pgpool-II 使用 SQL 有一些限制条件。参考 <a href="#restriction">限制</a> 获得详细信息。</strong>
 </p>
 
+<p class="top_link"><a href="#Top">返回顶部</a></p>
+
+<!-- ================================================================================ -->
+
 <h1>支持的平台<a name="platform"></a></h1>
 
 <p>pgpool-II 可以运行在 Linux，Solaris，FreeBSD 以及基本上所有的类 UNIX 架构的平台上。不支持 Windows。支持 6.4 以上版本的 PostgreSQL 服务器。然而，如果要使用并行查询功能，需要 7.4 或更高版本。</p>
 
 <p>如果你在使用 7.3 或者更老版本的 PostgreSQL，一些 pgpool-II 的功能将无法使用。但无论如何你不应该还在用这么老的版本了。</p>
 
-<p>你还要确保你所有的 PostgreSQL 服务器运行相同主版本号的 PostgreSQL 程序。另外，如果你想要使用在线恢复，硬件架构和操作系统必须一致。</p>
+<p>你还要确保你所有的 PostgreSQL 服务器运行相同主版本号的 PostgreSQL 程序。另外，如果你想要使用在线恢复，硬件架构和操作系统必须一致。
+	另外，我们不推荐在使用不同编译参数编译的 PostgreSQL：包括是否支持 SSL，是否使用了 --disable-integer-datetimes 参数或者不同的块大小。
+	这些可能对 pgpool-II 的部分功能有影响。
+	通常情况下，小版本号不同没有什么影响。但是我们没有针对小版本的区别做全面测试，因此我们建议还是使用相同的版本的 PostgreSQL。</p>
 
 <h1>pgpool-II 的安装<a name="install"></a></h1>
 
 <p>
-pgpool-II 可以在 <a href="http://pgfoundry.org/projects/pgpool/">pgpool 开发页面</a>下载到。而且也提供包括 CentOS，RedHat Enterprise Linux，Fedora 和 Debian 在内的大量平台的二进制包。请检查相关的软件库。</p>
+pgpool-II 可以在 <a href="http://pgpool.net/">pgpool 开发页面</a>下载到。而且也提供包括 CentOS，RedHat Enterprise Linux，Fedora 和 Debian 在内的大量平台的二进制包。请检查相关的软件库。</p>
 
 <p>
-pgpool-II 可以在以下位置下载源码：<a href="http://pgfoundry.org/projects/pgpool/">pgpool 开发页面</a>。
+pgpool-II 可以在以下位置下载源码：<a href="http://pgpool.net/mediawiki/index.php/Downloads">pgpool 开发页面</a>。
 </p>
 
 <p>从源码安装 pgpool-II 需要 2.9 甚至或更高版本的 gcc，以及 GNU make。而且，pgpool-II 需要链接到 libpq 库，所以在构建 pgpool-II 的机器上必须安装 libpq 库和它的开发头文件。另外，还需要 OpenSSL 库和它的头文件以便在 pgpool-II 中提供 OpenSSL 支持。</p>
@@ -130,6 +135,26 @@ pgpool-II 可以在以下位置下载源码：<a href="http://pgfoundry.org/proj
 </p>
 </dd>
 
+    <p>如果你需要非默认的值，有以下选项可以设置：</p>
+    <table border>
+      <tr><th class="nodec"><code>--prefix=path</code></th>
+      <td>pgpool-II 的二进制程序和文档将被安装到这个目录。默认值为 <code>/usr/local</code></td></tr>
+      <tr><th class="nodec"><code>--with-pgsql=path</code></th>
+      <td>PostgreSQL 的客户端库安装的顶层目录。默认值由 <code>pg_config</code> 提供</td></tr>
+      <tr><th class="nodec"><code>--with-openssl</code></th>
+      <td>pgpool-II 程序将提供 OpenSSL 支持。默认是禁用 OpenSSL 支持的。<span class="version">V2.3 -</span></td></tr>
+      <tr><th class="nodec"><code>--enable-sequence-lock</code></th>
+      <td>在 pgpool-II 3.0 系列中使用 insert_lock 兼容。pgpool-II 针对序列表中的一行进行加锁。PostgreSQL 8.2 或2011年六月以后发布的版本无法使用这种加锁方法。
+          <span class="version">V3.1 -</span></td></tr>
+      <tr><th class="nodec"><code>--enable-table-lock</code></th>
+      <td>在 pgpool-II 2.2 和 2.3 系列中使用 insert_lock 兼容。pgpool-II 针对被插入的表进行加锁。这种锁因为和 VACUUM 冲突，已被废弃。<span class="version">V3.1 -</span></td></tr>
+      <tr><th class="nodec"><code>--with-memcached=path</code></th>
+      <td>pgpool-II 的二进制程序将使用 <a href="#memcached_params">memcached</a> 作为 <a href="#memqcache">基于内存的查询缓存</a>。你必须先安装 <a href="http://libmemcached.org/libMemcached.html">libmemcached</a>。
+          <span class="version">V3.2 -</span></td>
+      </tr>
+      </table>
+    </dd>
+
 <dt>make</dt>
 <dd>
 <p>
@@ -141,7 +166,7 @@ make install
 </p>
 </dd>
 
-<dt>安装 pgpool_regclass</dt>
+<dt>安装 pgpool_regclass <span class="version">V3.0 -</span> </dt>
 <dd>
 <p>
 如果你在使用 PostgreSQL 8.0 或之后的版本，强烈推荐在需要访问的 PostgreSQL 中安装 pgpool_regclass 函数，因为它被 pgpool-II 内部使用。如果不这样做，在不同的 schema 中处理相同的表名会出现问题（临时表不会出问题）。
@@ -633,6 +658,8 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
       </p>
       <p>
       	可以通过在本参数名的末尾添加一个数字来指定多个后台程序（例如<code>backend_hostname0</code>）。这个数字对应为“数据库节点 ID”，是从 0 开始的正整数。被设置数据库节点ID为 0 的后台程序后台程序将被叫做“主数据库”。当定义了多个后台程序时，即使主数据库当机后依然能继续（某些模式下不行）。在这种情况下，存活的最小的数据库节点编号的数据库将被变成新的主数据库。
+      <p> 请注意有编号为 0 的节点在流复制中没有其他意义。但是，你需要注意数据库节点是不是“主节点”。请参考 <a href="#stream">流复制</a> 获得更多细节。</p>
+    </p>
       <p>如果你只计划使用一台 PostgreSQL 服务器，可以通过 <code>backend_hostname0</code> 指定。</p>
       <p>
       	可以通过配置本参数后重新加载配置文件添加新的节点。但是，对已有的值无法更新，所以这种情况下你必须重启 pgpool-II。
@@ -1364,7 +1391,7 @@ recovery_2nd_stage_command = ''
 </ol>
 </p>
 
-<h3>并行模式</h3>
+<h1 id="parallel">并行模式</h3>
 
 <p>本模式实现了查询的并行执行。表可以被分割，数据分布在每个节点中。而且，复制和负载均衡功能也可以同时使用。在并行模式中，pgpool.conf 中的 replication_mode 和 load_balance_mode 被设置为 ture，master_slave 被设置为 false，parallel_mode 被设置为 false。当你改变这些参数后，需要重启 pgpool-II。
 </p>
@@ -1564,7 +1591,7 @@ ELSE 2
   一个 service-configuration 的示例文件被安装为安装目录下的"share/pgpool.pam"。
 </p>
 
-<h2>设置 Query cache 方法</h2>
+<h1 id="query_cache">设置 Query cache 方法 <span class="version">- V3.1 (已废弃)</span></h1>
 <p> Query cache 可以在 pgpool-II 的所有模式中使用。在 pgpool.conf 中启用它如下：</p>
 <pre>
 enable_query_cache = true
@@ -1591,144 +1618,316 @@ CREATE TABLE pgpool_catalog.query_cache (
 </strong>
 </p>
 
-<h3>使用共享内存或者 Memcached</h3>
+<h1><a name="memqcache"></a> 基于内存的查询缓存 <span class="version">V3.2 -</span></h1>
 
-<p>要启用内存缓存功能，需要设置以下项目为 true （默认为 false）
+<p>你可以在任何模式中使用基于内存的查询缓存。它不同于以上的查询缓存，因为基于内存的查询缓存会快很多，因为缓存存储于内存中。
+	另外，如果缓存事小了，你不需要重启 pgpool-II 因为相关的表已经得到更新了。
 </p>
 
-<pre>
-memory_cache_enabled = true
-</pre>
+<p>基于内存的缓存保存 SELECT 语句（以及它绑定的参数，如果 SELECT 是一个扩展的查询）以及对应的数据。
+如果是相同的 SELECT 语句，则直接返回缓存的值。因为不再有 SQL 分析或者到 PostgreSQL 的调用，实际上它会非常快。
+</p>
 
 <p>
-内存缓存的行为可以通过以下参数设置：<br>
-缓存存储方式。可以为“shmem”（共享内存）或“memcached”。默认为shmem。
+其他方面，它会比较慢，因为它增加了一些负载用于缓存。另外，当一个表被更新，pgpool 自动删除相关的表的缓存。
+因此，在有很多更新的系统中，性能会降低。如果 cache_hit_ratio 低于 70%，建议你关闭基于内存的缓存。
+</p>
+
+<h2 id="MEMORY_CACHE_RESTRICTIONS">限制</h2>
+<ul>
+    <li>
+    基于内存的查询缓存通过监视 UPDATE，INSERT，ALTER TABLE一类的查询语句来自动删除缓存的数据。
+    但 pgpool-II 无法发现通过触发器、外键和 DROP TABLE CASCADE 产生的非显式的更新。
+    你可以通过配置 <a href="#MEMQCACHE_EXPIRE">memqcache_expire</a> 让 pgpool 在固定时间周期内自动删除缓存来避免这个问题，
+    你也可以通过配置 <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a> 来让 pgpool 的基于内存的缓存忽略指定的表。
+    </li>
+
+    <li>
+    如果你使用 pgpool-II 的多个实例来使用共享内存进行缓存，可能出现一个 pgpool 发现表被更新了因而删除了缓存，但另一个依旧使用旧的缓存。
+    对于这种情况，使用 memcached 是一个更好的策略。
+    </li>
+</ul>
+
+<h2 id="MEMORY_CACHE_ENABLED">启用基于内存的查询缓存</h2>
+<p>
+要启用基于内存的查询缓存，设置以下选项为 on（默认为 off）。
+</p>
+
+<pre>
+memory_cache_enabled = on
+</pre>
+
+<h2 id="MEMQCACHE_METHOD">选择缓存策略</h2>
+<p>
+你可以选择一个缓存策略：共享内存或者 <a href="http://memcached.org">memcached</a>（不能同时使用）。
+使用共享内存的查询缓存很快且简单，因为你不需要安装和配置 memcached，但缓存的最大数量限制于共享内存。
+使用 memcached 的查询缓存需要更多的负载用于访问网络，但你可以任意设置你需要的大小。
+</p>
+<p>
+可以通过 memqcache_method 指定内存缓存的行为。可以是 “shmem” 或者 “memcached”。默认为 shmem。
 </p>
 <pre>
-
 memqcache_method = 'shmem'
 </pre>
 
+
+<h2 id="memqcache_cases">基于内存缓存被禁用的情况</h2>
 <p>
-Memcached 主机名。memqcache_method=memcached 时要求设置。如果本参数以“/”开始，则使用 UNIX 域套接字。
+并非所有的 SELECT 和 WITH 语句可以被缓存。在包括以下列表的一些情况，为了保证数据库和缓存的一致性，缓存被避免了。
 </p>
-<pre>
-memqcache_memcached_host = 'foo.com'
-</pre>
-
-<p>
-Memcached 端口。port number. memqcache_method=memcached 时要求设置。
-</p>
-<pre>
-memqcache_memcached_port = 11211
-</pre>
-
-<p>
-内存缓存使用的内存字节数。memqcache_method=shmem 时要求设置。
-</p>
-<pre>
-memqcache_total_size = 10240
-</pre>
-
-<p>总共的缓存项目数。memqcache_method=shmem 时要求设置。每个缓存项目消耗 48 字节。
-</p>
-<pre>
-memqcache_max_num_cache = 100
-</pre>
-
-<p>
-内存缓存的生命周期，单位为秒。默认为 60。
-</p>
-<pre>
-memqcache_expire = 60
-</pre>
-
-<p>允许的 SELECT 的最大结果数，单位为字节。如果超出这个值，则不缓存结果。
-</p>
-
-<pre>
-memqcache_maxcache = 512
-</pre>
-
-<p>缓存块的大小，单位为字节<br>
-当 memqcache_method=shmem 时有意义。内存缓存被分割成固定大小的块。如果块大小较小，则内存使用率较高，<br>
-但处理速度可能较慢。但是，如果块大小较大，则内存使用率不高，但处理速度快。默认值为 8192。<br>
-
-</p>
-<pre>
-memqcache_cache_block_size= 8192
-
-</pre>
-
-<h3>memcached 的安装</h3>
-
-<p>
-如果你想使用基于 memcached 的查询，你需要安装 memcached。
-</p>
-
-<p>
-可以从 <a href="http://memcached.org/">memcached 开发主页</a> 获取到 memcached 的源码。
-</p>
-
-<dl>
-<dt>configure</dt>
-
-<dd>
-<p>
-在解压源码包后，执行 configure 脚本。
-</p>
-<pre>
-./configure
-</pre>
-</dd>
-<dt>make</dt>
-<dd>
-<pre>
-make
-make install
-</pre>
-</dd>
-</dl>
-
-<h3>libmemcached 的安装</h3>
-
-<p>
-C 客户端程序使用的库为 libmemcached。你需在安装 memcached 后安装 libmemcached。
-</p>
-
-<p>
-可以从 <a href="http://libmemcached.org/libMemcached.html">libmemcached 开发主页</a> 获取到 libmemcached 的源码。
-</p>
-
-<dl>
-<dt>configure</dt>
-<dd>
-
-<p>
-在解压源码包后，执行 configure 脚本。
-</p>
-<pre>
-./configure
-</pre>
-
-<p>
-如果你想使用非默认的参数，有以下参数可以设置：
-</p>
-
 <ul>
-  <li><code>--with-memcached=path</code><br/>
-  	Memcached 安装的顶级目录。</li>
+    <li>SELECT 包含以下表的 <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a></li>
+    <li>SELECT FOR SHARE / UPDATE</li>
+    <li>SELECT 包含 un-immutable 函数</li>
+    <li>SELECT 包含 TEMP TABLE</li>
+    <li>SELECT 包含 系统对象</li>
+	<li>SELECT 包含 VIEW 和 不记录日志的表。但如果表在 <a href="#WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</a> 中，结果还是会被缓存的。</li>
+
+    <li>SELECT 包含 VIEW </li>
+    <li>SELECT 在一个被终止的显示事务中</li>
+    <li>SELECT 结果超出 <a href="#MEMQCACHE_MAXCACHE">memqcache_maxcache</a></li>
 </ul>
 
-</dd>
+<h2 id="non_memqcache_case">缓存不被使用的情况</h2>
+<p>
+存在一些情况，及时匹配的查询缓存存在，pgpool 也不返回结果。
+</p>
+<ul>
+    <li>如果一个更新擦做在一个显式的事务中执行，在事务中，pgpool 不使用查询缓存。</li>
+    <li>匹配的查询是由其他用户（因为安全原因）生成的。</li>
+    <li>匹配的查询由于 <a href="#MEMQCACHE_EXPIRE">memqcache_expire</a> 设置而需要被删除。</li>
+</ul>
+
+<h2 id="memqcache_params">配置</h2>
+
+<p>
+以下参数可以同时用于 shmem 和 memcached。
+</p>
+
+<dl>
+<dt id="MEMQCACHE_EXPIRE">memqcache_expire <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    查询缓存的生命周期，默认为 0。0 表示没有缓存超时，而且缓存被启用直到表被更新。
+    本参数和 <a href="#MEMQCACHE_AUTO_CACHE_INVALIDATION">memqcache_auto_cache_invalidation</a> 是相交的。
+    </p>
+    </dd>
+
+<dt id="MEMQCACHE_AUTO_CACHE_INVALIDATION">memqcache_auto_cache_invalidation
+<span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    如果为 on，则在表被更新的时候自动删除相关的缓存。
+    如果为 off，则不删除缓存。默认为 on。
+    本参数和 <a href="#MEMQCACHE_EXPIRE">memqcache_expire</a> 相交。
+    </p>
+    </dd>
+
+<dt id="MEMQCACHE_MAXCACHE">memqcache_maxcache <span class="version">V3.2 -</span></dt>
+    <dd>
+        <p>
+        如果 SELECT 结果集的大小超出了 memqcache_maxcache 字节，则不缓存且显示以下消息：
+        </p>
+<pre>
+2012-05-02 15:08:17 LOG:   pid 13756: pool_add_temp_query_cache: data size exceeds memqcache_maxcache. current:4095 requested:111 memq_maxcache:4096
+</pre>
+        <p>
+        要避免这个问题，你需要将 memqcache_maxcache 设置得大一些。
+        但如果你使用共享内存作为缓存策略，它必须小于 <a href="#MEMQCACHE_CACHE_BLOCK_SIZE">memqcache_cache_block_size</a>。
+        如果是 memchached，她必须小于 slab 的大小（默认为 1 MB）。
+        </p>
+    </dd>
+
+<dt id="WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    指定一个以逗号分隔的表名的列表，用于使 SELECT 的结果被缓存，也可以是视图或者不写日志的表。可以使用正则表达式。
+    </p>
+    <p>
+    同时存在于 white_memqcache_table_list 和 <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a> 的表和视图将被缓存。
+    </p>
+    </dd>
+
+<dt id="BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    	指定一个以逗号分隔的表名的列表，用于使 SELECT 的结果不被缓存，也可以是视图或者不写日志的表。可以使用正则表达式。
+    </p>
+    </dd>
+
+<dt id="MEMQCACHE_OIDDIR">memqcache_oiddir <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    用于 SELECT 的存储表的 OID 的目录的完整路径。在 memqcache_oiddir 下有使用数据库 oid 命名的目录，
+    每个目录之下是在 SELECT 中使用的以表的 oid 命名的文件。在文件中，存储了查询缓存。它们是用于删除缓存的关键。
+    </p>
+    <p>
+    在 memqcache_oiddir 下的目录和文件不会被删除，即使 pgpool-II 重启。
+    如果你使用 "<a href="#start">pgpool -C</a>" 启动 pgpool，则 pgpool 使用旧的 oid 映射。
+    </p>
+    </dd>
+</dl>
+
+<h2 id="monitoring_memqcache">监控缓存</h2>
+<p>
+这里讲述如何监控查询缓存。要知道一个 SELECT 的结果是不是从查询缓存获得，需要启用 <a href="#LOG_PER_NODE_STATEMENT">log_per_node_statement</a>。
+</p>
+<pre>
+2012-05-01 15:42:09 LOG:   pid 20181: query result fetched from cache. statement: select * from t1;
+</pre>
+
+<p>
+<a href="#pool_status">pool_status</a> 命令显示缓存的命中率。
+</p>
+<pre>
+memqcache_stats_start_time           | Tue May  1 15:41:59 2012 | Start time of query cache stats
+memqcache_no_cache_hits              | 80471                    | Number of SELECTs not hitting query cache
+memqcache_cache_hits                 | 36717                    | Number of SELECTs hitting query cache
+</pre>
+
+
+<p>
+在本例中，你可以通过以下方法计算：
+</p>
+<p>
+<pre>
+(memqcache_cache_hits) / (memqcache_no_cache_hits+memqcache_cache_hits) = 36717 / (36717 + 80471) = 31.3%
+</pre>
+
+<p>
+<a href="#pool_cache">show pool_cache</a> 也显示相同的结果。
+</p>
+
+<h2 id="shmem_params">配置使用共享内存</h2>
+<p>
+以下为用于共享内存缓存策略的参数。
+</p>
+
+<dl>
+<dt id="MEMQCACHE_TOTAL_SIZE">memqcache_total_size <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    指定用于缓存的共享内存的大小，单位为字节。
+    </p>
+    </dd>
+
+<dt id="MEMQCACHE_MAX_NUM_CACHE">memqcache_max_num_cache <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    制定缓存的项目数。这用于定义缓存管理空间的大小。（你需要它来协助 <a href="#MEMQCACHE_TOTAL_SIZE">memqcache_total_size</a> 参数）。
+    可以使用以下方法计算缓存管理空间的大小：<a href="#MEMQCACHE_MAX_NUM_CACHE">memqcache_max_num_cache</a> * 48 字节。
+    如果数量太小，则注册缓存的时候会报错。但如果太大则浪费空间。
+    </p>
+    </dd>
+
+<dt id="MEMQCACHE_CACHE_BLOCK_SIZE">memqcache_cache_block_size <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    如果缓存存储是共享内存，pgpool 使用内存除以 memqcache_cache_block_size。SELECT 的结果被放入块中。
+    但是因为 SELECT 的结果不能被放入多个块中，它无法缓存大于 memqcache_cache_block_size 的结果。
+    memqcache_cache_block_size 必须大于或等于 512。
+    </p>
+    </dd>
+</dl>
+
+<h2 id="memcached_params">配置使用 memcached</h2>
+
+<p>
+以下为用于 memcached 缓存策略的参数。
+</p>
+
+<dl>
+<dt id="MEMQCACHE_MEMCACHED_HOST">memqcache_memcached_host <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    指定 memcached 工作的主机的主机名或 IP 地址。如果和 pgpool-II 在同一台机器，设置为 'localhost'。
+    </p>
+    </dd>
+
+<dt id="MEMQCACHE_MEMCACHED_PORT">memqcache_memcached_port <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    指定 memcached 的端口。默认为 11211。
+    </p>
+    </dd>
+</dl>
+
+
+<h3 id="install_memcached">memcached 安装</h3>
+
+<p>
+要使用 memcached 作为缓存策略，pgpool-II 需要配合 memcached 和其客户端 libmemcached 使用。
+通过 rpm 安装很简单。这里讲解如何使用源码安装。
+</p>
+
+<p>
+可以在以下位置获得 memcached 的源码：
+<a href="http://memcached.org/">memcached development page</a>
+</p>
+
+<dl>
+<dt>configure</dt>
+    <dd>
+    <p>
+    在解压源码包后，执行配置脚本。
+    </p>
+<pre>
+./configure
+</pre>
+    </dd>
+
 <dt>make</dt>
-<dd>
+    <dd>
 <pre>
 make
 make install
 </pre>
-</dd>
+    </dd>
 </dl>
+
+<h3 id="install_libmemcached">libmemcached 安装</h3>
+
+<p>
+Libmemcached 是 memcached 的客户端库。你需要在安装 memcached 后安装 libmemcached。
+</p>
+
+<p>
+可以在以下位置获得 libmemcached 的源码：
+<a href="http://libmemcached.org/libMemcached.html">libmemcached development page</a>
+</p>
+
+<dl>
+<dt>configure</dt>
+    <dd>
+    <p>
+    在解压源码包后，执行配置脚本。
+    </p>
+<pre>
+./configure
+</pre>
+
+    <p>
+    如果你不想使用默认值，一些可选项为：
+    </p>
+
+    <ul>
+        <li><code>--with-memcached=path</code><br/>
+        安装 Memcached 的顶层目录。</li>
+    </ul>
+    </dd>
+
+<dt>make</dt>
+    <dd>
+<pre>
+make
+make install
+</pre>
+    </dd>
+</dl>
+
+<p class="top_link"><a href="#Top">回到顶部</a></p>
+
+<!-- ================================================================================ -->
 <h1>启动/关闭 pgpool-II<a name="start"></a></h1>
 
 <p>所有后端服务器和System DB(若需要)都必须在启动 pgpool-II 之前启动。
@@ -3095,10 +3294,14 @@ SELECT L1-table.col FROM L1-table WHERE L1-table.col % 2 = 0 AND L1-table.col IN
 <a href="tutorial-zh_cn.html">pgpool-II入门教程</a> 已发布。
 </p>
 
-<div class="copyright">
+<p class="top_link"><a href="#Top">返回顶部</a></p>
+
+</div>
+
+<div class="copyright" style="clear: both">
 <hr>
 <copyright>
-Copyright &copy; 2003 &ndash; 2011 pgpool Global Development Group
+Copyright &copy; 2003 &ndash; 2012 pgpool Global Development Group
 </copyright>
 </div>
 </body>
