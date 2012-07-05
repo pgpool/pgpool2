@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Sun Jun 24 19:10:17 JST 2012
+Last modified: Thu Jul  5 17:24:41 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2586,6 +2586,7 @@ Not All of SELECTs and WITH can be cached. In some cases including followings,
 cache is avoided to keep consistency between caches and databases.
 </p>
 <ul>
+    <li>SELECT starting with "/*NO QUERY CACHE*/" comment</li>
     <li>SELECT including tables in <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a></li>
     <li>SELECT FOR SHARE / UPDATE</li>
     <li>SELECT including un-immutable funcsions</li>
