@@ -2087,6 +2087,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 		char *query;
 		Node *node;
 		List *parse_tree_list;
+		POOL_MEMORY_POOL *old_context = pool_memory;
 
 		case 'X':	/* Terminate */
 			return POOL_END;
@@ -2152,6 +2153,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 				return POOL_END;
 			}
 			query = "INSERT INTO foo VALUES(1)";
+			pool_memory = query_context->memory_context;
 			parse_tree_list = raw_parser(query);
 			node = (Node *) lfirst(list_head(parse_tree_list));
 			pool_start_query(query_context, query, strlen(query) + 1, node);
@@ -2162,6 +2164,8 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 				status = FunctionCall3(frontend, backend, len, contents);
 			else
 				status = FunctionCall(frontend, backend);
+
+			pool_memory = old_context;
 			break;
 
 		case 'c':	/* CopyDone */
