@@ -2389,6 +2389,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 		char *query;
 		Node *node;
 		List *parse_tree_list;
+		POOL_MEMORY_POOL *old_context;
 
 		case 'X':	/* Terminate */
 			return POOL_END;
@@ -2453,6 +2454,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 				pool_error("ProcessFrontendResponse: pool_init_query_context failed");
 				return POOL_END;
 			}
+			old_context = pool_memory_context_switch_to(query_context->memory_context);
 			query = "INSERT INTO foo VALUES(1)";
 			parse_tree_list = raw_parser(query);
 			node = (Node *) lfirst(list_head(parse_tree_list));
@@ -2464,6 +2466,8 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 				status = FunctionCall3(frontend, backend, len, contents);
 			else
 				status = FunctionCall(frontend, backend);
+
+			pool_memory_context_switch_to(old_context);
 			break;
 
 		case 'c':	/* CopyDone */
