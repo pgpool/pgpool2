@@ -29,6 +29,9 @@
 #include "pool.h"
 #include <sys/time.h>
 
+#define NO_QUERY_CACHE "/*NO QUERY CACHE*/"
+#define NO_QUERY_CACHE_COMMENT_SZ (sizeof(NO_QUERY_CACHE)-1)
+
 #define POOL_MD5_HASHKEYLEN		32		/* MD5 hash key length */
 
 /*

@@ -668,6 +668,12 @@ bool pool_is_allow_to_cache(Node *node, char *query)
 	int num_oids = -1;
 	SelectContext ctx;
 
+	/*
+	 * If NO QUERY CACHE coment exists, do not cache.
+	 */
+	if (!strncasecmp(query, NO_QUERY_CACHE, NO_QUERY_CACHE_COMMENT_SZ))
+		return false;
+
 	stmt = (SelectStmt *)node;
 
 	/*
