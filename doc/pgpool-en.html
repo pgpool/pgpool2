@@ -1327,7 +1327,8 @@ configuration parameters below must be set in addition to everything above.</p>
     neither load balanced, nor replicated if in replication mode.
     In master slave mode, such SELECTs are sent to master (primary) only.
     </p>
-    <p>You can use regular expression into the list to match function name,
+    <p>You can use regular expression into the list to match function name
+     (to which added automatically ^ and $),
     for example if you have prefixed all your read only function with 'get_' or 'select_'
     </p>
 <pre>
@@ -1343,7 +1344,8 @@ white_function_list = 'get_.*,select_.*'
     load balanced, nor replicated if in replication mode.
     In master slave mode, such SELECTs are sent to master(primary) only.
     </p>
-    <p>You can use regular expression into the list to match function name,
+    <p>You can use regular expression into the list to match function name
+     (to which added automatically ^ and $)
     for example if you have prefixed all your updating functions with 'set_', 'update_', 'delete_' or 'insert_':
     </p>
 <pre>
@@ -2660,7 +2662,7 @@ These are the parameters used with both of shmem and memcached.
     <dd>
     <p>
     Specify a comma separated list of table names whose SELECT results are to be cached even if
-        they are VIEWs or unlogged tables. You can use regular expression.
+    they are VIEWs or unlogged tables. You can use regular expression (to which added automatically ^ and $).
     </p>
     <p>
     TABLEs and VIEWs in both of white_memqcache_table_list and
@@ -2672,7 +2674,7 @@ These are the parameters used with both of shmem and memcached.
     <dd>
     <p>
     Specify a comma separated list of table names whose SELECT results are <strong>NOT</strong> to be cached.
-    You can use regular expression.
+    You can use regular expression (to which added automatically ^ and $).
     </p>
     </dd>
 
