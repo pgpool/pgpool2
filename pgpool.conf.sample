@@ -421,7 +421,7 @@ client_idle_limit_in_recovery = 0
 #------------------------------------------------------------------------------
 # WATCHDOG
 #------------------------------------------------------------------------------
-use_watchdog = on
+use_watchdog = off 
                                     # Activates watchdog
 trusted_servers = ''
                                     # trusted server list which are used
@@ -461,6 +461,7 @@ wd_lifecheck_query = 'SELECT 1'
 #other_pgpool_hostname1 = 'host1'
 #other_pgpool_port1 = 5432
 #other_wd_port1 = 9000
+
 
 #------------------------------------------------------------------------------
 # OTHERS
