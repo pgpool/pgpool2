@@ -35,6 +35,7 @@ Last modified: Thu Jul  5 17:24:41 JST 2012
         <li><a href="#online-recovery">Online recovery</a></li>
         <li><a href="#backup">Backup</a></li>
         <li><a href="#deploy">Deploying pgpool-II</a></li>
+        <li><a href="#watchdog">Watchdog</a></li>
         <li><a href="#troubleshooting">Troubleshooting</a></li>
         <li><a href="#restriction">Restrictions</a></li>
         <li><a href="#reference">References</a></li>
@@ -857,7 +858,7 @@ local0.*    /var/log/pgpool.log
     <tr><td>%m</td><td>New master node ID.</td></tr>
     <tr><td>%H</td><td>Hostname of the new master node.</td></tr>
     <tr><td>%P</td><td>Old primary node ID.</td></tr>
-	<tr><td>%r</td><td>New master port number.</td></tr>
+    <tr><td>%r</td><td>New master port number.</td></tr>
     <tr><td>%R</td><td>New master database cluster directory.</td></tr>
     <tr><td>%%</td><td>'%' character</td></tr>
     </table>
@@ -893,7 +894,7 @@ local0.*    /var/log/pgpool.log
     <tr><td>%m</td><td>New master node</td></tr>
     <tr><td>%H</td><td>Hostname of the new master node.</td></tr>
     <tr><td>%P</td><td>Old primary node ID.</td></tr>
-	<tr><td>%r</td><td>New master port number.</td></tr>
+    <tr><td>%r</td><td>New master port number.</td></tr>
     <tr><td>%R</td><td>New master database cluster directory.</td></tr>
     <tr><td>%%</td><td>'%' character</td></tr>
     </table>
@@ -921,7 +922,7 @@ local0.*    /var/log/pgpool.log
     <tr><td>%m</td><td>New master node ID.</td></tr>
     <tr><td>%H</td><td>Hostname of the new master node.</td></tr>
     <tr><td>%P</td><td>Old primary node ID.</td></tr>
-	<tr><td>%r</td><td>New master port number.</td></tr>
+    <tr><td>%r</td><td>New master port number.</td></tr>
     <tr><td>%R</td><td>New master database cluster directory.</td></tr>
     <tr><td>%%</td><td>'%' character</td></tr>
     </table>
@@ -1163,11 +1164,11 @@ local0.*    /var/log/pgpool.log
 <dt><a name="CHECK_TEMP_TABLE"></a>check_temp_table <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
-	If on, enable temporary table check in SELECT statements. This
-	initiates queries against system catalog of primary/master thus
-	increases load of primary/master.  If you are absolutely sure that your
-	system never uses temporary tables and you want to save access
-	to primary/master, you could turn this off.  Default is on.
+    If on, enable temporary table check in SELECT statements. This
+    initiates queries against system catalog of primary/master thus
+    increases load of primary/master.  If you are absolutely sure that your
+    system never uses temporary tables and you want to save access
+    to primary/master, you could turn this off.  Default is on.
     </p>
     </dd>
 
@@ -2592,8 +2593,8 @@ cache is avoided to keep consistency between caches and databases.
     <li>SELECT including un-immutable funcsions</li>
     <li>SELECT including TEMP TABLE</li>
     <li>SELECT including system catalogs</li>
-	<li>SELECT including VIEWs or unlogged tables.
-		However if the table is in <a href="#WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</a>, the result will be cached.</li>
+    <li>SELECT including VIEWs or unlogged tables.
+        However if the table is in <a href="#WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</a>, the result will be cached.</li>
 
     <li>SELECT including VIEWs</li>
     <li>SELECT in an aborted explicit transaction</li>
@@ -2659,7 +2660,7 @@ These are the parameters used with both of shmem and memcached.
     <dd>
     <p>
     Specify a comma separated list of table names whose SELECT results are to be cached even if
-		they are VIEWs or unlogged tables. You can use regular expression.
+        they are VIEWs or unlogged tables. You can use regular expression.
     </p>
     <p>
     TABLEs and VIEWs in both of white_memqcache_table_list and
@@ -2752,11 +2753,11 @@ These are the parameters used with shared memory as the cache strage.
 <dt id="MEMQCACHE_CACHE_BLOCK_SIZE">memqcache_cache_block_size <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
-	If cache storage is shared memory, pgpool uses the memory devided by memqcache_cache_block_size.
-	SELECT result is packed into the block.
-	However because the SELECT result cannot be placed in several blocks, it cannot be cached if it is larger
-	than memqcache_cache_block_size.
-	memqcache_cache_block_size must be greater or equal to 512.
+    If cache storage is shared memory, pgpool uses the memory devided by memqcache_cache_block_size.
+    SELECT result is packed into the block.
+    However because the SELECT result cannot be placed in several blocks, it cannot be cached if it is larger
+    than memqcache_cache_block_size.
+    memqcache_cache_block_size must be greater or equal to 512.
     </p>
     </dd>
 </dl>
@@ -3741,6 +3742,254 @@ Pgpool-HA is a high availability software for pgpool-II using hearbeat.
 Pgpool-HA is a sub probject of pgpool project as well as pgpool-II.
 Pgpool-HA can be available from pgpool development site as an open source softeware.
 </p>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
+
+<!-- ================================================================================ -->
+
+<h1 id="watchdog">Watchdog <span class="version">V3.2 -</span></h1>
+
+<p>
+"Watchdog" is a sub process of pgpool-II aiming for adding high availability feature to it.
+Features added by watchdog include:
+</p>
+
+<dl>
+<dt>Life checking of pgpool service</dt>
+    <dd>
+    <p>
+    Watchdog monitors responses of pgpool <i>service</i> rather than process.
+    It sends queries to PostgreSQL via pgpool which is being monitored
+    by watchdog and watchdog checks the response.
+    </p>
+    <p>
+    Also watchdog monitors connections to up stream servers
+    (application servers etc.) from the pgpool.
+    The connection between the up stream servers and the pgpool is monitored as service of pgpool.
+    </p>
+    </dd>
+
+<dt>Mutual monitoring of watchdog processes</dt>
+    <dd>
+    <p>
+    Watchdog processes exchange information on the monitored servers
+    to keep the information up to date,
+    and to allow watchdog processes to mutually monitor each other. 
+    </p>
+    </dd>
+
+<dt>Changing active/standby state in case of certain faults detected</dt>
+    <dd>
+    <p>
+    When a fault is detected in the pgpool service, watchdog notifies the other watchdogs of it.
+    Watchdogs decide the new active pgpool if previous active pgpool is broken
+    by voting and change active/standby state.
+    </p>
+    </dd>
+
+<dt>Automatic virtual IP address assigning synchronous to server switching</dt>
+    <dd>
+    <p>
+    When a standby pgpool server promotes to active, the new active server brings up virtual IP interface.
+    Meanwhile, the previous active server brings down the virtual IP interface.
+    This enables the active pgpool to work using the same IP address even when servers is switched over.
+    </p>
+    </dd>
+
+<dt>Automatic registration of a server as standby in recovery</dt>
+    <dd>
+    <p>
+    When broken server recovers or new server is attached,
+    the watchdog process notifies the other watchdog process along with information of the new server,
+    and the watchdog process receives information on the active server and other servers.
+    Then, the attached server is registered as standby.
+    </p>
+    </dd>
+</dl>
+
+<h2 id="deploy_watchdog">Server composition</h2>
+
+<p>
+Figure below describes how pgpool-II and watchdog process is configured.
+</p>
+<p><img src="wd-en.jpg" alt="watchdog server composition" hight=70% width=70%></p>
+
+<h2 id="start_watchdog">Starting/stopping watchdog</h2>
+<p>
+Watchdog process is started/stopped automatically by pgpool-II,
+therefore there is no dedicated command to start/stop it.
+However, pgpool-II must to be started with <font color="red">root privilege</font>
+because watchdog process needs to control the virtual IP interface.
+</p>
+
+<h2>Configuring watchdog (pgpool.conf)</h2>
+<p>
+Watchdog configuration parameters is described in pgpool.conf.
+There is sample configuration in WATCHDOG section in pgpool.conf.sample file.
+All following options are required to be specified in watchdog process.
+</p>
+
+<h3>Basic configuration</h3>
+
+<h4>Enabling</h4>
+<dl>
+<dt><a name="USE_WATCHDOG"></a>use_watchdog <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    If on, activates watchdog. Default is off.
+    </p>
+    </dd>
+</dl>
+
+<h4>Connection to up stream servers</h4>
+
+<dl>
+<dt><a name="TRUSTED_SERVERS"></a>trusted_servers <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    The list of trusted servers to check the up stream connections.
+    Each server is required to respond to ping.
+    Specify a comma separated list of servers such as "hostA,hostB,hostC".
+    </p>
+    </dd>
+
+<dt><a name="PING_PATH"></a>ping_path <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    This parameter specifies a path of ping command for monitoring connection
+    to the upper servers.
+    Set the only path such as "/bin".
+    </p>
+    </dd>
+</dl>
+
+<h4>Lifecheck of pgpol-II</h4>
+
+<dl>
+<dt><a name="WD_INTERVAL"></a>wd_interval <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    This parameter specifies the interval between life checks of pgpool-II
+    in second.
+    (A number greater than or equal to 1)
+    </p>
+    </dd>
+
+<dt><a name="WD_LIFE_POINT"></a>wd_life_point <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    The times to retry a failed life check of pgpool-II.
+    (A number greater than or equal to 1)
+    </p>
+    </dd>
+
+<dt><a name="WD_LIFECHECK_QUERY"></a>wd_lifecheck_query <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    Actual query to check pgpool-II.
+    Default is "SELECT 1"
+    </p>
+    </dd>
+</dl>
+
+<h4>Virtual IP address</h4>
+
+<dl>
+<dt><a name="DELEGATE_IP"></a>delegate_IP <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    Specifies the virtual IP address (VIP) of pgpool-II that is connected from
+    client servers (application servers etc.).
+    When a pgpool is switched from standby to active, the pgpool takes over this VIP.
+    </p>
+    </dd>
+
+<dt><a name="IFCONFIG_PATH"></a>ifconfig_path <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    This parameter specifies a path of a command to switch the IP address.
+    Set the only path such as "/sbin".
+    </p>
+    </dd>
+
+<dt><a name="IF_UP_CMD"></a>if_up_cmd <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    This parameter specifies a command to bring up the virtual IP.
+    Set the command and parameters such as
+    "ifconfig eth0:0 inet $_IP_$ netmask 255.255.255.0".
+    $_IP_$ is replaced by the IP address specified in <a href="#DELEGATE_IP">delegate_IP</a>.
+    </p>
+    </dd>
+
+<dt><a name="IF_DOWN_CMD"></a>if_down_cmd <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    This parameter specifies a command to bring down the virtual IP.
+    Set the command and parameters such as
+    "ifconfig eth0:0 down".
+    </p>
+    </dd>
+
+<dt><a name="ARPING_PATH"></a>arping_path <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    This parameter specifies a path of a command to send an ARP request
+    after the virtual IP is switched.
+    Set the only path such as "/usr/sbin".
+    </p>
+    </dd>
+
+<dt><a name="ARPING_CMD"></a>arping_cmd <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    This parameter specifies a command to send an ARP request
+    after the virtual IP is switched.
+    Set the command and parameters such as 
+    "arping -U $_IP_$ -w 1".
+    $_IP_$ is replaced by the IP address specified in <a href="#DELEGATE_IP">delegate_IP</a>.
+    </p>
+    </dd>
+</dl>
+
+<h3>Servers to be monitored</h3>
+<dl>
+<dt><a name="WD_PORT"></a>wd_port <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    Specifies the port number for mutual monitoring of watchdog processes.
+    </p>
+    </dd>
+
+<dt><a name="OTHER_PGPOOL_HOSTNAME"></a>other_pgpool_hostname<font color="red">0</font>
+    <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    Specifies the hostname pgpool-II server to be monitored.
+    The number at the end of the parameter name is referred as "server id",
+    and it starts from 0.
+    </p>
+    </dd>
+
+<dt><a name="OTHER_PGPOOL_PORT"></a>other_pgpool_port<font color="red">0</font>
+    <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    Specifies the port number for pgpool on pgpool-II server to be monitored.
+    The number at the end of the parameter name is referred as "server id",
+    and it starts from 0.
+    </p>
+    </dd>
+
+<dt><a name="OTHER_WD_PORT"></a>other_wd_port<font color="red">0</font> <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    Specifies the port number for watchdog on pgpool-II server to be monitored.
+    The number at the end of the parameter name is referred as "server id",
+    and it starts from 0.
+    </p>
+    </dd>
+</dl>
 
 <p class="top_link"><a href="#Top">back to top</a></p>
 
