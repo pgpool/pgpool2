@@ -393,7 +393,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				 * have any pending data in backends. */
 
 				/* If we have pending data in master, we need to process it */
-				if (!pool_ssl_pending(MASTER(backend)) &&
+				if (pool_ssl_pending(MASTER(backend)) ||
 					!pool_read_buffer_is_empty(MASTER(backend)))
 				{
 					status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
@@ -408,7 +408,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 							continue;
 
 						if (pool_ssl_pending(CONNECTION(backend, i)) ||
-							pool_read_buffer_is_empty(CONNECTION(backend, i)))
+							!pool_read_buffer_is_empty(CONNECTION(backend, i)))
 						{
 							/* If we have pending data in master, we need to process it */
 							if (IS_MASTER_NODE_ID(i))
