@@ -27,6 +27,7 @@
 #define WD_EXT_H
 
 /* watchdog.c */
+extern pid_t wd_ppid;
 extern pid_t wd_main(int fork_wait_time);
 
 /* wd_child.c */

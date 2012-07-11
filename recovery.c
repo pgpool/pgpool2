@@ -102,14 +102,19 @@ int start_recovery(int recovery_node)
 	{
 		pool_log("starting 2nd stage");
 
+		/* 2nd stage */
+		*InRecovery = RECOVERY_ONLINE;
 		if (pool_config->use_watchdog)
 		{
 			/* announce start recovery */
-			wd_start_recovery();
+			if (WD_OK != wd_start_recovery())
+			{
+				PQfinish(conn);
+				pool_error("start_recovery: timeover for waiting connection closed in the other pgpools");
+				return 1;
+			}
 		}
 
-		/* 2nd stage */
-		*InRecovery = RECOVERY_ONLINE;
 		if (wait_connection_closed() != 0)
 		{
 			PQfinish(conn);
@@ -182,7 +187,7 @@ int start_recovery(int recovery_node)
 void finish_recovery(void)
 {
 	/* announce end recovery */
-	if (pool_config->use_watchdog && *InRecovery == RECOVERY_ONLINE)
+	if (pool_config->use_watchdog && *InRecovery != RECOVERY_INIT)
 	{
 		wd_end_recovery();
 	}

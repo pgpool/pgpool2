@@ -71,6 +71,7 @@ wd_init(void)
 
 	/* check upper connection */
 	if ((pool_config->trusted_servers != NULL) &&
+		(strlen(pool_config->trusted_servers) > 0) &&
 		(wd_is_upper_ok(pool_config->trusted_servers) != WD_OK))
 	{
 		pool_error("failed to connect trusted server");

@@ -42,7 +42,7 @@ static int exec_ifconfig(char * path,char * command);
 int
 wd_IP_up(void)
 {
-	int rtn;
+	int rtn = WD_OK;
 	char path[128];
 	if (WD_List->delegate_ip == 0)
 	{
@@ -57,7 +57,7 @@ wd_IP_up(void)
 int
 wd_IP_down(void)
 {
-	int rtn;
+	int rtn = WD_OK;
 	char path[128];
 	if (WD_List->delegate_ip == 1)
 	{

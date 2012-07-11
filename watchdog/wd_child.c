@@ -205,15 +205,20 @@ send_response(int sock, WdPacket * recv_pack)
 			{
 				send_packet.packet_no = WD_NODE_READY;
 				*InRecovery = RECOVERY_ONLINE;
+				if (wait_connection_closed() != 0)
+				{
+					send_packet.packet_no = WD_NODE_FAILED;
+				}
 			}
 			break;
 		case WD_END_RECOVERY:
 			send_packet.packet_no = WD_NODE_READY;
 			*InRecovery = RECOVERY_INIT;
+			kill(wd_ppid, SIGUSR2);
 			break;
 		case WD_FAILBACK_REQUEST:
 			node = &(recv_pack->wd_body.wd_node_info);	
-			wd_set_node_mask(WD_FAILBACK_REQUEST,node->node_id_set, node->node_num);
+			wd_set_node_mask(WD_FAILBACK_REQUEST,node->node_id_set,node->node_num);
 			send_failback_request(node->node_id_set[0]);
 			send_packet.packet_no = WD_NODE_READY;
 			break;

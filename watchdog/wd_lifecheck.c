@@ -91,11 +91,13 @@ wd_lifecheck(void)
 	pthread_t thread[MAX_WATCHDOG_NUM];
 	WdPgpoolThreadArg thread_arg[MAX_WATCHDOG_NUM];
 
+
 	/* set startup time */
 	gettimeofday(&tv, NULL);
 
 	/* check upper connection */
 	if ((pool_config->trusted_servers != NULL) &&
+		(strlen(pool_config->trusted_servers ) > 0) &&
 		(wd_is_upper_ok(pool_config->trusted_servers) != WD_OK))
 	{
 		pool_error("failed to connect trusted server");
@@ -107,6 +109,12 @@ wd_lifecheck(void)
 		wd_set_myself(&tv, WD_DOWN);
 		wd_notice_server_down();
 		return WD_NG;
+	}
+
+	/* skip lifecheck during recovery execution */
+	if (*InRecovery != RECOVERY_INIT)
+	{
+		return WD_OK;
 	}
 
 	/* thread init */
@@ -131,6 +139,9 @@ wd_lifecheck(void)
 	for (i = 0; i < cnt; )
 	{
 		int result;
+
+		pool_debug("wd_lifecheck: checking pgpool %d (%s:%d)", i, p->hostname, p->pgpool_port);	
+
 		rc = pthread_join(thread[i], (void **)&result);
 		if ((rc != 0) && (errno == EINTR))
 		{
@@ -139,6 +150,8 @@ wd_lifecheck(void)
 		}
 		if (result == WD_OK)
 		{
+			pool_debug("wd_lifecheck: OK, status: %d", p->status);	
+
 			p->life = pool_config->wd_life_point;
 			if ((i == 0) &&
 				(WD_List->status == WD_DOWN))
@@ -155,6 +168,8 @@ wd_lifecheck(void)
 		}
 		else
 		{
+			pool_debug("wd_lifecheck: NG, status: %d life:%d", p->status, p->life);	
+
 			if (p->life > 0)
 			{
 				p->life --;

@@ -62,6 +62,11 @@ int wd_recv_packet(int sock, WdPacket * buf);
 int wd_escalation(void);
 int wd_start_recovery(void);
 int wd_end_recovery(void);
+int wd_send_failback_request(int node_id);
+int wd_degenerate_backend_set(int *node_id_set, int count);
+int wd_promote_backend(int node_id);
+int wd_set_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count);
+
 static int wd_send_packet_no(WD_PACKET_NO packet_no );
 static void * wd_negotiation(void * arg);
 static int send_packet_4_nodes(WdPacket *packet, WD_SEND_TYPE type);
@@ -614,7 +619,15 @@ send_packet_4_nodes(WdPacket *packet, WD_SEND_TYPE type)
 	{
 		return WD_OK;
 	}
-	rtn = (packet->packet_no == WD_STAND_FOR_MASTER)?WD_OK:WD_NG;
+	if ((packet->packet_no == WD_STAND_FOR_MASTER) ||
+		(packet->packet_no == WD_START_RECOVERY))
+	{
+		rtn = WD_OK;
+	}
+	else
+	{
+		rtn = WD_NG;
+	}
 	for (i=0; i<cnt; )
 	{
 		int result;
@@ -624,7 +637,8 @@ send_packet_4_nodes(WdPacket *packet, WD_SEND_TYPE type)
 			usleep(100);
 			continue;
 		}
-		if (packet->packet_no == WD_STAND_FOR_MASTER)
+		if ((packet->packet_no == WD_STAND_FOR_MASTER) ||
+			(packet->packet_no == WD_START_RECOVERY))
 		{
 			if (result == WD_NG)
 			{
@@ -700,7 +714,7 @@ hton_wd_node_packet(WdPacket * to, WdPacket * from)
 	to_info = &(to->wd_body.wd_node_info);
 	from_info = &(from->wd_body.wd_node_info);
 	to->packet_no = htonl(from->packet_no);
-	for (i = 0 ; i < to_info->node_num ; i ++)
+	for (i = 0 ; i < from_info->node_num ; i ++)
 	{
 		to_info->node_id_set[i] = htonl(from_info->node_id_set[i]);
 	}
@@ -734,6 +748,8 @@ int
 wd_escalation(void)
 {
 	int rtn;
+
+	pool_log("wd_escalation: eslcalated to master pgpool");
 
 	/* interface up as delegate IP */
 	wd_IP_up();
@@ -774,7 +790,7 @@ wd_send_failback_request(int node_id)
 
 	if (wd_chk_node_mask(WD_FAILBACK_REQUEST,&n,1))
 	{
-		return rtn;
+		return WD_OK;
 	}
 
 	/* send failback packet */
@@ -789,7 +805,7 @@ wd_degenerate_backend_set(int *node_id_set, int count)
 
 	if (wd_chk_node_mask(WD_DEGENERATE_BACKEND,node_id_set,count))
 	{
-		return rtn;
+		return WD_OK;
 	}
 	/* send degenerate packet */
 	rtn = wd_send_node_packet(WD_DEGENERATE_BACKEND, node_id_set, count);
@@ -804,7 +820,7 @@ wd_promote_backend(int node_id)
 
 	if (wd_chk_node_mask(WD_PROMOTE_BACKEND,&n,1))
 	{
-		return rtn;
+		return WD_OK;
 	}
 	/* send promote packet */
 	rtn = wd_send_node_packet(WD_PROMOTE_BACKEND, &n, 1);
@@ -831,6 +847,7 @@ wd_send_node_packet(WD_PACKET_NO packet_no, int *node_id_set, int count)
 	}
 	return rtn;
 }
+
 
 static int
 wd_chk_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count)
@@ -867,4 +884,3 @@ wd_set_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count)
 	}
 	return rtn;
 }
-
