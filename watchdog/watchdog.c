@@ -109,7 +109,7 @@ wd_main(int fork_wait_time)
 	status = wd_check_config();
 	if (status != WD_OK)
 	{
-		pool_error("wd_check_config failed");
+		pool_error("watchdog: wd_check_config failed");
 		return 0;
 	}
 
@@ -117,7 +117,7 @@ wd_main(int fork_wait_time)
 	status = wd_init();
 	if (status != WD_OK)
 	{
-		pool_error("wd_init failed");
+		pool_error("watchdog: wd_init failed");
 		return 0;
 	}
 

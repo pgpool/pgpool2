@@ -93,6 +93,8 @@ wd_declare(void)
 	int rtn;
 
 	/* send declare new master packet */
+	pool_debug("wd_declare: send the packet to declare the new master");
+
 	rtn = wd_send_packet_no(WD_DECLARE_NEW_MASTER);
 	return rtn;
 }
@@ -102,7 +104,8 @@ wd_stand_for_master(void)
 {
 	int rtn;
 
-	/* send staqnd for master packet */
+	/* send stand for master packet */
+	pool_debug("wd_declare: send the packet to be the new master");
 	rtn = wd_send_packet_no(WD_STAND_FOR_MASTER);
 	return rtn;
 }
@@ -235,7 +238,7 @@ wd_create_send_socket(char * hostname, int port)
 			{
 				return sock;
 			}
-			pool_error("connect() is failed,(%s)",strerror(errno));
+			pool_error("wd_create_send_socket: connect() is failed(%s)",strerror(errno));
 			break;
 		}
 		return sock;
@@ -758,6 +761,10 @@ wd_escalation(void)
 
 	/* send declare packet */
 	rtn = wd_declare();
+	if (rtn == WD_OK)
+	{
+		pool_log("wd_escalation:  escaleted to delegate_IP holder");
+	}
 
 	return rtn;
 }

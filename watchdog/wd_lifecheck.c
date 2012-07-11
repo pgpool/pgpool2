@@ -77,6 +77,11 @@ is_wd_lifecheck_ready(void)
 		}
 		p ++;
 	}
+
+	if (rtn == WD_OK)
+	{
+		pool_log("watchdog: lifecheck started");
+	}
 	return rtn;
 }
 
@@ -100,8 +105,9 @@ wd_lifecheck(void)
 		(strlen(pool_config->trusted_servers ) > 0) &&
 		(wd_is_upper_ok(pool_config->trusted_servers) != WD_OK))
 	{
-		pool_error("failed to connect trusted server");
-		/* This server connection may be downwd */
+		pool_error("wd_lifecheck: failed to connect to any trusted servers");
+
+		/* This server connection may be downed */
 		if (p->status == WD_MASTER)
 		{
 			wd_IP_down();
@@ -130,7 +136,7 @@ wd_lifecheck(void)
 		cnt ++;
 		if (cnt >= MAX_WATCHDOG_NUM)
 		{
-			pool_error("pgpool num is out of range(%d)",cnt);	
+			pool_error("wd_lifecheck: pgpool num is out of range(%d)",cnt);
 			break;
 		}
 	}
@@ -161,6 +167,8 @@ wd_lifecheck(void)
 				/* check existence of master pgpool */
 				if (wd_is_alive_master() == NULL )
 				{
+					pool_debug("wd_is_alive_master: there isn't any alive master");
+
 					/* escalate to delegate_IP holder */
 					wd_escalation();
 				}
@@ -176,6 +184,9 @@ wd_lifecheck(void)
 			}
 			if (p->life <= 0)
 			{
+				pool_log("wd_lifecheck: lifecheck failed %d times. pgpool seems not to be working",
+				         pool_config->wd_life_point);
+
 				if ((i == 0) &&
 					(WD_List->status != WD_DOWN))
 				{

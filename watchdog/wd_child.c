@@ -139,6 +139,7 @@ send_response(int sock, WdPacket * recv_pack)
 	/* set response packet no */
 	switch (recv_pack->packet_no)
 	{
+		/* add request into the watchdog list */
 		case WD_ADD_REQ:
 			p = &(recv_pack->wd_body.wd_info);	
 			if (wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, &(p->tv), p->status) > 0)
@@ -151,6 +152,8 @@ send_response(int sock, WdPacket * recv_pack)
 			}
 			memcpy(&(send_packet.wd_body.wd_info), WD_List, sizeof(WdInfo));
 			break;
+
+		/* announce candidacy to be the new master */
 		case WD_STAND_FOR_MASTER:
 			p = &(recv_pack->wd_body.wd_info);	
 			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, &(p->tv), p->status);
@@ -174,18 +177,23 @@ send_response(int sock, WdPacket * recv_pack)
 				memcpy(&(send_packet.wd_body.wd_info), WD_List, sizeof(WdInfo));
 			}
 			break;
+
+		/* announce assumption to be the new master */
 		case WD_DECLARE_NEW_MASTER:
 			p = &(recv_pack->wd_body.wd_info);	
 			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, &(p->tv), p->status);
 			if (WD_List->status == WD_MASTER)
 			{
 				/* resign master server */
+				pool_log("wd_declare_new_master: ifconfig down to resign master server");
 				wd_IP_down();
 				wd_set_myself(NULL, WD_NORMAL);
 			}
 			send_packet.packet_no = WD_READY;
 			memcpy(&(send_packet.wd_body.wd_info), WD_List, sizeof(WdInfo));
 			break;
+
+		/* announce that server is down */
 		case WD_SERVER_DOWN:
 			p = &(recv_pack->wd_body.wd_info);	
 			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, &(p->tv), WD_DOWN);
@@ -196,6 +204,8 @@ send_response(int sock, WdPacket * recv_pack)
 				wd_escalation();
 			}
 			break;
+
+		/* announce start online recovery */
 		case WD_START_RECOVERY:
 			if (*InRecovery != RECOVERY_INIT)
 			{

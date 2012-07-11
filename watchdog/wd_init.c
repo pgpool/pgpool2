@@ -48,7 +48,7 @@ wd_init(void)
 		WD_List = pool_shared_memory_create(sizeof(WdInfo) * MAX_WATCHDOG_NUM);
 		if (WD_List == NULL)
 		{
-			pool_error("failed to allocate watchdog list");
+			pool_error("wd_init: failed to allocate watchdog list");
 			return WD_NG;
 		}
 		memset(WD_List, 0, sizeof(WdInfo) * MAX_WATCHDOG_NUM);
@@ -59,7 +59,7 @@ wd_init(void)
 		WD_Node_List = pool_shared_memory_create(sizeof(unsigned char) * MAX_NUM_BACKENDS);
 		if (WD_Node_List == NULL)
 		{
-			pool_error("failed to allocate node list");
+			pool_error("wd_init: failed to allocate node list");
 			return WD_NG;
 		}
 		memset(WD_Node_List, 0, sizeof(unsigned char) * MAX_NUM_BACKENDS);
@@ -74,12 +74,15 @@ wd_init(void)
 		(strlen(pool_config->trusted_servers) > 0) &&
 		(wd_is_upper_ok(pool_config->trusted_servers) != WD_OK))
 	{
-		pool_error("failed to connect trusted server");
+		pool_error("wd_init: failed to connect trusted server");
 		return WD_NG;
 	}
 
 	/* send startup packet */
-	wd_startup();
+	if (wd_startup() == WD_NG)
+	{
+		pool_error("wd_init: failed to start watchdog");
+	}
 
 	/* check existence of master pgpool */
 	if (wd_is_exist_master() == NULL )
@@ -88,5 +91,6 @@ wd_init(void)
 		wd_escalation();
 	}
 
+	pool_log("wd_init: start watchdog");
 	return WD_OK;	
 }
