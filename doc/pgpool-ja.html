@@ -3873,7 +3873,7 @@ watchdog プロセスは pgpool-II 本体から起動される、高可用性を
 以下の機能を提供します。
 </p>
 <dl>
-<dt>pgpool サービスの生死監視</dt>
+<dt>pgpool サービスの死活監視</dt>
     <dd>
     <p>
     watchdog は pgpool のプロセスではなく、サービスの応答を監視します。
@@ -3881,7 +3881,7 @@ watchdog プロセスは pgpool-II 本体から起動される、高可用性を
     </p>
     <p>
     また watchdog は、pgpool から上位のサーバ（アプリケーションサーバなど）への接続も監視します。
-    上位サーバから PostgreSQL への接続・応答を pgpool のサービスとして生死監視します。
+    上位サーバから PostgreSQL への接続・応答を pgpool のサービスとして死活監視します。
     </p>
     </dd>
 
@@ -3925,7 +3925,7 @@ watchdog プロセスは pgpool-II 本体から起動される、高可用性を
 </dl>
 
 
-<h2>サーバ構成</h2>
+<h2 id="watchdog_structure">サーバ構成</h2>
 <p>
 watchdogプロセスを含むpgpool-IIサーバは以下の図のようなシステム構成をとります。
 </p>
@@ -3939,7 +3939,7 @@ watchdog プロセスは pgpool-II から自動的に起動・停止されます
 pgpool-II の起動は <font color="red">root 権限で</font> 行う必要があります。
 </p>
 <p>
-なお、他の pgpool および接続先の PostgreSQL が全て起動するのを待ってから、生死監視を開始します。
+なお、他の pgpool および接続先の PostgreSQL が全て起動するのを待ってから、死活監視を開始します。
 </p>
 
 <h2 id="config_watchdog">pgpool.conf の設定</h2>
@@ -3951,7 +3951,7 @@ watchdog プロセスは以下の項目すべてを指定する必要があり�
 
 <h3>基本設定セクション</h3>
 
-<h4>全般</h4>
+<h4>有効化</h4>
 <dl>
 <dt><a name="USE_WATCHDOG"></a>use_watchdog <span class="version">V3.2 ～</span></dt>
     <dd>
@@ -4005,7 +4005,7 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
 <dt><a name="WD_LIFE_POINT"></a>wd_life_point <span class="version">V3.2 ～</span></dt>
     <dd>
     <p>
-    pgpool-II の生死監視で応答が得られなかった場合のリトライ回数です。
+    pgpool-II の死活監視で応答が得られなかった場合のリトライ回数です。
     （1 以上の数値）
     </p>
     </dd>
@@ -4078,15 +4078,25 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
 
 </dl>
 
-<h3>監視対象サーバ指定セクション</h3>
+<h3>死活監視の受信設定セクション</h3>
 <dl>
+<dt><a name="WD_HOSTNAME"></a>wd_hostname <span class="version">V3.2 ～</span></dt>
+    <dd>
+    <p>
+    watchdog プロセスが相互監視を受信する為のホスト名または IP アドレスです。
+    </p>
+    </dd>
+
 <dt><a name="WD_PORT"></a>wd_port <span class="version">V3.2 ～</span></dt>
     <dd>
     <p>
     watchdog プロセスが相互監視を受信する為のポート番号です。
     </p>
     </dd>
+</dl>
 
+<h3>死活監視対象サーバ指定セクション</h3>
+<dl>
 <dt><a name="OTHER_PGPOOL_HOSTNAME"></a>other_pgpool_hostname<font color="red">0</font> <span class="version">V3.2 ～</span></dt>
     <dd>
     <p>
@@ -5466,7 +5476,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
     </p>
 
     <dl>
-    <dt>pgpool サービスの生死監視</dt>
+    <dt>pgpool サービスの死活監視</dt>
         <dd>
         <p>
         watchdog は、pgpool のプロセスではなくサービスの応答を監視します。
@@ -5474,7 +5484,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
         </p>
         <p>
         また watchdog は、pgpool から上位のサーバ（アプリケーションサーバなど）への接続も監視します。
-        上位サーバから PostgreSQL への接続・応答を pgpool のサービスとして生死監視します。
+        上位サーバから PostgreSQL への接続・応答を pgpool のサービスとして死活監視します。
         </p>
         </dd>
 
@@ -5544,6 +5554,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 
     <li>
     watchdog の相互死活監視に関するパラメータ
+    <a href="#WD_HOSTNAME">wd_hostname</a>、
     <a href="#WD_PORT">wd_port</a>、
     <a href="#OTHER_WD_PORT">other_wd_port</a>、
     <a href="#OTHER_PGPOOL_HOSTNAME">other_pgpool_hostname</a>、
