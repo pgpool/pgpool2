@@ -574,12 +574,13 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 	string = NULL;
 
 	/*
-	 * If the query is BEGIN READ WRITE in master/slave mode,
-	 * we send BEGIN instead of it to slaves/standbys. 
+	 * If the query is BEGIN READ WRITE or
+	 * BEGIN ... SERIALIZABLE in master/slave mode,
+	 * we send BEGIN to slaves/standbys instead.
+	 * original_query which is BEGIN READ WRITE is sent to primary.
+	 * rewritten_query which is BEGIN is sent to standbys.
 	 */
-	if (is_start_transaction_query(query_context->parse_tree) &&
-		is_read_write((TransactionStmt *)query_context->parse_tree) &&
-		MASTER_SLAVE)
+	if (pool_need_to_treat_as_if_default_transaction(query_context))
 	{
 		is_begin_read_write = true;
 	}
@@ -738,12 +739,13 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 	rewritten_begin = NULL;
 
 	/*
-	 * If the query is BEGIN READ WRITE in master/slave mode,
-	 * we send BEGIN instead of it to slaves/standbys. 
+	 * If the query is BEGIN READ WRITE or
+	 * BEGIN ... SERIALIZABLE in master/slave mode,
+	 * we send BEGIN to slaves/standbys instead.
+	 * original_query which is BEGIN READ WRITE is sent to primary.
+	 * rewritten_query which is BEGIN is sent to standbys.
 	 */
-	if (is_start_transaction_query(query_context->parse_tree) &&
-		is_read_write((TransactionStmt *)query_context->parse_tree) &&
-		MASTER_SLAVE)
+	if (pool_need_to_treat_as_if_default_transaction(query_context))
 	{
 		is_begin_read_write = true;
 
@@ -1372,12 +1374,57 @@ bool is_read_write(TransactionStmt *node)
 			bool read_only;
 
 			read_only = ((A_Const *)opt->arg)->val.val.ival;
-			if (!read_only)
+			if (read_only)
+				return false;	/* TRANSACTION READ ONLY */
+			else
+				/*
+				 * TRANSACTION READ WRITE specified. This sounds a little bit strange,
+				 * but actually the parse code works in the way.
+				 */
 				return true;
 		}
 	}
 
+	/*
+	 * No TRANSACTION READ ONLY/READ WRITE clause specified.
+	 */
 	return false;
+}
+
+/*
+ * Return true if start transaction query with "SERIALIZABLE" option.
+ */
+bool is_serializable(TransactionStmt *node)
+{
+	ListCell   *list_item;
+
+	List *options = node->options;
+	foreach(list_item, options)
+	{
+		DefElem *opt = (DefElem *) lfirst(list_item);
+
+		if (!strcmp("transaction_isolation", opt->defname) &&
+			IsA(opt->arg, A_Const) &&
+			((A_Const *)opt->arg)->val.type == T_String &&
+			!strcmp("serializable", ((A_Const *)opt->arg)->val.val.str))
+				return true;
+	}
+	return false;
+}
+
+/*
+ * If the query is BEGIN READ WRITE or
+ * BEGIN ... SERIALIZABLE in master/slave mode,
+ * we send BEGIN to slaves/standbys instead.
+ * original_query which is BEGIN READ WRITE is sent to primary.
+ * rewritten_query which is BEGIN is sent to standbys.
+ */
+bool pool_need_to_treat_as_if_default_transaction(POOL_QUERY_CONTEXT *query_context)
+{
+	return (MASTER_SLAVE &&
+			is_start_transaction_query(query_context->parse_tree) &&
+			(is_read_write((TransactionStmt *)query_context->parse_tree) ||
+			 is_serializable((TransactionStmt *)query_context->parse_tree)));
 }
 
 /*

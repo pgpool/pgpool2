@@ -89,6 +89,8 @@ extern char *pool_get_query_string(void);
 extern bool is_set_transaction_serializable(Node *node, char *query);
 extern bool is_start_transaction_query(Node *node);
 extern bool is_read_write(TransactionStmt *node);
+extern bool is_serializable(TransactionStmt *node);
+extern bool pool_need_to_treat_as_if_default_transaction(POOL_QUERY_CONTEXT *query_context);
 extern bool is_savepoint_query(Node *node);
 extern bool is_2pc_transaction_query(Node *node);
 extern void pool_set_query_state(POOL_QUERY_CONTEXT *query_context, POOL_QUERY_STATE state);
