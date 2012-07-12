@@ -39,6 +39,7 @@
 
 WdInfo * WD_List = NULL;					/* watchdog server list */
 unsigned char * WD_Node_List = NULL;		/* node list */
+pid_t wd_ppid = 0;
 static pid_t child_pid;
 
 pid_t wd_main(int fork_wait_time);
@@ -108,7 +109,7 @@ wd_main(int fork_wait_time)
 	status = wd_check_config();
 	if (status != WD_OK)
 	{
-		pool_error("wd_check_config failed");
+		pool_error("watchdog: wd_check_config failed");
 		return 0;
 	}
 
@@ -116,9 +117,11 @@ wd_main(int fork_wait_time)
 	status = wd_init();
 	if (status != WD_OK)
 	{
-		pool_error("wd_init failed");
+		pool_error("watchdog: wd_init failed");
 		return 0;
 	}
+
+	wd_ppid = getpid();
 
 	/* launch child process */
 	child_pid = wd_child(1);

@@ -42,7 +42,7 @@ static int exec_ifconfig(char * path,char * command);
 int
 wd_IP_up(void)
 {
-	int rtn;
+	int rtn = WD_OK;
 	char path[128];
 	if (WD_List->delegate_ip == 0)
 	{
@@ -57,7 +57,7 @@ wd_IP_up(void)
 int
 wd_IP_down(void)
 {
-	int rtn;
+	int rtn = WD_OK;
 	char path[128];
 	if (WD_List->delegate_ip == 1)
 	{
@@ -65,6 +65,8 @@ wd_IP_down(void)
 		sprintf(path,"%s/ifconfig",pool_config->ifconfig_path);
 		rtn = exec_ifconfig(path,pool_config->if_down_cmd);
 	}
+
+	pool_log("wd_IP_down: ifconfig down %s", (rtn == WD_OK) ? "succeeded" : "failed");
 	return rtn;
 }
 
@@ -80,7 +82,7 @@ exec_ifconfig(char * path,char * command)
 
 	if (pipe(pfd) == -1)
 	{
-		pool_error("pipe open error:%s",strerror(errno));
+		pool_error("exec_ifconfig: pipe open error:%s",strerror(errno));
 		return WD_NG;
 	}
 	memset(buf,0,sizeof(buf));

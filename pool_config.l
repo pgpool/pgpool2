@@ -1989,6 +1989,18 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			pool_config->delegate_IP = str;
 		}
+		else if (!strcmp(key, "wd_port") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			int v = atoi(yytext);
+
+			if (token != POOL_INTEGER || v <= 0)
+			{
+				pool_error("pool_config: %s must be higher than 1 numeric value", key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->wd_port = v;
+		}
 		else if (!strcmp(key, "wd_interval") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			int v = atoi(yytext);
@@ -2072,6 +2084,42 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->if_down_cmd = str;
+		}
+		else if (!strcmp(key, "arping_path") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->arping_path = str;
+		}
+		else if (!strcmp(key, "arping_cmd") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->arping_cmd = str;
 		}
 		else if (!strcmp(key, "wd_life_point") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{

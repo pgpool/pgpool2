@@ -40,6 +40,9 @@ int wd_is_upper_ok(char * server_list);
 static void * exec_ping(void * arg);
 static double get_result (char * ping_data);
 
+/**
+ * Try to conect to trusted servers.
+ */
 int
 wd_is_upper_ok(char * server_list)
 {
@@ -89,9 +92,7 @@ wd_is_upper_ok(char * server_list)
 		}
 		if (cnt >= MAX_WATCHDOG_NUM)
 		{
-			/*
-pool_error("trusted server num is out of range(%d)",cnt);	
-			*/
+			pool_debug("wd_is_upper_ok: trusted server num is out of range(%d)",cnt);	
 			break;
 		}
 	}
