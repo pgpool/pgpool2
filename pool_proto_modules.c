@@ -430,14 +430,13 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 				rewrite_query = rewrite_timestamp(backend, query_context->parse_tree, false, msg);
 
 				/*
-				 * If the query is BEGIN READ WRITE in master/slave mode,
-				 * we send BEGIN instead of it to slaves/standbys.
+				 * If the query is BEGIN READ WRITE or
+				 * BEGIN ... SERIALIZABLE in master/slave mode,
+				 * we send BEGIN to slaves/standbys instead.
 				 * original_query which is BEGIN READ WRITE is sent to primary.
 				 * rewritten_query which is BEGIN is sent to standbys.
 				 */
-				if (is_start_transaction_query(query_context->parse_tree) &&
-					is_read_write((TransactionStmt *)query_context->parse_tree) &&
-					MASTER_SLAVE)
+				if (pool_need_to_treat_as_if_default_transaction(query_context))
 				{
 					rewrite_query = pstrdup("BEGIN");
 				}
