@@ -757,7 +757,7 @@ wd_escalation(void)
 	/* interface up as delegate IP */
 	wd_IP_up();
 	/* set master status to the wd list */
-	wd_set_wd_list(pool_config->pgpool2_hostname, pool_config->port, pool_config->wd_port, NULL, WD_MASTER);
+	wd_set_wd_list(pool_config->wd_hostname, pool_config->port, pool_config->wd_port, NULL, WD_MASTER);
 
 	/* send declare packet */
 	rtn = wd_declare();

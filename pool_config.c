@@ -1960,6 +1960,12 @@ int pool_init_config(void)
 	pool_config->use_watchdog = 0;
 	pool_config->trusted_servers = NULL;
 	pool_config->delegate_IP = NULL;
+	res = gethostname(localhostname,sizeof(localhostname));
+	if(res !=0 )
+	{
+		pool_debug("faild to get this hostname");
+	}
+	pool_config->wd_hostname = localhostname;
 	pool_config->wd_port = 9000;
 	pool_config->other_wd->num_wd = 0;
 	pool_config->wd_interval = 10;
@@ -3694,7 +3700,8 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
-			pool_config->trusted_servers = str;
+			if(strlen(str))
+				pool_config->trusted_servers = str;
 		}
 		else if (!strcmp(key, "delegate_IP") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
@@ -3712,7 +3719,27 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
-			pool_config->delegate_IP = str;
+			if(strlen(str))
+				pool_config->delegate_IP = str;
+		}
+		else if (!strcmp(key, "wd_hostname") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			if(strlen(str))
+				pool_config->wd_hostname = str;
 		}
 		else if (!strcmp(key, "wd_port") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
@@ -3754,7 +3781,8 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
-			pool_config->ping_path = str;
+			if(strlen(str))
+				pool_config->ping_path = str;
 		}
 		else if (!strcmp(key, "ifconfig_path") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
@@ -3772,7 +3800,8 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
-			pool_config->ifconfig_path = str;
+			if(strlen(str))
+				pool_config->ifconfig_path = str;
 		}
 		else if (!strcmp(key, "if_up_cmd") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
@@ -3790,7 +3819,8 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
-			pool_config->if_up_cmd = str;
+			if(strlen(str))
+				pool_config->if_up_cmd = str;
 		}
 		else if (!strcmp(key, "if_down_cmd") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
@@ -3808,7 +3838,8 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
-			pool_config->if_down_cmd = str;
+			if(strlen(str))
+				pool_config->if_down_cmd = str;
 		}
 		else if (!strcmp(key, "arping_path") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
@@ -3826,7 +3857,8 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
-			pool_config->arping_path = str;
+			if(strlen(str))
+				pool_config->arping_path = str;
 		}
 		else if (!strcmp(key, "arping_cmd") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
@@ -3844,7 +3876,8 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
-			pool_config->arping_cmd = str;
+			if(strlen(str))
+				pool_config->arping_cmd = str;
 		}
 		else if (!strcmp(key, "wd_life_point") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
@@ -3874,7 +3907,8 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
-			pool_config->wd_lifecheck_query = str;
+			if(strlen(str))
+				pool_config->wd_lifecheck_query = str;
 		}
 
 

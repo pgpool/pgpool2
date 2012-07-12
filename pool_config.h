@@ -220,6 +220,7 @@ typedef struct {
 	 * add for watchdog
 	 */
 	int use_watchdog;		/* if non 0, use watchdog */
+	char *wd_hostname;		/* watchdog hostname */
 	int wd_port;			/* watchdog port */
 	WdDesc * other_wd;		/* watchdog lists */ 
 	char * trusted_servers;	/* icmp reachable server list (A,B,C) */

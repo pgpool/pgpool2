@@ -424,6 +424,8 @@ trusted_servers = ''
                                     # (hostA,hostB,hostC,...)
 delegate_IP = ''
                                     # delegate IP address
+wd_hostname = ''
+                                    # Host name or IP address of this watchdog
 wd_port = 9000
                                     # port number for watchdog service
 wd_interval = 10

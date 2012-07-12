@@ -35,6 +35,7 @@
 #endif
 
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <fcntl.h>
 
 #include <sys/wait.h>
@@ -610,7 +611,21 @@ int main(int argc, char **argv)
 	}
 
 	/* start watchdog */
-	watchdog_pid = wd_main(1);
+	if (pool_config->use_watchdog )
+	{
+		/* check root */
+		if (geteuid() != 0)
+		{
+			pool_error("watchdog must be started under the privileged user ID to up/down virtual network interface.");
+			myexit(1);
+		}
+		watchdog_pid = wd_main(1);
+		if (watchdog_pid == 0)
+		{
+			pool_error("wd_main error");
+			myexit(1);
+		}
+	}
 
 	/*
 	 * We need to block signal here. Otherwise child might send some

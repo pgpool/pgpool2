@@ -65,7 +65,7 @@ wd_init(void)
 		memset(WD_Node_List, 0, sizeof(unsigned char) * MAX_NUM_BACKENDS);
 	}
 	/* set myself to watchdog list */
-	wd_set_wd_list(pool_config->pgpool2_hostname, pool_config->port, pool_config->wd_port, &tv, WD_NORMAL);
+	wd_set_wd_list(pool_config->wd_hostname, pool_config->port, pool_config->wd_port, &tv, WD_NORMAL);
 	/* set other pgpools to watchdog list */
 	wd_add_wd_list(pool_config->other_wd);
 
