@@ -419,6 +419,19 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
+	/* check effective user id for watchdog */
+	/* watchdog must be started under the privileged user */
+	if (pool_config->use_watchdog )
+	{
+		/* check root */
+		if (geteuid() != 0)
+		{
+			pool_error("watchdog must be started under the privileged user ID to up/down virtual network interface.");
+			pool_shmem_exit(1);
+			exit(1);
+		}
+	}
+
 	/* set signal masks */
 	poolinitmask();
 
@@ -613,12 +626,6 @@ int main(int argc, char **argv)
 	/* start watchdog */
 	if (pool_config->use_watchdog )
 	{
-		/* check root */
-		if (geteuid() != 0)
-		{
-			pool_error("watchdog must be started under the privileged user ID to up/down virtual network interface.");
-			myexit(1);
-		}
 		watchdog_pid = wd_main(1);
 		if (watchdog_pid == 0)
 		{
