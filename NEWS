@@ -173,7 +173,7 @@
 
         - Add the parameters about mutual monitoring of watchdog processes
           as follows:
-          wd_port, other_wd_port. (Atsushi Mitani)
+          wd_hostname, wd_port, other_wd_port. (Atsushi Mitani)
 
         - Add the parameters about virtual IP as follows:
           ifconfig_path, if_up_cmd, if_down_cmd, arping_path, arping_cmd.
@@ -281,6 +281,17 @@
           (S1) SELECT * FROM t;
           (S2) DELETE FROM t;
           (S2) VACUUM t;
+
+    - Fix bug with treatment of BEGIN TRANSACTION in master/slave mode.
+      (Tatsuo Ishii)
+
+      Original complain is [pgpool-general: 714].
+      From 3.1, pgpool-II sends BEGIN.. to all DB nodes. Of course we cannot
+      send BEGIN TRANSACTION READ WRITE to standby nodes.
+      Problem is, we did not check BEGIN WORK ISOLATION LEVEL SERIALIZABLE;
+      and sent to standby nodes. Of course this is wrong, since it's not
+      allowed to run transactions in serializable mode on standby nodes.
+      So added check for BEGIN WORK ISOLATION LEVEL SERIALIZABLE case.
 
 ===============================================================================
 3.1 Series (2011/09/08 - )

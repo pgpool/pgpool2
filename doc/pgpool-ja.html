@@ -5731,6 +5731,29 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 </pre>
 </li>
 
+<li>マスタ・スレーブモードでの BEGIN TRANSACTION の扱いを修正しました。(Tatsuo Ishii)
+    <p>
+    これは <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-July/000719.html">[pgpool-general: 714]</a>
+    で報告されました。
+    </p>
+    <p>
+    3.1 以降、BEGIN TRANSACTION をすべてのノードに送るようにしました。
+    PostgreSQL の仕様では、スタンバイノードには BEGIN TRANSACTION READ WRITE を送ることはできませんが、
+    BEGIN WORK ISOLATION LEVEL SERIALIZABLE についてチェックしておらず、スタンバイノードに送信していました。
+    もちろんこれは誤りで、スタンバイノードが SERIALIZABLE モードになることは許されていません。
+    </p>
+    <p>
+    そのため、BEGIN WORK ISOLATION LEVEL SERIALIZABLE をチェックするようにしました。
+    </p>
+
+    <blockquote>
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-July/000719.html">[pgpool-general: 714]</a>
+    Load Balancing / Streaming Replication / Isolation Level serializable<br>
+    From: Philip Hofstetter<br>
+    Date: Wed, 11 Jul 2012 17:04:26 +0200
+    </blockquote>
+    </li>
+
 </ul>
 
 <hr>
