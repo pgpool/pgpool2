@@ -1127,6 +1127,16 @@ static POOL_DEST send_to_where(Node *node, char *query)
 				return ret;
 			}
 
+			/* SET TRANSACTION ISOLATION LEVEL SERIALIZABLE or
+			 * SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE or
+			 * SET transaction_isolation TO 'serializable'
+			 * SET default_transaction_isolation TO 'serializable'
+			 */
+			else if (is_set_transaction_serializable(node))
+			{
+				return POOL_PRIMARY;
+			}
+
 			/*
 			 * Check "SET TRANSACTION READ WRITE" "SET SESSION
 			 * CHARACTERISTICS AS TRANSACTION READ WRITE"
