@@ -73,7 +73,7 @@ extern POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context, int sen
 extern POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context, char *kind, int len, char *contents, int send_type, int node_id);
 extern Node *pool_get_parse_tree(void);
 extern char *pool_get_query_string(void);
-extern bool is_set_transaction_serializable(Node *node, char *query);
+extern bool is_set_transaction_serializable(Node *node);
 extern bool is_start_transaction_query(Node *node);
 extern bool is_read_write(TransactionStmt *node);
 extern bool is_serializable(TransactionStmt *node);
