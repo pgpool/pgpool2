@@ -1293,7 +1293,7 @@ char *pool_get_query_string(void)
  * SET transaction_isolation TO 'serializable'
  * SET default_transaction_isolation TO 'serializable'
  */
-bool is_set_transaction_serializable(Node *node, char *query)
+bool is_set_transaction_serializable(Node *node)
 {
 	ListCell   *list_item;
 

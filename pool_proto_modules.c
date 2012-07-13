@@ -1692,7 +1692,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				 * SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL
 				 * SERIALIZABLE, remember it.
 				 */
-				else if (is_set_transaction_serializable(node, query))
+				else if (is_set_transaction_serializable(node))
 				{
 					pool_set_transaction_isolation(POOL_SERIALIZABLE);
 				}
