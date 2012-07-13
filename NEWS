@@ -282,6 +282,20 @@
           (S2) DELETE FROM t;
           (S2) VACUUM t;
 
+    - Fix pool_process_query() bug reported in [pgpool-general: 672].
+      (Tatsuo Ishii)
+
+      This is caused by the function waits for primary node which does not
+      have pending data, while standbys have pending data.
+
+      [pgpool-general: 672] Transaction never finishes
+      http://www.sraoss.jp/pipermail/pgpool-general/2012-June/000676.html
+
+    - Fix wait_for_query_response() not to send param status to frontend if
+      frontend is NULL. (Tatsuo Ishii)
+
+      This could happen while processing reset_query_list and occur crash.
+
     - Fix bug with treatment of BEGIN TRANSACTION in master/slave mode.
       (Tatsuo Ishii)
 
@@ -292,6 +306,10 @@
       and sent to standby nodes. Of course this is wrong, since it's not
       allowed to run transactions in serializable mode on standby nodes.
       So added check for BEGIN WORK ISOLATION LEVEL SERIALIZABLE case.
+
+      [pgpool-general: 714]
+      Load Balancing / Streaming Replication / Isolation Level serializable
+      http://www.sraoss.jp/pipermail/pgpool-general/2012-July/000719.html
 
 ===============================================================================
 3.1 Series (2011/09/08 - )
