@@ -347,6 +347,10 @@ health_check_user = 'nobody'
                                    # Health check user
 health_check_password = ''
                                    # Password for health check user
+health_check_max_retries = 0
+                                   # Maximum number of times to retry a failed health check before giving up.
+health_check_retry_delay = 1
+                                   # Amount of time to wait (in seconds) between retries.
 
 
 #------------------------------------------------------------------------------
@@ -494,43 +498,49 @@ check_temp_table = on
 
 
 #------------------------------------------------------------------------------
-# MEMORY CACHE
+# ON MEMORY QUERY MEMORY CACHE
 #------------------------------------------------------------------------------
-# If true, use the memory cache functionality, false by default
-memory_cache_enabled = false
-
-# Cache store method. either shmem(shared memory) or Memcached. shmem by default
+memory_cache_enabled = off
+								   # If on, use the memory cache functionality, off by default
 memqcache_method = 'shmem'
-
-# Memcached host name. Mandatory if memqcache_method=memcached.
-# Default to localhost
+								   # Cache storage method. either 'shmem'(shared memory) or
+								   # 'memcached'. 'shmem' by default
 memqcache_memcached_host = 'localhost'
-
-# Memcached port number. Mondatory if memqcache_method=memcached.
-# Default to 11211
-memqcache_memcached_port=11211
-
-# Total memory size in bytes for storing memory cache. Mandatory if memqcache_method=shmem.
-# 128MB by default.
-memqcache_total_size=134217728
-
-# Total number of cache entries. Mandatory if memqcache_method=shmem.
-# a cache entry consumes 48 bytes.
-memqcache_max_num_cache=131072
-
-# Memory cache entry life time specified in seconds. 60 by default.
-memqcache_expire=60
-
-# If true, invalidation of query cache is triggered by corresponding
-# DDL/DML/DCL(and memqcache_expire).  If false, it is only triggered
-# by memqcache_expire.  True by default.
-memqcache_auto_cache_invalidation = true
-
-# Maximum SELECT result size in bytes.
-memqcache_maxcache=1024
-
-# Cache block size in bytes. 1MB by default
-memqcache_cache_block_size=1048576
-
-# Temporary work directory to record table oids
+								   # Memcached host name or IP address. Mandatory if
+								   # memqcache_method = 'memcached'.
+								   # Defaults to localhost.
+memqcache_memcached_port = 11211
+								   # Memcached port number. Mondatory if memqcache_method = 'memcached'.
+								   # Defaults to 11211.
+memqcache_total_size = 67108864
+								   # Total memory size in bytes for storing memory cache.
+								   # Mandatory if memqcache_method = 'shmem'.
+								   # Defaults to 64MB.
+memqcache_max_num_cache = 1000000
+								   # Total number of cache entries. Mandatory
+								   # if memqcache_method = 'shmem'.
+								   # Each cache entry consumes 48 bytes on shared memory.
+								   # Defaults to 1,000,000(45.8MB).
+memqcache_expire = 0
+								   # Memory cache entry life time specified in seconds.
+								   # 0 means infinite life time. 0 by default.
+memqcache_auto_cache_invalidation = on
+								   # If on, invalidation of query cache is triggered by corresponding
+								   # DDL/DML/DCL(and memqcache_expire).  If off, it is only triggered
+								   # by memqcache_expire.  on by default.
+memqcache_maxcache = 409600
+								   # Maximum SELECT result size in bytes.
+								   # Must be smaller than memqcache_cache_block_size. Defaults to 400KB.
+memqcache_cache_block_size = 1048576
+								   # Cache block size in bytes. Mandatory if memqcache_method = 'shmem'.
+								   # Defaults to 1MB.
 memqcache_oiddir = '/var/log/pgpool/oiddir'
+				   				   # Temporary work directory to record table oids
+white_memqcache_table_list = ''
+                                   # Comma separated list of table names to memcache
+                                   # that don't write to database
+                                   # Regexp are accepted
+black_memqcache_table_list = ''
+                                   # Comma separated list of table names not to memcache
+                                   # that don't write to database
+                                   # Regexp are accepted
