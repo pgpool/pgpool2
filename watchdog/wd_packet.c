@@ -238,7 +238,7 @@ wd_create_send_socket(char * hostname, int port)
 			{
 				return sock;
 			}
-			pool_error("wd_create_send_socket: connect() is failed(%s)",strerror(errno));
+			pool_error("wd_create_send_socket: connect() failed(%s)",strerror(errno));
 			break;
 		}
 		return sock;
