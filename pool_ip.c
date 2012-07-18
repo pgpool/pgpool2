@@ -9,7 +9,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Portions Copyright (c) 2003-2008	PgPool Global Development Group
+ * Portions Copyright (c) 2003-2012	PgPool Global Development Group
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -451,6 +451,7 @@ SockAddr_cidr_mask(struct sockaddr_storage * mask, char *numbits, int family)
 						& 0xffffffffUL;
 				else
 					maskl = 0;
+				memset(&mask4, 0, sizeof(mask4));
 				mask4.sin_addr.s_addr = htonl(maskl);
 				memcpy(mask, &mask4, sizeof(mask4));
 				break;
