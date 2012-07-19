@@ -155,7 +155,6 @@ int memcached_connect (void)
 	memcached_server_list_free(servers);
 #else
 	pool_error("memcached_connect: memcached support is not enabled");
-	memc = (memcached_st *)-1;
 	return -1;
 #endif
 	return 0;
