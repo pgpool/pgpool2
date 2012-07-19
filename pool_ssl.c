@@ -167,8 +167,13 @@ int pool_ssl_read(POOL_CONNECTION *cp, void *buf, int size) {
 			n = -1;
 			break;
 		default:
-			perror_ssl("SSL_read");
-			n = -1;
+			pool_error("pool_ssl_read: unrecognized error code: %d", err);
+			/*
+			 * We assume that the connection is broken. Returns 0
+			 * rather than -1 in this case because -1 triggers
+			 * unwanted failover in the caller (pool_read).
+			 */
+			n = 0;
 			break;
 	}
 
