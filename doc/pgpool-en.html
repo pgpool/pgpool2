@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Thu Jul  5 17:24:41 JST 2012
+Last modified: Wed Jul 18 08:34:32 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -56,7 +56,7 @@ Last modified: Thu Jul  5 17:24:41 JST 2012
 
 <h1 style="margin-top: 20px">What is pgpool-II?<a name="whatis"></a></h1>
 
-<p> pgpool-II is a middleware that sits between PostgreSQL servers
+<p> pgpool-II is a middle ware that sits between PostgreSQL servers
 and a PostgreSQL database client. It provides the following features:</p>
 
 <p>
@@ -65,17 +65,17 @@ and a PostgreSQL database client. It provides the following features:</p>
 <li>Connection Pooling</li>
     <p>pgpool-II maintains established connections to the PostgreSQL servers, and
     reuses them whenever a new connection with the same properties
-    (i.e. username, database, protocol version) comes in. It reduces the
+    (i.e. user name, database, protocol version) comes in. It reduces the
     connection overhead, and improves system's overall throughput.</p>
 
 <li>Replication</li>
     <p>pgpool-II can manage multiple PostgreSQL servers. Activating the
-    replication feature makes it possible to create a realtime backup on 2 or
+    replication feature makes it possible to create a real time backup on 2 or
     more PostgreSQL clusters, so that the service can continue without interruption
     if one of those clusters fails.</p>
 
 <li>Load Balance</li>
-    <p>If a database is replicated(because running in either replcation mode or master/slave mode),
+    <p>If a database is replicated(because running in either replication mode or master/slave mode),
     performing a SELECT query on any
     server will return the same result. pgpool-II takes advantage of
     the replication feature in order to reduce the load on each PostgreSQL server.
@@ -584,7 +584,7 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
     This parameter is useful on a server
     if it is so busy that <a href=#CHILD_LIFE_TIME">child_life_time</a> and
     <a href="#CONNECTION_LIFE_TIME">connection_life_time</a> are never triggered.
-    Thus this is also usefull to prevent PostgreSQL servers from getting too big.
+    Thus this is also useful to prevent PostgreSQL servers from getting too big.
     </p>
     <p>
     You need to reload pgpool.conf if you change this value.
@@ -681,7 +681,7 @@ local0.*    /var/log/pgpool.log
     <dd>
     <p>Produces SQL log messages when true. This is similar to the
     log_statement parameter in PostgreSQL. It produces logs even if the
-    debug option was not passed to pgpool-II at startup.
+    debug option was not passed to pgpool-II at start up.
     </p>
     <p>
     You need to reload pgpool.conf if you change this value.
@@ -766,7 +766,7 @@ local0.*    /var/log/pgpool.log
     </p>
     <p>
     This parameter serves to prevent the health check from waiting for a long
-    time in a case such as un unplugged network cable.
+    time in a case such as unplugged network cable.
     The timeout value is in seconds. Default value is 20.
     0 disables timeout (waits until TCP/IP timeout).
     </p>
@@ -997,7 +997,7 @@ local0.*    /var/log/pgpool.log
     even if the Master DB is down (not true in some modes).
     In this case, the youngest DB node ID alive will be the new Master DB.</p>
     <p>
-    Please note that the DB node which has id 0 has no special meaming
+    Please note that the DB node which has id 0 has no special meaning
     if operated in streaming replication mode.
     Rather, you should care about if the DB node is the "primary node" or not.
     See <a href="#stream">Streaming Replication</a> for more details.
@@ -1066,7 +1066,7 @@ local0.*    /var/log/pgpool.log
     </p>
     <p>
     Currently followings are allowed.
-    Multiple falgs can be specified by using "|".
+    Multiple flags can be specified by using "|".
     </p>
 
     <table border>
@@ -1076,7 +1076,7 @@ local0.*    /var/log/pgpool.log
         </td></tr>
     <tr><th class="nodec">DISALLOW_TO_FAILOVER</th>
     <td>Disallow to failover or detaching backend.
-        This is usefull when you protect backend by using HA(High Availability) softwares
+        This is useful when you protect backend by using HA(High Availability) softwares
         such as Heartbeat or Pacemaker.
         You cannot specify with ALLOW_TO_FAILOVER at a same time.
     </td></tr>
@@ -1157,7 +1157,7 @@ local0.*    /var/log/pgpool.log
      If you see following message frequently, increase the number.
     </p>
 <pre>
-"pool_search_relcache: cache replacement happend"
+"pool_search_relcache: cache replacement happened"
 </pre>
     </dd>
 
@@ -1368,7 +1368,7 @@ black_function_list = 'nextval,setval,lastval,currval'
     Please note that we have lastval and currval in addition to nextval and setval.
     Though lastval() and currval() are not writing functions,
     it is wise to add lastval() and currval() to avoid errors
-    in the case when these functions are accidentaly load balanced to other DB node.
+    in the case when these functions are accidentally load balanced to other DB node.
     Because adding to black_function_list will prevent load balancing.
     </p>
     </dd>
@@ -1762,7 +1762,7 @@ for doing the actual data replication.
 DB nodes' information (<a href="#BACKEND_HOSTNAME">backend_hostname</a>,
 <a href="#BACKEND_PORT">backend_port</a>, <a href="#BACKEND_WEIGHT">backend_weight</a>,
 <a href="#BACKEND_FLAG">backend_flag</a> and <a href="#BACKEND_DATA_DIRECTORY">backend_data_directory</a>
-if you need the online recovery fonctionality) must be set, in the same way as in the replication mode.
+if you need the online recovery functionality) must be set, in the same way as in the replication mode.
 In addition to that, set <code><a href="#MASTER_SLAVE_MODE">master_slave_mode</a></code> and
 <code><a href="#LOAD_BALANCE_MODE">load_balance_mode</a></code> to true.
 </p>
@@ -2085,7 +2085,7 @@ primary node.
 <h2 id="online_recovery_in_stream_mode">Online recovery with Streaming Replication</h2>
 <p>
 In master/slave mode with streaming replication, online recovery can be performed.
-In the online recovery procedure, primary server acts as a master server and recoveres specified standby server.
+In the online recovery procedure, primary server acts as a master server and recovers specified standby server.
 Thus the recovery procedure requires that the primary server is up and running.
 If the primary server goes down, and no standby server is promoted, you need to stop
 pgpool-II and all PostgreSQL servers and recover them manually.
@@ -2120,7 +2120,7 @@ recovery_1st_stage_command = 'basebackup.sh'
 </pre>
     </li>
 
-    <li>Leave <a href="#RECOVERY_2ND_STAGE_COMMAND">rrecovery_2nd_stage_command</a> be empty.
+    <li>Leave <a href="#RECOVERY_2ND_STAGE_COMMAND">recovery_2nd_stage_command</a> be empty.
 <pre>
 recovery_2nd_stage_command = ''
 </pre>
@@ -2151,7 +2151,7 @@ recovery_2nd_stage_command = ''
 That's it.
 Now you should be able to use <a href="#pcp_recovery_node">pcp_recovery_node</a> (as long as the standby
 node stops) or push "recovery" button of pgpoolAdmin to perform online recovery.
-If something goes wrong, please examin pgpool-II log, primary server log and standby server log(s).
+If something goes wrong, please examine pgpool-II log, primary server log and standby server log(s).
 </p>
 
 <p>
@@ -2270,7 +2270,7 @@ pgpool-II. The System DB's configuration is done in
 <dt><a name="SSL_CA_CERT_DIR"></a>ssl_ca_cert_dir</dt>
     <dd>
     <p>
-    The path to a directory containing PEM format CA certficate
+    The path to a directory containing PEM format CA certificate
     files, which can be used to verify the backend server certificate.
     This is analogous to the <code>-CApath</code> option
     of the OpenSSL <code>verify(1)</code> command.
@@ -2515,7 +2515,7 @@ You need to delete the cache data from the cache table or restart pgpool-II with
 
 <p>
 You can use on memory query cache in any mode.
-It is diffrent from the above query cache on the point that
+It is different from the above query cache on the point that
 on memory query cache is faster because cache storage is on memory.
 Moreover you don't need to restart pgpool-II when the cache is outdated
 because the underlying table gets updated.
@@ -2525,14 +2525,14 @@ because the underlying table gets updated.
 On memory cache saves pair of SELECT statements
 (with its Bind parameters if the SELECT is an extended query).
 If the same SELECTs comes in, it returns the value from cache.
-Since no SQL parsing nor access to PostgreSQL are involed, it's extremely fast.
+Since no SQL parsing nor access to PostgreSQL are involved, it's extremely fast.
 </p>
 
 <p>
 On the other hand, it might be slower than the normal path because it adds some overhead to store cache.
 Moreover when a table is updated, pgpool automatically deletes all the caches related to the table.
-So the prformace will be degraded by a system with a lot of updates.
-If the cache_hit_ratio is lower than 70%, you might want to disable onl memory cache.
+So the performance will be degraded by a system with a lot of updates.
+If the cache_hit_ratio is lower than 70%, you might want to disable on memory cache.
 </p>
 
 <h2 id="MEMORY_CACHE_RESTRICTIONS">Restrictions</h2>
@@ -2540,7 +2540,7 @@ If the cache_hit_ratio is lower than 70%, you might want to disable onl memory c
     <li>
     On memory query cache deletes the all cache of an updated table automatically
     with monitoring if the executed query is UPDATE, INSERT, ALTER TABLE and so on.
-    But pgpool-II isn't able to recognize implicit updates due to trigers, foreign keys and
+    But pgpool-II isn't able to recognize implicit updates due to triggers, foreign keys and
     DROP TABLE CASCADE.
     You can avoid this problem with <a href="#MEMQCACHE_EXPIRE">memqcache_expire</a>
     by which pgpool deletes old cache in a fixed time automatically, or with
@@ -2552,7 +2552,7 @@ If the cache_hit_ratio is lower than 70%, you might want to disable onl memory c
     If you want to use multiple instances of pgpool-II with online memory cache which uses shared memory,
     it could happen that one pgpool deletes cache,
     and the other one doesn't do it thus finds old cached result when a table gets updated.
-    Memcached is the better cache strage in this case.
+    Memcached is the better cache storage in this case.
     </li>
 </ul>
 
@@ -2565,11 +2565,11 @@ To enable the memory cache functionality, set this to on (default is off).
 memory_cache_enabled = on
 </pre>
 
-<h2 id="MEMQCACHE_METHOD">Choosing cache strage</h2>
+<h2 id="MEMQCACHE_METHOD">Choosing cache storage</h2>
 <p>
-You can choose a cache strage: shared memory or <a href="http://memcached.org">memcached</a>
+You can choose a cache storage: shared memory or <a href="http://memcached.org">memcached</a>
 (you can't use the both).
-Query cache with shared memory is fast and easy because you don't have to install and config memcached,
+Query cache with shared memory is fast and easy because you don't have to install and configure memcached,
 but restricted the max size of cache by the one of shared memory.
 Query cache with memcached needs a overhead to access network, but you can set the size as you like.
 </p>
@@ -2592,7 +2592,7 @@ cache is avoided to keep consistency between caches and databases.
     <li>SELECT starting with "/*NO QUERY CACHE*/" comment</li>
     <li>SELECT including tables in <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a></li>
     <li>SELECT FOR SHARE / UPDATE</li>
-    <li>SELECT including un-immutable funcsions</li>
+    <li>SELECT including un-immutable functions</li>
     <li>SELECT including TEMP TABLE</li>
     <li>SELECT including system catalogs</li>
     <li>SELECT including VIEWs or unlogged tables.
@@ -2635,7 +2635,7 @@ These are the parameters used with both of shmem and memcached.
 <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
-    If on, automatically deletes cache realted to the updated tables.
+    If on, automatically deletes cache related to the updated tables.
     If off, does not delete caches. Default is on.
     This parameter and <a href="#MEMQCACHE_EXPIRE">memqcache_expire</a>. are orthogonal.
     </p>
@@ -2652,7 +2652,7 @@ These are the parameters used with both of shmem and memcached.
 </pre>
         <p>
         To avoid this problem, you have to set memqcache_maxcache larger.
-        But if you use shared memory as the cache strage,
+        But if you use shared memory as the cache storage,
         it must be lower than <a href="#MEMQCACHE_CACHE_BLOCK_SIZE">memqcache_cache_block_size</a>.
         If memqcached, it must be lower than the size of slab (default is 1 MB).
         </p>
@@ -2689,7 +2689,7 @@ These are the parameters used with both of shmem and memcached.
     </p>
     <p>
     Directories and files under memqcache_oiddir are not deleted whenever pgpool-II restarts.
-    If you start pgpool by "<a href="#start">pgpool -C</a>", pgppol starts without the old oidmap.
+    If you start pgpool by "<a href="#start">pgpool -C</a>", pgpool starts without the old oidmap.
     </p>
     </dd>
 </dl>
@@ -2728,14 +2728,14 @@ In this example, you can calculate like the below:
 
 <h2 id="shmem_params">Configuring to use shared memory</h2>
 <p>
-These are the parameters used with shared memory as the cache strage.
+These are the parameters used with shared memory as the cache storage.
 </p>
 
 <dl>
 <dt id="MEMQCACHE_TOTAL_SIZE">memqcache_total_size <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
-    Specify the size of shared memory as cache strage in bytes.
+    Specify the size of shared memory as cache storage in bytes.
     </p>
     </dd>
 
@@ -2755,7 +2755,7 @@ These are the parameters used with shared memory as the cache strage.
 <dt id="MEMQCACHE_CACHE_BLOCK_SIZE">memqcache_cache_block_size <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
-    If cache storage is shared memory, pgpool uses the memory devided by memqcache_cache_block_size.
+    If cache storage is shared memory, pgpool uses the memory divided by memqcache_cache_block_size.
     SELECT result is packed into the block.
     However because the SELECT result cannot be placed in several blocks, it cannot be cached if it is larger
     than memqcache_cache_block_size.
@@ -2767,14 +2767,14 @@ These are the parameters used with shared memory as the cache strage.
 <h2 id="memcached_params">Configuring to use memcached</h2>
 
 <p>
-These are the parameters used with memcached as the cache strage.
+These are the parameters used with memcached as the cache storage.
 </p>
 
 <dl>
 <dt id="MEMQCACHE_MEMCACHED_HOST">memqcache_memcached_host <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
-    Specify the host name or the IP adddress in which memcached works.
+    Specify the host name or the IP address in which memcached works.
     If it is the same one as pgpool-II, set 'localhost'.
     </p>
     </dd>
@@ -2791,7 +2791,7 @@ These are the parameters used with memcached as the cache strage.
 <h3 id="install_memcached">memcached Installation</h3>
 
 <p>
-To use memcached as cache strage, pgpool-II needs a working memcached and
+To use memcached as cache storage, pgpool-II needs a working memcached and
 the client library: libmemcached.
 It is easy to install them by rpms. This explains how to install from source codes.
 </p>
@@ -2894,7 +2894,7 @@ pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-D][-d]
       <span class="version">V3.0 -</span></td></tr>
   <tr><td>-C</td><td>--clear-oidmaps</td>
       <td>Discard oid maps in <a href="#MEMQCACHE_OIDDIR">memqcache_oiddir</a> for on memory query cache
-      (only when <a href="#MEMQCACHE_METHOD">memqcache_strage</a> is 'memcached',
+      (only when <a href="#MEMQCACHE_METHOD">memqcache_method</a> is 'memcached',
       if shmem, discard whenever pgpool starts).
       <span class="version">V3.2 -</span></td></tr>
   <tr><td>-d</td><td>--debug</td><td>debug mode</tr>
@@ -3179,7 +3179,7 @@ node as a detached node.
 <font color="red">caution: Stop autovacuum on the master node (the
 first node which is up and running). Autovacuum may change the contents
 of the database and might cause inconsistency after online recovery if
-it's running. This applies only if you're recovering with a simple copy mecanism, such
+it's running. This applies only if you're recovering with a simple copy mechanism, such
 as the rsync one explained below. This doesn't apply if you're using PostgreSQL's
 PITR mechanism.</font>
 </p>
@@ -3552,9 +3552,9 @@ $ mv /usr/local/pgsql /usr/local/pgsql-old
     </li>
 
     <li><p>
-    Create a symblic link to the localtion where newer version of PostgreSQL installed.
+    Create a symbolic link to the location where newer version of PostgreSQL installed.
     This allow you to continue to use command search path you currently use.
-    Installting directory of newer PostgreSQL is supposed to be /usr/local/pgsql-new in following description.
+    Installing directory of newer PostgreSQL is supposed to be /usr/local/pgsql-new in following description.
     </p>
 <pre>
 $ ln -s /usr/local/pgsql-new /usr/local/pgsql
@@ -3574,7 +3574,7 @@ $ ln -s /usr/local/pgsql-old/data /usr/local/pgsql/data
     <li><p>
     Install C functions into PostgreSQL. "Installing C functions" section may help you.
     Because online recovery copies database cluster, the last step installing functions
-    using psql is not neccessary.
+    using psql is not necessary.
     Do make install.
     </p>
     </li>
@@ -3668,7 +3668,7 @@ If you need to restore form the base backup and archive log,
 set recovery_target_time of recovery.conf in the middle of the start/stop time.
 </p>
 
-<h2 id="backup_system_db">Backuping of system DB</h2>
+<h2 id="backup_system_db">Backing up of system DB</h2>
 <p>
 You need to backup system DB if pgpool-II is operated in parallel query
 mode or if you are using query cache.
@@ -3708,8 +3708,8 @@ to make those deployments and pros and cons.
     is within a local machine, socket communication can be faster than inter sever communication.
     Also if you are using multiple web serves or application servers, you can avoid
     the single point of failure problem
-    (in this case you must have identical pgpool.conf on each pgpool-II instanace).
-    There are seveal things you should care about in this configuration:
+    (in this case you must have identical pgpool.conf on each pgpool-II instance).
+    There are several things you should care about in this configuration:
     </p>
     <ul>
         <li>If the communication between pgpool-II and DB servers is not stable, it is possible
@@ -3719,7 +3719,7 @@ to make those deployments and pros and cons.
         </li>
         <li>While executing online recovery in replication mode,
             you need to stop all pgpool-II instances except the one which is doing online recovery.
-            Othewise DB can be running into inconsistent state.
+            Otherwise DB can be running into inconsistent state.
             In master slave mode+streaming replication mode, you do not need to stop other pgpool-II instances.
             You should not execute online recovery at the same time on multiple pgpool-II instances however.
         </li>
@@ -3741,8 +3741,8 @@ to make those deployments and pros and cons.
 <h2 id="pgpool_ha">About pgpool-HA</h2>
 <p>
 Pgpool-HA is a high availability software for pgpool-II using hearbeat.
-Pgpool-HA is a sub probject of pgpool project as well as pgpool-II.
-Pgpool-HA can be available from pgpool development site as an open source softeware.
+Pgpool-HA is a sub project of pgpool project as well as pgpool-II.
+Pgpool-HA can be available from pgpool development site as an open source software.
 </p>
 
 <p class="top_link"><a href="#Top">back to top</a></p>
@@ -3865,7 +3865,7 @@ All following options are required to be specified in watchdog process.
     </dd>
 </dl>
 
-<h4>Lifecheck of pgpol-II</h4>
+<h4>Life checking pgpool-II</h4>
 
 <dl>
 <dt><a name="WD_INTERVAL"></a>wd_interval <span class="version">V3.2 -</span></dt>
@@ -4078,7 +4078,7 @@ pgpool-II.
     to keep all the DB nodes in the same state.
     </p>
     <p>
-    Check the databases and resync them using online recovery if you find
+    Check the databases and re-sync them using online recovery if you find
     that they are out of sync.
     </p>
     </dd>
@@ -4115,7 +4115,7 @@ pgpool-II.
 <h1>Restrictions<a name="restriction"></a></h1>
 
 <p>
-<h2>Functionalities of PostgreSQL</h2>
+<h2>Functionality of PostgreSQL</h2>
 <p>
 <ul>
 <li>If you use pg_terminate_backend() to stop a backend, this will trigger
@@ -4147,7 +4147,7 @@ pgpool-II.
             <li>Please note that the user name and password must be
                  identical to those registered in PostgreSQL.</li>
             <li>After changing md5 password(in both pool_passwd and PostgreSQL of course),
-                you need to execute "pgpool reload" or restart pgpool(if your pgoool is 3.1 or before).</li>
+                you need to execute "pgpool reload" or restart pgpool(if your pgpool is 3.1 or before).</li>
        </ol>
     </li>
     <li>In all the other modes, trust, clear text password, crypt, md5,
@@ -5144,7 +5144,7 @@ SELECT L1-table.col FROM L1-table WHERE L1-table.col % 2 = 0 AND L1-table.col IN
 </pre>
 
 <p>
-In this example, the FROM and WHEREﾂ�lause and the TARGETLIST are in the L
+In this example, the FROM and WHERE clause and the TARGETLIST are in the L
 status. Because the subquery is in the P status, the query itself is in the S status.
 The rewriting is, as a consequence, performed as follows.
 </p>

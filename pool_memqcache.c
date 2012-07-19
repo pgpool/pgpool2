@@ -149,11 +149,13 @@ int memcached_connect (void)
 	if (rc != MEMCACHED_SUCCESS)
 	{
 		pool_error("memcached_connect: server_push %s\n", memcached_strerror(memc, rc));
+		memc = (memcached_st *)-1;
 		return -1;
 	}
 	memcached_server_list_free(servers);
 #else
 	pool_error("memcached_connect: memcached support is not enabled");
+	memc = (memcached_st *)-1;
 	return -1;
 #endif
 	return 0;
@@ -331,7 +333,12 @@ static int pool_fetch_cache(POOL_CONNECTION_POOL *backend, const char *query, ch
 			if (rc != MEMCACHED_NOTFOUND)
 			{
 				pool_error("pool_fetch_cache: memcached_get failed %s", memcached_strerror(memc, rc));
-				return -1;
+				/*
+				 * Turn off memory cache support to prevent future erros.
+				 */
+				pool_config->memory_cache_enabled = 0;
+				/* Behave as if cache not found */
+				return 1;
 			}
 			else
 			{
