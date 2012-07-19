@@ -1,0 +1,343 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>pgpool-II watchdog チュートリアル</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf8" />
+<link href="pgpool.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+img {
+    border: 1px solid black;
+    padding: 10px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+</style>
+
+</head>
+<body>
+
+<body bgcolor="#ffffff">
+<div id="top" class="header_text">pgpool-II watchdog チュートリアル</div>
+
+<div id="menu">
+    <div id="navcontainer">
+      <ul id="navlist">
+      <li><a href="#thisis">チュートリアルの概要</a></li>
+      <li><a href="#basic">基本設定</a>
+          <ul>
+          <li><a href="#basic_config">pgpool.conf 設定</a></li>
+          <li><a href="#basic_start">pgpool-II の起動</a></li>
+          </ul>
+      </li>
+      <li><a href="#try">簡単な watchdog 動作確認</a>
+          <ul>
+          <li><a href="#try_vip">仮想 IP アドレスへの接続</a></li>
+          <li><a href="#try_switch">仮想 IP アドレスの切り替え</a></li>
+          </ul>
+      </li>
+      <li><a href="start#more">応用</a>
+          <ul>
+          <li><a href="#more_lifecheck">監視についての設定</a></li>
+          <li><a href="#more_switch">仮想 IP アドレス切り替えについての設定</a></li>
+          </ul>
+      </li>
+      </ul>
+    </div>
+
+    <div class="header_small" align="center">
+    [<a href="tutorial-watchdog-en.html">English page</a>]
+    </div>
+</div>
+
+<div id="manual">
+
+<!-- ================================================================================ -->
+
+<h1 id="thisis">チュートリアルの概要</h1>
+
+<p>このチュートリアルでは、watchdog 機能を試す方法を説明します。</p>
+<p>Linux マシン 2 台にそれぞれ pgpool-II がインストールされているものとします。
+また、いずれかのマシンか第 3 のマシンに、PostgreSQL がインストールされて稼働しているものとします
+（backend ノードは 1 台でかまいません）。
+なお、pgpool-II はどのモードで稼働していても、watchdog を利用することができます。</p>
+<p>この文書では、Active を「osspc16」、Standby を「osspc20」とします。
+また psql などを実行するサーバを便宜上「someserver」と表記していますが、Active、Standby のサーバで構いません。</p>
+
+<p><img src="watchdog.png" alt="" /></p>
+
+<p class="top_link"><a href="#Top">△ back to top</a></p>
+
+<!-- ================================================================================ -->
+
+<h1 id="basic">基本設定</h1>
+
+<h2 id="basic_config">pgpool.conf 設定</h2>
+
+<h3>Active / Standby 共通</h3>
+<p>2 台の pgpool-II でそれぞれ設定します。</p>
+
+<h4 id="basic_config_ebable">watchdog の有効化</h4>
+<p>まず、watchdog 機能を有効にするフラグ「use_watchdog」を on にします。</p>
+<pre>
+use_watchdog = <b>on</b>
+                                    # Activates watchdog
+</pre>
+
+<h4 id="basic_config_upper">上位サーバ</h4>
+<p>アプリケーションサーバなど上位のサーバを指定する「trusted_servers」を記述します。
+<p>ここでは空欄にしておきます。</p>
+<pre>
+trusted_servers = ''
+                                    # trusted server list which are used
+                                    # to confirm network connection
+                                    # (hostA,hostB,hostC,...)
+</pre>
+
+<h4 id="basic_config_watchdog">watchdog</h4>
+<p>watchdog を起動するポートを「wd_port」」を指定します。</p>
+<p>ここではデフォルトのままにしておきます。</p>
+<pre>
+wd_port = 9000
+                                    # port number for watchdog service
+</pre>
+
+<h4 id="basic_config_vip">仮想 IP</h4>
+<p>仮想 IP を「delegate_IP」に指定します。まだ使われてない IP アドレスを記述します。</p>
+<pre>
+delegate_IP = '<b>133.137.177.143</b>'
+                                    # delegate IP address
+</pre>
+
+<h3 id="basic_config_lifecheck">監視対象サーバ関連</h3>
+<p>以下は、それぞれの pgpool-II で設定します。</p>
+<p>監視対象とする pgpool-II が稼働する  ホスト名「other_pgpool_hostname0」、
+その pgpool-II のポート番号「other_pgpool_port0」、
+その watchdog のポート番号「other_wd_port0」を、それぞれで記述します。
+</p>
+<p>なお、ホスト名は hostname コマンドの実行結果どおりのものを記述します。</p>
+<h4>Active (osspc16)</h4>
+<pre>
+other_pgpool_hostname0 = '<b>osspc20</b>'
+                                    # Host name or IP address to connect to for other pgpool 0
+other_pgpool_port0 = 9999
+                                    # Port number for othet pgpool 0
+other_wd_port0 = 9000
+                                    # Port number for othet watchdog 0
+</pre>
+
+<h4>Standby (osspc20)</h4>
+<pre>
+other_pgpool_hostname0 = '<b>osspc16</b>'
+                                    # Host name or IP address to connect to for other pgpool 0
+other_pgpool_port0 = 9999
+                                    # Port number for othet pgpool 0
+other_wd_port0 = 9000
+                                    # Port number for othet watchdog 0
+</pre>
+
+<!-- -------------------------------------------------------------------------------- -->
+
+<h2 id="basic_start">pgpool-II の起動</h2>
+
+<p>両方のサーバで pgpool-II を root で起動します。
+なお、ログで動作確認するため、-n オプションをつけて非デーモンモードで起動し、
+出力されるログメッセージを pgpool.log ファイルにリダイレクトします。</p>
+</p>
+
+<h3>Active サーバの pgpool-II の起動 (osspc16)</h3>
+<p>Active サーバで pgpool-II を起動します。</p>
+<pre>
+[user@osspc16]$ su -
+[root@osspc16]# {installed_dir}/bin/pgpool -n -f {installed_dir}/etc/pgpool.conf &gt; pgpool.log 2&gt;&amp;1
+</pre>
+
+<p>ログから、仮想 IP アドレスを使用し、また watchdog プロセス起動したことが確認できます。
+（なおこのログでの ERROR は、まだ起動していない Standby サーバの watchdog に接続しようとして失敗した、
+というものなので、無視して構いません。）</p>
+<pre>
+ERROR: wd_create_send_socket: connect() is failed(Connection refused)
+LOG:   wd_escalation: eslcalated to master pgpool
+ERROR: wd_create_send_socket: connect() is failed(Connection refused)
+LOG:   wd_escalation:  <b>escaleted to delegate_IP holder</b>
+LOG:   wd_init: <b>start watchdog</b>
+LOG:   pgpool-II successfully started. version 3.2beta1 (namameboshi)
+</pre>
+
+<h3>Standby サーバの pgpool-II の起動 (osspc20)</h3>
+<p>Standby サーバで pgpool-II を起動します。</p>
+<pre>
+[user@osspc20]$ su -
+[root@osspc20]# {installed_dir}/bin/pgpool -n -f {installed_dir}/etc/pgpool.conf &gt; pgpool.log 2&gt;&amp;1
+</pre>
+
+<p>「other_pgpool_hostname*」等に指定したすべての watchdog が起動していると、
+死活監視（lifecheck）が開始します。
+ここでは osspc16 しか指定していないので、この時点で開始したことがログからわかります。</p>
+<pre>
+LOG:   wd_init: start watchdog
+LOG:   pgpool-II successfully started. version 3.2beta1 (namameboshi)
+LOG:   watchdog: <b>lifecheck started</b>
+</pre>
+
+<p>すると、Active でも、死活監視を始めたというログメッセージが出力されます。</p>
+<pre>
+LOG:   watchdog: <b>lifecheck started</b>
+</pre>
+
+<p class="top_link"><a href="#Top">△ back to top</a></p>
+
+<!-- ================================================================================ -->
+
+<h1 id="try">簡単な watchdog 動作確認</h1>
+
+<h2 id="try_vip">仮想 IP アドレスへの接続</h2>
+<p>「delegate_IP」に指定した仮想 IP アドレスに、ping が通ることを確認します。</p>
+<pre>
+[user@someserver]$ ping 133.137.177.142
+PING 133.137.177.143 (133.137.177.143) 56(84) bytes of data.
+64 bytes from 133.137.177.143: icmp_seq=1 ttl=64 time=0.328 ms
+64 bytes from 133.137.177.143: icmp_seq=2 ttl=64 time=0.264 ms
+64 bytes from 133.137.177.143: icmp_seq=3 ttl=64 time=0.412 ms
+</pre>
+
+<p>先に pgpool-II を立ち上げた Active サーバが、仮想 IP アドレスを使っていることを確認します。</p>
+<pre>
+[root@osspc16]# ifconfig
+eth0      ...
+
+<b>eth0:0</b>    inet addr:133.137.177.143 ...
+
+lo        ...
+</pre>
+
+<p>あとから pgpool-II を立ち上げた Standby サーバで、仮想 IP アドレスを使っていないことを確認します。</p>
+<pre>
+[root@osspc20]# ifconfig
+eth0      ...
+
+lo        ...
+</pre>
+
+<p>仮想 IP アドレスを使って、PostgreSQL に接続できることを確認します。
+-h オプションには「delegate_IP」の IP アドレスを、-p オプションには「port」のポート番号を指定します。</p>
+<pre>
+[user@someserver]$ psql -h 133.137.177.142 -p 9999 -l
+</pre>
+
+<!-- -------------------------------------------------------------------------------- -->
+
+<h2 id="try_switch">仮想 IP アドレスの切り替え</h2>
+
+<p>Active サーバがサービス供給不可な状態になったときに、Standby がそれを引き継ぐのを確認します。</p>
+
+<p>Active サーバで pgpool-II が停止してしまったのを想定し、意図的に停止します。</p>
+<pre>
+[root@osspc16]# {installed_dir}/bin/pgpool stop
+</pre>
+
+<p>すると Standby サーバで、仮想 IP アドレスを使用しはじめたというログメッセージが出力されます。</p>
+<pre>
+LOG:   wd_escalation: <b>eslcalated to master pgpool</b>
+ERROR: wd_create_send_socket: connect() is failed(Connection refused)
+LOG:   wd_escalation:  escaleted to delegate_IP holder
+</pre>
+
+<p>また、Standby サーバでも死活監視が開始します。</p>
+<pre>
+LOG:   watchdog: lifecheck started
+</pre>
+
+<p>「delegate_IP」に指定した仮想 IP アドレスに、ping が通ることを確認します。</p>
+<pre>
+[user@someserver]$ ping 133.137.177.142
+PING 133.137.177.143 (133.137.177.143) 56(84) bytes of data.
+64 bytes from 133.137.177.143: icmp_seq=1 ttl=64 time=0.328 ms
+64 bytes from 133.137.177.143: icmp_seq=2 ttl=64 time=0.264 ms
+64 bytes from 133.137.177.143: icmp_seq=3 ttl=64 time=0.412 ms
+</pre>
+
+<p>Active で仮想 IP アドレスが使われなくなったのを確認します。</p>
+<pre>
+[root@osspc16]# ifconfig
+eth0      ...
+
+lo        ...
+</pre>
+
+<p>今度は Standby で仮想 IP アドレスが使われるようになったのを確認します。</p>
+<pre>
+[root@osspc20]# ifconfig
+eth0      ...
+
+<b>eth0:0</b>    inet addr:133.137.177.143 ...
+
+lo        ...
+</pre>
+
+<p>仮想 IP アドレスを使って、PostgreSQL に接続できることを確認します。</p>
+<pre>
+[user@someserver]$ psql -h 133.137.177.142 -p 9999 -l
+</pre>
+
+<p class="top_link"><a href="#Top">△ back to top</a></p>
+
+<!-- ================================================================================ -->
+
+<h1 id="more">応用</h1>
+
+<h2 id="more_lifecheck">監視についての設定</h2>
+
+<p>watchdog の監視方法について設定するパラメータがあります。</p>
+
+<p>監視間隔秒を指定する「wd_interval」、リトライ回数を指定する「wd_life_point」、
+監視に使うクエリを指定する「wd_lifecheck_query」を記述します。</p>
+<pre>
+wd_interval = 10
+                                    # lifecheck interval (sec) &gt; 0
+wd_life_point = 3
+                                    # lifecheck retry times
+wd_lifecheck_query = 'SELECT 1'
+                                    # lifecheck query to pgpool from watchdog
+</pre>
+
+<!-- -------------------------------------------------------------------------------- -->
+
+<h2 id="more_switch">仮想 IP アドレス切り替えについての設定</h2>
+
+<p>仮想 IP アドレスの切り替えコマンドについて設定するパラメータがあります。</p>
+
+<p>仮想 IP を切り替える際に使うコマンドとして「if_up_cmd」「if_down_cmd」、
+そのパスを指定する「ifconfig_path」を記述します。
+また、仮想 IP 切り替え後の ARP リクエスト送信コマンドを指定する「arping_cmd」、
+そのパスを指定する「arping_path」を記述します。</p>
+<p>なお通常は、デフォルト値のまま変更する必要はありません。</p>
+
+<pre>
+ifconfig_path = '/sbin'
+                                    # ifconfig command path
+if_up_cmd = 'ifconfig eth0:0 inet $_IP_$ netmask 255.255.255.0'
+                                    # startup delegate IP command
+if_down_cmd = 'ifconfig eth0:0 down'
+                                    # shutdown delegate IP command
+
+arping_path = '/usr/sbin'           # arping command path
+
+arping_cmd = 'arping -U $_IP_$ -w 1'
+</pre>
+
+<p class="top_link"><a href="#Top">△ back to top</a></p>
+
+</div>
+
+<!-- ================================================================================ -->
+
+<div class="copyright" style="clear: both">
+<hr>
+<copyright>
+Copyright &copy; 2003 &ndash; 2012 pgpool Global Development Group
+</copyright>
+</div>
+
+</body>
+</html>

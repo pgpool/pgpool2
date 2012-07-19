@@ -1,0 +1,306 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head>
+<title>pgpool-II Tutorial [ Watchdog ]</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<link href="pgpool.css" rel="stylesheet" type="text/css">
+
+<style type="text/css">
+img {
+    border: 1px solid black;
+    padding: 10px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+</style>
+
+</head>
+<body bgcolor="#ffffff">
+
+
+<div id="top" class="header_text">pgpool-II Tutorial [ Watchdog ]</div>
+
+<div id="menu">
+    <div id="navcontainer">
+      <ul id="navlist">
+      <li><a href="#thisis">About this document</a></li>
+      <li><a href="#basic">Basic configs</a>
+          <ul>
+          <li><a href="#basic_config">pgpool.conf</a></li>
+          <li><a href="#basic_start">Start pgpool</a></li>
+          </ul>
+      </li>
+      <li><a href="#try">Try watchdog</a>
+          <ul>
+          <li><a href="#try_vip">Connection to virtual IP</a></li>
+          <li><a href="#try_switch">Switching virtual IP</a></li>
+          </ul>
+      </li>
+      <li><a href="start#more">More</a>
+          <ul>
+          <li><a href="#more_lifecheck">Lifecheck</a></li>
+          <li><a href="#more_switch">Virtual IP</a></li>
+          </ul>
+      </li>
+      </ul>
+    </div>
+
+    <div class="header_small" align="center">
+    [<a href="tutorial-watchdog-ja.html">Japanese page</a>]
+    </div>
+</div>
+
+<div id="manual">
+
+<!-- ================================================================================ -->
+
+<h1 id="thisis">About this document</h1>
+
+<p>In this tutrial, I explain the simple way to try "Watchdog".</p>
+<p>What you need is 2 Linux boxes in which pgpool-II is installed and
+a PostgreSQL in the same machine or in the other one.
+it is enough that 1 node for backend exists.
+</p>
+<p>You can use on memory query cache with pgpool in any mode: replication mode, master/slave mode and raw mode.</p>
+
+<p>I use "osspc16" as an Active node and "osspc20" as a Standby node.
+"Someserver" means one of them.</p>
+
+<p><img src="watchdog.png" alt=""></p>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
+
+<!-- ================================================================================ -->
+
+<h1 id="basic">Basic configs</h1>
+
+<h2 id="basic_config">pgpool.conf</h2>
+
+<h3>In both of Active and Standby</h3>
+<p>Set the parameters in both of active and standby nodes.</p>
+
+<h4 id="basic_config_ebable">Enabling watchdog</h4>
+<p>First of all, set the flag to enable watchdog "use_watchdog" on.</p>
+<pre>use_watchdog = <b>on</b>
+                                    # Activates watchdog
+</pre>
+
+<h4 id="basic_config_upper">Up stream servers</h4>
+<p>Specify up stream servers (e.g. application servers). To be blank is OK.</p>
+<pre>trusted_servers = ''
+                                    # trusted server list which are used
+                                    # to confirm network connection
+                                    # (hostA,hostB,hostC,...)
+</pre>
+
+<h4 id="basic_config_watchdog">watchdog</h4>
+<p>Specify the port of watchdog. </p>
+<pre>wd_port = 9000
+                                    # port number for watchdog service
+</pre>
+
+<h4 id="basic_config_vip">Virtual IP</h4>
+<p>Specify the IP address for virtual IP address in "delegate_IP" which must not not be used by someone else.</p>
+<pre>delegate_IP = '<b>133.137.177.143</b>'
+                                    # delegate IP address
+</pre>
+
+<h3 id="basic_config_lifecheck">Monitoring</h3>
+<p>Next, set parameters for each pgpool.</p>
+<p>Specify "other_pgpool_hostname0", "other_pgpool_port0" and "other_wd_port0"
+where pgpool and watchdog to monitor.</p>
+<p>[*] Other_pgpool_hostname0 must be the value returned by hostname command.</p>
+
+<h4>Active (osspc16)</h4>
+<pre>other_pgpool_hostname0 = '<b>osspc20</b>'
+                                    # Host name or IP address to connect to for other pgpool 0
+other_pgpool_port0 = 9999
+                                    # Port number for othet pgpool 0
+other_wd_port0 = 9000
+                                    # Port number for othet watchdog 0
+</pre>
+
+<h4>Standby (osspc20)</h4>
+<pre>other_pgpool_hostname0 = '<b>osspc16</b>'
+                                    # Host name or IP address to connect to for other pgpool 0
+other_pgpool_port0 = 9999
+                                    # Port number for othet pgpool 0
+other_wd_port0 = 9000
+                                    # Port number for othet watchdog 0
+</pre>
+
+<!-- -------------------------------------------------------------------------------- -->
+
+<h2 id="basic_start">Starting pgpool</h2>
+
+<p>Start pgpool in each servers as root
+with "-n" (which means not-daemon mode) and redirect log messages into pgpool.log.
+</p>
+
+<h3>Starting pgpool in Active server (osspc16)</h3>
+<p>Start pgpool in an Active server.</p>
+<pre>[user@osspc16]$ su -
+[root@osspc16]# {installed_dir}/bin/pgpool -n -f {installed_dir}/etc/pgpool.conf &gt; pgpool.log 2&gt;&amp;1
+</pre>
+
+<p>Log messages show that pgpool has the virtual IP address and starts watchdog process.</p>
+<pre>ERROR: wd_create_send_socket: connect() is failed(Connection refused)
+LOG:   wd_escalation: eslcalated to master pgpool
+ERROR: wd_create_send_socket: connect() is failed(Connection refused)
+LOG:   wd_escalation:  <b>escaleted to delegate_IP holder</b>
+LOG:   wd_init: <b>start watchdog</b>
+LOG:   pgpool-II successfully started. version 3.2beta1 (namameboshi)
+</pre>
+
+<h3>Starting pgpool in Standby server (osspc20)</h3>
+<p>Start pgpool in Standby server.</p>
+<pre>[user@osspc20]$ su -
+[root@osspc20]# {installed_dir}/bin/pgpool -n -f {installed_dir}/etc/pgpool.conf &gt; pgpool.log 2&gt;&amp;1
+</pre>
+
+<p>When the all watchdog listed in other_pgpool_hostname get started, lifecheck starts.
+In this case osspc16 is the only other watchdog besides myself, lifecheck has started now.</p>
+<pre>LOG:   wd_init: start watchdog
+LOG:   pgpool-II successfully started. version 3.2beta1 (namameboshi)
+LOG:   watchdog: <b>lifecheck started</b>
+</pre>
+
+<p>And in an Active, lifecheck has started.</p>
+<pre>LOG:   watchdog: <b>lifecheck started</b>
+</pre>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
+
+<!-- ================================================================================ -->
+
+<h1 id="try">Try</h1>
+
+<h2 id="try_vip">Connecting to virtual IP</h2>
+<p>Confirm to ping to the virtual IP address.</p>
+<pre>[user@someserver]$ ping 133.137.177.142
+PING 133.137.177.143 (133.137.177.143) 56(84) bytes of data.
+64 bytes from 133.137.177.143: icmp_seq=1 ttl=64 time=0.328 ms
+64 bytes from 133.137.177.143: icmp_seq=2 ttl=64 time=0.264 ms
+64 bytes from 133.137.177.143: icmp_seq=3 ttl=64 time=0.412 ms
+</pre>
+
+<p>Confirm if the Active server which started at first has the virtual IP address.</p>
+<pre>[root@osspc16]# ifconfig
+eth0      ...
+
+<b>eth0:0</b>    inet addr:133.137.177.143 ...
+
+lo        ...
+</pre>
+
+<p>Confirm if the Standby server which started not at first doesn't have the virtual IP address.</p>
+<pre>[root@osspc20]# ifconfig
+eth0      ...
+
+lo        ...
+</pre>
+
+<p>Try to connect PostgreSQL by "psql -h delegate_IP -p port".</p>
+<pre>[user@someserver]$ psql -h 133.137.177.142 -p 9999 -l
+</pre>
+
+<!-- -------------------------------------------------------------------------------- -->
+
+<h2 id="try_switch">Switching virtual IP</h2>
+
+<p>Confirm how the Standby server works when the Active server can't provide its service.</p>
+
+<p>Stop pgpool in the Active server.</p>
+<pre>[root@osspc16]# {installed_dir}/bin/pgpool stop
+</pre>
+
+<p>Then, the Standby server starts to use the virtual IP address. Log shows:</p>
+<pre>LOG:   wd_escalation: <b>eslcalated to master pgpool</b>
+ERROR: wd_create_send_socket: connect() is failed(Connection refused)
+LOG:   wd_escalation:  escaleted to delegate_IP holder
+</pre>
+
+<p>Confirm to ping to the virtual IP address.</p>
+<pre>[user@someserver]$ ping 133.137.177.142
+PING 133.137.177.143 (133.137.177.143) 56(84) bytes of data.
+64 bytes from 133.137.177.143: icmp_seq=1 ttl=64 time=0.328 ms
+64 bytes from 133.137.177.143: icmp_seq=2 ttl=64 time=0.264 ms
+64 bytes from 133.137.177.143: icmp_seq=3 ttl=64 time=0.412 ms
+</pre>
+
+<p>Confirm that the Active server doesn't use the virtual IP address any more.</p>
+<pre>[root@osspc16]# ifconfig
+eth0      ...
+
+lo        ...
+</pre>
+
+<p>Confirm that the Standby server uses the virtual IP address.</p>
+<pre>[root@osspc20]# ifconfig
+eth0      ...
+
+<b>eth0:0</b>    inet addr:133.137.177.143 ...
+
+lo        ...
+</pre>
+
+<p>Try to connect PostgreSQL by "psql -h delegate_IP -p port".</p>
+<pre>[user@someserver]$ psql -h 133.137.177.142 -p 9999 -l
+</pre>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
+
+<!-- ================================================================================ -->
+
+<h1 id="more">More</h1>
+
+<h2 id="more_lifecheck">Lifecheck</h2>
+
+<p>There are the parameters about watchdog's monitoring.</p>
+
+<p>Specify the interval to check "wd_interval", the count to retry "wd_life_point",
+the qyery to check "wd_lifecheck_query".</p>
+<pre>wd_interval = 10
+                                    # lifecheck interval (sec) &gt; 0
+wd_life_point = 3
+                                    # lifecheck retry times
+wd_lifecheck_query = 'SELECT 1'
+                                    # lifecheck query to pgpool from watchdog
+</pre>
+
+<!-- -------------------------------------------------------------------------------- -->
+
+<h2 id="more_switch">Switching virtual IP address</h2>
+
+<p>There are the parameters for switching the virtual IP address.</p>
+
+<p>Specify switching commands "if_up_cmd", "if_down_cmd", the path to them "ifconfig_path",
+the command executed after switching to send ARP request"arping_cmd" and the path to it "arping_path".</p>
+
+<pre>ifconfig_path = '/sbin'
+                                    # ifconfig command path
+if_up_cmd = 'ifconfig eth0:0 inet $_IP_$ netmask 255.255.255.0'
+                                    # startup delegate IP command
+if_down_cmd = 'ifconfig eth0:0 down'
+                                    # shutdown delegate IP command
+
+arping_path = '/usr/sbin'           # arping command path
+
+arping_cmd = 'arping -U $_IP_$ -w 1'
+</pre>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
+
+</div>
+
+<!-- ================================================================================ -->
+
+<div class="copyright" style="clear: both">
+<hr>
+<copyright>
+Copyright © 2003 – 2012 pgpool Global Development Group
+</copyright>
+</div>
+
+
+
+</body></html>

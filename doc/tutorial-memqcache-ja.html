@@ -1,0 +1,376 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>pgpool-II オンメモリクエリキャッシュ チュートリアル</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf8" />
+<link href="pgpool.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+<body bgcolor="#ffffff">
+<div id="top" class="header_text">pgpool-II オンメモリクエリキャッシュ チュートリアル</div>
+
+<div id="menu">
+    <div id="navcontainer">
+      <ul id="navlist">
+      <li><a href="#thisis">チュートリアルの概要</a>
+          <ul>
+          <li><a href="#memqcache_config">共有メモリに関する設定</a></li>
+          </ul>
+      </li>
+      <li><a href="#basic">簡単なクエリキャッシュ</a>
+          <ul>
+          <li><a href="#memqcache_config">pgpool.conf の設定</a></li>
+          <li><a href="#basic_start">pgpool-II の起動</a></li>
+          <li><a href="#basic_try">クエリキャッシュ</a></li>
+          </ul>
+      </li>
+      <li><a href="start#more">応用</a>
+          <ul>
+          <li><a href="#invalidation">キャッシュの無効化</a></li>
+          <li><a href="#white_and_black_list">ホワイトリスト / ブラックリスト</a></li>
+          <li><a href="#cache_or_not">キャッシュ可否の制御</a></li>
+          </ul>
+      </li>
+      </ul>
+    </div>
+
+    <div class="header_small" align="center">
+    [<a href="tutrial-memqcache-en.html">English page</a>]
+    </div>
+</div>
+
+<div id="manual">
+
+<!-- ================================================================================ -->
+
+<h1 id="thisis">チュートリアルの概要</h1>
+
+<p>このチュートリアルでは、共有メモリを使ったオンメモリクエリキャッシュを試す方法を説明します。</p>
+<p>必要なのは、Linux マシン 1 台で、PostgreSQL と pgpool-II がインストールされているものとします。
+なお、pgpool-II はどのモードで稼働していても、オンメモリクエリキャッシュを利用することができます。</p>
+
+<p class="top_link"><a href="#Top">△ back to top</a></p>
+
+<!-- ================================================================================ -->
+
+<h1 id="basic">簡単なクエリキャッシュ</h1>
+
+<h2 id="memqcache_config">pgpool.conf の設定</h2>
+
+<h3>クエリキャッシュの基本設定</h3>
+
+<p>オンメモリクエリキャッシュ機能を有効にする「memory_cache_enabled」を on にします。</p>
+<pre>
+# If on, use the memory cache functionality, off by default
+memory_cache_enabled = <b>on</b>
+</pre>
+
+<p>メモリキャッシュでは、どの DB のどのテーブルのどのキャッシュ、という情報をファイルに保存していて、
+これを「OID マップ」と呼んでいます。
+このファイル群を配置するディレクトリを「memqcache_oiddir」で指定します。</p>
+<pre>
+# Temporary work directory to record table oids
+memqcache_oiddir = '/var/log/pgpool/oiddir'
+</pre>
+
+<h3 id="config_shmem">共有メモリに関する設定</h3>
+
+<p>
+キャッシュを記録する先を指定する「memqcache_method」は、デフォルトのまま
+shmem（共有メモリ）を指定します。</p>
+<pre>
+# Cache storage method. either 'shmem'(shared memory) or 'memcached'. 'shmem' by default
+memqcache_method = '<b>shmem</b>'
+</pre>
+
+<h3>ログ出力</h3>
+<p>オンメモリクエリキャッシュの動作確認に便利なため、どのバックエンドノードでどんなクエリが実行されたかを
+出力するフラグ「log_per_node_statement」を on にします。</p>
+<pre>
+log_per_node_statement = on
+                                   # Log all statements
+                                   # with node and backend informations
+</pre>
+
+<h2 id="basic_start">pgpool-II の起動</h2>
+
+<p>pgpool-II を起動します。
+なお、ログで動作確認するため、-n オプションをつけて非デーモンモードで起動し、
+出力されるログメッセージを pgpool.log ファイルにリダイレクトします。</p>
+<pre>
+$ {installed_dir}/bin/pgpool -n -f {installed_dir}/etc/pgpool.conf &gt; pgpool.log 2&gt;&amp;1
+</pre>
+
+<p>データベース、テーブルを作成します。</p>
+<pre>
+$ createdb -p 9999 test
+
+$ psql -p 9999 test
+test=&gt; CREATE TABLE table_cache_ok (a INT);
+CREATE TABLE
+
+test=&gt; INSERT INTO table_cache_ok VALUES (1), (2), (3);
+INSERT 0 3
+
+test=&gt; SELECT * FROM table_cache_ok ORDER BY a;
+ a
+---
+ 1
+ 2
+ 3
+(3 rows)
+</pre>
+
+<!-- -------------------------------------------------------------------------------- -->
+
+<h2 id="basic_try">クエリキャッシュ</h2>
+
+<p>SELECT を実行してみます。</p>
+<pre>
+test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+ a
+---
+ 1
+(1 row)
+</pre>
+
+<p>ログの log_per_node_statement の出力から、SELECT が実行されていることがわかります。</p>
+<pre>
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<p>では、もう一度同じ SELECT を実行します。</p>
+<pre>
+test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+ a
+---
+ 1
+(1 row)
+</pre>
+
+<p>ログを見ると今度は以下のメッセージがあり、キャッシュから結果を取得してきたことがわかります。</p>
+<pre>
+LOG:   <b>query result fetched from cache.</b> statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<p class="top_link"><a href="#Top">△ back to top</a></p>
+
+<!-- ================================================================================ -->
+
+<h1 id="more">応用</h1>
+
+<h2 id="invalidation">キャッシュの無効化</h2>
+
+<h3 id="invalidation_when_update">テーブルが更新されたとき</h3>
+<p>キャッシュした SELECT 結果は、そのテーブルが INSERT/UPDATE/DELETE されたとき、
+その SELECT 結果が古くなる可能性があります。
+デフォルトでは、INSERT/UPDATE/DELETE が行なわれたら、そのテーブルのキャッシュを削除します。
+<p>ここではその動作を確認します。</p>
+
+<h4 id="invalidation_config">設定</h4>
+<p>「memqcache_auto_cache_invalidation」で指定します。デフォルトでは on になっています。</p>
+<pre>
+# If on, invalidation of query cache is triggered by corresponding
+# DDL/DML/DCL(and memqcache_expire).  If off, it is only triggered
+# by memqcache_expire.  on by default.
+memqcache_auto_cache_invalidation = on
+</pre>
+
+<p>設定を変更した場合は、pgpool-II をリロードします。</p>
+<pre>
+$ {installed_dir}/bin/pgpool reload
+</pre>
+
+<h4 id="invalidation_try">動作確認</h4>
+<p>SELECT がキャッシュされていることを確認します。</p>
+<pre>
+test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   <b>query result fetched from cache.</b> statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<p>テーブルに INSERT を実行します。</p>
+<pre>
+test=&gt; INSERT INTO table_cache_ok VALUES (5);
+INSERT 0 1
+</pre>
+
+<p>再度 SELECT を実行し、キャッシュから取得されず、実際に SELECT が実行されることを確認します。</p>
+<pre>
+test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<h3 id="expire">一定秒数経過したとき</h3>
+<p>そのほか、一定秒数が経過したキャッシュも、自動的に削除します。</p>
+
+<h4 id="expire_config">設定</h4>
+<p>「memqcache_expire」パラメータでその秒数を指定します。
+デフォルトは 0 秒ですが、ここでは動作確認のため 5 秒にしてみます。</p>
+<pre>
+# Memory cache entry life time specified in seconds.
+# 0 means infinite life time. 0 by default.
+memqcache_expire = 5
+</pre>
+
+<p>設定を変更したら、pgpool-II をリロードします。</p>
+<pre>
+$ {installed_dir}/bin/pgpool reload
+</pre>
+
+<h4 id="expire_try">動作確認</h4>
+
+<p>SELECT がキャッシュされていることを確認します。</p>
+<pre>
+test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   <b>query result fetched from cache.</b> statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<p>そのまま 5 秒以上待ちます。</p>
+
+<p>再度 SELECT を実行し、キャッシュから取得されず、実際に SELECT が実行されることを確認します。</p>
+<pre>
+test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<!-- -------------------------------------------------------------------------------- -->
+
+<h2 id="white_and_black_list">ホワイトリスト / ブラックリスト</h2>
+<h3 id="whitelist">一部テーブルだけキャッシュする</h3>
+
+<h4 id="whitelist_config">設定</h4>
+<p>一部テーブルだけキャッシュしたい場合、「white_memqcache_table_list」にそのテーブルを指定します。
+TEMP テーブルや UNLOGGED テーブルも、ここに指定すればキャッシュされるようになります。</p>
+<p>テーブルの名前を直接指定することも、正規表現を使う（^ と $ が補完されて使われる）こともできます。</p>
+<pre>
+white_memqcache_table_list = '.*_cache_ok'
+                                   # Comma separated list of table names to memcache
+                                   # that don't write to database
+                                   # Regexp are accepted
+</pre>
+<p>設定を変更したら、pgpool-II をリロードします。</p>
+<pre>
+$ {installed_dir}/bin/pgpool reload
+</pre>
+
+<h4 id="whitelist_try">動作確認</h4>
+<p>キャッシュ不可とするテーブルを作成します。</p>
+<pre>
+$ psql -p 9999 test
+test=&gt; CREATE TABLE table_cache_ng (a INT);
+CREATE TABLE
+
+test=&gt; INSERT INTO table_cache_ng VALUES (1), (2), (3);
+INSERT 0 3
+</pre>
+
+<p>ホワイトリストに指定したテーブルの SELECT が、キャッシュされることを確認します。</p>
+<pre>
+test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT oid FROM pg_database WHERE datname = 'test'
+
+test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   <b>query result fetched from cache.</b> statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<p>ホワイトリストに指定していないテーブル の SELECT が、キャッシュされないことを確認します。</p>
+<pre>
+test=&gt; SELECT * FROM table_cache_ng WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT * FROM table_cache_ok WHERE a = 1;
+
+test=&gt; SELECT * FROM table_cache_ng WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<h3 id="blacklist">一部テーブルをキャッシュしない</h3>
+<h4 id="blacklist_config">設定</h4>
+<p>一部テーブルだけキャッシュしたくない場合、「black_memqcache_table_list」にそのテーブルを指定します。
+TEMP テーブルや UNLOGGED テーブルも、ここに指定したもの以外がキャッシュされるようになります。</p>
+<p>テーブルの名前を直接指定することも、正規表現を使う（^ と $ が補完されて使われる）こともできます。</p>
+<pre>
+black_memqcache_table_list = '.*_cache_ng'
+                                   # Comma separated list of table names not to memcache
+                                   # that don't write to database
+                                   # Regexp are accepted
+</pre>
+<p>設定を変更したら、pgpool-II をリロードします。</p>
+<pre>
+$ {installed_dir}/bin/pgpool reload
+</pre>
+
+<h4 id="blacklist_try">動作確認</h4>
+<p>ブラックリストに指定したテーブルの SELECT が、キャッシュされないことを確認します。</p>
+<pre>
+test=&gt; SELECT * FROM table_cache_ng WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT * FROM table_cache_ok WHERE a = 1;
+
+test=&gt; SELECT * FROM table_cache_ng WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<p>ブラックリストに指定していないテーブル の SELECT が、キャッシュされることを確認します。</p>
+<pre>
+test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT oid FROM pg_database WHERE datname = 'test'
+
+test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   <b>query result fetched from cache.</b> statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<!-- -------------------------------------------------------------------------------- -->
+
+<h2 id="cache_or_not">キャッシュ可否の制御</h2>
+
+<h3 id="maxcacge">結果が大きい SELECT がキャッシュされない</h3>
+<p>キャッシュできる SELECT 結果のサイズには限界があります。
+これを指定しているのが「memqcache_maxcache」パラメータです。</p>
+<pre>
+# Maximum SELECT result size in bytes.
+# Must be smaller than memqcache_cache_block_size. Defaults to 400KB.
+memqcache_maxcache = 409600
+</pre>
+
+<p>このサイズを超過しているときは、以下のログメッセージが出力されます。
+これは、「memqcache_maxcache」を 1024 バイトと非常に小さくして、10 MB 以上のテーブルを全件 SELECT した例です。</p>
+<pre>
+LOG:   DB node id: 0 backend pid: 17749 statement: SELECT * FROM pgbench_accounts ;
+LOG:   pool_add_temp_query_cache: <b>data size exceeds memqcache_maxcache</b>.
+                                  current:983 requested:110 memq_maxcache:1024
+</pre>
+
+<h3 id="no_query_cache">特定の SELECT をキャッシュしたくない</h3>
+<p>SELECT の可否をテーブルごとの指定ではなく、より細かく指定したい場合には、
+クエリの頭に「/* NO QUERY CACHE */」という接頭辞をつけることで対処することができます。</p>
+
+<p>例えば、以下のようにキャッシュされている SELECT でも、</p>
+<pre>
+LOG:   statement: SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   query result fetched from cache. statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<p>「/* NO QUERY CACHE */」をつけて実行すると、キャッシュされないようになります。</p>
+<pre>
+LOG:   statement: /* NO QUERY CACHE */ SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 18070 statement: /* NO QUERY CACHE */ SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   statement: /* NO QUERY CACHE */ SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 18070 statement: /* NO QUERY CACHE */ SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<p>なおこれは、現実的にはアプリケーションに手を入れることになるでしょう。</p>
+
+<p class="top_link"><a href="#Top">△ back to top</a></p>
+
+<!-- ================================================================================ -->
+
+</div>
+
+<div class="copyright" style="clear: both">
+<hr>
+<copyright>
+Copyright &copy; 2003 &ndash; 2012 pgpool Global Development Group
+</copyright>
+</div>
+
+</body>
+</html>
