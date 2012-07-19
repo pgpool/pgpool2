@@ -44,6 +44,16 @@ ul#navlist
 	color: #ffffff;
 	background: #000d33;
 	}
+
+	ul#navlist li > ul
+	{
+	margin-left: 0px;
+	padding-left: 0px;
+	}
+	ul#navlist li > ul li a {
+	border-left: 20px solid #B9B9CE;
+	background: #DEDEEF;
+	}
 	
 /* --------------------------- */
 #menu {
