@@ -288,7 +288,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 									if (status < 0)
 									{
 										pool_error("pool_process_query: error while reading message kind from backend %d", i);
-										return POOL_END;
+										return POOL_ERROR;
 									}
 									pool_log("pool_process_query: discard %c packet from backend %d", kind, i);
 
@@ -297,14 +297,14 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 										if (pool_read(CONNECTION(backend, i), &len, sizeof(len)) < 0)
 										{
 											pool_error("pool_process_query: error while reading message length from backend %d", i);
-											return POOL_END;
+											return POOL_ERROR;
 										}
 										len = ntohl(len) - 4;
 										string = pool_read2(CONNECTION(backend, i), len);
 										if (string == NULL)
 										{
 											pool_error("pool_process_query: error while reading rest of message from backend %d", i);
-											return POOL_END;
+											return POOL_ERROR;
 										}
 									}
 									else
@@ -313,7 +313,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 										if (string == NULL)
 										{
 											pool_error("pool_process_query: error while reading rest of message from backend %d", i);
-											return POOL_END;
+											return POOL_ERROR;
 										}
 									}
 								}
