@@ -1,0 +1,329 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head>
+<title>pgpool-II Tutorial [ On Memory Query Cache ]</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<link href="pgpool.css" rel="stylesheet" type="text/css">
+</head>
+<body bgcolor="#ffffff">
+
+
+<div id="top" class="header_text">pgpool-II Tutrial [ On Memory Query Cache ]</div>
+
+<div id="menu">
+    <div id="navcontainer">
+      <ul id="navlist">
+      <li><a href="#thisis">About this document</a></li>
+      <li><a href="#basic">On memory query cache</a>
+          <ul>
+          <li><a href="#memqcache_config">Config pgpool.conf</a></li>
+          <li><a href="#basic_start">Start pgpool</a></li>
+          <li><a href="#basic_try">Try query cache</a></li>
+          </ul>
+      </li>
+      <li><a href="start#more">More</a>
+          <ul>
+          <li><a href="#invalidation">Auto invalidation</a></li>
+          <li><a href="#white_and_black_list">White list and black list</a></li>
+          <li><a href="#cache_or_not">Other</a></li>
+          </ul>
+      </li>
+      </ul>
+    </div>
+
+    <div class="header_small" align="center">
+    [<a href="tutrial-memqcache-ja.html">Japanese page</a>]
+    </div>
+</div>
+
+<div id="manual">
+
+<!-- ================================================================================ -->
+
+<h1 id="thisis">About this document</h1>
+
+<p>In this Tutrial, I explain a simple way to try "On memory query cache" with shared memory.</p>
+<p>What you need is a Linux box in which PostgreSQL and pgpool-II are installed.
+You can use on memory query cache with pgpool in any mode: replication mode, master/slave mode and raw mode.</p>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
+
+<!-- ================================================================================ -->
+
+<h1 id="basic">On memory query cache</h1>
+
+<h2 id="memqcache_config">Configuring pgpool.conf</h2>
+
+<h3>Basic parameters</h3>
+
+<p>Set "memory_cache_enabled" on to enable the functionality of on memory query cache.</p>
+<pre># If on, use the memory cache functionality, off by default
+memory_cache_enabled = <b>on</b>
+</pre>
+
+<p>Pgpool creates "OID map" files which indicates that each cache are for which database and table.
+Specify the directory for it as you like.</p>
+<pre># Temporary work directory to record table oids
+memqcache_oiddir = '/var/log/pgpool/oiddir'
+</pre>
+
+<h3 id="config_shmem">About shared mamory</h3>
+
+<p>The parameter "memqcache_method" is the choice of the cache storage, and it defaults to "shmem".</p>
+<pre># Cache storage method. either 'shmem'(shared memory) or 'memcached'. 'shmem' by default
+memqcache_method = '<b>shmem</b>'
+</pre>
+
+<h3>About log</h3>
+<p>The parameter "log_per_node_statement" helps you to know in which backend node a query is executed.
+Set this parameter on.</p>
+<pre>log_per_node_statement = on
+                                   # Log all statements
+                                   # with node and backend informations
+</pre>
+
+<h2 id="basic_start">Starting pgpool</h2>
+
+<p>Start pgpool-II with "-n" (which means not-daemon mode) and redirect log messages into pgpool.log.</p>
+<pre>$ {installed_dir}/bin/pgpool -n -f {installed_dir}/etc/pgpool.conf &gt; pgpool.log 2&gt;&amp;1
+</pre>
+
+<p>Create a database and a table.</p>
+<pre>$ createdb -p 9999 test
+
+$ psql -p 9999 test
+test=&gt; CREATE TABLE table_cache_ok (a INT);
+CREATE TABLE
+
+test=&gt; INSERT INTO table_cache_ok VALUES (1), (2), (3);
+INSERT 0 3
+
+test=&gt; SELECT * FROM table_cache_ok ORDER BY a;
+ a
+---
+ 1
+ 2
+ 3
+(3 rows)
+</pre>
+
+<!-- -------------------------------------------------------------------------------- -->
+
+<h2 id="basic_try">Trying out query cache</h2>
+
+<p>Execute a SELECT.</p>
+<pre>test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+ a
+---
+ 1
+(1 row)
+</pre>
+
+<p>The output of log_per_node_statement shows that the SELECT is executed exactly.</p>
+<pre>LOG:   DB node id: 0 backend pid: 11203 statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<p>Execute the same SELECT.</p>
+<pre>test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+ a
+---
+ 1
+(1 row)
+</pre>
+
+<p>This time the log message shows that the result of SELECT is from caches.</p>
+<pre>LOG:   <b>query result fetched from cache.</b> statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
+
+<!-- ================================================================================ -->
+
+<h1 id="more">More fun with query cache</h1>
+
+<h2 id="invalidation">Auto invalidation</h2>
+
+<h3 id="invalidation_when_update">When a table is updated</h3>
+<p>When a table is updated, the cached results of SELECT from the table can be outdated.
+Pgpool discards all the cache of that table automatically by default.</p>
+
+<h4 id="invalidation_config">Configuration</h4>
+<p>Specify the action by "memqcache_auto_cache_invalidation". It's set "on" by default.</p>
+<pre># If on, invalidation of query cache is triggered by corresponding
+# DDL/DML/DCL(and memqcache_expire).  If off, it is only triggered
+# by memqcache_expire.  on by default.
+memqcache_auto_cache_invalidation = on
+</pre>
+
+<p>Reload pgpool after changing the parameter's value.</p>
+<pre>$ {installed_dir}/bin/pgpool reload
+</pre>
+
+<h4 id="invalidation_try">Trying the cache invalidation</h4>
+<p>Confirm that you can get the result of a SELECT from cache.</p>
+<pre>test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   <b>query result fetched from cache.</b> statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<p>Execute INSERT INTO the table.</p>
+<pre>test=&gt; INSERT INTO table_cache_ok VALUES (5);
+INSERT 0 1
+</pre>
+
+<p>Execute the same SELECT, and the SELECT is executed exactly.</p>
+<pre>test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<h3 id="expire">Cache expiration</h3>
+<p>Pgpool discards caches older than the specified expiration period.</p>
+
+<h4 id="expire_config">Configuration</h4>
+<p>Specify the expiration period by "memqcache_expire".
+Default is 0 seconds, but set 5 seconds to confirm for trial this time.</p>
+<pre># Memory cache entry life time specified in seconds.
+# 0 means infinite life time. 0 by default.
+memqcache_expire = 5
+</pre>
+
+<p>Reload pgpool after changing the parameter's value.</p>
+<pre>$ {installed_dir}/bin/pgpool reload
+</pre>
+
+<h4 id="expire_try">Try</h4>
+
+<p>Confirm that you can get the result of a SELECT from cache.</p>
+<pre>test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   <b>query result fetched from cache.</b> statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<p>Wait in 5 seconds...</p>
+
+<p>Execute the same SELECT, and the SELECT is executed exactly.</p>
+<pre>test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<!-- -------------------------------------------------------------------------------- -->
+
+<h2 id="white_and_black_list">White list and black list</h2>
+<h3 id="whitelist">Cache the result of some tables only</h3>
+
+<h4 id="whitelist_config">Configuration</h4>
+<p>If you want to cache the result of only some tabeles, specify the tables by "white_memqcache_table_list".</p>
+<p>You can use regular expression (to which added automatically ^ and $).</p>
+<pre>white_memqcache_table_list = '.*_cache_ok'
+                                   # Comma separated list of table names to memcache
+                                   # that don't write to database
+                                   # Regexp are accepted
+</pre>
+
+<p>Reload pgpool after changing the parameter's value.</p>
+<pre>$ {installed_dir}/bin/pgpool reload
+</pre>
+
+<h4 id="whitelist_try">Try</h4>
+<p>Create a table not to cache.</p>
+<pre>$ psql -p 9999 test
+test=&gt; CREATE TABLE table_cache_ng (a INT);
+CREATE TABLE
+
+test=&gt; INSERT INTO table_cache_ng VALUES (1), (2), (3);
+INSERT 0 3
+</pre>
+
+<p>Confirm if the SELECT FROM a table in white_memqcache_table_list is cached.</p>
+<pre>test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT oid FROM pg_database WHERE datname = 'test'
+
+test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   <b>query result fetched from cache.</b> statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<p>Confirm if the SELECT FROM a table NOT in white_memqcache_table_list is NOT cached.</p>
+<pre>test=&gt; SELECT * FROM table_cache_ng WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT * FROM table_cache_ok WHERE a = 1;
+
+test=&gt; SELECT * FROM table_cache_ng WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<h3 id="blacklist">Not cache the result of some tables</h3>
+<h4 id="blacklist_config">Config</h4>
+<p>If you don't want to cache the result of some tabeles, specify the tables by "black_memqcache_table_list".</p>
+<p>You can use regular expression (to which added automatically ^ and $).</p>
+<pre>black_memqcache_table_list = '.*_cache_ng'
+                                   # Comma separated list of table names not to memcache
+                                   # that don't write to database
+                                   # Regexp are accepted
+</pre>
+
+<p>Reload pgpool after changing the parameter's value.</p>
+<pre>$ {installed_dir}/bin/pgpool reload
+</pre>
+
+<h4 id="blacklist_try">Try</h4>
+<p>Confirm if the SELECT FROM a table in black_memqcache_table_list is NOT cached.</p>
+<pre>test=&gt; SELECT * FROM table_cache_ng WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT * FROM table_cache_ok WHERE a = 1;
+
+test=&gt; SELECT * FROM table_cache_ng WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<p>Confirm if the SELECT FROM a table NOT in black_memqcache_table_list is cached.</p>
+<pre>test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT oid FROM pg_database WHERE datname = 'test'
+
+test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   <b>query result fetched from cache.</b> statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<!-- -------------------------------------------------------------------------------- -->
+
+<h2 id="cache_or_not">What else?</h2>
+
+<h3 id="maxcacge">Too big results</h3>
+<p>The size of each SELECT result is limited by "memqcache_maxcache".</p>
+<pre># Maximum SELECT result size in bytes.
+# Must be smaller than memqcache_cache_block_size. Defaults to 400KB.
+memqcache_maxcache = 409600
+</pre>
+
+<p>If a result is bigger than memqcache_maxcache, the log message tells us that.
+This is an example when memqcache_maxcache is set 1024 byte and SELECTed table is bigger than 10 MB.</p>
+<pre>LOG:   DB node id: 0 backend pid: 17749 statement: SELECT * FROM pgbench_accounts ;
+LOG:   pool_add_temp_query_cache: <b>data size exceeds memqcache_maxcache</b>.
+                                  current:983 requested:110 memq_maxcache:1024
+</pre>
+
+<h3 id="no_query_cache">Specify each query not to cache</h3>
+<p>If white list and black list are not enough for you,
+put the text "/* NO QUERY CACHE */" at the head of the queries.</p>
+
+<pre>LOG:   statement: SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   query result fetched from cache. statement: SELECT * FROM table_cache_ok WHERE a = 1;
+
+LOG:   statement: /* NO QUERY CACHE */ SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 18070 statement: /* NO QUERY CACHE */ SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   statement: /* NO QUERY CACHE */ SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 18070 statement: /* NO QUERY CACHE */ SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<p>This way requires to change your program of course.</p>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
+
+<!-- ================================================================================ -->
+
+</div>
+
+<div class="copyright" style="clear: both">
+<hr>
+<copyright>
+Copyright © 2003 – 2012 pgpool Global Development Group
+</copyright>
+</div>
+
+
+
+</body></html>
