@@ -1044,7 +1044,14 @@ makeRangeVarFromNameList(List *names)
  */
 static char *make_table_name_from_rangevar(RangeVar *rangevar)
 {
-	static char tablename[POOL_NAMEDATALEN*2+1];
+	/*
+	 * Table name. Max size is calculated as follows:
+	 * schema name(POOL_NAMEDATALEN byte)
+	 * + single quote(1 byte)
+	 * + table name (POOL_NAMEDATALEN byte)
+	 * + NULL(1 byte)
+	 */
+	static char tablename[POOL_NAMEDATALEN*2+1+1];
 
 	if (rangevar == NULL)
 	{
@@ -1064,6 +1071,7 @@ static char *make_table_name_from_rangevar(RangeVar *rangevar)
 	if (rangevar->schemaname)
 	{
 		strncpy(tablename, rangevar->schemaname, POOL_NAMEDATALEN);
+		strcat(tablename, ".");
 	}
 
 	if (!rangevar->relname)
