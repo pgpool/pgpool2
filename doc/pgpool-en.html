@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Wed Jul 18 08:34:32 JST 2012
+Last modified: Sun Jul 22 15:00:44 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2663,11 +2663,15 @@ These are the parameters used with both of shmem and memcached.
     <p>
     Specify a comma separated list of table names whose SELECT results are to be cached even if
     they are VIEWs or unlogged tables. You can use regular expression (to which added automatically ^ and $).
-    </p>
+	</p>
     <p>
     TABLEs and VIEWs in both of white_memqcache_table_list and
     <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a> are cached.
     </p>
+	<p>
+	You need to add both non schema qualified name and schema qualified name if you plan to use both of them in your query. For exmaple, if you want to use both "table1" and "public.table1" in your query, you need to add "table1,public.table1", not just "table1".
+    </p>
+
     </dd>
 
 <dt id="BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list <span class="version">V3.2 -</span></dt>
@@ -2675,6 +2679,9 @@ These are the parameters used with both of shmem and memcached.
     <p>
     Specify a comma separated list of table names whose SELECT results are <strong>NOT</strong> to be cached.
     You can use regular expression (to which added automatically ^ and $).
+    </p>
+	<p>
+	You need to add both non schema qualified name and schema qualified name if you plan to use both of them in your query. For exmaple, if you want to use both "table1" and "public.table1" in your query, you need to add "table1,public.table1", not just "table1".
     </p>
     </dd>
 

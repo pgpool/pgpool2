@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Thu Jul  5 17:28:23 JST 2012
+Last modified: Sun Jul 22 15:00:35 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2772,6 +2772,8 @@ memcachedをキャッシュストレージに使用する場合は、ネット�
     なお、同じテーブル・VIEW が <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a> と両方に
     指定されている場合は、white_memqcache_table_list が優先され、キャッシュを利用します。
     </p>
+	<p>スキーマ名を付けないテーブル名とスキーマ名を付けた形の両方をクエリの中で使う場合は、両方共リストに登録してください。たとえば、"table1"と"public.table1"の両方がクエリに現れる場合は、単に"table1"ではなく、"table1,public.table1"を追加する必要があります。
+	</p>
     </dd>
 
 <dt id="BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list <span class="version">V3.2 〜</span></dt>
@@ -2780,6 +2782,8 @@ memcachedをキャッシュストレージに使用する場合は、ネット�
     SELECT結果をキャッシュしたくないテーブル名をカンマ区切りで指定します。正規表現も利用できます
     （指定した各表現に ^ と $ をつけた形で使われます）。
     </p>
+	<p>スキーマ名を付けないテーブル名とスキーマ名を付けた形の両方をクエリの中で使う場合は、両方共リストに登録してください。たとえば、"table1"と"public.table1"の両方がクエリに現れる場合は、単に"table1"ではなく、"table1,public.table1"を追加する必要があります。
+	</p>
     </dd>
 
 <dt id="MEMQCACHE_MAXCACHE">memqcache_maxcache <span class="version">V3.2 〜</span></dt>
