@@ -43,6 +43,7 @@ static bool is_immutable_function(char *fname);
 static bool select_table_walker(Node *node, void *context);
 static bool non_immutable_function_call_walker(Node *node, void *context);
 static char *strip_quote(char *str);
+static char *make_table_name_from_rangevar(RangeVar *rangevar);
 
 /*
  * Return true if this SELECT has function calls *and* supposed to
@@ -340,6 +341,7 @@ static bool
 unlogged_table_walker(Node *node, void *context)
 {
 	SelectContext	*ctx = (SelectContext *) context;
+	char *relname;
 
 	if (node == NULL)
 		return false;
@@ -347,10 +349,10 @@ unlogged_table_walker(Node *node, void *context)
 	if (IsA(node, RangeVar))
 	{
 		RangeVar *rgv = (RangeVar *)node;
+		relname = make_table_name_from_rangevar(rgv);
+		pool_debug("unlogged_table_walker: relname: %s", relname);
 
-		pool_debug("unlogged_table_walker: relname: %s", rgv->relname);
-
-		if (is_unlogged_table(rgv->relname))
+		if (is_unlogged_table(relname))
 		{
 			ctx->has_unlogged_table = true;
 			return false;
@@ -955,7 +957,7 @@ select_table_walker(Node *node, void *context)
 		int oid;
 		char *s;
 
-		table = nodeToString(rgv);
+		table = make_table_name_from_rangevar(rgv);
 		oid = pool_table_name_to_oid(table);
 
 		if (oid)
@@ -1033,4 +1035,52 @@ makeRangeVarFromNameList(List *names)
 	}
 
 	return rel;
+}
+
+/*
+ * Extract table name from RageVar.  Make schema qualification name if
+ * neccessary.  The returned table name is in static area. So next
+ * call to this function will break previous result.
+ */
+static char *make_table_name_from_rangevar(RangeVar *rangevar)
+{
+	/*
+	 * Table name. Max size is calculated as follows:
+	 * schema name(POOL_NAMEDATALEN byte)
+	 * + single quote(1 byte)
+	 * + table name (POOL_NAMEDATALEN byte)
+	 * + NULL(1 byte)
+	 */
+	static char tablename[POOL_NAMEDATALEN*2+1+1];
+
+	if (rangevar == NULL)
+	{
+		pool_error("make_table_name_from_rangevar: argument is NULL");
+		return "";
+	}
+
+	if (!IsA(rangevar, RangeVar))
+	{
+		pool_error("make_table_name_from_rangevar: argument is not a RangeVar (%d)",
+				   ((Node *)rangevar)->type);
+		return "";
+	}
+
+	*tablename = '\0';
+
+	if (rangevar->schemaname)
+	{
+		strncpy(tablename, rangevar->schemaname, POOL_NAMEDATALEN);
+		strcat(tablename, ".");
+	}
+
+	if (!rangevar->relname)
+	{
+		pool_error("make_table_name_from_rangevar: RangeVar->relname is NULL");
+		return "";
+	}
+
+	strncat(tablename, rangevar->relname, POOL_NAMEDATALEN);
+	pool_debug("make_table_name_from_rangevar: tablename:%s", tablename);
+	return tablename;
 }

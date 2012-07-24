@@ -179,6 +179,10 @@
           ifconfig_path, if_up_cmd, if_down_cmd, arping_path, arping_cmd.
           (Atsushi Mitani)
 
+  ** New tutorials 
+
+    Add the tutorials about on memory query cache and watchdog. (Nozomi Anzai)
+
       __________________________________________________________________
 
 * Enhancements
@@ -228,6 +232,16 @@
       pgpool-II. Patch contributed by Gurjeet Singh.
 
     - Improve the design of manuals. (Nozomi Anzai)
+          
+    - Remove unused parameter "query" from is_set_transaction_serializable().
+      (Tastuo Ishii)
+
+    - Fix on memory query cache section's comments in pgpool.com in the way
+      which other sections employ. (Tastuo Ishii)
+
+    - Add missing health_check_max_retries and health_check_retry_delay
+      directives to pgpool.conf.sample-master-slave pgpool.conf.sample-replication
+      pgpool.conf.sample-stream. (Tastuo Ishii)
 
       __________________________________________________________________
 
@@ -247,7 +261,7 @@
       Part of changes are contributed by Stevo Slavic.
 
       [pgpool-general: 131] Healthcheck timeout not always respected
-      http://www.sraoss.jp/pipermail/pgpool-general/2012-January/000131.html
+      http://www.pgpool.net/pipermail/pgpool-general/2012-January/000131.html
 
     - Fix pool_send_and_wait() to send or not to send COMMIT / ABORT depending
       on the transaction state on each node. (Tatsuo Ishii)
@@ -264,7 +278,7 @@
       Problem reported at [pgpool-general: 396].
 
       [pgpool-general: 396] strange load balancing issue in Solaris
-      http://www.sraoss.jp/pipermail/pgpool-general/2012-April/000397.html
+      http://www.pgpool.net/pipermail/pgpool-general/2012-April/000397.html
 
     - Fix segfault of pcp_systemdb_info not in parallel mode. (Nozomi Anzai)
 
@@ -289,7 +303,7 @@
       have pending data, while standbys have pending data.
 
       [pgpool-general: 672] Transaction never finishes
-      http://www.sraoss.jp/pipermail/pgpool-general/2012-June/000676.html
+      http://www.pgpool.net/pipermail/pgpool-general/2012-June/000676.html
 
     - Fix wait_for_query_response() not to send param status to frontend if
       frontend is NULL. (Tatsuo Ishii)
@@ -309,7 +323,71 @@
 
       [pgpool-general: 714]
       Load Balancing / Streaming Replication / Isolation Level serializable
-      http://www.sraoss.jp/pipermail/pgpool-general/2012-July/000719.html
+      http://www.pgpool.net/pipermail/pgpool-general/2012-July/000719.html
+
+    - Fix send_to_where() to send the query to only primary if the it is like
+      SET TRANSACTION ISOLATION LEVELSERIALIZABLE etc. (Tatsuo Ishii)
+
+      Case in streaming replication mode. Previously, it was sent to not only
+      primary but also to standby and of course this causes an error.
+      Similar SQLs are:
+       SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE or
+       SET transaction_isolation TO 'serializable'
+       SET default_transaction_isolation TO 'serializable'
+
+      Original complain is [pgpool-general: 715].
+
+      [pgpool-general: 715]
+      Re: Load Balancing / Streaming Replication / Isolation Level serializable
+      http://www.pgpool.net/pipermail/pgpool-general/2012-July/000720.html
+
+    - Prevent errors even if memcached is not available with on memory query
+      cache enabled and cache storage is memcached. (Tatsuo Ishii)
+
+      This is mainly achieved by modifying pool_fetch_cache to pretend
+      "cache not found" if memcached_get returns error other than
+      MEMCACHED_NOTFOUND. Also we set pool_config->memory_cache_enabled to 0 to
+      prevent future errors by accessing memcached.
+
+    - Run rerun libtoolize with --copy and --force option. (Tatsuo Ishii)
+
+      This should prevent build problems in different environment.
+      Following commands were executed:
+      libtoolize --copy --force
+      aclocal
+      autoheader
+      automake -a
+      autoconf
+
+    - Fix pool_ssl_read. (Tatsuo Ishii)
+	
+	  When SSL_read returns unknown error, treat as if EOF detected and returns 0
+	  to caller (pool_read). This is same as libpq's behavior. Also this will
+	  avoid unwanted failover in pool_read. pool_read triggers failover if
+	  underlying I/O functions, read(2) or pool_ssl_read returns -1.
+
+    - Fix pool_process_query. (Tatsuo Ishii)
+	
+	  When other than primary sends packet, pgpool tries to terminate session
+	  gracefully and hung because now ssl_read returns EOF, rather than error
+	  and triggers failover. For example [pgpool-general: 766] reported this:
+
+      2012-07-17 00:11:03 NZST [15692]: [257-1] ERROR: canceling statement
+      due to conflict with recovery
+      2012-07-17 00:11:03 NZST [15692]: [258-1] DETAIL: User query might
+      have needed to see row versions that must be removed.
+      2012-07-17 00:11:03 NZST [15692]: [259-1] STATEMENT: <SNIP>
+      2012-07-17 00:11:03 NZST [15696]: [366-1] FATAL: terminating
+      connection due to conflict with recovery
+      2012-07-17 00:11:03 NZST [15696]: [367-1] DETAIL: User query might
+      have needed to see row versions that must be removed.
+
+      In this case pool_process_query should return POOL_ERROR, rather than
+      POOL_END.
+
+      [pgpool-general: 766]
+	  Re: pgpool dropping backends too much
+	  http://www.pgpool.net/pipermail/pgpool-general/2012-July/000774.html
 
 ===============================================================================
 3.1 Series (2011/09/08 - )

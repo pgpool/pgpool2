@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Thu Jul  5 17:28:23 JST 2012
+Last modified: Sun Jul 22 15:00:35 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2772,6 +2772,8 @@ memcachedをキャッシュストレージに使用する場合は、ネット�
     なお、同じテーブル・VIEW が <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a> と両方に
     指定されている場合は、white_memqcache_table_list が優先され、キャッシュを利用します。
     </p>
+	<p>スキーマ名を付けないテーブル名とスキーマ名を付けた形の両方をクエリの中で使う場合は、両方共リストに登録してください。たとえば、"table1"と"public.table1"の両方がクエリに現れる場合は、単に"table1"ではなく、"table1,public.table1"を追加する必要があります。
+	</p>
     </dd>
 
 <dt id="BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list <span class="version">V3.2 〜</span></dt>
@@ -2780,6 +2782,8 @@ memcachedをキャッシュストレージに使用する場合は、ネット�
     SELECT結果をキャッシュしたくないテーブル名をカンマ区切りで指定します。正規表現も利用できます
     （指定した各表現に ^ と $ をつけた形で使われます）。
     </p>
+	<p>スキーマ名を付けないテーブル名とスキーマ名を付けた形の両方をクエリの中で使う場合は、両方共リストに登録してください。たとえば、"table1"と"public.table1"の両方がクエリに現れる場合は、単に"table1"ではなく、"table1,public.table1"を追加する必要があります。
+	</p>
     </dd>
 
 <dt id="MEMQCACHE_MAXCACHE">memqcache_maxcache <span class="version">V3.2 〜</span></dt>
@@ -5559,7 +5563,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
     <a href="#OTHER_WD_PORT">other_wd_port</a>、
     <a href="#OTHER_PGPOOL_HOSTNAME">other_pgpool_hostname</a>、
     <a href="#OTHER_PGPOOL_PORT">other_pgpool_port</a>
-    を追しました。 (Atsushi Mitani)
+    を追加しました。 (Atsushi Mitani)
     </li>
 
     <li>
@@ -5574,9 +5578,15 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 
     </ul>
     </dd>
+
 </dl>
 
 </li>
+
+<li>チュートリアル</li>
+<p><a href="#memqcache">オンメモリクエリキャッシュ</a> と <a href="#watchdog">Watchdog 機能</a>
+   のチュートリアルを作成しました。(Nozomi Anzai)</p> 
+
 </ul>
 
 <h3 id="3.2_enhansements">改良</h3>
@@ -5649,6 +5659,12 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 
 <li>マニュアルの見た目を改善しました。また、パラメータ名などページ内リンクを増やしました。(Nozomi Anzai)</li>
 
+<li>is_set_transaction_serializable() 関数から使用されていない引数 query を削除しました。(Tastuo Ishii)</li>
+
+<li>pgpool.conf の on memory query cache セクションのコメントを他のセクションと同じ様式に修正しました。(Tatsuo Ishii)</li>
+
+<li>pgpool.conf.sample-master-slave, pgpool.conf.sample-replication, pgpool.conf.sample-stream に
+   抜けていたオプション health_check_max_retries, health_check_retry_delay を追加しました。(Tastuo Ishii)</li>
 </ul>
 
 <h3 id="3.2_bugfix">バグ修正</h3>
@@ -5671,7 +5687,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
     </p>
 
     <blockquote>
-    Subject: <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-January/000131.html">[pgpool-general: 131]</a>
+    Subject: <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-January/000131.html">[pgpool-general: 131]</a>
     Healthcheck timeout not always respected<br>
     From: From: Stevo Slavic<br>
     Date: Tue, 10 Jan 2012 21:16:01 +0100
@@ -5689,7 +5705,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 
     <blockquote>
     Subject:
-    <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2012-April/001048.html">[pgpool-general-jp: 1049]</a>
+    <a href="http://www.pgpool.net/pipermail/pgpool-general-jp/2012-April/001048.html">[pgpool-general-jp: 1049]</a>
     COMMITでエラー<br>
     From: 稲村暢亮<br>
     Date: Mon, 30 Apr 2012 13:48:48 +0900
@@ -5701,7 +5717,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
     <p>この事象は [pgpool-general: 396] で報告されました。</p>
 
     <blockquote>
-    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-April/000397.html">[pgpool-general: 396]</a>
+    <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-April/000397.html">[pgpool-general: 396]</a>
     strange load balancing issue in Solaris<br>
     From: Aravinth<br>
     Date: Sat, 28 Apr 2012 07:26:58 +0530
@@ -5731,14 +5747,14 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 </pre>
 </li>
 
-<li><a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-June/000676.html">[pgpool-general: 672]</a>
+<li><a href="http://www.pgpool.net/pipermail/pgpool-general/2012-June/000676.html">[pgpool-general: 672]</a>
     で報告された、process_query() のバグを修正しました。(Tatsuo Ishii)
     <p>
     プライマリでは処理するデータがなく スタンバイにはある状態のときに、
     プライマリの処理を待ってしまうことがありました。
     </p>
     <blockquote>
-    Subject: <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-June/000676.html">[pgpool-general: 672]</a>
+    Subject: <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-June/000676.html">[pgpool-general: 672]</a>
     Transaction never finishes<br>
     From: Luiz Pasqual<br>
     Date: Thu, 28 Jun 2012 09:55:23 -0300
@@ -5752,7 +5768,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 
 <li>マスタ・スレーブモードでの BEGIN TRANSACTION の扱いを修正しました。(Tatsuo Ishii)
     <p>
-    これは <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-July/000719.html">[pgpool-general: 714]</a>
+    これは <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-July/000719.html">[pgpool-general: 714]</a>
     で報告されました。
     </p>
     <p>
@@ -5766,12 +5782,92 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
     </p>
 
     <blockquote>
-    Subject: <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-July/000719.html">[pgpool-general: 714]</a>
+    Subject: <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-July/000719.html">[pgpool-general: 714]</a>
     Load Balancing / Streaming Replication / Isolation Level serializable<br>
     From: Philip Hofstetter<br>
     Date: Wed, 11 Jul 2012 17:04:26 +0200
     </blockquote>
-    </li>
+</li>
+
+<li>SET TRANSACTION ISOLATION LEVELSERIALIZABLE などのクエリはプライマリのみに送るよう
+    send_to_where() を修正しました。(Tatsuo Ishii)
+    <p>
+    マスタ・スレーブモードで、以前はこのクエリはプライマリだけではなくスタンバイにも送られていましたが、
+    もちろんこれはエラーとなります。同じようなクエリとして以下のものがあります。
+    </p>
+    <ul>
+    <li>SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE</li>
+    <li>SET transaction_isolation TO 'serializable'</li>
+    <li>SET default_transaction_isolation TO 'serializable'</li>
+    </ul>
+    <p>
+    これは <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-July/000720.html">[pgpool-general: 715]</a>
+    で報告されました。
+    <p>
+
+    <blockquote>
+    Subject: <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-July/000720.html">[pgpool-general: 715]</a>
+    Re: Load Balancing / Streaming Replication / Isolation Level serializable<br />
+    From: Tastuo Ishii<br />
+    Date: Thu, 12 Jul 2012 00:16:58 +0900
+    </blockquote>
+</li>
+
+<li>オンメモリクエリキャッシュで memcached を利用している場合、
+    memcached サーバが停止していてもエラーを起こさないようにしました。(Tatsuo Ishii)
+    <p>
+    これは主に、memcached_get() が MEMCACHED_NOTFOUND 以外のエラーを返した場合には、
+    pool_fetch_cache() が "cache not found" を装うように修正することで対処しました。
+    また、その場合には後のエラーを防ぐために pool_config->memory_cache_enabled を 0
+    にセットするようにしました。
+    </p>
+</li>
+
+<li>rerun libtoolize with --copy and --force option を実行しました。(Tatsuo Ishii)
+    <p>
+    これにより環境によって発生するビルドの問題が回避できます。以下のコマンドが実行されました。
+    </p>
+    <pre>
+libtoolize --copy --force
+aclocal
+autoheader
+automake -a
+autoconf
+</pre>
+</li>
+
+<li>SSL_read() が不明のエラーを返した場合には EOF の検出とみなし、呼出元の pool_read() には
+    0 を返すよう pool_ssl_read() を修正しました。(Tatsuo Ishii)
+	<p>
+	これは libpq と同じ振る舞いです。また、これにより pool_read() での望ましくないフェイルオーバを回避することが出来ます。
+	これは、pool_read() は下層の I/O 関数（read(2), pool_ssl_read）が -1 を返したときにフェイルオーバを引き起こすからです。
+	</p>
+</li>
+
+<li> ハングアップを起こさないよう pool_process_query() を修正しました。 (Tatsuo Ishii)
+    <p>
+   プライマリ以外のノードがパケットを送信した際に、pgpool はセッションを終了しようとしてハングアップすることがありました。 	
+   これは ssl_read が エラーではなく EOF を返すようになり、フェイルオーバが実行されなくなっためです。
+   例えば [pgpool-gerenal: 766] では以下のような報告があります。
+   </p>
+<pre>
+2012-07-17 00:11:03 NZST [15692]: [257-1] ERROR: canceling statement due to conflict with recovery
+2012-07-17 00:11:03 NZST [15692]: [258-1] DETAIL: User query might have needed to see row versions that must be removed.
+2012-07-17 00:11:03 NZST [15692]: [259-1] STATEMENT: <SNIP>
+2012-07-17 00:11:03 NZST [15696]: [366-1] FATAL: terminating connection due to conflict with recovery
+2012-07-17 00:11:03 NZST [15696]: [367-1] DETAIL: User query might have needed to see row versions that must be removed.
+</pre>
+    <p>
+	このケースでは、pool_process_query() は POOL_END ではなく POOL_ERROR を返すべきです。
+	</p>
+
+    <blockquote>
+    Subject: <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-July/000774.html">[pgpool-general: 766]</a>
+	Re: pgpool dropping backends too much<br />
+    From: Karl von Randow <br />
+	Date: Thu, 19 Jul 2012 16:07:41 +1200
+    </blockquote>
+</li>
 
 </ul>
 
