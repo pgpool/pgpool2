@@ -655,10 +655,28 @@ bool pool_is_likely_select(char *query)
 			query++;
 	}
 
+	/*
+	 * Get rid of head comment.
+	 * It is sure that the query is in correct format, because the parser
+	 * has rejected bad queries such as the one with not-ended comment.
+	 */
+	if (*query && !strncmp(query, "/*", 2))
+	{
+		while (*query && strncmp(query, "*/", 2))
+			query++;
+
+		if (*query)
+			query += 2;
+
+		while (*query && isspace(*query))
+			query++;
+	}
+
 	if (!strncasecmp(query, "SELECT", 6) || !strncasecmp(query, "WITH", 4))
 	{
 		return true;
 	}
+
 	return false;
 }
 
