@@ -190,6 +190,7 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 			if (relcache->cache[i].session_id != local_session_id)
 			{
 				index = i;
+				relcache->cache[i].refcnt = 0;
 				break;
 			}
 		}
