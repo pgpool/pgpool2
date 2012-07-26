@@ -693,7 +693,6 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	query_context = bind_msg->query_context;
 	node = bind_msg->query_context->parse_tree;
 	query = bind_msg->query_context->original_query;
-	pool_debug("Execute: query: %s", query);
 
 	strlcpy(query_string_buffer, query, sizeof(query_string_buffer));
 
@@ -722,7 +721,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		{
 			/* Extract binary contents from bind message */
 			char *query_in_bind_msg = bind_msg->contents + bind_msg->param_offset;
-			char hex_str[4];  // 02X chars + white space + null end
+			char hex_str[4];  /* 02X chars + white space + null end */
 			int max_search_query_size = 0;
 			int i = 0;
 			char *tmp;
@@ -1727,13 +1726,13 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				/* If we are doing extended query and the state is after EXECUTE,
 				 * then we can commit cache.
 				 * We check latter condition by looking at query_context->query_w_hex.
-				 * This check is neccessary for certain flame work such as PHP PDO.
+				 * This check is neccessary for certain frame work such as PHP PDO.
 				 * It sends Sync message right after PARSE and it produces
 				 * "Ready for query" message from backend.
 				 */
 				if (pool_is_doing_extended_query_message())
 				{
-					if (session_context->query_context->query_w_hex)
+					if (session_context->query_context->query_state[MASTER_NODE_ID] == POOL_EXECUTE_COMPLETE)
 					{
 						pool_handle_query_cache(backend, session_context->query_context->query_w_hex, node, state);
 						free(session_context->query_context->query_w_hex);
@@ -2152,6 +2151,11 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	}
 
 	free(p1);
+
+	if (pool_is_doing_extended_query_message())
+	{
+		pool_set_query_state(session_context->query_context, POOL_EXECUTE_COMPLETE);
+	}
 
 	return POOL_CONTINUE;
 }
