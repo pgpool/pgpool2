@@ -67,6 +67,7 @@ POOL_RELCACHE *pool_create_relcache(int cachesize, char *sql,
 	p->register_func = register_func;
 	p->unregister_func = unregister_func;
 	p->cache_is_session_local = issessionlocal;
+	p->no_cache_if_zero = false;
 	p->cache = ip;
 	
 	return p;
