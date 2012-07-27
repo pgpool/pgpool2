@@ -731,7 +731,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 				while (max_search_query_size <= sizeof(char) * strlen(search_query))
 				{
 					max_search_query_size += 1024;
-					tmp =(char *)realloc(search_query, sizeof(char) * max_search_query_size);
+					tmp = (char *)realloc(search_query, sizeof(char) * max_search_query_size);
 					if (tmp == NULL)
 					{
 						return POOL_END;
@@ -745,6 +745,22 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			}
 
 			query_context->query_w_hex = search_query;
+
+			/*
+			 * When a transaction is comitted, query_context->temp_cache->query is used
+			 * to create md5 hash to search for query cache.
+			 * So overwrite the query text in temp cache to the one with the hex of bind message.
+			 * If not, md5 hash will be created by the query text without bind message, and
+			 * it will happen to find cache never or to get a wrong result.
+			 */
+			tmp = (char *)malloc(sizeof(char) * strlen(search_query) + 1);
+			if (tmp == NULL)
+			{
+				return POOL_END;
+			}
+			free(query_context->temp_cache->query);
+			query_context->temp_cache->query = tmp;
+			strcpy(query_context->temp_cache->query, search_query);
 		}
 
 		/* If the query is SELECT from table to cache, try to fetch cached result. */
