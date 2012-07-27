@@ -5,7 +5,7 @@
 ===============================================================================
 
                     3.2.0 (namameboshi) 2012/07/xx
-                    CURRENT AS OF 2012/07/06
+                    CURRENT AS OF 2012/07/26
 
 * Version 3.2.0
 
@@ -179,10 +179,6 @@
           ifconfig_path, if_up_cmd, if_down_cmd, arping_path, arping_cmd.
           (Atsushi Mitani)
 
-  ** New tutorials 
-
-    Add the tutorials about on memory query cache and watchdog. (Nozomi Anzai)
-
       __________________________________________________________________
 
 * Enhancements
@@ -231,8 +227,6 @@
       Before, the only way to recognize md5 password change was restarting
       pgpool-II. Patch contributed by Gurjeet Singh.
 
-    - Improve the design of manuals. (Nozomi Anzai)
-          
     - Remove unused parameter "query" from is_set_transaction_serializable().
       (Tastuo Ishii)
 
@@ -240,8 +234,18 @@
       which other sections employ. (Tastuo Ishii)
 
     - Add missing health_check_max_retries and health_check_retry_delay
-      directives to pgpool.conf.sample-master-slave pgpool.conf.sample-replication
+      directives to pgpool.conf.sample-master-slave, pgpool.conf.sample-replication
       pgpool.conf.sample-stream. (Tastuo Ishii)
+
+    - Fix pool_ssl_write. It seems someone forgot to do retrying when SSL
+      returns SSL_ERROR_WANT_READ or SSL_ERROR_WANT_WRITE.
+      Per [pgpool-general: 797]
+
+      [pgpool-general: 797]
+      Re: Problem with pgpool when using SSL, for client/pgpool communication
+      http://www.sraoss.jp/pipermail/pgpool-general/2012-July/000807.html
+
+    - Improve the design of manuals. (Nozomi Anzai)
 
       __________________________________________________________________
 
