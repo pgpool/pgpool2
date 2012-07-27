@@ -224,9 +224,7 @@ retry:
 			n = -1;
 			break;
 	}
-}
-
-return SSL_write(cp->ssl, buf, size);
+	return n;
 }
 
 static int init_ssl_ctx(POOL_CONNECTION *cp, enum ssl_conn_type conntype) {
