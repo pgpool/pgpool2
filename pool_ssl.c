@@ -201,18 +201,18 @@ retry:
 		case SSL_ERROR_SYSCALL:
 			if (n == -1)
 			{
-				pool_error("SSL_read error: %d", err);
+				pool_error("SSL_write error: %d", err);
 			}
 			else
 			{
-				pool_error("SSL_read error: EOF detected");
+				pool_error("SSL_write error: EOF detected");
 				n = -1;
 			}
 			break;
 
 		case SSL_ERROR_SSL:
 		case SSL_ERROR_ZERO_RETURN:
-			perror_ssl("SSL_read");
+			perror_ssl("SSL_write");
 			n = -1;
 			break;
 
