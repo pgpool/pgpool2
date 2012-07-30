@@ -1103,7 +1103,11 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	pool_write(frontend, &kind, 1);
 	sendlen = htonl(len1+4);
 	pool_write(frontend, &sendlen, sizeof(sendlen));
-	pool_write_and_flush(frontend, p1, len1);
+	if (pool_write_and_flush(frontend, p1, len1) < 0)
+	{
+		pool_error("SimpleForwardToFrontend: pool_write_and_flush failed");
+		return POOL_END;
+	}
 
 	/* save the received result for each kind */
 	if (pool_config->enable_query_cache && SYSDB_STATUS == CON_UP)
