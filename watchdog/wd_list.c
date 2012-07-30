@@ -31,7 +31,7 @@
 #include "watchdog.h"
 #include "wd_ext.h"
 
-int wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, struct timeval * tv, int status);
+int wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, char * delegate_ip, struct timeval * tv, int status);
 int wd_add_wd_list(WdDesc * other_wd);
 int wd_set_wd_info(WdInfo * info);
 WdInfo * wd_is_exist_master(void);
@@ -40,16 +40,23 @@ int wd_set_myself(struct timeval * tv, int status);
 WdInfo * wd_is_alive_master(void);
 
 int
-wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, struct timeval * tv, int status)
+wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, char * delegate_ip, struct timeval * tv, int status)
 {
 	int i = 0;
 	WdInfo * p = NULL;
 
 	if ((WD_List == NULL) || (hostname == NULL))
 	{
-		pool_error("memory allocate error");
+		pool_error("wd_set_wd_list: memory allocate error");
 		return -1;
 	}
+
+	if (strcmp(pool_config->delegate_IP, delegate_ip))
+	{
+		pool_error("wd_set_wd_list: delegate IP mismatch error");
+		return -1;
+	}
+
 	for ( i = 0 ; i < MAX_WATCHDOG_NUM ; i ++)
 	{
 		p = (WD_List+i);	
@@ -72,6 +79,7 @@ wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, struct timeval * t
 			strncpy(p->hostname, hostname, sizeof(p->hostname));
 			p->pgpool_port = pgpool_port;
 			p->wd_port = wd_port;
+			strncpy(p->delegate_ip, delegate_ip, sizeof(p->delegate_ip));
 			if (tv != NULL)
 			{
 				memcpy(&(p->tv),tv,sizeof(struct timeval));
@@ -80,7 +88,7 @@ wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, struct timeval * t
 			return i;
 		}
 	}
-	pool_error("Can not add new watchdog information cause the WD_List is full.");
+	pool_error("wd_set_wd_list: Can not add new watchdog information cause the WD_List is full.");
 	return -1;
 }
 
@@ -92,11 +100,12 @@ wd_add_wd_list(WdDesc * other_wd)
 
 	if (other_wd == NULL)
 	{
-		pool_error("memory allocate error");
+		pool_error("wd_add_wd_list: memory allocate error");
 		return -1;
 	}
 	for ( i = 0 ; i < other_wd->num_wd ; i ++)
 	{
+		strcpy(other_wd->wd_info[i].delegate_ip, pool_config->delegate_IP);
 		p = &(other_wd->wd_info[i]);
 		wd_set_wd_info(p);
 	}
@@ -107,7 +116,7 @@ int
 wd_set_wd_info(WdInfo * info)
 {
 	int rtn;
-	rtn = wd_set_wd_list(info->hostname, info->pgpool_port, info->wd_port, &(info->tv), info->status);
+	rtn = wd_set_wd_list(info->hostname, info->pgpool_port, info->wd_port, info->delegate_ip, &(info->tv), info->status);
 	return rtn;
 }
 

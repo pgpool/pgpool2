@@ -37,7 +37,7 @@ extern pid_t wd_child(int fork_wait_time);
 extern int wd_init(void);
 
 /* wd_list.c */
-extern int wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, struct timeval * tv, int status);
+extern int wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, char * delegate_ip, struct timeval * tv, int status);
 extern int wd_add_wd_list(WdDesc * other_wd);
 extern int wd_set_wd_info(WdInfo * info);
 extern WdInfo * wd_is_exist_master(void);
@@ -64,6 +64,7 @@ extern int wd_promote_backend(int node_id);
 extern int wd_set_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count);
 /* wd_ping.c */
 extern int wd_is_upper_ok(char * server_list);
+extern int wd_is_unnsed_ip(char * ip);
 
 /* wd_if.c */
 extern int wd_IP_up(void);

@@ -65,7 +65,7 @@ wd_init(void)
 		memset(WD_Node_List, 0, sizeof(unsigned char) * MAX_NUM_BACKENDS);
 	}
 	/* set myself to watchdog list */
-	wd_set_wd_list(pool_config->wd_hostname, pool_config->port, pool_config->wd_port, &tv, WD_NORMAL);
+	wd_set_wd_list(pool_config->wd_hostname, pool_config->port, pool_config->wd_port, pool_config->delegate_IP, &tv, WD_NORMAL);
 	/* set other pgpools to watchdog list */
 	wd_add_wd_list(pool_config->other_wd);
 
@@ -82,11 +82,18 @@ wd_init(void)
 	if (wd_startup() == WD_NG)
 	{
 		pool_error("wd_init: failed to start watchdog");
+		return WD_NG;
 	}
 
 	/* check existence of master pgpool */
 	if (wd_is_exist_master() == NULL )
 	{
+		if (!wd_is_unused_ip(pool_config->delegate_IP))
+		{
+			pool_error("wd_init: delegate_IP already exists");
+			return WD_NG;
+		}
+
 		/* escalate to delegate_IP holder */
 		wd_escalation();
 	}

@@ -44,9 +44,9 @@ wd_IP_up(void)
 {
 	int rtn = WD_OK;
 	char path[128];
-	if (WD_List->delegate_ip == 0)
+	if (WD_List->delegate_ip_flag == 0)
 	{
-		WD_List->delegate_ip = 1;
+		WD_List->delegate_ip_flag = 1;
 		sprintf(path,"%s/ifconfig",pool_config->ifconfig_path);
 		rtn = exec_ifconfig(path,pool_config->if_up_cmd);
 		sprintf(path,"%s/arping",pool_config->arping_path);
@@ -59,9 +59,9 @@ wd_IP_down(void)
 {
 	int rtn = WD_OK;
 	char path[128];
-	if (WD_List->delegate_ip == 1)
+	if (WD_List->delegate_ip_flag == 1)
 	{
-		WD_List->delegate_ip = 0;
+		WD_List->delegate_ip_flag = 0;
 		sprintf(path,"%s/ifconfig",pool_config->ifconfig_path);
 		rtn = exec_ifconfig(path,pool_config->if_down_cmd);
 	}

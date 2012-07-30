@@ -82,7 +82,8 @@ typedef struct {
 	int pgpool_port;	/* pgpool port */
 	int wd_port;		/* watchdog port */
 	int life;		/* life point */
-	int delegate_ip;	/* delegate IP flag */
+	char delegate_ip[WD_MAX_HOST_NAMELEN];	/* delegate IP */
+	int delegate_ip_flag;	/* delegate IP flag */
 }WdInfo;
 
 typedef struct {
