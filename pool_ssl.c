@@ -180,8 +180,51 @@ int pool_ssl_read(POOL_CONNECTION *cp, void *buf, int size) {
 	return n;
 }
 
-int pool_ssl_write(POOL_CONNECTION *cp, const void *buf, int size) {
-	return SSL_write(cp->ssl, buf, size);
+int pool_ssl_write(POOL_CONNECTION *cp, const void *buf, int size)
+{
+	int n;
+	int err;
+
+retry:
+	errno = 0;
+	n = SSL_write(cp->ssl, buf, size);
+	err = SSL_get_error(cp->ssl, n);
+	switch (err)
+	{
+		case SSL_ERROR_NONE:
+			break;
+
+		case SSL_ERROR_WANT_READ:
+		case SSL_ERROR_WANT_WRITE:
+			goto retry;
+
+		case SSL_ERROR_SYSCALL:
+			if (n == -1)
+			{
+				pool_error("SSL_write error: %d", err);
+			}
+			else
+			{
+				pool_error("SSL_write error: EOF detected");
+				n = -1;
+			}
+			break;
+
+		case SSL_ERROR_SSL:
+		case SSL_ERROR_ZERO_RETURN:
+			perror_ssl("SSL_write");
+			n = -1;
+			break;
+
+		default:
+			pool_error("pool_ssl_write: unrecognized error code: %d", err);
+			/*
+			 * We assume that the connection is broken.
+			 */
+			n = -1;
+			break;
+	}
+	return n;
 }
 
 static int init_ssl_ctx(POOL_CONNECTION *cp, enum ssl_conn_type conntype) {

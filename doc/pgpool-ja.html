@@ -175,44 +175,44 @@ pgpool-IIのソースコードからのインストールには、gcc 2.9以上�
 <pre>
 ./configure
 </pre>
-	<p>configureに指定できるオプションは以下です。</p>
+    <p>configureに指定できるオプションは以下です。</p>
 
     <table border>
     <tr><th class="nodec"><code>--prefix=path</code></th>
     <td>pgpool-II本体や関連ファイルをインストールするトップディレクトリを指定します。
         デフォルトは/usr/localです。
-	</td></tr>
+    </td></tr>
     <tr><th class="nodec"><code>--with-pgsql=path</code></th>
     <td>PostgreSQLのクライアントライブラリなどがインストールされているトップディレクトリを指定します。
         デフォルトは<code>pg_config</code>コマンドで取得できるパスです。
-	</td></tr>
+    </td></tr>
     <tr><th class="nodec"><code>--with-openssl</code></th>
     <td>pgpool-IIをOpenSSLサポート付で作成します。
         デフォルトではOpenSSLサポートは無効です。
         <span class="version">V2.3 〜</span>
-	</td></tr>
+    </td></tr>
     <tr><th class="nodec"><code>--enable-sequence-lock</code></th>
     <td>pgpool-II 3.0シリーズ(3.0.4まで)互換のinsert_lockを使用します。
         pgpool-IIは、シーケンステーブルの行に対してロックを行います。
         これは、2011年06月より後にリリースされたPostgreSQL 8.2以降では使用できません。
         <span class="version">V3.1 〜</span>
-	</td></tr>
+    </td></tr>
     <tr><th class="nodec"><code>--enable-table-lock</code></th>
     <td>pgpool-II 2.2と2.3シリーズ互換のinsert_lockを使用します。
         pgpool-IIは、挿入対象のテーブルに対してロックを行います。
         これは、ロックがVACUUMと競合するため非推奨です。
         <span class="version">V3.1 〜</span>
-	</td></tr>
-	<tr><th class="nodec"><code>--with-memcached=path</code>
+    </td></tr>
+    <tr><th class="nodec"><code>--with-memcached=path</code>
     </th>
-	<td>キャッシュストレージに <a href="memcached_params">memcached</a> を利用し、
+    <td>キャッシュストレージに <a href="memcached_params">memcached</a> を利用し、
     <a href="#memqcache">オンメモリクエリキャッシュ</a>機能を
-		利用したい場合に指定します。
-		<a href="http://libmemcached.org/libMemcached.html">libMemcached</a>のインストールが必要です。
+        利用したい場合に指定します。
+        <a href="http://libmemcached.org/libMemcached.html">libMemcached</a>のインストールが必要です。
         <span class="version">V3.2 〜</span>
-	</td></tr>
-	</table>
-	</dd>
+    </td></tr>
+    </table>
+    </dd>
 
 <dt>makeの実行</dt>
     <dd>
@@ -886,7 +886,7 @@ local0.*    /var/log/pgpool.log
     <tr><td>%M</td><td>古いマスターのノード番号</td></tr>
     <tr><td>%m</td><td>新しいマスターのノード番号</td></tr>
     <tr><td>%P</td><td>古いプライマリノード番号</td></tr>
-	<tr><td>%r</td><td>新しいマスターのポート番号</td></tr>
+    <tr><td>%r</td><td>新しいマスターのポート番号</td></tr>
     <tr><td>%R</td><td>新しいマスターのデータベースクラスタパス</td></tr>
     <tr><td>%%</td><td>'%'文字</td></tr>
     </table>
@@ -920,7 +920,7 @@ local0.*    /var/log/pgpool.log
     <tr><td>%m</td><td>新しいマスターのノード番号</td></tr>
     <tr><td>%H</td><td>新しいマスターのホスト名</td></tr>
     <tr><td>%P</td><td>古いプライマリノード番号</td></tr>
-	<tr><td>%r</td><td>新しいマスターのポート番号</td></tr>
+    <tr><td>%r</td><td>新しいマスターのポート番号</td></tr>
     <tr><td>%R</td><td>新しいマスターのデータベースクラスタパス</td></tr>
     <tr><td>%%</td><td>'%'文字</td></tr>
     </table>
@@ -950,7 +950,7 @@ local0.*    /var/log/pgpool.log
     <tr><td>%m</td><td>新しいマスターのノード番号</td></tr>
     <tr><td>%H</td><td>新しいマスターのホスト名</td></tr>
     <tr><td>%P</td><td>古いプライマリノード番号</td></tr>
-	<tr><td>%r</td><td>新しいマスターのポート番号</td></tr>
+    <tr><td>%r</td><td>新しいマスターのポート番号</td></tr>
     <tr><td>%R</td><td>新しいマスターのデータベースクラスタパス</td></tr>
     <tr><td>%%</td><td>'%'文字</td></tr>
     </table>
@@ -965,7 +965,7 @@ local0.*    /var/log/pgpool.log
     クライアントから再び接続を受け付けるために子プロセスの再起動が行われます。
     その後、切り離されたそれぞれのノードに対してfollow_master_commandに指定したコマンドが実行されます。
     通常は、ここに <a href="#pcp_recovery_node">pcp_recovery_node</a> コマンドを組み込んだシェルスクリプトなどを
-	指定し、新しいマスターからスレーブをリカバリするために使用します。
+    指定し、新しいマスターからスレーブをリカバリするために使用します。
     </p>
     </dd>
 
@@ -1196,9 +1196,9 @@ local0.*    /var/log/pgpool.log
     <dd>
     <p>
     もしonなら、SELECTに含まれるテーブルが一時テーブルかどうかのチェックを行います。
-	このチェックは、primary/masterのシステムカタログへのアクセスを発生させ、それなりに負荷を上げます。
-	もし一時テーブルを使っていないということが確かで、primary/masterの負荷を少しでも下げたいのであれば、
-	offにすることができます。デフォルトはonです。
+    このチェックは、primary/masterのシステムカタログへのアクセスを発生させ、それなりに負荷を上げます。
+    もし一時テーブルを使っていないということが確かで、primary/masterの負荷を少しでも下げたいのであれば、
+    offにすることができます。デフォルトはonです。
     </p>
     </dd>
 
@@ -1899,14 +1899,14 @@ Streaming Replicationを使う場合の雛形はpgpool.conf.sample-streamです�
 
 <dl id="params_for_stream_mode">
 <dt id="DELAY_THRESHOLD">delay_threshold <span class="version">V3.0 〜</span></dt>
-	<dd>
+    <dd>
     <p>
     スタンバイサーバへのレプリケーションの遅延許容度をバイト単位で指定します。
     pgpool-IIは、スタンバイサーバの遅延がこの値を超えた場合には、
     負荷分散が有効であってもそのDBノードにSELECTを送信せず、プライマリサーバに送るようにします。
     delay_thresholdが0の場合は、遅延のチェックを行ないません。
     また、delay_thresholdが指定されていても、<a href="#SR_CHECK_PERIOD">sr_check_period</a>が無効(=0)ならば、
-	やはりこの機能は働きません。
+    やはりこの機能は働きません。
     デフォルト値は0です。
     </p>
     <p>
@@ -1915,7 +1915,7 @@ Streaming Replicationを使う場合の雛形はpgpool.conf.sample-streamです�
 </li>
 
 <dt id="SR_CHECK_PERIOD">sr_check_period <span class="version">V3.1 〜</span></dt>
-	<dd>
+    <dd>
     <p>
     ストリーミングレプリケーションの遅延チェックの間隔を秒単位で指定します。
     デフォルト値は0で、これはチェックを行わないことを意味します。
@@ -1923,10 +1923,10 @@ Streaming Replicationを使う場合の雛形はpgpool.conf.sample-streamです�
     <p>
     このパラメータは設定ファイルの再読込によって変更できます。
     </p>
-	</dd>
+    </dd>
 
 <dt id="SR_CHECK_USER">sr_check_user <span class="version">V3.1 〜</span></dt>
-	<dd>
+    <dd>
     <p>
     ストリーミングレプリケーションの遅延チェックを行うユーザ名を指定します。
     このユーザは、すべてのバックエンドに存在しなければなりません。
@@ -1939,10 +1939,10 @@ Streaming Replicationを使う場合の雛形はpgpool.conf.sample-streamです�
     <p>
     このパラメータは設定ファイルの再読込によって変更できます。
     </p>
-	</dd>
+    </dd>
 
 <dt id="SR_CHECK_PASSWORD">sr_check_password <span class="version">V3.1 〜</span></dt>
-	<dd>
+    <dd>
     <p>
     ストリーミングレプリケーションの遅延チェックを行うユーザに対するパスワードをを指定します。
     パスワードが必要なければ空文字('')を指定します。
@@ -1950,16 +1950,16 @@ Streaming Replicationを使う場合の雛形はpgpool.conf.sample-streamです�
     <p>
     このパラメータは設定ファイルの再読込によって変更できます。
     </p>
-	</dd>
+    </dd>
 
 <dt id="LOG_STANDBY_DELAY">log_standby_delay <span class="version">V3.0 〜</span></dt>
-	<dd>
+    <dd>
     <p>
     レプリケーションの遅延状況をログする条件を指定します。
     'none'を指定すると、ログを出力しません。
     'always'ならヘルスチェックを実行するたびに必ず出力します。
     'if_over_threshold'を指定すると、<a href="#DELAY_THRESHOLD">delay_threshold</a>を超えたときだけ
-	ログが出力されます。
+    ログが出力されます。
     デフォルト値は'none'です。
     </p>
     <p>
@@ -1969,7 +1969,7 @@ Streaming Replicationを使う場合の雛形はpgpool.conf.sample-streamです�
     なお、レプリケーションの遅延状況は <a href="#pool_status">show pool_status</a> コマンドでも確認できます。
     項目名は"standby_delay#"です(#はDBノードIDです)。
     </p>
-	</dd>
+    </dd>
 </dl>
 
 <h2 id="failover_in_stream_mode">Streaming Replicationでのフェイルオーバ</h2>
@@ -2675,11 +2675,11 @@ pgpool内部のSQLパース処理などを経由しないため、非常に高�
 <h2 id="MEMORY_CACHE_RESTRICTIONS">オンメモリクエリキャッシュの制限事項</h2>
 <ul>
   <li>オンメモリクエリキャッシュでは、テーブルに変更があると、関連するキャッシュを自動的に削除して古いデータが返却されないようにする機能があります。
-	  このため、pgpoolは常にUPDATEやINSERTやALTER TABLEなどのコマンドが発行されたかどうかをモニタしています。
-	  しかし、トリガ、外部キーやDROP TABLE CASCADEなどの働きによって暗黙的にテーブルが更新されたことはpgpool-IIからはわからないため、この機能が働きません。
-	  この問題を回避するためには、<a href="#MEMQCACHE_EXPIRE">memqcache_expire</a>を使って一定時間経過したキャッシュを削除するようにするか、<a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a>を使って、該当テーブルがキャッシュされないようにしてください。</li>
+      このため、pgpoolは常にUPDATEやINSERTやALTER TABLEなどのコマンドが発行されたかどうかをモニタしています。
+      しかし、トリガ、外部キーやDROP TABLE CASCADEなどの働きによって暗黙的にテーブルが更新されたことはpgpool-IIからはわからないため、この機能が働きません。
+      この問題を回避するためには、<a href="#MEMQCACHE_EXPIRE">memqcache_expire</a>を使って一定時間経過したキャッシュを削除するようにするか、<a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a>を使って、該当テーブルがキャッシュされないようにしてください。</li>
   <li>複数のpgpool-IIを動かす環境で共有メモリを使ったオンメモリクエリキャッシュを使用すると、あるpgpool-II経由でテーブルが更新された時に、他のpgpool-IIのキャッシュが削除されず、古いデータを読みだしてしまうことがあります。
-	  このような環境では、キャッシュストレージにmemcachedを使ってください。</li>
+      このような環境では、キャッシュストレージにmemcachedを使ってください。</li>
 </ul>
 
 <h2 id="MEMORY_CACHE_ENABLED">オンメモリクエリキャッシュの有効化</h2>
@@ -2718,7 +2718,7 @@ memcachedをキャッシュストレージに使用する場合は、ネット�
   <li>一時テーブルを使っているSELECT</li>
   <li>システムカタログを検索しているSELECT</li>
   <li>VIEWをまたはunloggedテーブル使っているSELECT。
-	  ただし、それらのテーブルが<a href="#WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</a>で指定されている場合はキャッシュの対象になります。</li>
+      ただし、それらのテーブルが<a href="#WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</a>で指定されている場合はキャッシュの対象になります。</li>
   <li>明示的なトランザクション内でSELECTが発行され、そのトランザクションがアボートした時</li>
   <li>SELECT結果が大きい場合(<a href="#MEMQCACHE_MAXCACHE">memqcache_maxcache</a>の項参照)</li>
 </ul>
@@ -2772,8 +2772,8 @@ memcachedをキャッシュストレージに使用する場合は、ネット�
     なお、同じテーブル・VIEW が <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a> と両方に
     指定されている場合は、white_memqcache_table_list が優先され、キャッシュを利用します。
     </p>
-	<p>スキーマ名を付けないテーブル名とスキーマ名を付けた形の両方をクエリの中で使う場合は、両方共リストに登録してください。たとえば、"table1"と"public.table1"の両方がクエリに現れる場合は、単に"table1"ではなく、"table1,public.table1"を追加する必要があります。
-	</p>
+    <p>スキーマ名を付けないテーブル名とスキーマ名を付けた形の両方をクエリの中で使う場合は、両方共リストに登録してください。たとえば、"table1"と"public.table1"の両方がクエリに現れる場合は、単に"table1"ではなく、"table1,public.table1"を追加する必要があります。
+    </p>
     </dd>
 
 <dt id="BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list <span class="version">V3.2 〜</span></dt>
@@ -2782,25 +2782,25 @@ memcachedをキャッシュストレージに使用する場合は、ネット�
     SELECT結果をキャッシュしたくないテーブル名をカンマ区切りで指定します。正規表現も利用できます
     （指定した各表現に ^ と $ をつけた形で使われます）。
     </p>
-	<p>スキーマ名を付けないテーブル名とスキーマ名を付けた形の両方をクエリの中で使う場合は、両方共リストに登録してください。たとえば、"table1"と"public.table1"の両方がクエリに現れる場合は、単に"table1"ではなく、"table1,public.table1"を追加する必要があります。
-	</p>
+    <p>スキーマ名を付けないテーブル名とスキーマ名を付けた形の両方をクエリの中で使う場合は、両方共リストに登録してください。たとえば、"table1"と"public.table1"の両方がクエリに現れる場合は、単に"table1"ではなく、"table1,public.table1"を追加する必要があります。
+    </p>
     </dd>
 
 <dt id="MEMQCACHE_MAXCACHE">memqcache_maxcache <span class="version">V3.2 〜</span></dt>
     <dd>
-		<p>
-		SELECT文の実行結果がmemqcache_maxcacheバイトを超えると、キャッシュされません。
-		この場合、以下のようなメッセージが表示されます。
-		</p>
+        <p>
+        SELECT文の実行結果がmemqcache_maxcacheバイトを超えると、キャッシュされません。
+        この場合、以下のようなメッセージが表示されます。
+        </p>
 <pre>
 2012-05-02 15:08:17 LOG:   pid 13756: pool_add_temp_query_cache: data size exceeds memqcache_maxcache. current:4095 requested:111 memq_maxcache:4096
 </pre>
-		<p>
-		この問題を回避するためには、memqcache_maxcacheを大きくすれば良いのですが、
-		キャッシュストレージとして共有メモリを使用する場合は、
-		<a href="#MEMQCACHE_CACHE_BLOCK_SIZE">memqcache_cache_block_size</a>を超えないようにしてください。
-		キャッシュストレージとしてmemcachedを使用する場合は、
-		memcachedのスラブサイズ(デフォルトで1MB)を超えないようにしてください。
+        <p>
+        この問題を回避するためには、memqcache_maxcacheを大きくすれば良いのですが、
+        キャッシュストレージとして共有メモリを使用する場合は、
+        <a href="#MEMQCACHE_CACHE_BLOCK_SIZE">memqcache_cache_block_size</a>を超えないようにしてください。
+        キャッシュストレージとしてmemcachedを使用する場合は、
+        memcachedのスラブサイズ(デフォルトで1MB)を超えないようにしてください。
         </p>
     </dd>
 
@@ -2887,7 +2887,7 @@ memqcache_cache_hits                 | 36717                    | Number of SELE
     のキャッシュはこのブロックに入るだけ詰め込まれます。
     ただし、キャッシュは複数のブロックにまたがって格納されないので、
     memqcache_cache_block_sizeを検索結果が超えると、キャッシュに格納できなくなります。
-	memqcache_cache_block_sizeは、512以上の値でなければなりません。
+    memqcache_cache_block_sizeは、512以上の値でなければなりません。
     </p>
     </dd>
 </dl>
@@ -3001,26 +3001,26 @@ pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-D][-d]
 
 <table border>
 <tr><td>-c</td><td>--clear-cache</td>
-	<td>クエリキャッシュを消去します</td></tr>
+    <td>クエリキャッシュを消去します</td></tr>
 <tr><td>-f config_file</td><td>--config-file config-file</td>
-	<td>pgpool-IIの設定ファイルを指定します</td></tr>
+    <td>pgpool-IIの設定ファイルを指定します</td></tr>
 <tr><td>-a hba_file</td><td>--hba-file hba_file</td>
-	<td>HBA認証設定ファイルを指定します</td></tr>
+    <td>HBA認証設定ファイルを指定します</td></tr>
 <tr><td>-F pcp_config_file</td><td>--pcp-password-file</td>
-	<td>pcpの設定ファイルを指定します</td></tr>
+    <td>pcpの設定ファイルを指定します</td></tr>
 <tr><td>-n</td><td>--no-daemon</td>
-	<td>デーモンモードで起動しません（制御端末を切り離しません）</td></tr>
+    <td>デーモンモードで起動しません（制御端末を切り離しません）</td></tr>
 <tr><td>-D</td><td>--discard-status</td>
-	<td>pgpool_statusを削除し、以前の状態を復元しません
+    <td>pgpool_statusを削除し、以前の状態を復元しません
         <span class="version">V3.0 〜</span></td></tr>
 <tr><td>-C</td><td>--clear-oidmaps</td>
-	<td>オンメモリクエリキャッシュの <a href="#MEMQCACHE_OIDDIR">memqcache_oiddir</a> の
+    <td>オンメモリクエリキャッシュの <a href="#MEMQCACHE_OIDDIR">memqcache_oiddir</a> の
         ディレクトリの中身を消去します
         （<a href="#MEMQCACHE_METHOD">memqcache_method</a> が 'memcached' のときのみ。
           'shmem' のときは指定しなくても、必ず消去されます）。
          <span class="version">V3.2 〜</span></td></tr>
 <tr><td>-d</td><td>--debug</td>
-	<td>デバッグモードで起動します</td></tr>
+    <td>デバッグモードで起動します</td></tr>
 </table>
 
 <h2 id="start_pgpool">pgpool-II の停止</h2>
@@ -3034,11 +3034,11 @@ pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] st
 
 <table border>
 <tr><td>-m s[mart]</td><td>--mode s[mart]</td>
-	<td>接続中のクライアントが接続を終わるのを待ってから停止します(デフォルト)</td></tr>
+    <td>接続中のクライアントが接続を終わるのを待ってから停止します(デフォルト)</td></tr>
 <tr><td>-m f[ast]</td><td>--mode f[ast]</td>
-	<td>接続中のクライアントが接続を終わるのを待たずに直ちに停止します</td></tr>
+    <td>接続中のクライアントが接続を終わるのを待たずに直ちに停止します</td></tr>
 <tr><td>-m i[mmediate]</td><td>--mode i[mmediate]</td>
-	<td>-m fと同じ動作です</td></tr>
+    <td>-m fと同じ動作です</td></tr>
 </table>
 
 <p id="pool_status_file">
@@ -4660,27 +4660,27 @@ pgpool-IIを操作するUNIXコマンドとして、以下のものがありま�
 
 <table border>
 <tr><th><a href="#pcp_node_count">pcp_node_count</a></th>
-	<td>ノード数を取得する</td></tr>
+    <td>ノード数を取得する</td></tr>
 <tr><th><a href="#pcp_node_info">pcp_node_info</a></th>
-	<td>ノード情報を取得する</td></tr>
+    <td>ノード情報を取得する</td></tr>
 <tr><th><a href="#pcp_proc_count">pcp_proc_count</a></th>
-	<td>プロセス一覧を取得する</td></tr>
+    <td>プロセス一覧を取得する</td></tr>
 <tr><th><a href="#pcp_proc_info">pcp_proc_info</a></th>
-	<td>プロセス情報を取得する</td></tr>
+    <td>プロセス情報を取得する</td></tr>
 <tr><th><a href="#pcp_pool_status">pcp_pool_status</a></th>
-	<td>pgpool.conf のパラメータ設定値を取得する <span class="version">V3.1 〜</span></td></tr>
+    <td>pgpool.conf のパラメータ設定値を取得する <span class="version">V3.1 〜</span></td></tr>
 <tr><th><a href="#pcp_systemdb_info">pcp_systemdb_info</a></th>
-	<td>システムDB情報を取得する</td></tr>
+    <td>システムDB情報を取得する</td></tr>
 <tr><th><a href="#pcp_detach_node">pcp_detach_node</a></th>
-	<td>ノードを切り離す</td></tr>
+    <td>ノードを切り離す</td></tr>
 <tr><th><a href="#pcp_attach_node">pcp_attach_node</a></th>
-	<td>ノードを復帰させる</td></tr>
+    <td>ノードを復帰させる</td></tr>
 <tr><th><a href="#pcp_promote_node">pcp_promote_node</a></th>
-	<td>ノードをマスターに昇格させる <span class="version">V3.1 〜</span></td></tr>
+    <td>ノードをマスターに昇格させる <span class="version">V3.1 〜</span></td></tr>
 <tr><th><a href="#pcp_stop_pgpool">pcp_stop_pgpool</a></th>
-	<td>pgpool-IIを停止させる</td></tr>
+    <td>pgpool-IIを停止させる</td></tr>
 <tr><th><a href="#pcp_recovery_node">pcp_recovery_node</a></th>
-	<td>マスタノードを使ってノードのデータを再同期、ノード起動させる</td></tr>
+    <td>マスタノードを使ってノードのデータを再同期、ノード起動させる</td></tr>
 </table>
 
 
@@ -4942,31 +4942,31 @@ PCPコマンドは正常に処理を終了した場合、ステータス'0'で�
 
 <table border>
 <tr><th>UNKNOWNERR</th>
-	<td>1</td><td>不明なエラー</td></tr>
+    <td>1</td><td>不明なエラー</td></tr>
 <tr><th>EOFER</th>
-	<td>2</td><td>EOFエラー</td></tr>
+    <td>2</td><td>EOFエラー</td></tr>
 <tr><th>NOMEMERR</th>
-	<td>3</td><td>メモリ不足</td></tr>
+    <td>3</td><td>メモリ不足</td></tr>
 <tr><th>READERR</th>
-	<td>4</td><td>サーバからのデータ読み込みエラー</td></tr>
+    <td>4</td><td>サーバからのデータ読み込みエラー</td></tr>
 <tr><th>WRITEERR</th>
-	<td>5</td><td>サーバへのデータ書き込みエラー</td></tr>
+    <td>5</td><td>サーバへのデータ書き込みエラー</td></tr>
 <tr><th>TIMEOUTERR</th>
-	<td>6</td><td>タイムアウト</td></tr>
+    <td>6</td><td>タイムアウト</td></tr>
 <tr><th>INVALERR</th>
-	<td>7</td><td>PCPコマンドへの不正なオプション</td></tr>
+    <td>7</td><td>PCPコマンドへの不正なオプション</td></tr>
 <tr><th>CONNERR</th>
-	<td>8</td><td>サーバ接続エラー</td></tr>
+    <td>8</td><td>サーバ接続エラー</td></tr>
 <tr><th>NOCONNERR</th>
-	<td>9</td><td>接続が存在しない</td></tr>
+    <td>9</td><td>接続が存在しない</td></tr>
 <tr><th>SOCKERR</th>
-	<td>10</td><td>ソケットエラー</td></tr>
+    <td>10</td><td>ソケットエラー</td></tr>
 <tr><th>HOSTERR</th>
-	<td>11</td><td>ホスト名解決エラー</td></tr>
+    <td>11</td><td>ホスト名解決エラー</td></tr>
 <tr><th>BACKENDERR</th>
-	<td>12</td><td>サーバでのPCP処理エラー。存在しないプロセスIDの情報を取得しようとした場合など</td></tr>
+    <td>12</td><td>サーバでのPCP処理エラー。存在しないプロセスIDの情報を取得しようとした場合など</td></tr>
 <tr><th>AUTHERR</th>
-	<td>13</td><td>認証エラー</td></tr>
+    <td>13</td><td>認証エラー</td></tr>
 </table>
 
 <p class="top_link"><a href="#Top">△ back to top</a></p>
@@ -5838,34 +5838,36 @@ autoconf
 
 <li>SSL_read() が不明のエラーを返した場合には EOF の検出とみなし、呼出元の pool_read() には
     0 を返すよう pool_ssl_read() を修正しました。(Tatsuo Ishii)
-	<p>
-	これは libpq と同じ振る舞いです。また、これにより pool_read() での望ましくないフェイルオーバを回避することが出来ます。
-	これは、pool_read() は下層の I/O 関数（read(2), pool_ssl_read）が -1 を返したときにフェイルオーバを引き起こすからです。
-	</p>
+    <p>
+    これは libpq と同じ振る舞いです。また、これにより pool_read() での望ましくないフェイルオーバを回避することが出来ます。
+    これは、pool_read() は下層の I/O 関数（read(2), pool_ssl_read）が -1 を返したときにフェイルオーバを引き起こすからです。
+    </p>
 </li>
+
+<li>SSL エラー時に、リトライすべきときにしていなかったのを修正しました。 (Tatsuo Ishii)</li>
 
 <li> ハングアップを起こさないよう pool_process_query() を修正しました。 (Tatsuo Ishii)
     <p>
-   プライマリ以外のノードがパケットを送信した際に、pgpool はセッションを終了しようとしてハングアップすることがありました。 	
+   プライマリ以外のノードがパケットを送信した際に、pgpool はセッションを終了しようとしてハングアップすることがありました。
    これは ssl_read が エラーではなく EOF を返すようになり、フェイルオーバが実行されなくなっためです。
    例えば [pgpool-gerenal: 766] では以下のような報告があります。
    </p>
 <pre>
 2012-07-17 00:11:03 NZST [15692]: [257-1] ERROR: canceling statement due to conflict with recovery
 2012-07-17 00:11:03 NZST [15692]: [258-1] DETAIL: User query might have needed to see row versions that must be removed.
-2012-07-17 00:11:03 NZST [15692]: [259-1] STATEMENT: <SNIP>
+2012-07-17 00:11:03 NZST [15692]: [259-1] STATEMENT: &lt;SNIP&gt;
 2012-07-17 00:11:03 NZST [15696]: [366-1] FATAL: terminating connection due to conflict with recovery
 2012-07-17 00:11:03 NZST [15696]: [367-1] DETAIL: User query might have needed to see row versions that must be removed.
 </pre>
     <p>
-	このケースでは、pool_process_query() は POOL_END ではなく POOL_ERROR を返すべきです。
-	</p>
+    このケースでは、pool_process_query() は POOL_END ではなく POOL_ERROR を返すべきです。
+    </p>
 
     <blockquote>
     Subject: <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-July/000774.html">[pgpool-general: 766]</a>
-	Re: pgpool dropping backends too much<br />
+    Re: pgpool dropping backends too much<br />
     From: Karl von Randow <br />
-	Date: Thu, 19 Jul 2012 16:07:41 +1200
+    Date: Thu, 19 Jul 2012 16:07:41 +1200
     </blockquote>
 </li>
 

@@ -509,10 +509,14 @@ int pool_flush(POOL_CONNECTION *cp)
 		else
 		{
 			/*
-			 * ignore error on frontend. we need to continue the
-			 * processing with backends
+			 * If we are in replication mode, we need to continue the
+			 * processing with backends to keep consistency among
+			 * backends, thus ignore error.
 			 */
-			return 0;
+			if (REPLICATION)
+				return 0;
+			else
+				return -1;
 		}
 	}
 	return 0;
