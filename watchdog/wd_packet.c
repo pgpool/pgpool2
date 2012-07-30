@@ -753,7 +753,7 @@ wd_escalation(void)
 {
 	int rtn;
 
-	pool_log("wd_escalation: eslcalated to master pgpool");
+	pool_log("wd_escalation: escalated to master pgpool");
 
 	/* interface up as delegate IP */
 	wd_IP_up();
