@@ -36,6 +36,7 @@
 #include "watchdog.h"
 
 int wd_is_upper_ok(char * server_list);
+int wd_is_unused_ip(char * ip);
 
 static void * exec_ping(void * arg);
 static double get_result (char * ping_data);
@@ -116,6 +117,50 @@ wd_is_upper_ok(char * server_list)
 	free(buf);
 	return rtn;
 }
+
+/**
+ * check if IP addres is unused.
+ */
+int
+wd_is_unused_ip(char * ip)
+{
+	pthread_attr_t attr;
+	int rc = 0;
+	pthread_t thread;
+	WdInfo thread_arg;
+
+	int rtn = WD_NG;
+	int result;
+
+	if (ip == NULL)
+	{
+		return WD_NG;
+	}
+
+	/* thread init */
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+	/* set hostname as a thread_arg */
+	strncpy(thread_arg.hostname,ip,sizeof(thread_arg.hostname));
+
+	rc = pthread_create(&thread, &attr, exec_ping, (void*)&thread_arg);
+	pthread_attr_destroy(&attr);
+
+	rc = pthread_join(thread, (void **)&result);
+	if ((rc != 0) && (errno == EINTR))
+	{
+		return WD_NG;
+	}
+	if (result == WD_NG)
+	{
+		rtn = WD_OK;
+	}
+	pthread_detach(thread);
+
+	return rtn;
+}
+
 
 static void *
 exec_ping(void * arg)

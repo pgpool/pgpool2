@@ -681,6 +681,7 @@ hton_wd_packet(WdPacket * to, WdPacket * from)
 	to_info->pgpool_port = htonl(from_info->pgpool_port);
 	to_info->wd_port = htonl(from_info->wd_port);
 	memcpy(to_info->hostname,from_info->hostname,sizeof(to_info->hostname));
+	memcpy(to_info->delegate_ip,from_info->delegate_ip,sizeof(to_info->delegate_ip));
 	return WD_OK;
 }
 
@@ -702,6 +703,7 @@ ntoh_wd_packet(WdPacket * to, WdPacket * from)
 	to_info->pgpool_port = ntohl(from_info->pgpool_port);
 	to_info->wd_port = ntohl(from_info->wd_port);
 	memcpy(to_info->hostname,from_info->hostname,sizeof(to_info->hostname));
+	memcpy(to_info->delegate_ip,from_info->delegate_ip,sizeof(to_info->delegate_ip));
 	return WD_OK;
 }
 
@@ -753,12 +755,12 @@ wd_escalation(void)
 {
 	int rtn;
 
-	pool_log("wd_escalation: eslcalated to master pgpool");
+	pool_log("wd_escalation: escalated to master pgpool");
 
 	/* interface up as delegate IP */
 	wd_IP_up();
 	/* set master status to the wd list */
-	wd_set_wd_list(pool_config->wd_hostname, pool_config->port, pool_config->wd_port, NULL, WD_MASTER);
+	wd_set_wd_list(pool_config->wd_hostname, pool_config->port, pool_config->wd_port, pool_config->delegate_IP, NULL, WD_MASTER);
 
 	/* send declare packet */
 	rtn = wd_declare();

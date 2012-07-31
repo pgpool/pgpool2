@@ -142,7 +142,7 @@ send_response(int sock, WdPacket * recv_pack)
 		/* add request into the watchdog list */
 		case WD_ADD_REQ:
 			p = &(recv_pack->wd_body.wd_info);	
-			if (wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, &(p->tv), p->status) > 0)
+			if (wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status) > 0)
 			{
 				send_packet.packet_no = WD_ADD_ACCEPT;
 			}
@@ -156,7 +156,7 @@ send_response(int sock, WdPacket * recv_pack)
 		/* announce candidacy to be the new master */
 		case WD_STAND_FOR_MASTER:
 			p = &(recv_pack->wd_body.wd_info);	
-			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, &(p->tv), p->status);
+			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
 			/* check exist master */
 			if ((q = wd_is_alive_master()) != NULL)
 			{
@@ -181,7 +181,7 @@ send_response(int sock, WdPacket * recv_pack)
 		/* announce assumption to be the new master */
 		case WD_DECLARE_NEW_MASTER:
 			p = &(recv_pack->wd_body.wd_info);	
-			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, &(p->tv), p->status);
+			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
 			if (WD_List->status == WD_MASTER)
 			{
 				/* resign master server */
@@ -196,7 +196,7 @@ send_response(int sock, WdPacket * recv_pack)
 		/* announce that server is down */
 		case WD_SERVER_DOWN:
 			p = &(recv_pack->wd_body.wd_info);	
-			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, &(p->tv), WD_DOWN);
+			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), WD_DOWN);
 			send_packet.packet_no = WD_READY;
 			memcpy(&(send_packet.wd_body.wd_info), WD_List, sizeof(WdInfo));
 			if (wd_am_I_oldest() == WD_OK)
