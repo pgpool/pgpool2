@@ -5,7 +5,7 @@
 ===============================================================================
 
                     3.2.0 (namameboshi) 2012/07/xx
-                    CURRENT AS OF 2012/07/26
+                    CURRENT AS OF 2012/07/31
 
 * Version 3.2.0
 
@@ -364,17 +364,17 @@
       autoconf
 
     - Fix pool_ssl_read. (Tatsuo Ishii)
-	
-	  When SSL_read returns unknown error, treat as if EOF detected and returns 0
-	  to caller (pool_read). This is same as libpq's behavior. Also this will
-	  avoid unwanted failover in pool_read. pool_read triggers failover if
-	  underlying I/O functions, read(2) or pool_ssl_read returns -1.
+
+      When SSL_read returns unknown error, treat as if EOF detected and returns 0
+      to caller (pool_read). This is same as libpq's behavior. Also this will
+      avoid unwanted failover in pool_read. pool_read triggers failover if
+      underlying I/O functions, read(2) or pool_ssl_read returns -1.
 
     - Fix pool_process_query. (Tatsuo Ishii)
-	
-	  When other than primary sends packet, pgpool tries to terminate session
-	  gracefully and hung because now ssl_read returns EOF, rather than error
-	  and triggers failover. For example [pgpool-general: 766] reported this:
+
+      When other than primary sends packet, pgpool tries to terminate session
+      gracefully and hung because now ssl_read returns EOF, rather than error
+      and triggers failover. For example [pgpool-general: 766] reported this:
 
       2012-07-17 00:11:03 NZST [15692]: [257-1] ERROR: canceling statement
       due to conflict with recovery
@@ -390,8 +390,21 @@
       POOL_END.
 
       [pgpool-general: 766]
-	  Re: pgpool dropping backends too much
-	  http://www.pgpool.net/pipermail/pgpool-general/2012-July/000774.html
+      Re: pgpool dropping backends too much
+      http://www.pgpool.net/pipermail/pgpool-general/2012-July/000774.html
+
+    - If frontend terminates while reading large number of query results
+      from backend, pgpool continues to read from backend and write to
+      frontend until all query results consumued. (Tatsuo Ishii)
+
+      This will take very long time if query results is huge. To finish pgpool
+      session as soon as possible, modify pool_flush_it to returns error if
+      fail to write to frontend when operated in other than replication mode.
+      In replication mode, we need to keep the previous behavior to save
+      consistency among backends).
+
+      Also fix SimpleForwardToFrontend to return pool_write_and_flush error
+      status. Before it was ignored.
 
 ===============================================================================
 3.1 Series (2011/09/08 - )
