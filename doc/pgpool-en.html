@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Thu Jul 26 07:31:51 JST 2012
+Last modified: Tue Jul 31 14:35:58 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2475,6 +2475,11 @@ A sample service-configuration file is installed as "share/pgpool.pam" under the
 <!-- ================================================================================ -->
 
 <h1 id="query_cache">Setting Query cache method <span class="version">- V3.1 (DEPRECATED)</span></h1>
+
+<strong>Caution: this (on disk) query cache functionality will be removed in the near future.
+Please use <a href="#memqcache">on memory query cache</a> instead.
+</strong>
+
 <p>The Query cache can be used in all modes in pgpool-II.
 The query cache allow to reuse the SELECT result to boost the performance.
 Activating it in pgpool.conf is done as follows:</p>
@@ -4512,8 +4517,8 @@ fail. Also, the System DB must be PostgreSQL 7.4 or later.</p>
 
 <h2 id="caution_query_cache">Query Cache</h2>
 
-<p>Currently, the query cache must be deleted manually. pgpool-II does not
-invalidate old query cache automatically when the data is updated.</p>
+<p>With <a href="#query_cache">on disk query cache, invalidation must be done manually.
+This does not apply to <a href="#memqcache">on memory query cache</a>. Cacche invalidation is automatically done with on memory query cache.</p>
 
 <h2>Compatibility with pgpool</h2>
 

@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Sun Jul 22 15:00:35 JST 2012
+Last modified: Tue Jul 31 14:23:16 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2611,6 +2611,10 @@ pgpoolのサービス設定ファイルをシステムのPAM設定ディレク�
 
 <h1><a name="query_cache"></a>クエリキャッシュの設定方法 <span class="version">〜 V3.1 (DEPRECATED)</span></h1>
 
+<strong>注意: このクエリキャッシュ機能は近い将来実装から削除される予定です。
+代わりに、<a href="#memqcache">オンメモリクエリキャッシュ機能</a>を使用してください。
+</strong>
+
 <p>
 pgpool-IIでは、すべてのモードでクエリキャッシュを利用することができます。
 クエリキャッシュは、SELECTの結果を再利用することにより、性能を向上させます。
@@ -4641,7 +4645,8 @@ configure に失敗します。必ず libpq 3.0 以降(PostgreSQL 7.4以降) を
 
 <h2 id="caution_query_cache">クエリキャッシュ</h2>
 <p>
-現在のクエリキャッシュの実装では、キャッシュの無効化を手動で行う必要があります。
+<a href="#query_cache">ディスク上のクエリキャッシュ機能</a>では、キャッシュの無効化を手動で行う必要があります。
+<a href="#memqcache">オンメモリクエリキャッシュ機能</a>にはこの制限は当てはまりません。
 </p>
 
 </p>
