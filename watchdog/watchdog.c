@@ -28,6 +28,8 @@
 #include <wait.h>
 #include <ctype.h>
 #include <sys/un.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <errno.h>
@@ -46,6 +48,7 @@ pid_t wd_main(int fork_wait_time);
 static void child_wait(int signo);
 static void wd_exit(int exit_status);
 static int wd_check_config(void);
+static int has_sticky_bit(char * path);
 
 static void
 child_wait(int signo)
@@ -169,4 +172,51 @@ wd_main(int fork_wait_time)
 		sleep(pool_config->wd_interval);
 	}
 	return pid;
+}
+
+int
+wd_chk_sticky(void)
+{
+	char path[128];
+	char cmd[128];
+	
+	/* check sticky bit of ifup command */
+	wd_get_cmd(cmd, pool_config->if_up_cmd);
+	sprintf(path,"%s/%s",pool_config->ifconfig_path,cmd);
+	if (! has_sticky_bit(path))
+	{
+		fprintf(stderr,"ifup[%s] doesn't have sticky bit\n",path);
+		return 0;
+	}
+	/* check sticky bit of ifdown command */
+	wd_get_cmd(cmd, pool_config->if_down_cmd);
+	sprintf(path,"%s/%s",pool_config->ifconfig_path,cmd);
+	if (! has_sticky_bit(path))
+	{
+		fprintf(stderr,"ifdown[%s] doesn't have sticky bit\n",path);
+		return 0;
+	}
+	/* check sticky bit of arping command */
+	wd_get_cmd(cmd, pool_config->arping_cmd);
+	sprintf(path,"%s/%s",pool_config->arping_path,cmd);
+	if (! has_sticky_bit(path))
+	{
+		fprintf(stderr,"arping[%s] doesn't have sticky bit\n",path);
+		return 0;
+	}
+	fprintf(stderr,"all commands have sticky bit\n");
+	return 1;
+}
+
+/* if the file has sticky bit and the owner is root, it returns 1, otherwise returns 0 */
+static int
+has_sticky_bit(char * path)
+{
+	struct stat buf;
+	if (stat(path,&buf) < 0)
+	{
+		fprintf(stderr,"%s:stat failed\n",path);
+		return 0;
+	}
+	return ((buf.st_uid == 0) && (S_ISREG(buf.st_mode)) && (buf.st_mode & S_ISUID))?1:0;
 }

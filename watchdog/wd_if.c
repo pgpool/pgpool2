@@ -30,6 +30,7 @@
 #include <netdb.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <ctype.h>
 #include <errno.h>
 #include "pool.h"
 #include "pool_config.h"
@@ -37,6 +38,7 @@
 
 int wd_IP_up(void);
 int wd_IP_down(void);
+int wd_get_cmd(char * buf, char * cmd);
 static int exec_ifconfig(char * path,char * command);
 
 int
@@ -44,12 +46,16 @@ wd_IP_up(void)
 {
 	int rtn = WD_OK;
 	char path[128];
+	char cmd[128];
 	if (WD_List->delegate_ip_flag == 0)
 	{
 		WD_List->delegate_ip_flag = 1;
-		sprintf(path,"%s/ifconfig",pool_config->ifconfig_path);
+		wd_get_cmd(cmd,pool_config->if_up_cmd);
+		sprintf(path,"%s/%s",pool_config->ifconfig_path,cmd);
 		rtn = exec_ifconfig(path,pool_config->if_up_cmd);
-		sprintf(path,"%s/arping",pool_config->arping_path);
+
+		wd_get_cmd(cmd,pool_config->arping_cmd);
+		sprintf(path,"%s/%s",pool_config->arping_path,cmd);
 		rtn = exec_ifconfig(path,pool_config->arping_cmd);
 	}
 	return rtn;
@@ -59,15 +65,35 @@ wd_IP_down(void)
 {
 	int rtn = WD_OK;
 	char path[128];
+	char cmd[128];
 	if (WD_List->delegate_ip_flag == 1)
 	{
 		WD_List->delegate_ip_flag = 0;
-		sprintf(path,"%s/ifconfig",pool_config->ifconfig_path);
+		wd_get_cmd(cmd,pool_config->if_down_cmd);
+		sprintf(path,"%s/%s",pool_config->ifconfig_path,cmd);
 		rtn = exec_ifconfig(path,pool_config->if_down_cmd);
 	}
 
 	pool_log("wd_IP_down: ifconfig down %s", (rtn == WD_OK) ? "succeeded" : "failed");
 	return rtn;
+}
+
+int
+wd_get_cmd(char * buf, char * cmd)
+{
+	int i,j;
+	i = 0;
+	while(isspace(cmd[i]) != 0)
+	{
+		i++;
+	}
+	j = 0;
+	while(isspace(cmd[i]) == 0)
+	{
+		buf[j++] = cmd[i++];
+	}
+	buf[j] = '\0';
+	return strlen(buf);
 }
 
 static int

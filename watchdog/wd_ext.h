@@ -29,6 +29,7 @@
 /* watchdog.c */
 extern pid_t wd_ppid;
 extern pid_t wd_main(int fork_wait_time);
+extern int wd_chk_sticky(void);
 
 /* wd_child.c */
 extern pid_t wd_child(int fork_wait_time);
@@ -69,6 +70,7 @@ extern int wd_is_unnsed_ip(char * ip);
 /* wd_if.c */
 extern int wd_IP_up(void);
 extern int wd_IP_down(void);
+extern int wd_get_cmd(char * buf, char * cmd);
 
 /* wd_lifecheck.c */
 extern int is_wd_lifecheck_ready(void);

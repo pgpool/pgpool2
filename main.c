@@ -423,12 +423,21 @@ int main(int argc, char **argv)
 	/* watchdog must be started under the privileged user */
 	if (pool_config->use_watchdog )
 	{
-		/* check root */
-		if (geteuid() != 0)
+		/* check sticky bit of network interface control commands */
+		if (wd_chk_sticky() == 1)
 		{
-			pool_error("watchdog must be started under the privileged user ID to up/down virtual network interface.");
-			pool_shmem_exit(1);
-			exit(1);
+			/* if_up, if_down and arping command have a sticky bit */
+			pool_log("watchdog might call network commands which using sticky bit.");
+		}
+		else
+		{
+			/* check root */
+			if (geteuid() != 0)
+			{
+				pool_error("watchdog must be started under the privileged user ID to up/down virtual network interface.");
+				pool_shmem_exit(1);
+				exit(1);
+			}
 		}
 	}
 
