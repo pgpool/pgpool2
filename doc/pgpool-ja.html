@@ -4015,6 +4015,138 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
 
 <h1>$B%j%j!<%9%N!<%H(B<a name="release"></a></h1>
 
+<h2><a name="release3.1.4"></a>3.1.4 (hatsuiboshi) 2012/08/06</h2>
+<h3>$B35MW(B</h3>
+<p>$B$3$N%P!<%8%g%s$O(B3.1.3$B$KBP$9$k%P%0=$@5%j%j!<%9$G$9!#(B</p>
+<p>$B$^$?!"(BPostgreSQL 9.2 $B$KBP1~$7$^$7$?!#(B</p>
+
+<h3>$B%P%0=$@5(B</h3>
+<ul>
+
+<li>$B3F%N!<%I$K$*$$$F!"%H%i%s%6%/%7%g%s>uBV$K$h$C$F(B COMMIT / ABORT $B$9$k$+$I$&$+$rH=Dj$G$-$k$h$&$K!"(B
+    pool_send_and_wait() $B$r=$@5$7$^$7$?!#(B(Tatsuo Ishii)
+    <p>
+    $B%^%k%A%9%F!<%H%a%s%H$,Aw?.$5$l$?$H$-!"L@<(E*$J%H%i%s%6%/%7%g%sFb$K$"$k%W(B
+    $B%i%$%^%j$+!"L@<(E*$J%H%i%s%6%/%7%g%sFb$G$J$$%9%?%s%P%$$GH/@8$9$k2DG=@-$,(B
+    $B$"$j$^$7$?!#(B
+    </p>
+    <p>$B$3$l$O!"(B[pgpool-general-jp: 1049] $B$GJs9p$5$l$^$7$?!#(B</p>
+
+    <blockquote>
+    Subject:
+    <a href="http://www.pgpool.net/pipermail/pgpool-general-jp/2012-April/001048.html">[pgpool-general-jp: 1049]</a>
+    COMMIT$B$G%(%i!<(B<br>
+    From: $B0pB<D*N<(B<br>
+    Date: Mon, 30 Apr 2012 13:48:48 +0900
+    </blockquote>
+</li>
+
+<li>Solaris $B$G$N%m!<%I%P%i%s%9$r=$@5$7$^$7$?!#(B(Tatsuo Ishii)
+    <p>Solaris $B$G$N(B random() $B4X?t$N;EMM$N$?$a$KLdBj$,$"$C$?$?$a!"(Brand() $B$KJQ99$7$^$7$?!#(B</p>
+    <p>$B$3$N;v>]$O(B [pgpool-general: 396] $B$GJs9p$5$l$^$7$?!#(B</p>
+
+    <blockquote>
+    <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-April/000397.html">[pgpool-general: 396]</a>
+    strange load balancing issue in Solaris<br>
+    From: Aravinth<br>
+    Date: Sat, 28 Apr 2012 07:26:58 +0530
+    </blockquote>
+</li>
+
+<li><a href="#pool_status">SHOW pool_status</a> $B$N=PNO7k2L$K!"(B
+    <a href="#BACKEND_DATA_DIRECTORY">backend_data_directory</a>,
+    <a href="#SSL_CA_CERT">ssl_ca_cert</a>,
+    <a href="#SSL_CA_CERT_DIR">ssl_ca_cert_dir</a> $B$,$J$+$C$?$N$GDI2C$7$^$7$?!#(B(Nozomi Anzai)
+</li>
+
+<li>$B%Q%i%l%k%b!<%I$G$J$$$H$-!"(B<a href="#pcp_systemdb_info">pcp_systemdb_info</a> $B%3%^%s%I$,(B
+    segfault $B$7$F$?$N$r=$@5$7$^$7$?!#(B(Nozomi Anzai)</li>
+
+<li>"unnamed prepared statment does not exist" $B$H$$$&%(%i!<$,=P$k$N$r=$@5$7$^$7$?!#(B(Tatsuo Ishii)
+    <p>
+    $B$3$N%(%i!<$O(B pgpool $B$,FbItE*$KH/9T$7$F$$$k%/%(%j$GH/@8$7!"(B
+    $B%/%i%$%"%s%H$,H/9T$9$k(B unnamed $B%9%F!<%H%a%s%H$rGK2u$7$F$$$^$7$?!#(B
+    </p>
+    <p>
+    $B3HD%Ld$$9g$o$;%/%(%j$,<B9T$5$l$?$H$-$K$O!"FbItE*$KH/9T$9$k%/%(%j$N%9%F!<%H%a%s%H$H%]!<%?%k$K(B
+    $BL>A0$r$D$1$k$h$&$K$7$^$7$?!#(B
+    </p>
+</li>
+
+<li>$B%[%C%H%9%?%s%P%$%b!<%I$G%/%(%j>WFM$,5/$-$?$H$-$K%O%s%0%"%C%W$9$k$N$r=$@5$7$^$7$?!#(B(Yugo Nagata)
+    <p>$B$3$l$O!"0J2<$N<j=g$G:F8=$7$^$9!#(B</p>
+<pre>(S1) BEGIN;
+(S1) SELECT * FROM t;
+(S2) DELETE FROM t;
+(S2) VACUUM t;
+</pre>
+</li>
+
+<li>pid $B%U%!%$%k$NFI$_=q$-$r2~A1$7$^$7$?!#(B(Tatsuo Ishii)</li>
+
+<li><a href="http://www.pgpool.net/pipermail/pgpool-general/2012-June/000676.html">[pgpool-general: 672]</a>
+    $B$GJs9p$5$l$?!"(Bprocess_query() $B$N%P%0$r=$@5$7$^$7$?!#(B(Tatsuo Ishii)
+    <p>
+    $B%W%i%$%^%j$G$O=hM}$9$k%G!<%?$,$J$/(B $B%9%?%s%P%$$K$O$"$k>uBV$N$H$-$K!"(B
+    $B%W%i%$%^%j$N=hM}$rBT$C$F$7$^$&$3$H$,$"$j$^$7$?!#(B
+    </p>
+    <blockquote>
+    Subject: <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-June/000676.html">[pgpool-general: 672]</a>
+    Transaction never finishes<br>
+    From: Luiz Pasqual<br>
+    Date: Thu, 28 Jun 2012 09:55:23 -0300
+    </blockquote>
+</li>
+
+
+<li>$B%^%9%?!&%9%l!<%V%b!<%I$G$N(B BEGIN TRANSACTION $B$N07$$$r=$@5$7$^$7$?!#(B(Tatsuo Ishii)
+    <p>
+    $B$3$l$O(B <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-July/000719.html">[pgpool-general: 714]</a>
+    $B$GJs9p$5$l$^$7$?!#(B
+    </p>
+    <p>
+    3.1 $B0J9_!"(BBEGIN TRANSACTION $B$r$9$Y$F$N%N!<%I$KAw$k$h$&$K$7$^$7$?!#(B
+    PostgreSQL $B$N;EMM$G$O!"%9%?%s%P%$%N!<%I$K$O(B BEGIN TRANSACTION READ WRITE $B$rAw$k$3$H$O$G$-$^$;$s$,!"(B
+    BEGIN WORK ISOLATION LEVEL SERIALIZABLE $B$K$D$$$F%A%'%C%/$7$F$*$i$:!"%9%?%s%P%$%N!<%I$KAw?.$7$F$$$^$7$?!#(B
+    $B$b$A$m$s$3$l$O8m$j$G!"%9%?%s%P%$%N!<%I$,(B SERIALIZABLE $B%b!<%I$K$J$k$3$H$O5v$5$l$F$$$^$;$s!#(B
+    </p>
+    <p>
+    $B$=$N$?$a!"(BBEGIN WORK ISOLATION LEVEL SERIALIZABLE $B$r%A%'%C%/$9$k$h$&$K$7$^$7$?!#(B
+    </p>
+
+    <blockquote>
+    Subject: <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-July/000719.html">[pgpool-general: 714]</a>
+    Load Balancing / Streaming Replication / Isolation Level serializable<br>
+    From: Philip Hofstetter<br>
+    Date: Wed, 11 Jul 2012 17:04:26 +0200
+    </blockquote>
+</li>
+
+<li>SET TRANSACTION ISOLATION LEVELSERIALIZABLE $B$J$I$N%/%(%j$O%W%i%$%^%j$N$_$KAw$k$h$&(B
+    send_to_where() $B$r=$@5$7$^$7$?!#(B(Tatsuo Ishii)
+    <p>
+    $B%^%9%?!&%9%l!<%V%b!<%I$G!"0JA0$O$3$N%/%(%j$O%W%i%$%^%j$@$1$G$O$J$/%9%?%s%P%$$K$bAw$i$l$F$$$^$7$?$,!"(B
+    $B$b$A$m$s$3$l$O%(%i!<$H$J$j$^$9!#F1$8$h$&$J%/%(%j$H$7$F0J2<$N$b$N$,$"$j$^$9!#(B
+    </p>
+    <ul>
+    <li>SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE</li>
+    <li>SET transaction_isolation TO 'serializable'</li>
+    <li>SET default_transaction_isolation TO 'serializable'</li>
+    </ul>
+    <p>
+    $B$3$l$O(B <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-July/000720.html">[pgpool-general: 715]</a>
+    $B$GJs9p$5$l$^$7$?!#(B
+    <p>
+
+    <blockquote>
+    Subject: <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-July/000720.html">[pgpool-general: 715]</a>
+    Re: Load Balancing / Streaming Replication / Isolation Level serializable<br />
+    From: Tastuo Ishii<br />
+    Date: Thu, 12 Jul 2012 00:16:58 +0900
+    </blockquote>
+</li>
+</ul>
+
 <h2><a name="release3.1.3"></a>3.1.3 (hatsuiboshi) 2012/04/23</h2>
 <h3>$B35MW(B</h3>
 <p>
