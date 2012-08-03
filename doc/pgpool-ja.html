@@ -3304,6 +3304,57 @@ avgはsum/countとして処理されます。</p>
 
 <h1>リリースノート<a name="release"></a></h1>
 
+<h2>3.0.8 (umiyameboshi) 2012/08/06</h2>
+
+<ul>
+<li>Solaris でのロードバランスを修正しました。(Tatsuo Ishii)
+    <p>Solaris での random() 関数の仕様のために問題があったため、rand() に変更しました。</p> 
+    <p>この事象は [pgpool-general: 396] で報告されました。</p> 
+
+    <blockquote>
+    <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-April/000397.html">[pgpool-general: 396]</a>
+    strange load balancing issue in Solaris<br>
+    From: Aravinth<br>
+    Date: Sat, 28 Apr 2012 07:26:58 +0530
+    </blockquote>
+</li>
+
+<li>パラレルモードでないとき、<a href="#pcp_systemdb_info">pcp_systemdb_info</a> コマンドが
+    segfault してたのを修正しました。(Nozomi Anzai)</li>
+
+<li>"unnamed prepared statment does not exist" というエラーが出るのを修正しました。(Tatsuo Ishii)
+    <p>
+    このエラーは pgpool が内部的に発行しているクエリで発生し、
+    クライアントが発行する unnamed ステートメントを破壊していました。
+    </p>
+    <p>
+    拡張問い合わせクエリが実行されたときには、内部的に発行するクエリのステートメントとポータルに
+    名前をつけるようにしました。
+    </p>
+</li>
+
+<li>pid ファイルの読み書きを改善しました。(Tatsuo Ishii)</li>
+
+<li><a href="http://www.pgpool.net/pipermail/pgpool-general/2012-June/000676.html">[pgpool-general: 672]</a>
+    で報告された、process_query() のバグを修正しました。(Tatsuo Ishii)
+    <p>
+    プライマリでは処理するデータがなく スタンバイにはある状態のときに、
+    プライマリの処理を待ってしまうことがありました。
+    </p>
+    <blockquote>
+    Subject: <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-June/000676.html">[pgpool-general: 672]</a>
+    Transaction never finishes<br>
+    From: Luiz Pasqual<br>
+    Date: Thu, 28 Jun 2012 09:55:23 -0300
+    </blockquote>
+</li>
+
+<li>wait_for_query_response() が、frontend がないときには何もしないように修正しました。(Tatsuo Ishii)
+    <p>バックエンドをリセットする reset_query_list のクエリを実行に時間がかかったときに
+    発生する可能性があり、またクラッシュすることがありました。</p>
+</li>
+</ul>
+
 <h2>3.0.7 (umiyameboshi) 2012/04/23</h2>
 <h3>概要</h3>
 <p>

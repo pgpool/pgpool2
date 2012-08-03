@@ -1,3 +1,53 @@
+3.0.8 (umiyameboshi) 2012/08/06
+
+      * Version 3.0.8
+
+      This is a bugfix release against pgpool-II 3.0.7.
+
+      * General
+
+      - Adopt PostgreSQL 9.2. (Tatsuo Ishii)
+
+      * Bug fixes
+
+      - Fix load balance in Solaris. (Tatsuo Ishii)
+
+        Problem is, random() in using random() in Solaris results in strange
+        load balancing calculation.
+        Use srand()/rand() instead although they produce lesser quality random
+        Problem reported at [pgpool-general: 396].
+
+          [pgpool-general: 396] strange load balancing issue in Solaris
+          http://www.pgpool.net/pipermail/pgpool-general/2012-April/000397.html
+
+      - Fix segfault of pcp_systemdb_info not in parallel mode. (Nozomi Anzai)
+
+      - Fix "unnamed prepared statment does not exist" error. (Tatsuo Ishii)
+
+        This is caused by pgpool's internal query, which breaks client's
+        unnamed statements. To fix this, if extended query is used, named
+        statement/portal for internal are used for internal query.
+
+      - Fix is_system_catalog(). Its relcach was accidently defined as
+        "session local". (Tatsuo Ishii)
+
+      - Improve reading and writing pid_file. (Tatsuo Ishii)
+
+      - Fix pool_process_query() bug reported in [pgpool-general: 672].
+        (Tatsuo Ishii)
+
+        This is caused by the function waits for primary node which does not
+        have pending data, while standbys have pending data.
+
+          [pgpool-general: 672] Transaction never finishes
+          http://www.pgpool.net/pipermail/pgpool-general/2012-June/000676.html
+
+      - Fix wait_for_query_response() not to send param status to frontend if
+        frontend is NULL. (Tatsuo Ishii)
+
+        This could happen while processing reset_query_list and occur crash.
+
+
 3.0.7 (umiyameboshi) 2012/04/23
 
       * Version 3.0.7
