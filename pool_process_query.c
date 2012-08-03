@@ -2481,7 +2481,7 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 
 			if (pool_extract_error_message(false, backend, major, true, &message))
 			{
-				pool_log("do_query: error message from backend %s", message);
+				pool_log("do_query: error message from backend: %s", message);
 			}
 		}
 
