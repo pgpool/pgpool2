@@ -430,14 +430,13 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 				rewrite_query = rewrite_timestamp(backend, query_context->parse_tree, false, msg);
 
 				/*
-				 * If the query is BEGIN READ WRITE in master/slave mode,
-				 * we send BEGIN instead of it to slaves/standbys.
+				 * If the query is BEGIN READ WRITE or
+				 * BEGIN ... SERIALIZABLE in master/slave mode,
+				 * we send BEGIN to slaves/standbys instead.
 				 * original_query which is BEGIN READ WRITE is sent to primary.
 				 * rewritten_query which is BEGIN is sent to standbys.
 				 */
-				if (is_start_transaction_query(query_context->parse_tree) &&
-					is_read_write((TransactionStmt *)query_context->parse_tree) &&
-					MASTER_SLAVE)
+				if (pool_need_to_treat_as_if_default_transaction(query_context))
 				{
 					rewrite_query = pstrdup("BEGIN");
 				}
@@ -1425,7 +1424,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				 * SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL
 				 * SERIALIZABLE, remember it.
 				 */
-				else if (is_set_transaction_serializable(node, query))
+				else if (is_set_transaction_serializable(node))
 				{
 					pool_set_transaction_isolation(POOL_SERIALIZABLE);
 				}
@@ -2087,6 +2086,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 		char *query;
 		Node *node;
 		List *parse_tree_list;
+		POOL_MEMORY_POOL *old_context = pool_memory;
 
 		case 'X':	/* Terminate */
 			return POOL_END;
@@ -2152,6 +2152,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 				return POOL_END;
 			}
 			query = "INSERT INTO foo VALUES(1)";
+			pool_memory = query_context->memory_context;
 			parse_tree_list = raw_parser(query);
 			node = (Node *) lfirst(list_head(parse_tree_list));
 			pool_start_query(query_context, query, strlen(query) + 1, node);
@@ -2162,6 +2163,8 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 				status = FunctionCall3(frontend, backend, len, contents);
 			else
 				status = FunctionCall(frontend, backend);
+
+			pool_memory = old_context;
 			break;
 
 		case 'c':	/* CopyDone */

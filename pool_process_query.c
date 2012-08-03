@@ -421,7 +421,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				 * have any pending data in backends. */
 
 				/* If we have pending data in master, we need to process it */
-				if (!pool_ssl_pending(MASTER(backend)) &&
+				if (pool_ssl_pending(MASTER(backend)) ||
 					!pool_read_buffer_is_empty(MASTER(backend)))
 				{
 					status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
@@ -436,7 +436,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 							continue;
 
 						if (pool_ssl_pending(CONNECTION(backend, i)) ||
-							pool_read_buffer_is_empty(CONNECTION(backend, i)))
+							!pool_read_buffer_is_empty(CONNECTION(backend, i)))
 						{
 							/* If we have pending data in master, we need to process it */
 							if (IS_MASTER_NODE_ID(i))
@@ -906,10 +906,11 @@ POOL_STATUS send_simplequery_message(POOL_CONNECTION *backend, int len, char *st
 }
 
 /*
- * Wait for query response from single node. This checks frontend
- * connection by writing dummy parameter status packet every 30
- * seccond, and if the connection broke, returns error since there's
- * no point in that waiting until backend returns response.
+ * Wait for query response from single node. If frontend is not NULL,
+ * also check frontend connection by writing dummy parameter status
+ * packet every 30 seccond, and if the connection broke, returns error
+ * since there's no point in that waiting until backend returns
+ * response.
  */
 POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, int protoVersion)
 {
@@ -933,8 +934,12 @@ POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *
 			pool_error("wait_for_query_response: backend error occured while waiting for backend response");
 			return POOL_END;
 		}
-		else if (status > 0)		/* data is not ready */
+		else if (frontend != NULL && status > 0)
 		{
+			/*
+			 * If data from backend is not ready, check frontend connection by sending dummy
+			 * parameter status packet.
+			 */
 			if (protoVersion == PROTO_MAJOR_V3)
 			{
 				/* Write dummy parameter staus packet to check if the socket to frontend is ok */
