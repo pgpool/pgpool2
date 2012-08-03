@@ -1,11 +1,10 @@
                                 Release Notes
 
 ===============================================================================
-3.2 Series (2012/07/xx - )
+3.2 Series (2012/08/03 - )
 ===============================================================================
 
-                    3.2.0 (namameboshi) 2012/07/xx
-                    CURRENT AS OF 2012/07/31
+                    3.2.0 (namameboshi) 2012/08/03
 
 * Version 3.2.0
 
@@ -48,9 +47,9 @@
         cache_hit_ratio is lower than 70%, you might want to disable onl memory
         cache.
 
-    Choosing cache strage:
+    Choosing cache storage:
 
-        You can choose a cache strage: shared memory or memcached (you can't use
+        You can choose a cache storage: shared memory or memcached (you can't use
         the both).
         Query cache with shared memory is fast and easy because you don't have
         to install and config memcached, but restricted the max size of cache by
@@ -70,7 +69,7 @@
       - If you want to use multiple instances of pgpool-II with online memory
         cache which uses shared memory, it could happen that one pgpool deletes
         cache, and the other one doesn't do it thus finds old cached result
-        when a table gets updated. Memcached is the better cache strage in this
+        when a table gets updated. Memcached is the better cache storage in this
         case.
 
     New parameters:
@@ -105,7 +104,7 @@
     New commands:
 
       - Add "SHOW pool cache" which shows hit ratio of query cache and the
-        status of cache strage.
+        status of cache storage.
 
       - Add "--with-memcached" option to configure. (Nozomi Anzai)
 
