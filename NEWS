@@ -1,3 +1,37 @@
+2.2.8 (urukiboshi) 2012/08/06
+
+      * Version 2.2.8
+
+      It includes various fixes for bugs various bug fixes in 2.2.7.
+
+      * Bug fixes
+
+      - Fix do_error_execute_command() so that it discards responses from
+        backend until ErrorResponse received. (Toshihiro Kitagawa)
+
+        Note that we need to preserve non-error responses (i.e. ReadyForQuery)
+        and put back them using pool_unread().
+        Otherwise, ReadyForQuery response of DEALLOCATE. This could happen if
+        PHP PDO used.
+
+      - Fix SimpleForwardToFrontend() so that it reset select_in_transaction
+        flag and execute_select flag when bind error occurred while executing
+        SELECT. (Toshihiro Kitagawa)
+
+      - Fix bug with pcp_check_fd()'s timeout handling. (Tatsuo Ishii)
+
+        Per erboles.
+          Subject: [Pgpool-general] question about pcp_check_fd
+          Date: Sun, 23 May 2010 18:21:41 -0500
+          To: pgpool <pgpool-general@pgfoundry.org>
+
+      - Fix buffer overrun problem when pcp password is longer than 32.
+        (Tatsuo Ishii)
+
+      - Fix wait_for_query_response() not to send param status to frontend if
+        frontend is NULL. This could happen while processing reset_query_list.
+        (Tatsuo Ishii)
+
 2.2.7 (urukiboshi) 2010/04/15
 
       * Version 2.2.7
