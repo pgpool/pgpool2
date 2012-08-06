@@ -1,3 +1,85 @@
+2.3.4 (tomiteboshi) 2012/08/06
+
+    * Version 2.3.3
+
+      This version fixes various bugs since 2.3.3.
+
+    * Bug fixes
+
+    - Fix do_error_execute_command() so that it discards responses from
+      backend until ErrorResponse received. (Toshihiro Kitagawa)
+
+      Note that we need to preserve non-error responses (i.e. ReadyForQuery)
+      and put back them using pool_unread().
+      Otherwise, ReadyForQuery response of DEALLOCATE. This could happen if
+      PHP PDO used.
+
+    - Fix SimpleForwardToFrontend() so that it reset select_in_transaction
+      flag and execute_select flag when bind error occurred while executing
+      SELECT. (Toshihiro Kitagawa)
+
+    - Fix SSL connection sometimes hung if lots of data read from backend.
+      This is caused by the buffering in OpenSSL layer. To fix the problem,
+      (Tatsuo Ishii)
+
+      we check the buffer has any pending data by using SSL_pending() before
+      calling select(2).
+      See thread [Pgpool-general] Fwd: PGPOOL II 2.3.3 hang in ssl mode for
+      more details.
+
+    - Fix bug with pcp_check_fd()'s timeout handling. (Tatsuo Ishii)
+
+      Per erboles.
+        Subject: [Pgpool-general] question about pcp_check_fd
+        Date: Sun, 23 May 2010 18:21:41 -0500
+        To: pgpool <pgpool-general@pgfoundry.org>
+
+    - Do not force replication of DEALLOCATE if operated in master/slave mode.
+      Reported by Jan Kantert. (Toshihiro Kitagawa)
+
+      See:
+        Subject: [Pgpool-hackers] Problems with PgPool 2.3.3 Prepare /
+                 Deallocation handling in Master/Slave mode
+        Date: Fri, 28 May 2010 20:59:47 +0200
+      For more details.
+
+    - Make timestamp rewriting schema aware. (Tatsuo Ishii)
+
+    - Do not rewrite statement which accesses columns having now() etc. as the
+      default value but the data type are not timestamp etc. (Tatsuo Ishii)
+
+      Otherwise we have an error in DMLS. See:
+        Subject: [Pgpool-general] function epoch seems to be causing error
+        To: pgpool-general@pgfoundry.org
+        Date: Mon, 16 Aug 2010 21:48:31 +0000 (UTC)
+      For more details.
+
+    - Fix insert_lock to be schema aware. (Tatsuo Ishii)
+
+    - Fix long standing bug with timestamp rewriting against array and complex
+      types.  (Tatsuo Ishii)
+
+      Failed examples are:
+
+        INSERT INTO r1(col[1], col2.foo) VALUES (1, 2); -- insert_column_item
+        UPDATE r1 SET col1[1] = 1, col2.foo = 1; -- set_target
+        PREPARE "p" (int4[]) AS  SELECT $1[1]; -- c_expr
+        SELECT (ARRAY[1,2,3])[1];
+        SELECT (ARRAY[ARRAY[1]])[1][1];
+        SELECT ('{1,2,3}'::int[])[1];
+        SELECT ('{1,2,3}'::int[3])[1];
+        SELECT r1.col[1], (r1.col1).bar, (r1.col1).* FROM r1; -- columnref
+        SELECT (r1.col1).baz[1], (r1.col1).baz[1][2] FROM r1;
+
+      Patch provided by Akio Ishida.
+
+    - Fix buffer overrun problem when pcp password is longer than 32.
+      (Tatsuo Ishii)
+
+    - Fix wait_for_query_response() not to send param status to frontend if
+      frontend is NULL. This could happen while processing reset_query_list.
+      (Tatsuo Ishii)
+
 2.3.3 (tomiteboshi) 2010/04/23
 
 	  * Version 2.3.3

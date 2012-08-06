@@ -2811,6 +2811,99 @@ pgpool-II$B$N%A%e!<%H%j%"%k$O(B<a href="tutorial-ja.html">$B$3$3(B<a/>$B$K$
 
 <h1>$B%j%j!<%9%N!<%H(B<a name="release"></a></h1>
 
+<h2>2.3.4 (tomiteboshi) 2012/08/06</h2>
+<p>$B$3$N%P!<%8%g%s$G$O!"(B2.3.3 $B0JA0$N?'!9$J%P%0$,=$@5$5$l$F$$$^$9!#(B</p>
+
+<h3>$B%P%0=$@5(B</h3>
+
+<ul>
+<li>
+do_error_execute_command() $B$,(B ErrorResponse $B$r<u$1<h$k$^$G%P%C%/%(%s%I$+$i$N(B
+$B7k2L$r8+$J$$$h$&$K=$@5$7$^$7$?!#(B (Toshihiro Kitagawa)
+<p>
+ReadyForQuery $B$N$h$&$J%(%i!<$G$J$$7k2L$r$H$C$F$*$-!"(Bpool_unread() $B$G8F$S=P$9I,MW$,$"$k$?$a$G$9!#(B
+$B$3$l$O(B PHP PDO $B$r;H$C$F$$$k$H$-$K5/$3$k2DG=@-$,$"$j$^$7$?!#(B
+</p>
+</li>
+
+<li>
+SimpleForwardToFrontend() $B$,!"(BSELECT $B<B9TCf$K(B bind $B%(%i!<$K$J$C$?$H$-!"(B
+select_in_transaction $B%U%i%0$H(B execute_select $B%U%i%0$r$r%j%;%C%H$9$k$h$&$K=$@5$7$^$7$?!#(B
+(Toshihiro Kitagawa)
+</li>
+
+<li>
+$B%P%C%/%(%s%I$+$i$?$/$5$s$N7k2L$rFI$_9~$s$G$$$k4V$K!"(BSSL $B@\B3$,%O%s%0$9$k$3$H$,(B
+$B$"$k$N$r=$@5$7$^$7$?!#(BTatsuo Ishii)
+<p>$B>\:Y$O!"(B[Pgpool-general] Fwd: PGPOOL II 2.3.3 hang in ssl mode $B$N%9%l%C%I$r;2>H$7$F$/$@$5$$!#(B</p>
+</li>
+
+<li>
+pcp_check_fd() $B$N%?%$%`%"%&%H=hM}$N%P%0$r=$@5$7$^$7$?!#(B (Tatsuo Ishii)
+  <p>$B$3$l$O0J2<$GJs9p$5$l$^$7$?!#(B </p>
+  <blockquote>
+  Subject: [Pgpool-general] question about pcp_check_fd
+  Date: Sun, 23 May 2010 18:21:41 -0500
+  To: pgpool <pgpool-general@pgfoundry.org>
+  </blockquote>
+</li>
+
+<li>
+master/slave $B%b!<%I$G2TF/Cf!"(BDEALLOCATE $B$r%l%W%j%1!<%7%g%s$7$J$$$h$&$K$7$^$7$?!#(B(Toshihiro Kitagawa)
+<p>$B$3$l$O!"0J2<$G(B Jan Kantert $B$+$iJs9p$5$l$^$7$?!#(B</p>
+<blockquote>
+Subject: [Pgpool-hackers] Problems with PgPool 2.3.3 Prepare /
+         Deallocation handling in Master/Slave mode
+Date: Fri, 28 May 2010 20:59:47 +0200
+</blockquote>
+</li>
+
+<li>$B%?%$%`%9%?%s%W$N=q$-49$($G!"%9%-!<%^$rG'<1$9$k$h$&$K$7$^$7$?!#(B(Tatsuo Ishii)</li>
+
+<li>
+now() $B$J$I%G%U%)%k%HCM$K$b$D$,%G!<%?7?$,(B timestamp $B7?$G$J$$$h$&$J%+%i%`$X$N(B
+$B%"%/%;%9$,$"$k%9%F!<%H%a%s%H$r!"=q$-49$($J$$$h$&$K$7$^$7$?!#(B(Tatsuo Ishii)
+
+<p>$B$=$&$7$F$$$J$+$C$?$?$a$K!"(BDML $B$G%(%i!<$K$J$C$F$$$^$7$?!#(B</p>
+<blockquote>
+Subject: [Pgpool-general] function epoch seems to be causing error
+To: pgpool-general@pgfoundry.org
+Date: Mon, 16 Aug 2010 21:48:31 +0000 (UTC)
+</blockquote>
+</li>
+
+<li>insert_lock $B$,%9%-!<%^$rG'<1$9$k$h$&$K$J$j$^$7$?!#(B(Tatsuo Ishii)</li>
+
+<li>
+$BG[Ns7?$dJ#9g7?$N%+%i%`$N%?%$%`%9%?%s%W=q$-49$($K$*$1$k!"8E$/$+$i$"$k%P%0$r(B
+$B=$@5$7$^$7$?!#(B(Tatsuo Ishii)
+<p>$BNc$($P!"0J2<$N>l9g$K<:GT$7$F$$$^$7$?!#(B</p>
+<pre>
+INSERT INTO r1(col[1], col2.foo) VALUES (1, 2); -- insert_column_item
+UPDATE r1 SET col1[1] = 1, col2.foo = 1; -- set_target
+PREPARE "p" (int4[]) AS  SELECT $1[1]; -- c_expr
+SELECT (ARRAY[1,2,3])[1];
+SELECT (ARRAY[ARRAY[1]])[1][1];
+SELECT ('{1,2,3}'::int[])[1];
+SELECT ('{1,2,3}'::int[3])[1];
+SELECT r1.col[1], (r1.col1).bar, (r1.col1).* FROM r1; -- columnref
+SELECT (r1.col1).baz[1], (r1.col1).baz[1][2] FROM r1;
+</pre>
+
+<p>$B%Q%C%A$O(B Akio Ishida $B$+$iDs6!$5$l$^$7$?!#(B</p>
+</li>
+
+<li>pcp $B%Q%9%o!<%I$,(B 32 $BJ8;z0J>e$N$H$-$K!"%P%C%U%!%*!<%P!<%i%s$9$k$N$r=$@5$7$^$7$?!#(B(Tatsuo Ishii)</li>
+
+<li>
+wait_for_query_response() $B$,!"(Bfrontend $B$,$J$$$H$-$K$O2?$b$7$J$$$h$&$K=$@5$7$^$7$?!#(B(Tatsuo Ishii)
+<p>
+$B%P%C%/%(%s%I$r%j%;%C%H$9$k(B reset_query_list $B$N%/%(%j$r<B9T$K(B $B;~4V$,$+$+$C$?$H$-$KH/@8$9$k2DG=@-$,$"$j!"(B
+$B$^$?%/%i%C%7%e$9$k$3$H$,$"$j$^$7$?!#(B
+</p>
+</li>
+</ul>
+
 <h2>2.3.3 (tomiteboshi) 2010/04/23</h2>
 <p>$B$3$N%P!<%8%g%s$G$O!"(B2.3.2.2 $B0JA0$N?'!9$J%P%0$,=$@5$5$l$F$$$^$9!#(B</p>
 
@@ -3563,7 +3656,7 @@ INSERT/UPDATE/DELETE$B$O<+F0E*$K%^%9%?$N$_$KAw$i$l$^$9!#(BSELECT$B$K4X$7$F$OL
 <div class="copyright">
 <hr>
 <copyright>
-Copyright &copy; 2003 &ndash; 2008 PgPool Global Development Group
+Copyright &copy; 2003 &ndash; 2012 PgPool Global Development Group
 </copyright>
 </div>
 </body>
