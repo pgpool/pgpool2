@@ -85,6 +85,7 @@ static POOL_INTERNAL_BUFFER *pool_create_buffer(void);
 static void pool_discard_buffer(POOL_INTERNAL_BUFFER *buffer);
 static void pool_add_buffer(POOL_INTERNAL_BUFFER *buffer, void *data, size_t len);
 static void *pool_get_buffer(POOL_INTERNAL_BUFFER *buffer, size_t *len);
+static char *pool_get_buffer_pointer(POOL_INTERNAL_BUFFER *buffer);
 static char *pool_get_current_cache_buffer(size_t *len);
 static size_t pool_get_buffer_length(POOL_INTERNAL_BUFFER *buffer);
 static void pool_check_and_discard_cache_buffer(int num_oids, int *oids);
@@ -2607,7 +2608,15 @@ static void pool_add_oids_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache, in
 }
 
 /*
- * Internal buffer management modules
+ * Internal buffer management modules.
+ * Usage:
+ * 1) Create buffer using pool_create_buffer().
+ * 2) Add data to buffer using pool_add_buffer().
+ * 3) Extract (copied) data from buffer using pool_get_buffer().
+ * 4) Optionaly you can:
+ *		Obtain buffer length by using pool_get_buffer_length().
+ *		Obtain buffer pointer by using pool_get_buffer_pointer().
+ * 5) Discard buffer using pool_discard_buffer().
  */
 
 /*
@@ -2710,6 +2719,17 @@ static size_t pool_get_buffer_length(POOL_INTERNAL_BUFFER *buffer)
 		return 0;
 
 	return buffer->buflen;
+}
+
+/*
+ * Get internal buffer pointer.
+ */
+static char *pool_get_buffer_pointer(POOL_INTERNAL_BUFFER *buffer)
+{
+	if (buffer == NULL)
+		return NULL;
+
+	return buffer->buf;
 }
 
 /*
