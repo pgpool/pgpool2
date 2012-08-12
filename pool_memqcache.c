@@ -459,24 +459,22 @@ static int send_cached_messages(POOL_CONNECTION *frontend, const char *qcache, i
 	int msg = 0;
 	int i = 0;
 	int is_prepared_stmt = 0;
+	int len;
+	const char *p;
 
 	while (i < qcachelen)
 	{
 		char tmpkind;
 		int tmplen;
-		char tmpbuf[MAX_VALUE];
 
 		tmpkind = qcache[i];
-
-		i += 1;
+		i++;
 
 		memcpy(&tmplen, qcache+i, sizeof(tmplen));
 		i += sizeof(tmplen);
-
-		tmplen = ntohl(tmplen);
-
-		memcpy(tmpbuf, qcache+i, tmplen - sizeof(tmplen));
-		i += tmplen - sizeof(tmplen);
+		len = ntohl(tmplen);
+		p = qcache + i;
+		i += len - sizeof(tmplen);
 
 		/* No need to cache PARSE and BIND responses */
 		if (tmpkind == '1' || tmpkind == '2')
@@ -495,8 +493,8 @@ static int send_cached_messages(POOL_CONNECTION *frontend, const char *qcache, i
 		}
 
 		/* send message to frontend */
-		pool_debug("send_cached_messages: %c len: %d", tmpkind, tmplen);
-		send_message(frontend, tmpkind, tmplen, tmpbuf);
+		pool_debug("send_cached_messages: %c len: %d", tmpkind, len);
+		send_message(frontend, tmpkind, len, p);
 
 		msg++;
 	}
