@@ -1764,10 +1764,14 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		/*
 		 * If PREPARE or extended query protocol commands caused error,
 		 * remove the temporary saved message.
+		 * (except when ReadyForQuery() is called during Parse() of extended queries)
 		 */
 		else
 		{
-			if (session_context->uncompleted_message)
+			if ((pool_is_doing_extended_query_message() &&
+				 session_context->query_context->query_state[MASTER_NODE_ID] != POOL_UNPARSED &&
+			     session_context->uncompleted_message) ||
+			    (!pool_is_doing_extended_query_message() && session_context->uncompleted_message))
 			{
 				pool_add_sent_message(session_context->uncompleted_message);
 				pool_remove_sent_message(session_context->uncompleted_message->kind,
