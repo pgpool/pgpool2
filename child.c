@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2010	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -906,14 +906,12 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 	len = ntohl(len);
 	len -= sizeof(len);
 
-	if (len <= 0)
+	if (len <= 0 || len >= MAX_STARTUP_PACKET_LENGTH)
 	{
 		pool_error("read_startup_packet: incorrect packet length (%d)", len);
-	}
-	else if (len >= MAX_STARTUP_PACKET_LENGTH)
-	{
-		pool_error("read_startup_packet: invalid startup packet");
 		pool_free_startup_packet(sp);
+		alarm(0);
+		pool_signal(SIGALRM, SIG_IGN);
 		return NULL;
 	}
 
