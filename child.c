@@ -825,14 +825,12 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 	len = ntohl(len);
 	len -= sizeof(len);
 
-	if (len <= 0)
+	if (len <= 0 || len >= MAX_STARTUP_PACKET_LENGTH)
 	{
 		pool_error("read_startup_packet: incorrect packet length (%d)", len);
-	}
-	else if (len >= MAX_STARTUP_PACKET_LENGTH)
-	{
-		pool_error("read_startup_packet: invalid startup packet");
 		pool_free_startup_packet(sp);
+		alarm(0);
+		pool_signal(SIGALRM, SIG_IGN);
 		return NULL;
 	}
 
