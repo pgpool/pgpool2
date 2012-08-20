@@ -44,10 +44,8 @@ wd_child(int fork_wait_time)
 	int sock;
 	int fd;
 	int rtn;
-	pid_t pgid = 0;
 	pid_t pid = 0;
 
-	pgid = getpgid(0);
 	pid = fork();
 	if (pid != 0)
 	{
@@ -70,7 +68,6 @@ wd_child(int fork_wait_time)
 	signal(SIGUSR2, SIG_IGN);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGALRM, SIG_IGN);
-	setpgid(0,pgid);
 
 	init_ps_display("", "", "", "");
 
