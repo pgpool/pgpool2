@@ -643,6 +643,8 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
  */
 bool pool_is_likely_select(char *query)
 {
+	bool do_continue = false;
+
 	if (query == NULL)
 		return false;
 
@@ -652,27 +654,61 @@ bool pool_is_likely_select(char *query)
 		while (*query && isspace(*query))
 			query++;
 	}
+	if (! *query) { return false; }
 
 	/*
 	 * Get rid of head comment.
 	 * It is sure that the query is in correct format, because the parser
 	 * has rejected bad queries such as the one with not-ended comment.
 	 */
-	if (*query && !strncmp(query, "/*", 2))
+	while (*query)
 	{
-		while (*query && strncmp(query, "*/", 2))
-			query++;
-
-		if (*query)
-			query += 2;
-
+		/* Ignore spaces and return marks */
+		do_continue = false;
 		while (*query && isspace(*query))
+		{
 			query++;
-	}
+			do_continue = true;
+		}
+		if (do_continue) { continue; }
 
-	if (!strncasecmp(query, "SELECT", 6) || !strncasecmp(query, "WITH", 4))
-	{
-		return true;
+		while (*query && !strncmp(query, "\n", 2))
+		{
+			query++;
+			do_continue = true;
+		}
+		if (do_continue)
+		{
+			query += 2;
+			continue;
+		}
+
+		/* Ignore comments like C */
+		if (!strncmp(query, "/*", 2))
+		{
+			while (*query && strncmp(query, "*/", 2))
+				query++;
+
+			query += 2;
+			continue;
+		}
+
+		/* Ignore SQL comments */
+		if (!strncmp(query, "--", 2))
+		{
+			while (*query && strncmp(query, "\n", 2))
+				query++;
+
+			query += 2;
+			continue;
+		}
+
+		if (!strncasecmp(query, "SELECT", 6) || !strncasecmp(query, "WITH", 4))
+		{
+			return true;
+		}
+
+		query++;
 	}
 
 	return false;
