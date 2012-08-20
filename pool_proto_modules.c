@@ -370,7 +370,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		/*
 		 * If the table is to be cached, set is_cache_safe TRUE and register table oids.
 		 */ 
-		if (pool_config->memory_cache_enabled)
+		if (pool_config->memory_cache_enabled && query_context->is_multi_statement == false)
 		{
 			bool is_select_query = false;
 			int num_oids;
