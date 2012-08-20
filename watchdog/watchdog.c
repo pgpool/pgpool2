@@ -76,8 +76,6 @@ wd_exit(int exit_signo)
 	wd_notice_server_down();
 
 	kill (child_pid, exit_signo);
-	kill (0, exit_signo);
-
 	child_wait(0);
 
 	exit(0);
@@ -155,7 +153,6 @@ wd_main(int fork_wait_time)
 	signal(SIGQUIT, wd_exit);	
 	signal(SIGTERM, wd_exit);	
 	signal(SIGPIPE, SIG_IGN);	
-	setpgid(0,pgid);
 
 	set_ps_display("lifecheck",false);
 	/* wait until ready to go */
