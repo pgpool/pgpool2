@@ -128,7 +128,7 @@ wd_main(int fork_wait_time)
 	child_pid = wd_child(1);
 	if (child_pid < 0 )
 	{
-		pool_error("lunch wd_child failed");
+		pool_error("launch wd_child failed");
 		return child_pid;
 	}
 
