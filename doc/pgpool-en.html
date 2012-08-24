@@ -4018,6 +4018,16 @@ All following options are required to be specified in watchdog process.
     </dd>
 </dl>
 
+<h2 id="MEMORY_CACHE_RESTRICTIONS">Restrictions</h2>
+<ul>
+<li>
+When all the DB nodes are detached from pgpool-IIs due to PostgreSQL failure and so on,
+watchdog considers all the pgpool-II service are down. Thereafter, after DB node
+is returned to each pgpool-II by using pcp_attach_node command, it comes to be
+<i>split-brain</i> situation; there are multiple active pgpool-II.
+To avoid this problem, you have to restart the pgpool-IIs that are down.
+</li>
+</ul>
 <p class="top_link"><a href="#Top">back to top</a></p>
 
 <!-- ================================================================================ -->
