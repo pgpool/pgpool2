@@ -1520,7 +1520,8 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 }
 
 /*
- * do authentication for cp
+ * Do authentication. Assuming the only caller is
+ * *make_persistent_db_connection().
  */
 static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 {
@@ -1531,6 +1532,7 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 	char state;
 	char *p;
 	int pid, key;
+	bool keydata_done;
 
 	/*
 	 * read kind expecting 'R' packet (authentication response)
@@ -1662,8 +1664,12 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 	}
 
 	/*
-	 * read pid etc.
+	 * Read backend key data and wait until Reay for query arriving or
+	 * error happens.
 	 */
+
+	keydata_done = false;
+
 	for (;;)
 	{
 		status = pool_read(cp->con, &kind, sizeof(kind));
@@ -1676,6 +1682,7 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 		switch (kind)
 		{
 			case 'K':	/* backend key data */
+				keydata_done = true;
 				pool_debug("s_do_auth: backend key data received");
 
 				/* read message length */
@@ -1705,21 +1712,9 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 					return -1;
 				}
 				cp->key = key;
+				break;
 
-				/* read kind expecting 'Z' (ready for query) */
-				status = pool_read(cp->con, &kind, sizeof(kind));
-				if (status < 0)
-				{
-					pool_error("s_do_auth: error while reading kind");
-					return -1;
-				}
-
-				if (kind != 'Z')
-				{
-					pool_error("s_do_auth: expecting Z got %c", kind);
-					return -1;
-				}
-
+			case 'Z':	/* Ready for query */
 				/* read message length */
 				status = pool_read(cp->con, &length, sizeof(length));
 				if (status < 0)
@@ -1739,16 +1734,23 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 
 				pool_debug("s_do_auth: transaction state: %c", state);
 				cp->con->tstate = state;
+
+				if (!keydata_done)
+				{
+					pool_error("s_do_auth: ready for query arrived before receiving keydata");
+				}
 				return 0;
 				break;
 
 			case 'S':	/* parameter status */
+			case 'N':	/* notice response */
+			case 'E':	/* error response */
 				pool_debug("s_do_auth: parameter status data received");
 
 				status = pool_read(cp->con, &length, sizeof(length));
 				if (status < 0)
 				{
-					pool_error("s_do_auth: error while reading message length");
+					pool_error("s_do_auth: error while reading message length. kind:%c", kind);
 					return -1;
 				}
 
@@ -1761,7 +1763,7 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 				break;
 
 			default:
-				pool_error("s_do_auth: unknown response \"%c\" before processing BackendKeyData",
+				pool_error("s_do_auth: unknown response \"%c\" while processing BackendKeyData",
 						   kind);
 				break;
 		}
