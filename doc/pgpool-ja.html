@@ -4133,6 +4133,17 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
     </dd>
 </dl>
 
+<h2 id="WATCHDOG_RESTRICTIONS">watchdog の制限事項</h2>
+<ul>
+  <li>
+  全ての PostgreSQL がダウンしたなどにより pgpool-II から全ての DB ノードが切り離された場合、
+  watchdog は全 pgpool-II のサービスがダウンしたとみなします。
+  その後、各 pgpool-II で pcp_attach_node コマンドにより DB ノードの復帰をおこなった場合、
+  アクティブの pgpool-II が複数できてしまう「スプリットブレイン」状況になってしまいます。
+  この問題を回避するために、ダウン状態の pgpool-II を復帰させるには再起動を行う必要があります。
+  </li>
+</ul>
+
 <p class="top_link"><a href="#Top">△ back to top</a></p>
 
 <!-- ================================================================================ -->
