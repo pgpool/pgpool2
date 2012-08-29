@@ -1722,8 +1722,7 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 			case 'S':	/* parameter status */
 			case 'N':	/* notice response */
 			case 'E':	/* error response */
-				pool_debug("s_do_auth: parameter status data received");
-
+				/* Just throw away data */
 				status = pool_read(cp->con, &length, sizeof(length));
 				if (status < 0)
 				{
