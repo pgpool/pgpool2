@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Tue Jul 31 14:35:58 JST 2012
+Last modified: Sat Sep  1 09:08:25 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2392,8 +2392,8 @@ client authentication function using a configuration file called  "pool_hba.conf
 When you install pgpool, pool_hba.conf.sample will be installed in
 "/usr/local/etc", which is the default directory for configuration
 files. Copy pool_hba.conf.sample as pool_hba.conf and edit it if necessary.
-By default, pool_hba authentication is enabled. See "6. Setting up
-pgpool.conf" for more detail.
+By default, pool_hba authentication is disabled.
+Change <a href="#ENABLE_POOL_HBA">enable_pool_hba</a> to on to enable it.
 </p>
 <p>
 The format of the pool_hba.conf file follows very closely PostgreSQL's

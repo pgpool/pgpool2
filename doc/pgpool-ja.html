@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Tue Jul 31 14:23:16 JST 2012
+Last modified: Sat Sep  1 08:42:19 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2524,7 +2524,8 @@ pgpoolをインストールするとデフォルトインストール先の設�
 "/usr/local/etc"にpool_hba.conf.sampleが一緒にインストールされます。
 このpool_hba.conf.sampleファイルをpool_hba.confとしてコピーし、
 必要であれば編集してください。
-デフォルトではpool_hbaによる認証は有効になっています。
+デフォルトではpool_hbaによる認証は無効にになっています。
+pgpool.confの<a href="#ENABLE_POOL_HBA">enable_pool_hba</a>をonにしてください。
 </p>
 <p>
 pool_hba.confのフォーマットはpg_hba.confのものとほとんど同じです。
