@@ -740,7 +740,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 					tmp = NULL;
 				}
 
-				sprintf(hex_str, (i == 0) ? " %02X" : "%02X", (unsigned int)query_in_bind_msg[i]);
+				snprintf(hex_str, sizeof(hex_str), (i == 0) ? " %02X" : "%02X", 0xff & query_in_bind_msg[i]);
 				strcat(search_query, hex_str);
 			}
 
