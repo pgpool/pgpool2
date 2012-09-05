@@ -1,1 +1,1 @@
-#define PGPOOLVERSION "namameboshi"
+#define PGPOOLVERSION "tokakiboshi"
