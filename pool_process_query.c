@@ -2255,17 +2255,23 @@ POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backe
  */
 void free_select_result(POOL_SELECT_RESULT *result)
 {
-	int i;
+	int i, j;
+	int index;
 
 	if (result->nullflags)
 		free(result->nullflags);
 
 	if (result->data)
 	{
+		index = 0;
 		for(i=0;i<result->numrows;i++)
 		{
-			if (result->data[i])
-				free(result->data[i]);
+			for (j=0;j<result->rowdesc->num_attrs;j++)
+			{
+				if (result->data[index])
+					free(result->data[index]);
+				index++;
+			}
 		}
 		free(result->data);
 	}
