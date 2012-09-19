@@ -1477,7 +1477,7 @@ void version_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
  */
 void cache_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 {
-	static char *field_names[] = {"num_cache_hits", "num_selects", "cache_hit_ratio", "num_hash_entries", "used_hash_entries", "num_cache_entries", "used_cache_enrties_size", "free_cache_entries_size", "fragment_cache_entries_size"};
+	static char *field_names[] = {"num_cache_hits", "num_selects", "cache_hit_ratio", "num_hash_entries", "used_hash_entries", "num_cache_entries", "used_cache_entries_size", "free_cache_entries_size", "fragment_cache_entries_size"};
 	short num_fields = sizeof(field_names)/sizeof(char *);
 	int i;
 	short s;
