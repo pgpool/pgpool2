@@ -201,7 +201,8 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 		}
 		else
 		{
-			if (!pool_ssl_pending(frontend) && !pool_read_buffer_is_empty(frontend))
+			if ((pool_ssl_pending(frontend) || !pool_read_buffer_is_empty(frontend)) &&
+				!pool_is_query_in_progress())
 			{
 				/* We do not read anything from frontend after receiving X packet.
 				 * Just emit log message. This will guard us from buggy frontend.
