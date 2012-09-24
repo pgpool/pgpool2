@@ -45,17 +45,19 @@ int
 wd_IP_up(void)
 {
 	int rtn = WD_OK;
-	char path[128];
+	char path[WD_MAX_PATH_LEN];
 	char cmd[128];
+
 	if (WD_List->delegate_ip_flag == 0)
 	{
 		WD_List->delegate_ip_flag = 1;
+
 		wd_get_cmd(cmd,pool_config->if_up_cmd);
-		sprintf(path,"%s/%s",pool_config->ifconfig_path,cmd);
+		snprintf(path,sizeof(path),"%s/%s",pool_config->ifconfig_path,cmd);
 		rtn = exec_ifconfig(path,pool_config->if_up_cmd);
 
 		wd_get_cmd(cmd,pool_config->arping_cmd);
-		sprintf(path,"%s/%s",pool_config->arping_path,cmd);
+		snprintf(path,sizeof(path),"%s/%s",pool_config->arping_path,cmd);
 		rtn = exec_ifconfig(path,pool_config->arping_cmd);
 	}
 	return rtn;
@@ -64,13 +66,14 @@ int
 wd_IP_down(void)
 {
 	int rtn = WD_OK;
-	char path[128];
+	char path[WD_MAX_PATH_LEN];
 	char cmd[128];
+
 	if (WD_List->delegate_ip_flag == 1)
 	{
 		WD_List->delegate_ip_flag = 0;
 		wd_get_cmd(cmd,pool_config->if_down_cmd);
-		sprintf(path,"%s/%s",pool_config->ifconfig_path,cmd);
+		snprintf(path,sizeof(path),"%s/%s",pool_config->ifconfig_path,cmd);
 		rtn = exec_ifconfig(path,pool_config->if_down_cmd);
 	}
 
@@ -112,7 +115,7 @@ exec_ifconfig(char * path,char * command)
 		return WD_NG;
 	}
 	memset(buf,0,sizeof(buf));
-	strncpy(buf,command,sizeof(buf));
+	strlcpy(buf,command,sizeof(buf));
 	bp = buf;
 	while (*bp == ' ')
 	{
