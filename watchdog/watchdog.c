@@ -179,7 +179,7 @@ wd_chk_sticky(void)
 	
 	/* check sticky bit of ifup command */
 	wd_get_cmd(cmd, pool_config->if_up_cmd);
-	sprintf(path,"%s/%s",pool_config->ifconfig_path,cmd);
+	snprintf(path,sizeof(path),"%s/%s",pool_config->ifconfig_path,cmd);
 	if (! has_sticky_bit(path))
 	{
 		fprintf(stderr,"ifup[%s] doesn't have sticky bit\n",path);
@@ -187,7 +187,7 @@ wd_chk_sticky(void)
 	}
 	/* check sticky bit of ifdown command */
 	wd_get_cmd(cmd, pool_config->if_down_cmd);
-	sprintf(path,"%s/%s",pool_config->ifconfig_path,cmd);
+	snprintf(path,sizeof(path),"%s/%s",pool_config->ifconfig_path,cmd);
 	if (! has_sticky_bit(path))
 	{
 		fprintf(stderr,"ifdown[%s] doesn't have sticky bit\n",path);
@@ -195,7 +195,7 @@ wd_chk_sticky(void)
 	}
 	/* check sticky bit of arping command */
 	wd_get_cmd(cmd, pool_config->arping_cmd);
-	sprintf(path,"%s/%s",pool_config->arping_path,cmd);
+	snprintf(path,sizeof(path),"%s/%s",pool_config->arping_path,cmd);
 	if (! has_sticky_bit(path))
 	{
 		fprintf(stderr,"arping[%s] doesn't have sticky bit\n",path);
