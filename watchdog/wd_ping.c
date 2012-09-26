@@ -65,7 +65,7 @@ wd_is_upper_ok(char * server_list)
 	len = strlen(server_list)+2;
 	buf = malloc(len);
 	memset(buf,0,len);
-	strncpy(buf,server_list,len);
+	strlcpy(buf,server_list,len);
 	/* thread init */
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
@@ -79,7 +79,7 @@ wd_is_upper_ok(char * server_list)
 		{
 			*ep = '\0';
 		}
-		strncpy(thread_arg[cnt].hostname,bp,sizeof(thread_arg[cnt].hostname));
+		strlcpy(thread_arg[cnt].hostname,bp,sizeof(thread_arg[cnt].hostname));
 		rc = pthread_create(&thread[cnt], &attr, exec_ping, (void*)&thread_arg[cnt]);
 
 		cnt ++;
@@ -142,7 +142,7 @@ wd_is_unused_ip(char * ip)
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
 	/* set hostname as a thread_arg */
-	strncpy(thread_arg.hostname,ip,sizeof(thread_arg.hostname));
+	strlcpy(thread_arg.hostname,ip,sizeof(thread_arg.hostname));
 
 	rc = pthread_create(&thread, &attr, exec_ping, (void*)&thread_arg);
 	pthread_attr_destroy(&attr);
@@ -173,9 +173,9 @@ exec_ping(void * arg)
 	int pid, i = 0;
 	int r_size = 0;
 	char result[256];
-	char ping_path[128];
+	char ping_path[WD_MAX_PATH_LEN];
 
-	sprintf(ping_path,"%s/ping",pool_config->ping_path);
+	snprintf(ping_path,sizeof(ping_path),"%s/ping",pool_config->ping_path);
 	thread_arg = (WdInfo *)arg;
 	memset(result,0,sizeof(result));
 	if (pipe(pfd) == -1)
