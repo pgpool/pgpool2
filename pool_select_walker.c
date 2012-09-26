@@ -454,7 +454,19 @@ static bool is_system_catalog(char *table_name)
 		 */
 		if (!relcache)
 		{
-			relcache = pool_create_relcache(pool_config->relcache_size, ISBELONGTOPGCATALOGQUERY,
+			char *query;
+
+			/* pgpool_regclass has been installed */
+			if (pool_has_pgpool_regclass())
+			{
+				query = ISBELONGTOPGCATALOGQUERY2;
+			}
+			else
+			{
+				query = ISBELONGTOPGCATALOGQUERY;
+			}
+
+			relcache = pool_create_relcache(pool_config->relcache_size, query,
 											int_register_func, int_unregister_func,
 											false);
 			if (relcache == NULL)
