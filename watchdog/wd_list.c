@@ -76,10 +76,10 @@ wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, char * delegate_ip
 		}
 		else
 		{
-			strncpy(p->hostname, hostname, sizeof(p->hostname));
+			strlcpy(p->hostname, hostname, sizeof(p->hostname));
 			p->pgpool_port = pgpool_port;
 			p->wd_port = wd_port;
-			strncpy(p->delegate_ip, delegate_ip, sizeof(p->delegate_ip));
+			strlcpy(p->delegate_ip, delegate_ip, sizeof(p->delegate_ip));
 			if (tv != NULL)
 			{
 				memcpy(&(p->tv),tv,sizeof(struct timeval));
@@ -105,8 +105,8 @@ wd_add_wd_list(WdDesc * other_wd)
 	}
 	for ( i = 0 ; i < other_wd->num_wd ; i ++)
 	{
-		strcpy(other_wd->wd_info[i].delegate_ip, pool_config->delegate_IP);
 		p = &(other_wd->wd_info[i]);
+		strlcpy(p->delegate_ip, pool_config->delegate_IP, sizeof(p->delegate_ip));
 		wd_set_wd_info(p);
 	}
 	return i;
