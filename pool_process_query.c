@@ -3025,6 +3025,12 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 	/* get table name */
 	table = get_insert_command_table_name(node);
 
+	/* could not get table name. probably wrong SQL command */
+	if (table == NULL)
+	{
+		return POOL_CONTINUE;
+	}
+
 	/* trim quotes */
 	p = table;
 	for (i=0; *p; p++)
@@ -3033,12 +3039,6 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 			rel_name[i++] = *p;
 	}
 	rel_name[i] = '\0';
-
-	/* could not get table name. probably wrong SQL command */
-	if (table == NULL)
-	{
-		return POOL_CONTINUE;
-	}
 
 	/* table lock for insert target table? */
 	if (lock_kind == 1)
@@ -3427,12 +3427,16 @@ bool is_partition_table(POOL_CONNECTION_POOL *backend, Node *node)
 }
 
 /*
- * obtain table name in INSERT statement
+ * Obtain table name in INSERT statement.
+ * The table name is stored in the static buffer of this function.
+ * So subsequent call to this function will destroy previous result.
  */
 static char *get_insert_command_table_name(InsertStmt *node)
 {
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_MEMORY_POOL *old_context = pool_memory;
+	static char table[128];
+	char *p;
 
 	session_context = pool_get_session_context();
 	if (!session_context)
@@ -3443,11 +3447,18 @@ static char *get_insert_command_table_name(InsertStmt *node)
 	else
 		pool_memory = session_context->memory_context;
 
-	char *table = nodeToString(node->relation);
+	p = nodeToString(node->relation);
+	if (p == NULL)
+	{
+		pool_error("get_insert_command_table_name: cannot get table name");
+		return NULL;
+	}
+	strlcpy(table, p, sizeof(table));
+	pfree(p);
 
 	pool_memory = old_context;
 
-	pool_debug("get_insert_command_table_name: extracted table name: %s", table);
+	pool_debug("get_insert_command_table_name: extracted table name: %s", p);
 	return table;
 }
 
