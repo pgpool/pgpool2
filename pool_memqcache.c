@@ -1252,6 +1252,7 @@ static void pool_add_table_oid_map(POOL_CACHEKEY *cachekey, int num_table_oids, 
 		int fd;
 		int oid = table_oids[i];
 		int sts;
+		struct flock fl;
 
 		/*
 		 * Create or open each memqcache_oiddir/database_oid/table_oid
@@ -1263,10 +1264,16 @@ static void pool_add_table_oid_map(POOL_CACHEKEY *cachekey, int num_table_oids, 
 					   path, strerror(errno));
 			return;
 		}
-		sts = flock(fd, LOCK_EX);
+
+		fl.l_type   = F_WRLCK;
+		fl.l_whence = SEEK_SET;
+		fl.l_start  = 0;        	/* Offset from l_whence         */
+		fl.l_len    = 0;        	/* length, 0 = to EOF           */
+
+		sts = fcntl(fd, F_SETLKW, &fl);
 		if (sts == -1)
 		{
-			pool_error("pool_add_table_oid_map: failed to flock %s. reason:%s",
+			pool_error("pool_add_table_oid_map: failed to lock %s. reason:%s",
 					   path, strerror(errno));
 			close(fd);
 			return;
@@ -1426,6 +1433,7 @@ static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool
 		int fd;
 		int oid = table_oid[i];
 		int sts;
+		struct flock fl;
 
 		/*
 		 * Open each memqcache_oiddir/database_oid/table_oid
@@ -1441,10 +1449,16 @@ static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool
 					   path, strerror(errno));
 			return;
 		}
-		sts = flock(fd, LOCK_EX);
+
+		fl.l_type   = F_RDLCK;
+		fl.l_whence = SEEK_SET;
+		fl.l_start  = 0;        	/* Offset from l_whence         */
+		fl.l_len    = 0;        	/* length, 0 = to EOF           */
+
+		sts = fcntl(fd, F_SETLKW, &fl);
 		if (sts == -1)
 		{
-			pool_error("pool_invalidate_query_cache: failed to flock %s. reason:%s",
+			pool_error("pool_invalidate_query_cache: failed to lock %s. reason:%s",
 					   path, strerror(errno));
 			close(fd);
 			return;
