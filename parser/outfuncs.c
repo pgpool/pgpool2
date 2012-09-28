@@ -5618,5 +5618,8 @@ nodeToString(void *obj)
 	p = palloc(str->len+1);
 	memcpy(p, str->data, str->len);
 	*(p+str->len) = '\0';
+
+	free_string(str);
+
 	return p;
 }
