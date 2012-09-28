@@ -5536,8 +5536,12 @@ char *
 nodeToString(void *obj)
 {
 	String *str;
+	char *ret;
 
 	str = init_string("");
 	_outNode(str, obj);
-	return str->data;
+
+	ret = str->data;
+	pfree(str);
+	return ret;
 }
