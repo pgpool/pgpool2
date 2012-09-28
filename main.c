@@ -1634,12 +1634,16 @@ static int get_next_master_node(void)
 		 * node id. In other words, standby nodes are false. So need
 		 * to check backend status with VALID_BACKEND_RAW.
 		 */
-		if (RAW_MODE && VALID_BACKEND_RAW(i))
+		if (RAW_MODE)
 		{
+			if (VALID_BACKEND_RAW(i))
 				break;
 		}
-		else if (VALID_BACKEND(i))
-			break;
+		else
+		{
+			if (VALID_BACKEND(i))
+				break;
+		}
 	}
 
 	if (i == pool_config->backend_desc->num_backends)
