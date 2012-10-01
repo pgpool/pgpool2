@@ -2352,7 +2352,8 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 									POOL_CONNECTION_POOL *backend)
 {
 	char fkind;
-	char *contents = NULL;
+	char *bufp = NULL;
+	char *contents;
 	POOL_STATUS status;
 	int len;
 	POOL_SESSION_CONTEXT *session_context;
@@ -2382,15 +2383,15 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			return POOL_END;
 		len = ntohl(len) - 4;
 		if (len > 0)
-			contents = pool_read2(frontend, len);
+			bufp = pool_read2(frontend, len);
 	}
 	else
 	{
 		if (fkind != 'F')
-			contents = pool_read_string(frontend, &len, 0);
+			bufp = pool_read_string(frontend, &len, 0);
 	}
 
-	if (len > 0 && contents == NULL)
+	if (len > 0 && bufp == NULL)
 		return POOL_END;
 
 	if (fkind != 'S' && pool_is_ignore_till_sync())
@@ -2406,6 +2407,19 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 
 	pool_unset_doing_extended_query_message();
 
+	/*
+	 * Alloate buffer and copy the packet contents.  Because inside
+	 * these protocol modules, pool_read2 maybe called and modify its
+	 * buffer contents.
+	 */
+	contents = malloc(len);
+	if (contents == NULL)
+	{
+		pool_error("ProcessFrontendResponse: cannot allocate memory. request size:%d", len);
+		return POOL_ERROR;
+	}
+	memcpy(contents, bufp, len);
+
 	switch (fkind)
 	{
 		POOL_QUERY_CONTEXT *query_context;
@@ -2415,6 +2429,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 		POOL_MEMORY_POOL *old_context;
 
 		case 'X':	/* Terminate */
+			free(contents);
 			return POOL_END;
 
 		case 'Q':	/* Query */
@@ -2475,6 +2490,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			if (!query_context)
 			{
 				pool_error("ProcessFrontendResponse: pool_init_query_context failed");
+				free(contents);
 				return POOL_END;
 			}
 			old_context = pool_memory_context_switch_to(query_context->memory_context);
@@ -2507,6 +2523,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			pool_error("ProcessFrontendResponse: unknown message type %c(%02x)", fkind, fkind);
 			status = POOL_ERROR;
 	}
+	free(contents);
 
 	if (status != POOL_CONTINUE)
 		status = POOL_ERROR;
