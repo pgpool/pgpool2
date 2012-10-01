@@ -179,29 +179,32 @@ wd_chk_sticky(void)
 	
 	/* check sticky bit of ifup command */
 	wd_get_cmd(cmd, pool_config->if_up_cmd);
-	snprintf(path,sizeof(path),"%s/%s",pool_config->ifconfig_path,cmd);
+	snprintf(path, sizeof(path), "%s/%s", pool_config->ifconfig_path, cmd);
 	if (! has_sticky_bit(path))
 	{
-		fprintf(stderr,"ifup[%s] doesn't have sticky bit\n",path);
+		pool_log("wd_chk_sticky: ifup[%s] doesn't have sticky bit", path);
 		return 0;
 	}
+
 	/* check sticky bit of ifdown command */
 	wd_get_cmd(cmd, pool_config->if_down_cmd);
-	snprintf(path,sizeof(path),"%s/%s",pool_config->ifconfig_path,cmd);
+	snprintf(path, sizeof(path), "%s/%s", pool_config->ifconfig_path, cmd);
 	if (! has_sticky_bit(path))
 	{
-		fprintf(stderr,"ifdown[%s] doesn't have sticky bit\n",path);
+		pool_log("wd_chk_sticky: ifdown[%s] doesn't have sticky bit", path);
 		return 0;
 	}
+
 	/* check sticky bit of arping command */
 	wd_get_cmd(cmd, pool_config->arping_cmd);
-	snprintf(path,sizeof(path),"%s/%s",pool_config->arping_path,cmd);
+	snprintf(path, sizeof(path), "%s/%s", pool_config->arping_path, cmd);
 	if (! has_sticky_bit(path))
 	{
-		fprintf(stderr,"arping[%s] doesn't have sticky bit\n",path);
+		pool_log("wd_chk_sticky: arping[%s] doesn't have sticky bit", path);
 		return 0;
 	}
-	fprintf(stderr,"all commands have sticky bit\n");
+
+	pool_log("wd_chk_sticy: all commands have sticky bit");
 	return 1;
 }
 
@@ -212,8 +215,9 @@ has_sticky_bit(char * path)
 	struct stat buf;
 	if (stat(path,&buf) < 0)
 	{
-		fprintf(stderr,"%s:stat failed\n",path);
-		return 0;
+		pool_error("has_stickey_bit: %s: no such a command", path);
+		pool_shmem_exit(1);
+		exit(1);
 	}
 	return ((buf.st_uid == 0) && (S_ISREG(buf.st_mode)) && (buf.st_mode & S_ISUID))?1:0;
 }
