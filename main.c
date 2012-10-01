@@ -490,10 +490,14 @@ int main(int argc, char **argv)
 		pool_clear_cache_by_time(interval, 1);
 	}
 
-	/* set unix domain socket path */
+	/* set unix domain socket path for connections to pgpool */
 	snprintf(un_addr.sun_path, sizeof(un_addr.sun_path), "%s/.s.PGSQL.%d",
 			 pool_config->socket_dir,
 			 pool_config->port);
+	/* set unix domain socket path for pgpool PCP communication */
+	snprintf(pcp_un_addr.sun_path, sizeof(pcp_un_addr.sun_path), "%s/.s.PGSQL.%d",
+			 pool_config->pcp_socket_dir,
+			 pool_config->pcp_port);
 
 	/* set up signal handlers */
 	pool_signal(SIGPIPE, SIG_IGN);
@@ -678,9 +682,6 @@ int main(int argc, char **argv)
 	pool_log("%s successfully started. version %s (%s)", PACKAGE, VERSION, PGPOOLVERSION);
 
 	/* fork a child for PCP handling */
-	snprintf(pcp_un_addr.sun_path, sizeof(pcp_un_addr.sun_path), "%s/.s.PGSQL.%d",
-			 pool_config->pcp_socket_dir,
-			 pool_config->pcp_port);
 	pcp_unix_fd = create_unix_domain_socket(pcp_un_addr);
     /* maybe change "*" to pool_config->pcp_listen_addresses */
 	pcp_inet_fd = create_inet_domain_socket("*", pool_config->pcp_port);
