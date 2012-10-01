@@ -95,7 +95,7 @@ void pool_start_query(POOL_QUERY_CONTEXT *query_context, char *query, int len, N
 		session_context = pool_get_session_context();
 		query_context->original_length = len;
 		query_context->rewritten_length = -1;
-		query_context->original_query = query;
+		query_context->original_query = pstrdup(query);
 		query_context->rewritten_query = NULL;
 		query_context->parse_tree = node;
 		query_context->virtual_master_node_id = my_master_node_id;
