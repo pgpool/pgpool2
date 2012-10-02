@@ -2375,6 +2375,23 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 {
 #define DO_QUERY_ALLOC_NUM 1024	/* memory allocation unit for POOL_SELECT_RESULT */
 
+/*
+ * State transition control bits. We expect all following events have
+ * been occur before finish do_query() in extended protocol mode.
+ * Note that "Close Compplete" should occur twice, because two close
+ * requests(one for prepared statement and the other for portal) have
+ * been sent.
+ */
+#define PARSE_COMPLETE_RECEIVED			(1 << 0)
+#define BIND_COMPLETE_RECEIVED			(1 << 1)
+#define CLOSE_COMPLETE_RECEIVED			(1 << 2)
+#define COMMAND_COMPLETE_RECEIVED		(1 << 3)
+#define ROW_DESCRIPTION_RECEIVED		(1 << 4)
+#define DATA_ROW_RECEIVED				(1 << 5)
+#define STATE_COMPLETED		(PARSE_COMPLETE_RECEIVED | BIND_COMPLETE_RECEIVED |\
+							 CLOSE_COMPLETE_RECEIVED | COMMAND_COMPLETE_RECEIVED | \
+							 ROW_DESCRIPTION_RECEIVED | DATA_ROW_RECEIVED)
+
 	int i;
 	int len;
 	char kind;
@@ -2392,8 +2409,12 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 	int nbytes;
 	static char nullmap[8192];
 	unsigned char mask = 0;
+	bool doing_extended;
+	int num_close_complete;
+	int state;
 
-	pool_debug("do_query: extended:%d query:%s", pool_get_session_context() && pool_is_doing_extended_query_message(), query);
+	doing_extended = pool_get_session_context() && pool_is_doing_extended_query_message();
+	pool_debug("do_query: extended:%d query:%s", doing_extended, query);
 
 	*result = NULL;
 	res = malloc(sizeof(*res));
@@ -2524,9 +2545,9 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 		pool_write(backend, prepared_name, pname_len);
 
 		/*
-		 * Send sync message
+		 * Send flush message
 		 */
-		pool_write(backend, "S", 1);
+		pool_write(backend, "H", 1);
 		len = htonl(sizeof(len));
 		pool_write_and_flush(backend, &len, sizeof(len));
 	}
@@ -2546,6 +2567,10 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 	 * our internal use of SQL command (otherwise users will be
 	 * confused).
 	 */
+
+	num_close_complete = 0;
+	state = 0;
+
 	for(;;)
 	{
 		if (pool_read(backend, &kind, sizeof(kind)) < 0)
@@ -2588,6 +2613,7 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 		else
 		{
 			mask = 0;
+
 			if (kind == 'C' || kind == 'E' || kind == 'N' || kind == 'P')
 			{
 				if  (pool_read_string(backend, &len, 0) == NULL)
@@ -2602,23 +2628,36 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 		{
 			case 'Z':	/* Ready for query */
 				pool_debug("do_query: Ready for query");
-				return POOL_CONTINUE;
+				if (!doing_extended)
+					return POOL_CONTINUE;
 				break;
 
 			case 'C':	/* Command Complete */
 				pool_debug("do_query: Command complete received");
+				state |= COMMAND_COMPLETE_RECEIVED;
 				break;
 
 			case '1':	/* Parse complete */
+				pool_debug("do_query: Parse complete received");
+				state |= PARSE_COMPLETE_RECEIVED;
+				break;
+
 			case '2':	/* Bind complete */
-				pool_debug("do_query: %c complete received", kind);
+				pool_debug("do_query: Bind complete received");
+				state |= BIND_COMPLETE_RECEIVED;
 				break;
 
 			case '3':	/* Close complete */
 				pool_debug("do_query: Close complete received");
+				num_close_complete++;
+				if (num_close_complete >= 2)
+					state |= CLOSE_COMPLETE_RECEIVED;
 				break;
 
 			case 'T':	/* Row Description */
+				state |= ROW_DESCRIPTION_RECEIVED;
+				pool_debug("do_query: row description received");
+
 				if (major == PROTO_MAJOR_V3)
 				{
 					p = packet;
@@ -2714,6 +2753,9 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 				break;
 
 			case 'D':	/* data row */
+				state |= DATA_ROW_RECEIVED;
+				pool_debug("do_query: data row received");
+
 				if (major == PROTO_MAJOR_V3)
 				{
 					p = packet;
@@ -2834,6 +2876,11 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 				break;
 		}
 
+		if (doing_extended && (state & STATE_COMPLETED) == STATE_COMPLETED)
+		{
+			pool_debug("do_qyery: all state completed");
+			break;
+		}
 	}
 	return POOL_CONTINUE;
 }
