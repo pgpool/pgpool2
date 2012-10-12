@@ -1,3 +1,71 @@
+3.0.9 (umiyameboshi) 2012/10/12
+
+    * Version 3.0.8
+
+      This is a bugfix release against pgpool-II 3.0.8.
+
+    * General
+
+    - Fix read_startup_packet. (Tatsuo Ishii)
+
+      If packet length is lower than 0, it should
+      have returned immediately. Otherwise it would cause memory allocation
+      error later on.  per pgpool-general:886.
+      Also add canceling alarm.
+
+    - Add NOTICE message handling to s_do_auth. (Tatsuo Ishii)
+
+      Without this, health check responses false alarm and causes failover.
+      per bug track:
+      http://www.pgpool.net/mantisbt/view.php?id=25
+      Also allow to receive ready for query packet *not* right after backend
+      keydata.  I'm not sure if this could happen in the real world but the
+      protocol seems to allow this.
+
+    - Remove unnecessary/confusing debug log from s_do_auth.(Tatsuo Ishii)
+
+    - Fix inifinit loop in SSL mode. When there's pending data in SSL layer
+      of frontend, pool_process_query() checks pending data in backend.
+      (Tatsuo Ishii)
+
+      If there's non, it loops again and checks frontend/backend receive buffer
+      by using is_cache_empty(). Unfortunately it first checks pending data
+      in SSL layer of frontend, thus goes to backend data and checks again
+      (infinite loop).
+      The solution is, if there's pending data in SSL layer of frontend and
+      query is not in progress, call ProcessFrontendResponse() to process new
+      request from frontend.
+
+    - Fix is_system_catalog to use pgpool_regclass if available.
+      (Tatsuo Ishii)
+
+    - Fix memory leak in pool_get_insert_table_name(). (Tatsuo Ishii)
+
+      If session context's memory contex is used for nodeToString(), memory is
+      not freed until session ends.
+
+    - Fix possible memory leak in nodeToString(). (Tatsuo Ishii)
+
+      Since the memory context could be session context, memory used for
+      String object may be considerable if user session continues for hours or
+      days.
+      See bug track #24 for more details.
+
+    - Fix long standing problem with do_query(). (Tatsuo Ishii)
+
+      When 1) extended protocol used and 2)unnamed portal is used and 3) no
+      explicit transaction is used, user's unnamed portal is removed by Sync
+      message.
+      This is because Sync message closes transaction and unnamed portal is
+      removed. This leads to "portal "" does not exist" error.
+
+      Fix is, use "Flush" message instead of Sync. Main difference between
+      using Sync and Flush is, Flush does not return Ready for Query message.
+      So do_query() does not return until all expected responses are returned.
+      It seems the order of messages returned from backend is random, and
+      do_query () manages it by using state bits.
+
+
 3.0.8 (umiyameboshi) 2012/08/06
 
       * Version 3.0.8

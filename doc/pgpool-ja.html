@@ -3304,6 +3304,100 @@ avgはsum/countとして処理されます。</p>
 
 <h1>リリースノート<a name="release"></a></h1>
 
+<h2>3.0.9 (umiyameboshi) 2012/10/12</h2>
+<h3>概要</h3>
+<p>
+このバージョンでは、3.0.8における様々なバグが修正されています。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+<li>read_startup_packet() を修正しました。(Tatsuo Ishii)
+    <p>
+    パケット長が 0 以下のときは直ちに return するべきでしたが、そうなっていなく、
+    メモリ確保時にエラーになっていました。
+    </p>
+    <p>これは pgpool-general:886 を参照してください。また、キャンセルアラームを追加しました。</p>
+    <blockquote>
+    [pgpool-general: 886] read_startup_packet: out of memory<br>
+    From: Lonni J Friedman<br>
+    Date: Wed, 8 Aug 2012 10:18:15 -0700<br>
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-August/000896.html">
+    http://www.sraoss.jp/pipermail/pgpool-general/2012-August/000896.html</a>
+    </blockquote>
+</li>
+
+<li>s_do_auth() に NOTICE メッセージを追加しました。(Tatsuo Ishii)
+    <p>これがなかったために、ヘルスチェックが false アラームを受け取りフェイルオーバしていました。</p>
+    <p>これはバグトラックで報告されました。</p>
+    <blockquote>
+    #25 s_do_auth doesn't handle NoticeResponse (N) message<br>
+    Date:     2012-08-28 03:57<br>
+    Reporter: singh.gurjeet<br>
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=25">http://www.pgpool.net/mantisbt/view.php?id=25</a>
+    </blockquote>
+</li>
+
+<li>s_do_auth() から、不要かつ混乱をまねくデバッグメッセージを削除しました。(Tatsuo Ishii)</li>
+
+<li>SSL モードでの無限ループを修正しました。 (Tatsuo Ishii)
+    <p>
+    フロントエンドの SSL レイヤで溜っているデータがあるとき、
+    pool_process_query() がバックエンドに溜っているデータをチェックします。
+    もしそれが無かったときは再度ループして、フロントエンド/バックエンドがバッファを受け取っていないか
+    is_cache_empty() を以ってチェックします。
+    しかし、フロントエンドの SSL レイヤでデータが溜っているのを一度検知すると、
+    バックエンドに行ってまたチェックしようとします（無限ループ）。
+    </p>
+    <p>
+    これを解決するには、フロントエンドの SSL レイヤに溜っているデータがあり
+    かつ クエリが実行中でなければ、ProcessFrontendResponse() を呼んで
+    フロントエンドへの新しいリクエストをするようにしました。
+</p>
+</li>
+
+<li>is_system_catalog() で、可能ならば pgpool_regclass を使うようにしました。(Tatsuo Ishii)</li>
+
+<li>pool_get_insert_table_name() のメモリリークを修正しました。(Tatsuo Ishii)
+    <p>
+    nodeToString() でセッションコンテクストのメモリコンテクストを使ったあと、
+    セッション終了までは、メモリを開放していませんでした。
+    </p>
+    <p>詳しくはバグトラックをご覧ください。</p>
+    <blockquote>
+    #24 Severe memory leak in an OLTP environment<br>
+    Date:     2012-08-28 03:43<br>
+    Reporter: singh.gurjeet<br>
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=24">http://www.pgpool.net/mantisbt/view.php?id=24</a>
+    </blockquote>
+</li>
+
+<li>do_query() のセグメンテーションフォルトを修正しました。(Tatsuo Ishii)
+    <p>
+    クエリキャッシュが有効で拡張問い合わせが使われているとき、do_query() はシステムカタログに接続し、
+    pool_read2() を使います。
+    しかし、parse メッセージパケットを Parse() で取得し、パケットの内容が pool_read2() のバッファにあります。
+    このため、do_query() はパケットの内容を分割できず、セグメンテーションフォルトを引き起こしていました。
+    </p>
+    <p>
+    これを解決するために、メモリを確保し、パケット内容をコピーし、Parse() を飛ばすようにしました。
+    ただし、パケットの中にはクエリコンテクストが参照しているクエリ文字列も含まれています。
+    そのため、このクエリ文字列をコピーしてポインタをクエリコンテクストに保持する必要があります。
+    </p>
+    <p>
+    これは、Parse() だけの話でなく、他のプロトコルモジュールにもある問題と考えています。
+    本修正はそれらにも適用しますが、そのためには、ProcessFrontendResponse() を変更します。
+    </p>
+
+    <p>この問題はバグトラック #21 で報告されました。</p>
+    <blockquote>
+    #21 pgpool-II 3.2.0 cannot execute sql through jdbc<br>
+    Date:     2012-08-17 16:31<br>
+    Reporter: elisechiang<br>
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=21">http://www.pgpool.net/mantisbt/view.php?id=21</a>
+    </blockquote>
+</ul>
+
 <h2>3.0.8 (umiyameboshi) 2012/08/06</h2>
 
 <ul>
