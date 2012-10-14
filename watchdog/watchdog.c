@@ -25,7 +25,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
-#include <wait.h>
 #include <ctype.h>
 #include <sys/un.h>
 #include <sys/types.h>
