@@ -368,6 +368,7 @@ static bool
 view_walker(Node *node, void *context)
 {
 	SelectContext	*ctx = (SelectContext *) context;
+	char *relname;
 
 	if (node == NULL)
 		return false;
@@ -375,10 +376,10 @@ view_walker(Node *node, void *context)
 	if (IsA(node, RangeVar))
 	{
 		RangeVar *rgv = (RangeVar *)node;
+		relname = make_table_name_from_rangevar(rgv);
+		pool_debug("view_walker: relname: %s", relname);
 
-		pool_debug("view_walker: relname: %s", rgv->relname);
-
-		if (is_view(rgv->relname))
+		if (is_view(relname))
 		{
 			ctx->has_view = true;
 			return false;
