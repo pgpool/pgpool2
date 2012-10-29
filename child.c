@@ -156,6 +156,15 @@ void do_child(int unix_fd, int inet_fd)
 		child_exit(1);
 	}
 
+	/*
+	 * Open pool_passwd in child process.  This is necessary to avoid the
+	 * file descriptor race condition reported in [pgpool-general: 1141].
+	 */
+	if (strcmp("", pool_config->pool_passwd))
+	{
+		pool_reopen_passwd_file();
+	}
+
 	timeout.tv_sec = pool_config->child_life_time;
 	timeout.tv_usec = 0;
 
@@ -641,7 +650,8 @@ static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *time
 		if (pool_config->enable_pool_hba)
 		{
 			load_hba(get_hba_file_name());
-			pool_reopen_passwd_file();
+			if (strcmp("", pool_config->pool_passwd))
+				pool_reopen_passwd_file();
 		}
 		if (pool_config->parallel_mode)
 			pool_memset_system_db_info(system_db_info->info);
