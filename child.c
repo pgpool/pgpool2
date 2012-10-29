@@ -56,6 +56,7 @@
 #include "pool_ip.h"
 #include "md5.h"
 #include "pool_stream.h"
+#include "pool_passwd.h"
 
 static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *timeout);
 static StartupPacket *read_startup_packet(POOL_CONNECTION *cp);
@@ -150,6 +151,15 @@ void do_child(int unix_fd, int inet_fd)
 	if (pool_init_cp())
 	{
 		child_exit(1);
+	}
+
+	/*
+	 * Open pool_passwd in child process.  This is necessary to avoid the
+	 * file descriptor race condition reported in [pgpool-general: 1141].
+	 */
+	if (strcmp("", pool_config->pool_passwd))
+	{
+		pool_reopen_passwd_file();
 	}
 
 	timeout.tv_sec = pool_config->child_life_time;
@@ -638,7 +648,11 @@ static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *time
 	{
 		pool_get_config(get_config_file_name(), RELOAD_CONFIG);
 		if (pool_config->enable_pool_hba)
+		{
 			load_hba(get_hba_file_name());
+			if (strcmp("", pool_config->pool_passwd))
+				pool_reopen_passwd_file();
+		}
 		if (pool_config->parallel_mode)
 			pool_memset_system_db_info(system_db_info->info);
 		got_sighup = 0;

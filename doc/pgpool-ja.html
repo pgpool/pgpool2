@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Sat Sep  1 09:20:09 JST 2012
+Last modified: Mon Oct 29 22:09:42 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -3002,6 +3002,7 @@ pool_passwdがまだ存在しなければ、pgpool.confと同じディレクト�
 pool_hba.confについては、<a href="#hba">クライアント認証(HBA)のためのpool_hba.conf設定方法</a>
 を参照してください。
 <li>注意事項: pool_passwdに登録するパスワードは、PostgreSQLに登録したパスワードと完全に同じでなければなりません。
+<li>pool_passwdとPostgreSQLのmd5パスワードを変更したら、pgpool reload を実行してください。
 </ol>
 
 <li>それ以外のモードでは、trust, reject, clear text password, pam, crypt, md5認証方式だけが利用できます。

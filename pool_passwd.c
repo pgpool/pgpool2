@@ -29,6 +29,7 @@
 #include "pool_passwd.h"
 
 static FILE *passwd_fd = NULL;	/* File descriptor for pool_passwd */
+static char saved_passwd_filename[POOLMAXPATHLEN+1];
 
 /*
  * Initialize this module.
@@ -39,6 +40,13 @@ void pool_init_pool_passwd(char *pool_passwd_filename)
 {
 	if (passwd_fd)
 		return;
+
+	if (saved_passwd_filename[0] == '\0')
+	{
+		int len = strlen(pool_passwd_filename);
+		memcpy(saved_passwd_filename, pool_passwd_filename, len);
+		saved_passwd_filename[len] = '\0';
+	}
 
 	passwd_fd = fopen(pool_passwd_filename, "r+");
 	if (!passwd_fd)
@@ -229,4 +237,10 @@ void pool_finish_pool_passwd(void)
 		fclose(passwd_fd);
 		passwd_fd = NULL;
 	}
+}
+
+void pool_reopen_passwd_file(void)
+{
+	pool_finish_pool_passwd();
+	pool_init_pool_passwd(saved_passwd_filename);
 }

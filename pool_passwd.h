@@ -36,5 +36,6 @@ extern int pool_create_passwdent(char *username, char *passwd);
 extern char *pool_get_passwd(char *username);
 extern void pool_delete_passwdent(char *username);
 extern void pool_finish_pool_passwd(void);
+extern void pool_reopen_passwd_file(void);
 
 #endif /* POOL_PASSWD_H */
