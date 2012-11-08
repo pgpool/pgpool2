@@ -241,7 +241,7 @@ psql -f insert_lock.sql template1
 
 <table border>
 
-  <tr>
+  <tr class="header">
     <th>功能/模式</th>
     <th>原始模式 (*3)</th>
     <th>复制模式</th>
@@ -250,67 +250,67 @@ psql -f insert_lock.sql template1
   </tr>
 
   <tr>
-    <td>连接池</td>
-	<td align="center">X</td>
-	<td align="center">O</td>
-	<td align="center">O</td>
-	<td align="center">O</td>
+    <th>连接池</th>
+    <td align="center">X</td>
+    <td align="center">O</td>
+    <td align="center">O</td>
+    <td align="center">O</td>
   </tr>
 
   <tr>
-    <td>复制</td>
-	<td align="center">X</td>
-	<td align="center">O</td>
-	<td align="center">X</td>
-	<td align="center">(*1)</td>
+    <th>复制</th>
+    <td align="center">X</td>
+    <td align="center">O</td>
+    <td align="center">X</td>
+    <td align="center">(*1)</td>
   </tr>
 
   <tr>
-    <td>负载均衡</td>
-	<td align="center">X</td>
-	<td align="center">O</td>
-	<td align="center">O</td>
-	<td align="center">(*1)</td>
+    <th>负载均衡</th>
+    <td align="center">X</td>
+    <td align="center">O</td>
+    <td align="center">O</td>
+    <td align="center">(*1)</td>
   </tr>
 
   <tr>
-    <td>故障恢复</td>
-	<td align="center">O</td>
-	<td align="center">O</td>
-	<td align="center">O</td>
-	<td align="center">X</td>
+    <th>故障恢复</th>
+    <td align="center">O</td>
+    <td align="center">O</td>
+    <td align="center">O</td>
+    <td align="center">X</td>
   </tr>
 
   <tr>
-    <td>在线恢复</td>
-	<td align="center">X</td>
-	<td align="center">O</td>
-	<td align="center">(*2)</td>
-	<td align="center">X</td>
+    <th>在线恢复</th>
+    <td align="center">X</td>
+    <td align="center">O</td>
+    <td align="center">(*2)</td>
+    <td align="center">X</td>
   </tr>
 
   <tr>
-    <td>并行查询</td>
-	<td align="center">X</td>
-	<td align="center">X</td>
-	<td align="center">X</td>
-	<td align="center">O</td>
+    <th>并行查询</th>
+    <td align="center">X</td>
+    <td align="center">X</td>
+    <td align="center">X</td>
+    <td align="center">O</td>
   </tr>
 
   <tr>
-    <td>需要的服务器数</td>
-	<td align="center">1 或更多</td>
-	<td align="center">2 或更多</td>
-	<td align="center">2 或更多</td>
-	<td align="center">2 或更多</td>
+    <th>需要的服务器数</th>
+    <td align="center">1 或更多</td>
+    <td align="center">2 或更多</td>
+    <td align="center">2 或更多</td>
+    <td align="center">2 或更多</td>
   </tr>
 
   <tr>
-    <td>是否需要系统数据库</td>
-	<td align="center">否</td>
-	<td align="center">否</td>
-	<td align="center">否</td>
-	<td align="center">是</td>
+    <th>是否需要系统数据库</th>
+    <td align="center">否</td>
+    <td align="center">否</td>
+    <td align="center">否</td>
+    <td align="center">是</td>
   </tr>
 
 </table>
@@ -322,7 +322,7 @@ psql -f insert_lock.sql template1
  <li>(*3) 客户端仅仅是通过 pgpool-II 连接到 PostgreSQL 服务器。这种模式仅仅用于限制到服务器的连接数，或者在多台机器上启用故障恢复。
 </ul>
 
-<h2>配置 <code>pcp.conf</code></h2>
+<h2 id="pcp_conf">配置 <code>pcp.conf</code></h2>
 
 <p>pgpool-II 有一个控制接口，管理员可以通过它远程收集 pgpool-II 的状态信息或者终止 pgpool-II 进程。
 <code>pcp.conf</code> 是用于这个接口认证的用户/密码文件。
@@ -880,12 +880,15 @@ pgpool-II 在普通操作中通常访问 <code>backend_hostname0</code> 指定�
 
 <h1><a name="connection_pool_mode"></a>连接池模式</h1>
 
-<p>在连接池模式中，所有在原始模式中的功能以及连接池功能都可以使用。要启用本模式，设置原始模式的配置参数以及以下的参数。</p>
+<p>在连接池模式中，所有在原始模式中的功能以及连接池功能都可以使用。要启用本模式，你需要设置 "<a href="#CONNECTION_CACHE">connection_cache</a>" 为 on。
+以下参数会对连接池产生影响。</p>
 
 <dl>
   <dt><a name="MAX_POOL"></a>max_pool</dt>
   <dd>
-    <p>在 pgpool-II 子进程中缓存的最大连接数。当有新的连接使用相同的用户名连接到相同的数据库，pgpool-II 将重用缓存的连接。如果不是，则 pgpool-II 建立一个新的连接到 PostgreSQL。如果缓存的连接数达到了 max_pool，则最老的连接将被抛弃，并使用这个槽位来保存新的连接。默认值为 4。请小心通过 pgpool-II 进程到后台的连接数可能达到 <code>num_init_children</code> * <code>max_pool</code> 个。需要重启 pgpool-II 以使改动生效。
+    <p>在 pgpool-II 子进程中缓存的最大连接数。当有新的连接使用相同的用户名连接到相同的数据库，pgpool-II 将重用缓存的连接。如果不是，则 pgpool-II 建立一个新的连接到 PostgreSQL。如果缓存的连接数达到了 max_pool，则最老的连接将被抛弃，并使用这个槽位来保存新的连接。默认值为 4。请小心通过 pgpool-II 进程到后台的连接数可能达到
+    	<code><a href="#NUM_INIT_CHILDREN">num_init_children</a></code> *
+      <code><a href="#MAX_POOL">max_pool</a></code> 个。需要重启 pgpool-II 以使改动生效。
 	</p>
   </dd>
   <dt><a name="CONNECTION_LIFE_TIME"></a>connection_life_time</dt>
@@ -943,8 +946,8 @@ pgpool-II 在普通操作中通常访问 <code>backend_hostname0</code> 指定�
 
   <dt><a name="REPLICATION_STOP_ON_MISMATCH"></a>replication_stop_on_mismatch</dt>
   <dd>
-	  <p>当设置为 true 时，当不同的后台程序返回不同的包类型时，则和其他后台程序差别最大的后台程序将被退化。
-	  	一个典型的用例为一个事务中的 SELECT 语句，在 replicate_select 设置为 true 的情况下，一个 SELECT 语句从不同的后台程序中返回不同的行数。非 SELECT 语句也可能触发这种情况。
+	  <p>当设置为 true 时，当不同的后台程序返回不同的包类型时，则和其他后台程序差别最大的后台程序将被退化。</p>
+	  <p>一个典型的用例为一个事务中的 SELECT 语句，在 <a href="#REPLICATE_SELECT">replicate_select</a> 设置为 true 的情况下，一个 SELECT 语句从不同的后台程序中返回不同的行数。非 SELECT 语句也可能触发这种情况。
 	  	例如，一个后台程序执行 UPDATE 成功但其他的失败。注意 pgpool 不会检查 SELECT 返回的记录的内容。如果设置为 false，则会话被终止但后台程序不被退化。默认值为 false。</p>
   </dd>
 
@@ -990,7 +993,7 @@ black_function_list = 'nextval,setval,lastval,currval'
 <p>当设置为 true，pgpool-II 在复制模式中将复制 SELECT 语句。如果为 false，则 pgpool-II 只发送它们到主数据库。默认为 false。
 </p>
 <p>
-	如果 SELECT 查询是在一个显式的事务块中，replicate_select 和 load_balance_mode 将影响复制的工作模式。以下为具体的细节。
+	如果 SELECT 查询是在一个显式的事务块中，<a href="#REPLICATE_SELECT">replicate_select</a> 和 <a href="#LOAD_BALANCE_MODE">load_balance_mode</a> 将影响复制的工作模式。以下为具体的细节。
 </p>
 
 <p>
@@ -1050,16 +1053,21 @@ black_function_list = 'nextval,setval,lastval,currval'
   <dt><a name="INSERT_LOCK"></a>insert_lock</dt>
   <dd>
       <p>如果在包含 SERIAL 类型的表中做复制， SERIAL 列的值在不同后台间可能不同。这个问题可以通过显式的锁表解决（当然，事务的并发性将被严重退化）。为了达到这个目的，必须做以下的改变：</p>
-      <pre>
-      INSERT INTO ... </pre>
-      <p>
-      改变为
-      </p>
-      <pre>
-      BEGIN;
-      LOCK TABLE ...
-      INSERT INTO ...
-      COMMIT; </pre>
+
+<pre>
+INSERT INTO ...
+</pre>
+
+    <p>
+    改变为
+    </p>
+
+<pre>
+BEGIN;
+LOCK TABLE ...
+INSERT INTO ...
+COMMIT;
+</pre>
 
       <p>当 <code>insert_lock</code> 为 true 时，pgpool-II 自动在每次执行 INSERT 时添加以上的查询（如果已经在事务中，它只是简单地添加 LOCK TABLE ... ）。
 	</p>
@@ -1209,20 +1217,36 @@ lobj_lock_table 指定的表必须被预先建立。如果你在 template1 中�
 </dl>
 
 <h2 id="condition_for_load_balance">负载均衡的条件</h2>
-<p>需要对一个查询使用负载均衡，需要满足以下的所有条件：
-<ul>
-	<li>PostgreSQL 7.4 或更高版本</li>
-	<li>查询必须不是在一个显式的事务中（例如，不在 BEGIN ~ END 块中）</li>
-    <li>不能是 SELECT nextval 或者 SELECT setval
-    <li>不能是 SELECT INTO
-    <li>不能是 SELECT FOR UPDATE 或者 FOR SHARE
-    <li>以 "SELECT" 开始或者为 COPY TO STDOUT, EXPLAIN, EXPLAIN ANALYZE SELECT... 其中一个，ignore_leading_white_space = true 将忽略开头的空格.
-</ul>
+<p>
+需要对一个查询使用负载均衡，需要满足以下的所有条件：
 </p>
+
+<ul>
+    <li>PostgreSQL 7.4 或更高版本</li>
+	  <li>即可以在复制模式中，也可以在主备模式中</li>
+    <li>在复制模式中，查询必须不是在一个显式的事务中（例如，不在 BEGIN ~ END 块中）</li>
+    <li>不能是 SELECT INTO</li>
+    <li>不能是 SELECT FOR UPDATE 或者 FOR SHARE</li>
+    <li>以 "SELECT" 开始或者为 COPY TO STDOUT, EXPLAIN, EXPLAIN ANALYZE SELECT... 其中一个，ignore_leading_white_space = true 将忽略开头的空格。
+    	（除非是在 <a href="#BLACK_FUNCTION_LIST">black_list</a> 或者 <a href="#WHITE_FUNCTION_LIST">white_list</a> 指明的有写动作的函数）
+	<li><span class="version">V3.0 -</span>在主备模式中，除了以上条件，还包含以下条件：
+		<ul>
+		  <li>不能使用临时表</li>
+		  <li>不能使用不写日志的表</li>
+		  <li>不能使用系统表</li>
+		  <li>不过，如果碰到以下条件，即使是显式事务，依然有可能进行负载均衡</li>
+			  <ul>
+				<li>事务隔离级别不是SERIALIZABLE</li>
+				<li>事务一直没有进行写查询（直到发生写入查询前，都可能进行负载均衡）</li>
+			  </ul>
+		</ul>
+	</li>
+</ul>
+
 <p>
 注意你可以通过在 SELECT 语句之前插入任意的注释来禁止负载均衡：
 <pre>
-  /*REPLICATION*/ SELECT ...
+/*REPLICATION*/ SELECT ...
 </pre>
 </p>
 
@@ -1236,19 +1260,21 @@ lobj_lock_table 指定的表必须被预先建立。如果你在 template1 中�
 </font>
 </p>
 
-<h2><p>复制模式中的故障切换</p></h2>
+<h2 id="failover_in_replication_mode">复制模式中的故障切换</h2>
 
 <p> pgpool-II 退化一个死掉的后台并继续提供服务。只要最少还有一个后台还或者，服务就可以继续。</p>
 
-<h2><p>复制模式中的特有错误</p></h2>
+<h2 id="errors_in_replication_mode">复制模式中的特有错误</h2>
 <p>
 在复制模式中，如果 pgpool 发现 INSERT，UPDATE 和 DELETE 生效的行数不同，如果 failover_if_affected_tuples_mismatch 被设置为 false，则 pgpool 将发送错误的 SQL 语句到所有的数据库节点来取消当前当前事务（如果为 false 则发生退化）。
 在这种情况下，你将在客户端终端中看到以下错误信息：
+<p>
 <pre>
-   =# UPDATE t SET a = a + 1;
-   ERROR: pgpool detected difference of the number of update tuples Possible last query was: "update t1 set i = 1;"
-   HINT: check data consistency between master and other db node
+=# UPDATE t SET a = a + 1;
+ERROR: pgpool detected difference of the number of update tuples Possible last query was: "update t1 set i = 1;"
+HINT: check data consistency between master and other db node
 </pre>
+
 <p>
 你将在 PostgreSQL 的日志中看到更新的行数（在本例中，数据库节点 0 更新了 0 行而数据库节点 1 更新了 1 行）。
 </p>
@@ -1257,7 +1283,6 @@ lobj_lock_table 指定的表必须被预先建立。如果你在 template1 中�
 2010-07-22 13:23:25 LOG:   pid 5490: ReadyForQuery: Degenerate backends: 1
 2010-07-22 13:23:25 LOG:   pid 5490: ReadyForQuery: Number of affected tuples are: 0 1
 </pre>
-</p>
 
 <p class="top_link"><a href="#Top">返回顶部</a></p>
 
@@ -1265,14 +1290,21 @@ lobj_lock_table 指定的表必须被预先建立。如果你在 template1 中�
 
 <h1><a name="master_slave_mode"></a>主/备模式</h1>
 
-<p>本模式用于使用其他负责完成实际的数据复制的主/备复制软件（类似于 Slong-I 和 基于流复制）来连接 pgpool-II。数据库节点的信息（如果你需要在线恢复功能，backend_hostname、backend_port、backend_weight、backend_flag 和 backend_data_directory ）必须被设置，和复制模式中的方法相同。另外，还需要设置 <code>master_slave_mode</code> 和 <code>load_balance_mode</code> 为 true。pgpool-II 将发送需要复制的查询到主数据库，并在必要时将其他的查询将被负载均衡。不能被负载均衡而发送到主数据库的查询当然也是受负载均衡逻辑控制的。
+<p>
+本模式用于使用其他负责完成实际的数据复制的主/备复制软件（类似于 Slong-I 和 基于流复制）来连接 pgpool-II。
+必须设置数据库节点的信息（如果你需要在线恢复功能，<a href="#BACKEND_HOSTNAME">backend_hostname</a>、<a href="#BACKEND_PORT">backend_port</a>、
+<a href="#BACKEND_WEIGHT">backend_weight</a>、<a href="#BACKEND_FLAG">backend_flag</a> 和 <a href="#BACKEND_DATA_DIRECTORY">backend_data_directory</a>），
+这和复制模式中的方法相同。另外，还需要设置 <code><a href="#MASTER_SLAVE_MODE">master_slave_mode</a></code> 和 <code><a href="#LOAD_BALANCE_MODE">load_balance_mode</a></code> 为 true。
+</p>
+<p>
+pgpool-II 将发送需要复制的查询到主数据库，并在必要时将其他的查询将被负载均衡。不能被负载均衡而发送到主数据库的查询当然也是受负载均衡逻辑控制的。
 </p>
 
 
 <p>在主/备模式中，对于临时表的 DDL 和 DML 操作只能在主节点上被执行。SELECT 也可以被强制在主节点上执行，但这需要你在 SELECT 语句前添加一个 /*NO LOAD BALANCE*/ 注释。
 </p>
 
-<p>在主/备模式中， <code>replication_mode</code> 必须被设置为 false ，并且 <code>master_slave_mode</code> 为 true。</p>
+<p>在主/备模式中， <code><a href="#REPLICATION_MODE">replication_mode</a></code> 必须被设置为 false ，并且 <code><a href="#MASTER_SLAVE_MODE">master_slave_mode</a></code> 为 true。</p>
 
 <p>主/备模式有一个“master_slave_sub mode”。默认值为 'slony'，用于 Slony-I。你也可以设置它为 'stream'，它在你想使用 PostgreSQL 内置的复制系统（基于流复制）时被设置。用于 Slony-I 子模式的示例配置文件为 pgpool.conf.sample-master-slave，用于基于流复制的子模式的示例文件为 sub-module is pgpool.conf.sample-stream。
 </p>
@@ -1280,7 +1312,7 @@ lobj_lock_table 指定的表必须被预先建立。如果你在 template1 中�
 修改以上任何参数都需要重新启动 pgpool-II。
 </p>
 <p>
-在主/备模式中，你可以通过设置 white_function_list 和 black_function_list 来控制负载均衡。参考 <a href="#white_function_list">white_function_list</a> 获得详细信息。
+在主/备模式中，你可以通过设置 <a href="#WHITE_FUNCTION_LIST">white_function_list</a> 和 <a href="#BLACK_FUNCTION_LIST">black_function_list</a> 来控制负载均衡。参考 <a href="#WHITE_FUNCTION_LIST">white_function_list</a> 获得详细信息。
 </p>
 
 <p class="top_link"><a href="#Top">返回顶部</a></p>
@@ -1289,7 +1321,7 @@ lobj_lock_table 指定的表必须被预先建立。如果你在 template1 中�
 
 <h1><a name="stream"></a>流复制 <span class="version">V3.1 -</span></h1>
 <p>
-就像以上规定的，pgpool-II 可以与 PostgreSQL 9.0 带来的基于流复制协同工作。要使用它，启用“master_slave_mode”并设置“master_slave_sub_mode”为“stream”。
+就像以上规定的，pgpool-II 可以与 PostgreSQL 9.0 带来的基于流复制协同工作。要使用它，启用“<a href="#MASTER_SLAVE_MODE">master_slave_mode</a>”并设置“<a href="#MASTER_SLAVE_SUB_MODE">master_slave_sub_mode</a>”为“stream”。
 pgpool-II 认为基于流复制启用了热备，也就是说备库是以只读方式打开的。以下参数可以用于本模式：
 </p>
 
@@ -2225,23 +2257,23 @@ pgpool-II 通过 SHOW 命令提供一些信息。SHOW 是一个真实的 SQL 语
 <p>"SHOW pool_status" 返回配置参数列表，包含参数的 name, value, 和 description。下面是返回结果的一个摘录:
 <pre>
 benchs2=# show pool_status;
-             item              |              value              |                           description                            
--------------------------------+---------------------------------+------------------------------------------------------------------
- listen_addresses              | 127.0.0.1                       | host name(s) or IP address(es) to listen to
- port                          | 9999                            | pgpool accepting port number
- socket_dir                    | /tmp                            | pgpool socket directory
- num_init_children             | 5                               | # of children initially pre-forked
- child_life_time               | 300                             | if idle for this seconds, child exits
+                 item                 |             value              |                           description
+--------------------------------------+--------------------------------+------------------------------------------------------------------
+ listen_addresses                     | localhost                      | host name(s) or IP address(es) to listen to
+ port                                 | 9999                           | pgpool accepting port number
+ socket_dir                           | /tmp                           | pgpool socket directory
+ pcp_port                             | 9898                           | PCP port # to bind
+ pcp_socket_dir                       | /tmp                           | PCP socket directory
 </pre>
 </p>
 <h2>pool_nodes <span class="version">V3.0 -</span></h2>
 <p>"SHOW pool_nodes" 返回所有配置节点的列表.它显示了节点的 id, hostname, port, status, 以及权重 weight (仅在使用负载均衡模式时有意义)。status 列可能的值可在 <a href="#pcp_node_info">pcp_node_info reference</a> 里获得解释。
 <pre>
 benchs2=# show pool_nodes;
-  id  |  hostname   | port | status | lb_weight     
-------+-------------+------+--------+-----------
-   0  | 127.0.0.1   | 5432 | 2      | 0.5
-   1  | 192.168.1.7 | 5432 | 3      | 0.5
+  id  |  hostname   | port | status | lb_weight |  role
+------+-------------+------+--------+-----------+---------
+   0  | 127.0.0.1   | 5432 | 2      | 0.5       | primary
+   1  | 192.168.1.7 | 5432 | 3      | 0.5       | standby
 (2 lignes)
 </pre>
 </p>
@@ -2262,7 +2294,7 @@ benchs2=# show pool_nodes;
 <p>结果将一直返回 num_init_children 行。</p>
 <pre>
 benchs2=# show pool_processes;
-   pool_pid |     start_time      | database | username  |     create_time     | pool_counter 
+ pool_pid |     start_time      | database | username  |     create_time     | pool_counter 
 ----------+---------------------+----------+-----------+---------------------+--------------
  8465     | 2010-08-14 08:35:40 |          |           |                     | 
  8466     | 2010-08-14 08:35:40 | benchs   | guillaume | 2010-08-14 08:35:43 | 1
@@ -2290,9 +2322,9 @@ benchs2=# show pool_processes;
 <li>pool_connected 如果前端正使用该后端服务器时是true (1).</li>
 </ul>
 </p>
-<p>结果将一直返回num_init_children*max_pool 行.</p>
+<p>结果将一直返回 <a href="#NUM_INIT_CHILDREN">num_init_children</a> * <a href="#MAX_POOL">max_pool</a> 行.</p>
 <pre>
-  pool_pid |     start_time      | pool_id | backend_id | database | username  |     create_time     | majorversion | minorversion | pool_counter | pool_backendpid | pool_connected 
+ pool_pid |     start_time      | pool_id | backend_id | database | username  |     create_time     | majorversion | minorversion | pool_counter | pool_backendpid | pool_connected 
 ----------+---------------------+---------+------------+----------+-----------+---------------------+--------------+--------------+--------------+-----------------+----------------
  8465     | 2010-08-14 08:35:40 | 0       | 0          |          |           |                     |              |              |              |                 | 
  8465     | 2010-08-14 08:35:40 | 1       | 0          |          |           |                     |              |              |              |                 | 
@@ -2400,7 +2432,7 @@ pgpool-II 以两个阶段来执行在线恢复。当一个恢复节点同步数�
     <li> 等待所有的客户端连接断开
     <li> CHECKPOINT
     <li> 在线恢复的第二阶段
-    <li> 启动 postmaster （执行 pgpool_remote_start）
+    <li> 启动 postmaster （执行 <a href="#pool_remote_start">pgpool_remote_start</a>）
     <li> 节点连接上来
   </ol>
 </p>
@@ -2428,18 +2460,18 @@ pgpool-II 以两个阶段来执行在线恢复。当一个恢复节点同步数�
 </font>
 </p>
 
-<h2>配置在线恢复</h2>
+<h2 id="online_recovery_params">配置在线恢复</h2>
 <p>
 	为在线恢复在pgpool.conf中设置如下参数：
-
-   <ul>
-    <li> backend_data_directory
-    <li> recovery_user
-    <li> recovery_password
-    <li> recovery_1st_stage_command
-    <li> recovery_2nd_stage_command
-   </ul>
 </p>
+
+<ul>
+    <li><a href="#BACKEND_DATA_DIRECTORY">backend_data_directory</a></li>
+    <li><a href="#RECOVERY_USER">recovery_user</a></li>
+    <li><a href="#RECOVERY_PASSWORD">recovery_password</a></li>
+    <li><a href="#RECOVERY_1ST_STAGE_COMMAND">recovery_1st_stage_command</a></li>
+    <li><a href="#RECOVERY_2ND_STAGE_COMMAND">recovery_2nd_stage_command</a></li>
+</ul>
 
 
 <h2><a name="installing-c-functions"></a>安装c语言函数</h2>
@@ -2483,17 +2515,18 @@ pgpool-II 以两个阶段来执行在线恢复。当一个恢复节点同步数�
 <p>
 	需要一个脚本从主节点获取一个备份库，然后把它拷贝到恢复目标节点中去。该脚本可命名为如"copy-base-backup"。下面是个示例：
 </p>
-<pre>
-  #! /bin/sh
-  DATA=$1
-  RECOVERY_TARGET=$2
-  RECOVERY_DATA=$3
 
-  psql -c "select pg_start_backup('pgpool-recovery')" postgres
-  echo "restore_command = 'scp $HOSTNAME:/data/archive_log/%f %p'" > /data/recovery.conf
-  tar -C /data -zcf pgsql.tar.gz pgsql
-  psql -c 'select pg_stop_backup()' postgres
-  scp pgsql.tar.gz $RECOVERY_TARGET:$RECOVERY_DATA
+<pre>
+#! /bin/sh
+DATA=$1
+RECOVERY_TARGET=$2
+RECOVERY_DATA=$3
+
+psql -c "select pg_start_backup('pgpool-recovery')" postgres
+echo "restore_command = 'scp $HOSTNAME:/data/archive_log/%f %p'" &gt; /data/recovery.conf
+tar -C /data -zcf pgsql.tar.gz pgsql
+psql -c 'select pg_stop_backup()' postgres
+scp pgsql.tar.gz $RECOVERY_TARGET:$RECOVERY_DATA
 </pre>
 
 <p>
@@ -2564,9 +2597,9 @@ recovery_2nd_stage_command = 'pgpool_recovery_pitr'
 </p>
 
 <pre>
-  % pgpool_remote_start remote_host remote_datadir
-  remote_host:    Hostname of a recovery target.
-  remote_datadir: Database cluster path of a recovery target.
+% pgpool_remote_start remote_host remote_datadir
+remote_host:    Hostname of a recovery target.
+remote_datadir: Database cluster path of a recovery target.
 </pre>
 
 <p>
@@ -2595,10 +2628,10 @@ ssh -T $DEST $PGCTL -w -D $DESTDIR start 2>/dev/null 1>/dev/null < /dev/null &
 </p>
 
 <pre>
-  % pgpool_recovery datadir remote_host remote_datadir
-  datadir:        Database cluster path of a master node.
-  remote_host:    Hostname of a recovery target node.
-  remote_datadir: Database cluster path of a recovery target node.
+% pgpool_recovery datadir remote_host remote_datadir
+datadir:        Database cluster path of a master node.
+remote_host:    Hostname of a recovery target node.
+remote_datadir: Database cluster path of a recovery target node.
 </pre>
 
 <p>
@@ -2625,11 +2658,11 @@ recovery_2nd_stage_command = 'pgpool_recovery'
 
 <h2>如何执行在线恢复</h2>
 <p>
-	为了执行在线恢复，使用 pcp_recovery_node 命令或 pgpoolAdmin。
+	为了执行在线恢复，使用 <a href="pcp_recovery_node">pcp_recovery_node</a> 命令或 pgpoolAdmin。
 </p>
 
 <p>
-	注意你需要给 pcp_recovery_node 第一个参数传递一个大数。该数是一个以秒为单位的定时参数。如果你使用 pgpoolAdmin，在pgmgt.conf.php中设置 "_PGPOOL2_PCP_TIMEOUT "参数为一个大数。
+	注意你需要给 <a href="pcp_recovery_node">pcp_recovery_node</a> 第一个参数传递一个大数。该数是一个以秒为单位的定时参数。如果你使用 pgpoolAdmin，在pgmgt.conf.php中设置 "_PGPOOL2_PCP_TIMEOUT "参数为一个大数。
 </p>
 
 <h2 id="minorup_w_online_recovery">使用在线恢复实现 PostgreSQL 版本升级</h2>
@@ -3113,7 +3146,7 @@ Pgpool-HA 可以在 pgpool 开发网站找到，它是一个开源软件。</p>
 <p>
 	pgpool-II 的健康检查特性检测到DB节点失效。
 </p>
-<p>
+
 <pre>
 2010-07-23 16:42:57 ERROR: pid 20031: health check failed. 1 th host foo at port 5432 is down
 2010-07-23 16:42:57 LOG:   pid 20031: set 1 th backend down status
@@ -3121,10 +3154,11 @@ Pgpool-HA 可以在 pgpool 开发网站找到，它是一个开源软件。</p>
 2010-07-23 16:42:58 LOG:   pid 20031: failover_handler: set new master node: 0
 2010-07-23 16:42:58 LOG:   pid 20031: failover done. shutdown host foo(5432)
 </pre>
-</p>
+
 <p>
 	该日志表明DB节点1 (主机foo) 与pgpool中断并失去连接（关闭），于是DB节点0成为新的master。检查DB节点1，处理掉产生故障的原因，之后如果可能则会在DB节点1上执行一个在线恢复。
 </p>
+</dd>
 
 <dt>Failed to read kind from frontend
 <dd>
@@ -3156,7 +3190,7 @@ was:"之后看到引起错误的 SQL 语句，接着是响应类型。如果响�
 </p>
 
 <p>
-<dt>pgpool-II 检查插入、更细或者删除的不同的行数
+<dt>pgpool-II 检查插入、更新或者删除的不同的行数
 <dd>
 <p>
 	在复制模式下，pgpool-II 检测到 INSERT/UPDATE/DELETE 在影响的节点上产生不同的行数。
@@ -3174,8 +3208,12 @@ was:"之后看到引起错误的 SQL 语句，接着是响应类型。如果响�
 <p>
 	停止怀疑有错误数据的数据库节点并执行在线恢复。
 </p>
-</ul>
+</dl>
 
+<p class="top_link"><a href="#Top">返回顶部</a></p>
+
+
+<!-- ================================================================================ -->
 
 <h1>限制<a name="restriction"></a></h1>
 
