@@ -1820,7 +1820,7 @@ See <a href="#WHITE_FUNCTION_LIST">white_function_list</a> for more details.
 <h1><a name="stream"></a>Streaming Replication <span class="version">V3.1 -</span></h1>
 <p>
 As stated above, pgpool-II can work together with Streaming Replication, which
-is available since PostgreSQL 9.0. To use it, enable '<a href="#MASTER_SLAVE_MODE">master_slave</a>' and
+is available since PostgreSQL 9.0. To use it, enable '<a href="#MASTER_SLAVE_MODE">master_slave_mode</a>' and
 set '<a href="#MASTER_SLAVE_SUB_MODE">master_slave_sub_mode</a>' to 'stream'.
 pgpool-II assumes that Streaming Replication is used with Hot Standby at present,
 which means that the standby database is open read-only.
