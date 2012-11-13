@@ -78,7 +78,7 @@ static void pool_reset_memqcache_buffer(void);
 static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char *data, int size);
 static POOL_CACHEID *pool_find_item_on_shmem_cache(POOL_QUERY_HASH *query_hash);
 static char *pool_get_item_shmem_cache(POOL_QUERY_HASH *query_hash, int *size, int *sts);
-static void pool_add_query_cache_array(POOL_QUERY_CACHE_ARRAY *cache_array, POOL_TEMP_QUERY_CACHE *cache);
+static POOL_QUERY_CACHE_ARRAY * pool_add_query_cache_array(POOL_QUERY_CACHE_ARRAY *cache_array, POOL_TEMP_QUERY_CACHE *cache);
 static void pool_add_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache, char kind, char *data, int data_len);
 static void pool_add_oids_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache, int num_oids, int *oids);
 static POOL_INTERNAL_BUFFER *pool_create_buffer(void);
@@ -2472,10 +2472,12 @@ static void dump_shmem_cache(POOL_CACHE_BLOCKID blockid)
 POOL_QUERY_CACHE_ARRAY *pool_create_query_cache_array(void)
 {
 #define POOL_QUERY_CACHE_ARRAY_ALLOCATE_NUM 128
+#define POOL_QUERY_CACHE_ARRAY_HEADER_SIZE (sizeof(int)+sizeof(int))
+
 	size_t size;
 	POOL_QUERY_CACHE_ARRAY *p;
 
-	size = sizeof(int) + sizeof(int) + POOL_QUERY_CACHE_ARRAY_ALLOCATE_NUM *
+	size = POOL_QUERY_CACHE_ARRAY_HEADER_SIZE + POOL_QUERY_CACHE_ARRAY_ALLOCATE_NUM *
 		sizeof(POOL_TEMP_QUERY_CACHE *);
 	p = malloc(size);
 	if (!p)
@@ -2508,26 +2510,28 @@ void pool_discard_query_cache_array(POOL_QUERY_CACHE_ARRAY *cache_array)
 /*
  * Add query cache array
  */
-static void pool_add_query_cache_array(POOL_QUERY_CACHE_ARRAY *cache_array, POOL_TEMP_QUERY_CACHE *cache)
+static POOL_QUERY_CACHE_ARRAY * pool_add_query_cache_array(POOL_QUERY_CACHE_ARRAY *cache_array, POOL_TEMP_QUERY_CACHE *cache)
 {
 	size_t size;
+	POOL_QUERY_CACHE_ARRAY *cp = cache_array;
 
 	if (!cache_array)
-		return;
+		return cp;
 
 	if (cache_array->num_caches >= 	cache_array->array_size)
 	{
 		cache_array->array_size += POOL_QUERY_CACHE_ARRAY_ALLOCATE_NUM;
-		size = cache_array->array_size + sizeof(int) + cache_array->array_size *
+		size = POOL_QUERY_CACHE_ARRAY_HEADER_SIZE + cache_array->array_size *
 			sizeof(POOL_TEMP_QUERY_CACHE *);
 		cache_array = realloc(cache_array, size);
 		if (!cache_array)
 		{
 			pool_error("pool_add_query_cache_array: malloc failed");
-			return;
+			return cp;
 		}
 	}
 	cache_array->caches[cache_array->num_caches++] = cache;
+	return cache_array;
 }
 
 /*
@@ -2954,7 +2958,8 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 			 */
 			else
 			{
-				pool_add_query_cache_array(session_context->query_cache_array, cache);
+				session_context->query_cache_array = 
+					pool_add_query_cache_array(session_context->query_cache_array, cache);
 			}
 
 			/* Count up temporary SELECT stats */
