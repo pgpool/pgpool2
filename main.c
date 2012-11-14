@@ -1519,6 +1519,8 @@ static void failover(void)
 	int new_primary;
 	int nodes[MAX_NUM_BACKENDS];
 	bool need_to_restart_children;
+	int status;
+	int sts;
 
 	pool_debug("failover_handler called");
 
@@ -1884,6 +1886,29 @@ static void failover(void)
 	 * Send restart request to pcp child.
 	 */
 	kill(pcp_pid, SIGUSR1);
+	for (;;)
+	{
+		sts = waitpid(pcp_pid, &status, 0);
+		if (sts != -1)
+			break;
+		if (sts == -1)
+		{
+			if (errno == EINTR)
+				continue;
+			else
+			{
+				pool_error("failover: waitpid failed. reson: %s", strerror(errno));
+				return;
+			}
+		}
+	}
+	if (WIFSIGNALED(status))
+		pool_log("PCP child %d exits with status %d by signal %d in failover()", pcp_pid, status, WTERMSIG(status));
+	else
+		pool_log("PCP child %d exits with status %d in failover()", pcp_pid, status);
+
+	pcp_pid = pcp_fork_a_child(pcp_unix_fd, pcp_inet_fd, pcp_conf_file);
+	pool_log("fork a new PCP child pid %d in failover()", pcp_pid);
 }
 
 /*
