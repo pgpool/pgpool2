@@ -1778,6 +1778,7 @@ void pool_send_severity_message(POOL_CONNECTION *frontend, int protoMajor,
 		int sendlen;
 
 		len = 0;
+		memset(data, 0, MAXDATA);
 
 		pool_write(frontend, "E", 1);
 
