@@ -1724,15 +1724,30 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 						return POOL_END;
 				}
 
-				/*
-				 * If the query was not READ SELECT, and we are in an
-				 * explicit transaction, remember that we had a write
-				 * query in this transaction.
-				 */
-				else if (!is_select_query(node, query) &&
-						 TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) == 'T')
+				else if (!is_select_query(node, query))
 				{
-					pool_set_writing_transaction();
+					/*
+					 * If the query was not READ SELECT, and we are in an
+					 * explicit transaction, remember that we had a write
+					 * query in this transaction.
+					 */
+					if (TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) == 'T')
+					{
+						pool_set_writing_transaction();
+					}
+
+					/*
+					 * If the query was CREATE TEMP TABLE, discard
+					 * temp table relcache because we might have had
+					 * persistent table relation cache which has table
+					 * name as the tem table.
+					 */
+					if (IsA(node, CreateStmt))
+					{
+						CreateStmt *create_table_stmt = (CreateStmt *)node;
+						if (create_table_stmt->relation->istemp)
+							discard_temp_table_relcache();
+					}
 				}
 			}
 
