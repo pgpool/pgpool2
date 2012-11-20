@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -246,6 +246,7 @@ print_usage(const char prog[], int exit_code)
   --md5auth, -m        Produce md5 authentication password.\n\
   --username, -u USER  When producing a md5 authentication password,\n\
                        create the pool_passwd entry for USER.\n\
+  --config-file, -f CONFIG-FILE  Specify pgpool.conf.\n\
   --help, -h           This help menu.\n\
 \n\
 Warning: At most %d characters are allowed for input.\n\

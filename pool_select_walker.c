@@ -368,6 +368,7 @@ static bool
 view_walker(Node *node, void *context)
 {
 	SelectContext	*ctx = (SelectContext *) context;
+	char *relname;
 
 	if (node == NULL)
 		return false;
@@ -375,10 +376,10 @@ view_walker(Node *node, void *context)
 	if (IsA(node, RangeVar))
 	{
 		RangeVar *rgv = (RangeVar *)node;
+		relname = make_table_name_from_rangevar(rgv);
+		pool_debug("view_walker: relname: %s", relname);
 
-		pool_debug("view_walker: relname: %s", rgv->relname);
-
-		if (is_view(rgv->relname))
+		if (is_view(relname))
 		{
 			ctx->has_view = true;
 			return false;
@@ -492,6 +493,8 @@ static bool is_system_catalog(char *table_name)
  * Judge the table used in a query represented by node is a temporary
  * table or not.
  */
+static POOL_RELCACHE *is_temp_table_relcache;
+
 static bool is_temp_table(char *table_name)
 {
 /*
@@ -519,7 +522,6 @@ static bool is_temp_table(char *table_name)
 	int hasrelistemp;
 	bool result;
 	static POOL_RELCACHE *hasrelistemp_cache;
-	static POOL_RELCACHE *relcache;
 	char *query;
 	POOL_CONNECTION_POOL *backend;
 
@@ -554,12 +556,12 @@ static bool is_temp_table(char *table_name)
 	/*
 	 * If relcache does not exist, create it.
 	 */
-	if (!relcache)
+	if (!is_temp_table_relcache)
 	{
-		relcache = pool_create_relcache(pool_config->relcache_size, query,
-										int_register_func, int_unregister_func,
-										true);
-		if (relcache == NULL)
+		is_temp_table_relcache = pool_create_relcache(pool_config->relcache_size, query,
+													  int_register_func, int_unregister_func,
+													  true);
+		if (is_temp_table_relcache == NULL)
 		{
 			pool_error("is_temp_table: pool_create_relcache error");
 			return false;
@@ -569,8 +571,20 @@ static bool is_temp_table(char *table_name)
 	/*
 	 * Search relcache.
 	 */
-	result = pool_search_relcache(relcache, backend, table_name)==0?false:true;
+	result = pool_search_relcache(is_temp_table_relcache, backend, table_name)==0?false:true;
 	return result;
+}
+
+/*
+ * Discard relcache used by is_temp_table_relcache().
+ */
+void discard_temp_table_relcache(void)
+{
+	if (is_temp_table_relcache)
+	{
+		pool_discard_relcache(is_temp_table_relcache);
+		is_temp_table_relcache = NULL;
+	}
 }
 
 /*

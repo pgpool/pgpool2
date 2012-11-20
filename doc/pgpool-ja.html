@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Sat Sep  1 08:42:19 JST 2012
+Last modified: Thu Nov  1 18:30:11 JST 2012
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1769,6 +1769,7 @@ SELECTなどの問い合わせがロードバランスされます。
 </p>
 <ul>
     <li>PostgreSQLのバージョンが7.4以降である</li>
+	<li>レプリケーションモードまたはマスタースレーブモードである</li>
     <li>問い合わせが明示的なトランクザションブロックの内側にない(つまり、BEGINを発行していない)</li>
     <li>SELECT文(WITH付も含む。<a href="#BLACK_FUNCTION_LIST">black_list</a> または
         <a href="#WHITE_FUNCTION_LIST">white_list</a> で指定された書き込みを含むSELECTを除く)
@@ -1776,7 +1777,18 @@ SELECTなどの問い合わせがロードバランスされます。
     <li>SELECT INTO 文ではない</li>
     <li>SELECT FOR UPDATE/SELECT FOR SHARE文ではない</li>
     <li>クエリ文字列が SELECTまたはWITH で始まる(ignore_leading_white_space = trueの場合は空白は無視します)</li>
-</ul>
+	<li>マスタースレーブモードの場合、更に以下の条件が満たされなければなりません。<span class="version">V3.0 -</span></li>
+		<ul>
+		  <li>一時テーブルを使っていない</li>
+		  <li>unloggedテーブルを使っていない</li>
+		  <li>システムカタログを使っていない</li>
+		  <li>トランザクションブロックの内側であっても上記条件と下記条件を満たせばロードバランスされます。</li>
+			  <ul>
+				<li>トランザクション分離レベルがSERIALIZABLEでない</li>
+				<li>トランザクション内で更新を伴うクエリが実行されていない(更新を伴うクエリが実行されるまではロードバランスされます)</li>
+			  </ul>
+		</ul>
+  </ul>
 <p>
 (<a href="#replicate_select">replicate_selectの項目</a>も参考にしてください)
 また、<a href="where_to_send_queries.pdf">詳細な判定条件をフローチャートにしたもの</a>もご覧下さい。
