@@ -1931,7 +1931,6 @@ static void reaper(void)
 
 			pcp_pid = pcp_fork_a_child(pcp_unix_fd, pcp_inet_fd, pcp_conf_file);
 			pool_log("fork a new PCP child pid %d", pcp_pid);
-			break;
 		}
 
 		/* exiting process was worker process */
@@ -1946,8 +1945,8 @@ static void reaper(void)
 				worker_pid = worker_fork_a_child();
 
 			pool_log("fork a new worker child pid %d", worker_pid);
-			break;
-		} else
+		}
+		else
 		{
 			if (WIFSIGNALED(status))
 				pool_debug("child %d exits with status %d by signal %d", pid, status, WTERMSIG(status));
