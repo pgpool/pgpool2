@@ -60,10 +60,17 @@ wd_is_upper_ok(char * server_list)
 
 	if (server_list == NULL)
 	{
+		pool_error("wd_is_upper_ok: server_list is NULL");
 		return WD_NG;
 	}
 	len = strlen(server_list)+2;
 	buf = malloc(len);
+	if (buf == NULL)
+	{
+		pool_error("wd_is_upper_ok: malloc failed");
+		return WD_NG;
+	}
+
 	memset(buf,0,len);
 	strlcpy(buf,server_list,len);
 	/* thread init */
@@ -162,6 +169,9 @@ wd_is_unused_ip(char * ip)
 }
 
 
+/*
+ * Thread to execute ping against "trusted hosts".
+ */
 static void *
 exec_ping(void * arg)
 {
@@ -180,7 +190,7 @@ exec_ping(void * arg)
 	memset(result,0,sizeof(result));
 	if (pipe(pfd) == -1)
 	{
-		fprintf(stderr,"pipe open error:%s\n",strerror(errno));
+		pool_error("exec_ping: pipe open error:%s", strerror(errno));
 		return NULL;
 	}
 
@@ -191,12 +201,23 @@ exec_ping(void * arg)
 	args[i++] = NULL;
 
 	pid = fork();
+	if (pid == -1)
+	{
+		pool_error("exec_ping: fork() failed. reason: %s", strerror(errno));
+		exit(1);
+	}
 	if (pid == 0)
 	{
 		close(STDOUT_FILENO);
 		dup2(pfd[1], STDOUT_FILENO);
 		close(pfd[0]);
 		status = execv(ping_path,args);
+	   
+		if (status == -1)
+		{
+			pool_error("exec_ping: execv(%s) failed. reason: %s", ping_path, strerror(errno));
+			exit(1);
+		}
 		exit(0);
 	}
 	else
@@ -210,11 +231,18 @@ exec_ping(void * arg)
 			{
 				if (errno == EINTR)
 					continue;
+
+				pool_error("exec_ping: wait() failed. reason: %s", strerror(errno));
+				close(pfd[0]);
 				return NULL;
 			}
 
-			if (WIFEXITED(status) == 0 || WEXITSTATUS(status) != 0)
+			if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
+			{
+				pool_error("exec_ping: %s exited abnormaly", ping_path);
+				close(pfd[0]);
 				return NULL;
+			}
 			else
 				break;
 		}
@@ -239,8 +267,12 @@ get_result (char * ping_data)
 
 	if (ping_data == NULL)
 	{
+		pool_error("get_result: no ping data");
 		return -1;
 	}
+
+	pool_debug("get_result: ping data: %s", ping_data);
+
 	/*
 	 skip result until average data
 	 tipical result of ping is as follows,
@@ -268,6 +300,7 @@ get_result (char * ping_data)
 	msec = strtod(sp,(char **)NULL);
 	if (errno != 0)
 	{
+		pool_error("get_result: strtod() failed. reason: %s", strerror(errno));
 		return -1;
 	}
 	return msec;
