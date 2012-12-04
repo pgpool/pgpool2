@@ -51,6 +51,7 @@ extern bool pool_has_function_call(Node *node);
 extern bool pool_has_non_immutable_function_call(Node *node);
 extern bool pool_has_system_catalog(Node *node);
 extern bool pool_has_temp_table(Node *node);
+extern void discard_temp_table_relcache(void);
 extern bool pool_has_unlogged_table(Node *node);
 extern bool pool_has_view(Node *node);
 extern bool pool_has_insertinto_or_locking_clause(Node *node);

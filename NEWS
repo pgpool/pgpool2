@@ -4,6 +4,191 @@
 3.2 Series (2012/08/03 - )
 ===============================================================================
 
+                    3.2.1 (namameboshi) 2012/10/12
+
+* Version 3.2.1
+
+      This is a bugfix release against pgpool-II 3.2.0.
+
+* Bug fixes
+
+    - Fix send_cached_messages(). (Tatsuo Ishii)
+
+      Before it had 8192 bytes fix length buffer for each row data and if data
+      exceeded 8192 bytes, it just crashed.
+      To fix this, eliminate copying raw data which is passed as an argument
+      to buffer and pass the pointer to send_message.
+
+    - Fix that extended queries failed due to query cache. (Nozomi Anzai)
+
+    - Fix read_startup_packet(). (Tatsuo Ishii)
+
+      If packet length is lower than 0, it should have returned immediately.
+      Otherwise it would cause memory allocation error later on.
+      per pgpool-general:886. Also add canceling alarm.
+
+      [pgpool-general: 886] read_startup_packet: out of memory
+      From: Lonni J Friedman
+      Date: Wed, 8 Aug 2012 10:18:15 -0700
+      http://www.sraoss.jp/pipermail/pgpool-general/2012-August/000896.html
+
+    - Fix too watchdog process's aggressively kill other processes when pgpool
+      shuts down. (Tatsuo Ishii)
+
+      watchdog process calls kill(0,SIG) to kill all processes related to
+      watchdog.  Unfortunately this will kill not only watchdog related
+      processes but parent pgpool and even httpd in case when pgpool was
+      invoked from pgpoolAdmin because they are in the same process
+      group.
+      So for now, fix is removing call to the kill() and setpgid() because
+      setpgid() does nothing useful.
+
+      In the future, we should call setsid() to establish new process group
+      in any case.
+
+    - Fix query cache to regist such queries that start with "-- comment" or
+      have comments more than one. (Nozomi Anzai)
+
+    - Fix query cache to ignore multi statement. (Nozomi Anzai)
+
+      In previous, queries like "SELECT 1;UPDATE..." were cached, too, but it
+      was wrong.
+
+    - Add a watchdog restriction to documents. (Yugo Nagata)
+
+    - Add NOTICE message handling to s_do_auth(). (Tatsuo Ishii)
+
+      Without this, health check responses false alarm and causes failover.
+      per bug track:
+
+      #25 s_do_auth doesn't handle NoticeResponse (N) message
+      Date:     2012-08-28 03:57
+      Reporter: singh.gurjeet
+      http://www.pgpool.net/mantisbt/view.php?id=25
+
+    - Remove unnecessary/confusing debug log from s_do_auth().(Tatsuo Ishii)
+
+    - Fix buffer overrun in Execute when memory cache enabled.
+      (Tatsuo Ishii)
+
+      If one of bind parameter < 0, it was possible to produce more than 2
+      byte string for "%02X" due to sign extention.
+      Also use snprintf, rather than sprintf to prevent from possible buffer
+      overrun in the future.
+
+    - Fix long standing memory leak bug with free_select_result() since
+      pgpool-II 2.3 was born in December 2009. (Tatsuo Ishii)
+
+      Actually this bug only appears when operated in replication mode
+      (triggered by timestamp rewriting process by coincidence).
+      Per bug track #24:
+
+      #24 Severe memory leak in an OLTP environment
+      Date:     2012-08-28 03:43
+      Reporter: singh.gurjeet
+      http://www.pgpool.net/mantisbt/view.php?id=24
+
+    - Fix typo in cache_reporting(). (Tatsuo Ishii)
+
+    - Fix inifinit loop in SSL mode.  (Tatsuo Ishii)
+
+      When there's pending data in SSL layer of frontend, pool_process_query()
+      checks pending data in backend. If there's non, it loops again and checks
+      frontend/backend receive buffer by using is_cache_empty().
+      Unfortunately it first checks pending data in SSL layer of frontend,
+      thus goes to backend data and checks again (infinite loop).
+
+      The solution is, if there's pending data in SSL layer of frontend and
+      query is not in progress, call ProcessFrontendResponse() to process new
+      request from frontend.
+
+    - Fix is_system_catalog() to use pgpool_regclass if available.
+      (Tatsuo Ishii)
+
+    - Fix memory leak in pool_get_insert_table_name(). (Tatsuo Ishii)
+
+      If session context's memory contex is used for nodeToString(), memory is
+      not freed until session ends.
+      See bug track #24 for more details.
+
+      #24 Severe memory leak in an OLTP environment
+      Date:     2012-08-28 03:43
+      Reporter: singh.gurjeet
+      http://www.pgpool.net/mantisbt/view.php?id=24
+
+    - Use fcntl(2) rather than flock(2) to lock oid map files. (Tatsuo Ishii)
+
+      flock(2) is not portable and cannot be used on Solaris.
+      Patch contributed by Ibrar Ahmed.
+
+    - Fix oversight of get_next_master_node() when operated in raw mode.
+      (Tatsuo Ishii)
+
+      If master node goes down, it always returned master node id 0.
+      See [pgpool-general: 1039] for more details.
+
+      [pgpool-general: 1039] Raw failover not working as expected on pgpool-II
+      v3.2.0
+      From: Quentin White
+      Date: Tue, 25 Sep 2012 07:45:34 +0000
+      http://www.sraoss.jp/pipermail/pgpool-general/2012-September/001057.html
+
+    - Fix segfault of do_query(). (Tatsuo Ishii)
+
+      When memqcache enabled and extended protocol is used, do_query()
+      accesses system catalog and use pool_read2(). Unfortunately parse message
+      packet is given to Parse() and the packet contents is on pool_read2's
+      buffer. Thus do_query could break the packet contents, and it leads to
+      segfault.
+
+      Solution is, allocate memory and copies the packet contents and pass to
+      Parse(). Note that query context holds query string, which is in the
+      packet as well. So we need to copy it and save the pointer in the
+      query context.
+
+      We think the problem is not only with Parse() but with other protocol
+      modules. So this fix is not Parse() only, rather for other modules. For
+      this purpose ProcessFrontendResponse() is changed.
+
+      See bugtrack in detai.
+
+      #21 pgpool-II 3.2.0 cannot execute sql through jdbc
+      Date:     2012-08-17 16:31
+      Reporter: elisechiang
+      http://www.pgpool.net/mantisbt/view.php?id=21
+
+    - Fix to set unix domain socket path for pgpool PCP communication before
+      setting up signal handlers. (Yugo Nagata)
+
+      Previously, unlink of the socket in exitting process was failed because
+      the path of the socket was not set.
+      Patch contributed by Gilles Darold
+
+      [pgpool-hackers: 131] Found bug with watchdog resulting in pgpool
+                            segmentation fault
+      From: Gilles Darold
+      Date: Thu, 13 Sep 2012 18:54:42 +0200
+      http://www.sraoss.jp/pipermail/pgpool-hackers/2012-September/000130.html
+
+    - Fix to output the message when, in watchdog, ifup/down or arping command
+      does not exist. (Yugo Nagata)
+
+    - Fix long standing problem with do_query(). (Tatsuo Ishii)
+
+      When 1) extended protocol used and 2)unnamed portal is used and 3) no
+      explicit transaction is used, user's unnamed portal is removed by Sync
+      message.
+      This is because Sync message closes transaction and unnamed portal is
+      removed. This leads to "portal "" does not exist" error.
+
+      Fix is, use "Flush" message instead of Sync. Main difference between
+      using Sync and Flush is, Flush does not return Ready for Query message.
+      So do_query() does not return until all expected responses are returned.
+      It seems the order of messages returned from backend is random, and
+      do_query () manages it by using state bits.
+
+===============================================================================
+
                     3.2.0 (namameboshi) 2012/08/03
 
 * Version 3.2.0
@@ -409,6 +594,186 @@
 3.1 Series (2011/09/08 - )
 ===============================================================================
 
+                    3.1.5 (hatsuiboshi) 2012/10/12
+
+* Version 3.1.5
+
+      This is a bugfix release against pgpool-II 3.1.4
+
+      __________________________________________________________________
+
+* Bug fixes
+
+    - Fix read_startup_packet. (Tatsuo Ishii)
+
+      If packet length is lower than 0, it should
+      have returned immediately. Otherwise it would cause memory allocation
+      error later on.  per pgpool-general:886.
+      Also add canceling alarm.
+
+    - Add NOTICE message handling to s_do_auth. (Tatsuo Ishii)
+
+      Without this, health check responses false alarm and causes failover.
+      per bug track:
+      http://www.pgpool.net/mantisbt/view.php?id=25
+      Also allow to receive ready for query packet *not* right after backend
+      keydata.  I'm not sure if this could happen in the real world but the
+      protocol seems to allow this.
+
+    - Remove unnecessary/confusing debug log from s_do_auth.(Tatsuo Ishii)
+
+    - Fix inifinit loop in SSL mode. When there's pending data in SSL layer
+      of frontend, pool_process_query() checks pending data in backend. 
+      (Tatsuo Ishii)
+
+      If there's non, it loops again and checks frontend/backend receive buffer
+      by using is_cache_empty(). Unfortunately it first checks pending data
+      in SSL layer of frontend, thus goes to backend data and checks again
+      (infinite loop).
+      The solution is, if there's pending data in SSL layer of frontend and
+      query is not in progress, call ProcessFrontendResponse() to process new
+      request from frontend.
+
+    - Fix is_system_catalog to use pgpool_regclass if available.
+      (Tatsuo Ishii)
+
+    - Fix memory leak in pool_get_insert_table_name(). (Tatsuo Ishii)
+
+      If session context's memory contex is used for nodeToString(), memory is
+      not freed until session ends.
+
+    - Fix possible memory leak in nodeToString(). (Tatsuo Ishii)
+
+      Since the memory context could be session context, memory used for
+      String object may be considerable if user session continues for hours or
+      days.
+      See bug track #24 for more details.
+
+    - Fix long standing problem with do_query(). (Tatsuo Ishii)
+
+      When 1) extended protocol used and 2)unnamed portal is used and 3) no
+      explicit transaction is used, user's unnamed portal is removed by Sync
+      message.
+      This is because Sync message closes transaction and unnamed portal is
+      removed. This leads to "portal "" does not exist" error.
+
+      Fix is, use "Flush" message instead of Sync. Main difference between
+      using Sync and Flush is, Flush does not return Ready for Query message.
+      So do_query() does not return until all expected responses are returned.
+      It seems the order of messages returned from backend is random, and
+      do_query () manages it by using state bits.
+
+
+===============================================================================
+
+                    3.1.4 (hatsuiboshi) 2012/08/06
+
+* Version 3.1.4
+
+      This is a bugfix release against pgpool-II 3.1.3.
+
+      __________________________________________________________________
+
+* Bug fixes
+
+      * General
+
+      - Adopt PostgreSQL 9.2. (Tatsuo Ishii)
+
+      * Bug fixes
+
+      - Fix pool_send_and_wait() to send or not to send COMMIT / ABORT
+        depending on the transaction state on each node. (Tatsuo Ishii)
+
+        It is possible that only primary is in an explicit transaction but
+        standby is not in it if multi statement query has been sent.
+        Per bug report [pgpool-general-jp: 1049].
+
+      - Fix load balance in Solaris. (Tatsuo Ishii)
+
+        Problem is, random() in using random() in Solaris results in strange
+        load balancing calculation.
+        Use srand()/rand() instead although they produce lesser quality random
+        Problem reported at [pgpool-general: 396].
+
+          [pgpool-general: 396] strange load balancing issue in Solaris
+          http://www.pgpool.net/pipermail/pgpool-general/2012-April/000397.html
+
+      - Add params to the result of "SHOW pool_status": backend_data_directory,
+        ssl_ca_cert, ssl_ca_cert_dir. (Nozomi Anzai)
+
+      - Fix segfault of pcp_systemdb_info not in parallel mode. (Nozomi Anzai)
+
+      - Fix "unnamed prepared statment does not exist" error. (Tatsuo Ishii)
+
+        This is caused by pgpool's internal query, which breaks client's
+        unnamed statements. To fix this, if extended query is used, named
+        statement/portal for internal are used for internal query.
+
+      - Fix is_system_catalog(). Its relcach was accidently defined as
+        "session local". (Tatsuo Ishii)
+
+      - Fix hangup when query conflict occurs in Hot-Standby mode.
+        (Yugo Nagata)
+
+        Query example to reproduce:
+
+            (S1) BEGIN;
+            (S1) SELECT * FROM t;
+            (S2) DELETE FROM t;
+            (S2) VACUUM t;
+
+      - Improve reading and writing pid_file. (Tatsuo Ishii)
+
+      - Fix pool_process_query() bug reported in [pgpool-general: 672].
+        (Tatsuo Ishii)
+
+        This is caused by the function waits for primary node which does not
+        have pending data, while standbys have pending data.
+
+          [pgpool-general: 672] Transaction never finishes
+          http://www.pgpool.net/pipermail/pgpool-general/2012-June/000676.html
+
+      - Fix wait_for_query_response() not to send param status to frontend if
+        frontend is NULL. (Tatsuo Ishii)
+
+        This could happen while processing reset_query_list and occur crash.
+
+      - Fix bug with treatment of BEGIN TRANSACTION in master/slave mode.
+        (Tatsuo Ishii)
+
+        Original complain is [pgpool-general: 714].
+        From 3.1, pgpool-II sends BEGIN.. to all DB nodes. Of course we cannot
+        send BEGIN TRANSACTION READ WRITE to standby nodes.
+        Problem is, we did not check BEGIN WORK ISOLATION LEVEL SERIALIZABLE;
+        and sent to standby nodes. Of course this is wrong, since it's not
+        allowed to run transactions in serializable mode on standby nodes.
+        So added check for BEGIN WORK ISOLATION LEVEL SERIALIZABLE case.
+
+          [pgpool-general: 714]
+          Load Balancing / Streaming Replication / Isolation Level serializable
+          http://www.pgpool.net/pipermail/pgpool-general/2012-July/000719.html
+
+      - Fix send_to_where() to send the query to only primary if the it is like
+        SET TRANSACTION ISOLATION LEVELSERIALIZABLE etc. (Tatsuo Ishii)
+
+        Case in streaming replication mode. Previously, it was sent to not only
+        primary but also to standby and of course this causes an error.
+        Similar SQLs are:
+
+         SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL
+         SERIALIZABLE or SET transaction_isolation TO 'serializable'
+         SET default_transaction_isolation TO 'serializable'
+
+        Original complain is [pgpool-general: 715].
+
+          [pgpool-general: 715]
+          Re: Load Balancing / Streaming Replication / Isolation Level
+          serializable
+          http://www.pgpool.net/pipermail/pgpool-general/2012-July/000720.html
+
+===============================================================================
+
                     3.1.3 (hatsuiboshi) 2012/04/23
 
 * Version 3.1.3
@@ -789,6 +1154,132 @@
 
 ===============================================================================
 3.0 Series (2010/09/10 - )
+===============================================================================
+
+                    3.0.9 (hatsuiboshi) 2012/10/12
+
+* Version 3.0.9
+
+      This is a bugfix release against pgpool-II 3.0.8
+
+      __________________________________________________________________
+
+* Bug fixes
+
+    - Fix read_startup_packet. (Tatsuo Ishii)
+
+      If packet length is lower than 0, it should
+      have returned immediately. Otherwise it would cause memory allocation
+      error later on.  per pgpool-general:886.
+      Also add canceling alarm.
+
+    - Add NOTICE message handling to s_do_auth. (Tatsuo Ishii)
+
+      Without this, health check responses false alarm and causes failover.
+      per bug track:
+      http://www.pgpool.net/mantisbt/view.php?id=25
+      Also allow to receive ready for query packet *not* right after backend
+      keydata.  I'm not sure if this could happen in the real world but the
+      protocol seems to allow this.
+
+    - Remove unnecessary/confusing debug log from s_do_auth.(Tatsuo Ishii)
+
+    - Fix inifinit loop in SSL mode. When there's pending data in SSL layer
+      of frontend, pool_process_query() checks pending data in backend. 
+      (Tatsuo Ishii)
+
+      If there's non, it loops again and checks frontend/backend receive buffer
+      by using is_cache_empty(). Unfortunately it first checks pending data
+      in SSL layer of frontend, thus goes to backend data and checks again
+      (infinite loop).
+      The solution is, if there's pending data in SSL layer of frontend and
+      query is not in progress, call ProcessFrontendResponse() to process new
+      request from frontend.
+
+    - Fix is_system_catalog to use pgpool_regclass if available.
+      (Tatsuo Ishii)
+
+    - Fix memory leak in pool_get_insert_table_name(). (Tatsuo Ishii)
+
+      If session context's memory contex is used for nodeToString(), memory is
+      not freed until session ends.
+
+    - Fix possible memory leak in nodeToString(). (Tatsuo Ishii)
+
+      Since the memory context could be session context, memory used for
+      String object may be considerable if user session continues for hours or
+      days.
+      See bug track #24 for more details.
+
+    - Fix long standing problem with do_query(). (Tatsuo Ishii)
+
+      When 1) extended protocol used and 2)unnamed portal is used and 3) no
+      explicit transaction is used, user's unnamed portal is removed by Sync
+      message.
+      This is because Sync message closes transaction and unnamed portal is
+      removed. This leads to "portal "" does not exist" error.
+
+      Fix is, use "Flush" message instead of Sync. Main difference between
+      using Sync and Flush is, Flush does not return Ready for Query message.
+      So do_query() does not return until all expected responses are returned.
+      It seems the order of messages returned from backend is random, and
+      do_query () manages it by using state bits.
+
+===============================================================================
+
+                    3.0.8 (umiyameboshi) 2012/08/0
+
+* Version 3.0.8
+
+      This is a bugfix release against pgpool-II 3.0.7
+
+      __________________________________________________________________
+
+* Bug fixes
+
+      * General
+
+      - Adopt PostgreSQL 9.2. (Tatsuo Ishii)
+
+      * Bug fixes
+
+      - Fix load balance in Solaris. (Tatsuo Ishii)
+
+        Problem is, random() in using random() in Solaris results in strange
+        load balancing calculation.
+        Use srand()/rand() instead although they produce lesser quality random
+        Problem reported at [pgpool-general: 396].
+
+          [pgpool-general: 396] strange load balancing issue in Solaris
+          http://www.pgpool.net/pipermail/pgpool-general/2012-April/000397.html
+
+      - Fix segfault of pcp_systemdb_info not in parallel mode. (Nozomi Anzai)
+
+      - Fix "unnamed prepared statment does not exist" error. (Tatsuo Ishii)
+
+        This is caused by pgpool's internal query, which breaks client's
+        unnamed statements. To fix this, if extended query is used, named
+        statement/portal for internal are used for internal query.
+
+      - Fix is_system_catalog(). Its relcach was accidently defined as
+        "session local". (Tatsuo Ishii)
+
+      - Improve reading and writing pid_file. (Tatsuo Ishii)
+
+      - Fix pool_process_query() bug reported in [pgpool-general: 672].
+        (Tatsuo Ishii)
+
+        This is caused by the function waits for primary node which does not
+        have pending data, while standbys have pending data.
+
+          [pgpool-general: 672] Transaction never finishes
+          http://www.pgpool.net/pipermail/pgpool-general/2012-June/000676.html
+
+      - Fix wait_for_query_response() not to send param status to frontend if
+        frontend is NULL. (Tatsuo Ishii)
+
+        This could happen while processing reset_query_list and occur crash.
+
 ===============================================================================
 
                         3.0.7 (umiyameboshi) 2012/04/23
@@ -1272,6 +1763,93 @@
 2.3 Series (2009/12/07 - 2010/02/22)
 ===============================================================================
 
+                    2.3.4 (tomiteboshi) 2012/08/06
+
+* Version 2.3.4
+
+      This version fixes various bugs since 2.3.3.
+
+      __________________________________________________________________
+
+* Bug fixes
+
+    - Fix do_error_execute_command() so that it discards responses from
+      backend until ErrorResponse received. (Toshihiro Kitagawa)
+
+      Note that we need to preserve non-error responses (i.e. ReadyForQuery)
+      and put back them using pool_unread().
+      Otherwise, ReadyForQuery response of DEALLOCATE. This could happen if
+      PHP PDO used.
+
+    - Fix SimpleForwardToFrontend() so that it reset select_in_transaction
+      flag and execute_select flag when bind error occurred while executing
+      SELECT. (Toshihiro Kitagawa)
+
+    - Fix SSL connection sometimes hung if lots of data read from backend.
+      This is caused by the buffering in OpenSSL layer. To fix the problem,
+      (Tatsuo Ishii)
+
+      we check the buffer has any pending data by using SSL_pending() before
+      calling select(2).
+      See thread [Pgpool-general] Fwd: PGPOOL II 2.3.3 hang in ssl mode for 
+      more details.
+
+    - Fix bug with pcp_check_fd()'s timeout handling. (Tatsuo Ishii)
+
+      Per erboles.
+        Subject: [Pgpool-general] question about pcp_check_fd
+        Date: Sun, 23 May 2010 18:21:41 -0500
+        To: pgpool <pgpool-general@pgfoundry.org>
+
+    - Do not force replication of DEALLOCATE if operated in master/slave mode.
+      Reported by Jan Kantert. (Toshihiro Kitagawa)
+
+      See:
+        Subject: [Pgpool-hackers] Problems with PgPool 2.3.3 Prepare /
+                 Deallocation handling in Master/Slave mode
+        Date: Fri, 28 May 2010 20:59:47 +0200
+      For more details.
+
+    - Make timestamp rewriting schema aware. (Tatsuo Ishii)
+
+    - Do not rewrite statement which accesses columns having now() etc. as the 
+      default value but the data type are not timestamp etc. (Tatsuo Ishii)
+
+      Otherwise we have an error in DMLS. See:
+        Subject: [Pgpool-general] function epoch seems to be causing error
+        To: pgpool-general@pgfoundry.org
+        Date: Mon, 16 Aug 2010 21:48:31 +0000 (UTC)
+      For more details.
+
+    - Fix insert_lock to be schema aware. (Tatsuo Ishii)
+
+    - Fix long standing bug with timestamp rewriting against array and complex
+      types.  (Tatsuo Ishii)
+
+
+      Failed examples are:
+
+        INSERT INTO r1(col[1], col2.foo) VALUES (1, 2); -- insert_column_item
+        UPDATE r1 SET col1[1] = 1, col2.foo = 1; -- set_target
+        PREPARE "p" (int4[]) AS  SELECT $1[1]; -- c_expr
+        SELECT (ARRAY[1,2,3])[1];
+        SELECT (ARRAY[ARRAY[1]])[1][1];
+        SELECT ('{1,2,3}'::int[])[1];
+        SELECT ('{1,2,3}'::int[3])[1];
+        SELECT r1.col[1], (r1.col1).bar, (r1.col1).* FROM r1; -- columnref
+        SELECT (r1.col1).baz[1], (r1.col1).baz[1][2] FROM r1;
+
+      Patch provided by Akio Ishida.
+
+    - Fix buffer overrun problem when pcp password is longer than 32.
+      (Tatsuo Ishii)
+
+    - Fix wait_for_query_response() not to send param status to frontend if
+      frontend is NULL. This could happen while processing reset_query_list.
+      (Tatsuo Ishii)
+
+===============================================================================
+
                         2.3.3 (tomiteboshi) 2010/04/23
 
 * Version 2.3.3
@@ -1562,6 +2140,44 @@
 
 ===============================================================================
 2.2 Series (2009/02/08 - 2010/04/15)
+===============================================================================
+
+                    2.2.8 (urukiboshi) 2012/08/06
+
+* Version 2.2.8
+
+      It includes various fixes for bugs various bug fixes in 2.2.7.
+
+      __________________________________________________________________
+
+* Bug fixes
+
+      - Fix do_error_execute_command() so that it discards responses from
+        backend until ErrorResponse received. (Toshihiro Kitagawa)
+
+        Note that we need to preserve non-error responses (i.e. ReadyForQuery)
+        and put back them using pool_unread().
+        Otherwise, ReadyForQuery response of DEALLOCATE. This could happen if
+        PHP PDO used.
+
+      - Fix SimpleForwardToFrontend() so that it reset select_in_transaction
+        flag and execute_select flag when bind error occurred while executing
+        SELECT. (Toshihiro Kitagawa)
+
+      - Fix bug with pcp_check_fd()'s timeout handling. (Tatsuo Ishii)
+
+        Per erboles.
+          Subject: [Pgpool-general] question about pcp_check_fd
+          Date: Sun, 23 May 2010 18:21:41 -0500
+          To: pgpool <pgpool-general@pgfoundry.org>
+
+      - Fix buffer overrun problem when pcp password is longer than 32.
+        (Tatsuo Ishii)
+
+      - Fix wait_for_query_response() not to send param status to frontend if
+        frontend is NULL. This could happen while processing reset_query_list.
+        (Tatsuo Ishii)
+
 ===============================================================================
 
                     2.2.7 (urukiboshi) 2010/04/15
