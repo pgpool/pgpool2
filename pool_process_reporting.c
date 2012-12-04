@@ -182,11 +182,6 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].desc, "PCP socket directory", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "pcp_timeout", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->pcp_timeout);
-	strncpy(status[i].desc, "PCP timeout for an idle client", POOLCONFIG_MAXDESCLEN);
-	i++;
-
 	/* # - Authentication - */
 	strncpy(status[i].name, "enable_pool_hba", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->enable_pool_hba);
