@@ -182,6 +182,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].desc, "PCP socket directory", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	strncpy(status[i].name, "pcp_timeout", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->pcp_timeout);
+	strncpy(status[i].desc, "PCP timeout for an idle client", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	/* # - Authentication - */
 	strncpy(status[i].name, "enable_pool_hba", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->enable_pool_hba);
@@ -633,6 +638,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].name, "delegate_IP", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->delegate_IP);
 	strncpy(status[i].desc, "delegate IP address of master pgpool", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "wd_hostname", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->wd_hostname);
+	strncpy(status[i].desc, "Host name or IP address of this watchdog", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "wd_port", POOLCONFIG_MAXNAMELEN);

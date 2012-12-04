@@ -48,6 +48,8 @@ pcp_socket_dir = '/tmp'
                                    # The Debian package defaults to
                                    # /var/run/postgresql
                                    # (change requires restart)
+pcp_timeout = 10 
+                                   #PCP timeout (in seconds) for an idle client
 
 # - Backend Connection Settings -
 
