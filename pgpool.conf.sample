@@ -49,6 +49,9 @@ pcp_socket_dir = '/tmp'
                                    # /var/run/postgresql
                                    # (change requires restart)
 
+pcp_timeout = 10 
+                                   #PCP timeout (in seconds) for an idle client
+
 # - Backend Connection Settings -
 
 #backend_hostname0 = 'host1'
