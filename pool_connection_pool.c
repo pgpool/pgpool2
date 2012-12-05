@@ -566,6 +566,12 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 
 		if (connect(fd, (struct sockaddr *)&addr, len) < 0)
 		{
+			if (errno == EISCONN)
+			{
+				/* Socket is already connected */
+				break;
+			}
+
 			if ((errno == EINTR && retry) || errno == EAGAIN)
 				continue;
 
