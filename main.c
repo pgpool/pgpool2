@@ -2136,11 +2136,11 @@ static int health_check(void)
 
 		if (!slot)
 		{
-			if (!strcmp(dbname, "postgres"))
+			/*
+			 * Retry with template1 unless health check timer is expired.
+			 */
+			if (!strcmp(dbname, "postgres") && health_check_timer_expired == 0)
 			{
-				/*
-				 * Retry with template1
-				 */
 				dbname = "template1";
 				goto Retry;
 			}
