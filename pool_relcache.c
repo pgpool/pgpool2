@@ -167,9 +167,9 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 	/* Not in cache. Check the system catalog */
 	snprintf(query, sizeof(query), relcache->sql, rel);
 
-	per_node_statement_log(backend, REAL_MASTER_NODE_ID, query);
+	per_node_statement_log(backend, MASTER_NODE_ID, query);
 
-	if (do_query(backend->slots[REAL_MASTER_NODE_ID]->con, query, &res, MAJOR(backend)) != POOL_CONTINUE)
+	if (do_query(MASTER(backend), query, &res, MAJOR(backend)) != POOL_CONTINUE)
 	{
 		pool_error("pool_search_relcache: do_query failed");
 		if (res)
