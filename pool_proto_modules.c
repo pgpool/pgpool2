@@ -581,11 +581,13 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	pool_debug("Execute: query: %s", query);
 	strlcpy(query_string_buffer, query, sizeof(query_string_buffer));
 
-	/*
-	 * Decide where to send query
-	 */
 	session_context->query_context = query_context;
-	pool_where_to_send(query_context, query, node);
+	/*
+	 * Calling pool_where_to_send here is dangerous because the node
+	 * parse/bind has been sent could be change by
+	 * pool_where_to_send() and it leads to "portal not found"
+	 * etc. errors.
+	 */
 
 	/* check if query is "COMMIT" or "ROLLBACK" */
 	commit = is_commit_or_rollback_query(node);
@@ -1012,11 +1014,12 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	}
 
 	session_context->query_context = query_context;
-	pool_where_to_send(query_context, query_context->original_query,
-					   query_context->parse_tree);
 
 	if (pool_config->load_balance_mode && pool_is_writing_transaction())
 	{
+		pool_where_to_send(query_context, query_context->original_query,
+						   query_context->parse_tree);
+
 		if(parse_before_bind(frontend, backend, parse_msg) != POOL_CONTINUE)
 			return POOL_END;
 	}
@@ -1091,9 +1094,13 @@ POOL_STATUS Describe(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	}
 
 	session_context->query_context = query_context;
-	pool_where_to_send(query_context, query_context->original_query,
-					   query_context->parse_tree);
 
+	/*
+	 * Calling pool_where_to_send here is dangerous because the node
+	 * parse/bind has been sent could be change by
+	 * pool_where_to_send() and it leads to "portal not found"
+	 * etc. errors.
+	 */
 	pool_debug("Describe: waiting for master completing the query");
 	if (pool_extended_send_and_wait(query_context, "D", len, contents, 1, MASTER_NODE_ID)
 		!= POOL_CONTINUE)
