@@ -133,6 +133,7 @@ main(int argc, char *argv[])
 
 			exit(EXIT_FAILURE);
 		}
+		printf("\n");
 		set_tio_attr(0);
 
 		/* Remove LF at the end of line, if there is any. */
