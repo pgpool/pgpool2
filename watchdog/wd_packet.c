@@ -154,16 +154,19 @@ wd_create_send_socket(char * hostname, int port)
 	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 	{
 		/* socket create failed */
+		pool_error("wd_create_send_socket: Failed to create socket. reason: %s", strerror(errno));
 		return -1;
 	}
 
 	/* set socket option */
 	if ( setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *) &one, sizeof(one)) == -1 )
 	{
+		pool_error("wd_create_send_socket: setsockopt(TCP_NODELAY) failed. reason: %s", strerror(errno));
 		return -1;
 	}
 	if ( setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(one)) == -1 )
 	{
+		pool_error("wd_create_send_socket: setsockopt(SO_KEEPALIVE) failed. reason: %s", strerror(errno));
 		return -1;
 	}
 
@@ -260,29 +263,34 @@ wd_create_recv_socket(int port)
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
 		/* socket create failed */
+		pool_error("wd_create_recv_socket: Failed to create socket. reason: %s", strerror(errno));
 		return -1;
     }
     if ( fcntl(sock, F_SETFL, O_NONBLOCK) == -1)
     {
 		/* failed to set nonblock */
+		pool_error("wd_create_recv_socket: Failed to set nonblock. reason: %s", strerror(errno));
 		close(sock);
         return -1;
     }
     if ( setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(one)) == -1 )
     {
 		/* setsockopt(SO_REUSEADDR) failed */
+		pool_error("wd_create_recv_socket: setspockopt(SO_REUSEADDR) failed. reason: %s", strerror(errno));
 		close(sock);
         return -1;
     }
     if ( setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *) &one, sizeof(one)) == -1 )
     {
         /* setsockopt(TCP_NODELAY) failed */
+		pool_error("wd_create_recv_socket: setsockopt(TCP_NODELAY) failed. reason: %s", strerror(errno));
 		close(sock);
         return -1;
     }
     if ( setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(one)) == -1 )
     {
         /* setsockopt(SO_KEEPALIVE) failed */
+		pool_error("wd_create_recv_socket: setsockopt(SO_KEEPALIVE) failed. reason: %s", strerror(errno));
 		close(sock);
         return -1;
     }
@@ -295,6 +303,13 @@ wd_create_recv_socket(int port)
     if ( bind(sock, (struct sockaddr *) & addr, len) < 0 )
     {
 		/* bind failed */
+		char *host = "", *serv = "";
+		char hostname[NI_MAXHOST], servname[NI_MAXSERV];
+		if (getnameinfo((struct sockaddr *) &addr, len, hostname, sizeof(hostname), servname, sizeof(servname), 0) == 0) {
+			host = hostname;
+			serv = servname;
+		}
+		pool_error("wd_create_recv_socket: bind(%s:%s) failed. reason: %s", host, serv, strerror(errno));
 		close(sock);
         return -1;
     }
@@ -302,6 +317,7 @@ wd_create_recv_socket(int port)
     if ( listen(sock, MAX_WATCHDOG_NUM * 2) < 0 )
     {
 		/* listen failed */
+		pool_error("wd_create_recv_socket: listen() failed. reason: %s", strerror(errno));
 		close(sock);
         return -1;
     }
