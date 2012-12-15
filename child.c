@@ -1413,7 +1413,8 @@ void child_exit(int code)
 	}
 
 	/* let backend know now we are exiting */
-	send_frontend_exits();
+	if (pool_connection_pool)
+		send_frontend_exits();
 
 	exit(code);
 }
