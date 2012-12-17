@@ -806,6 +806,10 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 	/* read startup packet length */
 	if (pool_read(cp, &len, sizeof(len)))
 	{
+		pool_error("read_startup_packet: incorrect packet length (%d)", len);
+		pool_free_startup_packet(sp);
+		alarm(0);
+		pool_signal(SIGALRM, SIG_IGN);
 		return NULL;
 	}
 	len = ntohl(len);
