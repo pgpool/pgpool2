@@ -226,7 +226,8 @@ extern POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 												char *contents, bool *foundp);
 
 extern bool pool_is_likely_select(char *query);
-extern bool pool_is_table_to_cache(const char *table_name);
+extern bool pool_is_table_in_black_list(const char *table_name);
+extern bool pool_is_table_in_white_list(const char *table_name);
 extern bool pool_is_allow_to_cache(Node *node, char *query);
 extern int pool_extract_table_oids(Node *node, int **oidsp);
 extern void pool_add_dml_table_oid(int oid);
