@@ -746,7 +746,7 @@ bool pool_is_allow_to_cache(Node *node, char *query)
 			for (i = 0; i < num_oids; i++)
 			{
 				pool_debug("pool_is_allow_to_cache: check table_names[%d] = %s", i, ctx.table_names[i]);
-				if (pool_is_table_to_cache(ctx.table_names[i]) == false)
+				if (pool_is_table_in_black_list(ctx.table_names[i]) == true)
 				{
 					pool_debug("pool_is_allow_to_cache: false");
 					return false;
@@ -795,7 +795,7 @@ bool pool_is_allow_to_cache(Node *node, char *query)
 				pool_debug("pool_is_allow_to_cache: check table_names[%d] = %s", i, table);
 				if (is_view(table) || is_unlogged_table(table))
 				{
-					if (pool_is_table_to_cache(table) == false)
+					if (pool_is_table_in_white_list(table) == false)
 					{
 						pool_debug("pool_is_allow_to_cache: false");
 						return false;
@@ -821,32 +821,33 @@ bool pool_is_allow_to_cache(Node *node, char *query)
 	return true;
 }
 
+
 /*
- * Return true If the SELECTed table is in white list or is not in black list,
- * and table is to be cached.
+ * Return true If the SELECTed table is in back list.
  */
-bool pool_is_table_to_cache(const char *table_name)
+bool pool_is_table_in_black_list(const char *table_name)
 {
-	/* Cache in case of the table in white list */
-	if (pool_config->num_white_memqcache_table_list > 0)
+
+	if (pool_config->num_black_memqcache_table_list > 0 &&
+	    pattern_compare((char *)table_name, BLACKLIST, "black_memqcache_table_list") == 1)
 	{
-		if (pattern_compare((char *)table_name, WHITELIST, "white_memqcache_table_list") == 1)
-			return true;
-		else
-			return false;
+		return true;
 	}
 
-	/* No cache in case of the table in black list */
-	else if (pool_config->num_black_memqcache_table_list > 0)
+	return false;
+}
+
+/*
+ * Return true If the SELECTed table is in white list.
+ */
+bool pool_is_table_in_white_list(const char *table_name)
+{
+	if (pool_config->num_white_memqcache_table_list > 0 &&
+		pattern_compare((char *)table_name, WHITELIST, "white_memqcache_table_list") == 1)
 	{
-		if (pattern_compare((char *)table_name, BLACKLIST, "black_memqcache_table_list") == 1)
-			return false;
-		else
-			return true;
+		return true;
 	}
 
-	/* No cache otherwise */
-	pool_error("pool_is_table_to_cache: unknown case");
 	return false;
 }
 
