@@ -106,7 +106,7 @@ wd_stand_for_master(void)
 	int rtn;
 
 	/* send stand for master packet */
-	pool_debug("wd_declare: send the packet to be the new master");
+	pool_debug("wd_stand_for_master: send the packet to be the new master");
 	rtn = wd_send_packet_no(WD_STAND_FOR_MASTER);
 	return rtn;
 }
