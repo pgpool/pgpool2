@@ -87,7 +87,7 @@ POOL_CONNECTION *pool_open(int fd)
 	cp->sbuf = NULL;
 	cp->sbufsz = 0;
 	cp->buf2 = NULL;
-	cp->sbufsz = 0;
+	cp->bufsz2 = 0;
 
 	cp->fd = fd;
 	return cp;
