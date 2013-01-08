@@ -175,7 +175,10 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 					child_exit(1);
 				}
 				else
+				{
+					pool_log("pool_read: do not failover because fail_over_on_backend_error is off");
 					return -1;
+				}
 			}
 			else
 			{
@@ -295,7 +298,10 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 					child_exit(1);
 				}
 				else
+				{
+					pool_log("pool_read2: do not failover because fail_over_on_backend_error is off");
 					return NULL;
+				}
 			}
 			else
 			{
@@ -504,7 +510,10 @@ int pool_flush(POOL_CONNECTION *cp)
 				child_exit(1);
 			}
 			else
+			{
+				pool_log("pool_flush: do not failover because fail_over_on_backend_error is off");
 				return -1;
+			}
 		}
 		else
 		{

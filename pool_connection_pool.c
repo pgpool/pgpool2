@@ -658,6 +658,10 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 			{
 				notice_backend_error(i);
 			}
+			else
+			{
+				pool_log("new_connection: do not failover because fail_over_on_backend_error is off");
+			}
 			child_exit(1);
 		}
 
