@@ -176,6 +176,20 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 		}
 
 		/*
+		 * If we are not processing a query, now is the time to
+		 * extract retrieve pending data from buffer stack if any.
+		 */
+		if (!pool_is_query_in_progress())
+		{
+			for (i=0;i<NUM_BACKENDS;i++)
+			{
+				int plen;
+				if (VALID_BACKEND(i) && pool_stacklen(CONNECTION(backend, i)) > 0)
+					pool_pop(CONNECTION(backend, i), &plen);
+			}
+		}
+
+		/*
 		 * If we are prcessing query, process it.
 		 */
 		if (pool_is_query_in_progress())
@@ -291,30 +305,52 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 										pool_error("pool_process_query: error while reading message kind from backend %d", i);
 										return POOL_ERROR;
 									}
-									pool_log("pool_process_query: discard %c packet from backend %d", kind, i);
 
-									if (MAJOR(backend) == PROTO_MAJOR_V3)
+									if (kind == 'A')
 									{
-										if (pool_read(CONNECTION(backend, i), &len, sizeof(len)) < 0)
+										/*
+										 * In replication mode, NOTIFY is sent to all backends.
+										 * However the order of arrival of 'Notification response'
+										 * is not necessarily the master first and then slaves.
+										 * So if it arrives slave first, we should try to read from master,
+										 * rather than just discard it.
+										 */
+										pool_unread(CONNECTION(backend, i), &kind, sizeof(kind));
+										pool_log("pool_process_query: received %c packet from backend %d. Don't dicard and read %c packet from master", kind, i, kind);
+										if (pool_read(CONNECTION(backend, MASTER_NODE_ID), &kind, sizeof(kind)) < 0)
 										{
-											pool_error("pool_process_query: error while reading message length from backend %d", i);
+											pool_error("pool_process_query: error while reading message kind from backend %d", MASTER_NODE_ID);
 											return POOL_ERROR;
 										}
-										len = ntohl(len) - 4;
-										string = pool_read2(CONNECTION(backend, i), len);
-										if (string == NULL)
-										{
-											pool_error("pool_process_query: error while reading rest of message from backend %d", i);
-											return POOL_ERROR;
-										}
+										pool_unread(CONNECTION(backend, MASTER_NODE_ID), &kind, sizeof(kind));
 									}
 									else
 									{
-										string = pool_read_string(CONNECTION(backend, i), &len, 0);
-										if (string == NULL)
+										pool_log("pool_process_query: discard %c packet from backend %d", kind, i);
+
+										if (MAJOR(backend) == PROTO_MAJOR_V3)
 										{
-											pool_error("pool_process_query: error while reading rest of message from backend %d", i);
-											return POOL_ERROR;
+											if (pool_read(CONNECTION(backend, i), &len, sizeof(len)) < 0)
+											{
+												pool_error("pool_process_query: error while reading message length from backend %d", i);
+												return POOL_ERROR;
+											}
+											len = ntohl(len) - 4;
+											string = pool_read2(CONNECTION(backend, i), len);
+											if (string == NULL)
+											{
+												pool_error("pool_process_query: error while reading rest of message from backend %d", i);
+												return POOL_ERROR;
+											}
+										}
+										else
+										{
+											string = pool_read_string(CONNECTION(backend, i), &len, 0);
+											if (string == NULL)
+											{
+												pool_error("pool_process_query: error while reading rest of message from backend %d", i);
+												return POOL_ERROR;
+											}
 										}
 									}
 								}
@@ -1075,28 +1111,36 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	}
 	memcpy(p1, p, len);
 
-	for (i=0;i<NUM_BACKENDS;i++)
+	/*
+	 * If we received a notification message in master/slave mode,
+	 * other backends will not receive the message.
+	 * So we should skip other nodes otherwise we will hung in pool_read.
+	 */
+	if (!MASTER_SLAVE || kind != 'A')
 	{
-		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
+		for (i=0;i<NUM_BACKENDS;i++)
 		{
-			status = pool_read(CONNECTION(backend, i), &len, sizeof(len));
-			if (status < 0)
+			if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 			{
-				pool_error("SimpleForwardToFrontend: error while reading message length");
-				return POOL_END;
-			}
+				status = pool_read(CONNECTION(backend, i), &len, sizeof(len));
+				if (status < 0)
+				{
+					pool_error("SimpleForwardToFrontend: error while reading message length");
+					return POOL_END;
+				}
 
-			len = ntohl(len);
-			len -= 4;
+				len = ntohl(len);
+				len -= 4;
 
-			p = pool_read2(CONNECTION(backend, i), len);
-			if (p == NULL)
-				return POOL_END;
+				p = pool_read2(CONNECTION(backend, i), len);
+				if (p == NULL)
+					return POOL_END;
 
-			if (len != len1)
-			{
-				pool_debug("SimpleForwardToFrontend: length does not match between backends master(%d) %d th backend(%d) kind:(%c)",
- 						   len, i, len1, kind);
+				if (len != len1)
+				{
+					pool_debug("SimpleForwardToFrontend: length does not match between backends master(%d) %d th backend(%d) kind:(%c)",
+							   len, i, len1, kind);
+				}
 			}
 		}
 	}
@@ -1823,11 +1867,12 @@ POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
 				pool_error("do_command: error while reading message length");
 				return POOL_END;
 			}
+			pool_debug("len:%x", len);
 			len = ntohl(len) - 4;
-			
-			if (kind != 'N' && kind != 'E' && kind != 'S' && kind != 'C')
+
+			if (kind != 'N' && kind != 'E' && kind != 'S' && kind != 'C' && kind != 'A')
 			{
-				pool_error("do_command: error, kind is not N, E, S or C(%02x)", kind);
+				pool_error("do_command: error, kind is not N, E, S, C or A(%02x)", kind);
 				return POOL_END;
 			}
 			string = pool_read2(backend, len);
@@ -1835,6 +1880,22 @@ POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
 			{
 				pool_error("do_command: error while reading rest of message");
 				return POOL_END;
+			}
+
+			/*
+			 * It is possible that we receives a notification response
+			 * ('A') from one of backends prior to "ready for query"
+			 * response if LISTEN and NOTIFY are issued in a same
+			 * connection. So we need to save notification response to
+			 * stack buffer so that we could retrieve it later on.
+			 */
+			if (kind == 'A')
+			{
+				int nlen = htonl(len+4);
+				pool_debug("nlen:%x", nlen);
+				pool_push(backend, &kind, sizeof(kind));
+				pool_push(backend, &nlen, sizeof(nlen));
+				pool_push(backend, string, len);
 			}
 		}
 		else
@@ -3561,6 +3622,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 	double max_count = 0;
 	int degenerate_node_num = 0;		/* number of backends degeneration requested */
 	int degenerate_node[MAX_NUM_BACKENDS];		/* degeneration requested backend list */
+	POOL_STATUS status;
 
 	POOL_MEMORY_POOL *old_context;
 
@@ -3571,6 +3633,31 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 	int first_node = -1;
 
 	memset(kind_map, 0, sizeof(kind_map));
+
+	if (MASTER_SLAVE)
+	{
+		status = read_kind_from_one_backend(frontend, backend, (char *)&kind, MASTER_NODE_ID);
+		if (status != POOL_CONTINUE)
+		{
+			pool_error("read_kind_from_backend: read_kind_from_one_backend for master node %d failed",
+					   MASTER_NODE_ID);
+			return status;
+		}
+
+		/*
+		 * If we received a notification message in master/slave mode,
+		 * other backends will not receive the message.
+		 * So we should skip other nodes otherwise we will hung in pool_read.
+		 */
+		if (kind == 'A')	
+		{
+			*decided_kind = 'A';
+			pool_log("read_kind_from_backend: received notification message for master node %d",
+					 MASTER_NODE_ID);
+			return POOL_CONTINUE;
+		}
+		pool_unread(CONNECTION(backend, MASTER_NODE_ID), &kind, sizeof(kind));
+	}
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
