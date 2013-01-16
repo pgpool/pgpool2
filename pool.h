@@ -164,6 +164,9 @@ typedef struct {
 	char *buf2;	/* buffer for pool_read2 */
 	int bufsz2;	/* its size in bytes */
 
+	char *buf3;	/* buffer for pool_push/pop */
+	int bufsz3;	/* its size in bytes */
+
 	int isbackend;		/* this connection is for backend if non 0 */
 	int db_node_id;		/* DB node id for this connection */
 

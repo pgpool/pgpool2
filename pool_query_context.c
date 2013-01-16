@@ -278,8 +278,14 @@ int pool_virtual_master_db_node_id(void)
 	}
 
 	/*
-	 * No query context exists. Returns master node id in private buffer.
+	 * No query context exists.  If in master/slave mode, returns
+	 * primary node if exists.  Oterwise returns my_master_node_id,
+	 * which represents the last REAL_MASTER_NODE_ID.
 	 */
+	if (MASTER_SLAVE)
+	{
+		return PRIMARY_NODE_ID;
+	}
 	return my_master_node_id;
 }
 

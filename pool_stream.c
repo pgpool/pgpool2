@@ -852,6 +852,66 @@ int pool_unread(POOL_CONNECTION *cp, void *data, int len)
 }
 
 /*
+ * pool_push: Push data into buffer stack.
+ */
+int pool_push(POOL_CONNECTION *cp, void *data, int len)
+{
+	char *p;
+
+	pool_debug("pool_push: len: %d", len);
+
+	if (cp->bufsz3 == 0)
+	{
+		p = cp->buf3 = malloc(len);
+		if (p == NULL)
+		{
+			pool_error("pool_push: malloc failed. len:%d", len);
+			return -1;
+		}
+	}
+	else
+	{
+		p = cp->buf3 + cp->bufsz3;
+		cp->buf3 = realloc(cp->buf3, cp->bufsz3 + len);
+	}
+
+	memcpy(p, data, len);
+	cp->bufsz3 += len;
+
+	return 0;
+}
+
+/*
+ * pool_pop: Pop data from buffer stack and put back data using
+ * pool_unread.
+ */
+void pool_pop(POOL_CONNECTION *cp, int *len)
+{
+	if (cp->bufsz3 == 0)
+	{
+		*len = 0;
+		pool_debug("pool_pop: len: %d", *len);
+		return;
+	}
+
+	pool_unread(cp, cp->buf3, cp->bufsz3);
+	*len = cp->bufsz3;
+	free(cp->buf3);
+	cp->bufsz3 = 0;
+	cp->buf3 = NULL;
+	pool_debug("pool_pop: len: %d", *len);
+}
+
+/*
+ * pool_stacklen: Returns buffer stack length
+ * pool_unread.
+ */
+int pool_stacklen(POOL_CONNECTION *cp)
+{
+	return cp->bufsz3;
+}
+
+/*
  * set non-block flag
  */
 void pool_set_nonblock(int fd)
