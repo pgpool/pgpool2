@@ -511,6 +511,14 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 	int on = 1;
 	struct sockaddr_in addr;
 	struct hostent *hp;
+	struct timeval timeout;
+	fd_set rset, wset;
+	int error;
+	socklen_t socklen;
+	int sts;
+
+#define CONNECT_TIMEOUT_MSEC 1000		/* specify select(2) timeout in millisecond */
+
 
 	fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (fd < 0)
@@ -575,13 +583,77 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 			if ((errno == EINTR && retry) || errno == EAGAIN)
 				continue;
 
-			/* Non block fd could return these */
-			if (errno == EINPROGRESS || errno == EALREADY)
-				continue;
+			/*
+			 * If error was "connect(2) is in progress", then wait for
+			 * completion.  Otherwise error out.
+			 */
+			if (errno != EINPROGRESS && errno != EALREADY)
+			{
+				pool_error("connect_inet_domain_socket: connect() failed: %s",strerror(errno));
+				close(fd);
+				return -1;
+			}
 
-			pool_error("connect_inet_domain_socket: connect() failed: %s",strerror(errno));
-			close(fd);
-			return -1;
+			timeout.tv_sec = 0;
+			timeout.tv_usec = CONNECT_TIMEOUT_MSEC * 1000;
+			FD_ZERO(&rset);
+			FD_SET(fd, &rset);	
+			FD_ZERO(&wset);
+			FD_SET(fd, &wset);
+			sts = select(fd+1, &rset, &wset, NULL, &timeout);
+
+			if (sts == 0)
+			{
+				/* select timeout */
+				if (retry)
+				{
+					pool_log("connect_inet_domain_socket: select() timedout. retrying...");
+					continue;
+				}
+
+				/*
+				 * If read data or write data was set, either connect
+				 * succeeded or error.  We need to figure it out. This
+				 * is the hardest part in using non blocking
+				 * connect(2).  See W. Richar Stevens's "UNIX Network
+				 * Programming: Volume 1, Second Edition" section
+				 * 15.4.
+				 */
+				if (FD_ISSET(fd, &rset) || FD_ISSET(fd, &wset))
+				{
+					error = 0;
+					socklen = sizeof(error);
+					if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &socklen) < 0)
+					{
+						/* Solaris returns error in this case */
+						pool_error("connect_inet_domain_socket: getsockopt() failed: %s", strerror(errno));
+						close(fd);
+						return -1;
+					}
+
+					/* Non Solaris case */
+					if (error != 0)
+					{
+						pool_error("connect_inet_domain_socket: getsockopt() detects error: %s", strerror(error));
+						close(fd);
+						return -1;
+					}
+				}
+				else
+				{
+					pool_error("connect_inet_domain_socket: both read data and write data was not set");
+					close(fd);
+					return -1;
+				}
+			}
+			else		/* select returns error */
+			{
+				if((errno == EINTR && retry) || errno == EAGAIN)
+				{
+					pool_log("connect_inet_domain_socket: select() interrupted. retrying...");
+					continue;
+				}
+			}
 		}
 		break;
 	}
