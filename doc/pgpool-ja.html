@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Thu Nov  1 18:30:11 JST 2012
+Last modified: Thu Jan 31 08:10:02 JST 2013
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -3967,6 +3967,11 @@ pgpool-II の起動は <font color="red">root 権限で</font> 行う必要が�
 <p>
 watchdog プロセスの設定項目は pgpool.conf に記述します。
 pgpool.conf.sample ファイルの WATCHDOG セクションにサンプルを記述していますので、参照してください。
+</p>
+<p>
+<font color="red">注意: watchdogを有効化する場合は、<a href="#NUM_INIT_CHILDREN">num_init_children</a>に十分大きな値を設定して下さい。watchdog自身もpgpool-IIにクライアントとして接続するためです。</font>
+</p>
+<p>
 watchdog プロセスは以下の項目すべてを指定する必要があります。
 </p>
 

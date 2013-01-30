@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Thu Nov  1 18:30:38 JST 2012
+Last modified: Thu Jan 31 08:13:48 JST 2013
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -3857,6 +3857,11 @@ The life checking starts after waiting for all of the pgpools to start.
 <p>
 Watchdog configuration parameters is described in pgpool.conf.
 There is sample configuration in WATCHDOG section in pgpool.conf.sample file.
+</p>
+<p>
+<font color="red">CAUTION: You need to set <a href="#NUM_INIT_CHILDREN">num_init_children</a> large enough if you plan to use watchdog. This is because the watchdog process connects to pgpool-II as a client.</font>
+</p>
+<p>
 All following options are required to be specified in watchdog process.
 </p>
 
