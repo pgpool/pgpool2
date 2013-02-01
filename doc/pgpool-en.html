@@ -3926,6 +3926,31 @@ All following options are required to be specified in watchdog process.
     Default is "SELECT 1"
     </p>
     </dd>
+
+<dt><a name="WD_LIFECHECK_DBNAME"></a>wd_lifecheck_dbname <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    The database name connected for checking pgpool-II.
+    Default is "template1"
+    </p>
+    </dd>
+
+<dt><a name="WD_LIFECHECK_USER"></a>wd_lifecheck_user <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    The user name to check pgpool-II.
+    This user must exist in all the PostgreSQL backends.
+    Default is "nobody"
+    </p>
+    </dd>
+
+<dt><a name="WD_LIFECHECK_PASSWORD"></a>wd_lifecheck_password <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    The password of the user to check pgpool-II.
+    Default is ""
+    </p>
+    </dd>
 </dl>
 
 <h4>Virtual IP address</h4>

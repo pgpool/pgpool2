@@ -233,7 +233,10 @@ typedef struct {
 	char * arping_path;	/* path to arping command */
 	char * arping_cmd;		/* arping command */
 	int  wd_life_point;		/* life point (retry times at lifecheck) */
-	char * wd_lifecheck_query;	/* lifecheck query */
+	char *wd_lifecheck_query;	/* lifecheck query */
+	char *wd_lifecheck_dbname;	/* Database name connected for lifecheck */
+	char *wd_lifecheck_user;	/* PostgreSQL user name for watchdog */
+	char *wd_lifecheck_password; /* password for watchdog user */
 } POOL_CONFIG;
 
 typedef enum {

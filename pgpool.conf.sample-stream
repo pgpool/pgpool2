@@ -451,6 +451,12 @@ wd_life_point = 3
                                     # lifecheck retry times
 wd_lifecheck_query = 'SELECT 1'
                                     # lifecheck query to pgpool from watchdog
+wd_lifecheck_dbname = 'template1'
+                                    # Database name connected for lifecheck 
+wd_lifecheck_user = 'nobody'
+                                    # watchdog user monitoring pgpools in lifecheck
+wd_lifecheck_password = ''
+                                    # Password for watchdog user in lifecheck
 # Other pgpool Connection Settings
 
 #other_pgpool_hostname0 = 'host0'

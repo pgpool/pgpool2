@@ -238,16 +238,31 @@ create_conn(char * hostname, int port)
 	static char conninfo[1024];
 	PGconn *conn;
 
+	if (strlen(pool_config->wd_lifecheck_dbname) == 0)
+	{
+		pool_error("create_conn: wd_lifecheck_dbname is empty");
+		return NULL;
+	}
+
+	if (strlen(pool_config->wd_lifecheck_user) == 0)
+	{
+		pool_error("create_conn: wd_lifecheck_user is empty");
+		return NULL;
+	}
+
 	snprintf(conninfo,sizeof(conninfo),
-		"host='%s' port='%d' dbname='template1' user='%s' password='%s' connect_timeout='%d'",
+		"host='%s' port='%d' dbname='%s' user='%s' password='%s' connect_timeout='%d'",
 		hostname,
 		port,
-		pool_config->recovery_user,
-		pool_config->recovery_password,
+		pool_config->wd_lifecheck_dbname,
+		pool_config->wd_lifecheck_user,
+		pool_config->wd_lifecheck_password,
 		pool_config->wd_interval / 2 + 1);
 	conn = PQconnectdb(conninfo);
+
 	if (PQstatus(conn) != CONNECTION_OK)
 	{
+		pool_debug("create_conn: Connection to database failed: %s", PQerrorMessage(conn));
 		PQfinish(conn);
 		return NULL;
 	}

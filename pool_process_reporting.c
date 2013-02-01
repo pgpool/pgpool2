@@ -690,6 +690,21 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].desc, "lifecheck query to pgpool from watchdog", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	strncpy(status[i].name, "wd_lifecheck_dbname", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->wd_lifecheck_dbname);
+	strncpy(status[i].desc, "database name connected for lifecheck", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "wd_lifecheck_user", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->wd_lifecheck_user);
+	strncpy(status[i].desc, "watchdog user monitoring pgpools in lifecheck", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "wd_lifecheck_password", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->wd_lifecheck_password);
+	strncpy(status[i].desc, "password for watchdog user in lifecheck", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	/*
 	 * end of watchdog
 	 */
