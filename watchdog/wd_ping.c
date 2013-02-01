@@ -3,7 +3,7 @@
  *
  * Handles watchdog connection, and protocol communication with pgpool-II
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2012	PgPool Global Development Group
@@ -100,7 +100,7 @@ wd_is_upper_ok(char * server_list)
 		}
 		if (cnt >= MAX_WATCHDOG_NUM)
 		{
-			pool_debug("wd_is_upper_ok: trusted server num is out of range(%d)",cnt);	
+			pool_debug("wd_is_upper_ok: trusted server num is out of range(%d)",cnt);
 			break;
 		}
 	}
@@ -118,7 +118,6 @@ wd_is_upper_ok(char * server_list)
 		{
 			rtn = WD_OK;
 		}
-		pthread_detach(thread[i]);
 		i++;
 	}
 	free(buf);
@@ -163,7 +162,6 @@ wd_is_unused_ip(char * ip)
 	{
 		rtn = WD_OK;
 	}
-	pthread_detach(thread);
 
 	return rtn;
 }
@@ -282,7 +280,7 @@ get_result (char * ping_data)
 	sp = ping_data;
 	for ( i = 0 ; i < 4 ; i ++)
 	{
-		sp = strchr(sp,'/');	
+		sp = strchr(sp,'/');
 		if (sp == NULL)
 		{
 			return -1;
