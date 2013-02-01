@@ -3,7 +3,7 @@
  *
  * Handles watchdog connection, and protocol communication with pgpool-II
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2012	PgPool Global Development Group
@@ -64,7 +64,7 @@ is_wd_lifecheck_ready(void)
 			{
 				PQclear(res);
 			}
-			if ((status == PGRES_NONFATAL_ERROR )|| 
+			if ((status == PGRES_NONFATAL_ERROR )||
 				(status == PGRES_FATAL_ERROR ))
 			{
 				rtn = WD_NG;
@@ -146,7 +146,7 @@ wd_lifecheck(void)
 	{
 		int result;
 
-		pool_debug("wd_lifecheck: checking pgpool %d (%s:%d)", i, p->hostname, p->pgpool_port);	
+		pool_debug("wd_lifecheck: checking pgpool %d (%s:%d)", i, p->hostname, p->pgpool_port);
 
 		rc = pthread_join(thread[i], (void **)&result);
 		if ((rc != 0) && (errno == EINTR))
@@ -156,7 +156,7 @@ wd_lifecheck(void)
 		}
 		if (result == WD_OK)
 		{
-			pool_debug("wd_lifecheck: OK, status: %d", p->status);	
+			pool_debug("wd_lifecheck: OK, status: %d", p->status);
 
 			p->life = pool_config->wd_life_point;
 			if ((i == 0) &&
@@ -176,7 +176,7 @@ wd_lifecheck(void)
 		}
 		else
 		{
-			pool_debug("wd_lifecheck: NG, status: %d life:%d", p->status, p->life);	
+			pool_debug("wd_lifecheck: NG, status: %d life:%d", p->status, p->life);
 
 			if (p->life > 0)
 			{
@@ -199,7 +199,6 @@ wd_lifecheck(void)
 				}
 			}
 		}
-		pthread_detach(thread[i]);
 		i++;
 		p++;
 	}
@@ -241,8 +240,8 @@ create_conn(char * hostname, int port)
 
 	snprintf(conninfo,sizeof(conninfo),
 		"host='%s' port='%d' dbname='template1' user='%s' password='%s' connect_timeout='%d'",
-		hostname, 
-		port, 
+		hostname,
+		port,
 		pool_config->recovery_user,
 		pool_config->recovery_password,
 		pool_config->wd_interval / 2 + 1);

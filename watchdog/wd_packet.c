@@ -3,7 +3,7 @@
  *
  * Handles watchdog connection, and protocol communication with pgpool-II
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2012	PgPool Global Development Group
@@ -132,7 +132,7 @@ wd_send_packet_no(WD_PACKET_NO packet_no )
 	/* set add request packet */
 	packet.packet_no = packet_no;
 	memcpy(&(packet.wd_body.wd_info),WD_List,sizeof(WdInfo));
-	/* send packet to all watchdogs */	
+	/* send packet to all watchdogs */
 	rtn = send_packet_4_nodes(&packet, WD_SEND_TO_MASTER );
 	if (rtn == WD_OK)
 	{
@@ -415,7 +415,7 @@ wd_send_packet(int sock, WdPacket * snd_pack)
 		FD_ZERO(&wmask);
 		FD_SET(sock,&wmask);
 		rtn = select(sock+1, (fd_set *)NULL, &wmask, (fd_set *)NULL, &timeout);
-	  
+
 		if (rtn < 0 )
 		{
 			if (errno == EAGAIN || errno == EINTR)
@@ -426,7 +426,7 @@ wd_send_packet(int sock, WdPacket * snd_pack)
 		}
 		else if (rtn & FD_ISSET(sock, &wmask))
 		{
-			s = send(sock,send_ptr + send_size,buf_size - send_size ,flag); 
+			s = send(sock,send_ptr + send_size,buf_size - send_size ,flag);
 			if (s < 0)
 			{
 				if (errno == EINTR || errno == EAGAIN)
@@ -467,7 +467,7 @@ wd_recv_packet(int sock, WdPacket * recv_pack)
 	memset(&buf,0,sizeof(WdPacket));
 	for (;;)
 	{
-		r = recv(sock,read_ptr + read_size ,len - read_size, 0); 
+		r = recv(sock,read_ptr + read_size ,len - read_size, 0);
 		if (r < 0)
 		{
 			if (errno == EINTR || errno == EAGAIN)
@@ -482,7 +482,7 @@ wd_recv_packet(int sock, WdPacket * recv_pack)
 			read_size += r;
 			if (read_size == len)
 			{
-				
+
 				if ((ntohl(buf.packet_no) >= WD_INVALID) &&
 					(ntohl(buf.packet_no) <= WD_READY ))
 				{
@@ -673,7 +673,6 @@ send_packet_4_nodes(WdPacket *packet, WD_SEND_TYPE type)
 				rtn = WD_OK;
 			}
 		}
-		pthread_detach(thread[i]);
 		i++;
 	}
 
@@ -866,7 +865,7 @@ wd_send_node_packet(WD_PACKET_NO packet_no, int *node_id_set, int count)
 	memcpy(packet.wd_body.wd_node_info.node_id_set,node_id_set,sizeof(int)*count);
 	packet.wd_body.wd_node_info.node_num = count;
 
-	/* send packet to all watchdogs */	
+	/* send packet to all watchdogs */
 	rtn = send_packet_4_nodes(&packet, WD_SEND_TO_MASTER );
 	if (rtn == WD_OK)
 	{
