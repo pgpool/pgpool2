@@ -159,20 +159,6 @@ wd_lifecheck(void)
 			pool_debug("wd_lifecheck: OK, status: %d", p->status);
 
 			p->life = pool_config->wd_life_point;
-			if ((i == 0) &&
-				(WD_List->status == WD_DOWN))
-			{
-				wd_set_myself(&tv, WD_NORMAL);
-				wd_startup();
-				/* check existence of master pgpool */
-				if (wd_is_alive_master() == NULL )
-				{
-					pool_debug("wd_is_alive_master: there isn't any alive master");
-
-					/* escalate to delegate_IP holder */
-					wd_escalation();
-				}
-			}
 		}
 		else
 		{
@@ -184,8 +170,8 @@ wd_lifecheck(void)
 			}
 			if (p->life <= 0)
 			{
-				pool_log("wd_lifecheck: lifecheck failed %d times. pgpool seems not to be working",
-				         pool_config->wd_life_point);
+				pool_log("wd_lifecheck: lifecheck failed %d times. pgpool %d (%s:%d) seems not to be working",
+				         pool_config->wd_life_point, i, p->hostname, p->pgpool_port);
 
 				if ((i == 0) &&
 					(WD_List->status != WD_DOWN))
@@ -202,6 +188,12 @@ wd_lifecheck(void)
 		i++;
 		p++;
 	}
+
+	if (WD_List->status == WD_DOWN)
+	{
+		pool_error("wd_lifecheck: watchdog status is DOWN. You need to restart this for recovery.");
+	}
+
 	return WD_OK;
 }
 
