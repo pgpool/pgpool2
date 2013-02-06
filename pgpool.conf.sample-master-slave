@@ -235,6 +235,9 @@ backend_data_directory1 = '/data1'
 # If true, use pool_hba.conf for client authentication.
 enable_pool_hba = false
 
+# File name of pool_passwd for md5 authentication. "" disables pool_passwd. 
+pool_passwd = "pool_passwd"
+
 # - online recovery -
 # online recovery user
 recovery_user = 'nobody'

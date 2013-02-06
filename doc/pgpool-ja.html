@@ -662,7 +662,19 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
 <dd>
     <p>trueならば、pool_hba.confに従ってクライアント認証を行います。
     詳細は<a href="#hba">クライアント認証(HBA)のためのpool_hba.conf設定方法</a>を参照してください。
-    このパラメータを変更した時には pgpool-II を再起動してください。</p>
+    このパラメータを変更した時には設定ファイルを再読み込みしてください。
+   </p>
+</dd>
+
+<dt>pool_passwd</dt>
+<dd>
+    <p>
+    md5 認証で用いる認証ファイルのファイル名を指定します。
+    デフォルト値は "pool_passwd" です。
+    空文字列（""）を指定すると 認証ファイルの読込は無効になります。  
+    詳細は<a href="#md5">認証・アクセス制御方式</a>を参照してください。
+    このパラメータを変更した時には pgpool-II を再起動してください。
+	</p>
 </dd>
 
 <dt>backend_hostname</dt>
@@ -2548,6 +2560,8 @@ pgpool-IIと同様、pgpoolプロジェクトのサブプロジェクトであり、pgpool
     md5$BG'>Z$K4X$7$F$O!"PostgreSQLに該当ユーザをmd5認証付でPostgreSQLに登録し、
     次にpgpoolに付属するpg_md5コマンドを使って、pool_passwdという認証ファイルを作成することにより
     利用できるようになります。
+    pool_passwdは認証ファイルのデフォルトのファイル名です。
+    ファイル名はpool_passwdパラメータで変更することができます。
 
     <ol>
     <li>DBユーザのアカウントでログインし、"pg_md5 --md5auth パスワード" を実行します。</li>
