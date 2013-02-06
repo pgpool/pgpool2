@@ -601,6 +601,18 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
     See <a href="#hba">setting up pool_hba.conf for client authentication</a>.
     </p>
     <p>
+    You need to reload pgpool.conf if you change this value.
+    </p>
+    </dd>
+
+<dt><a name="POOL_PASSWD"></a>pool_passwd</dt>
+    <dd>
+    <p>
+    Specify the file name of pool_passwd for md5 authentication.
+    Default value is "pool_passwd". "" disables to read pool_passwd. 
+    See <a href="#md5">Authentication / Access Controls</a> for more details.
+    </p>
+    <p>
     You need to restart pgpool-II if you change this value.
     </p>
     </dd>
@@ -611,7 +623,7 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
     Default value is 60.
     </p>
     <p>
-    You need to restart pgpool-II if you change authentication_timeout.</p>
+    You need to reload pgpool.conf if you change this value.
     </dd>
 </dl>
 
@@ -4221,7 +4233,10 @@ pgpool-II.
 <ul>
     <li>In the replication mode or master/slave mode, trust, clear text password,
         and pam methods are supported. md5 in also supported since pgpool-II 3.0.
-        md5 is supported by using "pool_passwd". Here are the steps to enable md5 authentication:
+        md5 is supported by using a authencitaion file ("pool_passwd").
+        "pool_passwd" is default name of the authentication file.
+        You can change the file name using <a href="#POOL_PASSWD">pool_passwd</a>.
+        Here are the steps to enable md5 authentication:
         <ol>
             <li>Login as the database's operating system user and type
                 "pg_md5 --md5auth --username=<your_username> <your_passwd>"

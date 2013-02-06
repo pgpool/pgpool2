@@ -615,6 +615,19 @@ pgpool.confでは空白行や#で始まる行はコメントと見なされま�
     詳細は<a href="#hba">クライアント認証(HBA)のためのpool_hba.conf設定方法</a>を参照してください。
     </p>
     <p>
+    このパラメータを変更した時には設定ファイルを再読み込みしてください。
+    </p>
+    </dd>
+
+<dt><a name="POOL_PASSWD"></a>pool_passwd</dt>
+    <dd>
+    <p>
+    md5 認証で用いる認証ファイルのファイル名を指定します。
+    デフォルト値は "pool_passwd" です。
+    空文字列（""）を指定すると 認証ファイルの読込は無効になります。  
+    詳細は<a href="#md5">認証・アクセス制御方式</a>を参照してください。
+    </p>
+    <p>
     このパラメータを変更した時には pgpool-II を再起動してください。
     </p>
     </dd>
@@ -4318,6 +4331,8 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
         md5認証に関しては、PostgreSQLに該当ユーザをmd5認証付でPostgreSQLに登録し、
         次にpgpoolに付属するpg_md5コマンドを使って、pool_passwdという認証ファイルを作成することにより
         利用できるようになります。
+        pool_passwdは認証ファイルのデフォルトのファイル名です。
+        ファイル名は<a href="#POOL_PASSWD">pool_passwd</a>で変更することができます。
         <ol>
         <li>DBユーザのアカウントでログインし、"pg_md5 --md5auth パスワード"
             または "pg_md5 --md5auth --username=ユーザ名 パスワード" を実行します。
