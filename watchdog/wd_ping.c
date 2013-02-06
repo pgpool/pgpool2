@@ -167,8 +167,8 @@ wd_is_unused_ip(char * ip)
 }
 
 
-/*
- * Thread to execute ping against "trusted hosts".
+/**
+ * Thread to execute ping against "trusted hosts" or delegate IP.
  */
 static void *
 exec_ping(void * arg)
@@ -186,10 +186,11 @@ exec_ping(void * arg)
 	snprintf(ping_path,sizeof(ping_path),"%s/ping",pool_config->ping_path);
 	thread_arg = (WdInfo *)arg;
 	memset(result,0,sizeof(result));
+
 	if (pipe(pfd) == -1)
 	{
 		pool_error("exec_ping: pipe open error:%s", strerror(errno));
-		return NULL;
+		return WD_NG;
 	}
 
 	args[i++] = "ping";
@@ -210,7 +211,7 @@ exec_ping(void * arg)
 		dup2(pfd[1], STDOUT_FILENO);
 		close(pfd[0]);
 		status = execv(ping_path,args);
-	   
+
 		if (status == -1)
 		{
 			pool_error("exec_ping: execv(%s) failed. reason: %s", ping_path, strerror(errno));
@@ -232,29 +233,45 @@ exec_ping(void * arg)
 
 				pool_error("exec_ping: wait() failed. reason: %s", strerror(errno));
 				close(pfd[0]);
-				return NULL;
+				return WD_NG;
 			}
 
-			if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
+			if (WIFEXITED(status) == 0)
 			{
 				pool_error("exec_ping: %s exited abnormaly", ping_path);
 				close(pfd[0]);
-				return NULL;
+				return WD_NG;
+			}
+			else if (WEXITSTATUS(status) != 0)
+			{
+				pool_debug("exec_ping: failed to ping %s", thread_arg->hostname);
+				return WD_NG;
 			}
 			else
+			{
+				pool_debug("exec_ping: succeed to ping %s", thread_arg->hostname);
 				break;
+			}
 		}
+
 		i = 0;
 		while  (( (r_size = read (pfd[0], &result[i], sizeof(result)-i)) > 0) && (errno == EINTR))
 		{
 			i += r_size;
 		}
+
 		close(pfd[0]);
 	}
-	rtn = (get_result (result) > 0)?WD_OK:WD_NG;
+
+	/* Check whether average RTT > 0 */
+	rtn = (get_result (result) > 0) ? WD_OK : WD_NG;
+
 	pthread_exit((void *)rtn);
 }
 
+/**
+ * Get average round-trip time of ping result.
+ */
 static double
 get_result (char * ping_data)
 {
@@ -287,19 +304,24 @@ get_result (char * ping_data)
 		}
 		sp ++;
 	}
+
 	ep = strchr (sp,'/');
 	if (ep == NULL)
 	{
 		return -1;
 	}
+
 	*ep = '\0';
 	errno = 0;
+
 	/* convert to numeric data from text */
 	msec = strtod(sp,(char **)NULL);
+
 	if (errno != 0)
 	{
 		pool_error("get_result: strtod() failed. reason: %s", strerror(errno));
 		return -1;
 	}
+
 	return msec;
 }
