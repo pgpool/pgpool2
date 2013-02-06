@@ -1379,17 +1379,6 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			pool_config->log_per_node_statement = v;
 		}
-       	else if (!strcmp(key, "log_statement") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
-		{
-			int v = eval_logical(yytext);
-
-			if (v < 0)
-			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
-				return(-1);
-			}
-			pool_config->log_statement = v;
-		}
 
 		else if (!strcmp(key, "lobj_lock_table") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{

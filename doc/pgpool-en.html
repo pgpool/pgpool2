@@ -468,14 +468,6 @@ comment and will be ignored.</p>
       This parameter can only be set at server start.<p>
   </dd>
 
-  <dt>pcp_timeout</dt>
-  <dd>
-      <p>PCP connection's timeout value in seconds. If a client does not
-      respond within the set seconds, PCP closes the connection with
-      the client. Default is 10 seconds. 0 means no timeout. This can be changed
-      with a reload.</p>
-  </dd>
-
   <dt>num_init_children</dt>
   <dd>
       <p>The number of preforked pgpool-II server processes. Default
@@ -568,7 +560,7 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
   <dd>
       <p>Add timestamps to the logs when set to true. Default is
       true.
-      You need to reload pgpool.conf if you change print_timestamp.
+      You need to restart pgpool-II if you change print_timestamp.
       </p>
   </dd>
 
