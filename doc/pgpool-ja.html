@@ -451,14 +451,6 @@ PostgreSQLのUNIXドメインソケットが置かれているディレクトリ
 このパラメータを変更した時には pgpool-II を再起動してください。
 </p>
 
-<dt><a name="PCP_TIMEOUT"></a>pcp_timeout</dt>
-<dd>
-<p>
-pcpがpgppoolと接続する際のタイムアウト値。0にするとタイムアウトしません。
-デフォルト値は10(秒)です。
-このパラメータを変更した時には設定ファイルを再読み込みしてください。
-</p>
-
 <dt><a name="NUM_INIT_CHILDREN"></a>num_init_children</dt>
 <dd>
 <p>
@@ -582,7 +574,7 @@ LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7から選択しま
 <p>
    trueならばpgpool-IIのログにタイムスタンプを追加します。デフォルトは
    trueです。
-このパラメータを変更した時には設定ファイルを再読み込みしてください。
+   このパラメータを変更した時には pgpool-II を再起動してください。</p>
 </p>
 
 <dt><a name="CONNECTION_CACHE"></a>connection_cache</dt>
