@@ -4062,14 +4062,27 @@ All following options are required to be specified in watchdog process.
     </dd>
 </dl>
 
-<h2 id="MEMORY_CACHE_RESTRICTIONS">Restrictions</h2>
+<h2 id="WATCHDOG_RESTRICTIONS">Restrictions on watchdog</h2>
 <ul>
 <li>
-When all the DB nodes are detached from pgpool-IIs due to PostgreSQL failure and so on,
-watchdog considers all the pgpool-II service are down. Thereafter, after DB node
-is returned to each pgpool-II by using pcp_attach_node command, it comes to be
-<i>split-brain</i> situation; there are multiple active pgpool-II.
-To avoid this problem, you have to restart the pgpool-IIs that are down.
+When all the DB nodes are detached from a pgpool-II due to PostgreSQL server failure or
+pcp_detach_node issued, watchdog regards that the pgpool-II service is in down status and
+brings the virtual IP assigned to watchdog down. Thus clients of pgpool cannot connect to
+pgpool-II using the virtual IP any more. This is neccessary to avoid <i>split-brain</i>,
+that is, situations where there are multiple active pgpool-II.
+</li>
+<li>
+Don't connect to pgpool-II in down status using the real IP. Because a pgpool-II in down status
+can't receive information from watchdog, its backend status may be different from other pgpool-II.
+</li>
+<li>
+pgpool-II in down status can't become active nor standby pgpool-II.
+Recovery from down status requires restart of pgpool-II.
+</li>
+<li>
+Please note that after the active pgpool-II stops, it will take a few seconds until the
+standby pgpool-II promote to new active, to make sure that the former virtual IP is brought
+down before a down notification packet is sent to other pgpool-IIs.
 </li>
 </ul>
 <p class="top_link"><a href="#Top">back to top</a></p>

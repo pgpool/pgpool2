@@ -4177,11 +4177,22 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
 <h2 id="WATCHDOG_RESTRICTIONS">watchdog の制限事項</h2>
 <ul>
   <li>
-  全ての PostgreSQL がダウンしたなどにより pgpool-II から全ての DB ノードが切り離された場合、
-  watchdog は全 pgpool-II のサービスがダウンしたとみなします。
-  その後、各 pgpool-II で pcp_attach_node コマンドにより DB ノードの復帰をおこなった場合、
-  アクティブの pgpool-II が複数できてしまう「スプリットブレイン」状況になってしまいます。
-  この問題を回避するために、ダウン状態の pgpool-II を復帰させるには再起動を行う必要があります。
+  PostgreSQL サーバのダウンや pcp_detach_node の実行により pgpool-II から全ての DB ノードが切り離された場合、
+  watchdog は pgpool-II のサービスがダウンした状態とみなし、watchdog に割り当てられていた仮想 IP は停止されます。
+  そのため、クライアントは仮想 IP を使って pgpool-II への接続することは出来なくなります。
+  これは、アクティブの pgpool-II が複数できてしまう「スプリットブレイン」状況を避けるための仕様です。
+  </li>
+  <li>
+  ダウン状態の pgpool-II へ 実 IP を使った接続はしないでください。ダウン状態の pgpool-II は watchdog からの
+  情報を受け取ることが出来ないため、バックエンドの状態が他のpgpool-II と異なっている場合があります。
+  </li>
+  <li>
+  ダウン状態の pgpool-II はアクティブまたはスタンバイになることはできません。ダウン状態から復帰するためには
+  pgpool-II を再起動する必要があります。
+  </li>
+  <li>
+  アクティブな pgpool-II の停止後、スタンバイ pgpool-II が新しいアクティブに昇格するまでには数秒の時間がかかることに注意してください。
+  これは、アクティブ pgpool-II の停止を他の pgpool-II に通知する前に、仮想 IP が停止されたことの確認を行っているためです。
   </li>
 </ul>
 
