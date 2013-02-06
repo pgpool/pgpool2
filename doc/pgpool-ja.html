@@ -768,8 +768,20 @@ falseにすると、フェイルオーバせず、単にエラーがレポート
    trueならば、pool_hba.confに従ってクライアント認証を行います。
    詳細は<a href="#hba">クライアント認証(HBA)のためのpool_hba.conf設定
    方法</a>を参照してください。
-このパラメータを変更した時には pgpool-II を再起動してください。
+   このパラメータを変更した時には設定ファイルを再読み込みしてください。
 </p>
+</dd>
+
+<dt><a name="POOL_PASSWD"></a>pool_passwd</dt>
+<dd>
+<p>
+    md5 認証で用いる認証ファイルのファイル名を指定します。
+    デフォルト値は "pool_passwd" です。
+    空文字列（""）を指定すると 認証ファイルの読込は無効になります。  
+    詳細は<a href="#md5">認証・アクセス制御方式</a>を参照してください。
+    このパラメータを変更した時には pgpool-II を再起動してください。
+</p>
+</dd>
 
 <dt><a name="BACKEND_HOSTNAME"></a>backend_hostname</dt>
 <dd>
@@ -2982,8 +2994,10 @@ Possible last query was:のあとに、このエラーを返す原因となっ�
 <ul>
 <li>レプリケーションモードまたマスタ/スレーブモード時にはtrust, reject, clear
      text password, pam, 認証方式だけが利用できます。
-crypt認証は利用できません。
-md5認証に関しては、PostgreSQLに該当ユーザをmd5認証付でPostgreSQLに登録し、次にpgpoolに付属するpg_md5コマンドを使って、pool_passwdという認証ファイルを作成することにより利用できるようになります。
+     crypt認証は利用できません。
+     md5認証に関しては、PostgreSQLに該当ユーザをmd5認証付でPostgreSQLに登録し、次にpgpoolに付属するpg_md5コマンドを使って、pool_passwdという認証ファイルを作成することにより利用できるようになります。
+     pool_passwdは認証ファイルのデフォルトのファイル名です。
+     ファイル名は<a href="#POOL_PASSWD">pool_passwd</a>で変更することができます。
 <ol>
 <li>DBユーザのアカウントでログインし、"pg_md5 --md5auth パスワード"
 または "pg_md5 --md5auth --username=ユーザ名 パスワード" を実行します。

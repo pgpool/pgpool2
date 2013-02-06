@@ -72,6 +72,10 @@ backend_flag1 = 'ALLOW_TO_FAILOVER'
 
 enable_pool_hba = off
                                    # Use pool_hba.conf for client authentication
+pool_passwd = "pool_passwd"
+                                   # File name of pool_passwd for md5 authentication.
+                                   # "" disables pool_passwd. 
+                                   # (change requires restart)
 authentication_timeout = 60
                                    # Delay in seconds to complete client authentication
                                    # 0 means no timeout.
