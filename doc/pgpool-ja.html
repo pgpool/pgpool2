@@ -516,18 +516,6 @@ pgpool.confでは空白行や#で始まる行はコメントと見なされま�
     </p>
     </dd>
 
-<dt><a name="PCP_TIMEOUT"></a>pcp_timeout</dt>
-    <dd>
-    <p>
-    pcpがpgppoolと接続する際のタイムアウト値。0にするとタイムアウトしません。
-    デフォルト値は10(秒)です。
-    </p>
-    <p>
-    このパラメータを変更した時には設定ファイルを再読み込みしてください。
-    </p>
-    </dd>
-</dl>
-
 <h3>Pools</h3>
 
 <dl>
@@ -671,7 +659,7 @@ local0.*    /var/log/pgpool.log
     trueならばpgpool-IIのログにタイムスタンプを追加します。デフォルトはtrueです。
     </p>
     <p>
-    このパラメータを変更した時には設定ファイルを再読み込みしてください。
+    このパラメータを変更した時には pgpool-II を再起動してください。
     </p>
     </dd>
 
@@ -3984,6 +3972,9 @@ watchdog プロセスは以下の項目すべてを指定する必要があり�
     <p>
     watchdog を有効にするには on にします。デフォルトは off です。
     </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
     </dd>
 </dl>
 
@@ -4006,6 +3997,9 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
     <p>
     指定がない場合は上位サーバへのネットワーク到達監視をしません。
     </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
     </dd>
 
 <dt><a name="PING_PATH"></a>ping_path <span class="version">V3.2 ～</span></dt>
@@ -4013,6 +4007,9 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
     <p>
     上位サーバへの接続監視に利用する ping コマンドのパスです。
     "/bin" のようにパスだけを指定します。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
     </p>
     </dd>
 </dl>
@@ -4026,6 +4023,9 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
     pgpool-II への生存監視の間隔（秒）です。
     （1 以上の数値）
     </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
     </dd>
 
 <dt><a name="WD_LIFE_POINT"></a>wd_life_point <span class="version">V3.2 ～</span></dt>
@@ -4034,6 +4034,9 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
     pgpool-II の死活監視で応答が得られなかった場合のリトライ回数です。
     （1 以上の数値）
     </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
     </dd>
 
 <dt><a name="WD_LIFECHECK_QUERY"></a>wd_lifecheck_query <span class="version">V3.2 ～</span></dt>
@@ -4041,6 +4044,9 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
     <p>
     pgpool-II の死活監視のために発行されるクエリです。
     デフォルトは "SELECT 1" です。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
     </p>
     </dd>
 
@@ -4078,6 +4084,9 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
     （アプリケーションサーバなど）外部からの接続される pgpool-II の仮想 IP アドレスです。
     スタンバイからアクティブに切り替わる際、pgpool はこの仮想 IP を引き継ぎます。
     </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
     </dd>
 
 <dt><a name="IFCONFIG_PATH"></a>ifconfig_path <span class="version">V3.2 ～</span></dt>
@@ -4085,6 +4094,9 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
     <p>
     IP アドレス切り替えに利用するコマンドのパスです。
     "/sbin" のようにパスだけを指定します。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
     </p>
     </dd>
 
@@ -4096,6 +4108,9 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
     のようにコマンドとパラメータを指定します。
     $_IP_$　は <a href="#DELEGATE_IP">delegate_IP</a> で指定された IP アドレスに置換されます。
     </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
     </dd>
 
 <dt><a name="IF_DOWN_CMD"></a>if_down_cmd <span class="version">V3.2 ～</span></dt>
@@ -4105,6 +4120,9 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
     "ifconfig eth0:0 down"
     のようにコマンドとパラメータを指定します。
     </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
     </dd>
 
 <dt><a name="ARPING_PATH"></a>arping_path <span class="version">V3.2 ～</span></dt>
@@ -4112,6 +4130,9 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
     <p>
     IP アドレス切り替え後に ARP リクエストを送信するコマンドのパスです。
     "/usr/sbin" のようにパスだけを指定します。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
     </p>
     </dd>
 
@@ -4122,6 +4143,9 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
     "arping -U $_IP_$ -w 1"
     のようにコマンドとパラメータを指定します。
     $_IP_$ は <a href="#DELEGATE_IP">delegate_IP</a> で指定された IP アドレスに置換されます。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
     </p>
     </dd>
 
@@ -4134,12 +4158,18 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
     <p>
     watchdog プロセスが相互監視を受信する為のホスト名または IP アドレスです。
     </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
     </dd>
 
 <dt><a name="WD_PORT"></a>wd_port <span class="version">V3.2 ～</span></dt>
     <dd>
     <p>
     watchdog プロセスが相互監視を受信する為のポート番号です。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
     </p>
     </dd>
 </dl>

@@ -518,17 +518,6 @@ comment and will be ignored.</p>
     This parameter can only be set at server start.</p>
     </dd>
 
-<dt><a name="PCP_TIMEOUT"></a>pcp_timeout</dt>
-    <dd>
-    <p>PCP connection's timeout value in seconds. If a client does not
-    respond within the set seconds, PCP closes the connection with
-    the client. Default is 10 seconds. 0 means no timeout.
-    </p>
-    <p>
-    This can be changed with a reload.</p>
-    </dd>
-</dl>
-
 <h3>Pools</h3>
 
 <dl>
@@ -3874,6 +3863,9 @@ All following options are required to be specified in watchdog process.
     <p>
     If on, activates watchdog. Default is off.
     </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
     </dd>
 </dl>
 
@@ -3887,6 +3879,9 @@ All following options are required to be specified in watchdog process.
     Each server is required to respond to ping.
     Specify a comma separated list of servers such as "hostA,hostB,hostC".
     </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
     </dd>
 
 <dt><a name="PING_PATH"></a>ping_path <span class="version">V3.2 -</span></dt>
@@ -3895,6 +3890,9 @@ All following options are required to be specified in watchdog process.
     This parameter specifies a path of ping command for monitoring connection
     to the upper servers.
     Set the only path such as "/bin".
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
     </p>
     </dd>
 </dl>
@@ -3909,6 +3907,9 @@ All following options are required to be specified in watchdog process.
     in second.
     (A number greater than or equal to 1)
     </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
     </dd>
 
 <dt><a name="WD_LIFE_POINT"></a>wd_life_point <span class="version">V3.2 -</span></dt>
@@ -3917,6 +3918,9 @@ All following options are required to be specified in watchdog process.
     The times to retry a failed life check of pgpool-II.
     (A number greater than or equal to 1)
     </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
     </dd>
 
 <dt><a name="WD_LIFECHECK_QUERY"></a>wd_lifecheck_query <span class="version">V3.2 -</span></dt>
@@ -3924,6 +3928,9 @@ All following options are required to be specified in watchdog process.
     <p>
     Actual query to check pgpool-II.
     Default is "SELECT 1"
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
     </p>
     </dd>
 
@@ -3963,6 +3970,9 @@ All following options are required to be specified in watchdog process.
     client servers (application servers etc.).
     When a pgpool is switched from standby to active, the pgpool takes over this VIP.
     </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
     </dd>
 
 <dt><a name="IFCONFIG_PATH"></a>ifconfig_path <span class="version">V3.2 -</span></dt>
@@ -3970,6 +3980,9 @@ All following options are required to be specified in watchdog process.
     <p>
     This parameter specifies a path of a command to switch the IP address.
     Set the only path such as "/sbin".
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
     </p>
     </dd>
 
@@ -3981,6 +3994,9 @@ All following options are required to be specified in watchdog process.
     "ifconfig eth0:0 inet $_IP_$ netmask 255.255.255.0".
     $_IP_$ is replaced by the IP address specified in <a href="#DELEGATE_IP">delegate_IP</a>.
     </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
     </dd>
 
 <dt><a name="IF_DOWN_CMD"></a>if_down_cmd <span class="version">V3.2 -</span></dt>
@@ -3990,6 +4006,9 @@ All following options are required to be specified in watchdog process.
     Set the command and parameters such as
     "ifconfig eth0:0 down".
     </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
     </dd>
 
 <dt><a name="ARPING_PATH"></a>arping_path <span class="version">V3.2 -</span></dt>
@@ -3998,6 +4017,9 @@ All following options are required to be specified in watchdog process.
     This parameter specifies a path of a command to send an ARP request
     after the virtual IP is switched.
     Set the only path such as "/usr/sbin".
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
     </p>
     </dd>
 
@@ -4010,6 +4032,9 @@ All following options are required to be specified in watchdog process.
     "arping -U $_IP_$ -w 1".
     $_IP_$ is replaced by the IP address specified in <a href="#DELEGATE_IP">delegate_IP</a>.
     </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
     </dd>
 </dl>
 
@@ -4020,12 +4045,18 @@ All following options are required to be specified in watchdog process.
     <p>
     Specifies the hostname or IP address for mutual monitoring of watchdog processes.
     </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
     </dd>
 
 <dt><a name="WD_PORT"></a>wd_port <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
     Specifies the port number for mutual monitoring of watchdog processes.
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
     </p>
     </dd>
 </dl>

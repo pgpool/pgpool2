@@ -423,35 +423,49 @@ client_idle_limit_in_recovery = 0
 #------------------------------------------------------------------------------
 use_watchdog = off 
                                     # Activates watchdog
+                                    # (change requires restart)
 trusted_servers = ''
                                     # trusted server list which are used
                                     # to confirm network connection
                                     # (hostA,hostB,hostC,...)
+                                    # (change requires restart)
 delegate_IP = ''
                                     # delegate IP address
+                                    # (change requires restart)
 wd_hostname = ''
                                     # Host name or IP address of this watchdog
+                                    # (change requires restart)
 wd_port = 9000
                                     # port number for watchdog service
+                                    # (change requires restart)
 wd_interval = 10
                                     # lifecheck interval (sec) > 0
+                                    # (change requires restart)
 ping_path = '/bin'
                                     # ping command path
+                                    # (change requires restart)
 ifconfig_path = '/sbin'
                                     # ifconfig command path
+                                    # (change requires restart)
 if_up_cmd = 'ifconfig eth0:0 inet $_IP_$ netmask 255.255.255.0'
                                     # startup delegate IP command
+                                    # (change requires restart)
 if_down_cmd = 'ifconfig eth0:0 down'
                                     # shutdown delegate IP command
+                                    # (change requires restart)
 
 arping_path = '/usr/sbin'           # arping command path
+                                    # (change requires restart)
 
 arping_cmd = 'arping -U $_IP_$ -w 1'
                                     # arping command
+                                    # (change requires restart)
 wd_life_point = 3
                                     # lifecheck retry times
+                                    # (change requires restart)
 wd_lifecheck_query = 'SELECT 1'
                                     # lifecheck query to pgpool from watchdog
+                                    # (change requires restart)
 wd_lifecheck_dbname = 'template1'
                                     # Database name connected for lifecheck 
 wd_lifecheck_user = 'nobody'
@@ -513,37 +527,47 @@ memory_cache_enabled = off
 memqcache_method = 'shmem'
 								   # Cache storage method. either 'shmem'(shared memory) or
 								   # 'memcached'. 'shmem' by default
+                                   # (change requires restart)
 memqcache_memcached_host = 'localhost'
 								   # Memcached host name or IP address. Mandatory if
 								   # memqcache_method = 'memcached'.
 								   # Defaults to localhost.
+                                   # (change requires restart)
 memqcache_memcached_port = 11211
 								   # Memcached port number. Mondatory if memqcache_method = 'memcached'.
 								   # Defaults to 11211.
+                                   # (change requires restart)
 memqcache_total_size = 67108864
 								   # Total memory size in bytes for storing memory cache.
 								   # Mandatory if memqcache_method = 'shmem'.
 								   # Defaults to 64MB.
+                                   # (change requires restart)
 memqcache_max_num_cache = 1000000
 								   # Total number of cache entries. Mandatory
 								   # if memqcache_method = 'shmem'.
 								   # Each cache entry consumes 48 bytes on shared memory.
 								   # Defaults to 1,000,000(45.8MB).
+                                   # (change requires restart)
 memqcache_expire = 0
 								   # Memory cache entry life time specified in seconds.
 								   # 0 means infinite life time. 0 by default.
+                                   # (change requires restart)
 memqcache_auto_cache_invalidation = on
 								   # If on, invalidation of query cache is triggered by corresponding
 								   # DDL/DML/DCL(and memqcache_expire).  If off, it is only triggered
 								   # by memqcache_expire.  on by default.
+                                   # (change requires restart)
 memqcache_maxcache = 409600
 								   # Maximum SELECT result size in bytes.
 								   # Must be smaller than memqcache_cache_block_size. Defaults to 400KB.
+                                   # (change requires restart)
 memqcache_cache_block_size = 1048576
 								   # Cache block size in bytes. Mandatory if memqcache_method = 'shmem'.
 								   # Defaults to 1MB.
+                                   # (change requires restart)
 memqcache_oiddir = '/var/log/pgpool/oiddir'
 				   				   # Temporary work directory to record table oids
+                                   # (change requires restart)
 white_memqcache_table_list = ''
                                    # Comma separated list of table names to memcache
                                    # that don't write to database
