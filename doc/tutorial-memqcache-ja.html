@@ -177,10 +177,7 @@ LOG:   <b>query result fetched from cache.</b> statement: SELECT * FROM table_ca
 memqcache_auto_cache_invalidation = on
 </pre>
 
-<p>設定を変更した場合は、pgpool-II をリロードします。</p>
-<pre>
-$ {installed_dir}/bin/pgpool reload
-</pre>
+<p>設定を変更した場合は、pgpool-II を再起動します。</p>
 
 <h4 id="invalidation_try">動作確認</h4>
 <p>SELECT がキャッシュされていることを確認します。</p>
@@ -213,10 +210,7 @@ LOG:   DB node id: 0 backend pid: 11203 statement: SELECT * FROM table_cache_ok 
 memqcache_expire = 5
 </pre>
 
-<p>設定を変更したら、pgpool-II をリロードします。</p>
-<pre>
-$ {installed_dir}/bin/pgpool reload
-</pre>
+<p>設定を変更したら、pgpool-II を再起動します。</p>
 
 <h4 id="expire_try">動作確認</h4>
 
