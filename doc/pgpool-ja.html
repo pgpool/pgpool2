@@ -3312,6 +3312,172 @@ avgはsum/countとして処理されます。</p>
 
 <h1>リリースノート<a name="release"></a></h1>
 
+<h2>3.0.10 (umiyameboshi) 2013/2/8</h2>
+<h3>概要</h3>
+<p>
+このバージョンでは、3.0.8における様々なバグが修正されています。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>md5 認証で競合が発生する不具合が修正されました。(Tatsuo Ishii)
+<p>
+  pool_passwd のファイル識別子は pgpool の親プロセスで開かれたものが子プロセス
+  に引き継がれてます。複数の接続で同時に md5 認証を行う際には、pool_get_passwd が
+  呼ばれ、ファイル識別子が走査されますが、ファイル識別子が共有されるために md5 認証
+  が失敗することがありました。この問題は、個々の子プロセスで pool_passwd ファイルを
+  開き直すことで解決されました。
+</p>
+<p>
+  この問題は [pgpool-general:1141] にて、Jason Slagle さんによって報告・解析されました。
+</p>
+<blockquote>
+  [pgpool-general: 1141] Possible race condition in pool_get_passwd<br />
+  From: Jason Slagle<br />
+  Date: Sun, 28 Oct 2012 01:12:52 -0400<br />
+  <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-October/001160.html">
+  http://www.sraoss.jp/pipermail/pgpool-general/2012-October/001160.html</a>
+</blockquote>
+</li>
+
+<li>pool_send_severity_message() で未初期化のメモリを使用しないよう修正しました。
+  (Tatsuo Ishii)
+<p>
+  このバグによりセグメンテーション違反が発生することがありました。
+  バグトラック #33 に投稿された valgrind 実行結果（dudee さんによる）にて報告されました。
+</p>
+<blockquote>
+  #33 pgpool-II 3.2.1 segfault<br />
+  Reporter: dudee
+  Date: 2012-10-30 19:16
+  <a href="http://www.pgpool.net/mantisbt/view.php?id=33">
+  http://www.pgpool.net/mantisbt/view.php?id=33</a>
+</blockquote>
+</li>
+
+<li>通常のテーブルと同名の一時テーブルがあるときに、クエリキャッシュの結果が不正になる
+  バグを修正しました。 (Tatsuo Ishii)
+<p>
+  以下はバグを引き起こす処理の例です。
+</p>
+<pre>
+  1) CREATE TABLE t1(i int);    -- 通常のテーブルを作成
+  2) INSERT INTO t1 VALUES(1);
+  3) SELECT * FROM t1;        -- クエリキャッシュが作成される
+  4) CREATE TEMP TABLE t1(i int);    -- 一時テーブルの作成
+  5) SELECT * FROM t1;        -- 誤ったクエリキャッシュが作成される!
+</pre>
+<p>
+  #3 で t1 のキャッシュが生成されますが、#5 でこれが不正に使われており、一時テーブル t1 が
+  一時テーブルと見なされていないのが問題でした。
+</p>
+</li>
+
+<li>pcp または worker 子プロセスの終了イベントを受信したときに、reaper() で wait3()
+  ループを終了しないように修正しました。 (Tatsuo Ishii)
+<p>
+  修正前は、reaper() は子プロセスの終了イベントを誤って無視してしまい、ゾンビプロセスを作り、
+  新しいプロセスを生成できないことがありました。
+</p>
+<p>
+  この問題は[pgpool-general-jp: 1123]にて、後藤さんより報告され、修正の示唆を頂きました。
+</p>
+<blockquote>
+  [pgpool-general-jp: 1123] Re: オンラインリカバリ後にゾンビプロセスになる<br />
+  From: GOTO, Daisuke
+  Date: Wed, 21 Nov 2012 19:56:17 +0900
+  <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2012-November/001122.html">
+  http://www.sraoss.jp/pipermail/pgpool-general-jp/2012-November/001122.html</a>
+</blockquote>
+</li>
+
+<li>pool_search_relcache() が REAL_MASTER_NODE_ID ではなく MASTER, MASTER_NODE_ID
+  を使用するように修正しました。 (Tatsuo Ishii)
+<p>
+  ストリーミングレプリケーションモードで 0 番ノードがフェールバックした場合、pgpool は
+  子プロセスを再起動しません。そのとき、REAL_MASTER_NODE_ID は 0 番ノードの接続
+  情報を探しにいきますが、これはバックエンドへの新しい接続が確立するまで存在しません。
+  そのため、接続情報の参照によって、セグメンテーションフォルトが発生していました。
+  この状況でも、MASTER または MASTER_NODE_ID は以前にキャッシュされたマスター
+  ノード ID を見にいくため、安全に使うことが出来ます。
+</p>
+</li>
+
+<li>ストリーミングレプリケーションモードでレプリケーション遅延が大きくなったときに、 
+  "portal not found" エラーが発生するバグを修正しました。 (Tatsuo Ishii)
+<p>
+  これは delay_threshold が導入以来、ずっと存在していたバグです。
+</p>
+<p>
+  bind, describe, execute の実行時に遅延が域値を越えた場合、送り先の DB ノードは
+  変更されていました。しかし、parse がそれとは異なるノードに送られていた場合、送り先ノードには
+  parse された ステートメントやポータルが存在しないために bind, describe, execute は
+  失敗していました。 修正後は、大きな遅延が発生した場合でも、これらは parse が実行された
+　ノード以外には送られないようになりました。
+</p>
+</li>
+
+<li>pg_md5 で、ユーザからのパスワード入力の後には改行するように修正しました。 (Yugo Nagata)</li>
+
+<li>watchdog のポート番号が既に使用されていた場合にエラーメッセージを出力するよう修正しました。 
+  (Yugo Nagata)
+<p> 
+  この問題は [pgpool-general: 1167] で Will Ferguson さんによって報告されました。
+</p>
+<blockquote>
+  [pgpool-general: 1167] Re: Watchdog error - wd_init: delegate_IP already exists<br />
+  From: Will Ferguson
+  Date: Tue, 6 Nov 2012 13:03:36 +0000
+  <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-November/001186.html">
+  http://www.sraoss.jp/pipermail/pgpool-general/2012-November/001186.html</a>
+</blockquote>
+</li>
+
+<li>コネクションプールが存在しない場合には、child_exit() が send_frontend_exits()
+  を呼ばないよう修正しました。 (Tatsuo Ishii)
+<p>
+  send_frontend_exits() は pool_connection_pool で指されてるオブジェクトを参照しているため、
+  修正前にはセグメンテーションフォルトが発生していました。バグトラック #44 の tuomas さんの報告によります。
+</p>
+<blockquote>
+  #44 pgpool went haywire after slave shutdown triggering master failover<br />
+  Reporter: tuomas
+  Date: 2012-12-11 00:33
+  <a href="http://www.pgpool.net/mantisbt/view.php?id=44">
+  http://www.pgpool.net/mantisbt/view.php?id=44</a>
+</blockquote>
+</li>
+
+<li>pool_read() が不正なパケットを読み込んだ場合に、read_startup_packet() がアラームクロック
+  をリセットして StartupPacket を解放するよう修正しました。 (Nozomi Anzai)
+<p>
+  修正前は、pgpool ポートの監視を行うプログラムの接続により、認証のタイムアウトが発生していました。 
+  この問題は、バグトラック #35 で報告されました。
+</p>
+<blockquote>
+  #35 Authentication is timeout<br />
+  Reporter: tuomas 
+  Date: 2012-11-20 11:54
+  <a href="http://www.pgpool.net/mantisbt/view.php?id=35">
+  http://www.pgpool.net/mantisbt/view.php?id=35</a>
+</blockquote>
+</li>
+
+<li>pool_open() が誤ったバッファポインタを初期化していたバグを修正しました。 (Tatsuo Ishii)
+<p>
+  このポインタは事前に memset() によって初期化されているため、実際にはこのバグによる害は
+  ありませんでした。
+</p>    
+</li>
+
+<li>ヘルプメッセージに -f オプションの説明を追加しました。 (Tatsuo Ishii)</li>
+
+<li>ドキュメント中の、「パラメータ変更に再起動が必要かどうか」の情報を追記・修正しました。(Yugo Nagata)</li>
+
+<li>pool_passwd に関する記述を pgpool_conf.sample*、および,ドキュメントに追加しました。 (Yugo Nagata)</li>
+</ul>
+
 <h2>3.0.9 (umiyameboshi) 2012/10/12</h2>
 <h3>概要</h3>
 <p>
