@@ -4,6 +4,345 @@
 3.2 Series (2012/08/03 - )
 ===============================================================================
 
+                    3.2.2 (namameboshi) 2013/2/8
+
+* Version 3.2.2
+
+      This is a bugfix release against pgpool-II 3.2.1.
+
+* Bug fixes
+
+* 3.2.2
+
+    - Fix compile errors on FreeBSD. (Tatsuo Ishii)
+
+    - Fix pgpool does not recognize VIEWs other than in default schema,
+      which is usually "public". (Tatsuo Ishii)
+
+      This makes pgpool to create caches for such a VIEW's query results,
+      which of course should not be allowed. 
+
+      Problem reported and patch provided by jgentsch in bug id #30.
+
+      #30 pgpool 3.2.1 - views in schema other than public are caching
+      Reporter: jgentsch
+      Date: 2012-10-19 23:13
+      http://www.pgpool.net/mantisbt/view.php?id=30
+
+    - Fix race condition when using md5 authentication. (Tatsuo Ishii)
+
+      The file descriptor to pool_passwd is opened in pgpool main and pgpool
+      child inherits it. When concurrent connections try to authenticate md5
+      method, they call pool_get_passwd and seek the fd and cause random md5
+      auth failure because underlying fd is shared. Fix is, let individual
+      pgpool child open the file by calling pool_reopen_passwd_file.
+
+      Problem reported and analyzed by Jason Slagle in pgpool-general:1141.
+
+      [pgpool-general: 1141] Possible race condition in pool_get_passwd
+      From: Jason Slagle
+      Date: Sun, 28 Oct 2012 01:12:52 -0400
+      http://www.sraoss.jp/pipermail/pgpool-general/2012-October/001160.html
+
+    - Clarify load balance condition information in manual. (Tatsuo Ishii)
+
+    - Fix segfault due to bug with query cache array handling. (Tatsuo Ishii)
+
+      The cache arrary is used to keep temporary cache results in a transaction.
+      If there are more than 128 SELECTs in a transaction, the module expands
+      cache_arrary by using realloc. However it does not record the new pointer
+      returned by realloc. So the module keeps on using the old pointer which is
+      absoleted.
+
+      This problem is reported in bug track #31 by jgentsch.
+
+      #31 pgpool V3_2_STABLE - segfault in pool_memqcache.c:2529
+      Reporter:jgentsch
+      Date: 2012-10-23 06:25
+      http://www.pgpool.net/mantisbt/view.php?id=31
+
+    - Fix hung up while repeating pcp_attach_node and pcp_detatch_node
+      (Tatsuo Ishii)
+      
+      When node status is changed by pcp_attach_node and pcp_detatch_node,
+      failover() sends SIGUSR1 to pcp_child process expecting it exits to
+      refresh node status. In this situation lots of pgpool children exit and
+      produce SIGCHLD as well. The SIGCHLD handler reaper() tries catch all
+      SIGCHLD but sometimes it fails depending on the system load and timing.
+      If SIGCHLD produced by pcp child is not caught, the process becomes
+      zombie and never restarted.
+
+      This problem is reported in bug track #32 (by oleg_myrk) etc.
+
+      #32 PGPool hangs on pcp_attach/detach
+      Reporter: oleg_myrk
+      Date: 2012-10-24 00:01
+      http://www.pgpool.net/mantisbt/view.php?id=32
+
+    - Fix pool_send_severity_message() not to use uninitialized memory.
+      (Tatsuo Ishii)
+
+      It cause a segmentaion fault.
+      Reported in Bug #33's attached valgrind output by dudee.
+
+      #33 pgpool-II 3.2.1 segfault
+      Reporter: dudee
+      Date: 2012-10-30 19:16
+      http://www.pgpool.net/mantisbt/view.php?id=33
+
+    - Fix bug with query cache returning incorrect data in some cases when a
+      persistent table and temp table have same name. (Tatsuo Ishii)
+
+      Here is a sequence to trigger the bug:
+
+      1) CREATE TABLE t1(i int);    -- create a persistent table
+      2) INSERT INTO t1 VALUES(1);
+      3) SELECT * FROM t1;        -- query cache entry created
+      4) CREATE TEMP TABLE t1(i int);    -- create a temp table
+      5) SELECT * FROM t1;        -- query cache entry mistakenly created!
+
+      Problem is #3 creates relcache entry for t1, and #5 incorrecly uses it
+      and believes that temp table t1 is not a temp table. 
+
+    - Add a description about "-f" to help message. (Tatsuo Ishii)
+
+    - Fix reaper() not to exit wait3() loop when catches pcp or worker child
+      exit event. (Tatsuo Ishii)
+
+      Otherwise reaper() mistakenly ignore some process exit event and make a
+      risk of creating zombie process and forgetting to create new process.
+
+      Problem reported and fix suggested by Goto in [pgpool-general-jp: 1123].
+      http://www.sraoss.jp/pipermail/pgpool-general-jp/2012-November/001122.html
+      (in Japanese)
+
+    - Fix a typo of configure help message. (Yugo Nagata)
+
+    - Add wd_hostname to pool_process_reporting.c. (Yugo Nagata)
+
+      Otherwise, wd_hostname is not contained in results of SHOW pool_status and 
+      cp_pool_status.
+
+    - Fix connect_inet_domain_socket_by_port() to not error out when connect(2)
+      returns EISCONN (Socket is already connected) error. (Tatsuo Ishii)
+     
+      This could happen with non blocking socket and should be treated as normal.
+      Per bug track #29 (by spork) and pgpool-general 1218 (by Mikola Rose).
+
+      #29 pgpool 3.2.1 cannot connect to db hosts
+      Reporter: spork
+      Date: 2012-10-18 15:03
+      http://www.pgpool.net/mantisbt/view.php?id=29
+
+      [pgpool-general: 1218] pgpool 3.2.1 - Health check failing to connect
+      From: Mikola Rose
+      Date: Tue, 4 Dec 2012 20:21:55 +0000
+      http://www.sraoss.jp/pipermail/pgpool-general/2012-December/001237.html
+
+    - Fix health_check() to check the health check timer before retrying
+      with template1 database. (Tatuo Ishii)
+
+      Without this, the retry with node 0 always fails because health check timer
+      may be already expired.
+
+    - Fix pool_search_relcache() to use MASTER or MASTER_NODE_ID macro, rather
+      than REAL_MASTER_NODE_ID. (Tatsuo Ishii)
+
+      In case node 0 fail back in streaming replication mode, pgpool does not
+      restart child process.  So REAL_MASTER_NODE_ID looks for node 0 con info,
+      which is not present until new connection to backend made. Thus referring
+      to node con info results in segfault. MASTER or MASTER_NODE_ID are safe in
+      this situation because they look at cached former master node id.
+
+    - Fix long standing bug "portal not found" error when replication delay
+      is too much in streaming replication mode. (Tatsuo Ishii)
+
+      The bug had been there since the delay threshold was introduced.
+
+      We changed destination DB node if delay threshold exceeds in bind,
+      describe and execute. However, if parse sends to different node, bind,
+      describe or execute will fail because no parsed statement or portal
+      exists.  Solution is, not to send to different parse node even
+      if delay threshold is too much.
+
+    - Fix pg_md5 to output "\n" after user inputs password. (Yugo Nagata)
+
+    - Fix to print error message when the port number for watchdog is already used.
+      (Yugo Nagata)
+
+      This issue was reported by Will Ferguson in [pgpool-general: 1167].
+
+      [pgpool-general: 1167] Re: Watchdog error - wd_init: delegate_IP already exists
+      From: Will Ferguson
+      Date: Tue, 6 Nov 2012 13:03:36 +0000
+      http://www.sraoss.jp/pipermail/pgpool-general/2012-November/001186.html
+
+    - Fix child_exit() to not call send_frontend_exits() if there's no
+      connection pool. (Tatsuo Ishii)
+      
+      Otherwise, it segfaults because send_frontend_exits() referes to objects
+      pointed to by pool_connection_pool. Per bug track #44 by tuomas.
+
+      #44 pgpool went haywire after slave shutdown triggering master failover
+      Reporter: tuomas
+      Date: 2012-12-11 00:33
+      http://www.pgpool.net/mantisbt/view.php?id=44
+
+    - Fix bug that only tables in white_memqcache_table_list was cached when
+      black_memqcache_table_list has any tables. (Yugo Nagata)
+
+    - Fix read_startup_packet() to reset alarm and free StartupPacket when
+      pool_read() returns 0 which means incorrect packet length. (Nozomi Anzai)
+
+      Previously, authentication timeout occurs when connected by a program
+      monitoring the pgpool port.It is reported in bug track #35.
+
+      #35 Authentication is timeout
+      Reporter: tuomas 
+      Date: 2012-11-20 11:54
+      http://www.pgpool.net/mantisbt/view.php?id=35
+
+    - Fix long standing bug with pool_open(). (Tatsuo Ishii)
+
+      It initializes wrong buffer pointer. Actually this is harmless because the
+      pointer is initialized by prior memset() call, though.
+
+    - Log that failover is avoided because "fail_over_on_backend_error" is
+      turned off. (Tatsuo Ishii)
+
+    - Fix LISTEN/NOTIFY handling bugs. (Tatsuo Ishii)
+
+      1) In streaming replication mode:
+
+      Session 1: LISTEN aaa;
+      Session 2: NOTIFY aaa;
+      Session 1: LISTEN aaa; --- hangs
+
+      (If LISTEN and NOTIFY are issued in a same session, it works fine.)
+
+      We assume that packets come from all nodes. However in streaming
+      replication mode, notification message only comes from primary
+      node and we should avoid reading from standby nodes.
+
+      2) In streaming replication mode: If primary node is not node 0, it
+      hangs like #1 even if fix applies. This is because MASTER_NODE_ID
+      macro (actually pool_virtual_master_db_node_id()) always returns
+      REAL_MASTER_NODE_ID, which is node 0 (if it is alive). The function
+      should return PRIMARY_NODE_ID in master/slave mode.
+
+      3) In replication mode, LISTEN/NOTIFY simply does not work.  In the
+      mode, NOTIFY is sent to all backends.  However the order of arrival of
+      'Notification response' is not necessarily the master first and then
+      slaves.  So if it arrives slave first, we should try to read from
+      master, rather than just discard it. Fixed in pool_process_query().
+ 
+      4) In replication mode, if LISTEN and NOTIFY are issued in a same
+      session, the session is disconnected because do_command() may receive
+      other than 'N', 'E', 'S' and 'C'. The solution is, put 'A' packet on a
+      stack and pop out when it is convenient. For this purpose, new
+      functions pool_push(), pool_pop() and pool_stacklen() are added.
+
+      This probmel is reported in but grack #45 by rpashin.
+
+      #45 LISTEN/NOTIFY doesn't work if cluster contains more then 1 node in
+      streaming replication mode
+      Reporter: rpashin 
+      Date: 2012-12-12 00:09
+      http://www.pgpool.net/mantisbt/view.php?id=45
+
+      Considering the size of the patch, I do not back patch to 3.1 or
+      before(so far, we have not heard any complaints on 3.1 or before).
+
+    - Fix connect_inet_domain_socket_by_port() to call select(2) rather than
+      error out when connect(2) returns EINPROGESS or EALREADY error. 
+      (Tatsuo Ishii)
+
+      When using non-blocking socket, despite the errors like
+      "Connection timed out", actually connection has been established.
+      To solve the problem we should use select(2) to wait for connection
+      establishing when connect(2) reports EINPROGRESS or EALREADY, instead
+      of doing a retry tight loop. 
+
+      This problem is reported in bug track #46 by mcousin.
+
+      #46 Watchdog failing to connect sometimes
+      Reporter: mcousin 
+      Date: 2012-12-15 01:01
+      http://www.pgpool.net/mantisbt/view.php?id=46
+
+    - Add caution to increase num_init_children if watchdog enabled in manual.
+      (Tatsuo Ishii)
+
+      See [pgpool-general: 1330] for more details.
+
+      [pgpool-general: 1330] WatchDog and pgool sudden stop working
+      From: Tomas Halgas
+      Date: Fri, 18 Jan 2013 14:47:23 +0100
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-January/001350.html
+
+    - Fix segmentation fault while pgpool-II stating up or fail over when
+      watchdog is enabled. (Yugo Nagata)
+
+      This is caused by wrong usage of pthread, namely pthread_detach and
+      pthread_join are mixed together.  Solution is to use pthread_join only
+      if we need to get status of child thread. BTW, the problem could occu
+      on moderately modern OS such as Fedora 17, but the reason why the problem
+      is not observed on other OSs is, just we were lucky.
+
+      Problem reported in [pgpool-general: 1179] by Lonni J Friedman.
+
+      [pgpool-general: 1179] 3.2.1 segfaults at startup on Fedora17.
+      From: Lonni J Friedman
+      Date: Mon, 12 Nov 2012 15:58:29 -0800
+      http://www.sraoss.jp/pipermail/pgpool-general/2012-November/001198.html
+    
+      Patch provided by chads in bug track #48. 
+
+      pthread_detach is being used wrong; causes pgpool to segfault.
+      Reporter: chads 
+      Date: 2013-01-16 05:44
+      http://www.pgpool.net/mantisbt/view.php?id=48
+
+    - Avoid split-brain situation reported in [pgpool-general: 1046] (Yugo Nagata)
+  
+      After all backend nodes are detached from pgpools and then some backend node
+      are attached to these, multiple active pgpools could exist simultaneously,
+      that is to say, split-brain situation occurs.
+ 
+      In this fix, when once all backend DB nodes are detached from pgpool, the pgpool
+      stays DOWN status until this is restarted. The pgpool in DOWN status cannot
+      escalate to active (delegate IP holder), so split-brain situation is avoided.
+
+      [pgpool-general: 1046]
+      watchdog enabled delegate_IP on multiple nodes simultaneously
+      From: Lonni J Friedman
+      Date: Wed, 26 Sep 2012 09:05:09 -0700
+      http://www.sraoss.jp/pipermail/pgpool-general/2012-September/001064.html
+
+    - Avoid a possible hang during the active pgpool exits. (Yugo Nagata)
+    
+      When exiting, the active pgpool brings down the virtual IP and then
+      sends a packet to other pgpools. However, the packet sometimes is sent
+      before the virtual IP is brought down completely. In this case the packet
+      sender is set to this IP. When the IP is brought down before other pgpools
+      respond, the active pgpool can not recieve the response, and hang up.
+    
+      In this fix, the active pgpool confirms that the virtual IP is brought
+      down before sending the packet.
+
+    - Modify descriptions of restrictions on watchdog. (Yugo Nagata)
+
+    - Modify pgpool.conf.sample* and documents to correct information of
+      whether a certain parameter change requires restart. (Yugo Nagata)
+
+    - Add pool_passwd option to pgpool.conf.sample*, pool_process_reporting.c,
+      and documents. (Yugo Nagata)
+
+      Otherwise, wd_hostname is not contained in results of SHOW pool_status and
+      pcp_pool_status.
+
+===============================================================================
+
                     3.2.1 (namameboshi) 2012/10/12
 
 * Version 3.2.1
@@ -64,6 +403,7 @@
       #25 s_do_auth doesn't handle NoticeResponse (N) message
       Date:     2012-08-28 03:57
       Reporter: singh.gurjeet
+      Date:
       http://www.pgpool.net/mantisbt/view.php?id=25
 
     - Remove unnecessary/confusing debug log from s_do_auth().(Tatsuo Ishii)
@@ -86,6 +426,7 @@
       #24 Severe memory leak in an OLTP environment
       Date:     2012-08-28 03:43
       Reporter: singh.gurjeet
+      Date:
       http://www.pgpool.net/mantisbt/view.php?id=24
 
     - Fix typo in cache_reporting(). (Tatsuo Ishii)
@@ -592,6 +933,129 @@
 
 ===============================================================================
 3.1 Series (2011/09/08 - )
+===============================================================================
+
+                    3.1.6 (hatsuiboshi) 2013/2/8
+
+* Version 3.1.6
+
+      This is a bugfix release against pgpool-II 3.1.5
+
+      __________________________________________________________________
+
+* Bug fixes
+
+    - Fix race condition when using md5 authentication. (Tatsuo Ishii)
+
+      The file descriptor to pool_passwd is opened in pgpool main and pgpool
+      child inherits it. When concurrent connections try to authenticate md5
+      method, they call pool_get_passwd and seek the fd and cause random md5
+      auth failure because underlying fd is shared. Fix is, let individual
+      pgpool child open the file by calling pool_reopen_passwd_file.
+
+      Problem reported and analyzed by Jason Slagle in pgpool-general:1141.
+
+      [pgpool-general: 1141] Possible race condition in pool_get_passwd
+      From: Jason Slagle
+      Date: Sun, 28 Oct 2012 01:12:52 -0400
+      http://www.sraoss.jp/pipermail/pgpool-general/2012-October/001160.html
+
+    - Fix hung up while repeating pcp_attach_node and pcp_detatch_node
+      (Tatsuo Ishii)
+      
+      When node status is changed by pcp_attach_node and pcp_detatch_node,
+      failover() sends SIGUSR1 to pcp_child process expecting it exits to
+      refresh node status. In this situation lots of pgpool children exit and
+      produce SIGCHLD as well. The SIGCHLD handler reaper() tries catch all
+      SIGCHLD but sometimes it fails depending on the system load and timing.
+      If SIGCHLD produced by pcp child is not caught, the process becomes
+      zombie and never restarted.
+
+      This problem is reported in bug track #32 (by oleg_myrk) etc.
+
+      #32 PGPool hangs on pcp_attach/detach
+      Reporter: oleg_myrk 
+    　Date: 2012-10-24 00:01
+      http://www.pgpool.net/mantisbt/view.php?id=32
+
+    - Fix pool_send_severity_message() not to use uninitialized memory.
+      (Tatsuo Ishii)
+
+      It cause a segmentaion fault.
+      Reported in Bug #33's attached valgrind output by dudee.
+
+      #33 pgpool-II 3.2.1 segfault
+      Reporter: dudee
+      Date: 2012-10-30 19:16
+      http://www.pgpool.net/mantisbt/view.php?id=33
+
+    - Add a description about "-f" to help message. (Tatsuo Ishii)
+
+    - Fix reaper() not to exit wait3() loop when catches pcp or worker child
+      exit event. (Tatsuo Ishii)
+
+      Otherwise reaper() mistakenly ignore some process exit event and make a
+      risk of creating zombie process and forgetting to create new process.
+
+      Problem reported and fix suggested by Goto in [pgpool-general-jp: 1123].
+      http://www.sraoss.jp/pipermail/pgpool-general-jp/2012-November/001122.html
+      (in Japanese)
+
+    - Fix pool_search_relcache() to use MASTER or MASTER_NODE_ID macro, rather
+      than REAL_MASTER_NODE_ID. (Tatsuo Ishii)
+
+      In case node 0 fail back in streaming replication mode, pgpool does not
+      restart child process.  So REAL_MASTER_NODE_ID looks for node 0 con info,
+      which is not present until new connection to backend made. Thus referring
+      to node con info results in segfault. MASTER or MASTER_NODE_ID are safe in
+      this situation because they look at cached former master node id.
+
+    - Fix long standing bug "portal not found" error when replication delay
+      is too much in streaming replication mode. (Tatsuo Ishii)
+
+      The bug had been there since the delay threshold was introduced.
+
+      We changed destination DB node if delay threshold exceeds in bind,
+      describe and execute. However, if parse sends to different node, bind,
+      describe or execute will fail because no parsed statement or portal
+      exists.  Solution is, not to send to different parse node even
+      if delay threshold is too much.
+
+    - Fix pg_md5 to output "\n" after user inputs password. (Yugo Nagata)
+
+    - Fix child_exit() to not call send_frontend_exits() if there's no
+      connection pool. (Tatsuo Ishii)
+      
+      Otherwise, it segfaults because send_frontend_exits() referes to objects
+      pointed to by pool_connection_pool. Per bug track #44 by tuomas.
+
+      #44 pgpool went haywire after slave shutdown triggering master failover
+      Reporter: tuomas
+      Date: 2012-12-11 00:33
+      http://www.pgpool.net/mantisbt/view.php?id=4
+
+    - Fix read_startup_packet() to reset alarm and free StartupPacket when
+      pool_read() returns 0 which means incorrect packet length. (Nozomi Anzai)
+
+      Previously, authentication timeout occurs when connected by a program
+      monitoring the pgpool port.It is reported in bug track #35 by tuomas.
+
+      #35 Authentication is timeout
+      Reporter: tuomas 
+      Date: 2012-11-20 11:54
+      http://www.pgpool.net/mantisbt/view.php?id=3
+
+    - Fix long standing bug with pool_open(). (Tatsuo Ishii)
+
+      It initializes wrong buffer pointer. Actually this is harmless because the
+      pointer is initialized by prior memset() call, though.
+
+    - Modify documents to correct information of whether a certain parameter
+      change requires restart. (Yugo Nagata)
+
+    - Add pool_passwd option to pgpool.conf.sample*, and documents. (Yugo Nagata)
+
+
 ===============================================================================
 
                     3.1.5 (hatsuiboshi) 2012/10/12
@@ -1154,6 +1618,110 @@
 
 ===============================================================================
 3.0 Series (2010/09/10 - )
+===============================================================================
+
+                    3.0.10 (hatsuiboshi) 2013/2/8
+
+* Version 3.0.10
+
+      This is a bugfix release against pgpool-II 3.0.9
+
+      __________________________________________________________________
+
+* Bug fixes
+
+    - Fix race condition when using md5 authentication. (Tatsuo Ishii)
+
+      The file descriptor to pool_passwd is opened in pgpool main and pgpool
+      child inherits it. When concurrent connections try to authenticate md5
+      method, they call pool_get_passwd and seek the fd and cause random md5
+      auth failure because underlying fd is shared. Fix is, let individual
+      pgpool child open the file by calling pool_reopen_passwd_file.
+
+      Problem reported and analyzed by Jason Slagle in pgpool-general:1141.
+
+      [pgpool-general: 1141] Possible race condition in pool_get_passwd
+      From: Jason Slagle
+      Date: Sun, 28 Oct 2012 01:12:52 -0400
+      http://www.sraoss.jp/pipermail/pgpool-general/2012-October/001160.html
+
+    - Fix pool_send_severity_message() not to use uninitialized memory.
+      (Tatsuo Ishii)
+
+      It cause a segmentaion fault.
+      Reported in Bug #33's attached valgrind output by dudee.
+
+      #33 pgpool-II 3.2.1 segfault
+      Reporter: dudee
+      Date: 2012-10-30 19:16
+      http://www.pgpool.net/mantisbt/view.php?id=33
+
+    - Fix reaper() not to exit wait3() loop when catches pcp or worker child
+      exit event. (Tatsuo Ishii)
+
+      Otherwise reaper() mistakenly ignore some process exit event and make a
+      risk of creating zombie process and forgetting to create new process.
+
+      Problem reported and fix suggested by Goto in [pgpool-general-jp: 1123].
+      http://www.sraoss.jp/pipermail/pgpool-general-jp/2012-November/001122.html
+      (in Japanese)
+
+    - Fix pool_search_relcache() to use MASTER or MASTER_NODE_ID macro, rather
+      than REAL_MASTER_NODE_ID. (Tatsuo Ishii)
+
+      In case node 0 fail back in streaming replication mode, pgpool does not
+      restart child process.  So REAL_MASTER_NODE_ID looks for node 0 con info,
+      which is not present until new connection to backend made. Thus referring
+      to node con info results in segfault. MASTER or MASTER_NODE_ID are safe in
+      this situation because they look at cached former master node id.
+
+    - Fix long standing bug "portal not found" error when replication delay
+      is too much in streaming replication mode. (Tatsuo Ishii)
+
+      The bug had been there since the delay threshold was introduced.
+
+      We changed destination DB node if delay threshold exceeds in bind,
+      describe and execute. However, if parse sends to different node, bind,
+      describe or execute will fail because no parsed statement or portal
+      exists.  Solution is, not to send to different parse node even
+      if delay threshold is too much.
+
+    - Fix pg_md5 to output "\n" after user inputs password. (Yugo Nagata)
+
+    - Fix child_exit() to not call send_frontend_exits() if there's no
+      connection pool. (Tatsuo Ishii)
+      
+      Otherwise, it segfaults because send_frontend_exits() referes to objects
+      pointed to by pool_connection_pool. Per bug track #44 by tuomas.
+
+      #44 pgpool went haywire after slave shutdown triggering master failover
+      Reporter: tuomas 
+      Date: 2012-12-11 00:33
+      http://www.pgpool.net/mantisbt/view.php?id=44
+
+    - Fix read_startup_packet() to reset alarm and free StartupPacket when
+      pool_read() returns 0 which means incorrect packet length. (Nozomi Anzai)
+
+      Previously, authentication timeout occurs when connected by a program
+      monitoring the pgpool port.It is reported in bug track #35 by tuomas.
+
+      #35 Authentication is timeout
+      Reporter: tuomas 
+      Date: 2012-11-20 11:54
+      http://www.pgpool.net/mantisbt/view.php?id=35
+
+    - Fix long standing bug with pool_open(). (Tatsuo Ishii)
+
+      It initializes wrong buffer pointer. Actually this is harmless because the
+      pointer is initialized by prior memset() call, though.
+
+    - Add a description about "-f" to help message. (Tatsuo Ishii)
+
+    - Modify documents to correct information of whether a certain parameter
+      change requires restart. (Yugo Nagata)
+
+    - Add pool_passwd option to pgpool.conf.sample*, and documents. (Yugo Nagata)
+
 ===============================================================================
 
                     3.0.9 (hatsuiboshi) 2012/10/12
