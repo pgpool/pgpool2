@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Wed Feb 6 20:09:42 JST 2013
+Last modified: Fri Feb  8 21:02:14 JST 2013
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -4081,24 +4081,6 @@ pgpool-IIのチュートリアルは<a href="tutorial-ja.html">ここ</a>にあ�
   <a href="http://www.pgpool.net/mantisbt/view.php?id=33">
   http://www.pgpool.net/mantisbt/view.php?id=33</a>
 </blockquote>
-</li>
-
-<li>通常のテーブルと同名の一時テーブルがあるときに、クエリキャッシュの結果が不正になる
-  バグを修正しました。 (Tatsuo Ishii)
-<p>
-  以下はバグを引き起こす処理の例です。
-</p>
-<pre>
-  1) CREATE TABLE t1(i int);    -- 通常のテーブルを作成
-  2) INSERT INTO t1 VALUES(1);
-  3) SELECT * FROM t1;        -- クエリキャッシュが作成される
-  4) CREATE TEMP TABLE t1(i int);    -- 一時テーブルの作成
-  5) SELECT * FROM t1;        -- 誤ったクエリキャッシュが作成される!
-</pre>
-<p>
-  #3 で t1 のキャッシュが生成されますが、#5 でこれが不正に使われており、一時テーブル t1 が
-  一時テーブルと見なされていないのが問題でした。
-</p>
 </li>
 
 <li>ヘルプメッセージに -f オプションの説明を追加しました。 (Tatsuo Ishii)</li>
