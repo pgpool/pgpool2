@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2012	PgPool Global Development Group
+ * Copyright (c) 2003-2013	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1450,7 +1450,14 @@ void notice_backend_error(int node_id)
 {
 	int n = node_id;
 
-	degenerate_backend_set(&n, 1);
+	if (getpid() == mypid)
+	{
+		pool_log("notice_backend_error: called from pgpool main. ignored.");
+	}
+	else
+	{
+		degenerate_backend_set(&n, 1);
+	}
 }
 
 /* notice backend connection error using SIGUSR1 */

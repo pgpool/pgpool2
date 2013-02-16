@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2012	PgPool Global Development Group
+ * Copyright (c) 2003-2013	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1403,6 +1403,12 @@ void pool_free_startup_packet(StartupPacket *sp)
  */
 void child_exit(int code)
 {
+	if (getpid() == mypid)
+	{
+		pool_log("child_exit: called from pgpool main. ignored.");
+		return;
+	}
+
 	/* count down global connection counter */
 	if (accepted)
 		connection_count_down();
