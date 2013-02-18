@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Thu Jan 31 08:10:02 JST 2013
+Last modified: Fri Feb 8 11:10:02 JST 2013
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1770,7 +1770,7 @@ SELECTなどの問い合わせがロードバランスされます。
 </p>
 <ul>
     <li>PostgreSQLのバージョンが7.4以降である</li>
-	<li>レプリケーションモードまたはマスタースレーブモードである</li>
+    <li>レプリケーションモードまたはマスタースレーブモードである</li>
     <li>問い合わせが明示的なトランクザションブロックの内側にない(つまり、BEGINを発行していない)</li>
     <li>SELECT文(WITH付も含む。<a href="#BLACK_FUNCTION_LIST">black_list</a> または
         <a href="#WHITE_FUNCTION_LIST">white_list</a> で指定された書き込みを含むSELECTを除く)
@@ -1778,17 +1778,17 @@ SELECTなどの問い合わせがロードバランスされます。
     <li>SELECT INTO 文ではない</li>
     <li>SELECT FOR UPDATE/SELECT FOR SHARE文ではない</li>
     <li>クエリ文字列が SELECTまたはWITH で始まる(ignore_leading_white_space = trueの場合は空白は無視します)</li>
-	<li>マスタースレーブモードの場合、更に以下の条件が満たされなければなりません。<span class="version">V3.0 -</span></li>
-		<ul>
-		  <li>一時テーブルを使っていない</li>
-		  <li>unloggedテーブルを使っていない</li>
-		  <li>システムカタログを使っていない</li>
-		  <li>トランザクションブロックの内側であっても上記条件と下記条件を満たせばロードバランスされます。</li>
-			  <ul>
-				<li>トランザクション分離レベルがSERIALIZABLEでない</li>
-				<li>トランザクション内で更新を伴うクエリが実行されていない(更新を伴うクエリが実行されるまではロードバランスされます)</li>
-			  </ul>
-		</ul>
+    <li>マスタースレーブモードの場合、更に以下の条件が満たされなければなりません。<span class="version">V3.0 -</span></li>
+        <ul>
+          <li>一時テーブルを使っていない</li>
+          <li>unloggedテーブルを使っていない</li>
+          <li>システムカタログを使っていない</li>
+          <li>トランザクションブロックの内側であっても上記条件と下記条件を満たせばロードバランスされます。</li>
+              <ul>
+                <li>トランザクション分離レベルがSERIALIZABLEでない</li>
+                <li>トランザクション内で更新を伴うクエリが実行されていない(更新を伴うクエリが実行されるまではロードバランスされます)</li>
+              </ul>
+        </ul>
   </ul>
 <p>
 (<a href="#replicate_select">replicate_selectの項目</a>も参考にしてください)
@@ -4063,30 +4063,7 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
     </p>
     </dd>
 
-<dt><a name="WD_LIFECHECK_DBNAME"></a>wd_lifecheck_dbname <span class="version">V3.3 ～</span></dt>
-    <dd>
-    <p>
-    pgpool-II の死活監視で接続するデータベースです。
-    デフォルトは "template1" です。
-    </p>
-    </dd>
-
-<dt><a name="WD_LIFECHECK_USER"></a>wd_lifecheck_user <span class="version">V3.3 ～</span></dt>
-    <dd>
-    <p>
-    pgpool-II の死活監視を行うユーザです。
-    デフォルトは "nobody" です。
-    </p>
-    </dd>
 </dl>
-
-<dt><a name="WD_LIFECHECK_PASSWORD"></a>wd_lifecheck_password <span class="version">V3.3 ～</span></dt>
-    <dd>
-    <p>
-    pgpool-II の死活監視を行うユーザのパスワードです。
-    デフォルトは "" です。
-    </p>
-    </dd>
 
 <h4>仮想 IP</h4>
 
@@ -5439,6 +5416,701 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 
 <h1 id="release">リリースノート</h1>
 
+<h2><a name="release3.2.3"></a>3.2.3 (namameboshi) 2013/2/18</h2>
+<h3>概要</h3>
+<p>pgpool-II 3.2.2 に対するバグ修正リリースです。
+   おもに、3.2.2 のヘルスチェックに関する致命的な問題を修正するものです。</p>
+<p>以下の条件がすべて満たされたとき、フェイルオーバ発生時に pgpool のメインプロセスが消滅し、
+   pgpool-II へのクライアントの接続がすべてハングします。
+   また、その状態から復帰するには、pgpool の子プロセスを手動で kill し、pgpool-II を
+   再起動するしかありませんでした。</p>
+   <ul>
+   <li>ヘルスチェックが有効である。 </li>
+   <li>PostgreSQL への接続を、UNIX ドメインソケットではなく TCP/IP で行なっている
+       （※ pgpool.conf のバックエンドノード設定において "backend_hostnameN" が空欄でない）。</li>
+   </ul>
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+<li><a href="#322_bugfix_connect">3.2.2</a> で入り込んだ connect_inet_domain_socket_by_port() の
+    バグを修正しました。 (Tatsuo Ishii)
+    <p>
+    接続において non blocking の connect() が EINPROGRESS や EALREADY という結果を返したときには、
+    select(2) を呼んで read / write ファイルディスクリプタの準備されるまで待つようにしました。
+    </p>
+    <p>
+    本来は select() が 0 以上を返したときにそうするべきところを、0 を返したときだけになっていました。
+    その結果、connect_inet_domain_socket_by_port() が実際には失敗しているのに
+    成功していたと誤って返していました。
+    </p>
+    <p>
+    またさらに、これによって health_check() がバックエンドが生きているものと誤認し、
+    バックエンドソケットに書き込みを行なおうとし、失敗していました。
+    これをトリガに notice_backend_error() が呼ばれ、SIGUSR1 シグナルが pgpool のメインプロセスの
+    親プロセスに送られます。
+    その結果、pgpool をシェルから起動していれば、シェルを kill する、ということになります。
+    </p>
+    <p>
+    pgpool をバックグラウンドで起動していれば #1 プロセスを kill します。
+    これは、pgpool を root として起動していなければ問題ありません。
+    もっとも root として起動していても、SIGUSR1 を受け取って /dev/initctl を再度 open するだけなので、
+    実際に問題はありません。
+    </p>
+    <p>
+    これらの困った問題は pgpool が誕生した時点から存在していましたが、
+    connect_inet_domain_socket_by_port() のバグによって表面化しました。
+    修正には、notice_backend_error() と child_exit() を変更し、
+    pgpool のメインプロセス自体から呼ばれたときには、自分自身を kill しないように、何も行なわないようにしました。
+    </p>
+</li>
+
+<li>設定パラメータの一覧を表示する "<a href="#pool_status">SHOW pool_status</a>" で
+    <a href="#POOL_PASSWD">pool_passwd</a> が表示されていないのを修正しました。(Yugo Nagata)</li>
+
+<li>configure.in にある configure のヘルプの typo を修正しました。 (Yugo Nagata)</li>
+</ul>
+
+<h2><a name="release3.2.2"></a>3.2.2 (namameboshi) 2013/2/8</h2>
+<h3>概要</h3>
+<p>
+このバージョンは 3.2.1 に対するバグ修正リリースです。
+</p>
+<h3>バグ修正</h3>
+<ul>
+<li>FreeBSD で発生するコンパイルエラーを修正しました。 (Tatsuo Ishii)</li>
+
+<li>デフォルトのスキーマ（通常は public）以外で作られたビューが認識
+  されていなかったバグを修正しました。(Tatsuo Ishii)
+<p>
+  このバグのため、本来キャッシュされるべきでない、該当するビューのクエリ結果がキャッシュされていました。
+</p>
+<p>
+  この問題はバグトラック #30 で jgentsch さんによって報告され、パッチを提供頂きました。
+</p>
+<blockquote>
+  #30 pgpool 3.2.1 - views in schema other than public are caching<br />
+  Reporter: jgentsch<br />
+  Date: 2012-10-19 23:13<br />
+  <a href="http://www.pgpool.net/mantisbt/view.php?id=30">
+  http://www.pgpool.net/mantisbt/view.php?id=30</a>
+</blockquote>
+</li>
+
+<li>md5 認証で競合が発生する不具合が修正されました。(Tatsuo Ishii)
+<p>
+  pool_passwd のファイル識別子は pgpool の親プロセスで開かれたものが子プロセス
+  に引き継がれてます。複数の接続で同時に md5 認証を行う際には、pool_get_passwd が呼ばれ、
+  ファイル識別子が走査されますが、ファイル識別子が共有されるために md5 認証が
+  失敗することがありました。この問題は、個々の子プロセスで pool_passwd ファイルを
+  開き直すことで解決されました。
+</p>
+<p>
+  この問題は [pgpool-general:1141] にて、Jason Slagle さんによって報告・解析されました。
+</p>
+<blockquote>
+  [pgpool-general: 1141] Possible race condition in pool_get_passwd<br />
+  From: Jason Slagle<br />
+  Date: Sun, 28 Oct 2012 01:12:52 -0400<br />
+  <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-October/001160.html">
+  http://www.sraoss.jp/pipermail/pgpool-general/2012-October/001160.html</a>
+</blockquote>
+</li>
+
+<li>ロードバランスの条件について、より詳しい情報をマニュアルに追記しました。 (Tatso Ishii)</li>
+
+<li>オンメモリクエリキャッシュ使用時に発生するセグメンテーションフォルトを修正しました。
+  これはキャッシュアレイの処理のバグが原因です。 (Tatsuo Isii)
+<p>
+  トランザクション中の一時キャッシュの結果を保持するためにキャッシュアレイ使用されます。
+  １つのトランザクションに 128 以上の SELECT がある場合には、キャッシュアレイの領域が
+  realloc を用いて拡張されます。しかし、その時に返却される新しいポインタではなく、
+  古いポインタが使われ続けていました。
+</p>
+<p>
+  この問題はバグトラック #31 にて jgentsch さんによって報告されました。
+</p>
+<blockquote>
+  #31 pgpool V3_2_STABLE - segfault in pool_memqcache.c:2529<br />
+  Reporter:jgentsch<br />
+  Date: 2012-10-23 06:25<br />
+  <a href="http://www.pgpool.net/mantisbt/view.php?id=31">
+  http://www.pgpool.net/mantisbt/view.php?id=31</a>
+</blockquote>
+</li>
+
+<li>pcp_attach_node, pcp_detach_node を繰り返し実行したときに起こるハングアップを
+  修正しました。 (Tatsuo Ishii)
+<p>
+  pcp_attach_node, pap_detach_node によりノードステータスが変更された時、failover()
+  は子プロセスに SIGUSR1 シグナルを送り、プロセスの終了とノードステータスの更新を行います。
+  その時に発せられた SIGCHLD シグナルは全て reaper() ハンドラで受信しますが、システムの
+  負荷とタイミングによりこれが失敗することがありました。pcp プロセスによる SIGCHLD シグナルの
+  受信に失敗した場合に、これがゾンビプロセスとなり、pcp プロセスが永遠に再起動されなくなって
+  いました。
+</p>
+<p>
+  この問題はバグトラック #32（oleg_myrk さんによる）他で報告されました。
+</p>
+<blockquote>
+  #32 PGPool hangs on pcp_attach/detach<br />
+  Reporter: oleg_myrk<br />
+  Date: 2012-10-24 00:01<br />
+  <a href="http://www.pgpool.net/mantisbt/view.php?id=32">
+  http://www.pgpool.net/mantisbt/view.php?id=32</a>
+</blockquote>
+</li>
+
+<li>pool_send_severity_message() で未初期化のメモリを使用しないよう修正しました。
+  (Tatsuo Ishii)
+<p>
+  このバグによりセグメンテーション違反が発生することがありました。
+  バグトラック #33 に投稿された valgrind 実行結果（dudee さんによる）にて報告されました。
+</p>
+<blockquote>
+  #33 pgpool-II 3.2.1 segfault<br />
+  Reporter: dudee<br />
+  Date: 2012-10-30 19:16<br />
+  <a href="http://www.pgpool.net/mantisbt/view.php?id=33">
+  http://www.pgpool.net/mantisbt/view.php?id=33</a>
+</blockquote>
+</li>
+
+<li>通常のテーブルと同名の一時テーブルがあるときに、クエリキャッシュの結果が不正になる
+  バグを修正しました。 (Tatsuo Ishii)
+<p>
+  以下はバグを引き起こす処理の例です。
+</p>
+<pre>
+  1) CREATE TABLE t1(i int);         -- 通常のテーブルを作成
+  2) INSERT INTO t1 VALUES(1);
+  3) SELECT * FROM t1;               -- クエリキャッシュが作成される
+  4) CREATE TEMP TABLE t1(i int);    -- 一時テーブルの作成
+  5) SELECT * FROM t1;               -- 誤ったクエリキャッシュが作成される!
+</pre>
+<p>
+  #3 で t1 のキャッシュが生成されますが、#5 でこれが不正に使われており、一時テーブル t1 が
+  一時テーブルと見なされていないのが問題でした。
+</p>
+</li>
+
+<li>ヘルプメッセージに -f オプションの説明を追加しました。 (Tatsuo Ishii)</li>
+
+<li>pcp または worker 子プロセスの終了イベントを受信したときに、reaper() で wait3()
+  ループを終了しないように修正しました。 (Tatsuo Ishii)
+<p>
+  修正前は、reaper() は子プロセスの終了イベントを誤って無視してしまい、ゾンビプロセスを作り、
+  新しいプロセスを生成できないことがありました。
+</p>
+<p>
+  この問題は[pgpool-general-jp: 1123]にて、後藤さんより報告され、修正の示唆を頂きました。
+</p>
+<blockquote>
+  [pgpool-general-jp: 1123] Re: オンラインリカバリ後にゾンビプロセスになる<br />
+  From: GOTO, Daisuke<br />
+  Date: Wed, 21 Nov 2012 19:56:17 +0900<br />
+  <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2012-November/001122.html">
+  http://www.sraoss.jp/pipermail/pgpool-general-jp/2012-November/001122.html</a>
+</blockquote>
+</li>
+
+<li>configure のヘルプメッセージの typo を修正しました。 (Yugo Nagata)</li>
+
+<li>wd_hostname を pool_process_reporting.c に追加しました。 (Yugo Nagata)
+<p>
+  以前は SHOW pool_status, pcp_pool_status の結果に wd_hostname が出力されていませんでした。
+</p>
+</li>
+
+<li>connect(2) が EISCONN（ソケットが接続済み）エラーを返したときには、
+  connect_inet_domain_socket_by_port() はエラーを出力しないよう修正しました。
+  (Tatsuo Ishii)
+<p>
+  これはノンブロッキングソケットでは起こり得る、正常のこととして扱われるべきです。
+  バグトラック #29 （by spork）と pgpool-general 1218（by Mikola Rose）で報告されました。
+</p>
+<blockquote>
+  #29 pgpool 3.2.1 cannot connect to db hosts<br />
+  Reporter: spork<br />
+  Date: 2012-10-18 15:03<br />
+  <a href="http://www.pgpool.net/mantisbt/view.php?id=29">
+  http://www.pgpool.net/mantisbt/view.php?id=29</a>
+</blockquote>
+<blockquote>
+  [pgpool-general: 1218] pgpool 3.2.1 - Health check failing to connect<br />
+  From: Mikola Rose<br />
+  Date: Tue, 4 Dec 2012 20:21:55 +0000<br />
+  <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-December/001237.html">
+  http://www.sraoss.jp/pipermail/pgpool-general/2012-December/001237.html</a>
+</blockquote>
+</li>
+
+<li>health_check() が template1 データベースに再接続を試みる前に、ヘルスチェックタイマーを
+    チェックするよう修正しました。 (Tastuo Ishii)
+<p>
+  修正前は、ヘルスチェックタイマーが既に期限を向かえているために、0番ノードへのヘルスチェックの
+  再接続が常に失敗していました。
+</p>
+</li>
+
+<li>pool_search_relcache() が REAL_MASTER_NODE_ID ではなく MASTER, MASTER_NODE_ID
+  を使用するように修正しました。 (Tatsuo Ishii)
+<p>
+  ストリーミングレプリケーションモードで 0 番ノードがフェールバックした場合、pgpool は
+  子プロセスを再起動しません。そのとき、REAL_MASTER_NODE_ID は 0 番ノードの接続情報を探しにいきますが、
+  これはバックエンドへの新しい接続が確立するまで存在しません。
+  そのため、接続情報の参照によって、セグメンテーションフォルトが発生していました。
+  この状況でも、MASTER または MASTER_NODE_ID は以前にキャッシュされたマスターノード ID を見にいくため、
+  安全に使うことが出来ます。
+</p>
+</li>
+
+<li>ストリーミングレプリケーションモードでレプリケーション遅延が大きくなったときに、
+  "portal not found" エラーが発生するバグを修正しました。 (Tatsuo Ishii)
+<p>
+  これは delay_threshold が導入以来、ずっと存在していたバグです。
+</p>
+<p>
+  bind, describe, execute の実行時に遅延が域値を越えた場合、送り先の DB ノードは
+  変更されていました。しかし、parse がそれとは異なるノードに送られていた場合、送り先ノードには
+  parse された ステートメントやポータルが存在しないために bind, describe, execute は
+  失敗していました。 修正後は、大きな遅延が発生した場合でも、これらは parse が実行された
+　ノード以外には送られないようになりました。
+</p>
+</li>
+
+<li>pg_md5 で、ユーザからのパスワード入力の後には改行するように修正しました。 (Yugo Nagata)</li>
+
+<li>watchdog のポート番号が既に使用されていた場合にエラーメッセージを出力するよう修正しました。
+  (Yugo Nagata)
+<p>
+  この問題は [pgpool-general: 1167] で Will Ferguson さんによって報告されました。
+</p>
+<blockquote>
+  [pgpool-general: 1167] Re: Watchdog error - wd_init: delegate_IP already exists<br />
+  From: Will Ferguson<br />
+  Date: Tue, 6 Nov 2012 13:03:36 +0000<br />
+  <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-November/001186.html">
+  http://www.sraoss.jp/pipermail/pgpool-general/2012-November/001186.html</a>
+</blockquote>
+</li>
+
+<li>コネクションプールが存在しない場合には、child_exit() が send_frontend_exits()
+  を呼ばないよう修正しました。 (Tatsuo Ishii)
+<p>
+  send_frontend_exits() は pool_connection_pool で指されてるオブジェクトを参照しているため、
+  修正前にはセグメンテーションフォルトが発生していました。バグトラック #44 の tuomas さんの報告によります。
+</p>
+<blockquote>
+  #44 pgpool went haywire after slave shutdown triggering master failover<br />
+  Reporter: tuomas<br />
+  Date: 2012-12-11 00:33<br />
+  <a href="http://www.pgpool.net/mantisbt/view.php?id=44">
+  http://www.pgpool.net/mantisbt/view.php?id=44</a>
+</blockquote>
+</li>
+
+<li>オンメモリクエリキャッシュで、black_memqcache_table_list にテーブルが指定されている場合に
+  white_memqcache_table_list に指定されたテーブルのみがキャッシュされていたバグを修正しました。
+  (Yugo Nagata)</li>
+
+<li>pool_read() が不正なパケットを読み込んだ場合に、read_startup_packet() がアラームクロック
+  をリセットして StartupPacket を解放するよう修正しました。 (Nozomi Anzai)
+<p>
+  修正前は、pgpool ポートの監視を行うプログラムの接続により、認証のタイムアウトが発生していました。
+  この問題は、バグトラック #35 で報告されました。
+</p>
+<blockquote>
+  #35 Authentication is timeout<br />
+  Reporter: tuomas <br />
+  Date: 2012-11-20 11:54<br />
+  <a href="http://www.pgpool.net/mantisbt/view.php?id=35">
+  http://www.pgpool.net/mantisbt/view.php?id=35</a>
+</blockquote>
+</li>
+
+<li>pool_open() が誤ったバッファポインタを初期化していたバグを修正しました。 (Tatsuo Ishii)
+<p>
+  このポインタは事前に memset() によって初期化されているため、実際にはこのバグによる害は
+  ありませんでした。
+</p>
+</li>
+
+<li>fail_over_on_backend_error が無効のためファイルオーバが行われなかった場合には、
+  ログメッセージを出力するようにしました。 (Tatsuo Ishii)</li>
+
+<li>LISTEN/NOTIFY の処理に関するバグを修正しました。 (Tatsuo Ishii)
+<p>
+  1) ストリームレプリケーションモードにおいて以下の状況でハングアップが起きていました。
+</p>
+<pre>
+  Session 1: LISTEN aaa;
+  Session 2: NOTIFY aaa;
+  Session 1: LISTEN aaa; --- ハング
+</pre>
+<p>
+  （LISTEN と NOTIFY が同じセッションで発行された場合には問題ありませんでした。）
+</p>
+<p>
+  pgpool では、パケットは全てのバックエンドから送られてくることを前提にしていました。
+  しかし、ストリーミングレプリケーションモードでは notifiction メッセージはプライマリノードからしか
+  送られて来ません。このハングは、スタンバイノードからのパケット読込を回避することで修正しました。
+</p>
+<p>
+  2) この修正後も、ストリーミングレプリケーションモードでプライマリノードが 0 番ノードの場合には、
+  #1 と同様のハングが発生していました。これは、MASTER_NODE_ID マクロが
+  常に REAL_MASTER_NODE_ID を返していたためです。 master/slave モードでは、これが
+  PRIMARY_NODE_ID を返すように修正しました。
+</p>
+<p>
+  3) レプリケーションモードでは LISTEN/NOTIFY は全く動作していませんでした。このモード
+  では NOTIFY は全てのバックエンドに送られます。しかし、その応答の順番はマスターが最初で、
+  次がスレーブとは限りません。最初にスレーブから応答した場合には、単にそれを破棄するのではなく、
+  マスターから読込を行うように pool_process_query() を修正しました。
+</p>
+<p>
+  4) レプリケーションモードで、LISTENとNOTIFYが同じセッションから発行された場合、
+  db_command() が 'N', 'E', 'S', 'C' 以外のパケットを受信するために、そのセッションは切断されていました。
+  これは、'A'パケットをスタックに入れておき、都合の良いときに取り出すことで解決しました。
+  そのための関数、pool_push(), pool_pop(), pool_stacklen() が追加されています。
+</p>
+<p>
+  このバグはバグトラック #45 で rpashin さんにより報告されました。
+</p>
+<blockquote>
+  #45 LISTEN/NOTIFY doesn't work if cluster contains more then 1 node in<br />
+  streaming replication mode<br />
+  Reporter: rpashin <br />
+  Date: 2012-12-12 00:09<br />
+  <a href="http://www.pgpool.net/mantisbt/view.php?id=45">
+  http://www.pgpool.net/mantisbt/view.php?id=45</a>
+</blockquote>
+<p>
+  修正のサイズが大きいため、この修正は 3.1 以前にはバックパッチされません。
+  （これまでのところ、3.1 以前でこの障害の報告はありません。）
+</p>
+</li>
+
+<li id="322_bugfix_connect">connect(2) が EINPREGESS または EALREADY エラーを返したときには、
+  connect_inet_domain_socket_by_port() は エラーを出力せずに、select(2) を実行するよう
+  修正しました。 (Tatsuo Ishii)
+<p>
+  ノンブロッキングソケットでは、"Connection timed out" エラーにもかかわらず、実際には
+  接続は確立されています。これを解決するためには、connect(2) が EINPROGRESS または
+  EALREADY を返した場合には、再試行ループではなく select(2) を使って接続を待つ必要があります。
+</p>
+<p>
+  この問題は、バグトラック #46 で mcousin さんにより報告されました。
+</p>
+<blockquote>
+  #46 Watchdog failing to connect sometimes<br />
+  Reporter: mcousin <br />
+  Date: 2012-12-15 01:01<br />
+  <a href="http://www.pgpool.net/mantisbt/view.php?id=46">
+  http://www.pgpool.net/mantisbt/view.php?id=46</a>
+</blockquote>
+</li>
+
+<li>watchdog 使用時は num_init_children を大きめに設定するよう、マニュアルに注意書きを
+  追記しました。 (Tatsuo Ishii)
+<p>
+  詳しくは[pgpool-general: 1330] をご覧ください。
+</p>
+<blockquote>
+  [pgpool-general: 1330] WatchDog and pgool sudden stop working<br />
+  From: Tomas Halgas<br />
+  Date: Fri, 18 Jan 2013 14:47:23 +0100<br />
+  <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-January/001350.html">
+  http://www.sraoss.jp/pipermail/pgpool-general/2013-January/001350.html</a>
+</blockquote>
+</li>
+
+<li>watchdog を有効にしたときに、 pgpool-II の起動時、ファイルオーバ時に発生する
+  セグメンテーションフォルトを修正しました。 (Yugo Nagata)
+<p>
+  このバグの原因は pthread_detach と pthread_join を併用するという pthread の誤使用でした。
+  スレッドのステータス取得のため、pthread_join のみを用いることで
+　修正しました。なお、この問題は Fedora 17 などの比較的最近のOSで発生しましたが、
+  幸運にも他の OS では観察されていませんでした。
+</p>
+<p>
+  この問題は [pgpool-general: 1179] にて、Lonni J Friedman さんによって報告されました。
+</p>
+<blockquote>
+  [pgpool-general: 1179] 3.2.1 segfaults at startup on Fedora17.<br />
+  From: Lonni J Friedman<br />
+  Date: Mon, 12 Nov 2012 15:58:29 -0800<br />
+  <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-November/001198.html">
+  http://www.sraoss.jp/pipermail/pgpool-general/2012-November/001198.html</a>
+</blockquote>
+<p>
+  修正パッチはバグトラック #48 にて、chads さんによって提供頂きました。
+</p>
+<blockquote>
+  pthread_detach is being used wrong; causes pgpool to segfault.<br />
+  Reporter: chads <br />
+  Date: 2013-01-16 05:44<br />
+  <a href="http://www.pgpool.net/mantisbt/view.php?id=48">
+  http://www.pgpool.net/mantisbt/view.php?id=48</a>
+</blockquote>
+</li>
+
+<li>[pgpool-general: 1046] で報告されたスプリットブレインが発生しないよう修正しました。
+  (Yugo Nagata)
+<p>
+  全てのバックエンドから切り離された pgpool-II にバックエンドを復帰させた時に、複数の
+  アクティブ pgpool が存在してしまう状況（スプリットブレイン）が発生していました。
+  修正後は、一度全てのバックエンドから切り離された pgpool-II は、再起動されない限り、
+  ダウン状態に留まります。ダウン状態の pgpool-II はアクティブになれないため、上述の
+  スプリットブレインは回避されます。
+</p>
+<blockquote>
+  [pgpool-general: 1046]<br />
+  watchdog enabled delegate_IP on multiple nodes simultaneously<br />
+  From: Lonni J Friedman<br />
+  Date: Wed, 26 Sep 2012 09:05:09 -0700<br />
+  <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-September/001064.html">
+  http://www.sraoss.jp/pipermail/pgpool-general/2012-September/001064.html</a>
+</blockquote>
+</li>
+
+<li>アクティブ pgpool の終了時にハングすることがあったのを修正しました。
+  (Yugo Nagata)
+<p>
+  アクティブ pgpool は終了時に仮想 IP を停止してパケットを他の pgpool に送ります。
+  しかし、仮想 IP が完全に停止する前にパケットが送信されることがありました。その場合、
+  パケットの送信元には仮想 IP がセットされるため、仮想IPの停止後はアクティブ pgpool パケットの
+  応答を受け取れなくなり、ハングしていました。
+</p><p>
+  修正後は、アクティブ pgpool は仮想 IP の停止を確認した後に、パケットを送信します。
+</p>
+</li>
+
+<li>マニュアルの「watchdogの制限事項」の項目を加筆・修正しました。 (Yugo Nagata)</li>
+
+<li>pgpool.conf.sample* およびドキュメント中の、「パラメータ変更に再起動が必要かどうか」
+  の情報を追記・修正しました。 (Yugo Nagata)</li>
+
+<li>pool_passwd に関する記述を pgpool_conf.sample*、 ドキュメント、 および
+  pool_process_reporting.c に追加しました。 (Yugo Nagata)
+<p>
+  修正前は、SHOW pool_status, pcp_pool_status の出力に pool_passwd が含まれて
+  いませんでした。
+</p>
+</li>
+</ul>
+
+<h2><a name="release3.2.1"></a>3.2.1 (namameboshi) 2012/10/12</h2>
+<h3>概要</h3>
+<p>
+このバージョンは 3.2.0 に対するバグ修正リリースです。
+</p>
+<h3>バグ修正</h3>
+<ul>
+<li>send_cached_messages() を修正しました。 (Tatsuo Ishii)
+    <p>
+    これまでは、行データが 8192 byte 以上のときはバッファ長を 8192 byte に修正して
+    キャッシュしているだけでした。
+    </p>
+    <p>
+    これを、引数としてわたってきたバッファ用の raw データのコピーを削除して、
+    send_message へのポインタを無視するようにしました。
+    </p>
+</li>
+
+<li>クエリキャッシュ機能により、拡張問い合わせが失敗していたのを修正しました。 (Nozomi Anzai)</li>
+
+<li>read_startup_packet() を修正しました。(Tatsuo Ishii)
+    <p>
+    パケット長が 0 以下のときは直ちに return するべきでしたが、そうなっていなく、
+    メモリ確保時にエラーになっていました。
+    </p>
+    <p>これは pgpool-general:886 を参照してください。また、キャンセルアラームを追加しました。</p>
+    <blockquote>
+    [pgpool-general: 886] read_startup_packet: out of memory<br>
+    From: Lonni J Friedman<br>
+    Date: Wed, 8 Aug 2012 10:18:15 -0700<br>
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-August/000896.html">
+    http://www.sraoss.jp/pipermail/pgpool-general/2012-August/000896.html</a>
+    </blockquote>
+</li>
+
+<li>pgpool をシャットダウンするときに、watchdog のプロセス終了方法を修正しました。 (Tatsuo Ishii)
+    <p>
+    watchdog プロセスは kill(0,SIG) を呼んで watchdog 関連のプロセスを終了していました。
+    これによってかえって、親プロセスや pgpool や httpd プロセスまでもを終了させることがありました。
+    これは、pgpoolAdmin によって invoke されている場合に、すべてが同じプロセスグループになるためです。
+    </p>
+    <p>将来は、どんな場合でもsetsid()によって新しいプロセスグループを作るべきだと思います。</p>
+</li>
+
+<li>"-- コメント" で始まったりコメントが複数あるクエリで、
+    クエリキャッシュが使えなかったのを修正しました。(Nozomi Anzai)
+</li>
+
+<li>マルチステートメントのクエリはキャッシュしないようにしました。(Nozomi Anzai)
+    <p>これまでは "SELECT 1;UPDATE..." のようなクエリもキャッシュしていましたが、誤りでした。</p>
+</li>
+
+<li>ドキュメントに watchdog の制限を追記しました。(Yugo Nagata)</li>
+
+<li>s_do_auth() に NOTICE メッセージを追加しました。(Tatsuo Ishii)
+    <p>これがなかったために、ヘルスチェックが false アラームを受け取りフェイルオーバしていました。</p>
+    <p>これはバグトラックで報告されました。</p>
+    <blockquote>
+    #25 s_do_auth doesn't handle NoticeResponse (N) message<br>
+    Date:     2012-08-28 03:57<br>
+    Reporter: singh.gurjeet<br>
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=25">http://www.pgpool.net/mantisbt/view.php?id=25</a>
+    </blockquote>
+</li>
+
+<li>s_do_auth() から、不要かつ混乱をまねくデバッグメッセージを削除しました。(Tatsuo Ishii)</li>
+
+<li>メモリキャッシュ有効時に Execute() でバッファオーバーランするのを修正しました。(Tatsuo Ishii)
+    <p>
+    bind パラメータのひとつが 0 より小さいとき、符号拡張のために "%02X" で
+    2 バイト以上の文字を生成する可能性がありました。
+    </p>
+    <p>
+    また、そのあとにバッファオーバランを招く可能性を排除するため、sprintf()
+    ではなく snprintf() を使うようにしました。
+    </p>
+</li>
+
+<li>2009 年 12 月にリリースした pgpool-II 2.3 以来ずっと存在した
+   free_select_result() のメモリーリークを修正しました。(Tatsuo Ishii)
+    <p>
+    実際にはこのバグは、レプリケーションモードでしか発生しません
+    （タイムスタンプ書き換え時に偶然発生することがありました）。
+    </p>
+    <p>これはバグトラック #24 で報告されました。</p>
+    <blockquote>
+    #24 Severe memory leak in an OLTP environment<br>
+    Date:     2012-08-28 03:43<br>
+    Reporter: singh.gurjeet<br>
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=24">http://www.pgpool.net/mantisbt/view.php?id=24</a>
+</blockquote>
+</li>
+
+<li>cache_reporting() の typo を修正しました。(Tatsuo Ishii)</li>
+
+<li>SSL モードでの無限ループを修正しました。 (Tatsuo Ishii)
+    <p>
+    フロントエンドの SSL レイヤで溜っているデータがあるとき、
+    pool_process_query() がバックエンドに溜っているデータをチェックします。
+    もしそれが無かったときは再度ループして、フロントエンド/バックエンドがバッファを受け取っていないか
+    is_cache_empty() を以ってチェックします。
+    しかし、フロントエンドの SSL レイヤでデータが溜っているのを一度検知すると、
+    バックエンドに行ってまたチェックしようとします（無限ループ）。
+    </p>
+    <p>
+    これを解決するには、フロントエンドの SSL レイヤに溜っているデータがあり
+    かつ クエリが実行中でなければ、ProcessFrontendResponse() を呼んで
+    フロントエンドへの新しいリクエストをするようにしました。
+</p>
+</li>
+
+<li>is_system_catalog() で、可能ならば pgpool_regclass を使うようにしました。(Tatsuo Ishii)</li>
+
+<li>pool_get_insert_table_name() のメモリリークを修正しました。(Tatsuo Ishii)
+    <p>
+    nodeToString() でセッションコンテクストのメモリコンテクストを使ったあと、
+    セッション終了までは、メモリを開放していませんでした。
+    </p>
+    <p>詳しくはバグトラックをご覧ください。</p>
+    <blockquote>
+    #24 Severe memory leak in an OLTP environment<br>
+    Date:     2012-08-28 03:43<br>
+    Reporter: singh.gurjeet<br>
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=24">http://www.pgpool.net/mantisbt/view.php?id=24</a>
+    </blockquote>
+</li>
+
+<li>OID マップファイルをロックするのに flock(2) ではなく fcntl(2) を使うようにしました。(Tatsuo Ishii)
+    <p>
+    flock(2) は環境に依存し、Solaris で使えませんでした。
+    パッチは Ibrar Ahmed さんからいただきました。
+    </p>
+</li>
+
+<li>Raw モードで稼働しているとき、get_next_master_node() で見落としがあったのを修正しました。(Tatsuo Ishii)
+    <p>マスタノードがダウンしたとき、必ずマスタノード ID 0 を返していました。</p>
+    <p>詳細は [pgpool-general: 1039] をご覧ください。</p>
+    <blockquote>
+    [pgpool-general: 1039] Raw failover not working as expected on pgpool-II v3.2.0
+    From: Quentin White<br>
+    Date: Tue, 25 Sep 2012 07:45:34 +0000<br>
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-September/001057.html">
+    http://www.sraoss.jp/pipermail/pgpool-general/2012-September/001057.html</a>
+    </blockquote>
+</li>
+
+<li>do_query() のセグメンテーションフォルトを修正しました。(Tatsuo Ishii)
+    <p>
+    クエリキャッシュが有効で拡張問い合わせが使われているとき、do_query() はシステムカタログに接続し、
+    pool_read2() を使います。
+    しかし、parse メッセージパケットを Parse() で取得し、パケットの内容が pool_read2() のバッファにあります。
+    このため、do_query() はパケットの内容を分割できず、セグメンテーションフォルトを引き起こしていました。
+    </p>
+    <p>
+    これを解決するために、メモリを確保し、パケット内容をコピーし、Parse() を飛ばすようにしました。
+    ただし、パケットの中にはクエリコンテクストが参照しているクエリ文字列も含まれています。
+    そのため、このクエリ文字列をコピーしてポインタをクエリコンテクストに保持する必要があります。
+    </p>
+    <p>
+    これは、Parse() だけの話でなく、他のプロトコルモジュールにもある問題と考えています。
+    本修正はそれらにも適用しますが、そのためには、ProcessFrontendResponse() を変更します。
+    </p>
+
+    <p>この問題はバグトラック #21 で報告されました。</p>
+    <blockquote>
+    #21 pgpool-II 3.2.0 cannot execute sql through jdbc<br>
+    Date:     2012-08-17 16:31<br>
+    Reporter: elisechiang<br>
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=21">http://www.pgpool.net/mantisbt/view.php?id=21</a>
+    </blockquote>
+</li>
+
+<li>PCP 通信で UNIX ドメインソケットパスをセットするのを、
+    シグナルハンドラのセットアップ前に行なうように修正しました。(Yugo Nagata)
+    <p>これまでは、このパス情報がなかったために、プロセス終了時のソケットの削除が失敗していました。</p>
+    <p>パッチは Gilles Darold さんが提供しました。</p>
+    <blockquote>
+    [pgpool-hackers: 131] Found bug with watchdog resulting in pgpool segmentation fault
+    From: Gilles Darold<br>
+    Date: Thu, 13 Sep 2012 18:54:42 +0200<br>
+    <a href="http://www.sraoss.jp/pipermail/pgpool-hackers/2012-September/000130.html">
+    http://www.sraoss.jp/pipermail/pgpool-hackers/2012-September/000130.html</a>
+    </blockquote>
+</li>
+
+<li>watchdog の ifup/ifdown や arping コマンドが存在しないときに
+    メッセージを出すようにしました。 (Yugo Nagata)</li>
+
+<li>ずっとあった do_query() で "portal "" does not exist" エラーが出るのを修正しました。(Tatsuo Ishii)
+    <p>
+    1) 拡張問い合わせを使っていて、
+    2) unnamed portal が使われていて、
+    3) 明示的なトランザクションを使っていないとき、
+    ユーザの unnamed portal が Sync メッセージで削除されていました。
+    </p>
+    <p>
+    これは、Sync メッセージがトランザクションを終了して unnamed portal を削除するためです。
+    このために "portal "" does not exist" というエラーが出ていました。
+    </p>
+    <p>
+    これを修正するために、Sync ではなく Flush メッセージを使うようにしました。
+    二者の主な違いとしては、Flush は Ready For Query メッセージを返さないことです。
+    したがって do_query() は、来るべきであろうメッセージをすべて待ってから return するようになります。
+    </p>
+    <p>
+    バックエンドからメッセージが来る順序はランダムに見えますが、do_query() は
+    それを状態のビットを以って管理しています。
+    </p>
+</li>
+</ul>
+
 <h2><a name="release3.2.0"></a>3.2.0 (namameboshi) 2012/08/03</h2>
 <h3>概要</h3>
 <p>
@@ -5931,7 +6603,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
     <p>
     これは主に、memcached_get() が MEMCACHED_NOTFOUND 以外のエラーを返した場合には、
     pool_fetch_cache() が "cache not found" を装うように修正することで対処しました。
-    また、その場合には後のエラーを防ぐために pool_config->memory_cache_enabled を 0
+    また、その場合には後のエラーを防ぐために pool_config-&gt;memory_cache_enabled を 0
     にセットするようにしました。
     </p>
 </li>
@@ -5991,7 +6663,7 @@ autoconf
     クエリ結果が巨大だとこれは非常に長い時間を要します。
     pgpool のセッションを極力早く終了するには、レプリケーションモード以外では、
     フロントエンドへの書き込みに失敗したらエラーを返すように、pool_flush_it を変更しました。
-    レプリケーションモードでは、以前どおりの挙動、すなわちバックエンド間での  同期書き込みを行ないます。
+    レプリケーションモードでは、以前どおりの挙動、すなわちバックエンド間での同期書き込みを行ないます。
     </p>
     <p>
     そのほか、SimpleForwardToFrontend が、pool_write_and_flush がエラーを返してきたときに
@@ -6003,7 +6675,416 @@ autoconf
 
 <hr>
 
-<h2><a name="release3.1.2"></a>3.1.3 (hatsuiboshi) 2012/01/31</h2>
+<h2><a name="release3.1.6"></a>3.1.5 (hatsuiboshi) 2012/10/12</h2>
+<h3>概要</h3>
+<p>このバージョンは3.1.5に対するバグ修正リリースです。</p>
+<ul>
+
+<li>md5 認証で競合が発生する不具合が修正されました。(Tatsuo Ishii)
+<p>
+  pool_passwd のファイル識別子は pgpool の親プロセスで開かれたものが子プロセスに引き継がれてます。
+  複数の接続で同時に md5 認証を行う際には、pool_get_passwd が呼ばれ、ファイル識別子が走査されますが、
+  ファイル識別子が共有されるために md5 認証が失敗することがありました。
+  この問題は、個々の子プロセスで pool_passwd ファイルを開き直すことで解決されました。
+</p>
+<p>
+  この問題は [pgpool-general:1141] にて、Jason Slagle さんによって報告・解析されました。
+</p>
+<blockquote>
+  [pgpool-general: 1141] Possible race condition in pool_get_passwd<br />
+  From: Jason Slagle<br />
+  Date: Sun, 28 Oct 2012 01:12:52 -0400<br />
+  <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-October/001160.html">
+  http://www.sraoss.jp/pipermail/pgpool-general/2012-October/001160.html</a>
+</blockquote>
+</li>
+
+<li>pcp_attach_node, pcp_detach_node を繰り返し実行したときに起こるハングアップを
+  修正しました。 (Tatsuo Ishii)
+<p>
+  pcp_attach_node, pap_detach_node によりノードステータスが変更された時、failover()
+  は子プロセスに SIGUSR1 シグナルを送り、プロセスの終了とノードステータスの更新を行います。
+  その時に発せられた SIGCHLD シグナルは全て reaper() ハンドラで受信しますが、
+  システムの負荷とタイミングによりこれが失敗することがありました。
+  pcp プロセスによる SIGCHLD シグナルの受信に失敗した場合に、これがゾンビプロセスとなり、
+  pcp プロセスが永遠に再起動されなくなっていました。
+</p>
+<p>
+  この問題はバグトラック #32（oleg_myrk さんによる）他で報告されました。
+</p>
+<blockquote>
+  #32 PGPool hangs on pcp_attach/detach<br />
+  Reporter: oleg_myrk
+  Date: 2012-10-24 00:01
+  <a href="http://www.pgpool.net/mantisbt/view.php?id=32">
+  http://www.pgpool.net/mantisbt/view.php?id=32</a>
+</blockquote>
+</li>
+
+<li>pool_send_severity_message() で未初期化のメモリを使用しないよう修正しました。
+  (Tatsuo Ishii)
+<p>
+  このバグによりセグメンテーション違反が発生することがありました。
+  バグトラック #33 に投稿された valgrind 実行結果（dudee さんによる）にて報告されました。
+</p>
+<blockquote>
+  #33 pgpool-II 3.2.1 segfault<br />
+  Reporter: dudee
+  Date: 2012-10-30 19:16
+  <a href="http://www.pgpool.net/mantisbt/view.php?id=33">
+  http://www.pgpool.net/mantisbt/view.php?id=33</a>
+</blockquote>
+</li>
+
+<li>通常のテーブルと同名の一時テーブルがあるときに、クエリキャッシュの結果が不正になる
+  バグを修正しました。 (Tatsuo Ishii)
+<p>
+  以下はバグを引き起こす処理の例です。
+</p>
+<pre>
+  1) CREATE TABLE t1(i int);         -- 通常のテーブルを作成
+  2) INSERT INTO t1 VALUES(1);
+  3) SELECT * FROM t1;               -- クエリキャッシュが作成される
+  4) CREATE TEMP TABLE t1(i int);    -- 一時テーブルの作成
+  5) SELECT * FROM t1;               -- 誤ったクエリキャッシュが作成される!
+</pre>
+<p>
+  #3 で t1 のキャッシュが生成されますが、#5 でこれが不正に使われており、一時テーブル t1 が
+  一時テーブルと見なされていないのが問題でした。
+</p>
+</li>
+
+<li>ヘルプメッセージに -f オプションの説明を追加しました。 (Tatsuo Ishii)</li>
+
+<li>pcp または worker 子プロセスの終了イベントを受信したときに、reaper() で wait3()
+  ループを終了しないように修正しました。 (Tatsuo Ishii)
+<p>
+  修正前は、reaper() は子プロセスの終了イベントを誤って無視してしまい、ゾンビプロセスを作り、
+  新しいプロセスを生成できないことがありました。
+</p>
+<p>
+  この問題は[pgpool-general-jp: 1123]にて、後藤さんより報告され、修正の示唆を頂きました。
+</p>
+<blockquote>
+  [pgpool-general-jp: 1123] Re: オンラインリカバリ後にゾンビプロセスになる<br />
+  From: GOTO, Daisuke
+  Date: Wed, 21 Nov 2012 19:56:17 +0900
+  <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2012-November/001122.html">
+  http://www.sraoss.jp/pipermail/pgpool-general-jp/2012-November/001122.html</a>
+</blockquote>
+</li>
+
+<li>pool_search_relcache() が REAL_MASTER_NODE_ID ではなく MASTER, MASTER_NODE_ID
+  を使用するように修正しました。 (Tatsuo Ishii)
+<p>
+  ストリーミングレプリケーションモードで 0 番ノードがフェールバックした場合、pgpool は
+  子プロセスを再起動しません。そのとき、REAL_MASTER_NODE_ID は 0 番ノードの接続情報を
+  探しにいきますが、これはバックエンドへの新しい接続が確立するまで存在しません。
+  そのため、接続情報の参照によって、セグメンテーションフォルトが発生していました。
+  この状況でも、MASTER または MASTER_NODE_ID は以前にキャッシュされた
+  マスターノード ID を見にいくため、安全に使うことが出来ます。
+</p>
+</li>
+
+<li>ストリーミングレプリケーションモードでレプリケーション遅延が大きくなったときに、
+  "portal not found" エラーが発生するバグを修正しました。 (Tatsuo Ishii)
+<p>
+  これは delay_threshold が導入以来、ずっと存在していたバグです。
+</p>
+<p>
+  bind, describe, execute の実行時に遅延が域値を越えた場合、送り先の DB ノードは
+  変更されていました。しかし、parse がそれとは異なるノードに送られていた場合、送り先ノードには
+  parse された ステートメントやポータルが存在しないために bind, describe, execute は
+  失敗していました。 修正後は、大きな遅延が発生した場合でも、これらは parse が実行された
+　ノード以外には送られないようになりました。
+</p>
+</li>
+
+<li>pg_md5 で、ユーザからのパスワード入力の後には改行するように修正しました。 (Yugo Nagata)</li>
+
+<li>watchdog のポート番号が既に使用されていた場合にエラーメッセージを出力するよう修正しました。
+  (Yugo Nagata)
+<p> 
+  この問題は [pgpool-general: 1167] で Will Ferguson さんによって報告されました。
+</p>
+<blockquote>
+  [pgpool-general: 1167] Re: Watchdog error - wd_init: delegate_IP already exists<br />
+  From: Will Ferguson
+  Date: Tue, 6 Nov 2012 13:03:36 +0000
+  <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-November/001186.html">
+  http://www.sraoss.jp/pipermail/pgpool-general/2012-November/001186.html</a>
+</blockquote>
+</li>
+
+<li>コネクションプールが存在しない場合には、child_exit() が send_frontend_exits()
+  を呼ばないよう修正しました。 (Tatsuo Ishii)
+<p>
+  send_frontend_exits() は pool_connection_pool で指されてるオブジェクトを参照しているため、
+  修正前にはセグメンテーションフォルトが発生していました。バグトラック #44 の tuomas さんの報告によります。
+</p>
+<blockquote>
+  #44 pgpool went haywire after slave shutdown triggering master failover<br />
+  Reporter: tuomas
+  Date: 2012-12-11 00:33
+  <a href="http://www.pgpool.net/mantisbt/view.php?id=44">
+  http://www.pgpool.net/mantisbt/view.php?id=44</a>
+</blockquote>
+</li>
+
+<li>pool_read() が不正なパケットを読み込んだ場合に、read_startup_packet() がアラームクロック
+  をリセットして StartupPacket を解放するよう修正しました。 (Nozomi Anzai)
+<p>
+  修正前は、pgpool ポートの監視を行うプログラムの接続により、認証のタイムアウトが発生していました。
+  この問題は、バグトラック #35 で報告されました。
+</p>
+<blockquote>
+  #35 Authentication is timeout<br />
+  Reporter: tuomas 
+  Date: 2012-11-20 11:54
+  <a href="http://www.pgpool.net/mantisbt/view.php?id=35">
+  http://www.pgpool.net/mantisbt/view.php?id=35</a>
+</blockquote>
+</li>
+
+<li>pool_open() が誤ったバッファポインタを初期化していたバグを修正しました。 (Tatsuo Ishii)
+<p>
+  このポインタは事前に memset() によって初期化されているため、実際にはこのバグによる害は
+  ありませんでした。
+</p>
+</li>
+
+<li>ドキュメント中の、「パラメータ変更に再起動が必要かどうか」の情報を追記・修正しました。(Yugo Nagata)</li>
+
+<li>pool_passwd に関する記述を pgpool_conf.sample*、および,ドキュメントに追加しました。 (Yugo Nagata)
+</li>
+</ul>
+
+<h2><a name="release3.1.5"></a>3.1.5 (hatsuiboshi) 2012/10/12</h2>
+<h3>概要</h3>
+<p>このバージョンは3.1.4に対するバグ修正リリースです。</p>
+
+<h3>バグ修正</h3>
+<ul>
+<li>read_startup_packet() を修正しました。(Tatsuo Ishii)
+    <p>
+    パケット長が 0 以下のときは直ちに return するべきでしたが、そうなっていなく、
+    メモリ確保時にエラーになっていました。
+    </p>
+    <p>これは pgpool-general:886 を参照してください。また、キャンセルアラームを追加しました。</p>
+    <blockquote>
+    [pgpool-general: 886] read_startup_packet: out of memory<br>
+    From: Lonni J Friedman<br>
+    Date: Wed, 8 Aug 2012 10:18:15 -0700<br>
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-August/000896.html">
+    http://www.sraoss.jp/pipermail/pgpool-general/2012-August/000896.html</a>
+    </blockquote>
+</li>
+
+<li>s_do_auth() に NOTICE メッセージを追加しました。(Tatsuo Ishii)
+    <p>これがなかったために、ヘルスチェックが false アラームを受け取りフェイルオーバしていました。</p>
+    <p>これはバグトラックで報告されました。</p>
+    <blockquote>
+    #25 s_do_auth doesn't handle NoticeResponse (N) message<br>
+    Date:     2012-08-28 03:57<br>
+    Reporter: singh.gurjeet<br>
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=25">http://www.pgpool.net/mantisbt/view.php?id=25</a>
+    </blockquote>
+</li>
+
+<li>s_do_auth() から、不要かつ混乱をまねくデバッグメッセージを削除しました。(Tatsuo Ishii)</li>
+
+<li>SSL モードでの無限ループを修正しました。 (Tatsuo Ishii)
+    <p>
+    フロントエンドの SSL レイヤで溜っているデータがあるとき、
+    pool_process_query() がバックエンドに溜っているデータをチェックします。
+    もしそれが無かったときは再度ループして、フロントエンド/バックエンドがバッファを受け取っていないか
+    is_cache_empty() を以ってチェックします。
+    しかし、フロントエンドの SSL レイヤでデータが溜っているのを一度検知すると、
+    バックエンドに行ってまたチェックしようとします（無限ループ）。
+    </p>
+    <p>
+    これを解決するには、フロントエンドの SSL レイヤに溜っているデータがあり
+    かつ クエリが実行中でなければ、ProcessFrontendResponse() を呼んで
+    フロントエンドへの新しいリクエストをするようにしました。
+</p>
+</li>
+
+<li>is_system_catalog() で、可能ならば pgpool_regclass を使うようにしました。(Tatsuo Ishii)</li>
+
+<li>pool_get_insert_table_name() のメモリリークを修正しました。(Tatsuo Ishii)
+    <p>
+    nodeToString() でセッションコンテクストのメモリコンテクストを使ったあと、
+    セッション終了までは、メモリを開放していませんでした。
+    </p>
+    <p>詳しくはバグトラックをご覧ください。</p>
+    <blockquote>
+    #24 Severe memory leak in an OLTP environment<br>
+    Date:     2012-08-28 03:43<br>
+    Reporter: singh.gurjeet<br>
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=24">http://www.pgpool.net/mantisbt/view.php?id=24</a>
+    </blockquote>
+</li>
+
+<li>do_query() のセグメンテーションフォルトを修正しました。(Tatsuo Ishii)
+    <p>
+    クエリキャッシュが有効で拡張問い合わせが使われているとき、do_query() はシステムカタログに接続し、
+    pool_read2() を使います。
+    しかし、parse メッセージパケットを Parse() で取得し、パケットの内容が pool_read2() のバッファにあります。
+    このため、do_query() はパケットの内容を分割できず、セグメンテーションフォルトを引き起こしていました。
+    </p>
+    <p>
+    これを解決するために、メモリを確保し、パケット内容をコピーし、Parse() を飛ばすようにしました。
+    ただし、パケットの中にはクエリコンテクストが参照しているクエリ文字列も含まれています。
+    そのため、このクエリ文字列をコピーしてポインタをクエリコンテクストに保持する必要があります。
+    </p>
+    <p>
+    これは、Parse() だけの話でなく、他のプロトコルモジュールにもある問題と考えています。
+    本修正はそれらにも適用しますが、そのためには、ProcessFrontendResponse() を変更します。
+    </p>
+
+    <p>この問題はバグトラック #21 で報告されました。</p>
+    <blockquote>
+    #21 pgpool-II 3.2.0 cannot execute sql through jdbc<br>
+    Date:     2012-08-17 16:31<br>
+    Reporter: elisechiang<br>
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=21">http://www.pgpool.net/mantisbt/view.php?id=21</a>
+    </blockquote>
+</li>
+</ul>
+
+<h2><a name="release3.1.4"></a>3.1.4 (hatsuiboshi) 2012/08/06</h2>
+<h3>概要</h3>
+<p>このバージョンは3.1.3に対するバグ修正リリースです。</p>
+<p>また、PostgreSQL 9.2 に対応しました。</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>各ノードにおいて、トランザクション状態によって COMMIT / ABORT するかどうかを判定できるように、
+    pool_send_and_wait() を修正しました。(Tatsuo Ishii)
+    <p>
+    マルチステートメントが送信されたとき、明示的なトランザクション内にあるプ
+    ライマリか、明示的なトランザクション内でないスタンバイで発生する可能性が
+    ありました。
+    </p>
+    <p>これは、[pgpool-general-jp: 1049] で報告されました。</p>
+
+    <blockquote>
+    Subject:
+    <a href="http://www.pgpool.net/pipermail/pgpool-general-jp/2012-April/001048.html">[pgpool-general-jp: 1049]</a>
+    COMMITでエラー<br>
+    From: 稲村暢亮<br>
+    Date: Mon, 30 Apr 2012 13:48:48 +0900
+    </blockquote>
+</li>
+
+<li>Solaris でのロードバランスを修正しました。(Tatsuo Ishii)
+    <p>Solaris での random() 関数の仕様のために問題があったため、rand() に変更しました。</p>
+    <p>この事象は [pgpool-general: 396] で報告されました。</p>
+
+    <blockquote>
+    <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-April/000397.html">[pgpool-general: 396]</a>
+    strange load balancing issue in Solaris<br>
+    From: Aravinth<br>
+    Date: Sat, 28 Apr 2012 07:26:58 +0530
+    </blockquote>
+</li>
+
+<li><a href="#pool_status">SHOW pool_status</a> の出力結果に、
+    <a href="#BACKEND_DATA_DIRECTORY">backend_data_directory</a>,
+    <a href="#SSL_CA_CERT">ssl_ca_cert</a>,
+    <a href="#SSL_CA_CERT_DIR">ssl_ca_cert_dir</a> がなかったので追加しました。(Nozomi Anzai)
+</li>
+
+<li>パラレルモードでないとき、<a href="#pcp_systemdb_info">pcp_systemdb_info</a> コマンドが
+    segfault してたのを修正しました。(Nozomi Anzai)</li>
+
+<li>"unnamed prepared statment does not exist" というエラーが出るのを修正しました。(Tatsuo Ishii)
+    <p>
+    このエラーは pgpool が内部的に発行しているクエリで発生し、
+    クライアントが発行する unnamed ステートメントを破壊していました。
+    </p>
+    <p>
+    拡張問い合わせクエリが実行されたときには、内部的に発行するクエリのステートメントとポータルに
+    名前をつけるようにしました。
+    </p>
+</li>
+
+<li>ホットスタンバイモードでクエリ衝突が起きたときにハングアップするのを修正しました。(Yugo Nagata)
+    <p>これは、以下の手順で再現します。</p>
+<pre>(S1) BEGIN;
+(S1) SELECT * FROM t;
+(S2) DELETE FROM t;
+(S2) VACUUM t;
+</pre>
+</li>
+
+<li>pid ファイルの読み書きを改善しました。(Tatsuo Ishii)</li>
+
+<li><a href="http://www.pgpool.net/pipermail/pgpool-general/2012-June/000676.html">[pgpool-general: 672]</a>
+    で報告された、process_query() のバグを修正しました。(Tatsuo Ishii)
+    <p>
+    プライマリでは処理するデータがなく スタンバイにはある状態のときに、
+    プライマリの処理を待ってしまうことがありました。
+    </p>
+    <blockquote>
+    Subject: <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-June/000676.html">[pgpool-general: 672]</a>
+    Transaction never finishes<br>
+    From: Luiz Pasqual<br>
+    Date: Thu, 28 Jun 2012 09:55:23 -0300
+    </blockquote>
+</li>
+
+
+<li>マスタ・スレーブモードでの BEGIN TRANSACTION の扱いを修正しました。(Tatsuo Ishii)
+    <p>
+    これは <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-July/000719.html">[pgpool-general: 714]</a>
+    で報告されました。
+    </p>
+    <p>
+    3.1 以降、BEGIN TRANSACTION をすべてのノードに送るようにしました。
+    PostgreSQL の仕様では、スタンバイノードには BEGIN TRANSACTION READ WRITE を送ることはできませんが、
+    BEGIN WORK ISOLATION LEVEL SERIALIZABLE についてチェックしておらず、スタンバイノードに送信していました。
+    もちろんこれは誤りで、スタンバイノードが SERIALIZABLE モードになることは許されていません。
+    </p>
+    <p>
+    そのため、BEGIN WORK ISOLATION LEVEL SERIALIZABLE をチェックするようにしました。
+    </p>
+
+    <blockquote>
+    Subject: <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-July/000719.html">[pgpool-general: 714]</a>
+    Load Balancing / Streaming Replication / Isolation Level serializable<br>
+    From: Philip Hofstetter<br>
+    Date: Wed, 11 Jul 2012 17:04:26 +0200
+    </blockquote>
+</li>
+
+<li>SET TRANSACTION ISOLATION LEVELSERIALIZABLE などのクエリはプライマリのみに送るよう
+    send_to_where() を修正しました。(Tatsuo Ishii)
+    <p>
+    マスタ・スレーブモードで、以前はこのクエリはプライマリだけではなくスタンバイにも送られていましたが、
+    もちろんこれはエラーとなります。同じようなクエリとして以下のものがあります。
+    </p>
+    <ul>
+    <li>SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE</li>
+    <li>SET transaction_isolation TO 'serializable'</li>
+    <li>SET default_transaction_isolation TO 'serializable'</li>
+    </ul>
+    <p>
+    これは <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-July/000720.html">[pgpool-general: 715]</a>
+    で報告されました。
+    <p>
+
+    <blockquote>
+    Subject: <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-July/000720.html">[pgpool-general: 715]</a>
+    Re: Load Balancing / Streaming Replication / Isolation Level serializable<br />
+    From: Tastuo Ishii<br />
+    Date: Thu, 12 Jul 2012 00:16:58 +0900
+    </blockquote>
+</li>
+</ul>
+
+<h2><a name="release3.1.3"></a>3.1.3 (hatsuiboshi) 2012/01/31</h2>
 <h3>概要</h3>
 <p>
 このバージョンは3.1.2に対するバグ修正リリースです。
@@ -6348,7 +7429,398 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
  </li><li>pgpool-regclass()をPostgreSQL 9.1でコンパイルできるようにしました(Tatsuo Ishii)
  </li><li>英語版と日本語版のpgpool-IIマニュアルを更新、同期しました(Tatsuo Ishii)
 </li></ul>
-<p></p>
+
+<hr>
+
+<h2>3.0.10 (umiyameboshi) 2013/2/8</h2>
+<h3>概要</h3>
+<p>
+このバージョンでは、3.0.9における様々なバグが修正されています。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>md5 認証で競合が発生する不具合が修正されました。(Tatsuo Ishii)
+<p>
+  pool_passwd のファイル識別子は pgpool の親プロセスで開かれたものが子プロセス
+  に引き継がれてます。複数の接続で同時に md5 認証を行う際には、pool_get_passwd が
+  呼ばれ、ファイル識別子が走査されますが、ファイル識別子が共有されるために md5 認証
+  が失敗することがありました。この問題は、個々の子プロセスで pool_passwd ファイルを
+  開き直すことで解決されました。
+</p>
+<p>
+  この問題は [pgpool-general:1141] にて、Jason Slagle さんによって報告・解析されました。
+</p>
+<blockquote>
+  [pgpool-general: 1141] Possible race condition in pool_get_passwd<br />
+  From: Jason Slagle<br />
+  Date: Sun, 28 Oct 2012 01:12:52 -0400<br />
+  <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-October/001160.html">
+  http://www.sraoss.jp/pipermail/pgpool-general/2012-October/001160.html</a>
+</blockquote>
+</li>
+
+<li>pool_send_severity_message() で未初期化のメモリを使用しないよう修正しました。
+  (Tatsuo Ishii)
+<p>
+  このバグによりセグメンテーション違反が発生することがありました。
+  バグトラック #33 に投稿された valgrind 実行結果（dudee さんによる）にて報告されました。
+</p>
+<blockquote>
+  #33 pgpool-II 3.2.1 segfault<br />
+  Reporter: dudee
+  Date: 2012-10-30 19:16
+  <a href="http://www.pgpool.net/mantisbt/view.php?id=33">
+  http://www.pgpool.net/mantisbt/view.php?id=33</a>
+</blockquote>
+</li>
+
+<li>通常のテーブルと同名の一時テーブルがあるときに、クエリキャッシュの結果が不正になる
+  バグを修正しました。 (Tatsuo Ishii)
+<p>
+  以下はバグを引き起こす処理の例です。
+</p>
+<pre>
+  1) CREATE TABLE t1(i int);    -- 通常のテーブルを作成
+  2) INSERT INTO t1 VALUES(1);
+  3) SELECT * FROM t1;        -- クエリキャッシュが作成される
+  4) CREATE TEMP TABLE t1(i int);    -- 一時テーブルの作成
+  5) SELECT * FROM t1;        -- 誤ったクエリキャッシュが作成される!
+</pre>
+<p>
+  #3 で t1 のキャッシュが生成されますが、#5 でこれが不正に使われており、一時テーブル t1 が
+  一時テーブルと見なされていないのが問題でした。
+</p>
+</li>
+
+<li>pcp または worker 子プロセスの終了イベントを受信したときに、reaper() で wait3()
+  ループを終了しないように修正しました。 (Tatsuo Ishii)
+<p>
+  修正前は、reaper() は子プロセスの終了イベントを誤って無視してしまい、ゾンビプロセスを作り、
+  新しいプロセスを生成できないことがありました。
+</p>
+<p>
+  この問題は[pgpool-general-jp: 1123]にて、後藤さんより報告され、修正の示唆を頂きました。
+</p>
+<blockquote>
+  [pgpool-general-jp: 1123] Re: オンラインリカバリ後にゾンビプロセスになる<br />
+  From: GOTO, Daisuke
+  Date: Wed, 21 Nov 2012 19:56:17 +0900
+  <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2012-November/001122.html">
+  http://www.sraoss.jp/pipermail/pgpool-general-jp/2012-November/001122.html</a>
+</blockquote>
+</li>
+
+<li>pool_search_relcache() が REAL_MASTER_NODE_ID ではなく MASTER, MASTER_NODE_ID
+  を使用するように修正しました。 (Tatsuo Ishii)
+<p>
+  ストリーミングレプリケーションモードで 0 番ノードがフェールバックした場合、pgpool は
+  子プロセスを再起動しません。そのとき、REAL_MASTER_NODE_ID は 0 番ノードの接続
+  情報を探しにいきますが、これはバックエンドへの新しい接続が確立するまで存在しません。
+  そのため、接続情報の参照によって、セグメンテーションフォルトが発生していました。
+  この状況でも、MASTER または MASTER_NODE_ID は以前にキャッシュされたマスター
+  ノード ID を見にいくため、安全に使うことが出来ます。
+</p>
+</li>
+
+<li>ストリーミングレプリケーションモードでレプリケーション遅延が大きくなったときに、 
+  "portal not found" エラーが発生するバグを修正しました。 (Tatsuo Ishii)
+<p>
+  これは delay_threshold が導入以来、ずっと存在していたバグです。
+</p>
+<p>
+  bind, describe, execute の実行時に遅延が域値を越えた場合、送り先の DB ノードは
+  変更されていました。しかし、parse がそれとは異なるノードに送られていた場合、送り先ノードには
+  parse された ステートメントやポータルが存在しないために bind, describe, execute は
+  失敗していました。 修正後は、大きな遅延が発生した場合でも、これらは parse が実行された
+　ノード以外には送られないようになりました。
+</p>
+</li>
+
+<li>pg_md5 で、ユーザからのパスワード入力の後には改行するように修正しました。 (Yugo Nagata)</li>
+
+<li>watchdog のポート番号が既に使用されていた場合にエラーメッセージを出力するよう修正しました。 
+  (Yugo Nagata)
+<p> 
+  この問題は [pgpool-general: 1167] で Will Ferguson さんによって報告されました。
+</p>
+<blockquote>
+  [pgpool-general: 1167] Re: Watchdog error - wd_init: delegate_IP already exists<br />
+  From: Will Ferguson
+  Date: Tue, 6 Nov 2012 13:03:36 +0000
+  <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-November/001186.html">
+  http://www.sraoss.jp/pipermail/pgpool-general/2012-November/001186.html</a>
+</blockquote>
+</li>
+
+<li>コネクションプールが存在しない場合には、child_exit() が send_frontend_exits()
+  を呼ばないよう修正しました。 (Tatsuo Ishii)
+<p>
+  send_frontend_exits() は pool_connection_pool で指されてるオブジェクトを参照しているため、
+  修正前にはセグメンテーションフォルトが発生していました。バグトラック #44 の tuomas さんの報告によります。
+</p>
+<blockquote>
+  #44 pgpool went haywire after slave shutdown triggering master failover<br />
+  Reporter: tuomas
+  Date: 2012-12-11 00:33
+  <a href="http://www.pgpool.net/mantisbt/view.php?id=44">
+  http://www.pgpool.net/mantisbt/view.php?id=44</a>
+</blockquote>
+</li>
+
+<li>pool_read() が不正なパケットを読み込んだ場合に、read_startup_packet() がアラームクロック
+  をリセットして StartupPacket を解放するよう修正しました。 (Nozomi Anzai)
+<p>
+  修正前は、pgpool ポートの監視を行うプログラムの接続により、認証のタイムアウトが発生していました。 
+  この問題は、バグトラック #35 で報告されました。
+</p>
+<blockquote>
+  #35 Authentication is timeout<br />
+  Reporter: tuomas 
+  Date: 2012-11-20 11:54
+  <a href="http://www.pgpool.net/mantisbt/view.php?id=35">
+  http://www.pgpool.net/mantisbt/view.php?id=35</a>
+</blockquote>
+</li>
+
+<li>pool_open() が誤ったバッファポインタを初期化していたバグを修正しました。 (Tatsuo Ishii)
+<p>
+  このポインタは事前に memset() によって初期化されているため、実際にはこのバグによる害は
+  ありませんでした。
+</p>    
+</li>
+
+<li>ヘルプメッセージに -f オプションの説明を追加しました。 (Tatsuo Ishii)</li>
+
+<li>ドキュメント中の、「パラメータ変更に再起動が必要かどうか」の情報を追記・修正しました。(Yugo Nagata)</li>
+
+<li>pool_passwd に関する記述を pgpool_conf.sample*、および,ドキュメントに追加しました。 (Yugo Nagata)</li>
+
+</ul>
+
+<h2>3.0.9 (umiyameboshi) 2012/10/12</h2>
+<h3>概要</h3>
+<p>
+このバージョンでは、3.0.8における様々なバグが修正されています。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+<li>read_startup_packet() を修正しました。(Tatsuo Ishii)
+    <p>
+    パケット長が 0 以下のときは直ちに return するべきでしたが、そうなっていなく、
+    メモリ確保時にエラーになっていました。
+    </p>
+    <p>これは pgpool-general:886 を参照してください。また、キャンセルアラームを追加しました。</p>
+    <blockquote>
+    [pgpool-general: 886] read_startup_packet: out of memory<br>
+    From: Lonni J Friedman<br>
+    Date: Wed, 8 Aug 2012 10:18:15 -0700<br>
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-August/000896.html">
+    http://www.sraoss.jp/pipermail/pgpool-general/2012-August/000896.html</a>
+    </blockquote>
+</li>
+
+<li>s_do_auth() に NOTICE メッセージを追加しました。(Tatsuo Ishii)
+    <p>これがなかったために、ヘルスチェックが false アラームを受け取りフェイルオーバしていました。</p>
+    <p>これはバグトラックで報告されました。</p>
+    <blockquote>
+    #25 s_do_auth doesn't handle NoticeResponse (N) message<br>
+    Date:     2012-08-28 03:57<br>
+    Reporter: singh.gurjeet<br>
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=25">http://www.pgpool.net/mantisbt/view.php?id=25</a>
+    </blockquote>
+</li>
+
+<li>s_do_auth() から、不要かつ混乱をまねくデバッグメッセージを削除しました。(Tatsuo Ishii)</li>
+
+<li>SSL モードでの無限ループを修正しました。 (Tatsuo Ishii)
+    <p>
+    フロントエンドの SSL レイヤで溜っているデータがあるとき、
+    pool_process_query() がバックエンドに溜っているデータをチェックします。
+    もしそれが無かったときは再度ループして、フロントエンド/バックエンドがバッファを受け取っていないか
+    is_cache_empty() を以ってチェックします。
+    しかし、フロントエンドの SSL レイヤでデータが溜っているのを一度検知すると、
+    バックエンドに行ってまたチェックしようとします（無限ループ）。
+    </p>
+    <p>
+    これを解決するには、フロントエンドの SSL レイヤに溜っているデータがあり
+    かつ クエリが実行中でなければ、ProcessFrontendResponse() を呼んで
+    フロントエンドへの新しいリクエストをするようにしました。
+</p>
+</li>
+
+<li>is_system_catalog() で、可能ならば pgpool_regclass を使うようにしました。(Tatsuo Ishii)</li>
+
+<li>pool_get_insert_table_name() のメモリリークを修正しました。(Tatsuo Ishii)
+    <p>
+    nodeToString() でセッションコンテクストのメモリコンテクストを使ったあと、
+    セッション終了までは、メモリを開放していませんでした。
+    </p>
+    <p>詳しくはバグトラックをご覧ください。</p>
+    <blockquote>
+    #24 Severe memory leak in an OLTP environment<br>
+    Date:     2012-08-28 03:43<br>
+    Reporter: singh.gurjeet<br>
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=24">http://www.pgpool.net/mantisbt/view.php?id=24</a>
+    </blockquote>
+</li>
+
+<li>do_query() のセグメンテーションフォルトを修正しました。(Tatsuo Ishii)
+    <p>
+    クエリキャッシュが有効で拡張問い合わせが使われているとき、do_query() はシステムカタログに接続し、
+    pool_read2() を使います。
+    しかし、parse メッセージパケットを Parse() で取得し、パケットの内容が pool_read2() のバッファにあります。
+    このため、do_query() はパケットの内容を分割できず、セグメンテーションフォルトを引き起こしていました。
+    </p>
+    <p>
+    これを解決するために、メモリを確保し、パケット内容をコピーし、Parse() を飛ばすようにしました。
+    ただし、パケットの中にはクエリコンテクストが参照しているクエリ文字列も含まれています。
+    そのため、このクエリ文字列をコピーしてポインタをクエリコンテクストに保持する必要があります。
+    </p>
+    <p>
+    これは、Parse() だけの話でなく、他のプロトコルモジュールにもある問題と考えています。
+    本修正はそれらにも適用しますが、そのためには、ProcessFrontendResponse() を変更します。
+    </p>
+
+    <p>この問題はバグトラック #21 で報告されました。</p>
+    <blockquote>
+    #21 pgpool-II 3.2.0 cannot execute sql through jdbc<br>
+    Date:     2012-08-17 16:31<br>
+    Reporter: elisechiang<br>
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=21">http://www.pgpool.net/mantisbt/view.php?id=21</a>
+    </blockquote>
+</ul>
+
+<h2>3.0.8 (umiyameboshi) 2012/08/06</h2>
+
+<ul>
+<li>Solaris でのロードバランスを修正しました。(Tatsuo Ishii)
+    <p>Solaris での random() 関数の仕様のために問題があったため、rand() に変更しました。</p>
+    <p>この事象は [pgpool-general: 396] で報告されました。</p>
+
+    <blockquote>
+    <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-April/000397.html">[pgpool-general: 396]</a>
+    strange load balancing issue in Solaris<br>
+    From: Aravinth<br>
+    Date: Sat, 28 Apr 2012 07:26:58 +0530
+    </blockquote>
+</li>
+
+<li>パラレルモードでないとき、<a href="#pcp_systemdb_info">pcp_systemdb_info</a> コマンドが
+    segfault してたのを修正しました。(Nozomi Anzai)</li>
+
+<li>"unnamed prepared statment does not exist" というエラーが出るのを修正しました。(Tatsuo Ishii)
+    <p>
+    このエラーは pgpool が内部的に発行しているクエリで発生し、
+    クライアントが発行する unnamed ステートメントを破壊していました。
+    </p>
+    <p>
+    拡張問い合わせクエリが実行されたときには、内部的に発行するクエリのステートメントとポータルに
+    名前をつけるようにしました。
+    </p>
+</li>
+
+<li>pid ファイルの読み書きを改善しました。(Tatsuo Ishii)</li>
+
+<li><a href="http://www.pgpool.net/pipermail/pgpool-general/2012-June/000676.html">[pgpool-general: 672]</a>
+    で報告された、process_query() のバグを修正しました。(Tatsuo Ishii)
+    <p>
+    プライマリでは処理するデータがなく スタンバイにはある状態のときに、
+    プライマリの処理を待ってしまうことがありました。
+    </p>
+    <blockquote>
+    Subject: <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-June/000676.html">[pgpool-general: 672]</a>
+    Transaction never finishes<br>
+    From: Luiz Pasqual<br>
+    Date: Thu, 28 Jun 2012 09:55:23 -0300
+    </blockquote>
+</li>
+
+<li>wait_for_query_response() が、frontend がないときには何もしないように修正しました。(Tatsuo Ishii)
+    <p>バックエンドをリセットする reset_query_list のクエリを実行に時間がかかったときに
+    発生する可能性があり、またクラッシュすることがありました。</p>
+</li>
+</ul>
+
+<h2>3.0.7 (umiyameboshi) 2012/04/23</h2>
+<h3>概要</h3>
+<p>
+このバージョンでは、3.0.6におけるバグが修正されています。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+<li>m4 ファイルを追加しました。これにより古い OS で起こるコンパイルの問題を回避できます。(Tatsuo Ishii)</li>
+<li>シグナル割り込みによって、セマフォが解放されないままプロセスが終了することがあるバグを修正しました。(Tatsuo Ishii)</li>
+<li>reset_query 時のメモリリークを修正しました。 (Tatsuo Ishii)</li>
+<li>以下の場合に parser memory をリストアするよう SimpleQuery() 関数を修正しました。
+    <ol>
+    <li>組み込み show コマンド使用時</li>
+    <li>パラレルクエリモード</li>
+    <li>クエリキャッシュ使用時</li>
+    </ol>
+    さもないと、後で不正な palloc を発生する障害が起きるからです。(Tatsuo Ishii)
+</li>
+<li>pool_ssl_read() 関数が大きいサイズのデータを読み込めるよう修正しました。以下の報告によるものです。(Tatsuo Ishii)<br />
+    <a href=http://www.pgpool.net/pipermail/pgpool-general/2012-March/000299.html">
+    http://www.pgpool.net/pipermail/pgpool-general/2012-March/000299.html</a></li>
+
+<li>PREPARE 文でエラーが起きた際に発生するハングアップを修正しました。Tominari Katsumata さんの報告に基づきます。(Toshihiro Kitagagwa)</li>
+</ul>
+
+<h2>3.0.6 (umiyameboshi) 2012/01/31</h2>
+<h3>概要</h3>
+<p>
+このバージョンでは、3.0.5におけるバグが修正されています。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+<li>以下のスレッドで報告されている無限ループを修正しました。(Tatsuo Ishii)<br/>
+    <a href="http://www.pgpool.net/pipermail/pgpool-general/2011-December/000099.html">
+    http://www.pgpool.net/pipermail/pgpool-genral/2011-December/000099.html</a><br/>
+    プライマリからから受け取ったバッファが空である一方で、スタンバイのどれかが
+    受け取ったバッファが空でないとき、pgpool へのパケットが送られてしまう、
+    という可能性が考慮されていませんでした。<br/>
+    この事象は例えば、postgresql.conf を再読み込みしたときに発生することがありました。<br/>
+    この修正では、スタンバイからしか受け取れなかったバッファは無視するようにしました。
+</li>
+</ul>
+
+<h2>3.0.5 (umiyameboshi) 2011/10/31</h2>
+<h3>概要</h3>
+<p>
+このバージョンでは、3.0.4における様々なバグが修正されています。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+<li>空のクエリの処理に関するバグを修正しました。空のクエリはSELECTクエリと同じ扱いになります。
+    この修正は、空のクエリのあとのロードバランスを可能にします(Kitagawa)</li>
+<li>カラム定義が"DEFAULT nextval(('"x_seq"'::text)::regclass)"のようになっていても
+    insert_lockが正しく動作するように修正しました(Kitagawa)</li>
+<li>pgpool-IIマニュアルのbackend_weightに関する説明を修正しました。
+    それは、pgpool.confの再読み込みで変更できます(Tatsuo)</li>
+<li>rawモードでノードを復帰させたときにノードの状態が更新されないバグを修正しました(Guillaume Lelarge)</li>
+<li>FOR SHARE/UPDATE句のあるサブクエリを含むSELECTがスレーブ(standby)に送られるバグを修正しました(Tatsuo)</li>
+<li>PREPARE文でデフォルト値のタイムスタンプ書き換えに失敗するバグを修正しました。
+    これは以前は動作していましたが、3.0で動作しなくなっていました(Kitagawa)</li>
+<li>rawモード、enable_hbaが無効、バックエンドが2台以上の場合に
+    pgpool子プロセスがクラッシュするのを修正しました(Kitagawa)</li>
+<li>メモリリークをいくつか修正しました(Kitagawa)</li>
+</ul>
+
+<h3>改良</h3>
+<ul>
+<li>カラムのデフォルト値に任意の式を指定してもタイムスタンプ書き換えが動作するようにしました。
+以前は、now()が含まれているものを検知すると、単純にそれをnow()で置き換えてました。
+これは、デフォルト値の誤った書き換えを引き起こします。例えば、timezone('utc'::text, now())です。
+しかし、これは簡易プロトコルのみへの適用であることに注意してください。
+拡張プロトコル(例えばJava, PHP PDO)または、SQLの"PREPARE"にはまだ適用されていません(Tatsuo)</li>
+<li>エラーメッセージ"do_md5: read_password_packet failed"をデバッグレベルにしました(Kitagawa)</li>
+</ul>
 
 <h2>3.0.4 (umiyameboshi) 2011/06/01</h2>
 <h3>概要</h3>
