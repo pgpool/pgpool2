@@ -1977,6 +1977,9 @@ int pool_init_config(void)
 	pool_config->arping_cmd = "arping -U $_IP_$ -w 1";
 	pool_config->wd_life_point = 3;
 	pool_config->wd_lifecheck_query = "SELECT 1";
+	pool_config->wd_lifecheck_dbname = "template1";
+	pool_config->wd_lifecheck_user = "nobody";
+	pool_config->wd_lifecheck_password = "";
 
 
     pool_config->memory_cache_enabled = 0;
@@ -3911,6 +3914,65 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				pool_config->wd_lifecheck_query = str;
 		}
 
+		else if (!strcmp(key, "wd_lifecheck_dbname") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->wd_lifecheck_dbname = str;
+		}
+
+		else if (!strcmp(key, "wd_lifecheck_user") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->wd_lifecheck_user = str;
+		}
+
+		else if (!strcmp(key, "wd_lifecheck_password") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->wd_lifecheck_password = str;
+		}
 
         else if (!strcmp(key, "ssl") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
