@@ -4,15 +4,68 @@
 3.2 Series (2012/08/03 - )
 ===============================================================================
 
+                    3.2.3 (namameboshi) 2013/2/18
+
+* Version 3.2.3
+
+      This is a bug fix release against pgpool-II 3.2.2. Main purpose
+      of this release is to fix fatal problem with pgpool-II 3.2.2's
+      health checking. If all of following conditions are met, pgpool
+      main process disappeared and all client connections to pgpool-II
+      hang forever when failover happens. And the only way to recover
+      from it is, manualy killing the pgpool child process and restart
+      pgpool-II.
+
+      - health checking is enabled
+
+      - connecting method to PostgreSQL is TCP/IP, not UNIX domain
+        socket(i.e. "backend_hostnameN" is not empty string)
+
+      __________________________________________________________________
+
+* Bug fixes
+
+    - Fix connect_inet_domain_socket_by_port() bug introduced in
+      3.2.2. (Tatsuo Ishii)
+
+      When non blocking connect() reports EINPROGRESS or EALREADY, it
+      calls select(2) to wait for read or write fd ready. However it
+      mistakenly checks error condition using getsockopt(). It should
+      be called when select() returns > 0, rather than 0. Because of
+      this, connect_inet_domain_socket_by_port() could return
+      succeeded fd even it actually failed.
+
+      And what is worse, this health_check() mistakenly believes that
+      backend is alive and tries to write to backend socket, which of
+      course fails. This triggers to call notice_backend_error(),
+      which sends SIGUSR1 signal to pgpool main's parent process. This
+      will result in various weird things: for example, if you start
+      pgpool from a shell, the signal kills the shell.  If you start
+      pgpool in background, pgpool's parent is the process #1. As long
+      as you started pgpool as non root, it's ok. Even if you start
+      pgpool as root, init just reopens /dev/initctl by receiving
+      SIGUSR1. These all annoying bugs have been there since pgpool
+      was born. The connect_inet_domain_socket_by_port() bug just
+      reveals it. To fix this, I modified notice_backend_error and
+      child_exit() so that it does nothing when called from pgpool
+      main process itself to prevent pgpool from shooting itself in
+      the foot.
+
+    - Fix to show pool_passwd in "SHOW pool_status". (Yugo Nagata)
+
+    - Fix a typo at configure's help in configure.in. (Yugo Nagata)
+
+===============================================================================
+
                     3.2.2 (namameboshi) 2013/2/8
 
 * Version 3.2.2
 
       This is a bugfix release against pgpool-II 3.2.1.
 
-* Bug fixes
+      __________________________________________________________________
 
-* 3.2.2
+* Bug fixes
 
     - Fix compile errors on FreeBSD. (Tatsuo Ishii)
 
@@ -63,7 +116,7 @@
 
     - Fix hung up while repeating pcp_attach_node and pcp_detatch_node
       (Tatsuo Ishii)
-      
+
       When node status is changed by pcp_attach_node and pcp_detatch_node,
       failover() sends SIGUSR1 to pcp_child process expecting it exits to
       refresh node status. In this situation lots of pgpool children exit and
@@ -125,7 +178,7 @@
 
     - Fix connect_inet_domain_socket_by_port() to not error out when connect(2)
       returns EISCONN (Socket is already connected) error. (Tatsuo Ishii)
-     
+
       This could happen with non blocking socket and should be treated as normal.
       Per bug track #29 (by spork) and pgpool-general 1218 (by Mikola Rose).
 
@@ -179,7 +232,7 @@
 
     - Fix child_exit() to not call send_frontend_exits() if there's no
       connection pool. (Tatsuo Ishii)
-      
+
       Otherwise, it segfaults because send_frontend_exits() referes to objects
       pointed to by pool_connection_pool. Per bug track #44 by tuomas.
 
@@ -235,7 +288,7 @@
       'Notification response' is not necessarily the master first and then
       slaves.  So if it arrives slave first, we should try to read from
       master, rather than just discard it. Fixed in pool_process_query().
- 
+
       4) In replication mode, if LISTEN and NOTIFY are issued in a same
       session, the session is disconnected because do_command() may receive
       other than 'N', 'E', 'S' and 'C'. The solution is, put 'A' packet on a
@@ -295,7 +348,7 @@
       From: Lonni J Friedman
       Date: Mon, 12 Nov 2012 15:58:29 -0800
       http://www.sraoss.jp/pipermail/pgpool-general/2012-November/001198.html
-    
+
       Patch provided by chads in bug track #48. 
 
       pthread_detach is being used wrong; causes pgpool to segfault.
@@ -304,11 +357,11 @@
       http://www.pgpool.net/mantisbt/view.php?id=48
 
     - Avoid split-brain situation reported in [pgpool-general: 1046] (Yugo Nagata)
-  
+
       After all backend nodes are detached from pgpools and then some backend node
       are attached to these, multiple active pgpools could exist simultaneously,
       that is to say, split-brain situation occurs.
- 
+
       In this fix, when once all backend DB nodes are detached from pgpool, the pgpool
       stays DOWN status until this is restarted. The pgpool in DOWN status cannot
       escalate to active (delegate IP holder), so split-brain situation is avoided.
@@ -320,13 +373,13 @@
       http://www.sraoss.jp/pipermail/pgpool-general/2012-September/001064.html
 
     - Avoid a possible hang during the active pgpool exits. (Yugo Nagata)
-    
+
       When exiting, the active pgpool brings down the virtual IP and then
       sends a packet to other pgpools. However, the packet sometimes is sent
       before the virtual IP is brought down completely. In this case the packet
       sender is set to this IP. When the IP is brought down before other pgpools
       respond, the active pgpool can not recieve the response, and hang up.
-    
+
       In this fix, the active pgpool confirms that the virtual IP is brought
       down before sending the packet.
 
@@ -348,6 +401,8 @@
 * Version 3.2.1
 
       This is a bugfix release against pgpool-II 3.2.0.
+
+      __________________________________________________________________
 
 * Bug fixes
 
@@ -962,7 +1017,7 @@
 
     - Fix hung up while repeating pcp_attach_node and pcp_detatch_node
       (Tatsuo Ishii)
-      
+
       When node status is changed by pcp_attach_node and pcp_detatch_node,
       failover() sends SIGUSR1 to pcp_child process expecting it exits to
       refresh node status. In this situation lots of pgpool children exit and
@@ -1025,7 +1080,7 @@
 
     - Fix child_exit() to not call send_frontend_exits() if there's no
       connection pool. (Tatsuo Ishii)
-      
+
       Otherwise, it segfaults because send_frontend_exits() referes to objects
       pointed to by pool_connection_pool. Per bug track #44 by tuomas.
 
