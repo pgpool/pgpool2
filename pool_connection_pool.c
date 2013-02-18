@@ -610,7 +610,9 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 					pool_log("connect_inet_domain_socket: select() timedout. retrying...");
 					continue;
 				}
-
+			}
+			else if (sts > 0)
+			{
 				/*
 				 * If read data or write data was set, either connect
 				 * succeeded or error.  We need to figure it out. This
@@ -634,7 +636,7 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 					/* Non Solaris case */
 					if (error != 0)
 					{
-						pool_error("connect_inet_domain_socket: getsockopt() detects error: %s", strerror(error));
+						pool_error("connect_inet_domain_socket: getsockopt() detected error: %s", strerror(error));
 						close(fd);
 						return -1;
 					}
