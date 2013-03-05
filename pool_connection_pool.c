@@ -517,7 +517,11 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 	socklen_t socklen;
 	int sts;
 
-#define CONNECT_TIMEOUT_MSEC 1000		/* specify select(2) timeout in millisecond */
+#define CONNECT_TIMEOUT_MSEC 1000		/* specify select(2) timeout in milliseconds */
+#define CONNECT_TIMEOUT_SEC CONNECT_TIMEOUT_MSEC/1000	/* seconds part */
+/* microseconds part */
+#define CONNECT_TIMEOUT_MICROSEC (CONNECT_TIMEOUT_SEC == 0?CONNECT_TIMEOUT_MSEC*1000:\
+								  CONNECT_TIMEOUT_MSEC*1000 - CONNECT_TIMEOUT_SEC*1000*1000)
 
 
 	fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -594,8 +598,8 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 				return -1;
 			}
 
-			timeout.tv_sec = 0;
-			timeout.tv_usec = CONNECT_TIMEOUT_MSEC * 1000;
+			timeout.tv_sec = CONNECT_TIMEOUT_SEC;
+			timeout.tv_usec = CONNECT_TIMEOUT_MICROSEC;
 			FD_ZERO(&rset);
 			FD_SET(fd, &rset);	
 			FD_ZERO(&wset);
