@@ -611,8 +611,14 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 				/* select timeout */
 				if (retry)
 				{
-					pool_log("connect_inet_domain_socket: select() timedout. retrying...");
+					pool_log("connect_inet_domain_socket: select() timed out. retrying...");
 					continue;
+				}
+				else
+				{
+					pool_error("connect_inet_domain_socket: select() timed out");
+					close(fd);
+					return -1;
 				}
 			}
 			else if (sts > 0)
@@ -659,6 +665,9 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 					pool_log("connect_inet_domain_socket: select() interrupted. retrying...");
 					continue;
 				}
+				pool_log("connect_inet_domain_socket: select() interrupted");
+				close(fd);
+				return -1;
 			}
 		}
 		break;
