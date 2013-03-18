@@ -771,7 +771,8 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			if (rewrite_query != NULL)
 			{
 				int alloc_len = len - strlen(stmt) + strlen(rewrite_query);
-				contents = palloc(alloc_len);
+				contents = pool_memory_realloc(session_context->memory_context,
+                                                                      msg->contents, alloc_len);
 				strcpy(contents, name);
 				strcpy(contents + strlen(name) + 1, rewrite_query);
 				memcpy(contents + strlen(name) + strlen(rewrite_query) + 2,
