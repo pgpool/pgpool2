@@ -65,7 +65,7 @@ extern int wd_promote_backend(int node_id);
 extern int wd_set_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count);
 /* wd_ping.c */
 extern int wd_is_upper_ok(char * server_list);
-extern int wd_is_unnsed_ip(char * ip);
+extern int wd_is_unused_ip(char * ip);
 
 /* wd_if.c */
 extern int wd_IP_up(void);
@@ -76,6 +76,14 @@ extern int wd_get_cmd(char * buf, char * cmd);
 extern int is_wd_lifecheck_ready(void);
 extern int wd_lifecheck(void);
 extern int wd_ping_pgpool(WdInfo * pgpool);
+
+///hogehoge
+extern int wd_create_udp_send_socket(WdUdpIf udp_if);
+extern int wd_create_udp_recv_socket(WdUdpIf udp_if);
+extern int wd_udp_write(int sock, WdUdpPacket * pkt, int len, const char * destination);
+extern int wd_udp_read(int sock, WdUdpPacket * pkt);
+extern pid_t wd_reader(int fork_wait_time, WdUdpIf udp_if);
+extern pid_t wd_writer(int fork_wait_time, WdUdpIf udp_if);
 
 /* main.c */
 extern int myargc;

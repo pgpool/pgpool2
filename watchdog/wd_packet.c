@@ -684,20 +684,25 @@ hton_wd_packet(WdPacket * to, WdPacket * from)
 {
 	WdInfo * to_info = NULL;
 	WdInfo * from_info = NULL;
+
 	if ((to == NULL) || (from == NULL))
 	{
 		return WD_NG;
 	}
+
 	to_info = &(to->wd_body.wd_info);
 	from_info = &(from->wd_body.wd_info);
+
 	to->packet_no = htonl(from->packet_no);
 	to_info->status = htonl(from_info->status);
 	to_info->tv.tv_sec = htonl(from_info->tv.tv_sec);
 	to_info->tv.tv_usec = htonl(from_info->tv.tv_usec);
 	to_info->pgpool_port = htonl(from_info->pgpool_port);
 	to_info->wd_port = htonl(from_info->wd_port);
-	memcpy(to_info->hostname,from_info->hostname,sizeof(to_info->hostname));
-	memcpy(to_info->delegate_ip,from_info->delegate_ip,sizeof(to_info->delegate_ip));
+
+	memcpy(to_info->hostname, from_info->hostname, sizeof(to_info->hostname));
+	memcpy(to_info->delegate_ip, from_info->delegate_ip, sizeof(to_info->delegate_ip));
+
 	return WD_OK;
 }
 
@@ -706,20 +711,25 @@ ntoh_wd_packet(WdPacket * to, WdPacket * from)
 {
 	WdInfo * to_info = NULL;
 	WdInfo * from_info = NULL;
+
 	if ((to == NULL) || (from == NULL))
 	{
 		return WD_NG;
 	}
+
 	to_info = &(to->wd_body.wd_info);
 	from_info = &(from->wd_body.wd_info);
+
 	to->packet_no = ntohl(from->packet_no);
 	to_info->status = ntohl(from_info->status);
 	to_info->tv.tv_sec = ntohl(from_info->tv.tv_sec);
 	to_info->tv.tv_usec = ntohl(from_info->tv.tv_usec);
 	to_info->pgpool_port = ntohl(from_info->pgpool_port);
 	to_info->wd_port = ntohl(from_info->wd_port);
-	memcpy(to_info->hostname,from_info->hostname,sizeof(to_info->hostname));
-	memcpy(to_info->delegate_ip,from_info->delegate_ip,sizeof(to_info->delegate_ip));
+
+	memcpy(to_info->hostname, from_info->hostname, sizeof(to_info->hostname));
+	memcpy(to_info->delegate_ip, from_info->delegate_ip, sizeof(to_info->delegate_ip));
+
 	return WD_OK;
 }
 
@@ -757,7 +767,7 @@ ntoh_wd_node_packet(WdPacket * to, WdPacket * from)
 	}
 	to_info = &(to->wd_body.wd_node_info);
 	from_info = &(from->wd_body.wd_node_info);
-	to->packet_no = htonl(from->packet_no);
+	to->packet_no = ntohl(from->packet_no);
 	to_info->node_num = ntohl(from_info->node_num);
 	for (i = 0 ; i < to_info->node_num ; i ++)
 	{
@@ -776,7 +786,9 @@ wd_escalation(void)
 	/* interface up as delegate IP */
 	wd_IP_up();
 	/* set master status to the wd list */
-	wd_set_wd_list(pool_config->wd_hostname, pool_config->port, pool_config->wd_port, pool_config->delegate_IP, NULL, WD_MASTER);
+	wd_set_wd_list(pool_config->wd_hostname, pool_config->port,
+	               pool_config->wd_port, pool_config->delegate_IP,
+	               NULL, WD_MASTER);
 
 	/* send declare packet */
 	rtn = wd_declare();

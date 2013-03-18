@@ -68,6 +68,9 @@ wd_child(int fork_wait_time)
 	signal(SIGUSR2, SIG_IGN);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGALRM, SIG_IGN);
+	//TODO
+	// reload
+	// wakeup, failover??
 
 	init_ps_display("", "", "", "");
 

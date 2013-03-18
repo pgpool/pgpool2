@@ -43,6 +43,9 @@ unsigned char * WD_Node_List = NULL;		/* node list */
 pid_t wd_ppid = 0;
 static pid_t child_pid;
 
+static pid_t reader_pid[WD_MAX_IF_NUM];
+static pid_t writer_pid[WD_MAX_IF_NUM];
+
 pid_t wd_main(int fork_wait_time);
 static void child_wait(int signo);
 static void wd_exit(int exit_status);
@@ -64,6 +67,7 @@ static void
 wd_exit(int exit_signo)
 {
 	sigset_t mask;
+	int i;
 
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGTERM);
@@ -75,6 +79,12 @@ wd_exit(int exit_signo)
 	wd_notice_server_down();
 
 	kill (child_pid, exit_signo);
+
+	for (i = 0; i < pool_config->other_wd->num_udp_if; i++)
+	{
+		kill (reader_pid[i], exit_signo);
+		kill (writer_pid[i], exit_signo);
+	}
 	child_wait(0);
 
 	exit(0);
@@ -84,12 +94,24 @@ static int
 wd_check_config(void)
 {
 	int status = WD_OK;
-	if ((pool_config->other_wd->num_wd == 0)	||
-		(pool_config->delegate_IP == NULL)		||
-		(strlen(pool_config->delegate_IP) == 0))
+
+	if (pool_config->other_wd->num_wd == 0)
 	{
+		pool_error("wd_check_config: there is no other pgpools setting.");
 		status = WD_NG;
 	}
+	if (strlen(pool_config->delegate_IP) == 0)
+	{
+		pool_error("wd_check_config: delegate_IP is empty");
+		status = WD_NG;
+	}
+	if (strlen(pool_config->wd_udp_authkey) > MAX_PASSWORD_SIZE)
+	{
+		pool_error("wd_check_config: wd_udp_authkey length can't be larger than %d",
+		           MAX_PASSWORD_SIZE);
+		status = WD_NG;
+	}
+
 	return status;
 	
 }
@@ -98,8 +120,8 @@ pid_t
 wd_main(int fork_wait_time)
 {
 	int status = WD_INIT;
-	pid_t pgid = 0;
 	pid_t pid = 0;
+	int i;
 
 	if (!pool_config->use_watchdog)
 	{
@@ -131,7 +153,30 @@ wd_main(int fork_wait_time)
 		return child_pid;
 	}
 
-	pgid = getpgid(0);
+
+	if (!strcmp(pool_config->watchdog_mode, "udp"))
+	{
+		for (i = 0; i < pool_config->other_wd->num_udp_if; i++)
+		{
+			/* reader */
+			reader_pid[i] = wd_reader(1, pool_config->other_wd->udp_if[i]);
+			if (reader_pid[i] < 0 )
+			{
+				pool_error("launch wd_reader failed");
+				return reader_pid[i];
+			}
+
+			/* writer  */
+			writer_pid[i] = wd_writer(1, pool_config->other_wd->udp_if[i]);
+			if (writer_pid[i] < 0 )
+			{
+				pool_error("launch wd_writer failed");
+				return writer_pid[i];
+			}
+		}
+	}
+
+	/* fork lifecheck process*/
 	pid = fork();
 	if (pid != 0)
 	{
@@ -146,19 +191,22 @@ wd_main(int fork_wait_time)
 
 	init_ps_display("", "", "", "");
 
-	signal(SIGCHLD, SIG_DFL);
-	signal(SIGHUP, SIG_IGN);	
+	signal(SIGTERM, wd_exit);	
 	signal(SIGINT, wd_exit);	
 	signal(SIGQUIT, wd_exit);	
-	signal(SIGTERM, wd_exit);	
+	signal(SIGCHLD, SIG_DFL);
+	signal(SIGHUP, SIG_IGN);	
 	signal(SIGPIPE, SIG_IGN);	
 
 	set_ps_display("lifecheck",false);
+
 	/* wait until ready to go */
 	while (WD_OK != is_wd_lifecheck_ready())
 	{
 		sleep(pool_config->wd_interval * 10);
 	}
+
+	pool_log("watchdog: lifecheck started");
 
 	/* watchdog loop */
 	for (;;)

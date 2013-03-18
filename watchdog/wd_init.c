@@ -38,6 +38,7 @@ int
 wd_init(void)
 {
 	struct timeval tv;
+	WdInfo * p;
 
 	/* set startup time */
 	gettimeofday(&tv, NULL);
@@ -53,6 +54,7 @@ wd_init(void)
 		}
 		memset(WD_List, 0, sizeof(WdInfo) * MAX_WATCHDOG_NUM);
 	}
+
 	/* allocate node list */
 	if (WD_Node_List == NULL)
 	{
@@ -64,15 +66,28 @@ wd_init(void)
 		}
 		memset(WD_Node_List, 0, sizeof(unsigned char) * MAX_NUM_BACKENDS);
 	}
+
 	/* set myself to watchdog list */
-	wd_set_wd_list(pool_config->wd_hostname, pool_config->port, pool_config->wd_port, pool_config->delegate_IP, &tv, WD_NORMAL);
+	wd_set_wd_list(pool_config->wd_hostname, pool_config->port,
+	               pool_config->wd_port, pool_config->delegate_IP,
+				   &tv, WD_NORMAL);
+
 	/* set other pgpools to watchdog list */
 	wd_add_wd_list(pool_config->other_wd);
 
+	/* reset time value */
+	p = WD_List;
+	while (p->status != WD_END)
+	{
+		WD_TIME_INIT(p->udp_send_time);
+		WD_TIME_INIT(p->udp_last_recv_time);
+
+		p++;
+	}
+
 	/* check upper connection */
-	if ((pool_config->trusted_servers != NULL) &&
-		(strlen(pool_config->trusted_servers) > 0) &&
-		(wd_is_upper_ok(pool_config->trusted_servers) != WD_OK))
+	if (strlen(pool_config->trusted_servers) &&
+		wd_is_upper_ok(pool_config->trusted_servers) != WD_OK)
 	{
 		pool_error("wd_init: failed to connect trusted server");
 		return WD_NG;
@@ -90,7 +105,7 @@ wd_init(void)
 	{
 		if (!wd_is_unused_ip(pool_config->delegate_IP))
 		{
-			pool_error("wd_init: delegate_IP already exists");
+			pool_error("wd_init: delegate_IP %s already exists", pool_config->delegate_IP);
 			return WD_NG;
 		}
 

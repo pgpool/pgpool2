@@ -29,15 +29,30 @@
 #include <sys/time.h>
 #include "libpq-fe.h"
 
+#include "md5.h"
+
 #define WD_MAX_HOST_NAMELEN (128)
 #define WD_MAX_PATH_LEN (128)
 #define MAX_WATCHDOG_NUM (128)
 #define WD_SEND_TIMEOUT (1)
+#define WD_MAX_IF_NUM (256)
+#define WD_MAX_IF_NAME_LEN (16)
 
 #define WD_INFO(wd_id) (pool_config->other_wd->wd_info[(wd_id)])
+#define WD_UDP_IF(if_id) (pool_config->other_wd->udp_if[(if_id)]) 
 
 #define WD_NG (0)
 #define WD_OK (1)
+
+#define WD_MAX_SALT (256)
+
+#define WD_TIME_INIT(tv)      ((tv).tv_sec = (tv).tv_usec = 0)
+#define WD_TIME_ISSET(tv)     ((tv).tv_sec || (tv).tv_usec)
+#define WD_TIME_BEFORE(a,b)   (((a).tv_sec == (b).tv_sec) ? \
+                               ((a).tv_usec < (b).tv_usec) : \
+                               ((a).tv_sec < (b).tv_sec))
+#define WD_TIME_DIFF_SEC(a,b) (int)(((a).tv_sec - (b).tv_sec) + \
+                                    ((a).tv_usec - (b).tv_usec) / 1000000.0)
 
 /* 
  * packet number of watchdog negotiation
@@ -82,15 +97,17 @@ typedef struct {
 	char hostname[WD_MAX_HOST_NAMELEN];	/* host name */
 	int pgpool_port;	/* pgpool port */
 	int wd_port;		/* watchdog port */
-	int life;		/* life point */
+	int life;		/* life point */ 
 	char delegate_ip[WD_MAX_HOST_NAMELEN];	/* delegate IP */
 	int delegate_ip_flag;	/* delegate IP flag */
-}WdInfo;
+	struct timeval udp_send_time; /*send time */ 
+	struct timeval udp_last_recv_time; /* recv time */
+} WdInfo;
 
 typedef struct {
 	int node_id_set[MAX_NUM_BACKENDS];	/* node sets */
 	int node_num;						/* node number */
-}WdNodeInfo;
+} WdNodeInfo;
 
 typedef union {
 	WdInfo wd_info;
@@ -98,12 +115,20 @@ typedef union {
 } WD_PACKET_BODY;
 
 typedef struct {
+	char addr[WD_MAX_HOST_NAMELEN];
+	char if_name[WD_MAX_IF_NAME_LEN];
+} WdUdpIf;
+
+typedef struct {
 	int num_wd;		/* number of watchdogs */
 	WdInfo wd_info[MAX_WATCHDOG_NUM];
+
+	int num_udp_if; /* number of interface devices */
+	WdUdpIf udp_if[WD_MAX_IF_NUM];
 } WdDesc;
 
 /*
- * negotiation paket
+ * negotiation packet
  */
 typedef struct {
 	WD_PACKET_NO packet_no;	/* packet number */
@@ -120,11 +145,21 @@ typedef struct {
 } WdPacketThreadArg;
 
 /*
+ * UDP packet
+ */
+typedef struct {
+	char from[WD_MAX_HOST_NAMELEN];
+	struct timeval send_time;
+	WD_STATUS status;
+	char hash[(MD5_PASSWD_LEN+1)*2];
+} WdUdpPacket;
+
+/*
  * thread argument for lifecheck of pgpool
  */
 typedef struct {
 	PGconn * conn;	/* PGconn */
-	int retry;		/* retry times */
+	int retry;		/* retry times (not used?)*/ 
 } WdPgpoolThreadArg;
 
 extern WdInfo * WD_List;

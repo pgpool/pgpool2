@@ -37,6 +37,9 @@
 #define MODE_STREAMREP "stream"		/* Streaming Replication */
 #define MODE_SLONY "slony"		/* Slony-I */
 
+#define MODE_UDP "udp"
+#define MODE_QUERY "query"
+
 /*
  *  Regex support in white and black list function
  */
@@ -237,6 +240,12 @@ typedef struct {
 	char *wd_lifecheck_dbname;	/* Database name connected for lifecheck */
 	char *wd_lifecheck_user;	/* PostgreSQL user name for watchdog */
 	char *wd_lifecheck_password; /* password for watchdog user */
+
+	char *watchdog_mode;
+	int wd_udp_keepalive;
+	int wd_udp_deadtime;
+	int wd_udp_port;
+	char *wd_udp_authkey;
 } POOL_CONFIG;
 
 typedef enum {
