@@ -180,7 +180,6 @@ int my_proc_id;
 static BackendStatusRecord backend_rec;	/* Backend status record */
 
 static pid_t worker_pid; /* pid of worker process */
-static pid_t watchdog_pid; /* pid of watchdog process */
 
 BACKEND_STATUS* my_backend_status[MAX_NUM_BACKENDS];		/* Backend status buffer */
 int my_master_node_id;		/* Master node id buffer */
@@ -639,8 +638,7 @@ int main(int argc, char **argv)
 	/* start watchdog */
 	if (pool_config->use_watchdog )
 	{
-		watchdog_pid = wd_main(1);
-		if (watchdog_pid == 0)
+		if (!wd_main(1))
 		{
 			pool_error("wd_main error");
 			myexit(1);
@@ -1610,8 +1608,7 @@ static RETSIGTYPE exit_handler(int sig)
 
 	if (pool_config->use_watchdog)
 	{
-		pool_log("watchdog_pid: %d", watchdog_pid);
-		kill(watchdog_pid, sig);
+		wd_kill_watchdog(sig);
 	}
 
 	POOL_SETMASK(&UnBlockSig);
@@ -2316,6 +2313,17 @@ static void reaper(void)
 
 			pool_log("fork a new worker child pid %d", worker_pid);
 		}
+
+		/* exiting process was watchdog process */
+		else if (pool_config->use_watchdog && wd_is_watchdog_pid(pid))
+		{
+			if (!wd_reaper_watchdog(pid, status))
+			{
+				pool_error("wd_reaper failed");
+				myexit(1);
+			}
+		}
+
 		else
 		{
 			if (WIFSIGNALED(status))

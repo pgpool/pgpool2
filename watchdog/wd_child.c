@@ -49,6 +49,9 @@ wd_child(int fork_wait_time)
 	pid = fork();
 	if (pid != 0)
 	{
+		if (pid == -1)
+			pool_error("wd_child: fork() failed.");
+
 		return pid;
 	}
 
@@ -59,6 +62,8 @@ wd_child(int fork_wait_time)
 
 	myargv = save_ps_display_args(myargc, myargv);
 
+	POOL_SETMASK(&UnBlockSig);
+
 	signal(SIGTERM, wd_child_exit);
 	signal(SIGINT, wd_child_exit);
 	signal(SIGQUIT, wd_child_exit);
@@ -68,9 +73,6 @@ wd_child(int fork_wait_time)
 	signal(SIGUSR2, SIG_IGN);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGALRM, SIG_IGN);
-	//TODO
-	// reload
-	// wakeup, failover??
 
 	init_ps_display("", "", "", "");
 

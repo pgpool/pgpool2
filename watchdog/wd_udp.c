@@ -161,7 +161,7 @@ wd_create_udp_recv_socket(WdUdpIf udp_if)
 			close(sock);
 			return -1;
 		}
-		pool_log("wd_create_udp_recv_socket: bind send socket to device: %s", i.ifr_name);
+		pool_log("wd_create_udp_recv_socket: bind receive socket to device: %s", i.ifr_name);
 	}
 #endif
 
@@ -217,6 +217,12 @@ wd_udp_write(int sock, WdUdpPacket * pkt, int len, const char * host)
 	struct hostent *hp;
 	WdUdpPacket buf;
 
+	if (!host || !strlen(host))
+	{
+		pool_error("wd_udp_write: host name is empty");
+		return -1;
+	}
+
 	hp = gethostbyname(host);
 	if ((hp == NULL) || (hp->h_addrtype != AF_INET))
 	{
@@ -237,7 +243,7 @@ wd_udp_write(int sock, WdUdpPacket * pkt, int len, const char * host)
 		pool_error("wd_udp_write: failed to sent packet to %s", host);
 		return WD_NG;
 	}
-	pool_debug("wd_udp_write: send %d byte paeckt", rtn);
+	pool_debug("wd_udp_write: send %d byte packet", rtn);
 
 	return WD_OK;
 }
@@ -266,7 +272,7 @@ wd_udp_read(int sock, WdUdpPacket * pkt)
 	}
 	else
 	{
-		pool_debug("wd_udp_read: received %d byte paeckt", rtn);
+		pool_debug("wd_udp_read: received %d byte packet", rtn);
 	}
 
 	ntoh_wd_udp_packet(pkt, &buf);
@@ -288,6 +294,9 @@ pid_t wd_reader(int fork_wait_time, WdUdpIf udp_if)
 	pid = fork();
 	if (pid != 0)
 	{
+		if (pid == -1)
+			pool_error("wd_reader: fork() failed.");
+
 		return pid;
 	}
 
@@ -297,6 +306,8 @@ pid_t wd_reader(int fork_wait_time, WdUdpIf udp_if)
 	}
 
 	myargv = save_ps_display_args(myargc, myargv);
+
+	POOL_SETMASK(&UnBlockSig);
 
 	signal(SIGTERM, reader_exit);
 	signal(SIGINT, reader_exit);
@@ -374,6 +385,9 @@ pid_t wd_writer(int fork_wait_time, WdUdpIf udp_if)
 	pid = fork();
 	if (pid != 0)
 	{
+		if (pid == -1)
+			pool_error("wd_writer: fork() failed.");
+
 		return pid;
 	}
 
@@ -383,6 +397,8 @@ pid_t wd_writer(int fork_wait_time, WdUdpIf udp_if)
 	}
 
 	myargv = save_ps_display_args(myargc, myargv);
+
+	POOL_SETMASK(&UnBlockSig);
 
 	signal(SIGTERM, writer_exit);
 	signal(SIGINT, writer_exit);
@@ -395,7 +411,6 @@ pid_t wd_writer(int fork_wait_time, WdUdpIf udp_if)
 	signal(SIGALRM, SIG_IGN);
 
 	init_ps_display("", "", "", "");
-
 
 	if ( (sock = wd_create_udp_send_socket(udp_if)) < 0)
 	{

@@ -30,6 +30,9 @@
 extern pid_t wd_ppid;
 extern pid_t wd_main(int fork_wait_time);
 extern int wd_chk_sticky(void);
+extern int wd_is_watchdog_pid(pid_t pid);
+extern int wd_reaper_watchdog(pid_t pid, int status);
+extern void wd_kill_eatchdog(int sig);
 
 /* wd_child.c */
 extern pid_t wd_child(int fork_wait_time);
@@ -39,8 +42,7 @@ extern int wd_init(void);
 
 /* wd_list.c */
 extern int wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, char * delegate_ip, struct timeval * tv, int status);
-extern int wd_add_wd_list(WdDesc * other_wd);
-extern int wd_set_wd_info(WdInfo * info);
+extern int wd_add_wd_list(WdDesc * other_wd); extern int wd_set_wd_info(WdInfo * info);
 extern WdInfo * wd_is_exist_master(void);
 extern int wd_am_I_oldest(void);
 extern int wd_set_myself(struct timeval * tv, int status);
@@ -63,6 +65,7 @@ extern int wd_send_failback_request(int node_id);
 extern int wd_degenerate_backend_set(int *node_id_set, int count);
 extern int wd_promote_backend(int node_id);
 extern int wd_set_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count);
+
 /* wd_ping.c */
 extern int wd_is_upper_ok(char * server_list);
 extern int wd_is_unused_ip(char * ip);
@@ -77,7 +80,7 @@ extern int is_wd_lifecheck_ready(void);
 extern int wd_lifecheck(void);
 extern int wd_ping_pgpool(WdInfo * pgpool);
 
-///hogehoge
+/* wd_udp.c */
 extern int wd_create_udp_send_socket(WdUdpIf udp_if);
 extern int wd_create_udp_recv_socket(WdUdpIf udp_if);
 extern int wd_udp_write(int sock, WdUdpPacket * pkt, int len, const char * destination);

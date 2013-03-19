@@ -193,7 +193,7 @@ check_pgpool_status_by_udp(void)
 			}
 			else
 			{
-				pool_debug("check_pgpool_status_by_udp: OK");
+				pool_debug("check_pgpool_status_by_udp: OK; status %d", p->status);
 			}
 		}
 		else
@@ -202,14 +202,17 @@ check_pgpool_status_by_udp(void)
 
 			if (interval > pool_config->wd_udp_deadtime)
 			{
-				pool_debug("check_pgpool_status_by_udp: NG; the latest heartbeat received %d seconds ago", interval);
+				pool_debug("check_pgpool_status_by_udp: the latest heartbeat received %d seconds ago", interval);
+				pool_debug("check_pgpool_status_by_udp: NG; status %d", p->status);
+
 				pool_log("check_pgpool_status_by_udp: lifecheck failed. pgpool %d (%s:%d) seems not to be working",
 		                 cnt, p->hostname, p->pgpool_port);
 				pgpool_down(p);
 			}
 			else
 			{
-				pool_debug("check_pgpool_status_by_udp: OK; the latest heartbeat received %d secconds ago", interval);
+				pool_debug("check_pgpool_status_by_udp: the latest heartbeat received %d secconds ago", interval);
+				pool_debug("check_pgpool_status_by_udp: OK; status %d", p->status);
 			}
 		}
 
@@ -372,6 +375,7 @@ static int
 pgpool_down(WdInfo * pool)
 {
 	int rtn = WD_DOWN;
+
 	if ((WD_List->status == WD_NORMAL) &&
 		(pool->status == WD_MASTER))
 	{
