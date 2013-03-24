@@ -2,6 +2,9 @@ MODULES = pgpool-recovery
 DATA_built = pgpool-recovery.sql
 DATA = uninstall_pgpool-recovery.sql
 
+EXTENSION = pgpool_recovery
+DATA = pgpool_recovery--1.0.sql
+
 # if you are using PostgreSQL 8.0 or later,
 # using pg_config is recommended.
 # if you are not, comment out following line and...

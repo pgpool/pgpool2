@@ -2,6 +2,9 @@ MODULES = pgpool-regclass
 DATA_built = pgpool-regclass.sql
 DATA = uninstall_pgpool-regclass.sql
 
+EXTENSION = pgpool_regclass
+DATA = pgpool_regclass--1.0.sql
+
 # if you are using PostgreSQL 8.0 or later,
 # using pg_config is recommended.
 # if you are not, comment out following line and...
