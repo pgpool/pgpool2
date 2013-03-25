@@ -75,10 +75,14 @@ EXTRA_DIST = pgpool.8.in sample/pgpool.pam \
 		sql/pgpool-recovery/pgpool-recovery.c \
 		sql/pgpool-recovery/pgpool-recovery.sql.in \
 		sql/pgpool-recovery/uninstall_pgpool-recovery.sql \
+		sql/pgpool-recovery/pgpool_recovery--1.0.sql \
+		sql/pgpool-recovery/pgpool_recovery.control \
 		sql/pgpool-recovery/Makefile \
 		sql/pgpool-regclass/pgpool-regclass.c \
 		sql/pgpool-regclass/pgpool-regclass.sql.in \
 		sql/pgpool-regclass/uninstall_pgpool-regclass.sql \
+		sql/pgpool-regclass/pgpool_regclass--1.0.sql \
+		sql/pgpool-regclass/pgpool_regclass.control \
 		sql/pgpool-regclass/Makefile \
 		sql/pgpool-walrecrunning/README \
 		sql/pgpool-walrecrunning/pgpool-walrecrunning.c \
