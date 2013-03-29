@@ -41,7 +41,7 @@
 #include <libgen.h>
 
 /* Maximum number of characters allowed for input. */
-#define MAX_INPUT_SIZE	32
+#define MAX_INPUT_SIZE	MAX_USER_NAME_LEN
 
 static void	print_usage(const char prog[], int exit_code);
 static void	set_tio_attr(int enable);
