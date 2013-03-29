@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2010	PgPool Global Development Group
+ * Copyright (c) 2003-2013	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -27,6 +27,7 @@
 
 #include "pool.h"
 #include "pool_passwd.h"
+#include "md5.h"
 
 static FILE *passwd_fd = NULL;	/* File descriptor for pool_passwd */
 static char saved_passwd_filename[POOLMAXPATHLEN+1];
@@ -72,7 +73,7 @@ int pool_create_passwdent(char *username, char *passwd)
 {
 	int len;
 	int c;
-	char name[32];
+	char name[MAX_USER_NAME_LEN];
 	char *p;
 	int readlen;
 
@@ -129,6 +130,8 @@ int pool_create_passwdent(char *username, char *passwd)
 		}
 	}
 
+	fseek(passwd_fd, 0, SEEK_END);
+
 	/*
 	 * Not found the user name.
 	 * Create a new entry.
@@ -155,7 +158,7 @@ int pool_create_passwdent(char *username, char *passwd)
 char *pool_get_passwd(char *username)
 {
 	int c;
-	char name[33];
+	char name[MAX_USER_NAME_LEN+1];
 	static char passwd[POOL_PASSWD_LEN+1];
 	char *p;
 	int readlen;
