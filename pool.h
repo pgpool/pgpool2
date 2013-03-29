@@ -612,6 +612,7 @@ extern void free_select_result(POOL_SELECT_RESULT *result);
 extern int compare(const void *p1, const void *p2);
 extern POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id, int major);
 extern POOL_STATUS pool_discard_packet_contents(POOL_CONNECTION_POOL *cp);
+extern void pool_dump_valid_backend(int backend_id);
 
 /* pool_auth.c */
 extern void pool_random_salt(char *md5Salt);

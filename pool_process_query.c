@@ -3599,6 +3599,7 @@ POOL_STATUS read_kind_from_one_backend(POOL_CONNECTION *frontend, POOL_CONNECTIO
 	else
 	{
 		pool_error("read_kind_from_one_backend: %d th backend is not valid", node);
+		pool_dump_valid_backend(node);
 		return POOL_ERROR;
 	}
 }
@@ -4889,4 +4890,14 @@ SELECT_RETRY:
 			return status;
 	}
 	return POOL_CONTINUE;
+}
+
+/*
+ * Debugging aid for VALID_BACKEND macro.
+ */
+void pool_dump_valid_backend(int backend_id)
+{
+	pool_log("RAW_MODE:%d REAL_MASTER_NODE_ID:%d pool_is_node_to_be_sent_in_current_query:%d my_backend_status:%d",
+			 RAW_MODE, REAL_MASTER_NODE_ID, pool_is_node_to_be_sent_in_current_query(backend_id), 
+			 *my_backend_status[backend_id]);
 }
