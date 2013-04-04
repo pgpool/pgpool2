@@ -290,7 +290,7 @@ static void check_replication_time_lag(void)
 
 		/* Set standby delay value */
 		bkinfo = pool_get_node_info(i);
-		lag = lsn[PRIMARY_NODE_ID] - lsn[i];
+		lag = (lsn[PRIMARY_NODE_ID] > lsn[i]) ? lsn[PRIMARY_NODE_ID] - lsn[i] : 0;
 
 		if (PRIMARY_NODE_ID == i)
 		{
@@ -301,12 +301,13 @@ static void check_replication_time_lag(void)
 			bkinfo->standby_delay = lag;
 
 			/* Log delay if necessary */
-			if (!strcmp(pool_config->log_standby_delay, "always") ||
+			if ((!strcmp(pool_config->log_standby_delay, "always") && lag > 0) ||
 				(pool_config->delay_threshold &&
 				 !strcmp(pool_config->log_standby_delay, "if_over_threshold") &&
 				 lag > pool_config->delay_threshold))
 			{
-				pool_log("Replication of node:%d is behind %lld bytes from the primary server (node:%d)", i, lsn[PRIMARY_NODE_ID] - lsn[i], PRIMARY_NODE_ID);
+				pool_log("Replication of node:%d is behind %llu bytes from the primary server (node:%d)",
+				         i, lsn[PRIMARY_NODE_ID] - lsn[i], PRIMARY_NODE_ID);
 			}
 		}
 	}
