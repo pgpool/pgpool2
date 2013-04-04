@@ -488,6 +488,26 @@ wd_lifecheck_password = ''
 #other_pgpool_port1 = 5432
 #other_wd_port1 = 9000
 
+watchdog_mode='udp'
+                                    # Mode of watchdog lifecheck ('udp' or 'query') 
+wd_udp_port = 9694
+                                    # Port number for UDP heartbeat lifecheck 
+wd_udp_keepalive = 2;
+                                    # Interval time of sending UDP heartbeat signal (sec) 
+wd_udp_deadtime = 30
+                                    # Deadtime interval for UDP heartbeat signal (sec) 
+wd_udp_authkey = ''
+                                    # Authentication key for UDP heartbeat signal (sec) 
+
+udp_device0 = 'eth0'
+                                    # Name of NIC device 0 using for
+                                    # sending/receiving heartbeat signal
+udp_destination0 = 'host0_ip1'
+                                    # Destination host name or IP address
+                                    # for sending heartbeat signal using NIC device 0.
+
+#udp_device1 = 'eth1'
+#udp_destination1 = 'host0_ip2'
 
 #------------------------------------------------------------------------------
 # OTHERS
