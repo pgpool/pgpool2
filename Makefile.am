@@ -129,6 +129,7 @@ EXTRA_DIST = pgpool.8.in sample/pgpool.pam \
 		test/timestamp/expected/insert.out test/timestamp/expected/update.out \
 		test/timestamp/expected/misc.out test/timestamp/main.c \
 		test/timestamp/parse_schedule test/timestamp/run-test \
+		test/pgpool_setup \
 		redhat/pgpool.init redhat/pgpool.sysconfig redhat/pgpool.conf.sample.patch
 
 
