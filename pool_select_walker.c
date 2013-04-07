@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2012	PgPool Global Development Group
+ * Copyright (c) 2003-2013	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -739,16 +739,19 @@ bool pool_has_pgpool_regclass(void)
 /*
  * Query to know if pgpool_regclass exists.
  */
-#define HASPGPOOL_REGCLASSQUERY "SELECT count(*) FROM pg_catalog.pg_proc AS p WHERE p.proname = '%s'"
+#define HASPGPOOL_REGCLASSQUERY "SELECT count(*) FROM pg_catalog.pg_proc AS p WHERE p.proname = 'pgpool_regclass' AND has_function_privilege('%s', 'pgpool_regclass(cstring)', 'execute')"
+
 	bool result;
 	static POOL_RELCACHE *relcache;
 	POOL_CONNECTION_POOL *backend;
+	char *user;
 
 	backend = pool_get_session_context()->backend;
+	user = MASTER_CONNECTION(backend)->sp->user;
 
 	if (!relcache)
 	{
-		relcache = pool_create_relcache(32, HASPGPOOL_REGCLASSQUERY,
+		relcache = pool_create_relcache(pool_config->relcache_size, HASPGPOOL_REGCLASSQUERY,
 										int_register_func, int_unregister_func,
 										false);
 		if (relcache == NULL)
@@ -758,7 +761,7 @@ bool pool_has_pgpool_regclass(void)
 		}
 	}
 
-	result = pool_search_relcache(relcache, backend, "pgpool_regclass")==0?0:1;
+	result = pool_search_relcache(relcache, backend, user)==0?0:1;
 	return result;
 }
 
