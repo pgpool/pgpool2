@@ -4321,24 +4321,24 @@ static int detect_postmaster_down_error(POOL_CONNECTION *backend, int major)
 	int r =  detect_error(backend, ADMIN_SHUTDOWN_ERROR_CODE, major, 'E', false);
 	if (r < 0)
 	{
-		pool_log("detect_stop_postmaster_error: detect_error error");
+		pool_log("detect_postmaster_down_error: detect_error error");
 		return r;
 	}
 	if (r == SPECIFIED_ERROR)
 	{
-		pool_debug("detect_stop_postmaster_error: receive admin shutdown error from a node.");
+		pool_debug("detect_postmaster_down_error: receive admin shutdown error from a node.");
 		return r;
 	}
 
 	r = detect_error(backend, CRASH_SHUTDOWN_ERROR_CODE, major, 'N', false);
 	if (r < 0)
 	{
-		pool_log("detect_stop_postmaster_error: detect_error error");
+		pool_log("detect_postmaster_down_error: detect_error error");
 		return r;
 	}
 	if (r == SPECIFIED_ERROR)
 	{
-		pool_debug("detect_stop_postmaster_error: receive crash shutdown error from a node.");
+		pool_debug("detect_postmaster_down_error: receive crash shutdown error from a node.");
 	}
 	return r;
 }
