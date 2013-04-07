@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2013	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -4304,14 +4304,14 @@ static int detect_postmaster_down_error(POOL_CONNECTION *backend, int major)
 	int r =  detect_error(backend, ADMIN_SHUTDOWN_ERROR_CODE, major, 'E', false);
 	if (r == SPECIFIED_ERROR)
 	{
-		pool_debug("detect_stop_postmaster_error: receive admin shutdown error from a node.");
+		pool_debug("detect_postmaster_down_error: receive admin shutdown error from a node.");
 		return r;
 	}
 
 	r = detect_error(backend, CRASH_SHUTDOWN_ERROR_CODE, major, 'N', false);
 	if (r == SPECIFIED_ERROR)
 	{
-		pool_debug("detect_stop_postmaster_error: receive crash shutdown error from a node.");
+		pool_debug("detect_postmaster_down_error: receive crash shutdown error from a node.");
 	}
 	return r;
 }
