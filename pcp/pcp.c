@@ -1329,7 +1329,6 @@ pcp_pool_status(int *array_size)
 			if (strcmp(buf, "ArraySize") == 0)
 			{
 				index = (char *) memchr(buf, '\0', rsize) + 1;
-				//if (index != NULL)
 				ci_size = ntohl(*((int *)index));
 
 				*array_size = ci_size;
