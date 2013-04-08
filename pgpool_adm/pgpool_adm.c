@@ -311,7 +311,6 @@ _pcp_pool_status(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "item", TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "value", TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "description", TEXTOID, -1, 0);
-		//tupdesc = BlessTupleDesc(tupdesc);
 
 		/*
 		 * Generate attribute metadata needed later to produce tuples from raw
