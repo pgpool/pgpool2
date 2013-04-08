@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Portions Copyright (c) 2003-2010	PgPool Global Development Group
+ * Portions Copyright (c) 2003-2013	PgPool Global Development Group
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -2941,8 +2941,6 @@ static void writeSelectHeader(RewriteQuery *message,ConInfoTodblink *dblink, Str
 
 				if(first == 0)
 				{
-					//delay_string_append_char(message, str, analyze->virtual->table_list[i]);
-					//delay_string_append_char(message, str, "ooo.");
 					if(strcmp(col_name,"\"?column?\""))
 						delay_string_append_char(message, str, col_name);
 					else
@@ -4406,9 +4404,7 @@ _rewriteTypeName(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 						delay_string_append_char(message, str, typename);
 						delay_string_append_char(message, str, "\"\"");
 					} else {
-						//delay_string_append_char(message, str, "\"");
 						delay_string_append_char(message, str, typename);
-						//delay_string_append_char(message, str, "\"");
 					}
 				} else
 					delay_string_append_char(message, str, typename);
@@ -6906,12 +6902,7 @@ _rewriteFuncName(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 
 		if (IsA(v, String))
 		{
-			//delay_string_append_char(message, str, "\"");
 			delay_string_append_char(message, str, v->val.str);
-			//delay_string_append_char(message, str, "\"");
-		}
-		else
-		{
 		}
 	}
 }

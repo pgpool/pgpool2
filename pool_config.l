@@ -2609,7 +2609,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
     if (log_destination_changed)
     {
-        // log_destination has changed, we need to open syslog or close it
+        /* log_destination has changed, we need to open syslog or close it */
 		if (!strcmp(pool_config->log_destination, "stderr"))
         {
 	        closelog();
