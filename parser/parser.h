@@ -5,11 +5,11 @@
  *
  * This is the external API for the raw lexing/parsing functions.
  *
- * Portions Copyright (c) 2003-2008, PgPool Global Development Group
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2013, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parser.h,v 1.19 2004/12/31 22:03:38 pgsql Exp $
+ * src/include/parser/parser.h
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@ typedef enum
 	BACKSLASH_QUOTE_OFF,
 	BACKSLASH_QUOTE_ON,
 	BACKSLASH_QUOTE_SAFE_ENCODING
-} BackslashQuoteType;
+}	BackslashQuoteType;
 
 /* GUC variables in scan.l (every one of these is a bad idea :-() */
 extern int	backslash_quote;

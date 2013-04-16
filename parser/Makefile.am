@@ -18,7 +18,10 @@ libsql_parser_a_SOURCES  = \
 	parsenodes.h \
 	parser.c \
 	parser.h \
+	pg_class.h \
+	pg_config_manual.h \
 	pg_list.h \
+	pg_trigger.h \
 	pg_wchar.h \
 	pool_memory.c \
 	pool_memory.h \
@@ -29,6 +32,9 @@ libsql_parser_a_SOURCES  = \
 	scanner.h \
 	scansup.c \
 	scansup.h \
+	snprintf.c \
+	stringinfo.c \
+	stringinfo.h \
 	value.c \
 	value.h \
 	wchar.c

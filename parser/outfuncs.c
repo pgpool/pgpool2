@@ -28,6 +28,9 @@
 #include "pool_string.h"
 #include "pg_list.h"
 #include "parsenodes.h"
+#include "pg_class.h"
+#include "pg_trigger.h"
+#include "value.h"
 
 #define booltostr(x)  ((x) ? "true" : "false")
 
@@ -71,6 +74,7 @@ static void _outRangeTblRef(String *str, RangeTblRef *node);
 static void _outJoinExpr(String *str, JoinExpr *node);
 static void _outFromExpr(String *str, FromExpr *node);
 static void _outCreateStmt(String *str, CreateStmt *node);
+static void _outCreateTableAsStmt(String *str, CreateTableAsStmt *node);
 static void _outIndexStmt(String *str, IndexStmt *node);
 static void _outNotifyStmt(String *str, NotifyStmt *node);
 static void _outDeclareCursorStmt(String *str, DeclareCursorStmt *node);
@@ -128,14 +132,11 @@ static void _outAlterTableStmt(String *str, AlterTableStmt *node);
 static void _outCreateSeqStmt(String *str, CreateSeqStmt *node);
 static void _outAlterSeqStmt(String *str, AlterSeqStmt *node);
 static void _outCreatePLangStmt(String *str, CreatePLangStmt *node);
-static void _outDropPLangStmt(String *str, DropPLangStmt *node);
 static void _outCreateTableSpaceStmt(String *str, CreateTableSpaceStmt *node);
 static void _outDropTableSpaceStmt(String *str, DropTableSpaceStmt *node);
 static void _outCreateTrigStmt(String *str, CreateTrigStmt *node);
-static void _outDropPropertyStmt(String *str, DropPropertyStmt *node);
 static void _outDefineStmt(String *str, DefineStmt *node);
 static void _outCreateOpClassStmt(String *str, CreateOpClassStmt *node);
-static void _outRemoveOpClassStmt(String *str, RemoveOpClassStmt *node);
 static void _outDropStmt(String *str, DropStmt *node);
 static void _outFetchStmt(String *str, FetchStmt *node);
 static void _outGrantStmt(String *str, GrantStmt *node);
@@ -143,7 +144,6 @@ static void _outGrantRoleStmt(String *str, GrantRoleStmt *node);
 static void _outCreateFunctionStmt(String *str, CreateFunctionStmt *node);
 static void _outAlterFunctionStmt(String *str, AlterFunctionStmt *node);
 static void _outCreateCastStmt(String *str, CreateCastStmt *node);
-static void _outDropCastStmt(String *str, DropCastStmt *node);
 static void _outReindexStmt(String *str, ReindexStmt *node);
 static void _outRuleStmt(String *str, RuleStmt *node);
 static void _outViewStmt(String *str, ViewStmt *node);
@@ -161,7 +161,7 @@ static void _outCommentStmt(String *str, CommentStmt *node);
 static void _outDiscardStmt(String *str, DiscardStmt *node);
 static void _outCreateOpFamilyStmt(String *str, CreateOpFamilyStmt *node);
 static void _outAlterOpFamilyStmt(String *str, AlterOpFamilyStmt *node);
-static void _outRemoveOpFamilyStmt(String *str, RemoveOpFamilyStmt *node);
+//static void _outRemoveOpFamilyStmt(String *str, RemoveOpFamilyStmt *node);
 static void _outCreateEnumStmt(String *str, CreateEnumStmt *node);
 static void _outDropOwnedStmt(String *str, DropOwnedStmt *node);
 static void _outReassignOwnedStmt(String *str, ReassignOwnedStmt *node);
@@ -183,9 +183,47 @@ static void _outFuncOptList(String *str, List *list);
 static void _outCreatedbOptList(String *str, List *options);
 static void _outOperatorArgTypes(String *str, List *args);
 static void _outRangeFunction(String *str, RangeFunction *node);
-static void _outInhRelation(String *str, InhRelation *node);
+//static void _outInhRelation(String *str, InhRelation *node);
 static void _outWithDefinition(String *str, List *def_list);
 static void _outCurrentOfExpr(String *str, CurrentOfExpr *node);
+
+
+/*
+ * Shamelessly copied from backend/catalog/namespace.c
+ *
+ * NameListToString
+ *		Utility routine to convert a qualified-name list into a string.
+ *
+ * In most scenarios the list elements should always be Value strings,
+ * but we also allow A_Star for the convenience of ColumnRef processing.
+ */
+static String *NameListToString(List *names)
+{
+	String *str;
+	ListCell   *l;
+	char *p;
+
+	str = init_string("");
+
+	foreach(l, names)
+	{
+		Node	   *name = (Node *) lfirst(l);
+
+		if (l != list_head(names))
+			string_append_char(str, ".");
+
+		if (IsA(name, String))
+			string_append_char(str, strVal(name));
+		else if (IsA(name, A_Star))
+			string_append_char(str, "*");
+	}
+
+	p = palloc(str->len+1);
+	memcpy(p, str->data, str->len);
+	*(p+str->len) = '\0';
+
+	return str;
+}
 
 static char *escape_string(char *str)
 {
@@ -693,7 +731,7 @@ static void
 _outCreateStmt(String *str, CreateStmt *node)
 {
 	string_append_char(str, "CREATE ");
-	if (node->relation->istemp)
+	if (node->relation->relpersistence == RELPERSISTENCE_TEMP)
 		string_append_char(str, "TEMP ");
 	string_append_char(str, "TABLE ");
 	_outNode(str, node->relation);
@@ -734,6 +772,57 @@ _outCreateStmt(String *str, CreateStmt *node)
 		string_append_char(str, " TABLESPACE \"");
 		string_append_char(str, node->tablespacename);
 		string_append_char(str, "\"");
+	}
+}
+
+static void
+_outCreateTableAsStmt(String *str, CreateTableAsStmt *node)
+{
+	string_append_char(str, "CREATE ");
+	if (node->into->rel->relpersistence == RELPERSISTENCE_TEMP)
+		string_append_char(str, "TEMP ");
+	string_append_char(str, "TABLE ");
+	_outNode(str, node->into->rel);
+
+	if (node->into->colNames)
+	{
+		string_append_char(str, " (");
+		_outIdList(str, node->into->colNames);
+		string_append_char(str, ") ");
+	}
+
+	if (node->into->options)
+		_outWithDefinition(str, node->into->options);
+
+	switch (node->into->onCommit)
+	{
+		case ONCOMMIT_DROP:
+			string_append_char(str, " ON COMMIT DROP");
+			break;
+
+		case ONCOMMIT_DELETE_ROWS:
+			string_append_char(str, " ON COMMIT DELETE ROWS");
+			break;
+
+		case ONCOMMIT_PRESERVE_ROWS:
+			string_append_char(str, " ON COMMIT PRESERVE ROWS");
+			break;
+
+		default:
+			break;
+	}
+
+	if (node->into->tableSpaceName)
+	{
+		string_append_char(str, " TABLESPACE \"");
+		string_append_char(str, node->into->tableSpaceName);
+		string_append_char(str, "\"");
+	}
+
+	if (node->query)
+	{
+		string_append_char(str, " AS");
+		_outSelectStmt(str, node->query);
 	}
 }
 
@@ -874,7 +963,7 @@ _outSelectStmt(String *str, SelectStmt *node)
 			RangeVar *rel = (RangeVar *)into->rel;
 
 			string_append_char(str, "CREATE ");
-			if (rel->istemp == true)
+			if (rel->relpersistence == RELPERSISTENCE_TEMP)
 				string_append_char(str, "TEMP ");
 			string_append_char(str, "TABLE ");
 			_outNode(str, into->rel);
@@ -2844,11 +2933,13 @@ _outAlterTableCmd(String *str, AlterTableCmd *node)
 			string_append_char(str, node->name);
 			string_append_char(str, "\" TYPE ");
 			_outNode(str, node->def);
+#ifdef NOT_USED
 			if (node->transform)
 			{
 				string_append_char(str, " USING ");
 				_outNode(str, node->transform);
 			}
+#endif
 			break;
 
 		case AT_AddConstraint:
@@ -3029,7 +3120,7 @@ static void
 _outCreateSeqStmt(String *str, CreateSeqStmt *node)
 {
 	string_append_char(str, "CREATE ");
-	if (node->sequence->istemp)
+	if (node->sequence->relpersistence == RELPERSISTENCE_TEMP)
 		string_append_char(str, "TEMP ");
 	string_append_char(str, "SEQUENCE ");
 	_outNode(str, node->sequence);
@@ -3098,15 +3189,6 @@ _outCreatePLangStmt(String *str, CreatePLangStmt *node)
 	}
 }
 
-static void
-_outDropPLangStmt(String *str, DropPLangStmt *node)
-{
-	string_append_char(str, "DROP LANGUAGE \"");
-	string_append_char(str, node->plname);
-	string_append_char(str, "\"");
-	if (node->behavior == DROP_CASCADE)
-		string_append_char(str, " CASCADE");
-}
 
 static void
 _outCreateTableSpaceStmt(String *str, CreateTableSpaceStmt *node)
@@ -3179,9 +3261,9 @@ _outCreateTrigStmt(String *str, CreateTrigStmt *node)
 	string_append_char(str, node->trigname);
 	string_append_char(str, "\" ");
 
-	if (node->before == TRUE)
+	if (TRIGGER_FOR_BEFORE(node->timing))
 		string_append_char(str, "BEFORE ");
-	else
+	if (TRIGGER_FOR_AFTER(node->timing))
 		string_append_char(str, "AFTER ");
 
 	if (node->events & TRIGGER_TYPE_INSERT)
@@ -3238,34 +3320,6 @@ _outCreateTrigStmt(String *str, CreateTrigStmt *node)
 	string_append_char(str, "(");
 	_outNode(str, node->args);
 	string_append_char(str, ")");
-}
-
-static void
-_outDropPropertyStmt(String *str, DropPropertyStmt *node)
-{
-	switch (node->removeType)
-	{
-		case OBJECT_TRIGGER:
-			string_append_char(str, "DROP TRIGGER \"");
-			string_append_char(str, node->property);
-			string_append_char(str, "\" ON ");
-			_outNode(str, node->relation);
-			if (node->behavior == DROP_CASCADE)
-				string_append_char(str, " CASCADE");
-			break;
-
-		case OBJECT_RULE:
-			string_append_char(str, "DROP RULE \"");
-			string_append_char(str, node->property);
-			string_append_char(str, "\" ON ");
-			_outNode(str, node->relation);
-			if (node->behavior == DROP_CASCADE)
-				string_append_char(str, " CASCADE");
-			break;
-
-		default:
-			break;
-	}
 }
 
 static void
@@ -3454,61 +3508,26 @@ _outCreateOpClassStmt(String *str, CreateOpClassStmt *node)
 	_outNode(str, node->items);
 }
 
-static void
-_outRemoveOpClassStmt(String *str, RemoveOpClassStmt *node)
-{
-	string_append_char(str, "DROP OPERATOR CLASS ");
-	_outFuncName(str, node->opclassname);
-	string_append_char(str, " USING ");
-	string_append_char(str, node->amname);
-	if (node->behavior == DROP_CASCADE)
-		string_append_char(str, " CASCADE");
-}
+/*
+ * Handle drop satements. As of pgpool-II 3.3(derived parser from
+ * PostgreSQL 9.2), following types are supported:
+ *
+ * DROP TABLE, DROP SEQUENCE, DROP VIEW, DROP INDEX, DROP FOREIGN
+ * TABLE, DROP TYPE, DROP DOMAIN, DROP COLLATION, DROP CONVERSION,
+ * DROP SCHEMA, DROP TEXT SEARCH PARSER, DROP TEXT SEARCH DICTIONARY,
+ * DROP TEXT SEARCH CONFIGURATION, DROP LANGUAGE, DROP RULE, DROP
+ * OPERATOR, DROP OPERATOR CLASS
+ */
 
-static void
-_outDropStmt(String *str, DropStmt *node)
+static void add_function_like_objs(String *str, DropStmt *node)
 {
 	ListCell *lc;
 	char comma = 0;
-	
-	string_append_char(str, "DROP ");
-	switch (node->removeType)
-	{
-		case OBJECT_TABLE:
-			string_append_char(str, "TABLE ");
-			break;
 
-		case OBJECT_SEQUENCE:
-			string_append_char(str, "SEQUENCE ");
-			break;
-
-		case OBJECT_VIEW:
-			string_append_char(str, "VIEW ");
-			break;
-
-		case OBJECT_INDEX:
-			string_append_char(str, "INDEX ");
-			break;
-
-		case OBJECT_TYPE:
-			string_append_char(str, "TYPE ");
-			break;
-
-		case OBJECT_DOMAIN:
-			string_append_char(str, "DOMAIN ");
-			break;
-
-		case OBJECT_CONVERSION:
-			string_append_char(str, "CONVERSION ");
-			break;
-
-		case OBJECT_SCHEMA:
-			string_append_char(str, "SCHEMA ");
-			break;
-
-		default:
-			break;
-	}
+	if (node->concurrent)
+		string_append_char(str, "CONCURRENTLY ");
+	if (node->missing_ok)
+		string_append_char(str, "IF EXISTS ");
 
 	foreach (lc, node->objects)
 	{
@@ -3517,6 +3536,143 @@ _outDropStmt(String *str, DropStmt *node)
 		else
 			string_append_char(str, ", ");
 		_outFuncName(str, lfirst(lc));
+	}
+}
+
+static void
+_outDropStmt(String *str, DropStmt *node)
+{
+	ListCell *lc;
+	List *objname;
+
+	string_append_char(str, "DROP ");
+	switch (node->removeType)
+	{
+		case OBJECT_TABLE:
+			string_append_char(str, "TABLE ");
+			add_function_like_objs(str, node);
+			break;
+
+		case OBJECT_SEQUENCE:
+			string_append_char(str, "SEQUENCE ");
+			add_function_like_objs(str, node);
+			break;
+
+		case OBJECT_VIEW:
+			string_append_char(str, "VIEW ");
+			add_function_like_objs(str, node);
+			break;
+
+		case OBJECT_INDEX:
+			string_append_char(str, "INDEX ");
+			add_function_like_objs(str, node);
+			break;
+
+		case OBJECT_FOREIGN_TABLE:
+			string_append_char(str, "FOREIGN TABLE ");
+			add_function_like_objs(str, node);
+			break;
+
+		case OBJECT_FDW:
+			string_append_char(str, "FOREIGN DATA WRAPPER ");
+			add_function_like_objs(str, node);
+			break;
+
+		case OBJECT_TYPE:
+			string_append_char(str, "TYPE ");
+			add_function_like_objs(str, node);
+			break;
+
+		case OBJECT_DOMAIN:
+			string_append_char(str, "DOMAIN ");
+			add_function_like_objs(str, node);
+			break;
+
+		case OBJECT_COLLATION:
+			string_append_char(str, "COLLATION ");
+			add_function_like_objs(str, node);
+			break;
+
+		case OBJECT_CONVERSION:
+			string_append_char(str, "CONVERSION ");
+			add_function_like_objs(str, node);
+			break;
+
+		case OBJECT_SCHEMA:
+			string_append_char(str, "SCHEMA ");
+			add_function_like_objs(str, node);
+			break;
+
+		case OBJECT_EXTENSION:
+			string_append_char(str, "EXTENSION ");
+			add_function_like_objs(str, node);
+			break;
+
+		case OBJECT_TSPARSER:
+			string_append_char(str, "TEXT SEARCH PARSER ");
+			add_function_like_objs(str, node);
+			break;
+
+		case OBJECT_TSDICTIONARY:
+			string_append_char(str, "TEXT SEARCH DICTIONARY ");
+			add_function_like_objs(str, node);
+			break;
+
+		case OBJECT_TSTEMPLATE:
+			string_append_char(str, "TEXT SEARCH TEMPLATE ");
+			add_function_like_objs(str, node);
+			break;
+
+		case OBJECT_TSCONFIGURATION:
+			string_append_char(str, "TEXT SEARCH CONFIGURATION ");
+			add_function_like_objs(str, node);
+			break;
+
+		case OBJECT_LANGUAGE:
+			string_append_char(str, "PROCEDURAL LANGUAGE ");
+			add_function_like_objs(str, node);
+			break;
+
+		case OBJECT_RULE:
+			string_append_char(str, "DROP RULE ");
+			if (node->missing_ok)
+				string_append_char(str, "IF EXISTS ");
+			objname = lfirst(list_head(node->objects));
+			string_append_char(str, strVal(llast(objname)));
+			string_append_char(str, " ON ");
+			string_append_char(str,	NameListToString(list_truncate(list_copy(objname),
+																   list_length(objname) - 1))->data);
+			break;
+
+		case OBJECT_OPERATOR:
+			string_append_char(str, "OPERATOR ");
+			add_function_like_objs(str, node);
+			break;
+
+		case OBJECT_OPCLASS:
+			string_append_char(str, "DROP OPERATOR CLASS ");
+			if (node->missing_ok)
+				string_append_char(str, "IF EXISTS ");
+			objname = lfirst(list_head(node->objects));
+			string_append_char(str, strVal(llast(objname)));
+			string_append_char(str, " USING ");
+			_outNode(str, NameListToString(list_truncate(list_copy(objname), list_length(objname) - 1)));
+			break;
+
+		case OBJECT_CAST:
+			string_append_char(str, "DROP CAST ");
+			if (node->missing_ok)
+				string_append_char(str, "IF EXISTS ");
+			string_append_char(str, "(");
+			objname = linitial(node->objects);
+			_outNode(str, linitial(objname));
+			string_append_char(str, " AS ");
+			objname = linitial(node->arguments);
+			_outNode(str, linitial(objname));
+			string_append_char(str, ")");
+
+		default:
+			break;
 	}
 
 	if (node->behavior == DROP_CASCADE)
@@ -3851,6 +4007,7 @@ _outAlterFunctionStmt(String *str, AlterFunctionStmt *node)
 	_outFuncOptList(str, node->actions);
 }
 
+#ifdef NOT_USED
 static void
 _outRemoveFuncStmt(String *str, RemoveFuncStmt *node)
 {
@@ -3885,6 +4042,7 @@ _outRemoveFuncStmt(String *str, RemoveFuncStmt *node)
 	if (node->behavior == DROP_CASCADE)
 		string_append_char(str, " CASCADE");
 }
+#endif
 
 static void
 _outCreateCastStmt(String *str, CreateCastStmt *node)
@@ -3909,19 +4067,6 @@ _outCreateCastStmt(String *str, CreateCastStmt *node)
 		default:
 			break;
 	}
-}
-
-static void
-_outDropCastStmt(String *str, DropCastStmt *node)
-{
-	string_append_char(str, "DROP CAST (");
-	_outNode(str, node->sourcetype);
-	string_append_char(str, " AS ");
-	_outNode(str, node->targettype);
-	string_append_char(str, ")");
-
-	if (node->behavior == DROP_CASCADE)
-		string_append_char(str, " CASCADE");
 }
 
 static void
@@ -4260,7 +4405,7 @@ _outViewStmt(String *str, ViewStmt *node)
 	else
 		string_append_char(str, "CREATE ");
 
-	if (node->view->istemp == TRUE)
+	if (node->view->relpersistence == RELPERSISTENCE_TEMP)
 		string_append_char(str, "TEMP ");
 
 	string_append_char(str, "VIEW ");
@@ -4464,18 +4609,20 @@ _outPrepareStmt(String *str, PrepareStmt *node)
 static void
 _outExecuteStmt(String *str, ExecuteStmt *node)
 {
+#ifdef NOT_USED
 	if (node->into)
 	{
 		IntoClause *into = node->into;
 		RangeVar *rel = into->rel;
 
 		string_append_char(str, "CREATE ");
-		if (rel->istemp == TRUE)
+		if (rel->relpersistence == RELPERSISTENCE_TEMP)
 			string_append_char(str, "TEMP ");
 		string_append_char(str, "TABLE ");
 		_outNode(str, into->rel);
 		string_append_char(str, " AS ");
 	}
+#endif
 
 	string_append_char(str, "EXECUTE \"");
 	string_append_char(str, node->name);
@@ -4763,6 +4910,7 @@ _outAlterOpFamilyStmt(String *str, AlterOpFamilyStmt *node)
 {
 }
 
+#ifdef NOT_USED
 static void
 _outRemoveOpFamilyStmt(String *str, RemoveOpFamilyStmt *node)
 {
@@ -4774,6 +4922,7 @@ _outRemoveOpFamilyStmt(String *str, RemoveOpFamilyStmt *node)
 	string_append_char(str, node->amname);
 	string_append_char(str, "\"");
 }
+#endif
 
 static void
 _outCreateEnumStmt(String *str, CreateEnumStmt *node)
@@ -4935,6 +5084,7 @@ _outXmlSerialize(String *str, XmlSerialize *node)
 
 }
 
+#ifdef NOT_USED
 static void
 _outInhRelation(String *str, InhRelation *node)
 {
@@ -4960,6 +5110,7 @@ _outInhRelation(String *str, InhRelation *node)
 		}
 	}
 }
+#endif
 
 static void
 _outWithDefinition(String *str, List *def_list)
@@ -5174,6 +5325,10 @@ _outNode(String *str, void *obj)
 			case T_CreateStmt:
 				_outCreateStmt(str, obj);
 				break;
+			case T_CreateTableAsStmt:
+				_outCreateTableAsStmt(str, obj);
+				break;
+
 			case T_IndexStmt:
 				_outIndexStmt(str, obj);
 				break;
@@ -5402,9 +5557,11 @@ _outNode(String *str, void *obj)
 				_outCreatePLangStmt(str, obj);
 				break;
 
+#ifdef NOT_USED
 			case T_DropPLangStmt:
 				_outDropPLangStmt(str, obj);
 				break;
+#endif
 
 			case T_CreateTableSpaceStmt:
 				_outCreateTableSpaceStmt(str, obj);
@@ -5416,10 +5573,6 @@ _outNode(String *str, void *obj)
 
 			case T_CreateTrigStmt:
 				_outCreateTrigStmt(str, obj);
-				break;
-
-			case T_DropPropertyStmt:
-				_outDropPropertyStmt(str, obj);
 				break;
 
 			case T_DefineStmt:
@@ -5434,9 +5587,11 @@ _outNode(String *str, void *obj)
 				_outCreateOpClassItem(str, obj);
 				break;
 
+#ifdef NOT_USED
 			case T_RemoveOpClassStmt:
 				_outRemoveOpClassStmt(str, obj);
 				break;
+#endif
 
 			case T_DropStmt:
 				_outDropStmt(str, obj);
@@ -5474,17 +5629,20 @@ _outNode(String *str, void *obj)
 				_outAlterFunctionStmt(str, obj);
 				break;
 
+#ifdef NOT_USED
 			case T_RemoveFuncStmt:
 				_outRemoveFuncStmt(str, obj);
 				break;
+#endif
 
 			case T_CreateCastStmt:
 				_outCreateCastStmt(str, obj);
 				break;
-
+#ifdef NOT_USED
 			case T_DropCastStmt:
 				_outDropCastStmt(str, obj);
 				break;
+#endif
 
 			case T_ReindexStmt:
 				_outReindexStmt(str, obj);
@@ -5564,10 +5722,11 @@ _outNode(String *str, void *obj)
 			case T_AlterOpFamilyStmt:
 				_outAlterOpFamilyStmt(str, obj);
 				break;
-
+#ifdef NOT_USED
 			case T_RemoveOpFamilyStmt:
 				_outRemoveOpFamilyStmt(str, obj);
 				break;
+#endif
 
 			case T_CreateEnumStmt:
 				_outCreateEnumStmt(str, obj);
@@ -5589,12 +5748,11 @@ _outNode(String *str, void *obj)
 				_outAlterTSConfigurationStmt(str, obj);
 				break;
 
-
-
+#ifdef NOT_USED
 			case T_InhRelation:
 				_outInhRelation(str, obj);
 				break;
-
+#endif
 
 			default:
 				break;

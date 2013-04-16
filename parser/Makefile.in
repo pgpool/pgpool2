@@ -35,8 +35,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 subdir = parser
-DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in gram.c \
-	gram.h
+DIST_COMMON = README $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
+	gram.c gram.h
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/c-compiler.m4 \
 	$(top_srcdir)/c-library.m4 $(top_srcdir)/general.m4 \
@@ -56,7 +56,8 @@ am_libsql_parser_a_OBJECTS = copyfuncs.$(OBJEXT) gram.$(OBJEXT) \
 	keywords.$(OBJEXT) kwlookup.$(OBJEXT) list.$(OBJEXT) \
 	makefuncs.$(OBJEXT) nodes.$(OBJEXT) outfuncs.$(OBJEXT) \
 	parser.$(OBJEXT) pool_memory.$(OBJEXT) pool_string.$(OBJEXT) \
-	scansup.$(OBJEXT) value.$(OBJEXT) wchar.$(OBJEXT)
+	scansup.$(OBJEXT) snprintf.$(OBJEXT) stringinfo.$(OBJEXT) \
+	value.$(OBJEXT) wchar.$(OBJEXT)
 libsql_parser_a_OBJECTS = $(am_libsql_parser_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -222,7 +223,10 @@ libsql_parser_a_SOURCES = \
 	parsenodes.h \
 	parser.c \
 	parser.h \
+	pg_class.h \
+	pg_config_manual.h \
 	pg_list.h \
+	pg_trigger.h \
 	pg_wchar.h \
 	pool_memory.c \
 	pool_memory.h \
@@ -233,6 +237,9 @@ libsql_parser_a_SOURCES = \
 	scanner.h \
 	scansup.c \
 	scansup.h \
+	snprintf.c \
+	stringinfo.c \
+	stringinfo.h \
 	value.c \
 	value.h \
 	wchar.c
@@ -305,6 +312,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_memory.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_string.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scansup.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snprintf.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stringinfo.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/value.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wchar.Po@am__quote@
 

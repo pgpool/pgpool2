@@ -3,10 +3,11 @@
  * pg_wchar.h
  *	  multibyte-character support
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2013, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.94 2010/02/26 02:01:25 momjian Exp $
+ * src/include/mb/pg_wchar.h
  *
  *	NOTES
  *		This is used both by the backend and by libpq, but should not be
@@ -18,8 +19,6 @@
  */
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
-
-#include <sys/types.h>
 
 /*
  * The pg_wchar type
@@ -51,7 +50,13 @@ typedef unsigned int pg_wchar;
 /*
  * Is a prefix byte for "private" single byte encodings?
  */
-#define IS_LCPRV1(c)	((unsigned char)(c) == 0x9a || (unsigned char)(c) == 0x9b)
+#define LCPRV1_A		0x9a
+#define LCPRV1_B		0x9b
+#define IS_LCPRV1(c)	((unsigned char)(c) == LCPRV1_A || (unsigned char)(c) == LCPRV1_B)
+#define IS_LCPRV1_A_RANGE(c)	\
+	((unsigned char)(c) >= 0xa0 && (unsigned char)(c) <= 0xdf)
+#define IS_LCPRV1_B_RANGE(c)	\
+	((unsigned char)(c) >= 0xe0 && (unsigned char)(c) <= 0xef)
 /*
  * Is a leading byte for "official" multibyte encodings?
  */
@@ -59,7 +64,13 @@ typedef unsigned int pg_wchar;
 /*
  * Is a prefix byte for "private" multibyte encodings?
  */
-#define IS_LCPRV2(c)	((unsigned char)(c) == 0x9c || (unsigned char)(c) == 0x9d)
+#define LCPRV2_A		0x9c
+#define LCPRV2_B		0x9d
+#define IS_LCPRV2(c)	((unsigned char)(c) == LCPRV2_A || (unsigned char)(c) == LCPRV2_B)
+#define IS_LCPRV2_A_RANGE(c)	\
+	((unsigned char)(c) >= 0xf0 && (unsigned char)(c) <= 0xf4)
+#define IS_LCPRV2_B_RANGE(c)	\
+	((unsigned char)(c) >= 0xf5 && (unsigned char)(c) <= 0xfe)
 
 /*----------------------------------------------------
  * leading characters
@@ -279,19 +290,27 @@ extern pg_enc2gettext pg_enc2gettext_tbl[];
  * pg_wchar stuff
  */
 typedef int (*mb2wchar_with_len_converter) (const unsigned char *from,
-														pg_wchar *to,
+													pg_wchar *to,
+													int len);
+
+typedef int (*wchar2mb_with_len_converter) (const pg_wchar *from,
+														unsigned char *to,
 														int len);
 
 typedef int (*mblen_converter) (const unsigned char *mbstr);
 
 typedef int (*mbdisplaylen_converter) (const unsigned char *mbstr);
 
+typedef bool (*mbcharacter_incrementer) (unsigned char *mbstr, int len);
+
 typedef int (*mbverifier) (const unsigned char *mbstr, int len);
 
 typedef struct
 {
-	mb2wchar_with_len_converter mb2wchar_with_len;		/* convert a multibyte
-														 * string to a wchar */
+	mb2wchar_with_len_converter mb2wchar_with_len;	/* convert a multibyte
+													 * string to a wchar */
+	wchar2mb_with_len_converter wchar2mb_with_len;	/* convert a wchar
+													 * string to a multibyte */
 	mblen_converter mblen;		/* get byte length of a char */
 	mbdisplaylen_converter dsplen;		/* get display width of a char */
 	mbverifier	mbverify;		/* verify multibyte sequence */
@@ -372,6 +391,10 @@ extern int	pg_mb2wchar(const char *from, pg_wchar *to);
 extern int	pg_mb2wchar_with_len(const char *from, pg_wchar *to, int len);
 extern int pg_encoding_mb2wchar_with_len(int encoding,
 							  const char *from, pg_wchar *to, int len);
+extern int	pg_wchar2mb(const pg_wchar *from, char *to);
+extern int	pg_wchar2mb_with_len(const pg_wchar *from, char *to, int len);
+extern int pg_encoding_wchar2mb_with_len(int encoding,
+							  const pg_wchar *from, char *to, int len);
 extern int	pg_char_and_wchar_strcmp(const char *s1, const pg_wchar *s2);
 extern int	pg_wchar_strncmp(const pg_wchar *s1, const pg_wchar *s2, size_t n);
 extern int	pg_char_and_wchar_strncmp(const char *s1, const pg_wchar *s2, size_t n);
@@ -391,13 +414,10 @@ extern int pg_encoding_mbcliplen(int encoding, const char *mbstr,
 extern int	pg_mbcharcliplen(const char *mbstr, int len, int imit);
 extern int	pg_encoding_max_length(int encoding);
 extern int	pg_database_encoding_max_length(void);
+extern mbcharacter_incrementer pg_database_encoding_character_incrementer(void);
 
-#ifdef USE_WIDE_UPPER_LOWER
-extern size_t wchar2char(char *to, const wchar_t *from, size_t tolen);
-extern size_t char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen);
-#endif
-
-extern int	SetClientEncoding(int encoding, bool doit);
+extern int	PrepareClientEncoding(int encoding);
+extern int	SetClientEncoding(int encoding);
 extern void InitializeClientEncoding(void);
 extern int	pg_get_client_encoding(void);
 extern const char *pg_get_client_encoding_name(void);
@@ -412,6 +432,7 @@ extern int	pg_valid_client_encoding(const char *name);
 extern int	pg_valid_server_encoding(const char *name);
 
 extern unsigned char *unicode_to_utf8(pg_wchar c, unsigned char *utf8string);
+extern pg_wchar utf8_to_unicode(const unsigned char *c);
 extern int	pg_utf_mblen(const unsigned char *);
 extern unsigned char *pg_do_encoding_conversion(unsigned char *src, int len,
 						  int src_encoding,
@@ -419,6 +440,8 @@ extern unsigned char *pg_do_encoding_conversion(unsigned char *src, int len,
 
 extern char *pg_client_to_server(const char *s, int len);
 extern char *pg_server_to_client(const char *s, int len);
+extern char *pg_any_to_server(const char *s, int len, int encoding);
+extern char *pg_server_to_any(const char *s, int len, int encoding);
 
 extern unsigned short BIG5toCNS(unsigned short big5, unsigned char *lc);
 extern unsigned short CNStoBIG5(unsigned short cns, unsigned char lc);

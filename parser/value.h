@@ -4,10 +4,10 @@
  *	  interface for Value nodes
  *
  *
- * Portions Copyright (c) 2003-2008, PgPool Global Development Group
- * Copyright (c) 2003-2007, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2013, PgPool Global Development Group
+ * Copyright (c) 2003-2012, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/nodes/value.h,v 1.6 2007/01/05 22:19:56 momjian Exp $
+ * src/include/nodes/value.h
  *
  *-------------------------------------------------------------------------
  */

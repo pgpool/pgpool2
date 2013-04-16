@@ -962,7 +962,6 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		T_IndexStmt,	/* CREATE INDEX */
 		T_CreateFunctionStmt,
 		T_AlterFunctionStmt,
-		T_RemoveFuncStmt,
 		/*
 		T_DoStmt,		Our parser does not support yet
 		*/
@@ -985,9 +984,7 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		T_VariableShowStmt,
 		T_DiscardStmt,
 		T_CreateTrigStmt,
-		T_DropPropertyStmt,
 		T_CreatePLangStmt,
-		T_DropPLangStmt,
 		T_CreateRoleStmt,
 		T_AlterRoleStmt,
 		T_DropRoleStmt,
@@ -1001,12 +998,9 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		T_AlterRoleSetStmt,
 		T_CreateConversionStmt,
 		T_CreateCastStmt,
-		T_DropCastStmt,
 		T_CreateOpClassStmt,
 		T_CreateOpFamilyStmt,
 		T_AlterOpFamilyStmt,
-		T_RemoveOpClassStmt,
-		T_RemoveOpFamilyStmt,
 		T_PrepareStmt,
 		T_ExecuteStmt,
 		T_DeallocateStmt,		/* DEALLOCATE */
@@ -1023,10 +1017,8 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		T_AlterTSConfigurationStmt,
 		T_CreateFdwStmt,
 		T_AlterFdwStmt,
-		T_DropFdwStmt,
 		T_CreateForeignServerStmt,
 		T_AlterForeignServerStmt,
-		T_DropForeignServerStmt,
 		T_CreateUserMappingStmt,
 		T_AlterUserMappingStmt,
 		T_DropUserMappingStmt,

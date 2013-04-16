@@ -4,12 +4,12 @@
  *	  implementation of Value nodes
  *
  *
- * Portions Copyright (c) 2003-2008, PgPool Global Development Group
- * Copyright (c) 2003-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2013, PgPool Global Development Group
+ * Copyright (c) 2003-2012, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/value.c,v 1.2 2005/01/01 20:44:15 tgl Exp $
+ *	  src/backend/nodes/value.c
  *
  *-------------------------------------------------------------------------
  */

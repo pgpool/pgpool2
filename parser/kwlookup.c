@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/kwlookup.c,v 2.2 2009/03/08 16:53:30 alvherre Exp $
+ *	  src/backend/parser/kwlookup.c
  *
  *-------------------------------------------------------------------------
  */

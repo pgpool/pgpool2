@@ -1753,7 +1753,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 					if (IsA(node, CreateStmt))
 					{
 						CreateStmt *create_table_stmt = (CreateStmt *)node;
-						if (create_table_stmt->relation->istemp)
+						if (create_table_stmt->relation->relpersistence)
 							discard_temp_table_relcache();
 					}
 				}

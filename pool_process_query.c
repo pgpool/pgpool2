@@ -4048,7 +4048,6 @@ static bool is_internal_transaction_needed(Node *node)
 		T_IndexStmt,	/* CREATE INDEX */
 		T_CreateFunctionStmt,
 		T_AlterFunctionStmt,
-		T_RemoveFuncStmt,
 		/*
 		T_DoStmt,		Our parser does not support yet
 		*/
@@ -4070,9 +4069,7 @@ static bool is_internal_transaction_needed(Node *node)
 		T_AlterSeqStmt,
 		T_VariableSetStmt,		/* SET */
 		T_CreateTrigStmt,
-		T_DropPropertyStmt,
 		T_CreatePLangStmt,
-		T_DropPLangStmt,
 		T_CreateRoleStmt,
 		T_AlterRoleStmt,
 		T_DropRoleStmt,
@@ -4085,12 +4082,9 @@ static bool is_internal_transaction_needed(Node *node)
 		T_AlterRoleSetStmt,
 		T_CreateConversionStmt,
 		T_CreateCastStmt,
-		T_DropCastStmt,
 		T_CreateOpClassStmt,
 		T_CreateOpFamilyStmt,
 		T_AlterOpFamilyStmt,
-		T_RemoveOpClassStmt,
-		T_RemoveOpFamilyStmt,
 		T_PrepareStmt,
 		T_ExecuteStmt,
 		T_DeallocateStmt,
@@ -4109,10 +4103,8 @@ static bool is_internal_transaction_needed(Node *node)
 		T_AlterTSConfigurationStmt,
 		T_CreateFdwStmt,
 		T_AlterFdwStmt,
-		T_DropFdwStmt,
 		T_CreateForeignServerStmt,
 		T_AlterForeignServerStmt,
-		T_DropForeignServerStmt,
 		T_CreateUserMappingStmt,
 		T_AlterUserMappingStmt,
 		T_DropUserMappingStmt,

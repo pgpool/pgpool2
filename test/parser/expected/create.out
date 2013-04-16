@@ -4,18 +4,18 @@ CREATE TABLE "foo" ("a" int4,"b" "text") INHERITS ("a","b","c","d")
 CREATE TABLE "foo" ("a" int4,"b" numeric)  WITH OIDS 
 CREATE TABLE "foo" ("a" int4,"b" numeric)  WITHOUT OIDS 
 CREATE TABLE "foo" ("a" int4,"b" numeric)  WITH ("fillfactor"=10)
-CREATE TABLE "foo" ("a" ,"b" )  AS SELECT 1,2
-CREATE TABLE "foo" ("a" ,"b" )  WITH OIDS  AS SELECT 1,2
-CREATE TABLE "foo" ("a" ,"b" )  WITHOUT OIDS  AS SELECT 1,2
-CREATE TABLE "foo" ("a" ,"b" )  WITH ("fillfactor"=10) AS SELECT 1,2
+CREATE TABLE "foo" ("a", "b")  AS SELECT 1,2
+CREATE TABLE "foo" ("a", "b")  WITH OIDS  AS SELECT 1,2
+CREATE TABLE "foo" ("a", "b")  WITHOUT OIDS  AS SELECT 1,2
+CREATE TABLE "foo" ("a", "b")  WITH ("fillfactor"=10) AS SELECT 1,2
 syntax error: CREATE TABLE foo (a, b) ON COMMIT DROP
 syntax error: CREATE TABLE foo (a, b) ON COMMIT DELETE
 syntax error: CREATE TABLE foo (a, b) ON COMMIT PRESERVE
 syntax error: CREATE TABLE foo (a, b) ON COMMIT PRESERVE ROWS TABLESPACE data
-CREATE TABLE "foo" ("a" ,"b" )  ON COMMIT DROP AS SELECT 1,2
-CREATE TABLE "foo" ("a" ,"b" )  ON COMMIT DELETE ROWS AS SELECT 1,2
-CREATE TABLE "foo" ("a" ,"b" )  ON COMMIT PRESERVE ROWS AS SELECT 1,2
-CREATE TABLE "foo" ("a" ,"b" )  ON COMMIT PRESERVE ROWS AS SELECT 1,2
+CREATE TABLE "foo" ("a", "b")  ON COMMIT DROP AS SELECT 1,2
+CREATE TABLE "foo" ("a", "b")  ON COMMIT DELETE ROWS AS SELECT 1,2
+CREATE TABLE "foo" ("a", "b")  ON COMMIT PRESERVE ROWS AS SELECT 1,2
+CREATE TABLE "foo" ("a", "b")  ON COMMIT PRESERVE ROWS AS SELECT 1,2
 CREATE TABLE "foo" ("a" int4,LIKE "a" INCLUDING DEFAULTS) 
 CREATE TABLE "foo" ("a" int4,LIKE "a" INCLUDING CONSTRAINTS) 
 CREATE TABLE "foo" ("a" int4,LIKE "a" INCLUDING CONSTRAINTS INCLUDING INDEXES) 

@@ -1046,12 +1046,12 @@ static yyconst flex_int16_t yy_chk[2067] =
  * resulting "lex.backup" file says that no backing up is needed.
  *
  *
- * Portions Copyright (c) 2003-2008, PgPool Global Development Group
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2013, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.167 2010/05/30 18:10:41 tgl Exp $
+ *	  src/backend/parser/scan.l
  *
  *-------------------------------------------------------------------------
  */
@@ -1088,7 +1088,7 @@ static yyconst flex_int16_t yy_chk[2067] =
  */
 int				backslash_quote = BACKSLASH_QUOTE_SAFE_ENCODING;
 bool			escape_string_warning = true;
-bool			standard_conforming_strings = false;
+bool			standard_conforming_strings = true;
 
 /*
  * Set the type of YYSTYPE.
@@ -1225,8 +1225,8 @@ extern void core_yyset_column(int column_no, yyscan_t yyscanner);
  */
 /* $foo$ style quotes ("dollar quoting")
  * The quoted string starts with $foo$ where "foo" is an optional string
- * in the form of an identifier, except that it may not contain "$", 
- * and extends to the first occurrence of an identical string.  
+ * in the form of an identifier, except that it may not contain "$",
+ * and extends to the first occurrence of an identical string.
  * There is *no* processing of the quoted text.
  *
  * {dolqfailed} is an error rule to avoid scanner backup when {dolqdelim}
@@ -1268,7 +1268,7 @@ extern void core_yyset_column(int column_no, yyscan_t yyscanner);
  * If you change either set, adjust the character lists appearing in the
  * rule for "operator"!
  */
-/* we no longer allow unary minus in numbers. 
+/* we no longer allow unary minus in numbers.
  * instead we pass it separately to parser. there it gets
  * coerced via doNegate() -- Leon aug 20 1999
  *

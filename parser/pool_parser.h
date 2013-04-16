@@ -45,6 +45,7 @@ extern int	server_version_num;
 typedef uint8 bits8;			/* >= 8 bits */
 typedef uint16 bits16;			/* >= 16 bits */
 typedef uint32 bits32;			/* >= 32 bits */
+typedef unsigned long long int uint64;
 
 
 typedef size_t Size;
@@ -155,6 +156,43 @@ typedef unsigned long Datum;	/* XXX sizeof(long) >= sizeof(void *) */
 #define MAX_TIME_PRECISION 6
 
 
+/* ----------------------------------------------------------------
+ *              Section 1: hacks to cope with non-ANSI C compilers
+ *
+ * type prefixes (const, signed, volatile, inline) are handled in pg_config.h.
+ * ----------------------------------------------------------------
+ */
+
+/*
+ * CppAsString
+ *      Convert the argument to a string, using the C preprocessor.
+ * CppConcat
+ *      Concatenate two arguments together, using the C preprocessor.
+ *
+ * Note: the standard Autoconf macro AC_C_STRINGIZE actually only checks
+ * whether #identifier works, but if we have that we likely have ## too.
+ */
+#if defined(HAVE_STRINGIZE)
+
+#define CppAsString(identifier) #identifier
+#define CppConcat(x, y)         x##y
+#else                           /* !HAVE_STRINGIZE */
+
+#define CppAsString(identifier) "identifier"
+
+/*
+ * CppIdentity -- On Reiser based cpp's this is used to concatenate
+ *      two tokens.  That is
+ *              CppIdentity(A)B ==> AB
+ *      We renamed it to _private_CppIdentity because it should not
+ *      be referenced outside this file.  On other cpp's it
+ *      produces  A  B.
+ */
+#define _priv_CppIdentity(x)x
+#define CppConcat(x, y)         _priv_CppIdentity(x)y
+#endif   /* !HAVE_STRINGIZE */
+
+#if 0
 /* from include/catalog/pg_trigger.h  start */
 /* Bits within tgtype */
 #define TRIGGER_TYPE_ROW                (1 << 0)
@@ -164,6 +202,7 @@ typedef unsigned long Datum;	/* XXX sizeof(long) >= sizeof(void *) */
 #define TRIGGER_TYPE_UPDATE             (1 << 4)
 #define TRIGGER_TYPE_TRUNCATE           (1 << 5)
 /* from include/catalog/pg_trigger.h  end */
+#endif
 
 
 /* include/utils/elog.h */

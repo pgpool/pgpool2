@@ -4,11 +4,11 @@
  *	  POSTGRES memory context node definitions.
  *
  *
- * Portions Copyright (c) 2003-2008, PgPool Global Development Group
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2013, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/memnodes.h,v 1.30 2004/12/31 22:03:34 pgsql Exp $
+ * src/include/nodes/memnodes.h
  *
  *-------------------------------------------------------------------------
  */
@@ -60,6 +60,7 @@ typedef struct MemoryContextData
 	MemoryContext firstchild;	/* head of linked list of children */
 	MemoryContext nextchild;	/* next child of same parent */
 	char	   *name;			/* context name (just for debugging) */
+	bool		isReset;		/* T = no space alloced since last reset */
 } MemoryContextData;
 
 /* utils/palloc.h contains typedef struct MemoryContextData *MemoryContext */

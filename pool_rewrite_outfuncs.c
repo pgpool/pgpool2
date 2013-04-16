@@ -51,6 +51,7 @@
 #include "parser/parser.h"
 #include "parser/pool_string.h"
 #include "parser/pg_list.h"
+#include "parser/pg_trigger.h"
 #include "parser/parsenodes.h"
 #include "pool_rewrite_query.h"
 
@@ -151,23 +152,18 @@ static void _rewriteAlterTableStmt(Node *BaseSelect, RewriteQuery *message, ConI
 static void _rewriteCreateSeqStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, CreateSeqStmt *node);
 static void _rewriteAlterSeqStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, AlterSeqStmt *node);
 static void _rewriteCreatePLangStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, CreatePLangStmt *node);
-static void _rewriteDropPLangStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, DropPLangStmt *node);
 static void _rewriteCreateTableSpaceStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, CreateTableSpaceStmt *node);
 static void _rewriteDropTableSpaceStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, DropTableSpaceStmt *node);
 static void _rewriteCreateTrigStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, CreateTrigStmt *node);
-static void _rewriteDropPropertyStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, DropPropertyStmt *node);
 static void _rewriteDefineStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, DefineStmt *node);
 static void _rewriteCreateOpClassStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, CreateOpClassStmt *node);
-static void _rewriteRemoveOpClassStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, RemoveOpClassStmt *node);
 static void _rewriteDropStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, DropStmt *node);
 static void _rewriteFetchStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, FetchStmt *node);
 static void _rewriteGrantStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, GrantStmt *node);
 static void _rewriteGrantRoleStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, GrantRoleStmt *node);
 static void _rewriteCreateFunctionStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, CreateFunctionStmt *node);
 static void _rewriteAlterFunctionStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, AlterFunctionStmt *node);
-static void _rewriteRemoveFuncStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, RemoveFuncStmt *node);
 static void _rewriteCreateCastStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, CreateCastStmt *node);
-static void _rewriteDropCastStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, DropCastStmt *node);
 static void _rewriteReindexStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, ReindexStmt *node);
 static void _rewriteRuleStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, RuleStmt *node);
 static void _rewriteViewStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, ViewStmt *node);
@@ -220,6 +216,9 @@ static void writeRangeFooter(RewriteQuery *message,ConInfoTodblink *dblink, Stri
 static bool CheckAggOpt(RewriteQuery *message);
 static char *GetNameFromColumnRef(ColumnRef *node,bool state);
 static void AvgFuncCall(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, FuncCall *node);
+
+static void
+_rewriteFuncNameList(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, List *list);
 
 /* under define is used in _rewritejoinExpr */
 #define JDEFAULT 0
@@ -2423,7 +2422,7 @@ static void
 _rewriteCreateStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, CreateStmt *node)
 {
 	delay_string_append_char(message, str, "CREATE ");
-	if (node->relation->istemp)
+	if (node->relation->relpersistence)
 		delay_string_append_char(message, str, "TEMP ");
 	delay_string_append_char(message, str, "TABLE ");
 	_rewriteNode(BaseSelect, message, dblink, str, node->relation);
@@ -3484,7 +3483,7 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 			RangeVar *rel = (RangeVar *)into->rel;
 
 			delay_string_append_char(message, str, "CREATE ");
-			if (rel->istemp == true)
+			if (rel->relpersistence == true)
 				delay_string_append_char(message, str, "TEMP ");
 			delay_string_append_char(message, str, "TABLE ");
 			_rewriteNode(BaseSelect, message, dblink, str, into->rel);
@@ -6590,11 +6589,6 @@ _rewriteAlterTableCmd(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *
 			delay_string_append_char(message, str, node->name);
 			delay_string_append_char(message, str, "\" TYPE ");
 			_rewriteNode(BaseSelect, message, dblink, str, node->def);
-			if (node->transform)
-			{
-				delay_string_append_char(message, str, " USING ");
-				_rewriteNode(BaseSelect, message, dblink, str, node->transform);
-			}
 			break;
 
 		case AT_AddConstraint:
@@ -6775,7 +6769,7 @@ static void
 _rewriteCreateSeqStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, CreateSeqStmt *node)
 {
 	delay_string_append_char(message, str, "CREATE ");
-	if (node->sequence->istemp)
+	if (node->sequence->relpersistence)
 		delay_string_append_char(message, str, "TEMP ");
 	delay_string_append_char(message, str, "SEQUENCE ");
 	_rewriteNode(BaseSelect, message, dblink, str, node->sequence);
@@ -6845,16 +6839,6 @@ _rewriteCreatePLangStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink
 }
 
 static void
-_rewriteDropPLangStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, DropPLangStmt *node)
-{
-	delay_string_append_char(message, str, "DROP LANGUAGE \"");
-	delay_string_append_char(message, str, node->plname);
-	delay_string_append_char(message, str, "\"");
-	if (node->behavior == DROP_CASCADE)
-		delay_string_append_char(message, str, " CASCADE");
-}
-
-static void
 _rewriteCreateTableSpaceStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, CreateTableSpaceStmt *node)
 {
 	delay_string_append_char(message, str, "CREATE TABLESPACE \"");
@@ -6919,7 +6903,7 @@ _rewriteCreateTrigStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink 
 	delay_string_append_char(message, str, node->trigname);
 	delay_string_append_char(message, str, "\" ");
 
-	if (node->before == TRUE)
+	if (node->timing == TRUE)
 		delay_string_append_char(message, str, "BEFORE ");
 	else
 		delay_string_append_char(message, str, "AFTER ");
@@ -6978,34 +6962,6 @@ _rewriteCreateTrigStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink 
 	delay_string_append_char(message, str, "(");
 	_rewriteNode(BaseSelect, message, dblink, str, node->args);
 	delay_string_append_char(message, str, ")");
-}
-
-static void
-_rewriteDropPropertyStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, DropPropertyStmt *node)
-{
-	switch (node->removeType)
-	{
-		case OBJECT_TRIGGER:
-			delay_string_append_char(message, str, "DROP TRIGGER \"");
-			delay_string_append_char(message, str, node->property);
-			delay_string_append_char(message, str, "\" ON ");
-			_rewriteNode(BaseSelect, message, dblink, str, node->relation);
-			if (node->behavior == DROP_CASCADE)
-				delay_string_append_char(message, str, " CASCADE");
-			break;
-
-		case OBJECT_RULE:
-			delay_string_append_char(message, str, "DROP RULE \"");
-			delay_string_append_char(message, str, node->property);
-			delay_string_append_char(message, str, "\" ON ");
-			_rewriteNode(BaseSelect, message, dblink, str, node->relation);
-			if (node->behavior == DROP_CASCADE)
-				delay_string_append_char(message, str, " CASCADE");
-			break;
-
-		default:
-			break;
-	}
 }
 
 static void
@@ -7195,21 +7151,19 @@ _rewriteCreateOpClassStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodbli
 }
 
 static void
-_rewriteRemoveOpClassStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, RemoveOpClassStmt *node)
-{
-	delay_string_append_char(message, str, "DROP OPERATOR CLASS ");
-	_rewriteFuncName(BaseSelect, message, dblink, str, node->opclassname);
-	delay_string_append_char(message, str, " USING ");
-	delay_string_append_char(message, str, node->amname);
-	if (node->behavior == DROP_CASCADE)
-		delay_string_append_char(message, str, " CASCADE");
-}
-
-static void
 _rewriteDropStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, DropStmt *node)
 {
-	ListCell *lc;
-	char comma = 0;
+	//ListCell *lc;
+	//char comma = 0;
+
+	/*
+	 * types of drop statement
+	 * 1: DROP obj1, target2, ...
+	 * 2: DROP obj (arg1, arg2, ...)
+	 * 3: DROP obj ON obj
+	 * 0: other
+	 */
+	int drop_stmt_type = 1;
 
 	delay_string_append_char(message, str, "DROP ");
 	switch (node->removeType)
@@ -7246,11 +7200,109 @@ _rewriteDropStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 			delay_string_append_char(message, str, "SCHEMA ");
 			break;
 
+		case OBJECT_FUNCTION:
+			drop_stmt_type = 2;
+			delay_string_append_char(message, str, "FUNCTION ");
+			break;
+
+		case OBJECT_AGGREGATE:
+			drop_stmt_type = 2;
+			delay_string_append_char(message, str, "AGGREGATE ");
+			break;
+
+		case OBJECT_OPERATOR:
+			drop_stmt_type = 2;
+			delay_string_append_char(message, str, "OPERATOR CLASS ");
+			break;
+
+        case OBJECT_TRIGGER:
+			drop_stmt_type = 3;
+            delay_string_append_char(message, str, "TRIGGER ");
+            break;
+
+        case OBJECT_RULE:
+			drop_stmt_type = 3;
+            delay_string_append_char(message, str, "RULE ");
+            break;
+
+		case OBJECT_LANGUAGE:
+			delay_string_append_char(message, str, "LANGUAGE ");
+            break;
+
+		case OBJECT_CAST:
+			drop_stmt_type = 0;
+			delay_string_append_char(message, str, "CAST (");
+			//_rewriteNode(BaseSelect, message, dblink, str, node->objects);
+			_rewriteFuncNameList(BaseSelect, message, dblink, str, node->objects);
+			delay_string_append_char(message, str, " AS ");
+			//_rewriteNode(BaseSelect, message, dblink, str, node->arguments);
+			_rewriteFuncNameList(BaseSelect, message, dblink, str, node->arguments);
+			delay_string_append_char(message, str, ")");
+            break;
+
+		case OBJECT_OPCLASS:
+			drop_stmt_type = 0;
+			delay_string_append_char(message, str, "OPERATOR CLASS ");
+			//_rewriteFuncName(BaseSelect, message, dblink, str, node->objects);
+			_rewriteFuncNameList(BaseSelect, message, dblink, str, node->objects);
+			delay_string_append_char(message, str, " USING ");
+			//delay_string_append_char(message, str, node->arguments);
+			_rewriteFuncNameList(BaseSelect, message, dblink, str, node->arguments);
+			break;
+
 		default:
 			break;
 	}
 
-	foreach (lc, node->objects)
+	/* IF EXISTS */
+	if (node->missing_ok)
+		delay_string_append_char(message, str, "IF EXISTS ");
+
+	switch (drop_stmt_type)
+	{
+		case 1: /* DROP obj1, obj2, ... */
+			/*
+			foreach Array(lc, node->objects)
+			{
+				if (comma == 0)
+					comma = 1;
+				else
+					delay_string_append_char(message, str, ", ");
+				_rewriteFuncName(BaseSelect, message, dblink, str, lfirst(lc));
+			}
+			*/
+			_rewriteFuncNameList(BaseSelect, message, dblink, str, node->objects);
+			break;
+
+		case 2: /* DROP obj (arg1, arg2, ...) */
+			delay_string_append_char(message, str, " (");
+			_rewriteNode(BaseSelect, message, dblink, str, node->arguments);
+			delay_string_append_char(message, str, ")");
+			break;
+
+		case 3: /* DROP obj ON obj */
+			//delay_string_append_char(message, str, node->objects); // ???
+			_rewriteFuncNameList(BaseSelect, message, dblink, str, node->objects);
+			delay_string_append_char(message, str, "\" ON ");
+			_rewriteNode(BaseSelect, message, dblink, str, node->objects);
+			break;
+
+		default:
+			break;
+	}
+
+	/* CASCADE */
+	if (node->behavior == DROP_CASCADE)
+		delay_string_append_char(message, str, " CASCADE");
+}
+
+static void
+_rewriteFuncNameList(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, List *list)
+{
+	ListCell *lc;
+	char comma = 0;
+
+	foreach (lc, list)
 	{
 		if (comma == 0)
 			comma = 1;
@@ -7258,9 +7310,6 @@ _rewriteDropStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 			delay_string_append_char(message, str, ", ");
 		_rewriteFuncName(BaseSelect, message, dblink, str, lfirst(lc));
 	}
-
-	if (node->behavior == DROP_CASCADE)
-		delay_string_append_char(message, str, " CASCADE");
 }
 
 static void
@@ -7594,40 +7643,6 @@ _rewriteAlterFunctionStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodbli
 }
 
 static void
-_rewriteRemoveFuncStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, RemoveFuncStmt *node)
-{
-	switch (node->kind)
-	{
-		case OBJECT_FUNCTION:
-			delay_string_append_char(message, str, "DROP FUNCTION ");
-			break;
-
-		case OBJECT_AGGREGATE:
-			delay_string_append_char(message, str, "DROP AGGREGATE ");
-			break;
-
-		case OBJECT_OPERATOR:
-			delay_string_append_char(message, str, "DROP OPERATOR CLASS ");
-			break;
-
-		default:
-			break;
-	}
-
-	if (node->missing_ok)
-		delay_string_append_char(message, str, "IF EXISTS ");
-
-	_rewriteFuncName(BaseSelect, message, dblink, str, node->name);
-
-	delay_string_append_char(message, str, " (");
-	_rewriteNode(BaseSelect, message, dblink, str, node->args);
-	delay_string_append_char(message, str, ")");
-
-	if (node->behavior == DROP_CASCADE)
-		delay_string_append_char(message, str, " CASCADE");
-}
-
-static void
 _rewriteCreateCastStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, CreateCastStmt *node)
 {
 	delay_string_append_char(message, str, "CREATE CAST (");
@@ -7650,19 +7665,6 @@ _rewriteCreateCastStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink 
 		default:
 			break;
 	}
-}
-
-static void
-_rewriteDropCastStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, DropCastStmt *node)
-{
-	delay_string_append_char(message, str, "DROP CAST (");
-	_rewriteNode(BaseSelect, message, dblink, str, node->sourcetype);
-	delay_string_append_char(message, str, " AS ");
-	_rewriteNode(BaseSelect, message, dblink, str, node->targettype);
-	delay_string_append_char(message, str, ")");
-
-	if (node->behavior == DROP_CASCADE)
-		delay_string_append_char(message, str, " CASCADE");
 }
 
 static void
@@ -7951,7 +7953,7 @@ _rewriteViewStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 	else
 		delay_string_append_char(message, str, "CREATE ");
 
-	if (node->view->istemp == TRUE)
+	if (node->view->relpersistence == TRUE)
 		delay_string_append_char(message, str, "TEMP ");
 
 	delay_string_append_char(message, str, "VIEW ");
@@ -8155,13 +8157,13 @@ _rewritePrepareStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *db
 static void
 _rewriteExecuteStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, ExecuteStmt *node)
 {
-	if (node->into)
+	if (IsA(node, CreateTableAsStmt))
 	{
-		IntoClause *into = node->into;
+		IntoClause *into = ((CreateTableAsStmt *)node)->into;
 		RangeVar *rel = into->rel;
 
 		delay_string_append_char(message, str, "CREATE ");
-		if (rel->istemp == TRUE)
+		if (rel->relpersistence == TRUE)
 			delay_string_append_char(message, str, "TEMP ");
 		delay_string_append_char(message, str, "TABLE ");
 		_rewriteNode(BaseSelect, message, dblink, str, into->rel);
@@ -8422,6 +8424,7 @@ _rewriteRangeSubselect(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink 
 		{
 			ListCell   *lc;
 			int num = list_length(node->alias->colnames);
+			// XXXX: segfault occurs here
 			int ret_num = message->analyze[last + 1]->select_ret->col_num;
 			if(num == ret_num)
 			{
@@ -8882,10 +8885,6 @@ _rewriteNode(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, S
 				_rewriteCreatePLangStmt(BaseSelect, message, dblink, str, obj);
 				break;
 
-			case T_DropPLangStmt:
-				_rewriteDropPLangStmt(BaseSelect, message, dblink, str, obj);
-				break;
-
 			case T_CreateTableSpaceStmt:
 				_rewriteCreateTableSpaceStmt(BaseSelect, message, dblink, str, obj);
 				break;
@@ -8898,10 +8897,6 @@ _rewriteNode(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, S
 				_rewriteCreateTrigStmt(BaseSelect, message, dblink, str, obj);
 				break;
 
-			case T_DropPropertyStmt:
-				_rewriteDropPropertyStmt(BaseSelect, message, dblink, str, obj);
-				break;
-
 			case T_DefineStmt:
 				_rewriteDefineStmt(BaseSelect, message, dblink, str, obj);
 				break;
@@ -8912,10 +8907,6 @@ _rewriteNode(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, S
 
 			case T_CreateOpClassItem:
 				_rewriteCreateOpClassItem(BaseSelect, message, dblink, str, obj);
-				break;
-
-			case T_RemoveOpClassStmt:
-				_rewriteRemoveOpClassStmt(BaseSelect, message, dblink, str, obj);
 				break;
 
 			case T_DropStmt:
@@ -8954,16 +8945,8 @@ _rewriteNode(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, S
 				_rewriteAlterFunctionStmt(BaseSelect, message, dblink, str, obj);
 				break;
 
-			case T_RemoveFuncStmt:
-				_rewriteRemoveFuncStmt(BaseSelect, message, dblink, str, obj);
-				break;
-
 			case T_CreateCastStmt:
 				_rewriteCreateCastStmt(BaseSelect, message, dblink, str, obj);
-				break;
-
-			case T_DropCastStmt:
-				_rewriteDropCastStmt(BaseSelect, message, dblink, str, obj);
 				break;
 
 			case T_ReindexStmt:
@@ -9026,7 +9009,6 @@ _rewriteNode(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, S
 			case T_LockStmt:
 				_rewriteLockStmt(BaseSelect, message, dblink, str, obj);
 				break;
-
 			case T_CommentStmt:
 				_rewriteCommentStmt(BaseSelect, message, dblink, str, obj);
 				break;
@@ -9046,14 +9028,12 @@ _rewriteNode(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, S
 			case T_DiscardStmt:
 			case T_CreateOpFamilyStmt:
 			case T_AlterOpFamilyStmt:
-			case T_RemoveOpFamilyStmt:
 			case T_CreateEnumStmt:
 			case T_DropOwnedStmt:
 			case T_ReassignOwnedStmt:
 			case T_AlterTSDictionaryStmt:
 			case T_AlterTSConfigurationStmt:
 			case T_XmlSerialize:
-			case T_InhRelation:
 				break;
 
 			default:
