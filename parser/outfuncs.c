@@ -183,7 +183,7 @@ static void _outFuncOptList(String *str, List *list);
 static void _outCreatedbOptList(String *str, List *options);
 static void _outOperatorArgTypes(String *str, List *args);
 static void _outRangeFunction(String *str, RangeFunction *node);
-//static void _outInhRelation(String *str, InhRelation *node);
+static void _outInhRelation(String *str, TableLikeClause *node);
 static void _outWithDefinition(String *str, List *def_list);
 static void _outCurrentOfExpr(String *str, CurrentOfExpr *node);
 
@@ -5084,9 +5084,8 @@ _outXmlSerialize(String *str, XmlSerialize *node)
 
 }
 
-#ifdef NOT_USED
 static void
-_outInhRelation(String *str, InhRelation *node)
+_outInhRelation(String *str, TableLikeClause *node)
 {
 	string_append_char(str, "LIKE ");
 	_outNode(str, node->relation);
@@ -5110,7 +5109,6 @@ _outInhRelation(String *str, InhRelation *node)
 		}
 	}
 }
-#endif
 
 static void
 _outWithDefinition(String *str, List *def_list)
@@ -5748,11 +5746,9 @@ _outNode(String *str, void *obj)
 				_outAlterTSConfigurationStmt(str, obj);
 				break;
 
-#ifdef NOT_USED
-			case T_InhRelation:
+			case T_TableLikeClause:
 				_outInhRelation(str, obj);
 				break;
-#endif
 
 			default:
 				break;
