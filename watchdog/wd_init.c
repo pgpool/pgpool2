@@ -3,7 +3,7 @@
  *
  * Handles watchdog connection, and protocol communication with pgpool-II
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2012	PgPool Global Development Group
@@ -65,6 +65,13 @@ wd_init(void)
 			return WD_NG;
 		}
 		memset(WD_Node_List, 0, sizeof(unsigned char) * MAX_NUM_BACKENDS);
+	}
+
+	/* initialize interlock */
+	if (wd_init_interlock() != WD_OK)
+	{
+		pool_error("wd_init: wd_init_interlock failed");
+		return WD_NG;
 	}
 
 	/* set myself to watchdog list */

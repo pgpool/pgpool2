@@ -21,7 +21,6 @@
  *
  */
 
-#include <pthread.h>
 #include <stdio.h>
 #include <errno.h>
 #include <ctype.h>
@@ -69,7 +68,8 @@ wd_create_udp_send_socket(WdUdpIf udp_if)
 	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
 	{
 		/* socket create failed */
-		pool_error("wd_create_udp_send_socket: Failed to create socket. reason: %s", strerror(errno));
+		pool_error("wd_create_udp_send_socket: Failed to create socket. reason: %s",
+		           strerror(errno));
 		return -1;
 	}
 
@@ -77,7 +77,8 @@ wd_create_udp_send_socket(WdUdpIf udp_if)
 	tos = IPTOS_LOWDELAY;
 	if (setsockopt(sock, IPPROTO_IP, IP_TOS, (char *) &tos, sizeof(tos)) == -1 )
 	{
-		pool_error("wd_create_udp_send_socket: setsockopt(IP_TOS) failed. reason: %s", strerror(errno));
+		pool_error("wd_create_udp_send_socket: setsockopt(IP_TOS) failed. reason: %s",
+		           strerror(errno));
 		close(sock);
 		return -1;
 	}
@@ -112,7 +113,8 @@ wd_create_udp_send_socket(WdUdpIf udp_if)
 #endif
 
  	if (fcntl(sock, F_SETFD, FD_CLOEXEC) < 0) {
-		pool_error("wd_create_udp_send_socket: setting close-on-exec flag failed. reason: %s", strerror(errno));
+		pool_error("wd_create_udp_send_socket: setting close-on-exec flag failed. reason: %s",
+		           strerror(errno));
 		close(sock);
 		return -1;
 	}
@@ -138,13 +140,15 @@ wd_create_udp_recv_socket(WdUdpIf udp_if)
 	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
 	{
 		/* socket create failed */
-		pool_error("wd_create_udp_recv_socket: Failed to create socket. reason: %s", strerror(errno));
+		pool_error("wd_create_udp_recv_socket: Failed to create socket. reason: %s",
+		           strerror(errno));
 		return -1;
 	}
 
 	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(one)) == -1 )
 	{
-		pool_error("wd_create_udp_recv_socket: setsockopt(SO_REUSEADDR) failed. reason: %s", strerror(errno));
+		pool_error("wd_create_udp_recv_socket: setsockopt(SO_REUSEADDR) failed. reason: %s",
+		           strerror(errno));
 		close(sock);
 		return -1;
 	}
@@ -181,9 +185,10 @@ wd_create_udp_recv_socket(WdUdpIf udp_if)
 	bind_is_done = 0;
 	for (bind_tries = 0; !bind_is_done && bind_tries < MAX_BIND_TRIES; bind_tries++)
 	{
-		if(bind(sock, (struct sockaddr *)&addr, sizeof(struct sockaddr)) < 0)
+		if (bind(sock, (struct sockaddr *)&addr, sizeof(struct sockaddr)) < 0)
 		{
-			pool_log("wd_crate_udp_recv_socket: bind failed. reason: %s ... retrying", strerror(errno));
+			pool_log("wd_crate_udp_recv_socket: bind failed. reason: %s ... retrying",
+			         strerror(errno));
 			sleep(1);
 		}
 		else
@@ -195,13 +200,15 @@ wd_create_udp_recv_socket(WdUdpIf udp_if)
 	/* bind failed finally */
 	if (!bind_is_done)
 	{
-		pool_error("wd_crate_udp_recv_socket: unable to bind socket. reason: %s", strerror(errno));
+		pool_error("wd_crate_udp_recv_socket: unable to bind socket. reason: %s",
+		           strerror(errno));
 		close(sock);
 		return -1;
 	}
 
  	if (fcntl(sock, F_SETFD, FD_CLOEXEC) < 0) {
-		pool_error("wd_create_udp_recv_socket: setting close-on-exec flag failed. reason: %s", strerror(errno));
+		pool_error("wd_create_udp_recv_socket: setting close-on-exec flag failed. reason: %s",
+		           strerror(errno));
 		close(sock);
 		return -1;
 	}
@@ -434,7 +441,7 @@ pid_t wd_writer(int fork_wait_time, WdUdpIf udp_if)
 		}
 
 		wd_udp_write(sock, &pkt, sizeof(pkt), udp_if.addr); 
-		pool_debug("wd_wirete: send heartbeat signal to %s", udp_if.addr);
+		pool_debug("wd_writer: send heartbeat signal to %s", udp_if.addr);
 		sleep(pool_config->wd_udp_keepalive);
 	}
 

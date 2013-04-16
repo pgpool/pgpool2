@@ -3,7 +3,7 @@
  *
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2012	PgPool Global Development Group
@@ -32,7 +32,7 @@ extern pid_t wd_main(int fork_wait_time);
 extern int wd_chk_sticky(void);
 extern int wd_is_watchdog_pid(pid_t pid);
 extern int wd_reaper_watchdog(pid_t pid, int status);
-extern void wd_kill_eatchdog(int sig);
+extern void wd_kill_watchdog(int sig);
 
 /* wd_child.c */
 extern pid_t wd_child(int fork_wait_time);
@@ -47,6 +47,12 @@ extern WdInfo * wd_is_exist_master(void);
 extern int wd_am_I_oldest(void);
 extern int wd_set_myself(struct timeval * tv, int status);
 extern WdInfo * wd_is_alive_master(void);
+
+extern WdInfo * wd_get_lock_holder(void);
+extern WdInfo * wd_get_interlocking(void);
+extern void wd_set_lock_holder(WdInfo *p, bool value);
+extern void wd_set_interlocking(WdInfo *info, bool value);
+extern void wd_clear_interlocking_info(void);
 
 /* wd_packet.c */
 extern int wd_startup(void);
@@ -65,6 +71,8 @@ extern int wd_send_failback_request(int node_id);
 extern int wd_degenerate_backend_set(int *node_id_set, int count);
 extern int wd_promote_backend(int node_id);
 extern int wd_set_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count);
+extern int wd_send_packet_no(WD_PACKET_NO packet_no );
+extern int wd_send_lock_packet(WD_PACKET_NO packet_no, WD_LOCK_ID lock_id);
 
 /* wd_ping.c */
 extern int wd_is_upper_ok(char * server_list);
@@ -87,6 +95,17 @@ extern int wd_udp_write(int sock, WdUdpPacket * pkt, int len, const char * desti
 extern int wd_udp_read(int sock, WdUdpPacket * pkt);
 extern pid_t wd_reader(int fork_wait_time, WdUdpIf udp_if);
 extern pid_t wd_writer(int fork_wait_time, WdUdpIf udp_if);
+
+/* wd_interlock.c */
+extern int wd_init_interlock(void);
+extern void wd_start_interlock(void);
+extern void wd_end_interlock(void);
+extern void wd_leave_interlock(void);
+extern void wd_wait_for_lock(WD_LOCK_ID lock_id);
+extern bool wd_am_I_lock_holder(void);
+extern bool wd_is_locked(WD_LOCK_ID lock_id);
+extern void wd_set_lock(WD_LOCK_ID lock_id, bool value);
+extern int wd_unlock(WD_LOCK_ID lock);
 
 /* main.c */
 extern int myargc;

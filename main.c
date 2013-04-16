@@ -62,6 +62,7 @@
 #include "pool_passwd.h"
 #include "pool_memqcache.h"
 #include "watchdog/wd_ext.h"
+
 /*
  * Process pending signal actions.
  */
@@ -1738,6 +1739,22 @@ static void failover(void)
 	Req_info->switching = true;
 	node_id = Req_info->node_id[0];
 
+	/* start of command inter-lock with watchdog */
+	if (pool_config->use_watchdog)
+	{
+		wd_start_interlock();
+
+		/*
+		 * if it is due to DB down detection by healthcheck, send failover request
+		 * to other pgpools because detection of DB down on the others may be late.
+		 */
+		if (wd_am_I_lock_holder() &&
+		    !failover_request && Req_info->kind == NODE_DOWN_REQUEST)
+		{
+			wd_degenerate_backend_set(&node_id, 1);
+		}
+	}
+
 	/* failback request? */
 	if (Req_info->kind == NODE_UP_REQUEST)
 	{
@@ -1752,6 +1769,11 @@ static void failover(void)
 			kill(pcp_pid, SIGUSR2);
 			switching = 0;
 			Req_info->switching = false;
+
+			/* end of command inter-lock */	
+			if (pool_config->use_watchdog)
+				wd_leave_interlock();
+
 			return;
 		}
 
@@ -1759,8 +1781,22 @@ static void failover(void)
 				 BACKEND_INFO(node_id).backend_hostname,
 				 BACKEND_INFO(node_id).backend_port);
 		BACKEND_INFO(node_id).backend_status = CON_CONNECT_WAIT;	/* unset down status */
-		trigger_failover_command(node_id, pool_config->failback_command,
-								 MASTER_NODE_ID, get_next_master_node(), PRIMARY_NODE_ID);
+
+		/* wait for failback command lock or to be lock holder */
+		if (pool_config->use_watchdog && !wd_am_I_lock_holder())
+		{
+			wd_wait_for_lock(WD_FAILBACK_COMMAND_LOCK);
+		}
+		/* execute failback command if lock holder */
+		if (!pool_config->use_watchdog || wd_am_I_lock_holder())
+		{
+			trigger_failover_command(node_id, pool_config->failback_command,
+								 	MASTER_NODE_ID, get_next_master_node(), PRIMARY_NODE_ID);
+
+			/* unlock failback command */
+			if (pool_config->use_watchdog)
+				wd_unlock(WD_FAILBACK_COMMAND_LOCK);
+		}
 	}
 	else if (Req_info->kind == PROMOTE_NODE_REQUEST)
 	{
@@ -1777,6 +1813,11 @@ static void failover(void)
 			kill(pcp_pid, SIGUSR2);
 			switching = 0;
 			Req_info->switching = false;
+
+			/* end of command inter-lock */	
+			if (pool_config->use_watchdog)
+				wd_leave_interlock();
+
 			return;
 		}
 	}
@@ -1808,6 +1849,11 @@ static void failover(void)
 			kill(pcp_pid, SIGUSR2);
 			switching = 0;
 			Req_info->switching = false;
+
+			/* end of command inter-lock */	
+			if (pool_config->use_watchdog)
+				wd_leave_interlock();
+
 			return;
 		}
 	}
@@ -1902,13 +1948,28 @@ static void failover(void)
 		need_to_restart_children = true;
 	}
 
-	/* Exec failover_command if needed */
-	for (i = 0; i < pool_config->backend_desc->num_backends; i++)
+	/* wait for failover command lock or to be lock holder*/
+	if (pool_config->use_watchdog && !wd_am_I_lock_holder())
 	{
-		if (nodes[i])
-			trigger_failover_command(i, pool_config->failover_command,
-									 MASTER_NODE_ID, new_master, PRIMARY_NODE_ID);
+		wd_wait_for_lock(WD_FAILOVER_COMMAND_LOCK);
 	}
+
+	/* execute failover command if lock holder */
+	if (!pool_config->use_watchdog || wd_am_I_lock_holder())
+	{
+		/* Exec failover_command if needed */
+		for (i = 0; i < pool_config->backend_desc->num_backends; i++)
+		{
+			if (nodes[i])
+				trigger_failover_command(i, pool_config->failover_command,
+									 		MASTER_NODE_ID, new_master, PRIMARY_NODE_ID);
+		}
+
+		/* unlock failover command */
+		if (pool_config->use_watchdog)
+			wd_unlock(WD_FAILOVER_COMMAND_LOCK);
+	}
+
 
 /* no need to wait since it will be done in reap_handler */
 #ifdef NOT_USED
@@ -1972,12 +2033,29 @@ static void failover(void)
 	memset(Req_info->node_id, -1, sizeof(int) * MAX_NUM_BACKENDS);
 	pool_semaphore_unlock(REQUEST_INFO_SEM);
 
-	/* exec follow_master_command */
-	if ((follow_cnt > 0) && (*pool_config->follow_master_command != '\0'))
+	/* wait for follow_master_command lock or to be lock holder */
+	if (pool_config->use_watchdog && !wd_am_I_lock_holder())
 	{
-		follow_pid = fork_follow_child(Req_info->master_node_id, new_master,
-									   Req_info->primary_node_id);
+		wd_wait_for_lock(WD_FOLLOW_MASTER_COMMAND_LOCK);
 	}
+
+	/* execute follow_master_command */
+	if (!pool_config->use_watchdog || wd_am_I_lock_holder())
+	{
+		if ((follow_cnt > 0) && (*pool_config->follow_master_command != '\0'))
+		{
+			follow_pid = fork_follow_child(Req_info->master_node_id, new_master,
+									   	Req_info->primary_node_id);
+		}
+
+		/* unlock follow_master_command  */
+		if (pool_config->use_watchdog)
+			wd_unlock(WD_FOLLOW_MASTER_COMMAND_LOCK);
+	}
+
+	/* end of command inter-lock */	
+	if (pool_config->use_watchdog)
+		wd_end_interlock();
 
 	/* Save primary node id */
 	Req_info->primary_node_id = new_primary;

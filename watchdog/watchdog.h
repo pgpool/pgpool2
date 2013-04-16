@@ -3,7 +3,7 @@
  *
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2012	PgPool Global Development Group
@@ -39,7 +39,9 @@
 #define WD_MAX_IF_NAME_LEN (16)
 
 #define WD_INFO(wd_id) (pool_config->other_wd->wd_info[(wd_id)])
-#define WD_UDP_IF(if_id) (pool_config->other_wd->udp_if[(if_id)]) 
+#define WD_UDP_IF(if_id) (pool_config->other_wd->udp_if[(if_id)])
+
+#define WD_MYSELF (WD_List)
 
 #define WD_NG (0)
 #define WD_OK (1)
@@ -54,27 +56,43 @@
 #define WD_TIME_DIFF_SEC(a,b) (int)(((a).tv_sec - (b).tv_sec) + \
                                     ((a).tv_usec - (b).tv_usec) / 1000000.0)
 
-/* 
+/*
  * packet number of watchdog negotiation
  */
 typedef enum {
-	WD_INVALID = 0,			/* invalid packet no */
-	WD_ADD_REQ,				/* add request into the watchdog list */
-	WD_ADD_ACCEPT,			/* accept the add request */
-	WD_ADD_REJECT,			/* reject the add request */
-	WD_STAND_FOR_MASTER,	/* announce candidacy */
-	WD_VOTE_YOU,			/* agree to the candidacy */
-	WD_MASTER_EXIST,		/* disagree to the candidacy */
-	WD_DECLARE_NEW_MASTER,	/* announce assumption */
-	WD_SERVER_DOWN,			/* announce server down */
-	WD_READY,				/* answer to the announce */
+
+	/* normal packet */
+	WD_INVALID = 0,				/* invalid packet no */
+	WD_ADD_REQ,					/* add request into the watchdog list */
+	WD_ADD_ACCEPT,				/* accept the add request */
+	WD_ADD_REJECT,				/* reject the add request */
+	WD_STAND_FOR_MASTER,		/* announce candidacy */
+	WD_VOTE_YOU,				/* agree to the candidacy */
+	WD_MASTER_EXIST,			/* disagree to the candidacy */
+	WD_DECLARE_NEW_MASTER,		/* announce assumption */
+	WD_STAND_FOR_LOCK_HOLDER,	/* announce candidacy for lock holder */
+	WD_LOCK_HOLDER_EXIST,		/* reject the assumption for lock holder */
+	WD_DECLARE_LOCK_HOLDER,		/* announce to assume lock holder */
+	WD_RESIGN_LOCK_HOLDER,		/* announce to resign lock holder */
+	WD_START_INTERLOCK,			/* announce to start interlocking */
+	WD_END_INTERLOCK,			/* annnouce to end interlocking */
+	WD_SERVER_DOWN,				/* announce server down */
+	WD_READY,					/* answer to the announce */
+
+	/* node packet */
 	WD_START_RECOVERY,		/* announce start online recovery */
 	WD_END_RECOVERY,		/* announce end online recovery */
 	WD_FAILBACK_REQUEST,	/* announce failback request */
 	WD_DEGENERATE_BACKEND,	/* announce degenerate backend */
 	WD_PROMOTE_BACKEND,		/* announce promote backend */
 	WD_NODE_READY,			/* answer to the node announce */
-	WD_NODE_FAILED			/* fail answer to the node announce */
+	WD_NODE_FAILED,			/* fail answer to the node announce */
+
+	/* lock packet */
+	WD_UNLOCK_REQUEST,		/* annouce to unlocak command */
+	WD_LOCK_READY,			/* answer to the lock announce */
+	WD_LOCK_FAILED			/* fail answer to the lock announce */
+
 } WD_PACKET_NO;
 
 /*
@@ -86,22 +104,36 @@ typedef enum {
 	WD_NORMAL,
 	WD_MASTER,
 	WD_DOWN
-}WD_STATUS;
+} WD_STATUS;
+
+/*
+ * watchdog locks
+ */
+typedef enum {
+	WD_FAILOVER_START_LOCK = 0,
+	WD_FAILOVER_END_LOCK,
+	WD_FAILOVER_COMMAND_LOCK,
+	WD_FAILBACK_COMMAND_LOCK,
+	WD_FOLLOW_MASTER_COMMAND_LOCK,
+	WD_MAX_LOCK_NUM
+} WD_LOCK_ID;
 
 /*
  * watchdog list
  */
 typedef struct {
-	WD_STATUS status;	/* status */	
-	struct timeval tv;	/* startup time value */
-	char hostname[WD_MAX_HOST_NAMELEN];	/* host name */
-	int pgpool_port;	/* pgpool port */
-	int wd_port;		/* watchdog port */
-	int life;		/* life point */ 
+	WD_STATUS status;						/* status */	
+	struct timeval tv;						/* startup time value */
+	char hostname[WD_MAX_HOST_NAMELEN];		/* host name */
+	int pgpool_port;						/* pgpool port */
+	int wd_port;							/* watchdog port */
+	int life;								/* life point */
 	char delegate_ip[WD_MAX_HOST_NAMELEN];	/* delegate IP */
-	int delegate_ip_flag;	/* delegate IP flag */
-	struct timeval udp_send_time; /*send time */ 
-	struct timeval udp_last_recv_time; /* recv time */
+	int delegate_ip_flag;					/* delegate IP flag */
+	struct timeval udp_send_time; 			/*send time */
+	struct timeval udp_last_recv_time; 		/* recv time */
+	bool is_lock_holder;					/* lock holder flag */
+	bool in_interlocking;					/* failover or failback is in progress */
 } WdInfo;
 
 typedef struct {
@@ -109,9 +141,14 @@ typedef struct {
 	int node_num;						/* node number */
 } WdNodeInfo;
 
+typedef struct {
+	WD_LOCK_ID lock_id;
+} WdLockInfo;
+
 typedef union {
 	WdInfo wd_info;
 	WdNodeInfo wd_node_info;
+	WdLockInfo wd_lock_info;
 } WD_PACKET_BODY;
 
 typedef struct {
@@ -159,7 +196,7 @@ typedef struct {
  */
 typedef struct {
 	PGconn * conn;	/* PGconn */
-	int retry;		/* retry times (not used?)*/ 
+	int retry;		/* retry times (not used?)*/
 } WdPgpoolThreadArg;
 
 extern WdInfo * WD_List;

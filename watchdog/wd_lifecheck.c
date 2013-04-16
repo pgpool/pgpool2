@@ -82,7 +82,7 @@ is_wd_lifecheck_ready(void)
 			if (!WD_TIME_ISSET(p->udp_last_recv_time) ||
 			    !WD_TIME_ISSET(p->udp_send_time))
 			{
-				pool_debug("is_wd_lifecheck_ready: pgpool %d (%s:%d) has not sent the heartbeat signal yet",
+				pool_debug("is_wd_lifecheck_ready: pgpool %d (%s:%d) has not send the heartbeat signal yet",
 				           i, p->hostname, p->pgpool_port);
 				rtn = WD_NG;
 			}

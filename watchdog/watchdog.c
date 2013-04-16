@@ -80,10 +80,13 @@ wd_kill_watchdog(int sig)
 	kill (lifecheck_pid, sig);
 	kill (child_pid, sig);
 
-	for (i = 0; i < pool_config->other_wd->num_udp_if; i++)
+	if (!strcmp(pool_config->watchdog_mode, "udp"))
 	{
-		kill (reader_pid[i], sig);
-		kill (writer_pid[i], sig);
+		for (i = 0; i < pool_config->other_wd->num_udp_if; i++)
+		{
+			kill (reader_pid[i], sig);
+			kill (writer_pid[i], sig);
+		}
 	}
 }
 
