@@ -161,7 +161,6 @@ static void _outCommentStmt(String *str, CommentStmt *node);
 static void _outDiscardStmt(String *str, DiscardStmt *node);
 static void _outCreateOpFamilyStmt(String *str, CreateOpFamilyStmt *node);
 static void _outAlterOpFamilyStmt(String *str, AlterOpFamilyStmt *node);
-//static void _outRemoveOpFamilyStmt(String *str, RemoveOpFamilyStmt *node);
 static void _outCreateEnumStmt(String *str, CreateEnumStmt *node);
 static void _outDropOwnedStmt(String *str, DropOwnedStmt *node);
 static void _outReassignOwnedStmt(String *str, ReassignOwnedStmt *node);
@@ -822,7 +821,7 @@ _outCreateTableAsStmt(String *str, CreateTableAsStmt *node)
 	if (node->query)
 	{
 		string_append_char(str, " AS");
-		_outSelectStmt(str, node->query);
+		_outSelectStmt(str, (SelectStmt *)node->query);
 	}
 }
 
@@ -3670,6 +3669,18 @@ _outDropStmt(String *str, DropStmt *node)
 			objname = linitial(node->arguments);
 			_outNode(str, linitial(objname));
 			string_append_char(str, ")");
+			break;
+
+		case OBJECT_OPFAMILY:
+			string_append_char(str, "OPERATOR FAMILY ");
+			if (node->missing_ok)
+				string_append_char(str, "IF EXISTS ");
+			objname = linitial(node->objects);
+			_outIdList(str, objname);
+			string_append_char(str, " USING ");
+			objname = linitial(node->arguments);
+			_outIdList(str, objname);
+			break;
 
 		default:
 			break;
