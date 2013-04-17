@@ -62,7 +62,7 @@
  */
 int				backslash_quote = BACKSLASH_QUOTE_SAFE_ENCODING;
 bool			escape_string_warning = true;
-bool			standard_conforming_strings = true;
+bool			standard_conforming_strings = false;
 
 /*
  * Set the type of YYSTYPE.
