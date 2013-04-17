@@ -429,16 +429,6 @@ int main(int argc, char **argv)
 			/* if_up, if_down and arping command have a sticky bit */
 			pool_log("watchdog might call network commands which using sticky bit.");
 		}
-		else
-		{
-			/* check root */
-			if (geteuid() != 0)
-			{
-				pool_error("watchdog must be started under the privileged user ID to up/down virtual network interface.");
-				pool_shmem_exit(1);
-				exit(1);
-			}
-		}
 	}
 
 	/* set signal masks */
