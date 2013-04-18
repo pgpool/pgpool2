@@ -423,11 +423,11 @@ int main(int argc, char **argv)
 	/* watchdog must be started under the privileged user */
 	if (pool_config->use_watchdog )
 	{
-		/* check sticky bit of network interface control commands */
-		if (wd_chk_sticky() == 1)
+		/* check setuid bit of network interface control commands */
+		if (wd_chk_setuid() == 1)
 		{
-			/* if_up, if_down and arping command have a sticky bit */
-			pool_log("watchdog might call network commands which using sticky bit.");
+			/* if_up, if_down and arping command have a setuid bit */
+			pool_log("watchdog might call network commands which using setuid bit.");
 		}
 		else
 		{
