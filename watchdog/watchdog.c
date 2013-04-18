@@ -53,7 +53,7 @@ int wd_reaper_watchdog(pid_t pid, int status);
 static pid_t fork_a_lifecheck(int fork_wait_time);
 static void wd_exit(int exit_status);
 static int wd_check_config(void);
-static int has_sticky_bit(char * path);
+static int has_setuid_bit(char * path);
 
 static void
 wd_exit(int exit_signo)
@@ -356,50 +356,50 @@ wd_reaper_watchdog(pid_t pid, int status)
 }
 
 int
-wd_chk_sticky(void)
+wd_chk_setuid(void)
 {
 	char path[128];
 	char cmd[128];
 	
-	/* check sticky bit of ifup command */
+	/* check setuid bit of ifup command */
 	wd_get_cmd(cmd, pool_config->if_up_cmd);
 	snprintf(path, sizeof(path), "%s/%s", pool_config->ifconfig_path, cmd);
-	if (! has_sticky_bit(path))
+	if (! has_setuid_bit(path))
 	{
-		pool_log("wd_chk_sticky: ifup[%s] doesn't have sticky bit", path);
+		pool_log("wd_chk_setuid: ifup[%s] doesn't have setuid bit", path);
 		return 0;
 	}
 
-	/* check sticky bit of ifdown command */
+	/* check setuid bit of ifdown command */
 	wd_get_cmd(cmd, pool_config->if_down_cmd);
 	snprintf(path, sizeof(path), "%s/%s", pool_config->ifconfig_path, cmd);
-	if (! has_sticky_bit(path))
+	if (! has_setuid_bit(path))
 	{
-		pool_log("wd_chk_sticky: ifdown[%s] doesn't have sticky bit", path);
+		pool_log("wd_chk_setuid: ifdown[%s] doesn't have setuid bit", path);
 		return 0;
 	}
 
-	/* check sticky bit of arping command */
+	/* check setuid bit of arping command */
 	wd_get_cmd(cmd, pool_config->arping_cmd);
 	snprintf(path, sizeof(path), "%s/%s", pool_config->arping_path, cmd);
-	if (! has_sticky_bit(path))
+	if (! has_setuid_bit(path))
 	{
-		pool_log("wd_chk_sticky: arping[%s] doesn't have sticky bit", path);
+		pool_log("wd_chk_setuid: arping[%s] doesn't have setuid bit", path);
 		return 0;
 	}
 
-	pool_log("wd_chk_sticy: all commands have sticky bit");
+	pool_log("wd_chk_setuid all commands have setuid bit");
 	return 1;
 }
 
-/* if the file has sticky bit and the owner is root, it returns 1, otherwise returns 0 */
+/* if the file has setuid bit and the owner is root, it returns 1, otherwise returns 0 */
 static int
-has_sticky_bit(char * path)
+has_setuid_bit(char * path)
 {
 	struct stat buf;
 	if (stat(path,&buf) < 0)
 	{
-		pool_error("has_stickey_bit: %s: no such a command", path);
+		pool_error("has_setuid_bit: %s: no such a command", path);
 		pool_shmem_exit(1);
 		exit(1);
 	}
