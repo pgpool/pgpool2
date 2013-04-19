@@ -465,7 +465,9 @@ function set_pgpool_conf {
 
 	echo "health_check_period = 10" >> $CONF
 	echo "health_check_user = '$WHOAMI'" >> $CONF
-
+	OIDDIR=$BASEDIR/log/pgpool/oiddir
+	mkdir -p $OIDDIR
+	echo "memqcache_oiddir = '$OIDDIR'" >> $CONF
 	echo "log_per_node_statement = on" >> $CONF
 
 	if [ $MODE = "s" ];then
