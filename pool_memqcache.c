@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2012	PgPool Global Development Group
+ * Copyright (c) 2003-2013	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -114,6 +114,7 @@ static int pool_hash_insert(POOL_QUERY_HASH *key, POOL_CACHEID *cacheid, bool up
 static uint32 create_hash_key(POOL_QUERY_HASH *key);
 static volatile POOL_HASH_ELEMENT *get_new_hash_element(void);
 static void put_back_hash_element(volatile POOL_HASH_ELEMENT *element);
+static char *get_relation_without_alias(RangeVar *relation);
 
 /*
  * Connect to Memcached
@@ -884,12 +885,12 @@ int pool_extract_table_oids(Node *node, int **oidsp)
 	else if (IsA(node, UpdateStmt))
 	{
 		UpdateStmt *stmt = (UpdateStmt *)node;
-		table = nodeToString(stmt->relation);
+		table = get_relation_without_alias(stmt->relation);
 	}
 	else if (IsA(node, DeleteStmt))
 	{
 		DeleteStmt *stmt = (DeleteStmt *)node;
-		table = nodeToString(stmt->relation);
+		table = get_relation_without_alias(stmt->relation);
 	}
 
 #ifdef NOT_USED
@@ -997,6 +998,37 @@ int pool_extract_table_oids(Node *node, int **oidsp)
 		pool_debug("pool_extract_table_oids: table:%s oid:%d", table, oid);
 	}
 	return num_oids;
+}
+
+/*
+ * Get relation name without alias.  NodeToString() calls
+ * _outRangeVar(). Unfortunately _outRangeVar() returns table with
+ * alias ("t1 AS foo") as a table name if table alias is used. This
+ * function just trim down "AS..." part from the table name when table
+ * alias is used.
+ */
+static char *get_relation_without_alias(RangeVar *relation)
+{
+	char *table;
+	char *p;
+
+	if (!IsA(relation, RangeVar))
+	{
+		pool_error("get_relation_without_alias: not RangeVar(%d)", relation->type);
+		return "";
+	}
+	table = nodeToString(relation);
+	if (relation->alias)
+	{
+		p = strchr(table, ' ');
+		if (!p)
+		{
+			pool_error("get_relation_without_alias: cannot locate space;%s", table);
+			return "";
+		}
+		*p = '\0';
+	}
+	return table;		
 }
 
 #define POOL_OIDBUF_SIZE 1024
