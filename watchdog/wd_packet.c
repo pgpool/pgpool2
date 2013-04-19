@@ -55,6 +55,7 @@ int wd_startup(void);
 int wd_declare(void);
 int wd_stand_for_master(void);
 int wd_notice_server_down(void);
+int wd_authentication_failed(int sock);
 int wd_create_send_socket(char * hostname, int port);
 int wd_create_recv_socket(int port);
 int wd_accept(int sock);
@@ -72,6 +73,9 @@ int wd_send_lock_packet(WD_PACKET_NO packet_no, WD_LOCK_ID lock_id);
 
 static int wd_send_node_packet(WD_PACKET_NO packet_no, int *node_id_set, int count);
 static int wd_chk_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count);
+
+void wd_calc_hash(const char *str, int len, char *buf);
+int wd_packet_to_string(WdPacket pkt, char *str, int maxlen);
 
 static void * wd_thread_negotiation(void * arg);
 static int send_packet_4_nodes(WdPacket *packet, WD_SEND_TYPE type);
@@ -123,6 +127,23 @@ wd_notice_server_down(void)
 	wd_IP_down();
 	/* send notice server down packet */
 	rtn = wd_send_packet_no(WD_SERVER_DOWN);
+	return rtn;
+}
+
+/* send authenticaiont failed packet */
+int
+wd_authentication_failed(int sock)
+{
+	int rtn;
+	WdPacket send_packet;
+
+	memset(&send_packet, 0, sizeof(WdPacket));
+
+	send_packet.packet_no = WD_AUTH_FAILED;
+	memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
+
+	rtn = wd_send_packet(sock, &send_packet);
+
 	return rtn;
 }
 
@@ -509,6 +530,7 @@ wd_recv_packet(int sock, WdPacket * recv_pack)
 				{
 					ntoh_wd_lock_packet(recv_pack,&buf);
 				}
+
 				return WD_OK;
 			}
 		}
@@ -528,9 +550,20 @@ wd_thread_negotiation(void * arg)
 	uintptr_t rtn;
 	WdPacket recv_packet;
 	WdInfo * p;
+	char pack_str[WD_MAX_PACKET_STRING];
+	int pack_str_len;
 
 	thread_arg = (WdPacketThreadArg *)arg;
 	sock = thread_arg->sock;
+
+	gettimeofday(&(thread_arg->packet->send_time), NULL);
+
+	if (strlen(pool_config->wd_authkey))
+	{
+		/* calculate hash from packet */
+		pack_str_len = wd_packet_to_string(*(thread_arg->packet), pack_str, sizeof(pack_str));
+		wd_calc_hash(pack_str, pack_str_len, thread_arg->packet->hash);
+	}
 
 	/* packet send to target watchdog */
 	rtn = (uintptr_t)wd_send_packet(sock, thread_arg->packet);
@@ -549,6 +582,7 @@ wd_thread_negotiation(void * arg)
 		pthread_exit((void *)rtn);
 	}
 	rtn = WD_OK;
+
 	switch (thread_arg->packet->packet_no)
 	{
 		case WD_ADD_REQ:
@@ -591,6 +625,10 @@ wd_thread_negotiation(void * arg)
 			break;
 		case WD_UNLOCK_REQUEST:
 			rtn = (recv_packet.packet_no == WD_LOCK_FAILED) ? WD_NG : WD_OK;
+			break;
+		case WD_AUTH_FAILED:
+			pool_log("wd_thread_negotiation: watchdog authentication failed");
+			rtn = WD_NG;
 			break;
 		default:
 			break;
@@ -733,6 +771,11 @@ hton_wd_packet(WdPacket * to, WdPacket * from)
 	from_info = &(from->wd_body.wd_info);
 
 	to->packet_no = htonl(from->packet_no);
+	to->send_time.tv_sec = htonl(from->send_time.tv_sec);
+	to->send_time.tv_usec = htonl(from->send_time.tv_usec);
+
+	memcpy(to->hash, from->hash, sizeof(to->hash));
+
 	to_info->status = htonl(from_info->status);
 	to_info->tv.tv_sec = htonl(from_info->tv.tv_sec);
 	to_info->tv.tv_usec = htonl(from_info->tv.tv_usec);
@@ -760,6 +803,11 @@ ntoh_wd_packet(WdPacket * to, WdPacket * from)
 	from_info = &(from->wd_body.wd_info);
 
 	to->packet_no = ntohl(from->packet_no);
+	to->send_time.tv_sec = ntohl(from->send_time.tv_sec);
+	to->send_time.tv_usec = ntohl(from->send_time.tv_usec);
+
+	memcpy(to->hash, from->hash, sizeof(to->hash));
+
 	to_info->status = ntohl(from_info->status);
 	to_info->tv.tv_sec = ntohl(from_info->tv.tv_sec);
 	to_info->tv.tv_usec = ntohl(from_info->tv.tv_usec);
@@ -788,6 +836,11 @@ hton_wd_node_packet(WdPacket * to, WdPacket * from)
 	from_info = &(from->wd_body.wd_node_info);
 
 	to->packet_no = htonl(from->packet_no);
+	to->send_time.tv_sec = htonl(from->send_time.tv_sec);
+	to->send_time.tv_usec = htonl(from->send_time.tv_usec);
+
+	memcpy(to->hash, from->hash, sizeof(to->hash));
+
 	to_info->node_num = htonl(from_info->node_num);
 
 	for (i = 0 ; i < from_info->node_num ; i ++)
@@ -814,6 +867,11 @@ ntoh_wd_node_packet(WdPacket * to, WdPacket * from)
 	from_info = &(from->wd_body.wd_node_info);
 
 	to->packet_no = ntohl(from->packet_no);
+	to->send_time.tv_sec = ntohl(from->send_time.tv_sec);
+	to->send_time.tv_usec = ntohl(from->send_time.tv_usec);
+
+	memcpy(to->hash, from->hash, sizeof(to->hash));
+
 	to_info->node_num = ntohl(from_info->node_num);
 
 	for (i = 0 ; i < to_info->node_num ; i ++)
@@ -839,6 +897,11 @@ hton_wd_lock_packet(WdPacket * to, WdPacket * from)
 	from_info = &(from->wd_body.wd_lock_info);
 
 	to->packet_no = htonl(from->packet_no);
+	to->send_time.tv_sec = htonl(from->send_time.tv_sec);
+	to->send_time.tv_usec = htonl(from->send_time.tv_usec);
+
+	memcpy(to->hash, from->hash, sizeof(to->hash));
+
 	to_info->lock_id = htonl(from_info->lock_id);
 
 	return WD_OK;
@@ -859,6 +922,11 @@ ntoh_wd_lock_packet(WdPacket * to, WdPacket * from)
 	from_info = &(from->wd_body.wd_lock_info);
 
 	to->packet_no = ntohl(from->packet_no);
+	to->send_time.tv_sec = ntohl(from->send_time.tv_sec);
+	to->send_time.tv_usec = ntohl(from->send_time.tv_usec);
+
+	memcpy(to->hash, from->hash, sizeof(to->hash));
+
 	to_info->lock_id = ntohl(from_info->lock_id);
 
 	return WD_OK;
@@ -1029,4 +1097,41 @@ wd_set_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count)
 		*(WD_Node_List + offset) |= mask;
 	}
 	return rtn;
+}
+
+/* calculate hash for authentiction using packet contents */
+void
+wd_calc_hash(const char *str, int len, char *buf)
+{
+	char pass[(MAX_PASSWORD_SIZE + 1) / 2];
+	char username[(MAX_PASSWORD_SIZE + 1) / 2];
+	size_t pass_len;
+	size_t username_len;
+	size_t authkey_len;
+
+	/* use first half of authkey as username, last half as password */
+	authkey_len = strlen(pool_config->wd_authkey);
+
+	username_len = authkey_len / 2;
+	pass_len = authkey_len - username_len;
+	snprintf(username, username_len + 1, pool_config->wd_authkey);
+	snprintf(pass, pass_len + 1, pool_config->wd_authkey + username_len);
+
+	/* calculate hash using md5 encrypt */
+	pool_md5_encrypt(pass, username, strlen(username), buf + MD5_PASSWD_LEN + 1);
+	buf[(MD5_PASSWD_LEN+1)*2-1] = '\0';
+
+	pool_md5_encrypt(buf+MD5_PASSWD_LEN+1, str, len, buf);
+	buf[MD5_PASSWD_LEN] = '\0';
+}
+
+int
+wd_packet_to_string(WdPacket pkt, char *str, int maxlen)
+{
+	int len;
+
+	len = snprintf(str, maxlen, "no=%d tv_sec=%ld tv_usec=%ld",
+	               pkt.packet_no, pkt.send_time.tv_sec, pkt.send_time.tv_usec);
+
+	return len;
 }

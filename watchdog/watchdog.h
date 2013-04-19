@@ -46,7 +46,7 @@
 #define WD_NG (0)
 #define WD_OK (1)
 
-#define WD_MAX_SALT (256)
+#define WD_MAX_PACKET_STRING (256)
 
 #define WD_TIME_INIT(tv)      ((tv).tv_sec = (tv).tv_usec = 0)
 #define WD_TIME_ISSET(tv)     ((tv).tv_sec || (tv).tv_usec)
@@ -77,6 +77,7 @@ typedef enum {
 	WD_START_INTERLOCK,			/* announce to start interlocking */
 	WD_END_INTERLOCK,			/* annnouce to end interlocking */
 	WD_SERVER_DOWN,				/* announce server down */
+	WD_AUTH_FAILED,				/* fail anwser to authentication */
 	WD_READY,					/* answer to the announce */
 
 	/* node packet */
@@ -130,7 +131,7 @@ typedef struct {
 	int life;								/* life point */
 	char delegate_ip[WD_MAX_HOST_NAMELEN];	/* delegate IP */
 	int delegate_ip_flag;					/* delegate IP flag */
-	struct timeval udp_send_time; 			/*send time */
+	struct timeval udp_send_time; 			/* send time */
 	struct timeval udp_last_recv_time; 		/* recv time */
 	bool is_lock_holder;					/* lock holder flag */
 	bool in_interlocking;					/* failover or failback is in progress */
@@ -170,6 +171,8 @@ typedef struct {
 typedef struct {
 	WD_PACKET_NO packet_no;	/* packet number */
 	WD_PACKET_BODY wd_body;			/* watchdog information */
+	struct timeval send_time;
+	char hash[(MD5_PASSWD_LEN+1)*2];
 } WdPacket;
 
 /*

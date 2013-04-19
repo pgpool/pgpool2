@@ -245,7 +245,7 @@ typedef struct {
 	int wd_udp_keepalive;
 	int wd_udp_deadtime;
 	int wd_udp_port;
-	char *wd_udp_authkey;
+	char *wd_authkey;
 } POOL_CONFIG;
 
 typedef enum {

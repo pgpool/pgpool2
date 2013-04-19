@@ -50,6 +50,8 @@ static pid_t writer_pid[WD_MAX_IF_NUM];
 pid_t wd_main(int fork_wait_time);
 void wd_kill_watchdog(int sig);
 int wd_reaper_watchdog(pid_t pid, int status);
+int wd_chk_setuid(void);
+
 static pid_t fork_a_lifecheck(int fork_wait_time);
 static void wd_exit(int exit_status);
 static int wd_check_config(void);
@@ -105,9 +107,9 @@ wd_check_config(void)
 		pool_error("wd_check_config: delegate_IP is empty");
 		status = WD_NG;
 	}
-	if (strlen(pool_config->wd_udp_authkey) > MAX_PASSWORD_SIZE)
+	if (strlen(pool_config->wd_authkey) > MAX_PASSWORD_SIZE)
 	{
-		pool_error("wd_check_config: wd_udp_authkey length can't be larger than %d",
+		pool_error("wd_check_config: wd_authkey length can't be larger than %d",
 		           MAX_PASSWORD_SIZE);
 		status = WD_NG;
 	}

@@ -56,7 +56,7 @@ static RETSIGTYPE writer_exit(int sig);
 static RETSIGTYPE reader_exit(int sig);
 static int hton_wd_udp_packet(WdUdpPacket * to, WdUdpPacket * from);
 static int ntoh_wd_udp_packet(WdUdpPacket * to, WdUdpPacket * from);
-static void calc_hash(WdUdpPacket pkt, char *buf);
+static int packet_to_string_udp(WdUdpPacket pkt, char *str, int maxlen);
 
 int
 wd_create_udp_send_socket(WdUdpIf udp_if)
@@ -295,6 +295,8 @@ pid_t wd_reader(int fork_wait_time, WdUdpIf udp_if)
 	struct timeval tv;
 	char from[WD_MAX_HOST_NAMELEN];
 	char buf[(MD5_PASSWD_LEN+1)*2];
+	char pack_str[WD_MAX_PACKET_STRING];
+	int pack_str_len;
 
 	WdInfo * p;
 
@@ -341,10 +343,11 @@ pid_t wd_reader(int fork_wait_time, WdUdpIf udp_if)
 		if (wd_udp_read(sock, &pkt) == WD_OK)
 		{
 			/* auhtentication */
-			if (strlen(pool_config->wd_udp_authkey))
+			if (strlen(pool_config->wd_authkey))
 			{
 				/* calculate hash from packet */
-				calc_hash(pkt, buf);
+				pack_str_len = packet_to_string_udp(pkt, pack_str, sizeof(pack_str));
+				wd_calc_hash(pack_str, pack_str_len, buf);
 
 				if (strcmp(pkt.hash, buf))
 				{
@@ -388,6 +391,8 @@ pid_t wd_writer(int fork_wait_time, WdUdpIf udp_if)
 	pid_t pid = 0;
 	WdUdpPacket pkt;
 	WdInfo * p = WD_List;
+	char pack_str[WD_MAX_PACKET_STRING];
+	int pack_str_len;
 
 	pid = fork();
 	if (pid != 0)
@@ -434,13 +439,14 @@ pid_t wd_writer(int fork_wait_time, WdUdpIf udp_if)
 
 		pkt.status = p->status;
 
-		if (strlen(pool_config->wd_udp_authkey))
+		if (strlen(pool_config->wd_authkey))
 		{
 			/* calculate hash from packet */
-			calc_hash(pkt, pkt.hash);
+			pack_str_len = packet_to_string_udp(pkt, pack_str, sizeof(pack_str));
+			wd_calc_hash(pack_str, pack_str_len, pkt.hash);
 		}
 
-		wd_udp_write(sock, &pkt, sizeof(pkt), udp_if.addr); 
+		wd_udp_write(sock, &pkt, sizeof(pkt), udp_if.addr);
 		pool_debug("wd_writer: send heartbeat signal to %s", udp_if.addr);
 		sleep(pool_config->wd_udp_keepalive);
 	}
@@ -516,34 +522,12 @@ ntoh_wd_udp_packet(WdUdpPacket * to, WdUdpPacket * from)
 	return WD_OK;
 }
 
-/* calculate hash for authentiction using packet contents */
-static void 
-calc_hash(WdUdpPacket pkt, char *buf)
+/* convert pakcet to string and return length of the string */
+static int packet_to_string_udp(WdUdpPacket pkt, char *str, int maxlen)
 {
-	char pass[(MAX_PASSWORD_SIZE + 1) / 2];
-	char username[(MAX_PASSWORD_SIZE + 1) / 2];
-	char salt[WD_MAX_SALT];
-	size_t pass_len;
-	size_t username_len;
-	size_t salt_len;
-	size_t authkey_len;
+	int len;
+	len = snprintf(str, maxlen, "status=%d tv_sec=%ld tv_usec=%ld from=%s",
+	               pkt.status, pkt.send_time.tv_sec, pkt.send_time.tv_usec, pkt.from);
 
-	/* use first half of authkey as username, last half as password */
-	authkey_len = strlen(pool_config->wd_udp_authkey);
-
-	username_len = authkey_len / 2;
-	pass_len = authkey_len - username_len;
-	snprintf(username, username_len + 1, pool_config->wd_udp_authkey);
-	snprintf(pass, pass_len + 1, pool_config->wd_udp_authkey + username_len);
-
-	/* convert pakcet to string and use this as salt */
-	salt_len = snprintf(salt, sizeof(salt), "status=%d tv_sec=%ld tv_usec=%ld from=%s",
-	                    pkt.status, pkt.send_time.tv_sec, pkt.send_time.tv_usec, pkt.from);
-
-	/* calculate hash using md5 encrypt */
-	pool_md5_encrypt(pass, username, strlen(username), buf + MD5_PASSWD_LEN + 1);
-	buf[(MD5_PASSWD_LEN+1)*2-1] = '\0';
-
-	pool_md5_encrypt(buf+MD5_PASSWD_LEN+1, salt, salt_len, buf);
-	buf[MD5_PASSWD_LEN] = '\0';
+	return len;
 }

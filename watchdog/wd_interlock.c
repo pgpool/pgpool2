@@ -61,7 +61,7 @@ wd_init_interlock(void)
 			pool_error("wd_init_interlock: failed to allocate WD_Locks");
 			return WD_NG;
 		}
-		memset(WD_Locks, 0, sizeof(WD_Locks));
+		memset((void *)WD_Locks, 0, sizeof(WD_Locks) * WD_MAX_LOCK_NUM);
 	}
 
 	return WD_OK;

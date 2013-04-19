@@ -32,6 +32,7 @@ extern pid_t wd_main(int fork_wait_time);
 extern int wd_chk_sticky(void);
 extern int wd_is_watchdog_pid(pid_t pid);
 extern int wd_reaper_watchdog(pid_t pid, int status);
+extern int wd_chk_setuid(void);
 extern void wd_kill_watchdog(int sig);
 
 /* wd_child.c */
@@ -59,6 +60,7 @@ extern int wd_startup(void);
 extern int wd_declare(void);
 extern int wd_stand_for_master(void);
 extern int wd_notice_server_down(void);
+extern int wd_authentication_failed(int sock);
 extern int wd_create_send_socket(char * hostname, int port);
 extern int wd_create_recv_socket(int port);
 extern int wd_accept(int sock);
@@ -73,6 +75,8 @@ extern int wd_promote_backend(int node_id);
 extern int wd_set_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count);
 extern int wd_send_packet_no(WD_PACKET_NO packet_no );
 extern int wd_send_lock_packet(WD_PACKET_NO packet_no, WD_LOCK_ID lock_id);
+extern void wd_calc_hash(const char *str, int len, char *buf);
+int wd_packet_to_string(WdPacket pkt, char *str, int maxlen);
 
 /* wd_ping.c */
 extern int wd_is_upper_ok(char * server_list);

@@ -32,11 +32,12 @@
 #include <sys/time.h>
 #include "pool.h"
 #include "watchdog.h"
+#include "pool_config.h"
 #include "wd_ext.h"
 
 pid_t wd_child(int fork_wait_time);
 static void wd_child_exit(int exit_signo);
-static int send_response(int sock, WdPacket * recv_pack);
+static int wd_send_response(int sock, WdPacket * recv_pack);
 
 pid_t
 wd_child(int fork_wait_time)
@@ -104,7 +105,7 @@ wd_child(int fork_wait_time)
 		rtn = wd_recv_packet(fd, &buf);
 		if (rtn == WD_OK)
 		{
-			send_response(fd, &buf);
+			wd_send_response(fd, &buf);
 		}
 		close(fd);
 	}
@@ -127,7 +128,7 @@ wd_child_exit(int exit_signo)
 }
 
 static int
-send_response(int sock, WdPacket * recv_pack)
+wd_send_response(int sock, WdPacket * recv_pack)
 {
 	int rtn = WD_NG;
 	WdInfo * p, *q;
@@ -135,6 +136,9 @@ send_response(int sock, WdPacket * recv_pack)
 	WdLockInfo * lock;
 	WdPacket send_packet;
 	struct timeval tv;
+	char pack_str[WD_MAX_PACKET_STRING];
+	int pack_str_len;
+	char hash[(MD5_PASSWD_LEN+1)*2];
 
 	if (recv_pack == NULL)
 	{
@@ -142,6 +146,21 @@ send_response(int sock, WdPacket * recv_pack)
 	}
 	memset(&send_packet, 0, sizeof(WdPacket));
 	p = &(recv_pack->wd_body.wd_info);	
+
+	/* auhtentication */
+	if (strlen(pool_config->wd_authkey))
+	{
+		/* calculate hash from packet */
+		pack_str_len = wd_packet_to_string(*recv_pack, pack_str, sizeof(pack_str));
+		wd_calc_hash(pack_str, pack_str_len, hash);
+
+		if (strcmp(recv_pack->hash, hash))
+		{
+			pool_log("wd_send_response: watchdog authentication failed");
+			rtn = wd_authentication_failed(sock);
+			return rtn;
+		}
+	}
 
 	/* set response packet no */
 	switch (recv_pack->packet_no)

@@ -261,7 +261,7 @@ int pool_init_config(void)
 	pool_config->wd_udp_keepalive = 2;
 	pool_config->wd_udp_deadtime = 30;
 	pool_config->wd_udp_port = 9694;
-	pool_config->wd_udp_authkey = "";
+	pool_config->wd_authkey = "";
 
     pool_config->memory_cache_enabled = 0;
     pool_config->memqcache_method = "shmem";
@@ -2306,7 +2306,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			pool_config->wd_udp_deadtime = v;
 		}
-		else if (!strcmp(key, "wd_udp_authkey") &&
+		else if (!strcmp(key, "wd_authkey") &&
 				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			char *str;
@@ -2323,7 +2323,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
-			pool_config->wd_udp_authkey = str;
+			pool_config->wd_authkey = str;
 		}
 
 		else if (!strncmp(key, "udp_device", 10) &&
