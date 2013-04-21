@@ -44,6 +44,7 @@
 #include "pool_config.h"
 #include "watchdog.h"
 #include "wd_ext.h"
+#include "pool_memqcache.h"
 
 typedef enum {
 	WD_SEND_TO_MASTER = 0,
@@ -938,6 +939,16 @@ wd_escalation(void)
 	int rtn;
 
 	pool_log("wd_escalation: escalated to master pgpool");
+
+	/* clear shared memory cache */
+	if (pool_config->memory_cache_enabled &&
+	    pool_is_shmem_cache())
+	{
+		pool_log("wd_escalation: clear all the query cache on shared memory");
+		pool_clear_memory_cache();
+	}
+
+	system("ls -al");
 
 	/* interface up as delegate IP */
 	wd_IP_up();

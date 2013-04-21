@@ -237,6 +237,7 @@ extern void pool_discard_oid_maps_by_db(int dboid);
 extern bool pool_is_shmem_cache(void);
 extern size_t pool_shared_memory_cache_size(void);
 extern int pool_init_memory_cache(size_t size);
+extern void pool_clear_memory_cache(void);
 extern size_t pool_shared_memory_fsmm_size(void);
 extern int pool_init_fsmm(size_t size);
 extern void pool_allocate_fsmm_clock_hand(void);
