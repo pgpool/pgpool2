@@ -37,8 +37,11 @@ host_triplet = @host@
 subdir = watchdog
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/c-compiler.m4 \
-	$(top_srcdir)/c-library.m4 $(top_srcdir)/general.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
+	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
+	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
+	$(top_srcdir)/c-compiler.m4 $(top_srcdir)/c-library.m4 \
+	$(top_srcdir)/general.m4 \
 	$(top_srcdir)/ac_func_accept_argtypes.m4 \
 	$(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -53,7 +56,8 @@ lib_watchdog_a_AR = $(AR) $(ARFLAGS)
 lib_watchdog_a_LIBADD =
 am_lib_watchdog_a_OBJECTS = watchdog.$(OBJEXT) wd_child.$(OBJEXT) \
 	wd_if.$(OBJEXT) wd_init.$(OBJEXT) wd_lifecheck.$(OBJEXT) \
-	wd_list.$(OBJEXT) wd_packet.$(OBJEXT) wd_ping.$(OBJEXT)
+	wd_list.$(OBJEXT) wd_packet.$(OBJEXT) wd_ping.$(OBJEXT) \
+	wd_udp.$(OBJEXT) wd_interlock.$(OBJEXT)
 lib_watchdog_a_OBJECTS = $(am_lib_watchdog_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -207,7 +211,9 @@ lib_watchdog_a_SOURCES = \
 	wd_lifecheck.c \
 	wd_list.c \
 	wd_packet.c \
-	wd_ping.c
+	wd_ping.c \
+	wd_udp.c \
+	wd_interlock.c
 
 AM_CPPFLAGS = -D_GNU_SOURCE -I .. -I @PGSQL_INCLUDE_DIR@
 all: all-am
@@ -262,10 +268,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_child.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_if.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_init.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_interlock.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_lifecheck.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_list.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_packet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_ping.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_udp.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

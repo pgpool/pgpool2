@@ -139,7 +139,7 @@ int pool_init_config(void)
 		pool_error("failed to allocate pool_config->cwother_wd");
 		return -1;
 	}
-	memset(pool_config->other_wd,0,sizeof(WdDesc));
+	memset(pool_config->other_wd, 0, sizeof(WdDesc));
 
 	/* set hardcoded default values */
 	pool_config->listen_addresses = "localhost";
@@ -233,8 +233,10 @@ int pool_init_config(void)
 	 * add for watchdog
 	 */
 	pool_config->use_watchdog = 0;
-	pool_config->trusted_servers = NULL;
-	pool_config->delegate_IP = NULL;
+	pool_config->clear_memqcache_on_escalation = 1;	
+    pool_config->wd_escalation_command = "";
+	pool_config->trusted_servers = "";
+	pool_config->delegate_IP = "";
 	res = gethostname(localhostname,sizeof(localhostname));
 	if(res !=0 )
 	{
@@ -243,6 +245,7 @@ int pool_init_config(void)
 	pool_config->wd_hostname = localhostname;
 	pool_config->wd_port = 9000;
 	pool_config->other_wd->num_wd = 0;
+	pool_config->other_wd->num_udp_if = 0;
 	pool_config->wd_interval = 10;
 	pool_config->ping_path = "/bin";
 	pool_config->ifconfig_path = "/sbin";
@@ -256,6 +259,11 @@ int pool_init_config(void)
 	pool_config->wd_lifecheck_user = "nobody";
 	pool_config->wd_lifecheck_password = "";
 
+	pool_config->watchdog_mode = "udp";
+	pool_config->wd_udp_keepalive = 2;
+	pool_config->wd_udp_deadtime = 30;
+	pool_config->wd_udp_port = 9694;
+	pool_config->wd_authkey = "";
 
     pool_config->memory_cache_enabled = 0;
     pool_config->memqcache_method = "shmem";
@@ -1936,7 +1944,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			{
 				WD_INFO(slot).wd_port = atoi(yytext);
 				WD_INFO(slot).status = WD_INIT;
-				pool_config->other_wd->num_wd = slot+1;
+				pool_config->other_wd->num_wd = slot + 1;
 			}
 		}
 		else if (!strcmp(key, "use_watchdog") && CHECK_CONTEXT(INIT_CONFIG, context))
@@ -1950,6 +1958,39 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->use_watchdog = v;
+		}
+
+		else if (!strcmp(key, "clear_memqcache_on_escalation") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			int v = eval_logical(yytext);
+
+			if (v < 0)
+			{
+				pool_error("pool_config: invalid value %s for %s", yytext, key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->clear_memqcache_on_escalation = v;
+		}
+
+		else if (!strcmp(key, "wd_escalation_command") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->wd_escalation_command = str;
 		}
 
 		else if (!strcmp(key, "trusted_servers") && CHECK_CONTEXT(INIT_CONFIG, context))
@@ -2237,6 +2278,140 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->wd_lifecheck_password = str;
+		}
+
+		else if (!strcmp(key, "watchdog_mode") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+
+			if (strcmp(str, MODE_UDP) && strcmp(str, MODE_QUERY))
+			{
+				pool_error("pool_config: %s must be either \"udp\" or \"query\"", key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->watchdog_mode = str;
+		}
+		else if (!strcmp(key, "wd_udp_port") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			int v = atoi(yytext);
+
+			if (token != POOL_INTEGER || v <= 0)
+			{
+				pool_error("pool_config: %s must be higher than 1 numeric value", key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->wd_udp_port = v;
+		}
+		else if (!strcmp(key, "wd_udp_keepalive") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			int v = atoi(yytext);
+
+			if (token != POOL_INTEGER || v <= 0)
+			{
+				pool_error("pool_config: %s must be higher than 1 numeric value", key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->wd_udp_keepalive = v;
+		}
+		else if (!strcmp(key, "wd_udp_deadtime") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			int v = atoi(yytext);
+
+			if (token != POOL_INTEGER || v <= 0)
+			{
+				pool_error("pool_config: %s must be higher than 1 numeric value", key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->wd_udp_deadtime = v;
+		}
+		else if (!strcmp(key, "wd_authkey") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->wd_authkey = str;
+		}
+
+		else if (!strncmp(key, "udp_device", 10) &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context) &&
+				 mypid == getpid()) /* this parameter must be modified by parent pid */
+		{
+			int slot;
+			char *str;
+
+			slot = atoi(key + 10) ;
+			if (slot < 0 || slot >= WD_MAX_IF_NUM)
+			{
+				pool_error("pool_config: pgpool number %s for udp_device out of range", key);
+				fclose(fd);
+				return(-1);
+			}
+
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			if (context == INIT_CONFIG || (context == RELOAD_CONFIG ))
+			{
+				strlcpy(WD_UDP_IF(slot).if_name, str, WD_MAX_IF_NAME_LEN);
+				pool_config->other_wd->num_udp_if = slot + 1;
+			}
+
+		}
+		else if (!strncmp(key, "udp_destination", 15) &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context) &&
+				 mypid == getpid()) /* this parameter must be modified by parent pid */
+		{
+			int slot;
+			char *str;
+
+			slot = atoi(key + 15) ;
+			if (slot < 0 || slot >= WD_MAX_IF_NUM)
+			{
+				pool_error("pool_config: pgpool number %s for udp_destination out of range", key);
+				fclose(fd);
+				return(-1);
+			}
+
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			if (context == INIT_CONFIG || (context == RELOAD_CONFIG ))
+				strlcpy(WD_UDP_IF(slot).addr, str, WD_MAX_IF_NAME_LEN);
 		}
 
         else if (!strcmp(key, "ssl") && CHECK_CONTEXT(INIT_CONFIG, context))

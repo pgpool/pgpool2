@@ -93,6 +93,7 @@ static void pool_check_and_discard_cache_buffer(int num_oids, int *oids);
 static void pool_set_memqcache_blocks(int num_blocks);
 static int pool_get_memqcache_blocks(void);
 static void *pool_memory_cache_address(void);
+static void pool_reset_fsmm(size_t size);
 static void *pool_fsmm_address(void);
 static void pool_update_fsmm(POOL_CACHE_BLOCKID blockid, size_t free_space);
 static POOL_CACHE_BLOCKID pool_get_block(size_t free_space);
@@ -110,6 +111,7 @@ static POOL_CACHE_BLOCKID pool_reuse_block(void);
 static void dump_shmem_cache(POOL_CACHE_BLOCKID blockid);
 #endif
 
+static int pool_hash_reset(int nelements);
 static int pool_hash_insert(POOL_QUERY_HASH *key, POOL_CACHEID *cacheid, bool update);
 static uint32 create_hash_key(POOL_QUERY_HASH *key);
 static volatile POOL_HASH_ELEMENT *get_new_hash_element(void);
@@ -1675,6 +1677,36 @@ int pool_init_memory_cache(size_t size)
 }
 
 /*
+ * Clear all the shared memory cache and reset FSMM and hash table.
+ */
+void
+pool_clear_memory_cache(void)
+{
+	size_t size;
+#ifdef HAVE_SIGPROCMASK
+	sigset_t oldmask;
+#else
+	int	oldmask;
+#endif
+
+	POOL_SETMASK2(&BlockSig, &oldmask);
+	pool_shmem_lock();
+
+	size = pool_shared_memory_cache_size();
+	memset(shmem, 0, size);
+
+	size = pool_shared_memory_fsmm_size();
+	pool_reset_fsmm(size);
+
+	pool_discard_oid_maps();
+
+	pool_hash_reset(pool_config->memqcache_max_num_cache);
+
+	pool_shmem_unlock();
+	POOL_SETMASK(&oldmask);
+}
+
+/*
  * Return shared memory cache address
  */
 static void *pool_memory_cache_address(void)
@@ -1764,6 +1796,20 @@ static int *pool_fsmm_clock_hand;
 void pool_allocate_fsmm_clock_hand(void)
 {
 	pool_fsmm_clock_hand = pool_shared_memory_create(sizeof(pool_fsmm_clock_hand));
+	*pool_fsmm_clock_hand = 0;
+}
+
+/*
+ * Reset FSMM.
+ */
+static void
+pool_reset_fsmm(size_t size)
+{
+	int encode_value;
+
+	encode_value = POOL_MAX_FREE_SPACE/POOL_FSMM_RATIO;
+	memset(fsmm, encode_value, size);
+
 	*pool_fsmm_clock_hand = 0;
 }
 
@@ -3331,6 +3377,58 @@ int pool_hash_init(int nelements)
 #ifdef POOL_HASH_DEBUG
 	pool_log("pool_hash_init: size:%zd nelements2:%d", size, nelements2);
 #endif
+
+	for (i=0;i<nelements2-1;i++)
+	{
+		hash_elements[i].next = (POOL_HASH_ELEMENT *)&hash_elements[i+1];
+	}
+	hash_elements[nelements2-1].next = NULL;
+	hash_free = hash_elements;
+
+	return 0;
+}
+
+/*
+ * Reset hash table on shared memory "nelements" is max number of
+ * hash keys. The actual number of hash key is rounded up to power of
+ * 2.
+ */
+static int
+pool_hash_reset(int nelements)
+{
+	size_t size;
+	int nelements2;		/* number of rounded up hash keys */
+	int shift;
+	uint32 mask;
+	POOL_HASH_HEADER hh;
+	int i;
+
+	if (nelements <= 0)
+	{
+		pool_error("pool_hash_clear: invalid nelements:%d", nelements);
+		return -1;
+	}
+
+	/* Round up to power of 2 */
+	shift = 32;
+	nelements2 = 1;
+	do
+	{
+		nelements2 <<= 1;
+		shift--;
+	} while (nelements2 < nelements);
+
+	mask = ~0;
+	mask >>= shift;
+
+	size = (char *)&hh.elements - (char *)&hh + sizeof(POOL_HEADER_ELEMENT)*nelements2;
+	memset((void *)hash_header, 0, size);
+
+	hash_header->nhash = nelements2;
+    	hash_header->mask = mask;
+
+	size = sizeof(POOL_HASH_ELEMENT)*nelements2;
+	memset((void *)hash_elements, 0, size);
 
 	for (i=0;i<nelements2-1;i++)
 	{

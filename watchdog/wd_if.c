@@ -35,6 +35,7 @@
 #include "pool.h"
 #include "pool_config.h"
 #include "watchdog.h"
+#include "wd_ext.h"
 
 int wd_IP_up(void);
 int wd_IP_down(void);

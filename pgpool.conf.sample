@@ -427,7 +427,21 @@ client_idle_limit_in_recovery = 0
 #------------------------------------------------------------------------------
 use_watchdog = off 
                                     # Activates watchdog
+
+watchdog_mode='udp'
+                                    # Mode of watchdog lifecheck ('udp' or 'query') 
                                     # (change requires restart)
+
+clear_memqcache_on_escalation = on 
+                                    # Clear all the query cache on shared memory
+									# when standby pgpool escalate to active pgpool
+									# (= virtual IP holder).
+									# This should be off if client connects to pgpool
+									# not using virtual IP.
+									# (change requires restart)
+wd_escalation_command = ''
+                                   # Executes this command at escalation on new active pgpool.
+
 trusted_servers = ''
                                     # trusted server list which are used
                                     # to confirm network connection
@@ -445,6 +459,9 @@ wd_port = 9000
 wd_interval = 10
                                     # lifecheck interval (sec) > 0
                                     # (change requires restart)
+wd_authkey = ''
+                                    # Authentication key for watchdog communication 
+
 ping_path = '/bin'
                                     # ping command path
                                     # (change requires restart)
@@ -464,6 +481,22 @@ arping_path = '/usr/sbin'           # arping command path
 arping_cmd = 'arping -U $_IP_$ -w 1'
                                     # arping command
                                     # (change requires restart)
+wd_udp_port = 9694
+                                    # Port number for UDP heartbeat lifecheck 
+wd_udp_keepalive = 2;
+                                    # Interval time of sending UDP heartbeat signal (sec) 
+wd_udp_deadtime = 30
+                                    # Deadtime interval for UDP heartbeat signal (sec) 
+udp_device0 = 'eth0'
+                                    # Name of NIC device 0 using for
+                                    # sending/receiving heartbeat signal
+udp_destination0 = 'host0_ip1'
+                                    # Destination host name or IP address
+                                    # for sending heartbeat signal using NIC device 0.
+
+#udp_device1 = 'eth1'
+#udp_destination1 = 'host0_ip2'
+
 wd_life_point = 3
                                     # lifecheck retry times
                                     # (change requires restart)
@@ -476,6 +509,8 @@ wd_lifecheck_user = 'nobody'
                                     # watchdog user monitoring pgpools in lifecheck
 wd_lifecheck_password = ''
                                     # Password for watchdog user in lifecheck
+
+
 # Other pgpool Connection Settings
 
 #other_pgpool_hostname0 = 'host0'

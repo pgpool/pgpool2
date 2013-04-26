@@ -32,11 +32,12 @@
 #include <sys/time.h>
 #include "pool.h"
 #include "watchdog.h"
+#include "pool_config.h"
 #include "wd_ext.h"
 
 pid_t wd_child(int fork_wait_time);
 static void wd_child_exit(int exit_signo);
-static int send_response(int sock, WdPacket * recv_pack);
+static int wd_send_response(int sock, WdPacket * recv_pack);
 
 pid_t
 wd_child(int fork_wait_time)
@@ -49,6 +50,9 @@ wd_child(int fork_wait_time)
 	pid = fork();
 	if (pid != 0)
 	{
+		if (pid == -1)
+			pool_error("wd_child: fork() failed.");
+
 		return pid;
 	}
 
@@ -58,6 +62,8 @@ wd_child(int fork_wait_time)
 	}
 
 	myargv = save_ps_display_args(myargc, myargv);
+
+	POOL_SETMASK(&UnBlockSig);
 
 	signal(SIGTERM, wd_child_exit);
 	signal(SIGINT, wd_child_exit);
@@ -76,13 +82,17 @@ wd_child(int fork_wait_time)
 		/* memory allocate is not ready */
 		wd_child_exit(15);
 	}
-	sock = wd_create_recv_socket(WD_List->wd_port);
+
+	sock = wd_create_recv_socket(WD_MYSELF->wd_port);
+
 	if (sock < 0)
 	{
 		/* socket create failed */
 		wd_child_exit(15);
 	}
-	set_ps_display("watchdog",false);
+
+	set_ps_display("watchdog", false);
+
 	/* child loop */
 	for(;;)
 	{
@@ -95,7 +105,7 @@ wd_child(int fork_wait_time)
 		rtn = wd_recv_packet(fd, &buf);
 		if (rtn == WD_OK)
 		{
-			send_response(fd,&buf);
+			wd_send_response(fd, &buf);
 		}
 		close(fd);
 	}
@@ -118,13 +128,17 @@ wd_child_exit(int exit_signo)
 }
 
 static int
-send_response(int sock, WdPacket * recv_pack)
+wd_send_response(int sock, WdPacket * recv_pack)
 {
 	int rtn = WD_NG;
 	WdInfo * p, *q;
 	WdNodeInfo * node;
+	WdLockInfo * lock;
 	WdPacket send_packet;
 	struct timeval tv;
+	char pack_str[WD_MAX_PACKET_STRING];
+	int pack_str_len;
+	char hash[(MD5_PASSWD_LEN+1)*2];
 
 	if (recv_pack == NULL)
 	{
@@ -132,6 +146,21 @@ send_response(int sock, WdPacket * recv_pack)
 	}
 	memset(&send_packet, 0, sizeof(WdPacket));
 	p = &(recv_pack->wd_body.wd_info);	
+
+	/* auhtentication */
+	if (strlen(pool_config->wd_authkey))
+	{
+		/* calculate hash from packet */
+		pack_str_len = wd_packet_to_string(*recv_pack, pack_str, sizeof(pack_str));
+		wd_calc_hash(pack_str, pack_str_len, hash);
+
+		if (strcmp(recv_pack->hash, hash))
+		{
+			pool_log("wd_send_response: watchdog authentication failed");
+			rtn = wd_authentication_failed(sock);
+			return rtn;
+		}
+	}
 
 	/* set response packet no */
 	switch (recv_pack->packet_no)
@@ -147,7 +176,7 @@ send_response(int sock, WdPacket * recv_pack)
 			{
 				send_packet.packet_no = WD_ADD_REJECT;
 			}
-			memcpy(&(send_packet.wd_body.wd_info), WD_List, sizeof(WdInfo));
+			memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
 			break;
 
 		/* announce candidacy to be the new master */
@@ -163,7 +192,7 @@ send_response(int sock, WdPacket * recv_pack)
 			}
 			else
 			{
-				if (WD_List->tv.tv_sec <= p->tv.tv_sec )
+				if (WD_MYSELF->tv.tv_sec <= p->tv.tv_sec )
 				{
 					memcpy(&tv,&(p->tv),sizeof(struct timeval));
 					tv.tv_sec += 1;
@@ -171,7 +200,7 @@ send_response(int sock, WdPacket * recv_pack)
 				}
 				/* vote for the candidate */
 				send_packet.packet_no = WD_VOTE_YOU;
-				memcpy(&(send_packet.wd_body.wd_info), WD_List, sizeof(WdInfo));
+				memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
 			}
 			break;
 
@@ -179,7 +208,7 @@ send_response(int sock, WdPacket * recv_pack)
 		case WD_DECLARE_NEW_MASTER:
 			p = &(recv_pack->wd_body.wd_info);	
 			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
-			if (WD_List->status == WD_MASTER)
+			if (WD_MYSELF->status == WD_MASTER)
 			{
 				/* resign master server */
 				pool_log("wd_declare_new_master: ifconfig down to resign master server");
@@ -187,7 +216,52 @@ send_response(int sock, WdPacket * recv_pack)
 				wd_set_myself(NULL, WD_NORMAL);
 			}
 			send_packet.packet_no = WD_READY;
-			memcpy(&(send_packet.wd_body.wd_info), WD_List, sizeof(WdInfo));
+			memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
+			break;
+
+		/* annouce to assume lock holder */
+		case WD_STAND_FOR_LOCK_HOLDER:
+			p = &(recv_pack->wd_body.wd_info);	
+			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
+			/* only master handles lock holder privilege */
+			if (WD_MYSELF->status == WD_MASTER)
+			{
+				/* if theare are no lock holder yet */
+				if (wd_get_lock_holder() != NULL)
+				{
+					send_packet.packet_no = WD_LOCK_HOLDER_EXIST;
+				}
+			}
+			memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
+			break;
+
+		case WD_DECLARE_LOCK_HOLDER:
+			p = &(recv_pack->wd_body.wd_info);	
+			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
+			wd_set_lock_holder(p, true);
+			send_packet.packet_no = WD_READY;
+			memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
+			break;
+
+		/* annouce to resigne lock holder */
+		case WD_RESIGN_LOCK_HOLDER:
+			p = &(recv_pack->wd_body.wd_info);	
+			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
+			wd_set_lock_holder(p, false);
+			send_packet.packet_no = WD_READY;
+			memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
+			break;
+
+		case WD_START_INTERLOCK:
+			p = &(recv_pack->wd_body.wd_info);	
+			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
+			wd_set_interlocking(p, true);
+			break;
+
+		case WD_END_INTERLOCK:
+			p = &(recv_pack->wd_body.wd_info);	
+			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
+			wd_set_interlocking(p, false);
 			break;
 
 		/* announce that server is down */
@@ -195,7 +269,7 @@ send_response(int sock, WdPacket * recv_pack)
 			p = &(recv_pack->wd_body.wd_info);	
 			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), WD_DOWN);
 			send_packet.packet_no = WD_READY;
-			memcpy(&(send_packet.wd_body.wd_info), WD_List, sizeof(WdInfo));
+			memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
 			if (wd_am_I_oldest() == WD_OK)
 			{
 				wd_escalation();
@@ -241,9 +315,16 @@ send_response(int sock, WdPacket * recv_pack)
 			promote_backend(node->node_id_set[0]);
 			send_packet.packet_no = WD_NODE_READY;
 			break;
+
+		case WD_UNLOCK_REQUEST:
+			lock = &(recv_pack->wd_body.wd_lock_info);	
+			wd_set_lock(lock->lock_id, false);
+			send_packet.packet_no = WD_LOCK_READY;
+			break;
+
 		default:
 			send_packet.packet_no = WD_INVALID;
-			memcpy(&(send_packet.wd_body.wd_info), WD_List, sizeof(WdInfo));
+			memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
 			break;
 	}
 

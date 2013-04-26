@@ -3,7 +3,7 @@
  *
  * Handles watchdog connection, and protocol communication with pgpool-II
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2012	PgPool Global Development Group
@@ -31,14 +31,19 @@
 #include "watchdog.h"
 #include "wd_ext.h"
 
-int wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, char * delegate_ip, struct timeval * tv, int status);
 int wd_add_wd_list(WdDesc * other_wd);
 int wd_set_wd_info(WdInfo * info);
 WdInfo * wd_is_exist_master(void);
+WdInfo * wd_get_lock_holder(void);
+WdInfo * wd_get_interlocking(void);
+void wd_set_lock_holder(WdInfo *info, bool value);
+void wd_set_interlocking(WdInfo *info, bool value);
+void wd_clear_interlocking_info(void);
 int wd_am_I_oldest(void);
 int wd_set_myself(struct timeval * tv, int status);
 WdInfo * wd_is_alive_master(void);
 
+/* add or modify watchdog information list */
 int
 wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, char * delegate_ip, struct timeval * tv, int status)
 {
@@ -60,38 +65,51 @@ wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, char * delegate_ip
 	for ( i = 0 ; i < MAX_WATCHDOG_NUM ; i ++)
 	{
 		p = (WD_List+i);	
+
 		if( p->status != WD_END)
 		{
+			/* found; modify the pgpool. */
 			if ((!strncmp(p->hostname, hostname, sizeof(p->hostname))) &&
 				(p->pgpool_port == pgpool_port)	&&
 				(p->wd_port == wd_port))
 			{
+				p->status = status;
+
 				if (tv != NULL)
 				{
-					memcpy(&(p->tv),tv,sizeof(struct timeval));
+					memcpy(&(p->tv), tv, sizeof(struct timeval));
 				}
-				p->status = status;
+
 				return i;
 			}
 		}
+
+		/* not found; add as a new pgpool */
 		else
 		{
-			strlcpy(p->hostname, hostname, sizeof(p->hostname));
+			p->status = status;
 			p->pgpool_port = pgpool_port;
 			p->wd_port = wd_port;
+			p->in_interlocking = false;
+			p->is_lock_holder = false;
+
+			strlcpy(p->hostname, hostname, sizeof(p->hostname));
 			strlcpy(p->delegate_ip, delegate_ip, sizeof(p->delegate_ip));
+
 			if (tv != NULL)
 			{
-				memcpy(&(p->tv),tv,sizeof(struct timeval));
+				memcpy(&(p->tv), tv, sizeof(struct timeval));
 			}
-			p->status = status;
+
 			return i;
 		}
 	}
+
 	pool_error("wd_set_wd_list: Can not add new watchdog information cause the WD_List is full.");
 	return -1;
 }
 
+/* add watchdog information to list using config description */
 int
 wd_add_wd_list(WdDesc * other_wd)
 {
@@ -103,23 +121,28 @@ wd_add_wd_list(WdDesc * other_wd)
 		pool_error("wd_add_wd_list: memory allocate error");
 		return -1;
 	}
+
 	for ( i = 0 ; i < other_wd->num_wd ; i ++)
 	{
 		p = &(other_wd->wd_info[i]);
 		strlcpy(p->delegate_ip, pool_config->delegate_IP, sizeof(p->delegate_ip));
 		wd_set_wd_info(p);
 	}
+
 	return i;
 }
 
+/* set watchdog informaion to list */
 int
 wd_set_wd_info(WdInfo * info)
 {
 	int rtn;
-	rtn = wd_set_wd_list(info->hostname, info->pgpool_port, info->wd_port, info->delegate_ip, &(info->tv), info->status);
+	rtn = wd_set_wd_list(info->hostname, info->pgpool_port, info->wd_port,
+	                     info->delegate_ip, &(info->tv), info->status);
 	return rtn;
 }
 
+/* return master if exist, NULL if not found */
 WdInfo *
 wd_is_exist_master(void)
 {
@@ -140,6 +163,104 @@ wd_is_exist_master(void)
 	return NULL;	
 }
 
+/* set or unset in_interloking flag */
+void
+wd_set_interlocking(WdInfo *info, bool value)
+{
+	WdInfo * p = WD_List;
+
+	while (p->status != WD_END)
+	{
+		if ((!strncmp(p->hostname, info->hostname, sizeof(p->hostname))) &&
+			(p->pgpool_port == info->pgpool_port) &&
+			(p->wd_port == info->wd_port))
+		{
+			p->in_interlocking = value;
+			
+			return;
+		}
+		p++;
+	}
+}
+
+/* set or unset lock holder flag */
+void
+wd_set_lock_holder(WdInfo *info, bool value)
+{
+	WdInfo * p = WD_List;
+
+	while (p->status != WD_END)
+	{
+		if ((!strncmp(p->hostname, info->hostname, sizeof(p->hostname))) &&
+			(p->pgpool_port == info->pgpool_port) &&
+			(p->wd_port == info->wd_port))
+		{
+			p->is_lock_holder = value;
+
+			return;
+		}
+		p++;
+	}
+}
+
+/* return the lock holder if exist, NULL if not found */
+WdInfo *
+wd_get_lock_holder(void)
+{
+	WdInfo * p = WD_List;
+
+	while (p->status != WD_END)
+	{
+		/* find failover lock holder */
+		if ((p->status == WD_NORMAL || p->status == WD_MASTER) &&
+			p->is_lock_holder)
+		{
+			/* found */
+			return p;
+		}
+		p++;
+	}
+
+	/* not found */
+	return NULL;	
+}
+
+/* return the pgpool in interlocking found in first, NULL if not found */
+WdInfo *
+wd_get_interlocking(void)
+{
+	WdInfo * p = WD_List;
+
+	while (p->status != WD_END)
+	{
+		/* find pgpool in interlocking */
+		if ((p->status == WD_NORMAL || p->status == WD_MASTER) &&
+		    p->in_interlocking)
+		{
+			/* found */
+			return p;
+		}
+		p++;
+	}
+
+	/* not found */
+	return NULL;	
+}
+
+/* clear flags for interlocking */
+void
+wd_clear_interlocking_info(void)
+{
+	WdInfo * p = WD_List;
+
+	while (p->status != WD_END)
+	{
+		wd_set_lock_holder(p, false);
+		wd_set_interlocking(p, false);
+		p++;
+	}
+}
+
 int
 wd_am_I_oldest(void)
 {
@@ -151,9 +272,7 @@ wd_am_I_oldest(void)
 		if ((p->status == WD_NORMAL) ||
 			(p->status == WD_MASTER))
 		{
-			if ((p->tv.tv_sec < WD_List->tv.tv_sec) ||
-				((p->tv.tv_sec == WD_List->tv.tv_sec) &&
-				(p->tv.tv_usec < WD_List->tv.tv_usec)))
+			if (WD_TIME_BEFORE(p->tv, WD_MYSELF->tv))
 			{
 				return WD_NG;
 			}
@@ -161,21 +280,23 @@ wd_am_I_oldest(void)
 		p++;
 	}
 	return WD_OK;
-	
 }
 
 int
 wd_set_myself(struct timeval * tv, int status)
 {
-	if (WD_List == NULL)
+	if (WD_MYSELF == NULL)
 	{
 		return WD_NG;
 	}
+
 	if (tv != NULL)
 	{
-		memcpy(&(WD_List->tv),tv,sizeof(struct timeval));
+		memcpy(&(WD_MYSELF->tv),tv,sizeof(struct timeval));
 	}
-	WD_List->status = status;
+
+	WD_MYSELF->status = status;
+
 	return WD_OK;
 }
 
@@ -187,11 +308,13 @@ wd_is_alive_master(void)
 	master = wd_is_exist_master();
 	if (master != NULL)
 	{
-		if (wd_ping_pgpool(master) != WD_OK)
+		if (!strcmp(pool_config->watchdog_mode, "udp") ||
+		    (!strcmp(pool_config->watchdog_mode, "query") &&
+			 wd_ping_pgpool(master) == WD_OK))
 		{
-			master = NULL;
+			return master;
 		}
 	}
-	return master;
+	return NULL;
 }
 
