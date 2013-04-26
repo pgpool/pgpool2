@@ -4,7 +4,133 @@
 3.2 Series (2012/08/03 - )
 ===============================================================================
 
-                    3.2.3 (namameboshi) 2013/2/18
+                        3.2.4 (namameboshi) 2013/4/26
+
+* Version 3.2.4
+
+      This is a bugfix release against pgpool-II 3.2.3.
+
+      __________________________________________________________________
+
+* Bug fixes
+
+    - Fix connect_inet_domain_socket_by_port() to set more appropriate value
+      for timeout parameter of select(2). (Tatsuo Ishii) 
+      
+      Some platforms such as Solaris do not allow to specify too large
+      microseconds timeout value (>=1000000). So divide the timeout value to
+      seconds and microseconds.
+
+    - Fix connect_inet_domain_socket_by_port() to not return as normal when
+      interrupted by alarm. (Tatsuo Ishii)
+      
+      This confuses health checking because connect_inet_domain_socket_by_port()
+      returns unsable fd. This makes detecting errors in health checking longer.
+      
+      See the following for more details:
+
+      [pgpool-general: 1458]
+      health check timeout in pgpool-II-3.2.3
+      http://www.pgpool.net/pipermail/pgpool-general/2013-March/001482.html
+
+    - Fix long standing bug with timestamp rewriting code for processing
+      extended protocol. (Tatsuo Ishii)
+      
+      Parse() allocate memory using palloc() while rewriting the parse
+      message.  Problem is, the rewritten message was kept in the data which
+      is managed by pool_create_sent_message() etc. The function assumes
+      that all the data is in session context memory. However, palloc()
+      allocates memory in query context of course, and gets freeed later on
+      when the query context disappears. And the function tries to free the
+      memory as well, which causes various problems, including segfault and
+      double free. To fix this, memory to store rewritten message is
+      allocated using session context. The bug was there since pgpool-II 3.0
+      was born.
+      
+      Problem analysis and patch contributed by Naoya Anzai.
+
+      [pgpoolgenera-jp: 1146]. (in Japanese)
+      http://www.pgpool.net/pipermail/pgpool-general-jp/2013-March/001145.html
+
+    - Fix bug with md5 auth long user name handling. (Tatsuo Ishii)
+      
+      If user name is longer than 32 bytes, md5 authentication doesn't work.
+      Problem reported in [pgpool-general: 1526] by Thomas Martin.
+      
+      [pgpool-general: 1526]
+      [pgPool-II 3.2.3] MD5 authentication and username longer than 32 characters.
+      http://www.pgpool.net/pipermail/pgpool-general/2013-March/001551.html
+
+    - Fix to calculate replication delay only if standby server is behind from
+      the primay server. (Yugo Nagata)
+      
+      When the primary server is behind from standby server, negative value of
+      delay is calculated and the value is assigned to unsigned variable. It
+      causes a log message informing negative replication delay. And what is
+      worse, it also causes SELECT queries to be sent to the primary in load
+      balance even though there are no replication delay in fact.
+      
+      The problem is reported and analyzed by Saitoh Hidenori in
+      [pgpool-genera-jp: 1145]. 
+  
+      [pgpool-general-jp: 1145] (in Japanese)
+      http://www.pgpool.net/pipermail/pgpool-general-jp/2013-March/001144.html
+
+    - pgpool-recovery adopts PostgreSQL 9.3. (Tatsuo Ishii)
+    
+      Patch contributed by Asif Rehman. Slight editing by Tatsuo Ishii.
+
+      [pgpool-hackers: 180] 
+      compile error in ppool-recovery
+      http://www.pgpool.net/pipermail/pgpool-hackers/2013-April/000179.html
+
+    - Fix pool_has_pgpool_regclass() to check execute privilege of
+      pgpool_regclass(). (Tatsuo Ishii)
+      
+      Even though pgpool_regclass() exists, if pgpool cannot execute the
+      function, the connection to backend hangs. You can reproduce the problem
+      by just dropping  the execute privilege from pgpool_regclass and do some
+      insert in native replication mode.
+      
+      The problem is reported in bugtrack #53.
+
+      #53 pgpool_regclas hangs all connections
+      Date:     2013-04-04 13:35 
+      Reporter: tmandke
+      http://www.pgpool.net/mantisbt/view.php?id=53
+
+    - Fix error message mistakes in detect_postmaster_down_error(). (Tatsuo Ishii)
+
+      For example, "LOG: detect_stop_postmaster_error: detect_error error" is
+      fixed to "LOG: detect_postmaster_down_error: detect_error error", and so on.
+
+    - Remove root user check when watchdog is enabled. (Tatsuo Ishii)
+     
+      Per discussion [pgpool-general: 1627] Re: watchdog root requirement.
+
+      [pgpool-general: 1627]
+      Re: watchdog root requirement.
+      http://www.pgpool.net/pipermail/pgpool-general/2013-April/001654.html
+
+    - Fix bug with on memory query cache in handling UPDATE/DELETE with table
+      alias. (Tatsuo Ishii)
+      
+      If UPDATE/DELETE is with table alias (UPDATE t1 AS foo...) pgpool thinks
+      the table name is "t1 AS foo" and fails to invalidate query cache. This
+      is caused by _outRangeVar() called from nodeToString() which generates a
+      query string from RangeVar node in raw parse tree. The solution is removing
+      "AS foo" part from the output of the string.
+      
+      Reported in bugtrack #56.
+
+      #56 UPDATE with alias does not discard cache
+      Date:     2013-04-18 17:33 
+      Reporter: harukat 
+      http://www.pgpool.net/mantisbt/view.php?id=56
+
+===============================================================================
+
+                        3.2.3 (namameboshi) 2013/2/18
 
 * Version 3.2.3
 
@@ -57,7 +183,7 @@
 
 ===============================================================================
 
-                    3.2.2 (namameboshi) 2013/2/8
+                        3.2.2 (namameboshi) 2013/2/8
 
 * Version 3.2.2
 
@@ -396,7 +522,7 @@
 
 ===============================================================================
 
-                    3.2.1 (namameboshi) 2012/10/12
+                        3.2.1 (namameboshi) 2012/10/12
 
 * Version 3.2.1
 
@@ -585,7 +711,7 @@
 
 ===============================================================================
 
-                    3.2.0 (namameboshi) 2012/08/03
+                        3.2.0 (namameboshi) 2012/08/03
 
 * Version 3.2.0
 
@@ -990,7 +1116,93 @@
 3.1 Series (2011/09/08 - )
 ===============================================================================
 
-                    3.1.6 (hatsuiboshi) 2013/2/8
+                        3.1.7 (hatsuiboshi) 2013/4/26
+
+* Version 3.1.7
+
+      This is a bugfix release against pgpool-II 3.1.6.
+
+      __________________________________________________________________
+
+* Bug fixes
+
+    - Fix to show pool_passwd in "SHOW pool_status". (Yugo Nagata)
+
+    - Fix long standing bug with timestamp rewriting code for processing
+      extended protocol. (Tatsuo Ishii)
+      
+      Parse() allocate memory using palloc() while rewriting the parse
+      message.  Problem is, the rewritten message was kept in the data which
+      is managed by pool_create_sent_message() etc. The function assumes
+      that all the data is in session context memory. However, palloc()
+      allocates memory in query context of course, and gets freeed later on
+      when the query context disappears. And the function tries to free the
+      memory as well, which causes various problems, including segfault and
+      double free. To fix this, memory to store rewritten message is
+      allocated using session context. The bug was there since pgpool-II 3.0
+      was born.
+      
+      Problem analysis and patch contributed by Naoya Anzai.
+
+      [pgpoolgenera-jp: 1146]. (in Japanese)
+      http://www.pgpool.net/pipermail/pgpool-general-jp/2013-March/001145.html
+
+    - Fix bug with md5 auth long user name handling. (Tatsuo Ishii)
+      
+      If user name is longer than 32 bytes, md5 authentication doesn't work.
+      Problem reported in [pgpool-general: 1526] by Thomas Martin.
+      
+      [pgpool-general: 1526]
+      [pgPool-II 3.2.3] MD5 authentication and username longer than 32 characters.
+      http://www.pgpool.net/pipermail/pgpool-general/2013-March/001551.html
+
+    - Fix to calculate replication delay only if standby server is behind from
+      the primay server. (Yugo Nagata)
+      
+      When the primary server is behind from standby server, negative value of
+      delay is calculated and the value is assigned to unsigned variable. It
+      causes a log message informing negative replication delay. And what is
+      worse, it also causes SELECT queries to be sent to the primary in load
+      balance even though there are no replication delay in fact.
+      
+      The problem is reported and analyzed by Saitoh Hidenori in
+      [pgpool-genera-jp: 1145]. 
+      
+      [pgpool-general-jp: 1145] (in Japanese)
+      http://www.pgpool.net/pipermail/pgpool-general-jp/2013-March/001144.html
+
+    - pgpool-recovery adopts PostgreSQL 9.3. (Tatsuo Ishii)
+    
+      Patch contributed by Asif Rehman. Slight editing by Tatsuo Ishii.
+
+      [pgpool-hackers: 180] 
+      compile error in ppool-recovery
+      http://www.pgpool.net/pipermail/pgpool-hackers/2013-April/000179.html
+
+    - Fix pool_has_pgpool_regclass() to check execute privilege of
+      pgpool_regclass(). (Tatsuo Ishii)
+      
+      Even though pgpool_regclass() exists, if pgpool cannot execute the
+      function, the connection to backend hangs. You can reproduce the problem
+      by just dropping  the execute privilege from pgpool_regclass and do some
+      insert in native replication mode.
+      
+      The problem is reported in bugtrack #53.
+
+      #53 pgpool_regclas hangs all connections
+      Date:     2013-04-04 13:35 
+      Reporter: tmandke
+      http://www.pgpool.net/mantisbt/view.php?id=53
+
+    - Fix error message mistakes in detect_postmaster_down_error(). (Tatsuo Ishii)
+
+      For example, "LOG: detect_stop_postmaster_error: detect_error error" is
+      fixed to "LOG: detect_postmaster_down_error: detect_error error", and so on.
+
+===============================================================================
+
+                        3.1.6 (hatsuiboshi) 2013/2/8
+
 
 * Version 3.1.6
 
@@ -1113,7 +1325,7 @@
 
 ===============================================================================
 
-                    3.1.5 (hatsuiboshi) 2012/10/12
+                        3.1.5 (hatsuiboshi) 2012/10/12
 
 * Version 3.1.5
 
@@ -1185,7 +1397,7 @@
 
 ===============================================================================
 
-                    3.1.4 (hatsuiboshi) 2012/08/06
+                        3.1.4 (hatsuiboshi) 2012/08/06
 
 * Version 3.1.4
 
@@ -1293,7 +1505,7 @@
 
 ===============================================================================
 
-                    3.1.3 (hatsuiboshi) 2012/04/23
+                        3.1.3 (hatsuiboshi) 2012/04/23
 
 * Version 3.1.3
 
@@ -1675,7 +1887,92 @@
 3.0 Series (2010/09/10 - )
 ===============================================================================
 
-                    3.0.10 (hatsuiboshi) 2013/2/8
+                       3.0.11 (umeyameboshi) 2013/4/26
+
+* Version 3.1.7
+
+      This is a bugfix release against pgpool-II 3.1.6.
+
+      __________________________________________________________________
+
+* Bug fixes
+
+    - Fix to show pool_passwd in "SHOW pool_status". (Yugo Nagata)
+
+    - Fix long standing bug with timestamp rewriting code for processing
+      extended protocol. (Tatsuo Ishii)
+      
+      Parse() allocate memory using palloc() while rewriting the parse
+      message.  Problem is, the rewritten message was kept in the data which
+      is managed by pool_create_sent_message() etc. The function assumes
+      that all the data is in session context memory. However, palloc()
+      allocates memory in query context of course, and gets freeed later on
+      when the query context disappears. And the function tries to free the
+      memory as well, which causes various problems, including segfault and
+      double free. To fix this, memory to store rewritten message is
+      allocated using session context. The bug was there since pgpool-II 3.0
+      was born.
+      
+      Problem analysis and patch contributed by Naoya Anzai.
+
+      [pgpoolgenera-jp: 1146]. (in Japanese)
+      http://www.pgpool.net/pipermail/pgpool-general-jp/2013-March/001145.html
+
+    - Fix bug with md5 auth long user name handling. (Tatsuo Ishii)
+      
+      If user name is longer than 32 bytes, md5 authentication doesn't work.
+      Problem reported in [pgpool-general: 1526] by Thomas Martin.
+      
+      [pgpool-general: 1526]
+      [pgPool-II 3.2.3] MD5 authentication and username longer than 32 characters.
+      http://www.pgpool.net/pipermail/pgpool-general/2013-March/001551.html
+
+    - Fix to calculate replication delay only if standby server is behind from
+      the primay server. (Yugo Nagata)
+      
+      When the primary server is behind from standby server, negative value of
+      delay is calculated and the value is assigned to unsigned variable. It
+      causes a log message informing negative replication delay. And what is
+      worse, it also causes SELECT queries to be sent to the primary in load
+      balance even though there are no replication delay in fact.
+      
+      The problem is reported and analyzed by Saitoh Hidenori in
+      [pgpool-genera-jp: 1145]. 
+      
+      [pgpool-general-jp: 1145] (in Japanese)
+      http://www.pgpool.net/pipermail/pgpool-general-jp/2013-March/001144.html
+
+    - pgpool-recovery adopts PostgreSQL 9.3. (Tatsuo Ishii)
+    
+      Patch contributed by Asif Rehman. Slight editing by Tatsuo Ishii.
+
+      [pgpool-hackers: 180] 
+      compile error in ppool-recovery
+      http://www.pgpool.net/pipermail/pgpool-hackers/2013-April/000179.html
+
+    - Fix pool_has_pgpool_regclass() to check execute privilege of
+      pgpool_regclass(). (Tatsuo Ishii)
+      
+      Even though pgpool_regclass() exists, if pgpool cannot execute the
+      function, the connection to backend hangs. You can reproduce the problem
+      by just dropping  the execute privilege from pgpool_regclass and do some
+      insert in native replication mode.
+      
+      The problem is reported in bugtrack #53.
+
+      #53 pgpool_regclas hangs all connections
+      Date:     2013-04-04 13:35 
+      Reporter: tmandke
+      http://www.pgpool.net/mantisbt/view.php?id=53
+
+    - Fix error message mistakes in detect_postmaster_down_error(). (Tatsuo Ishii)
+
+      For example, "LOG: detect_stop_postmaster_error: detect_error error" is
+      fixed to "LOG: detect_postmaster_down_error: detect_error error", and so on.
+
+===============================================================================
+
+                        3.0.10 (umiyameboshi) 2013/2/8
 
 * Version 3.0.10
 
@@ -1779,7 +2076,7 @@
 
 ===============================================================================
 
-                    3.0.9 (hatsuiboshi) 2012/10/12
+                    3.0.9 (umiyameboshi) 2012/10/12
 
 * Version 3.0.9
 
@@ -1850,7 +2147,7 @@
 
 ===============================================================================
 
-                    3.0.8 (umiyameboshi) 2012/08/0
+                        3.0.8 (umiyameboshi) 2012/08/0
 
 * Version 3.0.8
 
@@ -2238,7 +2535,7 @@
 
 ===============================================================================
 
-                        3.0 (umiyameboshi) 2010/09/10
+                       3.0 (umiyameboshi) 2010/09/10
 
 * Version 3.0
 
