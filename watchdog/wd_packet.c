@@ -941,14 +941,12 @@ wd_escalation(void)
 	pool_log("wd_escalation: escalated to master pgpool");
 
 	/* clear shared memory cache */
-	if (pool_config->memory_cache_enabled &&
-	    pool_is_shmem_cache())
+	if (pool_config->memory_cache_enabled && pool_is_shmem_cache() &&
+	    pool_config->clear_memqcache_on_escalation)
 	{
 		pool_log("wd_escalation: clear all the query cache on shared memory");
 		pool_clear_memory_cache();
 	}
-
-	system("ls -al");
 
 	/* interface up as delegate IP */
 	wd_IP_up();

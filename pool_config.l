@@ -233,6 +233,7 @@ int pool_init_config(void)
 	 * add for watchdog
 	 */
 	pool_config->use_watchdog = 0;
+	pool_config->clear_memqcache_on_escalation = 1;	
 	pool_config->trusted_servers = "";
 	pool_config->delegate_IP = "";
 	res = gethostname(localhostname,sizeof(localhostname));
@@ -1956,6 +1957,19 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->use_watchdog = v;
+		}
+
+		else if (!strcmp(key, "clear_memqcache_on_escalation") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			int v = eval_logical(yytext);
+
+			if (v < 0)
+			{
+				pool_error("pool_config: invalid value %s for %s", yytext, key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->clear_memqcache_on_escalation = v;
 		}
 
 		else if (!strcmp(key, "trusted_servers") && CHECK_CONTEXT(INIT_CONFIG, context))

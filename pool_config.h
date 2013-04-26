@@ -222,32 +222,31 @@ typedef struct {
 	/*
 	 * add for watchdog
 	 */
-	int use_watchdog;		/* if non 0, use watchdog */
-	char *wd_hostname;		/* watchdog hostname */
-	int wd_port;			/* watchdog port */
-	WdDesc * other_wd;		/* watchdog lists */ 
-	char * trusted_servers;	/* icmp reachable server list (A,B,C) */
-	char * delegate_IP;		/* delegate IP address */
-	int  wd_interval;		/* lifecheck interval (sec) */
-	char * ping_path;		/* path to ping command */
-	char * ifconfig_path;	/* path to ifconfig command */
-	char * if_up_cmd;		/* ifup command */
-	char * if_down_cmd;		/* ifdown command */
-	char * arping_path;	/* path to arping command */
-	char * arping_cmd;		/* arping command */
-	int  wd_life_point;		/* life point (retry times at lifecheck) */
-	char *wd_lifecheck_query;	/* lifecheck query */
-	char *wd_lifecheck_dbname;	/* Database name connected for lifecheck */
-	char *wd_lifecheck_user;	/* PostgreSQL user name for watchdog */
-	char *wd_lifecheck_password; /* password for watchdog user */
-
-	char *watchdog_mode;
-	int wd_udp_keepalive;
-	int wd_udp_deadtime;
-	int wd_udp_port;
-	char *wd_authkey;
+	int use_watchdog;					/* if non 0, use watchdog */
+	char *watchdog_mode;				/* mode of lifecheck mode. 'udp' or 'query' */
+	int clear_memqcache_on_escalation;	/* if no 0, clear query cache on shmem when escalating */
+	char *wd_hostname;					/* watchdog hostname */
+	int wd_port;						/* watchdog port */
+	WdDesc * other_wd;					/* watchdog lists */ 
+	char * trusted_servers;				/* icmp reachable server list (A,B,C) */
+	char * delegate_IP;					/* delegate IP address */
+	int  wd_interval;					/* lifecheck interval (sec) */
+	char *wd_authkey;					/* Authentication key for watchdog communication */
+	char * ping_path;					/* path to ping command */
+	char * ifconfig_path;				/* path to ifconfig command */
+	char * if_up_cmd;					/* ifup command */
+	char * if_down_cmd;					/* ifdown command */
+	char * arping_path;					/* path to arping command */
+	char * arping_cmd;					/* arping command */
+	int  wd_life_point;					/* life point (retry times at lifecheck) */
+	char *wd_lifecheck_query;			/* lifecheck query */
+	char *wd_lifecheck_dbname;			/* Database name connected for lifecheck */
+	char *wd_lifecheck_user;			/* PostgreSQL user name for watchdog */
+	char *wd_lifecheck_password;		/* password for watchdog user */
+	int wd_udp_port;					/* Port number for UDP heartbeat lifecheck */
+	int wd_udp_keepalive;				/* Interval time of sending UDP heartbeat signal (sec) */
+	int wd_udp_deadtime;				/* Deadtime interval for UDP heartbeat signal (sec) */
 } POOL_CONFIG;
-
 typedef enum {
 	INIT_CONFIG = 1,   /* 0x01 */
 	RELOAD_CONFIG = 2  /* 0x02 */

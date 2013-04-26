@@ -431,6 +431,15 @@ use_watchdog = off
 watchdog_mode='udp'
                                     # Mode of watchdog lifecheck ('udp' or 'query') 
                                     # (change requires restart)
+
+clear_memqcache_on_escalation = on 
+                                    # Clear all the query cache on shared memory
+									# when standby pgpool escalate to active pgpool
+									# (= virtual IP holder).
+									# This should be off if client connects to pgpool
+									# not using virtual IP.
+									# (change requires restart)
+
 trusted_servers = ''
                                     # trusted server list which are used
                                     # to confirm network connection
