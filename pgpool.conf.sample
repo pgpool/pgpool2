@@ -439,6 +439,8 @@ clear_memqcache_on_escalation = on
 									# This should be off if client connects to pgpool
 									# not using virtual IP.
 									# (change requires restart)
+wd_escalation_command = ''
+                                   # Executes this command at escalation on new active pgpool.
 
 trusted_servers = ''
                                     # trusted server list which are used

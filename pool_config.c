@@ -1781,6 +1781,7 @@ int pool_init_config(void)
 	 */
 	pool_config->use_watchdog = 0;
 	pool_config->clear_memqcache_on_escalation = 1;	
+    pool_config->wd_escalation_command = "";
 	pool_config->trusted_servers = "";
 	pool_config->delegate_IP = "";
 	res = gethostname(localhostname,sizeof(localhostname));
@@ -3517,6 +3518,26 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->clear_memqcache_on_escalation = v;
+		}
+
+		else if (!strcmp(key, "wd_escalation_command") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->wd_escalation_command = str;
 		}
 
 		else if (!strcmp(key, "trusted_servers") && CHECK_CONTEXT(INIT_CONFIG, context))

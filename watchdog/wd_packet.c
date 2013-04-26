@@ -948,6 +948,12 @@ wd_escalation(void)
 		pool_clear_memory_cache();
 	}
 
+	/* execute escalation command */
+	if (strlen(pool_config->wd_escalation_command))
+	{
+		system(pool_config->wd_escalation_command);
+	}
+
 	/* interface up as delegate IP */
 	wd_IP_up();
 	/* set master status to the wd list */

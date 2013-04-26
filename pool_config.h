@@ -225,6 +225,7 @@ typedef struct {
 	int use_watchdog;					/* if non 0, use watchdog */
 	char *watchdog_mode;				/* mode of lifecheck mode. 'udp' or 'query' */
 	int clear_memqcache_on_escalation;	/* if no 0, clear query cache on shmem when escalating */
+    char *wd_escalation_command;		/* Executes this command at escalation on new active pgpool.*/
 	char *wd_hostname;					/* watchdog hostname */
 	int wd_port;						/* watchdog port */
 	WdDesc * other_wd;					/* watchdog lists */ 
