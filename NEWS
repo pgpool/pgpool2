@@ -79,11 +79,6 @@
       For example, "LOG: detect_stop_postmaster_error: detect_error error" is
       fixed to "LOG: detect_postmaster_down_error: detect_error error", and so on.
 
-    - detect_postmaster_down_error() のエラーメッセージを修正しました。(Tatsuo Ishii)
-
-      例えば、"LOG: detect_stop_postmaster_error: detect_error error" を 
-      "LOG: detect_postmaster_down_error: detect_error error" に修正するなどです。 
-
 3.0.10 (umiyameboshi) 2013/2/8
 
     * Version 3.0.10
