@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Fri Feb  8 21:02:14 JST 2013
+Last modified: Fri Apr 26 11:44:58 JST 2013
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -4021,6 +4021,109 @@ pgpool-IIのチュートリアルは<a href="tutorial-ja.html">ここ</a>にあ�
 
 <h1>リリースノート<a name="release"></a></h1>
 
+<h2><a name="release3.1.7"></a>3.1.7 (hatsuiboshi) 2012/10/12</h2>
+<h3>概要</h3>
+<p>このバージョンは3.1.6に対するバグ修正リリースです。</p>
+<ul>
+
+<li>
+設定パラメータの一覧を表示する "SHOW pool_status" で pool_passwdが表示されていないのを修正しました。(Yugo Nagata)
+</li>
+
+<li>
+拡張プロトコルの処理における timestamp の書き換えに関する長い間見過ごされていてたバグを修正しました。(Tatsuo Ishii)
+<p>
+  Parse() 関数は、parse メッセージの書き換えの際に palloc() を使ってメモリを確保していました。
+  書き換えられたメッセージは pool_create_sent_message()
+  関数などが管理するデータ領域に格納されますが、これが問題となっていました。
+  この関数ではデータが session context memory 中に存在することを想定しているのに対し、
+  palloc() では query context においてメモリの割り当てを行っており、この領域は
+  query context 終了時に解放されます。しかし、他の関数もこのメモリ領域を解放しようとするため、
+  セグメンテーション違反や二重解放を含む様々な問題の原因となっていました。
+  この問題は、書き換えたメッセージを格納するメモリを session context を用いて確保するこで修正されました。
+  これは pgpool-II 3.0 以来ずっと存在していたバグです。
+</p>
+<p>
+  この問題は、Naoya Anzai さんによって解析され、パッチが提供されました。
+</p>
+<blockquote>
+  [pgpoolgenera-jp: 1146]
+  拡張問い合わせプロトコルでセグメンテーションフォルト
+  http://www.pgpool.net/pipermail/pgpool-general-jp/2013-March/001145.html
+</blockquote>
+</li>
+
+<li>
+md5認証で長いユーザ名を処理する際のバグを修正しました。(Tatsuo Ishii)
+<p>
+  ユーザ名が 32 バイトより長い場合、md5 認証が動作していませんでした。
+  この問題は [pgpool-general: 1526] で Thomas Martin さんにより報告されました。    
+</p>
+<blockquote>
+  [pgpool-general: 1526]
+  [pgPool-II 3.2.3] MD5 authentication and username longer than 32 characters.
+  http://www.pgpool.net/pipermail/pgpool-general/2013-March/001551.html
+</blockquote>
+</li>
+
+<li>レプリケーション遅延の計算はスタンバイサーバがプライマリサーバより遅れている場合にのみ行うよう修正しました。(Yugo Nagata)
+<p>
+  タイミングによってスタンバイよりプライマリの方がレプリケーションが遅延
+  しているように見える場合があり、その場合には負値の遅延が計算されていました。
+  この値が符号無し変数に代入されると、実際には遅延が生じていないにも関わらず、
+  ログに遅延が負値で出力され、されに悪いことには、ロードバランス機能により
+  SELECT クエリがプライマリに振り分けられ、その結果プライマリの負荷が高まる
+  ことがありました。
+</p>
+<p>
+  この問題は Saitoh Hidenori さんによって報告、解析されました。
+</p>
+<blockquote>
+  [pgpool-genera-jp: 1145]
+  レプリケーション遅延確認の不具合について
+  http://www.pgpool.net/pipermail/pgpool-general-jp/2013-March/001144.html
+</blockquote>
+</li>
+
+<li>pgpool-recovery が PostgreSQL 9.3 に対応しました。 (Tatsuo Ishii)
+<p>
+  パッチは Asif Rehman さんにより提供され、これに Tatsuo Ishii が若干の修正を
+  加えました。
+</p>
+<blockquote>
+  [pgpool-hackers: 180] 
+  compile error in ppool-recovery
+  http://www.pgpool.net/pipermail/pgpool-hackers/2013-April/000179.html
+</blockquote>
+</li>
+
+<li>pool_has_pgpool_regclass が pgpool_regclass() の実行権限をチェックするよう修正しました。 (Tatsuo Ishii)
+<p>
+  pgpool_regclass が存在する場合でも、pgpool がこの関数を実行できない場合に、
+  バックエンドへの接続がハングしていました。この問題は、pgpool_regclass
+  から実行権限を剥奪し、ネイティブレプリケーションモードで INSERT を実行
+  することで再現可能です。
+</p>
+<p>
+  この問題は bugtrack #53 で報告されました。
+</p>
+<blockquote>
+  #53 pgpool_regclas hangs all connections
+  Date:     2013-04-04 13:35 
+  Reporter: tmandke
+  http://www.pgpool.net/mantisbt/view.php?id=53
+</blockquote>
+</li>
+
+<li>detect_postmaster_down_error() のエラーメッセージを修正しました。(Tatsuo Ishii)
+<p>
+  例えば、"LOG: detect_stop_postmaster_error: detect_error error" を 
+  "LOG: detect_postmaster_down_error: detect_error error" に修正するなどです。 
+</p>
+</li>
+
+</ul>
+
 <h2><a name="release3.1.6"></a>3.1.6 (hatsuiboshi) 2012/10/12</h2>
 <h3>概要</h3>
 <p>このバージョンは3.1.5に対するバグ修正リリースです。</p>
@@ -4583,6 +4686,113 @@ pgpool-IIのチュートリアルは<a href="tutorial-ja.html">ここ</a>にあ�
 </p>
 
 <hr>
+
+<h2>3.0.11 (umiyameboshi) 2013/2/8</h2>
+<h3>概要</h3>
+<p>
+このバージョンでは、3.0.10における様々なバグが修正されています。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+設定パラメータの一覧を表示する "SHOW pool_status" で pool_passwdが表示されていないのを修正しました。(Yugo Nagata)
+</li>
+
+<li>
+拡張プロトコルの処理における timestamp の書き換えに関する長い間見過ごされていてたバグを修正しました。(Tatsuo Ishii)
+<p>
+  Parse() 関数は、parse メッセージの書き換えの際に palloc() を使ってメモリを確保していました。
+  書き換えられたメッセージは pool_create_sent_message()
+  関数などが管理するデータ領域に格納されますが、これが問題となっていました。
+  この関数ではデータが session context memory 中に存在することを想定しているのに対し、
+  palloc() では query context においてメモリの割り当てを行っており、この領域は
+  query context 終了時に解放されます。しかし、他の関数もこのメモリ領域を解放しようとするため、
+  セグメンテーション違反や二重解放を含む様々な問題の原因となっていました。
+  この問題は、書き換えたメッセージを格納するメモリを session context を用いて確保するこで修正されました。
+  これは pgpool-II 3.0 以来ずっと存在していたバグです。
+</p>
+<p>
+  この問題は、Naoya Anzai さんによって解析され、パッチが提供されました。
+</p>
+<blockquote>
+  [pgpoolgenera-jp: 1146]
+  拡張問い合わせプロトコルでセグメンテーションフォルト
+  http://www.pgpool.net/pipermail/pgpool-general-jp/2013-March/001145.html
+</blockquote>
+</li>
+
+<li>
+md5認証で長いユーザ名を処理する際のバグを修正しました。(Tatsuo Ishii)
+<p>
+  ユーザ名が 32 バイトより長い場合、md5 認証が動作していませんでした。
+  この問題は [pgpool-general: 1526] で Thomas Martin さんにより報告されました。    
+</p>
+<blockquote>
+  [pgpool-general: 1526]
+  [pgPool-II 3.2.3] MD5 authentication and username longer than 32 characters.
+  http://www.pgpool.net/pipermail/pgpool-general/2013-March/001551.html
+</blockquote>
+</li>
+
+<li>レプリケーション遅延の計算はスタンバイサーバがプライマリサーバより遅れている場合にのみ行うよう修正しました。(Yugo Nagata)
+<p>
+  タイミングによってスタンバイよりプライマリの方がレプリケーションが遅延
+  しているように見える場合があり、その場合には負値の遅延が計算されていました。
+  この値が符号無し変数に代入されると、実際には遅延が生じていないにも関わらず、
+  ログに遅延が負値で出力され、されに悪いことには、ロードバランス機能により
+  SELECT クエリがプライマリに振り分けられ、その結果プライマリの負荷が高まる
+  ことがありました。
+</p>
+<p>
+  この問題は Saitoh Hidenori さんによって報告、解析されました。
+</p>
+<blockquote>
+  [pgpool-genera-jp: 1145]
+  レプリケーション遅延確認の不具合について
+  http://www.pgpool.net/pipermail/pgpool-general-jp/2013-March/001144.html
+</blockquote>
+</li>
+
+<li>pgpool-recovery が PostgreSQL 9.3 に対応しました。 (Tatsuo Ishii)
+<p>
+  パッチは Asif Rehman さんにより提供され、これに Tatsuo Ishii が若干の修正を
+  加えました。
+</p>
+<blockquote>
+  [pgpool-hackers: 180] 
+  compile error in ppool-recovery
+  http://www.pgpool.net/pipermail/pgpool-hackers/2013-April/000179.html
+</blockquote>
+</li>
+
+<li>pool_has_pgpool_regclass が pgpool_regclass() の実行権限をチェックするよう修正しました。 (Tatsuo Ishii)
+<p>
+  pgpool_regclass が存在する場合でも、pgpool がこの関数を実行できない場合に、
+  バックエンドへの接続がハングしていました。この問題は、pgpool_regclass
+  から実行権限を剥奪し、ネイティブレプリケーションモードで INSERT を実行
+  することで再現可能です。
+</p>
+<p>
+  この問題は bugtrack #53 で報告されました。
+</p>
+<blockquote>
+  #53 pgpool_regclas hangs all connections
+  Date:     2013-04-04 13:35 
+  Reporter: tmandke
+  http://www.pgpool.net/mantisbt/view.php?id=53
+</blockquote>
+</li>
+
+<li>detect_postmaster_down_error() のエラーメッセージを修正しました。(Tatsuo Ishii)
+<p>
+  例えば、"LOG: detect_stop_postmaster_error: detect_error error" を 
+  "LOG: detect_postmaster_down_error: detect_error error" に修正するなどです。 
+</p>
+</li>
+
+</ul>
 
 <h2>3.0.10 (umiyameboshi) 2013/2/8</h2>
 <h3>概要</h3>
