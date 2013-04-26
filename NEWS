@@ -1,4 +1,4 @@
-3.0.11 (umiyameboshi) 2013/4/26
+3.0.11 (umiyameboshi) 2013/04/26
 
     * Version 3.0.11
 
@@ -79,7 +79,7 @@
       For example, "LOG: detect_stop_postmaster_error: detect_error error" is
       fixed to "LOG: detect_postmaster_down_error: detect_error error", and so on.
 
-3.0.10 (umiyameboshi) 2013/2/8
+3.0.10 (umiyameboshi) 2013/02/08
 
     * Version 3.0.10
 
