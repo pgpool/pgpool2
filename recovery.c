@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2010	PgPool Global Development Group
+ * Copyright (c) 2003-2013	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -47,12 +47,19 @@ static char recovery_command[1024];
 
 extern volatile sig_atomic_t pcp_wakeup_request;
 
+/*
+ * Start online recovery.
+ * "recovery_node" is the node to be recovered.
+ * Master or primary node is chosen in this function.
+ */
 int start_recovery(int recovery_node)
 {
 	int node_id;
 	BackendInfo *backend;
 	BackendInfo *recovery_backend;
 	PGconn *conn;
+	int failback_wait_count;
+#define FAILBACK_WAIT_MAX_RETRY 5		/* 5 seconds should be enough for failback operation */
 
 	pool_log("starting recovering node %d", recovery_node);
 
@@ -64,8 +71,11 @@ int start_recovery(int recovery_node)
 
 	Req_info->kind = NODE_RECOVERY_REQUEST;
 
+	/* select master/primary node */
 	node_id = MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID;
 	backend = &pool_config->backend_desc->backend_info[node_id];
+
+	/* get node info to be recovered */
 	recovery_backend = &pool_config->backend_desc->backend_info[recovery_node];
 
 	conn = connect_backend_libpq(backend);
@@ -152,11 +162,19 @@ int start_recovery(int recovery_node)
 	send_failback_request(recovery_node);
 
 	/* wait for failback */
+	failback_wait_count = 0;
 	while (!pcp_wakeup_request)
 	{
 		struct timeval t = {1, 0};
 		/* polling SIGUSR2 signal every 1 sec */
 		select(0, NULL, NULL, NULL, &t);
+		failback_wait_count++;
+		if (failback_wait_count >= FAILBACK_WAIT_MAX_RETRY)
+		{
+			pool_log("start_recovery: waiting for wake up request is timeout(%d seconds)",
+					 FAILBACK_WAIT_MAX_RETRY);
+			break;
+		}
 	}
 	pcp_wakeup_request = 0;
 
