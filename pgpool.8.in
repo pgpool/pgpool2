@@ -9,7 +9,7 @@
 .SH NAME
 pgpool \- PostgreSQL connection pool daemon
 .SH SYNOPSIS
-\fBpgpool\fR [ \fB\-c\fR] [ \fB\-f config_file\fR ] [ \fB\-F pcp_config_file\fR ] [ \fB\-a hba_file\fR ] [ \fB\-n\fR ] [ \fB\-d\fR ]
+\fBpgpool\fR [ \fB\-c\fR] [ \fB\-f config_file\fR ] [ \fB\-F pcp_config_file\fR ] [ \fB\-a hba_file\fR ] [ \fB\-n\fR ] [ \fB\-D\fR ] [ \fB\-d\fR ]
 .LP
 \fBpgpool\fR [ \fB\-f config_file\fR ] [ \fB\-F pcp_config_file\fR ] [ \fB\-a hba_file\fR ] [ \fB\-m\fR \fI{s[mart]|f[ast]|i[mmediate]}\fR ] \fBstop\fR
 .LP
@@ -92,6 +92,11 @@ or
 To daemonize, explicitly invoke 
 .B pgpool
 in background.
+.TP
+.B \-D
+.P
+.B \--discard-status
+Discard pgpool_status file and do not restore previous status.
 .TP
 .B \-v
 .P
