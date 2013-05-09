@@ -45,9 +45,7 @@
 # pgpool port and pcp_port will be assigned afterwards.
 BASEPORT=11000
 # Number of PostgreSQL database clusters
-# XXX: more than two PostgreSQL clusters can be created but some of
-# part like failover script will not work correctly.
-NUMCLUSTERS=2
+NUMCLUSTERS=3
 # Where to look for pgpool.conf.sample*
 PGPOOLDIR=/usr/local/etc
 # LD_LIBRARY_PATH 
@@ -74,6 +72,8 @@ PSQL=$PGBIN/psql
 CONF=$BASEDIR/etc/pgpool.conf
 # failover script
 FAILOVER_SCRIPT=$BASEDIR/etc/failover.sh
+# follow master script
+FOLLOW_MASTER_SCRIPT=$BASEDIR/etc/follow_master.sh
 # pgpool_remote_start
 PGPOOL_REMOTE_START_SCRIPT=pgpool_remote_start
 # Start script name. This will be generated in this script.
@@ -141,6 +141,70 @@ q
 EOF
 
 chmod 755 $FAILOVER_SCRIPT
+}
+
+#-------------------------------------------
+# create follow master script
+#-------------------------------------------
+function create_follow_master_script()
+{
+cat >> $FOLLOW_MASTER_SCRIPT <<'EOF'
+#! /bin/sh
+# Execute command by failover.
+# special values:  %d = node id
+#                  %h = host name
+#                  %p = port number
+#                  %D = database cluster path
+#                  %m = new master node id
+#                  %M = old master node id
+#                  %H = new master node host name
+#                  %P = old primary node id
+#                  %% = '%' character
+#                  %R = new master database cluster path
+#                  %% = '%' character
+failed_node_id=$1
+failed_host_name=$2
+failed_port=$3
+failed_db_cluster=$4
+new_master_id=$5
+old_master_id=$6
+new_master_host_name=$7
+old_primary_node_id=$8
+new_master_port_number=$9
+new_master_db_cluster=${10}
+mydir=__MYDIR__
+log=$mydir/log/failover.log
+pg_ctl=__PGBIN__/pg_ctl
+cluster0=$mydir/data0
+cluster1=$mydir/data1
+cluster2=$mydir/data2
+PCP_PORT=__PCPPORT__
+pcp_super_user=__PCPSUPERUSER__
+
+date >> $log
+echo "failed_node_id $failed_node_id failed_host_name $failed_host_name failed_port $failed_port failed_db_cluster $failed_db_cluster new_master_id $new_master_id old_master_id $old_master_id new_master_host_name $new_master_host_name old_primary_node_id $old_primary_node_id new_master_port_number $new_master_port_number new_master_db_cluster $new_master_db_cluster" >> $log
+
+# Stop standby node
+$pg_ctl -w -m f -D $failed_db_cluster stop >> $log 2>&1
+sleep 10
+# recovery the node
+pcp_recovery_node 1 localhost $PCP_PORT $pcp_super_user $pcp_super_user $failed_node_id >> $log 2>&1
+
+EOF
+
+#-------------------------------------------
+# replace some variables in the script
+#-------------------------------------------
+/bin/ed $FOLLOW_MASTER_SCRIPT <<EOF
+/__MYDIR__/s@__MYDIR__@$BASEDIR@
+/__PGBIN__/s@__PGBIN__@$PGBIN@
+/__PCPSUPERUSER__/s/__PCPSUPERUSER__/$WHOAMI/
+/__PCPPORT__/s/__PCPPORT__/$PCP_PORT/
+w
+q
+EOF
+
+chmod 755 $FOLLOW_MASTER_SCRIPT
 }
 
 #-------------------------------------------
@@ -647,13 +711,15 @@ CREATE DATABASE test;
 EOF
 
 # temporarily start pgpool
-	echo "temporarily start pgpool-II to create data1"
+	echo "temporarily start pgpool-II to create standby nodes"
 	pgpool -D -n -f $BASEDIR/etc/pgpool.conf -F $BASEDIR/etc/pcp.conf -a $BASEDIR/etc/pool_hba.conf > $BASEDIR/log/pgpool.log 2>&1 &
 
 	echo -n "waiting for failover happens..."
 # wait for failover happens
-	sleep 5
+	sleep 20
 	echo "done."
+
+$PSQL -p $PGPOOL_PORT -c "show pool_nodes" test
 
 # recovery data1 and so on
 	n=1
@@ -661,20 +727,20 @@ EOF
 	do
 		echo -n "recovery node $n..."
 		pcp_recovery_node 1 localhost $PCP_PORT $WHOAMI $WHOAMI $n
+		sleep 10
 		echo "done."
 		n=`expr $n + 1`
 	done
 
-	echo "shutdown all"
-	$SHUTDOWNALL >&5 2>&1
+#	echo "shutdown all"
+#	$SHUTDOWNALL >&5 2>&1
+else
+	echo "start all"
+	$STARTALL >&5 2>&1
+	echo -n "waiting for pgpool-II coming up..."
+	sleep 20
+	echo "done."
 fi
-
-echo "start all"
-$STARTALL >&5 2>&1
-
-echo -n "waiting for pgpool-II coming up..."
-sleep 20
-echo "done."
 
 if [ $MODE = "r" ];then
 	echo "create extensions"
@@ -683,6 +749,15 @@ CREATE EXTENSION pgpool_regclass;
 CREATE EXTENSION pgpool_recovery;
 CREATE DATABASE test;
 EOF
+fi
+
+#-------------------------------------------
+# create follow_masterfailover script
+#-------------------------------------------
+if [ $MODE = "s" ];then
+	echo "creating follow master script"
+	create_follow_master_script >&5 2>&1
+	echo "follow_master_command = '$FOLLOW_MASTER_SCRIPT %d %h %p %D %m %M %H %P %r %R'" >> $CONF
 fi
 
 $PSQL -p $PGPOOL_PORT test <<EOF
