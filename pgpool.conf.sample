@@ -483,7 +483,7 @@ arping_cmd = 'arping -U $_IP_$ -w 1'
                                     # (change requires restart)
 wd_udp_port = 9694
                                     # Port number for UDP heartbeat lifecheck 
-wd_udp_keepalive = 2;
+wd_udp_keepalive = 2
                                     # Interval time of sending UDP heartbeat signal (sec) 
 wd_udp_deadtime = 30
                                     # Deadtime interval for UDP heartbeat signal (sec) 
