@@ -782,7 +782,7 @@ wd_escalation(void)
 	rtn = wd_declare();
 	if (rtn == WD_OK)
 	{
-		pool_log("wd_escalation:  escaleted to delegate_IP holder");
+		pool_log("wd_escalation:  escalated to delegate_IP holder");
 	}
 
 	return rtn;
