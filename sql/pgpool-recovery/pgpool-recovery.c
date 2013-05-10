@@ -29,13 +29,10 @@
 #include "catalog/namespace.h"
 #include "utils/syscache.h"
 #include "utils/builtins.h"		/* PostgreSQL 8.4 needs this for textout */
-<<<<<<< HEAD
 #include "utils/guc.h"
-=======
 #if defined(PG_VERSION_NUM) && (PG_VERSION_NUM >= 90300)
 #include "access/htup_details.h"		/* PostgreSQL 9.3 or later needs this */
 #endif
->>>>>>> 641ef2ff314d2a9336a37bb29cae686fb3849346
 
 #define REMOTE_START_FILE "pgpool_remote_start"
 
