@@ -16,10 +16,11 @@
 # directory for *testing* purpose.
 # Do not use this tool for production environment!
 #
-# usage: pgpool_setup [-m r|s]
+# usage: pgpool_setup [-m r|s][-n num_clusters]
 # -m s: create an installation as streaming replication mode.
 # (the default)
 # -m r: create an installation as native replication mode.
+#-n num_clusters: create num_clusters PostgreSQL database cluster nodes
 #
 # The user run this script will become the PostgreSQL super user as
 # well.  Current directory must be empty.  Assume that appropreate
@@ -44,8 +45,8 @@
 # $BASEPORT, $BASEPORT+1 and so on.
 # pgpool port and pcp_port will be assigned afterwards.
 BASEPORT=11000
-# Number of PostgreSQL database clusters
-NUMCLUSTERS=3
+# Default number of PostgreSQL database clusters
+NUMCLUSTERS=2
 # Where to look for pgpool.conf.sample*
 PGPOOLDIR=/usr/local/etc
 # LD_LIBRARY_PATH 
@@ -544,10 +545,14 @@ function set_pgpool_conf {
 # main script
 #
 ################################################################################
+function usage()
+{
+	echo "usage: $0 [-m r|s] [-n num_clusters]";exit 1
+}
 
 #-------------------------------------------
 # Argument check
-# usage: $0 [-m r|s]"
+# usage: $0 [-m r|s] [-n num_clusters]"
 #-------------------------------------------
 #
 # default mode is streaming replication mode
@@ -560,10 +565,13 @@ do
 		case $1 in
 			r ) MODE="r";;
 			s ) MODE="s";;
-			* ) echo "usage: $0 [-m r|s]";exit 1;;
+			* ) usage;;
 		esac
+	elif [ $1 = "-n" ];then
+		shift
+		NUMCLUSTERS=$1
 	elif [ $1 = "--help" -o $1 = "-o" ];then
-		echo "usage: $0 [-m r|s]"
+		usage
 		exit
 	fi
 	shift
@@ -714,9 +722,12 @@ EOF
 	echo "temporarily start pgpool-II to create standby nodes"
 	pgpool -D -n -f $BASEDIR/etc/pgpool.conf -F $BASEDIR/etc/pcp.conf -a $BASEDIR/etc/pool_hba.conf > $BASEDIR/log/pgpool.log 2>&1 &
 
-	echo -n "waiting for failover happens..."
+	if [ $NUMCLUSTERS -gt 1 ];then
+		echo -n "waiting for failover happens..."
 # wait for failover happens
-	sleep 20
+		sleep 20
+	fi
+
 	echo "done."
 
 $PSQL -p $PGPOOL_PORT -c "show pool_nodes" test
@@ -769,6 +780,10 @@ echo "pcp port is $PCP_PORT" >> README.port
 
 echo "shutdown all"
 $SHUTDOWNALL >&5 2>&1
+
+echo "export PGPOOL_PORT=$PGPOOL_PORT" > bashrc.ports
+echo "export PCP_PORT=$PCP_PORT" >> bashrc.ports
+chmod 755 bashrc.ports
 
 echo
 echo "pgpool-II setting for $MODENAME is done."
