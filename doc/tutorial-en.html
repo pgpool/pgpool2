@@ -13,7 +13,7 @@
 <p>Welcome to the Tutorial for pgpool-II. From here, you can learn how
 to install, setup, and run parallel queries or do replication using
 pgpool-II. We assume that you already know basic PostreSQL operations,
-so please refer to the PostgreSQL document if needed.</p>
+so please refer to the PostgreSQL document if neccesary.</p>
 
 <dl>
   <dt><em>Table of Contents</em></dt>
@@ -37,7 +37,7 @@ so please refer to the PostgreSQL document if needed.</p>
 
 <h2>1. <a name="start">Let's Begin!</a></h2>
 
-<p>First, we must learn how to install, configure pgpool-II and
+<p>First, we must learn how to install and configure pgpool-II and
 database nodes before using replication or parallel query.</p>
 
 <h3>1.1. <a name="install">Installing pgpool-II</a></h3>
@@ -65,19 +65,19 @@ permission on the installation directory.</p>
 <code>/usr/local</code> directory.</p>
 
 <p><em>Note</em>: pgpool-II requires libpq library in PostgreSQL 7.4
-or later (version 3 protocol). If <code>configure</code> script
-displays the following error message, libpq library may not be
+or later (version 3 protocol). If the <code>configure</code> script
+displays the following error message, the libpq library may not be
 installed, or it is not of version 3.</p>
 
 <pre>configure: error: libpq is not installed or libpq is old</pre>
 
-<p>If the library is version 3, but above message is still displayed,
+<p>If the library is version 3, but the above message is still displayed,
 your libpq library is probably not recognized by
-<code>configure</code> script.</p>
+the <code>configure</code> script.</p>
 
-<p><code>configure</code> script searches for libpq library under
-<code>/usr/local/pgsql</code> libaray. If you have installed
-PostgreSQL to a directory other than <code>/usr/local/pgsql</code>,
+<p>The <code>configure</code> script searches for libpq library under
+<code>/usr/local/pgsql</code>. If you have installed
+PostgreSQL in a directory other than <code>/usr/local/pgsql</code>,
 use <code>--with-pgsql</code>, or <code>--with-pgsql-includedir</code>
 and <code>--with-pgsql-libdir</code> command line options when you
 execute <code>configure</code>.</p>
@@ -85,7 +85,7 @@ execute <code>configure</code>.</p>
 <h3>1.2. <a name="config">Configuration Files</a></h3>
 
 <p>pgpool-II configuration parameters are saved in
-<code>pgpool.conf</code> file. The file is in "<code>parameter =
+the <code>pgpool.conf</code> file. The file is in "<code>parameter =
 value</code>" per line format. When you install pgpool-II,
 <code>pgpool.conf.sample</code> is automatically created. We recommend
 copying and renaming it to <code>pgpool.conf</code>, and edit it as
@@ -106,12 +106,12 @@ port = 9999
 
 <h3>1.3. <a name="pcp-config">Configuring PCP Commands</a></h3>
 
-<p>pgpool-II has an interface for administration purpose to retrieve
+<p>pgpool-II has an interface for administrative purpose to retrieve
 information on database nodes, shutdown pgpool-II, etc. via
 network. To use PCP commands, user authentication is required. This
 authentication is different from PostgreSQL's user authentication. A
-username and password need to be defined in <code>pcp.conf</code>
-file. In the file, a username and password are listed as a pair on
+user name and password need to be defined in the <code>pcp.conf</code>
+file. In the file, a user name and password are listed as a pair on
 each line, and they are separated by a colon (:). Passwords are
 encrypted in md5 hash format.</p>
 
@@ -123,13 +123,13 @@ automatically created. We recommend copying and renaming it to
 </p>
 <pre>$ cp /usr/local/etc/pcp.conf.sample /usr/local/etc/pcp.conf</pre>
 
-<p>To encrypt your password into md5 hash format, use pg_md5 command,
-which is installed as a part of pgpool-II
-executables. <code>pg_md5</code> takes text as an command line
+<p>To encrypt your password into md5 hash format, use the pg_md5 command,
+which is installed as one of pgpool-II's
+executables. <code>pg_md5</code> takes text as a command line
 argument, and displays its md5-hashed text.</p>
 
-<p>For example, give "postgres" as the command line argument, at
-<code>pg_md5</code> displays md5-hashed text to the standard
+<p>For example, give "postgres" as the command line argument, and
+<code>pg_md5</code> displays md5-hashed text on its standard
 output.</p>
 
 <pre>
@@ -189,7 +189,7 @@ SELECT queries are equally distributed among three servers.</p>
 
 <p>The above command, however, prints no log messages because pgpool
 detaches the terminal. If you want to show pgpool log messages, you
-pass <code>-n</code> option to pgpool command. pgpool-II is executed
+pass <code>-n</code> option to pgpool command so pgpool-II is executed
 as non-daemon process, and the terminal will not be detached.
 </p>
 
@@ -199,37 +199,37 @@ $ pgpool -n &
 
 <p>
 The log messages are printed on the terminal, so the recommended
-options to use are like the following.
+options to use the following.
 </p>
 
 <pre>$ pgpool -n -d &gt; /tmp/pgpool.log 2&gt;&1 &</pre>
 
-<p><code>-d</code> option enables debug messages to be generated.</p>
+<p>The <code>-d</code> option enables debug messages to be generated.</p>
 
 <p>
 The above command keeps appending log messages to /tmp/pgpool.log. If
 you need to rotate log files, pass the logs to a external command
-which have log rotation function. 
+which has log rotation function. 
 
-For example, you can use rotatelogs coming with Apache2:
+For example, you can use rotatelogs from Apache2:
 <pre>
 $ pgpool -n 2>&1 | /usr/local/apache2/bin/rotatelogs \
   -l -f /var/log/pgpool/pgpool.log.%A 86400 &
 </pre>
-This will generate a log file named "pgpool.log.Thursday" everyday then
-rotate it 00:00 at midnight. Rotatelogs adds log to a file if it already
+This will generate a log file named "pgpool.log.Thursday" then
+rotate it 00:00 at midnight. Rotatelogs adds logs to a file if it already
 exists. To delete old log files before rotation, you could use cron:
 <pre>
 55 23 * * * /usr/bin/find /var/log/pgpool -type f -mtime +5 -exec /bin/rm -f '{}' \;
 </pre>
-Please note that rotaelogs may exist as /usr/sbin/rotatelogs2 in some
+Please note that rotatelogs may exist as /usr/sbin/rotatelogs2 in some
 distributions.
 -f option generates a log file as soon as rotatelogs starts and is
-available apache2 2.2.9 or greater.
+available in apache2 2.2.9 or greater.
 </p>
 <p>
 Also <a
-href="http://www.cronolog.org"><code>cronolog</code></a> helps you.
+href="http://www.cronolog.org"><code>cronolog</code></a> can be used.
 </p>
 
 <pre>
@@ -238,12 +238,12 @@ $ pgpool -n 2>&1 | /usr/sbin/cronolog \
   '/var/log/pgsql/%Y-%m-%d-pgpool.log' &
 </pre>
 
-<p>To stop pgpool-II process, execute the following command.</p>
+<p>To stop pgpool-II, execute the following command.</p>
 
 <pre>$ pgpool stop</pre>
 
-<p>If any client is still connected, pgpool-II waits for them to
-disconnect, and then terminate itself. Execute the following command
+<p>If any client is still connected, pgpool-II waits for it to
+disconnect, and then terminates itself. Run the following command
 instead if you want to shutdown pgpool-II forcibly.
 
 <pre>$ pgpool -m fast stop</pre>
@@ -256,7 +256,7 @@ nodes.</p>
 <p>In this section, we'll use three database nodes, which we have
 already set up in section "1. <a href="#start">Let's Begin!</a>", and
 takes you step by step to create a database replication system. Sample
-data to be replicated will be generated by pgbench benchmark
+data to be replicated will be generated by the pgbench benchmark
 program.</p>
 
 <h3>2.1. <a name="replication-config">Configuring Replication</a></h3>
@@ -286,11 +286,11 @@ href="#start-shutdown">Starting/Stopping pgpool-II</a>".</p>
 
 <p>After configuring <code>pgpool.conf</code> and restarting
 pgpool-II, let's try the actual replication and see if everything is
-working OK.</p>
+working.</p>
 
 <p>First, we need to create a database to be replicated. We will name
 it "bench_replication". This database needs to be created on all the
-nodes. Use <code>createdb</code> commands through pgpool-II, and the
+nodes. Use the <code>createdb</code> commands through pgpool-II, and the
 database will be created on all the nodes.</p>
 
 <pre>$ createdb -p 9999 bench_replication</pre>
@@ -344,9 +344,9 @@ branches, tellers, accounts, and history tables on all the nodes (5432,
 
 <h2>3. <a name="parallel">Your First Parallel Query</a></h2>
 <p>
-Data within the different range is stored in two or more data base nodes in a parallel Query. This is called a partitioning. 
+Data within the range is stored in two or more data base nodes in a parallel Query. This is called a partitioning. 
 Moreover you could replicate some of tables among database nodes even
-in the parallel query mode.
+in parallel query mode.
 </p>
 
 <p>To enable parallel query in pgpool-II, you must set up another
@@ -382,10 +382,11 @@ configured so that pgpool-II accepts those connections.</p>
 Attention: The replication is not done for the table that does the partitioning
 though a parallel Query and the replication can be made effective at the same time. 
 
+<p>
 Attention: You can have both partitioned tables and replicated
-tables. However a table cannot be a partioned and replicated one at
+tables. However a table cannot be a partioned and replicated at
 the same time. Because the data structure of partioned tables and
-replicated tables are different, "bench_replication" database created
+replicated tables is different, "bench_replication" database created
 in section "2. <a href="#replication">Your First Replication</a>"
 cannot be reused in parallel query mode.</p>
 
@@ -407,13 +408,13 @@ load_balance_mode = true
 <h3>3.2. <a name="system-db">Configuring SystemDB</a></h3>
 
 <p> "System database" is just an ordinaly database. The only
-requirement is, dblink functions and the dist_def table, which
+requirement is that dblink functions and the dist_def table, which
 describes partioning rule, must be installed in the system
-database. You could have system database on a database node, or you
-could have multiple node having system database by using cascade
-configuration of pgpool-II.  </p>
+database. You could have a system database on a database node, or you
+could have multiple nodes having system database by using cascade
+configuration in pgpool-II.  </p>
 
-<p>In this section, we will create SystemDB within the 5432 port
+<p>In this section, we will create SystemDB on the 5432 port
 node. The following list is the configuration parameters for
 SystemDB</p>
 
@@ -438,7 +439,7 @@ $ createdb -p 5432 -O pgpool pgpool
 <h4><p>3.2.1. Installing dblink</p></h4>
 
 <p>Next, we must install dblink into "pgpool" database. dblink is one
-of the tools included in <code>contrib</code> directory in the
+of the tools included in the <code>contrib</code> directory in the
 PostgreSQL source code.</p>
 
 <p>To install dblink to your system, execute the following commands.</p>
@@ -449,7 +450,7 @@ $ USE_PGXS=1 make -C contrib/dblink install
 </pre>
 
 <p>After dblink has been installed into your system, we will define
-dblink functions in "pgpool" database. If PostgreSQL is installed in
+dblink functions in the "pgpool" database. If PostgreSQL is installed in
 <code>/usr/local/pgsql</code>, <code>dblink.sql</code> (a file with
 function definitions) should have been installed in
 <code>/usr/local/pgsql/share/contrib</code>. Now, execute the
@@ -498,7 +499,7 @@ CREATE TABLE pgpool_catalog.dist_def (
 
 <p>A distribution rule decides how to distribute data to a
 particular node. Data will be distributed depending on the value of
-"col_name" column. "dist_def_func" is a function that takes the value
+the "col_name" column. "dist_def_func" is a function that takes the value
 of "col_name" as its argument, and returns an integer which
 points to the appropriate database node ID where the data should be
 stored.</p>
@@ -510,7 +511,7 @@ nodes can be merged into one result.</p>
 <h4><p>3.2.3. Defining replicate_def table</p></h4>
 <p>
 If you want to use replicated tables in SELECT in parallel mode, you
-need to register information of such tables(replication rule) to a table
+need to register information about such tables(replication rule) to a table
 called replicate_def.
 The replicate_def table has already been made when making it from the 
 system_db.sql file when dist_def is defined. 
@@ -530,7 +531,7 @@ CREATE TABLE pgpool_catalog.replicate_def (
 replicate_def includes table's meta data information(dbname, schema_name, table_name, col_list, type_list).
 </p>
 <p>
-All the query analysis and query rewriting process are depending on the
+All the query analysis and query rewriting process are dependent on the
 information (table, column and type) stored in dist_def and/or
 replicate_def table.  If the information is not correct, analysis and
 query rewriting process will produce wrong results.
@@ -543,7 +544,7 @@ sample data into three database nodes. The sample data will be created
 by "pgbench -i -s 3" (i.e. scale factor of 3). We will create a new
 database called "bench_parallel" for this section.</p>
 
-<p>In pgpool-II's source code, you can find
+<p>In pgpool-II's source code, you can find the
 <code>dist_def_pgbench.sql</code> file in <code>sample</code>
 directoy. We will use this sample file here to create distribution
 rules for pgbench. Execute the following command in extracted
@@ -556,7 +557,7 @@ pgpool-II source code directory.</p>
 <p>Inside <code>dist_def_pgbench.sql</code>, we are inserting one
 row into "dist_def" table. There is a distribution
 function for accounts table. 
-For key-column, aid is defined for accounts respectively (which is primary keys)</p>
+For the key-column, aid is defined for accounts respectively (which is the primary keys)</p>
 
 <pre>
 INSERT INTO pgpool_catalog.dist_def VALUES (
@@ -570,7 +571,7 @@ INSERT INTO pgpool_catalog.dist_def VALUES (
 );
 </pre>
 
-<p>Now, we must define the distribution function for accounts table. Note
+<p>Now, we must define the distribution function for the accounts table. Note
 that you can use the same function from different tables. Also, you
 can define functions using languages other than SQL (e.g. PL/pgSQL,
 PL/Tcl, etc.).</p>
@@ -581,7 +582,7 @@ The value of the aid is 1 to 300000.
 The function is defined so that data is evenly distributed to three data base nodes. 
 </p>
 <p>
-SQL function will be defined as the return of the number of the data base node. 
+An SQL function will be defined as the return of the number of the data base node. 
 </p>
 
 </p>
@@ -638,12 +639,12 @@ be restarted. Please refer to section "1.5 <a
 href="#start-shutdown">Starting/Stopping pgpool-II</a>".</p>
 
 <p>After configuring <code>pgpool.conf</code> and restarting
-pgpool-II, let's try and see if parallel query is working OK.</p>
+pgpool-II, let's try and see if parallel query is working.</p>
 
 <p>First, we need to create a database to be distributed. We will name
 it "bench_parallel". This database needs to be created on all the
-nodes. Use <code>createdb</code> commands through pgpool-II, and the
-database will be created on all the nodes.</p>
+nodes. Use the <code>createdb</code> commands through pgpool-II, and the
+databases will be created on all the nodes.</p>
 
 <pre>$ createdb -p 9999 bench_parallel</pre>
 

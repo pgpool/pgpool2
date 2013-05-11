@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Fri Mar 15 18:02:22 JST 2013
+Last modified: Sat May 11 17:47:15 JST 2013
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -374,7 +374,7 @@ can collect pgpool-II status, and terminate pgpool-II processes remotely.
 authentication by this interface. All operation modes require the
 <code>pcp.conf</code> file to be set. A <code>$prefix/etc/pcp.conf.sample</code>
 file is created during the installation of pgpool-II. Rename the file to
-<code>pcp.conf</code> and add your username and password to it.
+<code>pcp.conf</code> and add your user name and password to it.
 </p>
 
 <pre>
@@ -382,7 +382,7 @@ cp $prefix/etc/pcp.conf.sample $prefix/etc/pcp.conf
 </pre>
 <p>
 An empty line or a line starting with "<code>#</code>" is treated as a
-comment and will be ignored. A username and its associated password must be
+comment and will be ignored. A user name and its associated password must be
 written as one line using the following format:
 </p>
 <pre>
@@ -1209,7 +1209,7 @@ Following parameters take effect to connection pool.</p>
     <dd>
     <p>The maximum number of cached connections in pgpool-II children processes.
     pgpool-II reuses the cached connection if an incoming connection is
-    connecting to the same database with the same username.
+    connecting to the same database with the same user name.
     If not, pgpool-II creates a new connection to the backend.
     If the number of cached connections exceeds max_pool,
     the oldest connection will be discarded, and uses that slot for the new connection.
@@ -1477,7 +1477,7 @@ COMMIT;
     (more precisely, access error on pg_clog, which keeps transaction status).
     To prevent this, PostgreSQL core developers decided to disallow row locking
     against sequences and this will break pgpool-II of course
-    (the &quot;fixed&quot; version of PostgreSQL will be released as 9.0.5,
+    (the &quot;fixed&quot; version of PostgreSQL was released as 9.0.5,
     8.4.9, 8.3.16 and 8.2.22).
     </p>
     <p>
@@ -1526,7 +1526,7 @@ end of transaction block
 <dt><a name="RECOVERY_USER"></a>recovery_user</dt>
     <dd>
     <p>
-    This parameter specifies a PostgreSQL username for online recovery.
+    This parameter specifies a PostgreSQL user name for online recovery.
     It can be changed without restarting.
     </p>
     </dd>
@@ -2258,7 +2258,7 @@ pgpool-II. The System DB's configuration is done in
 
 <dt><a name="SYSTEM_DB_USER"></a>system_db_user</dt>
     <dd>
-    <p>The username to connect to the System DB.</p>
+    <p>The user name to connect to the System DB.</p>
     </dd>
 
 <dt><a name="SYSTEM_DB_PASSWORD"></a>system_db_password</dt>
@@ -2429,7 +2429,7 @@ Here are the limitations of pool_hba.
 <ul>
 <li>"hostssl" connection type is not supported</li>
     <p>
-    Though "hostssl" is invalid, pgpool-II 2.3 or later supports SSL.
+    Even if the SSL support is enabled, "hostssl" cannot be used.
     See <a href="#ssl">SSL</a> for more details.
     </p>
 
@@ -3650,9 +3650,9 @@ The procedure to update primary PostgreSQL server is as follows:
 
 <h1><a name="backup"></a>Backup</h1>
 <p>
-To back up backend PostgreSQL servers and system DB, you can physical
+To back up backend PostgreSQL servers and system DB, you can use physical
 backup, logical backup (pg_dump, pg_dumpall) and PITR in the same manner as PostgreSQL.
-Please note that using logical backup and PITR should be performed directory PostgreSQL,
+Please note that using logical backup and PITR should be performed directory with PostgreSQL,
 rather than via pgpool-II to avoid errors caused by <a href="#LOAD_BALANCE_MODE">load_balance_mode</a> and
 <a href="#REPLICATE_SELECT">replicate_select</a>.
 </p>
@@ -3721,9 +3721,9 @@ to make those deployments and pros and cons.
     <p>
     Pgpool-II is running on a dedicated server.
     It's simple and pgpool-II is not affected by other server softwares.
-    Obvious cons is you need to by more hardware.
+    Obvious cons is you need to buy more hardware.
     Also pgpool-II can be a single point of failure with this configuration
-    (you can avoid this by using pgpool-HA described somewhere below).
+    (you can avoid this by using pgpool-HA described described below).
     </p>
     </dd>
 
@@ -3733,7 +3733,7 @@ to make those deployments and pros and cons.
     Deploying pgpool-II on a server where Apache, JBoss, Tomcat or other web
     server and application servers.
     Since communication between pgpool-II and web servers and application servers
-    is within a local machine, socket communication can be faster than inter sever communication.
+    is within a local machine, socket communication can be faster than inter-sever communication.
     Also if you are using multiple web serves or application servers, you can avoid
     the single point of failure problem
     (in this case you must have identical pgpool.conf on each pgpool-II instance).
@@ -3760,7 +3760,7 @@ to make those deployments and pros and cons.
     Running pgpool-II on the server as PostgreSQL is running on.
     You can avoid the single point of failure problem of pgpool-II with configuration.
     And obviously you do need to buy additional dedicated server.
-    Problem with this configuration is, application need to aware that which DB server they should connect to.
+    Problem with this configuration is, application need to aware of which DB server they should connect to.
     To solve the problem you can use virtual IP with pgpool-HA.
     </p>
     </dd>
@@ -3768,9 +3768,9 @@ to make those deployments and pros and cons.
 
 <h2 id="pgpool_ha">About pgpool-HA</h2>
 <p>
-Pgpool-HA is a high availability software for pgpool-II using hearbeat.
-Pgpool-HA is a sub project of pgpool project as well as pgpool-II.
-Pgpool-HA can be available from pgpool development site as an open source software.
+Pgpool-HA is a high availability software for pgpool-II using heartbeat.
+Pgpool-HA is a sub-project of the pgpool project as well as pgpool-II.
+Pgpool-HA can be available from the pgpool development site as an open source software.
 </p>
 
 <p class="top_link"><a href="#Top">back to top</a></p>
@@ -3780,7 +3780,7 @@ Pgpool-HA can be available from pgpool development site as an open source softwa
 <h1 id="watchdog">Watchdog <span class="version">V3.2 -</span></h1>
 
 <p>
-"Watchdog" is a sub process of pgpool-II aiming for adding high availability feature to it.
+"Watchdog" is a sub process of pgpool-II to add high availability.
 Features added by watchdog include:
 </p>
 
@@ -3793,9 +3793,9 @@ Features added by watchdog include:
     by watchdog and watchdog checks the response.
     </p>
     <p>
-    Also watchdog monitors connections to up stream servers
+    Also watchdog monitors connections to upstream servers
     (application servers etc.) from the pgpool.
-    The connection between the up stream servers and the pgpool is monitored as service of pgpool.
+    The connection between the upstream servers and the pgpool is monitored as a service of pgpool.
     </p>
     </dd>
 
@@ -3812,7 +3812,7 @@ Features added by watchdog include:
     <dd>
     <p>
     When a fault is detected in the pgpool service, watchdog notifies the other watchdogs of it.
-    Watchdogs decide the new active pgpool if previous active pgpool is broken
+    Watchdogs then decide the new active pgpool if previous active pgpool is broken
     by voting and change active/standby state.
     </p>
     </dd>
@@ -3822,7 +3822,7 @@ Features added by watchdog include:
     <p>
     When a standby pgpool server promotes to active, the new active server brings up virtual IP interface.
     Meanwhile, the previous active server brings down the virtual IP interface.
-    This enables the active pgpool to work using the same IP address even when servers is switched over.
+    This enables the active pgpool to work using the same IP address even when servers are switched.
     </p>
     </dd>
 
@@ -3832,7 +3832,7 @@ Features added by watchdog include:
     When broken server recovers or new server is attached,
     the watchdog process notifies the other watchdog process along with information of the new server,
     and the watchdog process receives information on the active server and other servers.
-    Then, the attached server is registered as standby.
+		Then, the attached server is registered as a standby.
     </p>
     </dd>
 </dl>
@@ -3857,7 +3857,7 @@ The life checking starts after waiting for all of the pgpools to start.
 
 <h2>Configuring watchdog (pgpool.conf)</h2>
 <p>
-Watchdog configuration parameters is described in pgpool.conf.
+Watchdog configuration parameters are described in pgpool.conf.
 There is sample configuration in WATCHDOG section in pgpool.conf.sample file.
 </p>
 <p>
@@ -4509,7 +4509,7 @@ be performed inside the functions.</p>
 <h3>Extended Query Protocol (for parallel mode)</h3>
 
 <p>The extended query protocol used by JDBC drivers, etc. is not
-supported. The simple query protocol must be used. This means you can't use
+supported. The simple query protocol must be used. This means you cannot use
 prepared statements.</p>
 
 <h3 id="ng_natural_join">Natural Join (for parallel mode)</h3>
@@ -4632,7 +4632,7 @@ fail. Also, the System DB must be PostgreSQL 7.4 or later.</p>
 <h2 id="caution_query_cache">Query Cache</h2>
 
 <p>With <a href="#query_cache">on disk query cache, invalidation must be done manually.
-This does not apply to <a href="#memqcache">on memory query cache</a>. Cacche invalidation is automatically done with on memory query cache.</p>
+This does not apply to <a href="#memqcache">on memory query cache</a>. Cache invalidation is automatically done with on memory query cache.</p>
 
 <h2>Compatibility with pgpool</h2>
 
@@ -4684,11 +4684,11 @@ First argument    - timeout value in seconds. PCP disconnects if
                     pgpool-II does not respond in this many seconds.
 Second argument   - pgpool-II's hostname
 Third argument    - PCP port number
-Fourth argument   - PCP username
+Fourth argument   - PCP user name
 Fifth argument    - PCP password
 </pre>
 
-<p>PCP usernames and passwords must be declared in
+<p>PCP user names and passwords must be declared in
 <code>pcp.conf</code> in <code>$prefix/etc</code>
 directory. <code>-F</code> option can be used when starting pgpool-II
 if <code>pcp.conf</code> is placed somewhere else. The password does
@@ -4787,7 +4787,7 @@ postgres_db postgres 1150769932 1150767351 3 0 1 1468 1
 
 The result is in the following order:
 1. connected database name
-2. connected username
+2. connected user name
 3. process start-up timestamp
 4. connection created timestamp
 5. protocol major version
@@ -4879,7 +4879,7 @@ First, the System DB information will be displayed on the first
 line. The result is in the following order:
 1. hostname
 2. port number
-3. username
+3. user name
 4. password. '' for no password.
 5. schema name
 6. database name
@@ -5012,7 +5012,7 @@ error had occurred, it will exit with the following error status.
 
 <!-- ================================================================================ -->
 
-<h1>Inside information<a name="internal"></a></h1>
+<h1>Internal information<a name="internal"></a></h1>
 <p>
 pgpool-II version 2.0.x brings extensive modifications, compared with the version 1.x
 Please note that what follows doesn't apply to version 1.x.
