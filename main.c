@@ -931,6 +931,7 @@ static void daemonize(void)
 	write_pid_file();
 	rc_chdir = chdir("/");
 
+	/* redirect stdin, stdout and stderr to /dev/null */
 	i = open("/dev/null", O_RDWR);
 	dup2(i, 0);
 	dup2(i, 1);
@@ -941,6 +942,7 @@ static void daemonize(void)
 		closelog();
 	}
 
+	/* close other file descriptors */
     fdlimit = sysconf(_SC_OPEN_MAX);
     for (i = 3; i < fdlimit; i++)
 		close(i);
@@ -1418,6 +1420,8 @@ static void myexit(int code)
 				kill(pid, SIGTERM);
 			}
 		}
+
+		/* wait for all children to exit */
 		while (wait(NULL) > 0)
 			;
 		if (errno != ECHILD)
