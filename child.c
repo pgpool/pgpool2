@@ -125,7 +125,7 @@ void do_child(int unix_fd, int inet_fd)
 	signal(SIGPIPE, SIG_IGN);
 
 #ifdef NONE_BLOCK
-	/* set listen fds to none block */
+	/* set listen fds to none-blocking */
 	pool_set_nonblock(unix_fd);
 	if (inet_fd)
 	{
