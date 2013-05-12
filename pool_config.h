@@ -247,7 +247,10 @@ typedef struct {
 	int wd_udp_port;					/* Port number for UDP heartbeat lifecheck */
 	int wd_udp_keepalive;				/* Interval time of sending UDP heartbeat signal (sec) */
 	int wd_udp_deadtime;				/* Deadtime interval for UDP heartbeat signal (sec) */
+	WdUdpIf udp_if[WD_MAX_IF_NUM];		/* interface devices */
+	int num_udp_if; 					/* number of interface devices */
 } POOL_CONFIG;
+
 typedef enum {
 	INIT_CONFIG = 1,   /* 0x01 */
 	RELOAD_CONFIG = 2  /* 0x02 */

@@ -39,7 +39,7 @@
 #define WD_MAX_IF_NAME_LEN (16)
 
 #define WD_INFO(wd_id) (pool_config->other_wd->wd_info[(wd_id)])
-#define WD_UDP_IF(if_id) (pool_config->other_wd->udp_if[(if_id)])
+#define WD_UDP_IF(if_id) (pool_config->udp_if[(if_id)])
 
 #define WD_MYSELF (WD_List)
 
@@ -160,9 +160,6 @@ typedef struct {
 typedef struct {
 	int num_wd;		/* number of watchdogs */
 	WdInfo wd_info[MAX_WATCHDOG_NUM];
-
-	int num_udp_if; /* number of interface devices */
-	WdUdpIf udp_if[WD_MAX_IF_NUM];
 } WdDesc;
 
 /*

@@ -308,8 +308,8 @@ wd_is_alive_master(void)
 	master = wd_is_exist_master();
 	if (master != NULL)
 	{
-		if (!strcmp(pool_config->watchdog_mode, "udp") ||
-		    (!strcmp(pool_config->watchdog_mode, "query") &&
+		if (!strcmp(pool_config->watchdog_mode, MODE_UDP) ||
+		    (!strcmp(pool_config->watchdog_mode, MODE_QUERY) &&
 			 wd_ping_pgpool(master) == WD_OK))
 		{
 			return master;

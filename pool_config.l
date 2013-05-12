@@ -233,6 +233,7 @@ int pool_init_config(void)
 	 * add for watchdog
 	 */
 	pool_config->use_watchdog = 0;
+	pool_config->watchdog_mode = MODE_UDP;
 	pool_config->clear_memqcache_on_escalation = 1;	
     pool_config->wd_escalation_command = "";
 	pool_config->trusted_servers = "";
@@ -245,8 +246,8 @@ int pool_init_config(void)
 	pool_config->wd_hostname = localhostname;
 	pool_config->wd_port = 9000;
 	pool_config->other_wd->num_wd = 0;
-	pool_config->other_wd->num_udp_if = 0;
 	pool_config->wd_interval = 10;
+	pool_config->wd_authkey = "";
 	pool_config->ping_path = "/bin";
 	pool_config->ifconfig_path = "/sbin";
 	pool_config->if_up_cmd = "ifconfig eth0:0 inet $_IP_$ netmask 255.255.255.0";
@@ -258,12 +259,10 @@ int pool_init_config(void)
 	pool_config->wd_lifecheck_dbname = "template1";
 	pool_config->wd_lifecheck_user = "nobody";
 	pool_config->wd_lifecheck_password = "";
-
-	pool_config->watchdog_mode = "udp";
+	pool_config->wd_udp_port = 9694;
 	pool_config->wd_udp_keepalive = 2;
 	pool_config->wd_udp_deadtime = 30;
-	pool_config->wd_udp_port = 9694;
-	pool_config->wd_authkey = "";
+	pool_config->num_udp_if = 0;
 
     pool_config->memory_cache_enabled = 0;
     pool_config->memqcache_method = "shmem";
@@ -2385,7 +2384,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			if (context == INIT_CONFIG || (context == RELOAD_CONFIG ))
 			{
 				strlcpy(WD_UDP_IF(slot).if_name, str, WD_MAX_IF_NAME_LEN);
-				pool_config->other_wd->num_udp_if = slot + 1;
+				pool_config->num_udp_if = slot + 1;
 			}
 
 		}

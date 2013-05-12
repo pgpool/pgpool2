@@ -630,6 +630,21 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].desc, "non 0 if operating in use_watchdog", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	strncpy(status[i].name, "watchdog_mode", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->watchdog_mode);
+	strncpy(status[i].desc, "mode of watchdog lifecheck", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "clear_memqcache_on_escalation", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->clear_memqcache_on_escalation);
+	strncpy(status[i].desc, "If true, clear all the query caches in shared memory when escalation occurs", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "wd_escalation_command", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->wd_escalation_command);
+	strncpy(status[i].desc, "command executed when escalation occurs", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	strncpy(status[i].name, "trusted_servers", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->trusted_servers);
 	strncpy(status[i].desc, "upper server list to observe connection", POOLCONFIG_MAXDESCLEN);
@@ -683,6 +698,21 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].name, "arping_cmd", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->arping_cmd);
 	strncpy(status[i].desc, "send ARP REQUESTi to neighbour host", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "wd_udp_port", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_udp_port);
+	strncpy(status[i].desc, "port number for UDP heartbeat lifecheck", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "wd_udp_keepalive", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_udp_keepalive);
+	strncpy(status[i].desc, "interval time of sending UDP heartbeat siganl (sec)", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "wd_udp_deadtime", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_udp_deadtime);
+	strncpy(status[i].desc, "deadtime interval for UDP heartbeat siganl (sec)", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "wd_life_point", POOLCONFIG_MAXNAMELEN);
@@ -873,6 +903,19 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "pgpool #%d watchdog port number", j);
 		i++;
 
+	}
+
+	for (j =0; j < pool_config->num_udp_if; j++)
+	{
+		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "udp_device%d", j);
+		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", WD_UDP_IF(j).if_name);
+		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "name of NIC device #%d for sending hearbeat", j);
+		i++;
+
+		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "udp_destination%d", j);
+		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", WD_UDP_IF(j).addr);
+		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "destination for sending heartbeat using NIC device %d", j);
+		i++;
 	}
 
 	*nrows = i;

@@ -60,7 +60,7 @@ is_wd_lifecheck_ready(void)
 	while (p->status != WD_END)
 	{
 		/* query mode */
-		if (!strcmp(pool_config->watchdog_mode, "query"))
+		if (!strcmp(pool_config->watchdog_mode, MODE_QUERY))
 		{
 			if (wd_ping_pgpool(p) == WD_NG)
 			{
@@ -70,7 +70,7 @@ is_wd_lifecheck_ready(void)
 			}
 		}
 		/* udp mode */
-		else if (!strcmp(pool_config->watchdog_mode, "udp"))
+		else if (!strcmp(pool_config->watchdog_mode, MODE_UDP))
 		{
 			if (p == WD_List)
 			{
@@ -154,12 +154,12 @@ static void
 check_pgpool_status()
 {
 	/* query mode */
-	if (!strcmp(pool_config->watchdog_mode, "query"))
+	if (!strcmp(pool_config->watchdog_mode, MODE_QUERY))
 	{
 		check_pgpool_status_by_query();
 	}
 	/* udp heartbeat mode */
-	else if (!strcmp(pool_config->watchdog_mode, "udp"))
+	else if (!strcmp(pool_config->watchdog_mode, MODE_UDP))
 	{
 		check_pgpool_status_by_udp();
 	}

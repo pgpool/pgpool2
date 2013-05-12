@@ -82,9 +82,9 @@ wd_kill_watchdog(int sig)
 	kill (lifecheck_pid, sig);
 	kill (child_pid, sig);
 
-	if (!strcmp(pool_config->watchdog_mode, "udp"))
+	if (!strcmp(pool_config->watchdog_mode, MODE_UDP))
 	{
-		for (i = 0; i < pool_config->other_wd->num_udp_if; i++)
+		for (i = 0; i < pool_config->num_udp_if; i++)
 		{
 			kill (reader_pid[i], sig);
 			kill (writer_pid[i], sig);
@@ -154,12 +154,12 @@ wd_main(int fork_wait_time)
 		return 0;
 	}
 
-	if (!strcmp(pool_config->watchdog_mode, "udp"))
+	if (!strcmp(pool_config->watchdog_mode, MODE_UDP))
 	{
-		for (i = 0; i < pool_config->other_wd->num_udp_if; i++)
+		for (i = 0; i < pool_config->num_udp_if; i++)
 		{
 			/* reader process */
-			reader_pid[i] = wd_reader(1, pool_config->other_wd->udp_if[i]);
+			reader_pid[i] = wd_reader(1, pool_config->udp_if[i]);
 			if (reader_pid[i] < 0 )
 			{
 				pool_error("launch wd_reader failed");
@@ -167,7 +167,7 @@ wd_main(int fork_wait_time)
 			}
 
 			/* writer process */
-			writer_pid[i] = wd_writer(1, pool_config->other_wd->udp_if[i]);
+			writer_pid[i] = wd_writer(1, pool_config->udp_if[i]);
 			if (writer_pid[i] < 0 )
 			{
 				pool_error("launch wd_writer failed");
@@ -251,7 +251,7 @@ wd_is_watchdog_pid(pid_t pid)
 		return 1;
 	}
 
-	for (i = 0; i < pool_config->other_wd->num_udp_if; i++)
+	for (i = 0; i < pool_config->num_udp_if; i++)
 	{
 		if (pid == reader_pid[i] || pid == writer_pid[i])
 		{
@@ -310,7 +310,7 @@ wd_reaper_watchdog(pid_t pid, int status)
 	/* exiting process was reader/writer process */
 	else
 	{
-		for (i = 0; i < pool_config->other_wd->num_udp_if; i++)
+		for (i = 0; i < pool_config->num_udp_if; i++)
 		{
 			if (pid == reader_pid[i])
 			{
@@ -320,7 +320,7 @@ wd_reaper_watchdog(pid_t pid, int status)
 				else
 					pool_debug("watchdog reader process %d exits with status %d", pid, status);
 
-				reader_pid[i] = wd_reader(1, pool_config->other_wd->udp_if[i]);
+				reader_pid[i] = wd_reader(1, pool_config->udp_if[i]);
 
 				if (reader_pid[i] < 0)
 				{
@@ -340,7 +340,7 @@ wd_reaper_watchdog(pid_t pid, int status)
 				else
 					pool_debug("watchdog writer process %d exits with status %d", pid, status);
 
-				writer_pid[i] = wd_writer(1, pool_config->other_wd->udp_if[i]);
+				writer_pid[i] = wd_writer(1, pool_config->udp_if[i]);
 
 				if (writer_pid[i] < 0)
 				{
