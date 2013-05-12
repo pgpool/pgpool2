@@ -191,54 +191,11 @@ wd_create_send_socket(char * hostname, int port)
 	/* try to connect */
 	for (;;)
 	{
-		fd_set wmask;
-		fd_set emask;
-		struct timeval timeout;
-		int sockErrVal = 0;
-		int rtn;
-		socklen_t sockErrValLen = sizeof(int);
-
-		timeout.tv_sec = WD_SEND_TIMEOUT;
-		timeout.tv_usec = 0;
-
-		FD_ZERO(&wmask);
-		FD_ZERO(&emask);
-		FD_SET(sock,&wmask);
-		FD_SET(sock,&emask);
-
-		rtn = select(sock+1, NULL, &wmask, &emask, &timeout );
-		if ( rtn < 0 )
+		if (connect(sock,(struct sockaddr*)&addr, len) < 0)
 		{
-			if ( errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK )
-			{
+			if (errno == EINTR)
 				continue;
-			}
-			/* connection failed */
-			break;
-		}
-		else if ( rtn == 0 )
-		{
-			/* timeout */
-			break;
-		}
-		else if ( FD_ISSET(sock, &emask) )
-		{
-			/* socket exception occured */
-			break;
-		}
-
-		if ( getsockopt(sock, SOL_SOCKET, SO_ERROR, (void*)&sockErrVal, &sockErrValLen) == 0 && sockErrVal != 0 )
-		{
-			/* error occured on this socket while connecting to target */
-			break;
-		}
-
-		rtn = connect(sock,(struct sockaddr*)&addr, len);
-		if ( rtn < 0 )
-		{
-			if ( errno == EINPROGRESS || errno == EALREADY || errno == EWOULDBLOCK || errno == EINTR || errno == 0 )
-				continue;
-			else if ( errno == EISCONN )
+			else if (errno == EISCONN)
 			{
 				return sock;
 			}
