@@ -461,7 +461,6 @@ wd_interval = 10
                                     # (change requires restart)
 wd_authkey = ''
                                     # Authentication key for watchdog communication 
-
 ping_path = '/bin'
                                     # ping command path
                                     # (change requires restart)
