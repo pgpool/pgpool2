@@ -270,7 +270,7 @@ wd_send_response(int sock, WdPacket * recv_pack)
 			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), WD_DOWN);
 			send_packet.packet_no = WD_READY;
 			memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
-			if (wd_am_I_oldest() == WD_OK)
+			if (wd_am_I_oldest() == WD_OK && WD_MYSELF->status != WD_MASTER)
 			{
 				wd_escalation();
 			}

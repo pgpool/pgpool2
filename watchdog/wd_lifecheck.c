@@ -120,7 +120,7 @@ wd_lifecheck(void)
 		pool_error("wd_lifecheck: failed to connect to any trusted servers");
 
 		/* This server connection may be downed */
-		if (WD_List->status == WD_MASTER)
+		if (WD_MYSELF->status == WD_MASTER)
 		{
 			wd_IP_down();
 		}
@@ -139,7 +139,7 @@ wd_lifecheck(void)
 	check_pgpool_status();
 
 	/* I'm in down.... */
-	if (WD_List->status == WD_DOWN)
+	if (WD_MYSELF->status == WD_DOWN)
 	{
 		pool_error("wd_lifecheck: watchdog status is DOWN. You need to restart this for recovery.");
 	}
@@ -181,9 +181,9 @@ check_pgpool_status_by_udp(void)
 		pool_debug("check_pgpool_status_by_udp: checking pgpool %d (%s:%d)",
 		           cnt, p->hostname, p->pgpool_port);
 
-		if (p == WD_List)
+		if (p == WD_MYSELF)
 		{
-			if (is_parent_alive() == WD_NG && WD_List->status != WD_DOWN)
+			if (is_parent_alive() == WD_NG && WD_MYSELF->status != WD_DOWN)
 			{
 				pool_debug("check_pgpool_status_by_udp: NG; the main pgpool process does't exist.");
 				pool_log("check_pgpool_status_by_udp: lifecheck failed. pgpool %d (%s:%d) seems not to be working",
@@ -297,7 +297,7 @@ check_pgpool_status_by_query(void)
 				         pool_config->wd_life_point, i, p->hostname, p->pgpool_port);
 
 				if ((i == 0) &&
-					(WD_List->status != WD_DOWN))
+					(WD_MYSELF->status != WD_DOWN))
 				{
 					wd_set_myself(&tv, WD_DOWN);
 					wd_notice_server_down();
@@ -371,12 +371,14 @@ create_conn(char * hostname, int port)
 	return conn;
 }
 
+/* handle other pgpool's down */
 static int
 pgpool_down(WdInfo * pool)
 {
 	int rtn = WD_DOWN;
 
-	if ((WD_List->status == WD_NORMAL) &&
+	/* the active pgpool goes down */
+	if ((WD_MYSELF->status == WD_NORMAL) &&
 		(pool->status == WD_MASTER))
 	{
 		pool->status = WD_DOWN;
