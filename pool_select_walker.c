@@ -739,7 +739,7 @@ bool pool_has_pgpool_regclass(void)
 /*
  * Query to know if pgpool_regclass exists.
  */
-#define HASPGPOOL_REGCLASSQUERY "SELECT count(*) FROM pg_catalog.pg_proc AS p WHERE p.proname = 'pgpool_regclass' AND has_function_privilege('%s', 'pgpool_regclass(cstring)', 'execute')"
+#define HASPGPOOL_REGCLASSQUERY "SELECT count(*) from (SELECT has_function_privilege('%s', 'pgpool_regclass(cstring)', 'execute') WHERE EXISTS(SELECT * FROM pg_catalog.pg_proc AS p WHERE p.proname = 'pgpool_regclass')) AS s"
 
 	bool result;
 	static POOL_RELCACHE *relcache;
