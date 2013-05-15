@@ -610,7 +610,7 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
     <dd>
     <p>
     Specify the file name of pool_passwd for md5 authentication.
-    Default value is "pool_passwd". "" disables to read pool_passwd. 
+    Default value is "pool_passwd". "" disables to read pool_passwd.
     See <a href="#md5">Authentication / Access Controls</a> for more details.
     </p>
     <p>
@@ -1691,7 +1691,7 @@ must be met:
 </p>
 <ul>
     <li>PostgreSQL version 7.4 or later</li>
-	<li>either in replication mode or master slave mode</li>
+    <li>either in replication mode or master slave mode</li>
     <li>the query must not be in an explicitly declared
         transaction (i.e. not in a BEGIN ~ END block) when operated in replication mode</li>
     <li>it's not SELECT INTO
@@ -1700,18 +1700,18 @@ must be met:
      ignore_leading_white_space = true will ignore leading white space.
      (Except for SELECTs using writing functions specified in <a href="#BLACK_FUNCTION_LIST">black_list</a> or
      <a href="#WHITE_FUNCTION_LIST">white_list</a>)
-	<li><span class="version">V3.0 -</span>in master slave mode, in addition to above, following conditions must be met:
-		<ul>
-		  <li>does not use temporary tables</li>
-		  <li>does not use unlogged tables</li>
-		  <li>does not use system catalogs</li>
-		  <li>However, if following conditions are met, load balance is possible even if in an explicit transaction</li>
-			  <ul>
-				<li>transaction isolation level is not SERIALIZABLE</li>
-				<li>the transaction has not issued a write query yet(until a write query issued, load balance is possible)</li>
-			  </ul>
-		</ul>
-	</li>
+    <li><span class="version">V3.0 -</span>in master slave mode, in addition to above, following conditions must be met:
+        <ul>
+          <li>does not use temporary tables</li>
+          <li>does not use unlogged tables</li>
+          <li>does not use system catalogs</li>
+          <li>However, if following conditions are met, load balance is possible even if in an explicit transaction</li>
+              <ul>
+                <li>transaction isolation level is not SERIALIZABLE</li>
+                <li>the transaction has not issued a write query yet(until a write query issued, load balance is possible)</li>
+              </ul>
+        </ul>
+    </li>
 
 </ul>
 
@@ -2684,13 +2684,13 @@ These are the parameters used with both of shmem and memcached.
     <p>
     Specify a comma separated list of table names whose SELECT results are to be cached even if
     they are VIEWs or unlogged tables. You can use regular expression (to which added automatically ^ and $).
-	</p>
+    </p>
     <p>
     TABLEs and VIEWs in both of white_memqcache_table_list and
     <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a> are cached.
     </p>
-	<p>
-	You need to add both non schema qualified name and schema qualified name if you plan to use both of them in your query. For exmaple, if you want to use both "table1" and "public.table1" in your query, you need to add "table1,public.table1", not just "table1".
+    <p>
+    You need to add both non schema qualified name and schema qualified name if you plan to use both of them in your query. For exmaple, if you want to use both "table1" and "public.table1" in your query, you need to add "table1,public.table1", not just "table1".
     </p>
 
     </dd>
@@ -2701,8 +2701,8 @@ These are the parameters used with both of shmem and memcached.
     Specify a comma separated list of table names whose SELECT results are <strong>NOT</strong> to be cached.
     You can use regular expression (to which added automatically ^ and $).
     </p>
-	<p>
-	You need to add both non schema qualified name and schema qualified name if you plan to use both of them in your query. For exmaple, if you want to use both "table1" and "public.table1" in your query, you need to add "table1,public.table1", not just "table1".
+    <p>
+    You need to add both non schema qualified name and schema qualified name if you plan to use both of them in your query. For exmaple, if you want to use both "table1" and "public.table1" in your query, you need to add "table1,public.table1", not just "table1".
     </p>
     </dd>
 
@@ -3778,66 +3778,74 @@ Pgpool-HA can be available from the pgpool development site as an open source so
 <!-- ================================================================================ -->
 
 <h1 id="watchdog">Watchdog <span class="version">V3.2 -</span></h1>
+<h2 id="what_is_watchdog">What is watchdog</h2>
 
 <p>
 "Watchdog" is a sub process of pgpool-II to add high availability.
-Features added by watchdog include:
+This resolve the single point of failure by coordinating multiple pgpool-IIs.
+watchdog adds the following features to pgpool-II.
 </p>
 
-<dl>
-<dt>Life checking of pgpool service</dt>
-    <dd>
+<h3>Life checking of pgpool-II</h3>
     <p>
-    Watchdog monitors responses of pgpool <i>service</i> rather than process.
-    It sends queries to PostgreSQL via pgpool which is being monitored
-    by watchdog and watchdog checks the response.
+    Watchdog monitors pgpool-IIs by either of two methods, "heartbeat" mode or "query" mode.
     </p>
+    <ul>
+    <li>
+    In heartbeat mode, watchdog monitors other pgpool-II process by using heartbeat signal.
+    Watchdog receives heartbeat signals sent by other pgpool-II periodically.
+    If there are no signal for a certain period, watchdog regards it as failure of the pgpool-II.
+    </li>
+    <li>
+    In query mode, watchdog monitors pgpool-II's service rather than process.
+    watchdog sends queries to other pgpool-II and checks the response.
+    </li>
+    </ul>
     <p>
     Also watchdog monitors connections to upstream servers
-    (application servers etc.) from the pgpool.
-    The connection between the upstream servers and the pgpool is monitored as a service of pgpool.
+    (application servers etc.) from the pgpool-II, and checks whether the pgpool-II can serves to the servers.
+    If the monitoring fails, watchdog treats the pgpool-II as down.
     </p>
-    </dd>
 
-<dt>Mutual monitoring of watchdog processes</dt>
-    <dd>
+<h3>Coordinating multiple pgpool-IIs</h3>
     <p>
-    Watchdog processes exchange information on the monitored servers
-    to keep the information up to date,
-    and to allow watchdog processes to mutually monitor each other. 
+    Watchdog coordinates multiple pgpool-IIs by exchanging information with each other.
     </p>
-    </dd>
+    <ul>
+    <li>
+    When backend node status changes by failover etc., watchdog notifies the information to other pgpool-IIs and synchronizes them.
+    When online recovery occurs, watchdog restricts client connections to other pgpool-IIs for avoiding inconsistency between backends.
+    </li>
+    <li>
+    Commands on failback or failover (<a href="#FAILOVER_COMMAND">failover_command</a>,
+    <a href="#FAILBACK_COMMAND">failback_command</a>, <a href="#FOLLOW_MASTER_COMMAND">follow_master_command</a>)
+    are executed by only one pgpool-II by interlocking.
+    </li>
+    </ul>
 
-<dt>Changing active/standby state in case of certain faults detected</dt>
-    <dd>
+<h3>Changing active/standby state in case of certain faults detected</h3>
     <p>
-    When a fault is detected in the pgpool service, watchdog notifies the other watchdogs of it.
-    Watchdogs then decide the new active pgpool if previous active pgpool is broken
-    by voting and change active/standby state.
+    When a fault of pgpool-II is detected, watchdog notifies the other watchdogs of it.
+    If this is the active pgpool-II, watchdogs decides the new active pgpool-II by voting and change active/standby state.
     </p>
-    </dd>
 
-<dt>Automatic virtual IP address assigning synchronous to server switching</dt>
-    <dd>
+<h3>Automatic virtual IP address assigning synchronous to server switching</h3>
     <p>
-    When a standby pgpool server promotes to active, the new active server brings up virtual IP interface.
+    When a standby pgpool-II server promotes to active, the new active server brings up virtual IP interface.
     Meanwhile, the previous active server brings down the virtual IP interface.
-    This enables the active pgpool to work using the same IP address even when servers are switched.
+    This enables the active pgpool-II to work using the same IP address even when servers are switched.
     </p>
-    </dd>
 
-<dt>Automatic registration of a server as standby in recovery</dt>
-    <dd>
+<h3>Automatic registration of a server as standby in recovery</h3>
     <p>
     When broken server recovers or new server is attached,
     the watchdog process notifies the other watchdog process along with information of the new server,
     and the watchdog process receives information on the active server and other servers.
-		Then, the attached server is registered as a standby.
+    Then, the attached server is registered as a standby.
     </p>
-    </dd>
 </dl>
 
-<h2 id="deploy_watchdog">Server composition</h2>
+<h2 id="watchdog_server_composition">Server composition</h2>
 
 <p>
 Figure below describes how pgpool-II and watchdog process is configured.
@@ -3846,13 +3854,17 @@ Figure below describes how pgpool-II and watchdog process is configured.
 
 <h2 id="start_watchdog">Starting/stopping watchdog</h2>
 <p>
-Watchdog process is started/stopped automatically by pgpool-II,
+Watchdog process starts/stops automatically as sub-processes of pgpool-II,
 therefore there is no dedicated command to start/stop it.
-However, pgpool-II must to be started with <font color="red">root privilege</font>
-because watchdog process needs to control the virtual IP interface.
 </p>
 <p>
-The life checking starts after waiting for all of the pgpools to start.
+Watchdog requires <font color="red">root privilege</font> for controling the virtual IP interface.
+One method is to start pgpool-II by root privilege.
+However, for security reason, to set custom commands to <a href="#IF_UP_CMD">if_up_cmd</a>,
+<a href="#IF_DOWN_CMD">if_up_cmd</a>, <a href="#ARPING_CMD">if_up_cmd</a> using sudo or setuid is recommended method.
+</p>
+<p>
+The life checking starts after confirming that all of the pgpool-IIs are alive.
 </p>
 
 <h2>Configuring watchdog (pgpool.conf)</h2>
@@ -3860,9 +3872,7 @@ The life checking starts after waiting for all of the pgpools to start.
 Watchdog configuration parameters are described in pgpool.conf.
 There is sample configuration in WATCHDOG section in pgpool.conf.sample file.
 </p>
-<p>
-<font color="red">CAUTION: You need to set <a href="#NUM_INIT_CHILDREN">num_init_children</a> large enough if you plan to use watchdog. This is because the watchdog process connects to pgpool-II as a client.</font>
-</p>
+
 <p>
 All following options are required to be specified in watchdog process.
 </p>
@@ -3891,6 +3901,10 @@ All following options are required to be specified in watchdog process.
     The list of trusted servers to check the up stream connections.
     Each server is required to respond to ping.
     Specify a comma separated list of servers such as "hostA,hostB,hostC".
+    If none of the server are pingable, watchdog regards it as failure of the pgpool-II.
+    </p>
+    <p>
+    If this option is empty, watchdog doesn't check up stream connections.
     </p>
     <p>
     You need to restart pgpool-II if you change this value.
@@ -3910,70 +3924,11 @@ All following options are required to be specified in watchdog process.
     </dd>
 </dl>
 
-<h4>Life checking pgpool-II</h4>
-
-<dl>
-<dt><a name="WD_INTERVAL"></a>wd_interval <span class="version">V3.2 -</span></dt>
-    <dd>
-    <p>
-    This parameter specifies the interval between life checks of pgpool-II
-    in second.
-    (A number greater than or equal to 1)
-    </p>
-    <p>
-    You need to restart pgpool-II if you change this value.
-    </p>
-    </dd>
-
-<dt><a name="WD_LIFE_POINT"></a>wd_life_point <span class="version">V3.2 -</span></dt>
-    <dd>
-    <p>
-    The times to retry a failed life check of pgpool-II.
-    (A number greater than or equal to 1)
-    </p>
-    <p>
-    You need to restart pgpool-II if you change this value.
-    </p>
-    </dd>
-
-<dt><a name="WD_LIFECHECK_QUERY"></a>wd_lifecheck_query <span class="version">V3.2 -</span></dt>
-    <dd>
-    <p>
-    Actual query to check pgpool-II.
-    Default is "SELECT 1"
-    </p>
-    <p>
-    You need to restart pgpool-II if you change this value.
-    </p>
-    </dd>
-
-<dt><a name="WD_LIFECHECK_DBNAME"></a>wd_lifecheck_dbname <span class="version">V3.3 -</span></dt>
-    <dd>
-    <p>
-    The database name connected for checking pgpool-II.
-    Default is "template1"
-    </p>
-    </dd>
-
-<dt><a name="WD_LIFECHECK_USER"></a>wd_lifecheck_user <span class="version">V3.3 -</span></dt>
-    <dd>
-    <p>
-    The user name to check pgpool-II.
-    This user must exist in all the PostgreSQL backends.
-    Default is "nobody"
-    </p>
-    </dd>
-
-<dt><a name="WD_LIFECHECK_PASSWORD"></a>wd_lifecheck_password <span class="version">V3.3 -</span></dt>
-    <dd>
-    <p>
-    The password of the user to check pgpool-II.
-    Default is ""
-    </p>
-    </dd>
-</dl>
-
 <h4>Virtual IP address</h4>
+
+<p>
+Configuration about virtual IP interface control
+</p>
 
 <dl>
 <dt><a name="DELEGATE_IP"></a>delegate_IP <span class="version">V3.2 -</span></dt>
@@ -3981,7 +3936,7 @@ All following options are required to be specified in watchdog process.
     <p>
     Specifies the virtual IP address (VIP) of pgpool-II that is connected from
     client servers (application servers etc.).
-    When a pgpool is switched from standby to active, the pgpool takes over this VIP.
+    When a pgpool-II is switched from standby to active, the pgpool-II takes over this VIP.
     </p>
     <p>
     You need to restart pgpool-II if you change this value.
@@ -4041,7 +3996,7 @@ All following options are required to be specified in watchdog process.
     <p>
     This parameter specifies a command to send an ARP request
     after the virtual IP is switched.
-    Set the command and parameters such as 
+    Set the command and parameters such as
     "arping -U $_IP_$ -w 1".
     $_IP_$ is replaced by the IP address specified in <a href="#DELEGATE_IP">delegate_IP</a>.
     </p>
@@ -4051,12 +4006,208 @@ All following options are required to be specified in watchdog process.
     </dd>
 </dl>
 
-<h3>Server itself to be monitored</h3>
+<h4>Behaivor on escalation</h4>
+
+<p> Configuration about behavior when pgpool-II escalates to active (virtual IP holder)
+
+<dl>
+<dt><a name="CLEAR_MEMQCACHE_ON_ESCALATION"></a>clear_memqcache_on_escalation <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    If this is on, watchdog clears all the query cache in the shared memory when pgpool-II escaltes to active.
+    This prevents the new active pgpool-II from using old query caches inconsistence to the old active.
+    Default is on.
+    </p>
+    <p>
+    This works only if <a href="#MEMQCACHE_METHOD">memqcache_method</a> is 'shmem'.
+    </p>
+    </dd>
+
+<dt><a name="wd_escalation_command"></a>wd_escalation_command <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    Watchdog executes this command on the new active when pgpool-II escaltes to active.
+    The timing is just before virtual IP brings up.
+    </p>
+    </dd>
+</dl>
+
+<h3>Life checking pgpool-II</h3>
+
+<p>Watchdog checks pgpool-II status periodically. This is called "life check".
+
+<h4>Common</h4>
+
+<dl>
+<dt><a name="WD_LIFECHECK_METHOD"></a>wd_lifecheck_method <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    This parameter specifies the method of life check. This is either of 'heartbeat' (default) or 'query'.
+    </p>
+    <p>
+    In 'heartbeat' mode, watchdog sends heartbeat singals (UDP packets) periodically to other pgpool-II.
+    Watchdog also receives the signals from other pgpool-II.
+    If there are no signal for a certain period, watchdog regards is as failure of the pgpool-II.
+    </p>
+    <p>
+    In 'query' mode, watchdog sends monitoring queries to other pgpool-II and checks the response.
+    </p>
+    <p>
+    <font color="red">CAUTION: In query mode, you need to set <a href="#NUM_INIT_CHILDREN">num_init_children</a>
+    large enough if you plan to use watchdog. This is because the watchdog process connects to pgpool-II as a client.</font>
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
+    </dd>
+
+<dt><a name="WD_INTERVAL"></a>wd_interval <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    This parameter specifies the interval between life checks of pgpool-II
+    in second.
+    (A number greater than or equal to 1)
+    Default is 10.
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
+    </dd>
+</dl>
+
+<h4>Configuration of heartbeat mode</h4>
+
+<dl>
+<dt><a name="WD_HEARTBEAT_PORT"></a>wd_heartbeat_port <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    This option specifies the port number to receive heartbeat signals.
+    This works only heartbeat mode.
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
+    </dd>
+
+<dt><a name="WD_HEARTBEAT_KEEPALIVE"></a>wd_heartbeat_keepalive <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    This option specifies the interval time (sec.) of sending heartbeat signals.
+    Default is 2.
+    This works only heartbeat mode.
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
+    </dd>
+
+<dt><a name="WD_HEARTBEAT_DEADTIME"></a>wd_heartbeat_deadtime <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    If there are no heartbeat signal for the period specified by this option, watchdog regards it as failure of the remote pgpool-II.
+    This works only heartbeat mode.
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
+    </dd>
+
+<dt><a name="WD_HEARTBEAT_DEVICE"></a>wd_heartbeat_port<font color="red">0</font> <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    This option specifies the network device name for sending heartbeat signals.
+    You can use multiple devices.
+    The number at the end of the parameter name is referred as "device number",
+    and it starts from 0.
+    If you want to set mutiple destination (<a href="WD_HEARTBEAT_DESTINATION">wd_heartbeat_destiationN</a>) for one device,
+    specify the device name repeatedly using different numbers.
+    This works only heartbeat mode.
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
+    </dd>
+
+<dt><a name="WD_HEARTBEAT_DESTINATION"></a>wd_heartbeat_destination<font color="red">0</font> <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    This option specifies the destination of heartbeat signals which is sent from the device specified by
+    <a href="WD_HEARTBEAT">wd_heartbeat_deviceX</a>. Use IP address or hostname.
+    The number at the end of the parameter name is referred as "device number",
+    and it starts from 0.
+    This works only heartbeat mode.
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
+    </dd>
+</dl>
+
+<h4>Configuration of query mode</h4>
+
+<dl>
+<dt><a name="WD_LIFE_POINT"></a>wd_life_point <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    The times to retry a failed life check of pgpool-II.
+    (A number greater than or equal to 1)
+    Default is 3.
+    This works only query mode.
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
+    </dd>
+
+<dt><a name="WD_LIFECHECK_QUERY"></a>wd_lifecheck_query <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    Actual query to check pgpool-II.
+    Default is "SELECT 1".
+    This works only query mode.
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
+    </dd>
+
+<dt><a name="WD_LIFECHECK_DBNAME"></a>wd_lifecheck_dbname <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    The database name connected for checking pgpool-II.
+    Default is "template1".
+    This works only query mode.
+    </p>
+    </dd>
+
+<dt><a name="WD_LIFECHECK_USER"></a>wd_lifecheck_user <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    The user name to check pgpool-II.
+    This user must exist in all the PostgreSQL backends.
+    Default is "nobody".
+    This works only query mode.
+    </p>
+    </dd>
+
+<dt><a name="WD_LIFECHECK_PASSWORD"></a>wd_lifecheck_password <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    The password of the user to check pgpool-II.
+    Default is "".
+    This works only query mode.
+    </p>
+    </dd>
+</dl>
+
+
+<h3>Communication between watchdogs</h3>
 <dl>
 <dt><a name="WD_HOSTNAME"></a>wd_hostname <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
-    Specifies the hostname or IP address for mutual monitoring of watchdog processes.
+    Specifies the hostname or IP address of pgpool-II server.
+    This is used for sending/receiving queries and packets, and also as identifier of watchdog.
     </p>
     <p>
     You need to restart pgpool-II if you change this value.
@@ -4066,7 +4217,21 @@ All following options are required to be specified in watchdog process.
 <dt><a name="WD_PORT"></a>wd_port <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
-    Specifies the port number for mutual monitoring of watchdog processes.
+    Specifies the port number for watchdog communication.
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
+    </dd>
+
+<dt><a name="WD_AUTHKEY"></a>wd_authkey <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    This option specifies the authentication key used in watchdog communication.
+    All the pgpool-II must have the same key.
+    Packets from watchdog of wrong key will be rejects.
+    This authentication is applied also for heatrbeat singals if lifecheck method is heartbeat mode.
+    If this is empty (default), watchdog doesn't conduct authenticate.
     </p>
     <p>
     You need to restart pgpool-II if you change this value.
@@ -4081,8 +4246,12 @@ All following options are required to be specified in watchdog process.
     <dd>
     <p>
     Specifies the hostname pgpool-II server to be monitored.
+    This is used for sending/receiving queries and packets, and also as identifier of watchdog.
     The number at the end of the parameter name is referred as "server id",
     and it starts from 0.
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
     </p>
     </dd>
 
@@ -4090,9 +4259,13 @@ All following options are required to be specified in watchdog process.
     <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
-    Specifies the port number for pgpool on pgpool-II server to be monitored.
+    Specifies the port number for pgpool service of pgpool-II server to be monitored.
+    In query mode, the queries specified in <a href="#WD_LIFECHECK_QUERY">wd_lifecheck_query</a> is sent to this port.
     The number at the end of the parameter name is referred as "server id",
     and it starts from 0.
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
     </p>
     </dd>
 
@@ -4103,13 +4276,16 @@ All following options are required to be specified in watchdog process.
     The number at the end of the parameter name is referred as "server id",
     and it starts from 0.
     </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
     </dd>
 </dl>
 
-<h2 id="WATCHDOG_RESTRICTIONS">Restrictions on watchdog</h2>
+<h2 id="watchdog_restrictions">Restrictions on watchdog</h2>
 <ul>
 <li>
-When all the DB nodes are detached from a pgpool-II due to PostgreSQL server failure or
+In query mode, when all the DB nodes are detached from a pgpool-II due to PostgreSQL server failure or
 pcp_detach_node issued, watchdog regards that the pgpool-II service is in down status and
 brings the virtual IP assigned to watchdog down. Thus clients of pgpool cannot connect to
 pgpool-II using the virtual IP any more. This is neccessary to avoid <i>split-brain</i>,

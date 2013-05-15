@@ -516,7 +516,7 @@ pgpool.confでは空白行や#で始まる行はコメントと見なされま�
     </p>
     </dd>
   </dl>
-		
+
 <h3>Pools</h3>
 
 <dl>
@@ -625,7 +625,7 @@ pgpool.confでは空白行や#で始まる行はコメントと見なされま�
     <p>
     md5 認証で用いる認証ファイルのファイル名を指定します。
     デフォルト値は "pool_passwd" です。
-    空文字列（""）を指定すると 認証ファイルの読込は無効になります。  
+    空文字列（""）を指定すると 認証ファイルの読込は無効になります。
     詳細は<a href="#md5">認証・アクセス制御方式</a>を参照してください。
     </p>
     <p>
@@ -3145,7 +3145,7 @@ benchs2=# show pool_status;
  listen_addresses                     | localhost                      | host name(s) or IP address(es) to listen to
  port                                 | 9999                           | pgpool accepting port number
  socket_dir                           | /tmp                           | pgpool socket directory
- pcp_port                             | 9898                           | PCP port # to bind 
+ pcp_port                             | 9898                           | PCP port # to bind
  pcp_socket_dir                       | /tmp                           | PCP socket directory
 </pre>
 
@@ -3525,7 +3525,7 @@ DESTDIR=$3       # database cluster of the DB node to be recovered
 port=5432        # PostgreSQL port number
 archdir=/data/archive_log    # archive log directory
 
-# Force to flush current value of sequences to xlog 
+# Force to flush current value of sequences to xlog
 psql -p $port -t -c 'SELECT datname FROM pg_database WHERE NOT datistemplate AND datallowconn' template1|
 while read i
 do
@@ -3872,7 +3872,7 @@ pgpool-IIは、独立したサーバに配置することもできますし、�
 <dt>DBサーバと同居
     <dd>
     <p>
-    PostgreSQLの稼働しているDBサバと同居させる方法です。
+    PostgreSQLの稼働しているDBサーバと同居させる方法です。
     この方法では、pgpool-IIが単一障害点になることがなく、余計なサーバを追加する必要もない点が優れていますが、
     アプリケーションがどのDBサーバに接続するのかを自ら判断する必要があるのが欠点です。
     この問題を解決するには、pgpool-HAと組み合わせて仮想IPを利用します。
@@ -3891,42 +3891,54 @@ pgpool-IIと同様、pgpoolプロジェクトのサブプロジェクトであ�
 <!-- ================================================================================ -->
 
 <h1 id="watchdog">Watchdog <span class="version">V3.2 ～</span></h1>
+<h2 id="what_is_watchdog">watchdog とは</h2>
 <p>
-watchdog プロセスは pgpool-II 本体から起動される、高可用性を目的としたプロセスです。
-以下の機能を提供します。
+watchdog プロセスは pgpool-II から起動される、高可用性を目的としたプロセスです。
+複数の pgpool-II を連携させることで単一障害点を回避します。
+watchdog は以下の機能を提供します。
 </p>
-<dl>
-<dt>pgpool サービスの死活監視</dt>
-    <dd>
+<h3>pgpool-II の死活監視</h3>
+<p>watchdog は pgpool-II の監視を行います。監視の方法は「ハートビート」モードと「クエリ」モードの２つがあります。</p>
+<ul>
+<li>
+    ハートビートモードでは、watchdog はハートビート信号を用いて 他の pgpool-II プロセスの死活監視を行います。
+    watchdog は、他の pgpool-II の watchdog より定期的に送られるハートビート信号を受け取り、これが一定期間以上途切れた場合にはその pgpool-II プロセスに障害が発生したと判断します。
+    </li>
+<li>
+    クエリモードでは、watchdog は pgpool-II のプロセスではなく「サービス」の応答を監視します。
+    このモードでは、監視対象の pgpool-II にクエリを発行しその応答をチェックします。
+    </li>
+</ul>
     <p>
-    watchdog は pgpool のプロセスではなく、サービスの応答を監視します。
-    監視対象の pgpool から PostgreSQL に問い合わせを行い、その応答をチェックします。
+    また watchdog は、pgpool-II から上位のサーバ（アプリケーションサーバなど）への接続も監視し、上位サーバへ pgpool-II のサービスを提供できるかチェックしています。
+    この監視に失敗した場合には、watchdog は pgpool-II に障害が発生しているとみなしダウンステータスに移行します。
     </p>
+<h3>pgpool-II 間の協調動作</h3>
     <p>
-    また watchdog は、pgpool から上位のサーバ（アプリケーションサーバなど）への接続も監視します。
-    上位サーバから PostgreSQL への接続・応答を pgpool のサービスとして死活監視します。
+    watchdog は互いに情報交換を行うことで複数の pgpool-II を協調動作させます。
     </p>
-    </dd>
+<ul>
+    <li>
+    フェールオーバなどでバックエンドノードの状態が変化した場合には、この情報を他の pgpool-II へ伝達し、同期を行います。
+    </li>
+    <li>
+    オンラインリカバリ時には、複数の pgpool-II で DB に不整合が生じないよう他の pgpool-II へのクライアントの接続を制限します。
+    </li>
+    </p>
+    <li>
+    フェールオーバ、ファイルバックの際に実行されるコマンド（<a href="#FAILOVER_COMMAND">failover_command</a>,
+    <a href="#FAILBACK_COMMAND">failback_command</a>, <a href="#FOLLOW_MASTER_COMMAND">follow_master_command</a>）は、インターロック機構により、１つの pgpool-II でのみ実行されます。
+    </li>
+</ul>
 
-<dt>watchdog プロセスの相互監視</dt>
-    <dd>
+<h3>障害発生検知時のアクティブ、スタンバイ切り替え</h3>
     <p>
-    各 watchdog はお互いの監視対象のサーバの情報を交換します。
-    これにより、pgpool サーバの情報を最新に保てるだけでなく、各 watchdog プロセスの相互監視を行っています。
-    </p>
-    </dd>
-
-<dt>障害発生検知時のアクティブ、スタンバイ切り替え</dt>
-    <dd>
-    <p>
-    pgpool のサービスに障害を検知した場合、watchdog は他の watchdog に障害検知を通知します。
-    故障した pgpool がアクティブの場合、他の watchdog は新しいアクティブを投票で決め、
+    pgpool-II の障害を検知した場合、watchdog は他の watchdog に障害検知を通知します。
+    故障した pgpool-II がアクティブの場合、他の watchdog は新しいアクティブを投票で決め、
     アクティブ・スタンバイの切り替えを行います。
     </p>
-    </dd>
 
-<dt>サーバ切り替えと連動した仮想 IP アドレスの自動付け替え</dt>
-    <dd>
+<h3>サーバ切り替えと連動した仮想 IP アドレスの自動付け替え</h3>
     <p>
     スタンバイが新しいアクティブに昇格する際、新アクティブ機の watchdog は
     アクティブ用の仮想IPインターフェースを起動します。
@@ -3935,20 +3947,16 @@ watchdog プロセスは pgpool-II 本体から起動される、高可用性を
     一方、旧アクティブ機の watchdog はアクティブ用仮想 IP インターフェースを停止します。
     これにより、サーバが切り替わった後もアクティブは同じ IP アドレスでサービスを継続することができます。
     </p>
-    </dd>
 
-<dt>サーバ復旧時、スタンバイ機としての自動登録</dt>
-    <dd>
+<h3>サーバ復旧時、スタンバイ機としての自動登録</h3>
     <p>
     障害機の復旧や新規サーバを追加する場合、watchdog はサーバの情報を他の watchdog に通知し、
     他の watchdog からはアクティブや他のサーバの情報を受け取ります。
     これにより追加したサーバはスタンバイ機として自動的に追加されます。
     </p>
-    </dd>
-</dl>
 
 
-<h2 id="watchdog_structure">サーバ構成</h2>
+<h2 id="watchdog_server_composition">サーバ構成</h2>
 <p>
 watchdogプロセスを含むpgpool-IIサーバは以下の図のようなシステム構成をとります。
 </p>
@@ -3957,21 +3965,22 @@ watchdogプロセスを含むpgpool-IIサーバは以下の図のようなシス
 
 <h2 id="start_watchdog">watchdog の起動と停止</h2>
 <p>
-watchdog プロセスは pgpool-II から自動的に起動・停止されますので、固有の起動・停止コマンドはありません。
-しかし、watchdog プロセスは仮想IPインターフェースの起動・停止を行いますので、
-pgpool-II の起動は <font color="red">root 権限で</font> 行う必要があります。
+watchdog プロセスは pgpool-II の子プロセスとして自動的に起動・停止されますので、固有の起動・停止コマンドはありません。
 </p>
 <p>
-なお、他の pgpool および接続先の PostgreSQL が全て起動するのを待ってから、死活監視を開始します。
+watchdog は仮想 IP インターフェースの起動・停止を行うため、 <font color="red">root 権限</font>を要求します。
+pgpool-II を起動する際に root 権限で実行するのが１つの方法です。
+しかし、セキュリティ上の理由からは、sudo や setuid を利用したコマンドを <a href="#IF_UP_CMD">if_up_cmd</a>、
+<a href="#IF_DOWN_CMD">if_up_cmd</a>、<a href="#ARPING_CMD">if_up_cmd</a> に設定するのがより良い方法です。
+</p>
+<p>
+なお、死活監視は他の全ての pgpool-II が生きていることを確認したのちに開始されます。
 </p>
 
 <h2 id="config_watchdog">pgpool.conf の設定</h2>
 <p>
 watchdog プロセスの設定項目は pgpool.conf に記述します。
 pgpool.conf.sample ファイルの WATCHDOG セクションにサンプルを記述していますので、参照してください。
-</p>
-<p>
-<font color="red">注意: watchdogを有効化する場合は、<a href="#NUM_INIT_CHILDREN">num_init_children</a>に十分大きな値を設定して下さい。watchdog自身もpgpool-IIにクライアントとして接続するためです。</font>
 </p>
 <p>
 watchdog プロセスは以下の項目すべてを指定する必要があります。
@@ -3994,9 +4003,9 @@ watchdog プロセスは以下の項目すべてを指定する必要があり�
 
 <h4>上位サーバへの接続</h4>
 <p>
-pgpool あるいは PostgreSQL のサービス提供先（DB クライアント）のサーバを、上位サーバと呼びます。
-pgpoolが生きていて PostgreSQLと繋がっている場合でも、
-上位サーバとのリンクが切れていれば「サービス」を継続できません。
+pgpool-II あるいは PostgreSQL のサービス提供先（DB クライアント）のサーバを、上位サーバと呼びます。
+pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
+上位サーバとのリンクが切れていればサービスを継続できません。
 そのため、watchdog は上位サーバとのリンクが繋がっているかどうかも監視します。
 </p>
 
@@ -4007,9 +4016,10 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
     上位接続を確認するための信頼できるサーバリストです。
     ping の応答が得られる必要があります。
     "hostA,hostB,hostC ..." のようにカンマで区切って複数のサーバを指定できます。
+    全てのサーバへの ping が失敗した場合、watchdog は pgpool-II に障害が発生したと判断します。
     </p>
     <p>
-    指定がない場合は上位サーバへのネットワーク到達監視をしません。
+    指定がない場合は上位サーバへの接続監視は行いません。
     </p>
     <p>
     このパラメータを変更した時には pgpool-II を再起動してください。
@@ -4028,52 +4038,18 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
     </dd>
 </dl>
 
-<h4>pgpool-II の死活監視</h4>
-
-<dl>
-<dt><a name="WD_INTERVAL"></a>wd_interval <span class="version">V3.2 ～</span></dt>
-    <dd>
-    <p>
-    pgpool-II への生存監視の間隔（秒）です。
-    （1 以上の数値）
-    </p>
-    <p>
-    このパラメータを変更した時には pgpool-II を再起動してください。
-    </p>
-    </dd>
-
-<dt><a name="WD_LIFE_POINT"></a>wd_life_point <span class="version">V3.2 ～</span></dt>
-    <dd>
-    <p>
-    pgpool-II の死活監視で応答が得られなかった場合のリトライ回数です。
-    （1 以上の数値）
-    </p>
-    <p>
-    このパラメータを変更した時には pgpool-II を再起動してください。
-    </p>
-    </dd>
-
-<dt><a name="WD_LIFECHECK_QUERY"></a>wd_lifecheck_query <span class="version">V3.2 ～</span></dt>
-    <dd>
-    <p>
-    pgpool-II の死活監視のために発行されるクエリです。
-    デフォルトは "SELECT 1" です。
-    </p>
-    <p>
-    このパラメータを変更した時には pgpool-II を再起動してください。
-    </p>
-    </dd>
-
-</dl>
-
 <h4>仮想 IP</h4>
+
+<p>
+仮想 IP の制御に関する設定です。
+</p>
 
 <dl>
 <dt><a name="DELEGATE_IP"></a>delegate_IP <span class="version">V3.2 ～</span></dt>
     <dd>
     <p>
     （アプリケーションサーバなど）外部からの接続される pgpool-II の仮想 IP アドレスです。
-    スタンバイからアクティブに切り替わる際、pgpool はこの仮想 IP を引き継ぎます。
+    スタンバイからアクティブに切り替わる際、pgpool-II はこの仮想 IP を引き継ぎます。
     </p>
     <p>
     このパラメータを変更した時には pgpool-II を再起動してください。
@@ -4139,15 +4115,222 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
     このパラメータを変更した時には pgpool-II を再起動してください。
     </p>
     </dd>
+</dl>
+
+<h4>昇格時の振る舞い</h4>
+
+<p>pgpool-II がアクティブ（仮想 IP を保持しているステータス）に昇格した時の振る舞いの設定です。</p>
+<dl>
+
+<dt><a name="CLEAR_MEMQCACHE_ON_ESCALATION"></a>clear_memqcache_on_escalation <span class="version">V3.3 ～</span></dt>
+    <dd>
+    <p>
+    このオプションが on の場合、pgpool-II がアクティブに昇格した時に、共有メモリ上のクエリキャッシュを全て削除します。
+    これにより、旧アクティブと非整合な古いクエリキャッシュが使われることを防止します。
+    <a href="#MEMQCACHE_METHOD">memqcache_method</a> が 'shmem' の場合のみ有効です。
+    デフォルトは on です。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
+    </dd>
+
+<dt><a name="wd_escalation_command"></a>wd_escalation_command <span class="version">V3.3 ～</span></dt>
+    <dd>
+    <p>
+    pgpool-II がアクティブに昇格した時に、ここで指定したコマンドが実行されます。
+    コマンドは、仮想 IP が立ち上がる直前のタイミングで実行されます。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
+    </dd>
 
 </dl>
 
-<h3>死活監視の受信設定セクション</h3>
+<h3>pgpool-II の死活監視</h3>
+
+<p>watchdog は一定時間間隔で pgpool-II の状態のチェック、すなわち死活監視を行います。</p>
+
+<h4>共通設定</h4>
+
+<dl>
+<dt><a name="WD_LIFECHECK_METHOD"></a>wd_lifecheck_method <span class="version">V3.3 ～</span></dt>
+    <dd>
+    <p>
+    死活監視の方法を指定します。指定できる値は 'heartbeat' (デフォルト)か 'query' です。
+    </p>
+    <p>
+    'heartbeat' を指定した場合には、監視は「ハートビートモード」で行われます。
+    watchdog は一定間隔でハートビート信号（UDP パケット）を他の pgpool-II へ送信します。
+    また watchdog は他の pgpool-II から送られてくる信号を受信し、これが一定時間以上途絶えた場合にはその pgpool-II に障害が発生したと判断します。
+    </p>
+    <p>
+    'query' を指定した場合には、監視は「クエリモード」で行われます。
+    watchdog は監視用のクエリを pgpool-II に発行し、それが成功するかどうかで pgpool-II が生きているかどうかを判断します。
+    </p>
+    <p>
+    <font color="red">注意: クエリモードを使用する場合は、<a href="#NUM_INIT_CHILDREN">num_init_children</a>に十分大きな値を設定して下さい。watchdog 自身も pgpool-II にクライアントとして接続するためです。</font>
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
+    </dd>
+
+<dt><a name="WD_INTERVAL"></a>wd_interval <span class="version">V3.2 ～</span></dt>
+    <dd>
+    <p>
+    死活監視を行う間隔（秒）です。
+    （1 以上の数値）
+    デフォルトの値は 10 です。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
+    </dd>
+</dl>
+
+<h4>ハートビートモードの設定</h4>
+
+<dl>
+<dt><a name="WD_HEARTBEAT_PORT"></a>wd_heartbeat_port <span class="version">V3.3 ～</span></dt>
+    <dd>
+    <p>
+    ハートビート信号を受信するポート番号を指定します。
+    ハートビートモードの場合のみ有効です。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
+    </dd>
+
+<dt><a name="WD_HEARTBEAT_KEEPALIVE"></a>wd_heartbeat_keepalive <span class="version">V3.3 ～</span></dt>
+    <dd>
+    <p>
+    ハートビート信号を送信する間隔（秒）を指定します。
+    デフォルトは 2 です。
+    ハートビートモードの場合のみ有効です。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
+    </dd>
+
+<dt><a name="WD_HEARTBEAT_DEADTIME"></a>wd_heartbeat_deadtime <span class="version">V3.3 ～</span></dt>
+    <dd>
+    <p>
+    このオプションで指定された間隔（秒）の間ハートビート信号が途絶えた場合、その pgpool-II に障害が発生したとみなされます。
+    ハートビートモードの場合のみ有効です。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
+    </dd>
+
+<dt><a name="WD_HEARTBEAT_DEVICE"></a>wd_heartbeat_port<font color="red">0</font> <span class="version">V3.3 ～</span></dt>
+    <dd>
+    <p>
+    ハートビートの送受信に用いるネットワークデバイス名を指定します。
+    複数のデバイスが設定可能です。
+    数値の部分はデバイスの番号です。
+    デバイス毎に 0 からの連番にします。
+    １つのデバイスに複数のハートビート送信先（<a href="WD_HEARTBEAT_DESTINATION">wd_heartbeat_destiationN</a>）を設定する場合は、重複するデバイス名を異なる番号で指定してください。
+    ハートビートモードの場合のみ有効です。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
+    </dd>
+
+<dt><a name="WD_HEARTBEAT_DESTINATION"></a>wd_heartbeat_destination<font color="red">0</font> <span class="version">V3.3 ～</span></dt>
+    <dd>
+    <p>
+    <a href="WD_HEARTBEAT">wd_heartbeat_deviceX</a>に指定したデバイスから送るハートビート信号の宛先を、ホスト名か IP で指定します。
+    数値の部分はデバイスの番号です。
+    デバイス毎に 0 からの連番にします。
+    ハートビートモードの場合のみ有効です。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
+    </dd>
+</dl>
+
+<h4>クエリモードの設定</h4>
+
+<dl>
+<dt><a name="WD_LIFE_POINT"></a>wd_life_point <span class="version">V3.2 ～</span></dt>
+    <dd>
+    <p>
+    監視クエリの応答が得られなかった場合のリトライ回数です。
+    （1 以上の数値）
+    デフォルトの値は 3 です。
+    クエリモードの場合のみ有効です。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
+    </dd>
+
+<dt><a name="WD_LIFECHECK_QUERY"></a>wd_lifecheck_query <span class="version">V3.2 ～</span></dt>
+    <dd>
+    <p>
+    pgpool-II の死活監視のために発行されるクエリです。
+    デフォルトは "SELECT 1" です。
+    クエリモードの場合のみ有効です。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
+    </dd>
+
+<dt><a name="WD_LIFECHECK_DBNAME"></a>wd_lifecheck_dbname <span class="version">V3.3 ～</span></dt>
+    <dd>
+    <p>
+    監視クエリを送る際の接続先のデータベース名です。
+    デフォルトは 'template1' です。
+    クエリモードの場合のみ有効です。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
+    </dd>
+
+<dt><a name="WD_LIFECHECK_USER"></a>wd_lifecheck_user <span class="version">V3.3 ～</span></dt>
+    <dd>
+    <p>
+    監視クエリを送る際にデータベースに接続するユーザ名です。
+    デフォルトは 'nobody' です。
+    クエリモードの場合のみ有効です。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
+    </dd>
+
+<dt><a name="WD_LIFECHECK_PASSWORD"></a>wd_lifecheck_password <span class="version">V3.3 ～</span></dt>
+    <dd>
+    <p>
+    監視クエリを送る際にデータベースに接続するパスワードです。
+    デフォルトでは設定されていません。
+    クエリモードの場合のみ有効です。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
+    </dd>
+</dl>
+
+<h3>watchdog 間通信</h3>
+
+<p>watchdog 間の情報交換に関する設定です。</p>
+
 <dl>
 <dt><a name="WD_HOSTNAME"></a>wd_hostname <span class="version">V3.2 ～</span></dt>
     <dd>
     <p>
-    watchdog プロセスが相互監視を受信する為のホスト名または IP アドレスです。
+    pgpool-II サーバのホスト名または IP アドレスです。
+    クエリやパケットの送受信の他、watchdog の識別子としても用います。
     </p>
     <p>
     このパラメータを変更した時には pgpool-II を再起動してください。
@@ -4157,7 +4340,21 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
 <dt><a name="WD_PORT"></a>wd_port <span class="version">V3.2 ～</span></dt>
     <dd>
     <p>
-    watchdog プロセスが相互監視を受信する為のポート番号です。
+    wachdog 間の情報交換のためのパケットを受信するポート番号を指定します。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
+    </dd>
+
+<dt><a name="WD_AUTHKEY"></a>wd_authkey <span class="version">V3.3 ～</span></dt>
+    <dd>
+    <p>
+    wachdog 間通信で用いられる認証キーです。
+    全ての pgpool-II で同じキーを指定する必要があります。
+    認証キーが異なる watchdog からの通信は拒絶されます。
+    死活監視をハートビートモードで行う場合には、この認証はハートビート信号にも適用されます。
+    指定が無い場合には認証は行われず、これがデフォルトです。
     </p>
     <p>
     このパラメータを変更した時には pgpool-II を再起動してください。
@@ -4165,40 +4362,51 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
     </dd>
 </dl>
 
-<h3>死活監視対象サーバ指定セクション</h3>
+<h3>監視対象サーバ</h3>
 <dl>
 <dt><a name="OTHER_PGPOOL_HOSTNAME"></a>other_pgpool_hostname<font color="red">0</font> <span class="version">V3.2 ～</span></dt>
     <dd>
     <p>
-    監視対象のpgpool-IIサーバのホスト名を指定します。
-    数値の部分は監視対象サーバの番号です。
+    監視対象の pgpool-II サーバのホスト名を指定します。
+    クエリやパケットの送受信の他、watchdog の識別子としても用います。
+    数値の部分は監視対象サーバの通し番号です。
     監視対象のサーバ毎に 0 からの連番にします。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
     </p>
     </dd>
 
 <dt><a name="OTHER_PGPOOL_PORT"></a>other_pgpool_port<font color="red">0</font> <span class="version">V3.2 ～</span></dt>
     <dd>
     <p>
-    監視対象のpgpool-IIサーバのpgpool用のポート番号を指定します。
-    数値の部分は監視対象サーバの番号です。
+    監視対象の pgpool-II サーバの pgpool ポート番号を指定します。
+    クエリモード使用時に、<a href="#WD_LIFECHECK_QUERY">wd_lifecheck_query</a> に指定したクエリがこのポートへ送られます。
+    数値の部分は監視対象サーバの通し番号です。
     監視対象のサーバ毎に 0 からの連番にします。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
     </p>
     </dd>
 
 <dt><a name="OTHER_WD_PORT"></a>other_wd_port<font color="red">0</font> <span class="version">V3.2 ～</span></dt>
     <dd>
     <p>
-    監視対象のpgpool-IIサーバのwatchdog用のポート番号を指定します
+    監視対象の pgpool-II サーバの watchdog パケット受信ポート番号を指定します
     数値の部分は監視対象サーバの番号です。
     監視対象のサーバ毎に 0 からの連番にします。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
     </p>
     </dd>
 </dl>
 
-<h2 id="WATCHDOG_RESTRICTIONS">watchdog の制限事項</h2>
+<h2 id="watchdog_restrictions">watchdog の制限事項</h2>
 <ul>
   <li>
-  PostgreSQL サーバのダウンや pcp_detach_node の実行により pgpool-II から全ての DB ノードが切り離された場合、
+  クエリモード使用時に、PostgreSQL サーバのダウンや pcp_detach_node の実行により pgpool-II から全ての DB ノードが切り離された場合、
   watchdog は pgpool-II のサービスがダウンした状態とみなし、watchdog に割り当てられていた仮想 IP は停止されます。
   そのため、クライアントは仮想 IP を使って pgpool-II への接続することは出来なくなります。
   これは、アクティブの pgpool-II が複数できてしまう「スプリットブレイン」状況を避けるための仕様です。
@@ -4910,17 +5118,17 @@ name : listen_addresses
 value: localhost
 desc : host name(s) or IP address(es) to listen to
 
-name : port 
-value: 9999 
+name : port
+value: 9999
 desc : pgpool accepting port number
 
 name : socket_dir
-value: /tmp 
+value: /tmp
 desc : pgpool socket directory
 
 name : pcp_port
-value: 9898 
-desc : PCP port # to bind 
+value: 9898
+desc : PCP port # to bind
 </pre>
 
 
@@ -5004,7 +5212,7 @@ pgpool-IIを指定されたモードでシャットダウンします。指定�
 りです。
 
 s    - smart モード
-f    - fast モード   
+f    - fast モード
 i    - immediate モード
 
 pgpool-IIが起動していない場合はConnectionErrorと表示され、終了コード8で終了し
@@ -5207,7 +5415,7 @@ FROM句に複数のテーブル、又はサブクエリがある場合
 <p>
 以下の例では、P1-tableが P 状態のテーブルでL1-table,L2-tableが L 状態のテーブルだとします。
 すると上記の表により、P1-table (左)とL1-table (右) が結合し P 状態となり、
-さらに P 状態と L 状態のL2-tableが結合してFROM句の実行ステータスは P 状態となります。 
+さらに P 状態と L 状態のL2-tableが結合してFROM句の実行ステータスは P 状態となります。
 <pre>
 SELECT * FROM P1-table,L1-table,L2-table;
 </pre>
@@ -5331,10 +5539,10 @@ SELECT L1-table.col FROM L1-table WHERE L1-table.col % 2 = 0 AND L1-table.col IN
 <pre>
 SELECT L1-table.col FROM dblink(SELECT loadbalance(SELECT L1-table.col FROM L1-table WHERE L1-table.col % 2 = 0 AND TRUE))
     WHERE
-        L1-table.col %2 = 0 AND 
-      L1-table.col IN 
+        L1-table.col %2 = 0 AND
+      L1-table.col IN
       (
-          SELECT P1-Table FROM 
+          SELECT P1-Table FROM
           dblink(select pool_parallel(SELECT P1-table FROM P1-table))
       ) ;
 </pre>
@@ -6371,7 +6579,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 
 <li>チュートリアル</li>
 <p><a href="#memqcache">オンメモリクエリキャッシュ</a> と <a href="#watchdog">Watchdog 機能</a>
-   のチュートリアルを作成しました。(Nozomi Anzai)</p> 
+   のチュートリアルを作成しました。(Nozomi Anzai)</p>
 
 </ul>
 
@@ -6805,7 +7013,7 @@ autoconf
 
 <li>watchdog のポート番号が既に使用されていた場合にエラーメッセージを出力するよう修正しました。
   (Yugo Nagata)
-<p> 
+<p>
   この問題は [pgpool-general: 1167] で Will Ferguson さんによって報告されました。
 </p>
 <blockquote>
@@ -6840,7 +7048,7 @@ autoconf
 </p>
 <blockquote>
   #35 Authentication is timeout<br />
-  Reporter: tuomas 
+  Reporter: tuomas
   Date: 2012-11-20 11:54
   <a href="http://www.pgpool.net/mantisbt/view.php?id=35">
   http://www.pgpool.net/mantisbt/view.php?id=35</a>
@@ -7525,7 +7733,7 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
 </p>
 </li>
 
-<li>ストリーミングレプリケーションモードでレプリケーション遅延が大きくなったときに、 
+<li>ストリーミングレプリケーションモードでレプリケーション遅延が大きくなったときに、
   "portal not found" エラーが発生するバグを修正しました。 (Tatsuo Ishii)
 <p>
   これは delay_threshold が導入以来、ずっと存在していたバグです。
@@ -7541,9 +7749,9 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
 
 <li>pg_md5 で、ユーザからのパスワード入力の後には改行するように修正しました。 (Yugo Nagata)</li>
 
-<li>watchdog のポート番号が既に使用されていた場合にエラーメッセージを出力するよう修正しました。 
+<li>watchdog のポート番号が既に使用されていた場合にエラーメッセージを出力するよう修正しました。
   (Yugo Nagata)
-<p> 
+<p>
   この問題は [pgpool-general: 1167] で Will Ferguson さんによって報告されました。
 </p>
 <blockquote>
@@ -7573,12 +7781,12 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
 <li>pool_read() が不正なパケットを読み込んだ場合に、read_startup_packet() がアラームクロック
   をリセットして StartupPacket を解放するよう修正しました。 (Nozomi Anzai)
 <p>
-  修正前は、pgpool ポートの監視を行うプログラムの接続により、認証のタイムアウトが発生していました。 
+  修正前は、pgpool ポートの監視を行うプログラムの接続により、認証のタイムアウトが発生していました。
   この問題は、バグトラック #35 で報告されました。
 </p>
 <blockquote>
   #35 Authentication is timeout<br />
-  Reporter: tuomas 
+  Reporter: tuomas
   Date: 2012-11-20 11:54
   <a href="http://www.pgpool.net/mantisbt/view.php?id=35">
   http://www.pgpool.net/mantisbt/view.php?id=35</a>
@@ -7589,7 +7797,7 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
 <p>
   このポインタは事前に memset() によって初期化されているため、実際にはこのバグによる害は
   ありませんでした。
-</p>    
+</p>
 </li>
 
 <li>ヘルプメッセージに -f オプションの説明を追加しました。 (Tatsuo Ishii)</li>
@@ -7842,7 +8050,7 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
 <h3>バグ修正</h3>
 <p>
 </p><ul>
- <li>pgpool-regclass()をPostgreSQL 8.0以降でコンパイルできるように修正しました。7.4はまだエラーが出ます(Tatsuo Ishii) 
+ <li>pgpool-regclass()をPostgreSQL 8.0以降でコンパイルできるように修正しました。7.4はまだエラーが出ます(Tatsuo Ishii)
  </li><li>ストリーミングレプリケーション構成で/*NO LOAD BALANCE*/コメントを使用したときに
     ハングアップする可能性を修正しました(Toshihiro Kitagawa)
  </li><li>Flush(H)メッセージやCloseComplete(C)メッセージを受信したときのハングアップを修正しました(Toshihiro Kitagawa)
@@ -8829,7 +9037,7 @@ S: &lt;-- ok since no previous SELECT is sent. kind mismatch error occurs!
 <h2>2.0.1 (hikitsuboshi) 2007/11/21</h2>
 <ul>
   <li> UPDATE もしくは DELETE を実行するとプロセスがダウンする不具合を
-       修正しました。(Yoshiyuki Asaba) 
+       修正しました。(Yoshiyuki Asaba)
   </li><li> <a href="#MASTER_SLAVE_MODE">master_slave</a> を true に設定している場合に、SQL 構文エラーを検知
        した時にマスタにのみそのクエリを送信するようにしました。(Yoshiyuki Asaba)
 </li></ul>
@@ -8889,7 +9097,7 @@ HINT:  check data consistency between master and other db node
   <li> 新しく <a href="AUTHENTICATION_TIMEOUT">authentication_timeout</a> という
        パラメータを追加しました。(Yoshiyuki Asaba)
     <ul>
-     <li>このパラメータでは認証時間のタイムアウトを設定します。 
+     <li>このパラメータでは認証時間のタイムアウトを設定します。
      </li><li>デフォルト値は 60 (1 分)です。
    </li></ul>
   </li><li> スタートアップパケットの長さが 10000 バイト越えている場合には、接続を切断するようにしました。(Yoshiyuki Asaba)
