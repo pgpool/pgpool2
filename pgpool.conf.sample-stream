@@ -62,11 +62,11 @@ backend_data_directory0 = '/data'
 backend_flag0 = 'ALLOW_TO_FAILOVER'
                                    # Controls various backend behavior
                                    # ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
-backend_hostname1 = 'host2'
-backend_port1 = 5433
-backend_weight1 = 1
-backend_data_directory1 = '/data1'
-backend_flag1 = 'ALLOW_TO_FAILOVER'
+#backend_hostname1 = 'host2'
+#backend_port1 = 5433
+#backend_weight1 = 1
+#backend_data_directory1 = '/data1'
+#backend_flag1 = 'ALLOW_TO_FAILOVER'
 
 # - Authentication -
 
