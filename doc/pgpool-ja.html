@@ -3986,9 +3986,7 @@ pgpool.conf.sample ファイルの WATCHDOG セクションにサンプルを記
 watchdog プロセスは以下の項目すべてを指定する必要があります。
 </p>
 
-<h3>基本設定セクション</h3>
-
-<h4>有効化</h4>
+<h3>有効化</h3>
 <dl>
 <dt><a name="USE_WATCHDOG"></a>use_watchdog <span class="version">V3.2 ～</span></dt>
     <dd>
@@ -4001,7 +3999,48 @@ watchdog プロセスは以下の項目すべてを指定する必要があり�
     </dd>
 </dl>
 
-<h4>上位サーバへの接続</h4>
+<h3>watchdog 間通信</h3>
+
+<p>watchdog 間の情報交換に関する設定です。</p>
+
+<dl>
+<dt><a name="WD_HOSTNAME"></a>wd_hostname <span class="version">V3.2 ～</span></dt>
+    <dd>
+    <p>
+    pgpool-II サーバのホスト名または IP アドレスです。
+    クエリやパケットの送受信の他、watchdog の識別子としても用います。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
+    </dd>
+
+<dt><a name="WD_PORT"></a>wd_port <span class="version">V3.2 ～</span></dt>
+    <dd>
+    <p>
+    wachdog 間の情報交換のためのパケットを受信するポート番号を指定します。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
+    </dd>
+
+<dt><a name="WD_AUTHKEY"></a>wd_authkey <span class="version">V3.3 ～</span></dt>
+    <dd>
+    <p>
+    wachdog 間通信で用いられる認証キーです。
+    全ての pgpool-II で同じキーを指定する必要があります。
+    認証キーが異なる watchdog からの通信は拒絶されます。
+    死活監視をハートビートモードで行う場合には、この認証はハートビート信号にも適用されます。
+    指定が無い場合には認証は行われず、これがデフォルトです。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
+    </dd>
+</dl>
+
+<h3>上位サーバへの接続</h3>
 <p>
 pgpool-II あるいは PostgreSQL のサービス提供先（DB クライアント）のサーバを、上位サーバと呼びます。
 pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
@@ -4038,7 +4077,7 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
     </dd>
 </dl>
 
-<h4>仮想 IP</h4>
+<h3>仮想 IP</h3>
 
 <p>
 仮想 IP の制御に関する設定です。
@@ -4117,7 +4156,7 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
     </dd>
 </dl>
 
-<h4>昇格時の振る舞い</h4>
+<h3>昇格時の振る舞い</h3>
 
 <p>pgpool-II がアクティブ（仮想 IP を保持しているステータス）に昇格した時の振る舞いの設定です。</p>
 <dl>
@@ -4135,7 +4174,7 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
     </p>
     </dd>
 
-<dt><a name="wd_escalation_command"></a>wd_escalation_command <span class="version">V3.3 ～</span></dt>
+<dt><a name="WD_ESCALATION_COMMAND"></a>wd_escalation_command <span class="version">V3.3 ～</span></dt>
     <dd>
     <p>
     pgpool-II がアクティブに昇格した時に、ここで指定したコマンドが実行されます。
@@ -4314,47 +4353,6 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
     監視クエリを送る際にデータベースに接続するパスワードです。
     デフォルトでは設定されていません。
     クエリモードの場合のみ有効です。
-    </p>
-    <p>
-    このパラメータを変更した時には pgpool-II を再起動してください。
-    </p>
-    </dd>
-</dl>
-
-<h3>watchdog 間通信</h3>
-
-<p>watchdog 間の情報交換に関する設定です。</p>
-
-<dl>
-<dt><a name="WD_HOSTNAME"></a>wd_hostname <span class="version">V3.2 ～</span></dt>
-    <dd>
-    <p>
-    pgpool-II サーバのホスト名または IP アドレスです。
-    クエリやパケットの送受信の他、watchdog の識別子としても用います。
-    </p>
-    <p>
-    このパラメータを変更した時には pgpool-II を再起動してください。
-    </p>
-    </dd>
-
-<dt><a name="WD_PORT"></a>wd_port <span class="version">V3.2 ～</span></dt>
-    <dd>
-    <p>
-    wachdog 間の情報交換のためのパケットを受信するポート番号を指定します。
-    </p>
-    <p>
-    このパラメータを変更した時には pgpool-II を再起動してください。
-    </p>
-    </dd>
-
-<dt><a name="WD_AUTHKEY"></a>wd_authkey <span class="version">V3.3 ～</span></dt>
-    <dd>
-    <p>
-    wachdog 間通信で用いられる認証キーです。
-    全ての pgpool-II で同じキーを指定する必要があります。
-    認証キーが異なる watchdog からの通信は拒絶されます。
-    死活監視をハートビートモードで行う場合には、この認証はハートビート信号にも適用されます。
-    指定が無い場合には認証は行われず、これがデフォルトです。
     </p>
     <p>
     このパラメータを変更した時には pgpool-II を再起動してください。

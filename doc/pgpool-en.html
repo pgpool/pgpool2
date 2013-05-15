@@ -3877,9 +3877,7 @@ There is sample configuration in WATCHDOG section in pgpool.conf.sample file.
 All following options are required to be specified in watchdog process.
 </p>
 
-<h3>Basic configuration</h3>
-
-<h4>Enabling</h4>
+<h3>Enabling</h3>
 <dl>
 <dt><a name="USE_WATCHDOG"></a>use_watchdog <span class="version">V3.2 -</span></dt>
     <dd>
@@ -3892,7 +3890,45 @@ All following options are required to be specified in watchdog process.
     </dd>
 </dl>
 
-<h4>Connection to up stream servers</h4>
+<h3>Watchdog communication</h3>
+<dl>
+<dt><a name="WD_HOSTNAME"></a>wd_hostname <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    Specifies the hostname or IP address of pgpool-II server.
+    This is used for sending/receiving queries and packets, and also as identifier of watchdog.
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
+    </dd>
+
+<dt><a name="WD_PORT"></a>wd_port <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    Specifies the port number for watchdog communication.
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
+    </dd>
+
+<dt><a name="WD_AUTHKEY"></a>wd_authkey <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    This option specifies the authentication key used in watchdog communication.
+    All the pgpool-II must have the same key.
+    Packets from watchdog of wrong key will be rejects.
+    This authentication is applied also for heatrbeat singals if lifecheck method is heartbeat mode.
+    If this is empty (default), watchdog doesn't conduct authenticate.
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
+    </dd>
+</dl>
+
+<h3>Connection to up stream servers</h3>
 
 <dl>
 <dt><a name="TRUSTED_SERVERS"></a>trusted_servers <span class="version">V3.2 -</span></dt>
@@ -3924,7 +3960,7 @@ All following options are required to be specified in watchdog process.
     </dd>
 </dl>
 
-<h4>Virtual IP address</h4>
+<h3>Virtual IP control</h3>
 
 <p>
 Configuration about virtual IP interface control
@@ -4006,7 +4042,7 @@ Configuration about virtual IP interface control
     </dd>
 </dl>
 
-<h4>Behaivor on escalation</h4>
+<h3>Behaivor on escalation</h3>
 
 <p> Configuration about behavior when pgpool-II escalates to active (virtual IP holder)
 
@@ -4023,7 +4059,7 @@ Configuration about virtual IP interface control
     </p>
     </dd>
 
-<dt><a name="wd_escalation_command"></a>wd_escalation_command <span class="version">V3.3 -</span></dt>
+<dt><a name="WD_ESCALATION_COMMAND"></a>wd_escalation_command <span class="version">V3.3 -</span></dt>
     <dd>
     <p>
     Watchdog executes this command on the new active when pgpool-II escaltes to active.
@@ -4196,45 +4232,6 @@ Configuration about virtual IP interface control
     The password of the user to check pgpool-II.
     Default is "".
     This works only query mode.
-    </p>
-    </dd>
-</dl>
-
-
-<h3>Communication between watchdogs</h3>
-<dl>
-<dt><a name="WD_HOSTNAME"></a>wd_hostname <span class="version">V3.2 -</span></dt>
-    <dd>
-    <p>
-    Specifies the hostname or IP address of pgpool-II server.
-    This is used for sending/receiving queries and packets, and also as identifier of watchdog.
-    </p>
-    <p>
-    You need to restart pgpool-II if you change this value.
-    </p>
-    </dd>
-
-<dt><a name="WD_PORT"></a>wd_port <span class="version">V3.2 -</span></dt>
-    <dd>
-    <p>
-    Specifies the port number for watchdog communication.
-    </p>
-    <p>
-    You need to restart pgpool-II if you change this value.
-    </p>
-    </dd>
-
-<dt><a name="WD_AUTHKEY"></a>wd_authkey <span class="version">V3.3 -</span></dt>
-    <dd>
-    <p>
-    This option specifies the authentication key used in watchdog communication.
-    All the pgpool-II must have the same key.
-    Packets from watchdog of wrong key will be rejects.
-    This authentication is applied also for heatrbeat singals if lifecheck method is heartbeat mode.
-    If this is empty (default), watchdog doesn't conduct authenticate.
-    </p>
-    <p>
-    You need to restart pgpool-II if you change this value.
     </p>
     </dd>
 </dl>
