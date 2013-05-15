@@ -39,7 +39,7 @@
 #define WD_MAX_IF_NAME_LEN (16)
 
 #define WD_INFO(wd_id) (pool_config->other_wd->wd_info[(wd_id)])
-#define WD_UDP_IF(if_id) (pool_config->udp_if[(if_id)])
+#define WD_HB_IF(if_id) (pool_config->hb_if[(if_id)])
 
 #define WD_MYSELF (WD_List)
 
@@ -131,8 +131,8 @@ typedef struct {
 	int life;								/* life point */
 	char delegate_ip[WD_MAX_HOST_NAMELEN];	/* delegate IP */
 	int delegate_ip_flag;					/* delegate IP flag */
-	struct timeval udp_send_time; 			/* send time */
-	struct timeval udp_last_recv_time; 		/* recv time */
+	struct timeval hb_send_time; 			/* send time */
+	struct timeval hb_last_recv_time; 		/* recv time */
 	bool is_lock_holder;					/* lock holder flag */
 	bool in_interlocking;					/* failover or failback is in progress */
 } WdInfo;
@@ -155,7 +155,7 @@ typedef union {
 typedef struct {
 	char addr[WD_MAX_HOST_NAMELEN];
 	char if_name[WD_MAX_IF_NAME_LEN];
-} WdUdpIf;
+} WdHbIf;
 
 typedef struct {
 	int num_wd;		/* number of watchdogs */
@@ -182,14 +182,14 @@ typedef struct {
 } WdPacketThreadArg;
 
 /*
- * UDP packet
+ * heartbeat packet
  */
 typedef struct {
 	char from[WD_MAX_HOST_NAMELEN];
 	struct timeval send_time;
 	WD_STATUS status;
 	char hash[(MD5_PASSWD_LEN+1)*2];
-} WdUdpPacket;
+} WdHbPacket;
 
 /*
  * thread argument for lifecheck of pgpool

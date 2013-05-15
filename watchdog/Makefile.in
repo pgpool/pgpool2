@@ -57,7 +57,7 @@ lib_watchdog_a_LIBADD =
 am_lib_watchdog_a_OBJECTS = watchdog.$(OBJEXT) wd_child.$(OBJEXT) \
 	wd_if.$(OBJEXT) wd_init.$(OBJEXT) wd_lifecheck.$(OBJEXT) \
 	wd_list.$(OBJEXT) wd_packet.$(OBJEXT) wd_ping.$(OBJEXT) \
-	wd_udp.$(OBJEXT) wd_interlock.$(OBJEXT)
+	wd_heartbeat.$(OBJEXT) wd_interlock.$(OBJEXT)
 lib_watchdog_a_OBJECTS = $(am_lib_watchdog_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -212,7 +212,7 @@ lib_watchdog_a_SOURCES = \
 	wd_list.c \
 	wd_packet.c \
 	wd_ping.c \
-	wd_udp.c \
+	wd_heartbeat.c \
 	wd_interlock.c
 
 AM_CPPFLAGS = -D_GNU_SOURCE -I .. -I @PGSQL_INCLUDE_DIR@
@@ -266,6 +266,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/watchdog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_child.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_heartbeat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_if.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_init.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_interlock.Po@am__quote@
@@ -273,7 +274,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_list.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_packet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_ping.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_udp.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

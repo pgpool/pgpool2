@@ -3,7 +3,7 @@
  *
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2013	PgPool Global Development Group
@@ -34,11 +34,14 @@
 /*
  * Master/slave sub mode
  */
-#define MODE_STREAMREP "stream"		/* Streaming Replication */
-#define MODE_SLONY "slony"		/* Slony-I */
+#define MODE_STREAMREP 	"stream"	/* Streaming Replication */
+#define MODE_SLONY 		"slony"		/* Slony-I */
 
-#define MODE_UDP "udp"
-#define MODE_QUERY "query"
+/*
+ * watchdog lifecheck method
+ */
+#define MODE_HEARTBEAT	"heartbeat"
+#define MODE_QUERY 		"query"
 
 /*
  *  Regex support in white and black list function
@@ -223,12 +226,12 @@ typedef struct {
 	 * add for watchdog
 	 */
 	int use_watchdog;					/* if non 0, use watchdog */
-	char *watchdog_mode;				/* mode of lifecheck mode. 'udp' or 'query' */
+	char *wd_lifecheck_method;			/* method of lifecheck. 'heartbeat' or 'query' */
 	int clear_memqcache_on_escalation;	/* if no 0, clear query cache on shmem when escalating */
     char *wd_escalation_command;		/* Executes this command at escalation on new active pgpool.*/
 	char *wd_hostname;					/* watchdog hostname */
 	int wd_port;						/* watchdog port */
-	WdDesc * other_wd;					/* watchdog lists */ 
+	WdDesc * other_wd;					/* watchdog lists */
 	char * trusted_servers;				/* icmp reachable server list (A,B,C) */
 	char * delegate_IP;					/* delegate IP address */
 	int  wd_interval;					/* lifecheck interval (sec) */
@@ -244,11 +247,11 @@ typedef struct {
 	char *wd_lifecheck_dbname;			/* Database name connected for lifecheck */
 	char *wd_lifecheck_user;			/* PostgreSQL user name for watchdog */
 	char *wd_lifecheck_password;		/* password for watchdog user */
-	int wd_udp_port;					/* Port number for UDP heartbeat lifecheck */
-	int wd_udp_keepalive;				/* Interval time of sending UDP heartbeat signal (sec) */
-	int wd_udp_deadtime;				/* Deadtime interval for UDP heartbeat signal (sec) */
-	WdUdpIf udp_if[WD_MAX_IF_NUM];		/* interface devices */
-	int num_udp_if; 					/* number of interface devices */
+	int wd_heartbeat_port;				/* Port number for heartbeat lifecheck */
+	int wd_heartbeat_keepalive;			/* Interval time of sending heartbeat signal (sec) */
+	int wd_heartbeat_deadtime;			/* Deadtime interval for heartbeat signal (sec) */
+	WdHbIf hb_if[WD_MAX_IF_NUM];		/* interface devices */
+	int num_hb_if;						/* number of interface devices */
 } POOL_CONFIG;
 
 typedef enum {

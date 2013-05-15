@@ -86,8 +86,8 @@ wd_init(void)
 	p = WD_List;
 	while (p->status != WD_END)
 	{
-		WD_TIME_INIT(p->udp_send_time);
-		WD_TIME_INIT(p->udp_last_recv_time);
+		WD_TIME_INIT(p->hb_send_time);
+		WD_TIME_INIT(p->hb_last_recv_time);
 
 		p++;
 	}

@@ -92,13 +92,13 @@ extern int is_wd_lifecheck_ready(void);
 extern int wd_lifecheck(void);
 extern int wd_ping_pgpool(WdInfo * pgpool);
 
-/* wd_udp.c */
-extern int wd_create_udp_send_socket(WdUdpIf udp_if);
-extern int wd_create_udp_recv_socket(WdUdpIf udp_if);
-extern int wd_udp_write(int sock, WdUdpPacket * pkt, int len, const char * destination);
-extern int wd_udp_read(int sock, WdUdpPacket * pkt);
-extern pid_t wd_reader(int fork_wait_time, WdUdpIf udp_if);
-extern pid_t wd_writer(int fork_wait_time, WdUdpIf udp_if);
+/* wd_hearbeat.c */
+extern int wd_create_hb_send_socket(WdHbIf hb_if);
+extern int wd_create_hb_recv_socket(WdHbIf hb_if);
+extern int wd_hb_send(int sock, WdHbPacket * pkt, int len, const char * destination);
+extern int wd_hb_recv(int sock, WdHbPacket * pkt);
+extern pid_t wd_hb_receiver(int fork_wait_time, WdHbIf hb_if);
+extern pid_t wd_hb_sender(int fork_wait_time, WdHbIf hb_if);
 
 /* wd_interlock.c */
 extern int wd_init_interlock(void);
