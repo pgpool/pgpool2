@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2012	PgPool Global Development Group
+ * Copyright (c) 2003-2013	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -2631,7 +2631,21 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 
 			if (pool_extract_error_message(false, backend, major, true, &message))
 			{
-				pool_log("do_query: error message from backend %s", message);
+				pool_error("do_query: error message from backend: %s. Exit this session.", message);
+				/*
+				 * This is fatal. Because: If we operate extended
+				 * query, backend would not accept subsequent commands
+				 * until "sync" message issued. However, if sync
+				 * message issued, unnamed statement/unnamed portal
+				 * will disappear and will cause lots of problems.  If
+				 * we do not operate extended query, ongoing
+				 * transaction is aborted, and subsequent query would
+				 * not accepted.  In summary there's no transparent
+				 * way for frontend to handle error case. The only way
+				 * is closing this session.
+				 */
+				child_exit(1);
+				return POOL_END;
 			}
 		}
 
