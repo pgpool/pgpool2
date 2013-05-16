@@ -11,7 +11,7 @@ lib_watchdog_a_SOURCES = \
 	wd_list.c \
 	wd_packet.c \
 	wd_ping.c \
-	wd_udp.c \
+	wd_heartbeat.c \
 	wd_interlock.c
 
 AM_CPPFLAGS = -D_GNU_SOURCE -I .. -I @PGSQL_INCLUDE_DIR@

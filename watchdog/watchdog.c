@@ -3,7 +3,7 @@
  *
  * Handles watchdog connection, and protocol communication with pgpool-II
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2012	PgPool Global Development Group
@@ -44,8 +44,8 @@ unsigned char * WD_Node_List = NULL;		/* node list */
 pid_t wd_ppid = 0;
 static pid_t lifecheck_pid;
 static pid_t child_pid;
-static pid_t reader_pid[WD_MAX_IF_NUM];
-static pid_t writer_pid[WD_MAX_IF_NUM];
+static pid_t hb_receiver_pid[WD_MAX_IF_NUM];
+static pid_t hb_sender_pid[WD_MAX_IF_NUM];
 
 pid_t wd_main(int fork_wait_time);
 void wd_kill_watchdog(int sig);
@@ -82,12 +82,12 @@ wd_kill_watchdog(int sig)
 	kill (lifecheck_pid, sig);
 	kill (child_pid, sig);
 
-	if (!strcmp(pool_config->watchdog_mode, MODE_UDP))
+	if (!strcmp(pool_config->wd_lifecheck_method, MODE_HEARTBEAT))
 	{
-		for (i = 0; i < pool_config->num_udp_if; i++)
+		for (i = 0; i < pool_config->num_hb_if; i++)
 		{
-			kill (reader_pid[i], sig);
-			kill (writer_pid[i], sig);
+			kill (hb_receiver_pid[i], sig);
+			kill (hb_sender_pid[i], sig);
 		}
 	}
 }
@@ -154,24 +154,24 @@ wd_main(int fork_wait_time)
 		return 0;
 	}
 
-	if (!strcmp(pool_config->watchdog_mode, MODE_UDP))
+	if (!strcmp(pool_config->wd_lifecheck_method, MODE_HEARTBEAT))
 	{
-		for (i = 0; i < pool_config->num_udp_if; i++)
+		for (i = 0; i < pool_config->num_hb_if; i++)
 		{
-			/* reader process */
-			reader_pid[i] = wd_reader(1, pool_config->udp_if[i]);
-			if (reader_pid[i] < 0 )
+			/* heartbeat receiver process */
+			hb_receiver_pid[i] = wd_hb_receiver(1, pool_config->hb_if[i]);
+			if (hb_receiver_pid[i] < 0 )
 			{
-				pool_error("launch wd_reader failed");
-				return reader_pid[i];
+				pool_error("launch wd_hb_receiver failed");
+				return hb_receiver_pid[i];
 			}
 
-			/* writer process */
-			writer_pid[i] = wd_writer(1, pool_config->udp_if[i]);
-			if (writer_pid[i] < 0 )
+			/* heartbeat sender process */
+			hb_sender_pid[i] = wd_hb_sender(1, pool_config->hb_if[i]);
+			if (hb_sender_pid[i] < 0 )
 			{
-				pool_error("launch wd_writer failed");
-				return writer_pid[i];
+				pool_error("launch wd_hb_sender failed");
+				return hb_sender_pid[i];
 			}
 		}
 	}
@@ -251,9 +251,9 @@ wd_is_watchdog_pid(pid_t pid)
 		return 1;
 	}
 
-	for (i = 0; i < pool_config->num_udp_if; i++)
+	for (i = 0; i < pool_config->num_hb_if; i++)
 	{
-		if (pid == reader_pid[i] || pid == writer_pid[i])
+		if (pid == hb_receiver_pid[i] || pid == hb_sender_pid[i])
 		{
 			return 1;
 		}
@@ -267,7 +267,7 @@ wd_reaper_watchdog(pid_t pid, int status)
 {
 	int i;
 
-	/* exiting process was watchdog lifecheck process */
+	/* watchdog lifecheck process exits */
 	if (pid == lifecheck_pid)
 	{
 		if (WIFSIGNALED(status))
@@ -287,7 +287,7 @@ wd_reaper_watchdog(pid_t pid, int status)
 		pool_log("fork a new watchdog lifecheck pid %d", lifecheck_pid);
 	}
 
-	/* exiting process was watchdog child process */
+	/* watchdog child process exits */
 	else if (pid == child_pid)
 	{
 		if (WIFSIGNALED(status))
@@ -307,48 +307,48 @@ wd_reaper_watchdog(pid_t pid, int status)
 		pool_log("fork a new watchdog child pid %d", child_pid);
 	}
 
-	/* exiting process was reader/writer process */
+	/* receiver/sender process exits */
 	else
 	{
-		for (i = 0; i < pool_config->num_udp_if; i++)
+		for (i = 0; i < pool_config->num_hb_if; i++)
 		{
-			if (pid == reader_pid[i])
+			if (pid == hb_receiver_pid[i])
 			{
 				if (WIFSIGNALED(status))
-					pool_debug("watchdog reader process %d exits with status %d by signal %d",
+					pool_debug("watchdog heartbeat receiver process %d exits with status %d by signal %d",
 					           pid, status, WTERMSIG(status));
 				else
-					pool_debug("watchdog reader process %d exits with status %d", pid, status);
+					pool_debug("watchdog heartbeat receiver process %d exits with status %d", pid, status);
 
-				reader_pid[i] = wd_reader(1, pool_config->udp_if[i]);
+				hb_receiver_pid[i] = wd_hb_receiver(1, pool_config->hb_if[i]);
 
-				if (reader_pid[i] < 0)
+				if (hb_receiver_pid[i] < 0)
 				{
-					pool_error("wd_reaper: fork a watchdog reader process failed");
+					pool_error("wd_reaper: fork a watchdog heartbeat receiver process failed");
 					return 0;
 				}
 		
-				pool_log("fork a new watchdog reader pid %d", reader_pid[i]);
+				pool_log("fork a new watchdog heartbeat receiver: pid %d", hb_receiver_pid[i]);
 				break;
 			}
 
-			else if (pid == writer_pid[i])
+			else if (pid == hb_sender_pid[i])
 			{
 				if (WIFSIGNALED(status))
-					pool_debug("watchdog writer process %d exits with status %d by signal %d",
+					pool_debug("watchdog heartbeat sender process %d exits with status %d by signal %d",
 					           pid, status, WTERMSIG(status));
 				else
-					pool_debug("watchdog writer process %d exits with status %d", pid, status);
+					pool_debug("watchdog heartbeat sender process %d exits with status %d", pid, status);
 
-				writer_pid[i] = wd_writer(1, pool_config->udp_if[i]);
+				hb_sender_pid[i] = wd_hb_sender(1, pool_config->hb_if[i]);
 
-				if (writer_pid[i] < 0)
+				if (hb_sender_pid[i] < 0)
 				{
-					pool_error("wd_reaper: fork a watchdog writer process failed");
+					pool_error("wd_reaper: fork a watchdog heartbeat sender process failed");
 					return 0;
 				}
 		
-				pool_log("fork a new watchdog writer pid %d", writer_pid[i]);
+				pool_log("fork a new watchdog heartbeat sender: pid %d", hb_sender_pid[i]);
 				break;
 			}
 		}

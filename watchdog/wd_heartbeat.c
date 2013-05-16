@@ -52,14 +52,14 @@
 
 #define MAX_BIND_TRIES 5
 
-static RETSIGTYPE writer_exit(int sig);
-static RETSIGTYPE reader_exit(int sig);
-static int hton_wd_udp_packet(WdUdpPacket * to, WdUdpPacket * from);
-static int ntoh_wd_udp_packet(WdUdpPacket * to, WdUdpPacket * from);
-static int packet_to_string_udp(WdUdpPacket pkt, char *str, int maxlen);
+static RETSIGTYPE hb_sender_exit(int sig);
+static RETSIGTYPE hb_receiver_exit(int sig);
+static int hton_wd_hb_packet(WdHbPacket * to, WdHbPacket * from);
+static int ntoh_wd_hb_packet(WdHbPacket * to, WdHbPacket * from);
+static int packet_to_string_hb(WdHbPacket pkt, char *str, int maxlen);
 
 int
-wd_create_udp_send_socket(WdUdpIf udp_if)
+wd_create_hb_send_socket(WdHbIf hb_if)
 {
 	int sock;
 	int tos;
@@ -68,7 +68,7 @@ wd_create_udp_send_socket(WdUdpIf udp_if)
 	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
 	{
 		/* socket create failed */
-		pool_error("wd_create_udp_send_socket: Failed to create socket. reason: %s",
+		pool_error("wd_create_hb_send_socket: Failed to create socket. reason: %s",
 		           strerror(errno));
 		return -1;
 	}
@@ -77,7 +77,7 @@ wd_create_udp_send_socket(WdUdpIf udp_if)
 	tos = IPTOS_LOWDELAY;
 	if (setsockopt(sock, IPPROTO_IP, IP_TOS, (char *) &tos, sizeof(tos)) == -1 )
 	{
-		pool_error("wd_create_udp_send_socket: setsockopt(IP_TOS) failed. reason: %s",
+		pool_error("wd_create_hb_send_socket: setsockopt(IP_TOS) failed. reason: %s",
 		           strerror(errno));
 		close(sock);
 		return -1;
@@ -86,16 +86,16 @@ wd_create_udp_send_socket(WdUdpIf udp_if)
 #if defined(SO_BINDTODEVICE)
 	{
 		struct ifreq i;
-		strlcpy(i.ifr_name, udp_if.if_name, sizeof(i.ifr_name));
+		strlcpy(i.ifr_name, hb_if.if_name, sizeof(i.ifr_name));
 
 		if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, &i, sizeof(i)) == -1)
 		{
-			pool_error("wd_create_udp_send_socket: setsockopt(SO_BINDTODEVICE) failed. reason: %s",
-			           strerror(errno));
+			pool_error("wd_create_hb_send_socket: setsockopt(SO_BINDTODEVICE) failed. reason: %s, device: %s",
+			           strerror(errno), i.ifr_name);
 			close(sock);
 			return -1;
 		}
-		pool_log("wd_create_udp_send_socket: bind send socket to device: %s", i.ifr_name);
+		pool_log("wd_create_hb_send_socket: bind send socket to device: %s", i.ifr_name);
 	}
 #endif
 #if defined(SO_REUSEPORT)
@@ -103,17 +103,17 @@ wd_create_udp_send_socket(WdUdpIf udp_if)
 		int one = 1;
 		if (setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &one, sizeof(one)) == -1)
 		{
-			pool_error("wd_create_udp_send_socket: setsockopt(SO_REUSEPORT) failed. reason: %s",
+			pool_error("wd_create_hb_send_socket: setsockopt(SO_REUSEPORT) failed. reason: %s",
 			           strerror(errno));
 			close(sock);
 			return -1;
 		}
-		pool_log("wd_create_udp_send_socket: set SO_REUSEPORT");
+		pool_log("wd_create_hb_send_socket: set SO_REUSEPORT");
 	}
 #endif
 
  	if (fcntl(sock, F_SETFD, FD_CLOEXEC) < 0) {
-		pool_error("wd_create_udp_send_socket: setting close-on-exec flag failed. reason: %s",
+		pool_error("wd_create_hb_send_socket: setting close-on-exec flag failed. reason: %s",
 		           strerror(errno));
 		close(sock);
 		return -1;
@@ -123,7 +123,7 @@ wd_create_udp_send_socket(WdUdpIf udp_if)
 }
 
 int
-wd_create_udp_recv_socket(WdUdpIf udp_if)
+wd_create_hb_recv_socket(WdHbIf hb_if)
 {
 	struct sockaddr_in addr;
 	int sock;
@@ -133,21 +133,21 @@ wd_create_udp_recv_socket(WdUdpIf udp_if)
 
 	memset(&(addr), 0, sizeof(addr));
 	addr.sin_family = AF_INET;
-	addr.sin_port = htons(pool_config->wd_udp_port);
+	addr.sin_port = htons(pool_config->wd_heartbeat_port);
 	addr.sin_addr.s_addr = INADDR_ANY;
 
 	/* create socket */
 	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
 	{
 		/* socket create failed */
-		pool_error("wd_create_udp_recv_socket: Failed to create socket. reason: %s",
+		pool_error("wd_create_hb_recv_socket: Failed to create socket. reason: %s",
 		           strerror(errno));
 		return -1;
 	}
 
 	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(one)) == -1 )
 	{
-		pool_error("wd_create_udp_recv_socket: setsockopt(SO_REUSEADDR) failed. reason: %s",
+		pool_error("wd_create_hb_recv_socket: setsockopt(SO_REUSEADDR) failed. reason: %s",
 		           strerror(errno));
 		close(sock);
 		return -1;
@@ -156,16 +156,16 @@ wd_create_udp_recv_socket(WdUdpIf udp_if)
 #if defined(SO_BINDTODEVICE)
 	{
 		struct ifreq i;
-		strlcpy(i.ifr_name, udp_if.if_name, sizeof(i.ifr_name));
+		strlcpy(i.ifr_name, hb_if.if_name, sizeof(i.ifr_name));
 
 		if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, &i, sizeof(i)) == -1)
 		{
-			pool_error("wd_create_udp_recv_socket: setsockopt(SO_BINDTODEVICE) failed. reason: %s",
-			           strerror(errno));
+			pool_error("wd_create_hb_recv_socket: setsockopt(SO_BINDTODEVICE) failed. reason: %s, devise: %s",
+			           strerror(errno), i.ifr_name);
 			close(sock);
 			return -1;
 		}
-		pool_log("wd_create_udp_recv_socket: bind receive socket to device: %s", i.ifr_name);
+		pool_log("wd_create_hb_recv_socket: bind receive socket to device: %s", i.ifr_name);
 	}
 #endif
 
@@ -173,12 +173,12 @@ wd_create_udp_recv_socket(WdUdpIf udp_if)
 	{
 		if (setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &one, sizeof(one)) == -1)
 		{
-			pool_error("wd_create_udp_recv_socket: setsockopt(SO_REUSEPORT) failed. reason: %s",
+			pool_error("wd_create_hb_recv_socket: setsockopt(SO_REUSEPORT) failed. reason: %s",
 			           strerror(errno));
 			close(sock);
 			return -1;
 		}
-		pool_log("wd_create_udp_recv_socket: set SO_REUSEPORT");
+		pool_log("wd_create_hb_recv_socket: set SO_REUSEPORT");
 	}
 #endif
 
@@ -187,7 +187,7 @@ wd_create_udp_recv_socket(WdUdpIf udp_if)
 	{
 		if (bind(sock, (struct sockaddr *)&addr, sizeof(struct sockaddr)) < 0)
 		{
-			pool_log("wd_crate_udp_recv_socket: bind failed. reason: %s ... retrying",
+			pool_log("wd_crate_hb_recv_socket: bind failed. reason: %s ... retrying",
 			         strerror(errno));
 			sleep(1);
 		}
@@ -200,14 +200,14 @@ wd_create_udp_recv_socket(WdUdpIf udp_if)
 	/* bind failed finally */
 	if (!bind_is_done)
 	{
-		pool_error("wd_crate_udp_recv_socket: unable to bind socket. reason: %s",
+		pool_error("wd_crate_hb_recv_socket: unable to bind socket. reason: %s",
 		           strerror(errno));
 		close(sock);
 		return -1;
 	}
 
  	if (fcntl(sock, F_SETFD, FD_CLOEXEC) < 0) {
-		pool_error("wd_create_udp_recv_socket: setting close-on-exec flag failed. reason: %s",
+		pool_error("wd_create_hb_recv_socket: setting close-on-exec flag failed. reason: %s",
 		           strerror(errno));
 		close(sock);
 		return -1;
@@ -217,81 +217,81 @@ wd_create_udp_recv_socket(WdUdpIf udp_if)
 }
 
 int
-wd_udp_write(int sock, WdUdpPacket * pkt, int len, const char * host)
+wd_hb_send(int sock, WdHbPacket * pkt, int len, const char * host)
 {
 	int rtn;
 	struct sockaddr_in addr;
 	struct hostent *hp;
-	WdUdpPacket buf;
+	WdHbPacket buf;
 
 	if (!host || !strlen(host))
 	{
-		pool_error("wd_udp_write: host name is empty");
+		pool_error("wd_hb_send: host name is empty");
 		return -1;
 	}
 
 	hp = gethostbyname(host);
 	if ((hp == NULL) || (hp->h_addrtype != AF_INET))
 	{
-		pool_error("wd_udp_write: gethostbyname() failed: %s host: %s",
+		pool_error("wd_hb_send: gethostbyname() failed: %s host: %s",
 		           hstrerror(h_errno), host);
 		return -1;
 	}
 	memmove((char *) &(addr.sin_addr), (char *) hp->h_addr, hp->h_length);
 
 	addr.sin_family = AF_INET;
-	addr.sin_port = htons(pool_config->wd_udp_port);
+	addr.sin_port = htons(pool_config->wd_heartbeat_port);
 
-	hton_wd_udp_packet(&buf, pkt);
+	hton_wd_hb_packet(&buf, pkt);
 
-	if ((rtn = sendto(sock, &buf, sizeof(WdUdpPacket), 0,
+	if ((rtn = sendto(sock, &buf, sizeof(WdHbPacket), 0,
 	                  (struct sockaddr *)&addr, sizeof(addr))) != len)
 	{
-		pool_error("wd_udp_write: failed to sent packet to %s", host);
+		pool_error("wd_hb_send: failed to sent packet to %s", host);
 		return WD_NG;
 	}
-	pool_debug("wd_udp_write: send %d byte packet", rtn);
+	pool_debug("wd_hb_send: send %d byte packet", rtn);
 
 	return WD_OK;
 }
 
 int
-wd_udp_read(int sock, WdUdpPacket * pkt)
+wd_hb_recv(int sock, WdHbPacket * pkt)
 {
 	int rtn;
 	struct sockaddr_in senderinfo;
 	socklen_t addrlen;
-	WdUdpPacket buf;
+	WdHbPacket buf;
 
 	addrlen = sizeof(senderinfo);
 
-	rtn = recvfrom(sock, &buf, sizeof(WdUdpPacket), 0,
+	rtn = recvfrom(sock, &buf, sizeof(WdHbPacket), 0,
 	               (struct sockaddr *)&senderinfo, &addrlen);
 	if (rtn < 0)
 	{	
-		pool_error("wd_udp_read: failed to receive packet");
+		pool_error("wd_hb_recv: failed to receive packet");
 		return WD_NG;
 	}
 	else if (rtn == 0)
 	{
-		pool_error("wd_udp_read: received zero bytes");
+		pool_error("wd_hb_recv: received zero bytes");
 		return WD_NG;
 	}
 	else
 	{
-		pool_debug("wd_udp_read: received %d byte packet", rtn);
+		pool_debug("wd_hb_recv: received %d byte packet", rtn);
 	}
 
-	ntoh_wd_udp_packet(pkt, &buf);
+	ntoh_wd_hb_packet(pkt, &buf);
 
 	return WD_OK;
 }
 
-pid_t wd_reader(int fork_wait_time, WdUdpIf udp_if)
+pid_t wd_hb_receiver(int fork_wait_time, WdHbIf hb_if)
 {
 	int sock;
 	pid_t pid = 0;
-	WdUdpPacket pkt;
+	WdHbPacket pkt;
 	struct timeval tv;
 	char from[WD_MAX_HOST_NAMELEN];
 	char buf[(MD5_PASSWD_LEN+1)*2];
@@ -304,7 +304,7 @@ pid_t wd_reader(int fork_wait_time, WdUdpIf udp_if)
 	if (pid != 0)
 	{
 		if (pid == -1)
-			pool_error("wd_reader: fork() failed.");
+			pool_error("wd_hb_receiver: fork() failed.");
 
 		return pid;
 	}
@@ -318,9 +318,9 @@ pid_t wd_reader(int fork_wait_time, WdUdpIf udp_if)
 
 	POOL_SETMASK(&UnBlockSig);
 
-	signal(SIGTERM, reader_exit);
-	signal(SIGINT, reader_exit);
-	signal(SIGQUIT, reader_exit);
+	signal(SIGTERM, hb_receiver_exit);
+	signal(SIGINT, hb_receiver_exit);
+	signal(SIGQUIT, hb_receiver_exit);
 	signal(SIGCHLD, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 	signal(SIGUSR1, SIG_IGN);
@@ -330,28 +330,28 @@ pid_t wd_reader(int fork_wait_time, WdUdpIf udp_if)
 
 	init_ps_display("", "", "", "");
 
-	if ( (sock = wd_create_udp_recv_socket(udp_if)) < 0)
+	if ( (sock = wd_create_hb_recv_socket(hb_if)) < 0)
 	{
-		pool_error("wd_reader: socket create failed");
-		reader_exit(SIGTERM);
+		pool_error("wd_hb_receiver: socket create failed");
+		hb_receiver_exit(SIGTERM);
 	}
 
-	set_ps_display("udp reader", false);
+	set_ps_display("heartbeat receiver", false);
 
 	for(;;)
 	{
-		if (wd_udp_read(sock, &pkt) == WD_OK)
+		if (wd_hb_recv(sock, &pkt) == WD_OK)
 		{
 			/* auhtentication */
 			if (strlen(pool_config->wd_authkey))
 			{
 				/* calculate hash from packet */
-				pack_str_len = packet_to_string_udp(pkt, pack_str, sizeof(pack_str));
+				pack_str_len = packet_to_string_hb(pkt, pack_str, sizeof(pack_str));
 				wd_calc_hash(pack_str, pack_str_len, buf);
 
 				if (strcmp(pkt.hash, buf))
 				{
-					pool_log("wd_reader: authentication failed");
+					pool_log("wd_hb_receiver: authentication failed");
 					continue;
 				}
 			}
@@ -368,12 +368,12 @@ pid_t wd_reader(int fork_wait_time, WdUdpIf udp_if)
 				if (!strcmp(p->hostname, from))
 				{
 					/* this is the first packet or the latest packet */
-					if (!WD_TIME_ISSET(p->udp_send_time) ||
-					    WD_TIME_BEFORE(p->udp_send_time, pkt.send_time))
+					if (!WD_TIME_ISSET(p->hb_send_time) ||
+					    WD_TIME_BEFORE(p->hb_send_time, pkt.send_time))
 					{
-						pool_debug("wd_reader: received heartbeat signal from %s", from);
-						p->udp_send_time = pkt.send_time;
-						p->udp_last_recv_time = tv;
+						pool_debug("wd_hb_receiver: received heartbeat signal from %s", from);
+						p->hb_send_time = pkt.send_time;
+						p->hb_last_recv_time = tv;
 					}
 					break;
 				}
@@ -385,11 +385,11 @@ pid_t wd_reader(int fork_wait_time, WdUdpIf udp_if)
 	return pid;
 }
 
-pid_t wd_writer(int fork_wait_time, WdUdpIf udp_if)
+pid_t wd_hb_sender(int fork_wait_time, WdHbIf hb_if)
 {
 	int sock;
 	pid_t pid = 0;
-	WdUdpPacket pkt;
+	WdHbPacket pkt;
 	WdInfo * p = WD_List;
 	char pack_str[WD_MAX_PACKET_STRING];
 	int pack_str_len;
@@ -398,7 +398,7 @@ pid_t wd_writer(int fork_wait_time, WdUdpIf udp_if)
 	if (pid != 0)
 	{
 		if (pid == -1)
-			pool_error("wd_writer: fork() failed.");
+			pool_error("wd_hb_sender: fork() failed.");
 
 		return pid;
 	}
@@ -412,9 +412,9 @@ pid_t wd_writer(int fork_wait_time, WdUdpIf udp_if)
 
 	POOL_SETMASK(&UnBlockSig);
 
-	signal(SIGTERM, writer_exit);
-	signal(SIGINT, writer_exit);
-	signal(SIGQUIT, writer_exit);
+	signal(SIGTERM, hb_sender_exit);
+	signal(SIGINT, hb_sender_exit);
+	signal(SIGQUIT, hb_sender_exit);
 	signal(SIGCHLD, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 	signal(SIGUSR1, SIG_IGN);
@@ -424,13 +424,13 @@ pid_t wd_writer(int fork_wait_time, WdUdpIf udp_if)
 
 	init_ps_display("", "", "", "");
 
-	if ( (sock = wd_create_udp_send_socket(udp_if)) < 0)
+	if ( (sock = wd_create_hb_send_socket(hb_if)) < 0)
 	{
-		pool_error("wd_writer: socket create failed");
-		writer_exit(SIGTERM);
+		pool_error("wd_hb_sender: socket create failed");
+		hb_sender_exit(SIGTERM);
 	}
 
-	set_ps_display("udp writer", false);
+	set_ps_display("heartbeat sender", false);
 
 	for(;;)
 	{
@@ -442,54 +442,54 @@ pid_t wd_writer(int fork_wait_time, WdUdpIf udp_if)
 		if (strlen(pool_config->wd_authkey))
 		{
 			/* calculate hash from packet */
-			pack_str_len = packet_to_string_udp(pkt, pack_str, sizeof(pack_str));
+			pack_str_len = packet_to_string_hb(pkt, pack_str, sizeof(pack_str));
 			wd_calc_hash(pack_str, pack_str_len, pkt.hash);
 		}
 
-		wd_udp_write(sock, &pkt, sizeof(pkt), udp_if.addr);
-		pool_debug("wd_writer: send heartbeat signal to %s", udp_if.addr);
-		sleep(pool_config->wd_udp_keepalive);
+		wd_hb_send(sock, &pkt, sizeof(pkt), hb_if.addr);
+		pool_debug("wd_hb_sender: send heartbeat signal to %s", hb_if.addr);
+		sleep(pool_config->wd_heartbeat_keepalive);
 	}
 
 	return pid;
 }
 
 static RETSIGTYPE
-writer_exit(int sig)
+hb_sender_exit(int sig)
 {
 	switch (sig)
 	{
 		case SIGTERM:	/* smart shutdown */
 		case SIGINT:	/* fast shutdown */
 		case SIGQUIT:	/* immediate shutdown */
-			pool_debug("writer child receives shutdown request signal %d", sig);
+			pool_debug("hb_sender child receives shutdown request signal %d", sig);
 			break;
 		default:
-			pool_error("writer child receives unknown signal %d", sig);
+			pool_error("hb_sender child receives unknown signal %d", sig);
 	}
 	
 	exit(0);
 }
 
 static RETSIGTYPE
-reader_exit(int sig)
+hb_receiver_exit(int sig)
 {
 	switch (sig)
 	{
 		case SIGTERM:	/* smart shutdown */
 		case SIGINT:	/* fast shutdown */
 		case SIGQUIT:	/* immediate shutdown */
-			pool_debug("reader child receives shutdown request signal %d", sig);
+			pool_debug("hb_receiver child receives shutdown request signal %d", sig);
 			break;
 		default:
-			pool_error("reader child receives unknown signal %d", sig);
+			pool_error("hb_receiver child receives unknown signal %d", sig);
 	}
 	
 	exit(0);
 }
 
 static int
-hton_wd_udp_packet(WdUdpPacket * to, WdUdpPacket * from)
+hton_wd_hb_packet(WdHbPacket * to, WdHbPacket * from)
 {
 	if ((to == NULL) || (from == NULL))
 	{
@@ -506,7 +506,7 @@ hton_wd_udp_packet(WdUdpPacket * to, WdUdpPacket * from)
 }
 
 static int
-ntoh_wd_udp_packet(WdUdpPacket * to, WdUdpPacket * from)
+ntoh_wd_hb_packet(WdHbPacket * to, WdHbPacket * from)
 {
 	if ((to == NULL) || (from == NULL))
 	{
@@ -523,7 +523,7 @@ ntoh_wd_udp_packet(WdUdpPacket * to, WdUdpPacket * from)
 }
 
 /* convert pakcet to string and return length of the string */
-static int packet_to_string_udp(WdUdpPacket pkt, char *str, int maxlen)
+static int packet_to_string_hb(WdHbPacket pkt, char *str, int maxlen)
 {
 	int len;
 	len = snprintf(str, maxlen, "status=%d tv_sec=%ld tv_usec=%ld from=%s",

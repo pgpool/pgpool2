@@ -46,7 +46,7 @@ static int pgpool_down(WdInfo * pool);
 
 static void check_pgpool_status(void);
 static void check_pgpool_status_by_query(void);
-static void check_pgpool_status_by_udp(void);
+static void check_pgpool_status_by_hb(void);
 static int ping_pgpool(PGconn * conn);
 static int is_parent_alive(void);
 
@@ -60,7 +60,7 @@ is_wd_lifecheck_ready(void)
 	while (p->status != WD_END)
 	{
 		/* query mode */
-		if (!strcmp(pool_config->watchdog_mode, MODE_QUERY))
+		if (!strcmp(pool_config->wd_lifecheck_method, MODE_QUERY))
 		{
 			if (wd_ping_pgpool(p) == WD_NG)
 			{
@@ -69,8 +69,8 @@ is_wd_lifecheck_ready(void)
 				rtn = WD_NG;
 			}
 		}
-		/* udp mode */
-		else if (!strcmp(pool_config->watchdog_mode, MODE_UDP))
+		/* heartbeat mode */
+		else if (!strcmp(pool_config->wd_lifecheck_method, MODE_HEARTBEAT))
 		{
 			if (p == WD_List)
 			{
@@ -79,8 +79,8 @@ is_wd_lifecheck_ready(void)
 				continue;
 			}
 
-			if (!WD_TIME_ISSET(p->udp_last_recv_time) ||
-			    !WD_TIME_ISSET(p->udp_send_time))
+			if (!WD_TIME_ISSET(p->hb_last_recv_time) ||
+			    !WD_TIME_ISSET(p->hb_send_time))
 			{
 				pool_debug("is_wd_lifecheck_ready: pgpool %d (%s:%d) has not send the heartbeat signal yet",
 				           i, p->hostname, p->pgpool_port);
@@ -91,7 +91,7 @@ is_wd_lifecheck_ready(void)
 		else
 		{
 			pool_error("is_wd_lifecheck_ready: unkown watchdog mode %s",
-			           pool_config->watchdog_mode);
+			           pool_config->wd_lifecheck_method);
 			return WD_NG;
 		}
 
@@ -154,19 +154,19 @@ static void
 check_pgpool_status()
 {
 	/* query mode */
-	if (!strcmp(pool_config->watchdog_mode, MODE_QUERY))
+	if (!strcmp(pool_config->wd_lifecheck_method, MODE_QUERY))
 	{
 		check_pgpool_status_by_query();
 	}
-	/* udp heartbeat mode */
-	else if (!strcmp(pool_config->watchdog_mode, MODE_UDP))
+	/* heartbeat mode */
+	else if (!strcmp(pool_config->wd_lifecheck_method, MODE_HEARTBEAT))
 	{
-		check_pgpool_status_by_udp();
+		check_pgpool_status_by_hb();
 	}
 }
 
 static void
-check_pgpool_status_by_udp(void)
+check_pgpool_status_by_hb(void)
 {
 	int cnt;
 	WdInfo * p = WD_List;
@@ -178,41 +178,41 @@ check_pgpool_status_by_udp(void)
 	cnt = 0;
 	while (p->status != WD_END)
 	{
-		pool_debug("check_pgpool_status_by_udp: checking pgpool %d (%s:%d)",
+		pool_debug("check_pgpool_status_by_hb: checking pgpool %d (%s:%d)",
 		           cnt, p->hostname, p->pgpool_port);
 
 		if (p == WD_MYSELF)
 		{
 			if (is_parent_alive() == WD_NG && WD_MYSELF->status != WD_DOWN)
 			{
-				pool_debug("check_pgpool_status_by_udp: NG; the main pgpool process does't exist.");
-				pool_log("check_pgpool_status_by_udp: lifecheck failed. pgpool %d (%s:%d) seems not to be working",
+				pool_debug("check_pgpool_status_by_hb: NG; the main pgpool process does't exist.");
+				pool_log("check_pgpool_status_by_hb: lifecheck failed. pgpool %d (%s:%d) seems not to be working",
 		                 cnt, p->hostname, p->pgpool_port);
 				wd_set_myself(&tv, WD_DOWN);
 				wd_notice_server_down();
 			}
 			else
 			{
-				pool_debug("check_pgpool_status_by_udp: OK; status %d", p->status);
+				pool_debug("check_pgpool_status_by_hb: OK; status %d", p->status);
 			}
 		}
 		else
 		{
-			interval = WD_TIME_DIFF_SEC(tv, p->udp_last_recv_time);
+			interval = WD_TIME_DIFF_SEC(tv, p->hb_last_recv_time);
 
-			if (interval > pool_config->wd_udp_deadtime)
+			if (interval > pool_config->wd_heartbeat_deadtime)
 			{
-				pool_debug("check_pgpool_status_by_udp: the latest heartbeat received %d seconds ago", interval);
-				pool_debug("check_pgpool_status_by_udp: NG; status %d", p->status);
+				pool_debug("check_pgpool_status_by_hb: the latest heartbeat received %d seconds ago", interval);
+				pool_debug("check_pgpool_status_by_hb: NG; status %d", p->status);
 
-				pool_log("check_pgpool_status_by_udp: lifecheck failed. pgpool %d (%s:%d) seems not to be working",
+				pool_log("check_pgpool_status_by_hb: lifecheck failed. pgpool %d (%s:%d) seems not to be working",
 		                 cnt, p->hostname, p->pgpool_port);
 				pgpool_down(p);
 			}
 			else
 			{
-				pool_debug("check_pgpool_status_by_udp: the latest heartbeat received %d secconds ago", interval);
-				pool_debug("check_pgpool_status_by_udp: OK; status %d", p->status);
+				pool_debug("check_pgpool_status_by_hb: the latest heartbeat received %d secconds ago", interval);
+				pool_debug("check_pgpool_status_by_hb: OK; status %d", p->status);
 			}
 		}
 
@@ -220,7 +220,7 @@ check_pgpool_status_by_udp(void)
 		cnt++;
 		if (cnt >= MAX_WATCHDOG_NUM)
 		{
-			pool_error("check_pgpool_status_by_udp: pgpool num is out of range(%d)",cnt);
+			pool_error("check_pgpool_status_by_hb: pgpool num is out of range(%d)",cnt);
 			break;
 		}
 	}

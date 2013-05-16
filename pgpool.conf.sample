@@ -74,7 +74,7 @@ enable_pool_hba = off
                                    # Use pool_hba.conf for client authentication
 pool_passwd = 'pool_passwd'
                                    # File name of pool_passwd for md5 authentication.
-                                   # "" disables pool_passwd. 
+                                   # "" disables pool_passwd.
                                    # (change requires restart)
 authentication_timeout = 60
                                    # Delay in seconds to complete client authentication
@@ -319,14 +319,14 @@ parallel_mode = off
                                    # Activates parallel query mode
                                    # (change requires restart)
 pgpool2_hostname = ''
-                                   # Set pgpool2 hostname 
+                                   # Set pgpool2 hostname
                                    # (change requires restart)
 
 # - System DB info -
 
 system_db_hostname  = 'localhost'
                                    # (change requires restart)
-system_db_port = 5432 
+system_db_port = 5432
                                    # (change requires restart)
 system_db_dbname = 'pgpool'
                                    # (change requires restart)
@@ -425,44 +425,40 @@ client_idle_limit_in_recovery = 0
 #------------------------------------------------------------------------------
 # WATCHDOG
 #------------------------------------------------------------------------------
-use_watchdog = off 
-                                    # Activates watchdog
 
-watchdog_mode='udp'
-                                    # Mode of watchdog lifecheck ('udp' or 'query') 
+# - Enabling -
+
+use_watchdog = off
+                                    # Activates watchdog
                                     # (change requires restart)
 
-clear_memqcache_on_escalation = on 
-                                    # Clear all the query cache on shared memory
-									# when standby pgpool escalate to active pgpool
-									# (= virtual IP holder).
-									# This should be off if client connects to pgpool
-									# not using virtual IP.
-									# (change requires restart)
-wd_escalation_command = ''
-                                   # Executes this command at escalation on new active pgpool.
+# -Connection to up stream servers -
 
 trusted_servers = ''
                                     # trusted server list which are used
                                     # to confirm network connection
                                     # (hostA,hostB,hostC,...)
                                     # (change requires restart)
-delegate_IP = ''
-                                    # delegate IP address
+ping_path = '/bin'
+                                    # ping command path
                                     # (change requires restart)
+
+# - Watchdog communication Settings -
+
 wd_hostname = ''
                                     # Host name or IP address of this watchdog
                                     # (change requires restart)
 wd_port = 9000
                                     # port number for watchdog service
                                     # (change requires restart)
-wd_interval = 10
-                                    # lifecheck interval (sec) > 0
-                                    # (change requires restart)
 wd_authkey = ''
-                                    # Authentication key for watchdog communication 
-ping_path = '/bin'
-                                    # ping command path
+                                    # Authentication key for watchdog communication
+                                    # (change requires restart)
+
+# - Virtual IP control Setting -
+
+delegate_IP = ''
+                                    # delegate IP address
                                     # (change requires restart)
 ifconfig_path = '/sbin'
                                     # ifconfig command path
@@ -480,21 +476,54 @@ arping_path = '/usr/sbin'           # arping command path
 arping_cmd = 'arping -U $_IP_$ -w 1'
                                     # arping command
                                     # (change requires restart)
-wd_udp_port = 9694
-                                    # Port number for UDP heartbeat lifecheck 
-wd_udp_keepalive = 2
-                                    # Interval time of sending UDP heartbeat signal (sec) 
-wd_udp_deadtime = 30
-                                    # Deadtime interval for UDP heartbeat signal (sec) 
-udp_device0 = 'eth0'
+
+# - Behaivor on escalation Setting -
+
+clear_memqcache_on_escalation = on
+                                    # Clear all the query cache on shared memory
+                                    # when standby pgpool escalate to active pgpool
+                                    # (= virtual IP holder).
+                                    # This should be off if client connects to pgpool
+                                    # not using virtual IP.
+                                    # (change requires restart)
+wd_escalation_command = ''
+                                    # Executes this command at escalation on new active pgpool.
+                                    # (change requires restart)
+
+# - Lifecheck Setting - 
+
+# -- common --
+
+wd_lifecheck_method='heartbeat'
+                                    # Method of watchdog lifecheck ('heartbeat' or 'query')
+                                    # (change requires restart)
+wd_interval = 10
+                                    # lifecheck interval (sec) > 0
+                                    # (change requires restart)
+
+# -- heartbeat mode --
+
+wd_heartbeat_port = 9694
+                                    # Port number for heartbeat lifecheck
+                                    # (change requires restart)
+wd_heartbeat_keepalive = 2
+                                    # Interval time of sending heartbeat signal (sec)
+                                    # (change requires restart)
+wd_heartbeat_deadtime = 30
+                                    # Deadtime interval for heartbeat signal (sec)
+                                    # (change requires restart)
+heartbeat_device0 = 'eth0'
                                     # Name of NIC device 0 using for
                                     # sending/receiving heartbeat signal
-udp_destination0 = 'host0_ip1'
+                                    # (change requires restart)
+heartbeat_destination0 = 'host0_ip1'
                                     # Destination host name or IP address
                                     # for sending heartbeat signal using NIC device 0.
+                                    # (change requires restart)
+#heartbeat_device1 = 'eth1'
+#heartbeat_destination1 = 'host0_ip2'
 
-#udp_device1 = 'eth1'
-#udp_destination1 = 'host0_ip2'
+# -- query mode --
 
 wd_life_point = 3
                                     # lifecheck retry times
@@ -503,21 +532,26 @@ wd_lifecheck_query = 'SELECT 1'
                                     # lifecheck query to pgpool from watchdog
                                     # (change requires restart)
 wd_lifecheck_dbname = 'template1'
-                                    # Database name connected for lifecheck 
+                                    # Database name connected for lifecheck
+                                    # (change requires restart)
 wd_lifecheck_user = 'nobody'
                                     # watchdog user monitoring pgpools in lifecheck
+                                    # (change requires restart)
 wd_lifecheck_password = ''
                                     # Password for watchdog user in lifecheck
+                                    # (change requires restart)
 
-
-# Other pgpool Connection Settings
+# - Other pgpool Connection Settings -
 
 #other_pgpool_hostname0 = 'host0'
                                     # Host name or IP address to connect to for other pgpool 0
+                                    # (change requires restart)
 #other_pgpool_port0 = 5432
                                     # Port number for othet pgpool 0
+                                    # (change requires restart)
 #other_wd_port0 = 9000
                                     # Port number for othet watchdog 0
+                                    # (change requires restart)
 #other_pgpool_hostname1 = 'host1'
 #other_pgpool_port1 = 5432
 #other_wd_port1 = 9000
