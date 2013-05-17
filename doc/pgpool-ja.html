@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Fri Mar 15 18:04:09 JST 2013
+Last modified: Fri May 17 15:59:58 JST 2013
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -237,13 +237,27 @@ make install
 cd pgpool-II-x.x.x/sql/pgpool-regclass
 make
 make install
+</pre>
+		<p>
+この後に以下か、
+		<p>
+<pre>
 psql -f pgpool-regclass.sql template1
 </pre>
-
+		</p>
+		<p>
+または
+		<p>
+<pre>
+psql template1
+CREATE EXTENSION pgpool_regclass;
+</pre>
+		<p>
+を実行します。
+		</p>
     <p>
-    pgpool-regclass.sqlの実行は、pgpool-II経由で利用するデータベース毎に必要になります。
-    ただし、"psql -f pgpool-regclass.sql template1"を実行後に作成されたデータベースでは
-    自動的にpgpool-regclass.sqlの内容が反映されているので、新たにpgpool-regclass.sqlを実行する必要はありません。
+    pgpool-regclass.sqlまたはCREATE EXTENSIONの実行は、pgpool-II経由で利用するデータベース毎に必要になります。
+    ただし、template1データベースに対して"psql -f pgpool-regclass.sql template1"またはCREATE EXTENSIONを実行後に作成されたデータベースでは、新たにpgpool-regclass.sqlまたはCREATE EXTENSIONを実行する必要はありません。
     </p>
     </dd>
 
