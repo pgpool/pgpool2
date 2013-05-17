@@ -4266,14 +4266,14 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
     </p>
     </dd>
 
-<dt><a name="WD_HEARTBEAT_DEVICE"></a>wd_heartbeat_device<font color="red">0</font> <span class="version">V3.3 ～</span></dt>
+<dt><a name="HEARTBEAT_DEVICE"></a>heartbeat_device<font color="red">0</font> <span class="version">V3.3 ～</span></dt>
     <dd>
     <p>
     ハートビートの送受信に用いるネットワークデバイス名を指定します。
     複数のデバイスが設定可能です。
     数値の部分はデバイスの番号です。
     デバイス毎に 0 からの連番にします。
-    １つのデバイスに複数のハートビート送信先（<a href="WD_HEARTBEAT_DESTINATION">wd_heartbeat_destiationN</a>）を設定する場合は、重複するデバイス名を異なる番号で指定してください。
+    １つのデバイスに複数のハートビート送信先（<a href="HEARTBEAT_DESTINATION">heartbeat_destiationN</a>）を設定する場合は、重複するデバイス名を異なる番号で指定してください。
     ハートビートモードの場合のみ有効です。
     </p>
     <p>
@@ -4281,10 +4281,10 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
     </p>
     </dd>
 
-<dt><a name="WD_HEARTBEAT_DESTINATION"></a>wd_heartbeat_destination<font color="red">0</font> <span class="version">V3.3 ～</span></dt>
+<dt><a name="HEARTBEAT_DESTINATION"></a>heartbeat_destination<font color="red">0</font> <span class="version">V3.3 ～</span></dt>
     <dd>
     <p>
-    <a href="WD_HEARTBEAT">wd_heartbeat_deviceX</a>に指定したデバイスから送るハートビート信号の宛先を、ホスト名か IP で指定します。
+    <a href="HEARTBEAT_DEVICE">heartbeat_deviceX</a>に指定したデバイスから送るハートビート信号の宛先を、ホスト名か IP で指定します。
     数値の部分はデバイスの番号です。
     デバイス毎に 0 からの連番にします。
     ハートビートモードの場合のみ有効です。

@@ -4148,14 +4148,14 @@ Configuration about virtual IP interface control
     </p>
     </dd>
 
-<dt><a name="WD_HEARTBEAT_DEVICE"></a>wd_heartbeat_device<font color="red">0</font> <span class="version">V3.3 -</span></dt>
+<dt><a name="HEARTBEAT_DEVICE"></a>heartbeat_device<font color="red">0</font> <span class="version">V3.3 -</span></dt>
     <dd>
     <p>
     This option specifies the network device name for sending heartbeat signals.
     You can use multiple devices.
     The number at the end of the parameter name is referred as "device number",
     and it starts from 0.
-    If you want to set mutiple destination (<a href="WD_HEARTBEAT_DESTINATION">wd_heartbeat_destiationN</a>) for one device,
+    If you want to set mutiple destination (<a href="HEARTBEAT_DESTINATION">heartbeat_destiationN</a>) for one device,
     specify the device name repeatedly using different numbers.
     This works only heartbeat mode.
     </p>
@@ -4164,11 +4164,11 @@ Configuration about virtual IP interface control
     </p>
     </dd>
 
-<dt><a name="WD_HEARTBEAT_DESTINATION"></a>wd_heartbeat_destination<font color="red">0</font> <span class="version">V3.3 -</span></dt>
+<dt><a name="HEARTBEAT_DESTINATION"></a>heartbeat_destination<font color="red">0</font> <span class="version">V3.3 -</span></dt>
     <dd>
     <p>
     This option specifies the destination of heartbeat signals which is sent from the device specified by
-    <a href="WD_HEARTBEAT">wd_heartbeat_deviceX</a>. Use IP address or hostname.
+    <a href="HEARTBEAT_DEVICE">heartbeat_deviceX</a>. Use IP address or hostname.
     The number at the end of the parameter name is referred as "device number",
     and it starts from 0.
     This works only heartbeat mode.
