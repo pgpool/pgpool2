@@ -38,6 +38,7 @@
 pid_t wd_child(int fork_wait_time);
 static void wd_child_exit(int exit_signo);
 static int wd_send_response(int sock, WdPacket * recv_pack);
+static void wd_node_request_signal(WD_PACKET_NO packet_no, WdNodeInfo *node);
 
 pid_t
 wd_child(int fork_wait_time)
@@ -139,6 +140,7 @@ wd_send_response(int sock, WdPacket * recv_pack)
 	char pack_str[WD_MAX_PACKET_STRING];
 	int pack_str_len;
 	char hash[(MD5_PASSWD_LEN+1)*2];
+	bool is_node_packet = false;
 
 	if (recv_pack == NULL)
 	{
@@ -300,19 +302,19 @@ wd_send_response(int sock, WdPacket * recv_pack)
 		case WD_FAILBACK_REQUEST:
 			node = &(recv_pack->wd_body.wd_node_info);	
 			wd_set_node_mask(WD_FAILBACK_REQUEST,node->node_id_set,node->node_num);
-			send_failback_request(node->node_id_set[0]);
+			is_node_packet = true;
 			send_packet.packet_no = WD_NODE_READY;
 			break;
 		case WD_DEGENERATE_BACKEND:
 			node = &(recv_pack->wd_body.wd_node_info);	
 			wd_set_node_mask(WD_DEGENERATE_BACKEND,node->node_id_set, node->node_num);
-			degenerate_backend_set(node->node_id_set, node->node_num);
+			is_node_packet = true;
 			send_packet.packet_no = WD_NODE_READY;
 			break;
 		case WD_PROMOTE_BACKEND:
 			node = &(recv_pack->wd_body.wd_node_info);	
 			wd_set_node_mask(WD_PROMOTE_BACKEND,node->node_id_set, node->node_num);
-			promote_backend(node->node_id_set[0]);
+			is_node_packet = true;
 			send_packet.packet_no = WD_NODE_READY;
 			break;
 
@@ -330,5 +332,34 @@ wd_send_response(int sock, WdPacket * recv_pack)
 
 	/* send response packet */
 	rtn = wd_send_packet(sock, &send_packet);
+
+	/* send node request signal.
+	 * wd_node_request_singnal() uses a semaphore lock internally, so should be
+	 * called after sending a response pakcet to prevent dead lock.
+	 */
+	if (is_node_packet)
+		wd_node_request_signal(recv_pack->packet_no, node);
+
 	return rtn;
+}
+
+/* send node request signal */
+static void
+wd_node_request_signal(WD_PACKET_NO packet_no, WdNodeInfo *node)
+{
+	switch (packet_no)
+	{
+		case WD_FAILBACK_REQUEST:
+			send_failback_request(node->node_id_set[0]);
+			break;
+		case WD_DEGENERATE_BACKEND:
+			degenerate_backend_set(node->node_id_set, node->node_num);
+			break;
+		case WD_PROMOTE_BACKEND:
+			promote_backend(node->node_id_set[0]);
+			break;
+		default:
+			pool_error("wd_node_request_signal: unknown packet number");
+			break;
+	}
 }
