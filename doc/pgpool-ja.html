@@ -5638,8 +5638,251 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 </table>
 
 <!-- ================================================================================ -->
-
 <h1 id="release">リリースノート</h1>
+
+<h2><a name="release3.3.0"></a>3.3.0 (tokariboshi) 2013/05/17</h2>
+<h3>概要</h3>
+<p>
+このバージョンは 3.3 系列の最初の版で、3.2 系からの「メジャーバージョンアップ」にあたります。
+</p>
+
+<h3>互換性のない変更</h3>
+
+<p> 以下は全て watchdog に関する変更です。詳細は以下の<a href="3.3_new_features">新機能</a>の項目を参照してください。</p>
+
+<ul>
+	  <li>デフォルトの監視方法がクエリモードからハートビートモードに変更されました。</li>
+
+	  <li>failover/failback コマンドが１つの pgpool-II でのみ実行されるようになりました。</li>
+
+      <li>デフォルトで、アクティブ pgpool-II への昇格時には共有メモリ内のクエリキャッシュを全て削除するようになりました。</li>
+
+      <li>クエリモードで他の pgpool-II を監視する際に用いられるデータベース名、ユーザ名、パスワードは専用のパラメータで指定されるようになりました。以前は template1, recovery_user, recovery_password が使われていました。</li>
+</ul>
+
+
+<h3 id="3.3_new_features">新機能</h3>
+<ul>
+<li>watchdog
+<dl>
+<dt>UDPのパケットのハートビート信号を用いた新しい監視方法が追加されました。(Yugo Nagata)</dt>
+<dd>
+<p>
+「ハートビート」モードと「クエリー」モードのから監視方法を選ぶことができます。
+</p>
+<p>
+ハートビートモードは今回新しく追加された方法です。
+    このモードでは、watchdog はハートビート信号を用いて 他の pgpool-II プロセスの死活監視を行います。
+    watchdog は、他の pgpool-II の watchdog より定期的に送られるハートビート信号を受け取り、これが一定期間以上途切れた場合にはその pgpool-II プロセスに障害が発生したと判断します。
+	冗長性を高めるため、複数のネットワークインタフェースデバイスを用いたハートビート交換が可能です。
+	デフォルトではこのモードで動作し、これが推奨設定です。
+</p>
+<p>
+
+    クエリモードでは従来と同じ動作になります。このモードではwatchdog は pgpool-II のプロセスではなく「サービス」の応答を監視します。
+    このモードでは、監視対象の pgpool-II にクエリを発行しその応答をチェックします。
+	この方法では他の pgpool-II から接続を受ける必要があるため、<a href="NUM_INIT_CHILDREN">num_init_children</a> が十分大きくない場合には監視が失敗する場合があることに注意してください。
+	これは非推奨の監視方法であり、下位互換のために残されています。
+</p>
+<ul>
+<p>
+以下のパラメータが追加されました。
+</p>
+          <li>wd_lifecheck_method</li>
+          <li>wd_heartbeat_port</li>
+          <li>wd_heartbeat_keepalive</li>
+          <li>wd_heartbeat_deadtime</li>
+          <li>heartbeat_deviceX</li>
+          <li>heartbeat_destinationX</li>
+ </ul>
+</dd>
+
+<dt>filover/failback コマンドを排他的に実行するインターロック機能が追加されました。(Yugo Nagata)</dt>
+<dd>
+<p>
+watchdog で複数の pgpool-II を連携した場合、failover/failback コマンド（failover_command, failback_command, follow_master_command）は１つの pgpool-II でのみ実行されます。
+</p>
+<p>
+以前は、これらのコマンドは全ての pgpool-II で実行されていました。
+</p>
+</dd>
+
+<dt>watchdog パケット通信に認証機構が追加されました。(Yugo Nagata)</dt>
+<dd>
+<p>
+間違った認証キーを持つ pgpool-II から送られた watchdog パケットは拒絶されます。（ハートビート信号を含む）
+全ての pgpool-II は同じキーを pgpool.conf の wdauthkey パラメータに持っている必要があります。
+間違った認証キーを持っていると、スタートアップパケットも他の pgpool-II から拒絶されるため、起動することもできません。
+</p>
+</dd>
+
+<dt>clear_memqcache_on_escalation パラメータを追加しました。(Yugo Nagata)</dt>
+<dd>
+<p>
+これが on の場合は、pgpool-II がアクティブに昇格した時に、共有メモリ上のメモリキャッシュが全てクリアます。
+</p>
+<P>
+これは、新しいアクティブの pgpool-II が以前のアクティブと矛盾する古いキャッシュを使わないようにするためです。
+</p>
+</dd>
+
+<dt> wd_escalation_command パラメータを追加しました. (Yugo Nagata)</dt>
+<dd>
+<p>
+このパラメータに指定されたコマンドは、pgpool-II がアクティブに昇格した時に実行されます。
+実行のタイミングは、仮想 IP が立ち上がった直後です。
+</p>
+</dd>
+<dt>wd_lifeccheck_dbname, wd_lifecheck_user, wd_lifecheck_password パラメータを追加しました。(Yugo Nagata)
+</dt>
+<dd>
+<p> 
+これらのパラメータは、クエリモードで監視の際に使用するデータベース名、ユーザ名、パスワードを提要します。以前はそれぞれ templat1, recovery_user, recovery_password が使われていました。
+</p>
+</dd>
+</dl>
+</li>
+<li>その他
+<dl>
+
+<dt>
+PostgreSQL 9.2 の raw パーサを取り入れました。 (Nozomi Anzai, Tatsuo Ishii)
+</dt>
+<dd>
+</dd>
+
+<dt>
+pgpool_setup を追加しました。(Tatsuo Ishii)</dt>
+<dd>
+<p>
+これはカレントディレクトリ下 pgpool-II と PostgreSQL のテスト環境を構築するツールです。
+</p>
+<pre>
+ usage: ./pgpool_setup [-m r|s] [-n num_clusters]
+   -m s: ストリームレプリケーションモードで構築（デフォルト） 
+   -m r: ネイティブレプリケーションモードで構築
+</pre>
+</dd>
+
+<dt>pgpool-recovery, pgpool-regclass を CREATE EXTENSION を使ってインストールできるようになりました。(Tatsuo Ishii)</dt>
+<dd>
+<p>
+古いインストール方法も継続して利用可能です。
+</p>
+<p>
+エクステンションの名前が "pgpool-recovery", "pgpool-regclass" ではなく "pgpool_recovery", "pgpool_regclass" であることに注意してください。前者では二重引用符が必要であり CREATE EXTENSION コマンドでは不便なためです。
+</p>
+</dd>
+
+<dt>pgpool_pgctl() 関数を追加しました。(Nozomi Anzai)</dt>
+<dd>
+</dd>
+<p>
+これを用いると、SQL から pg_ctl stop/restart/reload の実行が可能です。（ただし、start は除きます。）
+</p>
+<pre>
+ $ psql sales -c "select pgpool_pgctl('reload', 'fast')";
+  pgpool_pgctl
+ --------------
+  t
+ (1 row)
+</pre>
+<p>
+この関数は実行結果を無視して常に't'を返すため、ユーザは pg_ctl が成功したか失敗したか知ることができません。
+この関数を使用するには、セキュリティ上の理由からカスタム変数を設定し、データディレクトリへの権限を持ち pg_ctl を実行するユーザを限定する必要があります。
+</p>
+</dl>
+</li>
+</ul>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+オンラインリカバリ時のフェイルバックの完了待機でタイムアウト処理をするようにしました。(Tatsuo Ishii)
+<p>
+これによりリカバリーが永遠に終わらず pgpool-II が終了できなくなる状況を回避します。この現象は特に follow_master_command の実行中に起こり得ました。
+</p>
+</li>
+
+<li>
+ストリームレプリケーションモードでの follow_master_command 実行時に、%H に新しいプライマリノードが正しく割り当てられないバグを修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+他の pgpool-II からダウン通知を受け取った pgpool-II が既にアクティブである場合には、昇格処理を実行しないよう修正しました。(Yugo Nagata)
+</li>
+
+<li>
+watchdog ソケット作成時に、connect() の前に select() を実行していたのを修正しました。(Yugo Nagata)
+<p>
+未接続のソケットで select() を実行したときの処理は未定義で、プラットフォームで異なります。
+Linux では 2 を返し、結果としては無害です。しかし、Solaris では 0 を返し、これはタイムアウトと区別がつかないため、 watchdog が正しく動いていませんでした。
+</p>
+</li>
+
+<li>
+pgpool_regclass がインストールされていない場合に生じるエラーを修正しました。(Tatsuo Ishii)
+<p>
+pgpool_rgcalss が存在しない場合に、pool_has_pgpool_regcalss() で使われているクエリが失敗していました。
+詳しくは、[pgpool-general:1722] を参照してください。
+</p>
+</li>
+
+<li>
+PostgreSQL がエラーを返したときに do_query() がハングしないよう修正しました。(Tatsuo Ishii)
+<p>
+典型的な症状が「pg_stat_activety によると SELECT が実行されたままのように見える」というものです。
+これを解決するため、pgpool-II は当該プロレスを終了させ、既存のコネクションを捨てるように修正しました。
+あまり行儀のよい方法ではありませんが、これが最善の方法と信じています。
+</p>
+</li>
+
+<li>
+watchdog を有効にしたときに、フェイルオーバの最中に起こりうるデッドロックを修正しました。(Yugo Nagata)
+<p>
+このバグは、バグトラッカ #54 にて arshu arora さんによって報告されました。
+<br />
+<a href="http://www.pgpool.net/mantisbt/view.php?id=54">
+http://www.pgpool.net/mantisbt/view.php?id=54
+</a>
+</p>
+</li>
+
+</ul>
+
+<h3>改良</h3>
+
+<ul>
+<li>
+watchdog のプロセスが異常終了した場合に、これが自動で再起動されるよう修正しました。(Yugo Nagata)
+</li>
+
+<li>
+watchdog 有効時に ping コマンドを実行する関数にエラーチェックを追加しました。(Tatsuo Ishii)
+</li>
+
+<li>
+sprintf strncpy などの安全でない関数を、より安全な anprintf, strlcpy に置き換えました。(Yugo Nagata)
+</li>
+
+<li>
+ログ出力、コメント、関数名で使われていた "sticky bit" とう用語を "setuid bit" に置き換えました。(Yugo Nagata)
+<p>
+この用語は本来とは違う意味で使われており、混乱の元となっていました。
+</p>
+</li>
+
+<li>
+pool_hba.conf.sample の SSL に関する記述を修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+中国語マニュアルの過ちを修正し、最新の情報に更新しました。(Bambo Huang)
+</li>
+
+</ul>
+
 
 <h2><a name="release3.2.4"></a>3.2.4 (namameboshi) 2013/04/26</h2>
 <h3>概要</h3>
@@ -6521,7 +6764,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </li>
 </ul>
 
-<h3 id="3.2_new_feartures">新機能</h3>
+<h3 id="3.2_new_features">新機能</h3>
 
 <ul>
 <li><a href="#memqcache">メモリベースのクエリキャッシュ</a>を追加しました。
