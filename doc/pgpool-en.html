@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Sat May 11 17:47:15 JST 2013
+Last modified: Fri May 17 16:01:07 JST 2013
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -217,19 +217,33 @@ make install
     Without this, handling of duplicate table names in different schema
     might cause trouble (temporary tables aren't a problem).
     </p>
-
+	<p>
 <pre>
 cd pgpool-II-x.x.x/sql/pgpool-regclass
 make
 make install
+</pre>
+		</p>
+		<p>
+After this:
+		<p>
+<pre>
 psql -f pgpool-regclass.sql template1
 </pre>
-
+		</p>
+		<p>
+or
+		<p>
+<pre>
+psql template1
+CREATE EXTENSION pgpool_regclass;
+</pre>
+</p>
     <p>
-    Executing pgpool-regclass.sql should be performed on every databases accessed
+    Executing pgpool-regclass.sql or CREATE EXTENSION should be performed on every databases accessed
     with pgpool-II.
     You do not need to do this for a database created after the
-    execution of "psql -f pgpool-regclass.sql template1", as this template database
+    execution of "psql -f pgpool-regclass.sql template1" or CREATE EXTENSION, as this template database
     will be cloned to create new databases.
     </p>
     </dd>
