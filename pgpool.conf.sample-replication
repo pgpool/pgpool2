@@ -493,7 +493,7 @@ wd_escalation_command = ''
 
 # -- common --
 
-wd_lifecheck_method='heartbeat'
+wd_lifecheck_method = 'heartbeat'
                                     # Method of watchdog lifecheck ('heartbeat' or 'query')
                                     # (change requires restart)
 wd_interval = 10
