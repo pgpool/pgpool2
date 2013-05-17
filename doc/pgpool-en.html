@@ -3785,7 +3785,6 @@ Pgpool-HA can be available from the pgpool development site as an open source so
 This resolve the single point of failure by coordinating multiple pgpool-IIs.
 watchdog adds the following features to pgpool-II.
 </p>
-
 <h3>Life checking of pgpool-II</h3>
     <p>
     Watchdog monitors pgpool-IIs by either of two methods, "heartbeat" mode or "query" mode.
@@ -3795,10 +3794,15 @@ watchdog adds the following features to pgpool-II.
     In heartbeat mode, watchdog monitors other pgpool-II process by using heartbeat signal.
     Watchdog receives heartbeat signals sent by other pgpool-II periodically.
     If there are no signal for a certain period, watchdog regards it as failure of the pgpool-II.
+	For redundancy you can use multiple network interface devices for heartbeat exchange between pgpool-IIs.
+	This mode is default and recommended one.
     </li>
     <li>
     In query mode, watchdog monitors pgpool-II's service rather than process.
     watchdog sends queries to other pgpool-II and checks the response.
+	Note that this method requires connections from other pgpool-IIs, so it would fail motoring if
+	<a href="#NUM_INIT_CHILDLEN">num_init_childlen </a>isn't large enough.
+	This mode is deprecated and left for backward compatibility.
     </li>
     </ul>
     <p>
