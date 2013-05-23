@@ -1788,7 +1788,7 @@ int pool_init_config(void)
 	res = gethostname(localhostname,sizeof(localhostname));
 	if(res !=0 )
 	{
-		pool_debug("faild to get this hostname");
+		pool_debug("failed to get this hostname");
 	}
 	pool_config->wd_hostname = localhostname;
 	pool_config->wd_port = 9000;
@@ -1833,7 +1833,7 @@ int pool_init_config(void)
 	res = gethostname(localhostname,sizeof(localhostname));
 	if(res !=0 )
 	{
-		pool_debug("faild to get this hostname");
+		pool_debug("failed to get this hostname");
 	}
 	pool_config->pgpool2_hostname = localhostname;
 
@@ -4359,7 +4359,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			total_weight += BACKEND_INFO(i).unnormalized_weight;
 			pool_config->backend_desc->num_backends = i+1;
 			
-			/* intialize backend_hostname with a default socket path if empty */
+			/* initialize backend_hostname with a default socket path if empty */
 			if (*(BACKEND_INFO(i).backend_hostname) == '\0')
 			{
 				if (pool_config->backend_socket_dir == NULL)
@@ -4379,7 +4379,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 	pool_debug("num_backends: %d total_weight: %f",
 			   pool_config->backend_desc->num_backends, total_weight);
 	/*
-	 * Normalize load balacing weights. What we are doing here is,
+	 * Normalize load balancing weights. What we are doing here is,
 	 * assign 0 to RAND_MAX to each backend's weight according to the
 	 * value weightN.  For example, if two backends are assigned 1.0,
 	 * then each backend will get RAND_MAX/2 normalized weight.
@@ -4409,7 +4409,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 		system_db_info = malloc(sizeof(POOL_SYSTEMDB_CONNECTION_POOL));
 		if (system_db_info == NULL)
 		{
-			pool_error("failed to allocate sytem_db_info");
+			pool_error("failed to allocate system_db_info");
 			return -1;
 		}
 		memset(system_db_info, 0, sizeof(*system_db_info));

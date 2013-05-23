@@ -70,7 +70,7 @@ wd_init_interlock(void)
 /* notify to start interlocking */
 void wd_start_interlock(void)
 {
-	pool_log("wd_end_interlock: start interlocking");
+	pool_log("wd_start_interlock: start interlocking");
 
 	wd_set_interlocking(WD_MYSELF, true);
 	wd_send_packet_no(WD_START_INTERLOCK);
