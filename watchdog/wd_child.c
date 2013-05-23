@@ -149,7 +149,7 @@ wd_send_response(int sock, WdPacket * recv_pack)
 	memset(&send_packet, 0, sizeof(WdPacket));
 	p = &(recv_pack->wd_body.wd_info);	
 
-	/* auhtentication */
+	/* authentication */
 	if (strlen(pool_config->wd_authkey))
 	{
 		/* calculate hash from packet */
@@ -221,14 +221,14 @@ wd_send_response(int sock, WdPacket * recv_pack)
 			memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
 			break;
 
-		/* annouce to assume lock holder */
+		/* announce to assume lock holder */
 		case WD_STAND_FOR_LOCK_HOLDER:
 			p = &(recv_pack->wd_body.wd_info);	
 			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
 			/* only master handles lock holder privilege */
 			if (WD_MYSELF->status == WD_MASTER)
 			{
-				/* if theare are no lock holder yet */
+				/* if there are no lock holder yet */
 				if (wd_get_lock_holder() != NULL)
 				{
 					send_packet.packet_no = WD_LOCK_HOLDER_EXIST;
@@ -245,7 +245,7 @@ wd_send_response(int sock, WdPacket * recv_pack)
 			memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
 			break;
 
-		/* annouce to resigne lock holder */
+		/* announce to resign lock holder */
 		case WD_RESIGN_LOCK_HOLDER:
 			p = &(recv_pack->wd_body.wd_info);	
 			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
@@ -334,8 +334,8 @@ wd_send_response(int sock, WdPacket * recv_pack)
 	rtn = wd_send_packet(sock, &send_packet);
 
 	/* send node request signal.
-	 * wd_node_request_singnal() uses a semaphore lock internally, so should be
-	 * called after sending a response pakcet to prevent dead lock.
+	 * wd_node_request_signal() uses a semaphore lock internally, so should be
+	 * called after sending a response packet to prevent dead lock.
 	 */
 	if (is_node_packet)
 		wd_node_request_signal(recv_pack->packet_no, node);

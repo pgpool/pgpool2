@@ -20,7 +20,7 @@
  * is" without express or implied warranty.
  *
  * pool_proto_modules.h.: header file for pool_proto_modules.c, pool_proto2.c
- * and pool_process_qeury.c
+ * and pool_process_query.c
  *
  */
 

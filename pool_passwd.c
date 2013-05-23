@@ -67,7 +67,7 @@ void pool_init_pool_passwd(char *pool_passwd_filename)
 
 /*
  * Update passwd. If the user does not exist, create a new entry.
- * Returns 0 on success non 0 oterwise.
+ * Returns 0 on success non 0 otherwise.
  */
 int pool_create_passwdent(char *username, char *passwd)
 {
@@ -231,7 +231,7 @@ void pool_delete_passwdent(char *username)
 }
 
 /*
- * Finish this moule. Close pool_passwd.
+ * Finish this moil. Close pool_passwd.
  */
 void pool_finish_pool_passwd(void)
 {

@@ -191,7 +191,7 @@ static void discard_persistent_connection(void)
 }
 
 /*
- * Check replicaton time lag
+ * Check replication time lag
  */
 static void check_replication_time_lag(void)
 {

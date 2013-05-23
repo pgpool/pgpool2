@@ -18,7 +18,7 @@
  * suitability of this software for any purpose.  It is provided "as
  * is" without express or implied warranty.
  *
- * params.c: Paramter Status handling routines
+ * params.c: Parameter Status handling routines
  *
  */
 #include "config.h"

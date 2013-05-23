@@ -41,7 +41,7 @@ typedef enum {
 	SOCKERR,			/* thrown by socket() or setsockopt() */
 	HOSTERR,			/* thrown by gethostbyname() */
 	BACKENDERR,			/* server dependent error */
-	AUTHERR				/* authorization faiure */
+	AUTHERR				/* authorization failure */
 } ErrorCode;
 
 /* --------------------------------

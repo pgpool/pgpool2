@@ -18,7 +18,7 @@
  * suitability of this software for any purpose.  It is provided "as
  * is" without express or implied warranty.
  *
- * Global varibles. Should be eventually removed.
+ * Global variables. Should be eventually removed.
  */
 #include "pool.h"
 

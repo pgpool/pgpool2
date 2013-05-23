@@ -1094,7 +1094,7 @@ free_systemdb_info(SystemDBInfo * si)
 }
 
 /* --------------------------------
- * pcp_detach_node - dettach a node given by the argument from pgpool's control
+ * pcp_detach_node - detach a node given by the argument from pgpool's control
  *
  * return 0 on success, -1 otherwise
  * --------------------------------
@@ -1107,7 +1107,7 @@ pcp_detach_node(int nid)
 
 /* --------------------------------
 
- * and dettach a node given by the argument from pgpool's control
+ * and detach a node given by the argument from pgpool's control
  *
  * return 0 on success, -1 otherwise
  * --------------------------------

@@ -75,9 +75,9 @@ typedef enum {
 	WD_DECLARE_LOCK_HOLDER,		/* announce to assume lock holder */
 	WD_RESIGN_LOCK_HOLDER,		/* announce to resign lock holder */
 	WD_START_INTERLOCK,			/* announce to start interlocking */
-	WD_END_INTERLOCK,			/* annnouce to end interlocking */
+	WD_END_INTERLOCK,			/* announce to end interlocking */
 	WD_SERVER_DOWN,				/* announce server down */
-	WD_AUTH_FAILED,				/* fail anwser to authentication */
+	WD_AUTH_FAILED,				/* fail answer to authentication */
 	WD_READY,					/* answer to the announce */
 
 	/* node packet */
@@ -90,7 +90,7 @@ typedef enum {
 	WD_NODE_FAILED,			/* fail answer to the node announce */
 
 	/* lock packet */
-	WD_UNLOCK_REQUEST,		/* annouce to unlocak command */
+	WD_UNLOCK_REQUEST,		/* announce to unlock command */
 	WD_LOCK_READY,			/* answer to the lock announce */
 	WD_LOCK_FAILED			/* fail answer to the lock announce */
 

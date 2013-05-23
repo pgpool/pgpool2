@@ -337,7 +337,7 @@ static int pool_fetch_cache(POOL_CONNECTION_POOL *backend, const char *query, ch
 			{
 				pool_error("pool_fetch_cache: memcached_get failed %s", memcached_strerror(memc, rc));
 				/*
-				 * Turn off memory cache support to prevent future erros.
+				 * Turn off memory cache support to prevent future errors.
 				 */
 				pool_config->memory_cache_enabled = 0;
 				/* Behave as if cache not found */
@@ -582,7 +582,7 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 
 		/*
 		 * If we are doing extended query, wait and discard Sync
-		 * message from frontend. This is neccessary to prevent
+		 * message from frontend. This is necessary to prevent
 		 * receiving Sync message after Sending Ready for query.
 		 */
 		if (pool_is_doing_extended_query_message())
@@ -731,7 +731,7 @@ bool pool_is_allow_to_cache(Node *node, char *query)
 	SelectContext ctx;
 
 	/*
-	 * If NO QUERY CACHE coment exists, do not cache.
+	 * If NO QUERY CACHE comment exists, do not cache.
 	 */
 	if (!strncasecmp(query, NO_QUERY_CACHE, NO_QUERY_CACHE_COMMENT_SZ))
 		return false;
@@ -1225,7 +1225,7 @@ int pool_get_database_oid_from_dbname(char *dbname)
 /*
  * Add cache id(shmem case) or hash key(memcached case) to table oid
  * map file.  Caller must hold shmem lock before calling this function
- * to avoid file extention conflict among different pgpool child
+ * to avoid file extension conflict among different pgpool child
  * process.
  * As of pgpool-II 3.2, pool_handle_query_cache is responsible for that.
  * (pool_handle_query_cache -> pool_commit_cache -> pool_add_table_oid_map)
@@ -1318,7 +1318,7 @@ static void pool_add_table_oid_map(POOL_CACHEKEY *cachekey, int num_table_oids, 
 		/*
 		 * Below was ifdef-out because of a performance reason.
 		 * Looking for duplicate cache entries in a file needed
-		 * unacceptably high cost. So we gave up this and decieded not
+		 * unacceptably high cost. So we gave up this and decided not
 		 * to care about duplicate entries in the file.
 		 */
 #ifdef NOT_USED
@@ -1380,7 +1380,7 @@ static void pool_add_table_oid_map(POOL_CACHEKEY *cachekey, int num_table_oids, 
 
 /*
  * Discard all oid maps at pgpool-II startup.
- * This is neccessary for shmem case.
+ * This is necessary for shmem case.
  */
 void pool_discard_oid_maps(void)
 {
@@ -1407,7 +1407,7 @@ void pool_discard_oid_maps_by_db(int dboid)
 /*
  * Reading cache id(shmem case) or hash key(memcached case) from table
  * oid map file according to table_oids and discard cache entries.  If
- * unlink is true, the file will be unlinked after successfull cache
+ * unlink is true, the file will be unlinked after successful cache
  * removal.
  */
 static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlinkp, int dboid)
@@ -1607,7 +1607,7 @@ bool pool_is_shmem_cache(void)
 }
 
 /*
- * Remeber memory cache number of blocks.
+ * Remember memory cache number of blocks.
  */
 static int memqcache_num_blocks;
 static void pool_set_memqcache_blocks(int num_blocks)
@@ -1653,14 +1653,14 @@ size_t pool_shared_memory_cache_size(void)
 
 	pool_log("pool_shared_memory_cache_size: number of blocks: %d", num_blocks);
 
-	/* Remenber # of blocks */
+	/* Remember # of blocks */
 	pool_set_memqcache_blocks(num_blocks);
 	size = pool_config->memqcache_cache_block_size * num_blocks;
 	return size;
 }
 
 /*
- * Aquire and initialize shared memory cache. This should be called
+ * Acquire and initialize shared memory cache. This should be called
  * only once from pgpool main process at the process staring up time.
  */
 static void *shmem;
@@ -1723,9 +1723,9 @@ static void *pool_memory_cache_address(void)
  * 
  * Free space management map (FSMM) consists of bytes. Each byte
  * corresponds to block id. For example, if you have 1GB cache and
- * block size is 8Kb, number of blocks = 131,072, thus total sizeo of
+ * block size is 8Kb, number of blocks = 131,072, thus total size of
  * FSMM is 128Kb.  Each FSMM entry has value from 0 to 255. Those
- * valus describes total free space in each block.
+ * values describes total free space in each block.
  * For example, if the value is 2, the free space can be between 64
  * bytes and 95 bytes.
  *
@@ -1751,9 +1751,9 @@ size_t pool_shared_memory_fsmm_size(void)
 }
 
 /*
- * Aquire and initialize shared memory cache for FSMM. This should be
+ * Acquire and initialize shared memory cache for FSMM. This should be
  * called after pool_shared_memory_cache_size only once from pgpool
- * main process at the proces staring up time.
+ * main process at the process staring up time.
  */
 static void *fsmm;
 int pool_init_fsmm(size_t size)
@@ -1936,7 +1936,7 @@ static void pool_update_fsmm(POOL_CACHE_BLOCKID blockid, size_t free_space)
 
 /*
  * Add item data to shared memory cache.
- * On successfull registration, returns cache id.
+ * On successful registration, returns cache id.
  * The cache id is overwritten by the subsequent call to this function.
  * On error returns NULL.
  */
@@ -1993,7 +1993,7 @@ static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char
 	}
 
 	/*
-	 * Initialize the block if neccessary. If no live items are
+	 * Initialize the block if necessary. If no live items are
 	 * remained, we also initialize the block. If there's contiguous
 	 * deleted items, we turn them into free space as well.
 	 */
@@ -2007,7 +2007,7 @@ static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char
 	 * Create contiguous free space. We assume that item bodies are
 	 * ordered from bottom to top of the block, and corresponding item
 	 * pointers are ordered from the youngest to the oldest in the
-	 * beggining of the block.
+	 * beginning of the block.
 	 */
 
 	/*
@@ -2113,7 +2113,7 @@ static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char
 	 */
 	if (bh->free_bytes < request_size)
 	{
-		/* This shoud not happen */
+		/* This should not happen */
 		pool_error("pool_add_item_shmem_cache: not enough free space. Free space: %d required: %d block id:%d",
 				   bh->free_bytes, request_size, blockid);
 		return NULL;
@@ -2278,8 +2278,8 @@ static POOL_CACHEID *pool_find_item_on_shmem_cache(POOL_QUERY_HASH *query_hash)
 }
 
 /*
- * Delete item data specifed cache id from shmem.
- * On sccessfull deletion, returns 0.
+ * Delete item data specified cache id from shmem.
+ * On successful deletion, returns 0.
  * Other wise return -1.
  * FSMM is also updated.
  */
@@ -2347,7 +2347,7 @@ static int pool_delete_item_shmem_cache(POOL_CACHEID *cacheid)
 	/*
 	 * We do NOT count down bh->num_items here. The deleted space will be recycled
 	 * by pool_add_item_shmem_cache(). However, if this is the last item, we can
-	 * recyle whole block.
+	 * recycle whole block.
 	 *
 	 * 2012/4/1: Now we do not pack data in
 	 * pool_add_item_shmem_cache() for performance reason. Also we
@@ -2466,7 +2466,7 @@ static void pool_wipe_out_cache_block(POOL_CACHE_BLOCKID blockid)
 #endif
 
 /*
- * Aquire lock: XXX giant lock
+ * Acquire lock: XXX giant lock
  */
 void pool_shmem_lock(void)
 {
@@ -2744,7 +2744,7 @@ static void pool_add_oids_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache, in
  * 1) Create buffer using pool_create_buffer().
  * 2) Add data to buffer using pool_add_buffer().
  * 3) Extract (copied) data from buffer using pool_get_buffer().
- * 4) Optionaly you can:
+ * 4) Optionally you can:
  *		Obtain buffer length by using pool_get_buffer_length().
  *		Obtain buffer pointer by using pool_get_buffer_pointer().
  * 5) Discard buffer using pool_discard_buffer().
@@ -2903,7 +2903,7 @@ static char *pool_get_current_cache_buffer(size_t *len)
 
 /*
  * Mark this temporary query cache buffer discarded if the SELECT
- * uses the table oid specied by oids.
+ * uses the table oid specified by oids.
  */
 static void pool_check_and_discard_cache_buffer(int num_oids, int *oids)
 {
@@ -3223,7 +3223,7 @@ POOL_QUERY_CACHE_STATS *pool_get_memqcache_stats(void)
 
 /*
  * Reset query cache stats. Caller must lock QUERY_CACHE_STATS_SEM if
- * neccessary.
+ * necessary.
  */
 void pool_reset_memqcache_stats(void)
 {
@@ -3232,8 +3232,8 @@ void pool_reset_memqcache_stats(void)
 }
 
 /*
- * Count up number of successfull SELECTs and returns the number.
- * QUERY_CACHE_STATS_SEM lock is aquired in this function.
+ * Count up number of successful SELECTs and returns the number.
+ * QUERY_CACHE_STATS_SEM lock is acquired in this function.
  */
 long long int pool_stats_count_up_num_selects(long long int num)
 {
@@ -3252,7 +3252,7 @@ long long int pool_stats_count_up_num_selects(long long int num)
 }
 
 /*
- * Count up number of successfull SELECTs in temporary area and returns
+ * Count up number of successful SELECTs in temporary area and returns
  * the number.
  */
 long long int pool_tmp_stats_count_up_num_selects(void)
@@ -3265,7 +3265,7 @@ long long int pool_tmp_stats_count_up_num_selects(void)
 }
 
 /*
- * Return number of successfull SELECTs in temporary area.
+ * Return number of successful SELECTs in temporary area.
  */
 long long int pool_tmp_stats_get_num_selects(void)
 {
@@ -3276,7 +3276,7 @@ long long int pool_tmp_stats_get_num_selects(void)
 }
 
 /*
- * Reset number of successfull SELECTs in temporary area.
+ * Reset number of successful SELECTs in temporary area.
  */
 void pool_tmp_stats_reset_num_selects(void)
 {
@@ -3288,7 +3288,7 @@ void pool_tmp_stats_reset_num_selects(void)
 
 /*
  * Count up number of SELECTs extracted from cache returns the number.
- * QUERY_CACHE_STATS_SEM lock is aquired in this function.
+ * QUERY_CACHE_STATS_SEM lock is acquired in this function.
  */
 long long int pool_stats_count_up_num_cache_hits(void)
 {
@@ -3686,7 +3686,7 @@ static void put_back_hash_element(volatile POOL_HASH_ELEMENT *element)
  * Subsequent call to this function will break return value
  * because its in static memory.
  * Caller must hold shmem_lock before calling this function.
- * If on mememory query cache is not enabled, all stats are 0.
+ * If on memory query cache is not enabled, all stats are 0.
  */
 POOL_SHMEM_STATS *pool_get_shmem_storage_stats(void)
 {

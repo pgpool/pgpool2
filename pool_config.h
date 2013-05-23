@@ -65,7 +65,7 @@ typedef struct {
 #define POOL_ALLOW_TO_FAILOVER(x) (!(POOL_DISALLOW_TO_FAILOVER(x)))
 
 /*
- * configuration paramters
+ * configuration parameters
  */
 typedef struct {
 	char *listen_addresses; /* hostnames/IP addresses to listen on */
@@ -98,19 +98,19 @@ typedef struct {
 	int load_balance_mode;		/* load balance mode */
 
 	int replication_stop_on_mismatch;		/* if there's a data mismatch between master and secondary
-											 * start degenration to stop replication mode
+											 * start degeneration to stop replication mode
 											 */
 
 	/* If there's a disagreement with the number of affected tuples in
-	 * UPDATE/DELETE, then degenrate the node which is most likely
+	 * UPDATE/DELETE, then degenerate the node which is most likely
 	 * "minority".  # If false, just abort the transaction to keep the
 	 * consistency.*/
 	int failover_if_affected_tuples_mismatch;
 
 	int replicate_select; /* if non 0, replicate SELECT statement when load balancing is disabled. */
-	char **reset_query_list;		/* comma separated list of quries to be issued at the end of session */
-	char **white_function_list;		/* list of functions with no side effetcs */
-	char **black_function_list;		/* list of functions with side effetcs */
+	char **reset_query_list;		/* comma separated list of queries to be issued at the end of session */
+	char **white_function_list;		/* list of functions with no side effects */
+	char **black_function_list;		/* list of functions with side effects */
 	int print_timestamp;		/* if non 0, print time stamp to each log line */
 	int master_slave_mode;		/* if non 0, operate in master/slave mode */
 	char *master_slave_sub_mode;		/* either "slony" or "stream" */
@@ -127,7 +127,7 @@ typedef struct {
 	char *health_check_password; /* password for health check username */
 	int health_check_max_retries;	/* health check max retries */
 	int health_check_retry_delay;	/* amount of time to wait between retries */
-	int sr_check_period;		/* streming replication check period */
+	int sr_check_period;		/* streaming replication check period */
 	char *sr_check_user;		/* PostgreSQL user name streaming replication check */
 	char *sr_check_password;	/* password for sr_check_user */
 	char *failover_command;     /* execute command when failover happens */
@@ -149,7 +149,7 @@ typedef struct {
 	int recovery_timeout;				/* maximum time in seconds to wait for remote start-up */
 	int client_idle_limit_in_recovery;		/* If > 0, the client is forced to be
 											 *  disconnected after n seconds idle
-											 *  This parameter is only valid while in recovery 2nd statge */
+											 *  This parameter is only valid while in recovery 2nd stage */
 	int insert_lock;	/* if non 0, automatically lock table with INSERT to keep SERIAL
 						   data consistency */
 	int ignore_leading_white_space;		/* ignore leading white spaces of each query */
@@ -205,7 +205,7 @@ typedef struct {
 	int memory_cache_enabled;   /* if true, use the memory cache functionality, false by default */
 	char *memqcache_method;   /* Cache store method. Either 'shmem'(shared memory) or 'memcached'. 'shmem' by default */
 	char *memqcache_memcached_host;   /* Memcached host name. Mandatory if memqcache_method=memcached. */
-	int memqcache_memcached_port;   /* Memcached port number. Mondatory if memqcache_method=memcached. */
+	int memqcache_memcached_port;   /* Memcached port number. Mandatory if memqcache_method=memcached. */
 	int memqcache_total_size;   /* Total memory size in bytes for storing memory cache. Mandatory if memqcache_method=shmem. */
 	int memqcache_max_num_cache;   /* Total number of cache entries. Mandatory if memqcache_method=shmem. */
 	int memqcache_expire;   /* Memory cache entry life time specified in seconds. 60 by default. */
@@ -214,7 +214,7 @@ typedef struct {
 										   /* by memqcache_expire.  True by default. */
 	int memqcache_maxcache;   /* Maximum SELECT result size in bytes. */
 	int memqcache_cache_block_size;   /* Cache block size in bytes. 8192 by default */
-	char *memqcache_oiddir;		/* Tempory work directory to record table oids */
+	char *memqcache_oiddir;		/* Temporary work directory to record table oids */
 	char **white_memqcache_table_list;		/* list of tables to memqcache */
 	char **black_memqcache_table_list;		/* list of tables not to memqcache */
 

@@ -69,11 +69,11 @@ typedef struct {
 	RepliDefInfo *repliinfo;   /* replication table info */
 	SelectDefInfo *selectinfo; /* Sub-Select info */
 	char *alias;               /* alias name */
-	char state;                /* P = parallel, L = loadbarance S = systemdb(dblink) E = error*/
+	char state;                /* P = parallel, L = loadbalance S = systemdb(dblink) E = error*/
 	int ret_num;               /* build column number */
 } RangeInfo;
 
-/* build Virtual Table of FROM-Cluase */
+/* build Virtual Table of FROM-Clause */
 typedef struct {
 	char **col_list;     /* column list */
 	char **type_list;    /* type list */
@@ -89,9 +89,9 @@ typedef struct {
 	char **col_list;      /* column list */
 	char **type_list;     /* type list */
 	char **table_list;    /* table list */
-	char state;           /* P = parallel, L = loadbarance S = systemdb(dblink) E = error*/
+	char state;           /* P = parallel, L = loadbalance S = systemdb(dblink) E = error*/
 	int *valid;           /* valid column is true */
-	int col_num;          /* number of colum */
+	int col_num;          /* number of column */
 	char **using_list;    /* if join expr has using-list, column name is listed up */
 	int using_length;     /* column number of using-list */
 } JoinTable;
@@ -113,13 +113,13 @@ typedef struct {
 	bool opt;   /* optimization flag */
 } Aggexpr;
 
-/* main struct of alanyzing query */
+/* main struct of analyzing query */
 typedef struct {
 	int now_select;  /* rank of select */
-	int part;        /* the postion of analyzing select statement */
+	int part;        /* the position of analyzing select statement */
 	int last_select; /* caller select rank */
 	int call_part;   /* caller's potion */
-	int from_num;    /* number for from-cluase */
+	int from_num;    /* number for from-clause */
 	int larg_count;  /* left arg count */
 	int rarg_count;  /* right arg count */
 	int ret_count;   /* return list count */
@@ -128,13 +128,13 @@ typedef struct {
 	char partstate[8]; /* state of analyzing part */
 	bool select_union; /* if UNION is used, this flag is true */
 	bool select_range; /* RangeSubSelect is used  */
-	bool aggregate;    /* aggregate optimaztion ? */
+	bool aggregate;    /* aggregate optimization ? */
 	bool retlock;      /* this is used  */ 
 	Aggexpr *aggexpr;   /* Aggexpr in this statement*/
-	RangeInfo **range;  /* RangeInfo in from cluase */
+	RangeInfo **range;  /* RangeInfo in from clause */
 	int rangeinfo_num;  /* RangeInfo's number in this select statement*/
-	VirtualTable *virtual; /* Virtual Table in this select statment */
-	JoinTable *join;       /* sumary of join table */
+	VirtualTable *virtual; /* Virtual Table in this select statement */
+	JoinTable *join;       /* summary of join table */
 	SelectDefInfo *select_ret; /* build return list */
 } AnalyzeSelect;
 
@@ -145,18 +145,18 @@ typedef struct {
 typedef struct {
 	int r_code;           /* analyze or rewrite */
 	int r_node;           /* which node, query is sent */
-	int part;             /* part of select statment */
-	int rewritelock;      /* dblink start postion and lock rewrite */
+	int part;             /* part of select statement */
+	int rewritelock;      /* dblink start position and lock rewrite */
 	int analyze_num;      /* sum of AnalyzeSelect */
-	int current_select;   /* postion of analyze[] */  
+	int current_select;   /* position of analyze[] */  
 	int ignore_rewrite;   /* dont rewrite */
 	int column;           /* column number */
 	int virtual_num;     /* Virtual table column number */
-	int ret_num;         /* expect return cloumn number */
+	int ret_num;         /* expect return column number */
 	bool is_pg_catalog;  /* reference of pg_catalog */
-	bool is_loadbalance; /* load ballance ? */
-	bool is_parallel;    /* can paralle exec ? */
-	bool fromClause;     /* having FromCluase ? */
+	bool is_loadbalance; /* load balance ? */
+	bool is_parallel;    /* can parallel exec ? */
+	bool fromClause;     /* having FromClause ? */
 	char *table_relname; /* table name */
 	char *table_alias;   /* table alias name */
 	char *schemaname;    /* schema */
@@ -174,7 +174,7 @@ typedef struct {
 	char *dbname;   /* data base name */
 	char *user;     /* access user name */
 	int   port;     /* access port number */
-	char *password;  /* passward of connection */
+	char *password;  /* password of connection */
 } ConInfoTodblink;
 
 extern RewriteQuery *rewrite_query_stmt(Node *node, POOL_CONNECTION *frontend,POOL_CONNECTION_POOL *backend,RewriteQuery *message);

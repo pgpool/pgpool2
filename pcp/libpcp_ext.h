@@ -117,7 +117,7 @@ typedef struct {
 	char *table_name;		/* table name */
 	char *dist_key_col_name;/* column name for dist key */
 	int  dist_key_col_id;	/* column index id for dist key */
-	int  col_num;			/* number of clumn*/
+	int  col_num;			/* number of column*/
 	char **col_list;		/* column list */
 	char **type_list;		/* type list */
 	char *dist_def_func;	/* function name of distribution rule */
@@ -129,7 +129,7 @@ typedef struct {
 	char *dbname;     /* database name */
 	char *schema_name;    /* schema name */
 	char *table_name;   /* table name */
-	int  col_num;     /* number of clumn*/
+	int  col_num;     /* number of column*/
 	char **col_list;    /* column list */
 	char **type_list;   /* type list */
 	char *prepare_name;   /* prepared statement name */

@@ -82,7 +82,7 @@ void wd_start_interlock(void)
 	wd_lock_all();
 }
 
-/* notify to end intelocking */
+/* notify to end interlocking */
 void wd_end_interlock(void)
 {
 	pool_log("wd_end_interlock: end interlocking");
@@ -160,7 +160,7 @@ wd_assume_lock_holder(void)
 }
 
 /*
- * update information of who's loock holder
+ * update information of who's lock holder
  * Note that the lock holder pgpool can go down accidentally.
  */
 static void

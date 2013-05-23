@@ -168,7 +168,7 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 
 			if (cp->isbackend)
 			{
-				/* if fail_over_on_backend_erro is true, then trigger failover */
+				/* if fail_over_on_backend_error is true, then trigger failover */
 				if (pool_config->fail_over_on_backend_error)
 				{
 					notice_backend_error(cp->db_node_id);
@@ -291,7 +291,7 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 
 			if (cp->isbackend)
 			{
-				/* if fail_over_on_backend_erro is true, then trigger failover */
+				/* if fail_over_on_backend_error is true, then trigger failover */
 				if (pool_config->fail_over_on_backend_error)
 				{
 					notice_backend_error(cp->db_node_id);
@@ -430,7 +430,7 @@ int pool_flush_it(POOL_CONNECTION *cp)
 			}
 			else if (FD_ISSET(cp->fd, &exceptmask))
 			{
-				pool_log("pool_flush_it: exception occured");
+				pool_log("pool_flush_it: exception occurred");
 				cp->wbufpo = 0;
 				return -1;
 			}
@@ -503,7 +503,7 @@ int pool_flush(POOL_CONNECTION *cp)
 	{
 		if (cp->isbackend)
 		{
-			/* if fail_over_on_backend_erro is true, then trigger failover */
+			/* if fail_over_on_backend_error is true, then trigger failover */
 			if (pool_config->fail_over_on_backend_error)
 			{
 				notice_backend_error(cp->db_node_id);

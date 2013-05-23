@@ -131,7 +131,7 @@ wd_notice_server_down(void)
 	return rtn;
 }
 
-/* send authenticaiont failed packet */
+/* send authentication failed packet */
 int
 wd_authentication_failed(int sock)
 {
@@ -344,7 +344,7 @@ wd_accept(int sock)
 		}
 		else if ( FD_ISSET(sock, &emask) )
 		{
-			/* socket exception occured */
+			/* socket exception occurred */
 			break;
 		}
 		else if ( FD_ISSET(sock, &rmask) )
@@ -1071,7 +1071,7 @@ wd_set_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count)
 	return rtn;
 }
 
-/* calculate hash for authentiction using packet contents */
+/* calculate hash for authentication using packet contents */
 void
 wd_calc_hash(const char *str, int len, char *buf)
 {

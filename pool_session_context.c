@@ -64,7 +64,7 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 	/* Create memory context */
 	session_context->memory_context = pool_memory_create(PREPARE_BLOCK_SIZE);
 
-	/* Choose load balancing node if neccessary */
+	/* Choose load balancing node if necessary */
 	if (pool_config->load_balance_mode)
 	{
 		ProcessInfo *process_info = pool_get_my_process_info();
@@ -102,7 +102,7 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 	/* Backends have not ignored messages yet */
 	pool_unset_ignore_till_sync();
 
-	/* Initialize where to send map for PREPARE statemets */
+	/* Initialize where to send map for PREPARE statements */
 #ifdef NOT_USED
 	memset(&session_context->prep_where, 0, sizeof(session_context->prep_where));
 	session_context->prep_where.nelem = POOL_MAX_PREPARED_STATEMENTS;

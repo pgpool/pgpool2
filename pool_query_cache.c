@@ -257,8 +257,8 @@ pool_query_cache_table_exists(void)
  * query must be forwarded to the backends in order to retrieve data and
  * the result be cached.
  * Only difference is that POOL_ERROR indicates that some fatal error has
- * occured; query cache function, however, should be seemless to the user
- * whether cache was not found or error has occured during cache retrieve.
+ * occurred; query cache function, however, should be seamless to the user
+ * whether cache was not found or error has occurred during cache retrieve.
  * --------------------------------
  */
 POOL_STATUS
@@ -459,7 +459,7 @@ search_system_db_for_cache(POOL_CONNECTION *frontend, char *sql, int sql_len, st
 				status = ForwardCacheToFrontend(frontend, cache, tstate);
 				if (status < 0)
 				{
-					/* fatal error has occured while forwarding cache */
+					/* fatal error has occurred while forwarding cache */
 					pool_error("pool_query_cache_lookup: query cache forwarding failed");
 					return_value = CACHE_ERROR;
 				}
@@ -582,7 +582,7 @@ static int ForwardCacheToFrontend(POOL_CONNECTION *frontend, char *cache, char t
 /* --------------------------------
  * pool_query_cache_register() - register query cache to the SystemDB
  *
- * returns 0 on sucess, -1 otherwise
+ * returns 0 on success, -1 otherwise
  * --------------------------------
  */
 int

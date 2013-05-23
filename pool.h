@@ -125,7 +125,7 @@ typedef struct
 typedef struct CancelPacket
 {
 	int			protoVersion;		/* Protocol version */
-	int			pid;	/* bcckend process id */
+	int			pid;	/* backend process id */
 	int			key;	/* cancel key */
 } CancelPacket;
 
@@ -188,7 +188,7 @@ typedef struct {
 	char salt[4];		/* password salt */
 
 	/*
-	 * following are used to remember current session paramter status.
+	 * following are used to remember current session parameter status.
 	 * re-used connection will need them (V3 only)
 	 */
 	ParamStatus params;
@@ -380,7 +380,7 @@ typedef struct {
 /* description of row. corresponding to RowDescription message */
 typedef struct {
 	char *attrname;		/* attribute name */
-	int oid;	/* 0 or non 0 if it's a table oblect */
+	int oid;	/* 0 or non 0 if it's a table object */
 	int attrnumber;		/* attribute number starting with 1. 0 if it's not a table */
 	int typeoid;		/* data type oid */
 	int	size;	/* data length minus means variable data type */

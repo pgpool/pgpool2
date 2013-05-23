@@ -42,7 +42,7 @@ static void * exec_ping(void * arg);
 static double get_result (char * ping_data);
 
 /**
- * Try to conect to trusted servers.
+ * Try to connect to trusted servers.
  */
 int
 wd_is_upper_ok(char * server_list)
@@ -125,7 +125,7 @@ wd_is_upper_ok(char * server_list)
 }
 
 /**
- * check if IP addres is unused.
+ * check if IP address is unused.
  */
 int
 wd_is_unused_ip(char * ip)
@@ -238,7 +238,7 @@ exec_ping(void * arg)
 
 			if (WIFEXITED(status) == 0)
 			{
-				pool_error("exec_ping: %s exited abnormaly", ping_path);
+				pool_error("exec_ping: %s exited abnormally", ping_path);
 				close(pfd[0]);
 				return WD_NG;
 			}
@@ -290,7 +290,7 @@ get_result (char * ping_data)
 
 	/*
 	 skip result until average data
-	 tipical result of ping is as follows,
+	 typical result of ping is as follows,
 	 "rtt min/avg/max/mdev = 0.045/0.045/0.046/0.006 ms"
 	 we can find the average data beyond the 4th '/'.
 	 */

@@ -342,7 +342,7 @@ pid_t wd_hb_receiver(int fork_wait_time, WdHbIf hb_if)
 	{
 		if (wd_hb_recv(sock, &pkt) == WD_OK)
 		{
-			/* auhtentication */
+			/* authentication */
 			if (strlen(pool_config->wd_authkey))
 			{
 				/* calculate hash from packet */
@@ -522,7 +522,7 @@ ntoh_wd_hb_packet(WdHbPacket * to, WdHbPacket * from)
 	return WD_OK;
 }
 
-/* convert pakcet to string and return length of the string */
+/* convert packet to string and return length of the string */
 static int packet_to_string_hb(WdHbPacket pkt, char *str, int maxlen)
 {
 	int len;

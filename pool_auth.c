@@ -18,7 +18,7 @@
  * suitability of this software for any purpose.  It is provided "as
  * is" without express or implied warranty.
  *
- * pool_auth.c: authenticaton stuff
+ * pool_auth.c: authentication stuff
  *
 */
 
@@ -513,7 +513,7 @@ static POOL_STATUS pool_send_backend_key_data(POOL_CONNECTION *frontend, int pid
 }
 
 /*
- * perform clear text password authetication
+ * perform clear text password authentication
  */
 static int do_clear_text_password(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reauth, int protoMajor)
 {
@@ -526,7 +526,7 @@ static int do_clear_text_password(POOL_CONNECTION *backend, POOL_CONNECTION *fro
 	/* master? */
 	if (IS_MASTER_NODE_ID(backend->db_node_id))
 	{
-		pool_write(frontend, "R", 1);	/* authenticaton */
+		pool_write(frontend, "R", 1);	/* authentication */
 		if (protoMajor == PROTO_MAJOR_V3)
 		{
 			len = htonl(8);
@@ -583,13 +583,13 @@ static int do_clear_text_password(POOL_CONNECTION *backend, POOL_CONNECTION *fro
 	{
 		if ((ntohl(size) - 4) != backend->pwd_size)
 		{
-			pool_debug("do_clear_text_password; password size does not match in re-authetication");
+			pool_debug("do_clear_text_password; password size does not match in re-authentication");
 			return -1;
 		}
 
 		if (memcmp(password, backend->password, backend->pwd_size) != 0)
 		{
-			pool_debug("do_clear_text_password; password does not match in re-authetication");
+			pool_debug("do_clear_text_password; password does not match in re-authentication");
 			return -1;
 		}
 
@@ -665,7 +665,7 @@ static int do_clear_text_password(POOL_CONNECTION *backend, POOL_CONNECTION *fro
 }
 
 /*
- * perform crypt authetication
+ * perform crypt authentication
  */
 static int do_crypt(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reauth, int protoMajor)
 {
@@ -693,7 +693,7 @@ static int do_crypt(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int rea
 	/* master? */
 	if (IS_MASTER_NODE_ID(backend->db_node_id))
 	{
-		pool_write(frontend, "R", 1);	/* authenticaton */
+		pool_write(frontend, "R", 1);	/* authentication */
 		if (protoMajor == PROTO_MAJOR_V3)
 		{
 			len = htonl(10);
@@ -832,7 +832,7 @@ static int do_crypt(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int rea
 }
 
 /*
- * perform MD5 authetication
+ * perform MD5 authentication
  */
 static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reauth, int protoMajor)
 {
@@ -1012,7 +1012,7 @@ static int send_md5auth_request(POOL_CONNECTION *frontend, int protoMajor, char 
 	int len;
 	int kind;
 
-	pool_write(frontend, "R", 1);	/* authenticaton */
+	pool_write(frontend, "R", 1);	/* authentication */
 	if (protoMajor == PROTO_MAJOR_V3)
 	{
 		len = htonl(12);
@@ -1092,7 +1092,7 @@ static int read_password_packet(POOL_CONNECTION *frontend, int protoMajor, 	char
 /*
  * Send password packet to backend and receive authentication response
  * packet.  Return value is the last field of authentication
- * response. If it's 0, authentication was successfull.
+ * response. If it's 0, authentication was successful.
  * "password" must be null-terminated.
  */
 static int send_password_packet(POOL_CONNECTION *backend, int protoMajor, char *password)

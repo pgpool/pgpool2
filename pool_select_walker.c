@@ -137,7 +137,7 @@ bool pool_has_view(Node *node)
 }
 
 /*
- * Return true if this SELECT has INSERT INTO or FOR SHARE or FOR UDPATE.
+ * Return true if this SELECT has INSERT INTO or FOR SHARE or FOR UPDATE.
  */
 bool pool_has_insertinto_or_locking_clause(Node *node)
 {
@@ -1068,7 +1068,7 @@ makeRangeVarFromNameList(List *names)
 
 /*
  * Extract table name from RageVar.  Make schema qualification name if
- * neccessary.  The returned table name is in static area. So next
+ * necessary.  The returned table name is in static area. So next
  * call to this function will break previous result.
  */
 static char *make_table_name_from_rangevar(RangeVar *rangevar)

@@ -232,7 +232,7 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 			relcache->cache[index].expire = 0;
 		}
 		/*
-		 * Call user defined unregister/register fuction.
+		 * Call user defined unregister/register function.
 		 */
 		(*relcache->unregister_func)(relcache->cache[index].data);
 		relcache->cache[index].data = result;

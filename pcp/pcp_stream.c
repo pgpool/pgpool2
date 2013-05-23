@@ -37,7 +37,7 @@ static int save_pending_data(PCP_CONNECTION *pc, void *data, int len);
 static int pcp_check_fd(PCP_CONNECTION *pc, int notimeout);
 
 /* --------------------------------
- * pcp_open - allocate read & write buffers for PCP_CONNECION
+ * pcp_open - allocate read & write buffers for PCP_CONNECTION
  *
  * return newly allocated PCP_CONNECTION on success, NULL if malloc() fails
  * --------------------------------
@@ -79,7 +79,7 @@ pcp_open(int fd)
 }
 
 /* --------------------------------
- * pcp_close - deallocate read & write buffers for PCP_CONNECION
+ * pcp_close - deallocate read & write buffers for PCP_CONNECTION
  * --------------------------------
  */
 void

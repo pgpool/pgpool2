@@ -82,7 +82,7 @@ char query_string_buffer[QUERY_STRING_BUFFER_LEN];
 
 /*
  * query string produced by nodeToString() in simpleQuery().
- * this variable only usefull when enable_query_cache is true.
+ * this variable only useful when enable_query_cache is true.
  */
 char *parsed_query = NULL;
 
@@ -453,7 +453,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		if (!RAW_MODE)
 		{
 			/*
-			 * If there's only one node to send the commad, there's no
+			 * If there's only one node to send the command, there's no
 			 * point to start a transaction.
 			 */
 			if (pool_multi_node_to_be_sent(query_context))
@@ -747,7 +747,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			query_context->query_w_hex = search_query;
 
 			/*
-			 * When a transaction is comitted, query_context->temp_cache->query is used
+			 * When a transaction is committed, query_context->temp_cache->query is used
 			 * to create md5 hash to search for query cache.
 			 * So overwrite the query text in temp cache to the one with the hex of bind message.
 			 * If not, md5 hash will be created by the query text without bind message, and
@@ -1155,7 +1155,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		{
 			/*
 			 * Check if other than deadlock error detected.  If so, emit
-			 * log. This is usefull when invalid encoding error occurs. In
+			 * log. This is useful when invalid encoding error occurs. In
 			 * this case, PostgreSQL does not report what statement caused
 			 * that error and make users confused.
 			 */
@@ -1260,7 +1260,7 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	}
 
 	/*
-	 * If the query can ce cached, save its offset of query text in bind message's content.
+	 * If the query can be cached, save its offset of query text in bind message's content.
 	 */
 	if (query_context->is_cache_safe)
 	{
@@ -1700,7 +1700,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				 * If the query was COMMIT/ABORT, clear the history
 				 * that we had a writing command in the transaction
 				 * and forget the transaction isolation level.  This
-				 * is neccessary if succeeding transaction is not an
+				 * is necessary if succeeding transaction is not an
 				 * explicit one.
 				 */
 				else if (is_commit_or_rollback_query(node))
@@ -1748,7 +1748,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 					 * If the query was CREATE TEMP TABLE, discard
 					 * temp table relcache because we might have had
 					 * persistent table relation cache which has table
-					 * name as the tem table.
+					 * name as the temp table.
 					 */
 					if (IsA(node, CreateStmt))
 					{
@@ -1765,7 +1765,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				/* If we are doing extended query and the state is after EXECUTE,
 				 * then we can commit cache.
 				 * We check latter condition by looking at query_context->query_w_hex.
-				 * This check is neccessary for certain frame work such as PHP PDO.
+				 * This check is necessary for certain frame work such as PHP PDO.
 				 * It sends Sync message right after PARSE and it produces
 				 * "Ready for query" message from backend.
 				 */
@@ -2053,7 +2053,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	rows = extract_ntuples(p);
 
 	/*
-	 * Save number of affcted tuples of master node.
+	 * Save number of affected tuples of master node.
 	 */
 	session_context->ntuples[MASTER_NODE_ID] = rows;
 
@@ -2093,7 +2093,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 			int n = extract_ntuples(p);
 
 			/*
-			 * Save number of affcted tuples.
+			 * Save number of affected tuples.
 			 */
 			session_context->ntuples[i] = n;
 
@@ -2111,7 +2111,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 				{
 					/*
 					 * Remember that we have different number of UPDATE/DELETE
-					 * affcted tuples in backends.
+					 * affected tuples in backends.
 					 */
 					session_context->mismatch_ntuples = true;
 				}
@@ -2431,7 +2431,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 	pool_unset_doing_extended_query_message();
 
 	/*
-	 * Alloate buffer and copy the packet contents.  Because inside
+	 * Allocate buffer and copy the packet contents.  Because inside
 	 * these protocol modules, pool_read2 maybe called and modify its
 	 * buffer contents.
 	 */

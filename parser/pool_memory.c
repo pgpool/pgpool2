@@ -174,7 +174,7 @@ void pool_memory_free(POOL_MEMORY_POOL *pool, void *ptr)
 
 		if (block == NULL)
 		{
-			pool_log("An adress \"%p\" does not exist in memory pool.", chunk);
+			pool_log("An address \"%p\" does not exist in memory pool.", chunk);
 			return;
 		}
 
@@ -331,7 +331,7 @@ char *pool_memory_strdup(POOL_MEMORY_POOL *pool_memory, const char *string)
 }
 
 /*
- * Switch memory context from pool_meory to pm
+ * Switch memory context from pool_memory to pm
  */
 POOL_MEMORY_POOL *pool_memory_context_switch_to(POOL_MEMORY_POOL *pm)
 {

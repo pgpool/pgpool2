@@ -276,7 +276,7 @@ void do_child(int unix_fd, int inet_fd)
 		}
 
 		/*
-		 * Ok, negotiaton with frontend has been done. Let's go to the
+		 * Ok, negotiation with frontend has been done. Let's go to the
 		 * next step.  Connect to backend if there's no existing
 		 * connection which can be reused by this frontend.
 		 * Authentication is also done in this step.
@@ -360,7 +360,7 @@ void do_child(int unix_fd, int inet_fd)
 		 */
 		pool_init_session_context(frontend, backend);
 
-		/* Mark this connection pool is conncted from frontend */
+		/* Mark this connection pool is connected from frontend */
 		pool_coninfo_set_frontend_connected(pool_get_process_context()->proc_id, pool_pool_index());
 
 		/* query process loop */
@@ -414,14 +414,14 @@ void do_child(int unix_fd, int inet_fd)
 					}
 					break;
 
-				/* error occured. discard backend connection pool
+				/* error occurred. discard backend connection pool
                    and disconnect connection to the frontend */
 				case POOL_ERROR:
 					pool_log("do_child: exits with status 1 due to error");
 					child_exit(1);
 					break;
 
-				/* fatal error occured. just exit myself... */
+				/* fatal error occurred. just exit myself... */
 				case POOL_FATAL:
 					notice_backend_error(1);
 					child_exit(1);
@@ -444,7 +444,7 @@ void do_child(int unix_fd, int inet_fd)
 		/* Destroy session context */
 		pool_session_context_destroy();
 
-		/* Mark this connection pool is not conncted from frontend */
+		/* Mark this connection pool is not connected from frontend */
 		pool_coninfo_unset_frontend_connected(pool_get_process_context()->proc_id, pool_pool_index());
 
 		accepted = 0;
@@ -533,7 +533,7 @@ static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *time
 
 	/*
 	 * following code fragment computes remaining timeout val in a
-	 * portable way. Linux does this automazically but other platforms do not.
+	 * portable way. Linux does this automatically but other platforms do not.
 	 */
 	if (timeoutval)
 	{
@@ -797,7 +797,7 @@ static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *time
 		return NULL;
 	}
 
-	/* save ip addres for hba */
+	/* save ip address for hba */
 	memcpy(&cp->raddr, &saddr, sizeof(SockAddr));
 	if (cp->raddr.addr.ss_family == 0)
 		cp->raddr.addr.ss_family = AF_UNIX;
@@ -1179,7 +1179,7 @@ void cancel_request(CancelPacket *sp)
 		pool_close(con);
 
 		/*
-		 * this is needed to enure that the next DB node executes the
+		 * this is needed to ensure that the next DB node executes the
 		 * query supposed to be canceled.
 		 */
 		sleep(1);
@@ -1749,7 +1749,7 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 	}
 
 	/*
-	 * Read backend key data and wait until Reay for query arriving or
+	 * Read backend key data and wait until Ready for query arriving or
 	 * error happens.
 	 */
 

@@ -132,7 +132,7 @@ wd_add_wd_list(WdDesc * other_wd)
 	return i;
 }
 
-/* set watchdog informaion to list */
+/* set watchdog information to list */
 int
 wd_set_wd_info(WdInfo * info)
 {
@@ -163,7 +163,7 @@ wd_is_exist_master(void)
 	return NULL;	
 }
 
-/* set or unset in_interloking flag */
+/* set or unset in_interlocking flag */
 void
 wd_set_interlocking(WdInfo *info, bool value)
 {

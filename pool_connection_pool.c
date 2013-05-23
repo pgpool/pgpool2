@@ -189,7 +189,7 @@ void pool_discard_cp(char *user, char *database, int protoMajor)
 
 	if (p == NULL)
 	{
-		pool_error("pool_discard_cp: cannot get connection pool for user %s datbase %s", user, database);
+		pool_error("pool_discard_cp: cannot get connection pool for user %s database %s", user, database);
 		return;
 	}
 

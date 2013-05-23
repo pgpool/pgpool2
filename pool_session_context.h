@@ -60,7 +60,7 @@ typedef struct {
 	 */
 	bool is_cache_safe;	/* true if the query can be cached */
 	int param_offset;		/* Offset from contents where actual bind
-							 * paramters are stored.
+							 * parameters are stored.
 							 * This is meaningful only when is_cache_safe is true.
 							 */
 } POOL_SENT_MESSAGE;
@@ -123,7 +123,7 @@ typedef struct {
 #endif /* NOT_USED */
 	POOL_MEMORY_POOL *memory_context;	/* memory context for session */
 
-	/* message which does'nt receive complete message */
+	/* message which doesn't receive complete message */
 	POOL_SENT_MESSAGE *uncompleted_message;
 
 	POOL_SENT_MESSAGE_LIST message_list;
@@ -152,7 +152,7 @@ typedef struct {
 	 * Query cache management area
 	 */
 	POOL_QUERY_CACHE_ARRAY *query_cache_array;	/* pending SELECT results */
-	long long int num_selects;	/* number of successfull SELECTs in this transaction */
+	long long int num_selects;	/* number of successful SELECTs in this transaction */
 } POOL_SESSION_CONTEXT;
 
 extern void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);

@@ -189,7 +189,7 @@ static void examInsertStmt(Node *node,POOL_CONNECTION_POOL *backend, RewriteQuer
 			/* send  error message to frontend */
 			message->r_code = INSERT_SQL_RESTRICTION;
 			message->r_node = -1;
-			message->rewrite_query = pool_error_message("cannot analzye this InsertStmt");
+			message->rewrite_query = pool_error_message("cannot analyze this InsertStmt");
 			return;
   }
 
@@ -403,7 +403,7 @@ RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNE
 				else
 				{
 					/*
-					 * Ohter cases of message->r_code == SELECT_RELATION_ERROR
+					 * Other cases of message->r_code == SELECT_RELATION_ERROR
 					 * or SELECT_PG_CATALOG,
 					 * Transmit the Query to Master node and receive status.
 					 */
@@ -531,7 +531,7 @@ void analyze_debug(RewriteQuery *message)
  * This function checks the KEYWORD(POOL_PARALLEL,POOL_LOADBALANCE)
  * if the special function(like pool_parallel() or pool_loadbalance())
  * is used, mark the r_code,is_parallel and is_loadbalance.
- * In othe cases, It is necessary to analyze the Query.
+ * In other cases, It is necessary to analyze the Query.
  */
 RewriteQuery *is_parallel_query(Node *node, POOL_CONNECTION_POOL *backend)
 {

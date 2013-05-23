@@ -162,7 +162,7 @@ static char hba_file[POOLMAXPATHLEN+1];
 static int exiting = 0;		/* non 0 if I'm exiting */
 static int switching = 0;		/* non 0 if I'm fail overing or degenerating */
 
-static int clear_cache = 0;		/* non 0 if clear chache option (-c) is given */
+static int clear_cache = 0;		/* non 0 if clear cache option (-c) is given */
 static int not_detach = 0;		/* non 0 if non detach option (-n) is given */
 
 static int stop_sig = SIGTERM;	/* stopping signal default value */
@@ -514,7 +514,7 @@ int main(int argc, char **argv)
 	con_info = pool_shared_memory_create(size);
 	if (con_info == NULL)
 	{
-		pool_error("failed to allocate connection informations");
+		pool_error("failed to allocate connection information");
 		myexit(1);
 	}
 	memset(con_info, 0, size);
@@ -747,7 +747,7 @@ int main(int argc, char **argv)
 					{
 						if (POOL_DISALLOW_TO_FAILOVER(BACKEND_INFO(sts).flag))
 						{
-							pool_log("health_check: %d failover is canceld because failover is disallowed", sts);
+							pool_log("health_check: %d failover is canceled because failover is disallowed", sts);
 						}
 						else if (retrycnt <= pool_config->health_check_max_retries)
 						{
@@ -826,7 +826,7 @@ int main(int argc, char **argv)
 
 			if (pool_config->health_check_timeout > 0)
 			{
-				/* seems ok. cancel health check timer */
+				/* seems OK. cancel health check timer */
 				pool_signal(SIGALRM, SIG_IGN);
 			}
 
@@ -1484,7 +1484,7 @@ void degenerate_backend_set(int *node_id_set, int count)
 
 		if (POOL_DISALLOW_TO_FAILOVER(BACKEND_INFO(node_id_set[i]).flag))
 		{
-			pool_log("degenerate_backend_set: %d failover request from pid %d is canceld because failover is disallowed", node_id_set[i], getpid());
+			pool_log("degenerate_backend_set: %d failover request from pid %d is canceled because failover is disallowed", node_id_set[i], getpid());
 			continue;
 		}
 
@@ -1912,7 +1912,7 @@ static void failover(void)
    /* On 2011/5/2 Tatsuo Ishii says: if mode is streaming replication
 	* and request is NODE_UP_REQUEST(failback case) we don't need to
 	* restart all children. Existing session will not use newly
-	* attached node, but load balanced node is not changed util this
+	* attached node, but load balanced node is not changed until this
 	* session ends, so it's harmless anyway.
 	*/
 	if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP)	&&
@@ -2131,7 +2131,7 @@ static void failover(void)
 				continue;
 			else
 			{
-				pool_error("failover: waitpid failed. reson: %s", strerror(errno));
+				pool_error("failover: waitpid failed. reason: %s", strerror(errno));
 				return;
 			}
 		}
@@ -2158,7 +2158,7 @@ static RETSIGTYPE health_check_timer_handler(int sig)
 
 /*
  * Check if we can connect to the backend
- * returns 0 for ok. otherwise returns backend id + 1
+ * returns 0 for OK. otherwise returns backend id + 1
  */
 static int health_check(void)
 {
@@ -2240,7 +2240,7 @@ static int health_check(void)
 
 /*
  * check if we can connect to the SystemDB
- * returns 0 for ok. otherwise returns -1
+ * returns 0 for OK. otherwise returns -1
  */
 static int
 system_db_health_check(void)
@@ -2559,7 +2559,7 @@ static void kill_all_children(int sig)
  * recovery processing) or config file reload request(SIGHUP) has been
  * occurred.  In this case this function returns 1.
  * otherwise 0: (no signal event occurred), -1: (error)
- * XXX: is it ok that select(2) error is ignored here?
+ * XXX: is it OK that select(2) error is ignored here?
  */
 static int pool_pause(struct timeval *timeout)
 {
@@ -2697,7 +2697,7 @@ static int trigger_failover_command(int node, const char *command_line,
 						if (newmaster)
 							string_append_char(exec_cmd, newmaster->backend_hostname);
 						else
-							/* no vaid new master */
+							/* no valid new master */
 							string_append_char(exec_cmd, "");
 						break;
 
@@ -2714,7 +2714,7 @@ static int trigger_failover_command(int node, const char *command_line,
 							string_append_char(exec_cmd, port_buf);
 						}
 						else
-							/* no vaid new master */
+							/* no valid new master */
 							string_append_char(exec_cmd, "");
 						break;
 
@@ -2723,7 +2723,7 @@ static int trigger_failover_command(int node, const char *command_line,
 						if (newmaster)
 							string_append_char(exec_cmd, newmaster->backend_data_directory);
 						else
-							/* no vaid new master */
+							/* no valid new master */
 							string_append_char(exec_cmd, "");
 						break;
 

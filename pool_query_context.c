@@ -279,7 +279,7 @@ int pool_virtual_master_db_node_id(void)
 
 	/*
 	 * No query context exists.  If in master/slave mode, returns
-	 * primary node if exists.  Oterwise returns my_master_node_id,
+	 * primary node if exists.  Otherwise returns my_master_node_id,
 	 * which represents the last REAL_MASTER_NODE_ID.
 	 */
 	if (MASTER_SLAVE)
@@ -340,14 +340,14 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	else if (MASTER_SLAVE && query_context->is_multi_statement)
 	{
 		/*
-		 * If we are in master/slave mode and we have multi stametemt
+		 * If we are in master/slave mode and we have multi statement
 		 * query, we should send it to primary server only. Otherwise
 		 * it is possible to send a write query to standby servers
 		 * because we only use the first element of the multi
 		 * statement query and don't care about the rest.  Typical
 		 * situation where we are bugged by this is, "BEGIN;DELETE
 		 * FROM table;END". Note that from pgpool-II 3.1.0
-		 * transactional statements such as "BEGIN" is unconditionaly
+		 * transactional statements such as "BEGIN" is unconditionally
 		 * sent to all nodes(see send_to_where() for more details).
 		 * Someday we might be able to understand all part of multi
 		 * statement queries, but until that day we need this band
@@ -701,7 +701,7 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 
 		/*
 		 * Check if some error detected.  If so, emit
-		 * log. This is usefull when invalid encoding error
+		 * log. This is useful when invalid encoding error
 		 * occurs. In this case, PostgreSQL does not report
 		 * what statement caused that error and make users
 		 * confused.
@@ -901,7 +901,7 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 
 		/*
 		 * Check if some error detected.  If so, emit
-		 * log. This is usefull when invalid encoding error
+		 * log. This is useful when invalid encoding error
 		 * occurs. In this case, PostgreSQL does not report
 		 * what statement caused that error and make users
 		 * confused.
@@ -953,7 +953,7 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		T_ClosePortalStmt,
 		T_ClusterStmt,
 		T_CopyStmt,
-		T_CreateStmt,	/* CREAE TABLE */
+		T_CreateStmt,	/* CREATE TABLE */
 		T_DefineStmt,	/* CREATE AGGREGATE, OPERATOR, TYPE */
 		T_DropStmt,		/* DROP TABLE etc. */
 		T_TruncateStmt,
@@ -1258,7 +1258,7 @@ void where_to_send_deallocate(POOL_QUERY_CONTEXT *query_context, Node *node)
 
 /*
  * Returns parse tree for current query.
- * Preconition: the query is in progress state.
+ * Precondition: the query is in progress state.
  */
 Node *pool_get_parse_tree(void)
 {
@@ -1485,7 +1485,7 @@ void pool_set_query_state(POOL_QUERY_CONTEXT *query_context, POOL_QUERY_STATE st
 /*
  * Return -1, 0 or 1 according to s1 is "before, equal or after" s2 in terms of state
  * transition order. 
- * The State transiton order is defined as: UNPARSED < PARSE_COMPLETE < BIND_COMPLETE < EXECUTE_COMPLETE
+ * The State transition order is defined as: UNPARSED < PARSE_COMPLETE < BIND_COMPLETE < EXECUTE_COMPLETE
  */
 int statecmp(POOL_QUERY_STATE s1, POOL_QUERY_STATE s2)
 {
