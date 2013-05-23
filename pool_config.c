@@ -3914,7 +3914,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			int slot;
 			char *str;
 
-			slot = atoi(key + 10) ;
+			slot = atoi(key + 16) ;
 			if (slot < 0 || slot >= WD_MAX_IF_NUM)
 			{
 				pool_error("pool_config: pgpool number %s for heartbeat_device out of range", key);
@@ -3932,6 +3932,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			{
 				strlcpy(WD_HB_IF(slot).if_name, str, WD_MAX_IF_NAME_LEN);
 				pool_config->num_hb_if = slot + 1;
+				pool_log("hoge %d",pool_config->num_hb_if);
 			}
 
 		}
@@ -3942,7 +3943,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			int slot;
 			char *str;
 
-			slot = atoi(key + 15) ;
+			slot = atoi(key + 21) ;
 			if (slot < 0 || slot >= WD_MAX_IF_NUM)
 			{
 				pool_error("pool_config: pgpool number %s for heartbeat_destination out of range", key);
