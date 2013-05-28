@@ -1,0 +1,1028 @@
+#! /bin/bash
+# install.sh: Install script for pgpool-II
+
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+MAJOR_VERSION=3.3
+DIST=pgdg
+
+# pgpool-II
+PGPOOL_SOFTWARE_NAME=pgpool-II
+P_VERSION=3.3.0
+P_RELEASE=1
+PGPOOL_CONF_DIR=/etc/pgpool-II
+
+# pgpoolAdmin
+ADMIN_SOFTWARE_NAME=pgpoolAdmin
+A_VERSION=3.3
+A_RELEASE=1
+ADMIN_DIR=/var/www/html/pgpoolAdmin
+APACHE_USER=apache
+
+# packages
+ARCHITECTURE=$(uname -i)
+PACKAGE_FILES=(
+    $PGPOOL_SOFTWARE_NAME-$P_VERSION-$P_RELEASE.$DIST.$ARCHITECTURE.rpm
+    $ADMIN_SOFTWARE_NAME-$A_VERSION-$A_RELEASE.$DIST.noarch.rpm
+)
+
+# pgpool
+PGPOOL_BIN_DIR=/usr/bin
+PGPOOL_PORT=9999
+PCP_PORT=9898
+WATCHDOG_PORT=9000
+MODE=stream                    # This will be editted in script.
+NODE0_HOST=""                  # This will be editted in script.
+NODE1_HOST=""                  # This will be editted in script.
+
+# postgres
+PGHOME=/usr/pgsql-9.2
+CONTRIB_DIR=$PGHOME/share/contrib
+PG_SUPER_USER=postgres
+PG_SUPER_USER_PASSWD=$PG_SUPER_USER
+PG_ADMIN_USER=admin            # This will be editted in script.
+PGPORT=5432                    # This will be editted in script.
+PGDATA=/home/postgres/data     # This will be editted in script.
+ARCHIVE_DIR=/home/postgres/archivedir # This will be editted in script.
+INITDB_OPTION="--no-locale -E UTF8"
+
+# other
+USE_WATCHDOG=0                 # This will be editted in script.
+NOBODY_SBIN=/var/private/nobody/sbin
+PID_FILE_DIR=/var/run/pgpool/
+PGPOOL_LOG_DIR=/var/log/pgpool
+INSTALL_ONLY=0
+SKIPPED=0
+
+TEMP_FILE_RPM=rpmcheck
+BOLD=$'\e[0;30;1m'
+SPAN_END=$'\e[m'
+
+# -------------------------------------------------------------------
+# check
+# -------------------------------------------------------------------
+
+function ynQuestion()
+{
+    local _QUESTION=$1
+
+    echo
+    while :; do
+        echo -n "$_QUESTION (yes/no): "
+        read REPLY
+        case $REPLY in
+            [yY] | [yY][eE][sS])
+                return 0
+                ;;
+            [nN] | [nN][oO])
+                return 1
+                ;;
+        esac
+    done
+}
+
+function hasPackage()
+{
+    PACKAGE=$1
+    PACKAGE_NAME_SHOWN=$2
+    SILENT=0
+    if [ $# -eq 3 ]; then
+        SILENT=$3
+    fi
+
+    grep -q $PACKAGE $TEMP_FILE_RPM
+    if [ $? -ne 0 ]; then
+        if [ $SILENT -eq 0 ]; then
+            echo
+            echo "Please install $PACKAGE_NAME_SHOWN."
+        fi
+        return 1
+    fi
+
+    return 0
+}
+
+function checkEnv()
+{
+    return 0
+    # OS
+    if [ -f /etc/redhat-release ]; then
+        if grep -q "release 6" /etc/redhat-release; then
+        distribution=rhel6
+        else
+           echo "Your platform is not supported."
+           return 1
+        fi
+    fi
+
+    # pgpool-II
+    hasPackage $PGPOOL_SOFTWARE_NAME $PGPOOL_SOFTWARE_NAME 1
+    if [ $? -eq 0 ]; then
+        echo
+        echo "pgpool-II $MAJOR_VERSION is already installed."
+        return 1
+    fi
+
+    # other
+    hasPackage "postgresql92-server" "PostgreSQL (postgresql92-server)"
+    if [ $? -ne 0 ]; then return 1; fi
+    hasPackage "postgresql92" "PostgreSQL (postgresql92)"
+    if [ $? -ne 0 ]; then return 1; fi
+    hasPackage "httpd" "Apache (httpd)"
+    if [ $? -ne 0 ]; then return 1; fi
+    hasPackage "php-pgsql" "PHP (php-pgsql)"
+    if [ $? -ne 0 ]; then return 1; fi
+    hasPackage "php-mbstring" "PHP (php-mbstring)"
+    if [ $? -ne 0 ]; then return 1; fi
+    hasPackage "php" "PHP"
+    if [ $? -ne 0 ]; then return 1; fi
+
+    # root
+    if [ $(id -un) != root ]; then
+        echo
+        echo "Must be installed as root."
+        return 1
+    fi
+
+    return 0
+}
+
+# -------------------------------------------------------------------
+# Nodes
+# -------------------------------------------------------------------
+
+function fixNodes()
+{
+    if [ $USE_WATCHDOG -eq 1 ]; then
+        echo "*) All pgpool must have the same configuration about backends."
+    fi
+
+    # node 0
+    while :; do
+        echo -n "Specify node 0's hostname: "
+        read REPLY
+        if [ "$REPLY" != "" ]; then
+            if [ $REPLY = localhost ]; then
+                echo "NG. Please input actual hostname."
+            else
+                NODE0_HOST=$REPLY
+                break
+            fi
+        fi
+    done
+
+    # node 1
+    while :; do
+        echo -n "Specify node 1's hostname: "
+        read REPLY
+        if [ "$REPLY" != "" ]; then
+            if [ $REPLY = localhost ]; then
+                echo "NG. Please input actual hostname."
+            else
+                NODE1_HOST=$REPLY
+                break
+            fi
+        fi
+    done
+}
+
+# -------------------------------------------------------------------
+# pgpool.conf
+# -------------------------------------------------------------------
+
+function checkInputParam()
+{
+    local _PARAM=$1
+    local _DISCRIPTION=$2
+    local _DEFAULT=$3
+
+    while :; do
+        echo -n $_DISCRIPTION
+        if [ "$_DEFAULT" != "" ]; then
+            echo -n " (default: $_DEFAULT)"
+        fi
+        echo -n " : "
+
+        read _INPUT_VAL
+        if [ "$_INPUT_VAL" = "" ]; then
+            if [ "$_DEFAULT" != "" ]; then
+                RTN=$_DEFAULT
+                return 0
+            fi
+        else
+            case $_PARAM in
+                backend_hostname*)
+                    if [ $_INPUT_VAL = "localhost" ]; then
+                        echo "NG. Please specify the host name."
+                    else
+                        RTN=$_INPUT_VAL
+                        return 0
+                    fi
+                    ;;
+                *)
+                    RTN=$_INPUT_VAL
+                    return 0
+                    ;;
+            esac
+        fi
+    done
+
+    return 0
+}
+
+function setPgpoolParam()
+{
+    local _PARAM=$1
+    local _DESCRIPTION=$2
+    local _DEFAULT=""
+
+    if [ $# -eq 3 ]; then
+        _DEFAULT=$3
+    fi
+
+    checkInputParam $_PARAM "$_DESCRIPTION" $_DEFAULT
+    _NEWVAL=$RTN
+    case $_PARAM in
+        delegate_IP|ifconfig_path|arping_path|backend_data_directory*)
+            _NEWVAL="'$_NEWVAL'"
+            ;;
+        archive_command)
+            ARCHIVE_DIR=$_NEWVAL
+            RTN="cp %p $ARCHIVE_DIR/%f </dev/null'"
+            ;;
+    esac
+
+    writePgpoolParam $_PARAM $_NEWVAL
+}
+
+function writePgpoolParam()
+{
+    local _PARAM=$1
+    local _NEWVAL=$2
+
+    case $_PARAM in
+        backend_*)
+            echo "$_PARAM = $_NEWVAL" >> editted/pgpool.conf
+            ;;
+        *)
+            sed -i "s|^[#]*$_PARAM[ ]*=.*$|$_PARAM = $_NEWVAL|" editted/pgpool.conf
+            ;;
+    esac
+
+    echo "    [$_PARAM] $_NEWVAL"
+}
+
+function setBackend()
+{
+    local _NODE_NUM=$1
+
+    echo "* backend $_NODE_NUM"
+
+    if [ $_NODE_NUM -eq 0 ]; then
+        writePgpoolParam "backend_hostname$_NODE_NUM" $NODE0_HOST
+
+        setPgpoolParam "backend_port$_NODE_NUM"           "Port number"    $PGPORT
+        PGPORT=$RTN
+        setPgpoolParam "backend_data_directory$_NODE_NUM" "Data directory" $PGDATA
+        PGDATA=$RTN
+
+    else
+        writePgpoolParam "backend_hostname$_NODE_NUM"       $NODE1_HOST
+        writePgpoolParam "backend_port$_NODE_NUM"           $PGPORT
+        writePgpoolParam "backend_data_directory$_NODE_NUM" "'$PGDATA'"
+    fi
+    writePgpoolParam "backend_weight$_NODE_NUM" 1
+
+    echo
+}
+
+function doConfigPgpool()
+{
+    cp templates/pgpool.conf.sample editted/pgpool.conf
+    ynQuestion "Do you edit pgpool.conf now?"
+    if [ $? -ne 0 ]; then
+        SKIPPED=1
+        return
+    fi
+
+    local _STEPS=5
+
+    echo
+    echo $BOLD"----------------------------------------------------------------------"$SPAN_END
+    echo $BOLD"Configuration for pgpool-II... "$SPAN_END
+    echo $BOLD"----------------------------------------------------------------------"$SPAN_END
+    echo
+
+    # -------------------------------------------------------------------
+    # [1] general
+    # -------------------------------------------------------------------
+
+    echo "[1/$_STEPS] general"
+    echo
+
+    writePgpoolParam port 9999
+    writePgpoolParam pcp_port 9898
+
+    # -------------------------------------------------------------------
+    # [2] mode
+    # -------------------------------------------------------------------
+
+    echo
+    while :; do
+        echo "[2/$_STEPS] Which replication mode do you use? (native/ stream)"
+        echo
+
+        echo "native: native replication mode"
+        echo "stream: master slave mode with streaming replication"
+
+        read REPLY
+        case $REPLY in
+        native)
+            writePgpoolParam replication_mode on
+            MODE="replication"
+            break
+            ;;
+        stream)
+            writePgpoolParam master_slave_mode     on
+            writePgpoolParam master_slave_sub_mode "'stream'"
+            MODE="stream"
+            break
+            ;;
+        esac
+    done
+
+    ynQuestion "Do you use load balancing?"
+    if [ $? -eq 0 ]; then
+        writePgpoolParam load_balance_mode on
+    fi
+
+    ynQuestion "Do you use on memory query cache with shared memory?"
+    if [ $? -eq 0 ]; then
+        writePgpoolParam memory_cache_enabled on
+        writePgpoolParam memqcache_method     "'shmem'"
+        writePgpoolParam memqcache_oiddir     "'$PGPOOL_LOG_DIR/oiddir'"
+    fi
+
+    # -------------------------------------------------------------------
+    # [3] watchdog
+    # -------------------------------------------------------------------
+
+    echo
+    echo "[3/$_STEPS] watchdog"
+
+    ynQuestion "Do you use watchdog?"
+    if [ $? -eq 0 ]; then
+        USE_WATCHDOG=1
+
+        writePgpoolParam use_watchdog on
+        setPgpoolParam   delegate_IP  "delegate IP address"
+
+        # config of this watchdog
+        echo
+        echo "[[ config of this watchdog ]]"
+        writePgpoolParam other_pgpool_hostname0 $NODE0_HOST
+        writePgpoolParam wd_port                $PGPOOL_PORT
+
+        # config of another pgpool with watchdog
+        echo
+        echo "[[ config of another pgpool with watchdog ]]"
+        writePgpoolParam other_pgpool_hostname0 $NODE1_HOST
+        writePgpoolParam other_pgpool_port0     $PGPOOL_PORT
+        writePgpoolParam other_wd_port0         $WATCHDOG_PORT
+
+        # lifecheck
+        echo
+        echo "[[ lifecheck ]]"
+        while :; do
+            echo "[wd_lifecheck_method] method of watchdog lifecheck? (heartbeat / query)"
+            read REPLY
+            case $REPLY in
+                heartbeat|query)
+                    writePgpoolParam wd_lifecheck_method $REPLY
+                    WATCHDOG_METHOD=$REPLY
+                break
+                ;;
+            esac
+        done
+
+        case $WATCHDOG_METHOD in
+            heartbeat)
+                setPgpoolParam heartbeat_device "NIC device name of NIC to send/receive heartbeat signal" eth0
+                setPgpoolParam heartbeat_destination "host name or IP address to which device 0's heartbeat destinates" $NODE1_HOST
+                ;;
+
+            query)
+                writePgpoolParam wd_lifecheck_user     $PG_SUPER_USER
+                writePgpoolParam wd_lifecheck_password $PG_SUPER_USER_PASSWD
+                ;;
+        esac
+
+        # command path (to use commands with setuid bit)
+        writePgpoolParam ifconfig_path $NOBODY_SBIN
+        writePgpoolParam arping_path   $NOBODY_SBIN
+    fi
+
+    # [4] backend
+    echo
+    echo "[4/$_STEPS] backend"
+    echo
+
+    setBackend 0
+    setBackend 1
+
+    # [5] health check user
+    echo
+    echo "[5/$_STEPS] health check"
+    writePgpoolParam health_check_user     $PG_ADMIN_USER
+    writePgpoolParam health_check_password "'$PG_ADMIN_USER_PASSWD'"
+    writePgpoolParam health_check_period   10
+
+    # [6] fail over
+    echo
+    echo "[6/$_STEPS] fail over & online recovery"
+    writePgpoolParam recovery_user $PG_SUPER_USER
+    writePgpoolParam recovery_password $PG_SUPER_USER_PASSWD
+    if [ $MODE = "stream" ]; then
+        writePgpoolParam recovery_1st_stage_command basebackup-stream.sh
+        writePgpoolParam failover_command  "'$PGDATA/failover.sh %d %h %p %D %m %M %H %P %r %R'"
+        writePgpoolParam sr_check_user     $PG_SUPER_USER
+        writePgpoolParam sr_check_password $PG_SUPER_USER_PASSWD
+    else
+        writePgpoolParam recovery_1st_stage_command basebackup-replication.sh
+        writePgpoolParam recovery_2nd_stage_command pgpool_recovery_pitr
+    fi
+
+    echo
+    echo $BOLD"----------------------------------------------------------------------"$SPAN_END
+    echo "                                                              ... end."
+}
+
+# -------------------------------------------------------------------
+# pgpoolAdmin's conf
+# -------------------------------------------------------------------
+
+function writeAdminParam()
+{
+    local _PARAM=$1
+    local _NEWVAL=$2
+
+    sed -i "s|define('$_PARAM',[ ]*'.*');|define('$_PARAM', '$_NEWVAL');|" editted/pgmgt.conf.php
+}
+
+function doConfigAdmin()
+{
+    cp templates/pgmgt.conf.php editted/
+    ynQuestion "Do you edit pgmgt.conf.php now?"
+    if [ $? -ne 0 ]; then
+        return
+    fi
+
+    echo
+    echo $BOLD"----------------------------------------------------------------------"$SPAN_END
+    echo $BOLD"Configuration for pgpoolAdmin ..."$SPAN_END
+    echo $BOLD"----------------------------------------------------------------------"$SPAN_END
+    echo
+
+    while :; do
+        echo "Which language do you use? (en/fr/ja/zh_cn)"
+
+        read REPLY
+        case $REPLY in
+        en | fr | ja | zh_cn )
+            writeAdminParam "_PGPOOL2_LANG" $REPLY
+            break
+            ;;
+        esac
+    done
+
+    writeAdminParam _PGPOOL2_VERSION             $MAJOR_VERSION
+    writeAdminParam _PGPOOL2_CONFIG_FILE         $PGPOOL_CONF_DIR/pgpool.conf
+    writeAdminParam _PGPOOL2_PASSWORD_FILE       $PGPOOL_CONF_DIR/pcp.conf
+    writeAdminParam _PGPOOL2_COMMAND             $PGPOOL_BIN_DIR/pgpool
+    writeAdminParam _PGPOOL2_LOG_FILE            $PGPOOL_LOG_DIR/pgpool.log
+    writeAdminParam _PGPOOL2_CMD_OPTION_N        1
+    writeAdminParam _PGPOOL2_PCP_DIR             $PGPOOL_BIN_DIR
+    writeAdminParam _PGPOOL2_STATUS_REFRESH_TIME 5
+
+    echo
+    echo "    Other parameters is set automatically."
+    echo "    If you start pgpool-II by pgpoolAdmin, log will be output to $PGPOOL_LOG_DIR/pgpool.log."
+
+    echo
+    echo $BOLD"----------------------------------------------------------------------"$SPAN_END
+    echo "                                                              ... end."
+}
+
+# -------------------------------------------------------------------
+# pcp.conf
+# -------------------------------------------------------------------
+
+function doConfigPcp()
+{
+    cp templates/pcp.conf.sample editted/pcp.conf
+    ynQuestion "Do you edit pcp.conf now?"
+    if [ $? -ne 0 ]; then
+        return
+    fi
+
+    echo
+    echo $BOLD"----------------------------------------------------------------------"$SPAN_END
+    echo $BOLD"Configuration for PCP ..."$SPAN_END
+    echo $BOLD"----------------------------------------------------------------------"$SPAN_END
+    echo
+
+    while :; do
+        echo -n "username for pgpoolAdmin: "
+        read PG_ADMIN_USER
+        if [ "$PG_ADMIN_USER" != "" ]; then
+            break;
+        fi
+    done
+
+    while :; do
+        echo -n "this user's password: "
+        read PG_ADMIN_USER_PASSWD
+        if [ "$PG_ADMIN_USER_PASSWD" != "" ]; then
+            break;
+        fi
+    done
+
+    echo
+    echo $BOLD"----------------------------------------------------------------------"$SPAN_END
+    echo "                                                              ... end."
+}
+
+# -------------------------------------------------------------------
+# postgresql.conf
+# -------------------------------------------------------------------
+
+function doConfigPostgres()
+{
+    local _STEPS=4
+
+    cp templates/postgresql.conf editted/postgresql.conf
+    ynQuestion "Do you edit postgresql.conf now?"
+    if [ $? -ne 0 ]; then
+        SKIPPED=1
+        return
+    fi
+
+    echo
+    echo $BOLD"----------------------------------------------------------------------"$SPAN_END
+    echo $BOLD"Configuration for PostgreSQL ..."$SPAN_END
+    echo $BOLD"----------------------------------------------------------------------"$SPAN_END
+
+    # [1] hot standby
+    echo
+    echo "[1/$_STEPS] WAL archive"
+    setPostgresParam "archive_command" "the directory where to archive a logfile segment" $ARCHIVE_DIR
+    writePostgresParam listen_addresses "'*'"
+    writePostgresParam archive_mode     on
+    #writePostgresParam archive_command  "'cp %p $ARCHIVE_DIR/%f </dev/null'"
+
+    if [ $MODE = "stream" ]; then
+        writePostgresParam wal_level       hot_standby
+        writePostgresParam max_wal_senders 2
+        writePostgresParam hot_standby     on
+    else
+        writePostgresParam wal_level archive
+    fi
+
+    # [2] log
+    echo
+    echo "[2/$_STEPS] log"
+    writePostgresParam logging_collector        on
+    writePostgresParam log_filename             "'%A.log'"
+    writePostgresParam log_line_prefix          "'%t [%p-%l] '"
+    writePostgresParam log_truncate_on_rotation on
+
+    # [3] custom vartiable
+    echo "[4/$_STEPS] authorization"
+    writePostgresParam pgpool.pg_ctl "'$PGHOME/bin/pg_ctl'"
+
+    # [4] pg_hba.conf
+    echo
+    echo "[4/$_STEPS] authorization"
+    cp templates/pg_hba.conf editted/pg_hba.conf
+    ed -s editted/pg_hba.conf <<EOT
+/^#local *replication/s/^#//p
+/^#host *replication/s/^#//p
+/^#host *replication/s/^#//p
+w
+q
+EOT
+    echo "host    replication     $PG_SUPER_USER        $NODE0_HOST                 trust" >> editted/pg_hba.conf
+    echo "host    replication     $PG_SUPER_USER        $NODE1_HOST                 trust" >> editted/pg_hba.conf
+    echo "host    all             $PG_SUPER_USER        $NODE0_HOST                 trust" >> editted/pg_hba.conf
+    echo "host    all             $PG_SUPER_USER        $NODE1_HOST                 trust" >> editted/pg_hba.conf
+    echo "host    all             $PG_ADMIN_USER        $NODE0_HOST                 trust" >> editted/pg_hba.conf
+    echo "host    all             $PG_ADMIN_USER        $NODE1_HOST                 trust" >> editted/pg_hba.conf
+
+    echo
+    echo $BOLD"----------------------------------------------------------------------"$SPAN_END
+    echo "                                                              ... end."
+}
+
+function setPostgresParam()
+{
+    local _PARAM=$1
+    local _DESCRIPTION=$2
+    local _DEFAULT=""
+
+    if [ $# -eq 3 ]; then
+        _DEFAULT=$3
+    fi
+
+    checkInputParam $_PARAM "$_DESCRIPTION" $_DEFAULT
+    _NEWVAL=$RTN
+
+    if [ "$_PARAM" = "archive_command" ]; then
+        writePostgresParam archive_command  "'cp %p $ARCHIVE_DIR/%f </dev/null'"
+    else
+        writePostgresParam $_PARAM $_NEWVAL
+    fi
+}
+
+function writePostgresParam()
+{
+    local _PARAM=$1
+    local _NEWVAL=$2
+
+    echo "$_PARAM = $_NEWVAL" >> editted/postgresql.conf
+
+    echo "    [$_PARAM] $_NEWVAL"
+}
+
+# -------------------------------------------------------------------
+# scripts
+# -------------------------------------------------------------------
+
+function createConfForScript()
+{
+    local _SCRIPT=config_for_script
+
+    echo -n "create config for failover and online recovery ... ".
+    cp -f templates/$_SCRIPT editted/
+    ed -s editted/$_SCRIPT <<EOT
+/__PGHOME__/s@__PGHOME__@$PGHOME@
+/__NODE0_HOST__/s@__NODE0_HOST__@$NODE0_HOST@
+/__NODE1_HOST__/s@__NODE1_HOST__@$NODE1_HOST@
+/__NODE0_PORT__/s@__NODE0_PORT__@$PGPORT@
+/__NODE1_PORT__/s@__NODE1_PORT__@$PGPORT@
+/__NODE0_DIR__/s@__NODE0_DIR__@$PGDATA@
+/__NODE1_DIR__/s@__NODE1_DIR__@$PGDATA@
+/__PGSUPERUSER__/s@__PGSUPERUSER__@$PG_SUPER_USER@
+/__ARCHIVE_DIR__/s@__ARCHIVE_DIR__@$ARCHIVE_DIR@
+/__PGPOOL_LOG_DIR__/s@__PGPOOL_LOG_DIR__@$PGPOOL_LOG_DIR@
+w
+q
+EOT
+    echo "OK."
+}
+
+function createRecoveryConf()
+{
+    local _SCRIPT=recovery.conf
+
+    echo -n "create recovery.conf ... ".
+    cp -f templates/$_SCRIPT editted/
+    ed -s editted/$_SCRIPT <<EOT
+/__PGPOOL_PORT__/s@__PGPOOL_PORT__@$PGPOOL_PORT@
+/__REPLI_USER__/s@__REPLI_USER__@$PG_SUPER_USER@
+/__ARCHIVE_DIR__/s@__ARCHIVE_DIR__@$ARCHIVE_DIR@
+w
+q
+EOT
+    echo "OK."
+}
+
+function chownToApache()
+{
+    local _TARGET=$1
+    chown $APACHE_USER:$APACHE_USER $_TARGET
+}
+
+function copySbin()
+{
+    if [ ! -e $NOBODY_SBIN ]; then
+        mkdir -p $NOBODY_SBIN
+    fi
+    chownToApache $NOBODY_SBIN
+    chmod 700 $NOBODY_SBIN
+
+    cp /sbin/ifconfig $NOBODY_SBIN
+    cp /sbin/arping $NOBODY_SBIN
+    chmod 4755 $NOBODY_SBIN/ifconfig
+    chmod 4755 $NOBODY_SBIN/arping
+    chownToApache $NOBODY_SBIN/*
+}
+
+# -------------------------------------------------------------------
+# Install
+# -------------------------------------------------------------------
+
+function doInstall()
+{
+    echo -n "* Create user on OS: $PG_SUPER_USER ... "
+    useradd $PG_SUPER_USER -p $PG_SUPER_USER > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        echo "OK."
+        echo "    Created \"$PG_SUPER_USER\" user with password \"$PG_SUPER_USER_PASSWD\"."
+        echo "    You must change the password after install."
+    else
+        echo "Failed."
+        echo "    Maybe there is this user already. Continuing anyway."
+    fi
+
+    echo "* Install packages ... "
+    rpm -ivh ${PACKAGE_FILES[@]}
+    if [ $? -ne 0 ]; then
+        echo "Failed."
+        return 1
+    fi
+    echo
+    echo "OK."
+    return 0
+}
+
+# -------------------------------------------------------------------
+# Regist functions
+# -------------------------------------------------------------------
+
+function doQueries()
+{
+    su - $PG_SUPER_USER -c "$PGHOME/bin/pg_ctl -D $PGDATA -w start" > /dev/null 2>&1
+
+    echo -n "- create admin user ...."
+    $PGHOME/bin/psql -p $PGPORT -U $PG_SUPER_USER postgres \
+        -c "CREATE USER $PG_ADMIN_USER PASSWORD '$PG_ADMIN_USER_PASSWD'" >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        echo "OK."
+    else
+        echo "Failed."
+        echo "    Please create the user \"$PG_ADMIN_USER\" manually. Continuing anyway."
+    fi
+
+    echo -n "- regist pgpool_regclass ... "
+    $PGHOME/bin/psql -p $PGPORT -U $PG_SUPER_USER template1 \
+        -c "CREATE EXTENSION pgpool_regclass; " > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        echo "OK."
+    else
+        echo "Failed."
+        echo "    Please install pgpool_regclass() manually . Continuing anyway."
+    fi
+
+    echo -n "- regist pgpool_recovery ... "
+    $PGHOME/bin/psql -p $PGPORT -U $PG_SUPER_USER template1 \
+        -c "CREATE EXTENSION pgpool_recovery;" > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        echo "OK."
+    else
+        echo "Failed."
+        echo "    Please install pgpool_recovery() manually . Continuing anyway."
+    fi
+
+    su - $PG_SUPER_USER -c "$PGHOME/bin/pg_ctl stop -D $PGDATA" > /dev/null 2>&1
+}
+
+# ===================================================================
+# main
+# ===================================================================
+
+# -------------------------------------------------------------------
+# [1] check
+# -------------------------------------------------------------------
+
+# check environment
+echo -n "check for installation ..."
+
+rpm -qa | grep -E "${PGPOOL_SOFTWARE_NAME}|postgresql92|httpd|php|php-mbstring|php-pgsql" > $TEMP_FILE_RPM
+checkEnv
+if [ $? -ne 0 ]; then
+    rm -f $TEMP_FILE_RPM
+    exit 1
+fi
+rm -f $TEMP_FILE_RPM
+
+echo "OK."
+echo
+
+# -------------------------------------------------------------------
+
+# check agreement
+cat COPYING
+ynQuestion "Do you accept the end user software license agreement"
+if [ $? -ne 0 ]; then exit 1; fi
+
+ynQuestion "Do you edit configs? If no, install will start right now."
+if [ $? -ne 0 ]; then
+    doInstall
+    if [ $? -eq 0 ]; then
+        echo "Completed!"
+        exit 0
+    else
+        exit 1
+    fi
+fi
+
+ynQuestion "Is this the master node? If so, intdb will be executed after install."
+
+# -------------------------------------------------------------------
+# [2] prepare
+# -------------------------------------------------------------------
+
+rm -rf editted/
+mkdir editted/
+
+fixNodes
+doConfigPcp
+doConfigPgpool
+doConfigAdmin
+doConfigPostgres
+
+# -------------------------------------------------------------------
+
+if [ $SKIPPED -eq 0 ]; then
+    createConfForScript
+fi
+if [ $MODE = "stream" ]; then
+    createRecoveryConf
+    cp templates/basebackup-stream.sh editted/
+else
+    cp templates/basebackup-replication.sh editted/
+fi
+cp templates/failover.sh editted/
+cp templates/pool_remote_start editted/
+echo
+
+ynQuestion "Do you install pgpool really?"
+if [ $? -ne 0 ]; then
+    return
+fi
+
+# -------------------------------------------------------------------
+# [3] install RPMs
+# -------------------------------------------------------------------
+
+echo
+doInstall
+if [ $? -ne 0 ]; then exit 1; fi
+
+# -------------------------------------------------------------------
+# [4] Setup pgpool
+# -------------------------------------------------------------------
+
+# rewrite pgpool.conf
+echo
+echo -n "- rewrite pgpool.conf ... "
+cp editted/pgpool.conf $PGPOOL_CONF_DIR
+if [ $? -ne 0 ]; then
+    echo "Failed."
+    echo "    Please put pgpool.conf in the current directory to $PGPOOL_CONF_DIR manually. Continuing anyway."
+else
+    echo "OK."
+fi
+
+# rewrite pcp.conf
+echo -n "- rewrite pcp.conf ... "
+if [ "$PG_ADMIN_USER_PASSWD" = "" ]; then
+    echo "Skipped."
+else
+    MD5_PASSWD=`$PGPOOL_BIN_DIR/pg_md5 $PG_ADMIN_USER_PASSWD`
+    echo "${PG_ADMIN_USER}:${MD5_PASSWD}" >> editted/pcp.conf
+
+    cp editted/pcp.conf $PGPOOL_CONF_DIR
+    if [ $? -ne 0 ]; then
+        echo "Failed."
+        echo "    Please put pgpool.conf in the current directory to $PGPOOL_CONF_DIR manually. Continuing anyway."
+    else
+        echo "OK."
+    fi
+fi
+
+chmod 666 $PGPOOL_CONF_DIR/*.conf
+chmod 777 $PGPOOL_CONF_DIR
+
+# watchdog
+echo -n "- Setup watchdog ..."
+if [ $USE_WATCHDOG -eq 1 ]; then
+    copySbin
+    echo "OK."
+else
+    echo "Skipped."
+fi
+
+# -------------------------------------------------------------------
+# [5] Setup pgpoolAdmin
+# -------------------------------------------------------------------
+
+# pgpoolAdmin
+echo
+echo -n "* Setup pgpoolAdmin"
+
+echo -n "- rewrite pgmgt.conf.php ... "
+cp editted/pgmgt.conf.php $ADMIN_DIR/conf/
+if [ $? -ne 0 ]; then
+    echo "Failed."
+    echo "    Please put pgmgt.conf.php in the current directory to $ADMIN_DIR/conf manually. Continuing anyway."
+else
+    echo "OK."
+    chmod 666 $ADMIN_DIR/conf/pgmgt.conf.php
+fi
+
+echo "- Create log directiries ... OK."
+if [ ! -d $PID_FILE_DIR ]; then
+    mkdir $PID_FILE_DIR
+fi
+if [ ! -d $PGPOOL_LOG_DIR ]; then
+    mkdir $PGPOOL_LOG_DIR
+fi
+chownToApache $PID_FILE_DIR
+chownToApache $PGPOOL_LOG_DIR
+
+chmod 777 $PGPOOL_LOG_DIR
+chmod 777 $ADMIN_DIR/templates_c/
+
+# -------------------------------------------------------------------
+# [6] Create cluster
+# -------------------------------------------------------------------
+
+echo
+echo "* Create node 0 (localhost) 's database cluster"
+
+echo -n "- initdb ... "
+
+chown $PG_SUPER_USER $PGHOME
+su - $PG_SUPER_USER -c "$PGHOME/bin/pg_ctl -D $PGDATA stop -m immediate" > /dev/null 2>&1
+rm -rf $PGDATA
+mkdir $PGDATA
+chown $PG_SUPER_USER:$PG_SUPER_USER $PGDATA
+su - $PG_SUPER_USER -c "$PGHOME/bin/initdb -D $PGDATA $INITDB_OPTION" > /dev/null 2>&1
+
+if [ $? -ne 0 ]; then
+    echo "Failed."
+    echo "    Please initdb manually like \"$PGHOME/bin/initdb -D $PGDATA $INITDB_OPTION\"".
+
+else
+    echo "OK."
+
+    echo "- rewrite postgresql.conf ... OK."
+    cp editted/postgresql.conf $PGDATA
+
+    echo "- rewrite pg_hba.conf ... OK."
+    cp editted/pg_hba.conf $PGDATA
+
+    echo "- put scripts for failover and online recovery ... OK"
+    cp editted/config_for_script $PGPOOL_CONF_DIR
+    cp editted/basebackup*.sh $PGDATA
+    cp templates/pgpool_remote_start $PGDATA
+    cp templates/failover*.sh $PGDATA
+    chmod 755 $PGDATA/*.sh $PGDATA/pgpool_remote_start
+    chown $PG_SUPER_USER:$PG_SUPER_USER $PGDATA/*
+
+    if [ $MODE = "stream" ]; then
+        cp editted/recovery.conf $PGDATA/recovery.done
+    else
+        cp editted/pgpool_recovery_pitr $PGDATA
+        chmod 755 $PGDATA/pgpool_recovery_pitr
+    fi
+
+    echo "- create archive directory ... OK."
+    mkdir -p $ARCHIVE_DIR
+    chown $PG_SUPER_USER:$PG_SUPER_USER $ARCHIVE_DIR
+
+    doQueries
+fi
+
+# -------------------------------------------------------------------
+
+echo
+echo "----------------------------------------------------------------------"
+echo
+echo "Completed!"
+echo
+echo "See pgpoolAdmin."
+echo "    http://localhost/pgpoolAdmin/"
+echo
+if [ $USE_WATCHDOG -eq 1 ]; then
+    echo "   * Install pgpool-II to $NODE1_HOST"
+fi
+
+echo "   * Get enabled to SSH without password"
+echo "         ex.) ssh_wo_password.sh $PG_SUPER_USER $NODE0_HOST $NODE1_HOST"
+echo "   * Copy conf_for_script to node 1"
+echo "         ex.) scp $PGPOOL_CONF_DIR/config_for_script $PG_SUPER_USER@$NODE1_HOST:$PGPOOL_CONF_DIR"
+echo "   * Change owner of $PGHOME to $PG_SUPER_USER in both of nodes"
+echo "         ex.) chown $PG_SUPER_USER $PGHOME"
+echo "   * Start PostgreSQL"
+echo "         ex.) $PGHOME/bin/pg_ctl start -D $PGDATA"
+echo "   * Start pgppool"
+echo "         ex.) $PGPOOL_BIN_DIR/bin/pgpool "
+echo "                   -f $PGPOOL_CONF_DIR/pgpool.conf"
+echo "                   -F $PGPOOL_CONF_DIR/pcp.conf"
+echo "                   -nD > $PGPOOL_LOG_DIR/pgpool.log 2>&1 &"
+echo "   * Do online recovery of node 1"
+echo "         ex.) pcp_recovery_node 1 localhost 9898 $PG_ADMIN_USER $PG_ADMIN_USER_PASSWD 1"
+
+exit 0

@@ -1,0 +1,15 @@
+#! /bin/sh
+# start postmaster on the recoveried node
+
+if [ $# -ne 2 ]
+then
+    echo "pgpool_remote_start remote_host remote_datadir"
+    exit 1
+fi
+
+source /etc/pgpool-II/config_for_script
+
+dest_host=$1
+dest_dir=$2
+
+ssh $PGSUPERUSER@$dest_host -T "$pg_ctl -w -D $dest_dir start 2>/dev/null 1>/dev/null < /dev/null &"
