@@ -2872,8 +2872,15 @@ static int find_primary_node_repeatedly(void)
 		return -1;
 	}
 
+	/*
+	 * Try to find the new primary node and keep trying for
+	 * search_primary_node_timeout seconds.
+	 * search_primary_node_timeout = 0 means never timeout and keep searching
+	 * indefinitely
+	 */
 	pool_log("find_primary_node_repeatedly: waiting for finding a primary node");
-	for (sec = 0; sec < pool_config->recovery_timeout; sec++)
+	for (sec = 0; (pool_config->search_primary_node_timeout == 0 ||
+				sec < pool_config->search_primary_node_timeout); sec++)
 	{
 		node_id = find_primary_node();
 		if (node_id != -1)

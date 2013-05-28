@@ -35,8 +35,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 subdir = parser
-DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in gram.c \
-	gram.h
+DIST_COMMON = README $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
+	gram.c gram.h
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
