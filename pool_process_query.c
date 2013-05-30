@@ -2651,6 +2651,11 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 			case 'C':	/* Command Complete */
 				pool_debug("do_query: Command complete received");
 				state |= COMMAND_COMPLETE_RECEIVED;
+				/*
+				 * "Comand Complete" implies data row received status.
+				 * If there's no row returned, "command complete" comes without row data.
+				 */
+				state |= DATA_ROW_RECEIVED;
 				break;
 
 			case '1':	/* Parse complete */
