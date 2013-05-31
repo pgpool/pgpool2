@@ -56,6 +56,7 @@ int wd_startup(void);
 int wd_declare(void);
 int wd_stand_for_master(void);
 int wd_notice_server_down(void);
+int wd_update_info(void);
 int wd_authentication_failed(int sock);
 int wd_create_send_socket(char * hostname, int port);
 int wd_create_recv_socket(int port);
@@ -79,6 +80,7 @@ void wd_calc_hash(const char *str, int len, char *buf);
 int wd_packet_to_string(WdPacket pkt, char *str, int maxlen);
 
 static void * wd_thread_negotiation(void * arg);
+static int send_packet_for_all(WdPacket *packet);
 static int send_packet_4_nodes(WdPacket *packet, WD_SEND_TYPE type);
 static int hton_wd_packet(WdPacket * to, WdPacket * from);
 static int ntoh_wd_packet(WdPacket * to, WdPacket * from);
@@ -131,6 +133,16 @@ wd_notice_server_down(void)
 	return rtn;
 }
 
+int
+wd_update_info(void)
+{
+	int rtn;
+
+	/* send info request packet */
+	rtn = wd_send_packet_no(WD_INFO_REQ);
+	return rtn;
+}
+
 /* send authentication failed packet */
 int
 wd_authentication_failed(int sock)
@@ -151,21 +163,18 @@ wd_authentication_failed(int sock)
 int
 wd_send_packet_no(WD_PACKET_NO packet_no )
 {
-	int rtn;
+	int rtn = WD_OK;
 	WdPacket packet;
 
 	memset(&packet, 0, sizeof(WdPacket));
 
-	/* set add request packet */
+	/* set packet no and self information */
 	packet.packet_no = packet_no;
 	memcpy(&(packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
 
-	/* send packet to all watchdogs */
-	rtn = send_packet_4_nodes(&packet, WD_SEND_TO_MASTER );
-	if (rtn == WD_OK)
-	{
-		rtn = send_packet_4_nodes(&packet, WD_SEND_WITHOUT_MASTER);
-	}
+	/* send packet for all watchdogs */
+	rtn = send_packet_for_all(&packet);
+
 	return rtn;
 }
 
@@ -465,6 +474,7 @@ wd_recv_packet(int sock, WdPacket * recv_pack)
 				continue;
 			else
 			{
+				pool_error("wd_recv_packet: recv failed");
 				return WD_NG;
 			}
 		}
@@ -562,14 +572,15 @@ wd_thread_negotiation(void * arg)
 			}
 			break;
 		case WD_STAND_FOR_LOCK_HOLDER:
+		case WD_DECLARE_LOCK_HOLDER:
 			if (recv_packet.packet_no == WD_LOCK_HOLDER_EXIST)
 			{
 				rtn = WD_NG;
 			}
 			break;
 		case WD_DECLARE_NEW_MASTER:
-		case WD_DECLARE_LOCK_HOLDER:
 		case WD_RESIGN_LOCK_HOLDER:
+
 			if (recv_packet.packet_no != WD_READY)
 			{
 				rtn = WD_NG;
@@ -596,6 +607,26 @@ wd_thread_negotiation(void * arg)
 }
 
 static int
+send_packet_for_all(WdPacket *packet)
+{
+	int rtn = WD_OK;
+
+	WdInfo *p;
+
+	/* send packet to master watchdog */
+	if (WD_MYSELF->status != WD_MASTER)
+		rtn = send_packet_4_nodes(packet, WD_SEND_TO_MASTER );
+
+	/* send packet to other watchdogs */
+	if (rtn == WD_OK)
+	{
+		rtn = send_packet_4_nodes(packet, WD_SEND_WITHOUT_MASTER);
+	}
+
+	return rtn;
+}
+
+static int
 send_packet_4_nodes(WdPacket *packet, WD_SEND_TYPE type)
 {
 	int rtn;
@@ -612,25 +643,26 @@ send_packet_4_nodes(WdPacket *packet, WD_SEND_TYPE type)
 		return WD_NG;
 	}
 
-	if ((type == WD_SEND_TO_MASTER) && (WD_MYSELF->status == WD_MASTER))
-	{
-		return WD_OK;
-	}
-
 	/* thread init */
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
-	/* send packet to all watchdogs */
+	/* skip myself */
 	p++;
+	WD_MYSELF->is_contactable = true;
+
+	/* send packet to other watchdogs */
 	cnt = 0;
 	while (p->status != WD_END)
 	{
+		/* don't send packet to pgpool in down */
 		if (p->status == WD_DOWN)
 		{
+			p->is_contactable = false;
 			p++;
 			continue;
 		}
+
 		if (type == WD_SEND_TO_MASTER )
 		{
 			if (p->status != WD_MASTER)
@@ -647,30 +679,41 @@ send_packet_4_nodes(WdPacket *packet, WD_SEND_TYPE type)
 				continue;
 			}
 		}
+
 		sock = wd_create_send_socket(p->hostname, p->wd_port);
 		if (sock == -1)
 		{
+			pool_log("send_packet_4_nodes: packet for %s:%d is canceled", p->hostname, p->wd_port);
+			p->is_contactable = false;
 			p++;
 			continue;
 		}
+		else
+		{
+			p->is_contactable = true;
+		}
+
 		thread_arg[cnt].sock = sock;
 		thread_arg[cnt].target = p;
 		thread_arg[cnt].packet = packet;
 		rc = pthread_create(&thread[cnt], &attr, wd_thread_negotiation, (void*)&thread_arg[cnt]);
+
 		cnt ++;
 		p++;
 	}
 
 	pthread_attr_destroy(&attr);
 
+	/* no packet is sent */
 	if (cnt == 0)
 	{
 		return WD_OK;
 	}
 
-	/* init return value */
+	/* default return value */
 	if ((packet->packet_no == WD_STAND_FOR_MASTER) ||
 		(packet->packet_no == WD_STAND_FOR_LOCK_HOLDER) ||
+		(packet->packet_no == WD_DECLARE_LOCK_HOLDER) ||
 		(packet->packet_no == WD_START_RECOVERY))
 	{
 		rtn = WD_OK;
@@ -680,6 +723,7 @@ send_packet_4_nodes(WdPacket *packet, WD_SEND_TYPE type)
 		rtn = WD_NG;
 	}
 
+	/* receive the results */
 	for (i=0; i<cnt; )
 	{
 		int result;
@@ -690,8 +734,10 @@ send_packet_4_nodes(WdPacket *packet, WD_SEND_TYPE type)
 			continue;
 		}
 
+		/*  aggregate results according to the packet type */
 		if ((packet->packet_no == WD_STAND_FOR_MASTER) ||
 			(packet->packet_no == WD_STAND_FOR_LOCK_HOLDER) ||
+			(packet->packet_no == WD_DECLARE_LOCK_HOLDER) ||
 			(packet->packet_no == WD_START_RECOVERY))
 		{
 			/* if any result is NG then return NG */
@@ -700,6 +746,7 @@ send_packet_4_nodes(WdPacket *packet, WD_SEND_TYPE type)
 				rtn = WD_NG;
 			}
 		}
+
 		else
 		{
 			/* if any result is OK then return OK */
@@ -1006,11 +1053,8 @@ wd_send_node_packet(WD_PACKET_NO packet_no, int *node_id_set, int count)
 	packet.wd_body.wd_node_info.node_num = count;
 
 	/* send packet to all watchdogs */
-	rtn = send_packet_4_nodes(&packet, WD_SEND_TO_MASTER );
-	if (rtn == WD_OK)
-	{
-		rtn = send_packet_4_nodes(&packet, WD_SEND_WITHOUT_MASTER);
-	}
+	rtn = send_packet_for_all(&packet);
+
 	return rtn;
 }
 
@@ -1027,11 +1071,8 @@ wd_send_lock_packet(WD_PACKET_NO packet_no,  WD_LOCK_ID lock_id)
 	packet.wd_body.wd_lock_info.lock_id= lock_id;
 
 	/* send packet to all watchdogs */
-	rtn = send_packet_4_nodes(&packet, WD_SEND_TO_MASTER );
-	if (rtn == WD_OK)
-	{
-		rtn = send_packet_4_nodes(&packet, WD_SEND_WITHOUT_MASTER);
-	}
+	rtn = send_packet_for_all(&packet);
+
 	return rtn;
 }
 

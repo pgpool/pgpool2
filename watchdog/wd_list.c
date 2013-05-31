@@ -36,12 +36,14 @@ int wd_set_wd_info(WdInfo * info);
 WdInfo * wd_is_exist_master(void);
 WdInfo * wd_get_lock_holder(void);
 WdInfo * wd_get_interlocking(void);
+bool wd_is_interlocking_all(void);
 void wd_set_lock_holder(WdInfo *info, bool value);
 void wd_set_interlocking(WdInfo *info, bool value);
 void wd_clear_interlocking_info(void);
 int wd_am_I_oldest(void);
 int wd_set_myself(struct timeval * tv, int status);
 WdInfo * wd_is_alive_master(void);
+bool wd_is_contactable_master(void);
 
 /* add or modify watchdog information list */
 int
@@ -64,7 +66,7 @@ wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, char * delegate_ip
 
 	for ( i = 0 ; i < MAX_WATCHDOG_NUM ; i ++)
 	{
-		p = (WD_List+i);	
+		p = (WD_List+i);
 
 		if( p->status != WD_END)
 		{
@@ -148,7 +150,6 @@ wd_is_exist_master(void)
 {
 	WdInfo * p = WD_List;
 
-	p++;
 	while (p->status != WD_END)
 	{
 		/* find master pgpool in the other servers */
@@ -160,7 +161,7 @@ wd_is_exist_master(void)
 		p++;
 	}
 	/* not found */
-	return NULL;	
+	return NULL;
 }
 
 /* set or unset in_interlocking flag */
@@ -176,7 +177,7 @@ wd_set_interlocking(WdInfo *info, bool value)
 			(p->wd_port == info->wd_port))
 		{
 			p->in_interlocking = value;
-			
+
 			return;
 		}
 		p++;
@@ -222,7 +223,7 @@ wd_get_lock_holder(void)
 	}
 
 	/* not found */
-	return NULL;	
+	return NULL;
 }
 
 /* return the pgpool in interlocking found in first, NULL if not found */
@@ -231,8 +232,18 @@ wd_get_interlocking(void)
 {
 	WdInfo * p = WD_List;
 
+	/* for updating contactable flag */
+	wd_update_info();
+
 	while (p->status != WD_END)
 	{
+		/* skip if not contactable */
+		if (!p->is_contactable)
+		{
+			p++;
+			continue;
+		}
+
 		/* find pgpool in interlocking */
 		if ((p->status == WD_NORMAL || p->status == WD_MASTER) &&
 		    p->in_interlocking)
@@ -244,7 +255,38 @@ wd_get_interlocking(void)
 	}
 
 	/* not found */
-	return NULL;	
+	return NULL;
+}
+
+/* if all pgpool are in interlocking return true, otherwise false */
+bool
+wd_is_interlocking_all(void)
+{
+	WdInfo * p = WD_List;
+	bool rtn = true;
+
+	/* for updating contactable flag */
+	wd_update_info();
+
+	while (p->status != WD_END)
+	{
+		/* skip if not contactable */
+		if (!p->is_contactable)
+		{
+			p++;
+			continue;
+		}
+
+		/* find pgpool not in interlocking */
+		if ((p->status == WD_NORMAL || p->status == WD_MASTER) &&
+		    !p->in_interlocking)
+		{
+			rtn = false;
+		}
+		p++;
+	}
+
+	return rtn;
 }
 
 /* clear flags for interlocking */
@@ -300,21 +342,55 @@ wd_set_myself(struct timeval * tv, int status)
 	return WD_OK;
 }
 
+/*
+ * if master exists and it is alive actually return the master,
+ * otherwise return NULL
+ */
 WdInfo *
 wd_is_alive_master(void)
 {
 	WdInfo * master = NULL;
 
+	if (WD_MYSELF->status == WD_MASTER)
+		return WD_MYSELF;
+
 	master = wd_is_exist_master();
 	if (master != NULL)
 	{
-		if (!strcmp(pool_config->wd_lifecheck_method, MODE_HEARTBEAT) ||
-		    (!strcmp(pool_config->wd_lifecheck_method, MODE_QUERY) &&
-			 wd_ping_pgpool(master) == WD_OK))
+		if ((!strcmp(pool_config->wd_lifecheck_method, MODE_HEARTBEAT)
+		         && wd_check_heartbeat(master) == WD_OK) ||
+		    (!strcmp(pool_config->wd_lifecheck_method, MODE_QUERY)
+			     && wd_ping_pgpool(master) == WD_OK))
 		{
 			return master;
 		}
 	}
+
+	pool_debug("wd_is_alive_master: alive master not found");
+
 	return NULL;
 }
 
+/*
+ * if master exists and it is contactable return true,
+ * otherwise return false
+ */
+bool
+wd_is_contactable_master(void)
+{
+	WdInfo * master = NULL;
+
+	if (WD_MYSELF->status == WD_MASTER)
+		return true;
+
+	/* for updating contactable flag */
+	wd_update_info();
+
+	master = wd_is_alive_master();
+	if (master != NULL)
+	{
+		return master->is_contactable;
+	}
+
+	return false;
+}

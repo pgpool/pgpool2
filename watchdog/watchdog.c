@@ -74,6 +74,7 @@ wd_exit(int exit_signo)
 	exit(0);
 }
 
+/* send signal specified by sig to watchdog processes */
 void
 wd_kill_watchdog(int sig)
 {
@@ -241,6 +242,7 @@ fork_a_lifecheck(int fork_wait_time)
 	return pid;
 }
 
+/* if pid is for one of watchdog processes return 1, othewize return 0 */
 int
 wd_is_watchdog_pid(pid_t pid)
 {
@@ -262,6 +264,7 @@ wd_is_watchdog_pid(pid_t pid)
 	return 0;
 }
 
+/* restart watchdog process specified by pid */
 int
 wd_reaper_watchdog(pid_t pid, int status)
 {

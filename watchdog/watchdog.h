@@ -63,6 +63,7 @@ typedef enum {
 
 	/* normal packet */
 	WD_INVALID = 0,				/* invalid packet no */
+	WD_INFO_REQ,				/* information request */
 	WD_ADD_REQ,					/* add request into the watchdog list */
 	WD_ADD_ACCEPT,				/* accept the add request */
 	WD_ADD_REJECT,				/* reject the add request */
@@ -123,7 +124,7 @@ typedef enum {
  * watchdog list
  */
 typedef struct {
-	WD_STATUS status;						/* status */	
+	WD_STATUS status;						/* status */
 	struct timeval tv;						/* startup time value */
 	char hostname[WD_MAX_HOST_NAMELEN];		/* host name */
 	int pgpool_port;						/* pgpool port */
@@ -134,7 +135,8 @@ typedef struct {
 	struct timeval hb_send_time; 			/* send time */
 	struct timeval hb_last_recv_time; 		/* recv time */
 	bool is_lock_holder;					/* lock holder flag */
-	bool in_interlocking;					/* failover or failback is in progress */
+	bool in_interlocking;					/* interlocking is in progress */
+	bool is_contactable;					/* able to create socket and connection */
 } WdInfo;
 
 typedef struct {

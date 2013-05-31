@@ -51,15 +51,18 @@ extern WdInfo * wd_is_alive_master(void);
 
 extern WdInfo * wd_get_lock_holder(void);
 extern WdInfo * wd_get_interlocking(void);
+extern bool wd_is_interlocking_all(void);
 extern void wd_set_lock_holder(WdInfo *p, bool value);
 extern void wd_set_interlocking(WdInfo *info, bool value);
 extern void wd_clear_interlocking_info(void);
+extern bool wd_is_contactable_master(void);
 
 /* wd_packet.c */
 extern int wd_startup(void);
 extern int wd_declare(void);
 extern int wd_stand_for_master(void);
 extern int wd_notice_server_down(void);
+extern int wd_update_info(void);
 extern int wd_authentication_failed(int sock);
 extern int wd_create_send_socket(char * hostname, int port);
 extern int wd_create_recv_socket(int port);
@@ -90,6 +93,7 @@ extern int wd_get_cmd(char * buf, char * cmd);
 /* wd_lifecheck.c */
 extern int is_wd_lifecheck_ready(void);
 extern int wd_lifecheck(void);
+extern int wd_check_heartbeat(WdInfo * pgpool);
 extern int wd_ping_pgpool(WdInfo * pgpool);
 
 /* wd_hearbeat.c */

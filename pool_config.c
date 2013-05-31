@@ -3932,7 +3932,6 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			{
 				strlcpy(WD_HB_IF(slot).if_name, str, WD_MAX_IF_NAME_LEN);
 				pool_config->num_hb_if = slot + 1;
-				pool_log("hoge %d",pool_config->num_hb_if);
 			}
 
 		}

@@ -219,7 +219,7 @@ int main(int argc, char **argv)
 		{"version", no_argument, NULL, 'v'},
 		{NULL, 0, NULL, 0}
 	};
-	
+
 	myargc = argc;
 	myargv = argv;
 
@@ -574,7 +574,7 @@ int main(int argc, char **argv)
 		if (pool_is_shmem_cache())
 		{
 			size_t size;
-			
+
 			size = pool_shared_memory_cache_size();
 			if (size == 0)
 			{
@@ -1051,7 +1051,7 @@ static void write_pid_file(void)
 		close(fd);
 		pool_shmem_exit(1);
 		exit(1);
-	}	
+	}
 	if (close(fd) == -1)
 	{
 		pool_error("could not close pid file as %s. reason: %s",
@@ -1499,6 +1499,11 @@ void degenerate_backend_set(int *node_id_set, int count)
 		{
 			kill(parent, SIGUSR1);
 		}
+		else
+		{
+			pool_log("degenerate_backend_set: failover request from pid %d is canceled by other pgpool", getpid());
+			memset(Req_info->node_id, -1, sizeof(int) * MAX_NUM_BACKENDS);
+		}
 	}
 
 	pool_semaphore_unlock(REQUEST_INFO_SEM);
@@ -1530,6 +1535,12 @@ void promote_backend(int node_id)
 	{
 		kill(parent, SIGUSR1);
 	}
+	else
+	{
+		pool_log("promote_backend: promote request from pid %d is canceled by other pgpool", getpid());
+		Req_info->node_id[0] = -1;
+	}
+
 	pool_semaphore_unlock(REQUEST_INFO_SEM);
 }
 
@@ -1542,15 +1553,18 @@ void send_failback_request(int node_id)
 	Req_info->kind = NODE_UP_REQUEST;
 	Req_info->node_id[0] = node_id;
 
-    if (node_id < 0 || node_id >= MAX_NUM_BACKENDS || 
+    if (node_id < 0 || node_id >= MAX_NUM_BACKENDS ||
 		(RAW_MODE && BACKEND_INFO(node_id).backend_status != CON_DOWN && VALID_BACKEND(node_id)))
 	{
 		pool_error("send_failback_request: node %d is alive.", node_id);
+		Req_info->node_id[0] = -1;
 		return;
 	}
 
 	if (pool_config->use_watchdog && WD_OK != wd_send_failback_request(node_id))
 	{
+		pool_log("send_failback_request: failback request from pid %d is canceled by other pgpool", getpid());
+		Req_info->node_id[0] = -1;
 		return;
 	}
 	kill(parent, SIGUSR1);
@@ -1764,7 +1778,7 @@ static void failover(void)
 			switching = 0;
 			Req_info->switching = false;
 
-			/* end of command inter-lock */	
+			/* end of command inter-lock */
 			if (pool_config->use_watchdog)
 				wd_leave_interlock();
 
@@ -1808,7 +1822,7 @@ static void failover(void)
 			switching = 0;
 			Req_info->switching = false;
 
-			/* end of command inter-lock */	
+			/* end of command inter-lock */
 			if (pool_config->use_watchdog)
 				wd_leave_interlock();
 
@@ -1844,7 +1858,7 @@ static void failover(void)
 			switching = 0;
 			Req_info->switching = false;
 
-			/* end of command inter-lock */	
+			/* end of command inter-lock */
 			if (pool_config->use_watchdog)
 				wd_leave_interlock();
 
@@ -1918,7 +1932,7 @@ static void failover(void)
 	if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP)	&&
 		Req_info->kind == NODE_UP_REQUEST)
 	{
-		pool_log("Do not restart children because we are failbacking node id %d host%s port:%d and we are in streaming replication mode", node_id, 
+		pool_log("Do not restart children because we are failbacking node id %d host%s port:%d and we are in streaming replication mode", node_id,
 				 BACKEND_INFO(node_id).backend_hostname,
 				 BACKEND_INFO(node_id).backend_port);
 
@@ -1979,7 +1993,7 @@ static void failover(void)
 	else
 		new_primary =  find_primary_node_repeatedly();
 
-	/* 
+	/*
 	 * If follow_master_command is provided and in master/slave
 	 * streaming replication mode, we start degenerating all backends
 	 * as they are not replicated anymore.
@@ -2047,7 +2061,7 @@ static void failover(void)
 			wd_unlock(WD_FOLLOW_MASTER_COMMAND_LOCK);
 	}
 
-	/* end of command inter-lock */	
+	/* end of command inter-lock */
 	if (pool_config->use_watchdog)
 		wd_end_interlock();
 
@@ -2201,7 +2215,7 @@ static int health_check(void)
 			bkinfo->backend_status == CON_DOWN)
 			continue;
 
-		slot = make_persistent_db_connection(bkinfo->backend_hostname, 
+		slot = make_persistent_db_connection(bkinfo->backend_hostname,
 											 bkinfo->backend_port,
 											 dbname,
 											 pool_config->health_check_user,
@@ -2359,7 +2373,7 @@ static void reaper(void)
 			/* Child terminated by segmentation fault. Report it */
 			pool_error("Child process %d was terminated by segmentation fault", pid);
 		}
-			
+
 		/* if exiting child process was PCP handler */
 		if (pid == pcp_pid)
 		{
@@ -2773,7 +2787,7 @@ static int find_primary_node(void)
 {
 	BackendInfo *bkinfo;
 	POOL_CONNECTION_POOL_SLOT *s;
-	POOL_CONNECTION *con; 
+	POOL_CONNECTION *con;
 	POOL_STATUS status;
 	POOL_SELECT_RESULT *res;
 	bool is_standby;
@@ -2801,7 +2815,7 @@ static int find_primary_node(void)
 		is_standby = false;
 
 		bkinfo = pool_get_node_info(i);
-		s = make_persistent_db_connection(bkinfo->backend_hostname, 
+		s = make_persistent_db_connection(bkinfo->backend_hostname,
 										  bkinfo->backend_port,
 										  "postgres",
 										  pool_config->sr_check_user,
@@ -2829,7 +2843,7 @@ static int find_primary_node(void)
 		if (res->data[0] && !strcmp(res->data[0], "t"))
 		{
 			is_standby = true;
-		}   
+		}
 		free_select_result(res);
 		discard_persistent_db_connection(s);
 

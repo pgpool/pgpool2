@@ -58,6 +58,7 @@ static int hton_wd_hb_packet(WdHbPacket * to, WdHbPacket * from);
 static int ntoh_wd_hb_packet(WdHbPacket * to, WdHbPacket * from);
 static int packet_to_string_hb(WdHbPacket pkt, char *str, int maxlen);
 
+/* create socket for sending heartbeat */
 int
 wd_create_hb_send_socket(WdHbIf hb_if)
 {
@@ -82,7 +83,7 @@ wd_create_hb_send_socket(WdHbIf hb_if)
 		close(sock);
 		return -1;
 	}
-
+/*
 #if defined(SO_BINDTODEVICE)
 	{
 		struct ifreq i;
@@ -98,6 +99,7 @@ wd_create_hb_send_socket(WdHbIf hb_if)
 		pool_log("wd_create_hb_send_socket: bind send socket to device: %s", i.ifr_name);
 	}
 #endif
+*/
 #if defined(SO_REUSEPORT)
 	{
 		int one = 1;
@@ -122,6 +124,7 @@ wd_create_hb_send_socket(WdHbIf hb_if)
 	return sock;
 }
 
+/* create socket for receiving heartbeat */
 int
 wd_create_hb_recv_socket(WdHbIf hb_if)
 {
@@ -152,7 +155,7 @@ wd_create_hb_recv_socket(WdHbIf hb_if)
 		close(sock);
 		return -1;
 	}
-
+/*
 #if defined(SO_BINDTODEVICE)
 	{
 		struct ifreq i;
@@ -168,6 +171,7 @@ wd_create_hb_recv_socket(WdHbIf hb_if)
 		pool_log("wd_create_hb_recv_socket: bind receive socket to device: %s", i.ifr_name);
 	}
 #endif
+*/
 
 #if defined(SO_REUSEPORT)
 	{
@@ -216,6 +220,7 @@ wd_create_hb_recv_socket(WdHbIf hb_if)
 	return sock;
 }
 
+/* send heartbeat signal */
 int
 wd_hb_send(int sock, WdHbPacket * pkt, int len, const char * host)
 {
@@ -255,6 +260,7 @@ wd_hb_send(int sock, WdHbPacket * pkt, int len, const char * host)
 	return WD_OK;
 }
 
+/* receive heartbeat signal */
 int
 wd_hb_recv(int sock, WdHbPacket * pkt)
 {
@@ -287,6 +293,7 @@ wd_hb_recv(int sock, WdHbPacket * pkt)
 	return WD_OK;
 }
 
+/* fork heartbeat receiver child */
 pid_t wd_hb_receiver(int fork_wait_time, WdHbIf hb_if)
 {
 	int sock;
@@ -340,6 +347,7 @@ pid_t wd_hb_receiver(int fork_wait_time, WdHbIf hb_if)
 
 	for(;;)
 	{
+		/* receive heartbeat signal */
 		if (wd_hb_recv(sock, &pkt) == WD_OK)
 		{
 			/* authentication */
@@ -385,6 +393,7 @@ pid_t wd_hb_receiver(int fork_wait_time, WdHbIf hb_if)
 	return pid;
 }
 
+/* fork heartbeat sender child */
 pid_t wd_hb_sender(int fork_wait_time, WdHbIf hb_if)
 {
 	int sock;
@@ -434,11 +443,12 @@ pid_t wd_hb_sender(int fork_wait_time, WdHbIf hb_if)
 
 	for(;;)
 	{
+		/* contents of packet */
 		gettimeofday(&pkt.send_time, NULL);
 		strlcpy(pkt.from, pool_config->wd_hostname, sizeof(pkt.from));
-
 		pkt.status = p->status;
 
+		/* authentication key */
 		if (strlen(pool_config->wd_authkey))
 		{
 			/* calculate hash from packet */
@@ -446,6 +456,7 @@ pid_t wd_hb_sender(int fork_wait_time, WdHbIf hb_if)
 			wd_calc_hash(pack_str, pack_str_len, pkt.hash);
 		}
 
+		/* send heartbeat signal */
 		wd_hb_send(sock, &pkt, sizeof(pkt), hb_if.addr);
 		pool_debug("wd_hb_sender: send heartbeat signal to %s", hb_if.addr);
 		sleep(pool_config->wd_heartbeat_keepalive);

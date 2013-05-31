@@ -147,7 +147,7 @@ wd_send_response(int sock, WdPacket * recv_pack)
 		return rtn;
 	}
 	memset(&send_packet, 0, sizeof(WdPacket));
-	p = &(recv_pack->wd_body.wd_info);	
+	p = &(recv_pack->wd_body.wd_info);
 
 	/* authentication */
 	if (strlen(pool_config->wd_authkey))
@@ -167,15 +167,28 @@ wd_send_response(int sock, WdPacket * recv_pack)
 	/* set response packet no */
 	switch (recv_pack->packet_no)
 	{
+		/* information request */
+		case WD_INFO_REQ:
+			p = &(recv_pack->wd_body.wd_info);
+			wd_set_wd_list(p->hostname, p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
+			send_packet.packet_no = WD_READY;
+			memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
+			break;
+
 		/* add request into the watchdog list */
 		case WD_ADD_REQ:
-			p = &(recv_pack->wd_body.wd_info);	
-			if (wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status) > 0)
+			p = &(recv_pack->wd_body.wd_info);
+			if (wd_set_wd_list(p->hostname, p->pgpool_port, p->wd_port,
+			                   p->delegate_ip, &(p->tv), p->status) > 0)
 			{
+				pool_log("wd_send_response: receive add request from %s:%d and accept it",
+				         p->hostname, p->pgpool_port);
 				send_packet.packet_no = WD_ADD_ACCEPT;
 			}
 			else
 			{
+				pool_log("wd_send_response: receive add request from %s:%d and reject it",
+				         p->hostname, p->pgpool_port);
 				send_packet.packet_no = WD_ADD_REJECT;
 			}
 			memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
@@ -183,14 +196,17 @@ wd_send_response(int sock, WdPacket * recv_pack)
 
 		/* announce candidacy to be the new master */
 		case WD_STAND_FOR_MASTER:
-			p = &(recv_pack->wd_body.wd_info);	
-			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
+			p = &(recv_pack->wd_body.wd_info);
+			wd_set_wd_list(p->hostname, p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
 			/* check exist master */
 			if ((q = wd_is_alive_master()) != NULL)
 			{
 				/* vote against the candidate */
 				send_packet.packet_no = WD_MASTER_EXIST;
 				memcpy(&(send_packet.wd_body.wd_info), q, sizeof(WdInfo));
+
+				pool_log("wd_send_response: WD_STAND_FOR_MASTER received, and voting against %s:%d",
+				         p->hostname, p->pgpool_port);
 			}
 			else
 			{
@@ -203,17 +219,20 @@ wd_send_response(int sock, WdPacket * recv_pack)
 				/* vote for the candidate */
 				send_packet.packet_no = WD_VOTE_YOU;
 				memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
+
+				pool_log("wd_send_response: WD_STAND_FOR_MASTER received, and voting for %s:%d",
+				         p->hostname, p->pgpool_port);
 			}
 			break;
 
 		/* announce assumption to be the new master */
 		case WD_DECLARE_NEW_MASTER:
-			p = &(recv_pack->wd_body.wd_info);	
-			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
+			p = &(recv_pack->wd_body.wd_info);
+			wd_set_wd_list(p->hostname, p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
 			if (WD_MYSELF->status == WD_MASTER)
 			{
 				/* resign master server */
-				pool_log("wd_declare_new_master: ifconfig down to resign master server");
+				pool_log("wd_send_response: WD_DECLARE_NEW_MASTER received and resign master server");
 				wd_IP_down();
 				wd_set_myself(NULL, WD_NORMAL);
 			}
@@ -223,53 +242,79 @@ wd_send_response(int sock, WdPacket * recv_pack)
 
 		/* announce to assume lock holder */
 		case WD_STAND_FOR_LOCK_HOLDER:
-			p = &(recv_pack->wd_body.wd_info);	
-			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
-			/* only master handles lock holder privilege */
+			p = &(recv_pack->wd_body.wd_info);
+			wd_set_wd_list(p->hostname, p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
+			/* only master handles lock holder assignment */
 			if (WD_MYSELF->status == WD_MASTER)
 			{
-				/* if there are no lock holder yet */
+				/* if lock holder exists yet */
 				if (wd_get_lock_holder() != NULL)
 				{
+					pool_log("wd_send_response: WD_STAND_FOR_LOCK_HOLDER received but lock holder exists already");
 					send_packet.packet_no = WD_LOCK_HOLDER_EXIST;
 				}
+				else
+				{
+					pool_log("wd_send_response: WD_STAND_FOR_LOCK_HOLDER received it");
+					wd_set_lock_holder(p, true);
+					send_packet.packet_no = WD_READY;
+				}
+			}
+			else
+			{
+				send_packet.packet_no = WD_READY;
 			}
 			memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
 			break;
 
+		/* announce to assume lock holder */
 		case WD_DECLARE_LOCK_HOLDER:
-			p = &(recv_pack->wd_body.wd_info);	
-			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
-			wd_set_lock_holder(p, true);
-			send_packet.packet_no = WD_READY;
+			p = &(recv_pack->wd_body.wd_info);
+			wd_set_wd_list(p->hostname, p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
+			if (WD_MYSELF->is_lock_holder)
+			{
+				pool_log("wd_send_response: WD_DECLARE_LOCK_HOLDER received but lock holder exists already");
+				send_packet.packet_no = WD_LOCK_HOLDER_EXIST;
+			}
+			else
+			{
+				wd_set_lock_holder(p, true);
+				send_packet.packet_no = WD_READY;
+			}
 			memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
 			break;
 
 		/* announce to resign lock holder */
 		case WD_RESIGN_LOCK_HOLDER:
-			p = &(recv_pack->wd_body.wd_info);	
-			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
+			p = &(recv_pack->wd_body.wd_info);
+			wd_set_wd_list(p->hostname, p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
 			wd_set_lock_holder(p, false);
 			send_packet.packet_no = WD_READY;
 			memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
 			break;
 
+		/* announce to start interlocking */
 		case WD_START_INTERLOCK:
-			p = &(recv_pack->wd_body.wd_info);	
-			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
+			p = &(recv_pack->wd_body.wd_info);
+			wd_set_wd_list(p->hostname, p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
 			wd_set_interlocking(p, true);
+			send_packet.packet_no = WD_READY;
+			memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
 			break;
 
+		/* announce to end interlocking */
 		case WD_END_INTERLOCK:
-			p = &(recv_pack->wd_body.wd_info);	
-			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
+			p = &(recv_pack->wd_body.wd_info);
+			wd_set_wd_list(p->hostname, p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
 			wd_set_interlocking(p, false);
+			send_packet.packet_no = WD_READY;
+			memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
 			break;
 
 		/* announce that server is down */
 		case WD_SERVER_DOWN:
-			p = &(recv_pack->wd_body.wd_info);	
-			wd_set_wd_list(p->hostname,p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), WD_DOWN);
+			p = &(recv_pack->wd_body.wd_info);
+			wd_set_wd_list(p->hostname, p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), WD_DOWN);
 			send_packet.packet_no = WD_READY;
 			memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
 			if (wd_am_I_oldest() == WD_OK && WD_MYSELF->status != WD_MASTER)
@@ -294,32 +339,65 @@ wd_send_response(int sock, WdPacket * recv_pack)
 				}
 			}
 			break;
+
+		/* announce end online recovery */
 		case WD_END_RECOVERY:
 			send_packet.packet_no = WD_NODE_READY;
 			*InRecovery = RECOVERY_INIT;
 			kill(wd_ppid, SIGUSR2);
 			break;
+
+		/* announce failback request */
 		case WD_FAILBACK_REQUEST:
-			node = &(recv_pack->wd_body.wd_node_info);	
-			wd_set_node_mask(WD_FAILBACK_REQUEST,node->node_id_set,node->node_num);
-			is_node_packet = true;
-			send_packet.packet_no = WD_NODE_READY;
-			break;
-		case WD_DEGENERATE_BACKEND:
-			node = &(recv_pack->wd_body.wd_node_info);	
-			wd_set_node_mask(WD_DEGENERATE_BACKEND,node->node_id_set, node->node_num);
-			is_node_packet = true;
-			send_packet.packet_no = WD_NODE_READY;
-			break;
-		case WD_PROMOTE_BACKEND:
-			node = &(recv_pack->wd_body.wd_node_info);	
-			wd_set_node_mask(WD_PROMOTE_BACKEND,node->node_id_set, node->node_num);
-			is_node_packet = true;
-			send_packet.packet_no = WD_NODE_READY;
+			if (Req_info->switching)
+			{
+				pool_log("wd_send_response: failback request from other pgpool is canceled because it's while switching");
+				send_packet.packet_no = WD_NODE_FAILED;
+			}
+			else
+			{
+				node = &(recv_pack->wd_body.wd_node_info);
+				wd_set_node_mask(WD_FAILBACK_REQUEST,node->node_id_set,node->node_num);
+				is_node_packet = true;
+				send_packet.packet_no = WD_NODE_READY;
+			}
 			break;
 
+		/* announce degenerate backend */
+		case WD_DEGENERATE_BACKEND:
+			if (Req_info->switching)
+			{
+				pool_log("wd_send_response: failover request from other pgpool is canceled because it's while switching");
+				send_packet.packet_no = WD_NODE_FAILED;
+			}
+			else
+			{
+				node = &(recv_pack->wd_body.wd_node_info);
+				wd_set_node_mask(WD_DEGENERATE_BACKEND,node->node_id_set, node->node_num);
+				is_node_packet = true;
+				send_packet.packet_no = WD_NODE_READY;
+			}
+			break;
+
+		/* announce promote backend */
+		case WD_PROMOTE_BACKEND:
+			if (Req_info->switching)
+			{
+				pool_log("wd_send_response: promote request from other pgpool is canceled because it's while switching");
+				send_packet.packet_no = WD_NODE_FAILED;
+			}
+			else
+			{
+				node = &(recv_pack->wd_body.wd_node_info);
+				wd_set_node_mask(WD_PROMOTE_BACKEND,node->node_id_set, node->node_num);
+				is_node_packet = true;
+				send_packet.packet_no = WD_NODE_READY;
+			}
+			break;
+
+		/* announce to unlock command */
 		case WD_UNLOCK_REQUEST:
-			lock = &(recv_pack->wd_body.wd_lock_info);	
+			lock = &(recv_pack->wd_body.wd_lock_info);
 			wd_set_lock(lock->lock_id, false);
 			send_packet.packet_no = WD_LOCK_READY;
 			break;
@@ -343,7 +421,7 @@ wd_send_response(int sock, WdPacket * recv_pack)
 	return rtn;
 }
 
-/* send node request signal */
+/* send node request signal for other pgpool*/
 static void
 wd_node_request_signal(WD_PACKET_NO packet_no, WdNodeInfo *node)
 {

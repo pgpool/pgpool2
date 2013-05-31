@@ -47,6 +47,7 @@ static void wd_update_lock_holder(void);
 static int wd_assume_lock_holder(void);
 static void wd_resign_lock_holder(void);
 static void wd_lock_all(void);
+static void sleep_in_waiting(void);
 
 /* initialize interlock */
 int
@@ -72,14 +73,32 @@ void wd_start_interlock(void)
 {
 	pool_log("wd_start_interlock: start interlocking");
 
+	/* lock all the resource */
+	wd_lock_all();
+
 	wd_set_interlocking(WD_MYSELF, true);
 	wd_send_packet_no(WD_START_INTERLOCK);
 
 	/* try to assume lock holder */
 	wd_assume_lock_holder();
 
-	/* lock all the resource */
-	wd_lock_all();
+	/* wait for all pgpools starting interlock */
+	while (wd_is_locked(WD_FAILOVER_START_LOCK))
+	{
+		if (WD_MYSELF->status == WD_DOWN)
+		{
+			wd_set_lock_holder(WD_MYSELF, false);
+			break;
+		}
+
+		if (wd_am_I_lock_holder() && wd_is_interlocking_all())
+		{
+			wd_unlock(WD_FAILOVER_START_LOCK);
+		}
+
+		sleep_in_waiting();
+	}
+
 }
 
 /* notify to end interlocking */
@@ -93,13 +112,18 @@ void wd_end_interlock(void)
 	/* wait for all pgpools ending interlock */
 	while (wd_is_locked(WD_FAILOVER_END_LOCK))
 	{
-		struct timeval t = {1, 0};
-		select(0, NULL, NULL, NULL, &t);
+		if (WD_MYSELF->status == WD_DOWN)
+		{
+			wd_set_lock_holder(WD_MYSELF, false);
+			break;
+		}
 
 		if (wd_am_I_lock_holder() && !wd_get_interlocking())
 		{
 			wd_unlock(WD_FAILOVER_END_LOCK);
 		}
+
+		sleep_in_waiting();
 	}
 
 	wd_clear_interlocking_info();
@@ -128,11 +152,16 @@ void wd_wait_for_lock(WD_LOCK_ID lock_id)
 {
 	while (wd_is_locked(lock_id))
 	{
-		struct timeval t = {1, 0};
-		select(0, NULL, NULL, NULL, &t);
+		if (WD_MYSELF->status == WD_DOWN)
+		{
+			wd_set_lock_holder(WD_MYSELF, false);
+			break;
+		}
 
 		if (wd_am_I_lock_holder())
 			break;
+
+		sleep_in_waiting();
 	}
 }
 
@@ -147,13 +176,30 @@ wd_assume_lock_holder(void)
 
 	wd_set_lock_holder(WD_MYSELF, false);
 
-	/* (master and lock holder) or (succeeded to become lock holder) */
+	if (WD_MYSELF->status == WD_DOWN)
+		return WD_NG;
+
+	/*
+	 * confirm contatable master exists,
+	 * otherwise WD_STAND_FOR_LOCK_HOLDER always returns WD_OK,
+	 * eventually multiple pgpools become lock_holder
+	 */
+	while (!wd_is_contactable_master())
+	{
+		if (WD_MYSELF->status == WD_DOWN)
+			break;
+	}
+
+	/* I'm master and not lock holder, or I succeeded to become lock holder */
 	if ((WD_MYSELF->status == WD_MASTER && wd_get_lock_holder() == NULL) ||
 	    (wd_send_packet_no(WD_STAND_FOR_LOCK_HOLDER) == WD_OK))
 	{
-		wd_set_lock_holder(WD_MYSELF, true);
-		wd_send_packet_no(WD_DECLARE_LOCK_HOLDER);
-		rtn = WD_OK;
+		if (wd_send_packet_no(WD_DECLARE_LOCK_HOLDER) == WD_OK)
+		{
+			wd_set_lock_holder(WD_MYSELF, true);
+			pool_log("wd_assume_lock_holder: become a new lock holder");
+			rtn = WD_OK;
+		}
 	}
 
 	return rtn;
@@ -167,8 +213,13 @@ static void
 wd_update_lock_holder(void)
 {
 	/* assume lock holder if not exist */
-	if (wd_get_lock_holder() == NULL)
+	while (wd_get_lock_holder() == NULL)
+	{
+		if (WD_MYSELF->status == WD_DOWN)
+			break;
+
 		wd_assume_lock_holder();
+	}
 }
 
 /* resign lock holder */
@@ -214,4 +265,11 @@ wd_unlock(WD_LOCK_ID lock_id)
 	pool_debug("wd_unlock: send unlock request: %d", lock_id);
 
 	return rtn;
+}
+
+static void
+sleep_in_waiting(void)
+{
+	struct timeval t = {0, 100000};
+	select(0, NULL, NULL, NULL, &t);
 }

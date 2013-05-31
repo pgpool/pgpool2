@@ -110,6 +110,13 @@ wd_lifecheck(void)
 {
 	struct timeval tv;
 
+	/* I'm in down.... */
+	if (WD_MYSELF->status == WD_DOWN)
+	{
+		pool_error("wd_lifecheck: watchdog status is DOWN. You need to restart pgpool");
+		return WD_NG;
+	}
+
 	/* set startup time */
 	gettimeofday(&tv, NULL);
 
@@ -119,13 +126,14 @@ wd_lifecheck(void)
 	{
 		pool_error("wd_lifecheck: failed to connect to any trusted servers");
 
-		/* This server connection may be downed */
 		if (WD_MYSELF->status == WD_MASTER)
 		{
 			wd_IP_down();
 		}
+
 		wd_set_myself(&tv, WD_DOWN);
 		wd_notice_server_down();
+
 		return WD_NG;
 	}
 
@@ -135,20 +143,14 @@ wd_lifecheck(void)
 		return WD_OK;
 	}
 
-	/* check pgpool status */
+	/* check and update pgpool status */
 	check_pgpool_status();
-
-	/* I'm in down.... */
-	if (WD_MYSELF->status == WD_DOWN)
-	{
-		pool_error("wd_lifecheck: watchdog status is DOWN. You need to restart this for recovery.");
-	}
 
 	return WD_OK;
 }
 
 /*
- * check pgpool status and modify WDList
+ * check and update pgpool status
  */
 static void
 check_pgpool_status()
@@ -170,7 +172,6 @@ check_pgpool_status_by_hb(void)
 {
 	int cnt;
 	WdInfo * p = WD_List;
-	int interval;
 	struct timeval tv;
 
 	gettimeofday(&tv, NULL);
@@ -181,8 +182,10 @@ check_pgpool_status_by_hb(void)
 		pool_debug("check_pgpool_status_by_hb: checking pgpool %d (%s:%d)",
 		           cnt, p->hostname, p->pgpool_port);
 
+		/* about myself */
 		if (p == WD_MYSELF)
 		{
+			/* parent is dead so it's orphan.... */
 			if (is_parent_alive() == WD_NG && WD_MYSELF->status != WD_DOWN)
 			{
 				pool_debug("check_pgpool_status_by_hb: NG; the main pgpool process does't exist.");
@@ -191,27 +194,28 @@ check_pgpool_status_by_hb(void)
 				wd_set_myself(&tv, WD_DOWN);
 				wd_notice_server_down();
 			}
+			/* otherwise, the parent would take care of children. */
 			else
 			{
 				pool_debug("check_pgpool_status_by_hb: OK; status %d", p->status);
 			}
 		}
+
+		/*  about other pgpools, check the latest heartbeat. */
 		else
 		{
-			interval = WD_TIME_DIFF_SEC(tv, p->hb_last_recv_time);
-
-			if (interval > pool_config->wd_heartbeat_deadtime)
+			if (wd_check_heartbeat(p) == WD_NG)
 			{
-				pool_debug("check_pgpool_status_by_hb: the latest heartbeat received %d seconds ago", interval);
 				pool_debug("check_pgpool_status_by_hb: NG; status %d", p->status);
 
 				pool_log("check_pgpool_status_by_hb: lifecheck failed. pgpool %d (%s:%d) seems not to be working",
 		                 cnt, p->hostname, p->pgpool_port);
-				pgpool_down(p);
+
+				if (p->status != WD_DOWN)
+					pgpool_down(p);
 			}
 			else
 			{
-				pool_debug("check_pgpool_status_by_hb: the latest heartbeat received %d secconds ago", interval);
 				pool_debug("check_pgpool_status_by_hb: OK; status %d", p->status);
 			}
 		}
@@ -244,7 +248,7 @@ check_pgpool_status_by_query(void)
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
-	/* send packet to all watchdogs */
+	/* send queries to all pgpools using threads */
 	cnt = 0;
 	while (p->status != WD_END)
 	{
@@ -260,7 +264,7 @@ check_pgpool_status_by_query(void)
 	}
 	pthread_attr_destroy(&attr);
 
-	/* check results */
+	/* check results of queries */
 	p = WD_List;
 	for (i = 0; i < cnt; )
 	{
@@ -291,21 +295,24 @@ check_pgpool_status_by_query(void)
 			{
 				p->life --;
 			}
+
+			/* pgpool goes down */
 			if (p->life <= 0)
 			{
 				pool_log("check_pgpool_status_by_query: lifecheck failed %d times. pgpool %d (%s:%d) seems not to be working",
 				         pool_config->wd_life_point, i, p->hostname, p->pgpool_port);
 
+				/* It's me! */
 				if ((i == 0) &&
 					(WD_MYSELF->status != WD_DOWN))
 				{
 					wd_set_myself(&tv, WD_DOWN);
 					wd_notice_server_down();
 				}
-				else
-				{
+
+				/* It's other pgpool */
+				else if (p->status != WD_DOWN)
 					pgpool_down(p);
-				}
 			}
 		}
 		i++;
@@ -326,7 +333,7 @@ thread_ping_pgpool(void * arg)
 
 	thread_arg = (WdPgpoolThreadArg *)arg;
 	conn = thread_arg->conn;
-	rtn = (uintptr_t)ping_pgpool(conn);	
+	rtn = (uintptr_t)ping_pgpool(conn);
 
 	pthread_exit((void *)rtn);
 }
@@ -375,15 +382,21 @@ create_conn(char * hostname, int port)
 static int
 pgpool_down(WdInfo * pool)
 {
-	int rtn = WD_DOWN;
+	int rtn = WD_OK;
+	WD_STATUS prev_status;
 
-	/* the active pgpool goes down */
-	if ((WD_MYSELF->status == WD_NORMAL) &&
-		(pool->status == WD_MASTER))
+	pool_log("pgpool_down: %s:%d is going down",
+	         pool->hostname, pool->pgpool_port);
+
+	prev_status = pool->status;
+	pool->status = WD_DOWN;
+
+	/* the active pgpool goes down and I'm sandby pgpool */
+	if (prev_status == WD_MASTER && WD_MYSELF->status == WD_NORMAL)
 	{
-		pool->status = WD_DOWN;
 		if (wd_am_I_oldest() == WD_OK)
 		{
+			pool_log("pgpool_down: I'm oldest so standing for master");
 			/* stand for master */
 			rtn = wd_stand_for_master();
 			if (rtn == WD_OK)
@@ -391,10 +404,36 @@ pgpool_down(WdInfo * pool)
 				/* win */
 				wd_escalation();
 			}
+			else
+			{
+				/* rejected by others */
+				pool->status = prev_status;
+			}
 		}
 	}
-	pool->status = WD_DOWN;
+
 	return rtn;
+}
+
+/*
+ * Check if pgpool is alive using heartbeat signal.
+ */
+int
+wd_check_heartbeat(WdInfo * pgpool)
+{
+	int interval;
+	struct timeval tv;
+
+	gettimeofday(&tv, NULL);
+
+	interval = WD_TIME_DIFF_SEC(tv, pgpool->hb_last_recv_time);
+	pool_debug("wd_check_heartbeat: the latest heartbeat from %s:%d received %d seconds ago",
+	           pgpool->hostname, pgpool->pgpool_port, interval);
+
+	if (interval > pool_config->wd_heartbeat_deadtime)
+		return WD_NG;
+	else
+		return WD_OK;
 }
 
 /*
@@ -412,6 +451,7 @@ wd_ping_pgpool(WdInfo * pgpool)
 	return rtn;
 }
 
+/* inner function for issueing lifecheck query */
 static int
 ping_pgpool(PGconn * conn)
 {
