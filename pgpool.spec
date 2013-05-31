@@ -1,41 +1,46 @@
-Summary:	Pgpool is a connection pooling/replication server for PostgreSQL
-Name:		pgpool-II
-Version:	2.2.5
-Release:	3%{?dist}
-License:	BSD
-Group:		Applications/Databases
-URL:		http://pgpool.projects.PostgreSQL.org
-Source0:	http://pgfoundry.org/frs/download.php/2423/%{name}-%{version}.tar.gz
+Summary:        Pgpool is a connection pooling/replication server for PostgreSQL
+Name:           pgpool-II
+Version:        3.3.0
+Release:        1%{?dist}
+License:        BSD
+Group:          Applications/Databases
+Vendor:         Pgpool Global Development Group
+URL:            http://www.pgppol.net/
+Source0:        %{name}-%{version}.tar.gz
 Source1:        pgpool.init
 Source2:        pgpool.sysconfig
-Patch1:		pgpool.conf.sample.patch
-BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires:	postgresql-devel pam-devel
+Source3:        http://www.pgpool.net/pgpool-web/contrib_docs/watchdog_master_slave/scripts/failover.sh
+Source4:        http://www.pgpool.net/pgpool-web/contrib_docs/watchdog_master_slave/scripts/recovery_1st_stage
+Source5:        http://www.pgpool.net/pgpool-web/contrib_docs/watchdog_master_slave/scripts/pgpool_remote_start
+Patch1:         pgpool.conf.sample.patch
+BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+BuildRequires:  postgresql92-devel pam-devel
+Obsoletes:      postgresql-pgpool
 
-Obsoletes:	postgresql-pgpool
+%define pghome /usr/pgsql-9.2
 
 %description
-pgpool-II is a inherited project of pgpool (to classify from 
-pgpool-II, it is sometimes called as pgpool-I). For those of 
-you not familiar with pgpool-I, it is a multi-functional 
-middle ware for PostgreSQL that features connection pooling, 
-replication and load balancing functions. pgpool-I allows a 
-user to connect at most two PostgreSQL servers for higher 
-availability or for higher search performance compared to a 
+pgpool-II is a inherited project of pgpool (to classify from
+pgpool-II, it is sometimes called as pgpool-I). For those of
+you not familiar with pgpool-I, it is a multi-functional
+middle ware for PostgreSQL that features connection pooling,
+replication and load balancing functions. pgpool-I allows a
+user to connect at most two PostgreSQL servers for higher
+availability or for higher search performance compared to a
 single PostgreSQL server.
 
-pgpool-II, on the other hand, allows multiple PostgreSQL 
-servers (DB nodes) to be connected, which enables queries 
-to be executed simultaneously on all servers. In other words, 
-it enables "parallel query" processing. Also, pgpool-II can 
-be started as pgpool-I by changing configuration parameters. 
-pgpool-II that is executed in pgpool-I mode enables multiple 
-DB nodes to be connected, which was not possible in pgpool-I. 
+pgpool-II, on the other hand, allows multiple PostgreSQL
+servers (DB nodes) to be connected, which enables queries
+to be executed simultaneously on all servers. In other words,
+it enables "parallel query" processing. Also, pgpool-II can
+be started as pgpool-I by changing configuration parameters.
+pgpool-II that is executed in pgpool-I mode enables multiple
+DB nodes to be connected, which was not possible in pgpool-I.
 
 %package devel
-Summary:	The  development files for pgpool-II
-Group:		Development/Libraries
-Requires:	%{name} = %{version}
+Summary:     The development files for pgpool-II
+Group:       Development/Libraries
+Requires:    %{name} = %{version}
 
 %description devel
 Development headers and libraries for pgpool-II.
@@ -45,7 +50,10 @@ Development headers and libraries for pgpool-II.
 %patch1 -p0
 
 %build
-%configure --with-pgsql-includedir=%{_includedir}/pgsql --with-pgsql-lib=%{_libdir}/pgsql --disable-static --with-pam --disable-rpath --sysconfdir=%{_sysconfdir}/%{name}/
+%configure --with-pgsql-includedir=%{pghome}/include/ \
+           --with-pgsql-lib=%{pghome}/lib \
+           --disable-static --with-pam --disable-rpath \
+           --sysconfdir=%{_sysconfdir}/%{name}/
 
 make %{?_smp_flags}
 
@@ -62,20 +70,29 @@ install -m 755 %{SOURCE1} %{buildroot}%{_initrddir}/pgpool
 install -d %{buildroot}%{_sysconfdir}/sysconfig
 install -m 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sysconfig/pgpool
 
+# install to PostgreSQL
+export PATH=$PATH:%{pghome}/bin
+cd sql/pgpool-recovery/
+make %{?_smp_flags} DESTDIR=%{buildroot} install
+cd ../../
+cd sql/pgpool-regclass/
+make %{?_smp_flags} DESTDIR=%{buildroot} install
+cd ../../
+
 # nuke libtool archive and static lib
 rm -f %{buildroot}%{_libdir}/libpcp.{a,la}
 
 %clean
 rm -rf %{buildroot}
 
-%post 
+%post
 /sbin/ldconfig
 chkconfig --add pgpool
 
 %preun
 if [ $1 = 0 ] ; then
-	/sbin/service pgpool condstop >/dev/null 2>&1
-	chkconfig --del pgpool
+    /sbin/service pgpool condstop >/dev/null 2>&1
+    chkconfig --del pgpool
 fi
 
 %postun -p /sbin/ldconfig
@@ -83,33 +100,53 @@ fi
 %files
 %defattr(-,root,root,-)
 %dir %{_datadir}/%{name}
-%doc README README.euc_jp TODO COPYING INSTALL AUTHORS ChangeLog NEWS doc/pgpool-en.html doc/pgpool-ja.html doc/pgpool.css doc/tutorial-en.html doc/tutorial-ja.html doc/load_balance.odp doc/load_balance.png
+%doc README README.euc_jp TODO COPYING INSTALL AUTHORS ChangeLog NEWS doc/pgpool-en.html doc/pgpool-ja.html doc/pgpool.css doc/tutorial-en.html doc/tutorial-ja.html
 %{_bindir}/pgpool
 %{_bindir}/pcp_attach_node
 %{_bindir}/pcp_detach_node
 %{_bindir}/pcp_node_count
 %{_bindir}/pcp_node_info
+%{_bindir}/pcp_pool_status
 %{_bindir}/pcp_proc_count
 %{_bindir}/pcp_proc_info
+%{_bindir}/pcp_promote_node
 %{_bindir}/pcp_stop_pgpool
 %{_bindir}/pcp_recovery_node
 %{_bindir}/pcp_systemdb_info
 %{_bindir}/pg_md5
 %{_mandir}/man8/pgpool*
+%{_datadir}/%{name}/insert_lock.sql
 %{_datadir}/%{name}/system_db.sql
-%{_libdir}/libpcp.so.*
 %{_datadir}/%{name}/pgpool.pam
+%{pghome}/share/extension/pgpool-recovery.sql
+%{pghome}/share/extension/pgpool_recovery--1.0.sql
+%{pghome}/share/extension/pgpool_recovery.control
+%{pghome}/share/extension/pgpool-regclass.sql
+%{pghome}/share/extension/pgpool_regclass--1.0.sql
+%{pghome}/share/extension/pgpool_regclass.control
+%{_sysconfdir}/%{name}/pgpool.conf.sample-master-slave
+%{_sysconfdir}/%{name}/pgpool.conf.sample-replication
+%{_sysconfdir}/%{name}/pgpool.conf.sample-stream
+%{_libdir}/libpcp.so.*
+%{pghome}/lib/pgpool-recovery.so
+%{pghome}/lib/pgpool-regclass.so
 %{_initrddir}/pgpool
 %attr(764,root,root) %config(noreplace) %{_sysconfdir}/%{name}/*.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/pgpool
 
 %files devel
 %defattr(-,root,root,-)
+%{_includedir}/libpcp_ext.h
 %{_includedir}/pcp.h
+%{_includedir}/pool_process_reporting.h
 %{_includedir}/pool_type.h
 %{_libdir}/libpcp.so
 
 %changelog
+* Mon May 13 2013 Nozomi Anzai <anzai@sraoss.co.jp> 3.3.0-1
+- Update to 3.3.0
+- Change to install pgpool-recovery, pgpool-regclass to PostgreSQL
+
 * Tue Nov 3 2009 Devrim Gunduz <devrim@CommandPrompt.com> 2.2.5-3
 - Remove init script from all runlevels before uninstall. Per #RH Bugzilla
   532177
@@ -132,11 +169,11 @@ fi
 - Update to 2.2
 - Fix URL
 - Own /usr/share/pgpool-II directory.
-- Fix pid file path in init script, per	pgcore #81.
+- Fix pid file path in init script, per    pgcore #81.
 - Fix spec file -- we don't use short_name macro in pgcore spec file.
 - Create pgpool pid file directory, per pgcore #81.
 - Fix stop/start routines, also improve init script a bit.
-- Install conf files to a new directory (/etc/pgpool-II), and get rid 
+- Install conf files to a new directory (/etc/pgpool-II), and get rid
   of sample conf files.
 
 * Fri Aug 8 2008 Devrim Gunduz <devrim@CommandPrompt.com> 2.1-1
@@ -155,7 +192,7 @@ fi
 - Run chkconfig --add pgpool during %%post.
 
 * Thu Aug 16 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.2-4
-- Fixed the directory name where sample conf files and sql files 
+- Fixed the directory name where sample conf files and sql files
   are installed.
 
 * Sun Aug 5 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.2-3
@@ -183,7 +220,7 @@ fi
 
 * Thu Apr 22 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.0.2-3
 - Rebuilt for the correct tarball
-- Fixed man8 file ownership, per bugzilla review #229321 
+- Fixed man8 file ownership, per bugzilla review #229321
 
 * Tue Feb 20 2007 Jarod Wilson <jwilson@redhat.com> 1.0.2-2
 - Create proper devel package, drop -libs package
@@ -215,4 +252,3 @@ fi
 
 * Thu Sep 21 2006 - David Fetter <david@fetter.org> 1.0.1-1
 - Initial build pgpool-II 1.0.1 for PgPool Global Development Group
-

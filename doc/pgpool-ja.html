@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Fri May 17 15:59:58 JST 2013
+Last modified: Tue May 28 23:22:05 JST 2013
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -879,6 +879,20 @@ local0.*    /var/log/pgpool.log
     <a href="#HEALTH_CHECK_RETRY_DELAY">health_check_retry_delay</a>を変更した場合は、pgpool.confの再読込が必要です。
     </p>
     </dd>
+
+	<dt><a name="SEARCH_PRIMARY_NODE_TIMEOUT"></a>search_primary_node_timeout <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>このパラメータはフェイルオーバーが起きた時にプライマリノードを検索する際のタイムアウト時間を秒単位で指定します。
+		デフォルト値は10です。
+		pgpool-IIは、フェイルオーバの際にここで指定した時間プライマリノードを検索し続けます。
+		0を指定すると、永久に検索し続けます。
+		このパラメータはストリーミングレプリケーションモードで運用している場合以外は無視されます。
+    </p>
+    <p>
+	search_primary_node_timeoutを変更した場合は、pgpool.confの再読込が必要です。
+    </p>
+    </dd>
+		
 </dl>
 
 <h3>Failover and failback</h3>

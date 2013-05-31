@@ -147,6 +147,8 @@ typedef struct {
 	char *recovery_1st_stage_command;   /* Online recovery command in 1st stage */
 	char *recovery_2nd_stage_command;   /* Online recovery command in 2nd stage */
 	int recovery_timeout;				/* maximum time in seconds to wait for remote start-up */
+	int search_primary_node_timeout;	/* maximum time in seconds to search for new primary
+										 * node after failover */
 	int client_idle_limit_in_recovery;		/* If > 0, the client is forced to be
 											 *  disconnected after n seconds idle
 											 *  This parameter is only valid while in recovery 2nd stage */

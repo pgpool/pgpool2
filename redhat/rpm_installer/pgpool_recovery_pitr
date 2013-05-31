@@ -1,0 +1,47 @@
+#! /bin/sh
+# Force to flush current value of sequences to xlog
+
+master_db_cluster=$1
+recovery_node_host_name=$2
+dest_dir=$3
+
+source /etc/pgpool-II/config_for_script
+
+log=$PGPOOL_LOG_DIR/recovery.log
+
+if [ $master_db_cluster = $NODE0_DIR ]; then
+  master_port=$NODE0_PORT
+  master_dir=$NODE0_DIR
+
+elif [ $master_db_cluster = $NODE1_DIR ]; then
+  master_port=$NODE1_PORT
+  master_dir=$NODE1_DIR
+
+else
+  exit 1
+fi
+
+echo "----------------------------------------------------------------------" >> $log
+date >> $log
+echo "----------------------------------------------------------------------" >> $log
+echo "" >> $log
+
+# Get dbnames
+doSQL template1 'SELECT datname FROM pg_database WHERE NOT datistemplate AND datallowconn'
+
+# Force to flush current value of sequences to xlog
+while read i
+do
+  if [ "$i" != "" ]; then
+    doSQL $i "SELECT setval(oid, nextval(oid)) FROM pg_class WHERE relkind = 'S'"
+  fi
+done
+doSQL template1 "SELECT pgpool_switch_xlog('$ARCHIVE_DIR')"
+
+function doSQL()
+{
+    local _DB=$1
+    local _SQL=$2
+
+    $psql -p $master_port -U $PGSUPERUSER -t -c "$_SQL"
+}

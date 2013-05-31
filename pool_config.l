@@ -215,6 +215,7 @@ int pool_init_config(void)
     pool_config->recovery_1st_stage_command = "";
     pool_config->recovery_2nd_stage_command = "";
 	pool_config->recovery_timeout = 90;
+	pool_config->search_primary_node_timeout = 10;
 	pool_config->client_idle_limit_in_recovery = 0;
 	pool_config->lobj_lock_table = "";
 	pool_config->ssl = 0;
@@ -1441,6 +1442,20 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->recovery_timeout = v;
+		}
+
+		else if (!strcmp(key, "search_primary_node_timeout") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			int v = atoi(yytext);
+
+			if (token != POOL_INTEGER || v < 0)
+			{
+				pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->search_primary_node_timeout = v;
 		}
 
 		else if (!strcmp(key, "client_idle_limit_in_recovery") &&
