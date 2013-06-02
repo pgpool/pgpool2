@@ -77,6 +77,7 @@ static bool pool_has_insert_lock(void);
 static POOL_STATUS add_lock_target(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char* table);
 static bool has_lock_target(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char* table, bool for_update);
 static POOL_STATUS insert_oid_into_insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char* table);
+static bool is_all_slaves_command_complete(unsigned char *kind_list, int num_backends, int master);
 
 /* timeout sec for pool_check_fd */
 static int timeoutsec;
@@ -3631,6 +3632,27 @@ POOL_STATUS read_kind_from_one_backend(POOL_CONNECTION *frontend, POOL_CONNECTIO
 }
 
 /*
+ * returns true if all slaves status are 'C' (Command Complete)
+ */
+static bool is_all_slaves_command_complete(unsigned char *kind_list, int num_backends, int master)
+{
+	int i;
+	int ok = true;
+
+	for (i=0;i<num_backends;i++)
+	{
+		if (i == master || kind_list[i] == 0)
+			continue;
+		if (kind_list[i] != 'C')
+		{
+			ok = false;
+			break;
+		}
+	}
+	return ok;
+}
+		
+/*
  * read_kind_from_backend: read kind from backends.
  * the "frontend" parameter is used to send "kind mismatch" error message to the frontend.
  * the out parameter "decided_kind" is the packet kind decided by this function.
@@ -3739,7 +3761,23 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 		 * not all backends agree with kind. We need to do "decide by majority"
 		 */
 
-		if (max_count <= NUM_BACKENDS / 2.0)
+		/*
+		 * However here is a special case. In master slave mode, if
+		 * master gets an error at commit, while other slaves are
+		 * normal at commit, we don't need to degenrate any backend
+		 * because it is likely that the error was caused by a
+		 * deferred trigger.
+		 */
+		if (MASTER_SLAVE && query_context->parse_tree &&
+			is_commit_query(query_context->parse_tree) &&
+			kind_list[MASTER_NODE_ID] == 'E' &&
+			is_all_slaves_command_complete(kind_list, NUM_BACKENDS, MASTER_NODE_ID))
+		{
+			*decided_kind = kind_list[MASTER_NODE_ID];
+			pool_log("read_kind_from_backend: do not degenerate because it is likely caused by a delayed commit");
+			return POOL_CONTINUE;
+		}
+		else if (max_count <= NUM_BACKENDS / 2.0)
 		{
 			/* no one gets majority. We trust master node's kind */
 			trust_kind = kind_list[MASTER_NODE_ID];
