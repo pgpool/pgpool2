@@ -573,6 +573,9 @@ do
 	elif [ $1 = "--help" -o $1 = "-o" ];then
 		usage
 		exit
+	else
+		usage
+		exit
 	fi
 	shift
 done
@@ -663,12 +666,6 @@ do
 		create_recovery_conf $CLUSTERDIR $n >&5 2>&1
 	fi
 
-	# set up pgpool.conf
-	echo "backend_hostname$n = ''" >> $CONF
-	echo "backend_port$n = $PORT" >> $CONF
-	echo "backend_weight$n = 1" >> $CONF
-	echo "backend_data_directory$n = '$CLUSTERDIR'" >> $CONF
-
 	echo "$PG_CTL -D $CLUSTERDIR -m f stop" >> $SHUTDOWNALL
 	echo "$PG_CTL -w -D $CLUSTERDIR start" >> $STARTALL
 
@@ -718,17 +715,37 @@ CREATE EXTENSION pgpool_recovery;
 CREATE DATABASE test;
 EOF
 
+	n=0
+	PORT=$BASEPORT
+	CLUSTER="data"`expr $n`
+	CLUSTERDIR=$BASEDIR/$CLUSTER
+	echo "backend_hostname$n = ''" >> $CONF
+	echo "backend_port$n = $PORT" >> $CONF
+	echo "backend_weight$n = 1" >> $CONF
+	echo "backend_data_directory$n = '$CLUSTERDIR'" >> $CONF
+
 # temporarily start pgpool
 	echo "temporarily start pgpool-II to create standby nodes"
 	pgpool -D -n -f $BASEDIR/etc/pgpool.conf -F $BASEDIR/etc/pcp.conf -a $BASEDIR/etc/pool_hba.conf > $BASEDIR/log/pgpool.log 2>&1 &
 
-	if [ $NUMCLUSTERS -gt 1 ];then
-		echo -n "waiting for failover happens..."
-# wait for failover happens
-		sleep 20
-	fi
+	sleep 2
 
-	echo "done."
+	if [ $NUMCLUSTERS -gt 1 ];then
+		n=1
+		while [ $n -lt $NUMCLUSTERS ]
+		do
+		# set up pgpool.conf
+			PORT=`expr $PORT + 1`
+			echo "backend_hostname$n = ''" >> $CONF
+			echo "backend_port$n = $PORT" >> $CONF
+			echo "backend_weight$n = 1" >> $CONF
+			CLUSTER="data"`expr $n`
+			CLUSTERDIR=$BASEDIR/$CLUSTER
+			echo "backend_data_directory$n = '$CLUSTERDIR'" >> $CONF
+			n=`expr $n + 1`
+		done
+		pgpool -f $BASEDIR/etc/pgpool.conf reload
+	fi
 
 $PSQL -p $PGPOOL_PORT -c "show pool_nodes" test
 
@@ -738,9 +755,11 @@ $PSQL -p $PGPOOL_PORT -c "show pool_nodes" test
 	do
 		echo -n "recovery node $n..."
 		pcp_recovery_node 1 localhost $PCP_PORT $WHOAMI $WHOAMI $n
-		sleep 10
 		echo "done."
 		n=`expr $n + 1`
+		if [ $n -lt $NUMCLUSTERS ];then
+			sleep 10
+		fi
 	done
 
 #	echo "shutdown all"
