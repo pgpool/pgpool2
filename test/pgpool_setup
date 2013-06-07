@@ -540,6 +540,22 @@ function set_pgpool_conf {
 	fi
 }
 
+#-------------------------------------------
+# wait for pgpool comes up
+#-------------------------------------------
+function wait_for_pgpool_startup {
+	timeout=20
+
+	while [ $timeout -gt  0 ]
+	do
+		$PSQL -p $PGPOOL_PORT -c "show pool_nodes" test >/dev/null 2>&1
+		if [ $? = 0 ];then
+			break;
+		fi
+		timeout=`expr $timeout - 1`
+	done
+}
+
 #################################################################################
 #
 # main script
@@ -728,7 +744,7 @@ EOF
 	echo "temporarily start pgpool-II to create standby nodes"
 	pgpool -D -n -f $BASEDIR/etc/pgpool.conf -F $BASEDIR/etc/pcp.conf -a $BASEDIR/etc/pool_hba.conf > $BASEDIR/log/pgpool.log 2>&1 &
 
-	sleep 2
+	wait_for_pgpool_startup
 
 	if [ $NUMCLUSTERS -gt 1 ];then
 		n=1
@@ -758,12 +774,14 @@ $PSQL -p $PGPOOL_PORT -c "show pool_nodes" test
 		echo "done."
 		n=`expr $n + 1`
 		if [ $n -lt $NUMCLUSTERS ];then
-			sleep 10
+			wait_for_pgpool_startup
+#			sleep 10
 		fi
 	done
 
-#	echo "shutdown all"
-#	$SHUTDOWNALL >&5 2>&1
+#	
+#	replication mode
+#
 else
 	n=0
 	PORT=$BASEPORT
@@ -786,7 +804,8 @@ else
 	echo "start all"
 	$STARTALL >&5 2>&1
 	echo -n "waiting for pgpool-II coming up..."
-	sleep 20
+	wait_for_pgpool_startup
+#	sleep 20
 	echo "done."
 fi
 
