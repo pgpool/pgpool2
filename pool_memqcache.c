@@ -1483,7 +1483,7 @@ static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool
 			 */
 			pool_debug("pool_invalidate_query_cache: failed to open %s. reason:%s",
 					   path, strerror(errno));
-			return;
+			continue;
 		}
 
 		fl.l_type   = F_RDLCK;
