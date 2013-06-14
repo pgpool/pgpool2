@@ -9,9 +9,6 @@ URL:            http://www.pgppol.net/
 Source0:        %{name}-%{version}.tar.gz
 Source1:        pgpool.init
 Source2:        pgpool.sysconfig
-Source3:        http://www.pgpool.net/pgpool-web/contrib_docs/watchdog_master_slave/scripts/failover.sh
-Source4:        http://www.pgpool.net/pgpool-web/contrib_docs/watchdog_master_slave/scripts/recovery_1st_stage
-Source5:        http://www.pgpool.net/pgpool-web/contrib_docs/watchdog_master_slave/scripts/pgpool_remote_start
 Patch1:         pgpool.conf.sample.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  postgresql92-devel pam-devel
