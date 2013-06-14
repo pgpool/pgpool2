@@ -16,11 +16,12 @@
 # directory for *testing* purpose.
 # Do not use this tool for production environment!
 #
-# usage: pgpool_setup [-m r|s][-n num_clusters]
+# usage: pgpool_setup [-m r|s][-n num_clusters][--no-stop]
 # -m s: create an installation as streaming replication mode.
 # (the default)
 # -m r: create an installation as native replication mode.
 #-n num_clusters: create num_clusters PostgreSQL database cluster nodes
+#--no-stop: do not stop pgpool and PostgreSQL after the work
 #
 # The user run this script will become the PostgreSQL super user as
 # well.  Current directory must be empty.  Assume that appropreate
@@ -540,6 +541,22 @@ function set_pgpool_conf {
 	fi
 }
 
+#-------------------------------------------
+# wait for pgpool comes up
+#-------------------------------------------
+function wait_for_pgpool_startup {
+	timeout=20
+
+	while [ $timeout -gt  0 ]
+	do
+		$PSQL -p $PGPOOL_PORT -c "show pool_nodes" test >/dev/null 2>&1
+		if [ $? = 0 ];then
+			break;
+		fi
+		timeout=`expr $timeout - 1`
+	done
+}
+
 #################################################################################
 #
 # main script
@@ -547,16 +564,17 @@ function set_pgpool_conf {
 ################################################################################
 function usage()
 {
-	echo "usage: $0 [-m r|s] [-n num_clusters]";exit 1
+	echo "usage: $0 [-m r|s] [-n num_clusters] [--no-stop] ";exit 1
 }
 
 #-------------------------------------------
 # Argument check
-# usage: $0 [-m r|s] [-n num_clusters]"
+# usage: $0 [-m r|s] [-n num_clusters] [--no-stop]"
 #-------------------------------------------
 #
 # default mode is streaming replication mode
 MODE="s"
+NO_STOP="false"
 
 while [ $# -gt 0 ]
 do
@@ -570,7 +588,13 @@ do
 	elif [ $1 = "-n" ];then
 		shift
 		NUMCLUSTERS=$1
+	elif [ $1 = "--no-stop" ];then
+		shift
+		NO_STOP="true"
 	elif [ $1 = "--help" -o $1 = "-o" ];then
+		usage
+		exit
+	else
 		usage
 		exit
 	fi
@@ -663,12 +687,6 @@ do
 		create_recovery_conf $CLUSTERDIR $n >&5 2>&1
 	fi
 
-	# set up pgpool.conf
-	echo "backend_hostname$n = ''" >> $CONF
-	echo "backend_port$n = $PORT" >> $CONF
-	echo "backend_weight$n = 1" >> $CONF
-	echo "backend_data_directory$n = '$CLUSTERDIR'" >> $CONF
-
 	echo "$PG_CTL -D $CLUSTERDIR -m f stop" >> $SHUTDOWNALL
 	echo "$PG_CTL -w -D $CLUSTERDIR start" >> $STARTALL
 
@@ -718,17 +736,37 @@ CREATE EXTENSION pgpool_recovery;
 CREATE DATABASE test;
 EOF
 
+	n=0
+	PORT=$BASEPORT
+	CLUSTER="data"`expr $n`
+	CLUSTERDIR=$BASEDIR/$CLUSTER
+	echo "backend_hostname$n = ''" >> $CONF
+	echo "backend_port$n = $PORT" >> $CONF
+	echo "backend_weight$n = 1" >> $CONF
+	echo "backend_data_directory$n = '$CLUSTERDIR'" >> $CONF
+
 # temporarily start pgpool
 	echo "temporarily start pgpool-II to create standby nodes"
 	pgpool -D -n -f $BASEDIR/etc/pgpool.conf -F $BASEDIR/etc/pcp.conf -a $BASEDIR/etc/pool_hba.conf > $BASEDIR/log/pgpool.log 2>&1 &
 
-	if [ $NUMCLUSTERS -gt 1 ];then
-		echo -n "waiting for failover happens..."
-# wait for failover happens
-		sleep 20
-	fi
+	wait_for_pgpool_startup
 
-	echo "done."
+	if [ $NUMCLUSTERS -gt 1 ];then
+		n=1
+		while [ $n -lt $NUMCLUSTERS ]
+		do
+		# set up pgpool.conf
+			PORT=`expr $PORT + 1`
+			echo "backend_hostname$n = ''" >> $CONF
+			echo "backend_port$n = $PORT" >> $CONF
+			echo "backend_weight$n = 1" >> $CONF
+			CLUSTER="data"`expr $n`
+			CLUSTERDIR=$BASEDIR/$CLUSTER
+			echo "backend_data_directory$n = '$CLUSTERDIR'" >> $CONF
+			n=`expr $n + 1`
+		done
+		pgpool -f $BASEDIR/etc/pgpool.conf reload
+	fi
 
 $PSQL -p $PGPOOL_PORT -c "show pool_nodes" test
 
@@ -738,18 +776,41 @@ $PSQL -p $PGPOOL_PORT -c "show pool_nodes" test
 	do
 		echo -n "recovery node $n..."
 		pcp_recovery_node 1 localhost $PCP_PORT $WHOAMI $WHOAMI $n
-		sleep 10
 		echo "done."
+		n=`expr $n + 1`
+		if [ $n -lt $NUMCLUSTERS ];then
+			wait_for_pgpool_startup
+#			sleep 10
+		fi
+	done
+
+#	
+#	replication mode
+#
+else
+	n=0
+	PORT=$BASEPORT
+	CLUSTER="data"`expr $n`
+	CLUSTERDIR=$BASEDIR/$CLUSTER
+
+	while [ $n -lt $NUMCLUSTERS ]
+	do
+	# set up pgpool.conf
+		echo "backend_hostname$n = ''" >> $CONF
+		echo "backend_port$n = $PORT" >> $CONF
+		echo "backend_weight$n = 1" >> $CONF
+		CLUSTER="data"`expr $n`
+		CLUSTERDIR=$BASEDIR/$CLUSTER
+		echo "backend_data_directory$n = '$CLUSTERDIR'" >> $CONF
+		PORT=`expr $PORT + 1`
 		n=`expr $n + 1`
 	done
 
-#	echo "shutdown all"
-#	$SHUTDOWNALL >&5 2>&1
-else
 	echo "start all"
 	$STARTALL >&5 2>&1
 	echo -n "waiting for pgpool-II coming up..."
-	sleep 20
+	wait_for_pgpool_startup
+#	sleep 20
 	echo "done."
 fi
 
@@ -778,8 +839,10 @@ EOF
 echo "pgpool port is $PGPOOL_PORT" >> README.port
 echo "pcp port is $PCP_PORT" >> README.port
 
-echo "shutdown all"
-$SHUTDOWNALL >&5 2>&1
+if [ $NO_STOP = "false" ];then
+	echo "shutdown all"
+	$SHUTDOWNALL >&5 2>&1
+fi
 
 echo "export PGPOOL_PORT=$PGPOOL_PORT" > bashrc.ports
 echo "export PCP_PORT=$PCP_PORT" >> bashrc.ports
@@ -793,3 +856,7 @@ echo "pcp command user name is \"$WHOAMI\", password is \"$WHOAMI\"."
 echo "Each PostgreSQL, pgpool-II and pcp port is as follows:"
 cat README.port
 echo "The info above is in README.port."
+
+if [ $NO_STOP = "true" ];then
+	echo "CAUTION: whole system is still running."
+fi
