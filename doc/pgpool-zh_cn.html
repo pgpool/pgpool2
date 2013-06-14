@@ -17,7 +17,8 @@ Last modified: Wed Jun 29 09:50:01 JST 2011
 	 <div id="navcontainer">
       <ul id="navlist">
         <li id="active"><a href="#Whatis" id="current">什么是 pgpool</a></li>
-        <li><a href="#platform">平台</a></li>
+        <li><a href="#license">许可协议</a></li>
+        <li><a href="#platform">支持的平台</a></li>
         <li><a href="#install">pgpool-II 的安装</a></li>
         <li><a href="#config">配置 pgpool-II</a></li>
         <li><a href="#common">配置通用部分</a></li>
@@ -109,6 +110,22 @@ Last modified: Wed Jun 29 09:50:01 JST 2011
 
 <!-- ================================================================================ -->
 
+<h1>许可协议<a name="license"></a></h1>
+
+<p>
+版权所有 (c) 2003-2013 PgPool 全球开发小组
+
+授权出于任何目的任意使用、拷贝、修改和分发本软件以及文档，
+但必须在所有软件拷贝的支持文档中提供以上的版权信息，包括版权通知和许可，
+并且在没有事先明确的书面授权前，作者的名字不能用于发布软件的广告和宣传。
+作者不对本软件的任何用途负责。
+本软件以“现状”来提供，不提供任何明文或暗示的保证。
+</p>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
+
+<!-- ================================================================================ -->
+
 <h1>支持的平台<a name="platform"></a></h1>
 
 <p>pgpool-II 可以运行在 Linux，Solaris，FreeBSD 以及基本上所有的类 UNIX 架构的平台上。
@@ -190,17 +207,30 @@ make install
     中安装 pgpool_regclass 函数，因为它被 pgpool-II 内部使用。
     如果不这样做，在不同的 schema 中处理相同的表名会出现问题（临时表不会出问题）。
     </p>
-    
 <pre>
 cd pgpool-II-x.x.x/sql/pgpool-regclass
 make
 make install
+</pre>
+		</p>
+		<p>
+在这之后：
+		<p>
+<pre>
 psql -f pgpool-regclass.sql template1
 </pre>
-
+		</p>
+		<p>
+或者
+		<p>
+<pre>
+psql template1
+CREATE EXTENSION pgpool_regclass;
+</pre>
+</p>
     <p>
-    应在在每台通过 pgpool-II 访问的数据库中执行 pgpool-regclass.sql。
-    你不需要在你执行“psql -f pgpool-regclass.sql template1”后建立的数据库中这么做，
+    应在每台通过 pgpool-II 访问的数据库中执行 pgpool-regclass.sql 或者 CREATE EXTENSION。
+    你不需要在你执行“psql -f pgpool-regclass.sql template1” 或者 CREATE EXTENSION 后建立的数据库中这么做，
     因为这个模板数据库将被克隆成新建的数据库。
     </p>
     </dd>
@@ -435,11 +465,6 @@ cp $prefix/etc/pgpool.conf.sample $prefix/etc/pgpool.conf
     <p>
     本参数必须在服务器启动前设置。</p>
     </dd>
-    
-  <dt><a name="PCP_TIMEOUT"></a>pcp_timeout</dt>
-  <dd>
-      <p>PCP 连接超时值，单位为秒。如果客户端在设置的秒数内没有响应，PCP 关闭到这个客户端的连接。默认为 10 秒。0 表示没有超时。如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。</p>
-  </dd>
 </dl>
 
 <h3>池</h3>
@@ -473,13 +498,13 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
       </p>
   </dd>
 
-  <dt><a name="CHILD_MAX_CONNECTIONS"></a>child_max_connections</dt>
+<dt><a name="CHILD_MAX_CONNECTIONS"></a>child_max_connections</dt>
   <dd>
       <p>当 pgpool-II 子进程处理这么多个客户端连接后，它将被终止。这个参数在繁忙到 child_life_time 和 connection_life_time 永远不会触发的服务器上有效。如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
       </p>
   </dd>
 
-  <dt><a name="CLIENT_IDLE_LIMIT"></a>client_idle_limit</dt>
+<dt><a name="CLIENT_IDLE_LIMIT"></a>client_idle_limit</dt>
   <dd>
   <p>当一个客户端在执行最后一条查询后如果空闲到了 client_idle_limit 秒数，到这个客户端的连接将被断开。这在避免 pgpool 子进程被懒客户端占用或者探测断开的客户端和 pgpool 之间的 TCP/IP 连接非常有用。如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
 	</p>
@@ -494,8 +519,19 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
     如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
     </p>
     </dd>
-    
-  <dt><a name="AUTHENTICATION_TIMEOUT"></a>authentication_timeout</dt>
+
+<dt><a name="POOL_PASSWD"></a>pool_passwd</dt>
+    <dd>
+    <p>
+    指定用于 md5 认证的文件名。默认值为"pool_passwd"。"" 表示禁用。
+    参考 <a href="#md5">认证 / 访问控制</a> 获得更多信息。
+    </p>
+    <p>
+    如果你改变了这个值，需要重启 pgpool-II 以生效。
+    </p>
+    </dd>
+
+<dt><a name="AUTHENTICATION_TIMEOUT"></a>authentication_timeout</dt>
   <dd>
   <p>指定 pgpool 认证超时的时长。0 指禁用超时，默认值为 60 。如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
   </p>
@@ -504,7 +540,7 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
 <h3>日志</h3>
 
 <dl>
-  <dt><a name="LOG_DESTINATION"></a>log_destination</dt>
+  <dt><a name="LOG_DESTINATION"></a>log_destination <span class="version">V3.1 -</span></dt>
   <dd>
       <p>pgpool-II 支持多种记录服务器消息的方式，包括 stderr 和 syslog。默认为记录到 stderr。
       </p>
@@ -568,15 +604,14 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
 <h3>文件位置</h3>
 
 <dl>
-  <dt><a name="LOGDIR"></a>logdir</dt>
-  <dd>
-      <p>保存日志文件的目录。 pgpool_status 将被写入这个目录。
-       </p>
-  </dd>
-  
   <dt><a name="PID_FILE_NAME"></a>pid_file_name</dt>
   <dd>
       <p>到包含 pgpool-II 进程 ID 的文件的完整路径名。默认为 <code>'/var/run/pgpool/pgpool.pid'</code>。需要重启 pgpool-II 以使改动生效。
+       </p>
+  </dd>
+  <dt><a name="LOGDIR"></a>logdir</dt>
+  <dd>
+      <p>保存日志文件的目录。 pgpool_status 将被写入这个目录。
        </p>
   </dd>
 </dl>
@@ -595,39 +630,55 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
 <dl>
   <dt><a name="HEALTH_CHECK_TIMEOUT"></a>health_check_timeout</dt>
   <dd>
-      <p>pgpool-II 定期尝试连接到后台以检测服务器是否在服务器或网络上有问题。这种错误检测过程被称为“健康检查”。如果检测到错误，则 pgpool-II 会尝试进行故障恢复或者退化操作。本参数用于避免健康检查在例如网线断开等情况下等待很长时间。超时值的单位为秒。默认值为 20 。 0 禁用超时（一直等待到 TCP/IP 超时）。健康检查需要额外的到后端程序的连接，所以 <code>postgresql.conf</code> 中的 <code>max_connections</code> 需要加一。如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+      <p>pgpool-II 定期尝试连接到后台以检测服务器是否在服务器或网络上有问题。这种错误检测过程被称为“健康检查”。如果检测到错误，则 pgpool-II 会尝试进行故障恢复或者退化操作。<br>
+      本参数用于避免健康检查在例如网线断开等情况下等待很长时间。超时值的单位为秒。默认值为 20 。0 禁用超时（一直等待到 TCP/IP 超时）。<br>
+      健康检查需要额外的到后端程序的连接，所以 <code>postgresql.conf</code> 中的 <code>max_connections</code> 需要加一。<br>
+      如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
      </p>
   </dd>
 
   <dt><a name="HEALTH_CHECK_PERIOD"></a>health_check_period</dt>
   <dd>
-      <p>本参数指出健康检查的间隔，单位为秒。默认值为 0 ，代表禁用健康检查。如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+      <p>本参数指出健康检查的间隔，单位为秒。默认值为 0 ，代表禁用健康检查。<br>
+      如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
        </p>
   </dd>
       
-  <dt><a name="HEALTH_CHECK_USER"></a>health_check_user</dt>
+<dt><a name="HEALTH_CHECK_USER"></a>health_check_user</dt>
   <dd>
-      <p>用于执行健康检查的用户。用户必须存在于 PostgreSQL 后台中。如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+      <p>用于执行健康检查的用户。用户必须存在于 PostgreSQL 后台中。<br>
+      如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
        </p>
   </dd>
 
-  <dt><a name="HEALTH_CHECK_PASSWORD"></a>health_check_password <span class="version">V3.1 -</span></dt>
+<dt><a name="HEALTH_CHECK_PASSWORD"></a>health_check_password <span class="version">V3.1 -</span></dt>
   <dd>
-      <p>用于执行健康检查的用户的密码。如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+      <p>用于执行健康检查的用户的密码。<br>
+      如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
        </p>
   </dd>
-  <dt><a name="HEALTH_CHECK_MAX_RETRIES"></a>health_check_max_retries <span class="version">V3.2 -</span></dt>
+<dt><a name="HEALTH_CHECK_MAX_RETRIES"></a>health_check_max_retries <span class="version">V3.2 -</span></dt>
   <dd>
-      <p>在执行失效故障切换前尝试的最大失效健康检查次数。这个参数对于网络不稳定的时，健康检查失败但主节点依旧正常的情况下非常有效。默认值为 0，也就是不重试。如果你想启用 health_check_max_retries，建议你禁用 <a href="#FAIL_OVER_ON_BACKEND_ERROR">fail_over_on_backend_error</a> </dt>。
+      <p>在执行失效故障切换前尝试的最大失效健康检查次数。这个参数对于网络不稳定的时，健康检查失败但主节点依旧正常的情况下非常有效。默认值为 0，也就是不重试。如果你想启用 health_check_max_retries，建议你禁用 <a href="#FAIL_OVER_ON_BACKEND_ERROR">fail_over_on_backend_error</a>。<br>
       	如果你改变了 health_check_max_retries，需要重新加载 pgpool.conf。
       </p>
   </dd>
 
-  <dt><a name="HEALTH_CHECK_RETRY_DELAY"></a>health_check_retry_delay <span class="version">V3.2 -</span></dt>
+<dt><a name="HEALTH_CHECK_RETRY_DELAY"></a>health_check_retry_delay <span class="version">V3.2 -</span></dt>
   <dd> 
-      <p>失效健康检查重试的间隔时间（单位为秒）（ health_check_max_retries > 0 时有效 ）。如果为 0 则立即重试（不延迟）。如果你改变了 health_check_retry_delay，需要重新加载 pgpool.conf。
+      <p>失效健康检查重试的间隔时间（单位为秒）（ health_check_max_retries > 0 时有效 ）。如果为 0 则立即重试（不延迟）。<br>
+      如果你改变了 health_check_retry_delay，需要重新加载 pgpool.conf。
       </p>
   </dd>
+
+<dt><a name="SEARCH_PRIMARY_NODE_TIMEOUT"></a>search_primary_node_timeout <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>本参数指定在发生故障切换的时候查找一个主节点的最长时间，单位为秒。默认值为 10。pgpool-II 将在发生故障切换的时候在设置的时间内尝试搜索主节点，如果到达这么长时间未搜索到则放弃搜索。0 表示一直尝试。本参数在流复制模式之外的情况下被忽略。<br>
+    </p>
+    <p>
+    如果你改变了 search_primary_node_timeout，需要重新加载 pgpool.conf。
+    </p>
+    </dd>
 </dl>
 
 <h3>故障切换和恢复</h3>
@@ -638,20 +689,22 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
 <p>本参数指定当一个节点断开连接时执行的命令。pgpool-II 使用后台对应的信息代替以下的特别字符。
 </p>
 
-<blockquote>
+
 <table border>
-<tr><td>特殊字符</td><td>描述</td></tr>
-<tr><td>%d</td><td>断开连接的节点的后台 ID。</td></tr>
-<tr><td>%h</td><td>断开连接的节点的主机名。</td></tr>
-<tr><td>%p</td><td>断开连接的节点的端口号。</td></tr>
-<tr><td>%D</td><td>断开连接的节点的数据库实例所在目录。</td></tr>
-<tr><td>%M</td><td>旧的主节点 ID。</td></tr>
-<tr><td>%m</td><td>新的主节点 ID。</td></tr>
-<tr><td>%H</td><td>新的主节点主机名。</td></tr>
-<tr><td>%P</td><td>旧的第一节点 ID。</td></tr>
-<tr><td>%%</td><td>'%' 字符</td></tr>
+    <tr><td>特殊字符</td><td>描述</td></tr>
+    <tr><td>%d</td><td>断开连接的节点的后台 ID。</td></tr>
+    <tr><td>%h</td><td>断开连接的节点的主机名。</td></tr>
+    <tr><td>%p</td><td>断开连接的节点的端口号。</td></tr>
+    <tr><td>%D</td><td>断开连接的节点的数据库实例所在目录。</td></tr>
+    <tr><td>%M</td><td>旧的主节点 ID。</td></tr>
+    <tr><td>%m</td><td>新的主节点 ID。</td></tr>
+    <tr><td>%H</td><td>新的主节点主机名。</td></tr>
+    <tr><td>%P</td><td>旧的第一节点 ID。</td></tr>
+    <tr><td>%r</td><td>新的主节点的端口号。</td></tr>
+    <tr><td>%R</td><td>新的主节点的数据库实例所在目录。</td></tr>
+    <tr><td>%%</td><td>'%' 字符</td></tr>
 </table>
-</blockquote>
+
 <p>
 如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
 </p>
@@ -666,20 +719,22 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
 	本参数指定当一个节点连接时执行的命令。pgpool-II 使用后台对应的信息代替以下的特别字符。
 
 </p>
-<blockquote>
+
 <table border>
-<tr><td>特殊字符</td><td>描述</td></tr>
-<tr><td>%d</td><td>新连接上的节点的后台 ID。</td></tr>
-<tr><td>%h</td><td>新连接上的节点的主机名。</td></tr>
-<tr><td>%p</td><td>新连接上的节点的端口号。</td></tr>
-<tr><td>%D</td><td>新连接上的节点的数据库实例所在目录。</td></tr>
-<tr><td>%M</td><td>旧的主节点 ID。</td></tr>
-<tr><td>%m</td><td>新的主节点 ID。</td></tr>
-<tr><td>%H</td><td>新的主节点主机名。</td></tr>
-<tr><td>%P</td><td>旧的第一节点 ID。</td></tr>
-<tr><td>%%</td><td>'%' 字符</td></tr>
+    <tr><td>特殊字符</td><td>描述</td></tr>
+    <tr><td>%d</td><td>新连接上的节点的后台 ID。</td></tr>
+    <tr><td>%h</td><td>新连接上的节点的主机名。</td></tr>
+    <tr><td>%p</td><td>新连接上的节点的端口号。</td></tr>
+    <tr><td>%D</td><td>新连接上的节点的数据库实例所在目录。</td></tr>
+    <tr><td>%M</td><td>旧的主节点 ID。</td></tr>
+    <tr><td>%m</td><td>新的主节点 ID。</td></tr>
+    <tr><td>%H</td><td>新的主节点主机名。</td></tr>
+    <tr><td>%P</td><td>旧的第一节点 ID。</td></tr>
+    <tr><td>%r</td><td>新的主节点的端口号。</td></tr>
+    <tr><td>%R</td><td>新的主节点的数据库实例所在目录。</td></tr>
+    <tr><td>%%</td><td>'%' 字符</td></tr>
 </table>
-</blockquote>
+
 <p>
 如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
 </p>
@@ -690,20 +745,21 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
 本参数指定一个在主备流复制模式中发生主节点故障恢复后执行的命令。pgpool-II 使用后台对应的信息代替以下的特别字符。
 </p>
 
-<blockquote>
 <table border>
-<tr><td>特殊字符</td><td>描述</td></tr>
-<tr><td>%d</td><td>断开连接的节点的后台 ID。</td></tr>
-<tr><td>%h</td><td>断开连接的节点的主机名。</td></tr>
-<tr><td>%p</td><td>断开连接的节点的端口号。</td></tr>
-<tr><td>%D</td><td>断开连接的节点的数据库实例所在目录。</td></tr>
-<tr><td>%M</td><td>旧的主节点 ID。</td></tr>
-<tr><td>%m</td><td>新的主节点 ID。</td></tr>
-<tr><td>%H</td><td>新的主节点主机名。</td></tr>
-<tr><td>%P</td><td>旧的第一节点 ID。</td></tr>
-<tr><td>%%</td><td>'%' 字符</td></tr>
+    <tr><td>特殊字符</td><td>描述</td></tr>
+    <tr><td>%d</td><td>断开连接的节点的后台 ID。</td></tr>
+    <tr><td>%h</td><td>断开连接的节点的主机名。</td></tr>
+    <tr><td>%p</td><td>断开连接的节点的端口号。</td></tr>
+    <tr><td>%D</td><td>断开连接的节点的数据库实例所在目录。</td></tr>
+    <tr><td>%M</td><td>旧的主节点 ID。</td></tr>
+    <tr><td>%m</td><td>新的主节点 ID。</td></tr>
+    <tr><td>%H</td><td>新的主节点主机名。</td></tr>
+    <tr><td>%P</td><td>旧的第一节点 ID。</td></tr>
+    <tr><td>%r</td><td>新的主节点的端口号。</td></tr>
+    <tr><td>%R</td><td>新的主节点的数据库实例所在目录。</td></tr>
+    <tr><td>%%</td><td>'%' 字符</td></tr>
 </table>
-</blockquote>
+
 <p>
 如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
 </p>
@@ -1597,7 +1653,7 @@ recovery_2nd_stage_command = ''
 
 <h1 id="parallel">并行模式</h3>
 
-<p>本模式实现了查询的并行执行。表可以被分割，数据分布在每个节点中。而且，复制和负载均衡功能也可以同时使用。在并行模式中，pgpool.conf 中的 replication_mode 和 load_balance_mode 被设置为 ture，master_slave 被设置为 false，parallel_mode 被设置为 false。当你改变这些参数后，需要重启 pgpool-II。
+<p>本模式实现了查询的并行执行。表可以被分割，数据分布在每个节点中。而且，复制和负载均衡功能也可以同时使用。在并行模式中，pgpool.conf 中的 <a href="#REPLICATION_MODE">replication_mode</a> 和 <a href="#LOAD_BALANCE_MODE">load_balance_mode</a> 被设置为 ture，<a href="#MASTER_SLAVE_MODE">master_slave</a> 被设置为 false，<a href="#PARALLEL_MODE">parallel_mode</a> 被设置为 false。当你改变这些参数后，需要重启 pgpool-II。
 </p>
 
 <h2 id="system_db">配置 System DB</h2>
@@ -1746,7 +1802,7 @@ ELSE 2
 和 PostgreSQL 中使用的 pg_hba.conf 文件类似，pgpool-II 使用一个称之为 "pool_hba.conf" 的配置文件来支持类似的客户端认证功能。
 </p>
 <p>
-当安装 pgpool 的时候，pool_hba.conf.sample 文件将被安装在"/usr/local/etc"目录下，该位置也是配置文件的默认目录。拷贝 pool_hba.conf.sample 为 pool_hba.conf，如果必要的话并修改它。默认的情况下，pool_hba 认证被开启，详见"6. 设置 pgpool.conf"。 
+当安装 pgpool 的时候，pool_hba.conf.sample 文件将被安装在"/usr/local/etc"目录下，该位置也是配置文件的默认目录。拷贝 pool_hba.conf.sample 为 pool_hba.conf，如果必要的话并修改它。默认的情况下，<a href="#ENABLE_POOL_HBA">enable_pool_hba</a> 认证被开启。 
 </p>
 <p>
 	pool_hba.conf 文件的格式和 PostgreSQL 的 pg_hba.conf 的格式遵循的非常相近。
@@ -1871,14 +1927,14 @@ CREATE TABLE pgpool_catalog.query_cache (
 memory_cache_enabled = on
 </pre>
 
-<h2 id="MEMQCACHE_METHOD">选择缓存策略</h2>
+<h2 id="MEMQCACHE_METHOD">选择缓存存储</h2>
 <p>
 你可以选择一个缓存策略：共享内存或者 <a href="http://memcached.org">memcached</a>（不能同时使用）。
 使用共享内存的查询缓存很快且简单，因为你不需要安装和配置 memcached，但缓存的最大数量限制于共享内存。
 使用 memcached 的查询缓存需要更多的负载用于访问网络，但你可以任意设置你需要的大小。
 </p>
 <p>
-可以通过 memqcache_method 指定内存缓存的行为。可以是 “shmem” 或者 “memcached”。默认为 shmem。
+可以通过 memqcache_method 指定内存缓存的行为。可以是 “shmem”（共享内存） 或者 “memcached”。默认为 shmem。
 </p>
 <pre>
 memqcache_method = 'shmem'
@@ -1890,12 +1946,13 @@ memqcache_method = 'shmem'
 并非所有的 SELECT 和 WITH 语句可以被缓存。在包括以下列表的一些情况，为了保证数据库和缓存的一致性，缓存被避免了。
 </p>
 <ul>
+    <li>SELECT 语句以 "/*NO QUERY CACHE*/" 注释开始</li>
     <li>SELECT 包含以下表的 <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a></li>
     <li>SELECT FOR SHARE / UPDATE</li>
     <li>SELECT 包含 un-immutable 函数</li>
     <li>SELECT 包含 TEMP TABLE</li>
     <li>SELECT 包含 系统对象</li>
-	<li>SELECT 包含 VIEW 和 不记录日志的表。但如果表在 <a href="#WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</a> 中，结果还是会被缓存的。</li>
+	  <li>SELECT 包含 VIEW 和 不记录日志的表。但如果表在 <a href="#WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</a> 中，结果还是会被缓存的。</li>
 
     <li>SELECT 包含 VIEW </li>
     <li>SELECT 在一个被终止的显示事务中</li>
@@ -2239,7 +2296,7 @@ pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file] reload
 <h1><a name="show-commands"></a>SHOW 命令</h1>
 <h2>概述</h2>
 <p>
-pgpool-II 通过 SHOW 命令提供一些信息。SHOW 是一个真实的 SQL 语句, 但是如果该命令查询 pgpool-II 信息的话，pgpool-II 解释了该命令。可选项如下:
+pgpool-II 通过 SHOW 命令提供一些信息。SHOW 是一个真实的 SQL 语句, 但是如果该命令查询 pgpool-II 信息的话，pgpool-II 解释了该命令。可用选项如下:
 <ul>
   <li>pool_status, 获取配置</li>
   <li>pool_nodes, 获取节点信息 <span class="version">V3.0 -</span></li>
@@ -2247,6 +2304,7 @@ pgpool-II 通过 SHOW 命令提供一些信息。SHOW 是一个真实的 SQL 语
   <li>pool_pools, 获取pgPool-II 所有的连接池信息 <span class="version">V3.0 -</span></li>
   <li>pool_version, 获取pgPool_II 版本信息 <span class="version">V3.0 -</span></li>
 </ul>
+<p>除 "pool_status" 之外的选项都是从 pgpool-II 3.0 开始添加的。
 <p>
 <u>注意</u>：术语 'pool' 指的是一个 pgpool 进程所拥有的 PostgreSQL 会话池，并非指所有的 pgpool 所拥有的会话。
 </p> 
@@ -2658,11 +2716,11 @@ recovery_2nd_stage_command = 'pgpool_recovery'
 
 <h2>如何执行在线恢复</h2>
 <p>
-	为了执行在线恢复，使用 <a href="pcp_recovery_node">pcp_recovery_node</a> 命令或 pgpoolAdmin。
+	为了执行在线恢复，使用 <a href="#PCP_RECOVERY_NODE">pcp_recovery_node</a> 命令或 pgpoolAdmin。
 </p>
 
 <p>
-	注意你需要给 <a href="pcp_recovery_node">pcp_recovery_node</a> 第一个参数传递一个大数。该数是一个以秒为单位的定时参数。如果你使用 pgpoolAdmin，在pgmgt.conf.php中设置 "_PGPOOL2_PCP_TIMEOUT "参数为一个大数。
+	注意你需要给 <a href="#pcp_recovery_node">pcp_recovery_node</a> 第一个参数传递一个大数。该数是一个以秒为单位的定时参数。如果你使用 pgpoolAdmin，在pgmgt.conf.php中设置 "_PGPOOL2_PCP_TIMEOUT "参数为一个大数。
 </p>
 
 <h2 id="minorup_w_online_recovery">使用在线恢复实现 PostgreSQL 版本升级</h2>
@@ -2907,55 +2965,64 @@ Pgpool-HA 可以在 pgpool 开发网站找到，它是一个开源软件。</p>
 
 <p>
 “看门狗”是一个 pgpool-II 的子进程，用于添加高可用性功能。
-看门狗添加的功能包括：
+这通过多个 pgpool-II 的合作解决了单点故障的问题。
+看门狗为 pgpool-II 添加了以下功能：
 </p>
-
-<dl>
-<dt>pgpool 服务的生命检测</dt>
-    <dd>
+<h3>pgpool-II 服务的生命检测</h3>
     <p>
-    	看门狗监控 pgpool <i>服务</i>的响应而不是进程。
-    	它通过被它监控的 pgpool 发送查询到 PostgreSQL，并检查响应情况。
+    看门狗通过两种方式监控 pgpool-II，“心跳”模式或者“查询”模式。
     </p>
+    <ul>
+    <li>
+    在心跳模式中，看门狗使用心跳信号监控其他 pgpool-II 进程。看门狗接收其他 pgpool-II 定期发送的心跳信号。
+    如果时间周期到了还没收到信号，则看门狗认为 pgpool-II 已经失效。
+    为了冗余，你可以使用多个网络接口设备来在 pgpool-II 之间实现心跳交换。这是默认的模式，且推荐使用。
+    </li>
+    <li>
+    在查询模式中，看门狗监控 pgpool-II 提供的服务，而不是进程。看门狗向其他 pgpool-II 发送查询并检查反馈。
+    注意这种模式需要连接到其他 pgpool-II，所以如果 <a href="#NUM_INIT_CHILDREN">num_init_children</a> 不够大则可能监控失败。
+    本模式不赞成使用，保留的原因是为了向下兼容。
+    </li>
+    </ul>
     <p>
-    	看门狗还监控到从 pgpool 到前端服务器的连接（例如应用服务器）。
-    	从 pgpool 到前端服务器的连接作为 pgpool 的服务来监控。
+    	看门狗还监控到从 pgpool-II 到前端服务器的连接（例如应用服务器），并检查 pgpool-II 能否为这些服务提供服务。如果监控到失败，则认为 pgpool-II 宕机了。
     </p>
-    </dd>
 
-<dt>看门狗进程相互监控</dt>
-    <dd>
+<h3>协调多个 pgpool-II 共同工作</h3>
     <p>
-      看门狗进程交换被监控服务器的信息用来保证信息是最新的，并允许看门狗进程相互监控。
+    看门狗通过互相交换信息来协调多个 pgpool-II 共同工作。
     </p>
-    </dd>
+    <ul>
+    <li>
+    在后端节点例如由于故障切换而发生状态变化后，看门狗通知其他 pgpool-II 节点并同步信息。
+    在发生在线恢复时，看门狗限制客户端连接到其他 pgpool-II 节点，以避免后端节点的不一致。
+    </li>
+    <li>
+    故障切换或者故障恢复的命令 (<a href="#FAILOVER_COMMAND">failover_command</a>,
+    <a href="#FAILBACK_COMMAND">failback_command</a>, <a href="#FOLLOW_MASTER_COMMAND">follow_master_command</a>)
+    通过内部锁机制只被一个 pgpool-II 节点执行。
+    </li>
+    </ul>
 
-<dt>在某些故障检测中交换活跃/备用状态</dt>
-    <dd>
+<h3>在检测到某些故障时交换活跃/备用状态</h3>
     <p>
-    	当一个 pgpool 的故障被检测到，看门狗通知其他的看门狗这个消息。
-    	看门狗在旧的活跃 pgpool 发生故障后通过投票确定新的活跃 pgpool 并更新活跃/备用状态。
+    	当一个 pgpool-II 的故障被检测到，看门狗通知其他的看门狗这个消息。
+    	如果是活跃的 pgpool-II 发生故障，看门狗通过投票确定新的活跃 pgpool-II 并更新活跃/备用状态。
     </p>
-    </dd>
 
-<dt>在服务器切换的时候实现自动虚拟 IP 地址分配</dt>
-    <dd>
+<h3>在服务器切换的时候实现自动虚拟 IP 地址分配</h3>
     <p>
     	当一个备用 pgpool 服务器提升为活跃的，新的活跃服务器启动虚拟 IP 接口。
     	也就是，之前的活跃服务器停用虚拟 IP 接口。
     	这确保活动的 pgpool 使用相同的 IP 地址，即使在发生服务器切换的时候。
     </p>
-    </dd>
 
-<dt>在恢复的时候自动注册服务器为备用服务器</dt>
-    <dd>
+<h3>在恢复的时候自动注册服务器为备用服务器</h3>
     <p>
     	当失效的服务器恢复或者新的服务器连接上来，看门狗进程通知其他的看门狗进程关于新服务器的信息，
     	看门狗进程在活跃服务器和其他服务器上接收这些信息。
     	然后，新连接上的服务器注册为备用节点。
     </p>
-    </dd>
-</dl>
 
 <h2 id="deploy_watchdog">服务器组件</h2>
 
@@ -2967,8 +3034,12 @@ Pgpool-HA 可以在 pgpool 开发网站找到，它是一个开源软件。</p>
 <h2 id="start_watchdog">启动/停止看门狗</h2>
 <p>
 看门狗进程由 pgpool-II 自动启动/停止，也就是说，没有单独的命令来启动/停止它。
-但是，pgpool-II 启动时必须拥有<font color="red">管理员权限（root）</font>，
-因为看门狗进程需要控制虚拟 IP 接口。
+</p>
+<p>
+看门狗功能启动时必须拥有<font color="red">管理员权限（root）</font> 来控制虚拟 IP 接口。
+方法之一是使用 root 权限启动 pgpool-II。
+不过，考虑安全原因，推荐通过设置设置自定义命令 <a href="#IF_UP_CMD">if_up_cmd</a>、
+<a href="#IF_DOWN_CMD">if_up_cmd</a> 和 <a href="#ARPING_CMD">if_up_cmd</a> 为使用 sudo 或者 setuid 的方法。
 </p>
 <p>
 在等待到所有的 pgpool 启动后，生命监测将启动。
@@ -2978,139 +3049,339 @@ Pgpool-HA 可以在 pgpool 开发网站找到，它是一个开源软件。</p>
 <p>
 看门狗的配置参数在 pgpool.conf 中配置。
 在 pgpool.conf.sample 文件中的 WATCHDOG 小节是配置看门狗的示例。
-以下所有的选项都是使用看门狗进程必须指定的。
 </p>
 
-<h3>基本配置</h3>
-
-<h4>启用</h4>
+<p>
+以下所有的选项都是使用看门狗进程时必须指定的。
+</p>
+<h3>启用</h3>
 <dl>
 <dt><a name="USE_WATCHDOG"></a>use_watchdog <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
-    如果为 on，则激活看门狗，默认为 off。
+    如果为 on，则激活看门狗。默认为 off 。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
     </p>
     </dd>
 </dl>
 
-<h4>到前端服务器的链路</h4>
-
-<dl>
-<dt><a name="TRUSTED_SERVERS"></a>trusted_servers <span class="version">V3.2 -</span></dt>
-    <dd>
-    <p>
-    	用于检测前端链路状态的信任服务器的列表。每个服务器需要能响应 ping。
-    	用逗号分隔服务器的列表，例如“hostA,hostB,hostC”。
-    </p>
-    </dd>
-
-<dt><a name="PING_PATH"></a>ping_path <span class="version">V3.2 -</span></dt>
-    <dd>
-    <p>
-    	本参数指定用于监控到前端服务器连接的 ping 命令的路径。只需要设置路径，例如“/bin”。
-    </p>
-    </dd>
-</dl>
-
-<h4>pgpool-II 的生命检查</h4>
-
-<dl>
-<dt><a name="WD_INTERVAL"></a>wd_interval <span class="version">V3.2 -</span></dt>
-    <dd>
-    <p>
-    	本参数指定用于 pgpool-II 生命检查的间隔，单位为秒（一个大于或等于 1 的数字）。
-    </p>
-    </dd>
-
-<dt><a name="WD_LIFE_POINT"></a>wd_life_point <span class="version">V3.2 -</span></dt>
-    <dd>
-    <p>
-    	pgpool-II 生命检测失败后重试次数（一个大于或等于 1 的数字）。
-    </p>
-    </dd>
-
-<dt><a name="WD_LIFECHECK_QUERY"></a>wd_lifecheck_query <span class="version">V3.2 -</span></dt>
-    <dd>
-    <p>
-    	用于检查 pgpool-II 的查询语句。默认为“SELECT 1”。
-    </p>
-    </dd>
-</dl>
-
-<h4>虚拟 IP 地址</h4>
-
-<dl>
-<dt><a name="DELEGATE_IP"></a>delegate_IP <span class="version">V3.2 -</span></dt>
-    <dd>
-    <p>
-    	指定客户端服务器（应用服务器等）连接到的 pgpool-II 的虚拟 IP 地址（VIP）。
-    	当一个 pgpool 从备用切换到活跃状态，pgpool 将使用这个 VIP。
-    </p>
-    </dd>
-
-<dt><a name="IFCONFIG_PATH"></a>ifconfig_path <span class="version">V3.2 -</span></dt>
-    <dd>
-    <p>
-    	本参数指定切换 IP 地址的命令所在的路径。只需要设置路径例如“/sbin”。
-    </p>
-    </dd>
-
-<dt><a name="IF_UP_CMD"></a>if_up_cmd <span class="version">V3.2 -</span></dt>
-    <dd>
-    <p>
-    	本参数指定用于启用虚拟 IP 的命令。设置命令和参数例如：'ifconfig eth0:0 inet $_IP_$ netmask 255.255.255.0'。
-    	$_IP_$ 将被 <a href="#DELEGATE_IP">delegate_IP</a> 指定的 IP 地址替换。
-    </p>
-    </dd>
-
-<dt><a name="IF_DOWN_CMD"></a>if_down_cmd <span class="version">V3.2 -</span></dt>
-    <dd>
-    <p>
-    	本参数指定用于停用虚拟 IP 的命令。设置命令和参数例如：'ifconfig eth0:0 down'。
-    </p>
-    </dd>
-
-<dt><a name="ARPING_PATH"></a>arping_path <span class="version">V3.2 -</span></dt>
-    <dd>
-    <p>
-    	本参数指定用于在虚拟 IP 切换后用于发送 ARP 请求的命令的所在路径。
-      只需要设置路径例如“/usr/sbin”。
-    </p>
-    </dd>
-
-<dt><a name="ARPING_CMD"></a>arping_cmd <span class="version">V3.2 -</span></dt>
-    <dd>
-    <p>
-    	本参数指定在进行虚拟 IP 切换后用于发送 ARP 请求的命令。设置命令和参数例如：'arping -U $_IP_$ -w 1'。
-      $_IP_$ 将被 <a href="#DELEGATE_IP">delegate_IP</a> 指定的 IP 地址替换。
-    </p>
-    </dd>
-</dl>
-
-<h3>看门狗服务器自监控</h3>
+<h3>Watchdog communication</h3>
 <dl>
 <dt><a name="WD_HOSTNAME"></a>wd_hostname <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
-    	指定用于相互监控的看门狗进程的主机名或 IP 地址。
+    指定 pgpool-II 的主机名或者 IP 地址。这用于发送/接收查询和通讯包，也用于标记看门狗。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
     </p>
     </dd>
 
 <dt><a name="WD_PORT"></a>wd_port <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
-      指定用于相互监控的看门狗进程的端口。
+    指定看门狗的通信端口。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
+
+<dt><a name="WD_AUTHKEY"></a>wd_authkey <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    本选项指定用于看门狗通信的认证密钥。所有的 pgpool-II 必须有相同的密钥。
+    从使用不同密钥的看门狗发送过来的包将被拒绝。
+    本密钥也被用于生命检测被设置为心跳模式时的心跳信号。如果本值为空（默认）则看门狗不使用认证。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
     </p>
     </dd>
 </dl>
 
-<h3>监控服务器</h3>
+<h3>连接到上游服务器</h3>
+
+<dl>
+<dt><a name="TRUSTED_SERVERS"></a>trusted_servers <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    用于检测上游连接的可信服务器列表。每台服务器都应能响应 ping。
+    指定一个用逗号分隔的服务器列表例如 "hostA,hostB,hostC"。
+    如果没有任何服务器可以 ping 通，则看门狗认为 pgpool-II 出故障了。
+    </p>
+    <p>
+    如果本选项为空，则看门狗不检查上游连接。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
+
+<dt><a name="PING_PATH"></a>ping_path <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    本参数指定用于监控上游服务器的 ping 命令的路径。只需要设置路径例如 "/bin" 。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
+</dl>
+
+<h3>虚拟 IP 控制</h3>
+
+<p>
+配置虚拟 IP 接口相关控制
+</p>
+
+<dl>
+<dt><a name="DELEGATE_IP"></a>delegate_IP <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    指定客户端的服务（例如应用服务等）连接到的 pgpool-II 的虚拟 IP (VIP) 地址。
+    当一个 pgpool-II 从备节点切换为激活节点时，pgpool-II 接管这个 VIP。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
+
+<dt><a name="IFCONFIG_PATH"></a>ifconfig_path <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    本参数指定用于切换 IP 地址的命令的所在路径。
+    只设置路径，例如 "/sbin"。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
+
+<dt><a name="IF_UP_CMD"></a>if_up_cmd <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    本参数指定一个命令用以启用虚拟 IP。设置命令和参数，例如 "ifconfig eth0:0 inet $_IP_$ netmask 255.255.255.0"。
+    参数 $_IP_$  会被 <a href="#DELEGATE_IP">delegate_IP</a> 设置的值替换。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
+
+<dt><a name="IF_DOWN_CMD"></a>if_down_cmd <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    本参数指定一个命令用以停用虚拟 IP。设置命令和参数，例如 "ifconfig eth0:0 down"。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
+
+<dt><a name="ARPING_PATH"></a>arping_path <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    本参数指定在发生虚拟 IP 切换后用于发送一个 ARP 请求的命令的所在路径。只设置路径，例如 "/sbin"。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
+
+<dt><a name="ARPING_CMD"></a>arping_cmd <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    本参数指定一个命令用以在发生虚拟 IP 切换后用于发送一个 ARP 请求的命令。
+    设置命令和参数，例如 "arping -U $_IP_$ -w 1"。
+    参数 $_IP_$  会被 <a href="#DELEGATE_IP">delegate_IP</a> 设置的值替换。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
+</dl>
+
+<h3>角色升级时的行为</h3>
+
+<p>配置当 pgpool-II 角色升级为活跃（持有虚拟 IP ）时的行为
+
+<dl>
+<dt><a name="CLEAR_MEMQCACHE_ON_ESCALATION"></a>clear_memqcache_on_escalation <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    如果本值为 on，pgpool-II 在升级为活跃状态时清空所有的共享内存中的查询缓存。
+    这会避免新激活的 pgpool-II 使用旧的 pgpool-II 而导致的不一致情况。默认值为 on。
+    </p>
+    <p>
+    本选项只有在 <a href="#MEMQCACHE_METHOD">memqcache_method</a> 为 'shmem' 时生效。
+    </p>
+    </dd>
+
+<dt><a name="WD_ESCALATION_COMMAND"></a>wd_escalation_command <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    在 pgpool-II 在升级为活跃状态时看门狗执行本命令。执行时间在虚拟 IP 启用之前。
+    </p>
+    </dd>
+</dl>
+
+<h3>pgpool-II 存活情况查询</h3>
+
+<p>看门狗定期检查 pgpool-II 的状态。这被称为“存活检查”。
+
+<h4>通用</h4>
+
+<dl>
+<dt><a name="WD_LIFECHECK_METHOD"></a>wd_lifecheck_method <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    本参数指定存活检查的模式。可以是 'heartbeat' (默认) 或者 'query'。
+    </p>
+    <p>
+    在 'heartbeat' 模式中，看门狗定期发送心跳信号（UDP 包）到其他的 pgpool-II。看门狗也从其他 pgpool-II 获取信号。
+    如果在一段时间内没有收到信号，看门狗则认为那个 pgpool-II 发生了故障。
+    </p>
+    <p>
+    在 'query' 模式中，看门狗发送监控查询到其他的 pgpool-II 并检查反馈情况。
+    </p>
+    <p>
+    <font color="red">警告：如果你打算以查询模式使用看门狗，你需要设置 <a href="#NUM_INIT_CHILDREN">num_init_children</a>
+    到足够大的值。这是因为看门狗进程是以 pgpool-II 客户端的方式连接。</font>
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
+
+<dt><a name="WD_INTERVAL"></a>wd_interval <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    本参数指定 pgpool-II 进行存活检查的间隔，单位为秒（大于或等于 1）。默认为 10.
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
+</dl>
+
+<h4>心跳模式的配置</h4>
+
+<dl>
+<dt><a name="WD_HEARTBEAT_PORT"></a>wd_heartbeat_port <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    本选项指定接收心跳信号的端口号。本选项仅用于心跳模式。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
+
+<dt><a name="WD_HEARTBEAT_KEEPALIVE"></a>wd_heartbeat_keepalive <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    本选项指定发送心跳信号的间隔（秒）。默认值为 2。本选项仅用于心跳模式。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
+
+<dt><a name="WD_HEARTBEAT_DEADTIME"></a>wd_heartbeat_deadtime <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    如果本选项指定的时间周期内没有收到心跳信号，则看门狗认为远端的 pgpool-II 发生故障。本选项仅用于心跳模式。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
+
+<dt><a name="HEARTBEAT_DEVICE"></a>heartbeat_device<font color="red">0</font> <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    本选项指定用于发送心跳信号的网络设备名。可以指定多个设备。本参数名后面的数字表示“设备序号”，从 0 开始。
+    如果你想位一个设备设置多个目标（<a href="#HEARTBEAT_DESTINATION">heartbeat_destiationN</a>），需要使用不同的序号多次指定这个设备名。
+    本选项仅用于心跳模式。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
+
+<dt><a name="HEARTBEAT_DESTINATION"></a>heartbeat_destination<font color="red">0</font> <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    本选项指定通过由 <a href="#HEARTBEAT_DEVICE">heartbeat_deviceX</a> 指定的设备发送的心跳信号发送的目标。使用 IP 地址或主机名。
+    本参数名后面的数字表示“设备序号”，从 0 开始。本选项仅用于心跳模式。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
+</dl>
+
+<h4>查询模式的配置</h4>
+
+<dl>
+<dt><a name="WD_LIFE_POINT"></a>wd_life_point <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    在确认 pgpool-II 失效时的重试次数（一个大于或等于 1 的数字）。默认为 3。本选项仅用于查询模式。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
+
+<dt><a name="WD_LIFECHECK_QUERY"></a>wd_lifecheck_query <span class="version">V3.2 -</span></dt>
+    <dd>
+    <p>
+    用于检查 pgpool-II 的查询。默认为 "SELECT 1"。本选项仅用于查询模式。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
+
+<dt><a name="WD_LIFECHECK_DBNAME"></a>wd_lifecheck_dbname <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    用于检查 pgpool-II 时连接到的数据库名。默认为  "template1"。本选项仅用于查询模式。
+    </p>
+    </dd>
+
+<dt><a name="WD_LIFECHECK_USER"></a>wd_lifecheck_user <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    用于检查 pgpool-II 的用户名。用户名必须存在于后端的 PostgreSQL 中。默认为 "nobody"。
+    本选项仅用于查询模式。
+    </p>
+    </dd>
+
+<dt><a name="WD_LIFECHECK_PASSWORD"></a>wd_lifecheck_password <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    用于检查 pgpool-II 的密码。默认为 ""。
+    本选项仅用于查询模式。
+    </p>
+    </dd>
+</dl>
+
+<h3>服务监控</h3>
 <dl>
 <dt><a name="OTHER_PGPOOL_HOSTNAME"></a>other_pgpool_hostname<font color="red">0</font>
     <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
-    	指定被监控的 pgpool-II 服务器的主机名。参数末尾的数字表示“服务器id”，必须从 0 开始。
+    指定需要监控的 pgpool-II 服务器主机。这用于发送/接收查询和数据包，同时也是看门狗的标识。
+    本参数名后面的数字表示“服务序号”，从 0 开始。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
     </p>
     </dd>
 
@@ -3118,18 +3389,46 @@ Pgpool-HA 可以在 pgpool 开发网站找到，它是一个开源软件。</p>
     <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
-    	指定被监控的 pgpool-II 服务器上的 pgpool 的端口号。参数末尾的数字表示“服务器id”，必须从 0 开始。
+    指定需要监控的 pgpool-II 服务器的 pgpool 服务的端口。
+    对于查询模式，<a href="#WD_LIFECHECK_QUERY">wd_lifecheck_query</a> 指定的查询语句将被发送到这个端口。
+    本参数名后面的数字表示“服务序号”，从 0 开始。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
     </p>
     </dd>
 
 <dt><a name="OTHER_WD_PORT"></a>other_wd_port<font color="red">0</font> <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
-    	指定 pgpool-II 服务器上的需要被监控的看门狗的端口号。参数末尾的数字表示“服务器id”，必须从 0 开始。
+    指定需要监控的 pgpool-II 服务器的看门狗的端口。
+    本参数名后面的数字表示“服务序号”，从 0 开始。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
     </p>
     </dd>
 </dl>
 
+<h2 id="watchdog_restrictions">看门狗的限制</h2>
+<ul>
+<li>
+在查询模式中，如果所有的数据库节点由于 PostgreSQL 服务出现故障或者由于调用了 pcp_detach_node，
+看门狗会认为 pgpool-II 服务为故障状态并会剥夺虚拟 IP。这样，pgpool-II 的客户端就再也无法通过
+虚拟 IP 连接。这对于避免<i>脑裂</i>很重要，也就是说，这种情况下可能出先多个激活的 pgpool-II。
+</li>
+<li>
+不要通过真实 IP 连接到状态为下线的 pgpool-II。因为状态为下线的 pgpool-II 无法从看门狗获取信息，
+因此它的后端（数据库）信息可能与其他 pgpool-II 不同。
+</li>
+<li>
+为下线状态的 pgpool-I 不能变为激活或者备用的 pgpool-II。从下线状态恢复需要重启 pgpool-II。
+</li>
+<li>
+注意激活状态的 pgpool-II 停机，需要好几秒钟才能等到备用 pgpool-II 提升为激活状态，以确保之前的
+虚拟 IP 下线前的下线通知包被送到其他的 pgpool-II 节点。
+</li>
+</ul>
 <p class="top_link"><a href="#Top">返回顶部</a></p>
 
 <!-- ================================================================================ -->
@@ -3838,24 +4137,38 @@ i	- 立即模式 (immediate mode)
 
 <p>PCP 命令正确退出时状态为0.若由错误出现，将会具有如下的错误状态。
 
-<pre>
-UNKNOWNERR      1      Unknown Error (should not occur)
-EOFERR          2      EOF Error
-NOMEMERR        3      Memory shortage
-READERR         4      Error while reading from the server
-WRITEERR        5      Error while writing to the server
-TIMEOUTERR      6      Timeout
-INVALERR        7      Argument(s) to the PCP command was invalid
-CONNERR         8      Server connection error
-NOCONNERR       9      No connection exists
-SOCKERR         10     Socket error
-HOSTERR         11     Hostname resolution error
-BACKENDERR      12     PCP process error on the server (specifying an invalid ID, etc.)
-AUTHERR         13     Authorization failure
-</pre>
+<table border>
+<tr><th>UNKNOWNERR</th>
+    <td>1</td><td>Unknown Error (should not occur)</td></tr>
+<tr><th>EOFERR</th>
+    <td>2</td><td>EOF Error</td></tr>
+<tr><th>NOMEMERR</th>
+    <td>3</td><td>Memory shortage</td></tr>
+<tr><th>READERR</th>
+    <td>4</td><td>Error while reading from the server</td></tr>
+<tr><th>WRITEERR</th>
+    <td>5</td><td>Error while writing to the server</td></tr>
+<tr><th>TIMEOUTERR</th>
+    <td>6</td><td>Timeout</td></tr>
+<tr><th>INVALERR</th>
+    <td>7</td><td>Argument(s) to the PCP command was invalid</td></tr>
+<tr><th>CONNERR</th>
+    <td>8</td><td>Server connection error</td></tr>
+<tr><th>NOCONNERR</th>
+    <td>9</td><td>No connection exists</td></tr>
+<tr><th>SOCKERR</th>
+    <td>10</td><td>Socket error</td></tr>
+<tr><th>HOSTERR</th>
+    <td>11</td><td>Hostname resolution error</td></tr>
+<tr><th>BACKENDERR</th>
+    <td>12</td><td>PCP process error on the server (specifying an invalid ID, etc.)</td></tr>
+<tr><th>AUTHERR</th>
+    <td>13</td><td>Authorization failure</td></tr>
+</table>
+
 </p>
 
-<h1>内部信息 (Inside information)<a name="internal"></a></h1>
+<h1>内部信息 (Internal information)<a name="internal"></a></h1>
 <p>
 	相比于1.x版本，pgpool-II 2.0.x 带来大量的修改。请注意下面的内容不适用1.x版本。
 </p>
