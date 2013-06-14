@@ -16,11 +16,12 @@
 # directory for *testing* purpose.
 # Do not use this tool for production environment!
 #
-# usage: pgpool_setup [-m r|s][-n num_clusters]
+# usage: pgpool_setup [-m r|s][-n num_clusters][--no-stop]
 # -m s: create an installation as streaming replication mode.
 # (the default)
 # -m r: create an installation as native replication mode.
 #-n num_clusters: create num_clusters PostgreSQL database cluster nodes
+#--no-stop: do not stop pgpool and PostgreSQL after the work
 #
 # The user run this script will become the PostgreSQL super user as
 # well.  Current directory must be empty.  Assume that appropreate
@@ -563,16 +564,17 @@ function wait_for_pgpool_startup {
 ################################################################################
 function usage()
 {
-	echo "usage: $0 [-m r|s] [-n num_clusters]";exit 1
+	echo "usage: $0 [-m r|s] [-n num_clusters] [--no-stop] ";exit 1
 }
 
 #-------------------------------------------
 # Argument check
-# usage: $0 [-m r|s] [-n num_clusters]"
+# usage: $0 [-m r|s] [-n num_clusters] [--no-stop]"
 #-------------------------------------------
 #
 # default mode is streaming replication mode
 MODE="s"
+NO_STOP="false"
 
 while [ $# -gt 0 ]
 do
@@ -586,6 +588,9 @@ do
 	elif [ $1 = "-n" ];then
 		shift
 		NUMCLUSTERS=$1
+	elif [ $1 = "--no-stop" ];then
+		shift
+		NO_STOP="true"
 	elif [ $1 = "--help" -o $1 = "-o" ];then
 		usage
 		exit
@@ -834,8 +839,10 @@ EOF
 echo "pgpool port is $PGPOOL_PORT" >> README.port
 echo "pcp port is $PCP_PORT" >> README.port
 
-echo "shutdown all"
-$SHUTDOWNALL >&5 2>&1
+if [ $NO_STOP = "false" ];then
+	echo "shutdown all"
+	$SHUTDOWNALL >&5 2>&1
+fi
 
 echo "export PGPOOL_PORT=$PGPOOL_PORT" > bashrc.ports
 echo "export PCP_PORT=$PCP_PORT" >> bashrc.ports
@@ -849,3 +856,7 @@ echo "pcp command user name is \"$WHOAMI\", password is \"$WHOAMI\"."
 echo "Each PostgreSQL, pgpool-II and pcp port is as follows:"
 cat README.port
 echo "The info above is in README.port."
+
+if [ $NO_STOP = "true" ];then
+	echo "CAUTION: whole system is still running."
+fi

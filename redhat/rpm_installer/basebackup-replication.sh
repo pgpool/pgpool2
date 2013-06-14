@@ -9,15 +9,13 @@ source /etc/pgpool-II/config_for_script
 
 log=$PGPOOL_LOG_DIR/recovery.log
 
-if [ $master_dir = $NODE0_DIR ];then
-  master_host=$NODE0_HOST
-  master_port=$NODE0_PORT
-  master_dir=$NODE0_DIR
-
-elif [ $master_dir = $NODE1_DIR ];then
+if [ $dest_host = $NODE0_HOST ]; then
   master_host=$NODE1_HOST
   master_port=$NODE1_PORT
-  master_dir=$NODE1_DIR
+
+elif [ $dest_host = $NODE1_HOST ]; then
+  master_host=$NODE0_HOST
+  master_port=$NODE0_PORT
 
 else
   exit 1
@@ -42,7 +40,7 @@ $master_dir/ $PGSUPERUSER@$dest_host:$dest_dir/
 # recovery.conf
 echo "3. create recovery.conf" >> $log
 cat > recovery.conf <<EOF
-restore_command = 'cp $ARCHIVE_DIR/%f %p'
+restore_command = 'scp $PGSUPERUSER@$master_host:$ARCHIVE_DIR/%f %p'
 EOF
 scp recovery.conf $PGSUPERUSER@$dest_host:$dest_dir/
 rm -f recovery.conf
