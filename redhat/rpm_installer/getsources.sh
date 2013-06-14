@@ -2,8 +2,9 @@
 
 username=`whoami`
 rpm_dir=$HOME/rpm
-pgpool_src_dir=$HOME/git/pgpool2/master
-admin_src_dir=$HOME/git/pgpooladmin
+git_dir=$HOME/git
+pgpool_src_dir=$git_dir/pgpool2/master
+admin_src_dir=$git_dir/pgpooladmin
 pgdata_template=$HOME/local/pgsql/data
 work_dir=`pwd`/work
 
@@ -79,6 +80,7 @@ cp -f $admin_src_dir/conf/pgmgt.conf.php $work_dir/installer/templates/
 
 initdb -D data_tmp --no-locale -E UTF8 > /dev/null 2>&1
 cp -f data_tmp/postgresql.conf  $work_dir/installer/templates/
+sed -i "s/\(replication \+\)$USER/\1postgres/g" data_tmp/pg_hba.conf
 cp -f data_tmp/pg_hba.conf      $work_dir/installer/templates/
 rm -rf data_tmp
 

@@ -1,7 +1,7 @@
 #! /bin/bash
 PATH=/bin:/sbin:/usr/bin:/usr/sbin
 
-MJ_VERSION=3.2
+MJ_VERSION=3.3
 PKG_NAME_FOR_RPM=pgpool
 PKG_NAME_FOR_SHOW=pgpool-II
 
