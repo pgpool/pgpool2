@@ -1,0 +1,322 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head>
+<title>pgpool-II 入门教程 [ 基于内存的查询缓存 ]</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<link href="pgpool.css" rel="stylesheet" type="text/css">
+</head>
+<body bgcolor="#ffffff">
+
+
+<div id="top" class="header_text">pgpool-II 入门教程 [ 基于内存的查询缓存 ]</div>
+
+<div id="menu">
+    <div id="navcontainer">
+      <ul id="navlist">
+      <li><a href="#thisis">关于本文档</a></li>
+      <li><a href="#basic">基于内存的查询缓存</a>
+          <ul>
+          <li><a href="#memqcache_config">配置 pgpool.conf</a></li>
+          <li><a href="#basic_start">启动 pgpool</a></li>
+          <li><a href="#basic_try">试用查询缓存</a></li>
+          </ul>
+      </li>
+      <li><a href="#more">更多内容</a>
+          <ul>
+          <li><a href="#invalidation">自动失效</a></li>
+          <li><a href="#white_and_black_list">白名单和黑名单</a></li>
+          <li><a href="#cache_or_not">其他内容</a></li>
+          </ul>
+      </li>
+      </ul>
+    </div>
+
+    <div class="header_small" align="center">
+    [<a href="tutrial-memqcache-en.html">英文页面</a>]
+    </div>
+</div>
+
+<div id="manual">
+
+<!-- ================================================================================ -->
+
+<h1 id="thisis">关于本文档</h1>
+
+<p>在本教程中，将讲解一个简单的方法来在共享内存中试用“基于内存的查询缓存”。</p>
+<p>你需要的是一个安装有 PostgreSQL 和 pgpool-II 的 Linux 测试环境。你可以在任何模式中使用
+基于内存的查询缓存：复制模式，主/备模式和原始模式。</p>
+
+<p class="top_link"><a href="#Top">返回顶部</a></p>
+
+<!-- ================================================================================ -->
+
+<h1 id="basic">基于内存的查询缓存</h1>
+
+<h2 id="memqcache_config">配置 pgpool.conf</h2>
+
+<h3>基本参数</h3>
+
+<p>设置 "memory_cache_enabled" 为 on 以启用基于内存的查询缓存功能。</p>
+<pre># If on, use the memory cache functionality, off by default
+memory_cache_enabled = <b>on</b>
+</pre>
+
+<p>pgpool 会建立“OID 映射”文件，它用于指明哪个缓存用于哪个数据库和表。指定你希望用于这个用途的目录。</p>
+<pre># Temporary work directory to record table oids
+memqcache_oiddir = '/var/log/pgpool/oiddir'
+</pre>
+
+<h3 id="config_shmem">关于共享内存</h3>
+
+<p>参数 "memqcache_method" 用于选择缓存的存储类型，默认为 "shmem"。</p>
+<pre># Cache storage method. either 'shmem'(shared memory) or 'memcached'. 'shmem' by default
+memqcache_method = '<b>shmem</b>'
+</pre>
+
+<h3>关于日志</h3>
+<p>参数 "log_per_node_statement" 可以帮助你了解某个查询是在哪个后端上执行。设置本参数为 on。</p>
+<pre>log_per_node_statement = on
+                                   # Log all statements
+                                   # with node and backend informations
+</pre>
+
+<h2 id="basic_start">启动 pgpool</h2>
+
+<p>使用 "-n" 参数（表示以非守护进程模式）启动 pgpool-II 并重定向日志消息到 pgpool.log 中。</p>
+<pre>$ {installed_dir}/bin/pgpool -n -f {installed_dir}/etc/pgpool.conf &gt; pgpool.log 2&gt;&amp;1
+</pre>
+
+<p>建立数据库和表。</p>
+<pre>$ createdb -p 9999 test
+
+$ psql -p 9999 test
+test=&gt; CREATE TABLE table_cache_ok (a INT);
+CREATE TABLE
+
+test=&gt; INSERT INTO table_cache_ok VALUES (1), (2), (3);
+INSERT 0 3
+
+test=&gt; SELECT * FROM table_cache_ok ORDER BY a;
+ a
+---
+ 1
+ 2
+ 3
+(3 rows)
+</pre>
+
+<!-- -------------------------------------------------------------------------------- -->
+
+<h2 id="basic_try">试用查询缓存</h2>
+
+<p>执行一个 SELECT 语句。</p>
+<pre>test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+ a
+---
+ 1
+(1 row)
+</pre>
+
+<p>log_per_node_statement 的输出显示 SELECT 语句被实际执行了。</p>
+<pre>LOG:   DB node id: 0 backend pid: 11203 statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<p>再次执行相同的 SELECT 语句。</p>
+<pre>test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+ a
+---
+ 1
+(1 row)
+</pre>
+
+<p>这次日志消息显示 SELECT 语句的结果来源于缓存。</p>
+<pre>LOG:   <b>query result fetched from cache.</b> statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<p class="top_link"><a href="#Top">返回顶部</a></p>
+
+<!-- ================================================================================ -->
+
+<h1 id="more">查询缓存的更多内容</h1>
+
+<h2 id="invalidation">自动失效</h2>
+
+<h3 id="invalidation_when_update">当一个表被更新</h3>
+<p>当一个表被更新，这个表中缓存的 SELECT 的结果会过期。
+pgpool 默认情况下会自动忽略那个表上的所有缓存。</p>
+
+<h4 id="invalidation_config">配置</h4>
+<p>通过 "memqcache_auto_cache_invalidation" 指定动作。它的默认值是 "on"。</p>
+<pre># If on, invalidation of query cache is triggered by corresponding
+# DDL/DML/DCL(and memqcache_expire).  If off, it is only triggered
+# by memqcache_expire.  on by default.
+memqcache_auto_cache_invalidation = on
+</pre>
+
+<p>修改这个参数的值后，重启 pgpool。</p>
+
+<h4 id="invalidation_try">尝试自动失效的效果</h4>
+<p>确认你可以从缓存中获得 SELECT 语句的结果。</p>
+<pre>test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   <b>query result fetched from cache.</b> statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<p>在这个表中执行 INSERT INTO 。</p>
+<pre>test=&gt; INSERT INTO table_cache_ok VALUES (5);
+INSERT 0 1
+</pre>
+
+<p>再次执行相同的 SELECT 语句，这条 SELECT 语句被实际执行。</p>
+<pre>test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<h3 id="expire">缓存过期</h3>
+<p>pgpool 会忽略比指定过期周期更旧的缓存。</p>
+
+<h4 id="expire_config">配置</h4>
+<p>通过 "memqcache_expire" 指定过期周期。默认为 0 秒，不过为了测试我们在这里设置为 5 秒。</p>
+<pre># Memory cache entry life time specified in seconds.
+# 0 means infinite life time. 0 by default.
+memqcache_expire = 5
+</pre>
+
+<p>修改这个参数的值后，重启 pgpool。</p>
+
+<h4 id="expire_try">Try</h4>
+
+<p>确认你可以从缓存中获得 SELECT 语句的结果。</p>
+<pre>test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   <b>query result fetched from cache.</b> statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<p>等 5 秒钟...</p>
+
+<p>再次执行相同的 SELECT 语句，这条 SELECT 语句被实际执行。</p>
+<pre>test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<!-- -------------------------------------------------------------------------------- -->
+
+<h2 id="white_and_black_list">白名单和黑名单</h2>
+<h3 id="whitelist">只缓存某些表的结果</h3>
+
+<h4 id="whitelist_config">配置</h4>
+<p>如果你只想缓存某些表的结果，可以通过 "white_memqcache_table_list" 指定。</p>
+<p>可以使用正则表达式（会自动添加 ^ 和 $）。</p>
+<pre>white_memqcache_table_list = '.*_cache_ok'
+                                   # Comma separated list of table names to memcache
+                                   # that don't write to database
+                                   # Regexp are accepted
+</pre>
+
+<p>修改这个参数的值后，重新加载配置文件。</p>
+<pre>$ {installed_dir}/bin/pgpool reload
+</pre>
+
+<h4 id="whitelist_try">尝试</h4>
+<p>建立一个不需要缓存的表</p>
+<pre>$ psql -p 9999 test
+test=&gt; CREATE TABLE table_cache_ng (a INT);
+CREATE TABLE
+
+test=&gt; INSERT INTO table_cache_ng VALUES (1), (2), (3);
+INSERT 0 3
+</pre>
+
+<p>确认是否 SELECT FROM 在 white_memqcache_table_list 中的表被缓存。</p>
+<pre>test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT oid FROM pg_database WHERE datname = 'test'
+
+test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   <b>query result fetched from cache.</b> statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<p>确认是否 SELECT FROM 不在 white_memqcache_table_list 中的表不被缓存。</p>
+<pre>test=&gt; SELECT * FROM table_cache_ng WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT * FROM table_cache_ok WHERE a = 1;
+
+test=&gt; SELECT * FROM table_cache_ng WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<h3 id="blacklist">不缓存某些表的结果</h3>
+<h4 id="blacklist_config">Config</h4>
+<p>如果你不想缓存某些表的结果，可以通过 "black_memqcache_table_list" 指定。</p>
+<p>可以使用正则表达式（会自动添加 ^ 和 $）。</p>
+<pre>black_memqcache_table_list = '.*_cache_ng'
+                                   # Comma separated list of table names not to memcache
+                                   # that don't write to database
+                                   # Regexp are accepted
+</pre>
+
+<p>修改这个参数的值后，重新加载配置文件。</p>
+<pre>$ {installed_dir}/bin/pgpool reload
+</pre>
+
+<h4 id="blacklist_try">Try</h4>
+<p>确认是否 SELECT FROM 在 black_memqcache_table_list 中的表不被缓存。</p>
+<pre>test=&gt; SELECT * FROM table_cache_ng WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT * FROM table_cache_ok WHERE a = 1;
+
+test=&gt; SELECT * FROM table_cache_ng WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<p>确认是否 SELECT FROM 不在 black_memqcache_table_list 中的表被缓存。</p>
+<pre>test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 11203 statement: SELECT oid FROM pg_database WHERE datname = 'test'
+
+test=&gt; SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   <b>query result fetched from cache.</b> statement: SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<!-- -------------------------------------------------------------------------------- -->
+
+<h2 id="cache_or_not">还有什么内容？</h2>
+
+<h3 id="maxcacge">太大的结果集</h3>
+<p>SELECT 的结果集的大小会受限于 "memqcache_maxcache"。</p>
+<pre># Maximum SELECT result size in bytes.
+# Must be smaller than memqcache_cache_block_size. Defaults to 400KB.
+memqcache_maxcache = 409600
+</pre>
+
+<p>如果结果集大于 memqcache_maxcache，日志信息会告诉我们。
+以下是一个示例，memqcache_maxcache 被设置为 1024 字节而 SELECT 出来的表的大小超过 10 MB。</p>
+<pre>LOG:   DB node id: 0 backend pid: 17749 statement: SELECT * FROM pgbench_accounts ;
+LOG:   pool_add_temp_query_cache: <b>data size exceeds memqcache_maxcache</b>.
+                                  current:983 requested:110 memq_maxcache:1024
+</pre>
+
+<h3 id="no_query_cache">指定某个查询不需要缓存</h3>
+<p>如果白名单和黑名单还不够用，可以在查询最开始的地方
+put the text "/* NO QUERY CACHE */" at the head of the queries.</p>
+
+<pre>LOG:   statement: SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   query result fetched from cache. statement: SELECT * FROM table_cache_ok WHERE a = 1;
+
+LOG:   statement: /* NO QUERY CACHE */ SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 18070 statement: /* NO QUERY CACHE */ SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   statement: /* NO QUERY CACHE */ SELECT * FROM table_cache_ok WHERE a = 1;
+LOG:   DB node id: 0 backend pid: 18070 statement: /* NO QUERY CACHE */ SELECT * FROM table_cache_ok WHERE a = 1;
+</pre>
+
+<p>当然，这种方法需要修改你的程序。</p>
+
+<p class="top_link"><a href="#Top">返回顶部</a></p>
+
+<!-- ================================================================================ -->
+
+</div>
+
+<div class="copyright" style="clear: both">
+<hr>
+<copyright>
+Copyright © 2003 – 2013 pgpool Global Development Group
+</copyright>
+</div>
+
+
+
+</body></html>
