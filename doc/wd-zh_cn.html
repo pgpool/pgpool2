@@ -1,0 +1,201 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html;charset=gbk">
+<link rel="stylesheet" href="./pgpool-ja.css" type="text/css">
+<title>看门狗手册</title>
+</head>
+<body>
+<h1>什么是看门狗</h1>
+<p>
+  “看门狗”是一个 pgpool-II 的子进程，用于为 pgpool-II 添加高可用性功能。看门狗添加的功能包括：
+
+	<ul>
+	<li>pgpool 服务的存活检查</li>
+	<p>
+	看门狗监控 pgpool 的<i>服务</i>而不是进程。它通过被看门狗监控的 pgpool 发送查询到 PostgreSQL 并检查响应。
+	而且看门狗监控从 pgpool 到上游服务器（应用服务器等）的链路。
+	从上游服务器到 pgpool 之间的连接被以 pgpool 的服务的方式进行监控。
+	</p>
+
+	<li>看门狗进程间相互监控</li>
+	<p>
+	看门狗进程交换被监控服务器上的信息信息以保证信息是最新的，并允许看门狗进程相互监控对方。
+	</p>
+
+	<li>在某些故障被检测到的情况下改变活跃/备用状态</li>
+	<p>
+	当 pgpool 服务中探测到故障，看门狗会把这个内容通知到其他看门狗。
+	看门狗在确认旧的活跃的 pgpool 无法提供服务时，通过投票确定新的 pgpool 活跃节点，并改变活跃/备用状态。
+	</p>
+
+	<li>在服务切换的时候同步实现虚拟 IP 地址分配</li>
+	<p>
+	当一个备用的 pgpool 服务提升为活跃状态，新的活跃服务器启动虚拟 IP 接口。
+	也就是，之前活跃的服务器停用虚拟 IP 接口。
+	这让活跃的 pgpool 使用相同的 IP 地址，即使是在发生服务器切换的时候。
+	</p>
+
+	<li>在恢复后，自动注册服务为备用状态</li>
+	<p>
+	但故障的服务器恢复或新的服务器被加入，看门狗进程同时会通知其他的看门狗进程关于新服务器的信息，
+	而在活跃服务器以及其他服务器上的看门狗进程会接收这些信息。然后，新加入的服务器会被注册为备用节点。
+	</p>
+	</ul>
+</p>
+<h2>服务器结构图</h2>
+
+<p>
+下图描述了 pgpool-II 和看门狗进程的配置情况。
+</p>
+<table align=center width=800>
+<tr><td>
+<img src="wd-en.jpg" alt="watchdog server composition" hight=70% width=70%>
+</td></tr>
+</table>
+<h2>启动/停止看门狗</h2>
+<p>
+看门狗进程岁 pgpool-II 一起启停，也就是说，没有单独的命令启停它。
+然而，pgpool-II 必须以 <font color="red">root 权限</font>启动，因为看门狗进程需要控制虚拟 IP 接口。
+</p>
+<h2>配置看门狗 (pgpool.conf)</h2>
+<p>
+	看门狗的配置参数也在 pgpool.conf 中。在 pgpool.conf.sample 文件中的 WATCHDOG 小节有示例配置。
+	以下所有的选项都是配置看门狗进程所需要的。
+</p>
+
+<h3>基础配置</h3>
+<dl>
+
+<dt><a name="USE_WATCHDOG"></a>use_watchdog</dt>
+<dd>
+<p>
+如果为 on，则激活看门狗。默认为 off。
+</p>
+</dd>
+
+<dt><a name="TRUSTED_SERVERS"></a>trusted_servers</dt>
+<dd>
+<p>
+  用于检查上游连接的可信服务器列表。每台服务器都邀请能响应 ping。
+  指定一系列用逗号分隔的服务器列表，例如 "hostA,hostB,hostC"。
+</p>
+</dd>
+
+<dt><a name="DELEGATE_IP"></a>delegate_IP</dt>
+<dd>
+<p>
+	指定客户端服务器（应用服务器等）连接到的 pgpool-II 的虚拟 IP 地址(VIP)。
+	当一个 pgpool 从备用节点切换到活跃状态，pgpool 会使用这个 VIP。
+</p>
+</dd>
+
+<dt><a name="WD_HOSTNAME"></a>wd_hostname</dt>
+<dd>
+<p>
+	指定用于互相监控的看门狗进程的主机名或 IP 地址。
+</p>
+</dd>
+
+<dt><a name="WD_PORT"></a>wd_port</dt>
+<dd>
+<p>
+	指定用于互相监控的看门狗进程的端口号。
+</p>
+</dd>
+
+<dt><a name="WD_INTERVAL"></a>wd_interval</dt>
+<dd>
+<p>
+  本参数指定 pgpoll-II 用于存活检测的间隔，单位为秒（大于或等于 1 的数字）。
+</p>
+</dd>
+
+<dt><a name="PING_PATH"></a>ping_path</dt>
+<dd>
+<p>
+  本参数指定用于监控上游服务器的 ping 命令的路径。只需要设置路径例如 "/bin" 。 
+</p>
+</dd>
+
+<dt><a name="IFCONFIG_PATH"></a>ifconfig_path</dt>
+<dd>
+<p>
+	T本参数指定用于切换 IP 地址的命令的所在路径。 只设置路径，例如 "/sbin"。
+</p>
+</dd>
+
+<dt><a name="IF_UP_CMD"></a>if_up_cmd</dt>
+<dd>
+<p>
+	本参数指定一个命令用以启用虚拟 IP。设置命令和参数，例如 "ifconfig eth0:0 inet $_IP_$ netmask 255.255.255.0"。
+	参数 $_IP_$ 会被 delegate_IP 设置的值替换。 
+</p>
+</dd>
+
+<dt><a name="IF_DOWN_CMD"></a>if_down_cmd</dt>
+<dd>
+<p>
+	本参数指定一个命令用以停用虚拟 IP。设置命令和参数，例如 "ifconfig eth0:0 down"。
+</p>
+</dd>
+
+<dt><a name="ARPING_PATH"></a>arping_path</dt>
+<dd>
+<p>
+	本参数指定在发生虚拟 IP 切换后用于发送一个 ARP 请求的命令的所在路径。只设置路径，例如 "/usr/sbin"。
+</p>
+</dd>
+
+<dt><a name="ARPING_CMD"></a>arping_cmd</dt>
+<dd>
+<p>
+	本参数指定一个命令用以在发生虚拟 IP 切换后用于发送一个 ARP 请求的命令。
+	设置命令和参数，例如 "arping -U $_IP_$ -w 1"。参数 $_IP_$ 会被 delegate_IP 设置的值替换。
+</p>
+</dd>
+
+<dt><a name="WD_LIFE_POINT"></a>wd_life_point</dt>
+<dd>
+<p>
+  在确认 pgpool-II 失效时的重试次数（一个大于或等于 1 的数字）。
+</p>
+</dd>
+
+<dt><a name="WD_LIFECHECK_QUERY"></a>wd_lifecheck_query</dt>
+<dd>
+<p>
+  用于检查 pgpool-II 的查询。默认为 "SELECT 1"。
+</p>
+</dd>
+
+</dl>
+
+<h3>被监控的服务器</h3>
+<dl>
+<dt><a name="OTHER_PGPOOL_HOSTNAME"></a>other_pgpool_hostname<font color="red">0</font></dt>
+<dd>
+<p>
+	指定需要监控的 pgpool-II 服务器主机。这用于发送/接收查询和数据包，同时也是看门狗的标识。
+	本参数名后面的数字表示“服务序号”，从 0 开始。 
+</p>
+</dd>
+
+<dt><a name="OTHER_PGPOOL_PORT"></a>other_pgpool_port<font color="red">0</font></dt>
+<dd>
+<p>
+	指定需要监控的 pgpool-II 服务器的 pgpool 服务的端口。对于查询模式，wd_lifecheck_query 指定的查询语句将被发送到这个端口。
+	本参数名后面的数字表示“服务序号”，从 0 开始。 
+</p>
+</dd>
+
+<dt><a name="OTHER_WD_PORT"></a>other_wd_port<font color="red">0</font></dt>
+<dd>
+<p>
+	指定需要监控的 pgpool-II 服务器的看门狗的端口。
+	本参数名后面的数字表示“服务序号”，从 0 开始。 
+</p>
+</dd>
+</dl>
+</body>
+</html>
