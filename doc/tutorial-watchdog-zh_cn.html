@@ -1,0 +1,301 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head>
+<title>pgpool-II 入门教程 [ 看门狗 ]</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<link href="pgpool.css" rel="stylesheet" type="text/css">
+
+<style type="text/css">
+img {
+    border: 1px solid black;
+    padding: 10px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+</style>
+
+</head>
+<body bgcolor="#ffffff">
+
+
+<div id="top" class="header_text">pgpool-II 入门教程 [ 看门狗 ]</div>
+
+<div id="menu">
+    <div id="navcontainer">
+      <ul id="navlist">
+      <li><a href="#thisis">关于本文档</a></li>
+      <li><a href="#basic">基础配置</a>
+          <ul>
+          <li><a href="#basic_config">pgpool.conf</a></li>
+          <li><a href="#basic_start">启动 pgpool</a></li>
+          </ul>
+      </li>
+      <li><a href="#try">试用看门狗</a>
+          <ul>
+          <li><a href="#try_vip">连接到虚拟 IP</a></li>
+          <li><a href="#try_switch">切换虚拟 IP</a></li>
+          </ul>
+      </li>
+      <li><a href="start#more">更多内容</a>
+          <ul>
+          <li><a href="#more_lifecheck">存活检测（lifecheck）</a></li>
+          <li><a href="#more_switch">虚拟 IP</a></li>
+          </ul>
+      </li>
+      </ul>
+    </div>
+
+    <div class="header_small" align="center">
+    [<a href="tutorial-watchdog-en.html">英文页面</a>]
+    </div>
+</div>
+
+<div id="manual">
+
+<!-- ================================================================================ -->
+
+<h1 id="thisis">关于本文档</h1>
+
+<p>在本教程中，我将讲解试用“看门狗”的简单方法。</p>
+<p>你需要的是两台装有 pgpool-II 的 Linux 测试环境以及一个 PostgreSQL 安装在这些相同机器或者其他机器。
+只需要一个后端（PostgreSQL）节点就够了。
+</p>
+<p>你可以在任何模式中使用基于内存的查询缓存：复制模式，主/备模式和原始模式。</p>
+
+<p>我使用 "osspc16" 作为活跃（Active）节点以及 "osspc20" 作为备用（Standby）节点。
+"Someserver" 表示其中一台。</p>
+
+<p><img src="watchdog.png" alt=""></p>
+
+<p class="top_link"><a href="#Top">返回顶部</a></p>
+
+<!-- ================================================================================ -->
+
+<h1 id="basic">基础配置</h1>
+
+<h2 id="basic_config">pgpool.conf</h2>
+
+<h3>同时在活跃节点和备用节点中配置</h3>
+<p>同时在活跃节点和备用节点中配置以下参数</p>
+
+<h4 id="basic_config_ebable">启用看门狗</h4>
+<p>首先，设置 "use_watchdog" 为 on 以启用看门狗。</p>
+<pre>use_watchdog = <b>on</b>
+                                    # Activates watchdog
+</pre>
+
+<h4 id="basic_config_upper">上游服务器</h4>
+<p>指定上游服务器（例如应用服务器）。留空就够了。</p>
+<pre>trusted_servers = ''
+                                    # trusted server list which are used
+                                    # to confirm network connection
+                                    # (hostA,hostB,hostC,...)
+</pre>
+
+<h4 id="basic_config_watchdog">看门狗</h4>
+<p>指定看门狗的端口</p>
+<pre>wd_port = 9000
+                                    # port number for watchdog service
+</pre>
+
+<h4 id="basic_config_vip">虚拟 IP</h4>
+<p>在 "delegate_IP" 中设置用于虚拟 IP 地址的 IP 地址，它不能被任何人使用。</p>
+<pre>delegate_IP = '<b>133.137.177.143</b>'
+                                    # delegate IP address
+</pre>
+
+<h3 id="basic_config_lifecheck">监控</h3>
+<p>下一步，为每个 pgpool 设置参数。</p>
+<p>指定 "other_pgpool_hostname0"，"other_pgpool_port0" 和 "other_wd_port0"，对应要监控的 pgpool 和看门狗。</p>
+<p>[*] other_pgpool_hostname0 必须是 hostname 命令返回的值。</p>
+
+<h4>活跃节点 (osspc16)</h4>
+<pre>other_pgpool_hostname0 = '<b>osspc20</b>'
+                                    # Host name or IP address to connect to for other pgpool 0
+other_pgpool_port0 = 9999
+                                    # Port number for othet pgpool 0
+other_wd_port0 = 9000
+                                    # Port number for othet watchdog 0
+</pre>
+
+<h4>备用节点 (osspc20)</h4>
+<pre>other_pgpool_hostname0 = '<b>osspc16</b>'
+                                    # Host name or IP address to connect to for other pgpool 0
+other_pgpool_port0 = 9999
+                                    # Port number for othet pgpool 0
+other_wd_port0 = 9000
+                                    # Port number for othet watchdog 0
+</pre>
+
+<!-- -------------------------------------------------------------------------------- -->
+
+<h2 id="basic_start">启动 pgpool</h2>
+
+<p>以 root 身份使用 "-n" 参数（表示以非守护进程模式）启动每个 pgpool-II 并重定向日志消息到 pgpool.log 中。
+
+<h3>启动活跃节点 (osspc16) 上的 pgpool</h3>
+<p>启动活跃节点上的 pgpool。</p>
+<pre>[user@osspc16]$ su -
+[root@osspc16]# {installed_dir}/bin/pgpool -n -f {installed_dir}/etc/pgpool.conf &gt; pgpool.log 2&gt;&amp;1
+</pre>
+
+<p>日志显示 pgpool 获得了虚拟 IP 并启动了看门狗进程。</p>
+<pre>ERROR: wd_create_send_socket: connect() is failed(Connection refused)
+LOG:   wd_escalation: eslcalated to master pgpool
+ERROR: wd_create_send_socket: connect() is failed(Connection refused)
+LOG:   wd_escalation:  <b>escaleted to delegate_IP holder</b>
+LOG:   wd_init: <b>start watchdog</b>
+LOG:   pgpool-II successfully started. version 3.2beta1 (namameboshi)
+</pre>
+
+<h3>启动备用节点 (osspc20) 上的 pgpool</h3>
+<p>启动备用节点上的 pgpool。</p>
+<pre>[user@osspc20]$ su -
+[root@osspc20]# {installed_dir}/bin/pgpool -n -f {installed_dir}/etc/pgpool.conf &gt; pgpool.log 2&gt;&amp;1
+</pre>
+
+<p>当 other_pgpool_hostname 列出的所有看门狗已经启动，存活检测启动。
+在本例中，osspc16 是除了本节点之外的唯一的其他看门狗，因此存活检测已经启动了。</p>
+<pre>LOG:   wd_init: start watchdog
+LOG:   pgpool-II successfully started. version 3.2beta1 (namameboshi)
+LOG:   watchdog: <b>lifecheck started</b>
+</pre>
+
+<p>在活跃节点中，存活检测也启动了。</p>
+<pre>LOG:   watchdog: <b>lifecheck started</b>
+</pre>
+
+<p class="top_link"><a href="#Top">返回顶部</a></p>
+
+<!-- ================================================================================ -->
+
+<h1 id="try">试用</h1>
+
+<h2 id="try_vip">连接到虚拟 IP</h2>
+<p>通过 ping 确认虚拟 IP 地址。</p>
+<pre>[user@someserver]$ ping 133.137.177.142
+PING 133.137.177.143 (133.137.177.143) 56(84) bytes of data.
+64 bytes from 133.137.177.143: icmp_seq=1 ttl=64 time=0.328 ms
+64 bytes from 133.137.177.143: icmp_seq=2 ttl=64 time=0.264 ms
+64 bytes from 133.137.177.143: icmp_seq=3 ttl=64 time=0.412 ms
+</pre>
+
+<p>确定首先启动的活跃节点获得了虚拟 IP 地址。</p>
+<pre>[root@osspc16]# ifconfig
+eth0      ...
+
+<b>eth0:0</b>    inet addr:133.137.177.143 ...
+
+lo        ...
+</pre>
+
+<p>确定不是最先启动的备用节点没有获得虚拟 IP 地址。</p>
+<pre>[root@osspc20]# ifconfig
+eth0      ...
+
+lo        ...
+</pre>
+
+<p>尝试使用 "psql -h delegate_IP -p port" 连接到 PostgreSQL。</p>
+<pre>[user@someserver]$ psql -h 133.137.177.142 -p 9999 -l
+</pre>
+
+<!-- -------------------------------------------------------------------------------- -->
+
+<h2 id="try_switch">切换虚拟 IP</h2>
+
+<p>确认在活跃节点无法提供服务的时候别用节点是如何工作的。</p>
+
+<p>停止在活跃节点上的 pgpool。</p>
+<pre>[root@osspc16]# {installed_dir}/bin/pgpool stop
+</pre>
+
+<p>然后，备用服务器开始使用虚拟 IP。日志显示：</p>
+<pre>LOG:   wd_escalation: <b>eslcalated to master pgpool</b>
+ERROR: wd_create_send_socket: connect() is failed(Connection refused)
+LOG:   wd_escalation:  escaleted to delegate_IP holder
+</pre>
+
+<p>通过 ping 这个 IP 地址以确认。</p>
+<pre>[user@someserver]$ ping 133.137.177.142
+PING 133.137.177.143 (133.137.177.143) 56(84) bytes of data.
+64 bytes from 133.137.177.143: icmp_seq=1 ttl=64 time=0.328 ms
+64 bytes from 133.137.177.143: icmp_seq=2 ttl=64 time=0.264 ms
+64 bytes from 133.137.177.143: icmp_seq=3 ttl=64 time=0.412 ms
+</pre>
+
+<p>确认原来活跃的服务器不在使用虚拟 IP 地址。</p>
+<pre>[root@osspc16]# ifconfig
+eth0      ...
+
+lo        ...
+</pre>
+
+<p>确认原来的备用节点使用了虚拟 IP 地址。</p>
+<pre>[root@osspc20]# ifconfig
+eth0      ...
+
+<b>eth0:0</b>    inet addr:133.137.177.143 ...
+
+lo        ...
+</pre>
+
+<p>尝试使用 "psql -h delegate_IP -p port" 连接到 PostgreSQL。</p>
+<pre>[user@someserver]$ psql -h 133.137.177.142 -p 9999 -l
+</pre>
+
+<p class="top_link"><a href="#Top">返回顶部</a></p>
+
+<!-- ================================================================================ -->
+
+<h1 id="more">更多内容</h1>
+
+<h2 id="more_lifecheck">存活检测（Lifecheck）</h2>
+
+<p>以下为一些用于看门狗的监控的参数。</p>
+
+<p>指定检测周期 "wd_interval"，重试次数 "wd_life_point" 以及检测用的查询语句 "wd_lifecheck_query"。</p>
+<pre>wd_interval = 10
+                                    # lifecheck interval (sec) &gt; 0
+wd_life_point = 3
+                                    # lifecheck retry times
+wd_lifecheck_query = 'SELECT 1'
+                                    # lifecheck query to pgpool from watchdog
+</pre>
+
+<!-- -------------------------------------------------------------------------------- -->
+
+<h2 id="more_switch">切换虚拟 IP 地址</h2>
+
+<p>以下为一些用于切换虚拟 IP 地址的参数。</p>
+
+<p>指定切换命令 "if_up_cmd" 和 "if_down_cmd" 以及到这些命令的路径 "ifconfig_path"，
+以及在发生切换后发送 ARP 请求的命令 "arping_cmd" 以及到这个命令的路径 "arping_path"。</p>
+
+<pre>ifconfig_path = '/sbin'
+                                    # ifconfig command path
+if_up_cmd = 'ifconfig eth0:0 inet $_IP_$ netmask 255.255.255.0'
+                                    # startup delegate IP command
+if_down_cmd = 'ifconfig eth0:0 down'
+                                    # shutdown delegate IP command
+
+arping_path = '/usr/sbin'           # arping command path
+
+arping_cmd = 'arping -U $_IP_$ -w 1'
+</pre>
+
+<p class="top_link"><a href="#Top">返回顶部</a></p>
+
+</div>
+
+<!-- ================================================================================ -->
+
+<div class="copyright" style="clear: both">
+<hr>
+<copyright>
+Copyright © 2003 – 2012 pgpool Global Development Group
+</copyright>
+</div>
+
+
+
+</body></html>
