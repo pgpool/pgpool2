@@ -4233,6 +4233,23 @@ Configuration about virtual IP interface control
     You need to restart pgpool-II if you change this value.
     </p>
     </dd>
+
+<dt><a name="HEARTBEAT_DESTINATION_PORT"></a>heartbeat_destination_port<font color="red">0</font> <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    This option specifies the port number of destination of heartbeat signals which is sent from the device specified by
+    <a href="HEARTBEAT_DEVICE">heartbeat_deviceX</a>. 
+    This is usually the same value of <a href="WD_HEARTBEAT_PORT">wd_heartbeat_port</a> 
+    You must set another value if the port number is unusable or there are more than two pgpool-IIs in a host.
+    The number at the end of the parameter name is referred as "device number",
+    and it starts from 0.
+    This works only heartbeat mode.
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
+    </dd>
+</dl>
 </dl>
 
 <h4>Configuration of query mode</h4>

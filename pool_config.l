@@ -2403,6 +2403,24 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 
 		}
+		/* this must be prior to hertbeat_destination */
+		else if (!strncmp(key, "heartbeat_destination_port", 26) &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context) &&
+				 mypid == getpid()) /* this parameter must be modified by parent pid */
+		{
+			int slot;
+
+			slot = atoi(key + 26) ;
+			if (slot < 0 || slot >= WD_MAX_IF_NUM)
+			{
+				pool_error("pool_config: pgpool number %s for heartbeat_destination_port out of range", key);
+				fclose(fd);
+				return(-1);
+			}
+
+			if (context == INIT_CONFIG || (context == RELOAD_CONFIG ))
+				WD_HB_IF(slot).dest_port = atoi(yytext);
+		}
 		else if (!strncmp(key, "heartbeat_destination", 21) &&
 				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context) &&
 				 mypid == getpid()) /* this parameter must be modified by parent pid */

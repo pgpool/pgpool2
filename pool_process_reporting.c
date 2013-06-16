@@ -707,7 +707,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 
 	strncpy(status[i].name, "wd_heartbeat_port", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_heartbeat_port);
-	strncpy(status[i].desc, "port number for heartbeat lifecheck", POOLCONFIG_MAXDESCLEN);
+	strncpy(status[i].desc, "port number for receiving heartbeat signal", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "wd_heartbeat_keepalive", POOLCONFIG_MAXNAMELEN);
@@ -919,7 +919,12 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 
 		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "heartbeat_destination%d", j);
 		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", WD_HB_IF(j).addr);
-		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "destination for sending heartbeat using NIC device %d", j);
+		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "destination host for sending heartbeat using NIC device %d", j);
+		i++;
+
+		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "heartbeat_destination_port%d", j);
+		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", WD_HB_IF(j).dest_port);
+		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "destination port for sending heartbeat using NIC device %d", j);
 		i++;
 	}
 

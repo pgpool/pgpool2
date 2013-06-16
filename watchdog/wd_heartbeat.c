@@ -222,7 +222,7 @@ wd_create_hb_recv_socket(WdHbIf hb_if)
 
 /* send heartbeat signal */
 int
-wd_hb_send(int sock, WdHbPacket * pkt, int len, const char * host)
+wd_hb_send(int sock, WdHbPacket * pkt, int len, const char * host, const int port)
 {
 	int rtn;
 	struct sockaddr_in addr;
@@ -245,7 +245,7 @@ wd_hb_send(int sock, WdHbPacket * pkt, int len, const char * host)
 	memmove((char *) &(addr.sin_addr), (char *) hp->h_addr, hp->h_length);
 
 	addr.sin_family = AF_INET;
-	addr.sin_port = htons(pool_config->wd_heartbeat_port);
+	addr.sin_port = htons(port);
 
 	hton_wd_hb_packet(&buf, pkt);
 
@@ -301,6 +301,7 @@ pid_t wd_hb_receiver(int fork_wait_time, WdHbIf hb_if)
 	WdHbPacket pkt;
 	struct timeval tv;
 	char from[WD_MAX_HOST_NAMELEN];
+	int from_pgpool_port;
 	char buf[(MD5_PASSWD_LEN+1)*2];
 	char pack_str[WD_MAX_PACKET_STRING];
 	int pack_str_len;
@@ -369,17 +370,19 @@ pid_t wd_hb_receiver(int fork_wait_time, WdHbIf hb_if)
 
 			/* who send this packet? */
 			strlcpy(from, pkt.from, sizeof(from));
+			from_pgpool_port = pkt.from_pgpool_port;
 
 			p = WD_List;
 			while (p->status != WD_END)
 			{
-				if (!strcmp(p->hostname, from))
+				if (!strcmp(p->hostname, from) && p->pgpool_port == from_pgpool_port)
 				{
 					/* this is the first packet or the latest packet */
 					if (!WD_TIME_ISSET(p->hb_send_time) ||
 					    WD_TIME_BEFORE(p->hb_send_time, pkt.send_time))
 					{
-						pool_debug("wd_hb_receiver: received heartbeat signal from %s", from);
+						pool_debug("wd_hb_receiver: received heartbeat signal from %s:%d",
+						           from, from_pgpool_port);
 						p->hb_send_time = pkt.send_time;
 						p->hb_last_recv_time = tv;
 					}
@@ -446,6 +449,8 @@ pid_t wd_hb_sender(int fork_wait_time, WdHbIf hb_if)
 		/* contents of packet */
 		gettimeofday(&pkt.send_time, NULL);
 		strlcpy(pkt.from, pool_config->wd_hostname, sizeof(pkt.from));
+		pkt.from_pgpool_port = pool_config->port;
+
 		pkt.status = p->status;
 
 		/* authentication key */
@@ -457,8 +462,8 @@ pid_t wd_hb_sender(int fork_wait_time, WdHbIf hb_if)
 		}
 
 		/* send heartbeat signal */
-		wd_hb_send(sock, &pkt, sizeof(pkt), hb_if.addr);
-		pool_debug("wd_hb_sender: send heartbeat signal to %s", hb_if.addr);
+		wd_hb_send(sock, &pkt, sizeof(pkt), hb_if.addr, hb_if.dest_port);
+		pool_debug("wd_hb_sender: send heartbeat signal to %s:%d", hb_if.addr, hb_if.dest_port);
 		sleep(pool_config->wd_heartbeat_keepalive);
 	}
 
@@ -511,6 +516,7 @@ hton_wd_hb_packet(WdHbPacket * to, WdHbPacket * from)
 	to->send_time.tv_sec = htonl(from->send_time.tv_sec);
 	to->send_time.tv_usec = htonl(from->send_time.tv_usec);
 	memcpy(to->from, from->from, sizeof(to->from));
+	to->from_pgpool_port = htonl(from->from_pgpool_port);
 	memcpy(to->hash, from->hash, sizeof(to->hash));
 
 	return WD_OK;
@@ -528,6 +534,7 @@ ntoh_wd_hb_packet(WdHbPacket * to, WdHbPacket * from)
 	to->send_time.tv_sec = ntohl(from->send_time.tv_sec);
 	to->send_time.tv_usec = ntohl(from->send_time.tv_usec);
 	memcpy(to->from, from->from, sizeof(to->from));
+	to->from_pgpool_port = ntohl(from->from_pgpool_port);
 	memcpy(to->hash, from->hash, sizeof(to->hash));
 
 	return WD_OK;

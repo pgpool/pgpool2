@@ -157,6 +157,7 @@ typedef union {
 typedef struct {
 	char addr[WD_MAX_HOST_NAMELEN];
 	char if_name[WD_MAX_IF_NAME_LEN];
+	int dest_port;
 } WdHbIf;
 
 typedef struct {
@@ -188,6 +189,7 @@ typedef struct {
  */
 typedef struct {
 	char from[WD_MAX_HOST_NAMELEN];
+	int from_pgpool_port;
 	struct timeval send_time;
 	WD_STATUS status;
 	char hash[(MD5_PASSWD_LEN+1)*2];

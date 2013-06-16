@@ -4347,6 +4347,21 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
     このパラメータを変更した時には pgpool-II を再起動してください。
     </p>
     </dd>
+
+<dt><a name="HEARTBEAT_DESTINATION_PORT"></a>heartbeat_destination_port<font color="red">0</font> <span class="version">V3.3 ～</span></dt>
+    <dd>
+    <p>
+    <a href="HEARTBEAT_DEVICE">heartbeat_deviceX</a>に指定したデバイスから送るハートビート信号の宛先のポート番号を指定します。
+    通常は <a href="WD_HEARTBEAT_PORT">wd_heartbeat_port</a> と同じ値を指定します。
+    そのポート番号が使用できないホストや、同じホストで複数の pgpool-II を動作させる場合には、異なる値を指定する必要があります。
+    数値の部分はデバイスの番号です。
+    デバイス毎に 0 からの連番にします。
+    ハートビートモードの場合のみ有効です。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
+    </dd>
 </dl>
 
 <h4>クエリモードの設定</h4>

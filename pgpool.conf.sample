@@ -509,7 +509,7 @@ wd_interval = 10
 # -- heartbeat mode --
 
 wd_heartbeat_port = 9694
-                                    # Port number for heartbeat lifecheck
+                                    # Port number for receiving heartbeat signal
                                     # (change requires restart)
 wd_heartbeat_keepalive = 2
                                     # Interval time of sending heartbeat signal (sec)
@@ -521,12 +521,18 @@ heartbeat_device0 = 'eth0'
                                     # Name of NIC device 0 using for
                                     # sending/receiving heartbeat signal
                                     # (change requires restart)
-heartbeat_destination0 = 'host0_ip1'
+heartbeat_destination_ip0 = 'host0_ip1'
                                     # Destination host name or IP address
                                     # for sending heartbeat signal using NIC device 0.
                                     # (change requires restart)
+heartbeat_destination_port0 = 9694 
+                                    # Destination port number for sending heartbeat
+                                    # signal to destination 0. Usually this is the
+                                    # same of wd_heartbeat_port.
+                                    # (change requires restart)
 #heartbeat_device1 = 'eth1'
-#heartbeat_destination1 = 'host0_ip2'
+#heartbeat_destination_ip1 = 'host0_ip2'
+#heartbeat_destination_port1 = 9694
 
 # -- query mode --
 
