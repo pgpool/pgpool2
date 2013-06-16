@@ -10,7 +10,7 @@
 
 <body>
 <h1>pgpool-II 入门教程</h1>
-<p>欢迎阅读 pgpool-II 入门教程。从本教程中，你将学会如何安装，设置 pgpool-II 以及使用 pgpool-II 运行并行查询和复制。我们假设你已经知道PostgreSQL的基础操作，所以如果有需要，请先参考 PostgreSQL 的文档。</p>
+<p>欢迎阅读 pgpool-II 入门教程。从本教程中，你将学会如何安装，设置 pgpool-II 以及使用 pgpool-II 运行并行查询和复制。我们假设你已经知道PostgreSQL的基础操作，所以如果有必要，请先参考 PostgreSQL 的文档。</p>
 
 <dl>
   <dt><em>目录</em></dt>
@@ -274,8 +274,13 @@ $ pgpool -n 2>&1 | /usr/sbin/cronolog \
 <pre>listen_addresses = '*'</pre>
 
 <p>
+注意：进行了分区的表不会进行复制，不过并行查询和复制可以同时生效。
+</p>
+
+<p>
 注意：你可以同时拥有分区表和复制表。但是一个表不能同时被分区和复制。因为分区表和复制表的结构不同，“2. <a href="#replication">你的第一个复制</a>”小节中建立的“bench_replication”数据库无法用于并行查询模式。
 </p>
+
 <pre>
 replication_mode = true
 load_balance_mode = false
@@ -381,6 +386,13 @@ CREATE TABLE pgpool_catalog.replicate_def (
     PRIMARY KEY (dbname, schema_name, table_name)
 );
 </pre>
+<p>
+replicate_def 包含了表的元数据信息 (dbname, schema_name, table_name, col_list, type_list)。
+</p>
+<p>
+所有的查询分析和查询重写过程都依赖于存储于 dist_def 以及/或 replicate_def 表中的这些信息（表，列以及类型）。
+如果信息不正确，分析和查询重写过程将导致错误的结果。
+</p>
 
 <h3>3.3. <a name="dist-def">定义分发规则</a></h3>
 
@@ -460,7 +472,7 @@ INSERT INTO pgpool_catalog.replicate_def VALUES (
 $ psql -f sample/replicate_def_pgbench.sql -p 5432 pgpool
 </pre>
 
-<h3>3.5. <a name="parallel-check">检查并行</a></h3>
+<h3>3.5. <a name="parallel-check">检查并行查询</a></h3>
 
 <p>要使 <code>pgpool.conf</code> 中的改动生效，pgpool-II 必须重启。请参考“1.5 <a href="#start-shutdown">启动/停止 pgpool-II</a>”小节。</p>
 

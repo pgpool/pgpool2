@@ -9,15 +9,13 @@ source /etc/pgpool-II/config_for_script
 
 log=$PGPOOL_LOG_DIR/recovery.log
 
-if [ $master_dir = $NODE0_DIR ];then
-  master_host=$NODE0_HOST
-  master_port=$NODE0_PORT
-  master_dir=$NODE0_DIR
-
-elif [ $master_dir = $NODE1_DIR ];then
+if [ $dest_host = $NODE0_HOST ]; then
   master_host=$NODE1_HOST
   master_port=$NODE1_PORT
-  master_dir=$NODE1_DIR
+
+elif [ $dest_host = $NODE1_HOST ]; then
+  master_host=$NODE0_HOST
+  master_port=$NODE0_PORT
 
 else
   exit 1
