@@ -377,6 +377,13 @@ wd_hb_receiver(int fork_wait_time, WdHbIf hb_if)
 			{
 				if (!strcmp(p->hostname, from) && p->pgpool_port == from_pgpool_port)
 				{
+					/* ignore the packet from down pgpool */
+					if (pkt.status == WD_DOWN)
+					{
+						pool_debug("wd_hb_receiver: heatbeat signal from down pgpool (%s) is ignored", from);
+						break;
+					}
+
 					/* this is the first packet or the latest packet */
 					if (!WD_TIME_ISSET(p->hb_send_time) ||
 					    WD_TIME_BEFORE(p->hb_send_time, pkt.send_time))
