@@ -611,8 +611,6 @@ send_packet_for_all(WdPacket *packet)
 {
 	int rtn = WD_OK;
 
-	WdInfo *p;
-
 	/* send packet to master watchdog */
 	if (WD_MYSELF->status != WD_MASTER)
 		rtn = send_packet_4_nodes(packet, WD_SEND_TO_MASTER );
