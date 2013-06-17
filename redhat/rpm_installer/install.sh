@@ -384,7 +384,9 @@ function setWatchdog()
         heartbeat)
             #setPgpoolParam heartbeat_device0 "NIC device name of NIC to send/receive heartbeat signal" eth0
             #setPgpoolParam heartbeat_destination0 "host name or IP address to which device 0's heartbeat destinates" "'$NODE1_HOST'"
+            writePgpoolParam heartbeat_device0 "'eth0'"
             writePgpoolParam heartbeat_destination0 "'$DEST_HOST'"
+            writePgpoolParam heartbeat_destination_port0 "9694"
         ;;
 
         query)
@@ -412,7 +414,7 @@ function doConfigPgpool()
         return
     fi
 
-    local _STEPS=5
+    local _STEPS=6
 
     echo
     echo $BOLD"----------------------------------------------------------------------"$SPAN_END
@@ -629,7 +631,7 @@ function doConfigPcp()
 
 function doConfigPostgres()
 {
-    local _STEPS=4
+    local _STEPS=5
 
     cp templates/postgresql.conf editted/postgresql.conf
     ynQuestion "Do you edit postgresql.conf now?"
@@ -912,7 +914,9 @@ echo
 # -------------------------------------------------------------------
 
 # licence agreement
+echo "================================================================="
 cat COPYING
+echo "================================================================="
 ynQuestion "Do you accept the end user software license agreement?"
 if [ $? -ne 0 ]; then exit 1; fi
 
@@ -930,6 +934,8 @@ if [ $? -ne 0 ]; then
 fi
 
 echo
+echo "* Node information"
+echo
 echo "Two-node cluster (node 0 and node 1) is assumed."
 fixNodes
 
@@ -937,7 +943,7 @@ fixNodes
 echo
 echo "Which node is this?"
 echo "If this is node 0, a database cluster is created by initdb after installation."
-echo "Otherwise if this is node 1, you can use the configurations on node 0."
+echo "Otherwise if this is node 1, the configurations on node 0 is reused."
 ynQuestion "Is this node 0?"
 if [ $? -eq 0 ]; then
     NODE_NO=0
@@ -961,6 +967,8 @@ fi
 echo
 
 # postgres user check
+echo "* Check $PG_SUPER_USER user"
+echo
 id $PG_SUPER_USER >/dev/null 2>&1
 if [ $? -ne 0 ]; then
     echo "$PG_SUPER_USER user doesn't exist on $THIS_HOST. Creating ..."
@@ -989,9 +997,10 @@ fi
 # -------------------------------------------------------------------
 
 # passwordless access over ssh
-
 echo
-echo "Setup passwordless access over ssh from $PG_SUPER_USER@$THIS_HOST to $PG_SUPER_USER@$DEST_HOST"
+echo "* Setup passwordless access over ssh"
+echo
+echo "... from $PG_SUPER_USER@$THIS_HOST to $PG_SUPER_USER@$DEST_HOST"
 sshWithoutPass $PG_SUPER_USER
 if [ $? -ne 0 ]; then
     echo "Failed to ssh $PG_SUPER_USER@$DEST_HOST."
@@ -1001,7 +1010,7 @@ else
 fi
 
 echo
-echo "Setup passwordless access over ssh from $APACHE_USER@$THIS_HOST to $PG_SUPER_USER@$DEST_HOST"
+echo "... from $APACHE_USER@$THIS_HOST to $PG_SUPER_USER@$DEST_HOST"
 makeApacheLoginable
 if [ $? -ne 0 ]; then
     echo "Failed to make apache loginable. For configuring apache user, httpd must be stopped."
@@ -1014,6 +1023,8 @@ if [ $? -ne 0 ]; then
 else
     echo "OK."
 fi
+echo
+echo "* Configuration"
 echo
 
 # create temporary config files in editted directory
@@ -1044,7 +1055,7 @@ if [ $NODE_NO -eq 0 ]; then
     cp templates/pgpool_remote_start editted/
 
     echo
-    echo "- save configuration information for installation on node 1..."
+    echo "save configuration information for installation on node 1"
     writeValList
     rm -rf $TEMP_CONF
     mkdir $TEMP_CONF
@@ -1053,7 +1064,8 @@ if [ $NODE_NO -eq 0 ]; then
     chmod 700 $TEMP_CONF
     chmod 600 $TEMP_CONF/*
 else
-    echo "- copy configuration information from node 0..."
+    echo
+    echo "copy configuration information from node 0"
     su $PG_SUPER_USER -c "mkdir $TEMP_CONF; scp $PG_SUPER_USER@$DEST_HOST:$TEMP_CONF/* $TEMP_CONF"
     cp $TEMP_CONF/* editted
     rm -rf $TEMP_CONF
@@ -1067,6 +1079,8 @@ fi
 # [3] install RPMs
 # -------------------------------------------------------------------
 
+echo
+echo "* Installation"
 ynQuestion "Do you install pgpool really?"
 if [ $? -ne 0 ]; then
     return
@@ -1124,7 +1138,7 @@ fi
 
 # pgpoolAdmin
 echo
-echo -n "* Setup pgpoolAdmin"
+echo "* Setup pgpoolAdmin"
 
 echo -n "- rewrite pgmgt.conf.php ... "
 cp editted/pgmgt.conf.php $ADMIN_DIR/conf/
@@ -1159,6 +1173,7 @@ INITDB_OK=0
 if [ $NODE_NO -eq 0 ]; then
     echo
     echo "* Create node 0 (localhost) 's database cluster"
+	echo
 
     echo -n "- initdb ... "
 
@@ -1198,6 +1213,10 @@ if [ $NODE_NO -eq 0 ]; then
     fi
 fi
 
+echo
+echo "* Setup database"
+echo
+
 echo "- put scripts for failover ... OK"
 cp editted/config_for_script $PGPOOL_CONF_DIR
 if [ $MODE = "stream" ]; then
@@ -1220,8 +1239,9 @@ if [ $INITDB_OK -eq 1 ]; then
     doQueries
 fi
 
-echo "- remove configuration information on node 0..."
 if [ $NODE_NO -eq 1 ]; then
+    echo
+    echo "remove configuration information on node 0"
     su $PG_SUPER_USER -c "ssh $PG_SUPER_USER@$DEST_HOST rm -rf $TEMP_CONF"
 fi
 
