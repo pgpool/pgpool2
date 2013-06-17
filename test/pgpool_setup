@@ -82,6 +82,8 @@ PGPOOL_REMOTE_START_SCRIPT=pgpool_remote_start
 STARTALL=$BASEDIR/startall
 # Shutdown script name. This will be generated in this script.
 SHUTDOWNALL=$BASEDIR/shutdownall
+# pgpool reload script name. This will be generated in this script.
+PGPOOL_RELOAD=$BASEDIR/pgpool_reload
 
 #-------------------------------------------
 # create failover script
@@ -633,7 +635,7 @@ test ! -d etc && mkdir etc
 cp $SAMPLE_CONF $CONF
 
 #-------------------------------------------
-# create startall and shutdownall
+# create startall, shutdownall and pgpool_reload
 #-------------------------------------------
 echo "creating startall and shutdownall"
 echo "LD_LIBRARY_PATH=$LPATH" > $STARTALL
@@ -642,6 +644,9 @@ chmod 755 $STARTALL
 echo 'dir=`pwd`' > $SHUTDOWNALL
 echo 'pgpool -f $dir/etc/pgpool.conf -m f stop' >> $SHUTDOWNALL
 chmod 755 $SHUTDOWNALL
+echo 'dir=`pwd`' > $PGPOOL_RELOAD
+echo 'pgpool -f $dir/etc/pgpool.conf reload' >> $PGPOOL_RELOAD
+chmod 755 $PGPOOL_RELOAD
 
 #-------------------------------------------
 # create failover script
