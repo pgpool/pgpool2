@@ -3243,6 +3243,8 @@ Pgpool-HA 可以在 pgpool 开发网站找到，它是一个开源软件。</p>
     <p>
     在 'heartbeat' 模式中，看门狗定期发送心跳信号（UDP 包）到其他的 pgpool-II。看门狗也从其他 pgpool-II 获取信号。
     如果在一段时间内没有收到信号，看门狗则认为那个 pgpool-II 发生了故障。
+    考虑冗余，你可以使用多个网络接口设备进行 pgpool-II 之间的心跳交换。
+    本模式是默认和推荐使用的。
     </p>
     <p>
     在 'query' 模式中，看门狗发送监控查询到其他的 pgpool-II 并检查反馈情况。
@@ -3299,24 +3301,35 @@ Pgpool-HA 可以在 pgpool 开发网站找到，它是一个开源软件。</p>
     修改本值后，你需要重启 pgpool-II 以使改动生效。
     </p>
     </dd>
-
-<dt><a name="HEARTBEAT_DEVICE"></a>heartbeat_device<font color="red">0</font> <span class="version">V3.3 -</span></dt>
+<dt><a name="HEARTBEAT_DESTINATION"></a>heartbeat_destination<font color="red">0</font> <span class="version">V3.3 -</span></dt>
     <dd>
     <p>
-    本选项指定用于发送心跳信号的网络设备名。可以指定多个设备。本参数名后面的数字表示“设备序号”，从 0 开始。
-    如果你想位一个设备设置多个目标（<a href="#HEARTBEAT_DESTINATION">heartbeat_destiationN</a>），需要使用不同的序号多次指定这个设备名。
-    本选项仅用于心跳模式。
+	  本选项指定心跳信号发送的目标，可以是 IP 地址或主机名。你可以指定多个目标。
+    本参数名后面的数字表示“目标序号”，从 0 开始。本参数仅用于心跳模式。
     </p>
     <p>
     修改本值后，你需要重启 pgpool-II 以使改动生效。
     </p>
     </dd>
-
-<dt><a name="HEARTBEAT_DESTINATION"></a>heartbeat_destination<font color="red">0</font> <span class="version">V3.3 -</span></dt>
+<dt><a name="HEARTBEAT_DESTINATION_PORT"></a>heartbeat_destination_port<font color="red">0</font> <span class="version">V3.3 -</span></dt>
     <dd>
     <p>
-    本选项指定通过由 <a href="#HEARTBEAT_DEVICE">heartbeat_deviceX</a> 指定的设备发送的心跳信号发送的目标。使用 IP 地址或主机名。
-    本参数名后面的数字表示“设备序号”，从 0 开始。本选项仅用于心跳模式。
+    本选项指定由 <a href="HEARTBEAT_DESTINATION">heartbeat_destinationX</a> 指定的心跳信号目标的端口号。
+    这个值通常等于 <a href="WD_HEARTBEAT_PORT">wd_heartbeat_port</a>。
+    但如果这个端口号在某些主机上不能使用或者一个主机上有多个 pgpool-II 的时候你必须指定另一个值。
+    本参数名后面的数字表示“目标序号”，从 0 开始。本参数仅用于心跳模式。
+    </p>
+    <p>
+    修改本值后，你需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
+<dt><a name="HEARTBEAT_DEVICE"></a>heartbeat_device<font color="red">0</font> <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    本选项指定用于发送心跳信号到由 <a href="HEARTBEAT_DESTINATION">heartbeat_destinationX</a>指定的目标的设备名。
+    你可以向不同的目标使用相同的设备。
+    本参数名后面的数字表示“设备序号”，从 0 开始。
+    本选项仅用于心跳模式。另外，这只有在运行在 Linux 下的 root 权限中的 pgpool-II 才能生效，因为这使用了 SO_BINDTODEVICE 套接字选项。
     </p>
     <p>
     修改本值后，你需要重启 pgpool-II 以使改动生效。
