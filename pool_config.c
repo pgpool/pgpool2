@@ -3944,10 +3944,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			if (context == INIT_CONFIG || (context == RELOAD_CONFIG ))
-			{
 				strlcpy(WD_HB_IF(slot).if_name, str, WD_MAX_IF_NAME_LEN);
-				pool_config->num_hb_if = slot + 1;
-			}
 
 		}
 		/* this must be prior to hertbeat_destination */
@@ -3966,7 +3963,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 
 			if (context == INIT_CONFIG || (context == RELOAD_CONFIG ))
+			{
 				WD_HB_IF(slot).dest_port = atoi(yytext);
+				pool_config->num_hb_if = slot + 1;
+			}
 		}
 		else if (!strncmp(key, "heartbeat_destination", 21) &&
 				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context) &&

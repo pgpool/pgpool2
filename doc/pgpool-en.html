@@ -3843,11 +3843,11 @@ watchdog adds the following features to pgpool-II.
     </p>
     <ul>
     <li>
-    In heartbeat mode, watchdog monitors other pgpool-II process by using heartbeat signal.
+    In heartbeat mode, watchdog monitors other pgpool-II processes by using heartbeat signal.
     Watchdog receives heartbeat signals sent by other pgpool-II periodically.
-    If there are no signal for a certain period, watchdog regards it as failure of the pgpool-II.
-	For redundancy you can use multiple network interface devices for heartbeat exchange between pgpool-IIs.
-	This mode is default and recommended one.
+    If there are no signal for a certain period, watchdog regards this as failure of the pgpool-II.
+	For redundancy you can use multiple network connections for heartbeat exchange between pgpool-IIs.
+	This is the default mode and recommended.
     </li>
     <li>
     In query mode, watchdog monitors pgpool-II's service rather than process.
@@ -4204,28 +4204,12 @@ Configuration about virtual IP interface control
     </p>
     </dd>
 
-<dt><a name="HEARTBEAT_DEVICE"></a>heartbeat_device<font color="red">0</font> <span class="version">V3.3 -</span></dt>
-    <dd>
-    <p>
-    This option specifies the network device name for sending heartbeat signals.
-    You can use multiple devices.
-    The number at the end of the parameter name is referred as "device number",
-    and it starts from 0.
-    If you want to set mutiple destination (<a href="HEARTBEAT_DESTINATION">heartbeat_destiationN</a>) for one device,
-    specify the device name repeatedly using different numbers.
-    This works only heartbeat mode.
-    </p>
-    <p>
-    You need to restart pgpool-II if you change this value.
-    </p>
-    </dd>
-
 <dt><a name="HEARTBEAT_DESTINATION"></a>heartbeat_destination<font color="red">0</font> <span class="version">V3.3 -</span></dt>
     <dd>
     <p>
-    This option specifies the destination of heartbeat signals which is sent from the device specified by
-    <a href="HEARTBEAT_DEVICE">heartbeat_deviceX</a>. Use IP address or hostname.
-    The number at the end of the parameter name is referred as "device number",
+    This option specifies the destination of heartbeat signals bu IP address or hostname.
+    You can use multiple destination.
+    The number at the end of the parameter name is referred as "destination number",
     and it starts from 0.
     This works only heartbeat mode.
     </p>
@@ -4237,11 +4221,12 @@ Configuration about virtual IP interface control
 <dt><a name="HEARTBEAT_DESTINATION_PORT"></a>heartbeat_destination_port<font color="red">0</font> <span class="version">V3.3 -</span></dt>
     <dd>
     <p>
-    This option specifies the port number of destination of heartbeat signals which is sent from the device specified by
-    <a href="HEARTBEAT_DEVICE">heartbeat_deviceX</a>. 
-    This is usually the same value of <a href="WD_HEARTBEAT_PORT">wd_heartbeat_port</a> 
-    You must set another value if the port number is unusable or there are more than two pgpool-IIs in a host.
-    The number at the end of the parameter name is referred as "device number",
+    This option specifies the port number of destination of heartbeat signals
+	which is specified by <a href="HEARTBEAT_DESTINATION">heartbeat_destinationX</a>.
+    This is usually the same value as <a href="WD_HEARTBEAT_PORT">wd_heartbeat_port</a>
+    You must use another value if the port number is unusable on a certain host or
+	there are more than two pgpool-IIs in a host.
+    The number at the end of the parameter name is referred as "destination number",
     and it starts from 0.
     This works only heartbeat mode.
     </p>
@@ -4249,7 +4234,23 @@ Configuration about virtual IP interface control
     You need to restart pgpool-II if you change this value.
     </p>
     </dd>
-</dl>
+
+<dt><a name="HEARTBEAT_DEVICE"></a>heartbeat_device<font color="red">0</font> <span class="version">V3.3 -</span></dt>
+    <dd>
+    <p>
+    This option specifies the network device name for sending heartbeat signals to
+	destination specified by <a href="HEARTBEAT_DESTINATION">heartbeat_destinationX</a>.
+    You can use the same device for different distinations.
+    The number at the end of the parameter name is referred as "destination number",
+    and it starts from 0.
+    This works only heartbeat mode.
+	In addition, this works only when pgpool-II has root privilege and are running on Linux,
+	because this uses SO_BINDTODEVICE socket option.
+    </p>
+    <p>
+    You need to restart pgpool-II if you change this value.
+    </p>
+    </dd>
 </dl>
 
 <h4>Configuration of query mode</h4>

@@ -57,6 +57,7 @@ static RETSIGTYPE hb_receiver_exit(int sig);
 static int hton_wd_hb_packet(WdHbPacket * to, WdHbPacket * from);
 static int ntoh_wd_hb_packet(WdHbPacket * to, WdHbPacket * from);
 static int packet_to_string_hb(WdHbPacket pkt, char *str, int maxlen);
+static bool is_usable_bindtodevice(void);
 
 /* create socket for sending heartbeat */
 int
@@ -83,8 +84,8 @@ wd_create_hb_send_socket(WdHbIf hb_if)
 		close(sock);
 		return -1;
 	}
-/*
-#if defined(SO_BINDTODEVICE)
+
+	if (is_usable_bindtodevice())
 	{
 		struct ifreq i;
 		strlcpy(i.ifr_name, hb_if.if_name, sizeof(i.ifr_name));
@@ -98,8 +99,9 @@ wd_create_hb_send_socket(WdHbIf hb_if)
 		}
 		pool_log("wd_create_hb_send_socket: bind send socket to device: %s", i.ifr_name);
 	}
-#endif
-*/
+	else
+		pool_log("wd_create_hb_send_socket: couldn't bind send socket to device: %s", hb_if.if_name);
+
 #if defined(SO_REUSEPORT)
 	{
 		int one = 1;
@@ -155,8 +157,8 @@ wd_create_hb_recv_socket(WdHbIf hb_if)
 		close(sock);
 		return -1;
 	}
-/*
-#if defined(SO_BINDTODEVICE)
+
+	if (is_usable_bindtodevice())
 	{
 		struct ifreq i;
 		strlcpy(i.ifr_name, hb_if.if_name, sizeof(i.ifr_name));
@@ -170,8 +172,8 @@ wd_create_hb_recv_socket(WdHbIf hb_if)
 		}
 		pool_log("wd_create_hb_recv_socket: bind receive socket to device: %s", i.ifr_name);
 	}
-#endif
-*/
+	else
+		pool_log("wd_create_hb_recv_socket: couldn't bind receive socket to device: %s", hb_if.if_name);
 
 #if defined(SO_REUSEPORT)
 	{
@@ -212,10 +214,7 @@ wd_create_hb_recv_socket(WdHbIf hb_if)
 
  	if (fcntl(sock, F_SETFD, FD_CLOEXEC) < 0) {
 		pool_error("wd_create_hb_recv_socket: setting close-on-exec flag failed. reason: %s",
-		           strerror(errno));
-		close(sock);
-		return -1;
-	}
+		           strerror(errno)); close(sock); return -1; }
 
 	return sock;
 }
@@ -294,7 +293,8 @@ wd_hb_recv(int sock, WdHbPacket * pkt)
 }
 
 /* fork heartbeat receiver child */
-pid_t wd_hb_receiver(int fork_wait_time, WdHbIf hb_if)
+pid_t
+wd_hb_receiver(int fork_wait_time, WdHbIf hb_if)
 {
 	int sock;
 	pid_t pid = 0;
@@ -397,7 +397,8 @@ pid_t wd_hb_receiver(int fork_wait_time, WdHbIf hb_if)
 }
 
 /* fork heartbeat sender child */
-pid_t wd_hb_sender(int fork_wait_time, WdHbIf hb_if)
+pid_t
+wd_hb_sender(int fork_wait_time, WdHbIf hb_if)
 {
 	int sock;
 	pid_t pid = 0;
@@ -541,11 +542,31 @@ ntoh_wd_hb_packet(WdHbPacket * to, WdHbPacket * from)
 }
 
 /* convert packet to string and return length of the string */
-static int packet_to_string_hb(WdHbPacket pkt, char *str, int maxlen)
+static int
+packet_to_string_hb(WdHbPacket pkt, char *str, int maxlen)
 {
 	int len;
 	len = snprintf(str, maxlen, "status=%d tv_sec=%ld tv_usec=%ld from=%s",
 	               pkt.status, pkt.send_time.tv_sec, pkt.send_time.tv_usec, pkt.from);
 
 	return len;
+}
+
+static bool
+is_usable_bindtodevice(void)
+{
+#if defined(SO_BINDTODEVICE)
+	if (geteuid() != 0)
+	{
+		pool_log("is_usable_bindtodevice: setsockopt(SO_BINDTODEVICE) requies root privilege");
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+#else
+	pool_log("is_usable_bindtodevice: couldn't setsockopt(SO_BINDTODEVICE) in this platform");
+	return false;
+#endif
 }
