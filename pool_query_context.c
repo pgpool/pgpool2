@@ -481,7 +481,9 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	}
 	else if (REPLICATION || PARALLEL_MODE)
 	{
-		if (is_select_query(node, query))
+		if (pool_config->load_balance_mode &&
+			is_select_query(node, query) &&
+			MAJOR(backend) == PROTO_MAJOR_V3)
 		{
 			/*
 			 * If a writing function call is used or replicate_select is true,
@@ -491,10 +493,18 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 			{
 				pool_setall_node_to_be_sent(query_context);
 			}
-			else if (pool_config->load_balance_mode &&
-					 MAJOR(backend) == PROTO_MAJOR_V3 &&
-					 TSTATE(backend, MASTER_NODE_ID) == 'I')
+			/* 
+			 * If (we are outside of an explicit transaction) OR
+			 * (the transaction has not issued a write query yet, AND
+			 *	transaction isolation level is not SERIALIZABLE)
+			 * we might be able to load balance.
+			 */
+			else if (TSTATE(backend, MASTER_NODE_ID) == 'I' ||
+					 (!pool_is_writing_transaction() &&
+					  !pool_is_failed_transaction() &&
+					  pool_get_transaction_isolation() != POOL_SERIALIZABLE))
 			{
+				BackendInfo *bkinfo = pool_get_node_info(session_context->load_balance_node_id);
 				/* load balance */
 				pool_set_node_to_be_sent(query_context,
 										 session_context->load_balance_node_id);
