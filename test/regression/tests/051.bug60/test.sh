@@ -13,6 +13,8 @@
 # mode, session is not disconnect.  So I think the complain is fair
 # enough.
 #
+# Fixed in: http://git.postgresql.org/gitweb/?p=pgpool2.git;a=commit;h=e7e350465a6f33562322304b56f02cdbb1492641
+#
 WHOAMI=`whoami`
 source $TESTLIBS
 TESTDIR=testdir
