@@ -204,7 +204,12 @@ check_pgpool_status_by_hb(void)
 		/*  about other pgpools, check the latest heartbeat. */
 		else
 		{
-			if (wd_check_heartbeat(p) == WD_NG)
+			if (p->status == WD_DOWN)
+			{
+				pool_log("check_pgpool_status_by_hb: pgpool %d (%s:%d) is in down status",
+		                 cnt, p->hostname, p->pgpool_port);
+			}
+			else if (wd_check_heartbeat(p) == WD_NG)
 			{
 				pool_debug("check_pgpool_status_by_hb: NG; status %d", p->status);
 
@@ -252,8 +257,11 @@ check_pgpool_status_by_query(void)
 	cnt = 0;
 	while (p->status != WD_END)
 	{
-		thread_arg[cnt].conn = create_conn(p->hostname, p->pgpool_port);
-		rc = pthread_create(&thread[cnt], &attr, thread_ping_pgpool, (void*)&thread_arg[cnt]);
+		if (p->status != WD_DOWN)
+		{
+			thread_arg[cnt].conn = create_conn(p->hostname, p->pgpool_port);
+			rc = pthread_create(&thread[cnt], &attr, thread_ping_pgpool, (void*)&thread_arg[cnt]);
+		}
 		p ++;
 		cnt ++;
 		if (cnt >= MAX_WATCHDOG_NUM)
@@ -270,14 +278,25 @@ check_pgpool_status_by_query(void)
 	{
 		int result;
 
-		pool_debug("check_pgpool_status_by_qury: checking pgpool %d (%s:%d)",
+		pool_debug("check_pgpool_status_by_query: checking pgpool %d (%s:%d)",
 		           i, p->hostname, p->pgpool_port);
 
-		rc = pthread_join(thread[i], (void **)&result);
-		if ((rc != 0) && (errno == EINTR))
+		if (p->status == WD_DOWN)
 		{
-			usleep(100);
+			pool_log("check_pgpool_status_by_query: pgpool %d (%s:%d) is in down status",
+	                 i, p->hostname, p->pgpool_port);
+			i++;
+			p++;
 			continue;
+		}
+		else
+		{
+			rc = pthread_join(thread[i], (void **)&result);
+			if ((rc != 0) && (errno == EINTR))
+			{
+				usleep(100);
+				continue;
+			}
 		}
 
 		if (result == WD_OK)
