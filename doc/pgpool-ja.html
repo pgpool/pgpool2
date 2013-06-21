@@ -4337,8 +4337,8 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
 <dt><a name="HEARTBEAT_DESTINATION_PORT"></a>heartbeat_destination_port<font color="red">0</font> <span class="version">V3.3 ～</span></dt>
     <dd>
     <p>
-    <a href="HEARTBEAT_DESTINATION">heartbeat_destinationX</a>に指定したハートビート信号の送り先のポート番号を指定します。
-    通常は <a href="WD_HEARTBEAT_PORT">wd_heartbeat_port</a> と同じ値を指定します。
+    <a href="#HEARTBEAT_DESTINATION">heartbeat_destinationX</a>に指定したハートビート信号の送り先のポート番号を指定します。
+    通常は <a href="#WD_HEARTBEAT_PORT">wd_heartbeat_port</a> と同じ値を指定します。
     そのポート番号が使用できないホストや、同じホストで複数の pgpool-II を動作させる場合には、異なる値を指定する必要があります。
     数値の部分は送り先の番号です。0 からの連番にします。
     ハートビートモードの場合のみ有効です。
@@ -4351,7 +4351,7 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
 <dt><a name="HEARTBEAT_DEVICE"></a>heartbeat_device<font color="red">0</font> <span class="version">V3.3 ～</span></dt>
     <dd>
     <p>
-    <a href="HEARTBEAT_DESTINATION">heartbeat_destinationX</a>に指定した送り先とのハートビートの送受信に用いるネットワークデバイス名を指定します。
+    <a href="#HEARTBEAT_DESTINATION">heartbeat_destinationX</a>に指定した送り先とのハートビートの送受信に用いるネットワークデバイス名を指定します。
     数値の部分は送り先の番号です。デバイス毎に 0 からの連番にします。
     複数の異なる送り先に同じデバイスを設定することが可能です。
     ハートビートモードの場合のみ有効です。
@@ -5708,6 +5708,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
       <li>デフォルトで、アクティブ pgpool-II への昇格時には共有メモリ内のクエリキャッシュを全て削除するようになりました。</li>
 
       <li>クエリモードで他の pgpool-II を監視する際に用いられるデータベース名、ユーザ名、パスワードは専用のパラメータで指定されるようになりました。以前は template1, recovery_user, recovery_password が使われていました。</li>
+
 </ul>
 
 
@@ -5724,14 +5725,14 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 ハートビートモードは今回新しく追加された方法です。
     このモードでは、watchdog はハートビート信号を用いて 他の pgpool-II プロセスの死活監視を行います。
     watchdog は、他の pgpool-II の watchdog より定期的に送られるハートビート信号を受け取り、これが一定期間以上途切れた場合にはその pgpool-II プロセスに障害が発生したと判断します。
-	冗長性を高めるため、複数のネットワークインタフェースデバイスを用いたハートビート交換が可能です。
+	冗長性を高めるため、複数のネットワーク用いたハートビート交換が可能です。
 	デフォルトではこのモードで動作し、これが推奨設定です。
 </p>
 <p>
 
     クエリモードでは従来と同じ動作になります。このモードではwatchdog は pgpool-II のプロセスではなく「サービス」の応答を監視します。
     このモードでは、監視対象の pgpool-II にクエリを発行しその応答をチェックします。
-	この方法では他の pgpool-II から接続を受ける必要があるため、<a href="NUM_INIT_CHILDREN">num_init_children</a> が十分大きくない場合には監視が失敗する場合があることに注意してください。
+	この方法では他の pgpool-II から接続を受ける必要があるため、<a href="#NUM_INIT_CHILDREN">num_init_children</a> が十分大きくない場合には監視が失敗する場合があることに注意してください。
 	これは非推奨の監視方法であり、下位互換のために残されています。
 </p>
 <ul>
@@ -5742,8 +5743,9 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
           <li>wd_heartbeat_port</li>
           <li>wd_heartbeat_keepalive</li>
           <li>wd_heartbeat_deadtime</li>
-          <li>heartbeat_deviceX</li>
           <li>heartbeat_destinationX</li>
+          <li>heartbeat_destination_portX</li>
+          <li>heartbeat_deviceX</li>
  </ul>
 </dd>
 
@@ -5769,7 +5771,7 @@ watchdog で複数の pgpool-II を連携した場合、failover/failback コマ
 <dt>clear_memqcache_on_escalation パラメータを追加しました。(Yugo Nagata)</dt>
 <dd>
 <p>
-これが on の場合は、pgpool-II がアクティブに昇格した時に、共有メモリ上のメモリキャッシュが全てクリアます。
+これが on の場合は、pgpool-II がアクティブに昇格した時に、共有メモリ上のメモリキャッシュが全てクリアされます。
 </p>
 <P>
 これは、新しいアクティブの pgpool-II が以前のアクティブと矛盾する古いキャッシュを使わないようにするためです。
@@ -5783,6 +5785,7 @@ watchdog で複数の pgpool-II を連携した場合、failover/failback コマ
 実行のタイミングは、仮想 IP が立ち上がった直後です。
 </p>
 </dd>
+
 <dt>wd_lifeccheck_dbname, wd_lifecheck_user, wd_lifecheck_password パラメータを追加しました。(Yugo Nagata)
 </dt>
 <dd>
@@ -5790,6 +5793,15 @@ watchdog で複数の pgpool-II を連携した場合、failover/failback コマ
 これらのパラメータは、クエリモードで監視の際に使用するデータベース名、ユーザ名、パスワードを提要します。以前はそれぞれ templat1, recovery_user, recovery_password が使われていました。
 </p>
 </dd>
+
+<dt><a href="#DELEGATE_IP">delegate_ip</a> オプションが空の場合には、仮想 IP の立ち上げ/切り替えを行わないようになりました。
+</dt>
+<dd>
+<p>
+これにより、各 pgpool-II に固定 IP を用いてアクセスするマルチマスタ的運用で、仮想 IP を用意する必要がなくなりました。
+</p>
+</dd>
+
 </dl>
 </li>
 <li>その他
@@ -5808,9 +5820,11 @@ pgpool_setup を追加しました。(Tatsuo Ishii)</dt>
 これはカレントディレクトリ下 pgpool-II と PostgreSQL のテスト環境を構築するツールです。
 </p>
 <pre>
- usage: ./pgpool_setup [-m r|s] [-n num_clusters]
+ usage: pgpool_setup [-m r|s][-n num_clusters][--no-stop]
    -m s: ストリームレプリケーションモードで構築（デフォルト） 
    -m r: ネイティブレプリケーションモードで構築
+   -n num_clusters: num_clusters 台で PostgreSQL データベースクラスタノードを作成
+   --no-stop: セットアップ終了後に pgpool-II, PostgreSQL を終了しない 
 </pre>
 </dd>
 
@@ -5826,7 +5840,6 @@ pgpool_setup を追加しました。(Tatsuo Ishii)</dt>
 
 <dt>pgpool_pgctl() 関数を追加しました。(Nozomi Anzai)</dt>
 <dd>
-</dd>
 <p>
 これを用いると、SQL から pg_ctl stop/restart/reload の実行が可能です。（ただし、start は除きます。）
 </p>
@@ -5841,6 +5854,35 @@ pgpool_setup を追加しました。(Tatsuo Ishii)</dt>
 この関数は実行結果を無視して常に't'を返すため、ユーザは pg_ctl が成功したか失敗したか知ることができません。
 この関数を使用するには、セキュリティ上の理由からカスタム変数を設定し、データディレクトリへの権限を持ち pg_ctl を実行するユーザを限定する必要があります。
 </p>
+</dd>
+
+<dt>pgpool-II と pgpoolAdmin の RPM をインストールするシェルスクリプトを追加しました。
+    (Nozomi Anzai, Yugo Nagata)</dt>
+<dd>
+<p>
+getsources.sh を実行することで作成された work/installer に RPM ファイルをコピーし、
+このディレクトリを tar ボールで固めたものがインストーラパッケージとなります。 
+このインストーラは、RPM をインストールするだけではなく、postgresql.conf, pgpool.conf, pg_hba.conf
+recovery.conf, ファイルオーバやオンラインリカバリ用のスクリプトの設定も行います。
+</p>
+<p>２ノード構成を前提としており、インストールスクリプトは両方のノードで実行する必要があります。</p>
+</dd>
+
+<dt>新しいパラメータ search_primary_node_timeout を追加しました。(Muhammad Usama, Tatsuo Ishii)</dt>
+<dd>
+<p>
+このパラメータはファイルオーバ時にプライマリノードを探す最大の秒数を指定します。
+パッチは Muhammad Usama さんが作成し、日本語マニュアルの作成と、英語マニュアルの若干の修正を
+Tatsuo Ishii が行いました。</p>
+</dd>
+
+<dt>オンメモリクエリキャッシュと watchdog の 中国語のチュートリアルを追加しました。(Bambo Huang)</dt>
+<dd>
+</dd>
+
+<dt>レグレッションテストを作成しました。(Tatsuo Ishii)</dt>
+<dd></dd>
+
 </dl>
 </li>
 </ul>
@@ -5899,6 +5941,47 @@ http://www.pgpool.net/mantisbt/view.php?id=54
 </p>
 </li>
 
+<li>
+COMMIT 時エラーに不要なバックエンド切り離しを行わないようにしました。(Tatsuo Ishii)
+<p>
+マスタースレーブモードで、COMMIT 時にマスターノードでエラーが発生していたとしても、
+他のスレーブノードが正常な場合にはバックエンドを切り離す必要はありません。
+これは、遅延トリガーのために "kind mismatch error" が発生しうるからです。
+</p>
+</li>
+
+<li>
+拡張プロトコルの際に do_query で発生しうるハングアップを修正しました。(Tatsuo Ishii)
+<p>
+これは insert_lock が有効で、pgpool_catalog.insert_lock が存在することに起こり得ます。
+詳しくは [pgpool-general: 1684] を参照してください。
+</p>
+</li>
+
+<li>
+トランザクション内の DML で、クエリキャッシュの無効化が失敗する場合があるのを修正しました。
+(Tatsuo Ishii)
+<pre>
+  CREATE TABLE t1(i INTEGER);
+  CREATE TABLE t2(i INTEGER);
+  SELECT * FROM t1;
+  BEGIN;
+  DELETE FROM t2 WHERE i = 0;
+  INSERT INTO t1(i) VALUES(1);
+  COMMIT;
+
+  SELECT * FROM t1;
+</pre>
+
+<p>
+上の SQL で、COMMIT 発行時に pgpool は t2 のキャッシュを削除しようとしますが、実際には t2 の
+OID テーブルエントリがないのでこれは失敗します。そのときに、t1 の OID テーブルの確認までも失敗して
+いたのが原因で、直前の t1 の SELECT 結果のキャッシュが不正に残っていました。
+
+この問題はバグトラッカ #58 で wms さんにより報告されました。
+http://www.pgpool.net/mantisbt/view.php?id=58
+</p>
+
 </ul>
 
 <h3>改良</h3>
@@ -5928,7 +6011,19 @@ pool_hba.conf.sample の SSL に関する記述を修正しました。(Tatsuo I
 </li>
 
 <li>
-中国語マニュアルの過ちを修正し、最新の情報に更新しました。(Bambo Huang)
+レプリケーションモードで、明示的なトランザクション内のロードバランスができるようになりました。
+(Tatsuo Ishii)
+<p>
+ロードバランスが行われる条件は以下のとおりです。
+</p>
+<ol>
+<li>replicate_select が off</li>
+<li>書き込みを行う関数が使われていない</li>
+<li>トランザクション分離モードが SERIALIZABLE ではない</li>
+<li>DML/DDL がトランザクションの中で実行されていない</li>
+</ol>
+<li>
+中国語マニュアルを最新の情報に更新しました。(Bambo Huang)
 </li>
 
 </ul>

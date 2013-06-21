@@ -20,14 +20,14 @@
 
       - Default monitoring method was changed from query mode to heartbeat mode.
 
-	  - Failover/failback commands are executed in only one pgpool-II.
+      - Failover/failback commands are executed in only one pgpool-II.
 
       - In default, all the query caches on shared memory are cleared when
-	    standby pgpool-II escalates to active.
+        standby pgpool-II escalates to active.
 
       - Database name, user name, and password used for monitring other
-	    pgpool-II by query are specified by dedicated parameters.
-		Previously, template1, recovery_user, and recovery_password are used.
+        pgpool-II by query are specified by dedicated parameters.
+        Previously, template1, recovery_user, and recovery_password are used.
 
       __________________________________________________________________
 
@@ -36,55 +36,55 @@
   ** Watchdog 
 
     - Add a new monitring method using heartbeat signal of UDP packet in
-	  lifecheck. (Yugo Nagata)
+      lifecheck. (Yugo Nagata)
 
       You can select a method from either of two methods, "heartbeat" mode or
-	  "query" mode.
+      "query" mode.
 
-	  The heartbeat mode is the new method. In this mode, watchdog monitors
-	  other pgpool-II process by using heartbeat signal. Watchdog receives
-	  heartbeat signals sent by other pgpool-II periodically. If there are no
-	  signal for a certain period, watchdog regards it as failure of the
-	  pgpool-II. For redundancy you can use multiple network interface devices
-	  for heartbeat exchange between pgpool-IIs. This mode is default and
-	  recommended one.
+      The heartbeat mode is the new method. In this mode, watchdog monitors
+      other pgpool-II process by using heartbeat signal. Watchdog receives
+      heartbeat signals sent by other pgpool-II periodically. If there are no
+      signal for a certain period, watchdog regards it as failure of the
+      pgpool-II. For redundancy you can use multiple networks for heartbeat
+      exchange between pgpool-IIs. This mode is default and recommended one.
 
       The query mode is the conventional method. In this mode, watchdog monitors
-	  pgpool-II's service rather than process. Watchdog sends queries to other
-	  pgpool-II and checks the response. Note that this method requires connections
-	  from other pgpool-IIs, so it would fail motoring if num_init_children isn't
-	  large enough. This mode is deprecated and left for backward compatibility.
+      pgpool-II's service rather than process. Watchdog sends queries to other
+      pgpool-II and checks the response. Note that this method requires connections
+      from other pgpool-IIs, so it would fail motoring if num_init_children isn't
+      large enough. This mode is deprecated and left for backward compatibility.
 
-	  Add these new parameters:
+      Add these new parameters:
           - wd_lifecheck_method
           - wd_heartbeat_port
           - wd_heartbeat_keepalive
           - wd_heartbeat_deadtime
-          - heartbeat_deviceX
           - heartbeat_destinationX
+          - heartbeat_destination_portX
+          - heartbeat_deviceX
 
     - Add interlocking mechanism of exclusive failover/failback command
-	  execution. (Yugo Nagata)
+      execution. (Yugo Nagata)
     
       When using multiple pgpool-IIs with watchdog enabled, failover commands
       (failover_command, failback_command, and follow_master_command) get
-	  executed only at one pgpool-II.
+      executed only at one pgpool-II.
     
       Previously, these command got executed at all pgpool-IIs.
 
     - Add authentication mechanism for watchdog packet communication.
-	  (Yugo Nagata)
+      (Yugo Nagata)
     
       Watchdog packets (include heartbeat signal) from pgpool-II with wrong
-	  authentication key are rejected. All pgpool-IIs must have the same key,
-	  which is specified wd_authkey parameter in pgpool.conf. pgpool-II with
-	  wrong authkey can't even start watchdog, because the startup packet is
-	  rejected by other pgpool-IIs.
+      authentication key are rejected. All pgpool-IIs must have the same key,
+      which is specified wd_authkey parameter in pgpool.conf. pgpool-II with
+      wrong authkey can't even start watchdog, because the startup packet is
+      rejected by other pgpool-IIs.
  
     - Add clear_memqcache_on_escalation parameter. (Yugo Nagata)
     
       If this is on, all the query caches on shared memory are cleared when
-	  standby pgpool-II escalates to active.
+      standby pgpool-II escalates to active.
 
       This is aimed to prevent the new active pgpool-II from using inconsistent
       query caches with the previous active.
@@ -92,14 +92,19 @@
     - Add wd_escalation_command parameter. (Yugo Nagata)
     
       This specifies command which is executed at escalation on the new active
-	  pgpool-II server. The timing is just before virtual IP is brought up.
+      pgpool-II server. The timing is just before virtual IP is brought up.
 
     - Add parameters wd_lifecheck_dbname, wd_lifecheck_user, and
-	  wd_lifecheck_password. (Yugo Nagata)
+      wd_lifecheck_password. (Yugo Nagata)
     
       These parameters specify the database name, the user name, and password
-	  used in query mode lifecheck of watchdog . Previously, these are hard
-	  coded to use template1, recovery_user, and recovery_password.
+      used in query mode lifecheck of watchdog . Previously, these are hard
+      coded to use template1, recovery_user, and recovery_password.
+
+    - When delegate_IP parameter is emply, viertual IP is neither brought up
+      nor switched. (Yugo Nagata)
+
+      This allows multi-master like configuration without virtual IP. 
 
   ** Others
 
@@ -107,12 +112,14 @@
 
     - Add a tool called pgpool_setup to set up pgpool-II and PostgreSQL
       temporary installation in current directory for *testing* purpose.
-	  (Tatsuo Ishii)
+      (Tatsuo Ishii)
     
-      usage: ./pgpool_setup [-m r|s] [-n num_clusters]
-       -m s: create an installation as streaming replication mode.
-       (the default)
-       -m r: create an installation as native replication mode.
+      usage: pgpool_setup [-m r|s][-n num_clusters][--no-stop]
+         -m s: create an installation as streaming replication mode.
+         (the default)
+         -m r: create an installation as native replication mode.
+         -n num_clusters: create num_clusters PostgreSQL database cluster nodes
+         --no-stop: do not stop pgpool and PostgreSQL after the work
 
     - Support installation method using CREATE EXTENSION for pgpool-recovery
       and pgpool-regclass. (Tatsuo Ishii)
@@ -124,7 +131,7 @@
       convenient in using CREATE EXTENSION command (requires double quotes).
 
     - Add a function "pgpool_pgctl()" which enebles to execute
-	  pg_ctl stop/restart/reload (except for start) by SQL. (Nozomi Anzai)
+      pg_ctl stop/restart/reload (except for start) by SQL. (Nozomi Anzai)
     
       $ psql sales -c "select pgpool_pgctl('reload', 'fast')";
        pgpool_pgctl
@@ -133,30 +140,55 @@
       (1 row)
 
       This function always ignores the actual result and returns 't', so the
-	  user can't know if pg_ctl succeeded or failed. To use this we have to set
-	  the custom variable for security which limits the users to execute pg_ctl
-	  who has the permission of data directory.
+      user can't know if pg_ctl succeeded or failed. To use this we have to set
+      the custom variable for security which limits the users to execute pg_ctl
+      who has the permission of data directory.
+
+    - Add shell scripts to install pgpool-II and pgpoolAdmin by RPM.
+      (Nozomi Anzai, Yugo Nagata)
+    
+      To make the installer package execute getsources.sh, and the directory
+      named "work" will be created. And you rpmbuild each spec files in work/,
+      put RPMs into work/installer and make tar ball of work/installer.
+      The installer does not only install RPMs but also edit postgresql.conf,
+      pgpool.conf, pg_hba.conf, recovery.conf and scripts for failover and
+      online recovery.
+      
+      This assumes two-nodes configuration and the install script have to be
+      executed in both nodes.
+
+    - Add new parameter "search_primary_node_timeout". 
+      (Muhammad Usama, Tatsuo Ishii)
+    
+      The parameter specifies the maximum amount of time in seconds to
+      search for a primary node when a failover scenario occurs. Patch
+      contributed by Muhammad Usama.  Japanese doc and slight editing of
+      English doc by Tatsuo Ishii.
+
+    - Chinese tutorials for memqcache and watchdog. (Bambo Huang)
+
+    - Add regression test suit. (Tatsuo Ishii)
 
       __________________________________________________________________
 
 * Bug fixes
 
     - Consider timeout waiting for compeletion of failback request in on line
-	  recovery. (Tatsuo Ishii)
+      recovery. (Tatsuo Ishii)
     
       This will prevent the situation that recovery operation continues forever
-	  and we cannot even shutdown pgpool-II main process. This could happen
-	  especially while executing follow master command.
+      and we cannot even shutdown pgpool-II main process. This could happen
+      especially while executing follow master command.
 
     - Fix a bug that %H of follow_master_command is not assigned correctly the
-	  new primary node in stream replication mode.
-	  (Tatsuo Ishii)
+      new primary node in stream replication mode.
+      (Tatsuo Ishii)
 
     - Fix not to execute escalation when the pgpool-II which is already active
-	  receives down notification from other pgpool-II. (Yugo Nagata)
+      receives down notification from other pgpool-II. (Yugo Nagata)
 
     - Fix wd_create_send_socket() not to execute select() before connect().
-	  (Yugo Nagata)
+      (Yugo Nagata)
 
       How select() works on an unconnected socket is undefined, and differs
       between platform. On Linux, this returns 2 and it is eventually harmless.
@@ -170,39 +202,84 @@
       1722] for more details.
 
     - Fix do_query() not to hang when PostgreSQL returns an error.
-	  (Tatsuo Ishii)
+      (Tatsuo Ishii)
 
       The typical symptom is "I see SELECT is keep on running according to
-      pg_stat_activity".  To fix this pgpool-II just exits the process and
+      pg_stat_activity". To fix this pgpool-II just exits the process and
       kill the existig connection.  This is not gentle but at this point I
       believe this is the best solution.
 
     - Fix possible deadlock during failover with watchdog enabled.
-	  (Yugo Nagata)
+      (Yugo Nagata)
 
       This is reported in Bug track #54 by arshu arora
       http://www.pgpool.net/mantisbt/view.php?id=54
+
+    - Fix unnecessary degeneration caused by error on commit. (Tatsuo Ishii)
+
+      In master slave mode, if master gets an error at commit, while other
+      slaves are normal at commit, we don't need to degenrate any backend
+      because it is likely that the "kind mismatch error" was caused by a
+      deferred trigger.
+
+    - Fix bug with do_query which causes hung in extended protocol.
+      (Tatsuo Ishii)
+        
+      This problem could occur when insert lock is enabled and
+      pgpool_catalog.insert_lock exists, See [pgpool-general: 1684] for more
+      details.
+
+    - Fix possible failure of query cache invalidation for DML in transaction.
+      (Tatsuo Ishii)
+
+      CREATE TABLE t1(i INTEGER);
+      CREATE TABLE t2(i INTEGER);
+      SELECT * FROM t1;
+      BEGIN;
+      DELETE FROM t2 WHERE i = 0;
+      INSERT INTO t1(i) VALUES(1);
+      COMMIT;
+    
+      SELECT * FROM t1;
+    
+      At commit pgpool tries to delete cache for t2 but failes because
+      there's no oid table entry for t2. Problem is, it fails to check oid
+      table for t1. So cahce for t1 remains and the last SELECT incorrectly
+      returns cached data. Fix is, continuing to check oid table entries.
+
+      This is reported in Bug track #58 by wms 
+      http://www.pgpool.net/mantisbt/view.php?id=58
+
       __________________________________________________________________
 
 * Enhancements
 
     - Fix to restart watchdog processes automatically when these exit abnormally.
-	  (Yugo Nagata)
+      (Yugo Nagata)
 
     - Add more error checks and reportings to functions executing ping command
-	  with watchdog enabled. (Tatsuo Ishii)
+      with watchdog enabled. (Tatsuo Ishii)
 
     - Replace some unsafe functions, sprintf and strncpy, with more safe ones,
-	  snprintf and strlcpy respectively. (Yugo Nagata)
+      snprintf and strlcpy respectively. (Yugo Nagata)
 
     - Replace "sticky bit" to "setuid bit" in log message, comments and
-	  funcation names. (Yugo Nagata)
+      funcation names. (Yugo Nagata)
     
       These words were used mistakenly and caused confusion.
 
     - Fix description on SSL in pool_hba.conf.sample. (Tatsuo Ishii)
 
-    - Fix some mistake, update chinese manual to the latest. (Bambo Huang)
+    - Allow to load balancing in an explicit transaction in replication mode.
+      (Tatsuo Ishii)
+    
+        The condition to allow the load balancing is as follows:
+        1) replicate_select is off
+        2) no writing functions are used
+        3) transaction isolation level is not serializable
+        4) no DML/DDL are issued in the transaction
+
+    - Chinese manual is updated to the latest especially about watchdog. (Bambo Huang)
 
 ===============================================================================
 3.2 Series (2012/08/03 - )
