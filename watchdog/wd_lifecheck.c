@@ -126,7 +126,8 @@ wd_lifecheck(void)
 	{
 		pool_error("wd_lifecheck: failed to connect to any trusted servers");
 
-		if (WD_MYSELF->status == WD_MASTER)
+		if (WD_MYSELF->status == WD_MASTER &&
+		    strlen(pool_config->delegate_IP) != 0)
 		{
 			wd_IP_down();
 		}

@@ -103,11 +103,7 @@ wd_check_config(void)
 		pool_error("wd_check_config: there is no other pgpools setting.");
 		status = WD_NG;
 	}
-	if (strlen(pool_config->delegate_IP) == 0)
-	{
-		pool_error("wd_check_config: delegate_IP is empty");
-		status = WD_NG;
-	}
+
 	if (strlen(pool_config->wd_authkey) > MAX_PASSWORD_SIZE)
 	{
 		pool_error("wd_check_config: wd_authkey length can't be larger than %d",

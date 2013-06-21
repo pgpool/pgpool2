@@ -940,7 +940,7 @@ wd_escalation(void)
 {
 	int rtn;
 
-	pool_log("wd_escalation: escalated to master pgpool");
+	pool_log("wd_escalation: escalatting to master pgpool");
 
 	/* clear shared memory cache */
 	if (pool_config->memory_cache_enabled && pool_is_shmem_cache() &&
@@ -957,7 +957,9 @@ wd_escalation(void)
 	}
 
 	/* interface up as delegate IP */
-	wd_IP_up();
+	if (strlen(pool_config->delegate_IP) != 0)
+		wd_IP_up();
+
 	/* set master status to the wd list */
 	wd_set_wd_list(pool_config->wd_hostname, pool_config->port,
 	               pool_config->wd_port, pool_config->delegate_IP,
@@ -967,7 +969,7 @@ wd_escalation(void)
 	rtn = wd_declare();
 	if (rtn == WD_OK)
 	{
-		pool_log("wd_escalation: escalated to delegate_IP holder");
+		pool_log("wd_escalation: escalated to master pgpool successfully");
 	}
 
 	return rtn;
@@ -999,6 +1001,7 @@ wd_send_failback_request(int node_id)
 	int rtn = 0;
 	int n = node_id;
 
+	/* if failback packet is received already, do nothing */
 	if (wd_chk_node_mask(WD_FAILBACK_REQUEST,&n,1))
 	{
 		return WD_OK;
@@ -1014,10 +1017,12 @@ wd_degenerate_backend_set(int *node_id_set, int count)
 {
 	int rtn = 0;
 
+	/* if degenerate packet is received already, do nothing */
 	if (wd_chk_node_mask(WD_DEGENERATE_BACKEND,node_id_set,count))
 	{
 		return WD_OK;
 	}
+
 	/* send degenerate packet */
 	rtn = wd_send_node_packet(WD_DEGENERATE_BACKEND, node_id_set, count);
 	return rtn;
@@ -1029,10 +1034,12 @@ wd_promote_backend(int node_id)
 	int rtn = 0;
 	int n = node_id;
 
+	/* if promote packet is received already, do nothing */
 	if (wd_chk_node_mask(WD_PROMOTE_BACKEND,&n,1))
 	{
 		return WD_OK;
 	}
+
 	/* send promote packet */
 	rtn = wd_send_node_packet(WD_PROMOTE_BACKEND, &n, 1);
 	return rtn;
@@ -1074,6 +1081,7 @@ wd_send_lock_packet(WD_PACKET_NO packet_no,  WD_LOCK_ID lock_id)
 	return rtn;
 }
 
+/* check mask, and if maskted return 1 and clear it, otherwise return 0 */
 static int
 wd_chk_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count)
 {
@@ -1094,6 +1102,7 @@ wd_chk_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count)
 	return rtn;
 }
 
+/* set mask */
 int
 wd_set_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count)
 {

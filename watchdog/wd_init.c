@@ -108,9 +108,10 @@ wd_init(void)
 	}
 
 	/* check existence of master pgpool */
-	if (wd_is_exist_master() == NULL )
+	if (wd_is_exist_master() == NULL)
 	{
-		if (!wd_is_unused_ip(pool_config->delegate_IP))
+		if (strlen(pool_config->delegate_IP) != 0 &&
+		    !wd_is_unused_ip(pool_config->delegate_IP))
 		{
 			pool_error("wd_init: delegate_IP %s already exists", pool_config->delegate_IP);
 			return WD_NG;

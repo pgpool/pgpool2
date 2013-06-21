@@ -49,6 +49,9 @@ wd_IP_up(void)
 	char path[WD_MAX_PATH_LEN];
 	char cmd[128];
 
+	if (strlen(pool_config->delegate_IP) == 0)
+		return WD_NG;
+
 	if (WD_List->delegate_ip_flag == 0)
 	{
 		WD_List->delegate_ip_flag = 1;
@@ -71,6 +74,9 @@ wd_IP_down(void)
 	char path[WD_MAX_PATH_LEN];
 	char cmd[128];
 	int i;
+
+	if (strlen(pool_config->delegate_IP) == 0)
+		return WD_NG;
 
 	if (WD_List->delegate_ip_flag == 1)
 	{

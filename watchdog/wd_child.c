@@ -233,7 +233,8 @@ wd_send_response(int sock, WdPacket * recv_pack)
 			{
 				/* resign master server */
 				pool_log("wd_send_response: WD_DECLARE_NEW_MASTER received and resign master server");
-				wd_IP_down();
+				if (strlen(pool_config->delegate_IP) != 0)
+					wd_IP_down();
 				wd_set_myself(NULL, WD_NORMAL);
 			}
 			send_packet.packet_no = WD_READY;

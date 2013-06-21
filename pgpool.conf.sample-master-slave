@@ -464,6 +464,7 @@ wd_authkey = ''
 
 delegate_IP = ''
                                     # delegate IP address
+                                    # If this is empty, virtual IP never bring up. 
                                     # (change requires restart)
 ifconfig_path = '/sbin'
                                     # ifconfig command path
