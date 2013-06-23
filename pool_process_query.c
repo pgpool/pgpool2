@@ -2886,7 +2886,7 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 
 		if (doing_extended && (state & STATE_COMPLETED) == STATE_COMPLETED)
 		{
-			pool_debug("do_qyery: all state completed");
+			pool_debug("do_query: all state completed");
 			break;
 		}
 	}
