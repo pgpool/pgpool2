@@ -423,7 +423,12 @@ EXTRA_DIST = pgpool.8.in sample/pgpool.pam \
 		test/timestamp/expected/misc.out test/timestamp/main.c \
 		test/timestamp/parse_schedule test/timestamp/run-test \
 		test/pgpool_setup \
-		redhat/pgpool.init redhat/pgpool.sysconfig redhat/pgpool.conf.sample.patch
+		redhat/pgpool.init redhat/pgpool.sysconfig redhat/pgpool.conf.sample.patch \
+		redhat/rpm_installer/getsources.sh redhat/rpm_installer/config_for_script \
+		redhat/rpm_installer/install.sh redhat/rpm_installer/uninstall.sh \
+		redhat/rpm_installer/basebackup-replication.sh redhat/rpm_installer/basebackup-stream.sh \
+		redhat/rpm_installer/pgpool_recovery_pitr redhat/rpm_installer/pgpool_remote_start \
+		redhat/rpm_installer/recovery.conf redhat/rpm_installer/failover.sh
 
 SUBDIRS = parser pcp watchdog
 all: config.h
