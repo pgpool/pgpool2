@@ -518,7 +518,7 @@ wd_heartbeat_keepalive = 2
 wd_heartbeat_deadtime = 30
                                     # Deadtime interval for heartbeat signal (sec)
                                     # (change requires restart)
-heartbeat_destination = 'host0_ip1'
+heartbeat_destination0 = 'host0_ip1'
                                     # Host name or IP address of destination 0
                                     # for sending heartbeat signal.
                                     # (change requires restart)
@@ -534,7 +534,7 @@ heartbeat_device0 = 'eth0'
                                     # This works only when pgpool has root privilege.
                                     # (change requires restart)
 
-#heartbeat_destination_ip1 = 'host0_ip2'
+#heartbeat_destination1 = 'host0_ip2'
 #heartbeat_destination_port1 = 9694
 #heartbeat_device1 = 'eth1'
 

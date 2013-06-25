@@ -69,7 +69,6 @@ echo -n "    Get sources for installer ... "
 mkdir -p $work_dir/installer
 cp -f $pgpool_src_dir/redhat/rpm_installer/install.sh   $work_dir/installer/
 cp -f $pgpool_src_dir/redhat/rpm_installer/uninstall.sh $work_dir/installer/
-cp -f $pgpool_src_dir/redhat/rpm_installer/ssh_wo_password.sh $work_dir/installer/
 cp -f $pgpool_src_dir/COPYING                           $work_dir/installer/
 
 # each conf files
