@@ -2088,8 +2088,8 @@ static void failover(void)
 			 * if multiple PostgreSQL are going down (or even starting
 			 * pgpool, without starting PostgreSQL can trigger this).
 			 * Child calls degenerate_backend() and it tries to aquire
-			 * semaphore to write a failover request. In this case
-			 * also the signal mask is set, thus signals are never
+			 * semaphore to write a failover request. In this case the
+			 * signal mask is set as well, thus signals are never
 			 * received.
 			 */
 			kill(process_info[i].pid, SIGQUIT);
