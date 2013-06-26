@@ -101,8 +101,8 @@ cat >> $FAILOVER_SCRIPT <<'EOF'
 #                  %M = old master node id
 #                  %H = new master node host name
 #                  %P = old primary node id
-#                  %% = '%' character
 #                  %R = new master database cluster path
+#                  %r = new master port number
 #                  %% = '%' character
 failed_node_id=$1
 failed_host_name=$2
@@ -163,8 +163,8 @@ cat >> $FOLLOW_MASTER_SCRIPT <<'EOF'
 #                  %M = old master node id
 #                  %H = new master node host name
 #                  %P = old primary node id
-#                  %% = '%' character
 #                  %R = new master database cluster path
+#                  %r = new master port number
 #                  %% = '%' character
 failed_node_id=$1
 failed_host_name=$2
