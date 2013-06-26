@@ -2081,6 +2081,19 @@ static void failover(void)
 	{
 		for (i=0;i<pool_config->num_init_children;i++)
 		{
+
+			/*
+			 * Try to kill pgpool child because previous kill signal
+			 * may not be received by pgpool child. This could happen
+			 * if multiple PostgreSQL are going down (or even starting
+			 * pgpool, without starting PostgreSQL can trigger this).
+			 * Child calls degenerate_backend() and it tries to aquire
+			 * semaphore to write a failover request. In this case
+			 * also the signal mask is set, thus signals are never
+			 * received.
+			 */
+			kill(process_info[i].pid, SIGQUIT);
+
 			process_info[i].pid = fork_a_child(unix_fd, inet_fd, i);
 			process_info[i].start_time = time(NULL);
 		}
