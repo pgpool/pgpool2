@@ -2637,7 +2637,10 @@ static void pool_add_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache, char ki
 
 	if (temp_cache == NULL)
 	{
-		pool_error("pool_add_temp_query_cache: POOL_TEMP_QUERY_CACHE is NULL");
+		/* This could happen if cache exceeded in previous query
+		 * execution in the same unnamed portal.
+		 */
+		pool_debug("pool_add_temp_query_cache: POOL_TEMP_QUERY_CACHE is NULL");
 		return;
 	}
 
@@ -2965,6 +2968,12 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 
 				cache = pool_get_current_cache();
 				pool_discard_temp_query_cache(cache);
+				/*
+				 * Reset temp_cache pointer in the current query context
+				 * so that we don't double free memory.
+				 */
+				session_context->query_context->temp_cache = NULL;
+
 			}
 			/*
 			 * Otherwise add to the temp cache array.

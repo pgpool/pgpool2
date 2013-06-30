@@ -752,15 +752,24 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			 * So overwrite the query text in temp cache to the one with the hex of bind message.
 			 * If not, md5 hash will be created by the query text without bind message, and
 			 * it will happen to find cache never or to get a wrong result.
+			 * 
+			 * However, It is possible that temp_cache does not exist.
+			 * Consider following scenario:
+			 * - In the previous execute cache is overflowed, and
+			 *   temp_cache discarded.
+			 * - In the subsequent bind/execute uses the same portal
 			 */
-			tmp = (char *)malloc(sizeof(char) * strlen(search_query) + 1);
-			if (tmp == NULL)
+			if (query_context->temp_cache)
 			{
-				return POOL_END;
+				tmp = (char *)malloc(sizeof(char) * strlen(search_query) + 1);
+				if (tmp == NULL)
+				{
+					return POOL_END;
+				}
+				free(query_context->temp_cache->query);
+				query_context->temp_cache->query = tmp;
+				strcpy(query_context->temp_cache->query, search_query);
 			}
-			free(query_context->temp_cache->query);
-			query_context->temp_cache->query = tmp;
-			strcpy(query_context->temp_cache->query, search_query);
 		}
 
 		/* If the query is SELECT from table to cache, try to fetch cached result. */
