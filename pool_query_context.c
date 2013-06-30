@@ -1632,7 +1632,9 @@ bool pool_is_cache_exceeded(void)
 
 	if (pool_is_query_in_progress() && sc->query_context)
 	{
-		return sc->query_context->temp_cache->is_exceeded;
+		if (sc->query_context->temp_cache)
+			return sc->query_context->temp_cache->is_exceeded;
+		return true;
 	}
 	return false;
 }
@@ -1648,7 +1650,7 @@ void pool_set_cache_exceeded(void)
 	if (!sc)
 		return;
 
-	if (sc->query_context)
+	if (sc->query_context && sc->query_context->temp_cache)
 	{
 		sc->query_context->temp_cache->is_exceeded = true;
 	}
@@ -1665,7 +1667,7 @@ void pool_unset_cache_exceeded(void)
 	if (!sc)
 		return;
 
-	if (sc->query_context)
+	if (sc->query_context && sc->query_context->temp_cache)
 	{
 		sc->query_context->temp_cache->is_exceeded = false;
 	}
