@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2012	PgPool Global Development Group
+ * Copyright (c) 2003-2013	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -77,6 +77,7 @@ static bool pool_has_insert_lock(void);
 static POOL_STATUS add_lock_target(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char* table);
 static bool has_lock_target(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char* table, bool for_update);
 static POOL_STATUS insert_oid_into_insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char* table);
+static bool is_all_slaves_command_complete(unsigned char *kind_list, int num_backends, int master);
 
 /* timeout sec for pool_check_fd */
 static int timeoutsec;
@@ -2631,7 +2632,21 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 
 			if (pool_extract_error_message(false, backend, major, true, &message))
 			{
-				pool_log("do_query: error message from backend %s", message);
+				pool_error("do_query: error message from backend: %s. Exit this session.", message);
+				/*
+				 * This is fatal. Because: If we operate extended
+				 * query, backend would not accept subsequent commands
+				 * until "sync" message issued. However, if sync
+				 * message issued, unnamed statement/unnamed portal
+				 * will disappear and will cause lots of problems.  If
+				 * we do not operate extended query, ongoing
+				 * transaction is aborted, and subsequent query would
+				 * not accepted.  In summary there's no transparent
+				 * way for frontend to handle error case. The only way
+				 * is closing this session.
+				 */
+				child_exit(1);
+				return POOL_END;
 			}
 		}
 
@@ -2679,6 +2694,11 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 			case 'C':	/* Command Complete */
 				pool_debug("do_query: Command complete received");
 				state |= COMMAND_COMPLETE_RECEIVED;
+				/*
+				 * "Comand Complete" implies data row received status.
+				 * If there's no row returned, "command complete" comes without row data.
+				 */
+				state |= DATA_ROW_RECEIVED;
 				break;
 
 			case '1':	/* Parse complete */
@@ -3660,6 +3680,27 @@ POOL_STATUS read_kind_from_one_backend(POOL_CONNECTION *frontend, POOL_CONNECTIO
 }
 
 /*
+ * returns true if all slaves status are 'C' (Command Complete)
+ */
+static bool is_all_slaves_command_complete(unsigned char *kind_list, int num_backends, int master)
+{
+	int i;
+	int ok = true;
+
+	for (i=0;i<num_backends;i++)
+	{
+		if (i == master || kind_list[i] == 0)
+			continue;
+		if (kind_list[i] != 'C')
+		{
+			ok = false;
+			break;
+		}
+	}
+	return ok;
+}
+		
+/*
  * read_kind_from_backend: read kind from backends.
  * the "frontend" parameter is used to send "kind mismatch" error message to the frontend.
  * the out parameter "decided_kind" is the packet kind decided by this function.
@@ -3770,7 +3811,23 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 		 * not all backends agree with kind. We need to do "decide by majority"
 		 */
 
-		if (max_count <= NUM_BACKENDS / 2.0)
+		/*
+		 * However here is a special case. In master slave mode, if
+		 * master gets an error at commit, while other slaves are
+		 * normal at commit, we don't need to degenrate any backend
+		 * because it is likely that the error was caused by a
+		 * deferred trigger.
+		 */
+		if (MASTER_SLAVE && query_context->parse_tree &&
+			is_commit_query(query_context->parse_tree) &&
+			kind_list[MASTER_NODE_ID] == 'E' &&
+			is_all_slaves_command_complete(kind_list, NUM_BACKENDS, MASTER_NODE_ID))
+		{
+			*decided_kind = kind_list[MASTER_NODE_ID];
+			pool_log("read_kind_from_backend: do not degenerate because it is likely caused by a delayed commit");
+			return POOL_CONTINUE;
+		}
+		else if (max_count <= NUM_BACKENDS / 2.0)
 		{
 			/* no one gets majority. We trust master node's kind */
 			trust_kind = kind_list[MASTER_NODE_ID];

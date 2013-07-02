@@ -106,7 +106,7 @@ static void reload_config(void);
 static int pool_pause(struct timeval *timeout);
 static void kill_all_children(int sig);
 static int get_next_master_node(void);
-static pid_t fork_follow_child(int old_master, int new_master, int old_primary);
+static pid_t fork_follow_child(int old_master, int new_primary, int old_primary);
 
 static RETSIGTYPE exit_handler(int sig);
 static RETSIGTYPE reap_handler(int sig);
@@ -1813,7 +1813,7 @@ static void failover(void)
 	/* exec follow_master_command */
 	if ((follow_cnt > 0) && (*pool_config->follow_master_command != '\0'))
 	{
-		follow_pid = fork_follow_child(Req_info->master_node_id, new_master,
+		follow_pid = fork_follow_child(Req_info->master_node_id, new_primary,
 									   Req_info->primary_node_id);
 	}
 
@@ -2494,7 +2494,7 @@ static int trigger_failover_command(int node, const char *command_line,
 						break;
 
 					case 'H': /* new master host name */
-						newmaster = pool_get_node_info(get_next_master_node());
+						newmaster = pool_get_node_info(new_master);
 						if (newmaster)
 							string_append_char(exec_cmd, newmaster->backend_hostname);
 						else
@@ -2689,7 +2689,7 @@ static int find_primary_node_repeatedly(void)
 /*
 * fork a follow child
 */
-pid_t fork_follow_child(int old_master, int new_master, int old_primary)
+pid_t fork_follow_child(int old_master, int new_primary, int old_primary)
 {
 	pid_t pid;
 	int i;
@@ -2705,7 +2705,7 @@ pid_t fork_follow_child(int old_master, int new_master, int old_primary)
 			bkinfo = pool_get_node_info(i);
 			if (bkinfo->backend_status == CON_DOWN)
 				trigger_failover_command(i, pool_config->follow_master_command,
-										 old_master, new_master, old_primary);
+										 old_master, new_primary, old_primary);
 		}
 		exit(0);
 	}
