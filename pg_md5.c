@@ -171,7 +171,7 @@ main(int argc, char *argv[])
 static void update_pool_passwd(char *conf_file, char *password)
 {
 	struct passwd *pw;
-	char	 md5[MD5_PASSWD_LEN+1];
+	char	 md5[POOL_PASSWD_LEN+1];
 	char pool_passwd[POOLMAXPATHLEN+1];
 	char dirnamebuf[POOLMAXPATHLEN+1];
 	char *dirp;
