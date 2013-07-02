@@ -989,6 +989,28 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 			return NULL;
 	}
 
+	/* Check a user name was given. */
+	if (sp->major != 1234 &&
+	    (sp->user == NULL || sp->user[0] == '\0'))
+	{
+		pool_send_fatal_message(cp, sp->major, "28000",
+		                        "no PostgreSQL user name specified in startup packet",
+								"",
+								"",
+								__FILE__, __LINE__);
+		pool_error("read_startup_packet: no PostgreSQL user name specified in startup packet");
+		pool_free_startup_packet(sp);
+		alarm(0);
+		pool_signal(SIGALRM, SIG_IGN);
+		return NULL;
+	}
+
+	/* The database defaults to ther user name. */
+	if (sp->database == NULL || sp->database[0] == '\0')
+	{
+		sp->database = strdup(sp->user);
+	}
+
 	pool_debug("Protocol Major: %d Minor: %d database: %s user: %s",
 			   sp->major, sp->minor, sp->database, sp->user);
 	alarm(0);
@@ -997,8 +1019,8 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 }
 
 /*
-* send startup packet
-*/
+ * send startup packet
+ */
 int send_startup_packet(POOL_CONNECTION_POOL_SLOT *cp)
 {
 	int len;
@@ -1011,7 +1033,7 @@ int send_startup_packet(POOL_CONNECTION_POOL_SLOT *cp)
 /*
  * Reuse existing connection
  */
-static bool connect_using_existing_connection(POOL_CONNECTION *frontend, 
+static bool connect_using_existing_connection(POOL_CONNECTION *frontend,
 											  POOL_CONNECTION_POOL *backend,
 											  StartupPacket *sp)
 {
