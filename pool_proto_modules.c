@@ -706,10 +706,15 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		bool foundp;
 		POOL_STATUS status;
 		char *search_query = NULL;
+		int len;
+		char *tmp;
+#define STR_ALLOC_SIZE 1024
 
-		search_query = (char *)malloc(sizeof(char) * strlen(query) + 1);
+		len = strlen(query)+1;
+		search_query = (char *)malloc(len);
 		if (search_query == NULL)
 		{
+			pool_error("Execute: malloc failed");
 			return POOL_END;
 		}
 		strcpy(search_query, query);
@@ -722,26 +727,36 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			/* Extract binary contents from bind message */
 			char *query_in_bind_msg = bind_msg->contents + bind_msg->param_offset;
 			char hex_str[4];  /* 02X chars + white space + null end */
-			int max_search_query_size = 0;
-			int i = 0;
-			char *tmp;
+			int i;
+			int alloc_len;
+
+			alloc_len = (len/STR_ALLOC_SIZE+1)*STR_ALLOC_SIZE;
+			search_query = realloc(search_query, alloc_len);
+			if (search_query == NULL)
+			{
+				pool_error("Execute: realloc failed");
+				return POOL_END;
+			}
 
 			for (i = 0; i < bind_msg->len - bind_msg->param_offset; i++)
 			{
-				while (max_search_query_size <= sizeof(char) * strlen(search_query))
-				{
-					max_search_query_size += 1024;
-					tmp = (char *)realloc(search_query, sizeof(char) * max_search_query_size);
-					if (tmp == NULL)
-					{
-						return POOL_END;
-					}
-					search_query = tmp;
-					tmp = NULL;
-				}
+				int hexlen;
 
 				snprintf(hex_str, sizeof(hex_str), (i == 0) ? " %02X" : "%02X", 0xff & query_in_bind_msg[i]);
+				hexlen = strlen(hex_str);
+
+				if ((len+hexlen) > alloc_len)
+				{
+					alloc_len += STR_ALLOC_SIZE;
+					search_query = realloc(search_query, alloc_len);
+					if (search_query == NULL)
+					{
+						pool_error("Execute: realloc failed");
+						return POOL_END;
+					}
+				}
 				strcat(search_query, hex_str);
+				len += hexlen;
 			}
 
 			query_context->query_w_hex = search_query;
@@ -764,6 +779,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 				tmp = (char *)malloc(sizeof(char) * strlen(search_query) + 1);
 				if (tmp == NULL)
 				{
+					pool_error("Execute: malloc failed");
 					return POOL_END;
 				}
 				free(query_context->temp_cache->query);
