@@ -985,6 +985,40 @@ postmaster. You need to reload pgpool.conf if you change this value.
       </p>
   </dd>
 
+  <dt><a name="SSL_CA_CERT"></a>ssl_ca_cert</dt>
+  <dd>
+      <p>
+      The path to a PEM format file containing one or more CA root
+      certificates, which can be used to verify the backend server
+      certificate.  This is analogous to the <code>-CAfile</code> option 
+      of the OpenSSL <code>verify(1)</code> command.
+      </p>
+
+      <p>
+      The default value for this option is unset, so no
+      verification takes place.  Verification will still occur if
+      this option is not set but a value has been given for 
+      <code>ssl_ca_cert_dir</code>.
+      </p>
+  </dd>
+
+  <dt><a name="SSL_CA_CERT_DIR"></a>ssl_ca_cert_dir</dt>
+  <dd>
+      <p>
+      The path to a directory containing PEM format CA certficate
+      files, which can be used to verify the backend server
+      certificate.  This is analogous to the <code>-CApath</code> option 
+      of the OpenSSL <code>verify(1)</code> command.
+      </p>
+
+      <p>
+      The default value for this option is unset, so no
+      verification takes place.  Verification will still occur if
+      this option is not set but a value has been given for 
+      <code>ssl_ca_cert</code>.
+      </p>
+  </dd>
+
   <dt><a name="DEBUG_LEVEL"></a>debug_level</dt>
   <dd>
       <p>
@@ -1993,40 +2027,6 @@ pgpool-II. The System DB's configuration is done in
   <dd>
       <p>The password for the System DB. If no password is necessary,
       set the empty string ('').</p>
-  </dd>
-
-  <dt><a name="SSL_CA_CERT"></a>ssl_ca_cert</dt>
-  <dd>
-      <p>
-      The path to a PEM format file containing one or more CA root
-      certificates, which can be used to verify the backend server
-      certificate.  This is analogous to the <code>-CAfile</code> option 
-      of the OpenSSL <code>verify(1)</code> command.
-      </p>
-
-      <p>
-      The default value for this option is unset, so no
-      verification takes place.  Verification will still occur if
-      this option is not set but a value has been given for 
-      <code>ssl_ca_cert_dir</code>.
-      </p>
-  </dd>
-
-  <dt><a name="SSL_CA_CERT_DIR"></a>ssl_ca_cert_dir</dt>
-  <dd>
-      <p>
-      The path to a directory containing PEM format CA certficate
-      files, which can be used to verify the backend server
-      certificate.  This is analogous to the <code>-CApath</code> option 
-      of the OpenSSL <code>verify(1)</code> command.
-      </p>
-
-      <p>
-      The default value for this option is unset, so no
-      verification takes place.  Verification will still occur if
-      this option is not set but a value has been given for 
-      <code>ssl_ca_cert</code>.
-      </p>
   </dd>
 
 </dl>
