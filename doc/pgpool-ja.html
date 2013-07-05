@@ -20,9 +20,9 @@ Last modified: Fri Apr 26 11:44:58 JST 2013
   </tr>
   <tr>
     <td valign="top" style="border-right:1px dotted #cccccc;">
-	<br />
+    <br />
 
-	<div id="navcontainer">
+    <div id="navcontainer">
       <ul id="navlist">
         <li id="active"><a href="#Whatis" id="current">pgpool-IIとは</a></li>
         <li><a href="#platform">pgpool-IIの稼働環境</a></li>
@@ -36,23 +36,22 @@ Last modified: Fri Apr 26 11:44:58 JST 2013
         <li><a href="#start">pgpool-IIの起動と停止</a></li>
         <li><a href="#reload">pgpool-IIの設定ファイルの再読み込み</a></li>
         <li><a href="#show-commands">SHOWコマンド</a></li>
-	    <li><a href="#online-recovery">オンラインリカバリ</a></li>
-	    <li><a href="#backup">バックアップ</a></li>
-	    <li><a href="#deploy">pgpool-IIの配置について</a></li>
-	    <li><a href="#troubleshooting">トラブルシューティング</a></li>
+        <li><a href="#online-recovery">オンラインリカバリ</a></li>
+        <li><a href="#backup">バックアップ</a></li>
+        <li><a href="#deploy">pgpool-IIの配置について</a></li>
+        <li><a href="#troubleshooting">トラブルシューティング</a></li>
         <li><a href="#restriction">制限事項</a></li>
         <li><a href="#reference">リファレンス</a></li>
         <li><a href="#internal">内部情報</a></li>
         <li><a href="#release">リリースノート</a></li>
       </ul>
     </div>
-	<br />
+    <br />
 
-		<div class="header_small" align="center">
+    	<div class="header_small" align="center">
 
-			[<a href="pgpool-en.html">English page</a>]		</div>	</td>
+    		[<a href="pgpool-en.html">English page</a>]		</div>	</td>
     <td valign="top" style="border-left:1px dotted #cccccc;">
-	
 
 
 <h1>pgpool-IIとは<a name="whatis"></a></h1>
@@ -147,16 +146,16 @@ pgpool-II本体や関連ファイルをインストールするトップディ�
 PostgreSQLのクライアントライブラリなどがインストールされているトップディ
 レクトリを指定します。デフォルトは<code>pg_config</code>コマンドで取得できるパスです。</li>
   <li><code>--with-openssl</code><br/>
-	 pgpool-IIをOpenSSLサポート付で作成します。
-	 デフォルトではOpenSSLサポートは無効です。</li>
+     pgpool-IIをOpenSSLサポート付で作成します。
+     デフォルトではOpenSSLサポートは無効です。</li>
   <li><code>--enable-sequence-lock</code><br/>
-	 pgpool-II 3.0シリーズ(3.0.4まで)互換のinsert_lockを使用します。
-	 pgpool-IIは、シーケンステーブルの行に対してロックを行います。
-	 これは、2011年06月より後にリリースされたPostgreSQL 8.2以降では使用できません。</li>
+     pgpool-II 3.0シリーズ(3.0.4まで)互換のinsert_lockを使用します。
+     pgpool-IIは、シーケンステーブルの行に対してロックを行います。
+     これは、2011年06月より後にリリースされたPostgreSQL 8.2以降では使用できません。</li>
   <li><code>--enable-table-lock</code><br/>
-	 pgpool-II 2.2と2.3シリーズ互換のinsert_lockを使用します。
-	 pgpool-IIは、挿入対象のテーブルに対してロックを行います。
-	 これは、ロックがVACUUMと競合するため非推奨です。</li>
+     pgpool-II 2.2と2.3シリーズ互換のinsert_lockを使用します。
+     pgpool-IIは、挿入対象のテーブルに対してロックを行います。
+     これは、ロックがVACUUMと競合するため非推奨です。</li>
 </ul>
 </p>
 
@@ -440,7 +439,7 @@ pcpがコネクションを受け付けるUNIXドメインソケットを置く�
 
 <dt><a name="BACKEND_SOCKET_DIR"></a>backend_socket_dir</dt>
 <dd>
-	 <font color="red"><em>DEPRECATED</em></font><br>
+     <font color="red"><em>DEPRECATED</em></font><br>
 <p>
 このパラメータは、libpqのポリシーに合わせて削除されます。
 代わりにbackend_hostnameパラメータを使ってください。
@@ -539,11 +538,11 @@ pgpool-IIは、syslog ファシリティ LOCAL0 から LOCAL7 までにログを
 (syslog_facilityをご覧ください)。
 しかし、ほとんどのデフォルトのsyslog設定は、そのようなメッセージを廃棄してしまいます。
 そこで、syslogデーモンの以下のような設定が必要になります。
-	</p>
-	<pre>
-	local0.*    /var/log/pgpool.log
-	</pre>
-	</p>
+    </p>
+    <pre>
+    local0.*    /var/log/pgpool.log
+    </pre>
+    </p>
   </dd>
 
   <dt><a name="SYSLOG_FACILITY"></a>syslog_facility</dt>
@@ -552,13 +551,13 @@ pgpool-IIは、syslog ファシリティ LOCAL0 から LOCAL7 までにログを
 LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7から選択します。
 デフォルトは LOCAL0 です。
 併せてsyslogデーモンのドキュメントもご覧ください。
-	</p>
+    </p>
   </dd>
 
   <dt><a name="SYSLOG_IDENT"></a>syslog_ident</dt>
   <dd>
       <p>syslogが有効な場合、このパラメータによってsyslogのメッセージにあらわれるプログラム名を設定します。デフォルトは"pgpool"です。
-	</p>
+    </p>
   </dd>
 
 <dt><a name="PID_FILE_NAME"></a>pid_file_name</dt>
@@ -777,7 +776,7 @@ falseにすると、フェイルオーバせず、単にエラーがレポート
 <p>
     md5 認証で用いる認証ファイルのファイル名を指定します。
     デフォルト値は "pool_passwd" です。
-    空文字列（""）を指定すると 認証ファイルの読込は無効になります。  
+    空文字列（""）を指定すると 認証ファイルの読込は無効になります。
     詳細は<a href="#md5">認証・アクセス制御方式</a>を参照してください。
     このパラメータを変更した時には pgpool-II を再起動してください。
 </p>
@@ -891,66 +890,97 @@ ALLOW_TO_FAILOVERと同時には指定できません。
 </p>
 </dd>
 
-  <dt><a name="SSL">ssl</a></dt>
-  <dd>
-      <p>
-	 trueならばpgpool-IIとフロントエンド、pgpool-IIとバックエンドの間のSSL接続が可能になります。
-	 なお、pgpool-IIとフロントエンドの接続にSSLが利用できるためには、<code>ssl_key</code>と<code>ssl_cert</code>が設定されてなければなりません。
-      </p>
+<dt><a name="SSL">ssl</a></dt>
+<dd>
+<p>
+trueならばpgpool-IIとフロントエンド、pgpool-IIとバックエンドの間のSSL接続が可能になります。
+なお、pgpool-IIとフロントエンドの接続にSSLが利用できるためには、<code>ssl_key</code>と<code>ssl_cert</code>が設定されてなければなりません。
+</p>
 
-      <p>
-	 デフォルトではSSLサポートはオフになっています。SSLサポートを有効にするためには、configure時にOpenSSLサポートを有効にする必要があります。詳細は<a href="#install">インストール</a>の項目をご覧下さい。
-      </p>
+<p>
+ デフォルトではSSLサポートはオフになっています。SSLサポートを有効にするためには、configure時にOpenSSLサポートを有効にする必要があります。詳細は<a href="#install">インストール</a>の項目をご覧下さい。
+</p>
 
-      <p>
-	 sslを有効に設定したら、pgpoolの再起動をしてください。
-      </p>
-  </dd>
+<p>
+sslを有効に設定したら、pgpoolの再起動をしてください。
+</p>
+</dd>
 
-  <dt><a name="SSL_KEY"></a>ssl_key</dt>
-  <dd>
-      <p>
-	 フロントエンドとの接続に使用するプライベートキーファイルのフルパスを指定します。
-      </p>
+<dt><a name="SSL_KEY"></a>ssl_key</dt>
+<dd>
+<p>
+フロントエンドとの接続に使用するプライベートキーファイルのフルパスを指定します。
+</p>
 
-      <p>
-	 ssl_keyのデフォルト値はありません。
-	 ssl_keyの設定がない場合は、フロントエンドとの接続でSSLが使用されなくなります。
-      </p>
-  </dd>
+<p>
+ssl_keyのデフォルト値はありません。
+ssl_keyの設定がない場合は、フロントエンドとの接続でSSLが使用されなくなります。
+</p>
+</dd>
 
-  <dt><a name="SSL_CERT"></a>ssl_cert</dt>
-  <dd>
-      <p>
-	 フロントエンドとの接続に使用する公開x509証明書のフルパスを指定します。
-      </p>
+<dt><a name="SSL_CERT"></a>ssl_cert</dt>
+<dd>
+<p>
+フロントエンドとの接続に使用する公開x509証明書のフルパスを指定します。
+</p>
 
-      <p>
-	 ssl_certのデフォルト値はありません。
-	 ssl_certの設定がない場合は、フロントエンドとの接続でSSLが使用されなくなります。
-      </p>
+<p>
+ssl_certのデフォルト値はありません。
+ssl_certの設定がない場合は、フロントエンドとの接続でSSLが使用されなくなります。
+</p>
+</dd>
 
-  <dt><a name="DEBUG_LEVEL"></a>debug_level</dt>
-  <dd>
-      <p>
-	 デバッグメッセージの詳細レベル。0でデバッグメッセージの出力なし。
-	 1以上でデバッグメッセージを出力します。
-	 数字が大きければより詳細なメッセージが出力されるようになります(3.0では今のところメッセージの詳細度は変りません)。
-	 デフォルト値は0です。
-      </p>
-  </dd>
+<dt><a name="SSL_CA_CERT"></a>ssl_ca_cert</dt>
+<dd>
+<p>
+1 つ以上の CA ルート証明書を格納している PEM 形式ファイルのパスを指定します。
+このファイルはバックエンドサーバ証明書の検証に用いられます。
+このオプションは OpenSSL の <code>verify(1)</code> コマンドにおける <code>-CAfile</code> オプションと同様の機能を提供します。
+</p>
 
-  <dt><a name="RELCACHE_EXPIRE"></a>relcache_expire</dt>
-  <dd>
-      <p>
-	 リレーションキャッシュの寿命を秒単位で指定します。
-	 0を指定すると、キャッシュの寿命の管理は行わず、プロセスが生きているか、キャッシュが溢れるまでは有効になります(デフォルトの動作)。
-	 リレーションキャッシュは、PostgreSQLのシステムカタログに対する問い合わせを保存しておくものです。問い合わせる内容は、テーブルの構造、テーブルが一時テーブルかどうかなどがあります。
-	 キャッシュはpgpoolの子プロセスのローカルメモりに保管されています。
-	 もしALTER TABLEが発行されると、テーブルの構造が変わる場合があり、リレーションキャッシュの内容と一致しなくなる恐れがあります。
-	 relcache_expireにより、その危険性をコントロールできるようになります。
-      </p>
-  </dd>
+<p>
+デフォルトでは値が設定されておらず検証は行われません。
+このオプションが設定されていない場合においても、<code>ssl_ca_cert_dir</code> オプション
+が設定されている場合には検証が行われます。
+</p>
+</dd>
+
+<dt><a name="SSL_CA_CERT_DIR"></a>ssl_ca_cert_dir</dt>
+<dd>
+<p>
+PEM 形式の CA 証明書ファイルを格納しているディレクトリのパスを指定します。
+これらのファイルはバックエンドサーバ認証の検証に用いられます。
+このオプションは OpenSSL の <code>verify(1)</code> コマンドにおける <code>-CApath</code> オプションと同様の機能を提供します。
+</p>
+
+<p>
+デフォルトでは値が設定されておらず検証は行われません。
+このオプションが設定されていない場合においても、<code>ssl_ca_cert</code> オプション
+が設定されている場合には検証が行われます。
+</p>
+</dd>
+
+<dt><a name="DEBUG_LEVEL"></a>debug_level</dt>
+<dd>
+<p>
+デバッグメッセージの詳細レベル。0でデバッグメッセージの出力なし。
+1以上でデバッグメッセージを出力します。
+数字が大きければより詳細なメッセージが出力されるようになります(3.0では今のところメッセージの詳細度は変りません)。
+デフォルト値は0です。
+</p>
+</dd>
+
+<dt><a name="RELCACHE_EXPIRE"></a>relcache_expire</dt>
+<dd>
+<p>
+リレーションキャッシュの寿命を秒単位で指定します。
+0を指定すると、キャッシュの寿命の管理は行わず、プロセスが生きているか、キャッシュが溢れるまでは有効になります(デフォルトの動作)。
+リレーションキャッシュは、PostgreSQLのシステムカタログに対する問い合わせを保存しておくものです。問い合わせる内容は、テーブルの構造、テーブルが一時テーブルかどうかなどがあります。
+キャッシュはpgpoolの子プロセスのローカルメモりに保管されています。
+もしALTER TABLEが発行されると、テーブルの構造が変わる場合があり、リレーションキャッシュの内容と一致しなくなる恐れがあります。
+relcache_expireにより、その危険性をコントロールできるようになります。
+</p>
+</dd>
 
 </dl>
 
@@ -1033,7 +1063,7 @@ rawモードに加え、コネクションプーリングが利用できるよ�
 
 <ul>
 <li>「ABORT」は、PostgreSQL 7.4以上ではトランザクションブロックの中にい
-	 ない場合には発行されません。
+     ない場合には発行されません。
 </ul>
 
 </p>
@@ -1633,7 +1663,7 @@ trigger_file=$3
 
 # Do nothing if standby goes down.
 if [ $failed_node = 1 ]; then
-	exit 0;
+    exit 0;
 fi
 
 # Create trigger file.
@@ -1670,7 +1700,7 @@ max_wal_senders = 1
 以下は例ですので、必ず実際に合わせて調整してください。
 
 <pre>
-host	replication	postgres		192.168.0.10/32		trust
+host    replication	postgres		192.168.0.10/32		trust
 </pre>
 
 </ol>
@@ -1692,39 +1722,39 @@ pgpool-IIのStreaming Replicationモードは、こうした振り分けを自�
 <p>
 <ul>
  <li>Primaryノードにしか送られない問い合わせ
-	  <ul>
-	   <li>INSERT, UPDATE, DELETE, COPY FROM, TRUNCATE, CREATE, DROP, ALTER, COMMENT
-	   <li>SELECT ... FOR SHARE | UPDATE
-	   <li>トランザクションの分離レベルがシリアライザブルの場合のSELECT
-	   <li>ROW EXCLUSIVE MODEよりも強いLOCK
-	   <li>トランザクションコマンドの一部
-			<ul>
-			 <li>BEGIN READ WRITE, START TRANSACTION READ WRITE
-			 <li>SET TRANSACTION READ WRITE, SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE
-			 <li>SET transaction_read_only = off
-			</ul>
-	   <li>二相コミット関連のコマンド。PREPARE TRANSACTION, COMMIT PREPARED, ROLLBACK PREPARED
-	   <li>LISTEN, UNLISTEN, NOTIFY
-	   <li>VACUUM
-	   <li>シーケンス関連の関数(nextvalやsetvalなど)の呼び出し。
-	   <li>ラージオブジェクトの生成
-	  </ul>
+      <ul>
+       <li>INSERT, UPDATE, DELETE, COPY FROM, TRUNCATE, CREATE, DROP, ALTER, COMMENT
+       <li>SELECT ... FOR SHARE | UPDATE
+       <li>トランザクションの分離レベルがシリアライザブルの場合のSELECT
+       <li>ROW EXCLUSIVE MODEよりも強いLOCK
+       <li>トランザクションコマンドの一部
+    		<ul>
+    		 <li>BEGIN READ WRITE, START TRANSACTION READ WRITE
+    		 <li>SET TRANSACTION READ WRITE, SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE
+    		 <li>SET transaction_read_only = off
+    		</ul>
+       <li>二相コミット関連のコマンド。PREPARE TRANSACTION, COMMIT PREPARED, ROLLBACK PREPARED
+       <li>LISTEN, UNLISTEN, NOTIFY
+       <li>VACUUM
+       <li>シーケンス関連の関数(nextvalやsetvalなど)の呼び出し。
+       <li>ラージオブジェクトの生成
+      </ul>
  <li>Primary/Standbyどちらにも送ることのできる問い合わせ。
 負荷分散設定が有効ならば、standbyノードにも送信されます。
 ただし、レプリケーションの遅延上限(delay_threshold)が設定されていて、
 レプリケーションの遅延がdelay_thresholdを上回っている場合は問い合わせはPrimaryに送られます。
-	  <ul>
-	   <li>上記以外のSELECT
-	   <li>COPY TO
-	   <li>DECLARE, FETCH, CLOSE
-	   <li>SHOW
-	  </ul>
+      <ul>
+       <li>上記以外のSELECT
+       <li>COPY TO
+       <li>DECLARE, FETCH, CLOSE
+       <li>SHOW
+      </ul>
  <li>Primary/Standbyどちらにも送られる問い合わせ
-	  <ul>
-	   <li>SET
-	   <li>DISCARD
-	   <li>DEALLOCATE ALL
-	  </ul>
+      <ul>
+       <li>SET
+       <li>DISCARD
+       <li>DEALLOCATE ALL
+      </ul>
 </ul>
 </p>
 
@@ -1958,14 +1988,14 @@ num_init_children = 想定される同時接続数 * ( 1 + クエリの中で使
 
 <pre>
 CREATE TABLE pgpool_catalog.dist_def(
-	dbname TEXT,	-- DB名
-	schema_name TEXT,	--schema名
-	table_name TEXT,	-- テーブル名
-	col_name TEXT NOT NULL CHECK (col_name = ANY (col_list)),	-- 分散キー列名
-	col_list TEXT[] NOT NULL,	-- tableの属性名
-	type_list TEXT[] NOT NULL,	-- 属性のタイプ名
-	dist_def_func TEXT NOT NULL,	-- 分散先のDBノードを決定する関数名
-	PRIMARY KEY (dbname,schema_name,table_name)
+    dbname TEXT,	-- DB名
+    schema_name TEXT,	--schema名
+    table_name TEXT,	-- テーブル名
+    col_name TEXT NOT NULL CHECK (col_name = ANY (col_list)),	-- 分散キー列名
+    col_list TEXT[] NOT NULL,	-- tableの属性名
+    type_list TEXT[] NOT NULL,	-- 属性のタイプ名
+    dist_def_func TEXT NOT NULL,	-- 分散先のDBノードを決定する関数名
+    PRIMARY KEY (dbname,schema_name,table_name)
 );
 </pre>
 <h4><p>レプリケーションテーブルのルール登録</p></h4>
@@ -1978,12 +2008,12 @@ CREATE TABLE pgpool_catalog.dist_def(
 
 <pre>
 CREATE TABLE pgpool_catalog.replicate_def(
-	dbname TEXT,	-- DB名
-	schema_name TEXT,	--schema名
-	table_name TEXT,	-- テーブル名
-	col_list TEXT[] NOT NULL,	-- tableの属性名
-	type_list TEXT[] NOT NULL,	-- 属性のタイプ名
-	PRIMARY KEY (dbname,schema_name,table_name)
+    dbname TEXT,	-- DB名
+    schema_name TEXT,	--schema名
+    table_name TEXT,	-- テーブル名
+    col_list TEXT[] NOT NULL,	-- tableの属性名
+    type_list TEXT[] NOT NULL,	-- 属性のタイプ名
+    PRIMARY KEY (dbname,schema_name,table_name)
 );
 </pre>
 
@@ -2006,21 +2036,21 @@ branchesテーブルはレプリケーションテーブルのルール登録を
 
 <pre>
 INSERT INTO pgpool_catalog.dist_def VALUES (
-	'pgpool',
-	'public',
-	'accounts',
-	'aid',
-	ARRAY['aid','bid','abalance','filler'],
-	ARRAY['integer','integer','integer','character(84)'],
-	'pgpool_catalog.dist_def_accounts'
+    'pgpool',
+    'public',
+    'accounts',
+    'aid',
+    ARRAY['aid','bid','abalance','filler'],
+    ARRAY['integer','integer','integer','character(84)'],
+    'pgpool_catalog.dist_def_accounts'
 );
 
 INSERT INTO pgpool_catalog.replicate_def VALUES (
-	'pgpool',
-	'public',
-	'branches',
-	ARRAY['bid','bbalance','filler'],
-	ARRAY['integer','integer','character(84)']
+    'pgpool',
+    'public',
+    'branches',
+    ARRAY['bid','bbalance','filler'],
+    ARRAY['integer','integer','character(84)']
 );
 </pre>
 
@@ -2032,8 +2062,8 @@ INSERT INTO pgpool_catalog.replicate_def VALUES (
 <pre>
 CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_accounts (val ANYELEMENT) RETURNS INTEGER AS '
   SELECT CASE WHEN $1 >= 1 and $1 <= 30000 THEN 0
-	      WHEN $1 > 30000 and $1 <= 60000 THEN 1
-	      ELSE 2
+          WHEN $1 > 30000 and $1 <= 60000 THEN 1
+          ELSE 2
   END' LANGUAGE SQL;
 </pre>
 
@@ -2125,7 +2155,7 @@ md5に関しては、pool_passwdというパスワードファイルを併用す
 <h2>クエリキャッシュの設定方法</h2>
 
 <p>
-	pgpool-IIでは、すべてのモードでクエリキャッシュを利用することができます。
+    pgpool-IIでは、すべてのモードでクエリキャッシュを利用することができます。
 クエリキャッシュは、SELECTの結果を再利用することにより、性能を向上させます。
   利用する場合には、pgpool.confの設定を以下のように設定します。
 <pre>
@@ -2571,11 +2601,11 @@ pgpool_switch_xlog 関数の基本動作は pg_switch_xlog 関数と同じです
 #! /bin/sh
 # Online recovery 2nd stage script
 #
-datadir=$1		# master dabatase cluster
-DEST=$2			# hostname of the DB node to be recovered
-DESTDIR=$3		# database cluster of the DB node to be recovered
-port=5432		# PostgreSQL port number
-archdir=/data/archive_log	# archive log directory
+datadir=$1    	# master dabatase cluster
+DEST=$2    		# hostname of the DB node to be recovered
+DESTDIR=$3    	# database cluster of the DB node to be recovered
+port=5432    	# PostgreSQL port number
+archdir=/data/archive_log    # archive log directory
 
 # Force to flush current value of sequences to xlog
 psql -p $port -t -c 'SELECT datname FROM pg_database WHERE NOT datistemplate AND datallowconn' template1|
@@ -2673,11 +2703,11 @@ rsyncに関する注記:
 <ul>
  <li>-c (or --checksum) オプションを付けないと、ファイルが確実に転送されない場合があります。
  <li>-z (or --compress)オプションは低速なネットワークでは効果がありますが、
-	  100M以上の高速なネットワークではかえってCPU負荷を増やし、結果的に遅くなることがあります。
-	  高速ネットワークでは、このオプションを使用しないことをお勧めします。
+      100M以上の高速なネットワークではかえってCPU負荷を増やし、結果的に遅くなることがあります。
+      高速ネットワークでは、このオプションを使用しないことをお勧めします。
 
  <li>rsync の新しいバージョン(3.0.5)では、50%も性能が良くなったという報告が
-	  pgpool-generalメーリングリストでありました。
+      pgpool-generalメーリングリストでありました。
 </ul>
 </p>
 
@@ -3385,16 +3415,16 @@ configure に失敗します。必ず libpq 3.0 以降(PostgreSQL 7.4以降) を
 <p>
    pgpool-IIを操作するUNIXコマンドとして、以下のものがあります。
 <pre>
-   * pcp_node_count	- ノード数を取得する
-   * pcp_node_info	- ノード情報を取得する
-   * pcp_proc_count	- プロセス一覧を取得する
-   * pcp_proc_info	- プロセス情報を取得する
+   * pcp_node_count    - ノード数を取得する
+   * pcp_node_info    - ノード情報を取得する
+   * pcp_proc_count    - プロセス一覧を取得する
+   * pcp_proc_info    - プロセス情報を取得する
    * pcp_pool_status    pgpool.conf のパラメータ設定値を取得する
-   * pcp_systemdb_info	- システムDB情報を取得する
-   * pcp_detach_node	- ノードを切り離す
-   * pcp_attach_node	- ノードを復帰させる
-   * pcp_promote_node	- ノードをマスターに昇格させる
-   * pcp_stop_pgpool	- pgpool-IIを停止させる
+   * pcp_systemdb_info    - システムDB情報を取得する
+   * pcp_detach_node    - ノードを切り離す
+   * pcp_attach_node    - ノードを復帰させる
+   * pcp_promote_node    - ノードをマスターに昇格させる
+   * pcp_stop_pgpool    - pgpool-IIを停止させる
    * pcp_recovery_node  - マスタノードを使ってノードのデータを再同期、ノード起動させる
 </pre>
 </p>
@@ -3409,15 +3439,15 @@ configure に失敗します。必ず libpq 3.0 以降(PostgreSQL 7.4以降) を
    $ pcp_node_count [-d] 10 localhost 9898 postgres hogehoge
 
     第一引数    - タイムアウト値
-		秒数でタイムアウト値を指定します。この時間内にpgpool-IIから応
-		答がない場合はコネクションを切断して終了します。なお、
-		このオプションは 2.1 からは無視するようになっています。
-    第二引数	- pgpool-IIが稼動しているホスト名
-    第三引数	- PCPポート番号
-    第四引数	- PCPユーザ名
-    第五引数	- PCPパスワード
+    	秒数でタイムアウト値を指定します。この時間内にpgpool-IIから応
+    	答がない場合はコネクションを切断して終了します。なお、
+    	このオプションは 2.1 からは無視するようになっています。
+    第二引数    - pgpool-IIが稼動しているホスト名
+    第三引数    - PCPポート番号
+    第四引数    - PCPユーザ名
+    第五引数    - PCPパスワード
 
-	オプション引数として、-dがあります。-dが指定されるとデバッグ情報を出力します。
+    オプション引数として、-dがあります。-dが指定されるとデバッグ情報を出力します。
 </pre>
 <p>
     PCPユーザ名とパスワードは ./configure 時に --prefix で指定した
@@ -3437,7 +3467,7 @@ configure に失敗します。必ず libpq 3.0 以降(PostgreSQL 7.4以降) を
 <h3>pcp_node_count</h3>
 <pre>
    書式：
-	pcp_node_count  _timeout_  _host_  _port_  _userid_  _passwd
+    pcp_node_count  _timeout_  _host_  _port_  _userid_  _passwd
 </pre>
 <p>
    pgpool-IIの pgpool.conf で定義されたノードの総数を表示します。切り離されている
@@ -3448,7 +3478,7 @@ configure に失敗します。必ず libpq 3.0 以降(PostgreSQL 7.4以降) を
 <h3><a name="pcp_node_info"></a>pcp_node_info</h3>
 <pre>
    書式：
-	pcp_node_info  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid
+    pcp_node_info  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid
 </pre>
 
 <p>
@@ -3487,7 +3517,7 @@ configure に失敗します。必ず libpq 3.0 以降(PostgreSQL 7.4以降) を
 <p>
 <pre>
    書式：
-	pcp_proc_count  _timeout_  _host_  _port_  _userid_  _passwd
+    pcp_proc_count  _timeout_  _host_  _port_  _userid_  _passwd
 </pre>
 <p>
    pgpool-IIの子プロセスのプロセスIDを一覧表示します。複数ある場合は空白文字で区
@@ -3499,7 +3529,7 @@ configure に失敗します。必ず libpq 3.0 以降(PostgreSQL 7.4以降) を
 <p>
 <pre>
    書式：
-	pcp_proc_info  _timeout_  _host_  _port_  _userid_  _passwd_  _processid
+    pcp_proc_info  _timeout_  _host_  _port_  _userid_  _passwd_  _processid
 </pre>
 <p>
    pgpool-IIの子プロセス情報を表示します。出力結果は以下の例の通りです。
@@ -3559,7 +3589,7 @@ desc : PCP port # to bind
 <p>
 <pre>
    書式：
-	pcp_systemdb_info  _timeout_  _host_  _port_  _userid_  _passwd
+    pcp_systemdb_info  _timeout_  _host_  _port_  _userid_  _passwd
 
    pgpool-IIのシステムDB情報を表示します。出力結果は以下の通りです。
 
@@ -3601,7 +3631,7 @@ desc : PCP port # to bind
 <p>
 <pre>
    書式：
-	pcp_detach_node  [-g] _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid
+    pcp_detach_node  [-g] _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid
 
    pgpool-IIのノードを切り離します。
 -gを指定すると、すべてのクライアントが接続を終了するまでノードを復帰しません。
@@ -3614,7 +3644,7 @@ desc : PCP port # to bind
 <p>
 <pre>
    書式：
-	pcp_attach_node  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid
+    pcp_attach_node  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid
 
    pgpool-IIのノードを復帰させます。
 </pre>
@@ -3625,7 +3655,7 @@ desc : PCP port # to bind
 <p>
 <pre>
    書式:
-	pcp_promote_node  [-g] _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid
+    pcp_promote_node  [-g] _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid
 
    pgpool-IIのノードをマスターに昇格させます。これは、マスタースレーブモードでストリーミング
 レプリケーション構成の場合のみ使用できます。
@@ -3639,14 +3669,14 @@ desc : PCP port # to bind
 <p>
 <pre>
    書式：
-	pcp_stop_pgpool  _timeout_  _host_  _port_  _userid_  _passwd_  _mode
+    pcp_stop_pgpool  _timeout_  _host_  _port_  _userid_  _passwd_  _mode
 
    pgpool-IIを指定されたモードでシャットダウンします。指定できるモードは以下の通
    りです。
 
-   s	- smart モード
-   f	- fast モード
-   i	- immediate モード
+   s    - smart モード
+   f    - fast モード
+   i    - immediate モード
 
    pgpool-IIが起動していない場合はConnectionErrorと表示され、終了コード8で終了し
    ます。
@@ -3661,7 +3691,7 @@ desc : PCP port # to bind
 <p>
 <pre>
    書式：
-	pcp_recovery_node  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid
+    pcp_recovery_node  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid
 
    pgpool-IIのノードをデータを再同期させた上で復帰させます。
 </pre>
@@ -3673,27 +3703,27 @@ desc : PCP port # to bind
    PCPコマンドは正常に処理を終了した場合、ステータス'0'で終了します。エラーが起
    きた場合は以下のステータスにより終了します。
 <pre>
-   UNKNOWNERR	1	不明なエラー
-   EOFERR	2	EOFエラー
-   NOMEMERR	3	メモリ不足
-   READERR	4	サーバからのデータ読み込みエラー
-   WRITEERR	5	サーバへのデータ書き込みエラー
-   TIMEOUTERR	6	タイムアウト
-   INVALERR	7	PCPコマンドへの不正なオプション
-   CONNERR	8	サーバ接続エラー
-   NOCONNERR	9	接続が存在しない
-   SOCKERR	10	ソケットエラー
-   HOSTERR	11	ホスト名解決エラー
-   BACKENDERR	12	サーバでのPCP処理エラー。存在しないプロセスIDの情報を取
-			得しようとした場合など
-   AUTHERR	13	認証エラー
+   UNKNOWNERR    1	不明なエラー
+   EOFERR    2	EOFエラー
+   NOMEMERR    3	メモリ不足
+   READERR    4	サーバからのデータ読み込みエラー
+   WRITEERR    5	サーバへのデータ書き込みエラー
+   TIMEOUTERR    6	タイムアウト
+   INVALERR    7	PCPコマンドへの不正なオプション
+   CONNERR    8	サーバ接続エラー
+   NOCONNERR    9	接続が存在しない
+   SOCKERR    10	ソケットエラー
+   HOSTERR    11	ホスト名解決エラー
+   BACKENDERR    12	サーバでのPCP処理エラー。存在しないプロセスIDの情報を取
+    		得しようとした場合など
+   AUTHERR    13	認証エラー
 </pre>
 </p>
 
 <h1>内部情報<a name="internal"></a></h1>
 <p>
   pgpool-IIバージョン 2.0 以降では、1.x バージョンと比べ大幅な改良が加えられています。
-  1.x バージョンの情報とは互換性がないので注意してください。	
+  1.x バージョンの情報とは互換性がないので注意してください。
 </p>
 
 <h2>パラレル実行エンジン</h2>
@@ -3781,7 +3811,7 @@ SELECTの最終実行ステータスと処理される場所との関係は、�
 以下の単純なクエリでは、p1-tableがシステムDBのpgpool_catalog.dist_defテーブルに登録されている場合、つまりデータの分割が
 行われている場合には、サブクエリの最終実行ステータスが P となり、その結果サブクエリの呼び出し元である SELECT の実行ステータスも P となります。
 <pre>
-	SELECT * FROM (SELECT * FROM P1-table) as P2-table;
+    SELECT * FROM (SELECT * FROM P1-table) as P2-table;
 </pre>
 </p>
 <p>
@@ -3816,7 +3846,7 @@ FROM句から構成されるデータ集合全体の実行ステータスとな�
 以下の例では、P1-tableが P 状態のテーブルでL1-table,L2-tableが L 状態のテーブルだとします。
 すると上記の表により、P1-table (左)とL1-table (右) が結合し P 状態となり、さらに P 状態と L 状態のL2-tableが結合してFROM句の実行ステータスは P 状態となります。
 <pre>
-	SELECT * FROM P1-table,L1-table,L2-table;
+    SELECT * FROM P1-table,L1-table,L2-table;
 </pre>
 </p>
 
@@ -3843,7 +3873,7 @@ P 状態となります。そのため L1-tableの実行ステータスに依存
 、このクエリの実行場所はシステムDBとなります。
 </p>
 <pre>
-	SELECT * FROM L1-table where L1-table.column IN (SELECT * FROM P1-table);
+    SELECT * FROM L1-table where L1-table.column IN (SELECT * FROM P1-table);
 </pre>
 
 <p>
@@ -3856,7 +3886,7 @@ FROM 句が P 状態の場合、かつ、TARGETLISTに集約関数がある場�
 FROM句で定義したテーブル、サブクエリには存在しないカラムがWHERE句に使われている場合があります。これは以下のような相関サブクエリ内で発生します。
 </p>
 <pre>
-	SELECT * FROM L1-table FROM L1-table.col1 IN (SELECT * FROM P1-table WHERE P1-table.col = L1-table.col1);
+    SELECT * FROM L1-table FROM L1-table.col1 IN (SELECT * FROM P1-table WHERE P1-table.col = L1-table.col1);
 </pre>
 <p>上記のサブクエリに使われている L1-table.col1は、L1-tableを外部参照しています。この場合にサブクエリのWHERE句の実行ステータスは S 状態となります。
 
@@ -3903,16 +3933,16 @@ L 状態の場合には、pgpool.confのloadbalance_modeがtrueの場合には�
 例として P 状態の P1-table と L 状態の L1-table を使ったクエリで説明します
 </p>
 <pre>
-	SELECT P1-table.col, L1-table.col FROM P1-table,L1-table where P1-table.col = L1-table.col order by P1-table.col;
+    SELECT P1-table.col, L1-table.col FROM P1-table,L1-table where P1-table.col = L1-table.col order by P1-table.col;
 </pre>
 <p>
 このクエリでは ORDER BY 句があるため S 状態となり、FROM句、WHERE句、TARGETLISTは P 状態となります。
 このようなクエリでは以下のように書き換えられます。
 </p>
 <pre>
-	SELECT P1-table.col, L1-table.col FROM
-	　　　dblink(select pool_parallel(SELECT P1-table.col, L1-table.col FROM P1-table,L1-table where P1-table.col = L1-table.col))
-  	order by P1-table.col;
+    SELECT P1-table.col, L1-table.col FROM
+    　　　dblink(select pool_parallel(SELECT P1-table.col, L1-table.col FROM P1-table,L1-table where P1-table.col = L1-table.col))
+      order by P1-table.col;
 </pre>
 <p>
 ここでdblinkはpgpool-IIに問い合わせを送信します。また、pool_parallelは引数のクエリをパラレル実行エンジンをにわたす関数です。なお、上記はあくまでイメージであり実際に実行可能なクエリではありません。
@@ -3924,21 +3954,21 @@ L 状態の場合には、pgpool.confのloadbalance_modeがtrueの場合には�
 次の例を見てみます。
 </p>
 <pre>
-	SELECT L1-table.col FROM L1-table WHERE L1-table.col % 2 = 0 AND L1-table.col IN (SELECT P1-table FROM P1-table) ;
+    SELECT L1-table.col FROM L1-table WHERE L1-table.col % 2 = 0 AND L1-table.col IN (SELECT P1-table FROM P1-table) ;
 </pre>
 <p>
 この例では、FROM 句は L 状態、TARGETLISTも L 状態、WHERE句は P 状態のサブクエリを持っているため S 状態となります。
 これは以下のように書き換えが行われます。
 </p>
 <pre>
-	SELECT L1-table.col FROM dblink(SELECT loadbalance(SELECT L1-table.col FROM L1-table WHERE L1-table.col % 2 = 0 AND TRUE))
-		WHERE
-			L1-table.col %2 = 0 AND
-		  L1-table.col IN
-		  (
-		  	SELECT P1-Table FROM
-		  	dblink(select pool_parallel(SELECT P1-table FROM P1-table))
-		  ) ;
+    SELECT L1-table.col FROM dblink(SELECT loadbalance(SELECT L1-table.col FROM L1-table WHERE L1-table.col % 2 = 0 AND TRUE))
+    	WHERE
+    		L1-table.col %2 = 0 AND
+    	  L1-table.col IN
+    	  (
+    	  	SELECT P1-Table FROM
+    	  	dblink(select pool_parallel(SELECT P1-table FROM P1-table))
+    	  ) ;
 </pre>
 <p>
 ここで、pool_loadbalanceはクエリをいずれかのノードに送信する関数です。
@@ -3971,7 +4001,7 @@ FROM 句が P 状態で count(*) を使ったクエリは、以下のように�
         sum(pool_c$1) as count
     FROM
         dblink(select pool_parallel('select count(*) from  P1-table'))
-					AS pool_$1g (pool_c$1 bigint);
+    				AS pool_$1g (pool_c$1 bigint);
 </pre>
 
 <p>
@@ -4059,7 +4089,7 @@ pgpool-IIのチュートリアルは<a href="tutorial-ja.html">ここ</a>にあ�
 md5認証で長いユーザ名を処理する際のバグを修正しました。(Tatsuo Ishii)
 <p>
   ユーザ名が 32 バイトより長い場合、md5 認証が動作していませんでした。
-  この問題は [pgpool-general: 1526] で Thomas Martin さんにより報告されました。    
+  この問題は [pgpool-general: 1526] で Thomas Martin さんにより報告されました。
 </p>
 <blockquote>
   [pgpool-general: 1526]<br />
@@ -4127,8 +4157,8 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 
 <li>detect_postmaster_down_error() のエラーメッセージを修正しました。(Tatsuo Ishii)
 <p>
-  例えば、"LOG: detect_stop_postmaster_error: detect_error error" を 
-  "LOG: detect_postmaster_down_error: detect_error error" に修正するなどです。 
+  例えば、"LOG: detect_stop_postmaster_error: detect_error error" を
+  "LOG: detect_postmaster_down_error: detect_error error" に修正するなどです。
 </p>
 </li>
 
@@ -4228,7 +4258,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </p>
 </li>
 
-<li>ストリーミングレプリケーションモードでレプリケーション遅延が大きくなったときに、 
+<li>ストリーミングレプリケーションモードでレプリケーション遅延が大きくなったときに、
   "portal not found" エラーが発生するバグを修正しました。 (Tatsuo Ishii)
 <p>
   これは delay_threshold が導入以来、ずっと存在していたバグです。
@@ -4244,9 +4274,9 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 
 <li>pg_md5 で、ユーザからのパスワード入力の後には改行するように修正しました。 (Yugo Nagata)</li>
 
-<li>watchdog のポート番号が既に使用されていた場合にエラーメッセージを出力するよう修正しました。 
+<li>watchdog のポート番号が既に使用されていた場合にエラーメッセージを出力するよう修正しました。
   (Yugo Nagata)
-<p> 
+<p>
   この問題は [pgpool-general: 1167] で Will Ferguson さんによって報告されました。
 </p>
 <blockquote>
@@ -4276,7 +4306,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <li>pool_read() が不正なパケットを読み込んだ場合に、read_startup_packet() がアラームクロック
   をリセットして StartupPacket を解放するよう修正しました。 (Nozomi Anzai)
 <p>
-  修正前は、pgpool ポートの監視を行うプログラムの接続により、認証のタイムアウトが発生していました。 
+  修正前は、pgpool ポートの監視を行うプログラムの接続により、認証のタイムアウトが発生していました。
   この問題は、バグトラック #35 で報告されました。
 </p>
 <blockquote>
@@ -4292,7 +4322,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <p>
   このポインタは事前に memset() によって初期化されているため、実際にはこのバグによる害は
   ありませんでした。
-</p>    
+</p>
 </li>
 
 <li>ドキュメント中の、「パラメータ変更に再起動が必要かどうか」の情報を追記・修正しました。(Yugo Nagata)</li>
@@ -4555,7 +4585,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
     これは状況により BACKEND_INFO が利用できなくなる場合があったためです。(Tatsuo Ishii)</li>
 <li>子プロセスがレプリケーション遅延チェック要求を送り続けることがあるバグを修正しました。</br>
     以前はフェイルオーバ時にレプリケーション遅延をチェックする worker プロセスを限定した条件でしか起動していませんでしたが、<br/>
-	これは間違いで、常に再起動する必要があります。(Tatsuo Ishii)</li>
+    これは間違いで、常に再起動する必要があります。(Tatsuo Ishii)</li>
 <li>デバッグメッセージにヌル文字が含まれないように修正しました。ヌル文字が含まれるログは、バイナリファイルであると認識されることがあります。(Toshihiro Kitagawa)</li>
 <li>以下の場合に parser memory をリストアするよう SimpleQuery() 関数を修正しました。
     <ol>
@@ -4600,20 +4630,20 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <ul>
  <li>black_functon_listとwhite_function_listの読み込み処理でメモリ破壊を起こすバグを修正しました(Tatsuo Ishii)。
  <li>check_replication_time_lagの誤ったエラーメッセージを修正しました(Tatsuo Ishii)。
-	  ストリーミングレプリケーションの遅れのチェックのためにPostgreSQLに接続できなかった時に誤ったメッセージを出していました。3.1以降では health_check_userはこの目的のために使われていないので、これは誤りです。
+      ストリーミングレプリケーションの遅れのチェックのためにPostgreSQLに接続できなかった時に誤ったメッセージを出していました。3.1以降では health_check_userはこの目的のために使われていないので、これは誤りです。
  <li>メモリーリークを修正しました(Toshihiro Kitagawa)。これは、基本的に3.0.5(commit
-      	19a4ea9215da0b61728741fc0da2271958b09238)で行われた修正と同じものです。
+          19a4ea9215da0b61728741fc0da2271958b09238)で行われた修正と同じものです。
  <li>strncpy()を使った修正を多数行いました(Tatsuo Ishii)。strncpy()が使われている箇所が複数あり、そこではコピー長とバッファサイズが同じであるケースが考慮されていません。このため、コピー後の文字列がNULL終端されていない可能性があり、多くの問題を後で引き起こすことになります。この問題を修正するために、ほとんどの箇所をstrlcpy()で置き換えました。
  <li>可能な場合にはキャッシュされたバックエンドの状態情報を更新するようにしました(Tatsuo Ishii)。
-	 これにより、Jeff Frostから以下のメールで報告された問題が解決されました。
-	 すなわち、 follow_master_command が正しくバックエンドの状態を読み取れない問題です。
-	 <pre>
-	 Subject: [Pgpool-general] diagnosing BackendError from pcp_recovery_node
-	 To: pgpool-general@pgfoundry.org
-	 Date: Wed, 05 Oct 2011 15:15:07 -0700
-	 </pre>
+     これにより、Jeff Frostから以下のメールで報告された問題が解決されました。
+     すなわち、 follow_master_command が正しくバックエンドの状態を読み取れない問題です。
+     <pre>
+     Subject: [Pgpool-general] diagnosing BackendError from pcp_recovery_node
+     To: pgpool-general@pgfoundry.org
+     Date: Wed, 05 Oct 2011 15:15:07 -0700
+     </pre>
  <li>Windows環境でのみ必要なPGDLLIMPORTIを削除しました。これはgccを使わない環境で問題を引き起こします。
-	 パッチはIbrar Ahmedさんが提供しました。
+     パッチはIbrar Ahmedさんが提供しました。
 </ul>
 
 <h2><a name="release3.1.0"></a>3.1.0 (hatsuiboshi) 2011/09/08</h2>
@@ -4739,7 +4769,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 md5認証で長いユーザ名を処理する際のバグを修正しました。(Tatsuo Ishii)
 <p>
   ユーザ名が 32 バイトより長い場合、md5 認証が動作していませんでした。
-  この問題は [pgpool-general: 1526] で Thomas Martin さんにより報告されました。    
+  この問題は [pgpool-general: 1526] で Thomas Martin さんにより報告されました。
 </p>
 <blockquote>
   [pgpool-general: 1526]<br />
@@ -4807,8 +4837,8 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 
 <li>detect_postmaster_down_error() のエラーメッセージを修正しました。(Tatsuo Ishii)
 <p>
-  例えば、"LOG: detect_stop_postmaster_error: detect_error error" を 
-  "LOG: detect_postmaster_down_error: detect_error error" に修正するなどです。 
+  例えば、"LOG: detect_stop_postmaster_error: detect_error error" を
+  "LOG: detect_postmaster_down_error: detect_error error" に修正するなどです。
 </p>
 </li>
 
@@ -4906,7 +4936,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </p>
 </li>
 
-<li>ストリーミングレプリケーションモードでレプリケーション遅延が大きくなったときに、 
+<li>ストリーミングレプリケーションモードでレプリケーション遅延が大きくなったときに、
   "portal not found" エラーが発生するバグを修正しました。 (Tatsuo Ishii)
 <p>
   これは delay_threshold が導入以来、ずっと存在していたバグです。
@@ -4922,9 +4952,9 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 
 <li>pg_md5 で、ユーザからのパスワード入力の後には改行するように修正しました。 (Yugo Nagata)</li>
 
-<li>watchdog のポート番号が既に使用されていた場合にエラーメッセージを出力するよう修正しました。 
+<li>watchdog のポート番号が既に使用されていた場合にエラーメッセージを出力するよう修正しました。
   (Yugo Nagata)
-<p> 
+<p>
   この問題は [pgpool-general: 1167] で Will Ferguson さんによって報告されました。
 </p>
 <blockquote>
@@ -4954,12 +4984,12 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <li>pool_read() が不正なパケットを読み込んだ場合に、read_startup_packet() がアラームクロック
   をリセットして StartupPacket を解放するよう修正しました。 (Nozomi Anzai)
 <p>
-  修正前は、pgpool ポートの監視を行うプログラムの接続により、認証のタイムアウトが発生していました。 
+  修正前は、pgpool ポートの監視を行うプログラムの接続により、認証のタイムアウトが発生していました。
   この問題は、バグトラック #35 で報告されました。
 </p>
 <blockquote>
   #35 Authentication is timeout<br />
-  Reporter: tuomas 
+  Reporter: tuomas
   Date: 2012-11-20 11:54
   <a href="http://www.pgpool.net/mantisbt/view.php?id=35">
   http://www.pgpool.net/mantisbt/view.php?id=35</a>
@@ -4970,7 +5000,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <p>
   このポインタは事前に memset() によって初期化されているため、実際にはこのバグによる害は
   ありませんでした。
-</p>    
+</p>
 </li>
 
 <li>ヘルプメッセージに -f オプションの説明を追加しました。 (Tatsuo Ishii)</li>
@@ -5287,15 +5317,15 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
   <li>更新クエリを実行した後である
  </ul>
  <li>ストリーミングレプリケーションモード利用時のオンラインリカバリにおいて、以下のシナリオがうまく動作しない問題を修正しました。以下のシナリオでは、ノード0を最初のプライマリサーバ、ノード1を最初のスタンバイサーバとします。
-	  <p>
-	  <ol>
-	   <li>ノード0プライマリサーバがダウンし、ノード1スタンバイサーバが新しいプライマリサーバになる
-	   <li>ノード0の旧プライマリサーバは、オンラインリカバリで新スタンバイサーバになる
-	   <li>このときpgpool-IIは、ノード0の新スタンバイサーバを、プライマリサーバとみなしてしまう
-	  </ol>
-	  </p>
-	  これは、生きているノード番号の一番若いサーバをプライマリサーバと見なしていたためです。
-	  pgpool-II 3.0.3では、pgpool_walrecrunning()を使って、実際にそのノードがプライマリサーバかどうか判定するため、このような問題は起きません。
+      <p>
+      <ol>
+       <li>ノード0プライマリサーバがダウンし、ノード1スタンバイサーバが新しいプライマリサーバになる
+       <li>ノード0の旧プライマリサーバは、オンラインリカバリで新スタンバイサーバになる
+       <li>このときpgpool-IIは、ノード0の新スタンバイサーバを、プライマリサーバとみなしてしまう
+      </ol>
+      </p>
+      これは、生きているノード番号の一番若いサーバをプライマリサーバと見なしていたためです。
+      pgpool-II 3.0.3では、pgpool_walrecrunning()を使って、実際にそのノードがプライマリサーバかどうか判定するため、このような問題は起きません。
 この機能をうまく使うために、オンラインリカバリのスクリプトで%P(古いプライマリノード番号)が利用できるようになっています。
 なお、pgpool_walrecrunning()がインストールされていない場合は、上の問題は解消されず、3.0.1と同様の動作になります。
 </ul>
@@ -5569,10 +5599,10 @@ strerror() ではなく hstrerror() を使うように修正しました。 (Tat
  <li>フロントエンドとpgpool-II、pgpool-IIとPostgreSQLの間のSSL通信がサポートされました(Sean Finney)
  <li>ラージオブジェクトのレプリケーションがサポートされました(Tatsuo)
  <li>ヘルスチェックとオンラインリカバリの際に可能であればpostgresデータベースを使うようにしました。
-	  postgresデータベースが存在しない場合はtemplate1が使われます(以前の動作と同じ)。
-	  これにより、DROP DATABASEなどのコマンドがオンラインリカバリ中でも使えるようになりました(Tatsuo)
+      postgresデータベースが存在しない場合はtemplate1が使われます(以前の動作と同じ)。
+      これにより、DROP DATABASEなどのコマンドがオンラインリカバリ中でも使えるようになりました(Tatsuo)
  <li>問い合わせのパース処理でエラーが起きたときに、SQL文をログに出力するようにしました。
-	  エンコーディングエラーなどが発生した際にはPostgreSQLのログにもSQL文が記録されないため、これは有効です(Tatsuo)
+      エンコーディングエラーなどが発生した際にはPostgreSQLのログにもSQL文が記録されないため、これは有効です(Tatsuo)
  <li>kind mismatchエラーが発生し、その原因がDEALLOCATEコマンドだった場合にDEALLOCATEが削除しようとしたPREPARED文の元になったSQL文をログに出力するようにしました(Tatsuo)
 </ul>
 </p>
@@ -5602,19 +5632,19 @@ strerror() ではなく hstrerror() を使うように修正しました。 (Tat
 <p>
 <ul>
  <li>以下のすべての条件に合致する場合、DBに不正な値が書き込まれるバグを修正しました(Tatsuo)
-	  <p>
-	  <ol>
-	   <li>レプリケーションモードで動作
-	   <li>64bit OS
-	   <li>INSERTまたはUPDATEにおいて、now(), CURRENT_TIMESTAMP, CURRENT_DATE, CURRENT_TIMEを直接含むか、テーブルのデフォルト値に含んでいる
-	   <li>更にそのSQL内に32bit(10進で-2147483648から2147483647)の範囲を超える整数定数が含まれている
-	  </ol>
-	  以上を満たすSQLの例:
-	  <pre>
-	  INSERT INTO t1(id, regdate) VALUES(98887776655, NOW());
-	  </pre>
-	  この例では、98887776655が32bit値にカットされて書き込まれます。
-	  </p>
+      <p>
+      <ol>
+       <li>レプリケーションモードで動作
+       <li>64bit OS
+       <li>INSERTまたはUPDATEにおいて、now(), CURRENT_TIMESTAMP, CURRENT_DATE, CURRENT_TIMEを直接含むか、テーブルのデフォルト値に含んでいる
+       <li>更にそのSQL内に32bit(10進で-2147483648から2147483647)の範囲を超える整数定数が含まれている
+      </ol>
+      以上を満たすSQLの例:
+      <pre>
+      INSERT INTO t1(id, regdate) VALUES(98887776655, NOW());
+      </pre>
+      この例では、98887776655が32bit値にカットされて書き込まれます。
+      </p>
 
   <li>18以上のDBノードを使用している場合に、show pool_statusでクラッシュするバグを修正しました。
 このバグはshow pool_statusが実装されてからずっと存在していたものです。
@@ -5706,7 +5736,7 @@ INSERT/UPDATE/DELETEは自動的にマスタのみに送られます。SELECTに
 <ul>
  <li>pgpool-II 2.2.2で入ってしまったバグを修正しました。フロントエンドがアボートするタイミングによっては、以後内部状態がリセットされず、次のセッションでDMLやDDLがマスターノードのみ送られ、ノード間でデータの不一致が生じることがありました(Tatsuo)
  <li>pgpool-II 2.2.3でバージョン2プロトコルのクライアントが動かなくなってしまっていたのを修正しました。
-	  また、時間のかかるクエリを待っている間にフロントエンドが異常終了したことを検知する間隔を1秒から30秒に変更しました。このチェックは、2.2.4ではプロトコルバージョンが3のときのみ有効です(Tatsuo)
+      また、時間のかかるクエリを待っている間にフロントエンドが異常終了したことを検知する間隔を1秒から30秒に変更しました。このチェックは、2.2.4ではプロトコルバージョンが3のときのみ有効です(Tatsuo)
  <li>子プロセスを起動する前にシグナルのブロックやハンドラの設定を行なうようにしました。
 これは、pgpool-IIを起動した直後にフェイルオーバなどの事象が発生して子プロセスから親プロセスにシグナルが送られると、pgpool-IIの親プロセスが死んでしまうことがあるからです(Tatsuo)
 </ul>
@@ -5773,7 +5803,7 @@ INSERT/UPDATE/DELETEは自動的にマスタのみに送られます。SELECTに
 <h3>バグ修正</h3>
 <ul>
   <li>master/slaveモードで、DEALLOCATEが失敗することがある問題を修正しました。
-	   これは、最初のPREPAREがslaveで実行されないことによるものです(Toshihiro)
+       これは、最初のPREPAREがslaveで実行されないことによるものです(Toshihiro)
 
   <li>pgpool.specなどを2.2対応にしました(Devrim)
 
@@ -5796,10 +5826,10 @@ INSERT/UPDATE/DELETEは自動的にマスタのみに送られます。SELECTに
 <ul>
 <li>insert_lockが有効な場合、SERIAL型を持つテーブルだけがロックされるようになりました(Tatsuo)。
 <li>設定項目client_idle_limit_in_recoveryが追加されました。
-	 オンラインリカバリの第2ステージでクライアントがアイドルのまま居座ることによって、
-	 オンラインリカバリが進行しなくなることを防ぐことができます(Tatsuo)。
+     オンラインリカバリの第2ステージでクライアントがアイドルのまま居座ることによって、
+     オンラインリカバリが進行しなくなることを防ぐことができます(Tatsuo)。
 <li>設定項目pid_file_nameが追加されました。これは、pgpool-IIのpidファイルを指定します。
-	 これにより、logdirは使用されなくなりました(Tatsuo)。
+     これにより、logdirは使用されなくなりました(Tatsuo)。
 <li>DECLARE, FETCH, CLOSEで負荷分散されるようになりました(Tatsuo)。
 <li>pcpコマンドにデバッグオプション(-d)が追加されました(Jun Kuriyama)。
 <li>"kind mismatch"エラーの際に、原因となったクエリを表示するようにしました(Tatsuo)。
@@ -5809,10 +5839,10 @@ INSERT/UPDATE/DELETEは自動的にマスタのみに送られます。SELECTに
 <h3>互換性</h3>
 <ul>
   <li>フェイルオーバ時に必ずpgpoolの子プロセスを再起動するようにしました。
-	   この結果、フェイルオーバ時には必ずpgpoolへのセッションが一端切れることになります。
-	   こうしないと、ネットワークケーブル抜けなどの際に、
-	   TCP/IPのレイヤで再送が行なわれ、長い時間そのままになってしまうことが
-	   あるからです(Tatsuo)。
+       この結果、フェイルオーバ時には必ずpgpoolへのセッションが一端切れることになります。
+       こうしないと、ネットワークケーブル抜けなどの際に、
+       TCP/IPのレイヤで再送が行なわれ、長い時間そのままになってしまうことが
+       あるからです(Tatsuo)。
   <li>設定項目logdirは使われなくなりました。代りに、pid_file_nameを使ってください(Tatsuo)。
 
   <li>insert_lockのデフォルト値がtrueになりました(Tatsuo)。
@@ -5821,45 +5851,45 @@ INSERT/UPDATE/DELETEは自動的にマスタのみに送られます。SELECTに
 <h3>バグ修正</h3>
 <ul>
   <li> pgpoolがデーモンモードで起動される際に、すべてのファイルディスクリプタを
-	   閉じるようにしました。こうしないと、pgpoolAdminから起動された際に
-	   apacheのソケットファイルを引き継いでしまい、80番ポートが
-	   専有されてしまいます(Akio Ishida)。
+       閉じるようにしました。こうしないと、pgpoolAdminから起動された際に
+       apacheのソケットファイルを引き継いでしまい、80番ポートが
+       専有されてしまいます(Akio Ishida)。
   <li> トランザクションをシリアライズできないエラーが発生したときに、
-	   すべてのDBノードのトランザクションをアボートするようにしました。
-	   こうしないと、DBノードの間でデータの不整合が起きることがあります(Tatsuo)。
-	   例を示します(Mはマスタ、Sはスレーブを示します)。
-	   <pre>
-	   M:S1:BEGIN;
-	   M:S2:BEGIN;
-	   S:S1:BEGIN;
-	   S:S2:BEGIN;
-	   M:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
-	   M:S2:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
-	   S:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
-	   S:S2:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
-	   M:S1:UPDATE t1 SET i = i + 1;
-	   S:S1:UPDATE t1 SET i = i + 1;
-	   M:S2:UPDATE t1 SET i = i + 1; <-- blocked
-	   S:S1:COMMIT;
-	   M:S1:COMMIT;
-	   M:S2:ERROR:  could not serialize access due to concurrent update
-	   S:S2:UPDATE t1 SET i = i + 1; <-- success in UPDATE and data becomes inconsistent!
-	   </pre>
+       すべてのDBノードのトランザクションをアボートするようにしました。
+       こうしないと、DBノードの間でデータの不整合が起きることがあります(Tatsuo)。
+       例を示します(Mはマスタ、Sはスレーブを示します)。
+       <pre>
+       M:S1:BEGIN;
+       M:S2:BEGIN;
+       S:S1:BEGIN;
+       S:S2:BEGIN;
+       M:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+       M:S2:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+       S:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+       S:S2:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+       M:S1:UPDATE t1 SET i = i + 1;
+       S:S1:UPDATE t1 SET i = i + 1;
+       M:S2:UPDATE t1 SET i = i + 1; <-- blocked
+       S:S1:COMMIT;
+       M:S1:COMMIT;
+       M:S2:ERROR:  could not serialize access due to concurrent update
+       S:S2:UPDATE t1 SET i = i + 1; <-- success in UPDATE and data becomes inconsistent!
+       </pre>
 
  <li> rawモードでMD5認証が使えるようにしました。ドキュメント上では使えるはずでした(Tatsuo)。
 
  <li> "SET TRANSACTION ISOLATION LEVEL must be called before any query"の
-	   エラーが発生した場合に"kind mimatch"エラーになることを防ぐようにしました(Tatsuo)。
-	   以下のシナリオで問題が発生します。
-	   <pre>
-	   M:S1:BEGIN;
-	   S:S1:BEGIN;
-	   M:S1:SELECT 1; <-- only sent to MASTER
-	   M:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
-	   S:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
-	   M: <-- error
-	   S: <-- ok since no previous SELECT is sent. kind mismatch error occurs!
-	   </pre>
+       エラーが発生した場合に"kind mimatch"エラーになることを防ぐようにしました(Tatsuo)。
+       以下のシナリオで問題が発生します。
+       <pre>
+       M:S1:BEGIN;
+       S:S1:BEGIN;
+       M:S1:SELECT 1; <-- only sent to MASTER
+       M:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+       S:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+       M: <-- error
+       S: <-- ok since no previous SELECT is sent. kind mismatch error occurs!
+       </pre>
 
 <li>FreeBSDにおいて、psでのprocess statusの表示で余計なスペースが含まれてしまうのを修正しました(Jun Kuriyama)
 
@@ -6049,7 +6079,7 @@ INSERT/UPDATE/DELETEは自動的にマスタのみに送られます。SELECTに
   <li> トランザクション内で SELECT を実行した後に SELECT を正しくロードバラ
        ンスできない不具合を修正しました。(Yoshiyuki)
        <ul>
-	<li> この不具合は 1.2 で混入した不具合です。
+    <li> この不具合は 1.2 で混入した不具合です。
        </ul>
   <li> 64bit 環境でクエリキャッシュ機能を有効にすると、クラッシュする可能性のある不具合を修正しました(Yoshiyuki)
 </ul>
