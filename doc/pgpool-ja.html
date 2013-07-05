@@ -756,6 +756,36 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
     ssl_certの設定がない場合は、フロントエンドとの接続でSSLが使用されなくなります。</p>
 </dd>
 
+<dt>ssl_ca_cert</dt>
+<dd>
+    <p>
+    1 つ以上の CA ルート証明書を格納している PEM 形式ファイルのパスを指定します。
+    このファイルはバックエンドサーバ証明書の検証に用いられます。
+    このオプションは OpenSSL の <code>verify(1)</code> コマンドにおける <code>-CAfile</code> オプションと同様の機能を提供します。
+    </p>
+
+    <p>
+    デフォルトでは値が設定されておらず検証は行われません。
+    このオプションが設定されていない場合においても、<code>ssl_ca_cert_dir</code> オプション
+    が設定されている場合には検証が行われます。
+    </p>
+</dd>
+
+<dt>ssl_ca_cert_dir</dt>
+<dd>
+    <p>
+    PEM 形式の CA 証明書ファイルを格納しているディレクトリのパスを指定します。
+    これらのファイルはバックエンドサーバ認証の検証に用いられます。
+    このオプションは OpenSSL の <code>verify(1)</code> コマンドにおける <code>-CApath</code> オプションと同様の機能を提供します。
+    </p>
+
+    <p>
+    デフォルトでは値が設定されておらず検証は行われません。
+    このオプションが設定されていない場合においても、<code>ssl_ca_cert</code> オプション
+    が設定されている場合には検証が行われます。
+    </p>
+</dd>
+
 <dt>debug_level</dt>
 <dd>
     <p>デバッグメッセージの詳細レベル。0でデバッグメッセージの出力なし。
