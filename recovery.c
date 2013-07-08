@@ -63,8 +63,15 @@ int start_recovery(int recovery_node)
 
 	pool_log("starting recovering node %d", recovery_node);
 
+	if ( (recovery_node < 0) || (recovery_node >= pool_config->backend_desc->num_backends) )
+	{
+		pool_error("start_recovery: node id %d is not valid", recovery_node);
+		return 1;
+	}
+
 	if (VALID_BACKEND(recovery_node))
 	{
+
 		pool_error("start_recovery: backend node %d is alive", recovery_node);
 		return 1;
 	}
