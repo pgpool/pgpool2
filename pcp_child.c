@@ -774,6 +774,22 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 
 				node_id = atoi(buf);
 
+				if ( (node_id < 0) || (node_id >= pool_config->backend_desc->num_backends) )
+				{
+					char code[] = "NodeIdOutOfRange";
+					pool_error("pcp_child: node id %d is not valid", node_id);
+					pcp_write(frontend, "e", 1);
+					wsize = htonl(sizeof(code) + sizeof(int));
+					pcp_write(frontend, &wsize, sizeof(int));
+					pcp_write(frontend, code, sizeof(code));
+					if (pcp_flush(frontend) < 0)
+					{
+						pool_error("pcp_child: pcp_flush() failed. reason: %s", strerror(errno));
+						exit(1);
+					}
+					exit(1);
+				}
+
 				if ((!REPLICATION &&
 					 !(MASTER_SLAVE &&
 					   !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))) ||
