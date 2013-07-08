@@ -26,6 +26,7 @@
 # The user run this script will become the PostgreSQL super user as
 # well.  Current directory must be empty.  Assume that appropreate
 # pgpool and PostgreSQL binaries are in the command search path.
+# The user must have passwordless access to localhost over SSH.
 #
 # Rayout after executing this script:
 #  data[0-]: PostgreSQL database clusters
@@ -232,7 +233,7 @@ DEST=$1
 DESTDIR=$2
 PGCTL=__PGBIN__/pg_ctl
 
-ssh -T $DEST $PGCTL -w -D $DESTDIR start 2>/dev/null 1>/dev/null < /dev/null &
+ssh -T $PGCTL -w -D $DESTDIR start 2>/dev/null 1>/dev/null < /dev/null &
 EOF
 
 #-------------------------------------------
@@ -559,6 +560,23 @@ function wait_for_pgpool_startup {
 	done
 }
 
+#-------------------------------------------
+# wait for pgpool reload finished
+#-------------------------------------------
+function wait_for_pgpool_reload {
+	timeout=20
+	num_node=$1
+
+	while [ $timeout -gt  0 ]
+	do
+		N=`$PSQL -p $PGPOOL_PORT -c "show pool_status" test | grep backend_data | wc -l`
+		if [ $N = $num_node ];then
+			break;
+		fi
+		timeout=`expr $timeout - 1`
+	done
+}
+
 #################################################################################
 #
 # main script
@@ -773,6 +791,7 @@ EOF
 		pgpool -f $BASEDIR/etc/pgpool.conf reload
 	fi
 
+	wait_for_pgpool_reload $NUMCLUSTERS
 $PSQL -p $PGPOOL_PORT -c "show pool_nodes" test
 
 # recovery data1 and so on
