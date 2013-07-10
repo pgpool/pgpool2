@@ -4,6 +4,160 @@
 3.2 Series (2012/08/03 - )
 ===============================================================================
 
+                        3.2.5 (namameboshi) 2013/07/10
+
+* Version 3.2.5
+
+      This is a bugfix release against pgpool-II 3.2.4.
+
+      __________________________________________________________________
+
+* Bug fixes
+
+    - Add mention about "-D" option to the man page. (Tatsuo Ishii)
+
+    - Consider timeout waiting for compeletion of failback request in on line
+      recovery (Tatsuo Ishii)
+    
+      This will prevent the situation that recovery operation continues forever
+      and we cannot even shutdown pgpool-II main process. This could happen
+      especially while executing follow master command.
+
+    - Fix a bug that %H of follow_master_command is not assigned correctly the
+      new primary node in stream replication mode
+      (Tatsuo Ishii)
+
+    - Fix wd_create_send_socket() to not execute select() before connect()
+      (Yugo Nagata)
+
+      How select() works on an unconnected socket is undefined, and differs
+      between platform. On Linux, this returns 2 and it is eventually harmless.
+      However, on Soraris, this returns 0 and it is indistinguishable from time
+      timeout, so watchdog wouldn't work correctly.
+    
+    - Fix error when pgpool_regclass is not installed (Tatsuo Ishii)
+
+      The query used in pool_has_pgpool_regclass() fails if pgpool_regclass
+      does not exist. The bug was introduced in 3.2.4.  See [pgpool-general:
+      1722] for more details.
+
+      [pgpool-general: 1722] [PgPool-II 3.2.4] pgpool_regclass now mandatory?
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-May/001749.html
+
+    - Fix do_query() to not hang when PostgreSQL returns an error
+      (Tatsuo Ishii)
+
+      The typical symptom is "I see SELECT is keep on running according to
+      pg_stat_activity". To fix this pgpool-II just exits the process and
+      kill the existig connection.  This is not gentle but at this point I
+      believe this is the best solution.
+
+    - Fix possible deadlock during failover with watchdog enabled
+      (Yugo Nagata)
+
+      This is reported in Bug track #54 by arshu arora
+
+      #54 pgpool-II semaphore lock problem
+      http://www.pgpool.net/mantisbt/view.php?id=54
+
+    - Fix bug with do_query which causes hung in extended protocol
+      (Tatsuo Ishii)
+        
+      This problem could occur when insert lock is enabled and
+      pgpool_catalog.insert_lock exists, See [pgpool-general: 1684] for more
+      details.
+
+      [pgpool-general: 1684] insert_lock hangs
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-May/001711.html
+
+    - Fix unnecessary degeneration caused by error on commit (Tatsuo Ishii)
+
+      In master slave mode, if master gets an error at commit, while other
+      slaves are normal at commit, we don't need to degenrate any backend
+      because it is likely that the "kind mismatch error" was caused by a
+      deferred trigger.
+
+    - Fix possible failure of query cache invalidation for DML in transaction
+      (Tatsuo Ishii)
+
+      CREATE TABLE t1(i INTEGER);
+      CREATE TABLE t2(i INTEGER);
+      SELECT * FROM t1;
+      BEGIN;
+      DELETE FROM t2 WHERE i = 0;
+      INSERT INTO t1(i) VALUES(1);
+      COMMIT;
+    
+      SELECT * FROM t1;
+    
+      At commit pgpool tries to delete cache for t2 but failes because
+      there's no oid table entry for t2. Problem is, it fails to check oid
+      table for t1. So cahce for t1 remains and the last SELECT incorrectly
+      returns cached data. Fix is, continuing to check oid table entries.
+
+      This is reported in Bug track #58 by wms 
+
+      #58 query cache invalidation does not fire for multiple DML in transaction
+      http://www.pgpool.net/mantisbt/view.php?id=58
+
+    - Fix to register pgpool_regclass in pg_catalog schema (Tatsuo Ishii)
+    
+      This is necessary to deal with clients which restricts schema search path
+      to pg_catalog only. Postgres_fdw is such a client.
+
+    - Fix a potential crash in pg_md5 command (Muhammad Usama)
+    
+    - Fix a segmentation fault that occurs when on memory query cache enabled
+      and the query is issued in extended query mode and the result is too large
+      (Tatsuo Ishii)
+
+      This is reported in Bug track #63 by harukat.
+      Analysis and a test case are also provided.
+
+      #63 Child process was terminated by segmentation fault with memcached
+      http://www.pgpool.net/mantisbt/view.php?id=63
+    
+    - Fix a segmentation fault of a child process that occurs when a startup
+      packet has no PostgreSQL user information (Yugo Nagata)
+    
+      You can reproduce it by
+    
+          $ psql -p 9999 -U ''
+    
+      If enable_pool_hba is on, a child process terminates by segmentation
+      fault. Otherwise if enable_pool_hba is off, the error message is
+    
+          ERROR: pool_discard_cp: cannot get connection pool for user (null)
+                 database (null)
+    
+      In both cases, psql terminates with no message on frontend.
+    
+      In the fixed version, if PostgreSQL user is not specified in startup packet,
+      the message as following is output to both log and frontend. This is
+      the same behavior as PostgreSQL.
+    
+          FATAL: no PostgreSQL user name specified in startup packet
+
+    - Fix memory allocation logic in extended query processing with on-memory
+      query cache enabled (Tatsuo Ishii)
+    
+      When very long query string (> 1024 bytes) supplied in extended query
+      with bind parameters, it fails to allocate enough memory.
+
+    - Move ssl_ca_cert and ssl_ca_cert_dir descriptions to the SSL section
+      (Yugo Nagata)
+
+    - Add ssl_ca_cert and ssl_ca_cert_dir descriptions to the japanese document
+      (Yugo Nagata)    
+
+    - Fix to verify the backend node number in pcp_recovery_node (Yugo Nagata)
+    
+      When an invalid number is used, null value is passed as an arguments
+      of recovery script, and this causes a malfunction. In especially,
+      rsync may delete unrelated files in basebackup scripts.
+
+===============================================================================
+
                         3.2.4 (namameboshi) 2013/04/26
 
 * Version 3.2.4
@@ -1116,6 +1270,96 @@
 3.1 Series (2011/09/08 - )
 ===============================================================================
 
+                        3.1.8 (hatsuiboshi) 2013/07/10
+
+* Version 3.1.8
+
+      This is a bugfix release against pgpool-II 3.1.7.
+
+      __________________________________________________________________
+
+* Bug fixes
+
+    - Add mention about "-D" option to the man page. (Tatsuo Ishii)
+
+    - Consider timeout waiting for compeletion of failback request in on line
+      recovery (Tatsuo Ishii)
+    
+      This will prevent the situation that recovery operation continues forever
+      and we cannot even shutdown pgpool-II main process. This could happen
+      especially while executing follow master command.
+
+    - Fix a bug that %H of follow_master_command is not assigned correctly the
+      new primary node in stream replication mode
+      (Tatsuo Ishii)
+
+    - Fix do_query() to not hang when PostgreSQL returns an error
+      (Tatsuo Ishii)
+
+      The typical symptom is "I see SELECT is keep on running according to
+      pg_stat_activity". To fix this pgpool-II just exits the process and
+      kill the existig connection.  This is not gentle but at this point I
+      believe this is the best solution.
+
+    - Fix bug with do_query which causes hung in extended protocol
+      (Tatsuo Ishii)
+        
+      This problem could occur when insert lock is enabled and
+      pgpool_catalog.insert_lock exists, See [pgpool-general: 1684] for more
+      details.
+
+      [pgpool-general: 1684] insert_lock hangs
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-May/001711.html
+
+    - Fix unnecessary degeneration caused by error on commit (Tatsuo Ishii)
+
+      In master slave mode, if master gets an error at commit, while other
+      slaves are normal at commit, we don't need to degenrate any backend
+      because it is likely that the "kind mismatch error" was caused by a
+      deferred trigger.
+
+    - Fix to register pgpool_regclass in pg_catalog schema (Tatsuo Ishii)
+    
+      This is necessary to deal with clients which restricts schema search path
+      to pg_catalog only. Postgres_fdw is such a client.
+
+    - Fix a potential crash in pg_md5 command (Muhammad Usama)
+    
+    - Fix a segmentation fault of a child process that occurs when a startup
+      packet has no PostgreSQL user information (Yugo Nagata)
+    
+      You can reproduce it by
+    
+          $ psql -p 9999 -U ''
+    
+      If enable_pool_hba is on, a child process terminates by segmentation
+      fault. Otherwise if enable_pool_hba is off, the error message is
+    
+          ERROR: pool_discard_cp: cannot get connection pool for user (null)
+                 database (null)
+    
+      In both cases, psql terminates with no message on frontend.
+    
+      In the fixed version, if PostgreSQL user is not specified in startup packet,
+      the message as following is output to both log and frontend. This is
+      the same behavior as PostgreSQL.
+    
+          FATAL: no PostgreSQL user name specified in startup packet
+
+    - Move ssl_ca_cert and ssl_ca_cert_dir descriptions to the SSL section
+      (Yugo Nagata)
+
+    - Add ssl_ca_cert and ssl_ca_cert_dir descriptions to the japanese document
+      (Yugo Nagata)    
+
+    - Fix to verify the backend node number in pcp_recovery_node (Yugo Nagata)
+    
+      When an invalid number is used, null value is passed as an arguments
+      of recovery script, and this causes a malfunction. In especially,
+      rsync may delete unrelated files in basebackup scripts.
+
+===============================================================================
+
                         3.1.7 (hatsuiboshi) 2013/04/26
 
 * Version 3.1.7
@@ -1885,6 +2129,92 @@
 
 ===============================================================================
 3.0 Series (2010/09/10 - )
+===============================================================================
+
+                        3.0.12 (umeyameboshi) 2013/07/10
+
+* Version 3.0.12
+
+      This is a bugfix release against pgpool-II 3.0.11
+
+      __________________________________________________________________
+
+* Bug fixes
+
+    - Add mention about "-D" option to the man page. (Tatsuo Ishii)
+
+    - Consider timeout waiting for compeletion of failback request in on line
+      recovery (Tatsuo Ishii)
+    
+      This will prevent the situation that recovery operation continues forever
+      and we cannot even shutdown pgpool-II main process. This could happen
+      especially while executing follow master command.
+
+    - Fix do_query() to not hang when PostgreSQL returns an error
+      (Tatsuo Ishii)
+
+      The typical symptom is "I see SELECT is keep on running according to
+      pg_stat_activity". To fix this pgpool-II just exits the process and
+      kill the existig connection.  This is not gentle but at this point I
+      believe this is the best solution.
+
+    - Fix bug with do_query which causes hung in extended protocol
+      (Tatsuo Ishii)
+        
+      This problem could occur when insert lock is enabled and
+      pgpool_catalog.insert_lock exists, See [pgpool-general: 1684] for more
+      details.
+
+      [pgpool-general: 1684] insert_lock hangs
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-May/001711.html
+
+    - Fix unnecessary degeneration caused by error on commit (Tatsuo Ishii)
+
+      In master slave mode, if master gets an error at commit, while other
+      slaves are normal at commit, we don't need to degenrate any backend
+      because it is likely that the "kind mismatch error" was caused by a
+      deferred trigger.
+
+    - Fix to register pgpool_regclass in pg_catalog schema (Tatsuo Ishii)
+    
+      This is necessary to deal with clients which restricts schema search path
+      to pg_catalog only. Postgres_fdw is such a client.
+
+    - Fix a potential crash in pg_md5 command (Muhammad Usama)
+    
+    - Fix a segmentation fault of a child process that occurs when a startup
+      packet has no PostgreSQL user information (Yugo Nagata)
+    
+      You can reproduce it by
+    
+          $ psql -p 9999 -U ''
+    
+      If enable_pool_hba is on, a child process terminates by segmentation
+      fault. Otherwise if enable_pool_hba is off, the error message is
+    
+          ERROR: pool_discard_cp: cannot get connection pool for user (null)
+                 database (null)
+    
+      In both cases, psql terminates with no message on frontend.
+    
+      In the fixed version, if PostgreSQL user is not specified in startup packet,
+      the message as following is output to both log and frontend. This is
+      the same behavior as PostgreSQL.
+    
+          FATAL: no PostgreSQL user name specified in startup packet
+
+    - Move ssl_ca_cert and ssl_ca_cert_dir descriptions to the SSL section
+      (Yugo Nagata)
+
+    - Add ssl_ca_cert and ssl_ca_cert_dir descriptions to the japanese document
+      (Yugo Nagata)    
+
+    - Fix to verify the backend node number in pcp_recovery_node (Yugo Nagata)
+    
+      When an invalid number is used, null value is passed as an arguments
+      of recovery script, and this causes a malfunction. In especially,
+      rsync may delete unrelated files in basebackup scripts.
+
 ===============================================================================
 
                        3.0.11 (umeyameboshi) 2013/04/26
