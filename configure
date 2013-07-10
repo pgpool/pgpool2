@@ -3948,7 +3948,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=pgpool-II
- VERSION=3.0.11
+ VERSION=3.0.12
 
 
 cat >>confdefs.h <<_ACEOF
