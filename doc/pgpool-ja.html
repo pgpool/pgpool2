@@ -4051,6 +4051,117 @@ pgpool-IIのチュートリアルは<a href="tutorial-ja.html">ここ</a>にあ�
 
 <h1>リリースノート<a name="release"></a></h1>
 
+<h2><a name="release3.1.8"></a>3.1.8 (hatsuiboshi) 2013/07/10</h2>
+<h3>概要</h3>
+<p>
+このバージョンは 3.1.7 に対するバグ修正リリースです。
+</p>
+<h3>バグ修正</h3>
+<ul>
+<li>
+man ページに -D オプションの記述を追加しました。（Tatsuo Ishii)
+</li>
+
+<li>
+オンラインリカバリ時のフェイルバックの完了待機でタイムアウト処理をするようにしました。(Tatsuo Ishii)
+<p>
+これによりリカバリが永遠に終わらず pgpool-II が終了できなくなる状況を回避します。
+この現象は特に follow_master_command の実行中に起こり得ました。
+</p>
+</li>
+
+<li>
+ストリームレプリケーションモードでの follow_master_command 実行時に、%H に新しいプライマリノードが正しく割り当てられないバグを修正しました。
+(Tatsuo Ishii)
+</li>
+
+<li>
+PostgreSQL がエラーを返したときに do_query() がハングしないよう修正しました。
+(Tatsuo Ishii)
+<p>
+典型的な症状が「pg_stat_activety によると SELECT が実行されたままのように見える」というものです。
+これを解決するため、pgpool-II は当該プロセスを終了させ、既存のコネクションを捨てるように修正しました。
+</p>
+</li>
+
+<li>
+拡張プロトコルの際に do_query で発生しうるハングアップを修正しました。
+(Tatsuo Ishii)
+<p>
+これは insert_lock が有効で、pgpool_catalog.insert_lock が存在することに起こり得ます。
+詳しくは [pgpool-general: 1684] を参照してください。
+</p>
+<blockquote>
+  [pgpool-general: 1684] insert_lock hangs <br />
+  <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-May/001711.html">
+  http://www.sraoss.jp/pipermail/pgpool-general/2013-May/001711.html
+  </a>
+</blockquote>
+</li>
+
+<li>
+COMMIT 時エラーに不要なバックエンド切り離しを行わないようにしました。
+(Tatsuo Ishii)
+<p>
+マスタースレーブモードで、COMMIT 時にマスターノードでエラーが発生していたとしても、他のスレーブノードが正常な場合にはバックエンドを切り離す必要はありません。
+これは、遅延トリガーのために "kind mismatch error" が発生しうるからです。
+</p>
+</li>
+
+<li>
+pgpool_regclass を pg_catalog スキーマに登録するよう修正しました。
+(Tatsuo Ishii)
+<p>
+これは postgres_fdw のような、スキーマ検索パスが pg_catalog に限定されているクライアントに対応するために必要です。
+</p>
+</li>
+
+<li>
+pg_md5 コマンドで起こりうるクラッシュを修正しました。(Muhammad Usama)
+</li>
+
+<li>
+スタートアップパケットに PostgreSQL ユーザ情報が含まれていなかった場合に発生する子プロセスのセグメンテーション違反を修正しました。(Yugo Nagata)
+<p>
+このバグは以下を実行することにより再現できます。
+</p>
+<pre>
+    $ psql -p 9999 -U ''
+</pre>
+<p>
+enable_pool_hba が有効の場合は子プロセスがセグメンテーション違反で異常終了し、無効の場合には以下のメッセージがログに出力されていました。
+</p>
+<pre>
+    ERROR: pool_discard_cp: cannot get connection pool for user (null) database (null)
+</pre>
+
+<p>
+また、両方の場合で psql はフロントエンドに何のメッセージ出力せずに終了していました。
+修正後は、スタートアップパケットに PostgreSQL ユーザが指定されていない場合には以下のメッセージがログとフロントエンドの両方に出力されます。
+これは PostgreSQLと同じ振る舞いです。
+</p>
+<pre>
+    FATAL: no PostgreSQL user name specified in startup packet
+</pre>
+</li>
+
+<li>
+マニュアルの ssl_sa_cert, ssl_ca_cert_dir オプションの説明を SSL セクションに移動しました。(Yugo Nagata)
+</li>
+
+<li>
+ssl_sa_cert, ssl_ca_cert_dir オプションの説明を日本語マニュアルに追加しました。(Yugo Nagata)
+</li>
+
+<li>
+pcp_recovery_node コマンドで、バックエンドノード番号をチェックするように修正しました。(Yugo Nagata)
+<p>
+不正な値が使用された場合、リカバリで実行されるスクリプトの引数に空の値が渡されており、誤動作の原因となっていました。
+特にベースバックアップを行うスクリプトで、rsync が関係のないファイルを削除してしまうことがありました。
+</p>
+</li>
+</ul>
+
 <h2><a name="release3.1.7"></a>3.1.7 (hatsuiboshi) 2013/04/26</h2>
 <h3>概要</h3>
 <p>このバージョンは3.1.6に対するバグ修正リリースです。</p>
@@ -4726,6 +4837,112 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </p>
 
 <hr>
+
+<h2><a name="release3.0.12"></a>3.0.12 (umiyameboshi) 2013/07/10</h2>
+<h3>概要</h3>
+<p>
+このバージョンは 3.0.11 に対するバグ修正リリースです。
+</p>
+<h3>バグ修正</h3>
+<ul>
+<li>
+man ページに -D オプションの記述を追加しました。（Tatsuo Ishii)
+</li>
+
+<li>
+オンラインリカバリ時のフェイルバックの完了待機でタイムアウト処理をするようにしました。(Tatsuo Ishii)
+<p>
+これによりリカバリが永遠に終わらず pgpool-II が終了できなくなる状況を回避します。
+この現象は特に follow_master_command の実行中に起こり得ました。
+</p>
+</li>
+
+<li>
+PostgreSQL がエラーを返したときに do_query() がハングしないよう修正しました。
+(Tatsuo Ishii)
+<p>
+典型的な症状が「pg_stat_activety によると SELECT が実行されたままのように見える」というものです。
+これを解決するため、pgpool-II は当該プロセスを終了させ、既存のコネクションを捨てるように修正しました。
+</p>
+</li>
+
+<li>
+拡張プロトコルの際に do_query で発生しうるハングアップを修正しました。
+(Tatsuo Ishii)
+<p>
+これは insert_lock が有効で、pgpool_catalog.insert_lock が存在することに起こり得ます。
+詳しくは [pgpool-general: 1684] を参照してください。
+</p>
+<blockquote>
+  [pgpool-general: 1684] insert_lock hangs <br />
+  <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-May/001711.html">
+  http://www.sraoss.jp/pipermail/pgpool-general/2013-May/001711.html
+  </a>
+</blockquote>
+</li>
+
+<li>
+COMMIT 時エラーに不要なバックエンド切り離しを行わないようにしました。
+(Tatsuo Ishii)
+<p>
+マスタースレーブモードで、COMMIT 時にマスターノードでエラーが発生していたとしても、他のスレーブノードが正常な場合にはバックエンドを切り離す必要はありません。
+これは、遅延トリガーのために "kind mismatch error" が発生しうるからです。
+</p>
+</li>
+
+<li>
+pgpool_regclass を pg_catalog スキーマに登録するよう修正しました。
+(Tatsuo Ishii)
+<p>
+これは postgres_fdw のような、スキーマ検索パスが pg_catalog に限定されているクライアントに対応するために必要です。
+</p>
+</li>
+
+<li>
+pg_md5 コマンドで起こりうるクラッシュを修正しました。(Muhammad Usama)
+</li>
+
+<li>
+スタートアップパケットに PostgreSQL ユーザ情報が含まれていなかった場合に発生する子プロセスのセグメンテーション違反を修正しました。(Yugo Nagata)
+<p>
+このバグは以下を実行することにより再現できます。
+</p>
+<pre>
+    $ psql -p 9999 -U ''
+</pre>
+<p>
+enable_pool_hba が有効の場合は子プロセスがセグメンテーション違反で異常終了し、無効の場合には以下のメッセージがログに出力されていました。
+</p>
+<pre>
+    ERROR: pool_discard_cp: cannot get connection pool for user (null) database (null)
+</pre>
+
+<p>
+また、両方の場合で psql はフロントエンドに何のメッセージ出力せずに終了していました。
+修正後は、スタートアップパケットに PostgreSQL ユーザが指定されていない場合には以下のメッセージがログとフロントエンドの両方に出力されます。
+これは PostgreSQLと同じ振る舞いです。
+</p>
+<pre>
+    FATAL: no PostgreSQL user name specified in startup packet
+</pre>
+</li>
+
+<li>
+マニュアルの ssl_sa_cert, ssl_ca_cert_dir オプションの説明を SSL セクションに移動しました。(Yugo Nagata)
+</li>
+
+<li>
+ssl_sa_cert, ssl_ca_cert_dir オプションの説明を日本語マニュアルに追加しました。(Yugo Nagata)
+</li>
+
+<li>
+pcp_recovery_node コマンドで、バックエンドノード番号をチェックするように修正しました。(Yugo Nagata)
+<p>
+不正な値が使用された場合、リカバリで実行されるスクリプトの引数に空の値が渡されており、誤動作の原因となっていました。
+特にベースバックアップを行うスクリプトで、rsync が関係のないファイルを削除してしまうことがありました。
+</p>
+</li>
+</ul>
 
 <h2>3.0.11 (umiyameboshi) 2013/04/26</h2>
 <h3>概要</h3>
