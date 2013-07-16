@@ -488,8 +488,6 @@ pcp_node_info(int nid)
 				free(buf);
 				return NULL;
 			}
-			/* FIXME */
-			/* rsize -= strlen("CommandComplete") + 1; */
 
  			index = (char *) memchr(buf, '\0', rsize) + 1;
 			if (index != NULL)
