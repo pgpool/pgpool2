@@ -218,7 +218,6 @@ typedef struct {
 } POOL_REPORT_VERSION;
 
 struct WdInfo;
-//typedef struct WdInfo WdInfo;
 
 extern int pcp_connect(char *hostname, int port, char *username, char *password);
 extern void pcp_disconnect(void);
