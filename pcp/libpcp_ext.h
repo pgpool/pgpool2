@@ -155,7 +155,6 @@ typedef struct {
 	QueryCacheTableInfo query_cache_table_info; /* query cache db session info */
 	BACKEND_STATUS system_db_status;
 } SystemDBInfo;
-
 /*
  * reporting types
  */
@@ -218,6 +217,9 @@ typedef struct {
 	char version[POOLCONFIG_MAXVALLEN+1];
 } POOL_REPORT_VERSION;
 
+struct WdInfo;
+//typedef struct WdInfo WdInfo;
+
 extern int pcp_connect(char *hostname, int port, char *username, char *password);
 extern void pcp_disconnect(void);
 extern int pcp_terminate_pgpool(char mode);
@@ -237,6 +239,7 @@ extern void pcp_enable_debug(void);
 extern void pcp_disable_debug(void);
 extern int pcp_promote_node(int nid);
 extern int pcp_promote_node_gracefully(int nid);
+extern struct WdInfo *pcp_watchdog_info(int nid);
 
 /* ------------------------------
  * pcp_error.c

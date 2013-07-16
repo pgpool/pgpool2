@@ -1551,3 +1551,103 @@ static int _pcp_promote_node(int nid, bool gracefully)
 	free(buf);
 	return -1;
 }
+
+/* --------------------------------
+ * pcp_watchdog_info - get information of watchdog
+ *
+ * return structure of watchdog information on success, -1 otherwise
+ * --------------------------------
+ */
+WdInfo *
+pcp_watchdog_info(int nid)
+{
+	int wsize;
+	char wd_index[16];
+	char tos;
+	char *buf = NULL;
+	int rsize;
+
+	if (pc == NULL)
+	{
+		if (debug) fprintf(stderr, "DEBUG: connection does not exist\n");
+		errorcode = NOCONNERR;
+		return NULL;
+	}
+
+	snprintf(wd_index, sizeof(wd_index), "%d", nid);
+
+	pcp_write(pc, "W", 1);
+	wsize = htonl(strlen(wd_index)+1 + sizeof(int));
+	pcp_write(pc, &wsize, sizeof(int));
+	pcp_write(pc, wd_index, strlen(wd_index)+1);
+	if (pcp_flush(pc) < 0)
+	{
+		if (debug) fprintf(stderr, "DEBUG: could not send data to backend\n");
+		return NULL;
+	}
+	if (debug) fprintf(stderr, "DEBUG: send: tos=\"W\", len=%d\n", ntohl(wsize));
+
+	if (pcp_read(pc, &tos, 1))
+		return NULL;	
+	if (pcp_read(pc, &rsize, sizeof(int)))
+		return NULL;	
+	rsize = ntohl(rsize);
+	buf = (char *)malloc(rsize);
+	if (buf == NULL)
+	{
+		errorcode = NOMEMERR;
+		return NULL;
+	}
+	if (pcp_read(pc, buf, rsize - sizeof(int)))
+	{
+		free(buf);
+		return NULL;
+	}
+
+	if (debug) fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
+
+	if (tos == 'e')
+	{
+		if (debug) fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
+		errorcode = BACKENDERR;
+		free(buf);
+		return NULL;
+	}
+	else if (tos == 'w')
+	{
+		if (strcmp(buf, "CommandComplete") == 0)
+		{
+			char *index = NULL;
+			WdInfo* watchdog_info = NULL;
+
+			watchdog_info = (WdInfo *)malloc(sizeof(WdInfo));
+			if (watchdog_info == NULL)
+			{
+				errorcode = NOMEMERR;
+				free(buf);
+				return NULL;
+			}
+
+			index = (char *) memchr(buf, '\0', rsize) + 1;
+			if (index != NULL)
+				strcpy(watchdog_info->hostname, index);
+
+			index = (char *) memchr(index, '\0', rsize) + 1;
+			if (index != NULL)
+				watchdog_info->pgpool_port = atoi(index);
+
+			index = (char *) memchr(index, '\0', rsize) + 1;
+			if (index != NULL)
+				watchdog_info->wd_port = atoi(index);
+
+			index = (char *) memchr(index, '\0', rsize) + 1;
+			if (index != NULL)
+				watchdog_info->status = atof(index);
+
+			free(buf);
+			return watchdog_info;
+		}
+	}
+
+	free(buf);
+}

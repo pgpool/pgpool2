@@ -41,7 +41,7 @@ bin_PROGRAMS = pcp_stop_pgpool$(EXEEXT) pcp_node_count$(EXEEXT) \
 	pcp_proc_info$(EXEEXT) pcp_systemdb_info$(EXEEXT) \
 	pcp_detach_node$(EXEEXT) pcp_attach_node$(EXEEXT) \
 	pcp_recovery_node$(EXEEXT) pcp_promote_node$(EXEEXT) \
-	pcp_pool_status$(EXEEXT)
+	pcp_pool_status$(EXEEXT) pcp_watchdog_info$(EXEEXT)
 subdir = pcp
 DIST_COMMON = $(include_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
@@ -134,6 +134,10 @@ am_pcp_systemdb_info_OBJECTS = pcp_systemdb_info.$(OBJEXT) \
 	getopt_long.$(OBJEXT)
 pcp_systemdb_info_OBJECTS = $(am_pcp_systemdb_info_OBJECTS)
 pcp_systemdb_info_DEPENDENCIES = libpcp.la
+am_pcp_watchdog_info_OBJECTS = pcp_watchdog_info.$(OBJEXT) \
+	getopt_long.$(OBJEXT)
+pcp_watchdog_info_OBJECTS = $(am_pcp_watchdog_info_OBJECTS)
+pcp_watchdog_info_DEPENDENCIES = libpcp.la
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -152,13 +156,15 @@ SOURCES = $(libpcp_la_SOURCES) $(pcp_attach_node_SOURCES) \
 	$(pcp_node_info_SOURCES) $(pcp_pool_status_SOURCES) \
 	$(pcp_proc_count_SOURCES) $(pcp_proc_info_SOURCES) \
 	$(pcp_promote_node_SOURCES) $(pcp_recovery_node_SOURCES) \
-	$(pcp_stop_pgpool_SOURCES) $(pcp_systemdb_info_SOURCES)
+	$(pcp_stop_pgpool_SOURCES) $(pcp_systemdb_info_SOURCES) \
+	$(pcp_watchdog_info_SOURCES)
 DIST_SOURCES = $(libpcp_la_SOURCES) $(pcp_attach_node_SOURCES) \
 	$(pcp_detach_node_SOURCES) $(pcp_node_count_SOURCES) \
 	$(pcp_node_info_SOURCES) $(pcp_pool_status_SOURCES) \
 	$(pcp_proc_count_SOURCES) $(pcp_proc_info_SOURCES) \
 	$(pcp_promote_node_SOURCES) $(pcp_recovery_node_SOURCES) \
-	$(pcp_stop_pgpool_SOURCES) $(pcp_systemdb_info_SOURCES)
+	$(pcp_stop_pgpool_SOURCES) $(pcp_systemdb_info_SOURCES) \
+	$(pcp_watchdog_info_SOURCES)
 HEADERS = $(include_HEADERS)
 ETAGS = etags
 CTAGS = ctags
@@ -314,6 +320,8 @@ pcp_pool_status_SOURCES = pcp_pool_status.c pcp.h ../getopt_long.c ../getopt_lon
 pcp_pool_status_LDADD = libpcp.la
 pcp_promote_node_SOURCES = pcp_promote_node.c pcp.h ../getopt_long.c ../getopt_long.h
 pcp_promote_node_LDADD = libpcp.la
+pcp_watchdog_info_SOURCES = pcp_watchdog_info.c pcp.h ../getopt_long.c ../getopt_long.h
+pcp_watchdog_info_LDADD = libpcp.la
 all: all-am
 
 .SUFFIXES:
@@ -457,6 +465,9 @@ pcp_stop_pgpool$(EXEEXT): $(pcp_stop_pgpool_OBJECTS) $(pcp_stop_pgpool_DEPENDENC
 pcp_systemdb_info$(EXEEXT): $(pcp_systemdb_info_OBJECTS) $(pcp_systemdb_info_DEPENDENCIES) 
 	@rm -f pcp_systemdb_info$(EXEEXT)
 	$(LINK) $(pcp_systemdb_info_OBJECTS) $(pcp_systemdb_info_LDADD) $(LIBS)
+pcp_watchdog_info$(EXEEXT): $(pcp_watchdog_info_OBJECTS) $(pcp_watchdog_info_DEPENDENCIES) 
+	@rm -f pcp_watchdog_info$(EXEEXT)
+	$(LINK) $(pcp_watchdog_info_OBJECTS) $(pcp_watchdog_info_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -480,6 +491,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_stop_pgpool.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_stream.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_systemdb_info.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_watchdog_info.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

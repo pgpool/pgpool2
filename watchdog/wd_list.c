@@ -394,3 +394,15 @@ wd_is_contactable_master(void)
 
 	return false;
 }
+
+/*
+ * get watchdog information of specified index
+ */
+WdInfo *
+wd_get_watchdog_info(int wd_index)
+{
+	if (wd_index < 0 || wd_index > pool_config->other_wd->num_wd)
+		return NULL;
+
+	return &WD_List[wd_index];
+}

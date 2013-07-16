@@ -25,6 +25,7 @@
 #define PCP_H
 
 #include "pool_type.h"
+#include "watchdog/watchdog.h"
 
 #define MAX_USER_PASSWD_LEN    128
 

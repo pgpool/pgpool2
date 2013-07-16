@@ -123,7 +123,7 @@ typedef enum {
 /*
  * watchdog list
  */
-typedef struct {
+typedef struct WdInfo {
 	WD_STATUS status;						/* status */
 	struct timeval tv;						/* startup time value */
 	char hostname[WD_MAX_HOST_NAMELEN];		/* host name */

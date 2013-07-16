@@ -56,6 +56,7 @@ extern void wd_set_lock_holder(WdInfo *p, bool value);
 extern void wd_set_interlocking(WdInfo *info, bool value);
 extern void wd_clear_interlocking_info(void);
 extern bool wd_is_contactable_master(void);
+extern WdInfo * wd_get_watchdog_info(int num);
 
 /* wd_packet.c */
 extern int wd_startup(void);
