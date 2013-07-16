@@ -254,6 +254,9 @@
 
 * Enhancements
 
+    - Add mention about "-D" option to the man page.
+	  (Tatsuo Ishii)
+
     - Fix to restart watchdog processes automatically when these exit abnormally.
       (Yugo Nagata)
 
