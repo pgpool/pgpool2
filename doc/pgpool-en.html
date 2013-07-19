@@ -124,7 +124,7 @@ See <a href="#restriction">Restrictions</a> for more details.</strong>
 <h1>License<a name="license"></a></h1>
 
 <p>
-Copyright (c) 2003-2013		PgPool Global Development Group
+Copyright (c) 2003-2013        PgPool Global Development Group
 
 Permission to use, copy, modify, and distribute this software and
 its documentation for any purpose and without fee is hereby
@@ -239,23 +239,23 @@ make install
     Without this, handling of duplicate table names in different schema
     might cause trouble (temporary tables aren't a problem).
     </p>
-	<p>
+    <p>
 <pre>
 cd pgpool-II-x.x.x/sql/pgpool-regclass
 make
 make install
 </pre>
-		</p>
-		<p>
+        </p>
+        <p>
 After this:
-		<p>
+        <p>
 <pre>
 psql -f pgpool-regclass.sql template1
 </pre>
-		</p>
-		<p>
+        </p>
+        <p>
 or
-		<p>
+        <p>
 <pre>
 psql template1
 CREATE EXTENSION pgpool_regclass;
@@ -877,12 +877,12 @@ local0.*    /var/log/pgpool.log
 <dt><a name="SEARCH_PRIMARY_NODE_TIMEOUT"></a>search_primary_node_timeout <span class="version">V3.3 -</span></dt>
     <dd>
     <p>The parameter specifies the maximum amount of time in seconds to search
-	for a primary node when a failover scenario occurs.
-	The default value for the parameter is 10.
-	pgpool-II will search for the primary node for the amount of time given in case of
-	failover before giving up trying to search for a primary node.
-	0 means keep trying forever.
-	This parameter will be ignored if running in other than streaming replication mode.
+    for a primary node when a failover scenario occurs.
+    The default value for the parameter is 10.
+    pgpool-II will search for the primary node for the amount of time given in case of
+    failover before giving up trying to search for a primary node.
+    0 means keep trying forever.
+    This parameter will be ignored if running in other than streaming replication mode.
     </p>
     <p>
     You need to reload pgpool.conf if you change search_primary_node_timeout.
@@ -3847,15 +3847,15 @@ watchdog adds the following features to pgpool-II.
     In heartbeat mode, watchdog monitors other pgpool-II processes by using heartbeat signal.
     Watchdog receives heartbeat signals sent by other pgpool-II periodically.
     If there are no signal for a certain period, watchdog regards this as failure of the pgpool-II.
-	For redundancy you can use multiple network connections for heartbeat exchange between pgpool-IIs.
-	This is the default mode and recommended.
+    For redundancy you can use multiple network connections for heartbeat exchange between pgpool-IIs.
+    This is the default mode and recommended.
     </li>
     <li>
     In query mode, watchdog monitors pgpool-II's service rather than process.
     watchdog sends queries to other pgpool-II and checks the response.
-	Note that this method requires connections from other pgpool-IIs, so it would fail motoring if
-	<a href="#NUM_INIT_CHILDREN">num_init_children </a>isn't large enough.
-	This mode is deprecated and left for backward compatibility.
+    Note that this method requires connections from other pgpool-IIs, so it would fail motoring if
+    <a href="#NUM_INIT_CHILDREN">num_init_children </a>isn't large enough.
+    This mode is deprecated and left for backward compatibility.
     </li>
     </ul>
     <p>
@@ -4030,7 +4030,7 @@ Configuration about virtual IP interface control
     Specifies the virtual IP address (VIP) of pgpool-II that is connected from
     client servers (application servers etc.).
     When a pgpool-II is switched from standby to active, the pgpool-II takes over this VIP.
-	If this option is emply, virtual IP is never brought up.
+    If this option is emply, virtual IP is never brought up.
     </p>
     <p>
     You need to restart pgpool-II if you change this value.
@@ -4224,10 +4224,10 @@ Configuration about virtual IP interface control
     <dd>
     <p>
     This option specifies the port number of destination of heartbeat signals
-	which is specified by <a href="HEARTBEAT_DESTINATION">heartbeat_destinationX</a>.
+    which is specified by <a href="HEARTBEAT_DESTINATION">heartbeat_destinationX</a>.
     This is usually the same value as <a href="WD_HEARTBEAT_PORT">wd_heartbeat_port</a>
     You must use another value if the port number is unusable on a certain host or
-	there are more than two pgpool-IIs in a host.
+    there are more than two pgpool-IIs in a host.
     The number at the end of the parameter name is referred as "destination number",
     and it starts from 0.
     This works only heartbeat mode.
@@ -4241,13 +4241,13 @@ Configuration about virtual IP interface control
     <dd>
     <p>
     This option specifies the network device name for sending heartbeat signals to
-	destination specified by <a href="HEARTBEAT_DESTINATION">heartbeat_destinationX</a>.
+    destination specified by <a href="HEARTBEAT_DESTINATION">heartbeat_destinationX</a>.
     You can use the same device for different distinations.
     The number at the end of the parameter name is referred as "destination number",
     and it starts from 0.
     This works only heartbeat mode.
-	In addition, this works only when pgpool-II has root privilege and are running on Linux,
-	because this uses SO_BINDTODEVICE socket option.
+    In addition, this works only when pgpool-II has root privilege and are running on Linux,
+    because this uses SO_BINDTODEVICE socket option.
     </p>
     <p>
     You need to restart pgpool-II if you change this value.
@@ -4901,6 +4901,8 @@ This does not apply to <a href="#memqcache">on memory query cache</a>. Cache inv
     <td>retrieves the number of nodes</td></tr>
 <tr><th><a href="#pcp_node_info">pcp_node_info</a></th>
     <td>retrieves the node information</td></tr>
+<tr><th><a href="#pcp_watchdog_info">pcp_watchdog_info</a></th>
+    <td>retrieves the watchdog information</td></tr>
 <tr><th><a href="#pcp_proc_count">pcp_proc_count</a></th>
     <td>retrieves the process list</td></tr>
 <tr><th><a href="#pcp_proc_info">pcp_proc_info</a></th>
@@ -5006,6 +5008,43 @@ Weight  : 0.5
 </pre>
 
 <p>Specifying an invalid node ID will result in an error with exit
+status 12, and BackendError will be displayed.</p>
+
+<h3><a name="pcp_watchdog_info"/></a>pcp_watchdog_info</h3>
+
+<pre>
+Format:
+pcp_watchdog_info  _timeout_  _host_  _port_  _userid_  _passwd_  [_watchdogid_]
+</pre>
+
+<p>
+Displays the watchdog status of the pgpool-II.
+_watchdogid_ is the index of other_pgpool_hostname parameter in pgpool.conf.
+If this is omitted, display the watchdog status of the pgpool-II specified by _host_:_port_.
+Here is an output example:
+</p>
+
+<pre>
+$ pcp_watchdog_info 10 localhost 9898 postgres hogehoge 0
+host1 9999 9000 2
+
+The result is in the following order:
+1. hostname
+2. port number for pgpool-II
+3. port number for watchdog
+4. watchdog Status
+
+Status is represented by a digit from [1 to 4].
+1 - watchdog is not started
+2 - Standby: not holding the virtual IP
+3 - Active: holding the virtual IP
+4 - Down
+</pre>
+<p>
+The load balance weight is displayed in normalized format.
+</p>
+
+<p>Specifying an invalid watchdog ID will result in an error with exit
 status 12, and BackendError will be displayed.</p>
 
 <h3 id="pcp_proc_count">pcp_proc_count</h3>

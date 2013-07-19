@@ -132,7 +132,7 @@ pgpool-IIの機能が利用できます。
 <h1>License<a name="license"></a></h1>
 
 <p>
-Copyright (c) 2003-2013		PgPool Global Development Group
+Copyright (c) 2003-2013        PgPool Global Development Group
 
 Permission to use, copy, modify, and distribute this software and
 its documentation for any purpose and without fee is hereby
@@ -260,23 +260,23 @@ cd pgpool-II-x.x.x/sql/pgpool-regclass
 make
 make install
 </pre>
-		<p>
+        <p>
 この後に以下か、
-		<p>
+        <p>
 <pre>
 psql -f pgpool-regclass.sql template1
 </pre>
-		</p>
-		<p>
+        </p>
+        <p>
 または
-		<p>
+        <p>
 <pre>
 psql template1
 CREATE EXTENSION pgpool_regclass;
 </pre>
-		<p>
+        <p>
 を実行します。
-		</p>
+        </p>
     <p>
     pgpool-regclass.sqlまたはCREATE EXTENSIONの実行は、pgpool-II経由で利用するデータベース毎に必要になります。
     ただし、template1データベースに対して"psql -f pgpool-regclass.sql template1"またはCREATE EXTENSIONを実行後に作成されたデータベースでは、新たにpgpool-regclass.sqlまたはCREATE EXTENSIONを実行する必要はありません。
@@ -902,19 +902,19 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
-	<dt><a name="SEARCH_PRIMARY_NODE_TIMEOUT"></a>search_primary_node_timeout <span class="version">V3.3 -</span></dt>
+    <dt><a name="SEARCH_PRIMARY_NODE_TIMEOUT"></a>search_primary_node_timeout <span class="version">V3.3 -</span></dt>
     <dd>
     <p>このパラメータはフェイルオーバーが起きた時にプライマリノードを検索する際のタイムアウト時間を秒単位で指定します。
-		デフォルト値は10です。
-		pgpool-IIは、フェイルオーバの際にここで指定した時間プライマリノードを検索し続けます。
-		0を指定すると、永久に検索し続けます。
-		このパラメータはストリーミングレプリケーションモードで運用している場合以外は無視されます。
+        デフォルト値は10です。
+        pgpool-IIは、フェイルオーバの際にここで指定した時間プライマリノードを検索し続けます。
+        0を指定すると、永久に検索し続けます。
+        このパラメータはストリーミングレプリケーションモードで運用している場合以外は無視されます。
     </p>
     <p>
-	search_primary_node_timeoutを変更した場合は、pgpool.confの再読込が必要です。
+    search_primary_node_timeoutを変更した場合は、pgpool.confの再読込が必要です。
     </p>
     </dd>
-		
+        
 </dl>
 
 <h3>Failover and failback</h3>
@@ -1211,30 +1211,30 @@ local0.*    /var/log/pgpool.log
 <dt><a name="SSL_CA_CERT"></a>ssl_ca_cert</dt>
     <dd>
     <p>
-	1 つ以上の CA ルート証明書を格納している PEM 形式ファイルのパスを指定します。
-	このファイルはバックエンドサーバ証明書の検証に用いられます。
-	このオプションは OpenSSL の <code>verify(1)</code> コマンドにおける <code>-CAfile</code> オプションと同様の機能を提供します。
+    1 つ以上の CA ルート証明書を格納している PEM 形式ファイルのパスを指定します。
+    このファイルはバックエンドサーバ証明書の検証に用いられます。
+    このオプションは OpenSSL の <code>verify(1)</code> コマンドにおける <code>-CAfile</code> オプションと同様の機能を提供します。
     </p>
 
     <p>
-	デフォルトでは値が設定されておらず検証は行われません。
-	このオプションが設定されていない場合においても、<code>ssl_ca_cert_dir</code> オプション
-	が設定されている場合には検証が行われます。
+    デフォルトでは値が設定されておらず検証は行われません。
+    このオプションが設定されていない場合においても、<code>ssl_ca_cert_dir</code> オプション
+    が設定されている場合には検証が行われます。
     </p>
     </dd>
 
 <dt><a name="SSL_CA_CERT_DIR"></a>ssl_ca_cert_dir</dt>
     <dd>
     <p>
-	PEM 形式の CA 証明書ファイルを格納しているディレクトリのパスを指定します。
-	これらのファイルはバックエンドサーバ認証の検証に用いられます。
-	このオプションは OpenSSL の <code>verify(1)</code> コマンドにおける <code>-CApath</code> オプションと同様の機能を提供します。
+    PEM 形式の CA 証明書ファイルを格納しているディレクトリのパスを指定します。
+    これらのファイルはバックエンドサーバ認証の検証に用いられます。
+    このオプションは OpenSSL の <code>verify(1)</code> コマンドにおける <code>-CApath</code> オプションと同様の機能を提供します。
     </p>
 
     <p>
-	デフォルトでは値が設定されておらず検証は行われません。
-	このオプションが設定されていない場合においても、<code>ssl_ca_cert</code> オプション
-	が設定されている場合には検証が行われます。
+    デフォルトでは値が設定されておらず検証は行われません。
+    このオプションが設定されていない場合においても、<code>ssl_ca_cert</code> オプション
+    が設定されている場合には検証が行われます。
     </p>
     </dd>
 
@@ -3984,14 +3984,14 @@ watchdog は以下の機能を提供します。
 <li>
     ハートビートモードでは、watchdog はハートビート信号を用いて 他の pgpool-II プロセスの死活監視を行います。
     watchdog は、他の pgpool-II の watchdog より定期的に送られるハートビート信号を受け取り、これが一定期間以上途切れた場合には当該 pgpool-II プロセスに障害が発生したと判断します。
-	冗長性を高めるために、複数のネットワークを用いたハートビート交換が可能です。
-	デフォルトではこのモードで動作し、これが推奨設定です。
+    冗長性を高めるために、複数のネットワークを用いたハートビート交換が可能です。
+    デフォルトではこのモードで動作し、これが推奨設定です。
     </li>
 <li>
     クエリモードでは、watchdog は pgpool-II のプロセスではなく「サービス」の応答を監視します。
     このモードでは、監視対象の pgpool-II にクエリを発行しその応答をチェックします。
-	この方法では他の pgpool-II から接続を受ける必要があるため、<a href="NUM_INIT_CHILDREN">num_init_children</a> が十分大きくない場合には監視が失敗する場合があることに注意してください。
-	これは非推奨の監視方法であり、下位互換のために残されています。
+    この方法では他の pgpool-II から接続を受ける必要があるため、<a href="NUM_INIT_CHILDREN">num_init_children</a> が十分大きくない場合には監視が失敗する場合があることに注意してください。
+    これは非推奨の監視方法であり、下位互換のために残されています。
     </li>
 </ul>
     <p>
@@ -4356,7 +4356,7 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
     <dd>
     <p>
     ハートビート信号の送り先を、ホスト名か IP で指定します。
-	複数の送り先が指定可能です。
+    複数の送り先が指定可能です。
     数値の部分は送り先の番号です。0 からの連番にします。
     ハートビートモードの場合のみ有効です。
     </p>
@@ -4386,7 +4386,7 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
     数値の部分は送り先の番号です。デバイス毎に 0 からの連番にします。
     複数の異なる送り先に同じデバイスを設定することが可能です。
     ハートビートモードの場合のみ有効です。
-	また、SO_BINDTODEVICE ソケットオプションを使用しているため、pgpool-II が Linux で root 権限で起動している場合のみ有効です。
+    また、SO_BINDTODEVICE ソケットオプションを使用しているため、pgpool-II が Linux で root 権限で起動している場合のみ有効です。
     </p>
     <p>
     このパラメータを変更した時には pgpool-II を再起動してください。
@@ -5059,6 +5059,8 @@ pgpool-IIを操作するUNIXコマンドとして、以下のものがありま�
     <td>ノード数を取得する</td></tr>
 <tr><th><a href="#pcp_node_info">pcp_node_info</a></th>
     <td>ノード情報を取得する</td></tr>
+<tr><th><a href="#pcp_watchdog_info">pcp_watchdog_info</a></th>
+    <td>watchdog 情報を取得する <span class="version">V3.3 ～</span></td></tr>
 <tr><th><a href="#pcp_proc_count">pcp_proc_count</a></th>
     <td>プロセス一覧を取得する</td></tr>
 <tr><th><a href="#pcp_proc_info">pcp_proc_info</a></th>
@@ -5159,6 +5161,39 @@ host1 5432 1 1073741823.500000
 定義されていないノードIDを指定するとBackendErrorと表示され、終了コード12で終了します。
 </p>
 
+<h3><a name="pcp_watchdog_info"></a>pcp_watchdog_info</h3>
+<pre>
+書式：
+pcp_watchdog_info  _timeout_  _host_  _port_  _userid_  _passwd_  [_watchdogid_]
+</pre>
+
+<p>
+pgpool-IIの pgpool.conf の watchdog セクションで定義された pgpool-II の watchdog ステータスを表示します。
+_watchdogid_ は other_pgpool_hostname パラメータの添字です。省略された場合には、_host_:_port_ で動作している
+pgpool-II の watchdog ステータスが表示されます。出力結果は以下の例の通りです。
+</p>
+
+<pre>
+ex)
+$ pcp_watchdog_info 10 localhost 9898 postgres hogehoge 0
+host1 9999 9000 2
+
+結果は以下の順の通りです。
+1. pgpool-II のホスト名
+2. pgpool-II ポート番号
+3. watchdog ポート番号
+4. watchdog ステータス
+
+ステータスは[1..4]までの数字で表わされます。各数字の意味は：
+1 - 初期化時のみに表われる。指定された pgpool-II が未起動の場合に表示される。
+2 - スタンバイ: 仮想 IP を保持していない
+3 - アクティブ: 仮想 IP を保持している
+4 - ダウン
+</pre>
+
+<p>
+定義されていない watchdog IDを指定するとBackendErrorと表示され、終了コード12で終了します。
+</p>
 
 <h3 id="pcp_proc_count">pcp_proc_count</h3>
 <p>
@@ -5732,9 +5767,9 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 <p> 以下は全て watchdog に関する変更です。詳細は以下の<a href="3.3_new_features">新機能</a>の項目を参照してください。</p>
 
 <ul>
-	  <li>デフォルトの監視方法がクエリモードからハートビートモードに変更されました。</li>
+      <li>デフォルトの監視方法がクエリモードからハートビートモードに変更されました。</li>
 
-	  <li>failover/failback コマンドが１つの pgpool-II でのみ実行されるようになりました。</li>
+      <li>failover/failback コマンドが１つの pgpool-II でのみ実行されるようになりました。</li>
 
       <li>デフォルトで、アクティブ pgpool-II への昇格時には共有メモリ内のクエリキャッシュを全て削除するようになりました。</li>
 
@@ -5756,15 +5791,15 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 ハートビートモードは今回新しく追加された方法です。
     このモードでは、watchdog はハートビート信号を用いて 他の pgpool-II プロセスの死活監視を行います。
     watchdog は、他の pgpool-II の watchdog より定期的に送られるハートビート信号を受け取り、これが一定期間以上途切れた場合にはその pgpool-II プロセスに障害が発生したと判断します。
-	冗長性を高めるため、複数のネットワーク用いたハートビート交換が可能です。
-	デフォルトではこのモードで動作し、これが推奨設定です。
+    冗長性を高めるため、複数のネットワーク用いたハートビート交換が可能です。
+    デフォルトではこのモードで動作し、これが推奨設定です。
 </p>
 <p>
 
     クエリモードでは従来と同じ動作になります。このモードではwatchdog は pgpool-II のプロセスではなく「サービス」の応答を監視します。
     このモードでは、監視対象の pgpool-II にクエリを発行しその応答をチェックします。
-	この方法では他の pgpool-II から接続を受ける必要があるため、<a href="#NUM_INIT_CHILDREN">num_init_children</a> が十分大きくない場合には監視が失敗する場合があることに注意してください。
-	これは非推奨の監視方法であり、下位互換のために残されています。
+    この方法では他の pgpool-II から接続を受ける必要があるため、<a href="#NUM_INIT_CHILDREN">num_init_children</a> が十分大きくない場合には監視が失敗する場合があることに注意してください。
+    これは非推奨の監視方法であり、下位互換のために残されています。
 </p>
 <ul>
 <p>
@@ -5820,7 +5855,7 @@ watchdog で複数の pgpool-II を連携した場合、failover/failback コマ
 <dt>wd_lifeccheck_dbname, wd_lifecheck_user, wd_lifecheck_password パラメータを追加しました。(Yugo Nagata)
 </dt>
 <dd>
-<p> 
+<p>
 これらのパラメータは、クエリモードで監視の際に使用するデータベース名、ユーザ名、パスワードを提要します。以前はそれぞれ templat1, recovery_user, recovery_password が使われていました。
 </p>
 </dd>
@@ -5830,6 +5865,14 @@ watchdog で複数の pgpool-II を連携した場合、failover/failback コマ
 <dd>
 <p>
 これにより、各 pgpool-II に固定 IP を用いてアクセスするマルチマスタ的運用で、仮想 IP を用意する必要がなくなりました。
+</p>
+</dd>
+
+<dt>pcp_watchdog_info コマンドを追加しました。(Yugo Nagata)
+</dt>
+<dd>
+<p>
+これは watchdog ステータスを取得する pcp コマンドです。
 </p>
 </dd>
 
@@ -5852,10 +5895,10 @@ pgpool_setup を追加しました。(Tatsuo Ishii)</dt>
 </p>
 <pre>
  usage: pgpool_setup [-m r|s][-n num_clusters][--no-stop]
-   -m s: ストリームレプリケーションモードで構築（デフォルト） 
+   -m s: ストリームレプリケーションモードで構築（デフォルト）
    -m r: ネイティブレプリケーションモードで構築
    -n num_clusters: num_clusters 台で PostgreSQL データベースクラスタノードを作成
-   --no-stop: セットアップ終了後に pgpool-II, PostgreSQL を終了しない 
+   --no-stop: セットアップ終了後に pgpool-II, PostgreSQL を終了しない
 </pre>
 </dd>
 
@@ -5892,7 +5935,7 @@ pgpool_setup を追加しました。(Tatsuo Ishii)</dt>
 <dd>
 <p>
 getsources.sh を実行することで作成された work/installer に RPM ファイルをコピーし、
-このディレクトリを tar ボールで固めたものがインストーラパッケージとなります。 
+このディレクトリを tar ボールで固めたものがインストーラパッケージとなります。
 このインストーラは、RPM をインストールするだけではなく、postgresql.conf, pgpool.conf, pg_hba.conf
 recovery.conf, ファイルオーバやオンラインリカバリ用のスクリプトの設定も行います。
 </p>
@@ -6324,7 +6367,7 @@ connect_inet_domain_socket_by_port() で alarm 割り込み時を受けた時に
 md5認証で長いユーザ名を処理する際のバグを修正しました。(Tatsuo Ishii)
 <p>
   ユーザ名が 32 バイトより長い場合、md5 認証が動作していませんでした。
-  この問題は [pgpool-general: 1526] で Thomas Martin さんにより報告されました。    
+  この問題は [pgpool-general: 1526] で Thomas Martin さんにより報告されました。
 </p>
 <blockquote>
   [pgpool-general: 1526]<br />
@@ -6392,8 +6435,8 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 
 <li>detect_postmaster_down_error() のエラーメッセージを修正しました。(Tatsuo Ishii)
 <p>
-  例えば、"LOG: detect_stop_postmaster_error: detect_error error" を 
-  "LOG: detect_postmaster_down_error: detect_error error" に修正するなどです。 
+  例えば、"LOG: detect_stop_postmaster_error: detect_error error" を
+  "LOG: detect_postmaster_down_error: detect_error error" に修正するなどです。
 </p>
 </li>
 
@@ -7387,7 +7430,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 
 <li>チュートリアル</li>
 <p><a href="#memqcache">オンメモリクエリキャッシュ</a> と <a href="#watchdog">Watchdog 機能</a>
-   のチュートリアルを作成しました。(Nozomi Anzai)</p> 
+   のチュートリアルを作成しました。(Nozomi Anzai)</p>
 
 </ul>
 
@@ -7844,7 +7887,7 @@ pcp_recovery_node コマンドで、バックエンドノード番号をチェ�
 md5認証で長いユーザ名を処理する際のバグを修正しました。(Tatsuo Ishii)
 <p>
   ユーザ名が 32 バイトより長い場合、md5 認証が動作していませんでした。
-  この問題は [pgpool-general: 1526] で Thomas Martin さんにより報告されました。    
+  この問題は [pgpool-general: 1526] で Thomas Martin さんにより報告されました。
 </p>
 <blockquote>
   [pgpool-general: 1526]<br />
@@ -7912,8 +7955,8 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 
 <li>detect_postmaster_down_error() のエラーメッセージを修正しました。(Tatsuo Ishii)
 <p>
-  例えば、"LOG: detect_stop_postmaster_error: detect_error error" を 
-  "LOG: detect_postmaster_down_error: detect_error error" に修正するなどです。 
+  例えば、"LOG: detect_stop_postmaster_error: detect_error error" を
+  "LOG: detect_postmaster_down_error: detect_error error" に修正するなどです。
 </p>
 </li>
 
@@ -8048,7 +8091,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 
 <li>watchdog のポート番号が既に使用されていた場合にエラーメッセージを出力するよう修正しました。
   (Yugo Nagata)
-<p> 
+<p>
   この問題は [pgpool-general: 1167] で Will Ferguson さんによって報告されました。
 </p>
 <blockquote>
@@ -8823,7 +8866,7 @@ pcp_recovery_node コマンドで、バックエンドノード番号をチェ�
 md5認証で長いユーザ名を処理する際のバグを修正しました。(Tatsuo Ishii)
 <p>
   ユーザ名が 32 バイトより長い場合、md5 認証が動作していませんでした。
-  この問題は [pgpool-general: 1526] で Thomas Martin さんにより報告されました。    
+  この問題は [pgpool-general: 1526] で Thomas Martin さんにより報告されました。
 </p>
 <blockquote>
   [pgpool-general: 1526]<br />
@@ -8891,8 +8934,8 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 
 <li>detect_postmaster_down_error() のエラーメッセージを修正しました。(Tatsuo Ishii)
 <p>
-  例えば、"LOG: detect_stop_postmaster_error: detect_error error" を 
-  "LOG: detect_postmaster_down_error: detect_error error" に修正するなどです。 
+  例えば、"LOG: detect_stop_postmaster_error: detect_error error" を
+  "LOG: detect_postmaster_down_error: detect_error error" に修正するなどです。
 </p>
 </li>
 
@@ -8990,7 +9033,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </p>
 </li>
 
-<li>ストリーミングレプリケーションモードでレプリケーション遅延が大きくなったときに、 
+<li>ストリーミングレプリケーションモードでレプリケーション遅延が大きくなったときに、
   "portal not found" エラーが発生するバグを修正しました。 (Tatsuo Ishii)
 <p>
   これは delay_threshold が導入以来、ずっと存在していたバグです。
@@ -9006,9 +9049,9 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 
 <li>pg_md5 で、ユーザからのパスワード入力の後には改行するように修正しました。 (Yugo Nagata)</li>
 
-<li>watchdog のポート番号が既に使用されていた場合にエラーメッセージを出力するよう修正しました。 
+<li>watchdog のポート番号が既に使用されていた場合にエラーメッセージを出力するよう修正しました。
   (Yugo Nagata)
-<p> 
+<p>
   この問題は [pgpool-general: 1167] で Will Ferguson さんによって報告されました。
 </p>
 <blockquote>
@@ -9038,12 +9081,12 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <li>pool_read() が不正なパケットを読み込んだ場合に、read_startup_packet() がアラームクロック
   をリセットして StartupPacket を解放するよう修正しました。 (Nozomi Anzai)
 <p>
-  修正前は、pgpool ポートの監視を行うプログラムの接続により、認証のタイムアウトが発生していました。 
+  修正前は、pgpool ポートの監視を行うプログラムの接続により、認証のタイムアウトが発生していました。
   この問題は、バグトラック #35 で報告されました。
 </p>
 <blockquote>
   #35 Authentication is timeout<br />
-  Reporter: tuomas 
+  Reporter: tuomas
   Date: 2012-11-20 11:54
   <a href="http://www.pgpool.net/mantisbt/view.php?id=35">
   http://www.pgpool.net/mantisbt/view.php?id=35</a>
@@ -9054,7 +9097,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <p>
   このポインタは事前に memset() によって初期化されているため、実際にはこのバグによる害は
   ありませんでした。
-</p>    
+</p>
 </li>
 
 <li>ヘルプメッセージに -f オプションの説明を追加しました。 (Tatsuo Ishii)</li>
@@ -9307,7 +9350,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <h3>バグ修正</h3>
 <p>
 </p><ul>
- <li>pgpool-regclass()をPostgreSQL 8.0以降でコンパイルできるように修正しました。7.4はまだエラーが出ます(Tatsuo Ishii) 
+ <li>pgpool-regclass()をPostgreSQL 8.0以降でコンパイルできるように修正しました。7.4はまだエラーが出ます(Tatsuo Ishii)
  </li><li>ストリーミングレプリケーション構成で/*NO LOAD BALANCE*/コメントを使用したときに
     ハングアップする可能性を修正しました(Toshihiro Kitagawa)
  </li><li>Flush(H)メッセージやCloseComplete(C)メッセージを受信したときのハングアップを修正しました(Toshihiro Kitagawa)
@@ -10294,7 +10337,7 @@ S: &lt;-- ok since no previous SELECT is sent. kind mismatch error occurs!
 <h2>2.0.1 (hikitsuboshi) 2007/11/21</h2>
 <ul>
   <li> UPDATE もしくは DELETE を実行するとプロセスがダウンする不具合を
-       修正しました。(Yoshiyuki Asaba) 
+       修正しました。(Yoshiyuki Asaba)
   </li><li> <a href="#MASTER_SLAVE_MODE">master_slave</a> を true に設定している場合に、SQL 構文エラーを検知
        した時にマスタにのみそのクエリを送信するようにしました。(Yoshiyuki Asaba)
 </li></ul>
@@ -10354,7 +10397,7 @@ HINT:  check data consistency between master and other db node
   <li> 新しく <a href="AUTHENTICATION_TIMEOUT">authentication_timeout</a> という
        パラメータを追加しました。(Yoshiyuki Asaba)
     <ul>
-     <li>このパラメータでは認証時間のタイムアウトを設定します。 
+     <li>このパラメータでは認証時間のタイムアウトを設定します。
      </li><li>デフォルト値は 60 (1 分)です。
    </li></ul>
   </li><li> スタートアップパケットの長さが 10000 バイト越えている場合には、接続を切断するようにしました。(Yoshiyuki Asaba)
