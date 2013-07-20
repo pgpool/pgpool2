@@ -137,7 +137,7 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 	{
 		if (pool_check_fd(cp))
 		{
-			if (!IS_MASTER_NODE_ID(cp->db_node_id))
+			if (!IS_MASTER_NODE_ID(cp->db_node_id) && (getpid() != mypid))
 			{
 				pool_log("pool_read: data is not ready in DB node: %d. abort this session",
 						 cp->db_node_id);
@@ -173,6 +173,8 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 				{
 					notice_backend_error(cp->db_node_id);
 					child_exit(1);
+					pool_log("pool_read: do not failover because I am the main process");
+					return -1;
 				}
 				else
 				{
@@ -296,6 +298,8 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 				{
 					notice_backend_error(cp->db_node_id);
 					child_exit(1);
+					pool_log("pool_read2: do not failover because I am the main process");
+					return NULL;
 				}
 				else
 				{
@@ -508,6 +512,8 @@ int pool_flush(POOL_CONNECTION *cp)
 			{
 				notice_backend_error(cp->db_node_id);
 				child_exit(1);
+				pool_log("pool_flush: do not failover because I am the main process");
+				return -1;
 			}
 			else
 			{
@@ -650,6 +656,7 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 			{
 				notice_backend_error(cp->db_node_id);
 				child_exit(1);
+				return NULL;
 			}
 			else
 			{
