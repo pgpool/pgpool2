@@ -88,6 +88,10 @@
 		} \
     } while (0)
 
+#define CLEAR_ALARM \
+	do { \
+			pool_debug("health check: clearing alarm"); \
+    } while (alarm(0) > 0)
 
 #define PGPOOLMAXLITSENQUEUELENGTH 10000
 static void daemonize(void);
@@ -719,6 +723,7 @@ int main(int argc, char **argv)
 				 * communication path failure much earlier before
 				 * TCP/IP stack detects it.
 				 */
+				CLEAR_ALARM;
 				pool_signal(SIGALRM, health_check_timer_handler);
 				alarm(pool_config->health_check_timeout);
 			}
@@ -743,6 +748,7 @@ int main(int argc, char **argv)
 
 					retrycnt++;
 					pool_signal(SIGALRM, SIG_IGN);	/* Cancel timer */
+					CLEAR_ALARM;
 
 					if (!pool_config->parallel_mode)
 					{
@@ -798,6 +804,7 @@ int main(int argc, char **argv)
 				{
 					sys_retrycnt++;
 					pool_signal(SIGALRM, SIG_IGN);
+					CLEAR_ALARM;
 
 					if (sys_retrycnt > NUM_BACKENDS)
 					{
@@ -829,6 +836,7 @@ int main(int argc, char **argv)
 			{
 				/* seems ok. cancel health check timer */
 				pool_signal(SIGALRM, SIG_IGN);
+				CLEAR_ALARM;
 			}
 
 			sleep_time = pool_config->health_check_period;
@@ -1186,6 +1194,7 @@ pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 
 		/* call PCP child main */
 		POOL_SETMASK(&UnBlockSig);
+		health_check_timer_expired = 0;
 		reload_config_request = 0;
 		run_as_pcp_child = true;
 		pcp_do_child(unix_fd, inet_fd, pcp_conf_file);
@@ -1227,6 +1236,7 @@ pid_t fork_a_child(int unix_fd, int inet_fd, int id)
 
 		/* call child main */
 		POOL_SETMASK(&UnBlockSig);
+		health_check_timer_expired = 0;
 		reload_config_request = 0;
 		my_proc_id = id;
 		run_as_pcp_child = false;
@@ -1269,6 +1279,7 @@ pid_t worker_fork_a_child()
 
 		/* call child main */
 		POOL_SETMASK(&UnBlockSig);
+		health_check_timer_expired = 0;
 		reload_config_request = 0;
 		do_worker_child();
 	}
