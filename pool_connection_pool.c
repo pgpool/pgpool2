@@ -569,7 +569,7 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 			return -1;
 		}
 
-		if (health_check_timer_expired)		/* has health check timer expired */
+		if (health_check_timer_expired && getpid() == mypid)		/* has health check timer expired */
 		{
 			pool_log("connect_inet_domain_socket_by_port: health check timer expired");
 			close(fd);
