@@ -5,7 +5,7 @@
 #
 # Fixed in: http://git.postgresql.org/gitweb/?p=pgpool2.git;a=commit;h=d428c5c27600dd82161dda6a240737d88db78732
 # requires Java PostgreSQL JDBC driver.
-JDBC_DRIVER=/usr/local/pgsql/share/postgresql-9.2-1002.jdbc4.jar
+JDBC_DRIVER=/usr/local/pgsql/share/postgresql-9.2-1003.jdbc4.jar
 WHOAMI=`whoami`
 source $TESTLIBS
 TESTDIR=testdir
