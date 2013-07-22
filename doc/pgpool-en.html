@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Wed Jun  5 14:36:13 JST 2013
+Last modified: Tue Jul 23 08:04:32 JST 2013
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -3776,7 +3776,7 @@ to make those deployments and pros and cons.
     It's simple and pgpool-II is not affected by other server softwares.
     Obvious cons is you need to buy more hardware.
     Also pgpool-II can be a single point of failure with this configuration
-    (you can avoid this by using pgpool-HA described described below).
+    (you can avoid this by enabling <a href="#watchdog">watchdog</a> or using pgpool-HA described described below).
     </p>
     </dd>
 
@@ -3789,8 +3789,10 @@ to make those deployments and pros and cons.
     is within a local machine, socket communication can be faster than inter-sever communication.
     Also if you are using multiple web serves or application servers, you can avoid
     the single point of failure problem
-    (in this case you must have identical pgpool.conf on each pgpool-II instance).
-    There are several things you should care about in this configuration:
+    (in this case you must have identical pgpool.conf on each pgpool-II instance except the <a href="#watchdog">watchdog section</a>).
+		</p>
+		<p>
+		We strongly recommend to enable <a href="#watchdog">watchdog</a> to avoid following concerns in this configuration.
     </p>
     <ul>
         <li>If the communication between pgpool-II and DB servers is not stable, it is possible
@@ -3814,7 +3816,7 @@ to make those deployments and pros and cons.
     You can avoid the single point of failure problem of pgpool-II with configuration.
     And obviously you do need to buy additional dedicated server.
     Problem with this configuration is, application need to aware of which DB server they should connect to.
-    To solve the problem you can use virtual IP with pgpool-HA.
+    To solve the problem you can use virtual IP with <a href="#watchdog">watchdog</a> or pgpool-HA.
     </p>
     </dd>
 </dl>
