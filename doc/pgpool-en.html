@@ -4245,7 +4245,7 @@ Configuration about virtual IP interface control
     You can use the same device for different distinations.
     The number at the end of the parameter name is referred as "destination number",
     and it starts from 0.
-    This works only heartbeat mode.
+    This works only heartbeat mode. This is ignored when the value is empty.
     In addition, this works only when pgpool-II has root privilege and are running on Linux,
     because this uses SO_BINDTODEVICE socket option.
     </p>

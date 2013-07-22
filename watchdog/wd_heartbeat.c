@@ -84,28 +84,31 @@ wd_create_hb_send_socket(WdHbIf hb_if)
 		return -1;
 	}
 
-#if defined(SO_BINDTODEVICE)
+	if (hb_if.if_name[0] != '\0')
 	{
-		if (geteuid() == 0) /* check root privileges */
+#if defined(SO_BINDTODEVICE)
 		{
-			struct ifreq i;
-			strlcpy(i.ifr_name, hb_if.if_name, sizeof(i.ifr_name));
-
-			if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, &i, sizeof(i)) == -1)
+			if (geteuid() == 0) /* check root privileges */
 			{
-				pool_error("wd_create_hb_send_socket: setsockopt(SO_BINDTODEVICE) failed. reason: %s, device: %s",
-						   strerror(errno), i.ifr_name);
-				close(sock);
-				return -1;
+				struct ifreq i;
+				strlcpy(i.ifr_name, hb_if.if_name, sizeof(i.ifr_name));
+
+				if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, &i, sizeof(i)) == -1)
+				{
+					pool_error("wd_create_hb_send_socket: setsockopt(SO_BINDTODEVICE) failed. reason: %s, device: %s",
+						   	strerror(errno), i.ifr_name);
+					close(sock);
+					return -1;
+				}
+				pool_log("wd_create_hb_send_socket: bind send socket to device: %s", i.ifr_name);
 			}
-			pool_log("wd_create_hb_send_socket: bind send socket to device: %s", i.ifr_name);
+			else
+				pool_log("wd_create_hb_send_socket: setsockopt(SO_BINDTODEVICE) requies root privilege");
 		}
-		else
-			pool_log("wd_create_hb_send_socket: setsockopt(SO_BINDTODEVICE) requies root privilege");
-	}
 #else
-	pool_log("wd_create_hb_send_socket: couldn't setsockopt(SO_BINDTODEVICE) on this platform");
+		pool_log("wd_create_hb_send_socket: couldn't setsockopt(SO_BINDTODEVICE) on this platform");
 #endif
+	}
 
 #if defined(SO_REUSEPORT)
 	{
@@ -163,28 +166,31 @@ wd_create_hb_recv_socket(WdHbIf hb_if)
 		return -1;
 	}
 
-#if defined(SO_BINDTODEVICE)
+	if (hb_if.if_name[0] != '\0')
 	{
-		if (geteuid() == 0) /* check root privileges */
+#if defined(SO_BINDTODEVICE)
 		{
-			struct ifreq i;
-			strlcpy(i.ifr_name, hb_if.if_name, sizeof(i.ifr_name));
-
-			if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, &i, sizeof(i)) == -1)
+			if (geteuid() == 0) /* check root privileges */
 			{
-				pool_error("wd_create_hb_recv_socket: setsockopt(SO_BINDTODEVICE) failed. reason: %s, devise: %s",
-						   strerror(errno), i.ifr_name);
-				close(sock);
-				return -1;
+				struct ifreq i;
+				strlcpy(i.ifr_name, hb_if.if_name, sizeof(i.ifr_name));
+
+				if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, &i, sizeof(i)) == -1)
+				{
+					pool_error("wd_create_hb_recv_socket: setsockopt(SO_BINDTODEVICE) failed. reason: %s, devise: %s",
+						   	strerror(errno), i.ifr_name);
+					close(sock);
+					return -1;
+				}
+				pool_log("wd_create_hb_recv_socket: bind receive socket to device: %s", i.ifr_name);
 			}
-			pool_log("wd_create_hb_recv_socket: bind receive socket to device: %s", i.ifr_name);
+			else
+				pool_log("wd_create_hb_send_socket: setsockopt(SO_BINDTODEVICE) requies root privilege");
 		}
-		else
-			pool_log("wd_create_hb_send_socket: setsockopt(SO_BINDTODEVICE) requies root privilege");
-	}
 #else
-	pool_log("wd_create_hb_send_socket: couldn't setsockopt(SO_BINDTODEVICE) on this platform");
+		pool_log("wd_create_hb_send_socket: couldn't setsockopt(SO_BINDTODEVICE) on this platform");
 #endif
+	}
 
 #if defined(SO_REUSEPORT)
 	{

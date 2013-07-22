@@ -526,16 +526,17 @@ heartbeat_destination_port0 = 9694
                                     # heartbeat signal. Usually this is the
                                     # same as wd_heartbeat_port.
                                     # (change requires restart)
-heartbeat_device0 = 'eth0'
-                                    # Name of NIC device using for
-                                    # sending/receiving heartbeat signal
-                                    # to/from destination 0.
-                                    # This works only when pgpool has root privilege.
+heartbeat_device0 = ''
+                                    # Name of NIC device (such like 'eth0')
+                                    # used for sending/receiving heartbeat
+                                    # signal to/from destination 0.
+                                    # This works only when this is not empty
+                                    # and pgpool has root privilege.
                                     # (change requires restart)
 
 #heartbeat_destination1 = 'host0_ip2'
 #heartbeat_destination_port1 = 9694
-#heartbeat_device1 = 'eth1'
+#heartbeat_device1 = ''
 
 # -- query mode --
 
