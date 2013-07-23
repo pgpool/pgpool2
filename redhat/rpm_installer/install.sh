@@ -679,6 +679,18 @@ function doConfigPostgres()
     # [4] pg_hba.conf
     # -------------------------------------------------------------------
 
+    NODE0_MASK=""
+    NODE1_MASK=""
+    
+
+    # If hostname, netmask isn't necessary.
+    if expr "$NODE0_HOST" : "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}$" > /dev/null; then
+        NODE0_MASK=$NETMASK
+    fi
+    if expr "$NODE1_HOST" : "^[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}$" > /dev/null; then
+        NODE1_MASK=$NETMASK
+    fi
+
     echo
     echo "[5/$_STEPS] authorization"
     cp templates/pg_hba.conf editted/pg_hba.conf
@@ -689,12 +701,12 @@ function doConfigPostgres()
 w
 q
 EOT
-    echo "host    replication     $PG_SUPER_USER     $NODE0_HOST    $NETMASK    trust" >> editted/pg_hba.conf
-    echo "host    replication     $PG_SUPER_USER     $NODE1_HOST    $NETMASK    trust" >> editted/pg_hba.conf
-    echo "host    all             $PG_SUPER_USER     $NODE0_HOST    $NETMASK    trust" >> editted/pg_hba.conf
-    echo "host    all             $PG_SUPER_USER     $NODE1_HOST    $NETMASK    trust" >> editted/pg_hba.conf
-    echo "host    all             $PG_ADMIN_USER     $NODE0_HOST    $NETMASK    trust" >> editted/pg_hba.conf
-    echo "host    all             $PG_ADMIN_USER     $NODE1_HOST    $NETMASK    trust" >> editted/pg_hba.conf
+    echo "host    replication     $PG_SUPER_USER     $NODE0_HOST    $NODE0_MASK    trust" >> editted/pg_hba.conf
+    echo "host    replication     $PG_SUPER_USER     $NODE1_HOST    $NODE1_MASK    trust" >> editted/pg_hba.conf
+    echo "host    all             $PG_SUPER_USER     $NODE0_HOST    $NODE0_MASK    trust" >> editted/pg_hba.conf
+    echo "host    all             $PG_SUPER_USER     $NODE1_HOST    $NODE1_MASK    trust" >> editted/pg_hba.conf
+    echo "host    all             $PG_ADMIN_USER     $NODE0_HOST    $NODE0_MASK    trust" >> editted/pg_hba.conf
+    echo "host    all             $PG_ADMIN_USER     $NODE1_HOST    $NODE1_MASK    trust" >> editted/pg_hba.conf
 
     echo
     echo $BOLD"----------------------------------------------------------------------"$SPAN_END
@@ -1173,7 +1185,7 @@ INITDB_OK=0
 if [ $NODE_NO -eq 0 ]; then
     echo
     echo "* Create node 0 (localhost) 's database cluster"
-	echo
+    echo
 
     echo -n "- initdb ... "
 
