@@ -110,6 +110,7 @@ fi
 %{_bindir}/pcp_stop_pgpool
 %{_bindir}/pcp_recovery_node
 %{_bindir}/pcp_systemdb_info
+%{_bindir}/pcp_watchdog_info
 %{_bindir}/pg_md5
 %{_mandir}/man8/pgpool*
 %{_datadir}/%{name}/insert_lock.sql
