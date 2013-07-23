@@ -41,11 +41,12 @@ PGHOME=/usr/pgsql-9.2
 CONTRIB_DIR=$PGHOME/share/contrib
 PG_SUPER_USER=postgres
 PG_SUPER_USER_PASSWD=$PG_SUPER_USER
-PG_ADMIN_USER=admin            # This will be editted in script.
-PG_ADMIN_USER_PASSWD=pgpool    # This will be editted in script.
-PGPORT=5432                    # This will be editted in script.
-PGDATA=/home/postgres/data     # This will be editted in script.
-ARCHIVE_DIR=/home/postgres/archivedir # This will be editted in script.
+PG_SUPER_USER_HOME=`eval echo ~$PG_SUPER_USER`
+PG_ADMIN_USER=admin                        # This will be editted in script.
+PG_ADMIN_USER_PASSWD=pgpool                # This will be editted in script.
+PGPORT=5432                                # This will be editted in script.
+PGDATA=$PG_SUPER_USER_HOME/data            # This will be editted in script.
+ARCHIVE_DIR=$PG_SUPER_USER_HOME/archivedir # This will be editted in script.
 INITDB_OPTION="--no-locale -E UTF8"
 
 # other
@@ -382,9 +383,7 @@ function setWatchdog()
 
     case $WATCHDOG_METHOD in
         heartbeat)
-            #setPgpoolParam heartbeat_device0 "NIC device name of NIC to send/receive heartbeat signal" eth0
-            #setPgpoolParam heartbeat_destination0 "host name or IP address to which device 0's heartbeat destinates" "'$NODE1_HOST'"
-            writePgpoolParam heartbeat_device0 "'eth0'"
+            writePgpoolParam heartbeat_device0 "''"
             writePgpoolParam heartbeat_destination0 "'$DEST_HOST'"
             writePgpoolParam heartbeat_destination_port0 "9694"
         ;;
@@ -799,7 +798,8 @@ function copySbin()
 function sshWithoutPass()
 {
     local _THIS_USER=$1
-    local _SSH_DIR=/home/$_THIS_USER/.ssh
+    local _HOME=`eval echo ~$_THIS_USER`
+    local _SSH_DIR=$_HOME/.ssh
 
     rm $_SSH_DIR/id_rsa* >/dev/null 2>&1
     su - $_THIS_USER -c "ssh-keygen -q -t rsa -P '' -f $_SSH_DIR/id_rsa << EOF
@@ -858,7 +858,7 @@ function doQueries()
 
     echo -n "- create admin user ...."
     $PGHOME/bin/psql -p $PGPORT -U $PG_SUPER_USER postgres \
-        -c "CREATE USER $PG_ADMIN_USER PASSWORD '$PG_ADMIN_USER_PASSWD'" >/dev/null 2>&1
+        -c "CREATE USER $PG_ADMIN_USER PASSWORD '$PG_ADMIN_USER_PASSWD' SUPERUSER" >/dev/null 2>&1
     if [ $? -eq 0 ]; then
         echo "OK."
     else
