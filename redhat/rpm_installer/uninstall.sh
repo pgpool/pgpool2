@@ -9,6 +9,7 @@ NOBODY_SBIN=/var/private/nobody/sbin
 PID_FILE_DIR=/var/run/pgpool/
 PGPOOL_LOG_DIR=/var/log/pgpool
 PGPOOL_CONF_DIR=/etc/pgpool-II
+ADMIN_DIR=/var/www/html/pgpoolAdmin
 
 rpm -qa | grep -q $PKG_NAME_FOR_RPM
 if [ $? -ne 0 ]; then
@@ -49,6 +50,7 @@ rm -rf $NOBODY_SBIN
 rm -rf $PID_FILE_DIR
 rm -rf $PGPOOL_LOG_DIR
 rm -rf $PGPOOL_CONF_DIR
+rm -rf $ADMIN_DIR
 
 echo "Uninstallation is completed successfully."
 
