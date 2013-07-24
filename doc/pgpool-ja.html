@@ -38,9 +38,9 @@ Last modified: Tue Jul 23 08:08:30 JST 2013
         <li><a href="#backup">バックアップ</a></li>
         <li><a href="#deploy">pgpool-IIの配置について</a></li>
         <li><a href="#watchdog">watchdog</a></li>
+        <li><a href="#pcp_command">PCP コマンド</a></li>
         <li><a href="#troubleshooting">トラブルシューティング</a></li>
         <li><a href="#restriction">制限事項</a></li>
-        <li><a href="#reference">リファレンス</a></li>
         <li><a href="#internal">内部情報</a></li>
         <li><a href="#release">リリースノート</a></li>
       </ul>
@@ -131,9 +131,9 @@ pgpool-IIの機能が利用できます。
 
 <h1>License<a name="license"></a></h1>
 
+<p>Copyright (c) 2003-2013        PgPool Global Development Group</p>
+<p><br></p>
 <p>
-Copyright (c) 2003-2013        PgPool Global Development Group
-
 Permission to use, copy, modify, and distribute this software and
 its documentation for any purpose and without fee is hereby
 granted, provided that the above copyright notice appear in all
@@ -150,7 +150,7 @@ is" without express or implied warranty.
 
 <!-- ================================================================================ -->
 
-<h1>pgpool-IIの稼働環境<a name="platform"></a></h1>
+<h1>pgpool-II の稼働環境<a name="platform"></a></h1>
 <p>
 pgpool-IIは、Linuxをはじめ、SolarisやFreeBSDなどのほとんどのUNIX環境で動作します。Windowsでは動きません。
 </p>
@@ -171,24 +171,24 @@ PostgreSQLのマイナーバージョンが違う場合は大抵の場合問題�
 
 <!-- ================================================================================ -->
 
-<h1>pgpool-IIのインストール<a name="install"></a></h1>
+<h1>pgpool-II のインストール<a name="install"></a></h1>
 
 <p>
-Linux用のRPMパッケージは、CentOS、RedHat Enterprise Linux、Fedora、Debian用などが提供されています。
+Linux 用の RPM パッケージは、CentOS、RedHat Enterprise Linux、Fedora、Debian 用などが提供されています。
 該当リポジトリをチェックしてみてください。
 </p>
 
 <p>
-pgpool-II のソースコードは<a href="http://pgpool.net/mediawiki/index.php/Downloads">pgpool開発ページ</a> から
+pgpool-II のソースコードは <a href="http://pgpool.net/mediawiki/index.php/Downloads">pgpool 開発ページ</a> から
 ダウンロードできます。
 </p>
 
-<p>
-pgpool-IIのソースコードからのインストールには、gcc 2.9以上、およびGNU makeが必要です。
-また、pgpool-IIはlibpq(PostgreSQL付属のクライアントライブラリ)を使用するので、
-ビルドを行うマシン上にlibpqがインストールされていることが必要です。
-また、OpenSSLサポートを有効にする場合は、OpenSSLライブラリと開発用のヘッダーファイルが必要です。
-</p>
+<p>pgpool-II のソースコードからのインストールには、gcc 2.9 以上、および GNU make が必要です。
+また、pgpool-II は libpq（PostgreSQL 付属のクライアントライブラリ）を使用するので、
+ビルドを行うマシン上に libpq がインストールされていることが必要です。</p>
+<p>また、OpenSSL サポートを有効にする場合は、OpenSSL ライブラリと開発用のヘッダーファイルが必要です。</p>
+
+<h2 id="install_pgpool">pgpool-II のインストール</h2>
 
 <dl>
 <dt>configureの実行</dt>
@@ -243,79 +243,112 @@ make
 make install
 </pre>
     </dd>
-
-<dt>pgpool_regclassのインストール <span class="version">V3.0 〜</span></dt>
-    <dd>
-    <p>
-    PostgreSQL 8.0以降を使用している場合は、pgpool-IIが内部で使用するC関数pgpool_regclassをインストールします。
-    この関数がインストールされていなくてもpgpool-IIは動作しますが、違うスキーマで同じテーブル名を定義していて、
-    SQL文の中でスキーマ名を省略している場合に、不具合が生じることがあります(一時テーブルを除く)。
-    したがって、可能ならばpgpool_regclassをインストールすることをお勧めします。
-    </p>
-    <p>
-    このインストールは、pgpool-IIがアクセスする予定のすべてのPostgreSQLサーバで実施してください。
-    </p>
-<pre>
-cd pgpool-II-x.x.x/sql/pgpool-regclass
-make
-make install
-</pre>
-        <p>
-この後に以下か、
-        <p>
-<pre>
-psql -f pgpool-regclass.sql template1
-</pre>
-        </p>
-        <p>
-または
-        <p>
-<pre>
-psql template1
-CREATE EXTENSION pgpool_regclass;
-</pre>
-        <p>
-を実行します。
-        </p>
-    <p>
-    pgpool-regclass.sqlまたはCREATE EXTENSIONの実行は、pgpool-II経由で利用するデータベース毎に必要になります。
-    ただし、template1データベースに対して"psql -f pgpool-regclass.sql template1"またはCREATE EXTENSIONを実行後に作成されたデータベースでは、新たにpgpool-regclass.sqlまたはCREATE EXTENSIONを実行する必要はありません。
-    </p>
-    </dd>
-
-<dt>insert_lockテーブルの作成 <span class="version">V3.0 〜</span></dt>
-<dd>
-    <p>
-    レプリケーションモードでinsert_lockを利用したい場合は、排他制御用のテーブル
-    pgpool_catalog.insert_lockを作成します。
-    insert_lockテーブルが存在しなくても今のところinsert_lockは動作しますが、
-    その場合は、挿入対象のテーブルに対してロックが行われます。
-    これはpgpool-II 2.2と2.3シリーズの動作と同じです。挿入対象のテーブルに対するロックは、
-    VACUUMと競合してINSERT処理が長時間が待たされる可能性があります。
-    </p>
-    <p>
-    したがって、insert_lockテーブルを作成することをお勧めします。
-    テーブルの作成は、pgpool-IIがアクセスする予定のすべてのPostgreSQLサーバで実施してください。
-    </p>
-
-<pre>
-cd pgpool-II-x.x.x/sql
-psql -f insert_lock.sql template1
-</pre>
-
-    <p>
-    insert_lock.sqlの実行は、pgpool-II経由で利用するデータベース毎に必要になります。
-    ただし、&quot;psql -f insert_lock.sql template1&quot;を実行後に作成されたデータベースでは
-    自動的にinsert_lock.sqlの内容が反映されているので、
-    新たにinsert_lock.sqlを実行する必要はありません。
-    </p>
-    </dd>
 </dl>
 
+<h2 id="install_functions">関数の登録</h2>
+
+<h3 id="pgpool_regclass">pgpool_regclass のインストール（推奨） <span class="version">V3.0 〜</span></h3>
+<p>PostgreSQL 8.0 以降を使用している場合は、pgpool-II が内部で使用する C 関数
+pgpool_regclass をインストールします。</p>
+
+<h4>pgpool_regclass とは？</h4>
 <p>
-以上でインストールが完了します(GNU makeが必要なので、SolarisやFreeBSDなどでは
-makeをgmakeに読み替えてください)。
+この関数がインストールされていなくても pgpool-II は動作しますが、違うスキーマで同じテーブル名を定義していて、
+SQL 文の中でスキーマ名を省略している場合に、不具合が生じることがあります（一時テーブルを除く）。
+したがって、可能ならば pgpool_regclass をインストールすることをお勧めします。
 </p>
+
+<h4>関数のインストール</h4>
+<p>このインストールは、pgpool-II がアクセスする予定のすべての PostgreSQL サーバで実施してください。</p>
+<pre>
+$ cd pgpool-II-x.x.x/sql/pgpool-regclass
+$ make
+$ make install
+</pre>
+
+<p>この後に以下か、</p>
+
+<pre>
+$ psql -f pgpool-regclass.sql template1
+</pre>
+
+<p>または</p>
+
+<pre>
+$ psql template1
+=# CREATE EXTENSION pgpool_regclass;
+</pre>
+
+<p>を実行します。</p>
+
+<h4>備考</h4>
+<p>
+pgpool-regclass.sql または <code>CREATE EXTENSION</code> の実行は、
+pgpool-II 経由で利用するデータベース毎に必要になります。
+ただし、template1 データベースに対して "<code>psql -f pgpool-regclass.sql template1</code>" または
+<code>CREATE EXTENSION</code> を実行後に作成されたデータベースでは、
+新たに pgpool-regclass.sql または <code>CREATE EXTENSION</code> を実行する必要はありません。
+</p>
+
+<h3 id="insert_lock_table">insert_lock テーブルの作成 <span class="version">V3.0 〜</span></h3>
+
+<h4>レプリケーションモードでの insert_lock</h4>
+<p>
+レプリケーションモードで insert_lock を利用したい場合は、排他制御用のテーブル
+pgpool_catalog.insert_lock を作成します。
+</p>
+<p>
+insert_lock テーブルが存在しなくても今のところ insert_lock は動作しますが、
+その場合は、挿入対象のテーブルに対してロックが行われます。
+これは pgpool-II 2.2 と 2.3 シリーズの動作と同じです。挿入対象のテーブルに対するロックは、
+VACUUM と競合して INSERT 処理が長時間が待たされる可能性があります。
+</p>
+<p>
+したがって、insert_lock テーブルを作成することをお勧めします。
+テーブルの作成は、pgpool-II がアクセスする予定のすべての PostgreSQL サーバで実施してください。
+</p>
+
+<h4>テーブルの作成</h4>
+<pre>
+$ cd pgpool-II-x.x.x/sql
+$ psql -f insert_lock.sql template1
+</pre>
+
+<h4>備考</h4>
+<p>
+insert_lock.sqlの実行は、pgpool-II経由で利用するデータベース毎に必要になります。
+ただし、"<code>psql -f insert_lock.sql template1</code>" を実行後に作成されたデータベースでは
+自動的に insert_lock.sql の内容が反映されているので、新たに insert_lock.sql を実行する必要はありません。
+</p>
+
+<h3 id="pgpool_recovery">pgpool_recovery のインストール</h3>
+
+<p>後述の <a href="#online_recovery_in_stream_mode">オンラインリカバリ</a> の機能を使う場合には、
+pgpool_recovery, pgpool_remote_start, pgpool_switch_xlog という関数が必要です。</p>
+<p>また管理ツールである pgpoolAdmin の画面上から、バックエンドノードの PostgreSQL を停止・再起動・
+設定再読み込みを行なうことができますが、これには pgpool_pgctl という関数が使われます。</p>
+<p>これらの機能を使いたい場合には、上記の pgpool_regclass と同様の手順でこれらの C 関数を登録します。
+なお、この 4 つの関数は、すべてのデータベースにインストールされている必要はなく、template1 にだけで
+構いません。</p>
+<pre>
+$ cd pgpool-II-x.x.x/sql/pgpool-regclass
+$ make
+$ make install
+$ psql -f pgpool-recovery.sql template1
+</pre>
+
+<h4>pgpool_pgctl の設定 <span class="version">V3.3 〜</span></h4>
+
+<p>pgpool_pgctl 関数は、バックエンドノードの PostgreSQL の 「pgpool.pgctl」という
+カスタムパラメータに書かれたコマンドを実行します。
+この関数を使うには、このパラメータに pg_ctl コマンドのパスを指定します。</p>
+<pre>
+ex)
+$ cat &gt;&gt; /usr/local/pgsql/postgresql.conf
+pgpool.pg_ctl = '/usr/local/pgsql/bin/pg_ctl'
+
+$ pg_ctl reload -D /usr/local/pgsql/data
+</pre>
 
 <p class="top_link"><a href="#Top">△ back to top</a></p>
 
@@ -437,7 +470,7 @@ pcp.confは、pgpool-IIを動作させるユーザIDで読み取り可能にな�
 <!-- ================================================================================ -->
 
 <h1 id="pgpool_conf">pgpool.confの設定</h1>
-<h2 id="pgpool_conf_sample">サンプルファイル <span class="version">2.3 〜</span></h2>
+<h2 id="pgpool_conf_sample">サンプルファイル <span class="version">V2.3 〜</span></h2>
 <p>
 pgpool-IIをインストールすると、インストール先ディレクトリ(デフォルトでは/usr/local)
 /etc/pgpool.conf.sampleができるので、それを
@@ -3431,7 +3464,7 @@ PostgreSQLのPITRを使っている場合は適用されません。
 <p>
 pgpool ではオンラインリカバリを 2 段階に分けて実施します。
 pgpool のクライアントからは完全なデータの同期を取るために若干の接続待ちが発生します。
-リカバリ手順で以下の通りです。
+リカバリ手順で以下のとおりです。
 </p>
 
 <ol>
@@ -4526,6 +4559,398 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
 
 <!-- ================================================================================ -->
 
+<h1>PCP コマンド<a name="pcp_command"></a></h1>
+
+<h2>PCP コマンド一覧</h2>
+<p>pgpool-II を操作する UNIX コマンドとして、以下のものがあります。</p>
+
+<table border>
+<tr><th colspan="2">情報を取得する PCP コマンド</th></tr>
+<tr><th><a href="#pcp_node_count">pcp_node_count</a></th>
+    <td>ノード数を取得する</td></tr>
+<tr><th><a href="#pcp_node_info">pcp_node_info</a></th>
+    <td>ノード情報を取得する</td></tr>
+<tr><th><a href="#pcp_watchdog_info">pcp_watchdog_info</a></th>
+    <td>watchdog 情報を取得する <span class="version">V3.3 ～</span></td></tr>
+<tr><th><a href="#pcp_proc_count">pcp_proc_count</a></th>
+    <td>プロセス一覧を取得する</td></tr>
+<tr><th><a href="#pcp_proc_info">pcp_proc_info</a></th>
+    <td>プロセス情報を取得する</td></tr>
+<tr><th><a href="#pcp_pool_status">pcp_pool_status</a></th>
+    <td>pgpool.conf のパラメータ設定値を取得する <span class="version">V3.1 〜</span></td></tr>
+<tr><th><a href="#pcp_systemdb_info">pcp_systemdb_info</a></th>
+    <td>システム DB 情報を取得する</td></tr>
+<tr><th><a href="#pcp_detach_node">pcp_detach_node</a></th>
+
+<tr><th colspan="2">ノード等を操作する PCP コマンド</th></tr>
+<tr><th><a href="#pcp_detach_node">pcp_detach_node</a></th>
+    <td>ノードを切り離す</td></tr>
+<tr><th><a href="#pcp_attach_node">pcp_attach_node</a></th>
+    <td>ノードを復帰させる</td></tr>
+<tr><th><a href="#pcp_promote_node">pcp_promote_node</a></th>
+    <td>ノードをマスターに昇格させる <span class="version">V3.1 〜</span></td></tr>
+<tr><th><a href="#pcp_stop_pgpool">pcp_stop_pgpool</a></th>
+    <td>pgpool-IIを停止させる</td></tr>
+<tr><th><a href="#pcp_recovery_node">pcp_recovery_node</a></th>
+    <td>マスタノードを使ってノードのデータを再同期、ノード起動させる</td></tr>
+</table>
+
+
+<h2 id="pcp_comand_args">共通引数</h2>
+<p>全てのコマンドには共通する引数があります。これは接続するpgpool-IIの情報や認証情報などです。</p>
+
+<pre>
+ex)
+$ pcp_node_count [-d] 10 localhost 9898 postgres hogehoge
+</pre>
+
+<table border>
+<tr>
+<th nowrap>第 1 引数</th><td>タイムアウト値<br>
+秒数でタイムアウト値を指定します。
+この時間内に pgpool-II から応答がない場合はコネクションを切断して終了します。
+なお、このオプションは 2.1 からは無視するようになっています。
+</td>
+</tr>
+<tr><th nowrap>第 2 引数</th><td>pgpool-II が稼動しているホスト名</td></tr>
+<tr><th nowrap>第 3 引数</th><td>PCP ポート番号</td></tr>
+<tr><th nowrap>第 4 引数</th><td>PCP ユーザ名</td></tr>
+<tr><th nowrap>第 5 引数</th><td>PCP パスワード</td></tr>
+</table>
+
+<p>
+オプション引数として、<code>-d </code>があります。
+<code>-d</code> が指定されるとデバッグ情報を出力します。
+</p>
+<p>
+PCPユーザ名とパスワードは <code>./configure</code> 時に <code>--prefix</code> で指定した
+'インストールディレクトリ/etc' にある pcp.conf 内に記述されているものを指定します。
+pcp.conf ファイルの場所がデフォルト以外の場所にある場合、
+<code>pgpool</code> の <code>-F</code> オプションでその位置を指定することができます。
+パスワードはコマンドに渡す時点でmd5化されている必要はありません。
+</p>
+
+
+<h2>情報を取得するコマンド群</h2>
+<p>
+全てのコマンドは、実行した結果が標準出力に表示されます。
+</p>
+
+
+<h3 id="pcp_node_count">pcp_node_count</h3>
+<dl class="flat">
+<dt>書式</dt>
+<dd><code>pcp_node_count  _timeout_  _host_  _port_  _userid_  _passwd_</code></dd>
+<dt>説明</dt>
+<dd>pgpool-II の pgpool.conf で定義されたノードの総数を表示します。
+    切り離されているノードの区別はしません。</dd>
+</dl>
+
+
+<h3><a name="pcp_node_info"></a>pcp_node_info</h3>
+<dl class="flat">
+<dt>書式</dt>
+<dd><code>pcp_node_info  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_</code></dd>
+</pre>
+<dt>説明</dt>
+<dd>pgpool-II の pgpool.conf で定義されたノードの情報を表示します。出力結果は以下の例のとおりです。
+
+<pre>
+$ pcp_node_info 10 localhost 9898 postgres hogehoge 0
+host1 5432 1 1073741823.500000
+</pre>
+
+<p>結果は以下の順のとおりです。</p>
+<ul>
+<li>1. ノードのホスト名</li>
+<li>2. ノードのポート番号</li>
+<li>3. ステータス</li>
+<li>4. ロードバランスウェイト</li>
+</ul>
+
+<p>ステータスは [0..3] までの数字で表わされます。各数字の意味は：</p>
+<ul>
+<li>0 - 初期化時のみに表われる。PCP コマンドで表示されることはない。</li>
+<li>1 - ノード稼働中。接続無し</li>
+<li>2 - ノード稼働中。接続有り</li>
+<li>3 - ノードダウン</li>
+</ul>
+
+<p>ロードバランスウェイトは Normalize されたフォーマットで出力されます。</p>
+<p>定義されていないノード ID を指定すると BackendError と表示され、
+<a href="#exit_status">終了コード 12</a> で終了します。</p>
+</dd>
+</dl>
+
+<h3><a name="pcp_watchdog_info"></a>pcp_watchdog_info</h3>
+<dl class="flat">
+<dt>書式</dt>
+<dd><code>pcp_watchdog_info  _timeout_  _host_  _port_  _userid_  _passwd_  [_watchdogid_]</code></dd>
+
+<dt>説明</dt>
+<dd>
+<p>pgpool-II の pgpool.conf の watchdog セクションで定義された pgpool-II の watchdog ステータスを表示します。</p>
+<p>_watchdogid_ は other_pgpool_hostname パラメータの添字です。
+省略された場合には、_host_:_port_ で動作している pgpool-II の watchdog ステータスが表示されます。</p>
+<p>出力結果は以下の例のとおりです。</p>
+
+<pre>
+$ pcp_watchdog_info 10 localhost 9898 postgres hogehoge 0
+host1 9999 9000 2
+</pre>
+
+<p>結果は以下の順のとおりです。</p>
+<ul>
+<li>1. pgpool-II のホスト名</li>
+<li>2. pgpool-II ポート番号</li>
+<li>3. watchdog ポート番号</li>
+<li>4. watchdog ステータス</li>
+</ul>
+
+<p>ステータスは [1..4] までの数字で表わされます。各数字の意味は：</p>
+<ul>
+<li>1 - 初期化時のみに表われる。指定された pgpool-II が未起動の場合に表示される。</li>
+<li>2 - スタンバイ: 仮想 IP を保持していない</li>
+<li>3 - アクティブ: 仮想 IP を保持している</li>
+<li>4 - ダウン</li>
+</ul>
+
+<p>定義されていない watchdog ID を指定すると BackendError と表示され、
+<a href="#exit_status">終了コード 12</a> で終了します。</p>
+</dd>
+</dl>
+
+<h3 id="pcp_proc_count">pcp_proc_count</h3>
+<dl class="flat">
+<dt>書式</dt>
+<dd><code>pcp_proc_count  _timeout_  _host_  _port_  _userid_  _passwd_</code></dd>
+<dt>説明</dt>
+<dd>pgpool-II の子プロセスのプロセス ID を一覧表示します。複数ある場合は空白文字で区切られます。</dd>
+</dl>
+
+<h3 id="pcp_proc_info">pcp_proc_info</h3>
+<dl class="flat">
+<dt>書式</dt>
+<dd><code>pcp_proc_info  _timeout_  _host_  _port_  _userid_  _passwd_  _processid_</code></dd>
+<dt>説明</dt>
+<dd>
+<p>pgpool-II の子プロセス情報を表示します。出力結果は以下の例のとおりです。</p>
+<pre>
+$ pcp_proc_info 10 localhost 9898 postgres hogehoge 3815
+postgres_db postgres 1150769932 1150767351 3 0 1 14067 1
+postgres_db postgres 1150769932 1150767351 3 0 1 14068 1
+</pre>
+
+<p>結果は以下の順のとおりです。</p>
+<ul>
+<li>1. 接続しているデータベース名</li>
+<li>2. 接続しているユーザ名</li>
+<li>3. プロセススタート時刻</li>
+<li>4. コネクション作成時刻</li>
+<li>5. プロトコルメジャーバージョン</li>
+<li>6. プロトコルマイナーバージョン</li>
+<li>7. コネクション使用回数</li>
+<li>8. PostgreSQL バックエンドプロセスID</li>
+<li>9. フロントエンドから接続がある場合は 1、そうでなければ 0</li>
+</ul>
+
+<p>
+コネクションがバックエンドに対して張られていない場合、データは表示されません。
+コネクション情報が複数ある場合、複数行に 1 行 1 コネクション情報で表示されます。
+時刻は EPOCH タイムからの秒数で表わされます。
+</p>
+<p>定義されていないプロセスIDを指定するとBackendErrorと表示され、
+<a href="#exit_status">終了コード 12</a>で終了します。</p>
+</dd>
+</dl>
+
+<h3 id="pcp_pool_status">pcp_pool_status <span class="version">V3.1 〜</span></h3>
+<dl class="flat">
+<dt>書式</dt>
+<dd><code>pcp_pool_status _timeout_  _host_  _port_  _userid_  _passwd_</code></dd>
+<dt>説明</dt>
+<dd>
+<p>pgpool.conf のパラメータ設定値を取得します。出力結果は以下のとおりです。</p>
+<pre>
+$ pcp_pool_status 10 localhost 9898 postgres hogehoge
+name : listen_addresses
+value: localhost
+desc : host name(s) or IP address(es) to listen to
+
+name : port
+value: 9999
+desc : pgpool accepting port number
+
+name : socket_dir
+value: /tmp
+desc : pgpool socket directory
+
+name : pcp_port
+value: 9898
+desc : PCP port # to bind
+</pre>
+</dd>
+</dl>
+
+<h3 id="pcp_systemdb_info">pcp_systemdb_info</h3>
+<dl class="flat">
+<dt>書式</dt>
+<dd><code>pcp_systemdb_info  _timeout_  _host_  _port_  _userid_  _passwd_</code></dd>
+<dt>説明</dt>
+<dd>
+<p>pgpool-II のシステム DB 情報を表示します。出力結果は以下のとおりです。</p>
+<pre>
+$ pcp_systemdb_info 10 localhost 9898 postgres hogehoge
+localhost 5432 yamaguti '' pgpool_catalog pgpool 3
+yamaguti public accounts aid 4 aid bid abalance filler integer integer integer character(84) dist_def_accounts
+yamaguti public branches bid 3 bid bbalance filler integer integer character(84) dist_def_branches
+yamaguti public tellers bid 4 tid bid tbalance filler integer integer integer character(84) dist_def_tellers
+</pre>
+
+<p>まず 1 行目にシステム DB の情報が表示されます。結果は以下の順のとおりです。</p>
+<ul>
+<li>1. ホスト名</li>
+<li>2. ポート番号</li>
+<li>3. ユーザ名</li>
+<li>4. パスワード。空の場合は '' で表示されます。</li>
+<li>5. スキーマ名</li>
+<li>6. データベース名</li>
+<li>7. 分散定義関数の数</li>
+</ul>
+
+<p>
+2 行目以降は分散定義が表示されます。複数の定義がある場合は、1 つの定義につき 1 行表示されます。
+結果は以下の順のとおりです。
+</p>
+<ul>
+<li>1. 分散対象のデータベース名</li>
+<li>2. 分散対象のスキーマ名</li>
+<li>3. 分散対象のテーブル名</li>
+<li>4. 分散キーカラム名</li>
+<li>5. 分散対象テーブル中のカラム数</li>
+<li>6. カラム名リスト（5. のカラム数分表示されます）</li>
+<li>7. カラム型リスト（5. のカラム数分表示されます）</li>
+<li>8. 分散定義関数名</li>
+</ul>
+
+<p>
+システム DB が定義されていない（pgpool-II モードでない、かつクエリキャッシュがオフの）場合に実行すると、
+BackendErrorと表示され、<a href="#exit_status">終了コード 12</a> で終了します。
+</p>
+</dd>
+</dl>
+
+<h2>ノード等を操作するコマンド群</h2>
+
+<h3 id="pcp_detach_node">pcp_detach_node</h3>
+<dl class="flat">
+<dt>書式</dt>
+<dd><code>pcp_detach_node  [-g] _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_</code></dd>
+<dt>説明</dt>
+<dd>
+<p>pgpool-II のノードを切り離します。</p>
+<p><code>-g</code> を指定すると、すべてのクライアントが接続を終了するまでノードを復帰しません。
+（ただし、<a href="#CLIENT_IDLE_LIMIT_IN_RECOVERY">client_idle_limit_in_recovery</a> が -1
+あるいは、<a href="#RECOVERY_TIMEOUT">recovery_timeout</a> が設定されている場合を除く）
+</p>
+</dd>
+</dl>
+
+<h3 id="pcp_attach_node">pcp_attach_node</h3>
+<dl class="flat">
+<dt>書式</dt>
+<dd><code>pcp_attach_node  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_</code></dd>
+<dt>説明</dt>
+<dd>pgpool-II のノードを復帰させます。</dd>
+</dl>
+
+<h3 id="pcp_promote_node">pcp_promote_node <span class="version">V3.1 〜</span></h3>
+<dl class="flat">
+<dt>書式</dt>
+<dd><code>pcp_promote_node  [-g] _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_</code></dd>
+<dt>説明</dt>
+<dd>
+<p>pgpool-II のノードをマスターに昇格させます。これは、マスタースレーブモードで
+ストリーミングレプリケーション構成の場合のみ使用できます。
+</p>
+<p><code>-g</code> を指定すると、すべてのクライアントが接続を終了するまでノードを復帰しません。
+（ただし、<a href="#CLIENT_IDLE_LIMIT_IN_RECOVERY">client_idle_limit_in_recovery</a> が -1
+あるいは、<a href="#RECOVERY_TIMEOUT">recovery_timeout</a> が設定されている場合を除く）
+</p>
+</dd>
+</dl>
+
+<h3 id="pcp_stop_pgpool">pcp_stop_pgpool</h3>
+<dl class="flat">
+<dt>書式</dt>
+<dd><code>pcp_stop_pgpool  _timeout_  _host_  _port_  _userid_  _passwd_  _mode_</code></dd>
+<dt>説明</dt>
+<dd><p>pgpool-IIを指定されたモードでシャットダウンします。指定できるモードは以下のとおりです。</p>
+<ul>
+<li>s    - smart モード</li>
+<li>f    - fast モード</li>
+<li>i    - immediate モード</li>
+</ul>
+
+<p>pgpool-II が起動していない場合は ConnectionError と表示され、
+<a href="#exit_status">終了コード 8</a> で終了します。</p>
+
+<p>
+※ 現在は fast モードと immediate シャットダウンの処理に区別はありません。
+命令を送った時点でクライアントがいる・いないに関わらずシャットダウン処理を即座に行います。
+</p>
+</dd>
+</dl>
+
+<h3 id="pcp_recovery_node">pcp_recovery_node</h3>
+<dl class="flat">
+<dt>書式</dt>
+<dd><code>pcp_recovery_node  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_</code></dd>
+<dt>説明</dt>
+<dd>
+pgpool-II のノードをデータを再同期させた上で復帰させます。
+</dd>
+</dl>
+
+<h2 id="exit_status">終了ステータス</h2>
+<p>
+PCPコマンドは正常に処理を終了した場合、ステータス'0'で終了します。エラーが起
+きた場合は以下のステータスにより終了します。
+</p>
+
+<table border>
+<tr><th>UNKNOWNERR</th>
+    <td>1</td><td>不明なエラー</td></tr>
+<tr><th>EOFER</th>
+    <td>2</td><td>EOFエラー</td></tr>
+<tr><th>NOMEMERR</th>
+    <td>3</td><td>メモリ不足</td></tr>
+<tr><th>READERR</th>
+    <td>4</td><td>サーバからのデータ読み込みエラー</td></tr>
+<tr><th>WRITEERR</th>
+    <td>5</td><td>サーバへのデータ書き込みエラー</td></tr>
+<tr><th>TIMEOUTERR</th>
+    <td>6</td><td>タイムアウト</td></tr>
+<tr><th>INVALERR</th>
+    <td>7</td><td>PCPコマンドへの不正なオプション</td></tr>
+<tr><th>CONNERR</th>
+    <td>8</td><td>サーバ接続エラー</td></tr>
+<tr><th>NOCONNERR</th>
+    <td>9</td><td>接続が存在しない</td></tr>
+<tr><th>SOCKERR</th>
+    <td>10</td><td>ソケットエラー</td></tr>
+<tr><th>HOSTERR</th>
+    <td>11</td><td>ホスト名解決エラー</td></tr>
+<tr><th>BACKENDERR</th>
+    <td>12</td><td>サーバでのPCP処理エラー。存在しないプロセスIDの情報を取得しようとした場合など</td></tr>
+<tr><th>AUTHERR</th>
+    <td>13</td><td>認証エラー</td></tr>
+</table>
+
+<p class="top_link"><a href="#Top">△ back to top</a></p>
+
+<!-- ================================================================================ -->
+
 <h1><a name="troubleshooting"></a>トラブルシューティング</h1>
 <p>
 この章では、pgpool-IIを運用中に直面しやすい障害と、その対策方法をケース別に説明します。
@@ -5046,364 +5471,6 @@ configure に失敗します。必ず libpq 3.0 以降(PostgreSQL 7.4以降) を
 
 <!-- ================================================================================ -->
 
-<h1>リファレンス<a name="reference"></a></h1>
-<h2>PCPコマンドリファレンス</h2>
-
-<h3 id="pcp_command">PCPコマンド一覧</h3>
-<p>
-pgpool-IIを操作するUNIXコマンドとして、以下のものがあります。
-</p>
-
-<table border>
-<tr><th><a href="#pcp_node_count">pcp_node_count</a></th>
-    <td>ノード数を取得する</td></tr>
-<tr><th><a href="#pcp_node_info">pcp_node_info</a></th>
-    <td>ノード情報を取得する</td></tr>
-<tr><th><a href="#pcp_watchdog_info">pcp_watchdog_info</a></th>
-    <td>watchdog 情報を取得する <span class="version">V3.3 ～</span></td></tr>
-<tr><th><a href="#pcp_proc_count">pcp_proc_count</a></th>
-    <td>プロセス一覧を取得する</td></tr>
-<tr><th><a href="#pcp_proc_info">pcp_proc_info</a></th>
-    <td>プロセス情報を取得する</td></tr>
-<tr><th><a href="#pcp_pool_status">pcp_pool_status</a></th>
-    <td>pgpool.conf のパラメータ設定値を取得する <span class="version">V3.1 〜</span></td></tr>
-<tr><th><a href="#pcp_systemdb_info">pcp_systemdb_info</a></th>
-    <td>システムDB情報を取得する</td></tr>
-<tr><th><a href="#pcp_detach_node">pcp_detach_node</a></th>
-    <td>ノードを切り離す</td></tr>
-<tr><th><a href="#pcp_attach_node">pcp_attach_node</a></th>
-    <td>ノードを復帰させる</td></tr>
-<tr><th><a href="#pcp_promote_node">pcp_promote_node</a></th>
-    <td>ノードをマスターに昇格させる <span class="version">V3.1 〜</span></td></tr>
-<tr><th><a href="#pcp_stop_pgpool">pcp_stop_pgpool</a></th>
-    <td>pgpool-IIを停止させる</td></tr>
-<tr><th><a href="#pcp_recovery_node">pcp_recovery_node</a></th>
-    <td>マスタノードを使ってノードのデータを再同期、ノード起動させる</td></tr>
-</table>
-
-
-<h2 id="pcp_comand_args">共通引数</h2>
-<p>
-   全てのコマンドには共通する引数があります。これは接続するpgpool-IIの情報や認証
-   情報などです。
-<pre>
-ex)
-$ pcp_node_count [-d] 10 localhost 9898 postgres hogehoge
-
-第一引数    - タイムアウト値
-    秒数でタイムアウト値を指定します。この時間内にpgpool-IIから応
-    答がない場合はコネクションを切断して終了します。なお、
-    このオプションは 2.1 からは無視するようになっています。
-第二引数    - pgpool-IIが稼動しているホスト名
-第三引数    - PCPポート番号
-第四引数    - PCPユーザ名
-第五引数    - PCPパスワード
-
-オプション引数として、-dがあります。-dが指定されるとデバッグ情報を出力します。
-</pre>
-<p>
-PCPユーザ名とパスワードは ./configure 時に --prefix で指定した
-'インストールディレクトリ/etc' にある pcp.conf 内に記述されているものを指定します。
-pcp.conf ファイルの場所がデフォルト以外の場所にある場合、
-pgpool の-F オプションでその位置を指定することができます。
-パスワードはコマンドに渡す時点でmd5化されている必要はありません。
-</p>
-
-
-<h2>コマンド群</h2>
-<p>
-全てのコマンドは、実行した結果が標準出力に表示されます。
-</p>
-
-
-<h3 id="pcp_node_count">pcp_node_count</h3>
-<pre>
-書式：
-pcp_node_count  _timeout_  _host_  _port_  _userid_  _passwd_
-</pre>
-<p>
-pgpool-IIの pgpool.conf で定義されたノードの総数を表示します。切り離されているノードの区別はしません。
-</p>
-
-
-<h3><a name="pcp_node_info"></a>pcp_node_info</h3>
-<pre>
-書式：
-pcp_node_info  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
-</pre>
-
-<p>
-pgpool-IIの pgpool.conf で定義されたノードの情報を表示します。出力結果は以下の例の通りです。
-</p>
-
-<pre>
-ex)
-$ pcp_node_info 10 localhost 9898 postgres hogehoge 0
-host1 5432 1 1073741823.500000
-
-結果は以下の順の通りです。
-1. ノードのホスト名
-2. ノードのポート番号
-3. ステータス
-4. ロードバランスウェイト
-
-ステータスは[0..3]までの数字で表わされます。各数字の意味は：
-0 - 初期化時のみに表われる。PCPコマンドで表示されることはない。
-1 - ノード稼働中。接続無し
-2 - ノード稼働中。接続有り
-3 - ノードダウン
-</pre>
-
-<p>
-ロードバランスウェイトはNormalizeされたフォーマットで出力されます。
-</p>
-<p>
-定義されていないノードIDを指定するとBackendErrorと表示され、終了コード12で終了します。
-</p>
-
-<h3><a name="pcp_watchdog_info"></a>pcp_watchdog_info</h3>
-<pre>
-書式：
-pcp_watchdog_info  _timeout_  _host_  _port_  _userid_  _passwd_  [_watchdogid_]
-</pre>
-
-<p>
-pgpool-IIの pgpool.conf の watchdog セクションで定義された pgpool-II の watchdog ステータスを表示します。
-_watchdogid_ は other_pgpool_hostname パラメータの添字です。省略された場合には、_host_:_port_ で動作している
-pgpool-II の watchdog ステータスが表示されます。出力結果は以下の例の通りです。
-</p>
-
-<pre>
-ex)
-$ pcp_watchdog_info 10 localhost 9898 postgres hogehoge 0
-host1 9999 9000 2
-
-結果は以下の順の通りです。
-1. pgpool-II のホスト名
-2. pgpool-II ポート番号
-3. watchdog ポート番号
-4. watchdog ステータス
-
-ステータスは[1..4]までの数字で表わされます。各数字の意味は：
-1 - 初期化時のみに表われる。指定された pgpool-II が未起動の場合に表示される。
-2 - スタンバイ: 仮想 IP を保持していない
-3 - アクティブ: 仮想 IP を保持している
-4 - ダウン
-</pre>
-
-<p>
-定義されていない watchdog IDを指定するとBackendErrorと表示され、終了コード12で終了します。
-</p>
-
-<h3 id="pcp_proc_count">pcp_proc_count</h3>
-<p>
-<pre>
-書式：
-pcp_proc_count  _timeout_  _host_  _port_  _userid_  _passwd_
-</pre>
-<p>
-pgpool-IIの子プロセスのプロセスIDを一覧表示します。複数ある場合は空白文字で区切られます。
-</p>
-
-<h3 id="pcp_proc_info">pcp_proc_info</h3>
-<p>
-<pre>
-書式：
-pcp_proc_info  _timeout_  _host_  _port_  _userid_  _passwd_  _processid_
-</pre>
-<p>
-pgpool-IIの子プロセス情報を表示します。出力結果は以下の例の通りです。
-</p>
-<pre>
-ex)
-$ pcp_proc_info 10 localhost 9898 postgres hogehoge 3815
-postgres_db postgres 1150769932 1150767351 3 0 1 14067 1
-postgres_db postgres 1150769932 1150767351 3 0 1 14068 1
-
-結果は以下の順の通りです。
-1. 接続しているデータベース名
-2. 接続しているユーザ名
-3. プロセススタート時刻
-4. コネクション作成時刻
-5. プロトコルメジャーバージョン
-6. プロトコルマイナーバージョン
-7. コネクション使用回数
-8. PostgreSQLバックエンドプロセスID
-9. フロントエンドから接続がある場合は1、そうでなければ0
-
-コネクションがバックエンドに対して張られていない場合、データは表示されません。
-コネクション情報が複数ある場合、複数行に1行1コネクション情報で表示されます。
-時刻はEPOCHタイムからの秒数で表わされます。
-
-定義されていないプロセスIDを指定するとBackendErrorと表示され、<a href="#exit_status">終了コード12</a>で終了します。
-</pre>
-
-<h3 id="pcp_pool_status">pcp_pool_status <span class="version">V3.1 〜</span></h3>
-<pre>
-書式:
-pcp_pool_status _timeout_  _host_  _port_  _userid_  _passwd_
-</pre>
-<p>pgpool.conf のパラメータ設定値を取得します。出力結果は以下の通りです。</p>
-<pre>
-$ pcp_pool_status 10 localhost 9898 postgres hogehoge
-name : listen_addresses
-value: localhost
-desc : host name(s) or IP address(es) to listen to
-
-name : port
-value: 9999
-desc : pgpool accepting port number
-
-name : socket_dir
-value: /tmp
-desc : pgpool socket directory
-
-name : pcp_port
-value: 9898
-desc : PCP port # to bind
-</pre>
-
-
-<h3 id="pcp_systemdb_info">pcp_systemdb_info</h3>
-<pre>
-書式：
-pcp_systemdb_info  _timeout_  _host_  _port_  _userid_  _passwd_
-</pre>
-
-<p>pgpool-IIのシステムDB情報を表示します。出力結果は以下の通りです。</p>
-
-<pre>
-$ pcp_systemdb_info 10 localhost 9898 postgres hogehoge
-localhost 5432 yamaguti '' pgpool_catalog pgpool 3
-yamaguti public accounts aid 4 aid bid abalance filler integer integer integer character(84) dist_def_accounts
-yamaguti public branches bid 3 bid bbalance filler integer integer character(84) dist_def_branches
-yamaguti public tellers bid 4 tid bid tbalance filler integer integer integer character(84) dist_def_tellers
-
-まず一行目にシステムDBの情報が表示されます。結果は以下の順の通りです。
-
-1. ホスト名
-2. ポート番号
-3. ユーザ名
-4. パスワード。空の場合は''で表示されます。
-5. スキーマ名
-6. データベース名
-7. 分散定義関数の数
-
-二行目以降は分散定義が表示されます。複数の定義がある場合は、一つの定義につき
-一行表示されます。結果は以下の順の通りです。
-
-1. 分散対象のデータベース名
-2. 分散対象のスキーマ名
-3. 分散対象のテーブル名
-4. 分散キーカラム名
-5. 分散対象テーブル中のカラム数
-6. カラム名リスト(5.のカラム数分表示されます)
-7. カラム型リスト(5.のカラム数分表示されます)
-8. 分散定義関数名
-
-システムDBが定義されていない(pgpool-IIモードでない、かつクエリキャッシュがオ
-フの)場合に実行すると、BackendErrorと表示され、終了コード12で終了します。
-</pre>
-
-<h3 id="pcp_detach_node">pcp_detach_node</h3>
-<pre>
-書式：
-pcp_detach_node  [-g] _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
-
-pgpool-IIのノードを切り離します。
--gを指定すると、すべてのクライアントが接続を終了するまでノードを復帰しません。
-(ただし、client_idle_limit_in_recovery が -1 あるいは、recovery_timeout が設定されている場合を除く)
-</pre>
-
-<h3 id="pcp_attach_node">pcp_attach_node</h3>
-<pre>
-書式：
-pcp_attach_node  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
-
-pgpool-IIのノードを復帰させます。
-</pre>
-
-<h3 id="pcp_promote_node">pcp_promote_node <span class="version">V3.1 〜</span></h3>
-<pre>
-書式:
-pcp_promote_node  [-g] _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
-
-pgpool-IIのノードをマスターに昇格させます。これは、マスタースレーブモードでストリーミング
-レプリケーション構成の場合のみ使用できます。
--gを指定すると、すべてのクライアントが接続を終了するまでノードをマスターに昇格しません。
-(ただし、client_idle_limit_in_recovery が -1 あるいは、recovery_timeout が設定されている場合を除く)
-</pre>
-</p>
-
-<h3 id="pcp_stop_pgpool">pcp_stop_pgpool</h3>
-<pre>
-書式：
-pcp_stop_pgpool  _timeout_  _host_  _port_  _userid_  _passwd_  _mode_
-
-pgpool-IIを指定されたモードでシャットダウンします。指定できるモードは以下の通
-りです。
-
-s    - smart モード
-f    - fast モード
-i    - immediate モード
-
-pgpool-IIが起動していない場合はConnectionErrorと表示され、終了コード8で終了し
-ます。
-
-※ 現在は fast モードと immediate シャットダウンの処理に区別はあり
-  ません。命令を送った時点でクライアントがいる・いないに関わらず
-  シャットダウン処理を即座に行います。
-</pre>
-</p>
-
-<h3 id="pcp_recovery_node">pcp_recovery_node</h3>
-<pre>
-書式：
-pcp_recovery_node  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
-
-pgpool-IIのノードをデータを再同期させた上で復帰させます。
-</pre>
-</p>
-
-<h2 id="exit_status">終了ステータス</h2>
-<p>
-PCPコマンドは正常に処理を終了した場合、ステータス'0'で終了します。エラーが起
-きた場合は以下のステータスにより終了します。
-</p>
-
-<table border>
-<tr><th>UNKNOWNERR</th>
-    <td>1</td><td>不明なエラー</td></tr>
-<tr><th>EOFER</th>
-    <td>2</td><td>EOFエラー</td></tr>
-<tr><th>NOMEMERR</th>
-    <td>3</td><td>メモリ不足</td></tr>
-<tr><th>READERR</th>
-    <td>4</td><td>サーバからのデータ読み込みエラー</td></tr>
-<tr><th>WRITEERR</th>
-    <td>5</td><td>サーバへのデータ書き込みエラー</td></tr>
-<tr><th>TIMEOUTERR</th>
-    <td>6</td><td>タイムアウト</td></tr>
-<tr><th>INVALERR</th>
-    <td>7</td><td>PCPコマンドへの不正なオプション</td></tr>
-<tr><th>CONNERR</th>
-    <td>8</td><td>サーバ接続エラー</td></tr>
-<tr><th>NOCONNERR</th>
-    <td>9</td><td>接続が存在しない</td></tr>
-<tr><th>SOCKERR</th>
-    <td>10</td><td>ソケットエラー</td></tr>
-<tr><th>HOSTERR</th>
-    <td>11</td><td>ホスト名解決エラー</td></tr>
-<tr><th>BACKENDERR</th>
-    <td>12</td><td>サーバでのPCP処理エラー。存在しないプロセスIDの情報を取得しようとした場合など</td></tr>
-<tr><th>AUTHERR</th>
-    <td>13</td><td>認証エラー</td></tr>
-</table>
-
-<p class="top_link"><a href="#Top">△ back to top</a></p>
-
-<!-- ================================================================================ -->
-
 <h1>内部情報<a name="internal"></a></h1>
 <p>
 pgpool-IIバージョン 2.0 以降では、1.x バージョンと比べ大幅な改良が加えられています。
@@ -5485,7 +5552,7 @@ L 状態として定義します。
     <li> SELECTの最終実行ステータスの取得</li>
 </ol>
 <p>
-SELECTの最終実行ステータスと処理される場所との関係は、以下の通りです。
+SELECTの最終実行ステータスと処理される場所との関係は、以下のとおりです。
 </p>
 
 <table border>
@@ -9342,7 +9409,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </p><ul>
  <li>ストリーミングレプリケーションにおいて、<a href="#DELAY_THRESHOLD">delay_threshold</a> が
     0またはヘルスチェックが無効ならば、遅延チェックは実施されません。
-    これはpgpool-IIマニュアル通りの動作ですが、これまではヘルスチェックが無効の場合も
+    これはpgpool-IIマニュアルとおりの動作ですが、これまではヘルスチェックが無効の場合も
     遅延チェックが実施されていました(Guillaume Lelarge)
 </li></ul>
 <p></p>

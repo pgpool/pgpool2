@@ -241,3 +241,24 @@ h1 .version {
 	font-weight: bold;
 	color: red;
 }
+dl.flat dt {
+	clear: both;
+	float: left;
+	width: 40px;
+	line-height: 150%;
+}
+dl.flat dd {
+	padding-left: 50px;
+	line-height: 150%;
+}
+dl.flat dd * {
+	margin-left: 0px;
+}
+li dl dt {
+	font-weight: normal;
+	display: list-item;
+	list-style: square outside;
+}
+li dl dd {
+	margin-bottom: 10px;
+}
