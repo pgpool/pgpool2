@@ -306,6 +306,8 @@
       the message as following is output to both log and frontend. This is
       the same behavior as PostgreSQL.
 
+          FATAL: no PostgreSQL user name specified in startup packet
+
     - Fix memory allocation logic in extended query processing with on-memory
       query cache enabled (Tatsuo Ishii)
 
