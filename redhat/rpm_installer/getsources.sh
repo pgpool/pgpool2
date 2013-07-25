@@ -1,5 +1,9 @@
 #!/bin/sh
 
+username=`whoami`
+rpm_dir=$HOME/rpm
+work_dir=`pwd`/work
+
 # ---------------------------------------------------------------------
 # configuration
 # ---------------------------------------------------------------------
@@ -10,20 +14,15 @@ git_dir=$HOME/git
 pgpool_src_dir=$git_dir/pgpool2
 pgpool_tarball_dir=$pgpool_src_dir
 pgpool_version=3.3.0
+
 ## pgpoolAdmin
 admin_src_dir=$git_dir/pgpooladmin
 admin_tarball_dir=$admin_src_dir/tools
 admin_version=3.3
 
-username=`whoami`
-rpm_dir=$HOME/rpm
-work_dir=`pwd`/work
-
 ## postgresql92
 bin_path=/usr/pgsql-9.2/bin
-lib_path=/usr/pgsql-9.2/bin
-export PATH=$PATH:$bin_path
-export LD_LIBRARY=$LD_LIBRARY:$lib_path
+export PATH=$bin_path:$PATH
 
 echo "* Setup starts."
 echo
@@ -75,10 +74,10 @@ mv pgpool-II-$pgpool_version.tar.gz $rpm_dir/SOURCES
 
 # pgpoolAdmin-*.tar.gz
 if [ ! -f $admin_tarball_dir/pgpoolAdmin-$admin_version.tar.gz ]; then
-    echo "$admin_tarboll_dir/pgpoolAdmin-$admin_version.tar.gz not found."
+    echo "$admin_tarball_dir/pgpoolAdmin-$admin_version.tar.gz not found."
 	exit
 fi
-cp $admin_src_dir/tools/pgpoolAdmin-$admin_version.tar.gz $rpm_dir/SOURCES
+cp $admin_tarball_dir/pgpoolAdmin-$admin_version.tar.gz $rpm_dir/SOURCES
 
 # pgpool.conf.sample.patch, pgpool.init, pgpool.sysconfig
 cp -f $pgpool_src_dir/redhat/pgpool.conf.sample.patch $rpm_dir/SOURCES/
@@ -128,8 +127,8 @@ echo "* Setup Finished. See \"work\" directory."
 echo
 echo "* Next ..."
 echo
-echo "  - rpmbuild -ba pgpool.spec"
-echo "  - rpmbuild -ba pgpoolAdmin.spec"
-echo "  - move rpms (except for *.src.rpm) to $work_dir/installer/"
-echo "  - create tar ball from $work_dir/installer/"
+echo "  - rpmbuild -ba work/pgpool.spec"
+echo "  - rpmbuild -ba work/pgpoolAdmin.spec"
+echo "  - move ~/rpm/RPMS/../pgpool*.rpm (except for *.src.rpm) to work/installer/"
+echo "  - create tar ball from work/installer/"
 echo
