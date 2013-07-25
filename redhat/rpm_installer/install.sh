@@ -390,9 +390,9 @@ function setWatchdog()
                 break
                 ;;
         esac
-        writePgpoolParam wd_lifecheck_method $REPLY
-        WATCHDOG_METHOD=$REPLY
     done
+    writePgpoolParam wd_lifecheck_method $REPLY
+    WATCHDOG_METHOD=$REPLY
 
     case $WATCHDOG_METHOD in
         heartbeat)
