@@ -68,7 +68,7 @@ install -d %{buildroot}%{_sysconfdir}/sysconfig
 install -m 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sysconfig/pgpool
 
 # install to PostgreSQL
-export PATH=$PATH:%{pghome}/bin
+export PATH=%{pghome}/bin:$PATH
 cd sql/pgpool-recovery/
 make %{?_smp_flags} DESTDIR=%{buildroot} install
 cd ../../
