@@ -4037,14 +4037,14 @@ watchdog は以下の機能を提供します。
     </p>
 <ul>
     <li>
-    フェールオーバなどでバックエンドノードの状態が変化した場合には、この情報を他の pgpool-II へ伝達し、同期を行います。
+    フェイルオーバなどでバックエンドノードの状態が変化した場合には、この情報を他の pgpool-II へ伝達し、同期を行います。
     </li>
     <li>
     オンラインリカバリ時には、複数の pgpool-II で DB に不整合が生じないよう他の pgpool-II へのクライアントの接続を制限します。
     </li>
     </p>
     <li>
-    フェールオーバ、ファイルバックの際に実行されるコマンド（<a href="#FAILOVER_COMMAND">failover_command</a>,
+    フェイルオーバ、ファイルバックの際に実行されるコマンド（<a href="#FAILOVER_COMMAND">failover_command</a>,
     <a href="#FAILBACK_COMMAND">failback_command</a>, <a href="#FOLLOW_MASTER_COMMAND">follow_master_command</a>）は、インターロック機構により、１つの pgpool-II でのみ実行されます。
     </li>
 </ul>
@@ -6216,7 +6216,7 @@ pcp_recovery_node コマンドで、バックエンドノード番号をチェ�
 <li>
 child_life_time 使用時に発生しうるヘルスチェックのバグを修正しました。(Tatsuo Ishii)
 <p>
-バックエンドが正しく動作しているにも関わらずフェールオーバが発生することがありました。
+バックエンドが正しく動作しているにも関わらずフェイルオーバが発生することがありました。
 この問題は [pgpool-general: 1892] で larisa sabban さんにより報告されました。
 </p>
 <blockquote>
@@ -6895,7 +6895,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <li>pool_search_relcache() が REAL_MASTER_NODE_ID ではなく MASTER, MASTER_NODE_ID
   を使用するように修正しました。 (Tatsuo Ishii)
 <p>
-  ストリーミングレプリケーションモードで 0 番ノードがフェールバックした場合、pgpool は
+  ストリーミングレプリケーションモードで 0 番ノードがフェイルバックした場合、pgpool は
   子プロセスを再起動しません。そのとき、REAL_MASTER_NODE_ID は 0 番ノードの接続情報を探しにいきますが、
   これはバックエンドへの新しい接続が確立するまで存在しません。
   そのため、接続情報の参照によって、セグメンテーションフォルトが発生していました。
@@ -6975,7 +6975,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </p>
 </li>
 
-<li>fail_over_on_backend_error が無効のためファイルオーバが行われなかった場合には、
+<li>fail_over_on_backend_error が無効のためフェイルオーバが行われなかった場合には、
   ログメッセージを出力するようにしました。 (Tatsuo Ishii)</li>
 
 <li>LISTEN/NOTIFY の処理に関するバグを修正しました。 (Tatsuo Ishii)
@@ -7064,7 +7064,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </blockquote>
 </li>
 
-<li>watchdog を有効にしたときに、 pgpool-II の起動時、ファイルオーバ時に発生する
+<li>watchdog を有効にしたときに、 pgpool-II の起動時、フェイルオーバ時に発生する
   セグメンテーションフォルトを修正しました。 (Yugo Nagata)
 <p>
   このバグの原因は pthread_detach と pthread_join を併用するという pthread の誤使用でした。
@@ -8243,7 +8243,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <li>pool_search_relcache() が REAL_MASTER_NODE_ID ではなく MASTER, MASTER_NODE_ID
   を使用するように修正しました。 (Tatsuo Ishii)
 <p>
-  ストリーミングレプリケーションモードで 0 番ノードがフェールバックした場合、pgpool は
+  ストリーミングレプリケーションモードで 0 番ノードがフェイルバックした場合、pgpool は
   子プロセスを再起動しません。そのとき、REAL_MASTER_NODE_ID は 0 番ノードの接続情報を
   探しにいきますが、これはバックエンドへの新しい接続が確立するまで存在しません。
   そのため、接続情報の参照によって、セグメンテーションフォルトが発生していました。
@@ -8558,7 +8558,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <h3>バグ修正</h3>
 <ul>
 <li>m4 ファイルを追加しました。これにより古い OS で起こるコンパイルの問題を回避できます。(Tatsuo Ishii)</li>
-<li>フェールオーバを適切に処理するよう detect_postmaster_down_error() 関数を修正しました。(Tatsuo Ishii)<br>
+<li>フェイルオーバを適切に処理するよう detect_postmaster_down_error() 関数を修正しました。(Tatsuo Ishii)<br>
 <p>
 以前はバックエンドソケットの読み込みに失敗することがありました。
 </p>
@@ -9203,7 +9203,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <li>pool_search_relcache() が REAL_MASTER_NODE_ID ではなく MASTER, MASTER_NODE_ID
   を使用するように修正しました。 (Tatsuo Ishii)
 <p>
-  ストリーミングレプリケーションモードで 0 番ノードがフェールバックした場合、pgpool は
+  ストリーミングレプリケーションモードで 0 番ノードがフェイルバックした場合、pgpool は
   子プロセスを再起動しません。そのとき、REAL_MASTER_NODE_ID は 0 番ノードの接続
   情報を探しにいきますが、これはバックエンドへの新しい接続が確立するまで存在しません。
   そのため、接続情報の参照によって、セグメンテーションフォルトが発生していました。
