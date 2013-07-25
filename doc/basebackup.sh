@@ -12,6 +12,6 @@ rsync -C -a --delete -e ssh --exclude postgresql.conf --exclude postmaster.pid \
 --exclude postmaster.opts --exclude pg_log --exclude pg_xlog \
 --exclude recovery.conf $datadir/ $desthost:$destdir/
 
-ssh -T localhost mv $destdir/recovery.done $destdir/recovery.conf
+ssh -T $desthost mv $destdir/recovery.done $destdir/recovery.conf
 
 psql -c "SELECT pg_stop_backup()" postgres
