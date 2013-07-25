@@ -947,7 +947,7 @@ local0.*    /var/log/pgpool.log
     search_primary_node_timeoutを変更した場合は、pgpool.confの再読込が必要です。
     </p>
     </dd>
-        
+
 </dl>
 
 <h3>Failover and failback</h3>
@@ -4037,14 +4037,14 @@ watchdog は以下の機能を提供します。
     </p>
 <ul>
     <li>
-    フェールオーバなどでバックエンドノードの状態が変化した場合には、この情報を他の pgpool-II へ伝達し、同期を行います。
+    フェイルオーバなどでバックエンドノードの状態が変化した場合には、この情報を他の pgpool-II へ伝達し、同期を行います。
     </li>
     <li>
     オンラインリカバリ時には、複数の pgpool-II で DB に不整合が生じないよう他の pgpool-II へのクライアントの接続を制限します。
     </li>
     </p>
     <li>
-    フェールオーバ、ファイルバックの際に実行されるコマンド（<a href="#FAILOVER_COMMAND">failover_command</a>,
+    フェイルオーバ、ファイルバックの際に実行されるコマンド（<a href="#FAILOVER_COMMAND">failover_command</a>,
     <a href="#FAILBACK_COMMAND">failback_command</a>, <a href="#FOLLOW_MASTER_COMMAND">follow_master_command</a>）は、インターロック機構により、１つの pgpool-II でのみ実行されます。
     </li>
 </ul>
@@ -5823,7 +5823,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 <!-- ================================================================================ -->
 <h1 id="release">リリースノート</h1>
 
-<h2><a name="release3.3.0"></a>3.3.0 (tokakiboshi) 2013/05/17</h2>
+<h2><a name="release3.3.0"></a>3.3.0 (tokakiboshi) 2013/xx/xx</h2>
 <h3>概要</h3>
 <p>
 このバージョンは 3.3 系列の最初の版で、3.2 系からの「メジャーバージョンアップ」にあたります。
@@ -5965,6 +5965,10 @@ pgpool_setup を追加しました。(Tatsuo Ishii)</dt>
    -m s: ストリームレプリケーションモードで構築（デフォルト）
    -m r: ネイティブレプリケーションモードで構築
    -n num_clusters: num_clusters 台で PostgreSQL データベースクラスタノードを作成
+   -p base_port: ベースとなるポート番号を指定。最初の PostgreSQL ノードのポートは
+                 base_port, 次の PostgreSQL ノードのポートは base_port+1, n 番目
+                 の PostgreSQL ノードのポートは base_port+n-1, pgpool のポートは
+                 base_port+n, pcp のポートは base_port+n+1 となる。
    --no-stop: セットアップ終了後に pgpool-II, PostgreSQL を終了しない
 </pre>
 </dd>
@@ -6122,6 +6126,106 @@ OID テーブルエントリがないのでこれは失敗します。そのと�
 この問題はバグトラッカ #58 で wms さんにより報告されました。
 http://www.pgpool.net/mantisbt/view.php?id=58
 </p>
+</li>
+
+<li>
+pgpool_regclass を pg_catalog スキーマに登録するよう修正しました。
+(Tatsuo Ishii)
+<p>
+これは postgres_fdw のような、スキーマ検索パスが pg_catalog に限定されているクライアントに対応するために必要です。
+</p>
+</li>
+
+<li>
+"pgpool -m f stop" で起こるハングアップを修正しました。(Tatsuo Ishii)
+<p>
+これは管理を外れた子プロセスが終了されずに残ってしまうのが原因で、複数のバックエンドがダウンしたときや、バックエンドの起動前に pgpool-II が起動した場合に発生することがありました。
+</p>
+</li>
+
+<li>
+pg_md5 コマンドで起こりうるクラッシュを修正しました。(Muhammad Usama)
+</li>
+
+<li>
+オンメモリクエリキャッシュ有効時に発生するセグメンテーション違反が修正されました。(Tatsuo Ishii))
+<p>
+これは、拡張クエリモードで実行されたクエリが長い結果を返すときに発生します。
+このバグはバグトラック #63 にて、harukat さんにより報告、解析され、テストケースが提供されました。
+</p>
+<blockquote>
+  #63 Child process was terminated by segmentation fault with memcached<br />
+  <a href="http://www.pgpool.net/mantisbt/view.php?id=63">
+  http://www.pgpool.net/mantisbt/view.php?id=63
+  </a>
+</blockquote>
+</li>
+
+<li>
+スタートアップパケットに PostgreSQL ユーザ情報が含まれていなかった場合に発生する子プロセスのセグメンテーション違反を修正しました。(Yugo Nagata)
+<p>
+このバグは以下を実行することにより再現できます。
+</p>
+<pre>
+    $ psql -p 9999 -U ''
+</pre>
+<p>
+enable_pool_hba が有効の場合は子プロセスがセグメンテーション違反で異常終了し、無効の場合には以下のメッセージがログに出力されていました。
+</p>
+<pre>
+    ERROR: pool_discard_cp: cannot get connection pool for user (null) database (null)
+</pre>
+
+<p>
+また、両方の場合で psql はフロントエンドに何のメッセージ出力せずに終了していました。
+修正後は、スタートアップパケットに PostgreSQL ユーザが指定されていない場合には以下のメッセージがログとフロントエンドの両方に出力されます。
+これは PostgreSQLと同じ振る舞いです。
+</p>
+<pre>
+    FATAL: no PostgreSQL user name specified in startup packet
+</pre>
+</li>
+
+<li>
+オンメモリクエリを有効にした時の拡張クエリの処理におけるメモリ割り当てロジックを修正しました。(Tatsuo Ishii)
+<p>
+バインドパラメータ付きの拡張クエリで、1024 バイト以上の長いクエリ文字列が渡されたときに、十分なメモリ割り当てができていませんでした。
+</p>
+</li>
+
+<li>
+pcp_recovery_node コマンドで、バックエンドノード番号をチェックするように修正しました。(Yugo Nagata)
+<p>
+不正な値が使用された場合、リカバリで実行されるスクリプトの引数に空の値が渡されており、誤動作の原因となっていました。
+特にベースバックアップを行うスクリプトで、rsync が関係のないファイルを削除してしまうことがありました。
+</p>
+</li>
+
+<li>
+バックエンドエラー検出時に発生することがあるメインプロセスのセグメンテーション違反を修正しました。(Tatsuo Ishii)
+<p>
+この問題はバグトラック #62 で tuomas さんにより報告されました。
+</p>
+<blockquote>
+  #62 Slave network outage causes a segmentation fault on main process <br />
+  <a href="http://www.pgpool.net/mantisbt/view.php?id=62">
+  http://www.pgpool.net/mantisbt/view.php?id=62
+  </a>
+</blockquote>
+</li>
+<li>
+child_life_time 使用時に発生しうるヘルスチェックのバグを修正しました。(Tatsuo Ishii)
+<p>
+バックエンドが正しく動作しているにも関わらずフェイルオーバが発生することがありました。
+この問題は [pgpool-general: 1892] で larisa sabban さんにより報告されました。
+</p>
+<blockquote>
+  [pgpool-general: 1892] Pgpool is unable to connect backend PostgreSQL<br />
+  <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001920.html">
+  http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001920.html
+  </a>
+</blockquote>
+</li>
 
 </ul>
 
@@ -6171,6 +6275,14 @@ pool_hba.conf.sample の SSL に関する記述を修正しました。(Tatsuo I
 
 <li>
 中国語マニュアルを最新の情報に更新しました。(Bambo Huang)
+</li>
+
+<li>
+ドキュメントの ssl_ca_cert と ssl_ca_cert_dir の記述を SSL セクションに移動しました。(Yugo Nagata)
+</li>
+
+<li>
+日本語ドキュメントに ssl_ca_cert と ssl_ca_cert_dir の記述を加えました。(Yugo Nagata)
 </li>
 
 </ul>
@@ -6783,7 +6895,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <li>pool_search_relcache() が REAL_MASTER_NODE_ID ではなく MASTER, MASTER_NODE_ID
   を使用するように修正しました。 (Tatsuo Ishii)
 <p>
-  ストリーミングレプリケーションモードで 0 番ノードがフェールバックした場合、pgpool は
+  ストリーミングレプリケーションモードで 0 番ノードがフェイルバックした場合、pgpool は
   子プロセスを再起動しません。そのとき、REAL_MASTER_NODE_ID は 0 番ノードの接続情報を探しにいきますが、
   これはバックエンドへの新しい接続が確立するまで存在しません。
   そのため、接続情報の参照によって、セグメンテーションフォルトが発生していました。
@@ -6863,7 +6975,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </p>
 </li>
 
-<li>fail_over_on_backend_error が無効のためファイルオーバが行われなかった場合には、
+<li>fail_over_on_backend_error が無効のためフェイルオーバが行われなかった場合には、
   ログメッセージを出力するようにしました。 (Tatsuo Ishii)</li>
 
 <li>LISTEN/NOTIFY の処理に関するバグを修正しました。 (Tatsuo Ishii)
@@ -6952,7 +7064,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </blockquote>
 </li>
 
-<li>watchdog を有効にしたときに、 pgpool-II の起動時、ファイルオーバ時に発生する
+<li>watchdog を有効にしたときに、 pgpool-II の起動時、フェイルオーバ時に発生する
   セグメンテーションフォルトを修正しました。 (Yugo Nagata)
 <p>
   このバグの原因は pthread_detach と pthread_join を併用するという pthread の誤使用でした。
@@ -8131,7 +8243,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <li>pool_search_relcache() が REAL_MASTER_NODE_ID ではなく MASTER, MASTER_NODE_ID
   を使用するように修正しました。 (Tatsuo Ishii)
 <p>
-  ストリーミングレプリケーションモードで 0 番ノードがフェールバックした場合、pgpool は
+  ストリーミングレプリケーションモードで 0 番ノードがフェイルバックした場合、pgpool は
   子プロセスを再起動しません。そのとき、REAL_MASTER_NODE_ID は 0 番ノードの接続情報を
   探しにいきますが、これはバックエンドへの新しい接続が確立するまで存在しません。
   そのため、接続情報の参照によって、セグメンテーションフォルトが発生していました。
@@ -8446,7 +8558,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <h3>バグ修正</h3>
 <ul>
 <li>m4 ファイルを追加しました。これにより古い OS で起こるコンパイルの問題を回避できます。(Tatsuo Ishii)</li>
-<li>フェールオーバを適切に処理するよう detect_postmaster_down_error() 関数を修正しました。(Tatsuo Ishii)<br>
+<li>フェイルオーバを適切に処理するよう detect_postmaster_down_error() 関数を修正しました。(Tatsuo Ishii)<br>
 <p>
 以前はバックエンドソケットの読み込みに失敗することがありました。
 </p>
@@ -9091,7 +9203,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <li>pool_search_relcache() が REAL_MASTER_NODE_ID ではなく MASTER, MASTER_NODE_ID
   を使用するように修正しました。 (Tatsuo Ishii)
 <p>
-  ストリーミングレプリケーションモードで 0 番ノードがフェールバックした場合、pgpool は
+  ストリーミングレプリケーションモードで 0 番ノードがフェイルバックした場合、pgpool は
   子プロセスを再起動しません。そのとき、REAL_MASTER_NODE_ID は 0 番ノードの接続
   情報を探しにいきますが、これはバックエンドへの新しい接続が確立するまで存在しません。
   そのため、接続情報の参照によって、セグメンテーションフォルトが発生していました。

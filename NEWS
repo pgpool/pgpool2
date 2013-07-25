@@ -123,6 +123,10 @@
          (the default)
          -m r: create an installation as native replication mode.
          -n num_clusters: create num_clusters PostgreSQL database cluster nodes
+         -p base_port: specify base port. The first PostgreSQL node's port is
+                       base_port. Second PostgreSQL node's port is base_port+1
+                       ... nth PostgreSQL node's port is base_port+n-1, pgpool
+                       port is base_port+n, pcp port is base_port+n+1.
          --no-stop: do not stop pgpool and PostgreSQL after the work
 
     - Support installation method using CREATE EXTENSION for pgpool-recovery
@@ -205,6 +209,9 @@
       does not exist. The bug was introduced in 3.2.4.  See [pgpool-general:
       1722] for more details.
 
+      [pgpool-general: 1722] [PgPool-II 3.2.4] pgpool_regclass now mandatory?
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-May/001749.html
+
     - Fix do_query() not to hang when PostgreSQL returns an error.
       (Tatsuo Ishii)
 
@@ -233,6 +240,9 @@
       pgpool_catalog.insert_lock exists, See [pgpool-general: 1684] for more
       details.
 
+      [pgpool-general: 1684] insert_lock hangs
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-May/001711.html
+
     - Fix possible failure of query cache invalidation for DML in transaction.
       (Tatsuo Ishii)
 
@@ -254,12 +264,82 @@
       This is reported in Bug track #58 by wms
       http://www.pgpool.net/mantisbt/view.php?id=58
 
+    - Fix to register pgpool_regclass in pg_catalog schema (Tatsuo Ishii)
+
+      This is necessary to deal with clients which restricts schema search path
+      to pg_catalog only. Postgres_fdw is such a client.
+
+    - Fix a hang of "pgpool -m f stop" (Tatsuo Ishii)
+
+      This is caused by unmanaged pgpool children remaining. This could happen
+      when multiple PostgreSQLs are going down or even when pgpool is started
+      before PostgreSQL startup.
+
+    - Fix a potential crash in pg_md5 command (Muhammad Usama)
+
+    - Fix a segmentation fault that occurs when on memory query cache enabled
+      and the query is issued in extended query mode and the result is too large
+      (Tatsuo Ishii)
+
+      This is reported in Bug track #63 by harukat.
+      Analysis and a test case are also provided.
+
+      #63 Child process was terminated by segmentation fault with memcached
+      http://www.pgpool.net/mantisbt/view.php?id=63
+
+    - Fix a segmentation fault of a child process that occurs when a startup
+      packet has no PostgreSQL user information (Yugo Nagata)
+
+      You can reproduce it by
+
+          $ psql -p 9999 -U ''
+
+      If enable_pool_hba is on, a child process terminates by segmentation
+      fault. Otherwise if enable_pool_hba is off, the error message is
+
+          ERROR: pool_discard_cp: cannot get connection pool for user (null)
+                 database (null)
+
+      In both cases, psql terminates with no message on frontend.
+
+      In the fixed version, if PostgreSQL user is not specified in startup packet,
+      the message as following is output to both log and frontend. This is
+      the same behavior as PostgreSQL.
+
+    - Fix memory allocation logic in extended query processing with on-memory
+      query cache enabled (Tatsuo Ishii)
+
+      When very long query string (> 1024 bytes) supplied in extended query
+      with bind parameters, it fails to allocate enough memory.
+
+    - Fix to verify the backend node number in pcp_recovery_node (Yugo Nagata)
+
+      When an invalid number is used, null value is passed as an arguments
+      of recovery script, and this causes a malfunction. In especially,
+      rsync may delete unrelated files in basebackup scripts.
+
+    - Fix a segmentation fault on main process that could occures after backend
+      error detection (Tatsuo Ishii)
+
+      This is reported in Bug track #62 by tuomas.
+
+      #62 Slave network outage causes a segmentation fault on main process
+      http://www.pgpool.net/mantisbt/view.php?id=62
+
+    - Fix bug with health check when used with child_life_time (Tatsuo Ishii)
+
+      Failover could happen even if the backend was running fine.
+      This problem is reported in [pgpool-general: 1892] by larisa sabban.
+
+      [pgpool-general: 1892] Pgpool is unable to connect backend PostgreSQL
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001920.html
+
       __________________________________________________________________
 
 * Enhancements
 
     - Add mention about "-D" option to the man page.
-	  (Tatsuo Ishii)
+      (Tatsuo Ishii)
 
     - Fix to restart watchdog processes automatically when these exit abnormally.
       (Yugo Nagata)
@@ -289,6 +369,12 @@
     - Chinese manual is updated to the latest especially about watchdog. (Bambo Huang)
 
     - Add mention about "-D" option to the man page. (Tatsuo Ishii)
+
+    - Move ssl_ca_cert and ssl_ca_cert_dir descriptions to the SSL section
+      in the document (Yugo Nagata)
+
+    - Add ssl_ca_cert and ssl_ca_cert_dir descriptions to the japanese document
+      (Yugo Nagata)
 
 ===============================================================================
 3.2 Series (2012/08/03 - )
@@ -435,7 +521,7 @@
       with bind parameters, it fails to allocate enough memory.
 
     - Move ssl_ca_cert and ssl_ca_cert_dir descriptions to the SSL section
-      (Yugo Nagata)
+      in the document (Yugo Nagata)
 
     - Add ssl_ca_cert and ssl_ca_cert_dir descriptions to the japanese document
       (Yugo Nagata)
@@ -1637,7 +1723,7 @@
           FATAL: no PostgreSQL user name specified in startup packet
 
     - Move ssl_ca_cert and ssl_ca_cert_dir descriptions to the SSL section
-      (Yugo Nagata)
+      in the document (Yugo Nagata)
 
     - Add ssl_ca_cert and ssl_ca_cert_dir descriptions to the japanese document
       (Yugo Nagata)
@@ -2493,7 +2579,7 @@
           FATAL: no PostgreSQL user name specified in startup packet
 
     - Move ssl_ca_cert and ssl_ca_cert_dir descriptions to the SSL section
-      (Yugo Nagata)
+      in the document (Yugo Nagata)
 
     - Add ssl_ca_cert and ssl_ca_cert_dir descriptions to the japanese document
       (Yugo Nagata)

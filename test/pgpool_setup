@@ -22,7 +22,7 @@
 # -m r: create an installation as native replication mode.
 # -n num_clusters: create num_clusters PostgreSQL database cluster nodes
 # -p base_port: specify base port. The first PostgreSQL node's port is
-# -base_port. Second PostgreSQL node's port is base_port+1... nth
+#  base_port. Second PostgreSQL node's port is base_port+1... nth
 #  PostgreSQL node's port is base_port+n-1, pgpool port is
 #  base_port+n, pcp port is base_port+n+1.
 # --no-stop: do not stop pgpool and PostgreSQL after the work
