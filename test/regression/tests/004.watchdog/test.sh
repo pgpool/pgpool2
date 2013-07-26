@@ -34,7 +34,7 @@ wait_for_pgpool_startup
 cd ..
 
 # stop master pgpool and see if standby take over
-pgpool -f master/etc/pgpool.conf -m f stop
+$PGPOOL_INSTALL_DIR/bin/pgpool -f master/etc/pgpool.conf -m f stop
 
 sleep 1
 

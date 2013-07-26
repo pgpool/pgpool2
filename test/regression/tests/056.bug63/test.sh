@@ -5,7 +5,9 @@
 #
 # Fixed in: http://git.postgresql.org/gitweb/?p=pgpool2.git;a=commit;h=d428c5c27600dd82161dda6a240737d88db78732
 # requires Java PostgreSQL JDBC driver.
-JDBC_DRIVER=/usr/local/pgsql/share/postgresql-9.2-1003.jdbc4.jar
+PGBENCH=$PGBENCH_DIR/pgbench
+
+
 WHOAMI=`whoami`
 source $TESTLIBS
 TESTDIR=testdir
@@ -33,7 +35,7 @@ export CLASSPATH=.:$JDBC_DRIVER
 ./startall
 wait_for_pgpool_startup
 
-pgbench -i test
+$PGBENCH -i test
 java jdbctest2
 
 if [ $? != 0 ];then

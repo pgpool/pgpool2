@@ -4,6 +4,8 @@
 #
 source $TESTLIBS
 TESTDIR=testdir
+PG_CTL=$PGBIN/pg_ctl
+PSQL=$PGBIN/psql
 
 for mode in s r
 do
@@ -20,12 +22,12 @@ do
 
 	export PGPORT=$PGPOOL_PORT
 
-	psql -c "show pool_nodes" test
+	$PSQL -c "show pool_nodes" test
 
 	# trrigger failover
-	pg_ctl -D data1 -m f stop
+	$PG_CTL -D data1 -m f stop
 	wait_for_pgpool_startup
-	psql -c "show pool_nodes" test > result
+	$PSQL -c "show pool_nodes" test > result
 
 	# check the output of "show pool_nodes".
 	cmp result ../expected.$mode > /dev/null 2>&1

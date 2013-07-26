@@ -9,6 +9,8 @@ BUG="do_query"
 WHOAMI=`whoami`
 source $TESTLIBS
 TESTDIR=testdir
+PGBENCH=$PGBENCH_DIR/pgbench
+
 rm -fr $TESTDIR
 mkdir $TESTDIR
 cd $TESTDIR
@@ -27,10 +29,10 @@ export PGPORT=$PGPOOL_PORT
 wait_for_pgpool_startup
 
 echo "SELECT 1" > select.pgbench
-pgbench -i test
+$PGBENCH -i test
 
 # run test. This will hung if the bug is remained.
-(pgbench -c 10 -t 10 -M extended -f select.pgbench test)&
+($PGBENCH -c 10 -t 10 -M extended -f select.pgbench test)&
 sleep 5
 kill $!
 

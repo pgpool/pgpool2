@@ -4,6 +4,9 @@
 #
 source $TESTLIBS
 TESTDIR=testdir
+PSQL=$PGBIN/psql
+PGBENCH=$PGBENCH_DIR/pgbench
+
 rm -fr $TESTDIR
 mkdir $TESTDIR
 cd $TESTDIR
@@ -21,7 +24,7 @@ export PGPORT=$PGPOOL_PORT
 
 wait_for_pgpool_startup
 
-psql test <<EOF
+$PSQL test <<EOF
 CREATE TABLE t1(i SERIAL, j TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);
 EOF
 
@@ -29,14 +32,14 @@ cat > pgbench.sql <<EOF
 INSERT INTO t1 VALUES (DEFAULT);
 EOF
 
-pgbench -i test
-pgbench -f pgbench.sql -c 10 -t 10 test
+$PGBENCH -i test
+$PGBENCH -f pgbench.sql -c 10 -t 10 test
 
-psql -p 11000 test <<EOF
+$PSQL -p 11000 test <<EOF
 \copy (SELECT * FROM t1 ORDER BY i) to 'dump0.txt'
 EOF
 
-psql -p 11001 test <<EOF
+$PSQL -p 11001 test <<EOF
 \copy (SELECT * FROM t1 ORDER BY i) to 'dump1.txt'
 EOF
 

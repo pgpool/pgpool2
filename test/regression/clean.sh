@@ -6,6 +6,7 @@ export PGPOOL_SETUP=$HOME/bin/pgpool_setup
 log=$dir/log
 
 rm -fr $log
+rm -fr $dir/temp
 
 cd tests
 dirs=`ls`

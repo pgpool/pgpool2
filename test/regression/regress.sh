@@ -2,14 +2,126 @@
 # pgpool-II regression test driver.
 #
 # usage: regress.sh [test_name]
+# -i install directory of pgpool
+# -p installation path of Postgres
+# -m install (install pgpool-II and use that for tests) / noinstall : Default install
+
 dir=`pwd`
-export TESTLIBS=$dir/libs.sh
-export PGPOOL_SETUP=$HOME/bin/pgpool_setup
-export PSQL=psql
+MODE=install
+PGPOOL_PATH=/usr/local
+JDBC_DRIVER=/usr/local/pgsql/share/postgresql-9.2-1002.jdbc4.jar
 log=$dir/log
 fail=0
 ok=0
 
+CRED=$(tput setaf 1)
+CGREEN=$(tput setaf 2)
+CBLUE=$(tput setaf 4)
+CNORM=$(tput sgr0)
+
+
+function install_pgpool
+{
+	echo "creating pgpool-II temporary installation ..."
+        PGPOOL_PATH=$dir/temp/installed
+        
+	make install -C $dir/../../ -e prefix=${PGPOOL_PATH}
+	
+	echo "moving pgpool_setup to temporary installation path ..."
+        cp $dir/../pgpool_setup ${PGPOOL_PATH}/pgpool_setup
+	export PGPOOL_SETUP=$PGPOOL_PATH/pgpool_setup
+}
+
+function verify_pginstallation
+{
+	# PostgreSQL bin directory
+	PGBIN=`$PG_INSTALL_DIR/pg_config --bindir` || (echo "$0: cannot locate pg_config";exit 1)
+}
+
+function export_env_vars
+{
+	if [[ -z "$PGPOOL_PATH" ]]; then
+		# check if pgpool is in the path
+		PGPOOL_PATH=/usr/local
+		export PGPOOL_SETUP=$HOME/bin/pgpool_setup
+ 	fi
+	
+	if [[ -z "$PGBENCH_DIR" ]]; then
+		PGBENCH_DIR=`which pgbench`
+		if [[ -z "$PGBENCH_DIR" ]]; then
+			PGBENCH_DIR=$PGBIN
+		fi
+ 	fi
+	
+	echo "using pgpool-II at "$PGPOOL_PATH
+        export PGPOOL_INSTALL_DIR=$PGPOOL_PATH
+	
+	export TESTLIBS=$dir/libs.sh
+	export PGBIN=$PGBIN
+	export JDBC_DRIVER=$JDBC_DRIVER
+	export PGBENCH_DIR=$PGBENCH_DIR
+}
+function print_info
+{
+	echo ${CBLUE}"*************************"${CNORM}
+
+	echo "REGRESSION MODE : "${CBLUE}$MODE${CNORM}
+	echo "PGPOOL-II       : "${CBLUE}$PGPOOL_PATH${CNORM}
+	echo "PostgreSQL bin  : "${CBLUE}$PGBIN${CNORM}
+	echo "pgbench         : "${CBLUE}$PGBENCH_DIR${CNORM}
+	echo "PostgreSQL jdbc : "${CBLUE}$JDBC_DRIVER${CNORM}
+	echo ${CBLUE}"*************************"${CNORM}
+}
+
+function print_usage
+{
+	printf "Usage:\n"
+	printf "  %s: [Options]... [test_name]\n" $(basename $0) >&2
+	printf "\nOptions:\n"
+	printf "  -p   DIRECTORY           Postgres installed directory\n" >&2
+	printf "  -b   DIRECTORY           pgbench installed directory, if different from Postgres installed directory\n" >&2
+	printf "  -i   DIRECTORY           pgpool installed directory, if already installed pgpool is to be used for tests\n" >&2
+	printf "  -m   install/noinstall   make install pgpool to temp directory for executing regression tests [Default: install]\n" >&2
+	printf "  -j   FILE                Postgres jdbc jar file path\n" >&2
+	printf "  -?                       print this help and then exit\n\n" >&2
+	printf "Please read the README for details on adding new tests\n" >&2
+
+}
+
+trap "echo ; exit 0" SIGINT SIGQUIT
+
+while getopts "p:m:i:j:b:?" OPTION
+do
+  case $OPTION in
+    p)  PG_INSTALL_DIR="$OPTARG";;
+    m)  MODE="$OPTARG";;
+    i)  PGPOOL_INSTALL_DIR="$OPTARG";;
+    j)  JDBC_DRIVER="$OPTARG";;
+    b)  PGBENCH_DIR="$OPTARG";;
+    ?)  print_usage
+        exit 2;;
+  esac
+done
+
+shift $(($OPTIND - 1))
+if [ "$MODE" = "install" ]; then
+	install_pgpool
+
+elif [ "$MODE" = "noinstall" ]; then
+	echo not installing pgpool for the tests ...
+	if [[ -n "$PGPOOL_INSTALL_PATH" ]]; then
+		PGPOOL_PATH=$PGPOOL_INSTALL_PATH
+	fi
+else
+	echo $MODE : Invalid mode
+	exit -1
+fi 
+
+verify_pginstallation
+export_env_vars
+print_info
+
+#Start executing tests
 rm -fr $log
 mkdir $log
 
@@ -27,10 +139,10 @@ do
 	echo -n "testing $i..."
 	./test.sh > $log/$i 2>&1
 	if [ $? = 0 ];then
-		echo "ok."
+		echo ${CGREEN}"ok."${CNORM}
 		ok=`expr $ok + 1`
 	else
-		echo "failed."
+		echo ${CRED}"failed."${CNORM}
 		fail=`expr $fail + 1`
 	fi
 

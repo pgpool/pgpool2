@@ -5,6 +5,8 @@
 WHOAMI=`whoami`
 source $TESTLIBS
 TESTDIR=testdir
+PSQL=$PGBIN/psql
+
 rm -fr $TESTDIR
 mkdir $TESTDIR
 cd $TESTDIR
@@ -24,7 +26,7 @@ export PGPORT=$PGPOOL_PORT
 
 wait_for_pgpool_startup
 
-psql test <<EOF
+$PSQL test <<EOF
 CREATE TABLE t1(i INTEGER);
 CREATE TABLE t2(i INTEGER);
 SELECT * FROM t1;		-- this creates a cache entry

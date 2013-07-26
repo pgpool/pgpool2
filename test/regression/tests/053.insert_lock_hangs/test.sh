@@ -12,6 +12,8 @@
 WHOAMI=`whoami`
 source $TESTLIBS
 TESTDIR=testdir
+PSQL=$PGBIN/psql
+
 rm -fr $TESTDIR
 mkdir $TESTDIR
 cd $TESTDIR
@@ -30,7 +32,7 @@ export PGPORT=$PGPOOL_PORT
 
 # create insert_lock table
 
-psql  test <<EOF
+$PSQL  test <<EOF
 DROP TABLE IF EXISTS pgpool_catalog.insert_lock;
 CREATE SCHEMA pgpool_catalog;
 CREATE TABLE pgpool_catalog.insert_lock(reloid OID PRIMARY KEY);
@@ -46,7 +48,7 @@ EOF
 
 # create test table
 
-psql  test <<EOF
+$PSQL  test <<EOF
 DROP TABLE IF EXISTS kd_test_serial_pgpool;
 CREATE TABLE kd_test_serial_pgpool(id SERIAL, content TEXT);
 EOF

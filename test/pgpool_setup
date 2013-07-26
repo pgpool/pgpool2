@@ -54,7 +54,7 @@ BASEPORT=11000
 # Default number of PostgreSQL database clusters
 NUMCLUSTERS=2
 # Where to look for pgpool.conf.sample*
-PGPOOLDIR=/usr/local/etc
+PGPOOLDIR=$PGPOOL_INSTALL_DIR/etc
 # LD_LIBRARY_PATH 
 LPATH=/usr/local/pgsql/lib
 # initdb args
@@ -70,7 +70,6 @@ WHOAMI=`whoami`
 BASEDIR=`pwd`
 
 # PostgreSQL bin directory
-PGBIN=`pg_config --bindir` || (echo "$0: cannot locate pg_config";exit 1)
 INITDB=$PGBIN/initdb
 PG_CTL=$PGBIN/pg_ctl
 PSQL=$PGBIN/psql
@@ -667,10 +666,10 @@ echo "LD_LIBRARY_PATH=$LPATH" > $STARTALL
 echo 'dir=`pwd`' >> $STARTALL
 chmod 755 $STARTALL
 echo 'dir=`pwd`' > $SHUTDOWNALL
-echo 'pgpool -f $dir/etc/pgpool.conf -m f stop' >> $SHUTDOWNALL
+echo '$PGPOOL_INSTALL_DIR/bin/pgpool -f $dir/etc/pgpool.conf -m f stop' >> $SHUTDOWNALL
 chmod 755 $SHUTDOWNALL
 echo 'dir=`pwd`' > $PGPOOL_RELOAD
-echo 'pgpool -f $dir/etc/pgpool.conf reload' >> $PGPOOL_RELOAD
+echo '$PGPOOL_INSTALL_DIR/bin/pgpool -f $dir/etc/pgpool.conf reload' >> $PGPOOL_RELOAD
 chmod 755 $PGPOOL_RELOAD
 
 #-------------------------------------------
@@ -738,15 +737,15 @@ echo "pid_file_name = '$BASEDIR/run/pgpool.pid'" >> $CONF
 test ! -d log && mkdir log
 echo "logdir = '$BASEDIR/log'" >> $CONF
 
-echo 'pgpool -D -n -f $dir/etc/pgpool.conf -F $dir/etc/pcp.conf -a $dir/etc/pool_hba.conf > $dir/log/pgpool.log 2>&1 &' >> $STARTALL
+echo '$PGPOOL_INSTALL_DIR/bin/pgpool -D -n -f $dir/etc/pgpool.conf -F $dir/etc/pcp.conf -a $dir/etc/pool_hba.conf > $dir/log/pgpool.log 2>&1 &' >> $STARTALL
 
 # create pcp.conf
 cp $PGPOOLDIR/pcp.conf.sample etc/pcp.conf
 echo -n "${WHOAMI}:" >> etc/pcp.conf
-pg_md5 $WHOAMI >> etc/pcp.conf
+$PGPOOL_INSTALL_DIR/bin/pg_md5 $WHOAMI >> etc/pcp.conf
 
 # create pool_passwd
-pg_md5 -m -f etc/pgpool.conf -u $WHOAMI $WHOAMI
+$PGPOOL_INSTALL_DIR/bin/pg_md5 -m -f etc/pgpool.conf -u $WHOAMI $WHOAMI
 
 # create archive directory
 mkdir archivedir
@@ -777,7 +776,7 @@ EOF
 
 # temporarily start pgpool
 	echo "temporarily start pgpool-II to create standby nodes"
-	pgpool -D -n -f $BASEDIR/etc/pgpool.conf -F $BASEDIR/etc/pcp.conf -a $BASEDIR/etc/pool_hba.conf > $BASEDIR/log/pgpool.log 2>&1 &
+	$PGPOOL_INSTALL_DIR/bin/pgpool -D -n -f $BASEDIR/etc/pgpool.conf -F $BASEDIR/etc/pcp.conf -a $BASEDIR/etc/pool_hba.conf > $BASEDIR/log/pgpool.log 2>&1 &
 
 	wait_for_pgpool_startup
 
@@ -795,7 +794,7 @@ EOF
 			echo "backend_data_directory$n = '$CLUSTERDIR'" >> $CONF
 			n=`expr $n + 1`
 		done
-		pgpool -f $BASEDIR/etc/pgpool.conf reload
+		$PGPOOL_INSTALL_DIR/bin/pgpool -f $BASEDIR/etc/pgpool.conf reload
 	fi
 
 	wait_for_pgpool_reload $NUMCLUSTERS
@@ -806,7 +805,7 @@ $PSQL -p $PGPOOL_PORT -c "show pool_nodes" test
 	while [ $n -lt $NUMCLUSTERS ]
 	do
 		echo -n "recovery node $n..."
-		pcp_recovery_node 1 localhost $PCP_PORT $WHOAMI $WHOAMI $n
+		$PGPOOL_INSTALL_DIR/bin/pcp_recovery_node 1 localhost $PCP_PORT $WHOAMI $WHOAMI $n
 		echo "done."
 		n=`expr $n + 1`
 		if [ $n -lt $NUMCLUSTERS ];then

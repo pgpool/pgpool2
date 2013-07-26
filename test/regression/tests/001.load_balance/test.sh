@@ -4,6 +4,7 @@
 #
 source $TESTLIBS
 TESTDIR=testdir
+PSQL=$PGBIN/psql
 
 for mode in s r
 do
@@ -28,7 +29,7 @@ do
 
 	wait_for_pgpool_startup
 
-	psql test <<EOF
+	$PSQL test <<EOF
 CREATE TABLE t1(i INTEGER);
 CREATE FUNCTION f1(INTEGER) returns INTEGER AS 'SELECT \$1' LANGUAGE SQL;
 SELECT * FROM t1;		-- this load balances
@@ -56,7 +57,7 @@ EOF
 
 	./pgpool_reload
 
-	psql test <<EOF
+	$PSQL test <<EOF
 SELECT f1(1);		-- this does load balance
 EOF
 

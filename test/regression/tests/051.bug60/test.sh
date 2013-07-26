@@ -18,6 +18,8 @@
 WHOAMI=`whoami`
 source $TESTLIBS
 TESTDIR=testdir
+PSQL=$PGBIN/psql
+
 rm -fr $TESTDIR
 mkdir $TESTDIR
 cd $TESTDIR
@@ -35,10 +37,10 @@ wait_for_pgpool_startup
 export PGPORT=$PGPOOL_PORT
 
 # set up trigger
-psql -f ../database-setup.sql test
+$PSQL -f ../database-setup.sql test
 
 # trigger the bug
-psql -f ../bug.sql test
+$PSQL -f ../bug.sql test
 
 # trigger the bug in extended protocol mode
 perl <<EOF
