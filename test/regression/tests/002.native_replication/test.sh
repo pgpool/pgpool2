@@ -5,7 +5,7 @@
 source $TESTLIBS
 TESTDIR=testdir
 PSQL=$PGBIN/psql
-PGBENCH=$PGBENCH_DIR/pgbench
+PGBENCH=$PGBENCH_PATH
 
 rm -fr $TESTDIR
 mkdir $TESTDIR

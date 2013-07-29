@@ -8,7 +8,7 @@ source $TESTLIBS
 TESTDIR=testdir
 PG_CTL=$PGBIN/pg_ctl
 PSQL=$PGBIN/psql
-PGBENCH=$PGBENCH_DIR/pgbench
+PGBENCH=$PGBENCH_PATH
 
 rm -fr $TESTDIR
 mkdir $TESTDIR

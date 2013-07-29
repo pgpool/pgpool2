@@ -5,7 +5,7 @@
 #
 # Fixed in: http://git.postgresql.org/gitweb/?p=pgpool2.git;a=commit;h=d428c5c27600dd82161dda6a240737d88db78732
 # requires Java PostgreSQL JDBC driver.
-PGBENCH=$PGBENCH_DIR/pgbench
+PGBENCH=$PGBENCH_PATH
 
 
 WHOAMI=`whoami`

@@ -9,7 +9,7 @@ BUG="do_query"
 WHOAMI=`whoami`
 source $TESTLIBS
 TESTDIR=testdir
-PGBENCH=$PGBENCH_DIR/pgbench
+PGBENCH=$PGBENCH_PATH
 
 rm -fr $TESTDIR
 mkdir $TESTDIR
