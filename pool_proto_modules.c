@@ -846,7 +846,10 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		}
 
 		if (is_strict_query(query_context->parse_tree))
+		{
 			start_internal_transaction(frontend, backend, query_context->parse_tree);
+			allow_close_transaction = 1;
+		}
 
 		if (insert_stmt_with_lock)
 		{
