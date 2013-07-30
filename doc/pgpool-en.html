@@ -3942,7 +3942,9 @@ However, for security reason, to set custom commands to <a href="#IF_UP_CMD">if_
 <a href="#IF_DOWN_CMD">if_up_cmd</a>, <a href="#ARPING_CMD">if_up_cmd</a> using sudo or setuid is recommended method.
 </p>
 <p>
-The life checking starts after confirming that all of the pgpool-IIs are alive.
+Watchdog's life-checking starts after after all of the pgpool-IIs has started.
+This doesn't start if not all "other" nodes are alive
+Until this, failover of the virtual IP never occurs. 
 </p>
 
 <h2>Configuring watchdog (pgpool.conf)</h2>

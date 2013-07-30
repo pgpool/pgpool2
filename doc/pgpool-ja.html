@@ -4095,7 +4095,8 @@ pgpool-II を起動する際に root 権限で実行するのが１つの方法�
 <a href="#IF_DOWN_CMD">if_up_cmd</a>、<a href="#ARPING_CMD">if_up_cmd</a> に設定するのがより良い方法です。
 </p>
 <p>
-なお、死活監視は他の全ての pgpool-II が生きていることを確認したのちに開始されます。
+watchdog の 死活監視は他の全ての pgpool-II が起動した後に開始されます。
+全ての pgpool-II が起動していない状態では監視は行われず、仮想 IP の切り替えも行われません。
 </p>
 
 <h2 id="config_watchdog">pgpool.conf の設定</h2>
