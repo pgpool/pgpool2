@@ -125,6 +125,30 @@ EXTRA_DIST = pgpool.8.in sample/pgpool.pam \
 		test/timestamp/expected/misc.out test/timestamp/main.c \
 		test/timestamp/parse_schedule test/timestamp/run-test \
 		test/pgpool_setup \
+		test/regression/README \
+		test/regression/clean.sh \
+		test/regression/regress.sh \
+		test/regression/tests/057.bug61/test.sh \
+		test/regression/tests/050.bug58/test.sh \
+		test/regression/tests/002.native_replication/test.sh \
+		test/regression/tests/001.load_balance/test.sh \
+		test/regression/tests/052.do_query/test.sh \
+		test/regression/tests/055.backend_all_down/test.sh \
+		test/regression/tests/053.insert_lock_hangs/test.sh \
+		test/regression/tests/056.bug63/jdbctest2.java \
+		test/regression/tests/056.bug63/test.sh \
+		test/regression/tests/054.postgres_fdw/test.sh \
+		test/regression/tests/051.bug60/bug.sql \
+		test/regression/tests/051.bug60/test.sh \
+		test/regression/tests/051.bug60/database-clean.sql \
+		test/regression/tests/051.bug60/database-setup.sql \
+		test/regression/tests/004.watchdog/master.conf \
+		test/regression/tests/004.watchdog/test.sh \
+		test/regression/tests/004.watchdog/standby.conf \
+		test/regression/tests/003.failover/expected.s \
+		test/regression/tests/003.failover/test.sh \
+		test/regression/tests/003.failover/expected.r \
+		test/regression/libs.sh \
 		redhat/pgpool.init redhat/pgpool.sysconfig redhat/pgpool.conf.sample.patch \
 		redhat/rpm_installer/getsources.sh redhat/rpm_installer/config_for_script \
 		redhat/rpm_installer/install.sh redhat/rpm_installer/uninstall.sh \
