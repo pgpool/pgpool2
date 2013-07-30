@@ -16,3 +16,6 @@ do
 	rm -fr testdir *~
 	cd ..
 done
+
+rm -fr $dir/tests/004.watchdog/master
+rm -fr $dir/tests/004.watchdog/standby
