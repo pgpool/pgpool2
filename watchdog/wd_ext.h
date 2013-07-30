@@ -51,11 +51,12 @@ extern WdInfo * wd_is_alive_master(void);
 
 extern WdInfo * wd_get_lock_holder(void);
 extern WdInfo * wd_get_interlocking(void);
-extern bool wd_is_interlocking_all(void);
+extern bool wd_are_interlocking_all(void);
 extern void wd_set_lock_holder(WdInfo *p, bool value);
 extern void wd_set_interlocking(WdInfo *info, bool value);
 extern void wd_clear_interlocking_info(void);
 extern bool wd_is_contactable_master(void);
+extern bool wd_are_contactable_all(void);
 extern WdInfo * wd_get_watchdog_info(int num);
 
 /* wd_packet.c */
@@ -107,7 +108,7 @@ extern pid_t wd_hb_sender(int fork_wait_time, WdHbIf hb_if);
 
 /* wd_interlock.c */
 extern int wd_init_interlock(void);
-extern void wd_start_interlock(void);
+extern void wd_start_interlock(bool by_health_check);
 extern void wd_end_interlock(void);
 extern void wd_leave_interlock(void);
 extern void wd_wait_for_lock(WD_LOCK_ID lock_id);

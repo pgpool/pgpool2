@@ -1697,6 +1697,7 @@ static void failover(void)
 {
 	int i;
 	int node_id;
+	bool by_health_check;
 	int new_master;
 	int new_primary;
 	int nodes[MAX_NUM_BACKENDS];
@@ -1761,17 +1762,8 @@ static void failover(void)
 	/* start of command inter-lock with watchdog */
 	if (pool_config->use_watchdog)
 	{
-		wd_start_interlock();
-
-		/*
-		 * if it is due to DB down detection by healthcheck, send failover request
-		 * to other pgpools because detection of DB down on the others may be late.
-		 */
-		if (wd_am_I_lock_holder() &&
-		    !failover_request && Req_info->kind == NODE_DOWN_REQUEST)
-		{
-			wd_degenerate_backend_set(&node_id, 1);
-		}
+		by_health_check = (!failover_request && Req_info->kind==NODE_DOWN_REQUEST);
+		wd_start_interlock(by_health_check);
 	}
 
 	/* failback request? */

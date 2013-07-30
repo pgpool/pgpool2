@@ -36,7 +36,7 @@ int wd_set_wd_info(WdInfo * info);
 WdInfo * wd_is_exist_master(void);
 WdInfo * wd_get_lock_holder(void);
 WdInfo * wd_get_interlocking(void);
-bool wd_is_interlocking_all(void);
+bool wd_are_interlocking_all(void);
 void wd_set_lock_holder(WdInfo *info, bool value);
 void wd_set_interlocking(WdInfo *info, bool value);
 void wd_clear_interlocking_info(void);
@@ -44,6 +44,7 @@ int wd_am_I_oldest(void);
 int wd_set_myself(struct timeval * tv, int status);
 WdInfo * wd_is_alive_master(void);
 bool wd_is_contactable_master(void);
+bool wd_are_contactable_all(void);
 
 /* add or modify watchdog information list */
 int
@@ -260,7 +261,7 @@ wd_get_interlocking(void)
 
 /* if all pgpool are in interlocking return true, otherwise false */
 bool
-wd_is_interlocking_all(void)
+wd_are_interlocking_all(void)
 {
 	WdInfo * p = WD_List;
 	bool rtn = true;
@@ -357,8 +358,7 @@ wd_is_alive_master(void)
 	master = wd_is_exist_master();
 	if (master != NULL)
 	{
-		if ((!strcmp(pool_config->wd_lifecheck_method, MODE_HEARTBEAT)
-		         && wd_check_heartbeat(master) == WD_OK) ||
+		if ((!strcmp(pool_config->wd_lifecheck_method, MODE_HEARTBEAT)) ||
 		    (!strcmp(pool_config->wd_lifecheck_method, MODE_QUERY)
 			     && wd_ping_pgpool(master) == WD_OK))
 		{
@@ -386,13 +386,34 @@ wd_is_contactable_master(void)
 	/* for updating contactable flag */
 	wd_update_info();
 
-	master = wd_is_alive_master();
+	master = wd_is_exist_master();
 	if (master != NULL)
 	{
 		return master->is_contactable;
 	}
 
 	return false;
+}
+
+bool
+wd_are_contactable_all(void)
+{
+	WdInfo * p = WD_List;
+
+	/* for updating contactable flag */
+	wd_update_info();
+
+	while (p->status != WD_END)
+	{
+		if ((p->status == WD_NORMAL || p->status == WD_MASTER) &&
+		    !p->is_contactable)
+		{
+			return false;
+		}
+		p++;
+	}
+
+	return true;
 }
 
 /*

@@ -654,7 +654,8 @@ send_packet_4_nodes(WdPacket *packet, WD_SEND_TYPE type)
 	while (p->status != WD_END)
 	{
 		/* don't send packet to pgpool in down */
-		if (p->status == WD_DOWN)
+		if (p->status == WD_DOWN || 
+		    (packet->packet_no != WD_ADD_REQ && p->status == WD_INIT))
 		{
 			p->is_contactable = false;
 			p++;
