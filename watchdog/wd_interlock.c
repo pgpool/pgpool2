@@ -59,16 +59,20 @@ static void sleep_in_waiting(void);
 int
 wd_init_interlock(void)
 {
+	int alloc_size;
+
 	/* allocate WD_lock_holder */
 	if (WD_Locks == NULL)
 	{
-		WD_Locks = pool_shared_memory_create(sizeof(WD_Locks));
+		alloc_size = sizeof(bool) * WD_MAX_LOCK_NUM;
+
+		WD_Locks = pool_shared_memory_create(alloc_size);
 		if (WD_Locks == NULL)
 		{
 			pool_error("wd_init_interlock: failed to allocate WD_Locks");
 			return WD_NG;
 		}
-		memset((void *)WD_Locks, 0, sizeof(WD_Locks) * WD_MAX_LOCK_NUM);
+		memset((void *)WD_Locks, 0, alloc_size);
 	}
 
 	return WD_OK;
