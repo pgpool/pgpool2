@@ -1,4 +1,4 @@
-#! /bin/sh -x
+#! /bin/sh
 #-------------------------------------------------------------------
 # test script for watchdog
 source $TESTLIBS
@@ -45,7 +45,7 @@ cd master
 cd ../standby
 ./shutdownall
 
-if [ $RESULT = '' ]; then
+if [ -z "$RESULT" ]; then
     exit 1
 fi
 
