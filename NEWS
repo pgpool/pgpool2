@@ -1,10 +1,10 @@
                                 Release Notes
 
 ===============================================================================
-3.3 Series (2013/xx/xx - )
+3.3 Series (2013/07/30 - )
 ===============================================================================
 
-                        3.3 (tokakiboshi) 2013/xx/xx
+                        3.3 (tokakiboshi) 2013/07/30
 
 * Version 3.3
 
@@ -335,6 +335,20 @@
 
       [pgpool-general: 1892] Pgpool is unable to connect backend PostgreSQL
       http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001920.html
+
+    - Fix bug in parsing prepared statements with transaction handling in
+      replication mode (Tatsuo Ishii)
+
+      Parse() automatically starts a transaction for non SELECT query to keep
+      consistency among nodes in replication mode. But this wasn't closed. If
+      wrong query comes in, the transaction goes into an abort state but pgpool
+      does not close the transaction. Thus next query causes error because the
+      transaction is still in abort status.
+      
+      This problem was reported in [pgpool-general: 1877] by Sean Hogan.
+
+      [pgpool-general: 1877] current transaction is aborted, commands ignored
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001905.html
 
       __________________________________________________________________
 

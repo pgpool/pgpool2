@@ -6238,6 +6238,23 @@ FATAL: no PostgreSQL user name specified in startup packet
     </blockquote>
 </li>
 
+<li>レプリケーションモードにおけるプリペアド文のパース処理を修正しました。
+    (Tatsuo Ishii)
+    <p>
+      レプリケーションモードで SELECT 以外のクエリをパースする際には、ノード間の
+      一貫性保持のため自動的にトランザクションが開始されますが、トランザクション
+      を閉じる処理が行われていませんでした。そのため、実際に誤っているクエリだけ
+      ではなく、その次にパース処理されたクエリもアボートされていました。
+      このバグは [pgpool-general: 1877] で Sean Hogan さんにより報告されました。
+    </p>
+    <blockquote>
+    [pgpool-general: 1877] current transaction is aborted, commands ignored<br />
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001905.html">
+    http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001905.html
+	</a>
+    </blockquote>
+</li>
+
 </ul>
 
 <!-- -------------------------------------------------------------------------------- -->
