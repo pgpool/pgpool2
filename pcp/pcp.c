@@ -1648,4 +1648,5 @@ pcp_watchdog_info(int nid)
 	}
 
 	free(buf);
+	return NULL;
 }
