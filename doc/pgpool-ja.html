@@ -6198,7 +6198,7 @@ FATAL: no PostgreSQL user name specified in startup packet
 </pre>
 </li>
 
-<li>オンメモリクエリを有効にした時の拡張クエリの処理におけるメモリ割り当てロジックを修正しました。(Tatsuo Ishii)
+<li>オンメモリクエリキャッシュを有効にした時の拡張クエリの処理におけるメモリ割り当てロジックを修正しました。(Tatsuo Ishii)
     <p>
     バインドパラメータ付きの拡張クエリで、1024 バイト以上の長いクエリ文字列が渡されたときに、
     十分なメモリ割り当てができていませんでした。
@@ -6265,7 +6265,7 @@ FATAL: no PostgreSQL user name specified in startup packet
 <li>man ページに -D オプションの記述を追加しました。（Tatsuo Ishii)</li>
 <li>watchdog のプロセスが異常終了した場合に、これが自動で再起動されるよう修正しました。(Yugo Nagata)</li>
 <li>watchdog 有効時に ping コマンドを実行する関数にエラーチェックを追加しました。(Tatsuo Ishii)</li>
-<li>sprintf strncpy などの安全でない関数を、より安全な anprintf, strlcpy に置き換えました。(Yugo Nagata)</li>
+<li>sprintf strncpy などの安全でない関数を、より安全な snprintf, strlcpy に置き換えました。(Yugo Nagata)</li>
 <li>ログ出力、コメント、関数名で使われていた "sticky bit" という用語を
     "setuid bit" に置き換えました。(Yugo Nagata)
     <p>この用語は本来とは違う意味で使われており、混乱の元となっていました。</p>
@@ -6446,7 +6446,7 @@ FATAL: no PostgreSQL user name specified in startup packet
 </pre>
 </li>
 
-<li>オンメモリクエリを有効にした時の拡張クエリの処理におけるメモリ割り当てロジックを修正しました。(Tatsuo Ishii)
+<li>オンメモリクエリキャッシュを有効にした時の拡張クエリの処理におけるメモリ割り当てロジックを修正しました。(Tatsuo Ishii)
     <p>バインドパラメータ付きの拡張クエリで、1024 バイト以上の長いクエリ文字列が渡されたときに、
     十分なメモリ割り当てができていませんでした。
     </p>
