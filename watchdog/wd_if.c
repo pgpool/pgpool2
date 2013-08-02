@@ -37,9 +37,6 @@
 #include "watchdog.h"
 #include "wd_ext.h"
 
-int wd_IP_up(void);
-int wd_IP_down(void);
-int wd_get_cmd(char * buf, char * cmd);
 static int exec_ifconfig(char * path,char * command);
 
 int

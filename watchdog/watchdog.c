@@ -47,11 +47,6 @@ static pid_t child_pid;
 static pid_t hb_receiver_pid[WD_MAX_IF_NUM];
 static pid_t hb_sender_pid[WD_MAX_IF_NUM];
 
-pid_t wd_main(int fork_wait_time);
-void wd_kill_watchdog(int sig);
-int wd_reaper_watchdog(pid_t pid, int status);
-int wd_chk_setuid(void);
-
 static pid_t fork_a_lifecheck(int fork_wait_time);
 static void wd_exit(int exit_status);
 static int wd_check_config(void);

@@ -32,8 +32,6 @@
 #include "watchdog.h"
 #include "wd_ext.h"
 
-int wd_init(void);
-
 int
 wd_init(void)
 {

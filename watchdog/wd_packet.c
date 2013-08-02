@@ -52,32 +52,8 @@ typedef enum {
 	WD_SEND_ALL_NODES
 } WD_SEND_TYPE;
 
-int wd_startup(void);
-int wd_declare(void);
-int wd_stand_for_master(void);
-int wd_notice_server_down(void);
-int wd_update_info(void);
-int wd_authentication_failed(int sock);
-int wd_create_send_socket(char * hostname, int port);
-int wd_create_recv_socket(int port);
-int wd_accept(int sock);
-int wd_send_packet(int sock, WdPacket * snd_pack);
-int wd_recv_packet(int sock, WdPacket * buf);
-int wd_escalation(void);
-int wd_start_recovery(void);
-int wd_end_recovery(void);
-int wd_send_failback_request(int node_id);
-int wd_degenerate_backend_set(int *node_id_set, int count);
-int wd_promote_backend(int node_id);
-int wd_set_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count);
-int wd_send_packet_no(WD_PACKET_NO packet_no );
-int wd_send_lock_packet(WD_PACKET_NO packet_no, WD_LOCK_ID lock_id);
-
 static int wd_send_node_packet(WD_PACKET_NO packet_no, int *node_id_set, int count);
 static int wd_chk_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count);
-
-void wd_calc_hash(const char *str, int len, char *buf);
-int wd_packet_to_string(WdPacket pkt, char *str, int maxlen);
 
 static void * wd_thread_negotiation(void * arg);
 static int send_packet_for_all(WdPacket *packet);

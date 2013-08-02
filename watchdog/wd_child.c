@@ -35,7 +35,6 @@
 #include "pool_config.h"
 #include "wd_ext.h"
 
-pid_t wd_child(int fork_wait_time);
 static void wd_child_exit(int exit_signo);
 static int wd_send_response(int sock, WdPacket * recv_pack);
 static void wd_node_request_signal(WD_PACKET_NO packet_no, WdNodeInfo *node);

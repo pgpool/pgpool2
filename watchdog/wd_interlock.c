@@ -33,16 +33,6 @@
 
 static volatile bool * WD_Locks;
 
-int wd_init_interlock(void);
-void wd_start_interlock(bool by_health_check);
-void wd_end_interlock(void);
-void wd_leave_interlock(void);
-void wd_wait_for_lock(WD_LOCK_ID lock_id);
-bool wd_am_I_lock_holder(void);
-bool wd_is_locked(WD_LOCK_ID lock_id);
-void wd_set_lock(WD_LOCK_ID lock_id, bool value);
-int wd_unlock(WD_LOCK_ID lock_id);
-
 static void wd_update_lock_holder(void);
 static int wd_assume_lock_holder(void);
 static void wd_resign_lock_holder(void);

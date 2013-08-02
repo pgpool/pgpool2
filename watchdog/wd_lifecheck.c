@@ -37,9 +37,6 @@
 
 #include "libpq-fe.h"
 
-int is_wd_lifecheck_ready(void);
-int wd_lifecheck(void);
-int wd_ping_pgpool(WdInfo * pgpool);
 static void * thread_ping_pgpool(void * arg);
 static PGconn * create_conn(char * hostname, int port);
 static int pgpool_down(WdInfo * pool);

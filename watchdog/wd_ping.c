@@ -34,9 +34,7 @@
 #include "pool.h"
 #include "pool_config.h"
 #include "watchdog.h"
-
-int wd_is_upper_ok(char * server_list);
-int wd_is_unused_ip(char * ip);
+#include "wd_ext.h"
 
 static void * exec_ping(void * arg);
 static double get_result (char * ping_data);

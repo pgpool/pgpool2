@@ -31,21 +31,6 @@
 #include "watchdog.h"
 #include "wd_ext.h"
 
-int wd_add_wd_list(WdDesc * other_wd);
-int wd_set_wd_info(WdInfo * info);
-WdInfo * wd_is_exist_master(void);
-WdInfo * wd_get_lock_holder(void);
-WdInfo * wd_get_interlocking(void);
-bool wd_are_interlocking_all(void);
-void wd_set_lock_holder(WdInfo *info, bool value);
-void wd_set_interlocking(WdInfo *info, bool value);
-void wd_clear_interlocking_info(void);
-int wd_am_I_oldest(void);
-int wd_set_myself(struct timeval * tv, int status);
-WdInfo * wd_is_alive_master(void);
-bool wd_is_contactable_master(void);
-bool wd_are_contactable_all(void);
-
 /* add or modify watchdog information list */
 int
 wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, char * delegate_ip, struct timeval * tv, int status)
