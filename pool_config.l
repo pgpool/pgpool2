@@ -202,7 +202,6 @@ int pool_init_config(void)
 	pool_config->insert_lock = 1;
 	pool_config->ignore_leading_white_space = 1;
 	pool_config->parallel_mode = 0;
-	pool_config->enable_query_cache = 0;
 	pool_config->system_db_hostname = "localhost";
 	pool_config->system_db_port = 5432;
 	pool_config->system_db_dbname = "pgpool";
@@ -1511,19 +1510,6 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->parallel_mode = v;
-		}
-
-		else if (!strcmp(key, "enable_query_cache") && CHECK_CONTEXT(INIT_CONFIG, context))
-		{
-			int v = eval_logical(yytext);
-
-			if (v < 0)
-			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
-				fclose(fd);
-				return(-1);
-			}
-			pool_config->enable_query_cache = v;
 		}
 
 		else if (!strcmp(key, "pgpool2_hostname") && CHECK_CONTEXT(INIT_CONFIG, context))
@@ -2885,7 +2871,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 		}
 	}
 
-	if (pool_config->parallel_mode || pool_config->enable_query_cache)
+	if (pool_config->parallel_mode)
 	{
 #ifndef POOL_PRIVATE
 		int dist_num;
@@ -2944,15 +2930,6 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			{
 				pool_error("pool_config: parallel_mode requires replication_mode or load_balance_mode turned on");
 				return(-1);
-			}
-		}
-		if (pool_config->enable_query_cache)
-		{
-			info->query_cache_table_info.register_prepared_statement = NULL;
-			if (! pool_query_cache_table_exists())
-			{
-				pool_error("failed to locate query_cache table. perhaps it's not defined?");
-				return -1;
 			}
 		}
 		SYSDB_STATUS = CON_UP;

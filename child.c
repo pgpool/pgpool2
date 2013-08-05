@@ -1436,7 +1436,7 @@ void child_exit(int code)
 		connection_count_down();
 
 	/* prepare to shutdown connections to system db */
-	if(pool_config->parallel_mode || pool_config->enable_query_cache)
+	if(pool_config->parallel_mode)
 	{
 		if (system_db_info->pgconn)
 			pool_close_libpq_connection();
@@ -2007,7 +2007,7 @@ void check_stop_request(void)
  */
 static void init_system_db_connection(void)
 {	
-	if (pool_config->parallel_mode || pool_config->enable_query_cache)
+	if (pool_config->parallel_mode)
 	{
 		system_db_connect();
 		if (PQstatus(system_db_info->pgconn) != CONNECTION_OK)

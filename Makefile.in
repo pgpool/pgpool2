@@ -74,17 +74,16 @@ am_pgpool_OBJECTS = main.$(OBJEXT) child.$(OBJEXT) pool_auth.$(OBJEXT) \
 	pool_signal.$(OBJEXT) pcp_child.$(OBJEXT) md5.$(OBJEXT) \
 	pool_shmem.$(OBJEXT) pool_sema.$(OBJEXT) pool_system.$(OBJEXT) \
 	pool_rewrite_query.$(OBJEXT) pool_rewrite_outfuncs.$(OBJEXT) \
-	pool_query_cache.$(OBJEXT) pool_hba.$(OBJEXT) \
-	pool_path.$(OBJEXT) pool_ip.$(OBJEXT) ps_status.$(OBJEXT) \
-	strlcpy.$(OBJEXT) recovery.$(OBJEXT) pool_relcache.$(OBJEXT) \
-	pool_process_reporting.$(OBJEXT) pool_ssl.$(OBJEXT) \
-	pool_timestamp.$(OBJEXT) pool_proto2.$(OBJEXT) \
-	pool_proto_modules.$(OBJEXT) pool_lobj.$(OBJEXT) \
-	pool_process_context.$(OBJEXT) pool_memqcache.$(OBJEXT) \
-	pool_session_context.$(OBJEXT) pool_query_context.$(OBJEXT) \
-	pool_worker_child.$(OBJEXT) pool_passwd.$(OBJEXT) \
-	pool_globals.$(OBJEXT) pool_select_walker.$(OBJEXT) \
-	getopt_long.$(OBJEXT)
+	pool_hba.$(OBJEXT) pool_path.$(OBJEXT) pool_ip.$(OBJEXT) \
+	ps_status.$(OBJEXT) strlcpy.$(OBJEXT) recovery.$(OBJEXT) \
+	pool_relcache.$(OBJEXT) pool_process_reporting.$(OBJEXT) \
+	pool_ssl.$(OBJEXT) pool_timestamp.$(OBJEXT) \
+	pool_proto2.$(OBJEXT) pool_proto_modules.$(OBJEXT) \
+	pool_lobj.$(OBJEXT) pool_process_context.$(OBJEXT) \
+	pool_memqcache.$(OBJEXT) pool_session_context.$(OBJEXT) \
+	pool_query_context.$(OBJEXT) pool_worker_child.$(OBJEXT) \
+	pool_passwd.$(OBJEXT) pool_globals.$(OBJEXT) \
+	pool_select_walker.$(OBJEXT) getopt_long.$(OBJEXT)
 pgpool_OBJECTS = $(am_pgpool_OBJECTS)
 pgpool_DEPENDENCIES = parser/libsql-parser.a pcp/libpcp.la \
 	parser/nodes.o watchdog/lib-watchdog.a
@@ -203,6 +202,7 @@ DEFS = @DEFS@ \
 	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\"
 
 DEPDIR = @DEPDIR@
+DLLTOOL = @DLLTOOL@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
@@ -229,6 +229,7 @@ LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
+MANIFEST_TOOL = @MANIFEST_TOOL@
 MEMCACHED_DIR = @MEMCACHED_DIR@
 MEMCACHED_INCLUDE_OPT = @MEMCACHED_INCLUDE_OPT@
 MEMCACHED_LINK_OPT = @MEMCACHED_LINK_OPT@
@@ -263,6 +264,7 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__include = @am__include@
@@ -295,7 +297,6 @@ libdir = @libdir@
 libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
-lt_ECHO = @lt_ECHO@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
@@ -320,7 +321,7 @@ pgpool_SOURCES = pool.h pool_type.h version.h pgpool.conf.sample \
 	pool_signal.h pool_signal.c pcp_child.c md5.c md5.h pcp.conf.sample \
 	pool_ipc.h pool_shmem.c pool_sema.c pool_system.c \
 	pool_rewrite_query.c pool_rewrite_query.h pool_rewrite_outfuncs.c \
-	pool_query_cache.c pool_hba.conf.sample sample/pgpool.pam\
+	pool_hba.conf.sample sample/pgpool.pam\
 	pool_hba.c pool_path.h pool_path.c pool_ip.h pool_ip.c pool_type.h \
 	ps_status.c strlcpy.c recovery.c pool_relcache.c pool_relcache.h pool_process_reporting.c \
 	pool_ssl.c pool_timestamp.c pool_timestamp.h \
@@ -591,7 +592,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_process_reporting.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_proto2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_proto_modules.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_query_cache.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_query_context.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_relcache.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_rewrite_outfuncs.Po@am__quote@

@@ -80,12 +80,6 @@ bool is_parallel_table = false;
  */
 char query_string_buffer[QUERY_STRING_BUFFER_LEN];
 
-/*
- * query string produced by nodeToString() in simpleQuery().
- * this variable only useful when enable_query_cache is true.
- */
-char *parsed_query = NULL;
-
 static int check_errors(POOL_CONNECTION_POOL *backend, int backend_id);
 static void generate_error_message(char *prefix, int specific_error, char *query);
 static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
@@ -245,25 +239,6 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		 * rest of multiple statements are silently discarded.
 		 */
 		node = (Node *) lfirst(list_head(parse_tree_list));
-
-		if (pool_config->enable_query_cache &&
-			SYSDB_STATUS == CON_UP &&
-			IsA(node, SelectStmt) &&
-			!(is_select_pgcatalog = IsSelectpgcatalog(node, backend)))
-		{
-			/*
-			 * POOL_CONTINUE of here represent cache found, and messages were
-			 * sent to frontend already.
-			 */
-			if (pool_execute_query_cache_lookup(frontend, backend, node) == POOL_CONTINUE)
-			{
-				pool_query_context_destroy(query_context);
-				pool_set_skip_reading_from_backends();
-				pool_memory_context_switch_to(old_context);
-				return POOL_CONTINUE;
-			}
-		}
-
 		/*
 		 * Start query context
 		 */
@@ -2206,12 +2181,6 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		pool_write_and_flush(frontend, p1, len1);
 	}
 
-	/* save the received result for each kind */
-	if (pool_config->enable_query_cache && SYSDB_STATUS == CON_UP)
-	{
-		query_cache_register('C', frontend, backend->info->database, p1, len1);
-	}
-
 	/* Save the received result to buffer for each kind */
 	if (pool_config->memory_cache_enabled)
 	{
@@ -3125,45 +3094,6 @@ POOL_STATUS raise_intentional_error_if_need(POOL_CONNECTION_POOL *backend)
 	}
 
 	return POOL_CONTINUE;
-}
-
-void
-query_cache_register(char kind, POOL_CONNECTION *frontend, char *database, char *data, int data_len)
-{
-	static int inside_T;			/* flag to see the result data sequence */
-	int result;
-
-	if (is_select_pgcatalog || is_select_for_update)
-		return;
-
-	if (kind == 'T' && parsed_query)
-	{
-		result = pool_query_cache_register(kind, frontend, database, data, data_len, parsed_query);
-		if (result < 0)
-		{
-			pool_error("pool_query_cache_register: query cache registration failed");
-			inside_T = 0;
-		}
-		else
-		{
-			inside_T = 1;
-		}
-	}
-	else if ((kind == 'D' || kind == 'C' || kind == 'E') && inside_T)
-	{
-		result = pool_query_cache_register(kind, frontend, database, data, data_len, NULL);
-		if (kind == 'C' || kind == 'E' || result < 0)
-		{
-			if (result < 0)
-				pool_error("pool_query_cache_register: query cache registration failed");
-			else
-				pool_debug("pool_query_cache_register: query cache saved");
-
-			inside_T = 0;
-			free(parsed_query);
-			parsed_query = NULL;
-		}
-	}
 }
 
 /*

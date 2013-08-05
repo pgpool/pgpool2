@@ -1059,10 +1059,6 @@ static POOL_STATUS ParallelForwardToFrontend(char kind, POOL_CONNECTION *fronten
 	if (send_to_frontend)
 	{
 		status = pool_write(frontend, p, len);
-		if (pool_config->enable_query_cache && SYSDB_STATUS == CON_UP && status == 0)
-		{
-			query_cache_register(kind, frontend, database, p, len);
-		}
 	}
 
 	return status;
@@ -1153,12 +1149,6 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	{
 		pool_error("SimpleForwardToFrontend: pool_write_and_flush failed");
 		return POOL_END;
-	}
-
-	/* save the received result for each kind */
-	if (pool_config->enable_query_cache && SYSDB_STATUS == CON_UP)
-	{
-		query_cache_register(kind, frontend, backend->info->database, p1, len1);
 	}
 
 	/* save the received result to buffer for each kind */

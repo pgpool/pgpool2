@@ -160,8 +160,6 @@ typedef struct {
 
 	int parallel_mode;	/* if non 0, run in parallel query mode */
 
-	int enable_query_cache;		/* if non 0, use query cache. 0 by default */
-
 	char *pgpool2_hostname;		/* pgpool2 hostname */
 	char *system_db_hostname;	/* system DB hostname */
 	int system_db_port;			/* system DB port number */

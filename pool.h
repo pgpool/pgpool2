@@ -563,13 +563,6 @@ extern int system_db_connect (void);
 extern int pool_memset_system_db_info (SystemDBInfo *info);
 extern void pool_close_libpq_connection(void);
 
-/* pool_query_cache.c */
-extern POOL_STATUS pool_query_cache_lookup(POOL_CONNECTION *frontend, char *query, char *database, char tstate);
-extern int pool_query_cache_register(char kind, POOL_CONNECTION *frontend, char *database, char *data, int data_len, char *query);
-extern int pool_query_cache_table_exists(void);
-extern int pool_clear_cache_by_time(Interval *interval, int size);
-extern POOL_STATUS pool_execute_query_cache_lookup(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, Node *node);
-
 /* pool_hba.c */
 extern int load_hba(char *hbapath);
 extern void ClientAuthentication(POOL_CONNECTION *frontend);

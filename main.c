@@ -166,7 +166,6 @@ static char hba_file[POOLMAXPATHLEN+1];
 static int exiting = 0;		/* non 0 if I'm exiting */
 static int switching = 0;		/* non 0 if I'm fail overing or degenerating */
 
-static int clear_cache = 0;		/* non 0 if clear cache option (-c) is given */
 static int not_detach = 0;		/* non 0 if non detach option (-n) is given */
 
 static int stop_sig = SIGTERM;	/* stopping signal default value */
@@ -231,7 +230,7 @@ int main(int argc, char **argv)
 	snprintf(pcp_conf_file, sizeof(pcp_conf_file), "%s/%s", DEFAULT_CONFIGDIR, PCP_PASSWD_FILE_NAME);
 	snprintf(hba_file, sizeof(hba_file), "%s/%s", DEFAULT_CONFIGDIR, HBA_CONF_FILE_NAME);
 
-    while ((opt = getopt_long(argc, argv, "a:cdf:F:hm:nDCv", long_options, &optindex)) != -1)
+    while ((opt = getopt_long(argc, argv, "a:df:F:hm:nDCv", long_options, &optindex)) != -1)
 	{
 		switch (opt)
 		{
@@ -242,10 +241,6 @@ int main(int argc, char **argv)
 					exit(1);
 				}
 				strlcpy(hba_file, optarg, sizeof(hba_file));
-				break;
-
-			case 'c':			/* clear cache option */
-				clear_cache = 1;
 				break;
 
 			case 'd':	/* debug option */
@@ -472,17 +467,6 @@ int main(int argc, char **argv)
 	 * Restore previous backend status if possible
 	 */
 	read_status_file(discard_status);
-
-	/* clear cache */
-	if (clear_cache && pool_config->enable_query_cache && SYSDB_STATUS == CON_UP)
-	{
-		Interval interval[1];
-
-		interval[0].quantity = 0;
-		interval[0].unit = second;
-
-		pool_clear_cache_by_time(interval, 1);
-	}
 
 	/* set unix domain socket path for connections to pgpool */
 	snprintf(un_addr.sun_path, sizeof(un_addr.sun_path), "%s/.s.PGSQL.%d",
@@ -736,7 +720,7 @@ int main(int argc, char **argv)
 			sts = health_check();
 			POOL_SETMASK(&BlockSig);
 
-			if (pool_config->parallel_mode || pool_config->enable_query_cache)
+			if (pool_config->parallel_mode)
 				sys_sts = system_db_health_check();
 
 			if ((sts > 0 || sys_sts < 0) && (errno != EINTR || (errno == EINTR && health_check_timer_expired)))
@@ -887,7 +871,6 @@ static void usage(void)
 	fprintf(stderr, "                      (default: %s/%s)\n",DEFAULT_CONFIGDIR, PCP_PASSWD_FILE_NAME);
 	fprintf(stderr, "  -h, --help          Prints this help\n\n");
 	fprintf(stderr, "Start options:\n");
-	fprintf(stderr, "  -c, --clear         Clears query cache (enable_query_cache must be on)\n");
 	fprintf(stderr, "  -C, --clear-oidmaps Clears query cache oidmaps when memqcache_method is memcached\n");
 	fprintf(stderr, "                      (If shmem, discards whenever pgpool starts.)\n");
 	fprintf(stderr, "  -n, --dont-detach   Don't run in daemon mode, does not detach control tty\n");

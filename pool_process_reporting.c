@@ -463,10 +463,6 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].desc, "if non 0, run in parallel query mode", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "enable_query_cache", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->enable_query_cache);
-	strncpy(status[i].desc, "if non 0, use query cache", POOLCONFIG_MAXDESCLEN);
-	i++;
 
 	strncpy(status[i].name, "pgpool2_hostname", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->pgpool2_hostname);
@@ -590,11 +586,6 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].name, "parallel_mode", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->parallel_mode);
 	strncpy(status[i].desc, "if non 0, run in parallel query mode", POOLCONFIG_MAXDESCLEN);
-	i++;
-
-	strncpy(status[i].name, "enable_query_cache", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->enable_query_cache);
-	strncpy(status[i].desc, "if non 0, use query cache", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "pgpool2_hostname", POOLCONFIG_MAXNAMELEN);
