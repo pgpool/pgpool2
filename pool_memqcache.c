@@ -1567,8 +1567,12 @@ static void pool_reset_memqcache_buffer(void)
 	{
 		POOL_TEMP_QUERY_CACHE *cache;
 
+		pool_debug("pool_reset_memqcache_buffer: discard: %p", session_context->query_cache_array);
+
 		pool_discard_query_cache_array(session_context->query_cache_array);
 		session_context->query_cache_array = pool_create_query_cache_array();
+
+		pool_debug("pool_reset_memqcache_buffer: create: %p", session_context->query_cache_array);
 
 		/*
 		 * if the query context is still under use, we cannot discard
@@ -2579,8 +2583,11 @@ void pool_discard_query_cache_array(POOL_QUERY_CACHE_ARRAY *cache_array)
 	if (!cache_array)
 		return;
 
+	pool_debug("pool_discard_query_cache_array: num_caches: %d", cache_array->num_caches);
+
 	for (i=0;i<cache_array->num_caches;i++)
 	{
+		pool_debug("pool_discard_query_cache_array: i: %d cache: %p", i, cache_array->caches[i]);
 		pool_discard_temp_query_cache(cache_array->caches[i]);
 	}
 	free(cache_array);
@@ -2596,6 +2603,8 @@ static POOL_QUERY_CACHE_ARRAY * pool_add_query_cache_array(POOL_QUERY_CACHE_ARRA
 
 	if (!cache_array)
 		return cp;
+
+	pool_debug("pool_add_query_cache_array: num_caches: %d cache: %p", cache_array->num_caches, cache);
 
 	if (cache_array->num_caches >= 	cache_array->array_size)
 	{
@@ -2712,7 +2721,7 @@ static void pool_add_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache, char ki
 
 	if ((buflen+data_len+sizeof(int)+1) > pool_config->memqcache_maxcache)
 	{
-		pool_log("pool_add_temp_query_cache: data size exceeds memqcache_maxcache. current:%zd requested:%zd memq_maxcache:%d",
+		pool_debug("pool_add_temp_query_cache: data size exceeds memqcache_maxcache. current:%zd requested:%zd memq_maxcache:%d",
 				 buflen, data_len+sizeof(int)+1, pool_config->memqcache_maxcache);
 		temp_cache->is_exceeded = true;
 		return;
@@ -3048,6 +3057,16 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 			{
 				session_context->query_cache_array = 
 					pool_add_query_cache_array(session_context->query_cache_array, cache);
+				/*
+				 * Reset temp_cache pointer in the current query
+				 * context so that we don't add the same temp cache to
+				 * the cache array. This is necessary such that case
+				 * when next query is just a "bind message", without
+				 * "parse message". In the case the query context is
+				 * reused and same cache pointer will be added to the
+				 * query_cache_array which we do not want.
+				 */
+				session_context->query_context->temp_cache = NULL;
 			}
 
 			/* Count up temporary SELECT stats */
