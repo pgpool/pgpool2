@@ -18,7 +18,7 @@ pgpool_version=3.3.0
 ## pgpoolAdmin
 admin_src_dir=$git_dir/pgpooladmin
 admin_tarball_dir=$admin_src_dir/tools
-admin_version=3.3
+admin_version=3.3.0
 
 ## postgresql92
 bin_path=/usr/pgsql-9.2/bin
@@ -68,14 +68,14 @@ if [ $? -ne 0 ]; then
 fi
 if [ ! -f $pgpool_tarball_dir/pgpool-II-$pgpool_version.tar.gz ]; then
     echo "$pgpool_tarball_dir/pgpool-II-$pgpool_version.tar.gz not found."
-	exit
+    exit
 fi
 mv pgpool-II-$pgpool_version.tar.gz $rpm_dir/SOURCES
 
 # pgpoolAdmin-*.tar.gz
 if [ ! -f $admin_tarball_dir/pgpoolAdmin-$admin_version.tar.gz ]; then
     echo "$admin_tarball_dir/pgpoolAdmin-$admin_version.tar.gz not found."
-	exit
+    exit
 fi
 cp $admin_tarball_dir/pgpoolAdmin-$admin_version.tar.gz $rpm_dir/SOURCES
 
