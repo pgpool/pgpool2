@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Tue Aug  6 07:46:17 JST 2013
+Last modified: Tue Aug 13 08:20:27 JST 2013
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -299,13 +299,34 @@ cloned to create new databases.
 pgpool_recovery, pgpool_remote_start, pgpool_switch_xlog.</p>
 <p>And, pgpoolAdmin of the tool to control pgpool-II can stop, restart and reload the backend PostgreSQL nodes,
 and it needs the function named pgpool_pgctl.</p>
-<p>Here is the way to install there functions.</p>
+<p>
+Also pgpoolAdmin needs function pgpool_pgctl to stop/restart/reload config PostgreSQL.
+</p>
+<p>
+You can install those 4 functions in a same manner as pgpool_regclass.
+However, unlike pgpool_regclass, you only need to install those functions to template1 database.
+</p>
+
+<p>Here is the way to install those functions.</p>
+<p>
 <pre>
-$ cd pgpool-II-x.x.x/sql/pgpool-regclass
+$ cd pgpool-II-x.x.x/sql/pgpool-recovery
 $ make
 $ make install
+</pre>
+
+<p>After this:<p>
+<pre>
 $ psql -f pgpool-recovery.sql template1
 </pre>
+
+<p>or<p>
+
+<pre>
+$ psql template1
+=# CREATE EXTENSION pgpool_recovery;
+</pre>
+</p>
 
 <h4>Configuring pgpool.pgctl <span class="version">V3.0 -</span></h4>
 

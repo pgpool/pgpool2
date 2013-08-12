@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Tue Aug  6 07:47:28 JST 2013
+Last modified: Tue Aug 13 08:19:48 JST 2013
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -334,11 +334,24 @@ pgpool_recovery, pgpool_remote_start, pgpool_switch_xlog という関数が必�
 なお、この 4 つの関数は、すべてのデータベースにインストールされている必要はなく、template1 にだけで
 構いません。</p>
 <pre>
-$ cd pgpool-II-x.x.x/sql/pgpool-regclass
+$ cd pgpool-II-x.x.x/sql/pgpool-recovery
 $ make
 $ make install
+</pre>
+
+<p>この後に以下か、</p>
+<pre>
 $ psql -f pgpool-recovery.sql template1
 </pre>
+
+<p>または</p>
+
+<pre>
+$ psql template1
+=# CREATE EXTENSION pgpool_recovery;
+</pre>
+
+<p>を実行します。</p>
 
 <h4 id="pgpool_pgctl">pgpool.pgctl の設定 <span class="version">V3.3 〜</span></h4>
 
