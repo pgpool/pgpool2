@@ -917,7 +917,7 @@ wd_escalation(void)
 {
 	int rtn;
 
-	pool_log("wd_escalation: escalatting to master pgpool");
+	pool_log("wd_escalation: escalating to master pgpool");
 
 	/* clear shared memory cache */
 	if (pool_config->memory_cache_enabled && pool_is_shmem_cache() &&
