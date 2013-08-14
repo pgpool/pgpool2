@@ -41,7 +41,7 @@ pgpool_SOURCES = main/main.c \
 	utils/pool_process_reporting.c \
 	utils/pool_ssl.c \
 	utils/pool_stream.c \
-    	utils/getopt_long.c
+	utils/getopt_long.c
 
 DEFS = @DEFS@ \
 	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\"
@@ -77,8 +77,8 @@ AM_YFLAGS = -d
 EXTRA_DIST = sample/pgpool.pam \
 		sample/pgpool_remote_start sample/pgpool_recovery sample/pgpool_recovery_pitr \
 		sample/pgpool.conf.sample sample/pool_hba.conf.sample \
-        	sample/pgpool.conf.sample-replication sample/pgpool.conf.sample-master-slave \
-        	sample/pgpool.conf.sample-stream sample/pcp.conf.sample \
+      	sample/pgpool.conf.sample-replication sample/pgpool.conf.sample-master-slave \
+       	sample/pgpool.conf.sample-stream sample/pcp.conf.sample \
 		sample/dist_def_pgbench.sql sample/replicate_def_pgbench.sql \
 		sql/Makefile \
 		sql/insert_lock.sql sql/system_db.sql \
@@ -123,9 +123,9 @@ EXTRA_DIST = sample/pgpool.pam \
 		test/jdbc/expected/column test/jdbc/expected/lock test/jdbc/expected/select \
 		test/jdbc/expected/update test/jdbc/expected/insert test/jdbc/expected/CreateTempTable \
 		test/pdo-test/README.euc_jp test/pdo-test/collections.inc test/pdo-test/def.inc \
-		test/pdo-test/log.txt test/pdo-test/pdotest.php test/pdo-test/regsql.inc \
+		test/pdo-test/pdotest.php test/pdo-test/regsql.inc \
 		test/pdo-test/SQLlist/test1.sql test/pdo-test/SQLlist/test2.sql \
-		test/pdo-test/mod/database.inc test/pdo-test/mod/def.inc test/pdo-test/mod/errorhandler.inc \
+		test/pdo-test/mod/database.inc test/pdo-test/mod/errorhandler.inc \
 		test/timestamp/Makefile test/timestamp/input/insert.sql \
 		test/timestamp/input/update.sql test/timestamp/input/misc.sql \
 		test/timestamp/expected/insert.out test/timestamp/expected/update.out \
