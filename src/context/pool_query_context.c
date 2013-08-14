@@ -504,7 +504,6 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					  !pool_is_failed_transaction() &&
 					  pool_get_transaction_isolation() != POOL_SERIALIZABLE))
 			{
-				BackendInfo *bkinfo = pool_get_node_info(session_context->load_balance_node_id);
 				/* load balance */
 				pool_set_node_to_be_sent(query_context,
 										 session_context->load_balance_node_id);
