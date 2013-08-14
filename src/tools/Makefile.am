@@ -1,0 +1,2 @@
+SUBDIRS = pcp pgmd5
+

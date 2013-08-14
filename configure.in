@@ -4,12 +4,13 @@ AC_INIT
 dnl Checks for programs.
 AC_PROG_CC
 
-AM_INIT_AUTOMAKE(pgpool-II, 3.3.0)
+AM_INIT_AUTOMAKE(pgpool-II, 3.3.0, [subdir-objects])
 # AC_PROG_RANLIB
 AC_PROG_LIBTOOL
 
 AM_PROG_LEX
 AC_PROG_YACC
+AM_PROG_CC_C_O
 
 dnl suggested by libtoolize --force
 AC_CONFIG_MACRO_DIR([m4])
@@ -142,6 +143,12 @@ else
   INT64_FORMAT='"%ld"'
   UINT64_FORMAT='"%lu"'
 fi
+
+AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE",
+                   [Name of package])
+
+AC_DEFINE_UNQUOTED(VERSION, "$VERSION",
+                   [Version number of package])
 
 AC_DEFINE_UNQUOTED(INT64_FORMAT, $INT64_FORMAT,
                    [Define to the appropriate snprintf format for 64-bit ints, if any.])
@@ -388,6 +395,6 @@ if test "$enable_table_lock" = yes ; then
 fi
 AC_MSG_RESULT([$enable_table_lock])
 
-AM_CONFIG_HEADER(config.h)
+AM_CONFIG_HEADER(src/include/config.h)
 
-AC_OUTPUT([Makefile parser/Makefile pcp/Makefile watchdog/Makefile])
+AC_OUTPUT([Makefile doc/Makefile src/Makefile src/include/Makefile src/parser/Makefile src/libs/Makefile src/libs/pcp/Makefile src/tools/Makefile src/tools/pgmd5/Makefile src/tools/pcp/Makefile src/watchdog/Makefile])
