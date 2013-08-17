@@ -516,8 +516,16 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 		}
 		else
 		{
-			/* send to all nodes */
-			pool_setall_node_to_be_sent(query_context);
+			if (is_select_query(node, query) && !pool_config->replicate_select)
+			{
+				/* only send to master node */
+				pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
+			}
+			else
+			{
+				/* send to all nodes */
+				pool_setall_node_to_be_sent(query_context);
+			}
 		}
 	}
 	else

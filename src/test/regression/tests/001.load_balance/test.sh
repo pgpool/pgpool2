@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/sh -x
 #-------------------------------------------------------------------
 # test script for load balancing.
 #
@@ -69,7 +69,37 @@ EOF
 		exit 1
 	fi
 
+# in replication mode if load_balance_mode = off, SELECT query inside
+# an explicit transaction should be sent to master only.
+	if [ $mode = "r" ];then
+		./shutdownall
+		echo "load_balance_mode = off" >> etc/pgpool.conf
+		./startall
+		wait_for_pgpool_startup
+
+		$PSQL test <<EOF
+BEGIN;
+SELECT 1;
+END;
+EOF
+
+		ok=0
+		fgrep "SELECT 1;" log/pgpool.log |grep "DB node id: 0">/dev/null 2>&1
+		if [ $? = 0 ];then
+			fgrep "SELECT 1;" log/pgpool.log |grep "DB node id: 1">/dev/null 2>&1		
+			if [ $? != 0 ];then
+			# the SELECT should not be executed on node 1
+				ok=1
+			fi
+		# the SELECT should be executed on node 0
+		fi
+	fi
+
 	./shutdownall
+
+	if [ $ok != 1];then
+		exit 1;
+	fi
 
 	cd ..
 
