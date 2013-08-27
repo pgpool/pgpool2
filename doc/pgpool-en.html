@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Tue Aug 13 08:20:27 JST 2013
+Last modified: Tue Aug 27 09:13:22 JST 2013
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1674,12 +1674,13 @@ end of transaction block
     then pgpool-II executes $PGDATA/sync-command.
     </p>
     <p>
-    recovery_1st_stage_command will receive 3 parameters as follows:
+    recovery_1st_stage_command will receive 4 parameters as follows:
     </p>
     <ol>
         <li>path to master(primary) database cluster</li>
         <li>PostgreSQL host name to be recovered</li>
         <li>path to database cluster to be recovered</li>
+		<li>master database port number</li>
     </ol>
     <p>
     Note that pgpool-II <b>accepts</b> connections and queries while
@@ -1700,12 +1701,13 @@ end of transaction block
     pgpool-II executes $PGDATA/sync-command.
     </p>
     <p>
-    recovery_2nd_stage_command will receive 3 parameters as follows:
+    recovery_2nd_stage_command will receive 4 parameters as follows:
     </p>
     <ol>
         <li>path to master(primary) database cluster</li>
         <li>PostgreSQL host name to be recovered</li>
         <li>path to database cluster to be recovered</li>
+		<li>port number of database cluster to be recovered</li>
     </ol>
     </p>
     <p>

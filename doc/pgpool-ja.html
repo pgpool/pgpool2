@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Tue Aug 13 08:19:48 JST 2013
+Last modified: Tue Aug 27 09:12:47 JST 2013
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1737,12 +1737,13 @@ COMMIT;
     $PGDATA/sync-command を起動しようとします。
     </p>
     <p>
-    recovery_1st_stage_command は次の3つの引数を受けとります。
+    recovery_1st_stage_command は次の4つの引数を受けとります。
     </p>
     <ol>
         <li>マスタ(プライマリ)データベースクラスタへのパス</li>
         <li>リカバリ対象のPostgreSQLのホスト名</li>
         <li>リカバリ対象のデータベースクラスタへのパス</li>
+		<li>マスタデータベースクラスタのポート番号</li>
     </ol>
     <p>
     recovery_1st_stage_command を実行している間は pgpool ではクライアン

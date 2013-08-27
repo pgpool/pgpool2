@@ -41,7 +41,7 @@
 #define SECOND_STAGE 1
 
 static int exec_checkpoint(PGconn *conn);
-static int exec_recovery(PGconn *conn, BackendInfo *backend, char stage);
+static int exec_recovery(PGconn *conn, BackendInfo *master_backend, BackendInfo *recovery_backend, char stage);
 static int exec_remote_start(PGconn *conn, BackendInfo *backend);
 static PGconn *connect_backend_libpq(BackendInfo *backend);
 static int check_postmaster_started(BackendInfo *backend);
@@ -107,7 +107,7 @@ int start_recovery(int recovery_node)
 		pool_log("CHECKPOINT in the 1st stage done");
 	}
 
-	if (exec_recovery(conn, recovery_backend, FIRST_STAGE) != 0)
+	if (exec_recovery(conn, backend, recovery_backend, FIRST_STAGE) != 0)
 	{
 		PQfinish(conn);
 		return 1;
@@ -150,7 +150,7 @@ int start_recovery(int recovery_node)
 
 		pool_log("CHECKPOINT in the 2nd stage done");
 
-		if (exec_recovery(conn, recovery_backend, SECOND_STAGE) != 0)
+		if (exec_recovery(conn, backend, recovery_backend, SECOND_STAGE) != 0)
 		{
 			PQfinish(conn);
 			return 1;
@@ -240,17 +240,17 @@ static int exec_checkpoint(PGconn *conn)
 /*
  * Call pgpool_recovery() function.
  */
-static int exec_recovery(PGconn *conn, BackendInfo *backend, char stage)
+static int exec_recovery(PGconn *conn, BackendInfo *master_backend, BackendInfo *recovery_backend, char stage)
 {
 	PGresult *result;
 	char *hostname;
 	char *script;
 	int r;
 
-	if (strlen(backend->backend_hostname) == 0 || *(backend->backend_hostname) == '/')
+	if (strlen(recovery_backend->backend_hostname) == 0 || *(recovery_backend->backend_hostname) == '/')
 		hostname = "localhost";
 	else
-		hostname = backend->backend_hostname;
+		hostname = recovery_backend->backend_hostname;
 
 	script = (stage == FIRST_STAGE) ?
 		pool_config->recovery_1st_stage_command : pool_config->recovery_2nd_stage_command;
@@ -261,12 +261,16 @@ static int exec_recovery(PGconn *conn, BackendInfo *backend, char stage)
 		return 0;
 	}
 
+	/*
+	 * Execute recovery command
+	 */
 	snprintf(recovery_command,
 			 sizeof(recovery_command),
-			 "SELECT pgpool_recovery('%s', '%s', '%s')",
+			 "SELECT pgpool_recovery('%s', '%s', '%s', '%d')",
 			 script,
 			 hostname,
-			 backend->backend_data_directory);
+			 recovery_backend->backend_data_directory,
+			 master_backend->backend_port);
 
 	pool_log("starting recovery command: \"%s\"", recovery_command);
 

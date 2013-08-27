@@ -1,14 +1,15 @@
 #! /bin/sh
 
-if [ $# -ne 3 ]
+if [ $# -ne 4 ]
 then
-    echo "pgpool_recovery datadir remote_host remote_datadir"
+    echo "pgpool_recovery datadir remote_host remote_datadir master_port"
     exit 1
 fi
 
 datadir=$1
 DEST=$2
 DESTDIR=$3
+PORT=$4
 
 rsync -acurz --delete -e ssh $datadir/global/ $DEST:$DESTDIR/global/ &
 rsync -acurz --delete -e ssh $datadir/base/ $DEST:$DESTDIR/base/ &

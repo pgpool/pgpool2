@@ -5,8 +5,9 @@
 datadir=$1
 desthost=$2
 destdir=$3
+port=$4
 
-psql -c "SELECT pg_start_backup('Streaming Replication', true)" postgres
+psql -p $port -c "SELECT pg_start_backup('Streaming Replication', true)" postgres
 
 rsync -C -a --delete -e ssh --exclude postgresql.conf --exclude postmaster.pid \
 --exclude postmaster.opts --exclude pg_log --exclude pg_xlog \

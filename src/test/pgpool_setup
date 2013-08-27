@@ -303,41 +303,25 @@ SCRIPT=basebackup.sh
 cat >> $1/$SCRIPT <<'EOF'
 #! /bin/sh
 psql=__PGBIN__/psql
-DATA0_PORT=__DATA0_PORT__
-DATA1_PORT=`expr $DATA0_PORT + 1`
-DATA2_PORT=`expr $DATA1_PORT + 1`
 DATADIR_BASE=__DATADIR_BASE__
-DATA0_DIR=${DATADIR_BASE}"/data0"
-DATA1_DIR=${DATADIR_BASE}"/data1"
-DATA2_DIR=${DATADIR_BASE}"/data2"
 PGSUPERUSER=__PGSUPERUSER__
 
 master_db_cluster=$1
 recovery_node_host_name=$2
 DEST_CLUSTER=$3
+PORT=$4
 
 log=$DATADIR_BASE/log/recovery.log
 
-if [ $master_db_cluster = $DATA0_DIR ];then
-  PORT=$DATA0_PORT
-  SOURCE_CLUSTER=$DATA0_DIR
-elif [ $master_db_cluster = $DATA1_DIR ];then
-  PORT=$DATA1_PORT
-  SOURCE_CLUSTER=$DATA1_DIR
-else
-  PORT=$DATA2_PORT
-  SOURCE_CLUSTER=$DATA2_DIR
-fi
-
 $psql -p $PORT -c "SELECT pg_start_backup('Streaming Replication', true)" postgres
 
-echo "source: $SOURCE_CLUSTER dest: $DEST_CLUSTER" > $log
+echo "source: $master_db_cluster dest: $DEST_CLUSTER" > $log
 
 rsync -C -a -c --delete --exclude postgresql.conf --exclude postmaster.pid \
 --exclude postmaster.opts --exclude pg_log \
 --exclude recovery.conf --exclude recovery.done \
 --exclude pg_xlog \
-$SOURCE_CLUSTER/ $DEST_CLUSTER/
+$master_db_cluster/ $DEST_CLUSTER/
 
 rm -fr $DEST_CLUSTER/pg_xlog 
 mkdir $DEST_CLUSTER/pg_xlog
@@ -357,7 +341,6 @@ EOF
 #-------------------------------------------
 /bin/ed $1/$SCRIPT <<EOF
 /__PGBIN__/s@__PGBIN__@$PGBIN@
-/__DATA0_PORT__/s/__DATA0_PORT__/$BASEPORT/
 /__DATADIR_BASE__/s@__DATADIR_BASE__@$BASEDIR@
 /__PGSUPERUSER__/s/__PGSUPERUSER__/$WHOAMI/
 w
@@ -377,37 +360,21 @@ SCRIPT=basebackup.sh
 cat >> $1/$SCRIPT <<'EOF'
 #! /bin/sh
 psql=__PGBIN__/psql
-DATA0_PORT=__DATA0_PORT__
-DATA1_PORT=`expr $DATA0_PORT + 1`
-DATA2_PORT=`expr $DATA1_PORT + 1`
 DATADIR_BASE=__DATADIR_BASE__
-DATA0_DIR=${DATADIR_BASE}"/data0"
-DATA1_DIR=${DATADIR_BASE}"/data1"
-DATA2_DIR=${DATADIR_BASE}"/data2"
 PGSUPERUSER=__PGSUPERUSER__
 
 master_db_cluster=$1
 recovery_node_host_name=$2
 DEST_CLUSTER=$3
+PORT=$4
 
 log=$DATADIR_BASE/log/recovery.log
 
-if [ $master_db_cluster = $DATA0_DIR ];then
-  PORT=$DATA0_PORT
-  SOURCE_CLUSTER=$DATA0_DIR
-elif [ $master_db_cluster = $DATA1_DIR ];then
-  PORT=$DATA1_PORT
-  SOURCE_CLUSTER=$DATA1_DIR
-else
-  PORT=$DATA2_PORT
-  SOURCE_CLUSTER=$DATA2_DIR
-fi
-
 $psql -p $PORT -c "SELECT pg_start_backup('Native Replication', true)" postgres
 
-echo "source: $SOURCE_CLUSTER dest: $DEST_CLUSTER" > $log
+echo "source: $master_db_cluster dest: $DEST_CLUSTER" > $log
 
-cat > $SOURCE_CLUSTER/recovery.conf <<REOF
+cat > $master_db_cluster/recovery.conf <<REOF
 restore_command = 'cp __ARCHDIR__/%f %p'
 REOF
 
@@ -415,7 +382,7 @@ rsync -C -a -c --delete --exclude postgresql.conf --exclude postmaster.pid \
 --exclude postmaster.opts --exclude pg_log \
 --exclude recovery.done \
 --exclude pg_xlog \
-$SOURCE_CLUSTER/ $DEST_CLUSTER/
+$master_db_cluster/ $DEST_CLUSTER/
 
 rm -fr $DEST_CLUSTER/pg_xlog 
 mkdir $DEST_CLUSTER/pg_xlog
@@ -429,7 +396,6 @@ EOF
 #-------------------------------------------
 /bin/ed $1/$SCRIPT <<EOF
 /__PGBIN__/s@__PGBIN__@$PGBIN@
-/__DATA0_PORT__/s/__DATA0_PORT__/$BASEPORT/
 /__DATADIR_BASE__/s@__DATADIR_BASE__@$BASEDIR@
 /__PGSUPERUSER__/s/__PGSUPERUSER__/$WHOAMI/
 /__ARCHDIR__/s@__ARCHDIR__@$BASEDIR/archivedir@p
@@ -450,31 +416,15 @@ SCRIPT=pgpool_recovery_pitr
 cat >> $1/$SCRIPT <<'EOF'
 #! /bin/sh
 psql=__PGBIN__/psql
-DATA0_PORT=__DATA0_PORT__
-DATA1_PORT=`expr $DATA0_PORT + 1`
-DATA2_PORT=`expr $DATA1_PORT + 1`
 DATADIR_BASE=__DATADIR_BASE__
-DATA0_DIR=${DATADIR_BASE}"/data0"
-DATA1_DIR=${DATADIR_BASE}"/data1"
-DATA2_DIR=${DATADIR_BASE}"/data2"
 PGSUPERUSER=__PGSUPERUSER__
 
 master_db_cluster=$1
 recovery_node_host_name=$2
 DEST_CLUSTER=$3
+PORT=$4
 
 log=$DATADIR_BASE/log/recovery.log
-
-if [ $master_db_cluster = $DATA0_DIR ];then
-  PORT=$DATA0_PORT
-  SOURCE_CLUSTER=$DATA0_DIR
-elif [ $master_db_cluster = $DATA1_DIR ];then
-  PORT=$DATA1_PORT
-  SOURCE_CLUSTER=$DATA1_DIR
-else
-  PORT=$DATA2_PORT
-  SOURCE_CLUSTER=$DATA2_DIR
-fi
 
 # Force to flush current value of sequences to xlog 
 $psql -p $PORT -t -c 'SELECT datname FROM pg_database WHERE NOT datistemplate AND datallowconn' template1|
@@ -492,7 +442,6 @@ EOF
 #-------------------------------------------
 /bin/ed $1/$SCRIPT <<EOF
 /__PGBIN__/s@__PGBIN__@$PGBIN@p
-/__DATA0_PORT__/s/__DATA0_PORT__/$BASEPORT/p
 /__DATADIR_BASE__/s@__DATADIR_BASE__@$BASEDIR@p
 /__PGSUPERUSER__/s/__PGSUPERUSER__/$WHOAMI/p
 /__ARCHDIR__/s@__ARCHDIR__@$BASEDIR/archivedir@p
