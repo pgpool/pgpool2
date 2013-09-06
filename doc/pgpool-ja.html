@@ -5861,6 +5861,106 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 <hr><a name="release3.3.x"></a>
 
 <!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.3.1"></a>3.3.1 (tokakiboshi) 2013/09/06</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.3.0 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    tar ball 作成時にレグレッションテストを含めるよう修正しました。(Tatsuo Ishii)
+    <p>
+    3.3.0 リリースの tar ball にはレグレッションテストが含まれていませんでした。
+    </p>
+</li>
+
+<li>
+    レグレッションテストの watchdog テストスクリプトを修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    メモリオーバーランを修正しました。(Tatsuo Ishii)
+    <p>
+    このバグは [pgpool-general: 1956] で Sean Hogan さんにより指摘されました。
+    </p>
+    <blockquote>
+    [pgpool-general: 1956] memory overrun bug?
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001984.html">
+    http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001984.html
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    コンパイル時のエラーを修正しました。(Yugo Nagata)
+</li>
+
+<li>
+    オンメモリクエリキャッシュ使用時に子プロセスが sig abort で異常終了するバグを修正しました。
+    (Tatsuo Ishii)
+    <p>
+    parse メッセージの後に複数の bind/execute メッセージが来た場合に発生していた、メモリの二重開放がこのバグの原因です。
+    parse メッセージが来ると、クエリコンテキストと共に一時的なキャッシュが作成され、
+    クエリの実行時にこの一時キャッシュを指すポインタが配列に追加されます。そして、続く複数の bind
+    メッセージがこの同じポインタを使用することが、キャッシュ削除の際に二重開放を引き起こす原因となっていました。
+    </p>
+    <p>
+    このバグはバグトラック #68 にて harukat さんにより報告されました。
+    </p>
+    <blockquote>
+    #68: child process termination with sigabort when memory_cache_enabled = on
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=68">
+    http://www.pgpool.net/mantisbt/view.php?id=68
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    いくつかのテストケースをレグレッションテストに追加しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    ドキュメントの pgpool-recovery のインストールの節の typo を修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    ログメッセージの typo を修正しました。 (Yugo Nagata)
+</li>
+
+<li>
+    日本語ドキュメントの typo を修正しました。 (Yugo Nagata)
+</li>
+
+<li>
+    レプリケーションモードにてロードバランスモードが off の場合には、SELECT
+    クエリをマスターノードにのみ送信するよう修正しました。(Tatsuo Ishii)
+    <p>
+    レプリケーションモードでロードバランスモードが off の場合には、明示的なトランザクションの中で
+    SELECT クエリは、全てのノードにではなく、マスターノードにのみ送られなくてはなりません。
+    </p>
+    <p>
+    このバグは [pgpool-general: 2038] にて Rypl Lukas さんにより報告されました。
+    </p>
+    <blockquote>
+    [pgpool-general: 2038] SELECT sent to both nodes in replication mode
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-August/002066.html">
+    http://www.sraoss.jp/pipermail/pgpool-general/2013-August/002066.html
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    pgpool_setup が単独で動作しなくなっていたのを修正しました。(Tatsuo Ishii)
+</li>
+
+</ul>
+
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.3.0"></a>3.3.0 (tokakiboshi) 2013/07/30</h2>
 <!-- -------------------------------------------------------------------------------- -->
 
@@ -6304,6 +6404,102 @@ FATAL: no PostgreSQL user name specified in startup packet
 <!-- 3.2                                                                              -->
 <!-- ================================================================================ -->
 <hr><a name="release3.2.x"></a>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.2.6"></a>3.2.6 (namameboshi) 2013/09/06</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.2.5 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    バックエンドエラー検出時に発生することがあるメインプロセスのセグメンテーション違反を修正しました。
+    (Tatsuo Ishii)
+    <p>
+    この問題はバグトラック #62 で tuomas さんにより報告されました。
+    </p>
+    <blockquote>
+    #62 Slave network outage causes a segmentation fault on main process
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=62">
+    http://www.pgpool.net/mantisbt/view.php?id=62
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    child_life_time 使用時に発生しうるヘルスチェックのバグを修正しました。(Tatsuo Ishii)
+    <p>
+    バックエンドが正しく動作しているにも関わらずフェイルオーバが発生することがありました。この問題は
+    [pgpool-general: 1892] で larisa sabbanさんにより報告されました。
+    </p>
+    <blockquote>
+    [pgpool-general: 1892] Pgpool is unable to connect backend PostgreSQL
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001920.html">
+    http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001920.html
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    マニュアルの「pgpool-IIの配置について」の項目を改訂しました。(Tatsuo Ishii)
+    <p>
+    watchdog の使用に関する記述を追加しました。
+    </p>
+</li>
+
+<li>
+    doc/basebackup.sh スクリプトの ssh コマンドの間違いを修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    レプリケーションモードにおけるプリペアド文のパース処理を修正しました。(Tatsuo Ishii)
+    <p>
+    レプリケーションモードで SELECT 以外のクエリをパースする際には、
+    ノード間の一貫性保持のため自動的にトランザクションが開始されますが、
+    トランザクションを閉じる処理が行われていませんでした。
+    そのため、実際に誤っているクエリだけではなく、その次にパース処理されたクエリもアボートされていました。
+    </p>
+    <p>
+    このバグは [pgpool-general: 1877] で Sean Hogan さんにより報告されました。
+    </p>
+    <blockquote>
+    [pgpool-general: 1877] current transaction is aborted, commands ignored
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001905.html">
+    http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001905.html
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    オンメモリクエリキャッシュ使用時に子プロセスが sig abort で異常終了するバグを修正しました。
+    (Tatsuo Ishii)
+    <p>
+    parse メッセージの後に複数の bind/execute メッセージが来た場合に発生していた、メモリの二重開放がこのバグの原因です。
+    parse メッセージが来ると、クエリコンテキストと共に一時的なキャッシュが作成され、
+    クエリの実行時にこの一時キャッシュを指すポインタが配列に追加されます。そして、続く複数の bind
+    メッセージがこの同じポインタを使用することが、キャッシュ削除の際に二重開放を引き起こす原因となっていました。
+    </p>
+    <p>
+    このバグはバグトラック #68 にて harukat さんにより報告されました。
+    </p>
+    <blockquote>
+    #68: child process termination with sigabort when memory_cache_enabled = on
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=68">
+    http://www.pgpool.net/mantisbt/view.php?id=68
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    日本語ドキュメントの typo を修正しました。 (Yugo Nagata)
+</li>
+
+</ul>
 
 <!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.2.5"></a>3.2.5 (namameboshi) 2013/07/10</h2>
@@ -7885,6 +8081,47 @@ autoconf
 <hr><a name="release3.1.x"></a>
 
 <!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.1.9"></a>3.1.9 (hatsuiboshi) 2013/09/06</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.1.8 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    doc/basebackup.sh スクリプトの ssh コマンドの間違いを修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    レプリケーションモードにおけるプリペアド文のパース処理を修正しました。(Tatsuo Ishii)
+    <p>
+    レプリケーションモードで SELECT 以外のクエリをパースする際には、
+    ノード間の一貫性保持のため自動的にトランザクションが開始されますが、
+    トランザクションを閉じる処理が行われていませんでした。
+    そのため、実際に誤っているクエリだけではなく、その次にパース処理されたクエリもアボートされていました。
+    </p>
+    <p>
+    このバグは [pgpool-general: 1877] で Sean Hogan さんにより報告されました。
+    </p>
+    <blockquote>
+    [pgpool-general: 1877] current transaction is aborted, commands ignored
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001905.html">
+    http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001905.html
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    日本語ドキュメントの typo を修正しました。 (Yugo Nagata)
+</li>
+
+</ul>
+
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.1.8"></a>3.1.8 (hatsuiboshi) 2013/07/10</h2>
 <!-- -------------------------------------------------------------------------------- -->
 
@@ -8897,6 +9134,47 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
 <!-- 3.0                                                                              -->
 <!-- ================================================================================ -->
 <hr><a name="release3.0.x"></a>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.0.13"></a>3.0.13 (umiyameboshi) 2013/09/06</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.0.12 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    doc/basebackup.sh スクリプトの ssh コマンドの間違いを修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    レプリケーションモードにおけるプリペアド文のパース処理を修正しました。(Tatsuo Ishii)
+    <p>
+    レプリケーションモードで SELECT 以外のクエリをパースする際には、
+    ノード間の一貫性保持のため自動的にトランザクションが開始されますが、
+    トランザクションを閉じる処理が行われていませんでした。
+    そのため、実際に誤っているクエリだけではなく、その次にパース処理されたクエリもアボートされていました。
+    </p>
+    <p>
+    このバグは [pgpool-general: 1877] で Sean Hogan さんにより報告されました。
+    </p>
+    <blockquote>
+    [pgpool-general: 1877] current transaction is aborted, commands ignored
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001905.html">
+    http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001905.html
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    日本語ドキュメントの typo を修正しました。 (Yugo Nagata)
+</li>
+
+</ul>
 
 <!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.0.12"></a>3.0.12 (umiyameboshi) 2013/07/10</h2>

@@ -4,6 +4,71 @@
 3.3 Series (2013/07/30 - )
 ===============================================================================
 
+                        3.3.1 (tokakiboshi) 2013/09/06
+
+* Version 3.3.1
+
+    This is a bugfix release against pgpool-II 3.3.0.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix to add the regression test suite for making tar boll (Tatsuo Ishii)
+      
+      This isn't included in the tar ball of 3.3.0 release.
+
+    - Fix watchdog test script in regression test (Tatsuo Ishii)
+
+    - Fix a memory overrun bug (Tatsuo Ishii)
+      
+      This problem is pointed out in [pgpool-general: 1956] by Sean Hogan.
+      
+      [pgpool-general: 1956] memory overrun bug?
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001984.html
+
+    - Fix a compile error (Yugo Nagata)
+
+    - Fix child process termination with sig abort when memory query cache
+      is enabled (Tatsuo Ishii)
+      
+      This is due to double free bug that occurs when multiple bind/execute
+      messages come after a parse message. When a parse messages comes, query
+      context is created along with temp cache. The pointer to the temp cache
+      is added to the temp cache array when the query executed. Subsequent
+      bind messages uses the same temp cache pointer. This is the source of
+      double free bug when the cache array discarded.
+      
+      This is reported in Bug track #68 by harukat.
+      
+      #68: child process termination with sigabort when memory_cache_enabled = on
+      http://www.pgpool.net/mantisbt/view.php?id=68
+
+    - Add some test cases to regression test (Tatsuo Ishii)
+
+    - Fix typos of the document in installation of pgpool-recovery section.
+      (Tatsuo Ishii)
+
+    - Fix a typo of log message (Yugo Nagata)
+
+    - Fix typos of the japanese document (Yugo Nagata)
+
+    - Fix to send SELECT to master node only when load_balance_mode is off
+      in replication mode (Tatsuo Ishii)
+      
+      When load_balance_mode is off in replication mode, SELECT queries
+      should be sent to master node only, rather than sent to all nodes in
+      an explicit transaction.
+      
+      This problem is reported in [pgpool-general: 2038] by Rypl Lukas.
+      
+      [pgpool-general: 2038] SELECT sent to both nodes in replication mode
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-August/002066.html
+
+    - Fix pgpool_setup to work in standalone. (Tatsuo Ishii)
+
+===============================================================================
+
                         3.3 (tokakiboshi) 2013/07/30
 
 * Version 3.3
@@ -394,6 +459,71 @@
 
 ===============================================================================
 3.2 Series (2012/08/03 - )
+===============================================================================
+
+                        3.2.6 (namameboshi) 2013/09/06
+
+* Version 3.2.6
+
+    This is a bugfix release against pgpool-II 3.2.5.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix a segmentation fault on main process that could occures after backend
+      error detection (Tatsuo Ishii)
+      
+      This is reported in Bug track #62 by tuomas.
+      
+      #62 Slave network outage causes a segmentation fault on main process
+      http://www.pgpool.net/mantisbt/view.php?id=62
+
+    - Fix a bug with health check when used with child_life_time (Tatsuo Ishii)
+      
+      Failover could happen even if the backend was running fine.
+      This problem is reported in [pgpool-general: 1892] by larisa sabban.
+      
+      [pgpool-general: 1892] Pgpool is unable to connect backend PostgreSQL
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001920.html
+
+    - Fix "Deploying pgpool-II" section in the document (Tatsuo Ishii)
+      
+      Update descriptions about watchdog use.
+
+    - Fix a mistake in ssh command of doc/basebackup.sh (Tatsuo Ishii)
+
+    - Fix a bug in parsing prepared statements with transaction handling in
+      replication mode (Tatsuo Ishii)
+      
+      Parse() automatically starts a transaction for non SELECT query to keep
+      consistency among nodes in replication mode. But this wasn't closed. If
+      wrong query comes in, the transaction goes into an abort state but pgpool
+      does not close the transaction. Thus next query causes error because the
+      transaction is still in abort status.
+      
+      This problem was reported in [pgpool-general: 1877] by Sean Hogan.
+      
+      [pgpool-general: 1877] current transaction is aborted, commands ignored
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001905.html
+
+    - Fix child process termination with sig abort when memory query cache
+      is enabled (Tatsuo Ishii)
+      
+      This is due to double free bug that occurs when multiple bind/execute
+      messages come after a parse message. When a parse messages comes, query
+      context is created along with temp cache. The pointer to the temp cache
+      is added to the temp cache array when the query executed. Subsequent
+      bind messages uses the same temp cache pointer. This is the source of
+      double free bug when the cache array discarded.
+      
+      This is reported in Bug track #68 by harukat.
+      
+      #68: child process termination with sigabort when memory_cache_enabled = on
+      http://www.pgpool.net/mantisbt/view.php?id=68
+
+    - Fix typos of the japanese document (Yugo Nagata)
+
 ===============================================================================
 
                         3.2.5 (namameboshi) 2013/07/10
@@ -1662,6 +1792,36 @@
 3.1 Series (2011/09/08 - )
 ===============================================================================
 
+                        3.1.9 (hatsuiboshi) 2013/09/06
+
+* Version 3.1.9
+
+    This is a bugfix release against pgpool-II 3.1.8.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix a mistake in ssh command of doc/basebackup.sh (Tatsuo Ishii)
+
+    - Fix a bug in parsing prepared statements with transaction handling in
+      replication mode (Tatsuo Ishii)
+      
+      Parse() automatically starts a transaction for non SELECT query to keep
+      consistency among nodes in replication mode. But this wasn't closed. If
+      wrong query comes in, the transaction goes into an abort state but pgpool
+      does not close the transaction. Thus next query causes error because the
+      transaction is still in abort status.
+      
+      This problem was reported in [pgpool-general: 1877] by Sean Hogan.
+      
+      [pgpool-general: 1877] current transaction is aborted, commands ignored
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001905.html
+
+    - Fix typos of the japanese document (Yugo Nagata)
+
+===============================================================================
+
                         3.1.8 (hatsuiboshi) 2013/07/10
 
 * Version 3.1.8
@@ -2522,6 +2682,36 @@
 3.0 Series (2010/09/10 - )
 ===============================================================================
 
+                        3.0.13 (umiyameboshi) 2013/09/06
+
+* Version 3.0.13
+
+    This is a bugfix release against pgpool-II 3.0.12.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix a mistake in ssh command of doc/basebackup.sh (Tatsuo Ishii)
+
+    - Fix a bug in parsing prepared statements with transaction handling in
+      replication mode (Tatsuo Ishii)
+      
+      Parse() automatically starts a transaction for non SELECT query to keep
+      consistency among nodes in replication mode. But this wasn't closed. If
+      wrong query comes in, the transaction goes into an abort state but pgpool
+      does not close the transaction. Thus next query causes error because the
+      transaction is still in abort status.
+      
+      This problem was reported in [pgpool-general: 1877] by Sean Hogan.
+      
+      [pgpool-general: 1877] current transaction is aborted, commands ignored
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001905.html
+
+    - Fix typos of the japanese document (Yugo Nagata)
+
+===============================================================================
+
                         3.0.12 (umiyameboshi) 2013/07/10
 
 * Version 3.0.12
@@ -2609,7 +2799,7 @@
 
 ===============================================================================
 
-                       3.0.11 (umeyameboshi) 2013/04/26
+                       3.0.11 (umiyameboshi) 2013/04/26
 
 * Version 3.1.7
 
