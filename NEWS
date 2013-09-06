@@ -1,3 +1,29 @@
+ 3.0.13 (umiyameboshi) 2013/09/06
+
+    * Version 3.0.13
+
+      This is a bugfix release against pgpool-II 3.0.12.
+
+    * Bug fixes
+
+    - Fix a mistake in ssh command of doc/basebackup.sh (Tatsuo Ishii)
+
+    - Fix a bug in parsing prepared statements with transaction handling in
+      replication mode (Tatsuo Ishii)
+      
+      Parse() automatically starts a transaction for non SELECT query to keep
+      consistency among nodes in replication mode. But this wasn't closed. If
+      wrong query comes in, the transaction goes into an abort state but pgpool
+      does not close the transaction. Thus next query causes error because the
+      transaction is still in abort status.
+      
+      This problem was reported in [pgpool-general: 1877] by Sean Hogan.
+      
+      [pgpool-general: 1877] current transaction is aborted, commands ignored
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001905.html
+
+    - Fix typos of the japanese document (Yugo Nagata)
+
 3.0.12 (umiyameboshi) 2013/07/10
 
     * Version 3.0.12
