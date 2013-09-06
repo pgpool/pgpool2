@@ -4051,6 +4051,44 @@ pgpool-IIのチュートリアルは<a href="tutorial-ja.html">ここ</a>にあ�
 
 <h1>リリースノート<a name="release"></a></h1>
 
+<h2><a name="release3.1.9"></a>3.1.9 (hatsuiboshi) 2013/09/06</h2>
+<h3>概要</h3>
+<p>
+このバージョンは 3.1.8 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    doc/basebackup.sh スクリプトの ssh コマンドの間違いを修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    レプリケーションモードにおけるプリペアド文のパース処理を修正しました。(Tatsuo Ishii)
+    <p>
+    レプリケーションモードで SELECT 以外のクエリをパースする際には、
+    ノード間の一貫性保持のため自動的にトランザクションが開始されますが、
+    トランザクションを閉じる処理が行われていませんでした。
+    そのため、実際に誤っているクエリだけではなく、その次にパース処理されたクエリもアボートされていました。
+    </p>
+    <p>
+    このバグは [pgpool-general: 1877] で Sean Hogan さんにより報告されました。
+    </p>
+    <blockquote>
+    [pgpool-general: 1877] current transaction is aborted, commands ignored
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001905.html">
+    http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001905.html
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    日本語ドキュメントの typo を修正しました。 (Yugo Nagata)
+</li>
+
+</ul>
+
 <h2><a name="release3.1.8"></a>3.1.8 (hatsuiboshi) 2013/07/10</h2>
 <h3>概要</h3>
 <p>
@@ -4837,6 +4875,44 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </p>
 
 <hr>
+
+<h2><a name="release3.0.13"></a>3.0.13 (umiyameboshi) 2013/09/06</h2>
+<h3>概要</h3>
+<p>
+このバージョンは 3.0.12 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    doc/basebackup.sh スクリプトの ssh コマンドの間違いを修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    レプリケーションモードにおけるプリペアド文のパース処理を修正しました。(Tatsuo Ishii)
+    <p>
+    レプリケーションモードで SELECT 以外のクエリをパースする際には、
+    ノード間の一貫性保持のため自動的にトランザクションが開始されますが、
+    トランザクションを閉じる処理が行われていませんでした。
+    そのため、実際に誤っているクエリだけではなく、その次にパース処理されたクエリもアボートされていました。
+    </p>
+    <p>
+    このバグは [pgpool-general: 1877] で Sean Hogan さんにより報告されました。
+    </p>
+    <blockquote>
+    [pgpool-general: 1877] current transaction is aborted, commands ignored
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001905.html">
+    http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001905.html
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    日本語ドキュメントの typo を修正しました。 (Yugo Nagata)
+</li>
+
+</ul>
 
 <h2><a name="release3.0.12"></a>3.0.12 (umiyameboshi) 2013/07/10</h2>
 <h3>概要</h3>
