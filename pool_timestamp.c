@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2013	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -295,7 +295,7 @@ get_current_timestamp(POOL_CONNECTION_POOL *backend)
 {
 	POOL_SELECT_RESULT *res;
 	POOL_STATUS		 status;
-	static char		timestamp[32];
+	static char		timestamp[64];
 
 	status = do_query(MASTER(backend), "SELECT now()", &res, MAJOR(backend));
 	if (status != POOL_CONTINUE)
