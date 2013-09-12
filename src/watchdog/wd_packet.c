@@ -1111,8 +1111,8 @@ wd_calc_hash(const char *str, int len, char *buf)
 
 	username_len = authkey_len / 2;
 	pass_len = authkey_len - username_len;
-	snprintf(username, username_len + 1, pool_config->wd_authkey);
-	snprintf(pass, pass_len + 1, pool_config->wd_authkey + username_len);
+	snprintf(username, username_len + 1, "%s", pool_config->wd_authkey);
+	snprintf(pass, pass_len + 1, "%s", pool_config->wd_authkey + username_len);
 
 	/* calculate hash using md5 encrypt */
 	pool_md5_encrypt(pass, username, strlen(username), buf + MD5_PASSWD_LEN + 1);
