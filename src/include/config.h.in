@@ -49,9 +49,6 @@
 /* Define to 1 if you have the `BSD' library (-lBSD). */
 #undef HAVE_LIBBSD
 
-/* Define to 1 if you have the `compat' library (-lcompat). */
-#undef HAVE_LIBCOMPAT
-
 /* Define to 1 if you have the `crypt' library (-lcrypt). */
 #undef HAVE_LIBCRYPT
 
