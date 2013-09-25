@@ -184,7 +184,7 @@ int pool_init_config(void)
 	pool_config->master_slave_mode = 0;
 	pool_config->master_slave_sub_mode = "slony";
 	pool_config->delay_threshold = 0;
-	pool_config->log_standby_delay = 0;
+	pool_config->log_standby_delay = "none";
 	pool_config->connection_cache = 1;
 	pool_config->health_check_timeout = 20;
 	pool_config->health_check_period = 0;
