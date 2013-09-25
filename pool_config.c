@@ -490,7 +490,7 @@ char *yytext;
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2013	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1898,7 +1898,7 @@ int pool_init_config(void)
 	pool_config->master_slave_mode = 0;
 	pool_config->master_slave_sub_mode = "slony";
 	pool_config->delay_threshold = 0;
-	pool_config->log_standby_delay = 0;
+	pool_config->log_standby_delay = "none";
 	pool_config->connection_cache = 1;
 	pool_config->health_check_timeout = 20;
 	pool_config->health_check_period = 0;
@@ -3452,17 +3452,6 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->log_per_node_statement = v;
-		}
-       	else if (!strcmp(key, "log_statement") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
-		{
-			int v = eval_logical(yytext);
-
-			if (v < 0)
-			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
-				return(-1);
-			}
-			pool_config->log_statement = v;
 		}
 
 		else if (!strcmp(key, "lobj_lock_table") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
