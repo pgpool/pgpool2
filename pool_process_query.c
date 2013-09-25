@@ -1828,7 +1828,7 @@ POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
 	 * detected by a backend, other backend might not be noticed the
 	 * error.  In this case caller should send an error query to the
 	 * backend to abort the transaction. Otherwise the transaction
-	 * state might vary among backends(idle in transaction vs. abort).
+	 * state might vary among backends (idle in transaction vs. abort).
 	 */
 	deadlock_detected = detect_deadlock_error(backend, protoMajor);
 	if (deadlock_detected < 0)
@@ -1884,7 +1884,7 @@ POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
 			}
 
 			/*
-			 * It is possible that we receives a notification response
+			 * It is possible that we receive a notification response
 			 * ('A') from one of backends prior to "ready for query"
 			 * response if LISTEN and NOTIFY are issued in a same
 			 * connection. So we need to save notification response to
