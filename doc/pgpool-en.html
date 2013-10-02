@@ -328,10 +328,10 @@ $ psql template1
 </pre>
 </p>
 
-<h4>Configuring pgpool.pgctl <span class="version">V3.0 -</span></h4>
+<h4>Configuring pgpool.pg_ctl <span class="version">V3.0 -</span></h4>
 
-<p>The function pgpool_pgctl executes the value of ppool.pgctl in postgresql.conf as the pg_ctl command.
-To use this function, you have to this custom parameter.</p>
+<p>The function pgpool_pgctl executes the command whose path is specified by "pgpool.pg_ctl" in postgresql.conf.
+To use this function, you have to specify this parameter.</p>
 <pre>
 ex)
 $ cat &gt;&gt; /usr/local/pgsql/postgresql.conf
@@ -3967,7 +3967,7 @@ However, for security reason, to set custom commands to <a href="#IF_UP_CMD">if_
 <p>
 Watchdog's life-checking starts after after all of the pgpool-IIs has started.
 This doesn't start if not all "other" nodes are alive
-Until this, failover of the virtual IP never occurs. 
+Until this, failover of the virtual IP never occurs.
 </p>
 
 <h2>Configuring watchdog (pgpool.conf)</h2>
