@@ -3176,7 +3176,7 @@ JDBC ドライバなどのような拡張問い合わせプロトコルには対
 制限対象:パラレルモード
 </p>
 <p>
-postgresql.conf の add_missing_from設定値を off (デフォルト値)に設定してください。
+postgresql.conf の add_missing_from 設定値を off (デフォルト値)に設定してください。
 add_missing_from 設定値が on の時に使えるクエリは正しくpgpoolで処理されない可能性
 があります。
 </p>
@@ -3185,26 +3185,30 @@ add_missing_from 設定値が on の時に使えるクエリは正しくpgpool�
 制限対象:パラレルモード
 </p>
 <p>
-データ分割をしているテーブルに対してINSERT を行う際には、分割ルールとなる値を DEFAULT にはできません。例え
-ばテーブル t に x というカラムがあり、x が分割ルールの対象カラムだった
-場合には、
+データ分割をしているテーブルに対して <code>INSERT</code> を行う際には、分割ルールとなる値を
+<code>DEFAULT</code> にはできません。
+例えばテーブル t のカラム x が分割ルールの対象カラムだった場合には、
 </p>
 <pre>
   INSERT INTO t(x) VALUES (DEFAULT);
 </pre>
 <p>
-はできません。また、分割ルールとなる値が関数呼び出しの場合も
+とはできません。また、以下の様に分割ルールとなる値が関数呼び出しの場合も
 対応していません。
 </p>
 <pre>
   INSERT INTO t(x) VALUES (func());
 </pre>
 <p>
-必ず明示的に値を与える必要があります。
-
-また、SELECT INTO や INSERT INTO ... SELECT という形式もサポートしてい
-ません。
+このカラムには必ず明示的に値を与える必要があります。
 </p>
+<p>
+また、<code>SELECT INTO</code>、 <code>INSERT INTO ... SELECT</code>、および以下のような
+<code>VALUES</code> を用いた複数行の挿入には対応していません。
+</p>
+<pre>
+INSERT INTO t(x) VALUES (1),(2),(3);
+</pre>
 
 <h3>UPDATE</h3>
 <p>
