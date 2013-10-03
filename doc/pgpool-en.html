@@ -5133,26 +5133,31 @@ TABLE ... ON COMMIT DROP</code> inside the transaction block.</p>
 
 <h3 id="ng_insert">INSERT (for parallel mode)</h3>
 
-<p>You cannot use <code>DEFAULT</code> with the
-partitioning key column. For example, if the column x in the table t
-was the partitioning key column,
+<p>You cannot use <code>DEFAULT</code> for the
+partitioning key column. For example, if a column x in a table t
+is the partitioning key column,
 </p>
 
 <pre>
 INSERT INTO t(x) VALUES (DEFAULT);
 </pre>
 <p>
-is invalid. Also, functions cannot be used for this value either.
+isn't supported. Also, you cannot use functions for the value as below.
 </p>
 
 <pre>
 INSERT INTO t(x) VALUES (func());
 </pre>
 <p>
-Constant values must be used to INSERT with the partitioning
-key. <code>SELECT INTO</code> and <code>INSERT INTO ... SELECT</code>
-are also not supported.
+You must use explicit constant values for the partitioning key column.
 </p>
+<p>
+In addition, none of <code>SELECT INTO</code>, <code>INSERT INTO ... SELECT</code>,
+and multiple rows <code>INSERT</code> using <code>VALUES</code> as follows are supported.
+</p>
+<pre>
+INSERT INTO t(x) VALUES (1),(2),(3);
+</pre>
 
 <h3 id="ng_update">UPDATE (for parallel mode)</h3>
 
