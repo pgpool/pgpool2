@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Tue Aug 27 09:13:22 JST 2013
+Last modified: Sun Oct  6 17:49:55 JST 2013
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1865,9 +1865,11 @@ balancing. You need to call setAutoCommit(true) to enable autocommit.
 
 <h2 id="failover_in_replication_mode">Failover in Replication Mode</h2>
 
-<p>pgpool-II degenerates a dead backend and continues the
-service. The service can be continued if there is at least one backend
-alive.</p>
+<p>
+pgpool-II detaches a dead backend from the pool, maintaining the database 
+service via the remaining backends provided that there is at least one healthy 
+backend.
+</p>
 
 <h2 id="errors_in_replication_mode">Specific errors in replication mode</h2>
 <p>
@@ -1875,7 +1877,7 @@ In replication mode, if pgpool finds that the number of affected tuples
 by INSERT, UPDATE, DELETE are not same,
 it sends erroneous SQL statement to all DB nodes to abort the transaction
 if failover_if_affected_tuples_mismatch is set to false
-(degeneration occurs if it is set to true).
+(fail-over occurs if it is set to true).
 In this case you will see following error messages on client terminal:
 </p>
 <pre>
