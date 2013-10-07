@@ -1976,6 +1976,21 @@ static void failover(void)
 
 	if (Req_info->kind == PROMOTE_NODE_REQUEST && VALID_BACKEND(node_id))
 		new_primary = node_id;
+
+	/*
+	 * If the down node was a standby node in streaming replication
+	 * mode, we can avoid calling find_primary_node_repeatedly() and
+	 * recognize the former primary as the new primary node, which
+	 * will reduce the time to process standby down.
+	 */
+	else if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP) &&
+			 Req_info->kind == NODE_DOWN_REQUEST)
+	{
+		if (Req_info->primary_node_id != node_id)
+			new_primary = Req_info->primary_node_id;
+		else
+			new_primary =  find_primary_node_repeatedly();
+	}
 	else
 		new_primary =  find_primary_node_repeatedly();
 
