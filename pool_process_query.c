@@ -2414,7 +2414,10 @@ void free_select_result(POOL_SELECT_RESULT *result)
 }
 
 /*
- * Send a SELECT to one DB node.
+ * Send a query to one DB node and wait for it's completion.  The quey
+ * can be SELECT or any other type of query. However at this moment,
+ * the only client calls this function other than SELECT is
+ * insert_lock(), and the qury is either LOCK or SELECT for UPDATE.
  */
 POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result, int major)
 {
@@ -2559,14 +2562,20 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 		pool_write(backend, prepared_name, pname_len);
 
 		/*
-		 * Send descrive message
+		 * Send descrive message if the query is SELECT.
 		 */
-		pool_write(backend, "D", 1);
-		len = 4 + 1 + pname_len;
-		len = htonl(len);
-		pool_write(backend, &len, sizeof(len));
-		pool_write(backend, "P", 1);
-		pool_write(backend, prepared_name, pname_len);
+		if (!strcasecmp(query, "SELECT"))
+		{
+			/*
+			 * Send descrive message
+			 */
+			pool_write(backend, "D", 1);
+			len = 4 + 1 + pname_len;
+			len = htonl(len);
+			pool_write(backend, &len, sizeof(len));
+			pool_write(backend, "P", 1);
+			pool_write(backend, prepared_name, pname_len);
+		}
 
 		/*
 		 * Send execute message
@@ -2695,10 +2704,18 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 				pool_debug("do_query: Command complete received");
 				state |= COMMAND_COMPLETE_RECEIVED;
 				/*
-				 * "Comand Complete" implies data row received status.
-				 * If there's no row returned, "command complete" comes without row data.
+				 * "Comand Complete" implies data row received status
+				 * if the query was SELECT.  If there's no row
+				 * returned, "command complete" comes without row
+				 * data.
 				 */
 				state |= DATA_ROW_RECEIVED;
+				/*
+				 * For other than SELECT, ROW_DESCRIPTION_RECEIVED
+				 * should be set because we didn't issue DESCRIBE
+				 * message.
+				 */
+				state |= ROW_DESCRIPTION_RECEIVED;
 				break;
 
 			case '1':	/* Parse complete */
@@ -3085,6 +3102,7 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 	size_t nmatch = 2;
 	regmatch_t pmatch[nmatch];
 	static POOL_RELCACHE *relcache;
+	POOL_SELECT_RESULT *result;
 
 	/* insert_lock can be used in V3 only */
 	if (MAJOR(backend) != PROTO_MAJOR_V3)
@@ -3203,12 +3221,20 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 
 	if (lock_kind == 1)
 	{
-		status = do_command(frontend, MASTER(backend), qbuf, MAJOR(backend), MASTER_CONNECTION(backend)->pid,
-							MASTER_CONNECTION(backend)->key, 0);
+		if (pool_get_session_context() && pool_is_doing_extended_query_message())
+		{
+			status = do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
+			if (result)
+				free_select_result(result);
+		}
+		else
+		{
+			status = do_command(frontend, MASTER(backend), qbuf, MAJOR(backend), MASTER_CONNECTION(backend)->pid,
+								MASTER_CONNECTION(backend)->key, 0);
+		}
 	}
 	else if (lock_kind == 2)
 	{
-		POOL_SELECT_RESULT *result;
 		status = do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
 		if (result)
 			free_select_result(result);
@@ -3252,8 +3278,18 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 			lock_kind = 1;
 			snprintf(qbuf, sizeof(qbuf), "LOCK TABLE %s IN SHARE ROW EXCLUSIVE MODE", table);
 			per_node_statement_log(backend, MASTER_NODE_ID, qbuf);
-			status = do_command(frontend, MASTER(backend), qbuf, MAJOR(backend), MASTER_CONNECTION(backend)->pid,
-								MASTER_CONNECTION(backend)->key, 0);
+
+			if (pool_get_session_context() && pool_is_doing_extended_query_message())
+			{
+				status = do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
+				if (result)
+					free_select_result(result);
+			}
+			else
+			{
+				status = do_command(frontend, MASTER(backend), qbuf, MAJOR(backend), MASTER_CONNECTION(backend)->pid,
+									MASTER_CONNECTION(backend)->key, 0);
+			}
 		}
 	}
 
@@ -3276,8 +3312,17 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 				if (lock_kind == 1)
 				{
 					per_node_statement_log(backend, i, qbuf);
-					status = do_command(frontend, CONNECTION(backend, i), qbuf, PROTO_MAJOR_V3, 
-										MASTER_CONNECTION(backend)->pid, MASTER_CONNECTION(backend)->key, 0);
+					if (pool_get_session_context() && pool_is_doing_extended_query_message())
+					{
+						status = do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
+						if (result)
+							free_select_result(result);
+					}
+					else
+					{
+						status = do_command(frontend, CONNECTION(backend, i), qbuf, PROTO_MAJOR_V3, 
+											MASTER_CONNECTION(backend)->pid, MASTER_CONNECTION(backend)->key, 0);
+					}
 				}
 				else if (lock_kind == 2)
 				{

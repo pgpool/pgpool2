@@ -967,6 +967,7 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	POOL_SENT_MESSAGE *bind_msg;
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_QUERY_CONTEXT *query_context;
+	int insert_stmt_with_lock = 0;
 
 	/* Get session context */
 	session_context = pool_get_session_context();
@@ -1026,6 +1027,30 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 		if(parse_before_bind(frontend, backend, parse_msg) != POOL_CONTINUE)
 			return POOL_END;
+	}
+
+	/*
+	 * Start a transaction if necessary
+	 */
+	pool_debug("Bind: checking strict query");
+	if (is_strict_query(query_context->parse_tree))
+	{
+		pool_debug("Bind: strict query");
+		start_internal_transaction(frontend, backend, query_context->parse_tree);
+		allow_close_transaction = 1;
+	}
+
+	pool_debug("Bind: checking insert lock");
+	insert_stmt_with_lock = need_insert_lock(backend, query_context->original_query, query_context->parse_tree);
+	if (insert_stmt_with_lock)
+	{
+		pool_debug("Bind: issuing insert lock");
+		/* issue a LOCK command to keep consistency */
+		if (insert_lock(frontend, backend, query_context->original_query, (InsertStmt *)query_context->parse_tree, insert_stmt_with_lock) != POOL_CONTINUE)
+		{
+			pool_query_context_destroy(query_context);
+			return POOL_END;
+		}
 	}
 
 	pool_debug("Bind: waiting for master completing the query");
