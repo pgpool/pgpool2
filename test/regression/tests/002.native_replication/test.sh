@@ -35,6 +35,21 @@ EOF
 $PGBENCH -i test
 $PGBENCH -f pgbench.sql -c 10 -t 10 test
 
+# test with extended protocol (autocommit on)
+# per [pgpool-general: 2144].
+cp ../PgTester.java .
+javac PgTester.java
+export CLASSPATH=.:$JDBC_DRIVER
+psql -f ../create.sql test
+env
+psql -f $PGPOOL_INSTALL_DIR/share/pgpool-II/insert_lock.sql test
+
+java PgTester 0 &
+java PgTester 10 &
+java PgTester 100 &
+java PgTester 1000 &
+wait
+
 $PSQL -p 11000 test <<EOF
 \copy (SELECT * FROM t1 ORDER BY i) to 'dump0.txt'
 EOF
