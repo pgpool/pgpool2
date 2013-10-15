@@ -745,7 +745,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 				snprintf(hex_str, sizeof(hex_str), (i == 0) ? " %02X" : "%02X", 0xff & query_in_bind_msg[i]);
 				hexlen = strlen(hex_str);
 
-				if ((len+hexlen) > alloc_len)
+				if ((len+hexlen) >= alloc_len)
 				{
 					alloc_len += STR_ALLOC_SIZE;
 					search_query = realloc(search_query, alloc_len);
