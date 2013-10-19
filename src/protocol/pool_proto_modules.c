@@ -697,7 +697,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		/*
 		 * Add bind message's info to query to search.
 		 */
-		if (bind_msg->param_offset && bind_msg->contents)
+		if (query_context->is_cache_safe && bind_msg->param_offset && bind_msg->contents)
 		{
 			/* Extract binary contents from bind message */
 			char *query_in_bind_msg = bind_msg->contents + bind_msg->param_offset;
@@ -1268,7 +1268,7 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	 */
 	if (query_context->is_cache_safe)
 	{
-		bind_msg->param_offset = sizeof(int) + sizeof(char) * (strlen(portal_name) + strlen(pstmt_name));
+		bind_msg->param_offset = sizeof(char) * (strlen(portal_name) + strlen(pstmt_name) + 2);
 	}
 
 	session_context->uncompleted_message = bind_msg;
