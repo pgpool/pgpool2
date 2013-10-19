@@ -113,6 +113,7 @@ static int pool_hash_insert(POOL_QUERY_HASH *key, POOL_CACHEID *cacheid, bool up
 static uint32 create_hash_key(POOL_QUERY_HASH *key);
 static volatile POOL_HASH_ELEMENT *get_new_hash_element(void);
 static void put_back_hash_element(volatile POOL_HASH_ELEMENT *element);
+static bool is_free_hash_element(void);
 static char *get_relation_without_alias(RangeVar *relation);
 
 /*
@@ -1956,6 +1957,16 @@ static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char
 	 */
 	pool_init_cache_block(blockid);
 
+	/*
+	 * Make sure that we have at least one free hash element.
+	 */
+	while (!is_free_hash_element())
+	{
+		/* If not, reuse next victim block */
+		blockid = pool_reuse_block();
+		pool_init_cache_block(blockid);
+	}
+
 	/* Get block address on shmem */
 	p = block_address(blockid);
 	bh = (POOL_CACHE_BLOCK_HEADER *)p;
@@ -3589,6 +3600,14 @@ static void put_back_hash_element(volatile POOL_HASH_ELEMENT *element)
 	elm = hash_free->next;
 	hash_free->next = (POOL_HASH_ELEMENT *)element;
 	element->next = elm;
+}
+
+/*
+ * Return true if there's a free hash element.
+ */
+static bool is_free_hash_element(void)
+{
+	return hash_free->next != NULL;
 }
 
 /*
