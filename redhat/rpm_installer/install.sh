@@ -144,7 +144,6 @@ function hasPackage()
 
 function checkEnv()
 {
-    return 0
     # OS
     if [ -f /etc/redhat-release ]; then
         if grep -q "release 6" /etc/redhat-release; then
