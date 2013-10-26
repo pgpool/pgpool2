@@ -1799,7 +1799,7 @@ static int *pool_fsmm_clock_hand;
  */
 void pool_allocate_fsmm_clock_hand(void)
 {
-	pool_fsmm_clock_hand = pool_shared_memory_create(sizeof(pool_fsmm_clock_hand));
+	pool_fsmm_clock_hand = pool_shared_memory_create(sizeof(*pool_fsmm_clock_hand));
 	*pool_fsmm_clock_hand = 0;
 }
 
