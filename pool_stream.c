@@ -79,6 +79,7 @@ POOL_CONNECTION *pool_open(int fd)
 	if (cp->hp == NULL)
 	{
 		pool_error("pool_open: malloc failed");
+		free(cp);
 		return NULL;
 	}
 	cp->bufsz = READBUFSZ;
