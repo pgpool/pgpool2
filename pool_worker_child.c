@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2013	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -249,6 +249,8 @@ static void check_replication_time_lag(void)
 		sts = do_query(slots[i]->con, query, &res, PROTO_MAJOR_V3);
 		if (sts != POOL_CONTINUE)
 		{
+			if (res)
+				free_select_result(res);
 			pool_error("check_replication_time_lag: %s failed", query);
 			return;
 		}
