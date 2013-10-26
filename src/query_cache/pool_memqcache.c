@@ -1876,7 +1876,7 @@ static POOL_CACHE_BLOCKID pool_get_block(size_t free_space)
 		return -1;
 	}
 
-	if (free_space < 0 || free_space > POOL_MAX_FREE_SPACE)
+	if (free_space > POOL_MAX_FREE_SPACE)
 	{
 		pool_error("pool_get_block: invalid free space %zd", free_space);
 		return -1;
@@ -1920,7 +1920,7 @@ static void pool_update_fsmm(POOL_CACHE_BLOCKID blockid, size_t free_space)
 		return;
 	}
 
-	if (blockid < 0 || blockid >= pool_get_memqcache_blocks())
+	if (blockid >= pool_get_memqcache_blocks())
 	{
 		pool_error("pool_set_free_space: invalid block id %d", blockid);
 		return;
@@ -2309,7 +2309,7 @@ static int pool_delete_item_shmem_cache(POOL_CACHEID *cacheid)
 	pool_debug("pool_delete_item_shmem_cache: cacheid:%d itemid:%d",
 			   cacheid->blockid, cacheid->itemid);
 
-	if (cacheid->blockid < 0 || cacheid->blockid >= pool_get_memqcache_blocks())
+	if (cacheid->blockid >= pool_get_memqcache_blocks())
 	{
 		pool_error("pool_delete_item_shmem_cache: invalid block id %d",
 				   cacheid->blockid);
@@ -2426,7 +2426,7 @@ static int pool_init_cache_block(POOL_CACHE_BLOCKID blockid)
 	char *p;
 	POOL_CACHE_BLOCK_HEADER *bh;
 
-	if (blockid < 0 || blockid >= pool_get_memqcache_blocks())
+	if (blockid >= pool_get_memqcache_blocks())
 	{
 		pool_error("pool_init_cache_block: invalid block id %d", blockid);
 		return -1;
