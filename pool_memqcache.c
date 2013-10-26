@@ -1204,6 +1204,7 @@ int pool_get_database_oid_from_dbname(char *dbname)
 	if (status != POOL_CONTINUE)
 	{    
 		pool_debug("pool_discard_oid_maps_by_db: Failed.");
+		free_select_result(res);
 		return 0;
 	}    
 
