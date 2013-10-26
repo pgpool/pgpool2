@@ -2403,7 +2403,7 @@ static POOL_CACHE_ITEM_HEADER *pool_cache_item_header(POOL_CACHEID *cacheid)
 {
 	POOL_CACHE_BLOCK_HEADER *bh;
 
-	if (cacheid->blockid < 0 || cacheid->blockid >= pool_get_memqcache_blocks())
+	if (cacheid->blockid >= pool_get_memqcache_blocks())
 	{
 		pool_error("pool_cache_item_header: invalid block id %d", cacheid->blockid);
 		return NULL;
