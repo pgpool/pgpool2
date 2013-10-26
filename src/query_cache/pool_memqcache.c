@@ -2650,6 +2650,7 @@ POOL_TEMP_QUERY_CACHE *pool_create_temp_query_cache(char *query)
 		if (!p->query)
 		{
 			pool_error("pool_create_temp_query_cache: strdup failed");
+			free(p);
 			return NULL;
 		}
 		p->buffer = pool_create_buffer();
