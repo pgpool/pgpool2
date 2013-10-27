@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Portions Copyright (c) 2003-2009, PgPool Global Development Group
+ * Portions Copyright (c) 2003-2013, PgPool Global Development Group
  * Portions Copyright (c) 2003-2004, PostgreSQL Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
@@ -163,11 +163,13 @@ on_shmem_exit(void (*function) (int code, Datum arg), Datum arg)
 {
 	if (on_shmem_exit_index >= MAX_ON_EXITS)
 		pool_error("out of on_shmem_exit slots");
+	else
+	{
+		on_shmem_exit_list[on_shmem_exit_index].function = function;
+		on_shmem_exit_list[on_shmem_exit_index].arg = arg;
 
-	on_shmem_exit_list[on_shmem_exit_index].function = function;
-	on_shmem_exit_list[on_shmem_exit_index].arg = arg;
-
-	++on_shmem_exit_index;
+		++on_shmem_exit_index;
+	}
 }
 
 /*
