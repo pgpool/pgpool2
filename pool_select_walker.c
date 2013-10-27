@@ -1001,7 +1001,7 @@ select_table_walker(Node *node, void *context)
 
 			ctx->table_oids[num_oids] = oid;
 			s = strip_quote(table);
-			strcpy(ctx->table_names[num_oids], s);
+			strlcpy(ctx->table_names[num_oids], s, POOL_NAMEDATALEN);
 			free(s);
 
 			pool_debug("select_table_walker: ctx->table_names[%d] = %s",
