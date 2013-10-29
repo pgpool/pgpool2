@@ -1037,17 +1037,17 @@ static int read_password_packet(POOL_CONNECTION *frontend, int protoMajor, 	char
 
 		if (pool_read(frontend, &k, sizeof(k)))
 		{
-			pool_debug("read_password_packet_password: failed to read password packet \"p\"");
+			pool_debug("read_password_packet: failed to read password packet \"p\"");
 			return -1;
 		}
 		if (k != 'p')
 		{
-			pool_error("read_password_packet_password: password packet does not start with \"p\"");
+			pool_error("read_password_packet: password packet does not start with \"p\"");
 			return -1;
 		}
 		if (pool_read(frontend, &size, sizeof(size)))
 		{
-			pool_error("read_password_packet_password: failed to read password packet size");
+			pool_error("read_password_packet: failed to read password packet size");
 			return -1;
 		}
 	}
