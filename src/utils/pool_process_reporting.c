@@ -776,7 +776,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	i++;
 
 	strncpy(status[i].name, "memqcache_auto_cache_invalidation", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->memqcache_expire);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->memqcache_auto_cache_invalidation);
 	strncpy(status[i].desc, "If true, invalidation of query cache is triggered by corresponding DDL/DML/DCL(and memqcache_expire).  If false, it is only triggered  by memqcache_expire.  True by default.", POOLCONFIG_MAXDESCLEN);
 	i++;
 
