@@ -99,12 +99,12 @@ extern int wd_check_heartbeat(WdInfo * pgpool);
 extern int wd_ping_pgpool(WdInfo * pgpool);
 
 /* wd_hearbeat.c */
-extern int wd_create_hb_send_socket(WdHbIf hb_if);
-extern int wd_create_hb_recv_socket(WdHbIf hb_if);
+extern int wd_create_hb_send_socket(WdHbIf * hb_if);
+extern int wd_create_hb_recv_socket(WdHbIf * hb_if);
 extern int wd_hb_send(int sock, WdHbPacket * pkt, int len, const char * destination, const int dest_port);
 extern int wd_hb_recv(int sock, WdHbPacket * pkt);
-extern pid_t wd_hb_receiver(int fork_wait_time, WdHbIf hb_if);
-extern pid_t wd_hb_sender(int fork_wait_time, WdHbIf hb_if);
+extern pid_t wd_hb_receiver(int fork_wait_time, WdHbIf * hb_if);
+extern pid_t wd_hb_sender(int fork_wait_time, WdHbIf * hb_if);
 
 /* wd_interlock.c */
 extern int wd_init_interlock(void);

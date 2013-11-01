@@ -54,13 +54,13 @@
 
 static RETSIGTYPE hb_sender_exit(int sig);
 static RETSIGTYPE hb_receiver_exit(int sig);
-static int hton_wd_hb_packet(WdHbPacket * to, WdHbPacket * from);
-static int ntoh_wd_hb_packet(WdHbPacket * to, WdHbPacket * from);
-static int packet_to_string_hb(WdHbPacket pkt, char *str, int maxlen);
+static int hton_wd_hb_packet(WdHbPacket *to, WdHbPacket *from);
+static int ntoh_wd_hb_packet(WdHbPacket *to, WdHbPacket *from);
+static int packet_to_string_hb(WdHbPacket *pkt, char * str, int maxlen);
 
 /* create socket for sending heartbeat */
 int
-wd_create_hb_send_socket(WdHbIf hb_if)
+wd_create_hb_send_socket(WdHbIf *hb_if)
 {
 	int sock;
 	int tos;
@@ -84,14 +84,14 @@ wd_create_hb_send_socket(WdHbIf hb_if)
 		return -1;
 	}
 
-	if (hb_if.if_name[0] != '\0')
+	if (hb_if->if_name[0] != '\0')
 	{
 #if defined(SO_BINDTODEVICE)
 		{
 			if (geteuid() == 0) /* check root privileges */
 			{
 				struct ifreq i;
-				strlcpy(i.ifr_name, hb_if.if_name, sizeof(i.ifr_name));
+				strlcpy(i.ifr_name, hb_if->if_name, sizeof(i.ifr_name));
 
 				if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, &i, sizeof(i)) == -1)
 				{
@@ -136,7 +136,7 @@ wd_create_hb_send_socket(WdHbIf hb_if)
 
 /* create socket for receiving heartbeat */
 int
-wd_create_hb_recv_socket(WdHbIf hb_if)
+wd_create_hb_recv_socket(WdHbIf *hb_if)
 {
 	struct sockaddr_in addr;
 	int sock;
@@ -166,14 +166,14 @@ wd_create_hb_recv_socket(WdHbIf hb_if)
 		return -1;
 	}
 
-	if (hb_if.if_name[0] != '\0')
+	if (hb_if->if_name[0] != '\0')
 	{
 #if defined(SO_BINDTODEVICE)
 		{
 			if (geteuid() == 0) /* check root privileges */
 			{
 				struct ifreq i;
-				strlcpy(i.ifr_name, hb_if.if_name, sizeof(i.ifr_name));
+				strlcpy(i.ifr_name, hb_if->if_name, sizeof(i.ifr_name));
 
 				if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, &i, sizeof(i)) == -1)
 				{
@@ -311,7 +311,7 @@ wd_hb_recv(int sock, WdHbPacket * pkt)
 
 /* fork heartbeat receiver child */
 pid_t
-wd_hb_receiver(int fork_wait_time, WdHbIf hb_if)
+wd_hb_receiver(int fork_wait_time, WdHbIf *hb_if)
 {
 	int sock;
 	pid_t pid = 0;
@@ -372,7 +372,7 @@ wd_hb_receiver(int fork_wait_time, WdHbIf hb_if)
 			if (strlen(pool_config->wd_authkey))
 			{
 				/* calculate hash from packet */
-				pack_str_len = packet_to_string_hb(pkt, pack_str, sizeof(pack_str));
+				pack_str_len = packet_to_string_hb(&pkt, pack_str, sizeof(pack_str));
 				wd_calc_hash(pack_str, pack_str_len, buf);
 
 				if (strcmp(pkt.hash, buf))
@@ -422,7 +422,7 @@ wd_hb_receiver(int fork_wait_time, WdHbIf hb_if)
 
 /* fork heartbeat sender child */
 pid_t
-wd_hb_sender(int fork_wait_time, WdHbIf hb_if)
+wd_hb_sender(int fork_wait_time, WdHbIf *hb_if)
 {
 	int sock;
 	pid_t pid = 0;
@@ -482,13 +482,13 @@ wd_hb_sender(int fork_wait_time, WdHbIf hb_if)
 		if (strlen(pool_config->wd_authkey))
 		{
 			/* calculate hash from packet */
-			pack_str_len = packet_to_string_hb(pkt, pack_str, sizeof(pack_str));
+			pack_str_len = packet_to_string_hb(&pkt, pack_str, sizeof(pack_str));
 			wd_calc_hash(pack_str, pack_str_len, pkt.hash);
 		}
 
 		/* send heartbeat signal */
-		wd_hb_send(sock, &pkt, sizeof(pkt), hb_if.addr, hb_if.dest_port);
-		pool_debug("wd_hb_sender: send heartbeat signal to %s:%d", hb_if.addr, hb_if.dest_port);
+		wd_hb_send(sock, &pkt, sizeof(pkt), hb_if->addr, hb_if->dest_port);
+		pool_debug("wd_hb_sender: send heartbeat signal to %s:%d", hb_if->addr, hb_if->dest_port);
 		sleep(pool_config->wd_heartbeat_keepalive);
 	}
 
@@ -567,11 +567,11 @@ ntoh_wd_hb_packet(WdHbPacket * to, WdHbPacket * from)
 
 /* convert packet to string and return length of the string */
 static int
-packet_to_string_hb(WdHbPacket pkt, char *str, int maxlen)
+packet_to_string_hb(WdHbPacket *pkt, char *str, int maxlen)
 {
 	int len;
 	len = snprintf(str, maxlen, "status=%d tv_sec=%ld tv_usec=%ld from=%s",
-	               pkt.status, pkt.send_time.tv_sec, pkt.send_time.tv_usec, pkt.from);
+	               pkt->status, pkt->send_time.tv_sec, pkt->send_time.tv_usec, pkt->from);
 
 	return len;
 }
