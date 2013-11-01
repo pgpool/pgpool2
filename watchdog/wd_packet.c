@@ -199,11 +199,13 @@ wd_create_send_socket(char * hostname, int port)
 	if ( setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *) &one, sizeof(one)) == -1 )
 	{
 		pool_error("wd_create_send_socket: setsockopt(TCP_NODELAY) failed. reason: %s", strerror(errno));
+		close(sock);
 		return -1;
 	}
 	if ( setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(one)) == -1 )
 	{
 		pool_error("wd_create_send_socket: setsockopt(SO_KEEPALIVE) failed. reason: %s", strerror(errno));
+		close(sock);
 		return -1;
 	}
 
