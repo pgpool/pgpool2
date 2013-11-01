@@ -462,8 +462,7 @@ wd_recv_packet(int sock, WdPacket * recv_pack)
 			if (read_size == len)
 			{
 
-				if ((ntohl(buf.packet_no) >= WD_INVALID) &&
-					(ntohl(buf.packet_no) <= WD_READY ))
+				if (ntohl(buf.packet_no) <= WD_READY)
 				{
 					ntoh_wd_packet(recv_pack,&buf);
 				}
