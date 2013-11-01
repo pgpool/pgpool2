@@ -151,7 +151,7 @@ wd_main(int fork_wait_time)
 		for (i = 0; i < pool_config->num_hb_if; i++)
 		{
 			/* heartbeat receiver process */
-			hb_receiver_pid[i] = wd_hb_receiver(1, pool_config->hb_if[i]);
+			hb_receiver_pid[i] = wd_hb_receiver(1, &(pool_config->hb_if[i]));
 			if (hb_receiver_pid[i] < 0 )
 			{
 				pool_error("launch wd_hb_receiver failed");
@@ -159,7 +159,7 @@ wd_main(int fork_wait_time)
 			}
 
 			/* heartbeat sender process */
-			hb_sender_pid[i] = wd_hb_sender(1, pool_config->hb_if[i]);
+			hb_sender_pid[i] = wd_hb_sender(1, &(pool_config->hb_if[i]));
 			if (hb_sender_pid[i] < 0 )
 			{
 				pool_error("launch wd_hb_sender failed");
@@ -314,7 +314,7 @@ wd_reaper_watchdog(pid_t pid, int status)
 				else
 					pool_debug("watchdog heartbeat receiver process %d exits with status %d", pid, status);
 
-				hb_receiver_pid[i] = wd_hb_receiver(1, pool_config->hb_if[i]);
+				hb_receiver_pid[i] = wd_hb_receiver(1, &(pool_config->hb_if[i]));
 
 				if (hb_receiver_pid[i] < 0)
 				{
@@ -334,7 +334,7 @@ wd_reaper_watchdog(pid_t pid, int status)
 				else
 					pool_debug("watchdog heartbeat sender process %d exits with status %d", pid, status);
 
-				hb_sender_pid[i] = wd_hb_sender(1, pool_config->hb_if[i]);
+				hb_sender_pid[i] = wd_hb_sender(1, &(pool_config->hb_if[i]));
 
 				if (hb_sender_pid[i] < 0)
 				{

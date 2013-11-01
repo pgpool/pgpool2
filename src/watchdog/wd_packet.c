@@ -505,7 +505,7 @@ wd_thread_negotiation(void * arg)
 	if (strlen(pool_config->wd_authkey))
 	{
 		/* calculate hash from packet */
-		pack_str_len = wd_packet_to_string(*(thread_arg->packet), pack_str, sizeof(pack_str));
+		pack_str_len = wd_packet_to_string(thread_arg->packet, pack_str, sizeof(pack_str));
 		wd_calc_hash(pack_str, pack_str_len, thread_arg->packet->hash);
 	}
 
@@ -1123,12 +1123,12 @@ wd_calc_hash(const char *str, int len, char *buf)
 }
 
 int
-wd_packet_to_string(WdPacket pkt, char *str, int maxlen)
+wd_packet_to_string(WdPacket *pkt, char *str, int maxlen)
 {
 	int len;
 
 	len = snprintf(str, maxlen, "no=%d tv_sec=%ld tv_usec=%ld",
-	               pkt.packet_no, pkt.send_time.tv_sec, pkt.send_time.tv_usec);
+	               pkt->packet_no, pkt->send_time.tv_sec, pkt->send_time.tv_usec);
 
 	return len;
 }

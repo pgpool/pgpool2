@@ -81,7 +81,7 @@ extern int wd_set_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count
 extern int wd_send_packet_no(WD_PACKET_NO packet_no );
 extern int wd_send_lock_packet(WD_PACKET_NO packet_no, WD_LOCK_ID lock_id);
 extern void wd_calc_hash(const char *str, int len, char *buf);
-int wd_packet_to_string(WdPacket pkt, char *str, int maxlen);
+int wd_packet_to_string(WdPacket *pkt, char *str, int maxlen);
 
 /* wd_ping.c */
 extern int wd_is_upper_ok(char * server_list);
@@ -99,12 +99,12 @@ extern int wd_check_heartbeat(WdInfo * pgpool);
 extern int wd_ping_pgpool(WdInfo * pgpool);
 
 /* wd_hearbeat.c */
-extern int wd_create_hb_send_socket(WdHbIf hb_if);
-extern int wd_create_hb_recv_socket(WdHbIf hb_if);
+extern int wd_create_hb_send_socket(WdHbIf * hb_if);
+extern int wd_create_hb_recv_socket(WdHbIf * hb_if);
 extern int wd_hb_send(int sock, WdHbPacket * pkt, int len, const char * destination, const int dest_port);
 extern int wd_hb_recv(int sock, WdHbPacket * pkt);
-extern pid_t wd_hb_receiver(int fork_wait_time, WdHbIf hb_if);
-extern pid_t wd_hb_sender(int fork_wait_time, WdHbIf hb_if);
+extern pid_t wd_hb_receiver(int fork_wait_time, WdHbIf * hb_if);
+extern pid_t wd_hb_sender(int fork_wait_time, WdHbIf * hb_if);
 
 /* wd_interlock.c */
 extern int wd_init_interlock(void);
