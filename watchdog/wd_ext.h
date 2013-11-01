@@ -81,7 +81,7 @@ extern int wd_set_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count
 extern int wd_send_packet_no(WD_PACKET_NO packet_no );
 extern int wd_send_lock_packet(WD_PACKET_NO packet_no, WD_LOCK_ID lock_id);
 extern void wd_calc_hash(const char *str, int len, char *buf);
-int wd_packet_to_string(WdPacket pkt, char *str, int maxlen);
+int wd_packet_to_string(WdPacket *pkt, char *str, int maxlen);
 
 /* wd_ping.c */
 extern int wd_is_upper_ok(char * server_list);

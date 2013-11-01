@@ -153,7 +153,7 @@ wd_send_response(int sock, WdPacket * recv_pack)
 	if (strlen(pool_config->wd_authkey))
 	{
 		/* calculate hash from packet */
-		pack_str_len = wd_packet_to_string(*recv_pack, pack_str, sizeof(pack_str));
+		pack_str_len = wd_packet_to_string(recv_pack, pack_str, sizeof(pack_str));
 		wd_calc_hash(pack_str, pack_str_len, hash);
 
 		if (strcmp(recv_pack->hash, hash))
