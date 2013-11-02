@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2012	PgPool Global Development Group
+ * Copyright (c) 2003-2013	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -73,7 +73,13 @@ void pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp) {
 
 	pool_debug("pool_ssl: sending client->server SSL request");
 	pool_write_and_flush(cp, ssl_packet, sizeof(int)*2);
-	pool_read(cp, &server_response, 1);
+
+	if (pool_read(cp, &server_response, 1) < 0)
+	{
+		pool_error("pool_ssl_negotiate_clientserver: pool_read failed");
+		return;
+	}
+
 	pool_debug("pool_ssl: client->server SSL response: %c", server_response);
 
 	switch (server_response) {
