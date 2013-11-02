@@ -246,6 +246,7 @@ void do_child(int unix_fd, int inet_fd)
 		{
 			pool_debug("SSLRequest from client");
 			pool_ssl_negotiate_serverclient(frontend);
+			pool_free_startup_packet(sp);
 			goto retry_startup;
 		}
 
