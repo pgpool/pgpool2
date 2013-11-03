@@ -2322,6 +2322,9 @@ void free_select_result(POOL_SELECT_RESULT *result)
 	int i, j;
 	int index;
 
+	if (result == NULL)
+		return;
+
 	if (result->nullflags)
 		free(result->nullflags);
 
