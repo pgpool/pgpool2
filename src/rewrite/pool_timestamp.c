@@ -318,6 +318,7 @@ get_current_timestamp(POOL_CONNECTION_POOL *backend)
 	if (status != POOL_CONTINUE)
 	{
 		pool_error("get_current_timestamp: do_query failed");
+		free_select_result(res);
 		return NULL;
 	}
 
@@ -869,6 +870,7 @@ static A_Const *makeStringConstFromQuery(POOL_CONNECTION_POOL *backend, char *ex
 	if (status != POOL_CONTINUE)
 	{
 		pool_error("makeStringConstFromQuery: do_query failed");
+		free_select_result(res);
 		return NULL;
 	}
 
