@@ -516,7 +516,8 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 		}
 		else
 		{
-			if (is_select_query(node, query) && !pool_config->replicate_select)
+			if (is_select_query(node, query) && !pool_config->replicate_select &&
+				!pool_has_function_call(node))
 			{
 				/* only send to master node */
 				pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);

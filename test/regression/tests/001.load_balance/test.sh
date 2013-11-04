@@ -93,11 +93,31 @@ EOF
 			fi
 		# the SELECT should be executed on node 0
 		fi
+
+# in replication mode if load_balance_mode = off, SELECT query
+# including writing function should be sent to all the nodes.
+# per [pgpool-general: 2221].
+		echo "black_function_list = 'f1'" >> etc/pgpool.conf
+		echo "white_function_list = ''" >> etc/pgpool.conf
+		./pgpool_reload
+		$PSQL test <<EOF
+SELECT f1(2);		-- this should be sent to all the nodes
+EOF
+		fgrep "SELECT f1(2);" log/pgpool.log |grep "DB node id: 0">/dev/null 2>&1
+		if [ $? = 0 ];then
+			fgrep "SELECT f1(2);" log/pgpool.log |grep "DB node id: 1">/dev/null 2>&1		
+			if [ $? = 0 ];then
+			# the SELECT should be executed on node 0 & 1
+				ok=`expr $ok + 1`
+			fi
+		# the SELECT should be executed on node 0
+		fi
+
 	fi
 
 	./shutdownall
 
-	if [ $ok != 1];then
+	if [ $ok != 2 ];then
 		exit 1;
 	fi
 
