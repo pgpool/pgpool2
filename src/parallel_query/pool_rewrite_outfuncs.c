@@ -48,6 +48,7 @@
 #include <limits.h>
 
 #include "pool.h"
+#include "utils/palloc.h"
 #include "parser/parser.h"
 #include "parser/pool_string.h"
 #include "parser/pg_list.h"

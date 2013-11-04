@@ -31,7 +31,6 @@
 #include "utils/pool_signal.h"
 #include "parser/nodes.h"
 
-#include "libpq-fe.h"
 #include <stdio.h>
 #include <time.h>
 #include <sys/time.h>
@@ -74,6 +73,12 @@
 
 /* default string used to identify pgpool on syslog output */
 #define DEFAULT_SYSLOG_IDENT "pgpool"
+
+/* function return codes */
+#define GENERAL_ERROR		(-1)
+#define RETRY				(-2)
+#define OPERATION_TIMEOUT	(-3)
+
 
 typedef enum {
 	POOL_CONTINUE = 0,
@@ -415,6 +420,16 @@ typedef enum {
 extern pid_t mypid; /* parent pid */
 extern bool run_as_pcp_child;
 
+typedef enum
+{
+	PT_MAIN,
+	PT_CHILD,
+	PT_WORKER,
+	PT_PCP
+} ProcessType;
+
+extern ProcessType processType;
+
 extern POOL_CONNECTION_POOL *pool_connection_pool;	/* connection pool */
 extern volatile sig_atomic_t backend_timer_expired; /* flag for connection closed timer is expired */
 extern volatile sig_atomic_t health_check_timer_expired;		/* non 0 if health check timer expired */
@@ -534,6 +549,7 @@ extern void pool_free_startup_packet(StartupPacket *sp);
 extern void child_exit(int code);
 
 extern void init_prepared_list(void);
+extern void proc_exit(int);
 
 extern void *pool_shared_memory_create(size_t size);
 extern void pool_shmem_exit(int code);
@@ -546,7 +562,6 @@ extern BackendInfo *pool_get_node_info(int node_number);
 extern int pool_get_node_count(void);
 extern int *pool_get_process_list(int *array_size);
 extern ProcessInfo *pool_get_process_info(pid_t pid);
-extern SystemDBInfo *pool_get_system_db_info(void);
 extern POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *query, char *database);
 
 /* child.c */
@@ -562,6 +577,9 @@ extern int pool_get_id (DistDefInfo *info, const char * value);
 extern int system_db_connect (void);
 extern int pool_memset_system_db_info (SystemDBInfo *info);
 extern void pool_close_libpq_connection(void);
+extern int system_db_health_check(void);
+extern SystemDBInfo *pool_get_system_db_info(void);
+
 
 /* pool_hba.c */
 extern int load_hba(char *hbapath);
@@ -633,4 +651,5 @@ extern int connect_inet_domain_socket_by_port(char *host, int port, bool retry);
 extern int connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry);
 extern int pool_pool_index(void);
 
+extern int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps);
 #endif /* POOL_H */

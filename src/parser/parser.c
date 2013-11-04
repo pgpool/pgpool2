@@ -22,15 +22,14 @@
 
 #include <string.h>
 #include "pool_parser.h"
-#include "pool_memory.h"
+#include "utils/palloc.h"
 #include "gramparse.h"	/* required before parser/gram.h! */
 #include "gram.h"
 #include "parser.h"
 #include "pg_wchar.h"
-
+#include "utils/elog.h"
 
 List	   *parsetree;			/* result of parsing is left here */
-jmp_buf    jmpbuffer;
 int			server_version_num = 0;
 
 static pg_enc		server_encoding = PG_SQL_ASCII;
@@ -52,8 +51,9 @@ raw_parser(const char *str)
 	base_yy_extra_type yyextra;
 	int			yyresult;
 
-	if (pool_memory == NULL)
-		pool_memory = pool_memory_create(PARSER_BLOCK_SIZE);
+//	Do we need a seperate memory context here?
+//	if (pool_memory == NULL)
+//		pool_memory = pool_memory_create(PARSER_BLOCK_SIZE);
 
 	parsetree = NIL;			/* in case grammar forgets to set it */
 
@@ -66,30 +66,29 @@ raw_parser(const char *str)
 
 	/* initialize the bison parser */
 	parser_init(&yyextra);
-
 	in_parser_context = true;
-	if (setjmp(jmpbuffer) != 0)
+	PG_TRY();
+	{
+		yyresult = base_yyparse(yyscanner);
+		scanner_finish(yyscanner);
+		in_parser_context = false;
+		if (yyresult)				/* error */
+			return NIL;
+		return yyextra.parsetree;
+	}
+	PG_CATCH();
 	{
 		scanner_finish(yyscanner);
 		in_parser_context = false;
 		return NIL; /* error */
 	}
-	else
-	{
-		yyresult = base_yyparse(yyscanner);
-
-		scanner_finish(yyscanner);
-
-		in_parser_context = false;
-		if (yyresult)				/* error */
-			return NIL;
-	}
+	PG_END_TRY();
 	return yyextra.parsetree;
 }
 
 void free_parser(void)
 {
-	pool_memory_delete(pool_memory, 1);
+	//pool_memory_delete(pool_memory, 1);
 }
 
 /*
@@ -194,18 +193,6 @@ base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 	return cur_token;
 }
 
-
-void
-pool_parser_error(int level, const char *file, int line)
-{
-#ifdef PARSER_DEBUG
-	fprintf(stderr, "error: %d %s %d\n", level, file, line);
-#endif
-	if (level < ERROR)
-		return;
-	if (in_parser_context)
-		longjmp(jmpbuffer, 1);
-}
 
 static int
 parse_version(const char *versionString)

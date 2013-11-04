@@ -18,6 +18,7 @@
 #ifndef STRINGINFO_H
 #define STRINGINFO_H
 
+#include <stdio.h>
 #include "pg_config_manual.h"
 
 /* port.h */
@@ -28,10 +29,13 @@ extern int pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args);
  *  above from being replaced, and this is required because gcc doesn't
  *  know anything about pg_printf.
  */
+#ifndef vsnprintf
+
 #ifdef __GNUC__
 #define vsnprintf(...)  pg_vsnprintf(__VA_ARGS__)
 #else
 #define vsnprintf       pg_vsnprintf
+#endif
 #endif
 
 /* utils.memutils.h */

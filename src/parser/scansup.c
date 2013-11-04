@@ -15,7 +15,7 @@
  *-------------------------------------------------------------------------
  */
 #include "pool_parser.h"
-#include "pool_memory.h"
+#include "utils/palloc.h"
 
 #include <ctype.h>
 #include <string.h>

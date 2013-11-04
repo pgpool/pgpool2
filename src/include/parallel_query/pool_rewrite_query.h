@@ -29,7 +29,6 @@
 #include "parser/parser.h"
 #include "parser/pg_list.h"
 #include "parser/parsenodes.h"
-#include "parser/pool_memory.h"
 #include "parser/pool_string.h"
 
 /* return code set */

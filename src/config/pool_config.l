@@ -24,15 +24,28 @@
  */
 
 %{
-
 #include "pool.h"
 #include "pool_config.h"
+#ifndef POOL_PRIVATE
+#include "utils/elog.h"
+#else
+#include "utils/fe_ports.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define CHECK_CONTEXT(mask, context) ((mask) & (context))
+
+#ifdef POOL_PRIVATE
+
+/* we do not have elog api for pg_md5 utility*/
+/* include/utils/elog.h */
+#define ereport(elevel, rest) printf("pool_config: error at %s:%d\n", __FILE__, __LINE__)
+#define ereport(elevel, rest) printf("pool_config: error at %s:%d\n", __FILE__, __LINE__)
+
+#endif
 
 /* to shut off compiler warnings */
 int yylex(void);
@@ -434,15 +447,30 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 	bool use_memcached = false;
 #endif
 
-#define PARSE_ERROR()		pool_error("pool_config: parse error at line %d '%s'", Lineno, yytext)
+#ifndef POOL_PRIVATE
+#define PARSE_ERROR()		ereport(FATAL, \
+								(errmsg("syntex error in configuration file \"%s\"",POOL_CONF_FILE_NAME), \
+									errdetail("parse error at line %d '%s'", Lineno, yytext)))
+#else
+#define PARSE_ERROR()		fprintf(stderr,"ERROR: syntex error in configuration file \"%s\"",POOL_CONF_FILE_NAME); \
+							fprintf(stderr,"DETAILS: parse error at line %d '%s'", Lineno, yytext)
+#endif
 
 	/* open config file */
 	fd = fopen(confpath, "r");
 	if (!fd)
 	{
-		fprintf(stderr, "pool_config: could not open configuration file (%s)\n",
+#ifndef POOL_PRIVATE
+		ereport(WARNING,
+			(errmsg("could not open configuration file \"%s\"\n",
+				POOL_CONF_FILE_NAME)));
+		ereport(NOTICE,
+			(errmsg("using default configuration parameter values")));
+#else
+		fprintf(stderr,"WARNING: could not open configuration file \"%s\"\n",
 				POOL_CONF_FILE_NAME);
-		fprintf(stderr, "pool_config: using default values...\n");
+		fprintf(stderr,"NOTICE: using default configuration parameter values");
+#endif
 		return 0;
 	}
 
@@ -474,15 +502,19 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 		strlcpy(key, yytext, sizeof(key));
 
-		pool_debug("key: %s", key);
-
+#ifndef POOL_PRIVATE
+		ereport(DEBUG5,
+			(errmsg("key: %s", key)));
+#endif
 		token = yylex();
 
 		if (token == POOL_EQUALS)
 			token = yylex();
 
-		pool_debug("value: %s kind: %d", yytext, token);
-
+#ifndef POOL_PRIVATE
+		ereport(DEBUG5,
+			(errmsg("value: %s kind: %d", yytext, token)));
+#endif
 		if (!strcmp(key, "allow_inet_domain_socket") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			/* for backward compatibility */

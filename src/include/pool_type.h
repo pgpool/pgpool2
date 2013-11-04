@@ -30,7 +30,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include "pcp/libpcp_ext.h"
-
+#include "libpq-fe.h"
 /* Define common boolean type. C++ and BEOS already has it so exclude them. */
 #ifdef c_plusplus
 #ifndef __cplusplus
@@ -85,6 +85,18 @@ typedef enum {
 typedef struct {
 	BACKEND_STATUS status[MAX_NUM_BACKENDS];
 } BackendStatusRecord;
+
+
+#define MAXIMUM_ALIGNOF 8
+
+#define TYPEALIGN(ALIGNVAL,LEN)  \
+	(((intptr_t) (LEN) + ((ALIGNVAL) - 1)) & ~((intptr_t) ((ALIGNVAL) - 1)))
+
+#define SHORTALIGN(LEN)			TYPEALIGN(ALIGNOF_SHORT, (LEN))
+#define INTALIGN(LEN)			TYPEALIGN(ALIGNOF_INT, (LEN))
+#define LONGALIGN(LEN)			TYPEALIGN(ALIGNOF_LONG, (LEN))
+#define DOUBLEALIGN(LEN)		TYPEALIGN(ALIGNOF_DOUBLE, (LEN))
+#define MAXALIGN(LEN)			TYPEALIGN(MAXIMUM_ALIGNOF, (LEN))
 
 /*
  *  It seems that sockaddr_storage is now commonly used in place of sockaddr.
@@ -164,6 +176,280 @@ UserAuth;
 #define AUTH_REQ_SCM_CREDS  6   /* transfer SCM credentials */
 
 typedef unsigned int AuthRequest;
+
+/* no special DLL markers on most ports */
+#ifndef PGDLLIMPORT
+#define PGDLLIMPORT
+#endif
+#ifndef PGDLLEXPORT
+#define PGDLLEXPORT
+#endif
+#define STATIC_IF_INLINE
+
+typedef uint8 bits8;			/* >= 8 bits */
+typedef uint16 bits16;			/* >= 16 bits */
+typedef uint32 bits32;			/* >= 32 bits */
+typedef unsigned long long int uint64;
+
+
+typedef size_t Size;
+typedef unsigned long Datum;	/* XXX sizeof(long) >= sizeof(void *) */
+
+typedef void (*pg_on_exit_callback) (int code, Datum arg);
+/*
+ * NULL
+  *		Null pointer.
+   */
+#ifndef NULL
+#define NULL	((void *) 0)
+#endif
+
+/* ----------------------------------------------------------------
+ *				Section 6:	assertions
+ * ----------------------------------------------------------------
+ */
+
+/*
+ * USE_ASSERT_CHECKING, if defined, turns on all the assertions.
+ * - plai  9/5/90
+ *
+ * It should _NOT_ be defined in releases or in benchmark copies
+ */
+
+/*
+ * Assert() can be used in both frontend and backend code. In frontend code it
+ * just calls the standard assert, if it's available. If use of assertions is
+ * not configured, it does nothing.
+ */
+#ifndef USE_ASSERT_CHECKING
+
+#define Assert(condition)
+#define AssertMacro(condition)	((void)true)
+#define AssertArg(condition)
+#define AssertState(condition)
+#define Trap(condition, errorType)
+#define TrapMacro(condition, errorType)	(true)
+
+#elif defined(FRONTEND)
+
+#include <assert.h>
+#define Assert(p) assert(p)
+#define AssertMacro(p)	((void) assert(p))
+#define AssertArg(condition) assert(condition)
+#define AssertState(condition) assert(condition)
+#else							/* USE_ASSERT_CHECKING && !FRONTEND */
+
+/*
+ * Trap
+ *		Generates an exception if the given condition is true.
+ */
+#define Trap(condition, errorType) \
+	do { \
+		if ((assert_enabled) && (condition)) \
+		ExceptionalCondition(CppAsString(condition), (errorType), \
+				__FILE__, __LINE__); \
+	} while (0)
+
+/*
+ *	TrapMacro is the same as Trap but it's intended for use in macros:
+ *
+ *		#define foo(x) (AssertMacro(x != 0), bar(x))
+ *
+ *	Isn't CPP fun?
+ */
+#define TrapMacro(condition, errorType) \
+	((bool) ((! assert_enabled) || ! (condition) || \
+		(ExceptionalCondition(CppAsString(condition), (errorType), \
+							  __FILE__, __LINE__), 0)))
+
+#define Assert(condition) \
+	Trap(!(condition), "FailedAssertion")
+
+#define AssertMacro(condition) \
+	((void) TrapMacro(!(condition), "FailedAssertion"))
+
+#define AssertArg(condition) \
+	Trap(!(condition), "BadArgument")
+
+#define AssertState(condition) \
+	Trap(!(condition), "BadState")
+#endif   /* USE_ASSERT_CHECKING && !FRONTEND */
+
+
+/*
+ * Macros to support compile-time assertion checks.
+ *
+ * If the "condition" (a compile-time-constant expression) evaluates to false,
+ * throw a compile error using the "errmessage" (a string literal).
+ *
+ * gcc 4.6 and up supports _Static_assert(), but there are bizarre syntactic
+ * placement restrictions.	These macros make it safe to use as a statement
+ * or in an expression, respectively.
+ *
+ * Otherwise we fall back on a kluge that assumes the compiler will complain
+ * about a negative width for a struct bit-field.  This will not include a
+ * helpful error message, but it beats not getting an error at all.
+ */
+#ifdef HAVE__STATIC_ASSERT
+#define StaticAssertStmt(condition, errmessage) \
+	do { _Static_assert(condition, errmessage); } while(0)
+#define StaticAssertExpr(condition, errmessage) \
+	({ StaticAssertStmt(condition, errmessage); true; })
+#else							/* !HAVE__STATIC_ASSERT */
+#define StaticAssertStmt(condition, errmessage) \
+	((void) sizeof(struct { int static_assert_failure : (condition) ? 1 : -1; }))
+#define StaticAssertExpr(condition, errmessage) \
+	StaticAssertStmt(condition, errmessage)
+#endif   /* HAVE__STATIC_ASSERT */
+
+
+/*
+ * Compile-time checks that a variable (or expression) has the specified type.
+ *
+ * AssertVariableIsOfType() can be used as a statement.
+ * AssertVariableIsOfTypeMacro() is intended for use in macros, eg
+ *		#define foo(x) (AssertVariableIsOfTypeMacro(x, int), bar(x))
+ *
+ * If we don't have __builtin_types_compatible_p, we can still assert that
+ * the types have the same size.  This is far from ideal (especially on 32-bit
+ * platforms) but it provides at least some coverage.
+ */
+#ifdef HAVE__BUILTIN_TYPES_COMPATIBLE_P
+#define AssertVariableIsOfType(varname, typename) \
+	StaticAssertStmt(__builtin_types_compatible_p(__typeof__(varname), typename), \
+			CppAsString(varname) " does not have type " CppAsString(typename))
+#define AssertVariableIsOfTypeMacro(varname, typename) \
+	((void) StaticAssertExpr(__builtin_types_compatible_p(__typeof__(varname), typename), \
+		CppAsString(varname) " does not have type " CppAsString(typename)))
+#else							/* !HAVE__BUILTIN_TYPES_COMPATIBLE_P */
+#define AssertVariableIsOfType(varname, typename) \
+	StaticAssertStmt(sizeof(varname) == sizeof(typename), \
+			CppAsString(varname) " does not have type " CppAsString(typename))
+#define AssertVariableIsOfTypeMacro(varname, typename) \
+																((void) StaticAssertExpr(sizeof(varname) == sizeof(typename),		\
+																	 CppAsString(varname) " does not have type " CppAsString(typename)))
+#endif   /* HAVE__BUILTIN_TYPES_COMPATIBLE_P */
+/*
+ * StrNCpy
+ *	Like standard library function strncpy(), except that result string
+ *	is guaranteed to be null-terminated --- that is, at most N-1 bytes
+ *	of the source string will be kept.
+ *	Also, the macro returns no result (too hard to do that without
+ *	evaluating the arguments multiple times, which seems worse).
+ *
+ *	BTW: when you need to copy a non-null-terminated string (like a text
+ *	datum) and add a null, do not do it with StrNCpy(..., len+1).  That
+ *	might seem to work, but it fetches one byte more than there is in the
+ *	text object.  One fine day you'll have a SIGSEGV because there isn't
+ *	another byte before the end of memory.	Don't laugh, we've had real
+ *	live bug reports from real live users over exactly this mistake.
+ *	Do it honestly with "memcpy(dst,src,len); dst[len] = '\0';", instead.
+ */
+#define StrNCpy(dst,src,len) \
+	do \
+	{ \
+		char * _dst = (dst); \
+		Size _len = (len); \
+\
+		if (_len > 0) \
+		{ \
+			strncpy(_dst, (src), _len); \
+			_dst[_len-1] = '\0'; \
+		} \
+	} while (0)
+
+
+/* Get a bit mask of the bits set in non-long aligned addresses */
+#define LONG_ALIGN_MASK (sizeof(long) - 1)
+#define MEMSET_LOOP_LIMIT 1024
+
+/*
+ * MemSet
+ *	Exactly the same as standard library function memset(), but considerably
+ *	faster for zeroing small word-aligned structures (such as parsetree nodes).
+ *	This has to be a macro because the main point is to avoid function-call
+ *	overhead.	However, we have also found that the loop is faster than
+ *	native libc memset() on some platforms, even those with assembler
+ *	memset() functions.  More research needs to be done, perhaps with
+ *	MEMSET_LOOP_LIMIT tests in configure.
+ */
+#define MemSet(start, val, len) \
+	do \
+	{ \
+		/* must be void* because we don't know if it is integer aligned yet */ \
+		void   *_vstart = (void *) (start); \
+		int		_val = (val); \
+		Size	_len = (len); \
+\
+		if ((((intptr_t) _vstart) & LONG_ALIGN_MASK) == 0 && \
+			(_len & LONG_ALIGN_MASK) == 0 && \
+			_val == 0 && \
+			_len <= MEMSET_LOOP_LIMIT && \
+			/* \
+			 *	If MEMSET_LOOP_LIMIT == 0, optimizer should find \
+			 *	the whole "if" false at compile time. \
+			 */ \
+			MEMSET_LOOP_LIMIT != 0) \
+		{ \
+			long *_start = (long *) _vstart; \
+			long *_stop = (long *) ((char *) _start + _len); \
+			while (_start < _stop) \
+				*_start++ = 0; \
+		} \
+		else \
+			memset(_vstart, _val, _len); \
+	} while (0)
+
+/*
+ * MemSetAligned is the same as MemSet except it omits the test to see if
+ * "start" is word-aligned.  This is okay to use if the caller knows a-priori
+ * that the pointer is suitably aligned (typically, because he just got it
+ * from palloc(), which always delivers a max-aligned pointer).
+ */
+#define MemSetAligned(start, val, len) \
+	do \
+	{ \
+		long   *_start = (long *) (start); \
+		int		_val = (val); \
+		Size	_len = (len); \
+\
+		if ((_len & LONG_ALIGN_MASK) == 0 && \
+			_val == 0 && \
+			_len <= MEMSET_LOOP_LIMIT && \
+			MEMSET_LOOP_LIMIT != 0) \
+		{ \
+			long *_stop = (long *) ((char *) _start + _len); \
+			while (_start < _stop) \
+				*_start++ = 0; \
+		} \
+		else \
+			memset(_start, _val, _len); \
+	} while (0)
+
+
+/*
+ * MemSetTest/MemSetLoop are a variant version that allow all the tests in
+ * MemSet to be done at compile time in cases where "val" and "len" are
+ * constants *and* we know the "start" pointer must be word-aligned.
+ * If MemSetTest succeeds, then it is okay to use MemSetLoop, otherwise use
+ * MemSetAligned.  Beware of multiple evaluations of the arguments when using
+ * this approach.
+ */
+#define MemSetTest(val, len) \
+	( ((len) & LONG_ALIGN_MASK) == 0 && \
+	(len) <= MEMSET_LOOP_LIMIT && \
+	MEMSET_LOOP_LIMIT != 0 && \
+	(val) == 0 )
+
+#define MemSetLoop(start, val, len) \
+	do \
+	{ \
+		long * _start = (long *) (start); \
+		long * _stop = (long *) ((char *) _start + (Size) (len)); \
+	\
+		while (_start < _stop) \
+			*_start++ = 0; \
+	} while (0)
 
 
 #endif /* POOL_TYPE_H */

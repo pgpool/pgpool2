@@ -23,6 +23,8 @@
 #include "pool.h"
 #include "pool_config.h"
 #include "protocol/pool_proto_modules.h"
+#include "utils/palloc.h"
+#include "utils/memutils.h"
 #include "utils/pool_select_walker.h"
 #include "context/pool_session_context.h"
 #include "context/pool_query_context.h"
@@ -61,7 +63,11 @@ POOL_QUERY_CONTEXT *pool_init_query_context(void)
 	}
 
 	/* Create memory context */
-	qc->memory_context = pool_memory_create(PARSER_BLOCK_SIZE);
+	qc->memory_context = AllocSetContextCreate(CurrentMemoryContext,
+									 "QueryContext",
+									 ALLOCSET_DEFAULT_MINSIZE,
+									 ALLOCSET_DEFAULT_INITSIZE,
+									 ALLOCSET_DEFAULT_MAXSIZE);
 
 	return qc;
 }
@@ -78,7 +84,8 @@ void pool_query_context_destroy(POOL_QUERY_CONTEXT *query_context)
 		session_context = pool_get_session_context();
 		pool_unset_query_in_progress();
 		session_context->query_context = NULL;
-		pool_memory_delete(query_context->memory_context, 0);
+		MemoryContextDelete(query_context->memory_context);
+
 		free(query_context);
 	}
 }
@@ -361,11 +368,11 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	else if (MASTER_SLAVE)
 	{
 		POOL_DEST dest;
-		POOL_MEMORY_POOL *old_context;
+		MemoryContext old_context;
 
-		old_context = pool_memory_context_switch_to(query_context->memory_context);
+		old_context = MemoryContextSwitchTo(query_context->memory_context);
 		dest = send_to_where(node, query);
-		pool_memory_context_switch_to(old_context);
+		MemoryContextSwitchTo(old_context);
 
 		pool_debug("send_to_where: %d query: %s", dest, query);
 
@@ -936,6 +943,7 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
  * primary, the standby or either or both in master/slave+HR/SR mode.
  */
 static POOL_DEST send_to_where(Node *node, char *query)
+
 {
 /* From storage/lock.h */
 #define NoLock					0

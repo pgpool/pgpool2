@@ -163,15 +163,24 @@ getnameinfo_all(const struct sockaddr_storage * addr, int salen,
 	int			rc;
 
 	if (addr && addr->ss_family == AF_UNIX)
+	{
 		rc = getnameinfo_unix((const struct sockaddr_un *) addr, salen,
 							  node, nodelen,
 							  service, servicelen,
 							  flags);
+		printf("***** getnameinfo_unix() AF_UNIX\n");
+	}
 	else
+	{
 		rc = getnameinfo((const struct sockaddr *) addr, salen,
 						 node, nodelen,
 						 service, servicelen,
 						 flags);
+		printf("***** getnameinfo() OTHERS\n");
+
+	}
+			
+	printf("***** addr->ss_family = %u\n",(unsigned )addr->ss_family);
 
 	if (rc != 0)
 	{

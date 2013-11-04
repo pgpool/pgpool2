@@ -34,6 +34,7 @@
 #include <errno.h>
 
 #include "pool.h"
+#include "utils/elog.h"
 #include "pool_config.h"
 #include "watchdog/watchdog.h"
 #include "watchdog/wd_ext.h"
@@ -123,10 +124,8 @@ wd_main(int fork_wait_time)
 	/* check pool_config data */
 	status = wd_check_config();
 	if (status != WD_OK)
-	{
-		pool_error("watchdog: wd_check_config failed");
-		return 0;
-	}
+		ereport(FATAL,
+			(errmsg("watchdog: wd_check_config failed")));
 
 	/* initialize */
 	status = wd_init();

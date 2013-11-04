@@ -24,7 +24,7 @@
 #define IPC_H
 
 
-typedef unsigned long Datum;	/* XXX sizeof(long) >= sizeof(void *) */
+//typedef unsigned long Datum;	/* XXX sizeof(long) >= sizeof(void *) */
 
 
 #define IPCProtection	(0600)	/* access/modify by user only */

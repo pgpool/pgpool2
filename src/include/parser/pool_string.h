@@ -18,7 +18,7 @@
 
 #ifndef POOL_STRING_H
 #define POOL_STRING_H
-
+#include "pg_list.h"
 #define STRING_SIZE 128
 
 typedef struct
@@ -28,6 +28,7 @@ typedef struct
 	char *data;
 } String;
 
+extern String *NameListToString(List *names);
 extern String *init_string(char *str);
 extern void string_append_string(String *string, String *append_data);
 extern void string_append_char(String *string, char *append_data);

@@ -25,7 +25,7 @@
 
 #include <string.h>
 #include <stddef.h>
-#include "pool_memory.h"
+#include "utils/palloc.h"
 #include "parsenodes.h"
 
 

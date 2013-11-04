@@ -22,8 +22,8 @@
  */
 #include <string.h>
 #include <limits.h>
-
-#include "pool_memory.h"
+#include "pool_type.h"
+#include "utils/palloc.h"
 #include "parser.h"
 #include "pool_string.h"
 #include "pg_list.h"
@@ -196,7 +196,7 @@ static void _outCurrentOfExpr(String *str, CurrentOfExpr *node);
  * In most scenarios the list elements should always be Value strings,
  * but we also allow A_Star for the convenience of ColumnRef processing.
  */
-static String *NameListToString(List *names)
+String *NameListToString(List *names)
 {
 	String *str;
 	ListCell   *l;

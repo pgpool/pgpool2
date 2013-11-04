@@ -26,7 +26,7 @@
 #include "utils/pool_stream.h"
 #include "pool_config.h"
 #include "auth/pool_passwd.h"
-
+#include "utils/elog.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -67,14 +67,15 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	int authkind;
 	int i;
 	StartupPacket *sp;
+	
 
 	protoMajor = MAJOR(cp);
 
 	kind = pool_read_kind(cp);
 	if (kind < 0)
-	{
-		return -1;
-	}
+		ereport(ERROR,
+			(errmsg("invalid authentication packet from backend"),
+				errdetail("failed to get response kind")));
 
 	/* error response? */
 	if (kind == 'E')
@@ -84,27 +85,30 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 		 * a V2 protocol error response in the hope that v3 frontend
 		 * will negotiate again using v2 protocol.
 		 */
-		pool_log("pool_do_auth: maybe protocol version mismatch (current version %d)", protoMajor);
+
 		ErrorResponse(frontend, cp);
-		return -1;
+
+		ereport(ERROR,
+			(errmsg("backend authentication failed"),
+				errdetail("backend response with kind \'E\' when expecting \'R\'"),
+					errhint("This issue can be caused by version mismatch (current version %d)", protoMajor)));
 	}
 	else if (kind != 'R')
-	{
-		pool_error("pool_do_auth: expect \"R\" got %c", kind);
-		return -1;
-	}
+		ereport(ERROR,
+			(errmsg("backend authentication failed"),
+				errdetail("backend response with kind \'%c\' when expecting \'R\'",kind)));
 
 	/*
 	 * message length (v3 only)
 	 */
 	if (protoMajor == PROTO_MAJOR_V3 && pool_read_message_length(cp) < 0)
-	{
-		pool_error("Failed to read the authentication packet length. \
-This is likely caused by the inconsistency of auth method among DB nodes. \
-In this case you can check the previous error messages (hint: length field) \
-from pool_read_message_length and recheck the pg_hba.conf settings.");
-		return -1;
-	}
+		ereport(ERROR,
+			(errmsg("invalid authentication packet from backend"),
+				errdetail("failed to get the authentication packet length"),
+					errhint("This is likely caused by the inconsistency of auth method among DB nodes. \
+							Please check the previous error messages (hint: length field) \
+							from pool_read_message_length and recheck the pg_hba.conf settings.")));
+
 
 	/*
 	 * read authentication request kind.
@@ -124,10 +128,9 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 
 	authkind = pool_read_int(cp);
 	if (authkind < 0)
-	{
-		pool_error("pool_do_auth: read auth kind failed");
-		return -1;
-	}
+		ereport(ERROR,
+			(errmsg("invalid authentication packet from backend"),
+				errdetail("failed to get auth kind")));
 
 	authkind = ntohl(authkind);
 
@@ -149,7 +152,10 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 		msglen = htonl(0);
 		if (pool_write_and_flush(frontend, &msglen, sizeof(msglen)) < 0)
 		{
-			return -1;
+			ereport(ERROR,
+				(errmsg("failed to authenticate with backend"),
+					errdetail("unable to write to frontend")));
+
 		}
 		MASTER(cp)->auth_kind = 0;
 	}
@@ -170,7 +176,9 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 			{
 				pool_debug("do_clear_text_password failed in slot %d", i);
 				pool_send_auth_fail(frontend, cp);
-				return -1;
+				ereport(ERROR,
+					(errmsg("failed to authenticate with backend"),
+						errdetail("do_clear_text_password failed in slot %d", i)));
 			}
 		}
 	}
@@ -189,9 +197,10 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 
 			if (authkind < 0)
 			{
-				pool_debug("do_crypt_text_password failed in slot %d", i);
 				pool_send_auth_fail(frontend, cp);
-				return -1;
+				ereport(ERROR,
+					(errmsg("failed to authenticate with backend"),
+						errdetail("do_crypt_text_password failed in slot %d", i)));
 			}
 		}
 	}
@@ -209,7 +218,10 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 									"",
 									"check pg_hba.conf",
 									__FILE__, __LINE__);
-			return -1;
+			ereport(ERROR,
+				(errmsg("failed to authenticate with backend"),
+					errdetail("MD5 authentication is not supported in replication, master-slave and parallel modes."),
+						errhint("check pg_hba.conf settings on backend node")));
 		}
 
 		for (i=0;i<NUM_BACKENDS;i++)
@@ -223,24 +235,25 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 
 			if (authkind < 0)
 			{
-				pool_debug("do_md5failed in slot %d", i);
 				pool_send_auth_fail(frontend, cp);
-				return -1;
+				ereport(ERROR,
+					(errmsg("failed to authenticate with backend"),
+						errdetail("MD5 authentication failed in slot [%d].",i)));
 			}
 		}
 	}
 
 	else
 	{
-		pool_error("pool_do_auth: unsupported auth kind received: %d", authkind);
-		return -1;
+		ereport(ERROR,
+			(errmsg("failed to authenticate with backend"),
+				errdetail("unsupported auth kind received from backend: authkind:%d", authkind)));
 	}
 
 	if (authkind != 0)
-	{
-		pool_error("pool_do_auth: unknown authentication response from backend %d", authkind);
-		return -1;
-	}
+		ereport(ERROR,
+			(errmsg("failed to authenticate with backend"),
+				errdetail("invalid auth kind received from backend: authkind:%d", authkind)));
 
 	/*
 	 * authentication ok. now read pid and secret key from the
@@ -248,13 +261,14 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 	 */
 	for (;;)
 	{
-		char *message;
-
+		char *message = NULL;
 		kind = pool_read_kind(cp);
+
 		if (kind < 0)
 		{
-			pool_error("pool_do_auth: failed to read kind before BackendKeyData");
-			return -1;
+			ereport(ERROR,
+				(errmsg("authentication failed from backend"),
+					errdetail("failed to read kind before BackendKeyData")));
 		}
 		else if (kind == 'K')
 			break;
@@ -271,31 +285,42 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 					break;
 
 				case 'N':
-					if (pool_extract_error_message(true, MASTER(cp), protoMajor, true, &message) == 1)
+					if (pool_extract_error_message(false, MASTER(cp), protoMajor, true, &message) == 1)
 					{
-						pool_log("pool_do_auth: notice message from backend:%s", message);
+						ereport(NOTICE,
+							(errmsg("notice from backend"),
+								errdetail("BACKEND NOTICE: \"%s\"",message)));
 					}
 					/* process notice message */
 					if (SimpleForwardToFrontend(kind, frontend, cp))
-						return -1;
+						ereport(ERROR,
+							(errmsg("authentication failed"),
+								errdetail("failed to forward message to frontend")));
 					pool_flush(frontend);
 					break;
 
 					/* process error message */
 				case 'E':
-					if (pool_extract_error_message(true, MASTER(cp), protoMajor, true, &message) == 1)
+
+					if (pool_extract_error_message(false, MASTER(cp), protoMajor, true, &message) == 1)
 					{
 						pool_log("pool_do_auth: error message from backend:%s", message);
 					}
+
 					SimpleForwardToFrontend(kind, frontend, cp);
+
 					pool_flush(frontend);
-					return -1;
+
+					ereport(ERROR,
+						(errmsg("authentication failed, backend node replied with an error"),
+							errdetail("SERVER ERROR:\"%s\"",message?message:"could not extract backend message")));
+
 					break;
 
 				default:
-					pool_error("pool_do_auth: unknown response \"%c\" before processing BackendKeyData",
-							   kind);
-					return -1;
+					ereport(ERROR,
+						(errmsg("authentication failed"),
+							errdetail("unknown response \"%c\" before processing BackendKeyData",kind)));
 					break;
 			}
 		}
@@ -307,19 +332,19 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 				case 'N':
 					/* process notice message */
 					if (NoticeResponse(frontend, cp) != POOL_CONTINUE)
-						return -1;
+						ereport(ERROR,
+							(errmsg("authentication failed"),
+								errdetail("unable to send Notice response to backend")));
 					break;
 
 					/* process error message */
 				case 'E':
 					ErrorResponse(frontend, cp);
-					return -1;
-					break;
-
+					/* fallthrough*/
 				default:
-					pool_error("pool_do_auth: unknown response \"%c\" before processing V2 BackendKeyData",
-							   kind);
-					return -1;
+					ereport(ERROR,
+						(errmsg("authentication failed"),
+							errdetail("invalid response \"%c\" before processing BackendKeyData",kind)));
 					break;
 			}
 		}
@@ -331,15 +356,15 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 	if (protoMajor == PROTO_MAJOR_V3)
 	{
 		if (kind != 'K')
-		{
-			pool_error("pool_do_auth: expect \"K\" got %c", kind);
-			return -1;
-		}
+			ereport(ERROR,
+				(errmsg("authentication failed"),
+					errdetail("invalid find \"%c\" when expecting \"K\"",kind)));
 
 		if ((length = pool_read_message_length(cp)) != 12)
 		{
-			pool_error("pool_do_auth: invalid messages length(%d) for BackendKeyData", length);
-			return -1;
+			ereport(ERROR,
+				(errmsg("authentication failed"),
+					errdetail("invalid messages length(%d) for BackendKeyData", length)));
 		}
 	}
 
@@ -355,8 +380,9 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 			/* read pid */
 			if (pool_read(CONNECTION(cp, i), &pid, sizeof(pid)) < 0)
 			{
-				pool_error("pool_do_auth: failed to read pid in slot %d", i);
-				return -1;
+				ereport(ERROR,
+					(errmsg("authentication failed"),
+						errdetail("failed to read pid in slot %d", i)));
 			}
 
 			pool_debug("pool_do_auth: cp->info[i]:%p pid:%u", &cp->info[i], ntohl(pid));
@@ -366,8 +392,9 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 			/* read key */
 			if (pool_read(CONNECTION(cp, i), &key, sizeof(key)) < 0)
 			{
-				pool_error("pool_do_auth: failed to read key in slot %d", i);
-				return -1;
+				ereport(ERROR,
+					(errmsg("authentication failed"),
+						errdetail("failed to read key in slot %d", i)));
 			}
 			CONNECTION_SLOT(cp, i)->key = cp->info[i].key = key;
 
@@ -387,7 +414,11 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 	strncpy(cp->info->user, sp->user, sizeof(cp->info->user) - 1);
 	cp->info->counter = 1;
 #endif
-	return pool_send_backend_key_data(frontend, pid, key, protoMajor);
+	if(pool_send_backend_key_data(frontend, pid, key, protoMajor))
+		ereport(ERROR,
+			(errmsg("authentication failed"),
+				errdetail("failed to send backend data to frontedn")));
+	return 0;
 }
 
 /*

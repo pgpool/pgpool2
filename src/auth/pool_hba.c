@@ -35,7 +35,8 @@
 #include "utils/pool_ip.h"
 #include "utils/pool_stream.h"
 #include "pool_config.h"
-#include "parser/pool_memory.h"
+#include "pool_type.h"
+#include "utils/palloc.h"
 #include "parser/pg_list.h"
 #include "auth/pool_passwd.h"
 
@@ -46,7 +47,7 @@ static List *hba_lines = NIL;
 static List *hba_line_nums = NIL;
 static char *hbaFileName;
 
-static POOL_MEMORY_POOL *hba_memory_context = NULL;
+//static MemoryContext hba_memory_context;
 
 static void sendAuthRequest(POOL_CONNECTION *frontend, AuthRequest areq);
 static void auth_failed(POOL_CONNECTION *frontend);
@@ -103,18 +104,18 @@ int load_hba(char *hbapath)
 {
 	FILE *file;
 
-	POOL_MEMORY_POOL *old_context;
-	if (hba_memory_context == NULL)
-	{
-		hba_memory_context = pool_memory_create(PARSER_BLOCK_SIZE);
-		if (hba_memory_context == NULL)
-		{
-			pool_error("load_hba: pool_memory_create() failed");
-			return -1;
-		}
-	}
+//	POOL_MEMORY_POOL *old_context;
+//	if (hba_memory_context == NULL)
+//	{
+//		hba_memory_context = pool_memory_create(PARSER_BLOCK_SIZE);
+//		if (hba_memory_context == NULL)
+//		{
+//			pool_error("load_hba: pool_memory_create() failed");
+//			return -1;
+//		}
+//	}
 	/* switch memory context */
-	old_context = pool_memory_context_switch_to(hba_memory_context);
+//	old_context = pool_memory_context_switch_to(hba_memory_context);
 
 	if (hba_lines || hba_line_nums)
 		free_lines(&hba_lines, &hba_line_nums);
@@ -124,14 +125,14 @@ int load_hba(char *hbapath)
 	{
 		pool_error("could not open \"%s\". reason: %s",
 				   hbapath, strerror(errno));
-		pool_memory_delete(hba_memory_context, 0);
-
-		/* switch to old memory context */
-		pool_memory_context_switch_to(old_context);
+//		pool_memory_delete(hba_memory_context, 0);
+//
+//		/* switch to old memory context */
+//		pool_memory_context_switch_to(old_context);
 
 		return -1;
 	}
-
+	
 	pool_debug("loading \"%s\" for client authentication configuration file",
 			   hbapath);
 
@@ -141,7 +142,7 @@ int load_hba(char *hbapath)
 	hbaFileName = pstrdup(hbapath);
 
 	/* switch to old memory context */
-	pool_memory_context_switch_to(old_context);
+//	pool_memory_context_switch_to(old_context);
 
 	return 0;
 }

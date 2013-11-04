@@ -51,6 +51,7 @@
 #include "utils/pool_select_walker.h"
 #include "utils/pool_stream.h"
 #include "utils/pool_stream.h"
+#include "utils/elog.h"
 
 #ifdef USE_MEMCACHED
 memcached_st *memc;
@@ -1641,23 +1642,25 @@ size_t pool_shared_memory_cache_size(void)
 	size_t size;
 
 	if (pool_config->memqcache_maxcache > pool_config->memqcache_cache_block_size)
-	{
-		pool_error("pool_shared_memory_cache_size: memqcache_cache_block_size %d should be greater or equal to memqcache_maxcache %d",
-				   pool_config->memqcache_cache_block_size, pool_config->memqcache_maxcache);
-		return 0;
-	}
+		ereport(FATAL,
+			(errmsg("invalid memory cache configuration"),
+					errdetail("memqcache_cache_block_size %d should be greater or equal to memqcache_maxcache %d",
+								pool_config->memqcache_cache_block_size,
+								pool_config->memqcache_maxcache)));
+
 
 	num_blocks = pool_config->memqcache_total_size/
 		pool_config->memqcache_cache_block_size;
 	if (num_blocks == 0)
-	{
-		pool_error("pool_shared_memory_cache_size: memqcache_total_size %d should be greater or equal to memqcache_cache_block_size %d",
-				   pool_config->memqcache_total_size, pool_config->memqcache_cache_block_size);
-		return 0;
-	}
+		ereport(FATAL,
+			(errmsg("invalid memory cache configuration"),
+					errdetail("memqcache_total_size %d should be greater or equal to memqcache_cache_block_size %d",
+								pool_config->memqcache_total_size,
+								pool_config->memqcache_cache_block_size)));
 
-	pool_log("pool_shared_memory_cache_size: number of blocks: %d", num_blocks);
-
+		ereport(LOG,
+			(errmsg("memory cache initialized"),
+					errdetail("memcache blocks :%d",num_blocks)));
 	/* Remember # of blocks */
 	pool_set_memqcache_blocks(num_blocks);
 	size = pool_config->memqcache_cache_block_size * num_blocks;
@@ -1671,13 +1674,10 @@ size_t pool_shared_memory_cache_size(void)
 static void *shmem;
 int pool_init_memory_cache(size_t size)
 {
-	pool_debug("pool_init_memory_cache: request size:%zd", size);
+	ereport(DEBUG1,
+		(errmsg("memory cache request size : %d",size)));
+
 	shmem = pool_shared_memory_create(size);
-	if (shmem == NULL)
-	{
-		pool_error("pool_init_memory_cache: failed to allocate shared memory cache. request size: %zd", size);
-		return -1;
-	}
 	return 0;
 }
 
@@ -2997,10 +2997,10 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 	if (pool_is_cache_safe())
 	{
 		SelectContext ctx;
-		POOL_MEMORY_POOL *old_context;
-		old_context = pool_memory_context_switch_to(session_context->memory_context);
+		MemoryContext old_context;
+		old_context = MemoryContextSwitchTo(session_context->memory_context);
 		num_oids = pool_extract_table_oids_from_select_stmt(node, &ctx);
-		pool_memory_context_switch_to(old_context);
+		MemoryContextSwitchTo(old_context);
 		oids = ctx.table_oids;;
 		pool_debug("num_oids: %d oid: %d", num_oids, *oids);
 
@@ -3222,15 +3222,7 @@ static POOL_QUERY_CACHE_STATS *stats;
 int pool_init_memqcache_stats(void)
 {
 	stats = pool_shared_memory_create(sizeof(POOL_QUERY_CACHE_STATS));
-	if (stats == NULL)
-	{
-		pool_error("pool_init_meqcache_stats: failed to allocate shared memory stats. request size: %zd",
-				   sizeof(POOL_QUERY_CACHE_STATS));
-			return -1;
-	}
-
 	pool_reset_memqcache_stats();
-
 	return 0;
 }
 

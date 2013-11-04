@@ -3484,7 +3484,7 @@ bool is_partition_table(POOL_CONNECTION_POOL *backend, Node *node)
 static char *get_insert_command_table_name(InsertStmt *node)
 {
 	POOL_SESSION_CONTEXT *session_context;
-	POOL_MEMORY_POOL *old_context;
+	MemoryContext old_context;
 	static char table[128];
 	char *p;
 
@@ -3493,9 +3493,9 @@ static char *get_insert_command_table_name(InsertStmt *node)
 		return NULL;
 
 	if (session_context->query_context)
-		old_context = pool_memory_context_switch_to(session_context->query_context->memory_context);
+		old_context = MemoryContextSwitchTo(session_context->query_context->memory_context);
 	else
-		old_context = pool_memory_context_switch_to(session_context->memory_context);
+		old_context = MemoryContextSwitchTo(session_context->memory_context);
 
 	p = nodeToString(node->relation);
 	if (p == NULL)
@@ -3506,7 +3506,7 @@ static char *get_insert_command_table_name(InsertStmt *node)
 	strlcpy(table, p, sizeof(table));
 	pfree(p);
 
-	pool_memory_context_switch_to(old_context);
+	MemoryContextSwitchTo(old_context);
 
 	pool_debug("get_insert_command_table_name: extracted table name: %s", p);
 	return table;
@@ -3704,7 +3704,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 	int degenerate_node[MAX_NUM_BACKENDS];		/* degeneration requested backend list */
 	POOL_STATUS status;
 
-	POOL_MEMORY_POOL *old_context;
+	MemoryContext old_context;
 
 	POOL_SESSION_CONTEXT *session_context = pool_get_session_context();
 	POOL_QUERY_CONTEXT *query_context = session_context->query_context;
@@ -3871,9 +3871,9 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 	if (degenerate_node_num)
 	{
 		if (query_context)
-			old_context = pool_memory_context_switch_to(query_context->memory_context);
+			old_context = MemoryContextSwitchTo(query_context->memory_context);
 		else
-			old_context = pool_memory_context_switch_to(session_context->memory_context);
+			old_context = MemoryContextSwitchTo(session_context->memory_context);
 
 		String *msg = init_string("kind mismatch among backends. ");
 
@@ -3958,7 +3958,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 		free_string(msg);
 
 		/* Switch to old memory context */
-		pool_memory_context_switch_to(old_context);
+		MemoryContextSwitchTo(old_context);
 
 		if (pool_config->replication_stop_on_mismatch)
 		{
