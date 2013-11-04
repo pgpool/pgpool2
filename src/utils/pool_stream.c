@@ -99,6 +99,7 @@ POOL_CONNECTION *pool_open(int fd)
 */
 void pool_close(POOL_CONNECTION *cp)
 {
+	
 	/*
 	 * shutdown connection to the client so that pgpool is not blocked
 	 */

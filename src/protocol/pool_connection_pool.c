@@ -44,6 +44,7 @@
 
 #include "pool.h"
 #include "utils/pool_stream.h"
+#include "utils/palloc.h"
 #include "pool_config.h"
 #include "context/pool_process_context.h"
 
@@ -62,12 +63,7 @@ int pool_init_cp(void)
 {
 	int i;
 
-	pool_connection_pool = (POOL_CONNECTION_POOL *)malloc(sizeof(POOL_CONNECTION_POOL)*pool_config->max_pool);
-	if (pool_connection_pool == NULL)
-	{
-		pool_error("pool_init_cp: malloc() failed");
-		return -1;
-	}
+	pool_connection_pool = (POOL_CONNECTION_POOL *)palloc(sizeof(POOL_CONNECTION_POOL)*pool_config->max_pool);
 	memset(pool_connection_pool, 0, sizeof(POOL_CONNECTION_POOL)*pool_config->max_pool);
 
 	for (i = 0; i < pool_config->max_pool; i++)
@@ -157,7 +153,7 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, in
 						}
 
 						pool_close(CONNECTION(p, j));
-						free(CONNECTION_SLOT(p, j));
+						pfree(CONNECTION_SLOT(p, j));
 					}
 					info = p->info;
 					memset(p, 0, sizeof(POOL_CONNECTION_POOL_SLOT));
@@ -204,7 +200,7 @@ void pool_discard_cp(char *user, char *database, int protoMajor)
 			freed = 1;
 		}
 		pool_close(CONNECTION(p, i));
-		free(CONNECTION_SLOT(p, i));
+		pfree(CONNECTION_SLOT(p, i));
 	}
 
 	info = p->info;
@@ -726,12 +722,7 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 			continue;
 		}
 
-		s = malloc(sizeof(POOL_CONNECTION_POOL_SLOT));
-		if (s == NULL)
-		{
-			pool_error("new_connection: malloc() failed");
-			return NULL;
-		}
+		s = palloc(sizeof(POOL_CONNECTION_POOL_SLOT));
 
 		if (create_cp(s, i) == NULL)
 		{

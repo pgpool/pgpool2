@@ -22,7 +22,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "pool_memory.h"
+#include "utils/palloc.h"
 #include "pool_string.h"
 #include "value.h"
 

@@ -28,7 +28,6 @@
 #define POOL_PROTO_MODULES_H
 
 #include "parser/parser.h"
-#include "parser/pool_memory.h"
 #include "parser/pg_list.h"
 #include "parser/parsenodes.h"
 #include "parallel_query/pool_rewrite_query.h"

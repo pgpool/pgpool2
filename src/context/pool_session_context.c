@@ -25,6 +25,8 @@
 #include <string.h>
 
 #include "pool.h"
+#include "utils/palloc.h"
+#include "utils/memutils.h"
 #include "pool_config.h"
 #include "context/pool_session_context.h"
 
@@ -62,8 +64,13 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 	init_sent_message_list();
 
 	/* Create memory context */
-	session_context->memory_context = pool_memory_create(PREPARE_BLOCK_SIZE);
-
+	/* TODO rething about the parent for this context ??*/
+	session_context->memory_context = AllocSetContextCreate(TopMemoryContext,
+									 "SessionContext",
+									 ALLOCSET_SMALL_MINSIZE,
+									 ALLOCSET_SMALL_INITSIZE,
+									 ALLOCSET_SMALL_MAXSIZE);
+									 
 	/* Choose load balancing node if necessary */
 	if (pool_config->load_balance_mode)
 	{
@@ -128,7 +135,7 @@ void pool_session_context_destroy(void)
 	{
 		pool_clear_sent_message_list();
 		free(session_context->message_list.sent_messages);
-		pool_memory_delete(session_context->memory_context, 0);
+		MemoryContextDelete(session_context->memory_context);
 		if (pool_config->memory_cache_enabled)
 		{
 			pool_discard_query_cache_array(session_context->query_cache_array);
@@ -440,10 +447,10 @@ void pool_sent_message_destroy(POOL_SENT_MESSAGE *message)
 	if (message)
 	{
 		if (message->contents)
-			pool_memory_free(session_context->memory_context, message->contents);
+			pfree(message->contents);
 		
 		if (message->name)
-			pool_memory_free(session_context->memory_context, message->name);
+			pfree(message->name);
 
 		if (message->query_context)
 		{
@@ -469,7 +476,7 @@ void pool_sent_message_destroy(POOL_SENT_MESSAGE *message)
 		}
 
 		if (session_context->memory_context)
-			pool_memory_free(session_context->memory_context, message);
+			pfree(message);
 	}
 }
 
@@ -513,16 +520,16 @@ POOL_SENT_MESSAGE *pool_create_sent_message(char kind, int len, char *contents,
 		pool_error("pool_create_sent_message: session context is not initialized");
 		return NULL;
 	}
-
-	msg = pool_memory_alloc(session_context->memory_context,
-							sizeof(POOL_SENT_MESSAGE));
+	MemoryContext old_context = MemoryContextSwitchTo(session_context->memory_context);
+	msg = palloc(sizeof(POOL_SENT_MESSAGE));
 	msg->kind = kind;
 	msg->len = len;
-	msg->contents = pool_memory_alloc(session_context->memory_context, len);
+	msg->contents = palloc(len);
 	memcpy(msg->contents, contents, len);
 	msg->num_tsparams = num_tsparams;
-	msg->name = pool_memory_strdup(session_context->memory_context, name);
+	msg->name = pstrdup(name);
 	msg->query_context = query_context;
+	MemoryContextSwitchTo(old_context);
 
 	return msg;
 }

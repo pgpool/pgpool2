@@ -31,7 +31,6 @@
 #include "pool_process_context.h"
 #include "pool_session_context.h"
 #include "pool_query_context.h"
-#include "parser/pool_memory.h"
 #include "query_cache/pool_memqcache.h"
 
 /*
@@ -121,7 +120,7 @@ typedef struct {
 	/* where to send map for PREPARE/EXECUTE/DEALLOCATE */
 	POOL_PREPARED_SEND_MAP prep_where;
 #endif /* NOT_USED */
-	POOL_MEMORY_POOL *memory_context;	/* memory context for session */
+	MemoryContext memory_context;	/* memory context for session */
 
 	/* message which doesn't receive complete message */
 	POOL_SENT_MESSAGE *uncompleted_message;

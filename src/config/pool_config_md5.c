@@ -26,4 +26,6 @@
  */
 
 #define POOL_PRIVATE
+
+#include "../tools/fe_memutils.c"
 #include "pool_config.c"

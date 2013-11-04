@@ -25,6 +25,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include "utils/elog.h"
 #include "pool.h"
 #include "pool_config.h"
 
@@ -657,3 +658,88 @@ static int create_prepared_statement(DistDefInfo *dist_info)
 	dist_info->is_created_prepare = 1;
 	return 0;
 }
+
+/*
+ * system_db_health_check()
+ * check if we can connect to the SystemDB
+ * returns 0 for OK. otherwise returns -1
+ */
+int
+system_db_health_check(void)
+{
+	int fd;
+
+	/* V2 startup packet */
+	typedef struct {
+		int len;		/* startup packet length */
+		StartupPacket_v2 sp;
+	} MySp;
+	MySp mysp;
+	char kind;
+
+	memset(&mysp, 0, sizeof(mysp));
+	mysp.len = htonl(296);
+	mysp.sp.protoVersion = htonl(PROTO_MAJOR_V2 << 16);
+	strcpy(mysp.sp.database, "template1");
+	strncpy(mysp.sp.user, SYSDB_INFO->user, sizeof(mysp.sp.user) - 1);
+	*mysp.sp.options = '\0';
+	*mysp.sp.unused = '\0';
+	*mysp.sp.tty = '\0';
+
+	ereport(DEBUG1,
+		(errmsg("health_check: SystemDB status: %d", SYSDB_STATUS)));
+
+	/* if SystemDB is already down, ignore */
+	if (SYSDB_STATUS == CON_UNUSED || SYSDB_STATUS == CON_DOWN)
+		return 0;
+
+	if (*SYSDB_INFO->hostname == '/')
+		fd = connect_unix_domain_socket_by_port(SYSDB_INFO->port, SYSDB_INFO->hostname, FALSE);
+	else
+		fd = connect_inet_domain_socket_by_port(SYSDB_INFO->hostname, SYSDB_INFO->port, FALSE);
+
+	if (fd < 0)
+	{
+		pool_error("health check failed. SystemDB host %s at port %d is down",
+				   SYSDB_INFO->hostname,
+				   SYSDB_INFO->port);
+
+		return -1;
+	}
+
+	if (write(fd, &mysp, sizeof(mysp)) < 0)
+	{
+		pool_error("health check failed during write. SystemDB host %s at port %d is down",
+				   SYSDB_INFO->hostname,
+				   SYSDB_INFO->port);
+		close(fd);
+		return -1;
+	}
+
+	read(fd, &kind, 1);
+
+	if (write(fd, "X", 1) < 0)
+	{
+		pool_error("health check failed during write. SystemDB host %s at port %d is down",
+				   SYSDB_INFO->hostname,
+				   SYSDB_INFO->port);
+		close(fd);
+		return -1;
+	}
+
+	close(fd);
+	return 0;
+}
+
+/*
+ * get System DB information
+ */
+SystemDBInfo *
+pool_get_system_db_info(void)
+{
+	if (system_db_info == NULL)
+		return NULL;
+
+	return system_db_info->info;
+}
+

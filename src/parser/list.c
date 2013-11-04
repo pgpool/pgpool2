@@ -15,9 +15,9 @@
  *-------------------------------------------------------------------------
  */
 /*#include "postgres.h"*/
-
+#include "utils/elog.h"
 #include <stdlib.h>
-#include "pool_memory.h"
+#include "utils/palloc.h"
 #include "pg_list.h"
 
 
