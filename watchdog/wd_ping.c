@@ -35,6 +35,8 @@
 #include "pool_config.h"
 #include "watchdog.h"
 
+#define WD_MAX_PING_RESULT 256
+
 int wd_is_upper_ok(char * server_list);
 int wd_is_unused_ip(char * ip);
 
@@ -170,7 +172,7 @@ exec_ping(void * arg)
 	char * args[8];
 	int pid, i = 0;
 	int r_size = 0;
-	char result[256];
+	char result[WD_MAX_PING_RESULT];
 	char ping_path[WD_MAX_PATH_LEN];
 
 	snprintf(ping_path,sizeof(ping_path),"%s/ping",pool_config->ping_path);
@@ -217,10 +219,12 @@ exec_ping(void * arg)
 				break;
 		}
 		i = 0;
-		while  (( (r_size = read (pfd[0], &result[i], sizeof(result)-i)) > 0) && (errno == EINTR))
+		while  (( (r_size = read (pfd[0], &result[i], sizeof(result)-i-1)) > 0) && (errno == EINTR))
 		{
 			i += r_size;
 		}
+		result[sizeof(result)-1] = '\0';
+
 		close(pfd[0]);
 	}
 	rtn = (get_result (result) > 0)?WD_OK:WD_NG;
