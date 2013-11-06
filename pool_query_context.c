@@ -1241,11 +1241,10 @@ void where_to_send_deallocate(POOL_QUERY_CONTEXT *query_context, Node *node)
 	DeallocateStmt *d = (DeallocateStmt *)node;
 	POOL_SENT_MESSAGE *msg;
 
-	/* DELLOCATE ALL? */
+	/* DEALLOCATE ALL? */
 	if (d->name == NULL)
 	{
 		pool_setall_node_to_be_sent(query_context);
-		return;
 	}
 	else
 	{
@@ -1257,11 +1256,11 @@ void where_to_send_deallocate(POOL_QUERY_CONTEXT *query_context, Node *node)
 			/* Inherit same map from PREPARE or PARSE */
 			pool_copy_prep_where(msg->query_context->where_to_send,
 								 query_context->where_to_send);
+			return;
 		}
-		return;
+		/* prepared statement was not found */
+		pool_setall_node_to_be_sent(query_context);
 	}
-	/* prepared statement was not found */
-	pool_setall_node_to_be_sent(query_context);
 }
 
 /*
