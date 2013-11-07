@@ -145,11 +145,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
  */
 #define MAXITEMS (256 + MAX_NUM_BACKENDS*4)		
 
-	POOL_REPORT_CONFIG* status = malloc(MAXITEMS * sizeof(POOL_REPORT_CONFIG));
+	POOL_REPORT_CONFIG* status = palloc0(MAXITEMS * sizeof(POOL_REPORT_CONFIG));
 
 	/* we initialize the array with NULL values so when looping
 	 * on it, we can use it as stop condition */
-	memset(status, 0, sizeof(POOL_REPORT_CONFIG) * MAXITEMS);
+//	memset(status, 0, sizeof(POOL_REPORT_CONFIG) * MAXITEMS);
 
 	i = 0;
 
@@ -995,7 +995,7 @@ void config_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 
 	send_complete_and_ready(frontend, backend, nrows);
 
-	free(status);
+	pfree(status);
 }
 
 POOL_REPORT_NODES* get_nodes(int *nrows)
@@ -1148,7 +1148,7 @@ POOL_REPORT_POOLS* get_pools(int *nrows)
 
     int lines = 0;
 
-    POOL_REPORT_POOLS* pools = malloc(
+    POOL_REPORT_POOLS* pools = palloc(
 		pool_config->num_init_children * pool_config->max_pool * NUM_BACKENDS * sizeof(POOL_REPORT_POOLS)
 		);
 
@@ -1336,7 +1336,7 @@ void pools_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 
 	send_complete_and_ready(frontend, backend, nrows);
 
-	free(pools);
+	pfree(pools);
 }
 
 POOL_REPORT_PROCESSES* get_processes(int *nrows)

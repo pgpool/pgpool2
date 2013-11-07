@@ -1711,7 +1711,7 @@ pool_get_process_list(int *array_size)
 	int		i;
 
 	*array_size = pool_config->num_init_children;
-	array = calloc(*array_size, sizeof(int));
+	array = palloc0(*array_size * sizeof(int));
 	for (i = 0; i < *array_size; i++)
 		array[i] = process_info[i].pid;
 
