@@ -337,6 +337,7 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 	 * OK, read pid and secret key
 	 */
 	sp = MASTER_CONNECTION(cp)->sp;
+	pid = -1;
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -369,14 +370,12 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 		}
 	}
 
-#ifdef NOT_USED
-	sp = MASTER_CONNECTION(cp)->sp;
-	cp->info->major = sp->major;
-	cp->info->minor = sp->minor;
-	strncpy(cp->info->database, sp->database, sizeof(cp->info->database) - 1);
-	strncpy(cp->info->user, sp->user, sizeof(cp->info->user) - 1);
-	cp->info->counter = 1;
-#endif
+	if (pid == -1)
+	{
+		pool_error("pool_do_auth: all backends are down");
+		return -1;
+	}
+
 	return pool_send_backend_key_data(frontend, pid, key, protoMajor);
 }
 
