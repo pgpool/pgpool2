@@ -372,6 +372,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	 * OK, read pid and secret key
 	 */
 	sp = MASTER_CONNECTION(cp)->sp;
+	pid = -1;
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -406,18 +407,15 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 		}
 	}
 
-#ifdef NOT_USED
-	sp = MASTER_CONNECTION(cp)->sp;
-	cp->info->major = sp->major;
-	cp->info->minor = sp->minor;
-	strncpy(cp->info->database, sp->database, sizeof(cp->info->database) - 1);
-	strncpy(cp->info->user, sp->user, sizeof(cp->info->user) - 1);
-	cp->info->counter = 1;
-#endif
+	if (pid == -1)
+		ereport(ERROR,
+                (errmsg("authentication failed"),
+                 errdetail("all backends are down")));
+
 	if(pool_send_backend_key_data(frontend, pid, key, protoMajor))
 		ereport(ERROR,
 			(errmsg("authentication failed"),
-				errdetail("failed to send backend data to frontedn")));
+				errdetail("failed to send backend data to frontend")));
 	return 0;
 }
 
