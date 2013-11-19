@@ -3976,14 +3976,9 @@ parse_copy_data(char *buf, int len, char delimiter, int col_id)
 		if (buf[i] == '\\' && i != len - 2) /* escape */
 		{
 			if (buf[i+1] == delimiter)
-			{
 				i++;
-				str[j++] = buf[i];
-			}
-			else
-			{
-				str[j++] = buf[i];
-			}
+
+			str[j++] = buf[i];
 		}
 		else if (buf[i] == delimiter) /* delimiter */
 		{
@@ -4006,10 +4001,11 @@ parse_copy_data(char *buf, int len, char delimiter, int col_id)
 	if (field == col_id)
 	{
 		str[j] = '\0';
-		p = malloc(j);
+		p = malloc(j+1);
 		if (p == NULL)
 		{
 			pool_error("parse_copy_data: malloc failed");
+			free(str);
 			return NULL;
 		}
 		strcpy(p, str);
@@ -4031,7 +4027,7 @@ void query_ps_status(char *query, POOL_CONNECTION_POOL *backend)
 		return;
 
 	sp = MASTER_CONNECTION(backend)->sp;
-	i = snprintf(psbuf, sizeof(psbuf), "%s %s %s ",
+	i = snprintf(psbuf, sizeof(psbuf) - 1, "%s %s %s ",
 				 sp->user, sp->database, remote_ps_data);
 
 	/* skip spaces */
