@@ -1048,14 +1048,17 @@ static void failover(void)
 	/* failback request? */
 	if (Req_info->kind == NODE_UP_REQUEST)
 	{
-		if (node_id >= MAX_NUM_BACKENDS ||
+        if (node_id < 0 || node_id >= MAX_NUM_BACKENDS ||
 			(Req_info->kind == NODE_UP_REQUEST && !(RAW_MODE &&
             BACKEND_INFO(node_id).backend_status == CON_DOWN) && VALID_BACKEND(node_id)) ||
 			(Req_info->kind == NODE_DOWN_REQUEST && !VALID_BACKEND(node_id)))
 		{
 			pool_semaphore_unlock(REQUEST_INFO_SEM);
-			pool_error("failover_handler: invalid node_id %d status:%d MAX_NUM_BACKENDS: %d", node_id,
-					   BACKEND_INFO(node_id).backend_status, MAX_NUM_BACKENDS);
+            if (node_id < 0 || node_id >= MAX_NUM_BACKENDS)
+                pool_error("failover_handler: invalid node_id %d MAX_NUM_BACKENDS: %d", node_id, MAX_NUM_BACKENDS);
+            else
+                pool_error("failover_handler: invalid node_id %d status:%d MAX_NUM_BACKENDS: %d", node_id,
+                            BACKEND_INFO(node_id).backend_status, MAX_NUM_BACKENDS);
 			kill(pcp_pid, SIGUSR2);
 			switching = 0;
 			Req_info->switching = false;
