@@ -2903,8 +2903,9 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 						id = pool_get_id(info, p1);
 						pool_debug("CopyDataRow: copying id: %d", id);
 						free(p1);
-						if (!VALID_BACKEND(id))
+						if (id < 0 || !VALID_BACKEND(id))
 						{
+							pool_error("CopyDataRow: pool_get_id returns invalid id: %d", id);
 							exit(1);
 						}
 						if (pool_write(CONNECTION(backend, id), &kind, 1))
