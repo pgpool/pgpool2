@@ -1526,7 +1526,6 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	if (session_context->mismatch_ntuples && MAJOR(backend) == PROTO_MAJOR_V3)
 	{
 		int i;
-		signed char state;
 		char kind;
 
 		/*
@@ -1801,6 +1800,10 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				}
 				else
 				{
+					if (MAJOR(backend) != PROTO_MAJOR_V3)
+					{
+						state = 'I';	/* XXX I don't think query cache works with PROTO2 protocol */
+					}
 					pool_handle_query_cache(backend, query, node, state);
 				}
 			}
