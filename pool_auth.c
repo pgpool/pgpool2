@@ -5,7 +5,11 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
+<<<<<<< HEAD
  * Copyright (c) 2003-2010	PgPool Global Development Group
+=======
+ * Copyright (c) 2003-2013	PgPool Global Development Group
+>>>>>>> fdfa148... Fix uninialized variables when all nodes are down.
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1271,6 +1275,7 @@ signed char pool_read_kind(POOL_CONNECTION_POOL *cp)
 	char kind0, kind;
 	int i;
 
+	kind = -1;
 	kind0 = 0;
 
 	for (i=0;i<NUM_BACKENDS;i++)
@@ -1311,6 +1316,7 @@ int pool_read_int(POOL_CONNECTION_POOL *cp)
 	int data0, data;
 	int i;
 
+	data = -1;
 	data0 = 0;
 
 	for (i=0;i<NUM_BACKENDS;i++)
