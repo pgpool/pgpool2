@@ -4098,7 +4098,7 @@ void query_ps_status(char *query, POOL_CONNECTION_POOL *backend)
 	while (*query && isspace(*query))
 		query++;
 
-	for (; i< sizeof(psbuf); i++)
+	for (; i< sizeof(psbuf)-1; i++)
 	{
 		if (!*query || isspace(*query))
 			break;
