@@ -1773,7 +1773,7 @@ void pool_send_severity_message(POOL_CONNECTION *frontend, int protoMajor,
 	else if (protoMajor == PROTO_MAJOR_V3)
 	{
 		char data[MAXDATA];
-		char msgbuf[MAXMSGBUF];
+		char msgbuf[MAXMSGBUF+1];
 		int len;
 		int thislen;
 		int sendlen;
