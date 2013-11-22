@@ -1172,11 +1172,11 @@ void pools_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 		snprintf(proc_pid, sizeof(proc_pid), "%d", pools[i].pool_pid);
 		snprintf(pool_id, sizeof(pool_id), "%d", pools[i].pool_id);
 		if (pools[i].start_time)
-			strftime(proc_start_time, POOLCONFIG_MAXDATELEN, "%Y-%m-%d %H:%M:%S", localtime(&pools[i].start_time));
+			strftime(proc_start_time, sizeof(proc_start_time), "%Y-%m-%d %H:%M:%S", localtime(&pools[i].start_time));
 		else
 			*proc_start_time = '\0';
 		if (pools[i].create_time)
-			strftime(proc_create_time, POOLCONFIG_MAXDATELEN, "%Y-%m-%d %H:%M:%S", localtime(&pools[i].create_time));
+			strftime(proc_create_time, sizeof(proc_create_time), "%Y-%m-%d %H:%M:%S", localtime(&pools[i].create_time));
 		else
 			*proc_create_time = '\0';
 		snprintf(majorversion, sizeof(majorversion), "%d", pools[i].pool_majorversion);
