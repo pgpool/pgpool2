@@ -3807,6 +3807,11 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 			}
 		}
 	}
+	else if (first_node == -1)
+	{
+		pool_error("read_kind_from_backend: couldn't find first node. All backend down?");
+		return POOL_ERROR;
+	}
 	else
 		trust_kind = kind_list[first_node];
 
