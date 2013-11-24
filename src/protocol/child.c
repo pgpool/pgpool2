@@ -771,9 +771,8 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 	enable_authentication_timeout();
 
 	/* read startup packet length */
-	if (pool_read(cp, &len, sizeof(len)))
-		ereport(ERROR,
-			(errmsg("Invalid startup packet")));
+    pool_read_with_error(cp, &len, sizeof(len),
+                         "startup packet length");
 
 	len = ntohl(len);
 	len -= sizeof(len);
@@ -785,9 +784,8 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 	sp->startup_packet = palloc0(len);
 
 	/* read startup packet */
-	if (pool_read(cp, sp->startup_packet, len))
-		ereport(ERROR,
-			(errmsg("Invalid startup packet")));
+    pool_read_with_error(cp, sp->startup_packet, len,
+                         "startup packet");
 
 	sp->len = len;
 	memcpy(&protov, sp->startup_packet, sizeof(protov));
@@ -838,7 +836,8 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 				{
 					p += (strlen(p) + 1);
 					sp->application_name = p;
-					pool_debug("read_startup_packet: application_name: %s", p);
+                    ereport(DEBUG1,
+                            (errmsg("read_startup_packet: application_name: %s", p)));
 				}
 
 				p += (strlen(p) + 1);
@@ -997,7 +996,8 @@ void cancel_request(CancelPacket *sp)
 	CancelPacket cp;
 	bool found = false;
 
-	pool_debug("Cancel request received");
+    ereport(DEBUG1,
+            (errmsg("Cancel request received")));
 
 	/* look for cancel key from shmem info */
 	for (i=0;i<pool_config->num_init_children;i++)
@@ -1397,21 +1397,8 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	int len, len1;
 	int status;
 
-	cp = malloc(sizeof(POOL_CONNECTION_POOL_SLOT));
-	if (cp == NULL)
-	{
-		pool_error("make_persistent_db_connection: could not allocate memory");
-		return NULL;
-	}
-	memset(cp, 0, sizeof(POOL_CONNECTION_POOL_SLOT));
-
-	startup_packet = malloc(sizeof(*startup_packet));
-	if (startup_packet == NULL)
-	{
-		pool_error("make_persistent_db_connection: could not allocate memory");
-		return NULL;
-	}
-	memset(startup_packet, 0, sizeof(*startup_packet));
+	cp = palloc0(sizeof(POOL_CONNECTION_POOL_SLOT));
+	startup_packet = palloc0(sizeof(*startup_packet));
 	startup_packet->protoVersion = htonl(0x00030000);	/* set V3 proto major/minor */
 
 	/*
@@ -1428,8 +1415,10 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 
 	if (fd < 0)
 	{
-		pool_error("make_persistent_db_connection: connection to %s(%d) failed", hostname, port);
-		return NULL;
+        ereport(ERROR,
+                (errmsg("failed to make persistent db connection"),
+                 errdetail("connection to %s(%d) failed", hostname, port)));
+
 	}
 
 	cp->con = pool_open(fd);
@@ -1444,51 +1433,39 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	len1 = snprintf(&startup_packet->data[len], sizeof(startup_packet->data)-len, "%s", user) + 1;
 	if (len1 >= (sizeof(startup_packet->data)-len))
 	{
-		pool_error("make_persistent_db_connection: too long user name");
-		return NULL;
+        ereport(ERROR,
+                (errmsg("failed to make persistent db connection"),
+                 errdetail("user name is too long")));
 	}
 
 	len += len1;
 	len1 = snprintf(&startup_packet->data[len], sizeof(startup_packet->data)-len, "database") + 1;
 	if (len1 >= (sizeof(startup_packet->data)-len))
 	{
-		pool_error("make_persistent_db_connection: too long user name");
-		return NULL;
+        ereport(ERROR,
+                (errmsg("failed to make persistent db connection"),
+                 errdetail("user name is too long")));
 	}
 
 	len += len1;
 	len1 = snprintf(&startup_packet->data[len], sizeof(startup_packet->data)-len, "%s", dbname) + 1;
 	if (len1 >= (sizeof(startup_packet->data)-len))
 	{
-		pool_error("make_persistent_db_connection: too long database name");
-		return NULL;
+        ereport(ERROR,
+                (errmsg("failed to make persistent db connection"),
+                 errdetail("database name is too long")));
 	}
 	len += len1;
 	startup_packet->data[len++] = '\0';
 
-	cp->sp = malloc(sizeof(StartupPacket));
-	if (cp->sp == NULL)
-	{
-		pool_error("make_persistent_db_connection: could not allocate memory");
-		return NULL;
-	}
+	cp->sp = palloc(sizeof(StartupPacket));
 
 	cp->sp->startup_packet = (char *)startup_packet;
 	cp->sp->len = len + 4;
 	cp->sp->major = 3;
 	cp->sp->minor = 0;
-	cp->sp->database = strdup(dbname);
-	if (cp->sp->database == NULL)
-	{
-		pool_error("make_persistent_db_connection: could not allocate memory");
-		return NULL;
-	}
-	cp->sp->user = strdup(user);
-	if (cp->sp->user == NULL)
-	{
-		pool_error("make_persistent_db_connection: could not allocate memory");
-		return NULL;
-	}
+	cp->sp->database = pstrdup(dbname);
+	cp->sp->user = pstrdup(user);
 
 	/*
 	 * send startup packet
@@ -1496,8 +1473,10 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	status = send_startup_packet(cp);
 	if (status)
 	{
-		pool_error("make_persistent_db_connection: send_startup_packet failed");
-		return NULL;
+        ereport(ERROR,
+                (errmsg("failed to make persistent db connection"),
+                 errdetail("unable to send startup packet")));
+
 	}
 
 	/*
@@ -1505,8 +1484,9 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	 */
 	if (s_do_auth(cp, password))
 	{
-		pool_error("make_persistent_db_connection: s_do_auth failed");
-		return NULL;
+        ereport(ERROR,
+                (errmsg("failed to make persistent db connection"),
+                 errdetail("authentication failed")));
 	}
 
 	return cp;
@@ -1539,11 +1519,11 @@ void discard_persistent_db_connection(POOL_CONNECTION_POOL_SLOT *cp)
 	pool_unset_nonblock(cp->con->fd);
 
 	pool_close(cp->con);
-	free(cp->sp->startup_packet);
-	free(cp->sp->database);
-	free(cp->sp->user);
-	free(cp->sp);
-	free(cp);
+	pfree(cp->sp->startup_packet);
+	pfree(cp->sp->database);
+	pfree(cp->sp->user);
+	pfree(cp->sp);
+	pfree(cp);
 }
 
 /*
@@ -1564,37 +1544,28 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 	/*
 	 * read kind expecting 'R' packet (authentication response)
 	 */
-	status = pool_read(cp->con, &kind, sizeof(kind));
-	if (status < 0)
-	{
-		pool_error("s_do_auth: error while reading message kind");
-		return -1;
-	}
+	pool_read_with_error(cp->con, &kind, sizeof(kind),
+                                  "authentication message response type");
 
 	if (kind != 'R')
 	{
-		pool_error("s_do_auth: expecting R got %c", kind);
-		return -1;
+        ereport(ERROR,
+                (errmsg("failed to authenticate"),
+                 errdetail("invalid authentication message response type, Expecting 'R' and received '%c'",kind)));
 	}
 
 	/* read message length */
-	status = pool_read(cp->con, &length, sizeof(length));
-	if (status < 0)
-	{
-		pool_error("s_do_auth: error while reading message length");
-		return -1;
-	}
+	pool_read_with_error(cp->con, &length, sizeof(length),
+                         "authentication message response length");
+
 	length = ntohl(length);
 
 	/* read auth kind */
-	status = pool_read(cp->con, &auth_kind, sizeof(auth_kind));
-	if (status < 0)
-	{
-		pool_error("s_do_auth: error while reading auth kind");
-		return -1;
-	}
+	pool_read_with_error(cp->con, &auth_kind, sizeof(auth_kind),
+                       "authentication method from response");
 	auth_kind = ntohl(auth_kind);
-	pool_debug("s_do_auth: auth kind: %d", auth_kind);
+    ereport(DEBUG1,
+            (errmsg("authenticate kind = %d",auth_kind)));
 
 	if (auth_kind == 0)	/* trust authentication? */
 	{
@@ -1610,8 +1581,9 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 		status = pool_flush(cp->con);
 		if (status > 0)
 		{
-			pool_error("s_do_auth: error while sending clear text password");
-			return -1;
+            ereport(ERROR,
+                    (errmsg("failed to authenticate"),
+                     errdetail("error while sending clear text password")));
 		}
 		return s_do_auth(cp, password);
 	}
@@ -1621,12 +1593,7 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 		char salt[3];
 		char *crypt_password;
 
-		status = pool_read(cp->con, &salt, 2);
-		if (status > 0)
-		{
-			pool_error("s_do_auth: error while reading crypt salt");
-			return -1;
-		}
+		pool_read_with_error(cp->con, &salt, 2,"crypt salt");
 		salt[2] = '\0';
 
 		crypt_password = crypt(password, salt);
@@ -1637,8 +1604,9 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 		status = pool_flush(cp->con);
 		if (status > 0)
 		{
-			pool_error("s_do_auth: error while sending crypt password");
-			return -1;
+            ereport(ERROR,
+                    (errmsg("failed to authenticate"),
+                     errdetail("error while sending crypt password")));
 		}
 		return s_do_auth(cp, password);
 	}
@@ -1648,20 +1616,9 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 		char *buf, *buf1;
 		int size;
 
-		status = pool_read(cp->con, &salt, 4);
-		if (status > 0)
-		{
-			pool_error("s_do_auth: error while reading md5 salt");
-			return -1;
-		}
+		pool_read_with_error(cp->con, &salt, 4,"authentication md5 salt");
 
-		buf = malloc(2 * (MD5_PASSWD_LEN + 4)); /* hash + "md5" + '\0' */
-		if (buf == NULL)
-		{
-			pool_error("s_do_auth(): malloc failed: %s", strerror(errno));
-			return -1;
-		}
-		memset(buf, 0, 2 * (MD5_PASSWD_LEN + 4));
+		buf = palloc0(2 * (MD5_PASSWD_LEN + 4)); /* hash + "md5" + '\0' */
 
 		/* build md5 password */
 		buf1 = buf + MD5_PASSWD_LEN + 4;
@@ -1676,18 +1633,20 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 		status = pool_flush(cp->con);
 		if (status > 0)
 		{
-			pool_error("s_do_auth: error while sending md5 password");
-			return -1;
+            ereport(ERROR,
+                    (errmsg("failed to authenticate"),
+                     errdetail("error while sending md5 password")));
 		}
 
 		status = s_do_auth(cp, password);
-		free(buf);
+		pfree(buf);
 		return status;
 	}
 	else
 	{
-		pool_error("s_do_auth: auth kind %d not supported yet", auth_kind);
-		return -1;
+        ereport(ERROR,
+                (errmsg("failed to authenticate"),
+                 errdetail("auth kind %d not supported yet", auth_kind)));
 	}
 
 	/*
@@ -1699,12 +1658,8 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 
 	for (;;)
 	{
-		status = pool_read(cp->con, &kind, sizeof(kind));
-		if (status < 0)
-		{
-			pool_error("s_do_auth: error while reading message kind");
-			return -1;
-		}
+		pool_read_with_error(cp->con, &kind, sizeof(kind),
+                                      "authentication message kind");
 
 		switch (kind)
 		{
@@ -1713,52 +1668,32 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 				pool_debug("s_do_auth: backend key data received");
 
 				/* read message length */
-				status = pool_read(cp->con, &length, sizeof(length));
-				if (status < 0)
-				{
-					pool_error("s_do_auth: error while reading message length");
-					return -1;
-				}
+				pool_read_with_error(cp->con, &length, sizeof(length),"message length for authentication kind 'K'");
 				if (ntohl(length) != 12)
 				{
 					pool_error("s_do_auth: backend key data length is not 12 (%d)", ntohl(length));
 				}
 
 				/* read pid */
-				if (pool_read(cp->con, &pid, sizeof(pid)) < 0)
-				{
-					pool_error("s_do_auth: failed to read pid");
-					return -1;
-				}
+				pool_read_with_error(cp->con, &pid, sizeof(pid),"pid for authentication kind 'K'");
 				cp->pid = pid;
 
 				/* read key */
-				if (pool_read(cp->con, &key, sizeof(key)) < 0)
-				{
-					pool_error("s_do_auth: failed to read key");
-					return -1;
-				}
+				pool_read_with_error(cp->con, &key, sizeof(key),
+                                     "key for authentication kind 'K'");
 				cp->key = key;
 				break;
 
 			case 'Z':	/* Ready for query */
 				/* read message length */
-				status = pool_read(cp->con, &length, sizeof(length));
-				if (status < 0)
-				{
-					pool_error("s_do_auth: error while reading message length");
-					return -1;
-				}
+				pool_read_with_error(cp->con, &length, sizeof(length),
+                                   "message length for authentication kind 'Z'");
 				length = ntohl(length);
 
 				/* read transaction state */
-				status = pool_read(cp->con, &state, sizeof(state));
-				if (status < 0)
-				{
-					pool_error("s_do_auth: error while reading transaction state");
-					return -1;
-				}
-
+				pool_read_with_error(cp->con, &state, sizeof(state),
+                                     "transaction state  for authentication kind 'Z'");
+			
 				pool_debug("s_do_auth: transaction state: %c", state);
 				cp->con->tstate = state;
 
@@ -1773,13 +1708,9 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 			case 'N':	/* notice response */
 			case 'E':	/* error response */
 				/* Just throw away data */
-				status = pool_read(cp->con, &length, sizeof(length));
-				if (status < 0)
-				{
-					pool_error("s_do_auth: error while reading message length. kind:%c", kind);
-					return -1;
-				}
-
+				pool_read_with_error(cp->con, &length, sizeof(length),
+                                   "backend message length");
+			
 				length = ntohl(length);
 				length -= 4;
 
@@ -1932,7 +1863,10 @@ static void init_system_db_connection(void)
 		system_db_connect();
 		if (PQstatus(system_db_info->pgconn) != CONNECTION_OK)
 		{
-			pool_error("Could not make persistent libpq system DB connection");
+            ereport(ERROR,
+                    (errmsg("failed to make persistent system db connection"),
+                     errdetail("system_db_connect failed")));
+
 		}
 
 		system_db_info->connection = make_persistent_db_connection(pool_config->system_db_hostname,
@@ -1940,10 +1874,6 @@ static void init_system_db_connection(void)
 																   pool_config->system_db_dbname,
 																   pool_config->system_db_user,
 																   pool_config->system_db_password, false);
-		if (system_db_info->connection == NULL)
-		{
-			pool_error("Could not make persistent system DB connection");
-		}
 	}
 }
 
@@ -2399,7 +2329,7 @@ retry_startup:
 	 */
 
 	/* Check if restart request is set because of failback event
-	 * happend.  If so, close idle connections to backend and make
+	 * happened.  If so, close idle connections to backend and make
 	 * a new copy of backend status.
 	 */
 	if (pool_get_my_process_info()->need_to_restart)
@@ -2472,3 +2402,12 @@ static void print_process_status(char *remote_host,char* remote_port)
 	else
 		snprintf(remote_ps_data, sizeof(remote_ps_data),"%s(%s)",remote_host, remote_port);
 }
+
+bool is_session_connected()
+{
+	if(processType == PT_CHILD)
+		return (pool_get_session_context() != NULL);
+	return false;
+}
+
+

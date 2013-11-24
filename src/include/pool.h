@@ -589,7 +589,7 @@ extern void ClientAuthentication(POOL_CONNECTION *frontend);
 extern void pool_getnameinfo_all(SockAddr *saddr, char *remote_host, char *remote_port);
 
 /* strlcpy.c */
-extern size_t strlcpy(char *dst, const char *src, size_t siz);
+//extern size_t strlcpy(char *dst, const char *src, size_t siz);
 
 /* ps_status.c */
 extern bool update_process_title;
@@ -609,6 +609,7 @@ extern int wait_connection_closed(void);
 extern void cancel_request(CancelPacket *sp);
 extern void check_stop_request(void);
 extern void pool_initialize_private_backend_status(void);
+extern bool is_session_connected(void);
 
 /* pool_process_query.c */
 extern void reset_variables(void);

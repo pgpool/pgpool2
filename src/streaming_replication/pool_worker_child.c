@@ -23,6 +23,7 @@
  */
 #include "config.h"
 
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -50,6 +51,10 @@
 #endif
 
 #include "pool.h"
+#include "utils/palloc.h"
+#include "utils/memutils.h"
+#include "utils/elog.h"
+
 #include "context/pool_process_context.h"
 #include "context/pool_session_context.h"
 #include "pool_config.h"
@@ -72,7 +77,7 @@ static long text_to_lsn(char *text);
 static RETSIGTYPE my_signal_handler(int sig);
 static RETSIGTYPE reload_config_handler(int sig);
 static void reload_config(void);
-
+static void clean_persistent_connection_error_callback(void *arg);
 #define CHECK_REQUEST \
 	do { \
 		if (reload_config_request) \
@@ -91,6 +96,9 @@ static void reload_config(void);
 */
 void do_worker_child(void)
 {
+    sigjmp_buf	local_sigjmp_buf;
+	MemoryContext WorkerMemoryContext;
+
 	pool_debug("I am %d", getpid());
 
 	/* Identify myself via ps */
@@ -108,14 +116,38 @@ void do_worker_child(void)
 	signal(SIGUSR2, SIG_IGN);
 	signal(SIGPIPE, SIG_IGN);
 
+    /* Create per loop iteration memory context */
+	WorkerMemoryContext = AllocSetContextCreate(TopMemoryContext,
+                                             "Worker_main_loop",
+                                             ALLOCSET_DEFAULT_MINSIZE,
+                                             ALLOCSET_DEFAULT_INITSIZE,
+                                             ALLOCSET_DEFAULT_MAXSIZE);
+    
+	MemoryContextSwitchTo(TopMemoryContext);
+
 	/* Initialize my backend status */
 	pool_initialize_private_backend_status();
 
 	/* Initialize per process context */
 	pool_init_process_context();
 
+    if (sigsetjmp(local_sigjmp_buf, 1) != 0)
+	{
+		pool_signal(SIGALRM, SIG_IGN);
+		error_context_stack = NULL;
+		EmitErrorReport();
+		MemoryContextSwitchTo(TopMemoryContext);
+		FlushErrorState();
+	}
+	/* We can now handle ereport(ERROR) */
+	PG_exception_stack = &local_sigjmp_buf;
+
+
 	for (;;)
 	{
+        MemoryContextSwitchTo(WorkerMemoryContext);
+		MemoryContextResetAndDeleteChildren(WorkerMemoryContext);
+
 		CHECK_REQUEST;
 
 		if (pool_config->sr_check_period <= 0)
@@ -129,11 +161,20 @@ void do_worker_child(void)
 
 		if (pool_config->sr_check_period > 0 && MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
 		{
+            ErrorContextCallback errcallback;
 			/* Check and establish persistent connections to the backend */
 			establish_persistent_connection();
 
+            errcallback.callback = clean_persistent_connection_error_callback;
+            errcallback.arg = NULL;
+            errcallback.previous = error_context_stack;
+            error_context_stack = &errcallback;
+
 			/* Do replication time lag checking */
 			check_replication_time_lag();
+            
+            /* Pop the error context stack */
+            error_context_stack = errcallback.previous;
 
 			/* Discard persistent connections */
 			discard_persistent_connection();
@@ -144,14 +185,22 @@ void do_worker_child(void)
 }
 
 /*
+ * Error context callback for errors occurring after persistent db connection
+ * was created.
+ */
+static void
+clean_persistent_connection_error_callback(void *arg)
+{
+    discard_persistent_connection();
+}
+/*
  * Establish persistent connection to backend
  */
 static void establish_persistent_connection(void)
 {
 	int i;
 	BackendInfo *bkinfo;
-	POOL_CONNECTION_POOL_SLOT *s;
-
+	
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
 		if (!VALID_BACKEND(i))
@@ -159,16 +208,21 @@ static void establish_persistent_connection(void)
 
 		if (slots[i] == NULL)
 		{
-			bkinfo = pool_get_node_info(i);
-			s = make_persistent_db_connection(bkinfo->backend_hostname, 
+            PG_TRY();
+            {
+                bkinfo = pool_get_node_info(i);
+                slots[i] = make_persistent_db_connection(bkinfo->backend_hostname,
 											  bkinfo->backend_port,
 											  "postgres",
 											  pool_config->sr_check_user,
 											  pool_config->sr_check_password, true);
-			if (s)
-				slots[i] = s;
-			else
+            }
+		    PG_CATCH();
+            {
 				slots[i] = NULL;
+            }
+            PG_END_TRY();
+
 		}
 	}
 }
@@ -231,10 +285,11 @@ static void check_replication_time_lag(void)
 
 		if (!slots[i])
 		{
-			pool_debug("check_replication_time_lag: DB node is valid but no persistent connection");
-			pool_error("check_replication_time_lag: could not connect to DB node %d, check sr_check_user and sr_check_password", i);
+            ereport(ERROR,
+                    (errmsg("Failed to check replication time lag"),
+                     errdetail("No persistent db connection for the node %d",i),
+                        errhint("check sr_check_user and sr_check_password")));
 
-			return;
 		}
 
 		if (PRIMARY_NODE_ID == i)
@@ -256,27 +311,32 @@ static void check_replication_time_lag(void)
 		}
 		if (!res)
 		{
-			pool_error("check_replication_time_lag: %s result is null", query);
-			return;
+            ereport(ERROR,
+                (errmsg("Failed to check replication time lag"),
+                     errdetail("Query to node (%d) returned no result for node",i)));
 		}
 		if (res->numrows <= 0)
 		{
-			pool_error("check_replication_time_lag: %s returns no rows", query);
 			free_select_result(res);
-			return;
+            ereport(ERROR,
+                (errmsg("Failed to check replication time lag"),
+                     errdetail("Query to node (%d) returned result with no rows",i)));
 		}
 		if (res->data[0] == NULL)
 		{
-			pool_error("check_replication_time_lag: %s returns no data", query);
 			free_select_result(res);
-			return;
+            ereport(ERROR,
+                (errmsg("Failed to check replication time lag"),
+                     errdetail("Query to node (%d) returned no data",i)));
 		}
 
 		if (res->nullflags[0] == -1)
 		{
-			pool_log("check_replication_time_lag: %s returns NULL", query);
 			free_select_result(res);
 			lsn[i] = 0;
+            ereport(ERROR,
+                (errmsg("Failed to check replication time lag"),
+                     errdetail("Query to node (%d) returned NULL data",i)));
 		}
 		else
 		{
@@ -308,8 +368,9 @@ static void check_replication_time_lag(void)
 				 !strcmp(pool_config->log_standby_delay, "if_over_threshold") &&
 				 lag > pool_config->delay_threshold))
 			{
-				pool_log("Replication of node:%d is behind %llu bytes from the primary server (node:%d)",
-				         i, lsn[PRIMARY_NODE_ID] - lsn[i], PRIMARY_NODE_ID);
+                ereport(LOG,
+                        (errmsg("Replication of node:%d is behind %llu bytes from the primary server (node:%d)",
+                                i, lsn[PRIMARY_NODE_ID] - lsn[i], PRIMARY_NODE_ID)));
 			}
 		}
 	}
@@ -332,8 +393,10 @@ static long text_to_lsn(char *text)
 
 	if (sscanf(text, "%X/%X", &xlogid, &xrecoff) != 2)
 	{
-		pool_error("text_to_lsn: wrong log location format: %s", text);
-		return 0;
+        ereport(ERROR,
+            (errmsg("Invalid lsn format"),
+                 errdetail("wrong log location format: %s", text)));
+
 	}
 	lsn = xlogid * ((unsigned long long int)0xffffffff - WALSEGMENTSIZE) + xrecoff;
 #ifdef DEBUG

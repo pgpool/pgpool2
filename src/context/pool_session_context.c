@@ -64,7 +64,7 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 	init_sent_message_list();
 
 	/* Create memory context */
-	/* TODO rething about the parent for this context ??*/
+	/* TODO re-think about the parent for this context ??*/
 	session_context->memory_context = AllocSetContextCreate(TopMemoryContext,
 									 "SessionContext",
 									 ALLOCSET_SMALL_MINSIZE,

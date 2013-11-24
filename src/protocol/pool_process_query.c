@@ -237,7 +237,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 
 			/*
 			 * ProcessFrontendResponse() may start query
-			 * processing. We need to recheck
+			 * processing. We need to re-check
 			 * pool_is_query_in_progress() here.
 			 */
 			if (pool_is_query_in_progress())
@@ -300,12 +300,8 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 									/* If master does not have pending
 									 * data, we discard one packet from
 									 * other backend */
-									status = pool_read(CONNECTION(backend, i), &kind, sizeof(kind));
-									if (status < 0)
-									{
-										pool_error("pool_process_query: error while reading message kind from backend %d", i);
-										return POOL_ERROR;
-									}
+									pool_read_with_error(CONNECTION(backend, i), &kind, sizeof(kind),
+											"reading message kind from backend");
 
 									if (kind == 'A')
 									{
@@ -318,11 +314,9 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 										 */
 										pool_unread(CONNECTION(backend, i), &kind, sizeof(kind));
 										pool_log("pool_process_query: received %c packet from backend %d. Don't dicard and read %c packet from master", kind, i, kind);
-										if (pool_read(CONNECTION(backend, MASTER_NODE_ID), &kind, sizeof(kind)) < 0)
-										{
-											pool_error("pool_process_query: error while reading message kind from backend %d", MASTER_NODE_ID);
-											return POOL_ERROR;
-										}
+										pool_read_with_error(CONNECTION(backend, MASTER_NODE_ID), &kind, sizeof(kind),
+												"reading message kind from backend");
+
 										pool_unread(CONNECTION(backend, MASTER_NODE_ID), &kind, sizeof(kind));
 									}
 									else
@@ -331,11 +325,8 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 
 										if (MAJOR(backend) == PROTO_MAJOR_V3)
 										{
-											if (pool_read(CONNECTION(backend, i), &len, sizeof(len)) < 0)
-											{
-												pool_error("pool_process_query: error while reading message length from backend %d", i);
-												return POOL_ERROR;
-											}
+											pool_read_with_error(CONNECTION(backend, i), &len, sizeof(len),
+													"reading message length from backend");
 											len = ntohl(len) - 4;
 											string = pool_read2(CONNECTION(backend, i), len);
 											if (string == NULL)
@@ -973,7 +964,7 @@ int pool_check_fd(POOL_CONNECTION *cp)
 /*
  * send "terminate"(X) message to all backends, indicating that
  * backend should prepare to close connection to frontend (actually
- * pgpool). Note that caller must be protecedt from a signal
+ * pgpool). Note that caller must be proteceted from a signal
  * interruption while calling this function. Otherwise the number of
  * valid backends might be changed by failover/failback.
  */
@@ -2402,41 +2393,16 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 	pool_debug("do_query: extended:%d query:%s", doing_extended, query);
 
 	*result = NULL;
-	res = malloc(sizeof(*res));
-	if (!res)
-	{
-		pool_error("pool_query: malloc failed");
-		return POOL_ERROR;
-	}
-	rowdesc = malloc(sizeof(*rowdesc));
-	if (!rowdesc)
-	{
-		if (res)
-			free(res);
-		pool_error("pool_query: malloc failed");
-		return POOL_ERROR;
-	}
-	memset(res, 0, sizeof(*res));
-	memset(rowdesc, 0, sizeof(*rowdesc));
+	res = palloc0(sizeof(*res));
+	rowdesc = palloc0(sizeof(*rowdesc));
 	*result = res;
 
 	res->rowdesc = rowdesc;
 
 	num_data = 0;
 
-	res->nullflags = malloc(DO_QUERY_ALLOC_NUM*sizeof(int));
-	if (!res->nullflags)
-	{
-		pool_error("do_query: malloc failed");
-		return POOL_ERROR;
-	}
-	res->data = malloc(DO_QUERY_ALLOC_NUM*sizeof(char *));
-	if (!res->data)
-	{
-		pool_error("do_query: malloc failed");
-		return POOL_ERROR;
-	}
-	memset(res->data, 0, DO_QUERY_ALLOC_NUM*sizeof(char *));
+	res->nullflags = palloc(DO_QUERY_ALLOC_NUM*sizeof(int));
+	res->data = palloc0(DO_QUERY_ALLOC_NUM*sizeof(char *));
 
 	/*
 	 * Send a query to the backend. We use extended query proctocol
@@ -4915,7 +4881,7 @@ SELECT_RETRY:
 					pool_error("connection on node %d was terminated due to conflict with recovery", i);
 					pool_send_fatal_message(frontend, MAJOR(backend),
 											SERIALIZATION_FAIL_ERROR_CODE,
-											"connection was terminated due to confilict with recovery",
+											"connection was terminated due to conflict with recovery",
 											"User was holding a relation lock for too long.",
 											"In a moment you should be able to reconnect to the database and repeat your command.",
 											__FILE__, __LINE__);
