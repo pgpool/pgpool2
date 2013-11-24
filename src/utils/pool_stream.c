@@ -39,6 +39,7 @@
 #endif
 
 #include "pool.h"
+#include "utils/elog.h"
 #include "utils/pool_stream.h"
 #include "pool_config.h"
 
@@ -120,6 +121,16 @@ void pool_close(POOL_CONNECTION *cp)
 	free(cp);
 }
 
+void pool_read_with_error(POOL_CONNECTION *cp, void *buf, int len,
+                          const char* err_context )
+{
+	if (pool_read(cp, buf, len) < 0)
+	{
+        ereport(ERROR,
+                (errmsg("failed to read data of length %d from DB node: %d",len,cp->db_node_id),
+                 errdetail("error occurred when reading: %s",err_context?err_context:"")));
+	}
+}
 /*
 * read len bytes from cp
 * returns 0 on success otherwise -1.

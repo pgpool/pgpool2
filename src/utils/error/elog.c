@@ -271,6 +271,17 @@ errstart(int elevel, const char *filename, int lineno,
 				elevel = FATAL;
 		}
 
+		if(elevel  == ERROR)
+		{
+			if(processType == PT_CHILD)
+			{
+				/*
+				 * If the frontend connection exists, treat this error as FATAL
+				 */
+				if(is_session_connected())
+					elevel = FATAL;
+			}
+		}
 		/*
 		 * If the error level is ERROR or more, errfinish is not going to
 		 * return to caller; therefore, if there is any stacked error already
