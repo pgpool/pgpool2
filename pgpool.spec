@@ -1,20 +1,29 @@
+# How to build RPM:
+#   rpmbuild -ba pgpool.spec --define"pgpool_version 3.3.1" --define="pg_version 93" --define="pghome /usr/pgsql-9.3"
+#
+# expecting RPM name are:
+#   pgpool-II-pg{xx}-{version}.pgdg.{arch}.rpm
+#   pgpool-II-pg{xx}-devel-{version}.pgdg.{arch}.rpm
+#   pgpool-II-pg{xx}-{version}.pgdg.src.rpm
+
 Summary:        Pgpool is a connection pooling/replication server for PostgreSQL
-Name:           pgpool-II
-Version:        3.3.1
+Name:           pgpool-II-pg%{pg_version}
+Version:        %{pgpool_version}
 Release:        1%{?dist}
 License:        BSD
 Group:          Applications/Databases
 Vendor:         Pgpool Global Development Group
 URL:            http://www.pgppol.net/
-Source0:        %{name}-%{version}.tar.gz
+Source0:        pgpool-II-%{version}.tar.gz
 Source1:        pgpool.init
 Source2:        pgpool.sysconfig
 Patch1:         pgpool.conf.sample.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires:  postgresql92-devel pam-devel
+BuildRequires:  postgresql%{pg_version}-devel pam-devel
 Obsoletes:      postgresql-pgpool
 
-%define pghome /usr/pgsql-9.2
+# original pgpool archive name
+%define archive_name pgpool-II-%{version}
 
 %description
 pgpool-II is a inherited project of pgpool (to classify from
@@ -43,7 +52,7 @@ Requires:    %{name} = %{version}
 Development headers and libraries for pgpool-II.
 
 %prep
-%setup -q -n %{name}-%{version}
+%setup -q -n %{archive_name}
 %patch1 -p0
 
 %build
@@ -113,9 +122,9 @@ fi
 %{_bindir}/pcp_watchdog_info
 %{_bindir}/pg_md5
 %{_mandir}/man8/pgpool*
-%{_datadir}/%{name}/insert_lock.sql
-%{_datadir}/%{name}/system_db.sql
-%{_datadir}/%{name}/pgpool.pam
+%{_datadir}/pgpool-II/insert_lock.sql
+%{_datadir}/pgpool-II/system_db.sql
+%{_datadir}/pgpool-II/pgpool.pam
 %{pghome}/share/extension/pgpool-recovery.sql
 %{pghome}/share/extension/pgpool_recovery--1.0.sql
 %{pghome}/share/extension/pgpool_recovery.control
@@ -141,6 +150,9 @@ fi
 %{_libdir}/libpcp.so
 
 %changelog
+* Tue Nov 26 2013 Nozomi Anzai <anzai@sraoss.co.jp> 3.3.1-1
+- Improved to specify the versions of pgool-II and PostgreSQL
+
 * Mon May 13 2013 Nozomi Anzai <anzai@sraoss.co.jp> 3.3.0-1
 - Update to 3.3.0
 - Change to install pgpool-recovery, pgpool-regclass to PostgreSQL
