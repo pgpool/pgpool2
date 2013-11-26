@@ -75,6 +75,8 @@ static void init_system_db_connection(void);
 static bool connect_using_existing_connection(POOL_CONNECTION *frontend,
 											  POOL_CONNECTION_POOL *backend,
 											  StartupPacket *sp);
+static void free_persisten_db_connection_memory(POOL_CONNECTION_POOL_SLOT *cp);
+
 /*
  * non 0 means SIGTERM(smart shutdown) or SIGINT(fast shutdown) has arrived
  */
@@ -1490,6 +1492,7 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	if (startup_packet == NULL)
 	{
 		pool_error("make_persistent_db_connection: could not allocate memory");
+		free_persisten_db_connection_memory(cp);
 		return NULL;
 	}
 	memset(startup_packet, 0, sizeof(*startup_packet));
@@ -1510,6 +1513,8 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	if (fd < 0)
 	{
 		pool_error("make_persistent_db_connection: connection to %s(%d) failed", hostname, port);
+		free_persisten_db_connection_memory(cp);
+		free(startup_packet);
 		return NULL;
 	}
 
@@ -1526,6 +1531,9 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	if (len1 >= (sizeof(startup_packet->data)-len))
 	{
 		pool_error("make_persistent_db_connection: too long user name");
+		pool_close(cp->con);
+		free_persisten_db_connection_memory(cp);
+		free(startup_packet);
 		return NULL;
 	}
 
@@ -1534,6 +1542,9 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	if (len1 >= (sizeof(startup_packet->data)-len))
 	{
 		pool_error("make_persistent_db_connection: too long user name");
+		pool_close(cp->con);
+		free_persisten_db_connection_memory(cp);
+		free(startup_packet);
 		return NULL;
 	}
 
@@ -1542,6 +1553,9 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	if (len1 >= (sizeof(startup_packet->data)-len))
 	{
 		pool_error("make_persistent_db_connection: too long database name");
+		pool_close(cp->con);
+		free_persisten_db_connection_memory(cp);
+		free(startup_packet);
 		return NULL;
 	}
 	len += len1;
@@ -1551,6 +1565,9 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	if (cp->sp == NULL)
 	{
 		pool_error("make_persistent_db_connection: could not allocate memory");
+		pool_close(cp->con);
+		free_persisten_db_connection_memory(cp);
+		free(startup_packet);
 		return NULL;
 	}
 
@@ -1562,12 +1579,16 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	if (cp->sp->database == NULL)
 	{
 		pool_error("make_persistent_db_connection: could not allocate memory");
+		pool_close(cp->con);
+		free_persisten_db_connection_memory(cp);
 		return NULL;
 	}
 	cp->sp->user = strdup(user);
 	if (cp->sp->user == NULL)
 	{
 		pool_error("make_persistent_db_connection: could not allocate memory");
+		pool_close(cp->con);
+		free_persisten_db_connection_memory(cp);
 		return NULL;
 	}
 
@@ -1578,6 +1599,8 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	if (status)
 	{
 		pool_error("make_persistent_db_connection: send_startup_packet failed");
+		pool_close(cp->con);
+		free_persisten_db_connection_memory(cp);
 		return NULL;
 	}
 
@@ -1587,10 +1610,35 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	if (s_do_auth(cp, password))
 	{
 		pool_error("make_persistent_db_connection: s_do_auth failed");
+		pool_close(cp->con);
+		free_persisten_db_connection_memory(cp);
 		return NULL;
 	}
 
 	return cp;
+}
+
+/*
+ * Free memory of POOL_CONNECTION_POOL_SLOT.  Should only be used in
+ * make_persistent_db_connection and discard_persistent_db_connection.
+ */
+void free_persisten_db_connection_memory(POOL_CONNECTION_POOL_SLOT *cp)
+{
+	if (!cp)
+		return;
+	if (!cp->sp)
+	{
+		free(cp);
+		return;
+	}
+	if (cp->sp->startup_packet)
+		free(cp->sp->startup_packet);
+	if (cp->sp->database)
+		free(cp->sp->database);
+	if (cp->sp->user)
+		free(cp->sp->user);
+	free(cp->sp);
+	free(cp);
 }
 
 /*
@@ -1620,11 +1668,7 @@ void discard_persistent_db_connection(POOL_CONNECTION_POOL_SLOT *cp)
 	pool_unset_nonblock(cp->con->fd);
 
 	pool_close(cp->con);
-	free(cp->sp->startup_packet);
-	free(cp->sp->database);
-	free(cp->sp->user);
-	free(cp->sp);
-	free(cp);
+	free_persisten_db_connection_memory(cp);
 }
 
 /*
