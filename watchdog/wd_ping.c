@@ -227,7 +227,10 @@ exec_ping(void * arg)
 
 		close(pfd[0]);
 	}
-	rtn = (get_result (result) > 0)?WD_OK:WD_NG;
+
+	/* Check whether average RTT >= 0 */
+	rtn = (get_result (result) >= 0) ? WD_OK : WD_NG;
+
 	pthread_exit((void *)rtn);
 }
 
