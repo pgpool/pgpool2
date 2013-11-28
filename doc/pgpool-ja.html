@@ -5893,7 +5893,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 <p>パッチは Christoph Berg さんから提供されました。（<a href="ttp://www.sraoss.jp/pipermail/pgpool-general/2013-September/002156.html" target="_blank">[pgpool-general: 2127]</a>）</p>
 </li>
 
-<li>watchdog: -Werror=format-security をつけてコンパイルしたときの、warning/error を修正しました。(Tatsuo Ishii)
+<li>watchdog: <code>-Werror=format-security</code> をつけてコンパイルしたときの、warning/error を修正しました。(Tatsuo Ishii)
 <p>パッチは Christoph Berg さんから提供されました。（<a href="ttp://www.sraoss.jp/pipermail/pgpool-general/2013-September/002156.html" target="_blank">[pgpool-general: 2127]</a>）</p>
 </li>
 
@@ -6031,7 +6031,7 @@ parse によるロックが残存するためです。</p>
 
 <li>pool_do_auth() のエラーケースで変数を初期化していませんでした。 (Tatsuo Ishii)
 <p>有効なバックエンドがいないとき、pgpool は認証フェーズのフロントエンドにごみの pid を返していました。
-実際に、有効なヴァックエンドがいないために、フロントエンドは認証後に接続することができません。
+実際に、有効なバックエンドがいないために、フロントエンドは認証後に接続することができません。
 もちろんこれは問題あるものではありません。</p>
 <p>これは Coverity "1127331 Uninitialized scalar variable" で発見されました。</p>
 </li>
@@ -6064,6 +6064,15 @@ parse によるロックが残存するためです。</p>
 </li>
 
 <li>RPM: spec ファイルで、pgpool-II と PostgreSQL のバージョンを指定できるようにしました。(Nozomi Anzai)</li>
+
+<li>make_persistent_db_connection のリソースリークを修正しました。(Tatsuo Ishii)
+<p>この修正ののために、新しく free_persisten_db_connection_memory 関数を追加しました。</p>
+<p>これは Coverity #1111468 で発見されました。</p>
+</li>
+
+<li>watchdog: RTT が非常に短いときに <a href=#TRUSTED_SERVERS">trusted servers</a> への
+コネクションチェックに失敗する不具合をを、修正しました。(Yugo Nagata)
+</li>
 
 <li>Coverity で見つかったさまざまな不具合を修正しました。(Tatsuo Ishii)</li>
 
