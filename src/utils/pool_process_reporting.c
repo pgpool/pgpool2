@@ -272,6 +272,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].desc, "if true print time stamp to each log line", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	strncpy(status[i].name, "print_user", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->print_user);
+	strncpy(status[i].desc, "if true print user name to each log line", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	strncpy(status[i].name, "log_connections", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->log_connections);
 	strncpy(status[i].desc, "if true, print incoming connections to the log", POOLCONFIG_MAXDESCLEN);

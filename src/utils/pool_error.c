@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2012	PgPool Global Development Group
+ * Copyright (c) 2003-2013	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -30,12 +30,18 @@
 
 #include "pool.h"
 #include "pool_config.h"
+#ifndef POOL_TOOLS
+#include "context/pool_session_context.h"
+#endif
 
 #define MAXSTRFTIME 128
 
 extern int debug;
 
+#ifndef POOL_TOOLS
 static char *nowsec(void);
+#endif
+static char *optstring(int kind);
 
 void pool_error(const char *fmt,...)
 {
@@ -52,33 +58,29 @@ void pool_error(const char *fmt,...)
 #endif
 	POOL_SETMASK2(&BlockSig, &oldmask);
 
-	/* Write error message to syslog */
-	if (pool_config->logsyslog == 1) {
-	   va_start(ap, fmt);
-	   vsyslog(pool_config->syslog_facility | LOG_ERR, fmt, ap);
-	   va_end(ap);
-	   POOL_SETMASK(&oldmask);
-	   return;
+	/* Write message to syslog */
+	if (pool_config->logsyslog == 1)
+	{
+		va_start(ap, fmt);
+		vsyslog(pool_config->syslog_facility | LOG_ERR, fmt, ap);
+		va_end(ap);
+		POOL_SETMASK(&oldmask);
+		return;
 	}
 
-	if (pool_config->print_timestamp)
 #ifdef HAVE_ASPRINTF
-	  len = asprintf(&fmt2, "%s ERROR: pid %d: %s\n", nowsec(), (int)getpid(), fmt);
-	else
-	  len = asprintf(&fmt2, "ERROR: pid %d: %s\n", (int)getpid(), fmt);
+	len = asprintf(&fmt2, "%s %s\n", optstring(0), fmt);
 
-   if (len >= 0 && fmt2)
-   {
-     va_start(ap, fmt);
-     vfprintf(stderr, fmt2, ap);
-     va_end(ap);
-     fflush(stderr);
-	 free(fmt2);
-   }
+	if (len >= 0 && fmt2)
+	{
+		va_start(ap, fmt);
+		vfprintf(stderr, fmt2, ap);
+		va_end(ap);
+		fflush(stderr);
+		free(fmt2);
+	}
 #else
-	  fprintf(stderr, "%s ERROR: pid %d: ", nowsec(), (int)getpid());
-	else
-	  fprintf(stderr, "ERROR: pid %d: ", (int)getpid());
+	fprintf(stderr, "%s %s", optstring(0));
 
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
@@ -116,33 +118,29 @@ void pool_debug(const char *fmt,...)
 
 	POOL_SETMASK2(&BlockSig, &oldmask);
 
-	/* Write debug message to syslog */
-	if (pool_config->logsyslog == 1) {
-	   va_start(ap, fmt);
-	   vsyslog(pool_config->syslog_facility | LOG_DEBUG, fmt, ap);
-	   va_end(ap);
-	   POOL_SETMASK(&oldmask);
-	   return;
+	/* Write message to syslog */
+	if (pool_config->logsyslog == 1)
+	{
+		va_start(ap, fmt);
+		vsyslog(pool_config->syslog_facility | LOG_DEBUG, fmt, ap);
+		va_end(ap);
+		POOL_SETMASK(&oldmask);
+		return;
 	}
 
-	if (pool_config->print_timestamp)
 #ifdef HAVE_ASPRINTF
-	  len = asprintf(&fmt2, "%s DEBUG: pid %d: %s\n", nowsec(), (int)getpid(), fmt);
-	else
-	  len = asprintf(&fmt2, "DEBUG: pid %d: %s\n", (int)getpid(), fmt);
+	len = asprintf(&fmt2, "%s %s\n", optstring(1), fmt);
 
-   if (len >= 0 && fmt2)
-   {
-     va_start(ap, fmt);
-     vfprintf(stderr, fmt2, ap);
-     va_end(ap);
-     fflush(stderr);
-	 free(fmt2);
-   }
+	if (len >= 0 && fmt2)
+	{
+		va_start(ap, fmt);
+		vfprintf(stderr, fmt2, ap);
+		va_end(ap);
+		fflush(stderr);
+		free(fmt2);
+	}
 #else
-	  fprintf(stderr, "%s DEBUG: pid %d: ", nowsec(), (int)getpid());
-	else
-	  fprintf(stderr, "DEBUG: pid %d: ", (int)getpid());
+	fprintf(stderr, "%s %s", optstring(1));
 
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
@@ -166,36 +164,31 @@ void pool_log(const char *fmt,...)
 #else
 	int	oldmask;
 #endif
-
 	POOL_SETMASK2(&BlockSig, &oldmask);
 
-	/* Write log message to syslog */
-	if (pool_config->logsyslog == 1) {
-	   va_start(ap, fmt);
-	   vsyslog(pool_config->syslog_facility | LOG_NOTICE, fmt, ap);
-	   va_end(ap);
-	   POOL_SETMASK(&oldmask);
-	   return;
+	/* Write message to syslog */
+	if (pool_config->logsyslog == 1)
+	{
+		va_start(ap, fmt);
+		vsyslog(pool_config->syslog_facility | LOG_NOTICE, fmt, ap);
+		va_end(ap);
+		POOL_SETMASK(&oldmask);
+		return;
 	}
 
-	if (pool_config->print_timestamp)
 #ifdef HAVE_ASPRINTF
-	  len = asprintf(&fmt2, "%s LOG:   pid %d: %s\n", nowsec(), (int)getpid(), fmt);
-	else
-	  len = asprintf(&fmt2, "LOG:   pid %d: %s\n", (int)getpid(), fmt);
+	len = asprintf(&fmt2, "%s %s\n", optstring(2), fmt);
 
-   if (len >= 0 && fmt2)
-   {
-     va_start(ap, fmt);
-     vfprintf(stderr, fmt2, ap);
-     va_end(ap);
-     fflush(stderr);
-	 free(fmt2);
-   }
+	if (len >= 0 && fmt2)
+	{
+		va_start(ap, fmt);
+		vfprintf(stderr, fmt2, ap);
+		va_end(ap);
+		fflush(stderr);
+		free(fmt2);
+	}
 #else
-	  fprintf(stderr, "%s LOG:   pid %d: ", nowsec(), (int)getpid());
-	else
-	  fprintf(stderr, "LOG:   pid %d: ", (int)getpid());
+	fprintf(stderr, "%s %s", optstring(2));
 
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
@@ -206,6 +199,7 @@ void pool_log(const char *fmt,...)
 	POOL_SETMASK(&oldmask);
 }
 
+#ifndef POOL_TOOLS
 static char *nowsec(void)
 {
 	static char strbuf[MAXSTRFTIME];
@@ -214,6 +208,7 @@ static char *nowsec(void)
 	strftime(strbuf, MAXSTRFTIME, "%Y-%m-%d %H:%M:%S", localtime(&now));
 	return strbuf;
 }
+#endif
 
 #ifndef HAVE_VSYSLOG
 void vsyslog (int priority, const char *format, va_list ap)
@@ -240,3 +235,51 @@ void vsyslog (int priority, const char *format, va_list ap)
 	free(msg);
 }
 #endif /* HAVE_VSYSLOG */
+
+/*
+ * Create "ERROR" etc., timestamp, pid, user name string and return
+ * it. The returned string is in a static buff and subsequent calls
+ * will overwrite it.
+ */
+static char *optstring(int kind)
+{
+	static char *kindstr[] = {"ERROR:", "DEBUG:", "LOG:  "};
+	char timebuf[MAXSTRFTIME];
+	time_t now;
+	static char optbuf[MAXSTRFTIME+7+8+NAMEDATALEN];
+#ifndef POOL_TOOLS
+	char username[NAMEDATALEN];
+#endif
+	char buf[128];
+#ifndef POOL_TOOLS
+	POOL_SESSION_CONTEXT *c;
+#endif
+
+	optbuf[0] = '\0';
+
+	if (pool_config->print_timestamp)
+	{
+		now = time(NULL);
+		strftime(timebuf, MAXSTRFTIME, "%Y-%m-%d %H:%M:%S ", localtime(&now));
+		strcat(optbuf, timebuf);
+	}
+
+	snprintf(buf, sizeof(buf), "%s pid: %d", kindstr[kind], (int)getpid());
+	strcat(optbuf, buf);
+
+#ifndef POOL_TOOLS
+	if (pool_config->print_user)
+	{
+		if ((c = pool_get_session_context()))
+			if (MASTER_CONNECTION(c->backend) && MASTER_CONNECTION(c->backend)->sp &&
+				MASTER_CONNECTION(c->backend)->sp->user)
+			{
+				strlcpy(username, MASTER_CONNECTION(c->backend)->sp->user, sizeof(username));
+				strcat(optbuf, " user: ");
+				strcat(optbuf, username);
+			}
+	}
+#endif
+
+	return optbuf;
+}
