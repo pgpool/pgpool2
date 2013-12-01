@@ -11,5 +11,5 @@ pg_md5_SOURCES = pg_md5.c \
 			$(top_srcdir)/src/main/pool_globals.c
 
 DEFS = @DEFS@ \
-    -DDEFAULT_CONFIGDIR=\"$(sysconfdir)\"
+    -DDEFAULT_CONFIGDIR=\"$(sysconfdir)\" -DPOOL_TOOLS
 

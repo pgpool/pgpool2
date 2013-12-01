@@ -51,6 +51,18 @@
 
 #define POOLMAXPATHLEN 8192
 
+/*
+ * Brought from PostgreSQL's pg_config_manual.h.
+ *
+ * Maximum length for identifiers (e.g. table names, column names,
+ * function names).  Names actually are limited to one less byte than this,
+ * because the length must include a trailing zero byte.
+ *
+ * Please note that in version 2 protocol, maximum user name length is
+ * SM_USER, which is 32.
+ */
+#define NAMEDATALEN 64
+
 /* configuration file name */
 #define POOL_CONF_FILE_NAME "pgpool.conf"
 

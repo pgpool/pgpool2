@@ -181,6 +181,7 @@ int pool_init_config(void)
 	pool_config->black_function_list = default_black_function_list;
 	pool_config->num_black_function_list = sizeof(default_black_function_list)/sizeof(char *);
 	pool_config->print_timestamp = 1;
+	pool_config->print_user = 0;
 	pool_config->master_slave_mode = 0;
 	pool_config->master_slave_sub_mode = "slony";
 	pool_config->delay_threshold = 0;
@@ -1024,6 +1025,18 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->print_timestamp = v;
+		}
+		else if (!strcmp(key, "print_user") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			int v = eval_logical(yytext);
+
+			if (v < 0)
+			{
+				pool_error("pool_config: invalid value %s for %s", yytext, key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->print_user = v;
 		}
 
 		else if (!strcmp(key, "master_slave_mode") && CHECK_CONTEXT(INIT_CONFIG, context))
