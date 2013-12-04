@@ -5877,7 +5877,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 <ul>
 
 <li>レプリケーションモード稼働時、一部のタイムゾーンでタイムスタンプの書き換えが誤っていました。(Tatsuo Ishii)
-<p>タイムスタンプの書き換え処理では、現在日時を取得するあめに "SELECT now()" を実行します。
+<p>タイムスタンプの書き換え処理では、現在日時を取得するために "SELECT now()" を実行します。
 しかし一部のタイムゾーンにおいては、"02:30" のような場合に現在日時のためのバッファの大きさが
 十分ではありませんでした。"0900" のように 30 分刻みでのタイムゾーンでないときは、この問題は発生しません。
 そのため、これまでこの不具合が報告されたことはありませんでした。</p>
@@ -5890,11 +5890,11 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 
 <li>Makefile: Makefiles 内の pg_config を $(PG_CONFIG) に置き換えました。
 したがって、PostgreSQL のメジャーバージョンが異なる場合には、コンパイル中で上書きされるようになります。(Tatsuo Ishii)
-<p>パッチは Christoph Berg さんから提供されました。（<a href="ttp://www.sraoss.jp/pipermail/pgpool-general/2013-September/002156.html" target="_blank">[pgpool-general: 2127]</a>）</p>
+<p>パッチは Christoph Berg さんから提供されました。（<a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-September/002156.html" target="_blank">[pgpool-general: 2127]</a>）</p>
 </li>
 
 <li>watchdog: <code>-Werror=format-security</code> をつけてコンパイルしたときの、warning/error を修正しました。(Tatsuo Ishii)
-<p>パッチは Christoph Berg さんから提供されました。（<a href="ttp://www.sraoss.jp/pipermail/pgpool-general/2013-September/002156.html" target="_blank">[pgpool-general: 2127]</a>）</p>
+<p>パッチは Christoph Berg さんから提供されました。（<a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-September/002156.html" target="_blank">[pgpool-general: 2127]</a>）</p>
 </li>
 
 <li>configure: FreeBSD で問題があったため、-lcompat を削除しました。(Tatsuo Ishii)
@@ -5939,7 +5939,7 @@ segfault していたのを修正しました。(Tatsuo Ishii)
 <p>この問題は、たいていのユーザは JDBC を autocommit = off で使っているために、
 今まで報告されることがありませんでした。off であれば、ユーザが commit / rollback を発行するまで、
 parse によるロックが残存するためです。</p>
-<p>この不具合は Steve Kuekes さんにより、<a href="http://www.sraoss.jp/pipermail/pgpool-gener" target="_blank">[pgpool-general: 2142]</a> で報告されました。</p>
+<p>この不具合は Steve Kuekes さんにより、<a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-September/002171.html" target="_blank">[pgpool-general: 2142]</a> で報告されました。</p>
 </li>
 
 <li>クエリキャッシュにおけるメモリ確保サイズの不具合を修正しました。(Tatsuo Ishii)
@@ -6023,7 +6023,7 @@ parse によるロックが残存するためです。</p>
 <li>pgpool_catalog への public access を許可していませんでした。
 <p>これは、pgpool_catalog がレプリケーションモードで作成されている場合に、
 ユーザテーブルにデータを INSERT すると発生します。</p>
-<p>この不具合は <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2013-November/001228.htm" target="_blank">[pgpool-general-jp: 1229]</a> で報告されました。</p>
+<p>この不具合は <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2013-November/001228.html" target="_blank">[pgpool-general-jp: 1229]</a> で報告されました。</p>
 </li>
 
 <li>doc: <a href="#TRUSTED_SERVERS">trusted_servers</a> に複数のサーバを指定すべきであることを記述しました。

@@ -221,7 +221,7 @@
 
       If there's no valid backend, pgpool will return garbage pid to frontend in
       auth phase. Actually because no backend is available, frontend will be
-      disconnected later on. So this is not harmless.
+      disconnected later on. So this is harmless.
       Per Coverity report "1127331 Uninitialized scalar variable".
 
     - Fix to add node id range check when issue an error message using node
