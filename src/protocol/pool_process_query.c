@@ -1681,7 +1681,7 @@ void pool_send_severity_message(POOL_CONNECTION *frontend, int protoMajor,
 	else if (protoMajor == PROTO_MAJOR_V3)
 	{
 		char data[MAXDATA];
-		char msgbuf[MAXMSGBUF];
+		char msgbuf[MAXMSGBUF+1];
 		int len;
 		int thislen;
 		int sendlen;
@@ -3829,6 +3829,11 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 			}
 		}
 	}
+	else if (first_node == -1)
+	{
+		pool_error("read_kind_from_backend: couldn't find first node. All backend down?");
+		return POOL_ERROR;
+	}
 	else
 		trust_kind = kind_list[first_node];
 
@@ -3997,14 +4002,9 @@ parse_copy_data(char *buf, int len, char delimiter, int col_id)
 		if (buf[i] == '\\' && i != len - 2) /* escape */
 		{
 			if (buf[i+1] == delimiter)
-			{
 				i++;
-				str[j++] = buf[i];
-			}
-			else
-			{
-				str[j++] = buf[i];
-			}
+
+			str[j++] = buf[i];
 		}
 		else if (buf[i] == delimiter) /* delimiter */
 		{
@@ -4027,10 +4027,11 @@ parse_copy_data(char *buf, int len, char delimiter, int col_id)
 	if (field == col_id)
 	{
 		str[j] = '\0';
-		p = malloc(j);
+		p = malloc(j+1);
 		if (p == NULL)
 		{
 			pool_error("parse_copy_data: malloc failed");
+			free(str);
 			return NULL;
 		}
 		strcpy(p, str);
@@ -4052,14 +4053,14 @@ void query_ps_status(char *query, POOL_CONNECTION_POOL *backend)
 		return;
 
 	sp = MASTER_CONNECTION(backend)->sp;
-	i = snprintf(psbuf, sizeof(psbuf), "%s %s %s ",
+	i = snprintf(psbuf, sizeof(psbuf) - 1, "%s %s %s ",
 				 sp->user, sp->database, remote_ps_data);
 
 	/* skip spaces */
 	while (*query && isspace(*query))
 		query++;
 
-	for (; i< sizeof(psbuf); i++)
+	for (; i< sizeof(psbuf)-1; i++)
 	{
 		if (!*query || isspace(*query))
 			break;

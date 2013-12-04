@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2013	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -372,6 +372,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	 * OK, read pid and secret key
 	 */
 	sp = MASTER_CONNECTION(cp)->sp;
+	pid = -1;
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -406,18 +407,16 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 		}
 	}
 
-#ifdef NOT_USED
-	sp = MASTER_CONNECTION(cp)->sp;
-	cp->info->major = sp->major;
-	cp->info->minor = sp->minor;
-	strncpy(cp->info->database, sp->database, sizeof(cp->info->database) - 1);
-	strncpy(cp->info->user, sp->user, sizeof(cp->info->user) - 1);
-	cp->info->counter = 1;
-#endif
+	if (pid == -1)
+	{
+		ereport(ERROR,
+                (errmsg("authentication failed"),
+                 errdetail("pool_do_auth: all backends are down")));
+	}
 	if(pool_send_backend_key_data(frontend, pid, key, protoMajor))
 		ereport(ERROR,
 			(errmsg("authentication failed"),
-				errdetail("failed to send backend data to frontedn")));
+				errdetail("failed to send backend data to frontend")));
 	return 0;
 }
 
@@ -1313,6 +1312,7 @@ signed char pool_read_kind(POOL_CONNECTION_POOL *cp)
 	char kind0, kind;
 	int i;
 
+	kind = -1;
 	kind0 = 0;
 
 	for (i=0;i<NUM_BACKENDS;i++)
@@ -1369,6 +1369,7 @@ int pool_read_int(POOL_CONNECTION_POOL *cp)
 	int data0, data;
 	int i;
 
+	data = -1;
 	data0 = 0;
 
 	for (i=0;i<NUM_BACKENDS;i++)

@@ -537,7 +537,7 @@ char *get_config_file_name(void)
 }
 
 /*
- * get_config_file_name: return full path of pool_hba.conf.
+ * get_hba_file_name: return full path of pool_hba.conf.
  */
 char *get_hba_file_name(void)
 {

@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2012	PgPool Global Development Group
+ * Copyright (c) 2003-2013	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1321,21 +1321,14 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	if (pool_extended_send_and_wait(query_context, "B", len, contents, 1, MASTER_NODE_ID)
 		!= POOL_CONTINUE)
 	{
-		if (rewrite_msg != NULL)
-			/* free(rewrite_msg) */;
 		return POOL_END;
 	}
 
 	if (pool_extended_send_and_wait(query_context, "B", len, contents, -1, MASTER_NODE_ID)
 		!= POOL_CONTINUE)
 	{
-		if (rewrite_msg != NULL)
-			/* free(rewrite_msg) */;
 		return POOL_END;
 	}
-
-	if (rewrite_msg != NULL)
-		/* free(rewrite_msg) */;
 
 	return POOL_CONTINUE;
 }
@@ -1534,7 +1527,6 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	if (session_context->mismatch_ntuples && MAJOR(backend) == PROTO_MAJOR_V3)
 	{
 		int i;
-		signed char state;
 		char kind;
 
 		/*
@@ -1809,6 +1801,10 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				}
 				else
 				{
+					if (MAJOR(backend) != PROTO_MAJOR_V3)
+					{
+						state = 'I';	/* XXX I don't think query cache works with PROTO2 protocol */
+					}
 					pool_handle_query_cache(backend, query, node, state);
 				}
 			}
@@ -2911,8 +2907,9 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 						id = pool_get_id(info, p1);
 						pool_debug("CopyDataRow: copying id: %d", id);
 						free(p1);
-						if (!VALID_BACKEND(id))
+						if (id < 0 || !VALID_BACKEND(id))
 						{
+							pool_error("CopyDataRow: pool_get_id returns invalid id: %d", id);
 							exit(1);
 						}
 						if (pool_write(CONNECTION(backend, id), &kind, 1))

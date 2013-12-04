@@ -125,7 +125,7 @@ void pool_set_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id)
 		return;
 	}
 
-	if (node_id < 0 || node_id > MAX_NUM_BACKENDS)
+	if (node_id < 0 || node_id >= MAX_NUM_BACKENDS)
 	{
 		pool_error("pool_set_node_to_be_sent: invalid node id:%d", node_id);
 		return;
@@ -147,7 +147,7 @@ void pool_unset_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id)
 		return;
 	}
 
-	if (node_id < 0 || node_id > MAX_NUM_BACKENDS)
+	if (node_id < 0 || node_id >= MAX_NUM_BACKENDS)
 	{
 		pool_error("pool_unset_node_to_be_sent: invalid node id:%d", node_id);
 		return;
@@ -235,7 +235,7 @@ bool pool_is_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id)
 		return false;
 	}
 
-	if (node_id < 0 || node_id > MAX_NUM_BACKENDS)
+	if (node_id < 0 || node_id >= MAX_NUM_BACKENDS)
 	{
 		pool_error("pool_is_node_to_be_sent: invalid node id:%d", node_id);
 		return false;
@@ -523,7 +523,8 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 		}
 		else
 		{
-			if (is_select_query(node, query) && !pool_config->replicate_select)
+			if (is_select_query(node, query) && !pool_config->replicate_select &&
+				!pool_has_function_call(node))
 			{
 				/* only send to master node */
 				pool_set_node_to_be_sent(query_context, REAL_MASTER_NODE_ID);
@@ -1258,11 +1259,10 @@ void where_to_send_deallocate(POOL_QUERY_CONTEXT *query_context, Node *node)
 	DeallocateStmt *d = (DeallocateStmt *)node;
 	POOL_SENT_MESSAGE *msg;
 
-	/* DELLOCATE ALL? */
+	/* DEALLOCATE ALL? */
 	if (d->name == NULL)
 	{
 		pool_setall_node_to_be_sent(query_context);
-		return;
 	}
 	else
 	{
@@ -1274,11 +1274,11 @@ void where_to_send_deallocate(POOL_QUERY_CONTEXT *query_context, Node *node)
 			/* Inherit same map from PREPARE or PARSE */
 			pool_copy_prep_where(msg->query_context->where_to_send,
 								 query_context->where_to_send);
+			return;
 		}
-		return;
+		/* prepared statement was not found */
+		pool_setall_node_to_be_sent(query_context);
 	}
-	/* prepared statement was not found */
-	pool_setall_node_to_be_sent(query_context);
 }
 
 /*
