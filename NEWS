@@ -673,7 +673,7 @@
       wrong query comes in, the transaction goes into an abort state but pgpool
       does not close the transaction. Thus next query causes error because the
       transaction is still in abort status.
-      
+
       This problem was reported in [pgpool-general: 1877] by Sean Hogan.
 
       [pgpool-general: 1877] current transaction is aborted, commands ignored
@@ -725,6 +725,240 @@
 3.2 Series (2012/08/03 - )
 ===============================================================================
 
+                        3.2.7 (tokakiboshi) 2013/12/06
+
+* Version 3.2.7
+
+    This is a bugfix release against pgpool-II 3.2.6.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix incorrect time stamp rewriting in replication mode for certain time
+      zones. (Tatsuo Ishii)
+
+      Time stamp rewriting calls "SELECT now()" to get current time.
+      Unfortunately the buffer for the current time is too small for certain
+      time zones such as "02:30". Note that non-30-minutes-time-zone such as
+      "0900" does not reveal the problem. This explains why we haven't the bug
+      report until today.
+
+      Bug reported in [pgpool-general: 2113] and fix provided by Sean Hogan.
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-September/002142.html
+
+    - Makefile: Replace pg_config by $(PG_CONFIG) in Makefiles so it can be
+      overridden at build time when compiling for different PG major versions.
+      (Tatsuo Ishii)
+
+      Patch contributed by Christoph Berg ([pgpool-general: 2127]).
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-September/002156.html
+
+    - Remove -lcompat because it confuses FreeBSD per bug#15. (Tatsuo Ishii
+      http://www.pgpool.net/mantisbt/view.php?id=15
+
+    - Fix segfault when pgpool.conf does not set log_standby_delay.
+      (Tatsuo Ishii)
+
+      This is caused by wrong initialization for log_standby_delay in
+      pool_config.l.
+      Per bug#74. http://www.pgpool.net/mantisbt/view.php?id=74
+
+    - doc: Modify descriptions about restrictions of parallel mode
+      Muliple rows INSERT using VALUES are not supported in parallel mode.
+      (Yugo Nagata)
+
+    - Avoid calling find_primary_node_repeatedly() when standby node goes
+      down. (Tatsuo Ishii)
+
+      This will reduce the time to failover. Per bug #75, patch modified by
+      Tatsuo Ishii. http://www.pgpool.net/mantisbt/view.php?id=75
+
+    - Fix data inconsistency problem with native replication mode + extended
+      protocol case. (Tatsuo Ishii)
+
+      It is reported that concurrent INSERT using JDBC driver causes data
+      difference among database node. This only happens following conditions
+      are all met:
+
+      1) Native replication mode
+      2) Extended protocol used
+      3) The portal created by parse message is reused by bind message
+      4) autocommit is on
+      5) SERIAL (sequence) is used
+
+      Pgpool-II's parse message function knows it has to lock the target
+      table when INSERT (plus #5) is issued by clients. Unfortunately bind
+      message function did not know it. Once parse/bind/execute finishes,
+      pgpool releases the lock obtained by parse because of #4. JDBC wants
+      to reuse the portal and starts the cycle from bind message, which does
+      not obtain lock. As as result, lock-free INSERT are floating around
+      which causes data inconsistency of course.  The solution is, lock the
+      table in bind phase.
+
+      For this bind needs to issue LOCK in extended protocol. This was a little
+      bit hard because the module (do_command()) to issue internal SQL command
+      (other than SELECT) does not support extended protocol.
+      To solve the problem do_query() is modified so that it accepts other than
+      SELECT because it already accepts extended protocol.
+      The modification is minimum and is only tested for the case called from
+      insert_lock(). I do not recommend to replace every occurrence of
+      do_command () with do_query() at this point.
+
+      BTW the reason why the bug is not reported is, most users uses JDBC
+      with auto commit = off. In this case, the lock obtained by parse persists
+      until user explicitly issues commit or rollback.
+
+      Per bug report by Steve Kuekes in [pgpool-general: 2142].
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-September/002171.html
+
+    - Fix memory allocation size bug in the code path of query cache.
+      (Tatsuo  Ishii)
+
+      In execute() memory allocation size is too small incertain case. No bug
+      has been reported so far, but certainly this is a bug.
+
+    - Fix occasional segfault in query cache + extended protocol.
+      (Tatsuo Ishii)
+
+      When the query is not "cache safe", bind_msg->param_offset was not set
+      in Bind(). However, Execute() unconditionally uses bind_msg->param_offset
+      to convert bind parameters to string so that they can be added to the
+      cached query string and it causes segfault because bind_msg->param_offset
+      is a garbage. Also logic bug to calculate bind_msg->param_offset is
+      corrected.
+
+      Per bug#76. http://www.pgpool.net/mantisbt/view.php?id=76
+
+    - Avoid to run out free query cache hash index entry. (Tatsuo Ishii)
+
+      If hash index entries are run out, pgpool-II cannot reuse old cache
+      entry because pgpool-II always expects there's at least one empty hash
+      index entry. To mitigate the problem, if free hash index entries are run
+      out, look for victim cache block to reuse the hash index entry.
+
+      Per bug #70. http://www.pgpool.net/mantisbt/view.php?id=70
+
+    - Fix inappropriate shared memory allocation size for clock hand.
+      (Tatsuo Ishii)
+
+      The memory for clock hand was allocated as sizeof(pool_fsmm_clock_hand))
+      which is 8 bytes long because the variable is declared as:
+
+        static int *pool_fsmm_clock_hand;
+
+      This is plain wrong. The memory size actually needed is only 4 bytes,
+      which is sizeof(*pool_fsmm_clock_hand)). In other word, the bug allocated
+      unnecessary 4 bytes, which did nothing bd for the execution of program.
+      But a bug is a bug.
+
+      Per covery report "1111476 Wrong sizeof argument"
+
+    - Fix "show pool_status" always shows memqcache_auto_cache_invalidation as
+      0. (Tatsuo Ishii)
+      Per bug #80. http://www.pgpool.net/mantisbt/view.php?id=80
+
+    - Fix error message in read_password_packet(). (Tatsuo Ishii)
+
+    - watchdog: Fix to pass big parameter by pointer instead of by value at
+      some function. (Yugo Nagata)
+
+    - Fix memory leak when SSL is requested. (Tatsuo Ishii)
+
+      When SSL is requested, pgpool child retries to read start up packet.
+      However it does not free the memory for previous start up packet.
+
+      Per Coverity report "1111443 Resource".
+
+    - Fix memory leak when do_query() fails in timestamp rewriting.
+      (Tatsuo Ishii)
+
+      For this purpose free_select_result() is changed to accept NULL argument.
+      Per Coverity report "1111454, 1111455 Resource leak".
+
+    - watchdog: Fix to put null character at end of ping result string used in
+      watchdog. (Yugo Nagata)
+
+    - Fix target node selection logic when "DEALLOCATE portal|statement".
+      (Tatsuo Ishii)
+
+      When "DEALLOCATE portal|statement" is used and last prepared statement or
+      portal was not found, target node selection map is not set. Probably this
+      is not actually harmful because prepared statement or portal was not found
+      is an error case. The bug was there since day 0.
+
+      Per Coverity report "1111491 Structurally dead code".
+
+    - Fix range check bug of MAX_NUM_BACKENDS in corner case. (Tatsuo Ishii)
+
+      MAX_NUM_BACKENDS is the allowed max number of DB nodes (128, at this
+      point). In reality, probably no one ever tried more than 128 DB nodes
+      and that's the reason why nobody noticed.
+
+      Per Coverity report "1111429, 1111430 and 1111431 Out-of-bounds write".
+
+    - Do not set/unset fronted connection info for dead backend. (Tatsuo Ishii)
+
+      Per bug #82. http://www.pgpool.net/mantisbt/view.php?id=82
+
+    - Fix that the script forgets to allow public access to pgpool_catalog.
+      (Tatsuo Ishii)
+
+      The bug prevents inserting data into user tables if pgpool_catalog is
+      created in native replication mode.  The bug was there from day 1. I
+      wonder why nobody noticed until today.
+      Per [pgpool-general-jp: 1229].
+      http://www.sraoss.jp/pipermail/pgpool-general-jp/2013-November/001228.html
+
+    - Fix uninitialized variable in error case in pool_do_auth().
+      (Tatsuo Ishii)
+
+      If there's no valid backend, pgpool will return garbage pid to frontend in
+      auth phase. Actually because no backend is available, frontend will be
+      disconnected later on. So this is not harmless.
+      Per Coverity report "1127331 Uninitialized scalar variable".
+
+    - Fix to add node id range check when issue an error message using node
+      id. (Tatsuo Ishii)
+      Per Coverity report #1111433 "Out-of-bounds read".
+
+    - Fix buffer overrun bug and resource leak bug of parse_copy_data().
+      (Tatsuo Ishii)
+      Per Coverity report 1111427 "Out-of-bounds write" and 1111453 "Resource
+      leak".
+
+    - Fix possible segfault in CopyDataRaws(). (Tatsuo Ishii)
+      Coverity pointed out that if pool_get_id() returns an error, VALID_BACKEND
+      will access out of array.
+      Per Coverity report 1111413 "Memory - illegal accesses".
+
+    - Fix query cache is enabled and protocol version = 2 case. (Tatsuo Ishii)
+
+      When the protocol version = 2, we assume that session state is "idle".
+      This is not feasible but no way. I recommend to not use query cache
+      with protocol 2.
+      Per Coverity report 1111488 "Uninitialized scalar variable".
+
+    - Fix strftime() usage in pool_pools(). (Tatsuo Ishii)
+
+      The buffer is not large enough as expected by the second parameter. This
+      is not harmless because the format string will not produce longer result
+      string than the buffer.
+      Per Coverity report 1111426 "Out-of-bounds access".
+
+    - Fix resource leak in make_persistent_db_connection. (Tatsio Ishii)
+
+      For this pupose, new static function free_persisten_db_connection_memory
+      is added.
+      Per Coverity report #1111468.
+
+    - Fix a bug that connection check to trusted servers fails when the RTT
+      is very short. (Yugo Nagata)
+
+    - Fix several small bug fixes detected by Coverity. (Tatsuo Ishii)
+
+===============================================================================
+
                         3.2.6 (namameboshi) 2013/09/06
 
 * Version 3.2.6
@@ -737,52 +971,52 @@
 
     - Fix a segmentation fault on main process that could occures after backend
       error detection (Tatsuo Ishii)
-      
+
       This is reported in Bug track #62 by tuomas.
-      
+
       #62 Slave network outage causes a segmentation fault on main process
       http://www.pgpool.net/mantisbt/view.php?id=62
 
     - Fix a bug with health check when used with child_life_time (Tatsuo Ishii)
-      
+
       Failover could happen even if the backend was running fine.
       This problem is reported in [pgpool-general: 1892] by larisa sabban.
-      
+
       [pgpool-general: 1892] Pgpool is unable to connect backend PostgreSQL
       http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001920.html
 
     - Fix "Deploying pgpool-II" section in the document (Tatsuo Ishii)
-      
+
       Update descriptions about watchdog use.
 
     - Fix a mistake in ssh command of doc/basebackup.sh (Tatsuo Ishii)
 
     - Fix a bug in parsing prepared statements with transaction handling in
       replication mode (Tatsuo Ishii)
-      
+
       Parse() automatically starts a transaction for non SELECT query to keep
       consistency among nodes in replication mode. But this wasn't closed. If
       wrong query comes in, the transaction goes into an abort state but pgpool
       does not close the transaction. Thus next query causes error because the
       transaction is still in abort status.
-      
+
       This problem was reported in [pgpool-general: 1877] by Sean Hogan.
-      
+
       [pgpool-general: 1877] current transaction is aborted, commands ignored
       http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001905.html
 
     - Fix child process termination with sig abort when memory query cache
       is enabled (Tatsuo Ishii)
-      
+
       This is due to double free bug that occurs when multiple bind/execute
       messages come after a parse message. When a parse messages comes, query
       context is created along with temp cache. The pointer to the temp cache
       is added to the temp cache array when the query executed. Subsequent
       bind messages uses the same temp cache pointer. This is the source of
       double free bug when the cache array discarded.
-      
+
       This is reported in Bug track #68 by harukat.
-      
+
       #68: child process termination with sigabort when memory_cache_enabled = on
       http://www.pgpool.net/mantisbt/view.php?id=68
 
@@ -2056,6 +2290,161 @@
 3.1 Series (2011/09/08 - )
 ===============================================================================
 
+                        3.1.10 (hatsuiboshi) 2013/12/06
+
+* Version 3.1.9
+
+    This is a bugfix release against pgpool-II 3.1.9.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+
+
+    - Fix incorrect time stamp rewriting in replication mode for certain time
+      zones. (Tatsuo Ishii)
+
+      Time stamp rewriting calls "SELECT now()" to get current time.
+      Unfortunately the buffer for the current time is too small for certain
+      time zones such as "02:30". Note that non-30-minutes-time-zone such as
+      "0900" does not reveal the problem. This explains why we haven't the bug
+      report until today.
+
+      Bug reported in [pgpool-general: 2113] and fix provided by Sean Hogan.
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-September/002142.html
+
+    - Makefile: Replace pg_config by $(PG_CONFIG) in Makefiles so it can be
+      overridden at build time when compiling for different PG major versions.
+      (Tatsuo Ishii)
+
+      Patch contributed by Christoph Berg ([pgpool-general: 2127]).
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-September/002156.html
+
+    - configure: Remove -lcompat because it confuses FreeBSD per bug#15.
+      (Tatsuo Ishii)
+      http://www.pgpool.net/mantisbt/view.php?id=15
+
+    - Fix segfault when pgpool.conf does not set log_standby_delay.
+      (Tatsuo Ishii)
+
+      This is caused by wrong initialization for log_standby_delay in
+      pool_config.l.
+      Per bug#74. http://www.pgpool.net/mantisbt/view.php?id=74
+
+    - doc: Modify descriptions about restrictions of parallel mode
+      Muliple rows INSERT using VALUES are not supported in parallel mode.
+      (Yugo Nagata)
+
+    - Avoid calling find_primary_node_repeatedly() when standby node goes
+      down. (Tatsuo Ishii)
+
+      This will reduce the time to failover. Per bug #75, patch modified by
+      Tatsuo Ishii. http://www.pgpool.net/mantisbt/view.php?id=75
+
+    - Fix data inconsistency problem with native replication mode + extended
+      protocol case. (Tatsuo Ishii)
+
+      It is reported that concurrent INSERT using JDBC driver causes data
+      difference among database node. This only happens following conditions
+      are all met:
+
+      1) Native replication mode
+      2) Extended protocol used
+      3) The portal created by parse message is reused by bind message
+      4) autocommit is on
+      5) SERIAL (sequence) is used
+
+      Pgpool-II's parse message function knows it has to lock the target
+      table when INSERT (plus #5) is issued by clients. Unfortunately bind
+      message function did not know it. Once parse/bind/execute finishes,
+      pgpool releases the lock obtained by parse because of #4. JDBC wants
+      to reuse the portal and starts the cycle from bind message, which does
+      not obtain lock. As as result, lock-free INSERT are floating around
+      which causes data inconsistency of course.  The solution is, lock the
+      table in bind phase.
+
+      For this bind needs to issue LOCK in extended protocol. This was a little
+      bit hard because the module (do_command()) to issue internal SQL command
+      (other than SELECT) does not support extended protocol.
+      To solve the problem do_query() is modified so that it accepts other than
+      SELECT because it already accepts extended protocol.
+      The modification is minimum and is only tested for the case called from
+      insert_lock(). I do not recommend to replace every occurrence of
+      do_command () with do_query() at this point.
+
+      BTW the reason why the bug is not reported is, most users uses JDBC
+      with auto commit = off. In this case, the lock obtained by parse persists
+      until user explicitly issues commit or rollback.
+
+      Per bug report by Steve Kuekes in [pgpool-general: 2142].
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-September/002171.html
+
+    - Fix error message in read_password_packet(). (Tatsuo Ishii)
+
+    - Fix memory leak when do_query() fails in timestamp rewriting.
+      (Tatsuo Ishii)
+
+      For this purpose free_select_result() is changed to accept NULL argument.
+      Per Coverity report "1111454, 1111455 Resource leak".
+
+    - Fix target node selection logic when "DEALLOCATE portal|statement".
+      (Tatsuo Ishii)
+
+      When "DEALLOCATE portal|statement" is used and last prepared statement or
+      portal was not found, target node selection map is not set. Probably this
+      is not actually harmful because prepared statement or portal was not found
+      is an error case. The bug was there since day 0.
+
+      Per Coverity report "1111491 Structurally dead code".
+
+    - Fix range check bug of MAX_NUM_BACKENDS in corner case. (Tatsuo Ishii)
+
+      MAX_NUM_BACKENDS is the allowed max number of DB nodes (128, at this
+      point). In reality, probably no one ever tried more than 128 DB nodes
+      and that's the reason why nobody noticed.
+
+      Per Coverity report "1111429, 1111430 and 1111431 Out-of-bounds write".
+
+    - Fix that the script forgets to allow public access to pgpool_catalog.
+      (Tatsuo Ishii)
+
+      The bug prevents inserting data into user tables if pgpool_catalog is
+      created in native replication mode.  The bug was there from day 1. I
+      wonder why nobody noticed until today.
+      Per [pgpool-general-jp: 1229].
+      http://www.sraoss.jp/pipermail/pgpool-general-jp/2013-November/001228.html
+
+    - Fix uninitialized variable in error case in pool_do_auth().
+      (Tatsuo Ishii)
+
+      If there's no valid backend, pgpool will return garbage pid to frontend in
+      auth phase. Actually because no backend is available, frontend will be
+      disconnected later on. So this is not harmless.
+      Per Coverity report "1127331 Uninitialized scalar variable".
+
+    - Fix to add node id range check when issue an error message using node
+      id. (Tatsuo Ishii)
+      Per Coverity report #1111433 "Out-of-bounds read".
+
+    - Fix buffer overrun bug and resource leak bug of parse_copy_data().
+      (Tatsuo Ishii)
+      Per Coverity report 1111427 "Out-of-bounds write" and 1111453 "Resource
+      leak".
+
+    - Fix possible segfault in CopyDataRaws(). (Tatsuo Ishii)
+      Coverity pointed out that if pool_get_id() returns an error, VALID_BACKEND
+      will access out of array.
+      Per Coverity report 1111413 "Memory - illegal accesses".
+
+    - Fix resource leak in make_persistent_db_connection. (Tatsio Ishii)
+
+      For this pupose, new static function free_persisten_db_connection_memory
+      is added.
+      Per Coverity report #1111468.
+
+===============================================================================
+
                         3.1.9 (hatsuiboshi) 2013/09/06
 
 * Version 3.1.9
@@ -2070,15 +2459,15 @@
 
     - Fix a bug in parsing prepared statements with transaction handling in
       replication mode (Tatsuo Ishii)
-      
+
       Parse() automatically starts a transaction for non SELECT query to keep
       consistency among nodes in replication mode. But this wasn't closed. If
       wrong query comes in, the transaction goes into an abort state but pgpool
       does not close the transaction. Thus next query causes error because the
       transaction is still in abort status.
-      
+
       This problem was reported in [pgpool-general: 1877] by Sean Hogan.
-      
+
       [pgpool-general: 1877] current transaction is aborted, commands ignored
       http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001905.html
 
@@ -2946,6 +3335,127 @@
 3.0 Series (2010/09/10 - )
 ===============================================================================
 
+                        3.0.14 (umiyameboshi) 2013/12/06
+
+* Version 3.0.13
+
+    This is a bugfix release against pgpool-II 3.0.13.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix incorrect time stamp rewriting in replication mode for certain time
+      zones. (Tatsuo Ishii)
+
+      Time stamp rewriting calls "SELECT now()" to get current time.
+      Unfortunately the buffer for the current time is too small for certain
+      time zones such as "02:30". Note that non-30-minutes-time-zone such as
+      "0900" does not reveal the problem. This explains why we haven't the bug
+      report until today.
+
+      Bug reported in [pgpool-general: 2113] and fix provided by Sean Hogan.
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-September/002142.html
+
+    - Makefile: Replace pg_config by $(PG_CONFIG) in Makefiles so it can be
+      overridden at build time when compiling for different PG major versions.
+      (Tatsuo Ishii)
+
+      Patch contributed by Christoph Berg ([pgpool-general: 2127]).
+      http://www.sraoss.jp/pipermail/pgpool-general/2013-September/002156.html
+
+    - configure: Remove -lcompat because it confuses FreeBSD per bug#15.
+      (Tatsuo Ishii)
+      http://www.pgpool.net/mantisbt/view.php?id=15
+
+    - Fix segfault when pgpool.conf does not set log_standby_delay.
+      (Tatsuo Ishii)
+
+      This is caused by wrong initialization for log_standby_delay in
+      pool_config.l.
+      Per bug#74. http://www.pgpool.net/mantisbt/view.php?id=74
+
+    - doc: Modify descriptions about restrictions of parallel mode
+      Muliple rows INSERT using VALUES are not supported in parallel mode.
+      (Yugo Nagata)
+
+    - Avoid calling find_primary_node_repeatedly() when standby node goes
+      down. (Tatsuo Ishii)
+
+      This will reduce the time to failover. Per bug #75, patch modified by
+      Tatsuo Ishii. http://www.pgpool.net/mantisbt/view.php?id=75
+
+    - Fix error message in read_password_packet(). (Tatsuo Ishii)
+
+    - Fix memory leak when do_query() fails in timestamp rewriting.
+      (Tatsuo Ishii)
+
+      For this purpose free_select_result() is changed to accept NULL argument.
+      Per Coverity report "1111454, 1111455 Resource leak".
+
+    - Fix target node selection logic when "DEALLOCATE portal|statement".
+      (Tatsuo Ishii)
+
+      When "DEALLOCATE portal|statement" is used and last prepared statement or
+      portal was not found, target node selection map is not set. Probably this
+      is not actually harmful because prepared statement or portal was not found
+      is an error case. The bug was there since day 0.
+
+      Per Coverity report "1111491 Structurally dead code".
+
+    - Fix range check bug of MAX_NUM_BACKENDS in corner case. (Tatsuo Ishii)
+
+      MAX_NUM_BACKENDS is the allowed max number of DB nodes (128, at this
+      point). In reality, probably no one ever tried more than 128 DB nodes
+      and that's the reason why nobody noticed.
+
+      Per Coverity report "1111429, 1111430 and 1111431 Out-of-bounds write".
+
+    - Fix that the script forgets to allow public access to pgpool_catalog.
+      (Tatsuo Ishii)
+
+      The bug prevents inserting data into user tables if pgpool_catalog is
+      created in native replication mode.  The bug was there from day 1. I
+      wonder why nobody noticed until today.
+      Per [pgpool-general-jp: 1229].
+      http://www.sraoss.jp/pipermail/pgpool-general-jp/2013-November/001228.html
+
+    - Fix uninitialized variable in error case in pool_do_auth().
+      (Tatsuo Ishii)
+
+      If there's no valid backend, pgpool will return garbage pid to frontend in
+      auth phase. Actually because no backend is available, frontend will be
+      disconnected later on. So this is not harmless.
+      Per Coverity report "1127331 Uninitialized scalar variable".
+
+    - Fix to add node id range check when issue an error message using node
+      id. (Tatsuo Ishii)
+      Per Coverity report #1111433 "Out-of-bounds read".
+
+    - Fix buffer overrun bug and resource leak bug of parse_copy_data().
+      (Tatsuo Ishii)
+      Per Coverity report 1111427 "Out-of-bounds write" and 1111453 "Resource
+      leak".
+
+    - Fix possible segfault in CopyDataRaws(). (Tatsuo Ishii)
+      Coverity pointed out that if pool_get_id() returns an error, VALID_BACKEND
+      will access out of array.
+      Per Coverity report 1111413 "Memory - illegal accesses".
+
+    - Fix strftime() usage in pool_pools(). (Tatsuo Ishii)
+
+      The buffer is not large enough as expected by the second parameter. This
+      is not harmless because the format string will not produce longer result
+      string than the buffer.
+      Per Coverity report 1111426 "Out-of-bounds access".
+
+    - Fix resource leak in make_persistent_db_connection. (Tatsio Ishii)
+
+      For this pupose, new static function free_persisten_db_connection_memory
+      is added.
+      Per Coverity report #1111468.
+
+===============================================================================
                         3.0.13 (umiyameboshi) 2013/09/06
 
 * Version 3.0.13
@@ -2960,15 +3470,15 @@
 
     - Fix a bug in parsing prepared statements with transaction handling in
       replication mode (Tatsuo Ishii)
-      
+
       Parse() automatically starts a transaction for non SELECT query to keep
       consistency among nodes in replication mode. But this wasn't closed. If
       wrong query comes in, the transaction goes into an abort state but pgpool
       does not close the transaction. Thus next query causes error because the
       transaction is still in abort status.
-      
+
       This problem was reported in [pgpool-general: 1877] by Sean Hogan.
-      
+
       [pgpool-general: 1877] current transaction is aborted, commands ignored
       http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001905.html
 

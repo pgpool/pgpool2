@@ -5877,7 +5877,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 <ul>
 
 <li>レプリケーションモード稼働時、一部のタイムゾーンでタイムスタンプの書き換えが誤っていました。(Tatsuo Ishii)
-<p>タイムスタンプの書き換え処理では、現在日時を取得するために "SELECT now()" を実行します。
+<p>タイムスタンプの書き換え処理では、現在日時を取得するあめに "SELECT now()" を実行します。
 しかし一部のタイムゾーンにおいては、"02:30" のような場合に現在日時のためのバッファの大きさが
 十分ではありませんでした。"0900" のように 30 分刻みでのタイムゾーンでないときは、この問題は発生しません。
 そのため、これまでこの不具合が報告されたことはありませんでした。</p>
@@ -5890,11 +5890,11 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 
 <li>Makefile: Makefiles 内の pg_config を $(PG_CONFIG) に置き換えました。
 したがって、PostgreSQL のメジャーバージョンが異なる場合には、コンパイル中で上書きされるようになります。(Tatsuo Ishii)
-<p>パッチは Christoph Berg さんから提供されました。（<a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-September/002156.html" target="_blank">[pgpool-general: 2127]</a>）</p>
+<p>パッチは Christoph Berg さんから提供されました。（<a href="ttp://www.sraoss.jp/pipermail/pgpool-general/2013-September/002156.html" target="_blank">[pgpool-general: 2127]</a>）</p>
 </li>
 
 <li>watchdog: <code>-Werror=format-security</code> をつけてコンパイルしたときの、warning/error を修正しました。(Tatsuo Ishii)
-<p>パッチは Christoph Berg さんから提供されました。（<a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-September/002156.html" target="_blank">[pgpool-general: 2127]</a>）</p>
+<p>パッチは Christoph Berg さんから提供されました。（<a href="ttp://www.sraoss.jp/pipermail/pgpool-general/2013-September/002156.html" target="_blank">[pgpool-general: 2127]</a>）</p>
 </li>
 
 <li>configure: FreeBSD で問題があったため、-lcompat を削除しました。(Tatsuo Ishii)
@@ -6023,7 +6023,7 @@ parse によるロックが残存するためです。</p>
 <li>pgpool_catalog への public access を許可していませんでした。
 <p>これは、pgpool_catalog がレプリケーションモードで作成されている場合に、
 ユーザテーブルにデータを INSERT すると発生します。</p>
-<p>この不具合は <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2013-November/001228.html" target="_blank">[pgpool-general-jp: 1229]</a> で報告されました。</p>
+<p>この不具合は <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2013-November/001228.htm" target="_blank">[pgpool-general-jp: 1229]</a> で報告されました。</p>
 </li>
 
 <li>doc: <a href="#TRUSTED_SERVERS">trusted_servers</a> に複数のサーバを指定すべきであることを記述しました。
@@ -6070,7 +6070,7 @@ parse によるロックが残存するためです。</p>
 <p>これは Coverity #1111468 で発見されました。</p>
 </li>
 
-<li>watchdog: RTT が非常に短いときに <a href=#TRUSTED_SERVERS">trusted servers</a> への
+<li>watchdog: RTT が非常に短いときに <a href="#TRUSTED_SERVERS">trusted servers</a> への
 コネクションチェックに失敗する不具合をを、修正しました。(Yugo Nagata)
 </li>
 
@@ -6622,6 +6622,189 @@ FATAL: no PostgreSQL user name specified in startup packet
 <!-- 3.2                                                                              -->
 <!-- ================================================================================ -->
 <hr><a name="release3.2.x"></a>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.2.7"></a>3.2.7 (tokakiboshi) 2013/12/06</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.2.7 に対するバグ修正リリースです。
+<h3>バグ修正</h3>
+<ul>
+
+<li>レプリケーションモード稼働時、一部のタイムゾーンでタイムスタンプの書き換えが誤っていました。(Tatsuo Ishii)
+<p>タイムスタンプの書き換え処理では、現在日時を取得するあめに "SELECT now()" を実行します。
+しかし一部のタイムゾーンにおいては、"02:30" のような場合に現在日時のためのバッファの大きさが
+十分ではありませんでした。"0900" のように 30 分刻みでのタイムゾーンでないときは、この問題は発生しません。
+そのため、これまでこの不具合が報告されたことはありませんでした。</p>
+<p>この不具合は <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-September/002142.html" target="_blank">[pgpool-general: 2113]</a> で報告され、Sean Hogan さんによって修正が提供されました。</p>
+</li>
+
+<li>Makefile: Makefiles 内の pg_config を $(PG_CONFIG) に置き換えました。
+したがって、PostgreSQL のメジャーバージョンが異なる場合には、コンパイル中で上書きされるようになります。(Tatsuo Ishii)
+<p>パッチは Christoph Berg さんから提供されました。（<a href="ttp://www.sraoss.jp/pipermail/pgpool-general/2013-September/002156.html" target="_blank">[pgpool-general: 2127]</a>）</p>
+</li>
+
+<li>pgpool.conf で <a href="#LOG_STANDBY_DELAY">log_standby_delay</a> を設定してないときに
+segfault していたのを修正しました。(Tatsuo Ishii)
+<p>これは、pool_config.l での log_standby_delay の初期化が誤っていたためです。
+<a href="http://www.pgpool.net/mantisbt/view.php?id=74" target="_blank">bug#74</a> として報告されました。</p>
+</li>
+
+<li>スタンバイノードがダウンしようとしているときに find_primary_node_repeatedly() が
+呼ばれないようにしました。(Tatsuo Ishii)
+<p>これによってフェイルオーバの所要時間が短くなります。
+<a href="http://www.pgpool.net/mantisbt/view.php?id=75" target="_blank">bug#75</a> として報告され、
+パッチを Tatsuo Ishii が編集しました。</p>
+</li>
+
+<li>レプリケーションモードと拡張プロトコルを組み合わせた場合に、
+データ不整合があったのでこれを修正しました。(Tatsuo Ishii)
+<p>JDBC ドライバを使った同時 INSERT で、ノード間でのデータ不整合があるという報告がありました。
+この事象は以下の条件で必ず発生します。
+</p>
+<ol>
+    <li>レプリケーションモードを使用している</li>
+    <li>拡張プロトコルを使用している</li>
+    <li>parse で作成された portal が bind で再利用される</li>
+    <li>autocommit が on である</li>
+    <li>SERIAL（シーケンス）を使用している</li>
+</ol>
+
+<p>pgpool-II の parse 関数は、クライアントが INSERT (+ 5 の状態）を発行すると、対象テーブルをロックされていることを
+認識しています。しかし、bind 関数はそれを認識していませんでした。
+一度 parse / bind / execute が完了すると、pgpool は 4 の理由により parse で獲得したロックを解放します。
+そして JDBC は portal を再利用しようとし、ロックを獲得しないまま bind からのサイクルを開始してしまいます。
+その結果、ロックのない INSERT がノード間でのデータ不整合を引き起こします。
+この解決方法としては、bind でテーブルをロックするようにしました。
+</p>
+<p>この問題は、たいていのユーザは JDBC を autocommit = off で使っているために、
+今まで報告されることがありませんでした。off であれば、ユーザが commit / rollback を発行するまで、
+parse によるロックが残存するためです。</p>
+<p>この不具合は Steve Kuekes さんにより、<a href="http://www.sraoss.jp/pipermail/pgpool-gener" target="_blank">[pgpool-general: 2142]</a> で報告されました。</p>
+</li>
+
+<li>クエリキャッシュにおけるメモリ確保サイズの不具合を修正しました。(Tatsuo Ishii)
+<p>execute() において、メモリ確保サイズが一部の場合において小さすぎました。</p>
+</li>
+
+<li>クエリキャッシュ + 拡張プロトコルの組み合わせで使っている場合に、segfault する可能性があったのを
+修正しました。(Tatsuo Ishii)
+<p>クエリが "cache safe" でないときに、bind_msg-&gt;param_offset が Bind() でセットされていませんでした。
+しかし Execute() では無条件に bind_msg-&gt;param_offset を使おうとしていました。
+</p>
+<p>この不具合は <a href="http://www.pgpool.net/mantisbt/view.php?id=76" target="_blank">bug#76</a> で報告されました。</p>
+</li>
+
+<li>クエリキャッシュの hash index エントリがいっぱいにならないようにしました。(Tatsuo Ishii)
+<p>hash index エントリがいっぱいになると、pgpool-II は hash index の残りが少なくとも 1 つはある前提だったため、
+古いキャッシュエントリを再利用できませんでした。
+これを改善するために、hash index エントリがいっぱいになったら、再利用できるキャッシュブロックを
+探すようにしました。</p>
+<p>この不具合は <a href="http://www.pgpool.net/mantisbt/view.php?id=70" target="_blank">bug#70</a> で報告されました。</p>
+</li>
+
+<li>clock hand の不適切なサイズの共有メモリ確保を修正しました。(Tatsuo Ishii)
+<p>clock hand のメモリは、sizeof(pool_fsmm_clock_hand) 分確保されており、
+この変数が「<code>static int *pool_fsmm_clock_hand</code>」と定義されていることから、8 バイトでした。</p>
+<p>しかしこれは誤りで、実際に必要なのは「<code>sizeof(*pool_fsmm_clock_hand)</code>」での 4 バイトでした。</p>
+<p>これは Coverity "1111476 Wrong sizeof argument" で発見されました。</p>
+</li>
+
+<li>"<a href="#pool_status">show pool_status</a>" で
+<a href="#MEMQCACHE_AUTO_CACHE_INVALIDATION">memqcache_auto_cache_invalidation</a> が常に
+0 と表示されていました。 (Tatsuo Ishii)
+<p>この不具合は <a href="http://www.pgpool.net/mantisbt/view.php?id=80" target="_blank">bug#80</a> で報告されました。</p>
+</li>
+
+<li>read_password_packet() のエラーメッセージを修正しました。(Tatsuo Ishii)</li>
+
+<li>SSL 要求でのメモリリークを修正しました。(Tatsuo Ishii)
+<p>SSL での要求があったとき、pgpool 子プロセスは start up packet の読み込みをリトライしていました。
+しかし子プロセスは、以前の start up packet のメモリを解放していませんでした。</p>
+<p>これは Coverity "1111443 Resource" で発見されました。</p>
+</li>
+
+<li>do_query() がタイムスタンプの書き換えに失敗したとき、メモリリークしていました。(Tatsuo Ishii)
+<p>この修正のために、free_select_result() で NULL 引数を受け取れるようにしました。</p>
+<p>これは Coverity "1111454, 1111455 Resource leak" で発見されました。</p>
+</li>
+
+<li>watchdog: ping 結果を格納する文字列で、終端に NULL 文字を追加しました。（Yugo Nagata)</li>
+
+<li>"<code>DEALLOCATE portal|statement</code>" 実行時の対象ノードの選定ロジックを修正しました。(Tatsuo Ishii)
+<p>"<code>DEALLOCATE portal|statement</code>" 実行時、最後の prepared statement や portal が見つからない場合に、
+対象ノード選定マップがセットされていませんでした。
+おそらく、そうした場合はエラーなので、実際には問題ありません。</p>
+<p>これは Coverity "1111491 Structurally dead code" で発見されました。</p>
+</li>
+
+<li>MAX_NUM_BACKENDS の範囲チェックにおける不具合を修正しました。 (Tatsuo Ishii)
+<p>MAX_NUM_BACKENDS は DB ノードの最大数が限界値でした（現時点では 128）。
+実際には 128 の DB ノードで試す人がいなかったために、発見されなかった不具合のようです。</p>
+<p>これは Coverity "1111429, 1111430 and 1111431 Out-of-bounds write" で発見されました。</p>
+</li>
+
+<li>フロントエンド接続情報を、すでに無効なバックエンドについて set/unset しないようにしました。(Tatsuo Ishii)
+<p>この不具合は <a href="http://www.pgpool.net/mantisbt/view.php?id=82" target="_blank">bug#82</a> で報告されました。</p>
+</li>
+
+<li>pgpool_catalog への public access を許可していませんでした。
+<p>これは、pgpool_catalog がレプリケーションモードで作成されている場合に、
+ユーザテーブルにデータを INSERT すると発生します。</p>
+<p>この不具合は <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2013-November/001228.htm" target="_blank">[pgpool-general-jp: 1229]</a> で報告されました。</p>
+</li>
+
+<li>doc: <a href="#TRUSTED_SERVERS">trusted_servers</a> に複数のサーバを指定すべきであることを記述しました。
+(Yugo Nagata)</li>
+
+<li>pool_do_auth() のエラーケースで変数を初期化していませんでした。 (Tatsuo Ishii)
+<p>有効なバックエンドがいないとき、pgpool は認証フェーズのフロントエンドにごみの pid を返していました。
+実際に、有効なバックエンドがいないために、フロントエンドは認証後に接続することができません。
+もちろんこれは問題あるものではありません。</p>
+<p>これは Coverity "1127331 Uninitialized scalar variable" で発見されました。</p>
+</li>
+
+<li>ノード ID を使ったエラーメッセージの発行時に、ノード ID の範囲チェックをするようにしました。
+(Tatsuo Ishii)
+<p>これは Coverity "1111433 "Out-of-bounds read" で発見されました。</p>
+</li>
+
+<li>parse_copy_data() でのバッファオーバーランとリソースリークを修正しました。 (Tatsuo Ishii)
+<p>これは Coverity "1111427 Out-of-bounds write"、"1111453 Resource leak" で発見されました。</p>
+</li>
+
+<li>CopyDataRaws() で segfault する可能性があったのを修正しました。(Tatsuo Ishii)
+<p>pool_get_id() がエラーを返した場合に VALID_BACKEND が配列外にアクセスしようとしていました。</p>
+<p>これは Coverity "1111433 Out-of-bounds read" で発見されました。</p>
+</li>
+
+<li>クエリキャッシュ有効 + プロトコルバージョン = 2 の組み合わせでの処理を修正しました。(Tatsuo Ishii)
+<p>プロトコルバージョンが 2 のとき、セッション状態が "idle" である前提でしたが、
+実際にはそうではありませんでした。
+プロトコルバージョンが 2 の場合はクエリキャッシュを使用しないことをおすすめします。</p>
+<p>これは Coverity "1111488 Uninitialized scalar variable" で発見されました。</p>
+</li>
+
+<li>pool_pools() での strftime() の用法を修正しました。(Tatsuo Ishii)
+<p>バッファが第 2 引数で期待する値にたいして十分な大きさではありませんでした。
+実際にはそのような長い値がわたることはなく、問題ないものです。</p>
+<p>これは Coverity "1111426 Out-of-bounds access" で発見されました。</p>
+</li>
+
+<li>make_persistent_db_connection のリソースリークを修正しました。(Tatsuo Ishii)
+<p>この修正のために、新しく free_persisten_db_connection_memory 関数を追加しました。</p>
+<p>これは Coverity #1111468 で発見されました。</p>
+</li>
+
+<li>watchdog: RTT が非常に短いときに <a href="#TRUSTED_SERVERS">trusted servers</a> への
+コネクションチェックに失敗する不具合をを、修正しました。(Yugo Nagata)
+</li>
+
+<li>Coverity で見つかったさまざまな不具合を修正しました。(Tatsuo Ishii)</li>
+
+</ul>
 
 <!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.2.6"></a>3.2.6 (namameboshi) 2013/09/06</h2>
@@ -8298,6 +8481,142 @@ autoconf
 <!-- ================================================================================ -->
 <hr><a name="release3.1.x"></a>
 
+
+
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.1.10"></a>3.1.10 (tokakiboshi) 2013/12/06</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.1.9 に対するバグ修正リリースです。
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>レプリケーションモード稼働時、一部のタイムゾーンでタイムスタンプの書き換えが誤っていました。(Tatsuo Ishii)
+<p>タイムスタンプの書き換え処理では、現在日時を取得するあめに "SELECT now()" を実行します。
+しかし一部のタイムゾーンにおいては、"02:30" のような場合に現在日時のためのバッファの大きさが
+十分ではありませんでした。"0900" のように 30 分刻みでのタイムゾーンでないときは、この問題は発生しません。
+そのため、これまでこの不具合が報告されたことはありませんでした。</p>
+<p>この不具合は <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-September/002142.html" target="_blank">[pgpool-general: 2113]</a> で報告され、Sean Hogan さんによって修正が提供されました。</p>
+</li>
+
+<li>Makefile: Makefiles 内の pg_config を $(PG_CONFIG) に置き換えました。
+したがって、PostgreSQL のメジャーバージョンが異なる場合には、コンパイル中で上書きされるようになります。(Tatsuo Ishii)
+<p>パッチは Christoph Berg さんから提供されました。（<a href="ttp://www.sraoss.jp/pipermail/pgpool-general/2013-September/002156.html" target="_blank">[pgpool-general: 2127]</a>）</p>
+</li>
+
+<li>configure: FreeBSD で問題があったため、-lcompat を削除しました。(Tatsuo Ishii)
+<p><a href="http://www.pgpool.net/mantisbt/view.php?id=15">bug#15</a> で報告されました。</p>
+</li>
+
+<li>pgpool.conf で <a href="#LOG_STANDBY_DELAY">log_standby_delay</a> を設定してないときに
+segfault していたのを修正しました。(Tatsuo Ishii)
+<p>これは、pool_config.l での log_standby_delay の初期化が誤っていたためです。
+<a href="http://www.pgpool.net/mantisbt/view.php?id=74" target="_blank">bug#74</a> として報告されました。</p>
+</li>
+
+<li>doc: パラレルモードの制限事項を追記しました。VALUES 句を使った複数行の INSERT はパラレルモードではサポートされていません。(Yugo Nagata)</li>
+
+<li>スタンバイノードがダウンしようとしているときに find_primary_node_repeatedly() が
+呼ばれないようにしました。(Tatsuo Ishii)
+<p>これによってフェイルオーバの所要時間が短くなります。
+<a href="http://www.pgpool.net/mantisbt/view.php?id=75" target="_blank">bug#75</a> として報告され、
+パッチを Tatsuo Ishii が編集しました。</p>
+</li>
+
+<li>レプリケーションモードと拡張プロトコルを組み合わせた場合に、
+データ不整合があったのでこれを修正しました。(Tatsuo Ishii)
+<p>JDBC ドライバを使った同時 INSERT で、ノード間でのデータ不整合があるという報告がありました。
+この事象は以下の条件で必ず発生します。
+</p>
+<ol>
+    <li>レプリケーションモードを使用している</li>
+    <li>拡張プロトコルを使用している</li>
+    <li>parse で作成された portal が bind で再利用される</li>
+    <li>autocommit が on である</li>
+    <li>SERIAL（シーケンス）を使用している</li>
+</ol>
+
+<p>pgpool-II の parse 関数は、クライアントが INSERT (+ 5 の状態）を発行すると、対象テーブルをロックされていることを
+認識しています。しかし、bind 関数はそれを認識していませんでした。
+一度 parse / bind / execute が完了すると、pgpool は 4 の理由により parse で獲得したロックを解放します。
+そして JDBC は portal を再利用しようとし、ロックを獲得しないまま bind からのサイクルを開始してしまいます。
+その結果、ロックのない INSERT がノード間でのデータ不整合を引き起こします。
+この解決方法としては、bind でテーブルをロックするようにしました。
+</p>
+<p>この問題は、たいていのユーザは JDBC を autocommit = off で使っているために、
+今まで報告されることがありませんでした。off であれば、ユーザが commit / rollback を発行するまで、
+parse によるロックが残存するためです。</p>
+<p>この不具合は Steve Kuekes さんにより、<a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-September/002171.html" target="_blank">[pgpool-general: 2142]</a> で報告されました。</p>
+</li>
+
+<li>read_password_packet() のエラーメッセージを修正しました。(Tatsuo Ishii)</li>
+
+<li>do_query() がタイムスタンプの書き換えに失敗したとき、メモリリークしていました。(Tatsuo Ishii)
+<p>この修正のために、free_select_result() で NULL 引数を受け取れるようにしました。</p>
+<p>これは Coverity "1111454, 1111455 Resource leak" で発見されました。</p>
+</li>
+
+<li>"<code>DEALLOCATE portal|statement</code>" 実行時の対象ノードの選定ロジックを修正しました。(Tatsuo Ishii)
+<p>"<code>DEALLOCATE portal|statement</code>" 実行時、最後の prepared statement や portal が見つからない場合に、
+対象ノード選定マップがセットされていませんでした。
+おそらく、そうした場合はエラーなので、実際には問題ありません。</p>
+<p>これは Coverity "1111491 Structurally dead code" で発見されました。</p>
+</li>
+
+<li>MAX_NUM_BACKENDS の範囲チェックにおける不具合を修正しました。 (Tatsuo Ishii)
+<p>MAX_NUM_BACKENDS は DB ノードの最大数が限界値でした（現時点では 128）。
+実際には 128 の DB ノードで試す人がいなかったために、発見されなかった不具合のようです。</p>
+<p>これは Coverity "1111429, 1111430 and 1111431 Out-of-bounds write" で発見されました。</p>
+</li>
+
+<li>フロントエンド接続情報を、すでに無効なバックエンドについて set/unset しないようにしました。(Tatsuo Ishii)
+<p>この不具合は <a href="http://www.pgpool.net/mantisbt/view.php?id=82" target="_blank">bug#82</a> で報告されました。</p>
+</li>
+
+<li>pgpool_catalog への public access を許可していませんでした。
+<p>これは、pgpool_catalog がレプリケーションモードで作成されている場合に、
+ユーザテーブルにデータを INSERT すると発生します。</p>
+<p>この不具合は <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2013-November/001228.htm" target="_blank">[pgpool-general-jp: 1229]</a> で報告されました。</p>
+</li>
+
+<li>pool_do_auth() のエラーケースで変数を初期化していませんでした。 (Tatsuo Ishii)
+<p>有効なバックエンドがいないとき、pgpool は認証フェーズのフロントエンドにごみの pid を返していました。
+実際に、有効なバックエンドがいないために、フロントエンドは認証後に接続することができません。
+もちろんこれは問題あるものではありません。</p>
+<p>これは Coverity "1127331 Uninitialized scalar variable" で発見されました。</p>
+</li>
+
+<li>ノード ID を使ったエラーメッセージの発行時に、ノード ID の範囲チェックをするようにしました。
+(Tatsuo Ishii)
+<p>これは Coverity "1111433 "Out-of-bounds read" で発見されました。</p>
+</li>
+
+<li>parse_copy_data() でのバッファオーバーランとリソースリークを修正しました。 (Tatsuo Ishii)
+<p>これは Coverity "1111427 Out-of-bounds write"、"1111453 Resource leak" で発見されました。</p>
+</li>
+
+<li>CopyDataRaws() で segfault する可能性があったのを修正しました。(Tatsuo Ishii)
+<p>pool_get_id() がエラーを返した場合に VALID_BACKEND が配列外にアクセスしようとしていました。</p>
+<p>これは Coverity "1111433 Out-of-bounds read" で発見されました。</p>
+</li>
+
+<li>クエリキャッシュ有効 + プロトコルバージョン = 2 の組み合わせでの処理を修正しました。(Tatsuo Ishii)
+<p>プロトコルバージョンが 2 のとき、セッション状態が "idle" である前提でしたが、
+実際にはそうではありませんでした。
+プロトコルバージョンが 2 の場合はクエリキャッシュを使用しないことをおすすめします。</p>
+<p>これは Coverity "1111488 Uninitialized scalar variable" で発見されました。</p>
+</li>
+
+<li>make_persistent_db_connection のリソースリークを修正しました。(Tatsuo Ishii)
+<p>この修正ののために、新しく free_persisten_db_connection_memory 関数を追加しました。</p>
+<p>これは Coverity #1111468 で発見されました。</p>
+</li>
+
+<li>Coverity で見つかったさまざまな不具合を修正しました。(Tatsuo Ishii)</li>
+
 <!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.1.9"></a>3.1.9 (hatsuiboshi) 2013/09/06</h2>
 <!-- -------------------------------------------------------------------------------- -->
@@ -9352,6 +9671,116 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
 <!-- 3.0                                                                              -->
 <!-- ================================================================================ -->
 <hr><a name="release3.0.x"></a>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.0.14"></a>3.0.14 (umiyameboshi) 2013/12/06</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.0.13 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>レプリケーションモード稼働時、一部のタイムゾーンでタイムスタンプの書き換えが誤っていました。(Tatsuo Ishii)
+<p>タイムスタンプの書き換え処理では、現在日時を取得するあめに "SELECT now()" を実行します。
+しかし一部のタイムゾーンにおいては、"02:30" のような場合に現在日時のためのバッファの大きさが
+十分ではありませんでした。"0900" のように 30 分刻みでのタイムゾーンでないときは、この問題は発生しません。
+そのため、これまでこの不具合が報告されたことはありませんでした。</p>
+<p>この不具合は <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-September/002142.html" target="_blank">[pgpool-general: 2113]</a> で報告され、Sean Hogan さんによって修正が提供されました。</p>
+</li>
+
+<li>Makefile: Makefiles 内の pg_config を $(PG_CONFIG) に置き換えました。
+したがって、PostgreSQL のメジャーバージョンが異なる場合には、コンパイル中で上書きされるようになります。(Tatsuo Ishii)
+<p>パッチは Christoph Berg さんから提供されました。（<a href="ttp://www.sraoss.jp/pipermail/pgpool-general/2013-September/002156.html" target="_blank">[pgpool-general: 2127]</a>）</p>
+</li>
+
+<li>configure: FreeBSD で問題があったため、-lcompat を削除しました。(Tatsuo Ishii)
+<p><a href="http://www.pgpool.net/mantisbt/view.php?id=15">bug#15</a> で報告されました。</p>
+</li>
+
+<li>pgpool.conf で <a href="#LOG_STANDBY_DELAY">log_standby_delay</a> を設定してないときに
+segfault していたのを修正しました。(Tatsuo Ishii)
+<p>これは、pool_config.l での log_standby_delay の初期化が誤っていたためです。
+<a href="http://www.pgpool.net/mantisbt/view.php?id=74" target="_blank">bug#74</a> として報告されました。</p>
+</li>
+
+<li>doc: パラレルモードの制限事項を追記しました。VALUES 句を使った複数行の INSERT はパラレルモードではサポートされていません。(Yugo Nagata)</li>
+
+<li>スタンバイノードがダウンしようとしているときに find_primary_node_repeatedly() が
+呼ばれないようにしました。(Tatsuo Ishii)
+<p>これによってフェイルオーバの所要時間が短くなります。
+<a href="http://www.pgpool.net/mantisbt/view.php?id=75" target="_blank">bug#75</a> として報告され、
+パッチを Tatsuo Ishii が編集しました。</p>
+</li>
+
+<li>read_password_packet() のエラーメッセージを修正しました。(Tatsuo Ishii)</li>
+
+<li>SSL 要求でのメモリリークを修正しました。(Tatsuo Ishii)
+<p>SSL での要求があったとき、pgpool 子プロセスは start up packet の読み込みをリトライしていました。
+しかし子プロセスは、以前の start up packet のメモリを解放していませんでした。</p>
+<p>これは Coverity "1111443 Resource" で発見されました。</p>
+</li>
+
+<li>do_query() がタイムスタンプの書き換えに失敗したとき、メモリリークしていました。(Tatsuo Ishii)
+<p>この修正のために、free_select_result() で NULL 引数を受け取れるようにしました。</p>
+<p>これは Coverity "1111454, 1111455 Resource leak" で発見されました。</p>
+</li>
+
+<li>"<code>DEALLOCATE portal|statement</code>" 実行時の対象ノードの選定ロジックを修正しました。(Tatsuo Ishii)
+<p>"<code>DEALLOCATE portal|statement</code>" 実行時、最後の prepared statement や portal が見つからない場合に、
+対象ノード選定マップがセットされていませんでした。
+おそらく、そうした場合はエラーなので、実際には問題ありません。</p>
+<p>これは Coverity "1111491 Structurally dead code" で発見されました。</p>
+</li>
+
+<li>MAX_NUM_BACKENDS の範囲チェックにおける不具合を修正しました。 (Tatsuo Ishii)
+<p>MAX_NUM_BACKENDS は DB ノードの最大数が限界値でした（現時点では 128）。
+実際には 128 の DB ノードで試す人がいなかったために、発見されなかった不具合のようです。</p>
+<p>これは Coverity "1111429, 1111430 and 1111431 Out-of-bounds write" で発見されました。</p>
+</li>
+
+<li>フロントエンド接続情報を、すでに無効なバックエンドについて set/unset しないようにしました。(Tatsuo Ishii)
+<p>この不具合は <a href="http://www.pgpool.net/mantisbt/view.php?id=82" target="_blank">bug#82</a> で報告されました。</p>
+</li>
+
+<li>pgpool_catalog への public access を許可していませんでした。
+<p>これは、pgpool_catalog がレプリケーションモードで作成されている場合に、
+ユーザテーブルにデータを INSERT すると発生します。</p>
+<p>この不具合は <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2013-November/001228.htm" target="_blank">[pgpool-general-jp: 1229]</a> で報告されました。</p>
+</li>
+
+<li>pool_do_auth() のエラーケースで変数を初期化していませんでした。 (Tatsuo Ishii)
+<p>有効なバックエンドがいないとき、pgpool は認証フェーズのフロントエンドにごみの pid を返していました。
+実際に、有効なバックエンドがいないために、フロントエンドは認証後に接続することができません。
+もちろんこれは問題あるものではありません。</p>
+<p>これは Coverity "1127331 Uninitialized scalar variable" で発見されました。</p>
+</li>
+
+<li>ノード ID を使ったエラーメッセージの発行時に、ノード ID の範囲チェックをするようにしました。
+(Tatsuo Ishii)
+<p>これは Coverity "1111433 "Out-of-bounds read" で発見されました。</p>
+</li>
+
+<li>parse_copy_data() でのバッファオーバーランとリソースリークを修正しました。 (Tatsuo Ishii)
+<p>これは Coverity "1111427 Out-of-bounds write"、"1111453 Resource leak" で発見されました。</p>
+</li>
+
+<li>CopyDataRaws() で segfault する可能性があったのを修正しました。(Tatsuo Ishii)
+<p>pool_get_id() がエラーを返した場合に VALID_BACKEND が配列外にアクセスしようとしていました。</p>
+<p>これは Coverity "1111433 Out-of-bounds read" で発見されました。</p>
+</li>
+
+<li>make_persistent_db_connection のリソースリークを修正しました。(Tatsuo Ishii)
+<p>この修正ののために、新しく free_persisten_db_connection_memory 関数を追加しました。</p>
+<p>これは Coverity #1111468 で発見されました。</p>
+</li>
+
+<li>Coverity で見つかったさまざまな不具合を修正しました。(Tatsuo Ishii)</li>
+
+</ul>
 
 <!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.0.13"></a>3.0.13 (umiyameboshi) 2013/09/06</h2>
