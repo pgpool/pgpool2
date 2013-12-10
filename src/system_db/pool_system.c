@@ -700,31 +700,33 @@ system_db_health_check(void)
 
 	if (fd < 0)
 	{
-		pool_error("health check failed. SystemDB host %s at port %d is down",
-				   SYSDB_INFO->hostname,
-				   SYSDB_INFO->port);
-
-		return -1;
+		ereport(ERROR,
+			(errmsg("SystemDB health check failed"),
+				   errdetail("DB host \"%s\" at port %d is down",
+						   	   SYSDB_INFO->hostname,
+						   	   SYSDB_INFO->port)));
 	}
 
 	if (write(fd, &mysp, sizeof(mysp)) < 0)
 	{
-		pool_error("health check failed during write. SystemDB host %s at port %d is down",
-				   SYSDB_INFO->hostname,
-				   SYSDB_INFO->port);
 		close(fd);
-		return -1;
+		ereport(ERROR,
+				(errmsg("SystemDB health check failed"),
+				   errdetail("Write failed on DB host \"%s\" at port %d is down",
+						   	   SYSDB_INFO->hostname,
+						   	   SYSDB_INFO->port)));
 	}
 
 	read(fd, &kind, 1);
 
 	if (write(fd, "X", 1) < 0)
 	{
-		pool_error("health check failed during write. SystemDB host %s at port %d is down",
-				   SYSDB_INFO->hostname,
-				   SYSDB_INFO->port);
 		close(fd);
-		return -1;
+		ereport(ERROR,
+				(errmsg("SystemDB health check failed"),
+				   errdetail("Write failed on DB host \"%s\" at port %d is down",
+						   	   SYSDB_INFO->hostname,
+						   	   SYSDB_INFO->port)));
 	}
 
 	close(fd);

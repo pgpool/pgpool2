@@ -472,17 +472,17 @@ static int read_pid_file(void)
 	}
 	if ((readlen = read(fd, pidbuf, sizeof(pidbuf))) == -1)
 	{
-		pool_error("could not read pid file as %s. reason: %s",
-				   pool_config->pid_file_name, strerror(errno));
 		close(fd);
-		return -1;
+		ereport(FATAL,
+			(errmsg("could not read pid file as \"%s\". reason: %s",
+				   pool_config->pid_file_name, strerror(errno))));
 	}
 	else if (readlen == 0)
 	{
-		pool_error("EOF detected while reading pid file as %s. reason: %s",
-				   pool_config->pid_file_name, strerror(errno));
 		close(fd);
-		return -1;
+		ereport(FATAL,
+			(errmsg("EOF detected while reading pid file \"%s\". reason: %s",
+				   pool_config->pid_file_name, strerror(errno))));
 	}
 	close(fd);
 	return(atoi(pidbuf));

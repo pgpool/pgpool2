@@ -92,6 +92,10 @@
 
 
 #define PGPOOLMAXLITSENQUEUELENGTH 10000
+
+static int process_backend_health_check_failure(int health_check_node_id, int retrycnt);
+static bool do_health_check(bool use_template_db, volatile int *health_check_node_id);
+
 static void FileUnlink(int code, Datum path);
 static int write_status_file(void);
 static pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file);
@@ -117,7 +121,6 @@ static RETSIGTYPE reload_config_handler(int sig);
 static RETSIGTYPE health_check_timer_handler(int sig);
 static RETSIGTYPE wakeup_handler(int sig);
 
-static int health_check(void);
 static void initialize_shared_mem_objects(void);
 static int trigger_failover_command(int node, const char *command_line,
 									int old_master, int new_master, int old_primary);
@@ -175,18 +178,21 @@ int my_master_node_id;		/* Master node id buffer */
 /*
 * pgpool main program
 */
+
 int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 {
 	int i;
-	int retrycnt;
-	int sys_retrycnt;
-	bool retrying;
-	MemoryContext MainLoopMemoryContext;
+	volatile int health_check_node_id = 0;
+	volatile bool use_template_db = false;
+	volatile int retrycnt;
+	volatile int sys_retrycnt;
 
+	MemoryContext MainLoopMemoryContext;
 	sigjmp_buf	local_sigjmp_buf;
 	
 	/* Set the process type variable */
 	processType = PT_MAIN;
+	processState = INITIALIZING;
 
 	/*
 	 * Restore previous backend status if possible
@@ -283,7 +289,6 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 
 	retrycnt = 0;		/* reset health check retry counter */
 	sys_retrycnt = 0;	/* reset SystemDB health check retry counter */
-	retrying = false;
 
 	/* Save primary node id */
 	Req_info->primary_node_id = find_primary_node();
@@ -294,6 +299,54 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		error_context_stack = NULL;
 		EmitErrorReport();
 		FlushErrorState();
+		POOL_SETMASK(&BlockSig);
+
+		/* Check if we are failed during health check
+		 * perform the necessary actions in case
+		 */
+		if(processState == PERFORMING_HEALTH_CHECK)
+		{
+			if(errno != EINTR || health_check_timer_expired)
+			{
+				if(use_template_db == false)
+				{
+					/* Health check was performed on 'postgres' database
+					 * lets try to perform health check with template1 db
+					 * before marking the health check as failed
+					 */
+					use_template_db = true;
+
+				}
+				else
+				{
+					retrycnt++;
+					if(process_backend_health_check_failure(health_check_node_id, retrycnt))
+					{
+						health_check_node_id = 0;
+						use_template_db = false;
+					}
+				}
+			}
+		}
+		else if(processState == PERFORMING_SYSDB_CHECK)
+		{
+			if ( errno != EINTR || health_check_timer_expired)
+			{
+				sys_retrycnt++;
+				pool_signal(SIGALRM, SIG_IGN);
+				CLEAR_ALARM;
+
+				if (sys_retrycnt > NUM_BACKENDS)
+				{
+					pool_log("set SystemDB down status");
+					SYSDB_STATUS = CON_DOWN;
+					sys_retrycnt = 0;
+				}
+				int sleep_time = pool_config->health_check_period/NUM_BACKENDS;
+				pool_debug("retry sleep time: %d seconds", sleep_time);
+				pool_sleep(sleep_time);
+			}
+		}
 	}
 	/* We can now handle ereport(ERROR) */
 	PG_exception_stack = &local_sigjmp_buf;
@@ -301,20 +354,17 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	/* This is the main loop */
 	for (;;)
 	{
+		bool all_nodes_healthy;
 		CHECK_REQUEST;
+
 		/* do we need health checking for PostgreSQL? */
 		if (pool_config->health_check_period > 0)
 		{
-			int sts;
-			int sys_sts = 0;
-			unsigned int sleep_time;
-			unsigned int max_retries;
-
 			/* rest per iteration memory context */
 			MemoryContextSwitchTo(MainLoopMemoryContext);
 			MemoryContextResetAndDeleteChildren(MainLoopMemoryContext);
 
-			if (retrycnt == 0)
+			if (retrycnt == 0 && !use_template_db)
 				ereport(LOG,
 					(errmsg("starting health check")));
 			else
@@ -337,91 +387,31 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 			 */
 			errno = 0;
 			health_check_timer_expired = 0;
-			POOL_SETMASK(&UnBlockSig);
-			sts = health_check();
-			POOL_SETMASK(&BlockSig);
+
 			if (pool_config->parallel_mode)
-				sys_sts = system_db_health_check();
-			
-			if ( (sts > 0 || sys_sts < 0) && (errno != EINTR || health_check_timer_expired))
 			{
-				if(sts > 0 ) /* Backend connection failed */
-				{
-					sts--;
-					retrycnt++;
-					pool_signal(SIGALRM, SIG_IGN);	/* Cancel timer */
-					CLEAR_ALARM;
-
-					max_retries = pool_config->parallel_mode?NUM_BACKENDS:pool_config->health_check_max_retries;
-					
-					if (!pool_config->parallel_mode && POOL_DISALLOW_TO_FAILOVER(BACKEND_INFO(sts).flag))
-					{
-						ereport(LOG,
-							(errmsg("health_check: %d failover is canceled because failover is disallowed", sts)));
-					}
-					if (retrycnt > max_retries)
-					{
-						/* retry count over */
-						ereport(LOG,
-							(errmsg("set %d th backend down status", sts)));
-						Req_info->kind = NODE_DOWN_REQUEST;
-						Req_info->node_id[0] = sts;
-						health_check_timer_expired = 0;
-						failover();
-						if (pool_config->parallel_mode)
-							retrycnt = 0;
-						retrying = false;
-					}
-					else
-					{
-						/* continue to retry */
-						if (pool_config->parallel_mode)
-							sleep_time = pool_config->health_check_period/NUM_BACKENDS;
-						else
-							sleep_time = pool_config->health_check_retry_delay;
-
-						ereport(DEBUG2,
-							(errmsg("retry sleep time: %d seconds", sleep_time)));
-
-						pool_sleep(sleep_time);
-						continue;
-					}
-				}
-				
-				if (sys_sts < 0) /* SystemDB is down */
-				{
-					sys_retrycnt++;
-					
-					pool_signal(SIGALRM, SIG_IGN);
-					CLEAR_ALARM;
-
-					if (sys_retrycnt > NUM_BACKENDS)
-					{
-						ereport(LOG,
-							(errmsg("set SystemDB down status")));
-						SYSDB_STATUS = CON_DOWN;
-						sys_retrycnt = 0; 
-					}    
-					else if (sts == 0) /* goes to sleep only when SystemDB alone was down */
-					{    
-						sleep_time = pool_config->health_check_period/NUM_BACKENDS;
-						pool_debug("retry sleep time: %d seconds", sleep_time);
-						pool_sleep(sleep_time);
-						continue;
-					}    
-				}
+				processState = PERFORMING_SYSDB_CHECK;
+				system_db_health_check();
+				sys_retrycnt = 0;
+				errno = 0;
 			}
-			else
-			{
-				/* success. reset retry count */
-				retrycnt = 0;
-				if (retrying)
-				{
-					ereport(LOG,
-						(errmsg("after some retrying backend returned to healthy state")));
-					retrying = false;
-				}
-			}
+
+			POOL_SETMASK(&UnBlockSig);
+
+			processState = PERFORMING_HEALTH_CHECK;
+			all_nodes_healthy = do_health_check(use_template_db,&health_check_node_id);
+			POOL_SETMASK(&BlockSig);
+
+			health_check_node_id = 0;
+			use_template_db = false;
+			retrycnt = 0;
+
+			if (all_nodes_healthy)
+				ereport(LOG,
+					(errmsg("after retry %d, All backends are returned to healthy state",retrycnt)));
+
+
+			processState = SLEEPING;
 
 			if (pool_config->health_check_timeout > 0)
 			{
@@ -429,12 +419,11 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 				pool_signal(SIGALRM, SIG_IGN);
 				CLEAR_ALARM;
 			}
-
-			sleep_time = pool_config->health_check_period;
-			pool_sleep(sleep_time);
+			pool_sleep(pool_config->health_check_period);
 		}
 		else /* Health Check is not enable and we have not much to do */
 		{
+			processState = SLEEPING;
 			for (;;)
 			{
 				int r;
@@ -450,6 +439,57 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	}
 }
 
+/*
+ * Function process the backend node failure captured by the health check
+ * since this function is called from the exception handler so ereport(ERROR)
+ * is not allowed from this function
+ * Function returns non zero if failover is performed and 0 otherwise.
+ */
+static int
+process_backend_health_check_failure(int health_check_node_id, int retrycnt)
+{
+	/*
+	 *  health check is failed on template1 database as well
+	 */
+	int sleep_time = pool_config->parallel_mode ?
+			pool_config->health_check_period/NUM_BACKENDS : pool_config->health_check_retry_delay;
+
+	int health_check_max_retries = pool_config->parallel_mode ?
+			(NUM_BACKENDS - 1) : pool_config->health_check_retry_delay;
+
+	pool_signal(SIGALRM, SIG_IGN);	/* Cancel timer */
+	CLEAR_ALARM;
+
+	if (retrycnt <= health_check_max_retries)
+	{
+		/* Keep retrying and sleep a little in between */
+		ereport(DEBUG1,
+			(errmsg("Sleeping for %d seconds from process backend health check failure", sleep_time),
+					errdetail("health check failed retry no is %d while max retries are %d",retrycnt,health_check_max_retries) ));
+
+		pool_sleep(sleep_time);
+	}
+	else
+	{
+		/* No more retries left, proceed to failover if allowed */
+		if ((!pool_config->parallel_mode) &&
+			POOL_DISALLOW_TO_FAILOVER(BACKEND_INFO(health_check_node_id).flag))
+		{
+			pool_log("health check failed on node %d but failover is disallowed for the node", health_check_node_id);
+		}
+		else
+		{
+			pool_log("setting backend node %d status to NODE DOWN", health_check_node_id);
+			Req_info->kind = NODE_DOWN_REQUEST;
+			Req_info->node_id[0] = health_check_node_id;
+			health_check_timer_expired = 0;
+			failover();
+			return 1;
+			/* need to distribute this info to children ??*/
+		}
+	}
+	return 0;
+}
 /*
  * fork a child for PCP
  */
@@ -597,7 +637,6 @@ static int create_inet_domain_socket(const char *hostname, const int port)
 		ereport(FATAL,
 			(errmsg("failed to create INET domain socket"),
 			errdetail("socket error \"%s\"",strerror(errno))));
-//		myexit(1);
 	}
 	if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
 					sizeof(one))) == -1)
@@ -1484,31 +1523,38 @@ static RETSIGTYPE health_check_timer_handler(int sig)
 }
 
 
+
 /*
- * Check if we can connect to the backend
- * returns 0 for OK. otherwise returns backend id + 1
+ * do_health_check() performs the health check on all backend nodes.
+ * The inout parameter health_check_node_id is the starting backend
+ * node number for health check and when the function returns or
+ * exits with an error health_check_node_id contains the value
+ * of last backend node number on which health check was performed.
+ *
+ * Function returns false if all backend nodes are down and true if all
+ * backend nodes are in healthy state
  */
-static int health_check(void)
+static bool
+do_health_check(bool use_template_db, volatile int *health_check_node_id)
 {
 	POOL_CONNECTION_POOL_SLOT *slot;
 	BackendInfo *bkinfo;
-	static bool is_first = true;
 	static char *dbname;
 	int i;
+	bool all_nodes_healthy = false;
 
 	/* Do not execute health check during recovery */
 	if (*InRecovery)
-		return 0;
+		return false;
 
- Retry:
+	dbname = use_template_db ? "template1" : "postgres";
 	/*
-	 * First we try with "postgres" database.
+	 * Start checking the backed nodes starting from the
+	 * previously failed node
 	 */
-	if (is_first)
-		dbname = "postgres";
-
-	for (i=0;i<pool_config->backend_desc->num_backends;i++)
+	for (i=*health_check_node_id;i<pool_config->backend_desc->num_backends;i++)
 	{
+		*health_check_node_id = i;
 		/*
 		 * Make sure that health check timer has not been expired.
 		 * Before called health_check(), health_check_timer_expired is
@@ -1517,20 +1563,23 @@ static int health_check(void)
 		 */
 		if (health_check_timer_expired)
 		{
-			ereport(DEBUG1,
-				(errmsg("health check timer has been already expired before attempting to connect to %d th backend", i)));
-			return i+1;
+			ereport(ERROR,
+				(errmsg("health check timer has been already expired before attempting to connect backend node %d", i)));
 		}
 
 		bkinfo = pool_get_node_info(i);
 
 		ereport(DEBUG1,
-			(errmsg("health_check: %d th DB node status: %d", i, bkinfo->backend_status)));
+			(errmsg("Backend DB node %d status is %d", i, bkinfo->backend_status)));
 
 
 		if (bkinfo->backend_status == CON_UNUSED ||
 			bkinfo->backend_status == CON_DOWN)
 			continue;
+
+		all_nodes_healthy = true;
+		ereport(DEBUG1,
+			(errmsg("Trying to make persistent DB connection to backend node %d having status %d", i, bkinfo->backend_status)));
 
 		slot = make_persistent_db_connection(bkinfo->backend_hostname,
 											 bkinfo->backend_port,
@@ -1538,35 +1587,12 @@ static int health_check(void)
 											 pool_config->health_check_user,
 											 pool_config->health_check_password, false);
 
-		if (is_first)
-			is_first = false;
+		ereport(DEBUG1,
+			(errmsg("persistent DB connection to backend node %d having status %d is successful", i, bkinfo->backend_status)));
 
-		if (!slot)
-		{
-			/*
-			 * Retry with template1 unless health check timer is expired.
-			 */
-			if (!strcmp(dbname, "postgres") && health_check_timer_expired == 0)
-			{
-				dbname = "template1";
-				goto Retry;
-			}
-			else
-			{
-				pool_error("health check failed. %d th host %s at port %d is down",
-						   i,
-						   bkinfo->backend_hostname,
-						   bkinfo->backend_port);
-				return i+1;
-			}
-		}
-		else
-		{
-			discard_persistent_db_connection(slot);
-		}
+		discard_persistent_db_connection(slot);
 	}
-
-	return 0;
+	return all_nodes_healthy;
 }
 
 /*
@@ -2007,39 +2033,51 @@ static int find_primary_node(void)
 		 * Check to see if this is a standby node or not.
 		 */
 		is_standby = false;
+        PG_TRY();
+        {
 
-		bkinfo = pool_get_node_info(i);
-		s = make_persistent_db_connection(bkinfo->backend_hostname,
+        	bkinfo = pool_get_node_info(i);
+			s = make_persistent_db_connection(bkinfo->backend_hostname,
 										  bkinfo->backend_port,
 										  "postgres",
 										  pool_config->sr_check_user,
 										  pool_config->sr_check_password, true);
-		if (!s)
-		{
-			pool_error("find_primary_node: make_persistent_connection failed");
-			return -1;
-		}
-		con = s->con;
-		status = do_query(con, "SELECT pg_is_in_recovery()",
+			if (!s)
+			{
+				pool_error("find_primary_node: make_persistent_connection failed");
+				return -1;
+			}
+			con = s->con;
+			status = do_query(con, "SELECT pg_is_in_recovery()",
 						  &res, PROTO_MAJOR_V3);
-		if (res->numrows <= 0)
-		{
-			pool_log("find_primary_node: do_query returns no rows");
-		}
-		if (res->data[0] == NULL)
-		{
-			pool_log("find_primary_node: do_query returns no data");
-		}
-		if (res->nullflags[0] == -1)
-		{
-			pool_log("find_primary_node: do_query returns NULL");
-		}
-		if (res->data[0] && !strcmp(res->data[0], "t"))
-		{
-			is_standby = true;
-		}
-		free_select_result(res);
-		discard_persistent_db_connection(s);
+			if (res->numrows <= 0)
+			{
+				pool_log("find_primary_node: do_query returns no rows");
+			}
+			if (res->data[0] == NULL)
+			{
+				pool_log("find_primary_node: do_query returns no data");
+			}
+			if (res->nullflags[0] == -1)
+			{
+				pool_log("find_primary_node: do_query returns NULL");
+			}
+			if (res->data[0] && !strcmp(res->data[0], "t"))
+			{
+				is_standby = true;
+			}
+			free_select_result(res);
+			discard_persistent_db_connection(s);
+        }
+        PG_CATCH();
+        {
+        	ErrorData  *edata;
+        	edata = CopyErrorData();
+        	FlushErrorState();
+        	printf("%s",edata->message);
+        	return -1;
+        }
+        PG_END_TRY();
 
 		/*
 		 * If this is a standby, we continue to look for primary node.

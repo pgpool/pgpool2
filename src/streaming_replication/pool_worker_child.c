@@ -77,7 +77,6 @@ static long text_to_lsn(char *text);
 static RETSIGTYPE my_signal_handler(int sig);
 static RETSIGTYPE reload_config_handler(int sig);
 static void reload_config(void);
-static void clean_persistent_connection_error_callback(void *arg);
 #define CHECK_REQUEST \
 	do { \
 		if (reload_config_request) \
@@ -161,21 +160,21 @@ void do_worker_child(void)
 
 		if (pool_config->sr_check_period > 0 && MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
 		{
-            ErrorContextCallback errcallback;
-			/* Check and establish persistent connections to the backend */
 			establish_persistent_connection();
+            PG_TRY();
+            {
 
-            errcallback.callback = clean_persistent_connection_error_callback;
-            errcallback.arg = NULL;
-            errcallback.previous = error_context_stack;
-            error_context_stack = &errcallback;
-
-			/* Do replication time lag checking */
-			check_replication_time_lag();
+            	/* Do replication time lag checking */
+            	check_replication_time_lag();
+            }
+            PG_CATCH();
+            {
+	    		discard_persistent_connection();
+	    		sleep(pool_config->sr_check_period);
+	    		PG_RE_THROW();
+            }
+            PG_END_TRY();
             
-            /* Pop the error context stack */
-            error_context_stack = errcallback.previous;
-
 			/* Discard persistent connections */
 			discard_persistent_connection();
 		}
@@ -219,6 +218,10 @@ static void establish_persistent_connection(void)
             }
 		    PG_CATCH();
             {
+	        	ErrorData  *edata;
+	        	edata = CopyErrorData();
+	        	printf("%s",edata->message);
+	        	FlushErrorState();
 				slots[i] = NULL;
             }
             PG_END_TRY();
