@@ -2307,7 +2307,7 @@ void free_select_result(POOL_SELECT_RESULT *result)
 		return;
 
 	if (result->nullflags)
-		free(result->nullflags);
+		pfree(result->nullflags);
 
 	if (result->data)
 	{
@@ -2317,11 +2317,11 @@ void free_select_result(POOL_SELECT_RESULT *result)
 			for (j=0;j<result->rowdesc->num_attrs;j++)
 			{
 				if (result->data[index])
-					free(result->data[index]);
+					pfree(result->data[index]);
 				index++;
 			}
 		}
-		free(result->data);
+		pfree(result->data);
 	}
 
 	if (result->rowdesc)
@@ -2331,14 +2331,14 @@ void free_select_result(POOL_SELECT_RESULT *result)
 			for(i=0;i<result->rowdesc->num_attrs;i++)
 			{
 				if (result->rowdesc->attrinfo[i].attrname)
-					free(result->rowdesc->attrinfo[i].attrname);
+					pfree(result->rowdesc->attrinfo[i].attrname);
 			}
-			free(result->rowdesc->attrinfo);
+			pfree(result->rowdesc->attrinfo);
 		}
-		free(result->rowdesc);
+		pfree(result->rowdesc);
 	}
 
-	free(result);
+	pfree(result);
 }
 
 /*
@@ -2662,12 +2662,7 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 				if (num_fields > 0)
 				{
 					rowdesc->num_attrs = num_fields;
-					attrinfo = malloc(sizeof(*attrinfo)*num_fields);
-					if (!attrinfo)
-					{
-						pool_error("do_query: malloc failed");
-						return POOL_ERROR;
-					}
+					attrinfo = palloc(sizeof(*attrinfo)*num_fields);
 					rowdesc->attrinfo = attrinfo;
 
 					/* extract attribute info */
@@ -2676,12 +2671,7 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 						if (major == PROTO_MAJOR_V3)
 						{
 							len = strlen(p) + 1;
-							attrinfo->attrname = malloc(len);
-							if (!attrinfo->attrname)
-							{
-								pool_error("do_query: malloc failed");
-								return POOL_ERROR;
-							}
+							attrinfo->attrname = palloc(len);
 							memcpy(attrinfo->attrname, p, len);
 							p += len;
 							memcpy(&intval, p, sizeof(int));
@@ -2704,12 +2694,7 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 						else
 						{
 							p = pool_read_string(backend, &len, 0);
-							attrinfo->attrname = malloc(len);
-							if (!attrinfo->attrname)
-							{
-								pool_error("do_query: malloc failed");
-								return POOL_ERROR;
-							}
+							attrinfo->attrname = palloc(len);
 							memcpy(attrinfo->attrname, p, len);
 							if (pool_read(backend, &intval, sizeof(int)) < 0)
 							{
@@ -2777,12 +2762,7 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 
 							if (len > 0)	/* NOT NULL? */
 							{
-								res->data[num_data] = malloc(len + 1);
-								if (!res->data[num_data])
-								{
-									pool_error("do_query: malloc failed");
-									return POOL_ERROR;
-								}
+								res->data[num_data] = palloc(len + 1);
 								memcpy(res->data[num_data], p, len);
 								*(res->data[num_data] + len) = '\0';
 
@@ -2810,12 +2790,7 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 								if (len > 0)
 								{
 									p = pool_read2(backend, len);
-									res->data[num_data] = malloc(len + 1);
-									if (!res->data[num_data])
-									{
-										pool_error("do_query: malloc failed");
-										return POOL_ERROR;
-									}
+									res->data[num_data] = palloc(len + 1);
 									memcpy(res->data[num_data], p, len);
 									*(res->data[num_data] + len) = '\0';
 									if (res->data[num_data] == NULL)
@@ -2837,20 +2812,10 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 
 						if (num_data % DO_QUERY_ALLOC_NUM == 0)
 						{
-							res->nullflags = realloc(res->nullflags,
+							res->nullflags = repalloc(res->nullflags,
 													 (num_data/DO_QUERY_ALLOC_NUM +1)*DO_QUERY_ALLOC_NUM*sizeof(int));
-							if (!res->nullflags)
-							{
-								pool_error("do_query: malloc failed");
-								return POOL_ERROR;
-							}
-							res->data = realloc(res->data,
+							res->data = repalloc(res->data,
 												(num_data/DO_QUERY_ALLOC_NUM +1)*DO_QUERY_ALLOC_NUM*sizeof(char *));
-							if (!res->data)
-							{
-								pool_error("do_query: malloc failed");
-								return POOL_ERROR;
-							}
 						}
 					}
 				}

@@ -442,6 +442,19 @@ typedef enum
 
 extern ProcessType processType;
 
+typedef enum
+{
+	INITIALIZING,
+	PERFORMING_HEALTH_CHECK,
+	PERFORMING_SYSDB_CHECK,
+	SLEEPING,
+	WAITIG_FOR_CONNECTION,
+	BACKEND_CONNECTING,
+	PROCESSING
+} ProcessState;
+
+extern ProcessState processState;
+
 extern POOL_CONNECTION_POOL *pool_connection_pool;	/* connection pool */
 extern volatile sig_atomic_t backend_timer_expired; /* flag for connection closed timer is expired */
 extern volatile sig_atomic_t health_check_timer_expired;		/* non 0 if health check timer expired */
