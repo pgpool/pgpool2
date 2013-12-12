@@ -1,5 +1,5 @@
 # How to build RPM:
-#   rpmbuild -ba pgpool.spec --define"pgpool_version 3.3.1" --define="pg_version 93" --define="pghome /usr/pgsql-9.3"
+#   rpmbuild -ba pgpool.spec --define="pgpool_version 3.3.2" --define="pg_version 93" --define="pghome /usr/pgsql-9.3"
 #
 # expecting RPM name are:
 #   pgpool-II-pg{xx}-{version}.pgdg.{arch}.rpm
@@ -59,18 +59,18 @@ Development headers and libraries for pgpool-II.
 %configure --with-pgsql-includedir=%{pghome}/include/ \
            --with-pgsql-lib=%{pghome}/lib \
            --disable-static --with-pam --disable-rpath \
-           --sysconfdir=%{_sysconfdir}/%{name}/
+           --sysconfdir=%{_sysconfdir}/pgpool-II/
 
 make %{?_smp_flags}
 
 %install
 rm -rf %{buildroot}
 make %{?_smp_flags} DESTDIR=%{buildroot} install
-install -d %{buildroot}%{_datadir}/%{name}
-install -d %{buildroot}%{_sysconfdir}/%{name}
-mv %{buildroot}/%{_sysconfdir}/%{name}/pcp.conf.sample %{buildroot}%{_sysconfdir}/%{name}/pcp.conf
-mv %{buildroot}/%{_sysconfdir}/%{name}/pgpool.conf.sample %{buildroot}%{_sysconfdir}/%{name}/pgpool.conf
-mv %{buildroot}/%{_sysconfdir}/%{name}/pool_hba.conf.sample %{buildroot}%{_sysconfdir}/%{name}/pool_hba.conf
+install -d %{buildroot}%{_datadir}/pgpool-II
+install -d %{buildroot}%{_sysconfdir}/pgpool-II
+mv %{buildroot}/%{_sysconfdir}/pgpool-II/pcp.conf.sample %{buildroot}%{_sysconfdir}/pgpool-II/pcp.conf
+mv %{buildroot}/%{_sysconfdir}/pgpool-II/pgpool.conf.sample %{buildroot}%{_sysconfdir}/pgpool-II/pgpool.conf
+mv %{buildroot}/%{_sysconfdir}/pgpool-II/pool_hba.conf.sample %{buildroot}%{_sysconfdir}/pgpool-II/pool_hba.conf
 install -d %{buildroot}%{_initrddir}
 install -m 755 %{SOURCE1} %{buildroot}%{_initrddir}/pgpool
 install -d %{buildroot}%{_sysconfdir}/sysconfig
@@ -105,7 +105,7 @@ fi
 
 %files
 %defattr(-,root,root,-)
-%dir %{_datadir}/%{name}
+%dir %{_datadir}/pgpool-II
 %doc README README.euc_jp TODO COPYING INSTALL AUTHORS ChangeLog NEWS doc/pgpool-en.html doc/pgpool-ja.html doc/pgpool.css doc/tutorial-en.html doc/tutorial-ja.html
 %{_bindir}/pgpool
 %{_bindir}/pcp_attach_node
@@ -131,14 +131,14 @@ fi
 %{pghome}/share/extension/pgpool-regclass.sql
 %{pghome}/share/extension/pgpool_regclass--1.0.sql
 %{pghome}/share/extension/pgpool_regclass.control
-%{_sysconfdir}/%{name}/pgpool.conf.sample-master-slave
-%{_sysconfdir}/%{name}/pgpool.conf.sample-replication
-%{_sysconfdir}/%{name}/pgpool.conf.sample-stream
+%{_sysconfdir}/pgpool-II/pgpool.conf.sample-master-slave
+%{_sysconfdir}/pgpool-II/pgpool.conf.sample-replication
+%{_sysconfdir}/pgpool-II/pgpool.conf.sample-stream
 %{_libdir}/libpcp.so.*
 %{pghome}/lib/pgpool-recovery.so
 %{pghome}/lib/pgpool-regclass.so
 %{_initrddir}/pgpool
-%attr(764,root,root) %config(noreplace) %{_sysconfdir}/%{name}/*.conf
+%attr(764,root,root) %config(noreplace) %{_sysconfdir}/pgpool-II/*.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/pgpool
 
 %files devel
