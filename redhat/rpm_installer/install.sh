@@ -825,19 +825,23 @@ function copySbin()
 function sshWithoutPass()
 {
     local _THIS_USER=$1
+    local _REMOTE_HOST=$2
     local _HOME=`eval echo ~$_THIS_USER`
     local _SSH_DIR=$_HOME/.ssh
 
-    rm $_SSH_DIR/id_rsa* >/dev/null 2>&1
-    su - $_THIS_USER -c "ssh-keygen -q -t rsa -P '' -f $_SSH_DIR/id_rsa << EOF
+    if [ ! -e $_SSH_DIR/id_rsa ]; then
+        rm $_SSH_DIR/id_rsa* >/dev/null 2>&1
+        su - $_THIS_USER -c "ssh-keygen -q -t rsa -P '' -f $_SSH_DIR/id_rsa << EOF
 
 EOF"
+    fi
+
     if [ $? -ne 0 ]; then return 1; fi
 
-    ssh-copy-id -i $_SSH_DIR/id_rsa.pub $PG_SUPER_USER@$DEST_HOST > /dev/null 2>&1
+    ssh-copy-id -i $_SSH_DIR/id_rsa.pub $PG_SUPER_USER@$_REMOTE_HOST > /dev/null 2>&1
     if [ $? -ne 0 ]; then return 1; fi
 
-    su - $_THIS_USER -c "ssh -o StrictHostKeyChecking=no $PG_SUPER_USER@$DEST_HOST exit" > /dev/null 2>&1
+    su - $_THIS_USER -c "ssh -o StrictHostKeyChecking=no $PG_SUPER_USER@$_REMOTE_HOST exit" > /dev/null 2>&1
     if [ $? -ne 0 ]; then return 1; fi
 
     return 0
@@ -1048,7 +1052,7 @@ echo
 echo "* Setup password-less access over ssh"
 echo
 echo "Try ssh: $PG_SUPER_USER@$THIS_HOST (this host) -> $PG_SUPER_USER@$DEST_HOST (another host)"
-sshWithoutPass $PG_SUPER_USER
+sshWithoutPass $PG_SUPER_USER $DEST_HOST
 if [ $? -ne 0 ]; then
     echo "Failed to ssh $PG_SUPER_USER@$DEST_HOST (another host)."
     exit 1
@@ -1063,9 +1067,24 @@ if [ $? -ne 0 ]; then
     echo "Failed to make apache loginable. For configuring apache user, httpd must be stopped."
     exit 1
 fi
-sshWithoutPass $APACHE_USER
+sshWithoutPass $APACHE_USER $DEST_HOST
 if [ $? -ne 0 ]; then
     echo "Failed to ssh $PG_SUPER_USER@$DEST_HOST."
+    exit 1
+else
+    echo "OK."
+fi
+
+echo
+echo "Try ssh: $APACHE_USER@$THIS_HOST (this host) -> $PG_SUPER_USER@$THIS_HOST (this host)"
+makeApacheLoginable
+if [ $? -ne 0 ]; then
+    echo "Failed to make apache loginable. For configuring apache user, httpd must be stopped."
+    exit 1
+fi
+sshWithoutPass $APACHE_USER $THIS_HOST
+if [ $? -ne 0 ]; then
+    echo "Failed to ssh $PG_SUPER_USER@$THIS_HOST."
     exit 1
 else
     echo "OK."
