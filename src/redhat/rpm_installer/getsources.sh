@@ -134,7 +134,7 @@ echo "* Setup Finished. See \"work\" directory."
 echo
 echo "* Next ..."
 echo
-echo "  - rpmbuild -ba work/pgpool.spec"
+echo "  - rpmbuild -ba work/pgpool.spec --define\"pgpool_version 3.3.2\" --define=\"pg_version 93\" --define=\"pghome /usr/pgsql-9.3\""
 echo "  - rpmbuild -ba work/pgpoolAdmin.spec"
 echo "  - move ~/rpm/RPMS/../pgpool*.rpm (except for *.src.rpm) to work/installer-pg${pg_version}/"
 echo "  - create tar ball from work/installer-pg${pg_version}/"
