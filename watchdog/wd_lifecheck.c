@@ -444,6 +444,14 @@ wd_check_heartbeat(WdInfo * pgpool)
 	int interval;
 	struct timeval tv;
 
+	if (!WD_TIME_ISSET(pgpool->hb_last_recv_time) ||
+	    !WD_TIME_ISSET(pgpool->hb_send_time))
+	{
+		pool_debug("wd_check_heartbeat: pgpool (%s:%d) was restarted and has not send the heartbeat signal yet",
+		           pgpool->hostname, pgpool->pgpool_port);
+		return WD_OK;
+	}
+
 	gettimeofday(&tv, NULL);
 
 	interval = WD_TIME_DIFF_SEC(tv, pgpool->hb_last_recv_time);

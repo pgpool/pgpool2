@@ -46,6 +46,8 @@ WdInfo * wd_is_alive_master(void);
 bool wd_is_contactable_master(void);
 bool wd_are_contactable_all(void);
 
+static void wd_reset_wd_info(WdInfo *info);
+
 /* add or modify watchdog information list */
 int
 wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, char * delegate_ip, struct timeval * tv, int status)
@@ -76,6 +78,11 @@ wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, char * delegate_ip
 				(p->pgpool_port == pgpool_port)	&&
 				(p->wd_port == wd_port))
 			{
+				if (p->status == WD_DOWN || p->status == WD_INIT)
+				{
+					wd_reset_wd_info(p);
+				}
+
 				p->status = status;
 
 				if (tv != NULL)
@@ -90,11 +97,11 @@ wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, char * delegate_ip
 		/* not found; add as a new pgpool */
 		else
 		{
+			wd_reset_wd_info(p);
+
 			p->status = status;
 			p->pgpool_port = pgpool_port;
 			p->wd_port = wd_port;
-			p->in_interlocking = false;
-			p->is_lock_holder = false;
 
 			strlcpy(p->hostname, hostname, sizeof(p->hostname));
 			strlcpy(p->delegate_ip, delegate_ip, sizeof(p->delegate_ip));
@@ -110,6 +117,17 @@ wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, char * delegate_ip
 
 	pool_error("wd_set_wd_list: Can not add new watchdog information cause the WD_List is full.");
 	return -1;
+}
+
+/** reset watchdog info*/
+static void
+wd_reset_wd_info(WdInfo * info)
+{
+	WD_TIME_INIT(info->hb_send_time);
+	WD_TIME_INIT(info->hb_last_recv_time);
+
+	info->in_interlocking = false;
+	info->is_lock_holder = false;
 }
 
 /* add watchdog information to list using config description */

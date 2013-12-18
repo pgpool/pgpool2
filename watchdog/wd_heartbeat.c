@@ -410,6 +410,10 @@ wd_hb_receiver(int fork_wait_time, WdHbIf *hb_if)
 						p->hb_send_time = pkt.send_time;
 						p->hb_last_recv_time = tv;
 					}
+					else
+					{
+						pool_debug("wd_hb_receiver: received heartbeat signal is older than the latest, ignored");
+					}
 					break;
 				}
 				p++;
