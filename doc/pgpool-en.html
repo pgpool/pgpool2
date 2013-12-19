@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Tue Jul 23 08:14:27 JST 2013
+Last modified: Thu Dec 19 11:11:43 JST 2013
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -529,6 +529,37 @@ comment and will be ignored.</p>
     If more than num_init_children clients try to connect to pgpool-II,
     they are blocked (not rejected) until a connection to any pgpool-II process is closed.
     Up to 2*num_init_children can be queued.
+		</p>
+		<p>
+		The queued is inside the kernel called "listen queue". The length of the listen queue is called "backlog".
+		There is an upper limit of the backlog in some systems, and if num_init_children*2 exceeds the number, you need to set the backlong higher. Otherwise, following problems may occur in heavy loaded systems: 1) connecting to pgpool-II fails 2) connecting to pgpool-II is getting slow because of retries in the kernel.
+		You can check if the listen queue is actually overflowed by using "netstat -s" command.
+		If you find something like:
+		</p>
+		<pre>
+535 times the listen queue of a socket overflowed
+		</pre>
+		</p>
+		<p>
+then the listen queue is definitely overflowed.
+		You should increase the backlog in this case (you will be required a super user privilege).
+		</p>
+		<p>
+		<pre>
+# sysctl net.core.somaxconn
+net.core.somaxconn = 128
+# sysctl -w net.core.somaxconn = 256
+		</pre>
+		</p>
+		<p>
+You could add following to /etc/sysctl.conf instead.
+		</p>
+		<p>
+		<pre>
+net.core.somaxconn = 256
+		</pre>
+    </p>
+		<p>
     Number of connections to each PostgreSQL is roughly max_pool*num_init_children</p>
 
     <p>Some hints in addition to above:</p>
