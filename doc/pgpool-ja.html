@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Fri Apr 26 11:44:58 JST 2013
+Last modified: Thu Dec 19 11:12:59 JST 2013
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -451,6 +451,7 @@ PostgreSQLのUNIXドメインソケットが置かれているディレクトリ
 </p>
 
 <dt><a name="NUM_INIT_CHILDREN"></a>num_init_children</dt>
+<<<<<<< HEAD
 <dd>
 <p>
 preforkするpgpool-IIのサーバプロセスの数です。デフォルト値は32になっています。
@@ -463,6 +464,70 @@ preforkするpgpool-IIのサーバプロセスの数です。デフォルト値�
 したがって、すべてのコネクションが使用中の場合は問い合わせのキャンセルができなくなってしまうので、ご注意下さい。
 問い合わせのキャンセルを必ず保証したい場合は、想定されるコネクション数の倍の値を設定することをおすすめします。
 <li>一般ユーザでPostgreSQLに接続できるのは、max_connections - superuser_reserved_connections 分だけです。
+=======
+    <dd>
+    <p>
+    preforkするpgpool-IIのサーバプロセスの数です。デフォルト値は32になっています。
+    これが、pgpool-IIに対してクライアントが同時に接続できる上限の数になります。
+    これを超えた場合は、そのクライアントは、pgpool-IIのどれからのプロセスへのフロントエンドの接続が終了するまで
+    待たされます(PostgreSQLと違ってエラーになりません)。
+    待たされる数の上限は、2 * num_init_children です。
+	待ち行列は、OS内部に作られ、「listenキュー」と呼ばれます。listenキューの長さは「バックログ」と呼ばれます。
+	システムによってはバックログの上限が設定されており、2 * num_init_children がこれを越える場合はシステム側の設定変更が必要になります。
+		さもないと高負荷時にlistenキューが溢れ、pgpool-IIへの接続が失敗したり、システム内で行われるリトライにより著しく性能が低下することがあります。
+		listenキューが溢れているかどうかは、"netstat -s"で確認できます。"TcpExt"のパートで、
+		</p>
+		<p>
+		<pre>
+535 times the listen queue of a socket overflowed
+		</pre>
+		</p>
+		<p>
+		のようなメッセージが出ていればlistenキューが溢れています。listenキュー溢れを防ぐためにバックログを大きくするには、Linuxでは以下のようにします(root権限が必要です)。
+		</p>
+		<p>
+		<pre>
+# sysctl net.core.somaxconn
+net.core.somaxconn = 128
+# sysctl -w net.core.somaxconn = 256
+		</pre>
+		</p>
+		<p>
+		もちろん、/etc/sysctl.confに以下のように書いても構いません。
+		</p>
+		<p>
+		<pre>
+net.core.somaxconn = 256
+		</pre>
+    </p>
+    <p>
+    基本的に後述のmax_pool * num_init_children分だけPostgreSQLへのコネクションが張られますが、
+    他に以下の考慮が必要です。
+    </p>
+    <ul>
+        <li>問い合わせのキャンセルを行うと通常のコネクションとは別に新たなコネクションが張られます。
+            したがって、すべてのコネクションが使用中の場合は問い合わせのキャンセルができなくなってしまうので、
+            ご注意下さい。
+            問い合わせのキャンセルを必ず保証したい場合は、想定されるコネクション数の倍の値を
+            設定することをおすすめします。
+        </li>
+        <li>一般ユーザでPostgreSQLに接続できるのは、
+            max_connections - superuser_reserved_connections 分だけです。
+        </li>
+    </ul>
+    <p>
+    以上をまとめると、
+    </p>
+
+    <table border>
+    <tr><th>クエリのキャンセルを考慮しない場合</th>
+        <td>max_pool * num_init_children &lt;=<br>
+            (max_connections - superuser_reserved_connections)</td></tr>
+    <tr><th>クエリのキャンセルを考慮する場合</th>
+        <td>max_pool * num_init_children * 2 &lt;=<br>
+            (max_connections - superuser_reserved_connections)</td></tr>
+    </table>
+>>>>>>> 7f875af... Add mention about listen queue and how to increase the backlog in the num_init_children section.
 
 </ul>
 </p>
