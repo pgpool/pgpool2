@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Tue Aug 27 09:12:47 JST 2013
+Last modified: Thu Dec 19 10:53:46 JST 2013
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -613,6 +613,33 @@ pgpool.confでは空白行や#で始まる行はコメントと見なされま�
     これを超えた場合は、そのクライアントは、pgpool-IIのどれからのプロセスへのフロントエンドの接続が終了するまで
     待たされます(PostgreSQLと違ってエラーになりません)。
     待たされる数の上限は、2 * num_init_children です。
+	待ち行列は、OS内部に作られ、「listenキュー」と呼ばれます。listenキューの長さは「バックログ」と呼ばれます。
+	システムによってはバックログの上限が設定されており、2 * num_init_children がこれを越える場合はシステム側の設定変更が必要になります。
+		さもないと高負荷時にlistenキューが溢れ、pgpool-IIへの接続が失敗したり、システム内で行われるリトライにより著しく性能が低下することがあります。
+		listenキューが溢れているかどうかは、"netstat -s"で確認できます。"TcpExt"のパートで、
+		</p>
+		<p>
+		<pre>
+535 times the listen queue of a socket overflowed
+		</pre>
+		</p>
+		<p>
+		のようなメッセージが出ていればlistenキューが溢れています。listenキュー溢れを防ぐためにバックログを大きくするには、Linuxでは以下のようにします(root権限が必要です)。
+		</p>
+		<p>
+		<pre>
+# sysctl net.core.somaxconn
+net.core.somaxconn = 128
+# sysctl -w net.core.somaxconn = 256
+		</pre>
+		</p>
+		<p>
+		もちろん、/etc/sysctl.confに以下のように書いても構いません。
+		</p>
+		<p>
+		<pre>
+net.core.somaxconn = 256
+		</pre>
     </p>
     <p>
     基本的に後述のmax_pool * num_init_children分だけPostgreSQLへのコネクションが張られますが、
