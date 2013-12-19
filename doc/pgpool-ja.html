@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Thu Dec 19 11:19:03 JST 2013
+Last modified: Thu Dec 19 11:29:40 JST 2013
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -516,11 +516,6 @@ net.core.somaxconn = 256
 </ul>
 </p>
 <p>
-以上をまとめると、
-<pre>
-max_pool*num_init_children <= (max_connections - superuser_reserved_connections) (クエリのキャンセルを考慮しない場合)
-max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connections) (クエリのキャンセルを考慮する場合)
-</pre>
 のどちらかを満たすように設定してください。
 </p>
 <p>
