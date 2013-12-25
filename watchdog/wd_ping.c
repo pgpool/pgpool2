@@ -227,7 +227,7 @@ exec_ping(void * arg)
 		for (;;)
 		{
 			int r;
-			r = wait(&status);
+			r = waitpid(pid, &status, 0);
 			if (r < 0)
 			{
 				if (errno == EINTR)
