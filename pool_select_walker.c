@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -541,7 +541,7 @@ static bool is_unlogged_table(char *table_name)
 		{
 			relcache = pool_create_relcache(128, query,
 											int_register_func, int_unregister_func,
-											true);
+											false);
 			if (relcache == NULL)
 			{
 				pool_error("is_unlogged_table: pool_create_relcache error");
