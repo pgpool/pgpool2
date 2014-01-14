@@ -2341,7 +2341,14 @@ static int find_primary_node(void)
 		if (!s)
 		{
 			pool_error("find_primary_node: make_persistent_connection failed");
-			break;
+
+			/*
+			 * It is possible that a node is down even if
+			 * VALID_BACKEND tells it's valid.  This could happen
+			 * before health checking detects the failure.
+			 * Thus we should continue to look for primary node.
+			 */
+			continue;
 		}
 		con = s->con;
 
