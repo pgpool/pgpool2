@@ -1,5 +1,5 @@
 #! /bin/sh
-# Copyright (c) 2013 PgPool Global Development Group
+# Copyright (c) 2013-2014 PgPool Global Development Group
 #
 # Permission to use, copy, modify, and distribute this software and
 # its documentation for any purpose and without fee is hereby
@@ -16,10 +16,11 @@
 # directory for *testing* purpose.
 # Do not use this tool for production environment!
 #
-# usage: pgpool_setup [-m r|s][-n num_clusters][-p base_port][--no-stop]
+# usage: pgpool_setup [-m r|s|n][-n num_clusters][-p base_port][--no-stop]
 # -m s: create an installation as streaming replication mode.
 # (the default)
 # -m r: create an installation as native replication mode.
+# -m n: create an installation as raw mode.
 # -n num_clusters: create num_clusters PostgreSQL database cluster nodes
 # -p base_port: specify base port. The first PostgreSQL node's port is
 #  base_port. Second PostgreSQL node's port is base_port+1... nth
@@ -278,7 +279,7 @@ function set_postgresql_conf
 		echo "max_wal_senders = 2" >> $PGCONF
 		echo "archive_mode = on" >> $PGCONF
 		echo "archive_command = 'cp %p $BASEDIR/archivedir/%f </dev/null'" >> $PGCONF
-	else
+	elif [ $MODE = 'r' ];then
 		echo "wal_level = archive" >> $PGCONF
 		echo "archive_mode = on" >> $PGCONF
 		echo "archive_command = 'cp %p $BASEDIR/archivedir/%f </dev/null'" >> $PGCONF
@@ -590,12 +591,12 @@ function wait_for_pgpool_reload {
 ################################################################################
 function usage()
 {
-	echo "usage: $0 [-m r|s] [-n num_clusters] [-p base_port] [--no-stop] ";exit 1
+	echo "usage: $0 [-m r|s|n] [-n num_clusters] [-p base_port] [--no-stop] ";exit 1
 }
 
 #-------------------------------------------
 # Argument check
-# usage: $0 [-m r|s] [-n num_clusters] [-p base_port] [--no-stop]"
+# usage: $0 [-m r|s|n] [-n num_clusters] [-p base_port] [--no-stop]"
 #-------------------------------------------
 #
 # default mode is streaming replication mode
@@ -609,6 +610,7 @@ do
 		case $1 in
 			r ) MODE="r";;
 			s ) MODE="s";;
+			n ) MODE="n";;
 			* ) usage;;
 		esac
 	elif [ $1 = "-n" ];then
@@ -636,6 +638,9 @@ case $MODE in
 		;;
 	s ) MODENAME="streaming replication mode"
 		SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample-stream
+		;;
+	n ) MODENAME="raw mode"
+		SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample
 		;;
 esac
 
@@ -710,7 +715,7 @@ do
 	# create basebackup.sh
 	if [ $MODE = 's' ];then
 		create_basebackup_stream $CLUSTERDIR >&5 2>&1
-	else
+	elif [ $MODE = 'r' ];then
 		create_basebackup_replication $CLUSTERDIR >&5 2>&1
 		create_pgpool_recovery_pitr $CLUSTERDIR >&5 2>&1
 	fi
@@ -850,7 +855,7 @@ else
 	echo "done."
 fi
 
-if [ $MODE = "r" ];then
+if [ $MODE = "r" -o $MODE = "n" ];then
 	echo "create extensions"
 	$PSQL -p $PGPOOL_PORT template1 >&5 2>&1 <<EOF
 CREATE EXTENSION pgpool_regclass;
