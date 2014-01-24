@@ -941,7 +941,7 @@ wd_escalation(void)
 				pool_error("wd_escalation: escalation command failed. exit status: %d", WEXITSTATUS(r));
 		}
 		else
-				pool_error("wd_escalation: escalation command exit abnormally");
+			pool_error("wd_escalation: escalation command exit abnormally");
 	}
 
 	/* interface up as delegate IP */
