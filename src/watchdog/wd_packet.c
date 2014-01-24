@@ -931,7 +931,17 @@ wd_escalation(void)
 	/* execute escalation command */
 	if (strlen(pool_config->wd_escalation_command))
 	{
-		system(pool_config->wd_escalation_command);
+		int r;
+		r = system(pool_config->wd_escalation_command);
+		if (WIFEXITED(r))
+		{
+			if (WEXITSTATUS(r) == EXIT_SUCCESS)
+				pool_log("wd_escalation: escalation command succeeded");
+			else
+				pool_error("wd_escalation: escalation command failed. exit status: %d", WEXITSTATUS(r));
+		}
+		else
+				pool_error("wd_escalation: escalation command exit abnormally");
 	}
 
 	/* interface up as delegate IP */
