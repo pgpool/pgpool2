@@ -676,7 +676,9 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	/*
 	 * Fetch memory cache if possible
 	 */
-	if (pool_config->memory_cache_enabled && pool_is_likely_select(query))
+	if (pool_config->memory_cache_enabled && pool_is_likely_select(query) &&
+		!pool_is_writing_transaction() &&
+		(TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) != 'E'))
 	{
 		bool foundp;
 		POOL_STATUS status;
