@@ -36,7 +36,10 @@ socket_dir = '/tmp'
                                    # The Debian package defaults to
                                    # /var/run/postgresql
                                    # (change requires restart)
-
+listen_backlog_multiplier = 2
+                                   # Set the backlog parameter of listen(2) to
+								   # num_init_children * listen_backlog_multiplier.
+                                   # (change requires restart)
 
 # - pgpool Communication Manager Connection Settings -
 

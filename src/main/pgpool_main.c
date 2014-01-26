@@ -685,7 +685,7 @@ static int create_inet_domain_socket(const char *hostname, const int port)
 			errdetail("bind on host:\"%s\" server:\"%s\" failed with error \"%s\"",host, serv,strerror(errno))));
 	}
 
-	backlog = pool_config->num_init_children * 2;
+    backlog = pool_config->num_init_children * pool_config->listen_backlog_multiplier;
 	if (backlog > PGPOOLMAXLITSENQUEUELENGTH)
 		backlog = PGPOOLMAXLITSENQUEUELENGTH;
 
