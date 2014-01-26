@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Sun Jan 26 09:15:49 JST 2014
+Last modified: Sun Jan 26 14:46:40 JST 2014
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -677,7 +677,7 @@ net.core.somaxconn = 256
     </p>
     </dd>
 
-<dt><a name="LISTEN_BACKLOG_MULTIPLIERE"></a>listen_backlog_multiplier</dt>
+<dt><a name="LISTEN_BACKLOG_MULTIPLIERE"></a>listen_backlog_multiplier <span class="version">V3.4 -</span></dt>
 	<dd>
 	<p>
 	フロントエンドからpgpool-IIへの接続待ち行列の長さを制御します。デフォルト値は2です。接続待ち行列(listenシステムコールのbacklogパラメータ)の長さは、listen_backlog_multiplier * num_init_children で決まります。もし待ち行列の長さが不足する場合にはこのパラメータを増やしてください。その際、OSの設定値によっては待ち行列を長く出来ないことがあります。詳細は<a href="#NUM_INIT_CHILDREN">num_init_children</a>の項を参照してください。
@@ -1377,6 +1377,16 @@ local0.*    /var/log/pgpool.log
     もしonなら、SELECTに含まれるテーブルが一時テーブルかどうかのチェックを行います。
     このチェックは、primary/masterのシステムカタログへのアクセスを発生させ、それなりに負荷を上げます。
     もし一時テーブルを使っていないということが確かで、primary/masterの負荷を少しでも下げたいのであれば、
+    offにすることができます。デフォルトはonです。
+    </p>
+    </dd>
+
+<dt><a name="CHECK_UNLOGGED_TABLE"></a>check_unlogged_table <span class="version">V3.4 〜</span></dt>
+    <dd>
+    <p>
+    もしonなら、SELECTに含まれるテーブルがunloggedテーブルかどうかのチェックを行います。
+    このチェックは、primary/masterのシステムカタログへのアクセスを発生させ、それなりに負荷を上げます。
+    もしunloggedテーブルを使っていないということが確かで(たとえばPostgreSQLのバージョンが9.0かそれより前)、primary/masterの負荷を少しでも下げたいのであれば、
     offにすることができます。デフォルトはonです。
     </p>
     </dd>

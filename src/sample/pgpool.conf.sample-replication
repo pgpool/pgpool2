@@ -609,6 +609,13 @@ check_temp_table = on
 								   # and you want to save access to primary/master, you could turn this off.
 								   # Default is on.
 
+check_unlogged_table = on
+                                   # If on, enable unlogged table check in SELECT statements.
+                                   # This initiates queries against system catalog of primary/master
+                                   # thus increases load of master.
+                                   # If you are absolutely sure that your system never uses unlogged tables
+                                   # and you want to save access to primary/master, you could turn this off.
+                                   # Default is on.
 
 #------------------------------------------------------------------------------
 # ON MEMORY QUERY MEMORY CACHE
