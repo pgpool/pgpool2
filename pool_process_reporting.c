@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -580,6 +580,16 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].name, "relcache_expire", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%ld", pool_config->relcache_expire);
 	strncpy(status[i].desc, "relation cache expiration time in seconds", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "relcache_size", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->relcache_size);
+	strncpy(status[i].desc, "number of relation cache entry", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "check_temp_table", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->check_temp_table);
+	strncpy(status[i].desc, "enable temporary table check", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "parallel_mode", POOLCONFIG_MAXNAMELEN);
