@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Thu Dec 19 11:10:52 JST 2013
+Last modified: Sun Jan 26 09:15:49 JST 2014
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -612,9 +612,9 @@ pgpool.confでは空白行や#で始まる行はコメントと見なされま�
     これが、pgpool-IIに対してクライアントが同時に接続できる上限の数になります。
     これを超えた場合は、そのクライアントは、pgpool-IIのどれからのプロセスへのフロントエンドの接続が終了するまで
     待たされます(PostgreSQLと違ってエラーになりません)。
-    待たされる数の上限は、2 * num_init_children です。
+    待たされる数の上限は、listen_backlog_multiplier * num_init_children です。
 	待ち行列は、OS内部に作られ、「listenキュー」と呼ばれます。listenキューの長さは「バックログ」と呼ばれます。
-	システムによってはバックログの上限が設定されており、2 * num_init_children がこれを越える場合はシステム側の設定変更が必要になります。
+	システムによってはバックログの上限が設定されており、listen_backlog_multiplier * num_init_children がこれを越える場合はシステム側の設定変更が必要になります。
 		さもないと高負荷時にlistenキューが溢れ、pgpool-IIへの接続が失敗したり、システム内で行われるリトライにより著しく性能が低下することがあります。
 		listenキューが溢れているかどうかは、"netstat -s"で確認できます。"TcpExt"のパートで、
 		</p>
@@ -677,6 +677,16 @@ net.core.somaxconn = 256
     </p>
     </dd>
 
+<dt><a name="LISTEN_BACKLOG_MULTIPLIERE"></a>listen_backlog_multiplier</dt>
+	<dd>
+	<p>
+	フロントエンドからpgpool-IIへの接続待ち行列の長さを制御します。デフォルト値は2です。接続待ち行列(listenシステムコールのbacklogパラメータ)の長さは、listen_backlog_multiplier * num_init_children で決まります。もし待ち行列の長さが不足する場合にはこのパラメータを増やしてください。その際、OSの設定値によっては待ち行列を長く出来ないことがあります。詳細は<a href="#NUM_INIT_CHILDREN">num_init_children</a>の項を参照してください。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
+    </dd>
+		
 <dt><a name="CHILD_LIFE_TIME"></a>child_life_time</dt>
     <dd>
     <p>
@@ -11736,7 +11746,7 @@ HINT:  check data consistency between master and other db node
 <div class="copyright" style="clear: both">
 <hr>
 <copyright>
-Copyright &copy; 2003 &ndash; 2013 pgpool Global Development Group
+Copyright &copy; 2003 &ndash; 2014 pgpool Global Development Group
 </copyright>
 </div>
 

@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1335,7 +1335,7 @@ static int create_inet_domain_socket(const char *hostname, const int port)
 		myexit(1);
 	}
 
-	backlog = pool_config->num_init_children * 2;
+	backlog = pool_config->num_init_children * pool_config->listen_backlog_multiplier;
 	if (backlog > PGPOOLMAXLITSENQUEUELENGTH)
 		backlog = PGPOOLMAXLITSENQUEUELENGTH;
 

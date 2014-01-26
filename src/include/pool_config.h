@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -75,6 +75,7 @@ typedef struct {
 	char *pcp_socket_dir;		/* PCP socket directory */
 	int pcp_timeout;			/* PCP timeout for an idle client */
     int	num_init_children;	/* # of children initially pre-forked */
+    int	listen_backlog_multiplier; /* determines the size of the connection queue */
     int	child_life_time;	/* if idle for this seconds, child exits */
     int	connection_life_time;	/* if idle for this seconds, connection closes */
     int	child_max_connections;	/* if max_connections received, child exits */

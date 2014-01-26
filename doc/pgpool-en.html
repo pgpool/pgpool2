@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Thu Dec 19 11:10:39 JST 2013
+Last modified: Sun Jan 26 09:15:34 JST 2014
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -604,11 +604,11 @@ comment and will be ignored.</p>
     num_init_children is also the concurrent connections limit to pgpool-II from clients.
     If more than num_init_children clients try to connect to pgpool-II,
     they are blocked (not rejected) until a connection to any pgpool-II process is closed.
-    Up to 2*num_init_children can be queued.
+    Up to listen_backlog_multiplier*num_init_children can be queued.
 		</p>
 		<p>
 		The queued is inside the kernel called "listen queue". The length of the listen queue is called "backlog".
-		There is an upper limit of the backlog in some systems, and if num_init_children*2 exceeds the number, you need to set the backlong higher. Otherwise, following problems may occur in heavy loaded systems: 1) connecting to pgpool-II fails 2) connecting to pgpool-II is getting slow because of retries in the kernel.
+		There is an upper limit of the backlog in some systems, and if num_init_children*listen_backlog_multiplier exceeds the number, you need to set the backlong higher. Otherwise, following problems may occur in heavy loaded systems: 1) connecting to pgpool-II fails 2) connecting to pgpool-II is getting slow because of retries in the kernel.
 		You can check if the listen queue is actually overflowed by using "netstat -s" command.
 		If you find something like:
 		</p>
@@ -661,6 +661,19 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
     This parameter can only be set at server start.</p>
     </dd>
 
+<dt><a name="LISTEN_BACKLOG_MULTIPLIERE"></a>listen_backlog_multiplier</dt>
+    <dd>
+		<p>
+		Controls the length of connection queue from frontend to pgpool-II.	The default is 2.
+		The queue length (actually "backlog" parameter of listen system call) is defined as listen_backlog_multiplier * num_init_children.
+		If the queue length is not long enough, you should increase the parameter.
+		Some systems have upper limit of the backlog parameter of listen system call.
+		See <a href="#NUM_INIT_CHILDREN">num_init_children</a> for more details.
+		</p>
+		<p>
+		This parameter can only be set at server start.</p>
+	</dd>
+		
 <dt><a name="CHILD_LIFE_TIME"></a>child_life_time</dt>
     <dd>
     <p>A pgpool-II child process' life time in seconds.
@@ -5775,7 +5788,7 @@ else, it is assumed numeric. avg() is processed as sum()/count() (sum divided by
 <div class="copyright" style="clear: both">
 <hr>
 <copyright>
-Copyright &copy; 2003 &ndash; 2013 pgpool Global Development Group
+Copyright &copy; 2003 &ndash; 2014 pgpool Global Development Group
 </copyright>
 </div>
 </body>
