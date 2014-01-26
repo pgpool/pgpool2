@@ -198,6 +198,7 @@ typedef struct {
 	time_t relcache_expire;		/* relation cache life time in seconds */
 	int relcache_size;		/* number of relation cache life entry */
 	int check_temp_table;		/* enable temporary table check */
+	int check_unlogged_table;		/* enable unlogged table check */
 
 	/* followings are for regex support and do not exist in the configuration file */
 	RegPattern *lists_patterns; /* Precompiled regex patterns for black/white lists */

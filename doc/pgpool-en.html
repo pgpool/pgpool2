@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Sun Jan 26 09:15:34 JST 2014
+Last modified: Sun Jan 26 14:44:34 JST 2014
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -661,7 +661,7 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
     This parameter can only be set at server start.</p>
     </dd>
 
-<dt><a name="LISTEN_BACKLOG_MULTIPLIERE"></a>listen_backlog_multiplier</dt>
+<dt><a name="LISTEN_BACKLOG_MULTIPLIERE"></a>listen_backlog_multiplier <span class="version">V3.4 -</span></dt>
     <dd>
 		<p>
 		Controls the length of connection queue from frontend to pgpool-II.	The default is 2.
@@ -1352,6 +1352,17 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
+<dt><a name="CHECK_UNLOGGED_TABLE"></a>check_unlogged_table <span class="version">V3.4 -</span></dt>
+    <dd>
+    <p>
+    If on, enable unlogged table check in SELECT statements. This
+    initiates queries against system catalog of primary/master thus
+    increases load of primary/master.  If you are absolutely sure that your
+    system never uses unlogged (for example, you are using PostgreSQL 9.0 or before) tables and you want to save access
+    to primary/master, you could turn this off.  Default is on.
+    </p>
+    </dd>
+		
 </dl>
 
 <h2>Generating SSL certificates</h2>

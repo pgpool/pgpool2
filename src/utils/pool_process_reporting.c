@@ -593,6 +593,21 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].desc, "relation cache expiration time in seconds", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	strncpy(status[i].name, "relcache_size", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->relcache_size);
+	strncpy(status[i].desc, "number of relation cache entry", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "check_temp_table", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->check_temp_table);
+	strncpy(status[i].desc, "enable temporary table check", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "check_unlogged_table", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->check_unlogged_table);
+	strncpy(status[i].desc, "enable unlogged table check", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	strncpy(status[i].name, "parallel_mode", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->parallel_mode);
 	strncpy(status[i].desc, "if non 0, run in parallel query mode", POOLCONFIG_MAXDESCLEN);

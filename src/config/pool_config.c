@@ -1966,6 +1966,7 @@ int pool_init_config(void)
 	pool_config->relcache_expire = 0;
 	pool_config->relcache_size = 256;
 	pool_config->check_temp_table = 1;
+	pool_config->check_unlogged_table = 1;
 	pool_config->lists_patterns = NULL;
 	pool_config->pattc = 0;
 	pool_config->current_pattern_size = 0;
@@ -4350,6 +4351,18 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->check_temp_table = v;
+		}
+
+		else if (!strcmp(key, "check_unlogged_table") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			int v = eval_logical(yytext);
+
+			if (v < 0)
+			{
+				pool_error("pool_config: invalid value %s for %s", yytext, key);
+				return(-1);
+			}
+			pool_config->check_unlogged_table = v;
 		}
 
         else if (!strcmp(key, "memory_cache_enabled") &&
