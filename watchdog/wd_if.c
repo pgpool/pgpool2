@@ -42,12 +42,14 @@ int wd_IP_down(void);
 int wd_get_cmd(char * buf, char * cmd);
 static int exec_ifconfig(char * path,char * command);
 
+#define WD_TRY_PING_AT_IPUP 3
 int
 wd_IP_up(void)
 {
 	int rtn = WD_OK;
 	char path[WD_MAX_PATH_LEN];
 	char cmd[128];
+	int i;
 
 	if (strlen(pool_config->delegate_IP) == 0)
 		return WD_NG;
@@ -60,13 +62,41 @@ wd_IP_up(void)
 		snprintf(path,sizeof(path),"%s/%s",pool_config->ifconfig_path,cmd);
 		rtn = exec_ifconfig(path,pool_config->if_up_cmd);
 
-		wd_get_cmd(cmd,pool_config->arping_cmd);
-		snprintf(path,sizeof(path),"%s/%s",pool_config->arping_path,cmd);
-		rtn = exec_ifconfig(path,pool_config->arping_cmd);
+		if (rtn == WD_OK)
+		{
+			wd_get_cmd(cmd,pool_config->arping_cmd);
+			snprintf(path,sizeof(path),"%s/%s",pool_config->arping_path,cmd);
+			rtn = exec_ifconfig(path,pool_config->arping_cmd);
+		}
+		if (rtn == WD_OK)
+		{
+			for (i = 0; i < WD_TRY_PING_AT_IPUP; i++)
+			{
+				if (!wd_is_unused_ip(pool_config->delegate_IP))
+					break;
+			}
+
+			if (i >= WD_TRY_PING_AT_IPUP)
+				rtn = WD_NG;
+		}
+
+		if (rtn == WD_OK)
+			pool_log("wd_IP_up: ifconfig up succeeded");
+		else
+		{
+			WD_List->delegate_ip_flag = 0;
+			pool_error("wd_IP_up: ifconfig up failed");
+		}
 	}
+	else
+	{
+		pool_debug("wd_IP_up: already delegate IP holder");
+	}
+
 	return rtn;
 }
 
+#define WD_TRY_PING_AT_IPDOWN 3
 int
 wd_IP_down(void)
 {
@@ -87,20 +117,23 @@ wd_IP_down(void)
 
 		if (rtn == WD_OK)
 		{
-			for (i = 0; i < 3; i++)
+			for (i = 0; i < WD_TRY_PING_AT_IPDOWN; i++)
 			{
 				if (wd_is_unused_ip(pool_config->delegate_IP))
 					break;
 			}
 
-			if (i >= 3)
+			if (i >= WD_TRY_PING_AT_IPDOWN)
 				rtn = WD_NG;
 		}
 
 		if (rtn == WD_OK)
 			pool_log("wd_IP_down: ifconfig down succeeded");
 		else
+		{
+			WD_List->delegate_ip_flag = 1;
 			pool_error("wd_IP_down: ifconfig down failed");
+		}
 	}
 	else
 	{
