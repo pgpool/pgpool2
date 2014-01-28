@@ -631,7 +631,7 @@ send_packet_4_nodes(WdPacket *packet, WD_SEND_TYPE type)
 	while (p->status != WD_END)
 	{
 		/* don't send packet to pgpool in down */
-		if (p->status == WD_DOWN || 
+		if (p->status == WD_DOWN ||
 		    (packet->packet_no != WD_ADD_REQ && p->status == WD_INIT))
 		{
 			p->is_contactable = false;
@@ -916,7 +916,8 @@ ntoh_wd_lock_packet(WdPacket * to, WdPacket * from)
 int
 wd_escalation(void)
 {
-	int rtn;
+	int rtn, r;
+	bool has_error = false;
 
 	pool_log("wd_escalation: escalating to master pgpool");
 
@@ -931,22 +932,31 @@ wd_escalation(void)
 	/* execute escalation command */
 	if (strlen(pool_config->wd_escalation_command))
 	{
-		int r;
 		r = system(pool_config->wd_escalation_command);
 		if (WIFEXITED(r))
 		{
 			if (WEXITSTATUS(r) == EXIT_SUCCESS)
 				pool_log("wd_escalation: escalation command succeeded");
 			else
+			{
 				pool_error("wd_escalation: escalation command failed. exit status: %d", WEXITSTATUS(r));
+				has_error = true;
+			}
 		}
 		else
+		{
 			pool_error("wd_escalation: escalation command exit abnormally");
+			has_error = true;
+		}
 	}
 
 	/* interface up as delegate IP */
 	if (strlen(pool_config->delegate_IP) != 0)
-		wd_IP_up();
+	{
+		r = wd_IP_up();
+		if (r == WD_NG)
+			has_error = true;
+	}
 
 	/* set master status to the wd list */
 	wd_set_wd_list(pool_config->wd_hostname, pool_config->port,
@@ -957,7 +967,10 @@ wd_escalation(void)
 	rtn = wd_declare();
 	if (rtn == WD_OK)
 	{
-		pool_log("wd_escalation: escalated to master pgpool successfully");
+		if (has_error)
+			pool_log("wd_escalation: escalated to master pgpool with some errors");
+		else
+			pool_log("wd_escalation: escalated to master pgpool successfully");
 	}
 
 	return rtn;
