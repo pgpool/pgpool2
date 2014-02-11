@@ -89,6 +89,7 @@ static POOL_CONNECTION_POOL *get_backend_connection(POOL_CONNECTION *frontend);
 static StartupPacket *StartupPacketCopy(StartupPacket *sp);
 static void print_process_status(char *remote_host,char* remote_port);
 
+static void free_persisten_db_connection_memory(POOL_CONNECTION_POOL_SLOT *cp);
 
 /*
  * non 0 means SIGTERM(smart shutdown) or SIGINT(fast shutdown) has arrived
@@ -1415,10 +1416,11 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 
 	if (fd < 0)
 	{
+		free_persisten_db_connection_memory(cp);
+		free(startup_packet);
         ereport(ERROR,
                 (errmsg("failed to make persistent db connection"),
                  errdetail("connection to %s(%d) failed", hostname, port)));
-
 	}
 
 	cp->con = pool_open(fd);
@@ -1433,6 +1435,9 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	len1 = snprintf(&startup_packet->data[len], sizeof(startup_packet->data)-len, "%s", user) + 1;
 	if (len1 >= (sizeof(startup_packet->data)-len))
 	{
+		pool_close(cp->con);
+		free_persisten_db_connection_memory(cp);
+		free(startup_packet);
         ereport(ERROR,
                 (errmsg("failed to make persistent db connection"),
                  errdetail("user name is too long")));
@@ -1442,6 +1447,9 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	len1 = snprintf(&startup_packet->data[len], sizeof(startup_packet->data)-len, "database") + 1;
 	if (len1 >= (sizeof(startup_packet->data)-len))
 	{
+		pool_close(cp->con);
+		free_persisten_db_connection_memory(cp);
+		free(startup_packet);
         ereport(ERROR,
                 (errmsg("failed to make persistent db connection"),
                  errdetail("user name is too long")));
@@ -1451,6 +1459,9 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	len1 = snprintf(&startup_packet->data[len], sizeof(startup_packet->data)-len, "%s", dbname) + 1;
 	if (len1 >= (sizeof(startup_packet->data)-len))
 	{
+		pool_close(cp->con);
+		free_persisten_db_connection_memory(cp);
+		free(startup_packet);
         ereport(ERROR,
                 (errmsg("failed to make persistent db connection"),
                  errdetail("database name is too long")));
@@ -1473,10 +1484,11 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	status = send_startup_packet(cp);
 	if (status)
 	{
+		pool_close(cp->con);
+		free_persisten_db_connection_memory(cp);
         ereport(ERROR,
                 (errmsg("failed to make persistent db connection"),
                  errdetail("unable to send startup packet")));
-
 	}
 
 	/*
@@ -1490,6 +1502,29 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	}
 
 	return cp;
+}
+
+/*
+ * Free memory of POOL_CONNECTION_POOL_SLOT.  Should only be used in
+ * make_persistent_db_connection and discard_persistent_db_connection.
+ */
+void free_persisten_db_connection_memory(POOL_CONNECTION_POOL_SLOT *cp)
+{
+	if (!cp)
+		return;
+	if (!cp->sp)
+	{
+		pfree(cp);
+		return;
+	}
+	if (cp->sp->startup_packet)
+		pfree(cp->sp->startup_packet);
+	if (cp->sp->database)
+		pfree(cp->sp->database);
+	if (cp->sp->user)
+		pfree(cp->sp->user);
+	pfree(cp->sp);
+	pfree(cp);
 }
 
 /*
@@ -1519,11 +1554,7 @@ void discard_persistent_db_connection(POOL_CONNECTION_POOL_SLOT *cp)
 	pool_unset_nonblock(cp->con->fd);
 
 	pool_close(cp->con);
-	pfree(cp->sp->startup_packet);
-	pfree(cp->sp->database);
-	pfree(cp->sp->user);
-	pfree(cp->sp);
-	pfree(cp);
+	free_persisten_db_connection_memory(cp);
 }
 
 /*

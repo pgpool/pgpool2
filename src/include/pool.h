@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -49,6 +49,18 @@
 #define NONE_BLOCK
 
 #define POOLMAXPATHLEN 8192
+
+/*
+ * Brought from PostgreSQL's pg_config_manual.h.
+ *
+ * Maximum length for identifiers (e.g. table names, column names,
+ * function names).  Names actually are limited to one less byte than this,
+ * because the length must include a trailing zero byte.
+ *
+ * Please note that in version 2 protocol, maximum user name length is
+ * SM_USER, which is 32.
+ */
+#define NAMEDATALEN 64
 
 /* configuration file name */
 #define POOL_CONF_FILE_NAME "pgpool.conf"
@@ -602,7 +614,9 @@ extern void ClientAuthentication(POOL_CONNECTION *frontend);
 extern void pool_getnameinfo_all(SockAddr *saddr, char *remote_host, char *remote_port);
 
 /* strlcpy.c */
-//extern size_t strlcpy(char *dst, const char *src, size_t siz);
+#ifndef HAVE_STRLCPY
+extern size_t strlcpy(char *dst, const char *src, size_t siz);
+#endif
 
 /* ps_status.c */
 extern bool update_process_title;

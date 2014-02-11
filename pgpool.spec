@@ -1,20 +1,29 @@
+# How to build RPM:
+#   rpmbuild -ba pgpool.spec --define="pgpool_version 3.3.2" --define="pg_version 93" --define="pghome /usr/pgsql-9.3"
+#
+# expecting RPM name are:
+#   pgpool-II-pg{xx}-{version}.pgdg.{arch}.rpm
+#   pgpool-II-pg{xx}-devel-{version}.pgdg.{arch}.rpm
+#   pgpool-II-pg{xx}-{version}.pgdg.src.rpm
+
 Summary:        Pgpool is a connection pooling/replication server for PostgreSQL
-Name:           pgpool-II
-Version:        3.3.0
+Name:           pgpool-II-pg%{pg_version}
+Version:        %{pgpool_version}
 Release:        1%{?dist}
 License:        BSD
 Group:          Applications/Databases
 Vendor:         Pgpool Global Development Group
 URL:            http://www.pgppol.net/
-Source0:        %{name}-%{version}.tar.gz
+Source0:        pgpool-II-%{version}.tar.gz
 Source1:        pgpool.init
 Source2:        pgpool.sysconfig
 Patch1:         pgpool.conf.sample.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires:  postgresql92-devel pam-devel
+BuildRequires:  postgresql%{pg_version}-devel pam-devel
 Obsoletes:      postgresql-pgpool
 
-%define pghome /usr/pgsql-9.2
+# original pgpool archive name
+%define archive_name pgpool-II-%{version}
 
 %description
 pgpool-II is a inherited project of pgpool (to classify from
@@ -43,25 +52,25 @@ Requires:    %{name} = %{version}
 Development headers and libraries for pgpool-II.
 
 %prep
-%setup -q -n %{name}-%{version}
+%setup -q -n %{archive_name}
 %patch1 -p0
 
 %build
 %configure --with-pgsql-includedir=%{pghome}/include/ \
            --with-pgsql-lib=%{pghome}/lib \
            --disable-static --with-pam --disable-rpath \
-           --sysconfdir=%{_sysconfdir}/%{name}/
+           --sysconfdir=%{_sysconfdir}/pgpool-II/
 
 make %{?_smp_flags}
 
 %install
 rm -rf %{buildroot}
 make %{?_smp_flags} DESTDIR=%{buildroot} install
-install -d %{buildroot}%{_datadir}/%{name}
-install -d %{buildroot}%{_sysconfdir}/%{name}
-mv %{buildroot}/%{_sysconfdir}/%{name}/pcp.conf.sample %{buildroot}%{_sysconfdir}/%{name}/pcp.conf
-mv %{buildroot}/%{_sysconfdir}/%{name}/pgpool.conf.sample %{buildroot}%{_sysconfdir}/%{name}/pgpool.conf
-mv %{buildroot}/%{_sysconfdir}/%{name}/pool_hba.conf.sample %{buildroot}%{_sysconfdir}/%{name}/pool_hba.conf
+install -d %{buildroot}%{_datadir}/pgpool-II
+install -d %{buildroot}%{_sysconfdir}/pgpool-II
+mv %{buildroot}/%{_sysconfdir}/pgpool-II/pcp.conf.sample %{buildroot}%{_sysconfdir}/pgpool-II/pcp.conf
+mv %{buildroot}/%{_sysconfdir}/pgpool-II/pgpool.conf.sample %{buildroot}%{_sysconfdir}/pgpool-II/pgpool.conf
+mv %{buildroot}/%{_sysconfdir}/pgpool-II/pool_hba.conf.sample %{buildroot}%{_sysconfdir}/pgpool-II/pool_hba.conf
 install -d %{buildroot}%{_initrddir}
 install -m 755 %{SOURCE1} %{buildroot}%{_initrddir}/pgpool
 install -d %{buildroot}%{_sysconfdir}/sysconfig
@@ -96,7 +105,7 @@ fi
 
 %files
 %defattr(-,root,root,-)
-%dir %{_datadir}/%{name}
+%dir %{_datadir}/pgpool-II
 %doc README README.euc_jp TODO COPYING INSTALL AUTHORS ChangeLog NEWS doc/pgpool-en.html doc/pgpool-ja.html doc/pgpool.css doc/tutorial-en.html doc/tutorial-ja.html
 %{_bindir}/pgpool
 %{_bindir}/pcp_attach_node
@@ -113,23 +122,23 @@ fi
 %{_bindir}/pcp_watchdog_info
 %{_bindir}/pg_md5
 %{_mandir}/man8/pgpool*
-%{_datadir}/%{name}/insert_lock.sql
-%{_datadir}/%{name}/system_db.sql
-%{_datadir}/%{name}/pgpool.pam
+%{_datadir}/pgpool-II/insert_lock.sql
+%{_datadir}/pgpool-II/system_db.sql
+%{_datadir}/pgpool-II/pgpool.pam
 %{pghome}/share/extension/pgpool-recovery.sql
 %{pghome}/share/extension/pgpool_recovery--1.0.sql
 %{pghome}/share/extension/pgpool_recovery.control
 %{pghome}/share/extension/pgpool-regclass.sql
 %{pghome}/share/extension/pgpool_regclass--1.0.sql
 %{pghome}/share/extension/pgpool_regclass.control
-%{_sysconfdir}/%{name}/pgpool.conf.sample-master-slave
-%{_sysconfdir}/%{name}/pgpool.conf.sample-replication
-%{_sysconfdir}/%{name}/pgpool.conf.sample-stream
+%{_sysconfdir}/pgpool-II/pgpool.conf.sample-master-slave
+%{_sysconfdir}/pgpool-II/pgpool.conf.sample-replication
+%{_sysconfdir}/pgpool-II/pgpool.conf.sample-stream
 %{_libdir}/libpcp.so.*
 %{pghome}/lib/pgpool-recovery.so
 %{pghome}/lib/pgpool-regclass.so
 %{_initrddir}/pgpool
-%attr(764,root,root) %config(noreplace) %{_sysconfdir}/%{name}/*.conf
+%attr(764,root,root) %config(noreplace) %{_sysconfdir}/pgpool-II/*.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/pgpool
 
 %files devel
@@ -141,6 +150,9 @@ fi
 %{_libdir}/libpcp.so
 
 %changelog
+* Tue Nov 26 2013 Nozomi Anzai <anzai@sraoss.co.jp> 3.3.1-1
+- Improved to specify the versions of pgool-II and PostgreSQL
+
 * Mon May 13 2013 Nozomi Anzai <anzai@sraoss.co.jp> 3.3.0-1
 - Update to 3.3.0
 - Change to install pgpool-recovery, pgpool-regclass to PostgreSQL

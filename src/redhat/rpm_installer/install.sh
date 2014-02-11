@@ -9,6 +9,9 @@ DIST=pgdg
 # debug mode of this script
 SH_DEBUG=0
 
+# PostgreSQL
+PG_MAJOR_VERSION=9.3
+
 # pgpool-II
 PGPOOL_SOFTWARE_NAME=pgpool-II
 P_VERSION=3.3.0
@@ -23,10 +26,11 @@ ADMIN_DIR=/var/www/html/pgpoolAdmin
 APACHE_USER=apache
 
 # packages
+PG_VER=${PG_MAJOR_VERSION/./}
 ARCHITECTURE=$(uname -i)
 PACKAGE_FILES=(
-    $PGPOOL_SOFTWARE_NAME-$P_VERSION-$P_RELEASE.$DIST.$ARCHITECTURE.rpm
-    $ADMIN_SOFTWARE_NAME-$A_VERSION-$A_RELEASE.$DIST.noarch.rpm
+    ${PGPOOL_SOFTWARE_NAME}-pg${PG_VER}-${P_VERSION}-${P_RELEASE}.${DIST}.${ARCHITECTURE}.rpm
+    ${ADMIN_SOFTWARE_NAME}-${A_VERSION}-${A_RELEASE}.${DIST}.noarch.rpm
 )
 
 # pgpool
@@ -40,7 +44,7 @@ NODE1_HOST=""                  # This will be editted in script.
 NETMASK="255.255.255.0"        # This will be editted in script.
 
 # postgres
-PGHOME=/usr/pgsql-9.2
+PGHOME=/usr/pgsql-$PG_MAJOR_VERSION
 CONTRIB_DIR=$PGHOME/share/contrib
 PG_SUPER_USER=postgres
 PG_SUPER_USER_PASSWD=$PG_SUPER_USER
@@ -163,9 +167,9 @@ function checkEnv()
     fi
 
     # other
-    hasPackage "postgresql92-server" "PostgreSQL (postgresql92-server)"
+    hasPackage "postgresql${PG_VER}-server" "PostgreSQL (postgresql${PG_VER}-server)"
     if [ $? -ne 0 ]; then return 1; fi
-    hasPackage "postgresql92" "PostgreSQL (postgresql92)"
+    hasPackage "postgresql${PG_VER}" "PostgreSQL (postgresql${PG_VER})"
     if [ $? -ne 0 ]; then return 1; fi
     hasPackage "httpd" "Apache (httpd)"
     if [ $? -ne 0 ]; then return 1; fi
@@ -821,19 +825,23 @@ function copySbin()
 function sshWithoutPass()
 {
     local _THIS_USER=$1
+    local _REMOTE_HOST=$2
     local _HOME=`eval echo ~$_THIS_USER`
     local _SSH_DIR=$_HOME/.ssh
 
-    rm $_SSH_DIR/id_rsa* >/dev/null 2>&1
-    su - $_THIS_USER -c "ssh-keygen -q -t rsa -P '' -f $_SSH_DIR/id_rsa << EOF
+    if [ ! -e $_SSH_DIR/id_rsa ]; then
+        rm $_SSH_DIR/id_rsa* >/dev/null 2>&1
+        su - $_THIS_USER -c "ssh-keygen -q -t rsa -P '' -f $_SSH_DIR/id_rsa << EOF
 
 EOF"
+    fi
+
     if [ $? -ne 0 ]; then return 1; fi
 
-    ssh-copy-id -i $_SSH_DIR/id_rsa.pub $PG_SUPER_USER@$DEST_HOST > /dev/null 2>&1
+    ssh-copy-id -i $_SSH_DIR/id_rsa.pub $PG_SUPER_USER@$_REMOTE_HOST > /dev/null 2>&1
     if [ $? -ne 0 ]; then return 1; fi
 
-    su - $_THIS_USER -c "ssh -o StrictHostKeyChecking=no $PG_SUPER_USER@$DEST_HOST exit" > /dev/null 2>&1
+    su - $_THIS_USER -c "ssh -o StrictHostKeyChecking=no $PG_SUPER_USER@$_REMOTE_HOST exit" > /dev/null 2>&1
     if [ $? -ne 0 ]; then return 1; fi
 
     return 0
@@ -923,7 +931,7 @@ function doQueries()
 # 1. check environment
 echo -n "check for installation ..."
 
-rpm -qa | grep -E "${PGPOOL_SOFTWARE_NAME}|postgresql92|httpd|php|php-mbstring|php-pgsql" > $TEMP_FILE_RPM
+rpm -qa | grep -E "${PGPOOL_SOFTWARE_NAME}|postgresql${PG_VER}|httpd|php|php-mbstring|php-pgsql" > $TEMP_FILE_RPM
 checkEnv
 if [ $? -ne 0 ]; then
     rm -f $TEMP_FILE_RPM
@@ -1044,7 +1052,7 @@ echo
 echo "* Setup password-less access over ssh"
 echo
 echo "Try ssh: $PG_SUPER_USER@$THIS_HOST (this host) -> $PG_SUPER_USER@$DEST_HOST (another host)"
-sshWithoutPass $PG_SUPER_USER
+sshWithoutPass $PG_SUPER_USER $DEST_HOST
 if [ $? -ne 0 ]; then
     echo "Failed to ssh $PG_SUPER_USER@$DEST_HOST (another host)."
     exit 1
@@ -1059,9 +1067,24 @@ if [ $? -ne 0 ]; then
     echo "Failed to make apache loginable. For configuring apache user, httpd must be stopped."
     exit 1
 fi
-sshWithoutPass $APACHE_USER
+sshWithoutPass $APACHE_USER $DEST_HOST
 if [ $? -ne 0 ]; then
     echo "Failed to ssh $PG_SUPER_USER@$DEST_HOST."
+    exit 1
+else
+    echo "OK."
+fi
+
+echo
+echo "Try ssh: $APACHE_USER@$THIS_HOST (this host) -> $PG_SUPER_USER@$THIS_HOST (this host)"
+makeApacheLoginable
+if [ $? -ne 0 ]; then
+    echo "Failed to make apache loginable. For configuring apache user, httpd must be stopped."
+    exit 1
+fi
+sshWithoutPass $APACHE_USER $THIS_HOST
+if [ $? -ne 0 ]; then
+    echo "Failed to ssh $PG_SUPER_USER@$THIS_HOST."
     exit 1
 else
     echo "OK."

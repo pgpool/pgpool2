@@ -232,6 +232,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].desc, "# of children initially pre-forked", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	strncpy(status[i].name, "listen_backlog_multiplier", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->listen_backlog_multiplier);
+	strncpy(status[i].desc, "determines the size of the queue for pending connections", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	strncpy(status[i].name, "max_pool", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->max_pool);
 	strncpy(status[i].desc, "max # of connection pool per child", POOLCONFIG_MAXDESCLEN);
@@ -270,6 +275,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].name, "print_timestamp", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->print_timestamp);
 	strncpy(status[i].desc, "if true print time stamp to each log line", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "print_user", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->print_user);
+	strncpy(status[i].desc, "if true print user name to each log line", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "log_connections", POOLCONFIG_MAXNAMELEN);
@@ -581,6 +591,21 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].name, "relcache_expire", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%ld", pool_config->relcache_expire);
 	strncpy(status[i].desc, "relation cache expiration time in seconds", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "relcache_size", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->relcache_size);
+	strncpy(status[i].desc, "number of relation cache entry", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "check_temp_table", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->check_temp_table);
+	strncpy(status[i].desc, "enable temporary table check", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "check_unlogged_table", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->check_unlogged_table);
+	strncpy(status[i].desc, "enable unlogged table check", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "parallel_mode", POOLCONFIG_MAXNAMELEN);

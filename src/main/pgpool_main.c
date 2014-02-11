@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -685,7 +685,8 @@ static int create_inet_domain_socket(const char *hostname, const int port)
 			errdetail("bind on host:\"%s\" server:\"%s\" failed with error \"%s\"",host, serv,strerror(errno))));
 	}
 
-	backlog = pool_config->num_init_children * 2;
+    backlog = pool_config->num_init_children * pool_config->listen_backlog_multiplier;
+
 	if (backlog > PGPOOLMAXLITSENQUEUELENGTH)
 		backlog = PGPOOLMAXLITSENQUEUELENGTH;
 
@@ -2045,7 +2046,14 @@ static int find_primary_node(void)
 			if (!s)
 			{
 				pool_error("find_primary_node: make_persistent_connection failed");
-				return -1;
+                
+                /*
+                 * It is possible that a node is down even if
+                 * VALID_BACKEND tells it's valid.  This could happen
+                 * before health checking detects the failure.
+                 * Thus we should continue to look for primary node.
+                 */
+                continue;
 			}
 			con = s->con;
 			status = do_query(con, "SELECT pg_is_in_recovery()",
@@ -2075,7 +2083,7 @@ static int find_primary_node(void)
         	edata = CopyErrorData();
         	FlushErrorState();
         	printf("%s",edata->message);
-        	return -1;
+            continue;
         }
         PG_END_TRY();
 

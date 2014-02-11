@@ -36,7 +36,10 @@ socket_dir = '/tmp'
                                    # The Debian package defaults to
                                    # /var/run/postgresql
                                    # (change requires restart)
-
+listen_backlog_multiplier = 2
+                                   # Set the backlog parameter of listen(2) to
+								   # num_init_children * listen_backlog_multiplier.
+                                   # (change requires restart)
 
 # - pgpool Communication Manager Connection Settings -
 
@@ -145,7 +148,9 @@ log_destination = 'stderr'
 print_timestamp = on
                                    # Print timestamp on each line
                                    # (change requires restart)
-
+print_user = off
+                                   # Print user name on each line
+                                   # (change requires restart)
 log_connections = off
                                    # Log connections
 log_hostname = off
@@ -606,6 +611,13 @@ check_temp_table = on
                                    # and you want to save access to primary/master, you could turn this off.
                                    # Default is on.
 
+check_unlogged_table = on
+                                   # If on, enable unlogged table check in SELECT statements.
+                                   # This initiates queries against system catalog of primary/master
+                                   # thus increases load of master.
+                                   # If you are absolutely sure that your system never uses unlogged tables
+                                   # and you want to save access to primary/master, you could turn this off.
+                                   # Default is on.
 
 #------------------------------------------------------------------------------
 # ON MEMORY QUERY MEMORY CACHE

@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -75,6 +75,7 @@ typedef struct {
 	char *pcp_socket_dir;		/* PCP socket directory */
 	int pcp_timeout;			/* PCP timeout for an idle client */
     int	num_init_children;	/* # of children initially pre-forked */
+    int	listen_backlog_multiplier; /* determines the size of the connection queue */
     int	child_life_time;	/* if idle for this seconds, child exits */
     int	connection_life_time;	/* if idle for this seconds, connection closes */
     int	child_max_connections;	/* if max_connections received, child exits */
@@ -112,6 +113,7 @@ typedef struct {
 	char **white_function_list;		/* list of functions with no side effects */
 	char **black_function_list;		/* list of functions with side effects */
 	int print_timestamp;		/* if non 0, print time stamp to each log line */
+	int print_user;		/* if non 0, print user name to each log line */
 	int master_slave_mode;		/* if non 0, operate in master/slave mode */
 	char *master_slave_sub_mode;		/* either "slony" or "stream" */
 	unsigned long long int delay_threshold;		/* If the standby server delays more than delay_threshold,
@@ -196,6 +198,7 @@ typedef struct {
 	time_t relcache_expire;		/* relation cache life time in seconds */
 	int relcache_size;		/* number of relation cache life entry */
 	int check_temp_table;		/* enable temporary table check */
+	int check_unlogged_table;		/* enable unlogged table check */
 
 	/* followings are for regex support and do not exist in the configuration file */
 	RegPattern *lists_patterns; /* Precompiled regex patterns for black/white lists */

@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -543,8 +543,10 @@ char *get_hba_file_name(void)
 {
 	return hba_file;
 }
-/* Call back function to unlink the file */
-/* Call back function to unlink the file */
+
+/* 
+ * Call back function to unlink the file
+ */
 static void FileUnlink(int code, Datum path)
 {
 	char* filePath = (char*)path; 

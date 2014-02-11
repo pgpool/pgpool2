@@ -491,7 +491,7 @@ char *yytext;
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1888,6 +1888,7 @@ int pool_init_config(void)
 	pool_config->backend_socket_dir = NULL;
 	pool_config->pcp_timeout = 10;
 	pool_config->num_init_children = 32;
+	pool_config->listen_backlog_multiplier = 2;
 	pool_config->max_pool = 4;
 	pool_config->child_life_time = 300;
 	pool_config->client_idle_limit = 0;
@@ -1919,6 +1920,7 @@ int pool_init_config(void)
 	pool_config->black_function_list = default_black_function_list;
 	pool_config->num_black_function_list = sizeof(default_black_function_list)/sizeof(char *);
 	pool_config->print_timestamp = 1;
+	pool_config->print_user = 0;
 	pool_config->master_slave_mode = 0;
 	pool_config->master_slave_sub_mode = "slony";
 	pool_config->delay_threshold = 0;
@@ -1964,6 +1966,7 @@ int pool_init_config(void)
 	pool_config->relcache_expire = 0;
 	pool_config->relcache_size = 256;
 	pool_config->check_temp_table = 1;
+	pool_config->check_unlogged_table = 1;
 	pool_config->lists_patterns = NULL;
 	pool_config->pattc = 0;
 	pool_config->current_pattern_size = 0;
@@ -2359,6 +2362,18 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->num_init_children = v;
+		}
+		else if (!strcmp(key, "listen_backlog_multiplier") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			int v = atoi(yytext);
+
+			if (token != POOL_INTEGER || v < 1)
+			{
+				pool_error("pool_config: %s must be higher than 1 numeric value", key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->listen_backlog_multiplier = v;
 		}
 		else if (!strcmp(key, "child_life_time") &&
 				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
@@ -2781,6 +2796,18 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->print_timestamp = v;
+		}
+		else if (!strcmp(key, "print_user") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			int v = eval_logical(yytext);
+
+			if (v < 0)
+			{
+				pool_error("pool_config: invalid value %s for %s", yytext, key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->print_user = v;
 		}
 
 		else if (!strcmp(key, "master_slave_mode") && CHECK_CONTEXT(INIT_CONFIG, context))
@@ -4324,6 +4351,18 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->check_temp_table = v;
+		}
+
+		else if (!strcmp(key, "check_unlogged_table") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			int v = eval_logical(yytext);
+
+			if (v < 0)
+			{
+				pool_error("pool_config: invalid value %s for %s", yytext, key);
+				return(-1);
+			}
+			pool_config->check_unlogged_table = v;
 		}
 
         else if (!strcmp(key, "memory_cache_enabled") &&
