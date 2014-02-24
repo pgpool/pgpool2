@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -178,6 +178,14 @@ void pool_clear_node_to_be_sent(POOL_QUERY_CONTEXT *query_context)
 void pool_setall_node_to_be_sent(POOL_QUERY_CONTEXT *query_context)
 {
 	int i;
+	POOL_SESSION_CONTEXT *sc;
+
+	sc = pool_get_session_context();
+	if (!sc)
+	{
+		pool_error("pool_setall_node_to_be_sent: no session context");
+		return;
+	}
 
 	if (!query_context)
 	{
@@ -189,7 +197,20 @@ void pool_setall_node_to_be_sent(POOL_QUERY_CONTEXT *query_context)
 	{
 		if (private_backend_status[i] == CON_UP ||
 			(private_backend_status[i] == CON_CONNECT_WAIT))
+		{
+			/*
+			 * In streaming replication mode, if the node is not
+			 * primary node nor load balance node, there's no point to
+			 * send query.
+			 */
+			if (pool_config->master_slave_mode &&
+				!strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP) &&
+				i != PRIMARY_NODE_ID && i != sc->load_balance_node_id)
+			{
+				continue;
+			}
 			query_context->where_to_send[i] = true;
+		}
 	}
 	return;
 }
