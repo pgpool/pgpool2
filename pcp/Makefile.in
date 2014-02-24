@@ -84,7 +84,8 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
 	"$(DESTDIR)$(includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libpcp_la_LIBADD =
-am_libpcp_la_OBJECTS = pcp.lo pcp_stream.lo pcp_error.lo md5.lo
+am_libpcp_la_OBJECTS = pcp.lo pcp_stream.lo pcp_error.lo md5.lo \
+	strlcpy.lo
 libpcp_la_OBJECTS = $(am_libpcp_la_OBJECTS)
 PROGRAMS = $(bin_PROGRAMS)
 am_pcp_attach_node_OBJECTS = pcp_attach_node.$(OBJEXT) \
@@ -284,7 +285,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -D_GNU_SOURCE -I .. -I @PGSQL_INCLUDE_DIR@
 lib_LTLIBRARIES = libpcp.la
-libpcp_la_SOURCES = pcp.h ../pool_type.h md5.h pcp.c pcp_stream.h pcp_stream.c pcp_error.c md5.c
+libpcp_la_SOURCES = pcp.h ../pool_type.h md5.h pcp.c pcp_stream.h pcp_stream.c pcp_error.c md5.c strlcpy.c
 libpcp_la_LIBS = 
 include_HEADERS = pcp.h libpcp_ext.h ../pool_type.h ../pool_process_reporting.h
 pcp_stop_pgpool_SOURCES = pcp_stop_pgpool.c pcp.h ../getopt_long.c ../getopt_long.h
@@ -476,6 +477,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_stop_pgpool.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_stream.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_systemdb_info.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strlcpy.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
