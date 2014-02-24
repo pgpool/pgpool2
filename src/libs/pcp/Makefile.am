@@ -1,7 +1,8 @@
 AM_CPPFLAGS = -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
 
 lib_LTLIBRARIES = libpcp.la
-libpcp_la_SOURCES = pcp.c pcp_stream.c pcp_error.c $(top_srcdir)/src/auth/md5.c
+libpcp_la_SOURCES = pcp.c pcp_stream.c pcp_error.c $(top_srcdir)/src/auth/md5.c \
+					$(top_srcdir)/src/utils/strlcpy.c
 
 include_HEADERS = $(top_srcdir)/src/include/pcp/pcp.h \
 					$(top_srcdir)/src/include/pcp/libpcp_ext.h \
