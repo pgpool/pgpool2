@@ -717,7 +717,7 @@ pcp_process_info(int pid, int *array_size)
 			
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					strcpy(process_info[offset].connection_info->database, index);
+					strlcpy(process_info[offset].connection_info->database, index, SM_DATABASE);
 			
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
@@ -1342,15 +1342,15 @@ pcp_pool_status(int *array_size)
 			{
 				index = (char *) memchr(buf, '\0', rsize) + 1;
 				if (index != NULL)
-					strcpy(status[offset].name, index);
+					strlcpy(status[offset].name, index, POOLCONFIG_MAXNAMELEN+1);
 
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					strcpy(status[offset].value, index);
+					strlcpy(status[offset].value, index, POOLCONFIG_MAXVALLEN+1);
 
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					strcpy(status[offset].desc, index);
+					strlcpy(status[offset].desc, index, POOLCONFIG_MAXDESCLEN+1);
 
 				offset++;
 			}
@@ -1631,7 +1631,7 @@ pcp_watchdog_info(int nid)
 
 			index = (char *) memchr(buf, '\0', rsize) + 1;
 			if (index != NULL)
-				strcpy(watchdog_info->hostname, index);
+				strlcpy(watchdog_info->hostname, index, sizeof(watchdog_info->hostname));
 
 			index = (char *) memchr(index, '\0', rsize) + 1;
 			if (index != NULL)
