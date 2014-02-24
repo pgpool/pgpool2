@@ -74,6 +74,7 @@ wd_IP_up(void)
 			{
 				if (!wd_is_unused_ip(pool_config->delegate_IP))
 					break;
+				pool_debug("wd_IP_up: waiting... count: %d", i+1);
 			}
 
 			if (i >= WD_TRY_PING_AT_IPUP)
@@ -83,10 +84,7 @@ wd_IP_up(void)
 		if (rtn == WD_OK)
 			pool_log("wd_IP_up: ifconfig up succeeded");
 		else
-		{
-			WD_List->delegate_ip_flag = 0;
 			pool_error("wd_IP_up: ifconfig up failed");
-		}
 	}
 	else
 	{
@@ -233,16 +231,24 @@ exec_ifconfig(char * path,char * command)
 			{
 				if (errno == EINTR)
 					continue;
+
+				pool_debug("exec_ifconfig: wait() failed at errno: %d ", errno);
 				return WD_NG;
 			}
 
 			if (WIFEXITED(status) == 0 || WEXITSTATUS(status) != 0)
+			{
+				pool_debug("exec_ifconfig: '%s' failed. exit status: %d",
+				           command, WEXITSTATUS(status));
 				return WD_NG;
+			}
 			else
 				break;
 		}
 		close(pfd[0]);
 	}
+
+	pool_debug("exec_ifconfig: '%s' succeeded", command);
 	return WD_OK;
 }
 
