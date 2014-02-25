@@ -1054,6 +1054,9 @@ free_systemdb_info(SystemDBInfo * si)
 {
 	int i, j;
 
+	if (si == NULL)
+		return;
+
 	free(si->hostname);
 	free(si->user);
 	free(si->password);
