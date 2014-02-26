@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2010	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -58,7 +58,10 @@ pcp_open(int fd)
     /* initialize write buffer */
     pc->wbuf = malloc(WRITEBUFSZ);
     if (pc->wbuf == NULL)
-        return NULL;
+	{
+		free(pc);
+		return NULL;
+	}
     pc->wbufsz = WRITEBUFSZ;
     pc->wbufpo = 0;
 
@@ -67,6 +70,8 @@ pcp_open(int fd)
     if (pc->hp == NULL)
 	{
 		errorcode = NOMEMERR;
+		free(pc->wbuf);
+		free(pc);
         return NULL;
 	}
     pc->bufsz = READBUFSZ;
