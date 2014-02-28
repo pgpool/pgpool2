@@ -3220,7 +3220,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
-			pool_config->debug_level = v;
+			pool_config->debug_level |= v;
 		}
 	}
 
