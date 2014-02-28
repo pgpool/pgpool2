@@ -186,18 +186,13 @@ int main(int argc, char **argv)
 	pool_init_config();
 
 	/*
-	 * Override debug level
+	 * Init debug level with -d option value
 	 */
 	pool_config->debug_level = debug_level;
 
 	pool_get_config(conf_file, INIT_CONFIG);
 
 	/*
-	 * Override debug level
-	 */
-	if (pool_config->debug_level == 0)
-		pool_config->debug_level = debug_level;
-	/* 
 	 * TODO do it some better way, But till the time we decide
 	 * which min_* gucs we need to maintain lets do it this way
 	 */
