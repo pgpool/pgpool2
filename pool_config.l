@@ -151,8 +151,8 @@ int pool_init_config(void)
         pool_config->syslog_facility = LOG_LOCAL0;
         pool_config->syslog_ident = "pgpool";
 	pool_config->pid_file_name = DEFAULT_PID_FILE_NAME;
- 	pool_config->log_statement = 0;
- 	pool_config->log_per_node_statement = 0;
+	pool_config->log_statement = 0;
+	pool_config->log_per_node_statement = 0;
 	pool_config->log_connections = 0;
 	pool_config->log_hostname = 0;
 	pool_config->enable_pool_hba = 0;
@@ -670,7 +670,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			pool_config->pid_file_name = str;
 		}
-       	else if (!strcmp(key, "log_connections") &&
+		else if (!strcmp(key, "log_connections") &&
 				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			int v = eval_logical(yytext);
@@ -683,7 +683,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			pool_config->log_connections = v;
 		}
-       	else if (!strcmp(key, "log_hostname") &&
+		else if (!strcmp(key, "log_hostname") &&
 				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			int v = eval_logical(yytext);
@@ -1864,20 +1864,20 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 	fclose(fd);
 
-    if (log_destination_changed)
-    {
-        // log_destination has changed, we need to open syslog or close it
+	if (log_destination_changed)
+	{
+		/* log_destination has changed, we need to open syslog or close it */
 		if (!strcmp(pool_config->log_destination, "stderr"))
-        {
-	        closelog();
-    	   	pool_config->logsyslog = 0;
-        }
-        else
-        {
-    	   	openlog(pool_config->syslog_ident, LOG_PID|LOG_NDELAY|LOG_NOWAIT, pool_config->syslog_facility);
-    	   	pool_config->logsyslog = 1;
-        }
-    }
+		{
+			closelog();
+			pool_config->logsyslog = 0;
+		}
+		else
+		{
+			openlog(pool_config->syslog_ident, LOG_PID|LOG_NDELAY|LOG_NOWAIT, pool_config->syslog_facility);
+			pool_config->logsyslog = 1;
+		}
+	}
 
 	pool_config->backend_desc->num_backends = 0;
 	total_weight = 0.0;
@@ -1933,6 +1933,13 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			pool_debug("backend %d weight: %f", i, BACKEND_INFO(i).backend_weight);
 			pool_debug("backend %d flag: %04x", i, BACKEND_INFO(i).flag);
 		}
+	}
+
+	/* initialize system_db_hostname with a default socket path if empty */
+	if (*pool_config->system_db_hostname == '\0')
+	{
+		pool_debug("pool_config: empty system_db_hostname, use PostgreSQL's default unix socket path (%s)", DEFAULT_SOCKET_DIR);
+		strlcpy(pool_config->system_db_hostname, DEFAULT_SOCKET_DIR, MAX_DB_HOST_NAMELEN);
 	}
 
 	if (pool_config->parallel_mode || pool_config->enable_query_cache)
