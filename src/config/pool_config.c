@@ -2349,7 +2349,6 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			pool_config->log_connections = v;
 		}
-       	
 		else if (!strcmp(key, "log_hostname") &&
 				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
@@ -4103,7 +4102,8 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
-			pool_config->debug_level = v;
+			/* Consider -d option value stored in pool_config already */
+			pool_config->debug_level |= v;
 		}
 
 		else if (!strcmp(key, "relcache_expire") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
@@ -4387,20 +4387,20 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 	fclose(fd);
 
-    if (log_destination_changed)
-    {
-        /* log_destination has changed, we need to open syslog or close it */
+	if (log_destination_changed)
+	{
+		/* log_destination has changed, we need to open syslog or close it */
 		if (!strcmp(pool_config->log_destination, "stderr"))
-        {
+		{
 			closelog();
 			pool_config->logsyslog = 0;
-        }
-        else
-        {
+		}
+		else
+		{
 			openlog(pool_config->syslog_ident, LOG_PID|LOG_NDELAY|LOG_NOWAIT, pool_config->syslog_facility);
 			pool_config->logsyslog = 1;
-        }
-    }
+		}
+	}
 
 	pool_config->backend_desc->num_backends = 0;
 	total_weight = 0.0;

@@ -323,7 +323,7 @@ int main(int argc, char **argv)
 		exit(1);
 
 	/*
-	 * Override debug level
+	 * Init debug level with -d option value
 	 */
 	pool_config->debug_level = debug_level;
 
@@ -342,12 +342,6 @@ int main(int argc, char **argv)
 		   instead of stdout now that pool_get_config() is done */
 		pool_config->logsyslog = 1;
 	}
-
-	/*
-	 * Override debug level
-	 */
-	if (pool_config->debug_level == 0)
-		pool_config->debug_level = debug_level;
 
 	if (pool_config->enable_pool_hba)
 		load_hba(hba_file);
