@@ -1854,9 +1854,10 @@ pgpool-II. The System DB's configuration is done in
 <dl>
   <dt>system_db_hostname</dt>
   <dd>
-      <p>The hostname where the System DB is. Specifying the
-      empty string ('') means the System DB is on the same host as
-      pgpool-II, and will be accessed via a UNIX domain socket.</p>
+      <p>The hostname where the System DB exists. When this starts
+      with "/", this is regarded as a directory name containing socket files,
+      and UNIX domain socket is used to access instead of TCP/IP.
+      When this is empty, <code>"/tmp"</code> is used.</p>
   </dd>
 
   <dt>system_db_port</dt>
