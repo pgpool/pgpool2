@@ -1844,7 +1844,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
-			pool_config->debug_level = v;
+			pool_config->debug_level |= v;
 		}
 
 		else if (!strcmp(key, "relcache_expire") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
