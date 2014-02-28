@@ -1664,12 +1664,8 @@ master_slave をfalseにし、parallel_mode をtrueにします。
 <dl>
 <dt>system_db_hostname</dt>
 <dd>
-<p>
-システムDBが動いているホスト名です。
-"/"で始まる文字列を指定するとソケットファイルが存在するディレクトリ名とみなされ、
-TCP/IP ではなく UNIX ドメインソケットが使用されます。
-空文字(<code>''</code>)を指定すると、<code>/tmp</code>が使用されます。
-</p>
+    <p>システムDBが動いているホスト名です。空文字を指定すると、UNIXドメインソケットで接続します。
+    このパラメータを変更した時には pgpool-II を再起動してください。</p>
 </dd>
 
 <dt>system_db_port</dt>
