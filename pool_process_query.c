@@ -1127,6 +1127,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 				if (status < 0)
 				{
 					pool_error("SimpleForwardToFrontend: error while reading message length");
+					free(p1);
 					return POOL_END;
 				}
 
@@ -1152,6 +1153,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	if (pool_write_and_flush(frontend, p1, len1) < 0)
 	{
 		pool_error("SimpleForwardToFrontend: pool_write_and_flush failed");
+		free(p1);
 		return POOL_END;
 	}
 
