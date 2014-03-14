@@ -68,6 +68,7 @@ typedef struct {
 	bool is_parse_error;		/* if true, we could not parse the original
 								 * query and parsed node is actually a dummy query.
 								 */
+	int num_original_params; /* number of parameters in original query */
 } POOL_QUERY_CONTEXT;
 
 extern POOL_QUERY_CONTEXT *pool_init_query_context(void);
