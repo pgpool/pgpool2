@@ -2227,6 +2227,109 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	return POOL_CONTINUE;
 }
 
+POOL_STATUS ParameterDescription(POOL_CONNECTION *frontend,
+								 POOL_CONNECTION_POOL *backend)
+{
+	int len, len1 = 0;
+	char *p = NULL;
+	char *p1 = NULL;
+	int status;
+	int sendlen;
+	int i;
+
+	POOL_SESSION_CONTEXT *session_context;
+	int num_params, send_num_params, num_dmy;
+	char kind = 't';
+
+	session_context = pool_get_session_context();
+	if (!session_context)
+	{
+		pool_error("ParameterDescription: cannot get session context");
+		return POOL_END;
+	}
+
+	/* only in replication mode and rewritten query */
+	if (!REPLICATION || !session_context->query_context->rewritten_query)
+		return SimpleForwardToFrontend('t', frontend, backend);
+
+	/* get number of parameters in original query */
+	num_params = session_context->query_context->num_original_params;
+
+	status = pool_read(MASTER(backend), &len, sizeof(len));
+	if (status < 0)
+	{
+		pool_error("ParameterDescription: error while reading message length");
+		return POOL_END;
+	}
+
+	len = ntohl(len);
+	len -= sizeof(int32);
+	len1 = len;
+
+	/* number of parameters in rewritten query is just discarded */
+	status = pool_read(MASTER(backend), &num_dmy, sizeof(int16));
+	len -= sizeof(int16);
+
+	p = pool_read2(MASTER(backend), len);
+	if (p == NULL)
+		return POOL_END;
+
+	p1 = malloc(len);
+	if (p1 == NULL)
+	{
+		pool_error("ParameterDescription: malloc failed");
+		return POOL_ERROR;
+	}
+	memcpy(p1, p, len);
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
+		{
+			status = pool_read(CONNECTION(backend, i), &len, sizeof(len));
+			if (status < 0)
+			{
+				pool_error("ParameterDescription: error while reading message length");
+				return POOL_END;
+			}
+
+			len = ntohl(len);
+			len -= sizeof(int32);
+
+			p = pool_read2(CONNECTION(backend, i), len);
+			if (p == NULL)
+				return POOL_END;
+
+			if (len != len1)
+			{
+				pool_debug("ParameterDescription: length does not match between backends master(%d) %d th backend(%d) kind:(%c)",
+						   len, i, len1, kind);
+			}
+		}
+	}
+
+	pool_write(frontend, &kind, 1);
+
+	/* send back OIDs of parameters in original query and left are discarded */
+	len = sizeof(int16) + num_params * sizeof(int32);
+	sendlen = htonl(len + sizeof(int32));
+	pool_write(frontend, &sendlen, sizeof(int32));
+
+	send_num_params = htons(num_params);
+	pool_write(frontend, &send_num_params, sizeof(int16));
+
+	if (pool_write_and_flush(frontend, p1, num_params * sizeof(int32)) < 0)
+	{
+		pool_error("ParameterDescription: pool_write_and_flush failed");
+		free(p1);
+		return POOL_END;
+	}
+
+	free(p1);
+
+	return POOL_CONTINUE;
+}
+
 POOL_STATUS ErrorResponse3(POOL_CONNECTION *frontend,
 						   POOL_CONNECTION_POOL *backend)
 {
@@ -2674,6 +2777,10 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 				pool_set_command_success();
 				if (pool_is_doing_extended_query_message())
 					pool_unset_query_in_progress();
+				break;
+
+			case 't':	/* ParameterDescription */
+				status = ParameterDescription(frontend, backend);
 				break;
 
 			case 'I':	/* EmptyQueryResponse */

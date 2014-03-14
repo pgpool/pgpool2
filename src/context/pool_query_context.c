@@ -107,6 +107,7 @@ void pool_start_query(POOL_QUERY_CONTEXT *query_context, char *query, int len, N
 		query_context->parse_tree = node;
 		query_context->virtual_master_node_id = my_master_node_id;
 		query_context->is_cache_safe = false;
+		query_context->num_original_params = -1;
 		if (pool_config->memory_cache_enabled)
 			query_context->temp_cache = pool_create_temp_query_cache(query);
 		pool_set_query_in_progress();
