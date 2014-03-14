@@ -96,6 +96,7 @@ void pool_start_query(POOL_QUERY_CONTEXT *query_context, char *query, Node *node
 		query_context->rewritten_query = NULL;
 		query_context->parse_tree = node;
 		query_context->virtual_master_node_id = REAL_MASTER_NODE_ID;
+		query_context->num_original_params = -1;
 		pool_set_query_in_progress();
 		session_context->query_context = query_context;
 	}
