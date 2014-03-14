@@ -48,10 +48,10 @@ typedef struct {
 	A_Const					*ts_const;
 	POOL_CONNECTION_POOL	*backend;
 	char					*relname;
-	int						 num_params;	/* num of original params (for Parse) */
-	bool		 			 rewrite_to_params;
-	bool		 			 rewrite;		/* has rewritten? */
-	List					*params;		/* list of additional params */
+	int						 num_params;		/* num of original params (for Parse) */
+	bool		 			 rewrite_to_params;	/* true if rewritten to param insread of const */
+	bool		 			 rewrite;			/* has rewritten? */
+	List					*params;			/* list of additional params */
 } TSRewriteContext;
 
 static void *ts_register_func(POOL_SELECT_RESULT *res);
@@ -174,7 +174,6 @@ relcache_lookup(TSRewriteContext *ctx)
 
 	return (TSRel *) pool_search_relcache(ts_relcache, ctx->backend, ctx->relname);
 }
-
 
 static Node *
 makeTsExpr(TSRewriteContext *ctx)
@@ -688,6 +687,10 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 	}
 	else
 		;
+
+	/* save number of parameters in original query */
+	if (message)
+		message->query_context->num_original_params = ctx.num_params;
 
 	if (!rewrite)
 		return NULL;
