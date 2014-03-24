@@ -5165,6 +5165,11 @@ TABLE ... ON COMMIT DROP</code> inside the transaction block.</p>
 
 <p>Here are the queries which cannot be processed by pgpool-II</p>
 
+<h3 id="ng_prepare">PREPARE (for parallel mode)</h3>
+<p>
+Prepared statements created by <code>PREPARE</code> are not supported.
+</p>
+
 <h3 id="ng_insert">INSERT (for parallel mode)</h3>
 
 <p>You cannot use <code>DEFAULT</code> for the
