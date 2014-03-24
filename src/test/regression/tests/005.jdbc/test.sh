@@ -43,7 +43,10 @@ EOF
 	wait_for_pgpool_startup
 
 	sh run.sh > result.txt 2>&1
-	cmp result.txt expected.txt || (./shutdown all;exit 1)
+	cmp result.txt expected.txt
+	if [ $? != 0 ];then
+	    ./shutdownall; exit 1;
+	fi
 
 	./shutdownall
 
