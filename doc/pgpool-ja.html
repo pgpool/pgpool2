@@ -3401,6 +3401,142 @@ avgはsum/countとして処理されます。</p>
 
 <h1>リリースノート<a name="release"></a></h1>
 
+<h2><a name="release3.0.15"></a>3.0.15 (umiyameboshi) 2014/03/24</h2>
+<h3>概要</h3>
+<p>
+このバージョンは 3.0.14 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    doc: num_init_children の項に「listen キュー」の説明とその「バックログ」を増やす方法について追記しました。
+	(Tatsuo Ishii)
+</li>
+
+<li>
+    UNLOGGED テーブルを検出する処理のパフォーマンスが悪かったのを修正しました。
+	(Tatsuo Ishii)
+    <p>
+    この問題は <a href="http://www.sraoss.jp/pipermail/pgpool-hackers/2014-January/000435.html">[pgpool-hackers: 435]</a>
+	<a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-December/002354.html">[pgpool-general:2325]</a> で指摘されました。
+    </p>
+</li>
+
+<li>
+    プライマリノードの検出ロジックを修正しました。(Tatsuo Ishii)
+    <p>
+    プライマリノードが検出されないことがありました。例えば、node 0 がプライマリ、node 1
+	がスタンバイのときに、node 0 が落ちたとします。ヘルスチェックがそれを検出しますが、
+	内部のステータスがまだ更新されていない場合 node 0 には問題がないよう見えるため node 0
+	への接続が試みられます。実際にはこの接続は失敗するため、node 1
+	が新プライマリであることを検出する前に処理が終了していました。
+    </p>
+    <p>
+    この問題は <a href="http://www.sraoss.jp/pipermail/pgpool-general/2014-January/002442.html">[pgpool-general: 2409]</a> にて報告されました。
+    </p>
+</li>
+
+<li>
+    raw モードで自動コミットが off で JDBC を使用したときに、DML
+	が失敗するバグを修正しました。(Tatsuo Ishii)
+    <p>
+    この問題は <a href="http://www.pgpool.net/mantisbt/view.php?id=92">bug #92</a> で報告されました。
+    </p>
+</li>
+
+<li>
+    ストリーミングレプリケーションモードで無関係なノードにはクエリを送信しないように修正しました。
+	(Tatsuo Ishii)
+    <p>
+    pgpool-II は BEGIN, END, SET などのクエリを全ての DB ノードに送っています。
+	しかし、ストリーミングレプリケーションではプライマリノードと高々１台のスタンバイノードにしか送る必要がありません。
+	（もしプライマリノードがロードバランスノードとして選択されている場合には１台だけで充分です。）
+    </p>
+    <p>
+    詳細は <a href="http://www.sraoss.jp/pipermail/pgpool-hackers/2014-February/000464.html">
+	[pgpool-hackers: 464]</a> を参照してください。
+    </p>
+</li>
+
+<li>
+    バッファオーバランとメモリリークの可能性を修正しました。(Tatsuo Ishii)
+    <p>
+    Coverity 1111465, 1111482 の報告によります。
+    </p>
+</li>
+
+<li>
+    NULL ポインタの開放を修正しました。(Tatsuo Ishii)
+    <p>
+    Coverity 1111384 の報告によります。
+    </p>
+</li>
+
+<li>
+    メモリリークを修正しました。(Tatsuo Ishii)
+    <p>
+    Coverity 1111446 の報告によります。
+    </p>
+</li>
+
+<li>
+    パラレルモードで system_db_hostname
+	が空欄の場合に発生するセグメンテーションフォルトを修正しました。
+	(Yugo Nagata)
+</li>
+
+<li>
+    -d オプションで起動した場合に pgpool.conf
+	の処理中のデバッグメッセージを出力するように修正しました
+	(Yugo Nagata)
+    <p>
+    以前は -d オプション使用時でも出力されていないデバッグメッセージがありました。
+    </p>
+</li>
+
+<li>
+    レプリケーションモードで JDBC 使用時に now()
+	を含む準備文で発生する例外を修正しました。(Yugo Nagata)
+    <p>
+    JDBC で準備文を PrepareThreshold 回以上実行した場合には、文に名前が付けられ Parse
+	の後に Describe メッセージが発行されます。このとき、pgpool は now()
+	をパラメータに書き換えるため、元のクエリには無かった新しいパラメータが追加されます。
+	この場合、フロントエンドに返されるParameterDscription メッセージ（Describe
+	の返答）は、元のクエリが持つパラメータと同じ数の OID を含むべきです。そうしないと、JDBC
+	はArrayIndexoutOfBoundsException 例外を発生させてしまいます。
+    </p>
+    <p>
+    このバグは <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2013-September/001191.html">
+	[pgpool-general-jp: 1192]</a> で報告されました。
+    </p>
+</li>
+
+<li>
+    レプリケーションモードにて、デフォルト値が now()
+	のカラムを持つテーブルに対する準備文でエラーが発生するバグを修正しました。
+	(Yugo Nagata)
+    <p>
+    デフォルト値が now() を持つ名前付き準備文を parse する際に、pgpool-II
+	は時刻値をパラメータで置き換えます。そのため、その後の bind
+	メッセージも追加されたパラメータの形式コードを含んでいる必要があります。
+	しかし、元のクエリのパラーメータ形式数が１だった場合、この処理がなされていませんでした。これが
+	"incorrect binary data format in bind parameter 2" のようなエラーの原因となっていました。
+    </p>
+</li>
+
+<li>
+    doc: パラレルモードは PREPARE 文の実行に対応していないことを追記しました。(Yugo Nagata)
+    <p>
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=93">bug #93</a> の指摘によります。
+    </p>
+</li>
+
+
+</ul>
+
+
 <h2><a name="release3.0.14"></a>3.0.14 (umiyameboshi) 2013/12/06</h2>
 <h3>概要</h3>
 <p>

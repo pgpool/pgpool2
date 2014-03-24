@@ -1,4 +1,100 @@
-3.0.14 (umiyameboshi) 2013/12/06
+3.0.15 (umiyameboshi) 2014/03/24
+
+    * Version 3.0.15
+
+    This is a bugfix release against pgpool-II 3.0.14.
+
+    __________________________________________________________________
+
+    * Bug fixes
+
+    - doc: Add mention about "listen queue" and how to increase the "backlog"
+      in the num_init_children section. (Tatsuo Ishii)
+
+    - Fix bad performance of unlogged tables detection code. (Tatsuo Ishii)
+      
+      Pointed out at [pgpool-hackers: 435][[pgpool-general:2325].
+
+    - Fix primary node detection logic. (Tatsuo Ishii)
+      
+      There's a possibility that primary node is not detected. This happens
+      in following situation.  node 0: primary, node 1: standby. Node 0 goes
+      down. Health checking detects the fact but local status is not updated
+      yet. Primary node finding (find_primary_node) runs. Node 0's status is
+      yet healthy. Because find_primary_node fails to connect to node 0, it
+      immediately returns -1 and fails to find that fact that node 1 is now
+      primary.
+      
+      Fix is just continuing to look for primary node when fails to connect
+      to a node.
+      
+      Per [pgpool-general: 2409].
+
+    - Fix jdbc DML fails when operated in raw mode and auto commit is off.
+      (Tatsuo Ishii)
+      
+      This is reported in bug #92.
+
+    - Avoid to send queries to unrelated nodes in streaming replication mode.
+      (Tatsuo Ishii)
+      
+      Pgpool-II sends certain queries, such as BEGIN, END and SET commands to
+      all of DB nodes. However in streaming replication mode, only primary
+      node and at most one standby node are only concerned (if primacy node
+      is selected as the load balance node, only 1 node is concerned).
+      
+      See [pgpool-hackers: 464] for more details.
+
+    - Fix possible buffer overrun problem and memory leak. (Tatsuo Ishii)
+      
+      Per Coverity 1111465 and 1111482.
+
+    - Fix freeing NULL. (Tatsuo Ishii)
+      
+      Per Coverity 1111384.
+
+    - Fix memory leak. (Tatsuo Ishii)
+      
+      Per Coverity 1111446.
+
+    - Fix a segmentation fault in parallel mode with system_db_hostname is
+      empty (Yugo Nagata)
+
+    - Fix to output debug messages in processing pgpool.conf with -d option
+      (Yugo Nagata)
+      
+      Previously, some debug messages in pool_get_config() ware not output
+      even when -d option was used.
+
+    - Fix JDBC exception of prepared statement including now() in
+      replication mode (Yugo Nagata)
+      
+      With JDBC, when a prepared statement is executed more than
+      PrepareThreshold times, the statement is named and Describe message
+      is sent after Parse. With named statement, pgpool rewrite now() to
+      parameter in replication mode. Hence, rewritten query has additonal
+      parameter than original. In this case, ParameterDescription message
+      sent to frontend (response of Describe) should include OIDs of the
+      same number os original query's parameters. Otherwize, JDBC throws
+      ArrayIndexoutOfBoundsException.
+      
+      This is reported in [pgpool-general-jp: 1192].
+
+    - Fix backend error of prepared statement about table which has column whoes
+      default value is now() in replication mode (Yugo Nagata)
+      
+      When pgpool parses a named prepared statement with default now(),
+      timestamps are replaced to additional parameters. So, Bind message also
+      should inclued additional parameter format codes. However, when the
+      number of original parameter was one, pgpool didn't handle this. This
+      caused a error like "incorrect binary data format in bind parameter 2".
+
+    - doc: Add description about parallel mode doesn't support PREPARE (Yugo Nagata)
+      
+      Per bug #93
+
+===============================================================================
+
 
     * Version 3.0.14
 
