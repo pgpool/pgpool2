@@ -20,7 +20,7 @@ PGPOOL_CONF_DIR=/etc/pgpool-II
 
 # pgpoolAdmin
 ADMIN_SOFTWARE_NAME=pgpoolAdmin
-A_VERSION=3.3.0
+A_VERSION=3.3.1
 A_RELEASE=1
 ADMIN_DIR=/var/www/html/pgpoolAdmin
 APACHE_USER=apache

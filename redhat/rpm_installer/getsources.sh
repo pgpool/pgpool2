@@ -18,7 +18,7 @@ pgpool_version=3.3.3
 ## pgpoolAdmin
 admin_src_dir=${git_dir}/pgpooladmin
 admin_tarball_dir=${admin_src_dir}/tools
-admin_version=3.3.0
+admin_version=3.3.1
 
 ## postgresql93
 pg_home=/usr/pgsql-9.3
