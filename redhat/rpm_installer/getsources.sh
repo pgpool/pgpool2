@@ -13,16 +13,16 @@ git_dir=$HOME/git
 ## pgpool-II
 pgpool_src_dir=${git_dir}/pgpool2
 pgpool_tarball_dir=${pgpool_src_dir}
-pgpool_version=3.3.2
+pgpool_version=3.3.3
 
 ## pgpoolAdmin
 admin_src_dir=${git_dir}/pgpooladmin
 admin_tarball_dir=${admin_src_dir}/tools
 admin_version=3.3.0
 
-## postgresql92
-pg_home=/usr/pgsql-9.2
-pg_version=92
+## postgresql93
+pg_home=/usr/pgsql-9.3
+pg_version=93
 export PATH=${pg_home}/bin:$PATH
 
 echo "* Setup starts."
@@ -134,7 +134,7 @@ echo "* Setup Finished. See \"work\" directory."
 echo
 echo "* Next ..."
 echo
-echo "  - rpmbuild -ba work/pgpool.spec --define\"pgpool_version 3.3.2\" --define=\"pg_version 93\" --define=\"pghome /usr/pgsql-9.3\""
+echo "  - rpmbuild -ba work/pgpool.spec --define\"pgpool_version 3.3.3\" --define=\"pg_version 93\" --define=\"pghome /usr/pgsql-9.3\""
 echo "  - rpmbuild -ba work/pgpoolAdmin.spec"
 echo "  - move ~/rpm/RPMS/../pgpool*.rpm (except for *.src.rpm) to work/installer-pg${pg_version}/"
 echo "  - create tar ball from work/installer-pg${pg_version}/"
