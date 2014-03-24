@@ -4557,6 +4557,14 @@ JDBC ドライバなどのような拡張問い合わせプロトコルには対
 必ず簡易問い合わせプロトコルを使用してください。
 </p>
 
+<h3 id="ng_prepare">PREPARE, EXECUTE</h3>
+<p>
+制限対象:パラレルモード
+</p>
+<p>
+<code>PREPARE</code> 文で生成された準備文には対応していません。
+</p>
+
 <h3 id="ng_select">SELECT</h3>
 <p>
 制限対象:パラレルモード
@@ -4675,6 +4683,7 @@ View や Rule は各ノードに同じ内容が定義されます。
 <pre>
 CREATE VIEW sample AS SELECT * FROM a, b where a.i = b.i
 </pre>
+
 <p>
 上記のような テーブル結合を含んだVIEWは、a と b は同じノード内でのみ結合処理を行い、
 各ノードからの実行結果を統合します。ノードをまたがった JOIN を行う View を作成することはできません。
