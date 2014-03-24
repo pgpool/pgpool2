@@ -77,6 +77,9 @@ public class RunTest {
 	if (testcase.equals("CreateTempTable"))
 	    return new CreateTempTableTest();
 
+	if (testcase.equals("PrepareThreshold"))
+	    return new PrepareThresholdTest();
+
 	/* unknown test case */
 	return null;
     }

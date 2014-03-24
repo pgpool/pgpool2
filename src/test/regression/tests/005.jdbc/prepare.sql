@@ -1,4 +1,5 @@
 -- autocommit
+
 DROP TABLE autocommit;
 CREATE TABLE autocommit (a int);
 INSERT INTO autocommit SELECT generate_series(1, 10);
@@ -25,7 +26,7 @@ CREATE TABLE columntest
   v12 int4,
   v13 int4,
   v14 int4,
-  v15 int4) 
+  v15 int4)
 WITHOUT OIDS;
 INSERT INTO columntest VALUES (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15);
 
@@ -52,3 +53,11 @@ INSERT INTO up VALUES (2);
 -- insert
 DROP TABLE ins;
 CREATE TABLE ins (a int);
+
+-- prepareThreshold
+DROP TABLE IF EXISTS prepare_threshold;
+CREATE TABLE prepare_threshold (
+  i int,
+  d date,
+  t timestamp with time zone DEFAULT now()
+);

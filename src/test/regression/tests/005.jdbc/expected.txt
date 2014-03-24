@@ -5,3 +5,5 @@ lock: ok
 select: ok
 update: ok
 insert: ok
+CreateTempTable: ok
+PrepareThreshold: ok
