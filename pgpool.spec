@@ -57,7 +57,7 @@ Development headers and libraries for pgpool-II.
 
 %build
 %configure --with-pgsql-includedir=%{pghome}/include/ \
-           --with-pgsql-lib=%{pghome}/lib \
+           --with-pgsql-libdir=%{pghome}/lib \
            --disable-static --with-pam --disable-rpath \
            --sysconfdir=%{_sysconfdir}/pgpool-II/
 
