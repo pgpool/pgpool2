@@ -45,7 +45,7 @@ Development headers and libraries for pgpool-II.
 %patch1 -p0
 
 %build
-%configure --with-pgsql-includedir=%{_includedir}/pgsql --with-pgsql-lib=%{_libdir}/pgsql --disable-static --with-pam --disable-rpath --sysconfdir=%{_sysconfdir}/%{name}/
+%configure --with-pgsql-includedir=%{_includedir}/pgsql --with-pgsql-libdir=%{_libdir}/pgsql --disable-static --with-pam --disable-rpath --sysconfdir=%{_sysconfdir}/%{name}/
 
 make %{?_smp_flags}
 
