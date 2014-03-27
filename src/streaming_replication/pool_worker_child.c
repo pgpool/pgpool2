@@ -267,6 +267,12 @@ static void check_replication_time_lag(void)
 		return;
 	}
 
+	if (REAL_PRIMARY_NODE_ID < 0)
+	{
+		/* No need to check if there's no primary */
+		return;
+	}
+
 	/* Count healthy nodes */
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
