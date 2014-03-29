@@ -1591,6 +1591,11 @@ static RETSIGTYPE exit_handler(int sig)
 
 	exiting = 1;
 
+	/* Close listen socket */
+	pool_log("pgpool main: close listen socket");
+	close(inet_fd);
+	close(unix_fd);
+
 	for (i = 0; i < pool_config->num_init_children; i++)
 	{
 		pid_t pid = process_info[i].pid;
