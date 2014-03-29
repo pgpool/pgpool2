@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -101,6 +101,9 @@ static volatile sig_atomic_t alarm_enabled = false;
 static int idle;		/* non 0 means this child is in idle state */
 static int accepted = 0;
 
+static int child_inet_fd = 0;
+static int child_unix_fd = 0;
+
 extern int myargc;
 extern char **myargv;
 
@@ -153,6 +156,11 @@ void do_child(int unix_fd, int inet_fd)
 		pool_set_nonblock(inet_fd);
 	}
 #endif
+	if (inet_fd)
+	{
+		child_inet_fd = inet_fd;
+	}
+	child_unix_fd = unix_fd;
 
 	/* Create per loop iteration memory context */
 	ChildLoopMemoryContext = AllocSetContextCreate(TopMemoryContext,
@@ -1176,6 +1184,14 @@ static RETSIGTYPE die(int sig)
 	switch (sig)
 	{
 		case SIGTERM:	/* smart shutdown */
+			/* Refuse further requests by closing listen socket */
+			if (child_inet_fd)
+			{
+				pool_log("die: close listen socket");
+				close(child_inet_fd);
+			}
+			close(child_unix_fd);
+
 			if (idle == 0)
 			{
 				pool_debug("child receives smart shutdown request but it's not in idle state");
