@@ -32,6 +32,13 @@
 #include "pcp/pcp.h"
 #include "pcp/pcp_stream.h"
 
+#ifndef POOL_PRIVATE
+#include "utils/palloc.h"
+#include "utils/memutils.h"
+#else
+#include "utils/fe_ports.h"
+#endif
+
 static int consume_pending_data(PCP_CONNECTION *pc, void *data, int len);
 static int save_pending_data(PCP_CONNECTION *pc, void *data, int len);
 static int pcp_check_fd(PCP_CONNECTION *pc, int notimeout);
@@ -47,39 +54,27 @@ pcp_open(int fd)
 {
     PCP_CONNECTION *pc;
 
-    pc = (PCP_CONNECTION *)malloc(sizeof(PCP_CONNECTION));
-    if (pc == NULL)
-	{
-		errorcode = NOMEMERR;
-        return NULL;
-	}
-    memset(pc, 0, sizeof(*pc));
+#ifndef POOL_PRIVATE
+    MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
+#endif
 
+    pc = (PCP_CONNECTION *)palloc0(sizeof(PCP_CONNECTION));
     /* initialize write buffer */
-    pc->wbuf = malloc(WRITEBUFSZ);
-    if (pc->wbuf == NULL)
-	{
-		free(pc);
-		return NULL;
-	}
+    pc->wbuf = palloc(WRITEBUFSZ);
     pc->wbufsz = WRITEBUFSZ;
     pc->wbufpo = 0;
 
     /* initialize pending data buffer */
-    pc->hp = malloc(READBUFSZ);
-    if (pc->hp == NULL)
-	{
-		errorcode = NOMEMERR;
-		free(pc->wbuf);
-		free(pc);
-        return NULL;
-	}
+    pc->hp = palloc(READBUFSZ);
     pc->bufsz = READBUFSZ;
     pc->po = 0;
     pc->len = 0;
 
-    pc->fd = fd;
+#ifndef POOL_PRIVATE
+    MemoryContextSwitchTo(oldContext);
+#endif
 
+    pc->fd = fd;
     return pc;
 }
 
@@ -91,9 +86,9 @@ void
 pcp_close(PCP_CONNECTION *pc)
 {
     close(pc->fd);
-    free(pc->wbuf);
-    free(pc->hp);
-    free(pc);
+    pfree(pc->wbuf);
+    pfree(pc->hp);
+    pfree(pc);
 }
 
 /* --------------------------------
@@ -183,12 +178,15 @@ pcp_write(PCP_CONNECTION *pc, void *buf, int len)
         char *p;
 
         reqlen = (reqlen/WRITEBUFSZ+1)*WRITEBUFSZ;
-        p = realloc(pc->wbuf, reqlen);
-        if (p == NULL)
-		{
-			errorcode = NOMEMERR;
-			return -1;
-		}
+
+#ifndef POOL_PRIVATE
+        MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
+#endif
+        p = repalloc(pc->wbuf, reqlen);
+
+#ifndef POOL_PRIVATE
+        MemoryContextSwitchTo(oldContext);
+#endif
 
         pc->wbuf = p;
         pc->wbufsz = reqlen;
@@ -316,12 +314,16 @@ save_pending_data(PCP_CONNECTION *pc, void *data, int len)
     {
         /* too small, enlarge it */
         realloc_size = (reqlen/READBUFSZ+1)*READBUFSZ;
-        p = realloc(pc->hp, realloc_size);
-        if (p == NULL)
-		{
-			errorcode = NOMEMERR;
-            return -1;
-		}
+
+#ifndef POOL_PRIVATE
+        MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
+#endif
+        p = repalloc(pc->hp, realloc_size);
+
+#ifndef POOL_PRIVATE
+        MemoryContextSwitchTo(oldContext);
+#endif
+
         pc->bufsz = realloc_size;
         pc->hp = p;
     }

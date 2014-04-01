@@ -27,6 +27,7 @@
 #include "parallel_query/pool_rewrite_query.h"
 #include "protocol/pool_proto_modules.h"
 #include "context/pool_session_context.h"
+#include "utils/elog.h"
 
 #include <string.h>
 #include <errno.h>
@@ -347,123 +348,133 @@ int IsSelectpgcatalog(Node *node,POOL_CONNECTION_POOL *backend)
  */
 RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNECTION_POOL *backend,RewriteQuery *message)
 {
-	switch(node->type)
-	{
-		case T_SelectStmt:
-		{
-			SelectStmt *stmt = (SelectStmt *)node;
+    PG_TRY();
+    {
+        switch(node->type)
+        {
+            case T_SelectStmt:
+            {
+                SelectStmt *stmt = (SelectStmt *)node;
 
-			 /* Because "SELECT INTO" cannot be used in a parallel mode,
-			  * the error message is generated and send "ready for query" to frontend.
-			  */
-			if(stmt->intoClause)
-			{
-				pool_send_error_message(frontend, MAJOR(backend), "XX000",
-										"pgpool2 sql restriction",
-										"cannot use select into ...", "", __FILE__,
-										__LINE__);
+                 /* Because "SELECT INTO" cannot be used in a parallel mode,
+                  * the error message is generated and send "ready for query" to frontend.
+                  */
+                if(stmt->intoClause)
+                {
+                    pool_send_error_message(frontend, MAJOR(backend), "XX000",
+                                            "pgpool2 sql restriction",
+                                            "cannot use select into ...", "", __FILE__,
+                                            __LINE__);
 
 
-				pool_send_readyforquery(frontend);
-				message->status=POOL_CONTINUE;
-				break;
-			}
+                    pool_send_readyforquery(frontend);
+                    message->status=POOL_CONTINUE;
+                    break;
+                }
 
-			/*
-			 * The Query is actually rewritten based on analytical information on the Query.
-			 */
-			examSelectStmt(node,backend,message);
+                /*
+                 * The Query is actually rewritten based on analytical information on the Query.
+                 */
+                examSelectStmt(node,backend,message);
 
-			if (message->r_code != SELECT_PGCATALOG &&
-				message->r_code != SELECT_RELATION_ERROR)
-			{
-				/*
-				 * The rewritten Query is transmitted to system db,
-				 * and execution status is received.
-				 */
-				POOL_CONNECTION_POOL_SLOT *system_db = pool_system_db_connection();
-				message->status = OneNode_do_command(frontend,
-													system_db->con,
-													message->rewrite_query,
-													backend->info->database);
-			}
-			else
-			{
-				if(TSTATE(backend, MASTER_NODE_ID) == 'T' &&
-				   message->r_code == SELECT_RELATION_ERROR)
-				{
-					/*
-					 * In the case of message->r_code == SELECT_RELATION_ERROR and in the transaction,
-					 * Transmit the Query to all back ends, and to abort transaction.
-					 */
-					pool_debug("pool_rewrite_stmt(select): Inside transaction. abort transaction");
-					message->rewrite_query = nodeToString(node);
-					message->status = pool_parallel_exec(frontend,backend,message->rewrite_query,node,true);
-				}
-				else
-				{
-					/*
-					 * Other cases of message->r_code == SELECT_RELATION_ERROR
-					 * or SELECT_PG_CATALOG,
-					 * Transmit the Query to Master node and receive status.
-					 */
-					pool_debug("pool_rewrite_stmt: executed by Master");
-					message->rewrite_query = nodeToString(node);
-					message->status = OneNode_do_command(frontend,
-														MASTER(backend),
-														message->rewrite_query,
-														backend->info->database);
-				}
-			}
-			pool_debug("pool_rewrite_stmt: select message_code %d",message->r_code);
-		}
-		break;
+                if (message->r_code != SELECT_PGCATALOG &&
+                    message->r_code != SELECT_RELATION_ERROR)
+                {
+                    /*
+                     * The rewritten Query is transmitted to system db,
+                     * and execution status is received.
+                     */
+                    POOL_CONNECTION_POOL_SLOT *system_db = pool_system_db_connection();
+                    message->status = OneNode_do_command(frontend,
+                                                        system_db->con,
+                                                        message->rewrite_query,
+                                                        backend->info->database);
+                }
+                else
+                {
+                    if(TSTATE(backend, MASTER_NODE_ID) == 'T' &&
+                       message->r_code == SELECT_RELATION_ERROR)
+                    {
+                        /*
+                         * In the case of message->r_code == SELECT_RELATION_ERROR and in the transaction,
+                         * Transmit the Query to all back ends, and to abort transaction.
+                         */
+                        pool_debug("pool_rewrite_stmt(select): Inside transaction. abort transaction");
+                        message->rewrite_query = nodeToString(node);
+                        message->status = pool_parallel_exec(frontend,backend,message->rewrite_query,node,true);
+                    }
+                    else
+                    {
+                        /*
+                         * Other cases of message->r_code == SELECT_RELATION_ERROR
+                         * or SELECT_PG_CATALOG,
+                         * Transmit the Query to Master node and receive status.
+                         */
+                        pool_debug("pool_rewrite_stmt: executed by Master");
+                        message->rewrite_query = nodeToString(node);
+                        message->status = OneNode_do_command(frontend,
+                                                            MASTER(backend),
+                                                            message->rewrite_query,
+                                                            backend->info->database);
+                    }
+                }
+                pool_debug("pool_rewrite_stmt: select message_code %d",message->r_code);
+            }
+            break;
 
-		case T_InsertStmt:
+            case T_InsertStmt:
 
-		  /* The distribution of the INSERT sentence. */
-			examInsertStmt(node,backend,message);
+              /* The distribution of the INSERT sentence. */
+                examInsertStmt(node,backend,message);
 
-			if(message->r_code == 0 )
-			{
-				/* send the INSERT sentence */
-				message->status = OneNode_do_command(frontend,
-													CONNECTION(backend,message->r_node),
-													message->rewrite_query,
-													backend->info->database);
-			}
-			else if (message->r_code == INSERT_SQL_RESTRICTION)
-			{
-				/* Restriction case of INSERT sentence */
-				pool_send_error_message(frontend, MAJOR(backend), "XX000",
-										"pgpool2 sql restriction",
-										message->rewrite_query, "", __FILE__,
-										__LINE__);
+                if(message->r_code == 0 )
+                {
+                    /* send the INSERT sentence */
+                    message->status = OneNode_do_command(frontend,
+                                                        CONNECTION(backend,message->r_node),
+                                                        message->rewrite_query,
+                                                        backend->info->database);
+                }
+                else if (message->r_code == INSERT_SQL_RESTRICTION)
+                {
+                    /* Restriction case of INSERT sentence */
+                    pool_send_error_message(frontend, MAJOR(backend), "XX000",
+                                            "pgpool2 sql restriction",
+                                            message->rewrite_query, "", __FILE__,
+                                            __LINE__);
 
-				if(TSTATE(backend, MASTER_NODE_ID) == 'T')
-				{
-					/* In Transaction, send the invalid message to backend to abort this transaction */
-					pool_debug("rewrite_query_stmt(insert): Inside transaction. Abort transaction");
-					message->status = pool_parallel_exec(frontend,backend, "POOL_RESET_TSTATE",node,false);
-				}
-				else
-				{
-					/* return "ready for query" to frontend */
-					pool_send_readyforquery(frontend);
-					message->status=POOL_CONTINUE;
-				}
-			}
-			break;
+                    if(TSTATE(backend, MASTER_NODE_ID) == 'T')
+                    {
+                        /* In Transaction, send the invalid message to backend to abort this transaction */
+                        pool_debug("rewrite_query_stmt(insert): Inside transaction. Abort transaction");
+                        message->status = pool_parallel_exec(frontend,backend, "POOL_RESET_TSTATE",node,false);
+                    }
+                    else
+                    {
+                        /* return "ready for query" to frontend */
+                        pool_send_readyforquery(frontend);
+                        message->status=POOL_CONTINUE;
+                    }
+                }
+                break;
 #if 0
-		case T_UpdateStmt:
-			/* Improve UpdateStmt for complex query */
-			break;
+            case T_UpdateStmt:
+                /* Improve UpdateStmt for complex query */
+                break;
 #endif
-		default:
-			message->type = node->type;
-			message->status = POOL_CONTINUE;
-			break;
-	}
+            default:
+                message->type = node->type;
+                message->status = POOL_CONTINUE;
+                break;
+        }
+    }
+    PG_CATCH();
+    {
+        message->status= POOL_END;
+        FlushErrorState();
+    }
+    PG_END_TRY();
+    
 
 	pool_debug("pool_rewrite_stmt: query rule %d",node->type);
 

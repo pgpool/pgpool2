@@ -25,6 +25,7 @@
 #include "protocol/pool_proto_modules.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
+#include "utils/elog.h"
 #include "utils/pool_select_walker.h"
 #include "context/pool_session_context.h"
 #include "context/pool_query_context.h"
@@ -55,15 +56,9 @@ POOL_QUERY_CONTEXT *pool_init_query_context(void)
 {
 	POOL_QUERY_CONTEXT *qc;
 
-	qc = calloc(1, sizeof(*qc));
-	if (!qc)
-	{
-		pool_error("pool_init_query_context: cannot allocate memory");
-		return NULL;
-	}
-
+	qc = palloc0(sizeof(*qc));
 	/* Create memory context */
-	qc->memory_context = AllocSetContextCreate(CurrentMemoryContext,
+	qc->memory_context = AllocSetContextCreate(QueryContext,
 									 "QueryContext",
 									 ALLOCSET_DEFAULT_MINSIZE,
 									 ALLOCSET_DEFAULT_INITSIZE,
@@ -81,12 +76,11 @@ void pool_query_context_destroy(POOL_QUERY_CONTEXT *query_context)
 
 	if (query_context)
 	{
-		session_context = pool_get_session_context();
+		session_context = pool_get_session_context(false);
 		pool_unset_query_in_progress();
-		session_context->query_context = NULL;
 		MemoryContextDelete(query_context->memory_context);
-
-		free(query_context);
+		pfree(query_context);
+		session_context->query_context = NULL;
 	}
 }
 
@@ -99,7 +93,7 @@ void pool_start_query(POOL_QUERY_CONTEXT *query_context, char *query, int len, N
 
 	if (query_context)
 	{
-		session_context = pool_get_session_context();
+		session_context = pool_get_session_context(false);
 		query_context->original_length = len;
 		query_context->rewritten_length = -1;
 		query_context->original_query = pstrdup(query);
@@ -277,7 +271,7 @@ bool pool_is_node_to_be_sent_in_current_query(int node_id)
 	if (RAW_MODE)
 		return node_id == REAL_MASTER_NODE_ID;
 
-	sc = pool_get_session_context();
+	sc = pool_get_session_context(true);
 	if (!sc)
 		return true;
 
@@ -295,7 +289,7 @@ int pool_virtual_master_db_node_id(void)
 {
 	POOL_SESSION_CONTEXT *sc;
 
-	sc = pool_get_session_context();
+	sc = pool_get_session_context(true);
 	if (!sc)
 	{
 		return REAL_MASTER_NODE_ID;
@@ -333,7 +327,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 		return;
 	}
 
-	session_context = pool_get_session_context();
+	session_context = pool_get_session_context(false);
 	backend = session_context->backend;
 
 	/*
@@ -618,7 +612,7 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 	int len;
 	char *string;
 
-	session_context = pool_get_session_context();
+	session_context = pool_get_session_context(false);
 	frontend = session_context->frontend;
 	backend = session_context->backend;
 	is_commit = is_commit_or_rollback_query(query_context->parse_tree);
@@ -698,10 +692,7 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 
 		per_node_statement_log(backend, i, string);
 
-		if (send_simplequery_message(CONNECTION(backend, i), len, string, MAJOR(backend)) != POOL_CONTINUE)
-		{
-			return POOL_END;
-		}
+		send_simplequery_message(CONNECTION(backend, i), len, string, MAJOR(backend));
 	}
 
 	/* Wait for response */
@@ -732,20 +723,13 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 			else
 				string = query_context->rewritten_query;
 		}
-
-		if (wait_for_query_response(frontend, CONNECTION(backend, i), MAJOR(backend)) != POOL_CONTINUE)
-		{
-			/* Cancel current transaction */
-			CancelPacket cancel_packet;
-
-			cancel_packet.protoVersion = htonl(PROTO_CANCEL);
-			cancel_packet.pid = MASTER_CONNECTION(backend)->pid;
-			cancel_packet.key= MASTER_CONNECTION(backend)->key;
-			cancel_request(&cancel_packet);
-
-			return POOL_END;
-		}
-
+        
+        wait_for_query_response_with_trans_cleanup(frontend,
+                                                   CONNECTION(backend, i),
+                                                   MAJOR(backend),
+                                                   MASTER_CONNECTION(backend)->pid,
+                                                   MASTER_CONNECTION(backend)->key);
+        
 		/*
 		 * Check if some error detected.  If so, emit
 		 * log. This is useful when invalid encoding error
@@ -781,7 +765,7 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 	char *str;
 	char *rewritten_begin;
 
-	session_context = pool_get_session_context();
+	session_context = pool_get_session_context(false);
 	frontend = session_context->frontend;
 	backend = session_context->backend;
 	is_commit = is_commit_or_rollback_query(query_context->parse_tree);
@@ -803,13 +787,9 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 		is_begin_read_write = true;
 
 		if (*kind == 'P')
-		{
 			rewritten_begin = remove_read_write(len, contents, &rewritten_len);
-			if (rewritten_begin == NULL)
-				return POOL_END;
-		}
 	}
-	
+
 	if (!rewritten_begin)
 	{	
 		str_len = len;
@@ -890,11 +870,7 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 			per_node_statement_log(backend, i, msgbuf);
 		}
 
-		if (send_extended_protocol_message(backend, i, kind, str_len, str) != POOL_CONTINUE)
-		{
-			free(rewritten_begin);
-			return POOL_END;
-		}
+		send_extended_protocol_message(backend, i, kind, str_len, str);
 	}
 
 	if (!is_begin_read_write)
@@ -932,19 +908,11 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 				str = query_context->rewritten_query;
 		}
 
-		if (wait_for_query_response(frontend, CONNECTION(backend, i), MAJOR(backend)) != POOL_CONTINUE)
-		{
-			/* Cancel current transaction */
-			CancelPacket cancel_packet;
-
-			cancel_packet.protoVersion = htonl(PROTO_CANCEL);
-			cancel_packet.pid = MASTER_CONNECTION(backend)->pid;
-			cancel_packet.key= MASTER_CONNECTION(backend)->key;
-			cancel_request(&cancel_packet);
-
-			free(rewritten_begin);
-			return POOL_END;
-		}
+        wait_for_query_response_with_trans_cleanup(frontend,
+                                                   CONNECTION(backend, i),
+                                                   MAJOR(backend),
+                                                   MASTER_CONNECTION(backend)->pid,
+                                                   MASTER_CONNECTION(backend)->key);
 
 		/*
 		 * Check if some error detected.  If so, emit
@@ -956,7 +924,8 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 		per_node_error_log(backend, i, str, "pool_send_and_wait: Error or notice message from backend: ", true);
 	}
 
-	free(rewritten_begin);
+	if(rewritten_begin)
+        pfree(rewritten_begin);
 	return POOL_CONTINUE;
 }
 
@@ -1311,7 +1280,7 @@ Node *pool_get_parse_tree(void)
 {
 	POOL_SESSION_CONTEXT *sc;
 
-	sc = pool_get_session_context();
+	sc = pool_get_session_context(true);
 	if (!sc)
 		return NULL;
 
@@ -1330,7 +1299,7 @@ char *pool_get_query_string(void)
 {
 	POOL_SESSION_CONTEXT *sc;
 
-	sc = pool_get_session_context();
+	sc = pool_get_session_context(true);
 	if (!sc)
 		return NULL;
 
@@ -1584,16 +1553,11 @@ char* remove_read_write(int len, const char* contents, int *rewritten_len)
 	*rewritten_len = len - strlen(stmt) + strlen(rewritten_query);
 	if (len < *rewritten_len)
 	{
-		pool_error("remove_read_write: invalid message length.");
-		return NULL;
+        ereport(ERROR,
+            (errmsg("invalid message length of transaction packet")));
 	}
 
-	rewritten_contents = malloc(*rewritten_len);
-	if (rewritten_contents == NULL)
-	{
-		pool_error("remove_read_write: malloc failed.");
-		return NULL;
-	}
+	rewritten_contents = palloc(*rewritten_len);
 
 	strcpy(rewritten_contents, name);
 	strcpy(rewritten_contents + strlen(name) + 1, rewritten_query);
@@ -1611,7 +1575,7 @@ bool pool_is_cache_safe(void)
 {
 	POOL_SESSION_CONTEXT *sc;
 
-	sc = pool_get_session_context();
+	sc = pool_get_session_context(true);
 	if (!sc)
 		return false;
 
@@ -1629,7 +1593,7 @@ void pool_set_cache_safe(void)
 {
 	POOL_SESSION_CONTEXT *sc;
 
-	sc = pool_get_session_context();
+	sc = pool_get_session_context(true);
 	if (!sc)
 		return;
 
@@ -1646,7 +1610,7 @@ void pool_unset_cache_safe(void)
 {
 	POOL_SESSION_CONTEXT *sc;
 
-	sc = pool_get_session_context();
+	sc = pool_get_session_context(true);
 	if (!sc)
 		return;
 
@@ -1663,7 +1627,7 @@ bool pool_is_cache_exceeded(void)
 {
 	POOL_SESSION_CONTEXT *sc;
 
-	sc = pool_get_session_context();
+	sc = pool_get_session_context(true);
 	if (!sc)
 		return false;
 
@@ -1683,7 +1647,7 @@ void pool_set_cache_exceeded(void)
 {
 	POOL_SESSION_CONTEXT *sc;
 
-	sc = pool_get_session_context();
+	sc = pool_get_session_context(true);
 	if (!sc)
 		return;
 
@@ -1700,7 +1664,7 @@ void pool_unset_cache_exceeded(void)
 {
 	POOL_SESSION_CONTEXT *sc;
 
-	sc = pool_get_session_context();
+	sc = pool_get_session_context(true);
 	if (!sc)
 		return;
 

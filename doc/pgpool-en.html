@@ -786,10 +786,48 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
+<dt><a name="LOG_ERROR_VERBOSITY"></a>log_error_verbosity</dt>
+    <dd>
+    <p>
+    Controls the amount of detail emitted for each message that is logged.
+    Valid values are TERSE, DEFAULT, and VERBOSE, each adding more fields to displayed messages.
+    TERSE excludes the logging of DETAIL, HINT, and CONTEXT error information.
+    </p>
+    <p>
+    You need to reload pgpool.conf if you change this value.
+    </p>
+    </dd>
+
 <dt><a name="LOG_CONNECTIONS"></a>log_connections</dt>
     <dd>
     <p>
     If true, all incoming connections will be printed to the log.
+    </p>
+    <p>
+    You need to reload pgpool.conf if you change this value.
+    </p>
+    </dd>
+
+<dt><a name="CLIENT_MIN_MESSAGES"></a>client_min_messages</dt>
+    <dd>
+    <p>
+    Controls which minimum message levels are sent to the client.
+    Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, LOG, NOTICE,
+    WARNING, ERROR, FATAL, and PANIC. Each level includes all the
+    levels that follow it. The default is NOTICE.
+    </p>
+    <p>
+    You need to reload pgpool.conf if you change this value.
+    </p>
+    </dd>
+
+<dt><a name="LOG_MIN_MESSAGES"></a>log_min_messages</dt>
+    <dd>
+    <p>
+    Controls which minimum message levels are emitted to log.
+    Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, INFO, NOTICE,
+    WARNING, ERROR, LOG, FATAL, and PANIC. Each level includes all the
+    levels that follow it. The default is WARNING.    
     </p>
     <p>
     You need to reload pgpool.conf if you change this value.

@@ -118,12 +118,7 @@ int pool_init_config(void)
 	static char localhostname[256];
 	int i;
 
-	pool_config = malloc(sizeof(POOL_CONFIG));
-	if (pool_config == NULL)
-	{
-		pool_error("failed to allocate pool_config");
-		return(-1);
-	}
+	pool_config = palloc(sizeof(POOL_CONFIG));
 
 	memset(pool_config, 0, sizeof(POOL_CONFIG));
 
@@ -135,24 +130,13 @@ int pool_init_config(void)
 		return -1;
 	}
 #else
-	pool_config->backend_desc = malloc(sizeof(BackendDesc));
-	if (pool_config->backend_desc == NULL)
-	{
-		pool_error("failed to allocate pool_config->backend_desc");
-		return -1;
-	}
+	pool_config->backend_desc = palloc(sizeof(BackendDesc));
 #endif
 
 	/*
 	 * add for watchdog
 	 */
-	pool_config->other_wd = malloc(sizeof(WdDesc));
-	if (pool_config->other_wd == NULL)
-	{
-		pool_error("failed to allocate pool_config->cwother_wd");
-		return -1;
-	}
-	memset(pool_config->other_wd, 0, sizeof(WdDesc));
+	pool_config->other_wd = palloc0(sizeof(WdDesc));
 
 	/* set hardcoded default values */
 	pool_config->listen_addresses = "localhost";
@@ -195,6 +179,9 @@ int pool_init_config(void)
 	pool_config->black_function_list = default_black_function_list;
 	pool_config->num_black_function_list = sizeof(default_black_function_list)/sizeof(char *);
 	pool_config->print_timestamp = 1;
+	pool_config->log_error_verbosity = 1;    /* PGERROR_DEFAULT */
+	pool_config->client_min_messages = 18;  /* NOTICE */
+	pool_config->log_min_messages = 19;     /* WARNING */
 	pool_config->print_user = 0;
 	pool_config->master_slave_mode = 0;
 	pool_config->master_slave_sub_mode = "slony";
@@ -346,12 +333,7 @@ int add_regex_pattern(char *type, char *s)
 	currItem.flag = regex_flags;
 
 	/* Fill pattern array */
-	currItem.pattern = malloc(sizeof(char)*(strlen(s)+3));
-	if (currItem.pattern == NULL)
-	{
-		pool_error("add_to_patterns: unable to allocate new pattern");
-		return 0;
-	}
+	currItem.pattern = palloc(sizeof(char)*(strlen(s)+3));
 	/* Force exact matching of function name with ^ and $ on the regex
 	   if required to prevent partial matching. It also allow backward
 	   compatibility.
@@ -400,7 +382,7 @@ int growFunctionPatternArray(RegPattern item)
 	if (pool_config->pattc == pool_config->current_pattern_size)
 	{
 		pool_config->current_pattern_size += PATTERN_ARR_SIZE;
-		_tmp = realloc(pool_config->lists_patterns,
+		_tmp = repalloc(pool_config->lists_patterns,
 		               (pool_config->current_pattern_size * sizeof(RegPattern)));
 		if (!_tmp)
 		{
@@ -421,7 +403,7 @@ int growMemqcacheTablePatternArray(RegPattern item)
 	if (pool_config->memqcache_table_pattc == pool_config->current_memqcache_table_pattern_size)
 	{
 		pool_config->current_memqcache_table_pattern_size += PATTERN_ARR_SIZE;
-		_tmp = realloc(pool_config->lists_memqcache_table_patterns,
+		_tmp = repalloc(pool_config->lists_memqcache_table_patterns,
 		               (pool_config->current_memqcache_table_pattern_size * sizeof(RegPattern)));
 		if (!_tmp)
 		{
@@ -530,9 +512,9 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			if (v)
-				pool_config->listen_addresses = strdup("*");
+				pool_config->listen_addresses = pstrdup("*");
 			else
-				pool_config->listen_addresses = strdup("");
+				pool_config->listen_addresses = pstrdup("");
 		}
 		else if (!strcmp(key, "listen_addresses") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
@@ -1057,6 +1039,121 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			for (i=0;i<pool_config->num_black_function_list;i++)
 			{
 				add_regex_pattern("black_function_list", pool_config->black_function_list[i]);
+			}
+		}
+        else if (!strcmp(key, "log_error_verbosity") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str, *valid_val;
+            int i;
+            const char *ordered_valid_values[] = {"terse","default","verbose",NULL};
+            bool found = false;
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+            for(i=0; ; i++)
+            {
+                valid_val = (char*)ordered_valid_values[i];
+                if(!valid_val)
+                break;
+                if (!strcasecmp(str, valid_val))
+                {
+                    found = true;
+                    pool_config->log_error_verbosity = i;
+                    break;
+                }
+            }
+  			if (!found)
+			{
+				pool_error("pool_config: invalid log_error_verbosity %s", key);
+				fclose(fd);
+				return(-1);
+			}
+		}
+        
+        else if (!strcmp(key, "client_min_messages") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str, *valid_val;
+            int i;
+            const char *ordered_valid_values[] = {"debug5","debug4","debug3","debug2","debug1","log","commerror","info","notice","warning","error",NULL};
+            bool found = false;
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+            for(i=0; ; i++)
+            {
+                valid_val = (char*)ordered_valid_values[i];
+                if(!valid_val)
+                break;
+                
+                if (!strcasecmp(str, valid_val))
+                {
+                    found = true;
+                    pool_config->client_min_messages = i + 10;
+                    break;
+                }
+            }
+  			if (!found)
+			{
+				pool_error("pool_config: invalid client_min_messages  %s", key);
+				fclose(fd);
+				return(-1);
+			}
+		}
+        else if (!strcmp(key, "log_min_messages") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str, *valid_val;
+            int i;
+            const char *ordered_valid_values[] = {"debug5","debug4","debug3","debug2","debug1","log","commerror","info","notice","warning","error","fatal","panic",NULL};
+            bool found = false;
+            
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+            for(i=0; ; i++)
+            {
+                valid_val = (char*)ordered_valid_values[i];
+                if(!valid_val)
+                break;
+                
+                if (!strcasecmp(str, valid_val))
+                {
+                    found = true;
+                    pool_config->log_min_messages = i + 10; /* error codes start with 10 */
+                    break;
+                }
+            }
+  			if (!found)
+			{
+				pool_error("pool_config: invalid log_min_messages  %s", key);
+				fclose(fd);
+				return(-1);
 			}
 		}
 
@@ -2957,33 +3054,18 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 #endif
 		SystemDBInfo *info;
 		
-		system_db_info = malloc(sizeof(POOL_SYSTEMDB_CONNECTION_POOL));
-		if (system_db_info == NULL)
-		{
-			pool_error("failed to allocate system_db_info");
-			return -1;
-		}
+		system_db_info = palloc(sizeof(POOL_SYSTEMDB_CONNECTION_POOL));
 		memset(system_db_info, 0, sizeof(*system_db_info));
 
 #ifndef POOL_PRIVATE
 		system_db_info->system_db_status = pool_shared_memory_create(sizeof(BACKEND_STATUS));
 #else
-		system_db_info->system_db_status = malloc(sizeof(BACKEND_STATUS));
+		system_db_info->system_db_status = palloc(sizeof(BACKEND_STATUS));
 #endif
-		if (system_db_info->system_db_status == NULL)
-		{
-			pool_error("failed to allocate system_db_info->system_db_status");
-			return -1;
-		}
 
 		*system_db_info->system_db_status = CON_CONNECT_WAIT;	/* which is the same as SYSDB_STATUS = CON_CONNECT_WAIT */
 
-		info = malloc(sizeof(SystemDBInfo));
-		if (info == NULL)
-		{
-			pool_error("failed to allocate info");
-			return -1;
-		}
+		info = palloc(sizeof(SystemDBInfo));
 
 		system_db_info->info = info;
 		info->hostname = pool_config->system_db_hostname;
@@ -3036,12 +3118,7 @@ static char *extract_string(char *value, POOL_TOKEN token)
 {
 	char *ret;
 
-	ret = strdup(value);
-	if (!ret)
-	{
-		pool_error("extract_string: out of memory");
-		return NULL;
-	}
+	ret = pstrdup(value);
 
 	if (token == POOL_STRING)
 	{
@@ -3162,21 +3239,11 @@ static char **extract_string_tokens(char *str, char *delimi, int *n)
 
 	*n = 0;
 
-	tokens = malloc(MAXTOKENS*sizeof(char *));
-	if (tokens == NULL)
-	{
-		pool_error("extract_string_tokens: out of memory");
-		return NULL;
-	}
+	tokens = palloc(MAXTOKENS*sizeof(char *));
 
 	for (token = strtok(str, delimi); token != NULL && *n < MAXTOKENS; token = strtok(NULL, delimi))
 	{
-		tokens[*n] = strdup(token);
-		if (tokens[*n] == NULL)
-		{
-			pool_error("extract_string_tokens: out of memory");
-			return NULL;
-		}
+		tokens[*n] = pstrdup(token);
 		pool_debug("extract_string_tokens: token: %s", tokens[*n]);
 		(*n)++;
 	}

@@ -165,6 +165,7 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 						MASTER_CONNECTION(backend)->key, 0);
 	if (status == POOL_END)
 	{
+        
 		pool_error("pool_rewrite_lo_creat: failed to execute LOCK");
 		return NULL;
 	}

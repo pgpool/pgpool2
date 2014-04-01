@@ -619,7 +619,7 @@ cp $SAMPLE_CONF $CONF
 # create startall, shutdownall and pgpool_reload
 #-------------------------------------------
 echo "creating startall and shutdownall"
-echo "LD_LIBRARY_PATH=$LPATH" > $STARTALL
+echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$LPATH" > $STARTALL
 echo 'dir=`pwd`' >> $STARTALL
 echo "PGPOOL_INSTALL_DIR=$PGPOOL_INSTALL_DIR" >> $STARTALL
 chmod 755 $STARTALL

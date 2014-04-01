@@ -417,7 +417,7 @@ static bool is_system_catalog(char *table_name)
 			return false;
 	}
 
-	backend = pool_get_session_context()->backend;
+	backend = pool_get_session_context(false)->backend;
 
 	/*
 	 * Check if pg_namespace exists
@@ -530,7 +530,7 @@ static bool is_temp_table(char *table_name)
 			return false;
 	}
 
-	backend = pool_get_session_context()->backend;
+	backend = pool_get_session_context(false)->backend;
 
 	/*
 	 * Check backend version
@@ -617,7 +617,7 @@ bool is_unlogged_table(char *table_name)
 			return false;
 	}
 
-	backend = pool_get_session_context()->backend;
+	backend = pool_get_session_context(false)->backend;
 
 	/*
 	 * Check backend version
@@ -699,7 +699,7 @@ bool is_view(char *table_name)
 			return false;
 	}
 
-	backend = pool_get_session_context()->backend;
+	backend = pool_get_session_context(false)->backend;
 
 	/* pgpool_regclass has been installed */
 	if (pool_has_pgpool_regclass())
@@ -746,7 +746,7 @@ bool pool_has_pgpool_regclass(void)
 	POOL_CONNECTION_POOL *backend;
 	char *user;
 
-	backend = pool_get_session_context()->backend;
+	backend = pool_get_session_context(false)->backend;
 	user = MASTER_CONNECTION(backend)->sp->user;
 
 	if (!relcache)
@@ -871,7 +871,7 @@ static bool is_immutable_function(char *fname)
 	static POOL_RELCACHE *relcache;
 	POOL_CONNECTION_POOL *backend;
 
-	backend = pool_get_session_context()->backend;
+	backend = pool_get_session_context(false)->backend;
 
 	if (!relcache)
 	{
@@ -912,7 +912,7 @@ int pool_table_name_to_oid(char *table_name)
 		return oid;
 	}
 
-	backend = pool_get_session_context()->backend;
+	backend = pool_get_session_context(false)->backend;
 
 	if (pool_has_pgpool_regclass())
 	{

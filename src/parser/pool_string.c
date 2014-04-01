@@ -32,21 +32,10 @@ String *init_string(char *str)
 	String *string = palloc(sizeof(String));
 	int size;
 
-	if (string == NULL)
-	{
-		pool_error("init_string: palloc failed: %s", strerror(errno));
-		child_exit(1);
-	}
 
 	size = (strlen(str) + 1) / STRING_SIZE + 1;
 	string->size = size;
 	string->data = palloc(STRING_SIZE * size);
-	if (string->data == NULL)
-	{
-		pool_error("init_string: palloc failed: %s", strerror(errno));
-		pfree(string);
-		child_exit(1);
-	}
 
 	memset(string->data, 0, STRING_SIZE * size);
 
@@ -79,11 +68,6 @@ void string_append_char(String *string, char *append_data)
 		old_size = string->size; 
 		string->size = size;
 		string->data = repalloc(string->data, string->size * STRING_SIZE);
-		if (string->data == NULL)
-		{
-			pool_error("string_append_char: realloc failed: %s", strerror(errno));
-			child_exit(1);
-		}
 		memset(string->data + (old_size * STRING_SIZE),
 			   0, STRING_SIZE * (string->size - old_size));
 	}
@@ -101,20 +85,9 @@ String *copy_string(String *string)
 {
 	String *copy = palloc(sizeof(String));
 
-	if (copy == NULL)
-	{
-		pool_error("copy_string: palloc failed: %s", strerror(errno));
-		child_exit(1);
-	}
 	copy->size = string->size;
 	copy->len = string->len;
 	copy->data = palloc(string->size * STRING_SIZE);
-	if (copy->data == NULL)
-	{
-		pool_error("copy_string: palloc failed: %s", strerror(errno));
-		pfree(copy);
-		child_exit(1);
-	}		
 	memcpy(copy->data, string->data, string->size * STRING_SIZE);
 	
 	return copy;

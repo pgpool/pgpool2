@@ -124,8 +124,8 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 	sigjmp_buf	local_sigjmp_buf;
 	MemoryContext PCPMemoryContext;
 
-	PCP_CONNECTION *frontend = NULL;
-	int authenticated = 0;
+	PCP_CONNECTION* volatile frontend = NULL;
+	volatile int authenticated = 0;
 	struct timeval uptime;
 	char salt[4];
 	int random_salt = 0;
@@ -457,7 +457,9 @@ pcp_do_accept(int unix_fd, int inet_fd)
 
 	if (pcp_got_sighup)
 	{
+        MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
 		pool_get_config(get_config_file_name(), RELOAD_CONFIG);
+        MemoryContextSwitchTo(oldContext);
 		pcp_got_sighup = 0;
 	}
 
@@ -486,9 +488,7 @@ pcp_do_accept(int unix_fd, int inet_fd)
 					errdetail("setsockopt system call failed with error : \"%s\"",strerror(errno))));
 		}
 	}
-
-	if ((pc = pcp_open(afd)) == NULL)
-		close(afd);
+    pc = pcp_open(afd);
 	return pc;
 }
 

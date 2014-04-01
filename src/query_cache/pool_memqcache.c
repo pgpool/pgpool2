@@ -52,6 +52,9 @@
 #include "utils/pool_stream.h"
 #include "utils/pool_stream.h"
 #include "utils/elog.h"
+#include "utils/palloc.h"
+#include "utils/memutils.h"
+
 
 #ifdef USE_MEMCACHED
 memcached_st *memc;
@@ -140,8 +143,10 @@ int memcached_connect (void)
 	memqcache_memcached_host = pool_config->memqcache_memcached_host;
 	memqcache_memcached_port = pool_config->memqcache_memcached_port;
 
-	pool_debug("memcached_connect : memqcache_memcached_host = %s", memqcache_memcached_host);
-	pool_debug("memcached_connect : memqcache_memcached_port = %d", memqcache_memcached_port);
+	ereport(DEBUG1,
+            (errmsg("memcached_connect : memqcache_memcached_host = %s", memqcache_memcached_host)));
+	ereport(DEBUG1,
+            (errmsg("memcached_connect : memqcache_memcached_port = %d", memqcache_memcached_port)));
 
 #ifdef USE_MEMCACHED
 	memc = memcached_create(NULL);
@@ -360,12 +365,7 @@ static int pool_fetch_cache(POOL_CONNECTION_POOL *backend, const char *query, ch
 	}
 #endif
 
-	p = malloc(*len);
-	if (!p)
-	{
-		pool_error("pool_fetch_cache: malloc failed");
-		return -1;
-	}
+	p = palloc(*len);
 
 	memcpy(p, ptr, *len);
 
@@ -407,18 +407,13 @@ static char* encode_key(const char *s, char *buf, POOL_CONNECTION_POOL *backend)
 
 	length = u_length + d_length + q_length + 1;
 
-	strkey = (char*)malloc(sizeof(char) * length);
-	if (!strkey)
-	{
-		pool_error("encode_key: malloc failed");
-		return NULL;
-	}
+	strkey = (char*)palloc(sizeof(char) * length);
 
 	snprintf(strkey, length, "%s%s%s", backend->info->user, s, backend->info->database);
 
 	pool_md5_hash(strkey, strlen(strkey), buf);
 	pool_debug("encode_key: `%s' -> `%s'", strkey, buf);
-	free(strkey);
+	pfree(strkey);
 	return buf;
 }
 
@@ -566,10 +561,22 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 #endif
 
 	*foundp = false;
-
-	POOL_SETMASK2(&BlockSig, &oldmask);
+    
+    POOL_SETMASK2(&BlockSig, &oldmask);
 	pool_shmem_lock();
-	sts = pool_fetch_cache(backend, contents, &qcache, &qcachelen);
+
+    PG_TRY();
+    {
+        sts = pool_fetch_cache(backend, contents, &qcache, &qcachelen);
+    }
+    PG_CATCH();
+    {
+        pool_shmem_unlock();
+        POOL_SETMASK(&oldmask);
+        PG_RE_THROW();
+    }
+    PG_END_TRY();
+
 	pool_shmem_unlock();
 	POOL_SETMASK(&oldmask);
 
@@ -579,7 +586,7 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 		 * Cache found. send each messages to frontend
 		 */
 		send_cached_messages(frontend, qcache, qcachelen);
-		free(qcache);
+		pfree(qcache);
 
 		/*
 		 * If we are doing extended query, wait and discard Sync
@@ -1053,7 +1060,7 @@ void pool_add_dml_table_oid(int oid)
 	if (oidbufp >= oidbuf_size)
 	{
 		oidbuf_size += POOL_OIDBUF_SIZE;
-		tmp = realloc(oidbuf, sizeof(int) * oidbuf_size);
+		tmp = repalloc(oidbuf, sizeof(int) * oidbuf_size);
 		if (tmp == NULL)
 			return;
 
@@ -1104,7 +1111,7 @@ static int pool_get_dropdb_table_oids(int **oids, int dboid)
 		if (num_oids >= oids_size)
 		{
 			oids_size += POOL_OIDBUF_SIZE;
-			tmp = realloc(rtn, sizeof(int) * oids_size);
+			tmp = repalloc(rtn, sizeof(int) * oids_size);
 			if (tmp == NULL)
 			{
 				closedir(dir);
@@ -1162,7 +1169,7 @@ static int pool_get_database_oid(void)
 	static POOL_RELCACHE *relcache;
 	POOL_CONNECTION_POOL *backend;
 
-	backend = pool_get_session_context()->backend;
+	backend = pool_get_session_context(false)->backend;
 
 	/*
 	 * If relcache does not exist, create it.
@@ -1199,7 +1206,7 @@ int pool_get_database_oid_from_dbname(char *dbname)
 	char query[1024];
 
 	POOL_CONNECTION_POOL *backend;
-	backend = pool_get_session_context()->backend;
+	backend = pool_get_session_context(false)->backend;
 
 	snprintf(query, sizeof(query), DATABASE_TO_OID_QUERY, dbname); 
 	status = do_query(MASTER(backend), query, &res, MAJOR(backend));
@@ -1563,7 +1570,7 @@ static void pool_reset_memqcache_buffer(void)
 {
 	POOL_SESSION_CONTEXT * session_context;
 
-	session_context = pool_get_session_context();
+	session_context = pool_get_session_context(true);
 
 	if (session_context && session_context->query_cache_array)
 	{
@@ -1697,15 +1704,25 @@ pool_clear_memory_cache(void)
 	POOL_SETMASK2(&BlockSig, &oldmask);
 	pool_shmem_lock();
 
-	size = pool_shared_memory_cache_size();
-	memset(shmem, 0, size);
+    PG_TRY();
+    {
+        size = pool_shared_memory_cache_size();
+        memset(shmem, 0, size);
 
-	size = pool_shared_memory_fsmm_size();
-	pool_reset_fsmm(size);
+        size = pool_shared_memory_fsmm_size();
+        pool_reset_fsmm(size);
 
-	pool_discard_oid_maps();
+        pool_discard_oid_maps();
 
-	pool_hash_reset(pool_config->memqcache_max_num_cache);
+        pool_hash_reset(pool_config->memqcache_max_num_cache);
+    }
+    PG_CATCH();
+    {
+        pool_shmem_unlock();
+        POOL_SETMASK(&oldmask);
+        PG_RE_THROW();
+    }
+    PG_END_TRY();
 
 	pool_shmem_unlock();
 	POOL_SETMASK(&oldmask);
@@ -2488,6 +2505,7 @@ void pool_shmem_lock(void)
 	if (pool_is_shmem_cache())
 	{
 		pool_semaphore_lock(SHM_CACHE_SEM);
+
 	}
 }
 
@@ -2567,20 +2585,16 @@ POOL_QUERY_CACHE_ARRAY *pool_create_query_cache_array(void)
 {
 #define POOL_QUERY_CACHE_ARRAY_ALLOCATE_NUM 128
 #define POOL_QUERY_CACHE_ARRAY_HEADER_SIZE (sizeof(int)+sizeof(int))
-
+    MemoryContext oldContext = MemoryContextSwitchTo(ProcessLoopContext);
 	size_t size;
 	POOL_QUERY_CACHE_ARRAY *p;
 
 	size = POOL_QUERY_CACHE_ARRAY_HEADER_SIZE + POOL_QUERY_CACHE_ARRAY_ALLOCATE_NUM *
 		sizeof(POOL_TEMP_QUERY_CACHE *);
-	p = malloc(size);
-	if (!p)
-	{
-		pool_error("pool_create_query_cache_array: malloc failed");
-		return p;
-	}
+	p = palloc(size);
 	p->num_caches = 0;
 	p->array_size = POOL_QUERY_CACHE_ARRAY_ALLOCATE_NUM;
+    MemoryContextSwitchTo(oldContext);
 	return p;
 }
 
@@ -2601,7 +2615,7 @@ void pool_discard_query_cache_array(POOL_QUERY_CACHE_ARRAY *cache_array)
 		pool_debug("pool_discard_query_cache_array: i: %d cache: %p", i, cache_array->caches[i]);
 		pool_discard_temp_query_cache(cache_array->caches[i]);
 	}
-	free(cache_array);
+	pfree(cache_array);
 }
 
 /*
@@ -2622,12 +2636,7 @@ static POOL_QUERY_CACHE_ARRAY * pool_add_query_cache_array(POOL_QUERY_CACHE_ARRA
 		cache_array->array_size += POOL_QUERY_CACHE_ARRAY_ALLOCATE_NUM;
 		size = POOL_QUERY_CACHE_ARRAY_HEADER_SIZE + cache_array->array_size *
 			sizeof(POOL_TEMP_QUERY_CACHE *);
-		cache_array = realloc(cache_array, size);
-		if (!cache_array)
-		{
-			pool_error("pool_add_query_cache_array: malloc failed");
-			return cp;
-		}
+		cache_array = repalloc(cache_array, size);
 	}
 	cache_array->caches[cache_array->num_caches++] = cache;
 	return cache_array;
@@ -2643,36 +2652,18 @@ static POOL_QUERY_CACHE_ARRAY * pool_add_query_cache_array(POOL_QUERY_CACHE_ARRA
 POOL_TEMP_QUERY_CACHE *pool_create_temp_query_cache(char *query)
 {
 	POOL_TEMP_QUERY_CACHE *p;
+    MemoryContext oldContext = MemoryContextSwitchTo(QueryContext);
+	p = palloc(sizeof(*p));
+    p->query = pstrdup(query);
 
-	p = malloc(sizeof(*p));
-	if (p)
-	{
-		p->query = strdup(query);
-		if (!p->query)
-		{
-			pool_error("pool_create_temp_query_cache: strdup failed");
-			free(p);
-			return NULL;
-		}
-		p->buffer = pool_create_buffer();
-		if (!p->buffer)
-		{
-			free(p->query);
-			free(p);
-			return NULL;
-		}
-		p->oids = pool_create_buffer();
-		if (!p->oids)
-		{
-			free(p->query);
-			free(p->buffer);
-			free(p);
-			return NULL;
-		}
-		p->num_oids = 0;
-		p->is_exceeded = false;
-		p->is_discarded = false;
-	}
+    p->buffer = pool_create_buffer();
+    p->oids = pool_create_buffer();
+    p->num_oids = 0;
+    p->is_exceeded = false;
+    p->is_discarded = false;
+
+    MemoryContextSwitchTo(oldContext);
+
 	return p;
 }
 
@@ -2685,12 +2676,12 @@ void pool_discard_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache)
 		return;
 
 	if (temp_cache->query)
-		free(temp_cache->query);
+		pfree(temp_cache->query);
 	if (temp_cache->buffer)
 		pool_discard_buffer(temp_cache->buffer);
 	if (temp_cache->oids)
 		pool_discard_buffer(temp_cache->oids);
-	free(temp_cache);
+	pfree(temp_cache);
 }
 
 /*
@@ -2780,11 +2771,7 @@ static void pool_add_oids_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache, in
 static POOL_INTERNAL_BUFFER *pool_create_buffer(void)
 {
 	POOL_INTERNAL_BUFFER *p;
-	p = malloc(sizeof(*p));
-	if (p)
-	{
-		memset(p, 0, sizeof(*p));
-	}
+	p = palloc0(sizeof(*p));
 	return p;
 }
 
@@ -2796,8 +2783,8 @@ static void pool_discard_buffer(POOL_INTERNAL_BUFFER *buffer)
 	if (buffer)
 	{
 		if (buffer->buf)
-			free(buffer->buf);
-		free(buffer);
+			pfree(buffer->buf);
+		pfree(buffer);
 	}
 }
 
@@ -2819,13 +2806,7 @@ static void pool_add_buffer(POOL_INTERNAL_BUFFER *buffer, void *data, size_t len
 		pool_debug("pool_add_buffer: realloc old size:%zd new size:%zd",
 				   buffer->bufsize, allocate_size);
 		buffer->bufsize = allocate_size;
-		buffer->buf = (char *)realloc(buffer->buf, buffer->bufsize);
-		if (!buffer->buf)
-		{
-			pool_error("pool_add_buffer: realloc failed(request size:%zd",
-					   buffer->bufsize);
-			return;
-		}
+		buffer->buf = (char *)repalloc(buffer->buf, buffer->bufsize);
 	}
 	/* Add data to buffer */
 	memcpy(buffer->buf+buffer->buflen, data, len);
@@ -2853,13 +2834,7 @@ static void *pool_get_buffer(POOL_INTERNAL_BUFFER *buffer, size_t *len)
 		return NULL;
 	}
 
-	p = malloc(buffer->buflen);
-	if (!p)
-	{
-		pool_error("pool_get_buffer: malloc failed. Request size:%zd", buffer->buflen);
-		*len = 0;
-		return NULL;
-	}
+	p = palloc(buffer->buflen);
 	memcpy(p, buffer->buf, buffer->buflen);
 	*len = buffer->buflen;
 	return p;
@@ -2896,7 +2871,7 @@ POOL_TEMP_QUERY_CACHE *pool_get_current_cache(void)
 	POOL_QUERY_CONTEXT *query_context;
 	POOL_TEMP_QUERY_CACHE *p = NULL;
 
-	session_context = pool_get_session_context();
+	session_context = pool_get_session_context(true);
 	if (session_context)
 	{
 		query_context = session_context->query_context;
@@ -2938,7 +2913,7 @@ static void pool_check_and_discard_cache_buffer(int num_oids, int *oids)
 	int *soids;
 	int i, j, k;
 
-	session_context = pool_get_session_context();
+	session_context = pool_get_session_context(true);
 
 	if (!session_context || !session_context->query_cache_array)
 		return;
@@ -2969,7 +2944,7 @@ static void pool_check_and_discard_cache_buffer(int num_oids, int *oids)
 				}
 			}
 		}
-		free(soids);
+		pfree(soids);
 	}
 }
 
@@ -2991,7 +2966,7 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 	int	oldmask;
 #endif
 
-	session_context = pool_get_session_context();
+	session_context = pool_get_session_context(true);
 
 	/* Ok to cache SELECT result? */
 	if (pool_is_cache_safe())
@@ -3026,7 +3001,7 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 					{
 						pool_error("ReadyForQuery: pool_commit_cache failed");
 					}
-					free(cache_buffer);
+					pfree(cache_buffer);
 				}
 				pool_shmem_unlock();
 				POOL_SETMASK(&oldmask);
@@ -3128,8 +3103,8 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 			{
 				pool_error("ReadyForQuery: pool_commit_cache failed");
 			}
-			free(oids);
-			free(cache_buffer);
+			pfree(oids);
+			pfree(cache_buffer);
 		}
 		pool_shmem_unlock();
 		POOL_SETMASK(&oldmask);
@@ -3173,7 +3148,7 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 				pool_shmem_unlock();
 				pool_reset_memqcache_buffer();
 
-				free(oids);
+				pfree(oids);
 				pool_debug("ReadyForQuery: deleted all cache files for the DROPped DB");
 			}
 		}
@@ -3291,7 +3266,7 @@ long long int pool_tmp_stats_count_up_num_selects(void)
 {
 	POOL_SESSION_CONTEXT *session_context;
 
-	session_context = pool_get_session_context();
+	session_context = pool_get_session_context(false);
 	session_context->num_selects++;
 	return 	session_context->num_selects;
 }
@@ -3303,7 +3278,7 @@ long long int pool_tmp_stats_get_num_selects(void)
 {
 	POOL_SESSION_CONTEXT *session_context;
 
-	session_context = pool_get_session_context();
+	session_context = pool_get_session_context(false);
 	return session_context->num_selects;
 }
 
@@ -3314,7 +3289,7 @@ void pool_tmp_stats_reset_num_selects(void)
 {
 	POOL_SESSION_CONTEXT *session_context;
 
-	session_context = pool_get_session_context();
+	session_context = pool_get_session_context(false);
 	session_context->num_selects = 0;
 }
 

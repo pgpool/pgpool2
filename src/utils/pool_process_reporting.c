@@ -22,6 +22,7 @@
  */
 #include "pool.h"
 #include "protocol/pool_proto_modules.h"
+#include "utils/elog.h"
 #include "utils/pool_stream.h"
 #include "pool_config.h"
 #include "query_cache/pool_memqcache.h"
@@ -280,6 +281,21 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].name, "print_user", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->print_user);
 	strncpy(status[i].desc, "if true print user name to each log line", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+    strncpy(status[i].name, "log_error_verbosity", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->log_error_verbosity);
+	strncpy(status[i].desc, "controls how much detail about error should be emitted", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+    strncpy(status[i].name, "client_min_messages", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->client_min_messages);
+	strncpy(status[i].desc, "controls which message should be sent to client", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+    strncpy(status[i].name, "log_min_messages", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->log_min_messages);
+	strncpy(status[i].desc, "controls which message should be emitted to server log", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "log_connections", POOLCONFIG_MAXNAMELEN);
@@ -1606,11 +1622,22 @@ void cache_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	/*
 	 * Get raw cache stat data
 	 */
-	POOL_SETMASK2(&BlockSig, &oldmask);
-	pool_shmem_lock();
-	mystats = pool_get_shmem_storage_stats();
-	pool_shmem_unlock();
-	POOL_SETMASK(&oldmask);
+    POOL_SETMASK2(&BlockSig, &oldmask);
+    pool_shmem_lock();
+
+    PG_TRY();
+    {
+        mystats = pool_get_shmem_storage_stats();
+    }
+    PG_CATCH();
+    {
+        pool_shmem_unlock();
+        POOL_SETMASK(&oldmask);
+        PG_RE_THROW();
+    }
+    PG_END_TRY();
+    pool_shmem_unlock();
+    POOL_SETMASK(&oldmask);
 
 	/*
 	 * Convert to string

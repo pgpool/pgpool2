@@ -81,6 +81,7 @@ typedef enum
 #define PGDLLEXPORT
 #endif
 
+#define PGUNSIXBIT(val) (((val) & 0x3F) + '0')
 
 /* Error level codes */
 #define DEBUG5		10			/* Debugging messages, in categories of
@@ -132,9 +133,6 @@ typedef enum
 #endif
 #endif
 
-extern int		log_min_error_statement;
-extern int		log_min_messages;
-extern int		client_min_messages;
 
 /*----------
  * New-style error reporting API: to be used in this way:
@@ -196,6 +194,8 @@ extern void errfinish(int dummy,...);
 #define errcode(sqlerrcode) \
 	errcode_ign(0)
 extern int	errcode_ign(int sqlerrcode);
+
+extern int	pool_error_code(const char *errcode);
 
 extern int	return_code(int retcode);
 extern int	get_return_code(void);
@@ -428,6 +428,7 @@ typedef struct ErrorData
 	const char *domain;			/* message domain */
 	const char *context_domain; /* message domain for context message */
 	int			sqlerrcode;		/* encoded ERRSTATE */
+	char	   *pgpool_errcode;	/* error code to be sent to client */
 	char	   *message;		/* primary error message */
 	char	   *detail;			/* detail error message */
 	char	   *detail_log;		/* detail error message for server log only */
@@ -442,6 +443,7 @@ typedef struct ErrorData
 	int			retcode;			/* return code to be used in exit() code */
 	int			internalpos;	/* cursor index into internalquery */
 	char	   *internalquery;	/* text of internally-generated query */
+	char	   *client_error_code;	/* error code to report to client */
 	int			saved_errno;	/* errno at entry */
 
 	/* context containing associated non-constant strings */
@@ -471,10 +473,6 @@ typedef enum
 	PGERROR_VERBOSE				/* all the facts, ma'am */
 }	PGErrorVerbosity;
 
-extern int	Log_error_verbosity;
-extern char *Log_line_prefix;
-extern int	Log_destination;
-extern char *Log_destination_string;
 
 /* Log destination bitmap */
 #define LOG_DESTINATION_STDERR	 1
@@ -484,7 +482,7 @@ extern char *Log_destination_string;
 
 extern bool in_error_recursion_trouble(void);
 
-#ifdef HAVE_SYSLOG
+#ifdef HAVE_VSYSLOG
 extern void set_syslog_parameters(const char *ident, int facility);
 #endif
 
@@ -504,5 +502,6 @@ void on_exit_reset(void);
 void cancel_shmem_exit(pg_on_exit_callback function, Datum arg);
 void on_proc_exit(pg_on_exit_callback function, Datum arg);
 void on_shmem_exit(pg_on_exit_callback function, Datum arg);
+void on_system_exit(pg_on_exit_callback function, Datum arg);
 
 #endif   /* ELOG_H */
