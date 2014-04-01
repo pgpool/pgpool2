@@ -156,7 +156,7 @@ typedef struct {
 
 extern void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 extern void pool_session_context_destroy(void);
-extern POOL_SESSION_CONTEXT *pool_get_session_context(void);
+extern POOL_SESSION_CONTEXT *pool_get_session_context(bool noerror);
 extern int pool_get_local_session_id(void);
 extern bool pool_is_query_in_progress(void);
 extern void pool_set_query_in_progress(void);

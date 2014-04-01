@@ -46,7 +46,6 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
-typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -54,7 +53,6 @@ typedef int flex_int32_t;
 typedef unsigned char flex_uint8_t; 
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
-#endif /* ! C99 */
 
 /* Limits of integral types. */
 #ifndef INT8_MIN
@@ -84,6 +82,8 @@ typedef unsigned int flex_uint32_t;
 #ifndef UINT32_MAX
 #define UINT32_MAX             (4294967295U)
 #endif
+
+#endif /* ! C99 */
 
 #endif /* ! FLEXINT_H */
 
@@ -141,7 +141,15 @@ typedef unsigned int flex_uint32_t;
 
 /* Size of default input buffer. */
 #ifndef YY_BUF_SIZE
+#ifdef __ia64__
+/* On IA-64, the buffer size is 16k, not 8k.
+ * Moreover, YY_BUF_SIZE is 2*YY_READ_BUF_SIZE in the general case.
+ * Ditto for the __ia64__ case accordingly.
+ */
+#define YY_BUF_SIZE 32768
+#else
 #define YY_BUF_SIZE 16384
+#endif /* __ia64__ */
 #endif
 
 /* The state buf must be large enough to hold one state per character in the main buffer.
@@ -153,12 +161,7 @@ typedef unsigned int flex_uint32_t;
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
 #endif
 
-#ifndef YY_TYPEDEF_YY_SIZE_T
-#define YY_TYPEDEF_YY_SIZE_T
-typedef size_t yy_size_t;
-#endif
-
-extern yy_size_t yyleng;
+extern int yyleng;
 
 extern FILE *yyin, *yyout;
 
@@ -184,6 +187,11 @@ extern FILE *yyin, *yyout;
 
 #define unput(c) yyunput( c, (yytext_ptr)  )
 
+#ifndef YY_TYPEDEF_YY_SIZE_T
+#define YY_TYPEDEF_YY_SIZE_T
+typedef size_t yy_size_t;
+#endif
+
 #ifndef YY_STRUCT_YY_BUFFER_STATE
 #define YY_STRUCT_YY_BUFFER_STATE
 struct yy_buffer_state
@@ -201,7 +209,7 @@ struct yy_buffer_state
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
 	 */
-	yy_size_t yy_n_chars;
+	int yy_n_chars;
 
 	/* Whether we "own" the buffer - i.e., we know we created it,
 	 * and can realloc() it to grow it, and should free() it to
@@ -271,8 +279,8 @@ static YY_BUFFER_STATE * yy_buffer_stack = 0; /**< Stack as an array. */
 
 /* yy_hold_char holds the character lost when yytext is formed. */
 static char yy_hold_char;
-static yy_size_t yy_n_chars;		/* number of characters read into yy_ch_buf */
-yy_size_t yyleng;
+static int yy_n_chars;		/* number of characters read into yy_ch_buf */
+int yyleng;
 
 /* Points to current character in buffer. */
 static char *yy_c_buf_p = (char *) 0;
@@ -300,7 +308,7 @@ static void yy_init_buffer (YY_BUFFER_STATE b,FILE *file  );
 
 YY_BUFFER_STATE yy_scan_buffer (char *base,yy_size_t size  );
 YY_BUFFER_STATE yy_scan_string (yyconst char *yy_str  );
-YY_BUFFER_STATE yy_scan_bytes (yyconst char *bytes,yy_size_t len  );
+YY_BUFFER_STATE yy_scan_bytes (yyconst char *bytes,int len  );
 
 void *yyalloc (yy_size_t  );
 void *yyrealloc (void *,yy_size_t  );
@@ -358,7 +366,7 @@ static void yy_fatal_error (yyconst char msg[]  );
  */
 #define YY_DO_BEFORE_ACTION \
 	(yytext_ptr) = yy_bp; \
-	yyleng = (yy_size_t) (yy_cp - yy_bp); \
+	yyleng = (size_t) (yy_cp - yy_bp); \
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
@@ -555,7 +563,7 @@ static char *extract_string(char *value, POOL_TOKEN token);
 static char **extract_string_tokens(char *str, char *delim, int *n);
 static void clear_host_entry(int slot);
 
-#line 559 "config/pool_config.c"
+#line 567 "config/pool_config.c"
 
 #define INITIAL 0
 
@@ -594,7 +602,7 @@ FILE *yyget_out (void );
 
 void yyset_out  (FILE * out_str  );
 
-yy_size_t yyget_leng (void );
+int yyget_leng (void );
 
 char *yyget_text (void );
 
@@ -634,7 +642,12 @@ static int input (void );
 
 /* Amount of stuff to slurp up with each read. */
 #ifndef YY_READ_BUF_SIZE
+#ifdef __ia64__
+/* On IA-64, the buffer size is 16k, not 8k */
+#define YY_READ_BUF_SIZE 16384
+#else
 #define YY_READ_BUF_SIZE 8192
+#endif /* __ia64__ */
 #endif
 
 /* Copy whatever the last rule matched to the standard output. */
@@ -642,7 +655,7 @@ static int input (void );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO fwrite( yytext, yyleng, 1, yyout )
+#define ECHO do { if (fwrite( yytext, yyleng, 1, yyout )) {} } while (0)
 #endif
 
 /* Gets input and stuffs it into "buf".  number of characters read, or YY_NULL,
@@ -653,7 +666,7 @@ static int input (void );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		yy_size_t n; \
+		size_t n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -738,7 +751,7 @@ YY_DECL
 #line 98 "pool_config.l"
 
 
-#line 742 "config/pool_config.c"
+#line 755 "config/pool_config.c"
 
 	if ( !(yy_init) )
 		{
@@ -876,7 +889,7 @@ YY_RULE_SETUP
 #line 113 "pool_config.l"
 ECHO;
 	YY_BREAK
-#line 880 "config/pool_config.c"
+#line 893 "config/pool_config.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1063,7 +1076,7 @@ static int yy_get_next_buffer (void)
 
 	else
 		{
-			yy_size_t num_to_read =
+			int num_to_read =
 			YY_CURRENT_BUFFER_LVALUE->yy_buf_size - number_to_move - 1;
 
 		while ( num_to_read <= 0 )
@@ -1077,7 +1090,7 @@ static int yy_get_next_buffer (void)
 
 			if ( b->yy_is_our_buffer )
 				{
-				yy_size_t new_size = b->yy_buf_size * 2;
+				int new_size = b->yy_buf_size * 2;
 
 				if ( new_size <= 0 )
 					b->yy_buf_size += b->yy_buf_size / 8;
@@ -1108,7 +1121,7 @@ static int yy_get_next_buffer (void)
 
 		/* Read in more data. */
 		YY_INPUT( (&YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[number_to_move]),
-			(yy_n_chars), num_to_read );
+			(yy_n_chars), (size_t) num_to_read );
 
 		YY_CURRENT_BUFFER_LVALUE->yy_n_chars = (yy_n_chars);
 		}
@@ -1230,7 +1243,7 @@ static int yy_get_next_buffer (void)
 
 		else
 			{ /* need more input */
-			yy_size_t offset = (yy_c_buf_p) - (yytext_ptr);
+			int offset = (yy_c_buf_p) - (yytext_ptr);
 			++(yy_c_buf_p);
 
 			switch ( yy_get_next_buffer(  ) )
@@ -1254,7 +1267,7 @@ static int yy_get_next_buffer (void)
 				case EOB_ACT_END_OF_FILE:
 					{
 					if ( yywrap( ) )
-						return 0;
+						return EOF;
 
 					if ( ! (yy_did_buffer_switch_on_eof) )
 						YY_NEW_FILE;
@@ -1502,7 +1515,7 @@ void yypop_buffer_state (void)
  */
 static void yyensure_buffer_stack (void)
 {
-	yy_size_t num_to_alloc;
+	int num_to_alloc;
     
 	if (!(yy_buffer_stack)) {
 
@@ -1594,16 +1607,17 @@ YY_BUFFER_STATE yy_scan_string (yyconst char * yystr )
 
 /** Setup the input buffer state to scan the given bytes. The next call to yylex() will
  * scan from a @e copy of @a bytes.
- * @param bytes the byte buffer to scan
- * @param len the number of bytes in the buffer pointed to by @a bytes.
+ * @param yybytes the byte buffer to scan
+ * @param _yybytes_len the number of bytes in the buffer pointed to by @a bytes.
  * 
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE yy_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_len )
+YY_BUFFER_STATE yy_scan_bytes  (yyconst char * yybytes, int  _yybytes_len )
 {
 	YY_BUFFER_STATE b;
 	char *buf;
-	yy_size_t n, i;
+	yy_size_t n;
+	int i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = _yybytes_len + 2;
@@ -1685,7 +1699,7 @@ FILE *yyget_out  (void)
 /** Get the length of the current token.
  * 
  */
-yy_size_t yyget_leng  (void)
+int yyget_leng  (void)
 {
         return yyleng;
 }
@@ -1843,12 +1857,7 @@ int pool_init_config(void)
 	static char localhostname[256];
 	int i;
 
-	pool_config = malloc(sizeof(POOL_CONFIG));
-	if (pool_config == NULL)
-	{
-		pool_error("failed to allocate pool_config");
-		return(-1);
-	}
+	pool_config = palloc(sizeof(POOL_CONFIG));
 
 	memset(pool_config, 0, sizeof(POOL_CONFIG));
 
@@ -1860,24 +1869,13 @@ int pool_init_config(void)
 		return -1;
 	}
 #else
-	pool_config->backend_desc = malloc(sizeof(BackendDesc));
-	if (pool_config->backend_desc == NULL)
-	{
-		pool_error("failed to allocate pool_config->backend_desc");
-		return -1;
-	}
+	pool_config->backend_desc = palloc(sizeof(BackendDesc));
 #endif
 
 	/*
 	 * add for watchdog
 	 */
-	pool_config->other_wd = malloc(sizeof(WdDesc));
-	if (pool_config->other_wd == NULL)
-	{
-		pool_error("failed to allocate pool_config->cwother_wd");
-		return -1;
-	}
-	memset(pool_config->other_wd, 0, sizeof(WdDesc));
+	pool_config->other_wd = palloc0(sizeof(WdDesc));
 
 	/* set hardcoded default values */
 	pool_config->listen_addresses = "localhost";
@@ -1920,6 +1918,9 @@ int pool_init_config(void)
 	pool_config->black_function_list = default_black_function_list;
 	pool_config->num_black_function_list = sizeof(default_black_function_list)/sizeof(char *);
 	pool_config->print_timestamp = 1;
+	pool_config->log_error_verbosity = 1;    /* PGERROR_DEFAULT */
+	pool_config->client_min_messages = 18;  /* NOTICE */
+	pool_config->log_min_messages = 19;     /* WARNING */
 	pool_config->print_user = 0;
 	pool_config->master_slave_mode = 0;
 	pool_config->master_slave_sub_mode = "slony";
@@ -2071,12 +2072,7 @@ int add_regex_pattern(char *type, char *s)
 	currItem.flag = regex_flags;
 
 	/* Fill pattern array */
-	currItem.pattern = malloc(sizeof(char)*(strlen(s)+3));
-	if (currItem.pattern == NULL)
-	{
-		pool_error("add_to_patterns: unable to allocate new pattern");
-		return 0;
-	}
+	currItem.pattern = palloc(sizeof(char)*(strlen(s)+3));
 	/* Force exact matching of function name with ^ and $ on the regex
 	   if required to prevent partial matching. It also allow backward
 	   compatibility.
@@ -2125,7 +2121,7 @@ int growFunctionPatternArray(RegPattern item)
 	if (pool_config->pattc == pool_config->current_pattern_size)
 	{
 		pool_config->current_pattern_size += PATTERN_ARR_SIZE;
-		_tmp = realloc(pool_config->lists_patterns,
+		_tmp = repalloc(pool_config->lists_patterns,
 		               (pool_config->current_pattern_size * sizeof(RegPattern)));
 		if (!_tmp)
 		{
@@ -2146,7 +2142,7 @@ int growMemqcacheTablePatternArray(RegPattern item)
 	if (pool_config->memqcache_table_pattc == pool_config->current_memqcache_table_pattern_size)
 	{
 		pool_config->current_memqcache_table_pattern_size += PATTERN_ARR_SIZE;
-		_tmp = realloc(pool_config->lists_memqcache_table_patterns,
+		_tmp = repalloc(pool_config->lists_memqcache_table_patterns,
 		               (pool_config->current_memqcache_table_pattern_size * sizeof(RegPattern)));
 		if (!_tmp)
 		{
@@ -2255,9 +2251,9 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			if (v)
-				pool_config->listen_addresses = strdup("*");
+				pool_config->listen_addresses = pstrdup("*");
 			else
-				pool_config->listen_addresses = strdup("");
+				pool_config->listen_addresses = pstrdup("");
 		}
 		else if (!strcmp(key, "listen_addresses") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
@@ -2782,6 +2778,121 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			for (i=0;i<pool_config->num_black_function_list;i++)
 			{
 				add_regex_pattern("black_function_list", pool_config->black_function_list[i]);
+			}
+		}
+        else if (!strcmp(key, "log_error_verbosity") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str, *valid_val;
+            int i;
+            const char *ordered_valid_values[] = {"terse","default","verbose",NULL};
+            bool found = false;
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+            for(i=0; ; i++)
+            {
+                valid_val = (char*)ordered_valid_values[i];
+                if(!valid_val)
+                break;
+                if (!strcasecmp(str, valid_val))
+                {
+                    found = true;
+                    pool_config->log_error_verbosity = i;
+                    break;
+                }
+            }
+  			if (!found)
+			{
+				pool_error("pool_config: invalid log_error_verbosity %s", key);
+				fclose(fd);
+				return(-1);
+			}
+		}
+        
+        else if (!strcmp(key, "client_min_messages") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str, *valid_val;
+            int i;
+            const char *ordered_valid_values[] = {"debug5","debug4","debug3","debug2","debug1","log","commerror","info","notice","warning","error",NULL};
+            bool found = false;
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+            for(i=0; ; i++)
+            {
+                valid_val = (char*)ordered_valid_values[i];
+                if(!valid_val)
+                break;
+                
+                if (!strcasecmp(str, valid_val))
+                {
+                    found = true;
+                    pool_config->client_min_messages = i + 10;
+                    break;
+                }
+            }
+  			if (!found)
+			{
+				pool_error("pool_config: invalid client_min_messages  %s", key);
+				fclose(fd);
+				return(-1);
+			}
+		}
+        else if (!strcmp(key, "log_min_messages") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str, *valid_val;
+            int i;
+            const char *ordered_valid_values[] = {"debug5","debug4","debug3","debug2","debug1","log","commerror","info","notice","warning","error","fatal","panic",NULL};
+            bool found = false;
+            
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+            for(i=0; ; i++)
+            {
+                valid_val = (char*)ordered_valid_values[i];
+                if(!valid_val)
+                break;
+                
+                if (!strcasecmp(str, valid_val))
+                {
+                    found = true;
+                    pool_config->log_min_messages = i + 10; /* error codes start with 10 */
+                    break;
+                }
+            }
+  			if (!found)
+			{
+				pool_error("pool_config: invalid log_min_messages  %s", key);
+				fclose(fd);
+				return(-1);
 			}
 		}
 
@@ -4674,33 +4785,18 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 #endif
 		SystemDBInfo *info;
 		
-		system_db_info = malloc(sizeof(POOL_SYSTEMDB_CONNECTION_POOL));
-		if (system_db_info == NULL)
-		{
-			pool_error("failed to allocate system_db_info");
-			return -1;
-		}
+		system_db_info = palloc(sizeof(POOL_SYSTEMDB_CONNECTION_POOL));
 		memset(system_db_info, 0, sizeof(*system_db_info));
 
 #ifndef POOL_PRIVATE
 		system_db_info->system_db_status = pool_shared_memory_create(sizeof(BACKEND_STATUS));
 #else
-		system_db_info->system_db_status = malloc(sizeof(BACKEND_STATUS));
+		system_db_info->system_db_status = palloc(sizeof(BACKEND_STATUS));
 #endif
-		if (system_db_info->system_db_status == NULL)
-		{
-			pool_error("failed to allocate system_db_info->system_db_status");
-			return -1;
-		}
 
 		*system_db_info->system_db_status = CON_CONNECT_WAIT;	/* which is the same as SYSDB_STATUS = CON_CONNECT_WAIT */
 
-		info = malloc(sizeof(SystemDBInfo));
-		if (info == NULL)
-		{
-			pool_error("failed to allocate info");
-			return -1;
-		}
+		info = palloc(sizeof(SystemDBInfo));
 
 		system_db_info->info = info;
 		info->hostname = pool_config->system_db_hostname;
@@ -4753,12 +4849,7 @@ static char *extract_string(char *value, POOL_TOKEN token)
 {
 	char *ret;
 
-	ret = strdup(value);
-	if (!ret)
-	{
-		pool_error("extract_string: out of memory");
-		return NULL;
-	}
+	ret = pstrdup(value);
 
 	if (token == POOL_STRING)
 	{
@@ -4879,21 +4970,11 @@ static char **extract_string_tokens(char *str, char *delimi, int *n)
 
 	*n = 0;
 
-	tokens = malloc(MAXTOKENS*sizeof(char *));
-	if (tokens == NULL)
-	{
-		pool_error("extract_string_tokens: out of memory");
-		return NULL;
-	}
+	tokens = palloc(MAXTOKENS*sizeof(char *));
 
 	for (token = strtok(str, delimi); token != NULL && *n < MAXTOKENS; token = strtok(NULL, delimi))
 	{
-		tokens[*n] = strdup(token);
-		if (tokens[*n] == NULL)
-		{
-			pool_error("extract_string_tokens: out of memory");
-			return NULL;
-		}
+		tokens[*n] = pstrdup(token);
 		pool_debug("extract_string_tokens: token: %s", tokens[*n]);
 		(*n)++;
 	}

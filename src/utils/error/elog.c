@@ -56,11 +56,12 @@
 #include "pool_type.h"
 #include "utils/palloc.h"
 #include <fcntl.h>
+#include <arpa/inet.h>
 #include <time.h>
 #include <unistd.h>
 #include <signal.h>
 #include <ctype.h>
-#ifdef HAVE_SYSLOG
+#ifdef HAVE_VSYSLOG
 #include <syslog.h>
 #endif
 #include <string.h>
@@ -70,6 +71,9 @@
 #include "utils/elog.h"
 #include "utils/memutils.h"
 #include "pool_config.h"
+#include "utils/pool_stream.h"
+#include "context/pool_session_context.h"
+#include "pool.h"
 
 #define MAX_ON_EXITS 64
 
@@ -81,6 +85,8 @@ static struct ONEXIT
 
 static int	on_proc_exit_index,
 			on_shmem_exit_index;
+struct ONEXIT on_exit_prepare = {NULL,0L};
+
 /*
  * This flag tracks whether we've called atexit() in the current process
  * (or in the parent postmaster).
@@ -95,9 +101,6 @@ bool		proc_exit_inprogress = false;
 /* local functions */
 static void proc_exit_prepare(int code);
 
-int		log_min_error_statement = LOG;
-int		log_min_messages = LOG;
-int		client_min_messages = LOG;
 
 /* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
 CommandDest whereToSendOutput = DestDebug;
@@ -120,13 +123,7 @@ extern bool redirection_done;
  */
 emit_log_hook_type emit_log_hook = NULL;
 
-/* GUC parameters */
-int			Log_error_verbosity = PGERROR_VERBOSE;
-char	   *Log_line_prefix = NULL;		/* format for extra log line info */
-int			Log_destination = LOG_DESTINATION_STDERR;
-char	   *Log_destination_string = NULL;
-
-#ifdef HAVE_SYSLOG
+#ifdef HAVE_VSYSLOG
 
 /*
  * Max string length to send to syslog().  Note that this doesn't count the
@@ -147,7 +144,10 @@ static void write_syslog(int level, const char *line);
 #endif
 
 static void send_message_to_server_log(ErrorData *edata);
+static void send_message_to_frontend(ErrorData *edata);
 static void write_console(const char *line, int len);
+static void send_message_to_frontend(ErrorData *edata);
+static void pgpool_log_prefix(StringInfo buf, ErrorData *edata);
 
 #ifdef WIN32
 extern char *event_source;
@@ -183,14 +183,11 @@ static char formatted_log_time[FORMATTED_TS_LEN];
 	} while (0)
 
 
-static void log_line_prefix(StringInfo buf, ErrorData *edata);
 static char *expand_fmt_string(const char *fmt, ErrorData *edata);
 static const char *useful_strerror(int errnum);
 static const char *error_severity(int elevel);
 static void append_with_tabs(StringInfo buf, const char *str);
 static bool is_log_level_output(int elevel, int log_min_level);
-static void setup_formatted_log_time(void);
-static void setup_formatted_start_time(void);
 
 
 /*
@@ -271,17 +268,6 @@ errstart(int elevel, const char *filename, int lineno,
 				elevel = FATAL;
 		}
 
-		if(elevel  == ERROR)
-		{
-			if(processType == PT_CHILD)
-			{
-				/*
-				 * If the frontend connection exists, treat this error as FATAL
-				 */
-				if(is_session_connected())
-					elevel = FATAL;
-			}
-		}
 		/*
 		 * If the error level is ERROR or more, errfinish is not going to
 		 * return to caller; therefore, if there is any stacked error already
@@ -301,7 +287,7 @@ errstart(int elevel, const char *filename, int lineno,
 	 */
 
 	/* Determine whether message is enabled for server log output */
-	output_to_server = is_log_level_output(elevel, log_min_messages);
+	output_to_server = is_log_level_output(elevel, pool_config->log_min_messages);
 
 	/* Determine whether message is enabled for client output */
 	if (whereToSendOutput == DestRemote && elevel != COMMERROR)
@@ -312,10 +298,7 @@ errstart(int elevel, const char *filename, int lineno,
 		 * reasons and because many clients can't handle NOTICE messages
 		 * during authentication.
 		 */
-//		if (ClientAuthInProgress)
-//			output_to_client = (elevel >= ERROR);
-//		else
-			output_to_client = (elevel >= client_min_messages ||
+        output_to_client = (elevel >= pool_config->client_min_messages ||
 								elevel == INFO);
 	}
 
@@ -345,7 +328,6 @@ errstart(int elevel, const char *filename, int lineno,
 		if (in_error_recursion_trouble())
 		{
 			error_context_stack = NULL;
-//			debug_query_string = NULL;
 		}
 	}
 	if (++errordata_stack_depth >= ERRORDATA_STACK_SIZE)
@@ -379,15 +361,8 @@ errstart(int elevel, const char *filename, int lineno,
 	edata->funcname = funcname;
 	/* the default text domain is the backend's */
 	edata->domain = domain ? domain : PG_TEXTDOMAIN("postgres");
-	/* Select default errcode based on elevel */
-//	if (elevel >= ERROR)
-//		edata->sqlerrcode = ERRCODE_INTERNAL_ERROR;
-//	else if (elevel == WARNING)
-//		edata->sqlerrcode = ERRCODE_WARNING;
-//	else
-//		edata->sqlerrcode = ERRCODE_SUCCESSFUL_COMPLETION;
-	/* errno is saved here so that error parameter eval can't change it */
-//	edata->saved_errno = errno;
+
+    edata->saved_errno = errno;
 
 	/*
 	 * Any allocations for this error state level should go into ErrorContext
@@ -445,20 +420,6 @@ errfinish(int dummy,...)
 		 * execute in a reasonably sane state.
 		 */
 
-		/* This is just in case the error came while waiting for input */
-//		ImmediateInterruptOK = false;
-
-		/*
-		 * Reset InterruptHoldoffCount in case we ereport'd from inside an
-		 * interrupt holdoff section.  (We assume here that no handler will
-		 * itself be inside a holdoff section.	If necessary, such a handler
-		 * could save and restore InterruptHoldoffCount for itself, but this
-		 * should make life easier for most.)
-		 */
-//		InterruptHoldoffCount = 0;
-
-//		CritSectionCount = 0;	/* should be unnecessary, but... */
-
 		/*
 		 * Note that we leave CurrentMemoryContext set to ErrorContext. The
 		 * handler should reset it to something else soon.
@@ -477,8 +438,6 @@ errfinish(int dummy,...)
 	 * we must do this even if client is fool enough to have set
 	 * client_min_messages above FATAL, so don't look at output_to_client.
 	 */
-//	if (elevel >= FATAL && whereToSendOutput == DestRemote)
-//		pq_endcopyout(true);
 
 	/* Emit the message to the right places */
 	EmitErrorReport();
@@ -519,11 +478,6 @@ errfinish(int dummy,...)
 	if (elevel == FATAL)
 	{
 		/*
-		 * For a FATAL error, we let proc_exit clean up and exit.
-		 */
-//		ImmediateInterruptOK = false;
-
-		/*
 		 * If we just reported a startup failure, the client will disconnect
 		 * on receiving it, so don't send any more to the client.
 		 */
@@ -556,7 +510,7 @@ errfinish(int dummy,...)
 		 * XXX: what if we are *in* the postmaster?  abort() won't kill our
 		 * children...
 		 */
-//		ImmediateInterruptOK = false;
+
 		fflush(stdout);
 		fflush(stderr);
 		abort();
@@ -581,16 +535,24 @@ errfinish(int dummy,...)
 int
 errcode_ign(int sqlerrcode)
 {
-//	ErrorData  *edata = &errordata[errordata_stack_depth];
-//
-//	/* we don't bother incrementing recursion_depth */
-//	CHECK_STACK_DEPTH();
-//
-//	edata->sqlerrcode = sqlerrcode;
-
 	return 0;					/* return value does not matter */
 }
 
+int pool_error_code(const char *errcode)
+{
+    ErrorData  *edata = &errordata[errordata_stack_depth];
+	MemoryContext oldcontext;
+    
+	recursion_depth++;
+	CHECK_STACK_DEPTH();
+	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
+    
+	edata->pgpool_errcode = pstrdup(errcode);
+    
+	MemoryContextSwitchTo(oldcontext);
+	recursion_depth--;
+	return 0;					/* return value does not matter */
+}
 
 /*
  * errcode_for_socket_access --- add SQLSTATE error code to the current error
@@ -1180,8 +1142,8 @@ EmitErrorReport(void)
 		send_message_to_server_log(edata);
 
 	/* Send to client, if enabled */
-//	if (edata->output_to_client)
-//		send_message_to_frontend(edata);
+	if (edata->output_to_client)
+		send_message_to_frontend(edata);
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -1388,23 +1350,8 @@ pg_re_throw(void)
 		Assert(edata->elevel == ERROR);
 		edata->elevel = FATAL;
 
-		/*
-		 * At least in principle, the increase in severity could have changed
-		 * where-to-output decisions, so recalculate.  This should stay in
-		 * sync with errstart(), which see for comments.
-		 */
-//		if (IsPostmasterEnvironment)
-//			edata->output_to_server = is_log_level_output(FATAL,
-//														  log_min_messages);
-//		else
-			edata->output_to_server = (FATAL >= log_min_messages);
-		if (whereToSendOutput == DestRemote)
-		{
-//			if (ClientAuthInProgress)
-//				edata->output_to_client = true;
-//			else
-				edata->output_to_client = (FATAL >= client_min_messages);
-		}
+        edata->output_to_server = (FATAL >= pool_config->log_min_messages);
+        edata->output_to_client = (FATAL >= pool_config->client_min_messages);
 
 		/*
 		 * We can use errfinish() for the rest, but we don't want it to call
@@ -1497,7 +1444,7 @@ GetErrorContextStack(void)
 }
 
 
-#ifdef HAVE_SYSLOG
+#ifdef HAVE_VSYSLOG
 
 /*
  * Set or update the parameters for syslog logging
@@ -1597,12 +1544,12 @@ write_syslog(int level, const char *line)
 			memcpy(buf, line, buflen);
 			buf[buflen] = '\0';
 
-			/* trim to multibyte letter boundary */
+			/* trim to multibyte letter boundary
 			buflen = pg_mbcliplen(buf, buflen, buflen);
 			if (buflen <= 0)
 				return;
 			buf[buflen] = '\0';
-
+*/
 			/* already word boundary? */
 			if (line[buflen] != '\0' &&
 				!isspace((unsigned char) line[buflen]))
@@ -1632,7 +1579,7 @@ write_syslog(int level, const char *line)
 		syslog(level, "[%lu] %s", seq, line);
 	}
 }
-#endif   /* HAVE_SYSLOG */
+#endif   /* HAVE_VSYSLOG */
 
 #ifdef WIN32
 /*
@@ -1805,32 +1752,133 @@ write_console(const char *line, int len)
 	(void) rc;
 }
 
-/*
- * setup formatted_log_time, for consistent times between CSV and regular logs
- */
-static void
-setup_formatted_log_time(void)
-{
-}
 
 /*
- * setup formatted_start_time
+ * Write error report to frontend log
  */
 static void
-setup_formatted_start_time(void)
+send_message_to_frontend(ErrorData *edata)
 {
-	time_t now = time(NULL);
-	strftime(formatted_start_time, FORMATTED_TS_LEN, "%Y-%m-%d %H:%M:%S", localtime(&now));
+    if(processType != PT_CHILD)
+        return;
+    if(edata->elevel < NOTICE)
+        return;
+
+    POOL_SESSION_CONTEXT *session = pool_get_session_context(true);
+    if(!session || !session->frontend)
+        return;
+
+    POOL_CONNECTION *frontend = session->frontend;
+
+	pool_set_nonblock(frontend->fd);
+    
+	if (frontend->protoVersion == PROTO_MAJOR_V2)
+	{
+        char* message = edata->message?edata->message:"missing error text";
+		pool_write_noerror(frontend, (edata->elevel < ERROR) ? "N" : "E", 1);
+        pool_write_noerror(frontend, message, strlen(message));
+        pool_write_noerror(frontend, "\n", 1);
+        pool_flush_it(frontend);
+	}
+	else if (frontend->protoVersion == PROTO_MAJOR_V3)
+	{
+        /*
+         * Buffer length for each message part
+         */
+#define MAXMSGBUF 256
+        /*
+         * Buffer length for result message buffer.
+         * Since msg is consisted of 7 parts, msg buffer should be large
+         * enough to hold those message parts
+         */
+#define MAXDATA	(MAXMSGBUF+1)*7+1
+
+		char data[MAXDATA];
+		char msgbuf[MAXMSGBUF+1];
+		int len;
+		int thislen;
+		int sendlen;
+        
+		len = 0;
+		memset(data, 0, MAXDATA);
+        pool_write_noerror(frontend, (edata->elevel < ERROR) ? "N" : "E", 1);
+        
+		/* error level */
+		thislen = snprintf(msgbuf, MAXMSGBUF, "S%s", error_severity(edata->elevel));
+		thislen = Min(thislen, MAXMSGBUF);
+		memcpy(data +len, msgbuf, thislen+1);
+		len += thislen + 1;
+        
+		/* code */
+		thislen = snprintf(msgbuf, MAXMSGBUF, "C%s", edata->pgpool_errcode?edata->pgpool_errcode:"XX000");
+		thislen = Min(thislen, MAXMSGBUF);
+		memcpy(data +len, msgbuf, thislen+1);
+		len += thislen + 1;
+        
+		/* message */
+		thislen = snprintf(msgbuf, MAXMSGBUF, "M%s", edata->message?edata->message:"missing error text");
+		thislen = Min(thislen, MAXMSGBUF);
+		memcpy(data +len, msgbuf, thislen+1);
+		len += thislen + 1;
+        
+		/* detail */
+		if (edata->detail)
+		{
+			thislen = snprintf(msgbuf, MAXMSGBUF, "D%s", edata->detail);
+			thislen = Min(thislen, MAXMSGBUF);
+			memcpy(data +len, msgbuf, thislen+1);
+			len += thislen + 1;
+		}
+        
+		/* hint */
+		if (edata->hint )
+		{
+			thislen = snprintf(msgbuf, MAXMSGBUF, "H%s", edata->hint);
+			thislen = Min(thislen, MAXMSGBUF);
+			memcpy(data +len, msgbuf, thislen+1);
+			len += thislen + 1;
+		}
+        
+		/* file */
+		thislen = snprintf(msgbuf, MAXMSGBUF, "F%s", edata->filename);
+		thislen = Min(thislen, MAXMSGBUF);
+		memcpy(data +len, msgbuf, thislen+1);
+		len += thislen + 1;
+        
+		/* line */
+		thislen = snprintf(msgbuf, MAXMSGBUF, "L%d", edata->lineno);
+		thislen = Min(thislen, MAXMSGBUF);
+		memcpy(data +len, msgbuf, thislen+1);
+		len += thislen + 1;
+        
+		/* stop null */
+		len++;
+		*(data + len - 1) = '\0';
+        
+		sendlen = len;
+		len = htonl(len + 4);
+		pool_write_noerror(frontend, &len, sizeof(len));
+		pool_write_noerror(frontend, data, sendlen);
+        pool_flush_it(frontend);
+
+	}
+	pool_unset_nonblock(frontend->fd);
 }
 
-/*
- * Format tag info for log lines; append to the provided buffer.
- */
-static void
-log_line_prefix(StringInfo buf, ErrorData *edata)
-{
-}
 
+
+static void pgpool_log_prefix(StringInfo buf, ErrorData *edata)
+{
+    if (pool_config->print_timestamp)
+    {
+        char strbuf[129];
+        time_t now = time(NULL);
+        strftime(strbuf, 128, "%Y-%m-%d %H:%M:%S", localtime(&now));
+        appendStringInfo(buf, "%s: ", strbuf);
+    }
+    appendStringInfo(buf, "pid %d: ",(int)getpid());
+    
+}
 /*
  * Write error report to server's log
  */
@@ -1843,11 +1891,9 @@ send_message_to_server_log(ErrorData *edata)
 
 	formatted_log_time[0] = '\0';
 
-	log_line_prefix(&buf, edata);
+    pgpool_log_prefix(&buf, edata);
 	appendStringInfo(&buf, "%s:  ", error_severity(edata->elevel));
 
-//	if (Log_error_verbosity >= PGERROR_VERBOSE)
-//		appendStringInfo(&buf, "%s: ", unpack_sql_state(edata->sqlerrcode));
 
 	if (edata->message)
 		append_with_tabs(&buf, edata->message);
@@ -1863,79 +1909,59 @@ send_message_to_server_log(ErrorData *edata)
 
 	appendStringInfoChar(&buf, '\n');
 
-	if (Log_error_verbosity >= PGERROR_DEFAULT)
+	if (pool_config->log_error_verbosity >= PGERROR_DEFAULT)
 	{
 		if (edata->detail_log)
 		{
-			log_line_prefix(&buf, edata);
 			appendStringInfoString(&buf, _("DETAIL:  "));
 			append_with_tabs(&buf, edata->detail_log);
 			appendStringInfoChar(&buf, '\n');
 		}
 		else if (edata->detail)
 		{
-			log_line_prefix(&buf, edata);
 			appendStringInfoString(&buf, _("DETAIL:  "));
 			append_with_tabs(&buf, edata->detail);
 			appendStringInfoChar(&buf, '\n');
 		}
 		if (edata->hint)
 		{
-			log_line_prefix(&buf, edata);
 			appendStringInfoString(&buf, _("HINT:  "));
 			append_with_tabs(&buf, edata->hint);
 			appendStringInfoChar(&buf, '\n');
 		}
 		if (edata->internalquery)
 		{
-			log_line_prefix(&buf, edata);
 			appendStringInfoString(&buf, _("QUERY:  "));
 			append_with_tabs(&buf, edata->internalquery);
 			appendStringInfoChar(&buf, '\n');
 		}
 		if (edata->context)
 		{
-			log_line_prefix(&buf, edata);
 			appendStringInfoString(&buf, _("CONTEXT:  "));
 			append_with_tabs(&buf, edata->context);
 			appendStringInfoChar(&buf, '\n');
 		}
-		if (Log_error_verbosity >= PGERROR_VERBOSE)
+		if (pool_config->log_error_verbosity >= PGERROR_VERBOSE)
 		{
 			/* assume no newlines in funcname or filename... */
 			if (edata->funcname && edata->filename)
 			{
-				log_line_prefix(&buf, edata);
 				appendStringInfo(&buf, _("LOCATION:  %s, %s:%d\n"),
 								 edata->funcname, edata->filename,
 								 edata->lineno);
 			}
 			else if (edata->filename)
 			{
-				log_line_prefix(&buf, edata);
 				appendStringInfo(&buf, _("LOCATION:  %s:%d\n"),
 								 edata->filename, edata->lineno);
 			}
 		}
 	}
 
-	/*
-	 * If the user wants the query that generated this error logged, do it.
-	 
-	if (is_log_level_output(edata->elevel, log_min_error_statement) &&
-		debug_query_string != NULL &&
-		!edata->hide_stmt)
-	{
-		log_line_prefix(&buf, edata);
-		appendStringInfoString(&buf, _("STATEMENT:  "));
-		append_with_tabs(&buf, debug_query_string);
-		appendStringInfoChar(&buf, '\n');
-	}
-*/
-#ifdef HAVE_SYSLOG
+#ifdef HAVE_VSYSLOG
 	/* Write to syslog, if enabled */
-	if (Log_destination & LOG_DESTINATION_SYSLOG)
-	{
+    if (pool_config->logsyslog == 1)
+    {
 		int			syslog_level;
 
 		switch (edata->elevel)
@@ -1967,43 +1993,12 @@ send_message_to_server_log(ErrorData *edata)
 				syslog_level = LOG_CRIT;
 				break;
 		}
-		if (pool_config->logsyslog = 1)
+		if (pool_config->logsyslog == 1)
 			write_syslog(syslog_level, buf.data);
 	}
-#endif   /* HAVE_SYSLOG */
+#endif   /* HAVE_VSYSLOG */
 
-#ifdef WIN32
-	/* Write to eventlog, if enabled */
-	if (Log_destination & LOG_DESTINATION_EVENTLOG)
-	{
-		write_eventlog(edata->elevel, buf.data, buf.len);
-	}
-#endif   /* WIN32 */
-
-	/* Write to stderr, if enabled */
-	if ((Log_destination & LOG_DESTINATION_STDERR) || whereToSendOutput == DestDebug)
-	{
-		/*
-		 * Use the chunking protocol if we know the syslogger should be
-		 * catching stderr output, and we are not ourselves the syslogger.
-		 * Otherwise, just do a vanilla write to stderr.
-		 */
-#ifdef WIN32
-
-		/*
-		 * In a win32 service environment, there is no usable stderr. Capture
-		 * anything going there and write it to the eventlog instead.
-		 *
-		 * If stderr redirection is active, it was OK to write to stderr above
-		 * because that's really a pipe to the syslogger process.
-		 */
-		else if (pgwin32_is_service())
-			write_eventlog(edata->elevel, buf.data, buf.len);
-#endif
-		write_console(buf.data, buf.len);
-	}
-
-
+    write_console(buf.data, buf.len);
 	pfree(buf.data);
 }
 
@@ -2260,7 +2255,10 @@ proc_exit(int code)
 	proc_exit_prepare(code);
 
 	elog(DEBUG3, "exit(%d)", code);
-
+	if(processType == PT_MAIN)
+        system_exit(code);
+    else
+        child_exit(code);
 	exit(code);
 }
 
@@ -2294,7 +2292,15 @@ proc_exit_prepare(int code)
 	 * elog(FATAL) for example.)
 	 */
 	error_context_stack = NULL;
-
+    /* 
+     * call on exit prepare if some function is specified
+     * this extention is added by pgpool
+     */
+    if(on_exit_prepare.function)
+    {
+        (*on_exit_prepare.function) (code,on_exit_prepare.arg);
+        on_exit_prepare.function = NULL;
+    }
 	/* do our shared memory exits first */
 	shmem_exit(code);
 
@@ -2413,6 +2419,18 @@ on_shmem_exit(pg_on_exit_callback function, Datum arg)
 		atexit_callback_setup = true;
 	}
 }
+/* ----------------------------------------------------------------
+ *		on_system_exit
+ *
+ *		this function adds a callback function which is invoked
+ *		just before calling shmem_exit callbacks at process exit
+ * ----------------------------------------------------------------
+ */
+void on_system_exit(pg_on_exit_callback function, Datum arg)
+{
+    on_exit_prepare.function = function;
+    on_exit_prepare.arg = arg;
+}
 
 /* ----------------------------------------------------------------
  *		cancel_shmem_exit
@@ -2446,4 +2464,6 @@ on_exit_reset(void)
 {
 	on_shmem_exit_index = 0;
 	on_proc_exit_index = 0;
+    on_exit_prepare.function = NULL;
+    on_exit_prepare.arg = (Datum)NULL;
 }

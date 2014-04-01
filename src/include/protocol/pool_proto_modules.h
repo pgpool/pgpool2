@@ -147,7 +147,7 @@ extern int RowDescription(POOL_CONNECTION *frontend,
 						  POOL_CONNECTION_POOL *backend,
 						  short *result);
 
-
+extern void wait_for_query_response_with_trans_cleanup(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, int protoVersion, int pid, int key);
 extern POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, int protoVersion);
 extern int is_select_query(Node *node, char *sql);
 extern bool is_commit_query(Node *node);
@@ -170,7 +170,7 @@ extern POOL_STATUS pool_discard_packet(POOL_CONNECTION_POOL *cp);
 extern void query_cache_register(char kind, POOL_CONNECTION *frontend, char *database, char *data, int data_len);
 extern int is_drop_database(Node *node);		/* returns non 0 if this is a DROP DATABASE command */
 
-extern POOL_STATUS send_simplequery_message(POOL_CONNECTION *backend, int len, char *string, int major);
+extern void send_simplequery_message(POOL_CONNECTION *backend, int len, char *string, int major);
 extern POOL_STATUS send_extended_protocol_message(POOL_CONNECTION_POOL *backend,
 												  int node_id, char *kind,
 												  int len, char *string);

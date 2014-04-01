@@ -349,6 +349,7 @@ set_ps_display(const char *activity, bool force)
 		ident_handle = CreateEvent(NULL, TRUE, FALSE, name);
 	}
 #endif   /* PS_USE_WIN32 */
+
 #endif   /* not PS_USE_NONE */
 }
 

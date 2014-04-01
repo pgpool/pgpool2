@@ -46,6 +46,8 @@
 #include "utils/pool_stream.h"
 #include "utils/palloc.h"
 #include "pool_config.h"
+#include "utils/elog.h"
+#include "utils/memutils.h"
 #include "context/pool_process_context.h"
 
 static int pool_index;	/* Active pool index */
@@ -62,6 +64,7 @@ static int check_socket_status(int fd);
 int pool_init_cp(void)
 {
 	int i;
+	MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
 
 	pool_connection_pool = (POOL_CONNECTION_POOL *)palloc(sizeof(POOL_CONNECTION_POOL)*pool_config->max_pool);
 	memset(pool_connection_pool, 0, sizeof(POOL_CONNECTION_POOL)*pool_config->max_pool);
@@ -71,6 +74,7 @@ int pool_init_cp(void)
 		pool_connection_pool[i].info = pool_coninfo(pool_get_process_context()->proc_id, i, 0);
 		memset(pool_connection_pool[i].info, 0, sizeof(ConnectionInfo) * MAX_NUM_BACKENDS);
 	}
+    MemoryContextSwitchTo(oldContext);
 	return 0;
 }
 
@@ -88,33 +92,36 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, in
 	int i, freed = 0;
 	ConnectionInfo *info;
 
-	POOL_CONNECTION_POOL *p = pool_connection_pool;
+	POOL_CONNECTION_POOL *connection_pool = pool_connection_pool;
 
-	if (p == NULL)
+	if (connection_pool == NULL)
 	{
-		pool_error("pool_get_cp: pool_connection_pool is not initialized");
-		return NULL;
+        /* if no connection pool exists we have no reason to live */
+        ereport(ERROR,
+                (return_code(2),
+                 errmsg("unable to get connection"),
+                  errdetail("connection pool is not initialized")));
 	}
 
 	POOL_SETMASK2(&BlockSig, &oldmask);
 
 	for (i=0;i<pool_config->max_pool;i++)
 	{
-		if (MASTER_CONNECTION(p) &&
-			MASTER_CONNECTION(p)->sp &&
-			MASTER_CONNECTION(p)->sp->major == protoMajor &&
-			MASTER_CONNECTION(p)->sp->user != NULL &&
-			strcmp(MASTER_CONNECTION(p)->sp->user, user) == 0 &&
-			strcmp(MASTER_CONNECTION(p)->sp->database, database) == 0)
+		if (MASTER_CONNECTION(connection_pool) &&
+			MASTER_CONNECTION(connection_pool)->sp &&
+			MASTER_CONNECTION(connection_pool)->sp->major == protoMajor &&
+			MASTER_CONNECTION(connection_pool)->sp->user != NULL &&
+			strcmp(MASTER_CONNECTION(connection_pool)->sp->user, user) == 0 &&
+			strcmp(MASTER_CONNECTION(connection_pool)->sp->database, database) == 0)
 		{
 			int sock_broken = 0;
 			int j;
 
 			/* mark this connection is under use */
-			MASTER_CONNECTION(p)->closetime = 0;
+			MASTER_CONNECTION(connection_pool)->closetime = 0;
 			for (j=0;j<NUM_BACKENDS;j++)
 			{
-				p->info[j].counter++;
+				connection_pool->info[j].counter++;
 			}
 			POOL_SETMASK(&oldmask);
 
@@ -125,9 +132,9 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, in
 					if (!VALID_BACKEND(j))
 						continue;
 
-					if  (CONNECTION_SLOT(p, j))
+					if  (CONNECTION_SLOT(connection_pool, j))
 					{
-						sock_broken = check_socket_status(CONNECTION(p, j)->fd);
+						sock_broken = check_socket_status(CONNECTION(connection_pool, j)->fd);
 						if (sock_broken < 0)
 							break;
 					}
@@ -143,31 +150,33 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, in
 					pool_log("connection closed. retry to create new connection pool.");
 					for (j=0;j<NUM_BACKENDS;j++)
 					{
-						if (!VALID_BACKEND(j) || (CONNECTION_SLOT(p, j) == NULL))
+						if (!VALID_BACKEND(j) || (CONNECTION_SLOT(connection_pool, j) == NULL))
 							continue;
 
 						if (!freed)
 						{
-							pool_free_startup_packet(CONNECTION_SLOT(p, j)->sp);
+							pool_free_startup_packet(CONNECTION_SLOT(connection_pool, j)->sp);
+                            CONNECTION_SLOT(connection_pool, j)->sp = NULL;
+
 							freed = 1;
 						}
 
-						pool_close(CONNECTION(p, j));
-						pfree(CONNECTION_SLOT(p, j));
+						pool_close(CONNECTION(connection_pool, j));
+						pfree(CONNECTION_SLOT(connection_pool, j));
 					}
-					info = p->info;
-					memset(p, 0, sizeof(POOL_CONNECTION_POOL_SLOT));
-					p->info = info;
-					memset(p->info, 0, sizeof(ConnectionInfo) * MAX_NUM_BACKENDS);
+					info = connection_pool->info;
+					memset(connection_pool, 0, sizeof(POOL_CONNECTION_POOL_SLOT));
+					connection_pool->info = info;
+					memset(connection_pool->info, 0, sizeof(ConnectionInfo) * MAX_NUM_BACKENDS);
 					POOL_SETMASK(&oldmask);
 					return NULL;
 				}
 			}
 			POOL_SETMASK(&oldmask);
 			pool_index = i;
-			return p;
+			return connection_pool;
 		}
-		p++;
+		connection_pool++;
 	}
 
 	POOL_SETMASK(&oldmask);
@@ -199,6 +208,7 @@ void pool_discard_cp(char *user, char *database, int protoMajor)
 			pool_free_startup_packet(CONNECTION_SLOT(p, i)->sp);
 			freed = 1;
 		}
+        CONNECTION_SLOT(p, i)->sp = NULL;
 		pool_close(CONNECTION(p, i));
 		pfree(CONNECTION_SLOT(p, i));
 	}
@@ -222,12 +232,12 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 	ConnectionInfo *info;
 
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
-
+    /* if no connection pool exists we have no reason to live */
 	if (p == NULL)
-	{
-		pool_error("pool_create_cp: pool_connection_pool is not initialized");
-		return NULL;
-	}
+        ereport(ERROR,
+                (return_code(2),
+                 errmsg("unable to create connection"),
+                 errdetail("connection pool is not initialized")));
 
 	for (i=0;i<pool_config->max_pool;i++)
 	{
@@ -256,6 +266,7 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 				   MASTER_CONNECTION(p)->sp->user,
 				   MASTER_CONNECTION(p)->sp->database,
 				   MASTER_CONNECTION(p)->closetime);
+
 		if (MASTER_CONNECTION(p)->closetime < closetime)
 		{
 			closetime = MASTER_CONNECTION(p)->closetime;
@@ -281,11 +292,13 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 		if (!freed)
 		{
 			pool_free_startup_packet(CONNECTION_SLOT(p, i)->sp);
+            CONNECTION_SLOT(p, i)->sp = NULL;
+
 			freed = 1;
 		}
 
 		pool_close(CONNECTION(p, i));
-		free(CONNECTION_SLOT(p, i));
+		pfree(CONNECTION_SLOT(p, i));
 	}
 
 	info = p->info;
@@ -391,9 +404,9 @@ void pool_backend_timer(void)
 						pool_free_startup_packet(CONNECTION_SLOT(p, j)->sp);
 						freed = 1;
 					}
-
+                    CONNECTION_SLOT(p, j)->sp = NULL;
 					pool_close(CONNECTION(p, j));
-					free(CONNECTION_SLOT(p, j));
+					pfree(CONNECTION_SLOT(p, j));
 				}
 				info = p->info;
 				memset(p, 0, sizeof(POOL_CONNECTION_POOL));
@@ -697,13 +710,14 @@ static POOL_CONNECTION_POOL_SLOT *create_cp(POOL_CONNECTION_POOL_SLOT *cp, int s
 	}
 
 	cp->sp = NULL;
-	cp->con = pool_open(fd);
+	cp->con = pool_open(fd,true);
 	cp->closetime = 0;
 	return cp;
 }
 
 /*
  * create actual connections to backends
+ * new connection resides in TopMemoryContext
  */
 static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 {
@@ -711,6 +725,8 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 	int active_backend_count = 0;
 	int i;
 
+    MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
+    
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
 		pool_debug("new_connection: connecting %d backend", i);
@@ -746,14 +762,13 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 		p->info[i].create_time = time(NULL);
 		p->slots[i] = s;
 
-		if (pool_init_params(&s->con->params))
-		{
-			return NULL;
-		}
-
+		pool_init_params(&s->con->params);
+	
 		BACKEND_INFO(i).backend_status = CON_UP;
 		active_backend_count++;
 	}
+
+    MemoryContextSwitchTo(oldContext);
 
 	if (active_backend_count > 0)
 	{

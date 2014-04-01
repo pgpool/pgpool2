@@ -75,16 +75,19 @@ void
 wd_kill_watchdog(int sig)
 {
 	int i;
-
-	kill (lifecheck_pid, sig);
-	kill (child_pid, sig);
+    if(lifecheck_pid > 0)
+        kill (lifecheck_pid, sig);
+    if(child_pid > 0)
+        kill (child_pid, sig);
 
 	if (!strcmp(pool_config->wd_lifecheck_method, MODE_HEARTBEAT))
 	{
 		for (i = 0; i < pool_config->num_hb_if; i++)
 		{
-			kill (hb_receiver_pid[i], sig);
-			kill (hb_sender_pid[i], sig);
+            if(hb_receiver_pid[i] > 0)
+                kill(hb_receiver_pid[i], sig);
+            if(hb_sender_pid[i] > 0)
+                kill (hb_sender_pid[i], sig);
 		}
 	}
 }
@@ -193,6 +196,7 @@ fork_a_lifecheck(int fork_wait_time)
 
 		return pid;
 	}
+    on_exit_reset();
 
 	if (fork_wait_time > 0) {
 		sleep(fork_wait_time);

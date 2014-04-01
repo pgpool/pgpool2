@@ -25,9 +25,12 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "utils/elog.h"
 
 #include "pool.h"
 #include "parser/parser.h"
+#include "utils/palloc.h"
+#include "utils/memutils.h"
 
 #define MAX_PARAM_ITEMS 128
 
@@ -36,19 +39,14 @@
  */
 int pool_init_params(ParamStatus *params)
 {
+    MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
+
     params->num = 0;
-    params->names = malloc(MAX_PARAM_ITEMS*sizeof(char *));
-	if (params->names == NULL)
-	{
-		pool_error("pool_init_params: cannot allocate memory");
-		return -1;
-	}
-    params->values = malloc(MAX_PARAM_ITEMS*sizeof(char *));
-	if (params->values == NULL)
-	{
-		pool_error("pool_init_params: cannot allocate memory");
-		return -1;
-	}
+    params->names = palloc(MAX_PARAM_ITEMS*sizeof(char *));
+    params->values = palloc(MAX_PARAM_ITEMS*sizeof(char *));
+
+    MemoryContextSwitchTo(oldContext);
+
 	return 0;
 }
 
@@ -61,11 +59,17 @@ void pool_discard_params(ParamStatus *params)
 
     for (i=0;i<params->num;i++)
     {
-		free(params->names[i]);
-		free(params->values[i]);
+		pfree(params->names[i]);
+		pfree(params->values[i]);
     }
-    free(params->names);
-    free(params->values);
+    if(params->names)
+        pfree(params->names);
+    if(params->values)
+        pfree(params->values);
+    params->num = 0;
+    params->names = NULL;
+    params->values = NULL;
+    
 }
 
 /*
@@ -108,18 +112,14 @@ int pool_get_param(ParamStatus *params, int index, char **name, char **value)
 int pool_add_param(ParamStatus *params, char *name, char *value)
 {
     int pos;
+    MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
 
     if (pool_find_name(params, name, &pos))
     {
 		/* name already exists */
 		if (strlen(params->values[pos]) < strlen(value))
 		{
-			params->values[pos] = realloc(params->values[pos], strlen(value) + 1);
-			if (params->values[pos] == NULL)
-			{
-				pool_error("pool_init_params: cannot allocate memory");
-				return -1;
-			}
+			params->values[pos] = repalloc(params->values[pos], strlen(value) + 1);
 		}
 		strcpy(params->values[pos], value);
     }
@@ -130,25 +130,18 @@ int pool_add_param(ParamStatus *params, char *name, char *value)
 		/* add name/value pair */
 		if (params->num >= MAX_PARAM_ITEMS)
 		{
-			pool_error("pool_add_param: no more room for num");
-			return -1;
+            ereport(ERROR,
+                    (errmsg("add parameter failed"),
+                     errdetail("no more room for num")));
 		}
 		num = params->num;
-		params->names[num] = strdup(name);
-		if (params->names[num] == NULL)
-		{
-			pool_error("pool_init_params: cannot allocate memory");
-			return -1;
-		}
-		params->values[num] = strdup(value);
-		if (params->values[num] == NULL)
-		{
-			pool_error("pool_init_params: cannot allocate memory");
-			return -1;
-		}
+		params->names[num] = pstrdup(name);
+		params->values[num] = pstrdup(value);
 		params->num++;
     }
 	parser_set_param(name, value);
+    MemoryContextSwitchTo(oldContext);
+
 	return 0;
 }
 

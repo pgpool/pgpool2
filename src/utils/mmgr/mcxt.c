@@ -48,10 +48,10 @@ MemoryContext CurrentMemoryContext = NULL;
  */
 MemoryContext TopMemoryContext = NULL;
 MemoryContext ErrorContext = NULL;
-MemoryContext PostmasterContext = NULL;
+MemoryContext ProcessLoopContext = NULL; /* This context resets at every main loop iteration of a process */
 MemoryContext CacheMemoryContext = NULL;
 MemoryContext MessageContext = NULL;
-MemoryContext TopTransactionContext = NULL;
+MemoryContext QueryContext = NULL;
 MemoryContext CurTransactionContext = NULL;
 
 /* This is a transient link to the active portal's memory context: */
@@ -728,7 +728,9 @@ repalloc(void *pointer, Size size)
 	if (!AllocSizeIsValid(size))
 		elog(ERROR, "invalid memory alloc request size %lu",
 			 (unsigned long) size);
-
+    /* pgpool hack by usama */
+    if(pointer == NULL)
+        return palloc(size);
 	/*
 	 * Try to detect bogus pointers handed to us, poorly though we can.
 	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at an

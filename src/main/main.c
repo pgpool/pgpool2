@@ -184,35 +184,21 @@ int main(int argc, char **argv)
 	mypid = getpid();
 
 	pool_init_config();
-
 	/*
 	 * Override debug level
 	 */
 	pool_config->debug_level = debug_level;
 
 	pool_get_config(conf_file, INIT_CONFIG);
-
 	/*
 	 * Override debug level
 	 */
 	if (pool_config->debug_level == 0)
 		pool_config->debug_level = debug_level;
-	/* 
-	 * TODO do it some better way, But till the time we decide
-	 * which min_* gucs we need to maintain lets do it this way
-	 */
-	if(pool_config->debug_level < 5)
-	{
-		log_min_error_statement = LOG - pool_config->debug_level;
-		log_min_messages = LOG - pool_config->debug_level;
-		client_min_messages = LOG - pool_config->debug_level;
-	}
-	else 
-	{
-		log_min_error_statement = DEBUG5;
-		log_min_messages = DEBUG5;
-		client_min_messages = DEBUG5;
-	}
+
+    /* if command line -d arg is given adjust the log_min_message config variable */
+    if(debug_level > 0 && pool_config->log_min_messages > DEBUG1)
+        pool_config->log_min_messages = DEBUG1;
 
 	if (pool_config->enable_pool_hba)
 		load_hba(hba_file);
@@ -230,8 +216,8 @@ int main(int argc, char **argv)
 				if (pid < 0)
 				{
 					ereport(FATAL,
-						(return_code(1),
-						errmsg("could not read pid file")));
+                            (return_code(1),
+                             errmsg("could not read pid file")));
 				}
 
 				if (kill(pid, SIGHUP) == -1)
@@ -246,7 +232,7 @@ int main(int argc, char **argv)
 		{
 			stop_me();
 			unlink(pool_config->pid_file_name);
-			proc_exit(0);
+			exit(0);
 		}
 		else
 		{
@@ -302,6 +288,10 @@ int main(int argc, char **argv)
 	else
 		daemonize();
 	
+#ifdef HAVE_VSYSLOG
+    set_syslog_parameters(pool_config->syslog_ident ? pool_config->syslog_ident : "pgpool",
+                          pool_config->syslog_facility);
+#endif
 	/*
 	 * Locate pool_passwd
 	 * The default file name "pool_passwd" can be changed by setting
@@ -392,7 +382,7 @@ static void daemonize(void)
 	}
 	else if (pid > 0)
 	{			/* parent */
-		proc_exit(0);
+		exit(0);
 	}
 
 #ifdef HAVE_SETSID
@@ -549,7 +539,7 @@ char *get_hba_file_name(void)
  */
 static void FileUnlink(int code, Datum path)
 {
-	char* filePath = (char*)path; 
+	char* filePath = (char*)path;
 	if (unlink(filePath) == 0) return;
 	/* 
 	 * We are already exiting the system just produce a log entry to report an error

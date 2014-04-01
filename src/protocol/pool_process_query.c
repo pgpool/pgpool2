@@ -46,6 +46,10 @@
 #include "pool_config.h"
 #include "rewrite/pool_timestamp.h"
 #include "protocol/pool_proto_modules.h"
+#include "protocol/protocol_defs.h"
+#include "utils/palloc.h"
+#include "utils/memutils.h"
+#include "utils/elog.h"
 #include "utils/pool_relcache.h"
 #include "utils/pool_stream.h"
 #include "context/pool_session_context.h"
@@ -96,7 +100,6 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 	POOL_STATUS status;
 	int qcnt;
 	int i;
-
 	/*
 	 * This variable is used while processing reset_request (i.e.:
 	 * reset_request == 1).  If state is 0, then we call
@@ -105,9 +108,10 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 	 */
 	int state;
 
-	frontend->no_forward = reset_request;
+    frontend->no_forward = reset_request;
 	qcnt = 0;
 	state = 0;
+
 
 	/* Try to connect memcached */
 	if (pool_config->memory_cache_enabled && !pool_is_shmem_cache())
@@ -132,7 +136,8 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				 * guess I would like to be a paranoid...
 				 */
 				frontend->no_forward = 0;
-				return POOL_END;
+                ereport(ERROR,
+                    (errmsg("unable to reset backend status")));
 			}
 
 			else if (st == 0)	/* no query issued? */
@@ -158,7 +163,6 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				frontend->no_forward = 0;
 				return POOL_CONTINUE;
 			}
-
 		}
 
 		check_stop_request();
@@ -169,11 +173,10 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 		 */
 		if (*InRecovery > RECOVERY_INIT && pool_config->client_idle_limit_in_recovery == -1)
 		{
-			pool_log("pool_process_query: child connection forced to terminate due to client_idle_limitis -1");
-			pool_send_error_message(frontend, MAJOR(backend),
-									"57000", "connection terminated due to online recovery",
-									"","",  __FILE__, __LINE__);
-			return POOL_END;
+            ereport(ERROR,
+                (pool_error_code("57000"),
+                 errmsg("connection terminated due to online recovery"),
+                     errdetail("child connection forced to terminate due to client_idle_limit = -1")));
 		}
 
 		/*
@@ -224,12 +227,16 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				 */
 				if (reset_request)
 				{
-					pool_log("pool_process_query: garbage data from frontend after receiving terminate message ignored");
+                    elog(LOG,"garbage data from frontend after receiving terminate message ignored");
 					pool_discard_read_buffer(frontend);
 				}
 				else
 				{
+                    write_stderr("[%d]%s():%d\n",getpid(),__FUNCTION__,__LINE__);
+
 					status = ProcessFrontendResponse(frontend, backend);
+                    write_stderr("[%d]%s():%d\n",getpid(),__FUNCTION__,__LINE__);
+
 					if (status != POOL_CONTINUE)
 						return status;
 				}
@@ -313,7 +320,10 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 										 * rather than just discard it.
 										 */
 										pool_unread(CONNECTION(backend, i), &kind, sizeof(kind));
-										pool_log("pool_process_query: received %c packet from backend %d. Don't dicard and read %c packet from master", kind, i, kind);
+                                        ereport(LOG,
+                                            (errmsg("pool process query"),
+                                                 errdetail("received %c packet from backend %d. Don't dicard and read %c packet from master", kind, i, kind)));
+
 										pool_read_with_error(CONNECTION(backend, MASTER_NODE_ID), &kind, sizeof(kind),
 												"reading message kind from backend");
 
@@ -321,7 +331,10 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 									}
 									else
 									{
-										pool_log("pool_process_query: discard %c packet from backend %d", kind, i);
+                                        ereport(LOG,
+                                                (errmsg("pool process query"),
+                                                    errdetail("discard %c packet from backend %d", kind, i)));
+
 
 										if (MAJOR(backend) == PROTO_MAJOR_V3)
 										{
@@ -330,19 +343,19 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 											len = ntohl(len) - 4;
 											string = pool_read2(CONNECTION(backend, i), len);
 											if (string == NULL)
-											{
-												pool_error("pool_process_query: error while reading rest of message from backend %d", i);
-												return POOL_ERROR;
-											}
+                                                ereport(FATAL,
+                                                    (return_code(2),
+                                                         errmsg("unable to process query"),
+                                                            errdetail("error while reading rest of message from backend %d", i)));
 										}
 										else
 										{
 											string = pool_read_string(CONNECTION(backend, i), &len, 0);
 											if (string == NULL)
-											{
-												pool_error("pool_process_query: error while reading rest of message from backend %d", i);
-												return POOL_ERROR;
-											}
+                                                ereport(FATAL,
+                                                    (return_code(2),
+                                                         errmsg("unable to process query"),
+                                                            errdetail("error while reading rest of message from backend %d", i)));
 										}
 									}
 								}
@@ -356,7 +369,9 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 		/* reload config file */
 		if (got_sighup)
 		{
+            MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
 			pool_get_config(get_config_file_name(), RELOAD_CONFIG);
+            MemoryContextSwitchTo(oldContext);
 			if (pool_config->enable_pool_hba)
 				load_hba(get_hba_file_name());
 			if (pool_config->parallel_mode)
@@ -364,9 +379,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 			got_sighup = 0;
 		}
 	}
-	return POOL_CONTINUE;
 }
-
 
 /*
  * set_fd,isset_fs,zero_fd are used
@@ -434,17 +447,11 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 	POOL_SESSION_CONTEXT *session_context;
 
 	/* Get session context */
-	session_context = pool_get_session_context();
-	if (!session_context)
-	{
-		pool_error("pool_parallel_exec: cannot get session context");
-		return POOL_END;
-	}
-
+	session_context = pool_get_session_context(false);
 	if (!session_context->query_context)
 	{
-		pool_error("pool_parallel_exec: cannot get query context");
-		return POOL_END;
+        ereport(ERROR,
+                (errmsg("unable to get query context")));
 	}
 
 	pool_setall_node_to_be_sent(session_context->query_context);
@@ -522,10 +529,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 			pool_write(CONNECTION(backend, i), &sendlen, sizeof(sendlen));
  		}
 
-		if (pool_write_and_flush(CONNECTION(backend, i), string, len) < 0)
-		{
-			return POOL_END;
-		}
+		pool_write_and_flush(CONNECTION(backend, i), string, len);
 
 		/*
 		 * in "strict mode" we need to wait for backend completing the query.
@@ -535,7 +539,9 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 		{
 			pool_debug("waiting for backend %d completing the query", i);
 			if (synchronize(CONNECTION(backend, i)))
-				return POOL_END;
+                ereport(ERROR,
+                        (errmsg("parallel exec failed"),
+                         errdetail("failed to synchronize")));
 		}
 	}
 
@@ -577,9 +583,11 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 		{
 			if (errno == EINTR)
 				continue;
+            ereport(FATAL,
+                (return_code(2),
+                     errmsg("unable to execute parallel query"),
+                        errdetail("select() system call failed with reason: %s", strerror(errno))));
 
-				pool_error("select() failed. reason: %s", strerror(errno));
-			return POOL_ERROR;
 		 }
 
 		if (fds == 0)
@@ -636,19 +644,18 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 				/* get body of protocol */
 				for(;;)
 				{
-					if (pool_read(CONNECTION(backend, i), &kind, 1) < 0)
-					{
-						pool_error("pool_parallel_exec: failed to read kind from %d th backend", i);
-						return POOL_ERROR;
-					}
+					pool_read(CONNECTION(backend, i), &kind, 1);
 
 					/*
 					 * Sanity check
 					 */
 					if (kind == 0)
 					{
-						pool_error("pool_parallel_exec: kind is 0!");
-						return POOL_ERROR;
+                        ereport(FATAL,
+                            (return_code(2),
+                                 errmsg("unable to execute parallel query"),
+                                    errdetail("invalid message kind. backend message kind is 0")));
+
 					}
 
 					if((kind == 'E' ) &&
@@ -744,7 +751,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 /*
  * send simple query message to a node.
  */
-POOL_STATUS send_simplequery_message(POOL_CONNECTION *backend, int len, char *string, int major)
+void send_simplequery_message(POOL_CONNECTION *backend, int len, char *string, int major)
 {
 	/* forward the query to the backend */
 	pool_write(backend, "Q", 1);
@@ -754,16 +761,35 @@ POOL_STATUS send_simplequery_message(POOL_CONNECTION *backend, int len, char *st
 		int sendlen = htonl(len + 4);
 		pool_write(backend, &sendlen, sizeof(sendlen));
 	}
-
-	if (pool_write_and_flush(backend, string, len) < 0)
-	{
-		pool_error("send_simplequery_message: failed to send query: %s", string);
-		return POOL_END;
-	}
-
-	return POOL_CONTINUE;
+	pool_write_and_flush(backend, string, len);
 }
 
+/*
+ * wait_for_query_response_with_trans_cleanup():
+ * this function is the wrapper over the wait_for_query_response() function and performs
+ * and additional step of canceling the transaction in case of an error from wait_for_query_response()
+ */
+
+void wait_for_query_response_with_trans_cleanup(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, int protoVersion, int pid, int key)
+{
+    PG_TRY();
+    {
+        wait_for_query_response(frontend, backend, protoVersion);
+    }
+    PG_CATCH();
+    {
+        /* Cancel current transaction */
+        CancelPacket cancel_packet;
+        
+        cancel_packet.protoVersion = htonl(PROTO_CANCEL);
+        cancel_packet.pid = pid;
+        cancel_packet.key= key;
+        cancel_request(&cancel_packet);
+        
+        PG_RE_THROW();
+    }
+    PG_END_TRY();
+}
 /*
  * Wait for query response from single node. If frontend is not NULL,
  * also check frontend connection by writing dummy parameter status
@@ -790,8 +816,8 @@ POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *
 
 		if (status < 0)	/* error ? */
 		{
-			pool_error("wait_for_query_response: backend error occured while waiting for backend response");
-			return POOL_END;
+            ereport(ERROR,
+                    (errmsg("backend error occured while waiting for backend response")));
 		}
 		else if (frontend != NULL && status > 0)
 		{
@@ -802,20 +828,17 @@ POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *
 			if (protoVersion == PROTO_MAJOR_V3)
 			{
 				/* Write dummy parameter staus packet to check if the socket to frontend is ok */
-				if (pool_write(frontend, "S", 1) < 0)
-					return POOL_END;
+				pool_write(frontend, "S", 1);
 				plen = sizeof(DUMMY_PARAMETER)+sizeof(DUMMY_VALUE)+sizeof(plen);
 				plen = htonl(plen);
-				if (pool_write(frontend, &plen, sizeof(plen)) < 0)
-					return POOL_END;
-				if (pool_write(frontend, DUMMY_PARAMETER, sizeof(DUMMY_PARAMETER)) < 0)
-					return POOL_END;
-				if (pool_write(frontend, DUMMY_VALUE, sizeof(DUMMY_VALUE)) < 0)
-					return POOL_END;
+				pool_write(frontend, &plen, sizeof(plen));
+				pool_write(frontend, DUMMY_PARAMETER, sizeof(DUMMY_PARAMETER));
+				pool_write(frontend, DUMMY_VALUE, sizeof(DUMMY_VALUE));
 				if (pool_flush_it(frontend) < 0)
 				{
-					pool_error("wait_for_query_response: frontend error occured while waiting for backend reply");
-					return POOL_END;
+                    ereport(ERROR,
+                            (errmsg("unable to to flush data to frontend"),
+                             errdetail("frontend error occured while waiting for backend reply")));
 				}
 
 			} else		/* Protocol version 2 */
@@ -829,14 +852,14 @@ POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *
 				static char *notice_message = {"keep alive checking from pgpool-II"};
 
 				/* Write notice message packet to check if the socket to frontend is ok */
-				if (pool_write(frontend, "N", 1) < 0)
-					return POOL_END;
-				if (pool_write(frontend, notice_message, strlen(notice_message)+1) < 0)
-					return POOL_END;
+				pool_write(frontend, "N", 1);
+				pool_write(frontend, notice_message, strlen(notice_message)+1);
 				if (pool_flush_it(frontend) < 0)
 				{
-					pool_error("wait_for_query_response: frontend error occured while waiting for backend reply");
-					return POOL_END;
+                    ereport(ERROR,
+                        (errmsg("unable to to flush data to frontend"),
+                             errdetail("frontend error occured while waiting for backend reply")));
+
 				}
 #endif
 			}
@@ -871,11 +894,8 @@ POOL_STATUS send_extended_protocol_message(POOL_CONNECTION_POOL *backend,
 	 */
 	pool_write(cp, "H", 1);
 	sendlen = htonl(4);
-	if (pool_write_and_flush(cp, &sendlen, sizeof(sendlen)) < 0)
-	{
-		return POOL_ERROR;
-	}
-
+	pool_write_and_flush(cp, &sendlen, sizeof(sendlen));
+	
 	return POOL_CONTINUE;
 }
 
@@ -981,12 +1001,12 @@ void pool_send_frontend_exits(POOL_CONNECTION_POOL *backend)
 		 */
 		if (VALID_BACKEND(i) && CONNECTION_SLOT(backend, i))
 		{
-			pool_write(CONNECTION(backend, i), "X", 1);
+			pool_write_noerror(CONNECTION(backend, i), "X", 1);
 
 			if (MAJOR(backend) == PROTO_MAJOR_V3)
 			{
 				len = htonl(4);
-				pool_write(CONNECTION(backend, i), &len, sizeof(len));
+				pool_write_noerror(CONNECTION(backend, i), &len, sizeof(len));
 			}
 
 			/*
@@ -1018,19 +1038,13 @@ static POOL_STATUS ParallelForwardToFrontend(char kind, POOL_CONNECTION *fronten
 {
 	int len;
 	char *p;
-	int status;
 
 	if (send_to_frontend)
 	{
 		pool_write(frontend, &kind, 1);
 	}
 
-	status = pool_read(backend, &len, sizeof(len));
-	if (status < 0)
-	{
-		pool_error("ParallelForwardToFrontend: error while reading message length");
-		return POOL_END;
-	}
+	pool_read(backend, &len, sizeof(len));
 
 	if (send_to_frontend)
 	{
@@ -1044,15 +1058,14 @@ static POOL_STATUS ParallelForwardToFrontend(char kind, POOL_CONNECTION *fronten
 
 	p = pool_read2(backend, len);
 	if (p == NULL)
-		return POOL_END;
+        ereport(ERROR,
+            (errmsg("parallel forward to Frontend failed"),
+                 errdetail("read from backedn failed")));
 
-	status = POOL_CONTINUE;
 	if (send_to_frontend)
-	{
-		status = pool_write(frontend, p, len);
-	}
+		pool_write(frontend, p, len);
 
-	return status;
+	return POOL_CONTINUE;
 }
 
 POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
@@ -1061,7 +1074,6 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	int len, len1 = 0;
 	char *p = NULL;
 	char *p1 = NULL;
-	int status;
 	int sendlen;
 	int i;
 
@@ -1077,12 +1089,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	}
 #endif
 
-	status = pool_read(MASTER(backend), &len, sizeof(len));
-	if (status < 0)
-	{
-		pool_error("SimpleForwardToFrontend: error while reading message length");
-		return POOL_END;
-	}
+	pool_read(MASTER(backend), &len, sizeof(len));
 
 	len = ntohl(len);
 	len -= 4;
@@ -1090,13 +1097,10 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 
 	p = pool_read2(MASTER(backend), len);
 	if (p == NULL)
-		return POOL_END;
-	p1 = malloc(len);
-	if (p1 == NULL)
-	{
-		pool_error("SimpleForwardToFrontend: malloc failed");
-		return POOL_ERROR;
-	}
+        ereport(ERROR,
+            (errmsg("unable to forward message to frontend"),
+                 errdetail("read from backedn failed")));
+	p1 = palloc(len);
 	memcpy(p1, p, len);
 
 	/*
@@ -1110,24 +1114,22 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 		{
 			if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 			{
-				status = pool_read(CONNECTION(backend, i), &len, sizeof(len));
-				if (status < 0)
-				{
-					pool_error("SimpleForwardToFrontend: error while reading message length");
-					return POOL_END;
-				}
+				pool_read(CONNECTION(backend, i), &len, sizeof(len));
 
 				len = ntohl(len);
 				len -= 4;
 
 				p = pool_read2(CONNECTION(backend, i), len);
 				if (p == NULL)
-					return POOL_END;
+                    ereport(ERROR,
+                        (errmsg("unable to forward message to frontend"),
+                             errdetail("read on backend node failed")));
 
 				if (len != len1)
 				{
-					pool_debug("SimpleForwardToFrontend: length does not match between backends master(%d) %d th backend(%d) kind:(%c)",
-							   len, i, len1, kind);
+					ereport(DEBUG1,
+                            (errmsg("SimpleForwardToFrontend: length does not match between backends master(%d) %d th backend(%d) kind:(%c)",
+							   len, i, len1, kind)));
 				}
 			}
 		}
@@ -1136,11 +1138,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	pool_write(frontend, &kind, 1);
 	sendlen = htonl(len1+4);
 	pool_write(frontend, &sendlen, sizeof(sendlen));
-	if (pool_write_and_flush(frontend, p1, len1) < 0)
-	{
-		pool_error("SimpleForwardToFrontend: pool_write_and_flush failed");
-		return POOL_END;
-	}
+	pool_write_and_flush(frontend, p1, len1);
 
 	/* save the received result to buffer for each kind */
 	if (pool_config->memory_cache_enabled)
@@ -1160,14 +1158,12 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 		 * channel immediately.
 		 */
 		if (is_panic_or_fatal_error(p1, MAJOR(backend)))
-		{
-			free(p1);
-			return POOL_END;
-		}
+            ereport(ERROR,
+                    (errmsg("unable to forward message to frontend"),
+                     errdetail("FATAL error occured on backend")));
 	}
 
-	free(p1);
-
+	pfree(p1);
 	return POOL_CONTINUE;
 }
 
@@ -1177,16 +1173,6 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend,
 {
 	int sendlen;
 	int i;
-	POOL_SESSION_CONTEXT *session_context;
-
-	/* Get session context */
-	session_context = pool_get_session_context();
-	if (!session_context)
-	{
-		pool_error("SimpleForwardToBackend: cannot get session context");
-		return POOL_END;
-	}
-
 	sendlen = htonl(len + 4);
 
 	if (len == 0)
@@ -1203,19 +1189,17 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend,
 				per_node_statement_log(backend, i, msgbuf);
 #endif
 
-				if (pool_write(CONNECTION(backend, i), &kind, 1))
-					return POOL_END;
-				if (pool_write_and_flush(CONNECTION(backend,i), &sendlen, sizeof(sendlen)))
-					return POOL_END;
+				pool_write(CONNECTION(backend, i), &kind, 1);
+				pool_write_and_flush(CONNECTION(backend,i), &sendlen, sizeof(sendlen));
 			}
 		}
 		return POOL_CONTINUE;
 	}
 	else if (len < 0)
-	{
-		pool_error("SimpleForwardToBackend: invalid message length:%d for message:%c", len, kind);
-		return POOL_END;
-	}
+        ereport(ERROR,
+            (errmsg("unable to forward message to frontend"),
+                 errdetail("invalid message length:%d for message:%c", len, kind)));
+
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -1226,12 +1210,9 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend,
 			per_node_statement_log(backend, i, msgbuf);
 #endif
 
-			if (pool_write(CONNECTION(backend, i), &kind, 1))
-				return POOL_END;
-			if (pool_write(CONNECTION(backend,i), &sendlen, sizeof(sendlen)))
-				return POOL_END;
-			if (pool_write_and_flush(CONNECTION(backend, i), contents, len))
-				return POOL_END;
+			pool_write(CONNECTION(backend, i), &kind, 1);
+			pool_write(CONNECTION(backend,i), &sendlen, sizeof(sendlen));
+			pool_write_and_flush(CONNECTION(backend, i), contents, len);
 		}
 	}
 
@@ -1255,9 +1236,9 @@ POOL_STATUS ParameterStatus(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	len_array = pool_read_message_length2(backend);
 
 	if (len_array == NULL)
-	{
-		return POOL_END;
-	}
+        ereport(ERROR,
+            (errmsg("unable to process parameter status"),
+                 errdetail("read on backend failed")));
 
 	len = len_array[MASTER_NODE_ID];
 	sendlen = htonl(len);
@@ -1272,8 +1253,10 @@ POOL_STATUS ParameterStatus(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 
 			p = pool_read2(CONNECTION(backend, i), len);
 			if (p == NULL)
-				return POOL_END;
-
+                ereport(ERROR,
+                    (errmsg("unable to process parameter status"),
+                         errdetail("could not read from backend")));
+ 
 			name = p;
 			value = p + strlen(name) + 1;
 
@@ -1301,7 +1284,7 @@ POOL_STATUS ParameterStatus(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
  */
 void reset_variables(void)
 {
-	if(pool_get_session_context())
+	if(pool_get_session_context(true))
 		pool_unset_query_in_progress();
 }
 
@@ -1321,23 +1304,18 @@ void reset_connection(void)
  * Reset backend status. return values are:
  * 0: no query was issued 1: a query was issued 2: no more queries remain -1: error
  */
-static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
+static int
+    reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 {
 	char *query;
 	int qn;
-	POOL_SESSION_CONTEXT *session_context;
 	int i;
 	bool need_to_abort;
+	POOL_SESSION_CONTEXT *session_context;
 	POOL_TEMP_QUERY_CACHE *cache;
 
 	/* Get session context */
-	session_context = pool_get_session_context();
-	if (!session_context)
-	{
-		pool_error("reset_backend: cannot get session context");
-		return POOL_END;
-	}
-
+	session_context = pool_get_session_context(false);
 	/* Set reset context */
 	session_context->reset_context = true;
 
@@ -1396,7 +1374,6 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt)
 	}
 
 	query = pool_config->reset_query_list[qcnt];
-
 	if (!strcmp("ABORT", query))
 	{
 		/* If transaction state are all idle, we don't need to issue ABORT */
@@ -1710,7 +1687,7 @@ void pool_send_severity_message(POOL_CONNECTION *frontend, int protoMajor,
 		len += thislen + 1;
 
 		/* detail */
-		if (*detail != '\0')
+		if (detail && *detail != '\0')
 		{
 			thislen = snprintf(msgbuf, MAXMSGBUF, "D%s", detail);
 			thislen = Min(thislen, MAXMSGBUF);
@@ -1719,7 +1696,7 @@ void pool_send_severity_message(POOL_CONNECTION *frontend, int protoMajor,
 		}
 
 		/* hint */
-		if (*hint != '\0')
+		if (hint && *hint != '\0')
 		{
 			thislen = snprintf(msgbuf, MAXMSGBUF, "H%s", hint);
 			thislen = Min(thislen, MAXMSGBUF);
@@ -1777,7 +1754,6 @@ POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
 					   char *query, int protoMajor, int pid, int key, int no_ready_for_query)
 {
 	int len;
-	int status;
 	char kind;
 	char *string;
 	int deadlock_detected = 0;
@@ -1785,24 +1761,17 @@ POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
 	pool_debug("do_command: Query: %s", query);
 
 	/* send the query to the backend */
-	if (send_simplequery_message(backend, strlen(query)+1, query, protoMajor) != POOL_CONTINUE)
-		return POOL_END;
+	send_simplequery_message(backend, strlen(query)+1, query, protoMajor);
 
 	/*
 	 * Wait for response from badckend while polling frontend connection is ok.
 	 * If not, cancel the transaction.
 	 */
-	if (wait_for_query_response(frontend, backend, protoMajor) != POOL_CONTINUE)
-	{
-		/* Cancel current transaction */
-		CancelPacket cancel_packet;
-
-		cancel_packet.protoVersion = htonl(PROTO_CANCEL);
-		cancel_packet.pid = pid;
-		cancel_packet.key= key;
-		cancel_request(&cancel_packet);
-		return POOL_END;
-	}
+    wait_for_query_response_with_trans_cleanup(frontend,
+                                               backend,
+                                               protoMajor,
+                                               pid,
+                                               key);
 
  	/*
 	 * We must check deadlock error here. If a deadlock error is
@@ -1812,8 +1781,6 @@ POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
 	 * state might vary among backends (idle in transaction vs. abort).
 	 */
 	deadlock_detected = detect_deadlock_error(backend, protoMajor);
-	if (deadlock_detected < 0)
-		return POOL_END;
 
 	/*
 	 * Continue to read packets until we get ReadForQuery (Z).
@@ -1830,12 +1797,7 @@ POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
 	 */
 	for(;;)
 	{
-		status = pool_read(backend, &kind, sizeof(kind));
-		if (status < 0)
-		{
-			pool_error("do_command: error while reading message kind");
-			return POOL_END;
-		}
+		pool_read(backend, &kind, sizeof(kind));
 
 		pool_debug("do_command: kind: %c", kind);
 
@@ -1844,24 +1806,24 @@ POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
 
 		if (protoMajor == PROTO_MAJOR_V3)
 		{
-			if (pool_read(backend, &len, sizeof(len)) < 0)
-			{
-				pool_error("do_command: error while reading message length");
-				return POOL_END;
-			}
+			pool_read(backend, &len, sizeof(len));
+
 			pool_debug("len:%x", len);
 			len = ntohl(len) - 4;
 
 			if (kind != 'N' && kind != 'E' && kind != 'S' && kind != 'C' && kind != 'A')
 			{
-				pool_error("do_command: error, kind is not N, E, S, C or A(%02x)", kind);
-				return POOL_END;
+                ereport(ERROR,
+                        (errmsg("do command failed"),
+                         errdetail("kind is not N, E, S, C or A(%02x)", kind)));
+                
 			}
 			string = pool_read2(backend, len);
 			if (string == NULL)
 			{
-				pool_error("do_command: error while reading rest of message");
-				return POOL_END;
+                ereport(ERROR,
+                        (errmsg("do command failed"),
+                         errdetail("unable to read message from backend")));
 			}
 
 			/*
@@ -1885,8 +1847,9 @@ POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
 			string = pool_read_string(backend, &len, 0);
 			if (string == NULL)
 			{
-				pool_error("do_command: error while reading rest of message");
-				return POOL_END;
+                ereport(ERROR,
+                        (errmsg("do command failed"),
+                         errdetail("unable to read reset message from backend")));
 			}
 			if (kind == 'C')
 			{
@@ -1902,8 +1865,9 @@ POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
 		{
 			if (is_panic_or_fatal_error(string, protoMajor))
 			{
-				pool_error("do_command: %s", string);
-				return POOL_END;
+                ereport(ERROR,
+                        (errmsg("do command failed"),
+                         errdetail("backend error: \"%s\"",string)));
 			}
 		}
 	}
@@ -1920,16 +1884,13 @@ POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
 	 * Expecting CompleteCommand
 	 */
 retry_read_packet:
-	status = pool_read(backend, &kind, sizeof(kind));
-	if (status < 0)
-	{
-		pool_error("do_command: error while reading message kind");
-		return POOL_END;
-	}
+	pool_read(backend, &kind, sizeof(kind));
 
 	if (kind == 'E')
 	{
-		pool_log("do_command: backend does not successfully complete command %s status %c", query, kind);
+        ereport(LOG,
+                (errmsg("do command failed"),
+                 errdetail("backend does not successfully complete command %s status %c", query, kind)));
 	}
 
 	/*
@@ -1937,19 +1898,24 @@ retry_read_packet:
 	 */
 	if (protoMajor == PROTO_MAJOR_V3)
 	{
-		if (pool_read(backend, &len, sizeof(len)) < 0)
-			return POOL_END;
+		pool_read(backend, &len, sizeof(len));
 		len = ntohl(len) - 4;
 		string = pool_read2(backend, len);
 		if (string == NULL)
-			return POOL_END;
-		pool_debug("command tag: %s", string);
+            ereport(ERROR,
+                (errmsg("do command failed"),
+                     errdetail("read from backend failed")));
+
+        ereport(DEBUG2,
+                (errmsg("do command: command tag: %s", string)));
 	}
 	else
 	{
 		string = pool_read_string(backend, &len, 0);
 		if (string == NULL)
-			return POOL_END;
+            ereport(ERROR,
+                    (errmsg("do command failed"),
+                     errdetail("read from backend failed")));
 	}
 
 	if (kind == 'N') /* warning? */
@@ -1958,17 +1924,13 @@ retry_read_packet:
 	/*
 	 * Expecting ReadyForQuery
 	 */
-	status = pool_read(backend, &kind, sizeof(kind));
-	if (status < 0)
-	{
-		pool_error("do_command: error while reading message kind");
-		return POOL_END;
-	}
+	pool_read(backend, &kind, sizeof(kind));
 
 	if (kind != 'Z')
 	{
-		pool_error("do_command: backend returns %c while expecting ReadyForQuery", kind);
-		return POOL_END;
+        ereport(ERROR,
+                (errmsg("do command failed"),
+                 errdetail("backend returns %c while expecting ReadyForQuery", kind)));
 	}
 #endif
 
@@ -1978,23 +1940,17 @@ retry_read_packet:
 	if (protoMajor == PROTO_MAJOR_V3)
 	{
 		/* read packet lenghth for ready for query */
-		if (pool_read(backend, &len, sizeof(len)) < 0)
-		{
-			pool_error("do_command: error while reading message length");
-			return POOL_END;
-		}
+		pool_read(backend, &len, sizeof(len));
 
 		/* read transaction state */
-		status = pool_read(backend, &kind, sizeof(kind));
-		if (status < 0)
-		{
-			pool_error("do_command: error while reading transaction status");
-			return POOL_END;
-		}
+		pool_read(backend, &kind, sizeof(kind));
 
 		/* set transaction state */
-		pool_debug("do_command: transaction state: %c", kind);
+        
 		backend->tstate = kind;
+
+        ereport(DEBUG2,
+                (errmsg("do_command: transaction state: %c", kind)));
 	}
 
 	return deadlock_detected ? POOL_DEADLOCK : POOL_CONTINUE;
@@ -2011,15 +1967,11 @@ retry_read_packet:
 POOL_STATUS do_error_command(POOL_CONNECTION *backend, int major)
 {
 	char *error_query = POOL_ERROR_QUERY;
-	int status, len;
+	int len;
 	char kind;
 	char *string;
 
-	if (send_simplequery_message(backend, strlen(error_query) + 1, error_query, major) != POOL_CONTINUE)
-	{
-		return POOL_END;
-	}
-
+	send_simplequery_message(backend, strlen(error_query) + 1, error_query, major);
 	/*
 	 * Continue to read packets until we get Error response (E).
 	 * Until that we may recieve one of:
@@ -2034,38 +1986,28 @@ POOL_STATUS do_error_command(POOL_CONNECTION *backend, int major)
 	 */
 	do
 	{
-		status = pool_read(backend, &kind, sizeof(kind));
-		if (status < 0)
-		{
-			pool_error("do_error_command: error while reading message kind");
-			return POOL_END;
-		}
+		pool_read(backend, &kind, sizeof(kind));
 
-		pool_debug("do_error_command: kind: %c", kind);
+        ereport(DEBUG2,
+                (errmsg("do_error_command: kind: %c", kind)));
 
 		if (major == PROTO_MAJOR_V3)
 		{
-			if (pool_read(backend, &len, sizeof(len)) < 0)
-			{
-				pool_error("do_error_command: error while reading message length");
-				return POOL_END;
-			}
+			pool_read(backend, &len, sizeof(len));
 			len = ntohl(len) - 4;
 			string = pool_read2(backend, len);
 			if (string == NULL)
-			{
-				pool_error("do_error_command: error while reading rest of message");
-				return POOL_END;
-			}
+                ereport(ERROR,
+                    (errmsg("do error command failed"),
+                         errdetail("read from backend failed")));
 		}
 		else
 		{
 			string = pool_read_string(backend, &len, 0);
 			if (string == NULL)
-			{
-				pool_error("do_error_command: error while reading rest of message");
-				return POOL_END;
-			}
+                ereport(ERROR,
+                        (errmsg("do error command failed"),
+                         errdetail("read from backend failed")));
 		}
 	} while (kind != 'E');
 
@@ -2073,31 +2015,28 @@ POOL_STATUS do_error_command(POOL_CONNECTION *backend, int major)
 	/*
 	 * Expecting ErrorResponse
 	 */
-	status = pool_read(backend, &kind, sizeof(kind));
-	if (status < 0)
-	{
-		pool_error("do_command: error while reading message kind");
-		return POOL_END;
-	}
+	pool_read(backend, &kind, sizeof(kind));
 
 	/*
 	 * read command tag of CommandComplete response
 	 */
 	if (major == PROTO_MAJOR_V3)
 	{
-		if (pool_read(backend, &len, sizeof(len)) < 0)
-			return POOL_END;
+		pool_read(backend, &len, sizeof(len));
 		len = ntohl(len) - 4;
 		string = pool_read2(backend, len);
 		if (string == NULL)
-			return POOL_END;
-		pool_debug("command tag: %s", string);
+            ereport(ERROR,
+                (errmsg("do error command failed"),
+                     errdetail("read from backend failed")));
 	}
 	else
 	{
 		string = pool_read_string(backend, &len, 0);
 		if (string == NULL)
-			return POOL_END;
+            ereport(ERROR,
+                (errmsg("do error command failed"),
+                     errdetail("read from backend failed")));
 	}
 #endif
 	return POOL_CONTINUE;
@@ -2113,7 +2052,6 @@ POOL_STATUS do_error_command(POOL_CONNECTION *backend, int major)
  */
 POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id, int major)
 {
-	int status;
 	char kind;
 	char *string;
 	char msg[1024] = "pgpool_error_portal"; /* large enough */
@@ -2124,10 +2062,7 @@ POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id,
 
 	p = buf;
 	memset(msg + len, 0, sizeof(int));
-	if (send_extended_protocol_message(backend, node_id, "E", len + 5, msg))
-	{
-		return POOL_END;
-	}
+	send_extended_protocol_message(backend, node_id, "E", len + 5, msg);
 
 	/*
 	 * Discard responses from backend until ErrorResponse received.
@@ -2137,12 +2072,7 @@ POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id,
 	 * happen if PHP PDO used. (2010/04/21)
 	 */
 	do {
-		status = pool_read(CONNECTION(backend, node_id), &kind, sizeof(kind));
-		if (status < 0)
-		{
-			pool_error("do_error_execute_command: error while reading message kind");
-			return POOL_END;
-		}
+		pool_read(CONNECTION(backend, node_id), &kind, sizeof(kind));
 
 		/*
 		 * read command tag of CommandComplete response
@@ -2156,8 +2086,7 @@ POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id,
 
 		if (major == PROTO_MAJOR_V3)
 		{
-			if (pool_read(CONNECTION(backend, node_id), &len, sizeof(len)) < 0)
-				return POOL_END;
+			pool_read(CONNECTION(backend, node_id), &len, sizeof(len));
 
 			if (kind != 'E')
 			{
@@ -2169,7 +2098,10 @@ POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id,
 			len = ntohl(len) - 4;
 			string = pool_read2(CONNECTION(backend, node_id), len);
 			if (string == NULL)
-				return POOL_END;
+                ereport(ERROR,
+                    (errmsg("do error execute command failed"),
+                         errdetail("read from backend failed")));
+
 			pool_debug("command tag: %s", string);
 
 			if (kind != 'E')
@@ -2177,8 +2109,10 @@ POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id,
 				readlen += len;
 				if (readlen >= sizeof(buf))
 				{
-					pool_error("do_error_execute_command: not enough buffer space");
-					return POOL_END;
+                    ereport(ERROR,
+                            (errmsg("do error execute command failed"),
+                             errdetail("not enough space in buffer")));
+
 				}
 				memcpy(p, string, len);
 				p += sizeof(len);
@@ -2188,15 +2122,18 @@ POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id,
 		{
 			string = pool_read_string(CONNECTION(backend, node_id), &len, 0);
 			if (string == NULL)
-				return POOL_END;
+                ereport(ERROR,
+                    (errmsg("do error execute command failed"),
+                         errdetail("read from backend failed")));
 
 			if (kind != 'E')
 			{
 				readlen += len;
 				if (readlen >= sizeof(buf))
 				{
-					pool_error("do_error_execute_command: not enough buffer space");
-					return POOL_END;
+                    ereport(ERROR,
+                            (errmsg("do error execute command failed"),
+                             errdetail("not enough space in buffer")));
 				}
 				memcpy(p, string, len);
 				p += sizeof(len);
@@ -2207,11 +2144,7 @@ POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id,
     if (readlen > 0)
     {
         /* put messages back to read buffer */
-        if (pool_unread(CONNECTION(backend, node_id), buf, readlen) != 0)
-		{
-            pool_error("do_error_execute_command: pool_unread failed");
-			return POOL_END;
-		}
+        pool_unread(CONNECTION(backend, node_id), buf, readlen);
     }
 
 	return POOL_CONTINUE;
@@ -2237,20 +2170,12 @@ POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backe
 	sendlen = htonl(len + 4);
 	pool_write(backend, &sendlen, sizeof(sendlen));
 
-	if (pool_write_and_flush(backend, query, len) < 0)
-	{
-		return POOL_END;
-	}
+	pool_write_and_flush(backend, query, len);
 
 	for(;;)
 	{
-		status = pool_read(backend, &kind, sizeof(kind));
-		if (status < 0)
-		{
-			pool_error("OneNode_do_command: error while reading message kind");
-			return POOL_END;
-		}
-		
+		pool_read(backend, &kind, sizeof(kind));
+
 		if (kind == 'N' && strstr(query,"dblink")) {
 			notice = true;
 			status = ParallelForwardToFrontend(kind, frontend, backend, database, false);
@@ -2269,30 +2194,21 @@ POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backe
 	 * Expecting ReadyForQuery
 	 *
 	 */
-	status = pool_read(backend, &kind, sizeof(kind));
-
 	if(notice)
-				pool_send_error_message(frontend, 3, "XX000",
-										"pgpool2 sql restriction(notice from dblink)",query,"", 
-										__FILE__,__LINE__);
-
-	if (status < 0)
-	{
-		pool_error("OneNode_do_command: error while reading message kind");
-		return POOL_END;
-	}
+        pool_send_error_message(frontend, 3, "XX000",
+                                "pgpool2 sql restriction(notice from dblink)",query,"",
+                                __FILE__,__LINE__);
+	pool_read(backend, &kind, sizeof(kind));
 
 	if (kind != 'Z')
-	{
-		pool_error("OneNode_do_command: backend does not return ReadyForQuery");
-		return POOL_END;
-	}
-
+        ereport(ERROR,
+                (errmsg("One node do command failed"),
+                 errdetail("backend does not return ReadyForQuery")));
 
 	status = ParallelForwardToFrontend(kind, frontend, backend, database, true);
 	pool_flush(frontend);
 
-		return status;
+    return status;
 }
 
 /*
@@ -2389,7 +2305,7 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 	int num_close_complete;
 	int state;
 
-	doing_extended = pool_get_session_context() && pool_is_doing_extended_query_message();
+	doing_extended = pool_get_session_context(true) && pool_is_doing_extended_query_message();
 	pool_debug("do_query: extended:%d query:%s", doing_extended, query);
 
 	*result = NULL;
@@ -2411,7 +2327,7 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 	 * The name of named statment/unamed statement are "pgpool_PID"
 	 * where PID is the process id of itself.
 	 */
-	if (pool_get_session_context() && pool_is_doing_extended_query_message())
+	if (pool_get_session_context(true) && pool_is_doing_extended_query_message())
 	{
 		static char prepared_name[256];
 		static int pname_len;
@@ -2510,10 +2426,7 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 	}
 	else
 	{
-		if (send_simplequery_message(backend, strlen(query) + 1, query, major) != POOL_CONTINUE)
-		{
-			return POOL_END;
-		}
+		send_simplequery_message(backend, strlen(query) + 1, query, major);
 	}
 
 	/*
@@ -2530,26 +2443,21 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 
 	for(;;)
 	{
-		if (pool_read(backend, &kind, sizeof(kind)) < 0)
-		{
-			pool_error("do_query: error while reading message kind");
-			return POOL_END;
-		}
+		pool_read(backend, &kind, sizeof(kind));
 
 		pool_debug("do_query: kind: %c", kind);
 
 		if (kind ==  'E')
 		{
-			char *message;
+			char *message = NULL;
 
 			if (pool_extract_error_message(false, backend, major, true, &message))
 			{
-				pool_error("do_query: error message from backend: %s. Exit this session.", message);
 				/*
 				 * This is fatal. Because: If we operate extended
 				 * query, backend would not accept subsequent commands
 				 * until "sync" message issued. However, if sync
-				 * message issued, unnamed statement/unnamed portal
+				 * message is issued, unnamed statement/unnamed portal
 				 * will disappear and will cause lots of problems.  If
 				 * we do not operate extended query, ongoing
 				 * transaction is aborted, and subsequent query would
@@ -2557,28 +2465,28 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 				 * way for frontend to handle error case. The only way
 				 * is closing this session.
 				 */
-				child_exit(1);
-				return POOL_END;
+                ereport(FATAL,
+                    (return_code(1),
+                        errmsg("Backend throw an error message"),
+                         errdetail("Exiting current session because of an error from backend"),
+                            errhint("BACKEND Error: \"%s\"",message?message:"")));
 			}
 		}
 
 		if (major == PROTO_MAJOR_V3)
 		{
-			if (pool_read(backend, &len, sizeof(len)) < 0)
-			{
-				pool_error("do_query: error while reading message length");
-				return POOL_END;
-			}
+			pool_read(backend, &len, sizeof(len));
+
 			len = ntohl(len) - 4;
 
 			if (len > 0)
 			{
 				packet = pool_read2(backend, len);
 				if (packet == NULL)
-				{
-					pool_error("do_query: error while reading rest of message");
-					return POOL_END;
-				}
+                    ereport(ERROR,
+                            (errmsg("do query failed"),
+                             errdetail("error while reading rest of message")));
+
 			}
 		}
 		else
@@ -2589,8 +2497,9 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 			{
 				if  (pool_read_string(backend, &len, 0) == NULL)
 				{
-					pool_error("do_query: error while reading string of message type %c", kind);
-					return POOL_END;
+                    ereport(ERROR,
+                            (errmsg("do query failed"),
+                             errdetail("error while reading string of message type %c", kind)));
 				}
 			}
 		}
@@ -2650,11 +2559,7 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 				}
 				else
 				{
-					if (pool_read(backend, &shortval, sizeof(short)) < 0)
-                    {
-                        pool_error("do_query: error while reading number of fields");
-                        return POOL_END;
-                    }
+					pool_read(backend, &shortval, sizeof(short));
 				}
 				num_fields = ntohs(shortval);		/* number of fields */
 				pool_debug("num_fileds: %d", num_fields);
@@ -2696,23 +2601,11 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 							p = pool_read_string(backend, &len, 0);
 							attrinfo->attrname = palloc(len);
 							memcpy(attrinfo->attrname, p, len);
-							if (pool_read(backend, &intval, sizeof(int)) < 0)
-							{
-								pool_error("do_query: error while reading type oid");
-								return POOL_END;
-							}
+							pool_read(backend, &intval, sizeof(int));
 							attrinfo->typeoid = ntohl(intval);
-							if (pool_read(backend, &shortval, sizeof(short)) < 0)
-							{
-								pool_error("do_query: error while reading type size");
-                                return POOL_END;
-							}
+							pool_read(backend, &shortval, sizeof(short));
 							attrinfo->size = ntohs(shortval);
-							if (pool_read(backend, &intval, sizeof(int)) < 0)
-							{
-								pool_error("do_query: error while reading type modifier");
-                                return POOL_END;
-							}
+							pool_read(backend, &intval, sizeof(int));
 							attrinfo->mod = ntohl(intval);
 						}
 
@@ -2740,10 +2633,10 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
  						nbytes = (num_fields + 7)/8;
  
  						if (nbytes <= 0)
- 						{
- 							pool_error("do_query: error while reading null bitmap");
- 							return POOL_END;
- 						}
+                            ereport(ERROR,
+                                    (errmsg("do query failed"),
+                                     errdetail("error while reading null bitmap")));
+
  
  						pool_read(backend, nullmap, nbytes);
  					}
@@ -2778,11 +2671,7 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 							if (mask & nullmap[i/8])
 							{
 								/* field size */
-								if (pool_read(backend, &len, sizeof(int)) < 0)
-								{
-									pool_error("do_query: error while reading field size");
-									return POOL_END;
-								}
+								pool_read(backend, &len, sizeof(int));
 								len = ntohl(len) - 4;
 
 								res->nullflags[num_data] = len;
@@ -2794,10 +2683,9 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 									memcpy(res->data[num_data], p, len);
 									*(res->data[num_data] + len) = '\0';
 									if (res->data[num_data] == NULL)
-									{
-										pool_error("do_query: error while reading field data");
-										return POOL_END;
-									}
+                                        ereport(ERROR,
+                                                (errmsg("do query failed"),
+                                                 errdetail("error while reading field data")));
 								}
 							}
 							else
@@ -2951,18 +2839,6 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 	char qbuf[1024];
 	POOL_STATUS status;
 	int i, deadlock_detected = 0;
-
-#define SEQUENCETABLEQUERY "SELECT d.adsrc FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_attrdef d ON (a.attrelid = d.adrelid AND a.attnum = d.adnum) WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.relname = '%s' AND d.adsrc ~ 'nextval'"
-
-#define SEQUENCETABLEQUERY2 "SELECT d.adsrc FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_attrdef d ON (a.attrelid = d.adrelid AND a.attnum = d.adnum) WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.oid = pgpool_regclass('%s') AND d.adsrc ~ 'nextval'"
-
-/* query to lock a row by only the specified table name without regard to the schema */
-#define ROWLOCKQUERY "SELECT 1 FROM pgpool_catalog.insert_lock WHERE reloid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = '%s' ORDER BY oid LIMIT 1) FOR UPDATE"
-
-#define ROWLOCKQUERY2 "SELECT 1 FROM pgpool_catalog.insert_lock WHERE reloid = pgpool_regclass('%s') FOR UPDATE"
-
-#define MAX_NAME_LEN 128
-
 	char *adsrc;
 	char seq_rel_name[MAX_NAME_LEN+1];
 	char rel_name[MAX_NAME_LEN+1];
@@ -3024,8 +2900,10 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 											false);
 			if (relcache == NULL)
 			{
-				pool_error("insert_lock: pool_create_relcache error");
-				return false;
+                ereport(FATAL,
+                        (return_code(2),
+                        errmsg("unable to get insert lock on table"),
+                         errdetail("error while creating relcache")));
 			}
 		}
 
@@ -3041,10 +2919,10 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 		pool_debug("adsrc: %s", adsrc);
 
 		if (regcomp(&preg, "nextval\\(+'(.+)'", REG_EXTENDED|REG_NEWLINE) != 0)
-		{
-			pool_error("insert_lock: regex compile failed");
-			return POOL_END;
-		}
+            ereport(FATAL,
+                    (return_code(2),
+                     errmsg("unable to get insert lock on table"),
+                      errdetail("regex compile failed")));
 
 		if (regexec(&preg, adsrc, nmatch, pmatch, 0) == 0)
 		{
@@ -3059,10 +2937,11 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 		regfree(&preg);
 
 		if (len == 0)
-		{
-			pool_error("insert_lock: regex no match: pg_attrdef is %s", adsrc);
-			return POOL_END;
-		}
+            ereport(FATAL,
+                    (return_code(2),
+                     errmsg("unable to get insert lock on table"),
+                     errdetail("regex no match: pg_attrdef is %s", adsrc)));
+
 
 		pool_debug("seq rel name: %s", seq_rel_name);
 		snprintf(qbuf, sizeof(qbuf), "SELECT 1 FROM %s FOR UPDATE", seq_rel_name);
@@ -3089,7 +2968,7 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 
 	if (lock_kind == 1)
 	{
-		if (pool_get_session_context() && pool_is_doing_extended_query_message())
+		if (pool_get_session_context(true) && pool_is_doing_extended_query_message())
 		{
 			status = do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
 			if (result)
@@ -3131,7 +3010,10 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 					if (status == POOL_CONTINUE)
 					{
 						if (!(result && result->data[0] && !strcmp(result->data[0], "1")))
-							status = POOL_ERROR;
+                            ereport(FATAL,
+                                (return_code(2),
+                                     errmsg("failed to get insert lock"),
+                                     errdetail("unexpected data from backend")));
 					}
 				}
 			}
@@ -3147,7 +3029,7 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 			snprintf(qbuf, sizeof(qbuf), "LOCK TABLE %s IN SHARE ROW EXCLUSIVE MODE", table);
 			per_node_statement_log(backend, MASTER_NODE_ID, qbuf);
 
-			if (pool_get_session_context() && pool_is_doing_extended_query_message())
+			if (pool_get_session_context(true) && pool_is_doing_extended_query_message())
 			{
 				status = do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
 				if (result)
@@ -3180,7 +3062,7 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 				if (lock_kind == 1)
 				{
 					per_node_statement_log(backend, i, qbuf);
-					if (pool_get_session_context() && pool_is_doing_extended_query_message())
+					if (pool_get_session_context(true) && pool_is_doing_extended_query_message())
 					{
 						status = do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
 						if (result)
@@ -3220,12 +3102,12 @@ static bool pool_has_insert_lock(void)
 /*
  * Query to know if insert_lock table exists.
  */
-#define HASINSERT_LOCKQUERY "SELECT count(*) FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON (c.relnamespace = n.oid) WHERE nspname = 'pgpool_catalog' AND relname = '%s'"
+
 	bool result;
 	static POOL_RELCACHE *relcache;
 	POOL_CONNECTION_POOL *backend;
 
-	backend = pool_get_session_context()->backend;
+	backend = pool_get_session_context(false)->backend;
 
 	if (!relcache)
 	{
@@ -3233,12 +3115,12 @@ static bool pool_has_insert_lock(void)
 										int_register_func, int_unregister_func,
 										false);
 		if (relcache == NULL)
-		{
-			pool_error("pool_has_insert_lock: pool_create_relcache error");
-			return false;
-		}
-	}
+            ereport(FATAL,
+                    (return_code(2),
+                     errmsg("unable to get insert lock status"),
+                     errdetail("error while creating relcache")));
 
+	}
 	result = pool_search_relcache(relcache, backend, "insert_lock")==0?0:1;
 	return result;
 }
@@ -3252,35 +3134,34 @@ static bool pool_has_insert_lock(void)
  */
 static POOL_STATUS add_lock_target(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char* table)
 {
-	POOL_STATUS status;
-
 	/* lock the row where reloid is 0 to avoid "duplicate key violates..." error when insert new oid */
 	if (!has_lock_target(frontend, backend, NULL, true))
 	{
-		pool_log("add_lock_target: could not lock the row where reloid is 0");
+        ereport(LOG,
+                (errmsg("add lock target: not lock the row where reloid is 0")));
 
 		per_node_statement_log(backend, MASTER_NODE_ID, "LOCK TABLE pgpool_catalog.insert_lock IN SHARE ROW EXCLUSIVE MODE");
-		status = do_command(frontend, MASTER(backend), "LOCK TABLE pgpool_catalog.insert_lock IN SHARE ROW EXCLUSIVE MODE",
-							PROTO_MAJOR_V3, MASTER_CONNECTION(backend)->pid, MASTER_CONNECTION(backend)->key, 0);
-		if (status == POOL_CONTINUE)
-		{
-			if (has_lock_target(frontend, backend, NULL, false))
-			{
-				pool_debug("add_lock_target: reloid 0 already exists in insert_lock table");
-			}
-			else
-			{
-				if (insert_oid_into_insert_lock(frontend, backend, NULL) != POOL_CONTINUE)
-				{
-					pool_log("add_lock_target: could not insert 0 into insert_lock table");
-					return POOL_ERROR;
-				}
-			}
-		}
-		else
-		{
-			return POOL_ERROR;
-		}
+
+		if(do_command(frontend, MASTER(backend), "LOCK TABLE pgpool_catalog.insert_lock IN SHARE ROW EXCLUSIVE MODE",
+							PROTO_MAJOR_V3, MASTER_CONNECTION(backend)->pid, MASTER_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
+            ereport(ERROR,
+                    (errmsg("unable to add lock target"),
+                     errdetail("do_command returned DEADLOCK status")));
+
+        if (has_lock_target(frontend, backend, NULL, false))
+        {
+            ereport(DEBUG1,
+                    (errmsg("add lock target: reloid 0 already exists in insert_lock table")));
+        }
+        else
+        {
+            if (insert_oid_into_insert_lock(frontend, backend, NULL) != POOL_CONTINUE)
+            {
+                ereport(ERROR,
+                        (errmsg("unable to start the internal transaction"),
+                         errdetail("failed to insert 0 into insert_lock table")));
+            }
+        }
 	}
 
 	/* does insert_lock table contain the oid of the table? */
@@ -3292,10 +3173,10 @@ static POOL_STATUS add_lock_target(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 
 	/* insert the oid of the table into insert_lock table */
 	if (insert_oid_into_insert_lock(frontend, backend, table) != POOL_CONTINUE)
-	{
-		pool_log("add_lock_target: could not insert \"%s\" oid into insert_lock table", table);
-		return POOL_ERROR;
-	}
+        ereport(ERROR,
+                (errmsg("unable to start the internal transaction"),
+                 errdetail("could not insert \"%s\" oid into insert_lock table", table)));
+
 
 	return POOL_CONTINUE;
 }
@@ -3419,7 +3300,7 @@ static char *get_insert_command_table_name(InsertStmt *node)
 	static char table[128];
 	char *p;
 
-	session_context = pool_get_session_context();
+	session_context = pool_get_session_context(true);
 	if (!session_context)
 		return NULL;
 
@@ -3514,11 +3395,11 @@ bool is_strict_query(Node *node)
 int check_copy_from_stdin(Node *node)
 {
 	if (copy_schema)
-		free(copy_schema);
+		pfree(copy_schema);
 	if (copy_table)
-		free(copy_table);
+		pfree(copy_table);
 	if (copy_null)
-		free(copy_null);
+		pfree(copy_null);
 
 	copy_schema = copy_table = copy_null = NULL;
 
@@ -3532,13 +3413,13 @@ int check_copy_from_stdin(Node *node)
 
 			/* query is COPY FROM STDIN */
 			if (relation->schemaname)
-				copy_schema = strdup(relation->schemaname);
+				copy_schema = pstrdup(relation->schemaname);
 			else
-				copy_schema = strdup("public");
-			copy_table = strdup(relation->relname);
+				copy_schema = pstrdup("public");
+			copy_table = pstrdup(relation->relname);
 
 			copy_delimiter = '\t'; /* default delimiter */
-			copy_null = strdup("\\N"); /* default null string */
+			copy_null = pstrdup("\\N"); /* default null string */
 
 			/* look up delimiter and null string. */
 			foreach (lc, stmt->options)
@@ -3556,7 +3437,7 @@ int check_copy_from_stdin(Node *node)
 					if (copy_null)
 						free(copy_null);
 					v = (Value *)elem->arg;
-					copy_null = strdup(v->val.str);
+					copy_null = pstrdup(v->val.str);
 				}
 			}
 		}
@@ -3574,11 +3455,7 @@ POOL_STATUS read_kind_from_one_backend(POOL_CONNECTION *frontend, POOL_CONNECTIO
 	if (VALID_BACKEND(node))
 	{
 		char k;
-		if (pool_read(CONNECTION(backend, node), &k, 1) < 0)
-		{
-			pool_error("read_kind_from_one_backend: failed to read kind from %d th backend", node);
-			return POOL_ERROR;
-		}
+		pool_read(CONNECTION(backend, node), &k, 1);
 
 		pool_debug("read_kind_from_one_backend: read kind from %d th backend %c", node, k);
 
@@ -3587,9 +3464,11 @@ POOL_STATUS read_kind_from_one_backend(POOL_CONNECTION *frontend, POOL_CONNECTIO
 	}
 	else
 	{
-		pool_error("read_kind_from_one_backend: %d th backend is not valid", node);
 		pool_dump_valid_backend(node);
-		return POOL_ERROR;
+        ereport(ERROR,
+            (errmsg("unable to read message kind from backend"),
+                 errdetail("%d th backend is not valid", node)));
+        
 	}
 }
 
@@ -3624,20 +3503,17 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 {
 	int i;
 	unsigned char kind_list[MAX_NUM_BACKENDS];	/* records each backend's kind */
-	unsigned char kind_map[256]; /* records which kind gets majority.
-								  *	256 is the number of distinct values expressed by unsigned char
-								 */
+	unsigned char kind_map[256];                /* records which kind gets majority.
+                                                 *	256 is the number of distinct values expressed by unsigned char
+                                                 */
 	unsigned char kind;
-	int trust_kind;	/* decided kind */
+	int trust_kind;                              /* decided kind */
 	int max_kind = 0;
 	double max_count = 0;
-	int degenerate_node_num = 0;		/* number of backends degeneration requested */
-	int degenerate_node[MAX_NUM_BACKENDS];		/* degeneration requested backend list */
-	POOL_STATUS status;
+	int degenerate_node_num = 0;                /* number of backends degeneration requested */
+	int degenerate_node[MAX_NUM_BACKENDS];      /* degeneration requested backend list */
 
-	MemoryContext old_context;
-
-	POOL_SESSION_CONTEXT *session_context = pool_get_session_context();
+	POOL_SESSION_CONTEXT *session_context = pool_get_session_context(false);
 	POOL_QUERY_CONTEXT *query_context = session_context->query_context;
 
 	int num_executed_nodes = 0;
@@ -3647,13 +3523,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 
 	if (MASTER_SLAVE)
 	{
-		status = read_kind_from_one_backend(frontend, backend, (char *)&kind, MASTER_NODE_ID);
-		if (status != POOL_CONTINUE)
-		{
-			pool_error("read_kind_from_backend: read_kind_from_one_backend for master node %d failed",
-					   MASTER_NODE_ID);
-			return status;
-		}
+		read_kind_from_one_backend(frontend, backend, (char *)&kind, MASTER_NODE_ID);
 
 		/*
 		 * If we received a notification message in master/slave mode,
@@ -3687,11 +3557,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 				char *p, *value;
 				int len;
 
-				if (pool_read(CONNECTION(backend, i), &kind, 1) < 0)
-				{
-					pool_error("read_kind_from_backend: failed to read kind from %d th backend", i);
-					return POOL_ERROR;
-				}
+				pool_read(CONNECTION(backend, i), &kind, 1);
 
 				pool_debug("read_kind_from_backend: kind: %c from %d th backend", kind, i);
 
@@ -3703,11 +3569,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 					break;
 				}
 
-				if (pool_read(CONNECTION(backend, i), &len, sizeof(len)) < 0)
-				{
-					pool_error("read_kind_from_backend: failed to read parameter status packet length from %d th backend", i);
-					return POOL_ERROR;
-				}
+				pool_read(CONNECTION(backend, i), &len, sizeof(len));
 				len = htonl(len) - 4;
 				p = pool_read2(CONNECTION(backend, i), len);
 				if (p == NULL)
@@ -3796,8 +3658,10 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 	}
 	else if (first_node == -1)
 	{
-		pool_error("read_kind_from_backend: couldn't find first node. All backend down?");
-		return POOL_ERROR;
+        ereport(FATAL,
+            (return_code(2),
+                 errmsg("failed to read kind from backend"),
+                    errdetail("couldn't find first node. All backend down?")));
 	}
 	else
 		trust_kind = kind_list[first_node];
@@ -3806,11 +3670,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 
 	if (degenerate_node_num)
 	{
-		if (query_context)
-			old_context = MemoryContextSwitchTo(query_context->memory_context);
-		else
-			old_context = MemoryContextSwitchTo(session_context->memory_context);
-
+        int retcode = 2;
 		String *msg = init_string("kind mismatch among backends. ");
 
 		string_append_char(msg, "Possible last query was: \"");
@@ -3885,24 +3745,17 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 			}
 		}
 
-		pool_send_error_message(frontend, MAJOR(backend), "XX000",
-								msg->data, "",
-								"check data consistency among db nodes",
-								__FILE__, __LINE__);
-		pool_error("%s", msg->data);
-
-		free_string(msg);
-
-		/* Switch to old memory context */
-		MemoryContextSwitchTo(old_context);
-
 		if (pool_config->replication_stop_on_mismatch)
 		{
 			degenerate_backend_set(degenerate_node, degenerate_node_num);
-			child_exit(1);
+            retcode = 1;
 		}
-		else
-			return POOL_ERROR;
+        ereport(FATAL,
+            (return_code(retcode),
+                 errmsg("failed to read kind from backend"),
+                    errdetail("%s",msg->data),
+                        errhint("check data consistency among db nodes")));
+
 	}
 
 	return POOL_CONTINUE;
@@ -3924,20 +3777,15 @@ static int send_deallocate(POOL_CONNECTION_POOL *backend,
 	name = msglist.sent_messages[n]->name;
 
 	len = strlen(name) + 14; /* "DEALLOCATE \"" + "\"" + '\0' */
-	query = malloc(len);
-	if (query == NULL)
-	{
-		pool_error("send_deallocate: malloc failed");
-		return -1;
-	}
+	query = palloc(len);
 	sprintf(query, "DEALLOCATE \"%s\"", name);
 
 	if (SimpleQuery(NULL, backend, strlen(query)+1, query) != POOL_CONTINUE)
 	{
-		free(query);
+		pfree(query);
 		return 1;
 	}
-	free(query);
+	pfree(query);
 
 	return 0;
 }
@@ -3953,12 +3801,7 @@ parse_copy_data(char *buf, int len, char delimiter, int col_id)
 	int i, j, field = 0;
 	char *str, *p = NULL;
 
-	str = malloc(len + 1);
-	if (str == NULL)
-	{
-		pool_error("parse_copy_data: malloc failed");
-		return NULL;
-	}
+	str = palloc(len + 1);
 
 	/* buf is terminated by '\n'. */
 	/* skip '\n' in for loop.     */
@@ -3992,19 +3835,13 @@ parse_copy_data(char *buf, int len, char delimiter, int col_id)
 	if (field == col_id)
 	{
 		str[j] = '\0';
-		p = malloc(j+1);
-		if (p == NULL)
-		{
-			pool_error("parse_copy_data: malloc failed");
-			free(str);
-			return NULL;
-		}
+		p = palloc(j+1);
 		strcpy(p, str);
 		p[j] = '\0';
 		pool_debug("parse_copy_data: divide key value is %s", p);
 	}
 
-	free(str);
+	pfree(str);
 	return p;
 }
 
@@ -4012,13 +3849,14 @@ void query_ps_status(char *query, POOL_CONNECTION_POOL *backend)
 {
 	StartupPacket *sp;
 	char psbuf[1024];
-	int i;
+	int i = 0;
 
 	if (*query == '\0')
 		return;
 
 	sp = MASTER_CONNECTION(backend)->sp;
-	i = snprintf(psbuf, sizeof(psbuf) - 1, "%s %s %s ",
+    if(sp)
+        i = snprintf(psbuf, sizeof(psbuf) - 1, "%s %s %s ",
 				 sp->user, sp->database, remote_ps_data);
 
 	/* skip spaces */
@@ -4197,7 +4035,9 @@ POOL_STATUS start_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTIO
 
 				if (do_command(frontend, CONNECTION(backend, i), "BEGIN", MAJOR(backend), 
 							   MASTER_CONNECTION(backend)->pid,	MASTER_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
-					return POOL_END;
+                    ereport(ERROR,
+                            (errmsg("unable to start the internal transaction"),
+                             errdetail("do_command returned DEADLOCK status")));
 
 				/* Mark that we started new transaction */
 				INTERNAL_TRANSACTION_STARTED(backend, i) = true;
@@ -4228,75 +4068,85 @@ POOL_STATUS end_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTION_
 	 */
 	POOL_SETMASK2(&BlockSig, &oldmask);
 
-	/* We need to commit from secondary to master. */
-	for (i=0;i<NUM_BACKENDS;i++)
-	{
-		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i) &&
-			TSTATE(backend, i) != 'I' &&
-			INTERNAL_TRANSACTION_STARTED(backend, i))
-		{
-			if (MAJOR(backend) == PROTO_MAJOR_V3)
-			{
-				/*
-				 * Skip rest of Ready for Query packet
-				 */
-				if (pool_read(CONNECTION(backend, i), &len, sizeof(len)))
-				{
-					POOL_SETMASK(&oldmask);
-					return POOL_END;
-				}
-				if (pool_read(CONNECTION(backend, i), &tstate, sizeof(tstate)))
-				{
-					POOL_SETMASK(&oldmask);
-					return POOL_END;
-				}
-			}
+    PG_TRY();
+    {
+        /* We need to commit from secondary to master. */
+        for (i=0;i<NUM_BACKENDS;i++)
+        {
+            if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i) &&
+                TSTATE(backend, i) != 'I' &&
+                INTERNAL_TRANSACTION_STARTED(backend, i))
+            {
+                if (MAJOR(backend) == PROTO_MAJOR_V3)
+                {
+                    /*
+                     * Skip rest of Ready for Query packet
+                     */
+                    pool_read(CONNECTION(backend, i), &len, sizeof(len));
+                    pool_read(CONNECTION(backend, i), &tstate, sizeof(tstate));
+                }
 
-			per_node_statement_log(backend, i, "COMMIT");
+                per_node_statement_log(backend, i, "COMMIT");
+                PG_TRY();
+                {
+                    if (do_command(frontend, CONNECTION(backend, i), "COMMIT", MAJOR(backend),
+                                   MASTER_CONNECTION(backend)->pid,	MASTER_CONNECTION(backend)->key, 1) != POOL_CONTINUE)
+                    {
+                        ereport(ERROR,
+                                (errmsg("unable to COMMIT the transaction"),
+                                 errdetail("do_command returned DEADLOCK status")));
+                    }
+                }
+                PG_CATCH();
+                {
+                    INTERNAL_TRANSACTION_STARTED(backend, i) = false;
+                    PG_RE_THROW();
+                }
+                PG_END_TRY();
+                
+                INTERNAL_TRANSACTION_STARTED(backend, i) = false;
+            }
+        }
 
-			/* COMMIT success? */
-			if (do_command(frontend, CONNECTION(backend, i), "COMMIT", MAJOR(backend), 
-						   MASTER_CONNECTION(backend)->pid,	MASTER_CONNECTION(backend)->key, 1) != POOL_CONTINUE)
-			{
-				INTERNAL_TRANSACTION_STARTED(backend, i) = false;
-				POOL_SETMASK(&oldmask);
-				return POOL_END;
-			}
-			INTERNAL_TRANSACTION_STARTED(backend, i) = false;
-		}
-	}
+        /* Commit on master */
+        if (TSTATE(backend, MASTER_NODE_ID) != 'I' &&
+                INTERNAL_TRANSACTION_STARTED(backend, MASTER_NODE_ID))
+        {
+            if (MAJOR(backend) == PROTO_MAJOR_V3)
+            {
+                /*
+                 * Skip rest of Ready for Query packet
+                 */
+                pool_read(CONNECTION(backend, MASTER_NODE_ID), &len, sizeof(len));
+                pool_read(CONNECTION(backend, MASTER_NODE_ID), &tstate, sizeof(tstate));
+            }
 
-	/* Commit on master */
-	if (TSTATE(backend, MASTER_NODE_ID) != 'I' &&
-			INTERNAL_TRANSACTION_STARTED(backend, MASTER_NODE_ID))
-	{
-		if (MAJOR(backend) == PROTO_MAJOR_V3)
-		{
-			/*
-			 * Skip rest of Ready for Query packet
-			 */
-			if (pool_read(CONNECTION(backend, MASTER_NODE_ID), &len, sizeof(len)))
-			{
-				POOL_SETMASK(&oldmask);
-				return POOL_END;
-			}
-			if (pool_read(CONNECTION(backend, MASTER_NODE_ID), &tstate, sizeof(tstate)))
-			{
-				POOL_SETMASK(&oldmask);
-				return POOL_END;
-			}
-		}
-
-		per_node_statement_log(backend, MASTER_NODE_ID, "COMMIT");
-		if (do_command(frontend, MASTER(backend), "COMMIT", MAJOR(backend), 
-					   MASTER_CONNECTION(backend)->pid,	MASTER_CONNECTION(backend)->key, 1) != POOL_CONTINUE)
-		{
-			INTERNAL_TRANSACTION_STARTED(backend, MASTER_NODE_ID) = false;
-			POOL_SETMASK(&oldmask);
-			return POOL_END;
-		}
-		INTERNAL_TRANSACTION_STARTED(backend, MASTER_NODE_ID) = false;
-	}
+            per_node_statement_log(backend, MASTER_NODE_ID, "COMMIT");
+            PG_TRY();
+            {
+                if (do_command(frontend, MASTER(backend), "COMMIT", MAJOR(backend),
+                               MASTER_CONNECTION(backend)->pid,	MASTER_CONNECTION(backend)->key, 1) != POOL_CONTINUE)
+                {
+                    ereport(ERROR,
+                            (errmsg("unable to COMMIT the transaction"),
+                             errdetail("do_command returned DEADLOCK status")));
+                }
+            }
+            PG_CATCH();
+            {
+                INTERNAL_TRANSACTION_STARTED(backend, MASTER_NODE_ID) = false;
+                PG_RE_THROW();
+            }
+            PG_END_TRY();
+            INTERNAL_TRANSACTION_STARTED(backend, MASTER_NODE_ID) = false;
+        }
+    }
+    PG_CATCH();
+    {
+        POOL_SETMASK(&oldmask);
+        PG_RE_THROW();
+    }
+    PG_END_TRY();
 
 	POOL_SETMASK(&oldmask);
 	return POOL_CONTINUE;
@@ -4398,6 +4248,8 @@ int detect_query_cancel_error(POOL_CONNECTION *backend, int major)
 
 /*
  * detect_error: Detect specified error from error code.
+ * returns 0 in case of sucess or 1 in cause of specified error.
+ * and throws an ereport for all other errors
  */
 static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, char class, bool unread)
 {
@@ -4431,23 +4283,15 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 			p += sizeof(len);
 
 			len = ntohl(len) - 4;
-			str = malloc(len);
-
-			if (!str)
-			{
-				pool_error("detect_error: malloc failed");
-				return -1;
-			}
+			str = palloc(len);
 
 			pool_read(backend, str, len);
 			readlen += len;
 
 			if (readlen >= sizeof(buf))
-			{
-				pool_error("detect_error: not enough buffer space");
-				free(str);
-				return -1;
-			}
+                ereport(ERROR,
+                    (errmsg("unable to detect error"),
+                         errdetail("not enough space in buffer")));
 
 			memcpy(p, str, len);
 
@@ -4466,7 +4310,7 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 				else
 					e = e + strlen(e) + 1;
 			}
-			free(str);
+			pfree(str);
 		}
 		else
 		{
@@ -4474,10 +4318,9 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 			readlen += len;
 
 			if (readlen >= sizeof(buf))
-			{
-				pool_error("detect_error: not enough buffer space");
-				return -1;
-			}
+                ereport(ERROR,
+                        (errmsg("unable to detect error"),
+                         errdetail("not enough space in buffer")));
 
 			memcpy(p, str, len);
 		}
@@ -4485,8 +4328,7 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 	if (unread || !is_error)
 	{
 		/* put a message to read buffer */
-		if (pool_unread(backend, buf, readlen) != 0)
-			is_error = -1;
+		pool_unread(backend, buf, readlen);
 	}
 
 	return is_error;
@@ -4502,8 +4344,11 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
  * call to this function will break the buffer.  If unread is true,
  * the packet will be returned to the stream.
  *
- * Return values are: 0: not error or notice message 1: succeeded to
- * extract error message -1: error)
+ * Return values are: 
+ * 0: not error or notice message 
+ * 1: succeeded to extract error message 
+ * -1: error)
+ * we do not throw elog from this function
  */
 int pool_extract_error_message(bool read_kind, POOL_CONNECTION *backend, int major, bool unread, char **message)
 {
@@ -4515,100 +4360,107 @@ int pool_extract_error_message(bool read_kind, POOL_CONNECTION *backend, int maj
 
 	p = buf;
 
-	if (read_kind)
-	{
-		len = sizeof(kind);
+    PG_TRY();
+    {
+        if (read_kind)
+        {
+            len = sizeof(kind);
 
-		if (pool_read(backend, &kind, len) < 0)
-			return -1;
+            pool_read(backend, &kind, len);
 
-		readlen += len;
-		memcpy(p, &kind, len);
-		p += len;
+            readlen += len;
+            memcpy(p, &kind, len);
+            p += len;
 
-		if (kind != 'E' && kind != 'N')
-		{
-			if (pool_unread(backend, buf, readlen) != 0)
-				return -1;
-			return 0;
-		}
-	}
+            if (kind != 'E' && kind != 'N')
+            {
+                pool_unread(backend, buf, readlen);
+                return 0;
+            }
+        }
 
-	/* read actual message */
-	if (major == PROTO_MAJOR_V3)
-	{
-		char *e;
+        /* read actual message */
+        if (major == PROTO_MAJOR_V3)
+        {
+            char *e;
 
-		if (pool_read(backend, &len, sizeof(len)) < 0)
-			return -1;
-		readlen += sizeof(len);
-		memcpy(p, &len, sizeof(len));
-		p += sizeof(len);
+            pool_read(backend, &len, sizeof(len));
+            readlen += sizeof(len);
+            memcpy(p, &len, sizeof(len));
+            p += sizeof(len);
 
-		len = ntohl(len) - 4;
-		str = malloc(len);
-		if (!str)
-		{
-			pool_error("pool_extract_error_message: malloc failed");
-			return -1;
-		}
+            len = ntohl(len) - 4;
+            str = palloc(len);
 
-		pool_read(backend, str, len);
-		readlen += len;
+            pool_read(backend, str, len);
+            readlen += len;
 
-		if (readlen >= sizeof(buf))
-		{
-			pool_error("pool_extract_error_message: not enough buffer space");
-			free(str);
-			return -1;
-		}
+            if (readlen >= sizeof(buf))
+            {
+                ereport(NOTICE,
+                        (errmsg("unable to extract error message"),
+                         errdetail("not enough buffer space")));
+                
+                pfree(str);
+                return -1;
+            }
 
-		memcpy(p, str, len);
+            memcpy(p, str, len);
 
-		/*
-		 * Checks error code which is formatted 'Mxxxxxx'
-		 * (xxxxxx is error message).
-		 */
-		e = str;
-		while (*e)
-		{
-			if (*e == 'M')
-			{
-				e++;
-				strncpy(message_buf, e, sizeof(message_buf)-1);
-				message_buf[sizeof(message_buf)-1] = '\0';
-				break;
-			}
-			else
-				e = e + strlen(e) + 1;
-		}
-		free(str);
-	}
-	else
-	{
-		str = pool_read_string(backend, &len, 0);
-		len = Min(sizeof(message_buf)-1, len);
-		readlen += len;
+            /*
+             * Checks error code which is formatted 'Mxxxxxx'
+             * (xxxxxx is error message).
+             */
+            e = str;
+            while (*e)
+            {
+                if (*e == 'M')
+                {
+                    e++;
+                    strncpy(message_buf, e, sizeof(message_buf)-1);
+                    message_buf[sizeof(message_buf)-1] = '\0';
+                    break;
+                }
+                else
+                    e = e + strlen(e) + 1;
+            }
+            pfree(str);
+        }
+        else
+        {
+            str = pool_read_string(backend, &len, 0);
+            len = Min(sizeof(message_buf)-1, len);
+            readlen += len;
 
-		if (readlen >= sizeof(buf))
-		{
-			pool_error("pool_extract_error_message: not enough buffer space");
-			return -1;
-		}
+            if (readlen >= sizeof(buf))
+            {
+                ereport(NOTICE,
+                        (errmsg("unable to extract error message"),
+                         errdetail("not enough buffer space")));
+                return -1;
+            }
 
-		memcpy(p, str, len);
-		memcpy(message_buf, str, len);
-		message_buf[len] = '\0';
-	}
+            memcpy(p, str, len);
+            memcpy(message_buf, str, len);
+            message_buf[len] = '\0';
+        }
 
-	if (unread)
-	{
-		/* Put the message to read buffer */
-		if (pool_unread(backend, buf, readlen) != 0)
-			return -1;
-	}
+        if (unread)
+        {
+            /* Put the message to read buffer */
+            pool_unread(backend, buf, readlen);
+        }
 
-	*message = message_buf;
+        *message = message_buf;
+    }
+    PG_CATCH();
+    {
+		FlushErrorState();
+        return -1;
+    }
+    PG_END_TRY();
+    
+
 	return 1;
 }
 
@@ -4617,7 +4469,7 @@ int pool_extract_error_message(bool read_kind, POOL_CONNECTION *backend, int maj
  */
 POOL_STATUS pool_discard_packet(POOL_CONNECTION_POOL *cp)
 {
-	int status, i;
+	int i;
 	char kind;
 	POOL_CONNECTION *backend;
 
@@ -4630,14 +4482,10 @@ POOL_STATUS pool_discard_packet(POOL_CONNECTION_POOL *cp)
 
 		backend = CONNECTION(cp, i);
 
-		status = pool_read(backend, &kind, sizeof(kind));
-		if (status < 0)
-		{
-			pool_error("pool_discard_packet: error while reading message kind");
-			return POOL_END;
-		}
-
-		pool_debug("pool_discard_packet: kind: %c", kind);
+		pool_read(backend, &kind, sizeof(kind));
+        
+        ereport(DEBUG2,
+                (errmsg("pool_discard_packet: kind: %c", kind)));
 	}
 
 	return pool_discard_packet_contents(cp);
@@ -4663,27 +4511,22 @@ POOL_STATUS pool_discard_packet_contents(POOL_CONNECTION_POOL *cp)
 
 		if (MAJOR(cp) == PROTO_MAJOR_V3)
 		{
-			if (pool_read(backend, &len, sizeof(len)) < 0)
-			{
-				pool_error("pool_discard_packet_contents: error while reading message length");
-				return POOL_END;
-			}
+			pool_read(backend, &len, sizeof(len));
 			len = ntohl(len) - 4;
 			string = pool_read2(backend, len);
 			if (string == NULL)
-			{
-				pool_error("pool_discard_packet_contents: error while reading rest of message");
-				return POOL_END;
-			}
+                ereport(ERROR,
+                        (errmsg("pool discard packet contents failed"),
+                         errdetail("error while reading rest of message")));
+
 		}
 		else
 		{
 			string = pool_read_string(backend, &len, 0);
 			if (string == NULL)
-			{
-				pool_error("pool_discard_packet_contents: error while reading rest of message");
-				return POOL_END;
-			}
+                ereport(ERROR,
+                        (errmsg("pool discard packet contents failed"),
+                         errdetail("error while reading rest of message")));
 		}
 	}
 	return POOL_CONTINUE;
@@ -4769,8 +4612,9 @@ SELECT_RETRY:
 		if (errno == EINTR)
 			goto SELECT_RETRY;
 
-		pool_error("select() failed. reason: %s", strerror(errno));
-		return POOL_ERROR;
+        ereport(FATAL,
+            (errmsg("unable to read data"),
+                 errdetail("select() system call failed with reason \"%s\"",strerror(errno))));
 	}
 
 	/* select timeout */
@@ -4784,11 +4628,12 @@ SELECT_RETRY:
 			{
 				pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit(%d) reached",
 						 pool_config->client_idle_limit);
-				pool_send_error_message(frontend, MAJOR(backend),
-										"57000", "connection terminated due to client idle limit reached",
-										"","",  __FILE__, __LINE__);
-				return POOL_END;
-			}
+                ereport(ERROR,
+                        (pool_error_code("57000"),
+                        errmsg("unable to read data"),
+                         errdetail("child connection forced to terminate due to client_idle_limit:%d is reached",
+                                   pool_config->client_idle_limit)));
+            }
 		}
 		else if (*InRecovery > RECOVERY_INIT && pool_config->client_idle_limit_in_recovery > 0)
 		{
@@ -4798,10 +4643,10 @@ SELECT_RETRY:
 			{
 				pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit_in_recovery(%d) reached",
 						 pool_config->client_idle_limit_in_recovery);
-				pool_send_error_message(frontend, MAJOR(backend),
-										"57000", "connection terminated due to online recovery",
-										"","",  __FILE__, __LINE__);
-				return POOL_END;
+                ereport(ERROR,
+                    (pool_error_code("57000"),
+                    errmsg("unable to read data"),
+                         errdetail("child connection forced to terminate due to client_idle_limit_in_recovery:%d is reached",pool_config->client_idle_limit_in_recovery)));
 			}
 		}
 		else if (*InRecovery > RECOVERY_INIT && pool_config->client_idle_limit_in_recovery == -1)
@@ -4810,11 +4655,10 @@ SELECT_RETRY:
 			 * If we are in recovery and client_idle_limit_in_recovery is -1, then
 			 * exit immediately.
 			 */
-			pool_log("pool_process_query: child connection forced to terminate due to client_idle_limitis -1");
-			pool_send_error_message(frontend, MAJOR(backend),
-									"57000", "connection terminated due to online recovery",
-									"","",  __FILE__, __LINE__);
-			return POOL_END;
+            ereport(ERROR,
+                (pool_error_code("57000"),
+                errmsg("connection terminated due to online recovery"),
+                     errdetail("child connection forced to terminate due to client_idle_limitis:-1")));
 		}
 		goto SELECT_RETRY;
 	}
@@ -4843,14 +4687,12 @@ SELECT_RETRY:
 				r = detect_serialization_error(CONNECTION(backend, i), MAJOR(backend), false);
 				if (r == SPECIFIED_ERROR)
 				{
-					pool_error("connection on node %d was terminated due to conflict with recovery", i);
-					pool_send_fatal_message(frontend, MAJOR(backend),
-											SERIALIZATION_FAIL_ERROR_CODE,
-											"connection was terminated due to conflict with recovery",
-											"User was holding a relation lock for too long.",
-											"In a moment you should be able to reconnect to the database and repeat your command.",
-											__FILE__, __LINE__);
-					return POOL_ERROR;
+                    ereport(FATAL,
+                            (pool_error_code(SERIALIZATION_FAIL_ERROR_CODE),
+                                errmsg("connection was terminated due to conflict with recovery"),
+                                 errdetail("User was holding a relation lock for too long."),
+                                    errhint("In a moment you should be able to reconnect to the database and repeat your command.")));
+
 				}
 
 				/*
@@ -4875,8 +4717,10 @@ SELECT_RETRY:
 					 * detaching the backend. In this case reading from backend socket will
 					 * return EOF and it's better to close this session. So returns POOL_END.
 					 */ 
-					pool_log("detect_postmaster_down_error returns error on backend %d. Going to close this session.", i);
-					return POOL_END;
+                    ereport(LOG,
+                        (errmsg("unable to read and process data"),
+                             errdetail("detect_postmaster_down_error returns error on backend %d. Going to close this session.", i)));
+                    return POOL_END;
 				}
 			}
 		}
@@ -4891,17 +4735,27 @@ SELECT_RETRY:
 	if (!reset_request)
 	{
 		if (FD_ISSET(frontend->fd, &exceptmask))
-			return POOL_END;
+            ereport(ERROR,
+                (errmsg("unable to read from frontend socket"),
+                     errdetail("exception occured on frontend socket")));
+    
 		else if (FD_ISSET(frontend->fd, &readmask))
 		{
+            write_stderr("[%d]%s():%d\n",getpid(),__FUNCTION__,__LINE__);
+
 			status = ProcessFrontendResponse(frontend, backend);
+            write_stderr("[%d]%s():%d\n",getpid(),__FUNCTION__,__LINE__);
+
 			if (status != POOL_CONTINUE)
 				return status;
 		}
 	}
 
 	if (FD_ISSET(MASTER(backend)->fd, &exceptmask))
-		return POOL_ERROR;
+        ereport(FATAL,
+            (errmsg("unable to read from backend socket"),
+                 errdetail("exception occured on backend socket")));
+
 	else if (FD_ISSET(MASTER(backend)->fd, &readmask))
 	{
 		status = ProcessBackendResponse(frontend, backend, state, num_fields);
@@ -4916,7 +4770,8 @@ SELECT_RETRY:
  */
 void pool_dump_valid_backend(int backend_id)
 {
-	pool_log("RAW_MODE:%d REAL_MASTER_NODE_ID:%d pool_is_node_to_be_sent_in_current_query:%d my_backend_status:%d",
-			 RAW_MODE, REAL_MASTER_NODE_ID, pool_is_node_to_be_sent_in_current_query(backend_id), 
-			 *my_backend_status[backend_id]);
+    ereport(LOG,
+            (errmsg("RAW_MODE:%d REAL_MASTER_NODE_ID:%d pool_is_node_to_be_sent_in_current_query:%d my_backend_status:%d",
+                    RAW_MODE, REAL_MASTER_NODE_ID, pool_is_node_to_be_sent_in_current_query(backend_id),
+                    *my_backend_status[backend_id])));
 }

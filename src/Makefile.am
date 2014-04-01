@@ -45,7 +45,10 @@ pgpool_SOURCES = main/main.c \
 	utils/getopt_long.c \
 	utils/mmgr/mcxt.c \
 	utils/mmgr/aset.c \
-	utils/error/elog.c
+	utils/error/elog.c \
+    utils/pcp/pcp_stream.c \
+    utils/pcp/pcp_error.c \
+    utils/pcp/pcp_timeout.c
 
 DEFS = @DEFS@ \
 	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\"
@@ -66,7 +69,6 @@ pkgdata_DATA = sql/insert_lock.sql \
 #ACLOCAL_AMFLAGS = -I m4
 
 pgpool_LDADD = -L@PGSQL_LIB_DIR@ -lpq parser/libsql-parser.a \
-						$(libs_dir)/pcp/libpcp.la \
 						parser/nodes.o \
 						watchdog/lib-watchdog.a \
 						-lpthread

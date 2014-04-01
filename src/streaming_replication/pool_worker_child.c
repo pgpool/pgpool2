@@ -220,7 +220,7 @@ static void establish_persistent_connection(void)
             {
 	        	ErrorData  *edata;
 	        	edata = CopyErrorData();
-	        	printf("%s",edata->message);
+	        	write_stderr("%s",edata->message);
 	        	FlushErrorState();
 				slots[i] = NULL;
             }
@@ -443,7 +443,9 @@ static RETSIGTYPE reload_config_handler(int sig)
 static void reload_config(void)
 {
 	pool_log("reload config files.");
+    MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
 	pool_get_config(get_config_file_name(), RELOAD_CONFIG);
+    MemoryContextSwitchTo(oldContext);
 	if (pool_config->enable_pool_hba)
 		load_hba(get_hba_file_name());
 	reload_config_request = 0;

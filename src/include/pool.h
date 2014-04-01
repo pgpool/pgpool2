@@ -136,7 +136,8 @@ typedef struct
 	int minor;	/* protocol minor version */
 	char *database;	/* database name in startup_packet (malloced area) */
 	char *user;	/* user name in startup_packet (malloced area) */
-	char *application_name;		/* not malloced are. pointing to in startup_packet */
+	char *application_name;		/* not malloced. pointing to in startup_packet */
+    bool system_db;     /* true if database name is one of default that comes with server e.g postgres or template.. */
 } StartupPacket;
 
 typedef struct CancelPacket
@@ -450,7 +451,8 @@ typedef enum
 	SLEEPING,
 	WAITIG_FOR_CONNECTION,
 	BACKEND_CONNECTING,
-	PROCESSING
+	PROCESSING,
+    EXITING
 } ProcessState;
 
 extern ProcessState processState;
@@ -572,6 +574,7 @@ extern void pool_send_readyforquery(POOL_CONNECTION *frontend);
 extern int send_startup_packet(POOL_CONNECTION_POOL_SLOT *cp);
 extern void pool_free_startup_packet(StartupPacket *sp);
 extern void child_exit(int code);
+extern void system_exit(int code);
 
 extern void init_prepared_list(void);
 extern void proc_exit(int);
