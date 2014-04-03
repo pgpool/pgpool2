@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Sun Jan 26 14:44:34 JST 2014
+Last modified: Fri Apr  4 08:32:26 JST 2014
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1750,6 +1750,13 @@ end of transaction block
     Note that pgpool-II <b>accepts</b> connections and queries while
     recovery_1st_stage command is executed. You can retrieve and update data during this stage.
     </p>
+	<p>
+	<font color="red">
+	CAUTION:
+	</font>
+	recovery_1st_stage_command runs as an SQL command from PostgreSQL's point of view. If you enable PostgreSQL's statement_time_out and it's shorter than the execution time of the recovery_1st_stage_command, PostgreSQL cancels the command.
+	Typical symptoms of this is, rsync used in the command is killed by signal 2 for example.
+	</p>
     <p>
     This parameter can be changed without restarting.
     </p>
@@ -1782,6 +1789,13 @@ end of transaction block
     until all clients have closed their connections. The command is only executed
     when no client is connected to pgpool-II anymore.
     </p>
+	<p>
+	<font color="red">
+	CAUTION:
+	</font>
+	recovery_2nd_stage_command runs as an SQL command from PostgreSQL's point of view. If you enable PostgreSQL's statement_time_out and it's shorter than the execution time of the recovery_2nd_stage_command, PostgreSQL cancels the command.
+	Typical symptoms of this is, rsync used in the command is killed by signal 2 for example.
+	</p>
     <p>
     This parameter can be changed without restarting.
     </p>
