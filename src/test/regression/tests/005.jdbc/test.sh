@@ -28,7 +28,7 @@ pgpooltest.user=$USER
 pgpooltest.password=
 pgpooltest.dbname=test
 pgpooltest.options=
-pgpooltest.tests=autocommit batch column lock select update insert
+pgpooltest.tests=autocommit batch column lock select update insert CreateTempTable PrepareThreshold
 EOF
 	cp ../*.java .
 	cp ../*.sql .
@@ -43,7 +43,10 @@ EOF
 	wait_for_pgpool_startup
 
 	sh run.sh > result.txt 2>&1
-	cmp result.txt expected.txt || (./shutdown all;exit 1)
+	cmp result.txt expected.txt
+	if [ $? != 0 ];then
+	    ./shutdownall; exit 1;
+	fi
 
 	./shutdownall
 

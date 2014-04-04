@@ -95,6 +95,9 @@ extern POOL_STATUS CloseComplete(POOL_CONNECTION *frontend,
 extern POOL_STATUS CommandComplete(POOL_CONNECTION *frontend,
 								   POOL_CONNECTION_POOL *backend);
 
+extern POOL_STATUS ParameterDescription(POOL_CONNECTION *frontend,
+										POOL_CONNECTION_POOL *backend);
+
 extern POOL_STATUS ErrorResponse3(POOL_CONNECTION *frontend,
 								  POOL_CONNECTION_POOL *backend);
 

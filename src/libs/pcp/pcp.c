@@ -8,7 +8,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -242,7 +242,10 @@ pcp_authorize(char *username, char *password)
 	rsize = ntohl(rsize);
 	buf = (char *)palloc(rsize);
 	if (pcp_read(pc, buf, rsize - sizeof(int)))
+	{
+		free(buf);
 		return -1;
+	}
 	if (debug) fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
 
 	if (tos == 'e')
@@ -469,7 +472,7 @@ pcp_node_info(int nid)
 
  			index = (char *) memchr(buf, '\0', rsize) + 1;
 			if (index != NULL)
-				strcpy(backend_info->backend_hostname, index);
+				strlcpy(backend_info->backend_hostname, index, sizeof(backend_info->backend_hostname));
 
 			index = (char *) memchr(index, '\0', rsize) + 1;
 			if (index != NULL)
@@ -681,7 +684,7 @@ pcp_process_info(int pid, int *array_size)
 			
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					strcpy(process_info[offset].connection_info->database, index);
+					strlcpy(process_info[offset].connection_info->database, index, SM_DATABASE);
 			
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
@@ -1011,6 +1014,8 @@ free_systemdb_info(SystemDBInfo * si)
 {
 	int i, j;
 
+	if (si == NULL)
+		return;
 	pfree(si->hostname);
 	pfree(si->user);
 	pfree(si->password);
@@ -1285,15 +1290,15 @@ pcp_pool_status(int *array_size)
 			{
 				index = (char *) memchr(buf, '\0', rsize) + 1;
 				if (index != NULL)
-					strcpy(status[offset].name, index);
+					strlcpy(status[offset].name, index, POOLCONFIG_MAXNAMELEN+1);
 
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					strcpy(status[offset].value, index);
+					strlcpy(status[offset].value, index, POOLCONFIG_MAXVALLEN+1);
 
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					strcpy(status[offset].desc, index);
+					strlcpy(status[offset].desc, index, POOLCONFIG_MAXDESCLEN+1);
 
 				offset++;
 			}
@@ -1566,7 +1571,7 @@ pcp_watchdog_info(int nid)
 
 			index = (char *) memchr(buf, '\0', rsize) + 1;
 			if (index != NULL)
-				strcpy(watchdog_info->hostname, index);
+				strlcpy(watchdog_info->hostname, index, sizeof(watchdog_info->hostname));
 
 			index = (char *) memchr(index, '\0', rsize) + 1;
 			if (index != NULL)

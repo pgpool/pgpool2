@@ -61,7 +61,7 @@ public abstract class PgpoolTest {
 	    System.out.print(getTestName() + ": ");
 	    if (proc.exitValue() == 0)
 		System.out.println("ok");
-	    else if (proc.exitValue() == 0)
+	    else if (proc.exitValue() == 1)
 		System.out.println("FAIL");
 	    else
 		System.out.println("unknown error" + proc.exitValue());

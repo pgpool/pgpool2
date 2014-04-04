@@ -683,11 +683,11 @@ bool is_unlogged_table(char *table_name)
 bool is_view(char *table_name)
 {
 /*
- * Query to know if the target table is a view.
+ * Query to know if the target table is a view (including a materialized view).
  */
-#define ISVIEWQUERY "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.relname = '%s' AND c.relkind = 'v'"
+#define ISVIEWQUERY "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.relname = '%s' AND (c.relkind = 'v' OR c.relkind = 'm')"
 
-#define ISVIEWQUERY2 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = pgpool_regclass('%s') AND c.relkind = 'v'"
+#define ISVIEWQUERY2 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = pgpool_regclass('%s') AND (c.relkind = 'v' OR c.relkind = 'm')"
 
 	static POOL_RELCACHE *relcache;
 	POOL_CONNECTION_POOL *backend;

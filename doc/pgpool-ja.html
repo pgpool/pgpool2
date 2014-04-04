@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Sun Jan 26 14:46:40 JST 2014
+Last modified: Fri Apr  4 08:23:22 JST 2014
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -590,7 +590,7 @@ pgpool.confでは空白行や#で始まる行はコメントと見なされま�
     <p class="version_notice">
     <em class="caution">DEPRECATED（〜 3.0）</em>
     このパラメータは、libpqのポリシーに合わせて削除されます。
-    代わりに <a href=#BACKEND_HOSTNAME">backend_hostname</a> パラメータを使ってください。
+    代わりに <a href="#BACKEND_HOSTNAME">backend_hostname</a> パラメータを使ってください。
     </p>
     <p>
     UNIXドメインソケット経由でpgpool-IIがPostgreSQLと接続する際に使用する
@@ -1806,6 +1806,13 @@ COMMIT;
     recovery_1st_stage_command を実行している間は pgpool ではクライアン
     トからの接続を<b>制限しません</b>。参照や更新を行うことができます。
     </p>
+	<p>
+	<font color="red">
+	注意:
+	</font>
+	recovery_1st_stage_command は、PostgreSQLから見ると、一つのSQLとして実行されます。PostgreSQLの statement_timeout を無効にするか、statement_timeout が recovery_1st_stage_command の実行時間よりも十分長くないと、コマンドの実行がPostgreSQLにより途中でキャンセルされてしまいます。
+	この場合の典型的な症状は、recovery_1st_stage_command の中で呼び出されるコマンド(たとえば rsync)がシグナル2を受け取って中断する、というものです。
+	</p>
     <p>
     このパラメータを変更した時には設定ファイルを再読み込みしてください。
     </p>
@@ -1837,6 +1844,14 @@ COMMIT;
     新たな接続を制限し、現在の接続数が 0 になった時点
     でコマンドを起動します。
     </p>
+	<p>
+	<font color="red">
+	注意:
+	</font>
+	recovery_2nd_stage_command は、PostgreSQLから見ると、一つのSQLとして実行されます。PostgreSQLの statement_timeout を無効にするか、statement_timeout が recovery_2nd_stage_command の実行時間よりも十分長くないと、コマンドの実行がPostgreSQLにより途中でキャンセルされてしまいます。
+	この場合の典型的な症状は、recovery_2nd_stage_command の中で呼び出されるコマンド(たとえば rsync)がシグナル2を受け取って中断する、というものです。
+	</font>
+	</p>
     <p>
     このパラメータを変更した時には設定ファイルを再読み込みしてください。
     </p>
@@ -2519,7 +2534,10 @@ pgpoolAdminの「リカバリ」ボタンでオンラインリカバリが出来
 <dt><a name="SYSTEM_DB_HOSTNAME"></a>system_db_hostname</dt>
     <dd>
     <p>
-    システムDBが動いているホスト名です。空文字を指定すると、UNIXドメインソケットで接続します。
+    システムDBが動いているホスト名です。
+    "/"で始まる文字列を指定するとソケットファイルが存在するディレクトリ名とみなされ、
+    TCP/IP ではなく UNIX ドメインソケットが使用されます。
+    空文字(<code>''</code>)を指定すると、<code>/tmp</code>が使用されます。
     </p>
     <p>
     このパラメータを変更した時には pgpool-II を再起動してください。
@@ -5300,6 +5318,14 @@ pgpool-II では扱うことができないクエリについて説明します�
 <p>
 JDBC ドライバなどのような拡張問い合わせプロトコルには対応していません。
 必ず簡易問い合わせプロトコルを使用してください。
+</p>
+
+<h3 id="ng_prepare">PREPARE, EXECUTE</h3>
+<p>
+制限対象:パラレルモード
+</p>
+<p>
+<code>PREPARE</code> 文で生成された準備文には対応していません。
 </p>
 
 <h3 id="ng_select">SELECT</h3>
