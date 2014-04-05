@@ -12,6 +12,7 @@ cd $TESTDIR
 echo -n "creating master pgpool..."
 sh $PGPOOL_SETUP -m s -n 2 -p 11000|| exit 1
 echo "done."
+source ./bashrc.ports
 cat ../master.conf >> etc/pgpool.conf
 
 ./startall
@@ -27,6 +28,7 @@ cd $sdir
 echo -n "creating standby pgpool..."
 sh $PGPOOL_SETUP -m s -n 2 -p 11100|| exit 1
 echo "done."
+source ./bashrc.ports
 cat ../standby.conf >> etc/pgpool.conf
 egrep 'backend_data_directory0|backend_data_directory1|failover_command|follow_master_command' ../$TESTDIR/etc/pgpool.conf >> etc/pgpool.conf
 ./startall
@@ -36,9 +38,15 @@ cd ..
 # stop master pgpool and see if standby take over
 $PGPOOL_INSTALL_DIR/bin/pgpool -f master/etc/pgpool.conf -m f stop
 
-sleep 1
-
-RESULT=`grep "wd_escalation: escalated to master pgpool successfully" standby/log/pgpool.log`
+echo "Standby pgpool-II is detecting master went down and is escalating to master..."
+for i in 1 2 3 4 5 6 7 8 9 10
+do
+	RESULT=`grep "wd_escalation: escalated to master pgpool successfully" standby/log/pgpool.log`
+	if [ ! -z "$RESULT" ]; then
+		echo "Master escalation done."
+		break;
+	fi
+done
 
 cd master
 ./shutdownall
