@@ -7,11 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-<<<<<<< HEAD
-Last modified: Wed Feb 6 20:29:05 JST 2013
-=======
-Last modified: Thu Dec 19 11:08:56 JST 2013
->>>>>>> 7f875af... Add mention about listen queue and how to increase the backlog in the num_init_children section.
+Last modified: Sat Apr  5 18:28:59 JST 2014
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1320,6 +1316,13 @@ recovery_1st_stage command is executed. You can retrieve and update
 data during this stage.
 </p>
 <p>
+<font color="red">
+CAUTION:
+</font>
+recovery_1st_stage_command runs as an SQL command from PostgreSQL's point of view. If you enable PostgreSQL's statement_time_out and it's shorter than the execution time of the recovery_1st_stage_command, PostgreSQL cancels the command.
+Typical symptoms of this is, rsync used in the command is killed by signal 2 for example.
+</p>
+<p>
 This parameter can be changed without restarting.
 </p>
 
@@ -1349,6 +1352,14 @@ long time, the recovery command won't be executed. pgpool-II waits until all
 clients have closed their connections. The command is only executed when no 
 client is connected to pgpool-II anymore.
 </p>
+<p>
+<font color="red">
+CAUTION:
+</font>
+recovery_2nd_stage_command runs as an SQL command from PostgreSQL's point of view. If you enable PostgreSQL's statement_time_out and it's shorter than the execution time of the recovery_2nd_stage_command, PostgreSQL cancels the command.
+Typical symptoms of this is, rsync used in the command is killed by signal 2 for example.
+</p>
+
 <p>
 This parameter can be changed without restarting.
 </p>

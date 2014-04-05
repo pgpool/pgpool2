@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Thu Dec 19 11:14:48 JST 2013
+Last modified: Sat Apr  5 18:29:31 JST 2014
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1132,6 +1132,7 @@ black_function_list = 'nextval,setval,currval,lastval'
 
 <dt>recovery_1st_stage_command</dt>
 <dd>
+<<<<<<< HEAD
     <p>オンラインリカバリ中に起動するコマンド名を指定します。
     このスクリプトはPostgreSQLのマスタサーバ(プライマリサーバ)が起動します。
     コマンドファイルはセキュリティ上の観点からデータベースクラスタ以下にあるコマンドやスクリプトのみを呼び出します。
@@ -1139,6 +1140,76 @@ black_function_list = 'nextval,setval,currval,lastval'
     $PGDATA/sync-command を起動しようとします。</p>
 
     <p>recovery_1st_stage_command は次の3つの引数を受けとります。</p>
+=======
+<p>
+  オンラインリカバリ中に起動するコマンド名を指定します。
+  このスクリプトはPostgreSQLのマスタサーバ(プライマリサーバ)が起動します。
+  コマンドファイルはセキュリティ上の観点からデータベースクラスタ以下にあるコマンドやスクリプトのみを呼び出します。
+  例えば、recovery_1st_stage_command = 'sync-command' と設定してある場
+  合、$PGDATA/sync-command を起動しようとします。
+</p>
+<p>
+recovery_1st_stage_command は次の3つの引数を受けとります。
+</p>
+<ol>
+<li>マスタ(プライマリ)データベースクラスタへのパス</li>
+<li>リカバリ対象のPostgreSQLのホスト名</li>
+<li>リカバリ対象のデータベースクラスタへのパス</li>
+</ol>
+</p>
+<p>
+  recovery_1st_stage_command を実行している間は pgpool ではクライアン
+  トからの接続を<b>制限しません</b>。参照や更新を行うことができます。
+</p>
+<p>
+<font color="red">
+注意:
+</font>
+recovery_1st_stage_command は、PostgreSQLから見ると、一つのSQLとして実行されます。PostgreSQLの statement_timeout を無効にするか、statement_timeout が recovery_1st_stage_command の実行時間よりも十分長くないと、コマンドの実行がPostgreSQLにより途中でキャンセルされてしまいます。
+この場合の典型的な症状は、recovery_1st_stage_command の中で呼び出されるコマンド(たとえば rsync)がシグナル2を受け取って中断する、というものです。
+</p>
+
+<p>
+このパラメータを変更した時には設定ファイルを再読み込みしてください。
+</p>
+
+<dt><a name="RECOVERY_2ND_STAGE_COMMAND"></a>recovery_2nd_stage_command</dt>
+<dd>
+<p>
+  2 回目のオンラインリカバリ中に起動するコマンド名を指定します。
+  このスクリプトはPostgreSQLのマスタサーバ(プライマリサーバ)が起動します。
+  コマンドファイルはセキュリティ上の観点からデータベースクラスタ以下にあるコマンドやスクリプトのみを呼び出します。
+  例えば、recovery_2nd_stage_command = 'sync-command' と設定してある場
+  合、$PGDATA/sync-command を起動しようとします。
+</p>
+<p>
+recovery_2nd_stage_command は次の3つの引数を受けとります。
+</p>
+<ol>
+<li>マスタ(プライマリ)データベースクラスタへのパス</li>
+<li>リカバリ対象のPostgreSQLのホスト名</li>
+<li>リカバリ対象のデータベースクラスタへのパス</li>
+</ol>
+</p>
+<p>
+  recovery_2nd_stage_command を実行している間は pgpool ではクライアン
+  トから接続、参照、更新処理を一切<b>受け付けません</b>。また、バッチ
+  処理などによって接続しているクライアントが長時間存在している場合には
+  コマンドを起動しません。新たな接続を制限し、現在の接続数が 0 になった時点
+  でコマンドを起動します。
+</p>
+<p>
+<font color="red">
+注意:
+</font>
+recovery_2nd_stage_command は、PostgreSQLから見ると、一つのSQLとして実行されます。PostgreSQLの statement_timeout を無効にするか、statement_timeout が recovery_2nd_stage_command の実行時間よりも十分長くないと、コマンドの実行がPostgreSQLにより途中でキャンセルされてしまいます。
+この場合の典型的な症状は、recovery_2nd_stage_command の中で呼び出されるコマンド(たとえば rsync)がシグナル2を受け取って中断する、というものです。
+</p>
+
+<p>
+このパラメータを変更した時には設定ファイルを再読み込みしてください。
+</p>
+>>>>>>> e1671be... Add cautions that recovery commands are killed by statement_timeout of PostgreSQL.
 
     <ol>
     <li>マスタ(プライマリ)データベースクラスタへのパス</li>
