@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Thu Dec 19 11:29:40 JST 2013
+Last modified: Sat Apr  5 18:19:36 JST 2014
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1391,6 +1391,14 @@ recovery_1st_stage_command は次の3つの引数を受けとります。
   トからの接続を<b>制限しません</b>。参照や更新を行うことができます。
 </p>
 <p>
+<font color="red">
+注意:
+</font>
+recovery_1st_stage_command は、PostgreSQLから見ると、一つのSQLとして実行されます。PostgreSQLの statement_timeout を無効にするか、statement_timeout が recovery_1st_stage_command の実行時間よりも十分長くないと、コマンドの実行がPostgreSQLにより途中でキャンセルされてしまいます。
+この場合の典型的な症状は、recovery_1st_stage_command の中で呼び出されるコマンド(たとえば rsync)がシグナル2を受け取って中断する、というものです。
+</p>
+
+<p>
 このパラメータを変更した時には設定ファイルを再読み込みしてください。
 </p>
 
@@ -1419,6 +1427,14 @@ recovery_2nd_stage_command は次の3つの引数を受けとります。
   コマンドを起動しません。新たな接続を制限し、現在の接続数が 0 になった時点
   でコマンドを起動します。
 </p>
+<p>
+<font color="red">
+注意:
+</font>
+recovery_2nd_stage_command は、PostgreSQLから見ると、一つのSQLとして実行されます。PostgreSQLの statement_timeout を無効にするか、statement_timeout が recovery_2nd_stage_command の実行時間よりも十分長くないと、コマンドの実行がPostgreSQLにより途中でキャンセルされてしまいます。
+この場合の典型的な症状は、recovery_2nd_stage_command の中で呼び出されるコマンド(たとえば rsync)がシグナル2を受け取って中断する、というものです。
+</p>
+
 <p>
 このパラメータを変更した時には設定ファイルを再読み込みしてください。
 </p>
