@@ -6,7 +6,7 @@ function wait_for_pgpool_startup {
 
 	while [ $timeout -gt  0 ]
 	do
-		$PSQL -p $PGPOOL_PORT -c "show pool_nodes" test >/dev/null 2>&1
+		$PGBIN/psql -p $PGPOOL_PORT -c "show pool_nodes" test >/dev/null 2>&1
 		if [ $? = 0 ];then
 			break;
 		fi
