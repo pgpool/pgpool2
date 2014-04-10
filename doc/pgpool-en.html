@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Fri Apr  4 08:32:26 JST 2014
+Last modified: Thu Apr 10 13:29:19 JST 2014
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -556,6 +556,18 @@ comment and will be ignored.</p>
     pgpool-II will be created. Default is <code>'/tmp'</code>. Be
     aware that this socket might be deleted by a cron job. We recommend to
     set this value to <code>'/var/run'</code> or such directory.
+    </p>
+    <p>
+    This parameter can only be set at server start.</p>
+    </dd>
+
+<dt><a name="PCP_LISTEN_ADDRESS"></a>pcp_listen_addresses</dt>
+    <dd>
+    <p>Specifies the hostname or IP address, on which pcp process will accept
+    TCP/IP connections. <code>'*'</code> accepts
+    all incoming connections. <code>''</code> disables TCP/IP
+    connections. Default is <code>'*'</code>. Connections via UNIX
+    domain socket are always accepted.
     </p>
     <p>
     This parameter can only be set at server start.</p>

@@ -143,6 +143,7 @@ int pool_init_config(void)
 
 	/* set hardcoded default values */
 	pool_config->listen_addresses = "localhost";
+	pool_config->pcp_listen_addresses = "*";
 	pool_config->port = 9999;
 	pool_config->pcp_port = 9898;
 	pool_config->socket_dir = DEFAULT_SOCKET_DIR;
@@ -533,6 +534,26 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			pool_config->port = v;
 		}
+
+		else if (!strcmp(key, "pcp_listen_addresses") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->pcp_listen_addresses = str;
+		}
+
 		else if (!strcmp(key, "pcp_port") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			int v = atoi(yytext);

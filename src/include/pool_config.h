@@ -70,6 +70,7 @@ typedef struct {
 typedef struct {
 	char *listen_addresses; /* hostnames/IP addresses to listen on */
     int	port;	/* port # to bind */
+	char *pcp_listen_addresses;		/* PCP listen address to listen on */
 	int pcp_port;				/* PCP port # to bind */
 	char *socket_dir;		/* pgpool socket directory */
 	char *pcp_socket_dir;		/* PCP socket directory */

@@ -654,8 +654,11 @@ int main(int argc, char **argv)
 
 	/* fork a child for PCP handling */
 	pcp_unix_fd = create_unix_domain_socket(pcp_un_addr);
-    /* maybe change "*" to pool_config->pcp_listen_addresses */
-	pcp_inet_fd = create_inet_domain_socket("*", pool_config->pcp_port);
+
+	if (pool_config->pcp_listen_addresses[0])
+	{
+		pcp_inet_fd = create_inet_domain_socket(pool_config->pcp_listen_addresses, pool_config->pcp_port);
+	}
 	pcp_pid = pcp_fork_a_child(pcp_unix_fd, pcp_inet_fd, pcp_conf_file);
 
 	/* Fork worker process */

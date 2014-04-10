@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -158,7 +158,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	/* - pgpool Connection Settings - */
 	strncpy(status[i].name, "listen_addresses", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->listen_addresses);
-	strncpy(status[i].desc, "host name(s) or IP address(es) to listen to", POOLCONFIG_MAXDESCLEN);
+	strncpy(status[i].desc, "host name(s) or IP address(es) to listen on", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "port", POOLCONFIG_MAXNAMELEN);
@@ -170,6 +170,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].name, "socket_dir", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->socket_dir);
 	strncpy(status[i].desc, "pgpool socket directory", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	strncpy(status[i].name, "pcp_listen_addresses", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->pcp_listen_addresses);
+	strncpy(status[i].desc, "host name(s) or IP address(es) for pcp process to listen on", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "pcp_port", POOLCONFIG_MAXNAMELEN);

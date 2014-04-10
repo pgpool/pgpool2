@@ -43,6 +43,10 @@ listen_backlog_multiplier = 2
 
 # - pgpool Communication Manager Connection Settings -
 
+pcp_listen_addresses = '*'
+                                   # Host name or IP address for pcp process to listen on:
+                                   # '*' for all, '' for no TCP/IP connections
+                                   # (change requires restart)
 pcp_port = 9898
                                    # Port number for pcp
                                    # (change requires restart)

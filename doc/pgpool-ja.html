@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Fri Apr  4 08:23:22 JST 2014
+Last modified: Thu Apr 10 13:30:33 JST 2014
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -556,6 +556,19 @@ pgpool.confでは空白行や#で始まる行はコメントと見なされま�
     デフォルト値は'/tmp'です。
     このソケットは、cronによって削除されることがあるので注意してください。
     <code>'/var/run'</code>などのディレクトリに変更することをお勧めします。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
+    </dd>
+
+<dt><a name="PCP_LISTEN_ADDRESS"></a>pcp_listen_addresses</dt>
+    <dd>
+    <p>
+    pcpがTCP/IPコネクションを受け付けるアドレスをホスト名またはIPアドレスで指定します。
+    「*」を指定するとすべてのIPインタフェースからのコネクションを受け付けます。
+    「''」を指定するとTCP/IPコネクションを受け付けません。デフォルト値は「*」です。
+    UNIXドメインソケット経由のコネクションは常に受け付けます。
     </p>
     <p>
     このパラメータを変更した時には pgpool-II を再起動してください。
