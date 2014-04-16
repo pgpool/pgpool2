@@ -77,8 +77,11 @@ wd_kill_watchdog(int sig)
 	int i;
     if(lifecheck_pid > 0)
         kill (lifecheck_pid, sig);
+    lifecheck_pid = 0;
+    
     if(child_pid > 0)
         kill (child_pid, sig);
+    child_pid = 0;
 
 	if (!strcmp(pool_config->wd_lifecheck_method, MODE_HEARTBEAT))
 	{
@@ -86,6 +89,8 @@ wd_kill_watchdog(int sig)
 		{
             if(hb_receiver_pid[i] > 0)
                 kill(hb_receiver_pid[i], sig);
+            hb_receiver_pid[i] = 0;
+            
             if(hb_sender_pid[i] > 0)
                 kill (hb_sender_pid[i], sig);
 		}

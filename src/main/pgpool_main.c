@@ -122,6 +122,7 @@ static RETSIGTYPE wakeup_handler(int sig);
 static void initialize_shared_mem_objects(void);
 static int trigger_failover_command(int node, const char *command_line,
 									int old_master, int new_master, int old_primary);
+static POOL_CONNECTION_POOL_SLOT* verify_backend_node_status(int backend_no, bool* is_standby);
 static int find_primary_node(void);
 static int find_primary_node_repeatedly(void);
 static void terminate_all_childrens();
@@ -764,6 +765,7 @@ static int create_unix_domain_socket(struct sockaddr_un un_addr_tmp)
  */
 static void terminate_all_childrens()
 {
+    pid_t wpid;
     /*
      * This is supposed to be called from main process
      */
@@ -782,10 +784,14 @@ static void terminate_all_childrens()
 	{
 		wd_kill_watchdog(SIGTERM);
 	}
-    /* wait for all children to exit */
 
-    while (wait(NULL) > 0);
-    if (errno != ECHILD)
+    /* wait for all children to exit */
+    do
+    {
+        wpid = wait(NULL);
+    }while (wpid > 0 || (wpid == -1 && errno == EINTR));
+    
+    if (wpid == -1 && errno != ECHILD)
         ereport(LOG,
                 (errmsg("wait() failed. reason:%s", strerror(errno))));
 
@@ -946,6 +952,7 @@ void send_failback_request(int node_id)
 static RETSIGTYPE exit_handler(int sig)
 {
 	int i;
+    pid_t wpid;
 	POOL_SETMASK(&AuthBlockSig);
 
 	/*
@@ -975,6 +982,7 @@ static RETSIGTYPE exit_handler(int sig)
 		return;
 	}
 	exiting = 1;
+    processState = EXITING;
 
     /* Close listen socket */
 	pool_log("pgpool main: close listen socket");
@@ -987,23 +995,32 @@ static RETSIGTYPE exit_handler(int sig)
 		if (pid)
 		{
 			kill(pid, sig);
+			process_info[i].pid = 0;
 		}
 	}
+
     if(pcp_pid > 0)
         kill(pcp_pid, sig);
+    pcp_pid = 0;
+
     if(worker_pid > 0)
-	kill(worker_pid, sig);
+        kill(worker_pid, sig);
+    worker_pid = 0;
+
 	if (pool_config->use_watchdog)
 	{
 		wd_kill_watchdog(sig);
 	}
 
 	POOL_SETMASK(&UnBlockSig);
-
-	while (wait(NULL) > 0);
-
-	if (errno != ECHILD)
-		pool_error("wait() failed. reason:%s", strerror(errno));
+    do
+    {
+        wpid = wait(NULL);
+    }while (wpid > 0 || (wpid == -1 && errno == EINTR));
+    
+    if (wpid == -1 && errno != ECHILD)
+        ereport(LOG,
+                (errmsg("wait() failed. reason:%s", strerror(errno))));
 
 	process_info = NULL;
 	system_exit(0);
@@ -2076,6 +2093,66 @@ static int trigger_failover_command(int node, const char *command_line,
 
 	return r;
 }
+/*
+ * This function is used by find_primary_node() function and is just a wrapper
+ * over make_persistent_db_connection() function and does not throws ereport
+ * in case of connection fails but returns NULL in case of failure.
+ */
+static POOL_CONNECTION_POOL_SLOT*
+    verify_backend_node_status(int backend_no, bool* is_standby)
+{
+    POOL_CONNECTION_POOL_SLOT   *s = NULL;
+    POOL_CONNECTION *con;
+	POOL_STATUS status;
+	POOL_SELECT_RESULT *res;
+
+    BackendInfo *bkinfo = pool_get_node_info(backend_no);
+    *is_standby = false;
+    PG_TRY();
+    {
+        
+        s = make_persistent_db_connection(bkinfo->backend_hostname,
+										  bkinfo->backend_port,
+										  "postgres",
+										  pool_config->sr_check_user,
+										  pool_config->sr_check_password, true);
+        if (!s)
+        {
+            return NULL;
+        }
+        con = s->con;
+        status = do_query(con, "SELECT pg_is_in_recovery()",
+						  &res, PROTO_MAJOR_V3);
+        if (res->numrows <= 0)
+        {
+            ereport(LOG,
+                    (errmsg("verify_backend_node_status: do_query returns no rows")));
+        }
+        if (res->data[0] == NULL)
+        {
+            ereport(LOG,
+                    (errmsg("verify_backend_node_status: do_query returns no data")));
+        }
+        if (res->nullflags[0] == -1)
+        {
+            ereport(LOG,
+                    (errmsg("verify_backend_node_status: do_query returns NULL")));
+        }
+        if (res->data[0] && !strcmp(res->data[0], "t"))
+        {
+            *is_standby = true;
+        }
+        free_select_result(res);
+        discard_persistent_db_connection(s);
+    }
+    PG_CATCH();
+    {
+        EmitErrorReport();
+        FlushErrorState();
+    }
+    PG_END_TRY();
+    return s;
+}
 
 /*
  * Find the primary node (i.e. not standby node) and returns its node
@@ -2083,11 +2160,7 @@ static int trigger_failover_command(int node, const char *command_line,
  */
 static int find_primary_node(void)
 {
-	BackendInfo *bkinfo;
 	POOL_CONNECTION_POOL_SLOT *s;
-	POOL_CONNECTION *con;
-	POOL_STATUS status;
-	POOL_SELECT_RESULT *res;
 	bool is_standby;
 	int i;
 
@@ -2104,78 +2177,25 @@ static int find_primary_node(void)
 
 	for(i=0;i<NUM_BACKENDS;i++)
 	{
+        pool_error("find_primary_node: checking backend no %d\n",i);
+
 		if (!VALID_BACKEND(i))
 			continue;
-
-		/*
-		 * Check to see if this is a standby node or not.
-		 */
-		is_standby = false;
-        PG_TRY();
+        s = verify_backend_node_status(i,&is_standby);
+        if (!s)
         {
-
-        	bkinfo = pool_get_node_info(i);
-			s = make_persistent_db_connection(bkinfo->backend_hostname,
-										  bkinfo->backend_port,
-										  "postgres",
-										  pool_config->sr_check_user,
-										  pool_config->sr_check_password, true);
-			if (!s)
-			{
-				pool_error("find_primary_node: make_persistent_connection failed");
-                
-                /*
-                 * It is possible that a node is down even if
-                 * VALID_BACKEND tells it's valid.  This could happen
-                 * before health checking detects the failure.
-                 * Thus we should continue to look for primary node.
-                 */
-                continue;
-			}
-			con = s->con;
-			status = do_query(con, "SELECT pg_is_in_recovery()",
-						  &res, PROTO_MAJOR_V3);
-			if (res->numrows <= 0)
-			{
-				ereport(LOG,
-                        (errmsg("find_primary_node: do_query returns no rows")));
-			}
-			if (res->data[0] == NULL)
-			{
-				ereport(LOG,
-                        (errmsg("find_primary_node: do_query returns no data")));
-			}
-			if (res->nullflags[0] == -1)
-			{
-				ereport(LOG,
-                        (errmsg("find_primary_node: do_query returns NULL")));
-			}
-			if (res->data[0] && !strcmp(res->data[0], "t"))
-			{
-				is_standby = true;
-			}
-			free_select_result(res);
-			discard_persistent_db_connection(s);
-        }
-        PG_CATCH();
-        {
-            EmitErrorReport();
-        	FlushErrorState();
+            /*
+             * It is possible that a node is down even if
+             * VALID_BACKEND tells it's valid.  This could happen
+             * before health checking detects the failure.
+             * Thus we should continue to look for primary node.
+             */
             continue;
         }
-        PG_END_TRY();
-
-		/*
-		 * If this is a standby, we continue to look for primary node.
-		 */
 		if (is_standby)
-		{
 			pool_debug("find_primary_node: %d node is standby", i);
-		}
 		else
-		{
 			break;
-		}
 	}
 
 	if (i == NUM_BACKENDS)
@@ -2513,8 +2533,13 @@ static void system_will_go_down(int code, Datum arg)
     POOL_SETMASK(&AuthBlockSig);
     /* Write status file */
     write_status_file();
-    /* terminate all childrens */
-    terminate_all_childrens();
+    /* 
+     * Terminate all childrens. But we may already have killed
+     * all the childrens if we come to this function because of shutdown
+     * signal.
+     */
+    if(processState != EXITING)
+        terminate_all_childrens();
     processState = EXITING;
     POOL_SETMASK(&UnBlockSig);
     
