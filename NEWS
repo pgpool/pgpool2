@@ -4,6 +4,153 @@
 3.3 Series (2013/07/30 - )
 ===============================================================================
 
+                        3.3.3 (tokakiboshi) 2014/03/24
+
+* Version 3.3.3
+
+    This is a bugfix release against pgpool-II 3.3.2.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - installer: Fix bug that install of pgpool-II RPM fails (Yugo Nagata)
+
+    - installer: Fix to set up passwordless SSH from apache@localhost to
+      postgres@localhost (Yugo Nagata)
+
+    - Fix bug that restarted pgpool's watchdog status is regarded as down
+      (Yugo Nagata)
+
+    - doc: Add mention about "listen queue" and how to increase the "backlog"
+      in the num_init_children section. (Tatsuo Ishii)
+
+    - Fix bug that watchdog status goes down even when only one of trusted
+      servers get unpingable (Yugo Nagata)
+
+    - Fix bad performance of unlogged tables detection code. (Tatsuo Ishii)
+
+      Pointed out at [pgpool-hackers: 435][[pgpool-general:2325].
+
+    - Fix primary node detection logic. (Tatsuo Ishii)
+
+      There's a possibility that primary node is not detected. This happens
+      in following situation.  node 0: primary, node 1: standby. Node 0 goes
+      down. Health checking detects the fact but local status is not updated
+      yet. Primary node finding (find_primary_node) runs. Node 0's status is
+      yet healthy. Because find_primary_node fails to connect to node 0, it
+      immediately returns -1 and fails to find that fact that node 1 is now
+      primary.
+
+      Fix is just continuing to look for primary node when fails to connect
+      to a node.
+
+      Per [pgpool-general: 2409].
+
+    - Add raw mode support to pgpool_setup. (Tatsuo Ishii)
+
+    - test: Integrate jdbc test to regression test. (Tatsuo Ishii)
+
+    - Fix jdbc DML fails when operated in raw mode and auto commit is off.
+      (Tatsuo Ishii)
+
+      This is reported in bug #92.
+
+    - Fix to output error message when wd_escalation_command fails with exit
+      code other than 0 (Yugo Nagata)
+
+      This is suggested by Sergey Arlashin in [pgpool-general: 2457].
+
+    - test: Add new regression test for query cache. (Tatsuo Ishii)
+
+    - Fix query cache bug with extended protocol. (Tatsuo Ishii)
+
+      SELECT retrieves outdated cache even DML was executed in an expilicit
+      transaction. The bug had been there since in memory query cache was
+      born. Per [pgpool-general-jp: 1252].
+
+    - Add missing entries "relcache_size" and "check_temp_table" to show
+      pool_status (Tatsuo Ishii)
+
+    - Fix to output error message when if_up_cmd fails. (Yugo Nagata)
+
+      This is suggested by Sergey Arlashin in [pgpool-general: 2457].
+
+    - Avoid to send queries to unrelated nodes in streaming replication mode.
+      (Tatsuo Ishii)
+
+      Pgpool-II sends certain queries, such as BEGIN, END and SET commands to
+      all of DB nodes. However in streaming replication mode, only primary
+      node and at most one standby node are only concerned (if primacy node
+      is selected as the load balance node, only 1 node is concerned).
+
+      See [pgpool-hackers: 464] for more details.
+
+    - Fix possible buffer overrun problem and memory leak. (Tatsuo Ishii)
+
+      Per Coverity 1111465 and 1111482.
+
+    - Fix possible buffer overrun. (Tatsuo Ishii)
+
+      Replace strcpy() with strlcpy(). Per Coverity report 1111478, 1111480,
+      1111481.
+
+    - Add dubug messages for analyzing errors in if_up_cmd (Yugo Nagata)
+
+    - Fix freeing NULL. (Tatsuo Ishii)
+
+      Per Coverity 1111384.
+
+    - Do not enable query cache on materialized views. (Tatsuo Ishii)
+
+      Per bug #95.
+
+    - Fix memory leak. (Tatsuo Ishii)
+
+      Per Coverity 1111446.
+
+    - Fix a segmentation fault in parallel mode with system_db_hostname is
+      empty (Yugo Nagata)
+
+    - Fix to output debug messages in processing pgpool.conf with -d option
+      (Yugo Nagata)
+
+      Previously, some debug messages in pool_get_config() ware not output
+      even when -d option was used.
+
+    - Fix JDBC exception of prepared statement including now() in
+      replication mode (Yugo Nagata)
+
+      With JDBC, when a prepared statement is executed more than
+      PrepareThreshold times, the statement is named and Describe message
+      is sent after Parse. With named statement, pgpool rewrite now() to
+      parameter in replication mode. Hence, rewritten query has additonal
+      parameter than original. In this case, ParameterDescription message
+      sent to frontend (response of Describe) should include OIDs of the
+      same number os original query's parameters. Otherwize, JDBC throws
+      ArrayIndexoutOfBoundsException.
+
+      This is reported in [pgpool-general-jp: 1192].
+
+    - Fix backend error of prepared statement about table which has column whoes
+      default value is now() in replication mode (Yugo Nagata)
+
+      When pgpool parses a named prepared statement with default now(),
+      timestamps are replaced to additional parameters. So, Bind message also
+      should inclued additional parameter format codes. However, when the
+      number of original parameter was one, pgpool didn't handle this. This
+      caused a error like "incorrect binary data format in bind parameter 2".
+
+    - test: Fix a bug of regression test of JDBC that shows OK even when
+      this fails (Yugo Nagata)
+
+    - test: Add a new regression test for JDBC's PrepareThreshold (Yugo Nagata)
+
+    - doc: Add description about parallel mode doesn't support PREPARE (Yugo Nagata)
+
+      Per bug #93
+
+===============================================================================
 
                         3.3.2 (tokakiboshi) 2013/11/29
 
@@ -333,9 +480,9 @@
 
 ===============================================================================
 
-                        3.3 (tokakiboshi) 2013/07/30
+                        3.3.0 (tokakiboshi) 2013/07/30
 
-* Version 3.3
+* Version 3.3.0
 
       This is the first version of pgpool-II 3.3 series.
       That is, a "major version up" from 3.2 series.
@@ -721,8 +868,127 @@
     - Add ssl_ca_cert and ssl_ca_cert_dir descriptions to the japanese document
       (Yugo Nagata)
 
+
 ===============================================================================
 3.2 Series (2012/08/03 - )
+===============================================================================
+
+                        3.2.8 (namameboshi) 2014/03/24
+
+* Version 3.2.8
+
+    This is a bugfix release against pgpool-II 3.2.7.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - doc: Add mention about "listen queue" and how to increase the "backlog"
+      in the num_init_children section. (Tatsuo Ishii)
+
+    - Fix bug that watchdog status goes down even when only one of trusted
+      servers get unpingable (Yugo Nagata)
+
+    - Fix bad performance of unlogged tables detection code. (Tatsuo Ishii)
+
+      Pointed out at [pgpool-hackers: 435][[pgpool-general:2325].
+
+    - Fix primary node detection logic. (Tatsuo Ishii)
+
+      There's a possibility that primary node is not detected. This happens
+      in following situation.  node 0: primary, node 1: standby. Node 0 goes
+      down. Health checking detects the fact but local status is not updated
+      yet. Primary node finding (find_primary_node) runs. Node 0's status is
+      yet healthy. Because find_primary_node fails to connect to node 0, it
+      immediately returns -1 and fails to find that fact that node 1 is now
+      primary.
+
+      Fix is just continuing to look for primary node when fails to connect
+      to a node.
+
+      Per [pgpool-general: 2409].
+
+    - Fix jdbc DML fails when operated in raw mode and auto commit is off.
+      (Tatsuo Ishii)
+
+      This is reported in bug #92.
+
+    - Fix query cache bug with extended protocol. (Tatsuo Ishii)
+
+      SELECT retrieves outdated cache even DML was executed in an expilicit
+      transaction. The bug had been there since in memory query cache was
+      born. Per [pgpool-general-jp: 1252].
+
+    - Add missing entries "relcache_size" and "check_temp_table" to show
+      pool_status (Tatsuo Ishii)
+
+    - Avoid to send queries to unrelated nodes in streaming replication mode.
+      (Tatsuo Ishii)
+
+      Pgpool-II sends certain queries, such as BEGIN, END and SET commands to
+      all of DB nodes. However in streaming replication mode, only primary
+      node and at most one standby node are only concerned (if primacy node
+      is selected as the load balance node, only 1 node is concerned).
+
+      See [pgpool-hackers: 464] for more details.
+
+    - Fix possible buffer overrun problem and memory leak. (Tatsuo Ishii)
+
+      Per Coverity 1111465 and 1111482.
+
+    - Fix possible buffer overrun. (Tatsuo Ishii)
+
+      Replace strcpy() with strlcpy(). Per Coverity report 1111478, 1111480,
+      1111481.
+
+    - Fix freeing NULL. (Tatsuo Ishii)
+
+      Per Coverity 1111384.
+
+    - Do not enable query cache on materialized views. (Tatsuo Ishii)
+
+      Per bug #95.
+
+    - Fix memory leak. (Tatsuo Ishii)
+
+      Per Coverity 1111446.
+
+    - Fix a segmentation fault in parallel mode with system_db_hostname is
+      empty (Yugo Nagata)
+
+    - Fix to output debug messages in processing pgpool.conf with -d option
+      (Yugo Nagata)
+
+      Previously, some debug messages in pool_get_config() ware not output
+      even when -d option was used.
+
+    - Fix JDBC exception of prepared statement including now() in
+      replication mode (Yugo Nagata)
+
+      With JDBC, when a prepared statement is executed more than
+      PrepareThreshold times, the statement is named and Describe message
+      is sent after Parse. With named statement, pgpool rewrite now() to
+      parameter in replication mode. Hence, rewritten query has additonal
+      parameter than original. In this case, ParameterDescription message
+      sent to frontend (response of Describe) should include OIDs of the
+      same number os original query's parameters. Otherwize, JDBC throws
+      ArrayIndexoutOfBoundsException.
+
+      This is reported in [pgpool-general-jp: 1192].
+
+    - Fix backend error of prepared statement about table which has column whoes
+      default value is now() in replication mode (Yugo Nagata)
+
+      When pgpool parses a named prepared statement with default now(),
+      timestamps are replaced to additional parameters. So, Bind message also
+      should inclued additional parameter format codes. However, when the
+      number of original parameter was one, pgpool didn't handle this. This
+      caused a error like "incorrect binary data format in bind parameter 2".
+
+    - doc: Add description about parallel mode doesn't support PREPARE (Yugo Nagata)
+
+      Per bug #93
+
 ===============================================================================
 
                         3.2.7 (tokakiboshi) 2013/12/06
@@ -961,6 +1227,7 @@
 
                         3.2.6 (namameboshi) 2013/09/06
 
+
 * Version 3.2.6
 
     This is a bugfix release against pgpool-II 3.2.5.
@@ -1165,7 +1432,7 @@
       with bind parameters, it fails to allocate enough memory.
 
     - Move ssl_ca_cert and ssl_ca_cert_dir descriptions to the SSL section
-      in the document (Yugo Nagata)
+      (Yugo Nagata)
 
     - Add ssl_ca_cert and ssl_ca_cert_dir descriptions to the japanese document
       (Yugo Nagata)
@@ -2286,21 +2553,122 @@
       Also fix SimpleForwardToFrontend to return pool_write_and_flush error
       status. Before it was ignored.
 
+
 ===============================================================================
 3.1 Series (2011/09/08 - )
 ===============================================================================
 
-                        3.1.10 (hatsuiboshi) 2013/12/06
+                        3.1.11 (hatsuiboshi) 2014/03/24
 
-* Version 3.1.9
+* Version 3.1.11
 
-    This is a bugfix release against pgpool-II 3.1.9.
+    This is a bugfix release against pgpool-II 3.1.10.
 
     __________________________________________________________________
 
 * Bug fixes
 
+    - doc: Add mention about "listen queue" and how to increase the "backlog"
+      in the num_init_children section. (Tatsuo Ishii)
 
+    - Fix bad performance of unlogged tables detection code. (Tatsuo Ishii)
+
+      Pointed out at [pgpool-hackers: 435][[pgpool-general:2325].
+
+    - Fix primary node detection logic. (Tatsuo Ishii)
+
+      There's a possibility that primary node is not detected. This happens
+      in following situation.  node 0: primary, node 1: standby. Node 0 goes
+      down. Health checking detects the fact but local status is not updated
+      yet. Primary node finding (find_primary_node) runs. Node 0's status is
+      yet healthy. Because find_primary_node fails to connect to node 0, it
+      immediately returns -1 and fails to find that fact that node 1 is now
+      primary.
+
+      Fix is just continuing to look for primary node when fails to connect
+      to a node.
+
+      Per [pgpool-general: 2409].
+
+    - Fix jdbc DML fails when operated in raw mode and auto commit is off.
+      (Tatsuo Ishii)
+
+      This is reported in bug #92.
+
+    - Avoid to send queries to unrelated nodes in streaming replication mode.
+      (Tatsuo Ishii)
+
+      Pgpool-II sends certain queries, such as BEGIN, END and SET commands to
+      all of DB nodes. However in streaming replication mode, only primary
+      node and at most one standby node are only concerned (if primacy node
+      is selected as the load balance node, only 1 node is concerned).
+
+      See [pgpool-hackers: 464] for more details.
+
+    - Fix possible buffer overrun problem and memory leak. (Tatsuo Ishii)
+
+      Per Coverity 1111465 and 1111482.
+
+    - Fix possible buffer overrun. (Tatsuo Ishii)
+
+      Replace strcpy() with strlcpy(). Per Coverity report 1111478, 1111480,
+      1111481.
+
+    - Fix freeing NULL. (Tatsuo Ishii)
+
+      Per Coverity 1111384.
+
+    - Fix memory leak. (Tatsuo Ishii)
+
+      Per Coverity 1111446.
+
+    - Fix a segmentation fault in parallel mode with system_db_hostname is
+      empty (Yugo Nagata)
+
+    - Fix to output debug messages in processing pgpool.conf with -d option
+      (Yugo Nagata)
+
+      Previously, some debug messages in pool_get_config() ware not output
+      even when -d option was used.
+
+    - Fix JDBC exception of prepared statement including now() in
+      replication mode (Yugo Nagata)
+
+      With JDBC, when a prepared statement is executed more than
+      PrepareThreshold times, the statement is named and Describe message
+      is sent after Parse. With named statement, pgpool rewrite now() to
+      parameter in replication mode. Hence, rewritten query has additonal
+      parameter than original. In this case, ParameterDescription message
+      sent to frontend (response of Describe) should include OIDs of the
+      same number os original query's parameters. Otherwize, JDBC throws
+      ArrayIndexoutOfBoundsException.
+
+      This is reported in [pgpool-general-jp: 1192].
+
+    - Fix backend error of prepared statement about table which has column whoes
+      default value is now() in replication mode (Yugo Nagata)
+
+      When pgpool parses a named prepared statement with default now(),
+      timestamps are replaced to additional parameters. So, Bind message also
+      should inclued additional parameter format codes. However, when the
+      number of original parameter was one, pgpool didn't handle this. This
+      caused a error like "incorrect binary data format in bind parameter 2".
+
+    - doc: Add description about parallel mode doesn't support PREPARE (Yugo Nagata)
+
+      Per bug #93
+
+===============================================================================
+
+                        3.1.10 (hatsuiboshi) 2013/12/06
+
+* Version 3.1.10
+
+      This is a bugfix release against pgpool-II 3.1.9.
+
+    __________________________________________________________________
+
+* Bug fixes
 
     - Fix incorrect time stamp rewriting in replication mode for certain time
       zones. (Tatsuo Ishii)
@@ -2449,7 +2817,7 @@
 
 * Version 3.1.9
 
-    This is a bugfix release against pgpool-II 3.1.8.
+      This is a bugfix release against pgpool-II 3.1.8.
 
     __________________________________________________________________
 
@@ -2481,7 +2849,7 @@
 
       This is a bugfix release against pgpool-II 3.1.7.
 
-      __________________________________________________________________
+    __________________________________________________________________
 
 * Bug fixes
 
@@ -2552,7 +2920,7 @@
           FATAL: no PostgreSQL user name specified in startup packet
 
     - Move ssl_ca_cert and ssl_ca_cert_dir descriptions to the SSL section
-      in the document (Yugo Nagata)
+      (Yugo Nagata)
 
     - Add ssl_ca_cert and ssl_ca_cert_dir descriptions to the japanese document
       (Yugo Nagata)
@@ -2565,13 +2933,13 @@
 
 ===============================================================================
 
-                        3.1.7 (hatsuiboshi) 2013/04/26
+                        3.1.7 (hatsuiboshi) 2013/4/26
 
 * Version 3.1.7
 
-      This is a bugfix release against pgpool-II 3.1.6.
+      This is a bugfix release against pgpool-II 3.1.6
 
-      __________________________________________________________________
+    __________________________________________________________________
 
 * Bug fixes
 
@@ -2650,13 +3018,13 @@
 
 ===============================================================================
 
-                        3.1.6 (hatsuiboshi) 2013/02/08
+                        3.1.6 (hatsuiboshi) 2013/2/8
 
 * Version 3.1.6
 
       This is a bugfix release against pgpool-II 3.1.5
 
-      __________________________________________________________________
+    __________________________________________________________________
 
 * Bug fixes
 
@@ -2770,7 +3138,6 @@
 
     - Add pool_passwd option to pgpool.conf.sample*, and documents. (Yugo Nagata)
 
-
 ===============================================================================
 
                         3.1.5 (hatsuiboshi) 2012/10/12
@@ -2779,7 +3146,7 @@
 
       This is a bugfix release against pgpool-II 3.1.4
 
-      __________________________________________________________________
+    __________________________________________________________________
 
 * Bug fixes
 
@@ -2842,7 +3209,6 @@
       It seems the order of messages returned from backend is random, and
       do_query () manages it by using state bits.
 
-
 ===============================================================================
 
                         3.1.4 (hatsuiboshi) 2012/08/06
@@ -2851,15 +3217,15 @@
 
       This is a bugfix release against pgpool-II 3.1.3.
 
-      __________________________________________________________________
+    __________________________________________________________________
 
-* Bug fixes
-
-      * General
+* General
 
       - Adopt PostgreSQL 9.2. (Tatsuo Ishii)
 
-      * Bug fixes
+    __________________________________________________________________
+
+* Bug fixes
 
       - Fix pool_send_and_wait() to send or not to send COMMIT / ABORT
         depending on the transaction state on each node. (Tatsuo Ishii)
@@ -2959,7 +3325,7 @@
 
       This is a bugfix release against pgpool-II 3.1.2.
 
-      __________________________________________________________________
+    __________________________________________________________________
 
 * Bug fixes
 
@@ -3055,7 +3421,7 @@
 
       This is a bugfix release against pgpool-II 3.1.1.
 
-      __________________________________________________________________
+    __________________________________________________________________
 
 * Bug fixes
 
@@ -3071,7 +3437,6 @@
         This could happen when, for example, reloading postgresql.conf.
         The fix is that such buffer in standby is discarded.
 
-
 ===============================================================================
 
                         3.1.1 (hatsuiboshi) 2011/12/06
@@ -3080,45 +3445,45 @@
 
       This is a bugfix release against pgpool-II 3.1.
 
-      __________________________________________________________________
+    __________________________________________________________________
 
 * Bug fixes
 
       - Fix add_regex_pattern(). It does not allocate enough memory
-        for each black/white_function_list items.
-        The function adds "^" and "$" to each function items which do not
-        contain those characters. Unfortunately the function forgot to add
-        extra 2 bytes for those characters. This may lead to memory
-        corruption errors when pgpool starting up.
+           for each black/white_function_list items. The function adds
+           "^" and "$" to each function items which do not contain those
+           characters. Unfortunately the function forgot to add extra 2
+           bytes for those characters. This may lead to memory corruption
+           errors when pgpool starting up.
 
-      - Fix error message of check_replication_time_lag(Tatsuo Ishii).
-        It emitted wrong error message when it failed to connect to PostgreSQL
-        while checking streaming replication delay.
-        Because it does not use health_check_user anymore.
+      - Fix error message of check_replication_time_lag(Tatsuo
+        Ishii). It emitted wrong error message when it failed to
+        connect to PostgreSQL while checking streaming replication
+        delay. Because it does not use health_check_user anymore.
 
       - Fix memory leak(Toshihiro Kitagawa). This is essentially same
-        as the fix made for 3.0.5
-        (commit 19a4ea9215da0b61728741fc0da2271958b09238).
+          as the fix made for 3.0.5(commit
+          19a4ea9215da0b61728741fc0da2271958b09238).
 
-      - Major cleanup for strncpy(Tatsuo Ishii).
-        There are several places where strncpy() is used. Problem is some of
-        them do not consider the case when copy lengh == buffer size.
-        In this case copied buffer is not null terminated and may cause
-        tons of problems later.  To fix this, most of them are replaced by
-        strlcpy().
+      - Major cleanup for strncpy(Tatsuo Ishii). There are several
+          places where strncpy() is used. Problem is some of them do not
+          consider the case when copy lengh == buffer size. In this case
+          copied buffer is not null terminated and may cause tons of
+          problems later.  To fix this, most of them are replaced by
+          strlcpy().
 
       - Update cached backend status whenever possible(Tatsuo Ishii).
-        This solves the problem of follow_master_command not being
-        able to lookup backend status correctly which was reported by
-        Jeff Frost: Subject: [Pgpool-general] diagnosing BackendError
-        from pcp_recovery_node To: pgpool-general@pgfoundry.org Date:
-        Wed, 05 Oct 2011 15:15:07 -0700
+          This solves the problem of follow_master_command not being
+          able to lookup backend status correctly which was reported by
+          Jeff Frost: Subject: [Pgpool-general] diagnosing BackendError
+          from pcp_recovery_node To: pgpool-general@pgfoundry.org Date:
+          Wed, 05 Oct 2011 15:15:07 -0700
 
-      - Fix buffer overrun problem when pcp password is longer than 32
-        (Tatsuo Ishii).
+      - Fix buffer overrun problem when pcp password is longer than
+        32(Tatsuo Ishii).
 
-      - Remove PGDLLIMPORTI which is only neccessary for Windows and
-        cause a problem for non gcc. Patch contributed by Ibrar Ahmed.
+      - Remove PGDLLIMPORTI which is only neccessary for Windows
+          and cause a problem for non gcc. Patch contributed by Ibrar Ahmed.
 
 ===============================================================================
 
@@ -3129,21 +3494,21 @@
       This is the first version of pgpool-II 3.1 series.
       That is, a "major version up" from 3.0 series.
 
-      __________________________________________________________________
+    __________________________________________________________________
 
 * Incompatible changes
 
       - Change the lock method of insert_lock. The previous insert_lock uses
         row locking against the sequence relation, but the current one uses
-        row locking against pgpool_catalog.insert_lock table.
-        The reason is that PostgreSQL core developers decided to disallow row
-        locking against the sequence relation to avoid an internal error
-        which it leads. So creating insert_lock table in all databases which are
-        accessed via pgpool-II beforehand is required.
-        If does not exist insert_lock table, pgpool-II locks the insert target
-        table. This behavior is same as pgpool-II 2.2 and 2.3 series.
-        If you want to use insert_lock which is compatible with older releases,
-        you can specify lock method by configure options: --enable-sequence-lock,
+        row locking against pgpool_catalog.insert_lock table. The reason is
+        that PostgreSQL core developers decided to disallow row locking
+        against the sequence relation to avoid an internal error which it
+        leads. So creating insert_lock table in all databases which are
+        accessed via pgpool-II beforehand is required. If does not exist
+        insert_lock table, pgpool-II locks the insert target table. This
+        behavior is same as pgpool-II 2.2 and 2.3 series. If you want to use
+        insert_lock which is compatible with older releases, you can specify
+        lock method by configure options: --enable-sequence-lock,
         --enable-table-lock(Toshihiro Kitagawa)
 
       - Deprecate backend_socket_dir. Instead, if backend_hostname starts
@@ -3166,7 +3531,7 @@
         they completely obey setting of black/white_function_list. They were
         always handled as write functions before(Toshihiro Kitagawa)
 
-      __________________________________________________________________
+    __________________________________________________________________
 
 * New features
 
@@ -3198,7 +3563,8 @@
         backend behavior. Currently "ALLOW_TO_FAILOVER" or
         "DISALLOW_TO_FAILOVER" are allowed(Tatsuo Ishii)
 
-      - Add health_check_password directive(Nicolas Thauvin)
+      - Add health_check_password directive, but is not yet implemented
+        (Nicolas Thauvin)
 
       - Add sr_check_period, sr_check_user and sr_check_password directives.
         These are used for streaming replication delay checking and
@@ -3219,7 +3585,7 @@
       - In master/slave mode, SELECTs to unlogged table execute only on
         master/primary(Toshihiro Kitagawa)
 
-      __________________________________________________________________
+    __________________________________________________________________
 
 * Bug fixes
 
@@ -3257,8 +3623,7 @@
       - Replace wrong function name "notice_backend_error" with correct one
         "degenerate_backend_set" in the failover log message(Tatsuo Ishii)
 
-      - Remove unnecessary logging at the end of pgpool.conf parsing
-        (Tatsuo Ishii)
+      - Remove unnecessary logging at the end of pgpool.conf parsing(Tatsuo Ishii)
 
       - Fix possible crash of pgpool/worker child after attaching new backend.
         Fix suggested by Gurjeet Singh(Tatsuo Ishii)
@@ -3277,14 +3642,13 @@
 
       - Fix some memory leaks(Toshihiro Kitagawa)
 
-      __________________________________________________________________
+    __________________________________________________________________
 
 * Enhancements
 
       - Enhance online recovery in streaming replication mode.
-        Now restarting pgpool-II children is avoided when recovery finished.
-        So existing sessions can be continued while doing online recovery
-        (Tatsuo Ishii)
+        Now restarting pgpool-II children is avoided when recovery finished. So
+        existing sessions can be continued while doing online recovery(Tatsuo Ishii)
 
       - pcp_attach_node does not diconnect existing sessions in
         streaming replication mode. In other mode, pcp_attache_node
@@ -3332,14 +3696,111 @@
 
 
 ===============================================================================
-3.0 Series (2010/09/10 - )
+3.0 Series (2013/07/30 - )
+===============================================================================
+
+                        3.0.15 (umiyameboshi) 2014/03/24
+
+* Version 3.0.15
+
+    This is a bugfix release against pgpool-II 3.0.14.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - doc: Add mention about "listen queue" and how to increase the "backlog"
+      in the num_init_children section. (Tatsuo Ishii)
+
+    - Fix bad performance of unlogged tables detection code. (Tatsuo Ishii)
+
+      Pointed out at [pgpool-hackers: 435][[pgpool-general:2325].
+
+    - Fix primary node detection logic. (Tatsuo Ishii)
+
+      There's a possibility that primary node is not detected. This happens
+      in following situation.  node 0: primary, node 1: standby. Node 0 goes
+      down. Health checking detects the fact but local status is not updated
+      yet. Primary node finding (find_primary_node) runs. Node 0's status is
+      yet healthy. Because find_primary_node fails to connect to node 0, it
+      immediately returns -1 and fails to find that fact that node 1 is now
+      primary.
+
+      Fix is just continuing to look for primary node when fails to connect
+      to a node.
+
+      Per [pgpool-general: 2409].
+
+    - Fix jdbc DML fails when operated in raw mode and auto commit is off.
+      (Tatsuo Ishii)
+
+      This is reported in bug #92.
+
+    - Avoid to send queries to unrelated nodes in streaming replication mode.
+      (Tatsuo Ishii)
+
+      Pgpool-II sends certain queries, such as BEGIN, END and SET commands to
+      all of DB nodes. However in streaming replication mode, only primary
+      node and at most one standby node are only concerned (if primacy node
+      is selected as the load balance node, only 1 node is concerned).
+
+      See [pgpool-hackers: 464] for more details.
+
+    - Fix possible buffer overrun problem and memory leak. (Tatsuo Ishii)
+
+      Per Coverity 1111465 and 1111482.
+
+    - Fix freeing NULL. (Tatsuo Ishii)
+
+      Per Coverity 1111384.
+
+    - Fix memory leak. (Tatsuo Ishii)
+
+      Per Coverity 1111446.
+
+    - Fix a segmentation fault in parallel mode with system_db_hostname is
+      empty (Yugo Nagata)
+
+    - Fix to output debug messages in processing pgpool.conf with -d option
+      (Yugo Nagata)
+
+      Previously, some debug messages in pool_get_config() ware not output
+      even when -d option was used.
+
+    - Fix JDBC exception of prepared statement including now() in
+      replication mode (Yugo Nagata)
+
+      With JDBC, when a prepared statement is executed more than
+      PrepareThreshold times, the statement is named and Describe message
+      is sent after Parse. With named statement, pgpool rewrite now() to
+      parameter in replication mode. Hence, rewritten query has additonal
+      parameter than original. In this case, ParameterDescription message
+      sent to frontend (response of Describe) should include OIDs of the
+      same number os original query's parameters. Otherwize, JDBC throws
+      ArrayIndexoutOfBoundsException.
+
+      This is reported in [pgpool-general-jp: 1192].
+
+    - Fix backend error of prepared statement about table which has column whoes
+      default value is now() in replication mode (Yugo Nagata)
+
+      When pgpool parses a named prepared statement with default now(),
+      timestamps are replaced to additional parameters. So, Bind message also
+      should inclued additional parameter format codes. However, when the
+      number of original parameter was one, pgpool didn't handle this. This
+      caused a error like "incorrect binary data format in bind parameter 2".
+
+    - doc: Add description about parallel mode doesn't support PREPARE (Yugo Nagata)
+
+      Per bug #93
+
 ===============================================================================
 
                         3.0.14 (umiyameboshi) 2013/12/06
 
-* Version 3.0.13
+* Version 3.0.14
 
-    This is a bugfix release against pgpool-II 3.0.13.
+      This is a bugfix release against pgpool-II 3.0.13.
 
     __________________________________________________________________
 
@@ -3456,11 +3917,12 @@
       Per Coverity report #1111468.
 
 ===============================================================================
+
                         3.0.13 (umiyameboshi) 2013/09/06
 
 * Version 3.0.13
 
-    This is a bugfix release against pgpool-II 3.0.12.
+      This is a bugfix release against pgpool-II 3.0.12.
 
     __________________________________________________________________
 
@@ -3490,9 +3952,9 @@
 
 * Version 3.0.12
 
-      This is a bugfix release against pgpool-II 3.0.11
+      This is a bugfix release against pgpool-II 3.0.11.
 
-      __________________________________________________________________
+    __________________________________________________________________
 
 * Bug fixes
 
@@ -3559,7 +4021,7 @@
           FATAL: no PostgreSQL user name specified in startup packet
 
     - Move ssl_ca_cert and ssl_ca_cert_dir descriptions to the SSL section
-      in the document (Yugo Nagata)
+      (Yugo Nagata)
 
     - Add ssl_ca_cert and ssl_ca_cert_dir descriptions to the japanese document
       (Yugo Nagata)
@@ -3570,18 +4032,17 @@
       of recovery script, and this causes a malfunction. In especially,
       rsync may delete unrelated files in basebackup scripts.
 
-
 ===============================================================================
 
-                       3.0.11 (umiyameboshi) 2013/04/26
+                        3.0.11 (umiyameboshi) 2013/04/26
 
-* Version 3.1.7
+* Version 3.0.11
 
-      This is a bugfix release against pgpool-II 3.1.6.
+      This is a bugfix release against pgpool-II 3.0.10.
 
-      __________________________________________________________________
+    __________________________________________________________________
 
-* Bug fixes
+* Buf fixes
 
     - Fix to show pool_passwd in "SHOW pool_status". (Yugo Nagata)
 
@@ -3662,11 +4123,11 @@
 
 * Version 3.0.10
 
-      This is a bugfix release against pgpool-II 3.0.9
+      This is a bugfix release against pgpool-II 3.0.9.
 
-      __________________________________________________________________
+    __________________________________________________________________
 
-* Bug fixes
+* General
 
     - Fix race condition when using md5 authentication. (Tatsuo Ishii)
 
@@ -3762,15 +4223,15 @@
 
 ===============================================================================
 
-                    3.0.9 (umiyameboshi) 2012/10/12
+                        3.0.9 (umiyameboshi) 2012/10/12
 
 * Version 3.0.9
 
-      This is a bugfix release against pgpool-II 3.0.8
+      This is a bugfix release against pgpool-II 3.0.8.
 
-      __________________________________________________________________
+    __________________________________________________________________
 
-* Bug fixes
+* General
 
     - Fix read_startup_packet. (Tatsuo Ishii)
 
@@ -3833,21 +4294,21 @@
 
 ===============================================================================
 
-                        3.0.8 (umiyameboshi) 2012/08/0
+                        3.0.8 (umiyameboshi) 2012/08/06
 
 * Version 3.0.8
 
-      This is a bugfix release against pgpool-II 3.0.7
+      This is a bugfix release against pgpool-II 3.0.7.
 
-      __________________________________________________________________
+    __________________________________________________________________
 
-* Bug fixes
-
-      * General
+* General
 
       - Adopt PostgreSQL 9.2. (Tatsuo Ishii)
 
-      * Bug fixes
+    __________________________________________________________________
+
+* Bug fixes
 
       - Fix load balance in Solaris. (Tatsuo Ishii)
 
@@ -3894,7 +4355,7 @@
 
       This is a bugfix release against pgpool-II 3.0.6.
 
-      __________________________________________________________________
+    __________________________________________________________________
 
 * Bug fixes
 
@@ -3929,6 +4390,10 @@
 * Version 3.0.6
 
       This version fixes various bugs since 3.0.5.
+
+      __________________________________________________________________
+
+* Bug fixes
 
       - Fix infinite loop reported in this thread (Tatsuo Ishii):
         http://www.pgpool.net/pipermail/pgpool-general/2011-December/000099.html
@@ -4027,8 +4492,7 @@
         message(Toshihiro Kitagawa)
 
       - Fix possible hangup that happen for the receiving timing of
-        ReadyForQuery(Z) message after pgpool-II connects to backends
-        (Toshihiro Kitagawa)
+        ReadyForQuery(Z) message after pgpool-II connects to backends(Toshihiro Kitagawa)
 
       - Add description about parameters for recovery_1st_stage_command
         and recovery_2nd_stage_command(Tatsuo Ishii)
@@ -4079,11 +4543,11 @@
 * Incompatible changes
 
       - Now installing C function "pgpool_walrecrunning()" is recommended
-        if you plan to use streaming replication mode.
-        This is necessary for better use of online recovery in the mode.
+          if you plan to use streaming replication mode.
+          This is necessary for better use of online recovery in the mode.
         Also new variable "%P" can be used in the online recovery script.
-        If you do not install the function, these functionalities Cannot
-        be used(Tatsuo Ishii).
+        If you do not install the function, these functionalities cannot be
+        used(Tatsuo Ishii).
 
       - In raw mode if there's only one DB node and if a problem arises
         with the DB node, it will be brought to down status. However if
@@ -4114,14 +4578,12 @@
       - Fix bug that debug_level directive doesn't work. Patch
         contributed by Gilles Darold(Tatsuo Ishii)
 
-      - Fix possible crash of pgpool child while doing failover
-        (Toshihiro Kitagawa)
+      - Fix possible crash of pgpool child while doing failover(Toshihiro Kitagawa)
 
       - Fix white/black_function_list so that it works correctly when user
         calls function with schema name(Tatsuo Ishii)
 
-      - Fix bug that DROP DATABASE fails by connection cache
-        (Toshihiro Kitagawa)
+      - Fix bug that DROP DATABASE fails by connection cache(Toshihiro Kitagawa)
 
       - Fix bug that failover fails in raw mode(Toshihiro Kitagawa)
 
@@ -4153,9 +4615,9 @@
         system_db_password(Toshihiro Kitagawa)
 
       - Fix online recovery problem in the streaming replication
-        mode(Tatsuo Ishii).
-        Consider following scenario. Suppose node 0 is the initial primary server
-        and 1 is the initial standby server.
+        mode(Tatsuo Ishii). Consider following scenario. Suppose node 0 is
+        the initial primary server and 1 is the initial standby
+        server.
 
         1) Node 0 going down and node 1 promotes to new primary.
         2) Recover node 0 as new standby.
@@ -4221,7 +4683,7 @@
 
 ===============================================================================
 
-                       3.0 (umiyameboshi) 2010/09/10
+                        3.0 (umiyameboshi) 2010/09/10
 
 * Version 3.0
 
@@ -4301,11 +4763,10 @@
         transaction(Tatsuo Ishii)
 
       - In master/slave mode, SELECTs inside explicit transactions are
-        load balanced(Tatsuo Ishii, Toshihiro Kitagawa)
+        load balanced(Tatsuo, Kitagawa)
 
       - In master/slave mode, commands are no longer sent to all DB
-        nodes. This will prevent unnecessary locking
-        (Tatsuo Ishii, Toshihiro Kitagawa)
+        nodes. This will prevent unnecessary locking(Tatsuo, Kitagawa)
 
       - New command option adds to ignore the status file when
         starting up(Tatsuo Ishii)
@@ -4341,8 +4802,7 @@
         added(Toshihiro Kitagawa)
 
       - New C language function pgpool_regclass added to avoid a trouble
-        about handling of duplicate table names in different schema
-        (Tatsuo Ishii)
+        about handling of duplicate table names in different schema(Tatsuo Ishii)
 
       __________________________________________________________________
 
@@ -4366,7 +4826,7 @@
 
 
 ===============================================================================
-2.3 Series (2009/12/07 - 2010/02/22)
+2.3 Series (2009/12/07 - 2012/08/06)
 ===============================================================================
 
                     2.3.4 (tomiteboshi) 2012/08/06
@@ -4745,7 +5205,7 @@
 
 
 ===============================================================================
-2.2 Series (2009/02/08 - 2010/04/15)
+2.2 Series (2009/02/08 - 2012/08/06)
 ===============================================================================
 
                     2.2.8 (urukiboshi) 2012/08/06
@@ -5461,7 +5921,7 @@
 
 ===============================================================================
 
-                            1.0.0 (suboshi) 2006/09/08
+                            1.0 (suboshi) 2006/09/08
 
       * Initial release
 
