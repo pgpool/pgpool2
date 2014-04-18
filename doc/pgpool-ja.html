@@ -516,7 +516,7 @@ pgpool.confでは空白行や#で始まる行はコメントと見なされま�
     </p>
     </dd>
   </dl>
-		
+
 <h3>Pools</h3>
 
 <dl>
@@ -528,33 +528,33 @@ pgpool.confでは空白行や#で始まる行はコメントと見なされま�
     これを超えた場合は、そのクライアントは、pgpool-IIのどれからのプロセスへのフロントエンドの接続が終了するまで
     待たされます(PostgreSQLと違ってエラーになりません)。
     待たされる数の上限は、2 * num_init_children です。
-	待ち行列は、OS内部に作られ、「listenキュー」と呼ばれます。listenキューの長さは「バックログ」と呼ばれます。
-	システムによってはバックログの上限が設定されており、2 * num_init_children がこれを越える場合はシステム側の設定変更が必要になります。
-		さもないと高負荷時にlistenキューが溢れ、pgpool-IIへの接続が失敗したり、システム内で行われるリトライにより著しく性能が低下することがあります。
-		listenキューが溢れているかどうかは、"netstat -s"で確認できます。"TcpExt"のパートで、
-		</p>
-		<p>
-		<pre>
+    待ち行列は、OS内部に作られ、「listenキュー」と呼ばれます。listenキューの長さは「バックログ」と呼ばれます。
+    システムによってはバックログの上限が設定されており、2 * num_init_children がこれを越える場合はシステム側の設定変更が必要になります。
+        さもないと高負荷時にlistenキューが溢れ、pgpool-IIへの接続が失敗したり、システム内で行われるリトライにより著しく性能が低下することがあります。
+        listenキューが溢れているかどうかは、"netstat -s"で確認できます。"TcpExt"のパートで、
+        </p>
+        <p>
+        <pre>
 535 times the listen queue of a socket overflowed
-		</pre>
-		</p>
-		<p>
-		のようなメッセージが出ていればlistenキューが溢れています。listenキュー溢れを防ぐためにバックログを大きくするには、Linuxでは以下のようにします(root権限が必要です)。
-		</p>
-		<p>
-		<pre>
+        </pre>
+        </p>
+        <p>
+        のようなメッセージが出ていればlistenキューが溢れています。listenキュー溢れを防ぐためにバックログを大きくするには、Linuxでは以下のようにします(root権限が必要です)。
+        </p>
+        <p>
+        <pre>
 # sysctl net.core.somaxconn
 net.core.somaxconn = 128
 # sysctl -w net.core.somaxconn = 256
-		</pre>
-		</p>
-		<p>
-		もちろん、/etc/sysctl.confに以下のように書いても構いません。
-		</p>
-		<p>
-		<pre>
+        </pre>
+        </p>
+        <p>
+        もちろん、/etc/sysctl.confに以下のように書いても構いません。
+        </p>
+        <p>
+        <pre>
 net.core.somaxconn = 256
-		</pre>
+        </pre>
     </p>
     <p>
     基本的に後述のmax_pool * num_init_children分だけPostgreSQLへのコネクションが張られますが、
@@ -652,7 +652,7 @@ net.core.somaxconn = 256
     <p>
     md5 認証で用いる認証ファイルのファイル名を指定します。
     デフォルト値は "pool_passwd" です。
-    空文字列（""）を指定すると 認証ファイルの読込は無効になります。  
+    空文字列（""）を指定すると 認証ファイルの読込は無効になります。
     詳細は<a href="#md5">認証・アクセス制御方式</a>を参照してください。
     </p>
     <p>
@@ -1188,30 +1188,30 @@ local0.*    /var/log/pgpool.log
 <dt><a name="SSL_CA_CERT"></a>ssl_ca_cert</dt>
     <dd>
     <p>
-	1 つ以上の CA ルート証明書を格納している PEM 形式ファイルのパスを指定します。
-	このファイルはバックエンドサーバ証明書の検証に用いられます。
-	このオプションは OpenSSL の <code>verify(1)</code> コマンドにおける <code>-CAfile</code> オプションと同様の機能を提供します。
+    1 つ以上の CA ルート証明書を格納している PEM 形式ファイルのパスを指定します。
+    このファイルはバックエンドサーバ証明書の検証に用いられます。
+    このオプションは OpenSSL の <code>verify(1)</code> コマンドにおける <code>-CAfile</code> オプションと同様の機能を提供します。
     </p>
 
     <p>
-	デフォルトでは値が設定されておらず検証は行われません。
-	このオプションが設定されていない場合においても、<code>ssl_ca_cert_dir</code> オプション
-	が設定されている場合には検証が行われます。
+    デフォルトでは値が設定されておらず検証は行われません。
+    このオプションが設定されていない場合においても、<code>ssl_ca_cert_dir</code> オプション
+    が設定されている場合には検証が行われます。
     </p>
     </dd>
 
 <dt><a name="SSL_CA_CERT_DIR"></a>ssl_ca_cert_dir</dt>
     <dd>
     <p>
-	PEM 形式の CA 証明書ファイルを格納しているディレクトリのパスを指定します。
-	これらのファイルはバックエンドサーバ認証の検証に用いられます。
-	このオプションは OpenSSL の <code>verify(1)</code> コマンドにおける <code>-CApath</code> オプションと同様の機能を提供します。
+    PEM 形式の CA 証明書ファイルを格納しているディレクトリのパスを指定します。
+    これらのファイルはバックエンドサーバ認証の検証に用いられます。
+    このオプションは OpenSSL の <code>verify(1)</code> コマンドにおける <code>-CApath</code> オプションと同様の機能を提供します。
     </p>
 
     <p>
-	デフォルトでは値が設定されておらず検証は行われません。
-	このオプションが設定されていない場合においても、<code>ssl_ca_cert</code> オプション
-	が設定されている場合には検証が行われます。
+    デフォルトでは値が設定されておらず検証は行われません。
+    このオプションが設定されていない場合においても、<code>ssl_ca_cert</code> オプション
+    が設定されている場合には検証が行われます。
     </p>
     </dd>
 
@@ -3221,7 +3221,7 @@ benchs2=# show pool_status;
  listen_addresses                     | localhost                      | host name(s) or IP address(es) to listen to
  port                                 | 9999                           | pgpool accepting port number
  socket_dir                           | /tmp                           | pgpool socket directory
- pcp_port                             | 9898                           | PCP port # to bind 
+ pcp_port                             | 9898                           | PCP port # to bind
  pcp_socket_dir                       | /tmp                           | PCP socket directory
 </pre>
 
@@ -3601,7 +3601,7 @@ DESTDIR=$3       # database cluster of the DB node to be recovered
 port=5432        # PostgreSQL port number
 archdir=/data/archive_log    # archive log directory
 
-# Force to flush current value of sequences to xlog 
+# Force to flush current value of sequences to xlog
 psql -p $port -t -c 'SELECT datname FROM pg_database WHERE NOT datistemplate AND datallowconn' template1|
 while read i
 do
@@ -5000,17 +5000,17 @@ name : listen_addresses
 value: localhost
 desc : host name(s) or IP address(es) to listen to
 
-name : port 
-value: 9999 
+name : port
+value: 9999
 desc : pgpool accepting port number
 
 name : socket_dir
-value: /tmp 
+value: /tmp
 desc : pgpool socket directory
 
 name : pcp_port
-value: 9898 
-desc : PCP port # to bind 
+value: 9898
+desc : PCP port # to bind
 </pre>
 
 
@@ -5094,7 +5094,7 @@ pgpool-IIを指定されたモードでシャットダウンします。指定�
 りです。
 
 s    - smart モード
-f    - fast モード   
+f    - fast モード
 i    - immediate モード
 
 pgpool-IIが起動していない場合はConnectionErrorと表示され、終了コード8で終了し
@@ -5297,7 +5297,7 @@ FROM句に複数のテーブル、又はサブクエリがある場合
 <p>
 以下の例では、P1-tableが P 状態のテーブルでL1-table,L2-tableが L 状態のテーブルだとします。
 すると上記の表により、P1-table (左)とL1-table (右) が結合し P 状態となり、
-さらに P 状態と L 状態のL2-tableが結合してFROM句の実行ステータスは P 状態となります。 
+さらに P 状態と L 状態のL2-tableが結合してFROM句の実行ステータスは P 状態となります。
 <pre>
 SELECT * FROM P1-table,L1-table,L2-table;
 </pre>
@@ -5421,10 +5421,10 @@ SELECT L1-table.col FROM L1-table WHERE L1-table.col % 2 = 0 AND L1-table.col IN
 <pre>
 SELECT L1-table.col FROM dblink(SELECT loadbalance(SELECT L1-table.col FROM L1-table WHERE L1-table.col % 2 = 0 AND TRUE))
     WHERE
-        L1-table.col %2 = 0 AND 
-      L1-table.col IN 
+        L1-table.col %2 = 0 AND
+      L1-table.col IN
       (
-          SELECT P1-Table FROM 
+          SELECT P1-Table FROM
           dblink(select pool_parallel(SELECT P1-table FROM P1-table))
       ) ;
 </pre>
@@ -5507,7 +5507,13 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 
 <h1 id="release">リリースノート</h1>
 
+<!-- ================================================================================ -->
+<!-- 3.2                                                                              -->
+<!-- ================================================================================ -->
+
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.2.8"></a>3.2.8 (namameboshi) 2014/03/24</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは 3.2.7 に対するバグ修正リリースです。
@@ -5518,20 +5524,20 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 
 <li>
     doc: num_init_children の項に「listen キュー」の説明とその「バックログ」を増やす方法について追記しました。
-	(Tatsuo Ishii)
+    (Tatsuo Ishii)
 </li>
 
 <li>
     指定した上位サーバの内たった１台への ping が失敗した場合にも watchdog
-	ステータスがダウンになってしまうバグを修正しました。(Yugo Nagata)
+    ステータスがダウンになってしまうバグを修正しました。(Yugo Nagata)
 </li>
 
 <li>
     UNLOGGED テーブルを検出する処理のパフォーマンスが悪かったのを修正しました。
-	(Tatsuo Ishii)
+    (Tatsuo Ishii)
     <p>
     この問題は <a href="http://www.sraoss.jp/pipermail/pgpool-hackers/2014-January/000435.html">[pgpool-hackers: 435]</a>
-	<a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-December/002354.html">[pgpool-general:2325]</a> で指摘されました。
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-December/002354.html">[pgpool-general:2325]</a> で指摘されました。
     </p>
 </li>
 
@@ -5539,10 +5545,10 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
     プライマリノードの検出ロジックを修正しました。(Tatsuo Ishii)
     <p>
     プライマリノードが検出されないことがありました。例えば、node 0 がプライマリ、node 1
-	がスタンバイのときに、node 0 が落ちたとします。ヘルスチェックがそれを検出しますが、
-	内部のステータスがまだ更新されていない場合 node 0 には問題がないよう見えるため node 0
-	への接続が試みられます。実際にはこの接続は失敗するため、node 1
-	が新プライマリであることを検出する前に処理が終了していました。
+    がスタンバイのときに、node 0 が落ちたとします。ヘルスチェックがそれを検出しますが、
+    内部のステータスがまだ更新されていない場合 node 0 には問題がないよう見えるため node 0
+    への接続が試みられます。実際にはこの接続は失敗するため、node 1
+    が新プライマリであることを検出する前に処理が終了していました。
     </p>
     <p>
     この問題は <a href="http://www.sraoss.jp/pipermail/pgpool-general/2014-January/002442.html">[pgpool-general: 2409]</a> にて報告されました。
@@ -5551,7 +5557,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 
 <li>
     raw モードで自動コミットが off で JDBC を使用したときに、DML
-	が失敗するバグを修正しました。(Tatsuo Ishii)
+    が失敗するバグを修正しました。(Tatsuo Ishii)
     <p>
     この問題は <a href="http://www.pgpool.net/mantisbt/view.php?id=92">bug #92</a> で報告されました。
     </p>
@@ -5561,31 +5567,31 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
     拡張プロトコルにおけるクエリキャッシュのバグを修正しました。(Tatsuo Ishii)
     <p>
     明示的なトランザクション内で DML が実行された場合でも、SELECT
-	実行時に古いキャッシュが読み込まれていました。
-	これはインメモリクエリキャッシュが実装された時点から存在していたバグです。
+    実行時に古いキャッシュが読み込まれていました。
+    これはインメモリクエリキャッシュが実装された時点から存在していたバグです。
     </p>
     <p>
     <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2014-January/001251.html">
-	[pgpool-general-jp: 1252]</a> で報告されました。
+    [pgpool-general-jp: 1252]</a> で報告されました。
     </p>
 </li>
 
 <li>
     SHOW pool_status の結果から抜けていた relcashe_size と check_temp_table
-	を追加しました。(Tatsuo Ishii)
+    を追加しました。(Tatsuo Ishii)
 </li>
 
 <li>
     ストリーミングレプリケーションモードで無関係なノードにはクエリを送信しないように修正しました。
-	(Tatsuo Ishii)
+    (Tatsuo Ishii)
     <p>
     pgpool-II は BEGIN, END, SET などのクエリを全ての DB ノードに送っています。
-	しかし、ストリーミングレプリケーションではプライマリノードと高々１台のスタンバイノードにしか送る必要がありません。
-	（もしプライマリノードがロードバランスノードとして選択されている場合には１台だけで充分です。）
+    しかし、ストリーミングレプリケーションではプライマリノードと高々１台のスタンバイノードにしか送る必要がありません。
+    （もしプライマリノードがロードバランスノードとして選択されている場合には１台だけで充分です。）
     </p>
     <p>
     詳細は <a href="http://www.sraoss.jp/pipermail/pgpool-hackers/2014-February/000464.html">
-	[pgpool-hackers: 464]</a> を参照してください。
+    [pgpool-hackers: 464]</a> を参照してください。
     </p>
 </li>
 
@@ -5626,14 +5632,14 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 
 <li>
     パラレルモードで system_db_hostname
-	が空欄の場合に発生するセグメンテーションフォルトを修正しました。
-	(Yugo Nagata)
+    が空欄の場合に発生するセグメンテーションフォルトを修正しました。
+    (Yugo Nagata)
 </li>
 
 <li>
     -d オプションで起動した場合に pgpool.conf
-	の処理中のデバッグメッセージを出力するように修正しました
-	(Yugo Nagata)
+    の処理中のデバッグメッセージを出力するように修正しました
+    (Yugo Nagata)
     <p>
     以前は -d オプション使用時でも出力されていないデバッグメッセージがありました。
     </p>
@@ -5641,31 +5647,31 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 
 <li>
     レプリケーションモードで JDBC 使用時に now()
-	を含む準備文で発生する例外を修正しました。(Yugo Nagata)
+    を含む準備文で発生する例外を修正しました。(Yugo Nagata)
     <p>
     JDBC で準備文を PrepareThreshold 回以上実行した場合には、文に名前が付けられ Parse
-	の後に Describe メッセージが発行されます。このとき、pgpool は now()
-	をパラメータに書き換えるため、元のクエリには無かった新しいパラメータが追加されます。
-	この場合、フロントエンドに返されるParameterDscription メッセージ（Describe
-	の返答）は、元のクエリが持つパラメータと同じ数の OID を含むべきです。そうしないと、JDBC
-	はArrayIndexoutOfBoundsException 例外を発生させてしまいます。
+    の後に Describe メッセージが発行されます。このとき、pgpool は now()
+    をパラメータに書き換えるため、元のクエリには無かった新しいパラメータが追加されます。
+    この場合、フロントエンドに返されるParameterDscription メッセージ（Describe
+    の返答）は、元のクエリが持つパラメータと同じ数の OID を含むべきです。そうしないと、JDBC
+    はArrayIndexoutOfBoundsException 例外を発生させてしまいます。
     </p>
     <p>
     このバグは <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2013-September/001191.html">
-	[pgpool-general-jp: 1192]</a> で報告されました。
+    [pgpool-general-jp: 1192]</a> で報告されました。
     </p>
 </li>
 
 <li>
     レプリケーションモードにて、デフォルト値が now()
-	のカラムを持つテーブルに対する準備文でエラーが発生するバグを修正しました。
-	(Yugo Nagata)
+    のカラムを持つテーブルに対する準備文でエラーが発生するバグを修正しました。
+    (Yugo Nagata)
     <p>
     デフォルト値が now() を持つ名前付き準備文を parse する際に、pgpool-II
-	は時刻値をパラメータで置き換えます。そのため、その後の bind
-	メッセージも追加されたパラメータの形式コードを含んでいる必要があります。
-	しかし、元のクエリのパラーメータ形式数が１だった場合、この処理がなされていませんでした。これが
-	"incorrect binary data format in bind parameter 2" のようなエラーの原因となっていました。
+    は時刻値をパラメータで置き換えます。そのため、その後の bind
+    メッセージも追加されたパラメータの形式コードを含んでいる必要があります。
+    しかし、元のクエリのパラーメータ形式数が１だった場合、この処理がなされていませんでした。これが
+    "incorrect binary data format in bind parameter 2" のようなエラーの原因となっていました。
     </p>
 </li>
 
@@ -5680,12 +5686,11 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 
 
 <!-- -------------------------------------------------------------------------------- -->
-<h2><a name="release3.2.7"></a>3.2.7 (tokakiboshi) 2013/12/06</h2>
+<h2><a name="release3.2.7"></a>3.2.7 (namameboshi) 2013/12/06</h2>
 <!-- -------------------------------------------------------------------------------- -->
-
 <h3>概要</h3>
 <p>
-このバージョンは 3.2.7 に対するバグ修正リリースです。
+このバージョンは 3.2.6 に対するバグ修正リリースです。
 <h3>バグ修正</h3>
 <ul>
 
@@ -5957,7 +5962,9 @@ parse によるロックが残存するためです。</p>
 
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.2.5"></a>3.2.5 (namameboshi) 2013/07/10</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは 3.2.4 に対するバグ修正リリースです。
@@ -6156,7 +6163,9 @@ pcp_recovery_node コマンドで、バックエンドノード番号をチェ�
 </li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.2.4"></a>3.2.4 (namameboshi) 2013/04/26</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは 3.2.3 に対するバグ修正リリースです。
@@ -6216,7 +6225,7 @@ connect_inet_domain_socket_by_port() で alarm 割り込み時を受けた時に
 md5認証で長いユーザ名を処理する際のバグを修正しました。(Tatsuo Ishii)
 <p>
   ユーザ名が 32 バイトより長い場合、md5 認証が動作していませんでした。
-  この問題は [pgpool-general: 1526] で Thomas Martin さんにより報告されました。    
+  この問題は [pgpool-general: 1526] で Thomas Martin さんにより報告されました。
 </p>
 <blockquote>
   [pgpool-general: 1526]<br />
@@ -6284,8 +6293,8 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 
 <li>detect_postmaster_down_error() のエラーメッセージを修正しました。(Tatsuo Ishii)
 <p>
-  例えば、"LOG: detect_stop_postmaster_error: detect_error error" を 
-  "LOG: detect_postmaster_down_error: detect_error error" に修正するなどです。 
+  例えば、"LOG: detect_stop_postmaster_error: detect_error error" を
+  "LOG: detect_postmaster_down_error: detect_error error" に修正するなどです。
 </p>
 </li>
 
@@ -6325,7 +6334,9 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.2.3"></a>3.2.3 (namameboshi) 2013/02/18</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>pgpool-II 3.2.2 に対するバグ修正リリースです。
    おもに、3.2.2 のヘルスチェックに関する致命的な問題を修正するものです。</p>
@@ -6380,7 +6391,9 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <li>configure.in にある configure のヘルプの typo を修正しました。 (Yugo Nagata)</li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.2.2"></a>3.2.2 (namameboshi) 2013/02/08</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは 3.2.1 に対するバグ修正リリースです。
@@ -6809,7 +6822,9 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.2.1"></a>3.2.1 (namameboshi) 2012/10/12</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは 3.2.0 に対するバグ修正リリースです。
@@ -7020,7 +7035,9 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.2.0"></a>3.2.0 (namameboshi) 2012/08/03</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは 3.2 系列の最初の版で、3.1 系からの「メジャーバージョンアップ」にあたります。
@@ -7279,7 +7296,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 
 <li>チュートリアル</li>
 <p><a href="#memqcache">オンメモリクエリキャッシュ</a> と <a href="#watchdog">Watchdog 機能</a>
-   のチュートリアルを作成しました。(Nozomi Anzai)</p> 
+   のチュートリアルを作成しました。(Nozomi Anzai)</p>
 
 </ul>
 
@@ -7582,9 +7599,290 @@ autoconf
 
 </ul>
 
+<!-- ================================================================================ -->
+<!-- 3.1                                                                              -->
+<!-- ================================================================================ -->
 <hr>
 
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.1.11"></a>3.1.11 (hatsuiboshi) 2014/03/24</h2>
+<!-- -------------------------------------------------------------------------------- -->
+<h3>概要</h3>
+<p>
+このバージョンは 3.1.10 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    doc: num_init_children の項に「listen キュー」の説明とその「バックログ」を増やす方法について追記しました。
+    (Tatsuo Ishii)
+</li>
+
+<li>
+    UNLOGGED テーブルを検出する処理のパフォーマンスが悪かったのを修正しました。
+    (Tatsuo Ishii)
+    <p>
+    この問題は <a href="http://www.sraoss.jp/pipermail/pgpool-hackers/2014-January/000435.html">[pgpool-hackers: 435]</a>
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-December/002354.html">[pgpool-general:2325]</a> で指摘されました。
+    </p>
+</li>
+
+<li>
+    プライマリノードの検出ロジックを修正しました。(Tatsuo Ishii)
+    <p>
+    プライマリノードが検出されないことがありました。例えば、node 0 がプライマリ、node 1
+    がスタンバイのときに、node 0 が落ちたとします。ヘルスチェックがそれを検出しますが、
+    内部のステータスがまだ更新されていない場合 node 0 には問題がないよう見えるため node 0
+    への接続が試みられます。実際にはこの接続は失敗するため、node 1
+    が新プライマリであることを検出する前に処理が終了していました。
+    </p>
+    <p>
+    この問題は <a href="http://www.sraoss.jp/pipermail/pgpool-general/2014-January/002442.html">[pgpool-general: 2409]</a> にて報告されました。
+    </p>
+</li>
+
+<li>
+    raw モードで自動コミットが off で JDBC を使用したときに、DML
+    が失敗するバグを修正しました。(Tatsuo Ishii)
+    <p>
+    この問題は <a href="http://www.pgpool.net/mantisbt/view.php?id=92">bug #92</a> で報告されました。
+    </p>
+</li>
+
+<li>
+    ストリーミングレプリケーションモードで無関係なノードにはクエリを送信しないように修正しました。
+    (Tatsuo Ishii)
+    <p>
+    pgpool-II は BEGIN, END, SET などのクエリを全ての DB ノードに送っています。
+    しかし、ストリーミングレプリケーションではプライマリノードと高々１台のスタンバイノードにしか送る必要がありません。
+    （もしプライマリノードがロードバランスノードとして選択されている場合には１台だけで充分です。）
+    </p>
+    <p>
+    詳細は <a href="http://www.sraoss.jp/pipermail/pgpool-hackers/2014-February/000464.html">
+    [pgpool-hackers: 464]</a> を参照してください。
+    </p>
+</li>
+
+<li>
+    バッファオーバランとメモリリークの可能性を修正しました。(Tatsuo Ishii)
+    <p>
+    Coverity 1111465, 1111482 の報告によります。
+    </p>
+</li>
+
+<li>
+    バッファオーバランを修正しました。(Tatsuo Ishii)
+    <p>
+    strcpy() を strlcpy() で置き換えました。Coverity 1111478, 1111480 の報告によります。
+    </p>
+</li>
+
+<li>
+    NULL ポインタの開放を修正しました。(Tatsuo Ishii)
+    <p>
+    Coverity 1111384 の報告によります。
+    </p>
+</li>
+
+<li>
+    メモリリークを修正しました。(Tatsuo Ishii)
+    <p>
+    Coverity 1111446 の報告によります。
+    </p>
+</li>
+
+<li>
+    パラレルモードで system_db_hostname
+    が空欄の場合に発生するセグメンテーションフォルトを修正しました。
+    (Yugo Nagata)
+</li>
+
+<li>
+    -d オプションで起動した場合に pgpool.conf
+    の処理中のデバッグメッセージを出力するように修正しました
+    (Yugo Nagata)
+    <p>
+    以前は -d オプション使用時でも出力されていないデバッグメッセージがありました。
+    </p>
+</li>
+
+<li>
+    レプリケーションモードで JDBC 使用時に now()
+    を含む準備文で発生する例外を修正しました。(Yugo Nagata)
+    <p>
+    JDBC で準備文を PrepareThreshold 回以上実行した場合には、文に名前が付けられ Parse
+    の後に Describe メッセージが発行されます。このとき、pgpool は now()
+    をパラメータに書き換えるため、元のクエリには無かった新しいパラメータが追加されます。
+    この場合、フロントエンドに返されるParameterDscription メッセージ（Describe
+    の返答）は、元のクエリが持つパラメータと同じ数の OID を含むべきです。そうしないと、JDBC
+    はArrayIndexoutOfBoundsException 例外を発生させてしまいます。
+    </p>
+    <p>
+    このバグは <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2013-September/001191.html">
+    [pgpool-general-jp: 1192]</a> で報告されました。
+    </p>
+</li>
+
+<li>
+    レプリケーションモードにて、デフォルト値が now()
+    のカラムを持つテーブルに対する準備文でエラーが発生するバグを修正しました。
+    (Yugo Nagata)
+    <p>
+    デフォルト値が now() を持つ名前付き準備文を parse する際に、pgpool-II
+    は時刻値をパラメータで置き換えます。そのため、その後の bind
+    メッセージも追加されたパラメータの形式コードを含んでいる必要があります。
+    しかし、元のクエリのパラーメータ形式数が１だった場合、この処理がなされていませんでした。これが
+    "incorrect binary data format in bind parameter 2" のようなエラーの原因となっていました。
+    </p>
+</li>
+
+<li>
+    doc: パラレルモードは PREPARE 文の実行に対応していないことを追記しました。(Yugo Nagata)
+    <p>
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=93">bug #93</a> の指摘によります。
+    </p>
+</li>
+
+</ul>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.1.10"></a>3.1.10 (hatsuiboshi) 2013/12/06</h2>
+<!-- -------------------------------------------------------------------------------- -->
+<h3>概要</h3>
+<p>
+このバージョンは 3.1.9 に対するバグ修正リリースです。
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>レプリケーションモード稼働時、一部のタイムゾーンでタイムスタンプの書き換えが誤っていました。(Tatsuo Ishii)
+<p>タイムスタンプの書き換え処理では、現在日時を取得するあめに "SELECT now()" を実行します。
+しかし一部のタイムゾーンにおいては、"02:30" のような場合に現在日時のためのバッファの大きさが
+十分ではありませんでした。"0900" のように 30 分刻みでのタイムゾーンでないときは、この問題は発生しません。
+そのため、これまでこの不具合が報告されたことはありませんでした。</p>
+<p>この不具合は <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-September/002142.html" target="_blank">[pgpool-general: 2113]</a> で報告され、Sean Hogan さんによって修正が提供されました。</p>
+</li>
+
+<li>Makefile: Makefiles 内の pg_config を $(PG_CONFIG) に置き換えました。
+したがって、PostgreSQL のメジャーバージョンが異なる場合には、コンパイル中で上書きされるようになります。(Tatsuo Ishii)
+<p>パッチは Christoph Berg さんから提供されました。（<a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-September/002156.html" target="_blank">[pgpool-general: 2127]</a>）</p>
+</li>
+
+<li>configure: FreeBSD で問題があったため、-lcompat を削除しました。(Tatsuo Ishii)
+<p><a href="http://www.pgpool.net/mantisbt/view.php?id=15">bug#15</a> で報告されました。</p>
+</li>
+
+<li>pgpool.conf で <a href="#LOG_STANDBY_DELAY">log_standby_delay</a> を設定してないときに
+segfault していたのを修正しました。(Tatsuo Ishii)
+<p>これは、pool_config.l での log_standby_delay の初期化が誤っていたためです。
+<a href="http://www.pgpool.net/mantisbt/view.php?id=74" target="_blank">bug#74</a> として報告されました。</p>
+</li>
+
+<li>doc: パラレルモードの制限事項を追記しました。VALUES 句を使った複数行の INSERT はパラレルモードではサポートされていません。(Yugo Nagata)</li>
+
+<li>スタンバイノードがダウンしようとしているときに find_primary_node_repeatedly() が
+呼ばれないようにしました。(Tatsuo Ishii)
+<p>これによってフェイルオーバの所要時間が短くなります。
+<a href="http://www.pgpool.net/mantisbt/view.php?id=75" target="_blank">bug#75</a> として報告され、
+パッチを Tatsuo Ishii が編集しました。</p>
+</li>
+
+<li>レプリケーションモードと拡張プロトコルを組み合わせた場合に、
+データ不整合があったのでこれを修正しました。(Tatsuo Ishii)
+<p>JDBC ドライバを使った同時 INSERT で、ノード間でのデータ不整合があるという報告がありました。
+この事象は以下の条件で必ず発生します。
+</p>
+<ol>
+    <li>レプリケーションモードを使用している</li>
+    <li>拡張プロトコルを使用している</li>
+    <li>parse で作成された portal が bind で再利用される</li>
+    <li>autocommit が on である</li>
+    <li>SERIAL（シーケンス）を使用している</li>
+</ol>
+
+<p>pgpool-II の parse 関数は、クライアントが INSERT (+ 5 の状態）を発行すると、対象テーブルをロックされていることを
+認識しています。しかし、bind 関数はそれを認識していませんでした。
+一度 parse / bind / execute が完了すると、pgpool は 4 の理由により parse で獲得したロックを解放します。
+そして JDBC は portal を再利用しようとし、ロックを獲得しないまま bind からのサイクルを開始してしまいます。
+その結果、ロックのない INSERT がノード間でのデータ不整合を引き起こします。
+この解決方法としては、bind でテーブルをロックするようにしました。
+</p>
+<p>この問題は、たいていのユーザは JDBC を autocommit = off で使っているために、
+今まで報告されることがありませんでした。off であれば、ユーザが commit / rollback を発行するまで、
+parse によるロックが残存するためです。</p>
+<p>この不具合は Steve Kuekes さんにより、<a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-September/002171.html" target="_blank">[pgpool-general: 2142]</a> で報告されました。</p>
+</li>
+
+<li>read_password_packet() のエラーメッセージを修正しました。(Tatsuo Ishii)</li>
+
+<li>do_query() がタイムスタンプの書き換えに失敗したとき、メモリリークしていました。(Tatsuo Ishii)
+<p>この修正のために、free_select_result() で NULL 引数を受け取れるようにしました。</p>
+<p>これは Coverity "1111454, 1111455 Resource leak" で発見されました。</p>
+</li>
+
+<li>"<code>DEALLOCATE portal|statement</code>" 実行時の対象ノードの選定ロジックを修正しました。(Tatsuo Ishii)
+<p>"<code>DEALLOCATE portal|statement</code>" 実行時、最後の prepared statement や portal が見つからない場合に、
+対象ノード選定マップがセットされていませんでした。
+おそらく、そうした場合はエラーなので、実際には問題ありません。</p>
+<p>これは Coverity "1111491 Structurally dead code" で発見されました。</p>
+</li>
+
+<li>MAX_NUM_BACKENDS の範囲チェックにおける不具合を修正しました。 (Tatsuo Ishii)
+<p>MAX_NUM_BACKENDS は DB ノードの最大数が限界値でした（現時点では 128）。
+実際には 128 の DB ノードで試す人がいなかったために、発見されなかった不具合のようです。</p>
+<p>これは Coverity "1111429, 1111430 and 1111431 Out-of-bounds write" で発見されました。</p>
+</li>
+
+<li>フロントエンド接続情報を、すでに無効なバックエンドについて set/unset しないようにしました。(Tatsuo Ishii)
+<p>この不具合は <a href="http://www.pgpool.net/mantisbt/view.php?id=82" target="_blank">bug#82</a> で報告されました。</p>
+</li>
+
+<li>pgpool_catalog への public access を許可していませんでした。
+<p>これは、pgpool_catalog がレプリケーションモードで作成されている場合に、
+ユーザテーブルにデータを INSERT すると発生します。</p>
+<p>この不具合は <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2013-November/001228.html" target="_blank">[pgpool-general-jp: 1229]</a> で報告されました。</p>
+</li>
+
+<li>pool_do_auth() のエラーケースで変数を初期化していませんでした。 (Tatsuo Ishii)
+<p>有効なバックエンドがいないとき、pgpool は認証フェーズのフロントエンドにごみの pid を返していました。
+実際に、有効なバックエンドがいないために、フロントエンドは認証後に接続することができません。
+もちろんこれは問題あるものではありません。</p>
+<p>これは Coverity "1127331 Uninitialized scalar variable" で発見されました。</p>
+</li>
+
+<li>ノード ID を使ったエラーメッセージの発行時に、ノード ID の範囲チェックをするようにしました。
+(Tatsuo Ishii)
+<p>これは Coverity "1111433 "Out-of-bounds read" で発見されました。</p>
+</li>
+
+<li>parse_copy_data() でのバッファオーバーランとリソースリークを修正しました。 (Tatsuo Ishii)
+<p>これは Coverity "1111427 Out-of-bounds write"、"1111453 Resource leak" で発見されました。</p>
+</li>
+
+<li>CopyDataRaws() で segfault する可能性があったのを修正しました。(Tatsuo Ishii)
+<p>pool_get_id() がエラーを返した場合に VALID_BACKEND が配列外にアクセスしようとしていました。</p>
+<p>これは Coverity "1111433 Out-of-bounds read" で発見されました。</p>
+</li>
+
+<li>クエリキャッシュ有効 + プロトコルバージョン = 2 の組み合わせでの処理を修正しました。(Tatsuo Ishii)
+<p>プロトコルバージョンが 2 のとき、セッション状態が "idle" である前提でしたが、
+実際にはそうではありませんでした。
+プロトコルバージョンが 2 の場合はクエリキャッシュを使用しないことをおすすめします。</p>
+<p>これは Coverity "1111488 Uninitialized scalar variable" で発見されました。</p>
+</li>
+
+<li>make_persistent_db_connection のリソースリークを修正しました。(Tatsuo Ishii)
+<p>この修正ののために、新しく free_persisten_db_connection_memory 関数を追加しました。</p>
+<p>これは Coverity #1111468 で発見されました。</p>
+</li>
+
+<li>Coverity で見つかったさまざまな不具合を修正しました。(Tatsuo Ishii)</li>
+
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.1.9"></a>3.1.9 (hatsuiboshi) 2013/09/06</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは 3.1.8 に対するバグ修正リリースです。
@@ -7622,7 +7920,9 @@ autoconf
 
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.1.8"></a>3.1.8 (hatsuiboshi) 2013/07/10</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは 3.1.7 に対するバグ修正リリースです。
@@ -7733,7 +8033,9 @@ pcp_recovery_node コマンドで、バックエンドノード番号をチェ�
 </li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.1.7"></a>3.1.7 (hatsuiboshi) 2013/04/26</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは 3.1.6 に対するバグ修正リリースです。
@@ -7774,7 +8076,7 @@ pcp_recovery_node コマンドで、バックエンドノード番号をチェ�
 md5認証で長いユーザ名を処理する際のバグを修正しました。(Tatsuo Ishii)
 <p>
   ユーザ名が 32 バイトより長い場合、md5 認証が動作していませんでした。
-  この問題は [pgpool-general: 1526] で Thomas Martin さんにより報告されました。    
+  この問題は [pgpool-general: 1526] で Thomas Martin さんにより報告されました。
 </p>
 <blockquote>
   [pgpool-general: 1526]<br />
@@ -7842,14 +8144,16 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 
 <li>detect_postmaster_down_error() のエラーメッセージを修正しました。(Tatsuo Ishii)
 <p>
-  例えば、"LOG: detect_stop_postmaster_error: detect_error error" を 
-  "LOG: detect_postmaster_down_error: detect_error error" に修正するなどです。 
+  例えば、"LOG: detect_stop_postmaster_error: detect_error error" を
+  "LOG: detect_postmaster_down_error: detect_error error" に修正するなどです。
 </p>
 </li>
 
 </ul>
 
-<h2><a name="release3.1.6"></a>3.1.5 (hatsuiboshi) 2013/02/08</h2>
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.1.6"></a>3.1.6 (hatsuiboshi) 2013/02/08</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>このバージョンは3.1.5に対するバグ修正リリースです。</p>
 <ul>
@@ -7910,24 +8214,6 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </blockquote>
 </li>
 
-<li>通常のテーブルと同名の一時テーブルがあるときに、クエリキャッシュの結果が不正になる
-  バグを修正しました。 (Tatsuo Ishii)
-<p>
-  以下はバグを引き起こす処理の例です。
-</p>
-<pre>
-  1) CREATE TABLE t1(i int);         -- 通常のテーブルを作成
-  2) INSERT INTO t1 VALUES(1);
-  3) SELECT * FROM t1;               -- クエリキャッシュが作成される
-  4) CREATE TEMP TABLE t1(i int);    -- 一時テーブルの作成
-  5) SELECT * FROM t1;               -- 誤ったクエリキャッシュが作成される!
-</pre>
-<p>
-  #3 で t1 のキャッシュが生成されますが、#5 でこれが不正に使われており、一時テーブル t1 が
-  一時テーブルと見なされていないのが問題でした。
-</p>
-</li>
-
 <li>ヘルプメッセージに -f オプションの説明を追加しました。 (Tatsuo Ishii)</li>
 
 <li>pcp または worker 子プロセスの終了イベントを受信したときに、reaper() で wait3()
@@ -7976,20 +8262,6 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 
 <li>pg_md5 で、ユーザからのパスワード入力の後には改行するように修正しました。 (Yugo Nagata)</li>
 
-<li>watchdog のポート番号が既に使用されていた場合にエラーメッセージを出力するよう修正しました。
-  (Yugo Nagata)
-<p> 
-  この問題は [pgpool-general: 1167] で Will Ferguson さんによって報告されました。
-</p>
-<blockquote>
-  [pgpool-general: 1167] Re: Watchdog error - wd_init: delegate_IP already exists<br />
-  From: Will Ferguson<br />
-  Date: Tue, 6 Nov 2012 13:03:36 +0000<br />
-  <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-November/001186.html">
-  http://www.sraoss.jp/pipermail/pgpool-general/2012-November/001186.html</a>
-</blockquote>
-</li>
-
 <li>コネクションプールが存在しない場合には、child_exit() が send_frontend_exits()
   を呼ばないよう修正しました。 (Tatsuo Ishii)
 <p>
@@ -8033,7 +8305,9 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.1.5"></a>3.1.5 (hatsuiboshi) 2012/10/12</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>このバージョンは3.1.4に対するバグ修正リリースです。</p>
 
@@ -8126,7 +8400,9 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.1.4"></a>3.1.4 (hatsuiboshi) 2012/08/06</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>このバージョンは3.1.3に対するバグ修正リリースです。</p>
 <p>また、PostgreSQL 9.2 に対応しました。</p>
@@ -8258,7 +8534,9 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </li>
 </ul>
 
-<h2><a name="release3.1.3"></a>3.1.3 (hatsuiboshi) 2012/01/31</h2>
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.1.3"></a>3.1.3 (hatsuiboshi) 2012/04/23</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは3.1.2に対するバグ修正リリースです。
@@ -8338,7 +8616,9 @@ Tominari Katsumata さんの報告に基づきます。
 <li>デーモンモードで syslog を有効にしている際に md5 認証で発生するハングアップを修正しました。(Yugo Nagata)</li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.1.2"></a>3.1.2 (hatsuiboshi) 2012/01/31</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは3.1.1に対するバグ修正リリースです。
@@ -8364,7 +8644,9 @@ http://www.pgpool.net/pipermail/pgpool-genral/2011-December/000099.html</a><br>
 </li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.1.1"></a>3.1.1 (hatsuiboshi) 2011/12/06</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは3.1に対するバグ修正リリースです。
@@ -8411,7 +8693,9 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
 </li>
 </ul>
 
-<h2><a name="release3.1.0"></a>3.1.0 (hatsuiboshi) 2011/09/08</h2>
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.1"></a>3.1 (hatsuiboshi) 2011/09/08</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは3.1系列の最初の版で、3.0系からの「メジャーバージョンアップ」にあたります。
@@ -8604,9 +8888,262 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
  </li><li>英語版と日本語版のpgpool-IIマニュアルを更新、同期しました(Tatsuo Ishii)
 </li></ul>
 
+<!-- ================================================================================ -->
+<!-- 3.0                                                                              -->
+<!-- ================================================================================ -->
 <hr>
 
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.0.15"></a>3.0.15 (umiyameboshi) 2014/03/24</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.0.14 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    doc: num_init_children の項に「listen キュー」の説明とその「バックログ」を増やす方法について追記しました。
+    (Tatsuo Ishii)
+</li>
+
+<li>
+    UNLOGGED テーブルを検出する処理のパフォーマンスが悪かったのを修正しました。
+    (Tatsuo Ishii)
+    <p>
+    この問題は <a href="http://www.sraoss.jp/pipermail/pgpool-hackers/2014-January/000435.html">[pgpool-hackers: 435]</a>
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-December/002354.html">[pgpool-general:2325]</a> で指摘されました。
+    </p>
+</li>
+
+<li>
+    プライマリノードの検出ロジックを修正しました。(Tatsuo Ishii)
+    <p>
+    プライマリノードが検出されないことがありました。例えば、node 0 がプライマリ、node 1
+    がスタンバイのときに、node 0 が落ちたとします。ヘルスチェックがそれを検出しますが、
+    内部のステータスがまだ更新されていない場合 node 0 には問題がないよう見えるため node 0
+    への接続が試みられます。実際にはこの接続は失敗するため、node 1
+    が新プライマリであることを検出する前に処理が終了していました。
+    </p>
+    <p>
+    この問題は <a href="http://www.sraoss.jp/pipermail/pgpool-general/2014-January/002442.html">[pgpool-general: 2409]</a> にて報告されました。
+    </p>
+</li>
+
+<li>
+    raw モードで自動コミットが off で JDBC を使用したときに、DML
+    が失敗するバグを修正しました。(Tatsuo Ishii)
+    <p>
+    この問題は <a href="http://www.pgpool.net/mantisbt/view.php?id=92">bug #92</a> で報告されました。
+    </p>
+</li>
+
+<li>
+    ストリーミングレプリケーションモードで無関係なノードにはクエリを送信しないように修正しました。
+    (Tatsuo Ishii)
+    <p>
+    pgpool-II は BEGIN, END, SET などのクエリを全ての DB ノードに送っています。
+    しかし、ストリーミングレプリケーションではプライマリノードと高々１台のスタンバイノードにしか送る必要がありません。
+    （もしプライマリノードがロードバランスノードとして選択されている場合には１台だけで充分です。）
+    </p>
+    <p>
+    詳細は <a href="http://www.sraoss.jp/pipermail/pgpool-hackers/2014-February/000464.html">
+    [pgpool-hackers: 464]</a> を参照してください。
+    </p>
+</li>
+
+<li>
+    バッファオーバランとメモリリークの可能性を修正しました。(Tatsuo Ishii)
+    <p>
+    Coverity 1111465, 1111482 の報告によります。
+    </p>
+</li>
+
+<li>
+    NULL ポインタの開放を修正しました。(Tatsuo Ishii)
+    <p>
+    Coverity 1111384 の報告によります。
+    </p>
+</li>
+
+<li>
+    メモリリークを修正しました。(Tatsuo Ishii)
+    <p>
+    Coverity 1111446 の報告によります。
+    </p>
+</li>
+
+<li>
+    パラレルモードで system_db_hostname
+    が空欄の場合に発生するセグメンテーションフォルトを修正しました。
+    (Yugo Nagata)
+</li>
+
+<li>
+    -d オプションで起動した場合に pgpool.conf
+    の処理中のデバッグメッセージを出力するように修正しました
+    (Yugo Nagata)
+    <p>
+    以前は -d オプション使用時でも出力されていないデバッグメッセージがありました。
+    </p>
+</li>
+
+<li>
+    レプリケーションモードで JDBC 使用時に now()
+    を含む準備文で発生する例外を修正しました。(Yugo Nagata)
+    <p>
+    JDBC で準備文を PrepareThreshold 回以上実行した場合には、文に名前が付けられ Parse
+    の後に Describe メッセージが発行されます。このとき、pgpool は now()
+    をパラメータに書き換えるため、元のクエリには無かった新しいパラメータが追加されます。
+    この場合、フロントエンドに返されるParameterDscription メッセージ（Describe
+    の返答）は、元のクエリが持つパラメータと同じ数の OID を含むべきです。そうしないと、JDBC
+    はArrayIndexoutOfBoundsException 例外を発生させてしまいます。
+    </p>
+    <p>
+    このバグは <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2013-September/001191.html">
+    [pgpool-general-jp: 1192]</a> で報告されました。
+    </p>
+</li>
+
+<li>
+    レプリケーションモードにて、デフォルト値が now()
+    のカラムを持つテーブルに対する準備文でエラーが発生するバグを修正しました。
+    (Yugo Nagata)
+    <p>
+    デフォルト値が now() を持つ名前付き準備文を parse する際に、pgpool-II
+    は時刻値をパラメータで置き換えます。そのため、その後の bind
+    メッセージも追加されたパラメータの形式コードを含んでいる必要があります。
+    しかし、元のクエリのパラーメータ形式数が１だった場合、この処理がなされていませんでした。これが
+    "incorrect binary data format in bind parameter 2" のようなエラーの原因となっていました。
+    </p>
+</li>
+
+<li>
+    doc: パラレルモードは PREPARE 文の実行に対応していないことを追記しました。(Yugo Nagata)
+    <p>
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=93">bug #93</a> の指摘によります。
+    </p>
+</li>
+
+
+</ul>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.0.14"></a>3.0.14 (umiyameboshi) 2013/12/06</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.0.13 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>レプリケーションモード稼働時、一部のタイムゾーンでタイムスタンプの書き換えが誤っていました。(Tatsuo Ishii)
+<p>タイムスタンプの書き換え処理では、現在日時を取得するあめに "SELECT now()" を実行します。
+しかし一部のタイムゾーンにおいては、"02:30" のような場合に現在日時のためのバッファの大きさが
+十分ではありませんでした。"0900" のように 30 分刻みでのタイムゾーンでないときは、この問題は発生しません。
+そのため、これまでこの不具合が報告されたことはありませんでした。</p>
+<p>この不具合は <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-September/002142.html" target="_blank">[pgpool-general: 2113]</a> で報告され、Sean Hogan さんによって修正が提供されました。</p>
+</li>
+
+<li>Makefile: Makefiles 内の pg_config を $(PG_CONFIG) に置き換えました。
+したがって、PostgreSQL のメジャーバージョンが異なる場合には、コンパイル中で上書きされるようになります。(Tatsuo Ishii)
+<p>パッチは Christoph Berg さんから提供されました。（<a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-September/002156.html" target="_blank">[pgpool-general: 2127]</a>）</p>
+</li>
+
+<li>configure: FreeBSD で問題があったため、-lcompat を削除しました。(Tatsuo Ishii)
+<p><a href="http://www.pgpool.net/mantisbt/view.php?id=15">bug#15</a> で報告されました。</p>
+</li>
+
+<li>pgpool.conf で <a href="#LOG_STANDBY_DELAY">log_standby_delay</a> を設定してないときに
+segfault していたのを修正しました。(Tatsuo Ishii)
+<p>これは、pool_config.l での log_standby_delay の初期化が誤っていたためです。
+<a href="http://www.pgpool.net/mantisbt/view.php?id=74" target="_blank">bug#74</a> として報告されました。</p>
+</li>
+
+<li>doc: パラレルモードの制限事項を追記しました。VALUES 句を使った複数行の INSERT はパラレルモードではサポートされていません。(Yugo Nagata)</li>
+
+<li>スタンバイノードがダウンしようとしているときに find_primary_node_repeatedly() が
+呼ばれないようにしました。(Tatsuo Ishii)
+<p>これによってフェイルオーバの所要時間が短くなります。
+<a href="http://www.pgpool.net/mantisbt/view.php?id=75" target="_blank">bug#75</a> として報告され、
+パッチを Tatsuo Ishii が編集しました。</p>
+</li>
+
+<li>read_password_packet() のエラーメッセージを修正しました。(Tatsuo Ishii)</li>
+
+<li>SSL 要求でのメモリリークを修正しました。(Tatsuo Ishii)
+<p>SSL での要求があったとき、pgpool 子プロセスは start up packet の読み込みをリトライしていました。
+しかし子プロセスは、以前の start up packet のメモリを解放していませんでした。</p>
+<p>これは Coverity "1111443 Resource" で発見されました。</p>
+</li>
+
+<li>do_query() がタイムスタンプの書き換えに失敗したとき、メモリリークしていました。(Tatsuo Ishii)
+<p>この修正のために、free_select_result() で NULL 引数を受け取れるようにしました。</p>
+<p>これは Coverity "1111454, 1111455 Resource leak" で発見されました。</p>
+</li>
+
+<li>"<code>DEALLOCATE portal|statement</code>" 実行時の対象ノードの選定ロジックを修正しました。(Tatsuo Ishii)
+<p>"<code>DEALLOCATE portal|statement</code>" 実行時、最後の prepared statement や portal が見つからない場合に、
+対象ノード選定マップがセットされていませんでした。
+おそらく、そうした場合はエラーなので、実際には問題ありません。</p>
+<p>これは Coverity "1111491 Structurally dead code" で発見されました。</p>
+</li>
+
+<li>MAX_NUM_BACKENDS の範囲チェックにおける不具合を修正しました。 (Tatsuo Ishii)
+<p>MAX_NUM_BACKENDS は DB ノードの最大数が限界値でした（現時点では 128）。
+実際には 128 の DB ノードで試す人がいなかったために、発見されなかった不具合のようです。</p>
+<p>これは Coverity "1111429, 1111430 and 1111431 Out-of-bounds write" で発見されました。</p>
+</li>
+
+<li>フロントエンド接続情報を、すでに無効なバックエンドについて set/unset しないようにしました。(Tatsuo Ishii)
+<p>この不具合は <a href="http://www.pgpool.net/mantisbt/view.php?id=82" target="_blank">bug#82</a> で報告されました。</p>
+</li>
+
+<li>pgpool_catalog への public access を許可していませんでした。
+<p>これは、pgpool_catalog がレプリケーションモードで作成されている場合に、
+ユーザテーブルにデータを INSERT すると発生します。</p>
+<p>この不具合は <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2013-November/001228.html" target="_blank">[pgpool-general-jp: 1229]</a> で報告されました。</p>
+</li>
+
+<li>pool_do_auth() のエラーケースで変数を初期化していませんでした。 (Tatsuo Ishii)
+<p>有効なバックエンドがいないとき、pgpool は認証フェーズのフロントエンドにごみの pid を返していました。
+実際に、有効なバックエンドがいないために、フロントエンドは認証後に接続することができません。
+もちろんこれは問題あるものではありません。</p>
+<p>これは Coverity "1127331 Uninitialized scalar variable" で発見されました。</p>
+</li>
+
+<li>ノード ID を使ったエラーメッセージの発行時に、ノード ID の範囲チェックをするようにしました。
+(Tatsuo Ishii)
+<p>これは Coverity "1111433 "Out-of-bounds read" で発見されました。</p>
+</li>
+
+<li>parse_copy_data() でのバッファオーバーランとリソースリークを修正しました。 (Tatsuo Ishii)
+<p>これは Coverity "1111427 Out-of-bounds write"、"1111453 Resource leak" で発見されました。</p>
+</li>
+
+<li>CopyDataRaws() で segfault する可能性があったのを修正しました。(Tatsuo Ishii)
+<p>pool_get_id() がエラーを返した場合に VALID_BACKEND が配列外にアクセスしようとしていました。</p>
+<p>これは Coverity "1111433 Out-of-bounds read" で発見されました。</p>
+</li>
+
+<li>make_persistent_db_connection のリソースリークを修正しました。(Tatsuo Ishii)
+<p>この修正ののために、新しく free_persisten_db_connection_memory 関数を追加しました。</p>
+<p>これは Coverity #1111468 で発見されました。</p>
+</li>
+
+<li>Coverity で見つかったさまざまな不具合を修正しました。(Tatsuo Ishii)</li>
+
+</ul>
+
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.0.13"></a>3.0.13 (umiyameboshi) 2013/09/06</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは 3.0.12 に対するバグ修正リリースです。
@@ -8644,7 +9181,9 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
 
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.0.12"></a>3.0.12 (umiyamiboshi) 2013/07/10</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは 3.0.11 に対するバグ修正リリースです。
@@ -8750,7 +9289,9 @@ pcp_recovery_node コマンドで、バックエンドノード番号をチェ�
 </li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.0.11"></a>3.0.11 (umiyameboshi) 2013/04/26</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、3.0.10における様々なバグが修正されています。
@@ -8791,7 +9332,7 @@ pcp_recovery_node コマンドで、バックエンドノード番号をチェ�
 md5認証で長いユーザ名を処理する際のバグを修正しました。(Tatsuo Ishii)
 <p>
   ユーザ名が 32 バイトより長い場合、md5 認証が動作していませんでした。
-  この問題は [pgpool-general: 1526] で Thomas Martin さんにより報告されました。    
+  この問題は [pgpool-general: 1526] で Thomas Martin さんにより報告されました。
 </p>
 <blockquote>
   [pgpool-general: 1526]<br />
@@ -8859,14 +9400,16 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 
 <li>detect_postmaster_down_error() のエラーメッセージを修正しました。(Tatsuo Ishii)
 <p>
-  例えば、"LOG: detect_stop_postmaster_error: detect_error error" を 
-  "LOG: detect_postmaster_down_error: detect_error error" に修正するなどです。 
+  例えば、"LOG: detect_stop_postmaster_error: detect_error error" を
+  "LOG: detect_postmaster_down_error: detect_error error" に修正するなどです。
 </p>
 </li>
 
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>3.0.10 (umiyameboshi) 2013/02/08</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、3.0.9における様々なバグが修正されています。
@@ -8910,24 +9453,6 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </blockquote>
 </li>
 
-<li>通常のテーブルと同名の一時テーブルがあるときに、クエリキャッシュの結果が不正になる
-  バグを修正しました。 (Tatsuo Ishii)
-<p>
-  以下はバグを引き起こす処理の例です。
-</p>
-<pre>
-  1) CREATE TABLE t1(i int);    -- 通常のテーブルを作成
-  2) INSERT INTO t1 VALUES(1);
-  3) SELECT * FROM t1;        -- クエリキャッシュが作成される
-  4) CREATE TEMP TABLE t1(i int);    -- 一時テーブルの作成
-  5) SELECT * FROM t1;        -- 誤ったクエリキャッシュが作成される!
-</pre>
-<p>
-  #3 で t1 のキャッシュが生成されますが、#5 でこれが不正に使われており、一時テーブル t1 が
-  一時テーブルと見なされていないのが問題でした。
-</p>
-</li>
-
 <li>pcp または worker 子プロセスの終了イベントを受信したときに、reaper() で wait3()
   ループを終了しないように修正しました。 (Tatsuo Ishii)
 <p>
@@ -8958,7 +9483,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </p>
 </li>
 
-<li>ストリーミングレプリケーションモードでレプリケーション遅延が大きくなったときに、 
+<li>ストリーミングレプリケーションモードでレプリケーション遅延が大きくなったときに、
   "portal not found" エラーが発生するバグを修正しました。 (Tatsuo Ishii)
 <p>
   これは delay_threshold が導入以来、ずっと存在していたバグです。
@@ -8973,20 +9498,6 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </li>
 
 <li>pg_md5 で、ユーザからのパスワード入力の後には改行するように修正しました。 (Yugo Nagata)</li>
-
-<li>watchdog のポート番号が既に使用されていた場合にエラーメッセージを出力するよう修正しました。 
-  (Yugo Nagata)
-<p> 
-  この問題は [pgpool-general: 1167] で Will Ferguson さんによって報告されました。
-</p>
-<blockquote>
-  [pgpool-general: 1167] Re: Watchdog error - wd_init: delegate_IP already exists<br />
-  From: Will Ferguson
-  Date: Tue, 6 Nov 2012 13:03:36 +0000
-  <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-November/001186.html">
-  http://www.sraoss.jp/pipermail/pgpool-general/2012-November/001186.html</a>
-</blockquote>
-</li>
 
 <li>コネクションプールが存在しない場合には、child_exit() が send_frontend_exits()
   を呼ばないよう修正しました。 (Tatsuo Ishii)
@@ -9006,12 +9517,12 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <li>pool_read() が不正なパケットを読み込んだ場合に、read_startup_packet() がアラームクロック
   をリセットして StartupPacket を解放するよう修正しました。 (Nozomi Anzai)
 <p>
-  修正前は、pgpool ポートの監視を行うプログラムの接続により、認証のタイムアウトが発生していました。 
+  修正前は、pgpool ポートの監視を行うプログラムの接続により、認証のタイムアウトが発生していました。
   この問題は、バグトラック #35 で報告されました。
 </p>
 <blockquote>
   #35 Authentication is timeout<br />
-  Reporter: tuomas 
+  Reporter: tuomas
   Date: 2012-11-20 11:54
   <a href="http://www.pgpool.net/mantisbt/view.php?id=35">
   http://www.pgpool.net/mantisbt/view.php?id=35</a>
@@ -9022,7 +9533,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <p>
   このポインタは事前に memset() によって初期化されているため、実際にはこのバグによる害は
   ありませんでした。
-</p>    
+</p>
 </li>
 
 <li>ヘルプメッセージに -f オプションの説明を追加しました。 (Tatsuo Ishii)</li>
@@ -9033,7 +9544,9 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>3.0.9 (umiyameboshi) 2012/10/12</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、3.0.8における様々なバグが修正されています。
@@ -9125,10 +9638,18 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
     Reporter: elisechiang<br>
     <a href="http://www.pgpool.net/mantisbt/view.php?id=21">http://www.pgpool.net/mantisbt/view.php?id=21</a>
     </blockquote>
+    </li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>3.0.8 (umiyameboshi) 2012/08/06</h2>
+<!-- -------------------------------------------------------------------------------- -->
+<h3>概要</h3>
+<p>
+このバージョンでは、3.0.7における様々なバグが修正されています。
+</p>
 
+<h3>バグ修正</h3>
 <ul>
 <li>Solaris でのロードバランスを修正しました。(Tatsuo Ishii)
     <p>Solaris での random() 関数の仕様のために問題があったため、rand() に変更しました。</p>
@@ -9178,7 +9699,9 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>3.0.7 (umiyameboshi) 2012/04/23</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、3.0.6におけるバグが修正されています。
@@ -9204,7 +9727,9 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <li>PREPARE 文でエラーが起きた際に発生するハングアップを修正しました。Tominari Katsumata さんの報告に基づきます。(Toshihiro Kitagagwa)</li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>3.0.6 (umiyameboshi) 2012/01/31</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、3.0.5におけるバグが修正されています。
@@ -9223,7 +9748,9 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>3.0.5 (umiyameboshi) 2011/10/31</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、3.0.4における様々なバグが修正されています。
@@ -9256,7 +9783,9 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <li>エラーメッセージ"do_md5: read_password_packet failed"をデバッグレベルにしました(Kitagawa)</li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>3.0.4 (umiyameboshi) 2011/06/01</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、3.0.3における様々なバグが修正されています。
@@ -9275,7 +9804,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <h3>バグ修正</h3>
 <p>
 </p><ul>
- <li>pgpool-regclass()をPostgreSQL 8.0以降でコンパイルできるように修正しました。7.4はまだエラーが出ます(Tatsuo Ishii) 
+ <li>pgpool-regclass()をPostgreSQL 8.0以降でコンパイルできるように修正しました。7.4はまだエラーが出ます(Tatsuo Ishii)
  </li><li>ストリーミングレプリケーション構成で/*NO LOAD BALANCE*/コメントを使用したときに
     ハングアップする可能性を修正しました(Toshihiro Kitagawa)
  </li><li>Flush(H)メッセージやCloseComplete(C)メッセージを受信したときのハングアップを修正しました(Toshihiro Kitagawa)
@@ -9310,7 +9839,9 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </li></ul>
 <p></p>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.0.3"></a>3.0.3 (umiyameboshi) 2011/02/23</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、3.0.1における様々なバグが修正されています
@@ -9408,13 +9939,17 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </li></ul>
 <p></p>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.0.2"></a>3.0.2(umiyameboshi) 2011/02/17</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは問題があったために、リリースが取り消されました。
 </p>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.0.1"></a>3.0.1 (umiyameboshi) 2010/10/19</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、3.0における様々なバグが修正されています。
@@ -9433,7 +9968,9 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </li></ul>
 <p></p>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.0"></a>3.0 (umiyameboshi) 2010/09/10</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは3.0系列の最初の版で、2.2系や2.3系からの「メジャーバージョンアップ」にあたります。
@@ -9620,9 +10157,110 @@ PostgreSQL 9.0の新機能であるStreaming Replication/Hot Standby構成に対
      </p>
 
 </li></ul>
-<p></p>
 
+<!-- ================================================================================ -->
+<!-- 2.3                                                                              -->
+<!-- ================================================================================ -->
+<hr>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release2.3.4"></a>2.3.4 (tomiteboshi) 2012/08/06</h2>
+<!-- -------------------------------------------------------------------------------- -->
+<p>このバージョンでは、2.3.3 以前の色々なバグが修正されています。</p>
+
+<h3>バグ修正</h3>
+
+<ul>
+<li>
+do_error_execute_command() が ErrorResponse を受け取るまでバックエンドからの
+結果を見ないように修正しました。 (Toshihiro Kitagawa)
+<p>
+ReadyForQuery のようなエラーでない結果をとっておき、pool_unread() で呼び出す必要があるためです。
+これは PHP PDO を使っているときに起こる可能性がありました。
+</p>
+</li>
+
+<li>
+SimpleForwardToFrontend() が、SELECT 実行中に bind エラーになったとき、
+select_in_transaction フラグと execute_select フラグををリセットするように修正しました。
+(Toshihiro Kitagawa)
+</li>
+
+<li>
+バックエンドからたくさんの結果を読み込んでいる間に、SSL 接続がハングすることが
+あるのを修正しました。Tatsuo Ishii)
+<p>詳細は、[Pgpool-general] Fwd: PGPOOL II 2.3.3 hang in ssl mode のスレッドを参照してください。</p>
+</li>
+
+<li>
+pcp_check_fd() のタイムアウト処理のバグを修正しました。 (Tatsuo Ishii)
+  <p>これは以下で報告されました。 </p>
+  <blockquote>
+  Subject: [Pgpool-general] question about pcp_check_fd
+  Date: Sun, 23 May 2010 18:21:41 -0500
+  To: pgpool <pgpool-general@pgfoundry.org>
+  </blockquote>
+</li>
+
+<li>
+master/slave モードで稼働中、DEALLOCATE をレプリケーションしないようにしました。(Toshihiro Kitagawa)
+<p>これは、以下で Jan Kantert から報告されました。</p>
+<blockquote>
+Subject: [Pgpool-hackers] Problems with PgPool 2.3.3 Prepare /
+         Deallocation handling in Master/Slave mode
+Date: Fri, 28 May 2010 20:59:47 +0200
+</blockquote>
+</li>
+
+<li>タイムスタンプの書き換えで、スキーマを認識するようにしました。(Tatsuo Ishii)</li>
+
+<li>
+now() などデフォルト値にもつがデータ型が timestamp 型でないようなカラムへの
+アクセスがあるステートメントを、書き換えないようにしました。(Tatsuo Ishii)
+
+<p>そうしていなかったために、DML でエラーになっていました。</p>
+<blockquote>
+Subject: [Pgpool-general] function epoch seems to be causing error
+To: pgpool-general@pgfoundry.org
+Date: Mon, 16 Aug 2010 21:48:31 +0000 (UTC)
+</blockquote>
+</li>
+
+<li>insert_lock がスキーマを認識するようになりました。(Tatsuo Ishii)</li>
+
+<li>
+配列型や複合型のカラムのタイムスタンプ書き換えにおける、古くからあるバグを
+修正しました。(Tatsuo Ishii)
+<p>例えば、以下の場合に失敗していました。</p>
+<pre>
+INSERT INTO r1(col[1], col2.foo) VALUES (1, 2); -- insert_column_item
+UPDATE r1 SET col1[1] = 1, col2.foo = 1; -- set_target
+PREPARE "p" (int4[]) AS  SELECT $1[1]; -- c_expr
+SELECT (ARRAY[1,2,3])[1];
+SELECT (ARRAY[ARRAY[1]])[1][1];
+SELECT ('{1,2,3}'::int[])[1];
+SELECT ('{1,2,3}'::int[3])[1];
+SELECT r1.col[1], (r1.col1).bar, (r1.col1).* FROM r1; -- columnref
+SELECT (r1.col1).baz[1], (r1.col1).baz[1][2] FROM r1;
+</pre>
+
+<p>パッチは Akio Ishida から提供されました。</p>
+</li>
+
+<li>pcp パスワードが 32 文字以上のときに、バッファオーバーランするのを修正しました。(Tatsuo Ishii)</li>
+
+<li>
+wait_for_query_response() が、frontend がないときには何もしないように修正しました。(Tatsuo Ishii)
+<p>
+バックエンドをリセットする reset_query_list のクエリを実行に 時間がかかったときに発生する可能性があり、
+またクラッシュすることがありました。
+</p>
+</li>
+</ul>
+
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release2.3.3"></a>2.3.3 (tomiteboshi) 2010/04/23</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>このバージョンでは、2.3.2.2 以前の色々なバグが修正されています。</p>
 
@@ -9728,7 +10366,9 @@ SELECT * FROM a JOIN b USING (aid) JOIN c USING (cid) JOIN d USING</pre>
     strerror() ではなく hstrerror() を使うように修正しました。 (Tatsuo Ishii)</li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release2.3.2.2"></a>2.3.2.2 (tomiteboshi) 2010/02/22</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、2.3.xにおける様々なバグを修正しています。
@@ -9749,14 +10389,18 @@ SELECT * FROM a JOIN b USING (aid) JOIN c USING (cid) JOIN d USING</pre>
 </li></ul>
 <p></p>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release2.3.2.1"></a>2.3.2.1 (tomiteboshi) 2010/02/11</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、2.3.xにおいて、エラーとなるようなSQLを実行すると
 pgpoolへのセッションが切断されるバグを修正しています(Akio Ishida)。
 </p>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release2.3.2"></a>2.3.2 (tomiteboshi) 2010/02/07</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、2.3.1の色々なバグが修正されています。
@@ -9803,7 +10447,9 @@ pgpoolへのセッションが切断されるバグを修正しています(Akio
 </li></ul>
 <p></p>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release2.3.1"></a>2.3.1 (tomiteboshi) 2009/12/18</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、2.3の色々なバグが修正されています。
@@ -9841,7 +10487,9 @@ pgpoolへのセッションが切断されるバグを修正しています(Akio
  </li></ul>
 <p></p>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release2.3"></a>2.3 (tomiteboshi) 2009/12/07</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>このバージョンでは、レプリケーション機能に改良が加えられ、
 時刻データ(CURRENT_TIMESTAMP, CURRENT_DATE, now()など)を正しく扱うことができるようになりました。</p>
@@ -9891,9 +10539,81 @@ pgpoolへのセッションが切断されるバグを修正しています(Akio
 </li><li>時刻データのテストが追加されました(Akio Ishida)
 </li></ul>
 
-<p></p>
+<!-- ================================================================================ -->
+<!-- 2.2                                                                              -->
+<!-- ================================================================================ -->
+<hr>
 
+<!-- -------------------------------------------------------------------------------- -->
+<h2>2.2.8 (urukiboshi) 2012/08/06</h2>
+<!-- -------------------------------------------------------------------------------- -->
+<h3>概要</h3>
+<p>このバージョンでは、2.2.7 のバグが修正されています。</p>
+
+<h3>バグ修正</h3>
+<ul>
+<li>
+do_error_execute_command() が ErrorResponse を受け取るまでバックエンドからの結果を
+見ないように修正しました。 (Toshihiro Kitagawa)
+<p>
+ReadyForQuery のようなエラーでない結果をとっておき、pool_unread() で呼び出す
+必要があるためです。
+これは PHP PDO を使っているときに起こる可能性がありました。
+</p>
+</li>
+
+<li>
+SimpleForwardToFrontend() が、SELECT 実行中に bind エラーになったとき、
+select_in_transaction フラグと execute_select フラグををリセットするように修正しました。
+(Toshihiro Kitagawa)
+</li>
+
+<li>
+pcp_check_fd() のタイムアウト処理のバグを修正しました。 (Tatsuo Ishii)
+<p>これは以下で報告されました。</p>
+<blockquote>
+Subject: [Pgpool-general] question about pcp_check_fd<br>
+Date: Sun, 23 May 2010 18:21:41 -0500<br>
+To: pgpool <pgpool-general@pgfoundry.org>
+</blockquote>
+</li>
+
+<li>pcp パスワードが 32 文字以上のときに、バッファオーバーランするのを修正しました。(Tatsuo Ishii)</li>
+
+<li>
+wait_for_query_response() が、frontend がないときには何もしないように修正しました。(Tatsuo Ishii)
+<p>
+バックエンドをリセットする reset_query_list のクエリを実行に 時間がかかったときに
+発生する可能性があり、またクラッシュすることがありました。
+</p>
+</li>
+</ul>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h2>2.2.7 (urukiboshi) 2010/04/15</h2>
+<!-- -------------------------------------------------------------------------------- -->
+<h3>概要</h3>
+<p>
+このバージョンでは、kind mismatchエラーが起きた際のエラーメッセージが改善されています。
+また、2.2.6以前の色々なバグが修正されています。
+</p>
+<h3>バグ修正</h3>
+<ul>
+<li>マスター／スレーブモード、rawモード、またはコネクションプールモードにおいて、拡張プロトコルを使用している際に時々ハングアップするバグを修正しました。これは、2.3系からのバックパッチです(Kitagawa)
+<li>pgpool子プロセスがsegfaultを起こすpgpool-II 1.0から長い間存在したバグを修正しました。
+これは、親プロセスがshmemサイズの計算を間違えていたことに起因します。バグ解析(Kitagawa)、パッチ作成(Tatsuo)
+<li>マスター／スレーブモードにおいて、明示的なトランザクションで操作した場合は、Parse、Bind、Describe、そしてCloseメッセージをマスターノードのみに送るようにしました(Tatsuo)
+<li>postmasterが終了する際に、ログを出力するようにしました(Tatsuo)
+<li>make_persistent_db_connection関数のメモリリークを修正しました(Xavier Noguer)
+<li>マスター／スレーブモードでは、DEALLOCATEの強制的なレプリケーションをしないようにしました。
+pgpoolはParseをすべてのノードで実行しないため、これは無意味で問題(DEALLOCATE実行時のkind mismatch)を引き起こしていました(Tatsuo)
+<li>18より多いDBノードでshow pool_statusを実行したときにクラッシュするバグを修正しました(Tatsuo)
+<li>kind mismatchメッセージを改善しました。kindがERROR、またはNOTICEの場合は、何が起きているかユーザーがわかりやすいようにERROR/NOTICEメッセージを出力します(Tatsuo)
+</ul>
+
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.2.6 (urukiboshi) 2009/12/01</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、ロードバランスの重みパラメータweightの扱いが改善され、
@@ -9922,7 +10642,9 @@ pgpoolへのセッションが切断されるバグを修正しています(Akio
 </li></ul>
 <p></p>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.2.5 (urukiboshi) 2009/10/4</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、2.2.4以前の色々なバグが修正されています。
@@ -9938,7 +10660,9 @@ pgpoolへのセッションが切断されるバグを修正しています(Akio
 </li></ul>
 <p></p>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.2.4 (urukiboshi) 2009/8/24</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、2.2.3以前の色々なバグが修正されています。
@@ -9960,7 +10684,9 @@ pgpoolへのセッションが切断されるバグを修正しています(Akio
 </li></ul>
 <p></p>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.2.3 (urukiboshi) 2009/8/11</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、2.2.2以前の色々なバグが修正されています。
@@ -10013,7 +10739,9 @@ pgpoolへのセッションが切断されるバグを修正しています(Akio
 
 </li></ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.2.2 (urukiboshi) 2009/5/5</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、2.2.1以前の色々なバグが修正されています。
@@ -10037,7 +10765,9 @@ pgpoolのクライアントが終了(X)パケットをpgpoolに送信せずに�
       PostgreSQLのログに"unexpected EOF on client connection"が記録される問題を修正しました(Tatsuo Ishii)。
 </li></ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.2.1 (urukiboshi) 2009/4/25</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、2.2の色々なバグが修正されています。
@@ -10056,7 +10786,9 @@ pgpoolのクライアントが終了(X)パケットをpgpoolに送信せずに�
   </li><li>ドキュメントで追加し忘れたファイルを登録しました(Tatsuo Ishii)
 </li></ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.2 (urukiboshi) 2009/2/28</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、SERIALデータの扱いとオンラインリカバリに改良が行なわれています。
@@ -10166,7 +10898,14 @@ S: &lt;-- ok since no previous SELECT is sent. kind mismatch error occurs!
 
 </li></ul>
 
+<!-- ================================================================================ -->
+<!-- 2.1                                                                              -->
+<!-- ================================================================================ -->
+<hr>
+
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.1 (inamiboshi) 2008/7/25</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>新機能</h3>
 <ul>
   <li><a href="#FAILOVER_COMMAND">failover_command</a> と
@@ -10257,19 +10996,26 @@ S: &lt;-- ok since no previous SELECT is sent. kind mismatch error occurs!
   </li><li> DISTINCT構文 の解析に失敗する不具合を修正しました。(Yoshiharu Mori)
 </li></ul>
 
+<!-- ================================================================================ -->
+<!-- 2.0                                                                              -->
+<!-- ================================================================================ -->
 <hr>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.0.1 (hikitsuboshi) 2007/11/21</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <ul>
   <li> UPDATE もしくは DELETE を実行するとプロセスがダウンする不具合を
-       修正しました。(Yoshiyuki Asaba) 
+       修正しました。(Yoshiyuki Asaba)
   </li><li> <a href="#MASTER_SLAVE_MODE">master_slave</a> を true に設定している場合に、SQL 構文エラーを検知
        した時にマスタにのみそのクエリを送信するようにしました。(Yoshiyuki Asaba)
 </li></ul>
 
 <hr>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.0 (hikitsuboshi) 2007/11/16</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>互換性</h3>
 <ul>
   <li> <a href="#IGNORE_LEADING_WHITE_SPACE">ignore_leading_white_space</a> のデフォルト値を true にしました。
@@ -10315,14 +11061,19 @@ HINT:  check data consistency between master and other db node
   <li> パラレルモードで部分レプリケーションをサポートしました。(Yoshiharu Mori)
 </li></ul>
 
+<!-- ================================================================================ -->
+<!-- 1.3                                                                              -->
+<!-- ================================================================================ -->
 <hr>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>1.3 (sohiboshi) 2007/10/23</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <ul>
   <li> 新しく <a href="AUTHENTICATION_TIMEOUT">authentication_timeout</a> という
        パラメータを追加しました。(Yoshiyuki Asaba)
     <ul>
-     <li>このパラメータでは認証時間のタイムアウトを設定します。 
+     <li>このパラメータでは認証時間のタイムアウトを設定します。
      </li><li>デフォルト値は 60 (1 分)です。
    </li></ul>
   </li><li> スタートアップパケットの長さが 10000 バイト越えている場合には、接続を切断するようにしました。(Yoshiyuki Asaba)
@@ -10336,9 +11087,14 @@ HINT:  check data consistency between master and other db node
   </li><li> 64bit 環境でクエリキャッシュ機能を有効にすると、クラッシュする可能性のある不具合を修正しました(Yoshiyuki Asaba)
 </li></ul>
 
+<!-- ================================================================================ -->
+<!-- 1.2                                                                              -->
+<!-- ================================================================================ -->
 <hr>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>1.2.1 (tomoboshi) 2007/09/28</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <ul>
   <li> 拡張問合せプロトコルの Parse メッセージの処理でデッドロックが発
   生する可能性がある不具合を修正しました。(Yoshiyuki Asaba)
@@ -10353,7 +11109,9 @@ HINT:  check data consistency between master and other db node
 
 <hr>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>1.2 (tomoboshi) 2007/08/01</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <ul>
   <li> pgpool.conf に <a href="#REPLICATE_SELECT">replicate_select</a> という新規パラメータを追加しま
   した。デフォルト値は false です。(Yoshiyuki Asaba)
@@ -10396,9 +11154,14 @@ HINT:  check data consistency between master and other db node
 
 </li></ul>
 
+<!-- ================================================================================ -->
+<!-- 1.1                                                                              -->
+<!-- ================================================================================ -->
 <hr>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>1.1.1 (amiboshi) 2007/06/15</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <ul>
   <li> <a href="#LOAD_BALANCE_MODE">load_balance_mode</a> を有効にしていると、"kind mismatch" エラーが
   発生してしまう不具合を修正しました。これは 1.1 で入った不具合です。
@@ -10411,7 +11174,9 @@ HINT:  check data consistency between master and other db node
 
 <hr>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>1.1 (amiboshi) 2007/05/25</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <ul>
   <li> HBA 認証をサポートしました(Taiki Yamaguchi)
   </li><li> <a href="#LOG_CONNECTIONS">log_connections</a> をサポートしました(Taiki Yamaguchi)
@@ -10431,9 +11196,14 @@ HINT:  check data consistency between master and other db node
   </li><li> 巨大な SQL を実行しようとした場合に pgpool が無限ループに入る不具合を修正しました(Yoshiyuki Asaba)
 </li></ul>
 
+<!-- ================================================================================ -->
+<!-- 1.0                                                                              -->
+<!-- ================================================================================ -->
 <hr>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>1.0.2 (suboshi) 2007/02/13</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <ul>
   <li> 巨大な SQL を実行しようとした場合に pgpool が無限ループに入る不具合を修正しました(Yoshiyuki Asaba)
   </li><li> 拡張問合せプロトコルを使った場合にまれに pgpool が止まってしまう不具合を修正しました(Yoshiyuki Asaba)
@@ -10457,7 +11227,7 @@ HINT:  check data consistency between master and other db node
 <div class="copyright" style="clear: both">
 <hr>
 <copyright>
-Copyright &copy; 2003 &ndash; 2013 pgpool Global Development Group
+Copyright &copy; 2003 &ndash; 2014 pgpool Global Development Group
 </copyright>
 </div>
 
