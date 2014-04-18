@@ -456,33 +456,33 @@ cp インストール先ディレクトリ/etc/pgpool.conf.sample $prefix/etc/pg
     これを超えた場合は、そのクライアントは、pgpool-IIのどれからのプロセスへのフロントエンドの接続が終了するまで
     待たされます(PostgreSQLと違ってエラーになりません)。
     待たされる数の上限は、2 * num_init_children です。
-	待ち行列は、OS内部に作られ、「listenキュー」と呼ばれます。listenキューの長さは「バックログ」と呼ばれます。
-	システムによってはバックログの上限が設定されており、2 * num_init_children がこれを越える場合はシステム側の設定変更が必要になります。
-		さもないと高負荷時にlistenキューが溢れ、pgpool-IIへの接続が失敗したり、システム内で行われるリトライにより著しく性能が低下することがあります。
-		listenキューが溢れているかどうかは、"netstat -s"で確認できます。"TcpExt"のパートで、
-		</p>
-		<p>
-		<pre>
+    待ち行列は、OS内部に作られ、「listenキュー」と呼ばれます。listenキューの長さは「バックログ」と呼ばれます。
+    システムによってはバックログの上限が設定されており、2 * num_init_children がこれを越える場合はシステム側の設定変更が必要になります。
+        さもないと高負荷時にlistenキューが溢れ、pgpool-IIへの接続が失敗したり、システム内で行われるリトライにより著しく性能が低下することがあります。
+        listenキューが溢れているかどうかは、"netstat -s"で確認できます。"TcpExt"のパートで、
+        </p>
+        <p>
+        <pre>
 535 times the listen queue of a socket overflowed
-		</pre>
-		</p>
-		<p>
-		のようなメッセージが出ていればlistenキューが溢れています。listenキュー溢れを防ぐためにバックログを大きくするには、Linuxでは以下のようにします(root権限が必要です)。
-		</p>
-		<p>
-		<pre>
+        </pre>
+        </p>
+        <p>
+        のようなメッセージが出ていればlistenキューが溢れています。listenキュー溢れを防ぐためにバックログを大きくするには、Linuxでは以下のようにします(root権限が必要です)。
+        </p>
+        <p>
+        <pre>
 # sysctl net.core.somaxconn
 net.core.somaxconn = 128
 # sysctl -w net.core.somaxconn = 256
-		</pre>
-		</p>
-		<p>
-		もちろん、/etc/sysctl.confに以下のように書いても構いません。
-		</p>
-		<p>
-		<pre>
+        </pre>
+        </p>
+        <p>
+        もちろん、/etc/sysctl.confに以下のように書いても構いません。
+        </p>
+        <p>
+        <pre>
 net.core.somaxconn = 256
-		</pre>
+        </pre>
     </p>
     <p>
     基本的に後述のmax_pool * num_init_children分だけPostgreSQLへのコネクションが張られますが、
@@ -702,10 +702,10 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
     <p>
     md5 認証で用いる認証ファイルのファイル名を指定します。
     デフォルト値は "pool_passwd" です。
-    空文字列（""）を指定すると 認証ファイルの読込は無効になります。  
+    空文字列（""）を指定すると 認証ファイルの読込は無効になります。
     詳細は<a href="#md5">認証・アクセス制御方式</a>を参照してください。
     このパラメータを変更した時には pgpool-II を再起動してください。
-	</p>
+    </p>
 </dd>
 
 <dt>backend_hostname</dt>
@@ -1485,7 +1485,7 @@ $ cat failover_stream.sh
 #! /bin/sh
 # Failover command for streming replication.
 # This script assumes that DB node 0 is primary, and 1 is standby.
-# 
+#
 # If standby goes down, does nothing. If primary goes down, create a
 # trigger file so that standby take over primary node.
 #
@@ -1803,7 +1803,7 @@ $prefix/share/system_db.sqlにあるのでそれを利用します。
 <pre>num_init_children = 想定される同時接続数 * ( 1 + クエリの中で使われているテーブルの最大数)</pre>
 
 <h2>データ分割ルールの登録</h2>
-<p>データ分割を行うテーブルに対しては、テーブル情報をあらかじめ pgpool_catalog.dist_def 
+<p>データ分割を行うテーブルに対しては、テーブル情報をあらかじめ pgpool_catalog.dist_def
 というテーブルに登録しておきます。</p>
 
 <pre>
@@ -2129,7 +2129,7 @@ benchs2=# show pool_processes;
 <pre>
 benchs2=# show pool_pools;
 
- pool_pid | start_time | pool_id | backend_id | database | username  | create_time | majorversion | minorversion | pool_counter | pool_backendpid | pool_connected 
+ pool_pid | start_time | pool_id | backend_id | database | username  | create_time | majorversion | minorversion | pool_counter | pool_backendpid | pool_connected
 ----------+------------+---------+------------+----------+-----------+-------------+--------------+--------------+--------------+-----------------+----------------
  4318     | 1281433036 | 0       | 0          |          |           | 0           | 0            | 0            | 0            | 0               | 0
  4318     | 1281433036 | 1       | 0          |          |           | 0           | 0            | 0            | 0            | 0               | 0
@@ -2319,7 +2319,7 @@ DESTDIR=$3        # database cluster of the DB node to be recovered
 port=5432        # PostgreSQL port number
 archdir=/data/archive_log    # archive log directory
 
-# Force to flush current value of sequences to xlog 
+# Force to flush current value of sequences to xlog
 psql -p $port -t -c 'SELECT datname FROM pg_database WHERE NOT datistemplate AND datallowconn' template1|
 while read i
 do
@@ -2350,7 +2350,7 @@ pgpool からは以下の形式でスクリプトを実行します。</p>
 <pre>
   % pgpool_remote_start remote_host remote_datadir
   remote_host:    リカバリノードのホスト名
-  remote_datadir: リカバリノードのデータベースクラスタパス 
+  remote_datadir: リカバリノードのデータベースクラスタパス
 </pre>
 
 <p>サンプルスクリプトでは ssh 経由で postmaster を起動しています。
@@ -2384,7 +2384,7 @@ pgpool からは以下の形式でスクリプトを実行します。</p>
   % pgpool_recovery datadir remote_host remote_datadir
   datadir:        マスタのデータベースクラスタパス
   remote_host:    リカバリノードのホスト名
-  remote_datadir: リカバリノードのデータベースクラスタパス 
+  remote_datadir: リカバリノードのデータベースクラスタパス
 </pre>
 
 <p>サンプルスクリプトでは rsync を使って物理コピーをしています。もし
@@ -2705,7 +2705,7 @@ pgpool-IIと同様、pgpoolプロジェクトのサブプロジェクトであ�
         を参照してください。</li>
     <li>注意事項: pool_passwdに登録するパスワードは、PostgreSQLに登録したパスワードと
         完全に同じでなければなりません。</li>
-	<li>pool_passwdとPostgreSQLのmd5パスワードを変更したら、pgpool reload を実行してください。</li>
+    <li>pool_passwdとPostgreSQLのmd5パスワードを変更したら、pgpool reload を実行してください。</li>
     </ol>
 </li>
 
@@ -3170,7 +3170,7 @@ pgpool の-F オプションでその位置を指定することができます�
    りです。
 
    s    - smart モード
-   f    - fast モード   
+   f    - fast モード
    i    - immediate モード
 
    pgpool-IIが起動していない場合はConnectionErrorと表示され、終了コード8で終了し
@@ -3319,7 +3319,7 @@ FROM句に複数のテーブル、又はサブクエリがある場合
 しかし、TARGETLIST と WHERE句の実行ステータスは、以下の場合に変化します。</p>
 <ol>
   <li> サブクエリがある場合
-  <li> FROM句が P 状態の場合、かつ、TARGETLISTに集約関数、DISTINCTがある場合 
+  <li> FROM句が P 状態の場合、かつ、TARGETLISTに集約関数、DISTINCTがある場合
   <li> FROM句で定義したテーブル(データ集合)に存在しないカラムが使われている場合
 </ol>
 
@@ -3380,7 +3380,7 @@ SELECT P1-table.col, L1-table.col FROM P1-table,L1-table where P1-table.col = L1
 このようなクエリでは以下のように書き換えられます。</p>
 <pre>
     SELECT P1-table.col, L1-table.col FROM
-    　　　dblink(select pool_parallel(SELECT P1-table.col, L1-table.col FROM P1-table,L1-table where P1-table.col = L1-table.col)) 
+    　　　dblink(select pool_parallel(SELECT P1-table.col, L1-table.col FROM P1-table,L1-table where P1-table.col = L1-table.col))
       order by P1-table.col;
 </pre>
 
@@ -3402,10 +3402,10 @@ S 状態となります。
 <pre>
     SELECT L1-table.col FROM dblink(SELECT loadbalance(SELECT L1-table.col FROM L1-table WHERE L1-table.col % 2 = 0 AND TRUE))
         WHERE
-            L1-table.col %2 = 0 AND 
-          L1-table.col IN 
+            L1-table.col %2 = 0 AND
+          L1-table.col IN
           (
-              SELECT P1-Table FROM 
+              SELECT P1-Table FROM
               dblink(select pool_parallel(SELECT P1-table FROM P1-table))
           ) ;
 </pre>
@@ -3423,11 +3423,11 @@ S 状態となります。
 
     -&gt; クエリ書き換え
 
-    SELECT 
-        sum(pool_c$1) as count 
-    FROM 
+    SELECT
+        sum(pool_c$1) as count
+    FROM
         dblink(select pool_parallel('select count(*) from  P1-table'))
-                    AS pool_$1g (pool_c$1 bigint); 
+                    AS pool_$1g (pool_c$1 bigint);
 </pre>
 
 <p>各ノードでcount(*) を計算した後に、システムDBで集計(sum)をすることにより、目的が達成できます。</p>
@@ -3464,15 +3464,19 @@ avgはsum/countとして処理されます。</p>
 </table>
 
 
-
 <h1>チュートリアル</h1>
 <p>pgpool-IIのチュートリアルは<a href="tutorial-ja.html">ここ</a>にあります。是非ご覧下さい。</p>
 
 
-
 <h1>リリースノート<a name="release"></a></h1>
 
+<!-- ================================================================================ -->
+<!-- 3.0                                                                              -->
+<!-- ================================================================================ -->
+
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.0.15"></a>3.0.15 (umiyameboshi) 2014/03/24</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは 3.0.14 に対するバグ修正リリースです。
@@ -3483,15 +3487,15 @@ avgはsum/countとして処理されます。</p>
 
 <li>
     doc: num_init_children の項に「listen キュー」の説明とその「バックログ」を増やす方法について追記しました。
-	(Tatsuo Ishii)
+    (Tatsuo Ishii)
 </li>
 
 <li>
     UNLOGGED テーブルを検出する処理のパフォーマンスが悪かったのを修正しました。
-	(Tatsuo Ishii)
+    (Tatsuo Ishii)
     <p>
     この問題は <a href="http://www.sraoss.jp/pipermail/pgpool-hackers/2014-January/000435.html">[pgpool-hackers: 435]</a>
-	<a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-December/002354.html">[pgpool-general:2325]</a> で指摘されました。
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-December/002354.html">[pgpool-general:2325]</a> で指摘されました。
     </p>
 </li>
 
@@ -3499,10 +3503,10 @@ avgはsum/countとして処理されます。</p>
     プライマリノードの検出ロジックを修正しました。(Tatsuo Ishii)
     <p>
     プライマリノードが検出されないことがありました。例えば、node 0 がプライマリ、node 1
-	がスタンバイのときに、node 0 が落ちたとします。ヘルスチェックがそれを検出しますが、
-	内部のステータスがまだ更新されていない場合 node 0 には問題がないよう見えるため node 0
-	への接続が試みられます。実際にはこの接続は失敗するため、node 1
-	が新プライマリであることを検出する前に処理が終了していました。
+    がスタンバイのときに、node 0 が落ちたとします。ヘルスチェックがそれを検出しますが、
+    内部のステータスがまだ更新されていない場合 node 0 には問題がないよう見えるため node 0
+    への接続が試みられます。実際にはこの接続は失敗するため、node 1
+    が新プライマリであることを検出する前に処理が終了していました。
     </p>
     <p>
     この問題は <a href="http://www.sraoss.jp/pipermail/pgpool-general/2014-January/002442.html">[pgpool-general: 2409]</a> にて報告されました。
@@ -3511,7 +3515,7 @@ avgはsum/countとして処理されます。</p>
 
 <li>
     raw モードで自動コミットが off で JDBC を使用したときに、DML
-	が失敗するバグを修正しました。(Tatsuo Ishii)
+    が失敗するバグを修正しました。(Tatsuo Ishii)
     <p>
     この問題は <a href="http://www.pgpool.net/mantisbt/view.php?id=92">bug #92</a> で報告されました。
     </p>
@@ -3519,15 +3523,15 @@ avgはsum/countとして処理されます。</p>
 
 <li>
     ストリーミングレプリケーションモードで無関係なノードにはクエリを送信しないように修正しました。
-	(Tatsuo Ishii)
+    (Tatsuo Ishii)
     <p>
     pgpool-II は BEGIN, END, SET などのクエリを全ての DB ノードに送っています。
-	しかし、ストリーミングレプリケーションではプライマリノードと高々１台のスタンバイノードにしか送る必要がありません。
-	（もしプライマリノードがロードバランスノードとして選択されている場合には１台だけで充分です。）
+    しかし、ストリーミングレプリケーションではプライマリノードと高々１台のスタンバイノードにしか送る必要がありません。
+    （もしプライマリノードがロードバランスノードとして選択されている場合には１台だけで充分です。）
     </p>
     <p>
     詳細は <a href="http://www.sraoss.jp/pipermail/pgpool-hackers/2014-February/000464.html">
-	[pgpool-hackers: 464]</a> を参照してください。
+    [pgpool-hackers: 464]</a> を参照してください。
     </p>
 </li>
 
@@ -3554,14 +3558,14 @@ avgはsum/countとして処理されます。</p>
 
 <li>
     パラレルモードで system_db_hostname
-	が空欄の場合に発生するセグメンテーションフォルトを修正しました。
-	(Yugo Nagata)
+    が空欄の場合に発生するセグメンテーションフォルトを修正しました。
+    (Yugo Nagata)
 </li>
 
 <li>
     -d オプションで起動した場合に pgpool.conf
-	の処理中のデバッグメッセージを出力するように修正しました
-	(Yugo Nagata)
+    の処理中のデバッグメッセージを出力するように修正しました
+    (Yugo Nagata)
     <p>
     以前は -d オプション使用時でも出力されていないデバッグメッセージがありました。
     </p>
@@ -3569,31 +3573,31 @@ avgはsum/countとして処理されます。</p>
 
 <li>
     レプリケーションモードで JDBC 使用時に now()
-	を含む準備文で発生する例外を修正しました。(Yugo Nagata)
+    を含む準備文で発生する例外を修正しました。(Yugo Nagata)
     <p>
     JDBC で準備文を PrepareThreshold 回以上実行した場合には、文に名前が付けられ Parse
-	の後に Describe メッセージが発行されます。このとき、pgpool は now()
-	をパラメータに書き換えるため、元のクエリには無かった新しいパラメータが追加されます。
-	この場合、フロントエンドに返されるParameterDscription メッセージ（Describe
-	の返答）は、元のクエリが持つパラメータと同じ数の OID を含むべきです。そうしないと、JDBC
-	はArrayIndexoutOfBoundsException 例外を発生させてしまいます。
+    の後に Describe メッセージが発行されます。このとき、pgpool は now()
+    をパラメータに書き換えるため、元のクエリには無かった新しいパラメータが追加されます。
+    この場合、フロントエンドに返されるParameterDscription メッセージ（Describe
+    の返答）は、元のクエリが持つパラメータと同じ数の OID を含むべきです。そうしないと、JDBC
+    はArrayIndexoutOfBoundsException 例外を発生させてしまいます。
     </p>
     <p>
     このバグは <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2013-September/001191.html">
-	[pgpool-general-jp: 1192]</a> で報告されました。
+    [pgpool-general-jp: 1192]</a> で報告されました。
     </p>
 </li>
 
 <li>
     レプリケーションモードにて、デフォルト値が now()
-	のカラムを持つテーブルに対する準備文でエラーが発生するバグを修正しました。
-	(Yugo Nagata)
+    のカラムを持つテーブルに対する準備文でエラーが発生するバグを修正しました。
+    (Yugo Nagata)
     <p>
     デフォルト値が now() を持つ名前付き準備文を parse する際に、pgpool-II
-	は時刻値をパラメータで置き換えます。そのため、その後の bind
-	メッセージも追加されたパラメータの形式コードを含んでいる必要があります。
-	しかし、元のクエリのパラーメータ形式数が１だった場合、この処理がなされていませんでした。これが
-	"incorrect binary data format in bind parameter 2" のようなエラーの原因となっていました。
+    は時刻値をパラメータで置き換えます。そのため、その後の bind
+    メッセージも追加されたパラメータの形式コードを含んでいる必要があります。
+    しかし、元のクエリのパラーメータ形式数が１だった場合、この処理がなされていませんでした。これが
+    "incorrect binary data format in bind parameter 2" のようなエラーの原因となっていました。
     </p>
 </li>
 
@@ -3604,11 +3608,11 @@ avgはsum/countとして処理されます。</p>
     </p>
 </li>
 
-
 </ul>
 
-
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.0.14"></a>3.0.14 (umiyameboshi) 2013/12/06</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは 3.0.13 に対するバグ修正リリースです。
@@ -3715,7 +3719,9 @@ segfault していたのを修正しました。(Tatsuo Ishii)
 
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.0.13"></a>3.0.13 (umiyameboshi) 2013/09/06</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは 3.0.12 に対するバグ修正リリースです。
@@ -3753,7 +3759,9 @@ segfault していたのを修正しました。(Tatsuo Ishii)
 
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>3.0.12 (umiyameboshi) 2013/07/10</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは 3.0.11 に対するバグ修正リリースです。
@@ -3859,7 +3867,9 @@ pcp_recovery_node コマンドで、バックエンドノード番号をチェ�
 </li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>3.0.11 (umiyameboshi) 2013/04/26</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、3.0.10における様々なバグが修正されています。
@@ -3901,7 +3911,7 @@ pcp_recovery_node コマンドで、バックエンドノード番号をチェ�
 md5認証で長いユーザ名を処理する際のバグを修正しました。(Tatsuo Ishii)
 <p>
   ユーザ名が 32 バイトより長い場合、md5 認証が動作していませんでした。
-  この問題は [pgpool-general: 1526] で Thomas Martin さんにより報告されました。    
+  この問題は [pgpool-general: 1526] で Thomas Martin さんにより報告されました。
 </p>
 <blockquote>
   [pgpool-general: 1526]<br />
@@ -3969,14 +3979,16 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 
 <li>detect_postmaster_down_error() のエラーメッセージを修正しました。(Tatsuo Ishii)
 <p>
-  例えば、"LOG: detect_stop_postmaster_error: detect_error error" を 
-  "LOG: detect_postmaster_down_error: detect_error error" に修正するなどです。 
+  例えば、"LOG: detect_stop_postmaster_error: detect_error error" を
+  "LOG: detect_postmaster_down_error: detect_error error" に修正するなどです。
 </p>
 </li>
 
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>3.0.10 (umiyameboshi) 2013/02/08</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、3.0.9における様々なバグが修正されています。
@@ -4020,24 +4032,6 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </blockquote>
 </li>
 
-<li>通常のテーブルと同名の一時テーブルがあるときに、クエリキャッシュの結果が不正になる
-  バグを修正しました。 (Tatsuo Ishii)
-<p>
-  以下はバグを引き起こす処理の例です。
-</p>
-<pre>
-  1) CREATE TABLE t1(i int);    -- 通常のテーブルを作成
-  2) INSERT INTO t1 VALUES(1);
-  3) SELECT * FROM t1;        -- クエリキャッシュが作成される
-  4) CREATE TEMP TABLE t1(i int);    -- 一時テーブルの作成
-  5) SELECT * FROM t1;        -- 誤ったクエリキャッシュが作成される!
-</pre>
-<p>
-  #3 で t1 のキャッシュが生成されますが、#5 でこれが不正に使われており、一時テーブル t1 が
-  一時テーブルと見なされていないのが問題でした。
-</p>
-</li>
-
 <li>pcp または worker 子プロセスの終了イベントを受信したときに、reaper() で wait3()
   ループを終了しないように修正しました。 (Tatsuo Ishii)
 <p>
@@ -4068,7 +4062,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </p>
 </li>
 
-<li>ストリーミングレプリケーションモードでレプリケーション遅延が大きくなったときに、 
+<li>ストリーミングレプリケーションモードでレプリケーション遅延が大きくなったときに、
   "portal not found" エラーが発生するバグを修正しました。 (Tatsuo Ishii)
 <p>
   これは delay_threshold が導入以来、ずっと存在していたバグです。
@@ -4083,20 +4077,6 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </li>
 
 <li>pg_md5 で、ユーザからのパスワード入力の後には改行するように修正しました。 (Yugo Nagata)</li>
-
-<li>watchdog のポート番号が既に使用されていた場合にエラーメッセージを出力するよう修正しました。 
-  (Yugo Nagata)
-<p> 
-  この問題は [pgpool-general: 1167] で Will Ferguson さんによって報告されました。
-</p>
-<blockquote>
-  [pgpool-general: 1167] Re: Watchdog error - wd_init: delegate_IP already exists<br />
-  From: Will Ferguson
-  Date: Tue, 6 Nov 2012 13:03:36 +0000
-  <a href="http://www.sraoss.jp/pipermail/pgpool-general/2012-November/001186.html">
-  http://www.sraoss.jp/pipermail/pgpool-general/2012-November/001186.html</a>
-</blockquote>
-</li>
 
 <li>コネクションプールが存在しない場合には、child_exit() が send_frontend_exits()
   を呼ばないよう修正しました。 (Tatsuo Ishii)
@@ -4116,12 +4096,12 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <li>pool_read() が不正なパケットを読み込んだ場合に、read_startup_packet() がアラームクロック
   をリセットして StartupPacket を解放するよう修正しました。 (Nozomi Anzai)
 <p>
-  修正前は、pgpool ポートの監視を行うプログラムの接続により、認証のタイムアウトが発生していました。 
+  修正前は、pgpool ポートの監視を行うプログラムの接続により、認証のタイムアウトが発生していました。
   この問題は、バグトラック #35 で報告されました。
 </p>
 <blockquote>
   #35 Authentication is timeout<br />
-  Reporter: tuomas 
+  Reporter: tuomas
   Date: 2012-11-20 11:54
   <a href="http://www.pgpool.net/mantisbt/view.php?id=35">
   http://www.pgpool.net/mantisbt/view.php?id=35</a>
@@ -4132,7 +4112,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <p>
   このポインタは事前に memset() によって初期化されているため、実際にはこのバグによる害は
   ありませんでした。
-</p>    
+</p>
 </li>
 
 <li>ヘルプメッセージに -f オプションの説明を追加しました。 (Tatsuo Ishii)</li>
@@ -4142,7 +4122,9 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <li>pool_passwd に関する記述を pgpool_conf.sample*、および,ドキュメントに追加しました。 (Yugo Nagata)</li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>3.0.9 (umiyameboshi) 2012/10/12</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、3.0.8における様々なバグが修正されています。
@@ -4234,9 +4216,12 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
     Reporter: elisechiang<br>
     <a href="http://www.pgpool.net/mantisbt/view.php?id=21">http://www.pgpool.net/mantisbt/view.php?id=21</a>
     </blockquote>
+</li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>3.0.8 (umiyameboshi) 2012/08/06</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、3.0.7における様々なバグが修正されています。
@@ -4245,8 +4230,8 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <h3>バグ修正</h3>
 <ul>
 <li>Solaris でのロードバランスを修正しました。(Tatsuo Ishii)
-    <p>Solaris での random() 関数の仕様のために問題があったため、rand() に変更しました。</p> 
-    <p>この事象は [pgpool-general: 396] で報告されました。</p> 
+    <p>Solaris での random() 関数の仕様のために問題があったため、rand() に変更しました。</p>
+    <p>この事象は [pgpool-general: 396] で報告されました。</p>
 
     <blockquote>
     <a href="http://www.pgpool.net/pipermail/pgpool-general/2012-April/000397.html">[pgpool-general: 396]</a>
@@ -4292,7 +4277,9 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>3.0.7 (umiyameboshi) 2012/04/23</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、3.0.6におけるバグが修正されています。
@@ -4318,7 +4305,9 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <li>PREPARE 文でエラーが起きた際に発生するハングアップを修正しました。Tominari Katsumata さんの報告に基づきます。(Toshihiro Kitagagwa)</li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>3.0.6 (umiyameboshi) 2012/01/31</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、3.0.5におけるバグが修正されています。
@@ -4337,7 +4326,9 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>3.0.5 (umiyameboshi) 2011/10/31</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、3.0.4における様々なバグが修正されています。
@@ -4370,45 +4361,43 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 <li>エラーメッセージ"do_md5: read_password_packet failed"をデバッグレベルにしました(Kitagawa)</li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>3.0.4 (umiyameboshi) 2011/06/01</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、3.0.3における様々なバグが修正されています。
 </p>
 
 <h3>互換性のない変更</h3>
-<p>
 <ul>
- <li>ストリーミングレプリケーションにおいて、delay_thresholdが0またはヘルスチェックが無効ならば、遅延チェックは実施されません。これはpgpool-IIマニュアル通りの動作ですが、これまではヘルスチェックが無効の場合も遅延チェックが実施されていました(Guillaume Lelarge)
+ <li>ストリーミングレプリケーションにおいて、delay_thresholdが0またはヘルスチェックが無効ならば、遅延チェックは実施されません。これはpgpool-IIマニュアル通りの動作ですが、これまではヘルスチェックが無効の場合も遅延チェックが実施されていました(Guillaume Lelarge)</li>
 </ul>
-</p>
 
 <h3>バグ修正</h3>
-<p>
 <ul>
- <li>pgpool-regclass()をPostgreSQL 8.0以降でコンパイルできるように修正しました。7.4はまだエラーが出ます(Tatsuo) 
- <li>ストリーミングレプリケーション構成で/*NO LOAD BALANCE*/コメントを使用したときにハングアップする可能性を修正しました(Kitagawa)
- <li>Flush(H)メッセージやCloseComplete(C)メッセージを受信したときのハングアップを修正しました(Kitagawa)
- <li>pgpool-IIがバックエンドに接続後、RedyForQuery(Z)メッセージを受信するタイミングによって起こり得るハングアップを修正しました(Kitagawa)
- <li>recovery_1st_stage_commandとrecovery_2nd_stage_commandパラメータの説明を追加しました(Tatsuo)
- <li>pgpool-II内部で使用するシステムカタログキャッシュのサイズを32から128に増やしました。これは&quot;unnamed prepared statement does not exist&quot;エラーを軽減する効果があります(Tatsuo, Kitagawa)
- <li>pcp_connect()関数で二重free()を行うバグを修正しました。パッチはJehan-Guillaume (ioguix) de Rorthaisさんから頂きました(Tatsuo)
- <li>PQfinish()関数を誤って使用しているstart_recoery()のバグを修正しました(Tatsuo)
- <li>クライアントのアイドル時間がclient_idle_limitに達したときに、フロントエンドに送信される正しくないエラーメッセージを修正しました(Tatsuo)
- <li>pool_statusの「backend status」変数の名前を正しく修正しました。スペースを'_'に置き換えました(Guillaume Lelarge)
- <li>md5認証方式を採用してデーモンとして実行したときのハングアップを修正しました。パッチは、Nicolas Thauvinさんから頂きました(Tatsuo)
- <li>拡張問い合わせプロトコルでSQL文が出力されるように、log_per_node_statementを修正しました。これは以前は動作していましたが、3.0で動作しなくなっていました(Kitagawa)
+ <li>pgpool-regclass()をPostgreSQL 8.0以降でコンパイルできるように修正しました。7.4はまだエラーが出ます(Tatsuo) </li>
+ <li>ストリーミングレプリケーション構成で/*NO LOAD BALANCE*/コメントを使用したときにハングアップする可能性を修正しました(Kitagawa)</li>
+ <li>Flush(H)メッセージやCloseComplete(C)メッセージを受信したときのハングアップを修正しました(Kitagawa)</li>
+ <li>pgpool-IIがバックエンドに接続後、RedyForQuery(Z)メッセージを受信するタイミングによって起こり得るハングアップを修正しました(Kitagawa)</li>
+ <li>recovery_1st_stage_commandとrecovery_2nd_stage_commandパラメータの説明を追加しました(Tatsuo)</li>
+ <li>pgpool-II内部で使用するシステムカタログキャッシュのサイズを32から128に増やしました。これは&quot;unnamed prepared statement does not exist&quot;エラーを軽減する効果があります(Tatsuo, Kitagawa)</li>
+ <li>pcp_connect()関数で二重free()を行うバグを修正しました。パッチはJehan-Guillaume (ioguix) de Rorthaisさんから頂きました(Tatsuo)</li>
+ <li>PQfinish()関数を誤って使用しているstart_recoery()のバグを修正しました(Tatsuo)</li>
+ <li>クライアントのアイドル時間がclient_idle_limitに達したときに、フロントエンドに送信される正しくないエラーメッセージを修正しました(Tatsuo)</li>
+ <li>pool_statusの「backend status」変数の名前を正しく修正しました。スペースを'_'に置き換えました(Guillaume Lelarge)</li>
+ <li>md5認証方式を採用してデーモンとして実行したときのハングアップを修正しました。パッチは、Nicolas Thauvinさんから頂きました(Tatsuo)</li>
+ <li>拡張問い合わせプロトコルでSQL文が出力されるように、log_per_node_statementを修正しました。これは以前は動作していましたが、3.0で動作しなくなっていました(Kitagawa)</li>
 </ul>
-</p>
 
 <h3>改良</h3>
-<p>
 <ul>
- <li>サンプルの設定ファイルのblack_function_listにcurrval()とlastval()を追加しました。もしそれらがロードバランスされると、nextval()やsetval()の結果がスレーブに反映される前にcurrval()またはlastval()が呼ばれることがあります(Tatsuo)
+ <li>サンプルの設定ファイルのblack_function_listにcurrval()とlastval()を追加しました。もしそれらがロードバランスされると、nextval()やsetval()の結果がスレーブに反映される前にcurrval()またはlastval()が呼ばれることがあります(Tatsuo)</li>
 </ul>
-</p>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>3.0.3 (umiyameboshi) 2011/02/23</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、3.0.1における様々なバグが修正されています(pgpool-II 3.0.2のリリースはパッケージングの問題でキャンセルされました)。
@@ -4423,83 +4412,82 @@ md5認証で長いユーザ名を処理する際のバグを修正しました�
 </p>
 
 <h3>バグ修正</h3>
-<p>
 <ul>
- <li>パスワード認証における移植性を損なうコードを修正しました。これはFreeBSDユーザからのバグ報告に基づきます(Tatsuo)
- <li>insert_lockがユーザテーブルの全行をロックするバグを修正しました(Tatsuo, Kitagawa)
- <li>ユーザ名の長さが32バイトのときにpgpool子プロセスがクラッシュするパスワード認証のバグを修正しました(Tatsuo)
- <li>rawモードまたはバックエンドノード数が1のときに、pgpool子プロセスがクラッシュするmd5認証のバグを修正しました。パッチはRob Shepherdさんから頂きました(Tatsuo)
- <li>以前からあった配列と複合型に対するタイムスタンプ書き換えのバグを修正しました。パッチはAkio Ishidaさんから頂きました(Tatsuo)
- <li>debug_levelパラメータが動作しないバグを修正しました。パッチはGilles Daroldさんから頂きました(Tatsuo)
- <li>フェイルオーバー中に起こりうるpgpool子プロセスのクラッシュを修正しました(Kitagawa)
- <li>ユーザがスキーマ名の付いた関数を呼んだときにwhite/black_function_listが正しく動作するように修正しました(Tatsuo)
- <li>コネクションキャッシュによってDROP DATABASEが失敗するバグを修正しました(Kitagawa)
- <li>rawモードでフェイルオーバが失敗するバグを修正しました(Kitagawa)
- <li>1セッションで簡易問い合わせプロトコルと拡張問い合わせプロトコルの両方が使われたときに起こりうるpgpool子プロセスの終了を修正しました(Kitagawa)
- <li>拡張問い合わせプロトコルを使用中にエラーが発生すると起こりうるハングアップを修正しました(Kitagawa)
- <li>PG_TRY/CATCHを使用しないようにpgpool-regclass()を修正しました。PG_TRY/CATCHは、時々バックエンドが「PANIC:  ERRORDATA_STACK_SIZE exceeded.」というメッセージとともに終了するので安全でないように見えます(Tatsuo)
- <li>JDBCドライバがマスタノードに何度もBEGINを発行するロードバランスのバグを修正しました(Kitagawa)
- <li>failback_commandとfail_over_on_backend_errorが正しい値を表示するようにpool_statusを修正しました(Kitagawa)
- <li>pool_statusからrecovery_passwordとsystem_db_passwordを削除しました(Kitagawa)
- <li>ストリーミングレプリケーションモードでフェイルオーバを実行中に、バックエンドのログに「unexpected EOF on client connection」が出ないように修正しました(Tatsuo)
- <li>バックエンドがすべてダウンした場合に発生するpgpoolのクラッシュを修正しました(Tatsuo)
- <li>レプリケーション遅延チェックがバックエンドとの永続的な接続を行わないように修正しました。これは、レプリケーション遅延チェックの間でDBノードのダウンとアップが起きた場合に永続的な接続が不正になる可能性があるためです(Tatsuo)
- <li>英語ドキュメントを書き直してレビューしました(Marc Cousin, Gleu)
+ <li>パスワード認証における移植性を損なうコードを修正しました。これはFreeBSDユーザからのバグ報告に基づきます(Tatsuo)</li>
+ <li>insert_lockがユーザテーブルの全行をロックするバグを修正しました(Tatsuo, Kitagawa)</li>
+ <li>ユーザ名の長さが32バイトのときにpgpool子プロセスがクラッシュするパスワード認証のバグを修正しました(Tatsuo)</li>
+ <li>rawモードまたはバックエンドノード数が1のときに、pgpool子プロセスがクラッシュするmd5認証のバグを修正しました。パッチはRob Shepherdさんから頂きました(Tatsuo)</li>
+ <li>以前からあった配列と複合型に対するタイムスタンプ書き換えのバグを修正しました。パッチはAkio Ishidaさんから頂きました(Tatsuo)</li>
+ <li>debug_levelパラメータが動作しないバグを修正しました。パッチはGilles Daroldさんから頂きました(Tatsuo)</li>
+ <li>フェイルオーバー中に起こりうるpgpool子プロセスのクラッシュを修正しました(Kitagawa)</li>
+ <li>ユーザがスキーマ名の付いた関数を呼んだときにwhite/black_function_listが正しく動作するように修正しました(Tatsuo)</li>
+ <li>コネクションキャッシュによってDROP DATABASEが失敗するバグを修正しました(Kitagawa)</li>
+ <li>rawモードでフェイルオーバが失敗するバグを修正しました(Kitagawa)</li>
+ <li>1セッションで簡易問い合わせプロトコルと拡張問い合わせプロトコルの両方が使われたときに起こりうるpgpool子プロセスの終了を修正しました(Kitagawa)</li>
+ <li>拡張問い合わせプロトコルを使用中にエラーが発生すると起こりうるハングアップを修正しました(Kitagawa)</li>
+ <li>PG_TRY/CATCHを使用しないようにpgpool-regclass()を修正しました。PG_TRY/CATCHは、時々バックエンドが「PANIC:  ERRORDATA_STACK_SIZE exceeded.」というメッセージとともに終了するので安全でないように見えます(Tatsuo)</li>
+ <li>JDBCドライバがマスタノードに何度もBEGINを発行するロードバランスのバグを修正しました(Kitagawa)</li>
+ <li>failback_commandとfail_over_on_backend_errorが正しい値を表示するようにpool_statusを修正しました(Kitagawa)</li>
+ <li>pool_statusからrecovery_passwordとsystem_db_passwordを削除しました(Kitagawa)</li>
+ <li>ストリーミングレプリケーションモードでフェイルオーバを実行中に、バックエンドのログに「unexpected EOF on client connection」が出ないように修正しました(Tatsuo)</li>
+ <li>バックエンドがすべてダウンした場合に発生するpgpoolのクラッシュを修正しました(Tatsuo)</li>
+ <li>レプリケーション遅延チェックがバックエンドとの永続的な接続を行わないように修正しました。これは、レプリケーション遅延チェックの間でDBノードのダウンとアップが起きた場合に永続的な接続が不正になる可能性があるためです(Tatsuo)</li>
+ <li>英語ドキュメントを書き直してレビューしました(Marc Cousin, Gleu)</li>
  <li>以下の条件を満たすとき SELECT クエリがマスタノードに送信されないバグを修正しました(Kitagawa)
  <ul>
-  <li>マスタースレーブモードである
-  <li>拡張問い合わせプロトコルを使用している
-  <li>明示的にトランザクションを開始している
-  <li>更新クエリを実行した後である
+  <li>マスタースレーブモードである</li>
+  <li>拡張問い合わせプロトコルを使用している</li>
+  <li>明示的にトランザクションを開始している</li>
+  <li>更新クエリを実行した後である</li>
  </ul>
- <li>ストリーミングレプリケーションモード利用時のオンラインリカバリにおいて、以下のシナリオがうまく動作しない問題を修正しました。以下のシナリオでは、ノード0を最初のプライマリサーバ、ノード1を最初のスタンバイサーバとします。
-      <p>
+ <p>ストリーミングレプリケーションモード利用時のオンラインリカバリにおいて、以下のシナリオがうまく動作しない問題を修正しました。以下のシナリオでは、ノード0を最初のプライマリサーバ、ノード1を最初のスタンバイサーバとします。</p>
       <ol>
-       <li>ノード0プライマリサーバがダウンし、ノード1スタンバイサーバが新しいプライマリサーバになる
-       <li>ノード0の旧プライマリサーバは、オンラインリカバリで新スタンバイサーバになる
-       <li>このときpgpool-IIは、ノード0の新スタンバイサーバを、プライマリサーバとみなしてしまう
+       <li>ノード0プライマリサーバがダウンし、ノード1スタンバイサーバが新しいプライマリサーバになる</li>
+       <li>ノード0の旧プライマリサーバは、オンラインリカバリで新スタンバイサーバになる</li>
+       <li>このときpgpool-IIは、ノード0の新スタンバイサーバを、プライマリサーバとみなしてしまう</li>
       </ol>
-      </p>
-      これは、生きているノード番号の一番若いサーバをプライマリサーバと見なしていたためです。
+      <p>これは、生きているノード番号の一番若いサーバをプライマリサーバと見なしていたためです。
       pgpool-II 3.0.3では、pgpool_walrecrunning()を使って、実際にそのノードがプライマリサーバかどうか判定するため、このような問題は起きません。
 この機能をうまく使うために、オンラインリカバリのスクリプトで%P(古いプライマリノード番号)が利用できるようになっています。
-なお、pgpool_walrecrunning()がインストールされていない場合は、上の問題は解消されず、3.0.1と同様の動作になります。
+なお、pgpool_walrecrunning()がインストールされていない場合は、上の問題は解消されず、3.0.1と同様の動作になります。</p>
+</li>
 </ul>
-</p>
 
 <h3>改良</h3>
-<p>
 <ul>
- <li>ステータスファイルを読んでいるときに、特定のバックエンドがダウン状態ならばログを出力するようにしました(Tatsuo)
- <li>pgpoolが実行したクエリでエラーが発生した場合に、エラーメッセージを出力するようにしました(Tatsuo)
- <li>sqlディレクトリに主要なMakefileを追加しました(Tatsuo)
+ <li>ステータスファイルを読んでいるときに、特定のバックエンドがダウン状態ならばログを出力するようにしました(Tatsuo)</li>
+ <li>pgpoolが実行したクエリでエラーが発生した場合に、エラーメッセージを出力するようにしました(Tatsuo)</li>
+ <li>sqlディレクトリに主要なMakefileを追加しました(Tatsuo)</li>
 </ul>
-</p>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>3.0.2 (umiyameboshi) 2011/02/17</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは問題があったために、リリースが取り消されました。
 </p>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>3.0.1 (umiyameboshi) 2010/10/19</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、3.0における様々なバグが修正されています。
 </p>
 
 <h3>バグ修正</h3>
-<p>
 <ul>
- <li>認証されるサーバが複数ある場合にクラッシュするmd5認証のバグを修正しました(Tatsuo)
- <li>拡張問い合わせプロトコルにおいて、構文エラーのクエリを実行したときに子プロセスがクラッシュするバグを修正しました(Kitagawa)
- <li>ポータル情報のハンドリングにおける子プロセスが終了するバグを修正しました(Kitagawa)
- <li>拡張問い合わせプロトコルにおいて、ひとつのノードに送信されたクエリがエラーを起こしたときにハングアップするバグを修正しました(Kitagawa)
- <li>英語ドキュメントの誤植を修正しました。Asaf Ohaionさんのパッチを取り込みました(Tatsuo)
+ <li>認証されるサーバが複数ある場合にクラッシュするmd5認証のバグを修正しました(Tatsuo)</li>
+ <li>拡張問い合わせプロトコルにおいて、構文エラーのクエリを実行したときに子プロセスがクラッシュするバグを修正しました(Kitagawa)</li>
+ <li>ポータル情報のハンドリングにおける子プロセスが終了するバグを修正しました(Kitagawa)</li>
+ <li>拡張問い合わせプロトコルにおいて、ひとつのノードに送信されたクエリがエラーを起こしたときにハングアップするバグを修正しました(Kitagawa)</li>
+ <li>英語ドキュメントの誤植を修正しました。Asaf Ohaionさんのパッチを取り込みました(Tatsuo)</li>
 </ul>
-</p>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>3.0 (umiyameboshi) 2010/09/10</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンは3.0系列の最初の版で、2.2系や2.3系からの「メジャーバージョンアップ」にあたります。
@@ -4507,125 +4495,215 @@ PostgreSQL 9.0の新機能であるStreaming Replication/Hot Standby構成に対
 </p>
 <p>
 マスタースレーブモード全般で多くの改善がなされています。
-<ul>
- <li>明示的なトランザクション内のSELECTが負荷分散できるようになりました
- <li>不必要なDBノードにparse/bindメッセージが送られなくなりロック競合が減りました
- <li>不必要な内部トランザクションの起動がなくなり、オーバヘッドが軽減しています
- <li>一時テーブルを意識せずに安全に使えるようになりました
- <li>書き込みを伴う関数呼び出しを行なうSELECTをマスター(primay)でのみ実行するように制御できるようになりました
-</ul>
 </p>
+<ul>
+ <li>明示的なトランザクション内のSELECTが負荷分散できるようになりました</li>
+ <li>不必要なDBノードにparse/bindメッセージが送られなくなりロック競合が減りました</li>
+ <li>不必要な内部トランザクションの起動がなくなり、オーバヘッドが軽減しています</li>
+ <li>一時テーブルを意識せずに安全に使えるようになりました</li>
+ <li>書き込みを伴う関数呼び出しを行なうSELECTをマスター(primay)でのみ実行するように制御できるようになりました</li>
+</ul>
 <p>
 レプリケーションモードにおいても、書き込みを伴う関数呼び出しを行なうSELECTを負荷分散するかどうかの制御できるようになるなどの改良が加えられています。
 </p>
 
 <h3>新機能</h3>
-<p>
 <ul>
  <li>PostgreSQL 9.0の新機能であるStreaming Replication/Hot Standby(SR+HS)構成に対応しました(Tatsuo, Kitagawa)。
-pgpool-IIは基本的にはmaster/slave modeとして動作しますが、その際に "master_slave_sub_mode" という新しい設定項目に"stream"を設定することにより、SR+HS構成に最適な動作をします。
+<p>pgpool-IIは基本的にはmaster/slave modeとして動作しますが、その際に "master_slave_sub_mode" という新しい設定項目に"stream"を設定することにより、SR+HS構成に最適な動作をします。
 たとえば、更新クエリはPrimaryサーバにのみ送信し、SELECTはPrimaryとStandbyサーバに負荷分散することが可能です。
 そのほか、Standbyサーバをオンラインリカバリで復旧したり、PrimaryとStandbyのレプリケーション同期を監視し、遅れが大きいようならPrimaryにのみSELECTを送信させるようにすることも可能です。
-詳細は<a href="#stream">Streaming Replicationへの対応"</a>をご覧下さい。
-</p>
+詳細は<a href="#stream">Streaming Replicationへの対応"</a>をご覧下さい。</p></li>
 
-<ul>
- <li>オンラインリカバリがStreaming Replication対応で動作しているmaster/slaveモードに対応しました(Tatsuo)
+ <li>オンラインリカバリがStreaming Replication対応で動作しているmaster/slaveモードに対応しました(Tatsuo)</li>
 
  <li>Streaming Replicationモード用の新しい設定項目 "delay_threshold" が追加され、レプリケーションの遅れが監視できるようになりました。
-遅延が多い場合には、負荷分散しないようにすることができます(Tatsuo)
+遅延が多い場合には、負荷分散しないようにすることができます(Tatsuo)</li>
 
- <li>show pool_statusで、Streaming Replicationにおけるレプリケーションの遅延が確認できるようになりました(Tatsuo)
+ <li>show pool_statusで、Streaming Replicationにおけるレプリケーションの遅延が確認できるようになりました(Tatsuo)</li>
 
- <li>Streaming Replicationにおけるレプリケーションの遅延のログを制御する新しい設定項目"log_standby_delay"が追加されました(Tatsuo)
-
-</ul>
+ <li>Streaming Replicationにおけるレプリケーションの遅延のログを制御する新しい設定項目"log_standby_delay"が追加されました(Tatsuo)</li>
 
  <li>insert_lockが有効で、テーブルにシリアル型が含まれている場合、テーブルロックではなく、該当シーケンスを行ロックするようにしました。
-以前はテーブルロックをしていましたが、auto vacuumとロックが衝突したりして性能が低下する問題がありました(Tatsuo)
+以前はテーブルロックをしていましたが、auto vacuumとロックが衝突したりして性能が低下する問題がありました(Tatsuo)</li>
 
- <li>新しい"SHOW"コマンドが追加されました。すなわち、pool_nodes, pool_processes, pool_pools, pool_versionです(Guillaume Lelarge)
+ <li>新しい"SHOW"コマンドが追加されました。すなわち、pool_nodes, pool_processes, pool_pools, pool_versionです(Guillaume Lelarge)</li>
 
- <li>pcp_proc_infoコマンドの出力結果に、PostgreSQLバックエンドプロセスのプロセスIDとフロントエンドからの接続があるかどうかが追加されました(Tatsuo)
+ <li>pcp_proc_infoコマンドの出力結果に、PostgreSQLバックエンドプロセスのプロセスIDとフロントエンドからの接続があるかどうかが追加されました(Tatsuo)</li>
 
- <li>関数呼び出しを伴うSELECTを制御する設定項目white_function_listとback_function_listが追加されました(Tatsuo)
+ <li>関数呼び出しを伴うSELECTを制御する設定項目white_function_listとback_function_listが追加されました(Tatsuo)</li>
 
- <li>マスタースレーブモードにおいて、システムカタログを検索するSELECTは、整合性を保つために常にマスター(primary)で実行されるようになりました(Tatsuo)
+ <li>マスタースレーブモードにおいて、システムカタログを検索するSELECTは、整合性を保つために常にマスター(primary)で実行されるようになりました(Tatsuo)</li>
 
- <li>マスタースレーブモードにおいて、一時テーブルを検索するSELECTは、整合性を保つために常にマスター(primary)で実行されるようになりました(Tatsuo)
+ <li>マスタースレーブモードにおいて、一時テーブルを検索するSELECTは、整合性を保つために常にマスター(primary)で実行されるようになりました(Tatsuo)</li>
 
- <li>マスタスレーブモードで、明示的なトランザクション内で実行されない更新クエリにおいて、自動的にトランザクションを開始することを止めました。これは不必要でした。これによって、パフォーマンスが向上しています(Tatsuo)
+ <li>マスタスレーブモードで、明示的なトランザクション内で実行されない更新クエリにおいて、自動的にトランザクションを開始することを止めました。これは不必要でした。これによって、パフォーマンスが向上しています(Tatsuo)</li>
 
- <li>マスタスレーブモードで、明示的なトランザクション内で実行されるSELECTコマンドが負荷分散できるようになりました(Tatsuo, Kitagawa)
+ <li>マスタスレーブモードで、明示的なトランザクション内で実行されるSELECTコマンドが負荷分散できるようになりました(Tatsuo, Kitagawa)</li>
 
  <li>マスタスレーブモードで、必要なDBノードにのみコマンドが送られるようになりました。
-これにより、たとえばパースコマンドが不必要なDBノードにおいてもロックを取ってしまうようなことがなくなりました(Tatsuo, Kitagawa)
+これにより、たとえばパースコマンドが不必要なDBノードにおいてもロックを取ってしまうようなことがなくなりました(Tatsuo, Kitagawa)</li>
 
- <li>pgpoolの起動時に、ステータスファイルを無視するオプションが追加されました(Tatsuo)
+ <li>pgpoolの起動時に、ステータスファイルを無視するオプションが追加されました(Tatsuo)</li>
 
- <li>PostgreSQL 9.0のVACUUMの新しい書式をpgpool-IIのパーサがサポートしました(Tatsuo)
+ <li>PostgreSQL 9.0のVACUUMの新しい書式をpgpool-IIのパーサがサポートしました(Tatsuo)</li>
 
  <li>フェイルオーバ/フェイルバックコマンドで、"%H"という特殊変数が利用できるようになりました。
-これは、新しいマスターノードのホスト名を表します(Tatsuo)
+これは、新しいマスターノードのホスト名を表します(Tatsuo)</li>
 
  <li>failover_if_affected_tuples_mismatch という設定項目が追加されました(Tatsuo)
-従来、レプリケーションモードでINSERT/UPDATE/DELETEの結果行数が異なると、トランザクションをアボートしてセッションを強制切断していました。
-failover_if_affected_tuples_mismatch を trueに設定すると、この現象が起きたときに、不一致のあったDBノードを切り放して縮退運転に入るようになります。
+<p>従来、レプリケーションモードでINSERT/UPDATE/DELETEの結果行数が異なると、トランザクションをアボートしてセッションを強制切断していました。
+failover_if_affected_tuples_mismatch を trueに設定すると、この現象が起きたときに、不一致のあったDBノードを切り放して縮退運転に入るようになります。</p></li>
 
- <li>レプリケーションモードでDBノード間でINSERT/UPDATE/DELETEの結果行数の不一致が検出された際に、各DBノードにおける結果行数がログに記録されるようになりました(Tatsuo)
+ <li>レプリケーションモードでDBノード間でINSERT/UPDATE/DELETEの結果行数の不一致が検出された際に、各DBノードにおける結果行数がログに記録されるようになりました(Tatsuo)</li>
 
- <li>レプリケーションモードとマスタスレーブモードで、md5認証がサポートされました(Tatsuo)
+ <li>レプリケーションモードとマスタスレーブモードで、md5認証がサポートされました(Tatsuo)</li>
 
- <li>オンラインリカバリで、強制的にフロントエンドへの接続を切断して直ちにセカンドステージに入ることができるようになりました。そのためには、client_idle_limit_in_recovery に -1 を設定します(Tatsuo)
+ <li>オンラインリカバリで、強制的にフロントエンドへの接続を切断して直ちにセカンドステージに入ることができるようになりました。そのためには、client_idle_limit_in_recovery に -1 を設定します(Tatsuo)</li>
 
- <li>RAWモードにおいて、DBノードが1個だけしか存在しない状態でDBがエラーを起したためにDBノードを切り放したあとでDBノードが回復した場合に、pgpool-IIを再起動することになしにDBノードを利用できるようになりました(Tatsuo)
+ <li>RAWモードにおいて、DBノードが1個だけしか存在しない状態でDBがエラーを起したためにDBノードを切り放したあとでDBノードが回復した場合に、pgpool-IIを再起動することになしにDBノードを利用できるようになりました(Tatsuo)</li>
 
- <li>pcpコマンドにおいて、ロングオプションがサポートされました(Guillaume Lelarge)
+ <li>pcpコマンドにおいて、ロングオプションがサポートされました(Guillaume Lelarge)</li>
 
- <li>debug_level という設定項目が追加され、pgpool.confの再読み込みによってデバッグメッセージの出力をオン／オフできるようになりました(Tatsuo)
+ <li>debug_level という設定項目が追加され、pgpool.confの再読み込みによってデバッグメッセージの出力をオン／オフできるようになりました(Tatsuo)</li>
 
- <li>pgpool.confで、postgresql.confと同じ真偽値表現が利用できるようになりました。従来は、true/false, 1/0しか使えませんでした(Kitagawa)
+ <li>pgpool.confで、postgresql.confと同じ真偽値表現が利用できるようになりました。従来は、true/false, 1/0しか使えませんでした(Kitagawa)</li>
 
- <li>オンラインリカバリのセカンドステージをより安全に実行するために、C言語関数pgpool_switch_xlogを追加しました(Kitagawa)
+ <li>オンラインリカバリのセカンドステージをより安全に実行するために、C言語関数pgpool_switch_xlogを追加しました(Kitagawa)</li>
 
- <li>異なるスキーマに同じ名前のテーブルが存在する場合に起きる不具合を回避するために、C言語関数pgpool_regclassを追加しました(Tatsuo)
+ <li>異なるスキーマに同じ名前のテーブルが存在する場合に起きる不具合を回避するために、C言語関数pgpool_regclassを追加しました(Tatsuo)</li>
 
 </ul>
-</p>
 
 <h3>互換性のない変更</h3>
-<p>
 <ul>
 <li>replicate_selectとload_balance_modeを共にtrueに設定した場合、トランザクションブロックの外側で実行されるSELECT文は、replicate_selectに従うようになりました。以前は、load_balance_modeに従うようになっていました。もしクライアントがこの動作を利用している場合は、replicate_selectをfalseにしてback_function_listを設定することで同じ動作を実現できます。</li>
 </ul>
-</p>
 
-<p>
 <h3>バグ修正</h3>
-</p>
-<p>
 <ul>
 
  <li>型が時刻データ以外の列の場合、デフォルト値にnow()が含まれていても書き換えを行なわないようにしました。
-今までは無条件に書き換えを行なっていたため、書き換えの結果、INSERT文などがエラーになっていました(Tatsuo)
+今までは無条件に書き換えを行なっていたため、書き換えの結果、INSERT文などがエラーになっていました(Tatsuo)</li>
 
  <li>タイムスタンプの書き換え処理対象となるテーブルのスキーマが無視されないようにしました。
 ただし、この機能を有効にするためには、付属のユーザ定義関数"pgpool_regclass"のインストールが必要です。
-この関数がインストールされていない場合は、依然としてスキーマが無視されてしまいます(Tatsuo)
+この関数がインストールされていない場合は、依然としてスキーマが無視されてしまいます(Tatsuo)</li>
 
- <li>pcpコマンドのタイムアウトの扱いにおけるバグが修正されました(Tatsuo)
+ <li>pcpコマンドのタイムアウトの扱いにおけるバグが修正されました(Tatsuo)</li>
 
- <li>SSLが有効な状態で、大量のデータ通信が起るとハングする問題が修正されました(Tatsuo)
+ <li>SSLが有効な状態で、大量のデータ通信が起るとハングする問題が修正されました(Tatsuo)</li>
 
- <li>DBノードが1個だけしか存在しない状態でDBがエラーを起したた際に、間違ったDBノードがフェイルオーバするバグを修正しました(Tatsuo)
+ <li>DBノードが1個だけしか存在しない状態でDBがエラーを起したた際に、間違ったDBノードがフェイルオーバするバグを修正しました(Tatsuo)</li>
 
  <li>オンラインリカバリ時のpostmasterの起動チェックにおけるバグを修正しました。
-今まではpostmasterへの最初の接続が失敗すると、接続を無限に繰り返すようになっていました(Tatsuo)
+今まではpostmasterへの最初の接続が失敗すると、接続を無限に繰り返すようになっていました(Tatsuo)</li>
 
 </ul>
-</p>
 
+<!-- ================================================================================ -->
+<!-- 2.3                                                                              -->
+<!-- ================================================================================ -->
+<hr>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release2.3.4"></a>2.3.4 (tomiteboshi) 2012/08/06</h2>
+<!-- -------------------------------------------------------------------------------- -->
+<p>このバージョンでは、2.3.3 以前の色々なバグが修正されています。</p>
+
+<h3>バグ修正</h3>
+
+<ul>
+<li>
+do_error_execute_command() が ErrorResponse を受け取るまでバックエンドからの
+結果を見ないように修正しました。 (Toshihiro Kitagawa)
+<p>
+ReadyForQuery のようなエラーでない結果をとっておき、pool_unread() で呼び出す必要があるためです。
+これは PHP PDO を使っているときに起こる可能性がありました。
+</p>
+</li>
+
+<li>
+SimpleForwardToFrontend() が、SELECT 実行中に bind エラーになったとき、
+select_in_transaction フラグと execute_select フラグををリセットするように修正しました。
+(Toshihiro Kitagawa)
+</li>
+
+<li>
+バックエンドからたくさんの結果を読み込んでいる間に、SSL 接続がハングすることが
+あるのを修正しました。Tatsuo Ishii)
+<p>詳細は、[Pgpool-general] Fwd: PGPOOL II 2.3.3 hang in ssl mode のスレッドを参照してください。</p>
+</li>
+
+<li>
+pcp_check_fd() のタイムアウト処理のバグを修正しました。 (Tatsuo Ishii)
+  <p>これは以下で報告されました。 </p>
+  <blockquote>
+  Subject: [Pgpool-general] question about pcp_check_fd
+  Date: Sun, 23 May 2010 18:21:41 -0500
+  To: pgpool <pgpool-general@pgfoundry.org>
+  </blockquote>
+</li>
+
+<li>
+master/slave モードで稼働中、DEALLOCATE をレプリケーションしないようにしました。(Toshihiro Kitagawa)
+<p>これは、以下で Jan Kantert から報告されました。</p>
+<blockquote>
+Subject: [Pgpool-hackers] Problems with PgPool 2.3.3 Prepare /
+         Deallocation handling in Master/Slave mode
+Date: Fri, 28 May 2010 20:59:47 +0200
+</blockquote>
+</li>
+
+<li>タイムスタンプの書き換えで、スキーマを認識するようにしました。(Tatsuo Ishii)</li>
+
+<li>
+now() などデフォルト値にもつがデータ型が timestamp 型でないようなカラムへの
+アクセスがあるステートメントを、書き換えないようにしました。(Tatsuo Ishii)
+
+<p>そうしていなかったために、DML でエラーになっていました。</p>
+<blockquote>
+Subject: [Pgpool-general] function epoch seems to be causing error
+To: pgpool-general@pgfoundry.org
+Date: Mon, 16 Aug 2010 21:48:31 +0000 (UTC)
+</blockquote>
+</li>
+
+<li>insert_lock がスキーマを認識するようになりました。(Tatsuo Ishii)</li>
+
+<li>
+配列型や複合型のカラムのタイムスタンプ書き換えにおける、古くからあるバグを
+修正しました。(Tatsuo Ishii)
+<p>例えば、以下の場合に失敗していました。</p>
+<pre>
+INSERT INTO r1(col[1], col2.foo) VALUES (1, 2); -- insert_column_item
+UPDATE r1 SET col1[1] = 1, col2.foo = 1; -- set_target
+PREPARE "p" (int4[]) AS  SELECT $1[1]; -- c_expr
+SELECT (ARRAY[1,2,3])[1];
+SELECT (ARRAY[ARRAY[1]])[1][1];
+SELECT ('{1,2,3}'::int[])[1];
+SELECT ('{1,2,3}'::int[3])[1];
+SELECT r1.col[1], (r1.col1).bar, (r1.col1).* FROM r1; -- columnref
+SELECT (r1.col1).baz[1], (r1.col1).baz[1][2] FROM r1;
+</pre>
+
+<p>パッチは Akio Ishida から提供されました。</p>
+</li>
+
+<li>pcp パスワードが 32 文字以上のときに、バッファオーバーランするのを修正しました。(Tatsuo Ishii)</li>
+
+<li>
+wait_for_query_response() が、frontend がないときには何もしないように修正しました。(Tatsuo Ishii)
+<p>
+バックエンドをリセットする reset_query_list のクエリを実行に 時間がかかったときに発生する可能性があり、
+またクラッシュすることがありました。
+</p>
+</li>
+</ul>
+
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.3.3 (tomiteboshi) 2010/04/23</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>このバージョンでは、2.3.2.2 以前の色々なバグが修正されています。</p>
 
@@ -4696,7 +4774,9 @@ pgpool がバックエンドの応答を待ち続けなくなります。
 strerror() ではなく hstrerror() を使うように修正しました。 (Tatsuo)</li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.3.2.2 (tomiteboshi) 2010/02/22</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、2.3.xにおける様々なバグを修正しています。
@@ -4705,21 +4785,23 @@ strerror() ではなく hstrerror() を使うように修正しました。 (Tat
 </p>
 
 <h3>バグ修正</h3>
-<p>
 <ul>
- <li>タイムスタンプデータを含む拡張プロトコル問い合わせで、"message: invalid string in message"のエラーを出してトランザクションが終了してしまうバグを修正しました(Tatsuo)
- <li>タイムスタンプデータを含む拡張プロトコル問い合わせで、bind時にNULLを含むパラメータが存在するとpgpoolがクラッシュするバグを修正しました(Tatsuo)
- <li>pgpool_status上ですべてのノードがダウンのときにはこれを無効とし、「all node down症候群」が起きないようにしました(Tatsuo)
+ <li>タイムスタンプデータを含む拡張プロトコル問い合わせで、"message: invalid string in message"のエラーを出してトランザクションが終了してしまうバグを修正しました(Tatsuo)</li>
+ <li>タイムスタンプデータを含む拡張プロトコル問い合わせで、bind時にNULLを含むパラメータが存在するとpgpoolがクラッシュするバグを修正しました(Tatsuo)</li>
+ <li>pgpool_status上ですべてのノードがダウンのときにはこれを無効とし、「all node down症候群」が起きないようにしました(Tatsuo)</li>
 </ul>
-</p>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.3.2.1 (tomiteboshi) 2010/02/11</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、2.3.xにおいて、エラーとなるようなSQLを実行するとpgpoolへのセッションが切断されるバグを修正しています(Akio Ishida)。
 </p>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.3.2 (tomiteboshi) 2010/02/07</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、2.3.1の色々なバグが修正されています。
@@ -4730,34 +4812,32 @@ strerror() ではなく hstrerror() を使うように修正しました。 (Tat
 </p>
 
 <h3>改良点</h3>
-<p>
 <ul>
  <li>フロントエンドとpgpool-II、pgpool-IIとPostgreSQLの間のSSL通信がサポートされました(Sean Finney)
- <li>ラージオブジェクトのレプリケーションがサポートされました(Tatsuo)
+ <li>ラージオブジェクトのレプリケーションがサポートされました(Tatsuo)</li>
  <li>ヘルスチェックとオンラインリカバリの際に可能であればpostgresデータベースを使うようにしました。
       postgresデータベースが存在しない場合はtemplate1が使われます(以前の動作と同じ)。
-      これにより、DROP DATABASEなどのコマンドがオンラインリカバリ中でも使えるようになりました(Tatsuo)
+      これにより、DROP DATABASEなどのコマンドがオンラインリカバリ中でも使えるようになりました(Tatsuo)</li>
  <li>問い合わせのパース処理でエラーが起きたときに、SQL文をログに出力するようにしました。
-      エンコーディングエラーなどが発生した際にはPostgreSQLのログにもSQL文が記録されないため、これは有効です(Tatsuo)
- <li>kind mismatchエラーが発生し、その原因がDEALLOCATEコマンドだった場合にDEALLOCATEが削除しようとしたPREPARED文の元になったSQL文をログに出力するようにしました(Tatsuo)
+      エンコーディングエラーなどが発生した際にはPostgreSQLのログにもSQL文が記録されないため、これは有効です(Tatsuo)</li>
+ <li>kind mismatchエラーが発生し、その原因がDEALLOCATEコマンドだった場合にDEALLOCATEが削除しようとしたPREPARED文の元になったSQL文をログに出力するようにしました(Tatsuo)</li>
 </ul>
-</p>
 
 <h3>バグ修正</h3>
-<p>
 <ul>
- <li>たまにタイムスタンプを書き換えた問い合わせがマスタ以外のDBノードに不正なパケットを送ってしまう問題を修正しました(Tatsuo)
- <li>V2プロトコルでタイムスタンプの書き換え処理がエラーになるのを修正しました(Toshihiro Kitagawa)
- <li>master/slaveモード、かつトランザクション内で発行されるBind、Describe、Closeメッセージはマスタだけに送るようにしました(Tatsuo)
- <li>2.3でsmart shutdownによりすぐに停止しなくなったバグを修正しました(Toshihiro Kitagawa)
- <li>フロントエンドからの不正なコマンドを受け付けないようにしました(Xavier Noguer)
- <li>移植性を高めるために、fprintfの引数に%dzを使用するようにしました(Tatsuo)
- <li>コンパイラワーニングを修正しました(Tatsuo)
- <li>master/slaveモードの際に、DEALLOCATEをすべてのノードに送らないようにして、kind mismatchエラーを防ぐようにしました(Tatsuo)
+ <li>たまにタイムスタンプを書き換えた問い合わせがマスタ以外のDBノードに不正なパケットを送ってしまう問題を修正しました(Tatsuo)</li>
+ <li>V2プロトコルでタイムスタンプの書き換え処理がエラーになるのを修正しました(Toshihiro Kitagawa)</li>
+ <li>master/slaveモード、かつトランザクション内で発行されるBind、Describe、Closeメッセージはマスタだけに送るようにしました(Tatsuo)</li>
+ <li>2.3でsmart shutdownによりすぐに停止しなくなったバグを修正しました(Toshihiro Kitagawa)</li>
+ <li>フロントエンドからの不正なコマンドを受け付けないようにしました(Xavier Noguer)</li>
+ <li>移植性を高めるために、fprintfの引数に%dzを使用するようにしました(Tatsuo)</li>
+ <li>コンパイラワーニングを修正しました(Tatsuo)</li>
+ <li>master/slaveモードの際に、DEALLOCATEをすべてのノードに送らないようにして、kind mismatchエラーを防ぐようにしました(Tatsuo)</li>
 </ul>
-</p>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.3.1 (tomiteboshi) 2009/12/18</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、2.3の色々なバグが修正されています。
@@ -4765,31 +4845,32 @@ strerror() ではなく hstrerror() を使うように修正しました。 (Tat
 </p>
 
 <h3>バグ修正と改良点</h3>
-<p>
 <ul>
  <li>以下のすべての条件に合致する場合、DBに不正な値が書き込まれるバグを修正しました(Tatsuo)
-      <p>
       <ol>
-       <li>レプリケーションモードで動作
-       <li>64bit OS
-       <li>INSERTまたはUPDATEにおいて、now(), CURRENT_TIMESTAMP, CURRENT_DATE, CURRENT_TIMEを直接含むか、テーブルのデフォルト値に含んでいる
-       <li>更にそのSQL内に32bit(10進で-2147483648から2147483647)の範囲を超える整数定数が含まれている
+       <li>レプリケーションモードで動作</li>
+       <li>64bit OS</li>
+       <li>INSERTまたはUPDATEにおいて、now(), CURRENT_TIMESTAMP, CURRENT_DATE, CURRENT_TIMEを直接含むか、テーブルのデフォルト値に含んでいる</li>
+       <li>更にそのSQL内に32bit(10進で-2147483648から2147483647)の範囲を超える整数定数が含まれている</li>
       </ol>
-      以上を満たすSQLの例:
+      <p>以上を満たすSQLの例:</p>
       <pre>
       INSERT INTO t1(id, regdate) VALUES(98887776655, NOW());
       </pre>
+      <p>
       この例では、98887776655が32bit値にカットされて書き込まれます。
       </p>
+      /li>
 
   <li>18以上のDBノードを使用している場合に、show pool_statusでクラッシュするバグを修正しました。
-このバグはshow pool_statusが実装されてからずっと存在していたものです。
+このバグはshow pool_statusが実装されてからずっと存在していたものです。</li>
 
-  <li>"kind mismatch"メッセージが出た際に、kindがERRORまたはNOTICEならば、そのメッセージを表示するようにしました。これにより、PostgreSQLのログを見なくてもkind mismatchエラーの原因を容易に調べることができるようになりました(Tatsuo)
+  <li>"kind mismatch"メッセージが出た際に、kindがERRORまたはNOTICEならば、そのメッセージを表示するようにしました。これにより、PostgreSQLのログを見なくてもkind mismatchエラーの原因を容易に調べることができるようになりました(Tatsuo)</li>
  </ul>
-</p>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.3 (tomiteboshi) 2009/12/07</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、レプリケーション機能に改良が加えられ、時刻データ(CURRENT_TIMESTAMP, CURRENT_DATE, now()など)を正しく扱うことができるようになりました。
@@ -4801,30 +4882,103 @@ strerror() ではなく hstrerror() を使うように修正しました。 (Tat
 
 <h3>pgpool-II 2.2.からの非互換性</h3>
 <ul>
-<li>[logdir]の下にpgpool_statusというファイルが作られるので、pgpoolの実行ユーザが読み書きできる権限を与えておいてください。
+<li>[logdir]の下にpgpool_statusというファイルが作られるので、pgpoolの実行ユーザが読み書きできる権限を与えておいてください。</li>
 </ul>
 
 <h3>改良点</h3>
 <ul>
-<li>レプリケーションにおいて、時刻データ(CURRENT_TIMESTAMP, CURRENT_DATE, now()など)を正しく扱うことができるようになりました。特にアプリケーションに変更を加えることなく、INSERT/UPDATE文、テーブルのデフォルト値にこれらの時刻関数を含むケースでも正しくレプリケーションできます(いくつか制限事項があります。詳細は<a href="#restriction">制限事項</a>を参照してください)。(Akio Ishida)
-<li>SQLパーサをPostgreSQL 8.4のものにバージョンアップしました(Akio Ishida)
-<li>同時接続数が1(num_init_childrenが1)のときのレプリケーション性能が20%から100%向上しました(Tatsuo)
-<li>新しいディレクティブlog_per_node_statementが追加されました(Tatsuo)
+<li>レプリケーションにおいて、時刻データ(CURRENT_TIMESTAMP, CURRENT_DATE, now()など)を正しく扱うことができるようになりました。特にアプリケーションに変更を加えることなく、INSERT/UPDATE文、テーブルのデフォルト値にこれらの時刻関数を含むケースでも正しくレプリケーションできます(いくつか制限事項があります。詳細は<a href="#restriction">制限事項</a>を参照してください)。(Akio Ishida)</li>
+<li>SQLパーサをPostgreSQL 8.4のものにバージョンアップしました(Akio Ishida)</li>
+<li>同時接続数が1(num_init_childrenが1)のときのレプリケーション性能が20%から100%向上しました(Tatsuo)</li>
+<li>新しいディレクティブlog_per_node_statementが追加されました(Tatsuo)</li>
 log_statementと似ていますが、DBノード単位でログが出力されるので、レプリケーションや負荷分散の確認が容易です。
 また、バックエンドのプロセスIDも表示されるので、バックエンドのログと併せての解析が容易になっています。
-<li>新しいディレクティブfail_over_on_backend_errorが追加され、フェイルオーバの挙動がより細かく制御できるようになりました(Tatsuo)
-<li>pgpool-II停止時にダウンしたDBノードの情報をステータスファイルに記録し、pgpool-IIを起動したときにその情報をリストアできるようにしました(Tatsuo)
+<li>新しいディレクティブfail_over_on_backend_errorが追加され、フェイルオーバの挙動がより細かく制御できるようになりました(Tatsuo)</li>
+<li>pgpool-II停止時にダウンしたDBノードの情報をステータスファイルに記録し、pgpool-IIを起動したときにその情報をリストアできるようにしました(Tatsuo)</li>
 ステータスファイルは [logdir]/pgpoo_status というファイルに書かれます。
 <li>EXPLAINと、問い合わせがSELECTのときのEXPLAIN ANALYZEが負荷分散されるようになりました。
-これによって、DBノードの間で大幅に問い合わせプランが異るために、kind mismatchエラーが起きるのを防ぐことができます(Tatsuo)
-<li>日本語ドキュメントの体裁を改良しました(Tatsuo)
-<li>レプリケーションモード、マスタースレーブモード用のデフォルトpgpoo.conf.sampleが別途追加されました(Tatsuo)
-<li>時刻データのテストが追加されました(Akio Ishida)
+これによって、DBノードの間で大幅に問い合わせプランが異るために、kind mismatchエラーが起きるのを防ぐことができます(Tatsuo)</li>
+<li>日本語ドキュメントの体裁を改良しました(Tatsuo)</li>
+<li>レプリケーションモード、マスタースレーブモード用のデフォルトpgpoo.conf.sampleが別途追加されました(Tatsuo)</li>
+<li>時刻データのテストが追加されました(Akio Ishida)</li>
 </ul>
 
-</p>
+<!-- ================================================================================ -->
+<!-- 2.2                                                                              -->
+<!-- ================================================================================ -->
+<hr>
 
+<!-- -------------------------------------------------------------------------------- -->
+<h2>2.2.8 (urukiboshi) 2012/08/06</h2>
+<!-- -------------------------------------------------------------------------------- -->
+<h3>概要</h3>
+<p>このバージョンでは、2.2.7 のバグが修正されています。</p>
+
+<h3>バグ修正</h3>
+<ul>
+<li>
+do_error_execute_command() が ErrorResponse を受け取るまでバックエンドからの結果を
+見ないように修正しました。 (Toshihiro Kitagawa)
+<p>
+ReadyForQuery のようなエラーでない結果をとっておき、pool_unread() で呼び出す
+必要があるためです。
+これは PHP PDO を使っているときに起こる可能性がありました。
+</p>
+</li>
+
+<li>
+SimpleForwardToFrontend() が、SELECT 実行中に bind エラーになったとき、
+select_in_transaction フラグと execute_select フラグををリセットするように修正しました。
+(Toshihiro Kitagawa)
+</li>
+
+<li>
+pcp_check_fd() のタイムアウト処理のバグを修正しました。 (Tatsuo Ishii)
+<p>これは以下で報告されました。</p>
+<blockquote>
+Subject: [Pgpool-general] question about pcp_check_fd<br>
+Date: Sun, 23 May 2010 18:21:41 -0500<br>
+To: pgpool <pgpool-general@pgfoundry.org>
+</blockquote>
+</li>
+
+<li>pcp パスワードが 32 文字以上のときに、バッファオーバーランするのを修正しました。(Tatsuo Ishii)</li>
+
+<li>
+wait_for_query_response() が、frontend がないときには何もしないように修正しました。(Tatsuo Ishii)</li>
+<p>
+バックエンドをリセットする reset_query_list のクエリを実行に 時間がかかったときに
+発生する可能性があり、またクラッシュすることがありました。
+</p>
+</li>
+</ul>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h2>2.2.7 (urukiboshi) 2010/04/15</h2>
+<!-- -------------------------------------------------------------------------------- -->
+<h3>概要</h3>
+<p>
+このバージョンでは、kind mismatchエラーが起きた際のエラーメッセージが改善されています。
+また、2.2.6以前の色々なバグが修正されています。
+</p>
+<h3>バグ修正</h3>
+<ul>
+<li>マスター／スレーブモード、rawモード、またはコネクションプールモードにおいて、拡張プロトコルを使用している際に時々ハングアップするバグを修正しました。これは、2.3系からのバックパッチです(Kitagawa)</li>
+<li>pgpool子プロセスがsegfaultを起こすpgpool-II 1.0から長い間存在したバグを修正しました。
+これは、親プロセスがshmemサイズの計算を間違えていたことに起因します。バグ解析(Kitagawa)、パッチ作成(Tatsuo)</li>
+<li>マスター／スレーブモードにおいて、明示的なトランザクションで操作した場合は、Parse、Bind、Describe、そしてCloseメッセージをマスターノードのみに送るようにしました(Tatsuo)</li>
+<li>postmasterが終了する際に、ログを出力するようにしました(Tatsuo)</li>
+<li>make_persistent_db_connection関数のメモリリークを修正しました(Xavier Noguer)</li>
+<li>マスター／スレーブモードでは、DEALLOCATEの強制的なレプリケーションをしないようにしました。
+pgpoolはParseをすべてのノードで実行しないため、これは無意味で問題(DEALLOCATE実行時のkind mismatch)を引き起こしていました(Tatsuo)</li>
+<li>18より多いDBノードでshow pool_statusを実行したときにクラッシュするバグを修正しました(Tatsuo)
+<li>kind mismatchメッセージを改善しました。kindがERROR、またはNOTICEの場合は、何が起きているかユーザーがわかりやすいようにERROR/NOTICEメッセージを出力します(Tatsuo)</li>
+</ul>
+
+
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.2.6 (urukiboshi) 2009/12/01</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、ロードバランスの重みパラメータweightの扱いが改善され、
@@ -4835,85 +4989,90 @@ log_statementと似ていますが、DBノード単位でログが出力され�
 <ul>
 <li>DECLARE, CLOSE, FETCH, MOVEがロードバランスの対象にならなくなりました。
 もしデータが更新され、トランザクションがコミットされた後にCLOSEが発行されるとデータの一貫性がなくなるからです
-(つまり、holdできるカーソルの場合のことを言っています)(Tatsuo)
+(つまり、holdできるカーソルの場合のことを言っています)(Tatsuo)</li>
 <li>マスター／スレーブモードにおいて、拡張プロトコルのParseをマスター上でのみ実行するようにしました。
-以前はすべてのノードでParseが実行されていたのですが、これだと不必要なロックがスレーブでも取られてしまいます(Tatsuo)
-<li>uninstallの前にすべてのランレベルからinitスクリプトを削除するようにしました(Devrim)
-<li>認証に失敗したときに適切なエラーメッセージを出すようにしました(Glyn Astill)
-<li>ソケットへの書き込みに失敗したときにフロントエンド用なのかバックエンド用なのかわかるようにしました(Tatsuo)
-<li>フロントエンド用のソケットに書き込み失敗したときにいちいちエラーを出さないようにしました(Tatsuo)
+以前はすべてのノードでParseが実行されていたのですが、これだと不必要なロックがスレーブでも取られてしまいます(Tatsuo)</li>
+<li>uninstallの前にすべてのランレベルからinitスクリプトを削除するようにしました(Devrim)</li>
+<li>認証に失敗したときに適切なエラーメッセージを出すようにしました(Glyn Astill)</li>
+<li>ソケットへの書き込みに失敗したときにフロントエンド用なのかバックエンド用なのかわかるようにしました(Tatsuo)</li>
+<li>フロントエンド用のソケットに書き込み失敗したときにいちいちエラーを出さないようにしました(Tatsuo)</li>
 <li>マスター／スレーブモードで一時テーブルが使えるようになりました。
 INSERT/UPDATE/DELETEは自動的にマスタのみに送られます。SELECTに関しては明示的にクエリの前に
-/*NO LOAD BALANCE*/というコメントを付けなければなりません(Tatsuo)
+/*NO LOAD BALANCE*/というコメントを付けなければなりません(Tatsuo)</li>
 </ul>
-</p>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.2.5 (urukiboshi) 2009/10/4</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、2.2.4以前の色々なバグが修正されています。
 </p>
 <h3>バグ修正</h3>
 <ul>
-<li>コネクション数のカウントのミスにより、オンラインリカバリが終わらなくなるバグを修正しました(Tatsuo)
-<li>内部的にロックを発行する際にもフロントエンドが異常終了したことを検出してSQLコマンドをキャンセルするようにしました(Tatsuo)
-<li>接続の終了処理で無限ループに陥ることがあるバグを修正しました(Xavier Noguer, Tatsuo)
-<li>拡張プロトコルのパース処理でkind mismatch errorが起きた際に正しいSQL文を表示するようにしました(Tatsuo)
-<li>ドキュメントを改善しました(Tatsuo)
+<li>コネクション数のカウントのミスにより、オンラインリカバリが終わらなくなるバグを修正しました(Tatsuo)</li>
+<li>内部的にロックを発行する際にもフロントエンドが異常終了したことを検出してSQLコマンドをキャンセルするようにしました(Tatsuo)</li>
+<li>接続の終了処理で無限ループに陥ることがあるバグを修正しました(Xavier Noguer, Tatsuo)</li>
+<li>拡張プロトコルのパース処理でkind mismatch errorが起きた際に正しいSQL文を表示するようにしました(Tatsuo)</li>
+<li>ドキュメントを改善しました(Tatsuo)</li>
 </ul>
-</p>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.2.4 (urukiboshi) 2009/8/24</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、2.2.3以前の色々なバグが修正されています。
 </p>
 <h3>バグ修正</h3>
 <ul>
- <li>pgpool-II 2.2.2で入ってしまったバグを修正しました。フロントエンドがアボートするタイミングによっては、以後内部状態がリセットされず、次のセッションでDMLやDDLがマスターノードのみ送られ、ノード間でデータの不一致が生じることがありました(Tatsuo)
+ <li>pgpool-II 2.2.2で入ってしまったバグを修正しました。フロントエンドがアボートするタイミングによっては、以後内部状態がリセットされず、次のセッションでDMLやDDLがマスターノードのみ送られ、ノード間でデータの不一致が生じることがありました(Tatsuo)</li>
  <li>pgpool-II 2.2.3でバージョン2プロトコルのクライアントが動かなくなってしまっていたのを修正しました。
-      また、時間のかかるクエリを待っている間にフロントエンドが異常終了したことを検知する間隔を1秒から30秒に変更しました。このチェックは、2.2.4ではプロトコルバージョンが3のときのみ有効です(Tatsuo)
+      また、時間のかかるクエリを待っている間にフロントエンドが異常終了したことを検知する間隔を1秒から30秒に変更しました。このチェックは、2.2.4ではプロトコルバージョンが3のときのみ有効です(Tatsuo)</li>
  <li>子プロセスを起動する前にシグナルのブロックやハンドラの設定を行なうようにしました。
-これは、pgpool-IIを起動した直後にフェイルオーバなどの事象が発生して子プロセスから親プロセスにシグナルが送られると、pgpool-IIの親プロセスが死んでしまうことがあるからです(Tatsuo)
+これは、pgpool-IIを起動した直後にフェイルオーバなどの事象が発生して子プロセスから親プロセスにシグナルが送られると、pgpool-IIの親プロセスが死んでしまうことがあるからです(Tatsuo)</li>
 </ul>
-</p>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.2.3 (urukiboshi) 2009/8/11</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、2.2.2以前の色々なバグが修正されています。
 </p>
 <h3>バグ修正</h3>
 <ul>
- <li>バックエンドに新しいコネクションを張る際に、バックエンドの一つが障害を起しているケースで、後処理の中でpgpool-IIの子プロセスが落ちることがあるバグを修正しました(Tatsuo)
- <li>パラレルクエリのバグを修正しました(Yoshiharu Mori)
- <li>拡張プロトコルの場合にもエラーメッセージの中で最後に使用したクエリが表示できるようになりました(Akio Ishida)
- <li>kind mismatch errorメッセージの作成で、メッセージ内容が壊れることがあるバグを修正しました(Tatsuo, Akio Ishida)
- <li>バックエンドへの接続記述子の参照タイミングによってはpgpool-IIの子プロセスが落ちることがあるバグを修正しました(Tatsuo)。
- <li>pool_errorやpool_logの引数が間違っていた個所を修正しました(Akio Ishida)。
- <li>statement_timeoutのタイムアウトによるエラー処理を改良しました。実際にはタイムアウトまでにstatement_timeoutで設定した時間の倍かかっていたのを直しました。また、masterだけがstatement_timeoutを返した場合にも対応できるようにしました。以前はkind mismatchエラーになっていました(Tatsuo)。
-(master以外がstatement_timeoutを返さないケースではkind mismatchエラーになります)。
+ <li>バックエンドに新しいコネクションを張る際に、バックエンドの一つが障害を起しているケースで、後処理の中でpgpool-IIの子プロセスが落ちることがあるバグを修正しました(Tatsuo)</li>
+ <li>パラレルクエリのバグを修正しました(Yoshiharu Mori)</li>
+ <li>拡張プロトコルの場合にもエラーメッセージの中で最後に使用したクエリが表示できるようになりました(Akio Ishida)</li>
+ <li>kind mismatch errorメッセージの作成で、メッセージ内容が壊れることがあるバグを修正しました(Tatsuo, Akio Ishida)</li>
+ <li>バックエンドへの接続記述子の参照タイミングによってはpgpool-IIの子プロセスが落ちることがあるバグを修正しました(Tatsuo)。</li>
+ <li>pool_errorやpool_logの引数が間違っていた個所を修正しました(Akio Ishida)。</li>
+ <li>statement_timeoutのタイムアウトによるエラー処理を改良しました。実際にはタイムアウトまでにstatement_timeoutで設定した時間の倍かかっていたのを直しました。また、masterだけがstatement_timeoutを返した場合にも対応できるようにしました。以前はkind mismatchエラーになっていました(Tatsuo)。</li>
+<p>(master以外がstatement_timeoutを返さないケースではkind mismatchエラーになります)。</p>
 
- <li>health checkをより強化し、postmasterがSIGSTOPで止ってしまっている場合も障害検知できるようにしました。
+ <li>health checkをより強化し、postmasterがSIGSTOPで止ってしまっている場合も障害検知できるようにしました。</li>
 
  <li>バックエンドにSQLを投げ、その応答を待っている間にクライアントがpgpoolに対するコネクションを切断したことが検出できるようになりました。
 たとえば、WebアプリケーションではDBに対してリクエストを投げて、応答がないとキャンセルするようなことが頻繁に起ります。
 この場合、今まではpgpoolやPostgreSQLのプロセスが残ってしまい、同時接続数が枯渇したり、ロックを取ったままのトランザクションが残るなどしてシステム全体に影響を与えることがありました。
-今回の修正により、こうした状況が検出できるようになっただけでなく、SQLの応答待ちの間にクライアントがコネクションを切断した際には、SQLコマンドのキャンセルをpgpoolが行なって、ロック待ちなどのバックエンドプロセスが残るのを防ぐことができるようになりました(Tatsuo)。
+今回の修正により、こうした状況が検出できるようになっただけでなく、SQLの応答待ちの間にクライアントがコネクションを切断した際には、SQLコマンドのキャンセルをpgpoolが行なって、ロック待ちなどのバックエンドプロセスが残るのを防ぐことができるようになりました(Tatsuo)。</li>
 
-<li>引数なしのCLUSTERコマンドはトランザクションの中では実行できないので、自動トランザクションをスタートしないようにしました(Tatsuo)。
+<li>引数なしのCLUSTERコマンドはトランザクションの中では実行できないので、自動トランザクションをスタートしないようにしました(Tatsuo)。</li>
 
-<li>複数のプリペアドステートメントを使っている際に、セッションの終りでその一部だけが解放されるバグを修正しました(Akio Ishida)
+<li>複数のプリペアドステートメントを使っている際に、セッションの終りでその一部だけが解放されるバグを修正しました(Akio Ishida)</li>
 。
-<li>sql/pgpool-recovery/pgpool-recovery.cがPostgreSQL 8.4でコンパイルできるようにしました(Tatsuo)。
+<li>sql/pgpool-recovery/pgpool-recovery.cがPostgreSQL 8.4でコンパイルできるようにしました(Tatsuo)。</li>
 
-<li>拡張プロトコルを使っている場合に、クライアントとpgpoolの間でお互いに待ち状態になってしまうことがあるバグを修正しました(Gavin Sherry)。
+<li>拡張プロトコルを使っている場合に、クライアントとpgpoolの間でお互いに待ち状態になってしまうことがあるバグを修正しました(Gavin Sherry)。</li>
 
-<li>COPY FROMを実行中にクライアントが処理を中断した場合に、バックエンドプロセスが残ってしまうバグを修正しました(Tatsuo)。
+<li>COPY FROMを実行中にクライアントが処理を中断した場合に、バックエンドプロセスが残ってしまうバグを修正しました(Tatsuo)。</li>
 
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.2.2 (urukiboshi) 2009/5/5</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、2.2.1以前の色々なバグが修正されています。
@@ -4922,16 +5081,18 @@ INSERT/UPDATE/DELETEは自動的にマスタのみに送られます。SELECTに
 </p>
 <h3>バグ修正</h3>
 <ul>
-  <li>フロントエンドにpgpoolがデータを送信する際のエラーを無視するようにしました。これによって、バックエンドとの間で必要な処理が中断されないようになり、バックエンドの間でデータの一貫性がなくなる問題が回避されるようになりました(Tatsuo)。
+  <li>フロントエンドにpgpoolがデータを送信する際のエラーを無視するようにしました。これによって、バックエンドとの間で必要な処理が中断されないようになり、バックエンドの間でデータの一貫性がなくなる問題が回避されるようになりました(Tatsuo)。</li>
 
-  <li>マスタースレーブモードに関する2.2.1の修正の際に生じたバグを修正しました。プリペアドステートメントを使い回すとハングアップする可能性がありました(Toshihiro)。
+  <li>マスタースレーブモードに関する2.2.1の修正の際に生じたバグを修正しました。プリペアドステートメントを使い回すとハングアップする可能性がありました(Toshihiro)。</li>
 
-  <li>SQLコマンドのPREPAREとプロトコルレベルのEXECUTEが混在するとバックエンドがクラッシュするバグを修正しました。このバグが、2.2で持ち込まれたものです(Tatsuo)。
+  <li>SQLコマンドのPREPAREとプロトコルレベルのEXECUTEが混在するとバックエンドがクラッシュするバグを修正しました。このバグが、2.2で持ち込まれたものです(Tatsuo)。</li>
 
-  <li>コネクションのリセット用の問合わせを実行中にエラーが起きた場合に、PostgreSQLのログに"unexpected EOF on client connection"が記録される問題を修正しました(Tatsuo)。
+  <li>コネクションのリセット用の問合わせを実行中にエラーが起きた場合に、PostgreSQLのログに"unexpected EOF on client connection"が記録される問題を修正しました(Tatsuo)。</li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.2.1 (urukiboshi) 2009/4/25</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、2.2の色々なバグが修正されています。
@@ -4939,18 +5100,20 @@ INSERT/UPDATE/DELETEは自動的にマスタのみに送られます。SELECTに
 <h3>バグ修正</h3>
 <ul>
   <li>master/slaveモードで、DEALLOCATEが失敗することがある問題を修正しました。
-       これは、最初のPREPAREがslaveで実行されないことによるものです(Toshihiro)
+       これは、最初のPREPAREがslaveで実行されないことによるものです(Toshihiro)</li>
 
-  <li>pgpool.specなどを2.2対応にしました(Devrim)
+  <li>pgpool.specなどを2.2対応にしました(Devrim)</li>
 
-  <li>Version 2プロトコルではinsert_lockが無視されるようにしました(Tatsuo)
+  <li>Version 2プロトコルではinsert_lockが無視されるようにしました(Tatsuo)</li>
 
-  <li>パラメータ変更メッセージがバックエンドから届く度にログが出力されるのを止めました(Tatsuo)
+  <li>パラメータ変更メッセージがバックエンドから届く度にログが出力されるのを止めました(Tatsuo)</li>
 
-  <li>ドキュメントで追加し忘れたファイルを登録しました(Tatsuo)
+  <li>ドキュメントで追加し忘れたファイルを登録しました(Tatsuo)</li>
 </ul>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.2 (urukiboshi) 2009/2/28</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
 このバージョンでは、SERIALデータの扱いとオンラインリカバリに改良が行なわれています。
@@ -4958,19 +5121,17 @@ INSERT/UPDATE/DELETEは自動的にマスタのみに送られます。SELECTに
 </p>
 
 <h3>新機能</h3>
-<p>
 <ul>
-<li>insert_lockが有効な場合、SERIAL型を持つテーブルだけがロックされるようになりました(Tatsuo)。
+<li>insert_lockが有効な場合、SERIAL型を持つテーブルだけがロックされるようになりました(Tatsuo)。</li>
 <li>設定項目client_idle_limit_in_recoveryが追加されました。
      オンラインリカバリの第2ステージでクライアントがアイドルのまま居座ることによって、
-     オンラインリカバリが進行しなくなることを防ぐことができます(Tatsuo)。
+     オンラインリカバリが進行しなくなることを防ぐことができます(Tatsuo)。</li>
 <li>設定項目pid_file_nameが追加されました。これは、pgpool-IIのpidファイルを指定します。
-     これにより、logdirは使用されなくなりました(Tatsuo)。
-<li>DECLARE, FETCH, CLOSEで負荷分散されるようになりました(Tatsuo)。
-<li>pcpコマンドにデバッグオプション(-d)が追加されました(Jun Kuriyama)。
-<li>"kind mismatch"エラーの際に、原因となったクエリを表示するようにしました(Tatsuo)。
+     これにより、logdirは使用されなくなりました(Tatsuo)。</li>
+<li>DECLARE, FETCH, CLOSEで負荷分散されるようになりました(Tatsuo)。</li>
+<li>pcpコマンドにデバッグオプション(-d)が追加されました(Jun Kuriyama)。</li>
+<li>"kind mismatch"エラーの際に、原因となったクエリを表示するようにしました(Tatsuo)。</li>
 </ul>
-</p>
 
 <h3>互換性</h3>
 <ul>
@@ -4978,10 +5139,10 @@ INSERT/UPDATE/DELETEは自動的にマスタのみに送られます。SELECTに
        この結果、フェイルオーバ時には必ずpgpoolへのセッションが一端切れることになります。
        こうしないと、ネットワークケーブル抜けなどの際に、
        TCP/IPのレイヤで再送が行なわれ、長い時間そのままになってしまうことが
-       あるからです(Tatsuo)。
-  <li>設定項目logdirは使われなくなりました。代りに、pid_file_nameを使ってください(Tatsuo)。
+       あるからです(Tatsuo)。</li>
+  <li>設定項目logdirは使われなくなりました。代りに、pid_file_nameを使ってください(Tatsuo)。</li>
 
-  <li>insert_lockのデフォルト値がtrueになりました(Tatsuo)。
+  <li>insert_lockのデフォルト値がtrueになりました(Tatsuo)。</li>
 </ul>
 
 <h3>バグ修正</h3>
@@ -4989,11 +5150,11 @@ INSERT/UPDATE/DELETEは自動的にマスタのみに送られます。SELECTに
   <li> pgpoolがデーモンモードで起動される際に、すべてのファイルディスクリプタを
        閉じるようにしました。こうしないと、pgpoolAdminから起動された際に
        apacheのソケットファイルを引き継いでしまい、80番ポートが
-       専有されてしまいます(Akio Ishida)。
+       専有されてしまいます(Akio Ishida)。</li>
   <li> トランザクションをシリアライズできないエラーが発生したときに、
        すべてのDBノードのトランザクションをアボートするようにしました。
        こうしないと、DBノードの間でデータの不整合が起きることがあります(Tatsuo)。
-       例を示します(Mはマスタ、Sはスレーブを示します)。
+       <p>例を示します(Mはマスタ、Sはスレーブを示します)。</p>
        <pre>
        M:S1:BEGIN;
        M:S2:BEGIN;
@@ -5010,13 +5171,13 @@ INSERT/UPDATE/DELETEは自動的にマスタのみに送られます。SELECTに
        M:S1:COMMIT;
        M:S2:ERROR:  could not serialize access due to concurrent update
        S:S2:UPDATE t1 SET i = i + 1; &lt;-- success in UPDATE and data becomes inconsistent!
-       </pre>
+       </pre></li>
 
- <li> rawモードでMD5認証が使えるようにしました。ドキュメント上では使えるはずでした(Tatsuo)。
+ <li> rawモードでMD5認証が使えるようにしました。ドキュメント上では使えるはずでした(Tatsuo)。</li>
 
  <li> "SET TRANSACTION ISOLATION LEVEL must be called before any query"の
-       エラーが発生した場合に"kind mimatch"エラーになることを防ぐようにしました(Tatsuo)。
-       以下のシナリオで問題が発生します。
+       エラーが発生した場合に"kind mimatch"エラーになることを防ぐようにしました(Tatsuo)。</li>
+       <p>以下のシナリオで問題が発生します。</p>
        <pre>
        M:S1:BEGIN;
        S:S1:BEGIN;
@@ -5025,339 +5186,377 @@ INSERT/UPDATE/DELETEは自動的にマスタのみに送られます。SELECTに
        S:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
        M: &lt;-- error
        S: &lt;-- ok since no previous SELECT is sent. kind mismatch error occurs!
-       </pre>
+       </pre></li>
 
-<li>FreeBSDにおいて、psでのprocess statusの表示で余計なスペースが含まれてしまうのを修正しました(Jun Kuriyama)
+<li>FreeBSDにおいて、psでのprocess statusの表示で余計なスペースが含まれてしまうのを修正しました(Jun Kuriyama)</li>
 
-<li>BEGIN;を2度続けるとkind mismatch errorが発生するのを修正しました(Tatsuo)
+<li>BEGIN;を2度続けるとkind mismatch errorが発生するのを修正しました(Tatsuo)</li>
 
-<li>PostgreSQLがたくさんのDEBUGメッセージを出力する場合に、誤ってエラーと見なすバグを修正しました(Tatsuo)
+<li>PostgreSQLがたくさんのDEBUGメッセージを出力する場合に、誤ってエラーと見なすバグを修正しました(Tatsuo)</li>
 
-<li>クエリのキャンセルが動くようになりました(Tatsuo)
+<li>クエリのキャンセルが動くようになりました(Tatsuo)</li>
 
 <li>オンラインリカバリの後クライアントからの接続を受け付けるタイミングが早すぎるバグを修正しました。
-このバグにより、ノードデータの貫性が保たれない可能性がありました(Tatsuo)
+このバグにより、ノードデータの貫性が保たれない可能性がありました(Tatsuo)</li>
 
 <li>SELECT, INSERT, UPDATE, DELETE以外のコマンドでも必要ならばトランザクションブロックの内側で実行するようにしました。
-これにより、エラー発生の際にロールバックしてノードの整合性を保つことができます(Tatsuo)
+これにより、エラー発生の際にロールバックしてノードの整合性を保つことができます(Tatsuo)</li>
 
 <li>オンラインリカバリ後、pgpool-IIの子プロセスがクラッシュすることがあるバグを修正しました。
-これは、オンラインリカバリの後、新しくアタッチされたノードに接続がないのに、そのノードに子プロセスが終了時に終了メッセージをバックエンドに送信しようとして起っていました(Tatsuo)
+これは、オンラインリカバリの後、新しくアタッチされたノードに接続がないのに、そのノードに子プロセスが終了時に終了メッセージをバックエンドに送信しようとして起っていました(Tatsuo)</li>
 
 <li>PostgreSQLがpostgresql.confを再読み込みした際にpgpoolがエラーを検出してしまうバグを修正しました。
-これは、PostgreSQLが（たぶん）ドキュメントに書かれていないタイミングで「パラメータ変更」パケットを送信してくるために起り、修正はそのことに対応したものです(Tatsuo)
+これは、PostgreSQLが（たぶん）ドキュメントに書かれていないタイミングで「パラメータ変更」パケットを送信してくるために起り、修正はそのことに対応したものです(Tatsuo)</li>
 
 </ul>
 
+<!-- ================================================================================ -->
+<!-- 2.1                                                                              -->
+<!-- ================================================================================ -->
+<hr>
+
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.1 (inamiboshi) 2008/7/25</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>新機能</h3>
 <ul>
   <li> failover_command と failback_command に、新しいマスタノード ID
-  を表す '%m' をサポートしました。(Yoshiyuki)
+  を表す '%m' をサポートしました。(Yoshiyuki)</li>
   <li> failover_command と failback_command に、古いマスタノード ID を
-  表す '%M' をサポートしました。(Yoshiyuki)
+  表す '%M' をサポートしました。(Yoshiyuki)</li>
   <li> リカバリのタイムアウト時間を指定する recovery_timeout パラメー
-  タを追加しました。(Taiki)
+  タを追加しました。(Taiki)</li>
   <li> pg_md5 コマンドに -p オプションを追加しました。(Volkan Yazici,
-  Taiki)
+  Taiki)</li>
   <li> pgpool -v を実行するとバージョン番号を表示し、終了するようにし
-  ました。(Yoshiyuki)
+  ました。(Yoshiyuki)</li>
 </ul>
 
 <h3>互換性</h3>
 <ul>
   <li> pgpool_recovery と pgpool_remote_start 関数はスーパーユーザのみ実行
-  できるように権限チェックを強化しました。(Yoshiyuki)
+  できるように権限チェックを強化しました。(Yoshiyuki)</li>
   <li> raw モードでスタンバイノードにはコネクションプールを作成しない
-  ようにしました。(Yoshiyuki)
-  <li> replication_timeout パラメータを削除しました。(Yoshiyuki)
-  <li> PCP クライアントコマンドのタイムアウトを無効にしました。(Taiki)
+  ようにしました。(Yoshiyuki)</li>
+  <li> replication_timeout パラメータを削除しました。(Yoshiyuki)</li>
+  <li> PCP クライアントコマンドのタイムアウトを無効にしました。(Taiki)</li>
   <li> replicate_select = false の場合に、COPY TO STDOUT をレプリケー
-  ションさせないようにしました。(Yoshiyuki)
+  ションさせないようにしました。(Yoshiyuki)</li>
 </ul>
 
 <h3>修正</h3>
 <h4> 全般 </h4>
 <ul>
   <li> CloseComplete メッセージを受けとるとクラッシュする不具合を修正
-  しました。(Yoshiyuki)
-  <li> メッセージ転送処理を効率よくしました。(Yoshiyuki)
-  <li> Solaris 10 でコンパイルできるようにしました。(Yoshiyuki)
-  <li> ヘルスチェックとリカバリのログ出力を改良しました。(Tatsuo)
-  <li> 様々なメモリリークを修正しました。(Yoshiyuki)
+  しました。(Yoshiyuki)</li>
+  <li> メッセージ転送処理を効率よくしました。(Yoshiyuki)</li>
+  <li> Solaris 10 でコンパイルできるようにしました。(Yoshiyuki)</li>
+  <li> ヘルスチェックとリカバリのログ出力を改良しました。(Tatsuo)</li>
+  <li> 様々なメモリリークを修正しました。(Yoshiyuki)</li>
   <li> "failed to read kind from frontend" というエラーメッセージを
-  ERRORレベルから LOG レベルに下げました。(Yoshiyuki)
+  ERRORレベルから LOG レベルに下げました。(Yoshiyuki)</li>
   <li> raw モードでフェイルオーバに失敗する不具合を修正しました。
-  (Taiki)
+  (Taiki)</li>
   <li> 不正なノードを追加・切り離しを行うとゾンビプロセスが発生する不
-  具合を修正しました。(Yoshiyuki)
+  具合を修正しました。(Yoshiyuki)</li>
   <li> health_check_timeout が正しく動作しない不具合を修正しました。
-  (Kenichi Sawada)
+  (Kenichi Sawada)</li>
   <li> FreeBSD で ps コマンドの出力が正しくない不具合を修正しました。
-  (ISHIDA Akio)
+  (ISHIDA Akio)</li>
   <li> Unix domain ソケットが残っている場合のエラーメッセージを強化し
-  ました。(Jun Kuriyama)
-  <li> 認証に失敗した場合のエラーメッセージを強化しました。(Tatsuo)
+  ました。(Jun Kuriyama)</li>
+  <li> 認証に失敗した場合のエラーメッセージを強化しました。(Tatsuo)</li>
 </ul>
 
 <h4>レプリケーション</h4>
 <ul>
   <li> replicate_select を設定しても、常に false の挙動になる不具合を
-  修正しました。(Tatsuo)
+  修正しました。(Tatsuo)</li>
   <li> 拡張問い合わせプロトコルを使っていると、トランザクションを誤ってロー
-  ルバックしてしまう不具合を修正しました。(Yoshiyuki)
+  ルバックしてしまう不具合を修正しました。(Yoshiyuki)</li>
   <li> 非同期クエリを使っていると pgpool が不安定になる不具合を修正し
-  ました。(Yoshiyuki)
+  ました。(Yoshiyuki)</li>
   <li> 拡張問合せプロトコルを使うと /* REPLICATION */などのヒント句が消えて
-  しまう不具合を修正しました。(Yoshiyuki)
+  しまう不具合を修正しました。(Yoshiyuki)</li>
   <li> DEALLOCATE ALL を実行するとクラッシュする不具合を修正しました。
-  (Yoshiyuki)
+  (Yoshiyuki)</li>
   <li> immediate shutdown するとハングアップする不具合を修正しました。
-  (Yoshiyuki)
+  (Yoshiyuki)</li>
   <li> 高負荷時にオンラインリカバリを実施すると、リカバリプロセスがハ
-  ングアップする可能性のある不具合を修正しました。(Yoshiyuki)
+  ングアップする可能性のある不具合を修正しました。(Yoshiyuki)</li>
   <li> 拡張問合せプロトコルを使って SELECT を実行した際に、トランザク
   ションブロック内でクエリがエラーになると、pgpool がハングアップする
-  可能性のある不具合を修正しました。(Yoshiyuki)
+  可能性のある不具合を修正しました。(Yoshiyuki)</li>
 </ul>
 
 <h4>マスタースレーブ</h4>
 <ul>
   <li> トランザクションブロック内で、SET, PREPARE, DEALLOCATE を実行す
-  ると、プロセスがダウンする不具合を修正しました。(Yoshiyuki)
+  ると、プロセスがダウンする不具合を修正しました。(Yoshiyuki)</li>
   <li> マスタースレーブモードでロードバランスが正しく動作していない不
-  具合を修正しました。(Yoshiyuki)
+  具合を修正しました。(Yoshiyuki)</li>
 </ul>
 
 <h4>パラレルクエリ</h4>
 <ul>
-  <li> INSERT に失敗する不具合を修正しました。(Yoshiharu)
-  <li> FROM 句に AS が含まれると構文エラーになる不具合を修正しました。(sho)
-  <li> クエリを複数回実行するとハングアップする不具合を修正しました。(Yoshiharu)
-  <li> JOIN に失敗する不具合を修正しました。(Yoshiharu)
-  <li> DISTINCT構文 の解析に失敗する不具合を修正しました。(Yoshiharu)
+  <li> INSERT に失敗する不具合を修正しました。(Yoshiharu)</li>
+  <li> FROM 句に AS が含まれると構文エラーになる不具合を修正しました。(sho)</li>
+  <li> クエリを複数回実行するとハングアップする不具合を修正しました。(Yoshiharu)</li>
+  <li> JOIN に失敗する不具合を修正しました。(Yoshiharu)</li>
+  <li> DISTINCT構文 の解析に失敗する不具合を修正しました。(Yoshiharu)</li>
 </ul>
 
+<!-- ================================================================================ -->
+<!-- 2.0                                                                              -->
+<!-- ================================================================================ -->
 <hr>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.0.1 (hikitsuboshi) 2007/11/21</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <ul>
   <li> UPDATE もしくは DELETE を実行するとプロセスがダウンする不具合を
-       修正しました。(Yoshiyuki) 
+       修正しました。(Yoshiyuki) </li>
   <li> master_slave を true に設定している場合に、SQL 構文エラーを検知
-       した時にマスタにのみそのクエリを送信するようにしました。(Yoshiyuki)
+       した時にマスタにのみそのクエリを送信するようにしました。(Yoshiyuki)</li>
 </ul>
 
 <hr>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>2.0 (hikitsuboshi) 2007/11/16</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <h3>互換性</h3>
 <ul>
   <li> ignore_leading_white_space のデフォルト値を true にしました。
-  (Yoshiyuki)
+  (Yoshiyuki)</li>
   <li> replicate_strict を廃止しました。常に replicate_strict が true
-  の挙動になります。(Yoshiyuki)
+  の挙動になります。(Yoshiyuki)</li>
 </ul>
 
 <h3>全般</h3>
 <ul>
   <li> pgpool.conf をリロードできるようにしました。リロード時に分散ルー
-  ルも同時にリロードします。(Yoshiyuki)
-  <li> SQL パーサを PostgreSQL 8.3 に対応しました。(Yoshiyuki)
+  ルも同時にリロードします。(Yoshiyuki)</li>
+  <li> SQL パーサを PostgreSQL 8.3 に対応しました。(Yoshiyuki)</li>
   <li> ノードを切り離した際にユーザが設定したコマンドを実行できるよう
   に、pgpool.conf に failover_command というパラメータを追加しました。
-  (Yoshiyuki)
+  (Yoshiyuki)</li>
   <li> ノードを復帰した際にユーザが設定したコマンドを実行できるように、
   pgpool.conf に failback_command というパラメータを追加しました。
-  (Yoshiyuki)
+  (Yoshiyuki)</li>
   <li> pgpool.conf に client_idle_limit というパラメータを追加しました。
   このパラメータではクライアントからのクエリの最大待ち時間を設定するこ
-  とができます。(Tatsuo)
+  とができます。(Tatsuo)</li>
 </ul>
 
 <h3>レプリケーション</h3>
 <ul>
   <li> トランザクションブロックに囲まれていないクエリをレプリケーショ
   ンさせる場合、内部的にトランザクションを開始させるようにしました。
-  (Yoshiyuki)
-  <li> レプリケーションを高速化させるようにしました。(Yoshiyuki)
+  (Yoshiyuki)</li>
+  <li> レプリケーションを高速化させるようにしました。(Yoshiyuki)</li>
   <li> ノードを再同期させて復帰させる、オンラインリカバリ機能を実装し
-  ました。(Yoshiyuki)
+  ました。(Yoshiyuki)</li>
   <li> INSERT, UPDATE, DELETE した行数がすべて一致しなかった場合に、ト
   ランザクションをアボートさせるようにしました。(Yoshiyuki)
 <pre>
    x=# update t set a = a + 1;
    ERROR:  pgpool detected difference of the number of update tuples
    HINT:  check data consistency between master and other db node
-</pre>
+</pre></li>
   <li> 複数のバックエンドから異なる結果が返ってきた場合に、同じ結果が
-  多数返ってきた結果を信頼する多数決方式を実装しました。(Yoshiyuki)
-  <li> V2 問合せプロトコルでロードバランスできるようにしました。(Yoshiyuki)
+  多数返ってきた結果を信頼する多数決方式を実装しました。(Yoshiyuki)</li>
+  <li> V2 問合せプロトコルでロードバランスできるようにしました。(Yoshiyuki)</li>
 </ul>
 
 <h3>パラレルクエリ</h3>
 <ul>
-  <li> パラレルモードで部分レプリケーションをサポートしました。(Yoshiharu)
+  <li> パラレルモードで部分レプリケーションをサポートしました。(Yoshiharu)</li>
 </ul>
 
+<!-- ================================================================================ -->
+<!-- 1.3                                                                              -->
+<!-- ================================================================================ -->
 <hr>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>1.3 (sohiboshi) 2007/10/23</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <ul>
-  <li> 新しく authentication_timeout というパラメータを追加しました。(Yoshiyuki)
+  <li> 新しく authentication_timeout というパラメータを追加しました。(Yoshiyuki)</li>
     <ul>
-     <li>このパラメータでは認証時間のタイムアウトを設定します。 
-     <li>デフォルト値は 60 (1 分)です。
+     <li>このパラメータでは認証時間のタイムアウトを設定します。 </li>
+     <li>デフォルト値は 60 (1 分)です。</li>
    </ul>
-  <li> スタートアップパケットの長さが 10000 バイト越えている場合には、接続を切断するようにしました。(Yoshiyuki)
+  <li> スタートアップパケットの長さが 10000 バイト越えている場合には、接続を切断するようにしました。(Yoshiyuki)</li>
   <li> DEALLOCATE を実行するとまれに不正なメモリアクセスが発生する不具
-       合を修正しました。(Yoshiyuki)
+       合を修正しました。(Yoshiyuki)</li>
   <li> トランザクション内で SELECT を実行した後に SELECT を正しくロードバラ
-       ンスできない不具合を修正しました。(Yoshiyuki)
+       ンスできない不具合を修正しました。(Yoshiyuki)</li>
        <ul>
-    <li> この不具合は 1.2 で混入した不具合です。
+    <li> この不具合は 1.2 で混入した不具合です。</li>
        </ul>
-  <li> 64bit 環境でクエリキャッシュ機能を有効にすると、クラッシュする可能性のある不具合を修正しました(Yoshiyuki)
+  <li> 64bit 環境でクエリキャッシュ機能を有効にすると、クラッシュする可能性のある不具合を修正しました(Yoshiyuki)</li>
 </ul>
 
+<!-- ================================================================================ -->
+<!-- 1.2                                                                              -->
+<!-- ================================================================================ -->
 <hr>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>1.2.1 (tomoboshi) 2007/09/28</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <ul>
   <li> 拡張問合せプロトコルの Parse メッセージの処理でデッドロックが発
-  生する可能性がある不具合を修正しました。(Yoshiyuki)
+  生する可能性がある不具合を修正しました。(Yoshiyuki)</li>
 
   <li> Prepared statement を管理する領域がメモリリークしている不具合を
-  修正しました。(Yoshiyuki)
+  修正しました。(Yoshiyuki)</li>
 
-  <li> 一部の OS でコンパイルエラーになる不具合を修正しました。(Yoshiyuki)
+  <li> 一部の OS でコンパイルエラーになる不具合を修正しました。(Yoshiyuki)</li>
 
-  <li>master/slave モード内で SET, PREPARE, DEALLOCATE 文をレプリケーションさせるようにしました。(Yoshiyuki)
+  <li>master/slave モード内で SET, PREPARE, DEALLOCATE 文をレプリケーションさせるようにしました。(Yoshiyuki)</li>
 </ul>
 
 <hr>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>1.2 (tomoboshi) 2007/08/01</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <ul>
   <li> pgpool.conf に replicate_select という新規パラメータを追加しま
-  した。デフォルト値は false です。(Yoshiyuki)
+  した。デフォルト値は false です。(Yoshiyuki)</li>
   <ul>
     <li> true に設定した場合は、ロードバランスされない SELECT 文をレプ
     リケーションします(pgpool-II 1.0 の挙動)。false の場合はマスタにの
-    み SELECT を送信します。
+    み SELECT を送信します。</li>
   </ul>
 
-  <li> シグナル処理を安全に行うようにしました。(Yoshiyuki)
+  <li> シグナル処理を安全に行うようにしました。(Yoshiyuki)</li>
   <ul>
-    <li>まれにゾンビプロセスが残ってしまったり、不安定になることがありました。
+    <li>まれにゾンビプロセスが残ってしまったり、不安定になることがありました。</li>
   </ul>
-  
+
   <li> トランザクション中に SELECT 文がエラーになると、ハングアップし
-  てしまう不具合を修正しました。(Yoshiyuki)
+  てしまう不具合を修正しました。(Yoshiyuki)</li>
   <ul>
-    <li> この不具合は 1.1 に入った不具合です。
+    <li> この不具合は 1.1 に入った不具合です。</li>
   </ul>
 
   <li> PREPARE/EXECUTE が master/slave モードで正しく動作しない不具合
-  を修正しました。(Yoshiyuki)
+  を修正しました。(Yoshiyuki)</li>
 
   <li> デッドロックを検知すると、kind mismatch error が発生する不具合
-  を修正しました。(Yoshiyuki)
+  を修正しました。(Yoshiyuki)</li>
 
   <li> 拡張問い合わせプロトコルを使ったドライバを使用した場合に、構文
         解析時に警告が発生する SQL 文を実行するとハングアップもしくは
-        プロセスがクラッシュする不具合を修正しました。(Yoshiyuki)
+        プロセスがクラッシュする不具合を修正しました。(Yoshiyuki)</li>
 
   <li> コネクションキャッシュが一杯になるとメモリリークが発生する不具
-  合を修正しました。(Yoshiyuki)
+  合を修正しました。(Yoshiyuki)</li>
 
   <li> セッションが残った状態で PostgreSQL を fast shutdown もしくは
   immediate shutdown すると、残ったセッションがハングアップする不具合
-  を修正しました。(Yoshiyuki)
+  を修正しました。(Yoshiyuki)</li>
 
   <li> ロードバランス先を接続開始時に決定し、同じセッション内ではすべ
-  て同じノードにクエリを送信するようにしました。(Yoshiyuki)
+  て同じノードにクエリを送信するようにしました。(Yoshiyuki)</li>
 
   <li> connection_life_time を設定している場合にバッファオーバランが発
-  生する可能性がある不具合を修正しました。(Yoshiyuki)
+  生する可能性がある不具合を修正しました。(Yoshiyuki)</li>
 
 </ul>
 
+<!-- ================================================================================ -->
+<!-- 1.1                                                                              -->
+<!-- ================================================================================ -->
 <hr>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>1.1.1 (amiboshi) 2007/06/15</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <ul>
   <li> load_balance_mode を有効にしていると、"kind mismatch" エラーが
   発生してしまう不具合を修正しました。これは 1.1 で入った不具合です。
-  (Yoshiyuki)
+  (Yoshiyuki)</li>
   <li> プロトコルバージョン 2 を使ったドライバでレプリケーション使用す
-  ると、pgpool がハングアップする不具合を修正しました(Yoshiyuki)
+  ると、pgpool がハングアップする不具合を修正しました(Yoshiyuki)</li>
   <li> 拡張問合せプロトコルを使用すると、まれにデッドロックが発生する
-  不具合を修正しました(Yoshiyuki)
+  不具合を修正しました(Yoshiyuki)</li>
 </ul>
 
 <hr>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>1.1 (amiboshi) 2007/05/25</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <ul>
-  <li> HBA 認証をサポートしました(Taiki)
-  <li> log_connections をサポートしました(Taiki)
-  <li> log_hostname をサポートしました(Taiki)
-  <li> ps コマンドで pgpool の状態がわかるようにしました(Taiki)
-  <li> MacOS X でコンパイルエラーになる不具合を修正しました(Yoshiyuki)
+  <li> HBA 認証をサポートしました(Taiki)</li>
+  <li> log_connections をサポートしました(Taiki)</li>
+  <li> log_hostname をサポートしました(Taiki)</li>
+  <li> ps コマンドで pgpool の状態がわかるようにしました(Taiki)</li>
+  <li> MacOS X でコンパイルエラーになる不具合を修正しました(Yoshiyuki)</li>
   <li> 拡張問い合わせプロトコルを使ったクエリをロードバランスできるよ
-  うにしました(Yoshiyuki)
+  うにしました(Yoshiyuki)</li>
   <li> レプリケーション設定時、SELECT は master にのみ送信するようにし
   ました(Yoshiyuki)
     <ul>
       <li> もし SELECT をレプリケーションさせる場合は /*REPLICATION*/
-      のように SELECT の前にコメントを付ける必要があります
-    </ul>
+      のように SELECT の前にコメントを付ける必要があります</li>
+    </ul></li>
   <li> レプリケーション設定時、SELECT nextval() および SELECT setval()
-  を自動的にレプリケーションさせるようにしました(Yoshiyuki)
+  を自動的にレプリケーションさせるようにしました(Yoshiyuki)</li>
   <li> バックエンドへ接続中にシグナルに割り込まれると、フェイルオーバ
-  してしまう不具合を修正しました(Yoshiyuki)
+  してしまう不具合を修正しました(Yoshiyuki)</li>
   <li> PAM 認証のサンプルファイル pgpool.pam を
-  $PREFIX/share/pgpool-II/ にインストールするようにしました(Taiki)
+  $PREFIX/share/pgpool-II/ にインストールするようにしました(Taiki)</li>
   <li> 巨大な SQL を実行しようとした場合に pgpool が無限ループに入る不
-  具合を修正しました(Yoshiyuki) 
+  具合を修正しました(Yoshiyuki) </li>
 </ul>
 
+<!-- ================================================================================ -->
+<!-- 1.0                                                                              -->
+<!-- ================================================================================ -->
 <hr>
 
+<!-- -------------------------------------------------------------------------------- -->
 <h2>1.0.2 (suboshi) 2007/02/13</h2>
+<!-- -------------------------------------------------------------------------------- -->
 <ul>
   <li> 巨大な SQL を実行しようとした場合に pgpool が無限ループに入る不
-  具合を修正しました(Yoshiyuki) 
+  具合を修正しました(Yoshiyuki) </li>
   <li> 拡張問合せプロトコルを使った場合にまれに pgpool が止まってしま
-  う不具合を修正しました(Yoshiyuki) 
+  う不具合を修正しました(Yoshiyuki) </li>
   <li> フェイルオーバ、フェイルバック時のログ出力を改善しました
-  (Tatsuo)
+  (Tatsuo)</li>
   <li> SHOW pool_status の結果にバックエンドステータス情報を追加しまし
-  た(Tatsuo)
+  た(Tatsuo)</li>
   <li> レプリケーション時に UPDATE/DELETE の件数が実際の件数とは異なっ
-  た結果を返す不具合を修正しました(Tatsuo)
+  た結果を返す不具合を修正しました(Tatsuo)</li>
   <li> 古い gcc を使うと libpq のリンクに失敗する不具合を修正しました
-  (Yoshiyuki)
+  (Yoshiyuki)</li>
   <li> PHP:PDO や DBD-Pg を使った場合に、自動 DEALLOCATE が失敗してし
-  まう不具合を修正しました(Yoshiyuki)
+  まう不具合を修正しました(Yoshiyuki)</li>
   <li> SELECT FOR UPDATE, SELECT INTO をロードバランスさせないようにし
   ました。また、SELECT の前にコメントがある場合もロードバランスさせな
-  いようにしました。これは pgpool-I との互換性のためです。(Yoshiyuki)
+  いようにしました。これは pgpool-I との互換性のためです。(Yoshiyuki)</li>
   <li> configure 時の libpq のデフォルトパスを pg_config コマンドを使っ
   て取得するようにしました。なお、--with-pgsql 関連のオプションは次の
-  バージョンでは廃止予定です(Yoshiyuki)
+  バージョンでは廃止予定です(Yoshiyuki)</li>
   <li> コネクションプール再利用時に、ソケットが壊れている場合は再接続
-  するようにしました(Yoshiyuki)
+  するようにしました(Yoshiyuki)</li>
   <li> PostgreSQL 7.4.x の libpq を使ってビルドしようとすると、
   configure スクリプトでエラーとなってしまう不具合を修正しました
-  (Yoshiyuki)
+  (Yoshiyuki)</li>
 </ul>
 
 <div class="copyright">
 <hr>
 <copyright>
-Copyright &copy; 2003 &ndash; 2013 pgpool Global Development Group
+Copyright &copy; 2003 &ndash; 2014 pgpool Global Development Group
 </copyright>
 </div>
 </body>
