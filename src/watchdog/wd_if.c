@@ -224,12 +224,12 @@ exec_ifconfig(char * path,char * command)
 		{
 			int result;
 			result = wait(&status);
-			if (result < 0)
+			if (result < 0 && errno != ECHILD)
 			{
 				if (errno == EINTR)
 					continue;
 
-				pool_debug("exec_ifconfig: wait() failed at errno: %d ", errno);
+				pool_debug("exec_ifconfig: wait() failed. reason: %s ", strerror(errno));
 				return WD_NG;
 			}
 
