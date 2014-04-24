@@ -101,7 +101,7 @@ static void process_promote_node(PCP_CONNECTION *frontend,char *buf, char tos);
 static void process_shutown_request(char mode);
 
 static void process_authentication(PCP_CONNECTION *frontend, char *buf, char *pcp_conf_file,
-				char* salt, int *random_salt, int *authenticated);
+				char* salt, int *random_salt,volatile int *authenticated);
 static void send_md5salt(PCP_CONNECTION *frontend, char* salt);
 
 
@@ -1382,7 +1382,7 @@ process_promote_node(PCP_CONNECTION *frontend, char *buf, char tos)
 
 static void
 process_authentication(PCP_CONNECTION *frontend, char *buf, char *pcp_conf_file,
-				char* salt, int *random_salt, int *authenticated)
+				char* salt, int *random_salt,volatile int *authenticated)
 {
 	int wsize;
 

@@ -204,7 +204,7 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	/*
 	 * install the call back for preparation of system exit
 	 */
-    on_system_exit(system_will_go_down, NULL);
+    on_system_exit(system_will_go_down, (Datum)NULL);
 
 	/* set unix domain socket path for connections to pgpool */
 	snprintf(un_addr.sun_path, sizeof(un_addr.sun_path), "%s/.s.PGSQL.%d",
@@ -1067,7 +1067,10 @@ static RETSIGTYPE failover_handler(int sig)
 {
 	POOL_SETMASK(&BlockSig);
 	failover_request = 1;
-	write(pipe_fds[1], "\0", 1);
+	if(write(pipe_fds[1], "\0", 1) < 0)
+        ereport(WARNING,
+                (errmsg("failover_handler: write to pipe failed with error \"%s\"", strerror(errno))));
+
 	POOL_SETMASK(&UnBlockSig);
 }
 
@@ -1686,7 +1689,10 @@ static RETSIGTYPE reap_handler(int sig)
 {
 	POOL_SETMASK(&BlockSig);
 	sigchld_request = 1;
-	write(pipe_fds[1], "\0", 1);
+	if(write(pipe_fds[1], "\0", 1) < 0)
+        ereport(WARNING,
+            (errmsg("reap_handler: write to pipe failed with error \"%s\"", strerror(errno))));
+
 	POOL_SETMASK(&UnBlockSig);
 }
 
@@ -1868,7 +1874,9 @@ static RETSIGTYPE wakeup_handler(int sig)
 {
 	POOL_SETMASK(&BlockSig);
 	wakeup_request = 1;
-	write(pipe_fds[1], "\0", 1);
+	if(write(pipe_fds[1], "\0", 1) < 0)
+        ereport(WARNING,
+            (errmsg("wakeup_handler: write to pipe failed with error \"%s\"", strerror(errno))));
 	POOL_SETMASK(&UnBlockSig);
 }
 
@@ -1880,7 +1888,10 @@ static RETSIGTYPE reload_config_handler(int sig)
 {
 	POOL_SETMASK(&BlockSig);
 	reload_config_request = 1;
-	write(pipe_fds[1], "\0", 1);
+	if(write(pipe_fds[1], "\0", 1) < 0)
+        ereport(WARNING,
+            (errmsg("reload_config_handler: write to pipe failed with error \"%s\"", strerror(errno))));
+
 	POOL_SETMASK(&UnBlockSig);
 }
 
@@ -1923,7 +1934,11 @@ static int pool_pause(struct timeval *timeout)
 	FD_SET(pipe_fds[0], &rfds);
 	n = select(pipe_fds[0]+1, &rfds, NULL, NULL, timeout);
 	if (n == 1)
-		read(pipe_fds[0], &dummy, 1);
+    {
+		if(read(pipe_fds[0], &dummy, 1) < 0)
+            ereport(WARNING,
+                (errmsg("pool_pause: read on pipe failed with error \"%s\"", strerror(errno))));
+    }
 	return n;
 }
 
@@ -2101,7 +2116,6 @@ static POOL_CONNECTION_POOL_SLOT*
 {
     POOL_CONNECTION_POOL_SLOT   *s = NULL;
     POOL_CONNECTION *con;
-	POOL_STATUS status;
 	POOL_SELECT_RESULT *res;
 
     BackendInfo *bkinfo = pool_get_node_info(backend_no);
@@ -2119,7 +2133,7 @@ static POOL_CONNECTION_POOL_SLOT*
             return NULL;
         }
         con = s->con;
-        status = do_query(con, "SELECT pg_is_in_recovery()",
+        do_query(con, "SELECT pg_is_in_recovery()",
 						  &res, PROTO_MAJOR_V3);
         if (res->numrows <= 0)
         {
@@ -2525,7 +2539,7 @@ static void system_will_go_down(int code, Datum arg)
     if(mypid != getpid())
     {
         /* should never happen */
-        ereport(LOG,("system_will_go_down called from invalid process"));
+        ereport(LOG,(errmsg("system_will_go_down called from invalid process")));
         return;
     }
     POOL_SETMASK(&AuthBlockSig);

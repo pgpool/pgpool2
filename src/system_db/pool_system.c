@@ -25,6 +25,8 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 #include "utils/elog.h"
 #include "pool.h"
 #include "pool_config.h"
@@ -437,7 +439,6 @@ int pool_get_id (DistDefInfo *info, const char *value)
 {
 	int num;
 	PGresult *result;
-	char *type;
 	int length;
 
 	if (!system_db_info->pgconn ||
@@ -453,7 +454,6 @@ int pool_get_id (DistDefInfo *info, const char *value)
 			return -1;
 	}
 
-	type=info->type_list[info->dist_key_col_id];
 	length = strlen(value);
 	result = PQexecPrepared(system_db_info->pgconn, info->prepare_name,
 							1, &value, &length, NULL, 0);
@@ -596,7 +596,10 @@ system_db_health_check(void)
 						   	   SYSDB_INFO->port)));
 	}
 
-	read(fd, &kind, 1);
+	if(read(fd, &kind, 1) < 0)
+		ereport(WARNING,
+				(errmsg("SystemDB health read on socket failed")));
+    
 
 	if (write(fd, "X", 1) < 0)
 	{

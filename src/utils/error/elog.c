@@ -105,7 +105,6 @@ static void proc_exit_prepare(int code);
 /* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
 CommandDest whereToSendOutput = DestDebug;
 char		OutputFileName[1024];	/* debugging output file */
-static void set_errdata_field(MemoryContextData *cxt, char **ptr, const char *str);
 
 /* Global variables */
 ErrorContextCallback *error_context_stack = NULL;
@@ -162,14 +161,6 @@ static ErrorData errordata[ERRORDATA_STACK_SIZE];
 static int	errordata_stack_depth = -1; /* index of topmost active frame */
 
 static int	recursion_depth = 0;	/* to detect actual recursion */
-
-/* buffers for formatted timestamps that might be used by both
- * log_line_prefix and csv logs.
- */
-
-#define FORMATTED_TS_LEN 128
-static char formatted_start_time[FORMATTED_TS_LEN];
-static char formatted_log_time[FORMATTED_TS_LEN];
 
 
 /* Macro for checking errordata_stack_depth is reasonable */
@@ -970,15 +961,6 @@ int	get_return_code(void)
 	CHECK_STACK_DEPTH();
 
 	return edata->retcode;
-}
-/*
- * set_errdata_field --- set an ErrorData string field
- */
-static void
-set_errdata_field(MemoryContextData *cxt, char **ptr, const char *str)
-{
-	Assert(*ptr == NULL);
-	*ptr = MemoryContextStrdup(cxt, str);
 }
 
 /*
@@ -1888,8 +1870,6 @@ send_message_to_server_log(ErrorData *edata)
 	StringInfoData buf;
 
 	initStringInfo(&buf);
-
-	formatted_log_time[0] = '\0';
 
     pgpool_log_prefix(&buf, edata);
 	appendStringInfo(&buf, "%s:  ", error_severity(edata->elevel));

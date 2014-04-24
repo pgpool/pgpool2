@@ -184,15 +184,6 @@ void do_worker_child(void)
 }
 
 /*
- * Error context callback for errors occurring after persistent db connection
- * was created.
- */
-static void
-clean_persistent_connection_error_callback(void *arg)
-{
-    discard_persistent_connection();
-}
-/*
  * Establish persistent connection to backend
  */
 static void establish_persistent_connection(void)
