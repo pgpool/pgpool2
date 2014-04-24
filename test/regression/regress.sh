@@ -5,6 +5,7 @@
 # -i install directory of pgpool
 # -b pgbench path
 # -p installation path of Postgres
+# -j JDBC driver path
 # -m install (install pgpool-II and use that for tests) / noinstall : Default install
 
 dir=`pwd`
