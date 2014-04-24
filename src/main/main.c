@@ -371,7 +371,6 @@ static void daemonize(void)
 	int			i;
 	pid_t		pid;
 	int			fdlimit;
-    int         rc_chdir;
 
 	pid = fork();
 	if (pid == (pid_t) -1)
@@ -396,7 +395,10 @@ static void daemonize(void)
 
 	mypid = getpid();
 	write_pid_file();
-	rc_chdir = chdir("/");
+	if(chdir("/"))
+		ereport(WARNING,
+                (errmsg("change directory failed"),
+                 errdetail("chdir() system call failed with reason: \"%s\"", strerror(errno) )));
 
 	/* redirect stdin, stdout and stderr to /dev/null */
 	i = open("/dev/null", O_RDWR);

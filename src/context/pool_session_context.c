@@ -723,7 +723,6 @@ void pool_set_transaction_isolation(POOL_TRANSACTION_ISOLATION isolation_level)
  */
 POOL_TRANSACTION_ISOLATION pool_get_transaction_isolation(void)
 {
-	POOL_STATUS status;
 	POOL_SELECT_RESULT *res;
 	POOL_TRANSACTION_ISOLATION ret;
 
@@ -738,7 +737,7 @@ POOL_TRANSACTION_ISOLATION pool_get_transaction_isolation(void)
 		return session_context->transaction_isolation;
 
 	/* No cached data is available. Ask backend. */
-	status = do_query(MASTER(session_context->backend),
+	do_query(MASTER(session_context->backend),
 					  "SELECT current_setting('transaction_isolation')", &res, MAJOR(session_context->backend));
 
 	if (res->numrows <= 0)

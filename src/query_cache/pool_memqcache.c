@@ -733,7 +733,6 @@ bool pool_is_likely_select(char *query)
  */
 bool pool_is_allow_to_cache(Node *node, char *query)
 {
-	SelectStmt	*stmt;
 	int i = 0;
 	int num_oids = -1;
 	SelectContext ctx;
@@ -743,9 +742,6 @@ bool pool_is_allow_to_cache(Node *node, char *query)
 	 */
 	if (!strncasecmp(query, NO_QUERY_CACHE, NO_QUERY_CACHE_COMMENT_SZ))
 		return false;
-
-	stmt = (SelectStmt *)node;
-
 	/*
 	 * Check black table list first.
 	 */
@@ -1397,7 +1393,12 @@ void pool_discard_oid_maps(void)
 
 	snprintf(command, sizeof(command), "/bin/rm -fr %s/[0-9]*",
 			 pool_config->memqcache_oiddir);
-	system(command);
+	if(system(command) == -1)
+        ereport(WARNING,
+            (errmsg("unable to execute command \"%s\"",command),
+             errdetail("system() command failed with error \"%s\"",strerror(errno))));
+    
+
 }
 
 void pool_discard_oid_maps_by_db(int dboid)
@@ -1408,8 +1409,12 @@ void pool_discard_oid_maps_by_db(int dboid)
 	{
 		snprintf(command, sizeof(command), "/bin/rm -fr %s/%d/",
 				 pool_config->memqcache_oiddir, dboid);
-		system(command);
-		pool_debug("command: %s", command);
+		if(system(command) == -1)
+            ereport(WARNING,
+                    (errmsg("unable to execute command \"%s\"",command),
+                     errdetail("system() command failed with error \"%s\"",strerror(errno))));
+
+        pool_debug("command: %s", command);
 	}
 }
 
@@ -1682,7 +1687,7 @@ static void *shmem;
 int pool_init_memory_cache(size_t size)
 {
 	ereport(DEBUG1,
-		(errmsg("memory cache request size : %d",size)));
+		(errmsg("memory cache request size : %zd",size)));
 
 	shmem = pool_shared_memory_create(size);
 	return 0;

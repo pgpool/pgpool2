@@ -107,7 +107,6 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	List *parse_tree_list;
 	Node *node = NULL;
 	POOL_STATUS status;
-	char *string;
 	int lock_kind;
 	bool is_likely_select = false;
 	int specific_error = 0;
@@ -463,7 +462,6 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		}
 	}
 
-	string = query_context->original_query;
 
 	if (!RAW_MODE)
 	{
@@ -2311,10 +2309,9 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 	char *contents;
 	POOL_STATUS status;
 	int len = 0;
-	POOL_SESSION_CONTEXT *session_context;
 
 	/* Get session context */
-	session_context = pool_get_session_context(false);
+	pool_get_session_context(false);
 
 	if (pool_read_buffer_is_empty(frontend) && frontend->no_forward != 0)
 		return POOL_CONTINUE;
@@ -2489,10 +2486,9 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 {
 	int status;
 	char kind;
-	POOL_SESSION_CONTEXT *session_context;
 
 	/* Get session context */
-	session_context = pool_get_session_context(false);
+	pool_get_session_context(false);
 
 	if (pool_is_ignore_till_sync())
 	{
