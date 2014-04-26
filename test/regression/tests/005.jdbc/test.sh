@@ -9,13 +9,23 @@ export CLASSPATH=.:$JDBC_DRIVER
 
 for mode in s r n
 do
+	echo "===== mode:$mode ====="
 	rm -fr $TESTDIR
 	mkdir $TESTDIR
 	cd $TESTDIR
 
 # create test environment
 	echo -n "creating test environment..."
-	sh $PGPOOL_SETUP -m $mode -n 2 || exit 1
+
+	# to avoid repication lag problem when testing under streaming
+	# replication mode, set number of cluster to 1 when in the mode
+	if [ $mode = "s" ];then
+		n=1
+	else
+		n=2
+	fi
+
+	sh $PGPOOL_SETUP -m $mode -n $n || exit 1
 	echo "done."
 
 	source ./bashrc.ports
