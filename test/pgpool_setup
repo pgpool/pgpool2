@@ -564,6 +564,7 @@ function wait_for_pgpool_startup {
 			break;
 		fi
 		timeout=`expr $timeout - 1`
+		sleep 1
 	done
 }
 
@@ -581,6 +582,7 @@ function wait_for_pgpool_reload {
 			break;
 		fi
 		timeout=`expr $timeout - 1`
+		sleep 1
 	done
 }
 
