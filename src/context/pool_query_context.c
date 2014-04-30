@@ -175,7 +175,7 @@ void pool_setall_node_to_be_sent(POOL_QUERY_CONTEXT *query_context)
 	int i;
 	POOL_SESSION_CONTEXT *sc;
 
-	sc = pool_get_session_context();
+	sc = pool_get_session_context(true);
 	if (!sc)
 	{
 		pool_error("pool_setall_node_to_be_sent: no session context");

@@ -1017,7 +1017,6 @@ free_systemdb_info(SystemDBInfo * si)
 
 	if (si == NULL)
 		return;
-
 	pfree(si->hostname);
 	pfree(si->user);
 	pfree(si->password);

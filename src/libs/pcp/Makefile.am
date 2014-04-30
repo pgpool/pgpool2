@@ -4,7 +4,8 @@ lib_LTLIBRARIES = libpcp.la
 libpcp_la_SOURCES = pcp.c $(top_srcdir)/src/utils/pcp/pcp_stream.c \
                     $(top_srcdir)/src/utils/pcp/pcp_error.c \
                     $(top_srcdir)/src/utils/pcp/pcp_timeout.c \
-                    $(top_srcdir)/src/auth/md5.c
+                    $(top_srcdir)/src/auth/md5.c \
+                    $(top_srcdir)/src/utils/strlcpy.c
 
 include_HEADERS = $(top_srcdir)/src/include/pcp/pcp.h \
 					$(top_srcdir)/src/include/pcp/libpcp_ext.h \

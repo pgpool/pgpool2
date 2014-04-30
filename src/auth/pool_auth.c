@@ -410,10 +410,11 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	}
 
 	if (pid == -1)
+	{
 		ereport(ERROR,
                 (errmsg("authentication failed"),
-                 errdetail("all backends are down")));
-
+                 errdetail("pool_do_auth: all backends are down")));
+	}
 	if(pool_send_backend_key_data(frontend, pid, key, protoMajor))
 		ereport(ERROR,
 			(errmsg("authentication failed"),

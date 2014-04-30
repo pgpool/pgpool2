@@ -2051,12 +2051,7 @@ POOL_STATUS ParameterDescription(POOL_CONNECTION *frontend,
 	int num_params, send_num_params, num_dmy;
 	char kind = 't';
 
-	session_context = pool_get_session_context();
-	if (!session_context)
-	{
-		pool_error("ParameterDescription: cannot get session context");
-		return POOL_END;
-	}
+	session_context = pool_get_session_context(false);
 
 	/* only in replication mode and rewritten query */
 	if (!REPLICATION || !session_context->query_context->rewritten_query)

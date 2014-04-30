@@ -529,13 +529,15 @@ char *get_config_file_name(void)
 }
 
 /*
- * get_config_file_name: return full path of pool_hba.conf.
+ * get_hba_file_name: return full path of pool_hba.conf.
  */
 char *get_hba_file_name(void)
 {
 	return hba_file;
 }
-/* Call back function to unlink the file */
+/*
+ * Call back function to unlink the file
+ */
 static void FileUnlink(int code, Datum path)
 {
 	char* filePath = (char*)path;

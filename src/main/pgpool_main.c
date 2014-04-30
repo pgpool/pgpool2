@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -701,6 +701,7 @@ static int create_inet_domain_socket(const char *hostname, const int port)
 	}
 
     backlog = pool_config->num_init_children * pool_config->listen_backlog_multiplier;
+
 	if (backlog > PGPOOLMAXLITSENQUEUELENGTH)
 		backlog = PGPOOLMAXLITSENQUEUELENGTH;
 
@@ -984,10 +985,10 @@ static RETSIGTYPE exit_handler(int sig)
     processState = EXITING;
 
     /* Close listen socket */
-    pool_log("pgpool main: close listen socket");
-    close(inet_fd);
-    close(unix_fd);
-    
+	pool_log("pgpool main: close listen socket");
+	close(inet_fd);
+	close(unix_fd);
+
 	for (i = 0; i < pool_config->num_init_children; i++)
 	{
 		pid_t pid = process_info[i].pid;
@@ -1154,17 +1155,18 @@ static void failover(void)
 	/* failback request? */
 	if (Req_info->kind == NODE_UP_REQUEST)
 	{
-        if (node_id < 0 || node_id >= MAX_NUM_BACKENDS ||
+		if (node_id < 0 || node_id >= MAX_NUM_BACKENDS ||
 			(Req_info->kind == NODE_UP_REQUEST && !(RAW_MODE &&
             BACKEND_INFO(node_id).backend_status == CON_DOWN) && VALID_BACKEND(node_id)) ||
 			(Req_info->kind == NODE_DOWN_REQUEST && !VALID_BACKEND(node_id)))
 		{
 			pool_semaphore_unlock(REQUEST_INFO_SEM);
-            if (node_id < 0 || node_id >= MAX_NUM_BACKENDS)
-                pool_error("failover_handler: invalid node_id %d MAX_NUM_BACKENDS: %d", node_id, MAX_NUM_BACKENDS);
-            else
-                pool_error("failover_handler: invalid node_id %d status:%d MAX_NUM_BACKENDS: %d", node_id,
-                            BACKEND_INFO(node_id).backend_status, MAX_NUM_BACKENDS);
+
+			if (node_id < 0 || node_id >= MAX_NUM_BACKENDS)
+				pool_error("failover_handler: invalid node_id %d MAX_NUM_BACKENDS: %d", node_id, MAX_NUM_BACKENDS);
+			else
+				pool_error("failover_handler: invalid node_id %d status:%d MAX_NUM_BACKENDS: %d", node_id,
+						   BACKEND_INFO(node_id).backend_status, MAX_NUM_BACKENDS);
 			kill(pcp_pid, SIGUSR2);
 			switching = 0;
 			Req_info->switching = false;

@@ -101,11 +101,11 @@ static volatile sig_atomic_t alarm_enabled = false;
 static int idle;		/* non 0 means this child is in idle state */
 static int accepted = 0;
 
+fd_set  readmask;
+int     nsocks;
 static int child_inet_fd = 0;
 static int child_unix_fd = 0;
 
-fd_set        readmask;
-int nsocks;
 extern int myargc;
 extern char **myargv;
 
@@ -1454,7 +1454,6 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
         ereport(ERROR,
                 (errmsg("failed to make persistent db connection"),
                  errdetail("connection to %s(%d) failed", hostname, port)));
-
 	}
 
 	cp->con = pool_open(fd,true);
@@ -1550,17 +1549,17 @@ void free_persisten_db_connection_memory(POOL_CONNECTION_POOL_SLOT *cp)
 		return;
 	if (!cp->sp)
 	{
-		free(cp);
+		pfree(cp);
 		return;
 	}
 	if (cp->sp->startup_packet)
-		free(cp->sp->startup_packet);
+		pfree(cp->sp->startup_packet);
 	if (cp->sp->database)
-		free(cp->sp->database);
+		pfree(cp->sp->database);
 	if (cp->sp->user)
-		free(cp->sp->user);
-	free(cp->sp);
-	free(cp);
+		pfree(cp->sp->user);
+	pfree(cp->sp);
+	pfree(cp);
 }
 
 /*
