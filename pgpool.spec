@@ -9,7 +9,7 @@
 Summary:        Pgpool is a connection pooling/replication server for PostgreSQL
 Name:           pgpool-II-pg%{pg_version}
 Version:        %{pgpool_version}
-Release:        1%{?dist}
+Release:        2%{?dist}
 License:        BSD
 Group:          Applications/Databases
 Vendor:         Pgpool Global Development Group
@@ -19,7 +19,7 @@ Source1:        pgpool.init
 Source2:        pgpool.sysconfig
 Patch1:         pgpool.conf.sample.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires:  postgresql%{pg_version}-devel pam-devel
+BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel
 Obsoletes:      postgresql-pgpool
 
 # original pgpool archive name
@@ -56,9 +56,8 @@ Development headers and libraries for pgpool-II.
 %patch1 -p0
 
 %build
-%configure --with-pgsql-includedir=%{pghome}/include/ \
-           --with-pgsql-libdir=%{pghome}/lib \
-           --disable-static --with-pam --disable-rpath \
+%configure --with-pgsql=%{pghome} \
+           --disable-static --with-pam --with-openssl=/usr --disable-rpath \
            --sysconfdir=%{_sysconfdir}/pgpool-II/
 
 make %{?_smp_flags}
@@ -150,6 +149,10 @@ fi
 %{_libdir}/libpcp.so
 
 %changelog
+* Sun May 4 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.3-2
+- Fix configure option
+- Add openssl support
+
 * Tue Nov 26 2013 Nozomi Anzai <anzai@sraoss.co.jp> 3.3.1-1
 - Improved to specify the versions of pgool-II and PostgreSQL
 
