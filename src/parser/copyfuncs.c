@@ -25,7 +25,7 @@
 
 #include <string.h>
 #include <stddef.h>
-#include "pool_memory.h"
+#include "utils/palloc.h"
 #include "parsenodes.h"
 
 
@@ -3280,7 +3280,7 @@ copyObject(const void *from)
 
 		default:
 			pool_error("unrecognized node type: %d", (int) nodeTag(from));
-			retval = from;		/* keep compiler quiet */
+			retval = (char*)from;		/* keep compiler quiet */
 			break;
 	}
 

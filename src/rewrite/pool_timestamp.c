@@ -30,8 +30,8 @@
 #include "pool_config.h"
 #include "parser/parsenodes.h"
 #include "parser/parser.h"
-#include "parser/pool_memory.h"
-
+//#include "parser/pool_memory.h"
+#include "utils/palloc.h"
 
 typedef struct {
 	char	*attrname;	/* attribute name */

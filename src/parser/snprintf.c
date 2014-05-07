@@ -51,9 +51,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include "pool_memory.h"
 #include "pool_parser.h"
 #include "stringinfo.h"
+#include "utils/palloc.h"
 
 /* --------------------------------------------------------------------- */
 /* c.h                                                                   */

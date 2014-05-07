@@ -38,11 +38,10 @@
 #include "pool.h"
 #include "pcp/pcp.h"
 #include "pcp/pcp_stream.h"
+#include "utils/palloc.h"
 #include "utils/pool_process_reporting.h"
 #include "auth/md5.h"
 
-
-struct timeval pcp_timeout;
 
 static PCP_CONNECTION *pc;
 #ifdef DEBUG
@@ -207,16 +206,11 @@ pcp_authorize(char *username, char *password)
 	if (pcp_read(pc, &rsize, sizeof(int)))
 		return -1;
 	rsize = ntohl(rsize);
-	buf = (char *)malloc(rsize);
-	if (buf == NULL)
-	{
-		errorcode = NOMEMERR;
-		return -1;
-	}
+	buf = (char *)palloc(rsize);
 	if (pcp_read(pc, buf, rsize - sizeof(int)))
 		return -1;
 	memcpy(salt, buf, 4);
-	free(buf);
+	pfree(buf);
 
 	/* encrypt password */
 	pool_md5_hash(password, strlen(password), md5);
@@ -247,12 +241,7 @@ pcp_authorize(char *username, char *password)
 	if (pcp_read(pc, &rsize, sizeof(int)))
 		return -1;
 	rsize = ntohl(rsize);
-	buf = (char *)malloc(rsize);
-	if (buf == NULL)
-	{
-		errorcode = NOMEMERR;
-		return -1;
-	}
+	buf = (char *)palloc(rsize);
 	if (pcp_read(pc, buf, rsize - sizeof(int)))
 	{
 		free(buf);
@@ -269,14 +258,14 @@ pcp_authorize(char *username, char *password)
 	{
 		if (strcmp(buf, "AuthenticationOK") == 0)
 		{
-			free(buf);
+			pfree(buf);
 			return 0;
 		}
 
 		if (debug) fprintf(stderr, "DEBUG: authentication failed. reason=%s\n", buf);
 		errorcode = AUTHERR;
 	}
-	free(buf);
+	pfree(buf);
 
 	return -1;
 }
@@ -378,15 +367,10 @@ pcp_node_count(void)
 	if (pcp_read(pc, &rsize, sizeof(int)))
 		return -1;
 	rsize = ntohl(rsize);
-	buf = (char *)malloc(rsize);
-	if (buf == NULL)
-	{
-		errorcode = NOMEMERR;
-		return -1;
-	}
+	buf = (char *)palloc(rsize);
 	if (pcp_read(pc, buf, rsize - sizeof(int)))
 	{
-		free(buf);
+		pfree(buf);
 		return -1;
 	}
 
@@ -405,13 +389,13 @@ pcp_node_count(void)
 			if (index != NULL)
 			{
 				int ret = atoi(index);
-				free(buf);
+				pfree(buf);
 				return ret;
 			}
 		}
 	}
 
-	free(buf);
+	pfree(buf);
 
 	return -1;
 }
@@ -456,15 +440,10 @@ pcp_node_info(int nid)
 	if (pcp_read(pc, &rsize, sizeof(int)))
 		return NULL;	
 	rsize = ntohl(rsize);
-	buf = (char *)malloc(rsize);
-	if (buf == NULL)
-	{
-		errorcode = NOMEMERR;
-		return NULL;
-	}
+	buf = (char *)palloc(rsize);
 	if (pcp_read(pc, buf, rsize - sizeof(int)))
 	{
-		free(buf);
+		pfree(buf);
 		return NULL;
 	}
 
@@ -474,7 +453,7 @@ pcp_node_info(int nid)
 	{
 		if (debug) fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
 		errorcode = BACKENDERR;
-		free(buf);
+		pfree(buf);
 		return NULL;
 	}
 	else if (tos == 'i')
@@ -484,11 +463,11 @@ pcp_node_info(int nid)
 			char *index = NULL;
 			BackendInfo* backend_info = NULL;
 
-			backend_info = (BackendInfo *)malloc(sizeof(BackendInfo));
+			backend_info = (BackendInfo *)palloc(sizeof(BackendInfo));
 			if (backend_info == NULL)
 			{
 				errorcode = NOMEMERR;
-				free(buf);
+				pfree(buf);
 				return NULL;
 			}
 
@@ -508,12 +487,12 @@ pcp_node_info(int nid)
 			if (index != NULL)
 				backend_info->backend_weight = atof(index);
 
-			free(buf);
+			pfree(buf);
 			return backend_info;
 		}
 	}
 
-	free(buf);
+	pfree(buf);
 	return NULL;
 }
 
@@ -553,15 +532,10 @@ pcp_process_count(int *pnum)
 	if (pcp_read(pc, &rsize, sizeof(int)))
 		return NULL;	
 	rsize = ntohl(rsize);
-	buf = (char *)malloc(rsize);
-	if (buf == NULL)
-	{
-		errorcode = NOMEMERR;
-		return NULL;
-	}
+	buf = (char *)palloc(rsize);
 	if (pcp_read(pc, buf, rsize - sizeof(int)))
 	{
-		free(buf);
+		pfree(buf);
 		return NULL;		
 	}
 	if (debug) fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
@@ -569,7 +543,7 @@ pcp_process_count(int *pnum)
 	if (tos == 'e')
 	{
 		if (debug) fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
-		free(buf);
+		pfree(buf);
 		errorcode = BACKENDERR;
 		return NULL;
 	}
@@ -585,13 +559,7 @@ pcp_process_count(int *pnum)
 			index = (char *) memchr(buf, '\0', rsize) + 1;
 			process_count = atoi(index);
 
-			process_list = (int *)malloc(sizeof(int) * process_count);
-			if (process_list == NULL)
-			{
-				free(buf);
-				errorcode = NOMEMERR;
-				return NULL;
-			}
+			process_list = (int *)palloc(sizeof(int) * process_count);
 
 			for (i = 0; i < process_count; i++)
 			{
@@ -600,12 +568,12 @@ pcp_process_count(int *pnum)
 			}
 
 			*pnum = process_count;
-			free(buf);
+			pfree(buf);
 			return process_list;
 		}
 	}
 
-	free(buf);
+	pfree(buf);
 	return NULL;
 }
 
@@ -656,7 +624,7 @@ pcp_process_info(int pid, int *array_size)
 		if (pcp_read(pc, &rsize, sizeof(int)))
 			return NULL;
 		rsize = ntohl(rsize);
-		buf = (char *)malloc(rsize);
+		buf = (char *)palloc(rsize);
 		if (buf == NULL)
 		{
 			errorcode = NOMEMERR;
@@ -664,7 +632,7 @@ pcp_process_info(int pid, int *array_size)
 		}
 		if (pcp_read(pc, buf, rsize - sizeof(int)))
 		{
-			free(buf);
+			pfree(buf);
 			return NULL;
 		}
 		if (debug) fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
@@ -672,7 +640,7 @@ pcp_process_info(int pid, int *array_size)
 		if (tos == 'e')
 		{
 			if (debug) fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
-			free(buf);
+			pfree(buf);
 			errorcode = BACKENDERR;
 			return NULL;
 		}
@@ -688,19 +656,19 @@ pcp_process_info(int pid, int *array_size)
 
 				*array_size = ci_size;
 
-				process_info = (ProcessInfo *)malloc(sizeof(ProcessInfo) * ci_size);
+				process_info = (ProcessInfo *)palloc(sizeof(ProcessInfo) * ci_size);
 				if (process_info == NULL)
 				{
-					free(buf);
+					pfree(buf);
 					errorcode = NOMEMERR;
 					return NULL;
 				}
 
-				conn_info = (ConnectionInfo *)malloc(sizeof(ConnectionInfo) * ci_size);
+				conn_info = (ConnectionInfo *)palloc(sizeof(ConnectionInfo) * ci_size);
 				if  (conn_info == NULL)
 				{
-					free(buf);
-					free(process_info);
+					pfree(buf);
+					pfree(process_info);
 					errorcode = NOMEMERR;
 					return NULL;
 				}
@@ -759,7 +727,7 @@ pcp_process_info(int pid, int *array_size)
 			}
 			else if (strcmp(buf, "CommandComplete") == 0)
 			{
-				free(buf);
+				pfree(buf);
 				return process_info;
 			}
 			else
@@ -769,7 +737,7 @@ pcp_process_info(int pid, int *array_size)
 		}
 	}
 
-	free(buf);
+	pfree(buf);
 	return NULL;
 }
 
@@ -812,7 +780,7 @@ pcp_systemdb_info(void)
 		if (pcp_read(pc, &rsize, sizeof(int)))
 			return NULL;
 		rsize = ntohl(rsize);
-		buf = (char *)malloc(rsize);
+		buf = (char *)palloc(rsize);
 		if (buf == NULL)
 		{
 			errorcode = NOMEMERR;
@@ -820,7 +788,7 @@ pcp_systemdb_info(void)
 		}
 		if (pcp_read(pc, buf, rsize - sizeof(int)))
 		{
-			free(buf);
+			pfree(buf);
 			return NULL;
 		}
 		if (debug) fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
@@ -828,7 +796,7 @@ pcp_systemdb_info(void)
 		if (tos == 'e')
 		{
 			if (debug) fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
-			free(buf);
+			pfree(buf);
 			errorcode = BACKENDERR;
 			return NULL;
 		}
@@ -838,20 +806,20 @@ pcp_systemdb_info(void)
 
 			if (strcmp(buf, "SystemDBInfo") == 0)
 			{
-				systemdb_info = (SystemDBInfo *)malloc(sizeof(SystemDBInfo));
+				systemdb_info = (SystemDBInfo *)palloc(sizeof(SystemDBInfo));
 				if (systemdb_info == NULL)
 				{
-					free(buf);
+					pfree(buf);
 					errorcode = NOMEMERR;
 					return NULL;
 				}
 
 				index = (char *) memchr(buf, '\0', rsize) + 1;
 				if (index != NULL)
-					systemdb_info->hostname = strdup(index);
+					systemdb_info->hostname = pstrdup(index);
 				if (systemdb_info->hostname == NULL)
 				{
-					free(buf);
+					pfree(buf);
 					free_systemdb_info(systemdb_info);
 					errorcode = NOMEMERR;
 					return NULL;
@@ -863,10 +831,10 @@ pcp_systemdb_info(void)
 			
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					systemdb_info->user = strdup(index);
+					systemdb_info->user = pstrdup(index);
 				if (systemdb_info->user == NULL)
 				{
-					free(buf);
+					pfree(buf);
 					free_systemdb_info(systemdb_info);
 					errorcode = NOMEMERR;
 					return NULL;
@@ -874,10 +842,10 @@ pcp_systemdb_info(void)
 
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					systemdb_info->password = strdup(index);
+					systemdb_info->password = pstrdup(index);
 				if (systemdb_info->password == NULL)
 				{
-					free(buf);
+					pfree(buf);
 					free_systemdb_info(systemdb_info);
 					errorcode = NOMEMERR;
 					return NULL;
@@ -885,10 +853,10 @@ pcp_systemdb_info(void)
 
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					systemdb_info->schema_name = strdup(index);
+					systemdb_info->schema_name = pstrdup(index);
 				if (systemdb_info->schema_name == NULL)
 				{
-					free(buf);
+					pfree(buf);
 					free_systemdb_info(systemdb_info);
 					errorcode = NOMEMERR;
 					return NULL;
@@ -896,10 +864,10 @@ pcp_systemdb_info(void)
 
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					systemdb_info->database_name = strdup(index);
+					systemdb_info->database_name = pstrdup(index);
 				if (systemdb_info->database_name == NULL)
 				{
-					free(buf);
+					pfree(buf);
 					free_systemdb_info(systemdb_info);
 					errorcode = NOMEMERR;
 					return NULL;
@@ -916,14 +884,7 @@ pcp_systemdb_info(void)
 				if (systemdb_info->dist_def_num > 0)
 				{
 					systemdb_info->dist_def_slot = NULL;
-					systemdb_info->dist_def_slot = (DistDefInfo *)malloc(sizeof(DistDefInfo) * systemdb_info->dist_def_num);
-					if (systemdb_info->dist_def_slot == NULL)
-					{
-						free(buf);
-						free_systemdb_info(systemdb_info);
-						errorcode = NOMEMERR;
-						return NULL;
-					}
+					systemdb_info->dist_def_slot = (DistDefInfo *)palloc(sizeof(DistDefInfo) * systemdb_info->dist_def_num);
 				}
 			}
 			else if (strcmp(buf, "DistDefInfo") == 0)
@@ -931,32 +892,18 @@ pcp_systemdb_info(void)
 				DistDefInfo *dist_def_info = NULL;
 				int i;
 
-				dist_def_info = (DistDefInfo *)malloc(sizeof(DistDefInfo));
-				if (dist_def_info == NULL)
-				{
-					free(buf);
-					free_systemdb_info(systemdb_info);
-					errorcode = NOMEMERR;
-					return NULL;
-				}
+				dist_def_info = (DistDefInfo *)palloc(sizeof(DistDefInfo));
 
 				index = (char *) memchr(buf, '\0', rsize) + 1;
 				if (index != NULL)
-					dist_def_info->dbname = strdup(index);
-				if (dist_def_info->dbname == NULL)
-				{
-					free(buf);
-					free_systemdb_info(systemdb_info);
-					errorcode = NOMEMERR;
-					return NULL;
-				}
+					dist_def_info->dbname = pstrdup(index);
 			
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					dist_def_info->schema_name = strdup(index);
+					dist_def_info->schema_name = pstrdup(index);
 				if (dist_def_info->schema_name == NULL)
 				{
-					free(buf);
+					pfree(buf);
 					free_systemdb_info(systemdb_info);
 					errorcode = NOMEMERR;
 					return NULL;
@@ -964,10 +911,10 @@ pcp_systemdb_info(void)
 			
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					dist_def_info->table_name = strdup(index);
+					dist_def_info->table_name = pstrdup(index);
 				if (dist_def_info->table_name == NULL)
 				{
-					free(buf);
+					pfree(buf);
 					free_systemdb_info(systemdb_info);
 					errorcode = NOMEMERR;
 					return NULL;
@@ -975,10 +922,10 @@ pcp_systemdb_info(void)
 
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					dist_def_info->dist_key_col_name = strdup(index);
+					dist_def_info->dist_key_col_name = pstrdup(index);
 				if (dist_def_info->dist_key_col_name == NULL)
 				{
-					free(buf);
+					pfree(buf);
 					free_systemdb_info(systemdb_info);
 					errorcode = NOMEMERR;
 					return NULL;
@@ -989,10 +936,10 @@ pcp_systemdb_info(void)
 					dist_def_info->col_num = atoi(index);
 
 				dist_def_info->col_list = NULL;
-				dist_def_info->col_list = (char **)malloc(sizeof(char *) * dist_def_info->col_num);
+				dist_def_info->col_list = (char **)palloc(sizeof(char *) * dist_def_info->col_num);
 				if (dist_def_info->col_list == NULL)
 				{
-					free(buf);
+					pfree(buf);
 					free_systemdb_info(systemdb_info);
 					errorcode = NOMEMERR;
 					return NULL;
@@ -1001,10 +948,10 @@ pcp_systemdb_info(void)
 				{
 					index = (char *) memchr(index, '\0', rsize) + 1;
 					if (index != NULL)
-						dist_def_info->col_list[i] = strdup(index);
+						dist_def_info->col_list[i] = pstrdup(index);
 					if (dist_def_info->col_list[i] == NULL)
 					{
-						free(buf);
+						pfree(buf);
 						free_systemdb_info(systemdb_info);
 						errorcode = NOMEMERR;
 						return NULL;
@@ -1012,10 +959,10 @@ pcp_systemdb_info(void)
 				}
 			
 				dist_def_info->type_list = NULL;
-				dist_def_info->type_list = (char **)malloc(sizeof(char *) * dist_def_info->col_num);
+				dist_def_info->type_list = (char **)palloc(sizeof(char *) * dist_def_info->col_num);
 				if (dist_def_info->type_list == NULL)
 				{
-					free(buf);
+					pfree(buf);
 					free_systemdb_info(systemdb_info);
 					errorcode = NOMEMERR;
 					return NULL;
@@ -1024,10 +971,10 @@ pcp_systemdb_info(void)
 				{
 					index = (char *) memchr(index, '\0', rsize) + 1;
 					if (index != NULL)
-						dist_def_info->type_list[i] = strdup(index);
+						dist_def_info->type_list[i] = pstrdup(index);
 					if (dist_def_info->type_list[i] == NULL)
 					{
-						free(buf);
+						pfree(buf);
 						free_systemdb_info(systemdb_info);
 						errorcode = NOMEMERR;
 						return NULL;
@@ -1036,10 +983,10 @@ pcp_systemdb_info(void)
 
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					dist_def_info->dist_def_func = strdup(index);
+					dist_def_info->dist_def_func = pstrdup(index);
 				if (dist_def_info->dist_def_func == NULL)
 				{
-					free(buf);
+					pfree(buf);
 					free_systemdb_info(systemdb_info);
 					errorcode = NOMEMERR;
 					return NULL;
@@ -1049,7 +996,7 @@ pcp_systemdb_info(void)
 			}
 			else if (strcmp(buf, "CommandComplete") == 0)
 			{
-				free(buf);
+				pfree(buf);
 				return systemdb_info;
 			}
 			else
@@ -1059,7 +1006,7 @@ pcp_systemdb_info(void)
 		}
 	}
 	
-	free(buf);
+	pfree(buf);
 	return NULL;
 }
 
@@ -1070,31 +1017,30 @@ free_systemdb_info(SystemDBInfo * si)
 
 	if (si == NULL)
 		return;
-
-	free(si->hostname);
-	free(si->user);
-	free(si->password);
-	free(si->schema_name);
-	free(si->database_name);
+	pfree(si->hostname);
+	pfree(si->user);
+	pfree(si->password);
+	pfree(si->schema_name);
+	pfree(si->database_name);
 
 	if (si->dist_def_slot != NULL)
 	{
 		for (i = 0; i < si->dist_def_num; i++)
 		{
 			DistDefInfo *di = &si->dist_def_slot[i];
-			free(di->dbname);
-			free(di->schema_name);
-			free(di->table_name);
-			free(di->dist_def_func);
+			pfree(di->dbname);
+			pfree(di->schema_name);
+			pfree(di->table_name);
+			pfree(di->dist_def_func);
 			for (j = 0; j < di->col_num; j++)
 			{
-				free(di->col_list[j]);
-				free(di->type_list[j]);
+				pfree(di->col_list[j]);
+				pfree(di->type_list[j]);
 			}
 		}
 	}
 
-	free(si);
+	pfree(si);
 }
 
 /* --------------------------------
@@ -1161,7 +1107,7 @@ static int _pcp_detach_node(int nid, bool gracefully)
 	if (pcp_read(pc, &rsize, sizeof(int)))
 		return -1;
 	rsize = ntohl(rsize);
-	buf = (char *)malloc(rsize);
+	buf = (char *)palloc(rsize);
 	if (buf == NULL)
 	{
 		errorcode = NOMEMERR;
@@ -1169,7 +1115,7 @@ static int _pcp_detach_node(int nid, bool gracefully)
 	}
 	if (pcp_read(pc, buf, rsize - sizeof(int)))
 	{
-		free(buf);
+		pfree(buf);
 		return -1;
 	}
 	if (debug) fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
@@ -1184,12 +1130,12 @@ static int _pcp_detach_node(int nid, bool gracefully)
 		/* strcmp() for success message, or fail */
 		if(strcmp(buf, "CommandComplete") == 0)
 		{
-			free(buf);
+			pfree(buf);
 			return 0;
 		}
 	}
 
-	free(buf);
+	pfree(buf);
 	return -1;
 }
 
@@ -1234,7 +1180,7 @@ pcp_attach_node(int nid)
 	if (pcp_read(pc, &rsize, sizeof(int)))
 		return -1;
 	rsize = ntohl(rsize);
-	buf = (char *)malloc(rsize);
+	buf = (char *)palloc(rsize);
 	if (buf == NULL)
 	{
 		errorcode = NOMEMERR;
@@ -1242,7 +1188,7 @@ pcp_attach_node(int nid)
 	}
 	if (pcp_read(pc, buf, rsize - sizeof(int)))
 	{
-		free(buf);
+		pfree(buf);
 		return -1;
 	}
 	if (debug) fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
@@ -1257,12 +1203,12 @@ pcp_attach_node(int nid)
 		/* strcmp() for success message, or fail */
 		if(strcmp(buf, "CommandComplete") == 0)
 		{
-			free(buf);
+			pfree(buf);
 			return 0;
 		}
 	}
 
-	free(buf);
+	pfree(buf);
 	return -1;
 }
 
@@ -1306,7 +1252,7 @@ pcp_pool_status(int *array_size)
 		if (pcp_read(pc, &rsize, sizeof(int)))
 			return NULL;
 		rsize = ntohl(rsize);
-		buf = (char *)malloc(rsize);
+		buf = (char *)palloc(rsize);
 		if (buf == NULL)
 		{
 			errorcode = NOMEMERR;
@@ -1314,7 +1260,7 @@ pcp_pool_status(int *array_size)
 		}
 		if (pcp_read(pc, buf, rsize - sizeof(int)))
 		{
-			free(buf);
+			pfree(buf);
 			return NULL;
 		}
 		if (debug) fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
@@ -1322,7 +1268,7 @@ pcp_pool_status(int *array_size)
 		if (tos == 'e')
 		{
 			if (debug) fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
-			free(buf);
+			pfree(buf);
 			errorcode = BACKENDERR;
 			return NULL;
 		}
@@ -1337,7 +1283,7 @@ pcp_pool_status(int *array_size)
 
 				*array_size = ci_size;
 
-				status = (POOL_REPORT_CONFIG *) malloc(ci_size * sizeof(POOL_REPORT_CONFIG));
+				status = (POOL_REPORT_CONFIG *) palloc(ci_size * sizeof(POOL_REPORT_CONFIG));
 
 				continue;
 			}
@@ -1359,7 +1305,7 @@ pcp_pool_status(int *array_size)
 			}
 			else if (strcmp(buf, "CommandComplete") == 0)
 			{
-				free(buf);
+				pfree(buf);
 				return status;
 			}
 			else
@@ -1369,16 +1315,8 @@ pcp_pool_status(int *array_size)
 		}
 	}
 
-	free(buf);
+	pfree(buf);
 	return NULL;
-}
-
-void
-pcp_set_timeout(long sec)
-{
-	/* disable timeout (wait forever!) (2008/02/08 yamaguti) */
-	sec = 0;
-	pcp_timeout.tv_sec = sec;
 }
 
 
@@ -1416,7 +1354,7 @@ pcp_recovery_node(int nid)
 	if (pcp_read(pc, &rsize, sizeof(int)))
 		return -1;
 	rsize = ntohl(rsize);
-	buf = (char *)malloc(rsize);
+	buf = (char *)palloc(rsize);
 	if (buf == NULL)
 	{
 		errorcode = NOMEMERR;
@@ -1424,7 +1362,7 @@ pcp_recovery_node(int nid)
 	}
 	if (pcp_read(pc, buf, rsize - sizeof(int)))
 	{
-		free(buf);
+		pfree(buf);
 		return -1;
 	}
 	if (debug) fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
@@ -1439,12 +1377,12 @@ pcp_recovery_node(int nid)
 		/* strcmp() for success message, or fail */
 		if(strcmp(buf, "CommandComplete") == 0)
 		{
-			free(buf);
+			pfree(buf);
 			return 0;
 		}
 	}
 
-	free(buf);
+	pfree(buf);
 	return -1;
 }
 
@@ -1524,7 +1462,7 @@ static int _pcp_promote_node(int nid, bool gracefully)
 	if (pcp_read(pc, &rsize, sizeof(int)))
 		return -1;
 	rsize = ntohl(rsize);
-	buf = (char *)malloc(rsize);
+	buf = (char *)palloc(rsize);
 	if (buf == NULL)
 	{
 		errorcode = NOMEMERR;
@@ -1532,7 +1470,7 @@ static int _pcp_promote_node(int nid, bool gracefully)
 	}
 	if (pcp_read(pc, buf, rsize - sizeof(int)))
 	{
-		free(buf);
+		pfree(buf);
 		return -1;
 	}
 	if (debug) fprintf(stderr, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", tos, rsize, buf);
@@ -1547,12 +1485,12 @@ static int _pcp_promote_node(int nid, bool gracefully)
 		/* strcmp() for success message, or fail */
 		if(strcmp(buf, "CommandComplete") == 0)
 		{
-			free(buf);
+			pfree(buf);
 			return 0;
 		}
 	}
 
-	free(buf);
+	pfree(buf);
 	return -1;
 }
 
@@ -1596,7 +1534,7 @@ pcp_watchdog_info(int nid)
 	if (pcp_read(pc, &rsize, sizeof(int)))
 		return NULL;	
 	rsize = ntohl(rsize);
-	buf = (char *)malloc(rsize);
+	buf = (char *)palloc(rsize);
 	if (buf == NULL)
 	{
 		errorcode = NOMEMERR;
@@ -1604,7 +1542,7 @@ pcp_watchdog_info(int nid)
 	}
 	if (pcp_read(pc, buf, rsize - sizeof(int)))
 	{
-		free(buf);
+		pfree(buf);
 		return NULL;
 	}
 
@@ -1614,7 +1552,7 @@ pcp_watchdog_info(int nid)
 	{
 		if (debug) fprintf(stderr, "DEBUG: command failed. reason=%s\n", buf);
 		errorcode = BACKENDERR;
-		free(buf);
+		pfree(buf);
 		return NULL;
 	}
 	else if (tos == 'w')
@@ -1624,11 +1562,11 @@ pcp_watchdog_info(int nid)
 			char *index = NULL;
 			WdInfo* watchdog_info = NULL;
 
-			watchdog_info = (WdInfo *)malloc(sizeof(WdInfo));
+			watchdog_info = (WdInfo *)palloc(sizeof(WdInfo));
 			if (watchdog_info == NULL)
 			{
 				errorcode = NOMEMERR;
-				free(buf);
+				pfree(buf);
 				return NULL;
 			}
 
@@ -1648,11 +1586,11 @@ pcp_watchdog_info(int nid)
 			if (index != NULL)
 				watchdog_info->status = atof(index);
 
-			free(buf);
+			pfree(buf);
 			return watchdog_info;
 		}
 	}
 
-	free(buf);
+	pfree(buf);
 	return NULL;
 }

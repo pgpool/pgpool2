@@ -18,7 +18,7 @@
 #include <stdarg.h>
 #include "pool_type.h"
 #include "stringinfo.h"
-#include "pool_memory.h"
+#include "utils/palloc.h"
 
 /*
  * makeStringInfo

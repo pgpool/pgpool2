@@ -25,6 +25,9 @@
 #include <string.h>
 
 #include "pool.h"
+#include "utils/palloc.h"
+#include "utils/memutils.h"
+#include "utils/elog.h"
 #include "pool_config.h"
 #include "context/pool_session_context.h"
 
@@ -62,8 +65,13 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 	init_sent_message_list();
 
 	/* Create memory context */
-	session_context->memory_context = pool_memory_create(PREPARE_BLOCK_SIZE);
-
+	/* TODO re-think about the parent for this context ??*/
+	session_context->memory_context = AllocSetContextCreate(ProcessLoopContext,
+									 "SessionContext",
+									 ALLOCSET_SMALL_MINSIZE,
+									 ALLOCSET_SMALL_INITSIZE,
+									 ALLOCSET_SMALL_MAXSIZE);
+									 
 	/* Choose load balancing node if necessary */
 	if (pool_config->load_balance_mode)
 	{
@@ -128,7 +136,7 @@ void pool_session_context_destroy(void)
 	{
 		pool_clear_sent_message_list();
 		free(session_context->message_list.sent_messages);
-		pool_memory_delete(session_context->memory_context, 0);
+		MemoryContextDelete(session_context->memory_context);
 		if (pool_config->memory_cache_enabled)
 		{
 			pool_discard_query_cache_array(session_context->query_cache_array);
@@ -146,13 +154,14 @@ void pool_session_context_destroy(void)
 /*
  * Return session context
  */
-POOL_SESSION_CONTEXT *pool_get_session_context(void)
+POOL_SESSION_CONTEXT *pool_get_session_context(bool noerror)
 {
-	if (!session_context)
+	if (!session_context && !noerror)
 	{
-		return NULL;
+        ereport(FATAL,
+            (return_code(2),
+                errmsg("unable to get session context")));
 	}
-
 	return session_context;
 }
 
@@ -430,20 +439,19 @@ void pool_sent_message_destroy(POOL_SENT_MESSAGE *message)
 	POOL_QUERY_CONTEXT *qc = NULL;
 
 	if (!session_context)
-	{
-		pool_error("pool_sent_message_destroy: session context is not initialized");
-		return;
-	}
+        ereport(ERROR,
+                (errmsg("unable to free message"),
+                 errdetail("cannot get the session context")));
 
 	in_progress = pool_is_query_in_progress();
 
 	if (message)
 	{
 		if (message->contents)
-			pool_memory_free(session_context->memory_context, message->contents);
+			pfree(message->contents);
 		
 		if (message->name)
-			pool_memory_free(session_context->memory_context, message->name);
+			pfree(message->name);
 
 		if (message->query_context)
 		{
@@ -469,7 +477,7 @@ void pool_sent_message_destroy(POOL_SENT_MESSAGE *message)
 		}
 
 		if (session_context->memory_context)
-			pool_memory_free(session_context->memory_context, message);
+			pfree(message);
 	}
 }
 
@@ -481,10 +489,9 @@ void pool_clear_sent_message_list(void)
 	POOL_SENT_MESSAGE_LIST *msglist;
 
 	if (!session_context)
-	{
-		pool_error("pool_clear_sent_message_list: session context is not initialized");
-		return;
-	}
+        ereport(ERROR,
+                (errmsg("unable to clear message list"),
+                 errdetail("cannot get the session context")));
 
 	msglist = &session_context->message_list;
 
@@ -509,20 +516,20 @@ POOL_SENT_MESSAGE *pool_create_sent_message(char kind, int len, char *contents,
 	POOL_SENT_MESSAGE *msg;
 
 	if (!session_context)
-	{
-		pool_error("pool_create_sent_message: session context is not initialized");
-		return NULL;
-	}
+        ereport(ERROR,
+            (errmsg("unable to create message"),
+                 errdetail("cannot get the session context")));
 
-	msg = pool_memory_alloc(session_context->memory_context,
-							sizeof(POOL_SENT_MESSAGE));
+	MemoryContext old_context = MemoryContextSwitchTo(session_context->memory_context);
+	msg = palloc(sizeof(POOL_SENT_MESSAGE));
 	msg->kind = kind;
 	msg->len = len;
-	msg->contents = pool_memory_alloc(session_context->memory_context, len);
+	msg->contents = palloc(len);
 	memcpy(msg->contents, contents, len);
 	msg->num_tsparams = num_tsparams;
-	msg->name = pool_memory_strdup(session_context->memory_context, name);
+	msg->name = pstrdup(name);
 	msg->query_context = query_context;
+	MemoryContextSwitchTo(old_context);
 
 	return msg;
 }
@@ -568,13 +575,8 @@ void pool_add_sent_message(POOL_SENT_MESSAGE *message)
 	if (msglist->size == msglist->capacity)
 	{
 		msglist->capacity *= 2;
-		msglist->sent_messages = realloc(msglist->sent_messages,
+		msglist->sent_messages = repalloc(msglist->sent_messages,
 										 sizeof(POOL_SENT_MESSAGE *) * msglist->capacity);
-		if (!msglist->sent_messages)
-		{
-			pool_error("pool_add_sent_message: realloc failed: %s", strerror(errno));
-			exit(1);
-		}
 	}
 
 	msglist->sent_messages[msglist->size++] = message;
@@ -721,7 +723,6 @@ void pool_set_transaction_isolation(POOL_TRANSACTION_ISOLATION isolation_level)
  */
 POOL_TRANSACTION_ISOLATION pool_get_transaction_isolation(void)
 {
-	POOL_STATUS status;
 	POOL_SELECT_RESULT *res;
 	POOL_TRANSACTION_ISOLATION ret;
 
@@ -736,7 +737,7 @@ POOL_TRANSACTION_ISOLATION pool_get_transaction_isolation(void)
 		return session_context->transaction_isolation;
 
 	/* No cached data is available. Ask backend. */
-	status = do_query(MASTER(session_context->backend),
+	do_query(MASTER(session_context->backend),
 					  "SELECT current_setting('transaction_isolation')", &res, MAJOR(session_context->backend));
 
 	if (res->numrows <= 0)

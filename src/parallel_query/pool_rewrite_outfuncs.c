@@ -48,6 +48,7 @@
 #include <limits.h>
 
 #include "pool.h"
+#include "utils/palloc.h"
 #include "parser/parser.h"
 #include "parser/pool_string.h"
 #include "parser/pg_list.h"
@@ -590,7 +591,6 @@ static void _rewriteList(Node *BaseSelect, RewriteQuery *message, ConInfoTodblin
 	int loop = 0;
 	bool from;
 	int current_select = message->current_select;
-	int next = -1;
 	bool lock = false;
 	AnalyzeSelect *analyze;
 
@@ -608,7 +608,6 @@ static void _rewriteList(Node *BaseSelect, RewriteQuery *message, ConInfoTodblin
 
 	foreach(lc, node)
 	{
-		next = message->analyze_num;
 		if (first == 0)
 		{
 			first = 1;
@@ -849,9 +848,7 @@ static void
 AnalyzeReturnRecord(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, List *list)
 {
 	int select_num;
-	int range_num;
 	AnalyzeSelect *analyze;
-	RangeInfo **range;
 	VirtualTable *virtual;
 	ListCell   *lc;
 	int n_sublink = 0;
@@ -862,12 +859,6 @@ AnalyzeReturnRecord(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *db
 	analyze=message->analyze[select_num];
 
 	virtual = analyze->virtual;
-
-  /* get range table info */
-	range_num = analyze->rangeinfo_num;
-
-	/* "range = 0" means that this select stmt have no table */
-	range = analyze->range;
 
 	analyze->select_ret = (SelectDefInfo *) palloc(sizeof(SelectDefInfo));
 
@@ -2221,7 +2212,6 @@ ConvertFromUsingToON(RewriteQuery *message, String *str, JoinExpr *node, int sel
 static void
 _rewriteJoinExpr(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, JoinExpr *node)
 {
-	char l_state,r_state;
 	bool from;
 	int select_num;
 	bool natural = false;
@@ -2248,7 +2238,6 @@ _rewriteJoinExpr(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 	/* reset message */
 	message->fromClause = from;
 	message->current_select = select_num;
-	l_state = message->table_state;
 
 	if(message->r_code == SELECT_ANALYZE &&
 			(IsA(node->larg, RangeVar) || IsA(node->larg,RangeSubselect)))
@@ -2295,7 +2284,6 @@ _rewriteJoinExpr(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 
 	_rewriteNode(BaseSelect, message, dblink, str, node->rarg);
 
-	r_state = message->table_state;
 	message->fromClause = from;
 	message->current_select = select_num;
 
@@ -2617,7 +2605,6 @@ initSelectStmt(RewriteQuery *message,SelectStmt *node)
 static void writeRangeHeader(RewriteQuery *message,ConInfoTodblink *dblink, String *str,DistDefInfo *info, RepliDefInfo *info2,char *alias)
 {
 	char port[8];
-	char *schema = NULL;
 	char *table = NULL;
 
 
@@ -2649,7 +2636,6 @@ static void writeRangeHeader(RewriteQuery *message,ConInfoTodblink *dblink, Stri
 	if(info && !info2)
 	{
 		delay_string_append_char(message, str, "SELECT pool_parallel(\"");
-		schema = info->schema_name;
 		if(alias)
 			table = alias;
 		else
@@ -2658,7 +2644,6 @@ static void writeRangeHeader(RewriteQuery *message,ConInfoTodblink *dblink, Stri
 	else if (!info && info2)
 	{
 		delay_string_append_char(message, str, "SELECT pool_loadbalance(\"");
-		schema = info2->schema_name;
 		if(alias)
 			table = alias;
 		else
@@ -2710,7 +2695,6 @@ static void writeRangeHeader(RewriteQuery *message,ConInfoTodblink *dblink, Stri
 static void writeRangeFooter(RewriteQuery *message,ConInfoTodblink *dblink, String *str,DistDefInfo *info, RepliDefInfo *info2,char *alias)
 {
 	int i,num;
-	char *schema = NULL;
 	char *table = NULL;
 
 	delay_string_append_char(message, str, "\"");
@@ -2726,12 +2710,10 @@ static void writeRangeFooter(RewriteQuery *message,ConInfoTodblink *dblink, Stri
 	{
 		if(info && !info2)
 		{
-			schema = info->schema_name;
 			table = info->table_name;
 		}
 		else if (!info && info2)
 		{
-			schema = info2->schema_name;
 			table = info2->table_name;
 		}
 	}
@@ -3325,7 +3307,6 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 	BaseSelect = (Node *) node;
 	AnalyzeSelect *analyze;
 	int count;
-	int analyze_num = 0;
 	int target_analyze = 0;
 	int from_analyze = 0;
 	bool lock = false;
@@ -3343,7 +3324,6 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 			pool_debug("_rewriteSelectStmt:START QueryRewrite");
 	}
 
-	analyze_num = message->analyze_num;
 
 	analyze = message->analyze[count];
 	analyze->part = SELECT_START;
@@ -3850,10 +3830,6 @@ _rewriteSelectStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbl
 			if(last->part == SELECT_TARGETLIST)
 			{
 				char fromstate = last->partstate[SELECT_FROMCLAUSE];
-				char targetstate = (char) 0;
-
-				if(last->partstate[SELECT_TARGETLIST])
-					targetstate = last->partstate[SELECT_TARGETLIST];
 
 				if(fromstate == 'P' && analyze->state == 'L')
 				{
@@ -4651,13 +4627,12 @@ static void
 ChangeStatebyColumnRef(RewriteQuery *message,ColumnRef *col)
 {
 	AnalyzeSelect *analyze;
-	VirtualTable *virtual;
 	ListCell *c;
 	List *list;
 	char first = 0;
 	char *table_name = NULL;
 	char *column = NULL;
-	int num,no;
+	int no;
 
 	list = col->fields;
 
@@ -4702,8 +4677,6 @@ ChangeStatebyColumnRef(RewriteQuery *message,ColumnRef *col)
 							analyze->call_part
 							);
 
-	virtual = analyze->virtual;
-	num = virtual->col_num;
 
 	if(message->part==SELECT_WHERECLAUSE || message->part == SELECT_TARGETLIST)
 	{
@@ -4816,7 +4789,12 @@ static bool DetectValidColumn(RewriteQuery *message,char *table_name,char *colum
 
 static bool GetPoolColumn(RewriteQuery *message,String *str,char *table_name,char *column_name,int no, int call,bool state)
 {
-	AnalyzeSelect *analyze,*analyze_now;
+	AnalyzeSelect *analyze;
+
+#if 0
+	AnalyzeSelect *analyze_now;
+#endif
+
 	VirtualTable *virtual;
 	int v_num,i;
 	int get = 0;
@@ -4841,7 +4819,11 @@ static bool GetPoolColumn(RewriteQuery *message,String *str,char *table_name,cha
 	}
 
 	analyze = message->analyze[no];
+
+#if 0
 	analyze_now = message->analyze[call_num];
+#endif
+
 	virtual = analyze->virtual;
 	v_num = virtual->col_num;
 
@@ -8521,10 +8503,8 @@ _rewriteWithDefinition(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink 
 	if (list_length(def_list) == 1)
 	{
 		DefElem *elem;
-		Value *v;
 
 		elem = linitial(def_list);
-		v = (Value *)elem->arg;
 		if (strcmp(elem->defname, "oids") == 0)
 		{
 			Value *v = (Value *)elem->arg;

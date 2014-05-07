@@ -17,7 +17,7 @@
 #include "pool_parser.h"
 
 #include "makefuncs.h"
-#include "pool_memory.h"
+#include "utils/palloc.h"
 #include "pg_class.h"
 #include <stdlib.h>
 #include <string.h>

@@ -52,6 +52,7 @@
 #include "parser/pool_string.h"
 #include "context/pool_session_context.h"
 #include "context/pool_query_context.h"
+#include "utils/elog.h"
 #include "utils/pool_select_walker.h"
 #include "utils/pool_relcache.h"
 #include "utils/pool_stream.h"
@@ -89,7 +90,6 @@ static int* find_victim_nodes(int *ntuples, int nmembers, int master_node, int *
 static int extract_ntuples(char *message);
 static POOL_STATUS close_standby_transactions(POOL_CONNECTION *frontend,
 											  POOL_CONNECTION_POOL *backend);
-
 /*
  * Process Query('Q') message
  * Query messages include an SQL string.
@@ -107,22 +107,16 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	List *parse_tree_list;
 	Node *node = NULL;
 	POOL_STATUS status;
-	char *string;
 	int lock_kind;
 	bool is_likely_select = false;
 	int specific_error = 0;
 
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_QUERY_CONTEXT *query_context;
-	POOL_MEMORY_POOL *old_context;
+	MemoryContext old_context;
 
 	/* Get session context */
-	session_context = pool_get_session_context();
-	if (!session_context)
-	{
-		pool_error("SimpleQuery: cannot get session context");
-		return POOL_END;
-	}
+	session_context = pool_get_session_context(false);
 
 	/* save last query string for logging purpose */
 	strlcpy(query_string_buffer, contents, sizeof(query_string_buffer));
@@ -132,13 +126,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 	/* log query to log file if necessary */
 	if (pool_config->log_statement)
-	{
-		pool_log("statement: %s", contents);
-	}
-	else
-	{
-		pool_debug("statement2: %s", contents);
-	}
+        ereport(pool_config->log_statement? LOG: DEBUG1,(errmsg("statement: %s", contents)));
 
 	/*
 	 * Fetch memory cache if possible
@@ -181,16 +169,9 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 	/* Create query context */
 	query_context = pool_init_query_context();
-	if (!query_context)
-	{
-		pool_error("SimpleQuery: pool_init_query_context failed");
-		return POOL_END;
-	}
 
 	/* switch memory context */
-	if (pool_memory == NULL)
-		pool_memory = pool_memory_create(PARSER_BLOCK_SIZE);
-	old_context = pool_memory_context_switch_to(query_context->memory_context);
+	old_context = MemoryContextSwitchTo(query_context->memory_context);
 
 	/* parse SQL string */
 	parse_tree_list = raw_parser(contents);
@@ -279,7 +260,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			if (parallel)
 			{
 				pool_query_context_destroy(query_context);
-				pool_memory_context_switch_to(old_context);
+				MemoryContextSwitchTo(old_context);
 				return status;
 			}
 		}
@@ -337,7 +318,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 				pool_ps_idle_display(backend);
 				pool_query_context_destroy(query_context);
 				pool_set_skip_reading_from_backends();
-				pool_memory_context_switch_to(old_context);
+				MemoryContextSwitchTo(old_context);
 				return POOL_CONTINUE;
 			}
 		}
@@ -434,8 +415,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			if (pool_multi_node_to_be_sent(query_context))
 			{
 				/* start a transaction if needed */
-				if (start_internal_transaction(frontend, backend, (Node *)node) != POOL_CONTINUE)
-					return POOL_END;
+				start_internal_transaction(frontend, backend, (Node *)node);
 
 				/* check if need lock */
 				lock_kind = need_insert_lock(backend, contents, node);
@@ -478,16 +458,10 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			msg = pool_create_sent_message('Q', len, contents, 0,
 										   ((PrepareStmt *)node)->name,
 										   query_context);
-			if (!msg)
-			{
-				pool_error("SimpleQuery: cannot create query message: %s", strerror(errno));
-				return POOL_END;
-			}
 			session_context->uncompleted_message =  msg;
 		}
 	}
 
-	string = query_context->original_query;
 
 	if (!RAW_MODE)
 	{
@@ -552,11 +526,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			}
 
 			/* Send the query to master node */
-			if (pool_send_and_wait(query_context, 1, MASTER_NODE_ID) != POOL_CONTINUE)
-			{
-				pool_query_context_destroy(query_context);
-				return POOL_END;
-			}
+			pool_send_and_wait(query_context, 1, MASTER_NODE_ID);
 
 			/* Check specific errors */
 			specific_error = check_errors(backend, MASTER_NODE_ID);
@@ -577,44 +547,27 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			/* send query to other nodes */
 			query_context->rewritten_query = msg;
 			query_context->rewritten_length = len;
-			if (pool_send_and_wait(query_context, -1, MASTER_NODE_ID) != POOL_CONTINUE)
-				return POOL_END;
+			pool_send_and_wait(query_context, -1, MASTER_NODE_ID);
 		}
 		else
 		{
 			/*
 			 * Send the query to other than master node.
 			 */
-			if (pool_send_and_wait(query_context, -1, MASTER_NODE_ID) != POOL_CONTINUE)
-			{
-				pool_query_context_destroy(query_context);
-				return POOL_END;
-			}
+			pool_send_and_wait(query_context, -1, MASTER_NODE_ID);
 		}
 
 		/* Send "COMMIT" or "ROLLBACK" to only master node if query is "COMMIT" or "ROLLBACK" */
 		if (commit)
-		{
-			if (pool_send_and_wait(query_context, 1, MASTER_NODE_ID) != POOL_CONTINUE)
-			{
-				pool_query_context_destroy(query_context);
-				return POOL_END;
-			}
-		}
-		/* free_parser(); */
+			pool_send_and_wait(query_context, 1, MASTER_NODE_ID);
 	}
 	else
 	{
-		if (pool_send_and_wait(query_context, 1, MASTER_NODE_ID) != POOL_CONTINUE)
-		{
-			pool_query_context_destroy(query_context);
-			return POOL_END;
-		}
-		/* free_parser(); */
+		pool_send_and_wait(query_context, 1, MASTER_NODE_ID);
 	}
 
 	/* switch memory context */
-	pool_memory_context_switch_to(old_context);
+	MemoryContextSwitchTo(old_context);
 
 	return POOL_CONTINUE;
 }
@@ -634,36 +587,35 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	POOL_SENT_MESSAGE *bind_msg;
 
 	/* Get session context */
-	session_context = pool_get_session_context();
-	if (!session_context)
-	{
-		pool_error("Execute: cannot get session context");
-		return POOL_END;
-	}
+	session_context = pool_get_session_context(false);
 
-	pool_debug("Execute: portal name <%s>", contents);
+	ereport(DEBUG2,
+            (errmsg("Execute: portal name <%s>", contents)));
 
 	bind_msg = pool_get_sent_message('B', contents);
 	if (!bind_msg)
-	{
-		pool_error("Execute: cannot get bind message");
-		return POOL_END;
-	}
+        ereport(FATAL,
+            (return_code(2),
+             errmsg("unable to Execute"),
+                errdetail("unable to get bind message")));
+
 	if(!bind_msg->query_context)
-	{
-		pool_error("Execute: cannot get query context");
-		return POOL_END;
-	}
+        ereport(FATAL,
+                (return_code(2),
+                 errmsg("unable to Execute"),
+                 errdetail("unable to get bind message")));
+
 	if (!bind_msg->query_context->original_query)
-	{
-		pool_error("Execute: cannot get original query");
-		return POOL_END;
-	}
+        ereport(FATAL,
+            (return_code(2),
+                errmsg("unable to Execute"),
+                 errdetail("unable to get original query")));
+
 	if (!bind_msg->query_context->parse_tree)
-	{
-		pool_error("Execute: cannot get parse tree");
-		return POOL_END;
-	}
+        ereport(FATAL,
+            (return_code(2),
+                errmsg("unable to Execute"),
+                 errdetail("unable to get parse tree")));
 
 	query_context = bind_msg->query_context;
 	node = bind_msg->query_context->parse_tree;
@@ -671,7 +623,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	strlcpy(query_string_buffer, query, sizeof(query_string_buffer));
 
-	pool_debug("Execute: query string = <%s>", query);
+	ereport(DEBUG2,(errmsg("Execute: query string = <%s>", query)));
 
 	/*
 	 * Fetch memory cache if possible
@@ -685,15 +637,11 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		char *search_query = NULL;
 		int len;
 		char *tmp;
+
 #define STR_ALLOC_SIZE 1024
 
 		len = strlen(query)+1;
-		search_query = (char *)malloc(len);
-		if (search_query == NULL)
-		{
-			pool_error("Execute: malloc failed");
-			return POOL_END;
-		}
+		search_query = (char *)palloc(len);
 		strcpy(search_query, query);
 
 		/*
@@ -708,12 +656,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			int alloc_len;
 
 			alloc_len = (len/STR_ALLOC_SIZE+1)*STR_ALLOC_SIZE;
-			search_query = realloc(search_query, alloc_len);
-			if (search_query == NULL)
-			{
-				pool_error("Execute: realloc failed");
-				return POOL_END;
-			}
+			search_query = repalloc(search_query, alloc_len);
 
 			for (i = 0; i < bind_msg->len - bind_msg->param_offset; i++)
 			{
@@ -725,12 +668,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 				if ((len+hexlen) >= alloc_len)
 				{
 					alloc_len += STR_ALLOC_SIZE;
-					search_query = realloc(search_query, alloc_len);
-					if (search_query == NULL)
-					{
-						pool_error("Execute: realloc failed");
-						return POOL_END;
-					}
+					search_query = repalloc(search_query, alloc_len);
 				}
 				strcat(search_query, hex_str);
 				len += hexlen;
@@ -753,13 +691,8 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			 */
 			if (query_context->temp_cache)
 			{
-				tmp = (char *)malloc(sizeof(char) * strlen(search_query) + 1);
-				if (tmp == NULL)
-				{
-					pool_error("Execute: malloc failed");
-					return POOL_END;
-				}
-				free(query_context->temp_cache->query);
+				tmp = (char *)palloc(sizeof(char) * strlen(search_query) + 1);
+				pfree(query_context->temp_cache->query);
 				query_context->temp_cache->query = tmp;
 				strcpy(query_context->temp_cache->query, search_query);
 			}
@@ -800,10 +733,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		if (!commit)
 		{
 			/* Send the query to master node */
-			if (pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID) != POOL_CONTINUE)
-			{
-				return POOL_END;
-			}
+			pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID);
 
 			/* Check specific errors */
 			specific_error = check_errors(backend, MASTER_NODE_ID);
@@ -822,39 +752,27 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			memset(msg + len, 0, sizeof(int));
 
 			/* send query to other nodes */
-			if (pool_extended_send_and_wait(query_context, "E", len, msg, -1, MASTER_NODE_ID) != POOL_CONTINUE)
-				return POOL_END;
+			pool_extended_send_and_wait(query_context, "E", len, msg, -1, MASTER_NODE_ID);
 		}
 		else
 		{
-			if (pool_extended_send_and_wait(query_context, "E", len, contents, -1, MASTER_NODE_ID) != POOL_CONTINUE)
-				return POOL_END;
+			pool_extended_send_and_wait(query_context, "E", len, contents, -1, MASTER_NODE_ID);
 		}
 		
 		/* send "COMMIT" or "ROLLBACK" to only master node if query is "COMMIT" or "ROLLBACK" */
 		if (commit)
 		{
-			if (pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID) != POOL_CONTINUE)
-			{
-				return POOL_END;
-			}
+			pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID);
 		}
 	}
 	else
 	{
-		if (pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID) != POOL_CONTINUE)
-		{
-			return POOL_END;
-		}
-		if (pool_extended_send_and_wait(query_context, "E", len, contents, -1, MASTER_NODE_ID) != POOL_CONTINUE)
-		{
-			return POOL_END;
-		}
+		pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID);
+		pool_extended_send_and_wait(query_context, "E", len, contents, -1, MASTER_NODE_ID);
 	}
 
 	return POOL_CONTINUE;
 }
-
 /*
  * process Parse (V3 only)
  */
@@ -869,30 +787,24 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	Node *node = NULL;
 	POOL_SENT_MESSAGE *msg;
 	POOL_STATUS status;
-	POOL_MEMORY_POOL *old_context;
+	MemoryContext old_context;
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_QUERY_CONTEXT *query_context;
 
 	/* Get session context */
-	session_context = pool_get_session_context();
-	if (!session_context)
-	{
-		pool_error("Parse: cannot get session context");
-		return POOL_END;
-	}
+	session_context = pool_get_session_context(false);
 
 	/* Create query context */
 	query_context = pool_init_query_context();
-
+    
+    
 	pool_debug("Parse: statement name <%s>", contents);
 
 	name = contents;
 	stmt = contents + strlen(contents) + 1;
 
 	/* switch memory context */
-	if (pool_memory == NULL)
-		pool_memory = pool_memory_create(PARSER_BLOCK_SIZE);
-	old_context = pool_memory_context_switch_to(query_context->memory_context);
+	old_context = MemoryContextSwitchTo(query_context->memory_context);
 
 	/* parse SQL string */
 	parse_tree_list = raw_parser(stmt);
@@ -949,11 +861,6 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_start_query(query_context, pstrdup(stmt), strlen(stmt) + 1, node);
 
 		msg = pool_create_sent_message('P', len, contents, 0, name, query_context);
-		if (!msg)
-		{
-			pool_error("Parse: cannot create parse message: %s", strerror(errno));
-			return POOL_END;
-		}
 
 		session_context->uncompleted_message = msg;
 
@@ -1027,8 +934,11 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			if (rewrite_query != NULL)
 			{
 				int alloc_len = len - strlen(stmt) + strlen(rewrite_query);
-				contents = pool_memory_realloc(session_context->memory_context,
-                                                                      msg->contents, alloc_len);
+                /* switch memory context */
+				MemoryContext oldcxt = MemoryContextSwitchTo(session_context->memory_context);
+				contents = repalloc(msg->contents,alloc_len);
+				MemoryContextSwitchTo(oldcxt);
+
 				strcpy(contents, name);
 				strcpy(contents + strlen(name) + 1, rewrite_query);
 				memcpy(contents + strlen(name) + strlen(rewrite_query) + 2,
@@ -1061,7 +971,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		}
 	}
 
-	pool_memory_context_switch_to(old_context);
+	MemoryContextSwitchTo(old_context);
 
 	/*
 	 * If in replication mode, send "SYNC" message if not in a transaction.
@@ -1079,17 +989,15 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			{
 				if (!VALID_BACKEND(i))
 					continue;
-
 				/* send sync message */
 				send_extended_protocol_message(backend, i, "S", 0, "");
 			}
 
 			kind = pool_read_kind(backend);
 			if (kind != 'Z')
-			{
-				pool_query_context_destroy(query_context);
-				return POOL_END;
-			}
+                ereport(ERROR,
+                    (errmsg("unable to parse the query"),
+                         errdetail("invalid read kind")));
 
 			/*
 			 * SYNC message returns "Ready for Query" message.
@@ -1119,17 +1027,12 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			/* start a transaction if needed and lock the table */
 			status = insert_lock(frontend, backend, stmt, (InsertStmt *)query_context->parse_tree, insert_stmt_with_lock);
 			if (status != POOL_CONTINUE)
-			{
-				pool_query_context_destroy(query_context);
-				return status;
-			}
+                ereport(ERROR,
+                    (errmsg("unable to parse the query"),
+                         errdetail("unable to get insert lock")));
+                
 		}
 	}
-
-	/*
-	 * Cannot call free_parser() here. Since "string" might be allocated in parser context.
-	 * free_parser();
-	 */
 
 	if (REPLICATION || PARALLEL_MODE || MASTER_SLAVE)
 	{
@@ -1138,11 +1041,8 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		 * locks.
 		 */
 		pool_debug("Parse: waiting for master completing the query");
-		if (pool_extended_send_and_wait(query_context, "P", len, contents, 1, MASTER_NODE_ID) != POOL_CONTINUE)
-		{
-			pool_query_context_destroy(query_context);
-			return POOL_END;
-		}
+        pool_extended_send_and_wait(query_context, "P", len, contents, 1, MASTER_NODE_ID);
+
 
 		/*
 		 * We must check deadlock error because a aborted transaction
@@ -1151,64 +1051,43 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		 * error query to another nodes.
 		 */
 		deadlock_detected = detect_deadlock_error(MASTER(backend), MAJOR(backend));
-		if (deadlock_detected < 0)
-		{
-			pool_query_context_destroy(query_context);
-			return POOL_END;
-		}
-		else
-		{
-			/*
-			 * Check if other than deadlock error detected.  If so, emit
-			 * log. This is useful when invalid encoding error occurs. In
-			 * this case, PostgreSQL does not report what statement caused
-			 * that error and make users confused.
-			 */
-			per_node_error_log(backend, MASTER_NODE_ID, stmt, "Parse: Error or notice message from backend: ", true);
-		}
+        /*
+         * Check if other than deadlock error detected.  If so, emit
+         * log. This is useful when invalid encoding error occurs. In
+         * this case, PostgreSQL does not report what statement caused
+         * that error and make users confused.
+         */
+        per_node_error_log(backend, MASTER_NODE_ID, stmt, "Parse: Error or notice message from backend: ", true);
 
 		if (deadlock_detected)
 		{
 			POOL_QUERY_CONTEXT *error_qc;
 
 			error_qc = pool_init_query_context();
+
+
 			pool_start_query(error_qc, POOL_ERROR_QUERY, strlen(POOL_ERROR_QUERY) + 1, node);
 			pool_copy_prep_where(query_context->where_to_send, error_qc->where_to_send);
 			
 			pool_log("Parse: received deadlock error message from master node");
 
-			if (pool_send_and_wait(error_qc, -1, MASTER_NODE_ID) != POOL_CONTINUE)
-			{
-				pool_query_context_destroy(query_context);
-				return POOL_END;
-			}
+			pool_send_and_wait(error_qc, -1, MASTER_NODE_ID);
 
 			pool_query_context_destroy(error_qc);
-			pool_set_query_in_progress();
+            
+			
+            pool_set_query_in_progress();
 			session_context->query_context = query_context;
 		}
 		else
 		{
-			if (pool_extended_send_and_wait(query_context, "P", len, contents, -1, MASTER_NODE_ID) != POOL_CONTINUE)
-			{
-				pool_query_context_destroy(query_context);
-				return POOL_END;
-			}
+			pool_extended_send_and_wait(query_context, "P", len, contents, -1, MASTER_NODE_ID);
 		}
 	}
 	else
 	{
-		if (pool_extended_send_and_wait(query_context, "P", len, contents, 1, MASTER_NODE_ID) != POOL_CONTINUE)
-		{
-			pool_query_context_destroy(query_context);
-			return POOL_END;
-		}
+		pool_extended_send_and_wait(query_context, "P", len, contents, 1, MASTER_NODE_ID);
 	}
-
-	/*
-	 * Ok. we are safe to call free_parser();
-	 */
-	/* free_parser(); */
 
 	return POOL_CONTINUE;
 
@@ -1227,13 +1106,7 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	int insert_stmt_with_lock = 0;
 
 	/* Get session context */
-	session_context = pool_get_session_context();
-	if (!session_context)
-	{
-		pool_error("Bind: cannot get session context");
-		return POOL_END;
-	}
-
+	session_context = pool_get_session_context(false);
 	/*
 	 * Rewrite message
 	 */
@@ -1245,24 +1118,21 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		parse_msg = pool_get_sent_message('P', pstmt_name);
 	if (!parse_msg)
 	{
-		pool_error("Bind: cannot get parse message \"%s\"", pstmt_name);
-		return POOL_END;
+        ereport(ERROR,
+                (errmsg("unable to bind"),
+                 errdetail("cannot get parse message \"%s\"", pstmt_name)));
 	}
 
 	bind_msg = pool_create_sent_message('B', len, contents,
 										parse_msg->num_tsparams, portal_name,
 										parse_msg->query_context);
-	if (!bind_msg)
-	{
-		pool_error("Bind: cannot create bind message: %s", strerror(errno));
-		return POOL_END;
-	}
 
 	query_context = parse_msg->query_context;
 	if (!query_context)
 	{
-		pool_error("Bind: cannot get query context");
-		return POOL_END;
+        ereport(ERROR,
+                (errmsg("unable to bind"),
+                 errdetail("cannot get the query context")));
 	}
 
 	/*
@@ -1322,17 +1192,9 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	}
 
 	pool_debug("Bind: waiting for master completing the query");
-	if (pool_extended_send_and_wait(query_context, "B", len, contents, 1, MASTER_NODE_ID)
-		!= POOL_CONTINUE)
-	{
-		return POOL_END;
-	}
+	pool_extended_send_and_wait(query_context, "B", len, contents, 1, MASTER_NODE_ID);
 
-	if (pool_extended_send_and_wait(query_context, "B", len, contents, -1, MASTER_NODE_ID)
-		!= POOL_CONTINUE)
-	{
-		return POOL_END;
-	}
+	pool_extended_send_and_wait(query_context, "B", len, contents, -1, MASTER_NODE_ID);
 
 	return POOL_CONTINUE;
 }
@@ -1345,12 +1207,7 @@ POOL_STATUS Describe(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	POOL_QUERY_CONTEXT *query_context;
 
 	/* Get session context */
-	session_context = pool_get_session_context();
-	if (!session_context)
-	{
-		pool_error("Describe: cannot get session context");
-		return POOL_END;
-	}
+	session_context = pool_get_session_context(false);
 
 	/* Prepared Statement */
 	if (*contents == 'S')
@@ -1359,29 +1216,29 @@ POOL_STATUS Describe(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		if (!msg)
 			msg = pool_get_sent_message('P', contents+1);
 		if (!msg)
-		{
-			pool_error("Describe: cannot get parse message");
-			return POOL_END;
-		}
+            ereport(FATAL,
+                (return_code(2),
+                     errmsg("unable to execute Describe"),
+                     errdetail("unable to get the parse message")));
 	}
 	/* Portal */
 	else
 	{
 		msg = pool_get_sent_message('B', contents+1);
 		if (!msg)
-		{
-			pool_error("Describe: cannot get bind message");
-			return POOL_END;
-		}
+            ereport(FATAL,
+                    (return_code(2),
+                     errmsg("unable to execute Describe"),
+                     errdetail("unable to get the bind message")));
 	}
 
 	query_context = msg->query_context;
 
 	if (query_context == NULL)
-	{
-		pool_error("Describe: cannot get query context");
-		return POOL_END;
-	}
+        ereport(FATAL,
+                (return_code(2),
+                 errmsg("unable to execute Describe"),
+                 errdetail("unable to get the query context")));
 
 	session_context->query_context = query_context;
 
@@ -1391,14 +1248,12 @@ POOL_STATUS Describe(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	 * pool_where_to_send() and it leads to "portal not found"
 	 * etc. errors.
 	 */
-	pool_debug("Describe: waiting for master completing the query");
-	if (pool_extended_send_and_wait(query_context, "D", len, contents, 1, MASTER_NODE_ID)
-		!= POOL_CONTINUE)
-		return POOL_END;
+    ereport(DEBUG1,
+            (errmsg("Describe: waiting for master completing the query")));
 
-	if (pool_extended_send_and_wait(query_context, "D", len, contents, -1, MASTER_NODE_ID)
-		!= POOL_CONTINUE)
-		return POOL_END;
+	pool_extended_send_and_wait(query_context, "D", len, contents, 1, MASTER_NODE_ID);
+
+	pool_extended_send_and_wait(query_context, "D", len, contents, -1, MASTER_NODE_ID);
 
 	return POOL_CONTINUE;
 }
@@ -1412,12 +1267,7 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	POOL_QUERY_CONTEXT *query_context;
 
 	/* Get session context */
-	session_context = pool_get_session_context();
-	if (!session_context)
-	{
-		pool_error("Close: cannot get session context");
-		return POOL_END;
-	}
+	session_context = pool_get_session_context(false);
 
 	/* Prepared Statement */
 	if (*contents == 'S')
@@ -1426,47 +1276,44 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		if (!msg)
 			msg = pool_get_sent_message('P', contents+1);
 		if (!msg)
-		{
-			pool_error("Close: cannot get parse message");
-			return POOL_END;
-		}
+            ereport(FATAL,
+                (return_code(2),
+                     errmsg("unable to execute close"),
+                     errdetail("unable to get the parse message")));
 	}
 	/* Portal */
 	else if (*contents == 'P')
 	{
 		msg = pool_get_sent_message('B', contents+1);
 		if (!msg)
-		{
-			pool_error("Close: cannot get bind message");
-			return POOL_END;
-		}
+            ereport(FATAL,
+                    (return_code(2),
+                     errmsg("unable to execute close"),
+                     errdetail("unable to get the bind message")));
 	}
 	else
-	{
-		pool_error("Close: invalid message");
-		return POOL_END;
-	}
+        ereport(FATAL,
+                (return_code(2),
+                    errmsg("unable to execute close"),
+                    errdetail("invalid message")));
 
 	session_context->uncompleted_message = msg;
 	query_context = msg->query_context;
 
 	if (!query_context)
-	{
-		pool_error("Close: cannot get query context");
-		return POOL_END;
-	}
+        ereport(FATAL,
+                (return_code(2),
+                 errmsg("unable to execute close"),
+                 errdetail("unable to get the query context")));
 
 	session_context->query_context = query_context;
 	/* pool_where_to_send(query_context, query_context->original_query, query_context->parse_tree); */
 
-	pool_debug("Close: waiting for master completing the query");
-	if (pool_extended_send_and_wait(query_context, "C", len, contents, 1, MASTER_NODE_ID)
-		!= POOL_CONTINUE)
-		return POOL_END;
+    ereport(DEBUG1,
+            (errmsg("Close: waiting for master completing the query")));
+	pool_extended_send_and_wait(query_context, "C", len, contents, 1, MASTER_NODE_ID);
 
-	if (pool_extended_send_and_wait(query_context, "C", len, contents, -1, MASTER_NODE_ID)
-		!= POOL_CONTINUE)
-		return POOL_END;
+	pool_extended_send_and_wait(query_context, "C", len, contents, -1, MASTER_NODE_ID);
 
 	return POOL_CONTINUE;
 }
@@ -1514,12 +1361,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	char *query = NULL;
 
 	/* Get session context */
-	session_context = pool_get_session_context();
-	if (!session_context)
-	{
-		pool_error("ReadyForQuery: cannot get session context");
-		return POOL_END;
-	}
+	session_context = pool_get_session_context(false);
 
 	/*
 	 * If the numbers of update tuples are differ and
@@ -1550,12 +1392,12 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			{
 				int i;
 				String *msg;
-				POOL_MEMORY_POOL *old_context;
+				MemoryContext old_context;
 
 				if (session_context->query_context)
-					old_context = pool_memory_context_switch_to(session_context->query_context->memory_context);
-				else
-					old_context = pool_memory_context_switch_to(session_context->memory_context);
+                    old_context = MemoryContextSwitchTo(session_context->query_context->memory_context);
+                else
+					old_context = MemoryContextSwitchTo(session_context->memory_context);
 
 				msg = init_string("ReadyForQuery: Degenerate backends:");
 
@@ -1577,7 +1419,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				pool_log("%s", msg->data);
 				free_string(msg);
 
-				pool_memory_context_switch_to(old_context);
+				MemoryContextSwitchTo(old_context);
 
 				degenerate_backend_set(victim_nodes, number_of_nodes);
 				child_exit(1);
@@ -1617,6 +1459,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			if (kind == 'Z')
 				break;
 
+
 			/* put the message back to read buffer */
 			for (i=0;i<NUM_BACKENDS;i++)
 			{
@@ -1628,10 +1471,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 
 			/* discard rest of the packet */
 			if (pool_discard_packet(backend) != POOL_CONTINUE)
-			{
-				pool_error("ReadyForQuery: pool_discard_packet failed");
 				return POOL_END;
-			}
 		}
 		session_context->mismatch_ntuples = false;
 	}
@@ -1651,7 +1491,6 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	{
 		if ((len = pool_read_message_length(backend)) < 0)
 			return POOL_END;
-
 		/*
 		 * Set transaction state for each node
 		 */
@@ -1787,6 +1626,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			/* Memory cache enabled? */
 			if (cache_commit && pool_config->memory_cache_enabled)
 			{
+
 				/* If we are doing extended query and the state is after EXECUTE,
 				 * then we can commit cache.
 				 * We check latter condition by looking at query_context->query_w_hex.
@@ -1799,7 +1639,8 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 					if (session_context->query_context->query_state[MASTER_NODE_ID] == POOL_EXECUTE_COMPLETE)
 					{
 						pool_handle_query_cache(backend, session_context->query_context->query_w_hex, node, state);
-						free(session_context->query_context->query_w_hex);
+						if(session_context->query_context->query_w_hex)
+                            pfree(session_context->query_context->query_w_hex);
 						session_context->query_context->query_w_hex = NULL;
 					}
 				}
@@ -1834,11 +1675,12 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 
 		pool_unset_query_in_progress();
 	}
-
 	if (!pool_is_doing_extended_query_message())
 	{
 		if (!(node && IsA(node, PrepareStmt)))
-			pool_query_context_destroy(pool_get_session_context()->query_context);
+        {
+			pool_query_context_destroy(pool_get_session_context(false)->query_context);
+        }
 	}
 
 	/*
@@ -1868,9 +1710,9 @@ static POOL_STATUS close_standby_transactions(POOL_CONNECTION *frontend,
 			if (do_command(frontend, CONNECTION(backend, i), "COMMIT", MAJOR(backend), 
 						   MASTER_CONNECTION(backend)->pid,
 						   MASTER_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
-			{
-				return POOL_END;
-			}
+                ereport(ERROR,
+                        (errmsg("unable to close standby transactions"),
+                         errdetail("do_command returned DEADLOCK status")));
 		}
 	}
 	return POOL_CONTINUE;
@@ -1881,12 +1723,7 @@ POOL_STATUS ParseComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 	POOL_SESSION_CONTEXT *session_context;
 
 	/* Get session context */
-	session_context = pool_get_session_context();
-	if (!session_context)
-	{
-		pool_error("ParseComplete: cannot get session context");
-		return POOL_END;
-	}
+	session_context = pool_get_session_context(false);
 
 	if (session_context->uncompleted_message)
 	{
@@ -1909,12 +1746,7 @@ POOL_STATUS BindComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backen
 	POOL_SESSION_CONTEXT *session_context;
 
 	/* Get session context */
-	session_context = pool_get_session_context();
-	if (!session_context)
-	{
-		pool_error("BindComplete: cannot get session context");
-		return POOL_END;
-	}
+	session_context = pool_get_session_context(false);
 
 	if (session_context->uncompleted_message)
 	{
@@ -1938,12 +1770,7 @@ POOL_STATUS CloseComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 	POOL_STATUS status;
 
 	/* Get session context */
-	session_context = pool_get_session_context();
-	if (!session_context)
-	{
-		pool_error("CloseComplete: cannot get session context");
-		return POOL_END;
-	}
+	session_context = pool_get_session_context(false);
 
 	/* Send CloseComplete(3) to frontend before removing the target message */
 	status = SimpleForwardToFrontend('3', frontend, backend);
@@ -1975,12 +1802,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	POOL_SESSION_CONTEXT *session_context;
 
 	/* Get session context */
-	session_context = pool_get_session_context();
-	if (!session_context)
-	{
-		pool_error("CommandComplete: cannot get session context");
-		return POOL_END;
-	}
+	session_context = pool_get_session_context(false);
 
 	if (session_context->query_context != NULL)
 	{
@@ -2071,12 +1893,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	p = pool_read2(MASTER(backend), len);
 	if (p == NULL)
 		return POOL_END;
-	p1 = malloc(len);
-	if (p1 == NULL)
-	{
-		pool_error("CommandComplete: malloc failed");
-		return POOL_ERROR;
-	}
+	p1 = palloc(len);
 	memcpy(p1, p, len);
 
 	rows = extract_ntuples(p);
@@ -2151,12 +1968,12 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	if (session_context->mismatch_ntuples)
 	{
 		char msgbuf[128];
-		POOL_MEMORY_POOL *old_context;
+		MemoryContext old_context;
 
 		if (session_context->query_context)
-			old_context = pool_memory_context_switch_to(session_context->query_context->memory_context);
+			old_context = MemoryContextSwitchTo(session_context->query_context->memory_context);
 		else
-			old_context = pool_memory_context_switch_to(session_context->memory_context);
+			old_context = MemoryContextSwitchTo(session_context->memory_context);
 
 		String *msg = init_string("pgpool detected difference of the number of inserted, updated or deleted tuples. Possible last query was: \"");
 		string_append_char(msg, query_string_buffer);
@@ -2177,7 +1994,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		pool_log("%s", msg->data);
 		free_string(msg);
 
-		pool_memory_context_switch_to(old_context);
+		MemoryContextSwitchTo(old_context);
 	}
 	else
 	{
@@ -2188,15 +2005,9 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 			strncpy(tmp, p1, 7);
 			sprintf(tmp+7, "%d", rows);
 
-			p2 = strdup(tmp);
-			if (p2 == NULL)
-			{
-				pool_error("CommandComplete: malloc failed");
-				free(p1);
-				return POOL_ERROR;
-			}
+			p2 = pstrdup(tmp);
 
-			free(p1);
+			pfree(p1);
 			p1 = p2;
 			len1 = strlen(p2) + 1;
 		}
@@ -2216,7 +2027,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		}
 	}
 
-	free(p1);
+	pfree(p1);
 
 	if (pool_is_doing_extended_query_message())
 	{
@@ -2240,12 +2051,7 @@ POOL_STATUS ParameterDescription(POOL_CONNECTION *frontend,
 	int num_params, send_num_params, num_dmy;
 	char kind = 't';
 
-	session_context = pool_get_session_context();
-	if (!session_context)
-	{
-		pool_error("ParameterDescription: cannot get session context");
-		return POOL_END;
-	}
+	session_context = pool_get_session_context(false);
 
 	/* only in replication mode and rewritten query */
 	if (!REPLICATION || !session_context->query_context->rewritten_query)
@@ -2417,8 +2223,7 @@ POOL_STATUS FunctionCall(POOL_CONNECTION *frontend,
 	}
 
 	/* dummy */
-	if (pool_read(frontend, dummy, sizeof(dummy)) < 0)
-		return POOL_ERROR;
+	pool_read(frontend, dummy, sizeof(dummy));
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -2429,8 +2234,7 @@ POOL_STATUS FunctionCall(POOL_CONNECTION *frontend,
 	}
 
 	/* function object id */
-	if (pool_read(frontend, &oid, sizeof(oid)) < 0)
-		return POOL_ERROR;
+	pool_read(frontend, &oid, sizeof(oid));
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -2441,8 +2245,7 @@ POOL_STATUS FunctionCall(POOL_CONNECTION *frontend,
 	}
 
 	/* number of arguments */
-	if (pool_read(frontend, &argn, sizeof(argn)) < 0)
-		return POOL_ERROR;
+	pool_read(frontend, &argn, sizeof(argn));
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -2460,8 +2263,7 @@ POOL_STATUS FunctionCall(POOL_CONNECTION *frontend,
 		char *arg;
 
 		/* length of each argument in bytes */
-		if (pool_read(frontend, &len, sizeof(len)) < 0)
-			return POOL_ERROR;
+		pool_read(frontend, &len, sizeof(len));
 
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
@@ -2475,7 +2277,10 @@ POOL_STATUS FunctionCall(POOL_CONNECTION *frontend,
 
 		/* argument value itself */
 		if ((arg = pool_read2(frontend, len)) == NULL)
-			return POOL_ERROR;
+            ereport(FATAL,
+                (return_code(2),
+                    errmsg("failed to process function call"),
+                        errdetail("read from frontend failed")));
 
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
@@ -2490,8 +2295,7 @@ POOL_STATUS FunctionCall(POOL_CONNECTION *frontend,
 	{
 		if (VALID_BACKEND(i))
 		{
-			if (pool_flush(CONNECTION(backend, i)))
-				return POOL_ERROR;
+			pool_flush(CONNECTION(backend, i));
 		}
 	}
 	return POOL_CONTINUE;
@@ -2504,32 +2308,25 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 	char *bufp = NULL;
 	char *contents;
 	POOL_STATUS status;
-	int len;
-	POOL_SESSION_CONTEXT *session_context;
+	int len = 0;
 
 	/* Get session context */
-	session_context = pool_get_session_context();
-	if (!session_context)
-	{
-		pool_error("Parse: cannot get session context");
-		return POOL_END;
-	}
+	pool_get_session_context(false);
 
 	if (pool_read_buffer_is_empty(frontend) && frontend->no_forward != 0)
 		return POOL_CONTINUE;
 
-	if (pool_read(frontend, &fkind, 1) < 0)
-	{
-		pool_log("ProcessFrontendResponse: failed to read kind from frontend. frontend abnormally exited");
-		return POOL_END;
-	}
+	pool_read(frontend, &fkind, 1);
 
 	pool_debug("ProcessFrontendResponse: kind from frontend %c(%02x)", fkind, fkind);
 
 	if (MAJOR(backend) == PROTO_MAJOR_V3)
 	{
 		if (pool_read(frontend, &len, sizeof(len)) < 0)
-			return POOL_END;
+            ereport(ERROR,
+                (errmsg("unable to process frontend response"),
+                     errdetail("failed to read message length from frontend. frontend abnormally exited")));
+
 		len = ntohl(len) - 4;
 		if (len > 0)
 			bufp = pool_read2(frontend, len);
@@ -2541,7 +2338,9 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 	}
 
 	if (len > 0 && bufp == NULL)
-		return POOL_END;
+        ereport(ERROR,
+            (errmsg("unable to process frontend response"),
+                 errdetail("failed to read message from frontend. frontend abnormally exited")));
 
 	if (fkind != 'S' && pool_is_ignore_till_sync())
 	{
@@ -2551,6 +2350,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 		 */
 		if (!pool_is_query_in_progress())
 			pool_set_query_in_progress();
+
 		return POOL_CONTINUE;
 	}
 
@@ -2561,12 +2361,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 	 * these protocol modules, pool_read2 maybe called and modify its
 	 * buffer contents.
 	 */
-	contents = malloc(len);
-	if (contents == NULL)
-	{
-		pool_error("ProcessFrontendResponse: cannot allocate memory. request size:%d", len);
-		return POOL_ERROR;
-	}
+	contents = palloc(len);
 	memcpy(contents, bufp, len);
 
 	switch (fkind)
@@ -2575,11 +2370,17 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 		char *query;
 		Node *node;
 		List *parse_tree_list;
-		POOL_MEMORY_POOL *old_context;
+		MemoryContext old_context;
 
 		case 'X':	/* Terminate */
-			free(contents);
-			return POOL_END;
+            write_stderr("[%d]%s():%d\n",getpid(),__FUNCTION__,__LINE__);
+			pfree(contents);
+            write_stderr("[%d]%s():%d\n",getpid(),__FUNCTION__,__LINE__);
+
+            ereport(LOG,
+                (errmsg("Frontend terminated"),
+                     errdetail("received message kind 'X' from frontend")));
+            return POOL_END;
 
 		case 'Q':	/* Query */
 			allow_close_transaction = 1;
@@ -2636,13 +2437,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			 * Create dummy query context as if it were an INSERT.
 			 */
 			query_context = pool_init_query_context();
-			if (!query_context)
-			{
-				pool_error("ProcessFrontendResponse: pool_init_query_context failed");
-				free(contents);
-				return POOL_END;
-			}
-			old_context = pool_memory_context_switch_to(query_context->memory_context);
+			old_context = MemoryContextSwitchTo(query_context->memory_context);
 			query = "INSERT INTO foo VALUES(1)";
 			parse_tree_list = raw_parser(query);
 			node = (Node *) lfirst(list_head(parse_tree_list));
@@ -2655,7 +2450,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			else
 				status = FunctionCall(frontend, backend);
 
-			pool_memory_context_switch_to(old_context);
+			MemoryContextSwitchTo(old_context);
 			break;
 
 		case 'c':	/* CopyDone */
@@ -2669,13 +2464,19 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			}
 
 		default:
-			pool_error("ProcessFrontendResponse: unknown message type %c(%02x)", fkind, fkind);
-			status = POOL_ERROR;
+            ereport(FATAL,
+                (return_code(2),
+                 errmsg("unable to process frontend response"),
+                     errdetail("unknown message type %c(%02x)", fkind, fkind)));
+
 	}
-	free(contents);
+	pfree(contents);
 
 	if (status != POOL_CONTINUE)
-		status = POOL_ERROR;
+        ereport(FATAL,
+            (return_code(2),
+                errmsg("unable to process frontend response")));
+
 	return status;
 }
 
@@ -2685,15 +2486,9 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 {
 	int status;
 	char kind;
-	POOL_SESSION_CONTEXT *session_context;
 
 	/* Get session context */
-	session_context = pool_get_session_context();
-	if (!session_context)
-	{
-		pool_error("ProcessBackendResponse: cannot get session context");
-		return POOL_END;
-	}
+	pool_get_session_context(false);
 
 	if (pool_is_ignore_till_sync())
 	{
@@ -2717,8 +2512,10 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 	 */
 	if (kind == 0)
 	{
-		pool_error("ProcessBackendResponse: kind is 0!");
-		return POOL_ERROR;
+        ereport(FATAL,
+            (return_code(2),
+                errmsg("unable to process backend response"),
+                 errdetail("invalid message kind sent by backend connection")));
 	}
 
 	pool_debug("ProcessBackendResponse: kind from backend: %c", kind);
@@ -2873,8 +2670,9 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 				break;
 
 			default:
-				pool_error("Unknown message type %c(%02x)", kind, kind);
-				exit(1);
+                ereport(FATAL,
+                        (return_code(1),
+                         errmsg("Unknown message type %c(%02x)", kind, kind)));
 		}
 	}
 
@@ -2887,7 +2685,10 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 	}
 
 	if (status != POOL_CONTINUE)
-		status = POOL_ERROR;
+        ereport(FATAL,
+            (return_code(2),
+                 errmsg("unable to process backend response for message kind '%c'",kind)));
+
 	return status;
 }
 
@@ -2899,14 +2700,11 @@ POOL_STATUS CopyInResponse(POOL_CONNECTION *frontend,
 	/* forward to the frontend */
 	if (MAJOR(backend) == PROTO_MAJOR_V3)
 	{
-		if (SimpleForwardToFrontend('G', frontend, backend) != POOL_CONTINUE)
-			return POOL_END;
-		if (pool_flush(frontend) != POOL_CONTINUE)
-			return POOL_END;
+		SimpleForwardToFrontend('G', frontend, backend);
+		pool_flush(frontend);
 	}
 	else
-		if (pool_write_and_flush(frontend, "G", 1) < 0)
-			return POOL_END;
+		pool_write_and_flush(frontend, "G", 1);
 
 	status = CopyDataRows(frontend, backend, 1);
 	return status;
@@ -2920,14 +2718,11 @@ POOL_STATUS CopyOutResponse(POOL_CONNECTION *frontend,
 	/* forward to the frontend */
 	if (MAJOR(backend) == PROTO_MAJOR_V3)
 	{
-		if (SimpleForwardToFrontend('H', frontend, backend) != POOL_CONTINUE)
-			return POOL_END;
-		if (pool_flush(frontend) != POOL_CONTINUE)
-			return POOL_END;
+		SimpleForwardToFrontend('H', frontend, backend);
+		pool_flush(frontend);
 	}
 	else
-		if (pool_write_and_flush(frontend, "H", 1) < 0)
-			return POOL_END;
+		pool_write_and_flush(frontend, "H", 1);
 
 	status = CopyDataRows(frontend, backend, 0);
 	return status;
@@ -2963,16 +2758,12 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 				int sendlen;
 				char *p, *p1;
 
-				if (pool_read(frontend, &kind, 1) < 0)
-					return POOL_END;
+				pool_read(frontend, &kind, 1);
 
 				if (info && kind == 'd')
 				{
 					int id;
-					if (pool_read(frontend, &sendlen, sizeof(sendlen)))
-					{
-						return POOL_END;
-					}
+					pool_read(frontend, &sendlen, sizeof(sendlen));
 
 					len = ntohl(sendlen) - 4;
 
@@ -2981,7 +2772,9 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 
 					p = pool_read2(frontend, len);
 					if (p == NULL)
-						return POOL_END;
+                        ereport(ERROR,
+                            (errmsg("unable to copy data rows"),
+                                 errdetail("read on backend node failed")));
 
 					/* copy end ? */
 					if (len == 3 && memcmp(p, "\\.\n", 3) == 0)
@@ -2990,12 +2783,9 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 						{
 							if (VALID_BACKEND(i))
 							{
-								if (pool_write(CONNECTION(backend, i), &kind, 1))
-									return POOL_END;
-								if (pool_write(CONNECTION(backend, i), &sendlen, sizeof(sendlen)))
-									return POOL_END;
-								if (pool_write(CONNECTION(backend, i), p, len))
-									return POOL_END;
+								pool_write(CONNECTION(backend, i), &kind, 1);
+								pool_write(CONNECTION(backend, i), &sendlen, sizeof(sendlen));
+								pool_write(CONNECTION(backend, i), p, len);
 							}
 						}
 					}
@@ -3004,37 +2794,29 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 						p1 = parse_copy_data(p, len, copy_delimiter, info->dist_key_col_id);
 
 						if (!p1)
-						{
-							pool_error("CopyDataRow: cannot parse data");
-							return POOL_END;
-						}
+	                         ereport(ERROR,
+                                (errmsg("unable to copy data rows"),
+                                     errdetail("unable to parse data")));
+   
 						else if (strcmp(p1, copy_null) == 0)
-						{
-							pool_error("CopyDataRow: key parameter is NULL");
-							free(p1);
-							return POOL_END;
-						}
+                            ereport(ERROR,
+                                    (errmsg("unable to copy data rows"),
+                                     errdetail("key parameter is NULL")));
 
 						id = pool_get_id(info, p1);
+
 						pool_debug("CopyDataRow: copying id: %d", id);
-						free(p1);
+						pfree(p1);
 						if (id < 0 || !VALID_BACKEND(id))
-						{
-							pool_error("CopyDataRow: pool_get_id returns invalid id: %d", id);
-							exit(1);
-						}
-						if (pool_write(CONNECTION(backend, id), &kind, 1))
-						{
-							return POOL_END;
-						}
-						if (pool_write(CONNECTION(backend, id), &sendlen, sizeof(sendlen)))
-						{
-							return POOL_END;
-						}
-						if (pool_write_and_flush(CONNECTION(backend, id), p, len))
-						{
-							return POOL_END;
-						}
+                            ereport(FATAL,
+                                    (return_code(1),
+                                    errmsg("unable to copy data rows"),
+                                     errdetail("pool_get_id returns invalid id: %d", id)));
+                                    
+
+                        pool_write(CONNECTION(backend, id), &kind, 1);
+                        pool_write(CONNECTION(backend, id), &sendlen, sizeof(sendlen));
+                        pool_write_and_flush(CONNECTION(backend, id), p, len);
 					}
 				}
 				else
@@ -3043,8 +2825,7 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 
 					pool_debug("CopyDataRows: read kind from frontend %c(%02x)", kind, kind);
 
-					if (pool_read(frontend, &len, sizeof(len)) < 0)
-						return POOL_END;
+					pool_read(frontend, &len, sizeof(len));
 					len = ntohl(len) - 4;
 					if (len > 0)
 						contents = pool_read2(frontend, len);
@@ -3071,8 +2852,7 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 			{
 				signed char kind;
 
-				if ((kind = pool_read_kind(backend)) < 0)
-					return POOL_END;
+				kind = pool_read_kind(backend);
 
 				SimpleForwardToFrontend(kind, frontend, backend);
 
@@ -3095,7 +2875,9 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 		}
 
 		if (string == NULL)
-			return POOL_END;
+            ereport(ERROR,
+                (errmsg("unable to copy data rows"),
+                     errdetail("cannot read string message from backend")));
 
 #ifdef DEBUG
 		strlcpy(buf, string, sizeof(buf));
@@ -3133,17 +2915,18 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 		{
 			if (VALID_BACKEND(i))
 			{
-				if (pool_flush(CONNECTION(backend, i)) <0)
-					return POOL_END;
+				pool_flush(CONNECTION(backend, i));
 
 				if (synchronize(CONNECTION(backend, i)))
-					return POOL_END;
+                    ereport(FATAL,
+                        (return_code(2),
+                         errmsg("unable to copy data rows"),
+                             errdetail("failed to synchronize")));
 			}
 		}
 	}
 	else
-		if (pool_flush(frontend) <0)
-			return POOL_END;
+		pool_flush(frontend);
 
 	return POOL_CONTINUE;
 }
@@ -3160,12 +2943,7 @@ POOL_STATUS raise_intentional_error_if_need(POOL_CONNECTION_POOL *backend)
 	POOL_QUERY_CONTEXT *query_context;
 
 	/* Get session context */
-	session_context = pool_get_session_context();
-	if (!session_context)
-	{
-		pool_error("raise_intentional_error_if_need: cannot get session context");
-		return POOL_END;
-	}
+	session_context = pool_get_session_context(false);
 
 	query_context = session_context->query_context;
 
@@ -3231,8 +3009,11 @@ POOL_STATUS raise_intentional_error_if_need(POOL_CONNECTION_POOL *backend)
 }
 
 /*
- * Check various errors from backend.  return values: 0: no error 1:
- * deadlock detected 2: serialization error detected 3: query cancel
+ * Check various errors from backend.  return values: 
+ *  0: no error 
+ *  1: deadlock detected 
+ *  2: serialization error detected 
+ *  3: query cancel
  * detected: 4
  */
 static int check_errors(POOL_CONNECTION_POOL *backend, int backend_id)
@@ -3295,9 +3076,9 @@ static int check_errors(POOL_CONNECTION_POOL *backend, int backend_id)
 static void generate_error_message(char *prefix, int specific_error, char *query)
 {
 	POOL_SESSION_CONTEXT *session_context;
-	POOL_MEMORY_POOL *old_context;
+	MemoryContext old_context;
 
-	session_context = pool_get_session_context();
+	session_context = pool_get_session_context(true);
 	if (!session_context)
 		return;
 
@@ -3319,16 +3100,16 @@ static void generate_error_message(char *prefix, int specific_error, char *query
 	specific_error--;
 
 	if (session_context->query_context)
-		old_context = pool_memory_context_switch_to(session_context->query_context->memory_context);
+		old_context = MemoryContextSwitchTo(session_context->query_context->memory_context);
 	else
-		old_context = pool_memory_context_switch_to(session_context->memory_context);
+		old_context = MemoryContextSwitchTo(session_context->memory_context);
 
 	msg = init_string(prefix);
 	string_append_char(msg, error_messages[specific_error]);
 	pool_error(msg->data, query);
 	free_string(msg);
 
-	pool_memory_context_switch_to(old_context);
+	MemoryContextSwitchTo(old_context);
 }
 
 /*
@@ -3339,7 +3120,7 @@ void per_node_statement_log(POOL_CONNECTION_POOL *backend, int node_id, char *qu
 	POOL_CONNECTION_POOL_SLOT *slot = backend->slots[node_id];
 
 	if (pool_config->log_per_node_statement)
-		pool_log("DB node id: %d backend pid: %d statement: %s", node_id, ntohl(slot->pid), query);
+		ereport(LOG,(errmsg("DB node id: %d backend pid: %d statement: %s", node_id, ntohl(slot->pid), query)));
 }
 
 /*
@@ -3353,8 +3134,8 @@ void per_node_error_log(POOL_CONNECTION_POOL *backend, int node_id, char *query,
 
 	if (pool_extract_error_message(true, CONNECTION(backend, node_id), MAJOR(backend), true, &message) > 0)
 	{
-		pool_log("%s: DB node id: %d backend pid: %d statement: %s message: %s",
-				 prefix, node_id, ntohl(slot->pid), query, message);
+		ereport(LOG,(errmsg("%s: DB node id: %d backend pid: %d statement: %s message: %s",
+				 prefix, node_id, ntohl(slot->pid), query, message)));
 	}
 }
 
@@ -3379,8 +3160,7 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 		if (qc->where_to_send[i] && statecmp(qc->query_state[i], POOL_PARSE_COMPLETE) < 0)
 		{
 			pool_debug("parse_before_bind: waiting for backend %d completing parse", i);
-			if (pool_extended_send_and_wait(qc, "P", len, contents, 1, i) != POOL_CONTINUE)
-				return POOL_END;
+			pool_extended_send_and_wait(qc, "P", len, contents, 1, i);
 		}
 		else
 		{

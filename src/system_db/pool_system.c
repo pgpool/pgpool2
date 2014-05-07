@@ -25,6 +25,9 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include "utils/elog.h"
 #include "pool.h"
 #include "pool_config.h"
 
@@ -67,15 +70,9 @@ int  get_col_list(DistDefInfo *info)
 		}
 		else
 		{
-			info->col_list[i]  = malloc(strlen(PQgetvalue(result,0,0)) + 1);
-			info->type_list[i] = malloc(strlen(PQgetvalue(result,0,1)) + 1);
+			info->col_list[i]  = palloc(strlen(PQgetvalue(result,0,0)) + 1);
+			info->type_list[i] = palloc(strlen(PQgetvalue(result,0,1)) + 1);
 
-			if (info->col_list[i] == NULL || info->type_list[i] == NULL)
-			{
-				pool_error("get_col_list: malloc failed: %s", strerror(errno));
-				PQclear(result);
-				return -1;
-			}
 			strcpy(info->col_list[i],PQgetvalue(result,0,0));
 			strcpy(info->type_list[i],PQgetvalue(result,0,1));
 			if (strcmp(info->col_list[i], info->dist_key_col_name) == 0)
@@ -121,15 +118,9 @@ int  get_col_list2(RepliDefInfo *info)
 		}
 		else
 		{
-			info->col_list[i]  = malloc(strlen(PQgetvalue(result,0,0)) + 1);
-			info->type_list[i] = malloc(strlen(PQgetvalue(result,0,1)) + 1);
+			info->col_list[i]  = palloc(strlen(PQgetvalue(result,0,0)) + 1);
+			info->type_list[i] = palloc(strlen(PQgetvalue(result,0,1)) + 1);
 
-			if (info->col_list[i] == NULL || info->type_list[i] == NULL)
-			{
-				pool_error("get_col_list2: malloc failed: %s", strerror(errno));
-				PQclear(result);
-				return -1;
-			}
 			strcpy(info->col_list[i],PQgetvalue(result,0,0));
 			strcpy(info->type_list[i],PQgetvalue(result,0,1));
 			PQclear(result);
@@ -216,17 +207,9 @@ int pool_memset_system_db_info (SystemDBInfo *info)
 		info->dist_def_num = PQntuples(result);
 		if (info->dist_def_num != 0)
 		{
-			dist_info = malloc(sizeof(DistDefInfo) * info->dist_def_num);
+			dist_info = palloc(sizeof(DistDefInfo) * info->dist_def_num);
 		}
 
-		if (dist_info == NULL && info->dist_def_num != 0)
-		{
-			pool_error("pool_memset_system_db_info: malloc failed: %s",
-					   strerror(errno));
-			PQclear(result);
-			pool_close_libpq_connection();
-			return -1;
-		}
 
 		info->dist_def_slot = dist_info;
 
@@ -241,78 +224,30 @@ int pool_memset_system_db_info (SystemDBInfo *info)
 			int len;
 
 			num = atol(PQgetvalue(result, i ,4));
-			t_dbname = malloc(strlen(PQgetvalue(result,i,0)) + 1);
-			if (t_dbname == NULL)
-			{
-				pool_error("pool_memset_system_db_info: malloc failed: %s",
-						   strerror(errno));
-				PQclear(result);
-				pool_close_libpq_connection();
-				return -1;
-			}
+			t_dbname = palloc(strlen(PQgetvalue(result,i,0)) + 1);
 			strcpy(t_dbname, PQgetvalue(result,i,0));
 			dist_info[i].dbname = t_dbname;
 
-			t_schema_name = malloc(strlen(PQgetvalue(result,i,1)) + 1);
-			if (t_schema_name == NULL)
-			{
-				pool_error("pool_memset_system_db_info: malloc failed: %s",
-						   strerror(errno));
-				PQclear(result);
-				pool_close_libpq_connection();
-				return -1;
-			}
+			t_schema_name = palloc(strlen(PQgetvalue(result,i,1)) + 1);
 			strcpy(t_schema_name, PQgetvalue(result,i,1));
 			dist_info[i].schema_name = t_schema_name;
 
-			t_table_name = malloc(strlen(PQgetvalue(result,i,2)) + 1);
-			if (t_table_name == NULL)
-			{
-				pool_error("pool_memset_system_db_info: malloc failed: %s",
-						   strerror(errno));
-				PQclear(result);
-				pool_close_libpq_connection();
-				return -1;
-			}
+			t_table_name = palloc(strlen(PQgetvalue(result,i,2)) + 1);
 			strcpy(t_table_name, PQgetvalue(result,i,2));
 			dist_info[i].table_name = t_table_name;
 
-			t_dist_key_col_name = malloc(strlen(PQgetvalue(result,i,3)) + 1);
-			if (t_dist_key_col_name == NULL)
-			{
-				pool_error("pool_memset_system_db_info: malloc failed: %s",
-						   strerror(errno));
-				PQclear(result);
-				pool_close_libpq_connection();
-				return -1;
-			}
+			t_dist_key_col_name = palloc(strlen(PQgetvalue(result,i,3)) + 1);
 			strcpy(t_dist_key_col_name, PQgetvalue(result,i,3));
 			dist_info[i].dist_key_col_name = t_dist_key_col_name;
 
-			t_dist_def_func = malloc(strlen(PQgetvalue(result,i,7)) + 1);
-			if (t_dist_def_func == NULL)
-			{
-				pool_error("pool_memset_system_db_info: malloc failed: %s",
-						   strerror(errno));
-				PQclear(result);
-				pool_close_libpq_connection();
-				return -1;
-			}
+			t_dist_def_func = palloc(strlen(PQgetvalue(result,i,7)) + 1);
 			strcpy(t_dist_def_func, PQgetvalue(result,i,7));
 			dist_info[i].dist_def_func = t_dist_def_func;
 
 			dist_info[i].col_num = num;
 
-			dist_info[i].col_list = calloc(num, sizeof(char *));
-			dist_info[i].type_list = calloc(num, sizeof(char *));
-			if (dist_info[i].col_list == NULL || dist_info[i].type_list == NULL)
-			{
-				pool_error("pool_memset_system_db_info: calloc failed: %s",
-						   strerror(errno));
-				PQclear(result);
-				pool_close_libpq_connection();
-				return -1;
-			}
+			dist_info[i].col_list = palloc0(num * sizeof(char *));
+			dist_info[i].type_list = palloc0(num * sizeof(char *));
 
 			if (get_col_list(&dist_info[i]) < 0)
 			{
@@ -326,13 +261,7 @@ int pool_memset_system_db_info (SystemDBInfo *info)
 			len = strlen(t_dbname) + strlen(t_schema_name) +
 				strlen(t_table_name) + strlen("pgpool_");
 
-			dist_info[i].prepare_name = malloc(len + 1);
-			if (dist_info[i].prepare_name == NULL)
-			{
-				pool_error("pool_memset_system_db_info: malloc failed: %s",
-						   strerror(errno));
-				return -1;
-			}
+			dist_info[i].prepare_name = palloc(len + 1);
 
 			snprintf(dist_info[i].prepare_name, len+1, "pgpool_%s%s%s",
 					 t_dbname, t_schema_name, t_table_name);
@@ -365,17 +294,9 @@ int pool_memset_system_db_info (SystemDBInfo *info)
 		info->repli_def_num = PQntuples(result);
 		if (info->repli_def_num != 0)
 		{
-			repli_info = malloc(sizeof(RepliDefInfo) * info->repli_def_num);
+			repli_info = palloc(sizeof(RepliDefInfo) * info->repli_def_num);
 		}
 
-		if (repli_info == NULL && info->repli_def_num != 0)
-		{
-			pool_error("pool_memset_system_db_info: malloc failed: %s",
-					   strerror(errno));
-			PQclear(result);
-			pool_close_libpq_connection();
-			return -1;
-		}
 
 		info->repli_def_slot = repli_info;
 
@@ -388,54 +309,22 @@ int pool_memset_system_db_info (SystemDBInfo *info)
 			int len;
 
 			num = atol(PQgetvalue(result, i ,3));
-			t_dbname = malloc(strlen(PQgetvalue(result,i,0)) + 1);
-			if (t_dbname == NULL)
-			{
-				pool_error("pool_memset_system_db_info: malloc failed: %s",
-						   strerror(errno));
-				PQclear(result);
-				pool_close_libpq_connection();
-				return -1;
-			}
+			t_dbname = palloc(strlen(PQgetvalue(result,i,0)) + 1);
 			strcpy(t_dbname, PQgetvalue(result,i,0));
 			repli_info[i].dbname = t_dbname;
 
-			t_schema_name = malloc(strlen(PQgetvalue(result,i,1)) + 1);
-			if (t_schema_name == NULL)
-			{
-				pool_error("pool_memset_system_db_info: malloc failed: %s",
-						   strerror(errno));
-				PQclear(result);
-				pool_close_libpq_connection();
-				return -1;
-			}
+			t_schema_name = palloc(strlen(PQgetvalue(result,i,1)) + 1);
 			strcpy(t_schema_name, PQgetvalue(result,i,1));
 			repli_info[i].schema_name = t_schema_name;
 
-			t_table_name = malloc(strlen(PQgetvalue(result,i,2)) + 1);
-			if (t_table_name == NULL)
-			{
-				pool_error("pool_memset_system_db_info: malloc failed: %s",
-						   strerror(errno));
-				PQclear(result);
-				pool_close_libpq_connection();
-				return -1;
-			}
+			t_table_name = palloc(strlen(PQgetvalue(result,i,2)) + 1);
 			strcpy(t_table_name, PQgetvalue(result,i,2));
 			repli_info[i].table_name = t_table_name;
 
 			repli_info[i].col_num = num;
 
-			repli_info[i].col_list = calloc(num, sizeof(char *));
-			repli_info[i].type_list = calloc(num, sizeof(char *));
-			if (repli_info[i].col_list == NULL || repli_info[i].type_list == NULL)
-			{
-				pool_error("pool_memset_system_db_info: calloc failed: %s",
-						   strerror(errno));
-				PQclear(result);
-				pool_close_libpq_connection();
-				return -1;
-			}
+			repli_info[i].col_list = palloc0(num * sizeof(char *));
+			repli_info[i].type_list = palloc0(num * sizeof(char *));
 
 			if (get_col_list2(&repli_info[i]) < 0)
 			{
@@ -449,14 +338,7 @@ int pool_memset_system_db_info (SystemDBInfo *info)
 			len = strlen(t_dbname) + strlen(t_schema_name) +
 				strlen(t_table_name) + strlen("pgpool_");
 
-			repli_info[i].prepare_name = malloc(len + 1);
-			if (repli_info[i].prepare_name == NULL)
-			{
-				pool_error("pool_memset_system_db_info: malloc failed: %s",
-						   strerror(errno));
-				return -1;
-			}
-
+			repli_info[i].prepare_name = palloc(len + 1);
 			snprintf(repli_info[i].prepare_name, len+1, "pgpool_%s%s%s",
 					 t_dbname, t_schema_name, t_table_name);
 			repli_info[i].prepare_name[len] = '\0';
@@ -557,7 +439,6 @@ int pool_get_id (DistDefInfo *info, const char *value)
 {
 	int num;
 	PGresult *result;
-	char *type;
 	int length;
 
 	if (!system_db_info->pgconn ||
@@ -573,7 +454,6 @@ int pool_get_id (DistDefInfo *info, const char *value)
 			return -1;
 	}
 
-	type=info->type_list[info->dist_key_col_id];
 	length = strlen(value);
 	result = PQexecPrepared(system_db_info->pgconn, info->prepare_name,
 							1, &value, &length, NULL, 0);
@@ -657,3 +537,93 @@ static int create_prepared_statement(DistDefInfo *dist_info)
 	dist_info->is_created_prepare = 1;
 	return 0;
 }
+
+/*
+ * system_db_health_check()
+ * check if we can connect to the SystemDB
+ * returns 0 for OK. otherwise returns -1
+ */
+int
+system_db_health_check(void)
+{
+	int fd;
+
+	/* V2 startup packet */
+	typedef struct {
+		int len;		/* startup packet length */
+		StartupPacket_v2 sp;
+	} MySp;
+	MySp mysp;
+	char kind;
+
+	memset(&mysp, 0, sizeof(mysp));
+	mysp.len = htonl(296);
+	mysp.sp.protoVersion = htonl(PROTO_MAJOR_V2 << 16);
+	strcpy(mysp.sp.database, "template1");
+	strncpy(mysp.sp.user, SYSDB_INFO->user, sizeof(mysp.sp.user) - 1);
+	*mysp.sp.options = '\0';
+	*mysp.sp.unused = '\0';
+	*mysp.sp.tty = '\0';
+
+	ereport(DEBUG1,
+		(errmsg("health_check: SystemDB status: %d", SYSDB_STATUS)));
+
+	/* if SystemDB is already down, ignore */
+	if (SYSDB_STATUS == CON_UNUSED || SYSDB_STATUS == CON_DOWN)
+		return 0;
+
+	if (*SYSDB_INFO->hostname == '/')
+		fd = connect_unix_domain_socket_by_port(SYSDB_INFO->port, SYSDB_INFO->hostname, FALSE);
+	else
+		fd = connect_inet_domain_socket_by_port(SYSDB_INFO->hostname, SYSDB_INFO->port, FALSE);
+
+	if (fd < 0)
+	{
+		ereport(ERROR,
+			(errmsg("SystemDB health check failed"),
+				   errdetail("DB host \"%s\" at port %d is down",
+						   	   SYSDB_INFO->hostname,
+						   	   SYSDB_INFO->port)));
+	}
+
+	if (write(fd, &mysp, sizeof(mysp)) < 0)
+	{
+		close(fd);
+		ereport(ERROR,
+				(errmsg("SystemDB health check failed"),
+				   errdetail("Write failed on DB host \"%s\" at port %d is down",
+						   	   SYSDB_INFO->hostname,
+						   	   SYSDB_INFO->port)));
+	}
+
+	if(read(fd, &kind, 1) < 0)
+		ereport(WARNING,
+				(errmsg("SystemDB health read on socket failed")));
+    
+
+	if (write(fd, "X", 1) < 0)
+	{
+		close(fd);
+		ereport(ERROR,
+				(errmsg("SystemDB health check failed"),
+				   errdetail("Write failed on DB host \"%s\" at port %d is down",
+						   	   SYSDB_INFO->hostname,
+						   	   SYSDB_INFO->port)));
+	}
+
+	close(fd);
+	return 0;
+}
+
+/*
+ * get System DB information
+ */
+SystemDBInfo *
+pool_get_system_db_info(void)
+{
+	if (system_db_info == NULL)
+		return NULL;
+
+	return system_db_info->info;
+}
+

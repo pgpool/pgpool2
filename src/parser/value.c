@@ -16,8 +16,8 @@
 /*#include "postgres.h"*/
 
 #include <stdlib.h>
-#include "pool_memory.h"
 #include "parsenodes.h"
+#include "utils/palloc.h"
 
 /*
  *	makeInteger

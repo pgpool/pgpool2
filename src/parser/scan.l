@@ -43,16 +43,16 @@
 #include "scanner.h"
 #include "scansup.h"
 
-#include "pool_memory.h"
+#include "utils/palloc.h"
 #include "pg_wchar.h"
 
 
 
-
+#ifdef nouse
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
 #undef fprintf
 #define fprintf(file, fmt, msg)  ereport(ERROR, (errmsg_internal("%s", msg)))
-
+#endif
 /*
  * GUC variables.  This is a DIRECT violation of the warning given at the
  * head of gram.y, ie flex/bison code must not depend on any GUC variables;

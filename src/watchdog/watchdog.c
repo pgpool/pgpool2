@@ -34,6 +34,7 @@
 #include <errno.h>
 
 #include "pool.h"
+#include "utils/elog.h"
 #include "pool_config.h"
 #include "watchdog/watchdog.h"
 #include "watchdog/wd_ext.h"
@@ -74,16 +75,24 @@ void
 wd_kill_watchdog(int sig)
 {
 	int i;
-
-	kill (lifecheck_pid, sig);
-	kill (child_pid, sig);
+    if(lifecheck_pid > 0)
+        kill (lifecheck_pid, sig);
+    lifecheck_pid = 0;
+    
+    if(child_pid > 0)
+        kill (child_pid, sig);
+    child_pid = 0;
 
 	if (!strcmp(pool_config->wd_lifecheck_method, MODE_HEARTBEAT))
 	{
 		for (i = 0; i < pool_config->num_hb_if; i++)
 		{
-			kill (hb_receiver_pid[i], sig);
-			kill (hb_sender_pid[i], sig);
+            if(hb_receiver_pid[i] > 0)
+                kill(hb_receiver_pid[i], sig);
+            hb_receiver_pid[i] = 0;
+            
+            if(hb_sender_pid[i] > 0)
+                kill (hb_sender_pid[i], sig);
 		}
 	}
 }
@@ -123,10 +132,8 @@ wd_main(int fork_wait_time)
 	/* check pool_config data */
 	status = wd_check_config();
 	if (status != WD_OK)
-	{
-		pool_error("watchdog: wd_check_config failed");
-		return 0;
-	}
+		ereport(FATAL,
+			(errmsg("watchdog: wd_check_config failed")));
 
 	/* initialize */
 	status = wd_init();
@@ -194,6 +201,7 @@ fork_a_lifecheck(int fork_wait_time)
 
 		return pid;
 	}
+    on_exit_reset();
 
 	if (fork_wait_time > 0) {
 		sleep(fork_wait_time);

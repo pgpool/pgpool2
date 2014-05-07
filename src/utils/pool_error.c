@@ -270,7 +270,7 @@ static char *optstring(int kind)
 #ifndef POOL_TOOLS
 	if (pool_config->print_user)
 	{
-		if ((c = pool_get_session_context()))
+		if ((c = pool_get_session_context(true)))
 			if (MASTER_CONNECTION(c->backend) && MASTER_CONNECTION(c->backend)->sp &&
 				MASTER_CONNECTION(c->backend)->sp->user)
 			{

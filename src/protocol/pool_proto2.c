@@ -31,6 +31,7 @@
 #include "pool_config.h"
 #include "protocol/pool_proto_modules.h"
 #include "utils/pool_stream.h"
+#include "utils/elog.h"
 
 POOL_STATUS AsciiRow(POOL_CONNECTION *frontend,
 					 POOL_CONNECTION_POOL *backend,
@@ -264,7 +265,7 @@ POOL_STATUS CompletedResponse(POOL_CONNECTION *frontend,
 		TSTATE(backend, MASTER_NODE_ID) = 'I';
 
 	len1 = len;
-	string1 = strdup(string);
+	string1 = pstrdup(string);
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -274,7 +275,11 @@ POOL_STATUS CompletedResponse(POOL_CONNECTION *frontend,
 		/* read command tag */
 		string = pool_read_string(CONNECTION(backend, i), &len, 0);
 		if (string == NULL)
-			return POOL_END;
+            ereport(FATAL,
+                (return_code(2),
+                     errmsg("unable to complete response"),
+                     errdetail("read from backend node %d failed",i)));
+
 		else if (!strncmp(string, "BEGIN", 5))
 			TSTATE(backend, i) = 'T';
 		else if (!strncmp(string, "COMMIT", 6) || !strncmp(string, "ROLLBACK", 8))
@@ -288,7 +293,7 @@ POOL_STATUS CompletedResponse(POOL_CONNECTION *frontend,
 			/* we except INSERT, because INSERT response has OID */
 			if (strncmp(string1, "INSERT", 6))
 			{
-				free(string1);
+				pfree(string1);
 				return POOL_END;
 			}
 		}
@@ -296,13 +301,9 @@ POOL_STATUS CompletedResponse(POOL_CONNECTION *frontend,
 	/* forward to the frontend */
 	pool_write(frontend, "C", 1);
 	pool_debug("CompletedResponse: string: \"%s\"", string1);
-	if (pool_write(frontend, string1, len1) < 0)
-	{
-		free(string1);
-		return POOL_END;
-	}
+	pool_write(frontend, string1, len1);
 
-	free(string1);
+	pfree(string1);
 	return pool_flush(frontend);
 }
 
@@ -319,7 +320,7 @@ POOL_STATUS CursorResponse(POOL_CONNECTION *frontend,
 	if (string == NULL)
 		return POOL_END;
 	len1 = len;
-	string1 = strdup(string);
+	string1 = pstrdup(string);
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -328,30 +329,27 @@ POOL_STATUS CursorResponse(POOL_CONNECTION *frontend,
 			/* read cursor name */
 			string = pool_read_string(CONNECTION(backend, i), &len, 0);
 			if (string == NULL)
-				return POOL_END;
+                ereport(FATAL,
+                    (return_code(2),
+                        errmsg("unable to process cursor response"),
+                         errdetail("read failed on backend node %d",i)));
 			if (len != len1)
 			{
-				pool_error("CursorResponse: length does not match between master(%d) and %d th backend(%d)",
-						   len, i, len1);
-				pool_error("CursorResponse: master(%s) %d th backend(%s)", string1, i, string);
-				free(string1);
-				return POOL_END;
+                ereport(FATAL,
+                    (return_code(2),
+                        errmsg("unable to process cursor response"),
+                            errdetail("length does not match between master(%d) and %d th backend(%d)",len, i, len1),
+                                errhint("master(%s) %d th backend(%s)", string1, i, string)));
 			}
 		}
 	}
 
 	/* forward to the frontend */
 	pool_write(frontend, "P", 1);
-	if (pool_write(frontend, string1, len1) < 0)
-	{
-		free(string1);
-		return POOL_END;
-	}
-	free(string1);
-
-	if (pool_flush(frontend))
-		return POOL_END;
-
+	pool_write(frontend, string1, len1);
+	pool_flush(frontend);
+	pfree(string1);
+    
 	return POOL_CONTINUE;
 }
 
@@ -365,8 +363,7 @@ POOL_STATUS EmptyQueryResponse(POOL_CONNECTION *frontend,
 	{
 		if (VALID_BACKEND(i))
 		{
-			if (pool_read(CONNECTION(backend, i), &c, sizeof(c)) < 0)
-				return POOL_END;
+			pool_read(CONNECTION(backend, i), &c, sizeof(c));
 		}
 	}
 
@@ -395,14 +392,13 @@ POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend,
 
 	/* forward to the frontend */
 	pool_write(frontend, "E", 1);
-	if (pool_write_and_flush(frontend, string, len) < 0)
-		return POOL_END;
+	pool_write_and_flush(frontend, string, len);
 
 	/* 
 	 * check session context, because this function is called 
 	 * by pool_do_auth too.
 	 */
-	if (pool_get_session_context())
+	if (pool_get_session_context(true))
 		ret = raise_intentional_error_if_need(backend);
 
 	/* change transaction state */
@@ -432,8 +428,7 @@ POOL_STATUS FunctionResultResponse(POOL_CONNECTION *frontend,
 	{
 		if (VALID_BACKEND(i))
 		{
-			if (pool_read(CONNECTION(backend, i), &dummy, 1) < 0)
-				return POOL_ERROR;
+			pool_read(CONNECTION(backend, i), &dummy, 1);
 		}
 	}
 	pool_write(frontend, &dummy, 1);
@@ -446,8 +441,7 @@ POOL_STATUS FunctionResultResponse(POOL_CONNECTION *frontend,
 			if (VALID_BACKEND(i))
 			{
 				/* length of result in bytes */
-				if (pool_read(CONNECTION(backend, i), &len, sizeof(len)) < 0)
-					return POOL_ERROR;
+				pool_read(CONNECTION(backend, i), &len, sizeof(len));
 			}
 		}
 		pool_write(frontend, &len, sizeof(len));
@@ -460,7 +454,10 @@ POOL_STATUS FunctionResultResponse(POOL_CONNECTION *frontend,
 			{
 				/* result value itself */
 				if ((result = pool_read2(MASTER(backend), len)) == NULL)
-					return POOL_ERROR;
+                    ereport(FATAL,
+                        (return_code(2),
+                             errmsg("unable to process function result response"),
+                                errdetail("reading from backend node %d failed",i)));
 			}
 		}
 		pool_write(frontend, result, len);
@@ -471,8 +468,7 @@ POOL_STATUS FunctionResultResponse(POOL_CONNECTION *frontend,
 		if (VALID_BACKEND(i))
 		{
 			/* unused ('0') */
-			if (pool_read(MASTER(backend), &dummy, 1) < 0)
-				return POOL_ERROR;
+			pool_read(MASTER(backend), &dummy, 1);
 		}
 	}
 	pool_write(frontend, "0", 1);
@@ -494,17 +490,16 @@ POOL_STATUS NoticeResponse(POOL_CONNECTION *frontend,
 			/* read notice message */
 			string = pool_read_string(CONNECTION(backend, i), &len, 0);
 			if (string == NULL)
-				return POOL_END;
+                ereport(FATAL,
+                    (return_code(2),
+                         errmsg("unable to process Notice response"),
+                         errdetail("reading from backend node %d failed",i)));
 		}
 	}
 
 	/* forward to the frontend */
 	pool_write(frontend, "N", 1);
-	if (pool_write_and_flush(frontend, string, len) < 0)
-	{
-		return POOL_END;
-	}
-	return POOL_CONTINUE;
+	return pool_write_and_flush(frontend, string, len);
 }
 
 POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
@@ -522,24 +517,26 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 	{
 		if (VALID_BACKEND(i))
 		{
-			if (pool_read(CONNECTION(backend, i), &pid, sizeof(pid)) < 0)
-				return POOL_ERROR;
+			pool_read(CONNECTION(backend, i), &pid, sizeof(pid));
 			condition = pool_read_string(CONNECTION(backend, i), &len, 0);
 			if (condition == NULL)
-				return POOL_END;
+                  ereport(FATAL,
+                    (return_code(2),
+                        errmsg("unable to process Notification response"),
+                           errdetail("reading from backend node %d failed",i)));
 
 			if (IS_MASTER_NODE_ID(i))
 			{
 				pid1 = pid;
 				len1 = len;
-				condition1 = strdup(condition);
+				condition1 = pstrdup(condition);
 			}
 		}
 	}
 
 	pool_write(frontend, &pid1, sizeof(pid1));
 	status = pool_write_and_flush(frontend, condition1, len1);
-	free(condition1);
+	pfree(condition1);
 	return status;
 }
 
@@ -565,9 +562,11 @@ int RowDescription(POOL_CONNECTION *frontend,
 			pool_read(CONNECTION(backend, i), &num_fields, sizeof(short));
 			if (num_fields != num_fields1)
 			{
-				pool_error("RowDescription: num_fields does not match between backends master(%d) and %d th backend(%d)",
-						   num_fields, i, num_fields1);
-				return POOL_FATAL;
+                ereport(FATAL,
+                    (return_code(2),
+                        errmsg("unable to process row description"),
+                            errdetail("num_fields does not match between backends master(%d) and %d th backend(%d)",
+                               num_fields, i, num_fields1)));
 			}
 		}
 	}
@@ -585,8 +584,7 @@ int RowDescription(POOL_CONNECTION *frontend,
 		if (string == NULL)
 			return POOL_END;
 		len1 = len;
-		if (pool_write(frontend, string, len) < 0)
-			return POOL_END;
+		pool_write(frontend, string, len);
 
 		for (j=0;j<NUM_BACKENDS;j++)
 		{
@@ -594,13 +592,18 @@ int RowDescription(POOL_CONNECTION *frontend,
 			{
 				string = pool_read_string(CONNECTION(backend, j), &len, 0);
 				if (string == NULL)
-					return POOL_END;
+                    ereport(FATAL,
+                        (return_code(2),
+                            errmsg("unable to process row description"),
+                             errdetail("read failed on backend node %d",j)));
 
 				if (len != len1)
 				{
-					pool_error("RowDescription: field length does not match between backends master(%d) and %d th backend(%d)",
-							   ntohl(len), j, ntohl(len1));
-					return POOL_FATAL;
+                    ereport(FATAL,
+                        (return_code(2),
+                            errmsg("unable to process row description"),
+                            errdetail("field length does not match between backends master(%d) and %d th backend(%d)",
+                                   ntohl(len), j, ntohl(len1))));
 				}
 			}
 		}
@@ -623,8 +626,7 @@ int RowDescription(POOL_CONNECTION *frontend,
 				}
 			}
 		}
-		if (pool_write(frontend, &oid1, sizeof(int)) < 0)
-			return POOL_END;
+		pool_write(frontend, &oid1, sizeof(int));
 
 		/* size */
 		pool_read(MASTER(backend), &size, sizeof(short));
@@ -634,11 +636,12 @@ int RowDescription(POOL_CONNECTION *frontend,
 			if (VALID_BACKEND(j) && !IS_MASTER_NODE_ID(j))
 			{
 				pool_read(CONNECTION(backend, j), &size, sizeof(short));
-				if (size1 != size1)
+				if (size1 != size)
 				{
-					pool_error("RowDescription: field size does not match between backends master(%d) and %d th backend(%d)",
-							   ntohs(size), j, ntohs(size1));
-					return POOL_FATAL;
+                    ereport(FATAL,
+                            (errmsg("data among backends are different"),
+                             errdetail("field size does not match between backends master(%d) and %d th backend(%d", ntohs(size), j, ntohs(size1))));
+
 				}
 			}
 		}
@@ -661,8 +664,7 @@ int RowDescription(POOL_CONNECTION *frontend,
 				}
 			}
 		}
-		if (pool_write(frontend, &mod1, sizeof(int)) < 0)
-			return POOL_END;
+		pool_write(frontend, &mod1, sizeof(int));
 	}
 
 	*result = num_fields;

@@ -25,8 +25,6 @@
 extern jmp_buf jmpbuffer;
 extern int	server_version_num;
 
-#define AssertMacro
-#define Assert(expr)	((void) 0)
 
 /* include/c.h */
 /* integer */
@@ -42,19 +40,9 @@ extern int	server_version_num;
  * bitsN
  *		Unit of bitwise operation, AT LEAST N BITS IN SIZE.
  */
-typedef uint8 bits8;			/* >= 8 bits */
-typedef uint16 bits16;			/* >= 16 bits */
-typedef uint32 bits32;			/* >= 32 bits */
-typedef unsigned long long int uint64;
-
-
-typedef size_t Size;
-typedef unsigned int PoolOid;
 typedef unsigned int Index;
 typedef short AttrNumber;
-typedef unsigned long Datum;	/* XXX sizeof(long) >= sizeof(void *) */
 
-#define Oid PoolOid
 #define InvalidOid		((Oid) 0)
 
 /*
@@ -85,7 +73,6 @@ typedef unsigned long Datum;	/* XXX sizeof(long) >= sizeof(void *) */
 #define HIGHBIT					(0x80)
 #define IS_HIGHBIT_SET(ch)		((unsigned char)(ch) & HIGHBIT)
 
-#define PGDLLIMPORT
 
 
 /* include/utils/datetime.h */
@@ -205,7 +192,7 @@ typedef unsigned long Datum;	/* XXX sizeof(long) >= sizeof(void *) */
 #endif
 
 
-/* include/utils/elog.h */
+/* include/utils/elog.h 
 #define NOTICE 18
 #define WARNING 19
 #define ERROR 20
@@ -217,6 +204,6 @@ extern void pool_parser_error(int level, const char *file, int line);
 #ifndef elog
 #define elog(elevel, fmt, ...) pool_parser_error(elevel, __FILE__, __LINE__)
 #endif
-
+*/
 
 #endif /* POOL_PARSER_H */

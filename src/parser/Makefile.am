@@ -12,12 +12,14 @@ libsql_parser_a_SOURCES  = \
 	nodes.c \
 	outfuncs.c \
 	parser.c \
-	pool_memory.c \
 	pool_string.c \
 	scansup.c \
 	snprintf.c \
 	stringinfo.c \
 	value.c \
+	$(top_srcdir)/src/utils/mmgr/mcxt.c \
+	$(top_srcdir)/src/utils/mmgr/aset.c \
+	$(top_srcdir)/src/utils/error/elog.c \
 	wchar.c
 
 EXTRA_DIST = scan.c scan.l

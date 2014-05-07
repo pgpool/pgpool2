@@ -42,11 +42,15 @@
        (connection)->len = 0; \
     } while (0)
 
-extern POOL_CONNECTION *pool_open(int fd);
+extern POOL_CONNECTION *pool_open(int fd, bool backend_connection);
 extern void pool_close(POOL_CONNECTION *cp);
 extern int pool_read(POOL_CONNECTION *cp, void *buf, int len);
+extern void pool_read_with_error(POOL_CONNECTION *cp, void *buf, int len,
+                                 const char* err_context );
+
 extern char *pool_read2(POOL_CONNECTION *cp, int len);
 extern int pool_write(POOL_CONNECTION *cp, void *buf, int len);
+extern int pool_write_noerror(POOL_CONNECTION *cp, void *buf, int len);
 extern int pool_flush(POOL_CONNECTION *cp);
 extern int pool_flush_it(POOL_CONNECTION *cp);
 extern int pool_write_and_flush(POOL_CONNECTION *cp, void *buf, int len);

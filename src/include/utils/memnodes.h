@@ -15,7 +15,7 @@
 #ifndef MEMNODES_H
 #define MEMNODES_H
 
-#include "nodes.h"
+#include "parser/nodes.h"
 
 /*
  * MemoryContext
@@ -42,15 +42,14 @@ typedef struct MemoryContextMethods
 	void	   *(*realloc) (MemoryContext context, void *pointer, Size size);
 	void		(*init) (MemoryContext context);
 	void		(*reset) (MemoryContext context);
-	void		(*delete) (MemoryContext context);
+	void		(*delete_context) (MemoryContext context);
 	Size		(*get_chunk_space) (MemoryContext context, void *pointer);
 	bool		(*is_empty) (MemoryContext context);
-	void		(*stats) (MemoryContext context);
+	void		(*stats) (MemoryContext context, int level);
 #ifdef MEMORY_CONTEXT_CHECKING
 	void		(*check) (MemoryContext context);
 #endif
 } MemoryContextMethods;
-
 
 typedef struct MemoryContextData
 {

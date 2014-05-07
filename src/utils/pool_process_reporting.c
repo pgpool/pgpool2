@@ -22,6 +22,7 @@
  */
 #include "pool.h"
 #include "protocol/pool_proto_modules.h"
+#include "utils/elog.h"
 #include "utils/pool_stream.h"
 #include "pool_config.h"
 #include "query_cache/pool_memqcache.h"
@@ -145,11 +146,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
  */
 #define MAXITEMS (256 + MAX_NUM_BACKENDS*4)		
 
-	POOL_REPORT_CONFIG* status = malloc(MAXITEMS * sizeof(POOL_REPORT_CONFIG));
+	POOL_REPORT_CONFIG* status = palloc0(MAXITEMS * sizeof(POOL_REPORT_CONFIG));
 
 	/* we initialize the array with NULL values so when looping
 	 * on it, we can use it as stop condition */
-	memset(status, 0, sizeof(POOL_REPORT_CONFIG) * MAXITEMS);
+//	memset(status, 0, sizeof(POOL_REPORT_CONFIG) * MAXITEMS);
 
 	i = 0;
 
@@ -285,6 +286,21 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	strncpy(status[i].name, "print_user", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->print_user);
 	strncpy(status[i].desc, "if true print user name to each log line", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+    strncpy(status[i].name, "log_error_verbosity", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->log_error_verbosity);
+	strncpy(status[i].desc, "controls how much detail about error should be emitted", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+    strncpy(status[i].name, "client_min_messages", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->client_min_messages);
+	strncpy(status[i].desc, "controls which message should be sent to client", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+    strncpy(status[i].name, "log_min_messages", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->log_min_messages);
+	strncpy(status[i].desc, "controls which message should be emitted to server log", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	strncpy(status[i].name, "log_connections", POOLCONFIG_MAXNAMELEN);
@@ -1025,7 +1041,7 @@ void config_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 
 	send_complete_and_ready(frontend, backend, nrows);
 
-	free(status);
+	pfree(status);
 }
 
 POOL_REPORT_NODES* get_nodes(int *nrows)
@@ -1178,7 +1194,7 @@ POOL_REPORT_POOLS* get_pools(int *nrows)
 
     int lines = 0;
 
-    POOL_REPORT_POOLS* pools = malloc(
+    POOL_REPORT_POOLS* pools = palloc(
 		pool_config->num_init_children * pool_config->max_pool * NUM_BACKENDS * sizeof(POOL_REPORT_POOLS)
 		);
 
@@ -1366,7 +1382,7 @@ void pools_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 
 	send_complete_and_ready(frontend, backend, nrows);
 
-	free(pools);
+	pfree(pools);
 }
 
 POOL_REPORT_PROCESSES* get_processes(int *nrows)
@@ -1611,11 +1627,22 @@ void cache_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	/*
 	 * Get raw cache stat data
 	 */
-	POOL_SETMASK2(&BlockSig, &oldmask);
-	pool_shmem_lock();
-	mystats = pool_get_shmem_storage_stats();
-	pool_shmem_unlock();
-	POOL_SETMASK(&oldmask);
+    POOL_SETMASK2(&BlockSig, &oldmask);
+    pool_shmem_lock();
+
+    PG_TRY();
+    {
+        mystats = pool_get_shmem_storage_stats();
+    }
+    PG_CATCH();
+    {
+        pool_shmem_unlock();
+        POOL_SETMASK(&oldmask);
+        PG_RE_THROW();
+    }
+    PG_END_TRY();
+    pool_shmem_unlock();
+    POOL_SETMASK(&oldmask);
 
 	/*
 	 * Convert to string

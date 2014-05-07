@@ -35,7 +35,9 @@
 #include "utils/pool_ip.h"
 #include "utils/pool_stream.h"
 #include "pool_config.h"
-#include "parser/pool_memory.h"
+#include "pool_type.h"
+#include "utils/palloc.h"
+#include "utils/elog.h"
 #include "parser/pg_list.h"
 #include "auth/pool_passwd.h"
 
@@ -45,8 +47,6 @@
 static List *hba_lines = NIL;
 static List *hba_line_nums = NIL;
 static char *hbaFileName;
-
-static POOL_MEMORY_POOL *hba_memory_context = NULL;
 
 static void sendAuthRequest(POOL_CONNECTION *frontend, AuthRequest areq);
 static void auth_failed(POOL_CONNECTION *frontend);
@@ -103,18 +103,18 @@ int load_hba(char *hbapath)
 {
 	FILE *file;
 
-	POOL_MEMORY_POOL *old_context;
-	if (hba_memory_context == NULL)
-	{
-		hba_memory_context = pool_memory_create(PARSER_BLOCK_SIZE);
-		if (hba_memory_context == NULL)
-		{
-			pool_error("load_hba: pool_memory_create() failed");
-			return -1;
-		}
-	}
+//	POOL_MEMORY_POOL *old_context;
+//	if (hba_memory_context == NULL)
+//	{
+//		hba_memory_context = pool_memory_create(PARSER_BLOCK_SIZE);
+//		if (hba_memory_context == NULL)
+//		{
+//			pool_error("load_hba: pool_memory_create() failed");
+//			return -1;
+//		}
+//	}
 	/* switch memory context */
-	old_context = pool_memory_context_switch_to(hba_memory_context);
+//	old_context = pool_memory_context_switch_to(hba_memory_context);
 
 	if (hba_lines || hba_line_nums)
 		free_lines(&hba_lines, &hba_line_nums);
@@ -124,14 +124,14 @@ int load_hba(char *hbapath)
 	{
 		pool_error("could not open \"%s\". reason: %s",
 				   hbapath, strerror(errno));
-		pool_memory_delete(hba_memory_context, 0);
-
-		/* switch to old memory context */
-		pool_memory_context_switch_to(old_context);
+//		pool_memory_delete(hba_memory_context, 0);
+//
+//		/* switch to old memory context */
+//		pool_memory_context_switch_to(old_context);
 
 		return -1;
 	}
-
+	
 	pool_debug("loading \"%s\" for client authentication configuration file",
 			   hbapath);
 
@@ -141,115 +141,105 @@ int load_hba(char *hbapath)
 	hbaFileName = pstrdup(hbapath);
 
 	/* switch to old memory context */
-	pool_memory_context_switch_to(old_context);
+//	pool_memory_context_switch_to(old_context);
 
 	return 0;
 }
-
 
 /*
  * do frontend <-> pgpool authentication based on pool_hba.conf
  */
 void ClientAuthentication(POOL_CONNECTION *frontend)
 {
-	POOL_STATUS status = POOL_ERROR;
+	POOL_STATUS status = POOL_END;
+	PG_TRY();
+    {
+        if (! hba_getauthmethod(frontend))
+            ereport(FATAL,
+                (return_code(2),
+                    errmsg("client authentication failed"),
+                        errdetail("missing or erroneous pool_hba.conf file"),
+                            errhint("see pgpool log for details")));
 
-	if (! hba_getauthmethod(frontend))
-	{
-		pool_error("missing or erroneous pool_hba.conf file");
-		pool_send_error_message(frontend, frontend->protoVersion, "XX000",
-								"missing or erroneous pool_hba.conf file", "",
-								"See pgpool log for details.", __FILE__, __LINE__);
-		close_all_backend_connections();
-		/*
-		 * use exit(2) since this is not so fatal. other entries in
-		 * pool_hba.conf may be valid, so treat it as reject.
-		 */
-		child_exit(2);
-	}
 
-	switch (frontend->auth_method)
-	{
-		case uaReject:
-		{
-            /*
-			 * This could have come from an explicit "reject" entry in
-			 * pool_hba.conf, but more likely it means there was no matching
-			 * entry.  Take pity on the poor user and issue a helpful
-			 * error message.  NOTE: this is not a security breach,
-			 * because all the info reported here is known at the frontend
-			 * and must be assumed known to bad guys. We're merely helping
-			 * out the less clueful good guys.
-			 */
-			char hostinfo[NI_MAXHOST];
-			char *errmessage;
-			int messagelen;
+        switch (frontend->auth_method)
+        {
+            case uaReject:
+            {
+                /*
+                 * This could have come from an explicit "reject" entry in
+                 * pool_hba.conf, but more likely it means there was no matching
+                 * entry.  Take pity on the poor user and issue a helpful
+                 * error message.  NOTE: this is not a security breach,
+                 * because all the info reported here is known at the frontend
+                 * and must be assumed known to bad guys. We're merely helping
+                 * out the less clueful good guys.
+                 */
+                char hostinfo[NI_MAXHOST];
+                char *errmessage;
+                int messagelen;
 
-			getnameinfo_all(&frontend->raddr.addr, frontend->raddr.salen,
-							hostinfo, sizeof(hostinfo),
-							NULL, 0,
-							NI_NUMERICHOST);
+                getnameinfo_all(&frontend->raddr.addr, frontend->raddr.salen,
+                                hostinfo, sizeof(hostinfo),
+                                NULL, 0,
+                                NI_NUMERICHOST);
 
-			messagelen = sizeof(hostinfo) +
-				strlen(frontend->username) + strlen(frontend->database) + 80;
-			if ((errmessage = (char *)malloc(messagelen+1)) == NULL)
-			{
-				pool_error("ClientAuthentication: malloc failed: %s", strerror(errno));
-				child_exit(1);
-			}
-
+                messagelen = sizeof(hostinfo) +
+                    strlen(frontend->username) + strlen(frontend->database) + 80;
+                errmessage = (char *)palloc(messagelen+1);
 #ifdef USE_SSL
-			snprintf(errmessage, messagelen+7, /* +7 is for "SSL off" */
-					 "no pool_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
-					 hostinfo, frontend->username, frontend->database,
-					 frontend->ssl ? "SSL on" : "SSL off");
+                snprintf(errmessage, messagelen+7, /* +7 is for "SSL off" */
+                         "no pool_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
+                         hostinfo, frontend->username, frontend->database,
+                         frontend->ssl ? "SSL on" : "SSL off");
 #else
-			snprintf(errmessage, messagelen,
-					 "no pool_hba.conf entry for host \"%s\", user \"%s\", database \"%s\"",
-					 hostinfo, frontend->username, frontend->database);
+                snprintf(errmessage, messagelen,
+                         "no pool_hba.conf entry for host \"%s\", user \"%s\", database \"%s\"",
+                         hostinfo, frontend->username, frontend->database);
 #endif
-			pool_error("%s", errmessage);
-			pool_send_error_message(frontend, frontend->protoVersion, "XX000", errmessage,
-									"", "", __FILE__, __LINE__);
+                ereport(FATAL,
+                    (return_code(2),
+                         errmsg("client authentication failed"),
+                            errdetail("%s",errmessage),
+                                errhint("see pgpool log for details")));
+                break;
+            }
 
-			free(errmessage);
-			break;
-		}
+            /*case uaKrb4:
+            case uaKrb5:
+            case uaIdent:
+            case uaCrypt:
+            case uaPassword:
+                break; 
+            */
 
-/* 		case uaKrb4: */
-/* 			break; */
+            case uaMD5:
+                status = CheckMd5Auth(frontend->username);
+                break;
 
-/* 		case uaKrb5: */
-/* 			break; */
 
-/* 		case uaIdent: */
-/* 			break; */
+    #ifdef USE_PAM
+            case uaPAM:
+                pam_frontend_kludge = frontend;
+                status = CheckPAMAuth(frontend, frontend->username, "");
+                break;
+    #endif /* USE_PAM */
 
-		case uaMD5:
-			status = CheckMd5Auth(frontend->username);
- 			break;
-
-/* 		case uaCrypt: */
-/* 			break; */
-
-/* 		case uaPassword: */
-/* 			break; */
-
-#ifdef USE_PAM
-		case uaPAM:
-			pam_frontend_kludge = frontend;
-			status = CheckPAMAuth(frontend, frontend->username, "");
-			break;
-#endif /* USE_PAM */
-
-		case uaTrust:
-			status = POOL_CONTINUE;
-			break;
-	}
+            case uaTrust:
+                status = POOL_CONTINUE;
+                break;
+        }
+    }
+    PG_CATCH();
+    {
+        close_all_backend_connections();
+        PG_RE_THROW();
+    }
+    PG_END_TRY();
 
  	if (status == POOL_CONTINUE)
  		sendAuthRequest(frontend, AUTH_REQ_OK);
- 	else if (status != POOL_CONTINUE)
+ 	else
 		auth_failed(frontend);
 }
 
@@ -299,7 +289,7 @@ static void sendAuthRequest(POOL_CONNECTION *frontend, AuthRequest areq)
 /*
  * Collect password response packet from frontend.
  *
- * Returns NULL if couldn't get password, else malloc'd string.
+ * Returns NULL if couldn't get password, else palloc'd string.
  */
 static char *recv_password_packet(POOL_CONNECTION *frontend)
 {
@@ -340,12 +330,7 @@ static char *recv_password_packet(POOL_CONNECTION *frontend)
 	 * character-set conversion on it; since we don't yet know the
 	 * client's encoding, there wouldn't be much point.
 	 */
-	returnVal = strdup(passwd);
-	if (returnVal == NULL)
-	{
-		pool_error("recv_password_packet: strdup failed: %s", strerror(errno));
-		exit(1);
-	}
+	returnVal = pstrdup(passwd);
 	return returnVal;
 }
 
@@ -356,16 +341,11 @@ static char *recv_password_packet(POOL_CONNECTION *frontend)
  */
 static void auth_failed(POOL_CONNECTION *frontend)
 {
-	bool send_error_to_frontend = true;
 	int messagelen;
 	char *errmessage;
 
 	messagelen = strlen(frontend->username) + 100;
-	if ((errmessage = (char *)malloc(messagelen+1)) == NULL)
-	{
-		pool_error("auth_failed: malloc failed: %s", strerror(errno));
-		child_exit(1);
-	}
+	errmessage = (char *)palloc(messagelen+1);
 
 	switch (frontend->auth_method)
 	{
@@ -373,10 +353,6 @@ static void auth_failed(POOL_CONNECTION *frontend)
 			snprintf(errmessage, messagelen,
 					 "authentication with pgpool failed for user \"%s\": host rejected",
 					 frontend->username);
-			/*
-			 * if uaReject, frontend should have received 'E' and disconnected already.
-			 */
-			send_error_to_frontend = false;
 			break;
 /* 		case uaKrb4: */
 /* 			snprintf(errmessage, messagelen, */
@@ -423,17 +399,13 @@ static void auth_failed(POOL_CONNECTION *frontend)
 					 frontend->username);
 			break;
 	}
-
-	pool_error("%s", errmessage);
-	if (send_error_to_frontend)
-		pool_send_error_message(frontend, frontend->protoVersion, "XX000", errmessage,
-								"", "", __FILE__, __LINE__);
-
-	/*
-	 * don't need to free(errmessage). I will just kill myself.
-	 */
 	close_all_backend_connections();
-	child_exit(2);
+    ereport(FATAL,
+        (return_code(2),
+             errmsg("client authentication failed"),
+                errdetail("%s",errmessage),
+                    errhint("see pgpool log for details")));
+
 }
 
 
@@ -736,24 +708,14 @@ static void parse_hba(List *line, int line_num, POOL_CONNECTION *frontend,
 	 * duplicate db and username since strtok() in check_db() and check_user()
 	 * will override '\001' with '\0'.
 	 */
-	db_tmp = strdup(db);
-	if (db_tmp == NULL)
-	{
-		pool_error("parse_hba: strdup failed: %s", strerror(errno));
-		exit(1);
-	}
-	user_tmp = strdup(user);
-	if (user_tmp == NULL)
-	{
-		pool_error("parse_hba: strdup failed: %s", strerror(errno));
-		exit(1);
-	}
+	db_tmp = pstrdup(db);
+	user_tmp = pstrdup(user);
 	if (!check_db(frontend->database, frontend->username, db_tmp))
 		return;
 	if (!check_user(frontend->username, user_tmp))
         return;
-	free(db_tmp);
-	free(user_tmp);
+	pfree(db_tmp);
+	pfree(user_tmp);
 
 	/* Success */
 	*found_p = true;
@@ -828,12 +790,7 @@ static void parse_hba_auth(ListCell **line_item, UserAuth *userauth_p,
 	if (*line_item)
 	{
 		token = lfirst(*line_item);
-        *auth_arg_p = strdup(token);
-		if (*auth_arg_p == NULL)
-		{
-			pool_error("parse_hba_auth: strdup failed: %s", strerror(errno));
-			exit(1);
-		}
+        *auth_arg_p = pstrdup(token);
 		*line_item = lnext(*line_item);
 		/* If there is more on the line, it is an error */
 		if (*line_item)
@@ -950,7 +907,7 @@ static void tokenize_file(const char *filename, FILE *file,
 			/* Advance line number whenever we reach EOL */
 			line_number++;
 			/* Don't forget to free the next_token_expand result */
-			free(buf);
+			pfree(buf);
 		}
 	}
 }
@@ -969,23 +926,13 @@ static char * tokenize_inc_file(const char *outer_filename,
 	if (is_absolute_path(inc_filename))
 	{
 		/* absolute path is taken as-is */
-		inc_fullname = strdup(inc_filename);
-		if (inc_fullname == NULL)
-		{
-			pool_error("tokenize_inc_file: strdup failed: %s", strerror(errno));
-			exit(1);
-		}
+		inc_fullname = pstrdup(inc_filename);
 	}
 	else
 	{
 		/* relative path is relative to dir of calling file */
-		inc_fullname = (char *)malloc(strlen(outer_filename) + 1 +
+		inc_fullname = (char *)palloc(strlen(outer_filename) + 1 +
 									  strlen(inc_filename) + 1);
-		if (inc_fullname == NULL)
-		{
-			pool_error("tokenize_inc_file: malloc failed: %s", strerror(errno));
-			exit(1);
-		}
 		strcpy(inc_fullname, outer_filename);
 		get_parent_directory(inc_fullname);
 		join_path_components(inc_fullname, inc_fullname, inc_filename);
@@ -999,15 +946,10 @@ static char * tokenize_inc_file(const char *outer_filename,
 
 		pool_error("could not open secondary authentication file \"@%s\" as \"%s\": reason: %s",
 				   inc_filename, inc_fullname, strerror(errno));
-		free(inc_fullname);
+		pfree(inc_fullname);
 
 		/* return single space, it matches nothing */
-		returnVal = strdup(" ");
-		if (returnVal == NULL)
-		{
-			pool_error("tokenize_inc_file: malloc failed: %s", strerror(errno));
-			exit(1);
-		}
+		returnVal = pstrdup(" ");
 		return returnVal;
 	}
 
@@ -1016,15 +958,10 @@ static char * tokenize_inc_file(const char *outer_filename,
 
 	/*FreeFile(inc_file);*/
 	fclose(inc_file);
-	free(inc_fullname);
+	pfree(inc_fullname);
 
 	/* Create comma-separated string from List */
-	comma_str = strdup("");
-	if (comma_str == NULL)
-	{
-		pool_error("tokenize_inc_file: strdup failed: %s", strerror(errno));
-		exit(1);
-	}
+	comma_str = pstrdup("");
 	foreach(line, inc_lines)
 	{
 		List *token_list = (List *) lfirst(line);
@@ -1038,12 +975,7 @@ static char * tokenize_inc_file(const char *outer_filename,
 			needed = oldlen + strlen(lfirst(token)) + 1;
 			if (oldlen > 0)
 				needed++;
-			comma_str = realloc(comma_str, needed);
-			if (comma_str == NULL)
-			{
-				pool_error("tokenize_inc_file: realloc failed: %s", strerror(errno));
-				exit(1);
-			}
+			comma_str = repalloc(comma_str, needed);
 			if (oldlen > 0)
 				strcat(comma_str, MULTI_VALUE_SEP);
 			strcat(comma_str, lfirst(token));
@@ -1057,13 +989,8 @@ static char * tokenize_inc_file(const char *outer_filename,
 	{
 		char *returnVal;
 
-		free(comma_str);
-		returnVal = strdup(" ");
-		if (returnVal == NULL)
-		{
-			pool_error("tokenize_inc_file: strdup failed: %s", strerror(errno));
-			exit(1);
-		}
+		pfree(comma_str);
+		returnVal = pstrdup(" ");
 		return returnVal;
 	}
 
@@ -1097,12 +1024,7 @@ static char * next_token_expand(const char *filename, FILE *file)
 	char *incbuf;
 	int needed;
 
-	comma_str = strdup("");
-	if (comma_str == NULL)
-	{
-		pool_error("next_token_expand: strdup failed: %s", strerror(errno));
-		exit(1);
-	}
+	comma_str = pstrdup("");
 
 	do
 	{
@@ -1123,27 +1045,17 @@ static char * next_token_expand(const char *filename, FILE *file)
 			incbuf = tokenize_inc_file(filename, buf + 1);
 		else
 		{
-			incbuf = strdup(buf);
-			if (incbuf == NULL)
-			{
-				pool_error("next_token_expand: strdup failed: %s", strerror(errno));
-				exit(1);
-			}
+			incbuf = pstrdup(buf);
 		}
 
 		needed = strlen(comma_str) + strlen(incbuf) + 1;
 		if (trailing_comma)
 			needed++;
-		comma_str = realloc(comma_str, needed);
-		if (comma_str == NULL)
-		{
-			pool_error("next_token_expand: realloc failed: %s", strerror(errno));
-			exit(1);
-		}
+		comma_str = repalloc(comma_str, needed);
 		strcat(comma_str, incbuf);
 		if (trailing_comma)
 			strcat(comma_str, MULTI_VALUE_SEP);
-		free(incbuf);
+		pfree(incbuf);
 	} while (trailing_comma);
 
 	return comma_str;
@@ -1269,7 +1181,7 @@ static void free_lines(List **lines, List **line_nums)
 			ListCell *token;
 
 			foreach(token, ln)
-				free(lfirst(token));
+				pfree(lfirst(token));
 
 			list_free(ln);
 		}
@@ -1343,20 +1255,9 @@ static int pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg,
 	/*
 	 * PAM will free this memory in * pam_end()
 	 */
-	*resp = calloc(num_msg, sizeof(struct pam_response));
-	if (!*resp)
-	{
-		/* originally, it was logged as LOG */
-		pool_error("pam_passwd_conv_proc: calloc failed: %s", strerror(errno));
-		return PAM_CONV_ERR;
-	}
+	*resp = palloc0(num_msg, sizeof(struct pam_response));
 
-	(*resp)[0].resp = strdup((char *) appdata_ptr);
-	if ((*resp)[0].resp == NULL)
-	{
-		pool_error("pam_passwd_conv_proc: strdup failed: %s", strerror(errno));
-		exit(1);
-	}
+	(*resp)[0].resp = pstrdup((char *) appdata_ptr);
 	(*resp)[0].resp_retcode = 0;
 
 	return ((*resp)[0].resp ? PAM_SUCCESS : PAM_CONV_ERR);
@@ -1395,58 +1296,64 @@ static POOL_STATUS CheckPAMAuth(POOL_CONNECTION *frontend, char *user, char *pas
 
 	if (retval != PAM_SUCCESS)
 	{
-		pool_log("could not create PAM authenticator: %s",
-				 pam_strerror(pamh, retval));
 		pam_passwd = NULL;		/* Unset pam_passwd */
-		return POOL_ERROR;
+        ereport(FATAL,
+            (return_code(2),
+             errmsg("failed authentication against PAM"),
+                    errdetail("unable to create PAM authenticator: %s", pam_strerror(pamh, retval))));
 	}
 
 	retval = pam_set_item(pamh, PAM_USER, user);
 	if (retval != PAM_SUCCESS)
 	{
-		pool_log("pam_set_item(PAM_USER) failed: %s",
-				 pam_strerror(pamh, retval));
 		pam_passwd = NULL;		/* Unset pam_passwd */
-		return POOL_ERROR;
+        ereport(FATAL,
+                (return_code(2),
+                 errmsg("failed authentication against PAM"),
+                 errdetail("pam_set_item(PAM_USER) failed: %s", pam_strerror(pamh, retval))));
 	}
 
 	retval = pam_set_item(pamh, PAM_CONV, &pam_passw_conv);
 	if (retval != PAM_SUCCESS)
 	{
-		pool_log("pam_set_item(PAM_CONV) failed: %s",
-				 pam_strerror(pamh, retval));
 		pam_passwd = NULL;		/* Unset pam_passwd */
-		return POOL_ERROR;
+        ereport(FATAL,
+                (return_code(2),
+                 errmsg("failed authentication against PAM"),
+                 errdetail("pam_set_item(PAM_CONV) failed: %s", pam_strerror(pamh, retval))));
 	}
 
 	retval = pam_authenticate(pamh, 0);
 	if (retval != PAM_SUCCESS)	/* service name does not exist */
 	{
-		pool_log("pam_authenticate failed: %s",
-				 pam_strerror(pamh, retval));
 		pam_passwd = NULL;		/* Unset pam_passwd */
-		return POOL_ERROR;
+        ereport(FATAL,
+            (return_code(2),
+                 errmsg("failed authentication against PAM"),
+                    errdetail("pam_authenticate failed: %s", pam_strerror(pamh, retval))));
 	}
 
 	retval = pam_acct_mgmt(pamh, 0);
 	if (retval != PAM_SUCCESS)
 	{
-		pool_log("pam_acct_mgmt failed: %s",
-				 pam_strerror(pamh, retval));
 		pam_passwd = NULL;		/* Unset pam_passwd */
-		return POOL_ERROR;
+        ereport(FATAL,
+            (return_code(2),
+                 errmsg("failed authentication against PAM"),
+                    errdetail("system call pam_acct_mgmt failed : %s", pam_strerror(pamh, retval))));
 	}
 
 	retval = pam_end(pamh, retval);
 	if (retval != PAM_SUCCESS)
 	{
-		pool_log("could not release PAM authenticator: %s",
-				 pam_strerror(pamh, retval));
-	}
+        ereport(FATAL,
+            (return_code(2),
+                 errmsg("failed authentication against PAM"),
+                    errdetail("unable to release PAM authenticator: %s", pam_strerror(pamh, retval))));
+}
 
-	pam_passwd = NULL;			/* Unset pam_passwd */
-
-	return (retval == PAM_SUCCESS ? POOL_CONTINUE : POOL_ERROR);
+	pam_passwd = NULL;
+	return POOL_CONTINUE;
 }
 
 #endif   /* USE_PAM */
@@ -1459,10 +1366,11 @@ static POOL_STATUS CheckMd5Auth(char *username)
 	passwd = pool_get_passwd(username);
 
 	if (passwd == NULL)
-	{
-		/* Not found. authentication failed */
-		return POOL_ERROR;
-	}
+        ereport(FATAL,
+            (return_code(2),
+                 errmsg("md5 authentication failed"),
+                    errdetail("pool_passed file does not contains entry for \"%s\"",username)));
+
 
 	/*
 	 * Ok for now. Actual authentication will be performed later.

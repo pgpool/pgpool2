@@ -22,8 +22,8 @@
  */
 #include <string.h>
 #include <limits.h>
-
-#include "pool_memory.h"
+#include "pool_type.h"
+#include "utils/palloc.h"
 #include "parser.h"
 #include "pool_string.h"
 #include "pg_list.h"
@@ -196,7 +196,7 @@ static void _outCurrentOfExpr(String *str, CurrentOfExpr *node);
  * In most scenarios the list elements should always be Value strings,
  * but we also allow A_Star for the convenience of ColumnRef processing.
  */
-static String *NameListToString(List *names)
+String *NameListToString(List *names)
 {
 	String *str;
 	ListCell   *l;
@@ -3541,7 +3541,6 @@ static void add_function_like_objs(String *str, DropStmt *node)
 static void
 _outDropStmt(String *str, DropStmt *node)
 {
-	ListCell *lc;
 	List *objname;
 
 	string_append_char(str, "DROP ");
@@ -3886,6 +3885,12 @@ _outGrantStmt(String *str, GrantStmt *node)
 			string_append_char(str, "FOREIGN SERVER ");
 			_outIdList(str, node->objects);
 			break;
+            
+        case ACL_OBJECT_COLUMN:
+        case ACL_OBJECT_DOMAIN:
+        case ACL_OBJECT_LARGEOBJECT:
+        case ACL_OBJECT_TYPE:
+            break;
 	}
 
 	if (node->is_grant == true)
