@@ -60,7 +60,7 @@ PGPOOLDIR=$PGPOOL_INSTALL_DIR/etc
 # PostgreSQL commands(initdb, pg_ctl, psql) install dir
 PGBIN=${PGBIN:-"/usr/local/pgsql/bin"}
 # LD_LIBRARY_PATH 
-LPATH=/usr/local/pgsql/lib
+LPATH=${PGLIB:-"/usr/local/pgsql/lib"}
 # initdb args
 INITDBARG="--no-locale -E UTF_8"
 #-------------------------------------------
