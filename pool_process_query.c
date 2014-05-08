@@ -2934,6 +2934,8 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 
 #define NEXTVALQUERY2 "SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.oid = pgpool_regclass('%s')"
 
+#define NEXTVALQUERY3 "SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.oid = to_regclass('%s')"
+
 	char *str;
 	int result;
 	static POOL_RELCACHE *relcache;
@@ -2981,7 +2983,12 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 	{
 		char *query;
 
-		if (pool_has_pgpool_regclass())
+		/* PostgreSQL 9.4 or later has to_regclass() */
+		if (pool_has_to_regclass())
+		{
+			query = NEXTVALQUERY3;
+		}
+		else if (pool_has_pgpool_regclass())
 		{
 			query = NEXTVALQUERY2;
 		}
@@ -3091,7 +3098,12 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 		{
 			char *query;
 
-			if (pool_has_pgpool_regclass())
+			/* PostgreSQL 9.4 or later has to_regclass() */
+			if (pool_has_to_regclass())
+			{
+				query = SEQUENCETABLEQUERY3;
+			}
+			else if (pool_has_pgpool_regclass())
 			{
 				query = SEQUENCETABLEQUERY2;
 			}

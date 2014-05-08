@@ -56,6 +56,7 @@ extern bool pool_has_unlogged_table(Node *node);
 extern bool pool_has_view(Node *node);
 extern bool pool_has_insertinto_or_locking_clause(Node *node);
 extern bool pool_has_pgpool_regclass(void);
+extern bool pool_has_to_regclass(void);
 extern bool raw_expression_tree_walker(Node *node, bool (*walker) (), void *context);
 extern int pool_table_name_to_oid(char *table_name);
 extern int pool_extract_table_oids_from_select_stmt(Node *node, SelectContext *ctx);
