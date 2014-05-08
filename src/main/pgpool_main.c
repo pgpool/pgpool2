@@ -1553,6 +1553,11 @@ static void failover(void)
 	}
 	else
 	{
+		/* Temporary black magic. Without this regression 055 does not finish */
+		fprintf(stderr, "failover done. shutdown host %s(%d)",
+				 BACKEND_INFO(node_id).backend_hostname,
+				BACKEND_INFO(node_id).backend_port);
+
 		ereport(LOG,
                 (errmsg("failover done. shutdown host %s(%d)",
 				 BACKEND_INFO(node_id).backend_hostname,

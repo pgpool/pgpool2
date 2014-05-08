@@ -406,6 +406,8 @@ static bool is_system_catalog(char *table_name)
 
 #define ISBELONGTOPGCATALOGQUERY2 "SELECT count(*) FROM pg_class AS c, pg_namespace AS n WHERE c.oid = pgpool_regclass('%s') AND c.relnamespace = n.oid AND n.nspname = 'pg_catalog'"
 
+#define ISBELONGTOPGCATALOGQUERY3 "SELECT count(*) FROM pg_class AS c, pg_namespace AS n WHERE c.oid = to_regclass('%s') AND c.relnamespace = n.oid AND n.nspname = 'pg_catalog'"
+
 	int hasreliscatalog;
 	bool result;
 	static POOL_RELCACHE *hasreliscatalog_cache;
@@ -426,15 +428,7 @@ static bool is_system_catalog(char *table_name)
 	{
 		char *query;
 
-		/* pgpool_regclass has been installed */
-		if (pool_has_pgpool_regclass())
-		{
-			query = ISBELONGTOPGCATALOGQUERY2;
-		}
-		else
-		{
-			query = ISBELONGTOPGCATALOGQUERY;
-		}
+		query = HASPGNAMESPACEQUERY;
 
 		hasreliscatalog_cache = pool_create_relcache(pool_config->relcache_size, query,
 										int_register_func, int_unregister_func,
@@ -457,8 +451,13 @@ static bool is_system_catalog(char *table_name)
 		{
 			char *query;
 
+			/* PostgreSQL 9.4 or later has to_regclass() */
+			if (pool_has_to_regclass())
+			{
+				query = ISBELONGTOPGCATALOGQUERY3;
+			}
 			/* pgpool_regclass has been installed */
-			if (pool_has_pgpool_regclass())
+			else if (pool_has_pgpool_regclass())
 			{
 				query = ISBELONGTOPGCATALOGQUERY2;
 			}
@@ -607,6 +606,8 @@ bool is_unlogged_table(char *table_name)
 
 #define ISUNLOGGEDQUERY2 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = pgpool_regclass('%s') AND c.relpersistence = 'u'"
 
+#define ISUNLOGGEDQUERY3 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = to_regclass('%s') AND c.relpersistence = 'u'"
+
 	int hasrelpersistence;
 	static POOL_RELCACHE *hasrelpersistence_cache;
 	static POOL_RELCACHE *relcache;
@@ -640,8 +641,13 @@ bool is_unlogged_table(char *table_name)
 		bool result;
 		char *query;
 
+		/* PostgreSQL 9.4 or later has to_regclass() */
+		if (pool_has_to_regclass())
+		{
+			query = ISUNLOGGEDQUERY3;
+		}
 		/* pgpool_regclass has been installed */
-		if (pool_has_pgpool_regclass())
+		else if (pool_has_pgpool_regclass())
 		{
 			query = ISUNLOGGEDQUERY2;
 		}
@@ -689,6 +695,8 @@ bool is_view(char *table_name)
 
 #define ISVIEWQUERY2 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = pgpool_regclass('%s') AND (c.relkind = 'v' OR c.relkind = 'm')"
 
+#define ISVIEWQUERY3 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = to_regclass('%s') AND (c.relkind = 'v' OR c.relkind = 'm')"
+
 	static POOL_RELCACHE *relcache;
 	POOL_CONNECTION_POOL *backend;
 	bool result;
@@ -701,8 +709,13 @@ bool is_view(char *table_name)
 
 	backend = pool_get_session_context(false)->backend;
 
+	/* PostgreSQL 9.4 or later has to_regclass() */
+	if (pool_has_to_regclass())
+	{
+		query = ISVIEWQUERY3;
+	}
 	/* pgpool_regclass has been installed */
-	if (pool_has_pgpool_regclass())
+	else if (pool_has_pgpool_regclass())
 	{
 		query = ISVIEWQUERY2;
 	}
@@ -757,6 +770,40 @@ bool pool_has_pgpool_regclass(void)
 		if (relcache == NULL)
 		{
 			pool_error("has_pgpool_regclass: pool_create_relcache error");
+			return false;
+		}
+	}
+
+	result = pool_search_relcache(relcache, backend, user)==0?0:1;
+	return result;
+}
+
+/*
+ * Judge if we have to_regclass or not.
+ */
+bool pool_has_to_regclass(void)
+{
+/*
+ * Query to know if to_regclass exists.
+ */
+#define HAS_TOREGCLASSQUERY "SELECT count(*) from (SELECT has_function_privilege('%s', 'to_regclass(cstring)', 'execute') WHERE EXISTS(SELECT * FROM pg_catalog.pg_proc AS p WHERE p.proname = 'to_regclass')) AS s"
+
+	bool result;
+	static POOL_RELCACHE *relcache;
+	POOL_CONNECTION_POOL *backend;
+	char *user;
+
+	backend = pool_get_session_context(false)->backend;
+	user = MASTER_CONNECTION(backend)->sp->user;
+
+	if (!relcache)
+	{
+		relcache = pool_create_relcache(pool_config->relcache_size, HAS_TOREGCLASSQUERY,
+										int_register_func, int_unregister_func,
+										false);
+		if (relcache == NULL)
+		{
+			pool_error("has_to_regclass: pool_create_relcache error");
 			return false;
 		}
 	}
@@ -901,6 +948,7 @@ int pool_table_name_to_oid(char *table_name)
  */
 #define TABLE_TO_OID_QUERY "SELECT pgpool_regclass('%s')"
 #define TABLE_TO_OID_QUERY2 "SELECT oid FROM pg_class WHERE relname = '%s'"
+#define TABLE_TO_OID_QUERY3 "SELECT to_regclass('%s')"
 
 	int oid = 0;
 	static POOL_RELCACHE *relcache;
@@ -914,7 +962,11 @@ int pool_table_name_to_oid(char *table_name)
 
 	backend = pool_get_session_context(false)->backend;
 
-	if (pool_has_pgpool_regclass())
+	if (pool_has_to_regclass())
+	{
+		query = TABLE_TO_OID_QUERY3;
+	}
+	else if (pool_has_pgpool_regclass())
 	{
 		query = TABLE_TO_OID_QUERY;
 	}
