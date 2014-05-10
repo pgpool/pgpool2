@@ -9,7 +9,7 @@
 Summary:        Pgpool is a connection pooling/replication server for PostgreSQL
 Name:           pgpool-II-pg%{pg_version}
 Version:        %{pgpool_version}
-Release:        2%{?dist}
+Release:        3%{?dist}
 License:        BSD
 Group:          Applications/Databases
 Vendor:         Pgpool Global Development Group
@@ -149,6 +149,9 @@ fi
 %{_libdir}/libpcp.so
 
 %changelog
+* Sun May 10 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.3-3
+- Use 3.3-stable tree head
+
 * Sun May 4 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.3-2
 - Fix configure option
 - Add openssl support
