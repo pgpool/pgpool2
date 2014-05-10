@@ -793,7 +793,7 @@ bool pool_has_to_regclass(void)
 	POOL_CONNECTION_POOL *backend;
 	char *user;
 
-	backend = pool_get_session_context(false)->backend;
+	backend = pool_get_session_context()->backend;
 	user = MASTER_CONNECTION(backend)->sp->user;
 
 	if (!relcache)
