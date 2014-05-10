@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -57,6 +57,7 @@ static RETSIGTYPE hb_receiver_exit(int sig);
 static int hton_wd_hb_packet(WdHbPacket *to, WdHbPacket *from);
 static int ntoh_wd_hb_packet(WdHbPacket *to, WdHbPacket *from);
 static int packet_to_string_hb(WdHbPacket *pkt, char * str, int maxlen);
+static int wd_set_reuseport(int sock);
 
 /* create socket for sending heartbeat */
 int
@@ -110,19 +111,12 @@ wd_create_hb_send_socket(WdHbIf *hb_if)
 #endif
 	}
 
-#if defined(SO_REUSEPORT)
+	if (wd_set_reuseport(sock) != 0)
 	{
-		int one = 1;
-		if (setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &one, sizeof(one)) == -1)
-		{
-			pool_error("wd_create_hb_send_socket: setsockopt(SO_REUSEPORT) failed. reason: %s",
-			           strerror(errno));
-			close(sock);
-			return -1;
-		}
-		pool_log("wd_create_hb_send_socket: set SO_REUSEPORT");
+		pool_error("wd_create_hb_send_socket: wd_set_reuseport failed");
+		return -1;
 	}
-#endif
+	pool_log("wd_create_hb_send_socket: set SO_REUSEPORT");
 
  	if (fcntl(sock, F_SETFD, FD_CLOEXEC) < 0) {
 		pool_error("wd_create_hb_send_socket: setting close-on-exec flag failed. reason: %s",
@@ -192,18 +186,12 @@ wd_create_hb_recv_socket(WdHbIf *hb_if)
 #endif
 	}
 
-#if defined(SO_REUSEPORT)
+	if (wd_set_reuseport(sock) != 0)
 	{
-		if (setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &one, sizeof(one)) == -1)
-		{
-			pool_error("wd_create_hb_recv_socket: setsockopt(SO_REUSEPORT) failed. reason: %s",
-			           strerror(errno));
-			close(sock);
-			return -1;
-		}
-		pool_log("wd_create_hb_recv_socket: set SO_REUSEPORT");
+		pool_error("wd_create_hb_recv_socket: wd_set_reuseport failed");
+		return -1;
 	}
-#endif
+	pool_log("wd_create_hb_recv_socket: set SO_REUSEPORT");
 
 	bind_is_done = 0;
 	for (bind_tries = 0; !bind_is_done && bind_tries < MAX_BIND_TRIES; bind_tries++)
@@ -578,4 +566,37 @@ packet_to_string_hb(WdHbPacket *pkt, char *str, int maxlen)
 	               pkt->status, pkt->send_time.tv_sec, pkt->send_time.tv_usec, pkt->from);
 
 	return len;
+}
+
+/*
+ * Set SO_REUSEPORT option to the socket.  If the option is available
+ * in the compile time but not available in the run time, just emit a
+ * log and treat it as normal.
+ */
+static int wd_set_reuseport(int sock)
+{
+#if defined(SO_REUSEPORT)
+	int one = 1;
+
+	if (setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &one, sizeof(one)) == -1)
+	{
+		if (errno == EINVAL || errno == ENOPROTOOPT)
+		{
+			pool_log("wd_create_hb_send_socket: setsockopt(SO_REUSEPORT) is not supported by the kernel. detail: %s",
+					 strerror(errno));
+		}
+		else
+		{
+			pool_error("wd_create_hb_send_socket: setsockopt(SO_REUSEPORT) failed. reason: %s",
+					   strerror(errno));
+			close(sock);
+			return -1;
+		}
+	}
+	else
+		pool_log("wd_create_hb_send_socket: set SO_REUSEPORT");
+	return 0;
+#else
+	return 0;
+#endif
 }
