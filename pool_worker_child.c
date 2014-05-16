@@ -68,7 +68,7 @@ static volatile sig_atomic_t restart_request = 0;
 static void establish_persistent_connection(void);
 static void discard_persistent_connection(void);
 static void check_replication_time_lag(void);
-static long text_to_lsn(char *text);
+static unsigned long long int text_to_lsn(char *text);
 static RETSIGTYPE my_signal_handler(int sig);
 static RETSIGTYPE reload_config_handler(int sig);
 static void reload_config(void);
@@ -324,7 +324,7 @@ static void check_replication_time_lag(void)
 /*
  * Convert logid/recoff style text to 64bit log location (LSN)
  */
-static long text_to_lsn(char *text)
+static unsigned long long int text_to_lsn(char *text)
 {
 /*
  * WAL segment size in bytes.  XXX We should fetch this from
