@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Sat Apr  5 18:29:31 JST 2014
+Last modified: Fri May 16 16:46:37 JST 2014
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -1901,6 +1901,7 @@ CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_accounts (val ANYELEMENT) RET
 <p>以下はpool_hbaの制限事項です。</p>
 
 <ul>
+<<<<<<< HEAD
 <li>"hostssl"接続タイプはサポートされません
     <p>pool_hba.confに"hostssl"は指定することはできませんが、pgpool-IIは2.3以降でSSLをサポートしています。
     詳細は<a href="#ssl">SSL</a>を参照してください。
@@ -1909,6 +1910,11 @@ CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_accounts (val ANYELEMENT) RET
 
 <li>DATABASEフィールド値として"samegroup"はサポートされません</li>
     <p>pgpoolはバックエンドサーバにあるユーザ情報を事前に知る事ができないため、
+=======
+    <li>DATABASEフィールド値として"samegroup"はサポートされません</li>
+    <p>
+    pgpoolはバックエンドサーバにあるユーザ情報を事前に知る事ができないため、
+>>>>>>> fb819b2... Remove old restriction description which is no longer true.
     データベース名はpool_hba.confにある値のみと比較されます。
     なのでグループに関する認証はpool_hbaで行うことができません。</p>
 </li>

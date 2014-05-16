@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Sat Apr  5 18:28:59 JST 2014
+Last modified: Fri May 16 16:46:28 JST 2014
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2339,6 +2339,39 @@ PITR mechanism.</font>
    If the target PostgreSQL server has already started, you need to shut it down.
 </p>
 
+<<<<<<< HEAD
+=======
+<ul>
+<li>"samegroup" for DATABASE field is not supported</li>
+    <p>
+    Since pgpool does not know anything about users in the backend server,
+    the database name is simply checked against entries in the DATABASE
+    field of pool_hba.conf.
+    </p>
+
+<li>group names following "+" for USER field is not supported</li>
+    <p>
+    This is for the same reason as for the "samegroup" described above. A
+    user name is simply checked against the entries in the USER field
+    of pool_hba.conf.
+    </p>
+
+<li>IPv6 for IP address/mask is not supported</li>
+    <p>
+    pgpool currently does not support IPv6.
+    </p>
+
+<li>Only "trust", "reject", "md5" and "pam" for METHOD field are supported</li>
+    <p>
+    Again, this is for the same reason as for the "samegroup" described above.
+    pgpool does not have access to user/password information.
+    </p>
+    <p>
+    To use md5 authentication, you need to register your name and password in "pool_passwd".
+    See <a href="#md5">Authentication / Access Controls</a> for more details.
+</ul>
+
+>>>>>>> fb819b2... Remove old restriction description which is no longer true.
 <p>
 pgpool-II performs online recovery in two separated phases. There are a few 
 seconds or minutes when client will be waiting to connect to pgpool-II while a 
@@ -2763,6 +2796,7 @@ recovery.
 
 <p>
 <ul>
+<<<<<<< HEAD
   <li>In the replication mode or master/slave mode, trust, clear text
       password, and pam methods are supported. md5 in also supported since pgpool-II 3.0.
 	   
@@ -2796,6 +2830,33 @@ recovery.
       pgpool-II connections can use pg_hba.conf, of course).</li>
 	   </ul>
 </p>
+=======
+    <li>In the replication mode or master/slave mode, trust, clear text password,
+        and pam methods are supported. md5 in also supported since pgpool-II 3.0.
+        md5 is supported by using a authencitaion file ("pool_passwd").
+        "pool_passwd" is default name of the authentication file.
+        You can change the file name using <a href="#POOL_PASSWD">pool_passwd</a>.
+        Here are the steps to enable md5 authentication:
+        <ol>
+            <li>Login as the database's operating system user and type
+                "pg_md5 --md5auth --username=<your_username> <your_passwd>"
+                 user name and md5 encrypted password are registered into pool_passwd.
+                 If pool_passwd does not exist yet, pg_md5 command will
+                 automatically create it for you.</li>
+            <li>The format of pool_passwd is "username:encrypted_passwd".</li>
+            <li>You also need to add an appropriate md5 entry to pool_hba.conf.
+                See <a href="#hba">Setting up pool_hba.conf for client authentication (HBA)</a>
+                for more details.</li>
+            <li>Please note that the user name and password must be
+                 identical to those registered in PostgreSQL.</li>
+            <li>After changing md5 password(in both pool_passwd and PostgreSQL of course),
+                you need to execute "pgpool reload" or restart pgpool(if your pgpool is 3.1 or before).</li>
+       </ol>
+    </li>
+    <li>In all the other modes, trust, clear text password, crypt, md5,
+        and pam methods are supported.</li>
+    </ul>
+>>>>>>> fb819b2... Remove old restriction description which is no longer true.
 
 <h2>Large objects</h2>
 <p>
