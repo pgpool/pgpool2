@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Fri Apr  4 08:40:56 JST 2014
+Last modified: Fri May 16 16:44:22 JST 2014
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2475,12 +2475,6 @@ Here are the limitations of pool_hba.
 </p>
 
 <ul>
-<li>"hostssl" connection type is not supported</li>
-    <p>
-    Even if the SSL support is enabled, "hostssl" cannot be used.
-    See <a href="#ssl">SSL</a> for more details.
-    </p>
-
 <li>"samegroup" for DATABASE field is not supported</li>
     <p>
     Since pgpool does not know anything about users in the backend server,
@@ -4306,11 +4300,6 @@ pgpool-II.
     </li>
     <li>In all the other modes, trust, clear text password, crypt, md5,
         and pam methods are supported.</li>
-    <li>pgpool-II does not support pg_hba.conf-like access controls. If
-        TCP/IP connections are enabled, pgpool-II accepts all the
-        connections from any host. If needed, use iptables and such to
-        control access from other hosts. (PostgreSQL server accepting
-        pgpool-II connections can use pg_hba.conf, of course).</li>
     </ul>
 
 <h2>Large objects</h2>
