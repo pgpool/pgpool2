@@ -7,7 +7,7 @@
 </head>
 
 <!-- hhmts start -->
-Last modified: Sat Apr  5 18:24:43 JST 2014
+Last modified: Fri May 16 16:45:36 JST 2014
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -2217,11 +2217,14 @@ ELSE 2
 <p>
   Here are the limitations of pool_hba.
 <ul>
+<<<<<<< HEAD
 <li>"hostssl" connection type is not supported</li>
 <p>
     Though "hostssl" is invalid, pgpool-II 2.3 or later supports SSL.
 	See <a href="#ssl">SSL</a> for more details.
 </p>
+=======
+>>>>>>> fb819b2... Remove old restriction description which is no longer true.
 <li>"samegroup" for DATABASE field is not supported</li>
 <p>
     Since pgpool does not know anything about users in the backend server,
@@ -3185,6 +3188,7 @@ recovery.
 
 <p>
 <ul>
+<<<<<<< HEAD
   <li>In the replication mode or master/slave mode, trust, clear text
       password, and pam methods are supported. md5 in also supported since pgpool-II 3.0.
 	   
@@ -3218,6 +3222,33 @@ recovery.
       pgpool-II connections can use pg_hba.conf, of course).</li>
 	   </ul>
 </p>
+=======
+    <li>In the replication mode or master/slave mode, trust, clear text password,
+        and pam methods are supported. md5 in also supported since pgpool-II 3.0.
+        md5 is supported by using a authencitaion file ("pool_passwd").
+        "pool_passwd" is default name of the authentication file.
+        You can change the file name using <a href="#POOL_PASSWD">pool_passwd</a>.
+        Here are the steps to enable md5 authentication:
+        <ol>
+            <li>Login as the database's operating system user and type
+                "pg_md5 --md5auth --username=<your_username> <your_passwd>"
+                 user name and md5 encrypted password are registered into pool_passwd.
+                 If pool_passwd does not exist yet, pg_md5 command will
+                 automatically create it for you.</li>
+            <li>The format of pool_passwd is "username:encrypted_passwd".</li>
+            <li>You also need to add an appropriate md5 entry to pool_hba.conf.
+                See <a href="#hba">Setting up pool_hba.conf for client authentication (HBA)</a>
+                for more details.</li>
+            <li>Please note that the user name and password must be
+                 identical to those registered in PostgreSQL.</li>
+            <li>After changing md5 password(in both pool_passwd and PostgreSQL of course),
+                you need to execute "pgpool reload" or restart pgpool(if your pgpool is 3.1 or before).</li>
+       </ol>
+    </li>
+    <li>In all the other modes, trust, clear text password, crypt, md5,
+        and pam methods are supported.</li>
+    </ul>
+>>>>>>> fb819b2... Remove old restriction description which is no longer true.
 
 <h2>Large objects</h2>
 <p>
