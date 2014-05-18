@@ -71,7 +71,7 @@ pgpool_recovery(PG_FUNCTION_ARGS)
 																	  PointerGetDatum(PG_GETARG_TEXT_P(2))));
 	char *remote_port;
 
-	if (!PointerGetDatum(PG_GETARG_TEXT_P(3)))
+	if (PG_NARGS() < 4)
 	{
 		elog(ERROR, "pgpool_recovery: the 4th argument remote port is not present");
 	}
