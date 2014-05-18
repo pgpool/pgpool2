@@ -69,15 +69,6 @@ pgpool_recovery(PG_FUNCTION_ARGS)
 															PointerGetDatum(PG_GETARG_TEXT_P(1))));
 	char *remote_data_directory = DatumGetCString(DirectFunctionCall1(textout,
 																	  PointerGetDatum(PG_GETARG_TEXT_P(2))));
-	char *remote_port;
-
-	if (PG_NARGS() < 4)
-	{
-		elog(ERROR, "pgpool_recovery: the 4th argument remote port is not present");
-	}
-
-	remote_port = DatumGetCString(DirectFunctionCall1(textout,
-															PointerGetDatum(PG_GETARG_TEXT_P(3))));
 
 	if (!superuser())
 #ifdef ERRCODE_INSUFFICIENT_PRIVILEGE
@@ -88,9 +79,21 @@ pgpool_recovery(PG_FUNCTION_ARGS)
 		elog(ERROR, "must be superuser to use pgpool_recovery function");
 #endif
 
-	snprintf(recovery_script, sizeof(recovery_script), "%s/%s %s %s %s %s",
-			 DataDir, script, DataDir, remote_host,
-			 remote_data_directory, remote_port);
+	if (PG_NARGS() >= 4)		/* post pgpool-II 3.4 */
+	{
+		char *remote_port = DatumGetCString(DirectFunctionCall1(textout,
+														  PointerGetDatum(PG_GETARG_TEXT_P(3))));
+		snprintf(recovery_script, sizeof(recovery_script), "%s/%s %s %s %s %s",
+				 DataDir, script, DataDir, remote_host,
+				 remote_data_directory, remote_port);
+	}
+	else
+	{
+		snprintf(recovery_script, sizeof(recovery_script), "%s/%s %s %s %s",
+				 DataDir, script, DataDir, remote_host,
+				 remote_data_directory);
+	}
+
 	elog(DEBUG1, "recovery_script: %s", recovery_script);
 	r = system(recovery_script);
 
