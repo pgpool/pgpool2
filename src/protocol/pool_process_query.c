@@ -3707,6 +3707,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 					{
 						string_append_char(msg, m);
 						string_append_char(msg, "]");
+						pfree(m);
 					}
 					else
 					{
@@ -4348,29 +4349,29 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 
 /*
  * pool_extract_error_message: Extract human readable message from
- * ERROR/NOTICE reponse packet and return it. If read_kind is true,
- * kind will be read in this function. If read_kind is false, kind
+ * ERROR/NOTICE reponse packet and return it. If "read_kind" is true,
+ * kind will be read in this function. If "read_kind" is false, kind
  * should have been already read and it should be either 'E' or
- * 'N'.The returned string is placed in static buffer. Message larger
- * than the buffer will be silently truncated. Be warned that next
- * call to this function will break the buffer.  If unread is true,
- * the packet will be returned to the stream.
+ * 'N'. The returned string is in palloc'd buffer. Callers must pfree
+ * it if it becomes neccessary.
+ *
+ * If "unread" is true, the packet will be returned to the stream.
  *
  * Return values are: 
  * 0: not error or notice message 
  * 1: succeeded to extract error message 
  * -1: error)
- * we do not throw elog from this function
  */
 int pool_extract_error_message(bool read_kind, POOL_CONNECTION *backend, int major, bool unread, char **message)
 {
 	char kind;
 	int readlen = 0, len;
-	static char buf[8192]; /* unread buffer */
-	static char message_buf[8192];		/* mesasge buffer */
-	char *p, *str;
+	StringInfo str_buf;	/* unread buffer */
+	StringInfo str_message_buf;		/* message buffer */
+	char *str;
 
-	p = buf;
+	str_buf = makeStringInfo();
+	str_message_buf = makeStringInfo();
 
     PG_TRY();
     {
@@ -4381,12 +4382,15 @@ int pool_extract_error_message(bool read_kind, POOL_CONNECTION *backend, int maj
             pool_read(backend, &kind, len);
 
             readlen += len;
-            memcpy(p, &kind, len);
-            p += len;
+			appendStringInfoChar(str_buf, kind);
 
             if (kind != 'E' && kind != 'N')
             {
-                pool_unread(backend, buf, readlen);
+                pool_unread(backend, str_buf->data, readlen);
+				pfree(str_message_buf->data);
+				pfree(str_message_buf);
+				pfree(str_buf->data);
+				pfree(str_buf);
                 return 0;
             }
         }
@@ -4398,26 +4402,14 @@ int pool_extract_error_message(bool read_kind, POOL_CONNECTION *backend, int maj
 
             pool_read(backend, &len, sizeof(len));
             readlen += sizeof(len);
-            memcpy(p, &len, sizeof(len));
-            p += sizeof(len);
+			appendBinaryStringInfo(str_buf, (const char *)&len, sizeof(len));
 
             len = ntohl(len) - 4;
             str = palloc(len);
 
             pool_read(backend, str, len);
             readlen += len;
-
-            if (readlen >= sizeof(buf))
-            {
-                ereport(NOTICE,
-                        (errmsg("unable to extract error message"),
-                         errdetail("not enough buffer space")));
-                
-                pfree(str);
-                return -1;
-            }
-
-            memcpy(p, str, len);
+			appendBinaryStringInfo(str_buf, str, len);
 
             /*
              * Checks error code which is formatted 'Mxxxxxx'
@@ -4429,8 +4421,7 @@ int pool_extract_error_message(bool read_kind, POOL_CONNECTION *backend, int maj
                 if (*e == 'M')
                 {
                     e++;
-                    strncpy(message_buf, e, sizeof(message_buf)-1);
-                    message_buf[sizeof(message_buf)-1] = '\0';
+					appendStringInfoString(str_message_buf, e);
                     break;
                 }
                 else
@@ -4441,29 +4432,20 @@ int pool_extract_error_message(bool read_kind, POOL_CONNECTION *backend, int maj
         else
         {
             str = pool_read_string(backend, &len, 0);
-            len = Min(sizeof(message_buf)-1, len);
             readlen += len;
-
-            if (readlen >= sizeof(buf))
-            {
-                ereport(NOTICE,
-                        (errmsg("unable to extract error message"),
-                         errdetail("not enough buffer space")));
-                return -1;
-            }
-
-            memcpy(p, str, len);
-            memcpy(message_buf, str, len);
-            message_buf[len] = '\0';
+			appendStringInfoString(str_message_buf, str);
         }
 
         if (unread)
         {
             /* Put the message to read buffer */
-            pool_unread(backend, buf, readlen);
+            pool_unread(backend, str_buf->data, readlen);
         }
 
-        *message = message_buf;
+        *message = str_message_buf->data;
+		pfree(str_message_buf);
+		pfree(str_buf->data);
+		pfree(str_buf);
     }
     PG_CATCH();
     {

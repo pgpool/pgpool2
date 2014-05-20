@@ -1158,15 +1158,20 @@ signed char pool_read_kind(POOL_CONNECTION_POOL *cp)
 				if (kind0 == 'E')
 				{
 					if (pool_extract_error_message(false, MASTER(cp), MAJOR(cp), true, &message) == 1)
+					{
                         ereport(LOG,
                                 (errmsg("pool_read_kind: error message from master backend:%s", message)));
-
+						pfree(message);
+					}
 				}
 				else if (kind == 'E')
 				{
 					if (pool_extract_error_message(false, CONNECTION(cp, i), MAJOR(cp), true, &message) == 1)
+					{
                         ereport(LOG,
                                 (errmsg("pool_read_kind: error message from %d th backend:%s", i, message)));
+						pfree(message);
+					}
 				}
                 ereport(ERROR,
                     (errmsg("unable to read message kind"),
