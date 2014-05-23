@@ -938,6 +938,7 @@ static void daemonize(void)
 	dup2(i, 0);
 	dup2(i, 1);
 	dup2(i, 2);
+	close(i);
 
 	/* close syslog connection for daemonizing */
 	if (pool_config->logsyslog) {
