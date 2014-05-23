@@ -762,6 +762,7 @@ static void daemonize(void)
 	dup2(i, 0);
 	dup2(i, 1);
 	dup2(i, 2);
+	close(i);
 
     fdlimit = sysconf(_SC_OPEN_MAX);
     for (i = 3; i < fdlimit; i++)
