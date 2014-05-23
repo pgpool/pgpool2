@@ -808,11 +808,22 @@ pcp_systemdb_info(void)
 	}
 	if (debug) fprintf(stderr, "DEBUG: send: tos=\"S\", len=%d\n", ntohl(wsize));
 
-	while (1) {
+	while (1)
+	{
 		if (pcp_read(pc, &tos, 1))
+		{
+			if (buf != NULL)
+				free(buf);
 			return NULL;
+		}
+
 		if (pcp_read(pc, &rsize, sizeof(int)))
+		{
+			if (buf != NULL)
+				free(buf);
 			return NULL;
+		}
+
 		rsize = ntohl(rsize);
 		buf = (char *)malloc(rsize);
 		if (buf == NULL)
