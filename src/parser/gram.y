@@ -58,7 +58,6 @@
 
 #include "nodes.h"
 #include "keywords.h"
-//#include "pool_memory.h"
 #include "gramparse.h"
 #include "makefuncs.h"
 #include "pool_string.h"

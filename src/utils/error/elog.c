@@ -514,7 +514,6 @@ errfinish(int dummy,...)
 	 * can stop a query emitting tons of notice or warning messages, even if
 	 * it's in a loop that otherwise fails to check for interrupts.
 	 */
-	//CHECK_FOR_INTERRUPTS();
 }
 
 
@@ -1181,7 +1180,7 @@ CopyErrorData(void)
 		newedata->internalquery = pstrdup(newedata->internalquery);
 
 	/* Use the calling context for string allocation */
-//	newedata->assoc_context = CurrentMemoryContext;
+	newedata->assoc_context = CurrentMemoryContext;
 
 	return newedata;
 }
@@ -1394,7 +1393,7 @@ GetErrorContextStack(void)
 	 * Set up assoc_context to be the caller's context, so any allocations
 	 * done (which will include edata->context) will use their context.
 	 */
-//	edata->assoc_context = CurrentMemoryContext;
+	edata->assoc_context = CurrentMemoryContext;
 
 	/*
 	 * Call any context callback functions to collect the context information

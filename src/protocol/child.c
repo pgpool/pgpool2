@@ -217,6 +217,10 @@ void do_child(int unix_fd, int inet_fd)
         error_context_stack = NULL;
 
 		EmitErrorReport();
+        /* process the cleanup in ProcessLoopContext which will get reset
+         * during the next loop iteration
+         */
+		MemoryContextSwitchTo(ProcessLoopContext);
 
 		if (accepted)
 			connection_count_down();
@@ -422,6 +426,7 @@ backend_cleanup(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL* volatile backen
     {
         if(frontend)
         {
+            MemoryContext oldContext = CurrentMemoryContext;
             PG_TRY();
             {
                 if(pool_process_query(frontend, backend, 1) == POOL_CONTINUE)
@@ -433,6 +438,7 @@ backend_cleanup(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL* volatile backen
             PG_CATCH();
             {
                 /* ignore the error message */
+                MemoryContextSwitchTo(oldContext);
                 FlushErrorState();
             }
             PG_END_TRY();
@@ -452,8 +458,8 @@ backend_cleanup(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL* volatile backen
 }
 
 /*
-* perform accept() and return new fd
-*/
+ * perform accept() and return new fd
+ */
 static POOL_CONNECTION *do_accept(int unix_fd, int inet_fd, struct timeval *timeout)
 {
     return NULL;
@@ -1540,6 +1546,33 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 }
 
 /*
+ * make_persistent_db_connection_noerror() is a wrapper over
+ * make_persistent_db_connection() which does not ereports in case of an error
+ */
+POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection_noerror(
+                        char *hostname, int port, char *dbname, char *user, char *password, bool retry)
+{
+    POOL_CONNECTION_POOL_SLOT *slot = NULL;
+    MemoryContext oldContext = CurrentMemoryContext;
+    PG_TRY();
+    {
+        slot = make_persistent_db_connection(hostname,
+                                                 port,
+                                                 dbname,
+                                                 user,
+                                                 password, retry);
+    }
+    PG_CATCH();
+    {
+        EmitErrorReport();
+        MemoryContextSwitchTo(oldContext);
+        FlushErrorState();
+        slot = NULL;
+    }
+    PG_END_TRY();
+    return slot;
+}
+/*
  * Free memory of POOL_CONNECTION_POOL_SLOT.  Should only be used in
  * make_persistent_db_connection and discard_persistent_db_connection.
  */
@@ -2102,8 +2135,6 @@ wait_for_new_connections(int unix_fd, int inet_fd, struct timeval *timeout, Sock
 	if (FD_ISSET(inet_fd, &rmask))
 	{
 		fd = inet_fd;
-		//inet++;
-//		*inet = true;
 	}
 	/*
 	 * Note that some SysV systems do not work here. For those

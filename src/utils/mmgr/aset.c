@@ -84,8 +84,6 @@
  *-------------------------------------------------------------------------
  */
 
-//#include "postgres.h"
-
 #include "pool_type.h"
 #include "utils/palloc.h"
 #include "utils/memdebug.h"

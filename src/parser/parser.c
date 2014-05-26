@@ -50,10 +50,7 @@ raw_parser(const char *str)
 	core_yyscan_t yyscanner;
 	base_yy_extra_type yyextra;
 	int			yyresult;
-
-//	Do we need a seperate memory context here?
-//	if (pool_memory == NULL)
-//		pool_memory = pool_memory_create(PARSER_BLOCK_SIZE);
+    MemoryContext oldContext = CurrentMemoryContext;
 
 	parsetree = NIL;			/* in case grammar forgets to set it */
 
@@ -72,23 +69,23 @@ raw_parser(const char *str)
 		yyresult = base_yyparse(yyscanner);
 		scanner_finish(yyscanner);
 		in_parser_context = false;
-		if (yyresult)				/* error */
-			return NIL;
-		return yyextra.parsetree;
 	}
 	PG_CATCH();
 	{
+		MemoryContextSwitchTo(oldContext);
 		scanner_finish(yyscanner);
 		in_parser_context = false;
-		return NIL; /* error */
+		yyresult = -1;
+		FlushErrorState();
 	}
 	PG_END_TRY();
+	if (yyresult)				/* error */
+		return NIL;
 	return yyextra.parsetree;
 }
 
 void free_parser(void)
 {
-	//pool_memory_delete(pool_memory, 1);
 }
 
 /*

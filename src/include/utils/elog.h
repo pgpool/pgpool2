@@ -275,7 +275,6 @@ extern int	errfunction(const char *funcname);
 extern int	errposition(int cursorpos);
 
 #define pg_unreachable() exit(0)
-//extern int	err_generic_string(int field, const char *str);
 
 extern int	geterrcode(void);
 extern int	geterrposition(void);

@@ -80,6 +80,7 @@ void pool_query_context_destroy(POOL_QUERY_CONTEXT *query_context)
 		pool_unset_query_in_progress();
 		MemoryContextDelete(query_context->memory_context);
 		pfree(query_context);
+		query_context->original_query = NULL;
 		session_context->query_context = NULL;
 	}
 }
@@ -93,7 +94,9 @@ void pool_start_query(POOL_QUERY_CONTEXT *query_context, char *query, int len, N
 
 	if (query_context)
 	{
+		MemoryContext old_context;
 		session_context = pool_get_session_context(false);
+		old_context = MemoryContextSwitchTo(query_context->memory_context);
 		query_context->original_length = len;
 		query_context->rewritten_length = -1;
 		query_context->original_query = pstrdup(query);
@@ -106,6 +109,7 @@ void pool_start_query(POOL_QUERY_CONTEXT *query_context, char *query, int len, N
 			query_context->temp_cache = pool_create_temp_query_cache(query);
 		pool_set_query_in_progress();
 		session_context->query_context = query_context;
+		MemoryContextSwitchTo(old_context);
 	}
 }
 

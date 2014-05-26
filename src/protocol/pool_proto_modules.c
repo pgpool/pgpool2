@@ -2373,10 +2373,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 		MemoryContext old_context;
 
 		case 'X':	/* Terminate */
-            write_stderr("[%d]%s():%d\n",getpid(),__FUNCTION__,__LINE__);
 			pfree(contents);
-            write_stderr("[%d]%s():%d\n",getpid(),__FUNCTION__,__LINE__);
-
             ereport(LOG,
                 (errmsg("Frontend terminated"),
                      errdetail("received message kind 'X' from frontend")));

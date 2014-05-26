@@ -304,6 +304,7 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		/* Since not using PG_TRY, must reset error stack by hand */
 		error_context_stack = NULL;
 		EmitErrorReport();
+		MemoryContextSwitchTo(TopMemoryContext);
 		FlushErrorState();
 		POOL_SETMASK(&BlockSig);
 
@@ -2121,56 +2122,46 @@ static int trigger_failover_command(int node, const char *command_line,
 static POOL_CONNECTION_POOL_SLOT*
     verify_backend_node_status(int backend_no, bool* is_standby)
 {
-    POOL_CONNECTION_POOL_SLOT   *s = NULL;
-    POOL_CONNECTION *con;
+	POOL_CONNECTION_POOL_SLOT   *s = NULL;
+	POOL_CONNECTION *con;
 	POOL_SELECT_RESULT *res;
+	BackendInfo *bkinfo = pool_get_node_info(backend_no);
 
-    BackendInfo *bkinfo = pool_get_node_info(backend_no);
-    *is_standby = false;
-    PG_TRY();
-    {
-        
-        s = make_persistent_db_connection(bkinfo->backend_hostname,
+	*is_standby = false;
+
+	s = make_persistent_db_connection_noerror(bkinfo->backend_hostname,
 										  bkinfo->backend_port,
 										  "postgres",
 										  pool_config->sr_check_user,
 										  pool_config->sr_check_password, true);
-        if (!s)
-        {
-            return NULL;
-        }
-        con = s->con;
-        do_query(con, "SELECT pg_is_in_recovery()",
+	if (s)
+	{
+		con = s->con;
+		do_query(con, "SELECT pg_is_in_recovery()",
 						  &res, PROTO_MAJOR_V3);
-        if (res->numrows <= 0)
+		if (res->numrows <= 0)
+		{
+			ereport(LOG,
+					(errmsg("verify_backend_node_status: do_query returns no rows")));
+		}
+		if (res->data[0] == NULL)
         {
-            ereport(LOG,
-                    (errmsg("verify_backend_node_status: do_query returns no rows")));
-        }
-        if (res->data[0] == NULL)
-        {
-            ereport(LOG,
-                    (errmsg("verify_backend_node_status: do_query returns no data")));
-        }
-        if (res->nullflags[0] == -1)
-        {
-            ereport(LOG,
-                    (errmsg("verify_backend_node_status: do_query returns NULL")));
-        }
-        if (res->data[0] && !strcmp(res->data[0], "t"))
-        {
-            *is_standby = true;
-        }
-        free_select_result(res);
-        discard_persistent_db_connection(s);
-    }
-    PG_CATCH();
-    {
-        EmitErrorReport();
-        FlushErrorState();
-    }
-    PG_END_TRY();
-    return s;
+			ereport(LOG,
+					(errmsg("verify_backend_node_status: do_query returns no data")));
+		}
+		if (res->nullflags[0] == -1)
+		{
+			ereport(LOG,
+					(errmsg("verify_backend_node_status: do_query returns NULL")));
+		}
+		if (res->data[0] && !strcmp(res->data[0], "t"))
+		{
+			*is_standby = true;
+		}
+		free_select_result(res);
+		discard_persistent_db_connection(s);
+	}
+	return s;
 }
 
 /*

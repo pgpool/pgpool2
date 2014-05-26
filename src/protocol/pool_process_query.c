@@ -232,11 +232,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 				}
 				else
 				{
-                    write_stderr("[%d]%s():%d\n",getpid(),__FUNCTION__,__LINE__);
-
 					status = ProcessFrontendResponse(frontend, backend);
-                    write_stderr("[%d]%s():%d\n",getpid(),__FUNCTION__,__LINE__);
-
 					if (status != POOL_CONTINUE)
 						return status;
 				}
@@ -4365,9 +4361,11 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 int pool_extract_error_message(bool read_kind, POOL_CONNECTION *backend, int major, bool unread, char **message)
 {
 	char kind;
+	bool ret = 1;
 	int readlen = 0, len;
-	StringInfo str_buf;	/* unread buffer */
+	StringInfo str_buf;             /* unread buffer */
 	StringInfo str_message_buf;		/* message buffer */
+	MemoryContext oldContext = CurrentMemoryContext;
 	char *str;
 
 	str_buf = makeStringInfo();
@@ -4391,7 +4389,9 @@ int pool_extract_error_message(bool read_kind, POOL_CONNECTION *backend, int maj
 				pfree(str_message_buf);
 				pfree(str_buf->data);
 				pfree(str_buf);
-                return 0;
+                ereport(ERROR,
+                    (errmsg("unable to extract error message"),
+                        errdetail("invalid message kind \"%C\"",kind)));
             }
         }
 
@@ -4446,16 +4446,15 @@ int pool_extract_error_message(bool read_kind, POOL_CONNECTION *backend, int maj
 		pfree(str_message_buf);
 		pfree(str_buf->data);
 		pfree(str_buf);
-    }
-    PG_CATCH();
-    {
+	}
+	PG_CATCH();
+	{
+		MemoryContextSwitchTo(oldContext);
 		FlushErrorState();
-        return -1;
-    }
-    PG_END_TRY();
-    
-
-	return 1;
+		ret = -1;
+	}
+	PG_END_TRY();
+	return ret;
 }
 
 /*
@@ -4735,11 +4734,7 @@ SELECT_RETRY:
     
 		else if (FD_ISSET(frontend->fd, &readmask))
 		{
-            write_stderr("[%d]%s():%d\n",getpid(),__FUNCTION__,__LINE__);
-
 			status = ProcessFrontendResponse(frontend, backend);
-            write_stderr("[%d]%s():%d\n",getpid(),__FUNCTION__,__LINE__);
-
 			if (status != POOL_CONTINUE)
 				return status;
 		}

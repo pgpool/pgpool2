@@ -348,10 +348,11 @@ int IsSelectpgcatalog(Node *node,POOL_CONNECTION_POOL *backend)
  */
 RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNECTION_POOL *backend,RewriteQuery *message)
 {
-    PG_TRY();
-    {
-        switch(node->type)
-        {
+	MemoryContext oldContext = CurrentMemoryContext;
+	PG_TRY();
+	{
+		switch(node->type)
+		{
             case T_SelectStmt:
             {
                 SelectStmt *stmt = (SelectStmt *)node;
@@ -468,13 +469,13 @@ RewriteQuery *rewrite_query_stmt(Node *node,POOL_CONNECTION *frontend,POOL_CONNE
                 break;
         }
     }
-    PG_CATCH();
-    {
-        message->status= POOL_END;
-        FlushErrorState();
-    }
+	PG_CATCH();
+	{
+		message->status= POOL_END;
+		MemoryContextSwitchTo(oldContext);
+		FlushErrorState();
+	}
     PG_END_TRY();
-    
 
 	pool_debug("pool_rewrite_stmt: query rule %d",node->type);
 

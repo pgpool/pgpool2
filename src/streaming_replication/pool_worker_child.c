@@ -198,25 +198,12 @@ static void establish_persistent_connection(void)
 
 		if (slots[i] == NULL)
 		{
-            PG_TRY();
-            {
                 bkinfo = pool_get_node_info(i);
-                slots[i] = make_persistent_db_connection(bkinfo->backend_hostname,
+                slots[i] = make_persistent_db_connection_noerror(bkinfo->backend_hostname,
 											  bkinfo->backend_port,
 											  "postgres",
 											  pool_config->sr_check_user,
 											  pool_config->sr_check_password, true);
-            }
-		    PG_CATCH();
-            {
-	        	ErrorData  *edata;
-	        	edata = CopyErrorData();
-	        	write_stderr("%s",edata->message);
-	        	FlushErrorState();
-				slots[i] = NULL;
-            }
-            PG_END_TRY();
-
 		}
 	}
 }
