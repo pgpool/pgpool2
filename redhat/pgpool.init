@@ -4,7 +4,7 @@
 # chkconfig: - 64 36
 # description: Starts and stops the pgpool daemon
 # processname: pgpool
-# pidfile:	/var/run/pgpool.pid
+# pidfile:	/var/run/${NAME}.pid
 #
 # v1.0.0 Devrim GUNDUZ <devrim@CommandPrompt.com>
 # - Initial version of Red Hat / Fedora init script
@@ -14,10 +14,11 @@
 #
 # v2.2.5 Devrim GUNDUZ <devrim@CommandPrompt.com>
 # - Fix logging.
-
-if [ -r /etc/sysconfig/pgpool ]; then
-    . /etc/sysconfig/pgpool
-fi
+#
+# v3.0.0 Yugo Nagata <nagata@sraoss.co.jp>
+# - Fix stop and reload functions
+# - Fix exit code according with LSB
+# - Add try-restart option
 
 # Source function library.
 INITD=/etc/rc.d/init.d
@@ -49,11 +50,18 @@ else
 fi
 
 # Set defaults for configuration variables
+PGPOOLUSER=postgres
 PGPOOLENGINE=/usr/bin
 PGPOOLDAEMON=$PGPOOLENGINE/pgpool
 PGPOOLCONF=/etc/pgpool-II/pgpool.conf
 PGPOOLPIDDIR=/var/run/pgpool
 PGPOOLLOG=/var/log/pgpool.log
+
+lockfile="/var/lock/subsys/${NAME}"
+pidfile="$PGPOOLPIDDIR/pgpool.pid"
+
+# Override defaults from /etc/sysconfig/pgpool if file is present
+[ -f /etc/sysconfig/pgsql/${NAME} ] && . /etc/sysconfig/pgsql/${NAME}
 
 test -x $PGPOOLDAEMON || exit 5
 
@@ -61,49 +69,44 @@ test -x $PGPOOLDAEMON || exit 5
 if [ ! -r $PGPOOLCONF ]
 then
 	echo "$PGPOOLCONF not found"
-	RETVAL=1
-	failure	
-	exit
+	echo_failure
+	echo
+	exit 1
 fi
 
 # Create the log file if it does not exist
 if [ ! -x $PGPOOLLOG ]
 then
 	touch $PGPOOLLOG
-	chown postgres: $PGPOOLLOG
+	chown $PGPOOLUSER: $PGPOOLLOG
 fi
 
 if [ ! -d $PGPOOLPIDDIR ]
 then
 	mkdir $PGPOOLPIDDIR
-	chown postgres: $PGPOOLPIDDIR
+	chown $PGPOOLUSER: $PGPOOLPIDDIR
 fi
 
 script_result=0
 
 start(){
-	pid=`pidof -s "$PGPOOLDAEMON"`
-	if [ $pid ]
-	then
-		echo "pgpool is already running with pid $pid"
-		failure "$PGPOOL_START"
-		echo
-		script_result=1
-		exit 1
-	fi
-
 	PGPOOL_START=$"Starting ${NAME} service: "
 
 	echo -n "$PGPOOL_START"
+	if [ -n "`pidofproc -p $pidfile $PGPOOLDAEMON`" ]
+	then
+		echo_success
+		echo
+		exit 0
+	fi
 
-	$SU -l postgres -c "$PGPOOLDAEMON -f $PGPOOLCONF $OPTS & " >> "$PGPOOLLOG" 2>&1 < /dev/null
+	$SU -l $PGPOOLUSER -c "$PGPOOLDAEMON -f $PGPOOLCONF $OPTS & " >> "$PGPOOLLOG" 2>&1 < /dev/null
 	sleep 2
 
-	pid=`pidof -s "$PGPOOLDAEMON"`
-	if [ $pid ] 
+	if [ -n "`pidofproc -p $pidfile $PGPOOLDAEMON`" ]
 	then
 		success "$PGPOOL_START"
-		touch /var/lock/subsys/${NAME}
+		touch "$lockfile"
 		echo
 	else
 		failure "$PGPOOL_START"
@@ -113,30 +116,25 @@ start(){
 }
 
 stop(){
-	echo -n $"Stopping ${NAME} service: "
-        if [ $UID -ne 0 ]; then
-                RETVAL=1
-                failure
-        else
-		killproc /usr/bin/pgpool
-#		$PGPOOLDAEMON stop & >> "$PGPOOLLOG" 2>&1 < /dev/null
-                RETVAL=$?
-                [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/${NAME}
-        fi;
-        echo
-        return $RETVAL
-}
+	PGPOOL_STOP=$"Stopping ${NAME} service: "
 
-switch() {
-	echo -n $"Sending switchover request to $NAME "
-	$PGPOOLDAEMON -f $PGPOOLCONF switch >> "$PGPOOLLOG" 2>&1 < /dev/null
-	RETVAL=$?
-	echo
-	if [ $RETVAL -eq 0 ] 
+	echo -n "$PGPOOL_STOP"
+	if [ -e "$lockfile" ]
 	then
-		echo_success
+		$SU -l $PGPOOLUSER -c "$PGPOOLDAEMON -f $PGPOOLCONF -m fast stop" >> "$PGPOOLLOG" 2>&1 < /dev/null
+
+		#if [ -n "`pidofproc -p $pidfile $PGPOOLDAEMON`" ]
+		RETVAL=$?
+		if [ $RETVAL -eq 0 ]
+		then
+			success "$PGPOOL_STOP"
+			rm -f "$lockfile"
+		else
+			failure "$PGPOOL_STOP"
+			script_result=1
+		fi
 	else
-		echo_failure
+		echo_success
 	fi
 	echo
 }
@@ -147,23 +145,33 @@ restart(){
 }
 
 reload(){
-	echo -n $"Reloading ${NAME}: "
+	PGPOOL_RELOAD=$"Reloading ${NAME}: "
 
-	if [ -n "`pidfileofproc $PGPOOLDAEMON`" ] ; then
-		killproc $PGPOOLDAEMON -HUP
+	echo -n "$PGPOOL_RELOAD"
+	if [ -n "`pidofproc -p $pidfile $PGPOOLDAEMON`" ]
+	then
+		$SU -l $PGPOOLUSER -c "$PGPOOLDAEMON -f $PGPOOLCONF reload" >> "$PGPOOLLOG" 2>&1 < /dev/null
 	else
-		failure $"Reloading ${NAME}"
+		failure "$PGPOOL_RELOAD"
+		echo
+		exit 1
 	fi
 	RETVAL=$?
+	if [ $RETVAL -eq 0 ]; then
+		success "$PGPOOL_RELOAD"
+	else
+		failure "$PGPOOL_RELOAD"
+		script_result=1
+	fi
 	echo
 }
 
 condrestart(){
-	[ -e /var/lock/subsys/${NAME} ] && restart
+	[ -e "$lockfile" ] && restart
 }
 
 condstop(){
-	[ -e /var/lock/subsys/${NAME} ] && stop
+	[ -e "$lockfile" ] && stop
 }
 
 # See how we were called.
@@ -174,11 +182,8 @@ case "$1" in
   stop)
         stop
         ;;
-  switch)
-        switch
-        ;;
   status)
-        status pgpool
+        status -p $pidfile pgpool
         script_result=$?
         ;;
   restart)
@@ -187,15 +192,15 @@ case "$1" in
   reload|force-reload)
         reload
         ;;
-  condrestart)
+  condrestart|try-restart)
         condrestart
         ;;
   condstop)
         condstop
         ;;
   *)
-        echo $"Usage: $0 {start|stop|switch|status|restart|condrestart|condstop|reload|force-reload}"
-        exit 1
+        echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|condstop|reload|force-reload}"
+        exit 2
 esac
 
 exit $script_result
