@@ -15,10 +15,11 @@
 # v2.2.5 Devrim GUNDUZ <devrim@CommandPrompt.com>
 # - Fix logging.
 #
-# v3.0.0 Yugo Nagata <nagata@sraoss.co.jp>
-# - Fix stop and reload functions
-# - Fix exit code according with LSB
+# v3.3.3 Ryan Deshone <rdshone@liquidweb.com> and Yugo Nagata <nagata@sraoss.co.jp>
+# - Update stop and reload to use pgpool commands properly
+# - Removed "switch" as pgpool no longer suppports that command
 # - Add try-restart option
+# - Fix exit code according with LSB
 
 # Source function library.
 INITD=/etc/rc.d/init.d
@@ -60,8 +61,8 @@ PGPOOLLOG=/var/log/pgpool.log
 lockfile="/var/lock/subsys/${NAME}"
 pidfile="$PGPOOLPIDDIR/pgpool.pid"
 
-# Override defaults from /etc/sysconfig/pgpool if file is present
-[ -f /etc/sysconfig/pgsql/${NAME} ] && . /etc/sysconfig/pgsql/${NAME}
+# Import configuration from /etc/sysconfig, if it exists 
+[ -f /etc/sysconfig/${NAME} ] && . /etc/sysconfig/${NAME}
 
 test -x $PGPOOLDAEMON || exit 5
 
@@ -78,13 +79,13 @@ fi
 if [ ! -x $PGPOOLLOG ]
 then
 	touch $PGPOOLLOG
-	chown $PGPOOLUSER: $PGPOOLLOG
+	chown ${PGPOOLUSER}: $PGPOOLLOG
 fi
 
 if [ ! -d $PGPOOLPIDDIR ]
 then
 	mkdir $PGPOOLPIDDIR
-	chown $PGPOOLUSER: $PGPOOLPIDDIR
+	chown ${PGPOOLUSER}: $PGPOOLPIDDIR
 fi
 
 script_result=0
@@ -123,7 +124,6 @@ stop(){
 	then
 		$SU -l $PGPOOLUSER -c "$PGPOOLDAEMON -f $PGPOOLCONF -m fast stop" >> "$PGPOOLLOG" 2>&1 < /dev/null
 
-		#if [ -n "`pidofproc -p $pidfile $PGPOOLDAEMON`" ]
 		RETVAL=$?
 		if [ $RETVAL -eq 0 ]
 		then
@@ -145,7 +145,7 @@ restart(){
 }
 
 reload(){
-	PGPOOL_RELOAD=$"Reloading ${NAME}: "
+	PGPOOL_RELOAD=$"Reloading ${NAME} configuration: "
 
 	echo -n "$PGPOOL_RELOAD"
 	if [ -n "`pidofproc -p $pidfile $PGPOOLDAEMON`" ]
