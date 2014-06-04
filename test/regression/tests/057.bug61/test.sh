@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/usr/bin/env bash
 #-------------------------------------------------------------------
 # test script for bug#61
 # Child process xxxx was terminated by segmentation fault
@@ -16,7 +16,7 @@ cd $TESTDIR
 
 # create test environment
 echo -n "creating test environment..."
-sh $PGPOOL_SETUP -m s -n 1 || exit 1
+$PGPOOL_SETUP -m s -n 1 || exit 1
 echo "done."
 
 source ./bashrc.ports

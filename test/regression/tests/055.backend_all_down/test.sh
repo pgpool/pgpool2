@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/usr/bin/env bash
 #-------------------------------------------------------------------
 # "pgpool -m f stop" hangs because unmanaged pgpool children remains. 
 # Starting pgpool without starting PostgreSQL servers triggers the bug.
@@ -14,7 +14,7 @@ cd $TESTDIR
 
 # create test environment
 echo -n "creating test environment..."
-sh $PGPOOL_SETUP -m s -n 2 || exit 1
+$PGPOOL_SETUP -m s -n 2 || exit 1
 echo "done."
 
 source ./bashrc.ports

@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/usr/bin/env bash
 #-------------------------------------------------------------------
 # test script for memqcache.
 # requires Java PostgreSQL JDBC driver.
@@ -16,7 +16,7 @@ do
 
 # create test environment
 	echo -n "creating test environment..."
-	sh $PGPOOL_SETUP -m $mode -n 2 || exit 1
+	$PGPOOL_SETUP -m $mode -n 2 || exit 1
 	echo "done."
 
 	echo "memory_cache_enabled = on" >> etc/pgpool.conf

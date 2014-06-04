@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 #
 # pgpool-II regression test driver.
 #

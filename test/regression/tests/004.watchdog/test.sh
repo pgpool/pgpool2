@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/usr/bin/env bash
 #-------------------------------------------------------------------
 # test script for watchdog
 source $TESTLIBS
@@ -10,7 +10,7 @@ cd $TESTDIR
 
 # create master environment
 echo -n "creating master pgpool..."
-sh $PGPOOL_SETUP -m s -n 2 -p 11000|| exit 1
+$PGPOOL_SETUP -m s -n 2 -p 11000|| exit 1
 echo "done."
 source ./bashrc.ports
 cat ../master.conf >> etc/pgpool.conf
@@ -26,7 +26,7 @@ rm -fr $sdir
 mkdir $sdir
 cd $sdir
 echo -n "creating standby pgpool..."
-sh $PGPOOL_SETUP -m s -n 2 -p 11100|| exit 1
+$PGPOOL_SETUP -m s -n 2 -p 11100|| exit 1
 echo "done."
 source ./bashrc.ports
 cat ../standby.conf >> etc/pgpool.conf

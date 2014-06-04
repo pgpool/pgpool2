@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/usr/bin/env bash
 #-------------------------------------------------------------------
 # test script for bug#92
 # JDBC DML fails under raw mode && autocommit mode.
@@ -21,7 +21,7 @@ do
 
 # create test environment
 	echo -n "creating test environment..."
-	sh $PGPOOL_SETUP -m $mode -n 2 || exit 1
+	$PGPOOL_SETUP -m $mode -n 2 || exit 1
 	echo "done."
 
 	source ./bashrc.ports
