@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/usr/bin/env bash
 #-------------------------------------------------------------------
 # test script for do_query.
 #
@@ -17,7 +17,7 @@ cd $TESTDIR
 
 # create test environment
 echo -n "creating test environment..."
-sh $PGPOOL_SETUP -m s -n 1 --no-stop|| exit 1
+$PGPOOL_SETUP -m s -n 1 --no-stop|| exit 1
 echo "done."
 
 source ./bashrc.ports

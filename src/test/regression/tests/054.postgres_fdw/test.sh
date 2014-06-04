@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/usr/bin/env bash
 #-------------------------------------------------------------------
 # Check to see if postgres_fdw works with pgpool-II.  Since
 # postres_fdw sets search_path to pg_catalog, pgpool_regclass() should
@@ -19,7 +19,7 @@ cd $TESTDIR
 
 # create test environment
 echo -n "creating test environment..."
-sh $PGPOOL_SETUP -m r -n 2 --no-stop|| exit 1
+$PGPOOL_SETUP -m r -n 2 --no-stop|| exit 1
 echo "done."
 
 source ./bashrc.ports

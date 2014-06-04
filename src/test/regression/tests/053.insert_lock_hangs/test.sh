@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/usr/bin/env bash
 #-------------------------------------------------------------------
 # test script for bug reported in [pgpool-general: 1684].
 # The bug occurs when all of conditions below are met:
@@ -20,7 +20,7 @@ cd $TESTDIR
 
 # create test environment
 echo -n "creating test environment..."
-sh $PGPOOL_SETUP -m r -n 1 --no-stop|| exit 1
+$PGPOOL_SETUP -m r -n 1 --no-stop|| exit 1
 echo "done."
 
 source ./bashrc.ports

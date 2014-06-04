@@ -1,4 +1,4 @@
-#! /bin/sh -x
+#!/usr/bin/env bash
 #-------------------------------------------------------------------
 # test script for jdbc test
 #
@@ -25,7 +25,7 @@ do
 		n=2
 	fi
 
-	sh $PGPOOL_SETUP -m $mode -n $n || exit 1
+	$PGPOOL_SETUP -m $mode -n $n || exit 1
 	echo "done."
 
 	source ./bashrc.ports

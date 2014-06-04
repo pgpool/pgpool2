@@ -1,4 +1,5 @@
-#! /bin/sh
+#!/usr/bin/env bash
+#
 # Copyright (c) 2013-2014 PgPool Global Development Group
 #
 # Permission to use, copy, modify, and distribute this software and

@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/usr/bin/env bash
 #-------------------------------------------------------------------
 # test script for failover
 #
@@ -15,7 +15,7 @@ do
 
 # create test environment
 	echo -n "creating test environment..."
-	sh $PGPOOL_SETUP -m $mode -n 2 --no-stop|| exit 1
+	$PGPOOL_SETUP -m $mode -n 2 --no-stop|| exit 1
 	echo "done."
 
 	source ./bashrc.ports
