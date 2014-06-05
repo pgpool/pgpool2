@@ -108,7 +108,7 @@ do
   case $OPTION in
     p)  PG_INSTALL_DIR="$OPTARG";;
     m)  MODE="$OPTARG";;
-    i)  PGPOOL_INSTALL_DIR="$OPTARG";;
+    i)  PGPOOL_PATH="$OPTARG";;
     j)  JDBC_DRIVER="$OPTARG";;
     b)  PGBENCH_PATH="$OPTARG";;
     ?)  print_usage
@@ -125,6 +125,7 @@ elif [ "$MODE" = "noinstall" ]; then
 	if [[ -n "$PGPOOL_INSTALL_PATH" ]]; then
 		PGPOOL_PATH=$PGPOOL_INSTALL_PATH
 	fi
+	export PGPOOL_SETUP=$dir/../pgpool_setup
 else
 	echo $MODE : Invalid mode
 	exit -1
