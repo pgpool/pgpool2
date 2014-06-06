@@ -3124,7 +3124,7 @@ before starting pgpool-II.
 </p>
 
 <pre>
-pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-D][-d]
+pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-D][-d][x]
 </pre>
 
 <table border>
@@ -3147,6 +3147,8 @@ pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-D][-d]
       if shmem, discard whenever pgpool starts).
       <span class="version">V3.2 -</span></td></tr>
   <tr><td>-d</td><td>--debug</td><td>debug mode</tr>
+  <tr><td>-x</td><td>--debug-assertions</td>
+      <td>Turns on various assertion checks, This is a debugging aid</td></tr>
 </table>
 
 <h2 id="stop_pgpool">Stop pgpool-II</h2>

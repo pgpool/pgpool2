@@ -46,6 +46,7 @@ pgpool_SOURCES = main/main.c \
 	utils/mmgr/mcxt.c \
 	utils/mmgr/aset.c \
 	utils/error/elog.c \
+	utils/error/assert.c \
     utils/pcp/pcp_stream.c \
     utils/pcp/pcp_error.c \
     utils/pcp/pcp_timeout.c

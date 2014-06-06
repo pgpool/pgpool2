@@ -299,6 +299,9 @@
    */
 #undef UINT64_FORMAT
 
+/* Define to 1 to build with assertion checks. (--enable-cassert) */
+#undef USE_ASSERT_CHECKING
+
 /* Define to 1 if you want float4 values to be passed by value.
    (--enable-float4-byval) */
 #undef USE_FLOAT4_BYVAL

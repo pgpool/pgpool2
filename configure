@@ -781,6 +781,7 @@ with_memcached
 enable_rpath
 enable_sequence_lock
 enable_table_lock
+enable_cassert
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1427,6 +1428,7 @@ Optional Features:
                           (until 3.0.4)
   --enable-table-lock     insert_lock compatible with pgpool-II 2.2 and 2.3
                           series
+  --enable-cassert        build with assertion checks
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -14518,6 +14520,38 @@ $as_echo "#define USE_TABLE_LOCK 1" >>confdefs.h
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_table_lock" >&5
 $as_echo "$enable_table_lock" >&6; }
+
+
+pgac_args="$pgac_args enable_cassert"
+
+# Check whether --enable-cassert was given.
+if test "${enable_cassert+set}" = set; then :
+  enableval=$enable_cassert;
+  case $enableval in
+    yes)
+      :
+      ;;
+    no)
+      :
+      ;;
+    *)
+      as_fn_error $? "no argument expected for --enable-cassert option" "$LINENO" 5
+      ;;
+  esac
+
+else
+  enable_cassert=no
+
+fi
+
+
+if test "$enable_cassert" = yes ; then
+
+$as_echo "#define USE_ASSERT_CHECKING 1" >>confdefs.h
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: enable cassert = $enable_cassert" >&5
+$as_echo "enable cassert = $enable_cassert" >&6; }
 
 ac_config_headers="$ac_config_headers src/include/config.h"
 

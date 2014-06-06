@@ -396,6 +396,13 @@ if test "$enable_table_lock" = yes ; then
 fi
 AC_MSG_RESULT([$enable_table_lock])
 
+PGAC_ARG_BOOL(enable, cassert, no, [build with assertion checks])
+if test "$enable_cassert" = yes ; then
+        AC_DEFINE([USE_ASSERT_CHECKING], 1,
+                [Define to 1 to build with assertion checks. (--enable-cassert)])
+fi
+AC_MSG_RESULT([enable cassert = $enable_cassert])
+
 AM_CONFIG_HEADER(src/include/config.h)
 
 AC_OUTPUT([Makefile doc/Makefile src/Makefile src/include/Makefile src/parser/Makefile src/libs/Makefile src/libs/pcp/Makefile src/tools/Makefile src/tools/pgmd5/Makefile src/tools/pcp/Makefile src/watchdog/Makefile])

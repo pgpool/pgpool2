@@ -58,6 +58,7 @@ typedef char bool;
 #endif /* not C++ */
 #endif /* __BEOS__ */
 
+#define PointerIsValid(pointer) ((const void*)(pointer) != NULL)
 typedef signed char int8;		/* == 8 bits */
 typedef signed short int16;		/* == 16 bits */
 typedef signed int int32;		/* == 32 bits */
@@ -86,7 +87,7 @@ typedef struct {
 	BACKEND_STATUS status[MAX_NUM_BACKENDS];
 } BackendStatusRecord;
 
-
+extern int assert_enabled;
 #define MAXIMUM_ALIGNOF 8
 
 #define TYPEALIGN(ALIGNVAL,LEN)  \
@@ -231,7 +232,6 @@ typedef void (*pg_on_exit_callback) (int code, Datum arg);
 #define TrapMacro(condition, errorType)	(true)
 
 #elif defined(FRONTEND)
-
 #include <assert.h>
 #define Assert(p) assert(p)
 #define AssertMacro(p)	((void) assert(p))

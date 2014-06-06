@@ -59,7 +59,7 @@ static int not_detach = 0;		/* non 0 if non detach option (-n) is given */
 int stop_sig = SIGTERM;		/* stopping signal default value */
 int myargc;
 char **myargv;
-
+int assert_enabled = 0;
 int main(int argc, char **argv)
 {
 	int opt;
@@ -79,6 +79,7 @@ int main(int argc, char **argv)
 		{"dont-detach", no_argument, NULL, 'n'},
 		{"discard-status", no_argument, NULL, 'D'},
 		{"clear-oidmaps", no_argument, NULL, 'C'},
+		{"debug-assertions", no_argument, NULL, 'x'},
 		{"version", no_argument, NULL, 'v'},
 		{NULL, 0, NULL, 0}
 	};
@@ -89,8 +90,7 @@ int main(int argc, char **argv)
 	snprintf(conf_file, sizeof(conf_file), "%s/%s", DEFAULT_CONFIGDIR, POOL_CONF_FILE_NAME);
 	snprintf(pcp_conf_file, sizeof(pcp_conf_file), "%s/%s", DEFAULT_CONFIGDIR, PCP_PASSWD_FILE_NAME);
 	snprintf(hba_file, sizeof(hba_file), "%s/%s", DEFAULT_CONFIGDIR, HBA_CONF_FILE_NAME);
-
-    while ((opt = getopt_long(argc, argv, "a:df:F:hm:nDCv", long_options, &optindex)) != -1)
+    while ((opt = getopt_long(argc, argv, "a:df:F:hm:nDCxv", long_options, &optindex)) != -1)
 	{
 		switch (opt)
 		{
@@ -101,6 +101,10 @@ int main(int argc, char **argv)
 					exit(1);
 				}
 				strlcpy(hba_file, optarg, sizeof(hba_file));
+				break;
+
+			case 'x':	/* enable cassert */
+				assert_enabled = 1;
 				break;
 
 			case 'd':	/* debug option */
@@ -170,7 +174,6 @@ int main(int argc, char **argv)
 				exit(1);
 		}
 	}
-
 #ifdef USE_SSL
 	/* global ssl init */
 	SSL_library_init();
@@ -352,6 +355,7 @@ static void usage(void)
 	fprintf(stderr, "  -C, --clear-oidmaps Clears query cache oidmaps when memqcache_method is memcached\n");
 	fprintf(stderr, "                      (If shmem, discards whenever pgpool starts.)\n");
 	fprintf(stderr, "  -n, --dont-detach   Don't run in daemon mode, does not detach control tty\n");
+	fprintf(stderr, "  -x, --debug-assertions   Turns on various assertion checks, This is a debugging aid\n");
 	fprintf(stderr, "  -D, --discard-status Discard pgpool_status file and do not restore previous status\n");
 	fprintf(stderr, "  -d, --debug         Debug mode\n\n");
 	fprintf(stderr, "Stop options:\n");

@@ -130,8 +130,8 @@ am_pgpool_OBJECTS = main/main.$(OBJEXT) main/pool_globals.$(OBJEXT) \
 	utils/pool_ssl.$(OBJEXT) utils/pool_stream.$(OBJEXT) \
 	utils/getopt_long.$(OBJEXT) utils/mmgr/mcxt.$(OBJEXT) \
 	utils/mmgr/aset.$(OBJEXT) utils/error/elog.$(OBJEXT) \
-	utils/pcp/pcp_stream.$(OBJEXT) utils/pcp/pcp_error.$(OBJEXT) \
-	utils/pcp/pcp_timeout.$(OBJEXT)
+	utils/error/assert.$(OBJEXT) utils/pcp/pcp_stream.$(OBJEXT) \
+	utils/pcp/pcp_error.$(OBJEXT) utils/pcp/pcp_timeout.$(OBJEXT)
 pgpool_OBJECTS = $(am_pgpool_OBJECTS)
 pgpool_DEPENDENCIES = parser/libsql-parser.a parser/nodes.o \
 	watchdog/lib-watchdog.a
@@ -455,6 +455,7 @@ pgpool_SOURCES = main/main.c \
 	utils/mmgr/mcxt.c \
 	utils/mmgr/aset.c \
 	utils/error/elog.c \
+	utils/error/assert.c \
     utils/pcp/pcp_stream.c \
     utils/pcp/pcp_error.c \
     utils/pcp/pcp_timeout.c
@@ -803,6 +804,8 @@ utils/error/$(DEPDIR)/$(am__dirstamp):
 	@: > utils/error/$(DEPDIR)/$(am__dirstamp)
 utils/error/elog.$(OBJEXT): utils/error/$(am__dirstamp) \
 	utils/error/$(DEPDIR)/$(am__dirstamp)
+utils/error/assert.$(OBJEXT): utils/error/$(am__dirstamp) \
+	utils/error/$(DEPDIR)/$(am__dirstamp)
 utils/pcp/$(am__dirstamp):
 	@$(MKDIR_P) utils/pcp
 	@: > utils/pcp/$(am__dirstamp)
@@ -881,6 +884,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/pool_stream.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/ps_status.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/strlcpy.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@utils/error/$(DEPDIR)/assert.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/error/$(DEPDIR)/elog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/mmgr/$(DEPDIR)/aset.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/mmgr/$(DEPDIR)/mcxt.Po@am__quote@
