@@ -1330,7 +1330,6 @@ static RETSIGTYPE exit_handler(int sig)
 	{
 		pool_debug("exit_handler: I am not parent");
 		POOL_SETMASK(&UnBlockSig);
-		pool_shmem_exit(0);
 		exit(0);
 	}
 
