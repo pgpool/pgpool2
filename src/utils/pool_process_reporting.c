@@ -157,214 +157,214 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	/* CONNECTIONS */
 
 	/* - pgpool Connection Settings - */
-	strncpy(status[i].name, "listen_addresses", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "listen_addresses", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->listen_addresses);
-	strncpy(status[i].desc, "host name(s) or IP address(es) to listen on", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "host name(s) or IP address(es) to listen on", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "port", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "port", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->port);
-	strncpy(status[i].desc, "pgpool accepting port number", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "pgpool accepting port number", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* - pgpool Communication Manager Connection Settings - */
-	strncpy(status[i].name, "socket_dir", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "socket_dir", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->socket_dir);
-	strncpy(status[i].desc, "pgpool socket directory", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "pgpool socket directory", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "pcp_listen_addresses", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "pcp_listen_addresses", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->pcp_listen_addresses);
-	strncpy(status[i].desc, "host name(s) or IP address(es) for pcp process to listen on", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "host name(s) or IP address(es) for pcp process to listen on", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "pcp_port", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "pcp_port", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->pcp_port);
-	strncpy(status[i].desc, "PCP port # to bind", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "PCP port # to bind", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "pcp_socket_dir", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "pcp_socket_dir", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->pcp_socket_dir);
-	strncpy(status[i].desc, "PCP socket directory", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "PCP socket directory", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* # - Authentication - */
-	strncpy(status[i].name, "enable_pool_hba", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "enable_pool_hba", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->enable_pool_hba);
-	strncpy(status[i].desc, "if true, use pool_hba.conf for client authentication", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "if true, use pool_hba.conf for client authentication", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "pool_passwd", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "pool_passwd", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->pool_passwd);
-	strncpy(status[i].desc, "file name of pool_passwd for md5 authentication", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "file name of pool_passwd for md5 authentication", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "authentication_timeout", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "authentication_timeout", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->authentication_timeout);
-	strncpy(status[i].desc, "maximum time in seconds to complete client authentication", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].desc, "maximum time in seconds to complete client authentication", POOLCONFIG_MAXNAMELEN);
 	i++;
 
 	/* - SSL Connections - */
-	strncpy(status[i].name, "ssl", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "ssl", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->ssl);
-	strncpy(status[i].desc, "SSL support", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "SSL support", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "ssl_key", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "ssl_key", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ssl_key);
-	strncpy(status[i].desc, "path to the SSL private key file", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "path to the SSL private key file", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "ssl_cert", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "ssl_cert", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ssl_cert);
-	strncpy(status[i].desc, "path to the SSL public certificate file", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "path to the SSL public certificate file", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "ssl_ca_cert", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "ssl_ca_cert", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ssl_ca_cert);
-	strncpy(status[i].desc, "path to a single PEM format file", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "path to a single PEM format file", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "ssl_ca_cert_dir", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "ssl_ca_cert_dir", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ssl_ca_cert_dir);
-	strncpy(status[i].desc, "directory containing CA root certificate(s)", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "directory containing CA root certificate(s)", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* POOLS */
 
 	/* - Pool size -  */
-	strncpy(status[i].name, "num_init_children", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "num_init_children", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->num_init_children);
-	strncpy(status[i].desc, "# of children initially pre-forked", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "# of children initially pre-forked", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "listen_backlog_multiplier", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "listen_backlog_multiplier", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->listen_backlog_multiplier);
-	strncpy(status[i].desc, "determines the size of the queue for pending connections", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "determines the size of the queue for pending connections", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "max_pool", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "max_pool", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->max_pool);
-	strncpy(status[i].desc, "max # of connection pool per child", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "max # of connection pool per child", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* - Life time - */
-	strncpy(status[i].name, "child_life_time", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "child_life_time", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->child_life_time);
-	strncpy(status[i].desc, "if idle for this seconds, child exits", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "if idle for this seconds, child exits", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "child_max_connections", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "child_max_connections", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->child_max_connections);
-	strncpy(status[i].desc, "if max_connections received, chile exits", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "if max_connections received, chile exits", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "connection_life_time", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "connection_life_time", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->connection_life_time);
-	strncpy(status[i].desc, "if idle for this seconds, connection closes", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "if idle for this seconds, connection closes", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "client_idle_limit", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "client_idle_limit", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->client_idle_limit);
-	strncpy(status[i].desc, "if idle for this seconds, child connection closes", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "if idle for this seconds, child connection closes", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* LOGS */
 
 	/* - Where to log - */
-	strncpy(status[i].name, "log_destination", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "log_destination", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->log_destination);
-	strncpy(status[i].desc, "logging destination", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "logging destination", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* - What to log - */
-	strncpy(status[i].name, "print_timestamp", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "print_timestamp", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->print_timestamp);
-	strncpy(status[i].desc, "if true print time stamp to each log line", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "if true print time stamp to each log line", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "print_user", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "print_user", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->print_user);
-	strncpy(status[i].desc, "if true print user name to each log line", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "if true print user name to each log line", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-    strncpy(status[i].name, "log_error_verbosity", POOLCONFIG_MAXNAMELEN);
+    StrNCpy(status[i].name, "log_error_verbosity", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->log_error_verbosity);
-	strncpy(status[i].desc, "controls how much detail about error should be emitted", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "controls how much detail about error should be emitted", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-    strncpy(status[i].name, "client_min_messages", POOLCONFIG_MAXNAMELEN);
+    StrNCpy(status[i].name, "client_min_messages", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->client_min_messages);
-	strncpy(status[i].desc, "controls which message should be sent to client", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "controls which message should be sent to client", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-    strncpy(status[i].name, "log_min_messages", POOLCONFIG_MAXNAMELEN);
+    StrNCpy(status[i].name, "log_min_messages", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->log_min_messages);
-	strncpy(status[i].desc, "controls which message should be emitted to server log", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "controls which message should be emitted to server log", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "log_connections", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "log_connections", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->log_connections);
-	strncpy(status[i].desc, "if true, print incoming connections to the log", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "if true, print incoming connections to the log", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "log_hostname", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "log_hostname", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->log_hostname);
-	strncpy(status[i].desc, "if true, resolve hostname for ps and log print", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "if true, resolve hostname for ps and log print", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "log_statement", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "log_statement", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->log_statement);
-	strncpy(status[i].desc, "if non 0, logs all SQL statements", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "if non 0, logs all SQL statements", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "log_per_node_statement", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "log_per_node_statement", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->log_per_node_statement);
-	strncpy(status[i].desc, "if non 0, logs all SQL statements on each node", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "if non 0, logs all SQL statements on each node", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "log_standby_delay", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "log_standby_delay", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->log_standby_delay);
-	strncpy(status[i].desc, "how to log standby delay", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "how to log standby delay", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* - Syslog specific -  */
-	strncpy(status[i].name, "syslog_facility", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "syslog_facility", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "LOCAL%d", (pool_config->syslog_facility/8) - 16);
-	strncpy(status[i].desc, "syslog local faclity", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "syslog local faclity", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "syslog_ident", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "syslog_ident", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->syslog_ident);
-	strncpy(status[i].desc, "syslog program ident string", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "syslog program ident string", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* - Debug - */
-	strncpy(status[i].name, "debug_level", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "debug_level", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->debug_level);
-	strncpy(status[i].desc, "debug message level", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "debug message level", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* FILE LOCATIONS */
 
-	strncpy(status[i].name, "pid_file_name", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "pid_file_name", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->pid_file_name);
-	strncpy(status[i].desc, "path to pid file", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "path to pid file", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "logdir", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "logdir", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->logdir);
-	strncpy(status[i].desc, "PgPool status file logging directory", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "PgPool status file logging directory", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* CONNECTION POOLING */
 
-	strncpy(status[i].name, "connection_cache", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "connection_cache", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->connection_cache);
-	strncpy(status[i].desc, "if true, cache connection pool", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "if true, cache connection pool", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "reset_query_list", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "reset_query_list", POOLCONFIG_MAXNAMELEN);
 	*(status[i].value) = '\0';
 	for (j=0;j<pool_config->num_reset_queries;j++)
 	{
@@ -374,55 +374,55 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 		if (j != pool_config->num_reset_queries-1)
 			strncat(status[i].value, ";", len);
 	}
-	strncpy(status[i].desc, "queries issued at the end of session", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "queries issued at the end of session", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* REPLICATION MODE */
 
-	strncpy(status[i].name, "replication_mode", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "replication_mode", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->replication_mode);
-	strncpy(status[i].desc, "non 0 if operating in replication mode", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "non 0 if operating in replication mode", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "replicate_select", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "replicate_select", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->replicate_select);
-	strncpy(status[i].desc, "non 0 if SELECT statement is replicated", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "non 0 if SELECT statement is replicated", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "insert_lock", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "insert_lock", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->insert_lock);
-	strncpy(status[i].desc, "insert lock", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "insert lock", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "lobj_lock_table", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "lobj_lock_table", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->lobj_lock_table);
-	strncpy(status[i].desc, "table name used for large object replication control", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "table name used for large object replication control", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* - Degenerate handling - */
-	strncpy(status[i].name, "replication_stop_on_mismatch", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "replication_stop_on_mismatch", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->replication_stop_on_mismatch);
-	strncpy(status[i].desc, "stop replication mode on fatal error", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "stop replication mode on fatal error", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "failover_if_affected_tuples_mismatch", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "failover_if_affected_tuples_mismatch", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->failover_if_affected_tuples_mismatch);
-	strncpy(status[i].desc, "failover if affected tuples are mismatch", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "failover if affected tuples are mismatch", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* LOAD BALANCING MODE */
 
-	strncpy(status[i].name, "load_balance_mode", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "load_balance_mode", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->load_balance_mode);
-	strncpy(status[i].desc, "non 0 if operating in load balancing mode", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "non 0 if operating in load balancing mode", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "ignore_leading_white_space", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "ignore_leading_white_space", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->ignore_leading_white_space);
-	strncpy(status[i].desc, "ignore leading white spaces", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "ignore leading white spaces", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "white_function_list", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "white_function_list", POOLCONFIG_MAXNAMELEN);
 	*(status[i].value) = '\0';
 	for (j=0;j<pool_config->num_white_function_list;j++)
 	{
@@ -432,10 +432,10 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 		if (j != pool_config->num_white_function_list-1)
 			strncat(status[i].value, ",", len);
 	}
-	strncpy(status[i].desc, "functions those do not write to database", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "functions those do not write to database", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "black_function_list", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "black_function_list", POOLCONFIG_MAXNAMELEN);
 	*(status[i].value) = '\0';
 	for (j=0;j<pool_config->num_black_function_list;j++)
 	{
@@ -445,418 +445,418 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 		if (j != pool_config->num_black_function_list-1)
 			strncat(status[i].value, ",", len);
 	}
-	strncpy(status[i].desc, "functions those write to database", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "functions those write to database", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* MASTER/SLAVE MODE */
 
-	strncpy(status[i].name, "master_slave_mode", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "master_slave_mode", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->master_slave_mode);
-	strncpy(status[i].desc, "if true, operate in master/slave mode", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "if true, operate in master/slave mode", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "master_slave_sub_mode", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "master_slave_sub_mode", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->master_slave_sub_mode);
-	strncpy(status[i].desc, "master/slave sub mode", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "master/slave sub mode", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* - Streaming - */
-	strncpy(status[i].name, "sr_check_period", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "sr_check_period", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->sr_check_period);
-	strncpy(status[i].desc, "sr check period", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "sr check period", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "sr_check_user", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "sr_check_user", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->sr_check_user);
-	strncpy(status[i].desc, "sr check user", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "sr check user", POOLCONFIG_MAXDESCLEN);
 	i++;
 #ifdef NOT_USED	/* for security reason */
-	strncpy(status[i].name, "sr_check_password", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "sr_check_password", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->sr_check_password);
-	strncpy(status[i].desc, "sr check password", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "sr check password", POOLCONFIG_MAXDESCLEN);
 	i++;
 #endif
-	strncpy(status[i].name, "delay_threshold", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "delay_threshold", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%lld", pool_config->delay_threshold);
-	strncpy(status[i].desc, "standby delay threshold", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "standby delay threshold", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* - Special commands - */
-	strncpy(status[i].name, "follow_master_command", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "follow_master_command", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->follow_master_command);
-	strncpy(status[i].desc, "follow master command", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "follow master command", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* PARALLEL MODE AND QUERY CACHE */
 
-	strncpy(status[i].name, "parallel_mode", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "parallel_mode", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->parallel_mode);
-	strncpy(status[i].desc, "if non 0, run in parallel query mode", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "if non 0, run in parallel query mode", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 
-	strncpy(status[i].name, "pgpool2_hostname", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "pgpool2_hostname", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->pgpool2_hostname);
-	strncpy(status[i].desc, "pgpool2 hostname", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "pgpool2 hostname", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* - System DB info - */
-	strncpy(status[i].name, "system_db_hostname", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "system_db_hostname", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->system_db_hostname);
-	strncpy(status[i].desc, "system DB hostname", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "system DB hostname", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "system_db_port", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "system_db_port", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->system_db_port);
-	strncpy(status[i].desc, "system DB port number", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "system DB port number", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "system_db_dbname", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "system_db_dbname", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->system_db_dbname);
-	strncpy(status[i].desc, "system DB name", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "system DB name", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "system_db_schema", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "system_db_schema", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->system_db_schema);
-	strncpy(status[i].desc, "system DB schema name", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "system DB schema name", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "system_db_user", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "system_db_user", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->system_db_user);
-	strncpy(status[i].desc, "user name to access system DB", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "user name to access system DB", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* HEALTH CHECK */
 
-	strncpy(status[i].name, "health_check_period", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "health_check_period", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->health_check_period);
-	strncpy(status[i].desc, "health check period", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "health check period", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "health_check_timeout", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "health_check_timeout", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->health_check_timeout);
-	strncpy(status[i].desc, "health check timeout", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "health check timeout", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "health_check_user", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "health_check_user", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->health_check_user);
-	strncpy(status[i].desc, "health check user", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "health check user", POOLCONFIG_MAXDESCLEN);
 	i++;
 #ifdef NOT_USED	/* for security reason */
-	strncpy(status[i].name, "health_check_password", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "health_check_password", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->health_check_password);
-	strncpy(status[i].desc, "health check password", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "health check password", POOLCONFIG_MAXDESCLEN);
 	i++;
 #endif
-	strncpy(status[i].name, "health_check_max_retries", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "health_check_max_retries", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->health_check_max_retries);
-	strncpy(status[i].desc, "health check max retries", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "health check max retries", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "health_check_retry_delay", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "health_check_retry_delay", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->health_check_retry_delay);
-	strncpy(status[i].desc, "health check retry delay", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "health check retry delay", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* FAILOVER AND FAILBACK */
 
-	strncpy(status[i].name, "failover_command", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "failover_command", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->failover_command);
-	strncpy(status[i].desc, "failover command", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "failover command", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "failback_command", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "failback_command", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->failback_command);
-	strncpy(status[i].desc, "failback command", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "failback command", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "fail_over_on_backend_error", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "fail_over_on_backend_error", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->fail_over_on_backend_error);
-	strncpy(status[i].desc, "fail over on backend error", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "fail over on backend error", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* ONLINE RECOVERY */
 
-	strncpy(status[i].name, "recovery_user", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "recovery_user", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->recovery_user);
-	strncpy(status[i].desc, "online recovery user", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "online recovery user", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "recovery_1st_stage_command", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "recovery_1st_stage_command", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->recovery_1st_stage_command);
-	strncpy(status[i].desc, "execute a command in first stage.", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "execute a command in first stage.", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "recovery_2nd_stage_command", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "recovery_2nd_stage_command", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->recovery_2nd_stage_command);
-	strncpy(status[i].desc, "execute a command in second stage.", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "execute a command in second stage.", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "recovery_timeout", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "recovery_timeout", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->recovery_timeout);
-	strncpy(status[i].desc, "max time in seconds to wait for the recovering node's postmaster", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "max time in seconds to wait for the recovering node's postmaster", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "search_primary_node_timeout", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "search_primary_node_timeout", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->search_primary_node_timeout);
-	strncpy(status[i].desc, "max time in seconds to search for primary node after failover", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "max time in seconds to search for primary node after failover", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "client_idle_limit_in_recovery", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "client_idle_limit_in_recovery", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->client_idle_limit_in_recovery);
-	strncpy(status[i].desc, "if idle for this seconds, child connection closes in recovery 2nd statge", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "if idle for this seconds, child connection closes in recovery 2nd statge", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* OTHERS */
 
-	strncpy(status[i].name, "relcache_expire", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "relcache_expire", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%ld", pool_config->relcache_expire);
-	strncpy(status[i].desc, "relation cache expiration time in seconds", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "relation cache expiration time in seconds", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "relcache_size", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "relcache_size", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->relcache_size);
-	strncpy(status[i].desc, "number of relation cache entry", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "number of relation cache entry", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "check_temp_table", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "check_temp_table", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->check_temp_table);
-	strncpy(status[i].desc, "enable temporary table check", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "enable temporary table check", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "check_unlogged_table", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "check_unlogged_table", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->check_unlogged_table);
-	strncpy(status[i].desc, "enable unlogged table check", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "enable unlogged table check", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "parallel_mode", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "parallel_mode", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->parallel_mode);
-	strncpy(status[i].desc, "if non 0, run in parallel query mode", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "if non 0, run in parallel query mode", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "pgpool2_hostname", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "pgpool2_hostname", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->pgpool2_hostname);
-	strncpy(status[i].desc, "pgpool2 hostname", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "pgpool2 hostname", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "system_db_hostname", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "system_db_hostname", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->system_db_hostname);
-	strncpy(status[i].desc, "system DB hostname", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "system DB hostname", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "system_db_port", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "system_db_port", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->system_db_port);
-	strncpy(status[i].desc, "system DB port number", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "system DB port number", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "system_db_dbname", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "system_db_dbname", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->system_db_dbname);
-	strncpy(status[i].desc, "system DB name", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "system DB name", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "system_db_schema", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "system_db_schema", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->system_db_schema);
-	strncpy(status[i].desc, "system DB schema name", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "system DB schema name", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "system_db_user", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "system_db_user", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->system_db_user);
-	strncpy(status[i].desc, "user name to access system DB", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "user name to access system DB", POOLCONFIG_MAXDESCLEN);
 	i++;
 	
 	/*
 	 * add for watchdog
 	 */
-	strncpy(status[i].name, "use_watchdog", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "use_watchdog", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->use_watchdog);
-	strncpy(status[i].desc, "non 0 if operating in use_watchdog", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "non 0 if operating in use_watchdog", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "wd_lifecheck_method", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "wd_lifecheck_method", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->wd_lifecheck_method);
-	strncpy(status[i].desc, "method of watchdog lifecheck", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "method of watchdog lifecheck", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "clear_memqcache_on_escalation", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "clear_memqcache_on_escalation", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->clear_memqcache_on_escalation);
-	strncpy(status[i].desc, "If true, clear all the query caches in shared memory when escalation occurs", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "If true, clear all the query caches in shared memory when escalation occurs", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "wd_escalation_command", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "wd_escalation_command", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->wd_escalation_command);
-	strncpy(status[i].desc, "command executed when escalation occurs", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "command executed when escalation occurs", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "trusted_servers", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "trusted_servers", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->trusted_servers);
-	strncpy(status[i].desc, "upper server list to observe connection", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "upper server list to observe connection", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "delegate_IP", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "delegate_IP", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->delegate_IP);
-	strncpy(status[i].desc, "delegate IP address of master pgpool", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "delegate IP address of master pgpool", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "wd_hostname", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "wd_hostname", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->wd_hostname);
-	strncpy(status[i].desc, "Host name or IP address of this watchdog", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "Host name or IP address of this watchdog", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "wd_port", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "wd_port", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_port);
-	strncpy(status[i].desc, "watchdog port number", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "watchdog port number", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "wd_interval", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "wd_interval", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_interval);
-	strncpy(status[i].desc, "life check interval (second)", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "life check interval (second)", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "ping_path", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "ping_path", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ping_path);
-	strncpy(status[i].desc, "path to ping command", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "path to ping command", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "ifconfig_path", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "ifconfig_path", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ifconfig_path);
-	strncpy(status[i].desc, "path to ifconfig command", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "path to ifconfig command", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "if_up_cmd", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "if_up_cmd", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->if_up_cmd);
-	strncpy(status[i].desc, "virtual interface up command with full parameters", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "virtual interface up command with full parameters", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "if_down_cmd", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "if_down_cmd", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->if_down_cmd);
-	strncpy(status[i].desc, "virtual interface down command with full parameters", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "virtual interface down command with full parameters", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "arping_path", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "arping_path", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->arping_path);
-	strncpy(status[i].desc, "path to arping command", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "path to arping command", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "arping_cmd", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "arping_cmd", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->arping_cmd);
-	strncpy(status[i].desc, "send ARP REQUESTi to neighbour host", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "send ARP REQUESTi to neighbour host", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "wd_heartbeat_port", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "wd_heartbeat_port", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_heartbeat_port);
-	strncpy(status[i].desc, "port number for receiving heartbeat signal", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "port number for receiving heartbeat signal", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "wd_heartbeat_keepalive", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "wd_heartbeat_keepalive", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_heartbeat_keepalive);
-	strncpy(status[i].desc, "interval time of sending heartbeat siganl (sec)", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "interval time of sending heartbeat siganl (sec)", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "wd_heartbeat_deadtime", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "wd_heartbeat_deadtime", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_heartbeat_deadtime);
-	strncpy(status[i].desc, "deadtime interval for heartbeat siganl (sec)", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "deadtime interval for heartbeat siganl (sec)", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "wd_life_point", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "wd_life_point", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_life_point);
-	strncpy(status[i].desc, "retry times of life check", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "retry times of life check", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "wd_lifecheck_query", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "wd_lifecheck_query", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->wd_lifecheck_query);
-	strncpy(status[i].desc, "lifecheck query to pgpool from watchdog", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "lifecheck query to pgpool from watchdog", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "wd_lifecheck_dbname", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "wd_lifecheck_dbname", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->wd_lifecheck_dbname);
-	strncpy(status[i].desc, "database name connected for lifecheck", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "database name connected for lifecheck", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "wd_lifecheck_user", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "wd_lifecheck_user", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->wd_lifecheck_user);
-	strncpy(status[i].desc, "watchdog user monitoring pgpools in lifecheck", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "watchdog user monitoring pgpools in lifecheck", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "wd_lifecheck_password", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "wd_lifecheck_password", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->wd_lifecheck_password);
-	strncpy(status[i].desc, "password for watchdog user in lifecheck", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "password for watchdog user in lifecheck", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/*
 	 * end of watchdog
 	 */
 
-	strncpy(status[i].name, "memory_cache_enabled", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "memory_cache_enabled", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->memory_cache_enabled);
-	strncpy(status[i].desc, "If true, use the memory cache functionality, false by default", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "If true, use the memory cache functionality, false by default", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "memqcache_method", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "memqcache_method", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->memqcache_method);
-	strncpy(status[i].desc, "Cache store method. either shmem(shared memory) or Memcached. shmem by default", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "Cache store method. either shmem(shared memory) or Memcached. shmem by default", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "memqcache_memcached_host", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "memqcache_memcached_host", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->memqcache_memcached_host);
-	strncpy(status[i].desc, "Memcached host name. Mandatory if memqcache_method=memcached", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "Memcached host name. Mandatory if memqcache_method=memcached", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "memqcache_memcached_port", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "memqcache_memcached_port", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->memqcache_memcached_port);
-	strncpy(status[i].desc, "Memcached port number. Mondatory if memqcache_method=memcached", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "Memcached port number. Mondatory if memqcache_method=memcached", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "memqcache_total_size", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "memqcache_total_size", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->memqcache_total_size);
-	strncpy(status[i].desc, "Total memory size in bytes for storing memory cache. Mandatory if memqcache_method=shmem", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "Total memory size in bytes for storing memory cache. Mandatory if memqcache_method=shmem", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "memqcache_max_num_cache", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "memqcache_max_num_cache", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->memqcache_max_num_cache);
-	strncpy(status[i].desc, "Total number of cache entries", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "Total number of cache entries", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "memqcache_expire", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "memqcache_expire", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->memqcache_expire);
-	strncpy(status[i].desc, "Memory cache entry life time specified in seconds. 60 by default", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "Memory cache entry life time specified in seconds. 60 by default", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "memqcache_auto_cache_invalidation", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "memqcache_auto_cache_invalidation", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->memqcache_auto_cache_invalidation);
-	strncpy(status[i].desc, "If true, invalidation of query cache is triggered by corresponding DDL/DML/DCL(and memqcache_expire).  If false, it is only triggered  by memqcache_expire.  True by default.", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "If true, invalidation of query cache is triggered by corresponding DDL/DML/DCL(and memqcache_expire).  If false, it is only triggered  by memqcache_expire.  True by default.", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "memqcache_maxcache", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "memqcache_maxcache", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->memqcache_maxcache);
-	strncpy(status[i].desc, "Maximum SELECT result size in bytes", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "Maximum SELECT result size in bytes", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "memqcache_cache_block_size", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "memqcache_cache_block_size", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->memqcache_cache_block_size);
-	strncpy(status[i].desc, "Cache block size in bytes. 8192 by default", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "Cache block size in bytes. 8192 by default", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "memqcache_cache_oiddir", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "memqcache_cache_oiddir", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->memqcache_oiddir);
-	strncpy(status[i].desc, "Tempory work directory to record table oids", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "Tempory work directory to record table oids", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "memqcache_stats_start_time", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "memqcache_stats_start_time", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", ctime(&pool_get_memqcache_stats()->start_time));
-	strncpy(status[i].desc, "Start time of query cache stats", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "Start time of query cache stats", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "memqcache_no_cache_hits", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "memqcache_no_cache_hits", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%lld", pool_get_memqcache_stats()->num_selects);
-	strncpy(status[i].desc, "Number of SELECTs not hitting query cache", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "Number of SELECTs not hitting query cache", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "memqcache_cache_hits", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "memqcache_cache_hits", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%lld", pool_get_memqcache_stats()->num_cache_hits);
-	strncpy(status[i].desc, "Number of SELECTs hitting query cache", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "Number of SELECTs hitting query cache", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "white_memqcache_table_list", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "white_memqcache_table_list", POOLCONFIG_MAXNAMELEN);
 	*(status[i].value) = '\0';
 	for (j=0;j<pool_config->num_white_memqcache_table_list;j++)
 	{
@@ -866,10 +866,10 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 		if (j != pool_config->num_white_memqcache_table_list - 1)
 			strncat(status[i].value, ",", len);
 	}
-	strncpy(status[i].desc, "tables to memqcache", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "tables to memqcache", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	strncpy(status[i].name, "black_memqcache_table_list", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "black_memqcache_table_list", POOLCONFIG_MAXNAMELEN);
 	*(status[i].value) = '\0';
 	for (j=0;j<pool_config->num_black_memqcache_table_list;j++)
 	{
@@ -879,7 +879,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 		if (j != pool_config->num_black_memqcache_table_list - 1)
 			strncat(status[i].value, ",", len);
 	}
-	strncpy(status[i].desc, "tables not to memqcache", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "tables not to memqcache", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* BACKENDS */
@@ -1055,7 +1055,7 @@ POOL_REPORT_NODES* get_nodes(int *nrows)
 	    bi = pool_get_node_info(i);
 
 		snprintf(nodes[i].node_id, 	POOLCONFIG_MAXSTATLEN, 	"%d", 	i);
-	    strncpy(nodes[i].hostname, 	bi->backend_hostname, 		strlen(bi->backend_hostname)+1);
+	    StrNCpy(nodes[i].hostname, 	bi->backend_hostname, 		strlen(bi->backend_hostname)+1);
 	    snprintf(nodes[i].port, 	POOLCONFIG_MAXIDENTLEN, "%d", 	bi->backend_port);
 	    snprintf(nodes[i].status, 	POOLCONFIG_MAXSTATLEN, 	"%d", 	bi->backend_status);
 	    snprintf(nodes[i].lb_weight, POOLCONFIG_MAXWEIGHTLEN, "%f", bi->backend_weight/RAND_MAX);
@@ -1214,16 +1214,16 @@ POOL_REPORT_POOLS* get_pools(int *nrows)
 				pools[lines].backend_id = backend_id;
 				if (strlen(pi->connection_info[poolBE].database) == 0)
 				{
-					strncpy(pools[lines].database, "", POOLCONFIG_MAXIDENTLEN);
-					strncpy(pools[lines].username, "", POOLCONFIG_MAXIDENTLEN);
+					StrNCpy(pools[lines].database, "", POOLCONFIG_MAXIDENTLEN);
+					StrNCpy(pools[lines].username, "", POOLCONFIG_MAXIDENTLEN);
 					pools[lines].create_time = 0;
 					pools[lines].pool_majorversion = 0;
 					pools[lines].pool_minorversion = 0;
 				}
 				else
 				{
-					strncpy(pools[lines].database, pi->connection_info[poolBE].database, POOLCONFIG_MAXIDENTLEN);
-					strncpy(pools[lines].username, pi->connection_info[poolBE].user, POOLCONFIG_MAXIDENTLEN);
+					StrNCpy(pools[lines].database, pi->connection_info[poolBE].database, POOLCONFIG_MAXIDENTLEN);
+					StrNCpy(pools[lines].username, pi->connection_info[poolBE].user, POOLCONFIG_MAXIDENTLEN);
 					pools[lines].create_time = pi->connection_info[poolBE].create_time;
 					pools[lines].pool_majorversion = pi->connection_info[poolBE].major;
 					pools[lines].pool_minorversion = pi->connection_info[poolBE].minor;
@@ -1402,18 +1402,18 @@ POOL_REPORT_PROCESSES* get_processes(int *nrows)
 
         snprintf(processes[child].pool_pid, POOLCONFIG_MAXCOUNTLEN, "%d", proc_id);
 	    strftime(processes[child].start_time, POOLCONFIG_MAXDATELEN, "%Y-%m-%d %H:%M:%S", localtime(&pi->start_time));
-	    strncpy(processes[child].database, "", POOLCONFIG_MAXIDENTLEN);
-	    strncpy(processes[child].username, "", POOLCONFIG_MAXIDENTLEN);
-        strncpy(processes[child].create_time, "", POOLCONFIG_MAXDATELEN);
-        strncpy(processes[child].pool_counter, "", POOLCONFIG_MAXCOUNTLEN);
+	    StrNCpy(processes[child].database, "", POOLCONFIG_MAXIDENTLEN);
+	    StrNCpy(processes[child].username, "", POOLCONFIG_MAXIDENTLEN);
+        StrNCpy(processes[child].create_time, "", POOLCONFIG_MAXDATELEN);
+        StrNCpy(processes[child].pool_counter, "", POOLCONFIG_MAXCOUNTLEN);
 
         for (pool = 0; pool < pool_config->max_pool; pool++)
         {
             poolBE = pool*MAX_NUM_BACKENDS;
             if (pi->connection_info[poolBE].connected && strlen(pi->connection_info[poolBE].database) > 0 && strlen(pi->connection_info[poolBE].user) > 0)
             {
-	            strncpy(processes[child].database, pi->connection_info[poolBE].database, POOLCONFIG_MAXIDENTLEN);
-	            strncpy(processes[child].username, pi->connection_info[poolBE].user, POOLCONFIG_MAXIDENTLEN);
+	            StrNCpy(processes[child].database, pi->connection_info[poolBE].database, POOLCONFIG_MAXIDENTLEN);
+	            StrNCpy(processes[child].username, pi->connection_info[poolBE].user, POOLCONFIG_MAXIDENTLEN);
 	            strftime(processes[child].create_time, POOLCONFIG_MAXDATELEN, "%Y-%m-%d %H:%M:%S", localtime(&pi->connection_info[poolBE].create_time));
                 snprintf(processes[child].pool_counter, POOLCONFIG_MAXCOUNTLEN, "%d", pi->connection_info[poolBE].counter);
             }
