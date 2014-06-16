@@ -228,7 +228,7 @@ exec_ping(void * arg)
 		{
 			int r;
 			r = waitpid(pid, &status, 0);
-			if (r < 0 && errno == ECHILD)
+			if (r < 0 && errno != ECHILD)
 			{
 				if (errno == EINTR)
 					continue;
