@@ -277,7 +277,7 @@ function set_postgresql_conf
 	if [ $MODE = "s" ];then
 		echo "hot_standby = on" >> $PGCONF
 		echo "wal_level = hot_standby" >> $PGCONF
-		echo "max_wal_senders = 2" >> $PGCONF
+		echo "max_wal_senders = $NUMCLUSTERS" >> $PGCONF
 		echo "archive_mode = on" >> $PGCONF
 		echo "archive_command = 'cp %p $BASEDIR/archivedir/%f </dev/null'" >> $PGCONF
 	elif [ $MODE = 'r' ];then
