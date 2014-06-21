@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -273,6 +273,15 @@ static int exec_recovery(PGconn *conn, BackendInfo *master_backend, BackendInfo 
 			 master_backend->backend_port);
 
 	pool_log("starting recovery command: \"%s\"", recovery_command);
+	pool_log("disabling statement_timeout");
+	result = PQexec(conn, "SET statement_timeout To 0");
+	r = (PQresultStatus(result) !=  PGRES_COMMAND_OK);
+	if (r != 0)
+	{
+		pool_error("exec_recovery: SET STATEMENT_TIMEOUT failed at %s",
+				   (stage == FIRST_STAGE) ? "1st stage" : "2nd stage");
+	}
+	PQclear(result);
 
 	pool_debug("exec_recovery: start recovery");
 	result = PQexec(conn, recovery_command);
