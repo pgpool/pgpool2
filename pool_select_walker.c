@@ -948,7 +948,7 @@ int pool_table_name_to_oid(char *table_name)
  */
 #define TABLE_TO_OID_QUERY "SELECT pgpool_regclass('%s')"
 #define TABLE_TO_OID_QUERY2 "SELECT oid FROM pg_class WHERE relname = '%s'"
-#define TABLE_TO_OID_QUERY3 "SELECT to_regclass('%s')"
+#define TABLE_TO_OID_QUERY3 "SELECT COALESCE(0, to_regclass('%s'))"
 
 	int oid = 0;
 	static POOL_RELCACHE *relcache;
