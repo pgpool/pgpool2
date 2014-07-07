@@ -1180,7 +1180,7 @@ bool
 			{
 				RangeFunction *rf = (RangeFunction *) node;
 
-				if (walker(rf->funccallnode, context))
+				if (walker(rf->functions, context))
 					return true;
 				if (walker(rf->alias, context))
 					return true;

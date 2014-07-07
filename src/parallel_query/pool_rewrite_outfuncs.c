@@ -4271,11 +4271,21 @@ _rewriteLockingClause(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *
 {
 	if (node == NULL)
 		return;
-
-	if (node->forUpdate == TRUE)
-		delay_string_append_char(message, str, " FOR UPDATE");
-	else
-		delay_string_append_char(message, str, " FOR SHARED");
+	switch(node->strength)
+	{
+		case LCS_FORKEYSHARE:
+			delay_string_append_char(message, str, " FOR KEY SHARE");
+			break;
+		case LCS_FORSHARE:
+			delay_string_append_char(message, str, " FOR SHARE");
+			break;
+		case LCS_FORNOKEYUPDATE:
+			delay_string_append_char(message, str, " FOR NO KEY UPDATE");
+			break;
+		case LCS_FORUPDATE:
+			delay_string_append_char(message, str, " FOR UPDATE");
+			break;
+	}
 
 	_rewriteNode(BaseSelect, message, dblink, str, node->lockedRels);
 
@@ -7821,7 +7831,7 @@ _rewriteAlterOwnerStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink 
 			delay_string_append_char(message, str, "OPERATOR CLASS ");
 			_rewriteFuncName(BaseSelect, message, dblink, str, node->object);
 			delay_string_append_char(message, str, " USING ");
-			delay_string_append_char(message, str, node->addname);
+			delay_string_append_char(message, str, linitial(node->objarg));
 			delay_string_append_char(message, str, " OWNER TO \"");
 			delay_string_append_char(message, str, node->newowner);
 			delay_string_append_char(message, str, "\"");
@@ -8481,7 +8491,7 @@ _rewriteRangeSubselect(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink 
 static void
 _rewriteRangeFunction(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, RangeFunction *node)
 {
-	_rewriteNode(BaseSelect, message, dblink, str, node->funccallnode);
+	_rewriteNode(BaseSelect, message, dblink, str, node->functions); //TODO
 	if (node->alias)
 	{
 		_rewriteNode(BaseSelect, message, dblink, str, node->alias);

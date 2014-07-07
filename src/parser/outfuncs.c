@@ -107,7 +107,7 @@ static void _outUpdateStmt(String *str, UpdateStmt *node);
 static void _outDeleteStmt(String *str, DeleteStmt *node);
 static void _outTransactionStmt(String *str, TransactionStmt *node);
 static void _outTruncateStmt(String *str, TruncateStmt *node);
-#ifdef NOT_USED
+#ifdef NOT_USED_IN_PGPOOL
 /* 9.0 does have this */
 static void _outVacuumStmt(String *str, VacuumStmt *node);
 #endif
@@ -1137,10 +1137,21 @@ _outLockingClause(String *str, LockingClause *node)
 	if (node == NULL)
 		return;
 
-	if (node->forUpdate == TRUE)
-		string_append_char(str, " FOR UPDATE");
-	else
-		string_append_char(str, " FOR SHARED");
+	switch(node->strength)
+	{
+		case LCS_FORKEYSHARE:
+			string_append_char(str, " FOR KEY SHARE");
+			break;
+		case LCS_FORSHARE:
+			string_append_char(str, " FOR SHARE");
+			break;
+		case LCS_FORNOKEYUPDATE:
+			string_append_char(str, " FOR NO KEY UPDATE");
+			break;
+		case LCS_FORUPDATE:
+			string_append_char(str, " FOR UPDATE");
+			break;
+	}
 
 	_outNode(str, node->lockedRels);
 
@@ -2113,7 +2124,7 @@ static void _outTruncateStmt(String *str, TruncateStmt *node)
 	_outNode(str, node->relations);
 }
 
-#ifdef NOT_USED
+#ifdef NOT_USED_IN_PGPOOL
 /* 9.0 does not have */
 static void _outVacuumStmt(String *str, VacuumStmt *node)
 {
@@ -2932,7 +2943,7 @@ _outAlterTableCmd(String *str, AlterTableCmd *node)
 			string_append_char(str, node->name);
 			string_append_char(str, "\" TYPE ");
 			_outNode(str, node->def);
-#ifdef NOT_USED
+#ifdef NOT_USED_IN_PGPOOL
 			if (node->transform)
 			{
 				string_append_char(str, " USING ");
@@ -4023,7 +4034,7 @@ _outAlterFunctionStmt(String *str, AlterFunctionStmt *node)
 	_outFuncOptList(str, node->actions);
 }
 
-#ifdef NOT_USED
+#ifdef NOT_USED_IN_PGPOOL
 static void
 _outRemoveFuncStmt(String *str, RemoveFuncStmt *node)
 {
@@ -4265,7 +4276,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 			string_append_char(str, "OPERATOR CLASS ");
 			_outFuncName(str, node->object);
 			string_append_char(str, " USING ");
-			string_append_char(str, node->addname);
+			string_append_char(str, strVal(linitial(node->objarg)));
 			string_append_char(str, " OWNER TO \"");
 			string_append_char(str, node->newowner);
 			string_append_char(str, "\"");
@@ -4275,7 +4286,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 			string_append_char(str, "OPERATOR FAMILY ");
 			_outFuncName(str, node->object);
 			string_append_char(str, " USING ");
-			string_append_char(str, node->addname);
+			string_append_char(str, strVal(linitial(node->objarg)));
 			string_append_char(str, " OWNER TO \"");
 			string_append_char(str, node->newowner);
 			string_append_char(str, "\"");
@@ -4625,7 +4636,7 @@ _outPrepareStmt(String *str, PrepareStmt *node)
 static void
 _outExecuteStmt(String *str, ExecuteStmt *node)
 {
-#ifdef NOT_USED
+#ifdef NOT_USED_IN_PGPOOL
 	if (node->into)
 	{
 		IntoClause *into = node->into;
@@ -4872,10 +4883,11 @@ _outRangeSubselect(String *str, RangeSubselect *node)
 	_outNode(str, node->alias);
 }
 
+/*TODO*/
 static void
 _outRangeFunction(String *str, RangeFunction *node)
 {
-	_outNode(str, node->funccallnode);
+	_outNode(str, node->functions); //TODO
 	if (node->alias)
 	{
 		_outNode(str, node->alias);
@@ -4926,7 +4938,7 @@ _outAlterOpFamilyStmt(String *str, AlterOpFamilyStmt *node)
 {
 }
 
-#ifdef NOT_USED
+#ifdef NOT_USED_IN_PGPOOL
 static void
 _outRemoveOpFamilyStmt(String *str, RemoveOpFamilyStmt *node)
 {
@@ -5472,7 +5484,7 @@ _outNode(String *str, void *obj)
 				_outTruncateStmt(str, obj);
 				break;
 
-#ifdef NOT_USED
+#ifdef NOT_USED_IN_PGPOOL
 				/* 9.0 does not have this */
 			case T_VacuumStmt:
 				_outVacuumStmt(str, obj);
@@ -5571,7 +5583,7 @@ _outNode(String *str, void *obj)
 				_outCreatePLangStmt(str, obj);
 				break;
 
-#ifdef NOT_USED
+#ifdef NOT_USED_IN_PGPOOL
 			case T_DropPLangStmt:
 				_outDropPLangStmt(str, obj);
 				break;
@@ -5601,7 +5613,7 @@ _outNode(String *str, void *obj)
 				_outCreateOpClassItem(str, obj);
 				break;
 
-#ifdef NOT_USED
+#ifdef NOT_USED_IN_PGPOOL
 			case T_RemoveOpClassStmt:
 				_outRemoveOpClassStmt(str, obj);
 				break;
@@ -5643,7 +5655,7 @@ _outNode(String *str, void *obj)
 				_outAlterFunctionStmt(str, obj);
 				break;
 
-#ifdef NOT_USED
+#ifdef NOT_USED_IN_PGPOOL
 			case T_RemoveFuncStmt:
 				_outRemoveFuncStmt(str, obj);
 				break;
@@ -5652,7 +5664,7 @@ _outNode(String *str, void *obj)
 			case T_CreateCastStmt:
 				_outCreateCastStmt(str, obj);
 				break;
-#ifdef NOT_USED
+#ifdef NOT_USED_IN_PGPOOL
 			case T_DropCastStmt:
 				_outDropCastStmt(str, obj);
 				break;
@@ -5736,7 +5748,7 @@ _outNode(String *str, void *obj)
 			case T_AlterOpFamilyStmt:
 				_outAlterOpFamilyStmt(str, obj);
 				break;
-#ifdef NOT_USED
+#ifdef NOT_USED_IN_PGPOOL
 			case T_RemoveOpFamilyStmt:
 				_outRemoveOpFamilyStmt(str, obj);
 				break;
@@ -5772,19 +5784,18 @@ _outNode(String *str, void *obj)
 	}
 }
 
-
 /*
  * nodeToString -
  *	   returns the ascii representation of the Node as a palloc'd string
  */
 char *
-nodeToString(void *obj)
+nodeToString(const void *obj)
 {
 	String *str;
 	char *p;
 
 	str = init_string("");
-	_outNode(str, obj);
+	_outNode(str, (void *)obj);
 	p = palloc(str->len+1);
 	memcpy(p, str->data, str->len);
 	*(p+str->len) = '\0';

@@ -4,8 +4,8 @@
  *	  creator functions for primitive nodes. The functions here are for
  *	  the most frequently created nodes.
  *
- * Portions Copyright (c) 2003-2013, PgPool Global Development Group
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2014, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -24,6 +24,8 @@
 
 
 #define BOOLOID 16		/* XXX */
+
+
 
 /*
  * makeA_Expr -
@@ -126,7 +128,7 @@ makeVarFromTargetEntry(Index varno,
  * a rowtype; either a named composite type, or RECORD.  This function
  * encapsulates the logic for determining the correct rowtype OID to use.
  *
- * If allowScalar is true, then for the case where the RTE is a function
+ * If allowScalar is true, then for the case where the RTE is a single function
  * returning a non-composite result type, we produce a normal Var referencing
  * the function's result directly, instead of the single-column composite
  * value that the whole-row notation might otherwise suggest.
@@ -139,6 +141,7 @@ makeWholeRowVar(RangeTblEntry *rte,
 {
 	Var		   *result;
 	Oid			toid;
+	Node	   *fexpr;
 
 	switch (rte->rtekind)
 	{
@@ -155,8 +158,28 @@ makeWholeRowVar(RangeTblEntry *rte,
 							 InvalidOid,
 							 varlevelsup);
 			break;
+
 		case RTE_FUNCTION:
-			toid = exprType(rte->funcexpr);
+
+			/*
+			 * If there's more than one function, or ordinality is requested,
+			 * force a RECORD result, since there's certainly more than one
+			 * column involved and it can't be a known named type.
+			 */
+			if (rte->funcordinality || list_length(rte->functions) != 1)
+			{
+				/* always produces an anonymous RECORD result */
+				result = makeVar(varno,
+								 InvalidAttrNumber,
+								 RECORDOID,
+								 -1,
+								 InvalidOid,
+								 varlevelsup);
+				break;
+			}
+
+			fexpr = ((RangeTblFunction *) linitial(rte->functions))->funcexpr;
+			toid = exprType(fexpr);
 			if (type_is_rowtype(toid))
 			{
 				/* func returns composite; same as relation case */
@@ -174,7 +197,7 @@ makeWholeRowVar(RangeTblEntry *rte,
 								 1,
 								 toid,
 								 -1,
-								 exprCollation(rte->funcexpr),
+								 exprCollation(fexpr),
 								 varlevelsup);
 			}
 			else
@@ -188,6 +211,7 @@ makeWholeRowVar(RangeTblEntry *rte,
 								 varlevelsup);
 			}
 			break;
+
 		default:
 
 			/*
@@ -207,6 +231,7 @@ makeWholeRowVar(RangeTblEntry *rte,
 
 	return result;
 }
+
 #endif
 
 /*
@@ -320,9 +345,7 @@ makeNullConst(Oid consttype, int32 consttypmod, Oid constcollid)
 					 true,
 					 typByVal);
 }
-#endif
 
-#if 0
 /*
  * makeBoolConst -
  *	  creates a Const node representing a boolean value (can be NULL too)
@@ -334,6 +357,7 @@ makeBoolConst(bool value, bool isnull)
 	return (Node *) makeConst(BOOLOID, -1, InvalidOid, 1,
 							  BoolGetDatum(value), isnull, true);
 }
+
 #endif
 
 /*
@@ -470,6 +494,7 @@ makeFuncExpr(Oid funcid, Oid rettype, List *args,
 	funcexpr->funcid = funcid;
 	funcexpr->funcresulttype = rettype;
 	funcexpr->funcretset = false;		/* only allowed case here */
+	funcexpr->funcvariadic = false;		/* only allowed case here */
 	funcexpr->funcformat = fformat;
 	funcexpr->funccollid = funccollid;
 	funcexpr->inputcollid = inputcollid;
@@ -515,4 +540,28 @@ makeDefElemExtended(char *nameSpace, char *name, Node *arg,
 	res->defaction = defaction;
 
 	return res;
+}
+
+/*
+ * makeFuncCall -
+ *
+ * Initialize a FuncCall struct with the information every caller must
+ * supply.  Any non-default parameters have to be inserted by the caller.
+ */
+FuncCall *
+makeFuncCall(List *name, List *args, int location)
+{
+	FuncCall   *n = makeNode(FuncCall);
+
+	n->funcname = name;
+	n->args = args;
+	n->agg_order = NIL;
+	n->agg_filter = NULL;
+	n->agg_within_group = false;
+	n->agg_star = false;
+	n->agg_distinct = false;
+	n->func_variadic = false;
+	n->over = NULL;
+	n->location = location;
+	return n;
 }

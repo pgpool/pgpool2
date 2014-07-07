@@ -178,6 +178,10 @@ UserAuth;
 
 typedef unsigned int AuthRequest;
 
+#ifdef __GNUC__
+#define PG_USE_INLINE
+#endif
+
 /* no special DLL markers on most ports */
 #ifndef PGDLLIMPORT
 #define PGDLLIMPORT
@@ -185,7 +189,13 @@ typedef unsigned int AuthRequest;
 #ifndef PGDLLEXPORT
 #define PGDLLEXPORT
 #endif
+
+#ifdef PG_USE_INLINE
+#define STATIC_IF_INLINE static inline
+#else
 #define STATIC_IF_INLINE
+#endif   /* PG_USE_INLINE */
+
 
 typedef uint8 bits8;			/* >= 8 bits */
 typedef uint16 bits16;			/* >= 16 bits */

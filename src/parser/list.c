@@ -4,8 +4,8 @@
  *	  implementation for PostgreSQL generic linked list package
  *
  *
- * Portions Copyright (c) 2003-2013, PgPool Global Development Group
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2014, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -14,13 +14,14 @@
  *
  *-------------------------------------------------------------------------
  */
-/*#include "postgres.h"*/
+
+/* see pg_list.h */
+//#define PG_LIST_INCLUDE_DEFINITIONS
+
 #include "utils/elog.h"
 #include <stdlib.h>
 #include "utils/palloc.h"
 #include "pg_list.h"
-
-
 
 /*
  * Routines to simplify writing assertions about the type of a list; a
@@ -30,7 +31,33 @@
 #define IsIntegerList(l)		((l) == NIL || IsA((l), IntList))
 #define IsOidList(l)			((l) == NIL || IsA((l), OidList))
 
+#ifdef USE_ASSERT_CHECKING
+/*
+ * Check that the specified List is valid (so far as we can tell).
+ */
+static void
+check_list_invariants(const List *list)
+{
+	if (list == NIL)
+		return;
+
+	Assert(list->length > 0);
+	Assert(list->head != NULL);
+	Assert(list->tail != NULL);
+
+	Assert(list->type == T_List ||
+		   list->type == T_IntList ||
+		   list->type == T_OidList);
+
+	if (list->length == 1)
+		Assert(list->head == list->tail);
+	if (list->length == 2)
+		Assert(list->head->next == list->tail);
+	Assert(list->tail->next == NULL);
+}
+#else
 #define check_list_invariants(l)
+#endif   /* USE_ASSERT_CHECKING */
 
 /*
  * Return a freshly allocated List. Since empty non-NIL lists are
@@ -105,6 +132,8 @@ new_tail_cell(List *list)
 List *
 lappend(List *list, void *datum)
 {
+	Assert(IsPointerList(list));
+
 	if (list == NIL)
 		list = new_list(T_List);
 	else
@@ -121,6 +150,8 @@ lappend(List *list, void *datum)
 List *
 lappend_int(List *list, int datum)
 {
+	Assert(IsIntegerList(list));
+
 	if (list == NIL)
 		list = new_list(T_IntList);
 	else
@@ -137,6 +168,8 @@ lappend_int(List *list, int datum)
 List *
 lappend_oid(List *list, Oid datum)
 {
+	Assert(IsOidList(list));
+
 	if (list == NIL)
 		list = new_list(T_OidList);
 	else
@@ -182,6 +215,8 @@ lappend_cell(List *list, ListCell *prev, void *datum)
 {
 	ListCell   *new_cell;
 
+	Assert(IsPointerList(list));
+
 	new_cell = add_new_cell(list, prev);
 	lfirst(new_cell) = datum;
 	check_list_invariants(list);
@@ -193,6 +228,8 @@ lappend_cell_int(List *list, ListCell *prev, int datum)
 {
 	ListCell   *new_cell;
 
+	Assert(IsIntegerList(list));
+
 	new_cell = add_new_cell(list, prev);
 	lfirst_int(new_cell) = datum;
 	check_list_invariants(list);
@@ -203,6 +240,8 @@ ListCell *
 lappend_cell_oid(List *list, ListCell *prev, Oid datum)
 {
 	ListCell   *new_cell;
+
+	Assert(IsOidList(list));
 
 	new_cell = add_new_cell(list, prev);
 	lfirst_oid(new_cell) = datum;
@@ -224,6 +263,8 @@ lappend_cell_oid(List *list, ListCell *prev, Oid datum)
 List *
 lcons(void *datum, List *list)
 {
+	Assert(IsPointerList(list));
+
 	if (list == NIL)
 		list = new_list(T_List);
 	else
@@ -240,6 +281,8 @@ lcons(void *datum, List *list)
 List *
 lcons_int(int datum, List *list)
 {
+	Assert(IsIntegerList(list));
+
 	if (list == NIL)
 		list = new_list(T_IntList);
 	else
@@ -256,6 +299,8 @@ lcons_int(int datum, List *list)
 List *
 lcons_oid(Oid datum, List *list)
 {
+	Assert(IsOidList(list));
+
 	if (list == NIL)
 		list = new_list(T_OidList);
 	else
@@ -286,6 +331,8 @@ list_concat(List *list1, List *list2)
 		return list1;
 	if (list1 == list2)
 		elog(ERROR, "cannot list_concat() a list to itself");
+
+	Assert(list1->type == list2->type);
 
 	list1->length += list2->length;
 	list1->tail->next = list2->head;
@@ -332,6 +379,7 @@ list_truncate(List *list, int new_size)
 	}
 
 	/* keep the compiler quiet; never reached */
+	Assert(false);
 	return list;
 }
 
@@ -344,6 +392,9 @@ list_nth_cell(const List *list, int n)
 {
 	ListCell   *match;
 
+	Assert(list != NIL);
+	Assert(n >= 0);
+	Assert(n < list->length);
 	check_list_invariants(list);
 
 	/* Does the caller actually mean to fetch the tail? */
@@ -363,6 +414,7 @@ list_nth_cell(const List *list, int n)
 void *
 list_nth(const List *list, int n)
 {
+	Assert(IsPointerList(list));
 	return lfirst(list_nth_cell(list, n));
 }
 
@@ -373,6 +425,7 @@ list_nth(const List *list, int n)
 int
 list_nth_int(const List *list, int n)
 {
+	Assert(IsIntegerList(list));
 	return lfirst_int(list_nth_cell(list, n));
 }
 
@@ -383,10 +436,10 @@ list_nth_int(const List *list, int n)
 Oid
 list_nth_oid(const List *list, int n)
 {
+	Assert(IsOidList(list));
 	return lfirst_oid(list_nth_cell(list, n));
 }
-
-#if 0
+#ifdef NOT_USED_IN_PGPOOL
 /*
  * Return true iff 'datum' is a member of the list. Equality is
  * determined via equal(), so callers should ensure that they pass a
@@ -397,6 +450,7 @@ list_member(const List *list, const void *datum)
 {
 	const ListCell *cell;
 
+	Assert(IsPointerList(list));
 	check_list_invariants(list);
 
 	foreach(cell, list)
@@ -407,8 +461,7 @@ list_member(const List *list, const void *datum)
 
 	return false;
 }
-#endif
-
+#endif /*NOT_USED_IN_PGPOOL*/
 /*
  * Return true iff 'datum' is a member of the list. Equality is
  * determined by using simple pointer comparison.
@@ -418,6 +471,7 @@ list_member_ptr(const List *list, const void *datum)
 {
 	const ListCell *cell;
 
+	Assert(IsPointerList(list));
 	check_list_invariants(list);
 
 	foreach(cell, list)
@@ -437,6 +491,7 @@ list_member_int(const List *list, int datum)
 {
 	const ListCell *cell;
 
+	Assert(IsIntegerList(list));
 	check_list_invariants(list);
 
 	foreach(cell, list)
@@ -456,6 +511,7 @@ list_member_oid(const List *list, Oid datum)
 {
 	const ListCell *cell;
 
+	Assert(IsOidList(list));
 	check_list_invariants(list);
 
 	foreach(cell, list)
@@ -477,6 +533,7 @@ List *
 list_delete_cell(List *list, ListCell *cell, ListCell *prev)
 {
 	check_list_invariants(list);
+	Assert(prev != NULL ? lnext(prev) == cell : list_head(list) == cell);
 
 	/*
 	 * If we're about to delete the last node from the list, free the whole
@@ -507,7 +564,8 @@ list_delete_cell(List *list, ListCell *cell, ListCell *prev)
 	return list;
 }
 
-#if 0
+#ifdef NOT_USED_IN_PGPOOL
+
 /*
  * Delete the first cell in list that matches datum, if any.
  * Equality is determined via equal().
@@ -518,6 +576,7 @@ list_delete(List *list, void *datum)
 	ListCell   *cell;
 	ListCell   *prev;
 
+	Assert(IsPointerList(list));
 	check_list_invariants(list);
 
 	prev = NULL;
@@ -532,7 +591,8 @@ list_delete(List *list, void *datum)
 	/* Didn't find a match: return the list unmodified */
 	return list;
 }
-#endif
+
+#endif /*NOT_USED_IN_PGPOOL*/
 
 /* As above, but use simple pointer equality */
 List *
@@ -541,6 +601,7 @@ list_delete_ptr(List *list, void *datum)
 	ListCell   *cell;
 	ListCell   *prev;
 
+	Assert(IsPointerList(list));
 	check_list_invariants(list);
 
 	prev = NULL;
@@ -563,6 +624,7 @@ list_delete_int(List *list, int datum)
 	ListCell   *cell;
 	ListCell   *prev;
 
+	Assert(IsIntegerList(list));
 	check_list_invariants(list);
 
 	prev = NULL;
@@ -585,6 +647,7 @@ list_delete_oid(List *list, Oid datum)
 	ListCell   *cell;
 	ListCell   *prev;
 
+	Assert(IsOidList(list));
 	check_list_invariants(list);
 
 	prev = NULL;
@@ -619,7 +682,7 @@ list_delete_first(List *list)
 	return list_delete_cell(list, list_head(list), NULL);
 }
 
-#if 0
+#ifdef NOT_USED_IN_PGPOOL
 /*
  * Generate the union of two lists. This is calculated by copying
  * list1 via list_copy(), then adding to it all the members of list2
@@ -646,6 +709,9 @@ list_union(const List *list1, const List *list2)
 	List	   *result;
 	const ListCell *cell;
 
+	Assert(IsPointerList(list1));
+	Assert(IsPointerList(list2));
+
 	result = list_copy(list1);
 	foreach(cell, list2)
 	{
@@ -656,7 +722,7 @@ list_union(const List *list1, const List *list2)
 	check_list_invariants(result);
 	return result;
 }
-#endif
+#endif /*NOT_USED_IN_PGPOOL*/
 
 /*
  * This variant of list_union() determines duplicates via simple
@@ -667,6 +733,9 @@ list_union_ptr(const List *list1, const List *list2)
 {
 	List	   *result;
 	const ListCell *cell;
+
+	Assert(IsPointerList(list1));
+	Assert(IsPointerList(list2));
 
 	result = list_copy(list1);
 	foreach(cell, list2)
@@ -688,6 +757,9 @@ list_union_int(const List *list1, const List *list2)
 	List	   *result;
 	const ListCell *cell;
 
+	Assert(IsIntegerList(list1));
+	Assert(IsIntegerList(list2));
+
 	result = list_copy(list1);
 	foreach(cell, list2)
 	{
@@ -708,6 +780,9 @@ list_union_oid(const List *list1, const List *list2)
 	List	   *result;
 	const ListCell *cell;
 
+	Assert(IsOidList(list1));
+	Assert(IsOidList(list2));
+
 	result = list_copy(list1);
 	foreach(cell, list2)
 	{
@@ -719,7 +794,43 @@ list_union_oid(const List *list1, const List *list2)
 	return result;
 }
 
-#if 0
+#ifdef NOT_USED_IN_PGPOOL
+/*
+ * Return a list that contains all the cells that are in both list1 and
+ * list2.  The returned list is freshly allocated via palloc(), but the
+ * cells themselves point to the same objects as the cells of the
+ * input lists.
+ *
+ * Duplicate entries in list1 will not be suppressed, so it's only a true
+ * "intersection" if list1 is known unique beforehand.
+ *
+ * This variant works on lists of pointers, and determines list
+ * membership via equal().  Note that the list1 member will be pointed
+ * to in the result.
+ */
+List *
+list_intersection(const List *list1, const List *list2)
+{
+	List	   *result;
+	const ListCell *cell;
+
+	if (list1 == NIL || list2 == NIL)
+		return NIL;
+
+	Assert(IsPointerList(list1));
+	Assert(IsPointerList(list2));
+
+	result = NIL;
+	foreach(cell, list1)
+	{
+		if (list_member(list2, lfirst(cell)))
+			result = lappend(result, lfirst(cell));
+	}
+
+	check_list_invariants(result);
+	return result;
+}
+
 /*
  * Return a list that contains all the cells in list1 that are not in
  * list2. The returned list is freshly allocated via palloc(), but the
@@ -735,6 +846,9 @@ list_difference(const List *list1, const List *list2)
 	const ListCell *cell;
 	List	   *result = NIL;
 
+	Assert(IsPointerList(list1));
+	Assert(IsPointerList(list2));
+
 	if (list2 == NIL)
 		return list_copy(list1);
 
@@ -747,7 +861,7 @@ list_difference(const List *list1, const List *list2)
 	check_list_invariants(result);
 	return result;
 }
-#endif
+#endif /*NOT_USED_IN_PGPOOL*/
 
 /*
  * This variant of list_difference() determines list membership via
@@ -758,6 +872,9 @@ list_difference_ptr(const List *list1, const List *list2)
 {
 	const ListCell *cell;
 	List	   *result = NIL;
+
+	Assert(IsPointerList(list1));
+	Assert(IsPointerList(list2));
 
 	if (list2 == NIL)
 		return list_copy(list1);
@@ -781,6 +898,9 @@ list_difference_int(const List *list1, const List *list2)
 	const ListCell *cell;
 	List	   *result = NIL;
 
+	Assert(IsIntegerList(list1));
+	Assert(IsIntegerList(list2));
+
 	if (list2 == NIL)
 		return list_copy(list1);
 
@@ -803,6 +923,9 @@ list_difference_oid(const List *list1, const List *list2)
 	const ListCell *cell;
 	List	   *result = NIL;
 
+	Assert(IsOidList(list1));
+	Assert(IsOidList(list2));
+
 	if (list2 == NIL)
 		return list_copy(list1);
 
@@ -816,7 +939,8 @@ list_difference_oid(const List *list1, const List *list2)
 	return result;
 }
 
-#if 0
+#ifdef NOT_USED_IN_PGPOOL
+
 /*
  * Append datum to list, but only if it isn't already in the list.
  *
@@ -831,7 +955,8 @@ list_append_unique(List *list, void *datum)
 	else
 		return lappend(list, datum);
 }
-#endif
+
+#endif /*NOT_USED_IN_PGPOOL*/
 
 /*
  * This variant of list_append_unique() determines list membership via
@@ -870,7 +995,7 @@ list_append_unique_oid(List *list, Oid datum)
 		return lappend_oid(list, datum);
 }
 
-#if 0
+#ifdef NOT_USED_IN_PGPOOL
 /*
  * Append to list1 each member of list2 that isn't already in list1.
  *
@@ -878,13 +1003,16 @@ list_append_unique_oid(List *list, Oid datum)
  * via equal().
  *
  * This is almost the same functionality as list_union(), but list1 is
- * modified in-place rather than being copied.	Note also that list2's cells
+ * modified in-place rather than being copied.  Note also that list2's cells
  * are not inserted in list1, so the analogy to list_concat() isn't perfect.
  */
 List *
 list_concat_unique(List *list1, List *list2)
 {
 	ListCell   *cell;
+
+	Assert(IsPointerList(list1));
+	Assert(IsPointerList(list2));
 
 	foreach(cell, list2)
 	{
@@ -895,7 +1023,7 @@ list_concat_unique(List *list1, List *list2)
 	check_list_invariants(list1);
 	return list1;
 }
-#endif
+#endif /*NOT_USED_IN_PGPOOL*/
 
 /*
  * This variant of list_concat_unique() determines list membership via
@@ -905,6 +1033,9 @@ List *
 list_concat_unique_ptr(List *list1, List *list2)
 {
 	ListCell   *cell;
+
+	Assert(IsPointerList(list1));
+	Assert(IsPointerList(list2));
 
 	foreach(cell, list2)
 	{
@@ -924,6 +1055,9 @@ list_concat_unique_int(List *list1, List *list2)
 {
 	ListCell   *cell;
 
+	Assert(IsIntegerList(list1));
+	Assert(IsIntegerList(list2));
+
 	foreach(cell, list2)
 	{
 		if (!list_member_int(list1, lfirst_int(cell)))
@@ -941,6 +1075,9 @@ List *
 list_concat_unique_oid(List *list1, List *list2)
 {
 	ListCell   *cell;
+
+	Assert(IsOidList(list1));
+	Assert(IsOidList(list2));
 
 	foreach(cell, list2)
 	{
@@ -1005,6 +1142,7 @@ list_free_deep(List *list)
 	/*
 	 * A "deep" free operation only makes sense on a list of pointers.
 	 */
+	Assert(IsPointerList(list));
 	list_free_private(list, true);
 }
 
@@ -1105,33 +1243,6 @@ list_copy_tail(const List *oldlist, int nskip)
 }
 
 /*
- * When using non-GCC compilers, we can't define these as inline
- * functions in pg_list.h, so they are defined here.
- *
- * TODO: investigate supporting inlining for some non-GCC compilers.
- */
-#ifndef __GNUC__
-
-ListCell *
-list_head(const List *l)
-{
-	return l ? l->head : NULL;
-}
-
-ListCell *
-list_tail(List *l)
-{
-	return l ? l->tail : NULL;
-}
-
-int
-list_length(const List *l)
-{
-	return l ? l->length : 0;
-}
-#endif   /* ! __GNUC__ */
-
-/*
  * Temporary compatibility functions
  *
  * In order to avoid warnings for these function definitions, we need
@@ -1152,5 +1263,5 @@ int			length(const List *list);
 int
 length(const List *list)
 {
-	return list_length((List *)list);
+	return list_length(list);
 }

@@ -30,6 +30,7 @@ pgpool_SOURCES = main/main.c \
 	parallel_query/pool_rewrite_outfuncs.c \
 	utils/pool_select_walker.c \
 	utils/strlcpy.c \
+	utils/psprintf.c \
 	utils/pool_params.c \
 	utils/ps_status.c \
 	utils/pool_shmem.c \

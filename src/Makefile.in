@@ -121,11 +121,11 @@ am_pgpool_OBJECTS = main/main.$(OBJEXT) main/pool_globals.$(OBJEXT) \
 	parallel_query/pool_rewrite_query.$(OBJEXT) \
 	parallel_query/pool_rewrite_outfuncs.$(OBJEXT) \
 	utils/pool_select_walker.$(OBJEXT) utils/strlcpy.$(OBJEXT) \
-	utils/pool_params.$(OBJEXT) utils/ps_status.$(OBJEXT) \
-	utils/pool_shmem.$(OBJEXT) utils/pool_error.$(OBJEXT) \
-	utils/pool_sema.$(OBJEXT) utils/pool_signal.$(OBJEXT) \
-	utils/pool_path.$(OBJEXT) utils/pool_ip.$(OBJEXT) \
-	utils/pool_relcache.$(OBJEXT) \
+	utils/psprintf.$(OBJEXT) utils/pool_params.$(OBJEXT) \
+	utils/ps_status.$(OBJEXT) utils/pool_shmem.$(OBJEXT) \
+	utils/pool_error.$(OBJEXT) utils/pool_sema.$(OBJEXT) \
+	utils/pool_signal.$(OBJEXT) utils/pool_path.$(OBJEXT) \
+	utils/pool_ip.$(OBJEXT) utils/pool_relcache.$(OBJEXT) \
 	utils/pool_process_reporting.$(OBJEXT) \
 	utils/pool_ssl.$(OBJEXT) utils/pool_stream.$(OBJEXT) \
 	utils/getopt_long.$(OBJEXT) utils/mmgr/mcxt.$(OBJEXT) \
@@ -439,6 +439,7 @@ pgpool_SOURCES = main/main.c \
 	parallel_query/pool_rewrite_outfuncs.c \
 	utils/pool_select_walker.c \
 	utils/strlcpy.c \
+	utils/psprintf.c \
 	utils/pool_params.c \
 	utils/ps_status.c \
 	utils/pool_shmem.c \
@@ -760,6 +761,8 @@ utils/pool_select_walker.$(OBJEXT): utils/$(am__dirstamp) \
 	utils/$(DEPDIR)/$(am__dirstamp)
 utils/strlcpy.$(OBJEXT): utils/$(am__dirstamp) \
 	utils/$(DEPDIR)/$(am__dirstamp)
+utils/psprintf.$(OBJEXT): utils/$(am__dirstamp) \
+	utils/$(DEPDIR)/$(am__dirstamp)
 utils/pool_params.$(OBJEXT): utils/$(am__dirstamp) \
 	utils/$(DEPDIR)/$(am__dirstamp)
 utils/ps_status.$(OBJEXT): utils/$(am__dirstamp) \
@@ -883,6 +886,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/pool_ssl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/pool_stream.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/ps_status.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/psprintf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/strlcpy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/error/$(DEPDIR)/assert.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/error/$(DEPDIR)/elog.Po@am__quote@

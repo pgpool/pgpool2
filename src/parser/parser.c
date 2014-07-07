@@ -10,8 +10,8 @@
  * analyze.c and related files.
  *
  *
- * Portions Copyright (c) 2003-2009, PgPool Global Development Group
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2014, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -38,6 +38,7 @@ static	bool		in_parser_context = false;
 static int
 parse_version(const char *versionString);
 
+
 /*
  * raw_parser
  *		Given a query in string form, do lexical and grammatical analysis.
@@ -51,16 +52,16 @@ raw_parser(const char *str)
 	base_yy_extra_type yyextra;
 	int			yyresult;
     MemoryContext oldContext = CurrentMemoryContext;
-
+	
 	parsetree = NIL;			/* in case grammar forgets to set it */
-
+	
 	/* initialize the flex scanner */
 	yyscanner = scanner_init(str, &yyextra.core_yy_extra,
 							 ScanKeywords, NumScanKeywords);
-
+	
 	/* base_yylex() only needs this much initialization */
 	yyextra.have_lookahead = false;
-
+	
 	/* initialize the bison parser */
 	parser_init(&yyextra);
 	in_parser_context = true;
@@ -84,15 +85,13 @@ raw_parser(const char *str)
 	return yyextra.parsetree;
 }
 
-void free_parser(void)
-{
-}
+
 
 /*
- * Intermediate filter between parser and base lexer (base_yylex in scan.l).
+ * Intermediate filter between parser and core lexer (core_yylex in scan.l).
  *
  * The filter is needed because in some cases the standard SQL grammar
- * requires more than one token lookahead.	We reduce these cases to one-token
+ * requires more than one token lookahead.  We reduce these cases to one-token
  * lookahead by combining tokens here, in order to keep the grammar LALR(1).
  *
  * Using a filter is simpler than trying to recognize multiword tokens
@@ -160,7 +159,7 @@ base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 		case WITH:
 
 			/*
-			 * WITH TIME must be reduced to one token
+			 * WITH TIME and WITH ORDINALITY must each be reduced to one token
 			 */
 			cur_yylval = lvalp->core_yystype;
 			cur_yylloc = *llocp;
@@ -169,6 +168,9 @@ base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 			{
 				case TIME:
 					cur_token = WITH_TIME;
+					break;
+				case ORDINALITY:
+					cur_token = WITH_ORDINALITY;
 					break;
 				default:
 					/* save the lookahead token for next time */
@@ -190,23 +192,22 @@ base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 	return cur_token;
 }
 
-
 static int
 parse_version(const char *versionString)
 {
 	int			cnt;
 	int			vmaj,
-				vmin,
-				vrev;
-
+	vmin,
+	vrev;
+	
 	cnt = sscanf(versionString, "%d.%d.%d", &vmaj, &vmin, &vrev);
-
+	
 	if (cnt < 2)
 		return -1;
-
+	
 	if (cnt == 2)
 		vrev = 0;
-
+	
 	return (100 * vmaj + vmin) * 100 + vrev;
 }
 
@@ -244,3 +245,4 @@ pg_mblen(const char *mbstr)
 {
 	return pg_utf_mblen((const unsigned char *) mbstr);
 }
+

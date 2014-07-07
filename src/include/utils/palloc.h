@@ -28,6 +28,8 @@
 #ifndef PALLOC_H
 #define PALLOC_H
 
+#include "pg_config_manual.h"
+
 /*
  * Type MemoryContextData is declared in nodes/memnodes.h.	Most users
  * of memory allocation should just treat it as an abstract type, so we
@@ -101,5 +103,13 @@ extern void *palloc(Size size);
 extern void *palloc0(Size size);
 extern void pfree(void *pointer);
 extern void *repalloc(void *pointer, Size size);
+/* sprintf into a palloc'd buffer --- these are in psprintf.c */
+extern char *
+psprintf(const char *fmt,...)
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
+extern size_t
+pvsnprintf(char *buf, size_t len, const char *fmt, va_list args)
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 0)));
+
 
 #endif   /* PALLOC_H */
