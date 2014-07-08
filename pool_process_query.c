@@ -3534,7 +3534,7 @@ static char *get_insert_command_table_name(InsertStmt *node)
 
 	pool_memory_context_switch_to(old_context);
 
-	pool_debug("get_insert_command_table_name: extracted table name: %s", p);
+	pool_debug("get_insert_command_table_name: extracted table name: %s", table);
 	return table;
 }
 
