@@ -3327,8 +3327,8 @@ static char *get_insert_command_table_name(InsertStmt *node)
 	pfree(p);
 
 	MemoryContextSwitchTo(old_context);
-
-	pool_debug("get_insert_command_table_name: extracted table name: %s", p);
+	ereport(DEBUG2,
+            (errmsg("table name in insert command is \"%s\"", table)));
 	return table;
 }
 
