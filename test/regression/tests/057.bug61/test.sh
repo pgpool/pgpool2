@@ -28,13 +28,26 @@ wait_for_pgpool_startup
 
 $PGBENCH -i test
 
-EXPECT='psql: FATAL: no PostgreSQL user name specified in startup packet'
-RESULT=`$PSQL -p $PGPOOL_PORT -U '' test 2>&1`
+# Pre 9.4 libpq does not allow to specify NULL username
+echo "psql: FATAL: no PostgreSQL user name specified in startup packet" > expected.txt
+echo "\\q"|$PSQL -p $PGPOOL_PORT -U '' test > psql.log 2>&1
+psqlresult=$?
 
-if [ $RESULT -ne '' $EXPECT ]; then
-	./shutdownall
-    exit 1
-fi
+cat psql.log
+diff -b psql.log expected.txt
+diffresult=$?
 
 ./shutdownall
+
+if [ $psqlresult -ne 0 ];then
+	if [ $diffresult -eq 0 ]; then
+		# must be pre 9.4
+		exit 0
+	else
+		# pre 9.4 but does not work well or there's something wrong.
+		exit 1
+	fi
+fi
+# other case is all good
+
 exit 0
