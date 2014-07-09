@@ -122,7 +122,7 @@ static RETSIGTYPE wakeup_handler(int sig);
 static void initialize_shared_mem_objects(void);
 static int trigger_failover_command(int node, const char *command_line,
 									int old_master, int new_master, int old_primary);
-static POOL_CONNECTION_POOL_SLOT* verify_backend_node_status(int backend_no, bool* is_standby);
+static bool verify_backend_node_status(int backend_no, bool* is_standby);
 static int find_primary_node(void);
 static int find_primary_node_repeatedly(void);
 static void terminate_all_childrens();
@@ -2116,10 +2116,11 @@ static int trigger_failover_command(int node, const char *command_line,
 }
 /*
  * This function is used by find_primary_node() function and is just a wrapper
- * over make_persistent_db_connection() function and does not throws ereport
- * in case of connection fails but returns NULL in case of failure.
+ * over make_persistent_db_connection() function and returns boolean value to 
+ * inform connection status
+ * This function must not throws ereport
  */
-static POOL_CONNECTION_POOL_SLOT*
+static bool
     verify_backend_node_status(int backend_no, bool* is_standby)
 {
 	POOL_CONNECTION_POOL_SLOT   *s = NULL;
@@ -2160,8 +2161,9 @@ static POOL_CONNECTION_POOL_SLOT*
 		}
 		free_select_result(res);
 		discard_persistent_db_connection(s);
+		return true;
 	}
-	return s;
+	return false;
 }
 
 /*
@@ -2170,8 +2172,6 @@ static POOL_CONNECTION_POOL_SLOT*
  */
 static int find_primary_node(void)
 {
-	POOL_CONNECTION_POOL_SLOT *s;
-	bool is_standby;
 	int i;
 
 	/* Streaming replication mode? */
@@ -2181,18 +2181,23 @@ static int find_primary_node(void)
 		/* No point to look for primary node if not in streaming
 		 * replication mode.
 		 */
-		pool_debug("find_primary_node: not in streaming replication mode");
+		ereport(DEBUG1,
+				(errmsg("find_primary_node: not in streaming replication mode")));
 		return -1;
 	}
 
 	for(i=0;i<NUM_BACKENDS;i++)
 	{
-        pool_error("find_primary_node: checking backend no %d\n",i);
+		bool node_status;
+		bool is_standby;
+
+		ereport(LOG,
+				(errmsg("find_primary_node: checking backend no %d\n",i)));
 
 		if (!VALID_BACKEND(i))
 			continue;
-        s = verify_backend_node_status(i,&is_standby);
-        if (!s)
+		node_status = verify_backend_node_status(i,&is_standby);
+        if (!node_status)
         {
             /*
              * It is possible that a node is down even if
@@ -2203,14 +2208,16 @@ static int find_primary_node(void)
             continue;
         }
 		if (is_standby)
-			pool_debug("find_primary_node: %d node is standby", i);
+			ereport(DEBUG1,
+					(errmsg("find_primary_node: %d node is standby", i)));
 		else
 			break;
 	}
 
 	if (i == NUM_BACKENDS)
 	{
-		pool_debug("find_primary_node: no primary node found");
+		ereport(DEBUG1,
+				(errmsg("find_primary_node: no primary node found")));
 		return -1;
 	}
 
