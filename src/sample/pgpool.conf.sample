@@ -391,7 +391,12 @@ health_check_max_retries = 0
                                    # Maximum number of times to retry a failed health check before giving up.
 health_check_retry_delay = 1
                                    # Amount of time to wait (in seconds) between retries.
-
+connect_timeout = 1000
+                                   # Timeout value in milliseconds before giving up to connect to backend.
+								   # Default is 1000 ms (1 second). Flaky network user may want to increase
+								   # the value. 0 means no timeout.
+								   # Note that this value is not only used for health check,
+								   # but also for ordinary conection to backend.
 
 #------------------------------------------------------------------------------
 # FAILOVER AND FAILBACK

@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -521,17 +521,11 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 	struct sockaddr_in addr;
 	struct hostent *hp;
 	struct timeval timeout;
+	struct timeval *tm;
 	fd_set rset, wset;
 	int error;
 	socklen_t socklen;
 	int sts;
-
-#define CONNECT_TIMEOUT_MSEC 1000		/* specify select(2) timeout in milliseconds */
-#define CONNECT_TIMEOUT_SEC CONNECT_TIMEOUT_MSEC/1000	/* seconds part */
-/* microseconds part */
-#define CONNECT_TIMEOUT_MICROSEC (CONNECT_TIMEOUT_SEC == 0?CONNECT_TIMEOUT_MSEC*1000:\
-								  CONNECT_TIMEOUT_MSEC*1000 - CONNECT_TIMEOUT_SEC*1000*1000)
-
 
 	fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (fd < 0)
@@ -602,30 +596,46 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 			 */
 			if (errno != EINPROGRESS && errno != EALREADY)
 			{
-				pool_error("connect_inet_domain_socket: connect() failed: %s",strerror(errno));
+				pool_error("connect_inet_domain_socket(%s:%d): connect() failed: %s",
+						   host, port, strerror(errno));
 				close(fd);
 				return -1;
 			}
 
-			timeout.tv_sec = CONNECT_TIMEOUT_SEC;
-			timeout.tv_usec = CONNECT_TIMEOUT_MICROSEC;
+			if (pool_config->connect_timeout == 0)
+				tm = NULL;
+			else
+			{
+				tm = &timeout;
+				timeout.tv_sec = pool_config->connect_timeout/1000;
+				if (timeout.tv_sec == 0)
+				{
+					timeout.tv_usec = pool_config->connect_timeout*1000;
+				}
+				else
+				{
+					timeout.tv_usec = (pool_config->connect_timeout - timeout.tv_sec*1000)*1000;
+				}
+			}
+
 			FD_ZERO(&rset);
 			FD_SET(fd, &rset);	
 			FD_ZERO(&wset);
 			FD_SET(fd, &wset);
-			sts = select(fd+1, &rset, &wset, NULL, &timeout);
+			sts = select(fd+1, &rset, &wset, NULL, tm);
 
 			if (sts == 0)
 			{
 				/* select timeout */
 				if (retry)
 				{
-					pool_log("connect_inet_domain_socket: select() timed out. retrying...");
+					pool_log("connect_inet_domain_socket(%s:%d): select() timed out. retrying...",
+							 host, port);
 					continue;
 				}
 				else
 				{
-					pool_error("connect_inet_domain_socket: select() timed out");
+					pool_error("connect_inet_domain_socket(%s:%d): select() timed out", host, port);
 					close(fd);
 					return -1;
 				}
@@ -647,7 +657,8 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 					if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &socklen) < 0)
 					{
 						/* Solaris returns error in this case */
-						pool_error("connect_inet_domain_socket: getsockopt() failed: %s", strerror(errno));
+						pool_error("connect_inet_domain_socket(%s:%d): getsockopt() failed: %s",
+								   host, port, strerror(errno));
 						close(fd);
 						return -1;
 					}
@@ -655,14 +666,16 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 					/* Non Solaris case */
 					if (error != 0)
 					{
-						pool_error("connect_inet_domain_socket: getsockopt() detected error: %s", strerror(error));
+						pool_error("connect_inet_domain_socket(%s:%d): getsockopt() detected error: %s",
+								   host, port, strerror(error));
 						close(fd);
 						return -1;
 					}
 				}
 				else
 				{
-					pool_error("connect_inet_domain_socket: both read data and write data was not set");
+					pool_error("connect_inet_domain_socket(%s:%d): both read data and write data was not set",
+							   host, port);
 					close(fd);
 					return -1;
 				}
@@ -671,10 +684,12 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 			{
 				if((errno == EINTR && retry) || errno == EAGAIN)
 				{
-					pool_log("connect_inet_domain_socket: select() interrupted. retrying...");
+					pool_log("connect_inet_domain_socket(%s:%d): select() interrupted. retrying...",
+							 host, port);
 					continue;
 				}
-				pool_log("connect_inet_domain_socket: select() interrupted");
+				pool_log("connect_inet_domain_socket(%s:%d): select() interrupted",
+						 host, port);
 				close(fd);
 				return -1;
 			}

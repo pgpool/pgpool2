@@ -1017,6 +1017,19 @@ local0.*    /var/log/pgpool.log
       </p>
     </dd>
 
+<dt><a name="CONNECT_TIMEOUT"></a>connect_timeout <span class="version">V3.4 -</span></dt>
+    <dd>
+	  <p>Timeout value in milliseconds before giving up connecting to
+		backend using connect() system call.  Default is 1000 ms (1
+		second). Flaky network user may want to increase the value. 0
+		means no timeout.  Note that this value is not only used for
+		health check, but also for creating ordinary conection pools.
+	  </p>
+    <p>
+      You need to reload pgpool.conf if you change connect_timeout.
+    </p>
+    </dd>
+
 <dt><a name="SEARCH_PRIMARY_NODE_TIMEOUT"></a>search_primary_node_timeout <span class="version">V3.3 -</span></dt>
     <dd>
     <p>The parameter specifies the maximum amount of time in seconds to search

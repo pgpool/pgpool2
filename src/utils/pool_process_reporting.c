@@ -558,6 +558,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	StrNCpy(status[i].desc, "health check retry delay", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "connect_timeout", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->connect_timeout);
+	StrNCpy(status[i].desc, "connect timeout", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	/* FAILOVER AND FAILBACK */
 
 	StrNCpy(status[i].name, "failover_command", POOLCONFIG_MAXNAMELEN);

@@ -133,6 +133,7 @@ typedef struct {
 	char *health_check_password; /* password for health check username */
 	int health_check_max_retries;	/* health check max retries */
 	int health_check_retry_delay;	/* amount of time to wait between retries */
+	int connect_timeout;		/* timeout value before giving up connecting to backend */
 	int sr_check_period;		/* streaming replication check period */
 	char *sr_check_user;		/* PostgreSQL user name streaming replication check */
 	char *sr_check_password;	/* password for sr_check_user */

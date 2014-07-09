@@ -1011,6 +1011,17 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
+<dt><a name="CONNECT_TIMEOUT"></a>connect_timeout <span class="version">V3.4 -</span></dt>
+    <dd>
+	  <p>connect()システムコールを使ってバックエンドに接続する際のタイムアウト値をミリ秒単位で指定します。
+		デフォルトは1000ミリ秒(1秒)です。不安定なネットワークを使わなければならない場合は、この値を大きくすると良いでしょう。
+		0を指定すると、タイムアウトしません。
+	  </p>
+    <p>
+    <a href="#CONNECT_TIMEOUT">connect_timeout</a>を変更した場合は、pgpool.confの再読込が必要です。
+    </p>
+    </dd>
+
     <dt><a name="SEARCH_PRIMARY_NODE_TIMEOUT"></a>search_primary_node_timeout <span class="version">V3.3 -</span></dt>
     <dd>
     <p>このパラメータはフェイルオーバーが起きた時にプライマリノードを検索する際のタイムアウト時間を秒単位で指定します。

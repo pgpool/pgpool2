@@ -1934,6 +1934,7 @@ int pool_init_config(void)
 	pool_config->health_check_password = "";
 	pool_config->health_check_max_retries = 0;
 	pool_config->health_check_retry_delay = 1;
+	pool_config->connect_timeout = 1000;
 	pool_config->sr_check_period = 0;
 	pool_config->sr_check_user = "nobody";
 	pool_config->sr_check_password = "";
@@ -3136,6 +3137,19 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
                         }
                         pool_config->health_check_retry_delay = v;
                 }
+		else if (!strcmp(key, "connect_timeout") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			int v = atoi(yytext);
+
+			if (token != POOL_INTEGER || v < 0)
+			{
+				pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->connect_timeout = v;
+		}
 
 		else if (!strcmp(key, "sr_check_period") &&
 				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
