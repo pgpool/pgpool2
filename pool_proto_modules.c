@@ -1949,6 +1949,7 @@ POOL_STATUS ParameterDescription(POOL_CONNECTION *frontend,
 			if (status < 0)
 			{
 				pool_error("ParameterDescription: error while reading message length");
+                free(p1);
 				return POOL_END;
 			}
 
@@ -1957,8 +1958,10 @@ POOL_STATUS ParameterDescription(POOL_CONNECTION *frontend,
 
 			p = pool_read2(CONNECTION(backend, i), len);
 			if (p == NULL)
+            {
+                free(p1);
 				return POOL_END;
-
+            }
 			if (len != len1)
 			{
 				pool_debug("ParameterDescription: length does not match between backends master(%d) %d th backend(%d) kind:(%c)",
@@ -1985,7 +1988,6 @@ POOL_STATUS ParameterDescription(POOL_CONNECTION *frontend,
 	}
 
 	free(p1);
-
 	return POOL_CONTINUE;
 }
 
