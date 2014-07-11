@@ -2043,7 +2043,6 @@ POOL_STATUS ParameterDescription(POOL_CONNECTION *frontend,
 	int len, len1 = 0;
 	char *p = NULL;
 	char *p1 = NULL;
-	int status;
 	int sendlen;
 	int i;
 
@@ -2060,56 +2059,45 @@ POOL_STATUS ParameterDescription(POOL_CONNECTION *frontend,
 	/* get number of parameters in original query */
 	num_params = session_context->query_context->num_original_params;
 
-	status = pool_read(MASTER(backend), &len, sizeof(len));
-	if (status < 0)
-	{
-		pool_error("ParameterDescription: error while reading message length");
-		return POOL_END;
-	}
+	pool_read(MASTER(backend), &len, sizeof(len));
 
 	len = ntohl(len);
 	len -= sizeof(int32);
 	len1 = len;
 
 	/* number of parameters in rewritten query is just discarded */
-	status = pool_read(MASTER(backend), &num_dmy, sizeof(int16));
+	pool_read(MASTER(backend), &num_dmy, sizeof(int16));
 	len -= sizeof(int16);
 
 	p = pool_read2(MASTER(backend), len);
 	if (p == NULL)
-		return POOL_END;
+        ereport(ERROR,
+				(errmsg("ParameterDescription. connection error"),
+                 errdetail("read from backend failed")));
 
-	p1 = malloc(len);
-	if (p1 == NULL)
-	{
-		pool_error("ParameterDescription: malloc failed");
-		return POOL_ERROR;
-	}
+
+	p1 = palloc(len);
 	memcpy(p1, p, len);
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
 		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 		{
-			status = pool_read(CONNECTION(backend, i), &len, sizeof(len));
-			if (status < 0)
-			{
-				pool_error("ParameterDescription: error while reading message length");
-				return POOL_END;
-			}
+			pool_read(CONNECTION(backend, i), &len, sizeof(len));
 
 			len = ntohl(len);
 			len -= sizeof(int32);
 
 			p = pool_read2(CONNECTION(backend, i), len);
 			if (p == NULL)
-				return POOL_END;
+				ereport(ERROR,
+						(errmsg("ParameterDescription. connection error"),
+						 errdetail("read from backend no %d failed",i)));
 
 			if (len != len1)
-			{
-				pool_debug("ParameterDescription: length does not match between backends master(%d) %d th backend(%d) kind:(%c)",
-						   len, i, len1, kind);
-			}
+				ereport(DEBUG1,
+						(errmsg("ParameterDescription. backends does not match"),
+						 errdetail("length does not match between backends master(%d) %d th backend(%d) kind:(%c)",len, i, len1, kind)));
 		}
 	}
 
@@ -2124,14 +2112,12 @@ POOL_STATUS ParameterDescription(POOL_CONNECTION *frontend,
 	pool_write(frontend, &send_num_params, sizeof(int16));
 
 	if (pool_write_and_flush(frontend, p1, num_params * sizeof(int32)) < 0)
-	{
-		pool_error("ParameterDescription: pool_write_and_flush failed");
-		free(p1);
-		return POOL_END;
-	}
+		ereport(ERROR,
+				(errmsg("ParameterDescription. connection error"),
+				 errdetail("unable to write data to frontend")));
 
-	free(p1);
 
+	pfree(p1);
 	return POOL_CONTINUE;
 }
 

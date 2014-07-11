@@ -79,9 +79,9 @@ void pool_query_context_destroy(POOL_QUERY_CONTEXT *query_context)
 		session_context = pool_get_session_context(false);
 		pool_unset_query_in_progress();
 		MemoryContextDelete(query_context->memory_context);
-		pfree(query_context);
 		query_context->original_query = NULL;
 		session_context->query_context = NULL;
+		pfree(query_context);
 	}
 }
 
