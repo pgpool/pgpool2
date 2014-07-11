@@ -247,6 +247,7 @@ exec_ping(void * arg)
 			else if (WEXITSTATUS(status) != 0)
 			{
 				pool_debug("exec_ping: failed to ping %s: exit code %d", thread_arg->hostname, WEXITSTATUS(status));
+				close(pfd[0]);
 				return WD_NG;
 			}
 			else
