@@ -736,17 +736,24 @@ static void parse_hba(List *line, int line_num, POOL_CONNECTION *frontend,
 		pool_error("parse_hba: strdup failed: %s", strerror(errno));
 		exit(1);
 	}
+	if (!check_db(frontend->database, frontend->username, db_tmp))
+	{
+		free(db_tmp);
+		return;
+	}
+	free(db_tmp);
+
 	user_tmp = strdup(user);
 	if (user_tmp == NULL)
 	{
 		pool_error("parse_hba: strdup failed: %s", strerror(errno));
 		exit(1);
 	}
-	if (!check_db(frontend->database, frontend->username, db_tmp))
-		return;
 	if (!check_user(frontend->username, user_tmp))
+	{
+		free(user_tmp);
         return;
-	free(db_tmp);
+	}
 	free(user_tmp);
 
 	/* Success */
