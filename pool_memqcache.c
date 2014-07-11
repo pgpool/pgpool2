@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -3129,8 +3129,10 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 			{
 				pool_error("ReadyForQuery: pool_commit_cache failed");
 			}
-			free(oids);
-			free(cache_buffer);
+			if (oids)
+				free(oids);
+			if (cache_buffer)
+				free(cache_buffer);
 		}
 		pool_shmem_unlock();
 		POOL_SETMASK(&oldmask);
