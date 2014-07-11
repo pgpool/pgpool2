@@ -378,7 +378,7 @@ POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend,
 						  POOL_CONNECTION_POOL *backend)
 {
 	char *string = NULL;
-	int len;
+	int len = 0;
 	int i;
 	POOL_STATUS ret = POOL_CONTINUE;
 
@@ -484,7 +484,7 @@ POOL_STATUS NoticeResponse(POOL_CONNECTION *frontend,
 						   POOL_CONNECTION_POOL *backend)
 {
 	char *string = NULL;
-	int len;
+	int len = 0;
 	int i;
 
 	for (i=0;i<NUM_BACKENDS;i++)
@@ -532,6 +532,8 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 			{
 				pid1 = pid;
 				len1 = len;
+	            if(condition1)
+                    free(condition1);
 				condition1 = strdup(condition);
 			}
 		}
