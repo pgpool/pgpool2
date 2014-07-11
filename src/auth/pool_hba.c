@@ -709,12 +709,19 @@ static void parse_hba(List *line, int line_num, POOL_CONNECTION *frontend,
 	 * will override '\001' with '\0'.
 	 */
 	db_tmp = pstrdup(db);
-	user_tmp = pstrdup(user);
 	if (!check_db(frontend->database, frontend->username, db_tmp))
+	{
+		pfree(db_tmp);
 		return;
-	if (!check_user(frontend->username, user_tmp))
-        return;
+	}
 	pfree(db_tmp);
+
+	user_tmp = pstrdup(user);
+	if (!check_user(frontend->username, user_tmp))
+	{
+		pfree(user_tmp);
+        return;
+	}
 	pfree(user_tmp);
 
 	/* Success */
