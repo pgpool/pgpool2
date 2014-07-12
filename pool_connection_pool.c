@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -517,7 +517,7 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 	socklen_t socklen;
 	int sts;
 
-#define CONNECT_TIMEOUT_MSEC 1000		/* specify select(2) timeout in milliseconds */
+#define CONNECT_TIMEOUT_MSEC 10000		/* specify select(2) timeout in milliseconds */
 #define CONNECT_TIMEOUT_SEC CONNECT_TIMEOUT_MSEC/1000	/* seconds part */
 /* microseconds part */
 #define CONNECT_TIMEOUT_MICROSEC (CONNECT_TIMEOUT_SEC == 0?CONNECT_TIMEOUT_MSEC*1000:\
