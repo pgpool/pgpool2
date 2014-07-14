@@ -1934,7 +1934,7 @@ int pool_init_config(void)
 	pool_config->health_check_password = "";
 	pool_config->health_check_max_retries = 0;
 	pool_config->health_check_retry_delay = 1;
-	pool_config->connect_timeout = 1000;
+	pool_config->connect_timeout = 10000;
 	pool_config->sr_check_period = 0;
 	pool_config->sr_check_user = "nobody";
 	pool_config->sr_check_password = "";

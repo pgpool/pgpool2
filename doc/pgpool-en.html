@@ -1020,7 +1020,7 @@ local0.*    /var/log/pgpool.log
 <dt><a name="CONNECT_TIMEOUT"></a>connect_timeout <span class="version">V3.4 -</span></dt>
     <dd>
 	  <p>Timeout value in milliseconds before giving up connecting to
-		backend using connect() system call.  Default is 1000 ms (1
+		backend using connect() system call.  Default is 10000 ms (10
 		second). Flaky network user may want to increase the value. 0
 		means no timeout.  Note that this value is not only used for
 		health check, but also for creating ordinary conection pools.
