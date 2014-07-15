@@ -4795,6 +4795,7 @@ _outCommentStmt(String *str, CommentStmt *node)
 				snprintf(buf, 16, "%ld", v->val.ival);
 				string_append_char(str, buf);
 			}
+			break;
 
 		case OBJECT_CAST:
 			string_append_char(str, "CAST (");
