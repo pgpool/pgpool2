@@ -30,7 +30,6 @@
 #include "pool_config.h"
 #include "parser/parsenodes.h"
 #include "parser/parser.h"
-//#include "parser/pool_memory.h"
 #include "utils/palloc.h"
 
 typedef struct {
@@ -112,12 +111,9 @@ static void *
 ts_unregister_func(void *data)
 {
 	TSRel	*rel = (TSRel *) data;
-
-	if (rel == NULL)
-		return NULL;
-
-	free(rel);
-	return rel;
+	if (rel)
+		free(rel);
+	return (void *)0;
 }
 
 
@@ -778,7 +774,7 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend,
 	*len += (ts_len + sizeof(int32)) * message->num_tsparams;
 	/* allocate extra memory for parameter formats */
 	num_org_params = message->query_context->num_original_params;
-	new_msg = copy_to = (char *) malloc(*len + sizeof(int16) * (message->num_tsparams + num_org_params));
+	new_msg = copy_to = (char *) palloc(*len + sizeof(int16) * (message->num_tsparams + num_org_params));
 	copy_from = orig_msg;
 
 	/* portal_name */

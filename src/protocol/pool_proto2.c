@@ -374,7 +374,7 @@ POOL_STATUS EmptyQueryResponse(POOL_CONNECTION *frontend,
 POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend,
 						  POOL_CONNECTION_POOL *backend)
 {
-	char *string = NULL;
+	char *string = "";
 	int len = 0;
 	int i;
 	POOL_STATUS ret = POOL_CONTINUE;
@@ -389,7 +389,6 @@ POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend,
 				return POOL_END;
 		}
 	}
-
 	/* forward to the frontend */
 	pool_write(frontend, "E", 1);
 	pool_write_and_flush(frontend, string, len);
@@ -419,7 +418,7 @@ POOL_STATUS FunctionResultResponse(POOL_CONNECTION *frontend,
 {
 	char dummy;
 	int len;
-	char *result = 0;
+	char *result = NULL;
 	int i;
 
 	pool_write(frontend, "V", 1);
@@ -460,7 +459,13 @@ POOL_STATUS FunctionResultResponse(POOL_CONNECTION *frontend,
                                 errdetail("reading from backend node %d failed",i)));
 			}
 		}
-		pool_write(frontend, result, len);
+		if(result)
+			pool_write(frontend, result, len);
+		else
+			ereport(FATAL,
+				(return_code(2),
+					 errmsg("unable to process function result response"),
+					 errdetail("reading from backend node failed")));
 	}
 
 	for (i=0;i<NUM_BACKENDS;i++)
@@ -499,7 +504,13 @@ POOL_STATUS NoticeResponse(POOL_CONNECTION *frontend,
 
 	/* forward to the frontend */
 	pool_write(frontend, "N", 1);
-	return pool_write_and_flush(frontend, string, len);
+	if (string == NULL)
+		ereport(FATAL,
+			(return_code(2),
+				errmsg("unable to process Notice response"),
+				 errdetail("reading from backend node failed")));
+	else
+		return pool_write_and_flush(frontend, string, len);
 }
 
 POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,

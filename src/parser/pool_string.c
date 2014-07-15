@@ -32,22 +32,16 @@ String *init_string(char *str)
 	String *string = palloc(sizeof(String));
 	int size;
 
+	string->len = (str != NULL)? strlen(str): 0;
 
-	size = (strlen(str) + 1) / STRING_SIZE + 1;
+	size = (string->len + 1) / STRING_SIZE + 1;
 	string->size = size;
 	string->data = palloc(STRING_SIZE * size);
 
 	memset(string->data, 0, STRING_SIZE * size);
 
-	if (str == NULL)
-	{
-		string->len = 0;
-	}
-	else
-	{
-		string->len = strlen(str);
+	if (str != NULL)
 		memcpy(string->data, str, string->len);
-	}
 	
 	return string;
 }

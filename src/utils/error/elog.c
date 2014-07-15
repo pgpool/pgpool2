@@ -1345,9 +1345,8 @@ pg_re_throw(void)
 	}
 
 	/* Doesn't return ... */
-	fprintf(stderr,"pg_re_throw tried to return %s %d\n",
-						 __FILE__, __LINE__);
-}
+	ExceptionalCondition("pg_re_throw tried to return", "FailedAssertion",
+                         __FILE__, __LINE__);}
 
 
 /*

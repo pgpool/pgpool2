@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -88,6 +88,10 @@ typedef struct {
 } BackendStatusRecord;
 
 extern int assert_enabled;
+extern void ExceptionalCondition(const char *conditionName,
+								 const char *errorType,
+								 const char *fileName, int lineNumber) __attribute__((noreturn));
+
 #define MAXIMUM_ALIGNOF 8
 
 #define TYPEALIGN(ALIGNVAL,LEN)  \

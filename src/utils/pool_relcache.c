@@ -116,6 +116,7 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 	if (local_session_id < 0)
 	{
 		pool_error("pool_search_relcache: pool_get_local_session_id failed");
+		free(rel);
 		return NULL;
 	}
 
@@ -279,6 +280,7 @@ void *string_register_func(POOL_SELECT_RESULT *res)
 
 void *string_unregister_func(void *data)
 {
-	free(data);
-	return data;
+	if(data)
+		free(data);
+	return (void *)0;
 }
