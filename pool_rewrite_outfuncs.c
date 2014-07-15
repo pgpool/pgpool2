@@ -3947,12 +3947,10 @@ FuncChangebyAggregate(AnalyzeSelect *analyze, FuncCall *fnode)
 				free_string(sortfunc);
 				return i;
 			} else {
-				if(having)
-					free_string(having);
+				free_string(having);
 			}
 		}
-		if(sortfunc)
-			free_string(sortfunc);
+		free_string(sortfunc);
 	}
 	return -1;
 }
@@ -8269,6 +8267,7 @@ _rewriteCommentStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *db
 				snprintf(buf, 16, "%ld", v->val.ival);
 				delay_string_append_char(message, str, buf);
 			}
+			break;
 
 		case OBJECT_CAST:
 			delay_string_append_char(message, str, "CAST (");
@@ -8359,7 +8358,7 @@ _rewriteRangeSubselect(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink 
 		AnalyzeSelect *analyze;
 		analyze=message->analyze[sub_no];
 
-		if(node->alias && node->alias->colnames)
+		if(node->alias->colnames)
 		{
 			ListCell   *lc;
 			int num = list_length(node->alias->colnames);

@@ -160,7 +160,7 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, in
 						free(CONNECTION_SLOT(p, j));
 					}
 					info = p->info;
-					memset(p, 0, sizeof(POOL_CONNECTION_POOL_SLOT));
+					memset(p, 0, sizeof(POOL_CONNECTION_POOL));
 					p->info = info;
 					memset(p->info, 0, sizeof(ConnectionInfo) * MAX_NUM_BACKENDS);
 					POOL_SETMASK(&oldmask);

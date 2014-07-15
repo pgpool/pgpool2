@@ -97,13 +97,10 @@ ts_register_func(POOL_SELECT_RESULT *res)
 static void *
 ts_unregister_func(void *data)
 {
-	TSRel	*rel = (TSRel *) data;
-
-	if (rel == NULL)
-		return NULL;
-
-	free(rel);
-	return rel;
+    TSRel   *rel = (TSRel *) data;
+    if (rel)
+        free(rel);
+    return (void *)0;
 }
 
 
