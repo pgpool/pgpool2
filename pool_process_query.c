@@ -519,7 +519,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 /* used only in pool_parallel_exec */
 #define BITS (8 * sizeof(long int))
 
-static void set_fd(unsigned long fd ,unsigned long *setp)
+static void set_fd(int fd ,unsigned long *setp)
 {
 	unsigned long tmp = fd / FD_SETSIZE;
 	unsigned long rem = fd % FD_SETSIZE;
@@ -527,7 +527,7 @@ static void set_fd(unsigned long fd ,unsigned long *setp)
 }
 
 /* used only in pool_parallel_exec */
-static int isset_fd(unsigned long fd, unsigned long *setp)
+static int isset_fd(int fd, unsigned long *setp)
 {
 	unsigned long tmp = fd / FD_SETSIZE;
 	unsigned long rem = fd % FD_SETSIZE;

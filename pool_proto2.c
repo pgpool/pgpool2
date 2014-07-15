@@ -377,7 +377,7 @@ POOL_STATUS EmptyQueryResponse(POOL_CONNECTION *frontend,
 POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend,
 						  POOL_CONNECTION_POOL *backend)
 {
-	char *string = NULL;
+	char *string = "";
 	int len = 0;
 	int i;
 	POOL_STATUS ret = POOL_CONTINUE;
@@ -423,7 +423,7 @@ POOL_STATUS FunctionResultResponse(POOL_CONNECTION *frontend,
 {
 	char dummy;
 	int len;
-	char *result = 0;
+	char *result = NULL;
 	int i;
 
 	pool_write(frontend, "V", 1);
@@ -463,6 +463,8 @@ POOL_STATUS FunctionResultResponse(POOL_CONNECTION *frontend,
 					return POOL_ERROR;
 			}
 		}
+        if(result == NULL)
+            return POOL_ERROR;
 		pool_write(frontend, result, len);
 	}
 
@@ -498,12 +500,13 @@ POOL_STATUS NoticeResponse(POOL_CONNECTION *frontend,
 		}
 	}
 
+	if (string == NULL)
+		return POOL_END;
+
 	/* forward to the frontend */
 	pool_write(frontend, "N", 1);
 	if (pool_write_and_flush(frontend, string, len) < 0)
-	{
 		return POOL_END;
-	}
 	return POOL_CONTINUE;
 }
 
@@ -532,8 +535,8 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 			{
 				pid1 = pid;
 				len1 = len;
-	            if(condition1)
-                    free(condition1);
+				if(condition1)
+					free(condition1);
 				condition1 = strdup(condition);
 			}
 		}
