@@ -279,6 +279,7 @@ void *string_register_func(POOL_SELECT_RESULT *res)
 
 void *string_unregister_func(void *data)
 {
-	free(data);
-	return data;
+    if(data)
+	    free(data);
+    return (void *)0;
 }

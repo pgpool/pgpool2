@@ -29,43 +29,26 @@
 /* String Library */
 String *init_string(char *str)
 {
-	String *string = palloc(sizeof(String));
-	int size;
+    String *string = palloc(sizeof(String));
+    int size;
 
-	if (string == NULL)
-	{
-		pool_error("init_string: palloc failed: %s", strerror(errno));
-		child_exit(1);
-	}
+	string->len = (str != NULL)? strlen(str): 0;
 
-	size = (strlen(str) + 1) / STRING_SIZE + 1;
+	size = (string->len + 1) / STRING_SIZE + 1;
 	string->size = size;
 	string->data = palloc(STRING_SIZE * size);
-	if (string->data == NULL)
-	{
-		pool_error("init_string: palloc failed: %s", strerror(errno));
-		pfree(string);
-		child_exit(1);
-	}
 
 	memset(string->data, 0, STRING_SIZE * size);
 
-	if (str == NULL)
-	{
-		string->len = 0;
-	}
-	else
-	{
-		string->len = strlen(str);
+	if (str != NULL)
 		memcpy(string->data, str, string->len);
-	}
-	
+
 	return string;
 }
 
 void string_append_string(String *string, String *data)
 {
-	string_append_char(string, data->data);
+    string_append_char(string, data->data);
 }
 
 void string_append_char(String *string, char *append_data)

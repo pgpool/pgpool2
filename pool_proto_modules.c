@@ -1244,7 +1244,7 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 {
 	char *pstmt_name;
 	char *portal_name;
-	char *rewrite_msg;
+	char *rewrite_msg = NULL;
 	POOL_SENT_MESSAGE *parse_msg;
 	POOL_SENT_MESSAGE *bind_msg;
 	POOL_SESSION_CONTEXT *session_context;
@@ -1358,6 +1358,8 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	{
 		return POOL_END;
 	}
+    if(rewrite_msg)
+        free(rewrite_msg);
 
 	return POOL_CONTINUE;
 }
