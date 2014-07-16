@@ -2174,7 +2174,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 	session_context = pool_get_session_context();
 	if (!session_context)
 	{
-		pool_error("Parse: cannot get session context");
+		pool_error("ProcessFrontendResponse: cannot get session context");
 		return POOL_END;
 	}
 
