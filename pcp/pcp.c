@@ -711,6 +711,14 @@ pcp_process_info(int pid, int *array_size)
 			}
 			else if (strcmp(buf, "ProcessInfo") == 0)
 			{
+				if(process_info == NULL)
+				{
+					if (debug) fprintf(stderr, "DEBUG: invalid data.\"%s\"\n", buf);
+					free(buf);
+					errorcode = UNKNOWNERR;
+					return NULL;
+				}
+
 				process_info[offset].connection_info = &conn_info[offset];
 
 				index = (char *) memchr(buf, '\0', rsize) + 1;
@@ -1357,6 +1365,14 @@ pcp_pool_status(int *array_size)
 			}
 			else if (strcmp(buf, "ProcessConfig") == 0)
 			{
+				if(status == NULL)
+				{
+					if (debug) fprintf(stderr, "DEBUG: invalid data.\"%s\"\n", buf);
+					free(buf);
+					errorcode = UNKNOWNERR;
+					return NULL;
+				}
+
 				index = (char *) memchr(buf, '\0', rsize) + 1;
 				if (index != NULL)
 					strlcpy(status[offset].name, index, POOLCONFIG_MAXNAMELEN+1);
