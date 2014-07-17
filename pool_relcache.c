@@ -262,19 +262,7 @@ void *int_unregister_func(void *data)
 
 void *string_register_func(POOL_SELECT_RESULT *res)
 {
-	char	*ret = NULL;
-	int		 i;
-
-	if (res->numrows == 0)
-		return NULL;
-
-	for (i = 0; i < res->numrows; i++)
-	{
-		ret = strdup(res->data[i]);
-		break;
-	}
-
-	return (void *)ret;
+	return (res->numrows > 0)? strdup(res->data[0]): NULL;
 }
 
 void *string_unregister_func(void *data)
