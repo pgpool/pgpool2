@@ -705,6 +705,14 @@ pcp_process_info(int pid, int *array_size)
 			}
 			else if (strcmp(buf, "ProcessInfo") == 0)
 			{
+				if(process_info == NULL)
+				{
+					if (debug) fprintf(stderr, "DEBUG: invalid data.\"%s\"\n", buf);
+					free(buf);
+					errorcode = UNKNOWNERR;
+					return NULL;
+				}
+
 				index = (char *) memchr(buf, '\0', rsize) + 1;
 				if (index != NULL)
 					strcpy(process_info->connection_info[offset].database, index);
