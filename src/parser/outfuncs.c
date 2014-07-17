@@ -3278,8 +3278,6 @@ _outCreateTrigStmt(String *str, CreateTrigStmt *node)
 
 	if (node->events & TRIGGER_TYPE_INSERT)
 	{
-		if (has_events)
-			string_append_char(str, "OR ");
 		string_append_char(str, "INSERT ");
 		has_events = true;
 	}

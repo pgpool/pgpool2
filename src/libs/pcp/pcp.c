@@ -625,11 +625,6 @@ pcp_process_info(int pid, int *array_size)
 			return NULL;
 		rsize = ntohl(rsize);
 		buf = (char *)palloc(rsize);
-		if (buf == NULL)
-		{
-			errorcode = NOMEMERR;
-			return NULL;
-		}
 		if (pcp_read(pc, buf, rsize - sizeof(int)))
 		{
 			pfree(buf);
@@ -657,26 +652,20 @@ pcp_process_info(int pid, int *array_size)
 				*array_size = ci_size;
 
 				process_info = (ProcessInfo *)palloc(sizeof(ProcessInfo) * ci_size);
-				if (process_info == NULL)
-				{
-					pfree(buf);
-					errorcode = NOMEMERR;
-					return NULL;
-				}
-
 				conn_info = (ConnectionInfo *)palloc(sizeof(ConnectionInfo) * ci_size);
-				if  (conn_info == NULL)
-				{
-					pfree(buf);
-					pfree(process_info);
-					errorcode = NOMEMERR;
-					return NULL;
-				}
 
 				continue;
 			}
 			else if (strcmp(buf, "ProcessInfo") == 0)
 			{
+				if(process_info == NULL)
+				{
+					if (debug) fprintf(stderr, "DEBUG: invalid data.\"%s\"\n", buf);
+					pfree(buf);
+					errorcode = UNKNOWNERR;
+					return NULL;
+				}
+
 				process_info[offset].connection_info = &conn_info[offset];
 
 				index = (char *) memchr(buf, '\0', rsize) + 1;
@@ -1300,6 +1289,14 @@ pcp_pool_status(int *array_size)
 			}
 			else if (strcmp(buf, "ProcessConfig") == 0)
 			{
+				if(status == NULL)
+				{
+					if (debug) fprintf(stderr, "DEBUG: invalid data.\"%s\"\n", buf);
+					pfree(buf);
+					errorcode = UNKNOWNERR;
+					return NULL;
+				}
+
 				index = (char *) memchr(buf, '\0', rsize) + 1;
 				if (index != NULL)
 					strlcpy(status[offset].name, index, POOLCONFIG_MAXNAMELEN+1);

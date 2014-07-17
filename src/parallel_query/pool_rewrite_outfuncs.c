@@ -339,6 +339,9 @@ _checkVirtualColumn(ColumnRef *col,RewriteQuery *message)
 		}
 	}
 
+	if(!colname)
+		return check_col;
+
 	if(analyze->partstate[SELECT_FROMCLAUSE] == 'S')
 	{
 		if (message->table_relname)
@@ -2662,25 +2665,27 @@ static void writeRangeHeader(RewriteQuery *message,ConInfoTodblink *dblink, Stri
 		v_colnum = virtual->col_num;
 
 		delay_string_append_char(message, str, "SELECT ");
-
-		for(i = 0; i < v_colnum; i++)
+		if(table)
 		{
-			if(!strcmp(virtual->table_list[i],table) && virtual->valid[i] != -1)
+			for(i = 0; i < v_colnum; i++)
 			{
+				if(!strcmp(virtual->table_list[i],table) && virtual->valid[i] != -1)
+				{
 
-				if(first == 0)
-				{
-					delay_string_append_char(message, str, virtual->table_list[i]);
-					delay_string_append_char(message, str, ".");
-					delay_string_append_char(message, str, virtual->col_list[i]);
-					first = 1;
-				}
-				else
-				{
-					delay_string_append_char(message, str, ", ");
-					delay_string_append_char(message, str, virtual->table_list[i]);
-					delay_string_append_char(message, str, ".");
-					delay_string_append_char(message, str, virtual->col_list[i]);
+					if(first == 0)
+					{
+						delay_string_append_char(message, str, virtual->table_list[i]);
+						delay_string_append_char(message, str, ".");
+						delay_string_append_char(message, str, virtual->col_list[i]);
+						first = 1;
+					}
+					else
+					{
+						delay_string_append_char(message, str, ", ");
+						delay_string_append_char(message, str, virtual->table_list[i]);
+						delay_string_append_char(message, str, ".");
+						delay_string_append_char(message, str, virtual->col_list[i]);
+					}
 				}
 			}
 		}
@@ -2722,6 +2727,11 @@ static void writeRangeFooter(RewriteQuery *message,ConInfoTodblink *dblink, Stri
 	if(!table)
 	{
 		message->r_code = SELECT_RELATION_ERROR;
+		/* 
+		 * since we are unable to get the table name so nothing much we can
+		 * do so bailout
+		 */
+		return;
 	}
 
 	delay_string_append_char(message, str, table);
@@ -4166,10 +4176,11 @@ _rewriteFuncCall(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 		}
 	}
 
-	if(strcmp(funcname,"user") == 0 ||
+	if(funcname &&
+	   (strcmp(funcname,"user") == 0 ||
 	   strcmp(funcname,"current_user") == 0 ||
 	   strcmp(funcname,"session_user") == 0 ||
-	   strcmp(funcname,"current_role") == 0)
+	   strcmp(funcname,"current_role") == 0))
 		return ;
 
 	delay_string_append_char(message, str, "(");
@@ -4379,18 +4390,24 @@ _rewriteTypeName(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 				dot = 1;
 			else
 				delay_string_append_char(message, str, ".");
-				if(node->typemod < 0)
+
+			if(node->typemod < 0)
+			{
+				if(message->rewritelock != -1)
 				{
-					if(message->rewritelock != -1)
-					{
-						delay_string_append_char(message, str, "\"\"");
-						delay_string_append_char(message, str, typename);
-						delay_string_append_char(message, str, "\"\"");
-					} else {
-						delay_string_append_char(message, str, typename);
-					}
-				} else
+					delay_string_append_char(message, str, "\"\"");
 					delay_string_append_char(message, str, typename);
+					delay_string_append_char(message, str, "\"\"");
+				}
+				else
+				{
+					delay_string_append_char(message, str, typename);
+				}
+			}
+			else
+			{
+				delay_string_append_char(message, str, typename);
+			}
 		}
 	}
 
@@ -6900,8 +6917,6 @@ _rewriteCreateTrigStmt(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink 
 
 	if (node->events & TRIGGER_TYPE_INSERT)
 	{
-		if (has_events)
-			delay_string_append_char(message, str, "OR ");
 		delay_string_append_char(message, str, "INSERT ");
 		has_events = true;
 	}

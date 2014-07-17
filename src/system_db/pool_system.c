@@ -205,7 +205,7 @@ int pool_memset_system_db_info (SystemDBInfo *info)
 	else
  	{
 		info->dist_def_num = PQntuples(result);
-		if (info->dist_def_num != 0)
+		if (PQntuples(result) > 0)
 		{
 			dist_info = palloc(sizeof(DistDefInfo) * info->dist_def_num);
 		}
@@ -292,11 +292,10 @@ int pool_memset_system_db_info (SystemDBInfo *info)
 	else
  	{
 		info->repli_def_num = PQntuples(result);
-		if (info->repli_def_num != 0)
+		if (PQntuples(result) > 0)
 		{
 			repli_info = palloc(sizeof(RepliDefInfo) * info->repli_def_num);
 		}
-
 
 		info->repli_def_slot = repli_info;
 
