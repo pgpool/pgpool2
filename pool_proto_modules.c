@@ -2556,7 +2556,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 	if (pool_read(frontend, &fkind, 1) < 0)
 	{
 		pool_log("ProcessFrontendResponse: failed to read kind from frontend. frontend abnormally exited");
-		return POOL_END;
+		return POOL_END_WITH_FRONTEND_ERROR;
 	}
 
 	pool_debug("ProcessFrontendResponse: kind from frontend %c(%02x)", fkind, fkind);
