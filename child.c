@@ -358,12 +358,15 @@ void do_child(int unix_fd, int inet_fd)
 			{
 				/* client exits */
 				case POOL_END:
+				case POOL_END_WITH_FRONTEND_ERROR:
 					/*
 					 * do not cache connection if:
+					 * frontend abnormally exits or
 					 * pool_config->connection_cahe == 0 or
 					 * database name is template0, template1, postgres or regression
 					 */
-					if (pool_config->connection_cache == 0 ||
+					if (status == POOL_END_WITH_FRONTEND_ERROR ||
+						pool_config->connection_cache == 0 ||
 						!strcmp(sp->database, "template0") ||
 						!strcmp(sp->database, "template1") ||
 						!strcmp(sp->database, "postgres") ||
