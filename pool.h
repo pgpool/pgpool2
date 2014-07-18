@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2012	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -78,6 +78,7 @@ typedef enum {
 	POOL_CONTINUE = 0,
 	POOL_IDLE,
 	POOL_END,
+	POOL_END_WITH_FRONTEND_ERROR,
 	POOL_ERROR,
 	POOL_FATAL,
 	POOL_DEADLOCK
