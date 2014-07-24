@@ -4870,12 +4870,12 @@ SELECT_RETRY:
 
 			if (idle_count > pool_config->client_idle_limit)
 			{
-				pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit(%d) reached",
+				pool_log("pool_process_query: child connection forced to terminate due to client_idle_limit (%d) reached",
 						 pool_config->client_idle_limit);
 				pool_send_error_message(frontend, MAJOR(backend),
 										"57000", "connection terminated due to client idle limit reached",
 										"","",  __FILE__, __LINE__);
-				return POOL_END;
+				return POOL_END_WITH_FRONTEND_ERROR;
 			}
 		}
 		else if (*InRecovery > RECOVERY_INIT && pool_config->client_idle_limit_in_recovery > 0)
