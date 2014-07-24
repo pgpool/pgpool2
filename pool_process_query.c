@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -266,7 +266,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 						pool_send_error_message(frontend, MAJOR(backend),
 												"57000", "connection terminated due to client idle limit reached",
 												"","",  __FILE__, __LINE__);
-						return POOL_END;
+						return POOL_END_WITH_FRONTEND_ERROR;
 					}
 				}
 				else if (*InRecovery > 0 && pool_config->client_idle_limit_in_recovery > 0)
