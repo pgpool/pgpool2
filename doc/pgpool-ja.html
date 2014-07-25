@@ -5055,6 +5055,7 @@ yamaguti public tellers bid 4 tid bid tbalance filler integer integer integer ch
 pcp_detach_node  [-g] _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
 
 pgpool-IIのノードを切り離します。
+<p>すでにpgpool-IIに接続しているセッションは強制的に切断されます。</p>
 -gを指定すると、すべてのクライアントが接続を終了するまでノードを復帰しません。
 (ただし、client_idle_limit_in_recovery が -1 あるいは、recovery_timeout が設定されている場合を除く)
 </pre>
