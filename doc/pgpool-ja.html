@@ -4961,6 +4961,7 @@ BackendErrorと表示され、<a href="#exit_status">終了コード 12</a> で�
 <dt>説明</dt>
 <dd>
 <p>pgpool-II のノードを切り離します。</p>
+<p>すでにpgpool-IIに接続しているセッションは強制的に切断されます。
 <p><code>-g</code> を指定すると、すべてのクライアントが接続を終了するまでノードを復帰しません。
 （ただし、<a href="#CLIENT_IDLE_LIMIT_IN_RECOVERY">client_idle_limit_in_recovery</a> が -1
 あるいは、<a href="#RECOVERY_TIMEOUT">recovery_timeout</a> が設定されている場合を除く）
