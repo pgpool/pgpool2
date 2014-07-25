@@ -3858,6 +3858,7 @@ pcp_detach_node  [-g] _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
 </pre>
 <p>
 Detaches the given node from pgpool-II.
+Exisiting connections to pgpool-II are forced to be disconnected.
 If -g is given, wait until all clients are disconnected (unless
 client_idle_limit_in_recovery is -1 or recovery_timeout is expired).
 </p>
