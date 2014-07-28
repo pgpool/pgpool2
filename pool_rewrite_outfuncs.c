@@ -5113,7 +5113,7 @@ _rewriteColumnRef(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dbli
 	List *list;
 	char first = 0;
 	char *table_name = NULL;
-  char *column_name = NULL;
+	char *column_name = "";
 
 	if(CheckAggOpt(message))
 	{
