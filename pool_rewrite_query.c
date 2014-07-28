@@ -167,7 +167,7 @@ static void examInsertStmt(Node *node,POOL_CONNECTION_POOL *backend, RewriteQuer
 		return;
 	}
 
-	list_t = (List *)(((SelectStmt *)insert->selectStmt)->valuesLists);
+	list_t = insert->selectStmt ? (List *)(((SelectStmt *)insert->selectStmt)->valuesLists) : NULL;
 
 	if (!list_t)
 	{
