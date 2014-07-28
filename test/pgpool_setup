@@ -133,13 +133,9 @@ date >> $log
 echo "failed_node_id $failed_node_id failed_host_name $failed_host_name failed_port $failed_port failed_db_cluster $failed_db_cluster new_master_id $new_master_id old_master_id $old_master_id new_master_host_name $new_master_host_name old_primary_node_id $old_primary_node_id new_master_port_number $new_master_port_number new_master_db_cluster $new_master_db_cluster" >> $log
 
 if [ a"$failed_node_id" = a"$old_primary_node_id" ];then	# master failed
-    if [ a"$failed_node_id" = a"0" ];then
-		echo $pg_ctl -D $cluster1 promote >>$log	# let standby take over
-		$pg_ctl -D $cluster1 promote >>$log	# let standby take over
-    else
-		echo $pg_ctl -D $cluster0 promote >>$log	# let standby take over
-		$pg_ctl -D $cluster0 promote >>$log	# let standby take over
-   fi
+	new_primary_db_cluster=data"$new_master_id"
+	echo $pg_ctl -D $new_primary_db_cluster promote >>$log	# let standby take over
+	$pg_ctl -D $new_primary_db_cluster promote >>$log	# let standby take over
 fi
 EOF
 
