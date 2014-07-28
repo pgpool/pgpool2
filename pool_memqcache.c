@@ -3079,7 +3079,7 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 	else		/* Non cache safe queries */
 	{
 		/* Non cachable SELECT */
-		if (IsA(node, SelectStmt))
+		if (node && IsA(node, SelectStmt))
 		{
 			if (state == 'I')
 			{

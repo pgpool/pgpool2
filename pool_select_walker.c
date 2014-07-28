@@ -958,6 +958,8 @@ int pool_table_name_to_oid(char *table_name)
  */
 int pool_extract_table_oids_from_select_stmt(Node *node, SelectContext *ctx)
 {
+	if(!node)
+		return 0;
 	if (!IsA(node, SelectStmt))
 		return 0;
 
