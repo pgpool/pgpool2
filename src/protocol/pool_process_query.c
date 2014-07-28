@@ -2617,9 +2617,17 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 				if (major == PROTO_MAJOR_V3)
 				{
 					p = packet;
-					memcpy(&shortval, p, sizeof(short));
-					num_fields = htons(shortval);
-					p += sizeof(short);
+					if(p)
+					{
+						memcpy(&shortval, p, sizeof(short));
+						num_fields = htons(shortval);
+						p += sizeof(short);
+					}
+					else
+						ereport(ERROR,
+								(errmsg("do query failed"),
+								 errdetail("error while reading data")));
+
 				}
 
 				if (num_fields > 0)
@@ -3335,7 +3343,7 @@ static char *get_insert_command_table_name(InsertStmt *node)
 /* judge if this is a DROP DATABASE command */
 int is_drop_database(Node *node)
 {
-	return (IsA(node, DropdbStmt)) ? 1 : 0;
+	return (node && IsA(node, DropdbStmt)) ? 1 : 0;
 }
 
 /*
@@ -3580,14 +3588,16 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 				pool_read(CONNECTION(backend, i), &len, sizeof(len));
 				len = htonl(len) - 4;
 				p = pool_read2(CONNECTION(backend, i), len);
-				if (p == NULL)
+				if (p)
 				{
-					pool_error("read_kind_from_backend: failed to read parameter status packet from %d th backend", i);
+					value = p + strlen(p) + 1;
+					pool_debug("read_kind_from_backend: parameter name: %s value: %s", p, value);
+					if (IS_MASTER_NODE_ID(i))
+						pool_add_param(&CONNECTION(backend, i)->params, p, value);
 				}
-				value = p + strlen(p) + 1;
-				pool_debug("read_kind_from_backend: parameter name: %s value: %s", p, value);
-				if (IS_MASTER_NODE_ID(i))
-					pool_add_param(&CONNECTION(backend, i)->params, p, value);
+				else
+					pool_error("read_kind_from_backend: failed to read parameter status packet from %d th backend", i);
+
 			} while (kind == 'S');
 
 #ifdef DEALLOCATE_ERROR_TEST
