@@ -96,6 +96,10 @@ and a PostgreSQL database client. It provides the following features:</p>
     an error immediately.</p>
 
 <li>Parallel Query</li>
+    <p class="version_notice">
+    <em class="caution">DEPRECATED</em> :
+    This mode is deprecated and will be removed in the future release (possibly 3.5).
+    </p>
     <p>Using the parallel query feature, data can be split
     among multiple servers, so that a query can be executed on all the
     servers concurrently, reducing the overall execution time. Parallel query
@@ -2479,6 +2483,11 @@ For your reference, here are the steps taken in the recovery procedure.
 <!-- ================================================================================ -->
 
 <h1 id="parallel">Parallel Mode</h1>
+
+<p class="version_notice">
+  <em class="caution">DEPRECATED</em> :
+  This mode is deprecated and will be removed in the future release (possibly 3.5).
+</p>
 
 <p>This mode activates parallel execution of queries.
 Tables can be split, and data distributed to each node.

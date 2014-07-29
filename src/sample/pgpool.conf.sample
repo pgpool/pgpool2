@@ -345,34 +345,6 @@ follow_master_command = ''
                                    #   %R = new master database cluster path
                                    #   %% = '%' character
 
-
-#------------------------------------------------------------------------------
-# PARALLEL MODE
-#------------------------------------------------------------------------------
-
-parallel_mode = off
-                                   # Activates parallel query mode
-                                   # (change requires restart)
-pgpool2_hostname = ''
-                                   # Set pgpool2 hostname
-                                   # (change requires restart)
-
-# - System DB info -
-
-system_db_hostname  = 'localhost'
-                                   # (change requires restart)
-system_db_port = 5432
-                                   # (change requires restart)
-system_db_dbname = 'pgpool'
-                                   # (change requires restart)
-system_db_schema = 'pgpool_catalog'
-                                   # (change requires restart)
-system_db_user = 'pgpool'
-                                   # (change requires restart)
-system_db_password = ''
-                                   # (change requires restart)
-
-
 #------------------------------------------------------------------------------
 # HEALTH CHECK
 #------------------------------------------------------------------------------
