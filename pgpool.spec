@@ -9,7 +9,7 @@
 Summary:        Pgpool is a connection pooling/replication server for PostgreSQL
 Name:           pgpool-II-pg%{pg_version}
 Version:        %{pgpool_version}
-Release:        3%{?dist}
+Release:        4%{?dist}
 License:        BSD
 Group:          Applications/Databases
 Vendor:         Pgpool Global Development Group
@@ -18,6 +18,7 @@ Source0:        pgpool-II-%{version}.tar.gz
 Source1:        pgpool.init
 Source2:        pgpool.sysconfig
 Patch1:         pgpool.conf.sample.patch
+Patch2:         pgpool-II-head.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel
 Obsoletes:      postgresql-pgpool
@@ -54,6 +55,7 @@ Development headers and libraries for pgpool-II.
 %prep
 %setup -q -n %{archive_name}
 %patch1 -p0
+%patch2 -p1
 
 %build
 %configure --with-pgsql=%{pghome} \
@@ -149,6 +151,10 @@ fi
 %{_libdir}/libpcp.so
 
 %changelog
+* Wed Jul 30 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.3-4
+- Add PATCH2 which is diff between 3.3.3 and 3.3-stable tree head.
+- RPM expert said this is the better way.
+
 * Sun May 10 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.3-3
 - Use 3.3-stable tree head
 
