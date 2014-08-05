@@ -2073,8 +2073,9 @@ static void init_system_db_connection(void)
 {	
 	if (pool_config->parallel_mode || pool_config->enable_query_cache)
 	{
-		system_db_connect();
-		if (PQstatus(system_db_info->pgconn) != CONNECTION_OK)
+		int nRet;
+		nRet = system_db_connect();
+		if (nRet || PQstatus(system_db_info->pgconn) != CONNECTION_OK)
 		{
 			pool_error("Could not make persistent libpq system DB connection");
 		}

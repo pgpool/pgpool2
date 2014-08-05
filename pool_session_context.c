@@ -738,6 +738,13 @@ POOL_TRANSACTION_ISOLATION pool_get_transaction_isolation(void)
 	/* No cached data is available. Ask backend. */
 	status = do_query(MASTER(session_context->backend),
 					  "SELECT current_setting('transaction_isolation')", &res, MAJOR(session_context->backend));
+	if(status != POOL_CONTINUE)
+	{
+		pool_error("pool_get_transaction_isolation: do_query returns no rows");
+		if(res)
+			free_select_result(res);
+		return POOL_UNKNOWN;
+	}
 
 	if (res->numrows <= 0)
 	{
@@ -773,7 +780,8 @@ POOL_TRANSACTION_ISOLATION pool_get_transaction_isolation(void)
 		ret = POOL_UNKNOWN;
 	}   
 
-	free_select_result(res);
+	if(res)
+		free_select_result(res);
 
 	if (ret != POOL_UNKNOWN)
 		session_context->transaction_isolation = ret;

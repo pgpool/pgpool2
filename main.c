@@ -2822,7 +2822,6 @@ static int find_primary_node(void)
 	BackendInfo *bkinfo;
 	POOL_CONNECTION_POOL_SLOT *s;
 	POOL_CONNECTION *con;
-	POOL_STATUS status;
 	POOL_SELECT_RESULT *res;
 	bool is_standby;
 	int i;
@@ -2867,25 +2866,32 @@ static int find_primary_node(void)
 			continue;
 		}
 		con = s->con;
-		status = do_query(con, "SELECT pg_is_in_recovery()",
-						  &res, PROTO_MAJOR_V3);
-		if (res->numrows <= 0)
+		if (do_query(con, "SELECT pg_is_in_recovery()",&res, PROTO_MAJOR_V3) == POOL_CONTINUE)
 		{
-			pool_log("find_primary_node: do_query returns no rows");
+			if (res->numrows <= 0)
+			{
+				pool_log("find_primary_node: do_query returns no rows");
+			}
+			if (res->data[0] == NULL)
+			{
+				pool_log("find_primary_node: do_query returns no data");
+			}
+			if (res->nullflags[0] == -1)
+			{
+				pool_log("find_primary_node: do_query returns NULL");
+			}
+			if (res->data[0] && !strcmp(res->data[0], "t"))
+			{
+				is_standby = true;
+			}
 		}
-		if (res->data[0] == NULL)
+		else
 		{
-			pool_log("find_primary_node: do_query returns no data");
+			pool_log("find_primary_node: do_query failed");
 		}
-		if (res->nullflags[0] == -1)
-		{
-			pool_log("find_primary_node: do_query returns NULL");
-		}
-		if (res->data[0] && !strcmp(res->data[0], "t"))
-		{
-			is_standby = true;
-		}
-		free_select_result(res);
+
+		if(res)
+			free_select_result(res);
 		discard_persistent_db_connection(s);
 
 		/*

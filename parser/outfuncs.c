@@ -196,7 +196,8 @@ static void _outCurrentOfExpr(String *str, CurrentOfExpr *node);
  * In most scenarios the list elements should always be Value strings,
  * but we also allow A_Star for the convenience of ColumnRef processing.
  */
-static String *NameListToString(List *names)
+
+char *NameListToString(List *names)
 {
 	String *str;
 	ListCell   *l;
@@ -220,9 +221,11 @@ static String *NameListToString(List *names)
 	p = palloc(str->len+1);
 	memcpy(p, str->data, str->len);
 	*(p+str->len) = '\0';
+	free_string(str);
 
-	return str;
+	return p;
 }
+
 
 static char *escape_string(char *str)
 {
@@ -3539,7 +3542,6 @@ static void add_function_like_objs(String *str, DropStmt *node)
 static void
 _outDropStmt(String *str, DropStmt *node)
 {
-	ListCell *lc;
 	List *objname;
 
 	string_append_char(str, "DROP ");
@@ -3638,7 +3640,7 @@ _outDropStmt(String *str, DropStmt *node)
 			string_append_char(str, strVal(llast(objname)));
 			string_append_char(str, " ON ");
 			string_append_char(str,	NameListToString(list_truncate(list_copy(objname),
-																   list_length(objname) - 1))->data);
+																   list_length(objname) - 1)));
 			break;
 
 		case OBJECT_OPERATOR:
@@ -3653,7 +3655,9 @@ _outDropStmt(String *str, DropStmt *node)
 			objname = lfirst(list_head(node->objects));
 			string_append_char(str, strVal(llast(objname)));
 			string_append_char(str, " USING ");
-			_outNode(str, NameListToString(list_truncate(list_copy(objname), list_length(objname) - 1)));
+			string_append_char(str, "'");
+			string_append_char(str, escape_string(NameListToString(list_truncate(list_copy(objname), list_length(objname) - 1))));
+			string_append_char(str, "'");
 			break;
 
 		case OBJECT_CAST:

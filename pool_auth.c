@@ -330,12 +330,6 @@ from pool_read_message_length and recheck the pg_hba.conf settings.");
 	 */
 	if (protoMajor == PROTO_MAJOR_V3)
 	{
-		if (kind != 'K')
-		{
-			pool_error("pool_do_auth: expect \"K\" got %c", kind);
-			return -1;
-		}
-
 		if ((length = pool_read_message_length(cp)) != 12)
 		{
 			pool_error("pool_do_auth: invalid messages length(%d) for BackendKeyData", length);
