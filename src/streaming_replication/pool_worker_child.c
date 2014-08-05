@@ -73,6 +73,7 @@ static volatile sig_atomic_t restart_request = 0;
 static void establish_persistent_connection(void);
 static void discard_persistent_connection(void);
 static void check_replication_time_lag(void);
+static void CheckReplicationTimeLagErrorCb(void *arg);
 static unsigned long long int text_to_lsn(char *text);
 static RETSIGTYPE my_signal_handler(int sig);
 static RETSIGTYPE reload_config_handler(int sig);
@@ -232,12 +233,12 @@ static void check_replication_time_lag(void)
 {
 	int i;
 	int active_nodes = 0;
-	POOL_STATUS sts;
 	POOL_SELECT_RESULT *res;
 	unsigned long long int lsn[MAX_NUM_BACKENDS];
 	char *query;
 	BackendInfo *bkinfo;
 	unsigned long long int lag;
+	ErrorContextCallback callback;
 
 	if (NUM_BACKENDS <= 1)
 	{
@@ -265,6 +266,14 @@ static void check_replication_time_lag(void)
 		return;
 	}
 
+	/*
+	 * Register a error context callback to throw proper context message
+	 */
+	callback.callback = CheckReplicationTimeLagErrorCb;
+	callback.arg = NULL;
+	callback.previous = error_context_stack;
+	error_context_stack = &callback;
+
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
 		if (!VALID_BACKEND(i))
@@ -288,14 +297,8 @@ static void check_replication_time_lag(void)
 			query = "SELECT pg_last_xlog_replay_location()";
 		}
 
-		sts = do_query(slots[i]->con, query, &res, PROTO_MAJOR_V3);
-		if (sts != POOL_CONTINUE)
-		{
-			if (res)
-				free_select_result(res);
-			pool_error("check_replication_time_lag: %s failed", query);
-			return;
-		}
+		do_query(slots[i]->con, query, &res, PROTO_MAJOR_V3);
+
 		if (!res)
 		{
             ereport(ERROR,
@@ -361,8 +364,14 @@ static void check_replication_time_lag(void)
 			}
 		}
 	}
+
+	error_context_stack = callback.previous;
 }
 
+static void CheckReplicationTimeLagErrorCb(void *arg)
+{
+	errcontext("While checking replication time lag");
+}
 /*
  * Convert logid/recoff style text to 64bit log location (LSN)
  */

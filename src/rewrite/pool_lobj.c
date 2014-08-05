@@ -181,12 +181,7 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 
 	/* get max lobj id */
 	per_node_statement_log(backend, MASTER_NODE_ID, GET_MAX_LOBJ_KEY);
-	status = do_query(MASTER(backend), GET_MAX_LOBJ_KEY, &result, MAJOR(backend));
-	if (status == POOL_END)
-	{
-		pool_error("pool_rewrite_lo_creat: do_query failed");
-		return NULL;
-	}
+	do_query(MASTER(backend), GET_MAX_LOBJ_KEY, &result, MAJOR(backend));
 
 	if (!result)
 	{

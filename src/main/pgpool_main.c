@@ -2137,29 +2137,47 @@ static bool
 										  pool_config->sr_check_password, true);
 	if (s)
 	{
+		MemoryContext oldContext = CurrentMemoryContext;
 		con = s->con;
-		do_query(con, "SELECT pg_is_in_recovery()",
-						  &res, PROTO_MAJOR_V3);
-		if (res->numrows <= 0)
+
+		PG_TRY();
 		{
-			ereport(LOG,
-					(errmsg("verify_backend_node_status: do_query returns no rows")));
+			do_query(con, "SELECT pg_is_in_recovery()",
+					 &res, PROTO_MAJOR_V3);
 		}
-		if (res->data[0] == NULL)
-        {
-			ereport(LOG,
-					(errmsg("verify_backend_node_status: do_query returns no data")));
-		}
-		if (res->nullflags[0] == -1)
+		PG_CATCH();
 		{
+			/* ignore the error message */
+			res = NULL;
+			MemoryContextSwitchTo(oldContext);
+			FlushErrorState();
 			ereport(LOG,
-					(errmsg("verify_backend_node_status: do_query returns NULL")));
+					(errmsg("verify_backend_node_status: do_query failed")));
 		}
-		if (res->data[0] && !strcmp(res->data[0], "t"))
+		PG_END_TRY();
+		if(res)
 		{
-			*is_standby = true;
+			if (res->numrows <= 0)
+			{
+				ereport(LOG,
+						(errmsg("verify_backend_node_status: do_query returns no rows")));
+			}
+			if (res->data[0] == NULL)
+			{
+				ereport(LOG,
+						(errmsg("verify_backend_node_status: do_query returns no data")));
+			}
+			if (res->nullflags[0] == -1)
+			{
+				ereport(LOG,
+						(errmsg("verify_backend_node_status: do_query returns NULL")));
+			}
+			if (res->data[0] && !strcmp(res->data[0], "t"))
+			{
+				*is_standby = true;
+			}
+			free_select_result(res);
 		}
-		free_select_result(res);
 		discard_persistent_db_connection(s);
 		return true;
 	}

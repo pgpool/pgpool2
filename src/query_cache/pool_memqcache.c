@@ -1205,14 +1205,7 @@ int pool_get_database_oid_from_dbname(char *dbname)
 	backend = pool_get_session_context(false)->backend;
 
 	snprintf(query, sizeof(query), DATABASE_TO_OID_QUERY, dbname); 
-	status = do_query(MASTER(backend), query, &res, MAJOR(backend));
-
-	if (status != POOL_CONTINUE)
-	{    
-		pool_debug("pool_discard_oid_maps_by_db: Failed.");
-		free_select_result(res);
-		return 0;
-	}    
+	do_query(MASTER(backend), query, &res, MAJOR(backend));
 
 	if (res->numrows != 1)
 	{    

@@ -33,7 +33,7 @@
 
 static POOL_SESSION_CONTEXT session_context_d;
 static POOL_SESSION_CONTEXT *session_context = NULL;
-
+static void GetTranIsolationErrorCb(void *arg);
 static void init_sent_message_list(void);
 
 /*
@@ -725,6 +725,7 @@ POOL_TRANSACTION_ISOLATION pool_get_transaction_isolation(void)
 {
 	POOL_SELECT_RESULT *res;
 	POOL_TRANSACTION_ISOLATION ret;
+	ErrorContextCallback callback;
 
 	if (!session_context)
 	{
@@ -735,10 +736,20 @@ POOL_TRANSACTION_ISOLATION pool_get_transaction_isolation(void)
 	/* It seems cached result is usable. Return it. */
 	if (session_context->transaction_isolation != POOL_UNKNOWN)
 		return session_context->transaction_isolation;
+	/*
+	 * Register a error context callback to throw proper context message
+	 */
+	callback.callback = GetTranIsolationErrorCb;
+	callback.arg = NULL;
+	callback.previous = error_context_stack;
+	error_context_stack = &callback;
 
 	/* No cached data is available. Ask backend. */
+
 	do_query(MASTER(session_context->backend),
 					  "SELECT current_setting('transaction_isolation')", &res, MAJOR(session_context->backend));
+
+	error_context_stack = callback.previous;
 
 	if (res->numrows <= 0)
 	{
@@ -781,6 +792,12 @@ POOL_TRANSACTION_ISOLATION pool_get_transaction_isolation(void)
 
 	return ret;
 }
+
+static void GetTranIsolationErrorCb(void *arg)
+{
+	errcontext("While getting transaction isolation");
+}
+
 
 /*
  * The command in progress has not succeeded yet.

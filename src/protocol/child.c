@@ -1646,8 +1646,9 @@ static void init_system_db_connection(void)
 {	
 	if (pool_config->parallel_mode)
 	{
-		system_db_connect();
-		if (PQstatus(system_db_info->pgconn) != CONNECTION_OK)
+		int nRet;
+		nRet = system_db_connect();
+		if (nRet || PQstatus(system_db_info->pgconn) != CONNECTION_OK)
 		{
             ereport(ERROR,
                 (errmsg("failed to make persistent system db connection"),

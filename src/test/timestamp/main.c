@@ -65,8 +65,7 @@ pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backend, cha
 		return (void *) &(rc[1]);
 }
 
-POOL_STATUS
-do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result, int major) {
+void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result, int major) {
 	static POOL_SELECT_RESULT res;
 	static char *data[1] = {
 		"2009-01-01 23:59:59.123456+09"
@@ -76,7 +75,6 @@ do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result, int
 	res.data = data;
 
 	*result = &res;
-   	return POOL_CONTINUE; 
 }
 
 int

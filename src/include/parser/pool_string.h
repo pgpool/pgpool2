@@ -28,7 +28,7 @@ typedef struct
 	char *data;
 } String;
 
-extern String *NameListToString(List *names);
+extern char *NameListToString(List *names);
 extern String *init_string(char *str);
 extern void string_append_string(String *string, String *append_data);
 extern void string_append_char(String *string, char *append_data);

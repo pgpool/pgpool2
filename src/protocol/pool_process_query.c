@@ -2258,8 +2258,10 @@ void free_select_result(POOL_SELECT_RESULT *result)
  * can be SELECT or any other type of query. However at this moment,
  * the only client calls this function other than SELECT is
  * insert_lock(), and the qury is either LOCK or SELECT for UPDATE.
+ * Note: After the introduction of elog API the return type of do_query is changed
+ * to void. and now ereport is thrown in case of error occured within the function
  */
-POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result, int major)
+void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result, int major)
 {
 #define DO_QUERY_ALLOC_NUM 1024	/* memory allocation unit for POOL_SELECT_RESULT */
 
@@ -2505,7 +2507,7 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 			case 'Z':	/* Ready for query */
 				pool_debug("do_query: Ready for query");
 				if (!doing_extended)
-					return POOL_CONTINUE;
+					return;
 				break;
 
 			case 'C':	/* Command Complete */
@@ -2723,7 +2725,6 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 			break;
 		}
 	}
-	return POOL_CONTINUE;
 }
 
 /*
@@ -2848,7 +2849,6 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 	char *table, *p;
 	int len = 0;
 	char qbuf[1024];
-	POOL_STATUS status;
 	int i, deadlock_detected = 0;
 	char *adsrc;
 	char seq_rel_name[MAX_NAME_LEN+1];
@@ -2858,6 +2858,7 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 	regmatch_t pmatch[nmatch];
 	static POOL_RELCACHE *relcache;
 	POOL_SELECT_RESULT *result;
+	POOL_STATUS status = POOL_CONTINUE;
 
 	/* insert_lock can be used in V3 only */
 	if (MAJOR(backend) != PROTO_MAJOR_V3)
@@ -2986,9 +2987,7 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 	{
 		if (pool_get_session_context(true) && pool_is_doing_extended_query_message())
 		{
-			status = do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
-			if (result)
-				free_select_result(result);
+			do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
 		}
 		else
 		{
@@ -2998,15 +2997,13 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 	}
 	else if (lock_kind == 2)
 	{
-		status = do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
-		if (result)
-			free_select_result(result);
+		do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
 	}
 	else
 	{
 		POOL_SELECT_RESULT *result;
 		/* issue row lock command */
-		status = do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
+		do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
 		if (status == POOL_CONTINUE)
 		{
 			/* does oid exist in insert_lock table? */
@@ -3022,15 +3019,13 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 					per_node_statement_log(backend, MASTER_NODE_ID, qbuf);
 
 					/* issue row lock command */
-					status = do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
-					if (status == POOL_CONTINUE)
-					{
-						if (!(result && result->data[0] && !strcmp(result->data[0], "1")))
-                            ereport(FATAL,
-                                (return_code(2),
-                                     errmsg("failed to get insert lock"),
-                                     errdetail("unexpected data from backend")));
-					}
+					do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
+
+					if (!(result && result->data[0] && !strcmp(result->data[0], "1")))
+						ereport(FATAL,
+							(return_code(2),
+								 errmsg("failed to get insert lock"),
+								 errdetail("unexpected data from backend")));
 				}
 			}
 		}
@@ -3047,7 +3042,7 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 
 			if (pool_get_session_context(true) && pool_is_doing_extended_query_message())
 			{
-				status = do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
+				do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
 				if (result)
 					free_select_result(result);
 			}
@@ -3080,7 +3075,7 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 					per_node_statement_log(backend, i, qbuf);
 					if (pool_get_session_context(true) && pool_is_doing_extended_query_message())
 					{
-						status = do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
+						do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
 						if (result)
 							free_select_result(result);
 					}
@@ -3094,9 +3089,7 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 				{
 					POOL_SELECT_RESULT *result;
 					per_node_statement_log(backend, i, qbuf);
-					status = do_query(CONNECTION(backend,i), qbuf, &result, MAJOR(backend));
-					if (result)
-						free_select_result(result);
+					do_query(CONNECTION(backend,i), qbuf, &result, MAJOR(backend));
 				}
 			}
 
@@ -3208,7 +3201,6 @@ static bool has_lock_target(POOL_CONNECTION *frontend,
 {
 	char *suffix;
 	char qbuf[QUERY_STRING_BUFFER_LEN];
-	POOL_STATUS status;
 	POOL_SELECT_RESULT *result;
 
 	suffix = lock ? " FOR UPDATE" : "";
@@ -3226,14 +3218,11 @@ static bool has_lock_target(POOL_CONNECTION *frontend,
 	}
 
 	per_node_statement_log(backend, MASTER_NODE_ID, qbuf);
-	status = do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
-	if (status == POOL_CONTINUE)
+	do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
+	if (result && result->data[0] && !strcmp(result->data[0], "1"))
 	{
-		if (result && result->data[0] && !strcmp(result->data[0], "1"))
-		{
-			free_select_result(result);
-			return true;
-		}
+		free_select_result(result);
+		return true;
 	}
 
 	if (result)

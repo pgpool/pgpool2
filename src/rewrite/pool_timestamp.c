@@ -306,16 +306,9 @@ static char *
 get_current_timestamp(POOL_CONNECTION_POOL *backend)
 {
 	POOL_SELECT_RESULT *res;
-	POOL_STATUS		 status;
 	static char		timestamp[64];
 
-	status = do_query(MASTER(backend), "SELECT now()", &res, MAJOR(backend));
-	if (status != POOL_CONTINUE)
-	{
-		pool_error("get_current_timestamp: do_query failed");
-		free_select_result(res);
-		return NULL;
-	}
+	do_query(MASTER(backend), "SELECT now()", &res, MAJOR(backend));
 
 	if (res->numrows != 1)
 	{
@@ -884,13 +877,7 @@ static A_Const *makeStringConstFromQuery(POOL_CONNECTION_POOL *backend, char *ex
 	char *str;
 
 	snprintf(query, sizeof(query), "SELECT %s", expression);
-	status = do_query(MASTER(backend), query, &res, MAJOR(backend));
-	if (status != POOL_CONTINUE)
-	{
-		pool_error("makeStringConstFromQuery: do_query failed");
-		free_select_result(res);
-		return NULL;
-	}
+	do_query(MASTER(backend), query, &res, MAJOR(backend));
 
 	if (res->numrows != 1)
 	{

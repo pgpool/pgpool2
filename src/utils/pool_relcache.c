@@ -29,7 +29,11 @@
 #include "utils/pool_relcache.h"
 #include "context/pool_session_context.h"
 #include "pool_config.h"
+#include "utils/palloc.h"
+#include "utils/memutils.h"
+#include "utils/elog.h"
 
+static void SearchRelCacheErrorCb(void *arg);
 /*
  * Create relation cache
  */
@@ -103,20 +107,16 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 	int local_session_id;
 	time_t now;
 	void *result;
+	ErrorContextCallback callback;
 
 	/* Eliminate double quotes */
-	rel = malloc(strlen(table)+1);
-	if (!rel)
-	{
-		pool_error("pool_search_relcache: malloc failed");
-		return NULL;
-	}
+	rel = palloc(strlen(table)+1);
 
 	local_session_id = pool_get_local_session_id();
 	if (local_session_id < 0)
 	{
 		pool_error("pool_search_relcache: pool_get_local_session_id failed");
-		free(rel);
+		pfree(rel);
 		return NULL;
 	}
 
@@ -160,7 +160,7 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 			/* Found */
 			if (relcache->cache[i].refcnt < INT_MAX)
 				relcache->cache[i].refcnt++;
-			free(rel);
+			pfree(rel);
 			return relcache->cache[i].data;
 		}
 	}
@@ -170,14 +170,17 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 
 	per_node_statement_log(backend, MASTER_NODE_ID, query);
 
-	if (do_query(MASTER(backend), query, &res, MAJOR(backend)) != POOL_CONTINUE)
-	{
-		pool_error("pool_search_relcache: do_query failed");
-		if (res)
-			free_select_result(res);
-		free(rel);
-		return NULL;
-	}
+	/*
+	 * Register a error context callback to throw proper context message
+	 */
+	callback.callback = SearchRelCacheErrorCb;
+	callback.arg = NULL;
+	callback.previous = error_context_stack;
+	error_context_stack = &callback;
+
+	do_query(MASTER(backend), query, &res, MAJOR(backend));
+
+	error_context_stack = callback.previous;
 
 	/*
 	 * Look for replacement in cache
@@ -238,10 +241,15 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 		(*relcache->unregister_func)(relcache->cache[index].data);
 		relcache->cache[index].data = result;
 	}
-	free(rel);
+	pfree(rel);
 	free_select_result(res);
 
 	return 	result;
+}
+
+static void SearchRelCacheErrorCb(void *arg)
+{
+	errcontext("While searching system catalog, When relcache is missed");
 }
 
 /*

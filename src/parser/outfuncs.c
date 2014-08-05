@@ -24,6 +24,7 @@
 #include <limits.h>
 #include "pool_type.h"
 #include "utils/palloc.h"
+#include "utils/elog.h"
 #include "parser.h"
 #include "pool_string.h"
 #include "pg_list.h"
@@ -188,41 +189,43 @@ static void _outCurrentOfExpr(String *str, CurrentOfExpr *node);
 
 
 /*
- * Shamelessly copied from backend/catalog/namespace.c
- *
+ * Borrowed from backend/catalog/namespace.c
  * NameListToString
- *		Utility routine to convert a qualified-name list into a string.
+ *      Utility routine to convert a qualified-name list into a string.
+ *
+ * This is used primarily to form error messages, and so we do not quote
+ * the list elements, for the sake of legibility.
  *
  * In most scenarios the list elements should always be Value strings,
  * but we also allow A_Star for the convenience of ColumnRef processing.
  */
-String *NameListToString(List *names)
+char *
+NameListToString(List *names)
 {
-	String *str;
-	ListCell   *l;
-	char *p;
+    StringInfoData string;
+    ListCell   *l;
 
-	str = init_string("");
+    initStringInfo(&string);
 
-	foreach(l, names)
-	{
-		Node	   *name = (Node *) lfirst(l);
+    foreach(l, names)
+    {
+        Node       *name = (Node *) lfirst(l);
 
-		if (l != list_head(names))
-			string_append_char(str, ".");
+        if (l != list_head(names))
+            appendStringInfoChar(&string, '.');
 
-		if (IsA(name, String))
-			string_append_char(str, strVal(name));
-		else if (IsA(name, A_Star))
-			string_append_char(str, "*");
-	}
+        if (IsA(name, String))
+            appendStringInfoString(&string, strVal(name));
+        else if (IsA(name, A_Star))
+            appendStringInfoString(&string, "*");
+        else
+            elog(ERROR, "unexpected node type in name list: %d",
+                 (int) nodeTag(name));
+    }
 
-	p = palloc(str->len+1);
-	memcpy(p, str->data, str->len);
-	*(p+str->len) = '\0';
-
-	return str;
+    return string.data;
 }
+
 
 static char *escape_string(char *str)
 {
@@ -3648,7 +3651,7 @@ _outDropStmt(String *str, DropStmt *node)
 			string_append_char(str, strVal(llast(objname)));
 			string_append_char(str, " ON ");
 			string_append_char(str,	NameListToString(list_truncate(list_copy(objname),
-																   list_length(objname) - 1))->data);
+																   list_length(objname) - 1)));
 			break;
 
 		case OBJECT_OPERATOR:
@@ -3663,7 +3666,10 @@ _outDropStmt(String *str, DropStmt *node)
 			objname = lfirst(list_head(node->objects));
 			string_append_char(str, strVal(llast(objname)));
 			string_append_char(str, " USING ");
-			_outNode(str, NameListToString(list_truncate(list_copy(objname), list_length(objname) - 1)));
+			string_append_char(str, "'");
+			string_append_char(str, escape_string(NameListToString(list_truncate(list_copy(objname), list_length(objname) - 1))));
+			string_append_char(str, "'");
+
 			break;
 
 		case OBJECT_CAST:

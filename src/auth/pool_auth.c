@@ -357,11 +357,6 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	 */
 	if (protoMajor == PROTO_MAJOR_V3)
 	{
-		if (kind != 'K')
-			ereport(ERROR,
-				(errmsg("authentication failed"),
-					errdetail("invalid find \"%c\" when expecting \"K\"",kind)));
-
 		if ((length = pool_read_message_length(cp)) != 12)
 		{
 			ereport(ERROR,
