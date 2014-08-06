@@ -3295,6 +3295,27 @@ pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] st
 
 <p id="pool_status_file">
 pgpoolが停止すると、[logdir]/pgpool_statusというファイルにバックエンドの状態を書き込みます。
+pgpool-II 3.4.0から、ファイルフォーマットが変更され、ASCIIファイルになりました。
+ですから普通のエディタでこのファイルを参照したり編集ができます。
+たとえば、pgpool.confを編集して新しいバックエンドを追加、再起動した際にpgpool-IIが新しいバックエンドの死活を判定するまで待ちたくない場合、あらかじめそのバックエンドを"down"状態に編集しておくことができます。
+pgpool_statusの各行はそれぞれのバックエンドの状態に対応します。
+1行目は最初のバックエンド、2行目は2番目のバックエンドというような具合です。
+バックエンドの状態は"up", "down", "unused"のどれかです(大文字小文字は無視されます)。
+例を示します。
+<pre>
+up
+down
+up
+</pre>
+</p>
+
+<p>
+なお、pgpool-II 3.4.0より前のpgpool-IIはバイナリ形式のpgpool_status使用します。
+pgpool-II 3.4.0以降では、バイナリ形式のファイルも読むことができます。
+しかしpgpool-II 3.4.0より前のpgpool-IIはASCII形式のpgpool_statusを読むことはできません。
+</p>
+
+<p>
 次回pgpoolが起動したときにこのファイルが存在すると、バックエンドの状態をそこから復元します。
 これによって、
 </p>

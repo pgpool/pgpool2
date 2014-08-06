@@ -3195,7 +3195,27 @@ pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] st
 </table>
 
 <p>
-pgpool records backend status into the [logdir]/pgpool_status file. When pgpool
+pgpool records backend status into the [logdir]/pgpool_status file.
+From pgpool-II 3.4.0 the file format of pgpool_status has been changed: it's an ordinary ASCII file and you can read and edit the contents by using your favorite text editor.
+For example, if you add new backend and restart pgpool-II, you might have wait for long time until pgpool-II detects the new backend and performs failover.
+By editing pgpool_status to set the backend to be down status, you could avoid the situation because pgpool-II's health check skips down nodes.
+Each line in the file corresponding to each backend node status.
+The first backend status is the first line, and and the seconds backend status is the second line and so on.
+The backend status is represented by any of "up", "down", "unused" (case ignored).
+Here is an example of pgpool_status:
+<pre>
+up
+down
+up
+</pre>
+</p>
+
+<p>
+Note that pre-3.4.0 pgpool-II uses binary format pgpool_status. Pgpool-II 3.4.0 or later can read the file as well. However pre-3.4.0 pgpool-II cannot read ASCII format pgpool_status file.
+</p>
+
+<p>
+When pgpool
 restarts, it reads this file and restores the backend status. This will prevent
 a difference in data among DB nodes which might be caused by following scenario:
 </p>

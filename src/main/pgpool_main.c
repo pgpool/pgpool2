@@ -2423,6 +2423,7 @@ static int read_status_file(bool discard_status)
 	char fnamebuf[POOLMAXPATHLEN];
 	int i;
 	bool someone_wakeup = false;
+	bool is_old_format;
 
 	snprintf(fnamebuf, sizeof(fnamebuf), "%s/%s", pool_config->logdir, STATUS_FILE_NAME);
 	fd = fopen(fnamebuf, "r");
@@ -2452,28 +2453,94 @@ static int read_status_file(bool discard_status)
 		return 0;
 	}
 
-	if (fread(&backend_rec, 1, sizeof(backend_rec), fd) != sizeof(backend_rec))
-	{
-		pool_error("Could not read backend status file as %s. reason: %s",
-				   fnamebuf, strerror(errno));
-		fclose(fd);
-		return -1;
-	}
-	fclose(fd);
+	/*
+	 * Frist try out with old format file.
+	 */
+	is_old_format = true;
 
-	for (i=0;i< pool_config->backend_desc->num_backends;i++)
+	if (fread(&backend_rec, 1, sizeof(backend_rec), fd) == sizeof(backend_rec))
 	{
-		if (backend_rec.status[i] == CON_DOWN)
+		/* It's likely old binary format status file */
+		for (i=0;i< pool_config->backend_desc->num_backends;i++)
 		{
-			BACKEND_INFO(i).backend_status = CON_DOWN;
+			if (backend_rec.status[i] == CON_DOWN)
+			{
+				BACKEND_INFO(i).backend_status = CON_DOWN;
+				ereport(LOG,
+						(errmsg("read_status_file: %d th backend is set to down status", i)));
+			}
+			else if (BACKEND_INFO(i).backend_status == CON_CONNECT_WAIT ||
+					 BACKEND_INFO(i).backend_status == CON_UP)
+			{
+				BACKEND_INFO(i).backend_status = CON_CONNECT_WAIT;
+				someone_wakeup = true;
+			}
+			else
+			{
+				/* It seems it's not an old binary format status file */
+				is_old_format = false;
+				break;
+			}
+		}
+		fclose(fd);
+	}
+	else
+		is_old_format = false;
+
+	if (!is_old_format)
+	{
+		/*
+		 * Fall back to new ascii format file.
+		 * the format looks like(case is ignored):
+		 * 
+		 * up|down|unused
+		 * UP|down|unused
+		 *   :
+		 *   :
+		 */
+#define MAXLINE 10
+		char readbuf[MAXLINE];
+
+		fd = fopen(fnamebuf, "r");
+		if (!fd)
+		{
 			ereport(LOG,
-                    (errmsg("read_status_file: %d th backend is set to down status", i)));
+					(errmsg("Backend status file %s does not exist", fnamebuf)));
+			return -1;
 		}
-		else
+
+		for (i=0;i<MAX_NUM_BACKENDS;i++)
 		{
-			BACKEND_INFO(i).backend_status = CON_CONNECT_WAIT;
-			someone_wakeup = true;
+			BACKEND_INFO(i).backend_status = CON_UNUSED;
 		}
+			  
+		for (i=0;;i++)
+		{
+			readbuf[MAXLINE-1] = '\0';
+			if (fgets(readbuf, MAXLINE-1, fd) == 0)
+				break;
+
+			if (!strncasecmp("up", readbuf, 2))
+			{
+				BACKEND_INFO(i).backend_status = CON_UP;
+				someone_wakeup = true;
+			}
+			else if (!strncasecmp("down", readbuf, 4))
+			{
+				BACKEND_INFO(i).backend_status = CON_DOWN;
+				ereport(LOG,
+						(errmsg("read_status_file: %d th backend is set to down status", i)));
+			}
+			else if (!strncasecmp("unused", readbuf, 6))
+			{
+				BACKEND_INFO(i).backend_status = CON_UNUSED;
+			}
+			else
+			{
+				pool_error("read_status_file: %d th backend status is invalid (%s). ignored", i, readbuf);
+			}
+		}
+		fclose(fd);
 	}
 
 	/*
@@ -2507,15 +2574,33 @@ static int write_status_file()
 		return -1;
 	}
 
-	memset(&backend_rec, 0, sizeof(backend_rec));
     if(pool_config)
     {
+		char buf[10];
+
         for (i=0;i< pool_config->backend_desc->num_backends;i++)
         {
-            backend_rec.status[i] = BACKEND_INFO(i).backend_status;
-        }
+			char* status;
 
-        if (fwrite(&backend_rec, 1, sizeof(backend_rec), fd) != sizeof(backend_rec))
+			if (BACKEND_INFO(i).backend_status == CON_UP ||
+				BACKEND_INFO(i).backend_status == CON_CONNECT_WAIT)
+				status = "up";
+			else if (BACKEND_INFO(i).backend_status == CON_DOWN)
+				status = "down";
+			else
+				status = "unused";
+
+			sprintf(buf, "%s\n", status);
+			if (fwrite(buf, 1, strlen(buf), fd) != strlen(buf))
+			{
+				pool_error("Could not write backend status file as %s. reason: %s",
+						   fnamebuf, strerror(errno));
+				fclose(fd);
+				return -1;
+			}
+		}
+
+        if (fflush(fd) != 0)
         {
             pool_error("Could not write backend status file as %s. reason: %s",
                        fnamebuf, strerror(errno));
