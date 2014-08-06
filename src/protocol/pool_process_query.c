@@ -3418,13 +3418,14 @@ int check_copy_from_stdin(Node *node)
 
 			/* query is COPY FROM STDIN */
 			if (relation->schemaname)
-				copy_schema = pstrdup(relation->schemaname);
+				copy_schema = MemoryContextStrdup(TopMemoryContext,relation->schemaname);
 			else
-				copy_schema = pstrdup("public");
-			copy_table = pstrdup(relation->relname);
+				copy_schema = MemoryContextStrdup(TopMemoryContext,"public");
+
+			copy_table = MemoryContextStrdup(TopMemoryContext,relation->relname);
 
 			copy_delimiter = '\t'; /* default delimiter */
-			copy_null = pstrdup("\\N"); /* default null string */
+			copy_null = MemoryContextStrdup(TopMemoryContext,"\\N"); /* default null string */
 
 			/* look up delimiter and null string. */
 			foreach (lc, stmt->options)
@@ -3440,9 +3441,9 @@ int check_copy_from_stdin(Node *node)
 				else if (strcmp(elem->defname, "null") == 0)
 				{
 					if (copy_null)
-						free(copy_null);
+						pfree(copy_null);
 					v = (Value *)elem->arg;
-					copy_null = pstrdup(v->val.str);
+					copy_null = MemoryContextStrdup(TopMemoryContext,v->val.str);
 				}
 			}
 		}
