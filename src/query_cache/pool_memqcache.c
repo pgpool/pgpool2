@@ -1941,7 +1941,7 @@ static void pool_update_fsmm(POOL_CACHE_BLOCKID blockid, size_t free_space)
 		return;
 	}
 
-	if (free_space < 0 || free_space > POOL_MAX_FREE_SPACE)
+	if (free_space > POOL_MAX_FREE_SPACE)
 	{
 		pool_error("pool_set_free_space: invalid free space %zd", free_space);
 		return;
@@ -2339,7 +2339,7 @@ static int pool_delete_item_shmem_cache(POOL_CACHEID *cacheid)
 		return -1;
 	}
 
-	if (cacheid->itemid < 0 || cacheid->itemid >= bh->num_items)
+	if (cacheid->itemid >= bh->num_items)
 	{
 		/*
 		 * This could happen if the block is reused.  Since contents
@@ -2424,7 +2424,7 @@ static POOL_CACHE_ITEM_HEADER *pool_cache_item_header(POOL_CACHEID *cacheid)
 	}
 
 	bh = (POOL_CACHE_BLOCK_HEADER *)block_address(cacheid->blockid);
-	if (cacheid->itemid < 0 || cacheid->itemid >= bh->num_items)
+	if (cacheid->itemid >= bh->num_items)
 	{
 		pool_error("pool_cache_item_header: invalid item id %d", cacheid->itemid);
 		return NULL;
