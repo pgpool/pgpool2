@@ -2482,10 +2482,11 @@ static int read_status_file(bool discard_status)
 				break;
 			}
 		}
-		fclose(fd);
 	}
 	else
 		is_old_format = false;
+
+	fclose(fd);
 
 	if (!is_old_format)
 	{
