@@ -86,7 +86,7 @@ static void reload_config(void);
 			reload_config_request = 0; \
 		} else if (restart_request) \
 		{ \
-		  pool_log("worker process received restart request"); \
+		  ereport(LOG,(errmsg("worker process received restart request"))); \
 		  exit(1); \
 		} \
     } while (0)
@@ -98,8 +98,9 @@ void do_worker_child(void)
 {
     sigjmp_buf	local_sigjmp_buf;
 	MemoryContext WorkerMemoryContext;
-
-	pool_debug("I am %d", getpid());
+	
+	ereport(DEBUG1,
+		(errmsg("I am %d", getpid())));
 
 	/* Identify myself via ps */
 	init_ps_display("", "", "", "");
@@ -396,7 +397,8 @@ static unsigned long long int text_to_lsn(char *text)
 	}
 	lsn = xlogid * ((unsigned long long int)0xffffffff - WALSEGMENTSIZE) + xrecoff;
 #ifdef DEBUG
-	pool_log("lsn: %X %X %llX", xlogid, xrecoff, lsn);
+	ereport(LOG,
+			(errmsg("lsn: %X %X %llX", xlogid, xrecoff, lsn)));
 #endif
 	return lsn;
 }
@@ -435,7 +437,8 @@ static RETSIGTYPE reload_config_handler(int sig)
 
 static void reload_config(void)
 {
-	pool_log("reload config files.");
+	ereport(LOG,
+			(errmsg("reloading config file")));
     MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
 	pool_get_config(get_config_file_name(), RELOAD_CONFIG);
     MemoryContextSwitchTo(oldContext);

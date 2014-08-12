@@ -136,7 +136,9 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 
 	authkind = ntohl(authkind);
 
-	pool_debug("pool_do_auth: auth kind:%d", authkind);
+	ereport(DEBUG1,
+		(errmsg("authentication backend"),
+			 errdetail("auth kind:%d", authkind)));
 
 	/* trust? */
 	if (authkind == 0)
@@ -170,13 +172,17 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 			if (!VALID_BACKEND(i))
 				continue;
 
-			pool_debug("trying clear text password authentication");
+			ereport(DEBUG1,
+				(errmsg("authentication backend"),
+					 errdetail("trying clear text password authentication")));
 
 			authkind = do_clear_text_password(CONNECTION(cp, i), frontend, 0, protoMajor);
 
 			if (authkind < 0)
 			{
-				pool_debug("do_clear_text_password failed in slot %d", i);
+				ereport(DEBUG1,
+					(errmsg("authentication backend"),
+						 errdetail("clear text password failed in slot %d", i)));
 				pool_send_auth_fail(frontend, cp);
 				ereport(ERROR,
 					(errmsg("failed to authenticate with backend"),
@@ -193,7 +199,9 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 			if (!VALID_BACKEND(i))
 				continue;
 
-			pool_debug("trying crypt authentication");
+			ereport(DEBUG1,
+				(errmsg("authentication backend"),
+					 errdetail("trying crypt authentication")));
 
 			authkind = do_crypt(CONNECTION(cp, i), frontend, 0, protoMajor);
 
@@ -231,7 +239,9 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 			if (!VALID_BACKEND(i))
 				continue;
 
-			pool_debug("trying md5 authentication");
+			ereport(DEBUG1,
+				(errmsg("authentication backend"),
+					 errdetail("trying md5 authentication")));
 
 			authkind = do_md5(CONNECTION(cp, i), frontend, 0, protoMajor);
 
@@ -306,7 +316,9 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 
 					if (pool_extract_error_message(false, MASTER(cp), protoMajor, true, &message) == 1)
 					{
-						pool_log("pool_do_auth: error message from backend:%s", message);
+						ereport(LOG,
+								(errmsg("backend throws an error message"),
+								 errdetail("%s",message)));
 					}
 
 					SimpleForwardToFrontend(kind, frontend, cp);
@@ -382,8 +394,9 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 					(errmsg("authentication failed"),
 						errdetail("failed to read pid in slot %d", i)));
 			}
-
-			pool_debug("pool_do_auth: cp->info[i]:%p pid:%u", &cp->info[i], ntohl(pid));
+			ereport(DEBUG1,
+				(errmsg("authentication backend"),
+					 errdetail("cp->info[i]:%p pid:%u", &cp->info[i], ntohl(pid))));
 
 			CONNECTION_SLOT(cp, i)->pid = cp->info[i].pid = pid;
 
@@ -509,8 +522,9 @@ static POOL_STATUS pool_send_backend_key_data(POOL_CONNECTION *frontend, int pid
 		len = htonl(12);
 		pool_write(frontend, &len, sizeof(len));
 	}
-
-	pool_debug("pool_send_auth_ok: send pid %d to frontend", ntohl(pid));
+	ereport(DEBUG1,
+		(errmsg("sending backend key data"),
+			 errdetail("send pid %d to frontend", ntohl(pid))));
 
 	pool_write(frontend, &pid, sizeof(pid));
 	pool_write_and_flush(frontend, &key, sizeof(key));
@@ -691,7 +705,7 @@ static int do_crypt(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int rea
 		if ((ntohl(size) - 4) > sizeof(password))
 		{
             ereport(ERROR,
-                    (errmsg("crypt authentication failed"),
+				(errmsg("crypt authentication failed"),
                      errdetail("password is too long, password size is %d", ntohl(size) - 4)));
 		}
 
@@ -701,7 +715,10 @@ static int do_crypt(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int rea
 	/* connection reusing? */
 	if (reauth)
 	{
-		pool_debug("size: %d saved_size: %d", (ntohl(size) - 4), backend->pwd_size);
+		ereport(DEBUG1,
+			(errmsg("performing crypt authentication"),
+				 errdetail("size: %d saved_size: %d", (ntohl(size) - 4), backend->pwd_size)));
+
 		if ((ntohl(size) - 4) != backend->pwd_size)
             ereport(ERROR,
                     (errmsg("crypt authentication failed"),
@@ -817,8 +834,10 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 			/* Read salt */
 			pool_read(backend, salt, sizeof(salt));
 
-			pool_debug("DB node id: %d salt: %hhx%hhx%hhx%hhx", backend->db_node_id,
-					   salt[0], salt[1], salt[2], salt[3]);
+			ereport(DEBUG1,
+				(errmsg("performing md5 authentication"),
+					errdetail("DB node id: %d salt: %hhx%hhx%hhx%hhx", backend->db_node_id,
+						   salt[0], salt[1], salt[2], salt[3])));
 
 			/* Encrypt password in pool_passwd using the salt */
 			pg_md5_encrypt(pool_passwd+strlen("md5"), salt, sizeof(salt), encbuf);
@@ -852,8 +871,10 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 	{
 		/* read salt */
 		pool_read(backend, salt, sizeof(salt));
-		pool_debug("DB node id: %d salt: %hhx%hhx%hhx%hhx", backend->db_node_id,
-				   salt[0], salt[1], salt[2], salt[3]);
+		ereport(DEBUG1,
+			(errmsg("performing md5 authentication"),
+				errdetail("DB node id: %d salt: %hhx%hhx%hhx%hhx", backend->db_node_id,
+					   salt[0], salt[1], salt[2], salt[3])));
 	}
 	else
 	{
@@ -875,12 +896,12 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 	{
 		if (size != backend->pwd_size)
             ereport(ERROR,
-                    (errmsg("md5 authentication failed"),
+				(errmsg("md5 authentication failed"),
                      errdetail("password does not match")));
 
 		if (memcmp(password, backend->password, backend->pwd_size) != 0)
             ereport(ERROR,
-                    (errmsg("md5 authentication failed"),
+				(errmsg("md5 authentication failed"),
                      errdetail("password does not match")));
 
 		return 0;
@@ -890,7 +911,7 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 	kind = send_password_packet(backend, protoMajor, password);
 	if (kind < 0)
         ereport(ERROR,
-                (errmsg("md5 authentication failed"),
+			(errmsg("md5 authentication failed"),
                  errdetail("backend replied with invalid kind")));
 
 	/* If authenticated, reply back to frontend and save info */
@@ -946,8 +967,8 @@ static int read_password_packet(POOL_CONNECTION *frontend, int protoMajor, 	char
 		pool_read(frontend, &k, sizeof(k));
 		if (k != 'p')
             ereport(ERROR,
-                    (errmsg("authentication failed"),
-                        errdetail("invalid authentication packet. password packet does not start with \"p\"")));
+				(errmsg("authentication failed"),
+					errdetail("invalid authentication packet. password packet does not start with \"p\"")));
 
 		pool_read(frontend, &size, sizeof(size));
 	}
@@ -956,7 +977,7 @@ static int read_password_packet(POOL_CONNECTION *frontend, int protoMajor, 	char
 	if (*pwdSize > MAX_PASSWORD_SIZE)
 	{
         ereport(ERROR,
-                (errmsg("authentication failed"),
+			(errmsg("authentication failed"),
                  errdetail("invalid authentication packet. password is too long. password length is %d", *pwdSize)));
 		/*
 		 * We do not read to throw away packet here. Since it is possible that
@@ -999,7 +1020,7 @@ static int send_password_packet(POOL_CONNECTION *backend, int protoMajor, char *
 
 	if (response != 'R')
         ereport(ERROR,
-                (errmsg("authentication failed"),
+			(errmsg("authentication failed"),
                  errdetail("invalid backend response. Response does not replied with \"R\"")));
 
 	if (protoMajor == PROTO_MAJOR_V3)
@@ -1049,7 +1070,10 @@ int pool_read_message_length(POOL_CONNECTION_POOL *cp)
 	/* read message from master node */
 	pool_read(CONNECTION(cp, MASTER_NODE_ID), &length0, sizeof(length0));
 	length0 = ntohl(length0);
-	pool_debug("pool_read_message_length: slot: %d length: %d", MASTER_NODE_ID, length0);
+
+	ereport(DEBUG1,
+		(errmsg("reading message length"),
+			 errdetail("slot: %d length: %d", MASTER_NODE_ID, length0)));
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -1061,7 +1085,9 @@ int pool_read_message_length(POOL_CONNECTION_POOL *cp)
 		pool_read(CONNECTION(cp, i), &length, sizeof(length));
 
 		length = ntohl(length);
-		pool_debug("pool_read_message_length: slot: %d length: %d", i, length);
+		ereport(DEBUG1,
+			(errmsg("reading message length"),
+				 errdetail("slot: %d length: %d", i, length)));
 
 		if (length != length0)
             ereport(ERROR,
@@ -1094,7 +1120,10 @@ int *pool_read_message_length2(POOL_CONNECTION_POOL *cp)
 
 	length0 = ntohl(length0);
 	length_array[MASTER_NODE_ID] = length0;
-	pool_debug("pool_read_message_length2: master slot: %d length: %d", MASTER_NODE_ID, length0);
+	ereport(DEBUG1,
+		(errmsg("reading message length"),
+			 errdetail("master slot: %d length: %d", MASTER_NODE_ID, length0)));
+
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
 		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
@@ -1102,17 +1131,21 @@ int *pool_read_message_length2(POOL_CONNECTION_POOL *cp)
 			pool_read(CONNECTION(cp, i), &length, sizeof(length));
 
 			length = ntohl(length);
-			pool_debug("pool_read_message_length2: master slot: %d length: %d", i, length);
+			ereport(DEBUG1,
+				(errmsg("reading message length"),
+					 errdetail("master slot: %d length: %d", i, length)));
 
 			if (length != length0)
 			{
-				pool_log("pool_read_message_length2: message length (%d) in slot %d does not match with slot 0(%d)", length, i, length0);
+				ereport(LOG,
+					(errmsg("reading message length"),
+						errdetail("message length (%d) in slot %d does not match with slot 0(%d)", length, i, length0)));
 			}
 
 			if (length < 0)
 			{
                 ereport(ERROR,
-                        (errmsg("unable to read message length"),
+					(errmsg("unable to read message length"),
                          errdetail("invalid message length (%d)", length)));
 			}
 

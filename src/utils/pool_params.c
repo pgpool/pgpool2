@@ -131,7 +131,7 @@ int pool_add_param(ParamStatus *params, char *name, char *value)
 		if (params->num >= MAX_PARAM_ITEMS)
 		{
             ereport(ERROR,
-                    (errmsg("add parameter failed"),
+				(errmsg("add parameter failed"),
                      errdetail("no more room for num")));
 		}
 		num = params->num;
@@ -151,6 +151,7 @@ void pool_param_debug_print(ParamStatus *params)
 
     for (i=0;i<params->num;i++)
     {
-		pool_debug("No.%d: name: %s value: %s", i, params->names[i], params->values[i]);
+		ereport(DEBUG2,
+			(errmsg("No.%d: name: %s value: %s", i, params->names[i], params->values[i])));
 	}
 }

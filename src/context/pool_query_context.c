@@ -394,7 +394,9 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 		dest = send_to_where(node, query);
 		MemoryContextSwitchTo(old_context);
 
-		pool_debug("send_to_where: %d query: %s", dest, query);
+		ereport(DEBUG1,
+			(errmsg("decide where to send the queries"),
+				 errdetail("destination = %d for query= \"%s\"", dest, query)));
 
 		/* Should be sent to primary only? */
 		if (dest == POOL_PRIMARY)

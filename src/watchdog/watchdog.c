@@ -227,8 +227,8 @@ fork_a_lifecheck(int fork_wait_time)
 	{
 		sleep(pool_config->wd_interval * 10);
 	}
-
-	pool_log("watchdog: lifecheck started");
+	ereport(LOG,
+			(errmsg("watchdog: lifecheck started")));
 
 	/* watchdog loop */
 	for (;;)
@@ -273,10 +273,12 @@ wd_reaper_watchdog(pid_t pid, int status)
 	if (pid == lifecheck_pid)
 	{
 		if (WIFSIGNALED(status))
-			pool_debug("watchdog lifecheck process %d exits with status %d by signal %d",
-			           pid, status, WTERMSIG(status));
+			ereport(DEBUG1,
+					(errmsg("watchdog lifecheck process with PID:%d exits with status %d by signal %d",
+							pid, status, WTERMSIG(status))));
 		else
-			pool_debug("watchdog lifecheck process %d exits with status %d", pid, status);
+			ereport(DEBUG1,
+					(errmsg("watchdog lifecheck process with PID:%d exits with status %d", pid, status)));
 
 		lifecheck_pid = fork_a_lifecheck(1);
 
@@ -285,18 +287,23 @@ wd_reaper_watchdog(pid_t pid, int status)
 			pool_error("wd_reaper: fork a watchdog lifecheck process failed");
 			return 0;
 		}
+		ereport(LOG,
+				(errmsg("fork a new watchdog lifecheck pid %d", lifecheck_pid)));
 
-		pool_log("fork a new watchdog lifecheck pid %d", lifecheck_pid);
 	}
 
 	/* watchdog child process exits */
 	else if (pid == child_pid)
 	{
 		if (WIFSIGNALED(status))
-			pool_debug("watchdog child process %d exits with status %d by signal %d",
-			           pid, status, WTERMSIG(status));
+			ereport(DEBUG1,
+					(errmsg("watchdog child process with PID:%d exits with status %d by signal %d",
+							pid, status,WTERMSIG(status))));
 		else
-			pool_debug("watchdog child process %d exits with status %d", pid, status);
+			ereport(DEBUG1,
+				(errmsg("watchdog child process with PID:%d exits with status %d",
+						pid, status)));
+
 
 		child_pid = wd_child(1);
 
@@ -306,7 +313,9 @@ wd_reaper_watchdog(pid_t pid, int status)
 			return 0;
 		}
 
-		pool_log("fork a new watchdog child pid %d", child_pid);
+		ereport(LOG,
+				(errmsg("fork a new watchdog child pid %d", child_pid)));
+
 	}
 
 	/* receiver/sender process exits */
@@ -317,10 +326,12 @@ wd_reaper_watchdog(pid_t pid, int status)
 			if (pid == hb_receiver_pid[i])
 			{
 				if (WIFSIGNALED(status))
-					pool_debug("watchdog heartbeat receiver process %d exits with status %d by signal %d",
-					           pid, status, WTERMSIG(status));
+					ereport(DEBUG1,
+							(errmsg("watchdog heartbeat receiver process with PID:%d exits with status %d by signal %d",
+									pid, status, WTERMSIG(status))));
 				else
-					pool_debug("watchdog heartbeat receiver process %d exits with status %d", pid, status);
+					ereport(DEBUG1,
+							(errmsg("watchdog heartbeat receiver process with PID:%d exits with status %d", pid, status)));
 
 				hb_receiver_pid[i] = wd_hb_receiver(1, &(pool_config->hb_if[i]));
 
@@ -329,18 +340,22 @@ wd_reaper_watchdog(pid_t pid, int status)
 					pool_error("wd_reaper: fork a watchdog heartbeat receiver process failed");
 					return 0;
 				}
-		
-				pool_log("fork a new watchdog heartbeat receiver: pid %d", hb_receiver_pid[i]);
+
+				ereport(LOG,
+						(errmsg("fork a new watchdog heartbeat receiver with pid %d", hb_receiver_pid[i])));
+
 				break;
 			}
 
 			else if (pid == hb_sender_pid[i])
 			{
 				if (WIFSIGNALED(status))
-					pool_debug("watchdog heartbeat sender process %d exits with status %d by signal %d",
-					           pid, status, WTERMSIG(status));
+					ereport(DEBUG1,
+							(errmsg("watchdog heartbeat sender process with PID:%d exits with status %d by signal %d",
+									pid, status, WTERMSIG(status))));
 				else
-					pool_debug("watchdog heartbeat sender process %d exits with status %d", pid, status);
+					ereport(DEBUG1,
+							(errmsg("watchdog heartbeat sender process with PID:%d exits with status %d", pid, status)));
 
 				hb_sender_pid[i] = wd_hb_sender(1, &(pool_config->hb_if[i]));
 
@@ -349,8 +364,8 @@ wd_reaper_watchdog(pid_t pid, int status)
 					pool_error("wd_reaper: fork a watchdog heartbeat sender process failed");
 					return 0;
 				}
-		
-				pool_log("fork a new watchdog heartbeat sender: pid %d", hb_sender_pid[i]);
+				ereport(LOG,
+						(errmsg("fork a new watchdog heartbeat sender with PID:%d", hb_sender_pid[i])));
 				break;
 			}
 		}
@@ -370,7 +385,9 @@ wd_chk_setuid(void)
 	snprintf(path, sizeof(path), "%s/%s", pool_config->ifconfig_path, cmd);
 	if (! has_setuid_bit(path))
 	{
-		pool_log("wd_chk_setuid: ifup[%s] doesn't have setuid bit", path);
+		ereport(LOG,
+			(errmsg("checking setuid bit of ifup command"),
+				 errdetail("ifup[%s] doesn't have setuid bit", path)));
 		return 0;
 	}
 
@@ -379,7 +396,9 @@ wd_chk_setuid(void)
 	snprintf(path, sizeof(path), "%s/%s", pool_config->ifconfig_path, cmd);
 	if (! has_setuid_bit(path))
 	{
-		pool_log("wd_chk_setuid: ifdown[%s] doesn't have setuid bit", path);
+		ereport(LOG,
+			(errmsg("checking setuid bit of ifdown command"),
+				 errdetail("ifdown[%s] doesn't have setuid bit", path)));
 		return 0;
 	}
 
@@ -388,11 +407,15 @@ wd_chk_setuid(void)
 	snprintf(path, sizeof(path), "%s/%s", pool_config->arping_path, cmd);
 	if (! has_setuid_bit(path))
 	{
-		pool_log("wd_chk_setuid: arping[%s] doesn't have setuid bit", path);
+		ereport(LOG,
+			(errmsg("checking setuid bit of arping command"),
+				 errdetail("arping[%s] doesn't have setuid bit", path)));
+
 		return 0;
 	}
-
-	pool_log("wd_chk_setuid all commands have setuid bit");
+	ereport(LOG,
+		(errmsg("checking setuid bit of required commands"),
+			 errdetail("all commands have proper setuid bit")));
 	return 1;
 }
 

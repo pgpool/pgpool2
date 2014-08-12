@@ -27,6 +27,7 @@
 #include <sys/time.h>
 
 #include "pool.h"
+#include "utils/elog.h"
 #include "pool_config.h"
 #include "watchdog/watchdog.h"
 #include "watchdog/wd_ext.h"
@@ -74,7 +75,8 @@ void wd_start_interlock(bool by_health_check)
 	int count;
 	int node_id;
 
-	pool_log("wd_start_interlock: start interlocking");
+	ereport(LOG,
+		(errmsg("watchdog notifying to start interlocking")));
 
 	/* confirm other pgpools are contactable */
 	wd_confirm_contactable();
@@ -127,7 +129,8 @@ void wd_end_interlock(void)
 {
 	int count;
 
-	pool_log("wd_end_interlock: end interlocking");
+	ereport(LOG,
+			(errmsg("watchdog notifying to end interlocking")));
 
 	wd_set_interlocking(WD_MYSELF, false);
 	wd_send_packet_no(WD_END_INTERLOCK);
@@ -164,7 +167,8 @@ void wd_end_interlock(void)
 /* leave from interlocking by the wayside */
 void wd_leave_interlock(void)
 {
-	pool_log("wd_leave_interlock: leaving from interlocking");
+	ereport(LOG,
+		(errmsg("watchdog leaving from interlocking")));
 
 	if (wd_am_I_lock_holder())
 		wd_resign_lock_holder();
@@ -238,7 +242,9 @@ wd_assume_lock_holder(void)
 		if (wd_send_packet_no(WD_DECLARE_LOCK_HOLDER) == WD_OK)
 		{
 			wd_set_lock_holder(WD_MYSELF, true);
-			pool_log("wd_assume_lock_holder: become a new lock holder");
+			ereport(LOG,
+				(errmsg("watchdog became a new lock holder")));
+
 			rtn = WD_OK;
 		}
 	}
@@ -303,7 +309,9 @@ wd_unlock(WD_LOCK_ID lock_id)
 
 	wd_set_lock(lock_id, false);
 	rtn = wd_send_lock_packet(WD_UNLOCK_REQUEST, lock_id);
-	pool_debug("wd_unlock: send unlock request: %d", lock_id);
+	ereport(DEBUG1,
+		(errmsg("watchdog unlocking"),
+			 errdetail("sent unlock request: %d", lock_id)));
 
 	return rtn;
 }

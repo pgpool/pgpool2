@@ -27,6 +27,7 @@
 #include <sys/time.h>
 
 #include "pool.h"
+#include "utils/elog.h"
 #include "pool_config.h"
 #include "watchdog/watchdog.h"
 #include "watchdog/wd_ext.h"
@@ -369,7 +370,9 @@ wd_is_alive_master(void)
 		}
 	}
 
-	pool_debug("wd_is_alive_master: alive master not found");
+	ereport(DEBUG1,
+		(errmsg("watchdog checking master"),
+			 errdetail("alive master not found")));
 
 	return NULL;
 }

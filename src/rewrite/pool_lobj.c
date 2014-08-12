@@ -31,6 +31,7 @@
 #include "pool.h"
 #include "rewrite/pool_lobj.h"
 #include "utils/pool_relcache.h"
+#include "utils/elog.h"
 #include "pool_config.h"
 
 /*
@@ -111,7 +112,10 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 	memmove(&orig_fcall_oid, packet, sizeof(int32));
 	orig_fcall_oid = ntohl(orig_fcall_oid);
 
-	pool_debug("orig_fcall_oid:% d lo_creat_oid: %d", orig_fcall_oid, lo_creat_oid);
+	ereport(DEBUG1,
+		(errmsg("rewriting LO CREATE"),
+			 errdetail("orig_fcall_oid:% d lo_creat_oid: %d", orig_fcall_oid, lo_creat_oid)));
+
 	/*
 	 * This function call is calling lo_creat? */
 	if (orig_fcall_oid != lo_creat_oid)
@@ -137,8 +141,9 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 	 */
 	lo_create_oid = (int)(intptr_t)pool_search_relcache(relcache_lo_create, backend, "pg_proc");
 
-	pool_debug("pool_check_lo_creat: lo_creat_oid: %d lo_create_oid: %d",
-			   lo_creat_oid, lo_create_oid);
+	ereport(DEBUG1,
+		(errmsg("rewriting LO CREATE"),
+			errdetail("lo_creat_oid: %d lo_create_oid: %d",lo_creat_oid, lo_create_oid)));
 
 	/*
 	 * Parse input packet
@@ -152,8 +157,9 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 		pool_error("pool_rewrite_lo_creat: wrong return format code: %d", int16val);
 		return NULL;
 	}
-
-	pool_debug("pool_rewrite_lo_creat: return format code: %d", int16val);
+	ereport(DEBUG1,
+		(errmsg("rewriting LO CREATE"),
+			 errdetail("return format code: %d", int16val)));
 
 	/*
 	 * Ok, do it...
@@ -175,7 +181,9 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 	 */
 	if (TSTATE(backend, MASTER_NODE_ID) == 'E')
 	{
-		pool_log("pool_check_lo_creat: failed to execute: %s", qbuf);
+		ereport(LOG,
+			(errmsg("failed while rewriting LO CREATE"),
+				 errdetail("failed to execute: %s", qbuf)));
 		return NULL;
 	}
 
@@ -185,12 +193,17 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 
 	if (!result)
 	{
-		pool_log("pool_check_lo_creat: failed to execute: %s", GET_MAX_LOBJ_KEY);
+		ereport(LOG,
+			(errmsg("failed while rewriting LO CREATE"),
+				 errdetail("failed to execute: %s", GET_MAX_LOBJ_KEY)));
 		return NULL;
 	}
 		
 	lobjid = atoi(result->data[0]);
-	pool_debug("lobjid:%d", lobjid);
+	ereport(DEBUG1,
+		(errmsg("rewriting LO CREATE"),
+			 errdetail("lobjid:%d", lobjid)));
+
 	free_select_result(result);
 
 	/* sanity check */

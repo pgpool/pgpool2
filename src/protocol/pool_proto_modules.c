@@ -202,11 +202,13 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			 */
 			if (!strcmp(remote_host, "[local]"))
 			{
-				pool_log("SimpleQuery: Unable to parse the query: \"%s\" from local client", contents);
+				ereport(LOG,
+					(errmsg("Unable to parse the query: \"%s\" from local client", contents)));
 			}
 			else
 			{
-				pool_log("SimpleQuery: Unable to parse the query: \"%s\" from client %s(%s)", contents, remote_host, remote_port);
+				ereport(LOG,
+						(errmsg("Unable to parse the query: \"%s\" from client %s(%s)", contents, remote_host, remote_port)));
 			}
 			parse_tree_list = raw_parser(POOL_DUMMY_WRITE_QUERY);
 			query_context->is_parse_error = true;
@@ -235,7 +237,8 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			query_context->dboid = pool_get_database_oid_from_dbname(stmt->dbname);
 			if (query_context->dboid != 0)
 			{
-				pool_debug("DB's oid to discard its cache directory: dboid = %d", query_context->dboid);
+				ereport(DEBUG1,
+						(errmsg("DB's oid to discard its cache directory: dboid = %d", query_context->dboid)));
 			}
 		}
 
@@ -279,37 +282,50 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			if (!strcmp(sq_config, vnode->name))
             {
 				is_valid_show_command = true;
-                pool_debug("config reporting");
+				ereport(DEBUG1,
+					(errmsg("SimpleQuery"),
+						 errdetail("config reporting")));
                 config_reporting(frontend, backend);
             }
 			else if (!strcmp(sq_pools, vnode->name))
             {
 				is_valid_show_command = true;
-                pool_debug("pools reporting");
+				ereport(DEBUG1,
+					(errmsg("SimpleQuery"),
+						 errdetail("pools reporting")));
+
                 pools_reporting(frontend, backend);
             }
 			else if (!strcmp(sq_processes, vnode->name))
             {
 				is_valid_show_command = true;
-                pool_debug("processes reporting");
+				ereport(DEBUG1,
+					(errmsg("SimpleQuery"),
+						 errdetail("processes reporting")));
                 processes_reporting(frontend, backend);
             }
 			else if (!strcmp(sq_nodes, vnode->name))
             {
 				is_valid_show_command = true;
-                pool_debug("nodes reporting");
+				ereport(DEBUG1,
+					(errmsg("SimpleQuery"),
+						 errdetail("nodes reporting")));
                 nodes_reporting(frontend, backend);
             }
 			else if (!strcmp(sq_version, vnode->name))
             {
 				is_valid_show_command = true;
-                pool_debug("version reporting");
+				ereport(DEBUG1,
+					(errmsg("SimpleQuery"),
+						 errdetail("version reporting")));
                 version_reporting(frontend, backend);
             }
 			else if (!strcmp(sq_cache, vnode->name))
             {
 				is_valid_show_command = true;
-                pool_debug("cache reporting");
+				ereport(DEBUG1,
+					(errmsg("SimpleQuery"),
+						 errdetail("cache reporting")));
                 cache_reporting(frontend, backend);
             }
 
@@ -385,7 +401,8 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		{
 			int stime = 5;	/* XXX give arbitrary time to allow closing idle connections */
 
-			pool_debug("Query: sending SIGUSR1 signal to parent");
+			ereport(DEBUG1,
+					(errmsg("Query: sending SIGUSR1 signal to parent")));
 
 			Req_info->kind = CLOSE_IDLE_REQUEST;
 			kill(getppid(), SIGUSR1);		/* send USR1 signal to parent */
@@ -796,9 +813,9 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	/* Create query context */
 	query_context = pool_init_query_context();
-    
-    
-	pool_debug("Parse: statement name <%s>", contents);
+
+	ereport(DEBUG1,
+			(errmsg("Parse: statement name <%s>", contents)));
 
 	name = contents;
 	stmt = contents + strlen(contents) + 1;
@@ -835,11 +852,13 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			 */
 			if (!strcmp(remote_host, "[local]"))
 			{
-				pool_log("Parse: Unable to parse the query: \"%s\" from local client", stmt);
+				ereport(LOG,
+						(errmsg("Unable to parse the query: \"%s\" from local client", stmt)));
 			}
 			else
 			{
-				pool_log("Parse: Unable to parse the query: \"%s\" from client %s(%s)", stmt, remote_host, remote_port);
+				ereport(LOG,
+						(errmsg("Unable to parse the query: \"%s\" from client %s(%s)", stmt, remote_host, remote_port)));
 			}
 			parse_tree_list = raw_parser(POOL_DUMMY_WRITE_QUERY);
 			query_context->is_parse_error = true;
@@ -948,7 +967,8 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 				len = alloc_len;
 				name = contents;
 				stmt = contents + strlen(name) + 1;
-				pool_debug("Parse: rewrite query  %s %s len=%d", name, stmt, len);
+				ereport(DEBUG1,
+						(errmsg("Parse: rewrite query name:\"%s\" statement:\"%s\" len=%d", name, stmt, len)));
 
 				msg->len = len;
 				msg->contents = contents;
@@ -1040,7 +1060,8 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		 * We must synchronize because Parse message acquires table
 		 * locks.
 		 */
-		pool_debug("Parse: waiting for master completing the query");
+		ereport(DEBUG1,
+				(errmsg("Parse: waiting for master completing the query")));
         pool_extended_send_and_wait(query_context, "P", len, contents, 1, MASTER_NODE_ID);
 
 
@@ -1069,7 +1090,8 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			pool_start_query(error_qc, POOL_ERROR_QUERY, strlen(POOL_ERROR_QUERY) + 1, node);
 			pool_copy_prep_where(query_context->where_to_send, error_qc->where_to_send);
 			
-			pool_log("Parse: received deadlock error message from master node");
+			ereport(LOG,
+					(errmsg("Parse: received deadlock error message from master node")));
 
 			pool_send_and_wait(error_qc, -1, MASTER_NODE_ID);
 
@@ -1169,19 +1191,23 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	 */
 	if (REPLICATION)
 	{
-		pool_debug("Bind: checking strict query");
+		ereport(DEBUG1,
+				(errmsg("Bind: checking strict query")));
 		if (is_strict_query(query_context->parse_tree))
 		{
-			pool_debug("Bind: strict query");
+			ereport(DEBUG1,
+					(errmsg("Bind: strict query")));
 			start_internal_transaction(frontend, backend, query_context->parse_tree);
 			allow_close_transaction = 1;
 		}
 
-		pool_debug("Bind: checking insert lock");
+		ereport(DEBUG1,
+				(errmsg("Bind: checking insert lock")));
 		insert_stmt_with_lock = need_insert_lock(backend, query_context->original_query, query_context->parse_tree);
 		if (insert_stmt_with_lock)
 		{
-			pool_debug("Bind: issuing insert lock");
+			ereport(DEBUG1,
+					(errmsg("Bind: issuing insert lock")));
 			/* issue a LOCK command to keep consistency */
 			if (insert_lock(frontend, backend, query_context->original_query, (InsertStmt *)query_context->parse_tree, insert_stmt_with_lock) != POOL_CONTINUE)
 			{
@@ -1190,8 +1216,9 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			}
 		}
 	}
+	ereport(DEBUG1,
+		(errmsg("Bind: waiting for master completing the query")));
 
-	pool_debug("Bind: waiting for master completing the query");
 	pool_extended_send_and_wait(query_context, "B", len, contents, 1, MASTER_NODE_ID);
 
 	pool_extended_send_and_wait(query_context, "B", len, contents, -1, MASTER_NODE_ID);
@@ -1408,7 +1435,10 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 					snprintf(msgbuf, sizeof(msgbuf), " %d", victim_nodes[i]);
 					string_append_char(msg, msgbuf);
 				}
-				pool_log("%s", msg->data);
+				ereport(LOG,
+					(errmsg("processing ready for query message"),
+						 errdetail("%s", msg->data)));
+
 				free_string(msg);
 
 				msg = init_string("ReadyForQuery: Number of affected tuples are:");
@@ -1418,7 +1448,10 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 					snprintf(msgbuf, sizeof(msgbuf), " %d", session_context->ntuples[i]);
 					string_append_char(msg, msgbuf);
 				}
-				pool_log("%s", msg->data);
+				ereport(LOG,
+					(errmsg("processing ready for query message"),
+						 errdetail("%s", msg->data)));
+
 				free_string(msg);
 
 				MemoryContextSwitchTo(old_context);
@@ -1508,9 +1541,9 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				return POOL_END;
 
 			TSTATE(backend, i) = kind;
-
-			pool_debug("ReadyForQuery: transaction state:%c", state);
-
+			ereport(DEBUG1,
+				(errmsg("processing ReadyForQuery"),
+					 errdetail("transaction state '%c'(%02x)", state,state)));
 			/*
 			 * The transaction state to be returned to frontend is
 			 * master's.
@@ -1934,8 +1967,10 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 
 			if (len != len1)
 			{
-				pool_debug("CommandComplete: length does not match between backends master(%d) %d th backend(%d)",
- 						   len, i, len1);
+				ereport(DEBUG1,
+					(errmsg("processing command complete"),
+						errdetail("length does not match between backends master(%d) %d th backend(%d)",
+							   len, i, len1)));
 			}
 
 			int n = extract_ntuples(p);
@@ -1993,7 +2028,10 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 			snprintf(msgbuf, sizeof(msgbuf), " %d", session_context->ntuples[i]);
 			string_append_char(msg, msgbuf);
 		}
-		pool_log("%s", msg->data);
+		ereport(LOG,
+			(errmsg("processing command complete"),
+				 errdetail("%s", msg->data)));
+
 		free_string(msg);
 
 		MemoryContextSwitchTo(old_context);
@@ -2306,7 +2344,10 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 
 	pool_read(frontend, &fkind, 1);
 
-	pool_debug("ProcessFrontendResponse: kind from frontend %c(%02x)", fkind, fkind);
+	ereport(DEBUG1,
+		(errmsg("processing frontend response"),
+			 errdetail("received kind '%c'(%02x) from frontend",fkind,fkind)));
+
 
 	if (MAJOR(backend) == PROTO_MAJOR_V3)
 	{
@@ -2502,8 +2543,10 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
                 errmsg("unable to process backend response"),
                  errdetail("invalid message kind sent by backend connection")));
 	}
+	ereport(DEBUG1,
+		(errmsg("processing backend response"),
+			 errdetail("received kind '%c'(%02x) from backend",kind,kind)));
 
-	pool_debug("ProcessBackendResponse: kind from backend: %c", kind);
 
 	if (MAJOR(backend) == PROTO_MAJOR_V3)
 	{
@@ -2518,8 +2561,10 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 				break;
 
 			case 'Z':	/* ReadyForQuery */
+				ereport(DEBUG1,
+					(errmsg("processing backend response"),
+						 errdetail("Ready For Query received")));
 				status = ReadyForQuery(frontend, backend, true, true);
-				pool_debug("ProcessBackendResponse: Ready For Query");
 				break;
 
 			case '1':	/* ParseComplete */
@@ -2790,11 +2835,13 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 
 						id = pool_get_id(info, p1);
 
-						pool_debug("CopyDataRow: copying id: %d", id);
+						ereport(DEBUG1,
+							(errmsg("copy data rows"),
+								 errdetail("copying id: %d", id)));
 						pfree(p1);
 						if (id < 0 || !VALID_BACKEND(id))
                             ereport(FATAL,
-                                    (return_code(1),
+								(return_code(1),
                                     errmsg("unable to copy data rows"),
                                      errdetail("pool_get_id returns invalid id: %d", id)));
                                     
@@ -2807,8 +2854,9 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 				else
 				{
 					char *contents = NULL;
-
-					pool_debug("CopyDataRows: read kind from frontend %c(%02x)", kind, kind);
+					ereport(DEBUG1,
+						(errmsg("copy data rows"),
+							 errdetail("read kind from frontend %c(%02x)", kind, kind)));
 
 					pool_read(frontend, &len, sizeof(len));
 					len = ntohl(len) - 4;
@@ -2823,7 +2871,9 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 					continue;
 				else
 				{
-					pool_debug("CopyDataRows: copyin kind other than d (%c)", kind);
+					ereport(DEBUG1,
+						(errmsg("copy data rows"),
+							 errdetail("invalid copyin kind. expected 'd' got '%c'", kind)));
 					break;
 				}
 			}
@@ -2866,7 +2916,9 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 
 #ifdef DEBUG
 		strlcpy(buf, string, sizeof(buf));
-		pool_debug("copy line %d %d bytes :%s:", j++, len, buf);
+		ereport(DEBUG1,
+			(errmsg("copy data rows"),
+				 errdetail("copy line %d %d bytes :%s:", j++, len, buf)));
 #endif
 
 		if (copyin)
@@ -2951,7 +3003,9 @@ POOL_STATUS raise_intentional_error_if_need(POOL_CONNECTION_POOL *backend)
 			if (ret != POOL_CONTINUE)
 				return ret;
 		}
-		pool_debug("raise_intentional_error: intentional error occurred");
+		ereport(DEBUG1,
+			(errmsg("raising intentional error"),
+				errdetail("generating intentional error to sync backends transaction states")));
 	}
 
 	if (REPLICATION &&
@@ -3144,7 +3198,10 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 	{
 		if (qc->where_to_send[i] && statecmp(qc->query_state[i], POOL_PARSE_COMPLETE) < 0)
 		{
-			pool_debug("parse_before_bind: waiting for backend %d completing parse", i);
+			ereport(DEBUG1,
+				(errmsg("parse before bind"),
+					 errdetail("waiting for backend %d completing parse", i)));
+
 			pool_extended_send_and_wait(qc, "P", len, contents, 1, i);
 		}
 		else

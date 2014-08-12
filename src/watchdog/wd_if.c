@@ -33,6 +33,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include "pool.h"
+#include "utils/elog.h"
 #include "pool_config.h"
 #include "watchdog/watchdog.h"
 #include "watchdog/wd_ext.h"
@@ -71,7 +72,9 @@ wd_IP_up(void)
 			{
 				if (!wd_is_unused_ip(pool_config->delegate_IP))
 					break;
-				pool_debug("wd_IP_up: waiting... count: %d", i+1);
+				ereport(DEBUG1,
+					(errmsg("watchdog bringing up delegate IP"),
+						 errdetail("waiting... count: %d", i+1)));
 			}
 
 			if (i >= WD_TRY_PING_AT_IPUP)
@@ -79,13 +82,19 @@ wd_IP_up(void)
 		}
 
 		if (rtn == WD_OK)
-			pool_log("wd_IP_up: ifconfig up succeeded");
+			ereport(LOG,
+				(errmsg("watchdog bringing up delegate IP"),
+					 errdetail("ifconfig up succeeded")));
 		else
-			pool_error("wd_IP_up: ifconfig up failed");
+			ereport(LOG,
+				(errmsg("watchdog failed to bring up delegate IP"),
+					 errdetail("ifconfig up failed")));
 	}
 	else
 	{
-		pool_debug("wd_IP_up: already delegate IP holder");
+		ereport(DEBUG1,
+			(errmsg("watchdog failed to bring up delegate IP"),
+				 errdetail("already delegate IP holder")));
 	}
 
 	return rtn;
@@ -123,7 +132,11 @@ wd_IP_down(void)
 		}
 
 		if (rtn == WD_OK)
-			pool_log("wd_IP_down: ifconfig down succeeded");
+		{
+			ereport(LOG,
+				(errmsg("watchdog bringing down delegate IP"),
+					 errdetail("ifconfig down succeeded")));
+		}
 		else
 		{
 			WD_List->delegate_ip_flag = 1;
@@ -132,7 +145,9 @@ wd_IP_down(void)
 	}
 	else
 	{
-		pool_debug("wd_IP_down: not delegate IP holder");
+		ereport(DEBUG1,
+			(errmsg("watchdog failed to bring down delegate IP"),
+				 errdetail("not a delegate IP holder")));
 	}
 
 	return rtn;
@@ -229,14 +244,18 @@ exec_ifconfig(char * path,char * command)
 				if (errno == EINTR)
 					continue;
 
-				pool_debug("exec_ifconfig: wait() failed. reason: %s ", strerror(errno));
+				ereport(DEBUG1,
+					(errmsg("watchdog exec wait()failed"),
+						 errdetail("wait() system call failed with reason \"%s\"", strerror(errno))));
 				return WD_NG;
 			}
 
 			if (WIFEXITED(status) == 0 || WEXITSTATUS(status) != 0)
 			{
-				pool_debug("exec_ifconfig: '%s' failed. exit status: %d",
-				           command, WEXITSTATUS(status));
+				ereport(DEBUG1,
+					(errmsg("watchdog exec ifconfig failed"),
+						errdetail("'%s' failed. exit status: %d",command, WEXITSTATUS(status))));
+
 				return WD_NG;
 			}
 			else
@@ -244,8 +263,9 @@ exec_ifconfig(char * path,char * command)
 		}
 		close(pfd[0]);
 	}
+	ereport(DEBUG1,
+		(errmsg("watchdog exec ifconfig: '%s' succeeded", command)));
 
-	pool_debug("exec_ifconfig: '%s' succeeded", command);
 	return WD_OK;
 }
 

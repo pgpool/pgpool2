@@ -147,7 +147,10 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, in
 
 				if (sock_broken < 0)
 				{
-					pool_log("connection closed. retry to create new connection pool.");
+					ereport(LOG,
+						(errmsg("connection closed."),
+							 errdetail("retry to create new connection pool")));
+
 					for (j=0;j<NUM_BACKENDS;j++)
 					{
 						if (!VALID_BACKEND(j) || (CONNECTION_SLOT(connection_pool, j) == NULL))
@@ -235,9 +238,9 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
     /* if no connection pool exists we have no reason to live */
 	if (p == NULL)
         ereport(ERROR,
-                (return_code(2),
-                 errmsg("unable to create connection"),
-                 errdetail("connection pool is not initialized")));
+			(return_code(2),
+				 errmsg("unable to create connection"),
+					errdetail("connection pool is not initialized")));
 
 	for (i=0;i<pool_config->max_pool;i++)
 	{
@@ -250,8 +253,9 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 		}
 		p++;
 	}
-
-	pool_debug("no empty connection slot was found");
+	ereport(DEBUG1,
+		(errmsg("creating connection pool"),
+			 errdetail("no empty connection slot was found")));
 
 	/*
 	 * no empty connection slot was found. look for the oldest connection and discard it.
@@ -262,10 +266,12 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 
 	for (i=0;i<pool_config->max_pool;i++)
 	{
-		pool_debug("user: %s database: %s closetime: %ld",
-				   MASTER_CONNECTION(p)->sp->user,
-				   MASTER_CONNECTION(p)->sp->database,
-				   MASTER_CONNECTION(p)->closetime);
+		ereport(DEBUG1,
+			(errmsg("creating connection pool"),
+				errdetail("user: %s database: %s closetime: %ld",
+					   MASTER_CONNECTION(p)->sp->user,
+					   MASTER_CONNECTION(p)->sp->database,
+					   MASTER_CONNECTION(p)->closetime)));
 
 		if (MASTER_CONNECTION(p)->closetime < closetime)
 		{
@@ -279,10 +285,12 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 	p = oldestp;
 	pool_send_frontend_exits(p);
 
-	pool_debug("discarding old %zd th connection. user: %s database: %s",
-			   oldestp - pool_connection_pool,
-			   MASTER_CONNECTION(p)->sp->user,
-			   MASTER_CONNECTION(p)->sp->database);
+	ereport(DEBUG1,
+		(errmsg("creating connection pool"),
+			errdetail("discarding old %zd th connection. user: %s database: %s",
+				   oldestp - pool_connection_pool,
+				   MASTER_CONNECTION(p)->sp->user,
+				   MASTER_CONNECTION(p)->sp->database)));
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -318,7 +326,9 @@ void pool_connection_pool_timer(POOL_CONNECTION_POOL *backend)
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
 	int i;
 
-	pool_debug("pool_connection_pool_timer: set close time %ld", time(NULL));
+	ereport(DEBUG1,
+		(errmsg("setting backend connection close timer"),
+			 errdetail("close time %ld", time(NULL))));
 
 	MASTER_CONNECTION(backend)->closetime = time(NULL);		/* set connection close time */
 
@@ -340,7 +350,10 @@ void pool_connection_pool_timer(POOL_CONNECTION_POOL *backend)
 	}
 
 	/* no other timer found. set my timer */
-	pool_debug("pool_connection_pool_timer: set alarm after %d seconds", pool_config->connection_life_time);
+	ereport(DEBUG1,
+		(errmsg("setting backend connection close timer"),
+			 errdetail("setting alarm after %d seconds", pool_config->connection_life_time)));
+
 	pool_signal(SIGALRM, pool_backend_timer_handler);
 	alarm(pool_config->connection_life_time);
 }
@@ -367,7 +380,8 @@ void pool_backend_timer(void)
 
 	now = time(NULL);
 
-	pool_debug("pool_backend_timer_handler called at %ld", now);
+	ereport(DEBUG1,
+		(errmsg("backend timer handler called at%ld", now)));
 
 	for (i=0;i<pool_config->max_pool;i++, p++)
 	{
@@ -383,15 +397,18 @@ void pool_backend_timer(void)
 		{
 			int freed = 0;
 
-			pool_debug("pool_backend_timer_handler: expire time: %ld",
-					   MASTER_CONNECTION(p)->closetime+pool_config->connection_life_time);
+			ereport(DEBUG1,
+				(errmsg("backend timer handler called"),
+					errdetail("expire time: %ld",
+						   MASTER_CONNECTION(p)->closetime+pool_config->connection_life_time)));
 
 			if (now >= (MASTER_CONNECTION(p)->closetime+pool_config->connection_life_time))
 			{
 				/* discard expired connection */
-				pool_debug("pool_backend_timer_handler: expires user %s database %s",
-						   MASTER_CONNECTION(p)->sp->user, MASTER_CONNECTION(p)->sp->database);
-
+				ereport(DEBUG1,
+					(errmsg("backend timer handler called"),
+						errdetail("expired user: \"%s\" database: \"%s\"",
+							   MASTER_CONNECTION(p)->sp->user, MASTER_CONNECTION(p)->sp->database)));
 				pool_send_frontend_exits(p);
 
 				for (j=0;j<NUM_BACKENDS;j++)
@@ -489,7 +506,9 @@ int connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry)
 	{
 		if (exit_request)		/* exit request already sent */
 		{
-			pool_log("connect_unix_domain_socket_by_port: exit request has been sent");
+			ereport(LOG,
+				(errmsg("failed to connect to PostgreSQL server by unix domain socket"),
+					 errdetail("exit request has been sent")));
 			close(fd);
 			return -1;
 		}
@@ -567,14 +586,18 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 	{
 		if (exit_request)		/* exit request already sent */
 		{
-			pool_log("connect_inet_domain_socket_by_port: exit request has been sent");
+			ereport(LOG,
+				(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" using INET socket",host,port),
+					 errdetail("exit request has been sent")));
 			close(fd);
 			return -1;
 		}
 
 		if (health_check_timer_expired && getpid() == mypid)		/* has health check timer expired */
 		{
-			pool_log("connect_inet_domain_socket_by_port: health check timer expired");
+			ereport(LOG,
+				(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" using INET socket",host,port),
+					 errdetail("health check timer expired")));
 			close(fd);
 			return -1;
 		}
@@ -629,8 +652,9 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 				/* select timeout */
 				if (retry)
 				{
-					pool_log("connect_inet_domain_socket(%s:%d): select() timed out. retrying...",
-							 host, port);
+					ereport(LOG,
+						(errmsg("trying connecting to PostgreSQL server on \"%s:%d\" by INET socket",host,port),
+							 errdetail("timed out. retrying...")));
 					continue;
 				}
 				else
@@ -684,12 +708,14 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 			{
 				if((errno == EINTR && retry) || errno == EAGAIN)
 				{
-					pool_log("connect_inet_domain_socket(%s:%d): select() interrupted. retrying...",
-							 host, port);
+					ereport(LOG,
+						(errmsg("trying to connect to PostgreSQL server on \"%s:%d\" using INET socket",host,port),
+							 errdetail("select() interrupted. retrying...")));
 					continue;
 				}
-				pool_log("connect_inet_domain_socket(%s:%d): select() interrupted",
-						 host, port);
+				ereport(LOG,
+					(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" using INET socket",host,port),
+						 errdetail("select() system call interrupted")));
 				close(fd);
 				return -1;
 			}
@@ -744,12 +770,16 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
     
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
-		pool_debug("new_connection: connecting %d backend", i);
+		ereport(DEBUG1,
+			(errmsg("creating new connection to backend"),
+				 errdetail("connecting %d backend", i)));
 
 		if (!VALID_BACKEND(i))
 		{
-			pool_debug("new_connection: skipping slot %d because backend_status = %d",
-					   i, BACKEND_INFO(i).backend_status);
+			ereport(DEBUG1,
+				(errmsg("creating new connection to backend"),
+					errdetail("skipping backend slot %d because backend_status = %d",
+						   i, BACKEND_INFO(i).backend_status)));
 			continue;
 		}
 
@@ -769,7 +799,10 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 			}
 			else
 			{
-				pool_log("new_connection: do not failover because fail_over_on_backend_error is off");
+				ereport(LOG,
+					(errmsg("creating new connection to backend"),
+						 errdetail("not executing failover because fail_over_on_backend_error is off")));
+				continue;
 			}
 			child_exit(1);
 		}

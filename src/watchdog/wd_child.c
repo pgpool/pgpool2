@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include "pool.h"
+#include "utils/elog.h"
 #include "pool_config.h"
 #include "watchdog/wd_ext.h"
 #include "watchdog/watchdog.h"
@@ -157,7 +158,9 @@ wd_send_response(int sock, WdPacket * recv_pack)
 
 		if (strcmp(recv_pack->hash, hash))
 		{
-			pool_log("wd_send_response: watchdog authentication failed");
+			ereport(LOG,
+				(errmsg("failed sending watchdog response"),
+					 errdetail("watchdog authentication failed")));
 			rtn = wd_authentication_failed(sock);
 			return rtn;
 		}
@@ -180,14 +183,19 @@ wd_send_response(int sock, WdPacket * recv_pack)
 			if (wd_set_wd_list(p->hostname, p->pgpool_port, p->wd_port,
 			                   p->delegate_ip, &(p->tv), p->status) > 0)
 			{
-				pool_log("wd_send_response: receive add request from %s:%d and accept it",
-				         p->hostname, p->pgpool_port);
+				ereport(LOG,
+					(errmsg("sending watchdog response"),
+						errdetail("receive add request from %s:%d and accept it",
+							   p->hostname, p->pgpool_port)));
+
 				send_packet.packet_no = WD_ADD_ACCEPT;
 			}
 			else
 			{
-				pool_log("wd_send_response: receive add request from %s:%d and reject it",
-				         p->hostname, p->pgpool_port);
+				ereport(LOG,
+					(errmsg("sending watchdog response"),
+						errdetail("receive add request from %s:%d and reject it",
+							   p->hostname, p->pgpool_port)));
 				send_packet.packet_no = WD_ADD_REJECT;
 			}
 			memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
@@ -203,9 +211,10 @@ wd_send_response(int sock, WdPacket * recv_pack)
 				/* vote against the candidate */
 				send_packet.packet_no = WD_MASTER_EXIST;
 				memcpy(&(send_packet.wd_body.wd_info), q, sizeof(WdInfo));
-
-				pool_log("wd_send_response: WD_STAND_FOR_MASTER received, and voting against %s:%d",
-				         p->hostname, p->pgpool_port);
+				ereport(LOG,
+					(errmsg("sending watchdog response"),
+						errdetail("WD_STAND_FOR_MASTER received, and voting against %s:%d",
+							   p->hostname, p->pgpool_port)));
 			}
 			else
 			{
@@ -219,8 +228,10 @@ wd_send_response(int sock, WdPacket * recv_pack)
 				send_packet.packet_no = WD_VOTE_YOU;
 				memcpy(&(send_packet.wd_body.wd_info), WD_MYSELF, sizeof(WdInfo));
 
-				pool_log("wd_send_response: WD_STAND_FOR_MASTER received, and voting for %s:%d",
-				         p->hostname, p->pgpool_port);
+				ereport(LOG,
+					(errmsg("sending watchdog response"),
+						errdetail("WD_STAND_FOR_MASTER received, and voting for %s:%d",
+							   p->hostname, p->pgpool_port)));
 			}
 			break;
 
@@ -231,7 +242,10 @@ wd_send_response(int sock, WdPacket * recv_pack)
 			if (WD_MYSELF->status == WD_MASTER)
 			{
 				/* resign master server */
-				pool_log("wd_send_response: WD_DECLARE_NEW_MASTER received and resign master server");
+				ereport(LOG,
+					(errmsg("sending watchdog response"),
+						 errdetail("WD_DECLARE_NEW_MASTER received and resign master server")));
+
 				if (strlen(pool_config->delegate_IP) != 0)
 					wd_IP_down();
 				wd_set_myself(NULL, WD_NORMAL);
@@ -250,12 +264,18 @@ wd_send_response(int sock, WdPacket * recv_pack)
 				/* if lock holder exists yet */
 				if (wd_get_lock_holder() != NULL)
 				{
-					pool_log("wd_send_response: WD_STAND_FOR_LOCK_HOLDER received but lock holder exists already");
+					ereport(LOG,
+						(errmsg("sending watchdog response"),
+							 errdetail("WD_STAND_FOR_LOCK_HOLDER received but lock holder already exists")));
+
 					send_packet.packet_no = WD_LOCK_HOLDER_EXIST;
 				}
 				else
 				{
-					pool_log("wd_send_response: WD_STAND_FOR_LOCK_HOLDER received it");
+					ereport(LOG,
+						(errmsg("sending watchdog response"),
+							 errdetail("WD_STAND_FOR_LOCK_HOLDER received it")));
+
 					wd_set_lock_holder(p, true);
 					send_packet.packet_no = WD_READY;
 				}
@@ -273,7 +293,10 @@ wd_send_response(int sock, WdPacket * recv_pack)
 			wd_set_wd_list(p->hostname, p->pgpool_port, p->wd_port, p->delegate_ip, &(p->tv), p->status);
 			if (WD_MYSELF->is_lock_holder)
 			{
-				pool_log("wd_send_response: WD_DECLARE_LOCK_HOLDER received but lock holder exists already");
+				ereport(LOG,
+					(errmsg("sending watchdog response"),
+						 errdetail("WD_DECLARE_LOCK_HOLDER received but lock holder already exists")));
+
 				send_packet.packet_no = WD_LOCK_HOLDER_EXIST;
 			}
 			else
@@ -351,7 +374,10 @@ wd_send_response(int sock, WdPacket * recv_pack)
 		case WD_FAILBACK_REQUEST:
 			if (Req_info->switching)
 			{
-				pool_log("wd_send_response: failback request from other pgpool is canceled because it's while switching");
+
+				ereport(LOG,
+					(errmsg("sending watchdog response"),
+						 errdetail("failback request from other pgpool is canceled because of switching")));
 				send_packet.packet_no = WD_NODE_FAILED;
 			}
 			else
@@ -367,7 +393,10 @@ wd_send_response(int sock, WdPacket * recv_pack)
 		case WD_DEGENERATE_BACKEND:
 			if (Req_info->switching)
 			{
-				pool_log("wd_send_response: failover request from other pgpool is canceled because it's while switching");
+				ereport(LOG,
+					(errmsg("sending watchdog response"),
+						 errdetail("failover request from other pgpool is canceled because of switching")));
+
 				send_packet.packet_no = WD_NODE_FAILED;
 			}
 			else
@@ -383,7 +412,10 @@ wd_send_response(int sock, WdPacket * recv_pack)
 		case WD_PROMOTE_BACKEND:
 			if (Req_info->switching)
 			{
-				pool_log("wd_send_response: promote request from other pgpool is canceled because it's while switching");
+				ereport(LOG,
+					(errmsg("sending watchdog response"),
+						 errdetail("promote request from other pgpool is canceled because of switching")));
+
 				send_packet.packet_no = WD_NODE_FAILED;
 			}
 			else

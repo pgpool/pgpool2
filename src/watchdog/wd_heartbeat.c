@@ -45,6 +45,7 @@
 #endif
 
 #include "pool.h"
+#include "utils/elog.h"
 #include "pool_config.h"
 #include "auth/md5.h"
 #include "watchdog/watchdog.h"
@@ -101,13 +102,19 @@ wd_create_hb_send_socket(WdHbIf *hb_if)
 					close(sock);
 					return -1;
 				}
-				pool_log("wd_create_hb_send_socket: bind send socket to device: %s", i.ifr_name);
+				ereport(LOG,
+					(errmsg("creating socket for sending heartbeat"),
+						 errdetail("bind send socket to device: %s", i.ifr_name)));
 			}
 			else
-				pool_log("wd_create_hb_send_socket: setsockopt(SO_BINDTODEVICE) requies root privilege");
+				ereport(LOG,
+					(errmsg("creating socket for sending heartbeat"),
+						 errdetail("setsockopt(SO_BINDTODEVICE) requies root privilege")));
 		}
 #else
-		pool_log("wd_create_hb_send_socket: couldn't setsockopt(SO_BINDTODEVICE) on this platform");
+		ereport(LOG,
+			(errmsg("creating socket for sending heartbeat"),
+				 errdetail("setsockopt(SO_BINDTODEVICE) is not available on this platform")));
 #endif
 	}
 
@@ -116,7 +123,9 @@ wd_create_hb_send_socket(WdHbIf *hb_if)
 		pool_error("wd_create_hb_send_socket: wd_set_reuseport failed");
 		return -1;
 	}
-	pool_log("wd_create_hb_send_socket: set SO_REUSEPORT");
+	ereport(LOG,
+		(errmsg("creating socket for sending heartbeat"),
+			 errdetail("set SO_REUSEPORT")));
 
  	if (fcntl(sock, F_SETFD, FD_CLOEXEC) < 0) {
 		pool_error("wd_create_hb_send_socket: setting close-on-exec flag failed. reason: %s",
@@ -176,13 +185,20 @@ wd_create_hb_recv_socket(WdHbIf *hb_if)
 					close(sock);
 					return -1;
 				}
-				pool_log("wd_create_hb_recv_socket: bind receive socket to device: %s", i.ifr_name);
+				ereport(LOG,
+					(errmsg("createing watchdog heartbeat receive socket."),
+						 errdetail("bind receive socket to device: %s", i.ifr_name)));
+
 			}
 			else
-				pool_log("wd_create_hb_send_socket: setsockopt(SO_BINDTODEVICE) requies root privilege");
+				ereport(LOG,
+					(errmsg("failed to create watchdog heartbeat receive socket."),
+						 errdetail("setsockopt(SO_BINDTODEVICE) requies root privilege")));
 		}
 #else
-		pool_log("wd_create_hb_send_socket: couldn't setsockopt(SO_BINDTODEVICE) on this platform");
+		ereport(LOG,
+			(errmsg("failed to create watchdog heartbeat receive socket"),
+				 errdetail("setsockopt(SO_BINDTODEVICE) is not available on this platform")));
 #endif
 	}
 
@@ -191,15 +207,20 @@ wd_create_hb_recv_socket(WdHbIf *hb_if)
 		pool_error("wd_create_hb_recv_socket: wd_set_reuseport failed");
 		return -1;
 	}
-	pool_log("wd_create_hb_recv_socket: set SO_REUSEPORT");
+	ereport(LOG,
+		(errmsg("creating watchdog heartbeat receive socket."),
+			 errdetail("set SO_REUSEPORT")));
 
 	bind_is_done = 0;
 	for (bind_tries = 0; !bind_is_done && bind_tries < MAX_BIND_TRIES; bind_tries++)
 	{
 		if (bind(sock, (struct sockaddr *)&addr, sizeof(struct sockaddr)) < 0)
 		{
-			pool_log("wd_crate_hb_recv_socket: bind failed. reason: %s ... retrying",
-			         strerror(errno));
+			ereport(LOG,
+				(errmsg("failed to create watchdog heartbeat receive socket. retrying..."),
+					errdetail("bind failed with reason: \"%s\"",
+						   strerror(errno))));
+
 			sleep(1);
 		}
 		else
@@ -259,7 +280,8 @@ wd_hb_send(int sock, WdHbPacket * pkt, int len, const char * host, const int por
 		pool_error("wd_hb_send: failed to sent packet to %s", host);
 		return WD_NG;
 	}
-	pool_debug("wd_hb_send: send %d byte packet", rtn);
+	ereport(DEBUG2,
+			(errmsg("watchdog heartbeat: send %d byte packet", rtn)));
 
 	return WD_OK;
 }
@@ -289,7 +311,8 @@ wd_hb_recv(int sock, WdHbPacket * pkt)
 	}
 	else
 	{
-		pool_debug("wd_hb_recv: received %d byte packet", rtn);
+		ereport(DEBUG2,
+				(errmsg("watchdog heartbeat: received %d byte packet", rtn)));
 	}
 
 	ntoh_wd_hb_packet(pkt, &buf);
@@ -365,7 +388,10 @@ wd_hb_receiver(int fork_wait_time, WdHbIf *hb_if)
 
 				if (strcmp(pkt.hash, buf))
 				{
-					pool_log("wd_hb_receiver: authentication failed");
+					ereport(LOG,
+						(errmsg("watchdog heartbeat receive"),
+							 errdetail("authentication failed")));
+
 					continue;
 				}
 			}
@@ -385,7 +411,9 @@ wd_hb_receiver(int fork_wait_time, WdHbIf *hb_if)
 					/* ignore the packet from down pgpool */
 					if (pkt.status == WD_DOWN)
 					{
-						pool_debug("wd_hb_receiver: heatbeat signal from down pgpool (%s) is ignored", from);
+						ereport(DEBUG1,
+								(errmsg("watchdog heartbeat: received heartbeat signal from \"%s:%d\" whose status is down. ignored",
+										from, from_pgpool_port)));
 						break;
 					}
 
@@ -393,14 +421,17 @@ wd_hb_receiver(int fork_wait_time, WdHbIf *hb_if)
 					if (!WD_TIME_ISSET(p->hb_send_time) ||
 					    WD_TIME_BEFORE(p->hb_send_time, pkt.send_time))
 					{
-						pool_debug("wd_hb_receiver: received heartbeat signal from %s:%d",
-						           from, from_pgpool_port);
+						ereport(DEBUG1,
+								(errmsg("watchdog heartbeat: received heartbeat signal from \"%s:%d\"",
+										from, from_pgpool_port)));
+
 						p->hb_send_time = pkt.send_time;
 						p->hb_last_recv_time = tv;
 					}
 					else
 					{
-						pool_debug("wd_hb_receiver: received heartbeat signal is older than the latest, ignored");
+						ereport(DEBUG1,
+								(errmsg("watchdog heartbeat: received heartbeat signal is older than the latest, ignored")));
 					}
 					break;
 				}
@@ -480,7 +511,9 @@ wd_hb_sender(int fork_wait_time, WdHbIf *hb_if)
 
 		/* send heartbeat signal */
 		wd_hb_send(sock, &pkt, sizeof(pkt), hb_if->addr, hb_if->dest_port);
-		pool_debug("wd_hb_sender: send heartbeat signal to %s:%d", hb_if->addr, hb_if->dest_port);
+		ereport(DEBUG1,
+				(errmsg("watchdog heartbeat: send heartbeat signal to %s:%d", hb_if->addr, hb_if->dest_port)));
+
 		sleep(pool_config->wd_heartbeat_keepalive);
 	}
 
@@ -495,7 +528,8 @@ hb_sender_exit(int sig)
 		case SIGTERM:	/* smart shutdown */
 		case SIGINT:	/* fast shutdown */
 		case SIGQUIT:	/* immediate shutdown */
-			pool_debug("hb_sender child receives shutdown request signal %d", sig);
+			ereport(DEBUG1,
+					(errmsg("watchdog heartbeat sender child receives shutdown request signal %d", sig )));
 			break;
 		default:
 			pool_error("hb_sender child receives unknown signal %d", sig);
@@ -512,7 +546,8 @@ hb_receiver_exit(int sig)
 		case SIGTERM:	/* smart shutdown */
 		case SIGINT:	/* fast shutdown */
 		case SIGQUIT:	/* immediate shutdown */
-			pool_debug("hb_receiver child receives shutdown request signal %d", sig);
+			ereport(DEBUG1,
+				(errmsg("watchdog heartbeat receiver child receives shutdown request signal %d", sig )));
 			break;
 		default:
 			pool_error("hb_receiver child receives unknown signal %d", sig);
@@ -582,8 +617,10 @@ static int wd_set_reuseport(int sock)
 	{
 		if (errno == EINVAL || errno == ENOPROTOOPT)
 		{
-			pool_log("wd_create_hb_send_socket: setsockopt(SO_REUSEPORT) is not supported by the kernel. detail: %s",
-					 strerror(errno));
+			ereport(LOG,
+				(errmsg("error seting SO_REUSEPORT option to the socket"),
+					 errdetail("setsockopt(SO_REUSEPORT) is not supported by the kernel. detail: %s",
+							   strerror(errno))));
 		}
 		else
 		{
@@ -594,7 +631,9 @@ static int wd_set_reuseport(int sock)
 		}
 	}
 	else
-		pool_log("wd_create_hb_send_socket: set SO_REUSEPORT");
+		ereport(LOG,
+				(errmsg("set SO_REUSEPORT option to the socket")));
+
 	return 0;
 #else
 	return 0;

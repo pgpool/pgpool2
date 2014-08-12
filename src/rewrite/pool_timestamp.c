@@ -25,6 +25,7 @@
 
 #include "pool.h"
 #include "rewrite/pool_timestamp.h"
+#include "utils/elog.h"
 #include "utils/pool_relcache.h"
 #include "utils/pool_select_walker.h"
 #include "pool_config.h"
@@ -97,9 +98,11 @@ ts_register_func(POOL_SELECT_RESULT *res)
 		index++;
 
 		rel->attr[i].use_timestamp = *(res->data[i * NUM_COLS + index]) == 't';
-		pool_debug("attrname %s adsrc %s use_timestamp = %d",
-				   rel->attr[i].attrname, (rel->attr[i].adsrc? rel->attr[i].adsrc:"NULL"),
-										   rel->attr[i].use_timestamp);
+		ereport(DEBUG1,
+			(errmsg("timestamp register function"),
+				errdetail("attrname %s adsrc %s use_timestamp = %d",
+					   rel->attr[i].attrname, (rel->attr[i].adsrc? rel->attr[i].adsrc:"NULL"),
+					   rel->attr[i].use_timestamp)));
 	}
 
 	rel->relnatts = res->numrows;
@@ -871,7 +874,6 @@ static A_Const *makeStringConstFromQuery(POOL_CONNECTION_POOL *backend, char *ex
 {
 	A_Const *con;
 	POOL_SELECT_RESULT *res;
-	POOL_STATUS		 status;
 	char query[1024];
 	int len;
 	char *str;

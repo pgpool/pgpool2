@@ -226,19 +226,26 @@ static int pool_commit_cache(POOL_CONNECTION_POOL *backend, char *query, char *d
 	{
 		return -1;
 	}
+	ereport(DEBUG1,
+		(errmsg("commiting SELECT results to cache storage"),
+			 errdetail("Query=\"%s\"", query)));
 
-	pool_debug("pool_commit_cache: Query=%s", query);
 #ifdef DEBUG
 	dump_cache_data(data, datalen);
 #endif
 
 	/* encode md5key for memcached */
 	encode_key(query, tmpkey, backend);
-	pool_debug("pool_commit_cache: search key ==%s==", tmpkey);
+	ereport(DEBUG2,
+		(errmsg("commiting SELECT results to cache storage"),
+			 errdetail("search key : \"%s\"", tmpkey)));
+
 	memcpy(cachekey.hashkey, tmpkey, 32);
 
 	memqcache_expire = pool_config->memqcache_expire;
-	pool_debug("pool_commit_cache : memqcache_expire = %ld", memqcache_expire);
+	ereport(DEBUG1,
+		(errmsg("commiting SELECT results to cache storage"),
+			 errdetail("memqcache_expire = %ld", memqcache_expire)));
 
 	if (pool_is_shmem_cache())
 	{
@@ -251,7 +258,10 @@ static int pool_commit_cache(POOL_CONNECTION_POOL *backend, char *query, char *d
 
 		if (cacheid != NULL)
 		{
-			pool_debug("pool_commit_cache: the item already exists");
+			ereport(DEBUG1,
+				(errmsg("commiting SELECT results to cache storage"),
+					 errdetail("item already exists")));
+
 			return 0;
 		}
 		else
@@ -264,8 +274,10 @@ static int pool_commit_cache(POOL_CONNECTION_POOL *backend, char *query, char *d
 			}
 			else
 			{
-				pool_debug("pool_commit_cache: blockid: %d itemid: %d",
-						   cacheid->blockid, cacheid->itemid);
+				ereport(DEBUG2,
+					(errmsg("commiting SELECT results to cache storage"),
+						errdetail("blockid: %d itemid: %d",
+							   cacheid->blockid, cacheid->itemid)));
 			}
 			cachekey.cacheid.blockid = cacheid->blockid;
 			cachekey.cacheid.itemid = cacheid->itemid;
@@ -282,7 +294,9 @@ static int pool_commit_cache(POOL_CONNECTION_POOL *backend, char *query, char *d
 			pool_error("pool_commit_cache: memcached_set error %s", memcached_strerror(memc, rc));
 			return -1;
 		}
-		pool_debug("pool_commit_cache: set cache succeeded.");
+		ereport(DEBUG1,
+			(errmsg("commiting SELECT results to cache storage"),
+				 errdetail("set cache succeeded")));
 	}
 #endif
 
@@ -312,7 +326,10 @@ static int pool_fetch_cache(POOL_CONNECTION_POOL *backend, const char *query, ch
 
 	/* encode md5key for memcached */
 	encode_key(query, tmpkey, backend);
-	pool_debug("pool_fetch_cache: search key ==%s==", tmpkey);
+	ereport(DEBUG1,
+		(errmsg("fetching from cache storage"),
+			 errdetail("search key \"%s\"", tmpkey)));
+
 
 	if (pool_is_shmem_cache())
 	{
@@ -324,7 +341,10 @@ static int pool_fetch_cache(POOL_CONNECTION_POOL *backend, const char *query, ch
 		ptr = pool_get_item_shmem_cache(&query_hash, &mylen, &sts);
 		if (ptr == NULL)
 		{
-			pool_debug("pool_fetch_cache: cache not found on shmem");
+			ereport(DEBUG1,
+				(errmsg("fetching from cache storage"),
+					 errdetail("cache not found on shared memory")));
+
 			return 1;
 		}
 		*len = mylen;
@@ -352,7 +372,9 @@ static int pool_fetch_cache(POOL_CONNECTION_POOL *backend, const char *query, ch
 			else
 			{
 				/* Not found */
-				pool_debug("pool_fetch_cache: not found: query:%s key:%s", query, tmpkey);
+				ereport(DEBUG1,
+					(errmsg("fetching from cache storage"),
+						 errdetail("cache item not found for key: \"%s\" and query:\"%s\"",tmpkey,query)));
 				return 1;
 			}
 		}
@@ -374,7 +396,9 @@ static int pool_fetch_cache(POOL_CONNECTION_POOL *backend, const char *query, ch
 		free(ptr);
 	}
 
-	pool_debug("pool_fetch_cache: query=%s len:%zd", query, *len);
+	ereport(DEBUG1,
+		(errmsg("fetching from cache storage"),
+			 errdetail("query=\"%s\" len:%zd", query, *len)));
 #ifdef DEBUG
 	dump_cache_data(p, *len);
 #endif
@@ -397,13 +421,16 @@ static char* encode_key(const char *s, char *buf, POOL_CONNECTION_POOL *backend)
 	int length;
 
 	u_length = strlen(backend->info->user);
-	pool_debug("encode_key: username %s", backend->info->user);
+	ereport(DEBUG1,
+		(errmsg("memcache encode key"),
+			 errdetail("username: \"%s\" database_name: \"%s\"", backend->info->user,backend->info->database)));
 
 	d_length = strlen(backend->info->database);
-	pool_debug("encode_key: database_name %s", backend->info->database);
 
 	q_length = strlen(s);
-	pool_debug("encode_key: query %s", s);
+	ereport(DEBUG1,
+		(errmsg("memcache encode key"),
+			 errdetail("query: \"%s\"", s)));
 
 	length = u_length + d_length + q_length + 1;
 
@@ -412,7 +439,9 @@ static char* encode_key(const char *s, char *buf, POOL_CONNECTION_POOL *backend)
 	snprintf(strkey, length, "%s%s%s", backend->info->user, s, backend->info->database);
 
 	pool_md5_hash(strkey, strlen(strkey), buf);
-	pool_debug("encode_key: `%s' -> `%s'", strkey, buf);
+	ereport(DEBUG1,
+		(errmsg("memcache encode key"),
+			 errdetail("`%s' -> `%s'", strkey, buf)));
 	pfree(strkey);
 	return buf;
 }
@@ -493,7 +522,8 @@ static int send_cached_messages(POOL_CONNECTION *frontend, const char *qcache, i
 		}
 
 		/* send message to frontend */
-		pool_debug("send_cached_messages: %c len: %d", tmpkind, len);
+		ereport(DEBUG1,
+			(errmsg("memcache: sending cached messages: '%c' len: %d", tmpkind, len)));
 		send_message(frontend, tmpkind, len, p);
 
 		msg++;
@@ -507,7 +537,8 @@ static int send_cached_messages(POOL_CONNECTION *frontend, const char *qcache, i
  */
 static void send_message(POOL_CONNECTION *conn, char kind, int len, const char *data)
 {
-	pool_debug("send_message: kind=%c, len=%d, data=%p", kind, len, data);
+	ereport(DEBUG2,
+			(errmsg("memcache: sending messages: kind '%c', len=%d, data=%p", kind, len, data)));
 
 	pool_write(conn, &kind, 1);
 
@@ -527,7 +558,8 @@ static int delete_cache_on_memcached(const char *key)
 
 	memcached_return rc;
 
-	pool_debug("delete_cache_on_memcached: key: %s", key);
+	ereport(DEBUG2,
+			(errmsg("memcache: deleteing cache on memcached with key: \"%s\"", key)));
 
 
 	/* delete cache data on memcached. key is md5 hash query */
@@ -602,7 +634,8 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 				return POOL_END;
 			if (pool_read(frontend, &kind, 1))
 				return POOL_END;
-			pool_debug("pool_fetch_from_memory_cache: expecting sync: %c", kind);
+			ereport(DEBUG2,
+					(errmsg("memcache: fetching from memory cache: expecting sync: kind '%c'", kind)));
 			if (pool_read(frontend, &len, sizeof(len)))
 				return POOL_END;
 		}
@@ -632,9 +665,13 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 		*foundp = true;
 
 		if (pool_config->log_per_node_statement)
-			pool_log("query result fetched from cache. statement: %s", contents);
+			ereport(LOG,
+				(errmsg("fetch from memory cache"),
+					errdetail("query result fetched from cache. statement: %s", contents)));
 
-		pool_debug("pool_fetch_from_memory_cache: a query result found in the query cache, %s", contents);
+		ereport(DEBUG1,
+			(errmsg("fetch from memory cache"),
+				 errdetail("query result found in the query cache, %s", contents)));
 
 		return POOL_CONTINUE;
 	}
@@ -753,10 +790,12 @@ bool pool_is_allow_to_cache(Node *node, char *query)
 		{
 			for (i = 0; i < num_oids; i++)
 			{
-				pool_debug("pool_is_allow_to_cache: check table_names[%d] = %s", i, ctx.table_names[i]);
+				ereport(DEBUG1,
+						(errmsg("memcache: checking if node is allowed to cache: check table_names[%d] = \"%s\"", i, ctx.table_names[i])));
 				if (pool_is_table_in_black_list(ctx.table_names[i]) == true)
 				{
-					pool_debug("pool_is_allow_to_cache: false");
+					ereport(DEBUG1,
+							(errmsg("memcache: node is not allowed to cache")));
 					return false;
 				}
 			}
@@ -800,12 +839,14 @@ bool pool_is_allow_to_cache(Node *node, char *query)
 			for (i = 0; i < num_oids; i++)
 			{
 				char *table = ctx.table_names[i];
-				pool_debug("pool_is_allow_to_cache: check table_names[%d] = %s", i, table);
+				ereport(DEBUG1,
+						(errmsg("memcache: checking if node is allowed to cache: check table_names[%d] = \"%s\"", i, table)));
 				if (is_view(table) || is_unlogged_table(table))
 				{
 					if (pool_is_table_in_white_list(table) == false)
 					{
-						pool_debug("pool_is_allow_to_cache: false");
+						ereport(DEBUG1,
+								(errmsg("memcache: node is not allowed to cache")));
 						return false;
 					}
 				}
@@ -962,7 +1003,8 @@ int pool_extract_table_oids(Node *node, int **oidsp)
 			if (oid > 0)
 			{
 				oids[num_oids++] = pool_table_name_to_oid(table);
-				pool_debug("pool_extract_table_oids: table:%s oid:%d", table, oids[num_oids-1]);
+				ereport(DEBUG1,
+						(errmsg("memcache: extracting table oids: table: \"%s\" oid:%d", table, oids[num_oids-1])));
 			}
 		}
 		return num_oids;
@@ -986,14 +1028,16 @@ int pool_extract_table_oids(Node *node, int **oidsp)
 			if (oid > 0)
 			{
 				oids[num_oids++] = pool_table_name_to_oid(table);
-				pool_debug("pool_extract_table_oids: table:%s oid:%d", table, oids[num_oids-1]);
+				ereport(DEBUG1,
+						(errmsg("memcache: extracting table oids: table: \"%s\" oid:%d", table, oids[num_oids-1])));
 			}
 		}
 		return num_oids;
 	}
 	else
 	{
-		pool_debug("pool_extract_table_oids: other than INSERT/UPDATE/DELETE/TRUNCATE/DROP TABLE/ALTER TABLE statement");
+		ereport(DEBUG1,
+				(errmsg("memcache: extracting table oids: statment is different from INSERT/UPDATE/DELETE/TRUNCATE/DROP TABLE/ALTER TABLE")));
 		return 0;
 	}
 
@@ -1001,7 +1045,8 @@ int pool_extract_table_oids(Node *node, int **oidsp)
 	if (oid > 0)
 	{
 		oids[num_oids++] = pool_table_name_to_oid(table);
-		pool_debug("pool_extract_table_oids: table:%s oid:%d", table, oid);
+		ereport(DEBUG1,
+				(errmsg("memcache: extracting table oids: table: \"%s\" oid:%d", table, oid)));
 	}
 	return num_oids;
 }
@@ -1095,7 +1140,9 @@ static int pool_get_dropdb_table_oids(int **oids, int dboid)
 	snprintf(path, sizeof(path), "%s/%d", pool_config->memqcache_oiddir, dboid);
 	if ((dir = opendir(path)) == NULL)
 	{
-		pool_debug("pool_get_dropdb_table_oids: Failed to open dir: %s", path);
+		ereport(DEBUG1,
+			(errmsg("memcache: getting drop table oids"),
+				 errdetail("Failed to open dir: %s", path)));
 		return 0;
 	}
 
@@ -1198,7 +1245,6 @@ int pool_get_database_oid_from_dbname(char *dbname)
 {
 	int dboid = 0;
 	POOL_SELECT_RESULT *res;
-	POOL_STATUS status;
 	char query[1024];
 
 	POOL_CONNECTION_POOL *backend;
@@ -1208,8 +1254,10 @@ int pool_get_database_oid_from_dbname(char *dbname)
 	do_query(MASTER(backend), query, &res, MAJOR(backend));
 
 	if (res->numrows != 1)
-	{    
-		pool_debug("pool_discard_oid_maps_by_db: Failed. Received %d rows", res->numrows);
+	{
+		ereport(DEBUG1,
+			(errmsg("memcache: getting oid of current database"),
+				 errdetail("received %d rows", res->numrows)));
 		free_select_result(res);
 		return 0;
 	}    
@@ -1254,8 +1302,10 @@ static void pool_add_table_oid_map(POOL_CACHEKEY *cachekey, int num_table_oids, 
 	 * Create memqcache_oiddir/database_oid
 	 */
 	dboid = pool_get_database_oid();
+	ereport(DEBUG1,
+		(errmsg("memcache: adding table oid maps"),
+			 errdetail("dboid %d", dboid)));
 
-	pool_debug("pool_add_table_oid_map: dboid %d", dboid);
 	if (dboid <= 0)
 	{
 		pool_error("pool_add_table_oid_map: could not get database oid");
@@ -1402,12 +1452,15 @@ void pool_discard_oid_maps_by_db(int dboid)
 	{
 		snprintf(command, sizeof(command), "/bin/rm -fr %s/%d/",
 				 pool_config->memqcache_oiddir, dboid);
+
+		ereport(DEBUG1,
+				(errmsg("memcache: discarding oid maps by db"),
+				 errdetail("command: '%s\'", command)));
+
 		if(system(command) == -1)
             ereport(WARNING,
-                    (errmsg("unable to execute command \"%s\"",command),
+				(errmsg("unable to execute command \"%s\"",command),
                      errdetail("system() command failed with error \"%s\"",strerror(errno))));
-
-        pool_debug("command: %s", command);
 	}
 }
 
@@ -1443,8 +1496,10 @@ static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool
 	 */
 	if (dboid == 0) {
 		dboid = pool_get_database_oid();
+		ereport(DEBUG1,
+			(errmsg("memcache invalidating query cache"),
+				 errdetail("dboid %d", dboid)));
 
-		pool_debug("pool_invalidate_query_cache: dboid %d", dboid);
 		if (dboid <= 0)
 		{
 			pool_error("pool_invalidate_query_cache: could not get database oid");
@@ -1488,8 +1543,9 @@ static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool
 			 * been issued since the table has been created or since
 			 * pgpool-II started up.
 			 */
-			pool_debug("pool_invalidate_query_cache: failed to open %s. reason:%s",
-					   path, strerror(errno));
+			ereport(DEBUG1,
+				(errmsg("memcache invalidating query cache"),
+					errdetail("failed to open \"%s\". reason:\"%s\"",path, strerror(errno))));
 			continue;
 		}
 
@@ -1520,8 +1576,10 @@ static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool
 			{
 				if (pool_is_shmem_cache())
 				{
-					pool_debug("pool_invalidate_query_cache: deleting cacheid:%d itemid:%d",
-							   buf.cacheid.blockid, buf.cacheid.itemid);
+					ereport(DEBUG1,
+						(errmsg("memcache invalidating query cache"),
+							errdetail("deleting cacheid:%d itemid:%d",
+								   buf.cacheid.blockid, buf.cacheid.itemid)));
 					pool_delete_item_shmem_cache(&buf.cacheid);
 				}
 #ifdef USE_MEMCACHED
@@ -1531,7 +1589,10 @@ static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool
 
 					memcpy(delbuf, buf.hashkey, 32);
 					delbuf[32] = 0;
-					pool_debug("pool_invalidate_query_cache: deleting %s", delbuf);
+					ereport(DEBUG1,
+						(errmsg("memcache invalidating query cache"),
+							 errdetail("deleting %s", delbuf)));
+
 					delete_cache_on_memcached(delbuf);
 				}
 #endif
@@ -1574,21 +1635,27 @@ static void pool_reset_memqcache_buffer(void)
 	{
 		POOL_TEMP_QUERY_CACHE *cache;
 
-		pool_debug("pool_reset_memqcache_buffer: discard: %p", session_context->query_cache_array);
+		ereport(DEBUG1,
+			(errmsg("memcache reset buffer"),
+				 errdetail("discard: %p", session_context->query_cache_array)));
 
 		pool_discard_query_cache_array(session_context->query_cache_array);
 		session_context->query_cache_array = pool_create_query_cache_array();
 
-		pool_debug("pool_reset_memqcache_buffer: create: %p", session_context->query_cache_array);
-
+		ereport(DEBUG1,
+			(errmsg("memcache reset buffer"),
+				 errdetail("create: %p", session_context->query_cache_array)));
 		/*
 		 * if the query context is still under use, we cannot discard
 		 * temporary cache.
 		 */
 		if (can_query_context_destroy(session_context->query_context))
 		{
-			pool_debug("pool_reset_memqcache_buffer: discard temp buffer of %p (%s)",
-					   session_context->query_context, session_context->query_context->original_query);
+			ereport(DEBUG1,
+				(errmsg("memcache reset buffer"),
+					errdetail("discard temp buffer of %p (%s)",
+						   session_context->query_context, session_context->query_context->original_query)));
+
 			cache = pool_get_current_cache();
 			pool_discard_temp_query_cache(cache);
 			/*
@@ -1858,7 +1925,8 @@ static POOL_CACHE_BLOCKID pool_reuse_block(void)
 		if (!(POOL_ITEM_DELETED & cip->flags))
 		{
 			pool_hash_delete(&cip->query_hash);
-			pool_debug("pool_reuse_block: blockid: %d item: %d", reused_block, i);
+			ereport(DEBUG1,
+					(errmsg("pool_reuse_block: blockid: %d item: %d", reused_block, i)));
 		}
 	}
 
@@ -1869,7 +1937,8 @@ static POOL_CACHE_BLOCKID pool_reuse_block(void)
 	if (*pool_fsmm_clock_hand >= maxblock)
 		*pool_fsmm_clock_hand = 0;
 
-	pool_log("pool_reuse_block: blockid: %d", reused_block);
+	ereport(LOG,
+			(errmsg("pool_reuse_block: blockid: %d", reused_block)));
 
 	return reused_block;
 }
@@ -2052,7 +2121,9 @@ static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char
 		if (POOL_ITEM_DELETED & cip->flags)		/* Deleted item? */
 		{
 			need_pack = true;
-			pool_debug("pool_add_item_shmem_cache: start creating contiguous space");
+			ereport(DEBUG1,
+				(errmsg("memcache adding item"),
+					 errdetail("start creating contiguous space")));
 			break;
 		}
 	}
@@ -2111,16 +2182,19 @@ static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char
 			cid.blockid = blockid;
 			cid.itemid = index;
 			pool_hash_insert(&cip->query_hash, &cid, true);
-			pool_debug("pool_add_item_shmem_cache: item cid updated. old:%d %d new:%d %d",
-					   blockid, i, blockid, index);
-
+			ereport(DEBUG1,
+				(errmsg("memcache adding item"),
+					errdetail("item cid updated. old:%d %d new:%d %d",
+						   blockid, i, blockid, index)));
 			index++;
 		}
 	
 		/* All items deleted? */
 		if (num_deleted > 0 && num_deleted == bh->num_items)
 		{
-			pool_debug("pool_add_item_shmem_cache: all items deleted num_deleted:%d", num_deleted);
+			ereport(DEBUG1,
+				(errmsg("memcache adding item"),
+					 errdetail("all items deleted, total deleted:%d", num_deleted)));
 			bh->flags = 0;
 			pool_init_cache_block(blockid);
 			pool_update_fsmm(blockid, POOL_MAX_FREE_SPACE);
@@ -2194,8 +2268,10 @@ static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char
 
 	cacheid.blockid = blockid;
 	cacheid.itemid = bh->num_items;
-	pool_debug("pool_add_item_shmem_cache: new item inserted. blockid: %d itemid:%d", 
-			   cacheid.blockid, cacheid.itemid);
+	ereport(DEBUG1,
+		(errmsg("memcache adding item"),
+			errdetail("new item inserted. blockid: %d itemid:%d",
+				   cacheid.blockid, cacheid.itemid)));
 
 	/* Add up number of items */
 	bh->num_items++;
@@ -2211,8 +2287,9 @@ static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char
 		pool_delete_item_shmem_cache(&cacheid);
 		return NULL;
 	}
-
-	pool_debug("pool_add_item_shmem_cache: block: %d item: %d", cacheid.blockid, cacheid.itemid);
+	ereport(DEBUG1,
+		(errmsg("memcache adding item"),
+			 errdetail("block: %d item: %d", cacheid.blockid, cacheid.itemid)));
 
 #ifdef SHMEMCACHE_DEBUG
 	dump_shmem_cache(blockid);
@@ -2294,9 +2371,10 @@ static POOL_CACHEID *pool_find_item_on_shmem_cache(POOL_QUERY_HASH *query_hash)
 		now = time(NULL);
 		if (now > (cih->timestamp + pool_config->memqcache_expire))
 		{
-			pool_debug("pool_find_item_on_shmem_cache: cache expired");
-			pool_debug("pool_find_item_on_shmem_cache: now: %ld timestamp: %ld",
-					   now, cih->timestamp + pool_config->memqcache_expire);
+			ereport(DEBUG1,
+				(errmsg("memcache finding item"),
+					errdetail("cache expired: now: %ld timestamp: %ld",
+						   now, cih->timestamp + pool_config->memqcache_expire)));
 			pool_delete_item_shmem_cache(c);
 			return NULL;
 		}
@@ -2320,9 +2398,9 @@ static int pool_delete_item_shmem_cache(POOL_CACHEID *cacheid)
 	POOL_CACHE_ITEM_HEADER *cih;
 	POOL_QUERY_HASH key;
 	int size;
-
-	pool_debug("pool_delete_item_shmem_cache: cacheid:%d itemid:%d",
-			   cacheid->blockid, cacheid->itemid);
+	ereport(DEBUG1,
+		(errmsg("memcache deleting item data"),
+			errdetail("cacheid:%d itemid:%d",cacheid->blockid, cacheid->itemid)));
 
 	if (cacheid->blockid >= pool_get_memqcache_blocks())
 	{
@@ -2345,8 +2423,11 @@ static int pool_delete_item_shmem_cache(POOL_CACHEID *cacheid)
 		 * This could happen if the block is reused.  Since contents
 		 * of oid map file is not updated when the block is reused.
 		 */
-		pool_debug("pool_delete_item_shmem_cache: invalid item id %d in block:%d",
-				   cacheid->itemid, cacheid->blockid);
+		ereport(DEBUG1,
+			(errmsg("memcache error deleting item data"),
+				errdetail("invalid item id %d in block:%d",
+					   cacheid->itemid, cacheid->blockid)));
+
 		return -1;
 	}
 
@@ -2385,7 +2466,9 @@ static int pool_delete_item_shmem_cache(POOL_CACHEID *cacheid)
 	 */
 	if ((bh->num_items -1) == 0)
 	{
-		pool_debug("pool_delete_item_shmem_cache: no item remains. So initialize block");
+		ereport(DEBUG1,
+			(errmsg("memcache deleting item data"),
+				 errdetail("no item remains. initialize block")));
 		bh->flags = 0;
 		pool_init_cache_block(cacheid->blockid);
 	}
@@ -2399,8 +2482,11 @@ static int pool_delete_item_shmem_cache(POOL_CACHEID *cacheid)
 	if (cacheid->itemid == (bh->num_items -1))
 	{
 		bh->free_bytes += size;
-		pool_debug("pool_delete_item_shmem_cache: after deleting %d bytes, free_bytes is %d",
-				   size, bh->free_bytes);
+		ereport(DEBUG1,
+			(errmsg("memcache deleting item data"),
+				errdetail("deleted %d bytes, freebytes is = %d",
+					   size, bh->free_bytes)));
+
 		bh->num_items--;
 	}
 
@@ -2606,11 +2692,15 @@ void pool_discard_query_cache_array(POOL_QUERY_CACHE_ARRAY *cache_array)
 	if (!cache_array)
 		return;
 
-	pool_debug("pool_discard_query_cache_array: num_caches: %d", cache_array->num_caches);
+	ereport(DEBUG1,
+		(errmsg("memcache discarding query cache array"),
+			 errdetail("num_caches: %d", cache_array->num_caches)));
 
 	for (i=0;i<cache_array->num_caches;i++)
 	{
-		pool_debug("pool_discard_query_cache_array: i: %d cache: %p", i, cache_array->caches[i]);
+		ereport(DEBUG2,
+			(errmsg("memcache discarding query cache array"),
+				 errdetail("cache no: %d cache: %p", i, cache_array->caches[i])));
 		pool_discard_temp_query_cache(cache_array->caches[i]);
 	}
 	pfree(cache_array);
@@ -2627,8 +2717,9 @@ static POOL_QUERY_CACHE_ARRAY * pool_add_query_cache_array(POOL_QUERY_CACHE_ARRA
 	if (!cache_array)
 		return cp;
 
-	pool_debug("pool_add_query_cache_array: num_caches: %d cache: %p", cache_array->num_caches, cache);
-
+	ereport(DEBUG2,
+		(errmsg("memcache adding query cache array"),
+			 errdetail("num_caches: %d cache: %p", cache_array->num_caches, cache)));
 	if (cache_array->num_caches >= 	cache_array->array_size)
 	{
 		cache_array->array_size += POOL_QUERY_CACHE_ARRAY_ALLOCATE_NUM;
@@ -2697,13 +2788,17 @@ static void pool_add_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache, char ki
 		/* This could happen if cache exceeded in previous query
 		 * execution in the same unnamed portal.
 		 */
-		pool_debug("pool_add_temp_query_cache: POOL_TEMP_QUERY_CACHE is NULL");
+		ereport(DEBUG1,
+			(errmsg("memcache adding temporary query cache"),
+				 errdetail("POOL_TEMP_QUERY_CACHE is NULL")));
 		return;
 	}
 
 	if (temp_cache->is_exceeded)
 	{
-		pool_debug("pool_add_temp_query_cache: memqcache_maxcache exceeds");
+		ereport(DEBUG1,
+			(errmsg("memcache adding temporary query cache"),
+				 errdetail("memqcache_maxcache exceeds")));
 		return;
 	}
 
@@ -2722,8 +2817,10 @@ static void pool_add_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache, char ki
 
 	if ((buflen+data_len+sizeof(int)+1) > pool_config->memqcache_maxcache)
 	{
-		pool_debug("pool_add_temp_query_cache: data size exceeds memqcache_maxcache. current:%zd requested:%zd memq_maxcache:%d",
-				 buflen, data_len+sizeof(int)+1, pool_config->memqcache_maxcache);
+		ereport(DEBUG1,
+			(errmsg("memcache adding temporary query cache"),
+				errdetail("data size exceeds memqcache_maxcache. current:%zd requested:%zd memq_maxcache:%d",
+					   buflen, data_len+sizeof(int)+1, pool_config->memqcache_maxcache)));
 		temp_cache->is_exceeded = true;
 		return;
 	}
@@ -2801,18 +2898,20 @@ static void pool_add_buffer(POOL_INTERNAL_BUFFER *buffer, void *data, size_t len
 	if ((buffer->buflen + len) > buffer->bufsize)
 	{
 		size_t allocate_size = ((buffer->buflen + len)/POOL_ALLOCATE_UNIT +1)*POOL_ALLOCATE_UNIT;
-		pool_debug("pool_add_buffer: realloc old size:%zd new size:%zd",
-				   buffer->bufsize, allocate_size);
+		ereport(DEBUG2,
+			(errmsg("memcache adding data to internal buffer"),
+				errdetail("realloc old size:%zd new size:%zd",
+					   buffer->bufsize, allocate_size)));
 		buffer->bufsize = allocate_size;
 		buffer->buf = (char *)repalloc(buffer->buf, buffer->bufsize);
 	}
 	/* Add data to buffer */
 	memcpy(buffer->buf+buffer->buflen, data, len);
 	buffer->buflen += len;
-
-	pool_debug("pool_add_buffer: len:%zd, total:%zd bufsize:%zd",
-			   len, buffer->buflen, buffer->bufsize);
-
+	ereport(DEBUG2,
+		(errmsg("memcache adding data to internal buffer"),
+			errdetail("len:%zd, total:%zd bufsize:%zd",
+				   len, buffer->buflen, buffer->bufsize)));
 	return;
 }
 
@@ -2856,7 +2955,6 @@ static char *pool_get_buffer_pointer(POOL_INTERNAL_BUFFER *buffer)
 {
 	if (buffer == NULL)
 		return NULL;
-
 	return buffer->buf;
 }
 
@@ -2935,8 +3033,8 @@ static void pool_check_and_discard_cache_buffer(int num_oids, int *oids)
 			{
 				if (soids[j] == oids[k])
 				{
-					pool_debug("pool_check_and_discard_cache_buffer: discard cache for %s",
-							   cache->query);
+					ereport(DEBUG1,
+							(errmsg("discard cache for \"%s\"",cache->query)));
 					cache->is_discarded = true;
 					break;
 				}
@@ -2974,8 +3072,10 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 		old_context = MemoryContextSwitchTo(session_context->memory_context);
 		num_oids = pool_extract_table_oids_from_select_stmt(node, &ctx);
 		MemoryContextSwitchTo(old_context);
-		oids = ctx.table_oids;;
-		pool_debug("num_oids: %d oid: %d", num_oids, *oids);
+		oids = ctx.table_oids;
+		ereport(DEBUG2,
+			(errmsg("query cache handler for ReadyForQuery"),
+				 errdetail("num_oids: %d oid: %d", num_oids, *oids)));
 
 		if (state == 'I')		/* Not inside a transaction? */
 		{
@@ -3149,7 +3249,9 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 				pool_reset_memqcache_buffer();
 
 				pfree(oids);
-				pool_debug("ReadyForQuery: deleted all cache files for the DROPped DB");
+				ereport(DEBUG2,
+					(errmsg("query cache handler for ReadyForQuery"),
+						 errdetail("deleted all cache files for the DROPped DB")));
 			}
 		}
 		else
@@ -3370,7 +3472,10 @@ int pool_hash_init(int nelements)
     hash_header->mask = mask;
 
 #ifdef POOL_HASH_DEBUG
-	pool_log("pool_hash_init: size:%zd nelements2:%d", size, nelements2);
+	ereport(LOG,
+		(errmsg("initializing hash table on shared memory"),
+			 errdetail("size:%zd nelements2:%d", size, nelements2)));
+
 #endif
 
 	size = sizeof(POOL_HASH_ELEMENT)*nelements2;
@@ -3382,7 +3487,9 @@ int pool_hash_init(int nelements)
 	}
 
 #ifdef POOL_HASH_DEBUG
-	pool_log("pool_hash_init: size:%zd nelements2:%d", size, nelements2);
+	ereport(LOG,
+		(errmsg("initializing hash table on shared memory"),
+			 errdetail("size:%zd nelements2:%d", size, nelements2)));
 #endif
 
 	for (i=0;i<nelements2-1;i++)
@@ -3469,7 +3576,9 @@ POOL_CACHEID *pool_hash_search(POOL_QUERY_HASH *key)
 		memcpy(md5, key->query_hash, POOL_MD5_HASHKEYLEN);
 		md5[POOL_MD5_HASHKEYLEN] = '\0';
 #ifdef POOL_HASH_DEBUG
-		pool_log("pool_hash_search: hash_key:%d md5:%s", hash_key, md5);
+		ereport(LOG,
+			(errmsg("searching hash table"),
+				 errdetail("hash_key:%d md5:%s", hash_key, md5)));
 #endif
 	}
 
@@ -3481,7 +3590,9 @@ POOL_CACHEID *pool_hash_search(POOL_QUERY_HASH *key)
 			memcpy(md5, key->query_hash, POOL_MD5_HASHKEYLEN);
 			md5[POOL_MD5_HASHKEYLEN] = '\0';
 #ifdef POOL_HASH_DEBUG
-			pool_log("pool_hash_search: element md5:%s", md5);
+			ereport(LOG,
+				(errmsg("searching hash table"),
+					 errdetail("element md5:%s", md5)));
 #endif
 		}
 
@@ -3519,7 +3630,9 @@ static int pool_hash_insert(POOL_QUERY_HASH *key, POOL_CACHEID *cacheid, bool up
 		memcpy(md5, key->query_hash, POOL_MD5_HASHKEYLEN);
 		md5[POOL_MD5_HASHKEYLEN] = '\0';
 #ifdef POOL_HASH_DEBUG
-		pool_log("pool_hash_insert: hash_key:%d md5:%s block:%d item:%d", hash_key, md5, cacheid->blockid, cacheid->itemid);
+		ereport(LOG,
+			(errmsg("searching hash table"),
+				 errdetail("hash_key:%d md5:%s block:%d item:%d", hash_key, md5, cacheid->blockid, cacheid->itemid)));
 #endif
 	}
 
@@ -3661,8 +3774,10 @@ static volatile POOL_HASH_ELEMENT *get_new_hash_element(void)
 	}
 
 #ifdef POOL_HASH_DEBUG
-	pool_log("get_new_hash_element: hash_free->next:%p hash_free->next->next:%p",
-			 hash_free->next, hash_free->next->next);
+	ereport(LOG,
+		(errmsg("getting new hash element"),
+			errdetail("hash_free->next:%p hash_free->next->next:%p",
+				   hash_free->next, hash_free->next->next)));
 #endif
 
 	elm = hash_free->next;
@@ -3679,8 +3794,10 @@ static void put_back_hash_element(volatile POOL_HASH_ELEMENT *element)
 	POOL_HASH_ELEMENT *elm;
 
 #ifdef POOL_HASH_DEBUG
-	pool_log("put_back_hash_element: hash_free->next:%p hash_free->next->next:%p",
-			 hash_free->next, hash_free->next->next);
+	ereport(LOG,
+		(errmsg("getting new hash element"),
+			errdetail("hash_free->next:%p hash_free->next->next:%p",
+				   hash_free->next, hash_free->next->next)));
 #endif
 
 	elm = hash_free->next;

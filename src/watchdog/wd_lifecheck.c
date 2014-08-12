@@ -31,6 +31,7 @@
 #include <unistd.h>
 #include <netdb.h>
 #include "pool.h"
+#include "utils/elog.h"
 #include "pool_config.h"
 #include "watchdog/watchdog.h"
 #include "watchdog/wd_ext.h"
@@ -61,8 +62,10 @@ is_wd_lifecheck_ready(void)
 		{
 			if (wd_ping_pgpool(p) == WD_NG)
 			{
-				pool_debug("is_wd_lifecheck_ready: pgpool %d (%s:%d) has not started yet",
-				           i, p->hostname, p->pgpool_port);
+				ereport(DEBUG1,
+					(errmsg("watchdog checking life check is ready"),
+						errdetail("pgpool %d (%s:%d) has not started yet",
+							   i, p->hostname, p->pgpool_port)));
 				rtn = WD_NG;
 			}
 		}
@@ -79,8 +82,10 @@ is_wd_lifecheck_ready(void)
 			if (!WD_TIME_ISSET(p->hb_last_recv_time) ||
 			    !WD_TIME_ISSET(p->hb_send_time))
 			{
-				pool_debug("is_wd_lifecheck_ready: pgpool %d (%s:%d) has not send the heartbeat signal yet",
-				           i, p->hostname, p->pgpool_port);
+				ereport(DEBUG1,
+					(errmsg("watchdog checking life check is ready"),
+						errdetail("pgpool %d (%s:%d) has not send the heartbeat signal yet",
+							   i, p->hostname, p->pgpool_port)));
 				rtn = WD_NG;
 			}
 		}
@@ -177,8 +182,10 @@ check_pgpool_status_by_hb(void)
 	cnt = 0;
 	while (p->status != WD_END)
 	{
-		pool_debug("check_pgpool_status_by_hb: checking pgpool %d (%s:%d)",
-		           cnt, p->hostname, p->pgpool_port);
+		ereport(DEBUG1,
+			(errmsg("watchdog life checking by heartbeat"),
+				errdetail("checking pgpool %d (%s:%d)",
+					   cnt, p->hostname, p->pgpool_port)));
 
 		/* about myself */
 		if (p == WD_MYSELF)
@@ -186,16 +193,23 @@ check_pgpool_status_by_hb(void)
 			/* parent is dead so it's orphan.... */
 			if (is_parent_alive() == WD_NG && WD_MYSELF->status != WD_DOWN)
 			{
-				pool_debug("check_pgpool_status_by_hb: NG; the main pgpool process does't exist.");
-				pool_log("check_pgpool_status_by_hb: lifecheck failed. pgpool %d (%s:%d) seems not to be working",
-		                 cnt, p->hostname, p->pgpool_port);
+				ereport(DEBUG1,
+						(errmsg("checking pgpool status by heartbeat"),
+						 errdetail("NG; the main pgpool process does't exist.")));
+				ereport(LOG,
+					(errmsg("checking pgpool status by heartbeat"),
+						errdetail("lifecheck failed. pgpool %d (%s:%d) seems not to be working",
+							   cnt, p->hostname, p->pgpool_port)));
+
 				wd_set_myself(&tv, WD_DOWN);
 				wd_notice_server_down();
 			}
 			/* otherwise, the parent would take care of children. */
 			else
 			{
-				pool_debug("check_pgpool_status_by_hb: OK; status %d", p->status);
+				ereport(DEBUG1,
+					(errmsg("watchdog life checking by heartbeat"),
+						 errdetail("OK; status %d", p->status)));
 			}
 		}
 
@@ -204,22 +218,31 @@ check_pgpool_status_by_hb(void)
 		{
 			if (p->status == WD_DOWN)
 			{
-				pool_log("check_pgpool_status_by_hb: pgpool %d (%s:%d) is in down status",
-		                 cnt, p->hostname, p->pgpool_port);
+				ereport(LOG,
+					(errmsg("checking pgpool status by heartbeat"),
+						 errdetail("pgpool %d (%s:%d) status is down",
+								   cnt, p->hostname, p->pgpool_port)));
+
 			}
 			else if (wd_check_heartbeat(p) == WD_NG)
 			{
-				pool_debug("check_pgpool_status_by_hb: NG; status %d", p->status);
+				ereport(DEBUG1,
+						(errmsg("checking pgpool status by heartbeat"),
+						 errdetail("NG; status %d", p->status)));
 
-				pool_log("check_pgpool_status_by_hb: lifecheck failed. pgpool %d (%s:%d) seems not to be working",
-		                 cnt, p->hostname, p->pgpool_port);
+				ereport(LOG,
+					(errmsg("checking pgpool status by heartbeat"),
+						 errdetail("lifecheck failed. pgpool %d (%s:%d) seems not to be working",
+								   cnt, p->hostname, p->pgpool_port)));
 
 				if (p->status != WD_DOWN)
 					pgpool_down(p);
 			}
 			else
 			{
-				pool_debug("check_pgpool_status_by_hb: OK; status %d", p->status);
+				ereport(DEBUG1,
+					(errmsg("checking pgpool status by heartbeat"),
+						 errdetail("OK; status %d", p->status)));
 			}
 		}
 
@@ -276,13 +299,18 @@ check_pgpool_status_by_query(void)
 	{
 		int result;
 
-		pool_debug("check_pgpool_status_by_query: checking pgpool %d (%s:%d)",
-		           i, p->hostname, p->pgpool_port);
+		ereport(DEBUG1,
+				(errmsg("checking pgpool status by query"),
+					errdetail("checking pgpool %d (%s:%d)",
+						   i, p->hostname, p->pgpool_port)));
 
 		if (p->status == WD_DOWN)
 		{
-			pool_log("check_pgpool_status_by_query: pgpool %d (%s:%d) is in down status",
-	                 i, p->hostname, p->pgpool_port);
+			ereport(LOG,
+				(errmsg("checking pgpool status by query"),
+					errdetail("pgpool %d (%s:%d) is in down status",
+						   i, p->hostname, p->pgpool_port)));
+
 			i++;
 			p++;
 			continue;
@@ -299,15 +327,18 @@ check_pgpool_status_by_query(void)
 
 		if (result == WD_OK)
 		{
-			pool_debug("check_pgpool_status_by_query: OK; status: %d", p->status);
+			ereport(DEBUG1,
+					(errmsg("checking pgpool status by query"),
+					 errdetail("WD_OK: status: %d", p->status)));
 
 			/* life point init */
 			p->life = pool_config->wd_life_point;
 		}
 		else
 		{
-			pool_debug("check_pgpool_status_by_query: NG; status: %d life:%d", p->status, p->life);
-
+			ereport(DEBUG1,
+				(errmsg("checking pgpool status by query"),
+					 errdetail("NG; status: %d life:%d", p->status, p->life)));
 			if (p->life > 0)
 			{
 				p->life --;
@@ -316,8 +347,10 @@ check_pgpool_status_by_query(void)
 			/* pgpool goes down */
 			if (p->life <= 0)
 			{
-				pool_log("check_pgpool_status_by_query: lifecheck failed %d times. pgpool %d (%s:%d) seems not to be working",
-				         pool_config->wd_life_point, i, p->hostname, p->pgpool_port);
+				ereport(LOG,
+					(errmsg("checking pgpool status by query"),
+						errdetail("lifecheck failed %d times. pgpool %d (%s:%d) seems not to be working",
+								   pool_config->wd_life_point, i, p->hostname, p->pgpool_port)));
 
 				/* It's me! */
 				if ((i == 0) &&
@@ -388,7 +421,9 @@ create_conn(char * hostname, int port)
 
 	if (PQstatus(conn) != CONNECTION_OK)
 	{
-		pool_debug("create_conn: Connection to database failed: %s", PQerrorMessage(conn));
+		ereport(DEBUG1,
+			(errmsg("watchdog life checking"),
+				 errdetail("Connection to database failed: %s", PQerrorMessage(conn))));
 		PQfinish(conn);
 		return NULL;
 	}
@@ -402,8 +437,10 @@ pgpool_down(WdInfo * pool)
 	int rtn = WD_OK;
 	WD_STATUS prev_status;
 
-	pool_log("pgpool_down: %s:%d is going down",
-	         pool->hostname, pool->pgpool_port);
+	ereport(LOG,
+		(errmsg("active pgpool goes down"),
+			 errdetail("pgpool on %s:%d down",
+					   pool->hostname, pool->pgpool_port)));
 
 	prev_status = pool->status;
 	pool->status = WD_DOWN;
@@ -413,7 +450,10 @@ pgpool_down(WdInfo * pool)
 	{
 		if (wd_am_I_oldest() == WD_OK)
 		{
-			pool_log("pgpool_down: I'm oldest so standing for master");
+			ereport(LOG,
+				(errmsg("active pgpool goes down"),
+					 errdetail("I am the oldest, so standing for master")));
+
 			/* stand for master */
 			rtn = wd_stand_for_master();
 			if (rtn == WD_OK)
@@ -444,16 +484,20 @@ wd_check_heartbeat(WdInfo * pgpool)
 	if (!WD_TIME_ISSET(pgpool->hb_last_recv_time) ||
 	    !WD_TIME_ISSET(pgpool->hb_send_time))
 	{
-		pool_debug("wd_check_heartbeat: pgpool (%s:%d) was restarted and has not send the heartbeat signal yet",
-		           pgpool->hostname, pgpool->pgpool_port);
+		ereport(DEBUG1,
+			(errmsg("watchdog checking if pgpool is alive using heartbeat"),
+				errdetail("pgpool (%s:%d) was restarted and has not send the heartbeat signal yet",
+					   pgpool->hostname, pgpool->pgpool_port)));
 		return WD_OK;
 	}
 
 	gettimeofday(&tv, NULL);
 
 	interval = WD_TIME_DIFF_SEC(tv, pgpool->hb_last_recv_time);
-	pool_debug("wd_check_heartbeat: the latest heartbeat from %s:%d received %d seconds ago",
-	           pgpool->hostname, pgpool->pgpool_port, interval);
+	ereport(DEBUG1,
+		(errmsg("watchdog checking if pgpool is alive using heartbeat"),
+			errdetail("the last heartbeat from \"%s:%d\" received %d seconds ago",
+				   pgpool->hostname, pgpool->pgpool_port, interval)));
 
 	if (interval > pool_config->wd_heartbeat_deadtime)
 		return WD_NG;

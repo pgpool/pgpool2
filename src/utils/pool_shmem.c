@@ -83,7 +83,10 @@ static void
 IpcMemoryDetach(int status, Datum shmaddr)
 {
 	if (shmdt((void *) shmaddr) < 0)
-		pool_log("shmdt(%p) failed: %s", (void *) shmaddr, strerror(errno));
+		ereport(LOG,
+			(errmsg("removing shared memory segments"),
+				 errdetail("shmdt(%p) failed: %s", (void *) shmaddr, strerror(errno))));
+
 }
 
 /*
@@ -105,8 +108,10 @@ IpcMemoryDelete(int status, Datum shmId)
   		return;
 
 	if (shmctl(shmId, IPC_RMID, NULL) < 0)
-		pool_log("shmctl(%lu, %d, 0) failed: %s",
-				 shmId, IPC_RMID, strerror(errno));
+		ereport(LOG,
+			(errmsg("deleting shared memory segments"),
+				errdetail("shmctl(%lu, %d, 0) failed: %s",
+					   shmId, IPC_RMID, strerror(errno))));
 }
 
 void

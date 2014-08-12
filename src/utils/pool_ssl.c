@@ -26,6 +26,7 @@
 
 #include "config.h"
 #include "pool.h"
+#include "utils/elog.h"
 #include "utils/pool_stream.h"
 #include "pool_config.h"
 
@@ -71,7 +72,9 @@ void pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp) {
 	if ( (!pool_config->ssl) || init_ssl_ctx(cp, ssl_conn_clientserver))
 		return;
 
-	pool_debug("pool_ssl: sending client->server SSL request");
+	ereport(DEBUG1,
+		(errmsg("attempting to negotiate a secure connection"),
+			 errdetail("sending client->server SSL request")));
 	pool_write_and_flush(cp, ssl_packet, sizeof(int)*2);
 
 	if (pool_read(cp, &server_response, 1) < 0)
@@ -80,7 +83,9 @@ void pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp) {
 		return;
 	}
 
-	pool_debug("pool_ssl: client->server SSL response: %c", server_response);
+	ereport(DEBUG1,
+		(errmsg("attempting to negotiate a secure connection"),
+			 errdetail("client->server SSL response: %c", server_response)));
 
 	switch (server_response) {
 		case 'S':
@@ -94,7 +99,9 @@ void pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp) {
 			 * If backend does not support SSL but pgpool does, we get this.
 			 * i.e. This is normal.
 			 */
-			pool_debug("pool_ssl: server doesn't want to talk SSL");
+			ereport(DEBUG1,
+				(errmsg("attempting to negotiate a secure connection"),
+					 errdetail("server doesn't want to talk SSL")));
 			break;
 		default:
 			pool_error("pool_ssl: unhandled response: %c", server_response);
@@ -305,13 +312,17 @@ bool pool_ssl_pending(POOL_CONNECTION *cp)
 #else /* USE_SSL: wrap / no-op ssl functionality if it's not available */
 
 void pool_ssl_negotiate_serverclient(POOL_CONNECTION *cp) {
-	pool_debug("pool_ssl: SSL requested but SSL support is not available");
+	ereport(DEBUG1,
+			(errmsg("SSL is requested but SSL support is not available")));
 	pool_write_and_flush(cp, "N", 1);
 	cp->ssl_active = -1;
 }
 
 void pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp) {
-	pool_debug("pool_ssl: SSL requested but SSL support is not available");
+
+	ereport(DEBUG1,
+			(errmsg("SSL is requested but SSL support is not available")));
+
 	cp->ssl_active = -1;
 }
 

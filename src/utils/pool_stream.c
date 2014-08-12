@@ -178,7 +178,9 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 		{
 			if (errno == EINTR || errno == EAGAIN)
 			{
-				pool_debug("pool_read: retrying due to %s", strerror(errno));
+				ereport(DEBUG1,
+					(errmsg("read on socket failed with error :\"%s\"",strerror(errno)),
+						 errdetail("retrying...")));
 				continue;
 			}
 
@@ -198,7 +200,6 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 				}
 				else
 				{
-					pool_log("pool_read: do not failover because fail_over_on_backend_error is off");
                     ereport(ERROR,
                             (errmsg("unable to read data from DB node %d",cp->db_node_id),
                              errdetail("socket read failed with an error \"%s\"", strerror(errno))));
@@ -309,7 +310,9 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 		{
 			if (errno == EINTR || errno == EAGAIN)
 			{
-				pool_debug("pool_read2: retrying due to %s", strerror(errno));
+				ereport(DEBUG1,
+					(errmsg("read on socket failed with error :\"%s\"",strerror(errno)),
+						 errdetail("retrying...")));
 				continue;
 			}
 
@@ -484,7 +487,10 @@ int pool_flush_it(POOL_CONNECTION *cp)
 			}
 			else if (FD_ISSET(cp->fd, &exceptmask))
 			{
-				pool_log("pool_flush_it: exception occurred");
+				ereport(LOG,
+					(errmsg("unable to flush data"),
+						 errdetail("exception occurred while in waiting select() ")));
+
 				cp->wbufpo = 0;
 				return -1;
 			}
@@ -532,12 +538,13 @@ int pool_flush_it(POOL_CONNECTION *cp)
 			 * just report debug message.
 			 */
 			if (cp->isbackend)
-				pool_error("pool_flush_it: write failed to backend (%d). reason: %s offset: %d wlen: %d",
-						   cp->db_node_id, strerror(errno), offset, wlen);
+				ereport(DEBUG1,
+					(errmsg("write on backend %d failed with error :\"%s\"",cp->db_node_id,strerror(errno)),
+						 errdetail("while trying to write data from offset: %d wlen: %d",offset, wlen)));
 			else
-				pool_debug("pool_flush_it: write failed to frontend. reason: %s offset: %d wlen: %d",
-						   strerror(errno), offset, wlen);
-
+				ereport(DEBUG1,
+					(errmsg("write on frontend failed with error :\"%s\"",strerror(errno)),
+						 errdetail("while trying to write data from offset: %d wlen: %d",offset, wlen)));
 			cp->wbufpo = 0;
 			return -1;
 		}
@@ -561,9 +568,11 @@ int pool_flush(POOL_CONNECTION *cp)
 			if (pool_config->fail_over_on_backend_error)
 			{
 				notice_backend_error(cp->db_node_id);
-                
+				ereport(LOG,
+					(errmsg("unable to flush data to backend"),
+						 errdetail("do not failover because I am the main process")));
+
 				child_exit(1);
-				pool_log("pool_flush: do not failover because I am the main process");
 				return -1;
 			}
 			else
@@ -666,8 +675,10 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 		}
 		else
 		{
-			pool_debug("pool_read_string: read all from pending data. po:%d len:%d",
-					   cp->po, cp->len);
+			ereport(DEBUG1,
+				(errmsg("reading string data"),
+					 errdetail("read all from pending data. po:%d len:%d",
+							   cp->po, cp->len)));
 			return cp->sbuf;
 		}
 	} else
@@ -741,7 +752,9 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 		{
 			save_pending_data(cp, cp->sbuf+readp+strlength, readlen-strlength);
 			*len += strlength;
-			pool_debug("pool_read_string: total result %d with pending data po:%d len:%d", *len, cp->po, cp->len);
+			ereport(DEBUG1,
+				(errmsg("reading string data"),
+					 errdetail("total read %d with pending data po:%d len:%d", *len, cp->po, cp->len)));
 			return cp->sbuf;
 		}
 
@@ -751,7 +764,9 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 		if (flag)
 		{
 			/* ok we have read all data */
-			pool_debug("pool_read_string: total result %d ", *len);
+			ereport(DEBUG1,
+				(errmsg("reading string data"),
+					 errdetail("all data read: total read %d", *len)));
 			break;
 		}
 
@@ -917,7 +932,9 @@ int pool_push(POOL_CONNECTION *cp, void *data, int len)
 {
 	char *p;
 
-	pool_debug("pool_push: len: %d", len);
+	ereport(DEBUG1,
+		(errmsg("flushing data of len: %d", len)));
+
 
     MemoryContext oldContext = SwitchToConnectionContext(cp->isbackend);
 
@@ -947,7 +964,8 @@ void pool_pop(POOL_CONNECTION *cp, int *len)
 	if (cp->bufsz3 == 0)
 	{
 		*len = 0;
-		pool_debug("pool_pop: len: %d", *len);
+		ereport(DEBUG1,
+				(errmsg("pop data of len: %d", *len)));
 		return;
 	}
 
@@ -956,7 +974,8 @@ void pool_pop(POOL_CONNECTION *cp, int *len)
 	pfree(cp->buf3);
 	cp->bufsz3 = 0;
 	cp->buf3 = NULL;
-	pool_debug("pool_pop: len: %d", *len);
+	ereport(DEBUG1,
+			(errmsg("pop data of len: %d", *len)));
 }
 
 /*

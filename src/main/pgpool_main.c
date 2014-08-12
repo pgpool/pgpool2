@@ -87,7 +87,7 @@
 
 #define CLEAR_ALARM \
 	do { \
-			pool_debug("health check: clearing alarm"); \
+			elog(DEBUG1,"health check: clearing alarm"); \
     } while (alarm(0) > 0)
 
 
@@ -962,7 +962,9 @@ static RETSIGTYPE exit_handler(int sig)
 	 */
 	if (getpid() != mypid)
 	{
-		pool_debug("exit_handler: I am not parent");
+		ereport(DEBUG1,
+			(errmsg("exit_handler: I am not parent")));
+
 		POOL_SETMASK(&UnBlockSig);
 		proc_exit(0);
 	}
@@ -986,7 +988,9 @@ static RETSIGTYPE exit_handler(int sig)
     processState = EXITING;
 
     /* Close listen socket */
-	pool_log("pgpool main: close listen socket");
+	ereport(LOG,
+		(errmsg("shutdown request. closing listen socket")));
+
 	close(inet_fd);
 	close(unix_fd);
 
@@ -1092,7 +1096,8 @@ static void failover(void)
 	int status;
 	int sts;
 
-	pool_debug("failover_handler called");
+	ereport(DEBUG1,
+		(errmsg("failover handler called")));
 
 	memset(nodes, 0, sizeof(int) * MAX_NUM_BACKENDS);
 
@@ -1102,7 +1107,9 @@ static void failover(void)
 	 */
 	if (getpid() != mypid)
 	{
-		pool_debug("failover_handler: I am not parent");
+		ereport(DEBUG1,
+			(errmsg("failover handler called"),
+				 errdetail("I am not parent")));
 		kill(pcp_pid, SIGUSR2);
 		return;
 	}
@@ -1112,7 +1119,9 @@ static void failover(void)
 	 */
 	if (exiting)
 	{
-		pool_debug("failover_handler called while exiting");
+		ereport(DEBUG1,
+				(errmsg("failover handler called while exiting")));
+
 		kill(pcp_pid, SIGUSR2);
 		return;
 	}
@@ -1122,7 +1131,8 @@ static void failover(void)
 	 */
 	if (switching)
 	{
-		pool_debug("failover_handler called while switching");
+		ereport(DEBUG1,
+				(errmsg("failover handler called while switching")));
 		kill(pcp_pid, SIGUSR2);
 		return;
 	}
@@ -1141,7 +1151,9 @@ static void failover(void)
 	 * if not in replication mode/master slave mode, we treat this a restart request.
 	 * otherwise we need to check if we have already failovered.
 	 */
-	pool_debug("failover_handler: starting to select new master node");
+	ereport(DEBUG1,
+		(errmsg("failover handler"),
+			 errdetail("starting to select new master node")));
 	switching = 1;
 	Req_info->switching = true;
 	node_id = Req_info->node_id[0];
@@ -1353,7 +1365,9 @@ static void failover(void)
 			if (pid)
 			{
 				kill(pid, SIGQUIT);
-				pool_debug("failover_handler: kill %d", pid);
+				ereport(DEBUG1,
+					(errmsg("failover handler"),
+						 errdetail("kill process with PID:%d", pid)));
 			}
 		}
 
@@ -1714,17 +1728,20 @@ static void reaper(void)
 	int status;
 	int i;
 
-	pool_debug("reap_handler called");
+	ereport(DEBUG1,
+		(errmsg("reaper handler")));
 
 	if (exiting)
 	{
-		pool_debug("reap_handler: exited due to exiting");
+		ereport(DEBUG1,
+				(errmsg("reaper handler: exited because already in exiting mode")));
 		return;
 	}
 
 	if (switching)
 	{
-		pool_debug("reap_handler: exited due to switching");
+		ereport(DEBUG1,
+				(errmsg("reaper handler: exited due to switching")));
 		return;
 	}
 
@@ -1732,10 +1749,13 @@ static void reaper(void)
 	sigchld_request = 0;
 
 #ifdef HAVE_WAITPID
-	pool_debug("reap_handler: call waitpid");
+	ereport(DEBUG2,
+			(errmsg("reaper handler, call waitpid()")));
+
 	while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
 #else
-	pool_debug("reap_handler: call wait3");
+		ereport(DEBUG2,
+				(errmsg("reaper handler, call wait3()")));
 	while ((pid = wait3(&status, WNOHANG, NULL)) > 0)
 #endif
 	{
@@ -1791,9 +1811,11 @@ static void reaper(void)
 		else
 		{
 			if (WIFSIGNALED(status))
-				pool_debug("child %d exits with status %d by signal %d", pid, status, WTERMSIG(status));
+				ereport(DEBUG1,
+						(errmsg("reaper handler: child with PID:%d exits with status %d by signal %d", pid, status, WTERMSIG(status))));
 			else
-				pool_debug("child %d exits with status %d", pid, status);
+				ereport(DEBUG1,
+						(errmsg("reaper handler: child with PID:%d exits with status %d", pid, status)));
 
 			/* look for exiting child's pid */
 			for (i=0;i<pool_config->num_init_children;i++)
@@ -1805,14 +1827,17 @@ static void reaper(void)
 					{
 						process_info[i].pid = fork_a_child(unix_fd, inet_fd, i);
 						process_info[i].start_time = time(NULL);
-						pool_debug("fork a new child pid %d", process_info[i].pid);
+						ereport(DEBUG1,
+								(errmsg("reaper handler: forked a new child with PID:%d", process_info[i].pid)));
+
 						break;
 					}
 				}
 			}
 		}
 	}
-	pool_debug("reap_handler: normally exited");
+	ereport(DEBUG1,
+			(errmsg("reaper handler: exiting normally")));
 }
 
 /*

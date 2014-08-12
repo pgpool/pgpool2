@@ -151,7 +151,10 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 			{
 				if (now > relcache->cache[i].expire)
 				{
-					pool_debug("pool_search_relcache: relcache for database:%s table:%s expired. now:%ld expiration time:%ld", dbname, rel, now, relcache->cache[i].expire);
+					ereport(DEBUG1,
+						(errmsg("searching relcache"),
+							 errdetail("relcache for database:%s table:%s expired. now:%ld expiration time:%ld", dbname, rel, now, relcache->cache[i].expire)));
+
 					relcache->cache[i].refcnt = 0;
 					break;
 				}
@@ -215,7 +218,9 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 
 	if (relcache->cache[index].refcnt != 0)
 	{
-		pool_log("pool_search_relcache: cache replacement happend");
+		ereport(LOG,
+			(errmsg("searching relcache. cache replacement occured")));
+
 	}
 
 	/* Register cache */

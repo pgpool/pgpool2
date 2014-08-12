@@ -67,7 +67,9 @@ POOL_STATUS AsciiRow(POOL_CONNECTION *frontend,
 				   this as a fatal error. However in the real world
 				   we'd better to adapt this situation. Just throw a
 				   log... */
-				pool_debug("AsciiRow: NULLMAP differ between master and %d th backend", i);
+				ereport(DEBUG1,
+					(errmsg("processing ASCII row"),
+						 errdetail("NULLMAP is different between master and backend no %d", i)));
 			}
 		}
 	}
@@ -103,7 +105,10 @@ POOL_STATUS AsciiRow(POOL_CONNECTION *frontend,
 			pool_write(frontend, &size, sizeof(int));
 			pool_write(frontend, sendbuf, size1);
 			snprintf(msgbuf, Min(sizeof(msgbuf), size1+1), "%s", sendbuf);
-			pool_debug("AsciiRow: len: %d data: %s", size1, msgbuf);
+			ereport(DEBUG1,
+				(errmsg("processing ASCII row"),
+					 errdetail("len: %d data: %s", size1, msgbuf)));
+
 
 			for (j=0;j<NUM_BACKENDS;j++)
 			{
@@ -122,8 +127,10 @@ POOL_STATUS AsciiRow(POOL_CONNECTION *frontend,
 					   we'd better to adapt this situation. Just throw a
 					   log... */
 					if (size != size1)
-						pool_debug("AsciiRow: %d th field size does not match between master(%d) and %d th backend(%d)",
-								   i, ntohl(size), j, ntohl(size1));
+						ereport(DEBUG1,
+							(errmsg("processing ASCII row"),
+								 errdetail("size of field no %d does not match between master [size:%d] and backend no %d [size:%d]",
+										   i, ntohl(size), j, ntohl(size1))));
 
 					/* read and send actual data only when size > 0 */
 					if (size > 0)
@@ -180,7 +187,9 @@ POOL_STATUS BinaryRow(POOL_CONNECTION *frontend,
 				   this as a fatal error. However in the real world
 				   we'd better to adapt this situation. Just throw a
 				   log... */
-				pool_debug("BinaryRow: NULLMAP differ between master and %d th backend", i);
+				ereport(DEBUG1,
+					(errmsg("processing binary row"),
+						 errdetail("NULLMAP is different between master and backend no %d", i)));
 			}
 		}
 	}
@@ -212,9 +221,11 @@ POOL_STATUS BinaryRow(POOL_CONNECTION *frontend,
 					   we'd better to adapt this situation. Just throw a
 					   log... */
 					if (size != size1)
-						pool_debug("BinaryRow: %d th field size does not match between master(%d) and %d th backend(%d)",
-								   i, ntohl(size), j, ntohl(size1));
-				}
+						ereport(DEBUG1,
+							(errmsg("processing binary row"),
+								errdetail("size of field no %d does not match between master [size:%d] and backend no %d [size:%d]",
+									   i, ntohl(size), j, ntohl(size1))));
+			}
 
 				buf = NULL;
 
@@ -277,7 +288,7 @@ POOL_STATUS CompletedResponse(POOL_CONNECTION *frontend,
 		if (string == NULL)
             ereport(FATAL,
                 (return_code(2),
-                     errmsg("unable to complete response"),
+					errmsg("unable to process completed response"),
                      errdetail("read from backend node %d failed",i)));
 
 		else if (!strncmp(string, "BEGIN", 5))
@@ -287,8 +298,10 @@ POOL_STATUS CompletedResponse(POOL_CONNECTION *frontend,
  
 		if (len != len1)
 		{
-			pool_debug("CompletedResponse: message length does not match between master(%d \"%s\",) and %d th server (%d \"%s\",)",
-					   len, string, i, len1, string1);
+			ereport(DEBUG1,
+				(errmsg("processing completed response"),
+					errdetail("message length does not match between master(%d \"%s\",) and %d th server (%d \"%s\",)",
+						   len, string, i, len1, string1)));
 
 			/* we except INSERT, because INSERT response has OID */
 			if (strncmp(string1, "INSERT", 6))
@@ -300,7 +313,9 @@ POOL_STATUS CompletedResponse(POOL_CONNECTION *frontend,
 	}
 	/* forward to the frontend */
 	pool_write(frontend, "C", 1);
-	pool_debug("CompletedResponse: string: \"%s\"", string1);
+	ereport(DEBUG2,
+		(errmsg("processing completed response"),
+			 errdetail("string: \"%s\"", string1)));
 	pool_write(frontend, string1, len1);
 
 	pfree(string1);
@@ -624,7 +639,9 @@ int RowDescription(POOL_CONNECTION *frontend,
 		/* type oid */
 		pool_read(MASTER(backend), &oid, sizeof(int));
 		oid1 = oid;
-		pool_debug("RowDescription: type oid: %d", ntohl(oid));
+		ereport(DEBUG1,
+			(errmsg("processing ROW DESCRIPTION"),
+				 errdetail("type oid: %d", ntohl(oid))));
 		for (j=0;j<NUM_BACKENDS;j++)
 		{
 			if (VALID_BACKEND(j) && !IS_MASTER_NODE_ID(j))
@@ -634,8 +651,10 @@ int RowDescription(POOL_CONNECTION *frontend,
 				/* we do not regard oid mismatch as fatal */
 				if (oid != oid1)
 				{
-					pool_debug("RowDescription: field oid does not match between backends master(%d) and %d th backend(%d)",
-							   ntohl(oid), j, ntohl(oid1));
+					ereport(DEBUG1,
+						(errmsg("processing ROW DESCRIPTION"),
+							errdetail("field oid does not match between backends master(%d) and %d th backend(%d)",
+								   ntohl(oid), j, ntohl(oid1))));
 				}
 			}
 		}
@@ -652,18 +671,22 @@ int RowDescription(POOL_CONNECTION *frontend,
 				if (size1 != size)
 				{
                     ereport(FATAL,
-                            (errmsg("data among backends are different"),
+						(errmsg("data among backends are different"),
                              errdetail("field size does not match between backends master(%d) and %d th backend(%d", ntohs(size), j, ntohs(size1))));
 
 				}
 			}
 		}
-		pool_debug("RowDescription: field size: %d", ntohs(size));
+		ereport(DEBUG1,
+			(errmsg("processing ROW DESCRIPTION"),
+				 errdetail("field size: %d", ntohs(size))));
 		pool_write(frontend, &size1, sizeof(short));
 
 		/* modifier */
 		pool_read(MASTER(backend), &mod, sizeof(int));
-		pool_debug("RowDescription: modifier: %d", ntohs(mod));
+		ereport(DEBUG1,
+			(errmsg("processing ROW DESCRIPTION"),
+				 errdetail("modifier: %d", ntohs(mod))));
 		mod1 = mod;
 		for (j=0;j<NUM_BACKENDS;j++)
 		{
@@ -672,8 +695,10 @@ int RowDescription(POOL_CONNECTION *frontend,
 				pool_read(CONNECTION(backend, j), &mod, sizeof(int));
 				if (mod != mod1)
 				{
-					pool_debug("RowDescription: modifier does not match between backends master(%d) and %d th backend(%d)",
-							   ntohl(mod), j, ntohl(mod1));
+					ereport(DEBUG1,
+						(errmsg("processing ROW DESCRIPTION"),
+							errdetail("modifier does not match between backends master(%d) and %d th backend(%d)",
+								   ntohl(mod), j, ntohl(mod1))));
 				}
 			}
 		}

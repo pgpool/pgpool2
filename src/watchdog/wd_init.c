@@ -28,6 +28,7 @@
 #include <unistd.h>
 
 #include "pool.h"
+#include "utils/elog.h"
 #include "pool_config.h"
 #include "watchdog/watchdog.h"
 #include "watchdog/wd_ext.h"
@@ -118,7 +119,7 @@ wd_init(void)
 		/* escalate to delegate_IP holder */
 		wd_escalation();
 	}
-
-	pool_log("wd_init: start watchdog");
-	return WD_OK;	
+	ereport(LOG,
+		(errmsg("watchdog started")));
+	return WD_OK;
 }

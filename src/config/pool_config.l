@@ -246,7 +246,9 @@ int pool_init_config(void)
 	res = gethostname(localhostname,sizeof(localhostname));
 	if(res !=0 )
 	{
-		pool_debug("failed to get this hostname");
+		ereport(DEBUG1,
+			(errmsg("initializing pool configuration"),
+				errdetail("failed to get the local hostname")));
 	}
 	pool_config->wd_hostname = localhostname;
 	pool_config->wd_port = 9000;
@@ -291,7 +293,10 @@ int pool_init_config(void)
 	res = gethostname(localhostname,sizeof(localhostname));
 	if(res !=0 )
 	{
-		pool_debug("failed to get this hostname");
+		ereport(DEBUG1,
+			(errmsg("initializing pool configuration"),
+				errdetail("failed to get the local hostname")));
+
 	}
 	pool_config->pgpool2_hostname = localhostname;
 
@@ -349,7 +354,10 @@ int add_regex_pattern(char *type, char *s)
 	if (s[strlen(s)-1] != '$') {
 		strncat(currItem.pattern, "$", 2);
 	}
-	pool_debug("add_to_patterns: regex pattern: %s", currItem.pattern);
+	ereport(DEBUG1,
+		(errmsg("initializing pool configuration"),
+			errdetail("adding regex pattern for \"%s\" pattern: %s",type, currItem.pattern)));
+
 	/* compile our regex */
 	if (regcomp(&currItem.regexv, currItem.pattern, currItem.flag) != 0)
 	{
@@ -886,8 +894,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 		else if (!strcmp(key, "backend_socket_dir") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			char *str;
-			
-			pool_log("pool_config: backend_socket_dir is deprecated, please use backend_hostname");
+
+			ereport(LOG,
+				(errmsg("initializing pool configuration: backend_socket_dir is deprecated"),
+					errdetail("please use backend_hostname instead")));
 
 			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
 			{
@@ -946,7 +956,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
-			pool_debug("replication_stop_on_mismatch: %d", v);
+			ereport(DEBUG1,
+				(errmsg("initializing pool configuration"),
+					errdetail("replication_stop_on_mismatch: %d", v)));
+
 			pool_config->replication_stop_on_mismatch = v;
 		}
 		else if (!strcmp(key, "failover_if_affected_tuples_mismatch") &&
@@ -960,7 +973,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
-			pool_debug("failover_if_affected_tuples_mismatch: %d", v);
+			ereport(DEBUG1,
+				(errmsg("initializing pool configuration"),
+					errdetail("failover_if_affected_tuples_mismatch: %d", v)));
+
 			pool_config->failover_if_affected_tuples_mismatch = v;
 		}
 		else if (!strcmp(key, "replicate_select") &&
@@ -974,7 +990,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
-			pool_debug("replicate_select: %d", v);
+			ereport(DEBUG1,
+				(errmsg("initializing pool configuration"),
+					errdetail("replicate_select: %d", v)));
+
 			pool_config->replicate_select = v;
 		}
 		else if (!strcmp(key, "reset_query_list") &&
@@ -1870,7 +1889,9 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
-			pool_debug("pool_config: port slot number %d ", slot);
+			ereport(DEBUG1,
+				(errmsg("initializing pool configuration"),
+					errdetail("backend slot number %d port: %d ", slot,atoi(yytext))));
 			if (context == INIT_CONFIG)
 			{
 				BACKEND_INFO(slot).backend_port = atoi(yytext);
@@ -1907,8 +1928,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
+			ereport(DEBUG1,
+				(errmsg("initializing pool configuration"),
+					errdetail("weight slot number %d weight: %f", slot, v)));
 
-			pool_debug("pool_config: weight slot number %d weight: %f", slot, v);
 			status = BACKEND_INFO(slot).backend_status;
 
 			if (context == INIT_CONFIG || context == RELOAD_CONFIG)
@@ -1923,7 +1946,9 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				 */
 				if (context == RELOAD_CONFIG && old_v != v)
 				{
-					pool_log("Backend weight for backend%d changed from %f to %f. This will take effect from next client session.", slot, old_v, v);
+					ereport(LOG,
+						(errmsg("initializing pool configuration: backend weight for backend:%d changed from %f to %f", slot, old_v, v),
+							errdetail("This change will be effective from next client session")));
 				}
 			}
 		}
@@ -1978,7 +2003,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			flags = extract_string_tokens(str, "|", &n);
 			if (!flags || n < 0)
 			{
-				pool_debug("pool_config: unable to get backend flags");
+				ereport(DEBUG1,
+					(errmsg("initializing pool configuration"),
+						errdetail("unable to get backend flags")));
+
 				fclose(fd);
 				return(-1);
 			}
@@ -1995,7 +2023,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 					}
 					flag &= ~POOL_FAILOVER;
 					allow_to_failover_is_specified = true;
-					pool_debug("pool_config: allow_to_failover on");
+					ereport(DEBUG1,
+						(errmsg("initializing pool configuration"),
+							errdetail("allow_to_failover: ON")));
+
 				}
 
 				else if (!strcmp(flags[i], "DISALLOW_TO_FAILOVER"))
@@ -2008,7 +2039,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 					}
 					flag |= POOL_FAILOVER;
 					disallow_to_failover_is_specified = true;
-					pool_debug("pool_config: disallow_to_failover on");
+					ereport(DEBUG1,
+						(errmsg("initializing pool configuration"),
+							errdetail("disallow_to_failover: ON")));
+
 				}
 
 				else
@@ -2026,8 +2060,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 
 			BACKEND_INFO(slot).flag = flag;
+			ereport(DEBUG1,
+				(errmsg("initializing pool configuration"),
+					errdetail("backend slot number %d flag: %04x", slot, flag)));
 
-			pool_debug("pool_config: slot number %d flag: %04x", slot, flag);
 		}
 
        	else if (!strcmp(key, "log_statement") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
@@ -3040,20 +3076,26 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			{
 				if (pool_config->backend_socket_dir == NULL)
 				{
-					pool_debug("pool_config: empty backend_hostname%d, use PostgreSQL's default unix socket path (%s)", i, DEFAULT_SOCKET_DIR);
+					ereport(DEBUG1,
+						(errmsg("initializing pool configuration"),
+							errdetail("empty backend_hostname%d, use PostgreSQL's default unix socket path (%s)", i, DEFAULT_SOCKET_DIR)));
 					strlcpy(BACKEND_INFO(i).backend_hostname, DEFAULT_SOCKET_DIR, MAX_DB_HOST_NAMELEN);
 				}
 				else /* DEPRECATED. backward compatibility with older version. Use backend_socket_dir*/
 				{
-					pool_debug("pool_config: empty backend_hostname%d, use backend_socket_dir as unix socket path (%s)", i, pool_config->backend_socket_dir);
+					ereport(DEBUG1,
+						(errmsg("initializing pool configuration"),
+							errdetail("empty backend_hostname%d, use backend_socket_dir as unix socket path (%s)", i, pool_config->backend_socket_dir)));
 					strlcpy(BACKEND_INFO(i).backend_hostname, pool_config->backend_socket_dir, MAX_DB_HOST_NAMELEN);
 				}
 			}
 		}	
 	}
 
-	pool_debug("num_backends: %d total_weight: %f",
-			   pool_config->backend_desc->num_backends, total_weight);
+	ereport(DEBUG1,
+		(errmsg("initializing pool configuration"),
+			errdetail("num_backends: %d total_weight: %f",
+				pool_config->backend_desc->num_backends, total_weight)));
 	/*
 	 * Normalize load balancing weights. What we are doing here is,
 	 * assign 0 to RAND_MAX to each backend's weight according to the
@@ -3070,15 +3112,19 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 		{
 			BACKEND_INFO(i).backend_weight =
 				(RAND_MAX) * BACKEND_INFO(i).unnormalized_weight / total_weight;
-			pool_debug("backend %d weight: %f", i, BACKEND_INFO(i).backend_weight);
-			pool_debug("backend %d flag: %04x", i, BACKEND_INFO(i).flag);
+			ereport(DEBUG1,
+				(errmsg("initializing pool configuration"),
+					errdetail("backend %d weight: %f flag: %04x", i, BACKEND_INFO(i).backend_weight,BACKEND_INFO(i).flag)));
 		}
 	}
 
 	/* initialize system_db_hostname with a default socket path if empty */
 	if (*pool_config->system_db_hostname == '\0')
 	{
-		pool_debug("pool_config: empty system_db_hostname, use PostgreSQL's default unix socket path (%s)", DEFAULT_SOCKET_DIR);
+		ereport(DEBUG1,
+			(errmsg("initializing pool configuration"),
+				errdetail("empty system_db_hostname, use PostgreSQL's default unix socket path (%s)", DEFAULT_SOCKET_DIR)));
+
 		strlcpy(pool_config->system_db_hostname, DEFAULT_SOCKET_DIR, MAX_DB_HOST_NAMELEN);
 	}
 
@@ -3279,7 +3325,10 @@ static char **extract_string_tokens(char *str, char *delimi, int *n)
 	for (token = strtok(str, delimi); token != NULL && *n < MAXTOKENS; token = strtok(NULL, delimi))
 	{
 		tokens[*n] = pstrdup(token);
-		pool_debug("extract_string_tokens: token: %s", tokens[*n]);
+		ereport(DEBUG3,
+			(errmsg("initializing pool configuration"),
+				errdetail("extracting string tokens [token: %s]", tokens[*n])));
+
 		(*n)++;
 	}
 	return tokens;
@@ -3296,12 +3345,14 @@ static void clear_host_entry(int slot)
 #ifdef DEBUG
 static void print_host_entry(int slot)
 {
-	pool_debug("slot: %d host: %s port: %d status: %d weight: %f",
-			   slot,
-			   pool_config->server_hostnames[slot],
-			   pool_config->server_ports[slot],
-			   pool_config->server_status[slot],
-			   pool_config->server_weights[slot]);
+	ereport(DEBUG1,
+		(errmsg("initializing pool configuration"),
+			errdetail("slot: %d host: %s port: %d status: %d weight: %f",
+					slot,
+					pool_config->server_hostnames[slot],
+					pool_config->server_ports[slot],
+					pool_config->server_status[slot],
+					pool_config->server_weights[slot])));
 }
 #endif
 

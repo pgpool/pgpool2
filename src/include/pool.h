@@ -487,14 +487,8 @@ extern char *get_hba_file_name(void);
 #ifdef __GNUC__
 extern void pool_error(const char *fmt,...)
    	__attribute__((format (printf, 1, 2)));
-extern void pool_debug(const char *fmt,...)
-   	__attribute__((format (printf, 1, 2)));
-extern void pool_log(const char *fmt,...)
-   	__attribute__((format (printf, 1, 2)));
 #else
 extern void pool_error(const char *fmt,...);
-extern void pool_debug(const char *fmt,...);
-extern void pool_log(const char *fmt,...);
 #endif
 extern void do_child(int unix_fd, int inet_fd);
 extern void pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file);

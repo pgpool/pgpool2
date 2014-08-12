@@ -481,7 +481,8 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 
 	if (len <= 0 || len >= MAX_STARTUP_PACKET_LENGTH)
 		ereport(ERROR,
-			(errmsg("incorrect packet length (%d)", len)));
+			(errmsg("failed while reading startup packet"),
+				 errdetail("incorrect packet length (%d)", len)));
 
 	sp->startup_packet = palloc0(len);
 
@@ -539,8 +540,9 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 				{
 					p += (strlen(p) + 1);
 					sp->application_name = p;
-                    ereport(DEBUG1,
-                            (errmsg("read_startup_packet: application_name: %s", p)));
+					ereport(DEBUG1,
+						(errmsg("reading startup packet"),
+							 errdetail("application_name: %s", p)));
 				}
 
 				p += (strlen(p) + 1);
@@ -555,7 +557,8 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 
 		default:
 			ereport(ERROR,
-				(errmsg("invalid major no: %d in startup packet", sp->major)));
+				(errmsg("failed while reading startup packet"),
+					 errdetail("invalid major no: %d in startup packet", sp->major)));
 	}
 
 	/* Check a user name was given. */
@@ -568,7 +571,8 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 								"",
 								__FILE__, __LINE__);
 		ereport(FATAL,
-			(errmsg("read_startup_packet: no PostgreSQL user name specified in startup packet")));
+			(errmsg("failed while reading startup packet"),
+			 errdetail("no PostgreSQL user name specified in startup packet")));
 	}
 
 	/* The database defaults to ther user name. */
@@ -577,8 +581,11 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 		sp->database = pstrdup(sp->user);
 	}
 
-	pool_debug("Protocol Major: %d Minor: %d database: %s user: %s",
-			   sp->major, sp->minor, sp->database, sp->user);
+	ereport(DEBUG1,
+		(errmsg("reading startup packet"),
+			errdetail("Protocol Major: %d Minor: %d database: %s user: %s",
+				   sp->major, sp->minor, sp->database, sp->user)));
+
 	disable_authentication_timeout();
 
     if(!strcmp(sp->database, "template0") ||
@@ -715,12 +722,16 @@ void cancel_request(CancelPacket *sp)
 			for (k=0;k<NUM_BACKENDS;k++)
 			{
 				c = pool_coninfo(i, j, k);
-				pool_debug("con_info: address:%p database:%s user:%s pid:%d key:%d i:%d",
-						   c, c->database, c->user, ntohl(c->pid), ntohl(c->key),i);
-
+				ereport(DEBUG2,
+					(errmsg("processing cancel request"),
+						 errdetail("connection info: address:%p database:%s user:%s pid:%d key:%d i:%d",
+								   c, c->database, c->user, ntohl(c->pid), ntohl(c->key),i)));
 				if (c->pid == sp->pid && c->key == sp->key)
 				{
-					pool_debug("found pid:%d key:%d i:%d",ntohl(c->pid), ntohl(c->key),i);
+					ereport(DEBUG1,
+						(errmsg("processing cancel request"),
+							 errdetail("found pid:%d key:%d i:%d",ntohl(c->pid), ntohl(c->key),i)));
+
 					c = pool_coninfo(i, j, 0);
 					found = true;
 					goto found;
@@ -763,7 +774,9 @@ void cancel_request(CancelPacket *sp)
 		cp.pid = c->pid;
 		cp.key = c->key;
 
-		pool_log("cancel_request: canceling backend pid:%d key: %d", ntohl(cp.pid),ntohl(cp.key));
+		ereport(LOG,
+			(errmsg("forwarding cancel request to backend"),
+				 errdetail("canceling backend pid:%d key: %d", ntohl(cp.pid),ntohl(cp.key))));
 
 		if (pool_write_and_flush(con, &cp, sizeof(CancelPacket)) < 0)
 			pool_error("Could not send cancel request packet for backend %d", i);
@@ -877,7 +890,8 @@ static POOL_CONNECTION_POOL *connect_backend(StartupPacket *sp, POOL_CONNECTION 
  */
 static RETSIGTYPE die(int sig)
 {
-	pool_debug("child received shutdown request signal %d", sig);
+	ereport(LOG,
+			(errmsg("child process received shutdown request signal %d", sig)));
 
 	exit_request = sig;
 
@@ -887,14 +901,17 @@ static RETSIGTYPE die(int sig)
 			/* Refuse further requests by closing listen socket */
 			if (child_inet_fd)
 			{
-				pool_log("die: close listen socket");
+				ereport(LOG,
+						(errmsg("closing listen socket")));
+
 				close(child_inet_fd);
 			}
 			close(child_unix_fd);
 
 			if (idle == 0)
 			{
-				pool_debug("child receives smart shutdown request but it's not in idle state");
+				ereport(DEBUG1,
+						(errmsg("smart shutdown request received, but child is not in idle state")));
 			}
 			break;
 
@@ -918,7 +935,8 @@ static RETSIGTYPE close_idle_connection(int sig)
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
 	ConnectionInfo *info;
 
-	pool_debug("child receives close connection request");
+	ereport(DEBUG1,
+			(errmsg("close connection request received")));
 
 	for (j=0;j<pool_config->max_pool;j++, p++)
 	{
@@ -931,7 +949,9 @@ static RETSIGTYPE close_idle_connection(int sig)
 
 		if (MASTER_CONNECTION(p)->closetime > 0)		/* idle connection? */
 		{
-			pool_debug("close_idle_connection: close idle connection: user %s database %s", MASTER_CONNECTION(p)->sp->user, MASTER_CONNECTION(p)->sp->database);
+			ereport(DEBUG1,
+					(errmsg("closing idle connection"),
+					 errdetail("user: %s database: %s", MASTER_CONNECTION(p)->sp->user, MASTER_CONNECTION(p)->sp->database)));
 			pool_send_frontend_exits(p);
 
 			for (i=0;i<NUM_BACKENDS;i++)
@@ -963,7 +983,9 @@ static RETSIGTYPE close_idle_connection(int sig)
 static RETSIGTYPE authentication_timeout(int sig)
 {
 	alarm_enabled = false;
-	pool_log("authentication is timeout");
+	ereport(LOG,
+			(errmsg("authentication timeout")));
+
 	child_exit(1);
 }
 
@@ -1362,7 +1384,7 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 		if (status > 0)
 		{
             ereport(ERROR,
-                    (errmsg("failed to authenticate"),
+				(errmsg("failed to authenticate"),
                      errdetail("error while sending clear text password")));
 		}
 		return s_do_auth(cp, password);
@@ -1385,7 +1407,7 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 		if (status > 0)
 		{
             ereport(ERROR,
-                    (errmsg("failed to authenticate"),
+				(errmsg("failed to authenticate"),
                      errdetail("error while sending crypt password")));
 		}
 		return s_do_auth(cp, password);
@@ -1414,7 +1436,7 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 		if (status > 0)
 		{
             ereport(ERROR,
-                    (errmsg("failed to authenticate"),
+				(errmsg("failed to authenticate"),
                      errdetail("error while sending md5 password")));
 		}
 
@@ -1425,7 +1447,7 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 	else
 	{
         ereport(ERROR,
-                (errmsg("failed to authenticate"),
+			(errmsg("failed to authenticate"),
                  errdetail("auth kind %d not supported yet", auth_kind)));
 	}
 
@@ -1445,14 +1467,16 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 		{
 			case 'K':	/* backend key data */
 				keydata_done = true;
-				pool_debug("s_do_auth: backend key data received");
+				ereport(DEBUG1,
+					(errmsg("authenticate backend: key data received")));
+
 
 				/* read message length */
 				pool_read_with_error(cp->con, &length, sizeof(length),"message length for authentication kind 'K'");
 				if (ntohl(length) != 12)
 				{
                     ereport(ERROR,
-                            (errmsg("failed to authenticate"),
+						(errmsg("failed to authenticate"),
                              errdetail("invalid backend key data length. received %d bytes when expecting 12 bytes"
                                        , ntohl(length))));
 				}
@@ -1477,13 +1501,15 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 				pool_read_with_error(cp->con, &state, sizeof(state),
                                      "transaction state  for authentication kind 'Z'");
 			
-				pool_debug("s_do_auth: transaction state: %c", state);
+				ereport(DEBUG1,
+					(errmsg("authenticate backend: transaction state: %c", state)));
+
 				cp->con->tstate = state;
 
 				if (!keydata_done)
 				{
                     ereport(ERROR,
-                            (errmsg("failed to authenticate"),
+						(errmsg("failed to authenticate"),
                              errdetail("ready for query arrived before receiving keydata")));
 				}
 				return 0;
@@ -1506,7 +1532,7 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 
 			default:
                 ereport(ERROR,
-                        (errmsg("failed to authenticate"),
+					(errmsg("failed to authenticate"),
                          errdetail("unknown authentication message response received '%c'",kind)));
 				break;
 		}
@@ -1609,8 +1635,9 @@ int select_load_balancing_node(void)
 			total_weight += BACKEND_INFO(i).backend_weight;
 		}
 	}
-
-	pool_debug("select_load_balancing_node: selected backend id is %d", selected_slot);
+	ereport(DEBUG1,
+		(errmsg("selecting load balance node"),
+			 errdetail("selected backend id is %d", selected_slot)));
 	return selected_slot;
 }
 
@@ -1673,7 +1700,8 @@ void pool_initialize_private_backend_status(void)
 {
 	int i;
 
-	pool_debug("pool_initialize_private_backend_status: initialize backend status");
+	ereport(DEBUG1,
+		(errmsg("initializing backend status")));
 
 	for (i=0;i<MAX_NUM_BACKENDS;i++)
 	{
@@ -1693,7 +1721,10 @@ static void check_restart_request(void)
 	*/
 	if (pool_get_my_process_info()->need_to_restart)
 	{
-		pool_log("do_child: failback event found. restart myself.");
+		ereport(LOG,
+			(errmsg("failback event detected"),
+				 errdetail("restarting myself")));
+
 		pool_get_my_process_info()->need_to_restart = 0;
 		child_exit(1);
 	}
@@ -1745,8 +1776,10 @@ wait_for_new_connections(int unix_fd, int inet_fd, struct timeval *timeout, Sock
 		gettimeofday(&tv1, NULL);
 
 #ifdef DEBUG
-		pool_log("before select = {%d, %d}", timeoutval->tv_sec, timeoutval->tv_usec);
-		pool_log("g:before select = {%d, %d}", tv1.tv_sec, tv1.tv_usec);
+		ereport(DEBUG3,
+				(errmsg("before select = {%d, %d}", timeoutval->tv_sec, timeoutval->tv_usec)));
+		ereport(DEBUG3,
+				(errmsg("g:before select = {%d, %d}", tv1.tv_sec, tv1.tv_usec)));
 #endif
 	}
 
@@ -1787,8 +1820,10 @@ wait_for_new_connections(int unix_fd, int inet_fd, struct timeval *timeout, Sock
 			}
 		}
 #ifdef DEBUG
-		pool_log("g:after select = {%d, %d}", tv2.tv_sec, tv2.tv_usec);
-		pool_log("after select = {%d, %d}", timeout->tv_sec, timeout->tv_usec);
+		ereport(DEBUG3,
+				(errmsg("g:after select = {%d, %d}", tv2.tv_sec, tv2.tv_usec)));
+		ereport(DEBUG3,
+				(errmsg("after select = {%d, %d}", timeout->tv_sec, timeout->tv_usec)));
 #endif
 	}
 
@@ -2022,8 +2057,10 @@ get_connection(int front_end_fd, SockAddr *saddr)
 	/* log who is connecting */
 	if (pool_config->log_connections)
 	{
-		pool_log("connection received: host=%s%s%s",
-				 remote_host, remote_port[0] ? " port=" : "", remote_port);
+		ereport(LOG,
+				(errmsg("new connection received"),
+				 errdetail("connecting host=%s%s%s",
+						   remote_host, remote_port[0] ? " port=" : "", remote_port)));
 	}
 
     
@@ -2083,7 +2120,10 @@ retry_startup:
 	/* SSL? */
 	if (sp->major == 1234 && sp->minor == 5679 && !frontend->ssl_active)
 	{
-		pool_debug("SSLRequest from client");
+		ereport(DEBUG1,
+			(errmsg("selecting backend connection"),
+				 errdetail("SSLRequest from client")));
+
 		pool_ssl_negotiate_serverclient(frontend);
 		pool_free_startup_packet(sp);
 		goto retry_startup;
@@ -2115,7 +2155,10 @@ retry_startup:
 	 */
 	if (pool_get_my_process_info()->need_to_restart)
 	{
-		pool_log("do_child: failback event found. discard existing connections");
+		ereport(LOG,
+			(errmsg("selecting backend connection"),
+				 errdetail("failback event detected, discarding existing connections")));
+
 		pool_get_my_process_info()->need_to_restart = 0;
 		close_idle_connection(0);
 		pool_initialize_private_backend_status();
@@ -2142,13 +2185,16 @@ retry_startup:
 		if (sp->len != MASTER_CONNECTION(backend)->sp->len)
 		{
 			ereport(DEBUG1,
-				(errmsg("connection exists but startup packet length is not identical")));
+				(errmsg("selecting backend connection"),
+					 errdetail("connection exists but startup packet length is not identical")));
+
 			found = 0;
 		}
 		else if(memcmp(sp->startup_packet, MASTER_CONNECTION(backend)->sp->startup_packet, sp->len) != 0)
 		{
 			ereport(DEBUG1,
-				(errmsg("connection exists but startup packet contents is not identical")));
+				(errmsg("selecting backend connection"),
+					 errdetail("connection exists but startup packet contents is not identical")));
 			found = 0;
 		}
 

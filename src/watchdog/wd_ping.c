@@ -32,6 +32,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include "pool.h"
+#include "utils/elog.h"
 #include "pool_config.h"
 #include "watchdog/watchdog.h"
 #include "watchdog/wd_ext.h"
@@ -100,7 +101,9 @@ wd_is_upper_ok(char * server_list)
 		}
 		if (cnt >= MAX_WATCHDOG_NUM)
 		{
-			pool_debug("wd_is_upper_ok: trusted server num is out of range(%d)",cnt);
+			ereport(DEBUG1,
+				(errmsg("watchdog trying to connect to trusted server"),
+					 errdetail("trusted server num is out of range(%d)",cnt)));
 			break;
 		}
 	}
@@ -244,13 +247,17 @@ exec_ping(void * arg)
 			}
 			else if (WEXITSTATUS(status) != 0)
 			{
-				pool_debug("exec_ping: failed to ping %s: exit code %d", thread_arg->hostname, WEXITSTATUS(status));
+				ereport(DEBUG1,
+					(errmsg("watchdog executing ping"),
+						 errdetail("failed to ping \"%s\" exit code: %d", thread_arg->hostname, WEXITSTATUS(status))));
 				close(pfd[0]);
 				return WD_NG;
 			}
 			else
 			{
-				pool_debug("exec_ping: succeed to ping %s", thread_arg->hostname);
+				ereport(DEBUG1,
+					(errmsg("watchdog executing ping"),
+						 errdetail("succeed to ping %s", thread_arg->hostname)));
 				break;
 			}
 		}
@@ -287,9 +294,9 @@ get_result (char * ping_data)
 		pool_error("get_result: no ping data");
 		return -1;
 	}
-
-	pool_debug("get_result: ping data: %s", ping_data);
-
+	ereport(DEBUG1,
+		(errmsg("watchdog ping"),
+			 errdetail("ping data: %s", ping_data)));
 	/*
 	 skip result until average data
 	 typical result of ping is as follows,

@@ -42,6 +42,7 @@
 #include <sys/wait.h>
 
 #include "pool.h"
+#include "utils/elog.h"
 #include "pool_config.h"
 #include "watchdog/watchdog.h"
 #include "watchdog/wd_ext.h"
@@ -82,7 +83,9 @@ wd_declare(void)
 	int rtn;
 
 	/* send declare new master packet */
-	pool_debug("wd_declare: send the packet to declare the new master");
+	ereport(DEBUG1,
+		(errmsg("watchdog standing for master"),
+			 errdetail("send the packet to declare the new master")));
 
 	rtn = wd_send_packet_no(WD_DECLARE_NEW_MASTER);
 	return rtn;
@@ -94,7 +97,10 @@ wd_stand_for_master(void)
 	int rtn;
 
 	/* send stand for master packet */
-	pool_debug("wd_stand_for_master: send the packet to be the new master");
+	ereport(DEBUG1,
+		(errmsg("watchdog standing for master"),
+			 errdetail("send the packet to be the new master")));
+
 	rtn = wd_send_packet_no(WD_STAND_FOR_MASTER);
 	return rtn;
 }
@@ -215,8 +221,10 @@ wd_create_send_socket(char * hostname, int port)
 			{
 				return sock;
 			}
-			pool_log("wd_create_send_socket: connect() reports failure (%s). You can safely ignore this while starting up.",
-			         strerror(errno));
+			ereport(LOG,
+				(errmsg("failed to create watchdog sending socket"),
+					 errdetail("connect() reports failure \"%s\"",strerror(errno)),
+						errhint("You can safely ignore this while starting up.")));
 			break;
 		}
 		return sock;
@@ -574,7 +582,9 @@ wd_thread_negotiation(void * arg)
 			rtn = (recv_packet.packet_no == WD_LOCK_FAILED) ? WD_NG : WD_OK;
 			break;
 		case WD_AUTH_FAILED:
-			pool_log("wd_thread_negotiation: watchdog authentication failed");
+			ereport(LOG,
+				(errmsg("failed while watchdog thread negotiation"),
+					 errdetail("watchdog authentication failed")));
 			rtn = WD_NG;
 			break;
 		default:
@@ -660,7 +670,9 @@ send_packet_4_nodes(WdPacket *packet, WD_SEND_TYPE type)
 		sock = wd_create_send_socket(p->hostname, p->wd_port);
 		if (sock == -1)
 		{
-			pool_log("send_packet_4_nodes: packet for %s:%d is canceled", p->hostname, p->wd_port);
+			ereport(LOG,
+				(errmsg("watchdog sending packet for nodes"),
+					 errdetail("packet for %s:%d is canceled", p->hostname, p->wd_port)));
 			p->is_contactable = false;
 			p++;
 			continue;
@@ -920,13 +932,18 @@ wd_escalation(void)
 	int rtn, r;
 	bool has_error = false;
 
-	pool_log("wd_escalation: escalating to master pgpool");
+	ereport(LOG,
+		(errmsg("watchdog escalation"),
+			 errdetail("escalating to master pgpool")));
 
 	/* clear shared memory cache */
 	if (pool_config->memory_cache_enabled && pool_is_shmem_cache() &&
 	    pool_config->clear_memqcache_on_escalation)
 	{
-		pool_log("wd_escalation: clear all the query cache on shared memory");
+		ereport(LOG,
+			(errmsg("watchdog escalation"),
+				 errdetail("clearing all the query cache on shared memory")));
+
 		pool_clear_memory_cache();
 	}
 
@@ -937,7 +954,8 @@ wd_escalation(void)
 		if (WIFEXITED(r))
 		{
 			if (WEXITSTATUS(r) == EXIT_SUCCESS)
-				pool_log("wd_escalation: escalation command succeeded");
+				ereport(LOG,
+					(errmsg("watchdog escalation successful")));
 			else
 			{
 				pool_error("wd_escalation: escalation command failed. exit status: %d", WEXITSTATUS(r));
@@ -969,9 +987,13 @@ wd_escalation(void)
 	if (rtn == WD_OK)
 	{
 		if (has_error)
-			pool_log("wd_escalation: escalated to master pgpool with some errors");
+			ereport(LOG,
+				(errmsg("watchdog escalation successful"),
+					 errdetail("escalated to master pgpool with some errors")));
 		else
-			pool_log("wd_escalation: escalated to master pgpool successfully");
+			ereport(LOG,
+				(errmsg("watchdog escalation successful"),
+					 errdetail("escalated to master pgpool")));
 	}
 
 	return rtn;

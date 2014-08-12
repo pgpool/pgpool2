@@ -132,8 +132,11 @@ int load_hba(char *hbapath)
 		return -1;
 	}
 	
-	pool_debug("loading \"%s\" for client authentication configuration file",
-			   hbapath);
+	ereport(DEBUG1,
+		(errmsg("loading hba configuration"),
+			errdetail("loading file :\"%s\" for client authentication configuration file",
+				   hbapath)));
+
 
 	tokenize_file(hbapath, file, &hba_lines, &hba_line_nums);
 	fclose(file);
@@ -323,7 +326,8 @@ static char *recv_password_packet(POOL_CONNECTION *frontend)
 		return NULL;
 
 	/* Do not echo password to logs, for security. */
-	pool_debug("received password packet from frontend for pgpool's HBA");
+	ereport(DEBUG1,
+		(errmsg("received password packet from frontend for pgpool's HBA")));
 
 	/*
 	 * Return the received string.  Note we do not attempt to do any
@@ -616,8 +620,10 @@ static void parse_hba(List *line, int line_num, POOL_CONNECTION *frontend,
 		ret = getaddrinfo_all(token, NULL, &hints, &gai_result);
 		if (ret || !gai_result)
 		{
-			pool_log("invalid IP address \"%s\" in file \"%s\" line %d: %s",
-					 token, hbaFileName, line_num, gai_strerror(ret));
+			ereport(LOG,
+				(errmsg("parsing pool hba configuration file"),
+				 errdetail("invalid IP address \"%s\" in file \"%s\" line %d: %s",
+						   token, hbaFileName, line_num, gai_strerror(ret))));
 			if (cidr_slash)
 				*cidr_slash = '/';
             if (gai_result)
@@ -648,8 +654,11 @@ static void parse_hba(List *line, int line_num, POOL_CONNECTION *frontend,
 			ret = getaddrinfo_all(token, NULL, &hints, &gai_result);
 			if (ret || !gai_result)
 			{
-				pool_log("invalid IP mask \"%s\" in file \"%s\" line %d: %s",
-						 token, hbaFileName, line_num, gai_strerror(ret));
+				ereport(LOG,
+					(errmsg("parsing pool hba configuration file"),
+						 errdetail("invalid IP mask \"%s\" in file \"%s\" line %d: %s",
+								   token, hbaFileName, line_num, gai_strerror(ret))));
+
 				if (gai_result)
 					freeaddrinfo_all(hints.ai_family, gai_result);
 				goto hba_other_error;
@@ -660,8 +669,10 @@ static void parse_hba(List *line, int line_num, POOL_CONNECTION *frontend,
 
 			if (addr.ss_family != mask.ss_family)
 			{
-				pool_log("IP address and mask do not match in file \"%s\" line %d",
-						 hbaFileName, line_num);
+				ereport(LOG,
+					(errmsg("parsing pool hba configuration file"),
+						errdetail("IP address and mask do not match in file \"%s\" line %d",
+							   hbaFileName, line_num)));
 				goto hba_other_error;
 			}
 		}
@@ -730,12 +741,15 @@ static void parse_hba(List *line, int line_num, POOL_CONNECTION *frontend,
 
  hba_syntax:
 	if (line_item)
-		pool_log("invalid entry in file \"%s\" at line %d, token \"%s\"",
-				 hbaFileName, line_num, (char *) lfirst(line_item));
+		ereport(LOG,
+				(errmsg("parsing pool hba configuration file"),
+					errdetail("invalid entry in file \"%s\" at line %d, token \"%s\"",
+						   hbaFileName, line_num, (char *) lfirst(line_item))));
 	else
-		pool_log("missing field in file \"%s\" at end of line %d",
-				 hbaFileName, line_num);
-
+		ereport(LOG,
+				(errmsg("parsing pool hba configuration file"),
+					errdetail("missing field in file \"%s\" at end of line %d",
+						   hbaFileName, line_num)));
 	/* Come here if suitable message already logged */
  hba_other_error:
 	*error_p = true;
@@ -1123,7 +1137,10 @@ static void next_token(FILE *fp, char *buf, int bufsz)
 		if (buf >= end_buf)
 		{
 			*buf = '\0';
-			pool_log("authentication file token too long, skipping: \"%s\"", start_buf);
+			ereport(LOG,
+				(errmsg("parsing pool hba configuration file"),
+					 errdetail("authentication file token too long, skipping: \"%s\"", start_buf)));
+
 			/* Discard remainder of line */
 			while ((c = getc(fp)) != EOF && c != '\n')
 				;
@@ -1218,12 +1235,16 @@ static int pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg,
 		switch (msg[0]->msg_style)
 		{
 			case PAM_ERROR_MSG:
-				pool_log("error from underlying PAM layer: %s",
-						 msg[0]->msg);
+				ereport(LOG,
+					(errmsg("PAM Error"),
+						errdetail("error from underlying PAM layer: %s",
+							   msg[0]->msg)));
 				return PAM_CONV_ERR;
 			default:
-				pool_log("unsupported PAM conversation %d/%s",
-						 msg[0]->msg_style, msg[0]->msg);
+				ereport(LOG,
+					(errmsg("PAM Error"),
+						errdetail("unsupported PAM conversation %d/%s",
+							   msg[0]->msg_style, msg[0]->msg)));
 				return PAM_CONV_ERR;
 		}
 	}
@@ -1253,7 +1274,9 @@ static int pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg,
 
 		if (strlen(passwd) == 0)
 		{
-			pool_log("empty password returned by client");
+			ereport(LOG,
+				(errmsg("PAM Error"),
+					 errdetail("empty password returned by client")));
 			return PAM_CONV_ERR;
 		}
 		appdata_ptr = passwd;

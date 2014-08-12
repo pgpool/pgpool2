@@ -25,7 +25,7 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/sem.h>
-
+#include "utils/elog.h"
 #include "utils/pool_ipc.h"
 
 
@@ -66,7 +66,9 @@ IpcSemaphoreKill(int status, Datum semId)
 	semun.val = 0;				/* unused, but keep compiler quiet */
 
 	if (semctl(semId, 0, IPC_RMID) < 0)
-		pool_log("semctl(%lu, 0, IPC_RMID, ...) failed: %s", semId, strerror(errno));
+		ereport(LOG,
+			(errmsg("removing semaphore set"),
+				errdetail("semctl(%lu, 0, IPC_RMID, ...) failed: %s", semId, strerror(errno))));
 }
 
 /*

@@ -109,8 +109,8 @@ static void send_md5salt(PCP_CONNECTION *frontend, char* salt);
 	do { \
 		if (pcp_restart_request) \
 		{ \
-		  pool_log("pcp child process received restart request"); \
-		  exit(1); \
+			ereport(LOG,(errmsg("restart request received in pcp child process"))); \
+			exit(1); \
 		} \
 		else \
 		{ \
@@ -133,7 +133,8 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 	int rsize;
 	char *buf = NULL;
 
-	pool_debug("I am PCP %d", getpid());
+	ereport(DEBUG1,
+			(errmsg("I am PCP child with pid:%d",getpid())));
 
 	/* Identify myself via ps */
 	init_ps_display("", "", "", "");
@@ -251,11 +252,14 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 		if ((! authenticated) && (tos != 'R' && tos != 'M'))
 		{
 			ereport(ERROR,
-				(errmsg("connection not authorized")));
+				(errmsg("authentication failed for new PCP connection"),
+					errdetail("connection not authorized")));
 		}
 
 		/* process a request */
-		pool_debug("pcp_child: received PCP packet type of service '%c'", tos);
+		ereport(DEBUG1,
+			(errmsg("received PCP packet"),
+				 errdetail("PCP packet type of service '%c'", tos)));
 
 		set_ps_display("PCP: processing a request", false);
 
@@ -340,11 +344,14 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 				break;
 
 			case 'F':
-				pool_debug("pcp_child: stop online recovery");
+				ereport(DEBUG1,
+					(errmsg("PCP processing request, stop online recovery")));
 				break;
 
 			case 'X':			/* disconnect */
-				pool_debug("pcp_child: client disconnecting. close connection");
+				ereport(DEBUG1,
+					(errmsg("PCP processing request, client disconnecting"),
+						 errdetail("closing PCP connection")));
 				authenticated = 0;
 				pcp_close(frontend);
 				frontend = NULL;
@@ -352,8 +359,8 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 
 			default:
 				ereport(FATAL,
-					(errmsg("invalid pcp packet"),
-						errdetail("unknown pcp packet type \"%c\"",tos)));
+					(errmsg("PCP processing request"),
+						errdetail("unknown PCP packet type \"%c\"",tos)));
 		}
 		/* seems ok. cancel idle check timer */
 		pool_signal(SIGALRM, SIG_IGN);
@@ -366,8 +373,8 @@ static RETSIGTYPE
 die(int sig)
 {
 	pcp_exit_request = 1;
-
-	pool_debug("PCP child receives shutdown request signal %d", sig);
+	ereport(DEBUG1,
+			(errmsg("PCP child receives shutdown request signal %d", sig)));
 
 	switch (sig)
 	{
@@ -462,9 +469,8 @@ pcp_do_accept(int unix_fd, int inet_fd)
         MemoryContextSwitchTo(oldContext);
 		pcp_got_sighup = 0;
 	}
-
-	pool_debug("I am PCP %d accept fd %d", getpid(), afd);
-
+	ereport(DEBUG2,
+			(errmsg("I am PCP child with PID:%d and accept fd:%d", getpid(), afd)));
 	if (inet)
 	{
 		int on = 1;
@@ -538,7 +544,9 @@ user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len)
 	index = (char *) memchr(buf, '\0', MAX_USER_PASSWD_LEN);
 	if (index == NULL)
 	{
-		pool_debug("pcp_child: error while reading authentication packet");
+		ereport(LOG,
+			(errmsg("failed to authenticate PCP user"),
+				 errdetail("error while reading authentication packet")));
 		return 0;
 	}
 	strncpy(packet_password, ++index, MAX_USER_PASSWD_LEN);
@@ -546,7 +554,9 @@ user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len)
 	fp = fopen(passwd_file, "r");
 	if (fp == NULL)
 	{
-		pool_error("pcp_child: could not open %s. reason: %s", passwd_file, strerror(errno));
+		ereport(LOG,
+			(errmsg("failed to authenticate PCP user"),
+				 errdetail("could not open %s. reason: %s", passwd_file, strerror(errno))));
 		return 0;
 	}
 
@@ -566,8 +576,10 @@ user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len)
 			len++;
 			if (++i > MAX_USER_PASSWD_LEN)
 			{
-				pool_error("pcp_child: user name in %s exceeds %d", passwd_file, MAX_USER_PASSWD_LEN);
 				fclose(fp);
+				ereport(LOG,
+					(errmsg("failed to authenticate PCP user"),
+						 errdetail("username read from file \"%s\" is larger than maximum allowed username length [%d]", passwd_file, MAX_USER_PASSWD_LEN)));
 				return 0;
 			}
 		}
@@ -584,8 +596,10 @@ user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len)
 			len++;
 			if (++i > MAX_USER_PASSWD_LEN)
 			{
-				pool_error("pcp_child: password in %s exceeds %d", passwd_file, MAX_USER_PASSWD_LEN);
 				fclose(fp);
+				ereport(LOG,
+					(errmsg("failed to authenticate PCP user"),
+						 errdetail("password read from file \"%s\" is larger than maximum allowed password length [%d]", passwd_file, MAX_USER_PASSWD_LEN)));
 				return 0;
 			}
 		}
@@ -754,7 +768,9 @@ inform_process_count(PCP_CONNECTION *frontend)
 	pfree(process_list);
 	pfree(mesg);
 
-	pool_debug("pcp_child: %d process(es) found", process_count);
+	ereport(DEBUG1,
+		(errmsg("PCP: informing process count"),
+			 errdetail("%d process(es) found", process_count)));
 }
 
 static void
@@ -777,7 +793,9 @@ inform_process_info(PCP_CONNECTION *frontend,char *buf)
 		pcp_write(frontend, code, sizeof(code));
 		do_pcp_flush(frontend);
 
-		pool_debug("pcp_child: invalid process ID");
+		ereport(DEBUG1,
+			(errmsg("PCP: informing process info"),
+				 errdetail("invalid process ID")));
 	}
 	else
 	{
@@ -869,7 +887,10 @@ inform_process_info(PCP_CONNECTION *frontend,char *buf)
 		pcp_write(frontend, &wsize, sizeof(int));
 		pcp_write(frontend, fin_code, sizeof(fin_code));
 		do_pcp_flush(frontend);
-		pool_debug("pcp_child: retrieved process information from shared memory");
+		ereport(DEBUG1,
+			(errmsg("PCP informing process info"),
+				 errdetail("retrieved process information from shared memory")));
+
 		pfree(pools);
 	}
 }
@@ -1006,7 +1027,9 @@ inform_systemDB_info(PCP_CONNECTION *frontend)
 		pcp_write(frontend, fin_code, sizeof(fin_code));
 		do_pcp_flush(frontend);
 
-		pool_debug("pcp_child: retrieved SystemDB information from shared memory");
+		ereport(DEBUG1,
+			(errmsg("PCP: informing systemDB info"),
+				 errdetail("retrieved SystemDB information from shared memory")));
 	}
 }
 
@@ -1027,8 +1050,9 @@ inform_watchdog_info(PCP_CONNECTION *frontend,char *buf)
 		pcp_write(frontend, &wsize, sizeof(int));
 		pcp_write(frontend, code, sizeof(code));
 		do_pcp_flush(frontend);
-
-		pool_debug("pcp_child: watcdhog not enabled");
+		ereport(DEBUG1,
+			(errmsg("PCP: informing watchdog info"),
+				 errdetail("watcdhog not enabled")));
 		return;
 	}
 
@@ -1044,7 +1068,10 @@ inform_watchdog_info(PCP_CONNECTION *frontend,char *buf)
 		pcp_write(frontend, code, sizeof(code));
 		do_pcp_flush(frontend);
 
-		pool_debug("pcp_child: invalid watchdog index");
+		ereport(DEBUG1,
+			(errmsg("PCP: informing watchdog info"),
+				 errdetail("invalid watchdog index")));
+
 	}
 	else
 	{
@@ -1073,7 +1100,9 @@ inform_watchdog_info(PCP_CONNECTION *frontend,char *buf)
 		pcp_write(frontend, status, strlen(status)+1);
 		do_pcp_flush(frontend);
 
-		pool_debug("pcp_child: retrieved node information from shared memory");
+		ereport(DEBUG1,
+			(errmsg("PCP: informing watchdog info"),
+				 errdetail("retrieved node information from shared memory")));
 	}
 }
 
@@ -1097,7 +1126,10 @@ inform_node_info(PCP_CONNECTION *frontend,char *buf)
 		pcp_write(frontend, code, sizeof(code));
 		do_pcp_flush(frontend);
 
-		pool_debug("pcp_child: invalid node ID");
+		ereport(DEBUG1,
+			(errmsg("PCP: informing node info"),
+				 errdetail("invalid node ID")));
+
 	}
 	else
 	{
@@ -1125,7 +1157,10 @@ inform_node_info(PCP_CONNECTION *frontend,char *buf)
 		pcp_write(frontend, weight_str, strlen(weight_str)+1);
 		do_pcp_flush(frontend);
 
-		pool_debug("pcp_child: retrieved node information from shared memory");
+		ereport(DEBUG1,
+			(errmsg("PCP: informing node info"),
+				 errdetail("retrieved node information from shared memory")));
+
 	}
 }
 
@@ -1149,7 +1184,9 @@ inform_node_count(PCP_CONNECTION *frontend)
 	pcp_write(frontend, mesg, strlen(mesg)+1);
 	do_pcp_flush(frontend);
 
-	pool_debug("pcp_child: %d node(s) found", node_count);
+	ereport(DEBUG1,
+		(errmsg("PCP: informing node count"),
+			 errdetail("%d node(s) found", node_count)));
 }
 
 static void 
@@ -1166,7 +1203,10 @@ process_detach_node(PCP_CONNECTION *frontend,char *buf, char tos)
 		gracefully = true;
 
 	node_id = atoi(buf);
-	pool_debug("pcp_child: detaching Node ID %d", node_id);
+	ereport(DEBUG1,
+		(errmsg("PCP: processing detach node"),
+			 errdetail("detaching Node ID %d", node_id)));
+
 	pool_detach_node(node_id, gracefully);
 
 	pcp_write(frontend, "d", 1);
@@ -1184,7 +1224,10 @@ process_attach_node(PCP_CONNECTION *frontend,char *buf)
 	char code[] = "CommandComplete";
 
 	node_id = atoi(buf);
-	pool_debug("pcp_child: attaching Node ID %d", node_id);
+	ereport(DEBUG1,
+		(errmsg("PCP: processing attach node"),
+			 errdetail("attaching Node ID %d", node_id)));
+
 	send_failback_request(node_id);
 
 	pcp_write(frontend, "c", 1);
@@ -1241,7 +1284,9 @@ process_recovery_request(PCP_CONNECTION *frontend,char *buf)
 	}
 	else
 	{
-		pool_debug("pcp_child: start online recovery");
+		ereport(DEBUG1,
+			(errmsg("PCP: processing recovery request"),
+				 errdetail("start online recovery")));
 
 		r = start_recovery(node_id);
 		finish_recovery();
@@ -1311,8 +1356,9 @@ process_status_request(PCP_CONNECTION *frontend)
 	do_pcp_flush(frontend);
 
 	pfree(status);
-
-	pool_debug("pcp_child: retrieved status information");
+	ereport(DEBUG1,
+		(errmsg("PCP: processing status request"),
+			 errdetail("retrieved status information")));
 }
 
 static void
@@ -1369,8 +1415,9 @@ process_promote_node(PCP_CONNECTION *frontend, char *buf, char tos)
 				errdetail("specified node is already primary node, can't promote node id %d", node_id)));
 
 	}
-
-	pool_debug("pcp_child: promoting Node ID %d", node_id);
+	ereport(DEBUG1,
+		(errmsg("PCP: processing promote node"),
+			 errdetail("promoting Node ID %d", node_id)));
 	pool_promote_node(node_id, gracefully);
 
 	pcp_write(frontend, "d", 1);
@@ -1416,7 +1463,9 @@ process_authentication(PCP_CONNECTION *frontend, char *buf, char *pcp_conf_file,
 		do_pcp_flush(frontend);
 		*random_salt = 0;
 
-		pool_debug("pcp_child: authentication OK");
+		ereport(DEBUG1,
+			(errmsg("PCP: processing authentication request"),
+				 errdetail("authentication OK")));
 	}
 }
 
@@ -1434,7 +1483,9 @@ send_md5salt(PCP_CONNECTION *frontend, char* salt)
 	pcp_write(frontend, salt, 4);
 	do_pcp_flush(frontend);
 
-	pool_debug("pcp_child: salt sent to the client");
+	ereport(DEBUG1,
+			(errmsg("PCP: sent md5 salt to client")));
+
 }
 
 static void 
@@ -1444,22 +1495,31 @@ process_shutown_request(char mode)
 
 	if (mode == 's')
 	{
-		pool_debug("pcp_child: sending SIGTERM to the parent process(%d)", ppid);
+		ereport(DEBUG1,
+			(errmsg("PCP: processing shutdown request"),
+				 errdetail("sending SIGTERM to the parent process with PID:%d", ppid)));
 		kill(ppid, SIGTERM);
 	}
 	else if (mode == 'f')
 	{
-		pool_debug("pcp_child: sending SIGINT to the parent process(%d)", ppid);
+		ereport(DEBUG1,
+			(errmsg("PCP: processing shutdown request"),
+				 errdetail("sending SIGINT to the parent process with PID:%d", ppid)));
 		kill(ppid, SIGINT);
 	}
 	else if (mode == 'i')
 	{
-		pool_debug("pcp_child: sending SIGQUIT to the parent process(%d)", ppid);
+		ereport(DEBUG1,
+			(errmsg("PCP: processing shutdown request"),
+				 errdetail("sending SIGQUIT to the parent process with PID:%d", ppid)));
 		kill(ppid, SIGQUIT);
 	}
 	else
 	{
-		pool_debug("pcp_child: invalid shutdown mode %c", mode);
+		ereport(DEBUG1,
+			(errmsg("PCP: error while processing shutdown request"),
+				 errdetail("invalid shutdown mode \"%c\"", mode)));
+
 	}
 }
 

@@ -86,7 +86,9 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 			process_info->connection_info->load_balancing_node =
 			select_load_balancing_node();
 
-		pool_debug("selected load balancing node: %d", backend->info->load_balancing_node);
+		ereport(DEBUG1,
+			(errmsg("initializing session context"),
+				 errdetail("selected load balancing node: %d", backend->info->load_balancing_node)));
 	}
 
 	/* Unset query is in progress */
@@ -203,8 +205,8 @@ void pool_set_query_in_progress(void)
 		pool_error("pool_set_query_in_progress: session context is not initialized");
 		return;
 	}
-
-	pool_debug("pool_set_query_in_progress: done");
+	ereport(DEBUG1,
+		(errmsg("session context: setting query in progress. DONE")));
 
 	session_context->in_progress = true;
 }
@@ -220,7 +222,8 @@ void pool_unset_query_in_progress(void)
 		return;
 	}
 
-	pool_debug("pool_unset_query_in_progress: done");
+	ereport(DEBUG1,
+			(errmsg("session context: clearing query in progress. DONE")));
 
 	session_context->in_progress = false;
 }
@@ -249,8 +252,9 @@ void pool_set_skip_reading_from_backends(void)
 		pool_error("pool_set_skip_reading_from_backends: session context is not initialized");
 		return;
 	}
+	ereport(DEBUG1,
+			(errmsg("session context: setting skip reading from backends. DONE")));
 
-	pool_debug("pool_set_skip_reading_from_backends: done");
 
 	session_context->skip_reading_from_backends = true;
 }
@@ -266,7 +270,9 @@ void pool_unset_skip_reading_from_backends(void)
 		return;
 	}
 
-	pool_debug("pool_unset_skip_reading_from_backends: done");
+	ereport(DEBUG1,
+			(errmsg("session context: clearing skip reading from backends. DONE")));
+	
 
 	session_context->skip_reading_from_backends = false;
 }
@@ -296,8 +302,9 @@ void pool_set_doing_extended_query_message(void)
 		return;
 	}
 
-	pool_debug("pool_set_doing_extended_query_message: done");
-
+	ereport(DEBUG1,
+			(errmsg("session context: setting doing extended query messaging. DONE")));
+	
 	session_context->doing_extended_query_message = true;
 }
 
@@ -312,8 +319,9 @@ void pool_unset_doing_extended_query_message(void)
 		return;
 	}
 
-	pool_debug("pool_unset_doing_extended_query_message: done");
-
+	ereport(DEBUG1,
+			(errmsg("session context: clearing doing extended query messaging. DONE")));
+	
 	session_context->doing_extended_query_message = false;
 }
 
@@ -342,8 +350,9 @@ void pool_set_ignore_till_sync(void)
 		return;
 	}
 
-	pool_debug("pool_set_ignore_till_sync: done");
-
+	ereport(DEBUG1,
+			(errmsg("session context: setting ignore till sync. DONE")));
+	
 	session_context->ignore_till_sync = true;
 }
 
@@ -358,7 +367,8 @@ void pool_unset_ignore_till_sync(void)
 		return;
 	}
 
-	pool_debug("pool_unset_ignore_till_sync: done");
+	ereport(DEBUG1,
+			(errmsg("session context: clearing ignore till sync. DONE")));
 
 	session_context->ignore_till_sync = false;
 }
@@ -440,7 +450,7 @@ void pool_sent_message_destroy(POOL_SENT_MESSAGE *message)
 
 	if (!session_context)
         ereport(ERROR,
-                (errmsg("unable to free message"),
+			(errmsg("unable to free message"),
                  errdetail("cannot get the session context")));
 
 	in_progress = pool_is_query_in_progress();
@@ -550,7 +560,9 @@ void pool_add_sent_message(POOL_SENT_MESSAGE *message)
 
 	if (!message)
 	{
-		pool_debug("pool_add_sent_message: message is NULL");
+		ereport(DEBUG1,
+			(errmsg("adding sent message to list"),
+				 errdetail("message is null")));
 		return;
 	}
 
@@ -560,11 +572,13 @@ void pool_add_sent_message(POOL_SENT_MESSAGE *message)
 	if (old_msg)
 	{
 		if (message->kind == 'B')
-			pool_debug("pool_add_sent_message: portal \"%s\" already exists",
-					   message->name);
+			ereport(DEBUG1,
+				(errmsg("adding sent message to list"),
+					errdetail("portal \"%s\" already exists",message->name)));
 		else
-			pool_debug("pool_add_sent_message: prepared statement \"%s\" already exists",
-					   message->name);
+			ereport(DEBUG1,
+				(errmsg("adding sent message to list"),
+					errdetail("prepared statement \"%s\" already exists",message->name)));
 
 		if (*message->name == '\0')
 			pool_remove_sent_message(old_msg->kind, old_msg->name);
@@ -618,7 +632,9 @@ void pool_unset_writing_transaction(void)
 		pool_error("pool_unset_writing_transaction: session context is not initialized");
 		return;
 	}
-	pool_debug("pool_unset_writing_transaction: done");
+	ereport(DEBUG1,
+			(errmsg("session context: clearing writing transaction. DONE")));
+
 	session_context->writing_transaction = false;
 }
 
@@ -632,7 +648,8 @@ void pool_set_writing_transaction(void)
 		pool_error("pool_set_writing_transaction: session context is not initialized");
 		return;
 	}
-	pool_debug("pool_set_writing_transaction: done");
+	ereport(DEBUG1,
+			(errmsg("session context: setting writing transaction. DONE")));
 	session_context->writing_transaction = true;
 }
 
@@ -659,7 +676,9 @@ void pool_unset_failed_transaction(void)
 		pool_error("pool_unset_failed_transaction: session context is not initialized");
 		return;
 	}
-	pool_debug("pool_unset_failed_transaction: done");
+	ereport(DEBUG1,
+			(errmsg("session context: clearing failed transaction. DONE")));
+	
 	session_context->failed_transaction = false;
 }
 
@@ -673,7 +692,9 @@ void pool_set_failed_transaction(void)
 		pool_error("pool_set_failed_transaction: session context is not initialized");
 		return;
 	}
-	pool_debug("pool_set_failed_transaction: done");
+	ereport(DEBUG1,
+			(errmsg("session context: setting failed transaction. DONE")));
+
 	session_context->failed_transaction = true;
 }
 
@@ -700,7 +721,8 @@ void pool_unset_transaction_isolation(void)
 		pool_error("pool_unset_transaction_isolation: session context is not initialized");
 		return;
 	}
-	pool_debug("pool_unset_transaction_isolation: done");
+	ereport(DEBUG1,
+			(errmsg("session context: clearing failed transaction. DONE")));
 	session_context->transaction_isolation = POOL_UNKNOWN;
 }
 
@@ -714,7 +736,8 @@ void pool_set_transaction_isolation(POOL_TRANSACTION_ISOLATION isolation_level)
 		pool_error("pool_set_transaction_isolation: session context is not initialized");
 		return;
 	}
-	pool_debug("pool_set_transaction_isolation: done");
+	ereport(DEBUG1,
+			(errmsg("session context: setting transaction isolation. DONE")));
 	session_context->transaction_isolation = isolation_level;
 }
 
@@ -809,7 +832,8 @@ void pool_unset_command_success(void)
 		pool_error("pool_unset_command_success: session context is not initialized");
 		return;
 	}
-	pool_debug("pool_unset_command_success: done");
+	ereport(DEBUG1,
+			(errmsg("session context: clearing transaction isolation. DONE")));
 	session_context->command_success = false;
 }
 
@@ -823,7 +847,9 @@ void pool_set_command_success(void)
 		pool_error("pool_set_command_success: session context is not initialized");
 		return;
 	}
-	pool_debug("pool_set_command_success: done");
+	ereport(DEBUG1,
+			(errmsg("session context: setting command success. DONE")));
+
 	session_context->command_success = true;
 }
 
@@ -953,16 +979,14 @@ bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc)
 	for (i = 0; i < msglist->size; i++)
 	{
 		if (msglist->sent_messages[i]->query_context == qc)
-		{
-			pool_debug("can_query_context_destroy: query context %p is still used. query:%s",
-					   qc, qc->original_query);
 			count++;
-		}
 	}
 	if (count > 1)
 	{
-		pool_debug("can_query_context_destroy: query context %p is still used for %d times.",
-				   qc, count);
+		ereport(DEBUG1,
+			(errmsg("checking if query context can be safely destroyed"),
+				 errdetail("query context %p is still used %d times. query:\"%s\"",
+						   qc, count,qc->original_query)));
 		return false;
 	}
 

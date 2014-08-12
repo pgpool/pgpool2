@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include "pool.h"
+#include "utils/elog.h"
 #include "pool_config.h"
 #include "utils/pool_select_walker.h"
 #include "utils/pool_relcache.h"
@@ -150,8 +151,9 @@ bool pool_has_insertinto_or_locking_clause(Node *node)
 
 	raw_expression_tree_walker(node, insertinto_or_locking_clause_walker, &ctx);
 
-	pool_debug("pool_has_insertinto_or_locking_clause: returns %d",
-			   ctx.has_insertinto_or_locking_clause);
+	ereport(DEBUG1,
+		(errmsg("checking if query has INSERT INTO, FOR SHARE or FOR UPDATE"),
+			errdetail("result = %d",ctx.has_insertinto_or_locking_clause)));
 
 	return ctx.has_insertinto_or_locking_clause;
 }
@@ -196,21 +198,27 @@ int pattern_compare(char *str, const int type, const char *param_name)
 			switch(type) {
 			/* return 1 if string matches whitelist pattern */
 			case WHITELIST:
-				pool_debug("pattern_compare: %s (%s) matched: %s",
-			               param_name, lists_patterns[i].pattern, str);
+				ereport(DEBUG2,
+					(errmsg("comparing function name in whitelist regex array"),
+						errdetail("pattern_compare: %s (%s) matched: %s",
+							   param_name, lists_patterns[i].pattern, str)));
 				return 1;
 			/* return 1 if string matches blacklist pattern */
 			case BLACKLIST:
-				pool_debug("pattern_compare: %s (%s) matched: %s",
-			               param_name, lists_patterns[i].pattern, str);
+				ereport(DEBUG2,
+					(errmsg("comparing function name in blacklist regex array"),
+						 errdetail("pattern_compare: %s (%s) matched: %s",
+								   param_name, lists_patterns[i].pattern, str)));
 				return 1;
 			default:
 				pool_error("pattern_compare: %s unknown pattern match type: %s", param_name, str);
 				return -1;
 			}
 		}
-		pool_debug("pattern_compare: %s (%s) not matched: %s",
-	               param_name, lists_patterns[i].pattern, str);
+		ereport(DEBUG2,
+			(errmsg("comparing function name in blacklist/whitelist regex array"),
+				 errdetail("pattern_compare: %s (%s) not matched: %s",
+						   param_name, lists_patterns[i].pattern, str)));
 	}
 
 	/* return 0 otherwise */
@@ -245,7 +253,8 @@ static bool function_call_walker(Node *node, void *context)
 				fname = strVal(lsecond(fcall->funcname));		/* with schema qualification */
 			}
 
-			pool_debug("function_call_walker: function name: %s", fname);
+			ereport(DEBUG1,
+				(errmsg("function call walker, function name: \"%s\"", fname)));
 
 			/*
 			 * Check white list if any.
@@ -297,7 +306,8 @@ system_catalog_walker(Node *node, void *context)
 	{
 		RangeVar *rgv = (RangeVar *)node;
 
-		pool_debug("system_catalog_walker: relname: %s", rgv->relname);
+		ereport(DEBUG1,
+			(errmsg("system catalog walker, checking relation \"%s\"",rgv->relname)));
 
 		if (is_system_catalog(rgv->relname))
 		{
@@ -323,7 +333,8 @@ temp_table_walker(Node *node, void *context)
 	{
 		RangeVar *rgv = (RangeVar *)node;
 
-		pool_debug("temp_table_walker: relname: %s", rgv->relname);
+		ereport(DEBUG1,
+				(errmsg("temporary table walker. checking relation \"%s\"",rgv->relname)));
 
 		if (is_temp_table(rgv->relname))
 		{
@@ -350,7 +361,9 @@ unlogged_table_walker(Node *node, void *context)
 	{
 		RangeVar *rgv = (RangeVar *)node;
 		relname = make_table_name_from_rangevar(rgv);
-		pool_debug("unlogged_table_walker: relname: %s", relname);
+		
+		ereport(DEBUG1,
+				(errmsg("unlogged table walker. checking relation \"%s\"",relname)));
 
 		if (is_unlogged_table(relname))
 		{
@@ -377,7 +390,9 @@ view_walker(Node *node, void *context)
 	{
 		RangeVar *rgv = (RangeVar *)node;
 		relname = make_table_name_from_rangevar(rgv);
-		pool_debug("view_walker: relname: %s", relname);
+
+		ereport(DEBUG1,
+				(errmsg("view walker. checking relation \"%s\"",relname)));
 
 		if (is_view(relname))
 		{
@@ -844,7 +859,10 @@ bool pool_has_non_immutable_function_call(Node *node)
 
 	raw_expression_tree_walker(node, non_immutable_function_call_walker, &ctx);
 
-	pool_debug("pool_has_non_immutable_function_call: %d", ctx.has_non_immutable_function_call);
+	ereport(DEBUG1,
+		(errmsg("checking if SELECT statement contains the IMMUTABLE function call"),
+			 errdetail("result = %d", ctx.has_non_immutable_function_call)));
+
 	return ctx.has_non_immutable_function_call;
 }
 
@@ -875,7 +893,8 @@ static bool non_immutable_function_call_walker(Node *node, void *context)
 				fname = strVal(lsecond(fcall->funcname));		/* with schema qualification */
 			}
 
-			pool_debug("non_immutable_function_call_walker: function name: %s", fname);
+			ereport(DEBUG1,
+					(errmsg("non immutable function walker. checking function \"%s\"",fname)));
 
 			/* Check system catalog if the function is immutable */
 			if (is_immutable_function(fname) == false)
@@ -930,11 +949,16 @@ static bool is_immutable_function(char *fname)
 			pool_error("is_immutable_function: pool_create_relcache error");
 			return false;
 		}
-		pool_debug("is_immutable_function: relcache created");
+		ereport(DEBUG1,
+			(errmsg("checking if the function is IMMUTABLE"),
+				 errdetail("relcache created")));
 	}
 
-	result = pool_search_relcache(relcache, backend, fname)==0?0:1;
-	pool_debug("is_immutable_function: search result:%d", result);
+	result = (pool_search_relcache(relcache, backend, fname)==0) ? 0 : 1;
+
+	ereport(DEBUG1,
+		(errmsg("checking if the function is IMMUTABLE"),
+			 errdetail("search result = %d", result)));
 	return result;
 }
 
@@ -1047,7 +1071,10 @@ select_table_walker(Node *node, void *context)
 		{
 			if (POOL_MAX_SELECT_OIDS <= ctx->num_oids)
 			{
-				pool_debug("select_table_walker: number of oids exceeds");
+				ereport(DEBUG1,
+					(errmsg("extracting table oids from SELECT statement"),
+						 errdetail("number of oids = %d exceeds the maximum limit = %d",
+								   ctx->num_oids, POOL_MAX_SELECT_OIDS)));
 				return false;
 			}
 
@@ -1058,8 +1085,10 @@ select_table_walker(Node *node, void *context)
 			strlcpy(ctx->table_names[num_oids], s, POOL_NAMEDATALEN);
 			free(s);
 
-			pool_debug("select_table_walker: ctx->table_names[%d] = %s",
-			           num_oids, ctx->table_names[num_oids]);
+			ereport(DEBUG1,
+				(errmsg("extracting table oids from SELECT statement"),
+					 errdetail("ctx->table_names[%d] = \"%s\"",
+							   num_oids, ctx->table_names[num_oids])));
 		}
 	}
 
@@ -1164,6 +1193,7 @@ static char *make_table_name_from_rangevar(RangeVar *rangevar)
 	}
 
 	strncat(tablename, rangevar->relname, POOL_NAMEDATALEN);
-	pool_debug("make_table_name_from_rangevar: tablename:%s", tablename);
+	ereport(DEBUG1,
+			(errmsg("make table name from rangevar: tablename:\"%s\"", tablename)));
 	return tablename;
 }
