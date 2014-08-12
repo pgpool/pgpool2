@@ -731,7 +731,7 @@ pcp_process_info(int pid, int *array_size)
 			
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
-					strcpy(process_info[offset].connection_info->user, index);
+					strlcpy(process_info[offset].connection_info->user, index, SM_USER);
 			
 				index = (char *) memchr(index, '\0', rsize) + 1;
 				if (index != NULL)
