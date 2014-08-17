@@ -43,6 +43,7 @@
 #define MODE_HEARTBEAT	"heartbeat"
 #define MODE_QUERY 		"query"
 
+#include "utils/regex_array.h"
 /*
  *  Regex support in white and black list function
  */
@@ -229,6 +230,20 @@ typedef struct {
 	RegPattern *lists_memqcache_table_patterns; /* Precompiled regex patterns for black/white lists */
 	int memqcache_table_pattc; /* number of regexp pattern */
 	int current_memqcache_table_pattern_size; /* size of the regex pattern array */
+
+	/*
+	 * database_redirect_preference_list = 'postgres:primary,mydb[0-4]:1,mydb[5-9]:2'
+	 */
+	char *database_redirect_preference_list;	/* raw string in pgpool.conf */
+	RegArray *redirect_dbnames; /* Precompiled regex patterns for db prefrence list */
+	Left_right_tokens *db_redirect_tokens; /* db redirect for dbname and node string */
+
+	/*
+	 * app_name_redirect_preference_list = 'psql:primary,myapp[0-4]:1,myapp[5-9]:standby'
+	 */
+	char *app_name_redirect_preference_list;	/* raw string in pgpool.conf */
+	RegArray *redirect_app_names; /* Precompiled regex patterns for app name prefrence list */
+	Left_right_tokens *app_name_redirect_tokens; /* app name redirect for app_name and node string */
 
 	/*
 	 * add for watchdog

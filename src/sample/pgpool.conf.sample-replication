@@ -297,6 +297,15 @@ black_function_list = 'nextval,setval'
                                    # that write to database
                                    # Regexp are accepted
 
+database_redirect_preference_list = ''
+								   # comma separated list of pairs of database and node id.
+								   # example: postgres:primary,mydb[0-4]:1,mydb[5-9]:2'
+								   # valid for streaming replicaton mode only.
+
+app_name_redirect_preference_list = ''
+								   # comma separated list of pairs of app name and node id.
+								   # example: 'psql:primary,myapp[0-4]:1,myapp[5-9]:standby'
+								   # valid for streaming replicaton mode only.
 
 #------------------------------------------------------------------------------
 # MASTER/SLAVE MODE

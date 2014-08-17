@@ -2406,6 +2406,76 @@ parseに続くbind, describe, executeも同じDBノードで実行されます�
 最後に、pgpool-IIのパーサが構文エラーと判断した問い合わせはPrimaryノードだけに送られます。
 </p>
 
+<p>
+データベース名とアプリケーション名によって細かく検索問い合わせの負荷分散を指定することもできます。
+</p>
+
+<p>
+
+<dl>
+  <dt id="DATABASE_REDIRECT_PREFERENCE_LIST">database_redirect_preference_list <span class="version">V3.4 〜</span></dt>
+    <dd>
+    <p>
+    データベース名によって負荷分散をしたいノード番号を、"データベース名:ノード番号"で指定します。
+	たとえば、"test:1"と書くと、"test"という名称のデータベースに接続すると、常にノード番号1に検索問い合わせを送信するようになります。"データベース名:ノード番号"のペアをカンマ(,)で区切って複数指定することもできます。データベース名には、正規表現を指定することできます。
+	ノード番号に"primary"と書くと、常にプライマリノードを指定したことになります。
+	ノード番号に"standby"と書くと、スタンバイノードのうちどれかをバックエンドウェイトに応じてランダムに選択します。
+    </p>
+	<p>
+	  例を示します。
+	<pre>
+database_redirect_preference_list = 'postgres:primary,mydb[01]:1,mydb2:standby'
+	</pre>
+	</p>
+	<p>
+	この例では、検索問い合わせが、postgresデータベースはプライマリノード、mydb0とmydb1はノード1、mydb2はスタンバイノードに負荷分散します。
+	</p>
+    <p>
+    このパラメータは設定ファイルの再読込によって変更できます。
+    </p>
+    </dd>
+
+  <dt id="APP_NAME_REDIRECT_PREFERENCE_LIST">app_name_redirect_preference_list <span class="version">V3.4 〜</span></dt>
+    <dd>
+    <p>
+    アプリケーション名によって負荷分散をしたいノード番号を、"アプリケーション名:ノード番号"で指定します。
+	アプリケーション名とは、クライアントが接続時に指定する名称で、PostgreSQL 9.0以降で使用できます。
+	たとえばpsqlコマンドのアプリケーション名は"psql"です。
+	pgpool-IIは、クライアントが接続に送信するスタートアップパケットに含まれるアプリケーション名だけを認識します。
+	接続後に変更されたアプリケーション名は認識されません。
+	</p>
+	<p>
+	アプリケーション名の指定はdatabase_redirect_preference_listと同様です。
+	正規表現も使用できます。
+    </p>
+	<p>
+	  例を示します。
+	<pre>
+app_name_redirect_preference_list = 'psql:primary,myapp1:1,myapp2:standby'
+	</pre>
+	</p>
+	<p>
+	この例では、検索問い合わせが、psqlではプライマリノード、myapp1はノード1、myapp2はスタンバイノードに負荷分散します。
+	</p>
+	<p>
+	  app_name_redirect_preference_listは、database_redirect_preference_listよりも優先されます。
+	  以下の例を見てください。
+	  <pre>
+		database_redirect_preference_list = 'bigdb:primary'
+		app_name_redirect_preference_list = 'myapp:2'
+	  </pre>
+	</p>
+	<p>
+	  通常、bigdbというデータベースに接続するアプリケーションはプライマリノードに検索問い合わせを送信します。
+	  しかし、myappというアプリケーションは、同じbigdbに接続しても常にノード2に検索問い合わせするようになります。たとえば、myapp2が非常に重いSELECTを実行する分析アプリケーションで、ノード2を分析処理専用にしたい場合に有効です。
+	</p>
+    <p>
+    このパラメータは設定ファイルの再読込によって変更できます。
+    </p>
+    </dd>
+</dl>
+</p>
+
 <h2 id="online_recovery_in_stream_mode">Streaming Replicationでのオンラインリカバリ</h2>
 <p>
 Streaming replicationを利用したマスタスレーブモードでは、

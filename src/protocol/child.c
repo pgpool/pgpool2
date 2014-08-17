@@ -89,6 +89,7 @@ static StartupPacket *StartupPacketCopy(StartupPacket *sp);
 static void print_process_status(char *remote_host,char* remote_port);
 static bool backend_cleanup(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL* volatile backend);
 static void free_persisten_db_connection_memory(POOL_CONNECTION_POOL_SLOT *cp);
+static int choose_db_node_id(char *str);
 
 /*
  * non 0 means SIGTERM(smart shutdown) or SIGINT(fast shutdown) has arrived
@@ -1597,15 +1598,88 @@ static RETSIGTYPE wakeup_handler(int sig)
 
 
 /*
- * Select load balancing node
+ * Select load balancing node. This function is called when:
+ * 1) client connects
+ * 2) the node previously selected for the load balance node is down
  */
 int select_load_balancing_node(void)
 {
 	int selected_slot;
 	double total_weight,r;
 	int i;
+	int index;
+	POOL_SESSION_CONTEXT *ses = pool_get_session_context(false);
+	int tmp;
 
-	/* choose a backend in random manner with weight */
+	/*
+	 * -2 indicates there's no database_redirect_preference_list. -1 indicates
+	 * database_redirect_preference_list exists and any of standby nodes
+	 * specified.
+	 */
+	int suggested_node_id = -2;
+
+	/* 
+	 * Check database_redirect_preference_list
+	 */
+	if (STREAM && pool_config->redirect_dbnames)
+	{
+		char *database = MASTER_CONNECTION(ses->backend)->sp->database;
+
+		/* Check to see if the database matches any of
+		 * database_redirect_preference_list
+		 */
+		index = regex_array_match(pool_config->redirect_dbnames, database);
+		if (index >= 0)
+		{
+			/* Matches */
+			ereport(DEBUG1,
+					(errmsg("selecting load balance node db matched"),
+					 errdetail("dbname: %s index is %d dbnode is %s", database, index, pool_config->db_redirect_tokens->token[index].right_token)));
+
+			tmp = choose_db_node_id(pool_config->db_redirect_tokens->token[index].right_token);
+			if (tmp == -1 || (tmp >= 0 && VALID_BACKEND(tmp)))
+			{
+				suggested_node_id = tmp;
+			}
+		}
+	}
+
+	/* 
+	 * Check app_name_redirect_preference_list
+	 */
+	if (STREAM && pool_config->redirect_app_names)
+	{
+		char *app_name = MASTER_CONNECTION(ses->backend)->sp->application_name;
+
+		/* Check to see if the database matches any of
+		 * database_redirect_preference_list
+		 */
+		index = regex_array_match(pool_config->redirect_app_names, app_name);
+		if (index >= 0)
+		{
+			/* Matches */
+			ereport(DEBUG1,
+					(errmsg("selecting load balance node db matched"),
+					 errdetail("app_name: %s index is %d dbnode is %s", app_name, index, pool_config->app_name_redirect_tokens->token[index].right_token)));
+
+			tmp = choose_db_node_id(pool_config->app_name_redirect_tokens->token[index].right_token);
+			if (tmp == -1 || (tmp >= 0 && VALID_BACKEND(tmp)))
+			{
+				suggested_node_id = tmp;
+			}
+		}
+	}
+
+	if (suggested_node_id >= 0)
+	{
+		ereport(DEBUG1,
+				(errmsg("selecting load balance node"),
+				 errdetail("selected backend id is %d", suggested_node_id)));
+
+		return suggested_node_id;
+	}
+
+	/* Choose a backend in random manner with weight */
 	selected_slot = MASTER_NODE_ID;
 	total_weight = 0.0;
 
@@ -1613,7 +1687,13 @@ int select_load_balancing_node(void)
 	{
 		if (VALID_BACKEND(i))
 		{
-			total_weight += BACKEND_INFO(i).backend_weight;
+			if (suggested_node_id == -1)
+			{
+				if (i != PRIMARY_NODE_ID)
+					total_weight += BACKEND_INFO(i).backend_weight;
+			}
+			else
+				total_weight += BACKEND_INFO(i).backend_weight;
 		}
 	}
 
@@ -1626,6 +1706,9 @@ int select_load_balancing_node(void)
 	total_weight = 0.0;
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
+		if (suggested_node_id == -1 && i == PRIMARY_NODE_ID)
+			continue;
+
 		if (VALID_BACKEND(i) && BACKEND_INFO(i).backend_weight > 0.0)
 		{
 			if(r >= total_weight)
@@ -2237,4 +2320,36 @@ bool is_session_connected()
 	return false;
 }
 
+/*
+ * Given db node specified in pgpool.conf, returns appropriate physical
+ * DB node id.
+ * Acceptable db node specifications are:
+ *
+ * primary: primary node
+ * standby: any of standby node
+ * numeric: physical node id
+ * 
+ * If specified node does exist, returns MASTER_NODE_ID.  If "standby" is
+ * specified, returns -1. Caller should choose one of standby nodes
+ * appropriately.
+ */
+static int choose_db_node_id(char *str)
+{
+	int node_id = MASTER_NODE_ID;
 
+	if (!strcmp("primary", str) && PRIMARY_NODE_ID >= 0)
+	{
+		node_id = PRIMARY_NODE_ID;
+	}
+	else if (!strcmp("standby", str))
+	{
+		node_id = -1;
+	}
+	else
+	{
+		int tmp = atoi(str);
+		if (tmp >= 0 && tmp < NUM_BACKENDS)
+			node_id = tmp;
+	}
+	return node_id;
+}

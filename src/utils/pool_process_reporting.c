@@ -487,6 +487,16 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	StrNCpy(status[i].desc, "follow master command", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "database_redirect_preference_list", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->database_redirect_preference_list);
+	StrNCpy(status[i].desc, "redirect by database name", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	StrNCpy(status[i].name, "app_name_redirect_preference_list", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->app_name_redirect_preference_list);
+	StrNCpy(status[i].desc, "redirect by application name", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	/* PARALLEL MODE AND QUERY CACHE */
 
 	StrNCpy(status[i].name, "parallel_mode", POOLCONFIG_MAXNAMELEN);

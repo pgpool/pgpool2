@@ -2372,6 +2372,84 @@ Lastly, queries that pgpool-II's parser thinks to be an error are sent to the
 primary node.
 </p>
 
+<p>
+You can use database name and application name for smaller granularity
+in specifying load balance.
+</p>
+
+<p>
+<dl>
+  <dt id="DATABASE_REDIRECT_PREFERENCE_LIST">database_redirect_preference_list <span class="version">V3.4 〜</span></dt>
+    <dd>
+    <p>
+	  you can set "database name:node id" pair to specify the node id when connecting to the database.
+	  For example, by specifying "test:1",  pgpool-II always redirects SELECT to node 1 in case of connecting to database "test".
+	  You can specify multiple "database name:node id" pair by separating them using comma (,).
+	  Regular expressions are accepted for database name.
+	  Special keyword "primary" indicates the primary node and "standby" indicates one of standby nodes.
+    </p>
+	<p>
+	  Here is an example.
+	<pre>
+database_redirect_preference_list = 'postgres:primary,mydb[01]:1,mydb2:standby'
+	</pre>
+	</p>
+	<p>
+	  SELECTs will be redirected to primary if you connect to postgres database.
+	  Connecting to mydb0 or mydb1 will redirect SELECTs to node 1.
+	  Connecting to mydb2 will redirect SELECTs to one of standby nodes.
+	</p>
+    <p>
+    You need to reload pgpool.conf if you change this directive.
+    </p>
+    </dd>
+
+  <dt id="APP_NAME_REDIRECT_PREFERENCE_LIST">app_name_redirect_preference_list <span class="version">V3.4 〜</span></dt>
+    <dd>
+    <p>
+	  you can set "application name:node id" pair to specify the node id when the application is used.
+	  "Application name" is a name specified by a client when it connects to database.
+	You can use it in PostgreSQL 9.0 or later.
+	  For example, application of psql command is "psql".
+	  pgpool-II recognize application names only when clients sends a start up packet.
+	  Clients can send application names later on but pgpool-II will not recognize them.
+	</p>
+	<p>
+	  The notion of app_name_redirect_preference_list is same as database_redirect_preference_list.
+	  Thus you can use regular expressions for application name.
+    </p>
+	<p>
+	  Here is an example.
+	<pre>
+app_name_redirect_preference_list = 'psql:primary,myapp1:1,myapp2:standby'
+	</pre>
+	</p>
+	<p>
+	  In this example, psql sends SELECTs to primary node, myapp1 sends to node 1, and myapp2 sends to one of standby nodes.
+	</p>
+	<p>
+	  app_name_redirect_preference_list takes precedence over database_redirect_preference_list.
+	  See the next example.
+	  <pre>
+		database_redirect_preference_list = 'bigdb:primary'
+		app_name_redirect_preference_list = 'myapp:2'
+	  </pre>
+	</p>
+	<p>
+	  Applications connecting to bigdb database send SELECTs to primary node.
+	  However myapp sends SELECTs to node 2 even if it connects to bigdb.
+	  This is useful in a scenario: myapp2 sends very heavy SELECTs to execute analysis jobs.
+	  You want to use node 2 solely for analysis purpose.
+	</p>
+    <p>
+    You need to reload pgpool.conf if you change this directive.
+    </p>
+    </dd>
+</dl>
+</p>
+
+
+
 <h2 id="online_recovery_in_stream_mode">Online recovery with Streaming Replication</h2>
 <p>
 In master/slave mode with streaming replication, online recovery can be performed.

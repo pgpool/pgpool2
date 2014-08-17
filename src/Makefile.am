@@ -50,7 +50,8 @@ pgpool_SOURCES = main/main.c \
 	utils/error/assert.c \
     utils/pcp/pcp_stream.c \
     utils/pcp/pcp_error.c \
-    utils/pcp/pcp_timeout.c
+    utils/pcp/pcp_timeout.c \
+    utils/regex_array.c
 
 DEFS = @DEFS@ \
 	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\"
@@ -85,8 +86,8 @@ AM_YFLAGS = -d
 EXTRA_DIST = sample/pgpool.pam \
 		sample/pgpool_remote_start sample/pgpool_recovery sample/pgpool_recovery_pitr \
 		sample/pgpool.conf.sample sample/pool_hba.conf.sample \
-      	sample/pgpool.conf.sample-replication sample/pgpool.conf.sample-master-slave \
-       	sample/pgpool.conf.sample-stream sample/pcp.conf.sample \
+		sample/pgpool.conf.sample-replication sample/pgpool.conf.sample-master-slave \
+		sample/pgpool.conf.sample-stream sample/pcp.conf.sample \
 		sample/dist_def_pgbench.sql sample/replicate_def_pgbench.sql \
 		sql/Makefile \
 		sql/insert_lock.sql sql/system_db.sql \

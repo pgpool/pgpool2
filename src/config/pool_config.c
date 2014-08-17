@@ -518,6 +518,7 @@ char *yytext;
 #line 27 "pool_config.l"
 #include "pool.h"
 #include "pool_config.h"
+#include "utils/regex_array.h"
 #ifndef POOL_PRIVATE
 #include "utils/elog.h"
 #else
@@ -563,7 +564,7 @@ static char *extract_string(char *value, POOL_TOKEN token);
 static char **extract_string_tokens(char *str, char *delim, int *n);
 static void clear_host_entry(int slot);
 
-#line 567 "config/pool_config.c"
+#line 568 "config/pool_config.c"
 
 #define INITIAL 0
 
@@ -748,10 +749,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 98 "pool_config.l"
+#line 99 "pool_config.l"
 
 
-#line 755 "config/pool_config.c"
+#line 756 "config/pool_config.c"
 
 	if ( !(yy_init) )
 		{
@@ -833,12 +834,12 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 100 "pool_config.l"
+#line 101 "pool_config.l"
 Lineno++; return POOL_EOL;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 101 "pool_config.l"
+#line 102 "pool_config.l"
 /* eat whitespace */
 	YY_BREAK
 case 3:
@@ -846,50 +847,50 @@ case 3:
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 102 "pool_config.l"
+#line 103 "pool_config.l"
 /* eat comment */
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 104 "pool_config.l"
+#line 105 "pool_config.l"
 return POOL_KEY;
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 105 "pool_config.l"
+#line 106 "pool_config.l"
 return POOL_STRING;
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 106 "pool_config.l"
+#line 107 "pool_config.l"
 return POOL_UNQUOTED_STRING;
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 107 "pool_config.l"
+#line 108 "pool_config.l"
 return POOL_INTEGER;
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 108 "pool_config.l"
+#line 109 "pool_config.l"
 return POOL_REAL;
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 109 "pool_config.l"
+#line 110 "pool_config.l"
 return POOL_EQUALS;
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 111 "pool_config.l"
+#line 112 "pool_config.l"
 return POOL_PARSE_ERROR;
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 113 "pool_config.l"
+#line 114 "pool_config.l"
 ECHO;
 	YY_BREAK
-#line 893 "config/pool_config.c"
+#line 894 "config/pool_config.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1847,7 +1848,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 113 "pool_config.l"
+#line 114 "pool_config.l"
 
 
 
@@ -1973,6 +1974,21 @@ int pool_init_config(void)
 	pool_config->lists_patterns = NULL;
 	pool_config->pattc = 0;
 	pool_config->current_pattern_size = 0;
+
+	/*
+	 * database_redirect_preference_list
+	 */
+	pool_config->database_redirect_preference_list = NULL;
+	pool_config->redirect_dbnames = NULL;
+	pool_config->db_redirect_tokens = NULL;
+
+	/*
+	 * app_name_redirect_preference_list
+	 */
+	pool_config->app_name_redirect_preference_list = NULL;
+	pool_config->redirect_app_names = NULL;
+	pool_config->app_name_redirect_tokens = NULL;
+
 	/*
 	 * add for watchdog
 	 */
@@ -3649,7 +3665,6 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 		{
 			int slot;
 			double v;
-			BACKEND_STATUS status;
 
 			slot = atoi(key + 14);
 			if (slot < 0 || slot >= MAX_CONNECTION_SLOTS)
@@ -3670,8 +3685,6 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			ereport(DEBUG1,
 				(errmsg("initializing pool configuration"),
 					errdetail("weight slot number %d weight: %f", slot, v)));
-
-			status = BACKEND_INFO(slot).backend_status;
 
 			if (context == INIT_CONFIG || context == RELOAD_CONFIG)
 			{
@@ -4775,6 +4788,82 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				add_regex_pattern("black_memqcache_table_list", pool_config->black_memqcache_table_list[i]);
 			}
 		}
+
+		else if (!strcmp(key, "database_redirect_preference_list") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+			int i;
+			Left_right_tokens *lrtokens;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+
+			pool_config->database_redirect_preference_list = str;
+			lrtokens = create_lrtoken_array();
+			extract_string_tokens2(str, ",", ':', lrtokens);
+
+			pool_config->redirect_dbnames = create_regex_array();
+			pool_config->db_redirect_tokens = lrtokens;
+
+			for (i=0;i<lrtokens->pos;i++)
+			{
+				if (add_regex_array(pool_config->redirect_dbnames, lrtokens->token[i].left_token))
+				{
+				   pool_error("wrong redirect dbname regular expression %s", lrtokens->token[i].left_token);
+				   fclose(fd);
+				   return(-1);
+				}
+			}
+		}
+
+		else if (!strcmp(key, "app_name_redirect_preference_list") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+			int i;
+			Left_right_tokens *lrtokens;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+
+			pool_config->app_name_redirect_preference_list = str;
+			lrtokens = create_lrtoken_array();
+			extract_string_tokens2(str, ",", ':', lrtokens);
+
+			pool_config->redirect_app_names = create_regex_array();
+			pool_config->app_name_redirect_tokens = lrtokens;
+
+			for (i=0;i<lrtokens->pos;i++)
+			{
+				if (add_regex_array(pool_config->redirect_app_names, lrtokens->token[i].left_token))
+				{
+				   pool_error("wrong redirect dbname regular expression %s", lrtokens->token[i].left_token);
+				   fclose(fd);
+				   return(-1);
+				}
+			}
+		}
 	}
 
 	fclose(fd);
@@ -5048,7 +5137,7 @@ int eval_logical(char *str)
 
 /*
  * Extract tokens separated by delimi from str. Return value is an
- * array of pointers to malloced strings. number of tokens is set to
+ * array of pointers in pallocd strings. number of tokens is set to
  * n; note that str will be destroyed by strtok().
  */
 #define MAXTOKENS 1024

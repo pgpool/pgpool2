@@ -26,6 +26,7 @@
 %{
 #include "pool.h"
 #include "pool_config.h"
+#include "utils/regex_array.h"
 #ifndef POOL_PRIVATE
 #include "utils/elog.h"
 #else
@@ -234,6 +235,21 @@ int pool_init_config(void)
 	pool_config->lists_patterns = NULL;
 	pool_config->pattc = 0;
 	pool_config->current_pattern_size = 0;
+
+	/*
+	 * database_redirect_preference_list
+	 */
+	pool_config->database_redirect_preference_list = NULL;
+	pool_config->redirect_dbnames = NULL;
+	pool_config->db_redirect_tokens = NULL;
+
+	/*
+	 * app_name_redirect_preference_list
+	 */
+	pool_config->app_name_redirect_preference_list = NULL;
+	pool_config->redirect_app_names = NULL;
+	pool_config->app_name_redirect_tokens = NULL;
+
 	/*
 	 * add for watchdog
 	 */
@@ -1910,7 +1926,6 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 		{
 			int slot;
 			double v;
-			BACKEND_STATUS status;
 
 			slot = atoi(key + 14);
 			if (slot < 0 || slot >= MAX_CONNECTION_SLOTS)
@@ -1931,8 +1946,6 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			ereport(DEBUG1,
 				(errmsg("initializing pool configuration"),
 					errdetail("weight slot number %d weight: %f", slot, v)));
-
-			status = BACKEND_INFO(slot).backend_status;
 
 			if (context == INIT_CONFIG || context == RELOAD_CONFIG)
 			{
@@ -3036,6 +3049,82 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				add_regex_pattern("black_memqcache_table_list", pool_config->black_memqcache_table_list[i]);
 			}
 		}
+
+		else if (!strcmp(key, "database_redirect_preference_list") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+			int i;
+			Left_right_tokens *lrtokens;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+
+			pool_config->database_redirect_preference_list = str;
+			lrtokens = create_lrtoken_array();
+			extract_string_tokens2(str, ",", ':', lrtokens);
+
+			pool_config->redirect_dbnames = create_regex_array();
+			pool_config->db_redirect_tokens = lrtokens;
+
+			for (i=0;i<lrtokens->pos;i++)
+			{
+				if (add_regex_array(pool_config->redirect_dbnames, lrtokens->token[i].left_token))
+				{
+				   pool_error("wrong redirect dbname regular expression %s", lrtokens->token[i].left_token);
+				   fclose(fd);
+				   return(-1);
+				}
+			}
+		}
+
+		else if (!strcmp(key, "app_name_redirect_preference_list") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+			int i;
+			Left_right_tokens *lrtokens;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+
+			pool_config->app_name_redirect_preference_list = str;
+			lrtokens = create_lrtoken_array();
+			extract_string_tokens2(str, ",", ':', lrtokens);
+
+			pool_config->redirect_app_names = create_regex_array();
+			pool_config->app_name_redirect_tokens = lrtokens;
+
+			for (i=0;i<lrtokens->pos;i++)
+			{
+				if (add_regex_array(pool_config->redirect_app_names, lrtokens->token[i].left_token))
+				{
+				   pool_error("wrong redirect dbname regular expression %s", lrtokens->token[i].left_token);
+				   fclose(fd);
+				   return(-1);
+				}
+			}
+		}
 	}
 
 	fclose(fd);
@@ -3309,7 +3398,7 @@ int eval_logical(char *str)
 
 /*
  * Extract tokens separated by delimi from str. Return value is an
- * array of pointers to malloced strings. number of tokens is set to
+ * array of pointers in pallocd strings. number of tokens is set to
  * n; note that str will be destroyed by strtok().
  */
 #define MAXTOKENS 1024
