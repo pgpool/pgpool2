@@ -33,27 +33,27 @@ wait_for_pgpool_startup
 
 createdb mydb6
 createdb test2
-pgbench -i postgres
+$PGBENCH -i postgres
 
 ok=yes
 
 # should be redirect to primary (node 0)
-psql -c "SELECT 'test1'" postgres
+$PSQL -c "SELECT 'test1'" postgres
 
 test `getnode "test1"` -eq 0 || ok=ng
 
 # should be redirect to node 1
-psql -c "SELECT 'test2'" test
+$PSQL -c "SELECT 'test2'" test
 
 test `getnode "test2"` -eq 1 || ok=ng
 
 # should be redirect to node 2
-psql -c "SELECT 'test3'" mydb6
+$PSQL -c "SELECT 'test3'" mydb6
 
 test `getnode "test3"` -eq 2 || ok=ng
 
 # should be redirect to either node 1 or 2
-psql -c "SELECT 'test4'" test2
+$PSQL -c "SELECT 'test4'" test2
 
 test `getnode "test4"` -eq 1 -o `getnode "test4"` -eq 2 || ok=ng
 
@@ -64,12 +64,12 @@ echo "app_name_redirect_preference_list = 'psql:primary,pgbench:standby'" >> etc
 wait_for_pgpool_startup
 
 # should be redirect to node 0 because application name is psql
-psql -c "SELECT 'test5'" mydb6
+$PSQL -c "SELECT 'test5'" mydb6
 
 test `getnode "test5"` -eq 0 || ok=ng
 
 # should be redirect to either node 1 or 2
-pgbench -t 1 -f ../select.pgbench postgres
+$PGBENCH -t 1 -f ../select.pgbench postgres
 
 test `getnode "test6"` -eq 1 -o `getnode "test6"` -eq 2 || ok=ng
 
