@@ -306,6 +306,11 @@ app_name_redirect_preference_list = ''
 								   # comma separated list of pairs of app name and node id.
 								   # example: 'psql:primary,myapp[0-4]:1,myapp[5-9]:standby'
 								   # valid for streaming replicaton mode only.
+allow_sql_comments = off
+								   # if on, ignore SQL comments when judging if load balance or
+								   # query cache is possible.
+								   # If off, SQL comments effectively prevent the judgment
+								   # (pre 3.4 behavior).
 
 #------------------------------------------------------------------------------
 # MASTER/SLAVE MODE

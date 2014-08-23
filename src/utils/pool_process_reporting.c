@@ -497,6 +497,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	StrNCpy(status[i].desc, "redirect by application name", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "allow_sql_comments", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->allow_sql_comments);
+	StrNCpy(status[i].desc, "allow SQL comments", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	/* PARALLEL MODE AND QUERY CACHE */
 
 	StrNCpy(status[i].name, "parallel_mode", POOLCONFIG_MAXNAMELEN);

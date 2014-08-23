@@ -246,6 +246,13 @@ typedef struct {
 	Left_right_tokens *app_name_redirect_tokens; /* app name redirect for app_name and node string */
 
 	/*
+	 * if on, ignore SQL comments when judging if load balance or query cache
+	 * is possible. If off, SQL comments effectively prevent the judgment
+	 * (pre 3.4 behavior). For backward compatibilty sake, default is off.
+	 */
+	int allow_sql_comments;
+
+	/*
 	 * add for watchdog
 	 */
 	int use_watchdog;					/* if non 0, use watchdog */

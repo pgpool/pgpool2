@@ -1185,6 +1185,19 @@ local0.*    /var/log/pgpool.log
     You need to reload pgpool.conf if you change this value.
     </p>
     </dd>
+
+	<dt id="ALLOW_SQL_COMMENTS">allow_sql_comments <span class="version">V3.4 〜</span></dt>
+    <dd>
+    <p>
+	  If on, ignore SQL comments when judging if load balance or
+	  query cache is possible.
+	  If off, SQL comments effectively prevent the judgment
+	  (pre 3.4 behavior).
+    </p>
+    <p>
+    You need to reload pgpool.conf if you change this value.
+    </p>
+    </dd>
 </dl>
 
 <h3>Backends</h3>
@@ -1994,7 +2007,9 @@ comments just in front of the SELECT query:
 /*REPLICATION*/ SELECT ...
 </pre>
 </p>
-
+<p>
+If you want to use comments without supressing load balancing, you can set <a href="#ALLOW_SQL_COMMENTS">allow_sql_comments</a> to on.
+</p>
 <p>
 Please refer to <a href="#replicate_select">replicate_select</a> as well.
 See also a <a href="where_to_send_queries.pdf">flow chart</a>.

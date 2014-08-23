@@ -1400,20 +1400,23 @@ static int
 }
 
 /*
- * returns non 0 if the SQL statement can be load
- * balanced. Followings are statemnts go into this category.
+ * Returns true if the SQL statement is regarded as read SELECT from syntax's
+ * point of view. However callers need to do aditional checking such as if the
+ * SELECT does not have write functions or not to make sure that the SELECT is
+ * sematically read SELECT.
  *
+ * For followings this function returns true:
  * - SELECT/WITH without FOR UPDATE/SHARE
  * - COPY TO STDOUT
  * - EXPLAIN
  * - EXPLAIN ANALYZE and query is SELECT not including writing functions
  *
- * note that for SELECT INTO, this function returns 0
+ * Note that for SELECT this function returns false.
  */
-int is_select_query(Node *node, char *sql)
+bool is_select_query(Node *node, char *sql)
 {
 	if (node == NULL)
-		return 0;
+		return false;
 
 	/*
 	 * 2009/5/1 Tatsuo says: This test is not bogus. As of 2.2, pgpool
@@ -1426,9 +1429,9 @@ int is_select_query(Node *node, char *sql)
 	 * set it to Portal->sql_string.
 	 */
 	if (sql == NULL)
-		return 0;
+		return false;
 
-	if (pool_config->ignore_leading_white_space)
+	if (!pool_config->allow_sql_comments && pool_config->ignore_leading_white_space)
 	{
 		/* ignore leading white spaces */
 		while (*sql && isspace(*sql))
@@ -1442,12 +1445,15 @@ int is_select_query(Node *node, char *sql)
 		select_stmt = (SelectStmt *)node;
 
 		if (select_stmt->intoClause || select_stmt->lockingClause)
-			return 0;
+			return false;
 
-		/* '\0' and ';' signify empty query */
-		return (*sql == 's' || *sql == 'S' || *sql == '(' ||
-				*sql == 'w' || *sql == 'W' || *sql == 't' || *sql == 'T' ||
-				*sql == '\0' || *sql == ';');
+		if (!pool_config->allow_sql_comments)
+			/* '\0' and ';' signify empty query */
+			return (*sql == 's' || *sql == 'S' || *sql == '(' ||
+					*sql == 'w' || *sql == 'W' || *sql == 't' || *sql == 'T' ||
+					*sql == '\0' || *sql == ';');
+		else
+			return true;
 	}
 	else if (IsA(node, CopyStmt))
 	{
@@ -1481,13 +1487,13 @@ int is_select_query(Node *node, char *sql)
 			 * can always load balance.
 			 */
 			if (!analyze)
-				return 1;
+				return true;
 			/*
 			 * If ANALYZE, we need to check function calls.
 			 */
 			if (pool_has_function_call(query))
-				return 0;
-			return 1;
+				return false;
+			return true;
 		}
 		else
 		{
@@ -1496,10 +1502,10 @@ int is_select_query(Node *node, char *sql)
 			 * is not specified.
 			 */
 			if (!analyze)
-				return 1;
+				return true;
 		}
 	}
-	return 0;
+	return false;
 }
 
 #ifdef NOT_USED

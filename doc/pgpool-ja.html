@@ -1175,6 +1175,18 @@ local0.*    /var/log/pgpool.log
     このパラメータを変更した時には設定ファイルを再読み込みしてください。
     </p>
     </dd>
+
+	<dt id="ALLOW_SQL_COMMENTS">allow_sql_comments <span class="version">V3.4 〜</span></dt>
+    <dd>
+    <p>
+	  onならば、負荷分散やクエリキャッシュができるかどうかの判定の際にSQLコメントを無視します。
+	  offならば、その判定に影響を与えます(3.4より前のバージョンの動作です)。
+    </p>
+    <p>
+    You need to reload pgpool.conf if you change this value.
+    </p>
+    </dd>
+
 </dl>
 
 <h3>Backends</h3>
@@ -2041,7 +2053,10 @@ SELECTなどの問い合わせがロードバランスされます。
 すべてのバックエンドに送信される（レプリケーションされる）ようになります。
 副作用がある関数を含む問合わせに対してはこのテクニックが利用できます。
 </p>
-
+<p>
+SQLコメントの記述が負荷分散に影響を与えないようにするには、
+<a href="#ALLOW_SQL_COMMENTS">allow_sql_comments</a>をonにします。
+</p>
 <p>
 <font color="red">
 注意: JDBC ドライバなどのように、ドライバ内で autocommit の有効・無効のオプションがある場合、

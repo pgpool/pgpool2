@@ -250,6 +250,8 @@ int pool_init_config(void)
 	pool_config->redirect_app_names = NULL;
 	pool_config->app_name_redirect_tokens = NULL;
 
+	pool_config->allow_sql_comments = 0;
+
 	/*
 	 * add for watchdog
 	 */
@@ -3125,6 +3127,21 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				}
 			}
 		}
+
+       	else if (!strcmp(key, "allow_sql_comments") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			int v = eval_logical(yytext);
+
+			if (v < 0)
+			{
+				pool_error("pool_config: invalid value %s for %s", yytext, key);
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->allow_sql_comments = v;
+		}
+
 	}
 
 	fclose(fd);
