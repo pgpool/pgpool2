@@ -528,57 +528,14 @@ int connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry)
 	return fd;
 }
 
-/*
- * Connect to PostgreSQL server by using INET domain socket.
- * If retry is true, retry to call connect() upon receiving EINTR error.
- */
-int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
+bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int port, bool retry)
 {
-	int fd;
-	int len;
-	int on = 1;
-	struct sockaddr_in addr;
-	struct hostent *hp;
-	struct timeval timeout;
 	struct timeval *tm;
+	struct timeval timeout;
 	fd_set rset, wset;
+	int sts;
 	int error;
 	socklen_t socklen;
-	int sts;
-
-	fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (fd < 0)
-	{
-		pool_error("connect_inet_domain_socket_by_port: socket() failed: %s", strerror(errno));
-		return -1;
-	}
-
-	/* set nodelay */
-	if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY,
-				   (char *) &on,
-				   sizeof(on)) < 0)
-	{
-		pool_error("connect_inet_domain_socket_by_port: setsockopt() failed: %s", strerror(errno));
-		close(fd);
-		return -1;
-	}
-
-	memset((char *) &addr, 0, sizeof(addr));
-	addr.sin_family = AF_INET;
-
-	addr.sin_port = htons(port);
-	len = sizeof(struct sockaddr_in);
-
-	hp = gethostbyname(host);
-	if ((hp == NULL) || (hp->h_addrtype != AF_INET))
-	{
-		pool_error("connect_inet_domain_socket: gethostbyname() failed: %s host: %s", hstrerror(h_errno), host);
-		close(fd);
-		return -1;
-	}
-	memmove((char *) &(addr.sin_addr),
-			(char *) hp->h_addr,
-			hp->h_length);
 
 	pool_set_nonblock(fd);
 
@@ -590,7 +547,7 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 				(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" using INET socket",host,port),
 					 errdetail("exit request has been sent")));
 			close(fd);
-			return -1;
+			return false;
 		}
 
 		if (health_check_timer_expired && getpid() == mypid)		/* has health check timer expired */
@@ -599,10 +556,10 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 				(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" using INET socket",host,port),
 					 errdetail("health check timer expired")));
 			close(fd);
-			return -1;
+			return false;
 		}
 
-		if (connect(fd, (struct sockaddr *)&addr, len) < 0)
+		if (connect(fd, walk->ai_addr, walk->ai_addrlen) < 0)
 		{
 			if (errno == EISCONN)
 			{
@@ -621,8 +578,7 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 			{
 				pool_error("connect_inet_domain_socket(%s:%d): connect() failed: %s",
 						   host, port, strerror(errno));
-				close(fd);
-				return -1;
+				return false;
 			}
 
 			if (pool_config->connect_timeout == 0)
@@ -660,8 +616,7 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 				else
 				{
 					pool_error("connect_inet_domain_socket(%s:%d): select() timed out", host, port);
-					close(fd);
-					return -1;
+					return false;
 				}
 			}
 			else if (sts > 0)
@@ -683,8 +638,7 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 						/* Solaris returns error in this case */
 						pool_error("connect_inet_domain_socket(%s:%d): getsockopt() failed: %s",
 								   host, port, strerror(errno));
-						close(fd);
-						return -1;
+						return false;
 					}
 
 					/* Non Solaris case */
@@ -692,16 +646,14 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 					{
 						pool_error("connect_inet_domain_socket(%s:%d): getsockopt() detected error: %s",
 								   host, port, strerror(error));
-						close(fd);
-						return -1;
+						return false;
 					}
 				}
 				else
 				{
 					pool_error("connect_inet_domain_socket(%s:%d): both read data and write data was not set",
 							   host, port);
-					close(fd);
-					return -1;
+					return false;
 				}
 			}
 			else		/* select returns error */
@@ -717,16 +669,85 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 					(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" using INET socket",host,port),
 						 errdetail("select() system call interrupted")));
 				close(fd);
-				return -1;
+				return false;
 			}
 		}
 		break;
 	}
 
 	pool_unset_nonblock(fd);
-	return fd;
+	return true;
 }
 
+/*
+ * Connect to PostgreSQL server by using INET domain socket.
+ * If retry is true, retry to call connect() upon receiving EINTR error.
+ */
+int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
+{
+	int fd = -1;
+	int on = 1;
+	char *portstr;
+	int ret;
+	struct addrinfo *res;
+	struct addrinfo *walk;
+	struct addrinfo hints;
+
+	/* getaddrinfo() requires a string because it also accepts service names, such as "http". */
+	if (asprintf(&portstr, "%d", port) == -1)
+	{
+		pool_error("connect_inet_domain_socket_by_port: asprintf() failed: %s", strerror(errno));
+		return -1;
+	}
+
+	memset(&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+
+	if ((ret = getaddrinfo(host, portstr, &hints, &res)) != 0)
+	{
+		pool_error("connect_inet_domain_socket_by_port: getaddrinfo() failed: %s", gai_strerror(ret));
+		free(portstr);
+		return -1;
+	}
+
+	free(portstr);
+
+	for (walk = res; walk != NULL; walk = walk->ai_next)
+	{
+		fd = socket(walk->ai_family, walk->ai_socktype, walk->ai_protocol);
+		if (fd < 0)
+		{
+			pool_error("connect_inet_domain_socket_by_port: socket() failed: %s", strerror(errno));
+			continue;
+		}
+
+		/* set nodelay */
+		if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY,
+					   (char *) &on,
+					   sizeof(on)) < 0)
+		{
+			pool_error("connect_inet_domain_socket_by_port: setsockopt() failed: %s", strerror(errno));
+			close(fd);
+			freeaddrinfo(res);
+			return -1;
+		}
+
+		if (!connect_with_timeout(fd, walk, host, port, retry))
+		{
+			close(fd);
+			fd = -1;
+			continue;
+		}
+
+		freeaddrinfo(res);
+		return fd;
+	}
+
+	freeaddrinfo(res);
+	return -1;
+}
+ 
 /*
  * create connection pool
  */
