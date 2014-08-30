@@ -41,7 +41,7 @@ RegArray *create_regex_array(void)
 	ar = palloc(sizeof(RegArray));
 	ar->pos = 0;
 	ar->size = AR_ALLOC_UNIT;
-	ar->regex = (regex_t **)palloc(sizeof(regex_t **) * ar->size);
+	ar->regex = (regex_t **)palloc(sizeof(regex_t *) * ar->size);
 
 	return ar;
 }
@@ -162,7 +162,7 @@ Left_right_tokens *create_lrtoken_array(void)
 	ar = palloc(sizeof(Left_right_tokens));
 	ar->pos = 0;
 	ar->size = AR_ALLOC_UNIT;
-	ar->token = (Left_right_token *)palloc(sizeof(Left_right_token *) * ar->size);
+	ar->token = (Left_right_token *)palloc(sizeof(Left_right_token) * ar->size);
 
 	return ar;
 }
@@ -197,6 +197,7 @@ void extract_string_tokens2(char *str, char *delimi, char delimi2, Left_right_to
 
 		if (i == len -1)
 		{
+			pfree(mystr);
 			return;
 		}
 
@@ -212,10 +213,11 @@ void extract_string_tokens2(char *str, char *delimi, char delimi2, Left_right_to
 		if (lrtokens->pos == lrtokens->size)
 		{
 			lrtokens->size += AR_ALLOC_UNIT;
-			lrtokens->token = repalloc(lrtokens->token, lrtokens->size);
+			lrtokens->token = repalloc(lrtokens->token, sizeof(Left_right_token) * lrtokens->size);
 		}
 		lrtokens->token[lrtokens->pos].left_token = left_token;
 		lrtokens->token[lrtokens->pos].right_token = right_token;
 		lrtokens->pos++;
 	}
+	pfree(mystr);
 }
