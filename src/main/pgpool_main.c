@@ -99,10 +99,11 @@ static bool do_health_check(bool use_template_db, volatile int *health_check_nod
 static void FileUnlink(int code, Datum path);
 static int write_status_file();
 static pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file);
-static pid_t fork_a_child(int unix_fd, int inet_fd, int id);
+static pid_t fork_a_child(int *fds, int id);
 static pid_t worker_fork_a_child(void);
 static int create_unix_domain_socket(struct sockaddr_un un_addr_tmp);
 static int create_inet_domain_socket(const char *hostname, const int port);
+static int *create_inet_domain_sockets(const char *hostname, const int port);
 static void failover(void);
 static void reaper(void);
 static void wakeup_children(void);
@@ -145,8 +146,7 @@ BACKEND_STATUS private_backend_status[MAX_NUM_BACKENDS];
  */
 ConnectionInfo *con_info;
 
-static int unix_fd;	/* unix domain socket fd */
-static int inet_fd;	/* inet domain socket fd */
+static int *fds;	/* listening file descriptors (UNIX socket, inet domain sockets) */
 
 static int pcp_unix_fd; /* unix domain socket fd for PCP (not used) */
 static int pcp_inet_fd; /* inet domain socket fd for PCP */
@@ -219,12 +219,27 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	pool_signal(SIGPIPE, SIG_IGN);
 
 	/* create unix domain socket */
-	unix_fd = create_unix_domain_socket(un_addr);
+	fds = malloc(sizeof(int));
+	fds[0] = create_unix_domain_socket(un_addr);
 	on_proc_exit(FileUnlink, (Datum) un_addr.sun_path);
 
 	/* create inet domain socket if any */
 	if (pool_config->listen_addresses[0])
-		inet_fd = create_inet_domain_socket(pool_config->listen_addresses, pool_config->port);
+	{
+		int *inet_fds, *walk;
+		inet_fds = create_inet_domain_sockets(pool_config->listen_addresses, pool_config->port);
+		int n = 1;
+		for (walk = inet_fds; *walk != -1; walk++)
+			n++;
+		fds = realloc(fds, sizeof(int) * (n+1));
+		n = 1;
+		for (walk = inet_fds; *walk != -1; walk++)
+		{
+			fds[n] = inet_fds[n-1];
+			n++;
+		}
+		fds[n] = -1;
+	}
 
 	initialize_shared_mem_objects();
 
@@ -248,7 +263,7 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	/* fork the children */
 	for (i=0;i<pool_config->num_init_children;i++)
 	{
-		process_info[i].pid = fork_a_child(unix_fd, inet_fd, i);
+		process_info[i].pid = fork_a_child(fds, i);
 		process_info[i].start_time = time(NULL);
 	}
 
@@ -542,7 +557,7 @@ pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 /*
 * fork a child
 */
-pid_t fork_a_child(int unix_fd, int inet_fd, int id)
+pid_t fork_a_child(int *fds, int id)
 {
 	pid_t pid;
 
@@ -576,7 +591,7 @@ pid_t fork_a_child(int unix_fd, int inet_fd, int id)
 		reload_config_request = 0;
 		my_proc_id = id;
 		run_as_pcp_child = false;
-		do_child(unix_fd, inet_fd);
+		do_child(fds);
 	}
 	else if (pid == -1)
 	{
@@ -633,6 +648,134 @@ pid_t worker_fork_a_child()
 	}
 	
 	return pid;
+}
+
+static int *create_inet_domain_sockets(const char *hostname, const int port)
+{
+	int ret;
+	int fd;
+	int one = 1;
+	int status;
+	int backlog;
+	int n = 0;
+	int *sockfds;
+	char *portstr;
+	struct addrinfo *walk;
+	struct addrinfo *res;
+	struct addrinfo hints;
+
+	memset(&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
+
+	/* getaddrinfo() requires a string because it also accepts service names, such as "http". */
+	if (asprintf(&portstr, "%d", port) == -1)
+	{
+		ereport(FATAL,
+			(errmsg("failed to create INET domain socket"),
+			errdetail("asprintf() failed: %s", strerror(errno))));
+	}
+
+	if ((ret = getaddrinfo(hostname, portstr, &hints, &res)) != 0)
+	{
+		ereport(FATAL,
+			(errmsg("failed to create INET domain socket"),
+			errdetail("getaddrinfo() failed: %s", gai_strerror(ret))));
+	}
+
+	free(portstr);
+
+	for (walk = res; walk != NULL; walk = walk->ai_next)
+		n++;
+
+	sockfds = malloc(sizeof(int) * (n+1));
+	n = 0;
+	for (walk = res; walk != NULL; walk = walk->ai_next)
+		sockfds[n++] = -1;
+	/* We always terminate the list of sockets with a -1 entry */
+	sockfds[n] = -1;
+
+	n = 0;
+
+	for (walk = res; walk != NULL; walk = walk->ai_next)
+	{
+		char buf[INET6_ADDRSTRLEN+1];
+		memset(buf, 0, sizeof(buf));
+		if ((ret = getnameinfo((struct sockaddr*)walk->ai_addr, walk->ai_addrlen,
+						buf, sizeof(buf), NULL, 0, NI_NUMERICHOST)) != 0)
+		{
+			ereport(FATAL,
+				(errmsg("failed to create INET domain socket"),
+				errdetail("getnameinfo() failed: \"%s\"", gai_strerror(ret))));
+		}
+
+		ereport(LOG,
+			(errmsg("Setting up socket for %s:%d", buf, port)));
+
+		if ((fd = socket(walk->ai_family, walk->ai_socktype, walk->ai_protocol)) == -1)
+		{
+			/* A single failure is not necessarily a problem (machines without
+			 * proper dual stack setups), but if we cannot create any socket at
+			 * all, we report a FATAL error. */
+			ereport(LOG,
+				(errmsg("perhaps failed to create INET domain socket"),
+				errdetail("socket(%s) failed: \"%s\"", buf, strerror(errno))));
+			continue;
+		}
+
+		if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
+						sizeof(one))) == -1)
+		{
+			ereport(FATAL,
+				(errmsg("failed to create INET domain socket"),
+				errdetail("socket error \"%s\"",strerror(errno))));
+		}
+
+		if (walk->ai_family == AF_INET6)
+		{
+			/* On some machines, depending on the default value in
+			 * /proc/sys/net/ipv6/bindv6only, sockets will listen on both IPv6
+			 * and IPv4 at the same time. Since we are creating one socket per
+			 * address family, disable that option specifically to be sure it
+			 * is off. */
+			if ((setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &one, sizeof(one))) == -1) {
+				ereport(LOG,
+					(errmsg("perhaps failed to create INET domain socket"),
+					errdetail("setsockopt(%s, IPV6_V6ONLY) failed: \"%s\"", buf, strerror(errno))));
+			}
+		}
+
+		if (bind(fd, walk->ai_addr, walk->ai_addrlen) != 0)
+		{
+			ereport(FATAL,
+				(errmsg("failed to create INET domain socket"),
+				errdetail("bind on socket failed with error \"%s\"",strerror(errno))));
+		}
+
+		backlog = pool_config->num_init_children * pool_config->listen_backlog_multiplier;
+
+		if (backlog > PGPOOLMAXLITSENQUEUELENGTH)
+			backlog = PGPOOLMAXLITSENQUEUELENGTH;
+
+		status = listen(fd, backlog);
+		if (status < 0)
+			ereport(FATAL,
+				(errmsg("failed to create INET domain socket"),
+				errdetail("listen on socket failed with error \"%s\"",strerror(errno))));
+
+		sockfds[n++] = fd;
+	}
+
+	freeaddrinfo(res);
+
+	if (n == 0) {
+		ereport(FATAL,
+			(errmsg("failed to create INET domain socket"),
+			errdetail("Failed to create any sockets. See the earlier LOG messages.")));
+	}
+
+	return sockfds;
 }
 
 /*
@@ -991,8 +1134,9 @@ static RETSIGTYPE exit_handler(int sig)
 	ereport(LOG,
 		(errmsg("shutdown request. closing listen socket")));
 
-	close(inet_fd);
-	close(unix_fd);
+	int *walk;
+	for (walk = fds; *walk != -1; walk++)
+		close(*walk);
 
 	for (i = 0; i < pool_config->num_init_children; i++)
 	{
@@ -1532,7 +1676,7 @@ static void failover(void)
 			 */
 			kill(process_info[i].pid, SIGQUIT);
 
-			process_info[i].pid = fork_a_child(unix_fd, inet_fd, i);
+			process_info[i].pid = fork_a_child(fds, i);
 			process_info[i].start_time = time(NULL);
 		}
 	}
@@ -1825,7 +1969,7 @@ static void reaper(void)
 					/* if found, fork a new child */
 					if (!switching && !exiting && status)
 					{
-						process_info[i].pid = fork_a_child(unix_fd, inet_fd, i);
+						process_info[i].pid = fork_a_child(fds, i);
 						process_info[i].start_time = time(NULL);
 						ereport(DEBUG1,
 								(errmsg("reaper handler: forked a new child with PID:%d", process_info[i].pid)));

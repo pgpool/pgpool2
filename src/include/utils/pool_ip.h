@@ -54,10 +54,8 @@ extern int SockAddr_cidr_mask(struct sockaddr_storage * mask,
 extern const char * gai_strerror(int errcode);
 #endif /* HAVE_GAI_STRERROR */
 
-#ifdef HAVE_IPV6
 extern void promote_v4_to_v6_addr(struct sockaddr_storage * addr);
 extern void promote_v4_to_v6_mask(struct sockaddr_storage * addr);
-#endif
 
 #define IS_AF_INET(fam) ((fam) == AF_INET)
 #define IS_AF_UNIX(fam) ((fam) == AF_UNIX)

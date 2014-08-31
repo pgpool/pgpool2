@@ -684,14 +684,12 @@ static void parse_hba(List *line, int line_num, POOL_CONNECTION *frontend,
 			 * has IPv4 and the port is IPv6, promote the file address to
 			 * IPv6 and try to match that way.
 			 */
-#ifdef HAVE_IPV6
 			if (addr.ss_family == AF_INET && frontend->raddr.addr.ss_family == AF_INET6)
 			{
 				promote_v4_to_v6_addr(&addr);
 				promote_v4_to_v6_mask(&mask);
 			}
 			else
-#endif   /* HAVE_IPV6 */
 			{
 				/* Line doesn't match client port, so ignore it. */
 				return;
@@ -1285,7 +1283,7 @@ static int pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg,
 	/*
 	 * PAM will free this memory in * pam_end()
 	 */
-	*resp = palloc0(num_msg, sizeof(struct pam_response));
+	*resp = palloc0(num_msg* sizeof(struct pam_response));
 
 	(*resp)[0].resp = pstrdup((char *) appdata_ptr);
 	(*resp)[0].resp_retcode = 0;

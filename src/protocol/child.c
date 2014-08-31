@@ -79,7 +79,7 @@ static bool connect_using_existing_connection(POOL_CONNECTION *frontend,
 static void check_restart_request(void);
 static void enable_authentication_timeout(void);
 static void disable_authentication_timeout(void);
-static int wait_for_new_connections(int unix_fd, int inet_fd, struct timeval *timeout, SockAddr *saddr);
+static int wait_for_new_connections(int *fds, struct timeval *timeout, SockAddr *saddr);
 static void check_config_reload(void);
 static void get_backends_status(unsigned int *valid_backends, unsigned int *down_backends);
 static void validate_backend_connectivity(int front_end_fd);
@@ -119,7 +119,7 @@ char remote_port[NI_MAXSERV];	/* client port */
 /*
 * child main loop
 */
-void do_child(int unix_fd, int inet_fd)
+void do_child(int *fds)
 {
 	sigjmp_buf	local_sigjmp_buf;
 
@@ -148,23 +148,21 @@ void do_child(int unix_fd, int inet_fd)
 	signal(SIGUSR2, wakeup_handler);
 	signal(SIGPIPE, SIG_IGN);
 
+	int *walk;
 #ifdef NONE_BLOCK
 	/* set listen fds to none-blocking */
-	pool_set_nonblock(unix_fd);
-	if (inet_fd)
-	{
-		pool_set_nonblock(inet_fd);
-	}
+	for (walk = fds; *walk != -1; walk++)
+		pool_set_nonblock(*walk);
 #endif
-    nsocks =Max(unix_fd, inet_fd)+1;
+	for (walk = fds; *walk != -1; walk++)
+	{
+		if (*walk > nsocks)
+			nsocks = *walk;
+	}
+	nsocks++;
     FD_ZERO(&readmask);
-    FD_SET(unix_fd, &readmask);
-    if (inet_fd)
-    {
-        FD_SET(inet_fd, &readmask);
-        child_inet_fd = inet_fd;
-    }
-	child_unix_fd = unix_fd;
+	for (walk = fds; *walk != -1; walk++)
+		FD_SET(*walk, &readmask);
 
 	/* Create per loop iteration memory context */
 	ProcessLoopContext = AllocSetContextCreate(TopMemoryContext,
@@ -286,7 +284,7 @@ void do_child(int unix_fd, int inet_fd)
 		/* Destroy session context for just in case... */
 		pool_session_context_destroy();
 
-		front_end_fd = wait_for_new_connections(unix_fd, inet_fd, &timeout, &saddr);
+		front_end_fd = wait_for_new_connections(fds, &timeout, &saddr);
 		if(front_end_fd == OPERATION_TIMEOUT)
 		{
 			if(pool_config->child_life_time > 0 && connected)
@@ -1821,14 +1819,15 @@ static void check_restart_request(void)
  */
 
 static int
-wait_for_new_connections(int unix_fd, int inet_fd, struct timeval *timeout, SockAddr *saddr)
+wait_for_new_connections(int *fds, struct timeval *timeout, SockAddr *saddr)
 {
 	fd_set	rmask;
-    int fds;
+    int numfds;
 	int save_errno;
 
 	int fd = 0;
 	int afd;
+	int *walk;
 
 #ifdef ACCEPT_PERFORMANCE
 	struct timeval now1, now2;
@@ -1839,11 +1838,8 @@ wait_for_new_connections(int unix_fd, int inet_fd, struct timeval *timeout, Sock
 	struct timeval *timeoutval;
 	struct timeval tv1, tv2, tmback = {0, 0};
 
-	pool_set_nonblock(unix_fd);
-	if (inet_fd)
-	{
-		pool_set_nonblock(inet_fd);
-	}
+	for (walk = fds; *walk != -1; walk++)
+		pool_set_nonblock(*walk);
 
 	set_ps_display("wait for connection request", false);
 
@@ -1866,7 +1862,7 @@ wait_for_new_connections(int unix_fd, int inet_fd, struct timeval *timeout, Sock
 #endif
 	}
 
-	fds = select(nsocks, &rmask, NULL, NULL, timeoutval);
+	numfds = select(nsocks, &rmask, NULL, NULL, timeoutval);
 
 	save_errno = errno;
 	/* check backend timer is expired */
@@ -1912,7 +1908,7 @@ wait_for_new_connections(int unix_fd, int inet_fd, struct timeval *timeout, Sock
 
 	errno = save_errno;
 
-	if (fds == -1)
+	if (numfds == -1)
 	{
 		if (errno == EAGAIN || errno == EINTR)
 			return RETRY;
@@ -1922,19 +1918,18 @@ wait_for_new_connections(int unix_fd, int inet_fd, struct timeval *timeout, Sock
 	}
 
 	/* timeout */
-	if (fds == 0)
+	if (numfds == 0)
 	{
 		return OPERATION_TIMEOUT;
 	}
-	/* check unix domain socket */
-	if (FD_ISSET(unix_fd, &rmask))
+
+	for (walk = fds; *walk != -1; walk++)
 	{
-		fd = unix_fd;
-	}
-	/* check inet socket */
-	if (FD_ISSET(inet_fd, &rmask))
-	{
-		fd = inet_fd;
+		if (FD_ISSET(*walk, &rmask))
+		{
+			fd = *walk;
+			break;
+		}
 	}
 	/*
 	 * Note that some SysV systems do not work here. For those

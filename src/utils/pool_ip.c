@@ -56,11 +56,9 @@ static int rangeSockAddrAF_INET(const struct sockaddr_in * addr,
 					 const struct sockaddr_in * netaddr,
 					 const struct sockaddr_in * netmask);
 
-#ifdef HAVE_IPV6
 static int rangeSockAddrAF_INET6(const struct sockaddr_in6 * addr,
 					  const struct sockaddr_in6 * netaddr,
 					  const struct sockaddr_in6 * netmask);
-#endif
 
 static int getaddrinfo_unix(const char *path,
 				 const struct addrinfo * hintsp,
@@ -381,12 +379,10 @@ rangeSockAddr(const struct sockaddr_storage * addr,
 		return rangeSockAddrAF_INET((struct sockaddr_in *) addr,
 									(struct sockaddr_in *) netaddr,
 									(struct sockaddr_in *) netmask);
-#ifdef HAVE_IPV6
 	else if (addr->ss_family == AF_INET6)
 		return rangeSockAddrAF_INET6((struct sockaddr_in6 *) addr,
 									 (struct sockaddr_in6 *) netaddr,
 									 (struct sockaddr_in6 *) netmask);
-#endif
 	else
 		return 0;
 }
@@ -404,7 +400,6 @@ rangeSockAddrAF_INET(const struct sockaddr_in * addr,
 }
 
 
-#ifdef HAVE_IPV6
 static int
 rangeSockAddrAF_INET6(const struct sockaddr_in6 * addr,
 					  const struct sockaddr_in6 * netaddr,
@@ -421,7 +416,6 @@ rangeSockAddrAF_INET6(const struct sockaddr_in6 * addr,
 
 	return 1;
 }
-#endif
 
 /*
  *	SockAddr_cidr_mask - make a network mask of the appropriate family
@@ -463,7 +457,6 @@ SockAddr_cidr_mask(struct sockaddr_storage * mask, char *numbits, int family)
 				break;
 			}
 
-#ifdef HAVE_IPV6
 		case AF_INET6:
 			{
 				struct sockaddr_in6 mask6;
@@ -487,7 +480,6 @@ SockAddr_cidr_mask(struct sockaddr_storage * mask, char *numbits, int family)
 				memcpy(mask, &mask6, sizeof(mask6));
 				break;
 			}
-#endif
 		default:
 			return -1;
 	}
@@ -497,8 +489,6 @@ SockAddr_cidr_mask(struct sockaddr_storage * mask, char *numbits, int family)
 }
 
 
-#ifdef HAVE_IPV6
-
 /*
  * promote_v4_to_v6_addr --- convert an AF_INET addr to AF_INET6, using
  *		the standard convention for IPv4 addresses mapped into IPv6 world
@@ -507,7 +497,7 @@ SockAddr_cidr_mask(struct sockaddr_storage * mask, char *numbits, int family)
  * hold the result!  Note that we only worry about setting the fields
  * that rangeSockAddr will look at.
  */
-static void
+void
 promote_v4_to_v6_addr(struct sockaddr_storage * addr)
 {
 	struct sockaddr_in addr4;
@@ -542,7 +532,7 @@ promote_v4_to_v6_addr(struct sockaddr_storage * addr)
  * hold the result!  Note that we only worry about setting the fields
  * that rangeSockAddr will look at.
  */
-static void
+void
 promote_v4_to_v6_mask(struct sockaddr_storage * addr)
 {
 	struct sockaddr_in addr4;
@@ -567,6 +557,3 @@ promote_v4_to_v6_mask(struct sockaddr_storage * addr)
 
 	memcpy(addr, &addr6, sizeof(addr6));
 }
-
-#endif   /* HAVE_IPV6 */
-
