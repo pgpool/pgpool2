@@ -1384,7 +1384,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	int i;
 	int len;
 	signed char kind;
-	signed char state;
+	signed char state = 0;
 	POOL_SESSION_CONTEXT *session_context;
 	Node *node = NULL;
 	char *query = NULL;

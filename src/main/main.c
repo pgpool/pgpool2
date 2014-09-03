@@ -402,16 +402,23 @@ static void daemonize(void)
 	write_pid_file();
 	if(chdir("/"))
 		ereport(WARNING,
-                (errmsg("change directory failed"),
+			(errmsg("change directory failed"),
                  errdetail("chdir() system call failed with reason: \"%s\"", strerror(errno) )));
 
 	/* redirect stdin, stdout and stderr to /dev/null */
 	i = open("/dev/null", O_RDWR);
-	dup2(i, 0);
-	dup2(i, 1);
-	dup2(i, 2);
-	close(i);
-
+	if(i < 0)
+	{
+		ereport(WARNING,
+			(errmsg("failed to open \"/dev/null\", open() failed with error \"%s\"", strerror(errno))));
+	}
+	else
+	{
+		dup2(i, 0);
+		dup2(i, 1);
+		dup2(i, 2);
+		close(i);
+	}
 	/* close syslog connection for daemonizing */
 	if (pool_config->logsyslog) {
 		closelog();

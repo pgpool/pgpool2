@@ -2488,7 +2488,7 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 				if  (pool_read_string(backend, &len, 0) == NULL)
 				{
                     ereport(ERROR,
-                            (errmsg("do query failed"),
+						(errmsg("do query failed"),
                              errdetail("error while reading string of message type %c", kind)));
 				}
 			}
@@ -2550,9 +2550,17 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 
 				if (major == PROTO_MAJOR_V3)
 				{
-					p = packet;
-                    memcpy(&shortval, p, sizeof(short));
-                    p += sizeof(num_fields);
+					if(packet)
+					{
+						p = packet;
+						memcpy(&shortval, p, sizeof(short));
+						p += sizeof(num_fields);
+					}
+					else
+					{
+						ereport(ERROR,
+							(errmsg("do query failed, no data received for ROW DESCRIPTION ('%c') packet",kind)));
+					}
 				}
 				else
 				{
