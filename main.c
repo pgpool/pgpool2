@@ -935,11 +935,17 @@ static void daemonize(void)
 
 	/* redirect stdin, stdout and stderr to /dev/null */
 	i = open("/dev/null", O_RDWR);
-	dup2(i, 0);
-	dup2(i, 1);
-	dup2(i, 2);
-	close(i);
-
+	if(i < 0)
+	{
+		pool_error("Failed to open \"/dev/null\" reason:%s", strerror(errno));
+	}
+	else
+	{
+		dup2(i, 0);
+		dup2(i, 1);
+		dup2(i, 2);
+		close(i);
+	}
 	/* close syslog connection for daemonizing */
 	if (pool_config->logsyslog) {
 		closelog();
