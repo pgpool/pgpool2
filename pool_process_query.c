@@ -2690,9 +2690,17 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 
 				if (major == PROTO_MAJOR_V3)
 				{
-					p = packet;
-                    memcpy(&shortval, p, sizeof(short));
-                    p += sizeof(num_fields);
+					if(packet)
+					{
+						p = packet;
+						memcpy(&shortval, p, sizeof(short));
+						p += sizeof(num_fields);
+					}
+					else
+					{
+						pool_error("do_query: no data received for row description");
+						return POOL_END;
+					}
 				}
 				else
 				{
