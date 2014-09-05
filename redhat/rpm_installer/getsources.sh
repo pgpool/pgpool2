@@ -88,6 +88,7 @@ cp ${admin_tarball_dir}/pgpoolAdmin-${admin_version}.tar.gz ${rpm_dir}/SOURCES
 cp -f ${pgpool_src_dir}/redhat/pgpool.conf.sample.patch ${rpm_dir}/SOURCES/
 cp -f ${pgpool_src_dir}/redhat/pgpool.init              ${rpm_dir}/SOURCES/
 cp -f ${pgpool_src_dir}/redhat/pgpool.sysconfig         ${rpm_dir}/SOURCES/
+cp -f ${pgpool_src_dir}/redhat/pgpool-II-head.patch     ${rpm_dir}/SOURCES/
 
 echo "done."
 
@@ -134,8 +135,9 @@ echo "* Setup Finished. See \"work\" directory."
 echo
 echo "* Next ..."
 echo
-echo "  - rpmbuild -ba work/pgpool.spec --define\"pgpool_version 3.3.3\" --define=\"pg_version 93\" --define=\"pghome /usr/pgsql-9.3\""
+echo "  - rpmbuild -ba work/pgpool.spec --define=\"pgpool_version 3.3.4\" --define=\"pg_version 93\" --define=\"pghome /usr/pgsql-9.3\""
 echo "  - rpmbuild -ba work/pgpoolAdmin.spec"
-echo "  - move ~/rpm/RPMS/../pgpool*.rpm (except for *.src.rpm) to work/installer-pg${pg_version}/"
+echo "  - cp ~/rpm/RPMS/x86_64/pgpool-II-pg93-xxxx.rpm to work/installer-pg${pg_version}/"
+echo "  - cp ~/rpm/RPMS/noarch/pgpoolAdmin-xxxxx.rpm to work/installer-pg${pg_version}/"
 echo "  - create tar ball from work/installer-pg${pg_version}/"
 echo
