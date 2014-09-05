@@ -1,5 +1,5 @@
 # How to build RPM:
-#   rpmbuild -ba pgpool.spec --define="pgpool_version 3.3.3" --define="pg_version 93" --define="pghome /usr/pgsql-9.3"
+#   rpmbuild -ba pgpool.spec --define="pgpool_version 3.3.4" --define="pg_version 93" --define="pghome /usr/pgsql-9.3"
 #
 # expecting RPM name are:
 #   pgpool-II-pg{xx}-{version}.pgdg.{arch}.rpm
@@ -9,7 +9,7 @@
 Summary:        Pgpool is a connection pooling/replication server for PostgreSQL
 Name:           pgpool-II-pg%{pg_version}
 Version:        %{pgpool_version}
-Release:        4%{?dist}
+Release:        1%{?dist}
 License:        BSD
 Group:          Applications/Databases
 Vendor:         Pgpool Global Development Group
@@ -151,6 +151,9 @@ fi
 %{_libdir}/libpcp.so
 
 %changelog
+* Fri Sep 5 2014 Yugo Nagata <nagata@sraoss.co.jp> 3.3.4-1
+- Update to 3.3.4
+
 * Wed Jul 30 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.3-4
 - Add PATCH2 which is diff between 3.3.3 and 3.3-stable tree head.
 - RPM expert said this is the better way.

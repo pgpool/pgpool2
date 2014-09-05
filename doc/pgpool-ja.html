@@ -5915,6 +5915,288 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 <hr><a name="release3.3.x"></a>
 
 <!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.3.4"></a>3.3.4 (tokakiboshi) 2014/09/05</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.3.3 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    pgpool.spec のタイポを修正しました。(Yugo Nagata)
+</li>
+
+<li>
+    プライマリバックエンドが存在しない場合に、ワーカー子プロセスが終了と再起動を繰り返すバグを修正しました。(Tatsuo Ishii)
+    <p>
+    問題の同定と修正は Junegunn Choi さんの貢献によります。
+    </p>
+    <p>
+    詳しくは、[pgpool-hackers: 471] を参照してください。
+    </p>
+</li>
+
+<li>
+    スマートシャットダウンの実行時には受信用ソケットを閉じるように修正しました。(Tatsuo Ishii)
+    <p>
+    スマートシャットダウンが実行された場合でも、pgpool の子プロセスは受信用のポートを開いており、最終的に失敗するにもかからわずクライアントは接続要求を送信可能です。これは時間の無駄であるでけではなく、pgpool のフロントにいるロードバランサによる pgpool の停止の検出を妨げます。
+    </p>
+    <p>
+    この問題は [pgpool-hackers 474] にて Junegunn Choi によって解析され、パッチが提供されました。これを Tatsuo Ishii が改良し、inet ドメインだけではなく UNIX ドメインのソケットにも対応させました。
+    </p>
+</li>
+
+<li>
+    doc: PostgreSQL の statement_timeout によって、リカバリコマンドが終了させられる可能性を追記しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    test: wait_for_pgpool_startup 関数が正しく動いていなかったのを修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    test: watchdog のテストドライバが wait_for_pgpool_startup 関数を正しく使用するように修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    ifconfig コマンドの実行時に無害なエラーコードを無視するよう修正しました。(Yugo Nagata)
+    <p>
+    Linux で SIGCHLD のハンドラが SIG_IGN となっている場合、fork した子プロセスの中で execv() を用いて ifconfig や ping などのコマンドを実行した結果、wait()が実際にはプロセスが正常終了しているにもかからわず、エラーコード ECHILD で失敗する場合があります。このエラーは無視して、コマンドの実行は成功とみなすよう修正しました。
+    </p>
+</li>
+
+<li>
+    test: スクリプトのコメントに記載漏れのあった -j オプションの説明を追記しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    test: JDBC のレグレッションテストが想定外の失敗するのを修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    test: 遅いマシンでレグレッションテストが失敗しないよう修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    test: PostgreSQL ライブラリのディレクトリを環境変数で指定できるようになりました。(Tatsuo Ishii)
+</li>
+
+<li>
+    to_regclass 関数を持つ PostgreSQL 9.4 に対応しました。(Tatsuo Ishii)
+    <p>
+    PostgreSQL 9.4 は pgpool_regclass と同じ機能を持つ組み込み関数to_regclass を持っています。そのため、pgpool はまず to_regclassを探し、その後に pgpool_regclass を探すようになりました。
+    </p>
+</li>
+
+<li>
+    SO_REUSEPORT に関するコードの移植性の問題を修正しました。(Tatsuo Ishii)
+    <p>
+    何か所かで、setsockopt(sock, SOL_SOCKET, SO_REUSEPORT...) を使用していますが、SO_REUSEPORT は全ての Linux カーネルで使用可能ではありません。そのためコンパイル時に ifdef を用いて機能の有無を判断していました。しかし、あるカーネルで作成したバイナリが他のカーネルで実行できないという問題があったため、setsockopt() が返すエラーコードを用いて実行時に機能の有無を判断するように修正しました。
+    </p>
+</li>
+
+<li>
+    dic: 現在は当てはまらない古い制限事項を削除しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    text_to_lsn() 関数の返却値型を修正しました。(Yugo Nagata)
+    <p>
+    コンパイル時の警告の原因となっていました。
+    </p>
+</li>
+
+<li>
+    デーモン化した際にファイル識別子が閉じられていなかったのを修正しました。(Tatsuo Ishii)
+    <p>
+    Coverity の報告 #1111471 によります。
+    </p>
+</li>
+
+<li>
+    メモリリークを修正しました。 (Tatsuo Ishii)
+    <p>
+    Coverity の報告 #1111442 によります。
+    </p>
+</li>
+
+<li>
+    長らく放置されていた pgool.init の stop/restart のバグを修正しました。(Yugo Nagata)
+    <p>
+    以前は pgpool の停止に pgpool.init は killproc を用いていましたが、これにはいくつか問題がありました。これを、"pgpool -m fast stop" を用いるように修正しました。
+    </p>
+    <p>
+    Ryan DeShone により提供されたパッチを Yugo Nagata が修正しました。
+    </p>
+    <p>
+    詳しくは、[pgpool-hackers: 239][pgpool-hackers: 512] を参照してください。
+    </p>
+</li>
+
+<li>
+    pgpool_setup とレグレッションテストが Ubuntu で動くよう修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    test: -i オプション（pgpool インストールディレクトリの指定）が動作していなかったのを修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    不足していたインクルードファイル sys/wait.h を追加しました。(Tatsuo Ishii)
+    <blockquote>
+    bug #104 の報告によります。<br />
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=104">
+    http://www.pgpool.net/mantisbt/view.php?id=104
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    仮想IPの切り替わり時に、新しいアクティブ pgpool で起こる ping エラーの無限ループを修正しました。(Yugo Nagata)
+    <p>
+    また、新アクティブが無限ループにより応答できなくなるため、これの応答を待っている旧アクティブ pgpool がハングする原因にもなっていました。
+    </p>
+    <p>
+    この問題は [pgpool-hackers: 520] にて Qian Peng により報告されました。
+    </p>
+</li>
+
+<li>
+    オンラインリカバリの実行時は PostgreSQL の statement_timeout を無効んするようになりました。(Tatsuo Ishii)
+    <p>
+    オンラインリカバリは異常に長い時間を要する可能性がある一方、ユーザはenable_statment を有効にしている可能性があります。これによりオンラインリカバリがキャンセルされるのを防ぐため、リカバリの最中は statementtimeout を無効にするようになりました。
+    </p>
+    <p>
+    詳しくは [pgpool-general: 2919] を参照してください。
+    </p>
+</li>
+
+<li>
+    pool_table_nameto_oid 関数が PostgreSQL 9.4 で導入された to_regclassを使えるように修正しました。(Tatsuo Ishii)
+    <p>
+    ここで用いる relcache 関数は、対象のテーブルが存在しない場合は 0 を返す必要がありますが、to_regclass はこの場合 NULL を返します。これに対処するため COALESCE を用いるように修正しました。
+    </p>
+</li>
+
+<li>
+    test: PostgreSQL 9.4 以降でレグレッションテスト #057 がハングするバグを修正しました。(Tatsuo Ishii)
+    <p>
+    PostgreSQL 9.4 以降では libpq の振る舞いに変化があり、接続文字列のusername が NULL の場合でもエラーになりません。以前のテストはエラーになることが前提となっていました。
+    </p>
+</li>
+
+<li>
+    ping コマンド失敗時にパイプを閉じるように修正しました。(Yugo Nagata)
+    <p>
+    このバグにより "pipe open error: Too many open files" を引き起こすため、watchdog 有効時に上位サーバへの接続確認が失敗し、その結果 pgpool がダウンステータスとなってしまうことがありました。
+    </p>
+</li>
+
+<li>
+    リソースリークを修正しました。(Muhanmmad Usama)
+    <p>
+    Coverity の報告 #1222998, #1222999 によります。
+    </p>
+</li>
+
+<li>
+    pcp_detach_node コマンドが接続中のセッションを切断することを記載しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    pgpool_setup が生成する failover.sh を修正しました。(Tatsuo Ishii)
+    <p>
+    常に node0 か node1 を昇格させようとしており、3ノード以上の構成に対応していませんでした。
+    </p>
+</li>
+
+<li>
+    unsigned int 変数の意味の無い符号のチェックを取り除きました。(Tatsuo Ishii)
+    <p>
+    Coverity の報告 #1111419, #1111420, #1111422 によります。
+    </p>
+</li>
+
+<li>
+    strcpy() をより安全で推奨される strlcpy() に置き換えました。(Muhammad Usama)
+    <p>
+    Coverity の報告 #1111480 によります。
+    </p>
+</li>
+
+<li>
+    openssl に対応させるよう pgpool.spec を修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    pgpool.spec が 3.3-stable ツリーの head を使用するよう修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    不適切にセマフォを削除しないよう不必要な pool_shmem_exit() 呼び出しを取り除きました。(Tatsuo Ishii)
+    <p>
+    exit_handler はプロセスが親プロセスがどうかをチェックしていますが、子プロセスであった場合にも pool_shmem_exit() が呼ばれることがあり、これにより不適切にセマフォが削除されていました。この関数は親プロセス意外に呼ばれてはなりません。
+    </p>
+    <blockquote>
+    bug #102 によります。<br />
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=102">
+    http://www.pgpool.net/mantisbt/view.php?id=102
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    get_insert_command_tabel_name() 関数が開放済ポインタを使用しないよう修正しました。(Muhammad Usama)
+    <p>
+    Coverity の報告 #1223007 によります。
+    </p>
+</li>
+
+<li>
+    pool_handle_query_cache() 関数が NULL ポインタを開放しないよう修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    頼りないネットワークのため、connect() のタイムアウトを長め（10秒）に変更しました。(Tatsuo Ishii)
+    <p>
+    AWS などの頼りないネットワークに対応するため、connect_inet_domain_socket_by_port()の中の connect()のタイムアウトを１秒から10秒に変更しました。これにより頻発していたフェイルオーバを減らすことができます。
+    </p>
+</li>
+
+<li>
+    リセット用クエリにより発生するハングを修正しました。(Tatsuo Ishii)
+    <p>
+    DISCARD ALL などのリセットクエリが完了せず、pgpool の子プロセスがバックエンドからの反応を待ったまま固まってしまい、新しいクライアントからの接続が受けられなくなる問題が報告されました。
+    </p>
+    <p>
+    原因はまだ特定されていませんが、クライアントの接続がクエリ処理の最中に突然切断された場合、バックエンドがクエリを処理できない状態となり、リセットクエリを受け付けられなくのかもしれません。
+    </p>
+    <p>
+    これに対処するため、フロントエンドから接続が予期せず切断された場合は、クエリ処理ループを即座に終了し PostgreSQL への接続を切断し、新しい接続要求を待つように修正しました。
+    </p>
+    <p>
+    また client_idle_limit が設定されており、リミットに達した場合にもpgpool はバックエンドへの接続を切断するよう修正されました。
+    </p>
+    <blockquote>
+    bug #107 の報告によります。<br />
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=107">
+    http://www.pgpool.net/mantisbt/view.php?id=107
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    その他の何十もの Coverity 報告バグが修正されました。(Muhammad Usama)
+</li>
+
+
+</ul>
+
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.3.3"></a>3.3.3 (tokakiboshi) 2014/03/24</h2>
 <!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
@@ -6898,6 +7180,119 @@ FATAL: no PostgreSQL user name specified in startup packet
 <!-- 3.2                                                                              -->
 <!-- ================================================================================ -->
 <hr><a name="release3.2.x"></a>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.2.9"></a>3.2.9 (namameboshi) 2014/09/05</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.2.8 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    pgpool.spec のタイポを修正しました。(Yugo Nagata)
+</li>
+
+<li>
+    プライマリバックエンドが存在しない場合に、ワーカー子プロセスが終了と再起動を繰り返すバグを修正しました。(Tatsuo Ishii)
+    <p>
+    問題の同定と修正は Junegunn Choi さんの貢献によります。
+    </p>
+    <p>
+    詳しくは、[pgpool-hackers: 471] を参照してください。
+    </p>
+</li>
+
+<li>
+    スマートシャットダウンの実行時には受信用ソケットを閉じるように修正しました。(Tatsuo Ishii)
+    <p>
+    スマートシャットダウンが実行された場合でも、pgpool の子プロセスは受信用のポートを開いており、最終的に失敗するにもかからわずクライアントは接続要求を送信可能です。これは時間の無駄であるでけではなく、pgpool のフロントにいるロードバランサによる pgpool の停止の検出を妨げます。
+    </p>
+    <p>
+    この問題は [pgpool-hackers 474] にて Junegunn Choi によって解析され、パッチが提供されました。これを Tatsuo Ishii が改良し、inet ドメインだけではなく UNIX ドメインのソケットにも対応させました。
+    </p>
+</li>
+
+<li>
+    doc: PostgreSQL の statement_timeout によって、リカバリコマンドが終了させられる可能性を追記しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    dic: 現在は当てはまらない古い制限事項を削除しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    text_to_lsn() 関数の返却値型を修正しました。(Yugo Nagata)
+    <p>
+    コンパイル時の警告の原因となっていました。
+    </p>
+</li>
+
+<li>
+    デーモン化した際にファイル識別子が閉じられていなかったのを修正しました。(Tatsuo Ishii)
+    <p>
+    Coverity の報告 #1111471 によります。
+    </p>
+</li>
+
+<li>
+    メモリリークを修正しました。 (Tatsuo Ishii)
+    <p>
+    Coverity の報告 #1111442 によります。
+    </p>
+</li>
+
+<li>
+    長らく放置されていた pgool.init の stop/restart のバグを修正しました。(Yugo Nagata)
+    <p>
+    以前は pgpool の停止に pgpool.init は killproc を用いていましたが、これにはいくつか問題がありました。これを、"pgpool -m fast stop" を用いるように修正しました。
+    </p>
+    <p>
+    Ryan DeShone により提供されたパッチを Yugo Nagata が修正しました。
+    </p>
+    <p>
+    詳しくは、[pgpool-hackers: 239][pgpool-hackers: 512] を参照してください。
+    </p>
+</li>
+
+<li>
+    不足していたインクルードファイル sys/wait.h を追加しました。(Tatsuo Ishii)
+    <blockquote>
+    bug #104 の報告によります。<br />
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=104">
+    http://www.pgpool.net/mantisbt/view.php?id=104
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    オンラインリカバリの実行時は PostgreSQL の statement_timeout を無効んするようになりました。(Tatsuo Ishii)
+    <p>
+    オンラインリカバリは異常に長い時間を要する可能性がある一方、ユーザはenable_statment を有効にしている可能性があります。これによりオンラインリカバリがキャンセルされるのを防ぐため、リカバリの最中は statementtimeout を無効にするようになりました。
+    </p>
+    <p>
+    詳しくは [pgpool-general: 2919] を参照してください。
+    </p>
+</li>
+
+<li>
+    不適切にセマフォを削除しないよう不必要な pool_shmem_exit() 呼び出しを取り除きました。(Tatsuo Ishii)
+    <p>
+    exit_handler はプロセスが親プロセスがどうかをチェックしていますが、子プロセスであった場合にも pool_shmem_exit() が呼ばれることがあり、これにより不適切にセマフォが削除されていました。この関数は親プロセス意外に呼ばれてはなりません。
+    </p>
+    <blockquote>
+    bug #102 によります。<br />
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=102">
+    http://www.pgpool.net/mantisbt/view.php?id=102
+    </a>
+    </blockquote>
+</li>
+
+</ul>
 
 <!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.2.8"></a>3.2.8 (namameboshi) 2014/03/24</h2>
@@ -8924,6 +9319,109 @@ autoconf
 <hr><a name="release3.1.x"></a>
 
 <!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.1.12"></a>3.1.12 (hatsuiboshi) 2014/09/05</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.1.11 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    pgpool.spec のタイポを修正しました。(Yugo Nagata)
+</li>
+
+<li>
+    プライマリバックエンドが存在しない場合に、ワーカー子プロセスが終了と再起動を繰り返すバグを修正しました。(Tatsuo Ishii)
+    <p>
+    問題の同定と修正は Junegunn Choi さんの貢献によります。
+    </p>
+    <p>
+    詳しくは、[pgpool-hackers: 471] を参照してください。
+    </p>
+</li>
+
+<li>
+    スマートシャットダウンの実行時には受信用ソケットを閉じるように修正しました。(Tatsuo Ishii)
+    <p>
+    スマートシャットダウンが実行された場合でも、pgpool の子プロセスは受信用のポートを開いており、最終的に失敗するにもかからわずクライアントは接続要求を送信可能です。これは時間の無駄であるでけではなく、pgpool のフロントにいるロードバランサによる pgpool の停止の検出を妨げます。
+    </p>
+    <p>
+    この問題は [pgpool-hackers 474] にて Junegunn Choi によって解析され、パッチが提供されました。これを Tatsuo Ishii が改良し、inet ドメインだけではなく UNIX ドメインのソケットにも対応させました。
+    </p>
+</li>
+
+<li>
+    doc: PostgreSQL の statement_timeout によって、リカバリコマンドが終了させられる可能性を追記しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    dic: 現在は当てはまらない古い制限事項を削除しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    text_to_lsn() 関数の返却値型を修正しました。(Yugo Nagata)
+    <p>
+    コンパイル時の警告の原因となっていました。
+    </p>
+</li>
+
+<li>
+    デーモン化した際にファイル識別子が閉じられていなかったのを修正しました。(Tatsuo Ishii)
+    <p>
+    Coverity の報告 #1111471 によります。
+    </p>
+</li>
+
+<li>
+    メモリリークを修正しました。 (Tatsuo Ishii)
+    <p>
+    Coverity の報告 #1111442 によります。
+    </p>
+</li>
+
+<li>
+    長らく放置されていた pgool.init の stop/restart のバグを修正しました。(Yugo Nagata)
+    <p>
+    以前は pgpool の停止に pgpool.init は killproc を用いていましたが、これにはいくつか問題がありました。これを、"pgpool -m fast stop" を用いるように修正しました。
+    </p>
+    <p>
+    Ryan DeShone により提供されたパッチを Yugo Nagata が修正しました。
+    </p>
+    <p>
+    詳しくは、[pgpool-hackers: 239][pgpool-hackers: 512] を参照してください。
+    </p>
+</li>
+
+<li>
+    オンラインリカバリの実行時は PostgreSQL の statement_timeout を無効んするようになりました。(Tatsuo Ishii)
+    <p>
+    オンラインリカバリは異常に長い時間を要する可能性がある一方、ユーザはenable_statment を有効にしている可能性があります。これによりオンラインリカバリがキャンセルされるのを防ぐため、リカバリの最中は statementtimeout を無効にするようになりました。
+    </p>
+    <p>
+    詳しくは [pgpool-general: 2919] を参照してください。
+    </p>
+</li>
+
+<li>
+    不適切にセマフォを削除しないよう不必要な pool_shmem_exit() 呼び出しを取り除きました。(Tatsuo Ishii)
+    <p>
+    exit_handler はプロセスが親プロセスがどうかをチェックしていますが、子プロセスであった場合にも pool_shmem_exit() が呼ばれることがあり、これにより不適切にセマフォが削除されていました。この関数は親プロセス意外に呼ばれてはなりません。
+    </p>
+    <blockquote>
+    bug #102 によります。<br />
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=102">
+    http://www.pgpool.net/mantisbt/view.php?id=102
+    </a>
+    </blockquote>
+</li>
+
+</ul>
+
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.1.11"></a>3.1.11 (hatsuiboshi) 2014/03/24</h2>
 <!-- -------------------------------------------------------------------------------- -->
 
@@ -10230,6 +10728,109 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
 <!-- 3.0                                                                              -->
 <!-- ================================================================================ -->
 <hr><a name="release3.0.x"></a>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.0.16"></a>3.0.16 (umiyameboshi) 2014/09/05</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.0.15 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    pgpool.spec のタイポを修正しました。(Yugo Nagata)
+</li>
+
+<li>
+    プライマリバックエンドが存在しない場合に、ワーカー子プロセスが終了と再起動を繰り返すバグを修正しました。(Tatsuo Ishii)
+    <p>
+    問題の同定と修正は Junegunn Choi さんの貢献によります。
+    </p>
+    <p>
+    詳しくは、[pgpool-hackers: 471] を参照してください。
+    </p>
+</li>
+
+<li>
+    スマートシャットダウンの実行時には受信用ソケットを閉じるように修正しました。(Tatsuo Ishii)
+    <p>
+    スマートシャットダウンが実行された場合でも、pgpool の子プロセスは受信用のポートを開いており、最終的に失敗するにもかからわずクライアントは接続要求を送信可能です。これは時間の無駄であるでけではなく、pgpool のフロントにいるロードバランサによる pgpool の停止の検出を妨げます。
+    </p>
+    <p>
+    この問題は [pgpool-hackers 474] にて Junegunn Choi によって解析され、パッチが提供されました。これを Tatsuo Ishii が改良し、inet ドメインだけではなく UNIX ドメインのソケットにも対応させました。
+    </p>
+</li>
+
+<li>
+    doc: PostgreSQL の statement_timeout によって、リカバリコマンドが終了させられる可能性を追記しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    dic: 現在は当てはまらない古い制限事項を削除しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    text_to_lsn() 関数の返却値型を修正しました。(Yugo Nagata)
+    <p>
+    コンパイル時の警告の原因となっていました。
+    </p>
+</li>
+
+<li>
+    デーモン化した際にファイル識別子が閉じられていなかったのを修正しました。(Tatsuo Ishii)
+    <p>
+    Coverity の報告 #1111471 によります。
+    </p>
+</li>
+
+<li>
+    メモリリークを修正しました。 (Tatsuo Ishii)
+    <p>
+    Coverity の報告 #1111442 によります。
+    </p>
+</li>
+
+<li>
+    長らく放置されていた pgool.init の stop/restart のバグを修正しました。(Yugo Nagata)
+    <p>
+    以前は pgpool の停止に pgpool.init は killproc を用いていましたが、これにはいくつか問題がありました。これを、"pgpool -m fast stop" を用いるように修正しました。
+    </p>
+    <p>
+    Ryan DeShone により提供されたパッチを Yugo Nagata が修正しました。
+    </p>
+    <p>
+    詳しくは、[pgpool-hackers: 239][pgpool-hackers: 512] を参照してください。
+    </p>
+</li>
+
+<li>
+    オンラインリカバリの実行時は PostgreSQL の statement_timeout を無効んするようになりました。(Tatsuo Ishii)
+    <p>
+    オンラインリカバリは異常に長い時間を要する可能性がある一方、ユーザはenable_statment を有効にしている可能性があります。これによりオンラインリカバリがキャンセルされるのを防ぐため、リカバリの最中は statementtimeout を無効にするようになりました。
+    </p>
+    <p>
+    詳しくは [pgpool-general: 2919] を参照してください。
+    </p>
+</li>
+
+<li>
+    不適切にセマフォを削除しないよう不必要な pool_shmem_exit() 呼び出しを取り除きました。(Tatsuo Ishii)
+    <p>
+    exit_handler はプロセスが親プロセスがどうかをチェックしていますが、子プロセスであった場合にも pool_shmem_exit() が呼ばれることがあり、これにより不適切にセマフォが削除されていました。この関数は親プロセス意外に呼ばれてはなりません。
+    </p>
+    <blockquote>
+    bug #102 によります。<br />
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=102">
+    http://www.pgpool.net/mantisbt/view.php?id=102
+    </a>
+    </blockquote>
+</li>
+
+</ul>
 
 <!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.0.15"></a>3.0.15 (umiyameboshi) 2014/03/24</h2>

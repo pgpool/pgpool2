@@ -13,7 +13,7 @@ git_dir=$HOME/git
 ## pgpool-II
 pgpool_src_dir=${git_dir}/pgpool2
 pgpool_tarball_dir=${pgpool_src_dir}
-pgpool_version=3.3.3
+pgpool_version=3.3.4
 
 ## pgpoolAdmin
 admin_src_dir=${git_dir}/pgpooladmin
