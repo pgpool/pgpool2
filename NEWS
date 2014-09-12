@@ -162,7 +162,7 @@
 
     - Fix failover.sh produced by pgpool_setup (Tatsuo Ishii)
       
-      It did not support there's more than 3 nodes case. It always tries to
+      It did not support there's more than 2 nodes case. It always tries to
       promoto node0 or node1.
 
     - Remove meaningless minus check because of unsigned int variable
