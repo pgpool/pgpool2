@@ -4,6 +4,231 @@
 3.3 Series (2013/07/30 - )
 ===============================================================================
 
+                        3.3.4 (tokakiboshi) 2014/09/05
+
+* Version 3.3.4
+
+    This is a bugfix release against pgpool-II 3.3.3.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix a typo of pgpool.spec (Yugo Nagata)
+
+    - Fix bug that worker child process keeps failing when there's no
+      primary backend (Tatsuo Ishii)
+      
+      Problem identified and fix contributed by Junegunn Choi.
+      
+      See [pgpool-hackers: 471] for more details.
+
+    - Close listen socket when smart shutdown request is made (Tatsuo Ishii)
+      
+      When smart shutdown process starts, pgpool children still listen on
+      the port and clients can send further connection requests which fail
+      in the end. Which is not only waste of time, but also prevents a load
+      balancer which sits in front of pgpool from realizing the pgpool is
+      going down.
+      
+      Problem analyzed and patch provided by Junegunn Choi in [pgpool-hackers
+      474], and enhanced to take care not only inet domain socket but UNIX
+      domain socket by Tatsuo Ishii.
+
+    - doc: Add cautions that recovery commands are killed by statement_timeout
+      of PostgreSQL. (Tatsuo Ishii)
+
+    - test: Fix bug that wait_for_pgpool_startup does not work. (Tatsuo Ishii)
+
+    - test: Fix test driver for watchdog to use wait_for_pgpool_startup correctly
+      (Tatsuo Ishii)
+
+    - Fix to ignore a harmless error code when executing ifconfig command
+      (Yugo Nagata)
+      
+      When executing command such as ifconfig or ping by execv() in a forked
+      child proess, wait() can fails with an error code ECHILD, although the
+      process exists exactly, if SIGCHLD is set to SIG_IGN in Linux. We should
+      ignore this and not treat as failure of the command.
+
+    - test: Add undocumented "-j" option to the script comment. (Tatsuo Ishii)
+
+    - test: Fix unwanted JDBC regression test failure (Tatsuo Ishii)
+
+    - test: Fix to prevent regression test failures on slow machines
+      (Tatsuo Ishii)
+
+    - test: Allow to specify PostgreSQL library directory by environment
+      variable (Tatsuo Ishii)
+
+    - Adopt PostgreSQL 9.4 having to_regclass (Tatsuo Ishii)
+      
+      PostgreSQL 9.4 has built-in function "to_regclass", which has
+      equivalent functionality of pgpool_regclass. Now pgpool searches
+      to_regclass first then try pgpool_regclass.
+
+    - Fix unportable code related to SO_REUSEPORT (Tatsuo Ishii)
+      
+      There are several places using setsockopt(sock, SOL_SOCKET,
+      SO_REUSEPORT...). SO_REUSEPORT is not available on all Linux kernels
+      and the source code uses ifdef to detect the feature in the compile
+      time. Problem is, the binary created with kernel which provides the
+      feature cannot run on a kernel which does not provide the feature. Fix
+      is, detecting the feature in the run time by checking error code
+      returned by setsockopt() and ignore it if the cause of the error is
+      lacking the feature.
+
+    - doc: Remove old restriction description which is no longer true
+      (Tatsuo Ishii)
+
+    - Fix return type of text_to_lsn() function (Yugo Nagata)
+      
+      This caused compile warning.
+
+    - Fix file descriptor leak when daemonize. (Tatsuo Ishii)
+      
+      Per Coverity 1111471.
+
+    - Fix memory leak. (Tatsuo Ishii)
+      
+      Per Coverity 1111442.
+
+    - Fix pgpool.init's long-standing bug of stop/restart failure
+      (Yugo Nagata)
+      
+      In previous, pgpool.init uses killproc for stopping pgpool, but there
+      are several problems. In the new version, "pgpool -m fast stop" is
+      used in stop command.
+      
+      Original patch contributed by Ryan DeShone and modified by Yugo Nagata.
+      
+      See [pgpool-hackers: 239][pgpool-hackers: 512].
+
+    - Allow to run pgpool_setup and regression test on Ubuntu box
+      (Tatsuo Ishii)
+
+    - test: Fix -i option (install directory of pgpool) not working
+      (Tatsuo Ishii)
+
+    - Add missing include file sys/wait.h. (Tatsuo Ishii)
+      
+      Per bug #104.
+      http://www.pgpool.net/mantisbt/view.php?id=104
+
+    - Fix an infinite loop of ping error at new active pgpool when virtual
+      IP switching (Yugo Nagata)
+      
+      This bug also caused hangs of the old active pgpool, since this waits
+      response from the new active pgpool, which is in the infinite loop and
+      not able to respond.
+      
+      This problem is reported by Qian Peng in [pgpool-hackers: 520].
+
+    - Disbale statement_timeout of PostgreSQL while executing online recovery
+      (Tatsuo Ishii)
+      
+      Online recovery may take very long time and user may enable statement
+      timeout. To prevent online recovery canceled by statement timeout,
+      disable statement timeout in the connection used by online recovery.
+      
+      See [pgpool-general: 2919] for more details.
+
+    - Fix pool_table_name_to_oid in case new to_regclass used which is
+      introduced in PostgreSQL 9.4 (Tatsuo Ishii)
+      
+      The relcache func used here should return 0 if target table is not
+      found. However to_regclass returns NULL in this case. To fix the
+      problem now COALESCE is used.
+
+    - test: Fix regression test 057 hung if run against PostgreSQL 9.4 or
+      later (Tatsuo Ishii)
+      
+      PostgreSQL 9.4 or later changed libpq behavior: NULL username for
+      connection string does not cause an error, which was expected in the
+      test.
+
+    - Fix to close pipe when ping command exits with failure (Yugo Nagata)
+      
+      This bug causes pipe open error: Too many open files, which
+      leads to failure of connecting to trusted servers, and then
+      pgpool goes to down status.
+
+    - Fix Resource leaks (Muhammad Usama)
+      
+      Coverity issue #1222998 and #1222999.
+
+    - Add a description that pcp_detach_node command disconnects existing
+      sessions (Tatsuo Ishii)
+
+    - Fix failover.sh produced by pgpool_setup (Tatsuo Ishii)
+      
+      It did not support there's more than 2 nodes case. It always tries to
+      promoto node0 or node1.
+
+    - Remove meaningless minus check because of unsigned int variable
+      (Tatsuo Ishii)
+      
+      Coverity issue #1111419, #1111420, #1111422.
+
+    - replacing strcpy() with much safer and recomended call strlcpy()
+      (Muhammad Usama)
+      
+      Coverity issue #1111480.
+
+    - Fix pgpool.spec to support openssl (Tatsuo Ishii)
+
+    - Fix pgpool.spec to use 3.3-stable tree head (Tatsuo Ishii)
+
+    - Remove unnecessary call to pool_shmem_exit() which removes semaphore
+      when it shouldn't (Tatsuo Ishii)
+      
+      exit_handler checks if the process is parent or not. This is
+      good. However, even if it is a child process, it calls
+      pool_shmem_exit() which removes semaphore and shmem when it should
+      not. It should be called only from parent process.
+      
+      Per bug #102.
+      http://www.pgpool.net/mantisbt/view.php?id=102
+
+    - Fix get_insert_command_table_name() function not to use freed pointer
+      (Muhammad Usama)
+      
+      Coverity issue #1223007.
+
+    - Fix pool_handle_query_cache() to not free NULL pointer (Tatsuo Ishii)
+
+    - Change connect() timeout longer (10 seconds) for flaky network
+      (Tatsuo Ishii)
+      
+      Change connect() timeout in connect_inet_domain_socket_by_port() from
+      1 second to 10 seconds for flaky network such as AWS. This should help
+      reducing frequent failover.
+
+    - Fix reset query stuck problem. (Tatsuo Ishii)
+      
+      It is reported that reset query (DISCARD ALL etc.) occasionally does
+      not finish and pgpool child remain waiting for reply from backend thus
+      client cannot connect to pgpool.
+      
+      The cause of problem is not identified yet but if client suddenly
+      closes connection to pgpool in the middle of query processing, backend
+      may not accept the reset queries because they are not ready for query.
+      
+      The fix is, if frontend closes connection in unexpected way, query
+      process loop immediately returns with new state:
+      POOL_END_WITH_FRONTEND_ERROR and pgpool closes connection to
+      PostgreSQL then goes back to new connection request waiting loop.
+      
+      Also, pgpool closes connections to backend when client_idle_limit is
+      set and the idle limit.
+      
+      Per bug #107.
+      http://www.pgpool.net/mantisbt/view.php?id=107
+
+    - Fix other dozens of coverity issues (Muhammad Usama)
+
+===============================================================================
+
                         3.3.3 (tokakiboshi) 2014/03/24
 
 * Version 3.3.3
@@ -871,6 +1096,93 @@
 
 ===============================================================================
 3.2 Series (2012/08/03 - )
+===============================================================================
+
+                        3.2.9 (namameboshi) 2014/09/05
+
+* Version 3.2.9
+
+    This is a bugfix release against pgpool-II 3.2.8.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix a typo of pgpool.spec (Yugo Nagata)
+
+    - Fix bug that worker child process keeps failing when there's no
+      primary backend (Tatsuo Ishii)
+      
+      Problem identified and fix contributed by Junegunn Choi.
+      
+      See [pgpool-hackers: 471] for more details.
+
+    - Close listen socket when smart shutdown request is made (Tatsuo Ishii)
+      
+      When smart shutdown process starts, pgpool children still listen on
+      the port and clients can send further connection requests which fail
+      in the end. Which is not only waste of time, but also prevents a load
+      balancer which sits in front of pgpool from realizing the pgpool is
+      going down.
+      
+      Problem analyzed and patch provided by Junegunn Choi in [pgpool-hackers
+      474], and enhanced to take care not only inet domain socket but UNIX
+      domain socket by Tatsuo Ishii.
+
+    - doc: Add cautions that recovery commands are killed by statement_timeout
+      of PostgreSQL. (Tatsuo Ishii)
+
+    - doc: Remove old restriction description which is no longer true
+      (Tatsuo Ishii)
+
+    - Fix return type of text_to_lsn() function (Yugo Nagata)
+      
+      This caused compile warning.
+
+    - Fix file descriptor leak when daemonize. (Tatsuo Ishii)
+      
+      Per Coverity 1111471.
+
+    - Fix memory leak. (Tatsuo Ishii)
+      
+      Per Coverity 1111442.
+
+    - Fix pgpool.init's long-standing bug of stop/restart failure
+      (Yugo Nagata)
+      
+      In previous, pgpool.init uses killproc for stopping pgpool, but there
+      are several problems. In the new version, "pgpool -m fast stop" is
+      used in stop command.
+      
+      Original patch contributed by Ryan DeShone and modified by Yugo Nagata.
+      
+      See [pgpool-hackers: 239][pgpool-hackers: 512].
+
+    - Add missing include file sys/wait.h. (Tatsuo Ishii)
+      
+      Per bug #104.
+      http://www.pgpool.net/mantisbt/view.php?id=104
+
+    - Disbale statement_timeout of PostgreSQL while executing online recovery
+      (Tatsuo Ishii)
+      
+      Online recovery may take very long time and user may enable statement
+      timeout. To prevent online recovery canceled by statement timeout,
+      disable statement timeout in the connection used by online recovery.
+      
+      See [pgpool-general: 2919] for more details.
+
+    - Remove unnecessary call to pool_shmem_exit() which removes semaphore
+      when it shouldn't (Tatsuo Ishii)
+      
+      exit_handler checks if the process is parent or not. This is
+      good. However, even if it is a child process, it calls
+      pool_shmem_exit() which removes semaphore and shmem when it should
+      not. It should be called only from parent process.
+      
+      Per bug #102.
+      http://www.pgpool.net/mantisbt/view.php?id=102
+
 ===============================================================================
 
                         3.2.8 (namameboshi) 2014/03/24
@@ -2558,6 +2870,88 @@
 3.1 Series (2011/09/08 - )
 ===============================================================================
 
+                        3.1.12 (hatsuiboshi) 2014/09/05
+
+* Version 3.1.12
+
+    This is a bugfix release against pgpool-II 3.1.11.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix a typo of pgpool.spec (Yugo Nagata)
+
+    - Fix bug that worker child process keeps failing when there's no
+      primary backend (Tatsuo Ishii)
+      
+      Problem identified and fix contributed by Junegunn Choi.
+      
+      See [pgpool-hackers: 471] for more details.
+
+    - Close listen socket when smart shutdown request is made (Tatsuo Ishii)
+      
+      When smart shutdown process starts, pgpool children still listen on
+      the port and clients can send further connection requests which fail
+      in the end. Which is not only waste of time, but also prevents a load
+      balancer which sits in front of pgpool from realizing the pgpool is
+      going down.
+      
+      Problem analyzed and patch provided by Junegunn Choi in [pgpool-hackers
+      474], and enhanced to take care not only inet domain socket but UNIX
+      domain socket by Tatsuo Ishii.
+
+    - doc: Add cautions that recovery commands are killed by statement_timeout
+      of PostgreSQL. (Tatsuo Ishii)
+
+    - doc: Remove old restriction description which is no longer true
+      (Tatsuo Ishii)
+
+    - Fix return type of text_to_lsn() function (Yugo Nagata)
+      
+      This caused compile warning.
+
+    - Fix file descriptor leak when daemonize. (Tatsuo Ishii)
+      
+      Per Coverity 1111471.
+
+    - Fix memory leak. (Tatsuo Ishii)
+      
+      Per Coverity 1111442.
+
+    - Fix pgpool.init's long-standing bug of stop/restart failure
+      (Yugo Nagata)
+      
+      In previous, pgpool.init uses killproc for stopping pgpool, but there
+      are several problems. In the new version, "pgpool -m fast stop" is
+      used in stop command.
+      
+      Original patch contributed by Ryan DeShone and modified by Yugo Nagata.
+      
+      See [pgpool-hackers: 239][pgpool-hackers: 512].
+
+    - Disbale statement_timeout of PostgreSQL while executing online recovery
+      (Tatsuo Ishii)
+      
+      Online recovery may take very long time and user may enable statement
+      timeout. To prevent online recovery canceled by statement timeout,
+      disable statement timeout in the connection used by online recovery.
+      
+      See [pgpool-general: 2919] for more details.
+
+    - Remove unnecessary call to pool_shmem_exit() which removes semaphore
+      when it shouldn't (Tatsuo Ishii)
+      
+      exit_handler checks if the process is parent or not. This is
+      good. However, even if it is a child process, it calls
+      pool_shmem_exit() which removes semaphore and shmem when it should
+      not. It should be called only from parent process.
+      
+      Per bug #102.
+      http://www.pgpool.net/mantisbt/view.php?id=102
+
+===============================================================================
+
                         3.1.11 (hatsuiboshi) 2014/03/24
 
 * Version 3.1.11
@@ -3697,6 +4091,88 @@
 
 ===============================================================================
 3.0 Series (2013/07/30 - )
+===============================================================================
+
+                        3.0.16 (umiyameboshi) 2014/09/05
+
+* Version 3.0.16
+
+    This is a bugfix release against pgpool-II 3.0.15.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix a typo of pgpool.spec (Yugo Nagata)
+
+    - Fix bug that worker child process keeps failing when there's no
+      primary backend (Tatsuo Ishii)
+      
+      Problem identified and fix contributed by Junegunn Choi.
+      
+      See [pgpool-hackers: 471] for more details.
+
+    - Close listen socket when smart shutdown request is made (Tatsuo Ishii)
+      
+      When smart shutdown process starts, pgpool children still listen on
+      the port and clients can send further connection requests which fail
+      in the end. Which is not only waste of time, but also prevents a load
+      balancer which sits in front of pgpool from realizing the pgpool is
+      going down.
+      
+      Problem analyzed and patch provided by Junegunn Choi in [pgpool-hackers
+      474], and enhanced to take care not only inet domain socket but UNIX
+      domain socket by Tatsuo Ishii.
+
+    - doc: Add cautions that recovery commands are killed by statement_timeout
+      of PostgreSQL. (Tatsuo Ishii)
+
+    - doc: Remove old restriction description which is no longer true
+      (Tatsuo Ishii)
+
+    - Fix return type of text_to_lsn() function (Yugo Nagata)
+      
+      This caused compile warning.
+
+    - Fix file descriptor leak when daemonize. (Tatsuo Ishii)
+      
+      Per Coverity 1111471.
+
+    - Fix memory leak. (Tatsuo Ishii)
+      
+      Per Coverity 1111442.
+
+    - Fix pgpool.init's long-standing bug of stop/restart failure
+      (Yugo Nagata)
+      
+      In previous, pgpool.init uses killproc for stopping pgpool, but there
+      are several problems. In the new version, "pgpool -m fast stop" is
+      used in stop command.
+      
+      Original patch contributed by Ryan DeShone and modified by Yugo Nagata.
+      
+      See [pgpool-hackers: 239][pgpool-hackers: 512].
+
+    - Disbale statement_timeout of PostgreSQL while executing online recovery
+      (Tatsuo Ishii)
+      
+      Online recovery may take very long time and user may enable statement
+      timeout. To prevent online recovery canceled by statement timeout,
+      disable statement timeout in the connection used by online recovery.
+      
+      See [pgpool-general: 2919] for more details.
+
+    - Remove unnecessary call to pool_shmem_exit() which removes semaphore
+      when it shouldn't (Tatsuo Ishii)
+      
+      exit_handler checks if the process is parent or not. This is
+      good. However, even if it is a child process, it calls
+      pool_shmem_exit() which removes semaphore and shmem when it should
+      not. It should be called only from parent process.
+      
+      Per bug #102.
+      http://www.pgpool.net/mantisbt/view.php?id=102
+
 ===============================================================================
 
                         3.0.15 (umiyameboshi) 2014/03/24
