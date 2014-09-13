@@ -2030,6 +2030,12 @@ HINT: check data consistency between master and other db node
 <p>
 master/slaveモードは、Slony-IやStreaming Replicationのような、
 master/slave式のレプリケーションソフトにレプリケーションをまかせるモードです。
+</p>
+<p>
+なお、スレーブの数は1である必要はありません。
+実際には127個までのスレーブを持つことができます(スレーブの数は0でも構いません)。
+</p>
+<p>
 このモードで使うためには、レプリケーションモードと同じように、
 DBノードのホスト情報(<a href="#BACKEND_HOSTNAME">backend_hostname</a>,
 <a href="#BACKEND_PORT">backend_port</a>, <a href="#BACKEND_WEIGHT">backend_weight</a>,
