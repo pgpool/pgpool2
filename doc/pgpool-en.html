@@ -2064,6 +2064,12 @@ You will see number of updated rows in PostgreSQL log
 <p>This mode is used to couple pgpool-II with another master/slave
 replication software (like Slony-I and Streaming replication), which is responsible
 for doing the actual data replication.
+</p>
+<p>
+Please note that the number of slaves is not necessarily limited to just 1.
+Actually you could have up to 127 slaves (0 slaves is allowed).
+</p>
+<p>
 DB nodes' information (<a href="#BACKEND_HOSTNAME">backend_hostname</a>,
 <a href="#BACKEND_PORT">backend_port</a>, <a href="#BACKEND_WEIGHT">backend_weight</a>,
 <a href="#BACKEND_FLAG">backend_flag</a> and <a href="#BACKEND_DATA_DIRECTORY">backend_data_directory</a>
