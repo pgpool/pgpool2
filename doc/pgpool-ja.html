@@ -1603,6 +1603,12 @@ trueならば、フェイルオーバが起きます。その際、以下のよ�
 <h1><a name="master_slave_mode"></a>マスタースレーブモード</h1>
 <p>
   master/slaveモードは、Slony-IやStreaming Replicationのような、master/slave式のレプリケーションソフトにレプリケーションをまかせるモードです。
+</p>
+<p>
+なお、スレーブの数は1である必要はありません。
+実際には127個までのスレーブを持つことができます(スレーブの数は0でも構いません)。
+</p>
+<p>
 このモードで使うためには、レプリケーションモードと同じように、DBノードのホスト情報(backend_hostname, backend_port, backend_weight, backend_flag それにオンラインリカバリが必要ならばbackend_data_directory)をセットし、master_slave_modeとload_balance_modeをtrueにします。
 pgpool-IIは、レプリケーションされる必要のある問い合わせはマスターに送り、その他の問い合わせを可能ならば負荷分散します。問い合わせによってマスターDBだけに問い合わせが送られる場合と、DBノードの間でロードバランスされて問い合わせが送られる場合があります。
 </p>
