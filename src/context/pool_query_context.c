@@ -45,6 +45,13 @@ typedef enum {
 	POOL_BOTH
 } POOL_DEST;
 
+#define CHECK_QUERY_CONTEXT_IS_VALID \
+						do { \
+							if (!query_context) \
+								ereport(ERROR, \
+									(errmsg("setting db node for query to be sent, no query context")));\
+						} while (0)
+
 static POOL_DEST send_to_where(Node *node, char *query);
 static void where_to_send_deallocate(POOL_QUERY_CONTEXT *query_context, Node *node);
 static char* remove_read_write(int len, const char *contents, int *rewritten_len);
@@ -55,15 +62,9 @@ static char* remove_read_write(int len, const char *contents, int *rewritten_len
 POOL_QUERY_CONTEXT *pool_init_query_context(void)
 {
 	POOL_QUERY_CONTEXT *qc;
-
+	MemoryContext oldcontext = MemoryContextSwitchTo(QueryContext);
 	qc = palloc0(sizeof(*qc));
-	/* Create memory context */
-	qc->memory_context = AllocSetContextCreate(QueryContext,
-									 "QueryContext",
-									 ALLOCSET_DEFAULT_MINSIZE,
-									 ALLOCSET_DEFAULT_INITSIZE,
-									 ALLOCSET_DEFAULT_MAXSIZE);
-
+	MemoryContextSwitchTo(oldcontext);
 	return qc;
 }
 
@@ -78,7 +79,6 @@ void pool_query_context_destroy(POOL_QUERY_CONTEXT *query_context)
 	{
 		session_context = pool_get_session_context(false);
 		pool_unset_query_in_progress();
-		MemoryContextDelete(query_context->memory_context);
 		query_context->original_query = NULL;
 		session_context->query_context = NULL;
 		pfree(query_context);
@@ -96,7 +96,7 @@ void pool_start_query(POOL_QUERY_CONTEXT *query_context, char *query, int len, N
 	{
 		MemoryContext old_context;
 		session_context = pool_get_session_context(false);
-		old_context = MemoryContextSwitchTo(query_context->memory_context);
+		old_context = MemoryContextSwitchTo(QueryContext);
 		query_context->original_length = len;
 		query_context->rewritten_length = -1;
 		query_context->original_query = pstrdup(query);
@@ -118,17 +118,12 @@ void pool_start_query(POOL_QUERY_CONTEXT *query_context, char *query, int len, N
  */
 void pool_set_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id)
 {
-	if (!query_context)
-	{
-		pool_error("pool_set_node_to_be_sent: no query context");
-		return;
-	}
+	CHECK_QUERY_CONTEXT_IS_VALID;
 
 	if (node_id < 0 || node_id >= MAX_NUM_BACKENDS)
-	{
-		pool_error("pool_set_node_to_be_sent: invalid node id:%d", node_id);
-		return;
-	}
+		ereport(ERROR,
+			(errmsg("setting db node for query to be sent, invalid node id:%d",node_id),
+				 errdetail("backend node id: %d out of range, node id can be between 0 and %d",node_id,MAX_NUM_BACKENDS)));
 
 	query_context->where_to_send[node_id] = true;
 	
@@ -140,17 +135,12 @@ void pool_set_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id)
  */
 void pool_unset_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id)
 {
-	if (!query_context)
-	{
-		pool_error("pool_unset_node_to_be_sent: no query context");
-		return;
-	}
+	CHECK_QUERY_CONTEXT_IS_VALID;
 
 	if (node_id < 0 || node_id >= MAX_NUM_BACKENDS)
-	{
-		pool_error("pool_unset_node_to_be_sent: invalid node id:%d", node_id);
-		return;
-	}
+		ereport(ERROR,
+			(errmsg("un setting db node for query to be sent, invalid node id:%d",node_id),
+				 errdetail("backend node id: %d out of range, node id can be between 0 and %d",node_id,MAX_NUM_BACKENDS)));
 
 	query_context->where_to_send[node_id] = false;
 	
@@ -162,11 +152,8 @@ void pool_unset_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id)
  */
 void pool_clear_node_to_be_sent(POOL_QUERY_CONTEXT *query_context)
 {
-	if (!query_context)
-	{
-		pool_error("pool_clear_node_to_be_sent: no query context");
-		return;
-	}
+	CHECK_QUERY_CONTEXT_IS_VALID;
+
 	memset(query_context->where_to_send, false, sizeof(query_context->where_to_send));
 	return;
 }
@@ -179,18 +166,9 @@ void pool_setall_node_to_be_sent(POOL_QUERY_CONTEXT *query_context)
 	int i;
 	POOL_SESSION_CONTEXT *sc;
 
-	sc = pool_get_session_context(true);
-	if (!sc)
-	{
-		pool_error("pool_setall_node_to_be_sent: no session context");
-		return;
-	}
+	sc = pool_get_session_context(false);
 
-	if (!query_context)
-	{
-		pool_error("pool_setall_node_to_be_sent: no query context");
-		return;
-	}
+	CHECK_QUERY_CONTEXT_IS_VALID;
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -222,11 +200,7 @@ bool pool_multi_node_to_be_sent(POOL_QUERY_CONTEXT *query_context)
 	int i;
 	int cnt = 0;
 
-	if (!query_context)
-	{
-		pool_error("pool_multi_node_to_be_sent: no query context");
-		return false;
-	}
+	CHECK_QUERY_CONTEXT_IS_VALID;
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -249,17 +223,12 @@ bool pool_multi_node_to_be_sent(POOL_QUERY_CONTEXT *query_context)
  */
 bool pool_is_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id)
 {
-	if (!query_context)
-	{
-		pool_error("pool_is_node_to_be_sent: no query context");
-		return false;
-	}
+	CHECK_QUERY_CONTEXT_IS_VALID;
 
 	if (node_id < 0 || node_id >= MAX_NUM_BACKENDS)
-	{
-		pool_error("pool_is_node_to_be_sent: invalid node id:%d", node_id);
-		return false;
-	}
+		ereport(ERROR,
+			(errmsg("checking if db node is needed to be sent, invalid node id:%d",node_id),
+				 errdetail("backend node id: %d out of range, node id can be between 0 and %d",node_id,MAX_NUM_BACKENDS)));
 
 	return query_context->where_to_send[node_id];
 }
@@ -325,11 +294,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	POOL_CONNECTION_POOL *backend;
 	int i;
 
-	if (!query_context)
-	{
-		pool_error("pool_where_to_send: no query context");
-		return;
-	}
+	CHECK_QUERY_CONTEXT_IS_VALID;
 
 	session_context = pool_get_session_context(false);
 	backend = session_context->backend;
@@ -388,11 +353,8 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	else if (MASTER_SLAVE)
 	{
 		POOL_DEST dest;
-		MemoryContext old_context;
 
-		old_context = MemoryContextSwitchTo(query_context->memory_context);
 		dest = send_to_where(node, query);
-		MemoryContextSwitchTo(old_context);
 
 		ereport(DEBUG1,
 			(errmsg("decide where to send the queries"),
@@ -560,7 +522,8 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	}
 	else
 	{
-		pool_error("pool_where_to_send: unknown mode");
+		ereport(WARNING,
+				(errmsg("unknown pgpool-II mode while deciding for where to send query")));
 		return;
 	}
 
@@ -1490,11 +1453,7 @@ void pool_set_query_state(POOL_QUERY_CONTEXT *query_context, POOL_QUERY_STATE st
 {
 	int i;
 
-	if (!query_context)
-	{
-		pool_error("pool_set_query_state: no query context");
-		return;
-	}
+	CHECK_QUERY_CONTEXT_IS_VALID;
 
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{

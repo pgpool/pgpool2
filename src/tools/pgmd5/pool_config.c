@@ -1,5 +1,5 @@
 
-#line 3 "config/pool_config.c"
+#line 3 "pool_config.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -554,7 +554,7 @@ static char *extract_string(char *value, POOL_TOKEN token);
 static char **extract_string_tokens(char *str, char *delim, int *n);
 static void clear_host_entry(int slot);
 
-#line 558 "config/pool_config.c"
+#line 558 "pool_config.c"
 
 #define INITIAL 0
 
@@ -742,7 +742,7 @@ YY_DECL
 #line 89 "pool_config.l"
 
 
-#line 746 "config/pool_config.c"
+#line 746 "pool_config.c"
 
 	if ( !(yy_init) )
 		{
@@ -880,7 +880,7 @@ YY_RULE_SETUP
 #line 104 "pool_config.l"
 ECHO;
 	YY_BREAK
-#line 884 "config/pool_config.c"
+#line 884 "pool_config.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1973,6 +1973,8 @@ int pool_init_config(void)
 	pool_config->app_name_redirect_preference_list = NULL;
 	pool_config->redirect_app_names = NULL;
 	pool_config->app_name_redirect_tokens = NULL;
+
+	pool_config->allow_sql_comments = 0;
 
 	/*
 	 * add for watchdog
@@ -5087,6 +5089,25 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				}
 			}
 		}
+
+       	else if (!strcmp(key, "allow_sql_comments") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			int v = eval_logical(yytext);
+
+			if (v < 0)
+			{
+				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal to 0")));
+
+				return(-1);
+			}
+			pool_config->allow_sql_comments = v;
+		}
+
 	}
 
 	fclose(fd);

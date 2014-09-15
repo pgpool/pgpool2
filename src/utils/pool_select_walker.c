@@ -185,7 +185,8 @@ int pattern_compare(char *str, const int type, const char *param_name)
 		pattc = &pool_config->memqcache_table_pattc;
 
 	} else {
-		pool_error("pattern_compare: unknown paramname %s", param_name);
+		ereport(WARNING,
+				(errmsg("pattern_compare: unknown paramname %s", param_name)));
 		return -1;
 	}
 
@@ -211,7 +212,8 @@ int pattern_compare(char *str, const int type, const char *param_name)
 								   param_name, lists_patterns[i].pattern, str)));
 				return 1;
 			default:
-				pool_error("pattern_compare: %s unknown pattern match type: %s", param_name, str);
+				ereport(WARNING,
+						(errmsg("pattern_compare: \"%s\" unknown pattern match type: \"%s\"", param_name, str)));
 				return -1;
 			}
 		}
@@ -450,7 +452,8 @@ static bool is_system_catalog(char *table_name)
 										false);
 		if (hasreliscatalog_cache == NULL)
 		{
-			pool_error("is_system_catalog: pool_create_relcache error");
+			ereport(WARNING,
+					(errmsg("unable to create relcache, while checking for system catalog")));
 			return false;
 		}
 	}
@@ -486,7 +489,8 @@ static bool is_system_catalog(char *table_name)
 											false);
 			if (relcache == NULL)
 			{
-				pool_error("is_system_catalog: pool_create_relcache error");
+				ereport(WARNING,
+						(errmsg("unable to create relcache, while checking for system catalog")));
 				return false;
 			}
 		}
@@ -556,7 +560,8 @@ static bool is_temp_table(char *table_name)
 										false);
 		if (hasrelistemp_cache == NULL)
 		{
-			pool_error("is_temp_table: pool_create_relcache error");
+			ereport(WARNING,
+					(errmsg("unable to create relcache, while checking for temporary table")));
 			return false;
 		}
 	}
@@ -577,7 +582,8 @@ static bool is_temp_table(char *table_name)
 													  true);
 		if (is_temp_table_relcache == NULL)
 		{
-			pool_error("is_temp_table: pool_create_relcache error");
+			ereport(WARNING,
+					(errmsg("unable to create relcache, while checking for temporary table")));
 			return false;
 		}
 	}
@@ -645,7 +651,8 @@ bool is_unlogged_table(char *table_name)
 													   false);
 		if (hasrelpersistence_cache == NULL)
 		{
-			pool_error("is_unlogged_table: pool_create_relcache error");
+			ereport(WARNING,
+					(errmsg("unable to create relcache, while checking for unlogged table")));
 			return false;
 		}
 	}
@@ -681,7 +688,8 @@ bool is_unlogged_table(char *table_name)
 											false);
 			if (relcache == NULL)
 			{
-				pool_error("is_unlogged_table: pool_create_relcache error");
+				ereport(WARNING,
+						(errmsg("unable to create relcache, while checking for unlogged table")));
 				return false;
 			}
 		}
@@ -746,7 +754,8 @@ bool is_view(char *table_name)
 										false);
 		if (relcache == NULL)
 		{
-			pool_error("is_view: pool_create_relcache error");
+			ereport(WARNING,
+					(errmsg("unable to create relcache, while checking for view")));
 			return false;
 		}
 
@@ -784,7 +793,8 @@ bool pool_has_pgpool_regclass(void)
 										false);
 		if (relcache == NULL)
 		{
-			pool_error("has_pgpool_regclass: pool_create_relcache error");
+			ereport(WARNING,
+					(errmsg("unable to create relcache, while checking pgpool regclass presence")));
 			return false;
 		}
 	}
@@ -818,7 +828,8 @@ bool pool_has_to_regclass(void)
 										false);
 		if (relcache == NULL)
 		{
-			pool_error("has_to_regclass: pool_create_relcache error");
+			ereport(WARNING,
+					(errmsg("unable to create relcache, while checking to_regclass presence")));
 			return false;
 		}
 	}
@@ -946,7 +957,8 @@ static bool is_immutable_function(char *fname)
 										false);
 		if (relcache == NULL)
 		{
-			pool_error("is_immutable_function: pool_create_relcache error");
+			ereport(WARNING,
+					(errmsg("unable to create relcache, while checking if the function is immutable")));
 			return false;
 		}
 		ereport(DEBUG1,
@@ -1009,7 +1021,8 @@ int pool_table_name_to_oid(char *table_name)
 										true);
 		if (relcache == NULL)
 		{
-			pool_error("table_name_to_oid: pool_create_relcache error");
+			ereport(WARNING,
+					(errmsg("unable to create relcache, getting OID from table name")));
 			return oid;
 		}
 
@@ -1142,7 +1155,8 @@ makeRangeVarFromNameList(List *names)
 			rel->relname = strVal(lthird(names));
 			break;
 		default:
-			pool_error("improper relation name (too many dotted names)");
+			ereport(WARNING,
+					(errmsg("invalid relation name, too many indirections, while converting from table name to RangeVar")));
 			break;
 	}
 
@@ -1167,14 +1181,16 @@ static char *make_table_name_from_rangevar(RangeVar *rangevar)
 
 	if (rangevar == NULL)
 	{
-		pool_error("make_table_name_from_rangevar: argument is NULL");
+		ereport(WARNING,
+				(errmsg("RangeVar argument is NULL, while getting table name from RangeVar")));
 		return "";
 	}
 
 	if (!IsA(rangevar, RangeVar))
 	{
-		pool_error("make_table_name_from_rangevar: argument is not a RangeVar (%d)",
-				   ((Node *)rangevar)->type);
+		ereport(WARNING,
+				(errmsg("invalid argument, while getting table name from RangeVar")));
+
 		return "";
 	}
 
@@ -1188,7 +1204,9 @@ static char *make_table_name_from_rangevar(RangeVar *rangevar)
 
 	if (!rangevar->relname)
 	{
-		pool_error("make_table_name_from_rangevar: RangeVar->relname is NULL");
+		ereport(WARNING,
+				(errmsg("relname is NULL in RangeVar, while getting table name from RangeVar")));
+
 		return "";
 	}
 

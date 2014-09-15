@@ -22,6 +22,7 @@
  */
 
 #include "pool.h"
+#include "utils/elog.h"
 #include "context/pool_process_context.h"
 #include "pool_config.h"		/* remove me afterwards */
 
@@ -36,17 +37,16 @@ void pool_init_process_context(void)
 	process_context = &process_context_d;
 
 	if (!process_info)
-	{
-		pool_error("pool_init_process_context: process_info is not set");
-		child_exit(1);
-	}
+		ereport(FATAL,
+			(return_code(1),
+				 errmsg("process info is not set")));
 	process_context->process_info = process_info;
 
 	if (!pool_config->backend_desc)
-	{
-		pool_error("pool_init_process_context: backend_desc is not set");
-		child_exit(1);
-	}
+		ereport(FATAL,
+			(return_code(1),
+				 errmsg("backend desc is not set")));
+
 	process_context->backend_desc = pool_config->backend_desc;
 
 	process_context->proc_id = my_proc_id;
@@ -59,10 +59,6 @@ void pool_init_process_context(void)
  */
 POOL_PROCESS_CONTEXT *pool_get_process_context(void)
 {
-	if (!process_context)
-	{
-		pool_error("pool_get_process_context: process context is not initialized");
-	}
 	return process_context;
 }
 
@@ -72,10 +68,9 @@ POOL_PROCESS_CONTEXT *pool_get_process_context(void)
 ProcessInfo *pool_get_my_process_info(void)
 {
 	if (!process_context)
-	{
-		pool_error("pool_get_my_process_info: process context is not initialized");
-		return NULL;
-	}
+		ereport(FATAL,
+			(return_code(1),
+				 errmsg("process context is not initialized")));
 
 	return &process_context->process_info[process_context->proc_id];
 }
@@ -88,10 +83,9 @@ void pool_incremnet_local_session_id(void)
 	POOL_PROCESS_CONTEXT *p = pool_get_process_context();
 
 	if (!p)
-	{
-		pool_error("pool_incremnet_local_session_id: cannot get process context");
-		return;
-	}
+		ereport(ERROR,
+				(errmsg("failed to get process context")));
+
 	p->local_session_id++;
 }
 
@@ -130,19 +124,22 @@ ConnectionInfo *pool_coninfo(int child, int connection_pool, int backend)
 {
 	if (child < 0 || child >= pool_config->num_init_children)
 	{
-		pool_error("pool_coninfo: invalid child number: %d", child);
+		ereport(WARNING,
+			(errmsg("failed to get connection info, invalid child number: %d", child)));
 		return NULL;
 	}
 
 	if (connection_pool < 0 || connection_pool >= pool_config->max_pool)
 	{
-		pool_error("pool_coninfo: invalid connection_pool number: %d", connection_pool);
+		ereport(WARNING,
+				(errmsg("failed to get connection info, invalid connection pool number: %d", connection_pool)));
 		return NULL;
 	}
 
 	if (backend < 0 || backend >= MAX_NUM_BACKENDS)
 	{
-		pool_error("pool_coninfo: invalid backend number: %d", backend);
+		ereport(WARNING,
+				(errmsg("failed to get connection info, invalid backend number: %d", backend)));
 		return NULL;
 	}
 
@@ -170,28 +167,16 @@ ConnectionInfo *pool_coninfo_pid(int pid, int connection_pool, int backend)
 	}
 
 	if (child < 0)
-	{
-		pool_error("pool_coninfo_pid: invalid child pid: %d", pid);
-		return NULL;
-	}
+		elog(ERROR,"failed to get child pid, invalid child PID:%d",pid);
 
 	if (child < 0 || child >= pool_config->num_init_children)
-	{
-		pool_error("pool_coninfo_pid: invalid child number: %d", child);
-		return NULL;
-	}
+		elog(ERROR,"failed to get child pid, invalid child no:%d",child);
 
 	if (connection_pool < 0 || connection_pool >= pool_config->max_pool)
-	{
-		pool_error("pool_coninfo_pid: invalid connection_pool number: %d", connection_pool);
-		return NULL;
-	}
+		elog(ERROR,"failed to get child pid, invalid connection pool no:%d",connection_pool);
 
 	if (backend < 0 || backend >= MAX_NUM_BACKENDS)
-	{
-		pool_error("pool_coninfo: invalid backend number: %d", backend);
-		return NULL;
-	}
+		elog(ERROR,"failed to get child pid, invalid backend no:%d",backend);
 
 	return &con_info[child*pool_config->max_pool*MAX_NUM_BACKENDS+
 					 connection_pool*MAX_NUM_BACKENDS+
@@ -215,7 +200,7 @@ void pool_coninfo_set_frontend_connected(int proc_id, int pool_index)
 
 		if (con == NULL)
 		{
-			pool_error("pool_coninfo_set_frontend_connected: cannot get ConnectionInfo");
+			elog(WARNING,"failed to get connection info while marking the frontend is connected for pool");
 			return;
 		}
 		con->connected = true;
@@ -239,7 +224,7 @@ void pool_coninfo_unset_frontend_connected(int proc_id, int pool_index)
 
 		if (con == NULL)
 		{
-			pool_error("pool_coninfo_unset_frontend_connected: cannot get ConnectionInfo");
+			elog(WARNING,"failed to get connection info while marking the frontend is not connected for pool");
 			return;
 		}
 		con->connected = false;

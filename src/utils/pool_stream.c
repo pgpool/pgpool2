@@ -130,7 +130,7 @@ void pool_read_with_error(POOL_CONNECTION *cp, void *buf, int len,
 	if (pool_read(cp, buf, len) < 0)
 	{
         ereport(ERROR,
-                (errmsg("failed to read data of length %d from DB node: %d",len,cp->db_node_id),
+			(errmsg("failed to read data of length %d from DB node: %d",len,cp->db_node_id),
                  errdetail("error occurred when reading: %s",err_context?err_context:"")));
 	}
 }
@@ -184,8 +184,6 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 				continue;
 			}
 
-			pool_error("pool_read: read failed (%s)", strerror(errno));
-
 			if (cp->isbackend)
 			{
 				/* if fail_over_on_backend_error is true, then trigger failover */
@@ -195,20 +193,20 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 					child_exit(1);
                     /* we are in main process */
                     ereport(ERROR,
-                            (errmsg("unable to read data from DB node %d",cp->db_node_id),
+						(errmsg("unable to read data from DB node %d",cp->db_node_id),
                              errdetail("socket read failed with an error \"%s\"", strerror(errno))));
 				}
 				else
 				{
                     ereport(ERROR,
-                            (errmsg("unable to read data from DB node %d",cp->db_node_id),
+						(errmsg("unable to read data from DB node %d",cp->db_node_id),
                              errdetail("socket read failed with an error \"%s\"", strerror(errno))));
 				}
 			}
 			else
 			{
                 ereport(ERROR,
-                        (errmsg("unable to read data from frontend"),
+					(errmsg("unable to read data from frontend"),
                          errdetail("socket read failed with an error \"%s\"", strerror(errno))));
 			}
 		}
@@ -232,7 +230,7 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 				 * if backend offers authentication method, frontend could close connection
 				 */
                 ereport(FATAL,
-                        (errmsg("unable to read data from frontend"),
+					(errmsg("unable to read data from frontend"),
                          errdetail("EOF encountered with backend")));
 			}
 		}
@@ -315,8 +313,6 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 						 errdetail("retrying...")));
 				continue;
 			}
-
-			pool_error("pool_read2: read failed (%s)", strerror(errno));
 
 			if (cp->isbackend)
 			{
@@ -426,7 +422,7 @@ int pool_write(POOL_CONNECTION *cp, void *buf, int len)
 {
 	if (len < 0)
         ereport(ERROR,
-                (errmsg("unable to write data to %s",cp->isbackend?"backend":"frontend"),
+			(errmsg("unable to write data to %s",cp->isbackend?"backend":"frontend"),
                  errdetail("invalid data size: %d", len)));
     
     if(pool_write_noerror(cp,buf,len))
@@ -476,8 +472,8 @@ int pool_flush_it(POOL_CONNECTION *cp)
 			{
 				if (errno == EAGAIN || errno == EINTR || errno == EWOULDBLOCK)
 					continue;
-
-				pool_error("pool_flush_it: select() failed. reason: %s", strerror(errno));
+				ereport(WARNING,
+						(errmsg("pool_flush_it: select() failed. reason: %s", strerror(errno))));
 				cp->wbufpo = 0;
 				return -1;
 			}
@@ -514,7 +510,8 @@ int pool_flush_it(POOL_CONNECTION *cp)
 
 			else if (wlen < 0)
 			{
-				pool_error("pool_flush_it: invalid write size %d", sts);
+				ereport(WARNING,
+						(errmsg("pool_flush_it: invalid write size %d", sts)));
 				cp->wbufpo = 0;
 				return -1;
 			}
@@ -556,8 +553,8 @@ int pool_flush_it(POOL_CONNECTION *cp)
 }
 
 /*
-* flush write buffer and degenerate/failover if error occurs
-*/
+ * flush write buffer and degenerate/failover if error occurs
+ */
 int pool_flush(POOL_CONNECTION *cp)
 {
 	if (pool_flush_it(cp) == -1)
@@ -603,12 +600,67 @@ int pool_flush(POOL_CONNECTION *cp)
 }
 
 /*
-* combo of pool_write and pool_flush
-*/
-int pool_write_and_flush(POOL_CONNECTION *cp, void *buf, int len)
+ * same as pool_flush() but returns -ve value instead of ereport in case of failure
+ */
+int pool_flush_noerror(POOL_CONNECTION *cp)
+{
+    if (pool_flush_it(cp) == -1)
+    {
+        if (cp->isbackend)
+        {
+            /* if fail_over_on_backend_erro is true, then trigger failover */
+            if (pool_config->fail_over_on_backend_error)
+            {
+                notice_backend_error(cp->db_node_id);
+                child_exit(1);
+				ereport(LOG,
+					(errmsg("unable to flush data to backend"),
+						 errdetail("do not failover because I am the main process")));
+                return -1;
+            }
+            else
+            {
+				ereport(LOG,
+					(errmsg("unable to flush data to backend"),
+                         errdetail("do not failover because fail_over_on_backend_error is off")));
+                return -1;
+            }
+        }
+        else
+        {
+            /*
+             * If we are in replication mode, we need to continue the
+             * processing with backends to keep consistency among
+             * backends, thus ignore error.
+             */
+            if (REPLICATION)
+                return 0;
+            else
+                return -1;
+        }
+    }
+    return 0;
+}
+
+/*
+ * combo of pool_write and pool_flush
+ */
+void pool_write_and_flush(POOL_CONNECTION *cp, void *buf, int len)
 {
 	pool_write(cp, buf, len);
-	return pool_flush(cp);
+	pool_flush(cp);
+}
+
+/*
+ * same as pool_write_and_flush() but does not throws ereport when error occures
+ */
+int pool_write_and_flush_noerror(POOL_CONNECTION *cp, void *buf, int len)
+{
+	int ret;
+	ret = pool_write_noerror(cp,buf,len);
+	if(ret != 0)
+		return pool_flush_noerror(cp);
+	return ret;
 }
 
 /*
@@ -713,8 +765,6 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 
 		if (readlen == -1)
 		{
-			pool_error("pool_read_string: read() failed. reason:%s", strerror(errno));
-
 			if (cp->isbackend)
 			{
 				notice_backend_error(cp->db_node_id);

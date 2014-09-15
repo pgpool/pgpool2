@@ -125,7 +125,7 @@ static char *get_relation_without_alias(RangeVar *relation);
 /*
  * Connect to Memcached
  */
-int memcached_connect (void)
+int memcached_connect(void)
 {
 	char *memqcache_memcached_host;
 	int memqcache_memcached_port;
@@ -144,9 +144,7 @@ int memcached_connect (void)
 	memqcache_memcached_port = pool_config->memqcache_memcached_port;
 
 	ereport(DEBUG1,
-            (errmsg("memcached_connect : memqcache_memcached_host = %s", memqcache_memcached_host)));
-	ereport(DEBUG1,
-            (errmsg("memcached_connect : memqcache_memcached_port = %d", memqcache_memcached_port)));
+            (errmsg("connecting to memcached on Host:\"%s:%d\"", memqcache_memcached_host,memqcache_memcached_port)));
 
 #ifdef USE_MEMCACHED
 	memc = memcached_create(NULL);
@@ -158,13 +156,15 @@ int memcached_connect (void)
 	rc = memcached_server_push(memc, servers);
 	if (rc != MEMCACHED_SUCCESS)
 	{
-		pool_error("memcached_connect: server_push %s\n", memcached_strerror(memc, rc));
+		ereport(WARNING,
+			(errmsg("failed to connect to memcached, server push error:\"%s\"\n", memcached_strerror(memc, rc))));
 		memc = (memcached_st *)-1;
 		return -1;
 	}
 	memcached_server_list_free(servers);
 #else
-	pool_error("memcached_connect: memcached support is not enabled");
+	ereport(WARNING,
+			(errmsg("failed to connect to memcached, memcached support is not enabled")));
 	return -1;
 #endif
 	return 0;
@@ -182,7 +182,8 @@ void memcached_disconnect (void)
 	}
 	memcached_free(memc);
 #else
-	pool_error("memcached_disconnect: memcached support is not enabled");
+	ereport(WARNING,
+			(errmsg("failed to disconnect from memcached, memcached support is not enabled")));
 #endif
 }
 
@@ -269,7 +270,8 @@ static int pool_commit_cache(POOL_CONNECTION_POOL *backend, char *query, char *d
 			cacheid = pool_add_item_shmem_cache(&query_hash, data, datalen);
 			if (cacheid == NULL)
 			{
-				pool_error("pool_commit_cache: pool_add_item_shmem_cache failed");
+				ereport(LOG,
+						(errmsg("failed to add item to shmem cache")));
 				return -1;
 			}
 			else
@@ -291,7 +293,8 @@ static int pool_commit_cache(POOL_CONNECTION_POOL *backend, char *query, char *d
 						   data, datalen, (time_t)memqcache_expire, 0);
 		if (rc != MEMCACHED_SUCCESS)
 		{
-			pool_error("pool_commit_cache: memcached_set error %s", memcached_strerror(memc, rc));
+			ereport(WARNING,
+					(errmsg("cache commit failed with error:\"%s\"",memcached_strerror(memc, rc))));
 			return -1;
 		}
 		ereport(DEBUG1,
@@ -310,7 +313,9 @@ static int pool_commit_cache(POOL_CONNECTION_POOL *backend, char *query, char *d
 
 /*
  * Fetch from memory cache.
- * 0: fetch success, 1: not found -1: error
+ * Return:
+ * 0: fetch success, 
+ * 1: not found
  */
 static int pool_fetch_cache(POOL_CONNECTION_POOL *backend, const char *query, char **buf, size_t *len)
 {
@@ -320,9 +325,8 @@ static int pool_fetch_cache(POOL_CONNECTION_POOL *backend, const char *query, ch
 	char *p;
 
 	if (strlen(query) <= 0)
-	{
-		return -1;
-	}
+		ereport(ERROR,
+			(errmsg("fetching from cache storage, no query")));
 
 	/* encode md5key for memcached */
 	encode_key(query, tmpkey, backend);
@@ -361,7 +365,8 @@ static int pool_fetch_cache(POOL_CONNECTION_POOL *backend, const char *query, ch
 		{
 			if (rc != MEMCACHED_NOTFOUND)
 			{
-				pool_error("pool_fetch_cache: memcached_get failed %s", memcached_strerror(memc, rc));
+				ereport(LOG,
+					(errmsg("fetching from cache storage, memcached_get failed with error: \"%s\"", memcached_strerror(memc, rc))));
 				/*
 				 * Turn off memory cache support to prevent future errors.
 				 */
@@ -382,8 +387,8 @@ static int pool_fetch_cache(POOL_CONNECTION_POOL *backend, const char *query, ch
 #else
 	else
 	{
-		pool_error("pool_fetch_cache: memcached support is not enabled");
-		return -1;
+		ereport(ERROR,
+			(errmsg("memcached support is not enabled")));
 	}
 #endif
 
@@ -568,7 +573,8 @@ static int delete_cache_on_memcached(const char *key)
 	/* delete cache data on memcached is failed */
     if (rc != MEMCACHED_SUCCESS && rc != MEMCACHED_BUFFERED)
     {
-        pool_error ("delete_cache_on_memcached: %s\n", memcached_strerror(memc, rc));
+		ereport(LOG,
+				(errmsg("failed to delete cache on memcached, error:\"%s\"", memcached_strerror(memc, rc))));
         return 0;
     }
     return 1;
@@ -634,6 +640,7 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 				return POOL_END;
 			if (pool_read(frontend, &kind, 1))
 				return POOL_END;
+
 			ereport(DEBUG2,
 					(errmsg("memcache: fetching from memory cache: expecting sync: kind '%c'", kind)));
 			if (pool_read(frontend, &len, sizeof(len)))
@@ -674,11 +681,6 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 				 errdetail("query result found in the query cache, %s", contents)));
 
 		return POOL_CONTINUE;
-	}
-	else if (sts == -1)
-	{
-		pool_error("pool_fetch_from_memory_cache: pool_fetch_cache() failed. %s", contents);
-		return POOL_END;
 	}
 
 	/* Cache not found */
@@ -917,7 +919,8 @@ int pool_extract_table_oids(Node *node, int **oidsp)
 
 	if (node == NULL)
 	{
-		pool_error("pool_extract_table_oids: statement is NULL");
+		ereport(LOG,
+				(errmsg("memcache: error while extracting table oids. statement is NULL")));
 		return 0;
 	}
 
@@ -994,7 +997,8 @@ int pool_extract_table_oids(Node *node, int **oidsp)
 		{
 			if (num_oids > POOL_MAX_DML_OIDS)
 			{
-				pool_error("pool_extract_table_oids: too many oids:%d", num_oids);
+				ereport(LOG,
+						(errmsg("memcache: error while extracting table oids. too many oids:%d", num_oids)));
 				return 0;
 			}
 
@@ -1019,7 +1023,8 @@ int pool_extract_table_oids(Node *node, int **oidsp)
 		{
 			if (num_oids > POOL_MAX_DML_OIDS)
 			{
-				pool_error("pool_extract_table_oids: too many oids:%d", num_oids);
+				ereport(LOG,
+						(errmsg("memcache: error while extracting table oids. too many oids:%d", num_oids)));
 				return 0;
 			}
 
@@ -1065,7 +1070,9 @@ static char *get_relation_without_alias(RangeVar *relation)
 
 	if (!IsA(relation, RangeVar))
 	{
-		pool_error("get_relation_without_alias: not RangeVar(%d)", relation->type);
+		ereport(WARNING,
+			(errmsg("memcache: extracting table name without alias: invalid node, not a RangeVar"),
+				 errdetail("passed in node is of type:%d",relation->type)));
 		return "";
 	}
 	table = nodeToString(relation);
@@ -1074,7 +1081,9 @@ static char *get_relation_without_alias(RangeVar *relation)
 		p = strchr(table, ' ');
 		if (!p)
 		{
-			pool_error("get_relation_without_alias: cannot locate space;%s", table);
+			ereport(LOG,
+				(errmsg("memcache: extracting table name without alias: parsing error"),
+					 errdetail("cannot locate space in name:\"%s\"", table)));
 			return "";
 		}
 		*p = '\0';
@@ -1224,7 +1233,8 @@ static int pool_get_database_oid(void)
 										false);
 		if (relcache == NULL)
 		{
-			pool_error("pool_get_database_oid: pool_create_relcache error");
+			ereport(LOG,
+				(errmsg("memcache: error creating relcache while getting database OID")));
 			return oid;
 		}
 	}
@@ -1293,7 +1303,8 @@ static void pool_add_table_oid_map(POOL_CACHEKEY *cachekey, int num_table_oids, 
 	{
 		if (errno != EEXIST)
 		{
-			pool_error("pool_add_table_oid_map: failed to create %s. Reason:%s", dir, strerror(errno));
+			ereport(WARNING,
+				(errmsg("memcache: adding table oid maps, failed to create directory:\"%s\". error:\"%s\"", dir, strerror(errno))));
 			return;
 		}
 	}
@@ -1308,7 +1319,8 @@ static void pool_add_table_oid_map(POOL_CACHEKEY *cachekey, int num_table_oids, 
 
 	if (dboid <= 0)
 	{
-		pool_error("pool_add_table_oid_map: could not get database oid");
+		ereport(WARNING,
+				(errmsg("memcache: adding table oid maps, failed to get database OID")));
 		return;
 	}
 
@@ -1317,7 +1329,8 @@ static void pool_add_table_oid_map(POOL_CACHEKEY *cachekey, int num_table_oids, 
 	{
 		if (errno != EEXIST)
 		{
-			pool_error("pool_add_table_oid_map: failed to create %s. reason:%s", path, strerror(errno));
+			ereport(WARNING,
+					(errmsg("memcache: adding table oid maps, failed to create directory:\"%s\". error:\"%s\"", path, strerror(errno))));
 			return;
 		}
 	}
@@ -1344,8 +1357,8 @@ static void pool_add_table_oid_map(POOL_CACHEKEY *cachekey, int num_table_oids, 
 		snprintf(path, sizeof(path), "%s/%d/%d", dir, dboid, oid);
 		if ((fd = open(path, O_CREAT|O_RDWR, S_IRUSR|S_IWUSR)) == -1)
 		{
-			pool_error("pool_add_table_oid_map: failed to create or open %s. reason:%s",
-					   path, strerror(errno));
+			ereport(WARNING,
+					(errmsg("memcache: adding table oid maps, failed to open file:\"%s\". error:\"%s\"", path, strerror(errno))));
 			return;
 		}
 
@@ -1357,8 +1370,9 @@ static void pool_add_table_oid_map(POOL_CACHEKEY *cachekey, int num_table_oids, 
 		sts = fcntl(fd, F_SETLKW, &fl);
 		if (sts == -1)
 		{
-			pool_error("pool_add_table_oid_map: failed to lock %s. reason:%s",
-					   path, strerror(errno));
+			ereport(WARNING,
+					(errmsg("memcache: adding table oid maps, failed to lock file:\"%s\". error:\"%s\"", path, strerror(errno))));
+
 			close(fd);
 			return;
 		}
@@ -1375,8 +1389,8 @@ static void pool_add_table_oid_map(POOL_CACHEKEY *cachekey, int num_table_oids, 
 			sts = read(fd, (char *)&buf, len);
 			if (sts == -1)
 			{
-				pool_error("pool_add_table_oid_map: failed to read %s. reason:%s",
-						   path, strerror(errno));
+				ereport(WARNING,
+						(errmsg("memcache: adding table oid maps, failed to read file:\"%s\". error:\"%s\"", path, strerror(errno))));
 				close(fd);
 				return;
 			}
@@ -1395,7 +1409,8 @@ static void pool_add_table_oid_map(POOL_CACHEKEY *cachekey, int num_table_oids, 
 			 */
 			if (sts != 0)
 			{
-				pool_error("pool_add_table_oid_map: invalid read length %d for %s", sts, path);
+				ereport(WARNING,
+						(errmsg("memcache: adding table oid maps, invalid data length:%d in file:\"%s\". error:\"%s\"",sts, path)));
 				close(fd);
 				return;
 			}
@@ -1405,8 +1420,8 @@ static void pool_add_table_oid_map(POOL_CACHEKEY *cachekey, int num_table_oids, 
 
 		if (lseek(fd, 0, SEEK_END) == -1)
 		{
-			pool_error("pool_add_table_oid_map: failed to lseek %s. reason:%s",
-					   path, strerror(errno));
+			ereport(WARNING,
+					(errmsg("memcache: adding table oid maps, failed seek on file:\"%s\". error:\"%s\"", path, strerror(errno))));
 			close(fd);
 			return;
 		}
@@ -1417,8 +1432,8 @@ static void pool_add_table_oid_map(POOL_CACHEKEY *cachekey, int num_table_oids, 
 		sts = write(fd, (char *)cachekey, len);
 		if (sts == -1 || sts != len)
 		{
-			pool_error("pool_add_table_oid_map: failed to write %s. reason:%s",
-					   path, strerror(errno));
+			ereport(WARNING,
+					(errmsg("memcache: adding table oid maps, failed to write file:\"%s\". error:\"%s\"", path, strerror(errno))));
 			close(fd);
 			return;
 		}
@@ -1486,7 +1501,8 @@ static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool
 	{
 		if (errno != EEXIST)
 		{
-			pool_error("pool_invalidate_query_cache: failed to create %s", dir);
+			ereport(WARNING,
+					(errmsg("memcache: invalidating query cache, failed to create directory:\"%s\". error:\"%s\"", dir, strerror(errno))));
 			return;
 		}
 	}
@@ -1502,7 +1518,8 @@ static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool
 
 		if (dboid <= 0)
 		{
-			pool_error("pool_invalidate_query_cache: could not get database oid");
+			ereport(WARNING,
+					(errmsg("memcache: invalidating query cache, could not get database OID")));
 			return;
 		}
 	}
@@ -1512,7 +1529,8 @@ static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool
 	{
 		if (errno != EEXIST)
 		{
-			pool_error("pool_invalidate_query_cache: failed to create %s. reason:%s", path, strerror(errno));
+			ereport(WARNING,
+					(errmsg("memcache: invalidating query cache, failed to create directory:\"%s\". error:\"%s\"", path, strerror(errno))));
 			return;
 		}
 	}
@@ -1557,8 +1575,8 @@ static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool
 		sts = fcntl(fd, F_SETLKW, &fl);
 		if (sts == -1)
 		{
-			pool_error("pool_invalidate_query_cache: failed to lock %s. reason:%s",
-					   path, strerror(errno));
+			ereport(WARNING,
+					(errmsg("memcache: invalidating query cache, failed to lock file:\"%s\". error:\"%s\"", path, strerror(errno))));
 			close(fd);
 			return;
 		}
@@ -1567,8 +1585,9 @@ static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool
 			sts = read(fd, (char *)&buf, len);
 			if (sts == -1)
 			{
-				pool_error("pool_invalidate_query_cache: failed to read %s. reason:%s",
-						   path, strerror(errno));
+				ereport(WARNING,
+						(errmsg("memcache: invalidating query cache, failed to read file:\"%s\". error:\"%s\"", path, strerror(errno))));
+
 				close(fd);
 				return;
 			}
@@ -1604,7 +1623,8 @@ static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool
 			 */
 			if (sts != 0)
 			{
-				pool_error("pool_invalidate_query_cache: invalid read length %d for %s", sts, path);
+				ereport(WARNING,
+						(errmsg("memcache: invalidating query cache, invalid data length:%d in file:\"%s\"",sts, path)));
 				close(fd);
 				return;
 			}
@@ -1849,12 +1869,6 @@ int pool_init_fsmm(size_t size)
 	int encode_value;
 
 	fsmm = pool_shared_memory_create(size);
-	if (fsmm == NULL)
-	{
-		pool_error("pool_init_fsmm: failed to allocate shared memory cache. request size: %zd", size);
-		return -1;
-	}
-
 	encode_value = POOL_MAX_FREE_SPACE/POOL_FSMM_RATIO;
 	memset(fsmm, encode_value, maxblock);
 	return 0;
@@ -1956,13 +1970,16 @@ static POOL_CACHE_BLOCKID pool_get_block(size_t free_space)
 
 	if (p == NULL)
 	{
-		pool_error("pool_get_block: FSMM is not initialized");
+		ereport(WARNING,
+				(errmsg("memcache: getting block: FSMM is not initialized")));
 		return -1;
 	}
 
 	if (free_space > POOL_MAX_FREE_SPACE)
 	{
-		pool_error("pool_get_block: invalid free space %zd", free_space);
+		ereport(WARNING,
+			(errmsg("memcache: getting block: invalid free space:%zd", free_space),
+				 errdetail("requested free space: %zd is more than maximum allowed space:%lu",free_space,POOL_MAX_FREE_SPACE)));
 		return -1;
 	}
 
@@ -2000,19 +2017,24 @@ static void pool_update_fsmm(POOL_CACHE_BLOCKID blockid, size_t free_space)
 
 	if (p == NULL)
 	{
-		pool_error("pool_set_free_space: FSMM is not initialized");
+		ereport(WARNING,
+				(errmsg("memcache: updating free space in block: FSMM is not initialized")));
 		return;
 	}
 
 	if (blockid >= pool_get_memqcache_blocks())
 	{
-		pool_error("pool_set_free_space: invalid block id %d", blockid);
+		ereport(WARNING,
+				(errmsg("memcache: updating free space in block: block id:%d in invalid",blockid)));
 		return;
 	}
 
 	if (free_space > POOL_MAX_FREE_SPACE)
 	{
-		pool_error("pool_set_free_space: invalid free space %zd", free_space);
+		ereport(WARNING,
+			(errmsg("memcache: updating free space in block: invalid free space:%zd", free_space),
+				 errdetail("requested free space: %zd is more than maximum allowed space:%lu",free_space,POOL_MAX_FREE_SPACE)));
+
 		return;
 	}
 
@@ -2054,19 +2076,22 @@ static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char
 
 	if (query_hash == NULL)
 	{
-		pool_error("pool_add_item_shmem_cache: query hash is NULL");
+		ereport(LOG,
+				(errmsg("error while adding item to shmem cache, query hash is NULL")));
 		return NULL;
 	}
 
 	if (data == NULL)
 	{
-		pool_error("pool_add_item_shmem_cache: data NULL");
+		ereport(LOG,
+				(errmsg("error while adding item to shmem cache, data is NULL")));
 		return NULL;
 	}
 
 	if (size <= 0)
 	{
-		pool_error("pool_add_item_shmem_cache: invalid request size: %d", size);
+		ereport(LOG,
+				(errmsg("error while adding item to shmem cache, invalid request size: %d", size)));
 		return NULL;
 	}
 
@@ -2142,7 +2167,8 @@ static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char
 		dcip = calloc(1, pool_config->memqcache_cache_block_size);
 		if (!dcip)
 		{
-			pool_error("pool_add_item_shmem_cache: calloc failed");
+			ereport(WARNING,
+					(errmsg("memcache: adding item to cache: calloc failed")));
 			return NULL;
 		}
 
@@ -2218,8 +2244,10 @@ static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char
 	if (bh->free_bytes < request_size)
 	{
 		/* This should not happen */
-		pool_error("pool_add_item_shmem_cache: not enough free space. Free space: %d required: %d block id:%d",
-				   bh->free_bytes, request_size, blockid);
+		ereport(WARNING,
+			(errmsg("memcache: adding item to cache: not enough space"),
+				 errdetail("free space: %d required: %d block id:%d",
+						   bh->free_bytes, request_size, blockid)));
 		return NULL;
 	}
 
@@ -2279,7 +2307,8 @@ static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char
 	/* Update hash table */
 	if (pool_hash_insert(query_hash, &cacheid, false) < 0)
 	{
-		pool_error("pool_add_item_shmem_cache: pool_hash_insert failed");
+		ereport(LOG,
+				(errmsg("error while adding item to shmem cache, hash insert failed")));
 
 		/* Since we have failed to insert hash index entry, we need to
 		 * undo the addition of cache entry.
@@ -2310,7 +2339,8 @@ static char *pool_get_item_shmem_cache(POOL_QUERY_HASH *query_hash, int *size, i
 
 	if (sts == NULL)
 	{
-		pool_error("pool_get_item_shmem_cache: sts is NULL");
+		ereport(LOG,
+				(errmsg("error while getting item from shmem cache, sts is NULL")));
 		return NULL;
 	}
 
@@ -2318,13 +2348,15 @@ static char *pool_get_item_shmem_cache(POOL_QUERY_HASH *query_hash, int *size, i
 
 	if (query_hash == NULL)
 	{
-		pool_error("pool_get_item_shmem_cache: query hash is NULL");
+		ereport(LOG,
+				(errmsg("error while getting item from shmem cache, query hash is NULL")));
 		return NULL;
 	}
 
 	if (size == NULL)
 	{
-		pool_error("pool_get_item_shmem_cache: size is NULL");
+		ereport(LOG,
+				(errmsg("error while getting item from shmem cache, size is NULL")));
 		return NULL;
 	}
 
@@ -2404,16 +2436,18 @@ static int pool_delete_item_shmem_cache(POOL_CACHEID *cacheid)
 
 	if (cacheid->blockid >= pool_get_memqcache_blocks())
 	{
-		pool_error("pool_delete_item_shmem_cache: invalid block id %d",
-				   cacheid->blockid);
+		ereport(LOG,
+				(errmsg("error while deleting item from shmem cache, invalid block: %d",
+						cacheid->blockid)));
 		return -1;
 	}
 
 	bh = (POOL_CACHE_BLOCK_HEADER *)block_address(cacheid->blockid);
 	if (!(bh->flags & POOL_BLOCK_USED))
 	{
-		pool_error("pool_delete_item_shmem_cache: block %d is not used",
-				   cacheid->blockid);
+		ereport(LOG,
+				(errmsg("error while deleting item from shmem cache, block: %d is not used",
+						cacheid->blockid)));
 		return -1;
 	}
 
@@ -2434,15 +2468,17 @@ static int pool_delete_item_shmem_cache(POOL_CACHEID *cacheid)
 	cip = item_pointer(block_address(cacheid->blockid), cacheid->itemid);
 	if (!(cip->flags & POOL_ITEM_USED))
 	{
-		pool_error("pool_delete_item_shmem_cache: item %d was not used",
-				   cacheid->itemid);
+		ereport(LOG,
+				(errmsg("error while deleting item from shmem cache, item: %d was not used",
+						cacheid->itemid)));
 		return -1;
 	}
 
 	if (cip->flags & POOL_ITEM_DELETED)
 	{
-		pool_error("pool_delete_item_shmem_cache: item %d was deleted",
-				   cacheid->itemid);
+		ereport(LOG,
+				(errmsg("error while deleting item from shmem cache, item: %d was already deleted",
+						cacheid->itemid)));
 		return -1;
 	}
 
@@ -2505,14 +2541,16 @@ static POOL_CACHE_ITEM_HEADER *pool_cache_item_header(POOL_CACHEID *cacheid)
 
 	if (cacheid->blockid >= pool_get_memqcache_blocks())
 	{
-		pool_error("pool_cache_item_header: invalid block id %d", cacheid->blockid);
+		ereport(WARNING,
+				(errmsg("error while getting cache item header, invalid block id: %d", cacheid->blockid)));
 		return NULL;
 	}
 
 	bh = (POOL_CACHE_BLOCK_HEADER *)block_address(cacheid->blockid);
 	if (cacheid->itemid >= bh->num_items)
 	{
-		pool_error("pool_cache_item_header: invalid item id %d", cacheid->itemid);
+		ereport(WARNING,
+				(errmsg("error while getting cache item header, invalid item id: %d", cacheid->itemid)));
 		return NULL;
 	}
 
@@ -2529,7 +2567,8 @@ static int pool_init_cache_block(POOL_CACHE_BLOCKID blockid)
 
 	if (blockid >= pool_get_memqcache_blocks())
 	{
-		pool_error("pool_init_cache_block: invalid block id %d", blockid);
+		ereport(WARNING,
+				(errmsg("error while initializing cache block, invalid block id: %d", blockid)));
 		return -1;
 	}
 
@@ -3097,7 +3136,9 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 				{
 					if (pool_commit_cache(backend, query, cache_buffer, len, num_oids, oids) != 0)
 					{
-						pool_error("ReadyForQuery: pool_commit_cache failed");
+						ereport(WARNING,
+								(errmsg("ReadyForQuery: pool_commit_cache failed")));
+
 					}
 					pfree(cache_buffer);
 				}
@@ -3199,7 +3240,8 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 						
 			if (pool_commit_cache(backend, cache->query, cache_buffer, len, num_oids, oids) != 0)
 			{
-				pool_error("ReadyForQuery: pool_commit_cache failed");
+				ereport(WARNING,
+						(errmsg("ReadyForQuery: pool_commit_cache failed")));
 			}
 			if (oids)
 				pfree(oids);
@@ -3445,10 +3487,8 @@ int pool_hash_init(int nelements)
 	int i;
 
 	if (nelements <= 0)
-	{
-		pool_error("pool_hash_init: invalid nelements:%d", nelements);
-		return -1;
-	}
+		ereport(ERROR,
+			(errmsg("initializing hash table on shared memory, invalid number of elements: %d",nelements)));
 
 	/* Round up to power of 2 */
 	shift = 32;
@@ -3463,11 +3503,6 @@ int pool_hash_init(int nelements)
 	mask >>= shift;
 	size = (char *)&hh.elements - (char *)&hh + sizeof(POOL_HEADER_ELEMENT)*nelements2;
 	hash_header = pool_shared_memory_create(size);
-	if (hash_header == NULL)
-	{
-		pool_error("pool_hash_init: failed to allocate shared memory cache for hash header. request size: %zd", size);
-		return -1;
-	}
 	hash_header->nhash = nelements2;
     hash_header->mask = mask;
 
@@ -3480,11 +3515,6 @@ int pool_hash_init(int nelements)
 
 	size = sizeof(POOL_HASH_ELEMENT)*nelements2;
 	hash_elements = pool_shared_memory_create(size);
-	if (hash_elements == NULL)
-	{
-		pool_error("pool_hash_init: failed to allocate shared memory cache for free list. request size: %zd", size);
-		return -1;
-	}
 
 #ifdef POOL_HASH_DEBUG
 	ereport(LOG,
@@ -3518,10 +3548,8 @@ pool_hash_reset(int nelements)
 	int i;
 
 	if (nelements <= 0)
-	{
-		pool_error("pool_hash_clear: invalid nelements:%d", nelements);
-		return -1;
-	}
+		ereport(ERROR,
+				(errmsg("clearing hash table on shared memory, invalid number of elements: %d",nelements)));
 
 	/* Round up to power of 2 */
 	shift = 32;
@@ -3566,8 +3594,10 @@ POOL_CACHEID *pool_hash_search(POOL_QUERY_HASH *key)
 
 	if (hash_key >= hash_header->nhash)
 	{
-		pool_error("pool_hash_search: invalid hash key: %uld nhash: %ld",
-				   hash_key, hash_header->nhash);
+		ereport(WARNING,
+			(errmsg("memcache: searching cacheid from hash. invalid hash key"),
+				errdetail("invalid hash key: %uld nhash: %ld",
+					   hash_key, hash_header->nhash)));
 		return NULL;
 	}
 
@@ -3620,8 +3650,10 @@ static int pool_hash_insert(POOL_QUERY_HASH *key, POOL_CACHEID *cacheid, bool up
 
 	if (hash_key >= hash_header->nhash)
 	{
-		pool_error("pool_hash_insert: invalid hash key: %uld nhash: %ld",
-				   hash_key, hash_header->nhash);
+		ereport(WARNING,
+			(errmsg("memcache: adding cacheid to hash. invalid hash key"),
+				 errdetail("invalid hash key: %uld nhash: %ld",
+						   hash_key, hash_header->nhash)));
 		return -1;
 	}
 
@@ -3653,7 +3685,8 @@ static int pool_hash_insert(POOL_QUERY_HASH *key, POOL_CACHEID *cacheid, bool up
 			{
 				memcpy(md5, key->query_hash, POOL_MD5_HASHKEYLEN);
 				md5[POOL_MD5_HASHKEYLEN] = '\0';
-				pool_error("pool_hash_insert: the key:==%s== already exists", md5);
+				ereport(LOG,
+					(errmsg("memcache: adding cacheid to hash. hash key:\"%s\" already exists",md5)));
 				return -1;
 			}
 			else
@@ -3672,7 +3705,8 @@ static int pool_hash_insert(POOL_QUERY_HASH *key, POOL_CACHEID *cacheid, bool up
 	new_element = (POOL_HASH_ELEMENT *)get_new_hash_element();
 	if (!new_element)
 	{
-		pool_error("pool_hash_insert: could not get new element");
+		ereport(LOG,
+				(errmsg("memcache: adding cacheid to hash. failed to get new element")));
 		return -1;
 	}
 
@@ -3700,8 +3734,10 @@ int pool_hash_delete(POOL_QUERY_HASH *key)
 
 	if (hash_key >= hash_header->nhash)
 	{
-		pool_error("pool_hash_delete: invalid hash key: %uld nhash: %ld",
-				   hash_key, hash_header->nhash);
+		ereport(LOG,
+			(errmsg("memcache: deleting key from hash. invalid key"),
+				 errdetail("invalid hash key: %uld nhash: %ld",
+						   hash_key, hash_header->nhash)));
 		return -1;
 	}
 
@@ -3729,7 +3765,8 @@ int pool_hash_delete(POOL_QUERY_HASH *key)
 
 		memcpy(md5, key->query_hash, POOL_MD5_HASHKEYLEN);
 		md5[POOL_MD5_HASHKEYLEN] = '\0';
-		pool_error("pool_hash_delete: the key:==%s== not found", md5);
+		ereport(LOG,
+			(errmsg("memcache: deleting key from hash. key:\"%s\" not found",md5)));
 		return -1;
 	}
 

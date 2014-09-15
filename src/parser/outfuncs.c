@@ -5151,10 +5151,8 @@ _outWithDefinition(String *str, List *def_list)
 	if (list_length(def_list) == 1)
 	{
 		DefElem *elem;
-		Value *v;
-		
+
 		elem = linitial(def_list);
-		v = (Value *)elem->arg;
 		if (strcmp(elem->defname, "oids") == 0)
 		{
 			Value *v = (Value *)elem->arg;

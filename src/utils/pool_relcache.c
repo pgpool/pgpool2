@@ -43,28 +43,24 @@ POOL_RELCACHE *pool_create_relcache(int cachesize, char *sql,
 {
 	POOL_RELCACHE *p;
 	PoolRelCache *ip;
+	MemoryContext old_context;
 
 	if (cachesize < 0)
 	{
-		pool_error("pool_create_relcache: wrong cache size: %d", cachesize);
+		ereport(WARNING,
+				(errmsg("failed to create relcache: wrong cache size: %d", cachesize)));
 		return NULL;
 	}
+	/*
+	 * Create the relcache in session context if the cache is session local,
+	 * otherwise make home in TopMemoryContext
+	 */
+	old_context = MemoryContextSwitchTo(TopMemoryContext);
 
-	ip = (PoolRelCache *)malloc(sizeof(PoolRelCache)*cachesize);
-	if (ip == NULL)
-	{
-		pool_error("pool_create_relcache: cannot allocate memory %zd", sizeof(PoolRelCache)*cachesize);
-		return NULL;
-	}
-	memset(ip, 0, sizeof(PoolRelCache)*cachesize);
+	ip = (PoolRelCache *)palloc0(sizeof(PoolRelCache)*cachesize);
+	p = (POOL_RELCACHE *)palloc(sizeof(POOL_RELCACHE));
 
-	p = (POOL_RELCACHE *)malloc(sizeof(POOL_RELCACHE));
-	if (p == NULL)
-	{
-		pool_error("pool_create_relcache: cannot allocate memory %zd", sizeof(POOL_RELCACHE));
-		free(ip);
-		return NULL;
-	}
+	MemoryContextSwitchTo(old_context);
 
 	p->num = cachesize;
 	strlcpy(p->sql, sql, sizeof(p->sql));
@@ -87,8 +83,8 @@ void pool_discard_relcache(POOL_RELCACHE *relcache)
 	{
 		(*relcache->unregister_func)(relcache->cache[i].data);
 	}
-	free(relcache->cache);
-	free(relcache);
+	pfree(relcache->cache);
+	pfree(relcache);
 }
 
 /*
@@ -115,7 +111,6 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 	local_session_id = pool_get_local_session_id();
 	if (local_session_id < 0)
 	{
-		pool_error("pool_search_relcache: pool_get_local_session_id failed");
 		pfree(rel);
 		return NULL;
 	}
@@ -254,7 +249,7 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 
 static void SearchRelCacheErrorCb(void *arg)
 {
-	errcontext("While searching system catalog, When relcache is missed");
+	errcontext("while searching system catalog, When relcache is missed");
 }
 
 /*

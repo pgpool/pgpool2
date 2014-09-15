@@ -164,7 +164,8 @@ relcache_lookup(TSRewriteContext *ctx)
 
 		if (ts_relcache == NULL)
 		{
-			pool_error("relcache_lookup: pool_create_relcache error");
+			ereport(WARNING,
+				(errmsg("unable to create relcache")));
 			return NULL;
 		}
 	}
@@ -716,7 +717,8 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 		timestamp = get_current_timestamp(backend);
 		if (timestamp == NULL)
 		{
-			pool_error("rewrite_timestamp: could not get current timestamp");
+			ereport(WARNING,
+					(errmsg("rewrite timestamp failed, unable to get current timestamp")));
 			return NULL;
 		}
 
@@ -760,7 +762,8 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend,
 	ts = get_current_timestamp(backend);
 	if (ts == NULL)
 	{
-		pool_error("bind_rewrite_timestamp: could not get current timestamp");
+		ereport(WARNING,
+			(errmsg("bind rewrite timestamp failed, unable to get current timestamp")));
 		return NULL;
 	}
 

@@ -1067,7 +1067,7 @@ void config_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 POOL_REPORT_NODES* get_nodes(int *nrows)
 {
 	int i;
-	POOL_REPORT_NODES* nodes = malloc(NUM_BACKENDS * sizeof(POOL_REPORT_NODES));
+	POOL_REPORT_NODES* nodes = palloc(NUM_BACKENDS * sizeof(POOL_REPORT_NODES));
 	BackendInfo *bi = NULL;
 
     for (i = 0; i < NUM_BACKENDS; i++)
@@ -1201,7 +1201,7 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 
 	send_complete_and_ready(frontend, backend, nrows);
 
-	free(nodes);
+	pfree(nodes);
 }
 
 
@@ -1413,7 +1413,7 @@ POOL_REPORT_PROCESSES* get_processes(int *nrows)
     ProcessInfo *pi = NULL;
     int proc_id;
 
-    POOL_REPORT_PROCESSES* processes = malloc(pool_config->num_init_children * sizeof(POOL_REPORT_PROCESSES));
+    POOL_REPORT_PROCESSES* processes = palloc(pool_config->num_init_children * sizeof(POOL_REPORT_PROCESSES));
 
 	for (child = 0; child < pool_config->num_init_children; child++)
     {
@@ -1547,12 +1547,12 @@ void processes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backen
 
 	send_complete_and_ready(frontend, backend, nrows);
 
-	free(processes);
+	pfree(processes);
 }
 
 POOL_REPORT_VERSION* get_version(void)
 {
-	POOL_REPORT_VERSION *version = malloc(sizeof(POOL_REPORT_VERSION));
+	POOL_REPORT_VERSION *version = palloc(sizeof(POOL_REPORT_VERSION));
 
 	snprintf(version[0].version, POOLCONFIG_MAXVALLEN, "%s (%s)", VERSION, PGPOOLVERSION);
 
@@ -1604,7 +1604,7 @@ void version_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 
 	send_complete_and_ready(frontend, backend, 1);
 
-	free(version);
+	pfree(version);
 }
 
 /*
@@ -1637,12 +1637,7 @@ void cache_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 
 	MY_STRING_CACHE_STATS *strp;
 
-	strp = malloc(num_fields*sizeof(MY_STRING_CACHE_STATS));
-	if (!strp)
-	{
-		pool_error("cache_reporting: malloc failed");
-		return;
-	}
+	strp = palloc(num_fields*sizeof(MY_STRING_CACHE_STATS));
 
 	/*
 	 * Get raw cache stat data
@@ -1735,5 +1730,5 @@ void cache_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 
 	send_complete_and_ready(frontend, backend, 1);
 
-	free(strp);
+	pfree(strp);
 }

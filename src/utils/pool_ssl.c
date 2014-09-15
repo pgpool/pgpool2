@@ -79,8 +79,9 @@ void pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp) {
 
 	if (pool_read(cp, &server_response, 1) < 0)
 	{
-		pool_error("pool_ssl_negotiate_clientserver: pool_read failed");
-		return;
+		ereport(WARNING,
+				(errmsg("error while attempting to negotiate a secure connection, pool_read failed")));
+ 		return;
 	}
 
 	ereport(DEBUG1,
@@ -104,7 +105,8 @@ void pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp) {
 					 errdetail("server doesn't want to talk SSL")));
 			break;
 		default:
-			pool_error("pool_ssl: unhandled response: %c", server_response);
+			ereport(WARNING,
+					(errmsg("error while attempting to negotiate a secure connection, unhandled response: %c", server_response)));
 			break;
 	}
 }
@@ -165,11 +167,13 @@ int pool_ssl_read(POOL_CONNECTION *cp, void *buf, int size) {
 		case SSL_ERROR_SYSCALL:
 			if (n == -1)
 			{
-				pool_error("SSL_read error: %d", err);
+				ereport(WARNING,
+						(errmsg("ssl read: error: %d", err)));
 			}
 			else
 			{
-				pool_error("SSL_read error: EOF detected");
+				ereport(WARNING,
+						(errmsg("ssl read: EOF detected")));
 				n = -1;
 			}
 			break;
@@ -180,7 +184,8 @@ int pool_ssl_read(POOL_CONNECTION *cp, void *buf, int size) {
 			n = -1;
 			break;
 		default:
-			pool_error("pool_ssl_read: unrecognized error code: %d", err);
+			ereport(WARNING,
+					(errmsg("ssl read: unrecognized error code: %d", err)));
 			/*
 			 * We assume that the connection is broken. Returns 0
 			 * rather than -1 in this case because -1 triggers
@@ -214,11 +219,13 @@ retry:
 		case SSL_ERROR_SYSCALL:
 			if (n == -1)
 			{
-				pool_error("SSL_write error: %d", err);
+				ereport(WARNING,
+						(errmsg("ssl write: error: %d", err)));
 			}
 			else
 			{
-				pool_error("SSL_write error: EOF detected");
+				ereport(WARNING,
+						(errmsg("ssl write: EOF detected")));
 				n = -1;
 			}
 			break;
@@ -230,7 +237,8 @@ retry:
 			break;
 
 		default:
-			pool_error("pool_ssl_write: unrecognized error code: %d", err);
+		   ereport(WARNING,
+				   (errmsg("ssl write: unrecognized error code: %d", err)));
 			/*
 			 * We assume that the connection is broken.
 			 */
@@ -293,9 +301,11 @@ static void perror_ssl(const char *context) {
 	}
 
 	if (reason != NULL) {
-		pool_error("pool_ssl: %s: %s", context, reason);
+		ereport(LOG,
+			(errmsg("pool_ssl: \"%s\": \"%s\"", context, reason)));
 	} else {
-		pool_error("pool_ssl: %s: Unknown SSL error %lu", context, err);
+		ereport(LOG,
+				(errmsg("pool_ssl: \"%s\": Unknown SSL error %lu", context, err)));
 	}
 }
 
@@ -329,14 +339,16 @@ void pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp) {
 void pool_ssl_close(POOL_CONNECTION *cp) { return; }
 
 int pool_ssl_read(POOL_CONNECTION *cp, void *buf, int size) {
-	pool_error("pool_ssl: SSL i/o called but SSL support is not available");
+	ereport(WARNING,
+			(errmsg("pool_ssl: SSL i/o called but SSL support is not available")));
 	notice_backend_error(cp->db_node_id);
 	child_exit(1);
 	return -1; /* never reached */
 }
 
 int pool_ssl_write(POOL_CONNECTION *cp, const void *buf, int size) {
-	pool_error("pool_ssl: SSL i/o called but SSL support is not available");
+	ereport(WARNING,
+			(errmsg("pool_ssl: SSL i/o called but SSL support is not available")));
 	notice_backend_error(cp->db_node_id);
 	child_exit(1);
 	return -1; /* never reached */

@@ -28,6 +28,13 @@
 #include "pool.h"
 #include "auth/pool_passwd.h"
 #include "auth/md5.h"
+#ifndef POOL_PRIVATE
+#include "utils/elog.h"
+#else
+#include "utils/fe_ports.h"
+#endif
+
+
 
 static FILE *passwd_fd = NULL;	/* File descriptor for pool_passwd */
 static char saved_passwd_filename[POOLMAXPATHLEN+1];
@@ -59,9 +66,9 @@ void pool_init_pool_passwd(char *pool_passwd_filename)
 			if (passwd_fd)
 				return;
 		}
-
-		pool_error("pool_init_pool_passwd: couldn't open %s. reason: %s",
-				   pool_passwd_filename, strerror(errno));
+		ereport(ERROR,
+			(errmsg("initializing pool password, failed to open file:\"%s\"",pool_passwd_filename),
+				 errdetail("file open failed with error:\"%s\"",strerror(errno))));
 	}
 }
 
@@ -78,17 +85,13 @@ int pool_create_passwdent(char *username, char *passwd)
 	int readlen;
 
 	if (!passwd_fd)
-	{
-		pool_error("pool_create_passwdent: passwd_fd is NULL");
-		return -1;
-	}
+		ereport(ERROR,
+				(errmsg("error updating password, password file descriptor is NULL")));
 
 	len = strlen(passwd);
 	if (len != POOL_PASSWD_LEN)
-	{
-		pool_error("pool_create_passwdent: wrong password length:%d", len);
-		return -1;
-	}
+		ereport(ERROR,
+				(errmsg("error updating password, invalid password length:%d",len)));
 
 	rewind(passwd_fd);
 	name[0] = '\0';
@@ -164,16 +167,12 @@ char *pool_get_passwd(char *username)
 	int readlen;
 
 	if (!username)
-	{
-		pool_error("pool_get_passwd: username is NULL");
-		return NULL;
-	}
+		ereport(ERROR,
+				(errmsg("unable to get password, username is NULL")));
 
 	if (!passwd_fd)
-	{
-		pool_error("pool_get_passwd: passwd_fd is NULL");
-		return NULL;
-	}
+		ereport(ERROR,
+				(errmsg("unable to get password, password file descriptor is NULL")));
 
 	rewind(passwd_fd);
 	name[0] = '\0';

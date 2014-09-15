@@ -42,16 +42,13 @@ wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, char * delegate_ip
 	WdInfo * p = NULL;
 
 	if ((WD_List == NULL) || (hostname == NULL))
-	{
-		pool_error("wd_set_wd_list: memory allocate error");
-		return -1;
-	}
+		ereport(ERROR,
+			(errmsg("adding watchdog information list. memory allocation error")));
 
 	if (strcmp(pool_config->delegate_IP, delegate_ip))
-	{
-		pool_error("wd_set_wd_list: delegate IP mismatch error");
-		return -1;
-	}
+		ereport(ERROR,
+			(errmsg("adding watchdog information list. delegate IP mismatch error"),
+				 errdetail("delegate IP defined in config \"%s\" does not match with \"%s\"",pool_config->delegate_IP, delegate_ip)));
 
 	for ( i = 0 ; i < MAX_WATCHDOG_NUM ; i ++)
 	{
@@ -100,8 +97,8 @@ wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, char * delegate_ip
 			return i;
 		}
 	}
-
-	pool_error("wd_set_wd_list: Can not add new watchdog information cause the WD_List is full.");
+	ereport(WARNING,
+			(errmsg("failed adding watchdog information list. list is full")));
 	return -1;
 }
 
@@ -125,10 +122,9 @@ wd_add_wd_list(WdDesc * other_wd)
 
 	if (other_wd == NULL)
 	{
-		pool_error("wd_add_wd_list: memory allocate error");
-		return -1;
+		ereport(ERROR,
+				(errmsg("adding watchdog information list. memory allocation error")));
 	}
-
 	for ( i = 0 ; i < other_wd->num_wd ; i ++)
 	{
 		p = &(other_wd->wd_info[i]);

@@ -20,7 +20,7 @@
  * is" without express or implied warranty.
  *
  */
-
+#include <pthread.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -35,6 +35,8 @@
 
 #include "pool.h"
 #include "utils/elog.h"
+#include "utils/palloc.h"
+#include "utils/memutils.h"
 #include "pool_config.h"
 #include "watchdog/watchdog.h"
 #include "watchdog/wd_ext.h"
@@ -50,8 +52,9 @@ static pid_t hb_sender_pid[WD_MAX_IF_NUM];
 
 static pid_t fork_a_lifecheck(int fork_wait_time);
 static void wd_exit(int exit_status);
-static int wd_check_config(void);
+static void wd_check_config(void);
 static int has_setuid_bit(char * path);
+static void *exec_func(void *arg);
 
 static void
 wd_exit(int exit_signo)
@@ -97,61 +100,37 @@ wd_kill_watchdog(int sig)
 	}
 }
 
-static int
+static void
 wd_check_config(void)
 {
-	int status = WD_OK;
-
 	if (pool_config->other_wd->num_wd == 0)
-	{
-		pool_error("wd_check_config: there is no other pgpools setting.");
-		status = WD_NG;
-	}
+		ereport(ERROR,
+			(errmsg("invalid watchdog configuration. other pgpools setting is not defined")));
 
 	if (strlen(pool_config->wd_authkey) > MAX_PASSWORD_SIZE)
-	{
-		pool_error("wd_check_config: wd_authkey length can't be larger than %d",
-		           MAX_PASSWORD_SIZE);
-		status = WD_NG;
-	}
-
-	return status;
+		ereport(ERROR,
+				(errmsg("invalid watchdog configuration. wd_authkey length can't be larger than %d",
+						MAX_PASSWORD_SIZE)));
 }
 
 pid_t
 wd_main(int fork_wait_time)
 {
-	int status = WD_INIT;
 	int i;
 
 	if (!pool_config->use_watchdog)
-	{
 		return 0;
-	}
 
 	/* check pool_config data */
-	status = wd_check_config();
-	if (status != WD_OK)
-		ereport(FATAL,
-			(errmsg("watchdog: wd_check_config failed")));
+	wd_check_config();
 
 	/* initialize */
-	status = wd_init();
-	if (status != WD_OK)
-	{
-		pool_error("watchdog: wd_init failed");
-		return 0;
-	}
+	wd_init();
 
 	wd_ppid = getpid();
 
 	/* launch child process */
 	child_pid = wd_child(1);
-	if (child_pid < 0 )
-	{
-		pool_error("launch wd_child failed");
-		return 0;
-	}
 
 	if (!strcmp(pool_config->wd_lifecheck_method, MODE_HEARTBEAT))
 	{
@@ -159,29 +138,14 @@ wd_main(int fork_wait_time)
 		{
 			/* heartbeat receiver process */
 			hb_receiver_pid[i] = wd_hb_receiver(1, &(pool_config->hb_if[i]));
-			if (hb_receiver_pid[i] < 0 )
-			{
-				pool_error("launch wd_hb_receiver failed");
-				return hb_receiver_pid[i];
-			}
 
 			/* heartbeat sender process */
 			hb_sender_pid[i] = wd_hb_sender(1, &(pool_config->hb_if[i]));
-			if (hb_sender_pid[i] < 0 )
-			{
-				pool_error("launch wd_hb_sender failed");
-				return hb_sender_pid[i];
-			}
 		}
 	}
 
 	/* fork lifecheck process*/
 	lifecheck_pid = fork_a_lifecheck(fork_wait_time);
-	if (lifecheck_pid < 0 )
-	{
-		pool_error("launch lifecheck process failed");
-		return 0;
-	}
 
 	return lifecheck_pid;
 }
@@ -192,16 +156,18 @@ static pid_t
 fork_a_lifecheck(int fork_wait_time)
 {
 	pid_t pid;
+	sigjmp_buf	local_sigjmp_buf;
 
 	pid = fork();
 	if (pid != 0)
 	{
 		if (pid == -1)
-			pool_error("fork_a_lifecheck: fork() failed.");
-
+			ereport(ERROR,
+					(errmsg("failed to fork a lifecheck process")));
 		return pid;
 	}
     on_exit_reset();
+	processType = PT_LIFECHECK;
 
 	if (fork_wait_time > 0) {
 		sleep(fork_wait_time);
@@ -218,7 +184,16 @@ fork_a_lifecheck(int fork_wait_time)
 	signal(SIGQUIT, wd_exit);	
 	signal(SIGCHLD, SIG_DFL);
 	signal(SIGHUP, SIG_IGN);	
-	signal(SIGPIPE, SIG_IGN);	
+	signal(SIGPIPE, SIG_IGN);
+
+	/* Create per loop iteration memory context */
+	ProcessLoopContext = AllocSetContextCreate(TopMemoryContext,
+											   "wd_lifecheck_main_loop",
+											   ALLOCSET_DEFAULT_MINSIZE,
+											   ALLOCSET_DEFAULT_INITSIZE,
+											   ALLOCSET_DEFAULT_MAXSIZE);
+	
+	MemoryContextSwitchTo(TopMemoryContext);
 
 	set_ps_display("lifecheck",false);
 
@@ -230,9 +205,26 @@ fork_a_lifecheck(int fork_wait_time)
 	ereport(LOG,
 			(errmsg("watchdog: lifecheck started")));
 
+	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
+	{
+		/* Since not using PG_TRY, must reset error stack by hand */
+		error_context_stack = NULL;
+		
+		EmitErrorReport();
+		MemoryContextSwitchTo(TopMemoryContext);
+		FlushErrorState();
+		sleep(pool_config->wd_heartbeat_keepalive);
+	}
+	
+	/* We can now handle ereport(ERROR) */
+	PG_exception_stack = &local_sigjmp_buf;
+
 	/* watchdog loop */
 	for (;;)
 	{
+		MemoryContextSwitchTo(ProcessLoopContext);
+		MemoryContextResetAndDeleteChildren(ProcessLoopContext);
+
 		/* pgpool life check */
 		wd_lifecheck();
 		sleep(pool_config->wd_interval);
@@ -282,11 +274,6 @@ wd_reaper_watchdog(pid_t pid, int status)
 
 		lifecheck_pid = fork_a_lifecheck(1);
 
-		if (lifecheck_pid < 0)
-		{
-			pool_error("wd_reaper: fork a watchdog lifecheck process failed");
-			return 0;
-		}
 		ereport(LOG,
 				(errmsg("fork a new watchdog lifecheck pid %d", lifecheck_pid)));
 
@@ -306,12 +293,6 @@ wd_reaper_watchdog(pid_t pid, int status)
 
 
 		child_pid = wd_child(1);
-
-		if (child_pid < 0)
-		{
-			pool_error("wd_reaper: fork a watchdog child process failed");
-			return 0;
-		}
 
 		ereport(LOG,
 				(errmsg("fork a new watchdog child pid %d", child_pid)));
@@ -335,12 +316,6 @@ wd_reaper_watchdog(pid_t pid, int status)
 
 				hb_receiver_pid[i] = wd_hb_receiver(1, &(pool_config->hb_if[i]));
 
-				if (hb_receiver_pid[i] < 0)
-				{
-					pool_error("wd_reaper: fork a watchdog heartbeat receiver process failed");
-					return 0;
-				}
-
 				ereport(LOG,
 						(errmsg("fork a new watchdog heartbeat receiver with pid %d", hb_receiver_pid[i])));
 
@@ -359,11 +334,6 @@ wd_reaper_watchdog(pid_t pid, int status)
 
 				hb_sender_pid[i] = wd_hb_sender(1, &(pool_config->hb_if[i]));
 
-				if (hb_sender_pid[i] < 0)
-				{
-					pool_error("wd_reaper: fork a watchdog heartbeat sender process failed");
-					return 0;
-				}
 				ereport(LOG,
 						(errmsg("fork a new watchdog heartbeat sender with PID:%d", hb_sender_pid[i])));
 				break;
@@ -385,7 +355,7 @@ wd_chk_setuid(void)
 	snprintf(path, sizeof(path), "%s/%s", pool_config->ifconfig_path, cmd);
 	if (! has_setuid_bit(path))
 	{
-		ereport(LOG,
+		ereport(NOTICE,
 			(errmsg("checking setuid bit of ifup command"),
 				 errdetail("ifup[%s] doesn't have setuid bit", path)));
 		return 0;
@@ -396,7 +366,7 @@ wd_chk_setuid(void)
 	snprintf(path, sizeof(path), "%s/%s", pool_config->ifconfig_path, cmd);
 	if (! has_setuid_bit(path))
 	{
-		ereport(LOG,
+		ereport(NOTICE,
 			(errmsg("checking setuid bit of ifdown command"),
 				 errdetail("ifdown[%s] doesn't have setuid bit", path)));
 		return 0;
@@ -407,28 +377,67 @@ wd_chk_setuid(void)
 	snprintf(path, sizeof(path), "%s/%s", pool_config->arping_path, cmd);
 	if (! has_setuid_bit(path))
 	{
-		ereport(LOG,
+		ereport(NOTICE,
 			(errmsg("checking setuid bit of arping command"),
 				 errdetail("arping[%s] doesn't have setuid bit", path)));
 
 		return 0;
 	}
-	ereport(LOG,
+	ereport(NOTICE,
 		(errmsg("checking setuid bit of required commands"),
 			 errdetail("all commands have proper setuid bit")));
 	return 1;
 }
 
-/* if the file has setuid bit and the owner is root, it returns 1, otherwise returns 0 */
+/* 
+ * if the file has setuid bit and the owner is root, it returns 1, otherwise returns 0 
+ */
 static int
 has_setuid_bit(char * path)
 {
 	struct stat buf;
 	if (stat(path,&buf) < 0)
 	{
-		pool_error("has_setuid_bit: %s: no such a command", path);
-		pool_shmem_exit(1);
-		exit(1);
+		ereport(FATAL,
+			(return_code(1),
+			 errmsg("has_setuid_bit: command '%s' not found", path)));
 	}
 	return ((buf.st_uid == 0) && (S_ISREG(buf.st_mode)) && (buf.st_mode & S_ISUID))?1:0;
+}
+
+
+/*
+ * The function is wrapper over pthread_create and calls the user provided
+ * thread function inside PG_TRY, CATCH block to make sure any ereport ERROR
+ * from thread should stay within the thread.
+ */
+int watchdog_thread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine)(void *), void *arg)
+{
+	WdThreadInfo* thread_arg = palloc(sizeof(WdThreadInfo));
+	thread_arg->arg = arg;
+	thread_arg->start_routine = start_routine;
+	return pthread_create(thread, attr, exec_func, thread_arg);
+}
+
+static void *
+exec_func(void *arg)
+{
+	unsigned long rtn = (unsigned long)WD_NG;
+	MemoryContext oldContext =  CurrentMemoryContext;
+	WdThreadInfo* thread_arg = (WdThreadInfo*) arg;
+	Assert(thread_arg != NULL);
+	
+	PG_TRY();
+	{
+		rtn = thread_arg->start_routine(thread_arg->arg);
+	}
+	PG_CATCH();
+	{
+		/* ignore the error message */
+		EmitErrorReport();
+		MemoryContextSwitchTo(oldContext);
+		FlushErrorState();
+	}
+	PG_END_TRY();
+	return rtn;
 }

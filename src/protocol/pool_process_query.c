@@ -73,7 +73,7 @@ static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt);
 static char *get_insert_command_table_name(InsertStmt *node);
 static int send_deallocate(POOL_CONNECTION_POOL *backend, POOL_SENT_MESSAGE_LIST msglist, int n);
 static bool is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
-static POOL_STATUS ParallelForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *database, bool send_to_frontend);
+static void ParallelForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *database, bool send_to_frontend);
 static bool is_panic_or_fatal_error(const char *message, int major);
 static int detect_error(POOL_CONNECTION *master, char *error_code, int major, char class, bool unread);
 static int detect_postmaster_down_error(POOL_CONNECTION *master, int major);
@@ -411,9 +411,6 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 
 	pool_setall_node_to_be_sent(session_context->query_context);
 
-	timeout.tv_sec = 1;
-	timeout.tv_usec = 0;
-
 	len = strlen(string) + 1;
 
 	if (is_drop_database(node))
@@ -576,17 +573,15 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 			}
 			else
 			{
-				status = read_kind_from_one_backend(frontend, backend, &kind,i);
-				if (status != POOL_CONTINUE)
-					return status;
+				read_kind_from_one_backend(frontend, backend, &kind,i);
 
 				if (used_count == 0)
 				{
-					status = ParallelForwardToFrontend(kind,
-														frontend,
-														CONNECTION(backend, i),
-														backend->info->database,
-														send_to_frontend);
+					ParallelForwardToFrontend(kind,
+												frontend,
+												CONNECTION(backend, i),
+												backend->info->database,
+												send_to_frontend);
 					ereport(DEBUG1,
 						(errmsg("executing parallel query"),
 							 errdetail("backend kind ='%c'", kind)));
@@ -594,7 +589,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 				}
 				else
 				{
-					status = ParallelForwardToFrontend(kind,
+					ParallelForwardToFrontend(kind,
 														frontend,
 														CONNECTION(backend, i),
 														backend->info->database,
@@ -603,9 +598,6 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 						(errmsg("executing parallel query"),
 							 errdetail("backend kind dummy ='%c'", kind)));
 				}
-
-				if (status != POOL_CONTINUE)
-					return status;
 
 				if(kind == 'C' || kind == 'E' || kind == 'c')
 				{
@@ -643,7 +635,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 								(errmsg("executing parallel query"),
 									 errdetail("backend kind ='%c'", kind)));
 
-							status = ParallelForwardToFrontend(kind,
+							ParallelForwardToFrontend(kind,
 															frontend,
 															CONNECTION(backend, i),
 															backend->info->database,
@@ -654,7 +646,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 								(errmsg("executing parallel query"),
 									 errdetail("backend kind dummy ='%c'", kind)));
 
-							status = ParallelForwardToFrontend(kind,
+							ParallelForwardToFrontend(kind,
 															frontend,
 															CONNECTION(backend, i),
 															backend->info->database,
@@ -672,7 +664,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 							(errmsg("executing parallel query"),
 								 errdetail("backend kind dummy ='%c'", kind)));
 
-						status = ParallelForwardToFrontend(kind,
+						ParallelForwardToFrontend(kind,
 															frontend,
 															CONNECTION(backend, i),
 															backend->info->database,
@@ -689,20 +681,20 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 							ereport(DEBUG1,
 								(errmsg("executing parallel query"),
 									 errdetail("backend kind ='%c'", kind)));
-							status = ParallelForwardToFrontend(kind,
-															frontend,
-															CONNECTION(backend, i),
-															backend->info->database,
-															send_to_frontend);
+							ParallelForwardToFrontend(kind,
+														frontend,
+														CONNECTION(backend, i),
+														backend->info->database,
+														send_to_frontend);
 						} else {
 							ereport(DEBUG1,
 								(errmsg("executing parallel query"),
 									 errdetail("backend kind dummy ='%c'", kind)));
-							status = ParallelForwardToFrontend(kind,
-															frontend,
-															CONNECTION(backend, i),
-															backend->info->database,
-															false);
+							ParallelForwardToFrontend(kind,
+														frontend,
+														CONNECTION(backend, i),
+														backend->info->database,
+														false);
 						}
 						return POOL_CONTINUE;
 					}
@@ -710,20 +702,12 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 					if(kind == 'D')
 						datacount++;
 
-					status = ParallelForwardToFrontend(kind,
-														frontend,
-														CONNECTION(backend, i),
-														backend->info->database,
-														send_to_frontend);
-
-					if (status != POOL_CONTINUE)
-					{
-						return status;
-					}
-					else
-					{
-						pool_flush(frontend);
-					}
+					ParallelForwardToFrontend(kind,
+													frontend,
+													CONNECTION(backend, i),
+													backend->info->database,
+													send_to_frontend);
+					pool_flush(frontend);
 				}
 			}
 		}
@@ -822,7 +806,7 @@ POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *
 				if (pool_flush_it(frontend) < 0)
 				{
                     ereport(ERROR,
-                            (errmsg("unable to to flush data to frontend"),
+						(errmsg("unable to to flush data to frontend"),
                              errdetail("frontend error occured while waiting for backend reply")));
 				}
 
@@ -949,8 +933,9 @@ int pool_check_fd(POOL_CONNECTION *cp)
 		{
 			if (errno == EAGAIN || errno == EINTR)
 				continue;
-
-			pool_error("pool_check_fd: select() failed. reason %s", strerror(errno));
+			
+			ereport(WARNING,
+					(errmsg("waiting for reading data. select failed with error: \"%s\"", strerror(errno))));
 			break;
 		}
 		else if (fds == 0)		/* timeout */
@@ -958,7 +943,8 @@ int pool_check_fd(POOL_CONNECTION *cp)
 
 		if (FD_ISSET(fd, &exceptmask))
 		{
-			pool_error("pool_check_fd: exception occurred");
+			ereport(WARNING,
+					(errmsg("waiting for reading data. exception occurred in select ")));
 			break;
 		}
 		return 0;
@@ -1019,7 +1005,7 @@ void pool_send_frontend_exits(POOL_CONNECTION_POOL *backend)
  * and receives the results from backends .
  *
  */
-static POOL_STATUS ParallelForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *database, bool send_to_frontend)
+static void ParallelForwardToFrontend(char kind, POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *database, bool send_to_frontend)
 {
 	int len;
 	char *p;
@@ -1038,19 +1024,17 @@ static POOL_STATUS ParallelForwardToFrontend(char kind, POOL_CONNECTION *fronten
 
 	len = ntohl(len) - 4 ;
 
-	if (len <= 0)
-		return POOL_CONTINUE;
+	if (len > 0)
+	{
+		p = pool_read2(backend, len);
+		if (p == NULL)
+			ereport(ERROR,
+				(errmsg("parallel forward to Frontend failed"),
+					 errdetail("read from backedn failed")));
 
-	p = pool_read2(backend, len);
-	if (p == NULL)
-        ereport(ERROR,
-            (errmsg("parallel forward to Frontend failed"),
-                 errdetail("read from backedn failed")));
-
-	if (send_to_frontend)
-		pool_write(frontend, p, len);
-
-	return POOL_CONTINUE;
+		if (send_to_frontend)
+			pool_write(frontend, p, len);
+	}
 }
 
 POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
@@ -1084,7 +1068,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	if (p == NULL)
         ereport(ERROR,
             (errmsg("unable to forward message to frontend"),
-                 errdetail("read from backedn failed")));
+                 errdetail("read from backend failed")));
 	p1 = palloc(len);
 	memcpy(p1, p, len);
 
@@ -1113,7 +1097,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 				if (len != len1)
 				{
 					ereport(DEBUG1,
-                            (errmsg("SimpleForwardToFrontend: length does not match between backends master(%d) %d th backend(%d) kind:(%c)",
+						(errmsg("SimpleForwardToFrontend: length does not match between backends master(%d) %d th backend(%d) kind:(%c)",
 							   len, i, len1, kind)));
 				}
 			}
@@ -1130,7 +1114,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	{
 		if (pool_is_cache_safe() && !pool_is_cache_exceeded())
 		{
-				memqcache_register(kind, frontend, p1, len1);
+			memqcache_register(kind, frontend, p1, len1);
 		}
 	}
 
@@ -1144,7 +1128,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 		 */
 		if (is_panic_or_fatal_error(p1, MAJOR(backend)))
             ereport(ERROR,
-                    (errmsg("unable to forward message to frontend"),
+				(errmsg("unable to forward message to frontend"),
                      errdetail("FATAL error occured on backend")));
 	}
 
@@ -1718,7 +1702,8 @@ void pool_send_severity_message(POOL_CONNECTION *frontend, int protoMajor,
 		pool_write_and_flush(frontend, data, sendlen);
 	}
 	else
-		pool_error("send_error_message: unknown protocol major %d", protoMajor);
+		ereport(ERROR,
+				(errmsg("send_error_message: unknown protocol major %d", protoMajor)));
 
 	pool_unset_nonblock(frontend->fd);
 }
@@ -1813,7 +1798,7 @@ POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
 			if (string == NULL)
 			{
                 ereport(ERROR,
-                        (errmsg("do command failed"),
+					(errmsg("do command failed"),
                          errdetail("unable to read message from backend")));
 			}
 
@@ -1954,7 +1939,7 @@ retry_read_packet:
  * SELECT query is sent to master only.
  * If SELECT is error, we must abort transaction on other nodes.
  */
-POOL_STATUS do_error_command(POOL_CONNECTION *backend, int major)
+void do_error_command(POOL_CONNECTION *backend, int major)
 {
 	char *error_query = POOL_ERROR_QUERY;
 	int len;
@@ -2029,7 +2014,6 @@ POOL_STATUS do_error_command(POOL_CONNECTION *backend, int major)
                      errdetail("read from backend failed")));
 	}
 #endif
-	return POOL_CONTINUE;
 }
 
 /*
@@ -2040,7 +2024,7 @@ POOL_STATUS do_error_command(POOL_CONNECTION *backend, int major)
  * sync transaction status in each node, we send error query to other
  * than master node to ket them go into abort status.
  */
-POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id, int major)
+void do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id, int major)
 {
 	char kind;
 	char *string;
@@ -2133,8 +2117,6 @@ POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id,
         /* put messages back to read buffer */
         pool_unread(CONNECTION(backend, node_id), buf, readlen);
     }
-
-	return POOL_CONTINUE;
 }
 
 /*
@@ -2144,7 +2126,6 @@ POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id,
 POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *query, char *database)
 {
 	int len,sendlen;
-	int status;
 	char kind;
 	bool notice = false;
 
@@ -2163,12 +2144,13 @@ POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backe
 
 		if (kind == 'N' && strstr(query,"dblink")) {
 			notice = true;
-			status = ParallelForwardToFrontend(kind, frontend, backend, database, false);
-		} else {
+			ParallelForwardToFrontend(kind, frontend, backend, database, false);
+		} else
+		{
 			if(notice)
-				status = ParallelForwardToFrontend(kind, frontend, backend, database, false);
+				ParallelForwardToFrontend(kind, frontend, backend, database, false);
 			else
-				status = ParallelForwardToFrontend(kind, frontend, backend, database, true);
+				ParallelForwardToFrontend(kind, frontend, backend, database, true);
 		}
 		if (kind == 'C' || kind =='E')
 		{
@@ -2177,7 +2159,6 @@ POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backe
 	}
 	/*
 	 * Expecting ReadyForQuery
-	 *
 	 */
 	if(notice)
         pool_send_error_message(frontend, 3, "XX000",
@@ -2187,13 +2168,13 @@ POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backe
 
 	if (kind != 'Z')
         ereport(ERROR,
-                (errmsg("One node do command failed"),
+			(errmsg("One node do command failed"),
                  errdetail("backend does not return ReadyForQuery")));
 
-	status = ParallelForwardToFrontend(kind, frontend, backend, database, true);
+	ParallelForwardToFrontend(kind, frontend, backend, database, true);
 	pool_flush(frontend);
 
-    return status;
+    return POOL_CONTINUE;
 }
 
 /*
@@ -2794,7 +2775,8 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 	str = get_insert_command_table_name((InsertStmt *)node);
 	if (str == NULL)
 	{
-		pool_error("need_insert_lock: get_insert_command_table_name failed");
+		ereport(LOG,
+				(errmsg("unable to get table name from insert statement while checking if table locking is required")));
 		return 0;
 	}
 
@@ -2824,8 +2806,9 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 										false);
 		if (relcache == NULL)
 		{
-			pool_error("need_insert_lock: pool_create_relcache error");
-			return false;
+			ereport(LOG,
+					(errmsg("unable to create relcache while checking if table locking is required")));
+			return 0;
 		}
 	}
 
@@ -2928,9 +2911,9 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 			if (relcache == NULL)
 			{
                 ereport(FATAL,
-                        (return_code(2),
+					(return_code(2),
                         errmsg("unable to get insert lock on table"),
-                         errdetail("error while creating relcache")));
+							errdetail("error while creating relcache")));
 			}
 		}
 
@@ -3316,29 +3299,22 @@ bool is_partition_table(POOL_CONNECTION_POOL *backend, Node *node)
 static char *get_insert_command_table_name(InsertStmt *node)
 {
 	POOL_SESSION_CONTEXT *session_context;
-	MemoryContext old_context;
 	static char table[128];
 	char *p;
 
 	session_context = pool_get_session_context(true);
 	if (!session_context)
 		return NULL;
-
-	if (session_context->query_context)
-		old_context = MemoryContextSwitchTo(session_context->query_context->memory_context);
-	else
-		old_context = MemoryContextSwitchTo(session_context->memory_context);
-
 	p = nodeToString(node->relation);
 	if (p == NULL)
 	{
-		pool_error("get_insert_command_table_name: cannot get table name");
+		ereport(DEBUG1,
+				(errmsg("unable to get table name from insert command")));
 		return NULL;
 	}
 	strlcpy(table, p, sizeof(table));
 	pfree(p);
 
-	MemoryContextSwitchTo(old_context);
 	ereport(DEBUG2,
             (errmsg("table name in insert command is \"%s\"", table)));
 	return table;
@@ -3471,15 +3447,13 @@ int check_copy_from_stdin(Node *node)
 /*
  * read kind from one backend
  */
-POOL_STATUS read_kind_from_one_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *kind, int node)
+void read_kind_from_one_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *kind, int node)
 {
 	if (VALID_BACKEND(node))
 	{
 		char k;
 		pool_read(CONNECTION(backend, node), &k, 1);
-
 		*kind = k;
-		return POOL_CONTINUE;
 	}
 	else
 	{
@@ -3487,7 +3461,6 @@ POOL_STATUS read_kind_from_one_backend(POOL_CONNECTION *frontend, POOL_CONNECTIO
         ereport(ERROR,
             (errmsg("unable to read message kind from backend"),
                  errdetail("%d th backend is not valid", node)));
-        
 	}
 }
 
@@ -3518,7 +3491,7 @@ static bool is_all_slaves_command_complete(unsigned char *kind_list, int num_bac
  * the out parameter "decided_kind" is the packet kind decided by this function.
  * this function uses "decide by majority" method if kinds from all backends do not agree.
  */
-POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *decided_kind)
+void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *decided_kind)
 {
 	int i;
 	unsigned char kind_list[MAX_NUM_BACKENDS];	/* records each backend's kind */
@@ -3558,7 +3531,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 					 errdetail("received notification message for master node %d",
 							   MASTER_NODE_ID)));
 
-			return POOL_CONTINUE;
+			return;
 		}
 		pool_unread(CONNECTION(backend, MASTER_NODE_ID), &kind, sizeof(kind));
 	}
@@ -3607,7 +3580,9 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 						pool_add_param(&CONNECTION(backend, i)->params, p, value);
 				}
 				else
-					pool_error("read_kind_from_backend: failed to read parameter status packet from %d th backend", i);
+					ereport(WARNING,
+						(errmsg("failed to read parameter status packet from backend %d", i),
+							 errdetail("read from backend failed")));
 
 			} while (kind == 'S');
 
@@ -3659,7 +3634,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 				(errmsg("reading backend data packet kind. Error on master while all slaves are normal"),
 					 errdetail("do not degenerate because it is likely caused by a delayed commit")));
 
-			return POOL_CONTINUE;
+			return;
 		}
 		else if (max_count <= NUM_BACKENDS / 2.0)
 		{
@@ -3680,8 +3655,8 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 			if (kind_list[i] != 0 && trust_kind != kind_list[i])
 			{
 				/* degenerate */
-				pool_error("read_kind_from_backend: %d th kind %c does not match with master or majority connection kind %c",
-						   i, kind_list[i], trust_kind);
+				ereport(WARNING,
+					(errmsg("packet kind of backend %d ['%c'] does not match with master/majority nodes packet kind ['%c']",i,kind_list[i],trust_kind)));
 				degenerate_node[degenerate_node_num++] = i;
 			}
 		}
@@ -3789,7 +3764,7 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 
 	}
 
-	return POOL_CONTINUE;
+	return;
 }
 
 /*
@@ -4548,7 +4523,7 @@ POOL_STATUS pool_discard_packet_contents(POOL_CONNECTION_POOL *cp)
 			string = pool_read2(backend, len);
 			if (string == NULL)
                 ereport(ERROR,
-                        (errmsg("pool discard packet contents failed"),
+					(errmsg("pool discard packet contents failed"),
                          errdetail("error while reading rest of message")));
 
 		}
@@ -4557,7 +4532,7 @@ POOL_STATUS pool_discard_packet_contents(POOL_CONNECTION_POOL *cp)
 			string = pool_read_string(backend, &len, 0);
 			if (string == NULL)
                 ereport(ERROR,
-                        (errmsg("pool discard packet contents failed"),
+					(errmsg("pool discard packet contents failed"),
                          errdetail("error while reading rest of message")));
 		}
 	}

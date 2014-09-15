@@ -220,7 +220,7 @@ int main(int argc, char **argv)
 				if (pid < 0)
 				{
 					ereport(FATAL,
-                            (return_code(1),
+						(return_code(1),
                              errmsg("could not read pid file")));
 				}
 
@@ -228,7 +228,7 @@ int main(int argc, char **argv)
 				{
 					ereport(FATAL,
 						(return_code(1),
-						errmsg("could not reload configuration file pid: %d. reason: %s", pid, strerror(errno))));
+						 errmsg("could not reload configuration file pid: %d. reason: %s", pid, strerror(errno))));
 				}
 				exit(0);
 		}
@@ -279,7 +279,7 @@ int main(int argc, char **argv)
 		if (wd_chk_setuid() == 1)
 		{
 			/* if_up, if_down and arping command have a setuid bit */
-			ereport(LOG,
+			ereport(NOTICE,
 				(errmsg("watchdog might call network commands which using setuid bit.")));
 		}
 	}
@@ -314,11 +314,7 @@ int main(int argc, char **argv)
 		pool_init_pool_passwd(pool_passwd);
 	}
 
-	if (pool_semaphore_create(MAX_NUM_SEMAPHORES))
-	{
-		ereport(FATAL,
-			(errmsg("Unable to create semaphores. Exiting...")));
-	}
+	pool_semaphore_create(MAX_NUM_SEMAPHORES);
 
 	PgpoolMain(discard_status, clear_memcache_oidmaps); /* this is an infinate loop */
 

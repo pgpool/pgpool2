@@ -103,35 +103,18 @@ int load_hba(char *hbapath)
 {
 	FILE *file;
 
-//	POOL_MEMORY_POOL *old_context;
-//	if (hba_memory_context == NULL)
-//	{
-//		hba_memory_context = pool_memory_create(PARSER_BLOCK_SIZE);
-//		if (hba_memory_context == NULL)
-//		{
-//			pool_error("load_hba: pool_memory_create() failed");
-//			return -1;
-//		}
-//	}
-	/* switch memory context */
-//	old_context = pool_memory_context_switch_to(hba_memory_context);
-
 	if (hba_lines || hba_line_nums)
 		free_lines(&hba_lines, &hba_line_nums);
 
 	file = fopen(hbapath, "r");
 	if (!file)
 	{
-		pool_error("could not open \"%s\". reason: %s",
-				   hbapath, strerror(errno));
-//		pool_memory_delete(hba_memory_context, 0);
-//
-//		/* switch to old memory context */
-//		pool_memory_context_switch_to(old_context);
-
+		ereport(WARNING,
+			(errmsg("failed while loading hba configuration from file:\"%s\"",hbapath),
+				 errdetail("fopen failed with error: \"%s\"",strerror(errno))));
 		return -1;
 	}
-	
+
 	ereport(DEBUG1,
 		(errmsg("loading hba configuration"),
 			errdetail("loading file :\"%s\" for client authentication configuration file",
@@ -144,7 +127,6 @@ int load_hba(char *hbapath)
 	hbaFileName = pstrdup(hbapath);
 
 	/* switch to old memory context */
-//	pool_memory_context_switch_to(old_context);
 
 	return 0;
 }
@@ -310,8 +292,8 @@ static char *recv_password_packet(POOL_CONNECTION *frontend)
 
 		if (kind != 'p')
 		{
-			pool_error("expected password response, got message type %c",
-					   kind);
+			ereport(LOG,
+				(errmsg("unexpected password response received. expected 'p' received '%c'",kind)));
 			return NULL;		/* bad message type */
 		}
 	}
@@ -834,7 +816,8 @@ static bool check_user(char *user, char *param_str)
 			 * pgpool cannot accept groups. commented lines below are the
 			 * original code.
 			 */
-			pool_error("group token \"+\" is not supported in pgpool");
+			ereport(LOG,
+				(errmsg("group token \"+\" is not supported in pgpool")));
 			return false;
 /* 			if (check_group(tok + 1, user)) */
 /* 				return true; */
@@ -870,7 +853,8 @@ static bool check_db(char *dbname, char *user, char *param_str)
 			 * pgpool cannot accept groups. commented lines below are the
 			 * original code.
 			 */
-			pool_error("group token \"samegroup\" is not supported in pgpool");
+			ereport(LOG,
+				(errmsg("group token \"samegroup\" is not supported in pgpool")));
 			return false;
 /* 			if (check_group(dbname, user)) */
 /* 				return true; */
@@ -961,15 +945,14 @@ static char * tokenize_inc_file(const char *outer_filename,
 	inc_file = fopen(inc_fullname, "r");
 	if (inc_file == NULL)
 	{
-		char *returnVal;
+		ereport(WARNING,
+			(errmsg("failed to open secondary authentication file:\"%s\" as \"%s\"", inc_fullname,inc_fullname),
+				 errdetail("fopen failed with error: \"%s\"",strerror(errno))));
 
-		pool_error("could not open secondary authentication file \"@%s\" as \"%s\": reason: %s",
-				   inc_filename, inc_fullname, strerror(errno));
 		pfree(inc_fullname);
 
 		/* return single space, it matches nothing */
-		returnVal = pstrdup(" ");
-		return returnVal;
+		return pstrdup(" ");
 	}
 
     /* There is possible recursion here if the file contains @ */

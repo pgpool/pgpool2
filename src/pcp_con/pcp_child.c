@@ -1244,7 +1244,6 @@ process_recovery_request(PCP_CONNECTION *frontend,char *buf)
 	int node_id;
 	int wsize;
 	char code[] = "CommandComplete";
-	int r;
 
 	node_id = atoi(buf);
 
@@ -1287,25 +1286,29 @@ process_recovery_request(PCP_CONNECTION *frontend,char *buf)
 		ereport(DEBUG1,
 			(errmsg("PCP: processing recovery request"),
 				 errdetail("start online recovery")));
-
-		r = start_recovery(node_id);
-		finish_recovery();
-
-		if (r == 0) /* success */
+		PG_TRY();
 		{
+			start_recovery(node_id);
+			finish_recovery();
 			pcp_write(frontend, "c", 1);
 			wsize = htonl(sizeof(code) + sizeof(int));
 			pcp_write(frontend, &wsize, sizeof(int));
 			pcp_write(frontend, code, sizeof(code));
+			do_pcp_flush(frontend);
 		}
-		else
+		PG_CATCH();
 		{
+			finish_recovery();
 			int len = strlen("recovery failed") + 1;
 			pcp_write(frontend, "e", 1);
 			wsize = htonl(sizeof(int) + len);
 			pcp_write(frontend, &wsize, sizeof(int));
 			pcp_write(frontend, "recovery failed", len);
-		}
+			do_pcp_flush(frontend);
+			PG_RE_THROW();
+			
+		}PG_END_TRY();
+
 	}
 	do_pcp_flush(frontend);
 }

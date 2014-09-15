@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Portions Copyright (c) 2003-2009, PgPool Global Development Group
+ * Portions Copyright (c) 2003-2014, PgPool Global Development Group
  * Portions Copyright (c) 2003-2004, PostgreSQL Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
@@ -74,7 +74,7 @@ IpcSemaphoreKill(int status, Datum semId)
 /*
  * Create a semaphore set and initialize.
  */
-int
+void
 pool_semaphore_create(int numSems)
 {
 	int			i;
@@ -83,10 +83,8 @@ pool_semaphore_create(int numSems)
 	semId = semget(IPC_PRIVATE, numSems, IPC_CREAT | IPC_EXCL | IPCProtection);
 
 	if (semId < 0)
-	{
-		pool_error("could not create %d semaphores: %s", numSems, strerror(errno));
-		return -1;
-	}
+		ereport(FATAL,
+			(errmsg("Unable to create semaphores:%d error:\"%s\"",numSems,strerror(errno))));
 
 	on_shmem_exit(IpcSemaphoreKill, semId);
 
@@ -97,14 +95,10 @@ pool_semaphore_create(int numSems)
 
 		semun.val = 1;
 		if (semctl(semId, i, SETVAL, semun) < 0)
-		{
-			pool_error("semctl(%d, %d, SETVAL, %d) failed: %s",
-					   semId, i, 1, strerror(errno));
-			return -1;
-		}
+			ereport(FATAL,
+				(errmsg("Unable to create semaphores:%d error:\"%s\"",numSems,strerror(errno)),
+						errdetail("semctl(%d, %d, SETVAL, %d) failed",semId,i,semun.val)));
 	}
-
-	return 0;
 }
 
 /*
@@ -131,7 +125,8 @@ pool_semaphore_lock(int semNum)
 	} while (errStatus < 0 && errno == EINTR);
 
 	if (errStatus < 0)
-		pool_error("semop(id=%d) failed: %s", semId, strerror(errno));
+		ereport(WARNING,
+			(errmsg("failed to lock semaphore error:\"%s\"",strerror(errno))));
 }
 
 /*
@@ -159,5 +154,6 @@ pool_semaphore_unlock(int semNum)
 	} while (errStatus < 0 && errno == EINTR);
 
 	if (errStatus < 0)
-		pool_error("semop(id=%d) failed: %s", semId, strerror(errno));
+		ereport(WARNING,
+				(errmsg("failed to unlock semaphore error:\"%s\"",strerror(errno))));
 }

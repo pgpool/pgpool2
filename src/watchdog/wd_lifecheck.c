@@ -64,7 +64,7 @@ is_wd_lifecheck_ready(void)
 			{
 				ereport(DEBUG1,
 					(errmsg("watchdog checking life check is ready"),
-						errdetail("pgpool %d (%s:%d) has not started yet",
+						errdetail("pgpool:%d at \"%s:%d\" has not started yet",
 							   i, p->hostname, p->pgpool_port)));
 				rtn = WD_NG;
 			}
@@ -84,7 +84,7 @@ is_wd_lifecheck_ready(void)
 			{
 				ereport(DEBUG1,
 					(errmsg("watchdog checking life check is ready"),
-						errdetail("pgpool %d (%s:%d) has not send the heartbeat signal yet",
+						errdetail("pgpool:%d at \"%s:%d\" has not send the heartbeat signal yet",
 							   i, p->hostname, p->pgpool_port)));
 				rtn = WD_NG;
 			}
@@ -92,9 +92,9 @@ is_wd_lifecheck_ready(void)
 		/* otherwise */
 		else
 		{
-			pool_error("is_wd_lifecheck_ready: unkown watchdog mode %s",
-			           pool_config->wd_lifecheck_method);
-			return WD_NG;
+			ereport(ERROR,
+				(errmsg("checking if watchdog is ready, unkown watchdog mode \"%s\"",
+							pool_config->wd_lifecheck_method)));
 		}
 
 		p ++;
@@ -115,7 +115,8 @@ wd_lifecheck(void)
 	/* I'm in down.... */
 	if (WD_MYSELF->status == WD_DOWN)
 	{
-		pool_error("wd_lifecheck: watchdog status is DOWN. You need to restart pgpool");
+		ereport(NOTICE,
+				(errmsg("watchdog lifecheck, watchdog status is DOWN. You need to restart pgpool")));
 		return WD_NG;
 	}
 
@@ -123,21 +124,23 @@ wd_lifecheck(void)
 	gettimeofday(&tv, NULL);
 
 	/* check upper connection */
-	if (strlen(pool_config->trusted_servers) &&
-		wd_is_upper_ok(pool_config->trusted_servers) != WD_OK)
+	if (strlen(pool_config->trusted_servers))
 	{
-		pool_error("wd_lifecheck: failed to connect to any trusted servers");
-
-		if (WD_MYSELF->status == WD_MASTER &&
-		    strlen(pool_config->delegate_IP) != 0)
+		if(wd_is_upper_ok(pool_config->trusted_servers) != WD_OK)
 		{
-			wd_IP_down();
+			ereport(WARNING,
+					(errmsg("watchdog lifecheck, failed to connect to any trusted servers")));
+
+			if (WD_MYSELF->status == WD_MASTER &&
+				strlen(pool_config->delegate_IP) != 0)
+			{
+				wd_IP_down();
+			}
+			wd_set_myself(&tv, WD_DOWN);
+			wd_notice_server_down();
+
+			return WD_NG;
 		}
-
-		wd_set_myself(&tv, WD_DOWN);
-		wd_notice_server_down();
-
-		return WD_NG;
 	}
 
 	/* skip lifecheck during recovery execution */
@@ -174,7 +177,7 @@ static void
 check_pgpool_status_by_hb(void)
 {
 	int cnt;
-	WdInfo * p = WD_List;
+	WdInfo *p = WD_List;
 	struct timeval tv;
 
 	gettimeofday(&tv, NULL);
@@ -193,9 +196,6 @@ check_pgpool_status_by_hb(void)
 			/* parent is dead so it's orphan.... */
 			if (is_parent_alive() == WD_NG && WD_MYSELF->status != WD_DOWN)
 			{
-				ereport(DEBUG1,
-						(errmsg("checking pgpool status by heartbeat"),
-						 errdetail("NG; the main pgpool process does't exist.")));
 				ereport(LOG,
 					(errmsg("checking pgpool status by heartbeat"),
 						errdetail("lifecheck failed. pgpool %d (%s:%d) seems not to be working",
@@ -220,7 +220,7 @@ check_pgpool_status_by_hb(void)
 			{
 				ereport(LOG,
 					(errmsg("checking pgpool status by heartbeat"),
-						 errdetail("pgpool %d (%s:%d) status is down",
+						 errdetail("pgpool: %d at \"%s:%d\" status is down",
 								   cnt, p->hostname, p->pgpool_port)));
 
 			}
@@ -232,7 +232,7 @@ check_pgpool_status_by_hb(void)
 
 				ereport(LOG,
 					(errmsg("checking pgpool status by heartbeat"),
-						 errdetail("lifecheck failed. pgpool %d (%s:%d) seems not to be working",
+						 errdetail("lifecheck failed. pgpool: %d at \"%s:%d\" seems not to be working",
 								   cnt, p->hostname, p->pgpool_port)));
 
 				if (p->status != WD_DOWN)
@@ -250,7 +250,8 @@ check_pgpool_status_by_hb(void)
 		cnt++;
 		if (cnt >= MAX_WATCHDOG_NUM)
 		{
-			pool_error("check_pgpool_status_by_hb: pgpool num is out of range(%d)",cnt);
+			ereport(WARNING,
+					(errmsg("checking pgpool status by heartbeat, pgpool num is out of range:%d",cnt)));
 			break;
 		}
 	}
@@ -281,13 +282,14 @@ check_pgpool_status_by_query(void)
 		if (p->status != WD_DOWN)
 		{
 			thread_arg[cnt].conn = create_conn(p->hostname, p->pgpool_port);
-			rc = pthread_create(&thread[cnt], &attr, thread_ping_pgpool, (void*)&thread_arg[cnt]);
+			rc = watchdog_thread_create(&thread[cnt], &attr, thread_ping_pgpool, (void*)&thread_arg[cnt]);
 		}
 		p ++;
 		cnt ++;
 		if (cnt >= MAX_WATCHDOG_NUM)
 		{
-			pool_error("check_pgpool_status_by_query: pgpool num is out of range(%d)",cnt);
+			ereport(WARNING,
+					(errmsg("checking pgpool status by query, pgpool num is out of range:%d",cnt)));
 			break;
 		}
 	}
@@ -310,7 +312,6 @@ check_pgpool_status_by_query(void)
 				(errmsg("checking pgpool status by query"),
 					errdetail("pgpool %d (%s:%d) is in down status",
 						   i, p->hostname, p->pgpool_port)));
-
 			i++;
 			p++;
 			continue;
@@ -328,7 +329,7 @@ check_pgpool_status_by_query(void)
 		if (result == WD_OK)
 		{
 			ereport(DEBUG1,
-					(errmsg("checking pgpool status by query"),
+				(errmsg("checking pgpool status by query"),
 					 errdetail("WD_OK: status: %d", p->status)));
 
 			/* life point init */
@@ -399,13 +400,15 @@ create_conn(char * hostname, int port)
 
 	if (strlen(pool_config->wd_lifecheck_dbname) == 0)
 	{
-		pool_error("create_conn: wd_lifecheck_dbname is empty");
+		ereport(WARNING,
+				(errmsg("watchdog life checking, wd_lifecheck_dbname is empty")));
 		return NULL;
 	}
 
 	if (strlen(pool_config->wd_lifecheck_user) == 0)
 	{
-		pool_error("create_conn: wd_lifecheck_user is empty");
+		ereport(WARNING,
+				(errmsg("watchdog life checking, wd_lifecheck_user is empty")));
 		return NULL;
 	}
 

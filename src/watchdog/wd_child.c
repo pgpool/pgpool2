@@ -31,6 +31,8 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include "pool.h"
+#include "utils/palloc.h"
+#include "utils/memutils.h"
 #include "utils/elog.h"
 #include "pool_config.h"
 #include "watchdog/wd_ext.h"
@@ -44,18 +46,23 @@ pid_t
 wd_child(int fork_wait_time)
 {
 	int sock;
-	int fd;
+	volatile int fd;
 	int rtn;
 	pid_t pid = 0;
+	sigjmp_buf	local_sigjmp_buf;
 
 	pid = fork();
 	if (pid != 0)
 	{
 		if (pid == -1)
-			pool_error("wd_child: fork() failed.");
+			ereport(PANIC,
+					(errmsg("failed to fork a watchdog process")));
 
 		return pid;
 	}
+
+	on_exit_reset();
+	processType = PT_WATCHDOG;
 
 	if (fork_wait_time > 0)
 	{
@@ -83,6 +90,15 @@ wd_child(int fork_wait_time)
 		/* memory allocate is not ready */
 		wd_child_exit(15);
 	}
+	/* Create per loop iteration memory context */
+	ProcessLoopContext = AllocSetContextCreate(TopMemoryContext,
+											   "wd_child_main_loop",
+											   ALLOCSET_DEFAULT_MINSIZE,
+											   ALLOCSET_DEFAULT_INITSIZE,
+											   ALLOCSET_DEFAULT_MAXSIZE);
+	
+	MemoryContextSwitchTo(TopMemoryContext);
+
 
 	sock = wd_create_recv_socket(WD_MYSELF->wd_port);
 
@@ -94,10 +110,30 @@ wd_child(int fork_wait_time)
 
 	set_ps_display("watchdog", false);
 
+	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
+	{
+		/* Since not using PG_TRY, must reset error stack by hand */
+		if(fd > 0)
+			close(fd);
+
+		error_context_stack = NULL;
+		
+		EmitErrorReport();
+		MemoryContextSwitchTo(TopMemoryContext);
+		FlushErrorState();
+	}
+	
+	/* We can now handle ereport(ERROR) */
+	PG_exception_stack = &local_sigjmp_buf;
+
 	/* child loop */
 	for(;;)
 	{
+		MemoryContextSwitchTo(ProcessLoopContext);
+		MemoryContextResetAndDeleteChildren(ProcessLoopContext);
+		fd = -1;
 		WdPacket buf;
+
 		fd = wd_accept(sock);
 		if (fd < 0)
 		{
@@ -374,7 +410,6 @@ wd_send_response(int sock, WdPacket * recv_pack)
 		case WD_FAILBACK_REQUEST:
 			if (Req_info->switching)
 			{
-
 				ereport(LOG,
 					(errmsg("sending watchdog response"),
 						 errdetail("failback request from other pgpool is canceled because of switching")));
@@ -469,7 +504,8 @@ wd_node_request_signal(WD_PACKET_NO packet_no, WdNodeInfo *node)
 			promote_backend(node->node_id_set[0]);
 			break;
 		default:
-			pool_error("wd_node_request_signal: unknown packet number");
+			ereport(WARNING,
+				(errmsg("wd_node_request_signal: unknown packet number")));
 			break;
 	}
 }

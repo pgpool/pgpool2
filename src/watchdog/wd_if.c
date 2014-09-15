@@ -83,12 +83,10 @@ wd_IP_up(void)
 
 		if (rtn == WD_OK)
 			ereport(LOG,
-				(errmsg("watchdog bringing up delegate IP"),
-					 errdetail("ifconfig up succeeded")));
+				(errmsg("watchdog bringing up delegate IP, 'ifconfig up' succeeded")));
 		else
-			ereport(LOG,
-				(errmsg("watchdog failed to bring up delegate IP"),
-					 errdetail("ifconfig up failed")));
+			ereport(WARNING,
+				(errmsg("watchdog failed to bring up delegate IP, 'ifconfig up' failed")));
 	}
 	else
 	{
@@ -140,7 +138,8 @@ wd_IP_down(void)
 		else
 		{
 			WD_List->delegate_ip_flag = 1;
-			pool_error("wd_IP_down: ifconfig down failed");
+			ereport(WARNING,
+				(errmsg("watchdog bringing down delegate IP, ifconfig down failed")));
 		}
 	}
 	else
@@ -183,7 +182,8 @@ exec_ifconfig(char * path,char * command)
 
 	if (pipe(pfd) == -1)
 	{
-		pool_error("exec_ifconfig: pipe open error:%s",strerror(errno));
+		ereport(WARNING,
+				(errmsg("while executing ifconfig, pipe open failed with error \"%s\"",strerror(errno))));
 		return WD_NG;
 	}
 	memset(buf,0,sizeof(buf));
@@ -226,6 +226,7 @@ exec_ifconfig(char * path,char * command)
 	pid = fork();
 	if (pid == 0)
 	{
+		processType = PT_WATCHDOG_UTILITY;
 		close(STDOUT_FILENO);
 		dup2(pfd[1], STDOUT_FILENO);
 		close(pfd[0]);

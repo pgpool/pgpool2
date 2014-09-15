@@ -34,12 +34,14 @@ extern int wd_is_watchdog_pid(pid_t pid);
 extern int wd_reaper_watchdog(pid_t pid, int status);
 extern int wd_chk_setuid(void);
 extern void wd_kill_watchdog(int sig);
+/* utility function*/
+extern int watchdog_thread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine)(void *), void *arg);
 
 /* wd_child.c */
 extern pid_t wd_child(int fork_wait_time);
 
 /* wd_init.c */
-extern int wd_init(void);
+extern void wd_init(void);
 
 /* wd_list.c */
 extern int wd_set_wd_list(char * hostname, int pgpool_port, int wd_port, char * delegate_ip, struct timeval * tv, int status);
@@ -101,8 +103,8 @@ extern int wd_ping_pgpool(WdInfo * pgpool);
 /* wd_hearbeat.c */
 extern int wd_create_hb_send_socket(WdHbIf * hb_if);
 extern int wd_create_hb_recv_socket(WdHbIf * hb_if);
-extern int wd_hb_send(int sock, WdHbPacket * pkt, int len, const char * destination, const int dest_port);
-extern int wd_hb_recv(int sock, WdHbPacket * pkt);
+extern void wd_hb_send(int sock, WdHbPacket * pkt, int len, const char * destination, const int dest_port);
+extern void wd_hb_recv(int sock, WdHbPacket * pkt);
 extern pid_t wd_hb_receiver(int fork_wait_time, WdHbIf * hb_if);
 extern pid_t wd_hb_sender(int fork_wait_time, WdHbIf * hb_if);
 

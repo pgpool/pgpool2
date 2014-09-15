@@ -371,7 +371,7 @@ static void check_replication_time_lag(void)
 
 static void CheckReplicationTimeLagErrorCb(void *arg)
 {
-	errcontext("While checking replication time lag");
+	errcontext("while checking replication time lag");
 }
 /*
  * Convert logid/recoff style text to 64bit log location (LSN)
@@ -391,7 +391,7 @@ static unsigned long long int text_to_lsn(char *text)
 	if (sscanf(text, "%X/%X", &xlogid, &xrecoff) != 2)
 	{
         ereport(ERROR,
-            (errmsg("Invalid lsn format"),
+            (errmsg("invalid LSN format"),
                  errdetail("wrong log location format: %s", text)));
 
 	}

@@ -51,7 +51,7 @@
 #include "pool.h"
 #include "utils/pool_ip.h"
 #include "pool_config.h"
-
+#include "utils/elog.h"
 static int rangeSockAddrAF_INET(const struct sockaddr_in * addr,
 					 const struct sockaddr_in * netaddr,
 					 const struct sockaddr_in * netmask);
@@ -88,7 +88,8 @@ void pool_getnameinfo_all(SockAddr *saddr, char *remote_host, char *remote_port)
 								  remote_port, NI_MAXSERV,
 								  NI_NUMERICHOST | NI_NUMERICSERV);
 		if (ret)
-			pool_error("getnameinfo_all() failed: %s", gai_strerror(ret));
+			ereport(WARNING,
+				(errmsg("getnameinfo failed with error: \"%s\"",gai_strerror(ret))));
 	}
 }
 

@@ -58,11 +58,6 @@ wd_init_interlock(void)
 		alloc_size = sizeof(bool) * WD_MAX_LOCK_NUM;
 
 		WD_Locks = pool_shared_memory_create(alloc_size);
-		if (WD_Locks == NULL)
-		{
-			pool_error("wd_init_interlock: failed to allocate WD_Locks");
-			return WD_NG;
-		}
 		memset((void *)WD_Locks, 0, alloc_size);
 	}
 
@@ -118,7 +113,8 @@ void wd_start_interlock(bool by_health_check)
 		sleep_in_waiting();
 		if (--count < 0)
 		{
-			pool_error("wd_start_interlock: timed out");
+			ereport(WARNING,
+					(errmsg("watchdog start interlocking, timed out")));
 			break;
 		}
 	}
@@ -153,7 +149,8 @@ void wd_end_interlock(void)
 		sleep_in_waiting();
 		if (--count < 0)
 		{
-			pool_error("wd_end_interlock: timed out");
+			ereport(WARNING,
+					(errmsg("watchdog end interlocking, timed out")));
 			break;
 		}
 	}
@@ -203,7 +200,8 @@ void wd_wait_for_lock(WD_LOCK_ID lock_id)
 		sleep_in_waiting();
 		if (--count < 0)
 		{
-			pool_error("wd_wait_for_lock: timed out");
+			ereport(WARNING,
+					(errmsg("watchdog waiting for lock, timed out")));
 			break;
 		}
 	}
@@ -331,7 +329,8 @@ wd_confirm_contactable(void)
 		sleep_in_waiting();
 		if (--count < 0)
 		{
-			pool_error("wd_confirm_contactable: timed out");
+			ereport(WARNING,
+					(errmsg("watchdog confirming contactable, timed out")));
 			break;
 		}
 	}

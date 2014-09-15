@@ -120,6 +120,5 @@ main(int argc, char **argv)
 	return 0;
 }
 
-void child_exit(int code) { exit (code); }
 void pool_error(const char *fmt,...) {}
 void free_select_result(POOL_SELECT_RESULT *result) {}

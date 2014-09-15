@@ -203,6 +203,14 @@ typedef struct {
 	int retry;		/* retry times (not used?)*/
 } WdPgpoolThreadArg;
 
+/*
+ * thread information for pool_thread
+ */
+typedef struct {
+	void *(*start_routine)(void *);
+	void *arg;
+} WdThreadInfo;
+
 extern WdInfo * WD_List;
 extern unsigned char * WD_Node_List;
 

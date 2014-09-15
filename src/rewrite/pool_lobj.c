@@ -99,7 +99,8 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 										false);
 		if (relcache_lo_creat == NULL)
 		{
-			pool_error("pool_check_lo_creat: pool_create_relcache error");
+			ereport(WARNING,
+				(errmsg("unable to create relcache, while rewriting LO CREATE")));
 			return NULL;
 		}
 	}
@@ -131,7 +132,8 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 										false);
 		if (relcache_lo_create == NULL)
 		{
-			pool_error("pool_check_lo_creat: pool_create_relcache error");
+			ereport(LOG,
+					(errmsg("rewriting LO CREATE, unable to create relcache")));
 			return NULL;
 		}
 	}
@@ -154,7 +156,8 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 	/* sanity check */
 	if (result_format_code != 0 && result_format_code != 1)
 	{
-		pool_error("pool_rewrite_lo_creat: wrong return format code: %d", int16val);
+		ereport(LOG,
+				(errmsg("rewriting LO CREATE, invalid return format code: %d", int16val)));
 		return NULL;
 	}
 	ereport(DEBUG1,
@@ -171,8 +174,8 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 						MASTER_CONNECTION(backend)->key, 0);
 	if (status == POOL_END)
 	{
-        
-		pool_error("pool_rewrite_lo_creat: failed to execute LOCK");
+		ereport(WARNING,
+				(errmsg("rewriting LO CREATE, failed to execute LOCK")));
 		return NULL;
 	}
 
@@ -209,7 +212,8 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 	/* sanity check */
 	if (lobjid <= 0)
 	{
-		pool_error("pool_rewrite_lo_creat: wrong lob id: %d", lobjid);
+		ereport(WARNING,
+				(errmsg("rewriting LO CREATE, wrong lob id: %d", lobjid)));
 		return NULL;
 	}
 

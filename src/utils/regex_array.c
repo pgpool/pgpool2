@@ -28,8 +28,12 @@
 #include "pool.h"
 #include "pool_config.h"
 #include "utils/regex_array.h"
-#include "utils/palloc.h"
+#ifndef POOL_PRIVATE
 #include "utils/elog.h"
+#include "utils/palloc.h"
+#else
+#include "utils/fe_ports.h"
+#endif
 
 /*
  * Create RegArray object
@@ -58,13 +62,16 @@ int add_regex_array(RegArray *ar, char *pattern)
 
 	if (ar == NULL)
 	{
-		pool_error("add_regex_array: ar is NULL");
+		ereport(WARNING,
+				(errmsg("failed to add regex pattern, regex array is NULL")));
+
 		return -1;
 	}
 
 	if (pattern == NULL)
 	{
-		pool_error("add_regex_array: pattern is NULL");
+		ereport(WARNING,
+				(errmsg("failed to add regex pattern, regex pattern is NULL")));
 		return -1;
 	}
 
@@ -98,7 +105,8 @@ int add_regex_array(RegArray *ar, char *pattern)
 	regex = palloc(sizeof(regex_t));
 	if (regcomp(regex, pat, regex_flags) != 0)
 	{
-		pool_error("add_regex_array: invalid regex pattern: %s (%s)", pattern, pat);
+		ereport(WARNING,
+				(errmsg("failed to add regex pattern, invalid regex pattern: \"%s\" (%s)", pattern, pat)));
 		pfree(regex);
 		pfree(pat);
 		return -1;
@@ -125,13 +133,15 @@ int regex_array_match(RegArray *ar, char *pattern)
 
 	if (ar == NULL)
 	{
-		pool_error("add_regex_match: ar is NULL");
+		ereport(WARNING,
+				(errmsg("failed to execute regex matching, regex array is NULL")));
 		return -1;
 	}
 
 	if (pattern == NULL)
 	{
-		pool_error("add_regex_match: pattern is NULL");
+		ereport(WARNING,
+				(errmsg("failed to execute regex matching, pattern is NULL")));
 		return -1;
 	}
 

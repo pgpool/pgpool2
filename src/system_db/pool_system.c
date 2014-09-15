@@ -64,8 +64,8 @@ int  get_col_list(DistDefInfo *info)
 
 		if (!result || PQresultStatus(result) != PGRES_TUPLES_OK)
 		{
-			pool_error("get_col_list :PQexec failed: %s",
-					   PQerrorMessage(system_db_info->pgconn));
+			ereport(WARNING,
+					(errmsg("error while getting column list, PQexec failed: \"%s\"", PQerrorMessage(system_db_info->pgconn))));
 			return -1;
 		}
 		else
@@ -112,8 +112,9 @@ int  get_col_list2(RepliDefInfo *info)
 
 		if (!result || PQresultStatus(result) != PGRES_TUPLES_OK)
 		{
-			pool_error("get_col_list2: PQexec failed: %s",
-					   PQerrorMessage(system_db_info->pgconn));
+			ereport(WARNING,
+					(errmsg("error while getting column list, PQexec failed: \"%s\"", PQerrorMessage(system_db_info->pgconn))));
+
 			return -1;
 		}
 		else
@@ -151,8 +152,14 @@ int system_db_connect (void)
 
 	if (PQstatus(system_db_info->pgconn) != CONNECTION_OK)
 	{
-		pool_error("Connection to database failed: %s",
-				   PQerrorMessage(system_db_info->pgconn));
+		ereport(WARNING,
+			(errmsg("Connection to database failed: \"%s\"",PQerrorMessage(system_db_info->pgconn)),
+					errdetail("connection failed for database:\"%s@%s\" on Host:\"%s:%d\" ",
+							  system_db_info->info->user,
+							  system_db_info->info->database_name,
+							  system_db_info->info->hostname,
+							  system_db_info->info->port)));
+
 		PQfinish(system_db_info->pgconn);
 		system_db_info->pgconn = NULL;
 		return 1;
@@ -199,7 +206,8 @@ int pool_memset_system_db_info (SystemDBInfo *info)
 	result = PQexec(system_db_info->pgconn, sql);
 	if (!result || PQresultStatus(result) != PGRES_TUPLES_OK)
 	{
-		pool_error("PQexec failed: %s", PQerrorMessage(system_db_info->pgconn));
+		ereport(WARNING,
+				(errmsg("error while initializing distribution rules, PQexec failed: \"%s\"", PQerrorMessage(system_db_info->pgconn))));
 		return -1;
 	}
 	else
@@ -251,7 +259,9 @@ int pool_memset_system_db_info (SystemDBInfo *info)
 
 			if (get_col_list(&dist_info[i]) < 0)
 			{
-				pool_error("get_col_list() failed");
+				ereport(WARNING,
+						(errmsg("error while initializing distribution rules, failed to get column list")));
+
 				PQclear(result);
 				pool_close_libpq_connection();
 				return -1;
@@ -281,7 +291,8 @@ int pool_memset_system_db_info (SystemDBInfo *info)
 
 	if (!result)
 	{
-		pool_error("PQexec failed: %s", PQerrorMessage(system_db_info->pgconn));
+		ereport(WARNING,
+				(errmsg("error while initializing distribution rules, PQexec failed: \"%s\"", PQerrorMessage(system_db_info->pgconn))));
 		return -1;
 	}
 	else if (PQresultStatus(result) != PGRES_TUPLES_OK)
@@ -327,7 +338,8 @@ int pool_memset_system_db_info (SystemDBInfo *info)
 
 			if (get_col_list2(&repli_info[i]) < 0)
 			{
-				pool_error("get_col_list() failed");
+				ereport(WARNING,
+						(errmsg("error while initializing distribution rules, failed to get column list")));
 				PQclear(result);
 				pool_close_libpq_connection();
 				return -1;
@@ -460,7 +472,8 @@ int pool_get_id (DistDefInfo *info, const char *value)
 	if (!result || PQresultStatus(result) != PGRES_TUPLES_OK ||
 		PQgetisnull(result, 0, 0))
 	{
-		pool_error("PQexecPrepared failed: %s", PQerrorMessage(system_db_info->pgconn));
+		ereport(WARNING,
+				(errmsg("error while getting backend id from value, PQexecPrepared failed: \"%s\"", PQerrorMessage(system_db_info->pgconn))));
 		return -1;
 	}
 	else
@@ -530,7 +543,8 @@ static int create_prepared_statement(DistDefInfo *dist_info)
 
 	if (!result || PQresultStatus(result) != PGRES_COMMAND_OK)
 	{
-		pool_error("PQprepare failed: %s", PQerrorMessage(system_db_info->pgconn));
+		ereport(WARNING,
+				(errmsg("error while creating prepared statement, PQprepare failed: \"%s\"", PQerrorMessage(system_db_info->pgconn))));
 		return 1;
 	}
 	dist_info->is_created_prepare = 1;

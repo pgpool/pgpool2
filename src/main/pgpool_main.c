@@ -873,7 +873,7 @@ static int create_unix_domain_socket(struct sockaddr_un un_addr_tmp)
 	{
         ereport(FATAL,
             (errmsg("failed to create a socket"),
-                 errdetail("Failed to create UNIX domain socket. reason: %s", strerror(errno))));
+                 errdetail("Failed to create UNIX domain socket. error: \"%s\"", strerror(errno))));
 	}
 	memset((char *) &addr, 0, sizeof(addr));
 	addr.sun_family = AF_UNIX;
@@ -883,23 +883,23 @@ static int create_unix_domain_socket(struct sockaddr_un un_addr_tmp)
 	if (status == -1)
 	{
         ereport(FATAL,
-            (errmsg("failed to bind a socket"),
-                 errdetail("Failed to bind socket. reason: %s", strerror(errno))));
+            (errmsg("failed to bind a socket: \"%s\"",un_addr_tmp.sun_path),
+                 errdetail("bind socket failed with error: \"%s\"", strerror(errno))));
 	}
 
 	if (chmod(un_addr_tmp.sun_path, 0777) == -1)
 	{
         ereport(FATAL,
-                (errmsg("failed to bind a socket"),
-                 errdetail("system call chmod failed. reason: %s", strerror(errno))));
+			(errmsg("failed to bind a socket: \"%s\"",un_addr_tmp.sun_path),
+                 errdetail("system call chmod failed with error: \"%s\"", strerror(errno))));
 	}
 
 	status = listen(fd, PGPOOLMAXLITSENQUEUELENGTH);
 	if (status < 0)
 	{
         ereport(FATAL,
-                (errmsg("failed to bind a socket"),
-                 errdetail("system call listen() failed. reason: %s", strerror(errno))));
+			(errmsg("failed to bind a socket: \"%s\"",un_addr_tmp.sun_path),
+                 errdetail("system call listen() failed with error: \"%s\"", strerror(errno))));
 	}
 	return fd;
 }
@@ -940,17 +940,6 @@ static void terminate_all_childrens()
                 (errmsg("wait() failed. reason:%s", strerror(errno))));
 
 	POOL_SETMASK(&UnBlockSig);
-}
-
-/* 
- * This function is called by the proc_exit in elog.c after clearing
- * the shared memory, so no shared memory residents should be accessed form
- * this
- */
-void system_exit(int code)
-{
-    /* we have nothing much left to do here.*/
-    exit(code);
 }
 
 void notice_backend_error(int node_id)
@@ -1041,7 +1030,8 @@ void promote_backend(int node_id)
 
 	if (node_id < 0 || node_id >= MAX_NUM_BACKENDS || !VALID_BACKEND(node_id))
 	{
-		pool_error("promote_backend: node %d is not valid backend.", node_id);
+		ereport(LOG,
+				(errmsg("unabble to process promote backend, node %d is not valid backend.", node_id)));
 		return;
 	}
 
@@ -1071,14 +1061,16 @@ void send_failback_request(int node_id)
 	pid_t parent = getppid();
 
 	ereport(LOG,
-            (errmsg("send_failback_request: fail back %d th node request from pid %d", node_id, getpid())));
+            (errmsg("sending failback request: failback node: %d, requested by pid: %d", node_id, getpid())));
 	Req_info->kind = NODE_UP_REQUEST;
 	Req_info->node_id[0] = node_id;
 
     if (node_id < 0 || node_id >= MAX_NUM_BACKENDS ||
 		(RAW_MODE && BACKEND_INFO(node_id).backend_status != CON_DOWN && VALID_BACKEND(node_id)))
 	{
-		pool_error("send_failback_request: node %d is alive.", node_id);
+		ereport(LOG,
+				(errmsg("error sending failback request, node: %d is already alive", node_id)));
+
 		Req_info->node_id[0] = -1;
 		return;
 	}
@@ -1123,7 +1115,10 @@ static RETSIGTYPE exit_handler(int sig)
                 (errmsg("received immediate shutdown request")));
 	else
 	{
-		pool_error("exit_handler: unknown signal received %d", sig);
+		ereport(LOG,
+			(errmsg("main process received unknown signal: %d",sig),
+				 errdetail("ignoring...")));
+
 		POOL_SETMASK(&UnBlockSig);
 		return;
 	}
@@ -1172,7 +1167,7 @@ static RETSIGTYPE exit_handler(int sig)
                 (errmsg("wait() failed. reason:%s", strerror(errno))));
 
 	process_info = NULL;
-	system_exit(0);
+	exit(0);
 }
 
 /*
@@ -1320,10 +1315,11 @@ static void failover(void)
 			pool_semaphore_unlock(REQUEST_INFO_SEM);
 
 			if (node_id < 0 || node_id >= MAX_NUM_BACKENDS)
-				pool_error("failover_handler: invalid node_id %d MAX_NUM_BACKENDS: %d", node_id, MAX_NUM_BACKENDS);
+				ereport(LOG,
+					(errmsg("invalid failback request, node id: %d is invalid. node id must be between [0 and %d]",node_id,MAX_NUM_BACKENDS)));
 			else
-				pool_error("failover_handler: invalid node_id %d status:%d MAX_NUM_BACKENDS: %d", node_id,
-						   BACKEND_INFO(node_id).backend_status, MAX_NUM_BACKENDS);
+				ereport(LOG,
+						(errmsg("invalid failback request, status: [%d] of node id : %d is invalid for failback",BACKEND_INFO(node_id).backend_status,node_id)));
 			kill(pcp_pid, SIGUSR2);
 			switching = 0;
 			Req_info->switching = false;
@@ -1336,9 +1332,10 @@ static void failover(void)
 		}
 
 		ereport(LOG,
-                (errmsg("starting fail back. reconnect host %s(%d)",
+			(errmsg("starting fail back. reconnect host %s(%d)",
 				 BACKEND_INFO(node_id).backend_hostname,
 				 BACKEND_INFO(node_id).backend_port)));
+
 		BACKEND_INFO(node_id).backend_status = CON_CONNECT_WAIT;	/* unset down status */
 
 		/* wait for failback command lock or to be lock holder */
@@ -1425,7 +1422,8 @@ static void failover(void)
 
 	if (new_master < 0)
 	{
-		pool_error("failover_handler: no valid DB node found");
+		ereport(LOG,
+				(errmsg("failover: no valid backends node found")));
 	}
 
 /*
@@ -1547,7 +1545,9 @@ static void failover(void)
 		;
 
 	if (errno != ECHILD)
-		pool_error("failover_handler: wait() failed. reason:%s", strerror(errno));
+		ereport(LOG,
+			(errmsg("failover_handler: wait() failed. reason:%s", strerror(errno))));
+
 #endif
 
 	if (Req_info->kind == PROMOTE_NODE_REQUEST && VALID_BACKEND(node_id))
@@ -1748,7 +1748,8 @@ static void failover(void)
 				continue;
 			else
 			{
-				pool_error("failover: waitpid failed. reason: %s", strerror(errno));
+				ereport(WARNING,
+						(errmsg("failover: waitpid failed. reason: %s", strerror(errno))));
 				return;
 			}
 		}
@@ -1906,7 +1907,8 @@ static void reaper(void)
 		if (WIFSIGNALED(status) && WTERMSIG(status) == SIGSEGV)
 		{
 			/* Child terminated by segmentation fault. Report it */
-			pool_error("Child process %d was terminated by segmentation fault", pid);
+			ereport(WARNING,
+					(errmsg("child process with pid: %d was terminated by segmentation fault", pid)));
 		}
 
 		/* if exiting child process was PCP handler */
@@ -2462,6 +2464,8 @@ pid_t fork_follow_child(int old_master, int new_primary, int old_primary)
 	if (pid == 0)
 	{
 		on_exit_reset();
+		processType = PT_FOLLOWCHILD;
+
 		ereport(LOG,
 			(errmsg("start triggering follow command.")));
 		for (i = 0; i < pool_config->backend_desc->num_backends; i++)
@@ -2476,7 +2480,8 @@ pid_t fork_follow_child(int old_master, int new_primary, int old_primary)
 	}
 	else if (pid == -1)
 	{
-		pool_error("follow fork() failed. reason: %s", strerror(errno));
+		ereport(WARNING,
+				(errmsg("follow fork() failed with reason: \"%s\"", strerror(errno))));
 		exit(1);
 	}
 	return pid;
@@ -2611,14 +2616,11 @@ static int read_status_file(bool discard_status)
 	{
 		fclose(fd);
 		if (unlink(fnamebuf) == 0)
-		{
 			ereport(LOG,
                     (errmsg("Backend status file %s discarded", fnamebuf)));
-		}
 		else
-		{
-			pool_error("Failed to discard backend status file %s reason:%s", fnamebuf, strerror(errno));
-		}
+			ereport(WARNING,
+					(errmsg("failed to discard backend status file: \"%s\" with reason: \"%s\"", fnamebuf, strerror(errno))));
 		return 0;
 	}
 
@@ -2699,7 +2701,7 @@ static int read_status_file(bool discard_status)
 			{
 				BACKEND_INFO(i).backend_status = CON_DOWN;
 				ereport(LOG,
-						(errmsg("read_status_file: %d th backend is set to down status", i)));
+						(errmsg("reading status file: %d th backend is set to down status", i)));
 			}
 			else if (!strncasecmp("unused", readbuf, 6))
 			{
@@ -2707,7 +2709,9 @@ static int read_status_file(bool discard_status)
 			}
 			else
 			{
-				pool_error("read_status_file: %d th backend status is invalid (%s). ignored", i, readbuf);
+				ereport(WARNING,
+					(errmsg("invalid data in status file, ignoring..."),
+						 errdetail("backend:%d status is invalid: \"%s\"",i,readbuf)));
 			}
 		}
 		fclose(fd);
@@ -2740,7 +2744,9 @@ static int write_status_file()
 	fd = fopen(fnamebuf, "w");
 	if (!fd)
 	{
-		pool_error("Could not open status file %s", fnamebuf);
+		ereport(WARNING,
+			(errmsg("failed to open status file at: \"%s\"",fnamebuf),
+				 errdetail("\"%s\"",strerror(errno))));
 		return -1;
 	}
 
@@ -2763,8 +2769,9 @@ static int write_status_file()
 			sprintf(buf, "%s\n", status);
 			if (fwrite(buf, 1, strlen(buf), fd) != strlen(buf))
 			{
-				pool_error("Could not write backend status file as %s. reason: %s",
-						   fnamebuf, strerror(errno));
+				ereport(WARNING,
+					(errmsg("failed to write status file at: \"%s\"",fnamebuf),
+						 errdetail("\"%s\"",strerror(errno))));
 				fclose(fd);
 				return -1;
 			}
@@ -2772,8 +2779,9 @@ static int write_status_file()
 
         if (fflush(fd) != 0)
         {
-            pool_error("Could not write backend status file as %s. reason: %s",
-                       fnamebuf, strerror(errno));
+			ereport(WARNING,
+				(errmsg("failed to write status file at: \"%s\"",fnamebuf),
+					 errdetail("\"%s\"",strerror(errno))));
             fclose(fd);
             return -1;
         }
@@ -2785,7 +2793,8 @@ static int write_status_file()
 
 static void reload_config(void)
 {
-	ereport(LOG,(errmsg("reload config files.")));
+	ereport(LOG,
+		(errmsg("reload config files.")));
     MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
 	pool_get_config(conf_file, RELOAD_CONFIG);
     MemoryContextSwitchTo(oldContext);

@@ -33,7 +33,7 @@
 #include "watchdog/watchdog.h"
 #include "watchdog/wd_ext.h"
 
-int
+void
 wd_init(void)
 {
 	struct timeval tv;
@@ -46,11 +46,6 @@ wd_init(void)
 	if (WD_List == NULL)
 	{
 		WD_List = pool_shared_memory_create(sizeof(WdInfo) * MAX_WATCHDOG_NUM);
-		if (WD_List == NULL)
-		{
-			pool_error("wd_init: failed to allocate watchdog list");
-			return WD_NG;
-		}
 		memset(WD_List, 0, sizeof(WdInfo) * MAX_WATCHDOG_NUM);
 	}
 
@@ -58,20 +53,11 @@ wd_init(void)
 	if (WD_Node_List == NULL)
 	{
 		WD_Node_List = pool_shared_memory_create(sizeof(unsigned char) * MAX_NUM_BACKENDS);
-		if (WD_Node_List == NULL)
-		{
-			pool_error("wd_init: failed to allocate node list");
-			return WD_NG;
-		}
 		memset(WD_Node_List, 0, sizeof(unsigned char) * MAX_NUM_BACKENDS);
 	}
 
 	/* initialize interlock */
-	if (wd_init_interlock() != WD_OK)
-	{
-		pool_error("wd_init: wd_init_interlock failed");
-		return WD_NG;
-	}
+	wd_init_interlock();
 
 	/* set myself to watchdog list */
 	wd_set_wd_list(pool_config->wd_hostname, pool_config->port,
@@ -95,31 +81,27 @@ wd_init(void)
 	if (strlen(pool_config->trusted_servers) &&
 		wd_is_upper_ok(pool_config->trusted_servers) != WD_OK)
 	{
-		pool_error("wd_init: failed to connect trusted server");
-		return WD_NG;
+		ereport(ERROR,
+			(errmsg("failed to initialize watchdog, failed to connect to trusted server")));
 	}
-
 	/* send startup packet */
 	if (wd_startup() == WD_NG)
 	{
-		pool_error("wd_init: failed to start watchdog");
-		return WD_NG;
+		ereport(ERROR,
+				(errmsg("failed to initialize watchdog, startup failed")));
 	}
-
 	/* check existence of master pgpool */
 	if (wd_is_exist_master() == NULL)
 	{
 		if (strlen(pool_config->delegate_IP) != 0 &&
 		    !wd_is_unused_ip(pool_config->delegate_IP))
 		{
-			pool_error("wd_init: delegate_IP %s already exists", pool_config->delegate_IP);
-			return WD_NG;
+			ereport(ERROR,
+				(errmsg("failed to initialize watchdog, delegate_IP \"%s\" already exists", pool_config->delegate_IP)));
 		}
-
 		/* escalate to delegate_IP holder */
 		wd_escalation();
 	}
 	ereport(LOG,
 		(errmsg("watchdog started")));
-	return WD_OK;
 }

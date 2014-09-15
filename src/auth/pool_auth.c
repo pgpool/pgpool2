@@ -154,13 +154,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 		}
 
 		msglen = htonl(0);
-		if (pool_write_and_flush(frontend, &msglen, sizeof(msglen)) < 0)
-		{
-			ereport(ERROR,
-				(errmsg("failed to authenticate with backend"),
-					errdetail("unable to write to frontend")));
-
-		}
+		pool_write_and_flush(frontend, &msglen, sizeof(msglen));
 		MASTER(cp)->auth_kind = 0;
 	}
 
@@ -345,10 +339,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 			{
 				case 'N':
 					/* process notice message */
-					if (NoticeResponse(frontend, cp) != POOL_CONTINUE)
-						ereport(ERROR,
-							(errmsg("authentication failed"),
-								errdetail("unable to send Notice response to backend")));
+					NoticeResponse(frontend, cp);
 					break;
 
 					/* process error message */
@@ -800,7 +791,7 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 		pool_passwd = pool_get_passwd(frontend->username);
 		if (!pool_passwd)
             ereport(ERROR,
-                    (errmsg("md5 authentication failed"),
+				(errmsg("md5 authentication failed"),
                      errdetail("username \"%s\" does not exist in pool_passwd",frontend->username)));
 
 

@@ -24,6 +24,9 @@
  */
 
 %{
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "pool.h"
 #include "pool_config.h"
 #include "utils/regex_array.h"
@@ -33,20 +36,7 @@
 #include "utils/fe_ports.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #define CHECK_CONTEXT(mask, context) ((mask) & (context))
-
-#ifdef POOL_PRIVATE
-
-/* we do not have elog api for pg_md5 utility*/
-/* include/utils/elog.h */
-#define ereport(elevel, rest) printf("pool_config: error at %s:%d\n", __FILE__, __LINE__)
-#define ereport(elevel, rest) printf("pool_config: error at %s:%d\n", __FILE__, __LINE__)
-
-#endif
 
 /* to shut off compiler warnings */
 int yylex(void);
@@ -125,11 +115,6 @@ int pool_init_config(void)
 
 #ifndef POOL_PRIVATE
 	pool_config->backend_desc = pool_shared_memory_create(sizeof(BackendDesc));
-	if (pool_config->backend_desc == NULL)
-	{
-		pool_error("failed to allocate pool_config->backend_desc");
-		return -1;
-	}
 #else
 	pool_config->backend_desc = palloc(sizeof(BackendDesc));
 #endif
@@ -351,7 +336,8 @@ int add_regex_pattern(char *type, char *s)
 	}
 	else
 	{
-		pool_error("add_to_patterns: bad pattern type %s", type);
+		ereport(WARNING,
+			(errmsg("unable to add regex pattern, bad pattern type %s", type)));
 		return 0;
 	}
 	/* Fill the pattern flag */
@@ -379,20 +365,23 @@ int add_regex_pattern(char *type, char *s)
 	/* compile our regex */
 	if (regcomp(&currItem.regexv, currItem.pattern, currItem.flag) != 0)
 	{
-		pool_error("add_to_patterns: invalid regex pattern: %s", currItem.pattern);
+		ereport(WARNING,
+			(errmsg("unable to add regex pattern for \"%s\", invalid pattern: \"%s\"", type,currItem.pattern)));
 	}
     else if ((strcmp(type, "white_function_list") == 0 ||
 	          strcmp(type, "black_function_list") == 0) &&
              growFunctionPatternArray(currItem) < 0)
     {
-        pool_error("add_to_patterns: unable to allocate new pattern");
+		ereport(WARNING,
+			(errmsg("unable to add regex pattern for \"%s\", unable to allocate new pattern", type)));
         return 0;
     }
     else if ((strcmp(type, "white_memqcache_table_list") == 0 ||
 	          strcmp(type, "black_memqcache_table_list") == 0) &&
              growMemqcacheTablePatternArray(currItem) < 0)
     {
-        pool_error("add_to_patterns: unable to allocate new pattern");
+		ereport(WARNING,
+			(errmsg("unable to add regex pattern for \"%s\", unable to allocate new pattern", type)));
         return 0;
     }
 
@@ -453,37 +442,29 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 	char key[1024];
 	double total_weight;
 	int i;
+	int error_level;
     bool log_destination_changed = false;
 #ifdef USE_MEMCACHED
 	bool use_memcached = true;
 #else
 	bool use_memcached = false;
 #endif
+	if(CHECK_CONTEXT(INIT_CONFIG, context))
+		error_level = ERROR;
+	else
+		error_level = WARNING;
 
-#ifndef POOL_PRIVATE
-#define PARSE_ERROR()		ereport(FATAL, \
+#define PARSE_ERROR()		ereport(CHECK_CONTEXT(INIT_CONFIG, context)?ERROR:WARNING, \
 								(errmsg("syntex error in configuration file \"%s\"",POOL_CONF_FILE_NAME), \
 									errdetail("parse error at line %d '%s'", Lineno, yytext)))
-#else
-#define PARSE_ERROR()		fprintf(stderr,"ERROR: syntex error in configuration file \"%s\"",POOL_CONF_FILE_NAME); \
-							fprintf(stderr,"DETAILS: parse error at line %d '%s'", Lineno, yytext)
-#endif
 
 	/* open config file */
 	fd = fopen(confpath, "r");
 	if (!fd)
 	{
-#ifndef POOL_PRIVATE
 		ereport(WARNING,
-			(errmsg("could not open configuration file \"%s\"\n",
-				POOL_CONF_FILE_NAME)));
-		ereport(NOTICE,
-			(errmsg("using default configuration parameter values")));
-#else
-		fprintf(stderr,"WARNING: could not open configuration file \"%s\"\n",
-				POOL_CONF_FILE_NAME);
-		fprintf(stderr,"NOTICE: using default configuration parameter values");
-#endif
+			(errmsg("could not open configuration file: \"%s\"\n",POOL_CONF_FILE_NAME),
+				errdetail("using default configuration parameter values")));
 		return 0;
 	}
 
@@ -515,19 +496,15 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 		strlcpy(key, yytext, sizeof(key));
 
-#ifndef POOL_PRIVATE
 		ereport(DEBUG5,
 			(errmsg("key: %s", key)));
-#endif
 		token = yylex();
 
 		if (token == POOL_EQUALS)
 			token = yylex();
 
-#ifndef POOL_PRIVATE
 		ereport(DEBUG5,
 			(errmsg("value: %s kind: %d", yytext, token)));
-#endif
 		if (!strcmp(key, "allow_inet_domain_socket") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			/* for backward compatibility */
@@ -535,8 +512,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"",yytext,key)));
+				
 				return(-1);
 			}
 			if (v)
@@ -569,8 +549,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 1024)
 			{
-				pool_error("pool_config: %s must be 1024 or higher numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\". %s must be >= 1024",yytext,key, key)));
+
 				return(-1);
 			}
 			pool_config->port = v;
@@ -601,8 +584,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 1024)
 			{
-				pool_error("pool_config: %s must be 1024 or higher numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\". %s must be >= 1024",yytext,key, key)));
 				return(-1);
 			}
 			pool_config->pcp_port = v;
@@ -650,8 +635,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be equal or greater or equal to 0 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\". %s must be >= 0",yytext,key, key)));
 				return(-1);
 			}
 			pool_config->pcp_timeout = v;
@@ -662,8 +649,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 1)
 			{
-				pool_error("pool_config: %s must be higher than 1 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\". %s must be >= 1",yytext,key, key)));
 				return(-1);
 			}
 			pool_config->num_init_children = v;
@@ -674,8 +663,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 1)
 			{
-				pool_error("pool_config: %s must be higher than 1 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\". %s must be >= 1",yytext,key, key)));
 				return(-1);
 			}
 			pool_config->listen_backlog_multiplier = v;
@@ -687,8 +678,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be greater or equal to 0 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\". %s must be >= 0",yytext,key, key)));
 				return(-1);
 			}
 			pool_config->child_life_time = v;
@@ -700,8 +693,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be greater or equal to 0 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\". %s must be >= 0",yytext,key, key)));
 				return(-1);
 			}
 			pool_config->client_idle_limit = v;
@@ -713,8 +708,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be greater or equal to 0 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\". %s must be >= 0",yytext,key, key)));
 				return(-1);
 			}
 			pool_config->connection_life_time = v;
@@ -726,8 +723,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be greater or equal to 0 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\". %s must be >= 0",yytext,key, key)));
 				return(-1);
 			}
 			pool_config->child_max_connections = v;
@@ -739,8 +738,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be higher than 0 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\". %s must be >= 0",yytext,key, key)));
 				return(-1);
 			}
 			pool_config->authentication_timeout = v;
@@ -751,8 +752,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be greater or equal to 0 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\". %s must be >= 0",yytext,key, key)));
 				return(-1);
 			}
 			pool_config->max_pool = v;
@@ -858,8 +861,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"",yytext,key)));
 				return(-1);
 			}
 			pool_config->log_connections = v;
@@ -871,8 +876,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"",yytext,key)));
 				return(-1);
 			}
 			pool_config->log_hostname = v;
@@ -884,8 +891,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"",yytext,key)));
 				return(-1);
 			}
 			pool_config->enable_pool_hba = v;
@@ -937,16 +946,20 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"",yytext,key)));
 				return(-1);
 			}
 			pool_config->replication_mode = v;
 
 			if (pool_config->master_slave_mode && pool_config->replication_mode)
 			{
-				pool_error("pool_config: replication_mode and master_slave_mode cannot be enabled at the same time");
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("replication_mode and master_slave_mode cannot be enabled at the same time")));
 				return(-1);
 			}
 
@@ -957,8 +970,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"",yytext,key)));
 				return(-1);
 			}
 			pool_config->load_balance_mode = v;
@@ -970,8 +985,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"",yytext,key)));
 				return(-1);
 			}
 			ereport(DEBUG1,
@@ -987,8 +1004,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"",yytext,key)));
 				return(-1);
 			}
 			ereport(DEBUG1,
@@ -1004,8 +1023,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"",yytext,key)));
 				return(-1);
 			}
 			ereport(DEBUG1,
@@ -1132,8 +1153,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
             }
   			if (!found)
 			{
-				pool_error("pool_config: invalid log_error_verbosity %s", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"",yytext,key)));
 				return(-1);
 			}
 		}
@@ -1171,8 +1194,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
             }
   			if (!found)
 			{
-				pool_error("pool_config: invalid client_min_messages  %s", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"",yytext,key)));
 				return(-1);
 			}
 		}
@@ -1210,8 +1235,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
             }
   			if (!found)
 			{
-				pool_error("pool_config: invalid log_min_messages  %s", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"",yytext,key)));
 				return(-1);
 			}
 		}
@@ -1222,8 +1249,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"",yytext,key)));
 				return(-1);
 			}
 			pool_config->print_timestamp = v;
@@ -1234,8 +1263,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"",yytext,key)));
 				return(-1);
 			}
 			pool_config->print_user = v;
@@ -1247,16 +1278,20 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"",yytext,key)));
 				return(-1);
 			}
 			pool_config->master_slave_mode = v;
 
 			if (pool_config->master_slave_mode && pool_config->replication_mode)
 			{
-				pool_error("pool_config: replication_mode and master_slave_mode cannot be enabled at the same time");
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("replication_mode and master_slave_mode cannot be enabled at the same time")));
 				return(-1);
 			}
 		}
@@ -1280,8 +1315,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (strcmp(str, MODE_SLONY) && strcmp(str, MODE_STREAMREP))
 			{
-				pool_error("pool_config: %s must be either \"slony\" or \"stream\"", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("allowed values for configuration parameter %s can be either \"slony\" or \"stream\"", key)));
 				return(-1);
 			}
 			pool_config->master_slave_sub_mode = str;
@@ -1294,8 +1331,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be greater or equal to 0 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\". %s must be >= 0",yytext,key, key)));
 				return(-1);
 			}
 			pool_config->delay_threshold = v;
@@ -1320,8 +1359,12 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (strcmp(str, "always") && strcmp(str, "if_over_threshold") && strcmp(str, "none"))
 			{
-				pool_error("pool_config: invalid log_standby_delay %s", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("allowed values are: \"always\", \"if_over_threshold\" and \"none\"")));
+
 				return(-1);
 			}
 			pool_config->log_standby_delay = str;
@@ -1333,8 +1376,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key)));
 				return(-1);
 			}
 			pool_config->connection_cache = v;
@@ -1347,8 +1392,12 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal to 0")));
+
 				return(-1);
 			}
 			pool_config->health_check_timeout = v;
@@ -1361,8 +1410,12 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal to 0")));
+				
 				return(-1);
 			}
 			pool_config->health_check_period = v;
@@ -1415,8 +1468,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
                         if (token != POOL_INTEGER || v < 0)
                         {
-                                pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
-                                fclose(fd);
+							fclose(fd);
+							ereport(error_level,
+								(errmsg("invalid configuration for key \"%s\"",key),
+									errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+										errhint("value must be greater than or equal to 0")));
                                 return(-1);
                         }
                         pool_config->health_check_max_retries = v;
@@ -1429,9 +1485,12 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
                         if (token != POOL_INTEGER || v < 0)
                         {
-                                pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
-                                fclose(fd);
-                                return(-1);
+							fclose(fd);
+							ereport(error_level,
+								(errmsg("invalid configuration for key \"%s\"",key),
+									errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+										errhint("value must be greater than or equal to 0")));
+							return(-1);
                         }
                         pool_config->health_check_retry_delay = v;
                 }
@@ -1442,8 +1501,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal to 0")));
 				return(-1);
 			}
 			pool_config->connect_timeout = v;
@@ -1456,8 +1518,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal to 0")));
 				return(-1);
 			}
 			pool_config->sr_check_period = v;
@@ -1570,8 +1635,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key)));
 				return(-1);
 			}
 			pool_config->fail_over_on_backend_error = v;
@@ -1664,8 +1731,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal to 0")));
 				return(-1);
 			}
 			pool_config->recovery_timeout = v;
@@ -1678,8 +1748,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal to 0")));
 				return(-1);
 			}
 			pool_config->search_primary_node_timeout = v;
@@ -1692,8 +1765,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < -1)
 			{
-				pool_error("pool_config: %s must be greater or equal to -1 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal to 0")));
 				return(-1);
 			}
 			pool_config->client_idle_limit_in_recovery = v;
@@ -1706,8 +1782,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal to 0")));
 				return(-1);
 			}
 			pool_config->insert_lock = v;
@@ -1720,8 +1799,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal to 0")));
 				return(-1);
 			}
 			pool_config->ignore_leading_white_space = v;
@@ -1733,8 +1815,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal to 0")));
 				return(-1);
 			}
 			pool_config->parallel_mode = v;
@@ -1785,8 +1870,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal to 0")));
 				return(-1);
 			}
 			pool_config->system_db_port = v;
@@ -1878,8 +1966,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			slot = atoi(key + 16);
 			if (slot < 0 || slot >= MAX_CONNECTION_SLOTS)
 			{
-				pool_error("pool_config: backend number %s for backend_hostname out of range", key);
 				fclose(fd);
+					ereport(error_level,
+						(errmsg("invalid configuration for key \"%s\"",key),
+							errdetail("invalid slot no :\"%d\" for key:\"%s\"", slot,key),
+								errhint("backend number must be between 0 and %d inclusive",MAX_CONNECTION_SLOTS)));
 				return(-1);
 			}
 
@@ -1903,13 +1994,16 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			slot = atoi(key + 12);
 			if (slot < 0 || slot >= MAX_CONNECTION_SLOTS)
 			{
-				pool_error("pool_config: host number %s for port number out of range", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid slot no :\"%d\" for key:\"%s\"", slot,key),
+							errhint("backend port slot must be between 0 and %d inclusive",MAX_CONNECTION_SLOTS)));
 				return(-1);
 			}
 			ereport(DEBUG1,
 				(errmsg("initializing pool configuration"),
-					errdetail("backend slot number %d port: %d ", slot,atoi(yytext))));
+					errdetail("backend port slot number %d port: %d ", slot,atoi(yytext))));
 			if (context == INIT_CONFIG)
 			{
 				BACKEND_INFO(slot).backend_port = atoi(yytext);
@@ -1932,8 +2026,12 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			slot = atoi(key + 14);
 			if (slot < 0 || slot >= MAX_CONNECTION_SLOTS)
 			{
-				pool_error("pool_config: weight number %s for port number out of range", key);
 				fclose(fd);
+				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid slot no :\"%d\" for key:\"%s\"", slot,key),
+							errhint("backend weight slot must be between 0 and %d inclusive",MAX_CONNECTION_SLOTS)));
 				return(-1);
 			}
 
@@ -1941,8 +2039,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0.0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal to 0.0")));
 				return(-1);
 			}
 			ereport(DEBUG1,
@@ -1978,8 +2079,12 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			slot = atoi(key + 22);
 			if (slot < 0 || slot >= MAX_CONNECTION_SLOTS)
 			{
-				pool_error("pool_config: backend number %s for backend_data_directory out of range", key);
 				fclose(fd);
+				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid slot no :\"%d\" for key:\"%s\"", slot,key),
+							errhint("backend data directory slot must be between 0 and %d inclusive",MAX_CONNECTION_SLOTS)));
 				return(-1);
 			}
 
@@ -2010,8 +2115,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			str = extract_string(yytext, token);
 			if (str == NULL)
 			{
-				pool_error("pool_config: extract_string failed: %s", yytext);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("extract_string failed: %s", yytext)));
 				return(-1);
 			}
 
@@ -2032,8 +2139,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				{
 					if (disallow_to_failover_is_specified)
 					{
-						pool_error("pool_config: cannot set ALLOW_TO_FAILOVER and DISALLOW_TO_FAILOVER at the same time");
 						fclose(fd);
+						ereport(error_level,
+							(errmsg("invalid configuration for key \"%s\"",key),
+								errdetail("cannot set ALLOW_TO_FAILOVER and DISALLOW_TO_FAILOVER at the same time")));
+
 						return(-1);
 					}
 					flag &= ~POOL_FAILOVER;
@@ -2048,8 +2158,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				{
 					if (allow_to_failover_is_specified)
 					{
-						pool_error("pool_config: cannot set ALLOW_TO_FAILOVER and DISALLOW_TO_FAILOVER at the same time");
 						fclose(fd);
+						ereport(error_level,
+							(errmsg("invalid configuration for key \"%s\"",key),
+								errdetail("cannot set ALLOW_TO_FAILOVER and DISALLOW_TO_FAILOVER at the same time")));
 						return(-1);
 					}
 					flag |= POOL_FAILOVER;
@@ -2062,15 +2174,22 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 				else
 				{
-					pool_error("pool_config: invalid backend flag:%s", flags[i]);
+					fclose(fd);
+					ereport(error_level,
+						(errmsg("invalid configuration for key \"%s\"",key),
+							errdetail("unknown backend flag:%s", flags[i])));
+					return (-1);
 				}
 			}
 
 			slot = atoi(key + 12);
 			if (slot < 0 || slot >= MAX_CONNECTION_SLOTS)
 			{
-				pool_error("pool_config: slot number %s for flag out of range", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid slot no :\"%d\" for key:\"%s\"", slot,key),
+							errhint("slot must be between 0 and %d inclusive",MAX_CONNECTION_SLOTS)));
 				return(-1);
 			}
 
@@ -2087,7 +2206,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
+				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than  or equal to 0")));
 				return(-1);
 			}
 			pool_config->log_statement = v;
@@ -2098,7 +2221,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
+				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than  or equal to 0")));
 				return(-1);
 			}
 			pool_config->log_per_node_statement = v;
@@ -2135,8 +2262,12 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			slot = atoi(key + 21) ;
 			if (slot < 0 || slot >= MAX_CONNECTION_SLOTS)
 			{
-				pool_error("pool_config: pgpool number %s for other_pgpool_hostname out of range", key);
 				fclose(fd);
+				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid slot no :\"%d\" for key:\"%s\"", slot,key),
+							errhint("slot must be between 0 and %d inclusive",MAX_CONNECTION_SLOTS)));
 				return(-1);
 			}
 
@@ -2159,8 +2290,12 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			slot = atoi(key + 17);
 			if (slot < 0 || slot >= MAX_CONNECTION_SLOTS)
 			{
-				pool_error("pool_config: pgpool number %s for other_pgpool_port out of range", key);
 				fclose(fd);
+				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid slot no :\"%d\" for key:\"%s\"", slot,key),
+							errhint("slot must be between 0 and %d inclusive",MAX_CONNECTION_SLOTS)));
 				return(-1);
 			}
 
@@ -2177,8 +2312,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			slot = atoi(key + 13);
 			if (slot < 0 || slot >= MAX_CONNECTION_SLOTS)
 			{
-				pool_error("pool_config: pgpool number %s for other_wd_port out of range", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid slot no :\"%d\" for key:\"%s\"", slot,key),
+							errhint("slot must be between 0 and %d inclusive",MAX_CONNECTION_SLOTS)));
 				return(-1);
 			}
 
@@ -2195,8 +2333,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than  or equal to 0")));
 				return(-1);
 			}
 			pool_config->use_watchdog = v;
@@ -2208,8 +2349,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than  or equal to 0")));
 				return(-1);
 			}
 			pool_config->clear_memqcache_on_escalation = v;
@@ -2298,8 +2442,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v <= 0)
 			{
-				pool_error("pool_config: %s must be higher than 1 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than 0")));
 				return(-1);
 			}
 			pool_config->wd_port = v;
@@ -2310,8 +2457,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v <= 0)
 			{
-				pool_error("pool_config: %s must be higher than 1 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than 0")));
 				return(-1);
 			}
 			pool_config->wd_interval = v;
@@ -2436,8 +2586,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v <= 0)
 			{
-				pool_error("pool_config: %s must be higher than 1 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than 0")));
 				return(-1);
 			}
 			pool_config->wd_life_point = v;
@@ -2541,8 +2694,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (strcmp(str, MODE_HEARTBEAT) && strcmp(str, MODE_QUERY))
 			{
-				pool_error("pool_config: %s must be either \"heartbeat\" or \"query\"", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("allowed values for configuration parameter %s can be either \"heartbeat\" or \"query\"", key)));
 				return(-1);
 			}
 			pool_config->wd_lifecheck_method = str;
@@ -2553,8 +2708,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v <= 0)
 			{
-				pool_error("pool_config: %s must be higher than 1 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than 0")));
 				return(-1);
 			}
 			pool_config->wd_heartbeat_port = v;
@@ -2565,8 +2723,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v <= 0)
 			{
-				pool_error("pool_config: %s must be higher than 1 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than 0")));
 				return(-1);
 			}
 			pool_config->wd_heartbeat_keepalive = v;
@@ -2577,8 +2738,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v <= 0)
 			{
-				pool_error("pool_config: %s must be higher than 1 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than 0")));
 				return(-1);
 			}
 			pool_config->wd_heartbeat_deadtime = v;
@@ -2613,8 +2777,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			slot = atoi(key + 16) ;
 			if (slot < 0 || slot >= WD_MAX_IF_NUM)
 			{
-				pool_error("pool_config: pgpool number %s for heartbeat_device out of range", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid slot no :\"%d\" for key:\"%s\"", slot,key),
+							errhint("slot must be between 0 and %d inclusive",MAX_CONNECTION_SLOTS)));
 				return(-1);
 			}
 
@@ -2638,8 +2805,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			slot = atoi(key + 26) ;
 			if (slot < 0 || slot >= WD_MAX_IF_NUM)
 			{
-				pool_error("pool_config: pgpool number %s for heartbeat_destination_port out of range", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid slot no :\"%d\" for key:\"%s\"", slot,key),
+							errhint("slot must be between 0 and %d inclusive",MAX_CONNECTION_SLOTS)));
 				return(-1);
 			}
 
@@ -2659,8 +2829,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			slot = atoi(key + 21) ;
 			if (slot < 0 || slot >= WD_MAX_IF_NUM)
 			{
-				pool_error("pool_config: pgpool number %s for heartbeat_destination out of range", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid slot no :\"%d\" for key:\"%s\"", slot,key),
+							errhint("slot must be between 0 and %d inclusive",MAX_CONNECTION_SLOTS)));
 				return(-1);
 			}
 
@@ -2680,7 +2853,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
+				fclose(fd);
+				ereport(error_level,
+				(errmsg("invalid configuration for key \"%s\"",key),
+					errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key)));
+
 				return(-1);
 			}
 			pool_config->ssl = v;
@@ -2766,8 +2943,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal to 0")));
 				return(-1);
 			}
 			/* Consider -d option value stored in pool_config already */
@@ -2780,8 +2960,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 0)
 			{
-				pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal to 0")));
 				return(-1);
 			}
 			pool_config->relcache_expire = v;
@@ -2793,8 +2976,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (token != POOL_INTEGER || v < 1)
 			{
-				pool_error("pool_config: %s must be equal or higher than 1 numeric value", key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal to 1")));
 				return(-1);
 			}
 			pool_config->relcache_size = v;
@@ -2806,7 +2992,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
+				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key)));
 				return(-1);
 			}
 			pool_config->check_temp_table = v;
@@ -2818,7 +3007,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
+				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key)));
 				return(-1);
 			}
 			pool_config->check_unlogged_table = v;
@@ -2831,8 +3023,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
             if (v < 0)
             {
-                pool_error("pool_config: invalid value %s for %s", yytext, key);
-                fclose(fd);
+				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key)));
                 return(-1);
             }
             pool_config->memory_cache_enabled = v;
@@ -2856,15 +3050,20 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (!strcmp(str, "memcached") && !use_memcached)
 			{
-				pool_error("memqcached_method cannot be memcached because pgpool-II is not built with MEMCACHED enabled");
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration, Feature Not available"),
+						errdetail("invalid value:\"%s\" for key:\"%s\", memcached not available because pgpool-II is not built with MEMCACHED support", yytext,key)));
 				return -1;
 			}
 
 			if (strcmp(str, "memcached") && strcmp(str, "shmem"))
 			{
-				pool_error("memqcached_method must be either shmem or memcached");
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("allowed values for configuration parameter %s can be either \"shmem\" or \"memcached\"", str)));
+
 				return -1;
 			}
 
@@ -2894,8 +3093,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
             if (token != POOL_INTEGER || v < 0)
             {
-                pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
-                fclose(fd);
+				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal to 0")));
                 return(-1);
             }
             pool_config->memqcache_memcached_port = v;
@@ -2906,8 +3108,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
             if (token != POOL_INTEGER || v < 0)
             {
-                pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
-                fclose(fd);
+				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal to 0")));
                 return(-1);
             }
             pool_config->memqcache_total_size = v;
@@ -2918,8 +3123,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
             if (token != POOL_INTEGER || v < 0)
             {
-                pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
-                fclose(fd);
+				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal 0")));
                 return(-1);
             }
             pool_config->memqcache_max_num_cache = v;
@@ -2930,8 +3138,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
             if (token != POOL_INTEGER || v < 0)
             {
-                pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
-                fclose(fd);
+				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal 0")));
                 return(-1);
             }
             pool_config->memqcache_expire = v;
@@ -2942,8 +3153,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
             if (v < 0)
             {
-                pool_error("pool_config: invalid value %s for %s", yytext, key);
-                fclose(fd);
+				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key)));
                 return(-1);
             }
             pool_config->memqcache_auto_cache_invalidation = v;
@@ -2954,8 +3167,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
             if (token != POOL_INTEGER || v < 0)
             {
-                pool_error("pool_config: %s must be equal or higher than 0 numeric value", key);
-                fclose(fd);
+				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal 0")));
                 return(-1);
             }
             pool_config->memqcache_maxcache = v;
@@ -2966,8 +3182,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
             if (token != POOL_INTEGER || v < 512)
             {
-                pool_error("pool_config: %s must be equal or higher than 512 numeric value", key);
-                fclose(fd);
+				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal to 512")));
                 return(-1);
             }
             pool_config->memqcache_cache_block_size = v;
@@ -3083,8 +3302,10 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			{
 				if (add_regex_array(pool_config->redirect_dbnames, lrtokens->token[i].left_token))
 				{
-				   pool_error("wrong redirect dbname regular expression %s", lrtokens->token[i].left_token);
-				   fclose(fd);
+					fclose(fd);
+					ereport(error_level,
+						(errmsg("invalid configuration for key \"%s\"",key),
+							errdetail("wrong redirect dbname regular expression: \"%s\"", lrtokens->token[i].left_token)));
 				   return(-1);
 				}
 			}
@@ -3121,9 +3342,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			{
 				if (add_regex_array(pool_config->redirect_app_names, lrtokens->token[i].left_token))
 				{
-				   pool_error("wrong redirect dbname regular expression %s", lrtokens->token[i].left_token);
-				   fclose(fd);
-				   return(-1);
+					fclose(fd);
+					ereport(error_level,
+						(errmsg("invalid configuration for key \"%s\"",key),
+							errdetail("wrong redirect dbname regular expression: \"%s\"", lrtokens->token[i].left_token)));
+					return(-1);
 				}
 			}
 		}
@@ -3135,8 +3358,12 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			if (v < 0)
 			{
-				pool_error("pool_config: invalid value %s for %s", yytext, key);
 				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+							errhint("value must be greater than or equal to 0")));
+
 				return(-1);
 			}
 			pool_config->allow_sql_comments = v;
@@ -3271,12 +3498,14 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			dist_num = pool_memset_system_db_info(info);
 			if(dist_num < 0)
 			{
-				pool_error("failed to get systemdb info");
+				ereport(ERROR,
+					(errmsg("invalid configuration, failed to get systemdb info")));
 				return(-1);
 			}
 			if (!pool_config->replication_mode && !pool_config->load_balance_mode)
 			{
-				pool_error("pool_config: parallel_mode requires replication_mode or load_balance_mode turned on");
+				ereport(ERROR,
+					(errmsg("invalid configuration, parallel_mode requires replication_mode or load_balance_mode turned on")));
 				return(-1);
 			}
 		}
@@ -3292,7 +3521,8 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			if (pool_config->backend_desc->backend_info[i].backend_port != 0 &&
 				!strcmp(pool_config->backend_desc->backend_info[i].backend_data_directory, ""))
 			{
-				pool_error("pool_config: recovery_1st_stage_command and recovery_2nd_stage_command requires backend_data_directory to be set");
+				ereport(ERROR,
+					(errmsg("invalid configuration, recovery_1st_stage_command and recovery_2nd_stage_command requires backend_data_directory to be set")));
 				return -1;
 			}
 		}

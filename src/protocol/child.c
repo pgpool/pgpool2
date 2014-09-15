@@ -69,7 +69,7 @@ static RETSIGTYPE reload_config_handler(int sig);
 static RETSIGTYPE authentication_timeout(int sig);
 static void send_params(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 static void send_frontend_exits(void);
-static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password);
+static void s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password);
 static void connection_count_up(void);
 static void connection_count_down(void);
 static void init_system_db_connection(void);
@@ -90,7 +90,7 @@ static void print_process_status(char *remote_host,char* remote_port);
 static bool backend_cleanup(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL* volatile backend);
 static void free_persisten_db_connection_memory(POOL_CONNECTION_POOL_SLOT *cp);
 static int choose_db_node_id(char *str);
-
+static void child_will_go_down(int code, Datum arg);
 /*
  * non 0 means SIGTERM(smart shutdown) or SIGINT(fast shutdown) has arrived
  */
@@ -132,7 +132,8 @@ void do_child(int *fds)
 	int connections_count = 0;	/* used if child_max_connections > 0 */
 	char psbuf[NI_MAXHOST + 128];
 
-	ereport(DEBUG2,(errmsg("I am Pgpool Child process with pid: %d", getpid())));
+	ereport(DEBUG2,
+			(errmsg("I am Pgpool Child process with pid: %d", getpid())));
 
 	/* Identify myself via ps */
 	init_ps_display("", "", "", "");
@@ -147,6 +148,8 @@ void do_child(int *fds)
 	signal(SIGUSR1, close_idle_connection);
 	signal(SIGUSR2, wakeup_handler);
 	signal(SIGPIPE, SIG_IGN);
+
+	on_system_exit(child_will_go_down, (Datum)NULL);
 
 	int *walk;
 #ifdef NONE_BLOCK
@@ -601,13 +604,13 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 /*
  * send startup packet
  */
-int send_startup_packet(POOL_CONNECTION_POOL_SLOT *cp)
+void send_startup_packet(POOL_CONNECTION_POOL_SLOT *cp)
 {
 	int len;
 
 	len = htonl(cp->sp->len + sizeof(len));
 	pool_write(cp->con, &len, sizeof(len));
-	return pool_write_and_flush(cp->con, cp->sp->startup_packet, cp->sp->len);
+	pool_write_and_flush(cp->con, cp->sp->startup_packet, cp->sp->len);
 }
 
 /*
@@ -742,7 +745,8 @@ void cancel_request(CancelPacket *sp)
  found:
 	if (!found)
 	{
-		pool_error("cancel_request: invalid cancel key: pid:%d key:%d",ntohl(sp->pid), ntohl(sp->key));
+		ereport(LOG,
+			(errmsg("invalid cancel key: pid:%d key:%d",ntohl(sp->pid), ntohl(sp->key))));
 		return;	/* invalid key */
 	}
 
@@ -758,7 +762,8 @@ void cancel_request(CancelPacket *sp)
 
 		if (fd < 0)
 		{
-			pool_error("Could not create socket for sending cancel request for backend %d", i);
+			ereport(LOG,
+					(errmsg("Could not create socket for sending cancel request for backend %d", i)));
 			return;
 		}
 
@@ -777,8 +782,9 @@ void cancel_request(CancelPacket *sp)
 			(errmsg("forwarding cancel request to backend"),
 				 errdetail("canceling backend pid:%d key: %d", ntohl(cp.pid),ntohl(cp.key))));
 
-		if (pool_write_and_flush(con, &cp, sizeof(CancelPacket)) < 0)
-			pool_error("Could not send cancel request packet for backend %d", i);
+		if (pool_write_and_flush_noerror(con, &cp, sizeof(CancelPacket)) < 0)
+			ereport(WARNING,
+				(errmsg("failed to send cancel request to backend %d",i)));
 
 		pool_close(con);
 
@@ -861,12 +867,7 @@ static POOL_CONNECTION_POOL *connect_backend(StartupPacket *sp, POOL_CONNECTION 
 				CONNECTION_SLOT(backend, i)->sp = topmem_sp;
 
 				/* send startup packet */
-				if (send_startup_packet(CONNECTION_SLOT(backend, i)) < 0)
-				{
-					ereport(ERROR,
-						(errmsg("unable to connect to backend"),
-							errdetail("failed to send startup packet to backend [%d].",i)));
-				}
+				send_startup_packet(CONNECTION_SLOT(backend, i));
 			}
 		}
 		/*
@@ -902,7 +903,6 @@ static RETSIGTYPE die(int sig)
 			{
 				ereport(LOG,
 						(errmsg("closing listen socket")));
-
 				close(child_inet_fd);
 			}
 			close(child_unix_fd);
@@ -919,7 +919,10 @@ static RETSIGTYPE die(int sig)
 			child_exit(0);
 			break;
 		default:
-			pool_error("die() received unknown signal: %d", sig);
+			ereport(LOG,
+				(errmsg("child process received unknown signal: %d",sig),
+					 errdetail("ignoring...")));
+
 			break;
 	}
 }
@@ -1083,6 +1086,39 @@ void pool_free_startup_packet(StartupPacket *sp)
 /*
  * Do house keeping works when pgpool child process exits
  */
+static void
+child_will_go_down(int code, Datum arg)
+{
+	if(processType != PT_CHILD)
+	{
+		/* should never happen */
+		ereport(WARNING,
+				(errmsg("child_exit: called from invalid process. ignored.")));
+		return;
+	}
+	
+	/* count down global connection counter */
+	if (accepted)
+		connection_count_down();
+	
+	/* prepare to shutdown connections to system db */
+	if(pool_config->parallel_mode)
+	{
+		if (system_db_info->pgconn)
+			pool_close_libpq_connection();
+		if (pool_system_db_connection())
+			pool_close(pool_system_db_connection()->con);
+	}
+	
+	if (pool_config->memory_cache_enabled && !pool_is_shmem_cache())
+	{
+		memcached_disconnect();
+	}
+	
+	/* let backend know now we are exiting */
+	if (pool_connection_pool)
+		send_frontend_exits();
+}
 void child_exit(int code)
 {
 	if(processType != PT_CHILD)
@@ -1092,29 +1128,6 @@ void child_exit(int code)
                 (errmsg("child_exit: called from invalid process. ignored.")));
 		return;
 	}
-
-	/* count down global connection counter */
-	if (accepted)
-		connection_count_down();
-
-	/* prepare to shutdown connections to system db */
-	if(pool_config->parallel_mode)
-	{
-		if (system_db_info->pgconn)
-			pool_close_libpq_connection();
-		if (pool_system_db_connection())
-			pool_close(pool_system_db_connection()->con);
-	}
-
-	if (pool_config->memory_cache_enabled && !pool_is_shmem_cache())
-	{
-		memcached_disconnect();
-	}
-
-	/* let backend know now we are exiting */
-	if (pool_connection_pool)
-		send_frontend_exits();
-
 	exit(code);
 }
 
@@ -1137,7 +1150,6 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 
 	static StartupPacket_v3 *startup_packet;
 	int len, len1;
-	int status;
 
 	cp = palloc0(sizeof(POOL_CONNECTION_POOL_SLOT));
 	startup_packet = palloc0(sizeof(*startup_packet));
@@ -1160,8 +1172,8 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 		free_persisten_db_connection_memory(cp);
 		pfree(startup_packet);
         ereport(ERROR,
-                (errmsg("failed to make persistent db connection"),
-                 errdetail("connection to %s(%d) failed", hostname, port)));
+			(errmsg("failed to make persistent db connection"),
+                 errdetail("connection to host:\"%s:%d\" failed", hostname, port)));
 	}
 
 	cp->con = pool_open(fd,true);
@@ -1180,7 +1192,7 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 		free_persisten_db_connection_memory(cp);
 		pfree(startup_packet);
         ereport(ERROR,
-                (errmsg("failed to make persistent db connection"),
+			(errmsg("failed to make persistent db connection"),
                  errdetail("user name is too long")));
 	}
 
@@ -1204,7 +1216,7 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 		free_persisten_db_connection_memory(cp);
 		pfree(startup_packet);
         ereport(ERROR,
-                (errmsg("failed to make persistent db connection"),
+			(errmsg("failed to make persistent db connection"),
                  errdetail("database name is too long")));
 	}
 	len += len1;
@@ -1222,27 +1234,18 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	/*
 	 * send startup packet
 	 */
-	status = send_startup_packet(cp);
-	if (status)
+	PG_TRY();
+	{
+		send_startup_packet(cp);
+		s_do_auth(cp, password);
+	}
+	PG_CATCH();
 	{
 		pool_close(cp->con);
 		free_persisten_db_connection_memory(cp);
-        ereport(ERROR,
-                (errmsg("failed to make persistent db connection"),
-                 errdetail("unable to send startup packet")));
+		PG_RE_THROW();
 	}
-
-	/*
-	 * do authentication
-	 */
-	if (s_do_auth(cp, password))
-	{
-		pool_close(cp->con);
-		free_persisten_db_connection_memory(cp);
-        ereport(ERROR,
-                (errmsg("failed to make persistent db connection"),
-                 errdetail("authentication failed")));
-	}
+	PG_END_TRY();
 
 	return cp;
 }
@@ -1331,7 +1334,7 @@ void discard_persistent_db_connection(POOL_CONNECTION_POOL_SLOT *cp)
  * Do authentication. Assuming the only caller is
  * *make_persistent_db_connection().
  */
-static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
+static void s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 {
 	char kind;
 	int status;
@@ -1351,8 +1354,8 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 	if (kind != 'R')
 	{
         ereport(ERROR,
-                (errmsg("failed to authenticate"),
-                 errdetail("invalid authentication message response type, Expecting 'R' and received '%c'",kind)));
+			(errmsg("failed to authenticate"),
+				errdetail("invalid authentication message response type, Expecting 'R' and received '%c'",kind)));
 	}
 
 	/* read message length */
@@ -1379,14 +1382,9 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 		pool_write(cp->con, "p", 1);
 		pool_write(cp->con, &size, sizeof(size));
 		pool_write_and_flush(cp->con, password, strlen(password) + 1);
-		status = pool_flush(cp->con);
-		if (status > 0)
-		{
-            ereport(ERROR,
-				(errmsg("failed to authenticate"),
-                     errdetail("error while sending clear text password")));
-		}
-		return s_do_auth(cp, password);
+		pool_flush(cp->con);
+		s_do_auth(cp, password);
+		return;
 	}
 	else if (auth_kind == 4) /* crypt password? */
 	{
@@ -1409,7 +1407,8 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 				(errmsg("failed to authenticate"),
                      errdetail("error while sending crypt password")));
 		}
-		return s_do_auth(cp, password);
+		s_do_auth(cp, password);
+		return;
 	}
 	else if (auth_kind == 5) /* md5 password? */
 	{
@@ -1432,16 +1431,9 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 		pool_write(cp->con, &size, sizeof(size));
 		pool_write_and_flush(cp->con, buf, strlen(buf) + 1);
 		status = pool_flush(cp->con);
-		if (status > 0)
-		{
-            ereport(ERROR,
-				(errmsg("failed to authenticate"),
-                     errdetail("error while sending md5 password")));
-		}
-
-		status = s_do_auth(cp, password);
+		s_do_auth(cp, password);
 		pfree(buf);
-		return status;
+		return;
 	}
 	else
 	{
@@ -1511,7 +1503,7 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 						(errmsg("failed to authenticate"),
                              errdetail("ready for query arrived before receiving keydata")));
 				}
-				return 0;
+				return;
 				break;
 
 			case 'S':	/* parameter status */
@@ -1526,7 +1518,10 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 
 				p = pool_read2(cp->con, length);
 				if (p == NULL)
-					return -1;
+					ereport(ERROR,
+						(errmsg("failed to authenticate"),
+                             errdetail("unable to read data from socket")));
+
 				break;
 
 			default:
@@ -1536,7 +1531,8 @@ static int s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 				break;
 		}
 	}
-	return -1;
+	ereport(ERROR,
+		(errmsg("failed to authenticate")));
 }
 
 /*
@@ -2136,7 +2132,7 @@ get_connection(int front_end_fd, SockAddr *saddr)
 	if (pool_config->log_connections)
 	{
 		ereport(LOG,
-				(errmsg("new connection received"),
+			(errmsg("new connection received"),
 				 errdetail("connecting host=%s%s%s",
 						   remote_host, remote_port[0] ? " port=" : "", remote_port)));
 	}

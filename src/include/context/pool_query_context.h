@@ -58,7 +58,6 @@ typedef struct {
 	Node *rewritten_parse_tree;	/* rewritten raw parser output if any */
 	bool where_to_send[MAX_NUM_BACKENDS];	/* DB node map to send query */
 	int  virtual_master_node_id;	   		/* the 1st DB node to send query */
-	MemoryContext memory_context;		/* memory context for query */
 	POOL_QUERY_STATE query_state[MAX_NUM_BACKENDS];	/* for extended query protocol */
 	bool is_cache_safe;	/* true if SELECT is safe to cache */
 	POOL_TEMP_QUERY_CACHE *temp_cache;	/* temporary cache */

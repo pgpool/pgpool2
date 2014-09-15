@@ -439,6 +439,12 @@ typedef enum
 	PT_MAIN,
 	PT_CHILD,
 	PT_WORKER,
+	PT_HB_SENDER,
+	PT_HB_RECEIVER,
+	PT_WATCHDOG,
+	PT_LIFECHECK,
+	PT_FOLLOWCHILD,
+	PT_WATCHDOG_UTILITY,
 	PT_PCP
 } ProcessType;
 
@@ -485,12 +491,6 @@ extern char remote_port[];	/* client port */
  */
 extern char *get_config_file_name(void);
 extern char *get_hba_file_name(void);
-#ifdef __GNUC__
-extern void pool_error(const char *fmt,...)
-   	__attribute__((format (printf, 1, 2)));
-#else
-extern void pool_error(const char *fmt,...);
-#endif
 extern void do_child(int *fds);
 extern void pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file);
 extern int select_load_balancing_node(void);
@@ -513,7 +513,7 @@ extern bool pool_ssl_pending(POOL_CONNECTION *cp);
 extern POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend, 
 								  POOL_CONNECTION_POOL *backend);
 
-extern POOL_STATUS NoticeResponse(POOL_CONNECTION *frontend, 
+extern void NoticeResponse(POOL_CONNECTION *frontend,
 								  POOL_CONNECTION_POOL *backend);
 
 extern void notice_backend_error(int node_id);
@@ -566,10 +566,9 @@ extern void pool_send_severity_message(POOL_CONNECTION *frontend, int protoMajor
 							 char *severity,
 							 int line);
 extern void pool_send_readyforquery(POOL_CONNECTION *frontend);
-extern int send_startup_packet(POOL_CONNECTION_POOL_SLOT *cp);
+extern void send_startup_packet(POOL_CONNECTION_POOL_SLOT *cp);
 extern void pool_free_startup_packet(StartupPacket *sp);
 extern void child_exit(int code);
-extern void system_exit(int code);
 
 extern void init_prepared_list(void);
 extern void proc_exit(int);
@@ -577,7 +576,7 @@ extern void proc_exit(int);
 extern void *pool_shared_memory_create(size_t size);
 extern void pool_shmem_exit(int code);
 
-extern int pool_semaphore_create(int numSems);
+extern void pool_semaphore_create(int numSems);
 extern void pool_semaphore_lock(int semNum);
 extern void pool_semaphore_unlock(int semNum);
 
@@ -628,7 +627,7 @@ extern const char *get_ps_display(int *displen);
 extern void pool_ps_idle_display(POOL_CONNECTION_POOL *backend);
 
 /* recovery.c */
-extern int start_recovery(int recovery_node);
+extern void start_recovery(int recovery_node);
 extern void finish_recovery(void);
 extern int wait_connection_closed(void);
 
@@ -649,7 +648,7 @@ extern POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backen
 extern void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result, int major);
 extern void free_select_result(POOL_SELECT_RESULT *result);
 extern int compare(const void *p1, const void *p2);
-extern POOL_STATUS do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id, int major);
+extern void do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id, int major);
 extern POOL_STATUS pool_discard_packet_contents(POOL_CONNECTION_POOL *cp);
 extern void pool_dump_valid_backend(int backend_id);
 

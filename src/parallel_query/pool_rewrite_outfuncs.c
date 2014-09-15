@@ -4281,14 +4281,11 @@ _rewriteFuncCall(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblin
 static void
 AvgFuncCall(Node *BaseSelect, RewriteQuery *message, ConInfoTodblink *dblink, String *str, FuncCall *node)
 {
-	char *funcname;
 	if(message->r_code == SELECT_AEXPR)
 	{
 		KeepRewriteQueryReturnCode(message, SELECT_AEXPR_FALSE);
 		return;
 	}
-
-	funcname = strVal(lfirst(list_head(node->funcname)));
 
 	delay_string_append_char(message, str, "sum");
 

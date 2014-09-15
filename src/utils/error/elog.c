@@ -43,6 +43,7 @@
  * overflow.)
  *
  *
+ * Portions Copyright (c) 2003-2014, PgPool Global Development Group
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -177,6 +178,7 @@ static int	recursion_depth = 0;	/* to detect actual recursion */
 static char *expand_fmt_string(const char *fmt, ErrorData *edata);
 static const char *useful_strerror(int errnum);
 static const char *error_severity(int elevel);
+static const char *process_name();
 static void append_with_tabs(StringInfo buf, const char *str);
 static bool is_log_level_output(int elevel, int log_min_level);
 
@@ -1845,8 +1847,6 @@ send_message_to_frontend(ErrorData *edata)
 	pool_unset_nonblock(frontend->fd);
 }
 
-
-
 static void pgpool_log_prefix(StringInfo buf, ErrorData *edata)
 {
     if (pool_config->print_timestamp)
@@ -1857,7 +1857,6 @@ static void pgpool_log_prefix(StringInfo buf, ErrorData *edata)
         appendStringInfo(buf, "%s: ", strbuf);
     }
     appendStringInfo(buf, "pid %d: ",(int)getpid());
-    
 }
 /*
  * Write error report to server's log
@@ -2116,7 +2115,6 @@ error_severity(int elevel)
 	return prefix;
 }
 
-
 /*
  *	append_with_tabs
  *
@@ -2233,10 +2231,6 @@ proc_exit(int code)
 	proc_exit_prepare(code);
 
 	elog(DEBUG3, "exit(%d)", code);
-	if(processType == PT_MAIN)
-        system_exit(code);
-    else
-        child_exit(code);
 	exit(code);
 }
 

@@ -34,7 +34,6 @@ pgpool_SOURCES = main/main.c \
 	utils/pool_params.c \
 	utils/ps_status.c \
 	utils/pool_shmem.c \
-	utils/pool_error.c \
 	utils/pool_sema.c \
 	utils/pool_signal.c \
 	utils/pool_path.c \

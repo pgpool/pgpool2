@@ -174,21 +174,27 @@ wd_create_send_socket(char * hostname, int port)
 	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 	{
 		/* socket create failed */
-		pool_error("wd_create_send_socket: Failed to create socket. reason: %s", strerror(errno));
+		ereport(WARNING,
+			(errmsg("failed to create watchdog sending socket"),
+				 errdetail("create socket failed with reason: \"%s\"", strerror(errno))));
 		return -1;
 	}
 
 	/* set socket option */
 	if ( setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *) &one, sizeof(one)) == -1 )
 	{
-		pool_error("wd_create_send_socket: setsockopt(TCP_NODELAY) failed. reason: %s", strerror(errno));
 		close(sock);
+		ereport(WARNING,
+			(errmsg("failed to create watchdog sending socket"),
+				 errdetail("setsockopt(TCP_NODELAY) failed with reason: \"%s\"", strerror(errno))));
 		return -1;
 	}
 	if ( setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(one)) == -1 )
 	{
-		pool_error("wd_create_send_socket: setsockopt(SO_KEEPALIVE) failed. reason: %s", strerror(errno));
 		close(sock);
+		ereport(WARNING,
+			(errmsg("failed to create watchdog sending socket"),
+				 errdetail("setsockopt(SO_KEEPALIVE) failed with reason: \"%s\"", strerror(errno))));
 		return -1;
 	}
 
@@ -201,8 +207,10 @@ wd_create_send_socket(char * hostname, int port)
 		hp = gethostbyaddr(hostname,strlen(hostname),AF_INET);
 		if ((hp == NULL) || (hp->h_addrtype != AF_INET))
 		{
-			pool_error("gethostbyname() failed: %s host: %s", hstrerror(h_errno), hostname);
 			close(sock);
+			ereport(WARNING,
+				(errmsg("failed to create watchdog sending socket"),
+					 errdetail("gethostbyname for \"%s\" failed with error: \"%s\"", hostname,hstrerror(h_errno))));
 			return -1;
 		}
 	}
@@ -218,9 +226,8 @@ wd_create_send_socket(char * hostname, int port)
 			if (errno == EINTR)
 				continue;
 			else if (errno == EISCONN)
-			{
 				return sock;
-			}
+
 			ereport(LOG,
 				(errmsg("failed to create watchdog sending socket"),
 					 errdetail("connect() reports failure \"%s\"",strerror(errno)),
@@ -244,36 +251,41 @@ wd_create_recv_socket(int port)
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
 		/* socket create failed */
-		pool_error("wd_create_recv_socket: Failed to create socket. reason: %s", strerror(errno));
-		return -1;
+		ereport(ERROR,
+			(errmsg("failed to create watchdog receive socket"),
+				 errdetail("create socket failed with reason: \"%s\"", strerror(errno))));
     }
     if ( fcntl(sock, F_SETFL, O_NONBLOCK) == -1)
     {
 		/* failed to set nonblock */
-		pool_error("wd_create_recv_socket: Failed to set nonblock. reason: %s", strerror(errno));
 		close(sock);
-        return -1;
+		ereport(ERROR,
+			(errmsg("failed to create watchdog receive socket"),
+				 errdetail("setting non blocking mode on socket failed with reason: \"%s\"", strerror(errno))));
     }
     if ( setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(one)) == -1 )
     {
 		/* setsockopt(SO_REUSEADDR) failed */
-		pool_error("wd_create_recv_socket: setspockopt(SO_REUSEADDR) failed. reason: %s", strerror(errno));
 		close(sock);
-        return -1;
+		ereport(ERROR,
+			(errmsg("failed to create watchdog receive socket"),
+				 errdetail("setsockopt(SO_REUSEADDR) failed with reason: \"%s\"", strerror(errno))));
     }
     if ( setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *) &one, sizeof(one)) == -1 )
     {
         /* setsockopt(TCP_NODELAY) failed */
-		pool_error("wd_create_recv_socket: setsockopt(TCP_NODELAY) failed. reason: %s", strerror(errno));
 		close(sock);
-        return -1;
+		ereport(ERROR,
+			(errmsg("failed to create watchdog receive socket"),
+				 errdetail("setsockopt(TCP_NODELAY) failed with reason: \"%s\"", strerror(errno))));
     }
     if ( setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(one)) == -1 )
     {
         /* setsockopt(SO_KEEPALIVE) failed */
-		pool_error("wd_create_recv_socket: setsockopt(SO_KEEPALIVE) failed. reason: %s", strerror(errno));
 		close(sock);
-        return -1;
+		ereport(ERROR,
+			(errmsg("failed to create watchdog receive socket"),
+				 errdetail("setsockopt(SO_KEEPALIVE) failed with reason: \"%s\"", strerror(errno))));
     }
 
     addr.sin_family = AF_INET;
@@ -290,17 +302,19 @@ wd_create_recv_socket(int port)
 			host = hostname;
 			serv = servname;
 		}
-		pool_error("wd_create_recv_socket: bind(%s:%s) failed. reason: %s", host, serv, strerror(errno));
 		close(sock);
-        return -1;
+		ereport(ERROR,
+			(errmsg("failed to create watchdog receive socket"),
+				 errdetail("bind on \"%s:%s\" failed with reason: \"%s\"", host, serv, strerror(errno))));
     }
 
     if ( listen(sock, MAX_WATCHDOG_NUM * 2) < 0 )
     {
 		/* listen failed */
-		pool_error("wd_create_recv_socket: listen() failed. reason: %s", strerror(errno));
 		close(sock);
-        return -1;
+		ereport(ERROR,
+			(errmsg("failed to create watchdog receive socket"),
+				 errdetail("listen failed with reason: \"%s\"", strerror(errno))));
     }
 
     return sock;
@@ -460,10 +474,12 @@ wd_recv_packet(int sock, WdPacket * recv_pack)
 			if (errno == EINTR || errno == EAGAIN)
 				continue;
 			else
-			{
-				pool_error("wd_recv_packet: recv failed");
-				return WD_NG;
-			}
+            {
+                close(sock);
+				ereport(ERROR,
+					(errmsg("watchdog failed to receive packet"),
+						 errdetail("recv() failed with reason: \"%s\"", strerror(errno))));
+            }
 		}
 		else if (r > 0)
 		{
@@ -672,7 +688,7 @@ send_packet_4_nodes(WdPacket *packet, WD_SEND_TYPE type)
 		{
 			ereport(LOG,
 				(errmsg("watchdog sending packet for nodes"),
-					 errdetail("packet for %s:%d is canceled", p->hostname, p->wd_port)));
+					 errdetail("packet for \"%s:%d\" is canceled", p->hostname, p->wd_port)));
 			p->is_contactable = false;
 			p++;
 			continue;
@@ -685,7 +701,7 @@ send_packet_4_nodes(WdPacket *packet, WD_SEND_TYPE type)
 		thread_arg[cnt].sock = sock;
 		thread_arg[cnt].target = p;
 		thread_arg[cnt].packet = packet;
-		rc = pthread_create(&thread[cnt], &attr, wd_thread_negotiation, (void*)&thread_arg[cnt]);
+		rc = watchdog_thread_create(&thread[cnt], &attr, wd_thread_negotiation, (void*)&thread_arg[cnt]);
 
 		cnt ++;
 		p++;
@@ -958,13 +974,15 @@ wd_escalation(void)
 					(errmsg("watchdog escalation successful")));
 			else
 			{
-				pool_error("wd_escalation: escalation command failed. exit status: %d", WEXITSTATUS(r));
+				ereport(WARNING,
+						(errmsg("watchdog escalation command failed with exit status: %d", WEXITSTATUS(r))));
 				has_error = true;
 			}
 		}
 		else
 		{
-			pool_error("wd_escalation: escalation command exit abnormally");
+			ereport(WARNING,
+				(errmsg("watchdog escalation command exit abnormally")));
 			has_error = true;
 		}
 	}
@@ -987,13 +1005,11 @@ wd_escalation(void)
 	if (rtn == WD_OK)
 	{
 		if (has_error)
-			ereport(LOG,
-				(errmsg("watchdog escalation successful"),
-					 errdetail("escalated to master pgpool with some errors")));
+			ereport(NOTICE,
+				(errmsg("watchdog escalation successful, escalated to master pgpool with some errors")));
 		else
 			ereport(LOG,
-				(errmsg("watchdog escalation successful"),
-					 errdetail("escalated to master pgpool")));
+				(errmsg("watchdog escalation successful, escalated to master pgpool")));
 	}
 
 	return rtn;

@@ -368,7 +368,7 @@ POOL_STATUS CursorResponse(POOL_CONNECTION *frontend,
 	return POOL_CONTINUE;
 }
 
-POOL_STATUS EmptyQueryResponse(POOL_CONNECTION *frontend,
+void EmptyQueryResponse(POOL_CONNECTION *frontend,
 							   POOL_CONNECTION_POOL *backend)
 {
 	char c;
@@ -383,7 +383,7 @@ POOL_STATUS EmptyQueryResponse(POOL_CONNECTION *frontend,
 	}
 
 	pool_write(frontend, "I", 1);
-	return pool_write_and_flush(frontend, "", 1);
+	pool_write_and_flush(frontend, "", 1);
 }
 
 POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend,
@@ -392,7 +392,6 @@ POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend,
 	char *string = "";
 	int len = 0;
 	int i;
-	POOL_STATUS ret = POOL_CONTINUE;
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -413,7 +412,7 @@ POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend,
 	 * by pool_do_auth too.
 	 */
 	if (pool_get_session_context(true))
-		ret = raise_intentional_error_if_need(backend);
+		raise_intentional_error_if_need(backend);
 
 	/* change transaction state */
 	for (i=0;i<NUM_BACKENDS;i++)
@@ -425,7 +424,7 @@ POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend,
 		}
 	}
 
-	return ret;
+	return POOL_CONTINUE;
 }
 
 POOL_STATUS FunctionResultResponse(POOL_CONNECTION *frontend,
@@ -496,7 +495,7 @@ POOL_STATUS FunctionResultResponse(POOL_CONNECTION *frontend,
 	return pool_flush(frontend);
 }
 
-POOL_STATUS NoticeResponse(POOL_CONNECTION *frontend,
+void NoticeResponse(POOL_CONNECTION *frontend,
 						   POOL_CONNECTION_POOL *backend)
 {
 	char *string = NULL;
@@ -525,7 +524,7 @@ POOL_STATUS NoticeResponse(POOL_CONNECTION *frontend,
 				errmsg("unable to process Notice response"),
 				 errdetail("reading from backend node failed")));
 	else
-		return pool_write_and_flush(frontend, string, len);
+		pool_write_and_flush(frontend, string, len);
 }
 
 POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
@@ -535,7 +534,6 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 	char *condition, *condition1 = NULL;
 	int len, len1 = 0;
 	int i;
-	POOL_STATUS status;
 
 	pool_write(frontend, "A", 1);
 
@@ -563,9 +561,9 @@ POOL_STATUS NotificationResponse(POOL_CONNECTION *frontend,
 	}
 
 	pool_write(frontend, &pid1, sizeof(pid1));
-	status = pool_write_and_flush(frontend, condition1, len1);
+	pool_write_and_flush(frontend, condition1, len1);
 	pfree(condition1);
-	return status;
+	return POOL_CONTINUE;
 }
 
 int RowDescription(POOL_CONNECTION *frontend,

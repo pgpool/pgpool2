@@ -61,16 +61,12 @@ wd_is_upper_ok(char * server_list)
 
 	if (server_list == NULL)
 	{
-		pool_error("wd_is_upper_ok: server_list is NULL");
+		ereport(WARNING,
+			(errmsg("watchdog trying to connect to trusted server, server_list is NULL")));
 		return WD_NG;
 	}
 	len = strlen(server_list)+2;
-	buf = malloc(len);
-	if (buf == NULL)
-	{
-		pool_error("wd_is_upper_ok: malloc failed");
-		return WD_NG;
-	}
+	buf = palloc(len);
 
 	memset(buf,0,len);
 	strlcpy(buf,server_list,len);
@@ -88,7 +84,7 @@ wd_is_upper_ok(char * server_list)
 			*ep = '\0';
 		}
 		strlcpy(thread_arg[cnt].hostname,bp,sizeof(thread_arg[cnt].hostname));
-		rc = pthread_create(&thread[cnt], &attr, exec_ping, (void*)&thread_arg[cnt]);
+		rc = watchdog_thread_create(&thread[cnt], &attr, exec_ping, (void*)&thread_arg[cnt]);
 
 		cnt ++;
 		if (ep != NULL)
@@ -123,7 +119,7 @@ wd_is_upper_ok(char * server_list)
 		}
 		i++;
 	}
-	free(buf);
+	pfree(buf);
 	return rtn;
 }
 
@@ -153,7 +149,7 @@ wd_is_unused_ip(char * ip)
 	/* set hostname as a thread_arg */
 	strlcpy(thread_arg.hostname,ip,sizeof(thread_arg.hostname));
 
-	rc = pthread_create(&thread, &attr, exec_ping, (void*)&thread_arg);
+	rc = watchdog_thread_create(&thread, &attr, exec_ping, (void*)&thread_arg);
 	pthread_attr_destroy(&attr);
 
 	rc = pthread_join(thread, (void **)&result);
@@ -192,7 +188,9 @@ exec_ping(void * arg)
 
 	if (pipe(pfd) == -1)
 	{
-		pool_error("exec_ping: pipe open error:%s", strerror(errno));
+		ereport(WARNING,
+			(errmsg("failed to execute ping"),
+				 errdetail("pipe open failed. reason: %s", strerror(errno))));
 		return WD_NG;
 	}
 
@@ -205,11 +203,13 @@ exec_ping(void * arg)
 	pid = fork();
 	if (pid == -1)
 	{
-		pool_error("exec_ping: fork() failed. reason: %s", strerror(errno));
-		exit(1);
+		ereport(FATAL,
+			(errmsg("failed to execute ping"),
+				 errdetail("fork() failed. reason: %s", strerror(errno))));
 	}
 	if (pid == 0)
 	{
+		processType = PT_WATCHDOG_UTILITY;
 		close(STDOUT_FILENO);
 		dup2(pfd[1], STDOUT_FILENO);
 		close(pfd[0]);
@@ -217,8 +217,9 @@ exec_ping(void * arg)
 
 		if (status == -1)
 		{
-			pool_error("exec_ping: execv(%s) failed. reason: %s", ping_path, strerror(errno));
-			exit(1);
+			ereport(FATAL,
+				(errmsg("failed to execute ping"),
+					 errdetail("execv(%s) failed. reason: %s", ping_path, strerror(errno))));
 		}
 		exit(0);
 	}
@@ -233,16 +234,18 @@ exec_ping(void * arg)
 			{
 				if (errno == EINTR)
 					continue;
-
-				pool_error("exec_ping: wait() failed. reason: %s", strerror(errno));
 				close(pfd[0]);
+				ereport(WARNING,
+					(errmsg("failed to execute ping"),
+						 errdetail("wait() failed with reason \"%s\"", strerror(errno))));
 				return WD_NG;
 			}
 
 			if (WIFEXITED(status) == 0)
 			{
-				pool_error("exec_ping: %s exited abnormally", ping_path);
 				close(pfd[0]);
+				ereport(WARNING,
+					(errmsg("failed to execute ping, '%s' exited abnormally", ping_path)));
 				return WD_NG;
 			}
 			else if (WEXITSTATUS(status) != 0)
@@ -291,7 +294,8 @@ get_result (char * ping_data)
 
 	if (ping_data == NULL)
 	{
-		pool_error("get_result: no ping data");
+		ereport(WARNING,
+				(errmsg("get_result: no ping data")));
 		return -1;
 	}
 	ereport(DEBUG1,
@@ -328,7 +332,8 @@ get_result (char * ping_data)
 
 	if (errno != 0)
 	{
-		pool_error("get_result: strtod() failed. reason: %s", strerror(errno));
+		ereport(WARNING,
+				(errmsg("get_result: strtod() failed with reason \"%s\"", strerror(errno))));
 		return -1;
 	}
 

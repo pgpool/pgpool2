@@ -197,7 +197,8 @@ void pool_discard_cp(char *user, char *database, int protoMajor)
 
 	if (p == NULL)
 	{
-		pool_error("pool_discard_cp: cannot get connection pool for user %s database %s", user, database);
+		ereport(LOG,
+			(errmsg("cannot get connection pool for user: \"%s\" database: \"%s\", while discarding connection pool", user, database)));
 		return;
 	}
 
@@ -493,7 +494,9 @@ int connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry)
 	fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (fd == -1)
 	{
-		pool_error("connect_unix_domain_socket_by_port: socket() failed: %s", strerror(errno));
+		ereport(LOG,
+			(errmsg("failed to connect to PostgreSQL server by unix domain socket"),
+				 errdetail("create socket failed with error \"%s\"", strerror(errno))));
 		return -1;
 	}
 
@@ -517,9 +520,11 @@ int connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry)
 		{
 			if ((errno == EINTR && retry) || errno == EAGAIN)
 				continue;
-
-			pool_error("connect_unix_domain_socket_by_port: connect() failed to %s: %s", addr.sun_path, strerror(errno));
 			close(fd);
+			ereport(LOG,
+				(errmsg("failed to connect to PostgreSQL server by unix domain socket"),
+					 errdetail("connect to \"%s\" failed with error \"%s\"",addr.sun_path, strerror(errno))));
+
 			return -1;
 		}
 		break;
@@ -576,8 +581,8 @@ bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int port, b
 			 */
 			if (errno != EINPROGRESS && errno != EALREADY)
 			{
-				pool_error("connect_inet_domain_socket(%s:%d): connect() failed: %s",
-						   host, port, strerror(errno));
+				ereport(LOG,
+					(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" with error \"%s\"",host,port,strerror(errno))));
 				return false;
 			}
 
@@ -615,7 +620,8 @@ bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int port, b
 				}
 				else
 				{
-					pool_error("connect_inet_domain_socket(%s:%d): select() timed out", host, port);
+					ereport(LOG,
+						(errmsg("failed to connect to PostgreSQL server on \"%s:%d\", timed out",host,port)));
 					return false;
 				}
 			}
@@ -636,23 +642,25 @@ bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int port, b
 					if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &socklen) < 0)
 					{
 						/* Solaris returns error in this case */
-						pool_error("connect_inet_domain_socket(%s:%d): getsockopt() failed: %s",
-								   host, port, strerror(errno));
+						ereport(LOG,
+							(errmsg("failed to connect to PostgreSQL server on \"%s:%d\", getsockopt() failed with error \"%s\"",host,port,strerror(errno))));
+
 						return false;
 					}
 
 					/* Non Solaris case */
 					if (error != 0)
 					{
-						pool_error("connect_inet_domain_socket(%s:%d): getsockopt() detected error: %s",
-								   host, port, strerror(error));
+						ereport(LOG,
+								(errmsg("failed to connect to PostgreSQL server on \"%s:%d\", getsockopt() detected error \"%s\"",host,port,strerror(errno))));
 						return false;
 					}
 				}
 				else
 				{
-					pool_error("connect_inet_domain_socket(%s:%d): both read data and write data was not set",
-							   host, port);
+					ereport(LOG,
+							(errmsg("failed to connect to PostgreSQL server on \"%s:%d\", both read data and write data was not set",host,port)));
+
 					return false;
 				}
 			}
@@ -696,7 +704,9 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 	/* getaddrinfo() requires a string because it also accepts service names, such as "http". */
 	if (asprintf(&portstr, "%d", port) == -1)
 	{
-		pool_error("connect_inet_domain_socket_by_port: asprintf() failed: %s", strerror(errno));
+		ereport(WARNING,
+			(errmsg("failed to connect to PostgreSQL server, asprintf() failed with error \"%s\"",strerror(errno))));
+
 		return -1;
 	}
 
@@ -706,7 +716,9 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 
 	if ((ret = getaddrinfo(host, portstr, &hints, &res)) != 0)
 	{
-		pool_error("connect_inet_domain_socket_by_port: getaddrinfo() failed: %s", gai_strerror(ret));
+		ereport(WARNING,
+			(errmsg("failed to connect to PostgreSQL server, getaddrinfo() failed with error \"%s\"",gai_strerror(ret))));
+
 		free(portstr);
 		return -1;
 	}
@@ -718,7 +730,8 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 		fd = socket(walk->ai_family, walk->ai_socktype, walk->ai_protocol);
 		if (fd < 0)
 		{
-			pool_error("connect_inet_domain_socket_by_port: socket() failed: %s", strerror(errno));
+			ereport(WARNING,
+					(errmsg("failed to connect to PostgreSQL server, socket() failed with error \"%s\"",strerror(errno))));
 			continue;
 		}
 
@@ -727,7 +740,9 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 					   (char *) &on,
 					   sizeof(on)) < 0)
 		{
-			pool_error("connect_inet_domain_socket_by_port: setsockopt() failed: %s", strerror(errno));
+			ereport(WARNING,
+					(errmsg("failed to connect to PostgreSQL server, setsockopt() failed with error \"%s\"",strerror(errno))));
+
 			close(fd);
 			freeaddrinfo(res);
 			return -1;
@@ -766,10 +781,7 @@ static POOL_CONNECTION_POOL_SLOT *create_cp(POOL_CONNECTION_POOL_SLOT *cp, int s
 	}
 
 	if (fd < 0)
-	{
-		pool_error("connection to %s(%d) failed", b->backend_hostname, b->backend_port);
 		return NULL;
-	}
 
 	cp->sp = NULL;
 	cp->con = pool_open(fd,true);
@@ -808,9 +820,6 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 
 		if (create_cp(s, i) == NULL)
 		{
-			/* connection failed. mark this backend down */
-			pool_error("new_connection: create_cp() failed");
-
 			/* If fail_over_on_backend_error is true, do failover.
 			 * Otherwise, just exit this session.
 			 */
