@@ -4,12 +4,13 @@
 # expecting RPM name are:
 #   pgpool-II-pg{xx}-{version}.pgdg.{arch}.rpm
 #   pgpool-II-pg{xx}-devel-{version}.pgdg.{arch}.rpm
+#   pgpool-II-pg{xx}-extensions-{version}.pgdg.{arch}.rpm
 #   pgpool-II-pg{xx}-{version}.pgdg.src.rpm
 
 Summary:        Pgpool is a connection pooling/replication server for PostgreSQL
 Name:           pgpool-II-pg%{pg_version}
 Version:        %{pgpool_version}
-Release:        1%{?dist}
+Release:        2%{?dist}
 License:        BSD
 Group:          Applications/Databases
 Vendor:         Pgpool Global Development Group
@@ -51,6 +52,12 @@ Requires:    %{name} = %{version}
 
 %description devel
 Development headers and libraries for pgpool-II.
+
+%package extensions
+Summary:     Postgersql extensions for pgpool-II
+Group:       Applications/Databases
+%description extensions
+Postgresql extensions libraries and sql files for pgpool-II.
 
 %prep
 %setup -q -n %{archive_name}
@@ -126,18 +133,10 @@ fi
 %{_datadir}/pgpool-II/insert_lock.sql
 %{_datadir}/pgpool-II/system_db.sql
 %{_datadir}/pgpool-II/pgpool.pam
-%{pghome}/share/extension/pgpool-recovery.sql
-%{pghome}/share/extension/pgpool_recovery--1.0.sql
-%{pghome}/share/extension/pgpool_recovery.control
-%{pghome}/share/extension/pgpool-regclass.sql
-%{pghome}/share/extension/pgpool_regclass--1.0.sql
-%{pghome}/share/extension/pgpool_regclass.control
 %{_sysconfdir}/pgpool-II/pgpool.conf.sample-master-slave
 %{_sysconfdir}/pgpool-II/pgpool.conf.sample-replication
 %{_sysconfdir}/pgpool-II/pgpool.conf.sample-stream
 %{_libdir}/libpcp.so.*
-%{pghome}/lib/pgpool-recovery.so
-%{pghome}/lib/pgpool-regclass.so
 %{_initrddir}/pgpool
 %attr(764,root,root) %config(noreplace) %{_sysconfdir}/pgpool-II/*.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/pgpool
@@ -150,7 +149,21 @@ fi
 %{_includedir}/pool_type.h
 %{_libdir}/libpcp.so
 
+%files extensions
+%defattr(-,root,root,-)
+%{pghome}/share/extension/pgpool-recovery.sql
+%{pghome}/share/extension/pgpool_recovery--1.0.sql
+%{pghome}/share/extension/pgpool_recovery.control
+%{pghome}/share/extension/pgpool-regclass.sql
+%{pghome}/share/extension/pgpool_regclass--1.0.sql
+%{pghome}/share/extension/pgpool_regclass.control
+%{pghome}/lib/pgpool-recovery.so
+%{pghome}/lib/pgpool-regclass.so
+
 %changelog
+* Mon Sep 15 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.4-2
+- Split pgpool_regclass and pgpool_recovery as a separate extention package.
+
 * Fri Sep 5 2014 Yugo Nagata <nagata@sraoss.co.jp> 3.3.4-1
 - Update to 3.3.4
 
