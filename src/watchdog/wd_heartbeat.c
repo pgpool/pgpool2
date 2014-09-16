@@ -112,7 +112,7 @@ wd_create_hb_send_socket(WdHbIf *hb_if)
 			else
 				ereport(LOG,
 					(errmsg("creating socket for sending heartbeat"),
-						 errdetail("setsockopt(SO_BINDTODEVICE) requies root privilege")));
+						 errdetail("setsockopt(SO_BINDTODEVICE) requires root privilege")));
 		}
 #else
 		ereport(LOG,
