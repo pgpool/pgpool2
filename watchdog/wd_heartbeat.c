@@ -104,7 +104,7 @@ wd_create_hb_send_socket(WdHbIf *hb_if)
 				pool_log("wd_create_hb_send_socket: bind send socket to device: %s", i.ifr_name);
 			}
 			else
-				pool_log("wd_create_hb_send_socket: setsockopt(SO_BINDTODEVICE) requies root privilege");
+				pool_log("wd_create_hb_send_socket: setsockopt(SO_BINDTODEVICE) requires root privilege");
 		}
 #else
 		pool_log("wd_create_hb_send_socket: couldn't setsockopt(SO_BINDTODEVICE) on this platform");
