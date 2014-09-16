@@ -84,7 +84,7 @@ int add_regex_array(RegArray *ar, char *pattern)
 	/* Add extended regex search */
 	regex_flags |= REG_EXTENDED;
 
-	pat = palloc(sizeof(char)*(strlen(pattern)+3));
+	pat = palloc(sizeof(char)*(len+3));
 	if (strncmp(pattern, "^", 1) != 0)
 	{
 		strncpy(pat, "^", 2);
@@ -95,7 +95,7 @@ int add_regex_array(RegArray *ar, char *pattern)
 		strncpy(pat, pattern, len + 1);
 	}
 
-	if (pattern[len - 1] != '$')
+	if (len > 0 && pattern[len - 1] != '$')
 	{
 		strncat(pat, "$", 2);
 	}
