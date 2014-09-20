@@ -66,7 +66,7 @@ Postgresql extensions libraries and sql files for pgpool-II.
 
 %build
 %configure --with-pgsql=%{pghome} \
-           --disable-static --with-pam --with-openssl=/usr --disable-rpath \
+           --disable-static --with-pam --with-openssl --disable-rpath \
            --sysconfdir=%{_sysconfdir}/pgpool-II/
 
 make %{?_smp_flags}
