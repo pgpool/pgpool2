@@ -995,7 +995,7 @@ void degenerate_backend_set(int *node_id_set, int count)
 		}
 
 		ereport(LOG,
-                (errmsg("degenerate_backend_set: %d fail over request from pid %d", node_id_set[i], getpid())));
+                (errmsg("degenerate_backend_set: %d failover request from pid %d", node_id_set[i], getpid())));
 		Req_info->node_id[i] = node_id_set[i];
 		need_signal = true;
 	}
