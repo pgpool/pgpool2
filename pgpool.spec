@@ -161,7 +161,7 @@ fi
 %{pghome}/lib/pgpool-regclass.so
 
 %changelog
-* Mon Sep 21 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.4-2
+* Mon Sep 25 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.4-2
 - Split pgpool_regclass and pgpool_recovery as a separate extention package.
 - Fix wrong OpenSSL build option.
 
