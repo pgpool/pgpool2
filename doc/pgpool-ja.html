@@ -2137,7 +2137,7 @@ benchs2=# show pool_processes;
 <li>pool_connected は真偽値で、0ならフロントエンドからの接続無し、1なら接続ありを表します。</li>
 </ul>
 
-<p>返却行数は常にnum_init_children*max_poolになります。</p>
+<p>返却行数は常にnum_init_children*max_pool*「バックエンドの数」になります。</p>
 <pre>
 benchs2=# show pool_pools;
 
