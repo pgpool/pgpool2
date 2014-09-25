@@ -3146,7 +3146,7 @@ It has 11 columns:
     <li>pool_connected is a true (1) if a frontend is currently using this backend.</li>
 </ul>
 </p>
-<p>It'll always return <a href="#NUM_INIT_CHILDREN">num_init_children</a> * <a href="#MAX_POOL">max_pool</a> lines.</p>
+<p>It'll always return <a href="#NUM_INIT_CHILDREN">num_init_children</a> * <a href="#MAX_POOL">max_pool</a> * number_of_backends lines.</p>
 <pre>
   pool_pid |     start_time      | pool_id | backend_id | database | username  |     create_time     | majorversion | minorversion | pool_counter | pool_backendpid | pool_connected
 ----------+---------------------+---------+------------+----------+-----------+---------------------+--------------+--------------+--------------+-----------------+----------------
