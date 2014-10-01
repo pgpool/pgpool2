@@ -231,7 +231,7 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 				 */
                 ereport(FATAL,
 					(errmsg("unable to read data from frontend"),
-                         errdetail("EOF encountered with backend")));
+                         errdetail("EOF encountered with frontend")));
 			}
 		}
 
