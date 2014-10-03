@@ -1289,35 +1289,41 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		msg = pool_get_sent_message('Q', contents+1);
 		if (!msg)
 			msg = pool_get_sent_message('P', contents+1);
-		if (!msg)
-            ereport(FATAL,
-                (return_code(2),
-                     errmsg("unable to execute close"),
-                     errdetail("unable to get the parse message")));
 	}
 	/* Portal */
 	else if (*contents == 'P')
 	{
 		msg = pool_get_sent_message('B', contents+1);
-		if (!msg)
-            ereport(FATAL,
-                    (return_code(2),
-                     errmsg("unable to execute close"),
-                     errdetail("unable to get the bind message")));
 	}
 	else
         ereport(FATAL,
                 (return_code(2),
                     errmsg("unable to execute close, invalid message")));
+	/* 
+	 * As per the postgresql, calling close on non existing portals is not
+	 * an error. So on the same footings we will ignore all such calls and
+	 * return the close complete message to clients with out going to backend
+	 */
+	if (!msg)
+	{
+		int len = htonl(4);
+		pool_set_command_success();
+		pool_unset_query_in_progress();
+
+		pool_write(frontend, "3", 1);
+		pool_write_and_flush(frontend, &len, sizeof(len));
+
+		return POOL_CONTINUE;
+	}
 
 	session_context->uncompleted_message = msg;
 	query_context = msg->query_context;
 
 	if (!query_context)
         ereport(FATAL,
-                (return_code(2),
+			(return_code(2),
                  errmsg("unable to execute close"),
-                 errdetail("unable to get the query context")));
+					errdetail("unable to get the query context")));
 
 	session_context->query_context = query_context;
 	/* pool_where_to_send(query_context, query_context->original_query, query_context->parse_tree); */
