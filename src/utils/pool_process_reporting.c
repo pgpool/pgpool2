@@ -278,14 +278,9 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	i++;
 
 	/* - What to log - */
-	StrNCpy(status[i].name, "print_timestamp", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->print_timestamp);
-	StrNCpy(status[i].desc, "if true print time stamp to each log line", POOLCONFIG_MAXDESCLEN);
-	i++;
-
-	StrNCpy(status[i].name, "print_user", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->print_user);
-	StrNCpy(status[i].desc, "if true print user name to each log line", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].name, "log_line_prefix", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->log_line_prefix);
+	StrNCpy(status[i].desc, "printf-style string to output at beginning of each log line", POOLCONFIG_MAXDESCLEN);
 	i++;
 
     StrNCpy(status[i].name, "log_error_verbosity", POOLCONFIG_MAXNAMELEN);

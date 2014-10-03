@@ -147,8 +147,8 @@ static void send_message_to_server_log(ErrorData *edata);
 static void send_message_to_frontend(ErrorData *edata);
 static void write_console(const char *line, int len);
 static void send_message_to_frontend(ErrorData *edata);
-static void pgpool_log_prefix(StringInfo buf, ErrorData *edata);
-
+static void log_line_prefix(StringInfo buf, const char *line_prefix, ErrorData *edata);
+static const char *process_log_prefix_padding(const char *p, int *ppadding);
 #ifdef WIN32
 extern char *event_source;
 static void write_eventlog(int level, const char *line, int len);
@@ -178,7 +178,7 @@ static int	recursion_depth = 0;	/* to detect actual recursion */
 static char *expand_fmt_string(const char *fmt, ErrorData *edata);
 static const char *useful_strerror(int errnum);
 static const char *error_severity(int elevel);
-static const char *process_name();
+static const char *process_name(void);
 static void append_with_tabs(StringInfo buf, const char *str);
 static bool is_log_level_output(int elevel, int log_min_level);
 
@@ -340,6 +340,7 @@ errstart(int elevel, const char *filename, int lineno,
 	edata->elevel = elevel;
 	edata->output_to_server = output_to_server;
 	edata->output_to_client = output_to_client;
+	edata->retcode = 1;
 	if (filename)
 	{
 		const char *slash;
@@ -1847,17 +1848,195 @@ send_message_to_frontend(ErrorData *edata)
 	pool_unset_nonblock(frontend->fd);
 }
 
-static void pgpool_log_prefix(StringInfo buf, ErrorData *edata)
+/*
+ * process_log_prefix_padding --- helper function for processing the format
+ * string in log_line_prefix
+ *
+ * Note: This function returns NULL if it finds something which
+ * it deems invalid in the format string.
+ */
+static const char *
+process_log_prefix_padding(const char *p, int *ppadding)
 {
-    if (pool_config->print_timestamp)
-    {
-        char strbuf[129];
-        time_t now = time(NULL);
-        strftime(strbuf, 128, "%Y-%m-%d %H:%M:%S", localtime(&now));
-        appendStringInfo(buf, "%s: ", strbuf);
-    }
-    appendStringInfo(buf, "pid %d: ",(int)getpid());
+	int			paddingsign = 1;
+	int			padding = 0;
+	
+	if (*p == '-')
+	{
+		p++;
+		
+		if (*p == '\0')			/* Did the buf end in %- ? */
+			return NULL;
+		paddingsign = -1;
+	}
+	
+	/* generate an int version of the numerical string */
+	while (*p >= '0' && *p <= '9')
+		padding = padding * 10 + (*p++ - '0');
+	
+	/* format is invalid if it ends with the padding number */
+	if (*p == '\0')
+		return NULL;
+	
+	padding *= paddingsign;
+	*ppadding = padding;
+	return p;
 }
+
+/*
+ * Format tag info for log lines; append to the provided buffer.
+ */
+static void
+log_line_prefix(StringInfo buf, const char *line_prefix, ErrorData *edata)
+{
+	/* static counter for line numbers */
+	static long log_line_number = 0;
+
+	/* has counter been reset in current process? */
+	static int	log_my_pid = 0;
+	int			padding;
+	const char *p;
+	int			MyProcPid = getpid();
+
+	POOL_CONNECTION *frontend = NULL;
+	POOL_SESSION_CONTEXT *session = pool_get_session_context(true);
+	if(session)
+		frontend = session->frontend;
+
+	/*
+	 * This is one of the few places where we'd rather not inherit a static
+	 * variable's value from the postmaster.  But since we will, reset it when
+	 * MyProcPid changes. MyStartTime also changes when MyProcPid does, so
+	 * reset the formatted start timestamp too.
+	 */
+	if (log_my_pid != MyProcPid)
+	{
+		log_line_number = 0;
+		log_my_pid = MyProcPid;
+	}
+	log_line_number++;
+	
+	if (line_prefix == NULL)
+		return;					/* in case guc hasn't run yet */
+
+	for (p = line_prefix; *p != '\0'; p++)
+	{
+		if (*p != '%')
+		{
+			/* literal char, just copy */
+			appendStringInfoChar(buf, *p);
+			continue;
+		}
+		
+		/* must be a '%', so skip to the next char */
+		p++;
+		if (*p == '\0')
+			break;				/* format error - ignore it */
+		else if (*p == '%')
+		{
+			/* string contains %% */
+			appendStringInfoChar(buf, '%');
+			continue;
+		}
+
+		/*
+		 * Process any formatting which may exist after the '%'.  Note that
+		 * process_log_prefix_padding moves p past the padding number if it
+		 * exists.
+		 *
+		 * Note: Since only '-', '0' to '9' are valid formatting characters we
+		 * can do a quick check here to pre-check for formatting. If the char
+		 * is not formatting then we can skip a useless function call.
+		 *
+		 * Further note: At least on some platforms, passing %*s rather than
+		 * %s to appendStringInfo() is substantially slower, so many of the
+		 * cases below avoid doing that unless non-zero padding is in fact
+		 * specified.
+		 */
+		if (*p > '9')
+			padding = 0;
+		else if ((p = process_log_prefix_padding(p, &padding)) == NULL)
+			break;
+		
+		/* process the option */
+		switch (*p)
+		{
+			case 'a':	/* application name */
+			{
+				StartupPacket *sp = session? MASTER_CONNECTION(session->backend)->sp : NULL ;
+				const char *appname = sp? sp->application_name : "[No Connection]";
+				if (appname == NULL || *appname == '\0')
+					appname = "[unknown]";
+				if (padding != 0)
+					appendStringInfo(buf, "%*s", padding, appname);
+				else
+					appendStringInfoString(buf, appname);
+			}
+				break;
+			case 'P':	/* process name */
+				{
+					if (padding != 0)
+						appendStringInfo(buf, "%*s", padding, process_name());
+					else
+						appendStringInfoString(buf, process_name());
+				}
+				break;
+			case 'u':
+				{
+					const char *username = frontend? frontend->username : "[No Connection]";
+					if (username == NULL || *username == '\0')
+						username = "[unknown]";
+
+					if (padding != 0)
+						appendStringInfo(buf, "%*s", padding, username);
+					else
+						appendStringInfoString(buf, username);
+				}
+				break;
+			case 'd':
+				{
+					const char *dbname = frontend? frontend->database : "[No Connection]";
+
+					if (dbname == NULL || *dbname == '\0')
+						dbname = "[unknown]";
+
+					if (padding != 0)
+						appendStringInfo(buf, "%*s", padding, dbname);
+					else
+						appendStringInfoString(buf, dbname);
+				}
+				break;
+			case 'p':
+				if (padding != 0)
+					appendStringInfo(buf, "%*d", padding, MyProcPid);
+				else
+					appendStringInfo(buf, "%d", MyProcPid);
+				break;
+			case 'l':
+				if (padding != 0)
+					appendStringInfo(buf, "%*ld", padding, log_line_number);
+				else
+					appendStringInfo(buf, "%ld", log_line_number);
+				break;
+			case 't':
+			{
+				char strbuf[129];
+				time_t now = time(NULL);
+				strftime(strbuf, 128, "%Y-%m-%d %H:%M:%S", localtime(&now));
+
+				if (padding != 0)
+					appendStringInfo(buf, "%*s", padding, strbuf);
+				else
+					appendStringInfoString(buf, strbuf);
+			}
+				break;
+			default:
+				/* format error - ignore it */
+				break;
+		}
+	}
+}
+
 /*
  * Write error report to server's log
  */
@@ -1868,7 +2047,7 @@ send_message_to_server_log(ErrorData *edata)
 
 	initStringInfo(&buf);
 
-    pgpool_log_prefix(&buf, edata);
+	log_line_prefix(&buf, pool_config->log_line_prefix, edata);
 	appendStringInfo(&buf, "%s:  ", error_severity(edata->elevel));
 
 
@@ -1890,30 +2069,35 @@ send_message_to_server_log(ErrorData *edata)
 	{
 		if (edata->detail_log)
 		{
+			log_line_prefix(&buf, pool_config->log_line_prefix, edata);
 			appendStringInfoString(&buf, _("DETAIL:  "));
 			append_with_tabs(&buf, edata->detail_log);
 			appendStringInfoChar(&buf, '\n');
 		}
 		else if (edata->detail)
 		{
+			log_line_prefix(&buf, pool_config->log_line_prefix, edata);
 			appendStringInfoString(&buf, _("DETAIL:  "));
 			append_with_tabs(&buf, edata->detail);
 			appendStringInfoChar(&buf, '\n');
 		}
 		if (edata->hint)
 		{
+			log_line_prefix(&buf, pool_config->log_line_prefix, edata);
 			appendStringInfoString(&buf, _("HINT:  "));
 			append_with_tabs(&buf, edata->hint);
 			appendStringInfoChar(&buf, '\n');
 		}
 		if (edata->internalquery)
 		{
+			log_line_prefix(&buf, pool_config->log_line_prefix, edata);
 			appendStringInfoString(&buf, _("QUERY:  "));
 			append_with_tabs(&buf, edata->internalquery);
 			appendStringInfoChar(&buf, '\n');
 		}
 		if (edata->context)
 		{
+			log_line_prefix(&buf, pool_config->log_line_prefix, edata);
 			appendStringInfoString(&buf, _("CONTEXT:  "));
 			append_with_tabs(&buf, edata->context);
 			appendStringInfoChar(&buf, '\n');
@@ -1923,12 +2107,14 @@ send_message_to_server_log(ErrorData *edata)
 			/* assume no newlines in funcname or filename... */
 			if (edata->funcname && edata->filename)
 			{
+				log_line_prefix(&buf, pool_config->log_line_prefix, edata);
 				appendStringInfo(&buf, _("LOCATION:  %s, %s:%d\n"),
 								 edata->funcname, edata->filename,
 								 edata->lineno);
 			}
 			else if (edata->filename)
 			{
+				log_line_prefix(&buf, pool_config->log_line_prefix, edata);
 				appendStringInfo(&buf, _("LOCATION:  %s:%d\n"),
 								 edata->filename, edata->lineno);
 			}
@@ -2132,6 +2318,54 @@ append_with_tabs(StringInfo buf, const char *str)
 		if (ch == '\n')
 			appendStringInfoCharMacro(buf, '\t');
 	}
+}
+
+/*
+ * process_name --- get process name string of current process
+ */
+static const char *
+process_name(void)
+{
+	const char *prefix;
+
+	switch (processType)
+	{
+		case PT_CHILD:
+			prefix = _("CHILD");
+			break;
+		case PT_MAIN:
+			prefix = _("MAIN");
+			break;
+		case PT_WORKER:
+			prefix = _("WORKER");
+			break;
+		case PT_PCP:
+			prefix = _("PCP CHILD");
+			break;
+		case PT_HB_SENDER:
+			prefix = _("WD HB SENDER");
+			break;
+		case PT_HB_RECEIVER:
+			prefix = _("WD HB RECEIVER");
+			break;
+		case PT_WATCHDOG:
+			prefix = _("WATCHDOG");
+			break;
+		case PT_LIFECHECK:
+			prefix = _("LIFECHECK");
+			break;
+		case PT_WATCHDOG_UTILITY:
+			prefix = _("WD UTILITY");
+			break;
+		case PT_FOLLOWCHILD:
+			prefix = _("UTILITY");
+			break;
+		default:
+			prefix = "";
+			break;
+	}
+
+	return prefix;
 }
 
 

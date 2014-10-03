@@ -816,7 +816,7 @@ static StartupPacket *StartupPacketCopy(StartupPacket *sp)
 	new_sp->database = pstrdup(sp->database);
 	new_sp->user = pstrdup(sp->user);
 
-	if(new_sp->major == PROTO_MAJOR_V3)
+	if(new_sp->major == PROTO_MAJOR_V3 && sp->application_name)
 	{
 		/* adjust the application name pointer in new packet */
 		new_sp->application_name = new_sp->startup_packet + (sp->application_name - sp->startup_packet);
@@ -2203,6 +2203,10 @@ retry_startup:
 		goto retry_startup;
 	}
 
+	frontend->protoVersion = sp->major;
+	frontend->database = pstrdup(sp->database);
+	frontend->username = pstrdup(sp->user);
+
 	if (pool_config->enable_pool_hba)
 	{
 		/*
@@ -2210,9 +2214,7 @@ retry_startup:
 		 * Note that ClientAuthentication does not return if frontend
 		 * was rejected; it simply terminates this process.
 		 */
-		frontend->protoVersion = sp->major;
-		frontend->database = pstrdup(sp->database);
-		frontend->username = pstrdup(sp->user);
+
 		ClientAuthentication(frontend);
 	}
 

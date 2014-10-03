@@ -149,12 +149,8 @@ log_destination = 'stderr'
 
 # - What to log -
 
-print_timestamp = on
-                                   # Print timestamp on each line
-                                   # (change requires restart)
-print_user = off
-                                   # Print user name on each line
-                                   # (change requires restart)
+log_line_prefix = ''			   # printf-style string to output at beginning of each log line.
+
 log_connections = off
                                    # Log connections
 log_hostname = off

@@ -39,12 +39,10 @@ void pool_error(const char *fmt,...)
 	}
 
 	POOL_SETMASK2(&BlockSig, &oldmask);
-
-	if (pool_config->print_timestamp)
+	/*TODO
+	if (pool_config->print_timestamp)*/
 #ifdef HAVE_ASPRINTF
 	  len = asprintf(&fmt2, "%s ERROR: pid %d: %s\n", nowsec(), (int)getpid(), fmt);
-	else
-	  len = asprintf(&fmt2, "ERROR: pid %d: %s\n", (int)getpid(), fmt);
 
    if (len >= 0 && fmt2)
    {

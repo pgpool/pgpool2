@@ -114,11 +114,10 @@ typedef struct {
 	char **reset_query_list;		/* comma separated list of queries to be issued at the end of session */
 	char **white_function_list;		/* list of functions with no side effects */
 	char **black_function_list;		/* list of functions with side effects */
-	int print_timestamp;		/* if non 0, print time stamp to each log line */
+	char *log_line_prefix;		/* printf-style string to output at beginning of each log line */
     int log_error_verbosity;    /* controls how much detail about error should be emitted */
     int client_min_messages;    /*controls which message should be sent to client */
     int log_min_messages;       /*controls which message should be emitted to server log */
-	int print_user;		/* if non 0, print user name to each log line */
 	int master_slave_mode;		/* if non 0, operate in master/slave mode */
 	char *master_slave_sub_mode;		/* either "slony" or "stream" */
 	unsigned long long int delay_threshold;		/* If the standby server delays more than delay_threshold,

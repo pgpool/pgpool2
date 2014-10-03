@@ -1904,11 +1904,10 @@ int pool_init_config(void)
 	pool_config->num_white_function_list = 0;
 	pool_config->black_function_list = default_black_function_list;
 	pool_config->num_black_function_list = sizeof(default_black_function_list)/sizeof(char *);
-	pool_config->print_timestamp = 1;
+	pool_config->log_line_prefix = "";
 	pool_config->log_error_verbosity = 1;    /* PGERROR_DEFAULT */
 	pool_config->client_min_messages = 18;  /* NOTICE */
 	pool_config->log_min_messages = 19;     /* WARNING */
-	pool_config->print_user = 0;
 	pool_config->master_slave_mode = 0;
 	pool_config->master_slave_sub_mode = "slony";
 	pool_config->delay_threshold = 0;
@@ -2981,34 +2980,35 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 		}
-
-		else if (!strcmp(key, "print_timestamp") && CHECK_CONTEXT(INIT_CONFIG, context))
+		else if (!strcmp(key, "log_line_prefix") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
-			int v = eval_logical(yytext);
-
-			if (v < 0)
+			char *str;
+			
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
 			{
+				PARSE_ERROR();
 				fclose(fd);
-				ereport(error_level,
-					(errmsg("invalid configuration for key \"%s\"",key),
-						errdetail("invalid value:\"%s\" for key:\"%s\"",yytext,key)));
 				return(-1);
 			}
-			pool_config->print_timestamp = v;
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->log_line_prefix = str;
+		}
+		else if (!strcmp(key, "print_timestamp") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			ereport(NOTICE,
+				(errmsg("configuration key \"%s\" is not supported anymore",key),
+					errdetail("please use \"log_line_prefix\" instead")));
 		}
 		else if (!strcmp(key, "print_user") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
-			int v = eval_logical(yytext);
-
-			if (v < 0)
-			{
-				fclose(fd);
-				ereport(error_level,
-					(errmsg("invalid configuration for key \"%s\"",key),
-						errdetail("invalid value:\"%s\" for key:\"%s\"",yytext,key)));
-				return(-1);
-			}
-			pool_config->print_user = v;
+			ereport(NOTICE,
+				(errmsg("configuration key \"%s\" is not supported anymore",key),
+					errdetail("please use \"log_line_prefix\" instead")));
 		}
 
 		else if (!strcmp(key, "master_slave_mode") && CHECK_CONTEXT(INIT_CONFIG, context))

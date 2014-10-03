@@ -784,7 +784,7 @@ local0.*    /var/log/pgpool.log
       <p>to the syslog daemon's configuration file to make it work.</p>
     </dd>
 
-<dt><a name="PRINT_TIMESTAMP"></a>print_timestamp</dt>
+<dt><a name="PRINT_TIMESTAMP"></a>print_timestamp <span class="version">- V3.4 (REMOVED)</span></dt>
     <dd>
     <p>Add timestamps to the logs when set to true. Default is true.
     </p>
@@ -793,7 +793,7 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
-<dt><a name="PRINT_USER"></a>print_user</dt>
+<dt><a name="PRINT_USER"></a>print_user <span class="version">- V3.4 (REMOVED)</span></dt>
     <dd>
     <p>Add session user names to the logs when set to true. Default is false.
     </p>
@@ -801,6 +801,30 @@ local0.*    /var/log/pgpool.log
     You need to reload pgpool.conf if you change print_user.
     </p>
     </dd>
+
+	<dt><a name="LOG_LINE_PREFIX"></a>log_line_prefix</dt>
+	<dd>
+	<p>
+	This is a printf-style string that is output at the beginning of each log line.
+	% characters begin "escape sequences" that are replaced with information outlined below.
+	All unrecognized escapes are ignored. Other characters are copied straight to the log line.
+	Default is an empty string.
+	</p>
+	<table border>
+	<tr class="header"><th>Escape</th><th>Effect</th></tr>
+	<tr><td>%a</td><td>Client application name.</td></tr>
+	<tr><td>%p</td><td>Process ID (PID).</td></tr>
+	<tr><td>%P</td><td>Process name.</td></tr>
+	<tr><td>%t</td><td>Time stamp.</td></tr>
+	<tr><td>%d</td><td>Database name.</td></tr>
+	<tr><td>%u</td><td>User name.</td></tr>
+	<tr><td>%l</td><td>Log line number for each process.</td></tr>
+	<tr><td>%%</td><td>'%' character</td></tr>
+	</table>
+	<p>
+	You need to reload pgpool.conf if you change log_line_prefix
+	</p>
+	</dd>
 
 <dt><a name="LOG_ERROR_VERBOSITY"></a>log_error_verbosity</dt>
     <dd>
