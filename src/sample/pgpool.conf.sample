@@ -637,7 +637,7 @@ check_unlogged_table = on
                                    # Default is on.
 
 #------------------------------------------------------------------------------
-# ON MEMORY QUERY MEMORY CACHE
+# IN MEMORY QUERY MEMORY CACHE
 #------------------------------------------------------------------------------
 memory_cache_enabled = off
 								   # If on, use the memory cache functionality, off by default

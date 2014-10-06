@@ -29,7 +29,7 @@ Last modified: Fri May 16 16:43:17 JST 2014
         <li><a href="#parallel">Parallel Mode</a></li>
         <li><a href="#hba">Client authentication</a></li>
         <li><a href="#query_cache">Setting Query cache method</a></li>
-        <li><a href="#memqcache">On memory query Cache</a></li>
+        <li><a href="#memqcache">In memory query Cache</a></li>
         <li><a href="#start">Starting/Stopping pgpool-II</a></li>
         <li><a href="#reload">Reloading pgpool-II configuration files</a></li>
         <li><a href="#show-commands">SHOW commands</a></li>
@@ -219,7 +219,7 @@ enable OpenSSL support in pgpool-II.</p>
           <span class="version">V3.1 -</span></td></tr>
       <tr><th class="nodec"><code>--with-memcached=path</code></th>
       <td>pgpool-II binaries will use <a href="#memcached_params">memcached</a>
-          for <a href="#memqcache">on memory query cache</a>.
+          for <a href="#memqcache">in memory query cache</a>.
           You have to install <a href="http://libmemcached.org/libMemcached.html">libmemcached</a>.
           <span class="version">V3.2 -</span></td>
       </tr>
@@ -2859,7 +2859,7 @@ A sample service-configuration file is installed as "share/pgpool.pam" under the
 <h1 id="query_cache">Setting Query cache method <span class="version">- V3.4 (REMOVED)</span></h1>
 
 <strong>Caution: this (on disk) query cache functionality is removed from V3.4.
-Please use <a href="#memqcache">on memory query cache</a> instead.
+Please use <a href="#memqcache">in memory query cache</a> instead.
 </strong>
 
 <p>The Query cache can be used in all modes in pgpool-II.
@@ -2898,18 +2898,18 @@ You need to delete the cache data from the cache table or restart pgpool-II with
 
 <!-- ================================================================================ -->
 
-<h1><a name="memqcache"></a>On memory query Cache <span class="version">V3.2 -</span></h1>
+<h1><a name="memqcache"></a>In memory query Cache <span class="version">V3.2 -</span></h1>
 
 <p>
-You can use on memory query cache in any mode.
+You can use in memory query cache in any mode.
 It is different from the above query cache on the point that
-on memory query cache is faster because cache storage is on memory.
+in memory query cache is faster because cache storage is in memory.
 Moreover you don't need to restart pgpool-II when the cache is outdated
 because the underlying table gets updated.
 </p>
 
 <p>
-On memory cache saves pair of SELECT statements
+In memory cache saves pair of SELECT statements
 (with its Bind parameters if the SELECT is an extended query).
 If the same SELECTs comes in, it returns the value from cache.
 Since no SQL parsing nor access to PostgreSQL are involved, it's extremely fast.
@@ -2919,13 +2919,13 @@ Since no SQL parsing nor access to PostgreSQL are involved, it's extremely fast.
 On the other hand, it might be slower than the normal path because it adds some overhead to store cache.
 Moreover when a table is updated, pgpool automatically deletes all the caches related to the table.
 So the performance will be degraded by a system with a lot of updates.
-If the cache_hit_ratio is lower than 70%, you might want to disable on memory cache.
+If the cache_hit_ratio is lower than 70%, you might want to disable in memory cache.
 </p>
 
 <h2 id="MEMORY_CACHE_RESTRICTIONS">Restrictions</h2>
 <ul>
     <li>
-    On memory query cache deletes the all cache of an updated table automatically
+    In memory query cache deletes the all cache of an updated table automatically
     with monitoring if the executed query is UPDATE, INSERT, ALTER TABLE and so on.
     But pgpool-II isn't able to recognize implicit updates due to triggers, foreign keys and
     DROP TABLE CASCADE.
@@ -2943,7 +2943,7 @@ If the cache_hit_ratio is lower than 70%, you might want to disable on memory ca
     </li>
 </ul>
 
-<h2 id="MEMORY_CACHE_ENABLED">Enabling on memory query cache</h2>
+<h2 id="MEMORY_CACHE_ENABLED">Enabling in memory query cache</h2>
 <p>
 To enable the memory cache functionality, set this to on (default is off).
 </p>
@@ -2969,7 +2969,7 @@ memqcache_method = 'shmem'
 </pre>
 
 
-<h2 id="memqcache_cases">When on memory query cache is prohibited</h2>
+<h2 id="memqcache_cases">When in memory query cache is prohibited</h2>
 <p>
 
 Not All of SELECTs and WITH can be cached. In some cases including followings,
@@ -3090,7 +3090,7 @@ These are the parameters used with both of shmem and memcached.
 
 <h2 id="monitoring_memqcache">Monitoring caches</h2>
 <p>
-This explains how to monitor on memory query cache.
+This explains how to monitor in memory query cache.
 To know if a SELECT result is from query cache or not,
 enable <a href="#LOG_PER_NODE_STATEMENT">log_per_node_statement</a>.
 </p>
@@ -3287,7 +3287,7 @@ pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-D][-d][x]
       <td>Discard pgpool_status file and do not restore previous status
       <span class="version">V3.0 -</span></td></tr>
   <tr><td>-C</td><td>--clear-oidmaps</td>
-      <td>Discard oid maps in <a href="#MEMQCACHE_OIDDIR">memqcache_oiddir</a> for on memory query cache
+      <td>Discard oid maps in <a href="#MEMQCACHE_OIDDIR">memqcache_oiddir</a> for in memory query cache
       (only when <a href="#MEMQCACHE_METHOD">memqcache_method</a> is 'memcached',
       if shmem, discard whenever pgpool starts).
       <span class="version">V3.2 -</span></td></tr>
@@ -3526,7 +3526,7 @@ benchs2=# show pool_version;
 </pre>
 
 <h2 id="pool_cache">pool_cache <span class="version">V3.0 -</span></h2>
-<p>"SHOW pool_cache" displays cache storage statistics if <a href="#memqcache">on memory query cache</a> is enabled.
+<p>"SHOW pool_cache" displays cache storage statistics if <a href="#memqcache">in memory query cache</a> is enabled.
 Here is an example of it:
 </p>
 
@@ -5654,7 +5654,7 @@ fail. Also, the System DB must be PostgreSQL 7.4 or later.</p>
 <h2 id="caution_query_cache">Query Cache</h2>
 
 <p>With <a href="#query_cache">on disk query cache, invalidation must be done manually.
-This does not apply to <a href="#memqcache">on memory query cache</a>. Cache invalidation is automatically done with on memory query cache.</p>
+This does not apply to <a href="#memqcache">in memory query cache</a>. Cache invalidation is automatically done with in memory query cache.</p>
 
 
 <p class="top_link"><a href="#Top">back to top</a></p>

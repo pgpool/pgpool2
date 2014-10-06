@@ -188,7 +188,7 @@ void memcached_disconnect (void)
 }
 
 /*
- * Register buffer data for query cache on memory cache
+ * Register buffer data for query cache in memory cache
  */
 void memqcache_register(char kind,
                         POOL_CONNECTION *frontend,
@@ -3855,7 +3855,7 @@ static bool is_free_hash_element(void)
  * Subsequent call to this function will break return value
  * because its in static memory.
  * Caller must hold shmem_lock before calling this function.
- * If on memory query cache is not enabled, all stats are 0.
+ * If in memory query cache is not enabled, all stats are 0.
  */
 POOL_SHMEM_STATS *pool_get_shmem_storage_stats(void)
 {

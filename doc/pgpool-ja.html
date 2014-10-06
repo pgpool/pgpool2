@@ -30,7 +30,7 @@ Last modified: Fri May 16 16:43:02 JST 2014
         <li><a href="#parallel">パラレルモード</a></li>
         <li><a href="#hba">クライアント認証(HBA)のための pool_hba.conf 設定方法</a></li>
         <li><a href="#query_cache">クエリキャッシュの設定方法</a></li>
-        <li><a href="#memqcache">オンメモリクエリキャッシュの設定方法</a></li>
+        <li><a href="#memqcache">インメモリクエリキャッシュの設定方法</a></li>
         <li><a href="#start">pgpool-IIの起動と停止</a></li>
         <li><a href="#reload">pgpool-IIの設定ファイルの再読み込み</a></li>
         <li><a href="#show-commands">SHOWコマンド</a></li>
@@ -236,7 +236,7 @@ pgpool-II のソースコードは <a href="http://pgpool.net/mediawiki/index.ph
     <tr><th class="nodec"><code>--with-memcached=path</code>
     </th>
     <td>キャッシュストレージに <a href="memcached_params">memcached</a> を利用し、
-    <a href="#memqcache">オンメモリクエリキャッシュ</a>機能を
+    <a href="#memqcache">インメモリクエリキャッシュ</a>機能を
         利用したい場合に指定します。
         <a href="http://libmemcached.org/libMemcached.html">libMemcached</a>のインストールが必要です。
         <span class="version">V3.2 〜</span>
@@ -2951,7 +2951,7 @@ pgpoolのサービス設定ファイルをシステムのPAM設定ディレク�
 <h1><a name="query_cache"></a>クエリキャッシュの設定方法 <span class="version">〜 V3.4 (REMOVED)</span></h1>
 
 <strong>注意: このクエリキャッシュ機能はV3.4で削除されました。
-代わりに、<a href="#memqcache">オンメモリクエリキャッシュ機能</a>を使用してください。
+代わりに、<a href="#memqcache">インメモリクエリキャッシュ機能</a>を使用してください。
 </strong>
 
 <p>
@@ -2993,15 +2993,15 @@ pgpool-IIを再起動する必要があります。</strong>
 
 <!-- ================================================================================ -->
 
-<h1><a name="memqcache"></a>オンメモリクエリキャッシュの設定方法 <span class="version">V3.2 〜</span></h1>
+<h1><a name="memqcache"></a>インメモリクエリキャッシュの設定方法 <span class="version">V3.2 〜</span></h1>
 
 <p>
-pgpool-IIでは、すべてのモードでオンメモリクエリキャッシュを利用することができます。
+pgpool-IIでは、すべてのモードでインメモリクエリキャッシュを利用することができます。
 上記のクエリキャッシュと違い、メモリ上にキャッシュが置かれるので高速であるばかりでなく、
 データが更新されると自動的にキャッシュが無効になり、pgpool-IIの再起動の必要がありません。
 </p>
 <p>
-オンメモリクエリキャッシュは、問い合わせのSELECT文(拡張問い合わせの場合は更にバインドパラメータ)と
+インメモリクエリキャッシュは、問い合わせのSELECT文(拡張問い合わせの場合は更にバインドパラメータ)と
 検索結果をペアで記録し、2回目以降に同じSELECT文が発行された場合に、キャッシュから結果を返します。
 通常のSELECT文処理と違って、PostgreSQLにアクセスしないだけでなく、
 pgpool内部のSQLパース処理などを経由しないため、非常に高速です。
@@ -3011,23 +3011,23 @@ pgpool内部のSQLパース処理などを経由しないため、非常に高�
 かえって遅くなります。
 また、あるテーブルが更新された場合、そのテーブルを参照している
 すべてのキャッシュが自動削除されるため(自動削除しない設定も可能)、
-更新処理が多いシステムではオンメモリクエリキャッシュを有効にしていることでかえって遅くなります。
-キャッシュのヒット率が70%以下の場合は、オンメモリクエリキャッシュの設定を有効にしないほうが良いでしょう。
+更新処理が多いシステムではインメモリクエリキャッシュを有効にしていることでかえって遅くなります。
+キャッシュのヒット率が70%以下の場合は、インメモリクエリキャッシュの設定を有効にしないほうが良いでしょう。
 </p>
 
-<h2 id="MEMORY_CACHE_RESTRICTIONS">オンメモリクエリキャッシュの制限事項</h2>
+<h2 id="MEMORY_CACHE_RESTRICTIONS">インメモリクエリキャッシュの制限事項</h2>
 <ul>
-  <li>オンメモリクエリキャッシュでは、テーブルに変更があると、関連するキャッシュを自動的に削除して古いデータが返却されないようにする機能があります。
+  <li>インメモリクエリキャッシュでは、テーブルに変更があると、関連するキャッシュを自動的に削除して古いデータが返却されないようにする機能があります。
       このため、pgpoolは常にUPDATEやINSERTやALTER TABLEなどのコマンドが発行されたかどうかをモニタしています。
       しかし、トリガ、外部キーやDROP TABLE CASCADEなどの働きによって暗黙的にテーブルが更新されたことはpgpool-IIからはわからないため、この機能が働きません。
       この問題を回避するためには、<a href="#MEMQCACHE_EXPIRE">memqcache_expire</a>を使って一定時間経過したキャッシュを削除するようにするか、<a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a>を使って、該当テーブルがキャッシュされないようにしてください。</li>
-  <li>複数のpgpool-IIを動かす環境で共有メモリを使ったオンメモリクエリキャッシュを使用すると、あるpgpool-II経由でテーブルが更新された時に、他のpgpool-IIのキャッシュが削除されず、古いデータを読みだしてしまうことがあります。
+  <li>複数のpgpool-IIを動かす環境で共有メモリを使ったインメモリクエリキャッシュを使用すると、あるpgpool-II経由でテーブルが更新された時に、他のpgpool-IIのキャッシュが削除されず、古いデータを読みだしてしまうことがあります。
       このような環境では、キャッシュストレージにmemcachedを使ってください。</li>
 </ul>
 
-<h2 id="MEMORY_CACHE_ENABLED">オンメモリクエリキャッシュの有効化</h2>
+<h2 id="MEMORY_CACHE_ENABLED">インメモリクエリキャッシュの有効化</h2>
 <p>
-オンメモリクエリキャッシュを有効にするには、pgpool.confの"memory_cache_enabled"を有効にします。
+インメモリクエリキャッシュを有効にするには、pgpool.confの"memory_cache_enabled"を有効にします。
 <pre>
 memory_cache_enabled = true
 </pre>
@@ -3050,7 +3050,7 @@ memcachedをキャッシュストレージに使用する場合は、ネット�
 
 <h2 id="memqcache_cases">キャッシュが作成される場合と作成されない場合</h2>
 <p>
-すべてのSELECT(もしくはWITH)がオンメモリクエリキャッシュの対象になるわけではありません。
+すべてのSELECT(もしくはWITH)がインメモリクエリキャッシュの対象になるわけではありません。
 キャッシュとDBの一貫性を極力保つために、キャッシュされないケースがあります。以下それを列挙します。
 </p>
 <ul>
@@ -3068,7 +3068,7 @@ memcachedをキャッシュストレージに使用する場合は、ネット�
 
 <h2 id="non_memqcache_case">キャッシュがあっても参照されない場合</h2>
 <p>
-オンメモリクエリキャッシュが存在しても、そのキャッシュが利用されないケースがあります。
+インメモリクエリキャッシュが存在しても、そのキャッシュが利用されないケースがあります。
 以下それを列挙します。
 </p>
 <ul>
@@ -3165,7 +3165,7 @@ memcachedをキャッシュストレージに使用する場合は、ネット�
 
 <h2 id="monitoring_memqcache">キャッシュのモニタリング</h2>
 <p>
-オンメモリクエリキャッシュをモニタする方法を説明します。
+インメモリクエリキャッシュをモニタする方法を説明します。
 キャッシュから検索結果が取得されたかどうかは、<a href="#LOG_PER_NODE_STATEMENT">log_per_node_statement</a> を
 有効にすることで確認できます。
 </p>
@@ -3357,7 +3357,7 @@ pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-D][-d]
     <td>pgpool_statusを削除し、以前の状態を復元しません
         <span class="version">V3.0 〜</span></td></tr>
 <tr><td>-C</td><td>--clear-oidmaps</td>
-    <td>オンメモリクエリキャッシュの <a href="#MEMQCACHE_OIDDIR">memqcache_oiddir</a> の
+    <td>インメモリクエリキャッシュの <a href="#MEMQCACHE_OIDDIR">memqcache_oiddir</a> の
         ディレクトリの中身を消去します
         （<a href="#MEMQCACHE_METHOD">memqcache_method</a> が 'memcached' のときのみ。
           'shmem' のときは指定しなくても、必ず消去されます）。
@@ -3600,7 +3600,7 @@ benchs2=# show pool_version;
 </pre>
 
 <h2 id="pool_cache">pool_cache <span class="version">V3.1 〜</span></h2>
-<p>"SHOW pool_cache" は<a href="#memqcache">オンメモリクエリキャッシュ</a>が有効である場合に、クエリキャッシュのヒット率や、キャッシュストレージの状況を表示します。
+<p>"SHOW pool_cache" は<a href="#memqcache">インメモリクエリキャッシュ</a>が有効である場合に、クエリキャッシュのヒット率や、キャッシュストレージの状況を表示します。
 例を示します。
 </p>
 <p>
@@ -5709,7 +5709,7 @@ configure に失敗します。必ず libpq 3.0 以降(PostgreSQL 7.4以降) を
 <h2 id="caution_query_cache">クエリキャッシュ</h2>
 <p>
 <a href="#query_cache">ディスク上のクエリキャッシュ機能</a>では、キャッシュの無効化を手動で行う必要があります。
-<a href="#memqcache">オンメモリクエリキャッシュ機能</a>にはこの制限は当てはまりません。
+<a href="#memqcache">インメモリクエリキャッシュ機能</a>にはこの制限は当てはまりません。
 </p>
 
 </p>
@@ -6854,7 +6854,7 @@ parse によるロックが残存するためです。</p>
 </li>
 
 <li>
-    オンメモリクエリキャッシュ使用時に子プロセスが sig abort で異常終了するバグを修正しました。
+    インメモリクエリキャッシュ使用時に子プロセスが sig abort で異常終了するバグを修正しました。
     (Tatsuo Ishii)
     <p>
     parse メッセージの後に複数の bind/execute メッセージが来た場合に発生していた、メモリの二重解放がこのバグの原因です。
@@ -7108,7 +7108,7 @@ $ psql sales -c "select pgpool_pgctl('reload', 'fast')";
     Tatsuo Ishii が行いました。</p>
 </li>
 
-<li>オンメモリクエリキャッシュと watchdog の 中国語のチュートリアルを追加しました。(Bambo Huang)</li>
+<li>インメモリクエリキャッシュと watchdog の 中国語のチュートリアルを追加しました。(Bambo Huang)</li>
 
 <li>レグレッションテストを作成しました。(Tatsuo Ishii)</li>
 
@@ -7225,7 +7225,7 @@ SELECT * FROM t1;
 
 <li>pg_md5 コマンドで起こりうるクラッシュを修正しました。(Muhammad Usama)</li>
 
-<li>オンメモリクエリキャッシュ有効時に発生するセグメンテーション違反が修正されました。(Tatsuo Ishii))
+<li>インメモリクエリキャッシュ有効時に発生するセグメンテーション違反が修正されました。(Tatsuo Ishii))
     <p>
     これは、拡張クエリモードで実行されたクエリが長い結果を返すときに発生します。
     このバグはバグトラック #63 にて、harukat さんにより報告、解析され、テストケースが提供されました。
@@ -7263,7 +7263,7 @@ FATAL: no PostgreSQL user name specified in startup packet
 </pre>
 </li>
 
-<li>オンメモリクエリキャッシュを有効にした時の拡張クエリの処理におけるメモリ割り当てロジックを修正しました。(Tatsuo Ishii)
+<li>インメモリクエリキャッシュを有効にした時の拡張クエリの処理におけるメモリ割り当てロジックを修正しました。(Tatsuo Ishii)
     <p>
     バインドパラメータ付きの拡張クエリで、1024 バイト以上の長いクエリ文字列が渡されたときに、
     十分なメモリ割り当てができていませんでした。
@@ -7896,7 +7896,7 @@ parse によるロックが残存するためです。</p>
 </li>
 
 <li>
-    オンメモリクエリキャッシュ使用時に子プロセスが sig abort で異常終了するバグを修正しました。
+    インメモリクエリキャッシュ使用時に子プロセスが sig abort で異常終了するバグを修正しました。
     (Tatsuo Ishii)
     <p>
     parse メッセージの後に複数の bind/execute メッセージが来た場合に発生していた、メモリの二重解放がこのバグの原因です。
@@ -8038,7 +8038,7 @@ SELECT * FROM t1;
 
 <li>pg_md5 コマンドで起こりうるクラッシュを修正しました。(Muhammad Usama)</li>
 
-<li>オンメモリクエリキャッシュ有効時に発生するセグメンテーション違反が修正されました。(Tatsuo Ishii))
+<li>インメモリクエリキャッシュ有効時に発生するセグメンテーション違反が修正されました。(Tatsuo Ishii))
     <p>
     これは、拡張クエリモードで実行されたクエリが長い結果を返すときに発生します。
     このバグはバグトラック #63 にて、harukat さんにより報告、解析され、テストケースが提供されました。
@@ -8074,7 +8074,7 @@ FATAL: no PostgreSQL user name specified in startup packet
 </pre>
 </li>
 
-<li>オンメモリクエリキャッシュを有効にした時の拡張クエリの処理におけるメモリ割り当てロジックを修正しました。(Tatsuo Ishii)
+<li>インメモリクエリキャッシュを有効にした時の拡張クエリの処理におけるメモリ割り当てロジックを修正しました。(Tatsuo Ishii)
     <p>バインドパラメータ付きの拡張クエリで、1024 バイト以上の長いクエリ文字列が渡されたときに、
     十分なメモリ割り当てができていませんでした。
     </p>
@@ -8230,7 +8230,7 @@ FATAL: no PostgreSQL user name specified in startup packet
     </blockquote>
 </li>
 
-<li>別名を持つ UPDATE/DELETE の処理におけるオンメモリクエリキャッシュのバグを修正しました。(Tatsuo Ishii)
+<li>別名を持つ UPDATE/DELETE の処理におけるインメモリクエリキャッシュのバグを修正しました。(Tatsuo Ishii)
     <p>
     別名を持つ UPDATE/DELETE 文（例えば、UPDATE t1 AS foo ...）において、
     "t1 AS foo" がテーブル名と認識されていたため、クエリキャッシュの無効化が
@@ -8351,7 +8351,7 @@ FATAL: no PostgreSQL user name specified in startup packet
 
 <li>ロードバランスの条件について、より詳しい情報をマニュアルに追記しました。 (Tatso Ishii)</li>
 
-<li>オンメモリクエリキャッシュ使用時に発生するセグメンテーションフォルトを修正しました。
+<li>インメモリクエリキャッシュ使用時に発生するセグメンテーションフォルトを修正しました。
     これはキャッシュアレイの処理のバグが原因です。 (Tatsuo Isii)
     <p>
     トランザクション中の一時キャッシュの結果を保持するためにキャッシュアレイ使用されます。
@@ -8533,7 +8533,7 @@ FATAL: no PostgreSQL user name specified in startup packet
     </blockquote>
     </li>
 
-<li>オンメモリクエリキャッシュで、<a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a> に
+<li>インメモリクエリキャッシュで、<a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a> に
     テーブルが指定されている場合に <a href="#WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</a> に
     指定されたテーブルのみがキャッシュされていたバグを修正しました。
     (Yugo Nagata)</li>
@@ -8957,7 +8957,7 @@ Session 1: LISTEN aaa; --- ハング
     pgpool-II の再起動の必要がありません。
     </p>
     <p>
-    オンメモリクエリキャッシュは、問い合わせの SELECT 文(拡張問い合わせの場合は更にバインドパラメータ)と
+    インメモリクエリキャッシュは、問い合わせの SELECT 文(拡張問い合わせの場合は更にバインドパラメータ)と
     検索結果をペアで記録し、2 回目以降に同じ SELECT 文が発行された場合に、キャッシュから結果を返します。
     通常の SELECT 文処理と違って、PostgreSQL にアクセスしないだけでなく、
     pgpool 内部の SQL パース処理などを経由しないため、非常に高速です。
@@ -8966,8 +8966,8 @@ Session 1: LISTEN aaa; --- ハング
     反面、キャッシュにヒットしない場合は通常の SELECT 文の処理に加えてキャッシュ処理のオーバヘッドが生じるので、
     かえって遅くなります。また、あるテーブルが更新された場合、そのテーブルを参照している
     すべてのキャッシュが自動削除されるため（自動削除しない設定も可能）、
-    更新処理が多いシステムではオンメモリクエリキャッシュを有効にしていることでかえって遅くなります。
-    キャッシュのヒット率が 70% 以下の場合は、オンメモリクエリキャッシュの設定を有効にしないほうが良いでしょう。
+    更新処理が多いシステムではインメモリクエリキャッシュを有効にしていることでかえって遅くなります。
+    キャッシュのヒット率が 70% 以下の場合は、インメモリクエリキャッシュの設定を有効にしないほうが良いでしょう。
     </p>
 
 <dt>キャッシュストレージの選択</dt>
@@ -8990,7 +8990,7 @@ Session 1: LISTEN aaa; --- ハング
     <dd>
         <ul>
         <li>
-        オンメモリクエリキャッシュでは、テーブルに変更があると、関連するキャッシュを自動的に削除して
+        インメモリクエリキャッシュでは、テーブルに変更があると、関連するキャッシュを自動的に削除して
         古いデータが返却されないようにする機能があります。
         このため、pgpool は常に UPDATE や INSERT や ALTER TABLE などのコマンドが発行されたかどうかを
         モニタしています。<br>
@@ -9002,7 +9002,7 @@ Session 1: LISTEN aaa; --- ハング
         </li>
 
         <li>
-        複数の pgpool-II を動かす環境で共有メモリを使ったオンメモリクエリキャッシュを使用すると、
+        複数の pgpool-II を動かす環境で共有メモリを使ったインメモリクエリキャッシュを使用すると、
         ある pgpool-II 経由でテーブルが更新された時に、他の pgpool-II のキャッシュが削除されず、
         古いデータを読みだしてしまうことがあります。<br>
         このような環境では、キャッシュストレージに memcached を使ってください。
@@ -9185,7 +9185,7 @@ Session 1: LISTEN aaa; --- ハング
 </li>
 
 <li>チュートリアル</li>
-<p><a href="#memqcache">オンメモリクエリキャッシュ</a> と <a href="#watchdog">Watchdog 機能</a>
+<p><a href="#memqcache">インメモリクエリキャッシュ</a> と <a href="#watchdog">Watchdog 機能</a>
    のチュートリアルを作成しました。(Nozomi Anzai)</p>
 
 </ul>
@@ -9262,7 +9262,7 @@ Session 1: LISTEN aaa; --- ハング
 
 <li>is_set_transaction_serializable() 関数から使用されていない引数 query を削除しました。(Tastuo Ishii)</li>
 
-<li>pgpool.conf の on memory query cache セクションのコメントを他のセクションと同じ様式に修正しました。(Tatsuo Ishii)</li>
+<li>pgpool.conf の in memory query cache セクションのコメントを他のセクションと同じ様式に修正しました。(Tatsuo Ishii)</li>
 
 <li>pgpool.conf.sample-master-slave, pgpool.conf.sample-replication, pgpool.conf.sample-stream に
    抜けていたオプション health_check_max_retries, health_check_retry_delay を追加しました。(Tastuo Ishii)</li>
@@ -9414,7 +9414,7 @@ Session 1: LISTEN aaa; --- ハング
     </blockquote>
 </li>
 
-<li>オンメモリクエリキャッシュで memcached を利用している場合、
+<li>インメモリクエリキャッシュで memcached を利用している場合、
     memcached サーバが停止していてもエラーを起こさないようにしました。(Tatsuo Ishii)
     <p>
     これは主に、memcached_get() が MEMCACHED_NOTFOUND 以外のエラーを返した場合には、

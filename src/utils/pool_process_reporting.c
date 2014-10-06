@@ -1603,7 +1603,7 @@ void version_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 }
 
 /*
- * Show on memory cache reporting
+ * Show in memory cache reporting
  */
 void cache_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 {
