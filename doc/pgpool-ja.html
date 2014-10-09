@@ -695,7 +695,7 @@ net.core.somaxconn = 256
     </p>
     </dd>
 
-<dt><a name="LISTEN_BACKLOG_MULTIPLIERE"></a>listen_backlog_multiplier <span class="version">V3.4 -</span></dt>
+<dt><a name="LISTEN_BACKLOG_MULTIPLIER"></a>listen_backlog_multiplier <span class="version">V3.4 -</span></dt>
 	<dd>
 	<p>
 	フロントエンドからpgpool-IIへの接続待ち行列の長さを制御します。デフォルト値は2です。接続待ち行列(listenシステムコールのbacklogパラメータ)の長さは、listen_backlog_multiplier * num_init_children で決まります。もし待ち行列の長さが不足する場合にはこのパラメータを増やしてください。その際、OSの設定値によっては待ち行列を長く出来ないことがあります。詳細は<a href="#NUM_INIT_CHILDREN">num_init_children</a>の項を参照してください。
@@ -826,11 +826,73 @@ local0.*    /var/log/pgpool.log
     このパラメータを変更した時には pgpool-II を再起動してください。
     </p>
     </dd>
+
+
+	<dt><a name="LOG_LINE_PREFIX"></a>log_line_prefix</dt>
+	<dd>
+	<p>
+	  ログの先頭に付加する文字列をprintfのようなスタイルで指定します。
+	「%」はエスケープ文字で、この後の文字は以下のように置換えをされて出力されます。認識できないエスケープ指定は無視されます。それ以外の文字はそのままログに出力されます。
+	  log_line_prefixのデフォルトは空文字列です。
+	</p>
+	<table border>
+	<tr class="header"><th>エスケープ文字</th><th>効果</th></tr>
+	<tr><td>%a</td><td>クライアントのアプリケーション名</td></tr>
+	<tr><td>%p</td><td>プロセスID (PID)</td></tr>
+	<tr><td>%P</td><td>プロセス名</td></tr>
+	<tr><td>%t</td><td>タイムスタンプ</td></tr>
+	<tr><td>%d</td><td>データベース名</td></tr>
+	<tr><td>%u</td><td>ユーザ名</td></tr>
+	<tr><td>%l</td><td>プロセスごとのログ行番号</td></tr>
+	<tr><td>%%</td><td>'%' 文字自身</td></tr>
+	</table>
+	<p>
+    このパラメータを変更した時には設定ファイルを再読み込みしてください。
+	</p>
+	</dd>
+
+<dt><a name="LOG_ERROR_VERBOSITY"></a>log_error_verbosity</dt>
+    <dd>
+    <p>
+      ログメッセージの詳細度を指定します。
+    TERSE, DEFAULT, VERBOSEの順に詳細になります。
+    TERSE では、DETAIL, HINT, CONTEXTの各メッセージが含まれなくなります。
+    </p>
+    <p>
+    このパラメータを変更した時には設定ファイルを再読み込みしてください。
+    </p>
+    </dd>
 		
 <dt><a name="LOG_CONNECTIONS"></a>log_connections</dt>
     <dd>
     <p>
     trueならば、全てのクライアント接続をログへ出力します。
+    </p>
+    <p>
+    このパラメータを変更した時には設定ファイルを再読み込みしてください。
+    </p>
+    </dd>
+
+<dt><a name="CLIENT_MIN_MESSAGES"></a>client_min_messages</dt>
+    <dd>
+    <p>
+    クライアントに送る最低メッセージレベルを設定します。
+    DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, LOG, NOTICE,
+    WARNING, ERROR, FATAL, PANIC が指定でき、左に行くほど冗長です。
+    デフォルトは NOTICE です。
+    </p>
+    <p>
+    このパラメータを変更した時には設定ファイルを再読み込みしてください。
+    </p>
+    </dd>
+
+<dt><a name="LOG_MIN_MESSAGES"></a>log_min_messages</dt>
+    <dd>
+    <p>
+    ログに書き出す最低メッセージレベルを設定します。
+    DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, INFO, NOTICE,
+    WARNING, ERROR, LOG, FATAL, PANIC が指定でき、左に行くほど冗長です。
+    デフォルトは WARNING です。
     </p>
     <p>
     このパラメータを変更した時には設定ファイルを再読み込みしてください。
@@ -6071,6 +6133,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 <h1 id="release">リリースノート</h1>
 
 <ul class="flat_ul">
+<li><a href="#release3.4.x">V3.4.x</a></li>
 <li><a href="#release3.3.x">V3.3.x</a></li>
 <li><a href="#release3.2.x">V3.2.x</a></li>
 <li><a href="#release3.1.x">V3.1.x</a></li>
@@ -6083,6 +6146,91 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 <li><a href="#release1.2.x">V1.2.x</a></li>
 <li><a href="#release1.1.x">V1.1.x</a></li>
 <li><a href="#release1.0.x">V1.0.x</a></li>
+</ul>
+
+<!-- ================================================================================ -->
+<!-- 3.4                                                                              -->
+<!-- ================================================================================ -->
+<hr><a name="release3.4.x"></a>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.4.0"></a>3.4.0 (tataraboshi) 2014/10/XX</h2>
+<!-- -------------------------------------------------------------------------------- -->
+<h3>概要</h3>
+<p>
+このバージョンは 3.4 系列の最初の版で、3.3 系からの「メジャーバージョンアップ」にあたります。
+</p>
+
+<h3>互換性のない変更</h3>
+
+<p>
+
+<ul>
+    <li>パラレルクエリモードが廃止され、pgpool.confから削除されました。
+      これは、パラレルクエリモードのユーザが少ない割に維持に手間がかかるためです。
+      実際にはパラレルクエリモード用のコードはまだ存在しており、pgpool.confに必要なパラメータを書くことで使用は可能です。
+      しかしながら、次のpgpool-IIのバージョン(3.5.0)では、コードも削除される予定です</li>
+
+    <li>"print_timestamp"が削除されました。代わりに"<a href=#LOG_LINE_PREFIX>log_line_prefix</a>を使ってください</li>
+
+
+    <li>リカバリスクリプトが従来の3つではなく、4つのパラメータを受け取るようになりました(4番目のパラメータは、PostgreSQLのマスタサーバのポート番号です)。
+      もし4番目のパラメータの情報を必要としないのであれば、従来の3つのパラメータを受け取るリカバリスクリプトも利用できます</li>
+
+</ul>
+</p>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h3 id="3.4_new_features">新機能</h3>
+
+<ul>
+<li>アプリケーション名あるいはデータベース名できめ細かく負荷分散を制御できるようになりました(<a href="#DATABASE_REDIRECT_PREFERENCE_LIST">database_redirect_preference_list</a>と
+<a href="#APP_NAME_REDIRECT_PREFERENCE_LIST">app_name_redirect_preference_list</a>を参照)。
+  たとえば、クライアントのアプリケーション名の場合に、どれかのスレーブサーバに検索を分散させるのではなく、マスタサーバに投げるような設定も可能です(Tatsuo)</li>
+
+<li>pgpool-IIのプロセス名をログに出力できるようになりました。そのための新しいパラメータは "log_line_prefix"で、printfで指定するようなやり方で、ログの先頭に文字列を追加できます(Usama)</li>
+
+<li>PostgreSQLのように、ログの詳しさを指定できるようになりました。
+あたらしいパラメータは "<a href="#LOG_ERROR_VERBOSITY">log_error_verbosity</a>", "<a href="#CLIENT_MIN_MESSAGES">client_min_messages</a>", "<a href="#LOG_MIN_MESSAGES">log_min_messages</a>" です(Tatsuo)</li>
+
+<li>新しいパラメータ "<a href="#ALLOW_SQL_COMMENTS">allow_sql_comments</a>" がオンの場合、負荷分散に干渉すること無くSQLコメントを使えるようになりました。オフの場合は今までと同様の振る舞いになります(Tatsuo)</li>
+
+<li>"<a href="#CHECK_UNLOGGED_TABLE">check_unlogged_table</a>"という新しいパラメータにより、unloggedテーブルが使われているかどうかのチェックが省略できるようになりました。これにより、pgpool-IIが発行する内部的なカタログ参照のためのクエリの数を減らして性能を向上できます(Tatsuo)</li>
+
+<li>新しいパラメータ"<a href="#LISTEN_BACKLOG_MULTIPLIER">listen_backlog_multiplier</a>"を使って、非常に負荷の高いシステムにおけるListenバックログのあふれを防ぐことができるようになりました(Tatsuo)</li>
+
+<li>新しいパラメータ"<a href="#CONNECT_TIMEOUT">connect_timeout</a>"を使って、バックエンドへの接続タイムアウトを防ぐことができるようになりました。この機能は、不安定なネットワーク環境で役に立ちます(Tatsuo)</li>
+
+</p>
+</ul>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h3 id="3.4_enhancements">改善点</h3>
+
+<ul>
+<li>組み込みのSQLパーサがPostgreSQL 9.4と互換性のあるものになりました(Usama)</li>
+
+<li>PostgreSQLのメモリマネージャと例外処理マネージャが移植されました(Usama)</li>
+
+<li>ソースツリーを再構成しました(Usama)</li>
+
+<li>pgpool_statusのフォーマットがASCIIファイルになりました。これにより、たとえばpgpool-IIを起動するまえにダウンしているPostgreSQLノードを登録するようなことが可能です(Tatsuo)</li>
+
+<li>リカバリスクリプトに新しい第4のパラメータが追加されました。マスターノードのポート番号が指定可能です(Tatsuo)</li>
+
+<li>3つより多いデータベースをpgpool_setupで扱えるようになりました(Tatsuo)</li>
+
+</p>
+</ul>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h3 id="3.4_fixes">バグ修正(pgpool-II 3.3.4以降のもの)</h3>
+
+<ul>
+<li>Close portalリクエストを存在しないポータルに発行してもエラーにならなくなりました。これが元々PostgreSQLのフロントエンド／バックエンドプロトコルで要求されていた仕様です。このようなケースでは、バックエンドを経由すること無く"close complete"メッセージがクライアントに直ちに返るようになりました(Usama)</li>
+
+<li>Coverityにより見つかった多くのバグが修正されました(Usama, Tatsuo)</li>
+
 </ul>
 
 <!-- ================================================================================ -->

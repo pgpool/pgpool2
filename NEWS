@@ -1,6 +1,103 @@
                                 Release Notes
 
 ===============================================================================
+
+                        3.4.0 (tataraboshi) 2014/10/XX
+
+* Version 3.4.0
+
+      This is the first version of pgpool-II 3.4 series.
+      That is, a "major version up" from 3.3 series.
+
+      __________________________________________________________________
+
+* Incompatible changes
+
+    - Parallel query mode is obsoleted and is removed from
+      pgpool.conf. This is due to the very few users using the mode
+      (and the relatively high cost to maintain it).  Actual codes for
+      the mode are still there and users can use the mode if they
+      specify necessary parameters in pgpool.conf. Note, however, the
+      next version of pgpool-II (will be 3.5.0) will actually remove
+      the code.
+
+    - "print_timestamp" parameter is removed. Instead new
+      "log_line_prefix" should be used.
+
+    - Recovery script now accepts 4 parameters, rather than 3 (the 4th
+      parameter is the port number of master PostgreSQL). Existing
+      3-parameter-style recovery scripts can be used if you don't care
+      about information provided by the 4th parameter.
+      __________________________________________________________________
+
+* New features
+
+    - Allow fine control of load balancing by using application name
+      or database name. For example, if a client has particular
+      application name, read queries can be redirect to master node,
+      rather than to one of slave nodes (Tatsuo)
+
+    - Allow to print pgpool-II process names in the log output. New
+      parameter "log_line_prefix", which is the printf-style string
+      that is output at the beginning of each log line (Usama)
+
+    - Allow to control log verbosity like PostgreSQL. For this purpose
+      new parameters "log_error_verbosity", "client_min_messages",
+      "log_min_messages" are added (Usama)
+
+    - Allow to use SQL comments without disturbing load balancing if
+      new parameter "allow_sql_comments" is on. If it's off, previous
+      behavior is kept (Tatsuo)
+
+    - Allow to skip unlogged tables checking by using new parameter
+      "check_unlogged_table". This reduces the number of pgpool-II's
+      internal catalog look up queries and enhances performance
+      (Tatsuo)
+
+    - Prevent listen backlog overflow by using new parameter
+      "listen_backlog_multiplier" for very busy systems (Tatsuo)
+
+    - Prevent connection timeout to backend by using new parameter
+      "connect_timeout". This is useful in unstable networks
+      (Tatsuo)
+      __________________________________________________________________
+
+* Enhancements
+
+    - Builtin SQL parser is now compatible with PostgreSQL 9.4 (Usama)
+
+    - Import PostgreSQL's memory manager and exception manager (Usama)
+
+    - Reorganize source code tree (Usama)
+
+    - The status file "pgpool_status" is now a plain ASCII file. This
+      allows to register down PostgreSQL nodes before pgpool-II
+      starts for example (Tatsuo)
+
+    - Allow to use IPv6 address for PostgreSQ (Michael Stapelberg)
+
+    - Allow to use IPv6 bind address for pgpool-II (Michael Stapelberg)
+
+    - Rename all occurrence of "on memory query cache" to "in memory
+      query cache" because latter is more correct in English (Tatsuo)
+
+    - Add 4th paramter "master node port number" to recovery script
+      (Tatsuo)
+
+    - Allow to handle more than 3 database nodes in pgpool_setup
+      (Tatsuo)
+      __________________________________________________________________
+
+* Bug fixes (since 3.3.4)
+
+    - As per the PostgreSQL specification, calling close on non
+      existing portals is not an error. So on the same footings this
+      commit ignores all such packets and return the 'close complete'
+      message to client with out going to backend (Usama)
+
+    - Fix many issues/bugs found by Coverity (Usama, Tatsuo)
+
+===============================================================================
 3.3 Series (2013/07/30 - )
 ===============================================================================
 
