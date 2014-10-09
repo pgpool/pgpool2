@@ -244,7 +244,7 @@ replication_mode = off
                                    # (change requires restart)
 replicate_select = off
                                    # Replicate SELECT statements
-                                   # when in replication or parallel mode
+                                   # when in replication mode
                                    # replicate_select is higher priority than
                                    # load_balance_mode.
 
