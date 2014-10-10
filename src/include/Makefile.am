@@ -4,6 +4,5 @@ DEFS = @DEFS@ \
 	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\"
 
 EXTRA_DIST = auth \
-	context \
+	context parallel_query query_cache\
 	parser  pool.h  pcp  pool_type.h pool_config.h  protocol  rewrite  version.h  utils  watchdog  config.h  config.h.in
-
