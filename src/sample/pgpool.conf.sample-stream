@@ -150,7 +150,7 @@ log_destination = 'stderr'
 
 # - What to log -
 
-log_line_prefix = ''			   # printf-style string to output at beginning of each log line.
+log_line_prefix = '%t: pid %p: '   # printf-style string to output at beginning of each log line.
 
 log_connections = off
                                    # Log connections

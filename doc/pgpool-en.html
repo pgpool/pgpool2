@@ -808,7 +808,9 @@ local0.*    /var/log/pgpool.log
 	This is a printf-style string that is output at the beginning of each log line.
 	% characters begin "escape sequences" that are replaced with information outlined below.
 	All unrecognized escapes are ignored. Other characters are copied straight to the log line.
-	Default is an empty string.
+
+	Default is '%t: pid %p: ', which prints timestamp and process
+	id, which keeps backward compatibily with pre-3.4.
 	</p>
 	<table border>
 	<tr class="header"><th>Escape</th><th>Effect</th></tr>

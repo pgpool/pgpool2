@@ -1904,7 +1904,7 @@ int pool_init_config(void)
 	pool_config->num_white_function_list = 0;
 	pool_config->black_function_list = default_black_function_list;
 	pool_config->num_black_function_list = sizeof(default_black_function_list)/sizeof(char *);
-	pool_config->log_line_prefix = "";
+	pool_config->log_line_prefix = "%t: pid %p: ";
 	pool_config->log_error_verbosity = 1;    /* PGERROR_DEFAULT */
 	pool_config->client_min_messages = 18;  /* NOTICE */
 	pool_config->log_min_messages = 19;     /* WARNING */
