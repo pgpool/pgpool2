@@ -119,7 +119,4 @@ extern bool wd_is_locked(WD_LOCK_ID lock_id);
 extern void wd_set_lock(WD_LOCK_ID lock_id, bool value);
 extern int wd_unlock(WD_LOCK_ID lock);
 
-/* main.c */
-extern int myargc;
-extern char **myargv;
 #endif /* WD_EXT_H */

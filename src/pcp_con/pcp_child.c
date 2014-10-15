@@ -78,9 +78,6 @@ static RETSIGTYPE restart_handler(int sig);
 static int pool_detach_node(int node_id, bool gracefully);
 static int pool_promote_node(int node_id, bool gracefully);
 
-extern int myargc;
-extern char **myargv;
-
 static volatile sig_atomic_t pcp_got_sighup = 0;
 volatile sig_atomic_t pcp_wakeup_request = 0;
 static volatile sig_atomic_t pcp_restart_request = 0;

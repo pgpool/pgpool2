@@ -181,7 +181,7 @@ int main(int argc, char **argv)
 	SSL_load_error_strings();
 #endif /* USE_SSL */
 
-
+	myargv = save_ps_display_args(myargc, myargv);
 	/* create MemoryContexts */
 	MemoryContextInit();
 

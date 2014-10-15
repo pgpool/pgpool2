@@ -62,9 +62,6 @@
 #include "auth/md5.h"
 #include "utils/pool_stream.h"
 
-extern int myargc;
-extern char **myargv;
-
 char remote_ps_data[NI_MAXHOST];		/* used for set_ps_display */
 static POOL_CONNECTION_POOL_SLOT	*slots[MAX_NUM_BACKENDS];
 static volatile sig_atomic_t reload_config_request = 0;

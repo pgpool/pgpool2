@@ -534,7 +534,6 @@ pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 		close(pipe_fds[0]);
 		close(pipe_fds[1]);
 
-		myargv = save_ps_display_args(myargc, myargv);
 		/* Set the process type variable */
 		processType = PT_PCP;
 
@@ -581,7 +580,6 @@ pid_t fork_a_child(int *fds, int id)
 			close(pipe_fds[1]);
 		}
 
-		myargv = save_ps_display_args(myargc, myargv);
 		/* Set the process type variable */
 		processType = PT_CHILD;
 
@@ -630,7 +628,6 @@ pid_t worker_fork_a_child()
 			close(pipe_fds[1]);
 		}
 
-		myargv = save_ps_display_args(myargc, myargv);
 		/* Set the process type variable */
 		processType = PT_WORKER;
 

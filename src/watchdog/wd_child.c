@@ -69,8 +69,6 @@ wd_child(int fork_wait_time)
 		sleep(fork_wait_time);
 	}
 
-	myargv = save_ps_display_args(myargc, myargv);
-
 	POOL_SETMASK(&UnBlockSig);
 
 	signal(SIGTERM, wd_child_exit);

@@ -345,8 +345,6 @@ wd_hb_receiver(int fork_wait_time, WdHbIf *hb_if)
 		sleep(fork_wait_time);
 	}
 
-	myargv = save_ps_display_args(myargc, myargv);
-
 	POOL_SETMASK(&UnBlockSig);
 
 	signal(SIGTERM, hb_receiver_exit);
@@ -481,8 +479,6 @@ wd_hb_sender(int fork_wait_time, WdHbIf *hb_if)
 	{
 		sleep(fork_wait_time);
 	}
-
-	myargv = save_ps_display_args(myargc, myargv);
 
 	POOL_SETMASK(&UnBlockSig);
 
