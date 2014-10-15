@@ -40,6 +40,7 @@ endif
 
 SUBDIRS = \
 		pgpool-recovery \
-		pgpool-regclass
+		pgpool-regclass \
+		pgpool_adm
 
 $(recurse)

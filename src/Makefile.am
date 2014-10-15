@@ -102,6 +102,12 @@ EXTRA_DIST = sample/pgpool.pam \
 		sql/pgpool-regclass/pgpool_regclass--1.0.sql \
 		sql/pgpool-regclass/pgpool_regclass.control \
 		sql/pgpool-regclass/Makefile \
+		sql/pgpool_adm/pgpool_adm.c \
+		sql/pgpool_adm/pgpool_adm.h \
+		sql/pgpool_adm/pgpool_adm.control \
+		sql/pgpool_adm/pgpool_adm--1.0.sql \
+		sql/pgpool_adm/pgpool_adm.sql.in \
+		sql/pgpool_adm/Makefile \
 		test/parser/expected/copy.out test/parser/expected/create.out \
 		test/parser/expected/cursor.out test/parser/expected/delete.out \
 		test/parser/expected/drop.out test/parser/expected/insert.out \
