@@ -76,8 +76,6 @@ void start_recovery(int recovery_node)
 		ereport(ERROR,
 				(errmsg("node recovery failed, node id: %d is alive", recovery_node)));
 
-	Req_info->kind = NODE_RECOVERY_REQUEST;
-
 	/* select master/primary node */
 	node_id = MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID;
 	backend = &pool_config->backend_desc->backend_info[node_id];

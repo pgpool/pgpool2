@@ -365,6 +365,7 @@ extern int my_master_node_id;
 #define REQUEST_INFO_SEM 1
 #define SHM_CACHE_SEM	2
 #define QUERY_CACHE_STATS_SEM	3
+#define MAX_REQUEST_QUEUE_SIZE	10
 
 /*
  * number specified when semaphore is locked/unlocked
@@ -388,9 +389,16 @@ typedef enum {
 } POOL_REQUEST_KIND;
 
 typedef struct {
-	POOL_REQUEST_KIND	kind;	/* request kind */
-	int node_id[MAX_NUM_BACKENDS];		/* request node id */
-	int master_node_id;	/* the youngest node id which is not in down status */
+	POOL_REQUEST_KIND	kind;		/* request kind */
+	int node_id[MAX_NUM_BACKENDS];	/* request node id */
+	int count;						/* request node ids count */
+}POOL_REQUEST_NODE;
+
+typedef struct {
+	POOL_REQUEST_NODE request[MAX_REQUEST_QUEUE_SIZE];
+	int request_queue_head;
+	int request_queue_tail;
+	int master_node_id;		/* the youngest node id which is not in down status */
 	int primary_node_id;	/* the primary node id in streaming replication mode */
 	int conn_counter;
 	bool switching;	/* it true, failover or failback is in progress */
@@ -489,6 +497,7 @@ extern char remote_port[];	/* client port */
 /*
  * public functions
  */
+extern bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, int count);
 extern char *get_config_file_name(void);
 extern char *get_hba_file_name(void);
 extern void do_child(int *fds);

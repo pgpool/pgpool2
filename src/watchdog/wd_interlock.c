@@ -65,10 +65,9 @@ wd_init_interlock(void)
 }
 
 /* notify to start interlocking */
-void wd_start_interlock(bool by_health_check)
+void wd_start_interlock(bool by_health_check, int node_id)
 {
 	int count;
-	int node_id;
 
 	ereport(LOG,
 		(errmsg("watchdog notifying to start interlocking")));
@@ -90,10 +89,7 @@ void wd_start_interlock(bool by_health_check)
 	 * to other pgpools because detection of DB down on the others may be late.
 	 */
 	if (by_health_check && wd_am_I_lock_holder())
-	{
-		node_id = Req_info->node_id[0];
 		wd_degenerate_backend_set(&node_id, 1);
-	}
 
 	/* wait for all pgpools starting interlock */
 	count = WD_INTERLOCK_WAIT_COUNT;
