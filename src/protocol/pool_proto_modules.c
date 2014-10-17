@@ -2312,6 +2312,9 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 		len = ntohl(len) - 4;
 		if (len > 0)
 			bufp = pool_read2(frontend, len);
+		else if (len < 0)
+			ereport(ERROR,
+					(errmsg("frontend message length is less than 4 (kind: %c)", fkind)));
 	}
 	else
 	{
@@ -2343,13 +2346,21 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 	 * these protocol modules, pool_read2 maybe called and modify its
 	 * buffer contents.
 	 */
-	if(len > 0)
+	if (len > 0)
 	{
 		contents = palloc(len);
 		memcpy(contents, bufp, len);
 	}
 	else
-		contents = NULL;
+	{
+		/*
+		 * Set dummy content if len <= 0.
+		 * this happens only when protocol version is 2.
+		 */
+		contents = palloc(1);
+		memcpy(contents, "", 1);
+	}
+			
 	switch (fkind)
 	{
 		POOL_QUERY_CONTEXT *query_context;
