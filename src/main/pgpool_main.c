@@ -220,6 +220,10 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 
 	/* create unix domain socket */
 	fds = malloc(sizeof(int));
+	if (fds == NULL)
+		ereport(FATAL,
+				(errmsg("failed to allocate memory in startup process")));
+
 	fds[0] = create_unix_domain_socket(un_addr);
 	on_proc_exit(FileUnlink, (Datum) un_addr.sun_path);
 
@@ -227,11 +231,18 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	if (pool_config->listen_addresses[0])
 	{
 		int *inet_fds, *walk;
-		inet_fds = create_inet_domain_sockets(pool_config->listen_addresses, pool_config->port);
 		int n = 1;
+
+		inet_fds = create_inet_domain_sockets(pool_config->listen_addresses, pool_config->port);
+
 		for (walk = inet_fds; *walk != -1; walk++)
 			n++;
+
 		fds = realloc(fds, sizeof(int) * (n+1));
+		if (fds == NULL)
+			ereport(FATAL,
+					(errmsg("failed to allocate memory in startup process")));
+
 		n = 1;
 		for (walk = inet_fds; *walk != -1; walk++)
 		{
@@ -239,6 +250,7 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 			n++;
 		}
 		fds[n] = -1;
+		free(inet_fds);
 	}
 
 	initialize_shared_mem_objects();
