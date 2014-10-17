@@ -6189,18 +6189,18 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 <a href="#APP_NAME_REDIRECT_PREFERENCE_LIST">app_name_redirect_preference_list</a>を参照)。
   たとえば、クライアントのアプリケーション名の場合に、どれかのスレーブサーバに検索を分散させるのではなく、マスタサーバに投げるような設定も可能です(Tatsuo)</li>
 
-<li>pgpool-IIのプロセス名をログに出力できるようになりました。そのための新しいパラメータは "log_line_prefix"で、printfで指定するようなやり方で、ログの先頭に文字列を追加できます(Usama)</li>
+<li>pgpool-IIのプロセス名をログに出力できるようになりました。そのための新しいパラメータは "log_line_prefix"で、printfで指定するようなやり方で、ログの先頭に文字列を追加できます(Muhanmmad Usama)</li>
 
 <li>PostgreSQLのように、ログの詳しさを指定できるようになりました。
-あたらしいパラメータは "<a href="#LOG_ERROR_VERBOSITY">log_error_verbosity</a>", "<a href="#CLIENT_MIN_MESSAGES">client_min_messages</a>", "<a href="#LOG_MIN_MESSAGES">log_min_messages</a>" です(Tatsuo)</li>
+あたらしいパラメータは "<a href="#LOG_ERROR_VERBOSITY">log_error_verbosity</a>", "<a href="#CLIENT_MIN_MESSAGES">client_min_messages</a>", "<a href="#LOG_MIN_MESSAGES">log_min_messages</a>" です(Tatsuo Ishii)</li>
 
-<li>新しいパラメータ "<a href="#ALLOW_SQL_COMMENTS">allow_sql_comments</a>" がオンの場合、負荷分散に干渉すること無くSQLコメントを使えるようになりました。オフの場合は今までと同様の振る舞いになります(Tatsuo)</li>
+<li>新しいパラメータ "<a href="#ALLOW_SQL_COMMENTS">allow_sql_comments</a>" がオンの場合、負荷分散に干渉すること無くSQLコメントを使えるようになりました。オフの場合は今までと同様の振る舞いになります(Tatsuo Ishii)</li>
 
-<li>"<a href="#CHECK_UNLOGGED_TABLE">check_unlogged_table</a>"という新しいパラメータにより、unloggedテーブルが使われているかどうかのチェックが省略できるようになりました。これにより、pgpool-IIが発行する内部的なカタログ参照のためのクエリの数を減らして性能を向上できます(Tatsuo)</li>
+<li>"<a href="#CHECK_UNLOGGED_TABLE">check_unlogged_table</a>"という新しいパラメータにより、unloggedテーブルが使われているかどうかのチェックが省略できるようになりました。これにより、pgpool-IIが発行する内部的なカタログ参照のためのクエリの数を減らして性能を向上できます(Tatsuo Ishii)</li>
 
-<li>新しいパラメータ"<a href="#LISTEN_BACKLOG_MULTIPLIER">listen_backlog_multiplier</a>"を使って、非常に負荷の高いシステムにおけるListenバックログのあふれを防ぐことができるようになりました(Tatsuo)</li>
+<li>新しいパラメータ"<a href="#LISTEN_BACKLOG_MULTIPLIER">listen_backlog_multiplier</a>"を使って、非常に負荷の高いシステムにおけるListenバックログのあふれを防ぐことができるようになりました(Tatsuo Ishii)</li>
 
-<li>新しいパラメータ"<a href="#CONNECT_TIMEOUT">connect_timeout</a>"を使って、バックエンドへの接続タイムアウトを防ぐことができるようになりました。この機能は、不安定なネットワーク環境で役に立ちます(Tatsuo)</li>
+<li>新しいパラメータ"<a href="#CONNECT_TIMEOUT">connect_timeout</a>"を使って、バックエンドへの接続タイムアウトを防ぐことができるようになりました。この機能は、不安定なネットワーク環境で役に立ちます(Tatsuo Ishii)</li>
 
 </p>
 </ul>
@@ -6209,17 +6209,17 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 <h3 id="3.4_enhancements">改善点</h3>
 
 <ul>
-<li>組み込みのSQLパーサがPostgreSQL 9.4と互換性のあるものになりました(Usama)</li>
+<li>組み込みのSQLパーサがPostgreSQL 9.4と互換性のあるものになりました(Muhammad Usama)</li>
 
-<li>PostgreSQLのメモリマネージャと例外処理マネージャが移植されました(Usama)</li>
+<li>PostgreSQLのメモリマネージャと例外処理マネージャが移植されました(Muhammad Usama)</li>
 
-<li>ソースツリーを再構成しました(Usama)</li>
+<li>ソースツリーを再構成しました(Muhammad Usama)</li>
 
-<li>pgpool_statusのフォーマットがASCIIファイルになりました。これにより、たとえばpgpool-IIを起動するまえにダウンしているPostgreSQLノードを登録するようなことが可能です(Tatsuo)</li>
+<li>pgpool_statusのフォーマットがASCIIファイルになりました。これにより、たとえばpgpool-IIを起動するまえにダウンしているPostgreSQLノードを登録するようなことが可能です(Tatsuo Ishii)</li>
 
-<li>リカバリスクリプトに新しい第4のパラメータが追加されました。マスターノードのポート番号が指定可能です(Tatsuo)</li>
+<li>リカバリスクリプトに新しい第4のパラメータが追加されました。マスターノードのポート番号が指定可能です(Tatsuo Ishii)</li>
 
-<li>3つより多いデータベースをpgpool_setupで扱えるようになりました(Tatsuo)</li>
+<li>3つより多いデータベースをpgpool_setupで扱えるようになりました(Tatsuo Ishii)</li>
 
 </p>
 </ul>
@@ -6228,9 +6228,12 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 <h3 id="3.4_fixes">バグ修正(pgpool-II 3.3.4以降のもの)</h3>
 
 <ul>
-<li>Close portalリクエストを存在しないポータルに発行してもエラーにならなくなりました。これが元々PostgreSQLのフロントエンド／バックエンドプロトコルで要求されていた仕様です。このようなケースでは、バックエンドを経由すること無く"close complete"メッセージがクライアントに直ちに返るようになりました(Usama)</li>
 
-<li>Coverityにより見つかった多くのバグが修正されました(Usama, Tatsuo)</li>
+<li>failoverの際にデッドロックを起こすことがあるwatchdogのバグを修正しました。詳細はバグトラックの105番および[pgpool-committers: 2195] をご覧ください。</li>
+
+<li>Close portalリクエストを存在しないポータルに発行してもエラーにならなくなりました。これが元々PostgreSQLのフロントエンド／バックエンドプロトコルで要求されていた仕様です。このようなケースでは、バックエンドを経由すること無く"close complete"メッセージがクライアントに直ちに返るようになりました(Muhammad Usama)</li>
+
+<li>Coverityにより見つかった多くのバグが修正されました(Muhammad Usama, Tatsuo Ishii)</li>
 
 </ul>
 
@@ -6422,7 +6425,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 </li>
 
 <li>
-    リソースリークを修正しました。(Muhanmmad Usama)
+    リソースリークを修正しました。(Muhanmmad Muhammad Usama)
     <p>
     Coverity の報告 #1222998, #1222999 によります。
     </p>
@@ -6447,7 +6450,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 </li>
 
 <li>
-    strcpy() をより安全で推奨される strlcpy() に置き換えました。(Muhammad Usama)
+    strcpy() をより安全で推奨される strlcpy() に置き換えました。(Muhammad Muhammad Usama)
     <p>
     Coverity の報告 #1111480 によります。
     </p>

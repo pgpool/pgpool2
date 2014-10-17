@@ -35,67 +35,70 @@
     - Allow fine control of load balancing by using application name
       or database name. For example, if a client has particular
       application name, read queries can be redirect to master node,
-      rather than to one of slave nodes (Tatsuo)
+      rather than to one of slave nodes (Tatsuo Ishii)
 
     - Allow to print pgpool-II process names in the log output. New
       parameter "log_line_prefix", which is the printf-style string
-      that is output at the beginning of each log line (Usama)
+      that is output at the beginning of each log line (Muhammad Usama)
 
     - Allow to control log verbosity like PostgreSQL. For this purpose
       new parameters "log_error_verbosity", "client_min_messages",
-      "log_min_messages" are added (Usama)
+      "log_min_messages" are added (Muhammad Usama)
 
     - Allow to use SQL comments without disturbing load balancing if
       new parameter "allow_sql_comments" is on. If it's off, previous
-      behavior is kept (Tatsuo)
+      behavior is kept (Tatsuo Ishii)
 
     - Allow to skip unlogged tables checking by using new parameter
       "check_unlogged_table". This reduces the number of pgpool-II's
       internal catalog look up queries and enhances performance
-      (Tatsuo)
+      (Tatsuo Ishii)
 
     - Prevent listen backlog overflow by using new parameter
-      "listen_backlog_multiplier" for very busy systems (Tatsuo)
+      "listen_backlog_multiplier" for very busy systems (Tatsuo Ishii)
 
     - Prevent connection timeout to backend by using new parameter
       "connect_timeout". This is useful in unstable networks
-      (Tatsuo)
+      (Tatsuo Ishii)
       __________________________________________________________________
 
 * Enhancements
 
-    - Builtin SQL parser is now compatible with PostgreSQL 9.4 (Usama)
+    - Builtin SQL parser is now compatible with PostgreSQL 9.4 (Muhammad Usama)
 
-    - Import PostgreSQL's memory manager and exception manager (Usama)
+    - Import PostgreSQL's memory manager and exception manager (Muhammad Usama)
 
-    - Reorganize source code tree (Usama)
+    - Reorganize source code tree (Muhammad Usama)
 
     - The status file "pgpool_status" is now a plain ASCII file. This
       allows to register down PostgreSQL nodes before pgpool-II
-      starts for example (Tatsuo)
+      starts for example (Tatsuo Ishii)
 
     - Allow to use IPv6 address for PostgreSQ (Michael Stapelberg)
 
     - Allow to use IPv6 bind address for pgpool-II (Michael Stapelberg)
 
     - Rename all occurrence of "on memory query cache" to "in memory
-      query cache" because latter is more correct in English (Tatsuo)
+      query cache" because latter is more correct in English (Tatsuo Ishii)
 
     - Add 4th paramter "master node port number" to recovery script
-      (Tatsuo)
+      (Tatsuo Ishii)
 
     - Allow to handle more than 3 database nodes in pgpool_setup
-      (Tatsuo)
+      (Tatsuo Ishii)
       __________________________________________________________________
 
 * Bug fixes (since 3.3.4)
 
+    - Fix failover deadlock problem in watchdog (Muhammad Usama). See
+      bug #105 and [pgpool-committers: 2195] for more details.
+
     - As per the PostgreSQL specification, calling close on non
       existing portals is not an error. So on the same footings this
       commit ignores all such packets and return the 'close complete'
-      message to client with out going to backend (Usama)
+      message to client with out going to backend (Muhammad Usama)
 
-    - Fix many issues/bugs found by Coverity (Usama, Tatsuo)
+    - Fix many issues/bugs found by Coverity (Muhammad Usama, Tatsuo Ishii)
 
 ===============================================================================
 3.3 Series (2013/07/30 - )
