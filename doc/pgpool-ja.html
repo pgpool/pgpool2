@@ -6229,7 +6229,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 
 <ul>
 
-<li>failoverの際にデッドロックを起こすことがあるwatchdogのバグを修正しました。詳細はバグトラックの105番および[pgpool-committers: 2195] をご覧ください。</li>
+<li>failoverの際にデッドロックを起こすことがあるwatchdogのバグを修正しました。詳細はバグトラックの105番および[pgpool-committers: 2195] をご覧ください(Muhammad Usama)</li>
 
 <li>Close portalリクエストを存在しないポータルに発行してもエラーにならなくなりました。これが元々PostgreSQLのフロントエンド／バックエンドプロトコルで要求されていた仕様です。このようなケースでは、バックエンドを経由すること無く"close complete"メッセージがクライアントに直ちに返るようになりました(Muhammad Usama)</li>
 
