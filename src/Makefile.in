@@ -553,7 +553,8 @@ EXTRA_DIST = sample/pgpool.pam \
                 redhat/rpm_installer/install.sh redhat/rpm_installer/uninstall.sh \
                 redhat/rpm_installer/basebackup-replication.sh redhat/rpm_installer/basebackup-stream.sh \
                 redhat/rpm_installer/pgpool_recovery_pitr redhat/rpm_installer/pgpool_remote_start \
-                redhat/rpm_installer/recovery.conf redhat/rpm_installer/failover.sh
+                redhat/rpm_installer/recovery.conf redhat/rpm_installer/failover.sh \
+                pgpool.spec
 
 SUBDIRS = parser libs watchdog . tools include
 all: all-recursive

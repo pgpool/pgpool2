@@ -66,7 +66,6 @@ pkgdata_DATA = sql/insert_lock.sql \
 			   sql/system_db.sql \
 			   sample/pgpool.pam
 
-
 # suggested by libtoolize
 #ACLOCAL_AMFLAGS = -I m4
 
@@ -151,7 +150,10 @@ EXTRA_DIST = sample/pgpool.pam \
                 redhat/rpm_installer/install.sh redhat/rpm_installer/uninstall.sh \
                 redhat/rpm_installer/basebackup-replication.sh redhat/rpm_installer/basebackup-stream.sh \
                 redhat/rpm_installer/pgpool_recovery_pitr redhat/rpm_installer/pgpool_remote_start \
-                redhat/rpm_installer/recovery.conf redhat/rpm_installer/failover.sh
+                redhat/rpm_installer/recovery.conf redhat/rpm_installer/failover.sh \
+                pgpool.spec
+	   
+
 
 
 SUBDIRS = parser libs watchdog . tools include
