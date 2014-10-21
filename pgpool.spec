@@ -1,15 +1,16 @@
 # How to build RPM:
-#   rpmbuild -ba pgpool.spec --define="pgpool_version 3.3.2" --define="pg_version 93" --define="pghome /usr/pgsql-9.3"
+#   rpmbuild -ba pgpool.spec --define="pgpool_version 3.4beta1" --define="pg_version 93" --define="pghome /usr/pgsql-9.3"
 #
 # expecting RPM name are:
 #   pgpool-II-pg{xx}-{version}.pgdg.{arch}.rpm
 #   pgpool-II-pg{xx}-devel-{version}.pgdg.{arch}.rpm
+#   pgpool-II-pg{xx}-extensions-{version}.pgdg.{arch}.rpm
 #   pgpool-II-pg{xx}-{version}.pgdg.src.rpm
 
 Summary:        Pgpool is a connection pooling/replication server for PostgreSQL
 Name:           pgpool-II-pg%{pg_version}
 Version:        %{pgpool_version}
-Release:        1%{?dist}
+Release:        2%{?dist}
 License:        BSD
 Group:          Applications/Databases
 Vendor:         Pgpool Global Development Group
@@ -18,8 +19,9 @@ Source0:        pgpool-II-%{version}.tar.gz
 Source1:        pgpool.init
 Source2:        pgpool.sysconfig
 Patch1:         pgpool.conf.sample.patch
+Patch2:         pgpool-II-head.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires:  postgresql%{pg_version}-devel pam-devel
+BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel
 Obsoletes:      postgresql-pgpool
 
 # original pgpool archive name
@@ -51,14 +53,20 @@ Requires:    %{name} = %{version}
 %description devel
 Development headers and libraries for pgpool-II.
 
+%package extensions
+Summary:     Postgersql extensions for pgpool-II
+Group:       Applications/Databases
+%description extensions
+Postgresql extensions libraries and sql files for pgpool-II.
+
 %prep
 %setup -q -n %{archive_name}
 %patch1 -p0
+%patch2 -p1
 
 %build
-%configure --with-pgsql-includedir=%{pghome}/include/ \
-           --with-pgsql-libdir=%{pghome}/lib \
-           --disable-static --with-pam --disable-rpath \
+%configure --with-pgsql=%{pghome} \
+           --disable-static --with-pam --with-openssl --disable-rpath \
            --sysconfdir=%{_sysconfdir}/pgpool-II/
 
 make %{?_smp_flags}
@@ -125,18 +133,10 @@ fi
 %{_datadir}/pgpool-II/insert_lock.sql
 %{_datadir}/pgpool-II/system_db.sql
 %{_datadir}/pgpool-II/pgpool.pam
-%{pghome}/share/extension/pgpool-recovery.sql
-%{pghome}/share/extension/pgpool_recovery--1.0.sql
-%{pghome}/share/extension/pgpool_recovery.control
-%{pghome}/share/extension/pgpool-regclass.sql
-%{pghome}/share/extension/pgpool_regclass--1.0.sql
-%{pghome}/share/extension/pgpool_regclass.control
 %{_sysconfdir}/pgpool-II/pgpool.conf.sample-master-slave
 %{_sysconfdir}/pgpool-II/pgpool.conf.sample-replication
 %{_sysconfdir}/pgpool-II/pgpool.conf.sample-stream
 %{_libdir}/libpcp.so.*
-%{pghome}/lib/pgpool-recovery.so
-%{pghome}/lib/pgpool-regclass.so
 %{_initrddir}/pgpool
 %attr(764,root,root) %config(noreplace) %{_sysconfdir}/pgpool-II/*.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/pgpool
@@ -149,7 +149,40 @@ fi
 %{_includedir}/pool_type.h
 %{_libdir}/libpcp.so
 
+%files extensions
+%defattr(-,root,root,-)
+%{pghome}/share/extension/pgpool-recovery.sql
+%{pghome}/share/extension/pgpool_recovery--1.0.sql
+%{pghome}/share/extension/pgpool_recovery.control
+%{pghome}/share/extension/pgpool-regclass.sql
+%{pghome}/share/extension/pgpool_regclass--1.0.sql
+%{pghome}/share/extension/pgpool_regclass.control
+%{pghome}/lib/pgpool-recovery.so
+# From PostgreSQL 9.4 pgpool-regclass.so is not needed anymore
+# because 9.4 or later has to_regclass.
+%if %{pg_version} <= 93
+  %{pghome}/lib/pgpool-regclass.so
+%endif
+
 %changelog
+* Mon Sep 25 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.4-2
+- Split pgpool_regclass and pgpool_recovery as a separate extention package.
+- Fix wrong OpenSSL build option.
+
+* Fri Sep 5 2014 Yugo Nagata <nagata@sraoss.co.jp> 3.3.4-1
+- Update to 3.3.4
+
+* Wed Jul 30 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.3-4
+- Add PATCH2 which is diff between 3.3.3 and 3.3-stable tree head.
+- RPM expert said this is the better way.
+
+* Sun May 10 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.3-3
+- Use 3.3-stable tree head
+
+* Sun May 4 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.3-2
+- Fix configure option
+- Add openssl support
+
 * Tue Nov 26 2013 Nozomi Anzai <anzai@sraoss.co.jp> 3.3.1-1
 - Improved to specify the versions of pgool-II and PostgreSQL
 
