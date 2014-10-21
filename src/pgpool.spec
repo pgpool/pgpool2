@@ -18,7 +18,6 @@ URL:            http://www.pgppol.net/
 Source0:        pgpool-II-%{version}.tar.gz
 Source1:        pgpool.init
 Source2:        pgpool.sysconfig
-Patch1:         pgpool.conf.sample.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel
 Obsoletes:      postgresql-pgpool
@@ -60,7 +59,6 @@ Postgresql extensions libraries and sql files for pgpool-II.
 
 %prep
 %setup -q -n %{archive_name}
-%patch1 -p0
 
 %build
 %configure --with-pgsql=%{pghome} \
@@ -84,12 +82,12 @@ install -m 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sysconfig/pgpool
 
 # install to PostgreSQL
 export PATH=%{pghome}/bin:$PATH
-cd sql/pgpool-recovery/
+cd src/sql/pgpool-recovery/
 make %{?_smp_flags} DESTDIR=%{buildroot} install
-cd ../../
-cd sql/pgpool-regclass/
+cd ../../../
+cd src/sql/pgpool-regclass/
 make %{?_smp_flags} DESTDIR=%{buildroot} install
-cd ../../
+cd ../../../
 
 # nuke libtool archive and static lib
 rm -f %{buildroot}%{_libdir}/libpcp.{a,la}
@@ -112,7 +110,7 @@ fi
 %files
 %defattr(-,root,root,-)
 %dir %{_datadir}/pgpool-II
-%doc README README.euc_jp TODO COPYING INSTALL AUTHORS ChangeLog NEWS doc/pgpool-en.html doc/pgpool-ja.html doc/pgpool.css doc/tutorial-en.html doc/tutorial-ja.html
+%doc README TODO COPYING INSTALL AUTHORS ChangeLog NEWS doc/pgpool-en.html doc/pgpool-ja.html doc/pgpool.css doc/tutorial-en.html doc/tutorial-ja.html
 %{_bindir}/pgpool
 %{_bindir}/pcp_attach_node
 %{_bindir}/pcp_detach_node
@@ -150,7 +148,7 @@ fi
 %files extensions
 %defattr(-,root,root,-)
 %{pghome}/share/extension/pgpool-recovery.sql
-%{pghome}/share/extension/pgpool_recovery--1.0.sql
+%{pghome}/share/extension/pgpool_recovery--1.1.sql
 %{pghome}/share/extension/pgpool_recovery.control
 %{pghome}/share/extension/pgpool-regclass.sql
 %{pghome}/share/extension/pgpool_regclass--1.0.sql
