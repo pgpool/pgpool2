@@ -1856,6 +1856,27 @@
       Per bug #102.
       http://www.pgpool.net/mantisbt/view.php?id=102
 
+    - Fix reset query stuck problem. (Tatsuo Ishii)
+      
+      It is reported that reset query (DISCARD ALL etc.) occasionally does
+      not finish and pgpool child remain waiting for reply from backend thus
+      client cannot connect to pgpool.
+      
+      The cause of problem is not identified yet but if client suddenly
+      closes connection to pgpool in the middle of query processing, backend
+      may not accept the reset queries because they are not ready for query.
+      
+      The fix is, if frontend closes connection in unexpected way, query
+      process loop immediately returns with new state:
+      POOL_END_WITH_FRONTEND_ERROR and pgpool closes connection to
+      PostgreSQL then goes back to new connection request waiting loop.
+      
+      Also, pgpool closes connections to backend when client_idle_limit is
+      set and the idle limit.
+      
+      Per bug #107.
+      http://www.pgpool.net/mantisbt/view.php?id=107
+
 ===============================================================================
 
                         3.1.11 (hatsuiboshi) 2014/03/24
@@ -3413,6 +3434,27 @@
       When an invalid number is used, null value is passed as an arguments
       of recovery script, and this causes a malfunction. In especially,
       rsync may delete unrelated files in basebackup scripts.
+
+    - Fix reset query stuck problem. (Tatsuo Ishii)
+      
+      It is reported that reset query (DISCARD ALL etc.) occasionally does
+      not finish and pgpool child remain waiting for reply from backend thus
+      client cannot connect to pgpool.
+      
+      The cause of problem is not identified yet but if client suddenly
+      closes connection to pgpool in the middle of query processing, backend
+      may not accept the reset queries because they are not ready for query.
+      
+      The fix is, if frontend closes connection in unexpected way, query
+      process loop immediately returns with new state:
+      POOL_END_WITH_FRONTEND_ERROR and pgpool closes connection to
+      PostgreSQL then goes back to new connection request waiting loop.
+      
+      Also, pgpool closes connections to backend when client_idle_limit is
+      set and the idle limit.
+      
+      Per bug #107.
+      http://www.pgpool.net/mantisbt/view.php?id=107
 
 ===============================================================================
 
