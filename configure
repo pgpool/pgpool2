@@ -3963,7 +3963,7 @@ fi
 # Define the identity of the package.
 
  PACKAGE=pgpool-II
- VERSION=3.4-beta1
+ VERSION=3.4beta2
 
 
 # Some tools Automake needs.
