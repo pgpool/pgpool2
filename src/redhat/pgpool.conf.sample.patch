@@ -1,10 +1,10 @@
-*** pgpool.conf.sample.old      2013-03-04 11:08:30.000000000 +0900
---- pgpool.conf.sample  2013-03-04 11:09:40.000000000 +0900
+*** pgpool.conf.sample	2014-10-21 16:03:55.605775451 +0900
+--- pgpool.conf.sample.new	2014-10-21 16:04:15.557776162 +0900
 ***************
-*** 51,65 ****
-
+*** 58,72 ****
+  
   # - Backend Connection Settings -
-
+  
 ! #backend_hostname0 = 'host1'
                                      # Host name or IP address to connect to for backend 0
 ! #backend_port0 = 5432
@@ -17,10 +17,10 @@
                                      # Controls various backend behavior
                                      # ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
   #backend_hostname1 = 'host2'
---- 51,65 ----
-
+--- 58,72 ----
+  
   # - Backend Connection Settings -
-
+  
 ! backend_hostname0 = 'localhost'
                                      # Host name or IP address to connect to for backend 0
 ! backend_port0 = 5432
@@ -34,19 +34,19 @@
                                      # ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
   #backend_hostname1 = 'host2'
 ***************
-*** 183,189 ****
+*** 214,220 ****
   pid_file_name = '/var/run/pgpool/pgpool.pid'
                                      # PID file name
                                      # (change requires restart)
 ! logdir = '/tmp'
                                      # Directory of pgPool status file
                                      # (change requires restart)
-
---- 183,189 ----
+  
+--- 214,220 ----
   pid_file_name = '/var/run/pgpool/pgpool.pid'
                                      # PID file name
                                      # (change requires restart)
 ! logdir = '/var/log/pgpool'
                                      # Directory of pgPool status file
                                      # (change requires restart)
-
+  
