@@ -1,5 +1,5 @@
 # How to build RPM:
-#   rpmbuild -ba pgpool.spec --define="pgpool_version 3.4beta1" --define="pg_version 93" --define="pghome /usr/pgsql-9.3"
+#   rpmbuild -ba pgpool.spec --define="pgpool_version 3.4beta2" --define="pg_version 93" --define="pghome /usr/pgsql-9.3"
 #
 # expecting RPM name are:
 #   pgpool-II-pg{xx}-{version}.pgdg.{arch}.rpm
@@ -10,7 +10,7 @@
 Summary:        Pgpool is a connection pooling/replication server for PostgreSQL
 Name:           pgpool-II-pg%{pg_version}
 Version:        %{pgpool_version}
-Release:        2%{?dist}
+Release:        1%{?dist}
 License:        BSD
 Group:          Applications/Databases
 Vendor:         Pgpool Global Development Group
@@ -165,6 +165,9 @@ fi
 %endif
 
 %changelog
+* Tue Oct 21 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.4beta2
+- Adopt to PostgreSQL 9.4
+
 * Mon Sep 25 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.4-2
 - Split pgpool_regclass and pgpool_recovery as a separate extention package.
 - Fix wrong OpenSSL build option.
