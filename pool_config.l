@@ -1495,7 +1495,12 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
-			pool_config->debug_level |= v;
+			/* don't overwrite -d option at startup */
+			if (CHECK_CONTEXT(INIT_CONFIG, context))
+				pool_config->debug_level |= v;
+			/* use debug_level value at reload */
+			else if (CHECK_CONTEXT(RELOAD_CONFIG, context))
+				pool_config->debug_level = v;
 		}
 	}
 
