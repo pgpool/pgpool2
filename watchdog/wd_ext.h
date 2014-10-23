@@ -108,7 +108,7 @@ extern pid_t wd_hb_sender(int fork_wait_time, WdHbIf * hb_if);
 
 /* wd_interlock.c */
 extern int wd_init_interlock(void);
-extern void wd_start_interlock(bool by_health_check);
+extern void wd_start_interlock(bool by_health_check, int node_id);
 extern void wd_end_interlock(void);
 extern void wd_leave_interlock(void);
 extern void wd_wait_for_lock(WD_LOCK_ID lock_id);

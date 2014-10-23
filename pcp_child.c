@@ -226,16 +226,19 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 			{
 				int len;
 				int wsize;
-				char *msg;
+				char *msg = "OperationInProgress";
+				if(Req_info->request_queue_tail != Req_info->request_queue_head)
+				{
+					POOL_REQUEST_KIND reqkind;
+					reqkind = Req_info->request[(Req_info->request_queue_head +1) % MAX_REQUEST_QUEUE_SIZE].kind;
 
-				if (Req_info->kind == NODE_UP_REQUEST)
-					msg = "FailbackInProgress";
-				else if (Req_info->kind == NODE_DOWN_REQUEST)
-					msg = "FailoverInProgress";
-				else if (Req_info->kind == PROMOTE_NODE_REQUEST)
-					msg = "PromotionInProgress";
-				else
-					msg = "OperationInProgress";
+					if (reqkind == NODE_UP_REQUEST)
+						msg = "FailbackInProgress";
+					else if (reqkind == NODE_DOWN_REQUEST)
+						msg = "FailoverInProgress";
+					else if (reqkind == PROMOTE_NODE_REQUEST)
+						msg = "PromotionInProgress";
+				}
 
 				len = strlen(msg) + 1;
 				pcp_write(frontend, "e", 1);

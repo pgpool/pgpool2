@@ -430,9 +430,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			int stime = 5;	/* XXX give arbitrary time to allow closing idle connections */
 
 			pool_debug("Query: sending SIGUSR1 signal to parent");
-
-			Req_info->kind = CLOSE_IDLE_REQUEST;
-			kill(getppid(), SIGUSR1);		/* send USR1 signal to parent */
+			register_node_operation_request(CLOSE_IDLE_REQUEST, NULL, 0);
 
 			/* we need to loop over here since we will get USR1 signal while sleeping */
 			while (stime > 0)
