@@ -1043,22 +1043,32 @@ void degenerate_backend_set(int *node_id_set, int count)
 		if (node_id_set[i] < 0 || node_id_set[i] >= MAX_NUM_BACKENDS ||
 			!VALID_BACKEND(node_id_set[i]))
 		{
-			ereport(LOG,
-					(errmsg("degenerate_backend_set: node %d is not valid backend.", i)));
+			if (node_id_set[i] < 0 || node_id_set[i] >= MAX_NUM_BACKENDS)
+				ereport(LOG,
+						(errmsg("invalid degenerate backend request, node id: %d is out of range. node id must be between [0 and %d]"
+								,node_id_set[i],MAX_NUM_BACKENDS)));
+			else
+				ereport(LOG,
+						(errmsg("invalid degenerate backend request, node id : %d status: [%d] is not valid for failover"
+								,node_id_set[i],BACKEND_INFO(node_id_set[i]).backend_status)));
+
 			continue;
 		}
 
 		if (POOL_DISALLOW_TO_FAILOVER(BACKEND_INFO(node_id_set[i]).flag))
 		{
 			ereport(LOG,
-					(errmsg("degenerate_backend_set: %d failover request from pid %d is canceled because failover is disallowed", node_id_set[i], getpid())));
-			continue;
+					(errmsg("degenerate backend request for node_id: %d from pid [%d] is canceled because failover is disallowed on the node",
+							node_id_set[i], getpid())));
 		}
+		else
+		{
+			ereport(LOG,
+					(errmsg("received degenerate backend request for node_id: %d from pid [%d]",
+							node_id_set[i], getpid())));
 
-		ereport(LOG,
-                (errmsg("degenerate_backend_set: %d failover request from pid %d", node_id_set[i], getpid())));
-
-		node_id[node_count++] = node_id_set[i];
+			node_id[node_count++] = node_id_set[i];
+		}
 	}
 
 	if (node_count)
@@ -1070,7 +1080,8 @@ void degenerate_backend_set(int *node_id_set, int count)
 		else
 		{
 			ereport(LOG,
-					(errmsg("degenerate_backend_set: failover request from pid %d is canceled by other pgpool", getpid())));
+					(errmsg("degenerate backend request for node_id: %d from pid [%d] is canceled  by other pgpool"
+							, node_id_set[i], getpid())));
 		}
 	}
 
@@ -1086,13 +1097,19 @@ void promote_backend(int node_id)
 
 	if (node_id < 0 || node_id >= MAX_NUM_BACKENDS || !VALID_BACKEND(node_id))
 	{
-		ereport(LOG,
-				(errmsg("unabble to process promote backend, node %d is not valid backend.", node_id)));
+		if (node_id < 0 || node_id >= MAX_NUM_BACKENDS)
+			ereport(LOG,
+					(errmsg("invalid promote backend request, node id: %d is out of range. node id must be between [0 and %d]"
+							,node_id,MAX_NUM_BACKENDS)));
+		else
+			ereport(LOG,
+					(errmsg("invalid promote backend request, node id : %d status: [%d] not valid"
+							,node_id,BACKEND_INFO(node_id).backend_status)));
 		return;
 	}
-
 	ereport(LOG,
-            (errmsg("promote_backend: %d promote node request from pid %d", node_id, getpid())));
+			(errmsg("received promote backend request for node_id: %d from pid [%d]",
+					node_id, getpid())));
 
 	if (!pool_config->use_watchdog || WD_OK == wd_promote_backend(node_id))
 	{
@@ -1101,29 +1118,37 @@ void promote_backend(int node_id)
 	else
 	{
 		ereport(LOG,
-                (errmsg("promote_backend: promote request from pid %d is canceled by other pgpool", getpid())));
+				(errmsg("promote backend request for node_id: %d from pid [%d] is canceled  by other pgpool"
+						, node_id, getpid())));
 	}
 }
 
 /* send failback request using SIGUSR1 */
 void send_failback_request(int node_id)
 {
-	ereport(LOG,
-            (errmsg("sending failback request: failback node: %d, requested by pid: %d", node_id, getpid())));
-
     if (node_id < 0 || node_id >= MAX_NUM_BACKENDS ||
 		(RAW_MODE && BACKEND_INFO(node_id).backend_status != CON_DOWN && VALID_BACKEND(node_id)))
 	{
-		ereport(LOG,
-				(errmsg("error sending failback request, node: %d is already alive", node_id)));
-
+		if (node_id < 0 || node_id >= MAX_NUM_BACKENDS)
+			ereport(LOG,
+					(errmsg("invalid failback request, node id: %d is out of range. node id must be between [0 and %d]"
+							,node_id,MAX_NUM_BACKENDS)));
+		else
+			ereport(LOG,
+					(errmsg("invalid failback request, node id : %d status: [%d] not valid for failback"
+							,node_id,BACKEND_INFO(node_id).backend_status)));
 		return;
 	}
+
+	ereport(LOG,
+			(errmsg("received failback request for node_id: %d from pid [%d]",
+					node_id, getpid())));
 
 	if (pool_config->use_watchdog && WD_OK != wd_send_failback_request(node_id))
 	{
 		ereport(LOG,
-                (errmsg("send_failback_request: failback request from pid %d is canceled by other pgpool", getpid())));
+				(errmsg("failback request for node_id: %d from pid [%d] is canceled  by other pgpool"
+						, node_id, getpid())));
 		return;
 	}
 	register_node_operation_request(NODE_UP_REQUEST, &node_id, 1);
