@@ -493,7 +493,7 @@ process_backend_health_check_failure(int health_check_node_id, int retrycnt)
 			pool_config->health_check_period/NUM_BACKENDS : pool_config->health_check_retry_delay;
 
 	int health_check_max_retries = pool_config->parallel_mode ?
-			(NUM_BACKENDS - 1) : pool_config->health_check_retry_delay;
+			(NUM_BACKENDS - 1) : pool_config->health_check_max_retries;
 
 	pool_signal(SIGALRM, SIG_IGN);	/* Cancel timer */
 	CLEAR_ALARM;
