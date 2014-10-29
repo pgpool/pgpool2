@@ -128,7 +128,7 @@ void do_child(int *fds)
 	struct timeval now;
 	struct timezone tz;
 	struct timeval timeout;
-	static int connected;		/* non 0 if has been accepted connections from frontend */
+	static int connected = 0;	/* non 0 if has been accepted connections from frontend */
 	int connections_count = 0;	/* used if child_max_connections > 0 */
 	char psbuf[NI_MAXHOST + 128];
 
@@ -273,7 +273,6 @@ void do_child(int *fds)
 		StartupPacket *sp;
 		int front_end_fd;
 		SockAddr saddr;
-		connected = 0;
 		/* rest per iteration memory context */
 		MemoryContextSwitchTo(ProcessLoopContext);
 		MemoryContextResetAndDeleteChildren(ProcessLoopContext);
