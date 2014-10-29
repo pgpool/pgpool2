@@ -498,7 +498,7 @@ process_backend_health_check_failure(int health_check_node_id, int retrycnt)
 	pool_signal(SIGALRM, SIG_IGN);	/* Cancel timer */
 	CLEAR_ALARM;
 
-	if (retrycnt <= health_check_max_retries)
+	if (health_check_max_retries > 0 && retrycnt <= health_check_max_retries)
 	{
 		/* Keep retrying and sleep a little in between */
 		ereport(DEBUG1,
