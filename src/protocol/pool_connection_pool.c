@@ -832,7 +832,6 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 				ereport(LOG,
 					(errmsg("creating new connection to backend"),
 						 errdetail("not executing failover because fail_over_on_backend_error is off")));
-				continue;
 			}
 			child_exit(1);
 		}
