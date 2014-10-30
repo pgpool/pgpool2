@@ -556,8 +556,9 @@ function wait_for_pgpool_startup {
 
 	while [ $timeout -gt  0 ]
 	do
-		$PSQL -p $PGPOOL_PORT -c "show pool_nodes" test >/dev/null 2>&1
+		$PSQL -p $PGPOOL_PORT -c "show pool_nodes" postgres >/dev/null 2>&1
 		if [ $? = 0 ];then
+#		        echo "pgpool-II comes up after `expr 20 - $timeout` seconds"
 			break;
 		fi
 		timeout=`expr $timeout - 1`
