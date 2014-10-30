@@ -246,9 +246,9 @@ void do_child(int *fds)
             if ( ( pool_config->child_max_connections > 0 ) &&
                 ( connections_count >= pool_config->child_max_connections ) )
             {
-                ereport(FATAL,
-                    (return_code(2),
-                         errmsg("child exiting, %d connections reached", pool_config->child_max_connections)));
+                ereport(LOG,
+                    (errmsg("child exiting, %d connections reached", pool_config->child_max_connections)));
+				child_exit(2);
             }
         }
 
