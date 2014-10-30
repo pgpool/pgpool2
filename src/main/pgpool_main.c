@@ -340,9 +340,9 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		 */
 		if(processState == PERFORMING_HEALTH_CHECK)
 		{
-			if(errno != EINTR || health_check_timer_expired)
+			if (errno != EINTR || health_check_timer_expired)
 			{
-				if(use_template_db == false)
+				if (use_template_db == false)
 				{
 					/* Health check was performed on 'postgres' database
 					 * lets try to perform health check with template1 db
@@ -353,16 +353,23 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 				}
 				else
 				{
+					int ret;
+
 					retrycnt++;
-					if(process_backend_health_check_failure(health_check_node_id, retrycnt))
+					ret = process_backend_health_check_failure(health_check_node_id, retrycnt);
+					if (ret > 0) /* Retries are exhausted, reset the counter */
 					{
-						health_check_node_id = 0;
-						use_template_db = false;
+						retrycnt = 0;
+						if (ret == 2)
+						{
+							health_check_node_id = 0;
+							use_template_db = false;
+						}
 					}
 				}
 			}
 		}
-		else if(processState == PERFORMING_SYSDB_CHECK)
+		else if (processState == PERFORMING_SYSDB_CHECK)
 		{
 			if ( errno != EINTR || health_check_timer_expired)
 			{
@@ -481,7 +488,8 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
  * Function process the backend node failure captured by the health check
  * since this function is called from the exception handler so ereport(ERROR)
  * is not allowed from this function
- * Function returns non zero if failover is performed and 0 otherwise.
+ * Function returns non zero if no retries are exhausted.
+ * ( 1 if failover is not performed on node and 2 in case of failover)
  */
 static int
 process_backend_health_check_failure(int health_check_node_id, int retrycnt)
@@ -515,6 +523,7 @@ process_backend_health_check_failure(int health_check_node_id, int retrycnt)
 		{
 			ereport(LOG,
 					(errmsg("health check failed on node %d but failover is disallowed for the node", health_check_node_id)));
+			return 1;
 		}
 		else
 		{
@@ -522,7 +531,7 @@ process_backend_health_check_failure(int health_check_node_id, int retrycnt)
 					(errmsg("setting backend node %d status to NODE DOWN", health_check_node_id)));
 			health_check_timer_expired = 0;
 			register_node_operation_request(NODE_DOWN_REQUEST,&health_check_node_id,1);
-			return 1;
+			return 2;
 			/* need to distribute this info to children ??*/
 		}
 	}
