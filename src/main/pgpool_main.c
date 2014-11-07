@@ -120,7 +120,7 @@ static RETSIGTYPE reload_config_handler(int sig);
 static RETSIGTYPE health_check_timer_handler(int sig);
 static RETSIGTYPE wakeup_handler(int sig);
 
-static void initialize_shared_mem_objects(void);
+static void initialize_shared_mem_objects(bool clear_memcache_oidmaps);
 static int trigger_failover_command(int node, const char *command_line,
 									int old_master, int new_master, int old_primary);
 static bool verify_backend_node_status(int backend_no, bool* is_standby);
@@ -253,7 +253,7 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		free(inet_fds);
 	}
 
-	initialize_shared_mem_objects();
+	initialize_shared_mem_objects(clear_memcache_oidmaps);
 
 	/* start watchdog */
 	if (pool_config->use_watchdog )
@@ -2575,7 +2575,7 @@ pid_t fork_follow_child(int old_master, int new_primary, int old_primary)
 }
 
 
-static void initialize_shared_mem_objects()
+static void initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 {
 	int size,i;
 	/*
