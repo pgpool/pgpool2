@@ -1823,7 +1823,8 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				 */
 				if (pool_is_doing_extended_query_message())
 				{
-					if (session_context->query_context->query_state[MASTER_NODE_ID] == POOL_EXECUTE_COMPLETE)
+					if (session_context->query_context &&
+						session_context->query_context->query_state[MASTER_NODE_ID] == POOL_EXECUTE_COMPLETE)
 					{
 						pool_handle_query_cache(backend, session_context->query_context->query_w_hex, node, state);
 						free(session_context->query_context->query_w_hex);
