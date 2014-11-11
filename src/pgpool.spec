@@ -1,5 +1,5 @@
 # How to build RPM:
-#   rpmbuild -ba pgpool.spec --define="pgpool_version 3.4rc1" --define="pg_version 93" --define="pghome /usr/pgsql-9.3"
+#   rpmbuild -ba pgpool.spec --define="pgpool_version 3.4.0" --define="pg_version 93" --define="pghome /usr/pgsql-9.3"
 #
 # expecting RPM name are:
 #   pgpool-II-pg{xx}-{version}.pgdg.{arch}.rpm
@@ -19,7 +19,7 @@ Source0:        pgpool-II-%{version}.tar.gz
 Source1:        pgpool.init
 Source2:        pgpool.sysconfig
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel
+BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel libmemcached-devel
 Obsoletes:      postgresql-pgpool
 
 # original pgpool archive name
@@ -62,7 +62,7 @@ Postgresql extensions libraries and sql files for pgpool-II.
 
 %build
 %configure --with-pgsql=%{pghome} \
-           --disable-static --with-pam --with-openssl --disable-rpath \
+           --disable-static --with-pam --with-openssl --with-memcached=%{_usr} --disable-rpath \
            --sysconfdir=%{_sysconfdir}/pgpool-II/
 
 make %{?_smp_flags}
@@ -161,6 +161,9 @@ fi
 %endif
 
 %changelog
+* Tue Nov 11 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 
+- Add memcached support to configure.
+
 * Tue Oct 21 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.4beta2
 - Adopt to PostgreSQL 9.4
 
