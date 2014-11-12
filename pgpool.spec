@@ -21,7 +21,7 @@ Source2:        pgpool.sysconfig
 Patch1:         pgpool.conf.sample.patch
 Patch2:         pgpool-II-head.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel
+BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel libmemcached-devel
 Obsoletes:      postgresql-pgpool
 
 # original pgpool archive name
@@ -66,7 +66,7 @@ Postgresql extensions libraries and sql files for pgpool-II.
 
 %build
 %configure --with-pgsql=%{pghome} \
-           --disable-static --with-pam --with-openssl --disable-rpath \
+           --disable-static --with-pam --with-openssl --with-memcached=%{_usr} --disable-rpath \
            --sysconfdir=%{_sysconfdir}/pgpool-II/
 
 make %{?_smp_flags}
@@ -161,6 +161,9 @@ fi
 %{pghome}/lib/pgpool-regclass.so
 
 %changelog
+* Wed Nov 12 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.4-3
+- Add memcached support to configure.
+
 * Mon Sep 25 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.4-2
 - Split pgpool_regclass and pgpool_recovery as a separate extention package.
 - Fix wrong OpenSSL build option.
