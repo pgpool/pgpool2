@@ -57,7 +57,7 @@ BASEPORT=11000
 NUMCLUSTERS=2
 # Where to look for pgpool.conf.sample*
 PGPOOL_INSTALL_DIR=${PGPOOL_INSTALL_DIR:-"/usr/local"}
-PGPOOLDIR=$PGPOOL_INSTALL_DIR/etc
+PGPOOLDIR=${PGPOOLDIR:-${PGPOOL_INSTALL_DIR}/etc}
 # PostgreSQL commands(initdb, pg_ctl, psql) install dir
 PGBIN=${PGBIN:-"/usr/local/pgsql/bin"}
 # LD_LIBRARY_PATH 
@@ -704,7 +704,10 @@ echo "logdir = '$BASEDIR/log'" >> $CONF
 echo '$PGPOOL_INSTALL_DIR/bin/pgpool -D -n -f $dir/etc/pgpool.conf -F $dir/etc/pcp.conf -a $dir/etc/pool_hba.conf > $dir/log/pgpool.log 2>&1 &' >> $STARTALL
 
 # create pcp.conf
-cp $PGPOOLDIR/pcp.conf.sample etc/pcp.conf
+
+if [ -f $PGPOOLDIR/pcp.conf.sample ];then
+    cp $PGPOOLDIR/pcp.conf.sample etc/pcp.conf
+fi
 echo -n "${WHOAMI}:" >> etc/pcp.conf
 $PGPOOL_INSTALL_DIR/bin/pg_md5 $WHOAMI >> etc/pcp.conf
 
