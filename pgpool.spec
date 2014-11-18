@@ -2,15 +2,15 @@
 #   rpmbuild -ba pgpool.spec --define="pgpool_version 3.3.4" --define="pg_version 93" --define="pghome /usr/pgsql-9.3"
 #
 # expecting RPM name are:
-#   pgpool-II-pg{xx}-{version}.pgdg.{arch}.rpm
-#   pgpool-II-pg{xx}-devel-{version}.pgdg.{arch}.rpm
-#   pgpool-II-pg{xx}-extensions-{version}.pgdg.{arch}.rpm
-#   pgpool-II-pg{xx}-{version}.pgdg.src.rpm
+#   pgpool-II-pg{xx}-{version}-{rel}pgdg.rhel{v}.{arch}.rpm
+#   pgpool-II-pg{xx}-devel-{version}-{rel}pgdg.rhel{v}.{arch}.rpm
+#   pgpool-II-pg{xx}-extensions-{version}-{rel}pgdg.rhel{v}.{arch}.rpm
+#   pgpool-II-pg{xx}-{version}-{rel}pgdg.rhel{v}.src.rpm
 
 Summary:        Pgpool is a connection pooling/replication server for PostgreSQL
 Name:           pgpool-II-pg%{pg_version}
 Version:        %{pgpool_version}
-Release:        2%{?dist}
+Release:        3pgdg%{?dist}
 License:        BSD
 Group:          Applications/Databases
 Vendor:         Pgpool Global Development Group
