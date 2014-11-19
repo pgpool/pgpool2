@@ -16,7 +16,8 @@ To ensure rebuild does not run, configure.ac has the lines:
 dnl Disallow to rebuild configure.
 AM_MAINTAINER_MODE
 
-If you need to rebuild, you can remove this or run configure with "--disable-maintainer-mode" option.
+If you need to rebuild, you can remove this or run configure with
+"--disable-maintainer-mode" option.
 
 November 19, 2014
 Tatsuo Ishii
