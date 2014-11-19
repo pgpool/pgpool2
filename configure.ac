@@ -5,6 +5,10 @@ dnl Checks for programs.
 AC_PROG_CC
 
 AM_INIT_AUTOMAKE([subdir-objects])
+
+dnl Disallow to rebuild configure.
+AM_MAINTAINER_MODE
+
 # AC_PROG_RANLIB
 AC_PROG_LIBTOOL
 
