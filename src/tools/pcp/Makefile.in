@@ -94,7 +94,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/c-compiler.m4 $(top_srcdir)/c-library.m4 \
 	$(top_srcdir)/general.m4 \
 	$(top_srcdir)/ac_func_accept_argtypes.m4 \
-	$(top_srcdir)/configure.in
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
@@ -103,8 +103,9 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
+am__dirstamp = $(am__leading_dot)dirstamp
 am_pcp_attach_node_OBJECTS = pcp_attach_node.$(OBJEXT) \
-	fe_memutils.$(OBJEXT)
+	../fe_memutils.$(OBJEXT)
 pcp_attach_node_OBJECTS = $(am_pcp_attach_node_OBJECTS)
 pcp_attach_node_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -112,47 +113,47 @@ am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
 am_pcp_detach_node_OBJECTS = pcp_detach_node.$(OBJEXT) \
-	fe_memutils.$(OBJEXT)
+	../fe_memutils.$(OBJEXT)
 pcp_detach_node_OBJECTS = $(am_pcp_detach_node_OBJECTS)
 pcp_detach_node_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
 am_pcp_node_count_OBJECTS = pcp_node_count.$(OBJEXT) \
-	fe_memutils.$(OBJEXT)
+	../fe_memutils.$(OBJEXT)
 pcp_node_count_OBJECTS = $(am_pcp_node_count_OBJECTS)
 pcp_node_count_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
 am_pcp_node_info_OBJECTS = pcp_node_info.$(OBJEXT) \
-	fe_memutils.$(OBJEXT)
+	../fe_memutils.$(OBJEXT)
 pcp_node_info_OBJECTS = $(am_pcp_node_info_OBJECTS)
 pcp_node_info_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
 am_pcp_pool_status_OBJECTS = pcp_pool_status.$(OBJEXT) \
-	fe_memutils.$(OBJEXT)
+	../fe_memutils.$(OBJEXT)
 pcp_pool_status_OBJECTS = $(am_pcp_pool_status_OBJECTS)
 pcp_pool_status_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
 am_pcp_proc_count_OBJECTS = pcp_proc_count.$(OBJEXT) \
-	fe_memutils.$(OBJEXT)
+	../fe_memutils.$(OBJEXT)
 pcp_proc_count_OBJECTS = $(am_pcp_proc_count_OBJECTS)
 pcp_proc_count_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
 am_pcp_proc_info_OBJECTS = pcp_proc_info.$(OBJEXT) \
-	fe_memutils.$(OBJEXT)
+	../fe_memutils.$(OBJEXT)
 pcp_proc_info_OBJECTS = $(am_pcp_proc_info_OBJECTS)
 pcp_proc_info_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
 am_pcp_promote_node_OBJECTS = pcp_promote_node.$(OBJEXT) \
-	fe_memutils.$(OBJEXT)
+	../fe_memutils.$(OBJEXT)
 pcp_promote_node_OBJECTS = $(am_pcp_promote_node_OBJECTS)
 pcp_promote_node_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
 am_pcp_recovery_node_OBJECTS = pcp_recovery_node.$(OBJEXT) \
-	fe_memutils.$(OBJEXT)
+	../fe_memutils.$(OBJEXT)
 pcp_recovery_node_OBJECTS = $(am_pcp_recovery_node_OBJECTS)
 pcp_recovery_node_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
 am_pcp_stop_pgpool_OBJECTS = pcp_stop_pgpool.$(OBJEXT) \
-	fe_memutils.$(OBJEXT)
+	../fe_memutils.$(OBJEXT)
 pcp_stop_pgpool_OBJECTS = $(am_pcp_stop_pgpool_OBJECTS)
 pcp_stop_pgpool_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
 am_pcp_systemdb_info_OBJECTS = pcp_systemdb_info.$(OBJEXT) \
-	fe_memutils.$(OBJEXT)
+	../fe_memutils.$(OBJEXT)
 pcp_systemdb_info_OBJECTS = $(am_pcp_systemdb_info_OBJECTS)
 pcp_systemdb_info_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
 am_pcp_watchdog_info_OBJECTS = pcp_watchdog_info.$(OBJEXT) \
-	fe_memutils.$(OBJEXT)
+	../fe_memutils.$(OBJEXT)
 pcp_watchdog_info_OBJECTS = $(am_pcp_watchdog_info_OBJECTS)
 pcp_watchdog_info_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
 AM_V_P = $(am__v_P_@AM_V@)
@@ -461,6 +462,14 @@ clean-binPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
+../$(am__dirstamp):
+	@$(MKDIR_P) ..
+	@: > ../$(am__dirstamp)
+../$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) ../$(DEPDIR)
+	@: > ../$(DEPDIR)/$(am__dirstamp)
+../fe_memutils.$(OBJEXT): ../$(am__dirstamp) \
+	../$(DEPDIR)/$(am__dirstamp)
 
 pcp_attach_node$(EXEEXT): $(pcp_attach_node_OBJECTS) $(pcp_attach_node_DEPENDENCIES) $(EXTRA_pcp_attach_node_DEPENDENCIES) 
 	@rm -f pcp_attach_node$(EXEEXT)
@@ -512,11 +521,12 @@ pcp_watchdog_info$(EXEEXT): $(pcp_watchdog_info_OBJECTS) $(pcp_watchdog_info_DEP
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f ../*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fe_memutils.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@../$(DEPDIR)/fe_memutils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_attach_node.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_detach_node.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_node_count.Po@am__quote@
@@ -531,39 +541,28 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_watchdog_info.Po@am__quote@
 
 .c.o:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ $<
 
 .c.obj:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .c.lo:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
-
-fe_memutils.o: ../fe_memutils.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT fe_memutils.o -MD -MP -MF $(DEPDIR)/fe_memutils.Tpo -c -o fe_memutils.o `test -f '../fe_memutils.c' || echo '$(srcdir)/'`../fe_memutils.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/fe_memutils.Tpo $(DEPDIR)/fe_memutils.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='../fe_memutils.c' object='fe_memutils.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o fe_memutils.o `test -f '../fe_memutils.c' || echo '$(srcdir)/'`../fe_memutils.c
-
-fe_memutils.obj: ../fe_memutils.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT fe_memutils.obj -MD -MP -MF $(DEPDIR)/fe_memutils.Tpo -c -o fe_memutils.obj `if test -f '../fe_memutils.c'; then $(CYGPATH_W) '../fe_memutils.c'; else $(CYGPATH_W) '$(srcdir)/../fe_memutils.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/fe_memutils.Tpo $(DEPDIR)/fe_memutils.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='../fe_memutils.c' object='fe_memutils.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o fe_memutils.obj `if test -f '../fe_memutils.c'; then $(CYGPATH_W) '../fe_memutils.c'; else $(CYGPATH_W) '$(srcdir)/../fe_memutils.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -686,6 +685,8 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f ../$(DEPDIR)/$(am__dirstamp)
+	-rm -f ../$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -695,7 +696,7 @@ clean: clean-am
 clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ../$(DEPDIR) ./$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -741,7 +742,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ../$(DEPDIR) ./$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
