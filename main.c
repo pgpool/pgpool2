@@ -2200,8 +2200,8 @@ static int trigger_failover_command(int node, const char *command_line)
 	if (command_line == NULL || (strlen(command_line) == 0))
 		return 0;
 
-	/* check nodeID */
-	if (node < 0 || node > NUM_BACKENDS)
+	/* check failed nodeID */
+	if (node < 0 || node >= NUM_BACKENDS)
 		return -1;
 
 	info = pool_get_node_info(node);
