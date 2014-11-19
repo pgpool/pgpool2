@@ -1,0 +1,1824 @@
+diff --git a/NEWS b/NEWS
+index 17433e8..5cf610a 100644
+--- a/NEWS
++++ b/NEWS
+@@ -162,7 +162,7 @@
+ 
+     - Fix failover.sh produced by pgpool_setup (Tatsuo Ishii)
+       
+-      It did not support there's more than 3 nodes case. It always tries to
++      It did not support there's more than 2 nodes case. It always tries to
+       promoto node0 or node1.
+ 
+     - Remove meaningless minus check because of unsigned int variable
+@@ -1183,6 +1183,27 @@
+       Per bug #102.
+       http://www.pgpool.net/mantisbt/view.php?id=102
+ 
++    - Fix reset query stuck problem. (Tatsuo Ishii)
++      
++      It is reported that reset query (DISCARD ALL etc.) occasionally does
++      not finish and pgpool child remain waiting for reply from backend thus
++      client cannot connect to pgpool.
++      
++      The cause of problem is not identified yet but if client suddenly
++      closes connection to pgpool in the middle of query processing, backend
++      may not accept the reset queries because they are not ready for query.
++      
++      The fix is, if frontend closes connection in unexpected way, query
++      process loop immediately returns with new state:
++      POOL_END_WITH_FRONTEND_ERROR and pgpool closes connection to
++      PostgreSQL then goes back to new connection request waiting loop.
++      
++      Also, pgpool closes connections to backend when client_idle_limit is
++      set and the idle limit.
++      
++      Per bug #107.
++      http://www.pgpool.net/mantisbt/view.php?id=107
++
+ ===============================================================================
+ 
+                         3.2.8 (namameboshi) 2014/03/24
+@@ -2950,6 +2971,27 @@
+       Per bug #102.
+       http://www.pgpool.net/mantisbt/view.php?id=102
+ 
++    - Fix reset query stuck problem. (Tatsuo Ishii)
++      
++      It is reported that reset query (DISCARD ALL etc.) occasionally does
++      not finish and pgpool child remain waiting for reply from backend thus
++      client cannot connect to pgpool.
++      
++      The cause of problem is not identified yet but if client suddenly
++      closes connection to pgpool in the middle of query processing, backend
++      may not accept the reset queries because they are not ready for query.
++      
++      The fix is, if frontend closes connection in unexpected way, query
++      process loop immediately returns with new state:
++      POOL_END_WITH_FRONTEND_ERROR and pgpool closes connection to
++      PostgreSQL then goes back to new connection request waiting loop.
++      
++      Also, pgpool closes connections to backend when client_idle_limit is
++      set and the idle limit.
++      
++      Per bug #107.
++      http://www.pgpool.net/mantisbt/view.php?id=107
++
+ ===============================================================================
+ 
+                         3.1.11 (hatsuiboshi) 2014/03/24
+@@ -4508,6 +4550,27 @@
+       of recovery script, and this causes a malfunction. In especially,
+       rsync may delete unrelated files in basebackup scripts.
+ 
++    - Fix reset query stuck problem. (Tatsuo Ishii)
++      
++      It is reported that reset query (DISCARD ALL etc.) occasionally does
++      not finish and pgpool child remain waiting for reply from backend thus
++      client cannot connect to pgpool.
++      
++      The cause of problem is not identified yet but if client suddenly
++      closes connection to pgpool in the middle of query processing, backend
++      may not accept the reset queries because they are not ready for query.
++      
++      The fix is, if frontend closes connection in unexpected way, query
++      process loop immediately returns with new state:
++      POOL_END_WITH_FRONTEND_ERROR and pgpool closes connection to
++      PostgreSQL then goes back to new connection request waiting loop.
++      
++      Also, pgpool closes connections to backend when client_idle_limit is
++      set and the idle limit.
++      
++      Per bug #107.
++      http://www.pgpool.net/mantisbt/view.php?id=107
++
+ ===============================================================================
+ 
+                         3.0.11 (umiyameboshi) 2013/04/26
+diff --git a/doc/pgpool-en.html b/doc/pgpool-en.html
+index 72e2d14..f5e2aec 100644
+--- a/doc/pgpool-en.html
++++ b/doc/pgpool-en.html
+@@ -1945,6 +1945,12 @@ You will see number of updated rows in PostgreSQL log
+ <p>This mode is used to couple pgpool-II with another master/slave
+ replication software (like Slony-I and Streaming replication), which is responsible
+ for doing the actual data replication.
++</p>
++<p>
++Please note that the number of slaves is not necessarily limited to just 1.
++Actually you could have up to 127 slaves (0 slaves is allowed).
++</p>
++<p>
+ DB nodes' information (<a href="#BACKEND_HOSTNAME">backend_hostname</a>,
+ <a href="#BACKEND_PORT">backend_port</a>, <a href="#BACKEND_WEIGHT">backend_weight</a>,
+ <a href="#BACKEND_FLAG">backend_flag</a> and <a href="#BACKEND_DATA_DIRECTORY">backend_data_directory</a>
+@@ -3232,7 +3238,7 @@ It has 11 columns:
+     <li>pool_connected is a true (1) if a frontend is currently using this backend.</li>
+ </ul>
+ </p>
+-<p>It'll always return <a href="#NUM_INIT_CHILDREN">num_init_children</a> * <a href="#MAX_POOL">max_pool</a> lines.</p>
++<p>It'll always return <a href="#NUM_INIT_CHILDREN">num_init_children</a> * <a href="#MAX_POOL">max_pool</a> * number_of_backends lines.</p>
+ <pre>
+   pool_pid |     start_time      | pool_id | backend_id | database | username  |     create_time     | majorversion | minorversion | pool_counter | pool_backendpid | pool_connected
+ ----------+---------------------+---------+------------+----------+-----------+---------------------+--------------+--------------+--------------+-----------------+----------------
+diff --git a/doc/pgpool-ja.html b/doc/pgpool-ja.html
+index e6a32ee..0b714a0 100644
+--- a/doc/pgpool-ja.html
++++ b/doc/pgpool-ja.html
+@@ -2030,6 +2030,12 @@ HINT: check data consistency between master and other db node
+ <p>
+ master/slaveモードは、Slony-IやStreaming Replicationのような、
+ master/slave式のレプリケーションソフトにレプリケーションをまかせるモードです。
++</p>
++<p>
++なお、スレーブの数は1である必要はありません。
++実際には127個までのスレーブを持つことができます(スレーブの数は0でも構いません)。
++</p>
++<p>
+ このモードで使うためには、レプリケーションモードと同じように、
+ DBノードのホスト情報(<a href="#BACKEND_HOSTNAME">backend_hostname</a>,
+ <a href="#BACKEND_PORT">backend_port</a>, <a href="#BACKEND_WEIGHT">backend_weight</a>,
+@@ -3383,7 +3389,7 @@ benchs2=# show pool_processes;
+     <li>pool_connected は真偽値で、0ならフロントエンドからの接続無し、1なら接続ありを表します。</li>
+ </ul>
+ 
+-<p>返却行数は常に<a href="#NUM_INIT_CHILDREN">num_init_children</a> * <a href="#MAX_POOL">max_pool</a>になります。
++<p>返却行数は常に<a href="#NUM_INIT_CHILDREN">num_init_children</a> * <a href="#MAX_POOL">max_pool</a> * 「バックエンドの数」になります。
+ <pre>
+ benchs2=# show pool_pools;
+   pool_pid |     start_time      | pool_id | backend_id | database | username  |     create_time     | majorversion | minorversion | pool_counter | pool_backendpid | pool_connected
+@@ -5943,7 +5949,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその
+ <li>
+     スマートシャットダウンの実行時には受信用ソケットを閉じるように修正しました。(Tatsuo Ishii)
+     <p>
+-    スマートシャットダウンが実行された場合でも、pgpool の子プロセスは受信用のポートを開いており、最終的に失敗するにもかからわずクライアントは接続要求を送信可能です。これは時間の無駄であるでけではなく、pgpool のフロントにいるロードバランサによる pgpool の停止の検出を妨げます。
++    スマートシャットダウンが実行された場合でも、pgpool の子プロセスは受信用のポートを開いており、最終的に失敗するにもかからわずクライアントは接続要求を送信可能です。これは時間の無駄であるだけではなく、pgpool のフロントにいるロードバランサによる pgpool の停止の検出を妨げます。
+     </p>
+     <p>
+     この問題は [pgpool-hackers 474] にて Junegunn Choi によって解析され、パッチが提供されました。これを Tatsuo Ishii が改良し、inet ドメインだけではなく UNIX ドメインのソケットにも対応させました。
+@@ -6066,9 +6072,9 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその
+ </li>
+ 
+ <li>
+-    オンラインリカバリの実行時は PostgreSQL の statement_timeout を無効んするようになりました。(Tatsuo Ishii)
++    オンラインリカバリの実行時は PostgreSQL の statement_timeout を無効にするようになりました。(Tatsuo Ishii)
+     <p>
+-    オンラインリカバリは異常に長い時間を要する可能性がある一方、ユーザはenable_statment を有効にしている可能性があります。これによりオンラインリカバリがキャンセルされるのを防ぐため、リカバリの最中は statementtimeout を無効にするようになりました。
++    オンラインリカバリは異常に長い時間を要する可能性がある一方、ユーザは statement_timeout を有効にしている可能性があります。これによりオンラインリカバリがキャンセルされるのを防ぐため、リカバリの最中は statement_timeout を無効にするようになりました。
+     </p>
+     <p>
+     詳しくは [pgpool-general: 2919] を参照してください。
+@@ -6076,7 +6082,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその
+ </li>
+ 
+ <li>
+-    pool_table_nameto_oid 関数が PostgreSQL 9.4 で導入された to_regclassを使えるように修正しました。(Tatsuo Ishii)
++    pool_table_nameto_oid 関数が PostgreSQL 9.4 で導入された to_regclass を使えるように修正しました。(Tatsuo Ishii)
+     <p>
+     ここで用いる relcache 関数は、対象のテーブルが存在しない場合は 0 を返す必要がありますが、to_regclass はこの場合 NULL を返します。これに対処するため COALESCE を用いるように修正しました。
+     </p>
+@@ -6110,7 +6116,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその
+ <li>
+     pgpool_setup が生成する failover.sh を修正しました。(Tatsuo Ishii)
+     <p>
+-    常に node0 か node1 を昇格させようとしており、3ノード以上の構成に対応していませんでした。
++    常に node0 か node1 を昇格させようとしており、3 ノード以上の構成に対応していませんでした。
+     </p>
+ </li>
+ 
+@@ -6139,7 +6145,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその
+ <li>
+     不適切にセマフォを削除しないよう不必要な pool_shmem_exit() 呼び出しを取り除きました。(Tatsuo Ishii)
+     <p>
+-    exit_handler はプロセスが親プロセスがどうかをチェックしていますが、子プロセスであった場合にも pool_shmem_exit() が呼ばれることがあり、これにより不適切にセマフォが削除されていました。この関数は親プロセス意外に呼ばれてはなりません。
++    exit_handler はプロセスが親プロセスがどうかをチェックしていますが、子プロセスであった場合にも pool_shmem_exit() が呼ばれることがあり、これにより不適切にセマフォが削除されていました。この関数は親プロセス以外に呼ばれてはなりません。
+     </p>
+     <blockquote>
+     bug #102 によります。<br />
+@@ -6150,14 +6156,14 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその
+ </li>
+ 
+ <li>
+-    get_insert_command_tabel_name() 関数が開放済ポインタを使用しないよう修正しました。(Muhammad Usama)
++    get_insert_command_tabel_name() 関数が解放済ポインタを使用しないよう修正しました。(Muhammad Usama)
+     <p>
+     Coverity の報告 #1223007 によります。
+     </p>
+ </li>
+ 
+ <li>
+-    pool_handle_query_cache() 関数が NULL ポインタを開放しないよう修正しました。(Tatsuo Ishii)
++    pool_handle_query_cache() 関数が NULL ポインタを解放しないよう修正しました。(Tatsuo Ishii)
+ </li>
+ 
+ <li>
+@@ -6343,7 +6349,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその
+ </li>
+ 
+ <li>
+-    NULL ポインタの開放を修正しました。(Tatsuo Ishii)
++    NULL ポインタの解放を修正しました。(Tatsuo Ishii)
+     <p>
+     Coverity 1111384 の報告によります。
+     </p>
+@@ -6681,10 +6687,10 @@ parse によるロックが残存するためです。</p>
+     オンメモリクエリキャッシュ使用時に子プロセスが sig abort で異常終了するバグを修正しました。
+     (Tatsuo Ishii)
+     <p>
+-    parse メッセージの後に複数の bind/execute メッセージが来た場合に発生していた、メモリの二重開放がこのバグの原因です。
++    parse メッセージの後に複数の bind/execute メッセージが来た場合に発生していた、メモリの二重解放がこのバグの原因です。
+     parse メッセージが来ると、クエリコンテキストと共に一時的なキャッシュが作成され、
+     クエリの実行時にこの一時キャッシュを指すポインタが配列に追加されます。そして、続く複数の bind
+-    メッセージがこの同じポインタを使用することが、キャッシュ削除の際に二重開放を引き起こす原因となっていました。
++    メッセージがこの同じポインタを使用することが、キャッシュ削除の際に二重解放を引き起こす原因となっていました。
+     </p>
+     <p>
+     このバグはバグトラック #68 にて harukat さんにより報告されました。
+@@ -7210,7 +7216,7 @@ FATAL: no PostgreSQL user name specified in startup packet
+ <li>
+     スマートシャットダウンの実行時には受信用ソケットを閉じるように修正しました。(Tatsuo Ishii)
+     <p>
+-    スマートシャットダウンが実行された場合でも、pgpool の子プロセスは受信用のポートを開いており、最終的に失敗するにもかからわずクライアントは接続要求を送信可能です。これは時間の無駄であるでけではなく、pgpool のフロントにいるロードバランサによる pgpool の停止の検出を妨げます。
++    スマートシャットダウンが実行された場合でも、pgpool の子プロセスは受信用のポートを開いており、最終的に失敗するにもかからわずクライアントは接続要求を送信可能です。これは時間の無駄であるだけではなく、pgpool のフロントにいるロードバランサによる pgpool の停止の検出を妨げます。
+     </p>
+     <p>
+     この問題は [pgpool-hackers 474] にて Junegunn Choi によって解析され、パッチが提供されました。これを Tatsuo Ishii が改良し、inet ドメインだけではなく UNIX ドメインのソケットにも対応させました。
+@@ -7270,9 +7276,9 @@ FATAL: no PostgreSQL user name specified in startup packet
+ </li>
+ 
+ <li>
+-    オンラインリカバリの実行時は PostgreSQL の statement_timeout を無効んするようになりました。(Tatsuo Ishii)
++    オンラインリカバリの実行時は PostgreSQL の statement_timeout を無効にするようになりました。(Tatsuo Ishii)
+     <p>
+-    オンラインリカバリは異常に長い時間を要する可能性がある一方、ユーザはenable_statment を有効にしている可能性があります。これによりオンラインリカバリがキャンセルされるのを防ぐため、リカバリの最中は statementtimeout を無効にするようになりました。
++    オンラインリカバリは異常に長い時間を要する可能性がある一方、ユーザは statement_timeout を有効にしている可能性があります。これによりオンラインリカバリがキャンセルされるのを防ぐため、リカバリの最中は statement_timeout を無効にするようになりました。
+     </p>
+     <p>
+     詳しくは [pgpool-general: 2919] を参照してください。
+@@ -7282,7 +7288,7 @@ FATAL: no PostgreSQL user name specified in startup packet
+ <li>
+     不適切にセマフォを削除しないよう不必要な pool_shmem_exit() 呼び出しを取り除きました。(Tatsuo Ishii)
+     <p>
+-    exit_handler はプロセスが親プロセスがどうかをチェックしていますが、子プロセスであった場合にも pool_shmem_exit() が呼ばれることがあり、これにより不適切にセマフォが削除されていました。この関数は親プロセス意外に呼ばれてはなりません。
++    exit_handler はプロセスが親プロセスがどうかをチェックしていますが、子プロセスであった場合にも pool_shmem_exit() が呼ばれることがあり、これにより不適切にセマフォが削除されていました。この関数は親プロセス以外に呼ばれてはなりません。
+     </p>
+     <blockquote>
+     bug #102 によります。<br />
+@@ -7292,6 +7298,28 @@ FATAL: no PostgreSQL user name specified in startup packet
+     </blockquote>
+ </li>
+ 
++<li>
++    リセット用クエリにより発生するハングを修正しました。(Tatsuo Ishii)
++    <p>
++    DISCARD ALL などのリセットクエリが完了せず、pgpool の子プロセスがバックエンドからの反応を待ったまま固まってしまい、新しいクライアントからの接続が受けられなくなる問題が報告されました。
++    </p>
++    <p>
++    原因はまだ特定されていませんが、クライアントの接続がクエリ処理の最中に突然切断された場合、バックエンドがクエリを処理できない状態となり、リセットクエリを受け付けられなくのかもしれません。
++    </p>
++    <p>
++    これに対処するため、フロントエンドから接続が予期せず切断された場合は、クエリ処理ループを即座に終了し PostgreSQL への接続を切断し、新しい接続要求を待つように修正しました。
++    </p>
++    <p>
++    また client_idle_limit が設定されており、リミットに達した場合にもpgpool はバックエンドへの接続を切断するよう修正されました。
++    </p>
++    <blockquote>
++    bug #107 の報告によります。<br />
++    <a href="http://www.pgpool.net/mantisbt/view.php?id=107">
++    http://www.pgpool.net/mantisbt/view.php?id=107
++    </a>
++    </blockquote>
++</li>
++
+ </ul>
+ 
+ <!-- -------------------------------------------------------------------------------- -->
+@@ -7393,7 +7421,7 @@ FATAL: no PostgreSQL user name specified in startup packet
+ </li>
+ 
+ <li>
+-    NULL ポインタの開放を修正しました。(Tatsuo Ishii)
++    NULL ポインタの解放を修正しました。(Tatsuo Ishii)
+     <p>
+     Coverity 1111384 の報告によります。
+     </p>
+@@ -7723,10 +7751,10 @@ parse によるロックが残存するためです。</p>
+     オンメモリクエリキャッシュ使用時に子プロセスが sig abort で異常終了するバグを修正しました。
+     (Tatsuo Ishii)
+     <p>
+-    parse メッセージの後に複数の bind/execute メッセージが来た場合に発生していた、メモリの二重開放がこのバグの原因です。
++    parse メッセージの後に複数の bind/execute メッセージが来た場合に発生していた、メモリの二重解放がこのバグの原因です。
+     parse メッセージが来ると、クエリコンテキストと共に一時的なキャッシュが作成され、
+     クエリの実行時にこの一時キャッシュを指すポインタが配列に追加されます。そして、続く複数の bind
+-    メッセージがこの同じポインタを使用することが、キャッシュ削除の際に二重開放を引き起こす原因となっていました。
++    メッセージがこの同じポインタを使用することが、キャッシュ削除の際に二重解放を引き起こす原因となっていました。
+     </p>
+     <p>
+     このバグはバグトラック #68 にて harukat さんにより報告されました。
+@@ -8654,7 +8682,7 @@ Session 1: LISTEN aaa; --- ハング
+ <li>pool_get_insert_table_name() のメモリリークを修正しました。(Tatsuo Ishii)
+     <p>
+     nodeToString() でセッションコンテクストのメモリコンテクストを使ったあと、
+-    セッション終了までは、メモリを開放していませんでした。
++    セッション終了までは、メモリを解放していませんでした。
+     </p>
+     <p>詳しくはバグトラックをご覧ください。</p>
+     <blockquote>
+@@ -9347,7 +9375,7 @@ autoconf
+ <li>
+     スマートシャットダウンの実行時には受信用ソケットを閉じるように修正しました。(Tatsuo Ishii)
+     <p>
+-    スマートシャットダウンが実行された場合でも、pgpool の子プロセスは受信用のポートを開いており、最終的に失敗するにもかからわずクライアントは接続要求を送信可能です。これは時間の無駄であるでけではなく、pgpool のフロントにいるロードバランサによる pgpool の停止の検出を妨げます。
++    スマートシャットダウンが実行された場合でも、pgpool の子プロセスは受信用のポートを開いており、最終的に失敗するにもかからわずクライアントは接続要求を送信可能です。これは時間の無駄であるだけではなく、pgpool のフロントにいるロードバランサによる pgpool の停止の検出を妨げます。
+     </p>
+     <p>
+     この問題は [pgpool-hackers 474] にて Junegunn Choi によって解析され、パッチが提供されました。これを Tatsuo Ishii が改良し、inet ドメインだけではなく UNIX ドメインのソケットにも対応させました。
+@@ -9397,9 +9425,9 @@ autoconf
+ </li>
+ 
+ <li>
+-    オンラインリカバリの実行時は PostgreSQL の statement_timeout を無効んするようになりました。(Tatsuo Ishii)
++    オンラインリカバリの実行時は PostgreSQL の statement_timeout を無効にするようになりました。(Tatsuo Ishii)
+     <p>
+-    オンラインリカバリは異常に長い時間を要する可能性がある一方、ユーザはenable_statment を有効にしている可能性があります。これによりオンラインリカバリがキャンセルされるのを防ぐため、リカバリの最中は statementtimeout を無効にするようになりました。
++    オンラインリカバリは異常に長い時間を要する可能性がある一方、ユーザは statement_timeout を有効にしている可能性があります。これによりオンラインリカバリがキャンセルされるのを防ぐため、リカバリの最中は statement_timeout を無効にするようになりました。
+     </p>
+     <p>
+     詳しくは [pgpool-general: 2919] を参照してください。
+@@ -9409,7 +9437,7 @@ autoconf
+ <li>
+     不適切にセマフォを削除しないよう不必要な pool_shmem_exit() 呼び出しを取り除きました。(Tatsuo Ishii)
+     <p>
+-    exit_handler はプロセスが親プロセスがどうかをチェックしていますが、子プロセスであった場合にも pool_shmem_exit() が呼ばれることがあり、これにより不適切にセマフォが削除されていました。この関数は親プロセス意外に呼ばれてはなりません。
++    exit_handler はプロセスが親プロセスがどうかをチェックしていますが、子プロセスであった場合にも pool_shmem_exit() が呼ばれることがあり、これにより不適切にセマフォが削除されていました。この関数は親プロセス以外に呼ばれてはなりません。
+     </p>
+     <blockquote>
+     bug #102 によります。<br />
+@@ -9419,6 +9447,28 @@ autoconf
+     </blockquote>
+ </li>
+ 
++<li>
++    リセット用クエリにより発生するハングを修正しました。(Tatsuo Ishii)
++    <p>
++    DISCARD ALL などのリセットクエリが完了せず、pgpool の子プロセスがバックエンドからの反応を待ったまま固まってしまい、新しいクライアントからの接続が受けられなくなる問題が報告されました。
++    </p>
++    <p>
++    原因はまだ特定されていませんが、クライアントの接続がクエリ処理の最中に突然切断された場合、バックエンドがクエリを処理できない状態となり、リセットクエリを受け付けられなくのかもしれません。
++    </p>
++    <p>
++    これに対処するため、フロントエンドから接続が予期せず切断された場合は、クエリ処理ループを即座に終了し PostgreSQL への接続を切断し、新しい接続要求を待つように修正しました。
++    </p>
++    <p>
++    また client_idle_limit が設定されており、リミットに達した場合にもpgpool はバックエンドへの接続を切断するよう修正されました。
++    </p>
++    <blockquote>
++    bug #107 の報告によります。<br />
++    <a href="http://www.pgpool.net/mantisbt/view.php?id=107">
++    http://www.pgpool.net/mantisbt/view.php?id=107
++    </a>
++    </blockquote>
++</li>
++
+ </ul>
+ 
+ <!-- -------------------------------------------------------------------------------- -->
+@@ -9498,7 +9548,7 @@ autoconf
+ </li>
+ 
+ <li>
+-    NULL ポインタの開放を修正しました。(Tatsuo Ishii)
++    NULL ポインタの解放を修正しました。(Tatsuo Ishii)
+     <p>
+     Coverity 1111384 の報告によります。
+     </p>
+@@ -10197,7 +10247,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました
+ <li>pool_get_insert_table_name() のメモリリークを修正しました。(Tatsuo Ishii)
+     <p>
+     nodeToString() でセッションコンテクストのメモリコンテクストを使ったあと、
+-    セッション終了までは、メモリを開放していませんでした。
++    セッション終了までは、メモリを解放していませんでした。
+     </p>
+     <p>詳しくはバグトラックをご覧ください。</p>
+     <blockquote>
+@@ -10758,7 +10808,7 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
+ <li>
+     スマートシャットダウンの実行時には受信用ソケットを閉じるように修正しました。(Tatsuo Ishii)
+     <p>
+-    スマートシャットダウンが実行された場合でも、pgpool の子プロセスは受信用のポートを開いており、最終的に失敗するにもかからわずクライアントは接続要求を送信可能です。これは時間の無駄であるでけではなく、pgpool のフロントにいるロードバランサによる pgpool の停止の検出を妨げます。
++    スマートシャットダウンが実行された場合でも、pgpool の子プロセスは受信用のポートを開いており、最終的に失敗するにもかからわずクライアントは接続要求を送信可能です。これは時間の無駄であるだけではなく、pgpool のフロントにいるロードバランサによる pgpool の停止の検出を妨げます。
+     </p>
+     <p>
+     この問題は [pgpool-hackers 474] にて Junegunn Choi によって解析され、パッチが提供されました。これを Tatsuo Ishii が改良し、inet ドメインだけではなく UNIX ドメインのソケットにも対応させました。
+@@ -10808,9 +10858,9 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
+ </li>
+ 
+ <li>
+-    オンラインリカバリの実行時は PostgreSQL の statement_timeout を無効んするようになりました。(Tatsuo Ishii)
++    オンラインリカバリの実行時は PostgreSQL の statement_timeout を無効にするようになりました。(Tatsuo Ishii)
+     <p>
+-    オンラインリカバリは異常に長い時間を要する可能性がある一方、ユーザはenable_statment を有効にしている可能性があります。これによりオンラインリカバリがキャンセルされるのを防ぐため、リカバリの最中は statementtimeout を無効にするようになりました。
++    オンラインリカバリは異常に長い時間を要する可能性がある一方、ユーザは statement_timeout を有効にしている可能性があります。これによりオンラインリカバリがキャンセルされるのを防ぐため、リカバリの最中は statement_timeout を無効にするようになりました。
+     </p>
+     <p>
+     詳しくは [pgpool-general: 2919] を参照してください。
+@@ -10820,7 +10870,7 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
+ <li>
+     不適切にセマフォを削除しないよう不必要な pool_shmem_exit() 呼び出しを取り除きました。(Tatsuo Ishii)
+     <p>
+-    exit_handler はプロセスが親プロセスがどうかをチェックしていますが、子プロセスであった場合にも pool_shmem_exit() が呼ばれることがあり、これにより不適切にセマフォが削除されていました。この関数は親プロセス意外に呼ばれてはなりません。
++    exit_handler はプロセスが親プロセスがどうかをチェックしていますが、子プロセスであった場合にも pool_shmem_exit() が呼ばれることがあり、これにより不適切にセマフォが削除されていました。この関数は親プロセス以外に呼ばれてはなりません。
+     </p>
+     <blockquote>
+     bug #102 によります。<br />
+@@ -10830,6 +10880,28 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
+     </blockquote>
+ </li>
+ 
++<li>
++    リセット用クエリにより発生するハングを修正しました。(Tatsuo Ishii)
++    <p>
++    DISCARD ALL などのリセットクエリが完了せず、pgpool の子プロセスがバックエンドからの反応を待ったまま固まってしまい、新しいクライアントからの接続が受けられなくなる問題が報告されました。
++    </p>
++    <p>
++    原因はまだ特定されていませんが、クライアントの接続がクエリ処理の最中に突然切断された場合、バックエンドがクエリを処理できない状態となり、リセットクエリを受け付けられなくのかもしれません。
++    </p>
++    <p>
++    これに対処するため、フロントエンドから接続が予期せず切断された場合は、クエリ処理ループを即座に終了し PostgreSQL への接続を切断し、新しい接続要求を待つように修正しました。
++    </p>
++    <p>
++    また client_idle_limit が設定されており、リミットに達した場合にもpgpool はバックエンドへの接続を切断するよう修正されました。
++    </p>
++    <blockquote>
++    bug #107 の報告によります。<br />
++    <a href="http://www.pgpool.net/mantisbt/view.php?id=107">
++    http://www.pgpool.net/mantisbt/view.php?id=107
++    </a>
++    </blockquote>
++</li>
++
+ </ul>
+ 
+ <!-- -------------------------------------------------------------------------------- -->
+@@ -10901,7 +10973,7 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
+ </li>
+ 
+ <li>
+-    NULL ポインタの開放を修正しました。(Tatsuo Ishii)
++    NULL ポインタの解放を修正しました。(Tatsuo Ishii)
+     <p>
+     Coverity 1111384 の報告によります。
+     </p>
+@@ -11540,7 +11612,7 @@ md5認証で長いユーザ名を処理する際のバグを修正しました
+ <li>pool_get_insert_table_name() のメモリリークを修正しました。(Tatsuo Ishii)
+     <p>
+     nodeToString() でセッションコンテクストのメモリコンテクストを使ったあと、
+-    セッション終了までは、メモリを開放していませんでした。
++    セッション終了までは、メモリを解放していませんでした。
+     </p>
+     <p>詳しくはバグトラックをご覧ください。</p>
+     <blockquote>
+diff --git a/main.c b/main.c
+index 4390053..3175872 100644
+--- a/main.c
++++ b/main.c
+@@ -550,11 +550,10 @@ int main(int argc, char **argv)
+ 	}
+ 
+ 	/* initialize Req_info */
+-	Req_info->kind = NODE_UP_REQUEST;
+-	memset(Req_info->node_id, -1, sizeof(int) * MAX_NUM_BACKENDS);
+ 	Req_info->master_node_id = get_next_master_node();
+ 	Req_info->conn_counter = 0;
+ 	Req_info->switching = false;
++	Req_info->request_queue_head = Req_info->request_queue_tail = -1;
+ 
+ 	InRecovery = pool_shared_memory_create(sizeof(int));
+ 	if (InRecovery == NULL)
+@@ -762,10 +761,8 @@ int main(int argc, char **argv)
+ 						{
+ 							/* retry count over */
+ 							pool_log("set %d th backend down status", sts);
+-							Req_info->kind = NODE_DOWN_REQUEST;
+-							Req_info->node_id[0] = sts;
+ 							health_check_timer_expired = 0;
+-							failover();
++							register_node_operation_request(NODE_DOWN_REQUEST,&sts,1);
+ 							/* need to distribute this info to children */
+ 							retrying = false;
+ 						}
+@@ -776,10 +773,8 @@ int main(int argc, char **argv)
+ 						{
+ 							/* retry count over */
+ 							pool_log("set %d th backend down status", sts);
+-							Req_info->kind = NODE_DOWN_REQUEST;
+-							Req_info->node_id[0] = sts;
+ 							health_check_timer_expired = 0;
+-							failover();
++							register_node_operation_request(NODE_DOWN_REQUEST,&sts,1);
+ 							retrycnt = 0;
+ 							retrying = false;
+ 						}
+@@ -1465,26 +1460,78 @@ void notice_backend_error(int node_id)
+ 	}
+ }
+ 
+-/* notice backend connection error using SIGUSR1 */
+-void degenerate_backend_set(int *node_id_set, int count)
++/*
++ * register_node_operation_request()
++ *
++ * This function enqueues the failover/failback requests, and fires the failover() if the function
++ * is not already executing
++ */
++bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, int count)
+ {
+-	pid_t parent = getppid();
+-	int i;
+-	bool need_signal = false;
++	bool failover_in_progress;
+ #ifdef HAVE_SIGPROCMASK
+ 	sigset_t oldmask;
+ #else
+ 	int	oldmask;
+ #endif
+ 
++	/*
++	 * if the queue is already full
++	 * what to do?
++	 */
++	if((Req_info->request_queue_tail - MAX_REQUEST_QUEUE_SIZE) == Req_info->request_queue_head)
++	{
++		return false;
++	}
++	POOL_SETMASK2(&BlockSig, &oldmask);
++	pool_semaphore_lock(REQUEST_INFO_SEM);
++
++	if((Req_info->request_queue_tail - MAX_REQUEST_QUEUE_SIZE) == Req_info->request_queue_head)
++	{
++		pool_semaphore_unlock(REQUEST_INFO_SEM);
++		return false;
++	}
++	Req_info->request_queue_tail++;
++	Req_info->request[Req_info->request_queue_tail % MAX_REQUEST_QUEUE_SIZE].kind = kind;
++	if(count > 0)
++		memcpy(Req_info->request[Req_info->request_queue_tail % MAX_REQUEST_QUEUE_SIZE].node_id, node_id_set, (sizeof(int) * count));
++	Req_info->request[Req_info->request_queue_tail % MAX_REQUEST_QUEUE_SIZE].count = count;
++	failover_in_progress = Req_info->switching;
++	pool_semaphore_unlock(REQUEST_INFO_SEM);
++
++	if (getpid() == mypid)
++	{
++		/*
++		 * We are invoked from main process
++		 * call failover with blocked signals
++		 */
++		failover();
++		POOL_SETMASK(&oldmask);
++	}
++	else
++	{
++		POOL_SETMASK(&oldmask);
++		if(failover_in_progress == false)
++		{
++			kill(getppid(), SIGUSR1);
++		}
++	}
++
++	return true;
++}
++
++/* notice backend connection error using SIGUSR1 */
++void degenerate_backend_set(int *node_id_set, int count)
++{
++	int i;
++	int node_id[MAX_NUM_BACKENDS];
++	int node_count = 0;
++
+ 	if (pool_config->parallel_mode)
+ 	{
+ 		return;
+ 	}
+ 
+-	POOL_SETMASK2(&BlockSig, &oldmask);
+-	pool_semaphore_lock(REQUEST_INFO_SEM);
+-	Req_info->kind = NODE_DOWN_REQUEST;
+ 	for (i = 0; i < count; i++)
+ 	{
+ 		if (node_id_set[i] < 0 || node_id_set[i] >= MAX_NUM_BACKENDS ||
+@@ -1501,32 +1548,25 @@ void degenerate_backend_set(int *node_id_set, int count)
+ 		}
+ 
+ 		pool_log("degenerate_backend_set: %d fail over request from pid %d", node_id_set[i], getpid());
+-		Req_info->node_id[i] = node_id_set[i];
+-		need_signal = true;
++		node_id[node_count++] = node_id_set[i];
+ 	}
+ 
+-	if (need_signal)
++	if (node_count)
+ 	{
+ 		if (!pool_config->use_watchdog || WD_OK == wd_degenerate_backend_set(node_id_set, count))
+ 		{
+-			kill(parent, SIGUSR1);
++			register_node_operation_request(NODE_DOWN_REQUEST, node_id, node_count);
+ 		}
+ 		else
+ 		{
+ 			pool_log("degenerate_backend_set: failover request from pid %d is canceled by other pgpool", getpid());
+-			memset(Req_info->node_id, -1, sizeof(int) * MAX_NUM_BACKENDS);
+ 		}
+ 	}
+-
+-	pool_semaphore_unlock(REQUEST_INFO_SEM);
+-	POOL_SETMASK(&oldmask);
+ }
+ 
+ /* send promote node request using SIGUSR1 */
+ void promote_backend(int node_id)
+ {
+-	pid_t parent = getppid();
+-
+ 	if (!MASTER_SLAVE || strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
+ 	{
+ 		return;
+@@ -1538,48 +1578,36 @@ void promote_backend(int node_id)
+ 		return;
+ 	}
+ 
+-	pool_semaphore_lock(REQUEST_INFO_SEM);
+-	Req_info->kind = PROMOTE_NODE_REQUEST;
+-	Req_info->node_id[0] = node_id;
+ 	pool_log("promote_backend: %d promote node request from pid %d", node_id, getpid());
+ 
+ 	if (!pool_config->use_watchdog || WD_OK == wd_promote_backend(node_id))
+ 	{
+-		kill(parent, SIGUSR1);
++		register_node_operation_request(PROMOTE_NODE_REQUEST, &node_id, 1);
+ 	}
+ 	else
+ 	{
+ 		pool_log("promote_backend: promote request from pid %d is canceled by other pgpool", getpid());
+-		Req_info->node_id[0] = -1;
+ 	}
+-
+-	pool_semaphore_unlock(REQUEST_INFO_SEM);
+ }
+ 
+ /* send failback request using SIGUSR1 */
+ void send_failback_request(int node_id)
+ {
+-	pid_t parent = getppid();
+-
+ 	pool_log("send_failback_request: fail back %d th node request from pid %d", node_id, getpid());
+-	Req_info->kind = NODE_UP_REQUEST;
+-	Req_info->node_id[0] = node_id;
+ 
+     if (node_id < 0 || node_id >= MAX_NUM_BACKENDS ||
+ 		(RAW_MODE && BACKEND_INFO(node_id).backend_status != CON_DOWN && VALID_BACKEND(node_id)))
+ 	{
+ 		pool_error("send_failback_request: node %d is alive.", node_id);
+-		Req_info->node_id[0] = -1;
+ 		return;
+ 	}
+ 
+ 	if (pool_config->use_watchdog && WD_OK != wd_send_failback_request(node_id))
+ 	{
+ 		pool_log("send_failback_request: failback request from pid %d is canceled by other pgpool", getpid());
+-		Req_info->node_id[0] = -1;
+ 		return;
+ 	}
+-	kill(parent, SIGUSR1);
++	register_node_operation_request(NODE_UP_REQUEST, &node_id, 1);
+ }
+ 
+ static RETSIGTYPE exit_handler(int sig)
+@@ -1709,6 +1737,7 @@ static void failover(void)
+ 	bool need_to_restart_children;
+ 	int status;
+ 	int sts;
++	bool need_to_restart_pcp = false;
+ 
+ 	pool_debug("failover_handler called");
+ 
+@@ -1744,159 +1773,170 @@ static void failover(void)
+ 		kill(pcp_pid, SIGUSR2);
+ 		return;
+ 	}
+-
+-	pool_semaphore_lock(REQUEST_INFO_SEM);
+-
+-	if (Req_info->kind == CLOSE_IDLE_REQUEST)
+-	{
+-		pool_semaphore_unlock(REQUEST_INFO_SEM);
+-		kill_all_children(SIGUSR1);
+-		kill(pcp_pid, SIGUSR2);
+-		return;
+-	}
+-
+-	/*
+-	 * if not in replication mode/master slave mode, we treat this a restart request.
+-	 * otherwise we need to check if we have already failovered.
+-	 */
+-	pool_debug("failover_handler: starting to select new master node");
+-	switching = 1;
+ 	Req_info->switching = true;
+-	node_id = Req_info->node_id[0];
++	switching = 1;
+ 
+-	/* start of command inter-lock with watchdog */
+-	if (pool_config->use_watchdog)
++	for(;;)
+ 	{
+-		by_health_check = (!failover_request && Req_info->kind==NODE_DOWN_REQUEST);
+-		wd_start_interlock(by_health_check);
+-	}
++		POOL_REQUEST_KIND reqkind;
++		int queue_index;
++		int node_id_set[MAX_NUM_BACKENDS];
++		int node_count;
+ 
+-	/* failback request? */
+-	if (Req_info->kind == NODE_UP_REQUEST)
+-	{
+-		if (node_id < 0 || node_id >= MAX_NUM_BACKENDS ||
+-			(Req_info->kind == NODE_UP_REQUEST && !(RAW_MODE &&
+-            BACKEND_INFO(node_id).backend_status == CON_DOWN) && VALID_BACKEND(node_id)) ||
+-			(Req_info->kind == NODE_DOWN_REQUEST && !VALID_BACKEND(node_id)))
+-		{
+-			pool_semaphore_unlock(REQUEST_INFO_SEM);
++		pool_semaphore_lock(REQUEST_INFO_SEM);
+ 
+-			if (node_id < 0 || node_id >= MAX_NUM_BACKENDS)
+-				pool_error("failover_handler: invalid node_id %d MAX_NUM_BACKENDS: %d", node_id, MAX_NUM_BACKENDS);
+-			else
+-				pool_error("failover_handler: invalid node_id %d status:%d MAX_NUM_BACKENDS: %d", node_id,
+-						   BACKEND_INFO(node_id).backend_status, MAX_NUM_BACKENDS);
+-			kill(pcp_pid, SIGUSR2);
++		if(Req_info->request_queue_tail == Req_info->request_queue_head) /* request queue is empty*/
++		{
+ 			switching = 0;
+ 			Req_info->switching = false;
++			pool_semaphore_unlock(REQUEST_INFO_SEM);
++			break;
++		}
+ 
+-			/* end of command inter-lock */
+-			if (pool_config->use_watchdog)
+-				wd_leave_interlock();
++		/* make a local copy of request */
++		Req_info->request_queue_head++;
++		queue_index = Req_info->request_queue_head % MAX_REQUEST_QUEUE_SIZE;
++		memcpy(node_id_set, Req_info->request[queue_index].node_id , (sizeof(int) * Req_info->request[queue_index].count));
++		reqkind = Req_info->request[queue_index].kind;
++		node_count = Req_info->request[queue_index].count;
+ 
+-			return;
++		pool_semaphore_unlock(REQUEST_INFO_SEM);
++
++		if (reqkind == CLOSE_IDLE_REQUEST)
++		{
++			kill_all_children(SIGUSR1);
++			continue;
+ 		}
+ 
+-		pool_log("starting fail back. reconnect host %s(%d)",
+-				 BACKEND_INFO(node_id).backend_hostname,
+-				 BACKEND_INFO(node_id).backend_port);
+-		BACKEND_INFO(node_id).backend_status = CON_CONNECT_WAIT;	/* unset down status */
++		/*
++		 * if not in replication mode/master slave mode, we treat this a restart request.
++		 * otherwise we need to check if we have already failovered.
++		 */
++		pool_debug("failover_handler: starting to select new master node");
++		node_id = node_id_set[0];
+ 
+-		/* wait for failback command lock or to be lock holder */
+-		if (pool_config->use_watchdog && !wd_am_I_lock_holder())
++		/* start of command inter-lock with watchdog */
++		if (pool_config->use_watchdog)
+ 		{
+-			wd_wait_for_lock(WD_FAILBACK_COMMAND_LOCK);
++			by_health_check = (!failover_request && reqkind == NODE_DOWN_REQUEST);
++			wd_start_interlock(by_health_check, node_id);
+ 		}
+-		/* execute failback command if lock holder */
+-		if (!pool_config->use_watchdog || wd_am_I_lock_holder())
+-		{
+-			trigger_failover_command(node_id, pool_config->failback_command,
+-								 	MASTER_NODE_ID, get_next_master_node(), PRIMARY_NODE_ID);
+ 
+-			/* unlock failback command */
+-			if (pool_config->use_watchdog)
+-				wd_unlock(WD_FAILBACK_COMMAND_LOCK);
+-		}
+-	}
+-	else if (Req_info->kind == PROMOTE_NODE_REQUEST)
+-	{
+-		if (node_id != -1 && VALID_BACKEND(node_id))
++		/* failback request? */
++		if (reqkind == NODE_UP_REQUEST)
+ 		{
+-			pool_log("starting promotion. promote host %s(%d)",
++			if (node_id < 0 || node_id >= MAX_NUM_BACKENDS ||
++				(reqkind == NODE_UP_REQUEST && !(RAW_MODE &&
++				BACKEND_INFO(node_id).backend_status == CON_DOWN) && VALID_BACKEND(node_id)) ||
++				(reqkind == NODE_DOWN_REQUEST && !VALID_BACKEND(node_id)))
++			{
++
++				if (node_id < 0 || node_id >= MAX_NUM_BACKENDS)
++					pool_error("failover_handler: invalid node_id %d MAX_NUM_BACKENDS: %d", node_id, MAX_NUM_BACKENDS);
++				else
++					pool_error("failover_handler: invalid node_id %d status:%d MAX_NUM_BACKENDS: %d", node_id,
++							   BACKEND_INFO(node_id).backend_status, MAX_NUM_BACKENDS);
++
++				/* end of command inter-lock */
++				if (pool_config->use_watchdog)
++					wd_leave_interlock();
++
++				continue;
++			}
++
++			pool_log("starting fail back. reconnect host %s(%d)",
+ 					 BACKEND_INFO(node_id).backend_hostname,
+ 					 BACKEND_INFO(node_id).backend_port);
++
++			BACKEND_INFO(node_id).backend_status = CON_CONNECT_WAIT;	/* unset down status */
++
++			/* wait for failback command lock or to be lock holder */
++			if (pool_config->use_watchdog && !wd_am_I_lock_holder())
++			{
++				wd_wait_for_lock(WD_FAILBACK_COMMAND_LOCK);
++			}
++			/* execute failback command if lock holder */
++			if (!pool_config->use_watchdog || wd_am_I_lock_holder())
++			{
++				trigger_failover_command(node_id, pool_config->failback_command,
++										MASTER_NODE_ID, get_next_master_node(), PRIMARY_NODE_ID);
++
++				/* unlock failback command */
++				if (pool_config->use_watchdog)
++					wd_unlock(WD_FAILBACK_COMMAND_LOCK);
++			}
+ 		}
+-		else
++		else if (reqkind == PROMOTE_NODE_REQUEST)
+ 		{
+-			pool_log("failover: no backends are promoted");
+-			pool_semaphore_unlock(REQUEST_INFO_SEM);
+-			kill(pcp_pid, SIGUSR2);
+-			switching = 0;
+-			Req_info->switching = false;
++			if (node_id != -1 && VALID_BACKEND(node_id))
++			{
++				pool_log("starting promotion. promote host %s(%d)",
++						 BACKEND_INFO(node_id).backend_hostname,
++						 BACKEND_INFO(node_id).backend_port);
++			}
++			else
++			{
++				pool_log("failover: no backends are promoted");
+ 
+-			/* end of command inter-lock */
+-			if (pool_config->use_watchdog)
+-				wd_leave_interlock();
++				/* end of command inter-lock */
++				if (pool_config->use_watchdog)
++					wd_leave_interlock();
+ 
+-			return;
++				continue;
++			}
+ 		}
+-	}
+-	else
+-	{
+-		int cnt = 0;
+-
+-		for (i = 0; i < MAX_NUM_BACKENDS; i++)
++		else
+ 		{
+-			if (Req_info->node_id[i] != -1 &&
+-				((RAW_MODE && VALID_BACKEND_RAW(Req_info->node_id[i])) ||
+-				 VALID_BACKEND(Req_info->node_id[i])))
++			int cnt = 0;
++
++			for (i = 0; i < node_count; i++)
+ 			{
+-				pool_log("starting degeneration. shutdown host %s(%d)",
+-						 BACKEND_INFO(Req_info->node_id[i]).backend_hostname,
+-						 BACKEND_INFO(Req_info->node_id[i]).backend_port);
+-
+-				BACKEND_INFO(Req_info->node_id[i]).backend_status = CON_DOWN;	/* set down status */
+-				/* save down node */
+-				nodes[Req_info->node_id[i]] = 1;
+-				cnt++;
++				if (node_id_set[i] != -1 &&
++					((RAW_MODE && VALID_BACKEND_RAW(node_id_set[i])) ||
++					 VALID_BACKEND(node_id_set[i])))
++				{
++					pool_log("starting degeneration. shutdown host %s(%d)",
++							 BACKEND_INFO(node_id_set[i]).backend_hostname,
++							 BACKEND_INFO(node_id_set[i]).backend_port);
++
++					BACKEND_INFO(node_id_set[i]).backend_status = CON_DOWN;	/* set down status */
++					/* save down node */
++					nodes[node_id_set[i]] = 1;
++					cnt++;
++				}
+ 			}
+-		}
+ 
+-		if (cnt == 0)
+-		{
+-			pool_log("failover: no backends are degenerated");
+-			pool_semaphore_unlock(REQUEST_INFO_SEM);
+-			kill(pcp_pid, SIGUSR2);
+-			switching = 0;
+-			Req_info->switching = false;
++			if (cnt == 0)
++			{
++				pool_log("failover: no backends are degenerated");
+ 
+-			/* end of command inter-lock */
+-			if (pool_config->use_watchdog)
+-				wd_leave_interlock();
++				/* end of command inter-lock */
++				if (pool_config->use_watchdog)
++					wd_leave_interlock();
+ 
+-			return;
++				continue;
++			}
+ 		}
+-	}
+ 
+-	new_master = get_next_master_node();
++		new_master = get_next_master_node();
+ 
+-	if (new_master < 0)
+-	{
+-		pool_error("failover_handler: no valid DB node found");
+-	}
++		if (new_master < 0)
++		{
++			pool_error("failover_handler: no valid DB node found");
++		}
+ 
+-/*
+- * Before we tried to minimize restarting pgpool to protect existing
+- * connections from clients to pgpool children. What we did here was,
+- * if children other than master went down, we did not fail over.
+- * This is wrong. Think about following scenario. If someone
+- * accidentally plugs out the network cable, the TCP/IP stack keeps
+- * retrying for long time (typically 2 hours). The only way to stop
+- * the retry is restarting the process.  Bottom line is, we need to
+- * restart all children in any case.  See pgpool-general list posting
+- * "TCP connections are *not* closed when a backend timeout" on Jul 13
+- * 2008 for more details.
+- */
++	/*
++	 * Before we tried to minimize restarting pgpool to protect existing
++	 * connections from clients to pgpool children. What we did here was,
++	 * if children other than master went down, we did not fail over.
++	 * This is wrong. Think about following scenario. If someone
++	 * accidentally plugs out the network cable, the TCP/IP stack keeps
++	 * retrying for long time (typically 2 hours). The only way to stop
++	 * the retry is restarting the process.  Bottom line is, we need to
++	 * restart all children in any case.  See pgpool-general list posting
++	 * "TCP connections are *not* closed when a backend timeout" on Jul 13
++	 * 2008 for more details.
++	 */
+ #ifdef NOT_USED
+ 	else
+ 	{
+@@ -1935,60 +1975,60 @@ static void failover(void)
+ #endif
+ 
+ 
+-   /* On 2011/5/2 Tatsuo Ishii says: if mode is streaming replication
+-	* and request is NODE_UP_REQUEST(failback case) we don't need to
+-	* restart all children. Existing session will not use newly
+-	* attached node, but load balanced node is not changed until this
+-	* session ends, so it's harmless anyway.
+-	*/
+-	if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP)	&&
+-		Req_info->kind == NODE_UP_REQUEST)
+-	{
+-		pool_log("Do not restart children because we are failbacking node id %d host%s port:%d and we are in streaming replication mode", node_id,
+-				 BACKEND_INFO(node_id).backend_hostname,
+-				 BACKEND_INFO(node_id).backend_port);
+-
+-		need_to_restart_children = false;
+-	}
+-	else
+-	{
+-		pool_log("Restart all children");
++	   /* On 2011/5/2 Tatsuo Ishii says: if mode is streaming replication
++		* and request is NODE_UP_REQUEST(failback case) we don't need to
++		* restart all children. Existing session will not use newly
++		* attached node, but load balanced node is not changed until this
++		* session ends, so it's harmless anyway.
++		*/
++		if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP)	&&
++			reqkind == NODE_UP_REQUEST)
++		{
++			pool_log("Do not restart children because we are failbacking node id %d host%s port:%d and we are in streaming replication mode", node_id,
++					 BACKEND_INFO(node_id).backend_hostname,
++					 BACKEND_INFO(node_id).backend_port);
+ 
+-		/* kill all children */
+-		for (i = 0; i < pool_config->num_init_children; i++)
++			need_to_restart_children = false;
++		}
++		else
+ 		{
+-			pid_t pid = process_info[i].pid;
+-			if (pid)
++			pool_log("Restart all children");
++
++			/* kill all children */
++			for (i = 0; i < pool_config->num_init_children; i++)
+ 			{
+-				kill(pid, SIGQUIT);
+-				pool_debug("failover_handler: kill %d", pid);
++				pid_t pid = process_info[i].pid;
++				if (pid)
++				{
++					kill(pid, SIGQUIT);
++					pool_debug("failover_handler: kill %d", pid);
++				}
+ 			}
+-		}
+-
+-		need_to_restart_children = true;
+-	}
+ 
+-	/* wait for failover command lock or to be lock holder*/
+-	if (pool_config->use_watchdog && !wd_am_I_lock_holder())
+-	{
+-		wd_wait_for_lock(WD_FAILOVER_COMMAND_LOCK);
+-	}
++			need_to_restart_children = true;
++		}
+ 
+-	/* execute failover command if lock holder */
+-	if (!pool_config->use_watchdog || wd_am_I_lock_holder())
+-	{
+-		/* Exec failover_command if needed */
+-		for (i = 0; i < pool_config->backend_desc->num_backends; i++)
++		/* wait for failover command lock or to be lock holder*/
++		if (pool_config->use_watchdog && !wd_am_I_lock_holder())
+ 		{
+-			if (nodes[i])
+-				trigger_failover_command(i, pool_config->failover_command,
+-									 		MASTER_NODE_ID, new_master, PRIMARY_NODE_ID);
++			wd_wait_for_lock(WD_FAILOVER_COMMAND_LOCK);
+ 		}
+ 
+-		/* unlock failover command */
+-		if (pool_config->use_watchdog)
+-			wd_unlock(WD_FAILOVER_COMMAND_LOCK);
+-	}
++		/* execute failover command if lock holder */
++		if (!pool_config->use_watchdog || wd_am_I_lock_holder())
++		{
++			/* Exec failover_command if needed */
++			for (i = 0; i < pool_config->backend_desc->num_backends; i++)
++			{
++				if (nodes[i])
++					trigger_failover_command(i, pool_config->failover_command,
++												MASTER_NODE_ID, new_master, PRIMARY_NODE_ID);
++			}
++
++			/* unlock failover command */
++			if (pool_config->use_watchdog)
++				wd_unlock(WD_FAILOVER_COMMAND_LOCK);
++		}
+ 
+ 
+ /* no need to wait since it will be done in reap_handler */
+@@ -2000,164 +2040,162 @@ static void failover(void)
+ 		pool_error("failover_handler: wait() failed. reason:%s", strerror(errno));
+ #endif
+ 
+-	if (Req_info->kind == PROMOTE_NODE_REQUEST && VALID_BACKEND(node_id))
+-		new_primary = node_id;
++		if (reqkind == PROMOTE_NODE_REQUEST && VALID_BACKEND(node_id))
++			new_primary = node_id;
+ 
+-	/*
+-	 * If the down node was a standby node in streaming replication
+-	 * mode, we can avoid calling find_primary_node_repeatedly() and
+-	 * recognize the former primary as the new primary node, which
+-	 * will reduce the time to process standby down.
+-	 */
+-	else if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP) &&
+-			 Req_info->kind == NODE_DOWN_REQUEST)
+-	{
+-		if (Req_info->primary_node_id != node_id)
+-			new_primary = Req_info->primary_node_id;
++		/*
++		 * If the down node was a standby node in streaming replication
++		 * mode, we can avoid calling find_primary_node_repeatedly() and
++		 * recognize the former primary as the new primary node, which
++		 * will reduce the time to process standby down.
++		 */
++		else if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP) &&
++				 reqkind == NODE_DOWN_REQUEST)
++		{
++			if (Req_info->primary_node_id != node_id)
++				new_primary = Req_info->primary_node_id;
++			else
++				new_primary =  find_primary_node_repeatedly();
++		}
+ 		else
+ 			new_primary =  find_primary_node_repeatedly();
+-	}
+-	else
+-		new_primary =  find_primary_node_repeatedly();
+ 
+-	/*
+-	 * If follow_master_command is provided and in master/slave
+-	 * streaming replication mode, we start degenerating all backends
+-	 * as they are not replicated anymore.
+-	 */
+-	int follow_cnt = 0;
+-	if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
+-	{
+-		if (*pool_config->follow_master_command != '\0' ||
+-			Req_info->kind == PROMOTE_NODE_REQUEST)
++		/*
++		 * If follow_master_command is provided and in master/slave
++		 * streaming replication mode, we start degenerating all backends
++		 * as they are not replicated anymore.
++		 */
++		int follow_cnt = 0;
++		if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
+ 		{
+-			/* only if the failover is against the current primary */
+-			if (((Req_info->kind == NODE_DOWN_REQUEST) &&
+-				 (nodes[Req_info->primary_node_id])) ||
+-				((Req_info->kind == PROMOTE_NODE_REQUEST) &&
+-				 (VALID_BACKEND(node_id)))) {
++			if (*pool_config->follow_master_command != '\0' ||
++				reqkind == PROMOTE_NODE_REQUEST)
++			{
++				/* only if the failover is against the current primary */
++				if (((reqkind == NODE_DOWN_REQUEST) &&
++					 (nodes[Req_info->primary_node_id])) ||
++					((reqkind == PROMOTE_NODE_REQUEST) &&
++					 (VALID_BACKEND(node_id)))) {
+ 
+-				for (i = 0; i < pool_config->backend_desc->num_backends; i++)
+-				{
+-					/* do not degenerate the new primary */
+-					if ((new_primary >= 0) && (i != new_primary)) {
+-						BackendInfo *bkinfo;
+-						bkinfo = pool_get_node_info(i);
+-						pool_log("starting follow degeneration. shutdown host %s(%d)",
+-								 bkinfo->backend_hostname,
+-								 bkinfo->backend_port);
+-						bkinfo->backend_status = CON_DOWN;	/* set down status */
+-						follow_cnt++;
++					for (i = 0; i < pool_config->backend_desc->num_backends; i++)
++					{
++						/* do not degenerate the new primary */
++						if ((new_primary >= 0) && (i != new_primary)) {
++							BackendInfo *bkinfo;
++							bkinfo = pool_get_node_info(i);
++							pool_log("starting follow degeneration. shutdown host %s(%d)",
++									 bkinfo->backend_hostname,
++									 bkinfo->backend_port);
++							bkinfo->backend_status = CON_DOWN;	/* set down status */
++							follow_cnt++;
++						}
+ 					}
+-				}
+ 
+-				if (follow_cnt == 0)
+-				{
+-					pool_log("failover: no follow backends are degenerated");
+-				}
+-				else
+-				{
+-					/* update new master node */
+-					new_master = get_next_master_node();
+-					pool_log("failover: %d follow backends have been degenerated", follow_cnt);
++					if (follow_cnt == 0)
++					{
++						pool_log("failover: no follow backends are degenerated");
++					}
++					else
++					{
++						/* update new master node */
++						new_master = get_next_master_node();
++						pool_log("failover: %d follow backends have been degenerated", follow_cnt);
++					}
+ 				}
+ 			}
+ 		}
+-	}
+-
+-	memset(Req_info->node_id, -1, sizeof(int) * MAX_NUM_BACKENDS);
+-	pool_semaphore_unlock(REQUEST_INFO_SEM);
+ 
+-	/* wait for follow_master_command lock or to be lock holder */
+-	if (pool_config->use_watchdog && !wd_am_I_lock_holder())
+-	{
+-		wd_wait_for_lock(WD_FOLLOW_MASTER_COMMAND_LOCK);
+-	}
+-
+-	/* execute follow_master_command */
+-	if (!pool_config->use_watchdog || wd_am_I_lock_holder())
+-	{
+-		if ((follow_cnt > 0) && (*pool_config->follow_master_command != '\0'))
++		/* wait for follow_master_command lock or to be lock holder */
++		if (pool_config->use_watchdog && !wd_am_I_lock_holder())
+ 		{
+-			follow_pid = fork_follow_child(Req_info->master_node_id, new_primary,
+-									   	Req_info->primary_node_id);
++			wd_wait_for_lock(WD_FOLLOW_MASTER_COMMAND_LOCK);
+ 		}
+ 
+-		/* unlock follow_master_command  */
+-		if (pool_config->use_watchdog)
+-			wd_unlock(WD_FOLLOW_MASTER_COMMAND_LOCK);
+-	}
++		/* execute follow_master_command */
++		if (!pool_config->use_watchdog || wd_am_I_lock_holder())
++		{
++			if ((follow_cnt > 0) && (*pool_config->follow_master_command != '\0'))
++			{
++				follow_pid = fork_follow_child(Req_info->master_node_id, new_primary,
++											Req_info->primary_node_id);
++			}
+ 
+-	/* end of command inter-lock */
+-	if (pool_config->use_watchdog)
+-		wd_end_interlock();
++			/* unlock follow_master_command  */
++			if (pool_config->use_watchdog)
++				wd_unlock(WD_FOLLOW_MASTER_COMMAND_LOCK);
++		}
+ 
+-	/* Save primary node id */
+-	Req_info->primary_node_id = new_primary;
+-	pool_log("failover: set new primary node: %d", Req_info->primary_node_id);
++		/* end of command inter-lock */
++		if (pool_config->use_watchdog)
++			wd_end_interlock();
+ 
+-	if (new_master >= 0)
+-	{
+-		Req_info->master_node_id = new_master;
+-		pool_log("failover: set new master node: %d", Req_info->master_node_id);
+-	}
++		/* Save primary node id */
++		Req_info->primary_node_id = new_primary;
++		pool_log("failover: set new primary node: %d", Req_info->primary_node_id);
+ 
++		if (new_master >= 0)
++		{
++			Req_info->master_node_id = new_master;
++			pool_log("failover: set new master node: %d", Req_info->master_node_id);
++		}
+ 
+-	/* Fork the children if needed */
+-	if (need_to_restart_children)
+-	{
+-		for (i=0;i<pool_config->num_init_children;i++)
++		/* Fork the children if needed */
++		if (need_to_restart_children)
+ 		{
++			for (i=0;i<pool_config->num_init_children;i++)
++			{
+ 
+-			/*
+-			 * Try to kill pgpool child because previous kill signal
+-			 * may not be received by pgpool child. This could happen
+-			 * if multiple PostgreSQL are going down (or even starting
+-			 * pgpool, without starting PostgreSQL can trigger this).
+-			 * Child calls degenerate_backend() and it tries to aquire
+-			 * semaphore to write a failover request. In this case the
+-			 * signal mask is set as well, thus signals are never
+-			 * received.
+-			 */
+-			kill(process_info[i].pid, SIGQUIT);
++				/*
++				 * Try to kill pgpool child because previous kill signal
++				 * may not be received by pgpool child. This could happen
++				 * if multiple PostgreSQL are going down (or even starting
++				 * pgpool, without starting PostgreSQL can trigger this).
++				 * Child calls degenerate_backend() and it tries to aquire
++				 * semaphore to write a failover request. In this case the
++				 * signal mask is set as well, thus signals are never
++				 * received.
++				 */
++				kill(process_info[i].pid, SIGQUIT);
+ 
+-			process_info[i].pid = fork_a_child(unix_fd, inet_fd, i);
+-			process_info[i].start_time = time(NULL);
++				process_info[i].pid = fork_a_child(unix_fd, inet_fd, i);
++				process_info[i].start_time = time(NULL);
++			}
+ 		}
+-	}
+-	else
+-	{
+-		/* Set restart request to each child. Children will exit(1)
+-		 * whenever they are idle to restart.
+-		 */
+-		for (i=0;i<pool_config->num_init_children;i++)
++		else
+ 		{
+-			process_info[i].need_to_restart = 1;
++			/* Set restart request to each child. Children will exit(1)
++			 * whenever they are idle to restart.
++			 */
++			for (i=0;i<pool_config->num_init_children;i++)
++			{
++				process_info[i].need_to_restart = 1;
++			}
+ 		}
+-	}
+ 
+-	/*
+-	 * Send restart request to worker child.
+-	 */
+-	kill(worker_pid, SIGUSR1);
++		/*
++		 * Send restart request to worker child.
++		 */
++		kill(worker_pid, SIGUSR1);
+ 
+-	if (Req_info->kind == NODE_UP_REQUEST)
+-	{
+-		pool_log("failback done. reconnect host %s(%d)",
+-				 BACKEND_INFO(node_id).backend_hostname,
+-				 BACKEND_INFO(node_id).backend_port);
+-	}
+-	else if (Req_info->kind == PROMOTE_NODE_REQUEST)
+-	{
+-		pool_log("promotion done. promoted host %s(%d)",
+-				 BACKEND_INFO(node_id).backend_hostname,
+-				 BACKEND_INFO(node_id).backend_port);
+-	}
+-	else
+-	{
+-		pool_log("failover done. shutdown host %s(%d)",
+-				 BACKEND_INFO(node_id).backend_hostname,
+-				 BACKEND_INFO(node_id).backend_port);
++		if (reqkind == NODE_UP_REQUEST)
++		{
++			pool_log("failback done. reconnect host %s(%d)",
++					 BACKEND_INFO(node_id).backend_hostname,
++					 BACKEND_INFO(node_id).backend_port);
++		}
++		else if (reqkind == PROMOTE_NODE_REQUEST)
++		{
++			pool_log("promotion done. promoted host %s(%d)",
++					 BACKEND_INFO(node_id).backend_hostname,
++					 BACKEND_INFO(node_id).backend_port);
++		}
++		else
++		{
++			pool_log("failover done. shutdown host %s(%d)",
++					 BACKEND_INFO(node_id).backend_hostname,
++					 BACKEND_INFO(node_id).backend_port);
++		}
++		need_to_restart_pcp = true;
+ 	}
+ 
+ 	switching = 0;
+@@ -2168,35 +2206,38 @@ static void failover(void)
+ 	 */
+ 	kill(pcp_pid, SIGUSR2);
+ 
+-	sleep(1);
+-
+-	/*
+-	 * Send restart request to pcp child.
+-	 */
+-	kill(pcp_pid, SIGUSR1);
+-	for (;;)
++	if(need_to_restart_pcp)
+ 	{
+-		sts = waitpid(pcp_pid, &status, 0);
+-		if (sts != -1)
+-			break;
+-		if (sts == -1)
++		sleep(1);
++
++		/*
++		 * Send restart request to pcp child.
++		 */
++		kill(pcp_pid, SIGUSR1);
++		for (;;)
+ 		{
+-			if (errno == EINTR)
+-				continue;
+-			else
++			sts = waitpid(pcp_pid, &status, 0);
++			if (sts != -1)
++				break;
++			if (sts == -1)
+ 			{
+-				pool_error("failover: waitpid failed. reason: %s", strerror(errno));
+-				return;
++				if (errno == EINTR)
++					continue;
++				else
++				{
++					pool_error("failover: waitpid failed. reason: %s", strerror(errno));
++					return;
++				}
+ 			}
+ 		}
+-	}
+-	if (WIFSIGNALED(status))
+-		pool_log("PCP child %d exits with status %d by signal %d in failover()", pcp_pid, status, WTERMSIG(status));
+-	else
+-		pool_log("PCP child %d exits with status %d in failover()", pcp_pid, status);
++		if (WIFSIGNALED(status))
++			pool_log("PCP child %d exits with status %d by signal %d in failover()", pcp_pid, status, WTERMSIG(status));
++		else
++			pool_log("PCP child %d exits with status %d in failover()", pcp_pid, status);
+ 
+-	pcp_pid = pcp_fork_a_child(pcp_unix_fd, pcp_inet_fd, pcp_conf_file);
+-	pool_log("fork a new PCP child pid %d in failover()", pcp_pid);
++		pcp_pid = pcp_fork_a_child(pcp_unix_fd, pcp_inet_fd, pcp_conf_file);
++		pool_log("fork a new PCP child pid %d in failover()", pcp_pid);
++	}
+ }
+ 
+ /*
+diff --git a/pcp_child.c b/pcp_child.c
+index 0478ded..e2e24d0 100644
+--- a/pcp_child.c
++++ b/pcp_child.c
+@@ -226,16 +226,19 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
+ 			{
+ 				int len;
+ 				int wsize;
+-				char *msg;
+-
+-				if (Req_info->kind == NODE_UP_REQUEST)
+-					msg = "FailbackInProgress";
+-				else if (Req_info->kind == NODE_DOWN_REQUEST)
+-					msg = "FailoverInProgress";
+-				else if (Req_info->kind == PROMOTE_NODE_REQUEST)
+-					msg = "PromotionInProgress";
+-				else
+-					msg = "OperationInProgress";
++				char *msg = "OperationInProgress";
++				if(Req_info->request_queue_tail != Req_info->request_queue_head)
++				{
++					POOL_REQUEST_KIND reqkind;
++					reqkind = Req_info->request[(Req_info->request_queue_head +1) % MAX_REQUEST_QUEUE_SIZE].kind;
++
++					if (reqkind == NODE_UP_REQUEST)
++						msg = "FailbackInProgress";
++					else if (reqkind == NODE_DOWN_REQUEST)
++						msg = "FailoverInProgress";
++					else if (reqkind == PROMOTE_NODE_REQUEST)
++						msg = "PromotionInProgress";
++				}
+ 
+ 				len = strlen(msg) + 1;
+ 				pcp_write(frontend, "e", 1);
+diff --git a/pgpool.spec b/pgpool.spec
+index d53b79c..def1198 100644
+--- a/pgpool.spec
++++ b/pgpool.spec
+@@ -2,14 +2,15 @@
+ #   rpmbuild -ba pgpool.spec --define="pgpool_version 3.3.4" --define="pg_version 93" --define="pghome /usr/pgsql-9.3"
+ #
+ # expecting RPM name are:
+-#   pgpool-II-pg{xx}-{version}.pgdg.{arch}.rpm
+-#   pgpool-II-pg{xx}-devel-{version}.pgdg.{arch}.rpm
+-#   pgpool-II-pg{xx}-{version}.pgdg.src.rpm
++#   pgpool-II-pg{xx}-{version}-{rel}pgdg.rhel{v}.{arch}.rpm
++#   pgpool-II-pg{xx}-devel-{version}-{rel}pgdg.rhel{v}.{arch}.rpm
++#   pgpool-II-pg{xx}-extensions-{version}-{rel}pgdg.rhel{v}.{arch}.rpm
++#   pgpool-II-pg{xx}-{version}-{rel}pgdg.rhel{v}.src.rpm
+ 
+ Summary:        Pgpool is a connection pooling/replication server for PostgreSQL
+ Name:           pgpool-II-pg%{pg_version}
+ Version:        %{pgpool_version}
+-Release:        1%{?dist}
++Release:        3pgdg%{?dist}
+ License:        BSD
+ Group:          Applications/Databases
+ Vendor:         Pgpool Global Development Group
+@@ -20,7 +21,7 @@ Source2:        pgpool.sysconfig
+ Patch1:         pgpool.conf.sample.patch
+ Patch2:         pgpool-II-head.patch
+ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+-BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel
++BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel libmemcached-devel
+ Obsoletes:      postgresql-pgpool
+ 
+ # original pgpool archive name
+@@ -52,6 +53,12 @@ Requires:    %{name} = %{version}
+ %description devel
+ Development headers and libraries for pgpool-II.
+ 
++%package extensions
++Summary:     Postgersql extensions for pgpool-II
++Group:       Applications/Databases
++%description extensions
++Postgresql extensions libraries and sql files for pgpool-II.
++
+ %prep
+ %setup -q -n %{archive_name}
+ %patch1 -p0
+@@ -59,7 +66,7 @@ Development headers and libraries for pgpool-II.
+ 
+ %build
+ %configure --with-pgsql=%{pghome} \
+-           --disable-static --with-pam --with-openssl=/usr --disable-rpath \
++           --disable-static --with-pam --with-openssl --with-memcached=%{_usr} --disable-rpath \
+            --sysconfdir=%{_sysconfdir}/pgpool-II/
+ 
+ make %{?_smp_flags}
+@@ -126,18 +133,10 @@ fi
+ %{_datadir}/pgpool-II/insert_lock.sql
+ %{_datadir}/pgpool-II/system_db.sql
+ %{_datadir}/pgpool-II/pgpool.pam
+-%{pghome}/share/extension/pgpool-recovery.sql
+-%{pghome}/share/extension/pgpool_recovery--1.0.sql
+-%{pghome}/share/extension/pgpool_recovery.control
+-%{pghome}/share/extension/pgpool-regclass.sql
+-%{pghome}/share/extension/pgpool_regclass--1.0.sql
+-%{pghome}/share/extension/pgpool_regclass.control
+ %{_sysconfdir}/pgpool-II/pgpool.conf.sample-master-slave
+ %{_sysconfdir}/pgpool-II/pgpool.conf.sample-replication
+ %{_sysconfdir}/pgpool-II/pgpool.conf.sample-stream
+ %{_libdir}/libpcp.so.*
+-%{pghome}/lib/pgpool-recovery.so
+-%{pghome}/lib/pgpool-regclass.so
+ %{_initrddir}/pgpool
+ %attr(764,root,root) %config(noreplace) %{_sysconfdir}/pgpool-II/*.conf
+ %config(noreplace) %{_sysconfdir}/sysconfig/pgpool
+@@ -150,7 +149,25 @@ fi
+ %{_includedir}/pool_type.h
+ %{_libdir}/libpcp.so
+ 
++%files extensions
++%defattr(-,root,root,-)
++%{pghome}/share/extension/pgpool-recovery.sql
++%{pghome}/share/extension/pgpool_recovery--1.0.sql
++%{pghome}/share/extension/pgpool_recovery.control
++%{pghome}/share/extension/pgpool-regclass.sql
++%{pghome}/share/extension/pgpool_regclass--1.0.sql
++%{pghome}/share/extension/pgpool_regclass.control
++%{pghome}/lib/pgpool-recovery.so
++%{pghome}/lib/pgpool-regclass.so
++
+ %changelog
++* Wed Nov 12 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.4-3
++- Add memcached support to configure.
++
++* Mon Sep 25 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.4-2
++- Split pgpool_regclass and pgpool_recovery as a separate extention package.
++- Fix wrong OpenSSL build option.
++
+ * Fri Sep 5 2014 Yugo Nagata <nagata@sraoss.co.jp> 3.3.4-1
+ - Update to 3.3.4
+ 
+diff --git a/pool.h b/pool.h
+index d4b23e2..dd78915 100644
+--- a/pool.h
++++ b/pool.h
+@@ -347,6 +347,7 @@ extern int my_master_node_id;
+ #define REQUEST_INFO_SEM 1
+ #define SHM_CACHE_SEM	2
+ #define QUERY_CACHE_STATS_SEM	3
++#define MAX_REQUEST_QUEUE_SIZE	10
+ 
+ /*
+  * number specified when semaphore is locked/unlocked
+@@ -370,9 +371,16 @@ typedef enum {
+ } POOL_REQUEST_KIND;
+ 
+ typedef struct {
+-	POOL_REQUEST_KIND	kind;	/* request kind */
+-	int node_id[MAX_NUM_BACKENDS];		/* request node id */
+-	int master_node_id;	/* the youngest node id which is not in down status */
++	POOL_REQUEST_KIND	kind;		/* request kind */
++	int node_id[MAX_NUM_BACKENDS];	/* request node id */
++	int count;						/* request node ids count */
++}POOL_REQUEST_NODE;
++
++typedef struct {
++	POOL_REQUEST_NODE request[MAX_REQUEST_QUEUE_SIZE];
++	int request_queue_head;
++	int request_queue_tail;
++	int master_node_id;		/* the youngest node id which is not in down status */
+ 	int primary_node_id;	/* the primary node id in streaming replication mode */
+ 	int conn_counter;
+ 	bool switching;	/* it true, failover or failback is in progress */
+@@ -441,6 +449,7 @@ extern char remote_port[];	/* client port */
+ /*
+  * public functions
+  */
++extern bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, int count);
+ extern char *get_config_file_name(void);
+ extern char *get_hba_file_name(void);
+ #ifdef __GNUC__
+diff --git a/pool_config.c b/pool_config.c
+index ba93fa0..effee9f 100644
+--- a/pool_config.c
++++ b/pool_config.c
+@@ -4089,8 +4089,12 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
+ 				fclose(fd);
+ 				return(-1);
+ 			}
+-			/* Consider -d option value stored in pool_config already */
+-			pool_config->debug_level |= v;
++			/* don't overwrite -d option at startup */
++			if (CHECK_CONTEXT(INIT_CONFIG, context))
++				pool_config->debug_level |= v;
++			/* use debug_level value at reload */
++			else if (CHECK_CONTEXT(RELOAD_CONFIG, context))
++				pool_config->debug_level = v;
+ 		}
+ 
+ 		else if (!strcmp(key, "relcache_expire") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+diff --git a/pool_config.l b/pool_config.l
+index dcf3e7c..5c8737d 100644
+--- a/pool_config.l
++++ b/pool_config.l
+@@ -2542,8 +2542,12 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
+ 				fclose(fd);
+ 				return(-1);
+ 			}
+-			/* Consider -d option value stored in pool_config already */
+-			pool_config->debug_level |= v;
++			/* don't overwrite -d option at startup */
++			if (CHECK_CONTEXT(INIT_CONFIG, context))
++				pool_config->debug_level |= v;
++			/* use debug_level value at reload */
++			else if (CHECK_CONTEXT(RELOAD_CONFIG, context))
++				pool_config->debug_level = v;
+ 		}
+ 
+ 		else if (!strcmp(key, "relcache_expire") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+diff --git a/pool_ip.c b/pool_ip.c
+index cc62fd0..4566518 100644
+--- a/pool_ip.c
++++ b/pool_ip.c
+@@ -9,7 +9,7 @@
+  * pgpool: a language independent connection pool server for PostgreSQL
+  * written by Tatsuo Ishii
+  *
+- * Portions Copyright (c) 2003-2010	PgPool Global Development Group
++ * Portions Copyright (c) 2003-2014	PgPool Global Development Group
+  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+  * Portions Copyright (c) 1994, Regents of the University of California
+  *
+@@ -464,6 +464,8 @@ SockAddr_cidr_mask(struct sockaddr_storage * mask, char *numbits, int family)
+ 				struct sockaddr_in6 mask6;
+ 				int			i;
+ 
++				memset(&mask6, 0, sizeof(mask6));
++
+ 				if (bits < 0 || bits > 128)
+ 					return -1;
+ 				for (i = 0; i < 16; i++)
+diff --git a/pool_proto_modules.c b/pool_proto_modules.c
+index 1b00d3c..cd1524e 100644
+--- a/pool_proto_modules.c
++++ b/pool_proto_modules.c
+@@ -430,9 +430,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
+ 			int stime = 5;	/* XXX give arbitrary time to allow closing idle connections */
+ 
+ 			pool_debug("Query: sending SIGUSR1 signal to parent");
+-
+-			Req_info->kind = CLOSE_IDLE_REQUEST;
+-			kill(getppid(), SIGUSR1);		/* send USR1 signal to parent */
++			register_node_operation_request(CLOSE_IDLE_REQUEST, NULL, 0);
+ 
+ 			/* we need to loop over here since we will get USR1 signal while sleeping */
+ 			while (stime > 0)
+@@ -1823,7 +1821,8 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
+ 				 */
+ 				if (pool_is_doing_extended_query_message())
+ 				{
+-					if (session_context->query_context->query_state[MASTER_NODE_ID] == POOL_EXECUTE_COMPLETE)
++					if (session_context->query_context &&
++						session_context->query_context->query_state[MASTER_NODE_ID] == POOL_EXECUTE_COMPLETE)
+ 					{
+ 						pool_handle_query_cache(backend, session_context->query_context->query_w_hex, node, state);
+ 						free(session_context->query_context->query_w_hex);
+diff --git a/recovery.c b/recovery.c
+index 7010311..8eb1b72 100644
+--- a/recovery.c
++++ b/recovery.c
+@@ -79,8 +79,6 @@ int start_recovery(int recovery_node)
+ 		return 1;
+ 	}
+ 
+-	Req_info->kind = NODE_RECOVERY_REQUEST;
+-
+ 	/* select master/primary node */
+ 	node_id = MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID;
+ 	backend = &pool_config->backend_desc->backend_info[node_id];
+diff --git a/test/pgpool_setup b/test/pgpool_setup
+index 671da99..18d9838 100755
+--- a/test/pgpool_setup
++++ b/test/pgpool_setup
+@@ -57,7 +57,7 @@ BASEPORT=11000
+ NUMCLUSTERS=2
+ # Where to look for pgpool.conf.sample*
+ PGPOOL_INSTALL_DIR=${PGPOOL_INSTALL_DIR:-"/usr/local"}
+-PGPOOLDIR=$PGPOOL_INSTALL_DIR/etc
++PGPOOLDIR=${PGPOOLDIR:-${PGPOOL_INSTALL_DIR}/etc}
+ # PostgreSQL commands(initdb, pg_ctl, psql) install dir
+ PGBIN=${PGBIN:-"/usr/local/pgsql/bin"}
+ # LD_LIBRARY_PATH 
+@@ -556,8 +556,9 @@ function wait_for_pgpool_startup {
+ 
+ 	while [ $timeout -gt  0 ]
+ 	do
+-		$PSQL -p $PGPOOL_PORT -c "show pool_nodes" test >/dev/null 2>&1
++		$PSQL -p $PGPOOL_PORT -c "show pool_nodes" postgres >/dev/null 2>&1
+ 		if [ $? = 0 ];then
++#		        echo "pgpool-II comes up after `expr 20 - $timeout` seconds"
+ 			break;
+ 		fi
+ 		timeout=`expr $timeout - 1`
+@@ -750,7 +751,10 @@ echo "logdir = '$BASEDIR/log'" >> $CONF
+ echo '$PGPOOL_INSTALL_DIR/bin/pgpool -D -n -f $dir/etc/pgpool.conf -F $dir/etc/pcp.conf -a $dir/etc/pool_hba.conf > $dir/log/pgpool.log 2>&1 &' >> $STARTALL
+ 
+ # create pcp.conf
+-cp $PGPOOLDIR/pcp.conf.sample etc/pcp.conf
++
++if [ -f $PGPOOLDIR/pcp.conf.sample ];then
++    cp $PGPOOLDIR/pcp.conf.sample etc/pcp.conf
++fi
+ echo -n "${WHOAMI}:" >> etc/pcp.conf
+ $PGPOOL_INSTALL_DIR/bin/pg_md5 $WHOAMI >> etc/pcp.conf
+ 
+diff --git a/watchdog/wd_ext.h b/watchdog/wd_ext.h
+index af87d6e..95e5713 100644
+--- a/watchdog/wd_ext.h
++++ b/watchdog/wd_ext.h
+@@ -108,7 +108,7 @@ extern pid_t wd_hb_sender(int fork_wait_time, WdHbIf * hb_if);
+ 
+ /* wd_interlock.c */
+ extern int wd_init_interlock(void);
+-extern void wd_start_interlock(bool by_health_check);
++extern void wd_start_interlock(bool by_health_check, int node_id);
+ extern void wd_end_interlock(void);
+ extern void wd_leave_interlock(void);
+ extern void wd_wait_for_lock(WD_LOCK_ID lock_id);
+diff --git a/watchdog/wd_heartbeat.c b/watchdog/wd_heartbeat.c
+index f6080a8..b535fce 100644
+--- a/watchdog/wd_heartbeat.c
++++ b/watchdog/wd_heartbeat.c
+@@ -104,7 +104,7 @@ wd_create_hb_send_socket(WdHbIf *hb_if)
+ 				pool_log("wd_create_hb_send_socket: bind send socket to device: %s", i.ifr_name);
+ 			}
+ 			else
+-				pool_log("wd_create_hb_send_socket: setsockopt(SO_BINDTODEVICE) requies root privilege");
++				pool_log("wd_create_hb_send_socket: setsockopt(SO_BINDTODEVICE) requires root privilege");
+ 		}
+ #else
+ 		pool_log("wd_create_hb_send_socket: couldn't setsockopt(SO_BINDTODEVICE) on this platform");
+diff --git a/watchdog/wd_interlock.c b/watchdog/wd_interlock.c
+index edcddb1..c1b3e7b 100644
+--- a/watchdog/wd_interlock.c
++++ b/watchdog/wd_interlock.c
+@@ -34,7 +34,6 @@
+ static volatile bool * WD_Locks;
+ 
+ int wd_init_interlock(void);
+-void wd_start_interlock(bool by_health_check);
+ void wd_end_interlock(void);
+ void wd_leave_interlock(void);
+ void wd_wait_for_lock(WD_LOCK_ID lock_id);
+@@ -79,10 +78,9 @@ wd_init_interlock(void)
+ }
+ 
+ /* notify to start interlocking */
+-void wd_start_interlock(bool by_health_check)
++void wd_start_interlock(bool by_health_check, int node_id)
+ {
+ 	int count;
+-	int node_id;
+ 
+ 	pool_log("wd_start_interlock: start interlocking");
+ 
+@@ -103,10 +101,7 @@ void wd_start_interlock(bool by_health_check)
+ 	 * to other pgpools because detection of DB down on the others may be late.
+ 	 */
+ 	if (by_health_check && wd_am_I_lock_holder())
+-	{
+-		node_id = Req_info->node_id[0];
+ 		wd_degenerate_backend_set(&node_id, 1);
+-	}
+ 
+ 	/* wait for all pgpools starting interlock */
+ 	count = WD_INTERLOCK_WAIT_COUNT;
