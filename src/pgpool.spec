@@ -1,11 +1,11 @@
 # How to build RPM:
-#   rpmbuild -ba pgpool.spec --define="pgpool_version 3.4.0" --define="pg_version 93" --define="pghome /usr/pgsql-9.3"
+#   rpmbuild -ba pgpool.spec --define="pgpool_version 3.4.0" --define="pg_version 93" --define="pghome /usr/pgsql-9.3" --define="dist .rhel6"
 #
 # expecting RPM name are:
-#   pgpool-II-pg{xx}-{version}-{rel}pgdg.rhel{v}.{arch}.rpm
-#   pgpool-II-pg{xx}-devel-{version}-{rel}pgdg.rhel{v}.{arch}.rpm
-#   pgpool-II-pg{xx}-extensions-{version}-{rel}pgdg.rhel{v}.{arch}.rpm
-#   pgpool-II-pg{xx}-{version}-{rel}pgdg.rhel{v}.src.rpm
+#   pgpool-II-pg{pg_version}-{pgpool_version}-{rel}pgdg.rhel{v}.{arch}.rpm
+#   pgpool-II-pg{pg_version}-devel-{pgpool_version}-{rel}pgdg.rhel{v}.{arch}.rpm
+#   pgpool-II-pg{pg_version}-extensions-{pgpool_version}-{rel}pgdg.rhel{v}.{arch}.rpm
+#   pgpool-II-pg{pg_version}-{pgpool_version}-{rel}pgdg.rhel{v}.src.rpm
 
 Summary:        Pgpool is a connection pooling/replication server for PostgreSQL
 Name:           pgpool-II-pg%{pg_version}
@@ -18,6 +18,8 @@ URL:            http://www.pgppol.net/
 Source0:        pgpool-II-%{version}.tar.gz
 Source1:        pgpool.init
 Source2:        pgpool.sysconfig
+#Patch1:         pgpool.conf.sample.patch
+Patch2:         pgpool-II-head.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel libmemcached-devel
 Obsoletes:      postgresql-pgpool
@@ -59,6 +61,8 @@ Postgresql extensions libraries and sql files for pgpool-II.
 
 %prep
 %setup -q -n %{archive_name}
+#%patch1 -p0
+%patch2 -p1
 
 %build
 %configure --with-pgsql=%{pghome} \
