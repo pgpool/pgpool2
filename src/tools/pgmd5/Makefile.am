@@ -8,7 +8,7 @@ pg_md5_SOURCES = pg_md5.c \
 		strlcpy.c \
 		regex_array.c \
 		pool_config.l \
-		fe_port.c \
+		../fe_port.c \
 		fe_memutils.c \
 		pool_globals.c
 
@@ -28,8 +28,6 @@ strlcpy.c: ../../../src/utils/strlcpy.c
 regex_array.c: ../../../src/utils/regex_array.c
 	rm -f $@ && ln -s $< .
 pool_config.l: ../../../src/config/pool_config.l
-	rm -f $@ && ln -s $< .
-fe_port.c: ../../../src/tools/fe_port.c
 	rm -f $@ && ln -s $< .
 fe_memutils.c: ../../../src/tools/fe_memutils.c
 	rm -f $@ && ln -s $< .
