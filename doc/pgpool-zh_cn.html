@@ -14,7 +14,7 @@ Last modified: Wed Jun 29 09:50:01 JST 2011
 <div id="top" class="header_text">欢迎使用 pgpool-II 手册</div>
 
 <div id="menu">
-	 <div id="navcontainer">
+    <div id="navcontainer">
       <ul id="navlist">
         <li id="active"><a href="#Whatis" id="current">什么是 pgpool</a></li>
         <li><a href="#license">许可协议</a></li>
@@ -37,13 +37,13 @@ Last modified: Wed Jun 29 09:50:01 JST 2011
         <li><a href="#backup">备份</a></li>
         <li><a href="#deploy">部署 pgpool-II</a></li>
         <li><a href="#watchdog">看门狗</a></li>
+        <li><a href="#pcp_command">PCP 命令</a></li>
         <li><a href="#troubleshooting">故障排除</a></li>
         <li><a href="#restriction">限制</a></li>
-        <li><a href="#reference">参考信息</a></li>
         <li><a href="#internal">内部信息</a></li>
       </ul>
     </div>
-	 <br />
+     <br />
 
     <div class="header_small" align="center">
     [<a href="pgpool-en.html">英文页面</a>]
@@ -65,42 +65,46 @@ Last modified: Wed Jun 29 09:50:01 JST 2011
 
 <li>连接池</li>
     <p>pgpool-II 保持已经连接到 PostgreSQL 服务器的连接，
-    	并在使用相同参数（例如：用户名，数据库，协议版本）
-    	连接进来时重用它们。
-    	它减少了连接开销，并增加了系统的总体吞吐量。</p>
+        并在使用相同参数（例如：用户名，数据库，协议版本）
+        连接进来时重用它们。
+        它减少了连接开销，并增加了系统的总体吞吐量。</p>
 
 <li>复制</li>
     <p>pgpool-II 可以管理多个 PostgreSQL 服务器。
-    	激活复制功能并使在2台或者更多 PostgreSQL
-    	节点中建立一个实时备份成为可能，
-    	这样，如果其中一台节点失效，服务可以不被中断继续运行。</p>
+        激活复制功能并使在2台或者更多 PostgreSQL
+        节点中建立一个实时备份成为可能，
+        这样，如果其中一台节点失效，服务可以不被中断继续运行。</p>
 
 <li>负载均衡</li>
     <p>如果数据库进行了复制（可能运行在复制模式或者主备模式下），
-    	则在任何一台服务器中执行一个 SELECT 查询将返回相同的结果。
-    	pgpool-II 利用了复制的功能以降低每台 PostgreSQL 服务器的负载。
-    	它通过分发 SELECT 查询到所有可用的服务器中，增强了系统的整体吞吐量。
-    	在理想的情况下，读性能应该和 PostgreSQL 服务器的数量成正比。
-    	负载均很功能在有大量用户同时执行很多只读查询的场景中工作的效果最好。</p>
+        则在任何一台服务器中执行一个 SELECT 查询将返回相同的结果。
+        pgpool-II 利用了复制的功能以降低每台 PostgreSQL 服务器的负载。
+        它通过分发 SELECT 查询到所有可用的服务器中，增强了系统的整体吞吐量。
+        在理想的情况下，读性能应该和 PostgreSQL 服务器的数量成正比。
+        负载均很功能在有大量用户同时执行很多只读查询的场景中工作的效果最好。</p>
 
 <li>限制超过限度的连接</li>
     <p>PostgreSQL 会限制当前的最大连接数，当到达这个数量时，新的连接将被拒绝。
-    	增加这个最大连接数会增加资源消耗并且对系统的全局性能有一定的负面影响。
-    	pgpoo-II 也支持限制最大连接数，但它的做法是将连接放入队列，而不是立即返回一个错误。</p>
+        增加这个最大连接数会增加资源消耗并且对系统的全局性能有一定的负面影响。
+        pgpoo-II 也支持限制最大连接数，但它的做法是将连接放入队列，而不是立即返回一个错误。</p>
 
 <li>并行查询</li>
+    <p class="version_notice">
+    <em class="caution">不赞成使用</em> :
+   本模块不赞成继续使用，并将在将来的版本中移除（可能在 3.5 版本）。
+    </p>
     <p>使用并行查询时，数据可以被分割到多台服务器上，
-    	所以一个查询可以在多台服务器上同时执行，以减少总体执行时间。
-    	并行查询在查询大规模数据的时候非常有效。</p>
+        所以一个查询可以在多台服务器上同时执行，以减少总体执行时间。
+        并行查询在查询大规模数据的时候非常有效。</p>
 
 </ul>
 </p>
 
 <p>pgpool-II 使用 PostgreSQL 的前后台程序之间的协议，并且在前后台之间传递消息。
-	因此，一个（前端的）数据库应用程序认为 pgpool-II 就是实际的 PostgreSQL 数据库，
-	而后端的服务进程则认为 pgpool-II 是它的一个客户端。
-	因为 pgpool-II 对于服务器和客户端来说是透明的，
-	现有的数据库应用程序基本上可以不需要修改就可以使用 pgpool-II 了。</p>
+    因此，一个（前端的）数据库应用程序认为 pgpool-II 就是实际的 PostgreSQL 数据库，
+    而后端的服务进程则认为 pgpool-II 是它的一个客户端。
+    因为 pgpool-II 对于服务器和客户端来说是透明的，
+    现有的数据库应用程序基本上可以不需要修改就可以使用 pgpool-II 了。</p>
 
 <p>
 <strong>通过 pgpool-II 使用 SQL 有一些限制条件。参考 <a href="#restriction">限制</a> 获得详细信息。</strong>
@@ -112,9 +116,9 @@ Last modified: Wed Jun 29 09:50:01 JST 2011
 
 <h1>许可协议<a name="license"></a></h1>
 
+<p>版权所有 (c) 2003-2013 PgPool 全球开发小组</p>
+<p><br></p>
 <p>
-版权所有 (c) 2003-2013 PgPool 全球开发小组
-
 授权出于任何目的任意使用、拷贝、修改和分发本软件以及文档，
 但必须在所有软件拷贝的支持文档中提供以上的版权信息，包括版权通知和许可，
 并且在没有事先明确的书面授权前，作者的名字不能用于发布软件的广告和宣传。
@@ -122,23 +126,23 @@ Last modified: Wed Jun 29 09:50:01 JST 2011
 本软件以“现状”来提供，不提供任何明文或暗示的保证。
 </p>
 
-<p class="top_link"><a href="#Top">back to top</a></p>
+<p class="top_link"><a href="#Top">返回顶部</a></p>
 
 <!-- ================================================================================ -->
 
 <h1>支持的平台<a name="platform"></a></h1>
 
 <p>pgpool-II 可以运行在 Linux，Solaris，FreeBSD 以及基本上所有的类 UNIX 架构的平台上。
-	不支持 Windows。支持 6.4 以上版本的 PostgreSQL 服务器。
-	然而，如果要使用并行查询功能，需要 7.4 或更高版本。</p>
+    不支持 Windows。支持 6.4 以上版本的 PostgreSQL 服务器。
+    然而，如果要使用并行查询功能，需要 7.4 或更高版本。</p>
 
 <p>如果你在使用 7.3 或者更老版本的 PostgreSQL，一些 pgpool-II 的功能将无法使用。
-	但无论如何你不应该还在用这么老的版本了。</p>
+    但无论如何你不应该还在用这么老的版本了。</p>
 
 <p>你还要确保你所有的 PostgreSQL 服务器运行相同主版本号的 PostgreSQL 程序。另外，如果你想要使用在线恢复，硬件架构和操作系统必须一致。
-	另外，我们不推荐在使用不同编译参数编译的 PostgreSQL：包括是否支持 SSL，是否使用了 --disable-integer-datetimes 参数或者不同的块大小。
-	这些可能对 pgpool-II 的部分功能有影响。
-	通常情况下，小版本号不同没有什么影响。但是我们没有针对小版本的区别做全面测试，因此我们建议还是使用相同的版本的 PostgreSQL。</p>
+    另外，我们不推荐在使用不同编译参数编译的 PostgreSQL：包括是否支持 SSL，是否使用了 --disable-integer-datetimes 参数或者不同的块大小。
+    这些可能对 pgpool-II 的部分功能有影响。
+    通常情况下，小版本号不同没有什么影响。但是我们没有针对小版本的区别做全面测试，因此我们建议还是使用相同的版本的 PostgreSQL。</p>
 
 <p class="top_link"><a href="#Top">返回顶部</a></p>
 
@@ -158,9 +162,10 @@ pgpool-II 可以在 <a href="http://pgpool.net/">pgpool 开发页面</a>下载�
 </p>
 
 <p>从源码安装 pgpool-II 需要 2.9 甚至或更高版本的 gcc，以及 GNU make。
-	而且，pgpool-II 需要链接到 libpq 库，所以在构建 pgpool-II 的机器上必须安装 libpq 库和它的开发头文件。
-	另外，还需要 OpenSSL 库和它的头文件以便在 pgpool-II 中提供 OpenSSL 支持。</p>
+    而且，pgpool-II 需要链接到 libpq 库，所以在构建 pgpool-II 的机器上必须安装 libpq 库和它的开发头文件。
+    另外，还需要 OpenSSL 库和它的头文件以便在 pgpool-II 中提供 OpenSSL 支持。</p>
 
+<h2 id="install_pgpool">Installing pgpool-II</h2>
 <dl>
 <dt>configure</dt>
     <dd>
@@ -199,65 +204,105 @@ make install
     这将安装 install pgpool-II. （如果你使用的是 Solaris 或 FreeBSD，需要用 gmake 替换 make ）
     </p>
     </dd>
-
-<dt>安装 pgpool_regclass <span class="version">V3.0 -</span></dt>
-    <dd>
-    <p>
-    如果你在使用 PostgreSQL 8.0 或之后的版本，强烈推荐在需要访问的 PostgreSQL
-    中安装 pgpool_regclass 函数，因为它被 pgpool-II 内部使用。
-    如果不这样做，在不同的 schema 中处理相同的表名会出现问题（临时表不会出问题）。
-    </p>
-<pre>
-cd pgpool-II-x.x.x/sql/pgpool-regclass
-make
-make install
-</pre>
-		</p>
-		<p>
-在这之后：
-		<p>
-<pre>
-psql -f pgpool-regclass.sql template1
-</pre>
-		</p>
-		<p>
-或者
-		<p>
-<pre>
-psql template1
-CREATE EXTENSION pgpool_regclass;
-</pre>
-</p>
-    <p>
-    应在每台通过 pgpool-II 访问的数据库中执行 pgpool-regclass.sql 或者 CREATE EXTENSION。
-    你不需要在你执行“psql -f pgpool-regclass.sql template1” 或者 CREATE EXTENSION 后建立的数据库中这么做，
-    因为这个模板数据库将被克隆成新建的数据库。
-    </p>
-    </dd>
-<dt>建立 insert_lock 表<span class="version">V3.0 -</span></dt>
-    <dd>
-    <p>
-    如果你在复制模式中使用了 insert_lock ，强烈推荐建立 pgpool_catalog.insert_lock 表，用于互斥。
-    到现在为止，insert_lock 还能够工作。但是，在这种情况下，pgpool-II 需要锁定插入的目标表。
-    这种行为和 pgpool-II 2.2 和 2.3 系列类似。由于表锁与 VACUUM 冲突，所以 INSERT 操作可能因而等待很长时间。
-    </p>
-    
-<pre>
-cd pgpool-II-x.x.x/sql
-psql -f insert_lock.sql template1
-</pre>
-    <p>
-    应在在每台通过 pgpool-II 访问的数据库中执行 insert_lock.sql。
-    你不需要在你执行“psql -f insert_lock.sql template1”后建立的数据库中这么做，
-    因为这个模板数据库将被克隆成新建的数据库。
-    </p>
-    </dd>
 </dl>
 
+<h2 id="install_functions">安装必须的函数</h2>
+
+<h3>安装 pgpool_regclass （推荐）<span class="version">V3.0 -</span></h3>
 <p>
-安装过程至此完成。如果你是使用 Solaris 或者 FreeBSD，
-你需要在以上的描述中用 “gmake” 代替 “make”，因为这些操作系统需要 GNU make。
+如果你在使用 PostgreSQL 8.0 或之后的版本，强烈推荐在需要访问的 PostgreSQL
+中安装 pgpool_regclass 函数，因为它被 pgpool-II 内部使用。
+如果不这样做，在不同的 schema 中处理相同的表名会出现问题（临时表不会出问题）。
 </p>
+
+<pre>
+$ cd pgpool-II-x.x.x/sql/pgpool-regclass
+$ make
+$ make install
+</pre>
+
+<p>在这之后：<p>
+<pre>
+$ psql -f pgpool-regclass.sql template1
+</pre>
+
+<p>或者<p>
+
+<pre>
+$ psql template1
+=# CREATE EXTENSION pgpool_regclass;
+</pre>
+</p>
+<p>
+应在每台通过 pgpool-II 访问的数据库中执行 pgpool-regclass.sql 或者 CREATE EXTENSION。
+你不需要在你执行“psql -f pgpool-regclass.sql template1” 或者 CREATE EXTENSION 后建立的数据库中这么做，
+因为这个模板数据库将被克隆成新建的数据库。
+</p>
+
+<h3>建立 insert_lock 表<span class="version">V3.0 -</span></h3>
+<p>
+如果你在复制模式中使用了 insert_lock ，强烈推荐建立 pgpool_catalog.insert_lock 表，用于互斥。
+到现在为止，insert_lock 还能够工作。但是，在这种情况下，pgpool-II 需要锁定插入的目标表。
+这种行为和 pgpool-II 2.2 和 2.3 系列类似。由于表锁与 VACUUM 冲突，所以 INSERT 操作可能因而等待很长时间。
+</p>
+    
+<pre>
+$ cd pgpool-II-x.x.x/sql
+$ psql -f insert_lock.sql template1
+</pre>
+
+<p>
+应在在每台通过 pgpool-II 访问的数据库中执行 insert_lock.sql。
+你不需要在你执行“<code>psql -f insert_lock.sql template1</code>”后建立的数据库中这么做，
+因为这个模板数据库将被克隆成新建的数据库。
+</p>
+
+<h3>安装 pgpool_recovery</h3>
+
+<p>如果你使用 <a href="#online_recovery_in_stream_mode">在线回复</a>，需要以下一些函数：
+pgpool_recovery, pgpool_remote_start, pgpool_switch_xlog。</p>
+<p>另外，附带工具pgpoolAdmin 控制 pgpool-II 启停和重新连接后端的 PostgreSQL 节点，
+它需要函数 pgpool_pgctl。</p>
+<p>
+而且 pgpoolAdmin 需要函数 pgpool_pgctl 来对 PostgreSQL 进行停止/重启/重新加载参数操作。
+</p>
+<p>
+可以使用和安装 pgpool_regclass 一样的方法安装着四个函数。
+不过和 pgpool_regclass 不同的是，你只需要在 template1 数据库中安装这些函数。
+</p>
+
+<p>以下是安装这些函数的方法</p>
+<p>
+<pre>
+$ cd pgpool-II-x.x.x/sql/pgpool-recovery
+$ make
+$ make install
+</pre>
+
+<p>After this:<p>
+<pre>
+$ psql -f pgpool-recovery.sql template1
+</pre>
+
+<p>or<p>
+
+<pre>
+$ psql template1
+=# CREATE EXTENSION pgpool_recovery;
+</pre>
+</p>
+
+<h4>配置 pgpool.pg_ctl <span class="version">V3.3 -</span></h4>
+
+<p>函数 pgpool_pgctl 执行 postgresql.conf 中 "pgpool.pg_ctl" 指定的命令。
+要使用这个函数，你必须指定这个参数。</p>
+<pre>
+ex)
+$ cat &gt;&gt; /usr/local/pgsql/postgresql.conf
+pgpool.pg_ctl = '/usr/local/pgsql/bin/pg_ctl'
+
+$ pg_ctl reload -D /usr/local/pgsql/data
+</pre>
 
 <p class="top_link"><a href="#Top">返回顶部</a></p>
 
@@ -265,8 +310,10 @@ psql -f insert_lock.sql template1
 
 <h1>配置 pgpool-II<a name="config"></a></h1>
 
-<p>pgpool-II 的默认配置文件为 <code>/usr/local/etc/pgpool.conf</code> 和
-<code>/usr/local/etc/pcp.conf</code>。pgpool-II 中有很多操作模式。
+<p>pgpool-II 的默认配置文件为
+<code>/usr/local/etc/pgpool.conf</code> 和
+<code>/usr/local/etc/pcp.conf</code>。
+pgpool-II 中有很多操作模式。
 每种模式都有相关的可被开启或者禁用的功能，而且有相关的配置项用于控制它们的行为。</p>
 
 <table border>
@@ -346,10 +393,12 @@ psql -f insert_lock.sql template1
 </table>
 
 <ul>
- <li> O 意味着“可用”， X 意味着“不可用
- <li>(*1) 并行查询模式需要同时打开复制和负载均衡，但是复制和负载均衡无法用于并行查询模式中的分布式表。
- <li>(*2) 在线恢复可以和流复制同时使用。
- <li>(*3) 客户端仅仅是通过 pgpool-II 连接到 PostgreSQL 服务器。这种模式仅仅用于限制到服务器的连接数，或者在多台机器上启用故障恢复。
+    <li> O 意味着“可用”， X 意味着“不可用
+    <li>(*1) 并行查询模式需要同时打开复制和负载均衡，
+        但是复制和负载均衡无法用于并行查询模式中的分布式表。
+    <li>(*2) 在线恢复可以和流复制同时使用。
+    <li>(*3) 客户端仅仅是通过 pgpool-II 连接到 PostgreSQL 服务器。
+        这种模式仅仅用于限制到服务器的连接数，或者在多台机器上启用故障恢复。
 </ul>
 
 <h2 id="pcp_conf">配置 <code>pcp.conf</code></h2>
@@ -369,7 +418,8 @@ cp $prefix/etc/pcp.conf.sample $prefix/etc/pcp.conf
 username:[password encrypted in md5]
 </pre>
 <p>
-<code>[password encrypted in md5]</code> 可以通过 <code>$prefix/bin/pg_md5</code> 命令生成。
+<code>[password encrypted in md5]</code> 可以通过
+<code>$prefix/bin/pg_md5</code> 命令生成。
 </p>
 
 <pre>
@@ -386,9 +436,11 @@ acbd18db4cc2f85cedef654fccc4a4d8
 <p>
 <code>pcp.conf</code> 对于运行 pgpool-II 的用户必须可读。</p>
 
-<h2>配置 <code>pgpool.conf</code></h2>
+<h2 id="pgpool_conf">配置 <code>pgpool.conf</code></h2>
 
-<p>就像之前说的，每种操作模式在 <code>pgpool.conf</code> 文件中有它对应的配置项。一个 <code>$prefix/etc/pgpool.conf.sample</code> 文件在 pgpool-II 安装时已经被创建。重命名这个文件为 <code>pgpool.conf</code> 并修改它的内容。
+<p>就像之前说的，每种操作模式在 <code>pgpool.conf</code> 文件中有它对应的配置项。
+一个 <code>$prefix/etc/pgpool.conf.sample</code> 文件在 pgpool-II 安装时已经被创建。
+重命名这个文件为 <code>pgpool.conf</code> 并修改它的内容。
 </p>
 
 <pre>
@@ -428,32 +480,67 @@ cp $prefix/etc/pgpool.conf.sample $prefix/etc/pgpool.conf
 <h3>连接</h3>
 
 <dl>
-  <dt><a name="LISTEN_ADDRESS"></a>listen_addresses</dt>
-  <dd>
-      <p>指定 pgpool-II 将接受 TCP/IP 连接的主机名或者IP地址。<code>'*'</code> 将接受所有的连接。<code>''</code> 将禁用 TCP/IP 连接。默认为 <code>'localhost'</code>。总是支持接受通过 UNIX 域套接字发起的连接。需要重启 pgpool-II 以使改动生效。</p>
+<dt><a name="LISTEN_ADDRESS"></a>listen_addresses</dt>
+    <dd>
+    <p>指定 pgpool-II 将接受 TCP/IP 连接的主机名或者IP地址。
+    <code>'*'</code> 将接受所有的连接。<code>''</code> 将禁用 TCP/IP 连接。
+    默认为 <code>'localhost'</code>。总是支持接受通过 UNIX 域套接字发起的连接。
+    </p>
+    <p>
+    需要重启 pgpool-II 以使改动生效。
+    </p>
   </dd>
+
+<dt><a name="PORT"></a>port</dt>
+    <dd>
+    <p>pgpool-II 监听 TCP/IP 连接的端口号。默认为 9999。
+    </p>
+    <p>
+    需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
+
+<dt><a name="SOCKET_DIR"></a>socket_dir</dt>
+    <dd>
+    <p>pgpool-II 建立用于建立接受 UNIX 域套接字连接的目录。
+    默认为 <code>'/tmp'</code>。注意，这个套接字可能被 cron 任务删除。
+    我们建议设置这个值为 <code>'/var/run'</code> 或类似目录。
+    </p>
+    <p>
+    需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
+
+<dt><a name="PCP_LISTEN_ADDRESS"></a>pcp_listen_addresses</dt>
+    <dd>
+    <p>指定 pcp 进程接收 TCP/IP 连接的主机名或IP地址。
+        <code>'*'</code> 接收所有的连接。<code>''</code> 禁用 TCP/IP 连接。
+        默认为 <code>'*'</code>。总是允许使用 UNIX 域套接字进行连接。
+    </p>
+    <p>
+    本参数必须在服务启动前设置。
+    </p>
+    </dd>
+    
+<dt><a name="PCP_PORT"></a>pcp_port</dt>
+    <dd>
+    <p>PCP 进程接受连接的端口号。默认为 9898。
+    </p>
+    <p>本参数必须在服务启动前设置。
+    </p>
+    </dd>
+
+<dt><a name="PCP_SOCKET_DIR"></a>pcp_socket_dir</dt>
+    <dd>
+    <p>PCP 进程用于建立接受 UNIX 域套接字连接的目录。
+    默认为 <code>'/tmp'</code>。注意，这个套接字可能被 cron 任务删除。
+    我们建议设置这个值为 <code>'/var/run'</code> 或类似目录。
+    </p>
+    <p>
+    需要重启 pgpool-II 以使改动生效。</p>
+    </dd>
       
-  <dt><a name="PORT"></a>port</dt>
-  <dd>
-      <p>pgpool-II 监听 TCP/IP 连接的端口号。默认为 9999。需要重启 pgpool-II 以使改动生效。</p>
-  </dd>
-
-  <dt><a name="SOCKET_DIR"></a>socket_dir</dt>
-  <dd>
-      <p>pgpool-II 建立用于建立接受 UNIX 域套接字连接的目录。默认为 <code>'/tmp'</code>。注意，这个套接字可能被 cron 任务删除。我们建议设置这个值为 <code>'/var/run'</code> 或类似目录。需要重启 pgpool-II 以使改动生效。</p>
-  </dd>
-
-  <dt><a name="PCP_PORT"></a>pcp_port</dt>
-  <dd>
-      <p>PCP 进程接受连接的端口号。默认为 9898。本参数必须在服务器启动前设置。</p>
-  </dd>
-
-  <dt><a name="PCP_SOCKET_DIR"></a>pcp_socket_dir</dt>
-  <dd>
-      <p>PCP 进程用于建立接受 UNIX 域套接字连接的目录。默认为 <code>'/tmp'</code>。注意，这个套接字可能被 cron 任务删除。我们建议设置这个值为 <code>'/var/run'</code> 或类似目录。需要重启 pgpool-II 以使改动生效。</p>
-  </dd>
-      
-  <dt><a name="BACKEND_SOCKET_DIR"></a>backend_socket_dir<span class="version">- V3.0</span></dt>
+<dt><a name="BACKEND_SOCKET_DIR"></a>backend_socket_dir<span class="version">- V3.0</span></dt>
     <dd>
     <p class="version_notice">
     <em class="caution">不推荐使用</em> :
@@ -463,51 +550,120 @@ cp $prefix/etc/pgpool.conf.sample $prefix/etc/pgpool.conf
       默认为 <code>'/tmp'</code>.
     </p>
     <p>
-    本参数必须在服务器启动前设置。</p>
+    本参数必须在服务启动前设置。</p>
     </dd>
 </dl>
 
 <h3>池</h3>
 
 <dl>
-  <dt><a name="NUM_INIT_CHILDREN"></a>num_init_children</dt>
-  <dd>
-      <p>预先生成的 pgpool-II 服务进程数。默认为 32。num_init_children 也是 pgpool-II 支持的从客户端发起的最大并发连接数。如果超过 num_init_children 数的客户端尝试连接到 pgpool-II，它们将被阻塞（而不是拒绝连接），直到到任何一个 pgpool-II 进程的连接被关闭为止。最多有 2*num_init_children 可以被放入等待队列。</p>
-      
-	  <p>对于以上内容的一些提示：</p>
-	   <p>
-	   <ul>
-		<li>取消一个执行中的查询将导致建立另一个到后端的连接；因此，如果所有的连接都在使用，则查询无法被取消。如果你想确保查询可以被取消，设置本值为预期最大连接数的两倍。</li>
-		<li>PostgreSQL 允许最多 max_connections - superuser_reserved_connections 个非超级用户的并发连接。</li>
-	   </ul>
-	   </p>
-	   <p>归纳起来，max_pool，num_init_children，max_connections 和 superuser_reserved_connections 必须符合以下规则：
-	   </p>
-	   <p>
-	   <pre>
-max_pool*num_init_children <= (max_connections - superuser_reserved_connections) （不需要取消查询）
-max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connections) （需要取消查询）</pre>
-	   <p>
-	   	本参数必须在服务器启动前设置。
-       </p>
-	   </dd>
+<dt><a name="NUM_INIT_CHILDREN"></a>num_init_children</dt>
+    <dd>
+        <p>预生成的 pgpool-II 服务进程数。默认为 32。
+        num_init_children 也是 pgpool-II 支持的从客户端发起的最大并发连接数。
+        如果超过 num_init_children 数的客户端尝试连接到 pgpool-II，它们将被阻塞（而不是拒绝连接），
+        直到到任何一个 pgpool-II 进程的连接被关闭为止。
+        最多有 2*num_init_children 可以被放入等待队列。
+        </p>
+        <p>
+        这个队列存在于操作系统内核中，名为 "监听队列(listen queue)"。监听队列的长度被称为 "积压(backlog)"。
+        一些系统中有对积压的上限限制，如果 num_init_children*listen_backlog_multiplier 达到这个数值，你需要将积压值设置得更高点。否则，在高负载的系统中可能发生以下问题：1) 连接到 pgpool-II 失败 2) 连接到 pgpool-II 的时间变长，因为内核中存在一些限制。
+        你可以使用命令 "netstat -s" 检查监听队列是不是发生过溢出。
+        如果你发现类似于以下的：
+		</p>
+		<pre>
+535 times the listen queue of a socket overflowed
+		</pre>
+		</p>
+		<p>
+那么很明显监听队列溢出了。
+        这种情况下你需要增加积压(backlog)值（需要管理员权限）。
+        </p>
+        <p>
+        <pre>
+# sysctl net.core.somaxconn
+net.core.somaxconn = 128
+# sysctl -w net.core.somaxconn = 256
+		</pre>
+		</p>
+		<p>
+你也可以添加以下语句到 /etc/sysctl.conf 中。
+		</p>
+		<p>
+		<pre>
+net.core.somaxconn = 256
+		</pre>
+    </p>
+		<p>
+    到每个 PostgreSQL 的连接数大约为 max_pool*num_init_children</p>
 
-  <dt><a name="CHILD_LIFE_TIME"></a>child_life_time</dt>
-  <dd>
-      <p>pgpool-II 子进程的生命周期，单位为秒。如果子进程空闲了这么多秒，它将被终止，一个新的子进程将被创建。这个参数是用于应对内存泄露和其他不可预料错误的一个措施。默认值为 300 （5分钟）。0 将禁用本功能。注意它不影响尚未接受任何连接的进程。如果改变了这个值，你需要重新加载 pgpool.conf 以使变动生效。
-      </p>
-  </dd>
+    <p>对于以上内容的一些提示：</p>
+    <ul>
+        <li>取消一个执行中的查询将导致建立另一个到后端的连接；因此，如果所有的连接都在使用，
+            则查询无法被取消。如果你想确保查询可以被取消，设置本值为预期最大连接数的两倍。</li>
+
+        <li>PostgreSQL 允许最多 max_connections - superuser_reserved_connections
+            个非超级用户的并发连接。</li>
+    </ul>
+
+    <p>归纳起来，max_pool，num_init_children，max_connections
+        和 superuser_reserved_connections 必须符合以下规则： 
+    </p>
+<pre>
+max_pool*num_init_children &lt;= (max_connections - superuser_reserved_connections) (不需要取消查询)
+max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connections) (需要取消查询)
+</pre>
+
+    <p>
+    本参数必须在服务器启动前设置。</p>
+    </dd>
+
+<dt><a name="LISTEN_BACKLOG_MULTIPLIERE"></a>listen_backlog_multiplier <span class="version">V3.4 -</span></dt>
+    <dd>
+        <p>
+        控制前端到 pgpool-II 的连接队列的长度。默认值为 2。
+        队列长度（实际上是系统调用 listen 的 "backlog" 参数）由 listen_backlog_multiplier * num_init_children 定义。
+        如果这个队列不够长，你应该增加这个参数。
+        有一些系统会限制 listen 系统调用的 backlog 参数的上限。
+        参考 <a href="#NUM_INIT_CHILDREN">num_init_children</a> 获取详细信息。
+        </p>
+        <p>
+        本参数必须在服务启动前设置。</p>
+    </dd>
+
+<dt><a name="CHILD_LIFE_TIME"></a>child_life_time</dt>
+    <dd>
+    <p>pgpool-II 子进程的生命周期，单位为秒。
+    如果子进程空闲了这么多秒，它将被终止，一个新的子进程将被创建。
+    这个参数是用于应对内存泄露和其他不可预料错误的一个措施。默认值为 300 （5分钟）。
+    0 将禁用本功能。注意它不影响尚未接受任何连接的进程。
+    </p>
+    <p>
+    如果改变了这个值，你需要重新加载 pgpool.conf 以使变动生效。
+    </p>
+    </dd>
 
 <dt><a name="CHILD_MAX_CONNECTIONS"></a>child_max_connections</dt>
-  <dd>
-      <p>当 pgpool-II 子进程处理这么多个客户端连接后，它将被终止。这个参数在繁忙到 child_life_time 和 connection_life_time 永远不会触发的服务器上有效。如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
-      </p>
-  </dd>
+    <dd>
+    <p>当 pgpool-II 子进程处理这么多个客户端连接后，它将被终止。
+    这个参数在繁忙到 <a href=#CHILD_LIFE_TIME">child_life_time</a> 和
+    <a href="#CONNECTION_LIFE_TIME">connection_life_time</a> 永远不会触发的服务器上有效。
+    </p>
+    <p>
+    如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    </p>
+    </dd>
 
 <dt><a name="CLIENT_IDLE_LIMIT"></a>client_idle_limit</dt>
-  <dd>
-  <p>当一个客户端在执行最后一条查询后如果空闲到了 client_idle_limit 秒数，到这个客户端的连接将被断开。这在避免 pgpool 子进程被懒客户端占用或者探测断开的客户端和 pgpool 之间的 TCP/IP 连接非常有用。如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
-	</p>
+    <dd>
+    <p>当一个客户端在执行最后一条查询后如果空闲到了 client_idle_limit 秒数，
+      到这个客户端的连接将被断开。
+      这在避免 pgpool 子进程被懒客户端占用或者探测断开的客户端和 pgpool 之间的 TCP/IP 连接非常有用。
+    </p>
+    <p>
+      如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    </p>
+    </dd>
 
 <dt><a name="ENABLE_POOL_HBA"></a>enable_pool_hba</dt>
     <dd>
@@ -532,148 +688,297 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
     </dd>
 
 <dt><a name="AUTHENTICATION_TIMEOUT"></a>authentication_timeout</dt>
-  <dd>
-  <p>指定 pgpool 认证超时的时长。0 指禁用超时，默认值为 60 。如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
-  </p>
+    <dd>
+    <p>指定 pgpool 认证超时的时长。0 指禁用超时，默认值为 60 。
+    </p>
+    <p>
+    如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    </p>
+    </dd>
 </dl>
 
 <h3>日志</h3>
 
 <dl>
-  <dt><a name="LOG_DESTINATION"></a>log_destination <span class="version">V3.1 -</span></dt>
-  <dd>
-      <p>pgpool-II 支持多种记录服务器消息的方式，包括 stderr 和 syslog。默认为记录到 stderr。
-      </p>
-      <p>注：要使用syslog 作为 log_destination 的选项，你将需要更改你系统的 syslog 守护进程的配置。pgpool-II 可以记录到 syslog 设备 LOCAL0 到 LOCAL7 （参考 syslog_facility），
-      	但是大部分平台的默认的 syslog 配置将忽略这些消息。你需要添加如下一些内容
-	</p>
-	<pre>
-	local0.*    /var/log/pgpool.log	</pre>
-      <p>到 syslog 守护进程的配置文件以使它生效。
-	</p>
-  </dd>
-
-  <dt><a name="PRINT_TIMESTAMP"></a>print_timestamp</dt>
-  <dd>
-      <p>如果本值被设置为 true ，则将在日志中添加时间戳。默认值为 true。如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
-      </p>
-  </dd>
-
-  <dt><a name="LOG_CONNECTIONS"></a>log_connections</dt>
-  <dd>
-    <p>如果为 true，进入的连接将被打印到日志中。如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+<dt><a name="LOG_DESTINATION"></a>log_destination <span class="version">V3.1 -</span></dt>
+    <dd>
+    <p>pgpool-II 支持多种记录服务器消息的方式，包括 stderr 和 syslog。默认为记录到 stderr。
     </p>
-  </dd>
-
-  <dt><a name="LOG_HOSTNAME"></a>log_hostname</dt>
-  <dd>
-    <p>如果为 true，ps 命令将显示客户端的主机名而不是 IP 地址。而且，如果 log_connections 被开启，也会将主机名写入日志。如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    <p>注：要使用syslog 作为 log_destination 的选项，你将需要更改你系统的 syslog 守护进程的配置。
+    pgpool-II 可以记录到 syslog 设备 LOCAL0 到 LOCAL7 （参考 syslog_facility），
+    但是大部分平台的默认的 syslog 配置将忽略这些消息。你需要添加如下一些内容
     </p>
-  </dd>
+<pre>
+local0.*    /var/log/pgpool.log
+</pre>
+      <p>到 syslog 守护进程的配置文件以使它生效。</p>
+    </dd>
 
-  <dt><a name="LOG_STATEMENT"></a>log_statement</dt>
-  <dd>
-      <p>当设置为 true 时生成 SQL 日志消息。这类似于 PostgreSQL 中的 log_statement 参数。即使调试选项没有在启动的时候传递到 pgpool-II，它也会产生日志。</p>
-  </dd>
+<dt><a name="PRINT_TIMESTAMP"></a>print_timestamp <span class="version">- V3.4 (REMOVED)</span></dt>
+    <dd>
+    <p>
+    如果本值被设置为 true ，则将在日志中添加时间戳。默认值为 true。
+    </p>
+    <p>
+    如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    </p>
+    </dd>
 
-  <dt><a name="LOG_PER_NODE_STATEMENT"></a>log_per_node_statement <span class="version">V2.3 -</span></dt>
-  <dd>
-      <p>类似于 log_statement，除了它是针对每个 DB 节点产生日志外。例如它对于确定复制是否正常运行非常有用。如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
-       </p>
-  </dd>
+<dt><a name="PRINT_USER"></a>print_user <span class="version">- V3.4 (REMOVED)</span></dt>
+    <dd>
+    <p>如果本值被设置为 true，则将在日志中添加会话的用户名。默认为 false。
+    </p>
+    <p>
+    如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    </p>
+    </dd>
+
+	<dt><a name="LOG_LINE_PREFIX"></a>log_line_prefix</dt>
+	<dd>
+	<p>
+    这是输出到每行日志开头的打印样式字符串。
+    % 字符开始的 "转义序列" 将被下表的内容替换。
+    所有不支持的转义将被忽略。其他的字符串将直接拷贝到日志行中。
+
+    默认值为 '%t: pid %p: '，即打印时间戳和进程好，
+    这将与 3.4 之前的版本保持兼容。
+	</p>
+	<table border>
+	<tr class="header"><th>转义字符</th><th>效果</th></tr>
+	<tr><td>%a</td><td>客户端应用程序名</td></tr>
+	<tr><td>%p</td><td>进程号 (PID)</td></tr>
+	<tr><td>%P</td><td>进程名</td></tr>
+	<tr><td>%t</td><td>时间戳</td></tr>
+	<tr><td>%d</td><td>数据库名</td></tr>
+	<tr><td>%u</td><td>用户名</td></tr>
+	<tr><td>%l</td><td>为每个进程记录行号</td></tr>
+	<tr><td>%%</td><td>'%' 字符</td></tr>
+	</table>
+	<p>
+    如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+	</p>
+	</dd>
+
+<dt><a name="LOG_ERROR_VERBOSITY"></a>log_error_verbosity</dt>
+    <dd>
+    <p>
+    控制记录的日支消息的详细程度。有效的取值包括 TERSE、DEFAULT 和 VERBOSE，每个都会增加显示的消息内容。
+    TERSE 不包括记录 DETAIL、HINT 以及 CONTEXT 错误信息。
+    </p>
+    <p>
+    如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    </p>
+    </dd>
+
+<dt><a name="LOG_CONNECTIONS"></a>log_connections</dt>
+    <dd>
+    <p>
+    如果为 true，进入的连接将被打印到日志中。
+    </p>
+    <p>
+    如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    </p>
+    </dd>
+
+<dt><a name="CLIENT_MIN_MESSAGES"></a>client_min_messages</dt>
+    <dd>
+    <p>
+    控制哪个最小级别的消息被发送到客户端。
+    可用的值为 DEBUG5、DEBUG4、DEBUG3、DEBUG2、DEBUG1、LOG、NOTICE、
+    WARNING、ERROR、FATAL 以及 PANIC。每个级别包含它后面的级别。
+    默认值为 NOTICE。
+    </p>
+    <p>
+    如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    </p>
+    </dd>
+
+<dt><a name="LOG_MIN_MESSAGES"></a>log_min_messages</dt>
+    <dd>
+    <p>
+    控制哪个最小级别的消息被发送到日志中。
+    可用的值为 DEBUG5、DEBUG4、DEBUG3、DEBUG2、DEBUG1、LOG、NOTICE、
+    WARNING、ERROR、FATAL 以及 PANIC。每个级别包含它后面的级别。
+    默认值为 NOTICE。   
+    </p>
+    <p>
+    如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    </p>
+    </dd>
+
+<dt><a name="LOG_HOSTNAME"></a>log_hostname</dt>
+    <dd>
+    <p>
+    如果为 true，ps 命令将显示客户端的主机名而不是 IP 地址。
+    而且，如果 <a href="#LOG_CONNECTIONS">log_connections</a> 被开启，也会将主机名写入日志。
+    </p>
+    <p>
+    如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    </p>
+    </dd>
+
+<dt><a name="LOG_STATEMENT"></a>log_statement</dt>
+    <dd>
+    <p>当设置为 true 时生成 SQL 日志消息。
+    这类似于 PostgreSQL 中的 log_statement 参数。
+    即使调试选项没有在启动的时候传递到 pgpool-II，它也会产生日志。
+    </p>
+    <p>
+    如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    </p>
+    </dd>
+
+<dt><a name="LOG_PER_NODE_STATEMENT"></a>log_per_node_statement <span class="version">V2.3 -</span></dt>
+    <dd>
+    <p>类似于 <a href="#LOG_PER_NODE_STATEMENT">log_statement</a>，除了它是针对每个 DB 节点产生日志外。例如它对于确定复制是否正常运行非常有用。
+    </p>
+    <p>
+    如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    </p>
+    </dd>
   
-  <dt><a name="SYSLOG_FACILITY"></a>syslog_facility <span class="version">V3.1 -</span></dt>
-  <dd>
-      <p>当记录日志到 syslog 被启用，本参数确定被使用的 syslog “设备”。你可以使用 LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7；默认为 LOCAL0。还请参考你系统的 syslog 守护进程的文档。
-	</p>
-  </dd>
+<dt><a name="SYSLOG_FACILITY"></a>syslog_facility <span class="version">V3.1 -</span></dt>
+    <dd>
+    <p>当记录日志到 syslog 被启用，本参数确定被使用的 syslog “设备”。
+    你可以使用 LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7；
+    默认为 LOCAL0。还请参考你系统的 syslog 守护进程的文档。
+    </p>
+    </dd>
 
-  <dt><a name="SYSLOG_IDENT"></a>syslog_ident <span class="version">V3.1 -</span></dt>
-  <dd>
-      <p>当记录日志到 syslog 被启用，本参数确定用于标记 syslog 中 pgpool-II 消息的程序名。默认为“pgpool”。
-	</p>
-  </dd>
+<dt><a name="SYSLOG_IDENT"></a>syslog_ident <span class="version">V3.1 -</span></dt>
+    <dd>
+    <p>当记录日志到 syslog 被启用，本参数确定用于标记 syslog 中 pgpool-II 消息的程序名。默认为“pgpool”。
+    </p>
+    </dd>
 
-  <dt><a name="DEBUG_LEVEL"></a>debug_level <span class="version">V3.0 -</span></dt>
-  <dd>
-      <p>调试消息详细程度级别。0 表示没有消息。大于 1 表示更详细的消息。默认值为 0。
-      </p>
-  </dd>
+<dt><a name="DEBUG_LEVEL"></a>debug_level <span class="version">V3.0 -</span></dt>
+    <dd>
+    <p>
+    调试消息详细程度级别。0 表示没有消息。大于 1 表示更详细的消息。默认值为 0。
+    </p>
+    </dd>
 </dl>
 
 <h3>文件位置</h3>
 
 <dl>
-  <dt><a name="PID_FILE_NAME"></a>pid_file_name</dt>
-  <dd>
-      <p>到包含 pgpool-II 进程 ID 的文件的完整路径名。默认为 <code>'/var/run/pgpool/pgpool.pid'</code>。需要重启 pgpool-II 以使改动生效。
-       </p>
-  </dd>
-  <dt><a name="LOGDIR"></a>logdir</dt>
-  <dd>
-      <p>保存日志文件的目录。 pgpool_status 将被写入这个目录。
-       </p>
-  </dd>
+<dt><a name="PID_FILE_NAME"></a>pid_file_name</dt>
+    <dd>
+    <p>到包含 pgpool-II 进程 ID 的文件的完整路径名。
+    默认为 <code>'/var/run/pgpool/pgpool.pid'</code>。
+    </p>
+    <p>
+    需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
+
+<dt><a name="LOGDIR"></a>logdir</dt>
+    <dd>
+    <p>保存日志文件的目录。 pgpool_status 将被写入这个目录。</p>
+    </dd>
 </dl>
 
 <h3>连接池</h3>
 
 <dl>
-  <dt><a name="CONNECTION_CACHE"></a>connection_cache</dt>
-  <dd>
-      <p>如果本值被设置为 true，则缓存到 PostgreSQL 的连接。默认为 true。需要重启 pgpool-II 以使改动生效。</p>
-  </dd>
+<dt><a name="CONNECTION_CACHE"></a>connection_cache</dt>
+    <dd>
+    <p>如果本值被设置为 true，则缓存到 PostgreSQL 的连接。默认为 true。
+    </p>
+    <p>
+    需要重启 pgpool-II 以使改动生效。
+    </p>
+    </dd>
 </dl>
 
 <h3>健康检查</h3>
 
 <dl>
-  <dt><a name="HEALTH_CHECK_TIMEOUT"></a>health_check_timeout</dt>
-  <dd>
-      <p>pgpool-II 定期尝试连接到后台以检测服务器是否在服务器或网络上有问题。这种错误检测过程被称为“健康检查”。如果检测到错误，则 pgpool-II 会尝试进行故障恢复或者退化操作。<br>
-      本参数用于避免健康检查在例如网线断开等情况下等待很长时间。超时值的单位为秒。默认值为 20 。0 禁用超时（一直等待到 TCP/IP 超时）。<br>
-      健康检查需要额外的到后端程序的连接，所以 <code>postgresql.conf</code> 中的 <code>max_connections</code> 需要加一。<br>
-      如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
-     </p>
-  </dd>
+<dt><a name="HEALTH_CHECK_TIMEOUT"></a>health_check_timeout</dt>
+    <dd>
+    <p>pgpool-II 定期尝试连接到后台以检测服务器是否在服务器或网络上有问题。
+    这种错误检测过程被称为“健康检查”。如果检测到错误，
+    则 pgpool-II 会尝试进行故障恢复或者退化操作。
+    </p>
+    <p>
+    本参数用于避免健康检查在例如网线断开等情况下等待很长时间。
+    超时值的单位为秒。默认值为 20 。0 禁用超时（一直等待到 TCP/IP 超时）。
+    </p>
+    <p>
+    健康检查需要额外的到后端程序的连接，所以 <code>postgresql.conf</code>
+    中的 <code>max_connections</code> 需要加一。
+    </p>
+    <p>
+    如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    </p>
+    </dd>
 
-  <dt><a name="HEALTH_CHECK_PERIOD"></a>health_check_period</dt>
-  <dd>
-      <p>本参数指出健康检查的间隔，单位为秒。默认值为 0 ，代表禁用健康检查。<br>
-      如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
-       </p>
-  </dd>
+<dt><a name="HEALTH_CHECK_PERIOD"></a>health_check_period</dt>
+    <dd>
+    <p>本参数指出健康检查的间隔，单位为秒。默认值为 0 ，代表禁用健康检查。
+    </p>
+    <p>
+    如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    </p>
+    </dd>
       
 <dt><a name="HEALTH_CHECK_USER"></a>health_check_user</dt>
-  <dd>
-      <p>用于执行健康检查的用户。用户必须存在于 PostgreSQL 后台中。<br>
-      如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
-       </p>
-  </dd>
+    <dd>
+    <p>用于执行健康检查的用户。用户必须存在于 PostgreSQL 后台中。
+    </p>
+    <p>
+    如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    </p>
+    </dd>
 
 <dt><a name="HEALTH_CHECK_PASSWORD"></a>health_check_password <span class="version">V3.1 -</span></dt>
-  <dd>
-      <p>用于执行健康检查的用户的密码。<br>
-      如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
-       </p>
-  </dd>
+    <dd>
+    <p>用于执行健康检查的用户的密码。
+    </p>
+    <p>
+    如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    </p>
+    </dd>
+
 <dt><a name="HEALTH_CHECK_MAX_RETRIES"></a>health_check_max_retries <span class="version">V3.2 -</span></dt>
-  <dd>
-      <p>在执行失效故障切换前尝试的最大失效健康检查次数。这个参数对于网络不稳定的时，健康检查失败但主节点依旧正常的情况下非常有效。默认值为 0，也就是不重试。如果你想启用 health_check_max_retries，建议你禁用 <a href="#FAIL_OVER_ON_BACKEND_ERROR">fail_over_on_backend_error</a>。<br>
-      	如果你改变了 health_check_max_retries，需要重新加载 pgpool.conf。
-      </p>
-  </dd>
+    <dd>
+    <p>在执行失效故障切换前尝试的最大失效健康检查次数。
+    这个参数对于网络不稳定的时，健康检查失败但主节点依旧正常的情况下非常有效。
+    默认值为 0，也就是不重试。如果你想启用 health_check_max_retries，
+    建议你禁用 <a href="#FAIL_OVER_ON_BACKEND_ERROR">fail_over_on_backend_error</a>。
+    </p>
+    <p>
+    如果你改变了 health_check_max_retries，需要重新加载 pgpool.conf。
+    </p>
+    </dd>
 
 <dt><a name="HEALTH_CHECK_RETRY_DELAY"></a>health_check_retry_delay <span class="version">V3.2 -</span></dt>
-  <dd> 
-      <p>失效健康检查重试的间隔时间（单位为秒）（ health_check_max_retries > 0 时有效 ）。如果为 0 则立即重试（不延迟）。<br>
-      如果你改变了 health_check_retry_delay，需要重新加载 pgpool.conf。
-      </p>
-  </dd>
+    <dd> 
+    <p>失效健康检查重试的间隔时间（单位为秒）（ health_check_max_retries > 0 时有效 ）。
+    如果为 0 则立即重试（不延迟）。
+    </p>
+    <p>
+    如果你改变了 health_check_retry_delay，需要重新加载 pgpool.conf。
+    </p>
+    </dd>
+
+<dt><a name="CONNECT_TIMEOUT"></a>connect_timeout <span class="version">V3.4 -</span></dt>
+    <dd>
+    <p>使用 connect() 系统调用时候放弃连接到后端的超时毫秒值。
+    默认为 10000 毫秒（10秒）。网络不稳地的用户可能需要增加这个值。
+    0 表示不允许超时。注意本参数不仅仅用于健康检查，也用于普通连接池的连接。
+    </p>
+    <p>
+    如果你改变了 connect_timeout，需要重新加载 pgpool.conf。
+    </p>
+    </dd>
 
 <dt><a name="SEARCH_PRIMARY_NODE_TIMEOUT"></a>search_primary_node_timeout <span class="version">V3.3 -</span></dt>
     <dd>
-    <p>本参数指定在发生故障切换的时候查找一个主节点的最长时间，单位为秒。默认值为 10。pgpool-II 将在发生故障切换的时候在设置的时间内尝试搜索主节点，如果到达这么长时间未搜索到则放弃搜索。0 表示一直尝试。本参数在流复制模式之外的情况下被忽略。<br>
+    <p>本参数指定在发生故障切换的时候查找一个主节点的最长时间，单位为秒。
+    默认值为 10。pgpool-II 将在发生故障切换的时候在设置的时间内尝试搜索主节点，
+    如果到达这么长时间未搜索到则放弃搜索。0 表示一直尝试。
+    本参数在流复制模式之外的情况下被忽略。
     </p>
     <p>
     如果你改变了 search_primary_node_timeout，需要重新加载 pgpool.conf。
@@ -685,12 +990,13 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
 
 <dl>
 <dt><a name="FAILOVER_COMMAND"></a>failover_command</dt>
-<dd>
-<p>本参数指定当一个节点断开连接时执行的命令。pgpool-II 使用后台对应的信息代替以下的特别字符。
-</p>
+    <dd>
+    <p>本参数指定当一个节点断开连接时执行的命令。
+    pgpool-II 使用后台对应的信息代替以下的特别字符。
+    </p>
 
 
-<table border>
+    <table border>
     <tr><td>特殊字符</td><td>描述</td></tr>
     <tr><td>%d</td><td>断开连接的节点的后台 ID。</td></tr>
     <tr><td>%h</td><td>断开连接的节点的主机名。</td></tr>
@@ -703,24 +1009,26 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
     <tr><td>%r</td><td>新的主节点的端口号。</td></tr>
     <tr><td>%R</td><td>新的主节点的数据库实例所在目录。</td></tr>
     <tr><td>%%</td><td>'%' 字符</td></tr>
-</table>
+    </table>
 
-<p>
-如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
-</p>
+    <p>
+    如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    </p>
 
-<p>
-当进行故障切换时，pgpool 杀掉它的所有子进程，这将顺序终止所有的到 pgpool 的会话。然后，pgpool 调用 failover_command 并等待它完成。然后，pgpool 启动新的子进程并再次开始从客户端接受连接。
-</p>
+    <p>
+    当进行故障切换时，pgpool 杀掉它的所有子进程，这将顺序终止所有的到 pgpool 的会话。
+    然后，pgpool 调用 failover_command 并等待它完成。
+    然后，pgpool 启动新的子进程并再次开始从客户端接受连接。
+    </p>
+    </dd>
 
 <dt><a name="FAILBACK_COMMAND"></a>failback_command</dt>
-<dd>
-<p>
-	本参数指定当一个节点连接时执行的命令。pgpool-II 使用后台对应的信息代替以下的特别字符。
+    <dd>
+    <p>
+    本参数指定当一个节点连接时执行的命令。pgpool-II 使用后台对应的信息代替以下的特别字符。
+    </p>
 
-</p>
-
-<table border>
+    <table border>
     <tr><td>特殊字符</td><td>描述</td></tr>
     <tr><td>%d</td><td>新连接上的节点的后台 ID。</td></tr>
     <tr><td>%h</td><td>新连接上的节点的主机名。</td></tr>
@@ -733,20 +1041,22 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
     <tr><td>%r</td><td>新的主节点的端口号。</td></tr>
     <tr><td>%R</td><td>新的主节点的数据库实例所在目录。</td></tr>
     <tr><td>%%</td><td>'%' 字符</td></tr>
-</table>
+    </table>
 
-<p>
-如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
-</p>
+    <p>
+    如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    </p>
+    </dd>
 
 <dt><a name="FOLLOW_MASTER_COMMAND"></a>follow_master_command <span class="version">V3.1 -</span></dt>
-<dd>
-<p>
-本参数指定一个在主备流复制模式中发生主节点故障恢复后执行的命令。pgpool-II 使用后台对应的信息代替以下的特别字符。
-</p>
+    <dd>
+    <p>
+    本参数指定一个在主备流复制模式中发生主节点故障恢复后执行的命令。
+    pgpool-II 使用后台对应的信息代替以下的特别字符。
+    </p>
 
-<table border>
-    <tr><td>特殊字符</td><td>描述</td></tr>
+    <table border>
+    <tr class="header"><th>特殊字符</th><th>描述</th></tr>
     <tr><td>%d</td><td>断开连接的节点的后台 ID。</td></tr>
     <tr><td>%h</td><td>断开连接的节点的主机名。</td></tr>
     <tr><td>%p</td><td>断开连接的节点的端口号。</td></tr>
@@ -758,84 +1068,119 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
     <tr><td>%r</td><td>新的主节点的端口号。</td></tr>
     <tr><td>%R</td><td>新的主节点的数据库实例所在目录。</td></tr>
     <tr><td>%%</td><td>'%' 字符</td></tr>
-</table>
+    </table>
 
-<p>
-如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
-</p>
+    <p>
+    如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    </p>
 
-<p>
-如果 follow_master_commnd 不为空，当一个主备流复制中的主节点的故障切换完成，pgpool 退化所有的除新的主节点外的所有节点并启动一个新的子进程，再次准备好接受客户端的连接。在这之后，pgpool 针对每个退化的节点运行 ‘follow_master_command’ 指定的命令。通常，这个命令应该用于调用例如 pcp_recovery_node 命令来从新的主节点恢复备节点。
-</p>
+    <p>
+    如果 follow_master_commnd 不为空，当一个主备流复制中的主节点的故障切换完成，
+    pgpool 退化所有的除新的主节点外的所有节点并启动一个新的子进程，
+    再次准备好接受客户端的连接。
+    在这之后，pgpool 针对每个退化的节点运行 ‘follow_master_command’ 指定的命令。
+    通常，这个命令应该用于调用例如 <a href="#pcp_recovery_node">pcp_recovery_node</a> 命令来从新的主节点恢复备节点。
+    </p>
+    </dd>
 
-  <dt><a name="FAIL_OVER_ON_BACKEND_ERROR"></a>fail_over_on_backend_error <span class="version">V2.3 -</span></dt>
-  <dd>
-      <p>
-      	如果为 true，当往后台进程的通信中写入数据时发生错误，pgpool-II 将触发故障处理过程。这和 pgpool-II 2.2.x 甚至以前版本的行为一样。如果设置为 false，则 pgpool 将报告错误并断开该连接。请注意如果设置为 true，当连接到一个后台进程失败或者 pgpool 探测到 postmaster 由于管理原因关闭，pgpool 也会执行故障恢复过程。如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
-</p>
-</dd>
+<dt><a name="FAIL_OVER_ON_BACKEND_ERROR"></a>fail_over_on_backend_error <span class="version">V2.3 -</span></dt>
+    <dd>
+    <p>
+    如果为 true，当往后台进程的通信中写入数据时发生错误，pgpool-II 将触发故障处理过程。
+    这和 pgpool-II 2.2.x 甚至以前版本的行为一样。如果设置为 false，则 pgpool 将报告错误并断开该连接。
+    请注意如果设置为 true，当连接到一个后台进程失败或者 pgpool 探测到 postmaster 由于管理原因关闭，pgpool 也会执行故障恢复过程。
+    </p>
+    <p>
+    如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    </p>
+    </dd>
 </dl>
 
 <h3>负载均衡模式</h3>
 
 <dl>
   <dt><a name="IGNORE_LEADING_WHITE_SPACE"></a>ignore_leading_white_space</dt>
-  <dd>
-      <p>在负载均衡模式中 pgpool-II 忽略 SQL 查询语句前面的空白字符。如果使用类似于 DBI/DBD:Pg 一类的在用户的查询前增加空白的 API 中非常有用。如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。</p>
-  </dd>
+    <dd>
+    <p>在负载均衡模式中 pgpool-II 忽略 SQL 查询语句前面的空白字符。
+        如果使用类似于 DBI/DBD:Pg 一类的在用户的查询前增加空白的 API 中非常有用。
+    </p>
+    <p>
+    如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    </p>
+    </dd>
+  
+      <dt id="ALLOW_SQL_COMMENTS">allow_sql_comments <span class="version">V3.4 -</span></dt>
+    <dd>
+    <p>
+      如果设置为 on，在判断是否负载均衡或查询缓存的时候忽略 SQL 注释。
+      如果设置为 off，SQL 注释会有效地阻止以上的判断（3.4以前版本的行为）。
+    </p>
+    <p>
+    如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
+    </p>
+    </dd>
 </dl>
 
-<h3>后端（PostgreSQL服务器）</h3>
+<h3>后端（PostgreSQL 服务）</h3>
 
 <dl>
-  <dt><a name="BACKEND_HOSTNAME"></a>backend_hostname</dt>
-  <dd>
-      <p>指出连接到 PostgreSQL 后台程序的地址。它用于 pgpool-II 与服务器通信。如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
-      </p>
-      <p>
-      	对于 TCP/IP 通信，本参数可以是一个主机名或者IP地址。如果它是从斜线开始的，它指出是通过 UNIX 域套接字通信，而不是 TCP/IP 协议；它的值为存储套接字文件所在的目录。如果 backend_host 为空，则它的默认行为是通过 <code>/tmp</code> 中的 UNIX 域套接字连接。
-      </p>
-      <p>
-      	可以通过在本参数名的末尾添加一个数字来指定多个后台程序（例如<code>backend_hostname0</code>）。这个数字对应为“数据库节点 ID”，是从 0 开始的正整数。被设置数据库节点ID为 0 的后台程序后台程序将被叫做“主数据库”。当定义了多个后台程序时，即使主数据库当机后依然能继续（某些模式下不行）。在这种情况下，存活的最小的数据库节点编号的数据库将被变成新的主数据库。
-      <p> 请注意有编号为 0 的节点在流复制中没有其他意义。但是，你需要注意数据库节点是不是“主节点”。请参考 <a href="#stream">流复制</a> 获得更多细节。</p>
+<dt><a name="BACKEND_HOSTNAME"></a>backend_hostname</dt>
+    <dd>
+    <p>指出连接到 PostgreSQL 后台程序的地址。它用于 pgpool-II 与服务器通信。如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
     </p>
-      <p>如果你只计划使用一台 PostgreSQL 服务器，可以通过 <code>backend_hostname0</code> 指定。</p>
-      <p>
-      	可以通过配置本参数后重新加载配置文件添加新的节点。但是，对已有的值无法更新，所以这种情况下你必须重启 pgpool-II。
-      </p>
-  </dd>
+    <p>
+    对于 TCP/IP 通信，本参数可以是一个主机名或者IP地址。如果它是从斜线开始的，它指出是通过 UNIX 域套接字通信，而不是 TCP/IP 协议；它的值为存储套接字文件所在的目录。如果 backend_host 为空，则它的默认行为是通过 <code>/tmp</code> 中的 UNIX 域套接字连接。
+    </p>
+    <p>
+    可以通过在本参数名的末尾添加一个数字来指定多个后台程序（例如<code>backend_hostname0</code>）。这个数字对应为“数据库节点 ID”，是从 0 开始的正整数。被设置数据库节点ID为 0 的后台程序后台程序将被叫做“主数据库”。当定义了多个后台程序时，即使主数据库当机后依然能继续（某些模式下不行）。在这种情况下，存活的最小的数据库节点编号的数据库将被变成新的主数据库。
+    <p> 请注意有编号为 0 的节点在流复制中没有其他意义。但是，你需要注意数据库节点是不是“主节点”。请参考 <a href="#stream">流复制</a> 获得更多细节。</p>
+    </p>
+    <p>如果你只计划使用一台 PostgreSQL 服务器，可以通过 <code>backend_hostname0</code> 指定。</p>
+    <p>
+    可以通过配置本参数后重新加载配置文件添加新的节点。但是，对已有的值无法更新，所以这种情况下你必须重启 pgpool-II。
+    </p>
+    </dd>
 
-  <dt><a name="BACKEND_PORT"></a>backend_port</dt>
-  <dd>
-      <p>
-      	指定后台程序的端口号。可以通过在本参数名的末尾添加一个数字来指定多个后台程序（例如<code>backend_port0</code>）。如果你只计划使用一台 PostgreSQL 服务器，可以通过 <code>backend_port0</code> 指定。</p>
-      <p>
-      	可以通过配置本参数后重新加载配置文件添加新的后台端口。但是，对已有的值无法更新，所以这种情况下你必须重启 pgpool-II。
-      </p>
-  </dd>
+<dt><a name="BACKEND_PORT"></a>backend_port</dt>
+    <dd>
+    <p>指定后台程序的端口号。可以通过在本参数名的末尾添加一个数字来指定多个后台程序（例如<code>backend_port0</code>）。
+    如果你只计划使用一台 PostgreSQL 服务器，可以通过 <code>backend_port0</code> 指定。
+    </p>
+    <p>
+    可以通过配置本参数后重新加载配置文件添加新的后台端口。但是，对已有的值无法更新，所以这种情况下你必须重启 pgpool-II。
+    </p>
+    </dd>
 
-  <dt><a name="BACKEND_WEIGHT"></a>backend_weight</dt>
-  <dd>
-      <p>指定后台程序的负载均衡权重。可以通过在本参数名的末尾添加一个数字来指定多个后台程序（例如<code>backend_weight0</code>）。如果你只计划使用一台 PostgreSQL 服务器，可以通过 <code>backend_weight0</code> 指定。</p><p>在原始模式中，请将本值设置为 1。</p>
-      <p>
-      	可以通过配置本参数后重新加载配置文件添加新的负载均衡权重。但是，对已有的值无法更新，所以这种情况下你必须重启 pgpool-II。
-      </p>
-      <p>
-      	在 pgpool-II 2.2.6/2.3 或者更新的版本中，你可以通过重新加载配置文件来改变本值。但这只对新连接的客户会话生效。这在主备模式中可以避免任何执行一些管理工作的查询被发送到备用节点上。
-      </p>
-  </dd>
+<dt><a name="BACKEND_WEIGHT"></a>backend_weight</dt>
+    <dd>
+    <p>指定后台程序的负载均衡权重。
+    可以通过在本参数名的末尾添加一个数字来指定多个后台程序（例如<code>backend_weight0</code>）。
+    如果你只计划使用一台 PostgreSQL 服务器，可以通过 <code>backend_weight0</code> 指定。
+    在原始模式中，请将本值设置为 1。</p>
+    <p>
+    可以通过配置本参数后重新加载配置文件添加新的负载均衡权重。
+    </p>
+    <p>
+    在 pgpool-II 2.2.6/2.3 或者更新的版本中，你可以通过重新加载配置文件来改变本值。
+    但这只对新连接的客户会话生效。
+    这在主备模式中可以避免任何执行一些管理工作的查询被发送到备用节点上。
+    </p>
+    </dd>
 
-  <dt><a name="BACKEND_DATA_DIRECTORY"></a>backend_data_directory</dt>
-  <dd>
-      <p>指定后台的数据库实例的目录。可以通过在本参数名的末尾添加一个数字来指定多个后台程序（例如<code>backend_data_directory0</code>）。如果你不打算使用在线恢复，你可以不设置本参数。</p>
+<dt><a name="BACKEND_DATA_DIRECTORY"></a>backend_data_directory</dt>
+    <dd>
+    <p>指定后台的数据库实例的目录。
+    可以通过在本参数名的末尾添加一个数字来指定多个后台程序（例如<code>backend_data_directory0</code>）。
+    如果你不打算使用在线恢复，你可以不设置本参数。
+    </p>
+    <p>
+    可以通过配置本参数后重新加载配置文件添加新的后台的数据库实例目录。
+    但是，对已有的值无法更新，所以这种情况下你必须重启 pgpool-II。
+    </p>
+    </dd>
 
-      <p>
-      	可以通过配置本参数后重新加载配置文件添加新的后台的数据库实例目录。但是，对已有的值无法更新，所以这种情况下你必须重启 pgpool-II。
-      </p>
-  </dd>
-
-  <dt><a name="BACKEND_FLAG"></a>backend_flag <span class="version">V3.1 -</span></dt>
-   <dd>
+<dt><a name="BACKEND_FLAG"></a>backend_flag <span class="version">V3.1 -</span></dt>
+    <dd>
     <p>控制大量的后台程序的行为。可以通过在本参数名的末尾添加一个数字来指定多个后台程序（例如<code>backend_flag0</code>）
     </p>
     <p>
@@ -848,7 +1193,7 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
         </td></tr>
     <tr><th class="nodec">DISALLOW_TO_FAILOVER</th>
     <td>不允许故障切换或者从后台程序断开。本值在你使用 HA（高可用性）软件例如 Heartbeat 或者 Packmaker 来保护后台程序时非常有用。
-    	本值为默认值。指定本值后，不能同时指定 DISALLOW_TO_FAILOVER 。
+        本值为默认值。指定本值后，不能同时指定 DISALLOW_TO_FAILOVER 。
     </td></tr>
     </table>
   </dt>
@@ -857,35 +1202,80 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
 <h3>SSL</h3>
 
 <dl>
-  <dt><a name="SSL"></a>ssl <span class="version">V2.3 -</span></dt>
-  <dd>
-      <p>如果设置为 ture，则启用了到前端程序和后端程序的连接的 ssl 支持。注意为了能与前端程序进行 SSL 连接，必须设置 <code>ssl_key</code> 和 <code>ssl_cert</code>。</p>
-      <p>SSL 默认被关闭。就像在 <a href="#install">pgpool-II 的安装</a> 小节所说的，注意必须在编译时配置 OpenSSL 支持才能打开 SSL 支持。</p>
-      <p>如果修改了 SSL 相关的设置， pgpool-II 守护进程必须重启。</p>
-  </dd>
+<dt><a name="SSL">ssl</a> <span class="version">V2.3 -</span></dt>
+    <dd>
+    <p>
+    如果设置为 ture，则启用了到前端程序和后端程序的连接的 ssl 支持。
+    注意为了能与前端程序进行 SSL 连接，
+    必须设置 <code>ssl_key</code> 和 <code>ssl_cert</code>。
+    </p>
 
-  <dt><a name="SSL_KEY"></a>ssl_key <span class="version">V2.3 -</span></dt>
-  <dd>
-      <p>对于进入的连接使用的私钥文件所在路径。
-      </p>
-      <p>本选项没有默认值，如果本值不设置，则对于进入的连接将禁用 SSL。
-      </p>
-  </dd>
+    <p>
+    SSL 默认被关闭。就像在 <a href="#install">pgpool-II 的安装</a> 小节所说的，
+    注意必须在编译时配置 OpenSSL 支持才能打开 SSL 支持。
+    </p>
 
-  <dt><a name="SSL_CERT"></a>ssl_cert <span class="version">V2.3 -</span></dt>
-  <dd>
-      <p>
-      	对于进入的连接使用的公共 x509 证书文件所在的路径。
-      </p>
-      <p>本选项没有默认值，如果本值不设置，则对于进入的连接将禁用 SSL。
-      </p>
-  </dd>
+    <p>
+    如果修改了 SSL 相关的设置， pgpool-II 守护进程必须重启。
+    </p>
+    </dd>
+
+<dt><a name="SSL_KEY"></a>ssl_key <span class="version">V2.3 -</span></dt>
+    <dd>
+    <p>
+    对于进入的连接使用的私钥文件所在路径。
+    </p>
+
+    <p>
+    本选项没有默认值，如果本值不设置，则对于进入的连接将禁用 SSL。
+    </p>
+    </dd>
+
+<dt><a name="SSL_CERT"></a>ssl_cert <span class="version">V2.3 -</span></dt>
+    <dd>
+    <p>
+    对于进入的连接使用的公共 x509 证书文件所在的路径。
+    </p>
+
+    <p>
+    本选项没有默认值，如果本值不设置，则对于进入的连接将禁用 SSL。
+    </p>
+    </dd>
+
+<dt><a name="SSL_CA_CERT"></a>ssl_ca_cert</dt>
+    <dd>
+    <p>
+    到一个 PEM 格式的证书文件路径，包含一个或多个 CA 根证书，
+    用于校验后端的服务器证书。
+    类似于 OpenSSL 的 <code>verify(1)</code> 命令的 <code>-CAfile</code> 选项。
+    </p>
+
+    <p>
+    本选项的默认值是不设置，因此不会发生校验。
+    但是在 <code>ssl_ca_cert_dir</code> 被设置的时候，还是会发生校验。
+    </p>
+    </dd>
+
+<dt><a name="SSL_CA_CERT_DIR"></a>ssl_ca_cert_dir</dt>
+    <dd>
+    <p>
+    到一个包含 PEM 格式的 CA 证书的目录的路径，
+    用于校验后端的服务器证书。
+    类似于 OpenSSL 的 <code>verify(1)</code> 命令的 <code>-CApath</code> 选项。
+    </p>
+
+    <p>
+    本选项的默认值是不设置，因此不会发生校验。
+    但是在 <code>ssl_ca_cert</code> 被设置的时候，还是会发生校验。
+    </p>
+    </dd>
+    
 </dl>
 
 <h3>其他</h3>
 
 <dl>
-  <dt><a name="RELCACHE_EXPIRE"></a>relcache_expire <span class="version">V3.1 -</span></dt>
+<dt><a name="RELCACHE_EXPIRE"></a>relcache_expire <span class="version">V3.1 -</span></dt>
     <dd>
     <p>
      关系缓存的生命周期。0（默认值）表示没有缓冲区过期。
@@ -899,8 +1289,8 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
  <dt><a name="RELCACHE_SIZE"></a>relcache_size <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
-    	relcache 的条目数。默认为 256。
-    	如果你频繁看到以下信息，请增加此数量。
+        relcache 的条目数。默认为 256。
+        如果你频繁看到以下信息，请增加此数量。
     </p>
 <pre>
 "pool_search_relcache: cache replacement happened"
@@ -910,12 +1300,22 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
 <dt><a name="CHECK_TEMP_TABLE"></a>check_temp_table <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
-    	如果为 on，在 SELECT 语句中启用临时表检查。这会在启动查询前查询主节点上的系统对象，
-    	因此增加了主节点上的负载。如果你确定你的系统不会使用临时表，并且你想降低对主节点的访问，
-    	弄可以将它设置为 off。默认为 on。
+        如果为 on，在 SELECT 语句中启用临时表检查。这会在启动查询前查询主节点上的系统对象，
+        因此增加了主节点上的负载。如果你确定你的系统不会使用临时表，并且你想降低对主节点的访问，
+        弄可以将它设置为 off。默认为 on。
     </p>
     </dd>
 
+<dt><a name="CHECK_UNLOGGED_TABLE"></a>check_unlogged_table <span class="version">V3.4 -</span></dt>
+    <dd>
+    <p>
+    如果设置为 on，启用在 SELECT 语句中对无日志表的检查。
+    这回在主节点上查询系统表，因此会增加主节点的负载。
+    如果你确认你的系统没有使用无日志的表（例如，你在使用 PostgreSQL 9.0 或者之前的版本），
+    并且你想减少对主节点的访问，你可以将本选项设置为 off。默认值为 on。
+    </p>
+    </dd>
+    
 </dl>
 
 <h2>生成 SSL 证书</h2>
@@ -930,7 +1330,7 @@ pgpool-II 在普通操作中通常访问 <code>backend_hostname0</code> 指定�
 如果 backend_hostname0 因为某些原因不能正常工作，pgpool-II 尝试访问 backend_hostname1 指定的后台程序。
 如果它也不能正常工作，pgpool-II 尝试访问 backend_hostname2，3 等等。</p>
 
-<p class="top_link"><a href="#Top">back to top</a></p>
+<p class="top_link"><a href="#Top">返回顶部</a></p>
 
 <!-- ================================================================================ -->
 
@@ -940,41 +1340,45 @@ pgpool-II 在普通操作中通常访问 <code>backend_hostname0</code> 指定�
 以下参数会对连接池产生影响。</p>
 
 <dl>
-  <dt><a name="MAX_POOL"></a>max_pool</dt>
+<dt><a name="MAX_POOL"></a>max_pool</dt>
   <dd>
     <p>在 pgpool-II 子进程中缓存的最大连接数。当有新的连接使用相同的用户名连接到相同的数据库，pgpool-II 将重用缓存的连接。如果不是，则 pgpool-II 建立一个新的连接到 PostgreSQL。如果缓存的连接数达到了 max_pool，则最老的连接将被抛弃，并使用这个槽位来保存新的连接。默认值为 4。请小心通过 pgpool-II 进程到后台的连接数可能达到
-    	<code><a href="#NUM_INIT_CHILDREN">num_init_children</a></code> *
+        <code><a href="#NUM_INIT_CHILDREN">num_init_children</a></code> *
       <code><a href="#MAX_POOL">max_pool</a></code> 个。需要重启 pgpool-II 以使改动生效。
-	</p>
+    </p>
   </dd>
-  <dt><a name="CONNECTION_LIFE_TIME"></a>connection_life_time</dt>
+<dt><a name="CONNECTION_LIFE_TIME"></a>connection_life_time</dt>
   <dd>
       <p>缓存的连接的过期时长，单位为秒。过期的缓存连接将被关闭。默认值为 0，表示缓存的连接将不被关闭。</p>
   </dd>
-  <dt><a name="RESET_QUERY_LIST"></a>reset_query_list</dt>
-  <dd>
-      <p>指定在推出一个会话时发送到后台程序的SQL命令。多个命令可以通过“;”隔开。默认为以下的设置但你可以根据你的需求改变。
-      <pre>
-      reset_query_list = 'ABORT; DISCARD ALL'</pre>
+<dt><a name="RESET_QUERY_LIST"></a>reset_query_list</dt>
+    <dd>
+    <p>指定在推出一个会话时发送到后台程序的SQL命令。
+    多个命令可以通过“;”隔开。默认为以下的设置但你可以根据你的需求改变。
+
+<pre>
+reset_query_list = 'ABORT; DISCARD ALL'
+</pre>
+
 <p>
       不同版本的 PostgreSQL 需要使用不同的命令。以下为推荐的设置。
 </p>
-<p>
-<table border>
-<tr class="header"><th>PostgreSQL 版本</th><th>reset_query_list 的值</th></tr>
-<tr><td>7.1 或更老的版本</td><td>ABORT</td></tr>
-<tr><td>7.2 到 8.2</td><td>ABORT; RESET ALL; SET SESSION AUTHORIZATION DEFAULT</td></tr>
-<tr><td>8.3 或更新的版本</td><td>ABORT; DISCARD ALL</td></tr>
-</table>
-</p>
-<ul>
-<li>在 7.4 或更新的版本中，当不是在一个事务块中的时候，“ABORT”将不会被发出。
-</ul>
 
-<p>
-修改本参数后需要重新加载 pgpool.conf 以使改变生效。
-</p>
-</dd>
+    <table border>
+    <tr class="header"><th>PostgreSQL 版本</th><th>reset_query_list 的值</th></tr>
+    <tr><td>7.1 或更老的版本</td><td>ABORT</td></tr>
+    <tr><td>7.2 到 8.2</td><td>ABORT; RESET ALL; SET SESSION AUTHORIZATION DEFAULT</td></tr>
+    <tr><td>8.3 或更新的版本</td><td>ABORT; DISCARD ALL</td></tr>
+    </table>
+
+    <ul>
+    <li>在 7.4 或更新的版本中，当不是在一个事务块中的时候，“ABORT”将不会被发出。</li>
+    </ul>
+
+    <p>
+    修改本参数后需要重新加载 pgpool.conf 以使改变生效。
+    </p>
+    </dd>
 </dl>
 
 <h2><p>连接池模式中的故障切换</p></h2>
@@ -990,33 +1394,43 @@ pgpool-II 在普通操作中通常访问 <code>backend_hostname0</code> 指定�
 <p>本模式在后台程序间启用了数据复制。以下配置参数必须在设置以上参数之外另外设置。</p>
 
 <dl>
-  <dt><a name="REPLICATION_MODE"></a>replication_mode</dt>
+<dt><a name="REPLICATION_MODE"></a>replication_mode</dt>
   <dd>
       <p>设置为 true 以启用复制模式。默认值为 false。</p>
   </dd>
 
-  <dt><a name="LOAD_BALANCE_MODE"></a>load_balance_mode</dt>
+<dt><a name="LOAD_BALANCE_MODE"></a>load_balance_mode</dt>
   <dd>
       <p>当设置为 true 时，SELECT 查询将被分发到每个后台程序上用于负载均衡。默认值为 false。本参数必须在服务器启动前设置。</p>
   </dd>
 
-  <dt><a name="REPLICATION_STOP_ON_MISMATCH"></a>replication_stop_on_mismatch</dt>
+<dt><a name="REPLICATION_STOP_ON_MISMATCH"></a>replication_stop_on_mismatch</dt>
   <dd>
-	  <p>当设置为 true 时，当不同的后台程序返回不同的包类型时，则和其他后台程序差别最大的后台程序将被退化。</p>
-	  <p>一个典型的用例为一个事务中的 SELECT 语句，在 <a href="#REPLICATE_SELECT">replicate_select</a> 设置为 true 的情况下，一个 SELECT 语句从不同的后台程序中返回不同的行数。非 SELECT 语句也可能触发这种情况。
-	  	例如，一个后台程序执行 UPDATE 成功但其他的失败。注意 pgpool 不会检查 SELECT 返回的记录的内容。如果设置为 false，则会话被终止但后台程序不被退化。默认值为 false。</p>
+    <p>当设置为 true 时，当不同的后台程序返回不同的包类型时，则和其他后台程序差别最大的后台程序将被退化。</p>
+    <p>一个典型的用例为一个事务中的 SELECT 语句，在 <a href="#REPLICATE_SELECT">replicate_select</a> 设置为 true 的情况下，一个 SELECT 语句从不同的后台程序中返回不同的行数。非 SELECT 语句也可能触发这种情况。
+    例如，一个后台程序执行 UPDATE 成功但其他的失败。注意 pgpool 不会检查 SELECT 返回的记录的内容。
+    </p>
+    <p>
+    如果设置为 false，则会话被终止但后台程序不被退化。默认值为 false。</p>
   </dd>
 
-  <dt><a name="FAILOVER_IF_AFFECTED_TUPLES_MISMATCH"></a>failover_if_affected_tuples_mismatch <span class="version">V3.0 -</span></dt>
-  <dd>
-	  <p>当设置为 true 时，在执行 INSERT/UPDATE/DELETE 后不同的后台程序返回不同的生效记录数，则和其他后台程序差别最大的后台程序将被退化。如果设置为 false，则会话被终止但后台程序不被退化。默认值为 false。</p>
-  </dd>
-  
+<dt><a name="FAILOVER_IF_AFFECTED_TUPLES_MISMATCH"></a>failover_if_affected_tuples_mismatch
+    <span class="version">V3.0 -</span></dt>
+    <dd>
+    <p>当设置为 true 时，如果后端在执行 INSERT/UPDATE/DELETE 时返回影响的行数不相同，
+    那么拥有与其他后端匹配度最低的结果的后端将被退化掉（踢出集群）。
+    如果匹配度相同，则包含主数据库节点（拥有最小节点 ID 的数据库节点）的一组将被保留
+    而其他的将被退化掉。
+    </p>
+    <p>
+    如果设置为 false，则会话被终止但后端不被退化。默认值为 false。</p>
+    </dd>
+
 <dt><a name="WHITE_FUNCTION_LIST"></a>white_function_list <span class="version">V3.0 -</span></dt>
-<dd>
-<p>指定一系列用逗号隔开的<strong>不会</strong>更新数据库的函数名。在复制模式中，不在本列表中指定的函数将即不会被负载均衡，也不会被复制。在主备模式中，这些 SELECT 语句只被发送到主节点。</p>
-<p>你可以使用正则表达式来匹配函数名，例如你通过前缀“get_”或“select_”来作为你只读函数的开头：
-</p>
+    <dd>
+    <p>指定一系列用逗号隔开的<strong>不会</strong>更新数据库的函数名。在复制模式中，不在本列表中指定的函数将即不会被负载均衡，也不会被复制。在主备模式中，这些 SELECT 语句只被发送到主节点。</p>
+    <p>你可以使用正则表达式来匹配函数名，例如你通过前缀“get_”或“select_”来作为你只读函数的开头：
+    </p>
 <pre>
 white_function_list = 'get_.*,select_.*'
 </pre>
@@ -1034,79 +1448,81 @@ black_function_list = 'nextval,setval,set_.*,update_.*,delete_.*,insert_.*'
 </p>
 <p>在 pgpool-II 3.0 之前，nextval() 和 setval() 是已知的会写入数据库的函数。你可以通使用 white_function_list 好 balck_function_list 来做到：
 </p>
-<p>
+
 <pre>
 white_function_list = ''
 black_function_list = 'nextval,setval,lastval,currval'
 </pre>
-</p>
-<p>注意我们在 nextval 和 setval 后面追加了 lastval 和 currval。虽然 lastval() 和 currval() 不是会写入的函数，但添加 lastval() 和 currval() 可以避免这些函数被无意地被负载均衡到其他的数据库节点而导致错误。添加到 black_function_list 将避免它们被负载均衡。
-</p>
-</dd>
 
-<dt><a name="replicate_select"></a>replicate_select</dt>
+    <p>注意我们在 nextval 和 setval 后面追加了 lastval 和 currval。
+    虽然 lastval() 和 currval() 不是会写入的函数，
+    但添加 lastval() 和 currval() 可以避免这些函数被无意地被负载均衡到其他的数据库节点而导致错误。
+    添加到 black_function_list 将避免它们被负载均衡。
+    </p>
+    </dd>
+
+<dt><a name="REPLICATE_SELECT"></a>replicate_select</dt>
 <dd>
 <p>当设置为 true，pgpool-II 在复制模式中将复制 SELECT 语句。如果为 false，则 pgpool-II 只发送它们到主数据库。默认为 false。
 </p>
 <p>
-	如果 SELECT 查询是在一个显式的事务块中，<a href="#REPLICATE_SELECT">replicate_select</a> 和 <a href="#LOAD_BALANCE_MODE">load_balance_mode</a> 将影响复制的工作模式。以下为具体的细节。
+    如果 SELECT 查询是在一个显式的事务块中，<a href="#REPLICATE_SELECT">replicate_select</a> 和 <a href="#LOAD_BALANCE_MODE">load_balance_mode</a> 将影响复制的工作模式。以下为具体的细节。
 </p>
 
-<p>
-<table border>
 
-<tr>
-<th class="nodec">SELECT 在一个事务块中</th>
-<td>Y</td>
-<td>Y</td>
-<td>Y</td>
-<td>N</td>
-<td>N</td>
-<td>N</td>
-<td>Y</td>
-<td>N</td>
-</tr>
+    <table border>
+    
+    <tr>
+    <th class="nodec">SELECT 在一个事务块中</th>
+    <td>Y</td>
+    <td>Y</td>
+    <td>Y</td>
+    <td>N</td>
+    <td>N</td>
+    <td>N</td>
+    <td>Y</td>
+    <td>N</td>
+    </tr>
+    
+    <tr>
+    <th class="nodec">replicate_select 为 true</th>
+    <td>Y</td>
+    <td>Y</td>
+    <td>N</td>
+    <td>N</td>
+    <td>Y</td>
+    <td>Y</td>
+    <td>N</td>
+    <td>N</td>
+    </tr>
+    
+    <tr>
+    <th class="nodec">load_balance_mode 为 true</th>
+    <td>Y</td>
+    <td>N</td>
+    <td>N</td>
+    <td>N</td>
+    <td>Y</td>
+    <td>N</td>
+    <td>Y</td>
+    <td>Y</td>
+    </tr>
+    
+    <tr>
+    <th class="nodec">结果(R: 负载均衡, M: 只发送到主节点, L: 负载均衡)</th>
+    <td>R</td>
+    <td>R</td>
+    <td>M</td>
+    <td>M</td>
+    <td>R</td>
+    <td>R</td>
+    <td>M</td>
+    <td>L</td>
+    </tr>
+    </table>
+    </dd>
 
-<tr>
-<th class="nodec">replicate_select 为 true</th>
-<td>Y</td>
-<td>Y</td>
-<td>N</td>
-<td>N</td>
-<td>Y</td>
-<td>Y</td>
-<td>N</td>
-<td>N</td>
-</tr>
-
-<tr>
-<th class="nodec">load_balance_mode 为 true</th>
-<td>Y</td>
-<td>N</td>
-<td>N</td>
-<td>N</td>
-<td>Y</td>
-<td>N</td>
-<td>Y</td>
-<td>Y</td>
-</tr>
-
-<tr>
-<th class="nodec">结果(R: 负载均衡, M: 只发送到主节点, L: 负载均衡)</th>
-<td>R</td>
-<td>R</td>
-<td>M</td>
-<td>M</td>
-<td>R</td>
-<td>R</td>
-<td>M</td>
-<td>L</td>
-</tr>
-</table>
-</p>
-  </dd>
-
-  <dt><a name="INSERT_LOCK"></a>insert_lock</dt>
+<dt><a name="INSERT_LOCK"></a>insert_lock</dt>
   <dd>
       <p>如果在包含 SERIAL 类型的表中做复制， SERIAL 列的值在不同后台间可能不同。这个问题可以通过显式的锁表解决（当然，事务的并发性将被严重退化）。为了达到这个目的，必须做以下的改变：</p>
 
@@ -1126,33 +1542,33 @@ COMMIT;
 </pre>
 
       <p>当 <code>insert_lock</code> 为 true 时，pgpool-II 自动在每次执行 INSERT 时添加以上的查询（如果已经在事务中，它只是简单地添加 LOCK TABLE ... ）。
-	</p>
+    </p>
       <p>pgpool-II 2.2 或更高的版本中，可以自动探测是否表拥有 SERIAL 类型的列，所以如果没有 SERIAL 类型的列，则将不会锁表。
-	</p>
-	   <p>
+    </p>
+       <p>
        pgpool-II 3.0 系列直到 3.0.4 为止针对串行的关系使用一个行锁，而不是表锁。这使在 VACUUM（包括 autovacuum）时的锁冲突最小。但这会导致另一个问题。如果发生了嵌套事务，对串行的关系使用行所会导致 PostgreSQL 的内部错误（确切地说，保存事务状态的 pg_clog 会发生访问错误）。为了避免这个问题，PostgreSQL 核心开发者决定禁止对串行的关系加锁，当然这也会让 pgpool-II 无法工作（&quot;修复&quot;后的 PostgreSQL 版本为 9.0.5, 8.4.9, 8.3.16 和 8.2.22）。
-	   </p>
+       </p>
        <p>
        由于新版的 PostgreSQL 不允许对串行的关系加锁，pgpool-II 3.0.5 或更新的版本针对 pgpool_catalog.insert_lock 使用行锁。所以需要预先在通过 pgpool-II 访问的数据库中建立 insert_lock 表。详细内容请参考<a href="#install">建立 insert_lock 表</a>。如果不存在 insert_lock 表，pgpool-II 将锁定插入的目标表。这种行为和 pgpool-II 2.2 和 2.3 系列相同。如果你希望使用与旧版本兼容的 insert_lock，你可以在配置脚本中指定锁定模式。详细内容请参考 <a href="#install">configure</a> 。
        </p>
-	   <p>
+       <p>
       你也许需要更好（针对每个事务）的控制手段：
       </p>
 
       <ol>
-	<li>设置 <code>insert_lock</code> 为 true，并添加 <code>/*NO INSERT LOCK*/</code> 代码到你不想要表锁的 INSERT 语句的开始位置。</li>
+    <li>设置 <code>insert_lock</code> 为 true，并添加 <code>/*NO INSERT LOCK*/</code> 代码到你不想要表锁的 INSERT 语句的开始位置。</li>
 
-	<li>设置 <code>insert_lock</code> 为 false，并添加 <code>/*INSERT LOCK*/</code> 到你需要表锁的 INSERT 语句的开始位置。</li>
+    <li>设置 <code>insert_lock</code> 为 false，并添加 <code>/*INSERT LOCK*/</code> 到你需要表锁的 INSERT 语句的开始位置。</li>
       </ol>
 
       <p>
       默认值为 false。如果 <code>insert_lock</code> 被启用，则（通过 pgpool-II 运行的） PostgreSQL 8.0 的事务、权限、规则和 alter_table 的回归测试会失败。原因是 pgpool-II 会尝试 LOCK 这些规则测试的 VIEW ，并产生以下的错误消息：
       </p>
 
-      <pre>
-      ! ERROR: current transaction is aborted, commands ignored until
-      end of transaction block
-      </pre>
+<pre>
+! ERROR: current transaction is aborted, commands ignored until
+end of transaction block
+</pre>
 
       <p>例如，事务测试尝试 INSERT 到一个不存在的表，而 pgpool-II 导致 PostgreSQL 在这之前请求锁。事务将被终止，而之后的 INSERT 语句会产生以上的错误消息。
       </p>
@@ -1192,55 +1608,67 @@ recovery_1st_stage_command 将接受以下 3 个参数：
 </p>
 
 <dt><a name="RECOVERY_2ND_STAGE_COMMAND"></a>recovery_2nd_stage_command</dt>
-<dd>
-<p>
-本参数指定一个在在线恢复第二阶段在主（Primary）PostgreSQL 服务器上运行的命令。处于安全原因，本命令必须被放置在数据库实例目录中。例如，如果 recovery_2st_stage_command = 'sync-command'，那么 pgpool-II 将执行 $PGDATA/sync-command。
-</p>
-<p>
-recovery_2nd_stage_command 将接受以下 3 个参数：
-</p>
-<ol>
-<li>到主（Primary）数据库实例的路径</li>
-<li>需要恢复的 PostgreSQL 主机名</li>
-<li>需要恢复的数据库实例路径</li>
-</ol>
-</p>
-<p>
-注意 pgpool-II 在运行 recovery_2nd_stage_command 时<b>不接收</b>连接和查询。因此如果一个客户端长时间持有一个连接，则恢复命令不会被执行。pgpool-II 等待所有的客户端关闭它们的连接。这个命令只在没有任何客户端连接到 pgpool-II 时才执行。
-</p>
-<p>
-改变本参数不需要重启。
-</p>
+    <dd>
+    <p>
+    本参数指定一个在在线恢复第二阶段在主（Primary）PostgreSQL 服务器上运行的命令。处于安全原因，本命令必须被放置在数据库实例目录中。例如，如果 recovery_2st_stage_command = 'sync-command'，那么 pgpool-II 将执行 $PGDATA/sync-command。
+    </p>
+    <p>
+    recovery_2nd_stage_command 将接受以下 4 个参数：
+    </p>
+    <ol>
+        <li>到主（Primary）数据库实例的路径</li>
+        <li>需要恢复的 PostgreSQL 主机名</li>
+        <li>需要恢复的数据库实例路径</li>
+        <li>需要恢复的数据库实例的端口号</li>
+    </ol>
+    </p>
+    <p>
+    注意 pgpool-II 在运行 recovery_2nd_stage_command 时<b>不接收</b>连接和查询。因此如果一个客户端长时间持有一个连接，则恢复命令不会被执行。pgpool-II 等待所有的客户端关闭它们的连接。这个命令只在没有任何客户端连接到 pgpool-II 时才执行。
+    </p>
+	<p>
+	<font color="red">
+	CAUTION:
+	</font>
+    recovery_2nd_stage_command 对于 PostgreSQL 来说就是运行一个 SQL 命令。如果你启用了 PostgreSQL 的 statement_time_out 且它的值比 recovery_2nd_stage_command 执行的时间要短，PostgreSQL 会（在时间到达后）取消这个命令的执行。
+    这种情况的典型现象是，例如命令中的 rsync 收到信号 2。
+    </p>
+    <p>
+    改变本参数不需要重启。
+    </p>
+    </dd>
 
 <dt><a name="RECOVERY_TIMEOUT"></a>recovery_timeout</dt>
-<dd>
-<p>
-pgpool 在第二阶段不接受新的连接。如果一个客户端在恢复过程中连接到 pgpool，它必须等待到恢复结束。
-</p>
-<p>
-本参数指定恢复超时的时间，单位为秒。如果到达了本超时值，则 pgpool 取消在线恢复并接受连接。0 表示不等待。
-</p>
-<p>
-改变本参数不需要重启。
-</p>
+    <dd>
+    <p>
+    pgpool 在第二阶段不接受新的连接。如果一个客户端在恢复过程中连接到 pgpool，它必须等待到恢复结束。
+    </p>
+    <p>
+    本参数指定恢复超时的时间，单位为秒。如果到达了本超时值，则 pgpool 取消在线恢复并接受连接。0 表示不等待。
+    </p>
+    <p>
+    改变本参数不需要重启。
+    </p>
+    </dd>
 
-  <dt><a name="CLIENT_IDLE_LIMIT_IN_RECOVERY"></a>client_idle_limit_in_recovery <span class="version">V2.2 -</span></dt>
-  <dd>
-  <p> 类似于 client_idle_limit 但是只在恢复的第二阶段生效。从执行最后一个查询后空闲到 client_idle_limit_in_recovery 秒的客户端将被断开连接。
-  	这对避免 pgpool 的恢复被懒客户端扰乱或者客户机和 pgpool 之间的 TCP/IP 连接被意外断开（例如网线断开）非常有用。如果设置为 -1 ，则立即断开客户端连接。
-  	client_idle_limit_in_recovery 的默认值为 0，表示本功能不启用。
-  </p>
-  <p> 如果你的客户端非常繁忙，则无论你将 client_idle_limit_in_recovery 设置为多少 pgpool-II 都无法进入恢复的第二阶段。在这种情况下，
-  	你可以设置 client_idle_limit_in_recovery 为 -1 因而 pgpool-II 在进入第二阶段前立即断开这些繁忙的客户端的连接。
-  </p>
-  <p>
-   如果你改变了 client_idle_limit_in_recovery 你需要重新加载 pgpool.conf 。</p>
+<dt><a name="CLIENT_IDLE_LIMIT_IN_RECOVERY"></a>client_idle_limit_in_recovery
+    <span class="version">V2.2 -</span></dt>
+    <dd>
+    <p> 类似于 client_idle_limit 但是只在恢复的第二阶段生效。从执行最后一个查询后空闲到 client_idle_limit_in_recovery 秒的客户端将被断开连接。
+    这对避免 pgpool 的恢复被懒客户端扰乱或者客户机和 pgpool 之间的 TCP/IP 连接被意外断开（例如网线断开）非常有用。如果设置为 -1 ，则立即断开客户端连接。
+    client_idle_limit_in_recovery 的默认值为 0，表示本功能不启用。
+    </p>
+    <p> 如果你的客户端非常繁忙，则无论你将 client_idle_limit_in_recovery 设置为多少 pgpool-II 都无法进入恢复的第二阶段。在这种情况下，
+    你可以设置 client_idle_limit_in_recovery 为 -1 因而 pgpool-II 在进入第二阶段前立即断开这些繁忙的客户端的连接。
+    </p>
+    <p>
+    如果你改变了 client_idle_limit_in_recovery 你需要重新加载 pgpool.conf 。</p>
+    </dd>
 
 <dt><a name="LOBJ_LOCK_TABLE"></a>lobj_lock_table <span class="version">V2.2 -</span></dt>
-<dd>
-<p>
-本参数指定一个表名用于大对象的复制控制。如果它被指定，pgpool 将锁定由 lobj_lock_table 指定的表并通过查找 pg_largeobject 系统 catalog 生产一个大对象 id，并调用 lo_create 来建立这个大对象。这个过程保证 pgpool 在复制模式中在所有的数据库节点中获得相同的大对象 id。注意 PostgreSQL 8.0 或者更老的版本没有 lo_create，因此本功能将无法工作。
-</p>
+    <dd>
+    <p>
+    本参数指定一个表名用于大对象的复制控制。如果它被指定，pgpool 将锁定由 lobj_lock_table 指定的表并通过查找 pg_largeobject 系统 catalog 生产一个大对象 id，并调用 lo_create 来建立这个大对象。这个过程保证 pgpool 在复制模式中在所有的数据库节点中获得相同的大对象 id。注意 PostgreSQL 8.0 或者更老的版本没有 lo_create，因此本功能将无法工作。
+    </p>
 <p>
 对 libpq 的 lo_creat() 函数的调用将触发本功能。通过 Java API（JDBC 驱动），PHP API（pg_lo_create，或者 PHP 库中类似的 API 例如 PDO）进行的大对象创建，以及其他各种编程语言中相同的 API 使用相同的协议，因此也应该能够运行。
 </p>
@@ -1279,24 +1707,24 @@ lobj_lock_table 指定的表必须被预先建立。如果你在 template1 中�
 
 <ul>
     <li>PostgreSQL 7.4 或更高版本</li>
-	  <li>即可以在复制模式中，也可以在主备模式中</li>
+      <li>即可以在复制模式中，也可以在主备模式中</li>
     <li>在复制模式中，查询必须不是在一个显式的事务中（例如，不在 BEGIN ~ END 块中）</li>
     <li>不能是 SELECT INTO</li>
     <li>不能是 SELECT FOR UPDATE 或者 FOR SHARE</li>
     <li>以 "SELECT" 开始或者为 COPY TO STDOUT, EXPLAIN, EXPLAIN ANALYZE SELECT... 其中一个，ignore_leading_white_space = true 将忽略开头的空格。
-    	（除非是在 <a href="#BLACK_FUNCTION_LIST">black_list</a> 或者 <a href="#WHITE_FUNCTION_LIST">white_list</a> 指明的有写动作的函数）
-	<li><span class="version">V3.0 -</span>在主备模式中，除了以上条件，还包含以下条件：
-		<ul>
-		  <li>不能使用临时表</li>
-		  <li>不能使用不写日志的表</li>
-		  <li>不能使用系统表</li>
-		  <li>不过，如果碰到以下条件，即使是显式事务，依然有可能进行负载均衡</li>
-			  <ul>
-				<li>事务隔离级别不是SERIALIZABLE</li>
-				<li>事务一直没有进行写查询（直到发生写入查询前，都可能进行负载均衡）</li>
-			  </ul>
-		</ul>
-	</li>
+        （除非是在 <a href="#BLACK_FUNCTION_LIST">black_list</a> 或者 <a href="#WHITE_FUNCTION_LIST">white_list</a> 指明的有写动作的函数）
+    <li><span class="version">V3.0 -</span>在主备模式中，除了以上条件，还包含以下条件：
+        <ul>
+          <li>不能使用临时表</li>
+          <li>不能使用不写日志的表</li>
+          <li>不能使用系统表</li>
+          <li>不过，如果碰到以下条件，即使是显式事务，依然有可能进行负载均衡</li>
+              <ul>
+                <li>事务隔离级别不是SERIALIZABLE</li>
+                <li>事务一直没有进行写查询（直到发生写入查询前，都可能进行负载均衡）</li>
+              </ul>
+        </ul>
+    </li>
 </ul>
 
 <p>
@@ -1436,15 +1864,15 @@ pgpool-II 认为基于流复制启用了热备，也就是说备库是以只读�
 <dt id="LOG_STANDBY_DELAY">log_standby_delay <span class="version">V3.1 -</span></dt>
     <dd>
     <p>
-    	指出如何记录复制延迟。如果指定 'none'，则不写入日志。
-    	如果为 'always'，在每次执行健康检查时记录延迟。
-    	如果 'if_over_threshold' 被指定，只有当延迟到达 <a href="#DELAY_THRESHOLD">delay_threshold</a> 时记录日志。
-    	log_standby_delay 的默认值为 'none'。
-    	要使对本参数的改动生效，你需要重新加载 pgpool.conf。
+        指出如何记录复制延迟。如果指定 'none'，则不写入日志。
+        如果为 'always'，在每次执行健康检查时记录延迟。
+        如果 'if_over_threshold' 被指定，只有当延迟到达 <a href="#DELAY_THRESHOLD">delay_threshold</a> 时记录日志。
+        log_standby_delay 的默认值为 'none'。
+        要使对本参数的改动生效，你需要重新加载 pgpool.conf。
     </p>
     <p>
-    	你也可以使用“<a href="#pool_status">show pool_status</a>”命令监控复制延迟。
-    	列名为“standby_delay#”（其中 '#' 需要用数据库节点编号代替）。
+        你也可以使用“<a href="#pool_status">show pool_status</a>”命令监控复制延迟。
+        列名为“standby_delay#”（其中 '#' 需要用数据库节点编号代替）。
     </p>
     </dd>
 </dl>
@@ -1466,14 +1894,14 @@ pgpool-II 认为基于流复制启用了热备，也就是说备库是以只读�
 </p>
 <p>
 <ol>
- <li>将一个故障切换脚本放置到某个地方（例如 /usr/local/pgsql/bin ）并给它执行权限。
+    <li>将一个故障切换脚本放置到某个地方（例如 /usr/local/pgsql/bin ）并给它执行权限。
 <pre>
 $ cd /usr/loca/pgsql/bin
 $ cat failover_stream.sh
 #! /bin/sh
 # Failover command for streaming replication.
 # This script assumes that DB node 0 is primary, and 1 is standby.
-# 
+#
 # If standby goes down, do nothing. If primary goes down, create a
 # trigger file so that standby takes over primary node.
 #
@@ -1486,7 +1914,7 @@ trigger_file=$3
 
 # Do nothing if standby goes down.
 if [ $failed_node = 1 ]; then
-	exit 0;
+    exit 0;
 fi
 
 # Create the trigger file.
@@ -1496,29 +1924,37 @@ exit 0;
 
 chmod 755 failover_stream.sh
 </pre>
-<li>在 pgpool.conf 中设置 failover_commmand。
+    </li>
+
+    <li>在 pgpool.conf 中设置 <a href="#FAILOVER_COMMAND">failover_commmand</a>。
 <pre>
 failover_command = '/usr/local/src/pgsql/9.0-beta/bin/failover_stream.sh %d %H /tmp/trigger_file0'
 </pre>
-
-<li>在备节点中设置 recovery.conf。
-<a href="recovery.conf.sample">一个 recovery.conf 示例</a> 可以在 PostgreSQL 安装目录中找到。它的名字为 "share/recovery.conf.sample"。拷贝 recovery.conf.sample 为 recovery.conf 到数据库节点目录并编辑它。
+    </li>
+ 
+    <li>在备节点中设置 recovery.conf。
+    <a href="recovery.conf.sample">一个 recovery.conf 示例</a> 可以在 PostgreSQL 安装目录中找到。
+    它的名字为 "share/recovery.conf.sample"。
+    拷贝 recovery.conf.sample 为 recovery.conf 到数据库节点目录并编辑它。
 <pre>
 standby_mode = 'on'
 primary_conninfo = 'host=name of primary_host user=postgres'
 trigger_file = '/tmp/trigger_file0'
 </pre>
+    </li>
 
-<li>设置主节点上的 postgresql.conf 。以下仅仅是一个示例。你需要根据你自己的环境做调整。
+    <li>设置主节点上的 postgresql.conf 。以下仅仅是一个示例。你需要根据你自己的环境做调整。
 <pre>
 wal_level = hot_standby
 max_wal_senders = 1
 </pre>
+    </li>
 
-<li>设置主节点上的 pg_hba.conf 。以下仅仅是一个示例。你需要根据你自己的环境做调整。
+    <li>设置主节点上的 pg_hba.conf 。以下仅仅是一个示例。你需要根据你自己的环境做调整。
 <pre>
-host	replication	postgres		192.168.0.10/32		trust
+host    replication    postgres        192.168.0.10/32        trust
 </pre>
+    </li>
 
 </ol>
 
@@ -1535,48 +1971,57 @@ host	replication	postgres		192.168.0.10/32		trust
 </p>
 <p>
 <ul>
- <li>这些查询只允许被发送到主节点
-	  <ul>
-	   <li>INSERT, UPDATE, DELETE, COPY FROM, TRUNCATE, CREATE, DROP, ALTER, COMMENT
-	   <li>SELECT ... FOR SHARE | UPDATE
-	   <li>在事务隔离级别为 SERIALIZABLE 的 SELECT
-	   <li>比 ROW EXCLUSIVE MODE 更严厉的 LOCK 命令
-	   <li>一些事务相关命令：
-			<ul>
-			 <li>BEGIN READ WRITE, START TRANSACTION READ WRITE
-			 <li>SET TRANSACTION READ WRITE, SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE
-			 <li>SET transaction_read_only = off
-			</ul>
-	   <li>两步提交命令：PREPARE TRANSACTION, COMMIT PREPARED, ROLLBACK PREPARED
-	   <li>LISTEN, UNLISTEN, NOTIFY
-	   <li>VACUUM
-	   <li>一些序列生成器操作函数（nextval 和 setval）
-	   <li>大对象建立命令
-	  </ul>
- <li>这些查询可以被发送到主节点和备节点。如果启用了负载均衡，这些查询可以被发送到备节点。但是，如果设置了 delay_threshold 且复制延迟大于这个值，则查询被发送到主节点。
-	  <ul>
-	   <li>SELECT not listed above
-	   <li>COPY TO
-	   <li>DECLARE, FETCH, CLOSE
-	   <li>SHOW
-	  </ul>
- <li>以下查询被同时发送到主节点和备节点
-	  <ul>
-	   <li>SET
-	   <li>DISCARD
-	   <li>DEALLOCATE ALL
-	  </ul>
+    <li>这些查询只允许被发送到主节点
+    <ul>
+       <li>INSERT, UPDATE, DELETE, COPY FROM, TRUNCATE, CREATE, DROP, ALTER, COMMENT</li>
+       <li>SELECT ... FOR SHARE | UPDATE</li>
+       <li>在事务隔离级别为 SERIALIZABLE 的 SELECT</li>
+       <li>比 ROW EXCLUSIVE MODE 更严厉的 LOCK 命令</li>
+       <li>一些事务相关命令：
+           <ul>
+             <li>BEGIN READ WRITE, START TRANSACTION READ WRITE</li>
+             <li>SET TRANSACTION READ WRITE, SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE</li>
+             <li>SET transaction_read_only = off
+            </ul>
+       </li>
+       <li>两步提交命令：PREPARE TRANSACTION, COMMIT PREPARED, ROLLBACK PREPARED</li>
+       <li>LISTEN, UNLISTEN, NOTIFY</li>
+       <li>VACUUM</li>
+       <li>一些序列生成器操作函数（nextval 和 setval）</li>
+       <li>大对象建立命令</li>
+    </ul>
+    </li>
+
+    <li>这些查询可以被发送到主节点和备节点。
+    如果启用了负载均衡，这些查询可以被发送到备节点。
+    但是，如果设置了 <a href="#DELAY_THRESHOLD">delay_threshold</a> 且复制延迟大于这个值，
+    则查询被发送到主节点。
+    <ul>
+       <li>SELECT not listed above</li>
+       <li>COPY TO</li>
+       <li>DECLARE, FETCH, CLOSE</li>
+       <li>SHOW</li>
+    </ul>
+    </li>
+
+    <li>以下查询被同时发送到主节点和备节点
+   <ul>
+       <li>SET</li>
+       <li>DISCARD</li>
+       <li>DEALLOCATE ALL</li>
+   </ul>
+   </li>
 </ul>
 </p>
 
 <p>
 在一个显式的事务中：
-<ul>
- <li>启动事务的命令例如 BEGIN 只被发送到主节点。
- <li>接下来的 SELECT 和一些可以被发送到主节点或备节点的其他查询会在事务中执行或者在备节点中执行。
- <li>无法在备节点中执行的命令例如 INSERT 被发送到主节点。在这些命令之后的命令，即使是 SELECT 也被发送到主节点。这是因为这些 SELECT 语句可能需要立即查看 INSERT 的结果。这种行为一直持续到事务关闭或者终止。
-</ul>
 </p>
+<ul>
+    <li>启动事务的命令例如 BEGIN 只被发送到主节点。</li>
+    <li>接下来的 SELECT 和一些可以被发送到主节点或备节点的其他查询会在事务中执行或者在备节点中执行。</li>
+    <li>无法在备节点中执行的命令例如 INSERT 被发送到主节点。在这些命令之后的命令，即使是 SELECT 也被发送到主节点。这是因为这些 SELECT 语句可能需要立即查看 INSERT 的结果。这种行为一直持续到事务关闭或者终止。
+</ul>
 
 <p>
 在扩展协议中，在负载均衡模式中在分析查询时，有可能探测是否查询可以被发送到备节点。规则和非扩展协议下相同。例如，INSERT 被发送到主节点。接下来的 bind，describe 和 execute 也将被发送到主节点。
@@ -1589,33 +2034,121 @@ host	replication	postgres		192.168.0.10/32		trust
 最后，pgpool-II 的分析认为有错误的查询将被发送到主节点。
 </p>
 
-<h2>流复制中的在线恢复</h2>
+<p>
+在指定负载均衡的时候，你可以使用数据库名和应用程序名而达到更小的粒度。
+</p>
+
+<p>
+<dl>
+  <dt id="DATABASE_REDIRECT_PREFERENCE_LIST">database_redirect_preference_list <span class="version">V3.4 -</span></dt>
+    <dd>
+    <p>
+      你可以成对设置 "database name:node id" 来指定在连接到数据库时候使用的节点编号。
+      例如，指定 "test:1"，则 pgpool-II 在连接到 "test" 数据库的时候总是将 SELECT 语句重定向到节点 1。
+      你可以指定多个用逗号(,)分隔的 "database name:node id" 参数对。
+      数据库名允许使用正则表达式。
+      关键字 "primary" 表示主节点，关键字 "standby" 表示备节点。
+    </p>
+    <p>
+      示例如下：
+    <pre>
+database_redirect_preference_list = 'postgres:primary,mydb[01]:1,mydb2:standby'
+    </pre>
+    </p>
+    <p>
+      连接到 postgres 数据库时 SELECT 语句将被重定向到主节点。
+      连接到 mydb0 或者  mydb1 将重定向 SELECT 语句到节点 1。
+      连接到 mydb2 将重定向 SELECT 语句重定向到一个备节点。
+    </p>
+    <p>
+    要使对本参数的改动生效，你需要重新加载 pgpool.conf。
+    </p>
+    </dd>
+
+  <dt id="APP_NAME_REDIRECT_PREFERENCE_LIST">app_name_redirect_preference_list <span class="version">V3.4 -</span></dt>
+    <dd>
+    <p>
+      你可以成对设置 "application name:node id" 来指定应用程序使用的节点编号。
+      "Application name" 是客户端连接到数据库时指定的一个名称。
+      你可以在 PostgreSQL 9.0 或以后的版本中使用。
+      例如，psql 命令的名称是 "psql"。
+      pgpool-II 只能识别客户端在初始数据包中包含的应用程序名。
+      客户端可以在之后发送应用程序名但 pgpool-II 无法识别它。
+    </p>
+    <p>
+      app_name_redirect_preference_list 的概念和 app_name_redirect_preference_list 相同。
+      因此你也可以使用正则表达式来匹配应用程序名。
+    </p>
+    <p>
+      以下为一个示例：
+    <pre>
+app_name_redirect_preference_list = 'psql:primary,myapp1:1,myapp2:standby'
+    </pre>
+    </p>
+    <p>
+      本例中， psql 的 SELECT 语句被发送到主节点，myapp1 的发送到节点 1，myapp2 的发送到备节点。
+    </p>
+    <p>
+      app_name_redirect_preference_list 的优先级高于 database_redirect_preference_list。
+      例如：
+      <pre>
+        database_redirect_preference_list = 'bigdb:primary'
+        app_name_redirect_preference_list = 'myapp:2'
+      </pre>
+    </p>
+    <p>
+      应用程序连接到数据库 bigdb 并发送 SELECT 语句到主节点。
+      但是 myapp 发送 SELECT 语句到节点 2，即使它连接到的是 bigdb 数据库。
+      这在脚本中非常有用：myapp2 发送大量繁重的 SELECT 语句以执行分析任务。
+      你想单独使用节点 2 来进行分析工作。
+    </p>
+    <p>
+    要使对本参数的改动生效，你需要重新加载 pgpool.conf。
+    </p>
+    </dd>
+</dl>
+</p>
+
+
+
+<h2 id="online_recovery_in_stream_mode">流复制中的在线恢复</h2>
 <p>
 在流复制的主/备模式中，可以执行在线恢复。在在线恢复过程中，首要务器扮演了主服务器的角色并恢复到指定的备服务器。因此恢复过程需要首要服务器启动并运行。
 如果第一服务器失效且没有备用服务器被提升，你需要停止 pgpool-II 和所有的 PostgreSQL 服务器并手动恢复它们。
 </p>
+
 <p>
 <ol>
- <li>设置 recovery_user。通常为 "postgres"。
+    <li>设置 <a href="#RECOVERY_USER">recovery_user</a>。通常为 "postgres"。
 <pre>
 recovery_user = 'postgres'
 </pre>
-<li>设置登录到数据库的 recover_user 的 recovery_password。
+    </li>
+
+    <li>设置登录到数据库的 <a href="#RECOVERY_USER">recovery_user</a> 的 <a href="#RECOVERY_PASSWORD">recovery_password</a>。
 <pre>
 recovery_password = 't-ishii'
 </pre>
+    </li>
 
-<li>设置 recovery_1st_stage_command。这个阶段的这个脚本用来执行一个首要数据库的备份并还原它到备用节点。将此脚本放置在首要数据库示例的目录中并给它可执行权限。这里有一个用于配置了一个主节点和一个备节点的示例脚本 <a href="basebackup.sh">(basebackup.sh)</a> 。你需要设置 ssh 让 recovery_user 可以从首要节点登录到备用节点而不需要提供密码。
+    <li>设置 <a href="#RECOVERY_1ST_STAGE_COMMAND">recovery_1st_stage_command</a>。
+        这个阶段的这个脚本用来执行一个首要数据库的备份并还原它到备用节点。
+        将此脚本放置在首要数据库示例的目录中并给它可执行权限。
+        这里有一个用于配置了一个主节点和一个备节点的示例脚本 <a href="basebackup.sh">(basebackup.sh)</a> 。
+        你需要设置 ssh 让 recovery_user 可以从首要节点登录到备用节点而不需要提供密码。
 
 <pre>
 recovery_1st_stage_command = 'basebackup.sh'
 </pre>
-<li>让 recovery_2nd_stage_command 保留为空。
+    </li>
+
+    <li>让 <a href="#RECOVERY_2ND_STAGE_COMMAND">recovery_2nd_stage_command</a> 保留为空。
 <pre>
 recovery_2nd_stage_command = ''
 </pre>
+    </li>
 
-<li>在每个数据库节点中安装必须的执行在线恢复的 C 和 SQL 函数。
+    <li>在每个数据库节点中安装必须的执行在线恢复的 C 和 SQL 函数。
 </p>
 
 <pre>
@@ -1625,24 +2158,46 @@ recovery_2nd_stage_command = ''
 # psql -f pgpool-recovery.sql template1
 </pre>
 
-<li>在完成在线恢复后，pgpool-II 将在备节点启动 PostgreSQL。在每个数据库节点中安装用于本用途的脚本。
-<a href="pgpool_remote_start">示例脚本</a> 包含在源码的“sample”目录中。这个脚本使用了 ssh。你需要允许 recover_user 从首要节点登录到备用节点而不需要输入密码。
+    <li>在完成在线恢复后，pgpool-II 将在备节点启动 PostgreSQL。
+        在每个数据库节点中安装用于本用途的脚本。
+        <a href="pgpool_remote_start">示例脚本</a> 包含在源码的“sample”目录中。
+        这个脚本使用了 ssh。你需要允许 recover_user 从首要节点登录到备用节点而不需要输入密码。
+    </li>
 </ol>
 </p>
 
 <p>
-以上未全部内容。现在你可以使用 pcp_recovery_node （作为备用节点的步骤）或者点击 pgpoolAdmin 的“恢复”按钮来执行在线恢复了。如果出现问题，请检查 pgpool-II 的日子，首要服务器的日志和备用服务器的日志。
+以上未全部内容。现在你可以使用 pcp_recovery_node （作为备用节点的步骤）或者点击 pgpoolAdmin 的“恢复”按钮来执行在线恢复了。
+如果出现问题，请检查 pgpool-II 的日子，首要服务器的日志和备用服务器的日志。
 </p>
+
 <p>
 作为参考，以下为恢复过程的步骤。
 <ol>
-<li>Pgpool-II 使用 user = recovery_user, password = recovery_password 连接到首要服务器的 template1 数据库。
-<li>首要服务器执行 pgpool_recovery 函数。
-<li>pgpool_recovery 函数执行 recovery_1st_stage_command。注意 PostgreSQL 在数据库实例的当前目录中执行函数。因此，recovery_1st_stage_command 在数据库实例的目录中执行。
-<li>首要服务器执行 pgpool_remote_start 函数。本函数执行一个在数据库实例路径中名为“pgpool_remote_start”的脚本，它通过 ssh 在备用服务器上执行 pg_ctl 命令来进行恢复。pg_ctl 将在后台启动 postmaster。所以我们需要确保备用节点上的 postmaster 真正启动了。
-<li>pgpool-II 尝试使用 user = recovery_user 和 password = recovery_password 连接到备用 PostgreSQL。如果可能，连接到的数据库为“postgres”。否则，使用“template1”。pgpool-II 尝试 <a href="#RECOVERY_TIMEOUT">recovery_timeout</a> 秒。如果成功，进行下一步。
-<li>如果 <a href="#FAILBACK_COMMAND">failback_command</a> 不为空，pgpool-II 父进程执行这个脚本。
-<li>在 failback_command 完成后，pgpool-II 重新启动所有的子进程。
+    <li>Pgpool-II 使用 user = <a href="#RECOVERY_USER">recovery_user</a>,
+        password = <a href="#RECOVERY_PASSWORD">recovery_password</a>
+        连接到首要服务器的 template1 数据库。
+    </li>
+    <li>首要服务器执行 pgpool_recovery 函数。
+    </li>
+    <li>pgpool_recovery 函数执行 recovery_1st_stage_command。
+        注意 PostgreSQL 在数据库实例的当前目录中执行函数。
+        因此，recovery_1st_stage_command 在数据库实例的目录中执行。
+    </li>
+    <li>首要服务器执行 pgpool_remote_start 函数。
+        本函数执行一个在数据库实例路径中名为“pgpool_remote_start”的脚本，
+        它通过 ssh 在备用服务器上执行 pg_ctl 命令来进行恢复。pg_ctl 将在后台启动 postmaster。
+        所以我们需要确保备用节点上的 postmaster 真正启动了。
+    </li>
+    <li>pgpool-II 尝试使用 user = recovery_user 和 password = recovery_password
+        连接到备用 PostgreSQL。如果可能，连接到的数据库为“postgres”。
+        否则，使用“template1”。pgpool-II 尝试 <a href="#RECOVERY_TIMEOUT">recovery_timeout</a> 秒。
+        如果成功，进行下一步。
+    </li>
+    <li>如果 <a href="#FAILBACK_COMMAND">failback_command</a> 不为空，pgpool-II 父进程执行这个脚本。
+    </li>
+    <li>在 failback_command 完成后，pgpool-II 重新启动所有的子进程。
+    </li>
 </ol>
 </p>
 
@@ -1653,63 +2208,58 @@ recovery_2nd_stage_command = ''
 
 <h1 id="parallel">并行模式</h3>
 
-<p>本模式实现了查询的并行执行。表可以被分割，数据分布在每个节点中。而且，复制和负载均衡功能也可以同时使用。在并行模式中，pgpool.conf 中的 <a href="#REPLICATION_MODE">replication_mode</a> 和 <a href="#LOAD_BALANCE_MODE">load_balance_mode</a> 被设置为 ture，<a href="#MASTER_SLAVE_MODE">master_slave</a> 被设置为 false，<a href="#PARALLEL_MODE">parallel_mode</a> 被设置为 false。当你改变这些参数后，需要重启 pgpool-II。
+<p class="version_notice">
+  <em class="caution">不推荐使用</em> :
+  本模式不推荐使用，将在未来的版本中移除（可能在 3.5 中）。
+</p>
+
+<p>本模式实现了查询的并行执行。表可以被分割，数据分布在每个节点中。
+而且，复制和负载均衡功能也可以同时使用。
+在并行模式中，pgpool.conf 中的 <a href="#REPLICATION_MODE">replication_mode</a>
+和 <a href="#LOAD_BALANCE_MODE">load_balance_mode</a> 被设置为 ture，
+<a href="#MASTER_SLAVE_MODE">master_slave</a> 被设置为 false，
+<a href="#PARALLEL_MODE">parallel_mode</a> 被设置为 false。
+当你改变这些参数后，需要重启 pgpool-II。
 </p>
 
 <h2 id="system_db">配置 System DB</h2>
 
-<p>如果想使用并行模式，System DB 需要被正确配置。System DB 包含存储在一个表中的，用于选择被分区的数据将被发送到的恰当后端程序的规则。
-	System DB 不一定要和 pgpool-II 在同一台主机上。System DB 的配置由 <code>pgpool.conf</code> 完成。</p>
+<p>如果想使用并行模式，System DB 需要被正确配置。
+System DB 包含存储在一个表中的，用于选择被分区的数据将被发送到的恰当后端程序的规则。
+System DB 不一定要和 pgpool-II 在同一台主机上。
+System DB 的配置由 <code>pgpool.conf</code> 完成。</p>
 
 <dl>
-  <dt><a name="SYSTEM_DB_HOSTNAME"></a>system_db_hostname</dt>
-  <dd>
-      <p>System DB 所在的主机名。给出空字符串('')表示 SystemDB 和 pgpool-II 在同一台主机，且将通过 UNIX 域套接字访问。</p>
-  </dd>
+<dt><a name="SYSTEM_DB_HOSTNAME"></a>system_db_hostname</dt>
+    <dd>
+    <p>System DB 所在的主机名。给出空字符串('')表示 SystemDB
+    和 pgpool-II 在同一台主机，且将通过 UNIX 域套接字访问。
+    档本值为空时，将使用 <code>"/tmp"</code>。</p>
+    </dd>
 
-  <dt><a name="SYSTEM_DB_PORT"></a>system_db_port</dt>
-  <dd>
-      <p>System DB 使用的端口号</p>
-  </dd>
+<dt><a name="SYSTEM_DB_PORT"></a>system_db_port</dt>
+    <dd>
+    <p>System DB 使用的端口号</p>
+    </dd>
 
-  <dt><a name="SYSTEM_DBNAME"></a>system_dbname</dt>
+<dt><a name="SYSTEM_DBNAME"></a>system_dbname</dt>
   <dd>
       <p>分区规则和其他的信息将被定义到这里指定的数据库中。默认值为：<code>'pgpool'</code>。</p>
   </dd>
 
-  <dt><a name="SYSTEM_DB_SCHEMA"></a>system_db_schema</dt>
+<dt><a name="SYSTEM_DB_SCHEMA"></a>system_db_schema</dt>
   <dd>
       <p>分区规则和其他的信息将被定义到这里指定的模式中。默认值为：<code>'pgpool_catalog'</code>。</p>
   </dd>
 
-  <dt><a name="SYSTEM_DB_USER"></a>system_db_user</dt>
+<dt><a name="SYSTEM_DB_USER"></a>system_db_user</dt>
   <dd>
       <p>连接到 System DB 的用户名。</p>
   </dd>
 
-  <dt><a name="SYSTEM_DB_PASSWORD"></a>system_db_password</dt>
+<dt><a name="SYSTEM_DB_PASSWORD"></a>system_db_password</dt>
   <dd>
       <p>连接到 System DB 的密码，如果不需要密码，则设置为空字符串('')。</p>
-  </dd>
-
-  <dt><a name="SSL_CA_CERT"></a>ssl_ca_cert</dt>
-  <dd>
-      <p>
-      	到达用于校验后台服务器的 PEM 格式的包含一个或者多个 CA 根证书的文件的路径。这类似于 OpenSSL 的 <code>verify(1)</code> 命令的 <code>-CAfile</code> 选项。
-      </p>
-      <p>
-      	默认值为未设置，也就是不进行认证。如果本选项未设置但是 <code>ssl_ca_cert_dir</code>被设置了，则认证过程依旧会发生。
-      </p>
-  </dd>
-
-  <dt><a name="SSL_CA_CERT_DIR"></a>ssl_ca_cert_dir</dt>
-  <dd>
-      <p>
-      	到达包含用于校验后台服务器的 PEM 格式的 CA 证书的目录的路径。这类似于 OpenSSL 的 <code>verify(1)</code> 命令的 <code>-CApath</code> 选项。
-      </p>
-      <p>
-      	默认值为未设置，也就是不进行认证。如果本选项未设置但是 <code>ssl_ca_cert</code> 被设置了，则认证过程依旧会发生。
-      </p>
   </dd>
 
 </dl>
@@ -1730,14 +2280,14 @@ psql -f $prefix/share/system_db.sql pgpool
 
 <pre>
 CREATE TABLE pgpool_catalog.dist_def(
-dbname TEXT,                                              -- database name
-schema_name TEXT,                                         -- schema name
-table_name TEXT,                                          -- table name
-col_name TEXT NOT NULL CHECK (col_name = ANY (col_list)), -- partitioning key column name
-col_list TEXT[] NOT NULL,                                 -- names of table attributes
-type_list TEXT[] NOT NULL,                                -- types of table attributes
-dist_def_func TEXT NOT NULL,                              -- name of the partitioning rule function
-PRIMARY KEY (dbname,schema_name,table_name)
+    dbname TEXT,                                              -- database name
+    schema_name TEXT,                                         -- schema name
+    table_name TEXT,                                          -- table name
+    col_name TEXT NOT NULL CHECK (col_name = ANY (col_list)), -- partitioning key column name
+    col_list TEXT[] NOT NULL,                                 -- names of table attributes
+    type_list TEXT[] NOT NULL,                                -- types of table attributes
+    dist_def_func TEXT NOT NULL,                              -- name of the partitioning rule function
+    PRIMARY KEY (dbname,schema_name,table_name)
 );
 </pre>
 
@@ -1748,12 +2298,12 @@ PRIMARY KEY (dbname,schema_name,table_name)
 
 <pre>
 CREATE TABLE pgpool_catalog.replicate_def(
-	dbname TEXT,	    --database name
-	schema_name TEXT,	--schema name 
-	table_name TEXT,	--table name
-	col_list TEXT[] NOT NULL,	-- names of table attributes
-	type_list TEXT[] NOT NULL,	-- types of table attributes
-	PRIMARY KEY (dbname,schema_name,table_name)
+    dbname TEXT,                  -- database name
+    schema_name TEXT,             -- schema name
+    table_name TEXT,              --table name
+    col_list TEXT[] NOT NULL,     -- names of table attributes
+    type_list TEXT[] NOT NULL,    -- types of table attributes
+    PRIMARY KEY (dbname,schema_name,table_name)
 );
 </pre>
 
@@ -1764,21 +2314,21 @@ CREATE TABLE pgpool_catalog.replicate_def(
 </p>
 <pre>
 INSERT INTO pgpool_catalog.dist_def VALUES (
-	'pgpool',
-	'public',
-	'accounts',
-	'aid',
-	ARRAY['aid','bid','abalance','filler'],
-	ARRAY['integer','integer','integer','character(84)'],
-	'pgpool_catalog.dist_def_accounts'
+    'pgpool',
+    'public',
+    'accounts',
+    'aid',
+    ARRAY['aid','bid','abalance','filler'],
+    ARRAY['integer','integer','integer','character(84)'],
+    'pgpool_catalog.dist_def_accounts'
 );
 
 INSERT INTO pgpool_catalog.replicate_def VALUES (
-	'pgpool',
-	'public',
-	'branches',
-	ARRAY['bid','bbalance','filler'],
-	ARRAY['integer','integer','character(84)']
+    'pgpool',
+    'public',
+    'branches',
+    ARRAY['bid','bbalance','filler'],
+    ARRAY['integer','integer','character(84)']
 );
 </pre>
 
@@ -1787,8 +2337,8 @@ INSERT INTO pgpool_catalog.replicate_def VALUES (
 </p>
 <pre>
 CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_accounts (val ANYELEMENT) RETURNS INTEGER AS '
-SELECT CASE WHEN $1 >= 1 and $1 <= 30000 THEN 0
-WHEN $1 > 30000 and $1 <= 60000 THEN 1
+SELECT CASE WHEN $1 &gt;= 1 and $1 &lt;= 30000 THEN 0
+WHEN $1 &gt; 30000 and $1 &lt;= 60000 THEN 1
 ELSE 2
 </pre>
 
@@ -1805,58 +2355,60 @@ ELSE 2
 当安装 pgpool 的时候，pool_hba.conf.sample 文件将被安装在"/usr/local/etc"目录下，该位置也是配置文件的默认目录。拷贝 pool_hba.conf.sample 为 pool_hba.conf，如果必要的话并修改它。默认的情况下，<a href="#ENABLE_POOL_HBA">enable_pool_hba</a> 认证被开启。 
 </p>
 <p>
-	pool_hba.conf 文件的格式和 PostgreSQL 的 pg_hba.conf 的格式遵循的非常相近。
+    pool_hba.conf 文件的格式和 PostgreSQL 的 pg_hba.conf 的格式遵循的非常相近。
 </p>
 <pre>
-    local      DATABASE  USER  METHOD  [OPTION]
-    host       DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTION]
+local      DATABASE  USER  METHOD  [OPTION]
+host       DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTION]
 </pre>
 <p>
-  查看 "pool_hba.conf.sample" 文件获取每个字段详细的解释。
+查看 "pool_hba.conf.sample" 文件获取每个字段详细的解释。
 </p>
 <p>
-  下面是 pool_hba 的一些限制。
+下面是 pool_hba 的一些限制。
+</p>
+
 <ul>
-<li>"hostssl" 连接类型不被支持</li>
-<p>
-    尽管"hostssl"不能被使用，pgpool-II 2.3或更高版本支持SSL，详见<a href="#ssl">SSL</a>。    
-</p>
 <li>DATABASE 字段使用的"samegroup" 不被支持</li>
-<p>
+    <p>
     尽管 pgpool 并不知道后端服务器的用户的任何信息，但是将通过 pool_hba.conf 中的 DATABASE 字段项对数据库名进行简单的检查。   
-</p>
+    </p>
+
 <li>USER 字段使用的 group 名字后面跟个"+"不被支持 </li>
-<p>
+    <p>
     这与上面介绍的 "samegroup" 原因相同，将通过 pool_hba.conf 中 USER 字段项对用户名进行简单的检查。
-</p>
+    </p>
+
 <li>为 IP address/mask 使用的 IPv6 不被支持</li>
-<p>
+    <p>
     pgpool 当前不支持 IPv6.
-</p>
+    </p>
+
 <li>METHOD 字段仅仅支持 "trust", "reject", "md5" 和 "pam" </li>
-<p>
+    <p>
     再次，这与上面介绍的 "samegroup" 原因相同, pgpool 不能够访问 user/password 信息。
-</p>
-<p>
-要使用md5认证，你需要在 "pool_passwd" 中注册你的名字和密码。详见<a href="#md5">认证/访问控制</a>。
+    </p>
+    <p>
+    要使用md5认证，你需要在 "pool_passwd" 中注册你的名字和密码。详见<a href="#md5">认证/访问控制</a>。
 </ul>
+
 <p>
-	注意本节描述的所有认证发生在客户端和 pgpool-II 之间；客户端仍然需要继续通过 PostgreSQL 的认证过程。
-	pool_hba 并不关心客户端提供的用户名/数据库名（例如 psql -U testuser testdb）是否真实存在于后端服务器中。pool_hba 仅仅关心是否在 pool_hba.conf 中存在匹配。
+    注意本节描述的所有认证发生在客户端和 pgpool-II 之间；客户端仍然需要继续通过 PostgreSQL 的认证过程。
+    pool_hba 并不关心客户端提供的用户名/数据库名（例如 psql -U testuser testdb）是否真实存在于后端服务器中。pool_hba 仅仅关心是否在 pool_hba.conf 中存在匹配。
 </p>
 
 <p>
-	PAM 认证使用 pgpool 运行的主机上的用户信息来获得支持。若让 pgpool 支持PAM，需要在 configure 时指定"--with-pam"选项。
+    PAM 认证使用 pgpool 运行的主机上的用户信息来获得支持。若让 pgpool 支持PAM，需要在 configure 时指定"--with-pam"选项。
 </p>
 <pre>
-    configure --with-pam
+configure --with-pam
 </pre>
 <p>
   若启用 PAM 认证，你需要为 pgpool 在系统的 PAM 配置目录(通常是在"/etc/pam.d")中创建一个 service-configuration 文件。
   一个 service-configuration 的示例文件被安装为安装目录下的"share/pgpool.pam"。
 </p>
 
-<h1 id="query_cache">设置 Query cache 方法 <span class="version">- V3.1 (已废弃)</span></h1>
+<h1 id="query_cache">设置 Query cache 方法 <span class="version">- V3.4 (已移除)</span></h1>
 
 <strong>注意：这个（基于磁盘的）查询缓存功能将在不久后被移除。
 清使用<a href="#memqcache">基于内存的查询缓存</a>代替。
@@ -1881,17 +2433,21 @@ CREATE TABLE pgpool_catalog.query_cache (
 );
 </pre>
 <p>
-	然而，如果你不使用"pgpool_catalog"的话，你可能需要修改该语句中的 schema。
+    然而，如果你不使用"pgpool_catalog"的话，你可能需要修改该语句中的 schema。
 </p>
 <p>
 <strong>注意：当前的查询缓存的实现方法为在数据库中建立缓存数据。因此启用查询缓存可能会导致达不到最高的性能。即使相关的表被更新了，查询缓存的内容不会更新。你需要从缓存的表中删除缓存的数据或者通过 -c（删除缓存） 参数重启 pgpool-II。
 </strong>
 </p>
 
+<p class="top_link"><a href="#Top">返回顶部</a></p>
+
+<!-- ================================================================================ -->
+
 <h1><a name="memqcache"></a> 基于内存的查询缓存 <span class="version">V3.2 -</span></h1>
 
 <p>你可以在任何模式中使用基于内存的查询缓存。它不同于以上的查询缓存，因为基于内存的查询缓存会快很多，因为缓存存储于内存中。
-	另外，如果缓存事小了，你不需要重启 pgpool-II 因为相关的表已经得到更新了。
+    另外，如果缓存事小了，你不需要重启 pgpool-II 因为相关的表已经得到更新了。
 </p>
 
 <p>基于内存的缓存保存 SELECT 语句（以及它绑定的参数，如果 SELECT 是一个扩展的查询）以及对应的数据。
@@ -1952,7 +2508,7 @@ memqcache_method = 'shmem'
     <li>SELECT 包含 un-immutable 函数</li>
     <li>SELECT 包含 TEMP TABLE</li>
     <li>SELECT 包含 系统对象</li>
-	  <li>SELECT 包含 VIEW 和 不记录日志的表。但如果表在 <a href="#WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</a> 中，结果还是会被缓存的。</li>
+      <li>SELECT 包含 VIEW 和 不记录日志的表。但如果表在 <a href="#WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</a> 中，结果还是会被缓存的。</li>
 
     <li>SELECT 包含 VIEW </li>
     <li>SELECT 在一个被终止的显示事务中</li>
@@ -2022,7 +2578,7 @@ memqcache_method = 'shmem'
 <dt id="BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list <span class="version">V3.2 -</span></dt>
     <dd>
     <p>
-    	指定一个以逗号分隔的表名的列表，用于使 SELECT 的结果不被缓存，也可以是视图或者不写日志的表。可以使用正则表达式。
+        指定一个以逗号分隔的表名的列表，用于使 SELECT 的结果不被缓存，也可以是视图或者不写日志的表。可以使用正则表达式。
     </p>
     </dd>
 
@@ -2231,6 +2787,8 @@ pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-D][-d]
       如果是 shm，则总是忽略。
       <span class="version">V3.2 -</span></td></tr>
   <tr><td>-d</td><td>--debug</td><td>调试模式</tr>
+      <tr><td>-x</td><td>--debug-assertions</td>
+      <td>启用变量断言(assertion)检查，本功能用于调试</td></tr>
 </table>
 
 <h2 id="stop_pgpool">Stop pgpool-II</h2>
@@ -2252,18 +2810,42 @@ pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] st
 </table>
 
 <p>
-	pgpool 记录后端服务器的状态到 [logdir]/pgpool_status 文件中，当 pgpool 重启时，它读该文件并恢复后端服务器的状态。
-	这将避免可能由于下述原因造成的DB节点间的具有不同的数据：
-<ol>
-<li>一个后端服务器突然停止，然后pgpool执行恢复程序
-<li>一个update通过pgpool出现在一个活动的DBs上
-<li>管理员决定停止pgpool
-<li>其它人决定重启已停止的DB但并没通知管理员
-<li>管理员重启pgpool
-</ol>
-</p>
+    pgpool 记录后端服务器的状态到 [logdir]/pgpool_status 文件中，当 pgpool 重启时，它读该文件并恢复后端服务器的状态。
+    这将避免可能由于下述原因造成的DB节点间的具有不同的数据：
 <p>
-	如果由于某些原因，例如，停止的DB已经通过其它另外的方式已经获得了同步，则 pgpool_status 可在启动 pgpool 之前被安全的移除。
+pgpool 记录后端服务器的状态到 [logdir]/pgpool_status 文件中。
+从 pgpool-II 3.4.0 开始，pgpool_status 文件的格式发生了变化：它是一个文本文件了，你可以使用你最喜欢的文本编辑器读取或者编辑它。
+例如，你可以添加新的后端并重启 pgpool-II，你可能要等很久才能等到 pgpool-II 探测到新的后端并执行故障转移。
+通过编辑 pgpool_status 来设置后端为停机状态，你可以避免以上情况，因为 pgpool-II 的健康检查跳过了已停机的节点。
+文件中的每行对应每个后端节点的状态。
+第一个后端的状态在第一行，第二个后端的状态在第二行，以此类推。
+后端状态包含："up"、"down"、"unused" (表示忽略)。
+以下为一个 pgpool_status 文件的示例：
+<pre>
+up
+down
+up
+</pre>
+</p>
+
+<p>
+注意 pgpool-II 3.4.0 之前的版本中使用二进制的 pgpool_status 文件。pgpool-II 3.4.0 及以后版本也可以读这个文件。但是 pgpool-II 3.4.0 之前的版本无法读 ASCII 格式的 pgpool_status 文件。
+</p>
+
+<p>
+当 pgpool 重启的时候，它读取这个文件并恢复后端节点的状态。
+这将避免可能由于下述原因造成的DB节点间的具有不同的数据：
+</p>
+<ol>
+    <li>一个后端服务器突然停止，然后pgpool执行恢复程序
+    <li>一个update通过pgpool出现在一个活动的DBs上
+    <li>管理员决定停止pgpool
+    <li>其它人决定重启已停止的DB但并没通知管理员
+    <li>管理员重启pgpool
+</ol>
+
+<p>
+    如果由于某些原因，例如，停止的DB已经通过其它另外的方式已经获得了同步，则 pgpool_status 可在启动 pgpool 之前被安全的移除。
 </p>
 
 <p class="top_link"><a href="#Top">回到顶部</a></p>
@@ -2286,7 +2868,7 @@ pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file] reload
 </table>
 
 <p>
-	需要指出的是，一些配置项并不能通过重新加载来改变。新的修改后的配置将在新会话上生效。
+    需要指出的是，一些配置项并不能通过重新加载来改变。新的修改后的配置将在新会话上生效。
 </p>
 
 <p class="top_link"><a href="#Top">回到顶部</a></p>
@@ -2324,8 +2906,11 @@ benchs2=# show pool_status;
  pcp_socket_dir                       | /tmp                           | PCP socket directory
 </pre>
 </p>
-<h2>pool_nodes <span class="version">V3.0 -</span></h2>
-<p>"SHOW pool_nodes" 返回所有配置节点的列表.它显示了节点的 id, hostname, port, status, 以及权重 weight (仅在使用负载均衡模式时有意义)。status 列可能的值可在 <a href="#pcp_node_info">pcp_node_info reference</a> 里获得解释。
+<h2 id="pool_nodes">pool_nodes <span class="version">V3.0 -</span></h2>
+<p>"SHOW pool_nodes" 返回所有配置节点的列表。
+它显示了节点的 id, hostname, port, status 以及权重 weight (仅在使用负载均衡模式时有意义)。
+status 列可能的值可在 <a href="#pcp_node_info">pcp_node_info reference</a> 里获得解释。
+</p>
 <pre>
 benchs2=# show pool_nodes;
   id  |  hostname   | port | status | lb_weight |  role
@@ -2334,31 +2919,32 @@ benchs2=# show pool_nodes;
    1  | 192.168.1.7 | 5432 | 3      | 0.5       | standby
 (2 lignes)
 </pre>
-</p>
+
 <h2>pool_processes <span class="version">V3.0 -</span></h2>
 <p>"SHOW pool_processes" 返回 pgpool-II 所有进程的信息，这些进程正等待连接或在处理一个连接。
 </p>
 <p>
 结果有 6 列:
 <ul>
-<li>pool_pid 是显示的pgPool-II进程的PID</li>
-<li>start_time 是该进程启动时的时间戳</li>
-<li>database 是该进程当前连接的活跃的后台数据库名</li>
-<li>username 是该进程当前连接的活跃的后台用户名</li>
-<li>create_time 是连接的的创建时间和日期</li>
-<li>pool_counter 计数客户端使用该连接池（进程）的次数</li>
+    <li>pool_pid 是显示的pgPool-II进程的PID</li>
+    <li>start_time 是该进程启动时的时间戳</li>
+    <li>database 是该进程当前连接的活跃的后台数据库名</li>
+    <li>username 是该进程当前连接的活跃的后台用户名</li>
+    <li>create_time 是连接的的创建时间和日期</li>
+    <li>pool_counter 计数客户端使用该连接池（进程）的次数</li>
 </ul>
 </p>
 <p>结果将一直返回 num_init_children 行。</p>
 <pre>
+<pre>
 benchs2=# show pool_processes;
- pool_pid |     start_time      | database | username  |     create_time     | pool_counter 
+ pool_pid |     start_time      | database | username  |     create_time     | pool_counter
 ----------+---------------------+----------+-----------+---------------------+--------------
- 8465     | 2010-08-14 08:35:40 |          |           |                     | 
+ 8465     | 2010-08-14 08:35:40 |          |           |                     |
  8466     | 2010-08-14 08:35:40 | benchs   | guillaume | 2010-08-14 08:35:43 | 1
- 8467     | 2010-08-14 08:35:40 |          |           |                     | 
- 8468     | 2010-08-14 08:35:40 |          |           |                     | 
- 8469     | 2010-08-14 08:35:40 |          |           |                     | 
+ 8467     | 2010-08-14 08:35:40 |          |           |                     |
+ 8468     | 2010-08-14 08:35:40 |          |           |                     |
+ 8469     | 2010-08-14 08:35:40 |          |           |                     |
 (5 lines)
 </pre>
 <h2>pool_pools <span class="version">V3.0 -</span></h2>
@@ -2382,28 +2968,28 @@ benchs2=# show pool_processes;
 </p>
 <p>结果将一直返回 <a href="#NUM_INIT_CHILDREN">num_init_children</a> * <a href="#MAX_POOL">max_pool</a> 行.</p>
 <pre>
- pool_pid |     start_time      | pool_id | backend_id | database | username  |     create_time     | majorversion | minorversion | pool_counter | pool_backendpid | pool_connected 
+  pool_pid |     start_time      | pool_id | backend_id | database | username  |     create_time     | majorversion | minorversion | pool_counter | pool_backendpid | pool_connected
 ----------+---------------------+---------+------------+----------+-----------+---------------------+--------------+--------------+--------------+-----------------+----------------
- 8465     | 2010-08-14 08:35:40 | 0       | 0          |          |           |                     |              |              |              |                 | 
- 8465     | 2010-08-14 08:35:40 | 1       | 0          |          |           |                     |              |              |              |                 | 
- 8465     | 2010-08-14 08:35:40 | 2       | 0          |          |           |                     |              |              |              |                 | 
- 8465     | 2010-08-14 08:35:40 | 3       | 0          |          |           |                     |              |              |              |                 | 
+ 8465     | 2010-08-14 08:35:40 | 0       | 0          |          |           |                     |              |              |              |                 |
+ 8465     | 2010-08-14 08:35:40 | 1       | 0          |          |           |                     |              |              |              |                 |
+ 8465     | 2010-08-14 08:35:40 | 2       | 0          |          |           |                     |              |              |              |                 |
+ 8465     | 2010-08-14 08:35:40 | 3       | 0          |          |           |                     |              |              |              |                 |
  8466     | 2010-08-14 08:35:40 | 0       | 0          | benchs   | guillaume | 2010-08-14 08:35:43 | 3            | 0            | 1            | 8473            | 1
- 8466     | 2010-08-14 08:35:40 | 1       | 0          |          |           |                     |              |              |              |                 | 
- 8466     | 2010-08-14 08:35:40 | 2       | 0          |          |           |                     |              |              |              |                 | 
- 8466     | 2010-08-14 08:35:40 | 3       | 0          |          |           |                     |              |              |              |                 | 
- 8467     | 2010-08-14 08:35:40 | 0       | 0          |          |           |                     |              |              |              |                 | 
- 8467     | 2010-08-14 08:35:40 | 1       | 0          |          |           |                     |              |              |              |                 | 
- 8467     | 2010-08-14 08:35:40 | 2       | 0          |          |           |                     |              |              |              |                 | 
- 8467     | 2010-08-14 08:35:40 | 3       | 0          |          |           |                     |              |              |              |                 | 
- 8468     | 2010-08-14 08:35:40 | 0       | 0          |          |           |                     |              |              |              |                 | 
- 8468     | 2010-08-14 08:35:40 | 1       | 0          |          |           |                     |              |              |              |                 | 
- 8468     | 2010-08-14 08:35:40 | 2       | 0          |          |           |                     |              |              |              |                 | 
- 8468     | 2010-08-14 08:35:40 | 3       | 0          |          |           |                     |              |              |              |                 | 
- 8469     | 2010-08-14 08:35:40 | 0       | 0          |          |           |                     |              |              |              |                 | 
- 8469     | 2010-08-14 08:35:40 | 1       | 0          |          |           |                     |              |              |              |                 | 
- 8469     | 2010-08-14 08:35:40 | 2       | 0          |          |           |                     |              |              |              |                 | 
- 8469     | 2010-08-14 08:35:40 | 3       | 0          |          |           |                     |              |              |              |                 | 
+ 8466     | 2010-08-14 08:35:40 | 1       | 0          |          |           |                     |              |              |              |                 |
+ 8466     | 2010-08-14 08:35:40 | 2       | 0          |          |           |                     |              |              |              |                 |
+ 8466     | 2010-08-14 08:35:40 | 3       | 0          |          |           |                     |              |              |              |                 |
+ 8467     | 2010-08-14 08:35:40 | 0       | 0          |          |           |                     |              |              |              |                 |
+ 8467     | 2010-08-14 08:35:40 | 1       | 0          |          |           |                     |              |              |              |                 |
+ 8467     | 2010-08-14 08:35:40 | 2       | 0          |          |           |                     |              |              |              |                 |
+ 8467     | 2010-08-14 08:35:40 | 3       | 0          |          |           |                     |              |              |              |                 |
+ 8468     | 2010-08-14 08:35:40 | 0       | 0          |          |           |                     |              |              |              |                 |
+ 8468     | 2010-08-14 08:35:40 | 1       | 0          |          |           |                     |              |              |              |                 |
+ 8468     | 2010-08-14 08:35:40 | 2       | 0          |          |           |                     |              |              |              |                 |
+ 8468     | 2010-08-14 08:35:40 | 3       | 0          |          |           |                     |              |              |              |                 |
+ 8469     | 2010-08-14 08:35:40 | 0       | 0          |          |           |                     |              |              |              |                 |
+ 8469     | 2010-08-14 08:35:40 | 1       | 0          |          |           |                     |              |              |              |                 |
+ 8469     | 2010-08-14 08:35:40 | 2       | 0          |          |           |                     |              |              |              |                 |
+ 8469     | 2010-08-14 08:35:40 | 3       | 0          |          |           |                     |              |              |              |                 |
 (20 lines)
 </pre>
 
@@ -2483,44 +3069,51 @@ pgpool-II，在复制模式下在给客户端提供服务的同时，能够同�
 </p>
 
 <p>
-pgpool-II 以两个阶段来执行在线恢复。当一个恢复节点同步数据库时，客户端可能需要等待几秒到几分钟不等的时间来连接 pgpool-II。下面是这些步骤:
-  <ol>
-    <li> CHECKPOINT
-    <li> 在线恢复的第一阶段
-    <li> 等待所有的客户端连接断开
-    <li> CHECKPOINT
-    <li> 在线恢复的第二阶段
-    <li> 启动 postmaster （执行 <a href="#pool_remote_start">pgpool_remote_start</a>）
-    <li> 节点连接上来
-  </ol>
+pgpool-II 以两个阶段来执行在线恢复。
+当一个恢复节点同步数据库时，客户端可能需要等待几秒到几分钟不等的时间来连接 pgpool-II。
+下面是这些步骤：
 </p>
+
+<ol>
+    <li> CHECKPOINT</li>
+    <li> 在线恢复的第一阶段</li>
+    <li> 等待所有的客户端连接断开</li>
+    <li> CHECKPOINT</li>
+    <li> 在线恢复的第二阶段</li>
+    <li> 启动 postmaster （执行 <a href="#pool_remote_start">pgpool_remote_start</a>）</li>
+    <li> 节点连接上来</li>
+  </ol>
 
 <p>
    数据同步的第一个步称之为"第一阶段"。 数据在第一阶段中被同步，在第一阶段中，数据<b>能够</b>被并行的从任意表更新或获取。
 </p>
 
 <p>
-	你可以指定第一阶段中执行的脚本。pgpool-II传递三个参数到该脚本中。
-  <ol>
+你可以指定第一阶段中执行的脚本。pgpool-II传递三个参数到该脚本中。
+</p>
+
+<ol>
     <li>主节点的数据库实例路径。
     <li>被恢复的目标节点的主机名
     <li>被恢复的目标节点的数据库实例路径
-  </ol>
+</ol>
+
+<p>
+数据同步在称之为"第二阶段"中完成。在进入第二阶段前，pgpool-II 等待所有的客户端断开连接。它阻塞所有新来的连接直到第二阶段完成。
+</p>
+<p>
+当所有的连接被中断后，pgpool-II合并在第一和第二阶段中更新的数据。这是同步的最终数据。  
 </p>
 
 <p>
-	数据同步在称之为"第二阶段"中完成。在进入第二阶段前，pgpool-II 等待所有的客户端断开连接。它阻塞所有新来的连接直到第二阶段完成。当所有的连接被中断后，pgpool-II合并在第一和第二阶段中更新的数据。这是同步的最终数据。  
-</p>
-
-<p>
- <font color="red">
- 	注意：关于在线恢复有一个限制。如果 pgpool-II 本身安装在多个主机上，在线恢复则不能正确的工作，这是因为 pgpool-II需要在在线恢复的第二阶段中断所有客户端连接。如果存在多个 pgpool-II 主机，只有一个主机能收到在线恢复命令，然后阻塞连接。
+<font color="red">
+注意：关于在线恢复有一个限制。如果 pgpool-II 本身安装在多个主机上，在线恢复则不能正确的工作，这是因为 pgpool-II需要在在线恢复的第二阶段中断所有客户端连接。如果存在多个 pgpool-II 主机，只有一个主机能收到在线恢复命令，然后阻塞连接。
 </font>
 </p>
 
 <h2 id="online_recovery_params">配置在线恢复</h2>
 <p>
-	为在线恢复在pgpool.conf中设置如下参数：
+    为在线恢复在pgpool.conf中设置如下参数：
 </p>
 
 <ul>
@@ -2534,11 +3127,11 @@ pgpool-II 以两个阶段来执行在线恢复。当一个恢复节点同步数�
 
 <h2><a name="installing-c-functions"></a>安装c语言函数</h2>
 <p>
-	你需要为在线恢复在所有的后端节点中的"template1"数据库中安装c语言函数。源代码在pgpool-II的压缩包中。
+    你需要为在线恢复在所有的后端节点中的"template1"数据库中安装c语言函数。源代码在pgpool-II的压缩包中。
 </p>
 
 <pre>
-  pgpool-II-x.x.x/sql/pgpool-recovery/
+pgpool-II-x.x.x/sql/pgpool-recovery/
 </pre>
 
 <p>
@@ -2546,8 +3139,8 @@ pgpool-II 以两个阶段来执行在线恢复。当一个恢复节点同步数�
 </p>
 
 <pre>
-  % cd pgpool-II-x.x.x/sql/pgpool-recovery/
-  % make install
+% cd pgpool-II-x.x.x/sql/pgpool-recovery/
+% make install
 </pre>
 
 <p>
@@ -2555,14 +3148,14 @@ pgpool-II 以两个阶段来执行在线恢复。当一个恢复节点同步数�
 </p>
 
 <pre>
-  % cd pgpool-II-x.x.x/sql/pgpool-recovery/
-  % psql -f pgpool-recovery.sql template1
+% cd pgpool-II-x.x.x/sql/pgpool-recovery/
+% psql -f pgpool-recovery.sql template1
 </pre>
 
 
 <h2 id="recovery_script"> 恢复脚本部署 </h2>
 <p>
-	我们必须在数据库实例目录($PGDATA)中部署一些数据同步脚本和一个远程启动脚本。在pgpool-II-x.x.x/sample 目录中可找到一些示例脚本文件。
+    我们必须在数据库实例目录($PGDATA)中部署一些数据同步脚本和一个远程启动脚本。在pgpool-II-x.x.x/sample 目录中可找到一些示例脚本文件。
 </p>
 
 <h3 id="recovery_pitr">通过PITR在线恢复</h3>
@@ -2571,7 +3164,7 @@ pgpool-II 以两个阶段来执行在线恢复。当一个恢复节点同步数�
 </p>
 <h4>第一阶段</h4>
 <p>
-	需要一个脚本从主节点获取一个备份库，然后把它拷贝到恢复目标节点中去。该脚本可命名为如"copy-base-backup"。下面是个示例：
+    需要一个脚本从主节点获取一个备份库，然后把它拷贝到恢复目标节点中去。该脚本可命名为如"copy-base-backup"。下面是个示例：
 </p>
 
 <pre>
@@ -2588,7 +3181,7 @@ scp pgsql.tar.gz $RECOVERY_TARGET:$RECOVERY_DATA
 </pre>
 
 <p>
-	该脚本把主数据库设成backup模式，生成如下的 recovery.conf：
+    该脚本把主数据库设成backup模式，生成如下的 recovery.conf：
 </p>
 <pre>
 restore_command = 'scp master:/data/archive_log/%f %p'
@@ -2598,22 +3191,29 @@ restore_command = 'scp master:/data/archive_log/%f %p'
 </p>
 <h4>第二阶段</h4>
 <p>
-该过程的第二阶段是一个脚本进行强制 XLOG 文件转换。该脚本此处命名为"pgpool_recovery_pitr"。它强制执行事务日志的一个转换。为此，pg_switch_xlog可能会被用到。</p>
-<p><span class="version">V3.1 -</span>然而它可能在转换执行完<b>前</b>返回，这样可能会导致在线恢复过程的失败。Pgpool-II提供了一个更加安全的称之为"pgpool_switch_xlog"的函数，该函数等待一直到事务日志转换实际被完成后。pgpool_switch_xlog 在<a href="#installing-c-functions">安装 C 函数</a>小节过程执行时被安装。
+该过程的第二阶段是一个脚本进行强制 XLOG 文件转换。
+该脚本此处命名为"pgpool_recovery_pitr"。它强制执行事务日志的一个转换。
+为此，pg_switch_xlog可能会被用到。
 </p>
+<p><span class="version">V3.1 -</span>
+然而它可能在转换执行完<b>前</b>返回，这样可能会导致在线恢复过程的失败。
+Pgpool-II提供了一个更加安全的称之为"pgpool_switch_xlog"的函数，
+该函数等待一直到事务日志转换实际被完成后。
+pgpool_switch_xlog 在<a href="#installing-c-functions">安装 C 函数</a>小节过程执行时被安装。
+</p>
+
 <p>
 下面是示例脚本。
 </p>
-<p>
 <pre>
 #! /bin/sh
 # Online recovery 2nd stage script
 #
-datadir=$1		# master dabatase cluster
-DEST=$2			# hostname of the DB node to be recovered
-DESTDIR=$3		# database cluster of the DB node to be recovered
-port=5432		# PostgreSQL port number
-archdir=/data/archive_log	# archive log directory
+datadir=$1       # master dabatase cluster
+DEST=$2          # hostname of the DB node to be recovered
+DESTDIR=$3       # database cluster of the DB node to be recovered
+port=5432        # PostgreSQL port number
+archdir=/data/archive_log    # archive log directory
 
 # Force to flush current value of sequences to xlog 
 psql -p $port -t -c 'SELECT datname FROM pg_database WHERE NOT datistemplate AND datallowconn' template1|
@@ -2629,7 +3229,10 @@ psql -p $port -c "SELECT pgpool_switch_xlog('$archdir')" template1
 </p>
 
 <p>
-	该序列注入(flushing of sequences)仅在复制模式下有效：在该情况下，序列不得不在所有节点上具有同一个起点。在主/备模式下并不可用。脚本中的循环强制 PostgreSQL 发出所有数据库中序列生成器的当前值到事务日志中，这样它就传播到恢复的目标节点中去。
+该序列注入(flushing of sequences)仅在复制模式下有效：在该情况下，序列不得不在所有节点上具有同一个起点。在主/备模式下并不可用。
+</p>
+<p>
+脚本中的循环强制 PostgreSQL 发出所有数据库中序列生成器的当前值到事务日志中，这样它就传播到恢复的目标节点中去。
 </p>
 
 <p>
@@ -2643,15 +3246,13 @@ recovery_1st_stage_command = 'copy-base-backup'
 recovery_2nd_stage_command = 'pgpool_recovery_pitr'
 </pre>
 
-</p>
-
 <p>
-	我们已完成通过PITR进行在线恢复的准备工作。
+我们已完成通过PITR进行在线恢复的准备工作。
 </p>
 
 <h4 id="pool_remote_start">pgpool_remote_start</h4>
 <p>
-	该脚本启动远程主机的 postmaster 进程。pgpool-II 以如下方式执行。
+    该脚本启动远程主机的 postmaster 进程。pgpool-II 以如下方式执行。
 </p>
 
 <pre>
@@ -2661,11 +3262,11 @@ remote_datadir: Database cluster path of a recovery target.
 </pre>
 
 <p>
-	在该示例脚本中，我们通过 ssh 启动 postmaster 进程。所以如果你想要它能够运行，你需要提供不需要密码输入的 ssh 连接。
+    在该示例脚本中，我们通过 ssh 启动 postmaster 进程。所以如果你想要它能够运行，你需要提供不需要密码输入的 ssh 连接。
 </p>
 
 <p>
-	如果你使用PITR进行恢复，你需要部署一个库备份。PostgreSQL 将自动启动一个 PITR 恢复，然后它开始接受连接。
+    如果你使用PITR进行恢复，你需要部署一个库备份。PostgreSQL 将自动启动一个 PITR 恢复，然后它开始接受连接。
 </p>
 
 <pre>
@@ -2675,14 +3276,14 @@ DESTDIR=$2
 PGCTL=/usr/local/pgsql/bin/pg_ctl
 
 # Deploy a base backup
-ssh -T $DEST 'cd /data/; tar zxf pgsql.tar.gz' 2>/dev/null 1>/dev/null < /dev/null
+ssh -T $DEST 'cd /data/; tar zxf pgsql.tar.gz' 2&gt;/dev/null 1&gt;/dev/null &lt; /dev/null
 # Startup PostgreSQL server
-ssh -T $DEST $PGCTL -w -D $DESTDIR start 2>/dev/null 1>/dev/null < /dev/null &
+ssh -T $DEST $PGCTL -w -D $DESTDIR start 2&gt;/dev/null 1&gt;/dev/null &lt; /dev/null &amp;
 </pre>
 
-<h3>通过rsync在线恢复</h3>
+<h3 id="recovery_rsync">通过 rsync 在线恢复</h3>
 <p>
-	PostgreSQL 7.4 没有PITR ，rsync 可被用来进行在线恢复。在 pgpool-II 的压缩包中的"sample"目录中，有一个"pgpool_recovery"交恢复脚本。该脚本使用rsync命令，pgpool-II使用三个参数调用该脚本。
+    PostgreSQL 7.4 没有PITR ，rsync 可被用来进行在线恢复。在 pgpool-II 的压缩包中的"sample"目录中，有一个"pgpool_recovery"交恢复脚本。该脚本使用rsync命令，pgpool-II使用三个参数调用该脚本。
 </p>
 
 <pre>
@@ -2693,7 +3294,7 @@ remote_datadir: Database cluster path of a recovery target node.
 </pre>
 
 <p>
-	该脚本通过 ssh 使用 rsync 拷贝物理文件。所以你需要提供不需要密码输入的 ssh 连接。
+    该脚本通过 ssh 使用 rsync 拷贝物理文件。所以你需要提供不需要密码输入的 ssh 连接。
 </p>
 
 <p>
@@ -2707,20 +3308,21 @@ remote_datadir: Database cluster path of a recovery target node.
 </p>
 
 <p>
-	如果你使用 pgpool_recovery，在 pgpool.conf 里增加如下几行。
+    如果你使用 pgpool_recovery，在 pgpool.conf 里增加如下几行。
+</p>
+
 <pre>
 recovery_1st_stage_command = 'pgpool_recovery'
 recovery_2nd_stage_command = 'pgpool_recovery'
 </pre>
+
+<h2 id="perform_online_recovery">如何执行在线恢复</h2>
+<p>
+    为了执行在线恢复，使用 <a href="#PCP_RECOVERY_NODE">pcp_recovery_node</a> 命令或 pgpoolAdmin。
 </p>
 
-<h2>如何执行在线恢复</h2>
 <p>
-	为了执行在线恢复，使用 <a href="#PCP_RECOVERY_NODE">pcp_recovery_node</a> 命令或 pgpoolAdmin。
-</p>
-
-<p>
-	注意你需要给 <a href="#pcp_recovery_node">pcp_recovery_node</a> 第一个参数传递一个大数。该数是一个以秒为单位的定时参数。如果你使用 pgpoolAdmin，在pgmgt.conf.php中设置 "_PGPOOL2_PCP_TIMEOUT "参数为一个大数。
+    注意你需要给 <a href="#pcp_recovery_node">pcp_recovery_node</a> 第一个参数传递一个大数。该数是一个以秒为单位的定时参数。如果你使用 pgpoolAdmin，在pgmgt.conf.php中设置 "_PGPOOL2_PCP_TIMEOUT "参数为一个大数。
 </p>
 
 <h2 id="minorup_w_online_recovery">使用在线恢复实现 PostgreSQL 版本升级</h2>
@@ -2739,9 +3341,9 @@ recovery_2nd_stage_command = 'pgpool_recovery'
     </li>
 
     <li><p>版本升级应该先从不是主节点的节点开始。
-    	  在非主节点上停止 PostgreSQL。
-    	  Pgpool-II 将探测到 PostgreSQL 停止并生成以下日志。
-    	  这种情况下，到 pgpool-II 的会话都将被关闭。
+          在非主节点上停止 PostgreSQL。
+          Pgpool-II 将探测到 PostgreSQL 停止并生成以下日志。
+          这种情况下，到 pgpool-II 的会话都将被关闭。
         </p>
 <pre>
 2010-07-27 16:32:29 LOG:   pid 10215: set 1 th backend down status
@@ -2752,23 +3354,23 @@ recovery_2nd_stage_command = 'pgpool_recovery'
     </li>
 
     <li><p>
-    	在停止的节点上执行 PostgreSQL 的版本升级。
-    	你可以覆盖旧的 PostgreSQL，我们建议你将旧版本的 PostgreSQL 移动到某处
-    	以便在必要情况下恢复它。
+        在停止的节点上执行 PostgreSQL 的版本升级。
+        你可以覆盖旧的 PostgreSQL，我们建议你将旧版本的 PostgreSQL 移动到某处
+        以便在必要情况下恢复它。
     </p>
     </li>
 
     <li><p>
-    	如果你安装新的 PostgreSQL 在和旧版本不同的位置且你不想更新你的恢复脚本，
-    	你需要使用软连接一类的工具来修正路径。
-    	如果你选择覆盖，你可以跳过以下步骤，直到安装 C 函数的步骤。
-    	你可以立即执行在线恢复。
+        如果你安装新的 PostgreSQL 在和旧版本不同的位置且你不想更新你的恢复脚本，
+        你需要使用软连接一类的工具来修正路径。
+        如果你选择覆盖，你可以跳过以下步骤，直到安装 C 函数的步骤。
+        你可以立即执行在线恢复。
     </p>
     </li>
 
     <li><p>
-    	改变旧的 PostgreSQL 的安装目录。
-    	在以下示例中，PostgreSQL 的安装目录被假设为 /user/local/pgsql。
+        改变旧的 PostgreSQL 的安装目录。
+        在以下示例中，PostgreSQL 的安装目录被假设为 /user/local/pgsql。
     </p>
 <pre>
 $ mv /usr/local/pgsql /usr/local/pgsql-old
@@ -2776,9 +3378,9 @@ $ mv /usr/local/pgsql /usr/local/pgsql-old
     </li>
 
     <li><p>
-    	建立一个到新版本 PostgreSQL 安装位置的软连接。
-    	这允许你使用你当前的命令搜索路径。
-    	在以下示例中，新的 PostgreSQL 的安装路径被假设为 /usr/local/pgsql-new。
+        建立一个到新版本 PostgreSQL 安装位置的软连接。
+        这允许你使用你当前的命令搜索路径。
+        在以下示例中，新的 PostgreSQL 的安装路径被假设为 /usr/local/pgsql-new。
     </p>
 <pre>
 $ ln -s /usr/local/pgsql-new /usr/local/pgsql
@@ -2786,9 +3388,9 @@ $ ln -s /usr/local/pgsql-new /usr/local/pgsql
     </li>
 
     <li><p>
-    	如果数据库目录位于旧的 PostgreSQL 安装目录中，
-    	你应该建立或者拷贝一份因而新的 PostgreSQL 可以访问它。
-    	在以下示例中我们使用软连接。
+        如果数据库目录位于旧的 PostgreSQL 安装目录中，
+        你应该建立或者拷贝一份因而新的 PostgreSQL 可以访问它。
+        在以下示例中我们使用软连接。
     </p>
 <pre>
 $ ln -s /usr/local/pgsql-old/data /usr/local/pgsql/data
@@ -2803,13 +3405,13 @@ $ ln -s /usr/local/pgsql-old/data /usr/local/pgsql/data
     </li>
 
     <li><p>
-    	执行在线恢复。这样，你完成了一个节点的版本升级。
-    	要只需在线恢复，你需要使用 <a href="#pcp_recovery_node">pcp_recovery_node</a> 或 pgpoolAdmin。
+        执行在线恢复。这样，你完成了一个节点的版本升级。
+        要只需在线恢复，你需要使用 <a href="#pcp_recovery_node">pcp_recovery_node</a> 或 pgpoolAdmin。
     </p>
     </li>
 
     <li><p>
-    	针对每个节点重复以上步骤。到最后一步才是升级主节点。然后你就完成了。
+        针对每个节点重复以上步骤。到最后一步才是升级主节点。然后你就完成了。
     </p>
     </li>
 </ol>
@@ -2927,14 +3529,14 @@ pgpool-II 可以运行在专用的服务器上，应用服务运行的服务器�
     </p>
     <ul>
         <li>如果 pgpool-II 和数据库服务器之间的通信部稳定，
-        	有可能数据库节点 #1 到一个 pgpool-II 实例的连接断开
-        	但到另一个 pgpool-II 实例的连接是正常的。
-        	要避免这种问题，你可以使用双网络链路。
+            有可能数据库节点 #1 到一个 pgpool-II 实例的连接断开
+            但到另一个 pgpool-II 实例的连接是正常的。
+            要避免这种问题，你可以使用双网络链路。
         </li>
         <li>当在复制模式中执行在线恢复时，你需要停止除进行在线恢复外所有的 pgpool-II 实例。
-        	否则，数据库会运行到不一致的状态。
-        	在主备模式和流复制模式中，你不需要停止其他的 pgpool-II 实例。
-        	然而，你不允许在多个 pgpool-II 实例运行的时候执行在线恢复。
+            否则，数据库会运行到不一致的状态。
+            在主备模式和流复制模式中，你不需要停止其他的 pgpool-II 实例。
+            然而，你不允许在多个 pgpool-II 实例运行的时候执行在线恢复。
         </li>
     </ul>
     </dd>
@@ -2962,6 +3564,7 @@ Pgpool-HA 可以在 pgpool 开发网站找到，它是一个开源软件。</p>
 <!-- ================================================================================ -->
 
 <h1 id="watchdog">看门狗<span class="version">V3.2 -</span></h1>
+<h2 id="what_is_watchdog">什么是看门狗</h2>
 
 <p>
 “看门狗”是一个 pgpool-II 的子进程，用于添加高可用性功能。
@@ -2985,7 +3588,7 @@ Pgpool-HA 可以在 pgpool 开发网站找到，它是一个开源软件。</p>
     </li>
     </ul>
     <p>
-    	看门狗还监控到从 pgpool-II 到前端服务器的连接（例如应用服务器），并检查 pgpool-II 能否为这些服务提供服务。如果监控到失败，则认为 pgpool-II 宕机了。
+        看门狗还监控到从 pgpool-II 到前端服务器的连接（例如应用服务器），并检查 pgpool-II 能否为这些服务提供服务。如果监控到失败，则认为 pgpool-II 宕机了。
     </p>
 
 <h3>协调多个 pgpool-II 共同工作</h3>
@@ -3006,25 +3609,25 @@ Pgpool-HA 可以在 pgpool 开发网站找到，它是一个开源软件。</p>
 
 <h3>在检测到某些故障时交换活跃/备用状态</h3>
     <p>
-    	当一个 pgpool-II 的故障被检测到，看门狗通知其他的看门狗这个消息。
-    	如果是活跃的 pgpool-II 发生故障，看门狗通过投票确定新的活跃 pgpool-II 并更新活跃/备用状态。
+        当一个 pgpool-II 的故障被检测到，看门狗通知其他的看门狗这个消息。
+        如果是活跃的 pgpool-II 发生故障，看门狗通过投票确定新的活跃 pgpool-II 并更新活跃/备用状态。
     </p>
 
 <h3>在服务器切换的时候实现自动虚拟 IP 地址分配</h3>
     <p>
-    	当一个备用 pgpool 服务器提升为活跃的，新的活跃服务器启动虚拟 IP 接口。
-    	也就是，之前的活跃服务器停用虚拟 IP 接口。
-    	这确保活动的 pgpool 使用相同的 IP 地址，即使在发生服务器切换的时候。
+        当一个备用 pgpool 服务器提升为活跃的，新的活跃服务器启动虚拟 IP 接口。
+        也就是，之前的活跃服务器停用虚拟 IP 接口。
+        这确保活动的 pgpool 使用相同的 IP 地址，即使在发生服务器切换的时候。
     </p>
 
 <h3>在恢复的时候自动注册服务器为备用服务器</h3>
     <p>
-    	当失效的服务器恢复或者新的服务器连接上来，看门狗进程通知其他的看门狗进程关于新服务器的信息，
-    	看门狗进程在活跃服务器和其他服务器上接收这些信息。
-    	然后，新连接上的服务器注册为备用节点。
+        当失效的服务器恢复或者新的服务器连接上来，看门狗进程通知其他的看门狗进程关于新服务器的信息，
+        看门狗进程在活跃服务器和其他服务器上接收这些信息。
+        然后，新连接上的服务器注册为备用节点。
     </p>
 
-<h2 id="deploy_watchdog">服务器组件</h2>
+<h2 id="watchdog_server_composition">服务器组件</h2>
 
 <p>
 下图描述 pgpool-II 和看门狗进程是如何配置的。
@@ -3228,7 +3831,7 @@ Pgpool-HA 可以在 pgpool 开发网站找到，它是一个开源软件。</p>
     </dd>
 </dl>
 
-<h3>pgpool-II 存活情况查询</h3>
+<h3>pgpool-II 存活情况检查</h3>
 
 <p>看门狗定期检查 pgpool-II 的状态。这被称为“存活检查”。
 
@@ -3304,7 +3907,7 @@ Pgpool-HA 可以在 pgpool 开发网站找到，它是一个开源软件。</p>
 <dt><a name="HEARTBEAT_DESTINATION"></a>heartbeat_destination<font color="red">0</font> <span class="version">V3.3 -</span></dt>
     <dd>
     <p>
-	  本选项指定心跳信号发送的目标，可以是 IP 地址或主机名。你可以指定多个目标。
+      本选项指定心跳信号发送的目标，可以是 IP 地址或主机名。你可以指定多个目标。
     本参数名后面的数字表示“目标序号”，从 0 开始。本参数仅用于心跳模式。
     </p>
     <p>
@@ -3446,412 +4049,9 @@ Pgpool-HA 可以在 pgpool 开发网站找到，它是一个开源软件。</p>
 
 <!-- ================================================================================ -->
 
-<h1><a name="troubleshooting"></a>故障解决</h1>
-<p>
-	本节描述你使用pgpool-II时碰到的问题及其解决办法。
-</p>
-<p>
-<dl>
+<h1 id="pcp_command">PCP 命令</h1>
 
-<dt id="health_check_failed">健康检查失败</dt>
-<dd>
-<p>
-	pgpool-II 的健康检查特性检测到DB节点失效。
-</p>
-
-<pre>
-2010-07-23 16:42:57 ERROR: pid 20031: health check failed. 1 th host foo at port 5432 is down
-2010-07-23 16:42:57 LOG:   pid 20031: set 1 th backend down status
-2010-07-23 16:42:57 LOG:   pid 20031: starting degeneration. shutdown host foo(5432)
-2010-07-23 16:42:58 LOG:   pid 20031: failover_handler: set new master node: 0
-2010-07-23 16:42:58 LOG:   pid 20031: failover done. shutdown host foo(5432)
-</pre>
-
-<p>
-	该日志表明DB节点1 (主机foo) 与pgpool中断并失去连接（关闭），于是DB节点0成为新的master。检查DB节点1，处理掉产生故障的原因，之后如果可能则会在DB节点1上执行一个在线恢复。
-</p>
-</dd>
-
-<dt>Failed to read kind from frontend
-<dd>
-<p>
-<pre>
-2010-07-26 18:43:24 LOG:   pid 24161: ProcessFrontendResponse: failed to read kind from frontend. frontend abnormally exited
-</pre>
-<p>
-	该日志表明前端程序未能与 pgpool-II 正确的断开。可能的原因是：客户端应的 bug，客户端应用的强制结束(kill)或者是临时的网络故障。该类型的事件不会导致一个DB的破坏或者数据一致性问题。其仅仅是一个关于违反协议的的警告。如果该消息一直出现，建议你检查应用和网络。
-</p>
-
-<dt>Kind mismatch errors
-<dd>
-<p>
-	pgpool-II操作在复制模式时你可能得到该消息。
-</p>
-<pre>
-2010-07-22 14:18:32 ERROR: pid 9966: kind mismatch among backends. Possible last query was: "FETCH ALL FROM c;" kind details are: 0[T] 1[E: cursor "c" does not exist]
-</pre>
-<p>
-	pgpool-II把 SQL 命令发送给数据库节点后便会等待响应。该错误消息指示并非所有的数据库节点返回同样的响应。你可能会在"Possible last query
-was:"之后看到引起错误的 SQL 语句，接着是响应类型。如果响应指示是一个错误，则从 PostgreSQL 返回的错误消息将被显示出来。这里你看到"0[T]" 显示DB节点响应：0[T]"(开始发送行描述)，以及"1[E"
-表示DB节点1返回一个错误，消息是"cursor "c" does not exist"，然而数据库节点 0 发送了一个行记录。
-<p>
-	注意：在主/备模式时你同样会看到这类错误。例如即使在主/备模式下，SET 命令将会被发送给所有的数据库节点以保持所有的节点处于同一个状态。
-</p>
-<p>
-	如果你发现数据库不再同步，检查数据库并使用在线复制异步它们。
-</p>
-
-<p>
-<dt>pgpool-II 检查插入、更新或者删除的不同的行数
-<dd>
-<p>
-	在复制模式下，pgpool-II 检测到 INSERT/UPDATE/DELETE 在影响的节点上产生不同的行数。
-</p>
-<p>
-<pre>
-2010-07-22 11:49:28 ERROR: pid 30710: pgpool detected difference of the number of inserted, updated or deleted tuples. Possible last query was: "update t1 set i = 1;"
-2010-07-22 11:49:28 LOG:   pid 30710: ReadyForQuery: Degenerate backends: 1
-2010-07-22 11:49:28 LOG:   pid 30710: ReadyForQuery: Affected tuples are: 0 1
-</pre>
-<p>
-	在上面的示例中，在不同的数据库节点上执行"update t1 set i = 1"返回更新的行数不同。下一行表明 DB 1 接着出现退化 (断开，disconnected)，
-	然后是DB节点0受影响的行数是0，然而节点1受影响的行数是1.
-</p>
-<p>
-	停止怀疑有错误数据的数据库节点并执行在线恢复。
-</p>
-</dl>
-
-<p class="top_link"><a href="#Top">返回顶部</a></p>
-
-
-<!-- ================================================================================ -->
-
-<h1>限制<a name="restriction"></a></h1>
-
-<p>
-<h2>PostgreSQL的函数</h2>
-<p>
-<ul>
-<li>
-	如果你使用 pg_terminate_backend() 终止后台数据库，这会触发一个故障。原因是 PostgreSQL 使用完全相同的消息来关闭 postmaster 以终止一个后台数据库，目前还没有办法解决它，请不要使用该函数。
-</ul>
-
-<p>
-<h2><a name="md5"></a>认证/访问控制</h2>
-
-<p>
-<ul>
-  <li>在复制模式或主/备模式中，trust, clear text password, 以及 pam 方法被支持，md5 从 pgpool-II 3.0 之后开始被支持。
-  	
-  	通过使用"pool_passwd"来支持 md5。下面是启用 md5 的步骤：
-
-	   <ol>
-		<li>以数据库的操作系统用户(database's operating system user)登入，并键入 "pg_md5 --md5auth --username=<your_username> <your_passwd>"，
-			用户名和md5加密的密码被注册进 pool_passwd。如果 pool_passwd 还不存在，pg_md5 将会自动的为你创建。
-    </li>
-		<li> pool_passwd 格式是 "username:encrypted_passwd".</li>
-		<li>你还需要在 pool_hba.conf 中增加一个相应的 md5 项。详见<a href="#hba">为客户端认证设置 pool_hba.conf (HBA)</a>。
-		</li>
-		<li>请注意的是用户名和密码必须和 PostgreSQL 中注册的一样</li>
-	   </ol>
-
-	   </li>
-  <li>在所有的其它模式中，trust, clear text password, crypt, md5, 以及 pam都被支持。</li>
-  <li>pgpool-II 并不支持类似 pg_hba.conf 的访问控制。如果 TCP/IP 连接启用的话，pgpool-II 接受来自任何主机的所有连接。若必要，使用iptable来控制其它主机的访问。
-  	(当然PostgreSQL服务器能够使用 pg_hba.conf 来接受 pgpool-II 的连接)
-</li>
-	   </ul>
-</p>
-
-<h2>大对象 (Large objects)</h2>
-<p>
-	pgpool-II 2.3.2 或以上版本支持大对象复制，如果后台服务器是 PostgreSQL 8.1 或以上版本。有鉴于此，你需要启用 pgpool.conf 中的<a href="#lobj_lock_table">lobj_lock_table</a>。然而，使用后台函数 lo_import 的大对象复制不被支持。
-</p>
-
-<h2>主/备模式中的临时表</h2>
-<p>
-	Creating/inserting/updating/deleting 临时表将会永远在主（首要）节点上执行。pgpool-II 3.0 或以上版本中，也可以在这些主节点的表上执行 SELECT。然而，如果在 SELECT 中临时表名被用作一个符号，就没有办法来检测到它，这样 SELECT 将被负载均衡。这会产生一个 "not found the table" 错误或者会找到另外一个同名的表。为避免该问题，使用/*NO LOAD BALANCE*/ SQL 注释。
-</p>
-<p>
-<pre>
-将会产生问题的示例 SELECT:
-SELECT 't1'::regclass::oid;
-</pre>
-</p>
-<p>
-	psql 的 \d命令使用符号表名。pgpool-II 3.0 或更高版本检查是否 SELECT 包含任何对系统表(system catalogs)的访问，并永远把这些查询发送到主节点，这样我们避免了该问题。
-</p>
-
-<h2>复制模式中的函数等</h2>
-
-<p>不保证使用依赖上下文的机制所产生的数据（如 random number, transaction ID, OID, SERIAL, sequence），都会被在多个后台服务器上被正确的复制。
-</p>
-<p>对于SERIAL，启用insert_lock在数据复制中很有用。insert_lock 还有助于 SELECT setval() 和 SELECT nextval()。
-</p>
-
-<p>在 pgpool-II 2.3 或更高版本中，使用 CURRENT_TIMESTAMP,CURRENT_DATE, now()的 INSERT/UPDATE 将会被正确的复制。INSERT/UPDATE 使用 CURRENT_TIMESTAMP, CURRENT_DATE, now() 作为表的默认值时，也将会正确的复制。这通过执行时把这些函数替换成从master节点上获取的常量值来完成。然而仍有一些限制：
-
-<ul>
-<li>在 pgpool-II 3.0 或更低的以前的版本中，计算表中默认值的临时数据在一些情况下并不准确，例如，下面的表定义：	
-<pre>
-CREATE TABLE rel1(
-  d1 date DEFAULT CURRENT_DATE + 1
-)
-</pre>
-被看成如下的表:
-<pre>
-CREATE TABLE rel1(
-  d1 date DEFAULT CURRENT_DATE
-)
-</pre>
-<p> pgpool-II 3.1 后更高版本能够正确的处理这些情况。这样"d1"将会把明天(CURRENT_DATE + 1)作为默认值。然而当扩展的协议(例如在JDBC, PHP PDO中使用的)或者 PREPARE 被使用时，这个改进并不适用。
-</p>
-<p>
-	请注意如果列类型不是临时的，重写并不会被执行，这儿有个例子：
-<pre>
-foo bigint default (date_part('epoch'::text,('now'::text)::timestamp(3) with time zone) * (1000)::double precision)
-</pre>
-</p>
-<li>假定我们有如下表:
-<pre>
-CREATE TABLE rel1(
-  c1 int,
-  c2 timestamp default now()
-)
-</pre>
-我们可以复制：
-<pre>
-INSERT INTO rel1(c1) VALUES(1) 
-</pre>
-因为这将变为：
-<pre>
-INSERT INTO rel1(c1, c2) VALUES(1, '2009-01-01 23:59:59.123456+09')
-</pre>
-然而，
-<pre>
-INSERT INTO rel1(c1) SELECT 1
-</pre>
-不能够被转换，这样在当前的实现中不能被正确的复制，值将仍然会被插入，但是没有进行任何的转换。
-</ul>
-</p>
-<p>如果你在使用 8.3 或更高的版本 PostgreSQL ，并且在 reset_query_list 中指定 DISCARD ALL，那么将在会话的末尾处删除 <code>CREATE TEMP TABLE</code> 创建的表。
-
-</p>
-<p>
-	对于8.2.x或更早的版本，退出会话时并不会删除 <code>CREATE TEMP TABLE</code> 创建的表。这是由于连接池的原因，从 PostgreSQL 后台的视角来看，要保持 session 处于活动状态。为避免这一点，你必须通过发出 <code>DROP TABLE</code> 命令显式的删除该临时表，或在事务块中使用 <code>CREATE TEMP TABLE ... ON COMMIT DROP</code> 语句。
-</p>
-
-<h2>Queries</h2>
-
-<p>下面是不能被 pgpool-II 处理的查询。</p>
-
-<h3>INSERT (for parallel mode)</h3>
-
-<p>你不能使用 <code>DEFAULT</code> 作为分区关键字列(partitioning key column)。例如如果表t中的列x是分区关键字列，
-<pre>
-INSERT INTO t(x) VALUES (DEFAULT);
-</pre>
-<p>
-这将是无效的。而且该值也不能使用函数。
-</p>
-
-<pre>
-INSERT INTO t(x) VALUES (func());
-</pre>
-<p>
-	INSERT的分区值只能是常量值。<code>SELECT INTO</code> 和 <code>INSERT INTO ... SELECT</code> 也不被支持。
-</p>
-
-<h3>UPDATE (for parallel mode)</h3>
-
-<p>如果分区关键字列值被更新，后台数据库的数据一致性可能会丢失。pgpool-II 并不重新分区更新的数据。
-</p>
-
-<p>如果约束被违反时一个查询在后台数据库中引起的了一个错误，一个事务有可能不能够被回滚。
-</p>
-
-<p>如果在 <code>WHERE</code> 从句中一个函数被调用，该查询可能不能够被正确的执行。例如:
-<pre>
-UPDATE branches set bid = 100 where bid = (select max(bid) from beances);
-</pre>
-</p>
-
-<h3>SELECT ... FOR UPDATE (for parallel mode)</h3>
-
-<p>如果在 <code>WHERE</code> 从句中一个函数被调用，该查询可能不能够被正确的执行。例如:	
-<pre>
-SELECT * FROM  branches where bid = (select max(bid) from beances) FOR UPDATE;
-</pre>
-</p>
-
-<h3>COPY (for parallel mode)</h3>
-
-<p><code>COPY BINARY</code> 不被支持。从文件中拷贝也不被支持。只有 <code>COPY FROM STDIN</code> 和 <code>COPY TO STDOUT</code> 被支持。
-	</p>
-
-<h3>ALTER/CREATE TABLE (for parallel mode)</h3>
-
-<p>为更新分区规则，pgpool-II 必须重启以从 System DB 读取它们。</p>
-
-<h3>Transaction (for parallel mode)</h3>
-
-<p>一个事务块里面执行的 <code>SELECT</code> 语句将被在一个单独的事务中执行，这有个示例：
-
-<pre>
-BEGIN;
-INSERT INTO t(a) VALUES (1);
-SELECT * FROM t ORDER BY a; <-- INSERT above is not visible from this SELECT statement
-END;
-</pre>
-
-<h3>Views / Rules (for parallel mode)</h3>
-
-<p>
-	将会在所有的后台数据库中为 views 和 rules 创建同样的定义。
-</p>
-
-<pre>
-SELECT * FROM a, b where a.i = b.i
-</pre>
-<p>像上面的 <code>JOIN</code> 将在后台数据库中执行，然后由每个后台数据库返回的结果进行合并。跨节点的 Views 和 Rules 不能够被创建。然而若连接的表的数据都在同一个节点中，一个 VIEW 能够被创建。该VIEW需要在 pgpool_catalog.dist_def 中注册。一个 col_name 和 一个 dist_def_func 也必须进行注册，它们当在视图上执行插入操作时被使用。
-</p>
-
-<h3>Functions / Triggers (for parallel mode)</h3>
-
-<p>同样的函数定义将在所有的后台数据库中被创建。函数内不能执行跨节点连接(Join)，不能访问其它节点的数据。
-</p>
-
-<h3>Extended Query Protocol (for parallel mode)</h3>
-
-<p>JDBC驱动等等所使用的扩展的查询协议不被支持。必须使用简单的查询协议。这意味着你不能使用prepared statement。
-</p>
-
-<h3>Natural Join (for parallel mode)</h3>
-
-<p>自然连接(Natural Join)不被支持。必须使用"ON join condition" 或 "USING (join_column)"。
-</p>
-
-<h3>USING CLAUSE (for parallel mode)</h3>
-
-<p>USING CLAUSE 通过查询重写过程被转换为 ON CLAUSE。这样，当在目标列表中含有"*"时，连接的列会出现两次。
-</p>
-<p>
-这儿有个示例:
-</p>
-<p><pre>
-  =# SELECT * FROM t1 JOIN t2 USING(id);
-   id |  t  |   t
-  ----+-----+-------
-    1 | 1st | first
-  (1 row)
-</pre></p>
-<p>
-	在query rewrite过程中"USING"被转换成"ON"。这样下面是生效的重写结果：
-</p><p><pre>
-  =# SELECT * FROM t1 JOIN t2 ON t1.id = t2.id;
-   id |  t  | id |   t
-  ----+-----+----+-------
-    1 | 1st |  1 | first
-  (1 row)
-</pre>
-</p>
-<p>
-注意列"t"被重复。
-</p>
-
-<h3>多字节字符 (for all modes)</h3>
-
-<p>pgpool-II 不会在不同的多字节字符间进行转换。client, backend 以及 System DB 之间的编码必须相同。
-	</p>
-
-<h3>Multi-statement Query (for all modes)</h3>
-<p>
-pgpool-II 不处理 multi-statement queries。
-</p>
-
-<h3>Deadlocks (for parallel mode)</h3>
-
-<p>跨越多个后台数据库的死锁不能够被检测。例如:
-</p>
-<pre>
-(tellers table is partitioned using the following rule)
-  tid <= 10  --> node 0
-  tid >= 10  --> node 1
-
-A) BEGIN;
-B) BEGIN;
-A) SELECT * FROM tellers WHERE tid = 11 FOR UPDATE;
-B) SELECT * FROM tellers WHERE tid = 1 FOR UPDATE;
-A) SELECT * FROM tellers WHERE tid = 1 FOR UPDATE;
-B) SELECT * FROM tellers WHERE tid = 11 FOR UPDATE;
-</pre>
-<p>
-	在上述情况下，单个的节点不能探测到死锁，这样pgpool-II将会无限期的等待响应。该现象可出现在任何获取行级别锁(row level lock)的query中。
-</p>
-<p>而且，如果一个节点上出现了一个死锁，每个节点的事务状态将不再具有一致性。这样如果死锁被探测到 pgpool-II 将终止该进程。
-</p>
-<pre>
-pool_read_kind: kind does not match between master(84) slot[1] (69)
-</pre>
-
-<h3>Schemas (for parallel mode)</h3>
-
-<p>schema 中非 public 下的对象必须使用完整名字，如：
-</p>
-<pre>
-schema.object
-</pre>
-<p>
-	当路径设置如下时，pgpool-II 不能找到正确的 schema：
-</p>
-<pre>
-set search_path = xxx
-</pre>
-<p>
-	且 schema 名在 query 中被省略。
-</p>
-<h3>table name - column name(for parallel mode)</h3>
-<p>
-Limitation object:Parallel mode
-</p>
-<p>
-	一个表或列名不能是以 pool_ 起头。当重写查询时，这些名字被保留为内部处理。
-</p>
-
-</p>
-<h2>System DB</h2>
-
-<h3>分区规则 (Partitioning Rules)</h3>
-
-<p>仅可在一个分区规则中定义一个分区关键字列。如同'x or y'的条件式不被支持。</p>
-
-<h2>环境要求 (Environment Requirements)</h2>
-
-<h3>libpq</h3>
-
-<p>
-	在编译构建pgpool-II时<code>libpq</code>被链接。libpq版本必须是3.0。使用2.0版本的libpq编译pgpool-II将会失败。而且System DB 必须是 PostgreSQL 7.4 或更高版本。
-</p>
-
-<h2 id="caution_query_cache">查询缓存</h2>
-
-<p>当前，<a href="#query_cache">查询缓存</a>必须被手动删除。
-但这不影响 <a href="#memqcache">基于内存的查询缓存</a>。基于内存的查询缓存会自动清除无效的缓存。</p>
-
-<h2>与pgpool的兼容性 (Compatibility with pgpool)</h2>
-
-
-<p class="top_link"><a href="#Top">back to top</a></p>
-
-<!-- ================================================================================ -->
-
-<h1>参考<a name="reference"></a></h1>
-
-<h2>PCP 命令参考</h2>
-
-<h3>PCP 命令列表</h3>
-
+<h2>PCP 命令列表</h2>
 <p>PCP 命令是UNIX命令，通过网络操作pgpool-II。</p>
 
 <table border>
@@ -3859,6 +4059,8 @@ Limitation object:Parallel mode
     <td>获取节点数量</td></tr>
 <tr><th><a href="#pcp_node_info">pcp_node_info</a></th>
     <td>获取节点信息</td></tr>
+<tr><th><a href="#pcp_watchdog_info">pcp_watchdog_info</a> <span class="version">V3.3 -</span></th>
+    <td>返回看门狗信息</td></tr>
 <tr><th><a href="#pcp_proc_count">pcp_proc_count</a></th>
     <td>获取进程列表</td></tr>
 <tr><th><a href="#pcp_proc_info">pcp_proc_info</a></th>
@@ -3877,76 +4079,82 @@ Limitation object:Parallel mode
     <td>停止 pgpool-II</td></tr>
 </table>
 
+
 <h2 id="pcp_comand_args">常用的命令行参数</h2>
 
-<p>对于所有的PCP命令有5个常用的参数。它们给出了pgpool-II的信息和认证。对于有些命令必须需要多余的参数。
+<p>对于所有的PCP命令有5个常用的参数。它们给出了pgpool-II的信息和认证。
+对于有些命令必须需要多余的参数。
 
 <pre>
 例如)  $ pcp_node_count 10 localhost 9898 postgres hogehoge
-
-第1个 argument   - 以秒为单位的等待时间. 如果pgpool-II在这个数量的秒内没有响应，PCP将断开连接。
-第2个 argument   - pgpool-II的主机名
-第3个 argument   - PCP 端口号
-第4个 argument   - PCP 用户名
-第5个 argument   - PCP 密码
 </pre>
 
+<table border>
+<tr>
+<th>第一个参数</th>
+<td>以秒为单位的等待时间。如果pgpool-II在这个数量的秒内没有响应，PCP将断开连接。</td>
+</tr>
+<tr><th>第二个参数</th><td>pgpool-II 的主机名</td></tr>
+<tr><th>第三个参数</th><td>PCP 端口号</td></tr>
+<tr><th>第四个参数</th><td>PCP 用户名</td></tr>
+<tr><th>第五个参数</th><td>PCP 密码</td></tr>
+</table>
+
 <p>PCP的用户名和密码必须在<code>$prefix/etc</code>目录中的<code>pcp.conf</code>中声明。
-	启动pgpool-II时<code>-F</code>选项可被用来指定<code>pcp.conf</code>所处的别的位置。当传递给PCP命令时，并不需要以md5格式的密码。
-	</p>
+启动pgpool-II时<code>-F</code>选项可被用来指定<code>pcp.conf</code>所处的别的位置。
+当传递给PCP命令时，并不需要以md5格式的密码。</p>
 
 
-<h2>PCP 命令</h2>
+<h2>用于获取状态和配置信息的 PCP 命令</h2>
 
 <p>所有的PCP命令把结果显示在标准输出中。</p>
 
 
-<h3>pcp_node_count</h3>
+<h3 id="pcp_node_count">pcp_node_count</h3>
 
-<pre>
-Format:
-pcp_node_count  _timeout_  _host_  _port_  _userid_  _passwd_
-</pre>
+<dl class="flat">
+<dt>格式</dt>
+<dd>
+<code>pcp_node_count  _timeout_  _host_  _port_  _userid_  _passwd_</code>
+</dd>
+<dt>描述</dt>
+<dd>
+显示<code>pgpool.conf</code>中定义的所有的节点总数。
+它并不区别节点状态，例如attached/detached。所有节点都被算进去。
+</dd>
+</dl>
 
-<p>
-	显示<code>pgpool.conf</code>中定义的所有的节点总数。它并不区别节点状态，例如attached/detached。所有节点都被算进去。
-</p>
+<h3><a name="pcp_node_info"/></a>pcp_node_info</h3>
 
-
-<h3><a name="pcp_node_info"/>pcp_node_info</a></h3>
-
-<pre>
-Format:
-pcp_node_info  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
-</pre>
-
-<p>
-	显示给定节点 ID 的信息，这里是一个输出示例：
-</p>
-
+<dl class="flat">
+<dt>格式</dt>
+<dd><code>pcp_node_info  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_</code></dd>
+<dt>描述</dt>
+<dd>
+<p>显示给定节点 ID 的信息，这里是一个输出示例：</p>
 <pre>
 $ pcp_node_info 10 localhost 9898 postgres hogehoge 0
 host1 5432 1 1073741823.500000
-
-结果以如下顺序被显示：
-1. hostname
-2. port number
-3. status
-4. load balance weight
-
-Status 由数字 [0 - 3]来表示。
-0 - 该状态仅仅用于初始化，PCP从不显示它。
-1 - 节点已启动，还没有连接。
-2 - 节点已启动，连接被缓冲。
-3 - 节点已关闭。
 </pre>
-<p>
-	负载均衡权重以标准格式来显示。
-</p>
 
-<p>
- --verbose 选项帮助理解输出. 例如:
-</p>
+<p>结果以如下顺序被显示：</p>
+<ul>
+<li>1. 主机名</li>
+<li>2. 端口号</li>
+<li>3. 状态</li>
+<li>4. 负载均衡权重</li>
+</ul>
+
+<p>Status 由数字 [0 - 3] 来表示。</p>
+<ul>
+<li>0 - 该状态仅仅用于初始化，PCP从不显示它。</li>
+<li>1 - 节点已启动，还没有连接。</li>
+<li>2 - 节点已启动，连接被缓冲。</li>
+<li>3 - 节点已关闭。</li>
+</ul>
+<p>负载均衡权重以标准格式来显示。</p>
+
+<p><code>--verbose</code> 选项帮助理解输出. 例如:</p>
 
 <pre>
 $ pcp_node_info --verbose 10 localhost 9898 postgres hogehoge 0
@@ -3956,48 +4164,94 @@ Status  : 1
 Weight  : 0.5
 </pre>
 
-<p>指定一个无效的节点 ID 将会导致一个退出状态为 12 的错误，而且 BackendError 将被显示。</p>
+<p>指定一个无效的节点 ID 将会导致一个<a href="#exit_status">退出状态为 12</a> 的错误，
+而且 BackendError 将被显示。</p>
+</dd>
+</dl>
 
-<h3>pcp_proc_count</h3>
-<p>
+<h3><a name="pcp_watchdog_info"/></a>pcp_watchdog_info <span class="version">V3.3 -</span></h3>
+
+<dl class="flat">
+<dt>格式</dt>
+<dd><code>pcp_watchdog_info  _timeout_  _host_  _port_  _userid_  _passwd_  [_watchdogid_]</code></dd>
+<dt>描述</dt>
+<p>显示 pgpool-II 的看门狗状态。
+_watchdogid_ 为 other_pgpool_hostname 参数在 pgpool.conf 中的索引值。</p>
+<p>执行这个命令将显示以 _host_:_port_ 指定的 pgpool-II 的看门狗状态。</p>
+
+<p>示例如下：</p>
+
 <pre>
-Format:
-pcp_proc_count  _timeout_  _host_  _port_  _userid_  _passwd_
+$ pcp_watchdog_info 10 localhost 9898 postgres hogehoge 0
+host1 9999 9000 2
+这里有个示例输出。
 </pre>
+
+<p>结果按以下顺序显示：</p>
+<ul>
+<li>1. 主机名</li>
+<li>2. pgpool-II 的端口号</li>
+<li>3. 看门狗的端口号</li>
+<li>4. 看门狗状态</li>
+</ul>
+
+<p>状态用 [1 到 4] 之间的数字表示：</p>
+<ul>
+<li>1 - 看门狗没有启动</li>
+<li>2 - 备节点：没占用虚拟 IP</li>
+<li>3 - 活跃节点：占用虚拟 IP</li>
+<li>4 - 宕机</li>
+</ul>
+<p>负载均衡权重按规范格式显示。</p>
+
+<p>指定错误的看门狗 ID 将返回状态为 <a href="#exit_status">exit tatus 12</a> 的错误，
+并显示 BackendError 。</p>
+</dl>
+
+<h3 id="pcp_proc_count">pcp_proc_count</h3>
+
+<dl class="flat">
+<dt>格式</dt>
+<dd><code>pcp_proc_count  _timeout_  _host_  _port_  _userid_  _passwd_</code></dd>
+<dt>描述</dt>
+<dd>
+显示 pgpool-II 子进程 ID 列表。如果有多于一个的进程，ID 间将用空格来隔开。
+</dd>
+</dl>
+
+<h3 id="pcp_proc_info">pcp_proc_info</h3>
+<dl class="flat">
+<dt>Format</dt>
+<dd><code>pcp_proc_info  _timeout_  _host_  _port_  _userid_  _passwd_  _processid_</code></dd>
+<dt>Desc.</dt>
 <p>
-	显示 pgpool-II 子进程 ID 列表。如果有多于一个的进程，ID 间将用空格来隔开。
-</p>
-<h3>pcp_proc_info</h3>
-<p>
-<pre>
-Format:
-pcp_proc_info  _timeout_  _host_  _port_  _userid_  _passwd_  _processid_
-</pre>
-<p>
-	显示给定 pgpool-II 孩子进程 ID 的信息。输出结果示例如下：
+显示给定 pgpool-II 孩子进程 ID 的信息。输出结果示例如下：
 </p>
 <pre>
 $ pcp_proc_info 10 localhost 9898 postgres hogehoge 3815
 postgres_db postgres 1150769932 1150767351 3 0 1 1467 1
 postgres_db postgres 1150769932 1150767351 3 0 1 1468 1
-
-结果以如下顺序被显示：
-1. 连接的数据库名
-2. 连接的用户名
-3. 进程启动时间戳
-4. 连接创建时间戳
-5. 协议major版本
-6. 协议minor版本
-7. 连接重用计数
-8. PostgreSQL backend 进程 ID
-9. 前端连接时为1，否则为0
 </pre>
+
+<p>结果以如下顺序被显示：</p>
+<ul>
+<li>1. 连接的数据库名</li>
+<li>2. 连接的用户名</li>
+<li>3. 进程启动时间戳</li>
+<li>4. 连接创建时间戳</li>
+<li>5. 协议major版本</li>
+<li>6. 协议minor版本</li>
+<li>7. 连接重用计数</li>
+<li>8. PostgreSQL 后端进程 ID</li>
+<li>9. 前端连接时为 1，否则为0</li>
+</ul>
+
 <p>
-	如果没有与后台的连接，不显示任何内容。如果有多个连接，将显示多行，每行显示一个连接的信息，时间戳显示格式是 EPOCH。
+如果没有与后台的连接，不显示任何内容。如果有多个连接，将显示多行，每行显示一个连接的信息，时间戳显示格式是 EPOCH。
 </p>
 
 <p>
---verbose 可选项帮助理解输出. 示例如下:
+<code>--verbose</code> 可选项帮助理解输出. 示例如下:
 </p>
 
 <pre>
@@ -4022,16 +4276,19 @@ PID          : 1468
 Connected    : 1
 </pre>
 
-<p>指定一个无效的节点 ID 将会导致一个退出状态为 12 的错误，而且 BackendError 将被显示。</p>
+<p>
+指定一个无效的节点 ID 将会导致一个退出状态为 <a href="#exit_status">exit status 12</a>
+的错误，而且 BackendError 将被显示。
+</p>
+</dl>
 
 <h3 id="pcp_pool_status">pcp_pool_status <span class="version">V3.1 -</span></h3>
-<pre>
-格式：
-pcp_pool_status _timeout_  _host_  _port_  _userid_  _passwd_
-</pre>
-<p>
-显示 pgpool.conf 中的参数。以下是一个输出的示例：
-</p>
+<dl class="flat">
+<dt>格式</dt>
+<dd><code>pcp_pool_status _timeout_  _host_  _port_  _userid_  _passwd_</code></dd>
+<dt>描述</dt>
+<dd>
+<p>显示 pgpool.conf 中的参数。以下是一个输出的示例：</p>
 <pre>
 $ pcp_pool_status 10 localhost 9898 postgres hogehoge
 name : listen_addresses
@@ -4050,153 +4307,667 @@ name : pcp_port
 value: 9898
 desc : PCP port # to bind
 </pre>
+</dd>
+</dl>
 
-<h3>pcp_systemdb_info</h3>
-<p>
-<pre>
-Format:
-pcp_systemdb_info  _timeout_  _host_  _port_  _userid_  _passwd_
-</pre>
-<p>
-	显示 System DB 信息。输出示例如下：
-</p>
+<h3 id="pcp_systemdb_info">pcp_systemdb_info</h3>
+
+<dl class="flat">
+<dt>格式</dt>
+<dd><code>pcp_systemdb_info  _timeout_  _host_  _port_  _userid_  _passwd_</code></dd>
+<dt>描述</dt>
+<dd>
+<p>显示 System DB 信息。输出示例如下：</p>
 <pre>
 $ pcp_systemdb_info 10 localhost 9898 postgres hogehoge
 localhost 5432 yamaguti '' pgpool_catalog pgpool 3
 yamaguti public accounts aid 4 aid bid abalance filler integer integer integer character(84) dist_def_accounts
 yamaguti public branches bid 3 bid bbalance filler integer integer character(84) dist_def_branches
 yamaguti public tellers bid 4 tid bid tbalance filler integer integer integer character(84) dist_def_tellers
-
-首先，System DB 信息将被显示在第一行。结果以如下顺序被显示：
-1. 主机名
-2. 端口号
-3. 用户名
-4. 密码，若无显示为 ''
-5. schema 名
-6. 数据库名
-7. 定义的分区规则数量
 </pre>
+
+<p>首先，System DB 信息将被显示在第一行。结果以如下顺序被显示：</p>
+<ul>
+<li>1. 主机名</li>
+<li>2. 端口号</li>
+<li>3. 用户名</li>
+<li>4. 密码，若无显示为 ''</li>
+<li>5. schema 名</li>
+<li>6. 数据库名</li>
+<li>7. 定义的分区规则数量</li>
+</ul>
+
 <p>
-	然后，定义的分区规则将被在后续行显示。如果有多个定义，将显示多行，每行显示一个定义。结果以如下顺序被显示：
+然后，定义的分区规则将被在后续行显示。如果有多个定义，
+将显示多行，每行显示一个定义。结果以如下顺序被显示：
 </p>
-<pre>
-1. 目标分区数据库名
-2. 目标分区schema名
-3. 目标分区表名
-4. 分区关键字列名
-5. 目标表中的列树
-6. 列名 (最多显示5个)
-7. 列类型 (最多显示5个)
-8. 分区规则函数名
-</pre>
-<p>
-	如果 System DB 没有被定义（例如没有在 pgpool-II 模式，且 query cache 没有被启用)，将会导致一个退出状态为12的错误，而且 BackendError 将被显示。
-</p>
+<ul>
+<li>1. 目标分区数据库名</li>
+<li>2. 目标分区schema名</li>
+<li>3. 目标分区表名</li>
+<li>4. 分区关键字列名</li>
+<li>5. 目标表中的列树</li>
+<li>6. 列名 (最多显示5个)</li>
+<li>7. 列类型 (最多显示5个)</li>
+<li>8. 分区规则函数名</li>
+</ul>
 
-
-<h3>pcp_detach_node</h3>
-<pre>
-Format:
-pcp_detach_node  [-g] _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
-</pre>
 <p>
-	把指定的节点从 pgpool-II 分离。如果设定-g，将等待所有的客户端断开(除非client_idle_limit_in_recovery为-1，或者 recovery_timeout 过期)。
+如果 System DB 没有被定义（例如没有在 pgpool-II 模式，且 query cache 没有被启用)，
+将会导致一个退出状态为 <a href="#exit_status">exit status 12</a> 的错误，而且 BackendError 将被显示。
 </p>
 
+</dd>
+</dl>
 
-<h3>pcp_attach_node</h3>
+<h2>用于控制后端节点等的 PCP 命令</h2>
+
+<h3 id="pcp_detach_node">pcp_detach_node</h3>
+
+<dl class="flat">
+<dt>格式</dt>
+<dd><code>pcp_detach_node  [-g] _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_</code></dd>
+<dt>描述</dt>
+<dd>
 <p>
-<pre>
-Format:
-pcp_attach_node  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
-
-把给定的节点加入到 pgpool-II。
-</pre>
+把指定的节点从 pgpool-II 分离。
+如果设定 -g，将等待所有的客户端断开(除非client_idle_limit_in_recovery为 -1，
+或者 recovery_timeout 过期)。
 </p>
+</dd>
+</dl>
+
+
+<h3 id="pcp_attach_node">pcp_attach_node</h3>
+<dl class="flat">
+<dt>格式</dt>
+<dd><code>pcp_attach_node  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_</code></dd>
+<dt>描述</dt>
+<dd><p>把给定的节点加入到 pgpool-II。</p></dd>
+</dl>
 
 <h3 id="pcp_promote_node">pcp_promote_node <span class="version">V3.1 -</span></h3>
+
+<dl class="flat">
+<dt>Format</dt>
+<dd><code>pcp_promote_node  [-g] _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_</code></dd>
+<dt>Desc.</dt>
+<dd>
 <p>
-<pre>
-Format:
-pcp_promote_node  [-g] _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_
-
-为 pgpool-II 提升指定的节点为 master 。只适用于 master/slave 流复制。如果设定-g，将等待所有的客户端断开(除非 client_idle_limit_in_recovery 为-1，或者 recovery_timeout 过期)。
-</pre>
+为 pgpool-II 提升指定的节点为 master 。
+只适用于 master/slave 流复制。如果设定 -g，将等待所有的客户端断开(除非 client_idle_limit_in_recovery 为 -1，
+或者 recovery_timeout 过期)。
 </p>
+</dd>
+</dl>
 
-<h3>pcp_stop_pgpool</h3>
-<pre>
-Format:
-pcp_stop_pgpool  _timeout_  _host_  _port_  _userid_  _passwd_  _mode_
-</pre>
-
+<h3 id="pcp_stop_pgpool">pcp_stop_pgpool</h3>
+<dl class="flat">
+<dt>格式</dt>
+<dd><code>pcp_stop_pgpool  _timeout_  _host_  _port_  _userid_  _passwd_  _mode_</code></dd>
+<dt>描述</dt>
+<dd>
+<p>使用指定的模式关闭 pgpool-II 进程。可用的模式如下：</p>
+<ul>
+<li>s    - 智能模式 (smart mode)</li>
+<li>f    - 快速模式 (fast mode)</li>
+<li>i    - 立即模式 (immediate mode)</li>
+</ul>
 <p>
-	使用指定的模式关闭 pgpool-II 进程。可用的模式如下：
+如果 pgpool-II 进程不存在，将会导致一个退出状态为 <a href="#exit_status">exit status 8</a> 的错误，
+而且 BackendError 将被显示。
 </p>
-
-<pre>
-s	- 智能模式 (smart mode)
-f	- 快速模式 (fast mode)
-i	- 立即模式 (immediate mode)
-</pre>
 <p>
-	如果 pgpool-II 进程不存在，将会导致一个退出状态为 8 的错误，而且 BackendError 将被显示。
-</p>
-<p>* 当前，快速和立即模式没有区别。pgpool-II 终止所有的进程无论是否还有客户端连接到后端服务器。
-</p>
+* 当前，快速和立即模式没有区别。
+pgpool-II 终止所有的进程无论是否还有客户端连接到后端服务器。</p>
+</dd>
+</dl>
 
+<h3 id="pcp_recovery_node">pcp_recovery_node</h3>
+<dl class="flat">
+<dt>格式</dt>
+<dd><code>pcp_recovery_node  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_</code></dd>
+<dt>描述</dt>
+<dd>连接到给定的后端节点并启动恢复。</dd>
+</dl>
 
-<h2>退出状态 (Exit Status)</h2>
+<h2 id="exit_status">退出状态 (Exit Status)</h2>
 
-<p>PCP 命令正确退出时状态为0.若由错误出现，将会具有如下的错误状态。
+<p>PCP 命令正确退出时状态为 0。
+若由错误出现，将会具有如下的错误状态。</p>
 
 <table border>
 <tr><th>UNKNOWNERR</th>
-    <td>1</td><td>Unknown Error (should not occur)</td></tr>
+    <td>1</td><td>未知错误（理论上不会发生）</td></tr>
 <tr><th>EOFERR</th>
-    <td>2</td><td>EOF Error</td></tr>
+    <td>2</td><td>通信结束（EOF Error）</td></tr>
 <tr><th>NOMEMERR</th>
-    <td>3</td><td>Memory shortage</td></tr>
+    <td>3</td><td>内存不足</td></tr>
 <tr><th>READERR</th>
-    <td>4</td><td>Error while reading from the server</td></tr>
+    <td>4</td><td>从服务端读取数据时发生错误</td></tr>
 <tr><th>WRITEERR</th>
-    <td>5</td><td>Error while writing to the server</td></tr>
+    <td>5</td><td>发送数据到服务端时发生错误</td></tr>
 <tr><th>TIMEOUTERR</th>
-    <td>6</td><td>Timeout</td></tr>
+    <td>6</td><td>超时</td></tr>
 <tr><th>INVALERR</th>
-    <td>7</td><td>Argument(s) to the PCP command was invalid</td></tr>
+    <td>7</td><td>PCP 命令的参数错误</td></tr>
 <tr><th>CONNERR</th>
-    <td>8</td><td>Server connection error</td></tr>
+    <td>8</td><td>连接到服务器出错</td></tr>
 <tr><th>NOCONNERR</th>
-    <td>9</td><td>No connection exists</td></tr>
+    <td>9</td><td>没有足够的连接</td></tr>
 <tr><th>SOCKERR</th>
-    <td>10</td><td>Socket error</td></tr>
+    <td>10</td><td>套接字错误</td></tr>
 <tr><th>HOSTERR</th>
-    <td>11</td><td>Hostname resolution error</td></tr>
+    <td>11</td><td>解析域名出错</td></tr>
 <tr><th>BACKENDERR</th>
-    <td>12</td><td>PCP process error on the server (specifying an invalid ID, etc.)</td></tr>
+    <td>12</td><td>服务上的 PCP 进程错误（例如给出的 ID 错误）</td></tr>
 <tr><th>AUTHERR</th>
-    <td>13</td><td>Authorization failure</td></tr>
+    <td>13</td><td>认证失败</td></tr>
 </table>
 
+<p class="top_link"><a href="#Top">返回顶部</a></p>
+
+<!-- ================================================================================ -->
+
+<h1><a name="troubleshooting"></a>故障解决</h1>
+<p>
+本节描述你使用 pgpool-II 时碰到的问题及其解决办法。
 </p>
 
-<h1>内部信息 (Internal information)<a name="internal"></a></h1>
+<dl>
+
+<dt id="health_check_failed">健康检查失败</dt>
+<dd>
 <p>
-	相比于1.x版本，pgpool-II 2.0.x 带来大量的修改。请注意下面的内容不适用1.x版本。
+    pgpool-II 的健康检查特性检测到DB节点失效。
 </p>
 
-<h2>并行执行引擎 (Parallel execution engine)</h2>
+<pre>
+2010-07-23 16:42:57 ERROR: pid 20031: health check failed. 1 th host foo at port 5432 is down
+2010-07-23 16:42:57 LOG:   pid 20031: set 1 th backend down status
+2010-07-23 16:42:57 LOG:   pid 20031: starting degeneration. shutdown host foo(5432)
+2010-07-23 16:42:58 LOG:   pid 20031: failover_handler: set new master node: 0
+2010-07-23 16:42:58 LOG:   pid 20031: failover done. shutdown host foo(5432)
+</pre>
+
 <p>
-	并行执行引擎内置于pgpool-II。殷勤在每一个节点上执行相同的查询(Query)，根据节点的响应，传送结果到前端。
+    该日志表明DB节点1 (主机foo) 与pgpool中断并失去连接（关闭），
+    于是DB节点0成为新的master。检查DB节点1，处理掉产生故障的原因，
+    之后如果可能则会在 DB 节点 1 上执行一个在线恢复。
+</p>
+</dd>
+
+<dt id="failed_to_read_kind_from_frontend">Failed to read kind from frontend</dt>
+<dd>
+<pre>
+2010-07-26 18:43:24 LOG:   pid 24161: ProcessFrontendResponse: failed to read kind from frontend. frontend abnormally exited
+</pre>
+<p>
+    该日志表明前端程序未能与 pgpool-II 正确的断开。
+    可能的原因是：客户端应的 bug，客户端应用的强制结束(kill)或者是临时的网络故障。
+    该类型的事件不会导致一个DB的破坏或者数据一致性问题。
+    其仅仅是一个关于违反协议的的警告。
+    如果该消息一直出现，建议你检查应用和网络。
+</p>
+</dd>
+
+<dt id="kind_mismatch">Kind mismatch errors</dt>
+    <dd>
+    <p>
+    pgpool-II 操作在复制模式时你可能得到该消息。
+    </p>
+<pre>
+2010-07-22 14:18:32 ERROR: pid 9966: kind mismatch among backends. Possible last query was: "FETCH ALL FROM c;" kind details are: 0[T] 1[E: cursor "c" does not exist]
+</pre>
+    <p>
+    pgpool-II把 SQL 命令发送给数据库节点后便会等待响应。
+    该错误消息指示并非所有的数据库节点返回同样的响应。
+    你可能会在 "Possible last query was:" 之后看到引起错误的 SQL 语句，
+    接着是响应类型。如果响应指示是一个错误，则从 PostgreSQL 返回的错误消息将被显示出来。
+    这里你看到 "0[T]" 显示 DB 节点响应：0[T]"(开始发送行描述)，
+    以及 "1[E" 表示DB节点1返回一个错误，消息是"cursor "c" does not exist"，然而数据库节点 0 发送了一个行记录。
+    </p>
+    <p>
+    注意：在主/备模式时你同样会看到这类错误。
+    例如即使在主/备模式下，SET 命令将会被发送给所有的数据库节点以保持所有的节点处于同一个状态。
+    </p>
+    <p>
+    如果你发现数据库不再同步，检查数据库并使用在线复制异步它们。
+    </p>
+
+<p>
+<dt id="difference_of_number">pgpool-II 检查插入、更新或者删除的不同的行数</dt>
+    <dd>
+    <p>
+    在复制模式下，pgpool-II 检测到 INSERT/UPDATE/DELETE 在影响的节点上产生不同的行数。
+    </p>
+<pre>
+2010-07-22 11:49:28 ERROR: pid 30710: pgpool detected difference of the number of inserted, updated or deleted tuples. Possible last query was: "update t1 set i = 1;"
+2010-07-22 11:49:28 LOG:   pid 30710: ReadyForQuery: Degenerate backends: 1
+2010-07-22 11:49:28 LOG:   pid 30710: ReadyForQuery: Affected tuples are: 0 1
+</pre>
+    <p>
+    在上面的示例中，在不同的数据库节点上执行 "update t1 set i = 1"
+    返回更新的行数不同。下一行表明 DB 1 接着出现退化 (断开，disconnected)，
+    然后是DB节点0受影响的行数是0，然而节点1受影响的行数是1.
+    </p>
+    <p>
+    停止怀疑有错误数据的数据库节点并执行在线恢复。
+    </p>
+</dl>
+
+<p class="top_link"><a href="#Top">返回顶部</a></p>
+
+
+<!-- ================================================================================ -->
+
+<h1>限制<a name="restriction"></a></h1>
+
+<p>
+<h2>PostgreSQL的函数</h2>
+<p>
+<ul>
+<li>
+    如果你使用 pg_terminate_backend() 终止后台数据库，这会触发一个故障。
+    原因是 PostgreSQL 使用完全相同的消息来关闭 postmaster 以终止一个后台数据库，
+    目前还没有办法解决它，请不要使用该函数。
+</li>
+</ul>
+
+<p>
+<h2><a name="md5"></a>认证/访问控制</h2>
+
+<p>
+<ul>
+    <li>在复制模式或主/备模式中，trust, clear text password, 以及 pam 方法被支持，
+          md5 从 pgpool-II 3.0 之后开始被支持。通过使用 "pool_passwd" 文件来支持 md5。
+          "pool_passwd" 是默认的认证文件。你可以使用 <a href="#POOL_PASSWD">pool_passwd</a>
+          来改变文件名。下面是启用 md5 的步骤：
+        <ol>
+            <li>以数据库的操作系统用户(database's operating system user)登入，
+                并键入 "pg_md5 --md5auth --username=<your_username> <your_passwd>"，
+                用户名和md5加密的密码被注册进 pool_passwd。如果 pool_passwd 还不存在，
+                pg_md5 将会自动的为你创建。</li>
+            <li>pool_passwd 格式是 "username:encrypted_passwd".</li>
+            <li>你还需要在 pool_hba.conf 中增加一个相应的 md5 项。
+                详见<a href="#hba">为客户端认证设置 pool_hba.conf (HBA)</a>。</li>
+            <li>请注意的是用户名和密码必须和 PostgreSQL 中注册的一样</li>
+            <li>在修改 md5 密码后（当然，必须在 pool_passwd 和 PostgreSQL 都必须修改），
+                你需要执行 "pgpool reload" 或重启 pgpool（如果你的 pgpool 版本小于或等于 3.1）。</li>
+        </ol>
+    </li>
+    <li>在所有的其它模式中，trust, clear text password, crypt, md5, 以及 pam都被支持。</li>
+</ul>
 </p>
 
-<h2>查询重写 (Query Rewriting)</h2>
+<h2>大对象 (Large objects)</h2>
 <p>
-	本节解释了 pgpool-II 并行模式下的查询重写。
+pgpool-II 2.3.2 或以上版本支持大对象复制，如果后台服务器是 PostgreSQL 8.1 或以上版本。
+有鉴于此，你需要启用 pgpool.conf 中的<a href="#lobj_lock_table">lobj_lock_table</a>。
+然而，使用后台函数 lo_import 的大对象复制不被支持。
+</p>
+
+<h2 id="temp_table_in_master_slave_mode">主/备模式中的临时表</h2>
+<p>
+Creating/inserting/updating/deleting 临时表将会永远在主（首要）节点上执行。
+pgpool-II 3.0 或以上版本中，也可以在这些主节点的表上执行 SELECT。
+然而，如果在 SELECT 中临时表名被用作一个符号，就没有办法来检测到它，
+这样 SELECT 将被负载均衡。这会产生一个 "not found the table" 错误或者会找到另外一个同名的表。
+为避免该问题，使用/*NO LOAD BALANCE*/ SQL 注释。
+</p>
+
+<pre>
+将会产生问题的示例 SELECT:
+SELECT 't1'::regclass::oid;
+</pre>
+
+<p>
+psql 的 \d 命令使用符号表名。
+pgpool-II 3.0 或更高版本检查是否 SELECT
+包含任何对系统表(system catalogs)的访问，
+并永远把这些查询发送到主节点，这样我们避免了该问题。
+</p>
+
+<h2 id="caution_in_replication_mode">复制模式中的函数等</h2>
+
+<p>不保证使用依赖上下文的机制所产生的数据
+（如 random number, transaction ID, OID, SERIAL, sequence），
+都会被在多个后台服务器上被正确的复制。</p>
+<p>对于SERIAL，启用insert_lock在数据复制中很有用。
+insert_lock 还有助于 SELECT setval() 和 SELECT nextval()。</p>
+
+<p>在 pgpool-II 2.3 或更高版本中，
+使用 CURRENT_TIMESTAMP,CURRENT_DATE, now()的 INSERT/UPDATE 将会被正确的复制。
+INSERT/UPDATE 使用 CURRENT_TIMESTAMP, CURRENT_DATE, now() 作为表的默认值时，
+也将会正确的复制。这通过执行时把这些函数替换成从master节点上获取的常量值来完成。
+然而仍有一些限制：
+</p>
+
+<ul>
+    <li>在 pgpool-II 3.0 或更低的以前的版本中，
+        计算表中默认值的临时数据在一些情况下并不准确，例如，下面的表定义：    
+<pre>
+CREATE TABLE rel1(
+  d1 date DEFAULT CURRENT_DATE + 1
+)
+</pre>
+    被看成如下的表:
+<pre>
+CREATE TABLE rel1(
+  d1 date DEFAULT CURRENT_DATE
+)
+</pre>
+    <p>
+    pgpool-II 3.1 后更高版本能够正确的处理这些情况。
+    这样"d1"将会把明天(CURRENT_DATE + 1)作为默认值。
+    然而当扩展的协议(例如在JDBC, PHP PDO中使用的)或者 PREPARE 被使用时，这个改进并不适用。
+    </p>
+    <p>
+    请注意如果列类型不是临时的，重写并不会被执行，这样的例子：
+    </p>
+<pre>
+foo bigint default (date_part('epoch'::text,('now'::text)::timestamp(3) with time zone) * (1000)::double precision)
+</pre>
+    </li>
+
+    <li>假定我们有如下表：
+<pre>
+CREATE TABLE rel1(
+  c1 int,
+  c2 timestamp default now()
+)
+</pre>
+
+    我们可以复制：
+<pre>
+INSERT INTO rel1(c1) VALUES(1) 
+</pre>
+
+    因为这将变为：
+<pre>
+INSERT INTO rel1(c1, c2) VALUES(1, '2009-01-01 23:59:59.123456+09')
+</pre>
+
+    然而，
+<pre>
+INSERT INTO rel1(c1) SELECT 1
+</pre>
+    不能够被转换，这样在当前的实现中不能被正确的复制，
+    值将仍然会被插入，但是没有进行任何的转换。
+    </li>
+</ul>
+
+<p>如果你在使用 8.3 或更高的版本 PostgreSQL ，
+并且在 reset_query_list 中指定 DISCARD ALL，
+那么将在会话的末尾处删除 <code>CREATE TEMP TABLE</code> 创建的表。
 </p>
 <p>
-	在并行模式下，由客户端发出的查询会经历两个阶段的处理：
+对于8.2.x或更早的版本，
+退出会话时并不会删除 <code>CREATE TEMP TABLE</code> 创建的表。
+这是由于连接池的原因，从 PostgreSQL 后台的视角来看，
+要保持 session 处于活动状态。为避免这一点，
+你必须通过发出 <code>DROP TABLE</code> 命令显式的删除该临时表，
+或在事务块中使用 <code>CREATE TEMP TABLE ... ON COMMIT DROP</code> 语句。</p>
+
+<h2 id="ng_queries">Queries</h2>
+
+<p>以下是不能被 pgpool-II 处理的查询。</p>
+
+<h3 id="ng_prepare">PREPARE (for parallel mode)</h3>
+<p>
+不支持由 <code>PREPARE</code> 创建的 prepared statements。
+</p>
+
+<h3 id="ng_insert">INSERT (for parallel mode)</h3>
+
+<p>你不能使用 <code>DEFAULT</code> 作为分区关键字列(partitioning key column)。
+例如如果表 t 中的列 x 是分区关键字列，
+</p>
+
+<pre>
+INSERT INTO t(x) VALUES (DEFAULT);
+</pre>
+<p>
+这将是无效的。而且该值也不能使用函数。
+</p>
+
+<pre>
+INSERT INTO t(x) VALUES (func());
+</pre>
+<p>
+对于用于分区的列，你必须显式地指定值。
+</p>
+<p>
+INSERT的分区值只能是常量值。<code>SELECT INTO</code>
+和 <code>INSERT INTO ... SELECT</code> 也不被支持。
+</p>
+<pre>
+INSERT INTO t(x) VALUES (1),(2),(3);
+</pre>
+
+<h3 id="ng_update">UPDATE (并行模式)</h3>
+
+<p>如果分区关键字列值被更新，
+后台数据库的数据一致性可能会丢失。
+pgpool-II 并不重新分区更新的数据。</p>
+
+<p>如果约束被违反时一个查询在后台数据库中引起的了一个错误，
+一个事务有可能不能够被回滚。</p>
+
+<p>如果在 <code>WHERE</code> 从句中一个函数被调用，
+该查询可能不能够被正确的执行。例如:
+<pre>
+UPDATE branches set bid = 100 where bid = (select max(bid) from beances);
+</pre>
+</p>
+
+<h3 id="ng_select_for_update">SELECT ... FOR UPDATE (并行模式)</h3>
+
+<p>如果在 <code>WHERE</code> 从句中一个函数被调用，
+该查询可能不能够被正确的执行。例如:    
+<pre>
+SELECT * FROM  branches where bid = (select max(bid) from beances) FOR UPDATE;
+</pre>
+</p>
+
+<h3>COPY (并行模式)</h3>
+
+<p><code>COPY BINARY</code> 不被支持。
+从文件中拷贝也不被支持。
+只有 <code>COPY FROM STDIN</code> 和 <code>COPY TO STDOUT</code> 被支持。</p>
+
+<h3 id="ng_create_table">ALTER/CREATE TABLE (并行模式)</h3>
+
+<p>为更新分区规则，pgpool-II 必须重启以从 System DB 读取它们。</p>
+
+<h3 id="ng_transaction">事务 (并行模式)</h3>
+
+<p>一个事务块里面执行的 <code>SELECT</code>
+语句将被在一个单独的事务中执行，这有个示例：
+
+<pre>
+BEGIN;
+INSERT INTO t(a) VALUES (1);
+SELECT * FROM t ORDER BY a; <-- INSERT above is not visible from this SELECT statement
+END;
+</pre>
+
+<h3 id="ng_view">Views / Rules (并行模式)</h3>
+
+<p>
+将会在所有的后台数据库中为 views 和 rules 创建同样的定义。
+</p>
+
+<pre>
+SELECT * FROM a, b where a.i = b.i
+</pre>
+<p>
+像上面的 <code>JOIN</code> 将在后台数据库中执行，
+然后由每个后台数据库返回的结果进行合并。
+跨节点的 Views 和 Rules 不能够被创建。
+然而若连接的表的数据都在同一个节点中，一个 VIEW 能够被创建。
+该VIEW需要在 pgpool_catalog.dist_def 中注册。
+一个 col_name 和 一个 dist_def_func 也必须进行注册，
+它们当在视图上执行插入操作时被使用。
+</p>
+
+<h3 id="ng_fuction">Functions / Triggers (并行模式)</h3>
+
+<p>同样的函数定义将在所有的后台数据库中被创建。
+函数内不能执行跨节点连接(Join)，
+不能访问其它节点的数据。</p>
+
+<h3>扩展查询协议 (并行模式)</h3>
+
+<p>JDBC驱动等等所使用的扩展的查询协议不被支持。
+必须使用简单的查询协议。
+这意味着你不能使用 prepared statement。</p>
+
+<h3 id="ng_natural_join">Natural Join (并行模式)</h3>
+
+<p>自然连接(Natural Join)不被支持。
+必须使用"ON join condition" 或 "USING (join_column)"。</p>
+
+<h3 id="ng_extended_protocol">USING CLAUSE (并行模式)</h3>
+
+<p>USING CLAUSE 通过查询重写过程被转换为 ON CLAUSE。
+这样，当在目标列表中含有"*"时，连接的列会出现两次。</p>
+<p>
+这儿有个示例:
+</p>
+<pre>
+=# SELECT * FROM t1 JOIN t2 USING(id);
+ id |  t  |   t
+----+-----+-------
+  1 | 1st | first
+(1 row)
+</pre>
+<p>
+在查询重写过程中 "USING" 被转换成 "ON"。
+这样下面是生效的重写结果：
+</p>
+<pre>
+=# SELECT * FROM t1 JOIN t2 ON t1.id = t2.id;
+ id |  t  | id |   t
+----+-----+----+-------
+  1 | 1st |  1 | first
+(1 row)
+</pre>
+
+<p>
+注意列"t"被重复。
+</p>
+
+<h3 id="ng_multibyte_chars">多字节字符 (for all modes)</h3>
+
+<p>pgpool-II 不会在不同的多字节字符间进行转换。
+client、backend 以及 System DB 之间的编码必须相同。</p>
+
+<h3 id="ng_multi_statement">Multi-statement Query (并行模式)</h3>
+<p>
+pgpool-II 不处理 multi-statement queries。
+</p>
+
+<h3>死锁 (for parallel mode)</h3>
+
+<p>跨越多个后台数据库的死锁不能够被检测。例如:
+</p>
+<pre>
+(tellers table is partitioned using the following rule)
+  tid <= 10  --> node 0
+  tid >= 10  --> node 1
+
+A) BEGIN;
+B) BEGIN;
+A) SELECT * FROM tellers WHERE tid = 11 FOR UPDATE;
+B) SELECT * FROM tellers WHERE tid = 1 FOR UPDATE;
+A) SELECT * FROM tellers WHERE tid = 1 FOR UPDATE;
+B) SELECT * FROM tellers WHERE tid = 11 FOR UPDATE;
+</pre>
+<p>
+在上述情况下，单个的节点不能探测到死锁，
+这样pgpool-II将会无限期的等待响应。
+该现象可出现在任何获取行级别锁(row level lock)的query中。
+</p>
+<p>而且，如果一个节点上出现了一个死锁，
+每个节点的事务状态将不再具有一致性。
+这样如果死锁被探测到 pgpool-II 将终止该进程。
+</p>
+<pre>
+pool_read_kind: kind does not match between master(84) slot[1] (69)
+</pre>
+
+<h3>Schemas (for parallel mode)</h3>
+
+<p>schema 中非 public 下的对象必须使用完整名字，如：
+</p>
+<pre>
+schema.object
+</pre>
+<p>
+当路径设置如下时，pgpool-II 不能找到正确的 schema：
+</p>
+<pre>
+set search_path = xxx
+</pre>
+<p>
+且 schema 名在 query 中被省略。
+</p>
+
+<h3>表名 - 列名(并行模式)</h3>
+<p>
+限制的对象：并行模式
+</p>
+<p>
+一个表或列名不能是以 pool_ 起头。
+当重写查询时，这些名字被保留为内部处理。
+</p>
+
+<h2 id="caution_system_db">System DB</h2>
+
+<h3>分区规则</h3>
+
+<p>仅可在一个分区规则中定义一个分区关键字列。
+如同'x or y'的条件式不被支持。</p>
+
+<h2>环境要求</h2>
+
+<h3>libpq</h3>
+
+<p>
+在编译构建pgpool-II时<code>libpq</code>被链接。libpq版本必须是3.0。使用2.0版本的libpq编译pgpool-II将会失败。而且System DB 必须是 PostgreSQL 7.4 或更高版本。
+</p>
+
+<h2 id="caution_query_cache">查询缓存</h2>
+
+<p>当前，<a href="#query_cache">查询缓存</a>必须被手动删除。
+但这不影响 <a href="#memqcache">基于内存的查询缓存</a>。
+基于内存的查询缓存会自动清除无效的缓存。</p>
+
+
+<p class="top_link"><a href="#Top">返回顶部</a></p>
+
+<!-- ================================================================================ -->
+
+<h1>内部信息<a name="internal"></a></h1>
+<p>
+相比于1.x版本，pgpool-II 2.0.x 带来大量的修改。
+请注意下面的内容不适用1.x版本。
+</p>
+
+<h2 id="parallel_execute_engine">并行执行引擎</h2>
+<p>
+并行执行引擎内置于 pgpool-II。
+引擎在每一个节点上执行相同的查询，
+根据节点的响应，传送结果到前端。
+</p>
+
+<h2 id="rewrite_query">查询重写</h2>
+<p>
+本节解释了 pgpool-II 并行模式下的查询重写。
+</p>
+<p>
+在并行模式下，由客户端发出的查询会经历两个阶段的处理：
 </p>
 <ul>
 <li>查询分析 (Analysis of Query)
@@ -4205,43 +4976,61 @@ i	- 立即模式 (immediate mode)
 <p>
 下面解释了这两个阶段:
 </p>
-<h3>查询分析 (Analysis of Query)</h3>
+
+<h3 id="analyze_query">查询分析</h3>
 <h4>概述</h4>
 <p>
-	客户端提交的获取查询(retrieval Query)将会通过 SQL 分析器。然后将会使用存储在system DB中的信息对其进行分析。将会使用该信息更新该查询的每一部分的执行状态。该执行状态存储了哪个节点可以处理。例如，如果一个表的数据分布在多个节点上（正如 catalog 里的 pgpool_catalog.dist_def 中所声明的那样），就需要从所有的节点上获取数据。另外一方面，注册在 pgpool_catalog.replicate_def 中的表的数据若已复制，则可从任意一个节点获取。当数据需要从所有节点上处理时，状态是'P'，当需要从一个节点上处理时，状态是'L'，'S'状态是一个特殊的情况：意味着从所有节点获取后还需要执行另外一个步骤。例如需要对注册在 pgpool_catalog.dist_def 中表的数据进行排序。
+客户端提交的获取查询(retrieval Query)将会通过 SQL 分析器。
+然后将会使用存储在 system DB 中的信息对其进行分析。
+将会使用该信息更新该查询的每一部分的执行状态。
+</p>
+<p>
+该执行状态存储了哪个节点可以处理。
+例如，如果一个表的数据分布在多个节点上（正如 catalog 里的 pgpool_catalog.dist_def 中所声明的那样），
+就需要从所有的节点上获取数据。
+另外一方面，注册在 pgpool_catalog.replicate_def 中的表的数据若已复制，则可从任意一个节点获取。
+</p>
+<p>
+当数据需要从所有节点上处理时，状态是'P'，当需要从一个节点上处理时，
+状态是'L'，'S'状态是一个特殊的情况：意味着从所有节点获取后还需要执行另外一个步骤。
+例如需要对注册在 pgpool_catalog.dist_def 中表的数据进行排序。
 </p>
 
 <p>
-	获取查询(retrieval Query)将被以如下顺序进行分析，且在此处理过程中会改变执行状态。查询最终将在哪儿处理取决于主选择的最终状态(main select)。
+获取类查询将被以如下顺序进行分析，且在此处理过程中会改变执行状态。
+查询最终将在哪儿处理取决于主选择的最终状态。
 </p>
 
 <ol>
-  <li>是否使用了UNION, EXTRACT, INTERSECT?
-  <li>FROM语句的执行状态是什么?
-  <li>通过TARGETLIST改变执行状态
-  <li>根据WHERE语句对执行状态的改变
-  <li>根据GROUP BY语句对执行状态的改变
-  <li>根据HAVING语句对执行状态的改变
-  <li>根据ORDER BY语句对执行状态的改变
-  <li>执行状态中LIMIT OFFSET断言的改变
-  <li>获取SELECT的最终执行状态
+  <li>是否使用了 UNION, EXTRACT, INTERSECT?</li>
+  <li>FROM语句的执行状态是什么?</li>
+  <li>通过TARGETLIST改变执行状态</li>
+  <li>根据WHERE语句对执行状态的改变</li>
+  <li>根据GROUP BY语句对执行状态的改变</li>
+  <li>根据HAVING语句对执行状态的改变</li>
+  <li>根据ORDER BY语句对执行状态的改变</li>
+  <li>执行状态中LIMIT OFFSET断言的改变</li>
+  <li>获取SELECT的最终执行状态</li>
 </ol>
 
 <p>
-	SELECT最终执行状态(Execution status)和处理位置(Processed place)的关系如下：
+SELECT最终执行状态和处理位置的关系如下：
 </p>
 
 <p>
 <table border>
-		<tr><td>Execution status</td><td>Processed place</td></tr>
-		<tr><td align=center>L</td><td>查询可发送到任意一个节点上 </td></tr>
-		<tr><td align=center>P</td><td>在所有节点上运行同样的查询，并返回数据到客户端，使用并行执行引擎</td></tr>
-		<tr><td align=center>S</td><td>使用system DB处理完之后，返回数据到客户端</td></tr>
+<tr class="header"><th>执行状态</th><th>处理位置</th></tr>
+<tr><th>L</th><td>查询可发送到任意一个节点上 </td></tr>
+<tr><th>P</th><td>在所有节点上运行同样的查询，并返回数据到客户端，使用并行执行引擎</td></tr>
+<tr><th>S</th><td>使用system DB处理完之后，返回数据到客户端</td></tr>
 </table>
 </p>
 
 <p>
-	上面提到的规则也适用于子查询(Sub-Query)。在下面简单的查询中，如果 p1-table 注册在 system DB 的 pgpool_catalog.dist_def 表中(p1-table 是分布式的)，最终的子查询的执行状态变为P，这样子查询的父查询，执行状态也变为了P。
+面提到的规则也适用于子查询。在下面简单的查询中，
+如果 p1-table 注册在 system DB 的 pgpool_catalog.dist_def
+表中(p1-table 是分布式的)，最终的子查询的执行状态变为P，
+这样子查询的父查询，执行状态也变为了 P。
 </p>
 
 <pre>
@@ -4249,84 +5038,122 @@ SELECT * FROM (SELECT * FROM P1-table) as P2-table;
 </pre>
 
 <p>
-	接下来，让我们解释一下执行状态是如何具体改变的。让我们从一个例子开始，来解释 FROM 的状态。
+接下来，让我们解释一下执行状态是如何具体改变的。
+让我们从一个例子开始，来解释 FROM 的状态。
 </p>
 
 <h4><p>FROM 语句的执行状态</p></h4>
 <p>
-	这是一个获取查询(SELECT)。数据集和它的状态(P,L 和 S)根据FROM 语句进行定义。表的执行状态如下：当 FROM 语句中只有一个表时，整个数据集的执行状态和该表的执行状态一致。当 FROM 语句中有两个或多个或者有子查询时，根据JOIN的方法以及执行状态来执行查询，如下表所示。
+这是一个获取查询(SELECT)。数据集和它的状态(P,L 和 S)根据FROM 语句进行定义。
+表的执行状态如下：当 FROM 语句中只有一个表时，整个数据集的执行状态和该表的执行状态一致。
+当 FROM 语句中有两个或多个或者有子查询时，
+根据JOIN的方法以及执行状态来执行查询，如下表所示。
 </p>
 
 <p>
 <table border>
-<tr><td>JOIN type</td><td align = center colspan = 3> LEFT OUTER JOIN </td><td align = center colspan = 3> RIGHT OUTER JOIN </td><td align = center colspan = 3>FULL OUTER JOIN</td><td align = center colspan = 3>Other</td></tr>
-		<tr><td align = center>left/right</td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td></tr>
+<tr class="header"><th>JOIN type</th>
+<th colspan="3"> LEFT OUTER JOIN </th>
+<th colspan="3"> RIGHT OUTER JOIN </th>
+<th colspan="3">FULL OUTER JOIN</th>
+<th colspan="3">Other</th></tr>
+<tr class="center"><th>left/right</th><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td></tr>
 
-<tr><td align = center> P </td><td> S </td><td> P </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> P </td><td> S </td></tr>
+<tr class="center"><th> P </th><td> S </td><td> P </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> P </td><td> S </td></tr>
 
-<tr><td align = center> L </td><td> S </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> S </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td></tr>
+<tr class="center"><th> L </th><td> S </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> S </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td></tr>
 
-<tr><td align = center> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td></tr>
+<tr class="center"><th> S </th><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td></tr>
 
-</td></tr>
 </table>
 </p>
 
 <p>
-	在下面的示例中，P1-table是P状态，L1-table和L2-table是L状态。
+在下面的示例中，P1-table 是 P 状态，L1-table 和 L2-table 是 L 状态。
+</p>
+
 <pre>
 SELECT * FROM P1-table,L1-table,L2-table;
 </pre>
-P1-table (左) and L1-table (右)被连接，根据上表它们获得了P状态。根据P状态，它们与L状态的L2-table进行连接，连接之后现在也是P状态。
+
+<p>
+P1-table (左) and L1-table (右)被连接，根据上表它们获得了P状态。
+根据P状态，它们与L状态的L2-table进行连接，连接之后现在也是P状态。
 </p>
 
 
 <h4><p>由于 TARGETLIST 和 WHERE 从句导致执行状态的改变</p></h4>
 <p>
-	在一个基本的查询中，执行状态来自于 FROM 语句。然而，如果存在一个T ARGETLIST，WHERE 语句的执行状态能够以如下情况进行改变：
+在一个基本的查询中，执行状态来自于 FROM 语句。
+然而，如果存在一个T ARGETLIST，
+WHERE 语句的执行状态能够以如下情况进行改变：
 </p>
 <ol>
-	<li>当有一个子查询
-	<li>当有一个聚集函数或者标记为'P'的 TARGETLIST 含 DISTINCT
-	<li>当使用的一个列不存在于 FROM 语句中一个表(数据集)中时
+    <li>当有一个子查询</li>
+    <li>当有一个聚集函数或者标记为 'P' 的 TARGETLIST 含 DISTINCT</li>
+    <li>当使用的一个列不存在于 FROM 语句中一个表(数据集)中时</li>
 </ol>
 <p>
-	在这些情况下，如果初始状态是P 或 S，最终的子查询、TARGETLIST 和 WHERE 语句的执行状态是S。
-<p>
-	在下面的例子中，当子查询使用的表的状态是P，那么最终的子查询的执行状态是P。这样 WHERE 从句获得了S状态，无论L1的状态是什么，该查询将被运行在 system DB 中。
-<pre>
-	SELECT * FROM L1-table where L1-table.column IN (SELECT * FROM P1-table);
-</pre>
-<p>
-	当一个状态为'P'的 TARGETLIST 含有一个聚集函数时，为了在数据获取之后执行聚集函数，FROM语句的状态改为S。在特定的条件下将对聚集函数做一些优化。 
+在这些情况下，如果初始状态是 P 或 S，
+最终的子查询、TARGETLIST 和 WHERE 语句的执行状态是S。
 </p>
-<p>若一个列不存在于一个表中时，也可以在一个查询中使用。例如在下面的子查询中：
+<p>
+在下面的例子中，当子查询使用的表的状态是 P，
+那么最终的子查询的执行状态是P。
+这样 WHERE 从句获得了 S 状态，无论 L1 的状态是什么，
+该查询将被运行在 system DB 中。
 </p>
 <pre>
-	SELECT * FROM L1-table WHERE L1-table.col1 IN (SELECT * FROM P1-table WHERE P1-table.col = L1-table.col1);
+SELECT * FROM L1-table where L1-table.column IN (SELECT * FROM P1-table);
 </pre>
 <p>
-	该子查询从L1-table表中引用了L1-table.col1，含子查询的 WHERE 语句的执行状态为S。
+当一个状态为 'P' 的 TARGETLIST 含有一个聚集函数时，
+为了在数据获取之后执行聚集函数，FROM语句的状态改为 S。
+在特定的条件下将对聚集函数做一些优化。 
 </p>
-<h4><p>由于 GROUP BY, HAVING, ORDER BY 和 LIMIT/OFFSET 导致执行状态的改变</p></h4>
-
 <p>
-	执行状态是'P'的 WHERE 语句，若还存在GROUP BY, HAVING, ORDER BY 语句, 或 LIMIT/OFFSET 断言时，状态改为'S'。没有 GROUP BY 的查询从 WHERE 语句获取状态。类似的方法，若没有 HAVING 语句，将使用 GROUP BY 语句的执行状态。ORDER BY 语句和 LIMIT/OFFSET 断言具有类似的行为。
+若一个列不存在于一个表中时，也可以在一个查询中使用。
+例如在下面的子查询中：
 </p>
-
-<h4><p>当使用 UNION, EXTRACT, 及 INTERSECT 时</p></h4>
+<pre>
+SELECT * FROM L1-table WHERE L1-table.col1 IN (SELECT * FROM P1-table WHERE P1-table.col = L1-table.col1);
+</pre>
 <p>
-UNION, EXTRACT, 及 INTERSECT 查询的状态依赖于最终左侧和右侧 SELECT 语句的状态。若左右侧的状态都是L，组合的状态是L。若二者都是P，且查询是 UNION ALL，那么组合的状态是P。其它情况最终结果都是S。
-
-</p>
-<h4><p>获取 SELECT 的最终执行状态</p></h4>
-<p>
-	如果 SELECT 中所有语句都具有状态L，那么最终的执行状态是L。同样规则使用P。对于任何其它的组合最终状态是S。如果状态是L，若 loadbalance_mode 为 true 时负载被分布在不同的节点中，否则只被发送到 MASTER 节点上。对于状态P，将使用并行执行引擎进行并行处理。对于S，将会进入下面讲述的查询重写。
+该子查询从 L1-table 表中引用了 L1-table.col1，
+含子查询的 WHERE 语句的执行状态为S。
 </p>
 
-<h3>查询重写 (Query rewriting)</h3>
+<h4>由于 GROUP BY, HAVING, ORDER BY 和 LIMIT/OFFSET 导致执行状态的改变</h4>
+
 <p>
-	通过使用查询分析获取的执行状态来重写查询。下面是一个例子，P1-table具有P状态，L1-table具有L状态。
+执行状态是 'P' 的 WHERE 语句，若还存在GROUP BY、HAVING、ORDER BY 语句, 
+或 LIMIT/OFFSET 断言时，状态改为'S'。
+没有 GROUP BY 的查询从 WHERE 语句获取状态。
+类似的方法，若没有 HAVING 语句，将使用 GROUP BY 语句的执行状态。
+ORDER BY 语句和 LIMIT/OFFSET 断言具有类似的行为。
+</p>
+
+<h4>当使用 UNION, EXTRACT, 及 INTERSECT 时</h4>
+<p>
+UNION, EXTRACT, 及 INTERSECT 查询的状态依赖于最终左侧和右侧 SELECT 语句的状态。
+若左右侧的状态都是L，组合的状态是L。
+若二者都是P，且查询是 UNION ALL，那么组合的状态是P。
+其它情况最终结果都是S。
+</p>
+
+<h4>获取 SELECT 的最终执行状态</h4>
+<p>
+如果 SELECT 中所有语句都具有状态 L，那么最终的执行状态是 L。
+同样规则使用 P。对于任何其它的组合最终状态是 S。
+如果状态是 L，若 loadbalance_mode 为 true 时负载被分布在不同的节点中，
+否则只被发送到 MASTER 节点上。对于状态 P，将使用并行执行引擎进行并行处理。
+对于S，将会进入下面讲述的查询重写。
+</p>
+
+<h3 id="step_rewrite_query">查询重写</h3>
+<p>
+通过使用查询分析获取的执行状态来重写查询。
+下面是一个例子，P1-table具有 P 状态，L1-table 具有 L 状态。
 </p>
 <pre>
 SELECT P1-table.col, L1-table.col 
@@ -4336,18 +5163,21 @@ order by P1-table.col;
 </pre>
 
 <p>
-	在该查询中，由于有一个 ORDER BY 语句，状态是S。FROM 语句, WHERE 语句, 和 TARGETLIST 都为P状态，查询被重写成：
+    在该查询中，由于有一个 ORDER BY 语句，状态是S。FROM 语句, WHERE 语句, 和 TARGETLIST 都为P状态，查询被重写成：
 </p>
 
 <pre>
 SELECT P1-table.col, L1-table.col FROM
-	dblink(select pool_parallel(SELECT P1-table.col, L1-table.col FROM P1-table,L1-table where P1-table.col = L1-table.col)) 
-  	order by P1-table.col;
+    dblink(select pool_parallel(SELECT P1-table.col, L1-table.col FROM P1-table,L1-table where P1-table.col = L1-table.col))
+      order by P1-table.col;
 </pre>
 <p>
-	此处dblink传送该查询到 pgpool-II。pool_parallel 函数负责发送该查询到并行执行引擎。
+此处dblink传送该查询到 pgpool-II。
+pool_parallel 函数负责发送该查询到并行执行引擎。
 </p>
-<p>在该示例中 FROM 和 WHERE 语句以及 TARGETLIST 被以并行模式执行。这不是一个真正的重写查询，只是因为想提供一个示例。
+<p>
+在该示例中 FROM 和 WHERE 语句以及 TARGETLIST 被以并行模式执行。
+这不是一个真正的重写查询，只是因为想提供一个示例。
 </p>
 <p>
 这儿有另一个例子:
@@ -4358,67 +5188,78 @@ SELECT L1-table.col FROM L1-table WHERE L1-table.col % 2 = 0 AND L1-table.col IN
 </pre>
 
 <p>
-	在该示例中，FROM 和 WHERE 语句以及 TARGETLIST 都具有状态L。因为子查询是P状态，查询本身也为S状态。这样重写为如下：
+在该示例中，FROM 和 WHERE 语句以及 TARGETLIST 都具有状态 L。
+因为子查询是 P 状态，查询本身也为 S 状态。这样重写为如下：
 </p>
 <pre>
-	SELECT L1-table.col 
-	  FROM dblink(SELECT loadbalance(SELECT L1-table.col 
-	              FROM L1-table 
-	              WHERE L1-table.col % 2 = 0 
-	                AND TRUE))
-		WHERE
-			L1-table.col %2 = 0 AND 
-		  L1-table.col IN 
-		  (
-		  	SELECT P1-Table FROM 
-		  	dblink(select pool_parallel(SELECT P1-table FROM P1-table))
-		  ) ;
+SELECT L1-table.col
+  FROM dblink(SELECT loadbalance(SELECT L1-table.col
+              FROM L1-table
+              WHERE L1-table.col % 2 = 0
+                AND TRUE))
+    WHERE
+        L1-table.col %2 = 0 AND
+      L1-table.col IN
+      (
+          SELECT P1-Table FROM
+          dblink(select pool_parallel(SELECT P1-table FROM P1-table))
+      ) ;
 </pre>
-<p>pool_loadbalance 是一个函数，负责分发查询到任一个节点。
+<p>
+pool_loadbalance 是一个函数，负责分发查询到任一个节点。
 </p>
 
 <h3>为聚集函数的查询重写</h3>
 <p>
-	对于分组查询（聚集函数和 GROUP BY），重写为了减少system DB上的负载将试图在每一个节点上执行第一次聚集。
+对于分组查询（聚集函数和 GROUP BY），
+重写为了减少system DB上的负载将试图在每一个节点上执行第一次聚集。
 </p>
-<p>首先，我们看看 pgpool-II 为重写都做了那些事情。
+<p>
+首先，我们看看 pgpool-II 为重写都做了那些事情。
 </p>
-<p>该查询的 FROM 语句具有P状态且 TARGETLIST 含有count(*)，于是重写如下：
+<p>
+该查询的 FROM 语句具有P状态且 TARGETLIST 含有count(*)，于是重写如下：
 </p>
 <pre>
   select count(*) from P1-table;
 
-	-> rewrite
+    -&gt; rewrite
 
     SELECT
         sum(pool_c$1) as count
     FROM
         dblink(select pool_parallel('select count(*) from  P1-table'))
-					AS pool_$1g (pool_c$1 bigint);
+                    AS pool_$1g (pool_c$1 bigint);
 </pre>
-<p>在如下的条件下查询就会重写为上面类似的形式。
+<p>
+在如下的条件下查询就会重写为上面类似的形式。
 </p>
 <ol>
-		<li> FROM 语句具有P状态。
-		<li>聚集函数(仅 count, sum, min, max, 和 avg)以及 GROUP BY 中的列存在于 target list 中。
-		<li>WHERE 语句具有P状态。
-		<li>仅仅使用聚集函数中定义的、HAVING 语句和 FROM 语句中的、以及 GROUP BY 中的列
+    <li>FROM 语句具有P状态。</li>
+    <li>聚集函数(仅 count, sum, min, max, 和 avg)以及 GROUP BY 中的列存在于 target list 中。</li>
+    <li>WHERE 语句具有P状态。</li>
+    <li>仅仅使用聚集函数中定义的、HAVING 语句和 FROM 语句中的、以及 GROUP BY 中的列</li>
 </ol>
 <h3 id="caution_in_parallel_mode">并行模式一些说明</h3>
 <p>
-	并行模式下查询分析时需要列名和类型。这样当子查询的 TARGETLIST 中含有一个表达式或函数时，就需要别名和类型(通过映射 through a cast)。
-	请注意如果没有为表达式或函数提供映射,默认将选择文本类型。对于count()，假定为bigint类型，对于sum()为numeric类型，对于min()/max()，如果参数是date类型，返回类型为date，
-	其它的假定为numeric类型。avg() 被处理为 sum()/count() (总和除以数量)。</p>
+    并行模式下查询分析时需要列名和类型。这样当子查询的 TARGETLIST 中含有一个表达式或函数时，就需要别名和类型(通过映射 through a cast)。
+    请注意如果没有为表达式或函数提供映射,默认将选择文本类型。对于count()，假定为bigint类型，对于sum()为numeric类型，对于min()/max()，如果参数是date类型，返回类型为date，
+    其它的假定为numeric类型。avg() 被处理为 sum()/count() (总和除以数量)。</p>
 
 <h3 id="performance_parallel_mode">关于并行模式的性能</h3>
 <p>下面是一个相对于执行状态的查询性能的粗略估计:
 </p>
 
 <table border>
-		<tr><td>执行状态</td><td>性能</td></tr>
-<tr><td align = center>L</td><td>一个节点时除去pgpool-II的开销，没有性能损失，因为根本就没有并行查询</td></tr>
-<tr><td align = center>P</td><td>并行处理是很快的，特别针对顺序扫描。由于扫描大表变成在几个节点上分布式存在的小表上进行并行扫描，故很容易获得加速比。
-<tr><td align = center>S</td><td>当聚集函数可在并行方式被重写时，它们很快。</td></tr>
+<tr class="header"><th>执行状态</th><th>性能</th></tr>
+<tr><th>L</th>
+<td>一个节点时除去pgpool-II的开销，没有性能损失，因为根本就没有并行查询
+</td></tr>
+<tr><th>P</th>
+<td>并行处理是很快的，特别针对顺序扫描。由于扫描大表变成在几个节点上分布式存在的小表上进行并行扫描，故很容易获得加速比。
+<tr><th>S</th>
+<td>当聚集函数可在并行方式被重写时，它们很快。
+</td></tr>
 </td></tr>
 </table>
 
@@ -4438,7 +5279,7 @@ SELECT L1-table.col FROM L1-table WHERE L1-table.col % 2 = 0 AND L1-table.col IN
 <div class="copyright" style="clear: both">
 <hr>
 <copyright>
-Copyright &copy; 2003 &ndash; 2012 pgpool Global Development Group
+Copyright &copy; 2003 &ndash; 2014 pgpool Global Development Group
 </copyright>
 </div>
 </body>
