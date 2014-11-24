@@ -1,10 +1,14 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT
+AC_INIT([pgpool-II], [3.4.0], [pgpool-hackers@pgpoo.net], [pgpool-II])
 
 dnl Checks for programs.
 AC_PROG_CC
 
-AM_INIT_AUTOMAKE(pgpool-II, 3.4.0, [subdir-objects])
+AM_INIT_AUTOMAKE([subdir-objects])
+
+dnl Disallow to rebuild configure.
+AM_MAINTAINER_MODE(disable)
+
 # AC_PROG_RANLIB
 AC_PROG_LIBTOOL
 

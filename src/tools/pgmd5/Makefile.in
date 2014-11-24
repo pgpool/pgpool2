@@ -90,7 +90,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/c-compiler.m4 $(top_srcdir)/c-library.m4 \
 	$(top_srcdir)/general.m4 \
 	$(top_srcdir)/ac_func_accept_argtypes.m4 \
-	$(top_srcdir)/configure.in
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
@@ -99,10 +99,12 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
+am__dirstamp = $(am__leading_dot)dirstamp
 am_pg_md5_OBJECTS = pg_md5.$(OBJEXT) md5.$(OBJEXT) \
 	pool_passwd.$(OBJEXT) pool_signal.$(OBJEXT) strlcpy.$(OBJEXT) \
-	regex_array.$(OBJEXT) pool_config.$(OBJEXT) fe_port.$(OBJEXT) \
-	fe_memutils.$(OBJEXT) pool_globals.$(OBJEXT)
+	regex_array.$(OBJEXT) pool_config.$(OBJEXT) \
+	../fe_port.$(OBJEXT) fe_memutils.$(OBJEXT) \
+	pool_globals.$(OBJEXT)
 pg_md5_OBJECTS = $(am_pg_md5_OBJECTS)
 pg_md5_LDADD = $(LDADD)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -143,6 +145,7 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
+@MAINTAINER_MODE_FALSE@am__skiplex = test -f $@ ||
 LEXCOMPILE = $(LEX) $(AM_LFLAGS) $(LFLAGS)
 LTLEXCOMPILE = $(LIBTOOL) $(AM_V_lt) $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=compile $(LEX) $(AM_LFLAGS) $(LFLAGS)
@@ -222,6 +225,7 @@ LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
+MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
 MEMCACHED_DIR = @MEMCACHED_DIR@
@@ -308,21 +312,21 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -D_GNU_SOURCE -DPOOL_PRIVATE -I @PGSQL_INCLUDE_DIR@
 pg_md5_SOURCES = pg_md5.c \
-			$(top_srcdir)/src/auth/md5.c \
-			$(top_srcdir)/src/auth/pool_passwd.c \
-			$(top_srcdir)/src/utils/pool_signal.c \
-			$(top_srcdir)/src/utils/strlcpy.c \
-			$(top_srcdir)/src/utils/regex_array.c \
-			$(top_srcdir)/src/config/pool_config.l \
-			$(top_srcdir)/src/tools/fe_port.c \
-			$(top_srcdir)/src/tools/fe_memutils.c \
-			$(top_srcdir)/src/main/pool_globals.c
+		md5.c \
+		pool_passwd.c \
+		pool_signal.c \
+		strlcpy.c \
+		regex_array.c \
+		pool_config.l \
+		../fe_port.c \
+		fe_memutils.c \
+		pool_globals.c
 
 all: all-am
 
 .SUFFIXES:
 .SUFFIXES: .c .l .lo .o .obj
-$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -347,9 +351,9 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 
-$(top_srcdir)/configure:  $(am__configure_deps)
+$(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-$(ACLOCAL_M4):  $(am__aclocal_m4_deps)
+$(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
 install-binPROGRAMS: $(bin_PROGRAMS)
@@ -401,6 +405,13 @@ clean-binPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
+../$(am__dirstamp):
+	@$(MKDIR_P) ..
+	@: > ../$(am__dirstamp)
+../$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) ../$(DEPDIR)
+	@: > ../$(DEPDIR)/$(am__dirstamp)
+../fe_port.$(OBJEXT): ../$(am__dirstamp) ../$(DEPDIR)/$(am__dirstamp)
 
 pg_md5$(EXEEXT): $(pg_md5_OBJECTS) $(pg_md5_DEPENDENCIES) $(EXTRA_pg_md5_DEPENDENCIES) 
 	@rm -f pg_md5$(EXEEXT)
@@ -408,12 +419,13 @@ pg_md5$(EXEEXT): $(pg_md5_OBJECTS) $(pg_md5_DEPENDENCIES) $(EXTRA_pg_md5_DEPENDE
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f ../*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@../$(DEPDIR)/fe_port.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fe_memutils.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fe_port.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pg_md5.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_config.Po@am__quote@
@@ -424,145 +436,31 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strlcpy.Po@am__quote@
 
 .c.o:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ $<
 
 .c.obj:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .c.lo:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
 
-md5.o: $(top_srcdir)/src/auth/md5.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT md5.o -MD -MP -MF $(DEPDIR)/md5.Tpo -c -o md5.o `test -f '$(top_srcdir)/src/auth/md5.c' || echo '$(srcdir)/'`$(top_srcdir)/src/auth/md5.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md5.Tpo $(DEPDIR)/md5.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$(top_srcdir)/src/auth/md5.c' object='md5.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o md5.o `test -f '$(top_srcdir)/src/auth/md5.c' || echo '$(srcdir)/'`$(top_srcdir)/src/auth/md5.c
-
-md5.obj: $(top_srcdir)/src/auth/md5.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT md5.obj -MD -MP -MF $(DEPDIR)/md5.Tpo -c -o md5.obj `if test -f '$(top_srcdir)/src/auth/md5.c'; then $(CYGPATH_W) '$(top_srcdir)/src/auth/md5.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/auth/md5.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md5.Tpo $(DEPDIR)/md5.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$(top_srcdir)/src/auth/md5.c' object='md5.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o md5.obj `if test -f '$(top_srcdir)/src/auth/md5.c'; then $(CYGPATH_W) '$(top_srcdir)/src/auth/md5.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/auth/md5.c'; fi`
-
-pool_passwd.o: $(top_srcdir)/src/auth/pool_passwd.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT pool_passwd.o -MD -MP -MF $(DEPDIR)/pool_passwd.Tpo -c -o pool_passwd.o `test -f '$(top_srcdir)/src/auth/pool_passwd.c' || echo '$(srcdir)/'`$(top_srcdir)/src/auth/pool_passwd.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/pool_passwd.Tpo $(DEPDIR)/pool_passwd.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$(top_srcdir)/src/auth/pool_passwd.c' object='pool_passwd.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o pool_passwd.o `test -f '$(top_srcdir)/src/auth/pool_passwd.c' || echo '$(srcdir)/'`$(top_srcdir)/src/auth/pool_passwd.c
-
-pool_passwd.obj: $(top_srcdir)/src/auth/pool_passwd.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT pool_passwd.obj -MD -MP -MF $(DEPDIR)/pool_passwd.Tpo -c -o pool_passwd.obj `if test -f '$(top_srcdir)/src/auth/pool_passwd.c'; then $(CYGPATH_W) '$(top_srcdir)/src/auth/pool_passwd.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/auth/pool_passwd.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/pool_passwd.Tpo $(DEPDIR)/pool_passwd.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$(top_srcdir)/src/auth/pool_passwd.c' object='pool_passwd.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o pool_passwd.obj `if test -f '$(top_srcdir)/src/auth/pool_passwd.c'; then $(CYGPATH_W) '$(top_srcdir)/src/auth/pool_passwd.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/auth/pool_passwd.c'; fi`
-
-pool_signal.o: $(top_srcdir)/src/utils/pool_signal.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT pool_signal.o -MD -MP -MF $(DEPDIR)/pool_signal.Tpo -c -o pool_signal.o `test -f '$(top_srcdir)/src/utils/pool_signal.c' || echo '$(srcdir)/'`$(top_srcdir)/src/utils/pool_signal.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/pool_signal.Tpo $(DEPDIR)/pool_signal.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$(top_srcdir)/src/utils/pool_signal.c' object='pool_signal.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o pool_signal.o `test -f '$(top_srcdir)/src/utils/pool_signal.c' || echo '$(srcdir)/'`$(top_srcdir)/src/utils/pool_signal.c
-
-pool_signal.obj: $(top_srcdir)/src/utils/pool_signal.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT pool_signal.obj -MD -MP -MF $(DEPDIR)/pool_signal.Tpo -c -o pool_signal.obj `if test -f '$(top_srcdir)/src/utils/pool_signal.c'; then $(CYGPATH_W) '$(top_srcdir)/src/utils/pool_signal.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/utils/pool_signal.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/pool_signal.Tpo $(DEPDIR)/pool_signal.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$(top_srcdir)/src/utils/pool_signal.c' object='pool_signal.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o pool_signal.obj `if test -f '$(top_srcdir)/src/utils/pool_signal.c'; then $(CYGPATH_W) '$(top_srcdir)/src/utils/pool_signal.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/utils/pool_signal.c'; fi`
-
-strlcpy.o: $(top_srcdir)/src/utils/strlcpy.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT strlcpy.o -MD -MP -MF $(DEPDIR)/strlcpy.Tpo -c -o strlcpy.o `test -f '$(top_srcdir)/src/utils/strlcpy.c' || echo '$(srcdir)/'`$(top_srcdir)/src/utils/strlcpy.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/strlcpy.Tpo $(DEPDIR)/strlcpy.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$(top_srcdir)/src/utils/strlcpy.c' object='strlcpy.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o strlcpy.o `test -f '$(top_srcdir)/src/utils/strlcpy.c' || echo '$(srcdir)/'`$(top_srcdir)/src/utils/strlcpy.c
-
-strlcpy.obj: $(top_srcdir)/src/utils/strlcpy.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT strlcpy.obj -MD -MP -MF $(DEPDIR)/strlcpy.Tpo -c -o strlcpy.obj `if test -f '$(top_srcdir)/src/utils/strlcpy.c'; then $(CYGPATH_W) '$(top_srcdir)/src/utils/strlcpy.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/utils/strlcpy.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/strlcpy.Tpo $(DEPDIR)/strlcpy.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$(top_srcdir)/src/utils/strlcpy.c' object='strlcpy.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o strlcpy.obj `if test -f '$(top_srcdir)/src/utils/strlcpy.c'; then $(CYGPATH_W) '$(top_srcdir)/src/utils/strlcpy.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/utils/strlcpy.c'; fi`
-
-regex_array.o: $(top_srcdir)/src/utils/regex_array.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT regex_array.o -MD -MP -MF $(DEPDIR)/regex_array.Tpo -c -o regex_array.o `test -f '$(top_srcdir)/src/utils/regex_array.c' || echo '$(srcdir)/'`$(top_srcdir)/src/utils/regex_array.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/regex_array.Tpo $(DEPDIR)/regex_array.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$(top_srcdir)/src/utils/regex_array.c' object='regex_array.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o regex_array.o `test -f '$(top_srcdir)/src/utils/regex_array.c' || echo '$(srcdir)/'`$(top_srcdir)/src/utils/regex_array.c
-
-regex_array.obj: $(top_srcdir)/src/utils/regex_array.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT regex_array.obj -MD -MP -MF $(DEPDIR)/regex_array.Tpo -c -o regex_array.obj `if test -f '$(top_srcdir)/src/utils/regex_array.c'; then $(CYGPATH_W) '$(top_srcdir)/src/utils/regex_array.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/utils/regex_array.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/regex_array.Tpo $(DEPDIR)/regex_array.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$(top_srcdir)/src/utils/regex_array.c' object='regex_array.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o regex_array.obj `if test -f '$(top_srcdir)/src/utils/regex_array.c'; then $(CYGPATH_W) '$(top_srcdir)/src/utils/regex_array.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/utils/regex_array.c'; fi`
-
-fe_port.o: $(top_srcdir)/src/tools/fe_port.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT fe_port.o -MD -MP -MF $(DEPDIR)/fe_port.Tpo -c -o fe_port.o `test -f '$(top_srcdir)/src/tools/fe_port.c' || echo '$(srcdir)/'`$(top_srcdir)/src/tools/fe_port.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/fe_port.Tpo $(DEPDIR)/fe_port.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$(top_srcdir)/src/tools/fe_port.c' object='fe_port.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o fe_port.o `test -f '$(top_srcdir)/src/tools/fe_port.c' || echo '$(srcdir)/'`$(top_srcdir)/src/tools/fe_port.c
-
-fe_port.obj: $(top_srcdir)/src/tools/fe_port.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT fe_port.obj -MD -MP -MF $(DEPDIR)/fe_port.Tpo -c -o fe_port.obj `if test -f '$(top_srcdir)/src/tools/fe_port.c'; then $(CYGPATH_W) '$(top_srcdir)/src/tools/fe_port.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/tools/fe_port.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/fe_port.Tpo $(DEPDIR)/fe_port.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$(top_srcdir)/src/tools/fe_port.c' object='fe_port.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o fe_port.obj `if test -f '$(top_srcdir)/src/tools/fe_port.c'; then $(CYGPATH_W) '$(top_srcdir)/src/tools/fe_port.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/tools/fe_port.c'; fi`
-
-fe_memutils.o: $(top_srcdir)/src/tools/fe_memutils.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT fe_memutils.o -MD -MP -MF $(DEPDIR)/fe_memutils.Tpo -c -o fe_memutils.o `test -f '$(top_srcdir)/src/tools/fe_memutils.c' || echo '$(srcdir)/'`$(top_srcdir)/src/tools/fe_memutils.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/fe_memutils.Tpo $(DEPDIR)/fe_memutils.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$(top_srcdir)/src/tools/fe_memutils.c' object='fe_memutils.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o fe_memutils.o `test -f '$(top_srcdir)/src/tools/fe_memutils.c' || echo '$(srcdir)/'`$(top_srcdir)/src/tools/fe_memutils.c
-
-fe_memutils.obj: $(top_srcdir)/src/tools/fe_memutils.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT fe_memutils.obj -MD -MP -MF $(DEPDIR)/fe_memutils.Tpo -c -o fe_memutils.obj `if test -f '$(top_srcdir)/src/tools/fe_memutils.c'; then $(CYGPATH_W) '$(top_srcdir)/src/tools/fe_memutils.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/tools/fe_memutils.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/fe_memutils.Tpo $(DEPDIR)/fe_memutils.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$(top_srcdir)/src/tools/fe_memutils.c' object='fe_memutils.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o fe_memutils.obj `if test -f '$(top_srcdir)/src/tools/fe_memutils.c'; then $(CYGPATH_W) '$(top_srcdir)/src/tools/fe_memutils.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/tools/fe_memutils.c'; fi`
-
-pool_globals.o: $(top_srcdir)/src/main/pool_globals.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT pool_globals.o -MD -MP -MF $(DEPDIR)/pool_globals.Tpo -c -o pool_globals.o `test -f '$(top_srcdir)/src/main/pool_globals.c' || echo '$(srcdir)/'`$(top_srcdir)/src/main/pool_globals.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/pool_globals.Tpo $(DEPDIR)/pool_globals.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$(top_srcdir)/src/main/pool_globals.c' object='pool_globals.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o pool_globals.o `test -f '$(top_srcdir)/src/main/pool_globals.c' || echo '$(srcdir)/'`$(top_srcdir)/src/main/pool_globals.c
-
-pool_globals.obj: $(top_srcdir)/src/main/pool_globals.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT pool_globals.obj -MD -MP -MF $(DEPDIR)/pool_globals.Tpo -c -o pool_globals.obj `if test -f '$(top_srcdir)/src/main/pool_globals.c'; then $(CYGPATH_W) '$(top_srcdir)/src/main/pool_globals.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/main/pool_globals.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/pool_globals.Tpo $(DEPDIR)/pool_globals.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$(top_srcdir)/src/main/pool_globals.c' object='pool_globals.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o pool_globals.obj `if test -f '$(top_srcdir)/src/main/pool_globals.c'; then $(CYGPATH_W) '$(top_srcdir)/src/main/pool_globals.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/main/pool_globals.c'; fi`
-
 .l.c:
 	$(AM_V_LEX)$(am__skiplex) $(SHELL) $(YLWRAP) $< $(LEX_OUTPUT_ROOT).c $@ -- $(LEXCOMPILE)
-
-pool_config.c: $(top_srcdir)/src/config/pool_config.l
-	$(AM_V_LEX) \
-	$(am__skiplex) \
-	$(SHELL) $(YLWRAP) `test -f '$(top_srcdir)/src/config/pool_config.l' || echo '$(srcdir)/'`$(top_srcdir)/src/config/pool_config.l $(LEX_OUTPUT_ROOT).c pool_config.c -- $(LEX) $(AM_LFLAGS) $(LFLAGS)
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -685,6 +583,8 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f ../$(DEPDIR)/$(am__dirstamp)
+	-rm -f ../$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -695,7 +595,7 @@ clean: clean-am
 clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ../$(DEPDIR) ./$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -741,7 +641,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ../$(DEPDIR) ./$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -776,6 +676,25 @@ uninstall-am: uninstall-binPROGRAMS
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags tags-am uninstall uninstall-am uninstall-binPROGRAMS
 
+
+md5.c: ../../../src/auth/md5.c
+	rm -f $@ && ln -s $< .
+md5.h: ../../../src/include/auth/md5.h
+	rm -f $@ && ln -s $< .
+pool_passwd.c: ../../../src/auth/pool_passwd.c
+	rm -f $@ && ln -s $< .
+pool_signal.c: ../../../src/utils/pool_signal.c
+	rm -f $@ && ln -s $< .
+strlcpy.c: ../../../src/utils/strlcpy.c
+	rm -f $@ && ln -s $< .
+regex_array.c: ../../../src/utils/regex_array.c
+	rm -f $@ && ln -s $< .
+pool_config.l: ../../../src/config/pool_config.l
+	rm -f $@ && ln -s $< .
+fe_memutils.c: ../../../src/tools/fe_memutils.c
+	rm -f $@ && ln -s $< .
+pool_globals.c: ../../../src/main/pool_globals.c
+	rm -f $@ && ln -s $< .
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
