@@ -308,22 +308,52 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 
 									if (kind == 'A')
 									{
-										/*
-										 * In replication mode, NOTIFY is sent to all backends.
-										 * However the order of arrival of 'Notification response'
-										 * is not necessarily the master first and then slaves.
-										 * So if it arrives slave first, we should try to read from master,
-										 * rather than just discard it.
-										 */
-										pool_unread(CONNECTION(backend, i), &kind, sizeof(kind));
-                                        ereport(LOG,
-                                            (errmsg("pool process query"),
-                                                 errdetail("received %c packet from backend %d. Don't dicard and read %c packet from master", kind, i, kind)));
+										if(MASTER_SLAVE)
+										{
+											int sendlen;
+											/*
+											 * In master slave mode we may send the query to the standby
+											 * node and the NOTIFY comes back only from primary node. But since
+											 * we have sent the query to the standby, so the current MASTER_NODE_ID
+											 * will be pointing to the standby node. And we will get stuck if we
+											 * keep waiting for the current master node (standby) in this case to
+											 * send us the NOTIFY message.
+											 * see "0000116: LISTEN Notifications Not Reliably Delivered Using JDBC4 Demonstrator"
+											 * for the scenario
+											 */
+											pool_read_with_error(CONNECTION(backend, i), &len, sizeof(len),
+																 "reading message length from backend");
+											len = ntohl(len) - 4;
+											string = pool_read2(CONNECTION(backend,i), len);
+											if (string == NULL)
+												ereport(ERROR,
+													(errmsg("unable to forward NOTIFY message to frontend"),
+														 errdetail("read from backend failed")));
 
-										pool_read_with_error(CONNECTION(backend, MASTER_NODE_ID), &kind, sizeof(kind),
-												"reading message kind from backend");
+											pool_write(frontend, &kind, 1);
+											sendlen = htonl(len+4);
+											pool_write(frontend, &sendlen, sizeof(sendlen));
+											pool_write_and_flush(frontend, string, len);
+										}
+										else
+										{
+											/*
+											 * In replication mode, NOTIFY is sent to all backends.
+											 * However the order of arrival of 'Notification response'
+											 * is not necessarily the master first and then slaves.
+											 * So if it arrives slave first, we should try to read from master,
+											 * rather than just discard it.
+											 */
+											pool_unread(CONNECTION(backend, i), &kind, sizeof(kind));
+											ereport(LOG,
+												(errmsg("pool process query"),
+													 errdetail("received %c packet from backend %d. Don't dicard and read %c packet from master", kind, i, kind)));
 
-										pool_unread(CONNECTION(backend, MASTER_NODE_ID), &kind, sizeof(kind));
+											pool_read_with_error(CONNECTION(backend, MASTER_NODE_ID), &kind, sizeof(kind),
+													"reading message kind from backend");
+
+											pool_unread(CONNECTION(backend, MASTER_NODE_ID), &kind, sizeof(kind));
+										}
 									}
 									else
 									{
