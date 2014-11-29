@@ -31,7 +31,7 @@ sh pgpool.sh
 
 while true
 do
-	grep 'failover done. shutdown host /tmp(11001)' log/pgpool.log > /dev/null 2>&1
+	grep 'failover done. shutdown host /tmp(11003)' log/pgpool.log > /dev/null 2>&1
 	if [ $? = 0 ];then
 		break;
 	fi
