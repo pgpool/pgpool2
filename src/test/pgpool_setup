@@ -23,10 +23,10 @@
 # -m r: create an installation as native replication mode.
 # -m n: create an installation as raw mode.
 # -n num_clusters: create num_clusters PostgreSQL database cluster nodes
-# -p base_port: specify base port. The first PostgreSQL node's port is
-#  base_port. Second PostgreSQL node's port is base_port+1... nth
-#  PostgreSQL node's port is base_port+n-1, pgpool port is
-#  base_port+n, pcp port is base_port+n+1.
+# -p base_port: specify base port. pgpool port is base_port.
+#  pcp port is base_port + 1. The first PostgreSQL node's port is
+#  base_port + 2, second PostgreSQL node's port is base_port + 3
+#  and so on.
 # --no-stop: do not stop pgpool and PostgreSQL after the work
 #
 # The user run this script will become the PostgreSQL super user as
@@ -50,11 +50,11 @@
 # Configuration section
 #-------------------------------------------
 # Starting port number to be used. Each PostgreSQL is assigned
-# $BASEPORT, $BASEPORT+1 and so on.
-# pgpool port and pcp_port will be assigned afterwards.
-BASEPORT=11000
+# $BASEPORT + 2, $BASEPORT + 3 and so on.
+# pgpool port and pcp_port will be assigned to $BASEPORT and $BASEPORT +1 .
+BASEPORT=${BASEBOPRT:-"11000"}
 # Default number of PostgreSQL database clusters
-NUMCLUSTERS=2
+NUMCLUSTERS=${NUMCLUSTERS:-"2"}
 # Where to look for pgpool.conf.sample*
 PGPOOL_INSTALL_DIR=${PGPOOL_INSTALL_DIR:-"/usr/local"}
 PGPOOLDIR=${PGPOOLDIR:-${PGPOOL_INSTALL_DIR}/etc}
@@ -614,6 +614,12 @@ exec 5> $BASEDIR/pgpool_setup.log
 echo "Satrting set up in $MODENAME"
 
 #-------------------------------------------
+# assign base port for PostgreSQL
+#-------------------------------------------
+ORIG_BASEPORT=$BASEPORT
+BASEPORT=`expr $BASEPORT + 2`
+
+#-------------------------------------------
 # install pgpool.conf
 #-------------------------------------------
 test ! -d etc && mkdir etc
@@ -691,9 +697,9 @@ done
 
 set_pgpool_conf $CONF
 
-PGPOOL_PORT=`expr $PORT + 1`
+PGPOOL_PORT=$ORIG_BASEPORT
 echo "port = $PGPOOL_PORT" >> $CONF
-PCP_PORT=`expr $PORT + 2`
+PCP_PORT=`expr $PGPOOL_PORT + 1`
 echo "pcp_port = $PCP_PORT" >> $CONF
 
 test ! -d run && mkdir run
