@@ -658,7 +658,7 @@ int pool_write_and_flush_noerror(POOL_CONNECTION *cp, void *buf, int len)
 {
 	int ret;
 	ret = pool_write_noerror(cp,buf,len);
-	if(ret != 0)
+	if(ret == 0)
 		return pool_flush_noerror(cp);
 	return ret;
 }
