@@ -165,7 +165,13 @@ fi
 %endif
 
 %changelog
-* Tue Nov 11 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 
+* Fri Nov 21 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.4.0-2
+- Re-enable to apply difference from HEAD patch.
+
+* Tue Nov 18 2014 Yugo Nagata <nagata@sraoss.co.jp> 3.4.0-2
+- Rename RPM filename to include RHEL version no. 
+
+* Tue Nov 11 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.4.0-2
 - Add memcached support to configure.
 
 * Tue Oct 21 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.4beta2
