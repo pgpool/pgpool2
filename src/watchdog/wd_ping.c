@@ -168,6 +168,11 @@ wd_is_unused_ip(char * ip)
 
 /**
  * Thread to execute ping against "trusted hosts" or delegate IP.
+ * Note: Since this is a thread function and our Exception Manager
+ * and Memory Manager are not thread safe so do not use
+ * ereport(ERROR,..) and MemoryContextSwitchTo() functions
+ * All ereports other than ereport(ERROR) that do not executes longjump
+ * are fine to be used from thread function
  */
 static void *
 exec_ping(void * arg)
@@ -209,6 +214,7 @@ exec_ping(void * arg)
 	}
 	if (pid == 0)
 	{
+		/* CHILD */
 		processType = PT_WATCHDOG_UTILITY;
 		close(STDOUT_FILENO);
 		dup2(pfd[1], STDOUT_FILENO);
