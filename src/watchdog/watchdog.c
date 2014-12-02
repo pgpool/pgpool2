@@ -405,9 +405,7 @@ has_setuid_bit(char * path)
 
 
 /*
- * The function is wrapper over pthread_create and calls the user provided
- * thread function inside PG_TRY, CATCH block to make sure any ereport ERROR
- * from thread should stay within the thread.
+ * The function is wrapper over pthread_create.
  */
 int watchdog_thread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine)(void *), void *arg)
 {
@@ -420,22 +418,7 @@ int watchdog_thread_create(pthread_t *thread, const pthread_attr_t *attr, void *
 static void *
 exec_func(void *arg)
 {
-	unsigned long rtn = (unsigned long)WD_NG;
-	MemoryContext oldContext =  CurrentMemoryContext;
 	WdThreadInfo* thread_arg = (WdThreadInfo*) arg;
 	Assert(thread_arg != NULL);
-	
-	PG_TRY();
-	{
-		rtn = thread_arg->start_routine(thread_arg->arg);
-	}
-	PG_CATCH();
-	{
-		/* ignore the error message */
-		EmitErrorReport();
-		MemoryContextSwitchTo(oldContext);
-		FlushErrorState();
-	}
-	PG_END_TRY();
-	return rtn;
+	return thread_arg->start_routine(thread_arg->arg);
 }

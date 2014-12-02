@@ -376,6 +376,14 @@ wd_accept(int sock)
 	return -1;
 }
 
+/*
+ * Note: Since wd_send_packet() is called from wd_thread_negotiation()
+ * which is a thread function and our Exception Manager
+ * and Memory Manager are not thread safe so do not use
+ * ereport(ERROR,..) and MemoryContextSwitchTo() functions
+ * All ereports other than ereport(ERROR) that do not performs longjump
+ * are fine to be used from thread function
+ */
 int
 wd_send_packet(int sock, WdPacket * snd_pack)
 {
@@ -456,6 +464,14 @@ wd_send_packet(int sock, WdPacket * snd_pack)
 	return WD_NG;
 }
 
+/*
+ * Note: Since wd_recv_packet() is called from wd_thread_negotiation()
+ * which is a thread function and our Exception Manager
+ * and Memory Manager are not thread safe so do not use
+ * ereport(ERROR,..) and MemoryContextSwitchTo() functions
+ * All ereports other than ereport(ERROR) that do not performs longjump
+ * are fine to be used from thread function
+ */
 int
 wd_recv_packet(int sock, WdPacket * recv_pack)
 {
@@ -475,10 +491,10 @@ wd_recv_packet(int sock, WdPacket * recv_pack)
 				continue;
 			else
             {
-                close(sock);
-				ereport(ERROR,
+				ereport(WARNING,
 					(errmsg("watchdog failed to receive packet"),
 						 errdetail("recv() failed with reason: \"%s\"", strerror(errno))));
+				return WD_NG;
             }
 		}
 		else if (r > 0)
@@ -525,7 +541,7 @@ wd_thread_negotiation(void * arg)
 
 	thread_arg = (WdPacketThreadArg *)arg;
 	sock = thread_arg->sock;
-
+	p = thread_arg->target;
 	gettimeofday(&(thread_arg->packet->send_time), NULL);
 
 	if (strlen(pool_config->wd_authkey))
@@ -540,6 +556,9 @@ wd_thread_negotiation(void * arg)
 	if (rtn != WD_OK)
 	{
 		close(sock);
+		ereport(WARNING,
+			(errmsg("watchdog negotiation failed"),
+				 errdetail("failed to send watchdog packet to \"%s:%d\"", p->hostname, p->wd_port)));
 		pthread_exit((void *)rtn);
 	}
 
@@ -548,7 +567,11 @@ wd_thread_negotiation(void * arg)
 	rtn = (uintptr_t)wd_recv_packet(sock, &recv_packet);
 	if (rtn != WD_OK)
 	{
+		p = thread_arg->target;
 		close(sock);
+		ereport(WARNING,
+			(errmsg("watchdog negotiation failed"),
+				 errdetail("failed to receive watchdog packet from \"%s:%d\"", p->hostname, p->wd_port)));
 		pthread_exit((void *)rtn);
 	}
 	rtn = WD_OK;
@@ -562,6 +585,20 @@ wd_thread_negotiation(void * arg)
 			}
 			else
 			{
+				p = &(recv_packet.wd_body.wd_info);
+				if(recv_packet.packet_no == WD_ADD_REJECT)
+				{
+					ereport(WARNING,
+						(errmsg("watchdog negotiation failed"),
+							errdetail("watchdog add request is rejected by pgpool-II on %s:%d",
+								   p->hostname, p->pgpool_port)));
+				}
+				else
+					ereport(WARNING,
+						(errmsg("watchdog negotiation failed"),
+							 errdetail("invalid response received for watchdog add request from pgpool-II on %s:%d",
+									   p->hostname, p->pgpool_port)));
+
 				rtn = WD_NG;
 			}
 			break;
@@ -598,8 +635,8 @@ wd_thread_negotiation(void * arg)
 			rtn = (recv_packet.packet_no == WD_LOCK_FAILED) ? WD_NG : WD_OK;
 			break;
 		case WD_AUTH_FAILED:
-			ereport(LOG,
-				(errmsg("failed while watchdog thread negotiation"),
+			ereport(WARNING,
+				(errmsg("watchdog negotiation failed"),
 					 errdetail("watchdog authentication failed")));
 			rtn = WD_NG;
 			break;
