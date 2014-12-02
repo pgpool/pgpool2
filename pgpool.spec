@@ -1,11 +1,11 @@
 # How to build RPM:
-#   rpmbuild -ba pgpool.spec --define="pgpool_version 3.3.4" --define="pg_version 93" --define="pghome /usr/pgsql-9.3"
+#   rpmbuild -ba pgpool.spec --define="pgpool_version 3.3.4" --define="pg_version 93" --define="pghome /usr/pgsql-9.3" --define="dist .rhel6"
 #
 # expecting RPM name are:
-#   pgpool-II-pg{xx}-{version}-{rel}pgdg.rhel{v}.{arch}.rpm
-#   pgpool-II-pg{xx}-devel-{version}-{rel}pgdg.rhel{v}.{arch}.rpm
-#   pgpool-II-pg{xx}-extensions-{version}-{rel}pgdg.rhel{v}.{arch}.rpm
-#   pgpool-II-pg{xx}-{version}-{rel}pgdg.rhel{v}.src.rpm
+#   pgpool-II-pg{pg_version}-{pgpool_version}-{rel}pgdg.rhel{v}.{arch}.rpm
+#   pgpool-II-pg{pg_version}-devel-{pgpool_version}-{rel}pgdg.rhel{v}.{arch}.rpm
+#   pgpool-II-pg{pg_version}-extensions-{pgpool_version}-{rel}pgdg.rhel{v}.{arch}.rpm
+#   pgpool-II-pg{pg_version}-{pgpool_version}-{rel}pgdg.rhel{v}.src.rpm
 
 Summary:        Pgpool is a connection pooling/replication server for PostgreSQL
 Name:           pgpool-II-pg%{pg_version}
@@ -161,6 +161,9 @@ fi
 %{pghome}/lib/pgpool-regclass.so
 
 %changelog
+* Tue Nov 18 2014 Yugo Nagata <nagata@sraoss.co.jp> 3.3.4-3
+- Rename RPM file to include RHEL version no.
+
 * Wed Nov 12 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.4-3
 - Add memcached support to configure.
 
