@@ -61,9 +61,16 @@ static char* remove_read_write(int len, const char *contents, int *rewritten_len
  */
 POOL_QUERY_CONTEXT *pool_init_query_context(void)
 {
+	MemoryContext memory_context = AllocSetContextCreate(QueryContext,
+															"QueryContextMemoryContext",
+															ALLOCSET_SMALL_MINSIZE,
+															ALLOCSET_SMALL_INITSIZE,
+															ALLOCSET_SMALL_MAXSIZE);
+
+	MemoryContext oldcontext = MemoryContextSwitchTo(memory_context);
 	POOL_QUERY_CONTEXT *qc;
-	MemoryContext oldcontext = MemoryContextSwitchTo(QueryContext);
 	qc = palloc0(sizeof(*qc));
+	qc->memory_context = memory_context;
 	MemoryContextSwitchTo(oldcontext);
 	return qc;
 }
@@ -77,11 +84,13 @@ void pool_query_context_destroy(POOL_QUERY_CONTEXT *query_context)
 
 	if (query_context)
 	{
+		MemoryContext memory_context = query_context->memory_context;
 		session_context = pool_get_session_context(false);
 		pool_unset_query_in_progress();
 		query_context->original_query = NULL;
 		session_context->query_context = NULL;
 		pfree(query_context);
+		MemoryContextDelete(memory_context);
 	}
 }
 
@@ -96,7 +105,7 @@ void pool_start_query(POOL_QUERY_CONTEXT *query_context, char *query, int len, N
 	{
 		MemoryContext old_context;
 		session_context = pool_get_session_context(false);
-		old_context = MemoryContextSwitchTo(QueryContext);
+		old_context = MemoryContextSwitchTo(query_context->memory_context);
 		query_context->original_length = len;
 		query_context->rewritten_length = -1;
 		query_context->original_query = pstrdup(query);

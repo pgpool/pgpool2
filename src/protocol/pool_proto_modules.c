@@ -58,6 +58,8 @@
 #include "utils/pool_stream.h"
 #include "query_cache/pool_memqcache.h"
 #include "utils/pool_signal.h"
+#include "utils/palloc.h"
+#include "utils/memutils.h"
 
 char *copy_table = NULL;  /* copy table name */
 char *copy_schema = NULL;  /* copy table name */
@@ -168,6 +170,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 	/* Create query context */
 	query_context = pool_init_query_context();
+	MemoryContext old_context = MemoryContextSwitchTo(query_context->memory_context);
 
 	/* parse SQL string */
 	parse_tree_list = raw_parser(contents);
@@ -210,6 +213,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			query_context->is_parse_error = true;
 		}
 	}
+	MemoryContextSwitchTo(old_context);
 
 	if (parse_tree_list != NIL)
 	{
@@ -642,14 +646,11 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		POOL_STATUS status;
 		char *search_query = NULL;
 		int len;
-		char *tmp;
 
 #define STR_ALLOC_SIZE 1024
 
 		len = strlen(query)+1;
-		search_query = (char *)palloc(len);
-		strcpy(search_query, query);
-
+		search_query = MemoryContextStrdup(query_context->memory_context,query);
 		/*
 		 * Add bind message's info to query to search.
 		 */
@@ -697,10 +698,8 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			 */
 			if (query_context->temp_cache)
 			{
-				tmp = (char *)palloc(sizeof(char) * strlen(search_query) + 1);
 				pfree(query_context->temp_cache->query);
-				query_context->temp_cache->query = tmp;
-				strcpy(query_context->temp_cache->query, search_query);
+				query_context->temp_cache->query = MemoryContextStrdup(session_context->memory_context,search_query);
 			}
 		}
 
@@ -809,6 +808,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	stmt = contents + strlen(contents) + 1;
 
 	/* parse SQL string */
+	MemoryContext old_context = MemoryContextSwitchTo(query_context->memory_context);
 	parse_tree_list = raw_parser(stmt);
 
 	if (parse_tree_list == NIL)
@@ -849,6 +849,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			query_context->is_parse_error = true;
 		}
 	}
+	MemoryContextSwitchTo(old_context);
 
 	if (parse_tree_list != NIL)
 	{
@@ -2433,9 +2434,14 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			 */
 			query_context = pool_init_query_context();
 			query = "INSERT INTO foo VALUES(1)";
+			MemoryContext old_context = MemoryContextSwitchTo(query_context->memory_context);
+
 			parse_tree_list = raw_parser(query);
 			node = (Node *) lfirst(list_head(parse_tree_list));
 			pool_start_query(query_context, query, strlen(query) + 1, node);
+
+			MemoryContextSwitchTo(old_context);
+
 			pool_where_to_send(query_context, query_context->original_query,
 							   query_context->parse_tree);
 
