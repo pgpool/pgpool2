@@ -2373,7 +2373,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 		case 'X':	/* Terminate */
 			if(contents)
 				pfree(contents);
-            ereport(LOG,
+            ereport(DEBUG1,
                 (errmsg("Frontend terminated"),
                      errdetail("received message kind 'X' from frontend")));
             return POOL_END;
