@@ -35,6 +35,8 @@ do
 	# initialize tables
 	$PGBENCH -i test
 
+	$PGBENCH -S -T 1 test
+	
 	# find pgpool-II child process id and grab initial process size (virtual size)
 	foo=`ps x|grep "pgpool: wait for connection request"`
 	pid=`echo $foo|awk '{print $1}'`
@@ -49,7 +51,7 @@ do
 
 	echo "initial process size: $init_size after size: $after_size delta: $delta"
 
-	test -f "$delta -eq 0"
+	test "$delta -eq 0"
 
 	if [ $? != 0 ];then
 		echo "memory leak in $delta KB in mode:$mode"
