@@ -100,6 +100,12 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 	POOL_STATUS status;
 	int qcnt;
 	int i;
+	MemoryContext ProcessQueryContext = AllocSetContextCreate(QueryContext,
+										 "pool_process_query",
+										 ALLOCSET_DEFAULT_MINSIZE,
+										 ALLOCSET_DEFAULT_INITSIZE,
+										 ALLOCSET_DEFAULT_MAXSIZE);
+
 	/*
 	 * This variable is used while processing reset_request (i.e.:
 	 * reset_request == 1).  If state is 0, then we call
@@ -121,6 +127,10 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 
 	for (;;)
 	{
+
+		MemoryContextSwitchTo(ProcessQueryContext);
+		MemoryContextResetAndDeleteChildren(ProcessQueryContext);
+
 		/* Are we requested to send reset queries? */
 		if (state == 0 && reset_request)
 		{
@@ -428,7 +438,6 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
  	static char *sq_processes = "show pool_processes";
  	static char *sq_nodes = "show pool_nodes";
  	static char *sq_version = "show pool_version";
-	POOL_STATUS status;
 	struct timeval timeout;
 	int num_fds;
 	int used_count = 0;

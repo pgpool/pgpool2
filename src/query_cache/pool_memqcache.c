@@ -2708,16 +2708,18 @@ POOL_QUERY_CACHE_ARRAY *pool_create_query_cache_array(void)
 {
 #define POOL_QUERY_CACHE_ARRAY_ALLOCATE_NUM 128
 #define POOL_QUERY_CACHE_ARRAY_HEADER_SIZE (sizeof(int)+sizeof(int))
-    MemoryContext oldContext = MemoryContextSwitchTo(ProcessLoopContext);
+
 	size_t size;
 	POOL_QUERY_CACHE_ARRAY *p;
+	POOL_SESSION_CONTEXT *session_context =pool_get_session_context(false);
+	MemoryContext old_context = MemoryContextSwitchTo(session_context->memory_context);
 
 	size = POOL_QUERY_CACHE_ARRAY_HEADER_SIZE + POOL_QUERY_CACHE_ARRAY_ALLOCATE_NUM *
 		sizeof(POOL_TEMP_QUERY_CACHE *);
 	p = palloc(size);
 	p->num_caches = 0;
 	p->array_size = POOL_QUERY_CACHE_ARRAY_ALLOCATE_NUM;
-    MemoryContextSwitchTo(oldContext);
+    MemoryContextSwitchTo(old_context);
 	return p;
 }
 
@@ -2779,8 +2781,9 @@ static POOL_QUERY_CACHE_ARRAY * pool_add_query_cache_array(POOL_QUERY_CACHE_ARRA
  */
 POOL_TEMP_QUERY_CACHE *pool_create_temp_query_cache(char *query)
 {
+	POOL_SESSION_CONTEXT *session_context =pool_get_session_context(false);
+    MemoryContext old_context = MemoryContextSwitchTo(session_context->memory_context);
 	POOL_TEMP_QUERY_CACHE *p;
-    MemoryContext oldContext = MemoryContextSwitchTo(QueryContext);
 	p = palloc(sizeof(*p));
     p->query = pstrdup(query);
 
@@ -2790,7 +2793,7 @@ POOL_TEMP_QUERY_CACHE *pool_create_temp_query_cache(char *query)
     p->is_exceeded = false;
     p->is_discarded = false;
 
-    MemoryContextSwitchTo(oldContext);
+    MemoryContextSwitchTo(old_context);
 
 	return p;
 }
@@ -2932,6 +2935,8 @@ static void pool_add_buffer(POOL_INTERNAL_BUFFER *buffer, void *data, size_t len
 	/* Sanity check */
 	if (!buffer || !data || len == 0)
 		return;
+	POOL_SESSION_CONTEXT *session_context =pool_get_session_context(false);
+	MemoryContext old_context = MemoryContextSwitchTo(session_context->memory_context);
 
 	/* Check if we need to increase the buffer size */
 	if ((buffer->buflen + len) > buffer->bufsize)
@@ -2951,6 +2956,7 @@ static void pool_add_buffer(POOL_INTERNAL_BUFFER *buffer, void *data, size_t len
 		(errmsg("memcache adding data to internal buffer"),
 			errdetail("len:%zd, total:%zd bufsize:%zd",
 				   len, buffer->buflen, buffer->bufsize)));
+	MemoryContextSwitchTo(old_context);
 	return;
 }
 

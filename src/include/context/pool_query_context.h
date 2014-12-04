@@ -68,6 +68,7 @@ typedef struct {
 								 * query and parsed node is actually a dummy query.
 								 */
 	int num_original_params; /* number of parameters in original query */
+	MemoryContext memory_context;	/* memory context for query context */
 } POOL_QUERY_CONTEXT;
 
 extern POOL_QUERY_CONTEXT *pool_init_query_context(void);
