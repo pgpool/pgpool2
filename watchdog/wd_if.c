@@ -211,6 +211,8 @@ exec_ifconfig(char * path,char * command)
 	}
 	args[i++] = NULL;
 
+        signal(SIGCHLD, SIG_DFL);
+
 	pid = fork();
 	if (pid == 0)
 	{
@@ -226,13 +228,14 @@ exec_ifconfig(char * path,char * command)
 		for (;;)
 		{
 			int result;
-			result = wait(&status);
+			result = waitpid(pid, &status, 0);
 			if (result < 0 && errno != ECHILD)
 			{
 				if (errno == EINTR)
 					continue;
 
 				pool_debug("exec_ifconfig: wait() failed. reason: %s ", strerror(errno));
+                                signal(SIGCHLD, SIG_IGN);
 				return WD_NG;
 			}
 
@@ -240,6 +243,7 @@ exec_ifconfig(char * path,char * command)
 			{
 				pool_debug("exec_ifconfig: '%s' failed. exit status: %d",
 				           command, WEXITSTATUS(status));
+                                signal(SIGCHLD, SIG_IGN);
 				return WD_NG;
 			}
 			else
@@ -249,6 +253,7 @@ exec_ifconfig(char * path,char * command)
 	}
 
 	pool_debug("exec_ifconfig: '%s' succeeded", command);
+        signal(SIGCHLD, SIG_IGN);
 	return WD_OK;
 }
 
