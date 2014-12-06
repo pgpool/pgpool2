@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2014	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -223,6 +223,8 @@ exec_ifconfig(char * path,char * command)
 	}
 	args[i++] = NULL;
 
+	signal(SIGCHLD, SIG_DFL);
+
 	pid = fork();
 	if (pid == 0)
 	{
@@ -248,6 +250,8 @@ exec_ifconfig(char * path,char * command)
 				ereport(DEBUG1,
 					(errmsg("watchdog exec wait()failed"),
 						 errdetail("wait() system call failed with reason \"%s\"", strerror(errno))));
+
+				signal(SIGCHLD, SIG_IGN);
 				return WD_NG;
 			}
 
@@ -257,6 +261,7 @@ exec_ifconfig(char * path,char * command)
 					(errmsg("watchdog exec ifconfig failed"),
 						errdetail("'%s' failed. exit status: %d",command, WEXITSTATUS(status))));
 
+				signal(SIGCHLD, SIG_IGN);
 				return WD_NG;
 			}
 			else
@@ -267,6 +272,7 @@ exec_ifconfig(char * path,char * command)
 	ereport(DEBUG1,
 		(errmsg("watchdog exec ifconfig: '%s' succeeded", command)));
 
+	signal(SIGCHLD, SIG_IGN);
 	return WD_OK;
 }
 
