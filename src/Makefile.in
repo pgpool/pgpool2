@@ -132,7 +132,7 @@ am_pgpool_OBJECTS = main/main.$(OBJEXT) main/pool_globals.$(OBJEXT) \
 	utils/mmgr/aset.$(OBJEXT) utils/error/elog.$(OBJEXT) \
 	utils/error/assert.$(OBJEXT) utils/pcp/pcp_stream.$(OBJEXT) \
 	utils/pcp/pcp_error.$(OBJEXT) utils/pcp/pcp_timeout.$(OBJEXT) \
-	utils/regex_array.$(OBJEXT)
+	utils/regex_array.$(OBJEXT) utils/statistics.$(OBJEXT)
 pgpool_OBJECTS = $(am_pgpool_OBJECTS)
 pgpool_DEPENDENCIES = parser/libsql-parser.a parser/nodes.o \
 	watchdog/lib-watchdog.a
@@ -462,7 +462,8 @@ pgpool_SOURCES = main/main.c \
     utils/pcp/pcp_stream.c \
     utils/pcp/pcp_error.c \
     utils/pcp/pcp_timeout.c \
-    utils/regex_array.c
+    utils/regex_array.c \
+    utils/statistics.c
 
 sysconf_DATA = sample/pgpool.conf.sample \
 			   sample/pcp.conf.sample \
@@ -831,6 +832,8 @@ utils/pcp/pcp_timeout.$(OBJEXT): utils/pcp/$(am__dirstamp) \
 	utils/pcp/$(DEPDIR)/$(am__dirstamp)
 utils/regex_array.$(OBJEXT): utils/$(am__dirstamp) \
 	utils/$(DEPDIR)/$(am__dirstamp)
+utils/statistics.$(OBJEXT): utils/$(am__dirstamp) \
+	utils/$(DEPDIR)/$(am__dirstamp)
 
 pgpool$(EXEEXT): $(pgpool_OBJECTS) $(pgpool_DEPENDENCIES) $(EXTRA_pgpool_DEPENDENCIES) 
 	@rm -f pgpool$(EXEEXT)
@@ -897,6 +900,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/ps_status.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/psprintf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/regex_array.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/statistics.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/strlcpy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/error/$(DEPDIR)/assert.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/error/$(DEPDIR)/elog.Po@am__quote@

@@ -687,5 +687,12 @@ extern int connect_inet_domain_socket_by_port(char *host, int port, bool retry);
 extern int connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry);
 extern int pool_pool_index(void);
 
+/* utils/statistics.c */
+size_t stat_shared_memory_size(void);
+void stat_set_stat_area(void *address);
+void stat_init_stat_area(void);
+void stat_count_up(int backend_node_id, Node *parsetree);
+uint64 stat_get_select_count(int backend_node_id);
+
 extern int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps);
 #endif /* POOL_H */

@@ -50,7 +50,8 @@ pgpool_SOURCES = main/main.c \
     utils/pcp/pcp_stream.c \
     utils/pcp/pcp_error.c \
     utils/pcp/pcp_timeout.c \
-    utils/regex_array.c
+    utils/regex_array.c \
+    utils/statistics.c
 
 DEFS = @DEFS@ \
 	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\"

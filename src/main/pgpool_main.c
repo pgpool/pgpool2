@@ -2671,6 +2671,10 @@ static void initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 
 		pool_init_memqcache_stats();
 	}
+
+	/* Initialize statistics area */
+	stat_set_stat_area(pool_shared_memory_create(stat_shared_memory_size()));
+	stat_init_stat_area();
 }
 
 /*

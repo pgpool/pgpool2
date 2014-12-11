@@ -1074,6 +1074,7 @@ POOL_REPORT_NODES* get_nodes(int *nrows)
 	    snprintf(nodes[i].port, 	POOLCONFIG_MAXIDENTLEN, "%d", 	bi->backend_port);
 	    snprintf(nodes[i].status, 	POOLCONFIG_MAXSTATLEN, 	"%d", 	bi->backend_status);
 	    snprintf(nodes[i].lb_weight, POOLCONFIG_MAXWEIGHTLEN, "%f", bi->backend_weight/RAND_MAX);
+	    snprintf(nodes[i].select, POOLCONFIG_MAXWEIGHTLEN, "%lld", stat_get_select_count(i));
 
 		if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
 			if (i == REAL_PRIMARY_NODE_ID)
@@ -1096,7 +1097,7 @@ POOL_REPORT_NODES* get_nodes(int *nrows)
 
 void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 {
-	static char *field_names[] = {"node_id","hostname", "port", "status", "lb_weight", "role"};
+	static char *field_names[] = {"node_id","hostname", "port", "status", "lb_weight", "role", "select_cnt"};
 	short num_fields = sizeof(field_names)/sizeof(char *);
 	int i;
 	short s;
@@ -1148,6 +1149,11 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 			hsize = htonl(size+4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, nodes[i].role, size);
+
+			size = strlen(nodes[i].select);
+			hsize = htonl(size+4);
+			pool_write(frontend, &hsize, sizeof(hsize));
+			pool_write(frontend, nodes[i].select, size);
 		}
 	}
 	else
@@ -1163,6 +1169,7 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 			len += 4 + strlen(nodes[i].status);    /* int32 + data; */
 			len += 4 + strlen(nodes[i].lb_weight); /* int32 + data; */
 			len += 4 + strlen(nodes[i].role);      /* int32 + data; */
+			len += 4 + strlen(nodes[i].select);    /* int32 + data; */
 			len = htonl(len);
 			pool_write(frontend, &len, sizeof(len));
 			s = htons(num_fields);
@@ -1191,6 +1198,10 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 			len = htonl(strlen(nodes[i].role));
 			pool_write(frontend, &len, sizeof(len));
 			pool_write(frontend, nodes[i].role, strlen(nodes[i].role));
+
+			len = htonl(strlen(nodes[i].select));
+			pool_write(frontend, &len, sizeof(len));
+			pool_write(frontend, nodes[i].select, strlen(nodes[i].select));
 		}
 	}
 
