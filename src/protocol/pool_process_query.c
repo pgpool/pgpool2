@@ -459,7 +459,7 @@ POOL_STATUS pool_parallel_exec(POOL_CONNECTION *frontend,
 			(errmsg("executing parallel query"),
 				 errdetail("sending HUP signal to parent")));
 
-		kill(getppid(), SIGHUP);        /* send HUP signal to parent */
+		pool_signal_parent(SIGHUP); /* send HUP signal to parent */
 
 		/* we need to loop over here since we will get HUP signal while sleeping */
 		while (stime > 0)

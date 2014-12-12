@@ -195,7 +195,7 @@ void finish_recovery(void)
 	}
 
 	*InRecovery = RECOVERY_INIT;
-	kill(getppid(), SIGUSR2);
+	pool_signal_parent(SIGUSR2);
 }
 
 /*

@@ -1501,21 +1501,21 @@ process_shutown_request(char mode)
 		ereport(DEBUG1,
 			(errmsg("PCP: processing shutdown request"),
 				 errdetail("sending SIGTERM to the parent process with PID:%d", ppid)));
-		kill(ppid, SIGTERM);
+		pool_signal_parent(SIGTERM);
 	}
 	else if (mode == 'f')
 	{
 		ereport(DEBUG1,
 			(errmsg("PCP: processing shutdown request"),
 				 errdetail("sending SIGINT to the parent process with PID:%d", ppid)));
-		kill(ppid, SIGINT);
+		pool_signal_parent(SIGINT);
 	}
 	else if (mode == 'i')
 	{
 		ereport(DEBUG1,
 			(errmsg("PCP: processing shutdown request"),
 				 errdetail("sending SIGQUIT to the parent process with PID:%d", ppid)));
-		kill(ppid, SIGQUIT);
+		pool_signal_parent(SIGQUIT);
 	}
 	else
 	{
