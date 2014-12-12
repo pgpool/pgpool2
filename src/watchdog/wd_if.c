@@ -39,6 +39,7 @@
 #include "watchdog/wd_ext.h"
 
 static int exec_ifconfig(char * path,char * command);
+static char *string_replace(const char *string, const char *pattern, const char *replacement);
 
 #define WD_TRY_PING_AT_IPUP 3
 int
@@ -177,7 +178,7 @@ exec_ifconfig(char * path,char * command)
 	int status;
 	char * args[24];
 	int pid, i = 0;
-	char buf[256];
+	char* buf;
 	char *bp, *ep;
 
 	if (pipe(pfd) == -1)
@@ -186,8 +187,9 @@ exec_ifconfig(char * path,char * command)
 				(errmsg("while executing ifconfig, pipe open failed with error \"%s\"",strerror(errno))));
 		return WD_NG;
 	}
-	memset(buf,0,sizeof(buf));
-	strlcpy(buf,command,sizeof(buf));
+
+	buf = string_replace(command,"$_IP_$",pool_config->delegate_IP);
+
 	bp = buf;
 	while (*bp == ' ')
 	{
@@ -200,14 +202,7 @@ exec_ifconfig(char * path,char * command)
 		{
 			*ep = '\0';
 		}
-		if (!strncmp(bp,"$_IP_$",5))
-		{
-			args[i++] = pool_config->delegate_IP;
-		}
-		else
-		{
-			args[i++] = bp;
-		}
+		args[i++] = bp;
 		if (ep != NULL)
 		{
 			bp = ep +1;
@@ -237,6 +232,7 @@ exec_ifconfig(char * path,char * command)
 	}
 	else
 	{
+		pfree(buf);
 		close(pfd[1]);
 		for (;;)
 		{
@@ -274,6 +270,46 @@ exec_ifconfig(char * path,char * command)
 
 	signal(SIGCHLD, SIG_IGN);
 	return WD_OK;
+}
+
+/*
+ * string_replace:
+ * returns the new palloced string after replacing all
+ * occurances of pattern in string with replacement string
+ */
+static char *
+string_replace(const char *string, const char *pattern, const char *replacement)
+{
+	char *tok = NULL;
+	char *newstr = NULL;
+	char *oldstr = NULL;
+	char *head = NULL;
+	size_t pat_len,rep_len;
+
+	newstr = pstrdup(string);
+	/* bail out if no pattern or replacement is given */
+	if ( pattern == NULL || replacement == NULL )
+		return newstr;
+
+	pat_len = strlen(pattern);
+	rep_len = strlen(replacement);
+
+	head = newstr;
+	while ( (tok = strstr(head,pattern)))
+	{
+		oldstr = newstr;
+		newstr = palloc ( strlen ( oldstr ) - pat_len + rep_len + 1 );
+
+		memcpy(newstr, oldstr, tok - oldstr );
+		memcpy(newstr + (tok - oldstr), replacement, rep_len );
+		memcpy(newstr + (tok - oldstr) + rep_len, tok + pat_len, strlen(oldstr) - pat_len - (tok - oldstr));
+		/* put the string terminator */
+		memset( newstr + strlen (oldstr) - pat_len + rep_len , 0, 1 );
+		/* move back head right after the last replacement */
+		head = newstr + (tok - oldstr) + rep_len;
+		pfree(oldstr);
+	}
+	return newstr;
 }
 
 
