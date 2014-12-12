@@ -591,7 +591,7 @@ bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, i
 		POOL_SETMASK(&oldmask);
 		if(failover_in_progress == false)
 		{
-			kill(getppid(), SIGUSR1);
+			pool_signal_parent(SIGUSR1);
 		}
 	}
 

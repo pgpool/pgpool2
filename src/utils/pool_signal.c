@@ -25,7 +25,10 @@
  */
 
 #include "config.h"
+#include "pool.h"
 #include "utils/pool_signal.h"
+#include "utils/elog.h"
+#include <unistd.h>
 #include <signal.h>
 
 #ifdef HAVE_SIGPROCMASK
@@ -153,6 +156,28 @@ pool_signal(int signo, pool_sighandler_t func)
 		return SIG_ERR;
 	return oact.sa_handler;
 #endif   /* !HAVE_POSIX_SIGNALS */
+}
+
+int pool_signal_parent(int sig)
+{
+	/*
+	 * Check if saved parent pid is same as current parent.
+	 * This is a guard against sending the signal to init process
+	 * pgpool-II parent process crashed and left the child processes
+	 * orphan.
+	 */
+	if(mypid != getppid())
+	{
+		/*
+		 * pgpool parent is no more alive, commiting sucide.
+		 */
+		ereport(PANIC,
+				(errmsg("pgpool-II main process died unexpectedly. exiting current process")));
+	}
+	ereport(DEBUG1,
+		(errmsg("sending %d to the parent process with PID:%d", sig ,mypid)));
+
+	return kill(mypid, sig);
 }
 
 #endif   /* WIN32 */
