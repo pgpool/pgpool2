@@ -10,7 +10,7 @@
 Summary:        Pgpool is a connection pooling/replication server for PostgreSQL
 Name:           pgpool-II-pg%{pg_version}
 Version:        %{pgpool_version}
-Release:        2pgdg%{?dist}
+Release:        3pgdg%{?dist}
 License:        BSD
 Group:          Applications/Databases
 Vendor:         Pgpool Global Development Group
@@ -89,9 +89,13 @@ export PATH=%{pghome}/bin:$PATH
 cd src/sql/pgpool-recovery/
 make %{?_smp_flags} DESTDIR=%{buildroot} install
 cd ../../../
-cd src/sql/pgpool-regclass/
-make %{?_smp_flags} DESTDIR=%{buildroot} install
-cd ../../../
+# From PostgreSQL 9.4 pgpool-regclass.so is not needed anymore
+# because 9.4 or later has to_regclass.
+%if %{pg_version} <= 93
+  cd src/sql/pgpool-regclass/
+  make %{?_smp_flags} DESTDIR=%{buildroot} install
+  cd ../../../
+%endif
 
 # nuke libtool archive and static lib
 rm -f %{buildroot}%{_libdir}/libpcp.{a,la}
@@ -154,17 +158,20 @@ fi
 %{pghome}/share/extension/pgpool-recovery.sql
 %{pghome}/share/extension/pgpool_recovery--1.1.sql
 %{pghome}/share/extension/pgpool_recovery.control
-%{pghome}/share/extension/pgpool-regclass.sql
-%{pghome}/share/extension/pgpool_regclass--1.0.sql
-%{pghome}/share/extension/pgpool_regclass.control
 %{pghome}/lib/pgpool-recovery.so
 # From PostgreSQL 9.4 pgpool-regclass.so is not needed anymore
 # because 9.4 or later has to_regclass.
 %if %{pg_version} <= 93
+  %{pghome}/share/extension/pgpool_regclass--1.0.sql
+  %{pghome}/share/extension/pgpool_regclass.control
+  %{pghome}/share/extension/pgpool-regclass.sql
   %{pghome}/lib/pgpool-regclass.so
 %endif
 
 %changelog
+* Fri Dec 20 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.4.0-3
+- Fix "error: Installed (but unpackaged) file(s) found"
+
 * Fri Nov 21 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.4.0-2
 - Re-enable to apply difference from HEAD patch.
 
