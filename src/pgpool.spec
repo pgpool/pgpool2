@@ -169,7 +169,7 @@ fi
 %endif
 
 %changelog
-* Fri Dec 20 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.4.0-3
+* Sat Dec 20 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.4.0-3
 - Fix "error: Installed (but unpackaged) file(s) found"
 
 * Fri Nov 21 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.4.0-2
@@ -184,7 +184,7 @@ fi
 * Tue Oct 21 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.4beta2
 - Adopt to PostgreSQL 9.4
 
-* Mon Sep 25 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.4-2
+* Thu Sep 25 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.4-2
 - Split pgpool_regclass and pgpool_recovery as a separate extention package.
 - Fix wrong OpenSSL build option.
 
@@ -195,7 +195,7 @@ fi
 - Add PATCH2 which is diff between 3.3.3 and 3.3-stable tree head.
 - RPM expert said this is the better way.
 
-* Sun May 10 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.3-3
+* Sat May 10 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.3-3
 - Use 3.3-stable tree head
 
 * Sun May 4 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.3-2
@@ -275,12 +275,12 @@ fi
 - added --disable-rpath configure parameter.
 - Chowned sample conf files, so that they can work with pgpoolAdmin.
 
-* Thu Apr 22 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.0.2-4
+* Sun Apr 22 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.0.2-4
 - Added postgresql-devel as BR, per bugzilla review.
 - Added --disable-static flan, per bugzilla review.
 - Removed superfluous manual file installs, per bugzilla review.
 
-* Thu Apr 22 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.0.2-3
+* Sun Apr 22 2007 Devrim Gunduz <devrim@CommandPrompt.com> 1.0.2-3
 - Rebuilt for the correct tarball
 - Fixed man8 file ownership, per bugzilla review #229321
 
@@ -304,10 +304,10 @@ fi
 - Fix .so link problem
 - Cosmetic changes to spec file
 
-* Thu Sep 27 2006 - Devrim GUNDUZ <devrim@commandprompt.com> 1.0.1-3
+* Wed Sep 27 2006 - Devrim GUNDUZ <devrim@commandprompt.com> 1.0.1-3
 - Fix spec, per Yoshiyuki Asaba
 
-* Thu Sep 26 2006 - Devrim GUNDUZ <devrim@commandprompt.com> 1.0.1-2
+* Tue Sep 26 2006 - Devrim GUNDUZ <devrim@commandprompt.com> 1.0.1-2
 - Fixed rpmlint errors
 - Fixed download url
 - Added ldconfig for .so files
