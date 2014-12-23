@@ -159,6 +159,7 @@ typedef struct {
  * reporting types
  */
 /* some length definitions */
+#define POOLCONFIG_MAXIDLEN 4
 #define POOLCONFIG_MAXNAMELEN 64
 #define POOLCONFIG_MAXVALLEN 512
 #define POOLCONFIG_MAXDESCLEN 64
@@ -178,9 +179,9 @@ typedef struct {
 
 /* nodes report struct */
 typedef struct {
-	char node_id[POOLCONFIG_MAXSTATLEN+1];
+	char node_id[POOLCONFIG_MAXIDLEN+1];
 	char hostname[POOLCONFIG_MAXIDENTLEN+1];
-	char port[POOLCONFIG_MAXIDENTLEN+1];
+	char port[POOLCONFIG_MAXPORTLEN+1];
 	char status[POOLCONFIG_MAXSTATLEN+1];
 	char lb_weight[POOLCONFIG_MAXWEIGHTLEN+1];
 	char role[POOLCONFIG_MAXWEIGHTLEN+1];
