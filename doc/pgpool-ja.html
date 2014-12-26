@@ -4510,7 +4510,7 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
     </p>
     </dd>
 
-<dt><a name="IFCONFIG_PATH"></a>ifconfig_path <span class="version">V3.2 ～</span></dt>
+<dt><a name="IF_CMD_PATH"></a>if_cmd_path <span class="version">V3.5 ～</span></dt>
     <dd>
     <p>
     IP アドレス切り替えに利用するコマンドのパスです。
@@ -4525,7 +4525,7 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
     <dd>
     <p>
     仮想 IP を起動するために実行するコマンドです。
-    "ifconfig eth0:0 inet $_IP_$ netmask 255.255.255.0"
+    "ip addr add $_IP_$/24 dev eth0 label eth0:0"
     のようにコマンドとパラメータを指定します。
     $_IP_$　は <a href="#DELEGATE_IP">delegate_IP</a> で指定された IP アドレスに置換されます。
     </p>
@@ -4538,7 +4538,7 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
     <dd>
     <p>
     仮想IPを停止するために実行するコマンドです。
-    "ifconfig eth0:0 down"
+    "ip addr del $_IP_$/24 dev eth0"
     のようにコマンドとパラメータを指定します。
     </p>
     <p>

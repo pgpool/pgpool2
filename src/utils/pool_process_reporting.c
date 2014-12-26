@@ -732,9 +732,9 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	StrNCpy(status[i].desc, "path to ping command", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	StrNCpy(status[i].name, "ifconfig_path", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ifconfig_path);
-	StrNCpy(status[i].desc, "path to ifconfig command", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].name, "if_cmd_path", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->if_cmd_path);
+	StrNCpy(status[i].desc, "path to interface up/down command", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "if_up_cmd", POOLCONFIG_MAXNAMELEN);

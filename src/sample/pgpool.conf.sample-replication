@@ -487,8 +487,8 @@ delegate_IP = ''
                                     # delegate IP address
                                     # If this is empty, virtual IP never bring up. 
                                     # (change requires restart)
-ifconfig_path = '/sbin'
-                                    # ifconfig command path
+if_cmd_path = '/sbin'
+                                    # path to the directory where if_up/down_cmd exists 
                                     # (change requires restart)
 if_up_cmd = 'ip addr add $_IP_$/24 dev eth0 label eth0:0'
                                     # startup delegate IP command

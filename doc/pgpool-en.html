@@ -4380,7 +4380,7 @@ Configuration about virtual IP interface control
     </p>
     </dd>
 
-<dt><a name="IFCONFIG_PATH"></a>ifconfig_path <span class="version">V3.2 -</span></dt>
+<dt><a name="IF_CMD_PATH"></a>if_cmd_path <span class="version">V3.5 -</span></dt>
     <dd>
     <p>
     This parameter specifies a path of a command to switch the IP address.
@@ -4396,7 +4396,7 @@ Configuration about virtual IP interface control
     <p>
     This parameter specifies a command to bring up the virtual IP.
     Set the command and parameters such as
-    "ifconfig eth0:0 inet $_IP_$ netmask 255.255.255.0".
+    "ip addr add $_IP_$/24 dev eth0 label eth0:0"
     $_IP_$ is replaced by the IP address specified in <a href="#DELEGATE_IP">delegate_IP</a>.
     </p>
     <p>
@@ -4409,7 +4409,7 @@ Configuration about virtual IP interface control
     <p>
     This parameter specifies a command to bring down the virtual IP.
     Set the command and parameters such as
-    "ifconfig eth0:0 down".
+    "ip addr del $_IP_$/24 dev eth0"
     </p>
     <p>
     You need to restart pgpool-II if you change this value.

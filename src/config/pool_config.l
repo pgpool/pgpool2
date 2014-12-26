@@ -258,9 +258,9 @@ int pool_init_config(void)
 	pool_config->wd_interval = 10;
 	pool_config->wd_authkey = "";
 	pool_config->ping_path = "/bin";
-	pool_config->ifconfig_path = "/sbin";
-	pool_config->if_up_cmd = "ifconfig eth0:0 inet $_IP_$ netmask 255.255.255.0";
-	pool_config->if_down_cmd = "ifconfig eth0:0 down";
+	pool_config->if_cmd_path = "/sbin";
+	pool_config->if_up_cmd = "ip addr add $_IP_$/24 dev eth0 label eth0:0";
+	pool_config->if_down_cmd = "ip addr del $_IP_$/24 dev eth0";
 	pool_config->arping_path = "/usr/sbin";
 	pool_config->arping_cmd = "arping -U $_IP_$ -w 1";
 	pool_config->wd_life_point = 3;
@@ -2485,7 +2485,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			if(strlen(str))
 				pool_config->ping_path = str;
 		}
-		else if (!strcmp(key, "ifconfig_path") && CHECK_CONTEXT(INIT_CONFIG, context))
+		else if (!strcmp(key, "if_cmd_path") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			char *str;
 
@@ -2502,7 +2502,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			if(strlen(str))
-				pool_config->ifconfig_path = str;
+				pool_config->if_cmd_path = str;
 		}
 		else if (!strcmp(key, "if_up_cmd") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{

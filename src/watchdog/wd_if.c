@@ -38,7 +38,7 @@
 #include "watchdog/watchdog.h"
 #include "watchdog/wd_ext.h"
 
-static int exec_ifconfig(char * path,char * command);
+static int exec_if_cmd(char * path,char * command);
 static char *string_replace(const char *string, const char *pattern, const char *replacement);
 
 #define WD_TRY_PING_AT_IPUP 3
@@ -58,14 +58,14 @@ wd_IP_up(void)
 		WD_List->delegate_ip_flag = 1;
 
 		wd_get_cmd(cmd,pool_config->if_up_cmd);
-		snprintf(path,sizeof(path),"%s/%s",pool_config->ifconfig_path,cmd);
-		rtn = exec_ifconfig(path,pool_config->if_up_cmd);
+		snprintf(path,sizeof(path),"%s/%s",pool_config->if_cmd_path,cmd);
+		rtn = exec_if_cmd(path,pool_config->if_up_cmd);
 
 		if (rtn == WD_OK)
 		{
 			wd_get_cmd(cmd,pool_config->arping_cmd);
 			snprintf(path,sizeof(path),"%s/%s",pool_config->arping_path,cmd);
-			rtn = exec_ifconfig(path,pool_config->arping_cmd);
+			rtn = exec_if_cmd(path,pool_config->arping_cmd);
 		}
 		if (rtn == WD_OK)
 		{
@@ -84,10 +84,10 @@ wd_IP_up(void)
 
 		if (rtn == WD_OK)
 			ereport(LOG,
-				(errmsg("watchdog bringing up delegate IP, 'ifconfig up' succeeded")));
+				(errmsg("watchdog bringing up delegate IP, 'if_up_cmd' succeeded")));
 		else
 			ereport(WARNING,
-				(errmsg("watchdog failed to bring up delegate IP, 'ifconfig up' failed")));
+				(errmsg("watchdog failed to bring up delegate IP, 'if_up_cmd' failed")));
 	}
 	else
 	{
@@ -115,8 +115,8 @@ wd_IP_down(void)
 	{
 		WD_List->delegate_ip_flag = 0;
 		wd_get_cmd(cmd,pool_config->if_down_cmd);
-		snprintf(path, sizeof(path), "%s/%s", pool_config->ifconfig_path, cmd);
-		rtn = exec_ifconfig(path,pool_config->if_down_cmd);
+		snprintf(path, sizeof(path), "%s/%s", pool_config->if_cmd_path, cmd);
+		rtn = exec_if_cmd(path,pool_config->if_down_cmd);
 
 		if (rtn == WD_OK)
 		{
@@ -134,13 +134,13 @@ wd_IP_down(void)
 		{
 			ereport(LOG,
 				(errmsg("watchdog bringing down delegate IP"),
-					 errdetail("ifconfig down succeeded")));
+					 errdetail("if_down_cmd succeeded")));
 		}
 		else
 		{
 			WD_List->delegate_ip_flag = 1;
 			ereport(WARNING,
-				(errmsg("watchdog bringing down delegate IP, ifconfig down failed")));
+				(errmsg("watchdog bringing down delegate IP, if_down_cmd failed")));
 		}
 	}
 	else
@@ -172,7 +172,7 @@ wd_get_cmd(char * buf, char * cmd)
 }
 
 static int
-exec_ifconfig(char * path,char * command)
+exec_if_cmd(char * path,char * command)
 {
 	int pfd[2];
 	int status;
@@ -184,7 +184,7 @@ exec_ifconfig(char * path,char * command)
 	if (pipe(pfd) == -1)
 	{
 		ereport(WARNING,
-				(errmsg("while executing ifconfig, pipe open failed with error \"%s\"",strerror(errno))));
+				(errmsg("while executing interface up/down command, pipe open failed with error \"%s\"",strerror(errno))));
 		return WD_NG;
 	}
 
@@ -254,7 +254,7 @@ exec_ifconfig(char * path,char * command)
 			if (WIFEXITED(status) == 0 || WEXITSTATUS(status) != 0)
 			{
 				ereport(DEBUG1,
-					(errmsg("watchdog exec ifconfig failed"),
+					(errmsg("watchdog exec interface up/down command failed"),
 						errdetail("'%s' failed. exit status: %d",command, WEXITSTATUS(status))));
 
 				signal(SIGCHLD, SIG_IGN);
@@ -266,7 +266,7 @@ exec_ifconfig(char * path,char * command)
 		close(pfd[0]);
 	}
 	ereport(DEBUG1,
-		(errmsg("watchdog exec ifconfig: '%s' succeeded", command)));
+		(errmsg("watchdog exec interface up/down command: '%s' succeeded", command)));
 
 	signal(SIGCHLD, SIG_IGN);
 	return WD_OK;

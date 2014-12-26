@@ -266,7 +266,7 @@ typedef struct {
 	int  wd_interval;					/* lifecheck interval (sec) */
 	char *wd_authkey;					/* Authentication key for watchdog communication */
 	char * ping_path;					/* path to ping command */
-	char * ifconfig_path;				/* path to ifconfig command */
+	char * if_cmd_path;					/* path to interface up/down command */
 	char * if_up_cmd;					/* ifup command */
 	char * if_down_cmd;					/* ifdown command */
 	char * arping_path;					/* path to arping command */
