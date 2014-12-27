@@ -1644,21 +1644,28 @@ int select_load_balancing_node(void)
 	{
 		char *app_name = MASTER_CONNECTION(ses->backend)->sp->application_name;
 
-		/* Check to see if the database matches any of
-		 * database_redirect_preference_list
+		/*
+		 * Check only if application name is set.
+		 * Old applications may not have application name.
 		 */
-		index = regex_array_match(pool_config->redirect_app_names, app_name);
-		if (index >= 0)
+		if (app_name && strlen(app_name) > 0)
 		{
-			/* Matches */
-			ereport(DEBUG1,
-					(errmsg("selecting load balance node db matched"),
-					 errdetail("app_name: %s index is %d dbnode is %s", app_name, index, pool_config->app_name_redirect_tokens->token[index].right_token)));
-
-			tmp = choose_db_node_id(pool_config->app_name_redirect_tokens->token[index].right_token);
-			if (tmp == -1 || (tmp >= 0 && VALID_BACKEND(tmp)))
+			/* Check to see if the aplication name matches any of
+			 * app_name_redirect_preference_list.
+			 */
+			index = regex_array_match(pool_config->redirect_app_names, app_name);
+			if (index >= 0)
 			{
-				suggested_node_id = tmp;
+				/* Matches */
+				ereport(DEBUG1,
+						(errmsg("selecting load balance node db matched"),
+						 errdetail("app_name: %s index is %d dbnode is %s", app_name, index, pool_config->app_name_redirect_tokens->token[index].right_token)));
+
+				tmp = choose_db_node_id(pool_config->app_name_redirect_tokens->token[index].right_token);
+				if (tmp == -1 || (tmp >= 0 && VALID_BACKEND(tmp)))
+				{
+					suggested_node_id = tmp;
+				}
 			}
 		}
 	}
