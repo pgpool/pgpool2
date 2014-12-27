@@ -57,6 +57,7 @@ volatile sig_atomic_t health_check_timer_expired;		/* non 0 if health check time
 static POOL_CONNECTION_POOL_SLOT *create_cp(POOL_CONNECTION_POOL_SLOT *cp, int slot);
 static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p);
 static int check_socket_status(int fd);
+static bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int port, bool retry);
 
 /*
 * initialize connection pools. this should be called once at the startup.
@@ -533,7 +534,16 @@ int connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry)
 	return fd;
 }
 
-bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int port, bool retry)
+/*
+ * Connet to backend using pool_config->connect_timeout.
+ *
+ * fd: the socket
+ * walk: backend address to connect
+ * host and port: backend hostname and port number. Only for error message
+ * purpose.
+ * retry: true if need to retry
+ */
+static bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int port, bool retry)
 {
 	struct timeval *tm;
 	struct timeval timeout;
