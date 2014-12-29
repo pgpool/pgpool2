@@ -387,9 +387,7 @@ die(int sig)
 			break;
 	}
 
-	/* send_frontend_exits(); */
-
-	exit(0);
+	exit(1);
 }
 
 static RETSIGTYPE

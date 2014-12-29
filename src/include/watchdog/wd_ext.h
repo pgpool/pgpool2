@@ -31,7 +31,8 @@ extern pid_t wd_ppid;
 extern pid_t wd_main(int fork_wait_time);
 extern int wd_chk_sticky(void);
 extern int wd_is_watchdog_pid(pid_t pid);
-extern int wd_reaper_watchdog(pid_t pid, int status);
+extern char *wd_process_name_from_pid(pid_t pid);
+extern pid_t wd_reaper_watchdog(pid_t pid, bool restart_child);
 extern int wd_chk_setuid(void);
 extern void wd_kill_watchdog(int sig);
 /* utility function*/
