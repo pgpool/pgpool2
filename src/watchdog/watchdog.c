@@ -253,48 +253,53 @@ wd_is_watchdog_pid(pid_t pid)
 	return 0;
 }
 
-/* restart watchdog process specified by pid */
-int
-wd_reaper_watchdog(pid_t pid, int status)
+char* wd_process_name_from_pid(pid_t pid)
+{
+	int i;
+	if (pid == lifecheck_pid)
+		return "watchdog lifecheck";
+	if(pid == child_pid)
+		return "watchdog child";
+	for (i = 0; i < pool_config->num_hb_if; i++)
+	{
+		if (pid == hb_receiver_pid[i])
+			return "watchdog heartbeat receiver";
+
+		if (pid == hb_receiver_pid[i] || pid == hb_sender_pid[i])
+			return "watchdog heartbeat sender";
+	}
+	return "unknown watchdog process"; /* should never happen */
+}
+
+/*
+ * restart watchdog process specified by pid if restart_child is true
+ * return the new pid of the forked process or 0 if restart_child was false.
+ */
+pid_t
+wd_reaper_watchdog(pid_t pid, bool restart_child)
 {
 	int i;
 
 	/* watchdog lifecheck process exits */
 	if (pid == lifecheck_pid)
 	{
-		if (WIFSIGNALED(status))
-			ereport(DEBUG1,
-					(errmsg("watchdog lifecheck process with PID:%d exits with status %d by signal %d",
-							pid, status, WTERMSIG(status))));
+		if(restart_child)
+			lifecheck_pid = fork_a_lifecheck(1);
 		else
-			ereport(DEBUG1,
-					(errmsg("watchdog lifecheck process with PID:%d exits with status %d", pid, status)));
+			lifecheck_pid = 0;
 
-		lifecheck_pid = fork_a_lifecheck(1);
-
-		ereport(LOG,
-				(errmsg("fork a new watchdog lifecheck pid %d", lifecheck_pid)));
-
+		return lifecheck_pid;
 	}
 
 	/* watchdog child process exits */
 	else if (pid == child_pid)
 	{
-		if (WIFSIGNALED(status))
-			ereport(DEBUG1,
-					(errmsg("watchdog child process with PID:%d exits with status %d by signal %d",
-							pid, status,WTERMSIG(status))));
+		if(restart_child)
+			child_pid = wd_child(1);
 		else
-			ereport(DEBUG1,
-				(errmsg("watchdog child process with PID:%d exits with status %d",
-						pid, status)));
+			child_pid = 0;
 
-
-		child_pid = wd_child(1);
-
-		ereport(LOG,
-				(errmsg("fork a new watchdog child pid %d", child_pid)));
-
+		return child_pid;
 	}
 
 	/* receiver/sender process exits */
@@ -304,42 +309,26 @@ wd_reaper_watchdog(pid_t pid, int status)
 		{
 			if (pid == hb_receiver_pid[i])
 			{
-				if (WIFSIGNALED(status))
-					ereport(DEBUG1,
-							(errmsg("watchdog heartbeat receiver process with PID:%d exits with status %d by signal %d",
-									pid, status, WTERMSIG(status))));
+				if(restart_child)
+					hb_receiver_pid[i] = wd_hb_receiver(1, &(pool_config->hb_if[i]));
 				else
-					ereport(DEBUG1,
-							(errmsg("watchdog heartbeat receiver process with PID:%d exits with status %d", pid, status)));
+					hb_receiver_pid[i] = 0;
 
-				hb_receiver_pid[i] = wd_hb_receiver(1, &(pool_config->hb_if[i]));
-
-				ereport(LOG,
-						(errmsg("fork a new watchdog heartbeat receiver with pid %d", hb_receiver_pid[i])));
-
-				break;
+				return hb_receiver_pid[i];
 			}
 
 			else if (pid == hb_sender_pid[i])
 			{
-				if (WIFSIGNALED(status))
-					ereport(DEBUG1,
-							(errmsg("watchdog heartbeat sender process with PID:%d exits with status %d by signal %d",
-									pid, status, WTERMSIG(status))));
+				if(restart_child)
+					hb_sender_pid[i] = wd_hb_sender(1, &(pool_config->hb_if[i]));
 				else
-					ereport(DEBUG1,
-							(errmsg("watchdog heartbeat sender process with PID:%d exits with status %d", pid, status)));
+					hb_sender_pid[i] = 0;
 
-				hb_sender_pid[i] = wd_hb_sender(1, &(pool_config->hb_if[i]));
-
-				ereport(LOG,
-						(errmsg("fork a new watchdog heartbeat sender with PID:%d", hb_sender_pid[i])));
-				break;
+				return hb_sender_pid[i];
 			}
 		}
 	}
-	
-	return 1;
+	return -1;
 }
 
 int

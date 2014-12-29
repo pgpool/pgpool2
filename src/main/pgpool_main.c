@@ -128,7 +128,8 @@ static int find_primary_node(void);
 static int find_primary_node_repeatedly(void);
 static void terminate_all_childrens();
 static void system_will_go_down(int code, Datum arg);
-
+static pid_t pool_waitpid(int *status);
+static char* process_name_from_pid(pid_t pid);
 
 static struct sockaddr_un un_addr;		/* unix domain socket path */
 static struct sockaddr_un pcp_un_addr;  /* unix domain socket path for PCP */
@@ -304,9 +305,6 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 											  ALLOCSET_DEFAULT_MINSIZE,
 											  ALLOCSET_DEFAULT_INITSIZE,
 											  ALLOCSET_DEFAULT_MAXSIZE);
-	
-	ereport(LOG,
-		(errmsg("%s successfully started. version %s (%s)", PACKAGE, VERSION, PGPOOLVERSION)));
 
 	/* fork a child for PCP handling */
 	pcp_unix_fd = create_unix_domain_socket(pcp_un_addr);
@@ -322,6 +320,14 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 
 	retrycnt = 0;		/* reset health check retry counter */
 	sys_retrycnt = 0;	/* reset SystemDB health check retry counter */
+
+	/*
+	 * check for child signals to ensure child startup before reporting successfull start
+	 */
+	CHECK_REQUEST;
+
+	ereport(LOG,
+			(errmsg("%s successfully started. version %s (%s)", PACKAGE, VERSION, PGPOOLVERSION)));
 
 	/* Save primary node id */
 	Req_info->primary_node_id = find_primary_node();
@@ -994,16 +1000,16 @@ static void terminate_all_childrens()
 		return;
 	POOL_SETMASK(&BlockSig);
 
-    kill_all_children(SIGTERM);
+    kill_all_children(SIGINT);
     if(pcp_pid > 0)
-        kill(pcp_pid, SIGTERM);
+        kill(pcp_pid, SIGINT);
     pcp_pid = 0;
     if(worker_pid > 0)
-        kill(worker_pid, SIGTERM);
+        kill(worker_pid, SIGINT);
     worker_pid = 0;
 	if (pool_config->use_watchdog)
 	{
-		wd_kill_watchdog(SIGTERM);
+		wd_kill_watchdog(SIGINT);
 	}
 
     /* wait for all children to exit */
@@ -1951,8 +1957,48 @@ static RETSIGTYPE reap_handler(int sig)
 }
 
 /*
+ * pool_waitpid:
+ * nothing more than a wrapper function over NOHANG mode waitpid() or wait3()
+ * depending on the existance of waitpid in the system
+ */
+static pid_t pool_waitpid(int *status)
+{
+#ifdef HAVE_WAITPID
+	return waitpid(-1, status, WNOHANG);
+#else
+	return wait3(status, WNOHANG, NULL);
+#endif
+}
+
+/*
+ * process_name_from_pid()
+ * helper function for reaper() to report the terminating child process type name
+ */
+static char* process_name_from_pid(pid_t pid)
+{
+	if (pid == pcp_pid)
+		return "PCP child";
+	if (pid == worker_pid)
+		return "worker child";
+	if (pool_config->use_watchdog && wd_is_watchdog_pid(pid))
+		return wd_process_name_from_pid(pid);
+	return "child";
+}
+/*
  * Attach zombie processes and restart child processes.
  * reaper() must be called protected from signals.
+ * Note:
+ * In pgpool child can exit in two ways, either by some signal or by
+ * calling exit() system function.
+ * For the case of child terminating due to a signal the reaper() function
+ * always forks a new respective type of child process. But for the case when
+ * child got terminated by exit() system call than the function checks the exit
+ * code and if the child was exited by POOL_EXIT_FATAL than we do not restarts the
+ * terminating child but shutdowns the pgpool-II. This allow
+ * the child process to inform parent process of fatal failures which needs
+ * to be rectified (e.g startup failure) by user for smooth running of system.
+ * Also the child exits with success status POOL_EXIT_SUCCESS does not gets
+ * restarted.
  */
 static void reaper(void)
 {
@@ -1980,94 +2026,111 @@ static void reaper(void)
 	/* clear SIGCHLD request */
 	sigchld_request = 0;
 
-#ifdef HAVE_WAITPID
-	ereport(DEBUG2,
-			(errmsg("reaper handler, call waitpid()")));
-
-	while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
-#else
-		ereport(DEBUG2,
-				(errmsg("reaper handler, call wait3()")));
-	while ((pid = wait3(&status, WNOHANG, NULL)) > 0)
-#endif
+	while ((pid = pool_waitpid(&status)) > 0)
 	{
-		if (WIFSIGNALED(status) && WTERMSIG(status) == SIGSEGV)
+		pid_t new_pid = 0;
+		bool shutdown_system = false;
+		bool restart_child = true;
+		char *exiting_process_name = process_name_from_pid(pid);
+
+		/*
+		 * Check if the terminating child wants pgpool main to go down with it
+		 */
+		if(WIFEXITED(status))
+		{
+			if(WEXITSTATUS(status) == POOL_EXIT_FATAL)
+			{
+				ereport(DEBUG1,
+						(errmsg("%s process with pid: %d exit with FATAL ERROR. pgpool-II will be shutdown",exiting_process_name, pid)));
+				shutdown_system = true;
+			}
+			else if(WEXITSTATUS(status) == POOL_EXIT_SUCCESS)
+			{
+				ereport(DEBUG1,
+						(errmsg("%s process with pid: %d exit with SUCCESS. child will not be restarted",exiting_process_name, pid)));
+
+				restart_child = false;
+			}
+		}
+		if (WIFSIGNALED(status))
 		{
 			/* Child terminated by segmentation fault. Report it */
-			ereport(WARNING,
-					(errmsg("child process with pid: %d was terminated by segmentation fault", pid)));
+			if(WTERMSIG(status) == SIGSEGV)
+				ereport(WARNING,
+					(errmsg("%s process with pid: %d was terminated by segmentation fault", exiting_process_name,pid)));
+			else
+				ereport(LOG,
+						(errmsg("%s process with pid: %d exits with status %d by signal %d", exiting_process_name, pid, status, WTERMSIG(status))));
 		}
+		else
+			ereport(LOG,
+					(errmsg("%s process with pid: %d exits with status %d", exiting_process_name,pid, status)));
 
 		/* if exiting child process was PCP handler */
 		if (pid == pcp_pid)
 		{
-			if (WIFSIGNALED(status))
-				ereport(LOG,
-                        (errmsg("PCP child %d exits with status %d by signal %d", pid, status, WTERMSIG(status))));
+			if(restart_child)
+			{
+				pcp_pid = pcp_fork_a_child(pcp_unix_fd, pcp_inet_fd, pcp_conf_file);
+				new_pid = pcp_pid;
+			}
 			else
-                         ereport(LOG,
-                                 (errmsg("PCP child %d exits with status %d", pid, status)));
-
-			pcp_pid = pcp_fork_a_child(pcp_unix_fd, pcp_inet_fd, pcp_conf_file);
-			ereport(LOG,
-                    (errmsg("fork a new PCP child pid %d", pcp_pid)));
+				pcp_pid = 0;
 		}
 
 		/* exiting process was worker process */
 		else if (pid == worker_pid)
 		{
-			if (WIFSIGNALED(status))
-				ereport(LOG,
-                        (errmsg("worker child %d exits with status %d by signal %d", pid, status, WTERMSIG(status))));
-			else
-				ereport(LOG,
-                        (errmsg("worker child %d exits with status %d", pid, status)));
-
-			if (status)
+			if(restart_child)
+			{
 				worker_pid = worker_fork_a_child();
-
-			ereport(LOG,
-                    (errmsg("fork a new worker child pid %d", worker_pid)));
+				new_pid = worker_pid;
+			}
+			else
+				worker_pid = 0;
 		}
 
 		/* exiting process was watchdog process */
 		else if (pool_config->use_watchdog && wd_is_watchdog_pid(pid))
 		{
-			if (!wd_reaper_watchdog(pid, status))
-			{
-                ereport(FATAL,
-                    (errmsg("wd_reaper failed")));
-
-			}
+			new_pid = wd_reaper_watchdog(pid, restart_child);
 		}
-
 		else
 		{
-			if (WIFSIGNALED(status))
-				ereport(DEBUG1,
-						(errmsg("reaper handler: child with PID:%d exits with status %d by signal %d", pid, status, WTERMSIG(status))));
-			else
-				ereport(DEBUG1,
-						(errmsg("reaper handler: child with PID:%d exits with status %d", pid, status)));
-
 			/* look for exiting child's pid */
 			for (i=0;i<pool_config->num_init_children;i++)
 			{
 				if (pid == process_info[i].pid)
 				{
 					/* if found, fork a new child */
-					if (!switching && !exiting && status)
+					if (!switching && !exiting && restart_child)
 					{
 						process_info[i].pid = fork_a_child(fds, i);
 						process_info[i].start_time = time(NULL);
-						ereport(DEBUG1,
-								(errmsg("reaper handler: forked a new child with PID:%d", process_info[i].pid)));
-
-						break;
+						new_pid = process_info[i].pid;
 					}
+					else
+						process_info[i].pid = 0;
+					break;
 				}
 			}
 		}
+		if(shutdown_system)
+			ereport(FATAL,
+				(errmsg("%s process exit with fatal error. exiting pgpool-II",exiting_process_name)));
+		else if(restart_child && new_pid)
+		{
+			/* Report if the child was restarted */
+			ereport(LOG,
+					(errmsg("fork a new %s process with pid: %d",exiting_process_name, new_pid)));
+		}
+		else
+		{
+			/* And the child was not restarted */
+			ereport(LOG,
+					(errmsg("%s process with pid: %d exited with success and will not be restarted", exiting_process_name, pid)));
+		}
+
 	}
 	ereport(DEBUG1,
 			(errmsg("reaper handler: exiting normally")));

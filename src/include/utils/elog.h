@@ -120,6 +120,9 @@ typedef enum
 #define PANIC		22			/* take down the other backends with me */
 
  /* #define DEBUG DEBUG1 */	/* Backward compatibility with pre-7.3 */
+#define POOL_EXIT_SUCCESS	0	/* failure exit and child gets restarted*/
+#define POOL_EXIT_NOFATAL	1	/* failure exit and child gets restarted*/
+#define POOL_EXIT_FATAL		3	/* This exit code from child takes down the pgpool main with it */
 
 
 
