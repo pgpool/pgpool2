@@ -87,7 +87,7 @@ static POOL_CONNECTION *get_connection(int front_end_fd, SockAddr *saddr);
 static POOL_CONNECTION_POOL *get_backend_connection(POOL_CONNECTION *frontend);
 static StartupPacket *StartupPacketCopy(StartupPacket *sp);
 static void print_process_status(char *remote_host,char* remote_port);
-static bool backend_cleanup(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL* volatile backend);
+static bool backend_cleanup(POOL_CONNECTION* volatile *frontend, POOL_CONNECTION_POOL* volatile backend);
 static void free_persisten_db_connection_memory(POOL_CONNECTION_POOL_SLOT *cp);
 static int choose_db_node_id(char *str);
 static void child_will_go_down(int code, Datum arg);
@@ -226,7 +226,7 @@ void do_child(int *fds)
 		if (accepted)
 			connection_count_down();
         
-        backend_cleanup(frontend, backend);
+        backend_cleanup(&frontend, backend);
 
         session = pool_get_process_context();
 
@@ -364,7 +364,7 @@ void do_child(int *fds)
 			status = pool_process_query(frontend, backend, 0);
             if(status != POOL_CONTINUE)
             {
-                backend_cleanup(frontend, backend);
+                backend_cleanup(&frontend, backend);
                 break;
             }
 		}
@@ -407,11 +407,10 @@ void do_child(int *fds)
  * return true if backend connection is cached
  */
 static bool
-backend_cleanup(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL* volatile backend)
+backend_cleanup(POOL_CONNECTION* volatile *frontend, POOL_CONNECTION_POOL* volatile backend)
 {
     StartupPacket *sp;
     bool cache_connection = false;
-
     if(backend == NULL)
         return false;
 
@@ -424,12 +423,12 @@ backend_cleanup(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL* volatile backen
      */
     if(sp && pool_config->connection_cache != 0 && sp->system_db == false)
     {
-        if(frontend)
+        if(*frontend)
         {
             MemoryContext oldContext = CurrentMemoryContext;
             PG_TRY();
             {
-                if(pool_process_query(frontend, backend, 1) == POOL_CONTINUE)
+                if(pool_process_query(*frontend, backend, 1) == POOL_CONTINUE)
                 {
                     pool_connection_pool_timer(backend);
                     cache_connection = true;
@@ -447,8 +446,8 @@ backend_cleanup(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL* volatile backen
     if(cache_connection == false)
     {
         reset_connection();
-        pool_close(frontend);
-        frontend = NULL;
+        pool_close(*frontend);
+        *frontend = NULL;
         pool_send_frontend_exits(backend);
         if(sp)
             pool_discard_cp(sp->user, sp->database, sp->major);
