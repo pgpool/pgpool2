@@ -493,7 +493,7 @@ wd_node_request_signal(WD_PACKET_NO packet_no, WdNodeInfo *node)
 	switch (packet_no)
 	{
 		case WD_FAILBACK_REQUEST:
-			send_failback_request(node->node_id_set[0]);
+			send_failback_request(node->node_id_set[0],false);
 			break;
 		case WD_DEGENERATE_BACKEND:
 			degenerate_backend_set(node->node_id_set, node->node_num);

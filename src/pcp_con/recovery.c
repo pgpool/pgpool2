@@ -148,7 +148,7 @@ void start_recovery(int recovery_node)
 		pcp_wakeup_request = 0;
 
 		/* send failback request to pgpool parent */
-		send_failback_request(recovery_node);
+		send_failback_request(recovery_node,false);
 
 		/* wait for failback */
 		failback_wait_count = 0;

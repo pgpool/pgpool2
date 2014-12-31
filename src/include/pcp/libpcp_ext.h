@@ -25,7 +25,7 @@
 
 #ifndef LIBPCP_EXT_H
 #define LIBPCP_EXT_H
-
+#include <stdio.h>
 /*
  * startup packet definitions (v2) stolen from PostgreSQL
  */
@@ -150,6 +150,7 @@ typedef struct {
 	char *database_name;  /* database name */
 	int repli_def_num;    /* number of replication table */
 	int dist_def_num;   /* number of distribution table */
+	int dist_def_index;   /* for internal user number of distribution table */
 	RepliDefInfo *repli_def_slot; /* replication rule list */
 	DistDefInfo *dist_def_slot; /* distribution rule list */
 	QueryCacheTableInfo query_cache_table_info; /* query cache db session info */
@@ -219,29 +220,85 @@ typedef struct {
 	char version[POOLCONFIG_MAXVALLEN+1];
 } POOL_REPORT_VERSION;
 
+typedef enum {
+	PCP_CONNECTION_OK,
+	PCP_CONNECTION_CONNECTED,
+	PCP_CONNECTION_NOT_CONNECTED,
+	PCP_CONNECTION_BAD,
+	PCP_CONNECTION_AUTH_ERROR
+}ConnStateType;
+
+typedef enum {
+	PCP_RES_COMMAND_OK,
+	PCP_RES_BAD_RESPONSE,
+	PCP_RES_BACKEND_ERROR,
+	PCP_RES_INCOMPLETE,
+	PCP_RES_ERROR
+}ResultStateType;
+
+struct PCPConnInfo;
+
+typedef struct {
+	int			isint;		/* 1 if data in slot is integer, 0 otherwise */
+	int			datalen;	/* Length of binary data*/
+	union
+	{
+		int* ptr;
+		int integer;
+	}data;
+	void (*free_func)(struct PCPConnInfo*,void*);	/* custom free function deep free of data */
+}PCPResultSlot;
+
+typedef struct {
+	ResultStateType resultStatus;
+	int				resultSlots;	/* Total number of slots contained in this result */
+	int				nextFillSlot;	/* internal to keep track of last filled slot */
+	PCPResultSlot	resultSlot[1];	/* variable length slots */
+}PCPResultInfo;
+
+typedef struct PCPConnInfo{
+	void		*pcpConn;
+	char	    *errMsg;			/* error message, or NULL if no error */
+	ConnStateType	connState;
+	PCPResultInfo   *pcpResInfo;
+	FILE		*Pfdebug;			/* File pointer to output debug infor */
+	int errorCode;
+}PCPConnInfo;
+
 struct WdInfo;
 
-extern int pcp_connect(char *hostname, int port, char *username, char *password);
-extern void pcp_disconnect(void);
-extern int pcp_terminate_pgpool(char mode);
-extern int pcp_node_count(void);
-extern BackendInfo *pcp_node_info(int nid);
-extern int *pcp_process_count(int *process_count);
-extern ProcessInfo *pcp_process_info(int pid, int *array_size);
-extern SystemDBInfo *pcp_systemdb_info(void);
-extern void free_systemdb_info(SystemDBInfo * si);
-extern int pcp_detach_node(int nid);
-extern int pcp_detach_node_gracefully(int nid);
-extern int pcp_attach_node(int nid);
-extern POOL_REPORT_CONFIG* pcp_pool_status(int *array_size);
-extern void pcp_set_timeout(long sec);
-extern int pcp_recovery_node(int nid);
-extern void pcp_enable_debug(void);
-extern void pcp_disable_debug(void);
-extern int pcp_promote_node(int nid);
-extern int pcp_promote_node_gracefully(int nid);
-extern struct WdInfo *pcp_watchdog_info(int nid);
+extern PCPConnInfo* pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfdebug);
+extern void pcp_disconnect(PCPConnInfo* pcpConn);
 
+extern PCPResultInfo *pcp_terminate_pgpool(PCPConnInfo* pcpCon,char mode);
+extern PCPResultInfo *pcp_node_count(PCPConnInfo* pcpCon);
+extern PCPResultInfo *pcp_node_info(PCPConnInfo* pcpCon, int nid);
+
+extern PCPResultInfo *pcp_process_count(PCPConnInfo* pcpConn);
+extern PCPResultInfo *pcp_process_info(PCPConnInfo* pcpConn, int pid);
+
+extern PCPResultInfo *pcp_systemdb_info(PCPConnInfo* pcpConn);
+extern PCPResultInfo *pcp_detach_node(PCPConnInfo* pcpConn,int nid);
+extern PCPResultInfo *pcp_detach_node_gracefully(PCPConnInfo* pcpConn,int nid);
+extern PCPResultInfo *pcp_attach_node(PCPConnInfo* pcpConn, int nid);
+extern PCPResultInfo *pcp_pool_status(PCPConnInfo *pcpConn);
+extern PCPResultInfo *pcp_recovery_node(PCPConnInfo* pcpConn, int nid);
+extern PCPResultInfo *pcp_promote_node(PCPConnInfo* pcpConn, int nid);
+extern PCPResultInfo *pcp_promote_node_gracefully(PCPConnInfo* pcpConn,int nid);
+extern PCPResultInfo *pcp_watchdog_info(PCPConnInfo* pcpConn, int nid);
+extern void pcp_set_timeout(long sec);
+extern PCPResultInfo *pcp_set_backend_parameter(PCPConnInfo* pcpConn,char* parameter_name, char* value);
+
+
+extern ResultStateType PCPResultStatus(const PCPResultInfo *res);
+extern ConnStateType PCPConnectionStatus(const PCPConnInfo *conn);
+extern void* pcp_get_binary_data(const PCPResultInfo *res, unsigned int slotno);
+extern int pcp_get_int_data(const PCPResultInfo *res, unsigned int slotno);
+extern int pcp_get_data_length(const PCPResultInfo *res, unsigned int slotno);
+extern void pcp_free_result(PCPConnInfo* pcpConn);
+extern void pcp_free_connection(PCPConnInfo* pcpConn);
+extern int pcp_result_slot_count(PCPResultInfo* res);
+extern char *pcp_get_last_error(PCPConnInfo* pcpConn);
 /* ------------------------------
  * pcp_error.c
  * ------------------------------

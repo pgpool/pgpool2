@@ -1139,17 +1139,17 @@ void promote_backend(int node_id)
 }
 
 /* send failback request using SIGUSR1 */
-void send_failback_request(int node_id)
+void send_failback_request(int node_id,bool throw_error)
 {
     if (node_id < 0 || node_id >= MAX_NUM_BACKENDS ||
 		(RAW_MODE && BACKEND_INFO(node_id).backend_status != CON_DOWN && VALID_BACKEND(node_id)))
 	{
 		if (node_id < 0 || node_id >= MAX_NUM_BACKENDS)
-			ereport(LOG,
+			ereport(throw_error?ERROR:LOG,
 					(errmsg("invalid failback request, node id: %d is out of range. node id must be between [0 and %d]"
 							,node_id,MAX_NUM_BACKENDS)));
 		else
-			ereport(LOG,
+			ereport(throw_error?ERROR:LOG,
 					(errmsg("invalid failback request, node id : %d status: [%d] not valid for failback"
 							,node_id,BACKEND_INFO(node_id).backend_status)));
 		return;
@@ -1161,7 +1161,7 @@ void send_failback_request(int node_id)
 
 	if (pool_config->use_watchdog && WD_OK != wd_send_failback_request(node_id))
 	{
-		ereport(LOG,
+		ereport(throw_error?ERROR:LOG,
 				(errmsg("failback request for node_id: %d from pid [%d] is canceled  by other pgpool"
 						, node_id, getpid())));
 		return;

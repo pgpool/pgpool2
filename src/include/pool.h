@@ -528,7 +528,7 @@ extern void NoticeResponse(POOL_CONNECTION *frontend,
 extern void notice_backend_error(int node_id);
 extern void degenerate_backend_set(int *node_id_set, int count);
 extern void promote_backend(int node_id);
-extern void send_failback_request(int node_id);
+extern void send_failback_request(int node_id, bool throw_error);
 
 
 extern void pool_set_timeout(int timeoutval);
@@ -695,4 +695,8 @@ void stat_count_up(int backend_node_id, Node *parsetree);
 uint64 stat_get_select_count(int backend_node_id);
 
 extern int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps);
+
+/* pcp_child.c */
+extern int send_to_pcp_frontend(char* data, int len, bool flush);
+
 #endif /* POOL_H */

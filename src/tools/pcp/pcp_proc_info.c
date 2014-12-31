@@ -34,7 +34,7 @@
 #include "pcp/pcp.h"
 
 static void usage(void);
-static void myexit(ErrorCode e);
+static void myexit(PCPConnInfo* pcpConn);
 
 int
 main(int argc, char **argv)
@@ -52,6 +52,9 @@ main(int argc, char **argv)
 	char * frmt;
 	bool verbose = false;
 	bool all = false;
+	bool debug = false;
+	PCPConnInfo* pcpConn;
+	PCPResultInfo* pcpResInfo;
 
 	static struct option long_options[] = {
 		{"debug", no_argument, NULL, 'd'},
@@ -63,7 +66,7 @@ main(int argc, char **argv)
 	while ((ch = getopt_long(argc, argv, "hdva", long_options, &optindex)) != -1) {
 		switch (ch) {
 		case 'd':
-			pcp_enable_debug();
+			debug = true;
 			break;
 
 		case 'v':
@@ -77,8 +80,7 @@ main(int argc, char **argv)
 		case 'h':
 		case '?':
 		default:
-			usage();
-			exit(0);
+			myexit(NULL);
 		}
 	}
 	argc -= optind;
@@ -118,60 +120,33 @@ main(int argc, char **argv)
 	}
 
 	if (!(argc == 5 || argc == 6))
-	{
-		errorcode = INVALERR;
-		pcp_errorstr(errorcode);
-		myexit(errorcode);
-	}
+		myexit(NULL);
 
 	timeout = atol(argv[0]);
-	if (timeout < 0) {
-		errorcode = INVALERR;
-		pcp_errorstr(errorcode);
-		myexit(errorcode);
-	}
+	if (timeout < 0)
+		myexit(NULL);
 
 	if (strlen(argv[1]) >= MAX_DB_HOST_NAMELEN)
-	{
-		errorcode = INVALERR;
-		pcp_errorstr(errorcode);
-		myexit(errorcode);
-	}
+		myexit(NULL);
 	strcpy(host, argv[1]);
 
 	port = atoi(argv[2]);
 	if (port <= 1024 || port > 65535)
-	{
-		errorcode = INVALERR;
-		pcp_errorstr(errorcode);
-		myexit(errorcode);
-	}
+		myexit(NULL);
 
 	if (strlen(argv[3]) >= MAX_USER_PASSWD_LEN)
-	{
-		errorcode = INVALERR;
-		pcp_errorstr(errorcode);
-		myexit(errorcode);
-	}
+		myexit(NULL);
 	strcpy(user, argv[3]);
 
 	if (strlen(argv[4]) >= MAX_USER_PASSWD_LEN)
-	{
-		errorcode = INVALERR;
-		pcp_errorstr(errorcode);
-		myexit(errorcode);
-	}
+		myexit(NULL);
 	strcpy(pass, argv[4]);
 	
 	if (argc == 6) {
 
 		processID = atoi(argv[5]);
 		if (processID < 0)
-		{
-			errorcode = INVALERR;
-			pcp_errorstr(errorcode);
-			myexit(errorcode);
-		}
+			myexit(NULL);
 	}
 	else {
 		processID = 0;
@@ -179,52 +154,52 @@ main(int argc, char **argv)
 
 	pcp_set_timeout(timeout);
 
-	if (pcp_connect(host, port, user, pass))
+	pcpConn = pcp_connect(host, port, user, pass, debug?stdout:NULL);
+	if(PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
+		myexit(pcpConn);
+
+	pcpResInfo = pcp_process_info(pcpConn, processID);
+	if(PCPResultStatus(pcpResInfo) != PCP_RES_COMMAND_OK)
+		myexit(pcpConn);
+
+	
+	array_size = pcp_result_slot_count(pcpResInfo);
+	int i;
+	char strcreatetime[128];
+	char strstarttime[128];
+
+	for (i = 0; i < array_size; i++)
 	{
-		pcp_errorstr(errorcode);
-		myexit(errorcode);
+		
+		process_info = (ProcessInfo*) pcp_get_binary_data(pcpResInfo, i);
+		if(process_info == NULL)
+			break;
+		if ((!all) && (process_info->connection_info->database[0] == '\0'))
+			continue;
+
+		*strcreatetime = *strstarttime = '\0';
+
+		if (process_info->start_time)
+			strftime(strstarttime, 128, "%Y-%m-%d %H:%M:%S", localtime(&process_info->start_time));
+		if (process_info->connection_info->create_time)
+			strftime(strcreatetime, 128, "%Y-%m-%d %H:%M:%S", localtime(&process_info->connection_info->create_time));
+
+		printf(frmt,
+			process_info->connection_info->database,
+			process_info->connection_info->user,
+			strstarttime,
+			strcreatetime,
+			process_info->connection_info->major,
+			process_info->connection_info->minor,
+			process_info->connection_info->counter,
+			process_info->connection_info->pid,
+			process_info->connection_info->connected,
+			process_info->pid,
+			process_info->connection_info->backend_id);
 	}
 
-	if ((process_info = pcp_process_info(processID, &array_size)) == NULL)
-	{
-		pcp_errorstr(errorcode);
-		pcp_disconnect();
-		myexit(errorcode);
-	} else {
-		int i;
-		char strcreatetime[128];
-		char strstarttime[128];
-
-		for (i = 0; i < array_size; i++)
-		{
-			if ((!all) && (process_info[i].connection_info->database[0] == '\0'))
-				continue;
-
-			*strcreatetime = *strstarttime = '\0';
-
-			if (process_info[i].start_time)
-				strftime(strstarttime, 128, "%Y-%m-%d %H:%M:%S", localtime(&process_info[i].start_time));
-			if (process_info[i].connection_info->create_time)
-				strftime(strcreatetime, 128, "%Y-%m-%d %H:%M:%S", localtime(&process_info[i].connection_info->create_time));
-
-			printf(frmt,
-				process_info[i].connection_info->database,
-				process_info[i].connection_info->user,
-				strstarttime,
-				strcreatetime,
-				process_info[i].connection_info->major,
-				process_info[i].connection_info->minor,
-				process_info[i].connection_info->counter,
-				process_info[i].connection_info->pid,
-				process_info[i].connection_info->connected,
-				process_info[i].pid,
-				process_info[i].connection_info->backend_id);
-        }
-		free(process_info->connection_info);
-		free(process_info);
-	}
-
-	pcp_disconnect();
+	pcp_disconnect(pcpConn);
+	pcp_free_connection(pcpConn);
 
 	return 0;
 }
@@ -249,13 +224,17 @@ usage(void)
 }
 
 static void
-myexit(ErrorCode e)
+myexit(PCPConnInfo* pcpConn)
 {
-	if (e == INVALERR)
+	if (pcpConn == NULL)
 	{
 		usage();
-		exit(e);
 	}
-
-	exit(e);
+	else
+	{
+		fprintf(stderr, "%s\n",pcp_get_last_error(pcpConn)?pcp_get_last_error(pcpConn):"Unknown Error");
+		pcp_disconnect(pcpConn);
+		pcp_free_connection(pcpConn);
+	}
+	exit(-1);
 }

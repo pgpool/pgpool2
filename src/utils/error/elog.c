@@ -146,7 +146,6 @@ static void write_syslog(int level, const char *line);
 static void send_message_to_server_log(ErrorData *edata);
 static void send_message_to_frontend(ErrorData *edata);
 static void write_console(const char *line, int len);
-static void send_message_to_frontend(ErrorData *edata);
 static void log_line_prefix(StringInfo buf, const char *line_prefix, ErrorData *edata);
 static const char *process_log_prefix_padding(const char *p, int *ppadding);
 #ifdef WIN32
@@ -196,25 +195,6 @@ in_error_recursion_trouble(void)
 	/* Pull the plug if recurse more than once */
 	return (recursion_depth > 2);
 }
-
-/*
- * One of those fallback steps is to stop trying to localize the error
- * message, since there's a significant probability that that's exactly
- * what's causing the recursion.
- */
-static inline const char *
-err_gettext(const char *str)
-{
-#ifdef ENABLE_NLS
-	if (in_error_recursion_trouble())
-		return str;
-	else
-		return gettext(str);
-#else
-	return str;
-#endif
-}
-
 
 /*
  * errstart --- begin an error-reporting cycle
@@ -282,8 +262,9 @@ errstart(int elevel, const char *filename, int lineno,
 	/* Determine whether message is enabled for server log output */
 	output_to_server = is_log_level_output(elevel, pool_config->log_min_messages);
 
+
 	/* Determine whether message is enabled for client output */
-	if (whereToSendOutput == DestRemote && elevel != COMMERROR)
+	if (elevel != COMMERROR)
 	{
 		/*
 		 * client_min_messages is honored only after we complete the
@@ -1745,20 +1726,24 @@ write_console(const char *line, int len)
 static void
 send_message_to_frontend(ErrorData *edata)
 {
-    if(processType != PT_CHILD)
+	int protoVersion = PROTO_MAJOR_V3; /* default protocol version is V3 also used by pcp lib */
+	POOL_CONNECTION *frontend;
+
+    if(processType != PT_CHILD && processType != PT_PCP)
         return;
     if(edata->elevel < NOTICE)
         return;
+	if(processType == PT_CHILD)
+	{
+		POOL_SESSION_CONTEXT *session = pool_get_session_context(true);
+		if(!session || !session->frontend)
+			return;
+		frontend = session->frontend;
+		pool_set_nonblock(frontend->fd);
+		protoVersion = frontend->protoVersion;
+	}
 
-    POOL_SESSION_CONTEXT *session = pool_get_session_context(true);
-    if(!session || !session->frontend)
-        return;
-
-    POOL_CONNECTION *frontend = session->frontend;
-
-	pool_set_nonblock(frontend->fd);
-    
-	if (frontend->protoVersion == PROTO_MAJOR_V2)
+	if (protoVersion == PROTO_MAJOR_V2)
 	{
         char* message = edata->message?edata->message:"missing error text";
 		pool_write_noerror(frontend, (edata->elevel < ERROR) ? "N" : "E", 1);
@@ -1766,7 +1751,7 @@ send_message_to_frontend(ErrorData *edata)
         pool_write_noerror(frontend, "\n", 1);
         pool_flush_it(frontend);
 	}
-	else if (frontend->protoVersion == PROTO_MAJOR_V3)
+	else if (protoVersion == PROTO_MAJOR_V3)
 	{
         /*
          * Buffer length for each message part
@@ -1787,8 +1772,10 @@ send_message_to_frontend(ErrorData *edata)
         
 		len = 0;
 		memset(data, 0, MAXDATA);
-        pool_write_noerror(frontend, (edata->elevel < ERROR) ? "N" : "E", 1);
-        
+		if(processType == PT_CHILD)
+			pool_write_noerror(frontend, (edata->elevel < ERROR) ? "N" : "E", 1);
+        else
+			send_to_pcp_frontend((edata->elevel < ERROR) ? "N" : "E", 1, false);
 		/* error level */
 		thislen = snprintf(msgbuf, MAXMSGBUF, "S%s", error_severity(edata->elevel));
 		thislen = Min(thislen, MAXMSGBUF);
@@ -1843,12 +1830,19 @@ send_message_to_frontend(ErrorData *edata)
         
 		sendlen = len;
 		len = htonl(len + 4);
-		pool_write_noerror(frontend, &len, sizeof(len));
-		pool_write_noerror(frontend, data, sendlen);
-        pool_flush_it(frontend);
-
+		if(processType == PT_CHILD)
+		{
+			pool_write_noerror(frontend, &len, sizeof(len));
+			pool_write_noerror(frontend, data, sendlen);
+			pool_flush_it(frontend);
+			pool_unset_nonblock(frontend->fd);
+		}
+		else
+		{
+			send_to_pcp_frontend((char*)&len, sizeof(len), false);
+			send_to_pcp_frontend(data, sendlen, true);
+		}
 	}
-	pool_unset_nonblock(frontend->fd);
 }
 
 /*

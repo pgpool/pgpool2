@@ -33,7 +33,7 @@
 #include "pcp/pcp.h"
 
 static void usage(void);
-static void myexit(ErrorCode e);
+static void myexit(PCPConnInfo* pcpConn);
 
 int
 main(int argc, char **argv)
@@ -48,6 +48,9 @@ main(int argc, char **argv)
 	int ch;
 	int	optindex;
     bool verbose = false;
+	bool debug = false;
+	PCPConnInfo* pcpConn;
+	PCPResultInfo* pcpResInfo;
 
 	static struct option long_options[] = {
 		{"debug", no_argument, NULL, 'd'},
@@ -59,7 +62,7 @@ main(int argc, char **argv)
     while ((ch = getopt_long(argc, argv, "hdv", long_options, &optindex)) != -1) {
 		switch (ch) {
 		case 'd':
-			pcp_enable_debug();
+			debug = true;
 			break;
 
 		case 'v':
@@ -69,101 +72,67 @@ main(int argc, char **argv)
 		case 'h':
 		case '?':
 		default:
-			usage();
-			exit(0);
+			myexit(NULL);
 		}
 	}
 	argc -= optind;
 	argv += optind;
 
 	if (argc != 6)
-	{
-		errorcode = INVALERR;
-		pcp_errorstr(errorcode);
-		myexit(errorcode);
-	}
+		myexit(NULL);
 
 	timeout = atol(argv[0]);
-	if (timeout < 0) {
-		errorcode = INVALERR;
-		pcp_errorstr(errorcode);
-		myexit(errorcode);
-	}
+	if (timeout < 0)
+		myexit(NULL);
 
 	if (strlen(argv[1]) >= MAX_DB_HOST_NAMELEN)
-	{
-		errorcode = INVALERR;
-		pcp_errorstr(errorcode);
-		myexit(errorcode);
-	}
+		myexit(NULL);
 	strcpy(host, argv[1]);
 
 	port = atoi(argv[2]);
 	if (port <= 1024 || port > 65535)
-	{
-		errorcode = INVALERR;
-		pcp_errorstr(errorcode);
-		myexit(errorcode);
-	}
+		myexit(NULL);
 
 	if (strlen(argv[3]) >= MAX_USER_PASSWD_LEN)
-	{
-		errorcode = INVALERR;
-		pcp_errorstr(errorcode);
-		myexit(errorcode);
-	}
+		myexit(NULL);
 	strcpy(user, argv[3]);
 
 	if (strlen(argv[4]) >= MAX_USER_PASSWD_LEN)
-	{
-		errorcode = INVALERR;
-		pcp_errorstr(errorcode);
-		myexit(errorcode);
-	}
+		myexit(NULL);
 	strcpy(pass, argv[4]);
 
 	nodeID = atoi(argv[5]);
 	if (nodeID < 0 || nodeID > MAX_NUM_BACKENDS)
-	{
-		errorcode = INVALERR;
-		pcp_errorstr(errorcode);
-		myexit(errorcode);
-	}
+		myexit(NULL);
 
 	pcp_set_timeout(timeout);
+	pcpConn = pcp_connect(host, port, user, pass, debug?stdout:NULL);
+	if(PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
+		myexit(pcpConn);
 
-	if (pcp_connect(host, port, user, pass))
-	{
-		pcp_errorstr(errorcode);
-		myexit(errorcode);
-	}
+	pcpResInfo = pcp_node_info(pcpConn,nodeID);
+	if(PCPResultStatus(pcpResInfo) != PCP_RES_COMMAND_OK)
+		myexit(pcpConn);
 
-	if ((backend_info = pcp_node_info(nodeID)) == NULL)
+	backend_info = (BackendInfo *) pcp_get_binary_data(pcpResInfo,0);
+
+	if (verbose)
 	{
-		pcp_errorstr(errorcode);
-		pcp_disconnect();
-		myexit(errorcode);
+		printf("Hostname: %s\nPort    : %d\nStatus  : %d\nWeight  : %f\n", 
+			   backend_info->backend_hostname,
+			   backend_info->backend_port,
+			   backend_info->backend_status,
+			   backend_info->backend_weight/RAND_MAX);
 	} else {
-        if (verbose)
-        {
-		    printf("Hostname: %s\nPort    : %d\nStatus  : %d\nWeight  : %f\n", 
-		    	   backend_info->backend_hostname,
-		    	   backend_info->backend_port,
-		    	   backend_info->backend_status,
-		    	   backend_info->backend_weight/RAND_MAX);
-        } else {
-		    printf("%s %d %d %f\n", 
-		    	   backend_info->backend_hostname,
-		    	   backend_info->backend_port,
-		    	   backend_info->backend_status,
-		    	   backend_info->backend_weight/RAND_MAX);
-        }
-
-		free(backend_info);
+		printf("%s %d %d %f\n", 
+			   backend_info->backend_hostname,
+			   backend_info->backend_port,
+			   backend_info->backend_status,
+			   backend_info->backend_weight/RAND_MAX);
 	}
 
-	pcp_disconnect();
-
+	pcp_disconnect(pcpConn);
+	pcp_free_connection(pcpConn);
 	return 0;
 }
 
@@ -186,13 +155,19 @@ usage(void)
 }
 
 static void
-myexit(ErrorCode e)
+myexit(PCPConnInfo* pcpConn)
 {
-	if (e == INVALERR)
+	if (pcpConn == NULL)
 	{
 		usage();
-		exit(e);
 	}
-
-	exit(e);
+	else
+	{
+		fprintf(stderr, "%s\n",pcp_get_last_error(pcpConn)?pcp_get_last_error(pcpConn):"Unknown Error");
+		pcp_disconnect(pcpConn);
+		pcp_free_connection(pcpConn);
+	}
+	exit(-1);
 }
+
+
