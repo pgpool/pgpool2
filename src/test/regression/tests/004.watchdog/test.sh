@@ -35,6 +35,10 @@ egrep 'backend_data_directory0|backend_data_directory1|failover_command|follow_m
 wait_for_pgpool_startup
 cd ..
 
+echo "wait 5sec"
+sleep 5
+
+
 # stop master pgpool and see if standby take over
 $PGPOOL_INSTALL_DIR/bin/pgpool -f master/etc/pgpool.conf -m f stop
 
@@ -46,6 +50,8 @@ do
 		echo "Master escalation done."
 		break;
 	fi
+	echo "[check] $i times"
+	sleep 2
 done
 
 cd master
