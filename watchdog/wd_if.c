@@ -169,6 +169,7 @@ exec_ifconfig(char * path,char * command)
 	int pid, i = 0;
 	char* buf;
 	char *bp, *ep;
+	sighandler_t sig_org;
 
 	if (pipe(pfd) == -1)
 	{
@@ -206,7 +207,7 @@ exec_ifconfig(char * path,char * command)
 	}
 	args[i++] = NULL;
 
-        signal(SIGCHLD, SIG_DFL);
+	sig_org = signal(SIGCHLD, SIG_DFL);
 
 	pid = fork();
 	if (pid == 0)
@@ -232,6 +233,7 @@ exec_ifconfig(char * path,char * command)
 
 				pool_debug("exec_ifconfig: wait() failed. reason: %s ", strerror(errno));
                                 signal(SIGCHLD, SIG_IGN);
+				signal(SIGCHLD, sig_org);
 				return WD_NG;
 			}
 
@@ -239,7 +241,7 @@ exec_ifconfig(char * path,char * command)
 			{
 				pool_debug("exec_ifconfig: '%s' failed. exit status: %d",
 				           command, WEXITSTATUS(status));
-                                signal(SIGCHLD, SIG_IGN);
+				signal(SIGCHLD, sig_org);
 				return WD_NG;
 			}
 			else
@@ -249,7 +251,7 @@ exec_ifconfig(char * path,char * command)
 	}
 
 	pool_debug("exec_ifconfig: '%s' succeeded", command);
-        signal(SIGCHLD, SIG_IGN);
+	signal(SIGCHLD, sig_org);
 	return WD_OK;
 }
 
