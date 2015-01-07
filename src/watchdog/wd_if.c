@@ -180,6 +180,7 @@ exec_if_cmd(char * path,char * command)
 	int pid, i = 0;
 	char* buf;
 	char *bp, *ep;
+	sighandler_t sig_org;
 
 	if (pipe(pfd) == -1)
 	{
@@ -218,7 +219,7 @@ exec_if_cmd(char * path,char * command)
 	}
 	args[i++] = NULL;
 
-	signal(SIGCHLD, SIG_DFL);
+	sig_org = signal(SIGCHLD, SIG_DFL);
 
 	pid = fork();
 	if (pid == 0)
@@ -247,7 +248,7 @@ exec_if_cmd(char * path,char * command)
 					(errmsg("watchdog exec wait()failed"),
 						 errdetail("wait() system call failed with reason \"%s\"", strerror(errno))));
 
-				signal(SIGCHLD, SIG_IGN);
+				signal(SIGCHLD, sig_org);
 				return WD_NG;
 			}
 
@@ -257,7 +258,7 @@ exec_if_cmd(char * path,char * command)
 					(errmsg("watchdog exec interface up/down command failed"),
 						errdetail("'%s' failed. exit status: %d",command, WEXITSTATUS(status))));
 
-				signal(SIGCHLD, SIG_IGN);
+				signal(SIGCHLD, sig_org);
 				return WD_NG;
 			}
 			else
@@ -268,7 +269,7 @@ exec_if_cmd(char * path,char * command)
 	ereport(DEBUG1,
 		(errmsg("watchdog exec interface up/down command: '%s' succeeded", command)));
 
-	signal(SIGCHLD, SIG_IGN);
+	signal(SIGCHLD, sig_org);
 	return WD_OK;
 }
 
