@@ -232,7 +232,6 @@ exec_ifconfig(char * path,char * command)
 					continue;
 
 				pool_debug("exec_ifconfig: wait() failed. reason: %s ", strerror(errno));
-                                signal(SIGCHLD, SIG_IGN);
 				signal(SIGCHLD, sig_org);
 				return WD_NG;
 			}
