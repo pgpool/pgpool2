@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -411,7 +411,8 @@ backend_cleanup(POOL_CONNECTION* volatile *frontend, POOL_CONNECTION_POOL* volat
 {
     StartupPacket *sp;
     bool cache_connection = false;
-    if(backend == NULL)
+
+    if (backend == NULL)
         return false;
 
     sp = MASTER_CONNECTION(backend)->sp;
@@ -421,9 +422,9 @@ backend_cleanup(POOL_CONNECTION* volatile *frontend, POOL_CONNECTION_POOL* volat
      * system db and connection cache configuration
      * parameter is enabled
      */
-    if(sp && pool_config->connection_cache != 0 && sp->system_db == false)
+    if (sp && pool_config->connection_cache != 0 && sp->system_db == false)
     {
-        if(*frontend)
+        if (*frontend)
         {
             MemoryContext oldContext = CurrentMemoryContext;
             PG_TRY();
@@ -443,12 +444,27 @@ backend_cleanup(POOL_CONNECTION* volatile *frontend, POOL_CONNECTION_POOL* volat
             PG_END_TRY();
         }
     }
-    if(cache_connection == false)
+
+	/*
+	 * Close frontend connection
+	 */
+	reset_connection();
+	pool_close(*frontend);
+	*frontend = NULL;
+
+	/*
+	 * For those special databases we don't cache connection to backend.
+	 */
+    if (sp &&
+		(!strcmp(sp->database, "template0") ||
+		 !strcmp(sp->database, "template1") ||
+		 !strcmp(sp->database, "postgres") ||
+		 !strcmp(sp->database, "regression")))
+        cache_connection = false;
+
+    if (cache_connection == false)
     {
-        reset_connection();
-        pool_close(*frontend);
-        *frontend = NULL;
-        pool_send_frontend_exits(backend);
+		pool_send_frontend_exits(backend);
         if(sp)
             pool_discard_cp(sp->user, sp->database, sp->major);
     }
