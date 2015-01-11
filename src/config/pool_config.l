@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -61,6 +61,7 @@ typedef enum {
 static char *extract_string(char *value, POOL_TOKEN token);
 static char **extract_string_tokens(char *str, char *delim, int *n);
 static void clear_host_entry(int slot);
+static bool check_redirect_node_spec(char *node_spec);
 
 %}
 
@@ -3300,7 +3301,17 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			for (i=0;i<lrtokens->pos;i++)
 			{
-				if (add_regex_array(pool_config->redirect_dbnames, lrtokens->token[i].left_token))
+				if (!check_redirect_node_spec(lrtokens->token[i].right_token))
+				{
+					fclose(fd);
+					ereport(error_level,
+						(errmsg("invalid configuration for key \"%s\"",key),
+							errdetail("wrong redirect db node spec: \"%s\"", lrtokens->token[i].right_token)));
+				   return(-1);
+				}
+
+				if (*(lrtokens->token[i].left_token) == '\0' ||
+					add_regex_array(pool_config->redirect_dbnames, lrtokens->token[i].left_token))
 				{
 					fclose(fd);
 					ereport(error_level,
@@ -3340,12 +3351,23 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			for (i=0;i<lrtokens->pos;i++)
 			{
-				if (add_regex_array(pool_config->redirect_app_names, lrtokens->token[i].left_token))
+				if (!check_redirect_node_spec(lrtokens->token[i].right_token))
 				{
 					fclose(fd);
 					ereport(error_level,
 						(errmsg("invalid configuration for key \"%s\"",key),
-							errdetail("wrong redirect dbname regular expression: \"%s\"", lrtokens->token[i].left_token)));
+							errdetail("wrong redirect db node spec: \"%s\"", lrtokens->token[i].right_token)));
+				   return(-1);
+				}
+
+
+				if (*(lrtokens->token[i].left_token) == '\0' ||
+					add_regex_array(pool_config->redirect_app_names, lrtokens->token[i].left_token))
+				{
+					fclose(fd);
+					ereport(error_level,
+						(errmsg("invalid configuration for key \"%s\"",key),
+							errdetail("wrong redirect app name regular expression: \"%s\"", lrtokens->token[i].left_token)));
 					return(-1);
 				}
 			}
@@ -3745,4 +3767,41 @@ char *pool_flag_to_str(unsigned short flag)
 	else if (POOL_DISALLOW_TO_FAILOVER(flag))
 		snprintf(buf, sizeof(buf), "DISALLOW_TO_FAILOVER");
 	return buf;
+}
+
+/*
+ * Check DB node spec. node spec should be either "primary", "standby" or
+ * numeric DB node id.
+*/
+bool check_redirect_node_spec(char *node_spec)
+{
+	int len = strlen(node_spec);
+	int i;
+	long val;
+
+	if (len <= 0)
+		return false;
+
+	if (strcasecmp("primary", node_spec) == 0)
+	{
+		return true;
+	}
+
+	if (strcasecmp("standby", node_spec) == 0)
+	{
+		return true;
+	}
+
+	for (i=0;i<len;i++)
+	{
+		if (!isdigit((int)node_spec[i]))
+				return false;
+	}
+
+	val = atol(node_spec);
+
+    if (val >=0 && val < MAX_NUM_BACKENDS)
+		return true;
+
+    return false;
 }

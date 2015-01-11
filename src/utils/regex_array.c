@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -95,13 +95,12 @@ int add_regex_array(RegArray *ar, char *pattern)
 		strncpy(pat, pattern, len + 1);
 	}
 
-	if (len > 0 && pattern[len - 1] != '$')
+	if (len == 0 || (len > 0 && pattern[len - 1] != '$'))
 	{
 		strncat(pat, "$", 2);
 	}
 
 	/* Compile our regex */
-
 	regex = palloc(sizeof(regex_t));
 	if (regcomp(regex, pat, regex_flags) != 0)
 	{
