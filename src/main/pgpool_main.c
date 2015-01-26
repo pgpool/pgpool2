@@ -2995,3 +2995,21 @@ static void system_will_go_down(int code, Datum arg)
     POOL_SETMASK(&UnBlockSig);
     
 }
+
+int pool_send_to_frontend(char* data, int len, bool flush)
+{
+	if (processType == PT_PCP)
+		return send_to_pcp_frontend(data, len, flush);
+	else if (processType == PT_CHILD)
+		return send_to_pg_frontend(data, len, flush);
+	return -1;
+}
+
+int pool_frontend_exists(void)
+{
+	if (processType == PT_PCP)
+		return pcp_frontend_exists();
+	else if (processType == PT_CHILD)
+		return pg_frontend_exists();
+	return -1;
+}

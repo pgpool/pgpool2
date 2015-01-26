@@ -1727,30 +1727,29 @@ static void
 send_message_to_frontend(ErrorData *edata)
 {
 	int protoVersion = PROTO_MAJOR_V3; /* default protocol version is V3 also used by pcp lib */
-	POOL_CONNECTION *frontend;
 
-    if(processType != PT_CHILD && processType != PT_PCP)
-        return;
-    if(edata->elevel < NOTICE)
-        return;
+	if (pool_frontend_exists() < 0 )
+		return;
+
 	if(processType == PT_CHILD)
 	{
-		POOL_SESSION_CONTEXT *session = pool_get_session_context(true);
-		if(!session || !session->frontend)
+		/*
+		 * Do not forward the debug messages to client before session is initialized
+		 */
+		if (edata->elevel < ERROR && pool_get_session_context(true) == NULL)
 			return;
-		frontend = session->frontend;
-		pool_set_nonblock(frontend->fd);
-		protoVersion = frontend->protoVersion;
+		protoVersion = get_frontend_protocol_version();
+		set_pg_frontend_blocking(false);
 	}
 
 	if (protoVersion == PROTO_MAJOR_V2)
 	{
-        char* message = edata->message?edata->message:"missing error text";
-		pool_write_noerror(frontend, (edata->elevel < ERROR) ? "N" : "E", 1);
-        pool_write_noerror(frontend, message, strlen(message));
-        pool_write_noerror(frontend, "\n", 1);
-        pool_flush_it(frontend);
+		char* message = edata->message?edata->message:"missing error text";
+		pool_send_to_frontend((edata->elevel < ERROR) ? "N" : "E", 1,false);
+		pool_send_to_frontend(message, strlen(message),false);
+		pool_send_to_frontend("\n", 1,true);
 	}
+
 	else if (protoVersion == PROTO_MAJOR_V3)
 	{
         /*
@@ -1772,10 +1771,8 @@ send_message_to_frontend(ErrorData *edata)
         
 		len = 0;
 		memset(data, 0, MAXDATA);
-		if(processType == PT_CHILD)
-			pool_write_noerror(frontend, (edata->elevel < ERROR) ? "N" : "E", 1);
-        else
-			send_to_pcp_frontend((edata->elevel < ERROR) ? "N" : "E", 1, false);
+		pool_send_to_frontend((edata->elevel < ERROR) ? "N" : "E", 1, false);
+
 		/* error level */
 		thislen = snprintf(msgbuf, MAXMSGBUF, "S%s", error_severity(edata->elevel));
 		thislen = Min(thislen, MAXMSGBUF);
@@ -1830,19 +1827,14 @@ send_message_to_frontend(ErrorData *edata)
         
 		sendlen = len;
 		len = htonl(len + 4);
-		if(processType == PT_CHILD)
-		{
-			pool_write_noerror(frontend, &len, sizeof(len));
-			pool_write_noerror(frontend, data, sendlen);
-			pool_flush_it(frontend);
-			pool_unset_nonblock(frontend->fd);
-		}
-		else
-		{
-			send_to_pcp_frontend((char*)&len, sizeof(len), false);
-			send_to_pcp_frontend(data, sendlen, true);
-		}
+
+		pool_send_to_frontend((char*)&len, sizeof(len), false);
+		pool_send_to_frontend(data, sendlen, true);
+
 	}
+
+	if (processType == PT_CHILD)
+		set_pg_frontend_blocking(true);
 }
 
 /*

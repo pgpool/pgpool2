@@ -1523,10 +1523,17 @@ do_pcp_flush(PCP_CONNECTION *frontend)
 int send_to_pcp_frontend(char* data, int len, bool flush)
 {
 	int ret;
-	if(processType != PT_PCP || pcp_frontend == NULL)
+	if (processType != PT_PCP || pcp_frontend == NULL)
 		return -1;
 	ret = pcp_write(pcp_frontend, data, len);
-	if(flush && !ret)
+	if (flush && !ret)
 		ret = pcp_flush(pcp_frontend);
 	return ret;
+}
+
+int pcp_frontend_exists(void)
+{
+	if (processType != PT_PCP || pcp_frontend == NULL)
+		return -1;
+	return 0;
 }
