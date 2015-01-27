@@ -54,9 +54,8 @@ static PCPResultInfo* _pcp_promote_node(PCPConnInfo* pcpConn,int nid, bool grace
 static PCPResultInfo* process_pcp_response(PCPConnInfo* pcpConn, char sentMsg);
 static void setCommandSuccessful(PCPConnInfo* pcpConn);
 static void setResultStatus(PCPConnInfo* pcpConn, ResultStateType resultState);
-static void setResultBinaryData(PCPResultInfo *res, unsigned int slotno, void *value, int datalen);
-static int setNextResultBinaryData(PCPResultInfo *res, void *value, int datalen);
-static void setResultBinaryDataFreeFunc(PCPResultInfo *res, unsigned int slotno, void (*free_func)(struct PCPConnInfo*,void*) );
+static void setResultBinaryData(PCPResultInfo *res, unsigned int slotno, void *value, int datalen, void (*free_func)(struct PCPConnInfo*,void*) );
+static int setNextResultBinaryData(PCPResultInfo *res, void *value, int datalen, void (*free_func)(struct PCPConnInfo*,void*) );
 static void setResultIntData(PCPResultInfo *res, unsigned int slotno, int value);
 
 static void process_node_info_response(PCPConnInfo* pcpConn, char* buf, int len);
@@ -225,8 +224,16 @@ process_salt_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 {
 	char* salt = palloc((sizeof(char) * 4));
 	memcpy(salt, buf, 4);
-	setNextResultBinaryData(pcpConn->pcpResInfo, (void *)salt, sizeof(salt));
-	setCommandSuccessful(pcpConn);
+	if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)salt, sizeof(salt) , NULL) < 0 )
+	{
+		pcp_internal_error(pcpConn,
+						   "command failed. invalid response\n");
+		setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+	}
+	else
+	{
+		setCommandSuccessful(pcpConn);
+	}
 }
 /* --------------------------------
  * pcp_authorize - authenticate with pgpool using username and password
@@ -650,8 +657,16 @@ process_node_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 		index = (char *) memchr(index, '\0', len) + 1;
 		if (index != NULL)
 			backend_info->backend_weight = atof(index);
-		setNextResultBinaryData(pcpConn->pcpResInfo, (void *)backend_info, sizeof(BackendInfo));
-		setCommandSuccessful(pcpConn);
+		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)backend_info, sizeof(BackendInfo) , NULL) < 0)
+		{
+			pcp_internal_error(pcpConn,
+							   "command failed. invalid response\n");
+			setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+		}
+		else
+		{
+			setCommandSuccessful(pcpConn);
+		}
 	}
 	else
 	{
@@ -714,8 +729,16 @@ process_process_count_response(PCPConnInfo* pcpConn, char* buf, int len)
 			process_list[i] = atoi(index);
 		}
 		setResultSlotCount(pcpConn,1);
-		setNextResultBinaryData(pcpConn->pcpResInfo, process_list, (sizeof(int) * process_count));
-		setCommandSuccessful(pcpConn);
+		if (setNextResultBinaryData(pcpConn->pcpResInfo, process_list, (sizeof(int) * process_count) , NULL) < 0)
+		{
+			pcp_internal_error(pcpConn,
+							   "command failed. invalid response\n");
+			setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+		}
+		else
+		{
+			setCommandSuccessful(pcpConn);
+		}
 	}
 	else
 	{
@@ -792,7 +815,6 @@ process_process_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 	}
 	else if (strcmp(buf, "ProcessInfo") == 0)
 	{
-		int resNum;
 		if(PCPResultStatus(pcpConn->pcpResInfo) != PCP_RES_INCOMPLETE)
 			goto INVALID_RESPONSE;
 
@@ -863,10 +885,9 @@ process_process_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 			goto INVALID_RESPONSE;
 
 		processInfo->connection_info->connected = atoi(index);
-		resNum = setNextResultBinaryData(pcpConn->pcpResInfo, (void *)processInfo, sizeof(processInfo));
-		if(resNum < 0)
+		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)processInfo, sizeof(processInfo), free_processInfo) < 0)
 			goto INVALID_RESPONSE;
-		setResultBinaryDataFreeFunc(pcpConn->pcpResInfo, resNum -1, free_processInfo);
+
 		return;
 	}
 
@@ -926,7 +947,6 @@ static void
 process_systemdb_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 {
 	char *index;
-	int resNum;
 	SystemDBInfo *systemdb_info;
 
 	if (strcmp(buf, "SystemDBInfo") == 0)
@@ -981,10 +1001,9 @@ process_systemdb_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 			systemdb_info->dist_def_slot = (DistDefInfo *)palloc(sizeof(DistDefInfo) * systemdb_info->dist_def_num);
 			systemdb_info->dist_def_index = 0;
 		}
-		resNum = setNextResultBinaryData(pcpConn->pcpResInfo, (void *)systemdb_info, sizeof(SystemDBInfo));
-		if(resNum <= 0)
+		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)systemdb_info, sizeof(SystemDBInfo), free_systemdb_info) < 0)
 			goto INVALID_RESPONSE;
-		setResultBinaryDataFreeFunc(pcpConn->pcpResInfo, resNum -1, free_systemdb_info);
+
 		return;
 	}
 	else if (strcmp(buf, "DistDefInfo") == 0)
@@ -1289,7 +1308,7 @@ process_pool_status_response(PCPConnInfo* pcpConn, char* buf, int len)
 		if(index == NULL)
 			goto INVALID_RESPONSE;
 		strlcpy(status->desc, index, POOLCONFIG_MAXDESCLEN+1);
-		if(setNextResultBinaryData(pcpConn->pcpResInfo, (void *)status, sizeof(POOL_REPORT_CONFIG)) < 0)
+		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)status, sizeof(POOL_REPORT_CONFIG) , NULL) < 0)
 			goto INVALID_RESPONSE;
 		return;
 	}
@@ -1439,8 +1458,16 @@ process_watchdog_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 		if (index != NULL)
 			watchdog_info->status = atof(index);
 
-		setNextResultBinaryData(pcpConn->pcpResInfo, (void *)watchdog_info,sizeof(WdInfo));
-		setCommandSuccessful(pcpConn);
+		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)watchdog_info,sizeof(WdInfo) , NULL) < 0)
+		{
+			pcp_internal_error(pcpConn,
+							   "command failed. invalid response\n");
+			setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+		}
+		else
+		{
+			setCommandSuccessful(pcpConn);
+		}
 	}
 	else
 	{
@@ -1593,37 +1620,32 @@ setResultIntData(PCPResultInfo *res, unsigned int slotno, int value)
 		res->resultSlot[slotno].datalen = 0;
 		res->resultSlot[slotno].isint = 1;
 		res->resultSlot[slotno].data.integer = value;
+		res->resultSlot[slotno].free_func = NULL;
 	}
 }
 
 static void
-setResultBinaryData(PCPResultInfo *res, unsigned int slotno, void *value, int datalen)
+setResultBinaryData(PCPResultInfo *res, unsigned int slotno, void *value, int datalen, void (*free_func)(struct PCPConnInfo*,void*))
 {
 	if(res)
 	{
 		res->resultSlot[slotno].datalen = datalen;
 		res->resultSlot[slotno].isint = 0;
 		res->resultSlot[slotno].data.ptr = value;
+		res->resultSlot[slotno].free_func = free_func;
 	}
 }
 
 static int
-setNextResultBinaryData(PCPResultInfo *res, void *value, int datalen)
+setNextResultBinaryData(PCPResultInfo *res, void *value, int datalen, void (*free_func)(struct PCPConnInfo*,void*))
 {
 	if(res && res->nextFillSlot < res->resultSlots)
 	{
-		setResultBinaryData(res,res->nextFillSlot,value,datalen);
+		setResultBinaryData(res,res->nextFillSlot,value,datalen, free_func);
 		res->nextFillSlot++;
 		return res->nextFillSlot;
 	}
 	return -1;
-}
-
-static void
-setResultBinaryDataFreeFunc(PCPResultInfo *res, unsigned int slotno, void (*free_func)(struct PCPConnInfo*,void*) )
-{
-	if(res)
-		res->resultSlot[slotno].free_func = free_func;
 }
 
 static int
