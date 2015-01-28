@@ -96,21 +96,21 @@ Postgresql extensions libraries and sql files for pgpool-II.
            --disable-rpath \
            --sysconfdir=%{_sysconfdir}/%{short_name}/
 
-make %{?smp_mflags}
+make %{?_smp_mflags}
 
 %install
 rm -rf %{buildroot}
 
 # make pgpool-II
 export PATH=%{pghome}/bin:$PATH
-make %{?smp_mflags} DESTDIR=%{buildroot} install
+make %{?_smp_mflags} DESTDIR=%{buildroot} install
 
 # install to PostgreSQL
-make %{?smp_mflags} DESTDIR=%{buildroot} install -C src/sql/pgpool-recovery
+make %{?_smp_mflags} DESTDIR=%{buildroot} install -C src/sql/pgpool-recovery
 %if %{pg_version} <= 93
 # From PostgreSQL 9.4 pgpool-regclass.so is not needed anymore
 # because 9.4 or later has to_regclass.
-make %{?smp_mflags} DESTDIR=%{buildroot} install -C src/sql/pgpool-regclass
+make %{?_smp_mflags} DESTDIR=%{buildroot} install -C src/sql/pgpool-regclass
 %endif
 
 install -d %{buildroot}%{_datadir}/%{short_name}
