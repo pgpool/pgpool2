@@ -115,6 +115,7 @@ volatile sig_atomic_t got_sighup = 0;
 
 char remote_host[NI_MAXHOST];	/* client host */
 char remote_port[NI_MAXSERV];	/* client port */
+POOL_CONNECTION* volatile child_frontend = NULL;
 
 /*
 * child main loop
@@ -122,8 +123,6 @@ char remote_port[NI_MAXSERV];	/* client port */
 void do_child(int *fds)
 {
 	sigjmp_buf	local_sigjmp_buf;
-
-	POOL_CONNECTION* volatile frontend = NULL;
 	POOL_CONNECTION_POOL* volatile backend = NULL;
 	struct timeval now;
 	struct timezone tz;
@@ -209,13 +208,12 @@ void do_child(int *fds)
 		pool_reopen_passwd_file();
 	}
 
-
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
 	{
-        POOL_PROCESS_CONTEXT *session;
+		POOL_PROCESS_CONTEXT *session;
 		disable_authentication_timeout();
 		/* Since not using PG_TRY, must reset error stack by hand */
-        error_context_stack = NULL;
+		error_context_stack = NULL;
 
 		EmitErrorReport();
         /* process the cleanup in ProcessLoopContext which will get reset
@@ -225,37 +223,37 @@ void do_child(int *fds)
 
 		if (accepted)
 			connection_count_down();
-        
-        backend_cleanup(&frontend, backend);
 
-        session = pool_get_process_context();
+		backend_cleanup(&child_frontend, backend);
 
-        if(session)
-        {
-            /* Destroy session context */
-            pool_session_context_destroy();
+		session = pool_get_process_context();
 
-            /* Mark this connection pool is not connected from frontend */
-            pool_coninfo_unset_frontend_connected(pool_get_process_context()->proc_id, pool_pool_index());
+		if(session)
+		{
+			/* Destroy session context */
+			pool_session_context_destroy();
 
-            /* increment queries counter if necessary */
-            if ( pool_config->child_max_connections > 0 )
-                connections_count++;
+			/* Mark this connection pool is not connected from frontend */
+			pool_coninfo_unset_frontend_connected(pool_get_process_context()->proc_id, pool_pool_index());
 
-            /* check if maximum connections count for this child reached */
-            if ( ( pool_config->child_max_connections > 0 ) &&
-                ( connections_count >= pool_config->child_max_connections ) )
-            {
-                ereport(LOG,
-                    (errmsg("child exiting, %d connections reached", pool_config->child_max_connections)));
+			/* increment queries counter if necessary */
+			if ( pool_config->child_max_connections > 0 )
+				connections_count++;
+
+			/* check if maximum connections count for this child reached */
+			if ( ( pool_config->child_max_connections > 0 ) &&
+				( connections_count >= pool_config->child_max_connections ) )
+			{
+				ereport(LOG,
+						(errmsg("child exiting, %d connections reached", pool_config->child_max_connections)));
 				child_exit(2);
-            }
+			}
         }
 
-		if(frontend)
+		if(child_frontend)
 		{
-			pool_close(frontend);
-			frontend = NULL;
+			pool_close(child_frontend);
+			child_frontend = NULL;
 		}
 
 		MemoryContextSwitchTo(TopMemoryContext);
@@ -306,10 +304,10 @@ void do_child(int *fds)
 
 		check_config_reload();
 		validate_backend_connectivity(front_end_fd);
-		frontend = get_connection(front_end_fd, &saddr);
+		child_frontend = get_connection(front_end_fd, &saddr);
 
 		/* set frontend fd to blocking */
-		pool_unset_nonblock(frontend->fd);
+		pool_unset_nonblock(child_frontend->fd);
 
 		/* reset busy flag */
 		idle = 0;
@@ -321,11 +319,11 @@ void do_child(int *fds)
 			backend_timer_expired = 0;
 		}
 
-		backend = get_backend_connection(frontend);
+		backend = get_backend_connection(child_frontend);
 		if(!backend)
 		{
-			pool_close(frontend);
-			frontend = NULL;
+			pool_close(child_frontend);
+			child_frontend = NULL;
 			continue;
 		}
 		connected = 1;
@@ -340,7 +338,7 @@ void do_child(int *fds)
 		/*
 		 * Initialize per session context
 		 */
-		pool_init_session_context(frontend, backend);
+		pool_init_session_context(child_frontend, backend);
 
 		/*
 		 * Mark this connection pool is connected from frontend 
@@ -361,10 +359,10 @@ void do_child(int *fds)
 			MemoryContextSwitchTo(QueryContext);
 			MemoryContextResetAndDeleteChildren(QueryContext);
 
-			status = pool_process_query(frontend, backend, 0);
+			status = pool_process_query(child_frontend, backend, 0);
             if(status != POOL_CONTINUE)
             {
-                backend_cleanup(&frontend, backend);
+                backend_cleanup(&child_frontend, backend);
                 break;
             }
 		}
@@ -2366,4 +2364,40 @@ static int choose_db_node_id(char *str)
 			node_id = tmp;
 	}
 	return node_id;
+}
+
+int send_to_pg_frontend(char* data, int len, bool flush)
+{
+	int ret;
+	if (processType != PT_CHILD || child_frontend == NULL)
+		return -1;
+	ret = pool_write_noerror(child_frontend, data, len);
+	if(flush && !ret)
+		ret = pool_flush_it(child_frontend);
+	return ret;
+}
+
+int set_pg_frontend_blocking(bool blocking)
+{
+	if (processType != PT_CHILD || child_frontend == NULL)
+		return -1;
+	if (blocking)
+		pool_unset_nonblock(child_frontend->fd);
+	else
+		pool_set_nonblock(child_frontend->fd);
+	return 0;
+}
+
+int get_frontend_protocol_version(void)
+{
+	if (processType != PT_CHILD || child_frontend == NULL)
+		return -1;
+	return child_frontend->protoVersion;
+}
+
+int pg_frontend_exists(void)
+{
+	if (processType != PT_CHILD || child_frontend == NULL)
+		return -1;
+	return 0;
 }
