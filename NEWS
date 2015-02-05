@@ -4,6 +4,38 @@
 3.0 Series (2013/07/30 - )
 ===============================================================================
 
+                        3.0.17 (umiyameboshi) 2015/02/05
+
+* Version 3.0.17
+
+    This is a bugfix release against pgpool-II 3.0.16.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - doc: Describe explicitly that the number of slave nodes is not
+      necessarily 1 (Tatsuo Ishii)
+
+    - Fix uninitialized variable (Tatsuo Ishii)
+      
+      Per Coverity 1234603.
+
+    - doc: Fix missing release note entries in the previous release
+      (Tatsuo Ishii)
+
+    - Fix node id range check bug in trigger_failover_command(). (Tatsuo Ishii)
+      
+      The node id should be lower than NUM_BACKENDS. Probably harmless since
+      callers never pass node ids greater or equal to NUM_BACKENDS.
+
+    - Fix to disable debug mode by reloading config (Yugo Nagata)
+      
+      Per bug #114
+      http://www.pgpool.net/mantisbt/view.php?id=114
+
+===============================================================================
+
                         3.0.16 (umiyameboshi) 2014/09/05
 
 * Version 3.0.16
