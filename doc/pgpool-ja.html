@@ -6155,6 +6155,224 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 <hr><a name="release3.4.x"></a>
 
 <!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.4.1"></a>3.4.1 (tataraboshi) 2015/02/05</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.4.0 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    RPM: memcached に対応しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    pgpool_recovery 関数の引数を 3 から 4 に修正しました。(Tatsuo Ishii)
+    <p>
+    これは本来 3.4.0 リリース時に修正されるべきものでした。
+    </p>
+</li>
+
+<li>
+    test: pgpool_setup で使用する設定ファイルのディレクトリを環境変数 PGPOOLDIR で指定できるようになりました。(Tatsuo Ishii)
+</li>
+
+<li>
+    RPM: RPM ファイル名を変更しました。(Yugo Nagata)
+    <p>
+    新しいファイル名は PostgreSQL の公式 RPM ファイルのように RHEL のバージョン番号を含みます。(例. pgpool-II-pg93-3.4.0-2pgdg.rhel6.x86_64.rpm)
+    </p>
+</li>
+
+<li>
+    trigger_failover_command() 関数のノード ID 範囲検査のバグを修正しました。(Tatsuo Ishii)
+    <p>
+    ノード ID は定数 NUM_BACKENDS 未満である必要があります。実際にはNUM_BACKENDS 以上の値はこの関数に渡されていなかったので、おそらく害はありませんでした。
+    </p>
+</li>
+
+<li>
+    NOTIFY メッセージがバックエンドから送信された時に起こりうるスタックが修正されました。(Muhammad Usama)
+    <p>
+    これはマスタースレーブモードで、ロードバランスが有効であり、クライアントが拡張クエリを使用しているときに発生する可能性がありました。
+    </p>
+    <blockquote>
+    bug #116 の報告によります。<br />
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=116">
+    http://www.pgpool.net/mantisbt/view.php?id=116
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    test:pgpool_setup の failover スクリプトがデータベースクラスタの絶対パスを使用するように修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    test: pgpool_setup で使われるポート番号の割り当て方を変更しました。(Tatsuo Ishii)
+    <p>
+    ベースとなる番号（デフォルト 11000）を pgpool-II のポートに、ベース + 1を pcp のポートに、ベース + 2 以降を PostgreSQL のポートに割り当てるようになりました。
+    </p>
+</li>
+
+<li>
+    pgpool-II 3.4 でクエリをキャンセルできないバグを修正しました。(Muhammad Usama)
+</li>
+
+<li>
+    test: クエリキャンセルのレグレッションテストを追加しました。(Muhammad Usama)
+</li>
+
+<li>
+    スレッド安全ではない API をスレッド関数で使用しないよう修正しました。(Muhammad Usama)
+    <p>
+    pgpool-II は PostgreSQL のメモリと例外の管理機能を流用していますが、これらはスレッドセーフではありません。修正前は、これらのグローバル変数を扱う API がスレッドの関数の中で使用されており、未定義の動作やセグメンテーションフォルトの原因となっていました。特に、親プロセスが突然異常終了することがありました。
+    </p>
+</li>
+
+<li>
+    test: メモリリークのレグレッションテストを追加しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    長期間のコネクションがあるときのメモリリークが修正されました。(Muhammad Usama)
+    <p>
+    この問題は [pgpool-general: 3325] で報告されました。
+    </p>
+</li>
+
+<li>
+    "Frontend Terminated" メッセージのログレベルを LOG から DEBUG1 に変更しました。(Muhammad Usama)
+</li>
+
+<li>
+    exec_ifconfig() 関数での SIGCHLD ハンドリングの不具合をを修正しました。(Tatsuo Ishii)
+    <p>
+    何らかの理由により、SIGCHLD は SIG_IGN にセットされているにもかからず子プロセスの終了状態を取得しようとしていました。SIGCHLD は無視されるため、これは常に失敗します。このため watchdog の pgpool-II 切り替わり時に "ifconfig up" が失敗とみなされていました。
+    </p>
+    <p>
+    詳しくは "[pgpool-general: 3310] をご参照ください。
+    </p>
+</li>
+
+<li>
+    if_up_cmd, if_down_cmd でアドレスプレフィックス付きの $_IP_$ を使用できるように修正しました。(Muhammad Usama)
+    <p>
+    以前は "$_IP_$" の直後には空白が来ることが前提となっていたため、アドレスプレフィックスがある場合（例：$_IP_$/24 ）、このプレフィックスは無視されていました。
+    </p>
+    <blockquote>
+    bug #122 の報告によります。<br />
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=122">
+    http://www.pgpool.net/mantisbt/view.php?id=122
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    シグナルを init プロセスに送信しないよう修正しました。(Muhammad Usama)
+    <p>
+    これは、pgpool-II の親プロセスがクラッシュし、子プロセスがシステムの init プロセスにシグナルを送信可能になってしまうような状況に備えた対応です。
+    </p>
+    <blockquote>
+    bug #119 の報告によります。<br />
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=119">
+    http://www.pgpool.net/mantisbt/view.php?id=119
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    RPM: PostgreSQL 9.4 向けの RPM 作成時に発生していたエラー<br>"error: Installed ("error: Installed (but unpackaged) file(s) found"<br>を修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    show pool_nodes が 2 桁以上のノード ID を表示できるように修正しました。(Muhammad Usama)
+    <p>
+    この問題は [pgpool-general: 3374] で報告されました。
+    </p>
+</li>
+
+<li>
+    古いクライアントでアプリケーション名の指定がなかった場合に、メッセージ<br>"WARNING: failed to execute regex matching, pattern is NULL"<br>が出力されていたのを修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    起動時に子プロセスの立ち上げに失敗した場合には pgpool-II 全体で起動失敗とするように修正しました。(Muhammad Usama)
+    <p>
+    [pgpool-general: 3358] での報告によります。
+    </p>
+</li>
+
+<li>
+    子プロセスでエラーが発生したときに起こりうるセグメンテーションフォルトを修正しました。(Muhammad Usama)
+    <p>
+    この問題は [pgpool-general: 3377] で報告されました。
+    </p>
+</li>
+
+<li>
+    レグレッションテスト '004.watchdog' が失敗する場合があるのを修正しました。(Yugo Nagata)
+    <blockquote>
+    パッチは uehara によって bug #127 で提供されました。<br />
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=127">
+    http://www.pgpool.net/mantisbt/view.php?id=127
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    クライアント接続の閉じ忘れを修正しました。(Tatsuo Ishii)
+    <p>
+    pgpool-II 3.4.0 よりセッション終了時にクライアントへの接続が閉じられていませんでした。これにより "CLOSE_WAIT" が大量に滞留し、pgpool-II はクライアントからの新規の接続を受け付けられなくなります。
+    </p>
+    <p>
+    この問題は Pablo Sanchez により [pgpool-general: 3394] で報告されました。
+    </p>
+</li>
+
+<li>
+    if_up_cmd, if_down_cmd 実行後は SIGCHLD ハンドラを元に戻すように修正しました。(Yugo Nagata)
+    <p>
+    修正前は SIGCHLD は常に SIG_IGN にセットされていたので、ping など他のコマンドの終了状態の取得が正しく行えず、コマンド自体が正常終了してもログには警告メッセージが出力されていました。
+    </p>
+</li>
+
+<li>
+    RPM: RHEL/CentOS7 で systemd を使用するため pgpool.service を追加しました。(Nozomi Anzai)
+</li>
+
+<li>
+    enabled_pool_hba 有効時に pgpool reload を繰り返すとプロセスが異常終了するバグを修正しました。(Muhammad Usama)
+</li>
+
+<li>
+    app_name_redirect_preference_list と database_redirect_preference_listの値のチェックをより強固にしました。(Tatsuo Ishii)
+    <p>
+    以前はアプリケーション名・データベース名が空の場合や、不正なノード番号も許容されていましたが、この検査を厳しくし、起動時に fatal エラーを出力するように変更されました。
+    </p>
+    <p>
+    [pgpool-general-jp: 1337] の報告によります。
+    </p>
+</li>
+
+<li>
+    RPM: systemd が使用可能な場合は使用するよう変更しました。(Nozomi Anzai)
+</li>
+
+<li>
+    設定パラメータ "client_min_messages" の振る舞いを修正しました。(Muhammad Usama)
+    <p>
+    このパラメータはフロントエンドに送られる最小のメッセージレベルを制御するものですが、以前はこの値にかかわらず、NOTICE より低いレベルのメッセージは一切クライアントに送信されていませんでした。
+    </p>
+</li>
+
+</ul>
+
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.4.0"></a>3.4.0 (tataraboshi) 2014/11/07</h2>
 <!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
@@ -6232,6 +6450,175 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 <!-- 3.3                                                                              -->
 <!-- ================================================================================ -->
 <hr><a name="release3.3.x"></a>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.3.5"></a>3.3.5 (tokakiboshi) 2015/02/05</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.3.4 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    doc: スレーブノードの数は１である必要でないことを明記しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    watchdog を使用しているときにフェイルオーバ時に発生しうるデッドロックを修正しました。(Muhammad Usama)
+    <blockquote>
+    bug #105 の報告によります。<br />
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=105">
+    http://www.pgpool.net/mantisbt/view.php?id=105
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    未初期化の変数があったのを修正しました。(Tatsuo Ishii)
+    <p>
+    Coverity の報告 #1234603 によります。
+    </p>
+</li>
+
+<li>
+    doc: 前回のリリースで抜け落ちていたリリースノートを追記しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    test: pgpool_setup の wait_for_pgpool_startup 関数が test データベースではなく postgres データベースを使用するように修正しました。(Tatsuo Ishii)
+    <p>
+    test データベースは存在しない場合があり、その場合はタイムアウト（20秒）になるまでリトライしつづけるので、レグレッションテストに必要以上に時間がかかっていました。
+    </p>
+</li>
+
+<li>
+    クエリキャッシュで発生しうるセグメンテーションフォルトを修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    RPM: memcached に対応しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    test: pgpool_setup で使用する設定ファイルのディレクトリを環境変数 PGPOOLDIR で指定できるようになりました。(Tatsuo Ishii)
+</li>
+
+<li>
+    RPM: RPM ファイル名を変更しました。(Yugo Nagata)
+    <p>
+    新しいファイル名は PostgreSQL の公式 RPM ファイルのように RHEL のバージョン番号を含みます。(例. pgpool-II-pg93-3.4.0-2pgdg.rhel6.x86_64.rpm)
+    </p>
+</li>
+
+<li>
+    trigger_failover_command() 関数のノード ID 範囲検査のバグを修正しました。(Tatsuo Ishii)
+    <p>
+    ノード ID は定数 NUM_BACKENDS 未満である必要があります。実際にはNUM_BACKENDS 以上の値はこの関数に渡されていなかったので、おそらく害はありませんでした。
+    </p>
+</li>
+
+<li>
+    test:pgpool_setup の failover スクリプトがデータベースクラスタの絶対パスを使用するように修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    test: メモリリークのレグレッションテストを追加しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    exec_ifconfig() 関数での SIGCHLD ハンドリングの不具合をを修正しました。(Tatsuo Ishii)
+    <p>
+    何らかの理由により、SIGCHLD は SIG_IGN にセットされているにもかからず子プロセスの終了状態を取得しようとしていました。SIGCHLD は無視されるため、これは常に失敗します。このため watchdog の pgpool-II 切り替わり時に "ifconfig up" が失敗とみなされていました。
+    </p>
+    <p>
+    詳しくは "[pgpool-general: 3310] をご参照ください。
+    </p>
+</li>
+
+<li>
+    if_up_cmd, if_down_cmd でアドレスプレフィックス付きの $_IP_$ を使用できるように修正しました。(Muhammad Usama)
+    <p>
+    以前は "$_IP_$" の直後には空白が来ることが前提となっていたため、アドレスプレフィックスがある場合（例：$_IP_$/24 ）、このプレフィックスは無視されていました。
+    </p>
+    <blockquote>
+    bug #122 の報告によります。<br />
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=122">
+    http://www.pgpool.net/mantisbt/view.php?id=122
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    show pool_nodes が 2 桁以上のノード ID を表示できるように修正しました。(Muhammad Usama)
+    <p>
+    この問題は [pgpool-general: 3374] で報告されました。
+    </p>
+</li>
+
+<li>
+    レグレッションテスト '004.watchdog' が失敗する場合があるのを修正しました。(Yugo Nagata)
+    <blockquote>
+    パッチは uehara によって bug #127 で提供されました。<br />
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=127">
+    http://www.pgpool.net/mantisbt/view.php?id=127
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    if_up_cmd, if_down_cmd 実行後は SIGCHLD ハンドラを元に戻すように修正しました。(Yugo Nagata)
+    <p>
+    修正前は SIGCHLD は常に SIG_IGN にセットされていたので、ping など他のコマンドの終了状態の取得が正しく行えず、コマンド自体が正常終了してもログには警告メッセージが出力されていました。
+    </p>
+</li>
+
+<li>
+    RPM: RHEL/CentOS7 で systemd を使用するため pgpool.service を追加しました。(Nozomi Anzai)
+</li>
+
+<li>
+    RPM: pgpool_regclass と pgpool_recovery を extension パッケージとして他から分離させました。(Tatsuo Ishii)
+    <p>
+    PostgreSQL サーバでは extension パッケージのみが必要で、pgpool-II の全パッケージをインストールする必要はありません。
+    </p>
+    <p>
+    Andrew N Golovkov によります。
+    </p>
+</li>
+
+<li>
+    RPM: spec ファイルで SSL の configure オプションが誤っていたのを修正しました。(Tatsuo Ishii)
+    <p>
+    SSL を有効にするオプションが "--with-openssl=/usr" となっていましたが、正しくは "--with-openssl" でした。
+    </p>
+    <blockquote>
+    bug #115 の報告によります。<br />
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=115">
+    http://www.pgpool.net/mantisbt/view.php?id=115
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    RPM: systemd が使用可能なら使用するとともに、PostgreSQL 9.4 への対応を行いました。(Nozomi Anzai)
+</li>
+
+<li>
+    設定ファイルのリロードにより debug モードを無効にできるよう修正しました。(Yugo Nagata)
+    <blockquote>
+    bug #114 の報告によります。<br />
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=114">
+    http://www.pgpool.net/mantisbt/view.php?id=114
+    </a>
+    </blockquote>
+</li>
+
+
+</ul>
 
 <!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.3.4"></a>3.3.4 (tokakiboshi) 2014/09/05</h2>
@@ -7499,6 +7886,77 @@ FATAL: no PostgreSQL user name specified in startup packet
 <!-- 3.2                                                                              -->
 <!-- ================================================================================ -->
 <hr><a name="release3.2.x"></a>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.2.10"></a>3.2.10 (namameboshi) 2015/02/05</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.2.9 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    doc: スレーブノードの数は１である必要でないことを明記しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    未初期化の変数があったのを修正しました。(Tatsuo Ishii)
+    <p>
+    Coverity の報告 #1234603 によります。
+    </p>
+</li>
+
+<li>
+    doc: 前回のリリースで抜け落ちていたリリースノートを追記しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    クエリキャッシュで発生しうるセグメンテーションフォルトを修正しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    trigger_failover_command() 関数のノード ID 範囲検査のバグを修正しました。(Tatsuo Ishii)
+    <p>
+    ノード ID は定数 NUM_BACKENDS 未満である必要があります。実際にはNUM_BACKENDS 以上の値はこの関数に渡されていなかったので、おそらく害はありませんでした。
+    </p>
+</li>
+
+<li>
+    if_up_cmd, if_down_cmd でアドレスプレフィックス付きの $_IP_$ を使用できるように修正しました。(Muhammad Usama)
+    <p>
+    以前は "$_IP_$" の直後には空白が来ることが前提となっていたため、アドレスプレフィックスがある場合（例：$_IP_$/24 ）、このプレフィックスは無視されていました。
+    </p>
+    <blockquote>
+    bug #122 の報告によります。<br />
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=122">
+    http://www.pgpool.net/mantisbt/view.php?id=122
+    </a>
+    </blockquote>
+</li>
+
+<li>
+    show pool_nodes が 2 桁以上のノード ID を表示できるように修正しました。(Muhammad Usama)
+    <p>
+    この問題は [pgpool-general: 3374] で報告されました。
+    </p>
+</li>
+
+<li>
+    設定ファイルのリロードにより debug モードを無効にできるよう修正しました。(Yugo Nagata)
+    <blockquote>
+    bug #114 の報告によります。<br />
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=114">
+    http://www.pgpool.net/mantisbt/view.php?id=114
+    </a>
+    </blockquote>
+</li>
+
+
+</ul>
 
 <!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.2.9"></a>3.2.9 (namameboshi) 2014/09/05</h2>
@@ -9660,6 +10118,53 @@ autoconf
 <hr><a name="release3.1.x"></a>
 
 <!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.1.13"></a>3.1.13 (hatsuiboshi) 2015/02/05</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.1.12 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    doc: スレーブノードの数は１である必要でないことを明記しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    未初期化の変数があったのを修正しました。(Tatsuo Ishii)
+    <p>
+    Coverity の報告 #1234603 によります。
+    </p>
+</li>
+
+<li>
+    doc: 前回のリリースで抜け落ちていたリリースノートを追記しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    trigger_failover_command() 関数のノード ID 範囲検査のバグを修正しました。(Tatsuo Ishii)
+    <p>
+    ノード ID は定数 NUM_BACKENDS 未満である必要があります。実際にはNUM_BACKENDS 以上の値はこの関数に渡されていなかったので、おそらく害はありませんでした。
+    </p>
+</li>
+
+<li>
+    設定ファイルのリロードにより debug モードを無効にできるよう修正しました。(Yugo Nagata)
+    <blockquote>
+    bug #114 の報告によります。<br />
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=114">
+    http://www.pgpool.net/mantisbt/view.php?id=114
+    </a>
+    </blockquote>
+</li>
+
+
+</ul>
+
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.1.12"></a>3.1.12 (hatsuiboshi) 2014/09/05</h2>
 <!-- -------------------------------------------------------------------------------- -->
 
@@ -11091,6 +11596,53 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
 <!-- 3.0                                                                              -->
 <!-- ================================================================================ -->
 <hr><a name="release3.0.x"></a>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.0.17"></a>3.0.17 (umiyameboshi) 2015/02/05</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.0.16 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    doc: スレーブノードの数は１である必要でないことを明記しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    未初期化の変数があったのを修正しました。(Tatsuo Ishii)
+    <p>
+    Coverity の報告 #1234603 によります。
+    </p>
+</li>
+
+<li>
+    doc: 前回のリリースで抜け落ちていたリリースノートを追記しました。(Tatsuo Ishii)
+</li>
+
+<li>
+    trigger_failover_command() 関数のノード ID 範囲検査のバグを修正しました。(Tatsuo Ishii)
+    <p>
+    ノード ID は定数 NUM_BACKENDS 未満である必要があります。実際にはNUM_BACKENDS 以上の値はこの関数に渡されていなかったので、おそらく害はありませんでした。
+    </p>
+</li>
+
+<li>
+    設定ファイルのリロードにより debug モードを無効にできるよう修正しました。(Yugo Nagata)
+    <blockquote>
+    bug #114 の報告によります。<br />
+    <a href="http://www.pgpool.net/mantisbt/view.php?id=114">
+    http://www.pgpool.net/mantisbt/view.php?id=114
+    </a>
+    </blockquote>
+</li>
+
+
+</ul>
 
 <!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.0.16"></a>3.0.16 (umiyameboshi) 2014/09/05</h2>
