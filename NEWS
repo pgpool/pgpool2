@@ -2,6 +2,171 @@
 
 ===============================================================================
 
+                        3.4.1 (tataraboshi) 2015/02/05
+
+* Version 3.4.1
+
+    This is a bugfix release against pgpool-II 3.4.0.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - RPM: Add to support for memcached. (Tatsuo Ishii)
+
+    - Fix number of parameters of pgpool_recovery from 3 to 4. (Tatsuo Ishii)
+      
+      This really should be done before releasing 3.4.0.
+
+    - test: Allow pgpool_setup to set configuration file directory by setting
+      environment variable PGPOOLDIR (Tatsuo Ishii)
+
+    - RPM: Rename RPM file (Yugo Nagata)
+      
+      Rename filename to include the RHEL version number like PostgreSQL's
+      official RPM file. (e.g. pgpool-II-pg93-3.4.0-2pgdg.rhel6.x86_64.rpm)
+
+    - Fix node id range check bug in trigger_failover_command(). (Tatsuo Ishii)
+      
+      The node id should be lower than NUM_BACKENDS. Probably harmless since
+      callers never pass node ids greater or equal to NUM_BACKENDS.
+
+    - Fix occasional stuck that occures when a NOTIFY message is sent from
+      a backend. (Muhammad Usama)
+      
+      The issue happens in master slave mode with load balancing when the
+      client is doing extended query messaging.
+      
+      per bug #116
+      http://www.pgpool.net/mantisbt/view.php?id=116
+
+    - test: Fix failover script of pgpool_setup to use absolute path to the
+      database cluster (Tatsuo Ishii)
+
+    - test: Reorganize port numbers assigned in pgpool_setup (Tatsuo Ishii)
+      
+      Assign base port (11000 by default) to pgpool, base port + 1 to pcp,
+      port + 2 to PostgreSQL node0, port + 3 to PostgreSQL node1 and so on.
+
+    - Fix a bug that pgpool-II 3.4 can't cancel query (Muhammad Usama)
+
+    - test: Add regression test for cancelling query (Muhammad Usama)
+
+    - Fix to not use non-thread-safe APIs in thread functions
+      (Muhammad Usama)
+      
+      pgpool-II has borrowed the Memory and Exception managers from PostgreSQL
+      which never utilizes the threads so its APIs are not thread safe.
+      Previously, those API functions which manipulate the global variables
+      in thread functions, and it caused to undefined behavior or a
+      segmentation fault. Especially, the main process could die silently.
+
+    - test: Add memory leak regression test (Tatsuo Ishii)
+
+    - Fix a memory leak with long-lived connections (Muhammad Usama)
+      
+      Problem reporeted in [pgpool-general: 3325].
+
+    - Change the log level of "Frontend Terminated" message to DEBUG1 from LOG
+      (Muhammad Usama)
+
+    - Fix ill signal befavior of SIGCHLD in exec_ifconfig() (Tatsuo Ishii)
+      
+      For some reason SIGCHLD was set to SIG_IGN *and* tries to wait
+      child process which always fails because SIGCHLD is never delivered.
+      Due to this "ifconfig up" fails when switching to watchdog master.
+      
+      See "[pgpool-general: 3310] for more details.
+
+    - Allow $_IP_$ having address prefix in if_up_cmd and if_down_cmd
+      (Muhammad Usama)
+      
+      Previously, it is assumed that "$_IP_$" keyword will always have a
+      white space at the end, and when "$_IP_$" has address prefix (e.g.
+      $_IP_$/24), this prefix was ignored.
+      
+      Per bug #122.
+      http://www.pgpool.net/mantisbt/view.php?id=122
+
+    - Fix to not send signal to init process (Muhammad Usama)
+      
+      This is more of a guard against a situation where a crash of the
+      pgpool main process can make the child processes to send the signal
+      to system's init process.
+      
+      Per bug #119.
+      http://www.pgpool.net/mantisbt/view.php?id=119
+
+    - RPM: Fix "error: Installed (but unpackaged) file(s) found" while
+      creating RPMs for PostgreSQL 9.4 (Tatsuo Ishii)
+
+    - Allow "show pool_nodes" to print node ids having more than one digits
+      (Muhammad Usama)
+      
+      Problem reported in [pgpool-general: 3374].
+
+    - Prevent "WARNING: failed to execute regex matching, pattern is NULL"
+      message that could happen when application name is not set in the old
+      clients (Tatsuo Ishii)
+
+    - Fix pgpool main process to shutdown in case of child process start-up
+      failures (Muhammad Usama)
+      
+      Problem rported in [pgpool-general: 3358].
+
+    - Fix a segmentation fault that could happen in child process error
+      (Muhammad Usama)
+      
+      Problem reported in [pgpool-general: 3377].
+
+    - Fix occasional failure in regression test '004.watchdog' (Yugo Nagata)
+      
+      The patch provided by uehara in bug #127.
+      http://www.pgpool.net/mantisbt/view.php?id=127
+
+    - Fix client connection leak (Tatsuo Ishii)
+      
+      Since 3.4.0 pgpool-II child does not close the connection to client
+      when it ends the session.  This leads to serious "CLOSE_WAIT" flood,
+      which makes pgpool-II unusable since no new connection from clients
+      accepted.
+      
+      Problem reported by Pablo Sanchez in [pgpool-general: 3394].
+
+    - Restore SIGCHLD handler to its original after executing if_up/down_cmd
+      (Yugo Nagata)
+      
+      Previously SIGCHLD was set to SIGIGN always after if_up/down_cmd.
+      This led to a incorrect error handling of ping or other commands
+      execution, and warning messages were output to log even when the
+      command exited successfully.
+
+    - RPM: Add pgpool.service for systemd in RHEL/CentOS 7 (Nozomi Anzai)
+
+    - Fix process termination after several reload with enabled_pool_hba
+      (Muhammad Usama)
+
+    - Tighten up checking for app_name_redirect_preference_list and
+      database_redirect_preference_list (Tatsuo Ishii)
+      
+      Before empty application name or database name or invalid DB node
+      number were silently accepted. Now they are strictly checked and
+      let raise fatal error when starting up.
+      
+      Problem reported in [pgpool-general-jp: 1337].
+
+    - RPM: Change to use systemd if it is available (Nozomi Anzai)
+
+    - Fix the behavior of "client_min_messages" configuration parameter
+      (Muhammad Usama)
+      
+      This parameter controls the minimum message levels to be sent to the
+      frontend. Previously, regardless of the value of the parameter all
+      the messages with severity less than NOTICE level were not being
+      forwarded to the client.
+
+===============================================================================
+
                         3.4.0 (tataraboshi) 2014/11/07
 
 * Version 3.4.0
@@ -102,6 +267,125 @@
 
 ===============================================================================
 3.3 Series (2013/07/30 - )
+===============================================================================
+
+                        3.3.5 (tokakiboshi) 2015/02/05
+
+* Version 3.3.5
+
+    This is a bugfix release against pgpool-II 3.3.4.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - doc: Describe explicitly that the number of slave nodes is not
+      necessarily 1 (Tatsuo Ishii)
+
+    - Fix occasinal deadlock in failover with watchdog enabled
+      (Muhammad Usama)
+      
+      per bug #105
+      http://www.pgpool.net/mantisbt/view.php?id=105
+
+    - Fix uninitialized variable (Tatsuo Ishii)
+      
+      Per Coverity 1234603.
+
+    - doc: Fix missing release note entries in the previous release
+      (Tatsuo Ishii)
+
+    - test: Fix wait_for_pgpool_startup in pgpool_setup to use "postgres"
+      database rather than "test" (Tatsuo Ishii)
+      
+      The test database may or may not exist and if it does not, it will
+      always retry until timeout expired (20 seconds), and regression test
+      takes unnecessary long.
+
+    - Fix possible segmentation fault in query cache (Tatsuo Ishii)
+
+    - RPM: Add to support for memcached. (Tatsuo Ishii)
+
+    - test: Allow pgpool_setup to set configuration file directory by setting
+      environment variable PGPOOLDIR (Tatsuo Ishii)
+
+    - RPM: Rename RPM file (Yugo Nagata)
+      
+      Rename filename to include the RHEL version number like PostgreSQL's
+      official RPM file. (e.g. pgpool-II-pg93-3.4.0-2pgdg.rhel6.x86_64.rpm)
+
+    - Fix node id range check bug in trigger_failover_command(). (Tatsuo Ishii)
+      
+      The node id should be lower than NUM_BACKENDS. Probably harmless since
+      callers never pass node ids greater or equal to NUM_BACKENDS.
+
+    - test: Fix failover script of pgpool_setup to use absolute path to the
+      database cluster (Tatsuo Ishii)
+
+    - test: Add memory leak regression test (Tatsuo Ishii)
+
+    - Fix ill signal befavior of SIGCHLD in exec_ifconfig() (Tatsuo Ishii)
+      
+      For some reason SIGCHLD was set to SIG_IGN *and* tries to wait
+      child process which always fails because SIGCHLD is never delivered.
+      Due to this "ifconfig up" fails when switching to watchdog master.
+      
+      See "[pgpool-general: 3310] for more details.
+
+    - Allow $_IP_$ having address prefix in if_up_cmd and if_down_cmd
+      (Muhammad Usama)
+      
+      Previously, it is assumed that "$_IP_$" keyword will always have a
+      white space at the end, and when "$_IP_$" has address prefix (e.g.
+      $_IP_$/24), this prefix was ignored.
+      
+      Per bug #122.
+      http://www.pgpool.net/mantisbt/view.php?id=122
+
+    - Allow "show pool_nodes" to print node ids having more than one digits
+      (Muhammad Usama)
+      
+      Problem reported in [pgpool-general: 3374].
+
+    - Fix occasional failure in regression test '004.watchdog' (Yugo Nagata)
+      
+      The patch provided by uehara in bug #127.
+      http://www.pgpool.net/mantisbt/view.php?id=127
+
+    - Restore SIGCHLD handler to its original after executing if_up/down_cmd
+      (Yugo Nagata)
+      
+      Previously SIGCHLD was set to SIGIGN always after if_up/down_cmd.
+      This led to a incorrect error handling of ping or other commands
+      execution, and warning messages were output to log even when the
+      command exited successfully.
+
+    - RPM: Add pgpool.service for systemd in RHEL/CentOS 7 (Nozomi Anzai)
+
+    - RPM: Split pgpool_regclass and pgpool_recovery as a separate extension
+      package (Tatsuo Ishii)
+      
+      On PostgreSQL server, only the extension package is required, no pgpool
+      full package is necessary.
+      
+      Per Andrew N Golovkov.
+
+    - RPM: Fix wrong SSL configure option in the RPM spec file (Tatsuo Ishii)
+      
+      SSL enabling option is "--with-openssl=/usr" and this is wrong. This
+      should be "--with-openssl".
+      
+      Per bug #115.
+      http://www.pgpool.net/mantisbt/view.php?id=115
+
+    - RPM: Change to use systemd if it is available and adopt to PostgreSQL 9.4
+      (Nozomi Anzai)
+
+    - Fix to disable debug mode by reloading config (Yugo Nagata)
+      
+      Per bug #114
+      http://www.pgpool.net/mantisbt/view.php?id=114
+
 ===============================================================================
 
                         3.3.4 (tokakiboshi) 2014/09/05
@@ -1196,6 +1480,55 @@
 
 ===============================================================================
 3.2 Series (2012/08/03 - )
+===============================================================================
+
+                        3.2.10 (namameboshi) 2015/02/05
+
+* Version 3.2.10
+
+    This is a bugfix release against pgpool-II 3.2.9.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - doc: Describe explicitly that the number of slave nodes is not
+      necessarily 1 (Tatsuo Ishii)
+
+    - Fix uninitialized variable (Tatsuo Ishii)
+      
+      Per Coverity 1234603.
+
+    - doc: Fix missing release note entries in the previous release
+      (Tatsuo Ishii)
+
+    - Fix possible segmentation fault in query cache (Tatsuo Ishii)
+
+    - Fix node id range check bug in trigger_failover_command(). (Tatsuo Ishii)
+      
+      The node id should be lower than NUM_BACKENDS. Probably harmless since
+      callers never pass node ids greater or equal to NUM_BACKENDS.
+
+    - Allow $_IP_$ having address prefix in if_up_cmd and if_down_cmd
+      (Muhammad Usama)
+      
+      Previously, it is assumed that "$_IP_$" keyword will always have a
+      white space at the end, and when "$_IP_$" has address prefix (e.g.
+      $_IP_$/24), this prefix was ignored.
+      
+      Per bug #122.
+      http://www.pgpool.net/mantisbt/view.php?id=122
+
+    - Allow "show pool_nodes" to print node ids having more than one digits
+      (Muhammad Usama)
+      
+      Problem reported in [pgpool-general: 3374].
+
+    - Fix to disable debug mode by reloading config (Yugo Nagata)
+      
+      Per bug #114
+      http://www.pgpool.net/mantisbt/view.php?id=114
+
 ===============================================================================
 
                         3.2.9 (namameboshi) 2014/09/05
@@ -2991,6 +3324,38 @@
 3.1 Series (2011/09/08 - )
 ===============================================================================
 
+                        3.1.13 (hatsuiboshi) 2015/02/05
+
+* Version 3.1.13
+
+    This is a bugfix release against pgpool-II 3.1.12.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - doc: Describe explicitly that the number of slave nodes is not
+      necessarily 1 (Tatsuo Ishii)
+
+    - Fix uninitialized variable (Tatsuo Ishii)
+      
+      Per Coverity 1234603.
+
+    - doc: Fix missing release note entries in the previous release
+      (Tatsuo Ishii)
+
+    - Fix node id range check bug in trigger_failover_command(). (Tatsuo Ishii)
+      
+      The node id should be lower than NUM_BACKENDS. Probably harmless since
+      callers never pass node ids greater or equal to NUM_BACKENDS.
+
+    - Fix to disable debug mode by reloading config (Yugo Nagata)
+      
+      Per bug #114
+      http://www.pgpool.net/mantisbt/view.php?id=114
+
+===============================================================================
+
                         3.1.12 (hatsuiboshi) 2014/09/05
 
 * Version 3.1.12
@@ -4233,6 +4598,38 @@
 
 ===============================================================================
 3.0 Series (2013/07/30 - )
+===============================================================================
+
+                        3.0.17 (umiyameboshi) 2015/02/05
+
+* Version 3.0.17
+
+    This is a bugfix release against pgpool-II 3.0.16.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - doc: Describe explicitly that the number of slave nodes is not
+      necessarily 1 (Tatsuo Ishii)
+
+    - Fix uninitialized variable (Tatsuo Ishii)
+      
+      Per Coverity 1234603.
+
+    - doc: Fix missing release note entries in the previous release
+      (Tatsuo Ishii)
+
+    - Fix node id range check bug in trigger_failover_command(). (Tatsuo Ishii)
+      
+      The node id should be lower than NUM_BACKENDS. Probably harmless since
+      callers never pass node ids greater or equal to NUM_BACKENDS.
+
+    - Fix to disable debug mode by reloading config (Yugo Nagata)
+      
+      Per bug #114
+      http://www.pgpool.net/mantisbt/view.php?id=114
+
 ===============================================================================
 
                         3.0.16 (umiyameboshi) 2014/09/05
