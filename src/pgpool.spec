@@ -28,7 +28,9 @@ URL:            http://www.pgppol.net/
 Source0:        pgpool-II-%{version}.tar.gz
 Source1:        pgpool.init
 Source2:        pgpool.sysconfig
+%if %{systemd_enabled}
 Source3:        pgpool.service
+%endif
 #Patch1:         pgpool.conf.sample.patch
 Patch2:         pgpool-II-head.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
