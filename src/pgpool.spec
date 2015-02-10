@@ -20,7 +20,7 @@
 Summary:        Pgpool is a connection pooling/replication server for PostgreSQL
 Name:           pgpool-II-pg%{pg_version}
 Version:        %{pgpool_version}
-Release:        1pgdg%{?dist}
+Release:        2pgdg%{?dist}
 License:        BSD
 Group:          Applications/Databases
 Vendor:         Pgpool Global Development Group
@@ -28,7 +28,9 @@ URL:            http://www.pgppol.net/
 Source0:        pgpool-II-%{version}.tar.gz
 Source1:        pgpool.init
 Source2:        pgpool.sysconfig
+%if %{systemd_enabled}
 Source3:        pgpool.service
+%endif
 #Patch1:         pgpool.conf.sample.patch
 Patch2:         pgpool-II-head.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -147,10 +149,10 @@ rm -rf %{buildroot}
 
 %if %{systemd_enabled}
 %systemd_post pgpool.service
+%tmpfiles_create
 %else
 /sbin/chkconfig --add pgpool
 %endif
-%tmpfiles_create
 
 %preun
 %if %{systemd_enabled}
@@ -244,6 +246,9 @@ fi
 %endif
 
 %changelog
+* Tue Feb 10 2015 Nozomi Anzai <anzai@sraoss.co.jp> 3.4.1-2
+- Fix %tmpfiles_create to not be executed in RHEL/CentOS 6
+
 * Wed Jan 28 2015 Nozomi Anzai <anzai@sraoss.co.jp> 3.4.1
 - Fix typo of %{_smp_mflags}
 - Change to use systemd if it is available
