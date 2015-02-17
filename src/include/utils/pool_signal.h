@@ -38,6 +38,11 @@
 #define pool_sigset_t int
 #endif
 
+#ifdef _SYS_SIGNAL_H_
+/* This appears to be a BSD variant which also uses a different type name */
+typedef sig_t sighandler_t;
+#endif
+
 extern pool_sigset_t UnBlockSig,
 BlockSig,
 AuthBlockSig;
@@ -58,7 +63,6 @@ AuthBlockSig;
 int			pqsigsetmask(int mask);
 #endif
 #endif
-
 typedef void (*pool_sighandler_t) (int);
 extern pool_sighandler_t pool_signal(int signo, pool_sighandler_t func);
 extern void poolinitmask(void);
