@@ -1628,11 +1628,7 @@ void cache_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	static unsigned char nullmap[2] = {0xff, 0xff};
 	int nbytes = (num_fields + 7)/8;
 	volatile POOL_SHMEM_STATS *mystats;
-#ifdef HAVE_SIGPROCMASK
-	sigset_t oldmask;
-#else
-	int	oldmask;
-#endif
+	pool_sigset_t oldmask;
 	double ratio;
 
 #define POOL_CACHE_STATS_MAX_STRING_LEN 32

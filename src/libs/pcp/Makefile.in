@@ -127,8 +127,7 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libpcp_la_LIBADD =
-am_libpcp_la_OBJECTS = pcp.lo pcp_stream.lo pcp_error.lo \
-	pcp_timeout.lo md5.lo strlcpy.lo
+am_libpcp_la_OBJECTS = pcp.lo pcp_stream.lo md5.lo strlcpy.lo
 libpcp_la_OBJECTS = $(am_libpcp_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -327,8 +326,6 @@ AM_CPPFLAGS = -D_GNU_SOURCE -DPOOL_PRIVATE -I @PGSQL_INCLUDE_DIR@
 lib_LTLIBRARIES = libpcp.la
 libpcp_la_SOURCES = pcp.c \
 		    pcp_stream.c \
-                    pcp_error.c \
-                    pcp_timeout.c \
                     md5.c \
                     strlcpy.c
 
@@ -418,9 +415,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_error.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_stream.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_timeout.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strlcpy.Plo@am__quote@
 
 .c.o:

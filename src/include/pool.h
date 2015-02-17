@@ -360,11 +360,12 @@ extern int my_master_node_id;
 #define NO_LOAD_BALANCE "/*NO LOAD BALANCE*/"
 #define NO_LOAD_BALANCE_COMMENT_SZ (sizeof(NO_LOAD_BALANCE)-1)
 
-#define MAX_NUM_SEMAPHORES		4
-#define CONN_COUNTER_SEM 0
-#define REQUEST_INFO_SEM 1
-#define SHM_CACHE_SEM	2
+#define MAX_NUM_SEMAPHORES		5
+#define CONN_COUNTER_SEM		0
+#define REQUEST_INFO_SEM		1
+#define SHM_CACHE_SEM			2
 #define QUERY_CACHE_STATS_SEM	3
+#define PCP_REQUEST_SEM			4
 #define MAX_REQUEST_QUEUE_SIZE	10
 
 /*
@@ -440,7 +441,6 @@ typedef enum {
  * global variables
  */
 extern pid_t mypid; /* parent pid */
-extern bool run_as_pcp_child;
 
 typedef enum
 {
@@ -453,7 +453,8 @@ typedef enum
 	PT_LIFECHECK,
 	PT_FOLLOWCHILD,
 	PT_WATCHDOG_UTILITY,
-	PT_PCP
+	PT_PCP,
+	PT_PCP_WORKER
 } ProcessType;
 
 extern ProcessType processType;
@@ -501,7 +502,7 @@ extern bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id
 extern char *get_config_file_name(void);
 extern char *get_hba_file_name(void);
 extern void do_child(int *fds);
-extern void pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file);
+extern void pcp_main(int unix_fd, int inet_fd);
 extern int select_load_balancing_node(void);
 extern int pool_init_cp(void);
 extern POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
@@ -703,9 +704,15 @@ extern int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps);
 /* pcp_child.c */
 extern int send_to_pcp_frontend(char* data, int len, bool flush);
 extern int pcp_frontend_exists(void);
+extern void pcp_worker_main(int port);
+extern void pcp_mark_recovery_finished(void);
+extern bool pcp_mark_recovery_in_progress(void);
+
 
 /* pgpool_main.c */
 extern int pool_send_to_frontend(char* data, int len, bool flush);
 extern int pool_frontend_exists(void);
+extern pid_t pool_waitpid(int *status);
+
 
 #endif /* POOL_H */

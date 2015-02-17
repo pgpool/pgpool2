@@ -20,15 +20,10 @@ static void child_wait(int signo);
 void pool_error(const char *fmt,...)
 {
 	va_list		ap;
+	pool_sigset_t oldmask;
 #ifdef HAVE_ASPRINTF
 	char		*fmt2;
     int         len;
-#endif
-
-#ifdef HAVE_SIGPROCMASK
-	sigset_t oldmask;
-#else
-	int	oldmask;
 #endif
 	/* Write error message to syslog */
 	if (pool_config->logsyslog == 1) {

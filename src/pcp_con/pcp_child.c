@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -28,6 +28,8 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/wait.h>
 #include <netinet/in.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
@@ -46,92 +48,58 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <sys/time.h>
+
 
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
 
 #include "pool.h"
-#include "pcp/pcp_stream.h"
-#include "pcp/pcp.h"
-#include "auth/md5.h"
 #include "pool_config.h"
-#include "context/pool_process_context.h"
-#include "utils/pool_process_reporting.h"
-#include "watchdog/wd_ext.h"
 #include "utils/elog.h"
+#include "parser/pg_list.h"
 
-#define MAX_FILE_LINE_LEN    512
-#define MAX_USER_PASSWD_LEN  128
+static int pcp_unix_fd, pcp_inet_fd;
+volatile bool *pcp_recovery_in_progress;
+static volatile sig_atomic_t pcp_got_sighup = 0;
+static volatile sig_atomic_t pcp_restart_request = 0;
+List *pcp_worker_children = NULL;
+static volatile sig_atomic_t sigchld_request = 0;
 
-extern void pcp_set_timeout(long sec);
-volatile sig_atomic_t pcp_exit_request; /* non 0 means SIGTERM(smart shutdown) or SIGINT(fast shutdown) has arrived */
-
-static RETSIGTYPE die(int sig);
-static PCP_CONNECTION *pcp_do_accept(int unix_fd, int inet_fd);
-static void unset_nonblock(int fd);
-static int user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len);
-static RETSIGTYPE wakeup_handler(int sig);
+static RETSIGTYPE pcp_exit_handler(int sig);
+static RETSIGTYPE wakeup_handler_parent(int sig);
 static RETSIGTYPE reload_config_handler(int sig);
 static RETSIGTYPE restart_handler(int sig);
-static int pool_detach_node(int node_id, bool gracefully);
-static int pool_promote_node(int node_id, bool gracefully);
+static RETSIGTYPE reap_handler(int sig);
 
-static volatile sig_atomic_t pcp_got_sighup = 0;
-volatile sig_atomic_t pcp_wakeup_request = 0;
-static volatile sig_atomic_t pcp_restart_request = 0;
-
-static void  do_pcp_flush(PCP_CONNECTION *frontend);
-
-static void inform_process_count(PCP_CONNECTION *frontend);
-static void inform_process_info(PCP_CONNECTION *frontend, char *buf);
-static void inform_systemDB_info(PCP_CONNECTION *frontend);
-static void inform_watchdog_info(PCP_CONNECTION *frontend, char *buf);
-static void inform_node_info(PCP_CONNECTION *frontend, char *buf);
-static void inform_node_count(PCP_CONNECTION *frontend);
-static void process_detach_node(PCP_CONNECTION *frontend,char *buf,char tos);
-static void process_attach_node(PCP_CONNECTION *frontend,char *buf);
-static void process_recovery_request(PCP_CONNECTION *frontend,char *buf);
-static void process_status_request(PCP_CONNECTION *frontend);
-static void process_promote_node(PCP_CONNECTION *frontend,char *buf, char tos);
-static void process_shutown_request(PCP_CONNECTION *frontend,char mode);
-static void process_set_configration_parameter(PCP_CONNECTION *frontend,char *buf, int len);
-
-static void process_authentication(PCP_CONNECTION *frontend, char *buf, char *pcp_conf_file,
-				char* salt, int *random_salt,volatile int *authenticated);
-static void send_md5salt(PCP_CONNECTION *frontend, char* salt);
+static int pcp_do_accept(int unix_fd, int inet_fd);
+static void start_pcp_command_processor_process(int port);
+static void pcp_child_will_die(int code, Datum arg);
+static void pcp_kill_all_children(int sig);
+static void reaper(void);
 
 
 #define CHECK_RESTART_REQUEST \
 	do { \
+		if (sigchld_request) \
+		{ \
+			reaper(); \
+		} \
 		if (pcp_restart_request) \
 		{ \
 			ereport(LOG,(errmsg("restart request received in pcp child process"))); \
-			exit(1); \
-		} \
-		else \
-		{ \
-		  pool_initialize_private_backend_status(); \
+			pcp_exit_handler(SIGTERM); \
 		} \
     } while (0)
 
-PCP_CONNECTION* volatile pcp_frontend = NULL;
 
-void
-pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
+/*
+ * main entry point for pcp child process
+ */
+void pcp_main(int unix_fd, int inet_fd)
 {
 	sigjmp_buf	local_sigjmp_buf;
-	MemoryContext PCPMemoryContext;
-
-//	PCP_CONNECTION* volatile frontend = NULL;
-	volatile int authenticated = 0;
 	struct timeval uptime;
-	char salt[4];
-	int random_salt = 0;
-	char tos;
-	int rsize;
-	char *buf = NULL;
 
 	ereport(DEBUG1,
 			(errmsg("I am PCP child with pid:%d",getpid())));
@@ -140,35 +108,29 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 	init_ps_display("", "", "", "");
 
 	gettimeofday(&uptime, NULL);
-	srandom((unsigned int) (getpid() ^ uptime.tv_usec));
+	pcp_unix_fd = unix_fd;
+	pcp_inet_fd = inet_fd;
 
-	/* set pcp_read() timeout */
-	pcp_set_timeout(pool_config->pcp_timeout);
+	pcp_recovery_in_progress = pool_shared_memory_create(sizeof(bool));
+	*pcp_recovery_in_progress = false;
+	/*
+	 * install the call back for preparation of exit
+	 */
+	on_system_exit(pcp_child_will_die, (Datum)NULL);
 
 	/* set up signal handlers */
-	signal(SIGTERM, die);
-	signal(SIGINT, die);
-	signal(SIGHUP, reload_config_handler);
-	signal(SIGQUIT, die);
-	signal(SIGCHLD, SIG_DFL);
-	signal(SIGUSR1, restart_handler);
-	signal(SIGUSR2, wakeup_handler);
-	signal(SIGPIPE, SIG_IGN);
-	signal(SIGALRM, SIG_IGN);
-	/* Create per loop iteration memory context */
-	PCPMemoryContext = AllocSetContextCreate(TopMemoryContext,
-											  "PCP_main_loop",
-											  ALLOCSET_DEFAULT_MINSIZE,
-											  ALLOCSET_DEFAULT_INITSIZE,
-											  ALLOCSET_DEFAULT_MAXSIZE);
+	pool_signal(SIGTERM, pcp_exit_handler);
+	pool_signal(SIGINT, pcp_exit_handler);
+	pool_signal(SIGQUIT, pcp_exit_handler);
+	pool_signal(SIGHUP, reload_config_handler);
+	pool_signal(SIGCHLD, reap_handler);
+
+	pool_signal(SIGUSR1, restart_handler);
+	pool_signal(SIGUSR2, wakeup_handler_parent);
+	pool_signal(SIGPIPE, SIG_IGN);
+	pool_signal(SIGALRM, SIG_IGN);
 
 	MemoryContextSwitchTo(TopMemoryContext);
-
-	/* Initialize my backend status */
-	pool_initialize_private_backend_status();
-
-	/* Initialize process context */
-	pool_init_process_context();
 
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
 	{
@@ -176,247 +138,30 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 		EmitErrorReport();
 
 		pool_signal(SIGALRM, SIG_IGN);
-		if(pcp_frontend)
-			pcp_close(pcp_frontend);
-
-		pcp_frontend = NULL;
-		authenticated = 0;
 		MemoryContextSwitchTo(TopMemoryContext);
 		FlushErrorState();
 	}
 	/* We can now handle ereport(ERROR) */
 	PG_exception_stack = &local_sigjmp_buf;
-
 	for(;;)
 	{
-		MemoryContextSwitchTo(PCPMemoryContext);
-		MemoryContextResetAndDeleteChildren(PCPMemoryContext);
-
+		int port;
 		errno = 0;
-
 		CHECK_RESTART_REQUEST;
 
-		if (pcp_frontend == NULL)
+		port = pcp_do_accept(unix_fd, inet_fd);
+		if(port > 0)
 		{
-			pcp_frontend = pcp_do_accept(unix_fd, inet_fd);
-			if (pcp_frontend == NULL)
-				continue;
-
-			unset_nonblock(pcp_frontend->fd);
+			start_pcp_command_processor_process(port);
 		}
-
-		/* read a PCP packet */
-		if (pcp_read(pcp_frontend, &tos, 1))
-		{
-			if (errorcode == TIMEOUTERR)
-			{
-				ereport(ERROR,
-					(errmsg("unable to read from client"),
-						errdetail("pcp_read time out")));
-			}
-			ereport(FATAL,
-				(errmsg("unable to read from client"),
-					errdetail("pcp_read failed with error : \"%s\"",strerror(errno))));
-
-		}
-		if (pcp_read(pcp_frontend, &rsize, sizeof(int)))
-		{
-			if (errorcode == TIMEOUTERR)
-			{
-				ereport(ERROR,
-					(errmsg("unable to read from client"),
-						errdetail("pcp_read time out")));
-			}
-			ereport(FATAL,
-				(errmsg("unable to read from client"),
-					errdetail("pcp_read failed with error : \"%s\"",strerror(errno))));
-		}
-
-		rsize = ntohl(rsize);
-		if ((rsize - sizeof(int)) > 0)
-		{
-			buf = (char *)palloc(rsize - sizeof(int));
-			if (pcp_read(pcp_frontend, buf, rsize - sizeof(int)))
-			{
-				if (errorcode == TIMEOUTERR)
-				{
-					ereport(ERROR,
-						(errmsg("unable to read from client"),
-							errdetail("pcp_read time out")));
-				}
-				ereport(FATAL,
-					(errmsg("unable to read from client"),
-						errdetail("pcp_read failed with error : \"%s\"",strerror(errno))));
-			}
-		}
-
-		/* is this connection authenticated? if not disconnect immediately*/
-		if ((! authenticated) && (tos != 'R' && tos != 'M'))
-		{
-			ereport(ERROR,
-				(errmsg("authentication failed for new PCP connection"),
-					errdetail("connection not authorized")));
-		}
-
-		/* process a request */
-		ereport(DEBUG1,
-			(errmsg("received PCP packet"),
-				 errdetail("PCP packet type of service '%c'", tos)));
-
-		set_ps_display("PCP: processing a request", false);
-
-		if (tos == 'C' || tos == 'd' || tos == 'D' || tos == 'j' ||
-			tos == 'J' || tos == 'O' || tos == 'T')
-		{
-			if (Req_info->switching)
-			{
-				if(Req_info->request_queue_tail != Req_info->request_queue_head)
-				{
-					POOL_REQUEST_KIND reqkind;
-					reqkind = Req_info->request[(Req_info->request_queue_head +1) % MAX_REQUEST_QUEUE_SIZE].kind;
-
-					if (reqkind == NODE_UP_REQUEST)
-						ereport(ERROR,
-							(errmsg("failed to process PCP request at the moment"),
-								 errdetail("failback is in progress")));
-					else if (reqkind == NODE_DOWN_REQUEST)
-						ereport(ERROR,
-							(errmsg("failed to process PCP request at the moment"),
-								 errdetail("failover is in progress")));
-					else if (reqkind == PROMOTE_NODE_REQUEST)
-						ereport(ERROR,
-							(errmsg("failed to process PCP request at the moment"),
-								 errdetail("promote node operation is in progress")));
-					ereport(ERROR,
-							(errmsg("failed to process PCP request at the moment"),
-							 errdetail("operation is in progress")));
-				}
-			}
-		}
-
-		switch (tos)
-		{
-			case 'R':			/* authentication */
-				process_authentication(pcp_frontend, buf, pcp_conf_file,
-					salt, &random_salt, &authenticated);
-				break;
-
-			case 'M':			/* md5 salt */
-				send_md5salt(pcp_frontend, salt);
-				random_salt = 1;
-				break;
-			case 'A':			/* set configuration parameter */
-				process_set_configration_parameter(pcp_frontend,buf,rsize);
-				break;
-			case 'L':			/* node count */
-				inform_node_count(pcp_frontend);
-				break;
-			case 'I':			/* node info */
-				inform_node_info(pcp_frontend, buf);
-				break;
-			case 'N':			/* process count */
-				inform_process_count(pcp_frontend);
-				break;
-			case 'P':			/* process info */
-				inform_process_info(pcp_frontend, buf);
-				break;
-			case 'S':			/* SystemDB info */
-				inform_systemDB_info(pcp_frontend);
-				break;
-			case 'W':			/* watchdog info */
-				inform_watchdog_info(pcp_frontend, buf);
-				break;
-			case 'D':			/* detach node */
-			case 'd':			/* detach node gracefully */
-				process_detach_node(pcp_frontend, buf, tos);
-				break;
-			case 'C':			/* attach node */
-				process_attach_node(pcp_frontend, buf);
-				break;
-			case 'T':
-				process_shutown_request(pcp_frontend, buf[0]);
-				break;
-
-			case 'O': /* recovery request */
-				process_recovery_request(pcp_frontend, buf);
-				break;
-
-			case 'B': /* status request*/
-				process_status_request(pcp_frontend);
-				break;
-
-			case 'J':			/* promote node */
-			case 'j':			/* promote node gracefully */
-				process_promote_node(pcp_frontend,buf,tos);
-				break;
-
-			case 'F':
-				ereport(DEBUG1,
-					(errmsg("PCP processing request, stop online recovery")));
-				break;
-
-			case 'X':			/* disconnect */
-				ereport(DEBUG1,
-					(errmsg("PCP processing request, client disconnecting"),
-						 errdetail("closing PCP connection")));
-				authenticated = 0;
-				pcp_close(pcp_frontend);
-				pcp_frontend = NULL;
-				break;
-
-			default:
-				ereport(FATAL,
-					(errmsg("PCP processing request"),
-						errdetail("unknown PCP packet type \"%c\"",tos)));
-		}
-		/* seems ok. cancel idle check timer */
-		pool_signal(SIGALRM, SIG_IGN);
 	}
-
-	exit(0);
 }
 
-static RETSIGTYPE
-die(int sig)
-{
-	pcp_exit_request = 1;
-	ereport(DEBUG1,
-			(errmsg("PCP child receives shutdown request signal %d", sig)));
-
-	switch (sig)
-	{
-		case SIGTERM:	/* smart shutdown */
-		case SIGINT:	/* fast shutdown */
-		case SIGQUIT:	/* immediate shutdown */
-			exit(0);
-			break;
-		default:
-			break;
-	}
-
-	exit(1);
-}
-
-static RETSIGTYPE
-wakeup_handler(int sig)
-{
-	pcp_wakeup_request = 1;
-}
-
-static RETSIGTYPE
-restart_handler(int sig)
-{
-	pcp_restart_request = 1;
-}
-
-static PCP_CONNECTION *
+static int
 pcp_do_accept(int unix_fd, int inet_fd)
 {
-	PCP_CONNECTION *pc = NULL;
-
 	fd_set readmask;
 	int fds;
-
 	struct sockaddr addr;
 	socklen_t addrlen;
 	int fd = 0;
@@ -431,21 +176,18 @@ pcp_do_accept(int unix_fd, int inet_fd)
 		FD_SET(inet_fd, &readmask);
 
 	fds = select(Max(unix_fd, inet_fd)+1, &readmask, NULL, NULL, NULL);
-
 	if (fds == -1)
 	{
 		if (errno == EAGAIN || errno == EINTR)
-			return NULL;
+			return -1;
 		ereport(ERROR,
-			(errmsg("unable to accept new pcp connection"),
-				errdetail("select system call failed with error : \"%s\"",strerror(errno))));
+				(errmsg("unable to accept new pcp connection"),
+				 errdetail("select system call failed with error : \"%s\"",strerror(errno))));
 	}
-
 	if (FD_ISSET(unix_fd, &readmask))
 	{
 		fd = unix_fd;
 	}
-
 	if (FD_ISSET(inet_fd, &readmask))
 	{
 		fd = inet_fd;
@@ -463,15 +205,14 @@ pcp_do_accept(int unix_fd, int inet_fd)
 		 */
 		if (errno != EAGAIN && errno != EWOULDBLOCK)
 			ereport(ERROR,
-				(errmsg("unable to accept new pcp connection"),
-					errdetail("socket accept system call failed with error : \"%s\"",strerror(errno))));
+					(errmsg("unable to accept new pcp connection"),
+					 errdetail("socket accept system call failed with error : \"%s\"",strerror(errno))));
 	}
-
 	if (pcp_got_sighup)
 	{
-        MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
+		MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
 		pool_get_config(get_config_file_name(), RELOAD_CONFIG);
-        MemoryContextSwitchTo(oldContext);
+		MemoryContextSwitchTo(oldContext);
 		pcp_got_sighup = 0;
 	}
 	ereport(DEBUG2,
@@ -479,15 +220,14 @@ pcp_do_accept(int unix_fd, int inet_fd)
 	if (inet)
 	{
 		int on = 1;
-
 		if (setsockopt(afd, IPPROTO_TCP, TCP_NODELAY,
 					   (char *) &on,
 					   sizeof(on)) < 0)
 		{
 			close(afd);
 			ereport(ERROR,
-				(errmsg("unable to accept new pcp connection"),
-					errdetail("setsockopt system call failed with error : \"%s\"",strerror(errno))));
+					(errmsg("unable to accept new pcp connection"),
+					 errdetail("setsockopt system call failed with error : \"%s\"",strerror(errno))));
 		}
 		if (setsockopt(afd, SOL_SOCKET, SO_KEEPALIVE,
 					   (char *) &on,
@@ -495,140 +235,180 @@ pcp_do_accept(int unix_fd, int inet_fd)
 		{
 			close(afd);
 			ereport(ERROR,
-				(errmsg("unable to accept new pcp connection"),
-					errdetail("setsockopt system call failed with error : \"%s\"",strerror(errno))));
+					(errmsg("unable to accept new pcp connection"),
+					 errdetail("setsockopt system call failed with error : \"%s\"",strerror(errno))));
 		}
 	}
-    pc = pcp_open(afd);
-	return pc;
+	return afd;
 }
 
 /*
- * unset non-block flag
+ * forks a new pcp worker child
+ */
+static void start_pcp_command_processor_process(int port)
+{
+	pid_t pid = fork();
+	if (pid == 0)/* child */
+	{
+		/* Set the process type variable */
+		processType = PT_PCP_WORKER;
+		on_exit_reset();
+		/* Close the listen sockets sockets */
+		close(pcp_unix_fd);
+		close(pcp_inet_fd);
+		/* call PCP child main */
+		if (pcp_worker_children)
+			list_free(pcp_worker_children);
+		pcp_worker_children= NULL;
+		POOL_SETMASK(&UnBlockSig);
+		pcp_worker_main(port); /* Never returns */
+	}
+	else if (pid == -1)
+	{
+		ereport(FATAL,
+				(errmsg("fork() failed. reason: %s", strerror(errno))));
+	}
+	else /* parent */
+	{
+		ereport(LOG,
+				(errmsg("forked new pcp worker, pid=%d socket=%d",
+						(int) pid, (int) port)));
+		/* close the port in parent process. It is only consumed by child */
+		close(port);
+		/* Add it to the list */
+		pcp_worker_children = lappend_int(pcp_worker_children, (int)pid);
+	}
+}
+
+/*
+ * sends the signal to all children of pcp child process
  */
 static void
-unset_nonblock(int fd)
+pcp_kill_all_children(int sig)
 {
-	int var;
-
-	/* set fd to non-blocking */
-	var = fcntl(fd, F_GETFL, 0);
-	if (var == -1)
+	/* forward wakeup requests to children */
+	ListCell* lc;
+	foreach(lc, pcp_worker_children)
 	{
-		ereport(FATAL,
-			(errmsg("unable to connect"),
-				errdetail("fcntl system call failed with error : \"%s\"",strerror(errno))));
-
+		pid_t pid = (pid_t)lfirst_int(lc);
+		kill(pid,sig);
 	}
-	if (fcntl(fd, F_SETFL, var & ~O_NONBLOCK) == -1)
+}
+/*
+ * handle SIGCHLD
+ */
+static RETSIGTYPE reap_handler(int sig)
+{
+	POOL_SETMASK(&BlockSig);
+	sigchld_request = 1;
+	POOL_SETMASK(&UnBlockSig);
+}
+
+static void reaper(void)
+{
+	pid_t pid;
+	int status;
+
+	ereport(DEBUG1,
+			(errmsg("PCP child reaper handler")));
+
+	/* clear SIGCHLD request */
+	sigchld_request = 0;
+
+	while ((pid = pool_waitpid(&status)) > 0)
 	{
-		ereport(FATAL,
-			(errmsg("unable to connect"),
-				errdetail("fcntl system call failed with error : \"%s\"",strerror(errno))));
+		if(WIFEXITED(status))
+		{
+			if(WEXITSTATUS(status) == POOL_EXIT_FATAL)
+				ereport(LOG,
+						(errmsg("PCP worker process with pid: %d exit with FATAL ERROR.", pid)));
+			else if(WEXITSTATUS(status) == POOL_EXIT_SUCCESS)
+				ereport(LOG,
+						(errmsg("PCP process with pid: %d exit with SUCCESS.", pid)));
+		}
+		if (WIFSIGNALED(status))
+		{
+			/* Child terminated by segmentation fault. Report it */
+			if(WTERMSIG(status) == SIGSEGV)
+				ereport(WARNING,
+						(errmsg("PCP process with pid: %d was terminated by segmentation fault",pid)));
+			else
+				ereport(LOG,
+						(errmsg("PCP process with pid: %d exits with status %d by signal %d", pid, status, WTERMSIG(status))));
+		}
+		else
+			ereport(LOG,
+					(errmsg("PCP process with pid: %d exits with status %d",pid, status)));
+		ereport(DEBUG2,
+				(errmsg("going to remove pid: %d from pid list having %d elements",pid, list_length(pcp_worker_children))));
+		/* remove the pid of process from the list */
+		pcp_worker_children = list_delete_int(pcp_worker_children,pid);
+		ereport(DEBUG2,
+				(errmsg("new list have %d elements",list_length(pcp_worker_children))));
 	}
 }
 
-/*
- * see if received username and password matches with one in the file
- */
-static int
-user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len)
+static RETSIGTYPE
+pcp_exit_handler(int sig)
 {
-	FILE *fp = NULL;
-	char packet_username[MAX_USER_PASSWD_LEN+1];
-	char packet_password[MAX_USER_PASSWD_LEN+1];
-	char encrypt_buf[(MD5_PASSWD_LEN+1)*2];
-	char file_username[MAX_USER_PASSWD_LEN+1];
-	char file_password[MAX_USER_PASSWD_LEN+1];
-	char *index = NULL;
-	static char line[MAX_FILE_LINE_LEN+1];
-	int i, len;
+	pid_t wpid;
 
-	/* strcpy() should be OK, but use strncpy() to be extra careful */
-	strncpy(packet_username, buf, MAX_USER_PASSWD_LEN);
-	index = (char *) memchr(buf, '\0', MAX_USER_PASSWD_LEN);
-	if (index == NULL)
+	POOL_SETMASK(&AuthBlockSig);
+	ereport(DEBUG1,
+			(errmsg("PCP child receives shutdown request signal %d, Forwarding to all children", sig)));
+
+	pcp_kill_all_children(sig);
+
+	if (sig == SIGTERM) /* smart shutdown */
 	{
-		ereport(ERROR,
-			(errmsg("failed to authenticate PCP user"),
-				 errdetail("error while reading authentication packet")));
-		return 0;
+		ereport(DEBUG1,
+				(errmsg("PCP child receives smart shutdown request")));
+		/* close the listening sockets */
+		close(pcp_unix_fd);
+		close(pcp_inet_fd);
 	}
-	strncpy(packet_password, ++index, MAX_USER_PASSWD_LEN);
-
-	fp = fopen(passwd_file, "r");
-	if (fp == NULL)
+	else if (sig == SIGINT)
 	{
-		ereport(ERROR,
-			(errmsg("failed to authenticate PCP user"),
-				 errdetail("could not open %s. reason: %s", passwd_file, strerror(errno))));
-		return 0;
+		ereport(DEBUG1,
+				(errmsg("PCP child receives fast shutdown request")));
+	}
+	else if (sig == SIGQUIT)
+	{
+		ereport(DEBUG1,
+				(errmsg("PCP child receives immediate shutdown request")));
 	}
 
-	/* for now, I don't care if duplicate username exists in the config file */
-	while ((fgets(line, MAX_FILE_LINE_LEN, fp)) != NULL)
+	POOL_SETMASK(&UnBlockSig);
+
+	if (list_length(pcp_worker_children) > 0)
 	{
-		i = 0;
-		len = 0;
-
-		if (line[0] == '\n')
-			continue;
-		if (line[0] == '#')
-			continue;
-
-		while (line[i] != ':')
+		do
 		{
-			len++;
-			if (++i > MAX_USER_PASSWD_LEN)
-			{
-				fclose(fp);
-				ereport(ERROR,
-					(errmsg("failed to authenticate PCP user"),
-						 errdetail("username read from file \"%s\" is larger than maximum allowed username length [%d]", passwd_file, MAX_USER_PASSWD_LEN)));
-				return 0;
-			}
-		}
-		memcpy(file_username, line, len);
-		file_username[len] = '\0';
-
-		if (strcmp(packet_username, file_username) != 0)
-			continue;
-
-		i++;
-		len = 0;
-		while (line[i] != '\n' && line[i] != '\0')
-		{
-			len++;
-			if (++i > MAX_USER_PASSWD_LEN)
-			{
-				fclose(fp);
-				ereport(ERROR,
-					(errmsg("failed to authenticate PCP user"),
-						 errdetail("password read from file \"%s\" is larger than maximum allowed password length [%d]", passwd_file, MAX_USER_PASSWD_LEN)));
-				return 0;
-			}
-		}
-
-		memcpy(file_password, line+strlen(file_username)+1, len);
-		file_password[len] = '\0';
-
-		pool_md5_encrypt(file_password, file_username, strlen(file_username),
-					  encrypt_buf + MD5_PASSWD_LEN + 1);
-		encrypt_buf[(MD5_PASSWD_LEN+1)*2-1] = '\0';
-
-		pool_md5_encrypt(encrypt_buf+MD5_PASSWD_LEN+1, salt, salt_len,
-					  encrypt_buf);
-		encrypt_buf[MD5_PASSWD_LEN] = '\0';
-
-		if (strcmp(encrypt_buf, packet_password) == 0)
-		{
-			fclose(fp);
-			return 1;
-		}
+			wpid = wait(NULL);
+		}while (wpid > 0 || (wpid == -1 && errno == EINTR));
+		
+		if (wpid == -1 && errno != ECHILD)
+			ereport(WARNING,
+					(errmsg("wait() on pcp worker children failed. reason:%s", strerror(errno))));
+		list_free(pcp_worker_children);
 	}
+	pcp_worker_children = NULL;
 
-	fclose(fp);
-	return 0;
+	exit(0);
+}
+
+/* Wakeup signal handler for pcp parent process */
+static RETSIGTYPE
+wakeup_handler_parent(int sig)
+{
+	/* forward wakeup signal to all children */
+	pcp_kill_all_children(SIGUSR2);
+}
+
+static RETSIGTYPE
+restart_handler(int sig)
+{
+	pcp_restart_request = 1;
 }
 
 /* SIGHUP handler */
@@ -637,903 +417,71 @@ static RETSIGTYPE reload_config_handler(int sig)
 	pcp_got_sighup = 1;
 }
 
-/* Dedatch a node */
-static int pool_detach_node(int node_id, bool gracefully)
+static void pcp_child_will_die(int code, Datum arg)
 {
-	if (!gracefully)
-	{
-		notice_backend_error(node_id);	/* send failover request */
-		return 0;
-	}
-		
+	pid_t wpid;
 	/*
-	 * Wait until all frontends exit
+	 * This is supposed to be called from main process
 	 */
-	*InRecovery = RECOVERY_DETACH;	/* This wiil ensure that new incoming
-						 * connection requests are blocked */
-
-	if (wait_connection_closed())
+	if(processType != PT_PCP)
+		return;
+	if (list_length(pcp_worker_children) <= 0)
+		return;
+	pcp_kill_all_children(SIGINT);
+	/* wait for all children to exit */
+	do
 	{
-		/* wait timed out */
-		finish_recovery();
-		return -1;
-	}
-
-	/*
-	 * Now all frontends have gone. Let's do failover.
-	 */
-	notice_backend_error(node_id);		/* send failover request */
-
-	/*
-	 * Wait for failover completed.
-	 */
-	pcp_wakeup_request = 0;
-
-	while (!pcp_wakeup_request)
-	{
-		struct timeval t = {1, 0};
-		select(0, NULL, NULL, NULL, &t);
-	}
-	pcp_wakeup_request = 0;
-
-	/*
-	 * Start to accept incoming connections and send SIGUSR2 to pgpool
-	 * parent to distribute SIGUSR2 all pgpool children.
-	 */
-	finish_recovery();
-
-	return 0;
-}
-
-/* Promote a node */
-static int pool_promote_node(int node_id, bool gracefully)
-{
-	if (!gracefully)
-	{
-		promote_backend(node_id);	/* send promote request */
-		return 0;
-	}
-		
-	/*
-	 * Wait until all frontends exit
-	 */
-	*InRecovery = RECOVERY_PROMOTE;	/* This wiil ensure that new incoming
-						 * connection requests are blocked */
-
-	if (wait_connection_closed())
-	{
-		/* wait timed out */
-		finish_recovery();
-		return -1;
-	}
-
-	/*
-	 * Now all frontends have gone. Let's do failover.
-	 */
-	promote_backend(node_id);		/* send promote request */
-
-	/*
-	 * Wait for failover completed.
-	 */
-	pcp_wakeup_request = 0;
-
-	while (!pcp_wakeup_request)
-	{
-		struct timeval t = {1, 0};
-		select(0, NULL, NULL, NULL, &t);
-	}
-	pcp_wakeup_request = 0;
-
-	/*
-	 * Start to accept incoming connections and send SIGUSR2 to pgpool
-	 * parent to distribute SIGUSR2 all pgpool children.
-	 */
-	finish_recovery();
-
-	return 0;
-}
-
-static void 
-inform_process_count(PCP_CONNECTION *frontend)
-{
-	int wsize;
-	int process_count;
-	char process_count_str[16];
-	int *process_list = NULL;
-	char code[] = "CommandComplete";
-	char *mesg = NULL;
-	int i;
-	int total_port_len = 0;
-
-	process_list = pool_get_process_list(&process_count);
-
-	mesg = (char *)palloc(6*process_count);	/* port# is at most 5 characters long (MAX:65535) */
-
-	snprintf(process_count_str, sizeof(process_count_str), "%d", process_count);
-
-	for (i = 0; i < process_count; i++)
-	{
-		char port[6];
-		snprintf(port, sizeof(port), "%d", process_list[i]);
-		snprintf(mesg+total_port_len, strlen(port)+1, "%s", port);
-		total_port_len += strlen(port)+1;
-	}
-
-	pcp_write(frontend, "n", 1);
-	wsize = htonl(sizeof(code) +
-				  strlen(process_count_str)+1 +
-				  total_port_len +
-				  sizeof(int));
-	pcp_write(frontend, &wsize, sizeof(int));
-	pcp_write(frontend, code, sizeof(code));
-	pcp_write(frontend, process_count_str, strlen(process_count_str)+1);
-	pcp_write(frontend, mesg, total_port_len);
-	do_pcp_flush(frontend);
-
-	pfree(process_list);
-	pfree(mesg);
-
-	ereport(DEBUG1,
-		(errmsg("PCP: informing process count"),
-			 errdetail("%d process(es) found", process_count)));
-}
-
-static void
-inform_process_info(PCP_CONNECTION *frontend,char *buf)
-{
-	int proc_id;
-	int wsize;
-	int num_proc = pool_config->num_init_children;
-	int i;
-
-	proc_id = atoi(buf);
-
-	if ((proc_id != 0) && (pool_get_process_info(proc_id) == NULL))
-	{
-		ereport(ERROR,
-			(errmsg("informing process info failed"),
-				 errdetail("invalid process ID : %s",buf)));
-	}
-	else
-	{
-		/* First, send array size of connection_info */
-		char arr_code[] = "ArraySize";
-		char con_info_size[16];
-		/* Finally, indicate that all data is sent */
-		char fin_code[] = "CommandComplete";
-
-		POOL_REPORT_POOLS *pools = get_pools(&num_proc);
-
-		if (proc_id == 0)
-		{
-			snprintf(con_info_size, sizeof(con_info_size), "%d", num_proc);
-		}
-		else
-		{
-			snprintf(con_info_size, sizeof(con_info_size), "%d", pool_config->max_pool * NUM_BACKENDS);
-		}
-
-		pcp_write(frontend, "p", 1);
-		wsize = htonl(sizeof(arr_code) +
-					  strlen(con_info_size)+1 +
-					  sizeof(int));
-		pcp_write(frontend, &wsize, sizeof(int));
-		pcp_write(frontend, arr_code, sizeof(arr_code));
-		pcp_write(frontend, con_info_size, strlen(con_info_size)+1);
-		do_pcp_flush(frontend);
-
-		/* Second, send process information for all connection_info */
-		for (i=0; i<num_proc; i++)
-		{
-			char code[] = "ProcessInfo";
-			char proc_pid[16];
-			char proc_start_time[20];
-			char proc_create_time[20];
-			char majorversion[5];
-			char minorversion[5];
-			char pool_counter[16];
-			char backend_id[16];
-			char backend_pid[16];
-			char connected[2];
-
-			if (proc_id != 0 && proc_id != pools[i].pool_pid) continue;
-
-			snprintf(proc_pid, sizeof(proc_pid), "%d", pools[i].pool_pid);
-			snprintf(proc_start_time, sizeof(proc_start_time), "%ld", pools[i].start_time);
-			snprintf(proc_create_time, sizeof(proc_create_time), "%ld", pools[i].create_time);
-			snprintf(majorversion, sizeof(majorversion), "%d", pools[i].pool_majorversion);
-			snprintf(minorversion, sizeof(minorversion), "%d", pools[i].pool_minorversion);
-			snprintf(pool_counter, sizeof(pool_counter), "%d", pools[i].pool_counter);
-			snprintf(backend_id, sizeof(backend_pid), "%d", pools[i].backend_id);
-			snprintf(backend_pid, sizeof(backend_pid), "%d", pools[i].pool_backendpid);
-			snprintf(connected, sizeof(connected), "%d", pools[i].pool_connected);
-
-			pcp_write(frontend, "p", 1);
-			wsize = htonl(	sizeof(code) +
-							strlen(proc_pid)+1 +
-							strlen(pools[i].database)+1 +
-							strlen(pools[i].username)+1 +
-							strlen(proc_start_time)+1 +
-							strlen(proc_create_time)+1 +
-							strlen(majorversion)+1 +
-							strlen(minorversion)+1 +
-							strlen(pool_counter)+1 +
-							strlen(backend_id)+1 +
-							strlen(backend_pid)+1 +
-							strlen(connected)+1 +
-							sizeof(int));
-			pcp_write(frontend, &wsize, sizeof(int));
-			pcp_write(frontend, code, sizeof(code));
-			pcp_write(frontend, proc_pid, strlen(proc_pid)+1);
-			pcp_write(frontend, pools[i].database, strlen(pools[i].database)+1);
-			pcp_write(frontend, pools[i].username, strlen(pools[i].username)+1);
-			pcp_write(frontend, proc_start_time, strlen(proc_start_time)+1);
-			pcp_write(frontend, proc_create_time, strlen(proc_create_time)+1);
-			pcp_write(frontend, majorversion, strlen(majorversion)+1);
-			pcp_write(frontend, minorversion, strlen(minorversion)+1);
-			pcp_write(frontend, pool_counter, strlen(pool_counter)+1);
-			pcp_write(frontend, backend_id, strlen(backend_id)+1);
-			pcp_write(frontend, backend_pid, strlen(backend_pid)+1);
-			pcp_write(frontend, connected, strlen(connected)+1);
-			do_pcp_flush(frontend);
-		}
-
-		pcp_write(frontend, "p", 1);
-		wsize = htonl(sizeof(fin_code) +
-					  sizeof(int));
-		pcp_write(frontend, &wsize, sizeof(int));
-		pcp_write(frontend, fin_code, sizeof(fin_code));
-		do_pcp_flush(frontend);
-		ereport(DEBUG1,
-			(errmsg("PCP informing process info"),
-				 errdetail("retrieved process information from shared memory")));
-
-		pfree(pools);
-	}
-}
-
-static void
-inform_systemDB_info(PCP_CONNECTION *frontend)
-{
-	int wsize;
-
-	SystemDBInfo *si = NULL;
-	si = pool_get_system_db_info();
-
-	if (si == NULL)
-	{
-		ereport(ERROR,
-			(errmsg("informing system db info failed"),
-				 errdetail("system DB is not defined")));
-	}
-	else
-	{
-		/* first, send systemDB information */
-		char code[] = "SystemDBInfo";
-		char port[6];
-		char status[2];
-		char dist_def_num[16];
-		/* finally, indicate that all data is sent */
-		char fin_code[] = "CommandComplete";
-
-		/* since PCP clients can only see SystemDBInfo, set system_db_status from the shared memory */
-		si->system_db_status = SYSDB_STATUS;
-
-		snprintf(port, sizeof(port), "%d", si->port);
-		snprintf(status, sizeof(status), "%d", si->system_db_status);
-		snprintf(dist_def_num, sizeof(dist_def_num), "%d", si->dist_def_num);
-
-		pcp_write(frontend, "s", 1);
-		wsize = htonl(sizeof(code) +
-					  strlen(si->hostname)+1 +
-					  strlen(port)+1 +
-					  strlen(si->user)+1 +
-					  strlen(si->password)+1 +
-					  strlen(si->schema_name)+1 +
-					  strlen(si->database_name)+1 +
-					  strlen(dist_def_num)+1 +
-					  strlen(status)+1 +
-					  sizeof(int));
-		pcp_write(frontend, &wsize, sizeof(int));
-		pcp_write(frontend, code, sizeof(code));
-		pcp_write(frontend, si->hostname, strlen(si->hostname)+1);
-		pcp_write(frontend, port, strlen(port)+1);
-		pcp_write(frontend, si->user, strlen(si->user)+1);
-		pcp_write(frontend, si->password, strlen(si->password)+1);
-		pcp_write(frontend, si->schema_name, strlen(si->schema_name)+1);
-		pcp_write(frontend, si->database_name, strlen(si->database_name)+1);
-		pcp_write(frontend, dist_def_num, strlen(dist_def_num)+1);
-		pcp_write(frontend, status, strlen(status)+1);
-		do_pcp_flush(frontend);
-		/* second, send DistDefInfo if any */
-		if (si->dist_def_num > 0)
-		{
-			char dist_code[] = "DistDefInfo";
-			char col_num[16];
-			int col_list_total_len;
-			int type_list_total_len;
-			char *col_list = NULL;
-			char *type_list = NULL;
-			int col_list_offset;
-			int type_list_offset;
-			DistDefInfo *ddi;
-			int i, j;
-
-			for (i = 0; i < si->dist_def_num; i++)
-			{
-				ddi = &si->dist_def_slot[i];
-				snprintf(col_num, sizeof(col_num), "%d", ddi->col_num);
-
-				col_list_total_len = type_list_total_len = 0;
-				for (j = 0; j < ddi->col_num; j++)
-				{
-					col_list_total_len += strlen(ddi->col_list[j]) + 1;
-					type_list_total_len += strlen(ddi->type_list[j]) + 1;
-				}
-
-				col_list = (char *)palloc(col_list_total_len);
-				type_list = (char *)palloc(type_list_total_len);
-
-				col_list_offset = type_list_offset = 0;
-				for (j = 0; j < ddi->col_num; j++)
-				{
-					snprintf(col_list + col_list_offset, strlen(ddi->col_list[j])+1,
-							 "%s", ddi->col_list[j]);
-					snprintf(type_list + type_list_offset, strlen(ddi->type_list[j])+1,
-							 "%s", ddi->type_list[j]);
-					col_list_offset += strlen(ddi->col_list[j]) + 1;
-					type_list_offset += strlen(ddi->type_list[j]) + 1;
-				}
-
-				pcp_write(frontend, "s", 1);
-				wsize = htonl(sizeof(dist_code) +
-							  strlen(ddi->dbname)+1 +
-							  strlen(ddi->schema_name)+1 +
-							  strlen(ddi->table_name)+1 +
-							  strlen(ddi->dist_key_col_name)+1 +
-							  strlen(col_num)+1 +
-							  col_list_total_len +
-							  type_list_total_len +
-							  strlen(ddi->dist_def_func)+1 +
-							  sizeof(int));
-				pcp_write(frontend, &wsize, sizeof(int));
-				pcp_write(frontend, dist_code, sizeof(dist_code));
-				pcp_write(frontend, ddi->dbname, strlen(ddi->dbname)+1);
-				pcp_write(frontend, ddi->schema_name, strlen(ddi->schema_name)+1);
-				pcp_write(frontend, ddi->table_name, strlen(ddi->table_name)+1);
-				pcp_write(frontend, ddi->dist_key_col_name, strlen(ddi->dist_key_col_name)+1);
-				pcp_write(frontend, col_num, strlen(col_num)+1);
-				pcp_write(frontend, col_list, col_list_total_len);
-				pcp_write(frontend, type_list, type_list_total_len);
-				pcp_write(frontend, ddi->dist_def_func, strlen(ddi->dist_def_func)+1);
-				do_pcp_flush(frontend);
-
-				pfree(col_list);
-				pfree(type_list);
-			}
-		}
-
-		pcp_write(frontend, "s", 1);
-		wsize = htonl(sizeof(fin_code) +
-					  sizeof(int));
-		pcp_write(frontend, &wsize, sizeof(int));
-		pcp_write(frontend, fin_code, sizeof(fin_code));
-		do_pcp_flush(frontend);
-
-		ereport(DEBUG1,
-			(errmsg("PCP: informing systemDB info"),
-				 errdetail("retrieved SystemDB information from shared memory")));
-	}
-}
-
-static void
-inform_watchdog_info(PCP_CONNECTION *frontend,char *buf)
-{
-	int wd_index;
-	int wsize;
-	char code[] = "CommandComplete";
-	char pgpool_port_str[6];
-	char wd_port_str[6];
-	char status[2];
-
-	WdInfo *wi = NULL;
-
-	if (!pool_config->use_watchdog)
-		ereport(ERROR,
-			(errmsg("PCP: informing watchdog info failed"),
-				 errdetail("watcdhog is not enabled")));
-
-	wd_index = atoi(buf);
-	wi = wd_get_watchdog_info(wd_index);
-
-	if (wi == NULL)
-		ereport(ERROR,
-			(errmsg("PCP: informing watchdog info failed"),
-				 errdetail("invalid watchdog index")));
-
-	ereport(DEBUG2,
-		(errmsg("PCP: informing watchdog info"),
-			 errdetail("retrieved node information from shared memory")));
-
-	snprintf(pgpool_port_str, sizeof(pgpool_port_str), "%d", wi->pgpool_port);
-	snprintf(wd_port_str, sizeof(wd_port_str), "%d", wi->wd_port);
-	snprintf(status, sizeof(status), "%d", wi->status);
-
-	pcp_write(frontend, "w", 1);
-	wsize = htonl(sizeof(code) +
-				  strlen(wi->hostname)+1 +
-				  strlen(pgpool_port_str)+1 +
-				  strlen(wd_port_str)+1 +
-				  strlen(status)+1 +
-				  sizeof(int));
-	pcp_write(frontend, &wsize, sizeof(int));
-	pcp_write(frontend, code, sizeof(code));
-
-	pcp_write(frontend, wi->hostname, strlen(wi->hostname)+1);
-	pcp_write(frontend, pgpool_port_str, strlen(pgpool_port_str)+1);
-	pcp_write(frontend, wd_port_str, strlen(wd_port_str)+1);
-	pcp_write(frontend, status, strlen(status)+1);
-	do_pcp_flush(frontend);
-}
-
-static void
-inform_node_info(PCP_CONNECTION *frontend,char *buf)
-{
-	int node_id;
-	int wsize;
-	char code[] = "CommandComplete";
-	char port_str[6];
-	char status[2];
-	char weight_str[20];
-
-	BackendInfo *bi = NULL;
-
-	node_id = atoi(buf);
-	bi = pool_get_node_info(node_id);
-
-	if (bi == NULL)
-		ereport(ERROR,
-			(errmsg("informing node info failed"),
-				 errdetail("invalid node ID")));
-
-	ereport(DEBUG2,
-		(errmsg("PCP: informing node info"),
-			 errdetail("retrieved node information from shared memory")));
-
-	snprintf(port_str, sizeof(port_str), "%d", bi->backend_port);
-	snprintf(status, sizeof(status), "%d", bi->backend_status);
-	snprintf(weight_str, sizeof(weight_str), "%f", bi->backend_weight);
-
-	pcp_write(frontend, "i", 1);
-	wsize = htonl(sizeof(code) +
-				  strlen(bi->backend_hostname)+1 +
-				  strlen(port_str)+1 +
-				  strlen(status)+1 +
-				  strlen(weight_str)+1 +
-				  sizeof(int));
-	pcp_write(frontend, &wsize, sizeof(int));
-	pcp_write(frontend, code, sizeof(code));
-	pcp_write(frontend, bi->backend_hostname, strlen(bi->backend_hostname)+1);
-	pcp_write(frontend, port_str, strlen(port_str)+1);
-	pcp_write(frontend, status, strlen(status)+1);
-	pcp_write(frontend, weight_str, strlen(weight_str)+1);
-	do_pcp_flush(frontend);
-
-}
-
-static void
-inform_node_count(PCP_CONNECTION *frontend)
-{
-	int wsize;
-	int node_count = pool_get_node_count();
-
-	char code[] = "CommandComplete";
-	char mesg[16];
-
-	snprintf(mesg, sizeof(mesg), "%d", node_count);
-
-	pcp_write(frontend, "l", 1);
-	wsize = htonl(sizeof(code) +
-				  strlen(mesg)+1 +
-				  sizeof(int));
-	pcp_write(frontend, &wsize, sizeof(int));
-	pcp_write(frontend, code, sizeof(code));
-	pcp_write(frontend, mesg, strlen(mesg)+1);
-	do_pcp_flush(frontend);
-
-	ereport(DEBUG1,
-		(errmsg("PCP: informing node count"),
-			 errdetail("%d node(s) found", node_count)));
-}
-
-static void 
-process_detach_node(PCP_CONNECTION *frontend,char *buf, char tos)
-{
-	int node_id;
-	int wsize;
-	char code[] = "CommandComplete";
-	bool gracefully;
-
-	if (tos == 'D')
-		gracefully = false;
-	else
-		gracefully = true;
-
-	node_id = atoi(buf);
-	ereport(DEBUG1,
-		(errmsg("PCP: processing detach node"),
-			 errdetail("detaching Node ID %d", node_id)));
-
-	pool_detach_node(node_id, gracefully);
-
-	pcp_write(frontend, "d", 1);
-	wsize = htonl(sizeof(code) + sizeof(int));
-	pcp_write(frontend, &wsize, sizeof(int));
-	pcp_write(frontend, code, sizeof(code));
-	do_pcp_flush(frontend);
-}
-
-static void 
-process_attach_node(PCP_CONNECTION *frontend,char *buf)
-{
-	int node_id;
-	int wsize;
-	char code[] = "CommandComplete";
-
-	node_id = atoi(buf);
-	ereport(DEBUG1,
-		(errmsg("PCP: processing attach node"),
-			 errdetail("attaching Node ID %d", node_id)));
-
-	send_failback_request(node_id,true);
-
-	pcp_write(frontend, "c", 1);
-	wsize = htonl(sizeof(code) + sizeof(int));
-	pcp_write(frontend, &wsize, sizeof(int));
-	pcp_write(frontend, code, sizeof(code));
-	do_pcp_flush(frontend);
-}
-
-
-static void
-process_recovery_request(PCP_CONNECTION *frontend,char *buf)
-{
-	int node_id;
-	int wsize;
-	char code[] = "CommandComplete";
-
-	node_id = atoi(buf);
-
-	if ( (node_id < 0) || (node_id >= pool_config->backend_desc->num_backends) )
-	{
-		ereport(ERROR,
-			(errmsg("process recovery request failed"),
-				 errdetail("node id %d is not valid", node_id)));
-	}
-
-	if ((!REPLICATION &&
-		 !(MASTER_SLAVE &&
-		   !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))) ||
-		(MASTER_SLAVE &&
-		 !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP) &&
-		 node_id == PRIMARY_NODE_ID))
-	{
-		if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
-			ereport(ERROR,
-				(errmsg("process recovery request failed"),
-					 errdetail("primary server cannot be recovered by online recovery.")));
-		else
-			ereport(ERROR,
-					(errmsg("process recovery request failed"),
-					 errdetail("recovery request is accepted only in replication mode or stereaming replication mode.")));
-	}
-	else
-	{
-		ereport(DEBUG1,
-			(errmsg("PCP: processing recovery request"),
-				 errdetail("start online recovery")));
-		PG_TRY();
-		{
-			start_recovery(node_id);
-			finish_recovery();
-			pcp_write(frontend, "c", 1);
-			wsize = htonl(sizeof(code) + sizeof(int));
-			pcp_write(frontend, &wsize, sizeof(int));
-			pcp_write(frontend, code, sizeof(code));
-			do_pcp_flush(frontend);
-		}
-		PG_CATCH();
-		{
-			finish_recovery();
-			PG_RE_THROW();
-			
-		}PG_END_TRY();
-
-	}
-	do_pcp_flush(frontend);
-}
-
-static void
-process_status_request(PCP_CONNECTION *frontend)
-{
-	int nrows = 0;
-	int i;
-	POOL_REPORT_CONFIG *status = get_config(&nrows);
-	int len = 0;
-	/* First, send array size of connection_info */
-	char arr_code[] = "ArraySize";
-	char code[] = "ProcessConfig";
-	/* Finally, indicate that all data is sent */
-	char fin_code[] = "CommandComplete";
-
-	pcp_write(frontend, "b", 1);
-	len = htonl(sizeof(arr_code) + sizeof(int) + sizeof(int));
-	pcp_write(frontend, &len, sizeof(int));
-	pcp_write(frontend, arr_code, sizeof(arr_code));
-	len = htonl(nrows);
-	pcp_write(frontend, &len, sizeof(int));
-
-	do_pcp_flush(frontend);
-
-	for (i = 0; i < nrows; i++)
-	{
-		pcp_write(frontend, "b", 1);
-		len = htonl(sizeof(int)
-			+ sizeof(code)
-			+ strlen(status[i].name) + 1
-			+ strlen(status[i].value) + 1
-			+ strlen(status[i].desc) + 1
-		);
-
-		pcp_write(frontend, &len, sizeof(int));
-		pcp_write(frontend, code, sizeof(code));
-		pcp_write(frontend, status[i].name, strlen(status[i].name)+1);
-		pcp_write(frontend, status[i].value, strlen(status[i].value)+1);
-		pcp_write(frontend, status[i].desc, strlen(status[i].desc)+1);
-	}
-
-	pcp_write(frontend, "b", 1);
-	len = htonl(sizeof(fin_code) + sizeof(int));
-	pcp_write(frontend, &len, sizeof(int));
-	pcp_write(frontend, fin_code, sizeof(fin_code));
-	do_pcp_flush(frontend);
-
-	pfree(status);
-	ereport(DEBUG1,
-		(errmsg("PCP: processing status request"),
-			 errdetail("retrieved status information")));
-}
-
-static void
-process_promote_node(PCP_CONNECTION *frontend, char *buf, char tos)
-{
-	int node_id;
-	int wsize;
-	char code[] = "CommandComplete";
-	bool gracefully;
-
-	if (tos == 'J')
-		gracefully = false;
-	else
-		gracefully = true;
-
-	node_id = atoi(buf);
-	if ( (node_id < 0) || (node_id >= pool_config->backend_desc->num_backends) )
-		ereport(ERROR,
-			(errmsg("could not process recovery request"),
-				errdetail("node id %d is not valid", node_id)));
-	/* promoting node is reserved to Streaming Replication */
-	if (!MASTER_SLAVE || (strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP) != 0))
-	{
-		ereport(FATAL,
-			(errmsg("invalid pgpool mode for process recovery request"),
-				errdetail("not in streaming replication mode, can't promote node id %d", node_id)));
-
-	}
-
-	if (node_id == PRIMARY_NODE_ID)
-	{
-		ereport(FATAL,
-			(errmsg("invalid pgpool mode for process recovery request"),
-				errdetail("specified node is already primary node, can't promote node id %d", node_id)));
-
-	}
-	ereport(DEBUG1,
-		(errmsg("PCP: processing promote node"),
-			 errdetail("promoting Node ID %d", node_id)));
-	pool_promote_node(node_id, gracefully);
-
-	pcp_write(frontend, "d", 1);
-	wsize = htonl(sizeof(code) + sizeof(int));
-	pcp_write(frontend, &wsize, sizeof(int));
-	pcp_write(frontend, code, sizeof(code));
-	do_pcp_flush(frontend);
-}
-
-static void
-process_authentication(PCP_CONNECTION *frontend, char *buf, char *pcp_conf_file,
-				char* salt, int *random_salt,volatile int *authenticated)
-{
-	int wsize;
-
-	if (*random_salt)
-	{
-		*authenticated = user_authenticate(buf, pcp_conf_file, salt, 4);
-	}
-	if (!*random_salt || !*authenticated)
-	{
-		ereport(ERROR,
-				(errmsg("authentication failed"),
-				 errdetail("username and/or password does not match")));
-
-		*random_salt = 0;
-	}
-	else
-	{
-		char code[] = "AuthenticationOK";
-		pcp_write(frontend, "r", 1);
-		wsize = htonl(sizeof(code) + sizeof(int));
-		pcp_write(frontend, &wsize, sizeof(int));
-		pcp_write(frontend, code, sizeof(code));
-		do_pcp_flush(frontend);
-		*random_salt = 0;
-
-		ereport(DEBUG1,
-			(errmsg("PCP: processing authentication request"),
-				 errdetail("authentication OK")));
-	}
-}
-
-static void
-send_md5salt(PCP_CONNECTION *frontend, char* salt)
-{
-	int wsize;
-	ereport(DEBUG1,
-			(errmsg("PCP: sending md5 salt to client")));
-
-	pool_random_salt(salt);
-//	random_salt = 1;
-
-	pcp_write(frontend, "m", 1);
-	wsize = htonl(sizeof(int) + 4);
-	pcp_write(frontend, &wsize, sizeof(int));
-	pcp_write(frontend, salt, 4);
-	do_pcp_flush(frontend);
-
-
-}
-
-static void 
-process_shutown_request(PCP_CONNECTION *frontend, char mode)
-{
-	char code[] = "CommandComplete";
-	pid_t ppid = getppid();
-	int sig,len;
-
-	if (mode == 's')
-	{
-		ereport(DEBUG1,
-			(errmsg("PCP: processing shutdown request"),
-				 errdetail("sending SIGTERM to the parent process with PID:%d", ppid)));
-		sig = SIGTERM;
-	}
-	else if (mode == 'f')
-	{
-		ereport(DEBUG1,
-			(errmsg("PCP: processing shutdown request"),
-				 errdetail("sending SIGINT to the parent process with PID:%d", ppid)));
-		sig = SIGINT;
-	}
-	else if (mode == 'i')
-	{
-		ereport(DEBUG1,
-			(errmsg("PCP: processing shutdown request"),
-				 errdetail("sending SIGQUIT to the parent process with PID:%d", ppid)));
-		sig = SIGQUIT;
-	}
-	else
-	{
-		ereport(ERROR,
-			(errmsg("PCP: error while processing shutdown request"),
-				 errdetail("invalid shutdown mode \"%c\"", mode)));
-	}
+		wpid = wait(NULL);
+	}while (wpid > 0 || (wpid == -1 && errno == EINTR));
 	
-	pcp_write(frontend, "t", 1);
-	len = htonl(sizeof(code) + sizeof(int));
-	pcp_write(frontend, &len, sizeof(int));
-	pcp_write(frontend, code, sizeof(code));
-	do_pcp_flush(frontend);
-
-	pool_signal_parent(sig);
-
+	if (wpid == -1 && errno != ECHILD)
+		ereport(WARNING,
+				(errmsg("wait() on pcp worker children failed. reason:%s", strerror(errno))));
+	
+	POOL_SETMASK(&UnBlockSig);
 }
 
-static void
-process_set_configration_parameter(PCP_CONNECTION *frontend,char *buf, int len)
-{
-	char* param_name;
-	char* param_value;
-	int wsize;
-	char code[] = "CommandComplete";
-	
-	param_name = buf;
-	if(param_name == NULL)
-		ereport(ERROR,
-			(errmsg("PCP: set configuration parameter failed"),
-				 errdetail("invalid pcp packet received from client")));
-
-	param_value = (char *) memchr(buf, '\0', len) + 1;
-	if(param_value == NULL)
-		ereport(ERROR,
-			(errmsg("PCP: set configuration parameter failed"),
-				 errdetail("invalid pcp packet received from client")));
-
-	ereport(LOG,
-		(errmsg("PCP: set configuration parameter, \"%s TO %s\"",param_name,param_value)));
-
-	if(strcasecmp(param_name, "client_min_messages") == 0)
-	{
-		const char *ordered_valid_values[] = {"debug5","debug4","debug3","debug2","debug1","log","commerror","info","notice","warning","error",NULL};
-		bool found = false;
-		int i;
-		for(i=0; ; i++)
-		{
-			char* valid_val = (char*)ordered_valid_values[i];
-			if(!valid_val)
-				break;
-			
-			if (!strcasecmp(param_value, valid_val))
-			{
-				found = true;
-				pool_config->client_min_messages = i + 10;
-				ereport(DEBUG1,
-						(errmsg("PCP setting parameter \"%s\" to \"%s\"",param_name,param_value)));
-				break;
-			}
-		}
-		if (!found)
-			ereport(ERROR,
-				(errmsg("PCP: set configuration parameter failed"),
-					 errdetail("invalid value \"%s\" for parameter \"%s\"",param_value,param_name)));
-	}
-	else
-		ereport(ERROR,
-			(errmsg("PCP: set configuration parameter failed"),
-				 errdetail("invalid parameter \"%s\"",param_name)));
-	
-
-	pcp_write(frontend, "a", 1);
-	wsize = htonl(sizeof(code) + sizeof(int));
-	pcp_write(frontend, &wsize, sizeof(int));
-	pcp_write(frontend, code, sizeof(code));
-	do_pcp_flush(frontend);
-}
-/* 
- * Wrapper around pcp_flush which throws FATAL error when pcp_flush fails
+/*
+ * sets the shared memory flag to indicate pcp recovery command
+ * is in progress. If the flag is already set the function returns
+ * false.
  */
-static void 
-do_pcp_flush(PCP_CONNECTION *frontend)
+bool pcp_mark_recovery_in_progress(void)
 {
-	if (pcp_flush(frontend) < 0)
-		ereport(FATAL,
-			(errmsg("failed to flush data to client"),
-				errdetail("pcp_flush failed with error : \"%s\"",strerror(errno))));
+	bool command_already_inprogress;
+	pool_sigset_t oldmask;
+	/* 
+	 * only pcp worker is allowd to make this call
+	 */
+	if(processType != PT_PCP_WORKER)
+		return false;
+
+	POOL_SETMASK2(&BlockSig, &oldmask);
+	pool_semaphore_lock(PCP_REQUEST_SEM);
+	command_already_inprogress = *pcp_recovery_in_progress;
+	*pcp_recovery_in_progress = true;
+	pool_semaphore_unlock(PCP_REQUEST_SEM);
+	POOL_SETMASK(&oldmask);
+	return (command_already_inprogress == false);
 }
 
-int send_to_pcp_frontend(char* data, int len, bool flush)
+/*
+ * unsets the shared memory flag to indicate pcp recovery command
+ * is finsihed.
+ */
+void pcp_mark_recovery_finished(void)
 {
-	int ret;
-	if (processType != PT_PCP || pcp_frontend == NULL)
-		return -1;
-	ret = pcp_write(pcp_frontend, data, len);
-	if (flush && !ret)
-		ret = pcp_flush(pcp_frontend);
-	return ret;
+	pool_sigset_t oldmask;
+	/*
+	 * only pcp worker is allowd to make this call
+	 */
+	if(processType != PT_PCP_WORKER)
+		return;
+
+	POOL_SETMASK2(&BlockSig, &oldmask);
+	pool_semaphore_lock(PCP_REQUEST_SEM);
+	*pcp_recovery_in_progress = false;
+	pool_semaphore_unlock(PCP_REQUEST_SEM);
+	POOL_SETMASK(&oldmask);
 }
 
-int pcp_frontend_exists(void)
-{
-	if (processType != PT_PCP || pcp_frontend == NULL)
-		return -1;
-	return 0;
-}

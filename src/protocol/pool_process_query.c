@@ -4103,11 +4103,7 @@ POOL_STATUS end_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTION_
 	int i;
 	int len;
 	char tstate;
-#ifdef HAVE_SIGPROCMASK
-	sigset_t oldmask;
-#else
-	int	oldmask;
-#endif
+	pool_sigset_t oldmask;
 
 	/*
 	 * We must block all signals. If pgpool SIGTERM, SIGINT or SIGQUIT

@@ -38,7 +38,6 @@ static void myexit(PCPConnInfo* pcpConn);
 int
 main(int argc, char **argv)
 {
-	long timeout;
 	char host[MAX_DB_HOST_NAMELEN];
 	int port;
 	char user[MAX_USER_PASSWD_LEN];
@@ -73,34 +72,28 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 6)
+	if (argc != 5)
 		myexit(NULL);
 
-	timeout = atol(argv[0]);
-	if (timeout < 0)
+	if (strlen(argv[0]) >= MAX_DB_HOST_NAMELEN)
 		myexit(NULL);
+	strcpy(host, argv[0]);
 
-	if (strlen(argv[1]) >= MAX_DB_HOST_NAMELEN)
-		myexit(NULL);
-	strcpy(host, argv[1]);
-
-	port = atoi(argv[2]);
+	port = atoi(argv[1]);
 	if (port <= 1024 || port > 65535)
 		myexit(NULL);
 
+	if (strlen(argv[2]) >= MAX_USER_PASSWD_LEN)
+		myexit(NULL);
+	strcpy(user, argv[2]);
+
 	if (strlen(argv[3]) >= MAX_USER_PASSWD_LEN)
 		myexit(NULL);
-	strcpy(user, argv[3]);
+	strcpy(pass, argv[3]);
 
-	if (strlen(argv[4]) >= MAX_USER_PASSWD_LEN)
-		myexit(NULL);
-	strcpy(pass, argv[4]);
-
-	nodeID = atoi(argv[5]);
+	nodeID = atoi(argv[4]);
 	if (nodeID < 0 || nodeID > MAX_NUM_BACKENDS)
 		myexit(NULL);
-
-	pcp_set_timeout(timeout);
 
 	pcpConn = pcp_connect(host, port, user, pass, debug?stdout:NULL);
 	if(PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
@@ -120,10 +113,9 @@ static void
 usage(void)
 {
 	fprintf(stderr, "pcp_recovery_node - recovery a node\n\n");
-	fprintf(stderr, "Usage: pcp_recovery_node [-d] timeout hostname port# username password nodeID\n");
+	fprintf(stderr, "Usage: pcp_recovery_node [-d] hostname port# username password nodeID\n");
 	fprintf(stderr, "Usage: pcp_recovery_node -h\n\n");
 	fprintf(stderr, "  -d, --debug : enable debug message (optional)\n");
-	fprintf(stderr, "  timeout     : connection timeout value in seconds. command exits on timeout\n");
 	fprintf(stderr, "  hostname    : pgpool-II hostname\n");
 	fprintf(stderr, "  port#       : PCP port number\n");
 	fprintf(stderr, "  username    : username for PCP authentication\n");

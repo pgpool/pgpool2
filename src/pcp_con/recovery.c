@@ -49,7 +49,7 @@ static void check_postmaster_started(BackendInfo *backend);
 
 static char recovery_command[1024];
 
-extern volatile sig_atomic_t pcp_wakeup_request;
+extern volatile sig_atomic_t pcp_worker_wakeup_request;
 
 /*
  * Start online recovery.
@@ -145,14 +145,14 @@ void start_recovery(int recovery_node)
 		 * reset failover completion flag.  this is necessary since
 		 * previous failover/failback will set the flag to 1.
 		 */
-		pcp_wakeup_request = 0;
+		pcp_worker_wakeup_request = 0;
 
 		/* send failback request to pgpool parent */
 		send_failback_request(recovery_node,false);
 
 		/* wait for failback */
 		failback_wait_count = 0;
-		while (!pcp_wakeup_request)
+		while (!pcp_worker_wakeup_request)
 		{
 			struct timeval t = {1, 0};
 			/* polling SIGUSR2 signal every 1 sec */
@@ -168,7 +168,7 @@ void start_recovery(int recovery_node)
 				break;
 			}
 		}
-		pcp_wakeup_request = 0;
+		pcp_worker_wakeup_request = 0;
 	}
 	PG_CATCH();
 	{

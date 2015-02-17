@@ -84,11 +84,7 @@ int pool_init_cp(void)
 */
 POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, int check_socket)
 {
-#ifdef HAVE_SIGPROCMASK
-	sigset_t oldmask;
-#else
-	int	oldmask;
-#endif
+	pool_sigset_t oldmask;
 
 	int i, freed = 0;
 	ConnectionInfo *info;

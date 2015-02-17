@@ -75,7 +75,6 @@ typedef struct {
 	int pcp_port;				/* PCP port # to bind */
 	char *socket_dir;		/* pgpool socket directory */
 	char *pcp_socket_dir;		/* PCP socket directory */
-	int pcp_timeout;			/* PCP timeout for an idle client */
     int	num_init_children;	/* # of children initially pre-forked */
     int	listen_backlog_multiplier; /* determines the size of the connection queue */
     int	child_life_time;	/* if idle for this seconds, child exits */

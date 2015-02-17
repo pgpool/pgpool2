@@ -199,7 +199,7 @@ then
 	$pg_ctl -w -m f -D $failed_db_cluster stop >> $log 2>&1
 	sleep 10
 	# recovery the node
-	pcp_recovery_node 1 localhost $PCP_PORT $pcp_super_user $pcp_super_user $failed_node_id >> $log 2>&1
+	pcp_recovery_node localhost $PCP_PORT $pcp_super_user $pcp_super_user $failed_node_id >> $log 2>&1
 else
 	echo "$failed_db_cluster is not running. skipping follow master command." >> $log
 fi
@@ -778,7 +778,7 @@ $PSQL -p $PGPOOL_PORT -c "show pool_nodes" test
 	while [ $n -lt $NUMCLUSTERS ]
 	do
 		echo -n "recovery node $n..."
-		$PGPOOL_INSTALL_DIR/bin/pcp_recovery_node 1 localhost $PCP_PORT $WHOAMI $WHOAMI $n
+		$PGPOOL_INSTALL_DIR/bin/pcp_recovery_node localhost $PCP_PORT $WHOAMI $WHOAMI $n
 		echo "done."
 		n=`expr $n + 1`
 		if [ $n -lt $NUMCLUSTERS ];then

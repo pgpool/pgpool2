@@ -405,11 +405,7 @@ static void close_all_backend_connections(void)
 	int i;
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
 
-#ifdef HAVE_SIGPROCMASK
-	sigset_t oldmask;
-#else
-	int	oldmask;
-#endif
+	pool_sigset_t oldmask;
 
 	POOL_SETMASK2(&BlockSig, &oldmask);
 

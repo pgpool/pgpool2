@@ -165,8 +165,11 @@ int pool_signal_parent(int sig)
 	 * This is a guard against sending the signal to init process
 	 * pgpool-II parent process crashed and left the child processes
 	 * orphan.
+	 * we make a little exception for pcp process children, since their
+	 * they want to signal the main pgpool-II process but main process is
+	 * not the direct parent
 	 */
-	if(mypid != getppid())
+	if(processType != PT_PCP_WORKER && mypid != getppid())
 	{
 		/*
 		 * pgpool parent is no more alive, commiting sucide.

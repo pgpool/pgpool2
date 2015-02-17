@@ -128,7 +128,6 @@ static int find_primary_node(void);
 static int find_primary_node_repeatedly(void);
 static void terminate_all_childrens();
 static void system_will_go_down(int code, Datum arg);
-static pid_t pool_waitpid(int *status);
 static char* process_name_from_pid(pid_t pid);
 
 static struct sockaddr_un un_addr;		/* unix domain socket path */
@@ -553,11 +552,7 @@ process_backend_health_check_failure(int health_check_node_id, int retrycnt)
 bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, int count)
 {
 	bool failover_in_progress;
-#ifdef HAVE_SIGPROCMASK
-	sigset_t oldmask;
-#else
-	int	oldmask;
-#endif
+	pool_sigset_t oldmask;
 
 	/* 
 	 * if the queue is already full
@@ -627,8 +622,7 @@ pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 		POOL_SETMASK(&UnBlockSig);
 		health_check_timer_expired = 0;
 		reload_config_request = 0;
-		run_as_pcp_child = true;
-		pcp_do_child(unix_fd, inet_fd, pcp_conf_file);
+		pcp_main(unix_fd, inet_fd);
 	}
 	else if (pid == -1)
 	{
@@ -674,7 +668,6 @@ pid_t fork_a_child(int *fds, int id)
 		health_check_timer_expired = 0;
 		reload_config_request = 0;
 		my_proc_id = id;
-		run_as_pcp_child = false;
 		do_child(fds);
 	}
 	else if (pid == -1)
@@ -1961,7 +1954,7 @@ static RETSIGTYPE reap_handler(int sig)
  * nothing more than a wrapper function over NOHANG mode waitpid() or wait3()
  * depending on the existance of waitpid in the system
  */
-static pid_t pool_waitpid(int *status)
+pid_t pool_waitpid(int *status)
 {
 #ifdef HAVE_WAITPID
 	return waitpid(-1, status, WNOHANG);
@@ -2998,7 +2991,7 @@ static void system_will_go_down(int code, Datum arg)
 
 int pool_send_to_frontend(char* data, int len, bool flush)
 {
-	if (processType == PT_PCP)
+	if (processType == PT_PCP_WORKER)
 		return send_to_pcp_frontend(data, len, flush);
 	else if (processType == PT_CHILD)
 		return send_to_pg_frontend(data, len, flush);
@@ -3007,7 +3000,7 @@ int pool_send_to_frontend(char* data, int len, bool flush)
 
 int pool_frontend_exists(void)
 {
-	if (processType == PT_PCP)
+	if (processType == PT_PCP_WORKER)
 		return pcp_frontend_exists();
 	else if (processType == PT_CHILD)
 		return pg_frontend_exists();

@@ -33,16 +33,21 @@
 #include <signal.h>
 
 #ifdef HAVE_SIGPROCMASK
-extern sigset_t UnBlockSig,
-			BlockSig,
-			AuthBlockSig;
+#define pool_sigset_t sigset_t
+#else
+#define pool_sigset_t int
+#endif
+
+extern pool_sigset_t UnBlockSig,
+BlockSig,
+AuthBlockSig;
+
+
+#ifdef HAVE_SIGPROCMASK
 
 #define POOL_SETMASK(mask)	sigprocmask(SIG_SETMASK, mask, NULL)
 #define POOL_SETMASK2(mask, oldmask)	sigprocmask(SIG_SETMASK, mask, oldmask)
 #else
-extern int	UnBlockSig,
-			BlockSig,
-			AuthBlockSig;
 
 #ifndef WIN32
 #define POOL_SETMASK(mask)	sigsetmask(*((int*)(mask)))

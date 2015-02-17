@@ -499,7 +499,7 @@ char *yytext;
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -553,8 +553,9 @@ typedef enum {
 static char *extract_string(char *value, POOL_TOKEN token);
 static char **extract_string_tokens(char *str, char *delim, int *n);
 static void clear_host_entry(int slot);
+static bool check_redirect_node_spec(char *node_spec);
 
-#line 558 "pool_config.c"
+#line 559 "pool_config.c"
 
 #define INITIAL 0
 
@@ -739,10 +740,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 89 "pool_config.l"
+#line 90 "pool_config.l"
 
 
-#line 746 "pool_config.c"
+#line 747 "pool_config.c"
 
 	if ( !(yy_init) )
 		{
@@ -824,12 +825,12 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 91 "pool_config.l"
+#line 92 "pool_config.l"
 Lineno++; return POOL_EOL;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 92 "pool_config.l"
+#line 93 "pool_config.l"
 /* eat whitespace */
 	YY_BREAK
 case 3:
@@ -837,50 +838,50 @@ case 3:
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 93 "pool_config.l"
+#line 94 "pool_config.l"
 /* eat comment */
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 95 "pool_config.l"
+#line 96 "pool_config.l"
 return POOL_KEY;
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 96 "pool_config.l"
+#line 97 "pool_config.l"
 return POOL_STRING;
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 97 "pool_config.l"
+#line 98 "pool_config.l"
 return POOL_UNQUOTED_STRING;
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 98 "pool_config.l"
+#line 99 "pool_config.l"
 return POOL_INTEGER;
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 99 "pool_config.l"
+#line 100 "pool_config.l"
 return POOL_REAL;
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 100 "pool_config.l"
+#line 101 "pool_config.l"
 return POOL_EQUALS;
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 102 "pool_config.l"
+#line 103 "pool_config.l"
 return POOL_PARSE_ERROR;
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 104 "pool_config.l"
+#line 105 "pool_config.l"
 ECHO;
 	YY_BREAK
-#line 884 "pool_config.c"
+#line 885 "pool_config.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1838,7 +1839,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 104 "pool_config.l"
+#line 105 "pool_config.l"
 
 
 
@@ -1871,7 +1872,6 @@ int pool_init_config(void)
 	pool_config->socket_dir = DEFAULT_SOCKET_DIR;
 	pool_config->pcp_socket_dir = DEFAULT_SOCKET_DIR;
 	pool_config->backend_socket_dir = NULL;
-	pool_config->pcp_timeout = 10;
 	pool_config->num_init_children = 32;
 	pool_config->listen_backlog_multiplier = 2;
 	pool_config->max_pool = 4;
@@ -1904,7 +1904,7 @@ int pool_init_config(void)
 	pool_config->num_white_function_list = 0;
 	pool_config->black_function_list = default_black_function_list;
 	pool_config->num_black_function_list = sizeof(default_black_function_list)/sizeof(char *);
-	pool_config->log_line_prefix = "";
+	pool_config->log_line_prefix = "%t: pid %p: ";
 	pool_config->log_error_verbosity = 1;    /* PGERROR_DEFAULT */
 	pool_config->client_min_messages = 18;  /* NOTICE */
 	pool_config->log_min_messages = 19;     /* WARNING */
@@ -2365,21 +2365,6 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->pcp_socket_dir = str;
-		}
-		else if (!strcmp(key, "pcp_timeout") &&
-			 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
-		{
-			int v = atoi(yytext);
-
-			if (token != POOL_INTEGER || v < 0)
-			{
-				fclose(fd);
-				ereport(error_level,
-					(errmsg("invalid configuration for key \"%s\"",key),
-						errdetail("invalid value:\"%s\" for key:\"%s\". %s must be >= 0",yytext,key, key)));
-				return(-1);
-			}
-			pool_config->pcp_timeout = v;
 		}
 		else if (!strcmp(key, "num_init_children") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
@@ -5039,7 +5024,17 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			for (i=0;i<lrtokens->pos;i++)
 			{
-				if (add_regex_array(pool_config->redirect_dbnames, lrtokens->token[i].left_token))
+				if (!check_redirect_node_spec(lrtokens->token[i].right_token))
+				{
+					fclose(fd);
+					ereport(error_level,
+						(errmsg("invalid configuration for key \"%s\"",key),
+							errdetail("wrong redirect db node spec: \"%s\"", lrtokens->token[i].right_token)));
+				   return(-1);
+				}
+
+				if (*(lrtokens->token[i].left_token) == '\0' ||
+					add_regex_array(pool_config->redirect_dbnames, lrtokens->token[i].left_token))
 				{
 					fclose(fd);
 					ereport(error_level,
@@ -5079,12 +5074,23 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 			for (i=0;i<lrtokens->pos;i++)
 			{
-				if (add_regex_array(pool_config->redirect_app_names, lrtokens->token[i].left_token))
+				if (!check_redirect_node_spec(lrtokens->token[i].right_token))
 				{
 					fclose(fd);
 					ereport(error_level,
 						(errmsg("invalid configuration for key \"%s\"",key),
-							errdetail("wrong redirect dbname regular expression: \"%s\"", lrtokens->token[i].left_token)));
+							errdetail("wrong redirect db node spec: \"%s\"", lrtokens->token[i].right_token)));
+				   return(-1);
+				}
+
+
+				if (*(lrtokens->token[i].left_token) == '\0' ||
+					add_regex_array(pool_config->redirect_app_names, lrtokens->token[i].left_token))
+				{
+					fclose(fd);
+					ereport(error_level,
+						(errmsg("invalid configuration for key \"%s\"",key),
+							errdetail("wrong redirect app name regular expression: \"%s\"", lrtokens->token[i].left_token)));
 					return(-1);
 				}
 			}
@@ -5484,5 +5490,42 @@ char *pool_flag_to_str(unsigned short flag)
 	else if (POOL_DISALLOW_TO_FAILOVER(flag))
 		snprintf(buf, sizeof(buf), "DISALLOW_TO_FAILOVER");
 	return buf;
+}
+
+/*
+ * Check DB node spec. node spec should be either "primary", "standby" or
+ * numeric DB node id.
+*/
+bool check_redirect_node_spec(char *node_spec)
+{
+	int len = strlen(node_spec);
+	int i;
+	long val;
+
+	if (len <= 0)
+		return false;
+
+	if (strcasecmp("primary", node_spec) == 0)
+	{
+		return true;
+	}
+
+	if (strcasecmp("standby", node_spec) == 0)
+	{
+		return true;
+	}
+
+	for (i=0;i<len;i++)
+	{
+		if (!isdigit((int)node_spec[i]))
+				return false;
+	}
+
+	val = atol(node_spec);
+
+    if (val >=0 && val < MAX_NUM_BACKENDS)
+		return true;
+
+    return false;
 }
 

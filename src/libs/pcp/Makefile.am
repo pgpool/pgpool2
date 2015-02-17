@@ -3,8 +3,6 @@ AM_CPPFLAGS = -D_GNU_SOURCE -DPOOL_PRIVATE -I @PGSQL_INCLUDE_DIR@
 lib_LTLIBRARIES = libpcp.la
 libpcp_la_SOURCES = pcp.c \
 		    pcp_stream.c \
-                    pcp_error.c \
-                    pcp_timeout.c \
                     md5.c \
                     strlcpy.c
 

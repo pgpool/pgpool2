@@ -104,11 +104,11 @@ PROGRAMS = $(bin_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
 am_pgpool_OBJECTS = main/main.$(OBJEXT) main/pool_globals.$(OBJEXT) \
 	main/pgpool_main.$(OBJEXT) config/pool_config.$(OBJEXT) \
-	pcp_con/pcp_child.$(OBJEXT) pcp_con/recovery.$(OBJEXT) \
-	auth/md5.$(OBJEXT) auth/pool_auth.$(OBJEXT) \
-	auth/pool_passwd.$(OBJEXT) auth/pool_hba.$(OBJEXT) \
-	protocol/pool_proto2.$(OBJEXT) protocol/child.$(OBJEXT) \
-	protocol/pool_process_query.$(OBJEXT) \
+	pcp_con/pcp_child.$(OBJEXT) pcp_con/pcp_worker.$(OBJEXT) \
+	pcp_con/recovery.$(OBJEXT) auth/md5.$(OBJEXT) \
+	auth/pool_auth.$(OBJEXT) auth/pool_passwd.$(OBJEXT) \
+	auth/pool_hba.$(OBJEXT) protocol/pool_proto2.$(OBJEXT) \
+	protocol/child.$(OBJEXT) protocol/pool_process_query.$(OBJEXT) \
 	protocol/pool_connection_pool.$(OBJEXT) \
 	protocol/pool_proto_modules.$(OBJEXT) \
 	query_cache/pool_memqcache.$(OBJEXT) \
@@ -131,7 +131,6 @@ am_pgpool_OBJECTS = main/main.$(OBJEXT) main/pool_globals.$(OBJEXT) \
 	utils/getopt_long.$(OBJEXT) utils/mmgr/mcxt.$(OBJEXT) \
 	utils/mmgr/aset.$(OBJEXT) utils/error/elog.$(OBJEXT) \
 	utils/error/assert.$(OBJEXT) utils/pcp/pcp_stream.$(OBJEXT) \
-	utils/pcp/pcp_error.$(OBJEXT) utils/pcp/pcp_timeout.$(OBJEXT) \
 	utils/regex_array.$(OBJEXT) utils/statistics.$(OBJEXT)
 pgpool_OBJECTS = $(am_pgpool_OBJECTS)
 pgpool_DEPENDENCIES = parser/libsql-parser.a parser/nodes.o \
@@ -420,6 +419,7 @@ pgpool_SOURCES = main/main.c \
 	main/pgpool_main.c \
 	config/pool_config.l \
 	pcp_con/pcp_child.c \
+	pcp_con/pcp_worker.c \
 	pcp_con/recovery.c \
 	auth/md5.c \
 	auth/pool_auth.c \
@@ -460,8 +460,6 @@ pgpool_SOURCES = main/main.c \
 	utils/error/elog.c \
 	utils/error/assert.c \
     utils/pcp/pcp_stream.c \
-    utils/pcp/pcp_error.c \
-    utils/pcp/pcp_timeout.c \
     utils/regex_array.c \
     utils/statistics.c
 
@@ -671,6 +669,8 @@ pcp_con/$(DEPDIR)/$(am__dirstamp):
 	@: > pcp_con/$(DEPDIR)/$(am__dirstamp)
 pcp_con/pcp_child.$(OBJEXT): pcp_con/$(am__dirstamp) \
 	pcp_con/$(DEPDIR)/$(am__dirstamp)
+pcp_con/pcp_worker.$(OBJEXT): pcp_con/$(am__dirstamp) \
+	pcp_con/$(DEPDIR)/$(am__dirstamp)
 pcp_con/recovery.$(OBJEXT): pcp_con/$(am__dirstamp) \
 	pcp_con/$(DEPDIR)/$(am__dirstamp)
 auth/$(am__dirstamp):
@@ -826,10 +826,6 @@ utils/pcp/$(DEPDIR)/$(am__dirstamp):
 	@: > utils/pcp/$(DEPDIR)/$(am__dirstamp)
 utils/pcp/pcp_stream.$(OBJEXT): utils/pcp/$(am__dirstamp) \
 	utils/pcp/$(DEPDIR)/$(am__dirstamp)
-utils/pcp/pcp_error.$(OBJEXT): utils/pcp/$(am__dirstamp) \
-	utils/pcp/$(DEPDIR)/$(am__dirstamp)
-utils/pcp/pcp_timeout.$(OBJEXT): utils/pcp/$(am__dirstamp) \
-	utils/pcp/$(DEPDIR)/$(am__dirstamp)
 utils/regex_array.$(OBJEXT): utils/$(am__dirstamp) \
 	utils/$(DEPDIR)/$(am__dirstamp)
 utils/statistics.$(OBJEXT): utils/$(am__dirstamp) \
@@ -874,6 +870,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@parallel_query/$(DEPDIR)/pool_rewrite_outfuncs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@parallel_query/$(DEPDIR)/pool_rewrite_query.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@pcp_con/$(DEPDIR)/pcp_child.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@pcp_con/$(DEPDIR)/pcp_worker.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@pcp_con/$(DEPDIR)/recovery.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@protocol/$(DEPDIR)/child.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@protocol/$(DEPDIR)/pool_connection_pool.Po@am__quote@
@@ -906,9 +903,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@utils/error/$(DEPDIR)/elog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/mmgr/$(DEPDIR)/aset.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/mmgr/$(DEPDIR)/mcxt.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/pcp/$(DEPDIR)/pcp_error.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/pcp/$(DEPDIR)/pcp_stream.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/pcp/$(DEPDIR)/pcp_timeout.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\

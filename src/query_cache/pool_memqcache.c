@@ -592,11 +592,7 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 	char *qcache;
 	size_t qcachelen;
 	int sts;
-#ifdef HAVE_SIGPROCMASK
-	sigset_t oldmask;
-#else
-	int	oldmask;
-#endif
+	pool_sigset_t oldmask;
 
 	*foundp = false;
     
@@ -1780,11 +1776,7 @@ void
 pool_clear_memory_cache(void)
 {
 	size_t size;
-#ifdef HAVE_SIGPROCMASK
-	sigset_t oldmask;
-#else
-	int	oldmask;
-#endif
+	pool_sigset_t oldmask;
 
 	POOL_SETMASK2(&BlockSig, &oldmask);
 	pool_shmem_lock();
@@ -3096,16 +3088,12 @@ static void pool_check_and_discard_cache_buffer(int num_oids, int *oids)
 void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *node, char state)
 {
 	POOL_SESSION_CONTEXT *session_context;
+	pool_sigset_t oldmask;
 	char *cache_buffer;
 	size_t len;
 	int num_oids;
 	int *oids;
 	int i;
-#ifdef HAVE_SIGPROCMASK
-	sigset_t oldmask;
-#else
-	int	oldmask;
-#endif
 
 	session_context = pool_get_session_context(true);
 
@@ -3358,11 +3346,7 @@ int pool_init_memqcache_stats(void)
 POOL_QUERY_CACHE_STATS *pool_get_memqcache_stats(void)
 {
 	static POOL_QUERY_CACHE_STATS mystats;
-#ifdef HAVE_SIGPROCMASK
-	sigset_t oldmask;
-#else
-	int	oldmask;
-#endif
+	pool_sigset_t oldmask;
 
 	memset(&mystats, 0, sizeof(POOL_QUERY_CACHE_STATS));
 
@@ -3394,11 +3378,7 @@ void pool_reset_memqcache_stats(void)
  */
 long long int pool_stats_count_up_num_selects(long long int num)
 {
-#ifdef HAVE_SIGPROCMASK
-	sigset_t oldmask;
-#else
-	int	oldmask;
-#endif
+	pool_sigset_t oldmask;
 
 	POOL_SETMASK2(&BlockSig, &oldmask);
 	pool_semaphore_lock(QUERY_CACHE_STATS_SEM);
@@ -3449,11 +3429,7 @@ void pool_tmp_stats_reset_num_selects(void)
  */
 long long int pool_stats_count_up_num_cache_hits(void)
 {
-#ifdef HAVE_SIGPROCMASK
-	sigset_t oldmask;
-#else
-	int	oldmask;
-#endif
+	pool_sigset_t oldmask;
 
 	POOL_SETMASK2(&BlockSig, &oldmask);
 	pool_semaphore_lock(QUERY_CACHE_STATS_SEM);

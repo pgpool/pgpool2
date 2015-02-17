@@ -1033,11 +1033,7 @@ static void send_frontend_exits(void)
 	int i;
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
 
-#ifdef HAVE_SIGPROCMASK
-	sigset_t oldmask;
-#else
-	int	oldmask;
-#endif
+	pool_sigset_t oldmask;
 
 	POOL_SETMASK2(&BlockSig, &oldmask);
 
@@ -1554,11 +1550,7 @@ static void s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
  */
 static void connection_count_up(void)
 {
-#ifdef HAVE_SIGPROCMASK
-	sigset_t oldmask;
-#else
-	int	oldmask;
-#endif
+	pool_sigset_t oldmask;
 
 	POOL_SETMASK2(&BlockSig, &oldmask);
 	pool_semaphore_lock(CONN_COUNTER_SEM);
@@ -1573,11 +1565,7 @@ static void connection_count_up(void)
  */
 static void connection_count_down(void)
 {
-#ifdef HAVE_SIGPROCMASK
-	sigset_t oldmask;
-#else
-	int	oldmask;
-#endif
+	pool_sigset_t oldmask;
 
 	POOL_SETMASK2(&BlockSig, &oldmask);
 	pool_semaphore_lock(CONN_COUNTER_SEM);

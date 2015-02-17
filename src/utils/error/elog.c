@@ -2331,6 +2331,9 @@ process_name(void)
 		case PT_PCP:
 			prefix = _("PCP CHILD");
 			break;
+		case PT_PCP_WORKER:
+			prefix = _("PCP WORKER");
+			break;
 		case PT_HB_SENDER:
 			prefix = _("WD HB SENDER");
 			break;

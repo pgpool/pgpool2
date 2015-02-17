@@ -262,7 +262,6 @@ typedef struct PCPConnInfo{
 	ConnStateType	connState;
 	PCPResultInfo   *pcpResInfo;
 	FILE		*Pfdebug;			/* File pointer to output debug infor */
-	int errorCode;
 }PCPConnInfo;
 
 struct WdInfo;
@@ -286,7 +285,6 @@ extern PCPResultInfo *pcp_recovery_node(PCPConnInfo* pcpConn, int nid);
 extern PCPResultInfo *pcp_promote_node(PCPConnInfo* pcpConn, int nid);
 extern PCPResultInfo *pcp_promote_node_gracefully(PCPConnInfo* pcpConn,int nid);
 extern PCPResultInfo *pcp_watchdog_info(PCPConnInfo* pcpConn, int nid);
-extern void pcp_set_timeout(long sec);
 extern PCPResultInfo *pcp_set_backend_parameter(PCPConnInfo* pcpConn,char* parameter_name, char* value);
 
 
@@ -303,7 +301,5 @@ extern char *pcp_get_last_error(PCPConnInfo* pcpConn);
  * pcp_error.c
  * ------------------------------
  */
-//extern ErrorCode errorcode;
-//extern void pcp_errorstr(ErrorCode e);
 
 #endif /* LIBPCP_EXT_H */

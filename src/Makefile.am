@@ -8,6 +8,7 @@ pgpool_SOURCES = main/main.c \
 	main/pgpool_main.c \
 	config/pool_config.l \
 	pcp_con/pcp_child.c \
+	pcp_con/pcp_worker.c \
 	pcp_con/recovery.c \
 	auth/md5.c \
 	auth/pool_auth.c \
@@ -48,8 +49,6 @@ pgpool_SOURCES = main/main.c \
 	utils/error/elog.c \
 	utils/error/assert.c \
     utils/pcp/pcp_stream.c \
-    utils/pcp/pcp_error.c \
-    utils/pcp/pcp_timeout.c \
     utils/regex_array.c \
     utils/statistics.c
 

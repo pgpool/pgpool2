@@ -22,8 +22,6 @@
  */
 #include "pool.h"
 
-int debug = 0;	/* non 0 if debug option is given (-d). pcp only */
 pid_t mypid;	/* pgpool parent process id */
-bool run_as_pcp_child;
 ProcessType processType;
 ProcessState processState;

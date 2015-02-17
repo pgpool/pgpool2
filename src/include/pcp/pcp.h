@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2008	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -29,33 +29,14 @@
 
 #define MAX_USER_PASSWD_LEN    128
 
-typedef enum {
-	UNKNOWNERR = 1,		/* shouldn't happen */
-	EOFERR,				/* EOF read by read() */
-	NOMEMERR,			/* could not allocate memory */
-	READERR,			/* read() error */
-	WRITEERR,			/* flush() error */
-	TIMEOUTERR,			/* select() timeout */
-	INVALERR,			/* invalid command-line argument(s) number, length, range, etc. */
-	CONNERR,			/* thrown by connect() */
-	NOCONNERR,			/* not connected to server */
-	SOCKERR,			/* thrown by socket() or setsockopt() */
-	HOSTERR,			/* thrown by gethostbyname() */
-	BACKENDERR,			/* server dependent error */
-	AUTHERR				/* authorization failure */
-} ErrorCode;
-
 /* --------------------------------
  * pcp.c
  * --------------------------------
  */
-extern struct timeval pcp_timeout;
 
 /* ------------------------------
  * pcp_error.c
  * ------------------------------
  */
-extern ErrorCode errorcode;
-extern void pcp_errorstr(ErrorCode e);
 
 #endif /* PCP_H */

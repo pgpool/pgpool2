@@ -109,7 +109,6 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 		{
 			pcp_internal_error(pcpConn,
 							   "ERROR: failed to create UNIX domain socket. socket error \"%s\"",strerror(errno));
-			pcpConn->errorCode = SOCKERR;
 			pcpConn->connState = PCP_CONNECTION_BAD;
 
 			return pcpConn;
@@ -136,7 +135,6 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 
 			pcp_internal_error(pcpConn,
 							   "ERROR: connection to socket \"%s\" failed with error \"%s\"",unix_addr.sun_path,strerror(errno));
-			pcpConn->errorCode = CONNERR;
 			pcpConn->connState = PCP_CONNECTION_BAD;
 			return pcpConn;
 		}
@@ -148,7 +146,6 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 		{
 			pcp_internal_error(pcpConn,
 							   "ERROR: failed to create INET domain socket with error \"%s\"",strerror(errno));
-			pcpConn->errorCode = SOCKERR;
 			pcpConn->connState = PCP_CONNECTION_BAD;
 			return pcpConn;
 		}
@@ -160,7 +157,6 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 
 			pcp_internal_error(pcpConn,
 							   "ERROR: set socket option failed with error \"%s\"",strerror(errno));
-			pcpConn->errorCode = SOCKERR;
 			pcpConn->connState = PCP_CONNECTION_BAD;
 			return pcpConn;
 		}
@@ -173,7 +169,6 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 			close(fd);
 			pcp_internal_error(pcpConn,
 							   "ERROR: could not retrieve hostname. gethostbyname failed with error \"%s\"",strerror(errno));
-			pcpConn->errorCode = HOSTERR;
 			pcpConn->connState = PCP_CONNECTION_BAD;
 			return pcpConn;
 
@@ -189,7 +184,6 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 			close(fd);
 			pcp_internal_error(pcpConn,
 							   "ERROR: connection to host \"%s\" failed with error \"%s\"",hostname,strerror(errno));
-			pcpConn->errorCode = CONNERR;
 			pcpConn->connState = PCP_CONNECTION_BAD;
 			return pcpConn;
 		}
@@ -201,7 +195,6 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 		close(fd);
 		pcp_internal_error(pcpConn,
 						   "ERROR: failed to allocate memory");
-		pcpConn->errorCode = NOMEMERR;
 		pcpConn->connState = PCP_CONNECTION_BAD;
 		return pcpConn;
 	}
@@ -359,8 +352,6 @@ static PCPResultInfo* process_pcp_response(PCPConnInfo* pcpConn, char sentMsg)
 					pcp_internal_error(pcpConn,
 									   "ERROR: authentication failed. reason=\"%s\"\n", buf);
 					setResultStatus(pcpConn, PCP_RES_BACKEND_ERROR);
-
-					pcpConn->errorCode = AUTHERR;
 				}
 			}
 			break;

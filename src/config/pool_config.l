@@ -133,7 +133,6 @@ int pool_init_config(void)
 	pool_config->socket_dir = DEFAULT_SOCKET_DIR;
 	pool_config->pcp_socket_dir = DEFAULT_SOCKET_DIR;
 	pool_config->backend_socket_dir = NULL;
-	pool_config->pcp_timeout = 10;
 	pool_config->num_init_children = 32;
 	pool_config->listen_backlog_multiplier = 2;
 	pool_config->max_pool = 4;
@@ -627,21 +626,6 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->pcp_socket_dir = str;
-		}
-		else if (!strcmp(key, "pcp_timeout") &&
-			 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
-		{
-			int v = atoi(yytext);
-
-			if (token != POOL_INTEGER || v < 0)
-			{
-				fclose(fd);
-				ereport(error_level,
-					(errmsg("invalid configuration for key \"%s\"",key),
-						errdetail("invalid value:\"%s\" for key:\"%s\". %s must be >= 0",yytext,key, key)));
-				return(-1);
-			}
-			pool_config->pcp_timeout = v;
 		}
 		else if (!strcmp(key, "num_init_children") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
