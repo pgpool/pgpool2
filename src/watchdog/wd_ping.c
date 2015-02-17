@@ -215,6 +215,7 @@ exec_ping(void * arg)
 	if (pid == 0)
 	{
 		/* CHILD */
+		on_exit_reset();
 		processType = PT_WATCHDOG_UTILITY;
 		close(STDOUT_FILENO);
 		dup2(pfd[1], STDOUT_FILENO);

@@ -222,8 +222,15 @@ exec_ifconfig(char * path,char * command)
 	sig_org = signal(SIGCHLD, SIG_DFL);
 
 	pid = fork();
+	if (pid == -1)
+	{
+		ereport(FATAL,
+			(errmsg("failed to execute interface up/down command"),
+				 errdetail("fork() failed with reason: \"%s\"", strerror(errno))));
+	}
 	if (pid == 0)
 	{
+		on_exit_reset();
 		processType = PT_WATCHDOG_UTILITY;
 		close(STDOUT_FILENO);
 		dup2(pfd[1], STDOUT_FILENO);
