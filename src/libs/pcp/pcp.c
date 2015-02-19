@@ -217,7 +217,7 @@ process_salt_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 {
 	char* salt = palloc((sizeof(char) * 4));
 	memcpy(salt, buf, 4);
-	if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)salt, sizeof(salt) , NULL) < 0 )
+	if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)salt, 4, NULL) < 0 )
 	{
 		pcp_internal_error(pcpConn,
 						   "command failed. invalid response\n");
@@ -809,7 +809,7 @@ process_process_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 		if(PCPResultStatus(pcpConn->pcpResInfo) != PCP_RES_INCOMPLETE)
 			goto INVALID_RESPONSE;
 
-		processInfo = palloc0(sizeof(processInfo));
+		processInfo = palloc0(sizeof(ProcessInfo));
 		processInfo->connection_info = palloc0(sizeof(ConnectionInfo));
 
 		index = (char *) memchr(buf, '\0', len) + 1;
@@ -876,7 +876,7 @@ process_process_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 			goto INVALID_RESPONSE;
 
 		processInfo->connection_info->connected = atoi(index);
-		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)processInfo, sizeof(processInfo), free_processInfo) < 0)
+		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)processInfo, sizeof(ProcessInfo), free_processInfo) < 0)
 			goto INVALID_RESPONSE;
 
 		return;
