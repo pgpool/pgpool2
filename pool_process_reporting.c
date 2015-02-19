@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -33,7 +33,7 @@
 /* some length definitions */
 #define POOLCONFIG_MAXNAMELEN 64
 #define POOLCONFIG_MAXVALLEN 512
-#define POOLCONFIG_MAXDESCLEN 64
+#define POOLCONFIG_MAXDESCLEN 80
 #define POOLCONFIG_MAXIDENTLEN 63
 #define POOLCONFIG_MAXPORTLEN 6
 #define POOLCONFIG_MAXSTATLEN 2
