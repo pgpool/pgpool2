@@ -184,21 +184,31 @@ exec_ifconfig(char * path,char * command)
 		for (;;)
 		{
 			int result;
-			result = wait(&status);
+
+			result = waitpid(pid, &status, 0);
 			if (result < 0)
 			{
 				if (errno == EINTR)
 					continue;
+
+				pool_debug("exec_ifconfig: waitpid() failed. reason: %s ", strerror(errno));
+
 				return WD_NG;
 			}
 
 			if (WIFEXITED(status) == 0 || WEXITSTATUS(status) != 0)
+			{
+				pool_debug("exec_ifconfig: '%s' failed. exit status: %d",
+				           command, WEXITSTATUS(status));
 				return WD_NG;
+			}
 			else
 				break;
 		}
 		close(pfd[0]);
 	}
+	pool_debug("exec_ifconfig: '%s' succeeded", command);
+
 	return WD_OK;
 }
 

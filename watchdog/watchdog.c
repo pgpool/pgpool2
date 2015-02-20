@@ -24,7 +24,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <ctype.h>
 #include <sys/un.h>
 #include <sys/types.h>
@@ -146,12 +145,12 @@ wd_main(int fork_wait_time)
 
 	init_ps_display("", "", "", "");
 
-	signal(SIGCHLD, SIG_DFL);
-	signal(SIGHUP, SIG_IGN);	
-	signal(SIGINT, wd_exit);	
-	signal(SIGQUIT, wd_exit);	
-	signal(SIGTERM, wd_exit);	
-	signal(SIGPIPE, SIG_IGN);	
+	pool_signal(SIGCHLD, SIG_DFL);
+	pool_signal(SIGHUP, SIG_IGN);	
+	pool_signal(SIGINT, wd_exit);	
+	pool_signal(SIGQUIT, wd_exit);	
+	pool_signal(SIGTERM, wd_exit);	
+	pool_signal(SIGPIPE, SIG_IGN);	
 
 	set_ps_display("lifecheck",false);
 	/* wait until ready to go */
