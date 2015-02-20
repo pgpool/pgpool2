@@ -23,7 +23,6 @@
  */
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <signal.h>
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -66,15 +65,15 @@ wd_child(int fork_wait_time)
 
 	POOL_SETMASK(&UnBlockSig);
 
-	signal(SIGTERM, wd_child_exit);
-	signal(SIGINT, wd_child_exit);
-	signal(SIGQUIT, wd_child_exit);
-	signal(SIGCHLD, SIG_IGN);
-	signal(SIGHUP, SIG_IGN);
-	signal(SIGUSR1, SIG_IGN);
-	signal(SIGUSR2, SIG_IGN);
-	signal(SIGPIPE, SIG_IGN);
-	signal(SIGALRM, SIG_IGN);
+	pool_signal(SIGTERM, wd_child_exit);
+	pool_signal(SIGINT, wd_child_exit);
+	pool_signal(SIGQUIT, wd_child_exit);
+	pool_signal(SIGCHLD, SIG_DFL);
+	pool_signal(SIGHUP, SIG_IGN);
+	pool_signal(SIGUSR1, SIG_IGN);
+	pool_signal(SIGUSR2, SIG_IGN);
+	pool_signal(SIGPIPE, SIG_IGN);
+	pool_signal(SIGALRM, SIG_IGN);
 
 	init_ps_display("", "", "", "");
 

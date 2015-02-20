@@ -27,7 +27,6 @@
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <sys/types.h>
@@ -331,15 +330,15 @@ wd_hb_receiver(int fork_wait_time, WdHbIf *hb_if)
 
 	POOL_SETMASK(&UnBlockSig);
 
-	signal(SIGTERM, hb_receiver_exit);
-	signal(SIGINT, hb_receiver_exit);
-	signal(SIGQUIT, hb_receiver_exit);
-	signal(SIGCHLD, SIG_IGN);
-	signal(SIGHUP, SIG_IGN);
-	signal(SIGUSR1, SIG_IGN);
-	signal(SIGUSR2, SIG_IGN);
-	signal(SIGPIPE, SIG_IGN);
-	signal(SIGALRM, SIG_IGN);
+	pool_signal(SIGTERM, hb_receiver_exit);
+	pool_signal(SIGINT, hb_receiver_exit);
+	pool_signal(SIGQUIT, hb_receiver_exit);
+	pool_signal(SIGCHLD, SIG_DFL);
+	pool_signal(SIGHUP, SIG_IGN);
+	pool_signal(SIGUSR1, SIG_IGN);
+	pool_signal(SIGUSR2, SIG_IGN);
+	pool_signal(SIGPIPE, SIG_IGN);
+	pool_signal(SIGALRM, SIG_IGN);
 
 	init_ps_display("", "", "", "");
 
@@ -441,15 +440,15 @@ wd_hb_sender(int fork_wait_time, WdHbIf *hb_if)
 
 	POOL_SETMASK(&UnBlockSig);
 
-	signal(SIGTERM, hb_sender_exit);
-	signal(SIGINT, hb_sender_exit);
-	signal(SIGQUIT, hb_sender_exit);
-	signal(SIGCHLD, SIG_IGN);
-	signal(SIGHUP, SIG_IGN);
-	signal(SIGUSR1, SIG_IGN);
-	signal(SIGUSR2, SIG_IGN);
-	signal(SIGPIPE, SIG_IGN);
-	signal(SIGALRM, SIG_IGN);
+	pool_signal(SIGTERM, hb_sender_exit);
+	pool_signal(SIGINT, hb_sender_exit);
+	pool_signal(SIGQUIT, hb_sender_exit);
+	pool_signal(SIGCHLD, SIG_DFL);
+	pool_signal(SIGHUP, SIG_IGN);
+	pool_signal(SIGUSR1, SIG_IGN);
+	pool_signal(SIGUSR2, SIG_IGN);
+	pool_signal(SIGPIPE, SIG_IGN);
+	pool_signal(SIGALRM, SIG_IGN);
 
 	init_ps_display("", "", "", "");
 

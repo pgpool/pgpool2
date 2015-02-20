@@ -27,7 +27,6 @@
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <unistd.h>
 #include <netdb.h>
 #include "pool.h"
