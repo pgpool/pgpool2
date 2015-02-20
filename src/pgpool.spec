@@ -31,7 +31,7 @@ Source2:        pgpool.sysconfig
 %if %{systemd_enabled}
 Source3:        pgpool.service
 %endif
-#Patch1:         pgpool.conf.sample.patch
+Patch1:         pgpool.conf.sample.patch
 Patch2:         pgpool-II-head.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel libmemcached-devel
