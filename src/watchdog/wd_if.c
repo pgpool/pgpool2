@@ -242,15 +242,15 @@ exec_if_cmd(char * path,char * command)
 		for (;;)
 		{
 			int result;
-			result = wait(&status);
+			result = waitpid(pid, &status, 0);
 			if (result < 0)
 			{
 				if (errno == EINTR)
 					continue;
 
 				ereport(DEBUG1,
-					(errmsg("watchdog exec wait()failed"),
-						 errdetail("wait() system call failed with reason \"%s\"", strerror(errno))));
+					(errmsg("watchdog exec waitpid()failed"),
+						 errdetail("waitpid() system call failed with reason \"%s\"", strerror(errno))));
 
 				return WD_NG;
 			}
