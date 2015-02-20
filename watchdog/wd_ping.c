@@ -30,7 +30,6 @@
 #include <netdb.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
-#include <errno.h>
 #include "pool.h"
 #include "pool_config.h"
 #include "watchdog.h"
