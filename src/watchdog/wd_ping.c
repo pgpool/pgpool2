@@ -244,7 +244,7 @@ exec_ping(void * arg)
 				close(pfd[0]);
 				ereport(WARNING,
 					(errmsg("failed to execute ping"),
-						 errdetail("wait() failed with reason \"%s\"", strerror(errno))));
+						 errdetail("waitpid() failed with reason \"%s\"", strerror(errno))));
 				return WD_NG;
 			}
 
