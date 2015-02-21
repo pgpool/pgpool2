@@ -30,7 +30,6 @@
 #include <netdb.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
-#include <errno.h>
 #include "pool.h"
 #include "utils/elog.h"
 #include "pool_config.h"
@@ -106,14 +105,14 @@ wd_is_upper_ok(char * server_list)
 	pthread_attr_destroy(&attr);
 	for (i=0; i <cnt; )
 	{
-		int result;
-		rc = pthread_join(thread[i], (void **)&result);
+		void * result;
+		rc = pthread_join(thread[i], &result);
 		if ((rc != 0) && (errno == EINTR))
 		{
 			usleep(100);
 			continue;
 		}
-		if (result == WD_OK)
+		if (result == (void *)WD_OK)
 		{
 			rtn = WD_OK;
 		}
@@ -135,7 +134,7 @@ wd_is_unused_ip(char * ip)
 	WdInfo thread_arg;
 
 	int rtn = WD_NG;
-	int result;
+	void * result;
 
 	if (ip == NULL)
 	{
@@ -152,12 +151,12 @@ wd_is_unused_ip(char * ip)
 	rc = watchdog_thread_create(&thread, &attr, exec_ping, (void*)&thread_arg);
 	pthread_attr_destroy(&attr);
 
-	rc = pthread_join(thread, (void **)&result);
+	rc = pthread_join(thread, &result);
 	if ((rc != 0) && (errno == EINTR))
 	{
 		return WD_NG;
 	}
-	if (result == WD_NG)
+	if (result == (void *)WD_NG)
 	{
 		rtn = WD_OK;
 	}
@@ -237,14 +236,14 @@ exec_ping(void * arg)
 		{
 			int r;
 			r = waitpid(pid, &status, 0);
-			if (r < 0 && errno != ECHILD)
+			if (r < 0)
 			{
 				if (errno == EINTR)
 					continue;
 				close(pfd[0]);
 				ereport(WARNING,
 					(errmsg("failed to execute ping"),
-						 errdetail("wait() failed with reason \"%s\"", strerror(errno))));
+						 errdetail("waitpid() failed with reason \"%s\"", strerror(errno))));
 				return WD_NG;
 			}
 

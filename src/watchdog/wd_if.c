@@ -180,7 +180,6 @@ exec_ifconfig(char * path,char * command)
 	int pid, i = 0;
 	char* buf;
 	char *bp, *ep;
-	sighandler_t sig_org;
 
 	if (pipe(pfd) == -1)
 	{
@@ -219,8 +218,6 @@ exec_ifconfig(char * path,char * command)
 	}
 	args[i++] = NULL;
 
-	sig_org = signal(SIGCHLD, SIG_DFL);
-
 	pid = fork();
 	if (pid == -1)
 	{
@@ -245,17 +242,16 @@ exec_ifconfig(char * path,char * command)
 		for (;;)
 		{
 			int result;
-			result = wait(&status);
-			if (result < 0 && errno != ECHILD)
+			result = waitpid(pid, &status, 0);
+			if (result < 0)
 			{
 				if (errno == EINTR)
 					continue;
 
 				ereport(DEBUG1,
-					(errmsg("watchdog exec wait()failed"),
-						 errdetail("wait() system call failed with reason \"%s\"", strerror(errno))));
+					(errmsg("watchdog exec waitpid()failed"),
+						 errdetail("waitpid() system call failed with reason \"%s\"", strerror(errno))));
 
-				signal(SIGCHLD, sig_org);
 				return WD_NG;
 			}
 
@@ -265,7 +261,6 @@ exec_ifconfig(char * path,char * command)
 					(errmsg("watchdog exec ifconfig failed"),
 						errdetail("'%s' failed. exit status: %d",command, WEXITSTATUS(status))));
 
-				signal(SIGCHLD, sig_org);
 				return WD_NG;
 			}
 			else
@@ -276,7 +271,6 @@ exec_ifconfig(char * path,char * command)
 	ereport(DEBUG1,
 		(errmsg("watchdog exec ifconfig: '%s' succeeded", command)));
 
-	signal(SIGCHLD, sig_org);
 	return WD_OK;
 }
 
