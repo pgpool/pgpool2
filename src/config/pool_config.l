@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "pool.h"
 #include "pool_config.h"
 #include "utils/regex_array.h"
