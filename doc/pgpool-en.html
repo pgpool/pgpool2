@@ -1863,7 +1863,16 @@ must be met:
     <li>PostgreSQL version 7.4 or later</li>
     <li>either in replication mode or master slave mode</li>
     <li>the query must not be in an explicitly declared
-        transaction (i.e. not in a BEGIN ~ END block) when operated in replication mode</li>
+        transaction (i.e. not in a BEGIN ~ END block) when operated in replication mode
+       <ul>
+          <li>However, if following conditions are met, load balance is possible even if in an explicit transaction
+              <ul>
+                <li>transaction isolation level is not SERIALIZABLE</li>
+                <li>the transaction has not issued a write query yet(until a write query issued, load balance is possible)</li>
+              </ul>
+          </li>
+        </ul>
+    </li>
     <li>it's not SELECT INTO
     <li>it's not SELECT FOR UPDATE nor FOR SHARE
     <li>it starts with "SELECT" or one of COPY TO STDOUT, EXPLAIN, EXPLAIN ANALYZE SELECT...
@@ -1875,11 +1884,6 @@ must be met:
           <li>does not use temporary tables</li>
           <li>does not use unlogged tables</li>
           <li>does not use system catalogs</li>
-          <li>However, if following conditions are met, load balance is possible even if in an explicit transaction</li>
-              <ul>
-                <li>transaction isolation level is not SERIALIZABLE</li>
-                <li>the transaction has not issued a write query yet(until a write query issued, load balance is possible)</li>
-              </ul>
         </ul>
     </li>
 
