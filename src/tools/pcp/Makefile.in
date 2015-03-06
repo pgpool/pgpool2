@@ -104,56 +104,46 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
-am_pcp_attach_node_OBJECTS = pcp_attach_node.$(OBJEXT) \
-	../fe_memutils.$(OBJEXT)
+am__objects_1 = pcp_frontend_client.$(OBJEXT) ../fe_memutils.$(OBJEXT) \
+	../../utils/sprompt.$(OBJEXT) ../../utils/pool_path.$(OBJEXT)
+am_pcp_attach_node_OBJECTS = $(am__objects_1)
 pcp_attach_node_OBJECTS = $(am_pcp_attach_node_OBJECTS)
 pcp_attach_node_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-am_pcp_detach_node_OBJECTS = pcp_detach_node.$(OBJEXT) \
-	../fe_memutils.$(OBJEXT)
+am_pcp_detach_node_OBJECTS = $(am__objects_1)
 pcp_detach_node_OBJECTS = $(am_pcp_detach_node_OBJECTS)
 pcp_detach_node_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
-am_pcp_node_count_OBJECTS = pcp_node_count.$(OBJEXT) \
-	../fe_memutils.$(OBJEXT)
+am_pcp_node_count_OBJECTS = $(am__objects_1)
 pcp_node_count_OBJECTS = $(am_pcp_node_count_OBJECTS)
 pcp_node_count_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
-am_pcp_node_info_OBJECTS = pcp_node_info.$(OBJEXT) \
-	../fe_memutils.$(OBJEXT)
+am_pcp_node_info_OBJECTS = $(am__objects_1)
 pcp_node_info_OBJECTS = $(am_pcp_node_info_OBJECTS)
 pcp_node_info_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
-am_pcp_pool_status_OBJECTS = pcp_pool_status.$(OBJEXT) \
-	../fe_memutils.$(OBJEXT)
+am_pcp_pool_status_OBJECTS = $(am__objects_1)
 pcp_pool_status_OBJECTS = $(am_pcp_pool_status_OBJECTS)
 pcp_pool_status_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
-am_pcp_proc_count_OBJECTS = pcp_proc_count.$(OBJEXT) \
-	../fe_memutils.$(OBJEXT)
+am_pcp_proc_count_OBJECTS = $(am__objects_1)
 pcp_proc_count_OBJECTS = $(am_pcp_proc_count_OBJECTS)
 pcp_proc_count_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
-am_pcp_proc_info_OBJECTS = pcp_proc_info.$(OBJEXT) \
-	../fe_memutils.$(OBJEXT)
+am_pcp_proc_info_OBJECTS = $(am__objects_1)
 pcp_proc_info_OBJECTS = $(am_pcp_proc_info_OBJECTS)
 pcp_proc_info_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
-am_pcp_promote_node_OBJECTS = pcp_promote_node.$(OBJEXT) \
-	../fe_memutils.$(OBJEXT)
+am_pcp_promote_node_OBJECTS = $(am__objects_1)
 pcp_promote_node_OBJECTS = $(am_pcp_promote_node_OBJECTS)
 pcp_promote_node_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
-am_pcp_recovery_node_OBJECTS = pcp_recovery_node.$(OBJEXT) \
-	../fe_memutils.$(OBJEXT)
+am_pcp_recovery_node_OBJECTS = $(am__objects_1)
 pcp_recovery_node_OBJECTS = $(am_pcp_recovery_node_OBJECTS)
 pcp_recovery_node_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
-am_pcp_stop_pgpool_OBJECTS = pcp_stop_pgpool.$(OBJEXT) \
-	../fe_memutils.$(OBJEXT)
+am_pcp_stop_pgpool_OBJECTS = $(am__objects_1)
 pcp_stop_pgpool_OBJECTS = $(am_pcp_stop_pgpool_OBJECTS)
 pcp_stop_pgpool_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
-am_pcp_systemdb_info_OBJECTS = pcp_systemdb_info.$(OBJEXT) \
-	../fe_memutils.$(OBJEXT)
+am_pcp_systemdb_info_OBJECTS = $(am__objects_1)
 pcp_systemdb_info_OBJECTS = $(am_pcp_systemdb_info_OBJECTS)
 pcp_systemdb_info_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
-am_pcp_watchdog_info_OBJECTS = pcp_watchdog_info.$(OBJEXT) \
-	../fe_memutils.$(OBJEXT)
+am_pcp_watchdog_info_OBJECTS = $(am__objects_1)
 pcp_watchdog_info_OBJECTS = $(am_pcp_watchdog_info_OBJECTS)
 pcp_watchdog_info_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
 AM_V_P = $(am__v_P_@AM_V@)
@@ -356,29 +346,30 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 libs_dir = $(top_srcdir)/src/libs
 AM_CPPFLAGS = -D_GNU_SOURCE -DPOOL_PRIVATE -I @PGSQL_INCLUDE_DIR@
-pcp_stop_pgpool_SOURCES = pcp_stop_pgpool.c ../fe_memutils.c
+client_sources = pcp_frontend_client.c ../fe_memutils.c ../../utils/sprompt.c ../../utils/pool_path.c
+pcp_stop_pgpool_SOURCES = $(client_sources)
 pcp_stop_pgpool_LDADD = $(libs_dir)/pcp/libpcp.la
-pcp_node_count_SOURCES = pcp_node_count.c  ../fe_memutils.c
+pcp_node_count_SOURCES = $(client_sources)
 pcp_node_count_LDADD = $(libs_dir)/pcp/libpcp.la
-pcp_node_info_SOURCES = pcp_node_info.c ../fe_memutils.c
+pcp_node_info_SOURCES = $(client_sources)
 pcp_node_info_LDADD = $(libs_dir)/pcp/libpcp.la
-pcp_proc_count_SOURCES = pcp_proc_count.c ../fe_memutils.c
+pcp_proc_count_SOURCES = $(client_sources)
 pcp_proc_count_LDADD = $(libs_dir)/pcp/libpcp.la
-pcp_proc_info_SOURCES = pcp_proc_info.c ../fe_memutils.c
+pcp_proc_info_SOURCES = $(client_sources)
 pcp_proc_info_LDADD = $(libs_dir)/pcp/libpcp.la
-pcp_systemdb_info_SOURCES = pcp_systemdb_info.c ../fe_memutils.c
+pcp_systemdb_info_SOURCES = $(client_sources)
 pcp_systemdb_info_LDADD = $(libs_dir)/pcp/libpcp.la
-pcp_detach_node_SOURCES = pcp_detach_node.c ../fe_memutils.c
+pcp_detach_node_SOURCES = $(client_sources)
 pcp_detach_node_LDADD = $(libs_dir)/pcp/libpcp.la
-pcp_attach_node_SOURCES = pcp_attach_node.c ../fe_memutils.c
+pcp_attach_node_SOURCES = $(client_sources)
 pcp_attach_node_LDADD = $(libs_dir)/pcp/libpcp.la
-pcp_recovery_node_SOURCES = pcp_recovery_node.c ../fe_memutils.c
+pcp_recovery_node_SOURCES = $(client_sources)
 pcp_recovery_node_LDADD = $(libs_dir)/pcp/libpcp.la
-pcp_pool_status_SOURCES = pcp_pool_status.c ../fe_memutils.c
+pcp_pool_status_SOURCES = $(client_sources)
 pcp_pool_status_LDADD = $(libs_dir)/pcp/libpcp.la
-pcp_promote_node_SOURCES = pcp_promote_node.c ../fe_memutils.c
+pcp_promote_node_SOURCES = $(client_sources)
 pcp_promote_node_LDADD = $(libs_dir)/pcp/libpcp.la
-pcp_watchdog_info_SOURCES = pcp_watchdog_info.c ../fe_memutils.c
+pcp_watchdog_info_SOURCES = $(client_sources)
 pcp_watchdog_info_LDADD = $(libs_dir)/pcp/libpcp.la
 all: all-am
 
@@ -471,6 +462,16 @@ clean-binPROGRAMS:
 	@: > ../$(DEPDIR)/$(am__dirstamp)
 ../fe_memutils.$(OBJEXT): ../$(am__dirstamp) \
 	../$(DEPDIR)/$(am__dirstamp)
+../../utils/$(am__dirstamp):
+	@$(MKDIR_P) ../../utils
+	@: > ../../utils/$(am__dirstamp)
+../../utils/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) ../../utils/$(DEPDIR)
+	@: > ../../utils/$(DEPDIR)/$(am__dirstamp)
+../../utils/sprompt.$(OBJEXT): ../../utils/$(am__dirstamp) \
+	../../utils/$(DEPDIR)/$(am__dirstamp)
+../../utils/pool_path.$(OBJEXT): ../../utils/$(am__dirstamp) \
+	../../utils/$(DEPDIR)/$(am__dirstamp)
 
 pcp_attach_node$(EXEEXT): $(pcp_attach_node_OBJECTS) $(pcp_attach_node_DEPENDENCIES) $(EXTRA_pcp_attach_node_DEPENDENCIES) 
 	@rm -f pcp_attach_node$(EXEEXT)
@@ -523,23 +524,15 @@ pcp_watchdog_info$(EXEEXT): $(pcp_watchdog_info_OBJECTS) $(pcp_watchdog_info_DEP
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f ../*.$(OBJEXT)
+	-rm -f ../../utils/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@../$(DEPDIR)/fe_memutils.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_attach_node.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_detach_node.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_node_count.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_node_info.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_pool_status.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_proc_count.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_proc_info.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_promote_node.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_recovery_node.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_stop_pgpool.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_systemdb_info.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_watchdog_info.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@../../utils/$(DEPDIR)/pool_path.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@../../utils/$(DEPDIR)/sprompt.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_frontend_client.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -688,6 +681,8 @@ distclean-generic:
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
 	-rm -f ../$(DEPDIR)/$(am__dirstamp)
 	-rm -f ../$(am__dirstamp)
+	-rm -f ../../utils/$(DEPDIR)/$(am__dirstamp)
+	-rm -f ../../utils/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -697,7 +692,7 @@ clean: clean-am
 clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ../$(DEPDIR) ./$(DEPDIR)
+	-rm -rf ../$(DEPDIR) ../../utils/$(DEPDIR) ./$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -743,7 +738,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ../$(DEPDIR) ./$(DEPDIR)
+	-rm -rf ../$(DEPDIR) ../../utils/$(DEPDIR) ./$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

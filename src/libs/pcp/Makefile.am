@@ -2,9 +2,10 @@ AM_CPPFLAGS = -D_GNU_SOURCE -DPOOL_PRIVATE -I @PGSQL_INCLUDE_DIR@
 
 lib_LTLIBRARIES = libpcp.la
 libpcp_la_SOURCES = pcp.c \
-		    pcp_stream.c \
+					pcp_stream.c \
                     md5.c \
-                    strlcpy.c
+					../../utils/pool_path.c \
+                    ../../utils/strlcpy.c
 
 include_HEADERS = ../../../src/include/pcp/pcp.h \
 					../../../src/include/pcp/libpcp_ext.h \
@@ -16,10 +17,6 @@ md5.c: ../../../src/auth/md5.c
 md5.h: ../../../src/include/auth/md5.h
 	rm -f $@ && ln -s $< .
 pcp_stream.c: ../../../src/utils/pcp/pcp_stream.c
-	rm -f $@ && ln -s $< .
-pcp_error.c: ../../../src/utils/pcp/pcp_error.c
-	rm -f $@ && ln -s $< .
-pcp_timeout.c: ../../../src/utils/pcp/pcp_timeout.c
 	rm -f $@ && ln -s $< .
 strlcpy.c: ../../../src/utils/strlcpy.c
 	rm -f $@ && ln -s $< .

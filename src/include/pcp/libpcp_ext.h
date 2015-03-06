@@ -297,6 +297,8 @@ extern void pcp_free_result(PCPConnInfo* pcpConn);
 extern void pcp_free_connection(PCPConnInfo* pcpConn);
 extern int pcp_result_slot_count(PCPResultInfo* res);
 extern char *pcp_get_last_error(PCPConnInfo* pcpConn);
+
+extern int pcp_result_is_empty(PCPResultInfo* res);
 /* ------------------------------
  * pcp_error.c
  * ------------------------------

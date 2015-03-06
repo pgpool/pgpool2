@@ -28,10 +28,13 @@
 #include "utils/pool_path.h"
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <pwd.h>
 
 static void trim_directory(char *path);
 static void trim_trailing_separator(char *path);
-
+static int pqGetpwuid(uid_t uid, struct passwd * resultbuf, char *buffer,
+					  size_t buflen, struct passwd ** result);
 /*
  * get_parent_directory
  *
@@ -43,6 +46,67 @@ void get_parent_directory(char *path)
 	trim_directory(path);
 }
 
+/*
+ * Obtain user's home directory, return in given buffer
+ */
+bool
+get_home_directory(char *buf, int bufsize)
+{
+	char            pwdbuf[BUFSIZ];
+	struct passwd pwdstr;
+	struct passwd *pwd = NULL;
+	
+	if (pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) != 0)
+		return false;
+	strlcpy(buf, pwd->pw_dir, bufsize);
+	return true;
+}
+
+/*
+ * Obtain user name, return in given buffer
+ */
+bool
+get_os_username(char *buf, int bufsize)
+{
+	char            pwdbuf[BUFSIZ];
+	struct passwd pwdstr;
+	struct passwd *pwd = NULL;
+	
+	if (pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) != 0)
+		return false;
+	strlcpy(buf, pwd->pw_name, bufsize);
+	return true;
+}
+
+/*
+ * Wrapper around getpwuid() or getpwuid_r() to mimic POSIX getpwuid_r()
+ * behaviour, if it is not available or required.
+ */
+static int
+pqGetpwuid(uid_t uid, struct passwd * resultbuf, char *buffer,
+		   size_t buflen, struct passwd ** result)
+{
+#if defined(HAVE_GETPWUID_R)
+	
+#ifdef GETPWUID_R_5ARG
+	/* POSIX version */
+	getpwuid_r(uid, resultbuf, buffer, buflen, result);
+#else
+	
+	/*
+	 * Early POSIX draft of getpwuid_r() returns 'struct passwd *'.
+	 * getpwuid_r(uid, resultbuf, buffer, buflen)
+	 */
+	*result = getpwuid_r(uid, resultbuf, buffer, buflen);
+#endif
+#else
+	
+	/* no getpwuid_r() available, just use getpwuid() */
+	*result = getpwuid(uid);
+#endif
+	
+	return (*result == NULL) ? -1 : 0;
+}
 
 /*
  *  trim_directory
@@ -176,6 +240,23 @@ void canonicalize_path(char *path)
 	}
 }
 
+/*
+ *      last_dir_separator
+ *
+ * Find the location of the last directory separator, return
+ * NULL if not found.
+ */
+char *
+last_dir_separator(const char *filename)
+{
+	const char *p,
+	*ret = NULL;
+	
+	for (p = filename; *p; p++)
+		if (IS_DIR_SEP(*p))
+			ret = p;
+	return (char *) ret;
+}
 
 /*
  *  trim_trailing_separator

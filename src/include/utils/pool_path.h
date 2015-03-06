@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Portions Copyright (c) 2003-2008,	PgPool Global Development Group
+ * Portions Copyright (c) 2003-2015,	PgPool Global Development Group
  * Portions Copyright (c) 2004, PostgreSQL Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
@@ -26,7 +26,7 @@
 
 #ifndef POOL_PATH_H
 #define POOL_PATH_H
-
+#include"pool_type.h"
 /*
  * MAXPGPATH: standard size of a pathname buffer in PostgreSQL (hence,
  * maximum usable pathname length is one less).
@@ -48,5 +48,8 @@
 extern void get_parent_directory(char *path);
 extern void join_path_components(char *ret_path, const char *head, const char *tail);
 extern void canonicalize_path(char *path);
-	
+extern char *last_dir_separator(const char *filename);
+extern bool get_home_directory(char *buf, int bufsize);
+extern bool get_os_username(char *buf, int bufsize);
+
 #endif /* POOL_PATH_H */

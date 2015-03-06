@@ -91,6 +91,7 @@ PGPOOL_REMOTE_START_SCRIPT=pgpool_remote_start
 STARTALL=$BASEDIR/startall
 # Shutdown script name. This will be generated in this script.
 SHUTDOWNALL=$BASEDIR/shutdownall
+PCP_PASS_FILE=$BASEDIR/pcppass
 # pgpool reload script name. This will be generated in this script.
 PGPOOL_RELOAD=$BASEDIR/pgpool_reload
 
@@ -188,7 +189,7 @@ cluster0=$mydir/data0
 cluster1=$mydir/data1
 cluster2=$mydir/data2
 PCP_PORT=__PCPPORT__
-pcp_super_user=__PCPSUPERUSER__
+export PCPPASSFILE=__PCPPASSFILE__
 
 date >> $log
 echo "failed_node_id $failed_node_id failed_host_name $failed_host_name failed_port $failed_port failed_db_cluster $failed_db_cluster new_master_id $new_master_id old_master_id $old_master_id new_master_host_name $new_master_host_name old_primary_node_id $old_primary_node_id new_master_port_number $new_master_port_number new_master_db_cluster $new_master_db_cluster" >> $log
@@ -199,7 +200,7 @@ then
 	$pg_ctl -w -m f -D $failed_db_cluster stop >> $log 2>&1
 	sleep 10
 	# recovery the node
-	pcp_recovery_node localhost $PCP_PORT $pcp_super_user $pcp_super_user $failed_node_id >> $log 2>&1
+	pcp_recovery_node -w -h localhost -p $PCP_PORT -n $failed_node_id >> $log 2>&1
 else
 	echo "$failed_db_cluster is not running. skipping follow master command." >> $log
 fi
@@ -208,10 +209,11 @@ EOF
 #-------------------------------------------
 # replace some variables in the script
 #-------------------------------------------
+
 /bin/ed $FOLLOW_MASTER_SCRIPT <<EOF
 /__MYDIR__/s@__MYDIR__@$BASEDIR@
 /__PGBIN__/s@__PGBIN__@$PGBIN@
-/__PCPSUPERUSER__/s/__PCPSUPERUSER__/$WHOAMI/
+/__PCPPASSFILE__/s@__PCPPASSFILE__@$PCP_PASS_FILE@
 /__PCPPORT__/s/__PCPPORT__/$PCP_PORT/
 w
 q
@@ -702,6 +704,12 @@ echo "port = $PGPOOL_PORT" >> $CONF
 PCP_PORT=`expr $PGPOOL_PORT + 1`
 echo "pcp_port = $PCP_PORT" >> $CONF
 
+#-------------------------------------------
+# create password file for pcp
+#-------------------------------------------
+echo "localhost:${PCP_PORT}:${WHOAMI}:${WHOAMI}" >> $PCP_PASS_FILE
+chmod 0600 $PCP_PASS_FILE
+
 test ! -d run && mkdir run
 echo "pid_file_name = '$BASEDIR/run/pgpool.pid'" >> $CONF
 test ! -d log && mkdir log
@@ -772,13 +780,13 @@ EOF
 
 	wait_for_pgpool_reload $NUMCLUSTERS
 $PSQL -p $PGPOOL_PORT -c "show pool_nodes" test
-
+export PCPPASSFILE=$PCP_PASS_FILE
 # recovery data1 and so on
 	n=1
 	while [ $n -lt $NUMCLUSTERS ]
 	do
 		echo -n "recovery node $n..."
-		$PGPOOL_INSTALL_DIR/bin/pcp_recovery_node localhost $PCP_PORT $WHOAMI $WHOAMI $n
+		$PGPOOL_INSTALL_DIR/bin/pcp_recovery_node -w -h localhost -p $PCP_PORT -n $n
 		echo "done."
 		n=`expr $n + 1`
 		if [ $n -lt $NUMCLUSTERS ];then
@@ -849,6 +857,7 @@ fi
 
 echo "export PGPOOL_PORT=$PGPOOL_PORT" > bashrc.ports
 echo "export PCP_PORT=$PCP_PORT" >> bashrc.ports
+echo "export PCPPASSFILE=$PCP_PASS_FILE" >> bashrc.ports
 chmod 755 bashrc.ports
 
 echo

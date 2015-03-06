@@ -28,6 +28,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/un.h>
@@ -40,9 +41,13 @@
 #include "pool.h"
 #include "pcp/pcp.h"
 #include "pcp/pcp_stream.h"
+#include "utils/pool_path.h"
 #include "utils/palloc.h"
 #include "utils/pool_process_reporting.h"
 #include "auth/md5.h"
+
+#define PCPPASSFILE ".pcppass"
+#define DefaultHost  "localhost"
 
 
 static int pcp_authorize(PCPConnInfo* pcpConn, char *username, char *password);
@@ -74,6 +79,11 @@ static void setResultSlotCount(PCPConnInfo* pcpConn, unsigned int slotCount);
 static void free_systemdb_info(struct PCPConnInfo* pcpConn, void *ptr);
 static void free_processInfo(struct PCPConnInfo* pcpConn, void* ptr);
 static int PCPFlush(PCPConnInfo* pcpConn);
+
+static bool getPoolPassFilename(char *pgpassfile);
+static char *PasswordFromFile(PCPConnInfo* pcpConn, char *hostname, char *port, char *username);
+static char *pwdfMatchesString(char *buf, char *token);
+
 /* --------------------------------
  * pcp_connect - open connection to pgpool using given arguments
  *
@@ -91,6 +101,8 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 	struct sockaddr_in addr;
 	struct sockaddr_un unix_addr;
 	struct hostent *hp;
+	char *password_fron_file = NULL;
+	char   os_user[256];
 	PCPConnInfo* pcpConn = palloc0(sizeof(PCPConnInfo));
 	int fd;
 	int on = 1;
@@ -120,6 +132,7 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 		if (hostname == NULL || *hostname == '\0')
 		{
 			path = UNIX_DOMAIN_PATH;
+			hostname = path;
 		}
 		else
 		{
@@ -200,6 +213,24 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 	}
 	pcpConn->connState = PCP_CONNECTION_CONNECTED;
 
+	/*
+	 * If username is not provided. Use the os user name
+	 * and do not complain if it (getting os user name) gets failed
+	 */
+	if (username == NULL && get_os_username(os_user, sizeof(os_user)))
+		username = os_user;
+
+	/*
+	 * If password is not provided. lookup in pcppass file
+	 */
+	if (password == NULL || *password == '\0')
+	{
+		char port_str[100];
+		snprintf(port_str, sizeof(port_str), "%d",port);
+		password_fron_file = PasswordFromFile(pcpConn,(hostname == UNIX_DOMAIN_PATH)?DefaultHost:hostname, port_str, username);
+		password = password_fron_file;
+	}
+
 	if (pcp_authorize(pcpConn,username, password) < 0)
 	{
 		pcp_close(pcpConn->pcpConn);
@@ -208,6 +239,9 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 	}
 	else
 		pcpConn->connState = PCP_CONNECTION_OK;
+
+	if(password_fron_file)
+		pfree(password_fron_file);
 
 	return pcpConn;
 }
@@ -244,7 +278,13 @@ pcp_authorize(PCPConnInfo* pcpConn, char *username, char *password)
 	char md5[MD5_PASSWD_LEN+1];
 	PCPResultInfo* pcpRes;
 
-	if(PCPConnectionStatus(pcpConn) != PCP_CONNECTION_CONNECTED)
+	if (password == NULL)
+		password = "";
+
+	if (username == NULL)
+		username = "";
+
+	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_CONNECTED)
 	{
 		pcp_internal_error(pcpConn,
 						   "ERROR: PCP authorization failed. invalid connection state.");
@@ -333,7 +373,7 @@ static PCPResultInfo* process_pcp_response(PCPConnInfo* pcpConn, char sentMsg)
 		}
 
 		if(pcpConn->Pfdebug)
-			fprintf(pcpConn->Pfdebug, "DEBUG: recv: tos=\"%c\", len=%d, data=%s\n", toc, rsize, buf);
+			fprintf(pcpConn->Pfdebug, "DEBUG: recv: tos=\"%c\", len=%d\n", toc, rsize);
 
 		switch (toc) {
 			case 'r': /* Authentication Response */
@@ -1656,6 +1696,18 @@ int pcp_result_slot_count(PCPResultInfo* res)
 	return 0;
 }
 
+/* Returns 1 if ResultInfo has no data. 0 otherwise */
+int pcp_result_is_empty(PCPResultInfo* res)
+{
+	if (res)
+	{
+		if (res->resultSlots <= 1 && res->resultSlot[0].isint == 0 && res->resultSlot[0].datalen <= 0)
+			return 1;
+		return 0;
+	}
+	return 1;
+}
+
 void *pcp_get_binary_data(const PCPResultInfo *res, unsigned int slotno)
 {
 	if(res && slotno < res->resultSlots && !res->resultSlot[slotno].isint)
@@ -1726,3 +1778,157 @@ char *pcp_get_last_error(PCPConnInfo* pcpConn)
 	return NULL;
 }
 
+/*
+ * get the password file name which could be either pointed by PCPPASSFILE
+ * environment variable or resides in user home directory.
+ */
+static bool
+getPoolPassFilename(char *pgpassfile)
+{
+	char       *passfile_env;
+	
+	if ((passfile_env = getenv("PCPPASSFILE")) != NULL)
+	{
+		/* use the literal path from the environment, if set */
+		strlcpy(pgpassfile, passfile_env, MAXPGPATH);
+	}
+	else
+	{
+		char            homedir[MAXPGPATH];
+		if (!get_home_directory(homedir, sizeof(homedir)))
+			return false;
+		snprintf(pgpassfile, MAXPGPATH, "%s/%s", homedir, PCPPASSFILE);
+	}
+	return true;
+}
+
+/*
+ * Get a password from the password file. Return value is malloc'd.
+ * format = hostname:port:username:password 
+ */
+static char *
+PasswordFromFile(PCPConnInfo* pcpConn, char *hostname, char *port, char *username)
+{
+	FILE        *fp;
+	char        pgpassfile[MAXPGPATH];
+	struct stat stat_buf;
+#define LINELEN NAMEDATALEN*5
+	char        buf[LINELEN];
+
+	if (username == NULL || strlen(username) == 0)
+		return NULL;
+
+	if (hostname == NULL)
+		hostname = DefaultHost;
+
+	if (!getPoolPassFilename(pgpassfile))
+		return NULL;
+
+	/* If password file cannot be opened, ignore it. */
+	if (stat(pgpassfile, &stat_buf) != 0)
+		return NULL;
+
+	if (!S_ISREG(stat_buf.st_mode))
+	{
+		if(pcpConn->Pfdebug)
+			fprintf(pcpConn->Pfdebug, "WARNING: password file \"%s\" is not a plain file\n",pgpassfile);
+		return NULL;
+	}
+	
+	/* If password file is insecure, alert the user and ignore it. */
+	if (stat_buf.st_mode & (S_IRWXG | S_IRWXO))
+	{
+		if(pcpConn->Pfdebug)
+			fprintf(pcpConn->Pfdebug, "WARNING: password file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n",
+				pgpassfile);
+		return NULL;
+	}
+
+	fp = fopen(pgpassfile, "r");
+	if (fp == NULL)
+		return NULL;
+	
+	while (!feof(fp) && !ferror(fp))
+	{
+		char       *t = buf,
+		*ret,
+		*p1,
+		*p2;
+		int                     len;
+		
+		if (fgets(buf, sizeof(buf), fp) == NULL)
+			break;
+		
+		len = strlen(buf);
+		if (len == 0)
+			continue;
+		
+		/* Remove trailing newline */
+		if (buf[len - 1] == '\n')
+			buf[len - 1] = 0;
+		
+		if ((t = pwdfMatchesString(t, hostname)) == NULL ||
+			(t = pwdfMatchesString(t, port)) == NULL ||
+			(t = pwdfMatchesString(t, username)) == NULL)
+			continue;
+		ret = pstrdup(t);
+		fclose(fp);
+
+		/* De-escape password. */
+		for (p1 = p2 = ret; *p1 != ':' && *p1 != '\0'; ++p1, ++p2)
+		{
+			if (*p1 == '\\' && p1[1] != '\0')
+				++p1;
+			*p2 = *p1;
+		}
+		*p2 = '\0';
+		
+		return ret;
+	}
+	
+	fclose(fp);
+	return NULL;
+	
+#undef LINELEN
+}
+
+/*
+ * Helper function for PasswordFromFile borrowed from PG
+ * returns a pointer to the next token or NULL if the current
+ * token doesn't match
+ */
+static char *
+pwdfMatchesString(char *buf, char *token)
+{
+	char       *tbuf,
+	*ttok;
+	bool            bslash = false;
+	
+	if (buf == NULL || token == NULL)
+		return NULL;
+	tbuf = buf;
+	ttok = token;
+	if (tbuf[0] == '*' && tbuf[1] == ':')
+		return tbuf + 2;
+	while (*tbuf != 0)
+	{
+		if (*tbuf == '\\' && !bslash)
+		{
+			tbuf++;
+			bslash = true;
+		}
+		if (*tbuf == ':' && *ttok == 0 && !bslash)
+			return tbuf + 1;
+		bslash = false;
+		if (*ttok == 0)
+			return NULL;
+		if (*tbuf == *ttok)
+		{
+			tbuf++;
+			ttok++;
+		}
+		else
+			return NULL;
+	}
+	return NULL;
+}

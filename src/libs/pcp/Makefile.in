@@ -127,7 +127,9 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libpcp_la_LIBADD =
-am_libpcp_la_OBJECTS = pcp.lo pcp_stream.lo md5.lo strlcpy.lo
+am__dirstamp = $(am__leading_dot)dirstamp
+am_libpcp_la_OBJECTS = pcp.lo pcp_stream.lo md5.lo \
+	../../utils/pool_path.lo ../../utils/strlcpy.lo
 libpcp_la_OBJECTS = $(am_libpcp_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -325,9 +327,10 @@ top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -D_GNU_SOURCE -DPOOL_PRIVATE -I @PGSQL_INCLUDE_DIR@
 lib_LTLIBRARIES = libpcp.la
 libpcp_la_SOURCES = pcp.c \
-		    pcp_stream.c \
+					pcp_stream.c \
                     md5.c \
-                    strlcpy.c
+					../../utils/pool_path.c \
+                    ../../utils/strlcpy.c
 
 include_HEADERS = ../../../src/include/pcp/pcp.h \
 					../../../src/include/pcp/libpcp_ext.h \
@@ -403,20 +406,33 @@ clean-libLTLIBRARIES:
 	  echo rm -f $${locs}; \
 	  rm -f $${locs}; \
 	}
+../../utils/$(am__dirstamp):
+	@$(MKDIR_P) ../../utils
+	@: > ../../utils/$(am__dirstamp)
+../../utils/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) ../../utils/$(DEPDIR)
+	@: > ../../utils/$(DEPDIR)/$(am__dirstamp)
+../../utils/pool_path.lo: ../../utils/$(am__dirstamp) \
+	../../utils/$(DEPDIR)/$(am__dirstamp)
+../../utils/strlcpy.lo: ../../utils/$(am__dirstamp) \
+	../../utils/$(DEPDIR)/$(am__dirstamp)
 
 libpcp.la: $(libpcp_la_OBJECTS) $(libpcp_la_DEPENDENCIES) $(EXTRA_libpcp_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(libdir) $(libpcp_la_OBJECTS) $(libpcp_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f ../../utils/*.$(OBJEXT)
+	-rm -f ../../utils/*.lo
 
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@../../utils/$(DEPDIR)/pool_path.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@../../utils/$(DEPDIR)/strlcpy.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_stream.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strlcpy.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -447,6 +463,7 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+	-rm -rf ../../utils/.libs ../../utils/_libs
 install-includeHEADERS: $(include_HEADERS)
 	@$(NORMAL_INSTALL)
 	@list='$(include_HEADERS)'; test -n "$(includedir)" || list=; \
@@ -584,6 +601,8 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f ../../utils/$(DEPDIR)/$(am__dirstamp)
+	-rm -f ../../utils/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -594,7 +613,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ../../utils/$(DEPDIR) ./$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -640,7 +659,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ../../utils/$(DEPDIR) ./$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -683,10 +702,6 @@ md5.c: ../../../src/auth/md5.c
 md5.h: ../../../src/include/auth/md5.h
 	rm -f $@ && ln -s $< .
 pcp_stream.c: ../../../src/utils/pcp/pcp_stream.c
-	rm -f $@ && ln -s $< .
-pcp_error.c: ../../../src/utils/pcp/pcp_error.c
-	rm -f $@ && ln -s $< .
-pcp_timeout.c: ../../../src/utils/pcp/pcp_timeout.c
 	rm -f $@ && ln -s $< .
 strlcpy.c: ../../../src/utils/strlcpy.c
 	rm -f $@ && ln -s $< .

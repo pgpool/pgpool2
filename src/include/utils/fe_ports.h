@@ -32,7 +32,10 @@
 #ifndef FE_PORTS
 #define FE_PORTS
 
+#include "pool_type.h"
 
+
+extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
 extern int _fe_error_level;
 
 void *pg_malloc(size_t size);

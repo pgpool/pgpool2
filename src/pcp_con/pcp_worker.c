@@ -414,7 +414,7 @@ user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len)
 	index = (char *) memchr(buf, '\0', MAX_USER_PASSWD_LEN);
 	if (index == NULL)
 	{
-		ereport(ERROR,
+		ereport(FATAL,
 			(errmsg("failed to authenticate PCP user"),
 				 errdetail("error while reading authentication packet")));
 		return 0;
@@ -424,7 +424,7 @@ user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len)
 	fp = fopen(passwd_file, "r");
 	if (fp == NULL)
 	{
-		ereport(ERROR,
+		ereport(FATAL,
 				(errmsg("failed to authenticate PCP user"),
 				 errdetail("could not open %s. reason: %s", passwd_file, strerror(errno))));
 		return 0;
@@ -445,7 +445,7 @@ user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len)
 			if (++i > MAX_USER_PASSWD_LEN)
 			{
 				fclose(fp);
-				ereport(ERROR,
+				ereport(FATAL,
 					(errmsg("failed to authenticate PCP user"),
 						 errdetail("username read from file \"%s\" is larger than maximum allowed username length [%d]", passwd_file, MAX_USER_PASSWD_LEN)));
 				return 0;
@@ -465,7 +465,7 @@ user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len)
 			if (++i > MAX_USER_PASSWD_LEN)
 			{
 				fclose(fp);
-				ereport(ERROR,
+				ereport(FATAL,
 					(errmsg("failed to authenticate PCP user"),
 						 errdetail("password read from file \"%s\" is larger than maximum allowed password length [%d]", passwd_file, MAX_USER_PASSWD_LEN)));
 				return 0;
@@ -490,6 +490,10 @@ user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len)
 		}
 	}
 	fclose(fp);
+	ereport(FATAL,
+		(errmsg("authentication failed for user \"%s\"",packet_username),
+			 errdetail("username and/or password does not match")));
+
 	return 0;
 }
 

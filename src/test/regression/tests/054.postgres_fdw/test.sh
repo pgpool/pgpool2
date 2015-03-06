@@ -43,7 +43,7 @@ EOF
 
 # detach node #1 so that pgpool does not access
 # postgres_fdw. Otherwise it will go into an inifinite loop.
-$PGPOOL_INSTALL_DIR/bin/pcp_detach_node localhost $PCP_PORT $WHOAMI $WHOAMI 1
+$PGPOOL_INSTALL_DIR/bin/pcp_detach_node -w -h localhost -p $PCP_PORT -n 1
 
 if [ $? != 0 ];then
 	echo "pcp_detach_node failed"
