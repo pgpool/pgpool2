@@ -311,7 +311,7 @@ int main(int argc, char **argv)
 		dirp = dirname(dirnamebuf);
 		snprintf(pool_passwd, sizeof(pool_passwd), "%s/%s",
 				 dirp, pool_config->pool_passwd);
-		pool_init_pool_passwd(pool_passwd);
+		pool_init_pool_passwd(pool_passwd, POOL_PASSWD_R);
 	}
 
 	pool_semaphore_create(MAX_NUM_SEMAPHORES);

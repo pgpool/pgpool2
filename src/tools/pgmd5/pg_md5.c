@@ -211,7 +211,7 @@ static void update_pool_passwd(char *conf_file, char *username, char *password)
 	dirp = dirname(dirnamebuf);
 	snprintf(pool_passwd, sizeof(pool_passwd), "%s/%s",
 			 dirp, pool_config->pool_passwd);
-	pool_init_pool_passwd(pool_passwd);
+	pool_init_pool_passwd(pool_passwd, POOL_PASSWD_RW);
 
 	if (strlen(username))
 	{

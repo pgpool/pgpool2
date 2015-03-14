@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2010	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -31,7 +31,12 @@
 #define POOL_PASSWD_FILENAME "pool_passwd"
 #define POOL_PASSWD_LEN 35
 
-extern void pool_init_pool_passwd(char *pool_passwd_filename);
+typedef enum {
+	POOL_PASSWD_R,		/* open pool_passwd in read only mode. used by pgpool-II child main process */
+	POOL_PASSWD_RW,		/* open pool_passwd in read/write mode. used by pg_md5 command */
+} POOL_PASSWD_MODE;
+
+extern void pool_init_pool_passwd(char *pool_passwd_filename, POOL_PASSWD_MODE mode);
 extern int pool_create_passwdent(char *username, char *passwd);
 extern char *pool_get_passwd(char *username);
 extern void pool_delete_passwdent(char *username);

@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -34,20 +34,23 @@
 #include "utils/fe_ports.h"
 #endif
 
-
-
 static FILE *passwd_fd = NULL;	/* File descriptor for pool_passwd */
 static char saved_passwd_filename[POOLMAXPATHLEN+1];
+static POOL_PASSWD_MODE pool_passwd_mode;
 
 /*
  * Initialize this module.
  * If pool_passwd does not exist yet, create it.
  * Open pool_passwd.
  */
-void pool_init_pool_passwd(char *pool_passwd_filename)
+void pool_init_pool_passwd(char *pool_passwd_filename, POOL_PASSWD_MODE mode)
 {
+	char *openmode;
+
 	if (passwd_fd)
 		return;
+
+	pool_passwd_mode = mode;
 
 	if (saved_passwd_filename[0] == '\0')
 	{
@@ -56,7 +59,12 @@ void pool_init_pool_passwd(char *pool_passwd_filename)
 		saved_passwd_filename[len] = '\0';
 	}
 
-	passwd_fd = fopen(pool_passwd_filename, "r+");
+	if (mode == POOL_PASSWD_R)
+		openmode = "r";
+	else
+		openmode = "r+";
+
+	passwd_fd = fopen(pool_passwd_filename, openmode);
 	if (!passwd_fd)
 	{
 		if (errno == ENOENT)
@@ -87,6 +95,10 @@ int pool_create_passwdent(char *username, char *passwd)
 	if (!passwd_fd)
 		ereport(ERROR,
 				(errmsg("error updating password, password file descriptor is NULL")));
+
+	if (pool_passwd_mode != POOL_PASSWD_RW)
+		ereport(ERROR,
+				(errmsg("pool_create_passwdent should be called with pool_passwd opened with read/write mode")));
 
 	len = strlen(passwd);
 	if (len != POOL_PASSWD_LEN)
@@ -244,5 +256,5 @@ void pool_finish_pool_passwd(void)
 void pool_reopen_passwd_file(void)
 {
 	pool_finish_pool_passwd();
-	pool_init_pool_passwd(saved_passwd_filename);
+	pool_init_pool_passwd(saved_passwd_filename, pool_passwd_mode);
 }
