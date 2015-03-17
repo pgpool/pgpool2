@@ -4733,7 +4733,7 @@ down before a down notification packet is sent to other pgpool-IIs.
 
 <h2>PCP commands list</h2>
 <p>PCP commands are UNIX commands which manipulate pgpool-II via the network.
-
+Please note that the parameter format for all PCP commands has been changed since pgpool-II 3.5</p>
 <table border>
 <tr><th><a href="#pcp_node_count">pcp_node_count</a></th>
     <td>retrieves the number of nodes</td></tr>
@@ -4760,32 +4760,25 @@ down before a down notification packet is sent to other pgpool-IIs.
 </table>
 
 
-<h2 id="pcp_comand_args">Common Command-line Arguments</h2>
-
-<p>There are five arguments common to all of the PCP commands. They
-give information about pgpool-II and authentication. Extra
-arguments may be needed for some commands.
-
-<pre>
-e.g.)  $ pcp_node_count 10 localhost 9898 postgres hogehoge
-</pre>
-
-<table border>
-<tr>
-<th>First argument</th>
-<td>timeout value in seconds. PCP disconnects if pgpool-II does not respond in this many seconds.</td>
-</tr>
-<tr><th>Second argument</th><td>pgpool-II's hostname</td></tr>
-<tr><th>Third argument</th><td>PCP port number</td></tr>
-<tr><th>Fourth argument</th><td>PCP user name</td></tr>
-<tr><th>Fifth argument</th><td>PCP password</td></tr>
-</table>
+<h2 id="pcp_comand_password">PCP connection authentication</h2>
 
 <p>PCP user names and passwords must be declared in
 <code>pcp.conf</code> in <code>$prefix/etc</code>
 directory. <code>-F</code> option can be used when starting pgpool-II
-if <code>pcp.conf</code> is placed somewhere else. The password does
-not need to be in md5 format when passing it to the PCP commands.</p>
+if <code>pcp.conf</code> is placed somewhere else.</p>
+
+<h3 id="password_file">The Password File</h3>
+
+<p>The file .pcppass in a user's home directory or the file referenced by environment variable PCPPASSFILE can contain passwords to be used if no password has been specified for the pcp connection.</p>
+<p>This file should contain lines of the following format:<p>
+
+<pre>
+hostname:port:username:password
+</pre>
+<p>
+(You can add a reminder comment to the file by copying the line above and preceding it with #.) Each of the first three fields can be a literal value, or *, which matches anything. The password field from the first line that matches the current connection parameters will be used. (Therefore, put more-specific entries first when you are using wildcards.) If an entry needs to contain : or \, escape this character with \. A host name of localhost matches both TCP (host name localhost) and Unix domain socket connections coming from the local machine.</p>
+
+<p>The permissions on .pcppass must disallow any access to world or group; achieve this by the command chmod 0600 ~/.pcppass. If the permissions are less strict than this, the file will be ignored.</p>
 
 
 <h2>PCP Commands to know status and configuration</h2>
@@ -4794,29 +4787,161 @@ not need to be in md5 format when passing it to the PCP commands.</p>
 
 
 <h3 id="pcp_node_count">pcp_node_count</h3>
-
+<p><strong>Format:</strong></p>
 <dl class="flat">
-<dt>Format</dt>
-<dd>
-<code>pcp_node_count  _timeout_  _host_  _port_  _userid_  _passwd_</code>
-</dd>
-<dt>Desc.</dt>
-<dd>
-Displays the total number of nodes defined in <code>pgpool.conf</code>. It does
-not distinguish between nodes status, ie attached/detached. ALL nodes are counted.
-</dd>
+<pre><code>pcp_node_count [options...] </code></pre>
 </dl>
 
-<h3><a name="pcp_node_info"/></a>pcp_node_info</h3>
-
+<p>
+<strong>Description:</strong>
+</p>
 <dl class="flat">
-<dt>Format</dt>
-<dd><code>pcp_node_info  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_</code></dd>
-<dt>Desc.</dt>
-<dd>
-<p>Displays the information on the given node ID. Here is an output example:</p>
+	<p>Displays the total number of nodes defined in <code>pgpool.conf</code>. It does
+	not distinguish between nodes status, ie attached/detached. ALL nodes are counted.</p>
+</dl>
+
+<p><strong>Options:</strong></p>
+<p>
+<p><code>-h <strong>hostname</strong></p>
+	<p>--host=<strong>hostname</strong></code></p>
+</p>
+<dl class="flat">
+	<p>Specifies the host name of the machine on which the server is running. If the value begins with a slash,
+	it is used as the directory for the Unix-domain socket.</p>
+</dl>
+
+<p><code>-p <strong>port</strong></p>
+	<p>--port=<strong>port</strong></code></p>
+<dl class="flat">
+	<p>pgpool-II server PCP port (default:"9898").</p>
+</dl>
+
+<p><code>-u <strong>username</strong></p>
+	<p>--username=<strong>username</strong></code></p>
+<dl class="flat">
+	<p>username for PCP authentication (default: OS user name).</p>
+</dl>
+
+<p><code>-w </p>
+	<p>--no-password</code></p>
+<dl class="flat">
+	<p>never prompt for password. And if a password is not available by a .pcppass file, the connection attempt will fail. This option can be useful in batch jobs and scripts where no user is present to enter a password</p>
+</dl>
+
+<p><code>-W </p>
+	<p>--password</code></p>
+<dl class="flat">
+	<p>force password prompt (should happen automatically).</p>
+</dl>
+
+<p><code>-d </p>
+	<p>--debug</code></p>
+<dl class="flat">
+	<p>enable debug message.</p>
+</dl>
+
+<p><code>-v </p>
+	<p>--verbose</code></p>
+<dl class="flat">
+	<p>enable verbose output.</p>
+</dl>
+
+<p><code>-V </p>
+	<p>--version</code></p>
+<dl class="flat">
+	<p>print the pcp_node_count version, and exit.</p>
+</dl>
+
+<p><code>-? </p>
+	<p>--help</code></p>
+</p>
+<dl class="flat">
+	<p>show help about pcp_node_count command line arguments, and exit.</p>
+</dl>
+
+
+<h3><a name="pcp_node_info"/></a>pcp_node_info</h3>
+<p><strong>Format:</strong></p>
+<dl class="flat">
+<pre><code>pcp_node_info [options...] [node_id] </code></pre>
+</dl>
+
+<p>
+<strong>Description:</strong>
+</p>
+<dl class="flat">
+	<p>Displays the information on the given node ID.</p>
+</dl>
+
+<p><strong>Options:</strong></p>
+<p>
+<p><code>-h <strong>hostname</strong></p>
+	<p>--host=<strong>hostname</strong></code></p>
+</p>
+<dl class="flat">
+	<p>Specifies the host name of the machine on which the server is running. If the value begins with a slash,
+	it is used as the directory for the Unix-domain socket.</p>
+</dl>
+
+<p><code>-p <strong>port</strong></p>
+	<p>--port=<strong>port</strong></code></p>
+<dl class="flat">
+	<p>pgpool-II server PCP port (default:"9898").</p>
+</dl>
+<p><code>-u <strong>username</strong></p>
+	<p>--username=<strong>username</strong></code></p>
+<dl class="flat">
+	<p>username for PCP authentication (default: OS user name).</p>
+</dl>
+
+<p><code>-n <strong>node_id</strong></p>
+	<p>--node-id=<strong>node_id</strong></code></p>
+<dl class="flat">
+	<p>index of backend node to get information of.</p>
+</dl>
+
+
+<p><code>-w </p>
+	<p>--no-password</code></p>
+<dl class="flat">
+	<p>never prompt for password. And if a password is not available by a .pcppass file, the connection attempt will fail. This option can be useful in batch jobs and scripts where no user is present to enter a password</p>
+</dl>
+
+<p><code>-W </p>
+	<p>--password</code></p>
+<dl class="flat">
+	<p>force password prompt (should happen automatically).</p>
+</dl>
+
+<p><code>-d </p>
+	<p>--debug</code></p>
+<dl class="flat">
+	<p>enable debug message.</p>
+</dl>
+
+<p><code>-v </p>
+	<p>--verbose</code></p>
+<dl class="flat">
+	<p>enable verbose output.</p>
+</dl>
+
+<p><code>-V </p>
+	<p>--version</code></p>
+<dl class="flat">
+	<p>print the pcp_node_info version, and exit.</p>
+</dl>
+
+<p><code>-? </p>
+	<p>--help</code></p>
+</p>
+<dl class="flat">
+	<p>show help about pcp_node_info command line arguments, and exit.</p>
+</dl>
+
+<p><strong>Output example:</strong></p>
+<dl class="flat">
 <pre>
-$ pcp_node_info 10 localhost 9898 postgres hogehoge 0
+$ pcp_node_info -h localhost -U postgres 0
 host1 5432 1 1073741823.500000
 </pre>
 
@@ -4840,32 +4965,108 @@ host1 5432 1 1073741823.500000
 <p>The <code>--verbose</code> option can help understand the output. For example:</p>
 
 <pre>
-$ pcp_node_info --verbose 10 localhost 9898 postgres hogehoge 0
+$ pcp_node_info --verbose -h localhost -U postgres 0
 Hostname: host1
 Port    : 5432
 Status  : 1
 Weight  : 0.5
 </pre>
-
-<p>Specifying an invalid node ID will result in an error with <a href="#exit_status">exit status 12</a>,
-and BackendError will be displayed.</p>
-</dd>
+</dl>
 </dl>
 
 <h3><a name="pcp_watchdog_info"/></a>pcp_watchdog_info <span class="version">V3.3 -</span></h3>
+<p>
+<strong>Format:</strong>
+</p>
 
 <dl class="flat">
-<dt>Format</dt>
-<dd><code>pcp_watchdog_info  _timeout_  _host_  _port_  _userid_  _passwd_  [_watchdogid_]</code></dd>
-<dt>Desc.</dt>
-<p>Displays the watchdog status of the pgpool-II.
-_watchdogid_ is the index of other_pgpool_hostname parameter in pgpool.conf.</p>
-<p>If this is omitted, display the watchdog status of the pgpool-II specified by _host_:_port_.</p>
-
-<p>Here is an output example:</p>
-
 <pre>
-$ pcp_watchdog_info 10 localhost 9898 postgres hogehoge 0
+<code>pcp_watchdog_info [options...] [watchdogid]</code>
+</pre>
+</dl>
+
+<p>
+<strong>Description:</strong>
+</p>
+<dl class="flat">
+	<p>Displays the watchdog status of the pgpool-II.
+	watchdogid is the index of other_pgpool_hostname parameter in pgpool.conf.</p>
+	<p>If this is omitted, display the watchdog status of one's self watchdog.</p>
+</dl>
+
+<p><strong>Options:</strong></p>
+	<p>
+		<p><code>-h <strong>hostname</strong></p>
+		<p>--host=<strong>hostname</strong></code></p>
+	</p>
+<dl class="flat">
+	<p>Specifies the host name of the machine on which the server is running. If the value begins with a slash,
+	it is used as the directory for the Unix-domain socket.</p>
+</dl>
+
+<p><code>-p <strong>port</strong></p>
+	<p>--port=<strong>port</strong></code></p>
+<dl class="flat">
+	<p>pgpool-II server PCP port (default:"9898").</p>
+</dl>
+
+<p><code>-u <strong>username</strong></p>
+<p>--username=<strong>username</strong></code></p>
+<dl class="flat">
+	<p>username for PCP authentication (default: OS user name).</p>
+</dl>
+
+<p><code>-n <strong>watchdog_id</strong></p>
+	<p>--watchdog-id=<strong>watchdog_id</strong></code></p>
+<dl class="flat">
+	<p>index of other pgpool-II to get information for.</p>
+	<p>If ommitted then gets one's self watchdog information'.</p>
+</dl>
+
+<p><code>-w </p>
+<p>--no-password</code></p>
+<dl class="flat">
+	<p>never prompt for password. And if a password is not available by a .pcppass file, the connection attempt will fail. This option can be useful in batch jobs and scripts where no user is present to enter a password</p>
+</dl>
+
+
+<p><code>-W </p>
+<p>--password</code></p>
+<dl class="flat">
+	<p>force password prompt (should happen automatically).</p>
+</dl>
+
+<p><code>-d </p>
+<p>--debug</code></p>
+<dl class="flat">
+	<p>enable debug message.</p>
+</dl>
+
+<p><code>-v </p>
+	<p>--verbose</code></p>
+<dl class="flat">
+	<p>enable verbose output.</p>
+</dl>
+
+<p><code>-V </p>
+<p>--version</code></p>
+<dl class="flat">
+	<p>print the pcp_watchdog_info version, and exit.</p>
+</dl>
+
+<p><code>-? </p>
+<p>--help</code></p>
+</p>
+<dl class="flat">
+	<p>show help about pcp_watchdog_info command line arguments, and exit.</p>
+</dl>
+
+
+<p><strong>Output example:</strong></p>
+<dl class="flat">
+<pre>
+$ pcp_watchdog_info -h localhost -p 9898 -u postgres 0
+
 host1 9999 9000 2
 Here is an output example:
 </pre>
@@ -4887,33 +5088,177 @@ Here is an output example:
 </ul>
 <p>The load balance weight is displayed in normalized format.</p>
 
-<p>Specifying an invalid watchdog ID will result in an error with <a href="#exit_status">exit tatus 12</a>,
-and BackendError will be displayed.</p>
 </dl>
 
 <h3 id="pcp_proc_count">pcp_proc_count</h3>
 
+<p>
+<strong>Format:</strong>
+</p>
+
 <dl class="flat">
-<dt>Format</dt>
-<dd><code>pcp_proc_count  _timeout_  _host_  _port_  _userid_  _passwd_</code></dd>
-<dt>Desc.</dt>
-<dd>
-Displays the list of pgpool-II children process IDs. If there is more than
-one process, IDs will be delimited by a white space.
-</dd>
+<pre>
+<code>pcp_proc_count [options...] </code>
+</pre>
 </dl>
 
-<h3 id="pcp_proc_info">pcp_proc_info</h3>
-<dl class="flat">
-<dt>Format</dt>
-<dd><code>pcp_proc_info  _timeout_  _host_  _port_  _userid_  _passwd_  _processid_</code></dd>
-<dt>Desc.</dt>
 <p>
-Displays the information on the given pgpool-II child process ID. The
-output example is as follows:
+<strong>Description:</strong>
 </p>
+<dl class="flat">
+	<p>Displays the list of pgpool-II children process IDs. If there is more than
+	one process, IDs will be delimited by a white space.</p>
+</dl>
+
+<p>
+<strong>Options:</strong></p>
+<p>
+<p><code>-h <strong>hostname</strong></p>
+	<p>--host=<strong>hostname</strong></code></p>
+</p>
+<dl class="flat">
+	<p>Specifies the host name of the machine on which the server is running. If the value begins with a slash,
+	it is used as the directory for the Unix-domain socket.</p>
+</dl>
+
+<p><code>-p <strong>port</strong></p>
+	<p>--port=<strong>port</strong></code></p>
+<dl class="flat">
+	<p>pgpool-II server PCP port (default:"9898").</p>
+</dl>
+
+<p><code>-u <strong>username</strong></p>
+	<p>--username=<strong>username</strong></code></p>
+<dl class="flat">
+	<p>username for PCP authentication (default: OS user name).</p>
+</dl>
+
+<p><code>-w </p>
+	<p>--no-password</code></p>
+<dl class="flat">
+	<p>never prompt for password. And if a password is not available by a .pcppass file, the connection attempt will fail. This option can be useful in batch jobs and scripts where no user is present to enter a password</p>
+</dl>
+
+
+<p><code>-W </p>
+	<p>--password</code></p>
+<dl class="flat">
+	<p>force password prompt (should happen automatically).</p>
+</dl>
+
+<p><code>-d </p>
+	<p>--debug</code></p>
+<dl class="flat">
+	<p>enable debug message.</p>
+</dl>
+<p><code>-v </p>
+	<p>--verbose</code></p>
+<dl class="flat">
+	<p>enable verbose output.</p>
+</dl>
+
+<p><code>-V </p>
+	<p>--version</code></p>
+<dl class="flat">
+	<p>print the pcp_proc_count version, and exit.</p>
+</dl>
+
+<p><code>-? </p>
+	<p>--help</code></p>
+</p>
+<dl class="flat">
+	<p>show help about pcp_proc_count command line arguments, and exit.</p>
+</dl>
+
+
+
+<h3 id="pcp_proc_info">pcp_proc_info</h3>
+<p>
+<strong>Format:</strong>
+</p>
+
+<dl class="flat">
 <pre>
-$ pcp_proc_info 10 localhost 9898 postgres hogehoge 3815
+<code>pcp_proc_info [options...] [processid] </code>
+</pre>
+</dl>
+
+<p>
+<strong>Description:</strong>
+</p>
+<dl class="flat">
+	<p>Displays the information on the given pgpool-II child process ID.</p>
+</dl>
+
+<p><strong>Options:</strong></p>
+<p>
+<p><code>-h <strong>hostname</strong></p>
+	<p>--host=<strong>hostname</strong></code></p>
+</p>
+<dl class="flat">
+	<p>Specifies the host name of the machine on which the server is running. If the value begins with a slash,
+	it is used as the directory for the Unix-domain socket.</p>
+</dl>
+
+
+<p><code>-p <strong>port</strong></p>
+	<p>--port=<strong>port</strong></code></p>
+<dl class="flat">
+	<p>pgpool-II server PCP port (default:"9898").</p>
+</dl>
+
+<p><code>-u <strong>username</strong></p>
+	<p>--username=<strong>username</strong></code></p>
+<dl class="flat">
+	<p>username for PCP authentication (default: OS user name).</p>
+</dl>
+
+<p><code>-P <strong>PID</strong></p>
+	<p>--process-id=<strong>PID</strong></code></p>
+<dl class="flat">
+	<p>PID of pgpool-II child process.</p>
+</dl>
+
+<p><code>-w </p>
+	<p>--no-password</code></p>
+<dl class="flat">
+	<p>never prompt for password. And if a password is not available by a .pcppass file, the connection attempt will fail. This option can be useful in batch jobs and scripts where no user is present to enter a password</p>
+</dl>
+
+<p><code>-W </p>
+	<p>--password</code></p>
+<dl class="flat">
+	<p>force password prompt (should happen automatically).</p>
+</dl>
+
+<p><code>-d </p>
+	<p>--debug</code></p>
+<dl class="flat">
+	<p>enable debug message.</p>
+</dl>
+<p><code>-v </p>
+	<p>--verbose</code></p>
+<dl class="flat">
+	<p>enable verbose output.</p>
+</dl>
+
+<p><code>-V </p>
+	<p>--version</code></p>
+<dl class="flat">
+	<p>print the pcp_proc_info version, and exit.</p>
+</dl>
+
+<p><code>-? </p>
+	<p>--help</code></p>
+</p>
+<dl class="flat">
+	<p>show help about pcp_proc_info command line arguments, and exit.</p>
+</dl>
+
+<p><strong>Output example:</strong></p>
+<dl class="flat">
+<pre>
+$ pcp_proc_info -h localhost -p 9898 -U postgres 3815
 postgres_db postgres 1150769932 1150767351 3 0 1 1467 1
 postgres_db postgres 1150769932 1150767351 3 0 1 1468 1
 </pre>
@@ -4943,7 +5288,7 @@ The </code>--verbose</code> option can help understand the output. For example:
 </p>
 
 <pre>
-$ pcp_proc_info --verbose 10 localhost 9898 postgres hogehoge 3815
+$ pcp_proc_info --verbose -U postgres 3815
 Database     : postgres_db
 Username     : postgres
 Start time   : 1150769932
@@ -4964,19 +5309,89 @@ PID          : 1468
 Connected    : 1
 </pre>
 
-<p>Specifying an invalid node ID will result in an error with <a href="#exit_status">exit status 12</a>,
-and BackendError will be displayed.</p>
 </dl>
 
 <h3 id="pcp_pool_status">pcp_pool_status <span class="version">V3.1 -</span></h3>
+
+<p>
+<strong>Format:</strong>
+</p>
+
 <dl class="flat">
-<dt>Format</dt>
-<dd><code>pcp_pool_status _timeout_  _host_  _port_  _userid_  _passwd_</code></dd>
-<dt>Desc.</dt>
-<dd>
-<p>Displays parameters in pgpool.conf. The output example is as follows:</p>
 <pre>
-$ pcp_pool_status 10 localhost 9898 postgres hogehoge
+<code>pcp_pool_status [options...]</code>
+</pre>
+</dl>
+
+<p>
+<strong>Description:</strong>
+</p>
+<dl class="flat">
+	<p>Displays the parameter values as defined in pgpool.conf.</p>
+</dl>
+<p><strong>Options:</strong></p>
+<p>
+<p><code>-h <strong>hostname</strong></p>
+	<p>--host=<strong>hostname</strong></code></p>
+</p>
+<dl class="flat">
+	<p>Specifies the host name of the machine on which the server is running. If the value begins with a slash,
+	it is used as the directory for the Unix-domain socket.</p>
+</dl>
+
+<p><code>-p <strong>port</strong></p>
+	<p>--port=<strong>port</strong></code></p>
+<dl class="flat">
+	<p>pgpool-II server PCP port (default:"9898").</p>
+</dl>
+
+<p><code>-u <strong>username</strong></p>
+	<p>--username=<strong>username</strong></code></p>
+<dl class="flat">
+	<p>username for PCP authentication (default: OS user name).</p>
+</dl>
+
+<p><code>-w </p>
+	<p>--no-password</code></p>
+<dl class="flat">
+	<p>never prompt for password. And if a password is not available by a .pcppass file, the connection attempt will fail. This option can be useful in batch jobs and scripts where no user is present to enter a password</p>
+</dl>
+
+
+<p><code>-W </p>
+	<p>--password</code></p>
+<dl class="flat">
+	<p>force password prompt (should happen automatically).</p>
+</dl>
+
+<p><code>-d </p>
+	<p>--debug</code></p>
+<dl class="flat">
+	<p>enable debug message.</p>
+</dl>
+<p><code>-v </p>
+	<p>--verbose</code></p>
+<dl class="flat">
+	<p>enable verbose output.</p>
+</dl>
+
+<p><code>-V </p>
+	<p>--version</code></p>
+<dl class="flat">
+	<p>print the pcp_pool_status version, and exit.</p>
+</dl>
+
+<p><code>-? </p>
+	<p>--help</code></p>
+</p>
+<dl class="flat">
+	<p>show help about pcp_pool_status command line arguments, and exit.</p>
+</dl>
+
+<p><strong>Output example:</strong></p>
+<dl class="flat">
+<pre>
+$ pcp_pool_status -h localhost -U postgres
 name : listen_addresses
 value: localhost
 desc : host name(s) or IP address(es) to listen to
@@ -4998,14 +5413,85 @@ desc : PCP port # to bind
 
 <h3 id="pcp_systemdb_info">pcp_systemdb_info</h3>
 
+<p>
+<strong>Format:</strong>
+</p>
+
 <dl class="flat">
-<dt>Format</dt>
-<dd><code>pcp_systemdb_info  _timeout_  _host_  _port_  _userid_  _passwd_</code></dd>
-<dt>Desc.</dt>
-<dd>
-<p>Displays the System DB information. The output example is as follows:</p>
 <pre>
-$ pcp_systemdb_info 10 localhost 9898 postgres hogehoge
+<code>pcp_systemdb_info [options...]</code>
+</pre>
+</dl>
+
+<p>
+<strong>Description:</strong>
+</p>
+<dl class="flat">
+	<p>Displays the System DB information.</p>
+</dl>
+<p><strong>Options:</strong></p>
+<p>
+<p><code>-h <strong>hostname</strong></p>
+	<p>--host=<strong>hostname</strong></code></p>
+</p>
+<dl class="flat">
+	<p>Specifies the host name of the machine on which the server is running. If the value begins with a slash,
+	it is used as the directory for the Unix-domain socket.</p>
+</dl>
+
+<p><code>-p <strong>port</strong></p>
+	<p>--port=<strong>port</strong></code></p>
+<dl class="flat">
+	<p>pgpool-II server PCP port (default:"9898").</p>
+</dl>
+
+<p><code>-u <strong>username</strong></p>
+	<p>--username=<strong>username</strong></code></p>
+<dl class="flat">
+	<p>username for PCP authentication (default: OS user name).</p>
+</dl>
+
+<p><code>-w </p>
+	<p>--no-password</code></p>
+<dl class="flat">
+	<p>never prompt for password. And if a password is not available by a .pcppass file, the connection attempt will fail. This option can be useful in batch jobs and scripts where no user is present to enter a password</p>
+</dl>
+
+
+<p><code>-W </p>
+	<p>--password</code></p>
+<dl class="flat">
+	<p>force password prompt (should happen automatically).</p>
+</dl>
+
+<p><code>-d </p>
+	<p>--debug</code></p>
+<dl class="flat">
+	<p>enable debug message.</p>
+</dl>
+<p><code>-v </p>
+	<p>--verbose</code></p>
+<dl class="flat">
+	<p>enable verbose output.</p>
+</dl>
+
+<p><code>-V </p>
+	<p>--version</code></p>
+<dl class="flat">
+	<p>print the pcp_systemdb_info version, and exit.</p>
+</dl>
+
+<p><code>-? </p>
+	<p>--help</code></p>
+</p>
+<dl class="flat">
+	<p>show help about pcp_systemdb_info command line arguments, and exit.</p>
+</dl>
+
+<p><strong>Output example:</strong></p>
+<dl class="flat">
+<pre>
+$ pcp_systemdb_info -U postgres
 localhost 5432 yamaguti '' pgpool_catalog pgpool 3
 yamaguti public accounts aid 4 aid bid abalance filler integer integer integer character(84) dist_def_accounts
 yamaguti public branches bid 3 bid bbalance filler integer integer character(84) dist_def_branches
@@ -5039,119 +5525,384 @@ each line multiple times. The result is in the following order:
 <li>7. column types (displayed as many as said in 5.)</li>
 <li>8. partitioning rule function name</li>
 </ul>
-<p>
-If the System DB is not defined (i.e. not in pgpool-II mode, and query
-cache is disabled), it results in error with <a href="#exit_status">exit status 12</a>, and
-BackendError will be displayed.</p>
-
 </dd>
 </dl>
 
 <h2>PCP Commands to control backend nodes, etc.</h2>
 
 <h3 id="pcp_detach_node">pcp_detach_node</h3>
+<p>
+<strong>Format:</strong>
+</p>
 
 <dl class="flat">
-<dt>Format</dt>
-<dd><code>pcp_detach_node  [-g] _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_</code></dd>
-<dt>Desc.</dt>
-<dd>
+<pre>
+<code>pcp_detach_node [options...] [node_id]</code>
+</pre>
+</dl>
+
 <p>
-Detaches the given node from pgpool-II. Exisiting connections to pgpool-II are forced to be disconnected.
-If -g is given, wait until all clients are disconnected (unless
-client_idle_limit_in_recovery is -1 or recovery_timeout is expired).
+<strong>Description:</strong>
 </p>
-</dd>
+<dl class="flat">
+	<p>Detaches the given node from pgpool-II. Exisiting connections to pgpool-II are forced to be disconnected.</p>
+</dl>
+<p><strong>Options:</strong></p>
+<p>
+<p><code>-h <strong>hostname</strong></p>
+	<p>--host=<strong>hostname</strong></code></p>
+</p>
+<dl class="flat">
+	<p>Specifies the host name of the machine on which the server is running. If the value begins with a slash,
+	it is used as the directory for the Unix-domain socket.</p>
+</dl>
+
+<p><code>-p <strong>port</strong></p>
+	<p>--port=<strong>port</strong></code></p>
+<dl class="flat">
+	<p>pgpool-II server PCP port (default:"9898").</p>
+</dl>
+
+<p><code>-u <strong>username</strong></p>
+	<p>--username=<strong>username</strong></code></p>
+<dl class="flat">
+	<p>username for PCP authentication (default: OS user name).</p>
+</dl>
+
+<p><code>-n <strong>node_id</strong></p>
+	<p>--node-id=<strong>node_id</strong></code></p>
+<dl class="flat">
+	<p>index of backend node to detach.</p>
+</dl>
+
+<p><code>-w </p>
+	<p>--no-password</code></p>
+<dl class="flat">
+	<p>never prompt for password. And if a password is not available by a .pcppass file, the connection attempt will fail. This option can be useful in batch jobs and scripts where no user is present to enter a password</p>
+</dl>
+
+
+<p><code>-W </p>
+	<p>--password</code></p>
+<dl class="flat">
+	<p>force password prompt (should happen automatically).</p>
+</dl>
+
+<p><code>-d </p>
+	<p>--debug</code></p>
+<dl class="flat">
+	<p>enable debug message.</p>
+</dl>
+
+<p><code>-V </p>
+	<p>--version</code></p>
+<dl class="flat">
+	<p>print the pcp_detach_node version, and exit.</p>
+</dl>
+
+<p><code>-? </p>
+	<p>--help</code></p>
+</p>
+<dl class="flat">
+	<p>show help about pcp_detach_node command line arguments, and exit.</p>
 </dl>
 
 
 <h3 id="pcp_attach_node">pcp_attach_node</h3>
+<p><strong>Format:</strong></p>
+
 <dl class="flat">
-<dt>Format</dt>
-<dd><code>pcp_attach_node  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_</code></dd>
-<dt>Desc.</dt>
-<dd><p>Attaches the given node to pgpool-II.</p></dd>
+<pre><code>pcp_attach_node [options...] [node_id]</code></pre>
 </dl>
 
-<h3 id="pcp_promote_node">pcp_promote_node <span class="version">V3.1 -</span></h3>
-
-<dl class="flat">
-<dt>Format</dt>
-<dd><code>pcp_promote_node  [-g] _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_</code></dd>
-<dt>Desc.</dt>
-<dd>
 <p>
-Promotes the given node as new master to pgpool-II. In master/slave streaming replication only.
-If -g is given, wait until all clients are disconnected (unless
-client_idle_limit_in_recovery is -1 or recovery_timeout is expired).
+<strong>Description:</strong>
 </p>
-</dd>
+<dl class="flat">
+	<p>Attaches the given node to pgpool-II.</p>
 </dl>
+<p><strong>Options:</strong></p>
+<p>
+<p><code>-h <strong>hostname</strong></p>
+	<p>--host=<strong>hostname</strong></code></p>
+</p>
+<dl class="flat">
+	<p>Specifies the host name of the machine on which the server is running. If the value begins with a slash,
+	it is used as the directory for the Unix-domain socket.</p>
+</dl>
+<p><code>-p <strong>port</strong></p>
+	<p>--port=<strong>port</strong></code></p>
+<dl class="flat">
+	<p>pgpool-II server PCP port (default:"9898").</p>
+</dl>
+
+<p><code>-u <strong>username</strong></p>
+	<p>--username=<strong>username</strong></code></p>
+<dl class="flat">
+	<p>username for PCP authentication (default: OS user name).</p>
+</dl>
+
+<p><code>-n <strong>node)id</strong></p>
+	<p>--node-id=<strong>node_id</strong></code></p>
+<dl class="flat">
+	<p>index of backend node to attach.</p>
+</dl>
+
+<p><code>-w </p>
+	<p>--no-password</code></p>
+<dl class="flat">
+	<p>never prompt for password. And if a password is not available by a .pcppass file, the connection attempt will fail. This option can be useful in batch jobs and scripts where no user is present to enter a password</p>
+</dl>
+
+<p><code>-W </p>
+	<p>--password</code></p>
+<dl class="flat">
+	<p>force password prompt (should happen automatically).</p>
+</dl>
+
+<p><code>-d </p>
+	<p>--debug</code></p>
+<dl class="flat">
+	<p>enable debug message.</p>
+</dl>
+
+<p><code>-V </p>
+	<p>--version</code></p>
+<dl class="flat">
+	<p>print the pcp_node_info version, and exit.</p>
+</dl>
+
+<p><code>-? </p>
+	<p>--help</code></p>
+</p>
+<dl class="flat">
+	<p>show help about pcp_attach_node command line arguments, and exit.</p>
+</dl>
+
+<h3 id="pcp_promote_node">pcp_attach_node <span class="version">V3.1 -</span></h3>
+
+<p><strong>Format:</strong></p>
+<dl class="flat">
+<pre><code>pcp_promote_node [options...] [node_id]</code></pre>
+</dl>
+
+<p>
+<strong>Description:</strong>
+</p>
+<dl class="flat">
+	<p>Promotes the given node as new master to pgpool-II. In master/slave streaming replication only.
+	If -g is given, wait until all clients are disconnected (unless
+	client_idle_limit_in_recovery is -1 or recovery_timeout is expired).</p>
+</dl>
+<p><strong>Options:</strong></p>
+<p>
+<p><code>-h <strong>hostname</strong></p>
+	<p>--host=<strong>hostname</strong></code></p>
+</p>
+<dl class="flat">
+	<p>Specifies the host name of the machine on which the server is running. If the value begins with a slash,
+	it is used as the directory for the Unix-domain socket.</p>
+</dl>
+
+<p><code>-u <strong>username</strong></p>
+	<p>--username=<strong>username</strong></code></p>
+<dl class="flat">
+	<p>username for PCP authentication (default: OS user name).</p>
+</dl>
+<p><code>-p <strong>port</strong></p>
+	<p>--port=<strong>port</strong></code></p>
+<dl class="flat">
+	<p>pgpool-II server PCP port (default:"9898").</p>
+</dl>
+
+<p><code>-n <strong>node_id</strong></p>
+	<p>--node-id=<strong>node_id</strong></code></p>
+<dl class="flat">
+	<p>index of backend node to promote as new master.</p>
+</dl>
+
+<p><code>-w </p>
+	<p>--no-password</code></p>
+<dl class="flat">
+	<p>never prompt for password. And if a password is not available by a .pcppass file, the connection attempt will fail. This option can be useful in batch jobs and scripts where no user is present to enter a password</p>
+</dl>
+
+<p><code>-W </p>
+	<p>--password</code></p>
+<dl class="flat">
+	<p>force password prompt (should happen automatically).</p>
+</dl>
+
+<p><code>-d </p>
+	<p>--debug</code></p>
+<dl class="flat">
+	<p>enable debug message.</p>
+</dl>
+
+<p><code>-V </p>
+	<p>--version</code></p>
+<dl class="flat">
+	<p>print the pcp_promote_node version, and exit.</p>
+</dl>
+
+<p><code>-? </p>
+	<p>--help</code></p>
+</p>
+<dl class="flat">
+	<p>show help about pcp_promote_node command line arguments, and exit.</p>
+</dl>
+
 
 <h3 id="pcp_stop_pgpool">pcp_stop_pgpool</h3>
+
+<p><strong>Format:</strong></p>
 <dl class="flat">
-<dt>Format:</dt>
-<dd><code>pcp_stop_pgpool  _timeout_  _host_  _port_  _userid_  _passwd_  _mode_</code></dd>
-<dt>Desc.</dt>
-<dd>
-<p>Terminate the pgpool-II process with the given shutdown mode. The available modes are as follows:</p>
-<ul>
-<li>s    - smart mode</li>
-<li>f    - fast mode</li>
-<li>i    - immediate mode</li>
-</ul>
-<p>
-If the pgpool-II process does not exist, it results in error with <a href="#exit_status">exit status 8</a>,
-and ConnectionError will be displayed.
-</p>
-<p>
-* Currently, there is no difference between the fast and immediate
-mode. pgpool-II terminates all the processes whether there are clients
-connected to the backends or not.</p>
-</dd>
+<pre><code>pcp_stop_pgpool [options...]</code></pre>
 </dl>
+
+<p>
+<strong>Description:</strong>
+</p>
+<dl class="flat">
+	<p>Terminate the pgpool-II process.</p>
+</dl>
+
+<p><strong>Options:</strong></p>
+<p>
+<p><code>-h <strong>hostname</strong></p>
+	<p>--host=<strong>hostname</strong></code></p>
+</p>
+<dl class="flat">
+	<p>Specifies the host name of the machine on which the server is running. If the value begins with a slash,
+	it is used as the directory for the Unix-domain socket.</p>
+</dl>
+<p><code>-p <strong>port</strong></p>
+	<p>--port=<strong>port</strong></code></p>
+<dl class="flat">
+	<p>pgpool-II server PCP port (default:"9898").</p>
+</dl>
+
+<p><code>-u <strong>username</strong></p>
+	<p>--username=<strong>username</strong></code></p>
+<dl class="flat">
+	<p>username for PCP authentication (default: OS user name).</p>
+</dl>
+
+<p><code>-m <strong>mode</strong></p>
+	<p>--mode=<strong>mode</strong></code></p>
+<dl class="flat">
+	<p>shutdown mode for terminating the pgpool-II process.</p>
+	<p>The available modes are as follows:</p>
+	<ul>
+		<li>smart		 - smart mode</li>
+		<li>fast		 - fast mode</li>
+		<li>immediate    - immediate mode</li>
+	</ul>
+
+</dl>
+<p><code>-w </p>
+	<p>--no-password</code></p>
+<dl class="flat">
+	<p>never prompt for password. And if a password is not available by a .pcppass file, the connection attempt will fail. This option can be useful in batch jobs and scripts where no user is present to enter a password</p>
+</dl>
+
+<p><code>-W </p>
+	<p>--password</code></p>
+<dl class="flat">
+	<p>force password prompt (should happen automatically).</p>
+</dl>
+
+<p><code>-d </p>
+	<p>--debug</code></p>
+<dl class="flat">
+	<p>enable debug message.</p>
+</dl>
+
+<p><code>-V </p>
+	<p>--version</code></p>
+<dl class="flat">
+	<p>print the pcp_stop_pgpool version, and exit.</p>
+</dl>
+
+<p><code>-? </p>
+	<p>--help</code></p>
+</p>
+<dl class="flat">
+	<p>show help about pcp_stop_pgpool command line arguments, and exit.</p>
+</dl>
+
 
 <h3 id="pcp_recovery_node">pcp_recovery_node</h3>
+
+<p><strong>Format:</strong></p>
 <dl class="flat">
-<dt>Formet</dt>
-<dd><code>pcp_recovery_node  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_</code></dd>
-<dt>Desc.</dt>
-<dd>Attaches the given backend node with recovery.</dd>
+<pre><code>pcp_recovery_node [options...] [node_id] </code></pre>
 </dl>
 
-<h2 id="exit_status">Exit Status</h2>
+<p>
+<strong>Description:</strong>
+</p>
+<dl class="flat">
+	<p>Attaches the given backend node with recovery.</p>
+</dl>
 
-<p>PCP commands exits with status 0 when everything goes well. If any
-error had occurred, it will exit with the following error status.
+<p><strong>Options:</strong></p>
+<p>
+<p><code>-h <strong>hostname</strong></p>
+	<p>--host=<strong>hostname</strong></code></p>
+</p>
+<dl class="flat">
+	<p>Specifies the host name of the machine on which the server is running. If the value begins with a slash,
+	it is used as the directory for the Unix-domain socket.</p>
+</dl>
+<p><code>-p <strong>port</strong></p>
+	<p>--port=<strong>port</strong></code></p>
+<dl class="flat">
+	<p>pgpool-II server PCP port (default:"9898").</p>
+</dl>
 
-<table border>
-<tr><th>UNKNOWNERR</th>
-    <td>1</td><td>Unknown Error (should not occur)</td></tr>
-<tr><th>EOFERR</th>
-    <td>2</td><td>EOF Error</td></tr>
-<tr><th>NOMEMERR</th>
-    <td>3</td><td>Memory shortage</td></tr>
-<tr><th>READERR</th>
-    <td>4</td><td>Error while reading from the server</td></tr>
-<tr><th>WRITEERR</th>
-    <td>5</td><td>Error while writing to the server</td></tr>
-<tr><th>TIMEOUTERR</th>
-    <td>6</td><td>Timeout</td></tr>
-<tr><th>INVALERR</th>
-    <td>7</td><td>Argument(s) to the PCP command was invalid</td></tr>
-<tr><th>CONNERR</th>
-    <td>8</td><td>Server connection error</td></tr>
-<tr><th>NOCONNERR</th>
-    <td>9</td><td>No connection exists</td></tr>
-<tr><th>SOCKERR</th>
-    <td>10</td><td>Socket error</td></tr>
-<tr><th>HOSTERR</th>
-    <td>11</td><td>Hostname resolution error</td></tr>
-<tr><th>BACKENDERR</th>
-    <td>12</td><td>PCP process error on the server (specifying an invalid ID, etc.)</td></tr>
-<tr><th>AUTHERR</th>
-    <td>13</td><td>Authorization failure</td></tr>
-</table>
+<p><code>-u <strong>username</strong></p>
+	<p>--username=<strong>username</strong></code></p>
+<dl class="flat">
+	<p>username for PCP authentication (default: OS user name).</p>
+</dl>
+
+<p><code>-n <strong>node_id</strong></p>
+	<p>--node-id=<strong>node_id</strong></code></p>
+<dl class="flat">
+	<p>index of backend node.</p>
+</dl>
+
+<p><code>-w </p>
+	<p>--no-password</code></p>
+<dl class="flat">
+	<p>never prompt for password. And if a password is not available by a .pcppass file, the connection attempt will fail. This option can be useful in batch jobs and scripts where no user is present to enter a password</p>
+</dl>
+
+<p><code>-W </p>
+	<p>--password</code></p>
+<dl class="flat">
+	<p>force password prompt (should happen automatically).</p>
+</dl>
+
+<p><code>-d </p>
+	<p>--debug</code></p>
+<dl class="flat">
+	<p>enable debug message.</p>
+</dl>
+
+<p><code>-V </p>
+	<p>--version</code></p>
+<dl class="flat">
+	<p>print the pcp_recovery_node version, and exit.</p>
+</dl>
+
+<p><code>-? </p>
+	<p>--help</code></p>
+</p>
+<dl class="flat">
+	<p>show help about pcp_recovery_node command line arguments, and exit.</p>
+</dl>
 
 <p class="top_link"><a href="#Top">back to top</a></p>
 
