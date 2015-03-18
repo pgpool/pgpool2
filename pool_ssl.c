@@ -194,15 +194,14 @@ static int init_ssl_ctx(POOL_CONNECTION *cp, enum ssl_conn_type conntype) {
 	SSL_RETURN_ERROR_IF( (! cp->ssl_ctx), "SSL_CTX_new" );
 
 	if ( conntype == ssl_conn_serverclient) {
-		error = SSL_CTX_use_certificate_file(cp->ssl_ctx,
-		                                     pool_config->ssl_cert,
-		                                     SSL_FILETYPE_PEM);
-		SSL_RETURN_ERROR_IF( (error <= 0), "Loading SSL certificate");
+		error = SSL_CTX_use_certificate_chain_file(cp->ssl_ctx,
+		                                     pool_config->ssl_cert);
+		SSL_RETURN_ERROR_IF( (error != 1), "Loading SSL certificate");
 
 		error = SSL_CTX_use_PrivateKey_file(cp->ssl_ctx,
 		                                    pool_config->ssl_key,
 		                                    SSL_FILETYPE_PEM);
-		SSL_RETURN_ERROR_IF( (error <= 0), "Loading SSL private key");
+		SSL_RETURN_ERROR_IF( (error != 1), "Loading SSL private key");
 	} else {
 		/* set extra verification if ssl_ca_cert or ssl_ca_cert_dir are set */
 		if (strlen(pool_config->ssl_ca_cert))
@@ -211,10 +210,10 @@ static int init_ssl_ctx(POOL_CONNECTION *cp, enum ssl_conn_type conntype) {
 			cacert_dir = pool_config->ssl_ca_cert_dir;
     
 		if ( cacert || cacert_dir ) {
-			error = (!SSL_CTX_load_verify_locations(cp->ssl_ctx,
+			error = SSL_CTX_load_verify_locations(cp->ssl_ctx,
 			                                        cacert,
-			                                        cacert_dir));
-			SSL_RETURN_ERROR_IF(error, "SSL verification setup");
+			                                        cacert_dir);
+			SSL_RETURN_ERROR_IF((error != 1), "SSL verification setup");
 			SSL_CTX_set_verify(cp->ssl_ctx, SSL_VERIFY_PEER, NULL);
 		}
 	}
