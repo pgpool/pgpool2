@@ -227,7 +227,7 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 	{
 		char port_str[100];
 		snprintf(port_str, sizeof(port_str), "%d",port);
-		password_fron_file = PasswordFromFile(pcpConn,(hostname == UNIX_DOMAIN_PATH)?DefaultHost:hostname, port_str, username);
+		password_fron_file = PasswordFromFile(pcpConn, hostname, port_str, username);
 		password = password_fron_file;
 	}
 
@@ -1819,6 +1819,8 @@ PasswordFromFile(PCPConnInfo* pcpConn, char *hostname, char *port, char *usernam
 		return NULL;
 
 	if (hostname == NULL)
+		hostname = DefaultHost;
+	else if(strcmp(hostname , UNIX_DOMAIN_PATH) == 0)
 		hostname = DefaultHost;
 
 	if (!getPoolPassFilename(pgpassfile))
