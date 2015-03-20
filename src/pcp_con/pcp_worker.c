@@ -282,7 +282,7 @@ pcp_process_command(char tos, char *buf, int buf_len)
 
 		case 'D':			/* detach node */
 		case 'd':			/* detach node gracefully */
-			set_ps_display("PCP: processingdetach node request", false);
+			set_ps_display("PCP: processing detach node request", false);
 			process_detach_node(pcp_frontend, buf, tos);
 			break;
 
