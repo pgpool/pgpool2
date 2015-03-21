@@ -145,9 +145,25 @@ relcache_lookup(TSRewriteContext *ctx)
 	" WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.oid = pgpool_regclass('%s')" \
 	" ORDER BY a.attnum"
 
+#define ATTRDEFQUERY3 "SELECT attname, d.adsrc, coalesce((d.adsrc LIKE '%%now()%%' OR d.adsrc LIKE '%%''now''::text%%')" \
+	" AND (a.atttypid = 'timestamp'::regtype::oid OR" \
+	" a.atttypid = 'timestamp with time zone'::regtype::oid OR" \
+	" a.atttypid = 'date'::regtype::oid OR" \
+	" a.atttypid = 'time'::regtype::oid OR" \
+	" a.atttypid = 'time with time zone'::regtype::oid)" \
+    " , false)" \
+	" FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a " \
+	" LEFT JOIN pg_catalog.pg_attrdef d ON (a.attrelid = d.adrelid AND a.attnum = d.adnum)" \
+	" WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.oid = to_regclass('%s')" \
+	" ORDER BY a.attnum"
+
 	char *query;
 
-	if (pool_has_pgpool_regclass())
+	if (pool_has_to_regclass())
+	{
+		query = ATTRDEFQUERY3;		
+	}
+	else if (pool_has_pgpool_regclass())
 	{
 		query = ATTRDEFQUERY2;
 	}
