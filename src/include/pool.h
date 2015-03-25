@@ -215,6 +215,8 @@ typedef struct {
 
 	char kind;	/* kind cache */
 
+	/* true if remote end closed the connection */
+	bool EOF_on_socket;
 	/*
 	 * frontend info needed for hba
 	 */

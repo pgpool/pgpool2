@@ -596,10 +596,21 @@ static int do_clear_text_password(POOL_CONNECTION *backend, POOL_CONNECTION *fro
     pool_read(backend, &response, sizeof(response));
 
 	if (response != 'R')
+	{
+		if(response == 'E') /* Backend has thrown an error instead */
+		{
+			char* message;
+			if (pool_extract_error_message(false, backend, protoMajor, false, &message) == 1)
+			{
+				ereport(ERROR,
+					(errmsg("clear text password authentication failed"),
+					 errdetail("%s",message?message:"backend throws authentication error")));
+			}
+		}
         ereport(ERROR,
             (errmsg("clear text password authentication failed"),
                  errdetail("invalid packet from backend. backend does not return R while processing clear text password authentication")));
-
+	}
 	if (protoMajor == PROTO_MAJOR_V3)
 	{
 		pool_read(backend, &len, sizeof(len));
@@ -732,9 +743,21 @@ static int do_crypt(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int rea
 	pool_read(backend, &response, sizeof(response));
 
 	if (response != 'R')
+	{
+		if(response == 'E') /* Backend has thrown an error instead */
+		{
+			char* message;
+			if (pool_extract_error_message(false, backend, protoMajor, false, &message) == 1)
+			{
+				ereport(ERROR,
+						(errmsg("crypt authentication failed"),
+						 errdetail("%s",message?message:"backend throws authentication error")));
+			}
+		}
         ereport(ERROR,
-                (errmsg("crypt authentication failed"),
+			(errmsg("crypt authentication failed"),
                  errdetail("invalid packet from backend. backend does not return R while processing clear text password authentication")));
+	}
 
 	if (protoMajor == PROTO_MAJOR_V3)
 	{
@@ -1010,9 +1033,21 @@ static int send_password_packet(POOL_CONNECTION *backend, int protoMajor, char *
 	pool_read(backend, &response, sizeof(response));
 
 	if (response != 'R')
+	{
+		if(response == 'E') /* Backend has thrown an error instead */
+		{
+			char* message;
+			if (pool_extract_error_message(false, backend, protoMajor, false, &message) == 1)
+			{
+				ereport(ERROR,
+						(errmsg("authentication failed"),
+						 errdetail("%s",message?message:"backend throws authentication error")));
+			}
+		}
         ereport(ERROR,
 			(errmsg("authentication failed"),
                  errdetail("invalid backend response. Response does not replied with \"R\"")));
+	}
 
 	if (protoMajor == PROTO_MAJOR_V3)
 	{
