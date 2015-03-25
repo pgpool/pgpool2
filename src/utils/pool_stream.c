@@ -212,6 +212,7 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 		}
 		else if (readlen == 0)
 		{
+			cp->EOF_on_socket = true;
 			if (cp->isbackend)
 			{
                 ereport(FATAL,
@@ -229,7 +230,7 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 				/*
 				 * if backend offers authentication method, frontend could close connection
 				 */
-                ereport(FATAL,
+                ereport(ERROR,
 					(errmsg("unable to read data from frontend"),
                          errdetail("EOF encountered with frontend")));
 			}
@@ -342,6 +343,7 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 		}
 		else if (readlen == 0)
 		{
+			cp->EOF_on_socket = true;
 			if (cp->isbackend)
 			{
                 ereport(ERROR,
@@ -786,6 +788,7 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 			/*
 			 * just returns an error, not trigger failover or degeneration
 			 */
+			cp->EOF_on_socket = true;
             ereport(ERROR,
                 (errmsg("unable to read data from %s",cp->isbackend?"backend":"frontend"),
                      errdetail("EOF read on socket")));

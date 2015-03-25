@@ -215,7 +215,16 @@ void do_child(int *fds)
 		/* Since not using PG_TRY, must reset error stack by hand */
 		error_context_stack = NULL;
 
-		EmitErrorReport();
+		/*
+		 * Do not emit an error when EOF was encountered on frontend connection before the session
+		 * was initialized. This is the normal behavior of psql to close and reconnect
+		 * the connection when some authentication method is used
+		 */
+		if(pool_get_session_context(true) ||
+		   !child_frontend ||
+		   !child_frontend->EOF_on_socket)
+			EmitErrorReport();
+
         /* process the cleanup in ProcessLoopContext which will get reset
          * during the next loop iteration
          */
