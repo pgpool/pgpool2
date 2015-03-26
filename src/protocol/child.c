@@ -285,6 +285,7 @@ void do_child(int *fds)
 		MemoryContextSwitchTo(ProcessLoopContext);
 		MemoryContextResetAndDeleteChildren(ProcessLoopContext);
 
+		backend = NULL;
 		idle = 1;
 
 		/* pgpool stop request already sent? */
