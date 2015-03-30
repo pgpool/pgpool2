@@ -2980,10 +2980,18 @@ void raise_intentional_error_if_need(POOL_CONNECTION_POOL *backend)
 		query_context &&
 		is_select_query(query_context->parse_tree, query_context->original_query))
 	{
-		pool_setall_node_to_be_sent(query_context);
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
-			if (VALID_BACKEND(i) && REAL_MASTER_NODE_ID != i)
+			/*
+			 * Send a syntax error query to all backends except the node
+			 * which the original query was sent.
+			 */
+			if (pool_is_node_to_be_sent(query_context, i))
+				continue;
+			else
+				pool_set_node_to_be_sent(query_context, i);
+
+			if (VALID_BACKEND(i))
 			{
 				/*
 				 * We must abort transaction to sync transaction state.
