@@ -25,74 +25,44 @@
 #include "libpcp_ext.h"
 #include "pgpool_adm.h"
 
-/**
- * Init a pcp_conninfo struct with empty values
- * pcp_conninfo: pcpConninfo structure to intialize
- */
-void
-init_pcp_conninfo(pcpConninfo * pcp_conninfo)
-{
-	pcp_conninfo->host = NULL;
-	pcp_conninfo->timeout = -1;
-	pcp_conninfo->port = -1;
-	pcp_conninfo->user = NULL;
-	pcp_conninfo->pass = NULL;
-}
 
-/**
- * Checks the give pcp_conninfo has valid properties
- * pcp_conninfo: pcpConninfo structure to check
- *
- * exit the function call on error !
- */
-void
-check_pcp_conninfo_props(pcpConninfo * pcp_conninfo)
-{
-	if (pcp_conninfo->timeout < 0)
-		ereport(ERROR, (0, errmsg("Timeout is out of range.")));
+static PCPConnInfo *connect_to_server(char* host, int port, char* user, char* pass);
+static PCPConnInfo *connect_to_server_from_foreign_server(char * name);
 
-	if (pcp_conninfo->port < 0 || pcp_conninfo->port > 65535)
-		ereport(ERROR, (0, errmsg("PCP port out of range.")));
-
-	if (! pcp_conninfo->user)
-		ereport(ERROR, (0, errmsg("No user given.")));
-
-	if (! pcp_conninfo->pass)
-		ereport(ERROR, (0, errmsg("No password given.")));
-}
 
 /**
  * Wrapper around pcp_connect
  * pcp_conninfo: pcpConninfo structure having pcp connection properties
  */
-int
-pcp_connect_conninfo(pcpConninfo * pcp_conninfo)
+static PCPConnInfo*
+connect_to_server(char* host, int port, char* user, char* pass)
 {
-	pcp_set_timeout(pcp_conninfo->timeout);
+	PCPConnInfo* pcpConnInfo;
+	pcpConnInfo = pcp_connect(host, port, user, pass, NULL);
+	if (PCPConnectionStatus(pcpConnInfo) != PCP_CONNECTION_OK)
+		ereport(ERROR,(0,
+					   errmsg("connection to PCP server failed."),
+					   errdetail("%s\n",pcp_get_last_error(pcpConnInfo)?pcp_get_last_error(pcpConnInfo):"unknown reason")));
 
-	if (pcp_connect(pcp_conninfo->host, pcp_conninfo->port, pcp_conninfo->user, pcp_conninfo->pass))
-	{
-		return -1;
-	}
-
-	return 0;
+	return pcpConnInfo;
 }
 
 /**
  * Returns a pcpConninfo structure filled from a foreign server
  * name: the name of the foreign server
  */
-pcpConninfo
-get_pcp_conninfo_from_foreign_server(char * name)
+static PCPConnInfo*
+connect_to_server_from_foreign_server(char * name)
 {
 	Oid userid = GetUserId();
-	pcpConninfo pcp_conninfo;
+	char* user = NULL;
+	char* host = NULL;
+	int port = 9898;
+	char* pass = NULL;
 	/* raise an error if given foreign server doesn't exists */
 	ForeignServer * foreign_server = GetForeignServerByName(name, false);
 	UserMapping * user_mapping;
 	ListCell * cell;
-	
-	init_pcp_conninfo(&pcp_conninfo);
 
 	/* raise an error if the current user isn't mapped with the given foreign server */
 	user_mapping = GetUserMapping(userid, foreign_server->serverid);
@@ -103,15 +73,11 @@ get_pcp_conninfo_from_foreign_server(char * name)
 
 		if (strcmp(def->defname, "host") == 0)
 		{
-			pcp_conninfo.host = pstrdup(strVal(def->arg));
+			host = pstrdup(strVal(def->arg));
 		}
 		else if (strcmp(def->defname, "port") == 0)
 		{
-			pcp_conninfo.port = atoi(strVal(def->arg));
-		}
-		else if (strcmp(def->defname, "timeout") == 0)
-		{
-			pcp_conninfo.timeout = atoi(strVal(def->arg));
+			port = atoi(strVal(def->arg));
 		}
 	}
 
@@ -121,21 +87,20 @@ get_pcp_conninfo_from_foreign_server(char * name)
 
 		if (strcmp(def->defname, "user") == 0)
 		{
-			pcp_conninfo.user = pstrdup(strVal(def->arg));
+			user = pstrdup(strVal(def->arg));
 		}
 		else if (strcmp(def->defname, "password") == 0)
 		{
-			pcp_conninfo.pass = pstrdup(strVal(def->arg));
+			pass = pstrdup(strVal(def->arg));
 		}
 	}
 
-	return pcp_conninfo;
+	return connect_to_server(host,port,user,pass);
 }
 
 /**
  * nodeID: the node id to get info from
  * host_or_srv: server name or ip address of the pgpool server
- * timeout: timeout
  * port: pcp port number
  * user: user to connect with
  * pass: password
@@ -144,8 +109,10 @@ Datum
 _pcp_node_info(PG_FUNCTION_ARGS)
 {
 	int16  nodeID = PG_GETARG_INT16(0);
-	char * host_or_srv = text_to_cstring(PG_GETARG_TEXT_PP(1));
-	pcpConninfo pcp_conninfo;
+	char  *host_or_srv = text_to_cstring(PG_GETARG_TEXT_PP(1));
+
+	PCPConnInfo* pcpConnInfo;
+	PCPResultInfo* pcpResInfo;
 
 	BackendInfo * backend_info = NULL;
 	Datum values[4]; /* values to build the returned tuple from */
@@ -156,26 +123,34 @@ _pcp_node_info(PG_FUNCTION_ARGS)
 	if (nodeID < 0 || nodeID >= MAX_NUM_BACKENDS)
 		ereport(ERROR, (0, errmsg("NodeID is out of range.")));
 
-	init_pcp_conninfo(&pcp_conninfo);
-
-	if (PG_NARGS() == 6)
+	if (PG_NARGS() == 5)
 	{
-		pcp_conninfo.host = host_or_srv;
-		pcp_conninfo.timeout = PG_GETARG_INT16(2);
-		pcp_conninfo.port = PG_GETARG_INT16(3);
-		pcp_conninfo.user = text_to_cstring(PG_GETARG_TEXT_PP(4));
-		pcp_conninfo.pass = text_to_cstring(PG_GETARG_TEXT_PP(5));
+		char *user, *pass;
+		int port;
+		port = PG_GETARG_INT16(2);
+		user = text_to_cstring(PG_GETARG_TEXT_PP(3));
+		pass = text_to_cstring(PG_GETARG_TEXT_PP(4));
+		pcpConnInfo = connect_to_server(host_or_srv,port,user,pass);
 	}
 	else if (PG_NARGS() == 2)
 	{
-		pcp_conninfo = get_pcp_conninfo_from_foreign_server(host_or_srv);
+		pcpConnInfo = connect_to_server_from_foreign_server(host_or_srv);
 	}
 	else
 	{
 		ereport(ERROR, (0, errmsg("Wrong number of argument.")));
 	}
 
-	check_pcp_conninfo_props(&pcp_conninfo);
+	pcpResInfo = pcp_node_info(pcpConnInfo,nodeID);
+	if (pcpResInfo == NULL || PCPResultStatus(pcpResInfo) != PCP_RES_COMMAND_OK)
+	{
+		char *error = pcp_get_last_error(pcpConnInfo)? pstrdup(pcp_get_last_error(pcpConnInfo)):NULL;
+		pcp_disconnect(pcpConnInfo);
+		pcp_free_connection(pcpConnInfo);
+		ereport(ERROR,(0,
+					errmsg("failed to get node information"),
+					   errdetail("%s\n",error?error:"unknown reason")));
+	}
 
 	/**
 	 * Construct a tuple descriptor for the result rows.
@@ -187,19 +162,7 @@ _pcp_node_info(PG_FUNCTION_ARGS)
 	TupleDescInitEntry(tupledesc, (AttrNumber) 4, "weight", FLOAT4OID, -1, 0);
 	tupledesc = BlessTupleDesc(tupledesc);
 
-	/**
-	 * PCP session
-	 **/
-	if (pcp_connect_conninfo(&pcp_conninfo))
-	{
-		ereport(ERROR,(0, errmsg("Cannot connect to PCP server.")));
-	}
-
-	if ((backend_info = pcp_node_info(nodeID)) == NULL)
-	{
-		pcp_disconnect();
-		ereport(ERROR,(0, errmsg("Cannot get node information.")));
-	}
+	backend_info = (BackendInfo *) pcp_get_binary_data(pcpResInfo,0);
 
 	/* set values */
 	values[0] = CStringGetTextDatum(backend_info->backend_hostname);
@@ -225,8 +188,8 @@ _pcp_node_info(PG_FUNCTION_ARGS)
 	values[3] = Float8GetDatum(backend_info->backend_weight/RAND_MAX);
 	nulls[3] = false;
 
-	free(backend_info);
-	pcp_disconnect();
+	pcp_disconnect(pcpConnInfo);
+	pcp_free_connection(pcpConnInfo);
 
 	/* build and return the tuple */
 	tuple = heap_form_tuple(tupledesc, values, nulls);
@@ -238,7 +201,6 @@ _pcp_node_info(PG_FUNCTION_ARGS)
 
 /**
  * host_or_srv: server name or ip address of the pgpool server
- * timeout: timeout
  * port: pcp port number
  * user: user to connect with
  * pass: password
@@ -248,20 +210,18 @@ _pcp_pool_status(PG_FUNCTION_ARGS)
 {
 	MemoryContext oldcontext;
 	FuncCallContext *funcctx;
-	POOL_REPORT_CONFIG *status;
 	int32 nrows;
 	int32 call_cntr;
 	int32 max_calls;
 	AttInMetadata *attinmeta;
+	PCPConnInfo* pcpConnInfo;
+	PCPResultInfo* pcpResInfo;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
 		TupleDesc tupdesc;
 		char * host_or_srv = text_to_cstring(PG_GETARG_TEXT_PP(0));
-		pcpConninfo pcp_conninfo;
-
-		init_pcp_conninfo(&pcp_conninfo);
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -269,17 +229,19 @@ _pcp_pool_status(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		if (PG_NARGS() == 5)
+		if (PG_NARGS() == 4)
 		{
-			pcp_conninfo.host = host_or_srv;
-			pcp_conninfo.timeout = PG_GETARG_INT16(1);
-			pcp_conninfo.port = PG_GETARG_INT16(2);
-			pcp_conninfo.user = text_to_cstring(PG_GETARG_TEXT_PP(3));
-			pcp_conninfo.pass = text_to_cstring(PG_GETARG_TEXT_PP(4));
+			char *user, *pass;
+			int port;
+			port = PG_GETARG_INT16(1);
+			user = text_to_cstring(PG_GETARG_TEXT_PP(2));
+			pass = text_to_cstring(PG_GETARG_TEXT_PP(3));
+			pcpConnInfo = connect_to_server(host_or_srv,port,user,pass);
+
 		}
 		else if (PG_NARGS() == 1)
 		{
-			pcp_conninfo = get_pcp_conninfo_from_foreign_server(host_or_srv);
+			pcpConnInfo = connect_to_server_from_foreign_server(host_or_srv);
 		}
 		else
 		{
@@ -287,25 +249,21 @@ _pcp_pool_status(PG_FUNCTION_ARGS)
 			ereport(ERROR, (0, errmsg("Wrong number of argument.")));
 		}
 
-		check_pcp_conninfo_props(&pcp_conninfo);
-
-		/* get configuration and status */
-		/**
-		 * PCP session
-		 **/
-		if (pcp_connect_conninfo(&pcp_conninfo))
+		pcpResInfo = pcp_pool_status(pcpConnInfo);
+		if (pcpResInfo == NULL || PCPResultStatus(pcpResInfo) != PCP_RES_COMMAND_OK)
 		{
-			ereport(ERROR,(0, errmsg("Cannot connect to PCP server.")));
+			char *error = pcp_get_last_error(pcpConnInfo)? pstrdup(pcp_get_last_error(pcpConnInfo)):NULL;
+			pcp_disconnect(pcpConnInfo);
+			pcp_free_connection(pcpConnInfo);
+
+			MemoryContextSwitchTo(oldcontext);
+			ereport(ERROR,(0,
+						   errmsg("failed to get pool status"),
+						   errdetail("%s\n",error?error:"unknown reason")));
 		}
 
-		if ((status = pcp_pool_status(&nrows)) == NULL)
-		{
-			pcp_disconnect();
-			ereport(ERROR,(0, errmsg("Cannot pool status information.")));
-		}
-
-		pcp_disconnect();
-
+		nrows = pcp_result_slot_count(pcpResInfo);
+		pcp_disconnect(pcpConnInfo);
 		/* Construct a tuple descriptor for the result rows */
 		tupdesc = CreateTemplateTupleDesc(3, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "item", TEXTOID, -1, 0);
@@ -319,12 +277,12 @@ _pcp_pool_status(PG_FUNCTION_ARGS)
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
-		if ((status != NULL) && (nrows > 0))
+		if (nrows > 0)
 		{
 			funcctx->max_calls = nrows;
 
 			/* got results, keep track of them */
-			funcctx->user_fctx = status;
+			funcctx->user_fctx = pcpConnInfo;
 		}
 		else
 		{
@@ -343,7 +301,8 @@ _pcp_pool_status(PG_FUNCTION_ARGS)
 	call_cntr = funcctx->call_cntr;
 	max_calls = funcctx->max_calls;
 
-	status = (POOL_REPORT_CONFIG*) funcctx->user_fctx;
+	pcpConnInfo = (PCPConnInfo*) funcctx->user_fctx;
+	pcpResInfo = (PCPResultInfo*) pcpConnInfo->pcpResInfo;
 	attinmeta = funcctx->attinmeta;
 
 	if (call_cntr < max_calls)	/* executed while there is more left to send */
@@ -351,10 +310,11 @@ _pcp_pool_status(PG_FUNCTION_ARGS)
 		char * values[3];
 		HeapTuple tuple;
 		Datum result;
+		POOL_REPORT_CONFIG *status = (POOL_REPORT_CONFIG *)pcp_get_binary_data(pcpResInfo, call_cntr);
 
-		values[0] = pstrdup(status[call_cntr].name);
-		values[1] = pstrdup(status[call_cntr].value);
-		values[2] = pstrdup(status[call_cntr].desc);
+		values[0] = pstrdup(status->name);
+		values[1] = pstrdup(status->value);
+		values[2] = pstrdup(status->desc);
 
 		/* build the tuple */
 		tuple = BuildTupleFromCStrings(attinmeta, values);
@@ -367,16 +327,14 @@ _pcp_pool_status(PG_FUNCTION_ARGS)
 	else
 	{
 		/* do when there is no more left */
+		pcp_free_connection(pcpConnInfo);
 		SRF_RETURN_DONE(funcctx);
 	}
-
-	free(status);
 }
 
 /**
  * nodeID: the node id to get info from
  * host_or_srv: server name or ip address of the pgpool server
- * timeout: timeout
  * port: pcp port number
  * user: user to connect with
  * pass: password
@@ -385,45 +343,45 @@ Datum
 _pcp_node_count(PG_FUNCTION_ARGS)
 {
 	char * host_or_srv = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	pcpConninfo pcp_conninfo;
 	int16 node_count = 0;
 
-	init_pcp_conninfo(&pcp_conninfo);
+	PCPConnInfo* pcpConnInfo;
+	PCPResultInfo* pcpResInfo;
 
-	if (PG_NARGS() == 5)
+	if (PG_NARGS() == 4)
 	{
-		pcp_conninfo.host = host_or_srv;
-		pcp_conninfo.timeout = PG_GETARG_INT16(1);
-		pcp_conninfo.port = PG_GETARG_INT16(2);
-		pcp_conninfo.user = text_to_cstring(PG_GETARG_TEXT_PP(3));
-		pcp_conninfo.pass = text_to_cstring(PG_GETARG_TEXT_PP(4));
+		char *user, *pass;
+		int port;
+		port = PG_GETARG_INT16(1);
+		user = text_to_cstring(PG_GETARG_TEXT_PP(2));
+		pass = text_to_cstring(PG_GETARG_TEXT_PP(3));
+		pcpConnInfo = connect_to_server(host_or_srv,port,user,pass);
 	}
 	else if (PG_NARGS() == 1)
 	{
-		pcp_conninfo = get_pcp_conninfo_from_foreign_server(host_or_srv);
+		pcpConnInfo = connect_to_server_from_foreign_server(host_or_srv);
 	}
 	else
 	{
 		ereport(ERROR, (0, errmsg("Wrong number of argument.")));
 	}
 
-	check_pcp_conninfo_props(&pcp_conninfo);
+	pcpResInfo = pcp_node_count(pcpConnInfo);
 
-	/**
-	 * PCP session
-	 **/
-	if (pcp_connect_conninfo(&pcp_conninfo))
+	if (pcpResInfo == NULL || PCPResultStatus(pcpResInfo) != PCP_RES_COMMAND_OK)
 	{
-		ereport(ERROR,(0, errmsg("Cannot connect to PCP server.")));
+		char *error = pcp_get_last_error(pcpConnInfo)? pstrdup(pcp_get_last_error(pcpConnInfo)):NULL;
+		pcp_disconnect(pcpConnInfo);
+		pcp_free_connection(pcpConnInfo);
+		ereport(ERROR,(0,
+					   errmsg("failed to get node count"),
+					   errdetail("%s\n",error?error:"unknown reason")));
 	}
 
-	if ((node_count = pcp_node_count()) == -1)
-	{
-		pcp_disconnect();
-		ereport(ERROR,(0, errmsg("Cannot get node count.")));
-	}
+	node_count = pcp_get_int_data(pcpResInfo, 0);
 
-	pcp_disconnect();
+	pcp_disconnect(pcpConnInfo);
+	pcp_free_connection(pcpConnInfo);
 
 	PG_RETURN_INT16(node_count);
 }
@@ -431,7 +389,6 @@ _pcp_node_count(PG_FUNCTION_ARGS)
 /**
  * nodeID: the node id to get info from
  * host_or_srv: server name or ip address of the pgpool server
- * timeout: timeout
  * port: pcp port number
  * user: user to connect with
  * pass: password
@@ -441,49 +398,46 @@ _pcp_attach_node(PG_FUNCTION_ARGS)
 {
 	int16  nodeID = PG_GETARG_INT16(0);
 	char * host_or_srv = text_to_cstring(PG_GETARG_TEXT_PP(1));
-	pcpConninfo pcp_conninfo;
-	int status;
+
+	PCPConnInfo* pcpConnInfo;
+	PCPResultInfo* pcpResInfo;
 
 	if (nodeID < 0 || nodeID >= MAX_NUM_BACKENDS)
 		ereport(ERROR, (0, errmsg("NodeID is out of range.")));
 
-	init_pcp_conninfo(&pcp_conninfo);
-
-	if (PG_NARGS() == 6)
+	if (PG_NARGS() == 5)
 	{
-		pcp_conninfo.host = host_or_srv;
-		pcp_conninfo.timeout = PG_GETARG_INT16(2);
-		pcp_conninfo.port = PG_GETARG_INT16(3);
-		pcp_conninfo.user = text_to_cstring(PG_GETARG_TEXT_PP(4));
-		pcp_conninfo.pass = text_to_cstring(PG_GETARG_TEXT_PP(5));
+		char *user, *pass;
+		int port;
+		port = PG_GETARG_INT16(2);
+		user = text_to_cstring(PG_GETARG_TEXT_PP(3));
+		pass = text_to_cstring(PG_GETARG_TEXT_PP(4));
+		pcpConnInfo = connect_to_server(host_or_srv,port,user,pass);
 	}
 	else if (PG_NARGS() == 2)
 	{
-		pcp_conninfo = get_pcp_conninfo_from_foreign_server(host_or_srv);
+		pcpConnInfo = connect_to_server_from_foreign_server(host_or_srv);
 	}
 	else
 	{
 		ereport(ERROR, (0, errmsg("Wrong number of argument.")));
 	}
 
-	check_pcp_conninfo_props(&pcp_conninfo);
+	pcpResInfo = pcp_attach_node(pcpConnInfo,nodeID);
 
-	/**
-	 * PCP session
-	 **/
-	if (pcp_connect_conninfo(&pcp_conninfo))
+	if (pcpResInfo == NULL || PCPResultStatus(pcpResInfo) != PCP_RES_COMMAND_OK)
 	{
-		ereport(ERROR,(0, errmsg("Cannot connect to PCP server.")));
+		char *error = pcp_get_last_error(pcpConnInfo)? pstrdup(pcp_get_last_error(pcpConnInfo)):NULL;
+		pcp_disconnect(pcpConnInfo);
+		pcp_free_connection(pcpConnInfo);
+		ereport(ERROR,(0,
+					   errmsg("failed to attach node"),
+					   errdetail("%s\n",error?error:"unknown reason")));
 	}
 
-	status = pcp_attach_node(nodeID);
+	pcp_disconnect(pcpConnInfo);
+	pcp_free_connection(pcpConnInfo);
 
-	pcp_disconnect();
-
-	if (status == -1)
-	{
-		PG_RETURN_BOOL(false);
-	}
 
 	PG_RETURN_BOOL(true);
 }
@@ -492,7 +446,6 @@ _pcp_attach_node(PG_FUNCTION_ARGS)
  * nodeID: the node id to get info from
  * gracefully: detach node gracefully if true
  * host_or_srv: server name or ip address of the pgpool server
- * timeout: timeout
  * port: pcp port number
  * user: user to connect with
  * pass: password
@@ -503,56 +456,52 @@ _pcp_detach_node(PG_FUNCTION_ARGS)
 	int16 nodeID = PG_GETARG_INT16(0);
 	bool gracefully = PG_GETARG_BOOL(1);
 	char * host_or_srv = text_to_cstring(PG_GETARG_TEXT_PP(2));
-	pcpConninfo pcp_conninfo;
-	int status;
+
+	PCPConnInfo* pcpConnInfo;
+	PCPResultInfo* pcpResInfo;
 
 	if (nodeID < 0 || nodeID >= MAX_NUM_BACKENDS)
 		ereport(ERROR, (0, errmsg("NodeID is out of range.")));
 
-	init_pcp_conninfo(&pcp_conninfo);
-
-	if (PG_NARGS() == 7)
+	if (PG_NARGS() == 6)
 	{
-		pcp_conninfo.host = host_or_srv;
-		pcp_conninfo.timeout = PG_GETARG_INT16(3);
-		pcp_conninfo.port = PG_GETARG_INT16(4);
-		pcp_conninfo.user = text_to_cstring(PG_GETARG_TEXT_PP(5));
-		pcp_conninfo.pass = text_to_cstring(PG_GETARG_TEXT_PP(6));
+		char *user, *pass;
+		int port;
+		port = PG_GETARG_INT16(3);
+		user = text_to_cstring(PG_GETARG_TEXT_PP(4));
+		pass = text_to_cstring(PG_GETARG_TEXT_PP(5));
+		pcpConnInfo = connect_to_server(host_or_srv,port,user,pass);
 	}
 	else if (PG_NARGS() == 3)
 	{
-		pcp_conninfo = get_pcp_conninfo_from_foreign_server(host_or_srv);
+		pcpConnInfo = connect_to_server_from_foreign_server(host_or_srv);
 	}
 	else
 	{
 		ereport(ERROR, (0, errmsg("Wrong number of argument.")));
 	}
 
-	check_pcp_conninfo_props(&pcp_conninfo);
-
-	/**
-	 * PCP session
-	 **/
-	if (pcp_connect_conninfo(&pcp_conninfo))
-	{
-		ereport(ERROR,(0, errmsg("Cannot connect to PCP server.")));
-	}
-
 	if (gracefully)
 	{
-		status = pcp_detach_node_gracefully(nodeID);
+		pcpResInfo = pcp_detach_node_gracefully(pcpConnInfo,nodeID);
 	}
 	else
 	{
-		status = pcp_detach_node(nodeID);
+		pcpResInfo = pcp_detach_node(pcpConnInfo,nodeID);
 	}
 
-	pcp_disconnect();
-
-	if (status == -1)
+	if (pcpResInfo == NULL || PCPResultStatus(pcpResInfo) != PCP_RES_COMMAND_OK)
 	{
-		PG_RETURN_BOOL(false);
+		char *error = pcp_get_last_error(pcpConnInfo)? pstrdup(pcp_get_last_error(pcpConnInfo)):NULL;
+		pcp_disconnect(pcpConnInfo);
+		pcp_free_connection(pcpConnInfo);
+		ereport(ERROR,(0,
+					   errmsg("failed to detach node"),
+					   errdetail("%s\n",error?error:"unknown reason")));
 	}
+
+	pcp_disconnect(pcpConnInfo);
+	pcp_free_connection(pcpConnInfo);
 
 	PG_RETURN_BOOL(true);
 }
