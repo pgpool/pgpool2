@@ -530,6 +530,7 @@ extern void NoticeResponse(POOL_CONNECTION *frontend,
 
 extern void notice_backend_error(int node_id);
 extern void degenerate_backend_set(int *node_id_set, int count);
+extern bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool test_only);
 extern void promote_backend(int node_id);
 extern void send_failback_request(int node_id, bool throw_error);
 

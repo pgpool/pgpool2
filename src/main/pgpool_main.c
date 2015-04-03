@@ -1033,18 +1033,34 @@ void notice_backend_error(int node_id)
 	}
 }
 
-/* notice backend connection error using SIGUSR1 */
-void degenerate_backend_set(int *node_id_set, int count)
+/*
+ * degenerate_backend_set_ex:
+ *
+ * The function registers/verifies the node down operation request.
+ * The request is then processed by failover function.
+ *
+ * node_id_set:	array of node ids to be registered for NODE DOWN operation
+ * count:		number of elements in node_id_set array
+ * error:		if set error is thrown as soon as any node id is found in 
+ *				in node_id_set on which operation could not be performed.
+ * test_only:	When set, function only checks if NODE DOWN operation can be
+ *				executed on provided node ids and never registers the operation
+ *				request.
+ *				For test_only case function returs false or throws an error as
+ *				soon as first non complient node in node_id_set is found
+ */
+bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool test_only)
 {
 	int i;
-
 	int node_id[MAX_NUM_BACKENDS];
 	int node_count = 0;
+	int elevel = LOG;
+
+	if (error)
+		elevel = ERROR;
 
 	if (pool_config->parallel_mode)
-	{
-		return;
-	}
+		return false;
 
 	for (i = 0; i < count; i++)
 	{
@@ -1052,26 +1068,31 @@ void degenerate_backend_set(int *node_id_set, int count)
 			!VALID_BACKEND(node_id_set[i]))
 		{
 			if (node_id_set[i] < 0 || node_id_set[i] >= MAX_NUM_BACKENDS)
-				ereport(LOG,
+				ereport(elevel,
 						(errmsg("invalid degenerate backend request, node id: %d is out of range. node id must be between [0 and %d]"
 								,node_id_set[i],MAX_NUM_BACKENDS)));
 			else
-				ereport(LOG,
+				ereport(elevel,
 						(errmsg("invalid degenerate backend request, node id : %d status: [%d] is not valid for failover"
 								,node_id_set[i],BACKEND_INFO(node_id_set[i]).backend_status)));
+			if (test_only)
+				return false;
 
 			continue;
 		}
 
 		if (POOL_DISALLOW_TO_FAILOVER(BACKEND_INFO(node_id_set[i]).flag))
 		{
-			ereport(LOG,
-					(errmsg("degenerate backend request for node_id: %d from pid [%d] is canceled because failover is disallowed on the node",
+			ereport(elevel,
+				(errmsg("degenerate backend request for node_id: %d from pid [%d] is canceled because failover is disallowed on the node",
 							node_id_set[i], getpid())));
+			if (test_only)
+				return false;
 		}
 		else
 		{
-			ereport(LOG,
+			if (!test_only)	/* do not produce this log if we are in testing mode */
+				ereport(LOG,
 					(errmsg("received degenerate backend request for node_id: %d from pid [%d]",
 							node_id_set[i], getpid())));
 
@@ -1083,16 +1104,29 @@ void degenerate_backend_set(int *node_id_set, int count)
 	{
 		if (!pool_config->use_watchdog || WD_OK == wd_degenerate_backend_set(node_id_set, count))
 		{
+			/* If this was only a test. Inform the caller without doing anything */
+			if(test_only)
+				return true;
 			register_node_operation_request(NODE_DOWN_REQUEST, node_id, node_count);
 		}
 		else
 		{
-			ereport(LOG,
+			ereport(elevel,
 					(errmsg("degenerate backend request for node_id: %d from pid [%d] is canceled  by other pgpool"
 							, node_id_set[i], getpid())));
+			return false;
 		}
 	}
+	return true;
+}
 
+/*
+ * wrapper over degenerate_backend_set_ex function to register
+ * NODE down operation request
+ */
+void degenerate_backend_set(int *node_id_set, int count)
+{
+	degenerate_backend_set_ex(node_id_set, count, false, false);
 }
 
 /* send promote node request using SIGUSR1 */

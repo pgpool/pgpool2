@@ -498,14 +498,19 @@ user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len)
 }
 
 
-/* Dedatch a node */
+/* Detach a node */
 static int pool_detach_node(int node_id, bool gracefully)
 {
 	if (!gracefully)
 	{
-		notice_backend_error(node_id);	/* send failover request */
+		degenerate_backend_set_ex(&node_id, 1, true, false);
 		return 0;
 	}
+
+	/* Check if the NODE DOWN can be executed on
+	 * the given node id.
+	 */
+	degenerate_backend_set_ex(&node_id, 1, true, true);
 
 	/*
 	 * Wait until all frontends exit
@@ -520,15 +525,16 @@ static int pool_detach_node(int node_id, bool gracefully)
 		return -1;
 	}
 
+	pcp_worker_wakeup_request = 0;
+
 	/*
 	 * Now all frontends have gone. Let's do failover.
 	 */
-	notice_backend_error(node_id);		/* send failover request */
+	degenerate_backend_set_ex(&node_id, 1, true, false);
 
 	/*
 	 * Wait for failover completed.
 	 */
-	pcp_worker_wakeup_request = 0;
 
 	while (!pcp_worker_wakeup_request)
 	{
