@@ -293,12 +293,17 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 							if (!VALID_BACKEND(i))
 								continue;
 
+							ereport(LOG, (errmsg("__FILE__ %d", __LINE__)));
+
 							if (pool_ssl_pending(CONNECTION(backend, i)) ||
 								!pool_read_buffer_is_empty(CONNECTION(backend, i)))
 							{
 								/* If we have pending data in master, we need to process it */
 								if (IS_MASTER_NODE_ID(i))
 								{
+									FILE *fd = fopen("/tmp/pgpool.log", "w");
+									fprintf(fd, "pool_ssl_pending:%d pool_read_buffer_is_empty:%d", pool_ssl_pending(CONNECTION(backend, i)), pool_read_buffer_is_empty(CONNECTION(backend, i)));
+									fclose(fd);
 									status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
 									if (status != POOL_CONTINUE)
 										return status;
@@ -556,13 +561,18 @@ POOL_STATUS send_extended_protocol_message(POOL_CONNECTION_POOL *backend,
 	pool_write(cp, &sendlen, sizeof(sendlen));
 	pool_write(cp, string, len);
 
-	/*
-	 * send "Flush" message so that backend notices us
-	 * the completion of the command
-	 */
-	pool_write(cp, "H", 1);
-	sendlen = htonl(4);
-	pool_write_and_flush(cp, &sendlen, sizeof(sendlen));
+	if (REPLICATION)
+	{
+		/*
+		 * send "Flush" message so that backend notices us
+		 * the completion of the command
+		 */
+		pool_write(cp, "H", 1);
+		sendlen = htonl(4);
+		pool_write_and_flush(cp, &sendlen, sizeof(sendlen));
+	}
+	else
+		pool_flush(cp);
 	
 	return POOL_CONTINUE;
 }

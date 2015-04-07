@@ -723,7 +723,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		if (!commit)
 		{
 			/* Send the query to master node */
-			pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID);
+			pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID, false);
 
 			/* Check specific errors */
 			specific_error = check_errors(backend, MASTER_NODE_ID);
@@ -742,23 +742,24 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			memset(msg + len, 0, sizeof(int));
 
 			/* send query to other nodes */
-			pool_extended_send_and_wait(query_context, "E", len, msg, -1, MASTER_NODE_ID);
+			pool_extended_send_and_wait(query_context, "E", len, msg, -1, MASTER_NODE_ID, false);
 		}
 		else
 		{
-			pool_extended_send_and_wait(query_context, "E", len, contents, -1, MASTER_NODE_ID);
+			pool_extended_send_and_wait(query_context, "E", len, contents, -1, MASTER_NODE_ID, false);
 		}
 		
 		/* send "COMMIT" or "ROLLBACK" to only master node if query is "COMMIT" or "ROLLBACK" */
 		if (commit)
 		{
-			pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID);
+			pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID, false);
 		}
 	}
 	else
 	{
-		pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID);
-		pool_extended_send_and_wait(query_context, "E", len, contents, -1, MASTER_NODE_ID);
+		pool_set_query_in_progress();
+		pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID, false);
+		pool_extended_send_and_wait(query_context, "E", len, contents, -1, MASTER_NODE_ID, false);
 	}
 
 	return POOL_CONTINUE;
@@ -1035,7 +1036,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		 */
 		ereport(DEBUG1,
 				(errmsg("Parse: waiting for master completing the query")));
-        pool_extended_send_and_wait(query_context, "P", len, contents, 1, MASTER_NODE_ID);
+        pool_extended_send_and_wait(query_context, "P", len, contents, 1, MASTER_NODE_ID, false);
 
 
 		/*
@@ -1076,13 +1077,16 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		}
 		else
 		{
-			pool_extended_send_and_wait(query_context, "P", len, contents, -1, MASTER_NODE_ID);
+			pool_extended_send_and_wait(query_context, "P", len, contents, -1, MASTER_NODE_ID, false);
 		}
 	}
 	else
 	{
-		pool_extended_send_and_wait(query_context, "P", len, contents, 1, MASTER_NODE_ID);
+		pool_extended_send_and_wait(query_context, "P", len, contents, 1, MASTER_NODE_ID, true);
+		pool_add_sent_message(session_context->uncompleted_message);
 	}
+
+	pool_unset_query_in_progress();
 
 	return POOL_CONTINUE;
 
@@ -1192,9 +1196,10 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	ereport(DEBUG1,
 		(errmsg("Bind: waiting for master completing the query")));
 
-	pool_extended_send_and_wait(query_context, "B", len, contents, 1, MASTER_NODE_ID);
+	pool_extended_send_and_wait(query_context, "B", len, contents, 1, MASTER_NODE_ID, true);
 
-	pool_extended_send_and_wait(query_context, "B", len, contents, -1, MASTER_NODE_ID);
+	pool_extended_send_and_wait(query_context, "B", len, contents, -1, MASTER_NODE_ID, true);
+	pool_add_sent_message(session_context->uncompleted_message);
 	
 	if(rewrite_msg)
 		pfree(rewrite_msg);
@@ -1253,9 +1258,9 @@ POOL_STATUS Describe(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
     ereport(DEBUG1,
             (errmsg("Describe: waiting for master completing the query")));
 
-	pool_extended_send_and_wait(query_context, "D", len, contents, 1, MASTER_NODE_ID);
+	pool_extended_send_and_wait(query_context, "D", len, contents, 1, MASTER_NODE_ID, true);
 
-	pool_extended_send_and_wait(query_context, "D", len, contents, -1, MASTER_NODE_ID);
+	pool_extended_send_and_wait(query_context, "D", len, contents, -1, MASTER_NODE_ID, true);
 
 	return POOL_CONTINUE;
 }
@@ -1318,9 +1323,9 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
     ereport(DEBUG1,
             (errmsg("Close: waiting for master completing the query")));
-	pool_extended_send_and_wait(query_context, "C", len, contents, 1, MASTER_NODE_ID);
+	pool_extended_send_and_wait(query_context, "C", len, contents, 1, MASTER_NODE_ID, false);
 
-	pool_extended_send_and_wait(query_context, "C", len, contents, -1, MASTER_NODE_ID);
+	pool_extended_send_and_wait(query_context, "C", len, contents, -1, MASTER_NODE_ID, false);
 
 	return POOL_CONTINUE;
 }
@@ -2354,15 +2359,19 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 		case 'P':	/* Parse */
 			allow_close_transaction = 0;
 			pool_set_doing_extended_query_message();
+#ifdef NOT_USED
 			if (!pool_is_query_in_progress() && !pool_is_ignore_till_sync())
 				pool_set_query_in_progress();
+#endif
 			status = Parse(frontend, backend, len, contents);
 			break;
 
 		case 'B':	/* Bind */
 			pool_set_doing_extended_query_message();
+#ifdef NOT_USED
 			if (!pool_is_query_in_progress() && !pool_is_ignore_till_sync())
 				pool_set_query_in_progress();
+#endif
 			status = Bind(frontend, backend, len, contents);
 			break;
 
@@ -2374,8 +2383,10 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 
 		case 'D':	/* Describe */
 			pool_set_doing_extended_query_message();
+#ifdef NOT_USED
 			if (!pool_is_query_in_progress() && !pool_is_ignore_till_sync())
 				pool_set_query_in_progress();
+#endif
 			status = Describe(frontend, backend, len, contents);
 			break;
 
@@ -3051,7 +3062,7 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 				(errmsg("parse before bind"),
 					 errdetail("waiting for backend %d completing parse", i)));
 
-			pool_extended_send_and_wait(qc, "P", len, contents, 1, i);
+			pool_extended_send_and_wait(qc, "P", len, contents, 1, i, false);
 		}
 		else
 		{
