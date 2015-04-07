@@ -633,12 +633,30 @@ static RETSIGTYPE reload_config_handler(int sig)
 /* Dedatch a node */
 static int pool_detach_node(int node_id, bool gracefully)
 {
+	int nRet = 0;
 	if (!gracefully)
 	{
-		notice_backend_error(node_id);	/* send failover request */
+		if (degenerate_backend_set_ex(&node_id, 1, false, false) == false)
+		{
+			ereport(LOG,
+				(errmsg("PCP: processing detach node failed"),
+					 errdetail("detaching Node ID %d", node_id)));
+			return -1;
+		}
 		return 0;
 	}
-		
+
+	/* Check if the NODE DOWN can be executed on
+	 * the given node id.
+	 */
+	if (degenerate_backend_set_ex(&node_id, 1, false, true) == false)
+	{
+		ereport(LOG,
+			(errmsg("PCP: processing graceful detach node failed"),
+				 errdetail("detaching Node ID %d", node_id)));
+		return -1;
+	}
+
 	/*
 	 * Wait until all frontends exit
 	 */
@@ -653,14 +671,24 @@ static int pool_detach_node(int node_id, bool gracefully)
 	}
 
 	/*
-	 * Now all frontends have gone. Let's do failover.
+	 *	Now all frontends have gone. Let's do failover.
 	 */
-	notice_backend_error(node_id);		/* send failover request */
+	if (degenerate_backend_set_ex(&node_id, 1, false, false) == false)
+	{
+		nRet = -1;
+		pcp_wakeup_request = 1;
+		ereport(LOG,
+			(errmsg("PCP: processing graceful detach node failed"),
+				 errdetail("detaching Node ID %d", node_id)));
+	}
+	else
+	{
+		/*
+		 * Wait for failover completed.
+		 */
+		pcp_wakeup_request = 0;
+	}
 
-	/*
-	 * Wait for failover completed.
-	 */
-	pcp_wakeup_request = 0;
 
 	while (!pcp_wakeup_request)
 	{
@@ -675,7 +703,7 @@ static int pool_detach_node(int node_id, bool gracefully)
 	 */
 	finish_recovery();
 
-	return 0;
+	return nRet;
 }
 
 /* Promote a node */
@@ -1192,7 +1220,7 @@ process_detach_node(PCP_CONNECTION *frontend,char *buf, char tos)
 {
 	int node_id;
 	int wsize;
-	char code[] = "CommandComplete";
+	char *code;
 	bool gracefully;
 
 	if (tos == 'D')
@@ -1205,12 +1233,15 @@ process_detach_node(PCP_CONNECTION *frontend,char *buf, char tos)
 		(errmsg("PCP: processing detach node"),
 			 errdetail("detaching Node ID %d", node_id)));
 
-	pool_detach_node(node_id, gracefully);
+	if (pool_detach_node(node_id, gracefully) == 0)
+		code = "CommandComplete";
+	else
+		code = "CommandFailed";
 
 	pcp_write(frontend, "d", 1);
-	wsize = htonl(sizeof(code) + sizeof(int));
+	wsize = htonl(strlen(code) + 1 + sizeof(int));
 	pcp_write(frontend, &wsize, sizeof(int));
-	pcp_write(frontend, code, sizeof(code));
+	pcp_write(frontend, code, strlen(code) + 1);
 	do_pcp_flush(frontend);
 }
 
