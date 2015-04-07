@@ -1533,8 +1533,8 @@ black_function_list = 'nextval,setval,lastval,currval'
 
 <dt><a name="REPLICATE_SELECT"></a>replicate_select</dt>
     <dd>
-    <p>When set to true, pgpool-II replicates SELECTs in replication mode. If false,
-    pgpool-II only sends them to the Master DB. Default is false.
+    <p>When set to true, pgpool-II replicates SELECTs replication mode. If false,
+    pgpool-II sends SELECTs without writing function to the Master DB only. Default is false.
     </p>
     <p>
     If a SELECT query is inside an explicit transaction block, replicate_select and
@@ -1543,53 +1543,25 @@ black_function_list = 'nextval,setval,lastval,currval'
     </p>
 
     <table border>
-
-    <tr>
-    <th class="nodec">SELECT is inside a transaction block</th>
-    <td>Y</td>
-    <td>Y</td>
-    <td>Y</td>
-    <td>N</td>
-    <td>N</td>
-    <td>N</td>
-    <td>Y</td>
-    <td>N</td>
+    <tr class="center">
+        <th class="nodec">replicate_select is true</th>
+        <td>Y</td><td colspan="4">N</td>
     </tr>
-
-    <tr>
-    <th class="nodec">replicate_select is true</th>
-    <td>Y</td>
-    <td>Y</td>
-    <td>N</td>
-    <td>N</td>
-    <td>Y</td>
-    <td>Y</td>
-    <td>N</td>
-    <td>N</td>
+    <tr class="center">
+        <th class="nodec">load_balance_mode is true</th>
+        <td>any</td><td colspan="3">Y</td><td>N</td>
+    <tr class="center">
+        <th class="nodec">SELECT is inside a transaction block</th>
+        <td>any</td><td colspan="2">Y</td><td>N</td><td>any</td>
     </tr>
-
-    <tr>
-    <th class="nodec">load_balance_mode is true</th>
-    <td>Y</td>
-    <td>N</td>
-    <td>N</td>
-    <td>N</td>
-    <td>Y</td>
-    <td>N</td>
-    <td>Y</td>
-    <td>Y</td>
+    <tr class="center">
+        <th class="nodec">transaction isolation level is SERIALIZABLE and<br>
+                          the transaction has issued a write query</th>
+        <td>any</td><td>Y</td><td>N</td><td>any</td><td>any</td>
     </tr>
-
-    <tr>
-    <th class="nodec">results(R:replication, M: send only to master, L: load balance)</th>
-    <td>R</td>
-    <td>R</td>
-    <td>M</td>
-    <td>M</td>
-    <td>R</td>
-    <td>R</td>
-    <td>M</td>
-    <td>L</td>
+    <tr class="footer center">
+        <th class="nodec">results(R:replication, M: send only to master, L: load balance)</th>
+        <td>R</td><td>M</td><td>L</td><td>L</td><td>M</td>
     </tr>
     </table>
     </dd>

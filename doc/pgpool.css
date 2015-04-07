@@ -182,6 +182,9 @@ tr.header th {
 tr.center td {
 	text-align: center;
 }
+tr.footer {
+	border-top: double;
+}
 
 dd {
 	margin-left: 0px;
