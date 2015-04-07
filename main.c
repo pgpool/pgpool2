@@ -1261,8 +1261,21 @@ void notice_backend_error(int node_id)
 	degenerate_backend_set(&n, 1);
 }
 
-/* notice backend connection error using SIGUSR1 */
-void degenerate_backend_set(int *node_id_set, int count)
+/*
+ * degenerate_backend_set_ex:
+ *
+ * The function signals/verifies the node down request.
+ * The request is then processed by failover function.
+ *
+ * node_id_set: array of node ids to be registered for NODE DOWN operation
+ * count:       number of elements in node_id_set array
+ * test_only:   When set, function only checks if NODE DOWN operation can be
+ *              executed on provided node ids and never registers the operation
+ *              request.
+ *              For test_only case function returs false as
+ *              soon as first non complient node in node_id_set is found
+ */
+bool degenerate_backend_set_ex(int *node_id_set, int count, bool test_only)
 {
 	pid_t parent = getppid();
 	int i;
@@ -1274,27 +1287,39 @@ void degenerate_backend_set(int *node_id_set, int count)
 
 	if (pool_config->parallel_mode)
 	{
-		return;
+		return false;
+	}
+	if (test_only == false)
+	{
+		POOL_SETMASK2(&BlockSig, &oldmask);
+		pool_semaphore_lock(REQUEST_INFO_SEM);
+		Req_info->kind = NODE_DOWN_REQUEST;
 	}
 
-	POOL_SETMASK2(&BlockSig, &oldmask);
-	pool_semaphore_lock(REQUEST_INFO_SEM);
-	Req_info->kind = NODE_DOWN_REQUEST;
 	for (i = 0; i < count; i++)
 	{
 		if (node_id_set[i] < 0 || node_id_set[i] >= MAX_NUM_BACKENDS ||
 			!VALID_BACKEND(node_id_set[i]))
 		{
+			if (test_only)
+				return false;
 			pool_log("notice_backend_error: node %d is not valid backend.", i);
 			continue;
 		}
-
-		pool_log("notice_backend_error: %d fail over request from pid %d", node_id_set[i], getpid());
-		Req_info->node_id[i] = node_id_set[i];
+		if (test_only == false)
+		{
+			pool_log("notice_backend_error: %d fail over request from pid %d", node_id_set[i], getpid());
+			Req_info->node_id[i] = node_id_set[i];
+		}
 	}
-	kill(parent, SIGUSR1);
-	pool_semaphore_unlock(REQUEST_INFO_SEM);
-	POOL_SETMASK(&oldmask);
+
+	if (test_only == false)
+	{
+		kill(parent, SIGUSR1);
+		pool_semaphore_unlock(REQUEST_INFO_SEM);
+		POOL_SETMASK(&oldmask);
+	}
+	return true;
 }
 
 /* send failback request using SIGUSR1 */
@@ -1314,6 +1339,15 @@ void send_failback_request(int node_id)
 	}
 
 	kill(parent, SIGUSR1);
+}
+
+/*
+ * wrapper over degenerate_backend_set_ex function to signal
+ * NODE down operation request
+ */
+void degenerate_backend_set(int *node_id_set, int count)
+{
+	degenerate_backend_set_ex(node_id_set, count, false);
 }
 
 static RETSIGTYPE exit_handler(int sig)
