@@ -1462,11 +1462,25 @@ void notice_backend_error(int node_id)
 	}
 }
 
-/* notice backend connection error using SIGUSR1 */
-void degenerate_backend_set(int *node_id_set, int count)
+/*
+ * degenerate_backend_set_ex:
+ *
+ * The function signals/verifies the node down request.
+ * The request is then processed by failover function.
+ *
+ * node_id_set: array of node ids to be registered for NODE DOWN operation
+ * count:       number of elements in node_id_set array
+ * test_only:   When set, function only checks if NODE DOWN operation can be
+ *              executed on provided node ids and never registers the operation
+ *              request.
+ *              For test_only case function returs false as
+ *              soon as first non complient node in node_id_set is found
+ */
+bool degenerate_backend_set_ex(int *node_id_set, int count, bool test_only)
 {
 	pid_t parent = getppid();
 	int i;
+	bool ret = false;
 	bool need_signal = false;
 #ifdef HAVE_SIGPROCMASK
 	sigset_t oldmask;
@@ -1476,42 +1490,68 @@ void degenerate_backend_set(int *node_id_set, int count)
 
 	if (pool_config->parallel_mode)
 	{
-		return;
+		return false;
+	}
+	if (test_only == false)
+	{
+		POOL_SETMASK2(&BlockSig, &oldmask);
+		pool_semaphore_lock(REQUEST_INFO_SEM);
+		Req_info->kind = NODE_DOWN_REQUEST;
 	}
 
-	POOL_SETMASK2(&BlockSig, &oldmask);
-	pool_semaphore_lock(REQUEST_INFO_SEM);
-	Req_info->kind = NODE_DOWN_REQUEST;
 	for (i = 0; i < count; i++)
 	{
 		if (node_id_set[i] < 0 || node_id_set[i] >= MAX_NUM_BACKENDS ||
 			!VALID_BACKEND(node_id_set[i]))
 		{
 			pool_log("degenerate_backend_set: node %d is not valid backend.", i);
+			if (test_only)
+				return false;
 			continue;
 		}
 
 		if (POOL_DISALLOW_TO_FAILOVER(BACKEND_INFO(node_id_set[i]).flag))
 		{
 			pool_log("degenerate_backend_set: %d failover request from pid %d is canceld because failover is disallowed", node_id_set[i], getpid());
+			if (test_only)
+				return false;
 			continue;
 		}
 
-		pool_log("degenerate_backend_set: %d fail over request from pid %d", node_id_set[i], getpid());
-		Req_info->node_id[i] = node_id_set[i];
+		if (test_only == false)
+		{
+			pool_log("degenerate_backend_set: %d fail over request from pid %d", node_id_set[i], getpid());
+			Req_info->node_id[i] = node_id_set[i];
+		}
 		need_signal = true;
 	}
 
 	if (need_signal)
 	{
+		if (test_only)
+			return true;
 		if (!pool_config->use_watchdog || WD_OK == wd_degenerate_backend_set(node_id_set, count))
 		{
 			kill(parent, SIGUSR1);
+			ret = true;
 		}
 	}
+	else if (test_only)
+		return false;
 
 	pool_semaphore_unlock(REQUEST_INFO_SEM);
 	POOL_SETMASK(&oldmask);
+
+	return ret;
+}
+
+/*
+ * wrapper over degenerate_backend_set_ex function to signal
+ * NODE down operation request
+ */
+void degenerate_backend_set(int *node_id_set, int count)
+{
+	degenerate_backend_set_ex(node_id_set, count, false);
 }
 
 /* send promote node request using SIGUSR1 */
