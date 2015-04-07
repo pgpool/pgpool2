@@ -1102,18 +1102,19 @@ bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool tes
 
 	if (node_count)
 	{
+		/* If this was only a test. Inform the caller without doing anything */
+		if(test_only)
+			return true;
+
 		if (!pool_config->use_watchdog || WD_OK == wd_degenerate_backend_set(node_id_set, count))
 		{
-			/* If this was only a test. Inform the caller without doing anything */
-			if(test_only)
-				return true;
 			register_node_operation_request(NODE_DOWN_REQUEST, node_id, node_count);
 		}
 		else
 		{
 			ereport(elevel,
-					(errmsg("degenerate backend request for node_id: %d from pid [%d] is canceled  by other pgpool"
-							, node_id_set[i], getpid())));
+					(errmsg("degenerate backend request for %d node(s) from pid [%d] is canceled  by other pgpool"
+							, node_count, getpid())));
 			return false;
 		}
 	}
