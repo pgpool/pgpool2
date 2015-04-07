@@ -835,7 +835,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 			{
 				int node_id;
 				int wsize;
-				char code[] = "CommandComplete";
+				char *code;
 				bool gracefully;
 
 				if (tos == 'D')
@@ -845,12 +845,15 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 
 				node_id = atoi(buf);
 				pool_debug("pcp_child: detaching Node ID %d", node_id);
-				pool_detach_node(node_id, gracefully);
+				if (pool_detach_node(node_id, gracefully) == 0)
+					code = "CommandComplete";
+				else
+					code = "CommandFailed";
 
 				pcp_write(frontend, "d", 1);
-				wsize = htonl(sizeof(code) + sizeof(int));
+				wsize = htonl(strlen(code) + 1 + sizeof(int));
 				pcp_write(frontend, &wsize, sizeof(int));
-				pcp_write(frontend, code, sizeof(code));
+				pcp_write(frontend, code, strlen(code) + 1);
 				if (pcp_flush(frontend) < 0)
 				{
 					pool_error("pcp_child: pcp_flush() failed. reason: %s", strerror(errno));
@@ -1402,12 +1405,26 @@ static RETSIGTYPE reload_config_handler(int sig)
 /* Dedatch a node */
 static int pool_detach_node(int node_id, bool gracefully)
 {
+	int nRet = 0;
 	if (!gracefully)
 	{
-		notice_backend_error(node_id);	/* send failover request */
+		if (degenerate_backend_set_ex(&node_id, 1, false) == false)
+		{
+			pool_error("pcp_child: processing detach node failed");
+			return -1;
+		}
 		return 0;
 	}
-		
+
+	/* Check if the NODE DOWN can be executed on
+	 * the given node id.
+	 */
+	if (degenerate_backend_set_ex(&node_id, 1, true) == false)
+	{
+		pool_error("pcp_child: processing graceful detach node failed");
+		return -1;
+	}
+
 	/*
 	 * Wait until all frontends exit
 	 */
@@ -1424,12 +1441,19 @@ static int pool_detach_node(int node_id, bool gracefully)
 	/*
 	 * Now all frontends have gone. Let's do failover.
 	 */
-	notice_backend_error(node_id);		/* send failover request */
-
-	/*
-	 * Wait for failover completed.
-	 */
-	pcp_wakeup_request = 0;
+	if (degenerate_backend_set_ex(&node_id, 1, false) == false)
+	{
+		nRet = -1;
+		pcp_wakeup_request = 1;
+		pool_error("pcp_child: processing graceful detach node failed");
+	}
+	else
+	{
+		/*
+		 * Wait for failover completed.
+		 */
+		pcp_wakeup_request = 0;
+	}
 
 	while (!pcp_wakeup_request)
 	{
@@ -1444,7 +1468,7 @@ static int pool_detach_node(int node_id, bool gracefully)
 	 */
 	finish_recovery();
 
-	return 0;
+	return nRet;
 }
 
 /* Promote a node */
