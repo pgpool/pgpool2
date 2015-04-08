@@ -1,7 +1,35 @@
                                 Release Notes
 
 ===============================================================================
-3.0 Series (2013/07/30 - )
+3.0 Series (2010/09/10 - )
+===============================================================================
+
+                        3.0.18 (umiyameboshi) 2015/04/08
+
+* Version 3.0.18
+
+    This is a bugfix release against pgpool-II 3.0.17.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Enlarge POOLCONFIG_MAXDESCLEN to 80 (Tatsuo Ishii)
+      
+      This is used in show pool_status command and limits the length of
+      parameter description.  Unfortunately recovery_timeout description is
+      64 chars, which is 1 byte longer than former definition of the macro.
+
+    - Support SSL certificate chains in the certificate file for incoming
+      frontend connections (Muhammad Usama)
+
+    - Fix a problem with pcp_detach_node about graceful node detach (Muhammad Usama)
+      
+      When graceful node detach is requested gracefully, pcp_detach_node should
+      check if it is allowed to process detach_node command on the particular
+      node before blocking the incoming connections and closing the existing
+      connections.
+
 ===============================================================================
 
                         3.0.17 (umiyameboshi) 2015/02/05
