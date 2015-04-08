@@ -4,6 +4,74 @@
 3.3 Series (2013/07/30 - )
 ===============================================================================
 
+                        3.3.6 (tokakiboshi) 2015/04/08
+
+* Version 3.3.6
+
+    This is a bugfix release against pgpool-II 3.3.5.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - rpm: Fix %tmpfiles_create to not be executed in RHEL/CentOS 6
+      (Nozomi Anzai)
+
+    - Fix to use void * type for receiving return value of thread function
+      (Yugo Nagata)
+      
+      Previously int type was used and this could occur stack buffer
+      overflow. This caused an infinity loop of ping error at bringing
+      up or down VIP.
+
+    - Fix to set SIGCHLD to SIG_DFL instead of SIG_IGN in watchdog processes
+      (Yugo Nagata)
+      
+      When using waitpid, it isn't necessary to set SIGCHLD to SIG_IGN.
+      Rather, it is harmful, and due to this it was regarded that ping
+      command exited abnormally in error even when this succeeded.
+
+    - Remove an unnecessary include directive (Yugo Nagata)
+
+    - Enlarge POOLCONFIG_MAXDESCLEN to 80 (Tatsuo Ishii)
+      
+      This is used in show pool_status command and limits the length of
+      parameter description.  Unfortunately recovery_timeout description is
+      64 chars, which is 1 byte longer than former definition of the macro.
+
+    - doc: Update document of condition for load balancig (Yugo Nagata)
+      
+      Load balancing is possible in an explicit transaction block
+      even in replication mode since 3.3.0.
+
+    - Support SSL certificate chains in the certificate file for incoming
+      frontend connections (Muhammad Usama)
+
+    - Use to_regclass if available in time stamp rewriting in replication
+      mode (Tatsuo Ishii)
+
+    - Fix a hang when an error occurs in a transaction block with
+      replication mode (Yugo Nagata)
+      
+      When an error occurs at a backend node in a transaction block with
+      replication mode, pgpool-II sends an invalid query to other
+      backends to sync transaction states. However, previously, this was
+      not sent to master node, and pgpool-II was waiting for master's
+      response forever.
+
+    - Fix a problem with pcp_detach_node about graceful node detach (Muhammad Usama)
+      
+      When graceful node detach is requested gracefully, pcp_detach_node should
+      check if it is allowed to process detach_node command on the particular
+      node before blocking the incoming connections and closing the existing
+      connections.
+
+    - doc: Update table and flowchart of where a query should be sent to
+      (Yugo Nagata)
+
+    - rpm: pgpool.service is required only in RHEL/CentOS 7 (Nozomi Anzai)
+
+===============================================================================
                         3.3.5 (tokakiboshi) 2015/02/05
 
 * Version 3.3.5
@@ -1217,6 +1285,49 @@
 3.2 Series (2012/08/03 - )
 ===============================================================================
 
+                        3.2.11 (namameboshi) 2015/04/08
+
+* Version 3.2.11
+
+    This is a bugfix release against pgpool-II 3.2.10.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix to use void * type for receiving return value of thread function
+      (Yugo Nagata)
+      
+      Previously int type was used and this could occur stack buffer
+      overflow. This caused an infinity loop of ping error at bringing
+      up or down VIP.
+
+    - Fix to set SIGCHLD to SIG_DFL instead of SIG_IGN in watchdog processes
+      (Yugo Nagata)
+      
+      When using waitpid, it isn't necessary to set SIGCHLD to SIG_IGN.
+      Rather, it is harmful, and due to this it was regarded that ping
+      command exited abnormally in error even when this succeeded.
+
+    - Remove an unnecessary include directive (Yugo Nagata)
+
+    - Enlarge POOLCONFIG_MAXDESCLEN to 80 (Tatsuo Ishii)
+      
+      This is used in show pool_status command and limits the length of
+      parameter description.  Unfortunately recovery_timeout description is
+      64 chars, which is 1 byte longer than former definition of the macro.
+
+    - Support SSL certificate chains in the certificate file for incoming
+      frontend connections (Muhammad Usama)
+
+    - Fix a problem with pcp_detach_node about graceful node detach (Muhammad Usama)
+      
+      When graceful node detach is requested gracefully, pcp_detach_node should
+      check if it is allowed to process detach_node command on the particular
+      node before blocking the incoming connections and closing the existing
+      connections.
+
+===============================================================================
                         3.2.10 (namameboshi) 2015/02/05
 
 * Version 3.2.10
@@ -3059,6 +3170,33 @@
 3.1 Series (2011/09/08 - )
 ===============================================================================
 
+                        3.1.14 (hatsuiboshi) 2015/04/08
+
+* Version 3.1.14
+
+    This is a bugfix release against pgpool-II 3.1.13.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Enlarge POOLCONFIG_MAXDESCLEN to 80 (Tatsuo Ishii)
+      
+      This is used in show pool_status command and limits the length of
+      parameter description.  Unfortunately recovery_timeout description is
+      64 chars, which is 1 byte longer than former definition of the macro.
+
+    - Support SSL certificate chains in the certificate file for incoming
+      frontend connections (Muhammad Usama)
+
+    - Fix a problem with pcp_detach_node about graceful node detach (Muhammad Usama)
+      
+      When graceful node detach is requested gracefully, pcp_detach_node should
+      check if it is allowed to process detach_node command on the particular
+      node before blocking the incoming connections and closing the existing
+      connections.
+
+===============================================================================
                         3.1.13 (hatsuiboshi) 2015/02/05
 
 * Version 3.1.13
@@ -4333,6 +4471,34 @@
 
 ===============================================================================
 3.0 Series (2013/07/30 - )
+===============================================================================
+
+                        3.0.18 (umiyameboshi) 2015/04/08
+
+* Version 3.0.18
+
+    This is a bugfix release against pgpool-II 3.0.17.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Enlarge POOLCONFIG_MAXDESCLEN to 80 (Tatsuo Ishii)
+      
+      This is used in show pool_status command and limits the length of
+      parameter description.  Unfortunately recovery_timeout description is
+      64 chars, which is 1 byte longer than former definition of the macro.
+
+    - Support SSL certificate chains in the certificate file for incoming
+      frontend connections (Muhammad Usama)
+
+    - Fix a problem with pcp_detach_node about graceful node detach (Muhammad Usama)
+      
+      When graceful node detach is requested gracefully, pcp_detach_node should
+      check if it is allowed to process detach_node command on the particular
+      node before blocking the incoming connections and closing the existing
+      connections.
+
 ===============================================================================
 
                         3.0.17 (umiyameboshi) 2015/02/05
