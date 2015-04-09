@@ -139,6 +139,17 @@ pgpool_switch_xlog(PG_FUNCTION_ARGS)
 	Oid switch_xlog_oid;
 	Oid xlogfile_name_oid;
 
+#if !defined(PG_VERSION_NUM) || (PG_VERSION_NUM < 90400)
+	char* pg_xlogfile_name_arg_type = "text";
+#else
+	/* 
+	 * The argument data type of PG's pg_xlogfile_name() function
+	 * has been changed from text to pg_lsn since PostgreSQL 9.4
+	 */
+	char* pg_xlogfile_name_arg_type = "pg_lsn";
+#endif
+
+
 	archive_dir = DatumGetCString(DirectFunctionCall1(textout,
 													  PointerGetDatum(PG_GETARG_TEXT_P(0))));
 
@@ -152,7 +163,7 @@ pgpool_switch_xlog(PG_FUNCTION_ARGS)
 #endif
 
 	switch_xlog_oid = get_function_oid("pg_switch_xlog", NULL, "pg_catalog");
-	xlogfile_name_oid = get_function_oid("pg_xlogfile_name", "text", "pg_catalog");
+	xlogfile_name_oid = get_function_oid("pg_xlogfile_name", pg_xlogfile_name_arg_type, "pg_catalog");
 
 	if (!switch_xlog_oid || !xlogfile_name_oid)
 		elog(ERROR, "cannot find xlog functions");
