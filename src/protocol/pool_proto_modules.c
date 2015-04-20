@@ -758,8 +758,8 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	else
 	{
 		pool_set_query_in_progress();
-		pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID, false);
-		pool_extended_send_and_wait(query_context, "E", len, contents, -1, MASTER_NODE_ID, false);
+		pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID, true);
+		pool_extended_send_and_wait(query_context, "E", len, contents, -1, MASTER_NODE_ID, true);
 	}
 
 	return POOL_CONTINUE;
