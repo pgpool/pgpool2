@@ -1109,8 +1109,15 @@ void pool_add_dml_table_oid(int oid)
 
 	if (oidbufp >= oidbuf_size)
 	{
+		MemoryContext oldcxt;
 		oidbuf_size += POOL_OIDBUF_SIZE;
+		/*
+		 * This need to live throughout the life of child so home it in
+		 * TopMemoryContext
+		 */
+		oldcxt = MemoryContextSwitchTo(TopMemoryContext);
 		tmp = repalloc(oidbuf, sizeof(int) * oidbuf_size);
+		oldcxt = MemoryContextSwitchTo(oldcxt);
 		if (tmp == NULL)
 			return;
 
@@ -1120,11 +1127,12 @@ void pool_add_dml_table_oid(int oid)
 	for (i=0;i<oidbufp;i++)
 	{
 		if (oidbuf[i] == oid)
-			/* Already same oid exists */
+		/* Already same oid exists */
 			return;
 	}
 	oidbuf[oidbufp++] = oid;
 }
+
 
 /*
  * Get table oid buffer
