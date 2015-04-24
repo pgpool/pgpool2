@@ -4857,9 +4857,9 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
 
 <h2>PCP コマンド一覧</h2>
 <p>pgpool-II を操作する UNIX コマンドとして、以下のものがあります。</p>
+<p><font color="red">注意</font>：pgpool-II 3.5 より、全ての PCP コマンドのパラメータ書式が変更されています。</p>
 
 <table border>
-<tr><th colspan="2">情報を取得する PCP コマンド</th></tr>
 <tr><th><a href="#pcp_node_count">pcp_node_count</a></th>
     <td>ノード数を取得する</td></tr>
 <tr><th><a href="#pcp_node_info">pcp_node_info</a></th>
@@ -4875,8 +4875,6 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
 <tr><th><a href="#pcp_systemdb_info">pcp_systemdb_info</a></th>
     <td>システム DB 情報を取得する</td></tr>
 <tr><th><a href="#pcp_detach_node">pcp_detach_node</a></th>
-
-<tr><th colspan="2">ノード等を操作する PCP コマンド</th></tr>
 <tr><th><a href="#pcp_detach_node">pcp_detach_node</a></th>
     <td>ノードを切り離す</td></tr>
 <tr><th><a href="#pcp_attach_node">pcp_attach_node</a></th>
@@ -4890,40 +4888,108 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
 </table>
 
 
-<h2 id="pcp_comand_args">共通引数</h2>
-<p>全てのコマンドには共通する引数があります。これは接続するpgpool-IIの情報や認証情報などです。</p>
+<h2 id="pcp_comand_password">PCP 接続認証</h2>
+
+<p>PCP ユーザ名とパスワードが <code>$prefix/etc</code> ディレクトリ内の <code>pcp.conf</code>
+で宣言されている必要があります。<code>pcp.conf</code> が他の場所にある場合には、pgpool-II 
+の起動時に <code>-F</code>  オプションで指定することができます。</p>
+
+<h3 id="password_file">パスワードファイル</h3>
+<p>PCP 接続時にパスワードが指定されなかった場合、ユーザのホームディレクトリに配置された .pcppass
+ファイルか、環境変数 PCPPASSFILE で参照されるファイルに格納されたパスワードが使用可能です。</p>
+<p>このファイルの各行の書式は以下のとおりです：</p>
 
 <pre>
-ex)
+hostname:port:username:password
+</pre>
+<p>
+（この文字列の行頭に # を付けてからファイルにコピーしておけば備忘録のコメントになります。）
+最初の３つのフィールドはそれぞれリテラル値か、任意のものにマッチする * を指定します。
+現在の接続パラメータにマッチした最初の行のpassword フィールドが使用されます。
+（したがって、ワイルドーカードを使用する場合には、具体的なエントリーの方を先に書きます。）
+エントリーの中に : か \ を含む必要がある場合には、その文字を \ をつかってエスケープしてください。
+ホスト名 localhost はローカルマシンからの TCP と Unix ドメインソケットの両方の接続にマッチします。</p>
+
+<p>.pcppass のパーミッションはグループおよび全ユーザからのアクセスを許してはいけません。
+chmod 0600 ~/.pcppass を実行してください。これよりパーミッションの制限が弱い場合には、
+このファイルは無視されます。</p>
+
+<h2 id="pcp_common_options">共通引数</h2>
+<p>全てのコマンドには共通する引数があります。そのほとんどは認証情報を指定するもので、
+他は冗長出力モードやデバッグなどに関するものです。</p>
+
+<pre>
+-ex)
 $ pcp_node_count [-d] 10 localhost 9898 postgres hogehoge
 </pre>
 
-<table border>
-<tr>
-<th nowrap>第 1 引数</th><td>タイムアウト値<br>
-秒数でタイムアウト値を指定します。
-この時間内に pgpool-II から応答がない場合はコネクションを切断して終了します。
-なお、このオプションは 2.1 からは無視するようになっています。
-</td>
-</tr>
-<tr><th nowrap>第 2 引数</th><td>pgpool-II が稼動しているホスト名</td></tr>
-<tr><th nowrap>第 3 引数</th><td>PCP ポート番号</td></tr>
-<tr><th nowrap>第 4 引数</th><td>PCP ユーザ名</td></tr>
-<tr><th nowrap>第 5 引数</th><td>PCP パスワード</td></tr>
-</table>
+<dl class="options">
+<dt><code>
+-h <strong>hostname</strong>, --host=<strong>hostname</strong>
+</code></dt>
+<dd><p>
+pgpool-II が稼働しているホスト名を指定します。
+スラッシュから始まる場合は、Unix ドメインソケットのディレクトリと解釈されます。
+</p></dd>
 
-<p>
-オプション引数として、<code>-d </code>があります。
-<code>-d</code> が指定されるとデバッグ情報を出力します。
-</p>
-<p>
-PCPユーザ名とパスワードは <code>./configure</code> 時に <code>--prefix</code> で指定した
-'インストールディレクトリ/etc' にある pcp.conf 内に記述されているものを指定します。
-pcp.conf ファイルの場所がデフォルト以外の場所にある場合、
-<code>pgpool</code> の <code>-F</code> オプションでその位置を指定することができます。
-パスワードはコマンドに渡す時点でmd5化されている必要はありません。
-</p>
+<dt><code>
+-p <strong>port</strong>, --port=<strong>port</strong>
+</code></dt>
+<dd><p>
+PCP ポート番号を指定します。(デフォルト: 9898)
+</p></dd>
 
+<dt><code>
+-u <strong>username</strong>, --username=<strong>username</strong>
+</code></dt>
+<dd><p>
+PCP 認証のユーザ名を指定します。(デフォルト: OS のユーザ)
+</p></dd>
+
+<dt><code>
+-w, --no-password
+</code></dt>
+<dd><p>
+パスワード入力プロンプトを表示しません。
+もしパスワードが .pcppass ファイルから取得できない場合には接続は失敗します。
+このオプションはバッチジョブやスクリプトなど、パスワード入力が行うユーザいない場合に有用です。</p>
+</p></dd>
+
+<dt><code>
+-W, --password
+</code></dt>
+<dd><p>
+パスワード入力プロンプトを表示します。（自動的に選択される動作です）
+</p></dd>
+
+<dt><code>
+-d, --debug
+</code></dt>
+<dd><p>
+デバッグメッセージを表示します。
+</p></dd>
+
+<dt><code>
+-v, --verbose
+</code></dt>
+<dd><p>
+冗長出力を有効にします。
+</p></dd>
+
+<dt><code>
+-V, --version
+</code></dt>
+<dd><p>
+バージョンを表示して終了します。
+</p></dd>
+
+<dt><code>
+-?, --help
+</code></dt>
+<dd><p>
+コマンドラインのヘルプを表示して終了します。
+</p></dd>
+</dl>
 
 <h2>情報を取得するコマンド群</h2>
 <p>
@@ -4932,37 +4998,62 @@ pcp.conf ファイルの場所がデフォルト以外の場所にある場合�
 
 
 <h3 id="pcp_node_count">pcp_node_count</h3>
-<dl class="flat">
-<dt>書式</dt>
-<dd><code>pcp_node_count  _timeout_  _host_  _port_  _userid_  _passwd_</code></dd>
+<dl class="options">
+<dt>書式<dt>
+<dd>
+<pre><code>pcp_node_count [options...] </code></pre>
+</dd>
 <dt>説明</dt>
-<dd>pgpool-II の pgpool.conf で定義されたノードの総数を表示します。
-    切り離されているノードの区別はしません。</dd>
+<dd>
+	<p>pgpool-II の pgpool.conf で定義されたノードの総数を表示します。
+    切り離されているノードの区別はしません。</p>
+</dd>
+<dt>オプション</dt>
+<dd>
+	<p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
+</dd>
 </dl>
 
-
 <h3><a name="pcp_node_info"></a>pcp_node_info</h3>
-<dl class="flat">
+<dl class="options">
 <dt>書式</dt>
-<dd><code>pcp_node_info  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_</code></dd>
-</pre>
+<dd>
+<pre><code>pcp_node_info [options...] [node_id] </code></pre>
+</dd>
 <dt>説明</dt>
-<dd>pgpool-II の pgpool.conf で定義されたノードの情報を表示します。出力結果は以下の例のとおりです。
+<dd>
+	<p>指定されたノードの情報を表示します。</p>
+</dd>
+<dt>オプション</dt>
+<dd>
+	<dl>
+	<dt><code>-n <strong>node_id</strong>, --node-id=<strong>node_id</strong></code></dt>
+	<dd>
+		<p>情報を表示するバックエンドノードのインデックスを指定します。</p>
+	</dd>
+	<dt>その他</dt>
+	<dd>
+		<p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
+	</dd>
+	</dl>
+</dd>
 
+<dt>出力例</dt>
+<dd>
 <pre>
-$ pcp_node_info 10 localhost 9898 postgres hogehoge 0
+$ pcp_node_info -h localhost -U postgres 0
 host1 5432 1 1073741823.500000
 </pre>
 
 <p>結果は以下の順のとおりです。</p>
-<ul>
-<li>1. ノードのホスト名</li>
-<li>2. ノードのポート番号</li>
-<li>3. ステータス</li>
-<li>4. ロードバランスウェイト</li>
-</ul>
+<ol>
+<li>ノードのホスト名</li>
+<li>ノードのポート番号</li>
+<li>ステータス</li>
+<li>ロードバランスウェイト</li>
+</ol>
 
-<p>ステータスは [0..3] までの数字で表わされます。各数字の意味は：</p>
+<p>ステータスは [0..3] までの数字で表わされます。各数字の意味は以下のとおりです。</p>
 <ul>
 <li>0 - 初期化時のみに表われる。PCP コマンドで表示されることはない。</li>
 <li>1 - ノード稼働中。接続無し</li>
@@ -4971,37 +5062,49 @@ host1 5432 1 1073741823.500000
 </ul>
 
 <p>ロードバランスウェイトは Normalize されたフォーマットで出力されます。</p>
-<p>定義されていないノード ID を指定すると BackendError と表示され、
-<a href="#exit_status">終了コード 12</a> で終了します。</p>
+
+<p><code>--verbose</code> オプションは出力内容を理解するのに役に立ちます。例：</p>
+ 
+ <pre>
+$ pcp_node_info --verbose -h localhost -U postgres 0
+Hostname: host1
+Port    : 5432
+Status  : 1
+Weight  : 0.5
+</pre>
+
 </dd>
 </dl>
 
 <h3><a name="pcp_watchdog_info"></a>pcp_watchdog_info</h3>
-<dl class="flat">
+<dl>
 <dt>書式</dt>
-<dd><code>pcp_watchdog_info  _timeout_  _host_  _port_  _userid_  _passwd_  [_watchdogid_]</code></dd>
+<dd>
+	<pre><code>pcp_watchdog_info [options...] [watchdog_id]</code></pre>
+</dd>
 
 <dt>説明</dt>
 <dd>
 <p>pgpool-II の pgpool.conf の watchdog セクションで定義された pgpool-II の watchdog ステータスを表示します。</p>
 <p>_watchdogid_ は other_pgpool_hostname パラメータの添字です。
 省略された場合には、_host_:_port_ で動作している pgpool-II の watchdog ステータスが表示されます。</p>
-<p>出力結果は以下の例のとおりです。</p>
 
+<dt>出力例</dt>
+<dd>
 <pre>
-$ pcp_watchdog_info 10 localhost 9898 postgres hogehoge 0
+$ pcp_watchdog_info -h localhost -p 9898 -u postgres 0
 host1 9999 9000 2
 </pre>
 
 <p>結果は以下の順のとおりです。</p>
-<ul>
-<li>1. pgpool-II のホスト名</li>
-<li>2. pgpool-II ポート番号</li>
-<li>3. watchdog ポート番号</li>
-<li>4. watchdog ステータス</li>
-</ul>
+<ol>
+<li>pgpool-II のホスト名</li>
+<li>pgpool-II ポート番号</li>
+<li>watchdog ポート番号</li>
+<li>watchdog ステータス</li>
+</ol>
 
-<p>ステータスは [1..4] までの数字で表わされます。各数字の意味は：</p>
+<p>ステータスは [1..4] までの数字で表わされます。各数字の意味は以下のとおりです。</p>
 <ul>
 <li>1 - 初期化時のみに表われる。指定された pgpool-II が未起動の場合に表示される。</li>
 <li>2 - スタンバイ: 仮想 IP を保持していない</li>
@@ -5009,26 +5112,47 @@ host1 9999 9000 2
 <li>4 - ダウン</li>
 </ul>
 
-<p>定義されていない watchdog ID を指定すると BackendError と表示され、
-<a href="#exit_status">終了コード 12</a> で終了します。</p>
 </dd>
 </dl>
 
 <h3 id="pcp_proc_count">pcp_proc_count</h3>
-<dl class="flat">
+<dl>
 <dt>書式</dt>
-<dd><code>pcp_proc_count  _timeout_  _host_  _port_  _userid_  _passwd_</code></dd>
+<dd>
+	<pre><code>pcp_proc_count [options...] </code></pre>
+</dd>
 <dt>説明</dt>
-<dd>pgpool-II の子プロセスのプロセス ID を一覧表示します。複数ある場合は空白文字で区切られます。</dd>
+<dd><p>pgpool-II の子プロセスのプロセス ID を一覧表示します。複数ある場合は空白文字で区切られます。<p></dd>
+<dt>オプション</dt>
+<dd>
+	<p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
+</dd>
 </dl>
 
 <h3 id="pcp_proc_info">pcp_proc_info</h3>
-<dl class="flat">
+<dl>
 <dt>書式</dt>
-<dd><code>pcp_proc_info  _timeout_  _host_  _port_  _userid_  _passwd_  _processid_</code></dd>
+<dd>
+	<pre><code>pcp_proc_info [options...] [processid] </code></pre>
+</dd>
 <dt>説明</dt>
 <dd>
-<p>pgpool-II の子プロセス情報を表示します。出力結果は以下の例のとおりです。</p>
+<p>pgpool-II の子プロセス情報を表示します。</p>
+</dd>
+<dt>オプション</dt>
+<dd>
+	<dl class="options">
+	<dt><code>-P <strong>PID</strong>, --process-id=<strong>PID</strong></code></dt>
+	<dd>
+		<p>pgpool-II 子プロセスの PID を指定します。</p>
+	</dd>
+	<dt>その他</dt>
+	<dd>
+		<p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
+	</dd>
+</dd>
+</dd>
+<dt>出力例</dt>
 <pre>
 $ pcp_proc_info 10 localhost 9898 postgres hogehoge 3815
 postgres_db postgres 1150769932 1150767351 3 0 1 14067 1
@@ -5036,35 +5160,66 @@ postgres_db postgres 1150769932 1150767351 3 0 1 14068 1
 </pre>
 
 <p>結果は以下の順のとおりです。</p>
-<ul>
-<li>1. 接続しているデータベース名</li>
-<li>2. 接続しているユーザ名</li>
-<li>3. プロセススタート時刻</li>
-<li>4. コネクション作成時刻</li>
-<li>5. プロトコルメジャーバージョン</li>
-<li>6. プロトコルマイナーバージョン</li>
-<li>7. コネクション使用回数</li>
-<li>8. PostgreSQL バックエンドプロセスID</li>
-<li>9. フロントエンドから接続がある場合は 1、そうでなければ 0</li>
-</ul>
+<ol>
+<li>接続しているデータベース名</li>
+<li>接続しているユーザ名</li>
+<li>プロセススタート時刻</li>
+<li>コネクション作成時刻</li>
+<li>プロトコルメジャーバージョン</li>
+<li>プロトコルマイナーバージョン</li>
+<li>コネクション使用回数</li>
+<li>PostgreSQL バックエンドプロセスID</li>
+<li>フロントエンドから接続がある場合は 1、そうでなければ 0</li>
+</ol>
 
 <p>
 コネクションがバックエンドに対して張られていない場合、データは表示されません。
 コネクション情報が複数ある場合、複数行に 1 行 1 コネクション情報で表示されます。
 時刻は EPOCH タイムからの秒数で表わされます。
 </p>
-<p>定義されていないプロセスIDを指定するとBackendErrorと表示され、
-<a href="#exit_status">終了コード 12</a>で終了します。</p>
+
+<p><code>--verbose</code> オプションは出力内容を理解するのに役に立ちます。例：</p>
+
+<pre>
+$ pcp_proc_info --verbose -U postgres 3815
+Database     : postgres_db
+Username     : postgres
+Start time   : 1150769932
+Creation time: 1150767351
+Major        : 3
+Minor        : 0
+Counter      : 1
+PID          : 1467
+Connected    : 1
+Database     : postgres_db
+Username     : postgres
+Start time   : 1150769932
+Creation time: 1150767351
+Major        : 3
+Minor        : 0
+Counter      : 1
+PID          : 1468
+Connected    : 1
+</pre>
 </dd>
 </dl>
 
 <h3 id="pcp_pool_status">pcp_pool_status <span class="version">V3.1 〜</span></h3>
-<dl class="flat">
+<dl>
 <dt>書式</dt>
-<dd><code>pcp_pool_status _timeout_  _host_  _port_  _userid_  _passwd_</code></dd>
+<dd>
+	<pre><code>pcp_pool_status [options...]</code></pre>
+</dd>
 <dt>説明</dt>
 <dd>
-<p>pgpool.conf のパラメータ設定値を取得します。出力結果は以下のとおりです。</p>
+<p>pgpool.conf のパラメータ設定値を取得します。</p>
+</dd>
+<dt>オプション</dt>
+<dd>
+	<p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
+</dd>
+<dt>出力例</dt>
+<dd>
 <pre>
 $ pcp_pool_status 10 localhost 9898 postgres hogehoge
 name : listen_addresses
@@ -5087,12 +5242,21 @@ desc : PCP port # to bind
 </dl>
 
 <h3 id="pcp_systemdb_info">pcp_systemdb_info</h3>
-<dl class="flat">
+<dl>
 <dt>書式</dt>
-<dd><code>pcp_systemdb_info  _timeout_  _host_  _port_  _userid_  _passwd_</code></dd>
+<dd>
+	<pre><code>pcp_systemdb_info [options...]</code></pre>
+</dd>
 <dt>説明</dt>
 <dd>
-<p>pgpool-II のシステム DB 情報を表示します。出力結果は以下のとおりです。</p>
+<p>pgpool-II のシステム DB 情報を表示します。</p>
+</dd>
+<dt>オプション</dt>
+<dd>
+	<p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
+</dd>
+<dt>出力例</dt>
+<dd>
 <pre>
 $ pcp_systemdb_info 10 localhost 9898 postgres hogehoge
 localhost 5432 yamaguti '' pgpool_catalog pgpool 3
@@ -5102,145 +5266,182 @@ yamaguti public tellers bid 4 tid bid tbalance filler integer integer integer ch
 </pre>
 
 <p>まず 1 行目にシステム DB の情報が表示されます。結果は以下の順のとおりです。</p>
-<ul>
-<li>1. ホスト名</li>
-<li>2. ポート番号</li>
-<li>3. ユーザ名</li>
-<li>4. パスワード。空の場合は '' で表示されます。</li>
-<li>5. スキーマ名</li>
-<li>6. データベース名</li>
-<li>7. 分散定義関数の数</li>
-</ul>
+<ol>
+<li>ホスト名</li>
+<li>ポート番号</li>
+<li>ユーザ名</li>
+<li>パスワード。空の場合は '' で表示されます。</li>
+<li>スキーマ名</li>
+<li>データベース名</li>
+<li>分散定義関数の数</li>
+</ol>
 
 <p>
 2 行目以降は分散定義が表示されます。複数の定義がある場合は、1 つの定義につき 1 行表示されます。
 結果は以下の順のとおりです。
 </p>
-<ul>
-<li>1. 分散対象のデータベース名</li>
-<li>2. 分散対象のスキーマ名</li>
-<li>3. 分散対象のテーブル名</li>
-<li>4. 分散キーカラム名</li>
-<li>5. 分散対象テーブル中のカラム数</li>
-<li>6. カラム名リスト（5. のカラム数分表示されます）</li>
-<li>7. カラム型リスト（5. のカラム数分表示されます）</li>
-<li>8. 分散定義関数名</li>
-</ul>
+<ol>
+<li>分散対象のデータベース名</li>
+<li>分散対象のスキーマ名</li>
+<li>分散対象のテーブル名</li>
+<li>分散キーカラム名</li>
+<li>分散対象テーブル中のカラム数</li>
+<li>カラム名リスト（5. のカラム数分表示されます）</li>
+<li>カラム型リスト（5. のカラム数分表示されます）</li>
+<li>分散定義関数名</li>
+</ol>
 
-<p>
-システム DB が定義されていない（pgpool-II モードでない、かつクエリキャッシュがオフの）場合に実行すると、
-BackendErrorと表示され、<a href="#exit_status">終了コード 12</a> で終了します。
-</p>
 </dd>
 </dl>
 
 <h2>ノード等を操作するコマンド群</h2>
 
 <h3 id="pcp_detach_node">pcp_detach_node</h3>
-<dl class="flat">
+<dl>
 <dt>書式</dt>
-<dd><code>pcp_detach_node  [-g] _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_</code></dd>
+<dd>
+	<pre><code>pcp_detach_node [options...] [node_id] [grecefully]</code></pre>
+</dd>
 <dt>説明</dt>
 <dd>
 <p>pgpool-II のノードを切り離します。</p>
-<p>すでにpgpool-IIに接続しているセッションは強制的に切断されます。
-<p><code>-g</code> を指定すると、すべてのクライアントが接続を終了するまでノードを復帰しません。
-（ただし、<a href="#CLIENT_IDLE_LIMIT_IN_RECOVERY">client_idle_limit_in_recovery</a> が -1
-あるいは、<a href="#RECOVERY_TIMEOUT">recovery_timeout</a> が設定されている場合を除く）
-</p>
+<p>すでにpgpool-IIに接続しているセッションは強制的に切断されます。</p>
+</dd>
+<dt>オプション</dt>
+<dd>
+	<dl class="option">
+	<dt><code>-n <strong>node_id</strong>, --node-id=<strong>node_id</strong></code></dt>
+	<dd>
+		<p>切り離すバックエンドノードのインデックスを指定します。</p>
+	</dd>
+	<dt><code>-g, --gracefully</code></dt>
+	<dd>
+		<p>すべてのクライアントが接続を終了するまでノードを復帰しません。
+		（ただし、<a href="#CLIENT_IDLE_LIMIT_IN_RECOVERY">client_idle_limit_in_recovery</a> が -1
+		あるいは、<a href="#RECOVERY_TIMEOUT">recovery_timeout</a> が設定されている場合を除く）</p>
+	</dd>
+	<dt>その他</dt>
+	<dd>
+		<p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
+	</dd>
+	</dl>
 </dd>
 </dl>
 
 <h3 id="pcp_attach_node">pcp_attach_node</h3>
-<dl class="flat">
+<dl>
 <dt>書式</dt>
-<dd><code>pcp_attach_node  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_</code></dd>
+<dd>
+	<pre><code>pcp_attach_node [options...] [node_id]</code></pre>
+</dd>
 <dt>説明</dt>
-<dd>pgpool-II のノードを復帰させます。</dd>
+<dd><p>pgpool-II のノードを復帰させます。</p></dd>
+<dt>オプション</dt>
+<dd>
+	<dl class="options">
+	<dt><code>-n <strong>node_id</strong>, --node-id=<strong>node_id</strong></code></dt>
+	<dd>
+		<p>復帰させるバックエンドノードのインデックスを指定します。</p>
+	</dd>
+	<dt>その他</dt>
+	<dd>
+		<p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
+	</dd>
+	</dl>
+</dd>
 </dl>
 
 <h3 id="pcp_promote_node">pcp_promote_node <span class="version">V3.1 〜</span></h3>
-<dl class="flat">
+<dl>
 <dt>書式</dt>
-<dd><code>pcp_promote_node  [-g] _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_</code></dd>
+<dd>
+	<pre><code>pcp_promote_node [options...] [node_id] [gracefully]</code></pre>
+</dd>
 <dt>説明</dt>
 <dd>
 <p>pgpool-II のノードをマスターに昇格させます。これは、マスタースレーブモードで
 ストリーミングレプリケーション構成の場合のみ使用できます。
 </p>
-<p><code>-g</code> を指定すると、すべてのクライアントが接続を終了するまでノードを復帰しません。
-（ただし、<a href="#CLIENT_IDLE_LIMIT_IN_RECOVERY">client_idle_limit_in_recovery</a> が -1
-あるいは、<a href="#RECOVERY_TIMEOUT">recovery_timeout</a> が設定されている場合を除く）
-</p>
+</dd>
+<dt>オプション</dt>
+<dd>
+	<dl class="option">
+	<dt><code>-n <strong>node_id</strong>, --node-id=<strong>node_id</strong></code></dt>
+	<dd>
+		<p>マスターに昇格させるバックエンドノードのインデックスを指定します。</p>
+	</dd>
+	<dt><code>-g, --gracefully</code></dt>
+	<dd>
+		<p>すべてのクライアントが接続を終了するまでノードを復帰しません。
+		（ただし、<a href="#CLIENT_IDLE_LIMIT_IN_RECOVERY">client_idle_limit_in_recovery</a> が -1
+		あるいは、<a href="#RECOVERY_TIMEOUT">recovery_timeout</a> が設定されている場合を除く）</p>
+	</dd>
+	<dt>その他</dt>
+	<dd>
+		<p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
+	</dd>
+	</dl>
 </dd>
 </dl>
 
 <h3 id="pcp_stop_pgpool">pcp_stop_pgpool</h3>
-<dl class="flat">
+<dl>
 <dt>書式</dt>
-<dd><code>pcp_stop_pgpool  _timeout_  _host_  _port_  _userid_  _passwd_  _mode_</code></dd>
+<dd>
+	<pre><code>pcp_stop_pgpool [options...] [mode]</code></pre>
+</dd>
 <dt>説明</dt>
-<dd><p>pgpool-IIを指定されたモードでシャットダウンします。指定できるモードは以下のとおりです。</p>
-<ul>
-<li>s    - smart モード</li>
-<li>f    - fast モード</li>
-<li>i    - immediate モード</li>
-</ul>
-
-<p>pgpool-II が起動していない場合は ConnectionError と表示され、
-<a href="#exit_status">終了コード 8</a> で終了します。</p>
-
-<p>
-※ 現在は fast モードと immediate シャットダウンの処理に区別はありません。
-命令を送った時点でクライアントがいる・いないに関わらずシャットダウン処理を即座に行います。
-</p>
+<dd>
+	<p>pgpool-IIを指定されたモードでシャットダウンします。</p>
+</dd>
+<dt>オプション</dt>
+<dd>
+	<dl class="options">
+	<dt><code>-m <strong>mode</strong>, --mode=<strong>mode</strong></code></p>
+	<dd>
+		<p>シャットダウンモードを指定します。指定できるモードは以下のとおりです。</p>
+		<ul>
+			<li>s, smart        : smart モード</li>
+			<li>f, fast         : fast モード</li>
+			<li>i, immediate    : immediate モード</li>
+		</ul>
+		<p>
+		※ 現在は fast モードと immediate シャットダウンの処理に区別はありません。
+		命令を送った時点でクライアントがいる・いないに関わらずシャットダウン処理を即座に行います。
+		</p>
+	</dd>
+	<dt>その他</dt>
+	<dd>
+		<p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
+	</dd>
+	</dl>
 </dd>
 </dl>
 
 <h3 id="pcp_recovery_node">pcp_recovery_node</h3>
-<dl class="flat">
+<dl>
 <dt>書式</dt>
-<dd><code>pcp_recovery_node  _timeout_  _host_  _port_  _userid_  _passwd_  _nodeid_</code></dd>
-<dt>説明</dt>
 <dd>
+	<pre><code>pcp_recovery_node [options...] [node_id] </code></pre>
+</dd>
+<dt>説明</dt>
+<dd><p>
 pgpool-II のノードをデータを再同期させた上で復帰させます。
+</p></dd>
+<dt>オプション</dt>
+<dd>
+	<dl class="options">
+	<dt><code>-n <strong>node_id</strong>, --node-id=<strong>node_id</strong></code></dt>
+	<dd>
+		<p>バックエンドノードのインデックスを指定します。</p>
+	</dd>
+	<dt>その他</dt>
+	<dd>
+		<p><a href="#pcp_common_options">common options</a> を参照してください。</p>
+	</dd>
+	</dl>
 </dd>
 </dl>
-
-<h2 id="exit_status">終了ステータス</h2>
-<p>
-PCPコマンドは正常に処理を終了した場合、ステータス'0'で終了します。エラーが起
-きた場合は以下のステータスにより終了します。
-</p>
-
-<table border>
-<tr><th>UNKNOWNERR</th>
-    <td>1</td><td>不明なエラー</td></tr>
-<tr><th>EOFER</th>
-    <td>2</td><td>EOFエラー</td></tr>
-<tr><th>NOMEMERR</th>
-    <td>3</td><td>メモリ不足</td></tr>
-<tr><th>READERR</th>
-    <td>4</td><td>サーバからのデータ読み込みエラー</td></tr>
-<tr><th>WRITEERR</th>
-    <td>5</td><td>サーバへのデータ書き込みエラー</td></tr>
-<tr><th>TIMEOUTERR</th>
-    <td>6</td><td>タイムアウト</td></tr>
-<tr><th>INVALERR</th>
-    <td>7</td><td>PCPコマンドへの不正なオプション</td></tr>
-<tr><th>CONNERR</th>
-    <td>8</td><td>サーバ接続エラー</td></tr>
-<tr><th>NOCONNERR</th>
-    <td>9</td><td>接続が存在しない</td></tr>
-<tr><th>SOCKERR</th>
-    <td>10</td><td>ソケットエラー</td></tr>
-<tr><th>HOSTERR</th>
-    <td>11</td><td>ホスト名解決エラー</td></tr>
-<tr><th>BACKENDERR</th>
-    <td>12</td><td>サーバでのPCP処理エラー。存在しないプロセスIDの情報を取得しようとした場合など</td></tr>
-<tr><th>AUTHERR</th>
-    <td>13</td><td>認証エラー</td></tr>
-</table>
 
 <p class="top_link"><a href="#Top">△ back to top</a></p>
 
@@ -14388,6 +14589,10 @@ HINT:  check data consistency between master and other db node
   </li><li> コネクションプール再利用時に、ソケットが壊れている場合は再接続するようにしました(Yoshiyuki Asaba)
   </li><li> PostgreSQL 7.4.x の libpq を使ってビルドしようとすると、
       configure スクリプトでエラーとなってしまう不具合を修正しました(Yoshiyuki Asaba)
+	  <dl>
+	  <dt>hoge</dt><dd>HOGE</dd>
+	  <dt>hoge</dt><dd>HOGE</dd>
+	  </dl>
 </li></ul>
 
 <!-- ================================================================================ -->

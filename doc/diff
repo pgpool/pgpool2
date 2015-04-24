@@ -1,0 +1,70 @@
+diff --git a/doc/pgpool-ja.html b/doc/pgpool-ja.html
+index d7a99a1..567c6f3 100644
+--- a/doc/pgpool-ja.html
++++ b/doc/pgpool-ja.html
+@@ -1730,7 +1730,7 @@ black_function_list = 'nextval,setval,lastval,currval'
+     <p>
+     true を設定すると、レプリケーションモードでは SELECT 文をレプリケーションします。
+     これは pgpool-II 1.0 までの挙動と同じになります。
+-    false を設定すると SELECT 文をマスタのみに送信します。デフォルト値は false です。
++    false を設定すると更新を伴わない SELECT 文をマスタのみに送信します。デフォルト値は false です。
+     </p>
+     <p>
+     replicate_select、<a href="#LOAD_BALANCE_MODE">load_balance_mode</a>、
+@@ -1738,34 +1738,28 @@ black_function_list = 'nextval,setval,lastval,currval'
+     レプリケーションモードの動作が変化します。詳細を表に示します。
+     </p>
+ 
+-    <table border>
+-    <tr>
+-    <th class="nodec">SELECTが明示的なトランザクションブロックの内側にある</th>
+-    <td>Y</td><td>Y</td><td>Y</td><td>N</td><td>N</td><td>N</td><td>Y</td><td>N</td>
+-    </tr>
+-
+-    <tr>
+-    <th class="nodec">replicate_selectがtrue</th>
+-    <td>Y</td>
+-    <td>Y</td>
+-    <td>N</td>
+-    <td>N</td>
+-    <td>Y</td>
+-    <td>Y</td>
+-    <td>N</td>
+-    <td>N</td>
+-    </tr>
+-
+-    <tr>
+-    <th class="nodec">load_balance_modeがtrue</th>
+-    <td>Y</td><td>N</td><td>N</td><td>N</td><td>Y</td><td>N</td><td>Y</td><td>Y</td>
+-    </tr>
+-
+-    <tr>
+-    <th class="nodec">結果(R:レプリケーション, M: マスタのみに送信, L: ロードバランスされる)</th>
+-    <td>R</td><td>R</td><td>M</td><td>M</td><td>R</td><td>R</td><td>M</td><td>L</td>
+-    </tr>
+-    </table>
++	<table border>
++	<tr class="center">
++    	<th class="nodec">replicate_selectがtrue</th>
++		<td>Y</td><td colspan="4">N</td>
++	</tr>
++	<tr class="center">
++    	<th class="nodec">load_balance_modeがtrue</th>
++		<td>any</td><td colspan="3">Y</td><td>N</td>
++	<tr class="center">
++    	<th class="nodec">SELECTが明示的なトランザクションブロックの内側にある</th>
++		<td>any</td><td colspan="2">Y</td><td>N</td><td>any</td>
++	</tr>
++	<tr class="center">
++    	<th class="nodec">「トランザクション分離レベルがSERIALIZABLE」または<br>
++		                  「トランザクション内で更新を伴うクエリが実行されている」</th>
++		<td>any</td><td>Y</td><td>N</td><td>any</td><td>any</td>
++	</tr>
++	<tr class="footer center">
++    	<th class="nodec">結果(R:レプリケーション, M: マスタのみに送信, L: ロードバランスされる)</th>
++		<td>R</td><td>M</td><td>L</td><td>L</td><td>M</td>
++	</tr>
++	</table>
+     </dd>
+ 
+ <dt><a name="INSERT_LOCK"></a>insert_lock</dt>
