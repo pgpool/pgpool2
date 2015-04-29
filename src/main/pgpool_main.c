@@ -2399,7 +2399,7 @@ static int trigger_failover_command(int node, const char *command_line,
 							string_append_char(exec_cmd, newmaster->backend_hostname);
 						else
 							/* no valid new master */
-							string_append_char(exec_cmd, "");
+							string_append_char(exec_cmd, "\"\"");
 						break;
 
 					case 'm': /* new master node id */
@@ -2416,7 +2416,7 @@ static int trigger_failover_command(int node, const char *command_line,
 						}
 						else
 							/* no valid new master */
-							string_append_char(exec_cmd, "");
+							string_append_char(exec_cmd, "\"\"");
 						break;
 
 					case 'R': /* new master database directory */
@@ -2425,7 +2425,7 @@ static int trigger_failover_command(int node, const char *command_line,
 							string_append_char(exec_cmd, newmaster->backend_data_directory);
 						else
 							/* no valid new master */
-							string_append_char(exec_cmd, "");
+							string_append_char(exec_cmd, "\"\"");
 						break;
 
 					case 'M': /* old master node id */
