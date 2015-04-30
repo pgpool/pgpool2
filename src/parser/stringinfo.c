@@ -133,7 +133,7 @@ appendStringInfoVA(StringInfo str, const char *fmt, va_list args)
 	str->data[str->maxlen - 1] = '\0';
 #endif
 
-	nprinted = vsnprintf(str->data + str->len, avail, fmt, args);
+	nprinted = pvsnprintf(str->data + str->len, (size_t) avail, fmt, args);
 
 	/*
 	 * Note: some versions of vsnprintf return the number of chars actually
