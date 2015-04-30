@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include "pg_config_manual.h"
 
+#ifdef USE_REPL_SNPRINTF
 /* port.h */
 extern int pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args);
 
@@ -37,6 +38,8 @@ extern int pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args);
 #define vsnprintf       pg_vsnprintf
 #endif
 #endif
+
+#endif   /* USE_REPL_SNPRINTF */
 
 /* utils.memutils.h */
 
