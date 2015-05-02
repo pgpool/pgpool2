@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -2683,6 +2683,13 @@ static void initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 	memset(con_info, 0, size);
 
 	size = pool_config->num_init_children * (sizeof(ProcessInfo));
+
+	ereport(DEBUG1,
+			(errmsg("ProcessInfo: num_init_children (%d) * sizeof(ProcessInfo) (%zu) = %d bytes requested for shared memory",
+					pool_config->num_init_children,
+					sizeof(ProcessInfo),
+					size)));
+
 	process_info = pool_shared_memory_create(size);
 	memset(process_info, 0, size);
 
@@ -2693,6 +2700,10 @@ static void initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 
 	/* create fail over/switch over event area */
 	Req_info = pool_shared_memory_create(sizeof(POOL_REQUEST_INFO));
+
+	ereport(DEBUG1,
+			(errmsg("Request info are: sizeof(POOL_REQUEST_INFO) %zu bytes requested for shared memory",
+					sizeof(POOL_REQUEST_INFO))));
 
 	/*
 	 * Initialize backend status area.
@@ -2712,6 +2723,10 @@ static void initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 	Req_info->request_queue_head = Req_info->request_queue_tail = -1;
 	InRecovery = pool_shared_memory_create(sizeof(int));
 	*InRecovery = RECOVERY_INIT;
+
+	ereport(DEBUG1,
+			(errmsg("Recovery management area: sizeof(int) %zu bytes requested for shared memory",
+					sizeof(int))));
 
 	/*
 	 * Initialize shared memory cache
