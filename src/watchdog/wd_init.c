@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2012	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -47,6 +47,12 @@ wd_init(void)
 	{
 		WD_List = pool_shared_memory_create(sizeof(WdInfo) * MAX_WATCHDOG_NUM);
 		memset(WD_List, 0, sizeof(WdInfo) * MAX_WATCHDOG_NUM);
+
+		ereport(DEBUG1,
+				(errmsg("WD_List: sizeof(WdInfo) (%zu) * MAX_WATCHDOG_NUM (%d) = %zu bytes requested for shared memory",
+						sizeof(WdInfo),
+						MAX_WATCHDOG_NUM,
+						sizeof(WdInfo) * MAX_WATCHDOG_NUM)));
 	}
 
 	/* allocate node list */
@@ -54,6 +60,12 @@ wd_init(void)
 	{
 		WD_Node_List = pool_shared_memory_create(sizeof(unsigned char) * MAX_NUM_BACKENDS);
 		memset(WD_Node_List, 0, sizeof(unsigned char) * MAX_NUM_BACKENDS);
+
+		ereport(DEBUG1,
+				(errmsg("WD_Node_List: sizeof(unsigned char) (%zu) * MAX_NUM_BACKENDS (%d) = %zu bytes requested for shared memory",
+						sizeof(unsigned char),
+						MAX_WATCHDOG_NUM,
+						sizeof(unsigned char) * MAX_NUM_BACKENDS)));
 	}
 
 	/* initialize interlock */
