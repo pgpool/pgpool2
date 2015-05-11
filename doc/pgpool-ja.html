@@ -4935,6 +4935,8 @@ BackendErrorと表示され、<a href="#exit_status">終了コード 12</a> で�
 <dd>
 <p>pgpool-II のノードをマスターに昇格させます。これは、マスタースレーブモードで
 ストリーミングレプリケーション構成の場合のみ使用できます。
+このコマンドは実際にPostgreSQLのスタンバイサーバを昇格するわけではないことに注意してください。
+単にpgpool-IIの内部ステータスを変更し、フェイルオーバするだけです。ですので、ユーザはこのコマンドを使う際には自分でPostgreSQLのスタンバイを昇格させるようにしてください。
 </p>
 <p><code>-g</code> を指定すると、すべてのクライアントが接続を終了するまでノードを復帰しません。
 （ただし、<a href="#CLIENT_IDLE_LIMIT_IN_RECOVERY">client_idle_limit_in_recovery</a> が -1
