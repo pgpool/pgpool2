@@ -5216,7 +5216,7 @@ each line multiple times. The result is in the following order:
 </dd>
 </dl>
 
-<h3 id="pcp_promote_node">pcp_attach_node <span class="version">V3.1 -</span></h3>
+<h3 id="pcp_promote_node">pcp_promote_node <span class="version">V3.1 -</span></h3>
 <dl>
 <dt>Format:</dt>
 <dd>
@@ -5224,7 +5224,7 @@ each line multiple times. The result is in the following order:
 </dd>
 <dt>Description:</dt>
 <dd>
-	<p>Promotes the given node as new master to pgpool-II. In master/slave streaming replication only.</p>
+	<p>Promotes the given node as new master to pgpool-II. In master/slave streaming replication only. Please note that this command does not actually promote standby PostgreSQL backend: it just changes the internal status of pgpool-II and trigger failover and users have to promote standby PostgreSQL outside pgpool-II.</p>
 </dd>
 <dt>Options:</dt>
 <dd>

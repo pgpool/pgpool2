@@ -5362,6 +5362,8 @@ yamaguti public tellers bid 4 tid bid tbalance filler integer integer integer ch
 <dd>
 <p>pgpool-II のノードをマスターに昇格させます。これは、マスタースレーブモードで
 ストリーミングレプリケーション構成の場合のみ使用できます。
+このコマンドは実際にPostgreSQLのスタンバイサーバを昇格するわけではないことに注意してください。
+単にpgpool-IIの内部ステータスを変更し、フェイルオーバするだけです。ですので、ユーザはこのコマンドを使う際には自分でPostgreSQLのスタンバイを昇格させるようにしてください。
 </p>
 </dd>
 <dt>オプション</dt>
