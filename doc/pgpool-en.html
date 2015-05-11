@@ -5054,6 +5054,7 @@ client_idle_limit_in_recovery is -1 or recovery_timeout is expired).
 <dd>
 <p>
 Promotes the given node as new master to pgpool-II. In master/slave streaming replication only.
+Please note that this command does not actually promote standby PostgreSQL backend: it just changes the internal status of pgpool-II and trigger failover and users have to promote standby PostgreSQL outside pgpool-II.
 If -g is given, wait until all clients are disconnected (unless
 client_idle_limit_in_recovery is -1 or recovery_timeout is expired).
 </p>
