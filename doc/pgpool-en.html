@@ -1808,9 +1808,8 @@ See also a <a href="where_to_send_queries.pdf">flow chart</a>.
 
 <p>
 <font color="red">
-Note: the JDBC driver has an autocommit option. If autocommit is false, the JDBC
-driver sends "BEGIN" and "COMMIT" by itself. So pgpool cannot do any load
-balancing. You need to call setAutoCommit(true) to enable autocommit.
+Note: the JDBC driver has an autocommit option. If the autocommit is false, the JDBC
+driver sends "BEGIN" and "COMMIT" by itself. In this case <a href="#condition_for_load_balance">the same restriction above regarding load balancing</a> will be applied.
 </font>
 </p>
 
