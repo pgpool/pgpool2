@@ -452,15 +452,13 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 			all_nodes_healthy = do_health_check(use_template_db,&health_check_node_id);
 			POOL_SETMASK(&BlockSig);
 
+			if (all_nodes_healthy && retrycnt)
+				ereport(LOG,
+					(errmsg("all backends are returned to a healthy state after %d retry(ies)",retrycnt)));
+
 			health_check_node_id = 0;
 			use_template_db = false;
 			retrycnt = 0;
-
-			if (all_nodes_healthy && retrycnt)
-				ereport(LOG,
-					(errmsg("after retry %d, All backends are returned to healthy state",retrycnt)));
-
-
 			processState = SLEEPING;
 
 			if (pool_config->health_check_timeout > 0)
