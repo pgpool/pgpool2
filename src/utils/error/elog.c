@@ -162,6 +162,8 @@ static int	errordata_stack_depth = -1; /* index of topmost active frame */
 
 static int	recursion_depth = 0;	/* to detect actual recursion */
 
+static int	frontend_error_recursion_depth = 0;	/* to detect recursion in delivering error to frontend clients */
+
 
 /* Macro for checking errordata_stack_depth is reasonable */
 #define CHECK_STACK_DEPTH() \
@@ -301,6 +303,7 @@ errstart(int elevel, const char *filename, int lineno,
 		if (in_error_recursion_trouble())
 		{
 			error_context_stack = NULL;
+			output_to_client = false;
 		}
 	}
 	if (++errordata_stack_depth >= ERRORDATA_STACK_SIZE)
@@ -1224,6 +1227,7 @@ FlushErrorState(void)
 	 */
 	errordata_stack_depth = -1;
 	recursion_depth = 0;
+	frontend_error_recursion_depth = 0;
 	/* Delete all data in ErrorContext */
 	MemoryContextResetAndDeleteChildren(ErrorContext);
 }
@@ -1735,6 +1739,11 @@ send_message_to_frontend(ErrorData *edata)
 	 */
 	if (edata->elevel < ERROR && pool_get_session_context(true) == NULL)
 		return;
+	/*
+	 * Leave if we are failing on sending the message to frontend.
+	 */
+	if (++frontend_error_recursion_depth > 2)
+		return;
 
 	protoVersion = get_frontend_protocol_version();
 	set_pg_frontend_blocking(false);
@@ -1829,6 +1838,7 @@ send_message_to_frontend(ErrorData *edata)
 	}
 
 	set_pg_frontend_blocking(true);
+	frontend_error_recursion_depth--;
 }
 
 /*
