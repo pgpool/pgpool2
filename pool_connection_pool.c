@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -660,12 +660,27 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 			}
 			else		/* select returns error */
 			{
-				if((errno == EINTR && retry) || errno == EAGAIN)
+				if ((errno == EINTR && retry) || errno == EAGAIN)
 				{
 					pool_log("connect_inet_domain_socket: select() interrupted. retrying...");
 					continue;
 				}
-				pool_log("connect_inet_domain_socket: select() interrupted");
+
+				/*
+				 * select(2) was interrupted by certain signal and we guess it
+				 * was not SIGALRM because health_check_timer_expired was not
+				 * set (if the variable was set, we can assume that SIGALRM
+				 * handler was called). Surely this is not a health check time
+				 * out. We can assume that this is a transient case. So we
+				 * will retry again...
+				 */
+				if (health_check_timer_expired == 0 && errno == EINTR)
+				{
+					pool_log("connect_inet_domain_socket: select() interrupted by certain signal. retrying...");
+					continue;
+				}
+
+				pool_log("connect_inet_domain_socket: select() interrupted or returns error by \"%s\"", strerror(errno));
 				close(fd);
 				return -1;
 			}
