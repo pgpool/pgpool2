@@ -156,7 +156,7 @@ relcache_lookup(TSRewriteContext *ctx)
     " , false)" \
 	" FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a " \
 	" LEFT JOIN pg_catalog.pg_attrdef d ON (a.attrelid = d.adrelid AND a.attnum = d.adnum)" \
-	" WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.oid = to_regclass('%s')" \
+	" WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.oid = to_regclass('\"%s\"')" \
 	" ORDER BY a.attnum"
 
 	char *query;

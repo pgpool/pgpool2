@@ -421,9 +421,9 @@ static bool is_system_catalog(char *table_name)
  */
 #define ISBELONGTOPGCATALOGQUERY "SELECT count(*) FROM pg_class AS c, pg_namespace AS n WHERE c.relname = '%s' AND c.relnamespace = n.oid AND n.nspname = 'pg_catalog'"
 
-#define ISBELONGTOPGCATALOGQUERY2 "SELECT count(*) FROM pg_class AS c, pg_namespace AS n WHERE c.oid = pgpool_regclass('%s') AND c.relnamespace = n.oid AND n.nspname = 'pg_catalog'"
+#define ISBELONGTOPGCATALOGQUERY2 "SELECT count(*) FROM pg_class AS c, pg_namespace AS n WHERE c.oid = pgpool_regclass('\"%s\"') AND c.relnamespace = n.oid AND n.nspname = 'pg_catalog'"
 
-#define ISBELONGTOPGCATALOGQUERY3 "SELECT count(*) FROM pg_class AS c, pg_namespace AS n WHERE c.oid = to_regclass('%s') AND c.relnamespace = n.oid AND n.nspname = 'pg_catalog'"
+#define ISBELONGTOPGCATALOGQUERY3 "SELECT count(*) FROM pg_class AS c, pg_namespace AS n WHERE c.oid = to_regclass('\"%s\"') AND c.relnamespace = n.oid AND n.nspname = 'pg_catalog'"
 
 	int hasreliscatalog;
 	bool result;
@@ -623,11 +623,11 @@ bool is_unlogged_table(char *table_name)
  * Query to know if the target table is a unlogged one.  This query
  * is valid in PostgreSQL 9.1 or later.
  */
-#define ISUNLOGGEDQUERY "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.relname = '%s' AND c.relpersistence = 'u'"
+#define ISUNLOGGEDQUERY "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.relname = '\"%s\"' AND c.relpersistence = 'u'"
 
-#define ISUNLOGGEDQUERY2 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = pgpool_regclass('%s') AND c.relpersistence = 'u'"
+#define ISUNLOGGEDQUERY2 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = pgpool_regclass('\"%s\"') AND c.relpersistence = 'u'"
 
-#define ISUNLOGGEDQUERY3 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = to_regclass('%s') AND c.relpersistence = 'u'"
+#define ISUNLOGGEDQUERY3 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = to_regclass('\"%s\"') AND c.relpersistence = 'u'"
 
 	int hasrelpersistence;
 	static POOL_RELCACHE *hasrelpersistence_cache;
@@ -716,9 +716,9 @@ bool is_view(char *table_name)
  */
 #define ISVIEWQUERY "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.relname = '%s' AND (c.relkind = 'v' OR c.relkind = 'm')"
 
-#define ISVIEWQUERY2 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = pgpool_regclass('%s') AND (c.relkind = 'v' OR c.relkind = 'm')"
+#define ISVIEWQUERY2 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = pgpool_regclass('\"%s\"') AND (c.relkind = 'v' OR c.relkind = 'm')"
 
-#define ISVIEWQUERY3 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = to_regclass('%s') AND (c.relkind = 'v' OR c.relkind = 'm')"
+#define ISVIEWQUERY3 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = to_regclass('\"%s\"') AND (c.relkind = 'v' OR c.relkind = 'm')"
 
 	static POOL_RELCACHE *relcache;
 	POOL_CONNECTION_POOL *backend;
@@ -982,9 +982,9 @@ int pool_table_name_to_oid(char *table_name)
 /*
  * Query to convert table name to oid
  */
-#define TABLE_TO_OID_QUERY "SELECT pgpool_regclass('%s')"
-#define TABLE_TO_OID_QUERY2 "SELECT oid FROM pg_class WHERE relname = '%s'"
-#define TABLE_TO_OID_QUERY3 "SELECT COALESCE(to_regclass('%s')::oid, 0)"
+#define TABLE_TO_OID_QUERY "SELECT pgpool_regclass('\"%s\"')"
+#define TABLE_TO_OID_QUERY2 "SELECT oid FROM pg_class WHERE relname = '\"%s\"'"
+#define TABLE_TO_OID_QUERY3 "SELECT COALESCE(to_regclass('\"%s\"')::oid, 0)"
 
 	int oid = 0;
 	static POOL_RELCACHE *relcache;
