@@ -213,7 +213,7 @@ typedef struct {
 	char *memqcache_method;   /* Cache store method. Either 'shmem'(shared memory) or 'memcached'. 'shmem' by default */
 	char *memqcache_memcached_host;   /* Memcached host name. Mandatory if memqcache_method=memcached. */
 	int memqcache_memcached_port;   /* Memcached port number. Mandatory if memqcache_method=memcached. */
-	int memqcache_total_size;   /* Total memory size in bytes for storing memory cache. Mandatory if memqcache_method=shmem. */
+	int64 memqcache_total_size;   /* Total memory size in bytes for storing memory cache. Mandatory if memqcache_method=shmem. */
 	int memqcache_max_num_cache;   /* Total number of cache entries. Mandatory if memqcache_method=shmem. */
 	int memqcache_expire;   /* Memory cache entry life time specified in seconds. 60 by default. */
 	int memqcache_auto_cache_invalidation; /* If true, invalidation of query cache is triggered by corresponding */

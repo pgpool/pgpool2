@@ -2017,7 +2017,7 @@ int pool_init_config(void)
     pool_config->memqcache_method = "shmem";
     pool_config->memqcache_memcached_host = "localhost";
     pool_config->memqcache_memcached_port = 11211;
-    pool_config->memqcache_total_size = 67108864;
+    pool_config->memqcache_total_size = (int64)67108864;
     pool_config->memqcache_max_num_cache = 1000000;
     pool_config->memqcache_expire = 0;
     pool_config->memqcache_auto_cache_invalidation = 1;
@@ -4829,7 +4829,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
         }
         else if (!strcmp(key, "memqcache_total_size") && CHECK_CONTEXT(INIT_CONFIG, context))
         {
-            int v = atoi(yytext);
+            int64 v = atoll(yytext);
 
             if (token != POOL_INTEGER || v < 0)
             {
