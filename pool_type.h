@@ -72,6 +72,8 @@ typedef unsigned char uint8;	/* == 8 bits */
 typedef unsigned short uint16;	/* == 16 bits */
 typedef unsigned int uint32;	/* == 32 bits */
 
+typedef long int int64;
+
 typedef enum {
 	LOAD_UNSELECTED = 0,
 	LOAD_SELECTED

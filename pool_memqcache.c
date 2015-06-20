@@ -1635,7 +1635,7 @@ static int pool_get_memqcache_blocks(void)
  */
 size_t pool_shared_memory_cache_size(void)
 {
-	int num_blocks;
+	int64 num_blocks;
 	size_t size;
 
 	if (pool_config->memqcache_maxcache > pool_config->memqcache_cache_block_size)
@@ -1649,12 +1649,12 @@ size_t pool_shared_memory_cache_size(void)
 		pool_config->memqcache_cache_block_size;
 	if (num_blocks == 0)
 	{
-		pool_error("pool_shared_memory_cache_size: memqcache_total_size %d should be greater or equal to memqcache_cache_block_size %d",
+		pool_error("pool_shared_memory_cache_size: memqcache_total_size %ld should be greater or equal to memqcache_cache_block_size %d",
 				   pool_config->memqcache_total_size, pool_config->memqcache_cache_block_size);
 		return 0;
 	}
 
-	pool_log("pool_shared_memory_cache_size: number of blocks: %d", num_blocks);
+	pool_log("pool_shared_memory_cache_size: number of blocks: %ld", num_blocks);
 
 	/* Remenber # of blocks */
 	pool_set_memqcache_blocks(num_blocks);
