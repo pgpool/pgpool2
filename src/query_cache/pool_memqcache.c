@@ -1738,7 +1738,7 @@ static int pool_get_memqcache_blocks(void)
  */
 size_t pool_shared_memory_cache_size(void)
 {
-	int num_blocks;
+	int64 num_blocks;
 	size_t size;
 
 	if (pool_config->memqcache_maxcache > pool_config->memqcache_cache_block_size)
@@ -1754,13 +1754,13 @@ size_t pool_shared_memory_cache_size(void)
 	if (num_blocks == 0)
 		ereport(FATAL,
 			(errmsg("invalid memory cache configuration"),
-					errdetail("memqcache_total_size %d should be greater or equal to memqcache_cache_block_size %d",
+					errdetail("memqcache_total_size %ld should be greater or equal to memqcache_cache_block_size %d",
 								pool_config->memqcache_total_size,
 								pool_config->memqcache_cache_block_size)));
 
 		ereport(LOG,
 			(errmsg("memory cache initialized"),
-					errdetail("memcache blocks :%d",num_blocks)));
+					errdetail("memcache blocks :%ld",num_blocks)));
 	/* Remember # of blocks */
 	pool_set_memqcache_blocks(num_blocks);
 	size = pool_config->memqcache_cache_block_size * num_blocks;
