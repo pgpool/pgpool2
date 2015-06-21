@@ -964,7 +964,11 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 		node = (Node *) lfirst(list_head(parse_tree_list));
 
-		insert_stmt_with_lock = need_insert_lock(backend, stmt, node);
+		/* If replication mode, check to see what kind of insert lock is
+		 * neccessary.
+		 */
+		if (REPLICATION)
+			insert_stmt_with_lock = need_insert_lock(backend, stmt, node);
 
 		/*
 		 * Start query context
