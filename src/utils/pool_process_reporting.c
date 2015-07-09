@@ -150,7 +150,6 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 
 	/* we initialize the array with NULL values so when looping
 	 * on it, we can use it as stop condition */
-//	memset(status, 0, sizeof(POOL_REPORT_CONFIG) * MAXITEMS);
 
 	i = 0;
 
