@@ -871,6 +871,8 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 		active_backend_count++;
 	}
 
+	(void)write_status_file();
+
     MemoryContextSwitchTo(oldContext);
 
 	if (active_backend_count > 0)

@@ -97,7 +97,6 @@ static int process_backend_health_check_failure(int health_check_node_id, int re
 static bool do_health_check(bool use_template_db, volatile int *health_check_node_id);
 
 static void FileUnlink(int code, Datum path);
-static int write_status_file();
 static pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file);
 static pid_t fork_a_child(int *fds, int id);
 static pid_t worker_fork_a_child(void);
@@ -401,6 +400,9 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	}
 	/* We can now handle ereport(ERROR) */
 	PG_exception_stack = &local_sigjmp_buf;
+
+	/* Create or write status file */
+	(void)write_status_file();
 	
 	/* This is the main loop */
 	for (;;)
@@ -1470,6 +1472,7 @@ static void failover(void)
 					 BACKEND_INFO(node_id).backend_port)));
 
 			BACKEND_INFO(node_id).backend_status = CON_CONNECT_WAIT;	/* unset down status */
+			(void)write_status_file();
 
 			/* wait for failback command lock or to be lock holder */
 			if (pool_config->use_watchdog && !wd_am_I_lock_holder())
@@ -1524,6 +1527,8 @@ static void failover(void)
 							 BACKEND_INFO(node_id_set[i]).backend_port)));
 
 					BACKEND_INFO(node_id_set[i]).backend_status = CON_DOWN;	/* set down status */
+					(void)write_status_file();
+
 					/* save down node */
 					nodes[node_id_set[i]] = 1;
 					cnt++;
@@ -1722,6 +1727,8 @@ static void failover(void)
 									 bkinfo->backend_hostname,
 									 bkinfo->backend_port)));
 							bkinfo->backend_status = CON_DOWN;	/* set down status */
+							(void)write_status_file();
+
 							follow_cnt++;
 						}
 					}
@@ -2833,6 +2840,7 @@ static int read_status_file(bool discard_status)
 			if (backend_rec.status[i] == CON_DOWN)
 			{
 				BACKEND_INFO(i).backend_status = CON_DOWN;
+				(void)write_status_file();
 				ereport(LOG,
 						(errmsg("read_status_file: %d th backend is set to down status", i)));
 			}
@@ -2840,6 +2848,7 @@ static int read_status_file(bool discard_status)
 					 BACKEND_INFO(i).backend_status == CON_UP)
 			{
 				BACKEND_INFO(i).backend_status = CON_CONNECT_WAIT;
+				(void)write_status_file();
 				someone_wakeup = true;
 			}
 			else
@@ -2922,15 +2931,16 @@ static int read_status_file(bool discard_status)
 		{
 			BACKEND_INFO(i).backend_status = CON_CONNECT_WAIT;
 		}
+		(void)write_status_file();
 	}
 
 	return 0;
 }
 
 /*
-* Write the pid file
+* Write the status file
 */
-static int write_status_file()
+int write_status_file()
 {
 	FILE *fd;
 	char fnamebuf[POOLMAXPATHLEN];
@@ -2993,6 +3003,10 @@ static void reload_config(void)
 		(errmsg("reload config files.")));
     MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
 	pool_get_config(conf_file, RELOAD_CONFIG);
+
+	/* Realoading config file could change backend status */
+	(void)write_status_file();
+
     MemoryContextSwitchTo(oldContext);
 	if (pool_config->enable_pool_hba)
 		load_hba(hba_file);
@@ -3027,7 +3041,7 @@ static void system_will_go_down(int code, Datum arg)
     }
     POOL_SETMASK(&AuthBlockSig);
     /* Write status file */
-    write_status_file();
+    (void)write_status_file();
     /* 
      * Terminate all childrens. But we may already have killed
      * all the childrens if we come to this function because of shutdown

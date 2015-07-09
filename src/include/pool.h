@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -695,4 +695,6 @@ extern int connect_unix_domain_socket_by_port(int port, char *socket_dir, bool r
 extern int pool_pool_index(void);
 
 extern int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps);
+extern int write_status_file(void);
+
 #endif /* POOL_H */
