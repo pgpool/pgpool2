@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -123,6 +123,9 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 		session_context->query_cache_array = pool_create_query_cache_array();
 		session_context->num_selects = 0;
 	}
+
+	/* clear sync map */
+	pool_clear_sync_map();
 }
 
 /*
@@ -832,4 +835,40 @@ bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc)
 	}
 
 	return true;
+}
+
+/*
+ * Set sync map
+ */
+void pool_set_sync_map(int node_id)
+{
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("pool_set_sync_map: session context is not initialized")));
+
+	session_context->sync_map[node_id] = true;
+}
+
+/*
+ * Check if sync map is set
+ */
+bool pool_is_set_sync_map(int node_id)
+{
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("pool_is_set_sync_map: session context is not initialized")));
+
+	return session_context->sync_map[node_id];
+}
+
+/*
+ * Clear sync map
+ */
+void pool_clear_sync_map(void)
+{
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("pool_clear_sync_map: session context is not initialized")));
+
+	memset(&session_context->sync_map, 0, sizeof(session_context->sync_map));
 }

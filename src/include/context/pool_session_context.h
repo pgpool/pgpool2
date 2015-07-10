@@ -152,6 +152,18 @@ typedef struct {
 	 */
 	POOL_QUERY_CACHE_ARRAY *query_cache_array;	/* pending SELECT results */
 	long long int num_selects;	/* number of successful SELECTs in this transaction */
+
+	/*
+	 * Used for managing sync message response in streaming replication
+	 * mode. In streaming replication mode, there are at most two nodes
+	 * involved. One is always primary, and the other (if any) could be
+	 * standby. If the load balancing manager chooses the primary as the load
+	 * balancing node, only the primary node is involved. Every time extended
+	 * protocol is sent to backend, we set true on the member of array
+	 * below. It is cleared after sync message is processed and command
+	 * complete or error response message is processed.
+	 */
+	bool sync_map[MAX_NUM_BACKENDS];
 } POOL_SESSION_CONTEXT;
 
 extern void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
@@ -193,6 +205,9 @@ extern void pool_set_command_success(void);
 extern bool pool_is_command_success(void);
 extern void pool_copy_prep_where(bool *src, bool *dest);
 extern bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc);
+extern void pool_set_sync_map(int node_id);
+extern bool pool_is_set_sync_map(int node_id);
+extern void pool_clear_sync_map(void);
 
 #ifdef NOT_USED
 extern void pool_add_prep_where(char *name, bool *map);

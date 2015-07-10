@@ -755,7 +755,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID, false);
 		}
 	}
-	else
+	else		/* master/slave mode */
 	{
 		pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID, true);
 		pool_extended_send_and_wait(query_context, "E", len, contents, -1, MASTER_NODE_ID, true);

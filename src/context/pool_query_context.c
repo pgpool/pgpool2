@@ -852,6 +852,11 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 		if (*kind == 'E')
 		{
 			stat_count_up(i, query_context->parse_tree);
+
+			/* Set sync map so that we could wait for response from appropreate node */
+			pool_set_sync_map(i);
+			ereport(DEBUG1,
+					(errmsg("pool_send_and_wait: pool_set_sync_map: %d", i)));
 		}
 
 		send_extended_protocol_message(backend, i, kind, str_len, str);
