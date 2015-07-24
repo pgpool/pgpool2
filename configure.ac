@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT([pgpool-II], [3.3.6], [pgpool-hackers@pgpoo.net], [pgpool-II])
+AC_INIT([pgpool-II], [3.3.7], [pgpool-hackers@pgpoo.net], [pgpool-II])
 
 dnl Checks for programs.
 AC_PROG_CC

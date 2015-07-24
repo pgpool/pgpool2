@@ -4,6 +4,81 @@
 3.3 Series (2013/07/30 - )
 ===============================================================================
 
+                        3.3.7 (tokakiboshi) 2015/07/24
+
+* Version 3.3.7
+
+    This is a bugfix release against pgpool-II 3.3.6.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix "cannot find xlog functions" error in pgpool-recovery
+      (Muhammad Usama)
+      
+      The argument data type of PostgreSQL's pg_xlogfile_name() function
+      has been changed from text to pg_lsn since PostgreSQL 9.4. And
+      pgpool-recovery was still trying to locate the function by old
+      signature.
+
+    - Pass empty string parameters in failover command when pgpool-II
+      does not have a value for any particular parameter (Muhammad Usama)
+      
+      Instead of omitting the values for the parameters when pgpool-II does
+      not have any value for a particular parameter, it now passes an empty
+      string to the failover command. This makes sure that failover script
+      will always receive the exact number of expected parameters.
+
+    - doc: Clarify load balancing condition (Tatsuo Ishii)
+
+    - doc: Clarify description of pcp_promote_node (Tatsuo Ishii)
+      
+      It does not actually promote PostgreSQL standby.
+
+    - doc: Fix outdated limitation description about load balancing using
+      JDBC driver (Tatsuo Ishii)
+      
+      Even if autocommit is false, load balancing is possible in certain
+      conditions.
+
+    - Fix "select() system call interrupted" error (Tatsuo Ishii)
+      
+      The health check process complains above and then:
+      
+      ERROR:  failed to make persistent db connection
+      DETAIL:  connection to host:"x.x.x.x:5432 failed
+      
+      However, the healthchek triggers neither fail over nor retrying. So,
+      except the annoying messages above, everything goes well. This could
+      occur more easily if 1) num_init_children is big and 2) pgpool
+      children go into idle state (no query arrived from client for
+      child_life_time seconds).
+      
+      Original bug report is [pgpool-general: 3756] Connection Interrupted.
+      Patch created by Tatsuo Ishii. Enhancement from Usama.
+
+    - Fix the case when user table includes spaces (Tatsuo Ishii)
+      
+      For example if table names including spaces are used, pgpool-II cannot
+      be handled correctly by the internal functions which access system
+      catalogs and it results in SQL errors. Solution is, to always use
+      delimited identifier.
+      
+      Per bug #136.
+      http://www.pgpool.net/mantisbt/view.php?id=136
+      
+      Also see [pgpool-general: 3818].
+
+    - Allow to use in-memory query cache size more than 4GB (Tatsuo Ishii)
+      
+      This should have been allowed since in memory query cache was born.
+
+    - Do not send a query for checking insert lock in non replication mode
+      with extended query (Tatsuo Ishii)
+
+===============================================================================
+
                         3.3.6 (tokakiboshi) 2015/04/08
 
 * Version 3.3.6
@@ -1283,6 +1358,47 @@
 
 ===============================================================================
 3.2 Series (2012/08/03 - )
+===============================================================================
+
+                        3.2.12 (namameboshi) 2015/07/24
+
+* Version 3.2.12
+
+    This is a bugfix release against pgpool-II 3.2.11.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix "cannot find xlog functions" error in pgpool-recovery
+      (Muhammad Usama)
+      
+      The argument data type of PostgreSQL's pg_xlogfile_name() function
+      has been changed from text to pg_lsn since PostgreSQL 9.4. And
+      pgpool-recovery was still trying to locate the function by old
+      signature.
+
+    - Pass empty string parameters in failover command when pgpool-II
+      does not have a value for any particular parameter (Muhammad Usama)
+      
+      Instead of omitting the values for the parameters when pgpool-II does
+      not have any value for a particular parameter, it now passes an empty
+      string to the failover command. This makes sure that failover script
+      will always receive the exact number of expected parameters.
+
+    - doc: Fix outdated limitation description about load balancing using
+      JDBC driver (Tatsuo Ishii)
+      
+      Even if autocommit is false, load balancing is possible in certain
+      conditions.
+
+    - Allow to use in-memory query cache size more than 4GB (Tatsuo Ishii)
+      
+      This should have been allowed since in memory query cache was born.
+
+    - Do not send a query for checking insert lock in non replication mode
+      with extended query (Tatsuo Ishii)
+
 ===============================================================================
 
                         3.2.11 (namameboshi) 2015/04/08
@@ -3170,6 +3286,29 @@
 3.1 Series (2011/09/08 - )
 ===============================================================================
 
+                        3.1.15 (hatsuiboshi) 2015/07/24
+
+* Version 3.1.15
+
+    This is a bugfix release against pgpool-II 3.1.14.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix "cannot find xlog functions" error in pgpool-recovery
+      (Muhammad Usama)
+      
+      The argument data type of PostgreSQL's pg_xlogfile_name() function
+      has been changed from text to pg_lsn since PostgreSQL 9.4. And
+      pgpool-recovery was still trying to locate the function by old
+      signature.
+
+    - Do not send a query for checking insert lock in non replication mode
+      with extended query (Tatsuo Ishii)
+
+===============================================================================
+
                         3.1.14 (hatsuiboshi) 2015/04/08
 
 * Version 3.1.14
@@ -4471,6 +4610,29 @@
 
 ===============================================================================
 3.0 Series (2013/07/30 - )
+===============================================================================
+
+                        3.0.19 (umiyameboshi) 2015/07/24
+
+* Version 3.0.19
+
+    This is a bugfix release against pgpool-II 3.0.18.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix "cannot find xlog functions" error in pgpool-recovery
+      (Muhammad Usama)
+      
+      The argument data type of PostgreSQL's pg_xlogfile_name() function
+      has been changed from text to pg_lsn since PostgreSQL 9.4. And
+      pgpool-recovery was still trying to locate the function by old
+      signature.
+
+    - Do not send a query for checking insert lock in non replication mode
+      with extended query (Tatsuo Ishii)
+
 ===============================================================================
 
                         3.0.18 (umiyameboshi) 2015/04/08
