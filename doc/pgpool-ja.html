@@ -2177,6 +2177,8 @@ pgpool-IIのStreaming Replicationモードは、こうした振り分けを自�
         <li>SELECT ... FOR SHARE | UPDATE</li>
         <li>トランザクションの分離レベルがシリアライザブルの場合のSELECT</li>
         <li>ROW EXCLUSIVE MODEよりも強いLOCK</li>
+        <li>DECLARE, FETCH, CLOSE</li>
+        <li>SHOW</li>
         <li>トランザクションコマンドの一部
             <ul>
                 <li>BEGIN READ WRITE, START TRANSACTION READ WRITE
@@ -2202,8 +2204,6 @@ pgpool-IIのStreaming Replicationモードは、こうした振り分けを自�
     <ul>
         <li>上記以外のSELECT</li>
         <li>COPY TO</li>
-        <li>DECLARE, FETCH, CLOSE</li>
-        <li>SHOW</li>
     </ul>
     </li>
 
