@@ -1697,6 +1697,8 @@ at the query itself.
 	   <li>SELECT ... FOR SHARE | UPDATE
 	   <li>SELECT in transaction isolation level SERIALIZABLE
 	   <li>LOCK command more strict than ROW EXCLUSIVE MODE
+	   <li>DECLARE, FETCH, CLOSE
+	   <li>SHOW
 	   <li>Some transactional commands:
 			<ul>
 			 <li>BEGIN READ WRITE, START TRANSACTION READ WRITE
@@ -1717,8 +1719,6 @@ delay_threshold, queries are sent to the primary node.
 	  <ul>
 	   <li>SELECT not listed above
 	   <li>COPY TO
-	   <li>DECLARE, FETCH, CLOSE
-	   <li>SHOW
 	  </ul>
  <li>These queries are sent to both the primary node and the standby node
 	  <ul>
