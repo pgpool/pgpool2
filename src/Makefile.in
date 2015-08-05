@@ -111,6 +111,7 @@ am_pgpool_OBJECTS = main/main.$(OBJEXT) main/pool_globals.$(OBJEXT) \
 	protocol/child.$(OBJEXT) protocol/pool_process_query.$(OBJEXT) \
 	protocol/pool_connection_pool.$(OBJEXT) \
 	protocol/pool_proto_modules.$(OBJEXT) \
+	protocol/CommandComplete.$(OBJEXT) \
 	query_cache/pool_memqcache.$(OBJEXT) \
 	context/pool_session_context.$(OBJEXT) \
 	context/pool_process_context.$(OBJEXT) \
@@ -427,7 +428,8 @@ pgpool_SOURCES = main/main.c \
 	protocol/pool_process_query.c \
 	protocol/pool_connection_pool.c \
 	protocol/pool_proto_modules.c \
-    query_cache/pool_memqcache.c \
+	query_cache/pool_memqcache.c \
+	protocol/CommandComplete.c \
 	context/pool_session_context.c \
 	context/pool_process_context.c \
 	context/pool_query_context.c \
@@ -696,6 +698,8 @@ protocol/pool_connection_pool.$(OBJEXT): protocol/$(am__dirstamp) \
 	protocol/$(DEPDIR)/$(am__dirstamp)
 protocol/pool_proto_modules.$(OBJEXT): protocol/$(am__dirstamp) \
 	protocol/$(DEPDIR)/$(am__dirstamp)
+protocol/CommandComplete.$(OBJEXT): protocol/$(am__dirstamp) \
+	protocol/$(DEPDIR)/$(am__dirstamp)
 query_cache/$(am__dirstamp):
 	@$(MKDIR_P) query_cache
 	@: > query_cache/$(am__dirstamp)
@@ -841,6 +845,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@pcp_con/$(DEPDIR)/pcp_child.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@pcp_con/$(DEPDIR)/pcp_worker.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@pcp_con/$(DEPDIR)/recovery.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@protocol/$(DEPDIR)/CommandComplete.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@protocol/$(DEPDIR)/child.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@protocol/$(DEPDIR)/pool_connection_pool.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@protocol/$(DEPDIR)/pool_process_query.Po@am__quote@

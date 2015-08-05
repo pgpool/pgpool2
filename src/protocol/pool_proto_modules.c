@@ -87,7 +87,6 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 									 POOL_CONNECTION_POOL *backend,
 									 POOL_SENT_MESSAGE *message);
 static int* find_victim_nodes(int *ntuples, int nmembers, int master_node, int *number_of_nodes);
-static int extract_ntuples(char *message);
 static POOL_STATUS close_standby_transactions(POOL_CONNECTION *frontend,
 											  POOL_CONNECTION_POOL *backend);
 /*
@@ -1807,210 +1806,6 @@ POOL_STATUS CloseComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 	return status;
 }
 
-POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
-{
-	int i;
-	int len, len1, sendlen;
-	int rows;
-	char *p, *p1;
-	POOL_SESSION_CONTEXT *session_context;
-
-	/* Get session context */
-	session_context = pool_get_session_context(false);
-
-	if (session_context->query_context != NULL)
-	{
-		Node *node = session_context->query_context->parse_tree;
-
-		if (IsA(node, PrepareStmt))
-		{
-			if (session_context->uncompleted_message)
-			{
-				pool_add_sent_message(session_context->uncompleted_message);
-				session_context->uncompleted_message = NULL;
-			}
-		}
-		else if (IsA(node, DeallocateStmt))
-		{
-			char *name;
-			
-			name = ((DeallocateStmt *)node)->name;
-			if (name == NULL)
-			{
-				pool_remove_sent_messages('Q');
-				pool_remove_sent_messages('P');
-			}
-			else
-			{
-				pool_remove_sent_message('Q', name);
-				pool_remove_sent_message('P', name);
-			}
-		}
-		else if (IsA(node, DiscardStmt))
-		{
-			DiscardStmt *stmt = (DiscardStmt *)node;
-
-			if (stmt->target == DISCARD_PLANS)
-			{
-				pool_remove_sent_messages('Q');
-				pool_remove_sent_messages('P');
-			}
-			else if (stmt->target == DISCARD_ALL)
-			{
-				pool_clear_sent_message_list();
-			}
-		}
-		/*
-		 * JDBC driver sends "BEGIN" query internally if
-		 * setAutoCommit(false).  But it does not send Sync message
-		 * after "BEGIN" query.  In extended query protocol,
-		 * PostgreSQL returns ReadyForQuery when a client sends Sync
-		 * message.  Problem is, pgpool can't know the transaction
-		 * state without receiving ReadyForQuery. So we remember that
-		 * we need to send Sync message internally afterward, whenever
-		 * we receive BEGIN in extended protocol.
-		 */
-		else if (IsA(node, TransactionStmt))
-		{
-			TransactionStmt *stmt = (TransactionStmt *) node;
-
-			if (stmt->kind == TRANS_STMT_BEGIN || stmt->kind == TRANS_STMT_START)
-			{
-				int i;
-
-				for (i = 0; i < NUM_BACKENDS; i++)
-				{
-					if (!VALID_BACKEND(i))
-						continue;
-
-					TSTATE(backend, i) = 'T';
-				}
-				pool_unset_writing_transaction();
-				pool_unset_failed_transaction();
-				pool_unset_transaction_isolation();
-			}
-		}
-
-	}
-
-	pool_read(MASTER(backend), &len, sizeof(len));
-
-	len = ntohl(len);
-	len -= 4;
-	len1 = len;
-
-	p = pool_read2(MASTER(backend), len);
-	if (p == NULL)
-		return POOL_END;
-	p1 = palloc(len);
-	memcpy(p1, p, len);
-
-	rows = extract_ntuples(p);
-
-	/*
-	 * Save number of affected tuples of master node.
-	 */
-	session_context->ntuples[MASTER_NODE_ID] = rows;
-
-	for (i=0;i<NUM_BACKENDS;i++)
-	{
-		if (!IS_MASTER_NODE_ID(i))
-		{
-			if (!VALID_BACKEND(i))
-			{
-				session_context->ntuples[i] = -1;
-				continue;
-			}
-
-			pool_read(CONNECTION(backend, i), &len, sizeof(len));
-
-			len = ntohl(len);
-			len -= 4;
-
-			p = pool_read2(CONNECTION(backend, i), len);
-			if (p == NULL)
-				return POOL_END;
-
-			if (len != len1)
-			{
-				ereport(DEBUG1,
-					(errmsg("processing command complete"),
-						errdetail("length does not match between backends master(%d) %d th backend(%d)",
-							   len, i, len1)));
-			}
-
-			int n = extract_ntuples(p);
-
-			/*
-			 * Save number of affected tuples.
-			 */
-			session_context->ntuples[i] = n;
-
-			if (rows != n)
-			{
-				/*
-				 * Remember that we have different number of UPDATE/DELETE
-				 * affected tuples in backends.
-				 */
-				session_context->mismatch_ntuples = true;
-			}
-		}
-	}
-
-	if (session_context->mismatch_ntuples)
-	{
-		char msgbuf[128];
-
-		String *msg = init_string("pgpool detected difference of the number of inserted, updated or deleted tuples. Possible last query was: \"");
-		string_append_char(msg, query_string_buffer);
-		string_append_char(msg, "\"");
-		pool_send_error_message(frontend, MAJOR(backend),
-								"XX001", msg->data, "",
-								"check data consistency between master and other db node",  __FILE__, __LINE__);
-		ereport(LOG,
-			(errmsg("%s", msg->data)));
-		free_string(msg);
-
-		msg = init_string("CommandComplete: Number of affected tuples are:");
-
-		for (i=0;i<NUM_BACKENDS;i++)
-		{
-			snprintf(msgbuf, sizeof(msgbuf), " %d", session_context->ntuples[i]);
-			string_append_char(msg, msgbuf);
-		}
-		ereport(LOG,
-			(errmsg("processing command complete"),
-				 errdetail("%s", msg->data)));
-
-		free_string(msg);
-	}
-	else
-	{
-		pool_write(frontend, "C", 1);
-		sendlen = htonl(len1+4);
-		pool_write(frontend, &sendlen, sizeof(sendlen));
-		pool_write_and_flush(frontend, p1, len1);
-	}
-
-	/* Save the received result to buffer for each kind */
-	if (pool_config->memory_cache_enabled)
-	{
-		if (pool_is_cache_safe() && !pool_is_cache_exceeded())
-		{
-			memqcache_register('C', frontend, p1, len1);
-		}
-	}
-
-	pfree(p1);
-
-	if (pool_is_doing_extended_query_message())
-	{
-		pool_set_query_state(session_context->query_context, POOL_EXECUTE_COMPLETE);
-	}
-
-	return POOL_CONTINUE;
-}
-
 POOL_STATUS ParameterDescription(POOL_CONNECTION *frontend,
 								 POOL_CONNECTION_POOL *backend)
 {
@@ -2515,19 +2310,19 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 			case '1':	/* ParseComplete */
 				status = ParseComplete(frontend, backend);
 				pool_set_command_success();
-				pool_unset_query_in_progress();
+				//pool_unset_query_in_progress();
 				break;
 
 			case '2':	/* BindComplete */
 				status = BindComplete(frontend, backend);
 				pool_set_command_success();
-				pool_unset_query_in_progress();
+				//pool_unset_query_in_progress();
 				break;
 
 			case '3':	/* CloseComplete */
 				status = CloseComplete(frontend, backend);
 				pool_set_command_success();
-				pool_unset_query_in_progress();
+//				pool_unset_query_in_progress();
 				break;
 
 			case 'E':	/* ErrorResponse */
@@ -2546,8 +2341,8 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 			case 'C':	/* CommandComplete */				
 				status = CommandComplete(frontend, backend);
 				pool_set_command_success();
-				if (pool_is_doing_extended_query_message())
-					pool_unset_query_in_progress();
+//				if (pool_is_doing_extended_query_message())
+//					pool_unset_query_in_progress();
 				break;
 
 			case 't':	/* ParameterDescription */
@@ -2556,26 +2351,26 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 
 			case 'I':	/* EmptyQueryResponse */
 				status = SimpleForwardToFrontend(kind, frontend, backend);
-				if (pool_is_doing_extended_query_message())
-					pool_unset_query_in_progress();
+//				if (pool_is_doing_extended_query_message())
+//					pool_unset_query_in_progress();
 				break;
 
 			case 'T':	/* RowDescription */
 				status = SimpleForwardToFrontend(kind, frontend, backend);
-				if (pool_is_doing_extended_query_message())
-					pool_unset_query_in_progress();
+//				if (pool_is_doing_extended_query_message())
+//					pool_unset_query_in_progress();
 				break;
 
 			case 'n':	/* NoData */
 				status = SimpleForwardToFrontend(kind, frontend, backend);
-				if (pool_is_doing_extended_query_message())
-					pool_unset_query_in_progress();
+//				if (pool_is_doing_extended_query_message())
+//					pool_unset_query_in_progress();
 				break;
 
 			case 's':	/* PortalSuspended */
 				status = SimpleForwardToFrontend(kind, frontend, backend);
-				if (pool_is_doing_extended_query_message())
-					pool_unset_query_in_progress();
+//				if (pool_is_doing_extended_query_message())
+//					pool_unset_query_in_progress();
 				break;
 
 			default:
@@ -3216,24 +3011,4 @@ static int* find_victim_nodes(int *ntuples, int nmembers, int master_node, int *
 	}
 
 	return victim_nodes;
-}
-
-/*
- * Extract the number of tuples from CommandComplete message
- */
-static int extract_ntuples(char *message)
-{
-	char *rows;
-
-	if ((rows = strstr(message, "UPDATE")) || (rows = strstr(message, "DELETE")))
-		rows +=7;
-	else if ((rows = strstr(message, "INSERT")))
-	{
-		rows += 7;
-		while (*rows && *rows != ' ') rows++;
-	}
-	else
-		return 0;
-
-	return atoi(rows);
 }

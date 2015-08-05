@@ -207,6 +207,7 @@ extern void pool_copy_prep_where(bool *src, bool *dest);
 extern bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc);
 extern void pool_set_sync_map(int node_id);
 extern bool pool_is_set_sync_map(int node_id);
+extern int pool_get_nth_sync_map(int nth);
 extern void pool_clear_sync_map(void);
 
 #ifdef NOT_USED

@@ -862,6 +862,31 @@ bool pool_is_set_sync_map(int node_id)
 }
 
 /*
+ * Get nth valid node id from sync map
+ */
+int pool_get_nth_sync_map(int nth)
+{
+	int i;
+	int cnt = 0;
+
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		if (!VALID_BACKEND(i))
+			continue;
+
+		if (session_context->sync_map[i])
+		{
+			if (cnt == nth)
+				return i;	/* found nth valid node id */
+		}
+
+		cnt++;
+	}
+
+	return -1;		/* no valid node id found */
+}
+
+/*
  * Clear sync map
  */
 void pool_clear_sync_map(void)
