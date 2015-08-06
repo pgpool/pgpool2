@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1144,6 +1144,7 @@ static int read_status_file(bool discard_status)
 static int write_status_file(void)
 {
 	FILE *fd;
+	int fdnum;
 	char fnamebuf[POOLMAXPATHLEN];
 	int i;
 
@@ -1169,6 +1170,32 @@ static int write_status_file(void)
 		fclose(fd);
 		return -1;
 	}
+
+	if (fflush(fd) != 0)
+	{
+		pool_error("Could not flush backend status file as %s. reason: %s",
+				   fnamebuf, strerror(errno));
+		fclose(fd);
+		return -1;
+	}
+
+	fdnum = fileno(fd);
+	if (fdnum < 0)
+	{
+		pool_error("Failed to get file number of %s. reason: %s",
+				   fnamebuf, strerror(errno));
+		fclose(fd);
+		return -1;
+	}
+
+	if (fsync(fdnum) != 0)
+	{
+		pool_error("Failed to fsync() %s. reason: %s",
+				   fnamebuf, strerror(errno));
+		fclose(fd);
+		return -1;
+	}
+
 	fclose(fd);
 	return 0;
 }
