@@ -2943,6 +2943,7 @@ static int read_status_file(bool discard_status)
 int write_status_file()
 {
 	FILE *fd;
+	int fdnum;
 	char fnamebuf[POOLMAXPATHLEN];
 	int i;
 
@@ -2991,6 +2992,24 @@ int write_status_file()
             fclose(fd);
             return -1;
         }
+		fdnum = fileno(fd);
+		if (fdnum < 0)
+        {
+			ereport(WARNING,
+				(errmsg("failed to get file number. fsync() will not be performed: \"%s\"",fnamebuf),
+					 errdetail("\"%s\"",strerror(errno))));
+            fclose(fd);
+            return -1;
+        }
+		if (fsync(fdnum) != 0)
+		{
+			ereport(WARNING,
+				(errmsg("failed to fsync(): \"%s\"",fnamebuf),
+					 errdetail("\"%s\"",strerror(errno))));
+            fclose(fd);
+            return -1;
+		}
+			
         fclose(fd);
     }
 	return 0;
