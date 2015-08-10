@@ -1036,6 +1036,11 @@ static int
 
 	pool_set_timeout(10);
 
+	if (session_context = pool_get_session_context(false))
+	{
+		pool_unset_query_in_progress();
+	}
+
 	if (SimpleQuery(NULL, backend, strlen(query)+1, query) != POOL_CONTINUE)
 	{
 		pool_set_timeout(0);
