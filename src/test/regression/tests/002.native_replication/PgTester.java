@@ -20,7 +20,7 @@ public class PgTester {
 			Class.forName ("org.postgresql.Driver");
 
 			conn =
-				DriverManager.getConnection("jdbc:postgresql://localhost:11002/test");
+				DriverManager.getConnection("jdbc:postgresql://localhost:11000/test");
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} catch (SQLException e) {
