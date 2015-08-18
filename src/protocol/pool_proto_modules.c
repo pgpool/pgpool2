@@ -1084,7 +1084,9 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		/* XXX fix me:even with streaming replication mode, we could have deadlock */
 		pool_unset_query_in_progress();
 		pool_extended_send_and_wait(query_context, "P", len, contents, 1, MASTER_NODE_ID, true);
-		pool_extended_send_and_wait(query_context, "P", len, contents, -1, MASTER_NODE_ID, true);
+
+		if (!STREAM)
+			pool_extended_send_and_wait(query_context, "P", len, contents, -1, MASTER_NODE_ID, true);
 		pool_add_sent_message(session_context->uncompleted_message);
 	}
 
@@ -1200,7 +1202,8 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	pool_extended_send_and_wait(query_context, "B", len, contents, 1, MASTER_NODE_ID, true);
 
-	pool_extended_send_and_wait(query_context, "B", len, contents, -1, MASTER_NODE_ID, true);
+	if (!STREAM)
+		pool_extended_send_and_wait(query_context, "B", len, contents, -1, MASTER_NODE_ID, true);
 	pool_add_sent_message(session_context->uncompleted_message);
 	
 	if(rewrite_msg)
@@ -1262,7 +1265,8 @@ POOL_STATUS Describe(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	pool_extended_send_and_wait(query_context, "D", len, contents, 1, MASTER_NODE_ID, true);
 
-	pool_extended_send_and_wait(query_context, "D", len, contents, -1, MASTER_NODE_ID, true);
+	if (!STREAM)
+		pool_extended_send_and_wait(query_context, "D", len, contents, -1, MASTER_NODE_ID, true);
 
 	return POOL_CONTINUE;
 }
@@ -1327,7 +1331,8 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
             (errmsg("Close: waiting for master completing the query")));
 	pool_extended_send_and_wait(query_context, "C", len, contents, 1, MASTER_NODE_ID, false);
 
-	pool_extended_send_and_wait(query_context, "C", len, contents, -1, MASTER_NODE_ID, false);
+	if (!STREAM)
+		pool_extended_send_and_wait(query_context, "C", len, contents, -1, MASTER_NODE_ID, false);
 
 	return POOL_CONTINUE;
 }
