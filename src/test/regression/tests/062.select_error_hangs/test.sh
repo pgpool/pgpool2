@@ -49,7 +49,7 @@ for mode in simple extended
 do
 	echo -n "test $mode mode "
 	sh pgbench_loop.sh $mode &
-	sleep 2
+	sleep 5
 	kill $! >/dev/null 2>&1
 
 	# if kill succeeded then pgbench was stil running, i.e., hanging.
