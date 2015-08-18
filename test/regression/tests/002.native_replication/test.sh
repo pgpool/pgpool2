@@ -50,15 +50,25 @@ java PgTester 100 &
 java PgTester 1000 &
 wait
 
-$PSQL -p 11000 test <<EOF
-\copy (SELECT * FROM t1 ORDER BY i) to 'dump0.txt'
+$PSQL -p 11001 test <<EOF
+\copy (SELECT * FROM t1 ORDER BY i) to 'dump_t0.txt'
 EOF
 
 $PSQL -p 11001 test <<EOF
-\copy (SELECT * FROM t1 ORDER BY i) to 'dump1.txt'
+\copy (SELECT * FROM t1 ORDER BY i) to 'dump_t1.txt'
+EOF
+
+$PSQL -p 11000 test <<EOF
+\copy (SELECT * FROM sequencetester ORDER BY id) to 'dump_s0.txt'
+EOF
+
+$PSQL -p 11001 test <<EOF
+\copy (SELECT * FROM sequencetester ORDER BY id) to 'dump_s1.txt'
 EOF
 
 # check if database contents are identical
+cat dump_t0.txt dump_s0.txt > dump0.txt 
+cat dump_t1.txt dump_s1.txt > dump1.txt 
 diff dump0.txt dump1.txt
 if [ $? != 0 ];then
 	# contents are not identical
