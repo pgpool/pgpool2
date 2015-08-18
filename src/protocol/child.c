@@ -223,7 +223,7 @@ void do_child(int *fds)
 		 */
 		if(pool_get_session_context(true) ||
 		   !child_frontend ||
-		   !child_frontend->EOF_on_socket)
+		   child_frontend->socket_state != POOL_SOCKET_EOF)
 			EmitErrorReport();
 
         /* process the cleanup in ProcessLoopContext which will get reset
@@ -425,7 +425,7 @@ backend_cleanup(POOL_CONNECTION* volatile *frontend, POOL_CONNECTION_POOL* volat
         return false;
 
     sp = MASTER_CONNECTION(backend)->sp;
-    
+
     /*
      * cach connection if connection is not for
      * system db and connection cache configuration
@@ -455,21 +455,25 @@ backend_cleanup(POOL_CONNECTION* volatile *frontend, POOL_CONNECTION_POOL* volat
     }
 
 	/*
+	 * For those special databases, and when frontend client exits abnormally,
+	 * we don't cache connection to backend.
+	 */
+    if ((sp &&
+		(!strcmp(sp->database, "template0") ||
+		 !strcmp(sp->database, "template1") ||
+		 !strcmp(sp->database, "postgres") ||
+		 !strcmp(sp->database, "regression"))) ||
+		 (*frontend != NULL &&
+		  ((*frontend)->socket_state == POOL_SOCKET_EOF ||
+		  (*frontend)->socket_state == POOL_SOCKET_ERROR)))
+        cache_connection = false;
+
+	/*
 	 * Close frontend connection
 	 */
 	reset_connection();
 	pool_close(*frontend);
 	*frontend = NULL;
-
-	/*
-	 * For those special databases we don't cache connection to backend.
-	 */
-    if (sp &&
-		(!strcmp(sp->database, "template0") ||
-		 !strcmp(sp->database, "template1") ||
-		 !strcmp(sp->database, "postgres") ||
-		 !strcmp(sp->database, "regression")))
-        cache_connection = false;
 
     if (cache_connection == false)
     {
@@ -2370,6 +2374,8 @@ int send_to_pg_frontend(char* data, int len, bool flush)
 	int ret;
 	if (processType != PT_CHILD || child_frontend == NULL)
 		return -1;
+	if (child_frontend->socket_state != POOL_SOCKET_VALID)
+		return -1;
 	ret = pool_write_noerror(child_frontend, data, len);
 	if(flush && !ret)
 		ret = pool_flush_it(child_frontend);
@@ -2379,6 +2385,8 @@ int send_to_pg_frontend(char* data, int len, bool flush)
 int set_pg_frontend_blocking(bool blocking)
 {
 	if (processType != PT_CHILD || child_frontend == NULL)
+		return -1;
+	if (child_frontend->socket_state != POOL_SOCKET_VALID)
 		return -1;
 	if (blocking)
 		pool_unset_nonblock(child_frontend->fd);

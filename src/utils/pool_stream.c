@@ -93,7 +93,8 @@ POOL_CONNECTION *pool_open(int fd, bool backend_connection)
 	cp->bufsz2 = 0;
 
 	cp->fd = fd;
-    
+	cp->socket_state = POOL_SOCKET_VALID;
+
     MemoryContextSwitchTo(oldContext);
 
 	return cp;
@@ -110,7 +111,7 @@ void pool_close(POOL_CONNECTION *cp)
 	if (!cp->isbackend)
 		shutdown(cp->fd, 1);
 	close(cp->fd);
-
+	cp->socket_state = POOL_SOCKET_CLOSED;
 	pfree(cp->wbuf);
 	pfree(cp->hp);
 	if (cp->sbuf)
@@ -184,6 +185,7 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 				continue;
 			}
 
+			cp->socket_state = POOL_SOCKET_ERROR;
 			if (cp->isbackend)
 			{
 				/* if fail_over_on_backend_error is true, then trigger failover */
@@ -212,7 +214,7 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 		}
 		else if (readlen == 0)
 		{
-			cp->EOF_on_socket = true;
+			cp->socket_state = POOL_SOCKET_EOF;
 			if (cp->isbackend)
 			{
 				if(processType == PT_MAIN)
@@ -320,6 +322,7 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 				continue;
 			}
 
+			cp->socket_state = POOL_SOCKET_ERROR;
 			if (cp->isbackend)
 			{
 				/* if fail_over_on_backend_error is true, then trigger failover */
@@ -348,7 +351,7 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 		}
 		else if (readlen == 0)
 		{
-			cp->EOF_on_socket = true;
+			cp->socket_state = POOL_SOCKET_EOF;
 			if (cp->isbackend)
 			{
                 ereport(ERROR,
@@ -772,6 +775,7 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 
 		if (readlen == -1)
 		{
+			cp->socket_state = POOL_SOCKET_ERROR;
 			if (cp->isbackend)
 			{
 				notice_backend_error(cp->db_node_id);
@@ -793,7 +797,7 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 			/*
 			 * just returns an error, not trigger failover or degeneration
 			 */
-			cp->EOF_on_socket = true;
+			cp->socket_state = POOL_SOCKET_EOF;
             ereport(ERROR,
                 (errmsg("unable to read data from %s",cp->isbackend?"backend":"frontend"),
                      errdetail("EOF read on socket")));

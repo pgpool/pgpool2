@@ -101,6 +101,13 @@ typedef enum {
 	POOL_DEADLOCK
 } POOL_STATUS;
 
+typedef enum {
+	POOL_SOCKET_CLOSED = 0,
+	POOL_SOCKET_VALID,
+	POOL_SOCKET_ERROR,
+	POOL_SOCKET_EOF
+} POOL_SOCKET_STATE;
+
 /* protocol major version numbers */
 #define PROTO_MAJOR_V2	2
 #define PROTO_MAJOR_V3	3
@@ -216,7 +223,7 @@ typedef struct {
 	char kind;	/* kind cache */
 
 	/* true if remote end closed the connection */
-	bool EOF_on_socket;
+	POOL_SOCKET_STATE socket_state;
 	/*
 	 * frontend info needed for hba
 	 */
