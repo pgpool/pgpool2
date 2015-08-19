@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include "pool.h"
 #include "pool_config.h"
-#include "pool_relcache.h"
-#include "pool_timestamp.h"
+#include "utils/pool_relcache.h"
+#include "rewrite/pool_timestamp.h"
 #include "parser/parser.h"
 
 /* for get_current_timestamp() (MASTER() macro) */
@@ -12,6 +12,7 @@ POOL_REQUEST_INFO		_req_info;
 POOL_REQUEST_INFO *Req_info = &_req_info;
 POOL_CONFIG _pool_config;
 POOL_CONFIG *pool_config = &_pool_config;
+ProcessType processType;
 
 typedef struct {
 	char	*attrname;	/* attribute name */
@@ -50,12 +51,23 @@ bool pool_has_pgpool_regclass(void)
 	return false;
 }
 
+bool pool_has_to_regclass(void)
+{
+	return false;
+}
+
+char *remove_quotes_and_schema_from_relname(char *table)
+{
+	return table;
+}
+
 POOL_RELCACHE *
 pool_create_relcache(int cachesize, char *sql, func_ptr register_func, func_ptr unregister_func, bool issessionlocal)
 {
 	return (POOL_RELCACHE *) 1;
 }
 
+/* dummy result of relcache (attrname, adsrc, usetimestamp)*/
 void *
 pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backend, char *table)
 {
@@ -65,6 +77,7 @@ pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backend, cha
 		return (void *) &(rc[1]);
 }
 
+/* dummy result of "SELECT now()" */
 void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result, int major) {
 	static POOL_SELECT_RESULT res;
 	static char *data[1] = {
@@ -87,8 +100,11 @@ main(int argc, char **argv)
 	POOL_CONNECTION_POOL	backend;
 	POOL_CONNECTION_POOL_SLOT slot;
 	POOL_SENT_MESSAGE	msg;
+	POOL_QUERY_CONTEXT	ctx;
 	backend.slots[0] = &slot;
 	slot.sp = &sp;
+
+	MemoryContextInit();
 
 	pool_config->replication_mode = 1;
 
@@ -108,6 +124,7 @@ main(int argc, char **argv)
 		foreach(l, tree)
 		{
 			msg.num_tsparams = 0;
+			msg.query_context = &ctx;
 			Node *node = (Node *) lfirst(l);
 			query = rewrite_timestamp(&backend, node, false, &msg);
 			if (query)
@@ -120,5 +137,12 @@ main(int argc, char **argv)
 	return 0;
 }
 
-void pool_error(const char *fmt,...) {}
 void free_select_result(POOL_SELECT_RESULT *result) {}
+POOL_SESSION_CONTEXT *pool_get_session_context(bool noerror) {return NULL;}
+int pg_frontend_exists(void) {return 0;}
+int get_frontend_protocol_version(void) {return 0;}
+int set_pg_frontend_blocking(bool blocking) {return 0;}
+int send_to_pg_frontend(char* data, int len, bool flush) {return 0;}
+void ExceptionalCondition
+	(const char *conditionName,const char *errorType,
+	const char *fileName, int lineNumber) {}
