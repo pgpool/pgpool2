@@ -70,6 +70,7 @@ extern POOL_RELCACHE *pool_create_relcache(int cachesize, char *sql,
 									bool issessionlocal);
 extern void pool_discard_relcache(POOL_RELCACHE *relcache);
 extern void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backend, char *table);
+extern char *remove_quotes_and_schema_from_relname(char *table);
 extern void *int_register_func(POOL_SELECT_RESULT *res);
 extern void *int_unregister_func(void *data);
 extern void *string_register_func(POOL_SELECT_RESULT *res);

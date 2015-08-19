@@ -93,7 +93,6 @@ void pool_discard_relcache(POOL_RELCACHE *relcache)
  */
 void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backend, char *table)
 {
-	char *rel;
 	char *dbname;
 	int i;
 	int maxrefcnt = INT_MAX;
@@ -104,13 +103,6 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 	time_t now;
 	void *result;
 
-	/* Eliminate double quotes */
-	rel = malloc(strlen(table)+1);
-	if (!rel)
-	{
-		pool_error("pool_search_relcache: malloc failed");
-		return NULL;
-	}
 
 	local_session_id = pool_get_local_session_id();
 	if (local_session_id < 0)
@@ -118,13 +110,6 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 		pool_error("pool_search_relcache: pool_get_local_session_id failed");
 		return NULL;
 	}
-
-	for(i=0;*table;table++)
-	{
-		if (*table != '"')
-			rel[i++] = *table;
-	}
-	rel[i] = '\0';
 
 	/* Obtain database name */
 	dbname = MASTER_CONNECTION(backend)->sp->database;
@@ -144,13 +129,13 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 		}
 
 		if (strcasecmp(relcache->cache[i].dbname, dbname) == 0 &&
-			strcasecmp(relcache->cache[i].relname, rel) == 0)
+			strcasecmp(relcache->cache[i].relname, table) == 0)
 		{
 			if (relcache->cache[i].expire > 0)
 			{
 				if (now > relcache->cache[i].expire)
 				{
-					pool_debug("pool_search_relcache: relcache for database:%s table:%s expired. now:%ld expiration time:%ld", dbname, rel, now, relcache->cache[i].expire);
+					pool_debug("pool_search_relcache: relcache for database:%s table:%s expired. now:%ld expiration time:%ld", dbname, table, now, relcache->cache[i].expire);
 					relcache->cache[i].refcnt = 0;
 					break;
 				}
@@ -159,13 +144,13 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 			/* Found */
 			if (relcache->cache[i].refcnt < INT_MAX)
 				relcache->cache[i].refcnt++;
-			free(rel);
+
 			return relcache->cache[i].data;
 		}
 	}
 
 	/* Not in cache. Check the system catalog */
-	snprintf(query, sizeof(query), relcache->sql, rel);
+	snprintf(query, sizeof(query), relcache->sql, table);
 
 	per_node_statement_log(backend, MASTER_NODE_ID, query);
 
@@ -174,7 +159,6 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 		pool_error("pool_search_relcache: do_query failed");
 		if (res)
 			free_select_result(res);
-		free(rel);
 		return NULL;
 	}
 
@@ -220,7 +204,7 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 	if (!relcache->no_cache_if_zero || result)
 	{
 		strlcpy(relcache->cache[index].dbname, dbname, MAX_ITEM_LENGTH);
-		strlcpy(relcache->cache[index].relname, rel, MAX_ITEM_LENGTH);
+		strlcpy(relcache->cache[index].relname, table, MAX_ITEM_LENGTH);
 		relcache->cache[index].refcnt = 1;
 		relcache->cache[index].session_id = local_session_id;
 		if (pool_config->relcache_expire > 0)
@@ -237,10 +221,32 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 		(*relcache->unregister_func)(relcache->cache[index].data);
 		relcache->cache[index].data = result;
 	}
-	free(rel);
+
 	free_select_result(res);
 
 	return 	result;
+}
+
+char *remove_quotes_and_schema_from_relname(char *table)
+{
+	static char rel[MAX_ITEM_LENGTH];
+	char *p;
+	int i = 0;
+
+	/* get rid of schema name */
+	p = strchr(table, '.');
+	if (p)
+		table = p+1;
+
+	/* get rid of quotation marks */
+	for (i=0; *table; table++)
+	{
+		if (*table != '"')
+			rel[i++] = *table;
+	}
+	rel[i] = '\0';
+
+	return rel;
 }
 
 /*

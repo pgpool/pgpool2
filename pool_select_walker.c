@@ -42,7 +42,6 @@ static bool	insertinto_or_locking_clause_walker(Node *node, void *context);
 static bool is_immutable_function(char *fname);
 static bool select_table_walker(Node *node, void *context);
 static bool non_immutable_function_call_walker(Node *node, void *context);
-static char *strip_quote(char *str);
 static char *make_table_name_from_rangevar(RangeVar *rangevar);
 
 /*
@@ -416,8 +415,11 @@ static bool is_system_catalog(char *table_name)
 
 	if (table_name == NULL)
 	{
-			return false;
+		return false;
 	}
+
+	if (!pool_has_to_regclass() && !pool_has_pgpool_regclass())
+		table_name = remove_quotes_and_schema_from_relname(table_name);
 
 	backend = pool_get_session_context()->backend;
 
@@ -602,11 +604,11 @@ bool is_unlogged_table(char *table_name)
  * Query to know if the target table is a unlogged one.  This query
  * is valid in PostgreSQL 9.1 or later.
  */
-#define ISUNLOGGEDQUERY "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.relname = '\"%s\"' AND c.relpersistence = 'u'"
+#define ISUNLOGGEDQUERY "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.relname = '%s' AND c.relpersistence = 'u'"
 
-#define ISUNLOGGEDQUERY2 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = pgpool_regclass('\"%s\"') AND c.relpersistence = 'u'"
+#define ISUNLOGGEDQUERY2 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = pgpool_regclass('%s') AND c.relpersistence = 'u'"
 
-#define ISUNLOGGEDQUERY3 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = to_regclass('\"%s\"') AND c.relpersistence = 'u'"
+#define ISUNLOGGEDQUERY3 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = to_regclass('%s') AND c.relpersistence = 'u'"
 
 	int hasrelpersistence;
 	static POOL_RELCACHE *hasrelpersistence_cache;
@@ -615,8 +617,11 @@ bool is_unlogged_table(char *table_name)
 
 	if (table_name == NULL)
 	{
-			return false;
+		return false;
 	}
+
+	if (!pool_has_to_regclass() && !pool_has_pgpool_regclass())
+		table_name = remove_quotes_and_schema_from_relname(table_name);
 
 	backend = pool_get_session_context()->backend;
 
@@ -693,9 +698,9 @@ bool is_view(char *table_name)
  */
 #define ISVIEWQUERY "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.relname = '%s' AND (c.relkind = 'v' OR c.relkind = 'm')"
 
-#define ISVIEWQUERY2 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = pgpool_regclass('\"%s\"') AND (c.relkind = 'v' OR c.relkind = 'm')"
+#define ISVIEWQUERY2 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = pgpool_regclass('%s') AND (c.relkind = 'v' OR c.relkind = 'm')"
 
-#define ISVIEWQUERY3 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = to_regclass('\"%s\"') AND (c.relkind = 'v' OR c.relkind = 'm')"
+#define ISVIEWQUERY3 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = to_regclass('%s') AND (c.relkind = 'v' OR c.relkind = 'm')"
 
 	static POOL_RELCACHE *relcache;
 	POOL_CONNECTION_POOL *backend;
@@ -704,8 +709,11 @@ bool is_view(char *table_name)
 
 	if (table_name == NULL)
 	{
-			return false;
+		return false;
 	}
+
+	if (!pool_has_to_regclass() && !pool_has_pgpool_regclass())
+		table_name = remove_quotes_and_schema_from_relname(table_name);
 
 	backend = pool_get_session_context()->backend;
 
@@ -946,9 +954,9 @@ int pool_table_name_to_oid(char *table_name)
 /*
  * Query to convert table name to oid
  */
-#define TABLE_TO_OID_QUERY "SELECT pgpool_regclass('\"%s\"')"
-#define TABLE_TO_OID_QUERY2 "SELECT oid FROM pg_class WHERE relname = '\"%s\"'"
-#define TABLE_TO_OID_QUERY3 "SELECT COALESCE(to_regclass('\"%s\"')::oid, 0)"
+#define TABLE_TO_OID_QUERY "SELECT pgpool_regclass('%s')"
+#define TABLE_TO_OID_QUERY2 "SELECT oid FROM pg_class WHERE relname = '%s'"
+#define TABLE_TO_OID_QUERY3 "SELECT COALESCE(to_regclass('%s')::oid, 0)"
 
 	int oid = 0;
 	static POOL_RELCACHE *relcache;
@@ -959,6 +967,9 @@ int pool_table_name_to_oid(char *table_name)
 	{
 		return oid;
 	}
+
+	if (!pool_has_to_regclass() && !pool_has_pgpool_regclass())
+		table_name = remove_quotes_and_schema_from_relname(table_name);
 
 	backend = pool_get_session_context()->backend;
 
@@ -1038,7 +1049,6 @@ select_table_walker(Node *node, void *context)
 		RangeVar *rgv = (RangeVar *)node;
 		char *table;
 		int oid;
-		char *s;
 
 		table = make_table_name_from_rangevar(rgv);
 		oid = pool_table_name_to_oid(table);
@@ -1054,9 +1064,7 @@ select_table_walker(Node *node, void *context)
 			num_oids = ctx->num_oids++;
 
 			ctx->table_oids[num_oids] = oid;
-			s = strip_quote(table);
-			strlcpy(ctx->table_names[num_oids], s, POOL_NAMEDATALEN);
-			free(s);
+			strlcpy(ctx->table_names[num_oids], table, POOL_NAMEDATALEN);
 
 			pool_debug("select_table_walker: ctx->table_names[%d] = %s",
 			           num_oids, ctx->table_names[num_oids]);
@@ -1066,26 +1074,6 @@ select_table_walker(Node *node, void *context)
 	return raw_expression_tree_walker(node, select_table_walker, context);
 }
 
-static char *strip_quote(char *str)
-{
-	char *after;
-	int i = 0;
-
-	after = malloc(sizeof(char) * strlen(str) + 1);
-
-	do {
-		if (*str != '"')
-		{
-			after[i] = *str;
-			i++;
-		}
-		str++;
-	} while (*str != '\0');
-
-	after[i] = '\0';
-
-	return after;
-}
 
 /*
  * makeRangeVarFromNameList
@@ -1130,11 +1118,13 @@ static char *make_table_name_from_rangevar(RangeVar *rangevar)
 	/*
 	 * Table name. Max size is calculated as follows:
 	 * schema name(POOL_NAMEDATALEN byte)
-	 * + single quote(1 byte)
+	 * + quotation marks for schmea name(2 byte)
+	 * + period(1 byte)
 	 * + table name (POOL_NAMEDATALEN byte)
+	 * + quotation marks for table name(2 byte)
 	 * + NULL(1 byte)
 	 */
-	static char tablename[POOL_NAMEDATALEN*2+1+1];
+	static char tablename[POOL_NAMEDATALEN*2+1+2*2+1];
 
 	if (rangevar == NULL)
 	{
@@ -1153,7 +1143,9 @@ static char *make_table_name_from_rangevar(RangeVar *rangevar)
 
 	if (rangevar->schemaname)
 	{
-		strncpy(tablename, rangevar->schemaname, POOL_NAMEDATALEN);
+		strcat(tablename, "\"");
+		strncat(tablename, rangevar->schemaname, POOL_NAMEDATALEN);
+		strcat(tablename, "\"");
 		strcat(tablename, ".");
 	}
 
@@ -1163,7 +1155,11 @@ static char *make_table_name_from_rangevar(RangeVar *rangevar)
 		return "";
 	}
 
+	strcat(tablename, "\"");
 	strncat(tablename, rangevar->relname, POOL_NAMEDATALEN);
+	strcat(tablename, "\"");
+
 	pool_debug("make_table_name_from_rangevar: tablename:%s", tablename);
+
 	return tablename;
 }
