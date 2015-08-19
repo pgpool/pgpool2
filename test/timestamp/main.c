@@ -50,6 +50,16 @@ bool pool_has_pgpool_regclass(void)
 	return false;
 }
 
+bool pool_has_to_regclass(void)
+{
+	return false;
+}
+
+char *remove_quotes_and_schema_from_relname(char *table)
+{
+	return table; 
+}
+
 POOL_RELCACHE *
 pool_create_relcache(int cachesize, char *sql, func_ptr register_func, func_ptr unregister_func, bool issessionlocal)
 {
@@ -89,6 +99,7 @@ main(int argc, char **argv)
 	POOL_CONNECTION_POOL	backend;
 	POOL_CONNECTION_POOL_SLOT slot;
 	POOL_SENT_MESSAGE	msg;
+	POOL_QUERY_CONTEXT	ctx;
 	backend.slots[0] = &slot;
 	slot.sp = &sp;
 
@@ -110,6 +121,7 @@ main(int argc, char **argv)
 		foreach(l, tree)
 		{
 			msg.num_tsparams = 0;
+			msg.query_context = &ctx;
 			Node *node = (Node *) lfirst(l);
 			query = rewrite_timestamp(&backend, node, false, &msg);
 			if (query)
