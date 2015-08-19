@@ -36,26 +36,31 @@ SELECT * FROM t1;		-- this load balances
 SELECT f1(1);		-- this does not load balance
 EOF
 
-# check if simle load balance worked
+# check if simple load balance worked
 	fgrep "SELECT * FROM t1;" log/pgpool.log |grep "DB node id: 1">/dev/null 2>&1
 	if [ $? != 0 ];then
 	# expected result not found
+		echo fail: select is sent to zero-weight node.
 		./shutdownall
 		exit 1
 	fi
+	echo ok: load balance works.
 
 # check if black function list worked
 	fgrep "SELECT f1(1);" log/pgpool.log |grep "DB node id: 0">/dev/null 2>&1
 	if [ $? != 0 ];then
 	# expected result not found
+		echo fail: black function is sent to node 1.
 		./shutdownall
 		exit 1
 	fi
+	echo ok: black function list works.
 
 	echo "white_function_list = 'f1'" >> etc/pgpool.conf
 	echo "black_function_list = ''" >> etc/pgpool.conf
 
 	./pgpool_reload
+	sleep 1
 
 	$PSQL test <<EOF
 SELECT f1(1);		-- this does load balance
@@ -65,9 +70,11 @@ EOF
 	fgrep "SELECT f1(1);" log/pgpool.log |grep "DB node id: 1">/dev/null 2>&1
 	if [ $? != 0 ];then
 	# expected result not found
+		echo fail: white function is sent to zero-weight node.
 		./shutdownall
 		exit 1
 	fi
+	echo ok: white function list works.
 
 # in replication mode if load_balance_mode = off, SELECT query inside
 # an explicit transaction should be sent to master only.
@@ -89,6 +96,7 @@ EOF
 			fgrep "SELECT 1;" log/pgpool.log |grep "DB node id: 1">/dev/null 2>&1		
 			if [ $? != 0 ];then
 			# the SELECT should not be executed on node 1
+				echo ok: select is sent to only master when not load-blanced.
 				ok=1
 			fi
 		# the SELECT should be executed on node 0
@@ -100,6 +108,7 @@ EOF
 		echo "black_function_list = 'f1'" >> etc/pgpool.conf
 		echo "white_function_list = ''" >> etc/pgpool.conf
 		./pgpool_reload
+		sleep 1
 		$PSQL test <<EOF
 SELECT f1(2);		-- this should be sent to all the nodes
 EOF
@@ -108,6 +117,7 @@ EOF
 			fgrep "SELECT f1(2);" log/pgpool.log |grep "DB node id: 1">/dev/null 2>&1		
 			if [ $? = 0 ];then
 			# the SELECT should be executed on node 0 & 1
+				echo ok: black function is sent to all nodes.
 				ok=`expr $ok + 1`
 			fi
 		# the SELECT should be executed on node 0

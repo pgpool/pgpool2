@@ -60,6 +60,7 @@ test `getnode "test4"` -eq 1 -o `getnode "test4"` -eq 2 || ok=ng
 echo "app_name_redirect_preference_list = 'psql:primary,pgbench:standby'" >> etc/pgpool.conf
 
 ./pgpool_reload
+sleep 1
 
 wait_for_pgpool_startup
 
