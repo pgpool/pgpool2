@@ -12,6 +12,8 @@
 
 #define ROWLOCKQUERY2 "SELECT 1 FROM pgpool_catalog.insert_lock WHERE reloid = pgpool_regclass('%s') FOR UPDATE"
 
+#define ROWLOCKQUERY3 "SELECT 1 FROM pgpool_catalog.insert_lock WHERE reloid = to_regclass('%s') FOR UPDATE"
+
 #define MAX_NAME_LEN 128
 
 

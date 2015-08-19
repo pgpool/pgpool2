@@ -2772,13 +2772,13 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
  * Query to know if the target table has SERIAL column or not.
  * This query is valid through PostgreSQL 7.3 or higher.
  */
-#define NEXTVALQUERY "SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.relname = '\"%s\"'"
+#define NEXTVALQUERY "SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.relname = '%s'"
 
-#define NEXTVALQUERY2 "SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.oid = pgpool_regclass('\"%s\"')"
+#define NEXTVALQUERY2 "SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.oid = pgpool_regclass('%s')"
 
-#define NEXTVALQUERY3 "SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.oid = to_regclass('\"%s\"')"
+#define NEXTVALQUERY3 "SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.oid = to_regclass('%s')"
 
-	char *str;
+	char *table;
 	int result;
 	static POOL_RELCACHE *relcache;
 
@@ -2811,13 +2811,16 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 	 */
 
 	/* obtain table name */
-	str = get_insert_command_table_name((InsertStmt *)node);
-	if (str == NULL)
+	table = get_insert_command_table_name((InsertStmt *)node);
+	if (table == NULL)
 	{
 		ereport(LOG,
 				(errmsg("unable to get table name from insert statement while checking if table locking is required")));
 		return 0;
 	}
+
+	if (!pool_has_to_regclass() && !pool_has_pgpool_regclass())
+		table = remove_quotes_and_schema_from_relname(table);
 
 	/*
 	 * If relcache does not exist, create it.
@@ -2855,11 +2858,13 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 	 * Search relcache.
 	 */
 #ifdef USE_TABLE_LOCK
-	result = pool_search_relcache(relcache, backend, str)==0?0:1;
+	result = pool_search_relcache(relcache, backend, table)==0?0:1;
 #elif USE_SEQUENCE_LOCK
-	result = pool_search_relcache(relcache, backend, str)==0?0:2;
+	result = pool_search_relcache(relcache, backend, table)==0?0:2;
 #else
-	result = pool_search_relcache(relcache, backend, str)==0?0:3;
+			ereport(LOG,
+					(errmsg("use %s",table)));
+	result = pool_search_relcache(relcache, backend, table)==0?0:3;
 #endif
 	return result;
 }
@@ -2878,13 +2883,12 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
  */
 POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *query, InsertStmt *node, int lock_kind)
 {
-	char *table, *p;
+	char *table;
 	int len = 0;
 	char qbuf[1024];
 	int i, deadlock_detected = 0;
 	char *adsrc;
 	char seq_rel_name[MAX_NAME_LEN+1];
-	char rel_name[MAX_NAME_LEN+1];
 	regex_t preg;
 	size_t nmatch = 2;
 	regmatch_t pmatch[nmatch];
@@ -2904,15 +2908,6 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 	{
 		return POOL_CONTINUE;
 	}
-
-	/* trim quotes */
-	p = table;
-	for (i=0; *p; p++)
-	{
-		if (*p != '"')
-			rel_name[i++] = *p;
-	}
-	rel_name[i] = '\0';
 
 	/* table lock for insert target table? */
 	if (lock_kind == 1)
@@ -2955,6 +2950,9 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 							errdetail("error while creating relcache")));
 			}
 		}
+
+		if (!pool_has_to_regclass() && !pool_has_pgpool_regclass())
+			table = remove_quotes_and_schema_from_relname(table);
 
 		/*
 		 * Search relcache.
@@ -3003,10 +3001,15 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 	{
 		if (pool_has_insert_lock())
 		{
-			if (pool_has_pgpool_regclass())
-				snprintf(qbuf, sizeof(qbuf), ROWLOCKQUERY2, rel_name);
+			if (pool_has_to_regclass())
+				snprintf(qbuf, sizeof(qbuf), ROWLOCKQUERY3, table);
+			else if (pool_has_pgpool_regclass())
+				snprintf(qbuf, sizeof(qbuf), ROWLOCKQUERY2, table);
 			else
-				snprintf(qbuf, sizeof(qbuf), ROWLOCKQUERY, rel_name);
+			{
+				table = remove_quotes_and_schema_from_relname(table);
+				snprintf(qbuf, sizeof(qbuf), ROWLOCKQUERY, table);
+			}
 		}
 		else
 		{
@@ -3048,7 +3051,7 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 				result = NULL;
 
 				/* insert a lock target row into insert_lock table */
-				status = add_lock_target(frontend, backend, rel_name);
+				status = add_lock_target(frontend, backend, table);
 				if (status == POOL_CONTINUE)
 				{
 					per_node_statement_log(backend, MASTER_NODE_ID, qbuf);
@@ -3244,10 +3247,12 @@ static bool has_lock_target(POOL_CONNECTION *frontend,
 
 	if (table)
 	{
-		if (pool_has_pgpool_regclass())
-			snprintf(qbuf, sizeof(qbuf), "SELECT 1 FROM pgpool_catalog.insert_lock WHERE reloid = pgpool_regclass('\"%s\"')%s", table, suffix);
+		if (pool_has_to_regclass())
+			snprintf(qbuf, sizeof(qbuf), "SELECT 1 FROM pgpool_catalog.insert_lock WHERE reloid = to_regclass('%s')%s", table, suffix);
+		else if (pool_has_pgpool_regclass())
+			snprintf(qbuf, sizeof(qbuf), "SELECT 1 FROM pgpool_catalog.insert_lock WHERE reloid = pgpool_regclass('%s')%s", table, suffix);
 		else
-			snprintf(qbuf, sizeof(qbuf), "SELECT 1 FROM pgpool_catalog.insert_lock WHERE reloid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = '\"%s\"' ORDER BY oid LIMIT 1)%s", table, suffix);
+			snprintf(qbuf, sizeof(qbuf), "SELECT 1 FROM pgpool_catalog.insert_lock WHERE reloid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = '%s' ORDER BY oid LIMIT 1)%s", table, suffix);
 	}
 	else
 	{
@@ -3280,10 +3285,12 @@ static POOL_STATUS insert_oid_into_insert_lock(POOL_CONNECTION *frontend,
 
 	if (table)
 	{
-		if (pool_has_pgpool_regclass())
-			snprintf(qbuf, sizeof(qbuf), "INSERT INTO pgpool_catalog.insert_lock VALUES (pgpool_regclass('\"%s\"'))", table);
+		if (pool_has_to_regclass())
+			snprintf(qbuf, sizeof(qbuf), "INSERT INTO pgpool_catalog.insert_lock VALUES (to_regclass('%s'))", table);
+		else if (pool_has_pgpool_regclass())
+			snprintf(qbuf, sizeof(qbuf), "INSERT INTO pgpool_catalog.insert_lock VALUES (pgpool_regclass('%s'))", table);
 		else
-			snprintf(qbuf, sizeof(qbuf), "INSERT INTO pgpool_catalog.insert_lock SELECT oid FROM pg_catalog.pg_class WHERE relname = '\"%s\"' ORDER BY oid LIMIT 1", table);
+			snprintf(qbuf, sizeof(qbuf), "INSERT INTO pgpool_catalog.insert_lock SELECT oid FROM pg_catalog.pg_class WHERE relname = '%s' ORDER BY oid LIMIT 1", table);
 	}
 	else
 	{
@@ -3338,7 +3345,7 @@ bool is_partition_table(POOL_CONNECTION_POOL *backend, Node *node)
 static char *get_insert_command_table_name(InsertStmt *node)
 {
 	POOL_SESSION_CONTEXT *session_context;
-	static char table[128];
+	static char table[MAX_NAME_LEN+1];
 	char *p;
 
 	session_context = pool_get_session_context(true);

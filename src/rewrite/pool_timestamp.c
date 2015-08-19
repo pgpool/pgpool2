@@ -156,14 +156,17 @@ relcache_lookup(TSRewriteContext *ctx)
     " , false)" \
 	" FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a " \
 	" LEFT JOIN pg_catalog.pg_attrdef d ON (a.attrelid = d.adrelid AND a.attnum = d.adnum)" \
-	" WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.oid = to_regclass('\"%s\"')" \
+	" WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.oid = to_regclass('%s')" \
 	" ORDER BY a.attnum"
 
 	char *query;
+	char *table_name;
+
+	table_name = ctx->relname;
 
 	if (pool_has_to_regclass())
 	{
-		query = ATTRDEFQUERY3;		
+		query = ATTRDEFQUERY3;
 	}
 	else if (pool_has_pgpool_regclass())
 	{
@@ -172,6 +175,7 @@ relcache_lookup(TSRewriteContext *ctx)
 	else
 	{
 		query = ATTRDEFQUERY;
+		table_name = remove_quotes_and_schema_from_relname(table_name);
 	}
 
 	if (!ts_relcache)
@@ -186,7 +190,7 @@ relcache_lookup(TSRewriteContext *ctx)
 		}
 	}
 
-	return (TSRel *) pool_search_relcache(ts_relcache, ctx->backend, ctx->relname);
+	return (TSRel *) pool_search_relcache(ts_relcache, ctx->backend, table_name);
 }
 
 static Node *
