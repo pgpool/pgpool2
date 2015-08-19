@@ -2862,8 +2862,6 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 #elif USE_SEQUENCE_LOCK
 	result = pool_search_relcache(relcache, backend, table)==0?0:2;
 #else
-			ereport(LOG,
-					(errmsg("use %s",table)));
 	result = pool_search_relcache(relcache, backend, table)==0?0:3;
 #endif
 	return result;
