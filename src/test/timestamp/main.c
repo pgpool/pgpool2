@@ -143,6 +143,8 @@ int pg_frontend_exists(void) {return 0;}
 int get_frontend_protocol_version(void) {return 0;}
 int set_pg_frontend_blocking(bool blocking) {return 0;}
 int send_to_pg_frontend(char* data, int len, bool flush) {return 0;}
+int pool_send_to_frontend(char* data, int len, bool flush) {return 0;}
+int pool_frontend_exists(void) {return 0;}
 void ExceptionalCondition
 	(const char *conditionName,const char *errorType,
 	const char *fileName, int lineNumber) {}
