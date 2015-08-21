@@ -476,6 +476,35 @@ comment and will be ignored.</p>
       try to connect to pgpool-II, they are blocked (not rejected)
       until a connection to any pgpool-II process is closed.
       Up to 2*num_init_children can be queued.</p>
+		<p>
+		The queued is inside the kernel called "listen queue". The length of the listen queue is called "backlog".
+		There is an upper limit of the backlog in some systems, and if num_init_children*2 exceeds the number, you need to set the backlong higher. Otherwise, following problems may occur in heavy loaded systems: 1) connecting to pgpool-II fails 2) connecting to pgpool-II is getting slow because of retries in the kernel.
+		You can check if the listen queue is actually overflowed by using "netstat -s" command.
+		If you find something like:
+		</p>
+		<pre>
+535 times the listen queue of a socket overflowed
+		</pre>
+		</p>
+		<p>
+then the listen queue is definitely overflowed.
+		You should increase the backlog in this case (you will be required a super user privilege).
+		</p>
+		<p>
+		<pre>
+# sysctl net.core.somaxconn
+net.core.somaxconn = 128
+# sysctl -w net.core.somaxconn = 256
+		</pre>
+		</p>
+		<p>
+You could add following to /etc/sysctl.conf instead.
+		</p>
+		<p>
+		<pre>
+net.core.somaxconn = 256
+		</pre>
+    </p>
       
 	  <p>Some hints in addition to above:</p>
 	   <p>
@@ -648,7 +677,6 @@ This parameter specifies a command to run when a node is attached.
 pgpool-II replaces special the following characters with backend specific 
 information.
 
-<<<<<<< HEAD
 <center>
 <table border>
 <tr><td>Special character</td><td>Description</td></tr>
@@ -665,67 +693,6 @@ information.
 </center>
       You need to reload pgpool.conf if you change failback_command.
 </p>
-=======
-<dl>
-<dt><a name="NUM_INIT_CHILDREN"></a>num_init_children</dt>
-    <dd>
-    <p>The number of preforked pgpool-II server processes. Default is 32.
-    num_init_children is also the concurrent connections limit to pgpool-II from clients.
-    If more than num_init_children clients try to connect to pgpool-II,
-    they are blocked (not rejected) until a connection to any pgpool-II process is closed.
-    Up to 2*num_init_children can be queued.
-		</p>
-		<p>
-		The queued is inside the kernel called "listen queue". The length of the listen queue is called "backlog".
-		There is an upper limit of the backlog in some systems, and if num_init_children*2 exceeds the number, you need to set the backlong higher. Otherwise, following problems may occur in heavy loaded systems: 1) connecting to pgpool-II fails 2) connecting to pgpool-II is getting slow because of retries in the kernel.
-		You can check if the listen queue is actually overflowed by using "netstat -s" command.
-		If you find something like:
-		</p>
-		<pre>
-535 times the listen queue of a socket overflowed
-		</pre>
-		</p>
-		<p>
-then the listen queue is definitely overflowed.
-		You should increase the backlog in this case (you will be required a super user privilege).
-		</p>
-		<p>
-		<pre>
-# sysctl net.core.somaxconn
-net.core.somaxconn = 128
-# sysctl -w net.core.somaxconn = 256
-		</pre>
-		</p>
-		<p>
-You could add following to /etc/sysctl.conf instead.
-		</p>
-		<p>
-		<pre>
-net.core.somaxconn = 256
-		</pre>
-    </p>
-		<p>
-    Number of connections to each PostgreSQL is roughly max_pool*num_init_children</p>
-
-    <p>Some hints in addition to above:</p>
-    <ul>
-        <li>Canceling a query creates another
-            connection to the backend; thus, a query cannot be canceled if
-            all the connections are in use. If you want to ensure that queries can
-            be canceled, set this value to twice the expected connections.</li>
-
-        <li>PostgreSQL allows concurrent connections for non superusers up
-            to max_connections - superuser_reserved_connections.</li>
-    </ul>
-
-    <p>In summary, max_pool, num_init_children, max_connections,
-    superuser_reserved_connections must satisfy the following formula:
-    </p>
-<pre>
-max_pool*num_init_children &lt;= (max_connections - superuser_reserved_connections) (no query canceling needed)
-max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connections) (query canceling needed)
-</pre>
->>>>>>> 7f875af... Add mention about listen queue and how to increase the backlog in the num_init_children section.
 
   <dt>fail_over_on_backend_error</dt>
   <dd>
@@ -2345,39 +2312,6 @@ PITR mechanism.</font>
    If the target PostgreSQL server has already started, you need to shut it down.
 </p>
 
-<<<<<<< HEAD
-=======
-<ul>
-<li>"samegroup" for DATABASE field is not supported</li>
-    <p>
-    Since pgpool does not know anything about users in the backend server,
-    the database name is simply checked against entries in the DATABASE
-    field of pool_hba.conf.
-    </p>
-
-<li>group names following "+" for USER field is not supported</li>
-    <p>
-    This is for the same reason as for the "samegroup" described above. A
-    user name is simply checked against the entries in the USER field
-    of pool_hba.conf.
-    </p>
-
-<li>IPv6 for IP address/mask is not supported</li>
-    <p>
-    pgpool currently does not support IPv6.
-    </p>
-
-<li>Only "trust", "reject", "md5" and "pam" for METHOD field are supported</li>
-    <p>
-    Again, this is for the same reason as for the "samegroup" described above.
-    pgpool does not have access to user/password information.
-    </p>
-    <p>
-    To use md5 authentication, you need to register your name and password in "pool_passwd".
-    See <a href="#md5">Authentication / Access Controls</a> for more details.
-</ul>
-
->>>>>>> fb819b2... Remove old restriction description which is no longer true.
 <p>
 pgpool-II performs online recovery in two separated phases. There are a few 
 seconds or minutes when client will be waiting to connect to pgpool-II while a 
@@ -2802,7 +2736,6 @@ recovery.
 
 <p>
 <ul>
-<<<<<<< HEAD
   <li>In the replication mode or master/slave mode, trust, clear text
       password, and pam methods are supported. md5 in also supported since pgpool-II 3.0.
 	   
@@ -2829,40 +2762,8 @@ recovery.
 	   </li>
   <li>In all the other modes, trust, clear text password, crypt, md5,
       and pam methods are supported.</li>
-  <li>pgpool-II does not support pg_hba.conf-like access controls. If
-      TCP/IP connections are enabled, pgpool-II accepts all the
-      connections from any host. If needed, use iptables and such to
-      control access from other hosts. (PostgreSQL server accepting
-      pgpool-II connections can use pg_hba.conf, of course).</li>
 	   </ul>
 </p>
-=======
-    <li>In the replication mode or master/slave mode, trust, clear text password,
-        and pam methods are supported. md5 in also supported since pgpool-II 3.0.
-        md5 is supported by using a authencitaion file ("pool_passwd").
-        "pool_passwd" is default name of the authentication file.
-        You can change the file name using <a href="#POOL_PASSWD">pool_passwd</a>.
-        Here are the steps to enable md5 authentication:
-        <ol>
-            <li>Login as the database's operating system user and type
-                "pg_md5 --md5auth --username=<your_username> <your_passwd>"
-                 user name and md5 encrypted password are registered into pool_passwd.
-                 If pool_passwd does not exist yet, pg_md5 command will
-                 automatically create it for you.</li>
-            <li>The format of pool_passwd is "username:encrypted_passwd".</li>
-            <li>You also need to add an appropriate md5 entry to pool_hba.conf.
-                See <a href="#hba">Setting up pool_hba.conf for client authentication (HBA)</a>
-                for more details.</li>
-            <li>Please note that the user name and password must be
-                 identical to those registered in PostgreSQL.</li>
-            <li>After changing md5 password(in both pool_passwd and PostgreSQL of course),
-                you need to execute "pgpool reload" or restart pgpool(if your pgpool is 3.1 or before).</li>
-       </ol>
-    </li>
-    <li>In all the other modes, trust, clear text password, crypt, md5,
-        and pam methods are supported.</li>
-    </ul>
->>>>>>> fb819b2... Remove old restriction description which is no longer true.
 
 <h2>Large objects</h2>
 <p>
