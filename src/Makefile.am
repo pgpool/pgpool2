@@ -20,15 +20,12 @@ pgpool_SOURCES = main/main.c \
 	protocol/pool_connection_pool.c \
 	protocol/pool_proto_modules.c \
     query_cache/pool_memqcache.c \
-	system_db/pool_system.c \
 	context/pool_session_context.c \
 	context/pool_process_context.c \
 	context/pool_query_context.c \
 	streaming_replication/pool_worker_child.c \
 	rewrite/pool_timestamp.c \
 	rewrite/pool_lobj.c \
-	parallel_query/pool_rewrite_query.c \
-	parallel_query/pool_rewrite_outfuncs.c \
 	utils/pool_select_walker.c \
 	utils/strlcpy.c \
 	utils/psprintf.c \
@@ -63,7 +60,6 @@ sysconf_DATA = sample/pgpool.conf.sample \
 			   sample/pgpool.conf.sample-stream
 
 pkgdata_DATA = sql/insert_lock.sql \
-			   sql/system_db.sql \
 			   sample/pgpool.pam
 
 # suggested by libtoolize
@@ -88,7 +84,7 @@ EXTRA_DIST = sample/pgpool.pam \
 		sample/pgpool.conf.sample-stream sample/pcp.conf.sample \
 		sample/dist_def_pgbench.sql sample/replicate_def_pgbench.sql \
 		sql/Makefile \
-		sql/insert_lock.sql sql/system_db.sql \
+		sql/insert_lock.sql \
 		sql/pgpool-recovery/pgpool-recovery.c \
 		sql/pgpool-recovery/pgpool-recovery.sql.in \
 		sql/pgpool-recovery/uninstall_pgpool-recovery.sql \

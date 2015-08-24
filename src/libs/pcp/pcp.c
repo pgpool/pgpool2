@@ -8,7 +8,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -66,7 +66,6 @@ static void setResultIntData(PCPResultInfo *res, unsigned int slotno, int value)
 static void process_node_info_response(PCPConnInfo* pcpConn, char* buf, int len);
 static void process_command_complete_response(PCPConnInfo* pcpConn, char* buf, int len);
 static void process_watchdog_info_response(PCPConnInfo* pcpConn, char* buf, int len);
-static void process_systemdb_info_response(PCPConnInfo* pcpConn, char* buf, int len);
 static void process_process_info_response(PCPConnInfo* pcpConn, char* buf, int len);
 static void process_pool_status_response(PCPConnInfo* pcpConn, char* buf, int len);
 static void process_pcp_node_count_response(PCPConnInfo* pcpConn, char* buf, int len);
@@ -76,7 +75,6 @@ static void process_error_response(PCPConnInfo* pcpConn, char toc, char* buff);
 
 
 static void setResultSlotCount(PCPConnInfo* pcpConn, unsigned int slotCount);
-static void free_systemdb_info(struct PCPConnInfo* pcpConn, void *ptr);
 static void free_processInfo(struct PCPConnInfo* pcpConn, void* ptr);
 static int PCPFlush(PCPConnInfo* pcpConn);
 
@@ -453,13 +451,6 @@ static PCPResultInfo* process_pcp_response(PCPConnInfo* pcpConn, char sentMsg)
 					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 				else
 					process_watchdog_info_response(pcpConn,buf,rsize);
-				break;
-
-			case 's':
-				if(sentMsg != 'S')
-					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
-				else
-					process_systemdb_info_response(pcpConn,buf,rsize);
 				break;
 
 			case 'p':
@@ -971,223 +962,6 @@ pcp_process_info(PCPConnInfo* pcpConn, int pid)
 		fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"P\", len=%d\n", ntohl(wsize));
 
 	return process_pcp_response(pcpConn,'P');
-}
-
-
-static void
-process_systemdb_info_response(PCPConnInfo* pcpConn, char* buf, int len)
-{
-	char *index;
-	SystemDBInfo *systemdb_info;
-
-	if (strcmp(buf, "SystemDBInfo") == 0)
-	{
-		setResultStatus(pcpConn, PCP_RES_INCOMPLETE);
-		systemdb_info = (SystemDBInfo *)palloc0(sizeof(SystemDBInfo));
-
-		index = (char *) memchr(buf, '\0', len) + 1;
-		if(index == NULL)
-			goto INVALID_RESPONSE;
-
-		systemdb_info->hostname = pstrdup(index);
-
-		index = (char *) memchr(index, '\0', len) + 1;
-		if(index == NULL)
-			goto INVALID_RESPONSE;
-		systemdb_info->port = atoi(index);
-
-		index = (char *) memchr(index, '\0', len) + 1;
-		if(index == NULL)
-			goto INVALID_RESPONSE;
-		systemdb_info->user = pstrdup(index);
-
-		index = (char *) memchr(index, '\0', len) + 1;
-		if(index == NULL)
-			goto INVALID_RESPONSE;
-		systemdb_info->password = pstrdup(index);
-
-		index = (char *) memchr(index, '\0', len) + 1;
-		if(index == NULL)
-			goto INVALID_RESPONSE;
-		systemdb_info->schema_name = pstrdup(index);
-
-		index = (char *) memchr(index, '\0', len) + 1;
-		if(index == NULL)
-			goto INVALID_RESPONSE;
-		systemdb_info->database_name = pstrdup(index);
-
-		index = (char *) memchr(index, '\0', len) + 1;
-		if(index == NULL)
-			goto INVALID_RESPONSE;
-		systemdb_info->dist_def_num = atoi(index);
-
-		index = (char *) memchr(index, '\0', len) + 1;
-		if(index == NULL)
-			goto INVALID_RESPONSE;
-		systemdb_info->system_db_status = atoi(index);
-
-		if (systemdb_info->dist_def_num > 0)
-		{
-			systemdb_info->dist_def_slot = NULL;
-			systemdb_info->dist_def_slot = (DistDefInfo *)palloc(sizeof(DistDefInfo) * systemdb_info->dist_def_num);
-			systemdb_info->dist_def_index = 0;
-		}
-		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)systemdb_info, sizeof(SystemDBInfo), free_systemdb_info) < 0)
-			goto INVALID_RESPONSE;
-
-		return;
-	}
-	else if (strcmp(buf, "DistDefInfo") == 0)
-	{
-		DistDefInfo *dist_def_info = NULL;
-		int i;
-
-		if(PCPResultStatus(pcpConn->pcpResInfo) != PCP_RES_INCOMPLETE)
-			goto INVALID_RESPONSE;
-
-		systemdb_info =	(SystemDBInfo *)pcp_get_binary_data(pcpConn->pcpResInfo, 0);
-
-		dist_def_info = (DistDefInfo *)palloc(sizeof(DistDefInfo));
-
-		index = (char *) memchr(buf, '\0', len) + 1;
-		if(index == NULL)
-			goto INVALID_RESPONSE;
-
-		dist_def_info->dbname = pstrdup(index);
-
-		index = (char *) memchr(index, '\0', len) + 1;
-		if(index == NULL)
-			goto INVALID_RESPONSE;
-
-		dist_def_info->schema_name = pstrdup(index);
-
-		index = (char *) memchr(index, '\0', len) + 1;
-		if(index == NULL)
-			goto INVALID_RESPONSE;
-		dist_def_info->table_name = pstrdup(index);
-
-		index = (char *) memchr(index, '\0', len) + 1;
-		if(index == NULL)
-			goto INVALID_RESPONSE;
-		dist_def_info->dist_key_col_name = pstrdup(index);
-
-		index = (char *) memchr(index, '\0', len) + 1;
-		if(index == NULL)
-			goto INVALID_RESPONSE;
-		dist_def_info->col_num = atoi(index);
-
-		dist_def_info->col_list = NULL;
-		dist_def_info->col_list = (char **)palloc(sizeof(char *) * dist_def_info->col_num);
-
-		for (i = 0; i < dist_def_info->col_num; i++)
-		{
-			index = (char *) memchr(index, '\0', len) + 1;
-			if(index == NULL)
-				goto INVALID_RESPONSE;
-			dist_def_info->col_list[i] = pstrdup(index);
-		}
-
-		dist_def_info->type_list = NULL;
-		dist_def_info->type_list = (char **)palloc(sizeof(char *) * dist_def_info->col_num);
-
-		for (i = 0; i < dist_def_info->col_num; i++)
-		{
-			index = (char *) memchr(index, '\0', len) + 1;
-			if(index == NULL)
-				goto INVALID_RESPONSE;
-			dist_def_info->type_list[i] = pstrdup(index);
-		}
-
-		index = (char *) memchr(index, '\0', len) + 1;
-		if(index == NULL)
-			goto INVALID_RESPONSE;
-		dist_def_info->dist_def_func = pstrdup(index);
-
-		if(systemdb_info->dist_def_index >=  systemdb_info->dist_def_num)
-			goto INVALID_RESPONSE;
-
-		memcpy(&systemdb_info->dist_def_slot[systemdb_info->dist_def_index++], dist_def_info, sizeof(DistDefInfo));
-		return;
-	}
-	else if (strcmp(buf, "CommandComplete") == 0)
-	{
-		setResultStatus(pcpConn, PCP_RES_COMMAND_OK);
-		return;
-	}
-
-INVALID_RESPONSE:
-	pcp_internal_error(pcpConn,
-					   "command failed. invalid response: \n");
-	setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
-}
-/* --------------------------------
- * pcp_systemdb_info - get information of system DB
- *
- * return structure of system DB information on success, -1 otherwise
- * --------------------------------
- */
-
-PCPResultInfo *
-pcp_systemdb_info(PCPConnInfo* pcpConn)
-{
-	int wsize;
-
-	if(PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
-	{
-		pcp_internal_error(pcpConn,"invalid PCP connection");
-		return NULL;
-	}
-
-	pcp_write(pcpConn->pcpConn, "S", 1);
-	wsize = htonl(sizeof(int));
-	pcp_write(pcpConn->pcpConn, &wsize, sizeof(int));
-	if (PCPFlush(pcpConn) < 0)
-		return NULL;
-	if(pcpConn->Pfdebug)
-		fprintf(pcpConn->Pfdebug,"DEBUG: send: tos=\"S\", len=%d\n", ntohl(wsize));
-
-	return process_pcp_response(pcpConn,'S');
-}
-
-static void
-free_systemdb_info(struct PCPConnInfo* pcpConn, void *ptr)
-{
-	SystemDBInfo * si = (SystemDBInfo *)ptr;
-	int i, j;
-	if(pcpConn->Pfdebug)
-		fprintf(pcpConn->Pfdebug,"free systemdb info structure \n");
-
-	if (si == NULL)
-	{
-		if(pcpConn->Pfdebug)
-			fprintf(pcpConn->Pfdebug,"systemdb info structure is NULL nothing to free \n");
-
-		return;
-	}
-	pfree(si->hostname);
-	pfree(si->user);
-	pfree(si->password);
-	pfree(si->schema_name);
-	pfree(si->database_name);
-
-	if (si->dist_def_slot != NULL)
-	{
-		for (i = 0; i < si->dist_def_num; i++)
-		{
-			DistDefInfo *di = &si->dist_def_slot[i];
-			pfree(di->dbname);
-			pfree(di->schema_name);
-			pfree(di->table_name);
-			pfree(di->dist_def_func);
-			for (j = 0; j < di->col_num; j++)
-			{
-				pfree(di->col_list[j]);
-				pfree(di->type_list[j]);
-			}
-		}
-	}
-
-	pfree(si);
 }
 
 /* --------------------------------

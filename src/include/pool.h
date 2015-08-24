@@ -144,7 +144,6 @@ typedef struct
 	char *database;	/* database name in startup_packet (malloced area) */
 	char *user;	/* user name in startup_packet (malloced area) */
 	char *application_name;		/* not malloced. pointing to in startup_packet */
-    bool system_db;     /* true if database name is one of default that comes with server e.g postgres or template.. */
 } StartupPacket;
 
 typedef struct CancelPacket
@@ -253,14 +252,6 @@ typedef struct {
     POOL_CONNECTION_POOL_SLOT	*slots[MAX_NUM_BACKENDS];
 } POOL_CONNECTION_POOL;
 
-typedef struct {
-	SystemDBInfo *info;
-	PGconn *pgconn;
-	/* persistent connection to the system DB */
-	POOL_CONNECTION_POOL_SLOT *connection;
-	BACKEND_STATUS *system_db_status;
-} POOL_SYSTEMDB_CONNECTION_POOL;
-
 /* 
  * for pool_clear_cache() in pool_query_cache.c 
  *
@@ -350,14 +341,10 @@ extern int my_master_node_id;
 #define MASTER_SLAVE (pool_config->master_slave_mode)
 #define STREAM (MASTER_SLAVE && !strcmp("stream", pool_config->master_slave_sub_mode))
 #define DUAL_MODE (REPLICATION || MASTER_SLAVE)
-#define PARALLEL_MODE (pool_config->parallel_mode)
-#define RAW_MODE (!REPLICATION && !PARALLEL_MODE && !MASTER_SLAVE)
+#define RAW_MODE (!REPLICATION && !MASTER_SLAVE)
 #define MAJOR(p) MASTER_CONNECTION(p)->sp->major
 #define TSTATE(p, i) (CONNECTION(p, i)->tstate)
 #define INTERNAL_TRANSACTION_STARTED(p, i) (CONNECTION(p, i)->is_internal_transaction_started)
-#define SYSDB_INFO (system_db_info->info)
-#define SYSDB_CONNECTION (system_db_info->connection)
-#define SYSDB_STATUS (*system_db_info->system_db_status)
 
 #define Max(x, y)		((x) > (y) ? (x) : (y))
 #define Min(x, y)		((x) < (y) ? (x) : (y))
@@ -472,7 +459,6 @@ typedef enum
 {
 	INITIALIZING,
 	PERFORMING_HEALTH_CHECK,
-	PERFORMING_SYSDB_CHECK,
 	SLEEPING,
 	WAITIG_FOR_CONNECTION,
 	BACKEND_CONNECTING,
@@ -487,7 +473,6 @@ extern volatile sig_atomic_t backend_timer_expired; /* flag for connection close
 extern volatile sig_atomic_t health_check_timer_expired;		/* non 0 if health check timer expired */
 extern long int weight_master;	/* normalized weight of master (0-RAND_MAX range) */
 extern int my_proc_id;  /* process table id (!= UNIX's PID) */
-extern POOL_SYSTEMDB_CONNECTION_POOL *system_db_info; /* systemdb */
 extern ProcessInfo *process_info; /* shmem process information table */
 extern ConnectionInfo *con_info; /* shmem connection info table */
 extern POOL_REQUEST_INFO *Req_info;
@@ -614,16 +599,7 @@ extern POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection_noerror(
 extern void discard_persistent_db_connection(POOL_CONNECTION_POOL_SLOT *cp);
 
 /* define pool_system.c */
-extern POOL_CONNECTION_POOL_SLOT *pool_system_db_connection(void);
-extern DistDefInfo *pool_get_dist_def_info (char * dbname, char * schema_name, char * table_name);
-extern RepliDefInfo *pool_get_repli_def_info (char * dbname, char * schema_name, char * table_name);
-extern int pool_get_id (DistDefInfo *info, const char * value);
-extern int system_db_connect (void);
-extern int pool_memset_system_db_info (SystemDBInfo *info);
 extern void pool_close_libpq_connection(void);
-extern int system_db_health_check(void);
-extern SystemDBInfo *pool_get_system_db_info(void);
-
 
 /* pool_hba.c */
 extern int load_hba(char *hbapath);

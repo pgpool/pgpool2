@@ -42,7 +42,6 @@ char *last_dir_separator(const char *filename);
 
 static void usage(void);
 static inline bool app_require_nodeID(void);
-static void output_ststemdb_info_result(PCPResultInfo* pcpResInfo, bool verbose);
 static void output_watchdog_info_result(PCPResultInfo* pcpResInfo, bool verbose);
 static void output_procinfo_result(PCPResultInfo* pcpResInfo, bool all, bool verbose);
 static void output_proccount_result(PCPResultInfo* pcpResInfo, bool verbose);
@@ -62,7 +61,6 @@ typedef enum
 	PCP_PROMOTE_NODE,
 	PCP_RECOVERY_NODE,
 	PCP_STOP_PGPOOL,
-	PCP_SYSTEMDB_INFO,
 	PCP_WATCHDOG_INFO,
 	UNKNOWN,
 } PCP_UTILITIES;
@@ -87,7 +85,6 @@ struct AppTypes AllAppTypes[] =
 		{"pcp_promote_node", PCP_PROMOTE_NODE,"n:h:p:U:gwWvd", "promote a node as new master from pgpool-II"},
 		{"pcp_recovery_node", PCP_RECOVERY_NODE,"n:h:p:U:wWvd","recover a node"},
 		{"pcp_stop_pgpool", PCP_STOP_PGPOOL,"m:h:p:U:wWvd", "terminate pgpool-II"},
-		{"pcp_systemdb_info", PCP_SYSTEMDB_INFO,"h:p:U:wWvd", "display the pgpool-II systemDB information"},
 		{"pcp_watchdog_info", PCP_WATCHDOG_INFO,"n:h:p:U:wWvd", "display a pgpool-II watchdog's information"},
 		{NULL, UNKNOWN,NULL,NULL},
 	};
@@ -397,11 +394,6 @@ main(int argc, char **argv)
 		pcpResInfo = pcp_terminate_pgpool(pcpConn, shutdown_mode);
 	}
 
-	else if (current_app_type->app_type == PCP_SYSTEMDB_INFO)
-	{
-		pcpResInfo = pcp_systemdb_info(pcpConn);
-	}
-
 	else if (current_app_type->app_type == PCP_WATCHDOG_INFO)
 	{
 		pcpResInfo = pcp_watchdog_info(pcpConn,nodeID);
@@ -440,9 +432,6 @@ main(int argc, char **argv)
 
 		if (current_app_type->app_type == PCP_PROC_INFO)
 			output_procinfo_result(pcpResInfo, all, verbose);
-
-		else if (current_app_type->app_type == PCP_SYSTEMDB_INFO)
-			output_ststemdb_info_result(pcpResInfo, verbose);
 
 		else if (current_app_type->app_type == PCP_WATCHDOG_INFO)
 			output_watchdog_info_result(pcpResInfo, verbose);
@@ -617,42 +606,6 @@ output_procinfo_result(PCPResultInfo* pcpResInfo, bool all, bool verbose)
 	}
 	if(printed == false)
 		printf("No process information available\n\n");
-}
-
-static void
-output_ststemdb_info_result(PCPResultInfo* pcpResInfo, bool verbose)
-{
-	int i,j;
-	SystemDBInfo* systemdb_info = (SystemDBInfo *)pcp_get_binary_data(pcpResInfo, 0);
-	printf("%s %d %s %s %s %s %d %d\n",
-		   systemdb_info->hostname,
-		   systemdb_info->port,
-		   systemdb_info->user,
-		   systemdb_info->password[0] == '\0' ? "''" : systemdb_info->password,
-		   systemdb_info->schema_name,
-		   systemdb_info->database_name,
-		   systemdb_info->dist_def_num,
-		   systemdb_info->system_db_status);
-	
-	for (i = 0; i < systemdb_info->dist_def_num; i++)
-	{
-		DistDefInfo *ddi = &systemdb_info->dist_def_slot[i];
-		
-		printf("%s %s %s %s %d ",
-			   ddi->dbname,
-			   ddi->schema_name,
-			   ddi->table_name,
-			   ddi->dist_key_col_name,
-			   ddi->col_num);
-		
-		for (j = 0; j < ddi->col_num; j++)
-			printf("%s ", ddi->col_list[j]);
-		
-		for (j = 0; j < ddi->col_num; j++)
-			printf("%s ", ddi->type_list[j]);
-		
-		printf("%s\n", ddi->dist_def_func);
-	}
 }
 
 static void

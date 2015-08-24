@@ -72,7 +72,6 @@ static void send_frontend_exits(void);
 static void s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password);
 static void connection_count_up(void);
 static void connection_count_down(void);
-static void init_system_db_connection(void);
 static bool connect_using_existing_connection(POOL_CONNECTION *frontend,
 											  POOL_CONNECTION_POOL *backend,
 											  StartupPacket *sp);
@@ -189,9 +188,6 @@ void do_child(int *fds)
 #else
 	srandom((unsigned int) now.tv_usec);
 #endif
-
-	/* initialize system db connection */
-	init_system_db_connection();
 
 	/* initialize connection pool */
 	if (pool_init_cp())
@@ -427,11 +423,9 @@ backend_cleanup(POOL_CONNECTION* volatile *frontend, POOL_CONNECTION_POOL* volat
     sp = MASTER_CONNECTION(backend)->sp;
 
     /*
-     * cach connection if connection is not for
-     * system db and connection cache configuration
-     * parameter is enabled
+     * cach connection if connection cache configuration parameter is enabled
      */
-    if (sp && pool_config->connection_cache != 0 && sp->system_db == false)
+    if (sp && pool_config->connection_cache != 0)
     {
         if (*frontend)
         {
@@ -616,14 +610,6 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 				   sp->major, sp->minor, sp->database, sp->user)));
 
 	disable_authentication_timeout();
-
-    if(!strcmp(sp->database, "template0") ||
-        !strcmp(sp->database, "template1") ||
-        !strcmp(sp->database, "postgres") ||
-        !strcmp(sp->database, "regression"))
-        sp->system_db = true;
-    else
-        sp->system_db = false;
 
 	return sp;
 }
@@ -1123,15 +1109,6 @@ child_will_go_down(int code, Datum arg)
 	/* count down global connection counter */
 	if (accepted)
 		connection_count_down();
-	
-	/* prepare to shutdown connections to system db */
-	if(pool_config->parallel_mode)
-	{
-		if (system_db_info->pgconn)
-			pool_close_libpq_connection();
-		if (pool_system_db_connection())
-			pool_close(pool_system_db_connection()->con);
-	}
 	
 	if (pool_config->memory_cache_enabled && !pool_is_shmem_cache())
 	{
@@ -1766,31 +1743,6 @@ void check_stop_request(void)
 }
 
 /*
- * Initialize system DB connection
- */
-static void init_system_db_connection(void)
-{	
-	if (pool_config->parallel_mode)
-	{
-		int nRet;
-		nRet = system_db_connect();
-		if (nRet || PQstatus(system_db_info->pgconn) != CONNECTION_OK)
-		{
-            ereport(ERROR,
-                (errmsg("failed to make persistent system db connection"),
-                     errdetail("system_db_connect failed")));
-
-		}
-
-		system_db_info->connection = make_persistent_db_connection(pool_config->system_db_hostname,
-																   pool_config->system_db_port,
-																   pool_config->system_db_dbname,
-																   pool_config->system_db_user,
-																   pool_config->system_db_password, false);
-	}
-}
-
-/*
  * Initialize my backend status and master node id.
  * We copy the backend status to private area so that
  * they are not changed while I am alive.
@@ -2020,8 +1972,6 @@ static void check_config_reload(void)
 			if (strcmp("", pool_config->pool_passwd))
 				pool_reopen_passwd_file();
 		}
-		if (pool_config->parallel_mode)
-			pool_memset_system_db_info(system_db_info->info);
 		got_sighup = 0;
 	}
 }
@@ -2050,41 +2000,15 @@ static void validate_backend_connectivity(int front_end_fd)
 	char *error_hint = NULL;
 
 	get_backends_status(&valid_backends,&down_backends);
-	if (pool_config->parallel_mode)
+
+	if(valid_backends == 0)
 	{
-		/* Not even a single node is allowed to be down
-		 * when opperating in the parallel mode 
-		 */
-		 if(SYSDB_STATUS == CON_DOWN || down_backends > 0)
-		 {
-			 fatal_error = true;
-			 error_msg = "pgpool is not available in parallel query mode";
-			if(SYSDB_STATUS == CON_DOWN)
-			{
-				error_detail = "SystemDB status is down";
-				error_hint = "repair the SystemDB and restart pgpool";
-			}
-			else
-			{
-				error_detail = palloc(255);
-				snprintf(error_detail, 255, "%d backend nodes are down", down_backends);
-				error_hint = "repair the backend nodes and restart pgpool";
-			}
-		 }
+		fatal_error = true;
+		error_msg = "pgpool is not accepting any new connections";
+		error_detail = "all backend nodes are down, pgpool requires atleast one valid node";
+		error_hint = "repair the backend nodes and restart pgpool";
 	}
-	else
-	{
-		/* In non parallel mode single valid backend is all we need 
-		 * to continue 
-		 */
-		if(valid_backends == 0)
-		{
-			fatal_error = true;
-			error_msg = "pgpool is not accepting any new connections";
-			error_detail = "all backend nodes are down, pgpool requires atleast one valid node";
-			error_hint = "repair the backend nodes and restart pgpool";
-		}
-	}
+	
 	if(fatal_error)
 	{
 		/* check if we can inform the connecting client about the current

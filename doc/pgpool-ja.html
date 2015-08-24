@@ -8,7 +8,7 @@
 <body>
 
 <!-- hhmts start -->
-Last modified: Fri May 16 16:43:02 JST 2014
+Last modified: Mon Aug 24 18:18:48 JST 2015
 <!-- hhmts end -->
 
 <body bgcolor="#ffffff">
@@ -27,7 +27,6 @@ Last modified: Fri May 16 16:43:02 JST 2014
         <li><a href="#replication_mode">レプリケーションモード</a></li>
         <li><a href="#master_slave_mode">マスタースレーブモード</a></li>
         <li><a href="#stream">Streaming Replicationへの対応</a></li>
-        <li><a href="#parallel">パラレルモード</a></li>
         <li><a href="#hba">クライアント認証(HBA)のための pool_hba.conf 設定方法</a></li>
         <li><a href="#query_cache">クエリキャッシュの設定方法</a></li>
         <li><a href="#memqcache">インメモリクエリキャッシュの設定方法</a></li>
@@ -103,19 +102,6 @@ PostgreSQLサーバの間に割り込む形で動作し、PostgrSQLに以下の�
     </p>
     </li>
 
-    <li>パラレルクエリ
-    <p class="version_notice">
-    <em class="caution">DEPRECATED（〜 3.4）</em>
-    このモードは3.5.0以降削除されます。利用を推奨しません。
-    </p>
-
-    <p>
-    複数のサーバにデータを分割して受け持たせ、それぞれのサーバに同時に検索問い合わせを投げて、
-    問い合わせの処理時間を短縮するパラレルクエリが利用できます。
-    特に大規模なデータベースに対して検索を実行するときに威力を発揮します。
-    </p>
-    </li>
-
 </ul>
 
 <p>
@@ -160,7 +146,6 @@ is" without express or implied warranty.
 Windows では動きません。</p>
 <p>
 対応する PostgreSQL のバージョンは、PostgreSQL の 6.4 以降です。
-ただしパラレルクエリモードを使用するときは PostgreSQL 7.4 以降をお使いください。
 また、PostgreSQL 7.4 より前のバージョンでは、使用できる機能に制限事項があります。
 もっとも、そのような古いバージョンの PostgreSQL はそもそも使うべきではありません。
 </p>
@@ -384,38 +369,33 @@ pgpool-IIの設定ファイルはデフォルトでは/usr/local/etc/pgpool.conf
 <table border>
 
 <tr class="header">
-<th>使用できる機能/モード</th><th>rawモード(*3)</th><th>レプリケーションモード</th>
-<th>マスタスレーブモード</th><th>パラレルクエリモード</th>
+<th>使用できる機能/モード</th><th>rawモード(*2)</th><th>レプリケーションモード</th>
+<th>マスタスレーブモード</th>
 </tr>
 
 <tr>
 <th>コネクションプーリング</th><td align="center">×</td><td align="center">○</td>
-<td align="center">○</td><td align="center">○</td>
+<td align="center">○</td>
 </tr>
 
 <tr>
 <th>レプリケーション</th><td align="center">×</td><td align="center">○</td>
-<td align="center">×</td><td align="center">△(*1)</td>
+<td align="center">×</td>
 </tr>
 
 <tr>
 <th>負荷分散</th><td align="center">×</td><td align="center">○</td>
-<td align="center">○</td><td align="center">△(*1)</td>
+<td align="center">○</td>
 </tr>
 
 <tr>
 <th>フェイルオーバ</th><td align="center">○</td><td align="center">○</td>
-<td align="center">○</td><td align="center">×</td>
+<td align="center">○</td>
 </tr>
 
 <tr>
 <th>オンラインリカバリ</th><td align="center">×</td><td align="center">○</td>
-<td align="center">△(*2)</td><td align="center">×</td>
-</tr>
-
-<tr>
-<th>パラレルクエリ</th><td align="center">×</td><td align="center">×</td>
-<td align="center">×</td><td align="center">○</td>
+<td align="center">△(*1)</td>
 </tr>
 
 <tr>
@@ -423,21 +403,13 @@ pgpool-IIの設定ファイルはデフォルトでは/usr/local/etc/pgpool.conf
 <td align="center">2以上</td><td align="center">2以上</td>
 </tr>
 
-<tr>
-<th>システムDB</th><td align="center">不要</td><td align="center">不要</td>
-<td align="center">不要</td><td align="center">必要</td>
-</tr>
-
 </table>
 
 <ul>
-    <li>(*1)パラレルクエリモードでは、レプリケーションまたは負荷分散を有効にする必要があります。
-        ただし、分割して保存しているテーブルに対しては、レプリケーションならびに負荷分散の機能は使用されません。
-    </li>
-    <li>(*2)マスタースレーブモードでは、Streaming Replicationと併用するときにのみ
+    <li>(*1)マスタースレーブモードでは、Streaming Replicationと併用するときにのみ
         オンラインリカバリが可能です。
     </li>
-    <li>(*3)単にpgpool-IIを経由して接続するだけのモードです。
+    <li>(*2)単にpgpool-IIを経由して接続するだけのモードです。
         レプリケーションモードもマスタースレーブモードも有効にしていないときの動作です。
         PostgreSQLサーバへの接続セッション数を制限したり、2台以上のPostgreSQLサーバを用意して
         フェイルオーバ動作をさせたいときに利用します。
@@ -2689,235 +2661,6 @@ pgpoolAdminの「リカバリ」ボタンでオンラインリカバリが出来
 
 <!-- ================================================================================ -->
 
-<h1><a name="parallel"></a>パラレルモード</h1>
-<p class="version_notice">
-  <em class="caution">DEPRECATED（〜 3.4）</em>
-  このモードは3.5.0以降削除されます。利用を推奨しません。
-</p>
-<p>
-パラレルクエリ機能が利用できるモードです。
-テーブルを分割させ、各ノードにデータを持たせることができます。またレプリケーションや負荷分散機能も同時に使うことができます。
-</p>
-<p>
-パラレルモードでは、pgpool.confの<a href="#REPLICATION_MODE">replication_mode</a>または
-<a href="#LOAD_BALANCE_MODE">loadbalance_mode</a>にtrueを設定し、
-<a href="#MASTER_SLAVE_MODE">master_slave</a> をfalseにし、
-<a href="#PARALLEL_MODE">parallel_mode</a> をtrueにします。
-このパラメータを変更した時には pgpool-II を再起動してください。
-</p>
-
-<h2 id="system_db">システムDBの設定</h2>
-<p>
-パラレルモードを利用するためには、システムDBを設定する必要があります。
-システムDBはデータを各PostgreSQLサーバで分割するためのルールをPostgreSQLのテーブルの形で保持します。
-システムDBはpgpoolが動作するホストと同じホストに置く必要はありません。
-システムDBの設定はpgpool.confで行います。
-</p>
-
-<dl>
-<dt><a name="SYSTEM_DB_HOSTNAME"></a>system_db_hostname</dt>
-    <dd>
-    <p>
-    システムDBが動いているホスト名です。
-    "/"で始まる文字列を指定するとソケットファイルが存在するディレクトリ名とみなされ、
-    TCP/IP ではなく UNIX ドメインソケットが使用されます。
-    空文字(<code>''</code>)を指定すると、<code>/tmp</code>が使用されます。
-    </p>
-    <p>
-    このパラメータを変更した時には pgpool-II を再起動してください。
-    </p>
-    </dd>
-
-<dt><a name="SYSTEM_DB_PORT"></a>system_db_port</dt>
-    <dd>
-    <p>
-    システムDBのポート番号です。
-    </p>
-    <p>
-    このパラメータを変更した時には pgpool-IIを再起動してください。
-    </p>
-    </dd>
-
-<dt><a name="SYSTEM_DBNAME"></a>system_dbname</dt>
-    <dd>
-    <p>
-    システムDBは専用のデータベースに設置します。そのデータベース名を指定します。
-    このデータベースはあらかじめ存在しなければなりません。ここでは、
-    "pgpool"というデータベース名にするものとします。
-    </p>
-    <p>
-    このパラメータを変更した時には pgpool-II を再起動してください。
-    </p>
-    </dd>
-
-<dt><a name="SYSTEM_DB_SCHEMA"></a>system_db_schema</dt>
-    <dd>
-    <p>
-    システムDBは専用のスキーマに設置します。そのスキーマ名を指定します。
-    このスキーマはあらかじめ存在しなければなりません。ここでは、
-    "pgpool_catalog"というスキーマにするものとします。
-    </p>
-    <p>
-    このパラメータを変更した時には pgpool-II を再起動してください。
-    </p>
-    </dd>
-
-<dt><a name="SYSTEM_DB_USER"></a>system_db_user</dt>
-    <dd>
-    <p>
-    システムDBに接続するときのユーザ名です。
-    </p>
-    <p>
-    このパラメータを変更した時には pgpool-II を再起動してください。
-    </p>
-    </dd>
-
-<dt><a name="SYSTEM_DB_PASSWORD"></a>system_db_password</dt>
-    <dd>
-    <p>
-    システムDBに接続するときのパスワードです。パスワードを設定していない場合は空文字にしておきます。
-    </p>
-    <p>
-    このパラメータを変更した時には pgpool-II を再起動してください。
-    </p>
-    </dd>
-
-</dl>
-
-<h2 id="system_db_sql">システムDBの初期設定</h2>
-<p>
-システムDBにスキーマとテーブルを作成します。初期設定用のスクリプトが
-$prefix/share/system_db.sqlにあるのでそれを利用します。
-ただし、このスクリプトではスキーマ名が"pgpool_catalog"となっているので、
-違うスキーマを使う場合は適当に書き換えてください。
-また、データベース名として"pgpool"以外を使う場合は以下を適当に読み替えてください。
-<pre>
-psql -f $prefix/share/system_db.sql pgpool
-</pre>
-
-<h2 id="install_dblink">dblinkのインストール</h2>
-<p>
-パラレルモードではdblinkを使います。dblinkはPostgreSQLソースファイル($POSTGRES_SRC)
-</p>
-<pre>
-$(POSTGRES_SRC)/contrib/dblink
-</pre>
-<p>
-にあります。$POSTGRES_SRC/contrib/dblink/README.dblinkを参考にシステム
-DBにdblinkをインストールしてください。
-</p>
-<p>
-また、pgpoolデータベースに関数の登録が必要です。
-</p>
-<pre>
-psql pgpool &lt; $POSTGRES_SRC/contrib/dblink/dblink.sql
-</pre>
-
-<h2 id="connection_setting">コネクション数の設定</h2>
-<p>
-パラレルモードでは、クエリによりシステムDBからdblink経由でpgpoolに接続するので、
-想定される同時接続数以上のコネクションが必要になる場合があります。
-そのため、pgpool.confの<a href="#NUM_INIT_CHILDREN">num_init_children</a>には
-同時接続数より十分大きい値を設定して下さい。
-</p>
-<p>
-目安として以下の式で<a href="#NUM_INIT_CHILDREN">num_init_children</a>を設定してください。
-</p>
-<pre>
-num_init_children = 想定される同時接続数 * ( 1 + クエリの中で使われているテーブルの最大数)
-</pre>
-
-<h3 id="distdef">データ分割ルールの登録</h3>
-<p>
-データ分割を行うテーブルに対しては、テーブル情報をあらかじめ pgpool_catalog.dist_def
-というテーブルに登録しておきます。
-</p>
-
-<pre>
-CREATE TABLE pgpool_catalog.dist_def(
-    dbname TEXT,                   -- DB名
-    schema_name TEXT,              --schema名
-    table_name TEXT,               -- テーブル名
-    col_name TEXT NOT NULL CHECK (col_name = ANY (col_list)),    -- 分散キー列名
-    col_list TEXT[] NOT NULL,      -- tableの属性名
-    type_list TEXT[] NOT NULL,     -- 属性のタイプ名
-    dist_def_func TEXT NOT NULL,   -- 分散先のDBノードを決定する関数名
-    PRIMARY KEY (dbname,schema_name,table_name)
-    );
-</pre>
-
-<h3 id="replicate_def">レプリケーションテーブルのルール登録</h3>
-<p>
-一つのSQL文にJOIN等でデータ分割ルールに登録したテーブルと共に
-レプリケーションを行うテーブルを指定する場合には、レプリケーションを行うテーブルの情報を
-あらかじめ、pgpool_catalog.replicate_defというテーブルに登録しておきます。
-</p>
-
-<pre>
-CREATE TABLE pgpool_catalog.replicate_def(
-    dbname TEXT,                 -- DB名
-    schema_name TEXT,            -- schema名
-    table_name TEXT,             -- テーブル名
-    col_list TEXT[] NOT NULL,    -- tableの属性名
-    type_list TEXT[] NOT NULL,   -- 属性のタイプ名
-    PRIMARY KEY (dbname,schema_name,table_name)
-);
-</pre>
-
-<h2 id="example_partitioning">pgbench テーブルでの分割ルール例</h2>
-
-<p>
-pgbenchのテーブルを分割するルールの例を示します。
-</p>
-<p>
-この例では、accountsテーブルに対しては分割を行い、branchesテーブル
-とtellersテーブルに対してはレプリケーションを行うことにします。
-また、accountsテーブルとbanchesテーブルはbidで結合されることを想定し
-branchesテーブルはレプリケーションテーブルのルール登録を行います。
-</p>
-<p>
-もし、accountsテーブル、branchesテーブルとtellersテーブルの３つの
-テーブルの結合が行われる場合には、あらかじめtellersテーブルに対しても
-レプリケーションテーブルのルール登録を行う必要があります。　
-</p>
-
-<pre>
-INSERT INTO pgpool_catalog.dist_def VALUES (
-    'pgpool',
-    'public',
-    'accounts',
-        'aid',
-        ARRAY['aid','bid','abalance','filler'],
-        ARRAY['integer','integer','integer','character(84)'],
-        'pgpool_catalog.dist_def_accounts'
-);
-
-INSERT INTO pgpool_catalog.replicate_def VALUES (
-    'pgpool',
-    'public',
-    'branches',
-    ARRAY['bid','bbalance','filler'],
-    ARRAY['integer','integer','character(84)']
-);
-</pre>
-
-<p>
-ここで、pgpool_catalog.dist_def_accountsは、引数として分割キーの値を受け取り、
-どのPostgreSQLサーバ(「DBノード」と呼びます)を0からの番号で返す関数です。
-ここでは、3台のDBノードにデータを分割する関数の例を示します。
-</p>
-<pre>
-CREATE OR REPLACE FUNCTION pgpool_catalog.dist_def_accounts (val ANYELEMENT) RETURNS INTEGER AS '
-  SELECT CASE WHEN $1 &gt;= 1 and $1 &lt;= 30000 THEN 0
-          WHEN $1 &gt; 30000 and $1 &lt;= 60000 THEN 1
-          ELSE 2
-END' LANGUAGE SQL;
-</pre>
-
-<p class="top_link"><a href="#Top">△ back to top</a></p>
-
-<!-- ================================================================================ -->
-
 <h1><a name="hba"></a>クライアント認証(HBA)のための pool_hba.conf 設定方法</h1>
 <p>
 PostgreSQLのpg_hba.confと同じようにpgpoolでもpool_hba.confファイルを使った
@@ -3002,51 +2745,6 @@ pgpoolをPAMサポート付きでビルドするにはconfigureオプション�
 pgpoolのサービス設定ファイルをシステムのPAM設定ディレクトリ（通常は /etc/pam.d に作成する必要があります。
 サービス設定ファイルの例はインストールディレクトリの"share/pgpool.pam"を参考にしてく
 ださい。
-</p>
-
-<p class="top_link"><a href="#Top">△ back to top</a></p>
-
-<!-- ================================================================================ -->
-
-<h1><a name="query_cache"></a>クエリキャッシュの設定方法 <span class="version">〜 V3.4 (REMOVED)</span></h1>
-
-<strong>注意: このクエリキャッシュ機能はV3.4で削除されました。
-代わりに、<a href="#memqcache">インメモリクエリキャッシュ機能</a>を使用してください。
-</strong>
-
-<p>
-pgpool-IIでは、すべてのモードでクエリキャッシュを利用することができます。
-クエリキャッシュは、SELECTの結果を再利用することにより、性能を向上させます。
-利用する場合には、pgpool.confの設定を以下のように設定します。
-</p>
-<pre>
-enable_query_cache = true
-</pre>
-
-<p>
-また、システムDBに以下のテーブルを作成してください。
-</p>
-<pre>
-CREATE TABLE pgpool_catalog.query_cache (
-  hash TEXT,
-  query TEXT,
-  value bytea,
-  dbname TEXT,
-  create_time TIMESTAMP WITH TIME ZONE,
-  PRIMARY KEY(hash, dbname)
-);
-</pre>
-
-<p>
-ただし、この例ではスキーマ名が"pgpool_catalog"となっているので、
-違うスキーマを使う場合は適当に書き換えてください。
-</p>
-<p>
-<strong>注意: 現在のクエリキャッシュの実装では、キャッシュがデータベース上に作成されます。
-そのため、実行にあまり時間のかからないようなSELECTでは、クエリキャッシュを有効にすることによって、
-かえって遅くなることがあります。また、クエリキャッシュの内容は、テーブルが更新されてもそのままです。
-手動で上記テーブルから削除するか、-c オプション(クエリキャッシュのクリア)を追加して
-pgpool-IIを再起動する必要があります。</strong>
 </p>
 
 <p class="top_link"><a href="#Top">△ back to top</a></p>
@@ -3396,7 +3094,7 @@ make install
 
 <h2 id="start_pgpool">pgpool-II の起動</h2>
 <p>
-以上で設定が終わったので、各DBノードを起動し、必要ならばシステムDBも起動してからpgpool-IIを起動します。
+以上で設定が終わったので、各DBノードを起動してからpgpool-IIを起動します。
 </p>
 <pre>
 pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file][-n][-D][-d]
@@ -4171,7 +3869,7 @@ pgpool-IIの停止が必要になります。
 
 <h1><a name="backup"></a>バックアップ</h1>
 <p>
-バックエンドとシステムDBのPostgreSQLのバックアップは、単体のPostgreSQLと同様に、
+バックエンドのPostgreSQLのバックアップは、単体のPostgreSQLと同様に、
 物理バックアップ、論理バックアップ(pg_dump, pg_dumpall)、PITRが使用できます。
 ただし、論理バックアップとPITRの操作は、pgpool-IIを経由せずにPostgreSQLに対して直接行ってください。
 これは、<a href="#LOAD_BALANCE_MODE">load_balance_mode</a>や<a href="#REPLICATE_SELECT">replicate_select</a>などの
@@ -4196,34 +3894,6 @@ ACCESS SHAREモードのロックがかかります。
 （ALTER TABLE、DROP TABLE、TRUNCATE、REINDEX、CLUSTERおよびVACUUM FULLなど）は、ロック待ちが発生します。
 これは、非同期のレプリケーションで、スレーブノードに対してバックアップを行っている場合も、
 マスタが影響を受けることがありますので注意してください。
-</p>
-
-<h2 id="backup_parallel">パラレルモード</h2>
-<p>
-パラレルモードでpgpool-IIが動作している場合、クラスタ全体のデータが一貫性のある状態でバックアップを取得するには、
-アプリケーション、またはpgpool-IIの一時的な停止が必要になります。
-</p>
-
-<p>
-論理バックアップを利用する場合は、アプリケーション、またはpgpool-IIを停止し、
-すべてのノードでpg_dump, pg_dumpallコマンドを実行します。
-そして、すべてのノードでダンプが終了したら、アプリケーション、またはpgpool-IIを起動してください。
-</p>
-
-<p>
-PITRを利用する場合は、まず各ノードのシステムの時刻がほぼ一致していることを確認してください。
-そして、事前に各ノードでアーカイブログの設定を行い、ベースバックアップを取得します。
-ベースバックアップが終了したら、アプリケーション、またはpgpool-IIを一時的に停止します。
-停止後、その時刻と次に起動した時刻を記録します。
-この一時的な停止によって、クラスタ全体のデータが一貫性のある状態を保った期間ができます。
-ベースバックアップとアーカイブログを使用して各ノードをリストアする場合は、
-一時停止期間の真ん中あたりの時刻をrecovery.confのrecovery_target_timeに指定したうえで、リカバリを行ってください。
-</p>
-
-<h2 id="backup_system_db">システムDBのバックアップ</h2>
-<p>
-パラレルクエリモード、またはクエリキャッシュを使用している場合は、システムDBもバックアップする必要があります。
-pgpool.confの <a href="#SYSTEM_DBNAME">system_db_dbname</a> に設定したデータベースをバックアップしてください。
 </p>
 
 <p class="top_link"><a href="#Top">△ back to top</a></p>
@@ -4871,9 +4541,6 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
     <td>プロセス情報を取得する</td></tr>
 <tr><th><a href="#pcp_pool_status">pcp_pool_status</a></th>
     <td>pgpool.conf のパラメータ設定値を取得する <span class="version">V3.1 〜</span></td></tr>
-<tr><th><a href="#pcp_systemdb_info">pcp_systemdb_info</a></th>
-    <td>システム DB 情報を取得する</td></tr>
-<tr><th><a href="#pcp_detach_node">pcp_detach_node</a></th>
 <tr><th><a href="#pcp_detach_node">pcp_detach_node</a></th>
     <td>ノードを切り離す</td></tr>
 <tr><th><a href="#pcp_attach_node">pcp_attach_node</a></th>
@@ -5237,59 +4904,6 @@ name : pcp_port
 value: 9898
 desc : PCP port # to bind
 </pre>
-</dd>
-</dl>
-
-<h3 id="pcp_systemdb_info">pcp_systemdb_info</h3>
-<dl>
-<dt>書式</dt>
-<dd>
-	<pre><code>pcp_systemdb_info [options...]</code></pre>
-</dd>
-<dt>説明</dt>
-<dd>
-<p>pgpool-II のシステム DB 情報を表示します。</p>
-</dd>
-<dt>オプション</dt>
-<dd>
-	<p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
-</dd>
-<dt>出力例</dt>
-<dd>
-<pre>
-$ pcp_systemdb_info 10 localhost 9898 postgres hogehoge
-localhost 5432 yamaguti '' pgpool_catalog pgpool 3
-yamaguti public accounts aid 4 aid bid abalance filler integer integer integer character(84) dist_def_accounts
-yamaguti public branches bid 3 bid bbalance filler integer integer character(84) dist_def_branches
-yamaguti public tellers bid 4 tid bid tbalance filler integer integer integer character(84) dist_def_tellers
-</pre>
-
-<p>まず 1 行目にシステム DB の情報が表示されます。結果は以下の順のとおりです。</p>
-<ol>
-<li>ホスト名</li>
-<li>ポート番号</li>
-<li>ユーザ名</li>
-<li>パスワード。空の場合は '' で表示されます。</li>
-<li>スキーマ名</li>
-<li>データベース名</li>
-<li>分散定義関数の数</li>
-</ol>
-
-<p>
-2 行目以降は分散定義が表示されます。複数の定義がある場合は、1 つの定義につき 1 行表示されます。
-結果は以下の順のとおりです。
-</p>
-<ol>
-<li>分散対象のデータベース名</li>
-<li>分散対象のスキーマ名</li>
-<li>分散対象のテーブル名</li>
-<li>分散キーカラム名</li>
-<li>分散対象テーブル中のカラム数</li>
-<li>カラム名リスト（5. のカラム数分表示されます）</li>
-<li>カラム型リスト（5. のカラム数分表示されます）</li>
-<li>分散定義関数名</li>
-</ol>
-
 </dd>
 </dl>
 
@@ -5697,8 +5311,7 @@ pgpool-II では扱うことができないクエリについて説明します�
 </p>
 <p>
 現在の実装では、マルチバイト文字の変換処理を行いません。
-クライアントエンコーディング、バックエンドノードのサーバエンコーディング、システムDB
-のサーバエンコーディングを一致させるようにしてください。
+クライアントエンコーディング、バックエンドノードのサーバエンコーディングを一致させるようにしてください。
 </p>
 
 <h3 id="ng_multi_statement">マルチステートメント</h3>
@@ -5714,623 +5327,19 @@ pgpool-II では扱うことができないクエリについて説明します�
 1 つずつ送信するので、実際には問題になりません。
 </p>
 
-<h3 id="ng_extended_protocol">拡張問い合わせプロトコル</h3>
-<p>
-制限対象:パラレルモード
-</p>
-<p>
-JDBC ドライバなどのような拡張問い合わせプロトコルには対応していません。
-必ず簡易問い合わせプロトコルを使用してください。
-</p>
-
-<h3 id="ng_prepare">PREPARE, EXECUTE</h3>
-<p>
-制限対象:パラレルモード
-</p>
-<p>
-<code>PREPARE</code> 文で生成された準備文には対応していません。
-</p>
-
-<h3 id="ng_select">SELECT</h3>
-<p>
-制限対象:パラレルモード
-</p>
-<p>
-postgresql.conf の add_missing_from 設定値を off (デフォルト値)に設定してください。
-add_missing_from 設定値が on の時に使えるクエリは正しくpgpoolで処理されない可能性
-があります。
-</p>
-
-<h3 id="ng_insert">INSERT</h3>
-<p>
-制限対象:パラレルモード
-</p>
-<p>
-データ分割をしているテーブルに対して <code>INSERT</code> を行う際には、分割ルールとなる値を
-<code>DEFAULT</code> にはできません。
-例えばテーブル t のカラム x が分割ルールの対象カラムだった場合には、
-</p>
-<pre>
-INSERT INTO t(x) VALUES (DEFAULT);
-</pre>
-<p>
-とはできません。また、以下の様に分割ルールとなる値が関数呼び出しの場合も
-対応していません。
-</p>
-<pre>
-INSERT INTO t(x) VALUES (func());
-</pre>
-<p>
-このカラムには必ず明示的に値を与える必要があります。
-</p>
-<p>
-また、<code>SELECT INTO</code>、 <code>INSERT INTO ... SELECT</code>、および以下のような
-<code>VALUES</code> を用いた複数行の挿入には対応していません。
-</p>
-<pre>
-INSERT INTO t(x) VALUES (1),(2),(3);
-</pre>
-
-<h3 id="ng_update">UPDATE</h3>
-<p>
-制限対象:パラレルモード
-</p>
-<p>
-分割ルールとなるカラムを更新すると分割ルールに従ったデータの整合性が崩
-れる可能性があります。pgpool-II では特にデータの再配置ということは行い
-ません。
-</p>
-<p>
-もし制約違反などにより一部のノードでエラーになった場合にロールバックす
-ることはできません。
-</p>
-<p>
-WHERE 句にデータ分割を行ったテーブルを参照するサブクエリや関数呼び出しがある場合には正しく動かない可能性が
-あります。
-</p>
-<pre>
-例：UPDATE branches set bid = 100 where bid = (select max(bid) from beances);
-</pre>
-
-<h3 id="ng_select_for_update">SELECT ... FOR UPDATE</h3>
-<p>
-制限対象:パラレルモード
-</p>
-<p>
-WHERE 句にデータ分割を行ったテーブルを参照するサブクエリや関数呼び出しがある場合には正しく動かない可能性が
-あります。
-<pre>
-例：SELECT * FROM  branches where bid = (select max(bid) from beances) FOR UPDATE;
-</pre>
-</p>
-
-<h3 id="ng_copy">COPY</h3>
-<p>
-制限対象:パラレルモード
-</p>
-<p>
-COPY BINARY には対応していません。また、ファイルからのコピーにも対応していません。
-COPY FROM STDIN と COPY TO STDOUT のみ対応しています。
-</p>
-
-<h3 id="ng_create_table">ALTER/CREATE TABLE について</h3>
-<p>
-制限対象:パラレルモード
-</p>
-<p>
-pgpool に情報を更新させるためには、pgpool を再起動する必要があります。
-</p>
-
-<h3 id="ng_transaction">トランザクション</h3>
-<p>
-制限対象:パラレルモード
-</p>
-<p>
-トランザクション中に発行される SELECT は dblink を経由する場合には別ト
-ランザクションになります。以下に例を示します。
-</p>
-<pre>
-BEGIN;
-INSERT INTO t(a) VALUES (1);
-SELECT * FROM t ORDER BY a; &lt;-- 上の INSERT した値は見えない
-END;
-</pre>
-<p>
-また制約違反などにより一部のノードでエラーになった場合にロールバックすることはできません。
-</p>
-
-<h3 id="ng_view">View/Rule</h3>
-<p>
-制限対象:パラレルモード
-</p>
-<p>
-View や Rule は各ノードに同じ内容が定義されます。
-</p>
-<pre>
-CREATE VIEW sample AS SELECT * FROM a, b where a.i = b.i
-</pre>
-<p>
-上記のような テーブル結合を含んだVIEWは、a と b は同じノード内でのみ結合処理を行い、
-各ノードからの実行結果を統合します。ノードをまたがった JOIN を行う View を作成することはできません。
-Rule についても同様になります。
-</p>
-<p>
-ただし、データ分割したテーブルを同じノード内でのみ結合したい場合に、VIEWを作成することは可能です。
-この場合にはVIEWをpgpool_catalog.dist_defテーブルにVIEWを登録しておきます。
-</p>
-<p>
-また、pgpool_catalog.dist_defテーブルのcol_nameとdist_def_funcには、
-VIEWで定義したカラムとVIEWに対してINSERTが発行された場合に
-何処のノードにクエリを問い合わせるのかを決定する関数を登録してください。
-</p>
-
-<h3 id="ng_fuction">関数/トリガについて</h3>
-<p>
-制限対象:パラレルモード
-</p>
-<p>
-関数は各ノードに同じ内容が定義されます。関数内で JOIN や他のノードのデータ操作を行うことはできません。
-</p>
-
-<h3 id="ng_natural_join">Natural Join について</h3>
-<p>
-制限対象:パラレルモード
-</p>
-<p>
-Natural Join は利用できません。ON 結合条件または、USING(結合カラム) を明示的に
-指定する必要があります。
-</p>
-
-<h3 id="ng_using">USING 句について</h3>
-<p>
-制限対象:パラレルモード
-</p>
-<p>
-JOIN 構文の中で利用される USING 句はクエリの書き換え処理によって ON 句に変換されます。
-そのため、ターゲットリストに "*" を利用する問い合わせを行う場合には、同じ列名が出力されます。
-</p>
-
-<h3 id="ng_dead_lock">デッドロックについて</h3>
-<p>
-制限対象:パラレルモード
-</p>
-<p>
-ノード間をまたがるデッドロックを検出することができません。
-</p>
-<pre>
-例：accountsテーブルは以下のルールで分割されている。
-    aid &lt;= 100000 ノード 0
-    aid &gt;= 100000 ノード 1
-
-  A) BEGIN;
-  B) BEGIN;
-  A) SELECT * FROM accounts WHERE aid = 100001 FOR UPDATE;
-  B) SELECT * FROM accounts WHERE aid = 100000 FOR UPDATE;
-  A) SELECT * FROM accounts WHERE aid = 100000 FOR UPDATE;
-  B) SELECT * FROM accounts WHERE aid = 100001 FOR UPDATE;
-</pre>
-<p>
-この場合、単一のノードではデッドロックを検知できないため、pgpool は待
-たされた状態になります。この現象は SELECT FOR UPDATE 以外にも行ロック
-を獲得するクエリで発生する可能性があります。
-</p>
-<p>
-また、あるノードでデッドロックが発生した場合は、各ノードのトランザクショ
-ンの状態が異なる状況になります。そのため、デッドロックを検知した時点で
-以下のログを出力して pgpool は該当のプロセスを終了させます。
-<pre>
-pool_read_kind: kind does not match between master(84) slot[1] (69)
-</pre>
-
-<h3 id="ng_schema">スキーマについて</h3>
-<p>
-制限対象:パラレルモード
-</p>
-<p>
-public 以外のスキーマに属すようなオブジェクトの参照は必ず
-</p>
-<pre>
-スキーマ.オブジェクト
-</pre>
-<p>
-と指定するようにしてください。
-</p>
-<pre>
-set search_path = xxx
-</pre>
-<p>
-を指定し、スキーマ名を省略すると、pgpool がどの分散ルールを適用するか
-判断できません。
-</p>
-
-<h3 id="ng_relname">テーブル名、カラム名について</h3>
-<p>
-制限対象:パラレルモード
-</p>
-<p>
-pool_で始まるテーブル、カラム名は使えません。クエリ書き換えの際に内部処理で使用します。
-</p>
-
-<h2 id="caution_system_db">システム DB</h2>
-
-<h3>分割ルール</h3>
-<p>
-pgpool-II では分割ルールの対象のカラムは 1 つのみとします。x と y の
-OR 条件などといったものには対応していません。
-</p>
-
 <h2>ビルドに必要な環境</h2>
 
 <h3>libpq</h3>
 <p>
 pgpool-II では libpq をリンクします。libpq のバージョンは 2.0 の場合、
 configure に失敗します。必ず libpq 3.0 以降(PostgreSQL 7.4以降) をリンクするよ
-うにしてください。また、SystemDB のバージョンも PostgreSQL 7.4 以降が
-必須になります。
-</p>
-
-<h2 id="caution_query_cache">クエリキャッシュ</h2>
-<p>
-<a href="#query_cache">ディスク上のクエリキャッシュ機能</a>では、キャッシュの無効化を手動で行う必要があります。
-<a href="#memqcache">インメモリクエリキャッシュ機能</a>にはこの制限は当てはまりません。
-</p>
-
+うにしてください。
 </p>
 
 <p class="top_link"><a href="#Top">△ back to top</a></p>
 
 <!-- ================================================================================ -->
 
-<h1>内部情報<a name="internal"></a></h1>
-<p>
-pgpool-IIバージョン 2.0 以降では、1.x バージョンと比べ大幅な改良が加えられています。
-1.x バージョンの情報とは互換性がないので注意してください。
-</p>
-
-<h2 id="parallel_execute_engine">パラレル実行エンジン</h2>
-
-<p>
-pgpool-IIにはパラレル実行エンジンが組み込まれています。
-</p>
-<p>
-このエンジンは、パラレルモードのときに、各ノードに同じクエリを問い合
-わせ、ノードの応答順に結果をフロントエンドに送信するエンジンのことを
-指します。
-</p>
-
-<h2 id="rewrite_query">クエリ書き換え</h2>
-<p>
-パラレルモードでpgpool-IIが行うクエリ書き換えについて説明します。
-</p>
-<p>
-パラレルモードでは、クライアントが送信した検索系(SELECT処理)の問い合わせは、
-大きく分けて以下の 2 つの処理を行います。
-</p>
-<ol>
-    <li>クエリの解析</li>
-    <li>クエリの書き換え</li>
-</ol>
-
-<p>
-これら２つの処理について順に説明致します。
-</p>
-
-<h3 id="analyze_query">クエリの解析</h3>
-<h4>はじめに</h4>
-<p>
-クライアントが送信した検索系の問い合わせは、SQLパーサを通してからシステムDBに登録されている情報を
-もとにクエリ解析を行います。クエリの解析には実行ステータスの遷移で評価しています。
-</p>
-<p>
-ここで実行ステータスというのは、あるデータの集合が何処で取得または処理できるのか判断するものです。
-例えば、pgpool_catalog.dist_defテーブルに登録されているテーブルのデータ集合全体は、
-データが分割されているのですべてのノードから取得する必要があります。
-逆に、pgpool_catalog.replicate_defテーブルに登録されているテーブルのデータ集合全体は、
-すべてのノードから取得するのではなく、いずれかのノード
-から取得すれば十分です。
-</p>
-<p>
-ここで実行ステータスというのは、あるデータの集合が何処で取得または処理できるのか判断するものです。
-ここですべてのノードで処理する必要がある状態を P 状態、一つのノードで処理する必要がある状態を
-L 状態として定義します。
-</p>
-<p>
-ここで実行ステータスというのは、あるデータの集合が何処で取得または処理できるのか判断するものです。
-もう一つ、特別な状態として S 状態があります。
-これは、すべてのノードから取得した全データに対して処理を行ったときの状態のことを示します。
-</p>
-<p>
-ここで実行ステータスというのは、あるデータの集合が何処で取得または処理できるのか判断するものです。
-例えば、ソート処理です。pgpool_catalog.dist_defテーブルに登録されている
-テーブルのデータに対するソート処理は、すべてのノードからデータを取得した後に実行する必要があります。
-
-</p>
-<p>
-検索系クエリは、以下の処理順に解析され、実行ステータスが遷移していきます。
-実行ステータスが遷移していく過程で S 状態となると、以降の処理は必ず S 状態となります。
-そして最後のSELECTの最終実行ステータスの状態により、何処のDBで処理されるかが決定します。
-
-<ol>
-    <li> UNION、EXTRACT、INTERCECTが利用されているかどうか</li>
-    <li> FROM 句の実行ステータス</li>
-    <li> TARGETLIST による実行ステータスの変化</li>
-    <li> WHERE 句 にる実行ステータスの変化</li>
-    <li> GROUP BY 句による実行ステータスの変化</li>
-    <li> HAVING 句による実行ステータスの変化</li>
-    <li> ORDER BY 句による実行ステータスの変化</li>
-    <li> LIMIT OFFSET 述語に実行ステータスの変化</li>
-    <li> SELECTの最終実行ステータスの取得</li>
-</ol>
-<p>
-SELECTの最終実行ステータスと処理される場所との関係は、以下のとおりです。
-</p>
-
-<table border>
-<tr class="header"><th>実行ステータス</th><th>処理される場所</th></tr>
-<tr><th>L</th><td>いずれかのノードに問い合わせを行う</td></tr>
-<tr><th>P</th><td>すべてのノード同じ問い合わせを行い、パラレル実行エンジンを通してクライアントに返却</td></tr>
-<tr><th>S</th><td>システムDBで処理を行った後にクライアントに返却</td></tr>
-</td></tr>
-</table>
-
-<p>
-またサブクエリに対しても上記のルールが適応されます。
-以下の単純なクエリでは、p1-tableがシステムDBのpgpool_catalog.dist_defテーブルに登録されている場合、
-つまりデータの分割が
-行われている場合には、サブクエリの最終実行ステータスが P となり、
-その結果サブクエリの呼び出し元である SELECT の実行ステータスも P となります。
-</p>
-<pre>
-SELECT * FROM (SELECT * FROM P1-table) as P2-table;
-</pre>
-
-<p>
-次に具体的に実行ステータスがどのように遷移するのか説明します。
-まず2. From句の実行ステータス から説明します。
-</p>
-
-<h4>FROM 句の実行ステータス</h4>
-<p>
-検索系クエリ(SELECT)は FROM 句によりデータの集合を定義します。
-FROM句から構成せれるデータ集合は P 状態, L 状態、または S 状態を取ります。
-FROM句に指定しているテーブルが一つの場合には、単純にテーブルの実行ステータスが
-FROM句から構成されるデータ集合全体の実行ステータスとなります。
-FROM句に複数のテーブル、又はサブクエリがある場合
-には、結合方法によって以下のように実行ステータスが決定します。
-</p>
-
-<table border>
-<tr class="header">
-<th>結合方式</th>
-<th colspan="3">LEFT OUTER JOIN</th>
-<th colspan="3">RIGHT OUTER JOIN</th>
-<th colspan="3">FULL OUTER JOIN</th>
-<th colspan="3">その他</th>
-</tr>
-<tr class="center"><th>左＼右</th>
-<td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td>
-</tr>
-<tr class="center"><th> P </th>
-<td> S </td><td> P </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> P </td><td> S </td>
-</tr>
-<tr class="center"><th> L </th>
-<td> S </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td><td> S </td><td> L </td><td> S </td><td> P </td><td> L </td><td> S </td>
-</tr>
-<tr class="center"><th> S </th>
-<td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td><td> S </td>
-</tr>
-</table>
-
-<p>
-以下の例では、P1-tableが P 状態のテーブルでL1-table,L2-tableが L 状態のテーブルだとします。
-すると上記の表により、P1-table (左)とL1-table (右) が結合し P 状態となり、
-さらに P 状態と L 状態のL2-tableが結合してFROM句の実行ステータスは P 状態となります。
-<pre>
-SELECT * FROM P1-table,L1-table,L2-table;
-</pre>
-</p>
-
-<h4>TARGETLIST と WHERE句の実行ステータス</h4>
-
-<p>
-基本的なクエリでは、FROM 句と同じ実行ステータスを継承します。
-しかし、TARGETLIST と WHERE句の実行ステータスは、以下の場合に変化します。
-</p>
-<ol>
-    <li>サブクエリがある場合</li>
-    <li>FROM句が P 状態の場合、かつ、TARGETLISTに集約関数、DISTINCTがある場合 </li>
-    <li>FROM句で定義したテーブル(データ集合)に存在しないカラムが使われている場合</li>
-</ol>
-<p>
-サブクエリの最終実行ステータスが P 状態、または、S 状態の場合には、
-TARGETLIST、WHERE句の実行ステータスは、S 状態となります。
-下記の例では、サブクエリで使われているテーブルが、P 状態の場合には、
-サブクエリの最終実行ステータスはP 状態となります。
-そのため L1-tableの実行ステータスに依存せずに、WHERE句の実行ステータスは S状態となり、
-このクエリの実行場所はシステムDBとなります。
-</p>
-<pre>
-SELECT * FROM L1-table WHERE L1-table.column IN (SELECT * FROM P1-table);
-</pre>
-
-<p>
-FROM 句が P 状態の場合、かつ、TARGETLISTに集約関数がある場合は、
-データを取得後に集計する必要があるため、S状態に遷移します。
-また、特定の条件の下では、集約関数による最適化が行われます。
-</p>
-
-<p>
-FROM句で定義したテーブル、サブクエリには存在しないカラムがWHERE句に使われている場合があります。
-これは以下のような相関サブクエリ内で発生します。
-</p>
-<pre>
-SELECT * FROM L1-table WHERE L1-table.col1 IN (SELECT * FROM P1-table WHERE P1-table.col = L1-table.col1);
-</pre>
-<p>上記のサブクエリに使われている L1-table.col1は、L1-tableを外部参照しています。
-この場合にサブクエリのWHERE句の実行ステータスは S 状態となります。
-
-
-<h4>GROUP BY 句、HAVING 句、ORDER BY 句、LIMIT OFFSET 述語の実行ステータス</h4>
-
-<p>
-WHERE句の実行ステータスが P 状態の場合に、GROUP BY , HAVING 句、ORDER BY 句、
-LIMIT OFFSET 述語があるとS状態に遷移します。
-GROUP BY句が存在しないクエリはWHERE句の実行ステータスを継承します。
-また、HAVING句が無い場合にはGROUP BY 句の実行ステータスを継承します。
-ORDER BY 句、LIMIT OFFSET 述語も同様です。
-</p>
-
-<p>
-UNION、EXTRACT、INTERSECTが使われている場合
-</p>
-
-<p>
-UNION、EXTRAT、INTERSECTが使っているクエリは左側のSELECT文と右側のSELECT文の最終実行ステータスに依存します。
-左側と右側のSELECT文の最終実行ステータスが共に L 状態の時には、L 状態となります。
-</p>
-<p>
-また、左側と右側のSELECT文の最終実行ステータスが共に P 状態、かつUNION ALLの場合には P 状態となります。
-その他の組み合わせの場合には、S状態となります。
-</p>
-
-<h4>SELECTの最終実行ステータスの取得</h4>
-
-<p>
-実行ステータスがすべて L 状態の場合にはL状態、すべて P 状態の場合には、P 状態となります。
-それ以外は、S 状態となります。
-</p>
-<p>
-L 状態の場合には、pgpool.confのloadbalance_modeがtrueの場合には負荷分散され、
-それ以外の場合にはMASTERに問い合わせを行います。
-</p>
-<p>
-また、P 状態の場合には、パラレル実行エンジンを使って並列処理が行われます。
-S 状態の場合には、次のフェーズであるクエリ書き換えを行います。
-</p>
-
-<h3 id="step_rewrite_query">クエリ書き換え</h3>
-
-<p>
-クエリの解析フェーズで取得した実行ステータスを使ってクエリの書き換えを行います。
-例として P 状態の P1-table と L 状態の L1-table を使ったクエリで説明します・
-</p>
-<pre>
-SELECT P1-table.col, L1-table.col FROM P1-table,L1-table where P1-table.col = L1-table.col order by P1-table.col;
-</pre>
-<p>
-このクエリでは ORDER BY 句があるため S 状態となり、FROM句、WHERE句、TARGETLISTは P 状態となります。
-このようなクエリでは以下のように書き換えられます。
-</p>
-<pre>
-SELECT P1-table.col, L1-table.col FROM
-　　　dblink(select pool_parallel(SELECT P1-table.col, L1-table.col FROM P1-table,L1-table where P1-table.col = L1-table.col))
-      order by P1-table.col;
-</pre>
-<p>
-ここでdblinkはpgpool-IIに問い合わせを送信します。
-また、pool_parallelは引数のクエリをパラレル実行エンジンをにわたす関数です。
-なお、上記はあくまでイメージであり実際に実行可能なクエリではありません。
-</p>
-<p>
-上記の例のように、FROM句、WHERE句、TARGETLISTがすべて P 状態の場合には、
-FROM句、WHERE句、TARGETLISTをまとめて並列処理を行います。
-
-<p>
-次の例を見てみます。
-</p>
-<pre>
-SELECT L1-table.col FROM L1-table WHERE L1-table.col % 2 = 0 AND L1-table.col IN (SELECT P1-table FROM P1-table) ;
-</pre>
-<p>
-この例では、FROM 句は L 状態、TARGETLISTも L 状態、WHERE句は P 状態のサブクエリを持っているため S 状態となります。
-これは以下のように書き換えが行われます。
-</p>
-<pre>
-SELECT L1-table.col FROM dblink(SELECT loadbalance(SELECT L1-table.col FROM L1-table WHERE L1-table.col % 2 = 0 AND TRUE))
-    WHERE
-        L1-table.col %2 = 0 AND
-      L1-table.col IN
-      (
-          SELECT P1-Table FROM
-          dblink(select pool_parallel(SELECT P1-table FROM P1-table))
-      ) ;
-</pre>
-<p>
-ここで、pool_loadbalanceはクエリをいずれかのノードに送信する関数です。
-</p>
-
-<h4>集約によるクエリ書き換え</h4>
-
-<p>
-集計を行うクエリ(集約関数、GROUP BY )は各ノードに計算させ、システムDBで再集計を行うことにより、
-システムDBの負荷を減らしパフォーマンスも向上します。
-</p>
-<p>
-まず、最初にpgpool-IIが実際に行うクエリの書き換えを見てみます。
-</p>
-<p>
-FROM 句が P 状態で count(*) を使ったクエリは、以下のように書き換えが行われます。
-</p>
-
-<pre>
-select count(*) from P1-table;
-
--&gt; クエリ書き換え
-
-SELECT
-    sum(pool_c$1) as count
-FROM
-    dblink(select pool_parallel('select count(*) from  P1-table'))
-                AS pool_$1g (pool_c$1 bigint);
-</pre>
-
-<p>
-各ノードでcount(*) を計算した後に、システムDBで集計(sum)をすることによ
-り、目的が達成できます。
-</p>
-
-<p>
-上記のようなクエリ書き換えが行われる条件は以下の場合です。
-</p>
-<ol>
-    <li>FROM 句がP 状態</li>
-    <li>ターゲットリストに集約関数(count, sum, min, max,avgのみ対応),GROUP BYに指定したカラムが使われている</li>
-    <li>WHERE 句がP 状態</li>
-    <li>HAVING 句 に使われている集約関数(count, sum, min, max,avgのみ対応),
-        FROM句で定義されているカラム,GROUP BYに指定したカラムのみ使われている。</li>
-</ol>
-
-<pre>
-例)
- select P1-table.col,L1-table.col,count(*),avg(P1-table.col) from P1-table,L1-table wehre P1-table.col %2 = 0 group by P1-table.col,L1-table.coli having count(*) < 100
-</pre>
-
-<h3 id="caution_in_parallel_mode">パラレルモードの注意事項</h3>
-<p>
-パラレルモードでは、クエリの解析の際にカラム名とタイプが必要になります。
-そのため、サブクエリのTARGETLISTに式、関数を使っている場合には別名と型名をキャストでつける必要があります。
-式、関数に型のキャストがない場合には、text型として処理されますので注意してください。
-</p>
-<p>
-なお、集約関数の場合でかつ集約によるクエリ書き換えが行われる場合には、countはbigint型、sumはnumeric型となります。
-min,maxの場合には、引数が日付型の場合には日付型として計算され、それ以外はnumericとして計算されます。
-avgはsum/countとして処理されます。
-</p>
-
-<h3 id="performance_parallel_mode">パラレルモードのパフォーマンスについて</h3>
-<p>
-<p>
-SELECTの最終実行ステータスとパフォーマンスのおおよその目安は以下のとおりです。
-</p>
-
-<table border>
-<tr class="header"><th>実行ステータス</th><th>パフォーマンス</th></tr>
-<tr><th>L</th><td>パラレルクエリを利用しないのでpgpool-IIのオーバーヘッドを除き、単体ノードとの性能劣化はない</td></tr>
-<tr><th>P</th><td>並列処理を行うので高速、特にシーケンシャルスキャンの場合には効果がでる。また、データを分割することでテーブルサイズ(/1台)が小さくなることによりキャッシュに乗りやすくなる </td></tr>
-<tr><th>S</th><td>集約によるクエリ書き換えが行われると高速</td></tr>
-</table>
-
-<!-- ================================================================================ -->
 <h1 id="release">リリースノート</h1>
 
 <ul class="flat_ul">
@@ -14924,7 +13933,7 @@ HINT:  check data consistency between master and other db node
 <div class="copyright" style="clear: both">
 <hr>
 <copyright>
-Copyright &copy; 2003 &ndash; 2014 pgpool Global Development Group
+Copyright &copy; 2003 &ndash; 2015 pgpool Global Development Group
 </copyright>
 </div>
 

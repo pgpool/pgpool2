@@ -71,7 +71,6 @@ static int pool_detach_node(int node_id, bool gracefully);
 static int pool_promote_node(int node_id, bool gracefully);
 static void inform_process_count(PCP_CONNECTION *frontend);
 static void inform_process_info(PCP_CONNECTION *frontend, char *buf);
-static void inform_systemDB_info(PCP_CONNECTION *frontend);
 static void inform_watchdog_info(PCP_CONNECTION *frontend, char *buf);
 static void inform_node_info(PCP_CONNECTION *frontend, char *buf);
 static void inform_node_count(PCP_CONNECTION *frontend);
@@ -268,11 +267,6 @@ pcp_process_command(char tos, char *buf, int buf_len)
 		case 'P':			/* process info */
 			set_ps_display("PCP: processing process info request", false);
 			inform_process_info(pcp_frontend, buf);
-			break;
-
-		case 'S':			/* SystemDB info */
-			set_ps_display("PCP: processing systemDB info request", false);
-			inform_systemDB_info(pcp_frontend);
 			break;
 
 		case 'W':			/* watchdog info */
@@ -755,139 +749,6 @@ inform_process_info(PCP_CONNECTION *frontend,char *buf)
 				 errdetail("retrieved process information from shared memory")));
 		
 		pfree(pools);
-	}
-}
-
-static void
-inform_systemDB_info(PCP_CONNECTION *frontend)
-{
-	int wsize;
-	
-	SystemDBInfo *si = NULL;
-	si = pool_get_system_db_info();
-
-	if (si == NULL)
-	{
-		ereport(ERROR,
-				(errmsg("informing system db info failed"),
-				 errdetail("system DB is not defined")));
-	}
-	else
-	{
-		/* first, send systemDB information and finally the command complete */
-		char port[6];
-		char status[2];
-		char dist_def_num[16];
-		char fin_code[] = "CommandComplete";
-		char code[] = "SystemDBInfo";
-
-		/* since PCP clients can only see SystemDBInfo, set system_db_status from the shared memory */
-		si->system_db_status = SYSDB_STATUS;
-
-		snprintf(port, sizeof(port), "%d", si->port);
-		snprintf(status, sizeof(status), "%d", si->system_db_status);
-		snprintf(dist_def_num, sizeof(dist_def_num), "%d", si->dist_def_num);
-
-		pcp_write(frontend, "s", 1);
-		wsize = htonl(sizeof(code) +
-					  strlen(si->hostname)+1 +
-					  strlen(port)+1 +
-					  strlen(si->user)+1 +
-					  strlen(si->password)+1 +
-					  strlen(si->schema_name)+1 +
-					  strlen(si->database_name)+1 +
-					  strlen(dist_def_num)+1 +
-					  strlen(status)+1 +
-					  sizeof(int));
-		pcp_write(frontend, &wsize, sizeof(int));
-		pcp_write(frontend, code, sizeof(code));
-		pcp_write(frontend, si->hostname, strlen(si->hostname)+1);
-		pcp_write(frontend, port, strlen(port)+1);
-		pcp_write(frontend, si->user, strlen(si->user)+1);
-		pcp_write(frontend, si->password, strlen(si->password)+1);
-		pcp_write(frontend, si->schema_name, strlen(si->schema_name)+1);
-		pcp_write(frontend, si->database_name, strlen(si->database_name)+1);
-		pcp_write(frontend, dist_def_num, strlen(dist_def_num)+1);
-		pcp_write(frontend, status, strlen(status)+1);
-		do_pcp_flush(frontend);
-		/* second, send DistDefInfo if any */
-		if (si->dist_def_num > 0)
-		{
-			char dist_code[] = "DistDefInfo";
-			char col_num[16];
-			int col_list_total_len;
-			int type_list_total_len;
-			char *col_list = NULL;
-			char *type_list = NULL;
-			int col_list_offset;
-			int type_list_offset;
-			DistDefInfo *ddi;
-			int i, j;
-			
-			for (i = 0; i < si->dist_def_num; i++)
-			{
-				ddi = &si->dist_def_slot[i];
-				snprintf(col_num, sizeof(col_num), "%d", ddi->col_num);
-				
-				col_list_total_len = type_list_total_len = 0;
-				for (j = 0; j < ddi->col_num; j++)
-				{
-					col_list_total_len += strlen(ddi->col_list[j]) + 1;
-					type_list_total_len += strlen(ddi->type_list[j]) + 1;
-				}
-				
-				col_list = (char *)palloc(col_list_total_len);
-				type_list = (char *)palloc(type_list_total_len);
-				
-				col_list_offset = type_list_offset = 0;
-				for (j = 0; j < ddi->col_num; j++)
-				{
-					snprintf(col_list + col_list_offset, strlen(ddi->col_list[j])+1,
-							 "%s", ddi->col_list[j]);
-					snprintf(type_list + type_list_offset, strlen(ddi->type_list[j])+1,
-							 "%s", ddi->type_list[j]);
-					col_list_offset += strlen(ddi->col_list[j]) + 1;
-					type_list_offset += strlen(ddi->type_list[j]) + 1;
-				}
-				
-				pcp_write(frontend, "s", 1);
-				wsize = htonl(sizeof(dist_code) +
-							  strlen(ddi->dbname)+1 +
-							  strlen(ddi->schema_name)+1 +
-							  strlen(ddi->table_name)+1 +
-							  strlen(ddi->dist_key_col_name)+1 +
-							  strlen(col_num)+1 +
-							  col_list_total_len +
-							  type_list_total_len +
-							  strlen(ddi->dist_def_func)+1 +
-							  sizeof(int));
-				pcp_write(frontend, &wsize, sizeof(int));
-				pcp_write(frontend, dist_code, sizeof(dist_code));
-				pcp_write(frontend, ddi->dbname, strlen(ddi->dbname)+1);
-				pcp_write(frontend, ddi->schema_name, strlen(ddi->schema_name)+1);
-				pcp_write(frontend, ddi->table_name, strlen(ddi->table_name)+1);
-				pcp_write(frontend, ddi->dist_key_col_name, strlen(ddi->dist_key_col_name)+1);
-				pcp_write(frontend, col_num, strlen(col_num)+1);
-				pcp_write(frontend, col_list, col_list_total_len);
-				pcp_write(frontend, type_list, type_list_total_len);
-				pcp_write(frontend, ddi->dist_def_func, strlen(ddi->dist_def_func)+1);
-				do_pcp_flush(frontend);
-				
-				pfree(col_list);
-				pfree(type_list);
-			}
-		}
-
-		pcp_write(frontend, "s", 1);
-		wsize = htonl(sizeof(fin_code) +
-					  sizeof(int));
-		pcp_write(frontend, &wsize, sizeof(int));
-		pcp_write(frontend, fin_code, sizeof(fin_code));
-		do_pcp_flush(frontend);
-
-		ereport(DEBUG1,
-				(errmsg("PCP: informing systemDB info"),
-				 errdetail("retrieved SystemDB information from shared memory")));
 	}
 }
 

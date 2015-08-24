@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -45,7 +45,6 @@
 
 #include "pool.h"
 #include "rewrite/pool_timestamp.h"
-#include "parallel_query/pool_rewrite_query.h"
 #include "rewrite/pool_lobj.h"
 #include "protocol/pool_proto_modules.h"
 #include "pool_config.h"
@@ -76,7 +75,6 @@ static int allow_close_transaction = 1;
 
 int is_select_pgcatalog = 0;
 int is_select_for_update = 0; /* 1 if SELECT INTO or SELECT FOR UPDATE */
-bool is_parallel_table = false;
 
 /*
  * last query string sent to simpleQuery()
@@ -252,19 +250,6 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		else
 		{
 			query_context->is_multi_statement = false;
-		}
-
-		if (PARALLEL_MODE)
-		{
-			bool parallel = true;
-
-			is_parallel_table = is_partition_table(backend,node);
-			status = pool_do_parallel_query(frontend, backend, node, &parallel, &contents, &len);
-			if (parallel)
-			{
-				pool_query_context_destroy(query_context);
-				return status;
-			}
 		}
 
 		/* check COPY FROM STDIN
@@ -730,7 +715,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	/* check if query is "COMMIT" or "ROLLBACK" */
 	commit = is_commit_or_rollback_query(node);
 
-	if (REPLICATION || PARALLEL_MODE)
+	if (REPLICATION)
 	{
 		/*
 		 * Query is not commit/rollback
@@ -1042,7 +1027,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		}
 	}
 
-	if (REPLICATION || PARALLEL_MODE || MASTER_SLAVE)
+	if (REPLICATION || MASTER_SLAVE)
 	{
 		/*
 		 * We must synchronize because Parse message acquires table
@@ -1819,8 +1804,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	int i;
 	int len, len1, sendlen;
 	int rows;
-	char *p, *p1, *p2;
-	bool update_or_delete = false;
+	char *p, *p1;
 	POOL_SESSION_CONTEXT *session_context;
 
 	/* Get session context */
@@ -1920,9 +1904,6 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	 */
 	session_context->ntuples[MASTER_NODE_ID] = rows;
 
-	if (strstr(p, "UPDATE") || strstr(p, "DELETE"))
-		update_or_delete = true;
-
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
 		if (!IS_MASTER_NODE_ID(i))
@@ -1957,24 +1938,13 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 			 */
 			session_context->ntuples[i] = n;
 
-			/*
-			 * if we are in the parallel mode, we have to sum up the number
-			 * of affected rows
-			 */
-			if (PARALLEL_MODE && is_parallel_table && update_or_delete)
+			if (rows != n)
 			{
-				rows += n;
-			}
-			else
-			{
-				if (rows != n)
-				{
-					/*
-					 * Remember that we have different number of UPDATE/DELETE
-					 * affected tuples in backends.
-					 */
-					session_context->mismatch_ntuples = true;
-				}
+				/*
+				 * Remember that we have different number of UPDATE/DELETE
+				 * affected tuples in backends.
+				 */
+				session_context->mismatch_ntuples = true;
 			}
 		}
 	}
@@ -2008,20 +1978,6 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	}
 	else
 	{
-		if (PARALLEL_MODE && is_parallel_table && update_or_delete)
-		{
-			char tmp[32];
-
-			strncpy(tmp, p1, 7);
-			sprintf(tmp+7, "%d", rows);
-
-			p2 = pstrdup(tmp);
-
-			pfree(p1);
-			p1 = p2;
-			len1 = strlen(p2) + 1;
-		}
-
 		pool_write(frontend, "C", 1);
 		sendlen = htonl(len1+4);
 		pool_write(frontend, &sendlen, sizeof(sendlen));
@@ -2739,19 +2695,11 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 	char *string = NULL;
 	int len;
 	int i;
-	DistDefInfo *info = NULL;
 
 #ifdef DEBUG
 	int j = 0;
 	char buf[1024];
 #endif
-
-	if (copyin && pool_config->parallel_mode == TRUE)
-	{
-		info = pool_get_dist_def_info(MASTER_CONNECTION(backend)->sp->database,
-									  copy_schema,
-									  copy_table);
-	}
 
 	for (;;)
 	{
@@ -2760,86 +2708,20 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 			if (MAJOR(backend) == PROTO_MAJOR_V3)
 			{
 				char kind;
-				int sendlen;
-				char *p, *p1;
+				char *contents = NULL;
 
 				pool_read(frontend, &kind, 1);
 
-				if (info && kind == 'd')
-				{
-					int id;
-					pool_read(frontend, &sendlen, sizeof(sendlen));
+				ereport(DEBUG1,
+					(errmsg("copy data rows"),
+						 errdetail("read kind from frontend %c(%02x)", kind, kind)));
 
-					len = ntohl(sendlen) - 4;
+				pool_read(frontend, &len, sizeof(len));
+				len = ntohl(len) - 4;
+				if (len > 0)
+					contents = pool_read2(frontend, len);
 
-					if (len <= 0)
-						return POOL_CONTINUE;
-
-					p = pool_read2(frontend, len);
-					if (p == NULL)
-                        ereport(ERROR,
-                            (errmsg("unable to copy data rows"),
-                                 errdetail("read on backend node failed")));
-
-					/* copy end ? */
-					if (len == 3 && memcmp(p, "\\.\n", 3) == 0)
-					{
-						for (i=0;i<NUM_BACKENDS;i++)
-						{
-							if (VALID_BACKEND(i))
-							{
-								pool_write(CONNECTION(backend, i), &kind, 1);
-								pool_write(CONNECTION(backend, i), &sendlen, sizeof(sendlen));
-								pool_write(CONNECTION(backend, i), p, len);
-							}
-						}
-					}
-					else
-					{
-						p1 = parse_copy_data(p, len, copy_delimiter, info->dist_key_col_id);
-
-						if (!p1)
-	                         ereport(ERROR,
-                                (errmsg("unable to copy data rows"),
-                                     errdetail("unable to parse data")));
-   
-						else if (strcmp(p1, copy_null) == 0)
-                            ereport(ERROR,
-                                    (errmsg("unable to copy data rows"),
-                                     errdetail("key parameter is NULL")));
-
-						id = pool_get_id(info, p1);
-
-						ereport(DEBUG1,
-							(errmsg("copy data rows"),
-								 errdetail("copying id: %d", id)));
-						pfree(p1);
-						if (id < 0 || !VALID_BACKEND(id))
-                            ereport(FATAL,
-								(return_code(1),
-                                    errmsg("unable to copy data rows"),
-                                     errdetail("pool_get_id returns invalid id: %d", id)));
-                                    
-
-                        pool_write(CONNECTION(backend, id), &kind, 1);
-                        pool_write(CONNECTION(backend, id), &sendlen, sizeof(sendlen));
-                        pool_write_and_flush(CONNECTION(backend, id), p, len);
-					}
-				}
-				else
-				{
-					char *contents = NULL;
-					ereport(DEBUG1,
-						(errmsg("copy data rows"),
-							 errdetail("read kind from frontend %c(%02x)", kind, kind)));
-
-					pool_read(frontend, &len, sizeof(len));
-					len = ntohl(len) - 4;
-					if (len > 0)
-						contents = pool_read2(frontend, len);
-
-					SimpleForwardToBackend(kind, frontend, backend, len, contents);
-				}
+				SimpleForwardToBackend(kind, frontend, backend, len, contents);
 
 				/* CopyData? */
 				if (kind == 'd')

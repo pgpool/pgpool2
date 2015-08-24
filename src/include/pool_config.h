@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -163,16 +163,6 @@ typedef struct {
 	int ignore_leading_white_space;		/* ignore leading white spaces of each query */
  	int log_statement; /* 0:false, 1: true - logs all SQL statements */
  	int log_per_node_statement; /* 0:false, 1: true - logs per node detailed SQL statements */
-
-	int parallel_mode;	/* if non 0, run in parallel query mode */
-
-	char *pgpool2_hostname;		/* pgpool2 hostname */
-	char *system_db_hostname;	/* system DB hostname */
-	int system_db_port;			/* system DB port number */
-	char *system_db_dbname;		/* system DB name */
-	char *system_db_schema;		/* system DB schema name */
-	char *system_db_user;		/* user name to access system DB */
-	char *system_db_password;	/* password to access system DB */
 
 	char *lobj_lock_table;		/* table name to lock for rewriting lo_creat */
 

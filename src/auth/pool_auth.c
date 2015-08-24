@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -218,13 +218,13 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 		if (frontend->auth_method != uaMD5 && !RAW_MODE && NUM_BACKENDS > 1)
 		{
 			pool_send_error_message(frontend, protoMajor, AUTHFAIL_ERRORCODE,
-									"MD5 authentication is unsupported in replication, master-slave and parallel modes.",
+									"MD5 authentication is unsupported in replication and master-slave modes.",
 									"",
 									"check pg_hba.conf",
 									__FILE__, __LINE__);
 			ereport(ERROR,
 				(errmsg("failed to authenticate with backend"),
-					errdetail("MD5 authentication is not supported in replication, master-slave and parallel modes."),
+					errdetail("MD5 authentication is not supported in replication and master-slave modes."),
 						errhint("check pg_hba.conf settings on backend node")));
 		}
 

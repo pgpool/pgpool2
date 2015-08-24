@@ -63,14 +63,6 @@ user to connect at most two PostgreSQL servers for higher
 availability or for higher search performance compared to a
 single PostgreSQL server.
 
-pgpool-II, on the other hand, allows multiple PostgreSQL
-servers (DB nodes) to be connected, which enables queries
-to be executed simultaneously on all servers. In other words,
-it enables "parallel query" processing. Also, pgpool-II can
-be started as pgpool-I by changing configuration parameters.
-pgpool-II that is executed in pgpool-I mode enables multiple
-DB nodes to be connected, which was not possible in pgpool-I.
-
 %package devel
 Summary:     The development files for pgpool-II
 Group:       Development/Libraries
@@ -201,12 +193,10 @@ fi
 %{_bindir}/pcp_promote_node
 %{_bindir}/pcp_stop_pgpool
 %{_bindir}/pcp_recovery_node
-%{_bindir}/pcp_systemdb_info
 %{_bindir}/pcp_watchdog_info
 %{_bindir}/pg_md5
 %{_mandir}/man8/pgpool*
 %{_datadir}/%{short_name}/insert_lock.sql
-%{_datadir}/%{short_name}/system_db.sql
 %{_datadir}/%{short_name}/pgpool.pam
 %{_sysconfdir}/%{short_name}/pgpool.conf.sample-master-slave
 %{_sysconfdir}/%{short_name}/pgpool.conf.sample-replication
@@ -246,6 +236,9 @@ fi
 %endif
 
 %changelog
+* Tue AUg 24 2015 Yugo Nagata <nagata@sraoss.co.jp> 3.5.0
+- Remove system database 
+
 * Tue Feb 10 2015 Nozomi Anzai <anzai@sraoss.co.jp> 3.4.1-2
 - Fix %tmpfiles_create to not be executed in RHEL/CentOS 6
 

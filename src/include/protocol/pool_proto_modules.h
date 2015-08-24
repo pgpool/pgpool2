@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -30,7 +30,6 @@
 #include "parser/parser.h"
 #include "parser/pg_list.h"
 #include "parser/parsenodes.h"
-#include "parallel_query/pool_rewrite_query.h"
 #include "context/pool_session_context.h"
 #include "utils/pool_process_reporting.h"
 
@@ -46,7 +45,6 @@ extern char *copy_null; /* copy null string */
 
 extern int is_select_pgcatalog;
 extern int is_select_for_update; /* also for SELECT ... INTO */
-extern bool is_parallel_table;
 extern char *parsed_query;
 
 /*

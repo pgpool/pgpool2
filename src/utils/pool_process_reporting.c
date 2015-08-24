@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -496,45 +496,6 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	StrNCpy(status[i].desc, "allow SQL comments", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	/* PARALLEL MODE AND QUERY CACHE */
-
-	StrNCpy(status[i].name, "parallel_mode", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->parallel_mode);
-	StrNCpy(status[i].desc, "if non 0, run in parallel query mode", POOLCONFIG_MAXDESCLEN);
-	i++;
-
-
-	StrNCpy(status[i].name, "pgpool2_hostname", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->pgpool2_hostname);
-	StrNCpy(status[i].desc, "pgpool2 hostname", POOLCONFIG_MAXDESCLEN);
-	i++;
-
-	/* - System DB info - */
-	StrNCpy(status[i].name, "system_db_hostname", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->system_db_hostname);
-	StrNCpy(status[i].desc, "system DB hostname", POOLCONFIG_MAXDESCLEN);
-	i++;
-
-	StrNCpy(status[i].name, "system_db_port", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->system_db_port);
-	StrNCpy(status[i].desc, "system DB port number", POOLCONFIG_MAXDESCLEN);
-	i++;
-
-	StrNCpy(status[i].name, "system_db_dbname", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->system_db_dbname);
-	StrNCpy(status[i].desc, "system DB name", POOLCONFIG_MAXDESCLEN);
-	i++;
-
-	StrNCpy(status[i].name, "system_db_schema", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->system_db_schema);
-	StrNCpy(status[i].desc, "system DB schema name", POOLCONFIG_MAXDESCLEN);
-	i++;
-
-	StrNCpy(status[i].name, "system_db_user", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->system_db_user);
-	StrNCpy(status[i].desc, "user name to access system DB", POOLCONFIG_MAXDESCLEN);
-	i++;
-
 	/* HEALTH CHECK */
 
 	StrNCpy(status[i].name, "health_check_period", POOLCONFIG_MAXNAMELEN);
@@ -643,41 +604,6 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	StrNCpy(status[i].desc, "enable unlogged table check", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	StrNCpy(status[i].name, "parallel_mode", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->parallel_mode);
-	StrNCpy(status[i].desc, "if non 0, run in parallel query mode", POOLCONFIG_MAXDESCLEN);
-	i++;
-
-	StrNCpy(status[i].name, "pgpool2_hostname", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->pgpool2_hostname);
-	StrNCpy(status[i].desc, "pgpool2 hostname", POOLCONFIG_MAXDESCLEN);
-	i++;
-
-	StrNCpy(status[i].name, "system_db_hostname", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->system_db_hostname);
-	StrNCpy(status[i].desc, "system DB hostname", POOLCONFIG_MAXDESCLEN);
-	i++;
-
-	StrNCpy(status[i].name, "system_db_port", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->system_db_port);
-	StrNCpy(status[i].desc, "system DB port number", POOLCONFIG_MAXDESCLEN);
-	i++;
-
-	StrNCpy(status[i].name, "system_db_dbname", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->system_db_dbname);
-	StrNCpy(status[i].desc, "system DB name", POOLCONFIG_MAXDESCLEN);
-	i++;
-
-	StrNCpy(status[i].name, "system_db_schema", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->system_db_schema);
-	StrNCpy(status[i].desc, "system DB schema name", POOLCONFIG_MAXDESCLEN);
-	i++;
-
-	StrNCpy(status[i].name, "system_db_user", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->system_db_user);
-	StrNCpy(status[i].desc, "user name to access system DB", POOLCONFIG_MAXDESCLEN);
-	i++;
-	
 	/*
 	 * add for watchdog
 	 */

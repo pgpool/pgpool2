@@ -534,7 +534,6 @@ char *yytext;
 int yylex(void);
 
 POOL_CONFIG *pool_config;	/* configuration values */
-POOL_SYSTEMDB_CONNECTION_POOL *system_db_info;
 static unsigned Lineno;
 static char *default_reset_query_list[] = {"ABORT", "DISCARD ALL"};
 static char *default_black_function_list[] = {"nextval", "setval"};
@@ -1929,13 +1928,6 @@ int pool_init_config(void)
 	pool_config->fail_over_on_backend_error = 1;
 	pool_config->insert_lock = 1;
 	pool_config->ignore_leading_white_space = 1;
-	pool_config->parallel_mode = 0;
-	pool_config->system_db_hostname = "localhost";
-	pool_config->system_db_port = 5432;
-	pool_config->system_db_dbname = "pgpool";
-	pool_config->system_db_schema = "pgpool_catalog";
-	pool_config->system_db_user = "pgpool";
-	pool_config->system_db_password = "";
 	pool_config->backend_desc->num_backends = 0;
     pool_config->recovery_user = "";
     pool_config->recovery_password = "";
@@ -2039,7 +2031,6 @@ int pool_init_config(void)
 				errdetail("failed to get the local hostname")));
 
 	}
-	pool_config->pgpool2_hostname = localhostname;
 
 	for (i=0;i<MAX_CONNECTION_SLOTS;i++)
 	{
@@ -3533,152 +3524,6 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			pool_config->ignore_leading_white_space = v;
 		}
 
-		else if (!strcmp(key, "parallel_mode") && CHECK_CONTEXT(INIT_CONFIG, context))
-		{
-			int v = eval_logical(yytext);
-
-			if (v < 0)
-			{
-				fclose(fd);
-				ereport(error_level,
-					(errmsg("invalid configuration for key \"%s\"",key),
-						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
-							errhint("value must be greater than or equal to 0")));
-				return(-1);
-			}
-			pool_config->parallel_mode = v;
-		}
-
-		else if (!strcmp(key, "pgpool2_hostname") && CHECK_CONTEXT(INIT_CONFIG, context))
-		{
-			char *str;
-
-			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
-			{
-				PARSE_ERROR();
-				fclose(fd);
-				return(-1);
-			}
-			str = extract_string(yytext, token);
-			if (str == NULL)
-			{
-				fclose(fd);
-				return(-1);
-			}
-			if(strlen(str))
-				pool_config->pgpool2_hostname = str;
-		}
-
-		else if (!strcmp(key, "system_db_hostname") && CHECK_CONTEXT(INIT_CONFIG, context))
-		{
-			char *str;
-
-			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
-			{
-				PARSE_ERROR();
-				fclose(fd);
-				return(-1);
-			}
-			str = extract_string(yytext, token);
-			if (str == NULL)
-			{
-				fclose(fd);
-				return(-1);
-			}
-			pool_config->system_db_hostname = str;
-		}
-
-		else if (!strcmp(key, "system_db_port") && CHECK_CONTEXT(INIT_CONFIG, context))
-		{
-			int v = atoi(yytext);
-
-			if (token != POOL_INTEGER || v < 0)
-			{
-				fclose(fd);
-				ereport(error_level,
-					(errmsg("invalid configuration for key \"%s\"",key),
-						errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
-							errhint("value must be greater than or equal to 0")));
-				return(-1);
-			}
-			pool_config->system_db_port = v;
-		}
-
-		else if (!strcmp(key, "system_db_dbname") && CHECK_CONTEXT(INIT_CONFIG, context))
-		{
-			char *str;
-
-			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
-			{
-				PARSE_ERROR();
-				fclose(fd);
-				return(-1);
-			}
-			str = extract_string(yytext, token);
-			if (str == NULL)
-			{
-				fclose(fd);
-				return(-1);
-			}
-			pool_config->system_db_dbname = str;
-		}
-
-		else if (!strcmp(key, "system_db_schema") && CHECK_CONTEXT(INIT_CONFIG, context))
-		{
-			char *str;
-
-			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
-			{
-				PARSE_ERROR();
-				fclose(fd);
-				return(-1);
-			}
-			str = extract_string(yytext, token);
-			if (str == NULL)
-			{
-				fclose(fd);
-				return(-1);
-			}
-			pool_config->system_db_schema = str;
-		}
-
-		else if (!strcmp(key, "system_db_user") && CHECK_CONTEXT(INIT_CONFIG, context))
-		{
-			char *str;
-
-			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
-			{
-				PARSE_ERROR();
-				fclose(fd);
-				return(-1);
-			}
-			str = extract_string(yytext, token);
-			if (str == NULL)
-			{
-				fclose(fd);
-				return(-1);
-			}
-			pool_config->system_db_user = str;
-		}
-
-		else if (!strcmp(key, "system_db_password") && CHECK_CONTEXT(INIT_CONFIG, context))
-		{
-			char *str;
-
-			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
-			{
-				PARSE_ERROR();
-				fclose(fd);
-				return(-1);
-			}
-			str = extract_string(yytext, token);
-			if (str == NULL)
-			{
-				fclose(fd);
-				return(-1);
-			}
-			pool_config->system_db_password = str;
-		}
 
 		else if (!strncmp(key, "backend_hostname", 16) &&
 				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context) &&
@@ -5194,68 +5039,6 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				(errmsg("initializing pool configuration"),
 					errdetail("backend %d weight: %f flag: %04x", i, BACKEND_INFO(i).backend_weight,BACKEND_INFO(i).flag)));
 		}
-	}
-
-	/* initialize system_db_hostname with a default socket path if empty */
-	if (*pool_config->system_db_hostname == '\0')
-	{
-		ereport(DEBUG1,
-			(errmsg("initializing pool configuration"),
-				errdetail("empty system_db_hostname, use PostgreSQL's default unix socket path (%s)", DEFAULT_SOCKET_DIR)));
-
-		strlcpy(pool_config->system_db_hostname, DEFAULT_SOCKET_DIR, MAX_DB_HOST_NAMELEN);
-	}
-
-	if (pool_config->parallel_mode)
-	{
-#ifndef POOL_PRIVATE
-		int dist_num;
-#endif
-		SystemDBInfo *info;
-		
-		system_db_info = palloc(sizeof(POOL_SYSTEMDB_CONNECTION_POOL));
-		memset(system_db_info, 0, sizeof(*system_db_info));
-
-#ifndef POOL_PRIVATE
-		system_db_info->system_db_status = pool_shared_memory_create(sizeof(BACKEND_STATUS));
-#else
-		system_db_info->system_db_status = palloc(sizeof(BACKEND_STATUS));
-#endif
-
-		*system_db_info->system_db_status = CON_CONNECT_WAIT;	/* which is the same as SYSDB_STATUS = CON_CONNECT_WAIT */
-
-		info = palloc(sizeof(SystemDBInfo));
-
-		system_db_info->info = info;
-		info->hostname = pool_config->system_db_hostname;
-		info->port = pool_config->system_db_port;
-		info->user = pool_config->system_db_user;
-		info->password = pool_config->system_db_password;
-		info->database_name = pool_config->system_db_dbname;
-		info->schema_name = pool_config->system_db_schema;
-		info->dist_def_num = 0;
-		info->dist_def_slot = NULL;
-
-#ifndef POOL_PRIVATE
-		if (pool_config->parallel_mode)
-		{
-
-			dist_num = pool_memset_system_db_info(info);
-			if(dist_num < 0)
-			{
-				ereport(ERROR,
-					(errmsg("invalid configuration, failed to get systemdb info")));
-				return(-1);
-			}
-			if (!pool_config->replication_mode && !pool_config->load_balance_mode)
-			{
-				ereport(ERROR,
-					(errmsg("invalid configuration, parallel_mode requires replication_mode or load_balance_mode turned on")));
-				return(-1);
-			}
-		}
-		SYSDB_STATUS = CON_UP;
-#endif
 	}
 
 	if (strcmp(pool_config->recovery_1st_stage_command, "") ||

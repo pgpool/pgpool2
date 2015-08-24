@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -479,7 +479,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 			}
 		}
 	}
-	else if (REPLICATION || PARALLEL_MODE)
+	else if (REPLICATION)
 	{
 		if (pool_config->load_balance_mode &&
 			is_select_query(node, query) &&

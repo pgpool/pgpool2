@@ -186,7 +186,6 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	volatile int health_check_node_id = 0;
 	volatile bool use_template_db = false;
 	volatile int retrycnt;
-	volatile int sys_retrycnt;
 
 	MemoryContext MainLoopMemoryContext;
 	sigjmp_buf	local_sigjmp_buf;
@@ -317,7 +316,6 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	worker_pid = worker_fork_a_child();
 
 	retrycnt = 0;		/* reset health check retry counter */
-	sys_retrycnt = 0;	/* reset SystemDB health check retry counter */
 
 	/*
 	 * check for child signals to ensure child startup before reporting successfull start
@@ -373,29 +371,6 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 				}
 			}
 		}
-		else if (processState == PERFORMING_SYSDB_CHECK)
-		{
-			if ( errno != EINTR || health_check_timer_expired)
-			{
-				sys_retrycnt++;
-				pool_signal(SIGALRM, SIG_IGN);
-				CLEAR_ALARM;
-
-				if (sys_retrycnt > NUM_BACKENDS)
-				{
-					ereport(LOG,
-                            (errmsg("set SystemDB down status")));
-
-					SYSDB_STATUS = CON_DOWN;
-					sys_retrycnt = 0;
-				}
-				int sleep_time = pool_config->health_check_period/NUM_BACKENDS;
-
-				ereport(DEBUG2,
-                        (errmsg("retry sleep time: %d seconds", sleep_time)));
-				pool_sleep(sleep_time);
-			}
-		}
 	}
 	/* We can now handle ereport(ERROR) */
 	PG_exception_stack = &local_sigjmp_buf;
@@ -439,14 +414,6 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 			 */
 			errno = 0;
 			health_check_timer_expired = 0;
-
-			if (pool_config->parallel_mode)
-			{
-				processState = PERFORMING_SYSDB_CHECK;
-				system_db_health_check();
-				sys_retrycnt = 0;
-				errno = 0;
-			}
 
 			POOL_SETMASK(&UnBlockSig);
 
@@ -502,11 +469,8 @@ process_backend_health_check_failure(int health_check_node_id, int retrycnt)
 	/*
 	 *  health check is failed on template1 database as well
 	 */
-	int sleep_time = pool_config->parallel_mode ?
-			pool_config->health_check_period/NUM_BACKENDS : pool_config->health_check_retry_delay;
-
-	int health_check_max_retries = pool_config->parallel_mode ?
-			(NUM_BACKENDS - 1) : pool_config->health_check_max_retries;
+	int sleep_time = pool_config->health_check_retry_delay;
+	int health_check_max_retries = pool_config->health_check_max_retries;
 
 	pool_signal(SIGALRM, SIG_IGN);	/* Cancel timer */
 	CLEAR_ALARM;
@@ -523,8 +487,7 @@ process_backend_health_check_failure(int health_check_node_id, int retrycnt)
 	else
 	{
 		/* No more retries left, proceed to failover if allowed */
-		if ((!pool_config->parallel_mode) &&
-			POOL_DISALLOW_TO_FAILOVER(BACKEND_INFO(health_check_node_id).flag))
+		if (POOL_DISALLOW_TO_FAILOVER(BACKEND_INFO(health_check_node_id).flag))
 		{
 			ereport(LOG,
 					(errmsg("health check failed on node %d but failover is disallowed for the node", health_check_node_id)));
@@ -1058,9 +1021,6 @@ bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool tes
 
 	if (error)
 		elevel = ERROR;
-
-	if (pool_config->parallel_mode)
-		return false;
 
 	for (i = 0; i < count; i++)
 	{
@@ -3026,8 +2986,6 @@ static void reload_config(void)
     MemoryContextSwitchTo(oldContext);
 	if (pool_config->enable_pool_hba)
 		load_hba(hba_file);
-	if (pool_config->parallel_mode)
-		pool_memset_system_db_info(system_db_info->info);
 	kill_all_children(SIGHUP);
 
 	if (worker_pid)
