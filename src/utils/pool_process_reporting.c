@@ -821,7 +821,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	i++;
 
 	StrNCpy(status[i].name, "memqcache_total_size", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->memqcache_total_size);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%ld", pool_config->memqcache_total_size);
 	StrNCpy(status[i].desc, "Total memory size in bytes for storing memory cache. Mandatory if memqcache_method=shmem", POOLCONFIG_MAXDESCLEN);
 	i++;
 
