@@ -575,23 +575,6 @@ pgpool.confでは空白行や#で始まる行はコメントと見なされま�
     </p>
     </dd>
 
-<dt><a name="BACKEND_SOCKET_DIR"></a>backend_socket_dir <span class="version">〜 V3.0</span></dt>
-    <dd>
-    <p class="version_notice">
-    <em class="caution">DEPRECATED（〜 3.0）</em>
-    このパラメータは、libpqのポリシーに合わせて削除されます。
-    代わりに <a href="#BACKEND_HOSTNAME">backend_hostname</a> パラメータを使ってください。
-    </p>
-    <p>
-    UNIXドメインソケット経由でpgpool-IIがPostgreSQLと接続する際に使用する
-    PostgreSQLのUNIXドメインソケットが置かれているディレクトリです。デフォルト値は/tmpです。
-    </p>
-    <p>
-    このパラメータを変更した時には pgpool-II を再起動してください。
-    </p>
-    </dd>
-  </dl>
-
 <h3>Pools</h3>
 
 <dl>

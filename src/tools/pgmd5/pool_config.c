@@ -1870,7 +1870,6 @@ int pool_init_config(void)
 	pool_config->pcp_port = 9898;
 	pool_config->socket_dir = DEFAULT_SOCKET_DIR;
 	pool_config->pcp_socket_dir = DEFAULT_SOCKET_DIR;
-	pool_config->backend_socket_dir = NULL;
 	pool_config->num_init_children = 32;
 	pool_config->listen_backlog_multiplier = 2;
 	pool_config->max_pool = 4;
@@ -2632,28 +2631,6 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			pool_config->pool_passwd = str;
 		}
 
-		else if (!strcmp(key, "backend_socket_dir") && CHECK_CONTEXT(INIT_CONFIG, context))
-		{
-			char *str;
-
-			ereport(LOG,
-				(errmsg("initializing pool configuration: backend_socket_dir is deprecated"),
-					errdetail("please use backend_hostname instead")));
-
-			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
-			{
-				PARSE_ERROR();
-				fclose(fd);
-				return(-1);
-			}
-			str = extract_string(yytext, token);
-			if (str == NULL)
-			{
-				fclose(fd);
-				return(-1);
-			}
-			pool_config->backend_socket_dir = str;
-		}
 		else if (!strcmp(key, "replication_mode") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			int v = eval_logical(yytext);
@@ -4997,20 +4974,11 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			/* initialize backend_hostname with a default socket path if empty */
 			if (*(BACKEND_INFO(i).backend_hostname) == '\0')
 			{
-				if (pool_config->backend_socket_dir == NULL)
-				{
-					ereport(DEBUG1,
-						(errmsg("initializing pool configuration"),
-							errdetail("empty backend_hostname%d, use PostgreSQL's default unix socket path (%s)", i, DEFAULT_SOCKET_DIR)));
-					strlcpy(BACKEND_INFO(i).backend_hostname, DEFAULT_SOCKET_DIR, MAX_DB_HOST_NAMELEN);
-				}
-				else /* DEPRECATED. backward compatibility with older version. Use backend_socket_dir*/
-				{
-					ereport(DEBUG1,
-						(errmsg("initializing pool configuration"),
-							errdetail("empty backend_hostname%d, use backend_socket_dir as unix socket path (%s)", i, pool_config->backend_socket_dir)));
-					strlcpy(BACKEND_INFO(i).backend_hostname, pool_config->backend_socket_dir, MAX_DB_HOST_NAMELEN);
-				}
+				ereport(DEBUG1,
+					(errmsg("initializing pool configuration"),
+						errdetail("empty backend_hostname%d, use PostgreSQL's default unix socket path (%s)",
+						          i, DEFAULT_SOCKET_DIR)));
+				strlcpy(BACKEND_INFO(i).backend_hostname, DEFAULT_SOCKET_DIR, MAX_DB_HOST_NAMELEN);
 			}
 		}	
 	}

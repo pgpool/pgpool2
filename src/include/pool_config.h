@@ -89,7 +89,6 @@ typedef struct {
     int syslog_facility;        /* syslog facility: LOCAL0, LOCAL1, ... */
     char *syslog_ident;         /* syslog ident string: pgpool */
     char *pid_file_name;		/* pid file name */
-    char *backend_socket_dir;	/* Unix domain socket directory for the PostgreSQL server */
 	int replication_mode;		/* replication mode */
 
 	int log_connections;		/* 0:false, 1:true - logs incoming connections */
