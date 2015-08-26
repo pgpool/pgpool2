@@ -293,20 +293,12 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 							if (!VALID_BACKEND(i))
 								continue;
 
-							//ereport(LOG, (errmsg("%s %d",__FILE__, __LINE__)));
-
 							if (pool_ssl_pending(CONNECTION(backend, i)) ||
 								!pool_read_buffer_is_empty(CONNECTION(backend, i)))
 							{
-								ereport(LOG, (errmsg("%s %d",__FILE__, __LINE__)));
 								/* If we have pending data in master, we need to process it */
 								if (IS_MASTER_NODE_ID(i))
 								{
-									FILE *fd = fopen("/tmp/pgpool.log", "a+");
-									fprintf(fd, "pool_ssl_pending:%d pool_read_buffer_is_empty:%d", pool_ssl_pending(CONNECTION(backend, i)), pool_read_buffer_is_empty(CONNECTION(backend, i)));
-									fclose(fd);
-									ereport(LOG,
-											(errmsg("pool_ssl_pending:%d pool_read_buffer_is_empty:%d", pool_ssl_pending(CONNECTION(backend, i)), pool_read_buffer_is_empty(CONNECTION(backend, i)))));
 									status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
 									if (status != POOL_CONTINUE)
 										return status;

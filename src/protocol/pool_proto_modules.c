@@ -1027,7 +1027,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		}
 	}
 
-	if (REPLICATION || MASTER_SLAVE)
+	if (REPLICATION)
 	{
 		/*
 		 * We must synchronize because Parse message acquires table
@@ -1082,15 +1082,12 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	else
 	{
 		/* XXX fix me:even with streaming replication mode, we could have deadlock */
-		pool_unset_query_in_progress();
+		pool_set_query_in_progress();
 		pool_extended_send_and_wait(query_context, "P", len, contents, 1, MASTER_NODE_ID, true);
-
-		if (!STREAM)
-			pool_extended_send_and_wait(query_context, "P", len, contents, -1, MASTER_NODE_ID, true);
+		pool_extended_send_and_wait(query_context, "P", len, contents, -1, MASTER_NODE_ID, true);
 		pool_add_sent_message(session_context->uncompleted_message);
+		pool_unset_query_in_progress();
 	}
-
-	pool_unset_query_in_progress();
 
 	return POOL_CONTINUE;
 
@@ -1158,6 +1155,10 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	session_context->query_context = query_context;
 
+/*
+ * Fix me
+ */
+#ifdef NOT_USED
 	if (pool_config->load_balance_mode && pool_is_writing_transaction())
 	{
 		pool_where_to_send(query_context, query_context->original_query,
@@ -1166,6 +1167,7 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		if (parse_before_bind(frontend, backend, parse_msg) != POOL_CONTINUE)
 			return POOL_END;
 	}
+#endif
 
 	/*
 	 * Start a transaction if necessary in replication mode
@@ -1197,14 +1199,15 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			}
 		}
 	}
+
 	ereport(DEBUG1,
 		(errmsg("Bind: waiting for master completing the query")));
 
+	pool_set_query_in_progress();
 	pool_extended_send_and_wait(query_context, "B", len, contents, 1, MASTER_NODE_ID, true);
-
-	if (!STREAM)
-		pool_extended_send_and_wait(query_context, "B", len, contents, -1, MASTER_NODE_ID, true);
+	pool_extended_send_and_wait(query_context, "B", len, contents, -1, MASTER_NODE_ID, true);
 	pool_add_sent_message(session_context->uncompleted_message);
+	pool_unset_query_in_progress();
 	
 	if(rewrite_msg)
 		pfree(rewrite_msg);
@@ -1263,10 +1266,10 @@ POOL_STATUS Describe(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
     ereport(DEBUG1,
             (errmsg("Describe: waiting for master completing the query")));
 
+	pool_set_query_in_progress();
 	pool_extended_send_and_wait(query_context, "D", len, contents, 1, MASTER_NODE_ID, true);
-
-	if (!STREAM)
-		pool_extended_send_and_wait(query_context, "D", len, contents, -1, MASTER_NODE_ID, true);
+	pool_extended_send_and_wait(query_context, "D", len, contents, -1, MASTER_NODE_ID, true);
+	pool_unset_query_in_progress();
 
 	return POOL_CONTINUE;
 }
@@ -1329,10 +1332,11 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
     ereport(DEBUG1,
             (errmsg("Close: waiting for master completing the query")));
-	pool_extended_send_and_wait(query_context, "C", len, contents, 1, MASTER_NODE_ID, false);
 
-	if (!STREAM)
-		pool_extended_send_and_wait(query_context, "C", len, contents, -1, MASTER_NODE_ID, false);
+	pool_set_query_in_progress();
+	pool_extended_send_and_wait(query_context, "C", len, contents, 1, MASTER_NODE_ID, false);
+	pool_extended_send_and_wait(query_context, "C", len, contents, -1, MASTER_NODE_ID, false);
+	pool_unset_query_in_progress();
 
 	return POOL_CONTINUE;
 }
@@ -2865,7 +2869,7 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 				(errmsg("parse before bind"),
 					 errdetail("waiting for backend %d completing parse", i)));
 
-			pool_extended_send_and_wait(qc, "P", len, contents, 1, i, false);
+			pool_extended_send_and_wait(qc, "P", len, contents, 1, i, true);
 		}
 		else
 		{
