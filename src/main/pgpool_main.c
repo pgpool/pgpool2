@@ -144,6 +144,7 @@ BACKEND_STATUS private_backend_status[MAX_NUM_BACKENDS];
  * con_info[pool_config->num_init_children][pool_config->max_pool][MAX_NUM_BACKENDS]
  */
 ConnectionInfo *con_info;
+char* watchdog_ipc_address;
 
 static int *fds;	/* listening file descriptors (UNIX socket, inet domain sockets) */
 
@@ -2786,6 +2787,14 @@ static void initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 	/* Initialize statistics area */
 	stat_set_stat_area(pool_shared_memory_create(stat_shared_memory_size()));
 	stat_init_stat_area();
+	/* initialize watchdog IPC unix domain socket address */
+	if (pool_config->use_watchdog)
+	{
+		watchdog_ipc_address = pool_shared_memory_create(100);
+		snprintf(watchdog_ipc_address, 100,"wd_cmd_ipc_%d",pool_config->wd_port);
+	}
+	else
+		watchdog_ipc_address = NULL;
 }
 
 /*

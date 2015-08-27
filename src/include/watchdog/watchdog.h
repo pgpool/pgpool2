@@ -28,7 +28,7 @@
 
 #include <sys/time.h>
 #include "libpq-fe.h"
-
+#include "parser/pg_list.h"
 #include "auth/md5.h"
 
 #define WD_MAX_HOST_NAMELEN (128)
@@ -55,6 +55,10 @@
                                ((a).tv_sec < (b).tv_sec))
 #define WD_TIME_DIFF_SEC(a,b) (int)(((a).tv_sec - (b).tv_sec) + \
                                     ((a).tv_usec - (b).tv_usec) / 1000000.0)
+
+/* IPC MESSAGES */
+#define WD_REGISTER_FOR_NOTIFICATION		'1'
+#define WD_TRANSPORT_DATA_COMMAND			'2'
 
 /*
  * packet number of watchdog negotiation
@@ -214,4 +218,124 @@ typedef struct {
 extern WdInfo * WD_List;
 extern unsigned char * WD_Node_List;
 
+/*
+ * watchdog state
+ */
+typedef enum {
+	WD_NO_STATE = 0,
+	WD_LOADING,
+	WD_JOINING,
+	WD_INITIALIZING,
+	WD_WAITING_CONNECT,
+	WD_COORDINATOR,
+	WD_PARTICIPATE_IN_ELECTION,
+	WD_STAND_FOR_COORDINATOR,
+	WD_STANDBY
+} WD_STATES;
+
+typedef enum {
+	WD_SOCK_UNINITIALIZED = 0,
+	WD_SOCK_CREATED,
+	WD_SOCK_WAITING_FOR_CONNECT,
+	WD_SOCK_CONNECTED,
+	WD_SOCK_ERROR,
+	WD_CLOSED
+} WD_SOCK_STATE;
+
+typedef enum {
+	WD_EVENT_WD_STATE_CHANGED = 0,
+	WD_EVENT_CON_OPEN,
+	WD_EVENT_CON_CLOSED,
+	WD_EVENT_CON_ERROR,
+	WD_EVENT_TIMEOUT,
+	WD_EVENT_PACKET_RCV,
+	WD_EVENT_HB_MISSED
+} WD_EVENTS;
+
+typedef struct WatchdogNode
+{
+	WD_STATES state;
+	struct timeval tv;						/* startup time value */
+	char nodeName[WD_MAX_HOST_NAMELEN];
+	char hostname[WD_MAX_HOST_NAMELEN];		/* host name */
+	int wd_port;							/* watchdog port */
+	int pgpool_port;						/* pgpool port */
+	char delegate_ip[WD_MAX_HOST_NAMELEN];	/* delegate IP */
+	char** resolved_ips;
+	int delegate_ip_flag;					/* delegate IP flag */
+	unsigned int	lastCommandID;
+	struct timeval hb_last_recv_time; 		/* recv time */
+	int	private_id;
+	int server_sock;
+	int client_sock;
+	WD_SOCK_STATE server_sock_state;
+	WD_SOCK_STATE client_sock_state;
+
+	bool is_lock_holder;					/* lock holder flag */
+	bool in_interlocking;					/* interlocking is in progress */
+}WatchdogNode;
+
+typedef struct wd_command
+{
+	char			commandMessageType;
+	unsigned int	commandID;
+	unsigned int	commandSendToCount;
+	unsigned int	commandReplyFromCount;
+	unsigned int	commandTimeoutSec;
+	struct timeval  commandTime;
+	sig_atomic_t	commandFinished;
+}wd_command;
+
+typedef enum {
+	WD_COMMAND_ACTION_DEFAULT = 0,
+	WD_COMMAND_ACTION_SEND_ALL,
+	WD_COMMAND_ACTION_SEND_MASTER,
+	WD_COMMAND_ACTION_LOCAL
+} WD_COMMAND_ACTIONS;
+
+typedef struct WDIPCCommandNodeResultData
+{
+	int		node_id;
+	char	nodeName[WD_MAX_HOST_NAMELEN];
+	int		data_len;
+	char	*data;
+}WDIPCCommandNodeResultData;
+
+typedef struct WDIPCCommandResult
+{
+	char			commandMessageType;
+	unsigned int	commandSendToCount;
+	unsigned int	commandReplyFromCount;
+	int				resultSlotsCount;
+	List			*node_results;
+}WDIPCCommandResult;
+
+
+
+typedef struct wd_cluster
+{
+	WatchdogNode*	localNode;
+	WatchdogNode*	remoteNodes;
+	WatchdogNode*	masterNode;
+	int				remoteNodeCount;
+	int				aliveNodeCount;
+	bool			quorum_exists;
+	wd_command		lastCommand;
+	unsigned int	nextCommandID;
+	List			*unidentified_socks;
+	int				command_server_sock;
+	List			*notify_clients;
+	List			*ipc_command_socks;
+	List			*ipc_commands;
+}wd_cluster;
+
+extern WDIPCCommandResult*
+issue_wd_command(char type, WD_COMMAND_ACTIONS command_action,int timeout_sec, char* data, int data_len, bool blocking);
 #endif /* WATCHDOG_H */
+
+/* since we should have a provision to send arbitary length of data from the 
+ watchdog channel. And it is not necessary for the watchdog to know about the data
+ it is transmitting to the other node.
+ So it is compalsory for the IPC channel to handle any length of data
+ */
+

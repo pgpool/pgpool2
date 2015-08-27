@@ -67,6 +67,8 @@ static int ntoh_wd_node_packet(WdPacket * to, WdPacket * from);
 static int hton_wd_lock_packet(WdPacket * to, WdPacket * from);
 static int ntoh_wd_lock_packet(WdPacket * to, WdPacket * from);
 
+static int open_wd_command_sock(void);
+static int read_socket(int socket, void* buf, int len);
 int
 wd_startup(void)
 {
@@ -1089,20 +1091,246 @@ wd_send_failback_request(int node_id)
 	return rtn;
 }
 
+//int
+//wd_degenerate_backend_set(int *node_id_set, int count)
+//{
+//	int rtn = 0;
+//
+//	/* if degenerate packet is received already, do nothing */
+//	if (wd_chk_node_mask(WD_DEGENERATE_BACKEND,node_id_set,count))
+//	{
+//		return WD_OK;
+//	}
+//
+//	/* send degenerate packet */
+//	rtn = wd_send_node_packet(WD_DEGENERATE_BACKEND, node_id_set, count);
+//	return rtn;
+//}
+
 int
 wd_degenerate_backend_set(int *node_id_set, int count)
 {
-	int rtn = 0;
-
+	int rtn = WD_OK;
+	int data_size = (sizeof(int) * count) + sizeof(int);
+	char* data;
+	WDIPCCommandResult* result;
 	/* if degenerate packet is received already, do nothing */
 	if (wd_chk_node_mask(WD_DEGENERATE_BACKEND,node_id_set,count))
 	{
 		return WD_OK;
 	}
+	data = palloc(data_size);
+	/* First four bytes are packet no */
+	int* ptr = (int*)data;
+	ptr[0] = WD_DEGENERATE_BACKEND;
+	for (int i = 0; i < count; i++)
+	{
+		ptr[i+1] = htonl(node_id_set[i]);
+	}
 
-	/* send degenerate packet */
-	rtn = wd_send_node_packet(WD_DEGENERATE_BACKEND, node_id_set, count);
+	/* send degenerate command */
+	result = issue_wd_command(WD_TRANSPORT_DATA_COMMAND, WD_COMMAND_ACTION_DEFAULT, 10, data, data_size, true);
+	if (result == NULL)
+	{
+		return WD_NG;
+	}
+	/* Analyze the result */
+	if (result->commandSendToCount == 0)
+		rtn = WD_NG;
+	/* Here we assume that no answer means agreeing to what was asked for */
+	if (result->resultSlotsCount > 0)
+	{
+		ListCell *lc;
+		foreach(lc, result->node_results)
+		{
+			WDIPCCommandNodeResultData* resultSlot = lfirst(lc);
+			/* we only expect int type result data */
+			if (resultSlot->data_len != sizeof(int))
+			{
+				ereport(NOTICE,
+						(errmsg("invalid data sent from watchdog node \"%s\"",resultSlot->nodeName)));
+				rtn = WD_NG;
+				break;
+			}
+			int reply = ntohl( *((int*)resultSlot->data));
+			if (reply != WD_NODE_READY)
+			{
+				ereport(NOTICE,
+					(errmsg("failover request is rejected by \"%s\"",resultSlot->nodeName)));
+				rtn = WD_NG;
+				break;
+			}
+		}
+	}
+	
 	return rtn;
+}
+
+static int
+open_wd_command_sock(void)
+{
+	size_t	len = 0;
+	struct sockaddr_un addr;
+	int sock = -1;
+
+	/* We use unix domain stream sockets for the purpose */
+	if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
+	{
+		/* socket create failed */
+		ereport(ERROR,
+				(errmsg("failed to create watchdog IPC socket"),
+				 errdetail("create socket failed with reason: \"%s\"", strerror(errno))));
+	}
+
+	addr.sun_family = AF_INET;
+	snprintf(addr.sun_path, sizeof(addr.sun_path),"%s",watchdog_ipc_address);
+	len = sizeof(struct sockaddr_un);
+
+	if (connect(sock, (struct sockaddr *) &addr, sizeof(addr)) == -1)
+	{
+		close(sock);
+		ereport(ERROR,
+			(errmsg("failed to connect to watchdog command server socket"),
+				 errdetail("connect on \"%s\" failed with reason: \"%s\"", addr.sun_path, strerror(errno))));
+	}
+	return sock;
+}
+
+WDIPCCommandResult*
+issue_wd_command(char type, WD_COMMAND_ACTIONS command_action,int timeout_sec, char* data, int data_len, bool blocking)
+{
+	struct timeval start_time,tv;
+	int sock;
+	gettimeofday(&start_time, NULL);
+	/* open the watchdog command socket for IPC */
+	sock = open_wd_command_sock();
+	if (sock < 0)
+		return NULL;
+
+	if (send(sock,&type,1,0) < 1)
+	{
+		close(sock);
+		return NULL;
+	}
+	/*
+	 * since the command action will be consumed locally,
+	 * so no need to convert it to network byte order
+	 */
+	send(sock,&command_action,sizeof(command_action),0);
+	send(sock,&data_len,sizeof(int),0);
+	if (data && data_len > 0)
+		send(sock,data,data_len,0);
+
+	if (blocking)
+	{
+		/* if the command is blocking */
+		fd_set fds;
+		struct timeval *timeout_st = NULL;
+		if (timeout_sec > 0)
+		{
+			tv.tv_sec = timeout_sec;
+			timeout_st = &tv;
+		}
+		FD_ZERO(&fds);
+		FD_SET(sock,&fds);
+		for (;;)
+		{
+
+			int select_res;
+			select_res = select(sock+1,&fds,NULL,NULL,timeout_st);
+			if (select_res > 0)
+			{
+				
+				/* read the result */
+
+				int ret;
+				int header_size = sizeof(char) + sizeof(int) + sizeof(int) + sizeof(int);
+				WDIPCCommandResult* command_res = palloc(sizeof(WDIPCCommandResult));
+				ret = read_socket(sock, command_res, header_size);
+				if (ret != header_size)
+				{
+					ereport(DEBUG1,
+						(errmsg("error reading from IPC command socket"),
+							 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
+					close(sock);
+					return NULL;
+				}
+				command_res->node_results = NULL;
+				if (command_res->resultSlotsCount > 0)
+				{
+					/* get all the result slots */
+					for (int i =0 ; i < command_res->resultSlotsCount; i++)
+					{
+						WDIPCCommandNodeResultData* resultSlot = palloc(sizeof(WDIPCCommandNodeResultData));
+						ret = read_socket(sock, &(resultSlot->node_id), sizeof(resultSlot->node_id));
+						if (ret != sizeof(resultSlot->node_id))
+						{
+							ereport(LOG,
+								(errmsg("error reading from IPC command socket"),
+									 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
+							close(sock);
+							return NULL;
+						}
+						ret = read_socket(sock, resultSlot->nodeName, sizeof(resultSlot->nodeName));
+						if (ret != sizeof(resultSlot->nodeName))
+						{
+							ereport(LOG,
+								(errmsg("error reading from IPC command socket"),
+									 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
+							close(sock);
+							return NULL;
+						}
+						ret = read_socket(sock, &(resultSlot->data_len), sizeof(resultSlot->data_len));
+						if (ret != sizeof(resultSlot->data_len))
+						{
+							ereport(LOG,
+								(errmsg("error reading from IPC command socket"),
+									 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
+							close(sock);
+							return NULL;
+						}
+						if (resultSlot->data_len > 0)
+						{
+							resultSlot->data = palloc(resultSlot->data_len);
+							ret = read_socket(sock, resultSlot->data, resultSlot->data_len);
+							if (ret != resultSlot->data_len)
+							{
+								ereport(LOG,
+									(errmsg("error reading from IPC command socket"),
+										 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
+								close(sock);
+								return NULL;
+							}
+						}
+						command_res->node_results = lappend(command_res->node_results,resultSlot);
+					}
+				}
+				close(sock);
+				return command_res;
+			}
+			else if (select_res == 0) /* timeout */
+			{
+				close(sock);
+				return NULL;
+			}
+		}
+	}
+	close(sock);
+	return NULL;
+}
+
+static int read_socket(int socket, void* buf, int len)
+{
+	int read_len = 0;
+	while (read_len < len)
+	{
+		int nret;
+		nret =  read(socket, buf + read_len, len - read_len);
+		if (nret <= 0)
+			return nret;
+		read_len +=nret;
+	}
+	return read_len;
 }
 
 int
