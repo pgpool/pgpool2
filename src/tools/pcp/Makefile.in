@@ -80,7 +80,7 @@ build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = pcp_stop_pgpool$(EXEEXT) pcp_node_count$(EXEEXT) \
 	pcp_node_info$(EXEEXT) pcp_proc_count$(EXEEXT) \
-	pcp_proc_info$(EXEEXT) pcp_systemdb_info$(EXEEXT) \
+	pcp_proc_info$(EXEEXT) \
 	pcp_detach_node$(EXEEXT) pcp_attach_node$(EXEEXT) \
 	pcp_recovery_node$(EXEEXT) pcp_promote_node$(EXEEXT) \
 	pcp_pool_status$(EXEEXT) pcp_watchdog_info$(EXEEXT)
@@ -140,9 +140,6 @@ pcp_recovery_node_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
 am_pcp_stop_pgpool_OBJECTS = $(am__objects_1)
 pcp_stop_pgpool_OBJECTS = $(am_pcp_stop_pgpool_OBJECTS)
 pcp_stop_pgpool_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
-am_pcp_systemdb_info_OBJECTS = $(am__objects_1)
-pcp_systemdb_info_OBJECTS = $(am_pcp_systemdb_info_OBJECTS)
-pcp_systemdb_info_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
 am_pcp_watchdog_info_OBJECTS = $(am__objects_1)
 pcp_watchdog_info_OBJECTS = $(am_pcp_watchdog_info_OBJECTS)
 pcp_watchdog_info_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
@@ -185,13 +182,13 @@ SOURCES = $(pcp_attach_node_SOURCES) $(pcp_detach_node_SOURCES) \
 	$(pcp_pool_status_SOURCES) $(pcp_proc_count_SOURCES) \
 	$(pcp_proc_info_SOURCES) $(pcp_promote_node_SOURCES) \
 	$(pcp_recovery_node_SOURCES) $(pcp_stop_pgpool_SOURCES) \
-	$(pcp_systemdb_info_SOURCES) $(pcp_watchdog_info_SOURCES)
+	$(pcp_watchdog_info_SOURCES)
 DIST_SOURCES = $(pcp_attach_node_SOURCES) $(pcp_detach_node_SOURCES) \
 	$(pcp_node_count_SOURCES) $(pcp_node_info_SOURCES) \
 	$(pcp_pool_status_SOURCES) $(pcp_proc_count_SOURCES) \
 	$(pcp_proc_info_SOURCES) $(pcp_promote_node_SOURCES) \
 	$(pcp_recovery_node_SOURCES) $(pcp_stop_pgpool_SOURCES) \
-	$(pcp_systemdb_info_SOURCES) $(pcp_watchdog_info_SOURCES)
+	$(pcp_watchdog_info_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -357,8 +354,6 @@ pcp_proc_count_SOURCES = $(client_sources)
 pcp_proc_count_LDADD = $(libs_dir)/pcp/libpcp.la
 pcp_proc_info_SOURCES = $(client_sources)
 pcp_proc_info_LDADD = $(libs_dir)/pcp/libpcp.la
-pcp_systemdb_info_SOURCES = $(client_sources)
-pcp_systemdb_info_LDADD = $(libs_dir)/pcp/libpcp.la
 pcp_detach_node_SOURCES = $(client_sources)
 pcp_detach_node_LDADD = $(libs_dir)/pcp/libpcp.la
 pcp_attach_node_SOURCES = $(client_sources)
@@ -512,10 +507,6 @@ pcp_recovery_node$(EXEEXT): $(pcp_recovery_node_OBJECTS) $(pcp_recovery_node_DEP
 pcp_stop_pgpool$(EXEEXT): $(pcp_stop_pgpool_OBJECTS) $(pcp_stop_pgpool_DEPENDENCIES) $(EXTRA_pcp_stop_pgpool_DEPENDENCIES) 
 	@rm -f pcp_stop_pgpool$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(pcp_stop_pgpool_OBJECTS) $(pcp_stop_pgpool_LDADD) $(LIBS)
-
-pcp_systemdb_info$(EXEEXT): $(pcp_systemdb_info_OBJECTS) $(pcp_systemdb_info_DEPENDENCIES) $(EXTRA_pcp_systemdb_info_DEPENDENCIES) 
-	@rm -f pcp_systemdb_info$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(pcp_systemdb_info_OBJECTS) $(pcp_systemdb_info_LDADD) $(LIBS)
 
 pcp_watchdog_info$(EXEEXT): $(pcp_watchdog_info_OBJECTS) $(pcp_watchdog_info_DEPENDENCIES) $(EXTRA_pcp_watchdog_info_DEPENDENCIES) 
 	@rm -f pcp_watchdog_info$(EXEEXT)

@@ -6,7 +6,6 @@ bin_PROGRAMS =  pcp_stop_pgpool \
 				pcp_node_info \
 				pcp_proc_count \
 				pcp_proc_info \
-				pcp_systemdb_info \
 				pcp_detach_node \
 				pcp_attach_node \
 				pcp_recovery_node \
@@ -26,8 +25,6 @@ pcp_proc_count_SOURCES = $(client_sources)
 pcp_proc_count_LDADD = $(libs_dir)/pcp/libpcp.la
 pcp_proc_info_SOURCES = $(client_sources)
 pcp_proc_info_LDADD = $(libs_dir)/pcp/libpcp.la
-pcp_systemdb_info_SOURCES = $(client_sources)
-pcp_systemdb_info_LDADD = $(libs_dir)/pcp/libpcp.la
 pcp_detach_node_SOURCES = $(client_sources)
 pcp_detach_node_LDADD = $(libs_dir)/pcp/libpcp.la
 pcp_attach_node_SOURCES = $(client_sources)
