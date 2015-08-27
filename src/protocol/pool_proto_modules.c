@@ -1104,6 +1104,7 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_QUERY_CONTEXT *query_context;
 	int insert_stmt_with_lock = 0;
+	bool nowait;
 
 	/* Get session context */
 	session_context = pool_get_session_context(false);
@@ -1204,10 +1205,15 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		(errmsg("Bind: waiting for master completing the query")));
 
 	pool_set_query_in_progress();
-	pool_extended_send_and_wait(query_context, "B", len, contents, 1, MASTER_NODE_ID, true);
-	pool_extended_send_and_wait(query_context, "B", len, contents, -1, MASTER_NODE_ID, true);
+
+	nowait = (REPLICATION? false: true);
+
+	pool_extended_send_and_wait(query_context, "B", len, contents, 1, MASTER_NODE_ID, nowait);
+	pool_extended_send_and_wait(query_context, "B", len, contents, -1, MASTER_NODE_ID, nowait);
 	pool_add_sent_message(session_context->uncompleted_message);
-	pool_unset_query_in_progress();
+
+	if (!REPLICATION)
+		pool_unset_query_in_progress();
 	
 	if(rewrite_msg)
 		pfree(rewrite_msg);
@@ -1220,6 +1226,8 @@ POOL_STATUS Describe(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	POOL_SENT_MESSAGE *msg;
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_QUERY_CONTEXT *query_context;
+
+	bool nowait;
 
 	/* Get session context */
 	session_context = pool_get_session_context(false);
@@ -1266,10 +1274,14 @@ POOL_STATUS Describe(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
     ereport(DEBUG1,
             (errmsg("Describe: waiting for master completing the query")));
 
+	nowait = (REPLICATION? false: true);
+
 	pool_set_query_in_progress();
-	pool_extended_send_and_wait(query_context, "D", len, contents, 1, MASTER_NODE_ID, true);
-	pool_extended_send_and_wait(query_context, "D", len, contents, -1, MASTER_NODE_ID, true);
-	pool_unset_query_in_progress();
+	pool_extended_send_and_wait(query_context, "D", len, contents, 1, MASTER_NODE_ID, nowait);
+	pool_extended_send_and_wait(query_context, "D", len, contents, -1, MASTER_NODE_ID, nowait);
+
+	if (!REPLICATION)
+		pool_unset_query_in_progress();
 
 	return POOL_CONTINUE;
 }
@@ -2319,19 +2331,22 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 			case '1':	/* ParseComplete */
 				status = ParseComplete(frontend, backend);
 				pool_set_command_success();
-				//pool_unset_query_in_progress();
+				if (REPLICATION)
+					pool_unset_query_in_progress();
 				break;
 
 			case '2':	/* BindComplete */
 				status = BindComplete(frontend, backend);
 				pool_set_command_success();
-				//pool_unset_query_in_progress();
+				if (REPLICATION)
+					pool_unset_query_in_progress();
 				break;
 
 			case '3':	/* CloseComplete */
 				status = CloseComplete(frontend, backend);
 				pool_set_command_success();
-//				pool_unset_query_in_progress();
+				if (REPLICATION)
+					pool_unset_query_in_progress();
 				break;
 
 			case 'E':	/* ErrorResponse */
@@ -2350,8 +2365,8 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 			case 'C':	/* CommandComplete */				
 				status = CommandComplete(frontend, backend);
 				pool_set_command_success();
-//				if (pool_is_doing_extended_query_message())
-//					pool_unset_query_in_progress();
+				if (REPLICATION && pool_is_doing_extended_query_message())
+					pool_unset_query_in_progress();
 				break;
 
 			case 't':	/* ParameterDescription */
@@ -2360,26 +2375,26 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 
 			case 'I':	/* EmptyQueryResponse */
 				status = SimpleForwardToFrontend(kind, frontend, backend);
-//				if (pool_is_doing_extended_query_message())
-//					pool_unset_query_in_progress();
+				if (REPLICATION && pool_is_doing_extended_query_message())
+					pool_unset_query_in_progress();
 				break;
 
 			case 'T':	/* RowDescription */
 				status = SimpleForwardToFrontend(kind, frontend, backend);
-//				if (pool_is_doing_extended_query_message())
-//					pool_unset_query_in_progress();
+				if (REPLICATION && pool_is_doing_extended_query_message())
+					pool_unset_query_in_progress();
 				break;
 
 			case 'n':	/* NoData */
 				status = SimpleForwardToFrontend(kind, frontend, backend);
-//				if (pool_is_doing_extended_query_message())
-//					pool_unset_query_in_progress();
+				if (REPLICATION && pool_is_doing_extended_query_message())
+					pool_unset_query_in_progress();
 				break;
 
 			case 's':	/* PortalSuspended */
 				status = SimpleForwardToFrontend(kind, frontend, backend);
-//				if (pool_is_doing_extended_query_message())
-//					pool_unset_query_in_progress();
+				if (REPLICATION && pool_is_doing_extended_query_message())
+					pool_unset_query_in_progress();
 				break;
 
 			default:
