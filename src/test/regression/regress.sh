@@ -67,8 +67,15 @@ function export_env_vars
  	fi
 	
 	echo "using pgpool-II at "$PGPOOL_PATH
-    export PGPOOL_INSTALL_DIR=$PGPOOL_PATH
-	
+	export PGPOOL_INSTALL_DIR=$PGPOOL_PATH
+
+	PGPOOLLIB=${PGPOOL_INSTALL_DIR}/lib
+	if [ -z "$LD_LIBRARY_PATH" ];then
+	    export LD_LIBRARY_PATH=$PGPOOLLIB
+	else
+	    export LD_LIBRARY_PATH=${PGPOOLLIB}:${LD_LIBRARY_PATH}
+	fi
+
 	export TESTLIBS=$dir/libs.sh
 	export PGBIN=$PGBIN
 	export JDBC_DRIVER=$JDBC_DRIVER
