@@ -5,7 +5,7 @@
 * pgpool: a language independent connection pool server for PostgreSQL
 * written by Tatsuo Ishii
 *
-* Copyright (c) 2003-2013	PgPool Global Development Group
+* Copyright (c) 2003-2015	PgPool Global Development Group
 *
 * Permission to use, copy, modify, and distribute this software and
 * its documentation for any purpose and without fee is hereby
@@ -91,6 +91,8 @@ POOL_CONNECTION *pool_open(int fd, bool backend_connection)
 	cp->sbufsz = 0;
 	cp->buf2 = NULL;
 	cp->bufsz2 = 0;
+	cp->buf3 = NULL;
+	cp->bufsz3 = 0;
 
 	cp->fd = fd;
 	cp->socket_state = POOL_SOCKET_VALID;
@@ -118,6 +120,8 @@ void pool_close(POOL_CONNECTION *cp)
 		pfree(cp->sbuf);
 	if (cp->buf2)
 		pfree(cp->buf2);
+	if (cp->buf3)
+		pfree(cp->buf3);
 	pool_discard_params(&cp->params);
 
 	pool_ssl_close(cp);
@@ -995,7 +999,7 @@ int pool_push(POOL_CONNECTION *cp, void *data, int len)
 	char *p;
 
 	ereport(DEBUG1,
-		(errmsg("flushing data of len: %d", len)));
+		(errmsg("pushing data of len: %d", len)));
 
 
     MemoryContext oldContext = SwitchToConnectionContext(cp->isbackend);
@@ -1006,8 +1010,8 @@ int pool_push(POOL_CONNECTION *cp, void *data, int len)
 	}
 	else
 	{
-		p = cp->buf3 + cp->bufsz3;
 		cp->buf3 = repalloc(cp->buf3, cp->bufsz3 + len);
+		p = cp->buf3 + cp->bufsz3;
 	}
 
 	memcpy(p, data, len);
