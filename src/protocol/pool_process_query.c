@@ -86,7 +86,7 @@ static POOL_STATUS read_packets_and_process(POOL_CONNECTION *frontend, POOL_CONN
 static bool is_all_slaves_command_complete(unsigned char *kind_list, int num_backends, int master);
 
 /* timeout sec for pool_check_fd */
-static int timeoutsec;
+static int timeoutsec = -1;
 
 /*
  * Main module for query processing
@@ -480,7 +480,7 @@ POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *
 		/* Check to see if data from backend is ready */
 		pool_set_timeout(30);
 		status = pool_check_fd(backend);
-		pool_set_timeout(0);
+		pool_set_timeout(-1);
 
 		if (status < 0)	/* error ? */
 		{
@@ -586,10 +586,10 @@ int synchronize(POOL_CONNECTION *cp)
  */
 void pool_set_timeout(int timeoutval)
 {
-	if (timeoutval > 0)
+	if (timeoutval >= 0)
 		timeoutsec = timeoutval;
 	else
-		timeoutsec = 0;
+		timeoutsec = -1;
 }
 
 /*
@@ -616,7 +616,7 @@ int pool_check_fd(POOL_CONNECTION *cp)
 		
 	fd = cp->fd;
 
-	if (timeoutsec > 0)
+	if (timeoutsec >= 0)
 	{
 		timeout.tv_sec = timeoutsec;
 		timeout.tv_usec = 0;
@@ -775,6 +775,10 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	sendlen = htonl(len1+4);
 	pool_write(frontend, &sendlen, sizeof(sendlen));
 	pool_write_and_flush(frontend, p1, len1);
+
+	ereport(DEBUG1,
+			(errmsg("SimpleForwardToFrontend: packet:%c length:%d",
+					kind, len1)));
 
 	/* save the received result to buffer for each kind */
 	if (pool_config->memory_cache_enabled)
@@ -1035,11 +1039,11 @@ static int
 
 	if (SimpleQuery(NULL, backend, strlen(query)+1, query) != POOL_CONTINUE)
 	{
-		pool_set_timeout(0);
+		pool_set_timeout(-1);
 		return -1;
 	}
 
-	pool_set_timeout(0);
+	pool_set_timeout(-1);
 
 	cache = pool_get_current_cache();
 	if (cache)
@@ -1886,6 +1890,9 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 	bool doing_extended;
 	int num_close_complete;
 	int state;
+	int data_pushed;
+
+	data_pushed = 0;
 
 	doing_extended = pool_get_session_context(true) && pool_is_doing_extended_query_message();
 
@@ -1916,6 +1923,68 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 		static char prepared_name[256];
 		static int pname_len;
 		int qlen;
+
+		/*
+		 * Send flush message before going any further to retrieve and save
+		 * any pending response packet from backend. The saved packets will be
+		 * poped up before returning to caller. This preserves the user's
+		 * expectation of packet sequence.
+		 */
+
+		pool_write(backend, "H", 1);
+		len = htonl(sizeof(len));
+		pool_write_and_flush(backend, &len, sizeof(len));
+		sleep(1);		/* XXX: Fix me */
+
+		for (;;)
+		{
+			int len;
+			char *buf;
+
+			/* check if there's any pending data */
+			if (!pool_ssl_pending(backend) && pool_read_buffer_is_empty(backend))
+			{
+				pool_set_timeout(0);
+				if (pool_check_fd(backend) != 0)
+				{
+					ereport(DEBUG1,
+							(errmsg("do_query: no pending data")));
+					pool_set_timeout(-1);
+					break;
+				}
+			}
+
+			pool_set_timeout(-1);
+			pool_read(backend, &kind, 1);
+			ereport(DEBUG1,
+					(errmsg("do_query: saving kind: '%c'", kind)));
+			pool_push(backend, &kind, 1);
+			data_pushed += 1;
+
+			ereport(DEBUG1,
+					(errmsg("do_query: reading len")));
+			pool_read(backend, &len, sizeof(len));
+			ereport(DEBUG1,
+					(errmsg("do_query: finished reading len:%d", ntohl(len))));
+			pool_push(backend, &len, sizeof(len));
+			data_pushed += sizeof(len);
+
+			len = ntohl(len);
+			if ((len - sizeof(len)) > 0)
+			{
+				len -= sizeof(len);
+				ereport(DEBUG1,
+						(errmsg("do_query: saving message len:%d", len)));
+
+				buf = palloc(len);
+				pool_read(backend, buf, len);
+				pool_push(backend, buf, len);
+				data_pushed += len;
+			}
+
+			ereport(DEBUG1,
+					(errmsg("do_query: save kind: '%c' len: %d", kind, len)));
+		}
 
 		if (pname_len == 0)
 		{
@@ -2327,6 +2396,13 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 		{
 			ereport(DEBUG1,
 					(errmsg("do_query: all state completed. returning")));
+
+			if (data_pushed > 0)
+			{
+				ereport(DEBUG1,
+						(errmsg("do_query: poping %d", data_pushed)));
+				pool_pop(backend, &data_pushed);
+			}
 			break;
 		}
 	}
