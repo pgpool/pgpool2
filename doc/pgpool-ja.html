@@ -2146,7 +2146,7 @@ Streaming Replicationを使う場合の雛形はpgpool.conf.sample-streamです�
     <p>
     レプリケーションの遅延状況をログする条件を指定します。
     'none'を指定すると、ログを出力しません。
-    'always'ならヘルスチェックを実行するたびに必ず出力します。
+    'always'ならレプリケーションの遅延チェックを実行するたびに必ず出力します。
     'if_over_threshold'を指定すると、<a href="#DELAY_THRESHOLD">delay_threshold</a>を超えたときだけ
     ログが出力されます。
     デフォルト値は'none'です。
