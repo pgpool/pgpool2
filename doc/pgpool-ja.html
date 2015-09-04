@@ -1399,7 +1399,7 @@ PostgreSQL 9.0から利用可能になったStreaming Replicationに対応しま
 <li>log_standby_delay
     <p>レプリケーションの遅延状況をログする条件を指定します。
     'none'を指定すると、ログを出力しません。
-    'always'ならヘルスチェックを実行するたびに必ず出力します。
+    'always'ならレプリケーションの遅延チェックを実行するたびに必ず出力します。
     'if_over_threshold'を指定すると、delay_thresholdを超えたときだけログが出力されます。
     デフォルト値は'none'です。
     このパラメータは設定ファイルの再読込によって変更できます。
