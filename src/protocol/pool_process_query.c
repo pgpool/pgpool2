@@ -1890,9 +1890,9 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 	bool doing_extended;
 	int num_close_complete;
 	int state;
-	int data_pushed;
+	bool data_pushed;
 
-	data_pushed = 0;
+	data_pushed = false;
 
 	doing_extended = pool_get_session_context(true) && pool_is_doing_extended_query_message();
 
@@ -1930,60 +1930,60 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 		 * poped up before returning to caller. This preserves the user's
 		 * expectation of packet sequence.
 		 */
-
-		pool_write(backend, "H", 1);
-		len = htonl(sizeof(len));
-		pool_write_and_flush(backend, &len, sizeof(len));
-		sleep(1);		/* XXX: Fix me */
-
-		for (;;)
+		if (pool_is_pending_response())
 		{
-			int len;
-			char *buf;
+			pool_write(backend, "H", 1);
+			len = htonl(sizeof(len));
+			pool_write_and_flush(backend, &len, sizeof(len));
 
-			/* check if there's any pending data */
-			if (!pool_ssl_pending(backend) && pool_read_buffer_is_empty(backend))
+			for(;;)
 			{
-				pool_set_timeout(0);
-				if (pool_check_fd(backend) != 0)
+				int len;
+				char *buf;
+
+				pool_set_timeout(-1);
+
+				pool_read(backend, &kind, 1);
+				ereport(DEBUG1,
+						(errmsg("do_query: saving kind: '%c'", kind)));
+				pool_push(backend, &kind, 1);
+				data_pushed = true;
+
+				ereport(DEBUG1,
+						(errmsg("do_query: reading len")));
+				pool_read(backend, &len, sizeof(len));
+				ereport(DEBUG1,
+						(errmsg("do_query: finished reading len:%d", ntohl(len))));
+				pool_push(backend, &len, sizeof(len));
+
+				len = ntohl(len);
+				if ((len - sizeof(len)) > 0)
 				{
+					len -= sizeof(len);
 					ereport(DEBUG1,
-							(errmsg("do_query: no pending data")));
-					pool_set_timeout(-1);
-					break;
+							(errmsg("do_query: saving message len:%d", len)));
+
+					buf = palloc(len);
+					pool_read(backend, buf, len);
+					pool_push(backend, buf, len);
+				}
+
+				ereport(DEBUG1,
+						(errmsg("do_query: save kind: '%c' len: %d", kind, len)));
+
+				/* check if there's any pending data */
+				if (!pool_ssl_pending(backend) && pool_read_buffer_is_empty(backend))
+				{
+					pool_set_timeout(0);
+					if (pool_check_fd(backend) != 0)
+					{
+						ereport(DEBUG1,
+								(errmsg("do_query: no pending data")));
+						pool_set_timeout(-1);
+						break;
+					}
 				}
 			}
-
-			pool_set_timeout(-1);
-			pool_read(backend, &kind, 1);
-			ereport(DEBUG1,
-					(errmsg("do_query: saving kind: '%c'", kind)));
-			pool_push(backend, &kind, 1);
-			data_pushed += 1;
-
-			ereport(DEBUG1,
-					(errmsg("do_query: reading len")));
-			pool_read(backend, &len, sizeof(len));
-			ereport(DEBUG1,
-					(errmsg("do_query: finished reading len:%d", ntohl(len))));
-			pool_push(backend, &len, sizeof(len));
-			data_pushed += sizeof(len);
-
-			len = ntohl(len);
-			if ((len - sizeof(len)) > 0)
-			{
-				len -= sizeof(len);
-				ereport(DEBUG1,
-						(errmsg("do_query: saving message len:%d", len)));
-
-				buf = palloc(len);
-				pool_read(backend, buf, len);
-				pool_push(backend, buf, len);
-				data_pushed += len;
-			}
-
-			ereport(DEBUG1,
-					(errmsg("do_query: save kind: '%c' len: %d", kind, len)));
 		}
 
 		if (pname_len == 0)
@@ -2397,11 +2397,13 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 			ereport(DEBUG1,
 					(errmsg("do_query: all state completed. returning")));
 
-			if (data_pushed > 0)
+			if (data_pushed)
 			{
+				int poplen;
+
+				pool_pop(backend, &poplen);
 				ereport(DEBUG1,
-						(errmsg("do_query: poping %d", data_pushed)));
-				pool_pop(backend, &data_pushed);
+						(errmsg("do_query: popped data len:%d", poplen)));
 			}
 			break;
 		}

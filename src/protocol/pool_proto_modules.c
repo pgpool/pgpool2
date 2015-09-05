@@ -2183,6 +2183,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 				pool_set_query_in_progress();
 #endif
 			status = Parse(frontend, backend, len, contents);
+			pool_set_pending_response();
 			break;
 
 		case 'B':	/* Bind */
@@ -2192,12 +2193,14 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 				pool_set_query_in_progress();
 #endif
 			status = Bind(frontend, backend, len, contents);
+			pool_set_pending_response();
 			break;
 
 		case 'C':	/* Close */
 			if (!pool_is_query_in_progress() && !pool_is_ignore_till_sync())
 				pool_set_query_in_progress();
 			status = Close(frontend, backend, len, contents);
+			pool_set_pending_response();
 			break;
 
 		case 'D':	/* Describe */
@@ -2207,6 +2210,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 				pool_set_query_in_progress();
 #endif
 			status = Describe(frontend, backend, len, contents);
+			pool_set_pending_response();
 			break;
 
 		case 'S':  /* Sync */
@@ -2216,6 +2220,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			if (!pool_is_query_in_progress())
 				pool_set_query_in_progress();
 			status = SimpleForwardToBackend(fkind, frontend, backend, len, contents);
+			pool_unset_pending_response();
 			break;
 
 		case 'F':	/* FunctionCall */

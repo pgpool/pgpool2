@@ -164,6 +164,15 @@ typedef struct {
 	 * complete or error response message is processed.
 	 */
 	bool sync_map[MAX_NUM_BACKENDS];
+
+	/*
+	 * True if parse/bind/describe/close messages are sent to backend but
+	 * still sync or flush is not sent. If the flag is true, do_query issues
+	 * flush and stashes responses such as "parse complete" sent from backend,
+	 * then inserts them to pool_read buffer after finishing the job not to
+	 * confuse the message sequence.
+	 */
+	bool is_pending_response;
 } POOL_SESSION_CONTEXT;
 
 extern void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
@@ -209,6 +218,9 @@ extern void pool_set_sync_map(int node_id);
 extern bool pool_is_set_sync_map(int node_id);
 extern int pool_get_nth_sync_map(int nth);
 extern void pool_clear_sync_map(void);
+extern void pool_set_pending_response(void);
+extern void pool_unset_pending_response(void);
+extern bool pool_is_pending_response(void);
 
 #ifdef NOT_USED
 extern void pool_add_prep_where(char *name, bool *map);

@@ -124,8 +124,11 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 		session_context->num_selects = 0;
 	}
 
-	/* clear sync map */
+	/* Clear sync map */
 	pool_clear_sync_map();
+
+	/* Unset pending response */
+	pool_unset_pending_response();
 }
 
 /*
@@ -896,4 +899,40 @@ void pool_clear_sync_map(void)
 				(errmsg("pool_clear_sync_map: session context is not initialized")));
 
 	memset(&session_context->sync_map, 0, sizeof(session_context->sync_map));
+}
+
+/*
+ * Set pending response
+ */
+void pool_set_pending_response(void)
+{
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("pool_set_pending_response: session context is not initialized")));
+
+	session_context->is_pending_response = true;
+}
+
+/*
+ * Unset pending response
+ */
+void pool_unset_pending_response(void)
+{
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("pool_unset_pending_response: session context is not initialized")));
+
+	session_context->is_pending_response = false;
+}
+
+/*
+ * Returns true if pending response is set
+ */
+bool pool_is_pending_response(void)
+{
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("pool_is_pending_response: session context is not initialized")));
+
+	return session_context->is_pending_response;
 }
