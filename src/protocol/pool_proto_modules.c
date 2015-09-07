@@ -1346,9 +1346,18 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
             (errmsg("Close: waiting for master completing the query")));
 
 	pool_set_query_in_progress();
-	pool_extended_send_and_wait(query_context, "C", len, contents, 1, MASTER_NODE_ID, false);
-	pool_extended_send_and_wait(query_context, "C", len, contents, -1, MASTER_NODE_ID, false);
-	pool_unset_query_in_progress();
+
+	if (REPLICATION)
+	{
+		pool_extended_send_and_wait(query_context, "C", len, contents, 1, MASTER_NODE_ID, false);
+		pool_extended_send_and_wait(query_context, "C", len, contents, -1, MASTER_NODE_ID, false);
+	}
+	else
+	{
+		pool_extended_send_and_wait(query_context, "C", len, contents, 1, MASTER_NODE_ID, true);
+		pool_extended_send_and_wait(query_context, "C", len, contents, -1, MASTER_NODE_ID, true);
+		pool_unset_query_in_progress();
+	}
 
 	return POOL_CONTINUE;
 }
@@ -1816,6 +1825,10 @@ POOL_STATUS CloseComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 	{
 		pool_remove_sent_message(session_context->uncompleted_message->kind,
 								 session_context->uncompleted_message->name);
+		ereport(DEBUG1,
+				(errmsg("CloseComplete: remove uncompleted message. kind:%c, name:%s",
+						session_context->uncompleted_message->kind,
+						session_context->uncompleted_message->name)));
 		session_context->uncompleted_message = NULL;
 	}
 	else

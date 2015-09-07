@@ -74,6 +74,29 @@ typedef struct {
 } POOL_SENT_MESSAGE_LIST;
 
 /*
+ * Received message queue used in extended protocol/streaming replication
+ * mode.  The queue is an FIFO, allow to de-queue in the middle of the queue
+ * however.  When Parse/Bind/Close message are received, each message is
+ * en-queued.  The information is used to process those response messages,
+ * when Parse complete/Bind completes and Close compete message are received
+ * because they don't have any information regarding statement/portal.
+ *
+ * The memory used for the queue lives in the session context mememory.
+ */
+
+typedef enum {
+	POOL_PARSE,
+	POOL_BIND,
+	POOL_CLOSE
+} POOL_MESSAGE_TYPE;
+
+typedef struct {
+	POOL_MESSAGE_TYPE type;
+	char *contents;		/* message packet contents including message kind */
+	int contents_len;	/* message packet length */
+} POOL_PENDING_MESSAGE;
+
+/*
  * Per session context:
  */
 typedef struct {
@@ -173,6 +196,11 @@ typedef struct {
 	 * confuse the message sequence.
 	 */
 	bool is_pending_response;
+
+	/*
+	 * Parse/Bind/Close message queue.
+	 */
+	List *pending_messages;
 } POOL_SESSION_CONTEXT;
 
 extern void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
@@ -221,6 +249,10 @@ extern void pool_clear_sync_map(void);
 extern void pool_set_pending_response(void);
 extern void pool_unset_pending_response(void);
 extern bool pool_is_pending_response(void);
+extern void pool_pending_messages_init (void);
+extern void pool_pending_messages_destroy (void);
+extern void pool_pending_messages_add (POOL_PENDING_MESSAGE* message);
+extern POOL_PENDING_MESSAGE *pool_pending_message_remove(POOL_MESSAGE_TYPE type);
 
 #ifdef NOT_USED
 extern void pool_add_prep_where(char *name, bool *map);

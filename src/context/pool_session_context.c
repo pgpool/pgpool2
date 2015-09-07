@@ -35,6 +35,7 @@ static POOL_SESSION_CONTEXT session_context_d;
 static POOL_SESSION_CONTEXT *session_context = NULL;
 static void GetTranIsolationErrorCb(void *arg);
 static void init_sent_message_list(void);
+static POOL_PENDING_MESSAGE *copy_pending_message(POOL_PENDING_MESSAGE *messag);
 
 /*
  * Initialize per session context
@@ -935,4 +936,115 @@ bool pool_is_pending_response(void)
 				(errmsg("pool_is_pending_response: session context is not initialized")));
 
 	return session_context->is_pending_response;
+}
+
+
+/*
+ * Initialize pending message list
+ */
+void pool_pending_messages_init (void)
+{
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("pool_pending_message_init: session context is not initialized")));
+
+	session_context->pending_messages = NIL;
+}
+
+/*
+ * Destroy pending message list
+ */
+void pool_pending_messages_destroy (void)
+{
+	ListCell   *cell;
+	POOL_PENDING_MESSAGE *msg;
+
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("pool_pending_message_destory: session context is not initialized")));
+
+	foreach(cell, session_context->pending_messages)
+	{
+		msg = (POOL_PENDING_MESSAGE *) lfirst(cell);
+		pfree(msg->contents);
+	}
+	list_free(session_context->pending_messages);
+}
+
+/*
+ * Add one message
+ */
+void pool_pending_messages_add (POOL_PENDING_MESSAGE* message)
+{
+	POOL_PENDING_MESSAGE* msg;
+	MemoryContext old_context;
+
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("pool_pending_message_add: session context is not initialized")));
+
+	old_context = MemoryContextSwitchTo(session_context->memory_context);
+	msg = copy_pending_message(message);
+	session_context->pending_messages = lappend(session_context->pending_messages, msg);
+	MemoryContextSwitchTo(old_context);
+}
+
+/*
+ * Try to find the first message specified by the message type in the message
+ * list. If found, a copy of the message is returned and the message is
+ * removed the message list. If not, returns NULL.
+ */
+POOL_PENDING_MESSAGE *pool_pending_message_remove(POOL_MESSAGE_TYPE type)
+{
+	ListCell   *cell;
+	ListCell   *prev;
+	ListCell   *next;
+	POOL_PENDING_MESSAGE *msg;
+	MemoryContext old_context;
+
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("pool_pending_message_remove: session context is not initialized")));
+
+	old_context = MemoryContextSwitchTo(session_context->memory_context);
+
+	prev = NULL;
+	msg = NULL;
+
+	for (cell = list_head(session_context->pending_messages); cell; cell = next)
+	{
+		POOL_PENDING_MESSAGE *m = (POOL_PENDING_MESSAGE *) lfirst(cell);
+
+		next = lnext(cell);
+
+		if (m->type == type)
+		{
+			msg = copy_pending_message(m);
+
+			session_context->pending_messages =
+				list_delete_cell(session_context->pending_messages, cell, prev);
+
+			break;
+		}
+		else
+			prev = cell;
+	}
+
+	MemoryContextSwitchTo(old_context);
+	return msg;
+}
+
+/*
+ * Perform deep copy of POOL_PENDING_MESSAGE object in the current memory context.
+ */
+static POOL_PENDING_MESSAGE *copy_pending_message(POOL_PENDING_MESSAGE *message)
+{
+	POOL_PENDING_MESSAGE *msg;
+
+	msg = palloc(sizeof(POOL_PENDING_MESSAGE));
+	memcpy(msg, message, sizeof(POOL_PENDING_MESSAGE));
+	msg->contents = palloc(msg->contents_len);
+	memcpy(msg->contents, message->contents, msg->contents_len);
+
+	return msg;
 }
