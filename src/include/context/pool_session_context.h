@@ -92,7 +92,7 @@ typedef enum {
 
 typedef struct {
 	POOL_MESSAGE_TYPE type;
-	char *contents;		/* message packet contents including message kind */
+	char *contents;		/* message packet contents excluding message kind */
 	int contents_len;	/* message packet length */
 } POOL_PENDING_MESSAGE;
 
@@ -250,9 +250,12 @@ extern void pool_set_pending_response(void);
 extern void pool_unset_pending_response(void);
 extern bool pool_is_pending_response(void);
 extern void pool_pending_messages_init (void);
-extern void pool_pending_messages_destroy (void);
-extern void pool_pending_messages_add (POOL_PENDING_MESSAGE* message);
+extern void pool_pending_messages_destroy(void);
+extern POOL_PENDING_MESSAGE *pool_pending_messages_create(char kind, int len, char *contents);
+extern void pool_pending_message_add(POOL_PENDING_MESSAGE* message);
 extern POOL_PENDING_MESSAGE *pool_pending_message_remove(POOL_MESSAGE_TYPE type);
+extern char pool_get_close_message_spec(POOL_PENDING_MESSAGE *msg);
+extern char *pool_get_close_message_name(POOL_PENDING_MESSAGE *msg);
 
 #ifdef NOT_USED
 extern void pool_add_prep_where(char *name, bool *map);

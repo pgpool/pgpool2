@@ -1354,8 +1354,13 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	}
 	else
 	{
+		POOL_PENDING_MESSAGE *pmsg;
+
 		pool_extended_send_and_wait(query_context, "C", len, contents, 1, MASTER_NODE_ID, true);
 		pool_extended_send_and_wait(query_context, "C", len, contents, -1, MASTER_NODE_ID, true);
+
+		pmsg = pool_pending_messages_create('C', len, contents);
+		pool_pending_message_add(pmsg);
 		pool_unset_query_in_progress();
 	}
 
@@ -1813,6 +1818,8 @@ POOL_STATUS CloseComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 {
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_STATUS status;
+	char kind = ' ';
+	char *name;
 
 	/* Get session context */
 	session_context = pool_get_session_context(false);
@@ -1821,15 +1828,36 @@ POOL_STATUS CloseComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 	status = SimpleForwardToFrontend('3', frontend, backend);
 
 	/* Remove the target message */
-	if (session_context->uncompleted_message)
+	if (STREAM)
 	{
-		pool_remove_sent_message(session_context->uncompleted_message->kind,
-								 session_context->uncompleted_message->name);
+		POOL_PENDING_MESSAGE *pmsg;
+
+		pmsg = pool_pending_message_remove(POOL_CLOSE);
+
+		if (pmsg)
+		{
+			kind = pool_get_close_message_spec(pmsg);
+			name = pool_get_close_message_name(pmsg);
+		}
+	}
+	else
+	{
+		if (session_context->uncompleted_message)
+		{
+			kind = session_context->uncompleted_message->kind;
+			name = session_context->uncompleted_message->name;
+			session_context->uncompleted_message = NULL;
+		}
+	}
+	
+	if (kind == 'P' || kind == 'S')
+	{
+		pool_remove_sent_message(kind, name);
+								 
 		ereport(DEBUG1,
 				(errmsg("CloseComplete: remove uncompleted message. kind:%c, name:%s",
 						session_context->uncompleted_message->kind,
 						session_context->uncompleted_message->name)));
-		session_context->uncompleted_message = NULL;
 	}
 	else
 	{

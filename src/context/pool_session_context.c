@@ -130,6 +130,9 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 
 	/* Unset pending response */
 	pool_unset_pending_response();
+
+	/* Initialize pending message list */
+	pool_pending_messages_init();
 }
 
 /*
@@ -942,7 +945,7 @@ bool pool_is_pending_response(void)
 /*
  * Initialize pending message list
  */
-void pool_pending_messages_init (void)
+void pool_pending_messages_init(void)
 {
 	if (!session_context)
 		ereport(ERROR,
@@ -954,7 +957,7 @@ void pool_pending_messages_init (void)
 /*
  * Destroy pending message list
  */
-void pool_pending_messages_destroy (void)
+void pool_pending_messages_destroy(void)
 {
 	ListCell   *cell;
 	POOL_PENDING_MESSAGE *msg;
@@ -972,9 +975,53 @@ void pool_pending_messages_destroy (void)
 }
 
 /*
+ * Create one message.
+ */
+POOL_PENDING_MESSAGE *pool_pending_messages_create(char kind, int len, char *contents)
+{
+	POOL_PENDING_MESSAGE* msg;
+	MemoryContext old_context;
+
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("pool_pending_message_create: session context is not initialized")));
+
+	old_context = MemoryContextSwitchTo(session_context->memory_context);
+	msg = palloc(sizeof(POOL_PENDING_MESSAGE));
+
+	switch (kind)
+	{
+		case 'P':
+		msg->type = POOL_PARSE;
+		break;
+
+		case 'B':
+		msg->type = POOL_BIND;
+		break;
+
+		case 'C':
+		msg->type = POOL_CLOSE;
+		break;
+
+		default:
+			ereport(ERROR,
+					(errmsg("pool_pending_message_create: unknow kind: %c", kind)));
+		break;
+	}
+
+	msg->contents = palloc(len);
+	memcpy(msg->contents, contents, len);
+	msg->contents_len = len;
+
+	MemoryContextSwitchTo(old_context);
+
+	return msg;
+}
+
+/*
  * Add one message
  */
-void pool_pending_messages_add (POOL_PENDING_MESSAGE* message)
+void pool_pending_message_add(POOL_PENDING_MESSAGE* message)
 {
 	POOL_PENDING_MESSAGE* msg;
 	MemoryContext old_context;
@@ -982,6 +1029,10 @@ void pool_pending_messages_add (POOL_PENDING_MESSAGE* message)
 	if (!session_context)
 		ereport(ERROR,
 				(errmsg("pool_pending_message_add: session context is not initialized")));
+
+	ereport(DEBUG1,
+			(errmsg("pool_pending_message_add: message type:%d message len:%d",
+					message->type, message->contents_len)));
 
 	old_context = MemoryContextSwitchTo(session_context->memory_context);
 	msg = copy_pending_message(message);
@@ -1032,6 +1083,24 @@ POOL_PENDING_MESSAGE *pool_pending_message_remove(POOL_MESSAGE_TYPE type)
 
 	MemoryContextSwitchTo(old_context);
 	return msg;
+}
+
+/*
+ * Get message specification (either statement ('S') or portal ('P')) from a
+ * close message.
+ */
+char pool_get_close_message_spec(POOL_PENDING_MESSAGE *msg)
+{
+	return *msg->contents;
+}
+
+/*
+ * Get statement or portal name from close message.
+ * The returned pointer is within "msg".
+ */
+char *pool_get_close_message_name(POOL_PENDING_MESSAGE *msg)
+{
+	return (msg->contents)+1;
 }
 
 /*
