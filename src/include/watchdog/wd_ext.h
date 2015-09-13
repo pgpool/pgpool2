@@ -26,6 +26,33 @@
 #ifndef WD_EXT_H
 #define WD_EXT_H
 
+typedef enum NodeState
+{
+	NODE_EMPTY,
+	NODE_DEAD,
+	NODE_ALIVE
+}NodeStates;
+
+typedef struct LifeCheckNode
+{
+	NodeStates nodeState;
+	int  ID;
+	char hostName[128];
+	char nodeName[128];
+	int	 wdPort;
+	int  pgpoolPort;
+	struct timeval hb_send_time; 			/* send time */
+	struct timeval hb_last_recv_time; 		/* recv time */
+}LifeCheckNode;
+
+typedef struct lifeCheckCluster
+{
+	int nodeCount;
+	struct LifeCheckNode* lifeCheckNodes;
+}LifeCheckCluster;
+
+extern LifeCheckCluster* gslifeCheckCluster; /* lives in shared memory */
+
 /* watchdog.c */
 extern pid_t wd_ppid;
 extern pid_t wd_main(int fork_wait_time);
@@ -98,8 +125,9 @@ extern int wd_get_cmd(char * buf, char * cmd);
 /* wd_lifecheck.c */
 extern int is_wd_lifecheck_ready(void);
 extern int wd_lifecheck(void);
-extern int wd_check_heartbeat(WdInfo * pgpool);
 extern int wd_ping_pgpool(WdInfo * pgpool);
+extern bool initialize_lifecheck(void);
+
 
 /* wd_hearbeat.c */
 extern int wd_create_hb_send_socket(WdHbIf * hb_if);

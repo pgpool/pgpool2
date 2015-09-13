@@ -131,7 +131,8 @@ am_pgpool_OBJECTS = main/main.$(OBJEXT) main/pool_globals.$(OBJEXT) \
 	utils/getopt_long.$(OBJEXT) utils/mmgr/mcxt.$(OBJEXT) \
 	utils/mmgr/aset.$(OBJEXT) utils/error/elog.$(OBJEXT) \
 	utils/error/assert.$(OBJEXT) utils/pcp/pcp_stream.$(OBJEXT) \
-	utils/regex_array.$(OBJEXT) utils/statistics.$(OBJEXT)
+	utils/regex_array.$(OBJEXT) utils/json_writer.$(OBJEXT) \
+	utils/json.$(OBJEXT) utils/statistics.$(OBJEXT)
 pgpool_OBJECTS = $(am_pgpool_OBJECTS)
 pgpool_DEPENDENCIES = parser/libsql-parser.a parser/nodes.o \
 	watchdog/lib-watchdog.a
@@ -460,7 +461,9 @@ pgpool_SOURCES = main/main.c \
 	utils/error/elog.c \
 	utils/error/assert.c \
     utils/pcp/pcp_stream.c \
-    utils/regex_array.c \
+	utils/regex_array.c \
+	utils/json_writer.c \
+	utils/json.c \
     utils/statistics.c
 
 sysconf_DATA = sample/pgpool.conf.sample \
@@ -828,6 +831,10 @@ utils/pcp/pcp_stream.$(OBJEXT): utils/pcp/$(am__dirstamp) \
 	utils/pcp/$(DEPDIR)/$(am__dirstamp)
 utils/regex_array.$(OBJEXT): utils/$(am__dirstamp) \
 	utils/$(DEPDIR)/$(am__dirstamp)
+utils/json_writer.$(OBJEXT): utils/$(am__dirstamp) \
+	utils/$(DEPDIR)/$(am__dirstamp)
+utils/json.$(OBJEXT): utils/$(am__dirstamp) \
+	utils/$(DEPDIR)/$(am__dirstamp)
 utils/statistics.$(OBJEXT): utils/$(am__dirstamp) \
 	utils/$(DEPDIR)/$(am__dirstamp)
 
@@ -883,6 +890,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@streaming_replication/$(DEPDIR)/pool_worker_child.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@system_db/$(DEPDIR)/pool_system.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/getopt_long.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/json.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/json_writer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/pool_ip.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/pool_params.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/pool_path.Po@am__quote@

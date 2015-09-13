@@ -106,7 +106,8 @@ lib_watchdog_a_LIBADD =
 am_lib_watchdog_a_OBJECTS = watchdog.$(OBJEXT) wd_child.$(OBJEXT) \
 	wd_if.$(OBJEXT) wd_init.$(OBJEXT) wd_lifecheck.$(OBJEXT) \
 	wd_list.$(OBJEXT) wd_packet.$(OBJEXT) wd_ping.$(OBJEXT) \
-	wd_heartbeat.$(OBJEXT) wd_interlock.$(OBJEXT)
+	wd_heartbeat.$(OBJEXT) wd_escalation.$(OBJEXT) \
+	wd_interlock.$(OBJEXT)
 lib_watchdog_a_OBJECTS = $(am_lib_watchdog_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -312,6 +313,7 @@ lib_watchdog_a_SOURCES = \
 	wd_packet.c \
 	wd_ping.c \
 	wd_heartbeat.c \
+	wd_escalation.c \
 	wd_interlock.c
 
 all: all-am
@@ -365,6 +367,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/watchdog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_child.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_escalation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_heartbeat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_if.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_init.Po@am__quote@

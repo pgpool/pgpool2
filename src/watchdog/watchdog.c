@@ -67,7 +67,7 @@ wd_exit(int exit_signo)
 	sigaddset(&mask, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &mask, NULL);
 
-	wd_notice_server_down();
+//	wd_notice_server_down();
 
 	exit(0);
 }
@@ -115,7 +115,6 @@ wd_check_config(void)
 pid_t
 wd_main(int fork_wait_time)
 {
-	int i;
 
 	if (!pool_config->use_watchdog)
 		return 0;
@@ -124,26 +123,25 @@ wd_main(int fork_wait_time)
 	wd_check_config();
 
 	/* initialize */
-	wd_init();
+//	wd_init();
 
 	wd_ppid = getpid();
 
 	/* launch child process */
 	child_pid = wd_child(1);
-
-	if (!strcmp(pool_config->wd_lifecheck_method, MODE_HEARTBEAT))
-	{
-		for (i = 0; i < pool_config->num_hb_if; i++)
-		{
-			/* heartbeat receiver process */
-			hb_receiver_pid[i] = wd_hb_receiver(1, &(pool_config->hb_if[i]));
-
-			/* heartbeat sender process */
-			hb_sender_pid[i] = wd_hb_sender(1, &(pool_config->hb_if[i]));
-		}
-	}
-
-	/* fork lifecheck process*/
+//	if (!strcmp(pool_config->wd_lifecheck_method, MODE_HEARTBEAT))
+//	{
+//		for (i = 0; i < pool_config->num_hb_if; i++)
+//		{
+//			/* heartbeat receiver process */
+//			hb_receiver_pid[i] = wd_hb_receiver(1, &(pool_config->hb_if[i]));
+//
+//			/* heartbeat sender process */
+//			hb_sender_pid[i] = wd_hb_sender(1, &(pool_config->hb_if[i]));
+//		}
+//	}
+//
+//	/* fork lifecheck process*/
 	lifecheck_pid = fork_a_lifecheck(fork_wait_time);
 
 	return lifecheck_pid;
@@ -155,6 +153,7 @@ static pid_t
 fork_a_lifecheck(int fork_wait_time)
 {
 	pid_t pid;
+	int i;
 	sigjmp_buf	local_sigjmp_buf;
 
 	pid = fork();
@@ -193,6 +192,8 @@ fork_a_lifecheck(int fork_wait_time)
 	MemoryContextSwitchTo(TopMemoryContext);
 
 	set_ps_display("lifecheck",false);
+
+	initialize_lifecheck();
 
 	/* wait until ready to go */
 	while (WD_OK != is_wd_lifecheck_ready())
@@ -410,3 +411,4 @@ exec_func(void *arg)
 	Assert(thread_arg != NULL);
 	return thread_arg->start_routine(thread_arg->arg);
 }
+

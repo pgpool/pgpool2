@@ -67,7 +67,6 @@ static int ntoh_wd_node_packet(WdPacket * to, WdPacket * from);
 static int hton_wd_lock_packet(WdPacket * to, WdPacket * from);
 static int ntoh_wd_lock_packet(WdPacket * to, WdPacket * from);
 
-static int open_wd_command_sock(void);
 static int read_socket(int socket, void* buf, int len);
 int
 wd_startup(void)
@@ -1033,25 +1032,13 @@ wd_escalation(void)
 		if (r == WD_NG)
 			has_error = true;
 	}
-
-	/* set master status to the wd list */
-	wd_set_wd_list(pool_config->wd_hostname, pool_config->port,
-	               pool_config->wd_port, pool_config->delegate_IP,
-	               NULL, WD_MASTER);
-
-	/* send declare packet */
-	rtn = wd_declare();
-	if (rtn == WD_OK)
-	{
-		if (has_error)
-			ereport(NOTICE,
-				(errmsg("watchdog escalation successful, escalated to master pgpool with some errors")));
-		else
-			ereport(LOG,
-				(errmsg("watchdog escalation successful, escalated to master pgpool")));
-	}
-
-	return rtn;
+	if (has_error)
+		ereport(NOTICE,
+			(errmsg("watchdog escalation successful, escalated to master pgpool with some errors")));
+	else
+		ereport(LOG,
+			(errmsg("watchdog escalation successful, escalated to master pgpool")));
+	return WD_OK;
 }
 
 int
@@ -1111,6 +1098,7 @@ int
 wd_degenerate_backend_set(int *node_id_set, int count)
 {
 	int rtn = WD_OK;
+	int i;
 	int data_size = (sizeof(int) * count) + sizeof(int);
 	char* data;
 	WDIPCCommandResult* result;
@@ -1123,7 +1111,7 @@ wd_degenerate_backend_set(int *node_id_set, int count)
 	/* First four bytes are packet no */
 	int* ptr = (int*)data;
 	ptr[0] = WD_DEGENERATE_BACKEND;
-	for (int i = 0; i < count; i++)
+	for (i = 0; i < count; i++)
 	{
 		ptr[i+1] = htonl(node_id_set[i]);
 	}
@@ -1166,10 +1154,10 @@ wd_degenerate_backend_set(int *node_id_set, int count)
 	return rtn;
 }
 
-static int
-open_wd_command_sock(void)
+int
+open_wd_command_sock(bool throw_error)
 {
-	size_t	len = 0;
+	size_t	len;
 	struct sockaddr_un addr;
 	int sock = -1;
 
@@ -1177,21 +1165,24 @@ open_wd_command_sock(void)
 	if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
 	{
 		/* socket create failed */
-		ereport(ERROR,
-				(errmsg("failed to create watchdog IPC socket"),
-				 errdetail("create socket failed with reason: \"%s\"", strerror(errno))));
+		ereport(throw_error? ERROR:LOG,
+			(errmsg("failed to connect to watchdog command server socket"),
+				 errdetail("connect on \"%s\" failed with reason: \"%s\"", addr.sun_path, strerror(errno))));
+		return -1;
 	}
 
-	addr.sun_family = AF_INET;
+	memset(&addr, 0, sizeof(addr));
+	addr.sun_family = AF_UNIX;
 	snprintf(addr.sun_path, sizeof(addr.sun_path),"%s",watchdog_ipc_address);
 	len = sizeof(struct sockaddr_un);
 
-	if (connect(sock, (struct sockaddr *) &addr, sizeof(addr)) == -1)
+	if (connect(sock, (struct sockaddr *) &addr, len) == -1)
 	{
 		close(sock);
-		ereport(ERROR,
+		ereport(throw_error? ERROR:LOG,
 			(errmsg("failed to connect to watchdog command server socket"),
 				 errdetail("connect on \"%s\" failed with reason: \"%s\"", addr.sun_path, strerror(errno))));
+		return -1;
 	}
 	return sock;
 }
@@ -1203,7 +1194,7 @@ issue_wd_command(char type, WD_COMMAND_ACTIONS command_action,int timeout_sec, c
 	int sock;
 	gettimeofday(&start_time, NULL);
 	/* open the watchdog command socket for IPC */
-	sock = open_wd_command_sock();
+	sock = open_wd_command_sock(false);
 	if (sock < 0)
 		return NULL;
 
@@ -1258,8 +1249,9 @@ issue_wd_command(char type, WD_COMMAND_ACTIONS command_action,int timeout_sec, c
 				command_res->node_results = NULL;
 				if (command_res->resultSlotsCount > 0)
 				{
+					int i;
 					/* get all the result slots */
-					for (int i =0 ; i < command_res->resultSlotsCount; i++)
+					for (i =0 ; i < command_res->resultSlotsCount; i++)
 					{
 						WDIPCCommandNodeResultData* resultSlot = palloc(sizeof(WDIPCCommandNodeResultData));
 						ret = read_socket(sock, &(resultSlot->node_id), sizeof(resultSlot->node_id));
@@ -1460,3 +1452,4 @@ wd_packet_to_string(WdPacket *pkt, char *str, int maxlen)
 
 	return len;
 }
+

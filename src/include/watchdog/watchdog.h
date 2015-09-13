@@ -59,6 +59,9 @@
 /* IPC MESSAGES */
 #define WD_REGISTER_FOR_NOTIFICATION		'1'
 #define WD_TRANSPORT_DATA_COMMAND			'2'
+#define WD_NODE_STATUS_CHANGE_COMMAND		'3'
+#define WD_GET_NODES_LIST_COMMAND			'4'
+#define WD_NODES_LIST_DATA					'5'
 
 /*
  * packet number of watchdog negotiation
@@ -222,7 +225,7 @@ extern unsigned char * WD_Node_List;
  * watchdog state
  */
 typedef enum {
-	WD_NO_STATE = 0,
+	WD_DEAD = 0,
 	WD_LOADING,
 	WD_JOINING,
 	WD_INITIALIZING,
@@ -230,7 +233,11 @@ typedef enum {
 	WD_COORDINATOR,
 	WD_PARTICIPATE_IN_ELECTION,
 	WD_STAND_FOR_COORDINATOR,
-	WD_STANDBY
+	WD_STANDBY,
+	WD_WAITING_FOR_QUORUM,
+	WD_LOST,
+	/* the following states are only valid on remote nodes */
+	WD_ADD_MESSAGE_SENT
 } WD_STATES;
 
 typedef enum {
@@ -249,7 +256,12 @@ typedef enum {
 	WD_EVENT_CON_ERROR,
 	WD_EVENT_TIMEOUT,
 	WD_EVENT_PACKET_RCV,
-	WD_EVENT_HB_MISSED
+	WD_EVENT_HB_MISSED,
+	WD_EVENT_NEW_OUTBOUND_CONNECTION,
+	WD_EVENT_LOCAL_NODE_LOST,
+	WD_EVENT_REMOTE_NODE_LOST,
+	WD_EVENT_REMOTE_NODE_FOUND,
+	WD_EVENT_LOCAL_NODE_FOUND
 } WD_EVENTS;
 
 typedef struct WatchdogNode
@@ -283,7 +295,7 @@ typedef struct wd_command
 	unsigned int	commandReplyFromCount;
 	unsigned int	commandTimeoutSec;
 	struct timeval  commandTime;
-	sig_atomic_t	commandFinished;
+	int	commandFinished;
 }wd_command;
 
 typedef enum {
@@ -331,6 +343,10 @@ typedef struct wd_cluster
 
 extern WDIPCCommandResult*
 issue_wd_command(char type, WD_COMMAND_ACTIONS command_action,int timeout_sec, char* data, int data_len, bool blocking);
+
+extern int open_wd_command_sock(bool throw_error);
+
+pid_t fork_escalation_process(void);
 #endif /* WATCHDOG_H */
 
 /* since we should have a provision to send arbitary length of data from the 

@@ -13,5 +13,6 @@ lib_watchdog_a_SOURCES = \
 	wd_packet.c \
 	wd_ping.c \
 	wd_heartbeat.c \
+	wd_escalation.c \
 	wd_interlock.c
 

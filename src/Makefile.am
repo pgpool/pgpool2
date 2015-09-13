@@ -49,7 +49,9 @@ pgpool_SOURCES = main/main.c \
 	utils/error/elog.c \
 	utils/error/assert.c \
     utils/pcp/pcp_stream.c \
-    utils/regex_array.c \
+	utils/regex_array.c \
+	utils/json_writer.c \
+	utils/json.c \
     utils/statistics.c
 
 DEFS = @DEFS@ \

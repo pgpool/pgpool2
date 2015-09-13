@@ -53,49 +53,37 @@ wd_IP_up(void)
 	if (strlen(pool_config->delegate_IP) == 0)
 		return WD_NG;
 
-	if (WD_List->delegate_ip_flag == 0)
+	wd_get_cmd(cmd,pool_config->if_up_cmd);
+	snprintf(path,sizeof(path),"%s/%s",pool_config->if_cmd_path,cmd);
+	rtn = exec_if_cmd(path,pool_config->if_up_cmd);
+
+	if (rtn == WD_OK)
 	{
-		WD_List->delegate_ip_flag = 1;
-
-		wd_get_cmd(cmd,pool_config->if_up_cmd);
-		snprintf(path,sizeof(path),"%s/%s",pool_config->if_cmd_path,cmd);
-		rtn = exec_if_cmd(path,pool_config->if_up_cmd);
-
-		if (rtn == WD_OK)
+		wd_get_cmd(cmd,pool_config->arping_cmd);
+		snprintf(path,sizeof(path),"%s/%s",pool_config->arping_path,cmd);
+		rtn = exec_if_cmd(path,pool_config->arping_cmd);
+	}
+	if (rtn == WD_OK)
+	{
+		for (i = 0; i < WD_TRY_PING_AT_IPUP; i++)
 		{
-			wd_get_cmd(cmd,pool_config->arping_cmd);
-			snprintf(path,sizeof(path),"%s/%s",pool_config->arping_path,cmd);
-			rtn = exec_if_cmd(path,pool_config->arping_cmd);
-		}
-		if (rtn == WD_OK)
-		{
-			for (i = 0; i < WD_TRY_PING_AT_IPUP; i++)
-			{
-				if (!wd_is_unused_ip(pool_config->delegate_IP))
-					break;
-				ereport(DEBUG1,
-					(errmsg("watchdog bringing up delegate IP"),
-						 errdetail("waiting... count: %d", i+1)));
-			}
-
-			if (i >= WD_TRY_PING_AT_IPUP)
-				rtn = WD_NG;
-		}
-
-		if (rtn == WD_OK)
+			if (!wd_is_unused_ip(pool_config->delegate_IP))
+				break;
 			ereport(LOG,
-				(errmsg("watchdog bringing up delegate IP, 'if_up_cmd' succeeded")));
-		else
-			ereport(WARNING,
-				(errmsg("watchdog failed to bring up delegate IP, 'if_up_cmd' failed")));
-	}
-	else
-	{
-		ereport(DEBUG1,
-			(errmsg("watchdog failed to bring up delegate IP"),
-				 errdetail("already delegate IP holder")));
+				(errmsg("watchdog bringing up delegate IP"),
+					 errdetail("waiting... count: %d", i+1)));
+		}
+
+		if (i >= WD_TRY_PING_AT_IPUP)
+			rtn = WD_NG;
 	}
 
+	if (rtn == WD_OK)
+		ereport(LOG,
+			(errmsg("watchdog bringing up delegate IP, 'if_up_cmd' succeeded")));
+	else
+		ereport(WARNING,
+			(errmsg("watchdog failed to bring up delegate IP, 'if_up_cmd' failed")));
 	return rtn;
 }
 
