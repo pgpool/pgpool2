@@ -899,9 +899,6 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 					str = query_context->rewritten_query;
 			}
 
-			/* send sync message */
-			//send_extended_protocol_message(backend, i, "S", 0, "");
-
 			wait_for_query_response_with_trans_cleanup(frontend,
 													   CONNECTION(backend, i),
 													   MAJOR(backend),

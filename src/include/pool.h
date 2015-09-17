@@ -340,6 +340,7 @@ extern int my_master_node_id;
 #define REPLICATION (pool_config->replication_mode)
 #define MASTER_SLAVE (pool_config->master_slave_mode)
 #define STREAM (MASTER_SLAVE && !strcmp("stream", pool_config->master_slave_sub_mode))
+#define SLONY (MASTER_SLAVE && !strcmp("slony", pool_config->master_slave_sub_mode))
 #define DUAL_MODE (REPLICATION || MASTER_SLAVE)
 #define RAW_MODE (!REPLICATION && !MASTER_SLAVE)
 #define MAJOR(p) MASTER_CONNECTION(p)->sp->major

@@ -290,9 +290,14 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 					{
 						for (i=0;i<NUM_BACKENDS;i++)
 						{
+							int s, e;
+							
 							if (!VALID_BACKEND(i))
 								continue;
 
+							s = pool_ssl_pending(CONNECTION(backend, i));
+							e = pool_read_buffer_is_empty(CONNECTION(backend, i));
+							
 							if (pool_ssl_pending(CONNECTION(backend, i)) ||
 								!pool_read_buffer_is_empty(CONNECTION(backend, i)))
 							{
@@ -556,7 +561,7 @@ POOL_STATUS send_extended_protocol_message(POOL_CONNECTION_POOL *backend,
 	pool_write(cp, &sendlen, sizeof(sendlen));
 	pool_write(cp, string, len);
 
-	if (REPLICATION)
+	if (!STREAM)
 	{
 		/*
 		 * send "Flush" message so that backend notices us
@@ -814,6 +819,7 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend,
 	int sendlen;
 	int i;
 	sendlen = htonl(len + 4);
+	char msgbuf[256];
 
 	if (len == 0)
 	{
@@ -824,10 +830,10 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend,
 		{
 			if (VALID_BACKEND(i))
 			{
-#ifdef NOT_USED
+//#ifdef NOT_USED
 				snprintf(msgbuf, sizeof(msgbuf), "%c message", kind);
 				per_node_statement_log(backend, i, msgbuf);
-#endif
+//#endif
 
 				pool_write(CONNECTION(backend, i), &kind, 1);
 				pool_write_and_flush(CONNECTION(backend,i), &sendlen, sizeof(sendlen));
@@ -845,10 +851,10 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend,
 	{
 		if (VALID_BACKEND(i))
 		{
-#ifdef NOT_USED
+//#ifdef NOT_USED
 			snprintf(msgbuf, sizeof(msgbuf), "%c message", kind);
 			per_node_statement_log(backend, i, msgbuf);
-#endif
+//#endif
 
 			pool_write(CONNECTION(backend, i), &kind, 1);
 			pool_write(CONNECTION(backend,i), &sendlen, sizeof(sendlen));

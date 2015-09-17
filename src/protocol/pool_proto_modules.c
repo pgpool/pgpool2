@@ -597,7 +597,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
         ereport(FATAL,
                 (return_code(2),
                  errmsg("unable to Execute"),
-                 errdetail("unable to get bind message")));
+                 errdetail("unable to get query context")));
 
 	if (!bind_msg->query_context->original_query)
         ereport(FATAL,
@@ -714,7 +714,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	/* check if query is "COMMIT" or "ROLLBACK" */
 	commit = is_commit_or_rollback_query(node);
 
-	if (REPLICATION)
+	if (!STREAM)
 	{
 		/*
 		 * Query is not commit/rollback
@@ -754,7 +754,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID, false);
 		}
 	}
-	else		/* master/slave mode */
+	else		/* streaming replication mode */
 	{
 		pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID, true);
 		pool_extended_send_and_wait(query_context, "E", len, contents, -1, MASTER_NODE_ID, true);
@@ -1027,7 +1027,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		}
 	}
 
-	if (REPLICATION)
+	if (REPLICATION || SLONY)
 	{
 		/*
 		 * We must synchronize because Parse message acquires table
@@ -1079,7 +1079,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			pool_extended_send_and_wait(query_context, "P", len, contents, -1, MASTER_NODE_ID, false);
 		}
 	}
-	else
+	else if (STREAM)
 	{
 		/* XXX fix me:even with streaming replication mode, we could have deadlock */
 		pool_set_query_in_progress();
@@ -1087,6 +1087,10 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_extended_send_and_wait(query_context, "P", len, contents, -1, MASTER_NODE_ID, true);
 		pool_add_sent_message(session_context->uncompleted_message);
 		pool_unset_query_in_progress();
+	}
+	else
+	{
+		pool_extended_send_and_wait(query_context, "P", len, contents, 1, MASTER_NODE_ID, false);
 	}
 
 	return POOL_CONTINUE;
@@ -1206,14 +1210,16 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	pool_set_query_in_progress();
 
-	nowait = (REPLICATION? false: true);
+	nowait = (STREAM? true: false);
 
 	pool_extended_send_and_wait(query_context, "B", len, contents, 1, MASTER_NODE_ID, nowait);
 	pool_extended_send_and_wait(query_context, "B", len, contents, -1, MASTER_NODE_ID, nowait);
-	pool_add_sent_message(session_context->uncompleted_message);
 
-	if (!REPLICATION)
+	if (STREAM)
+	{
+		pool_add_sent_message(session_context->uncompleted_message);
 		pool_unset_query_in_progress();
+	}
 	
 	if(rewrite_msg)
 		pfree(rewrite_msg);
@@ -1314,9 +1320,10 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
                 (return_code(2),
                     errmsg("unable to execute close, invalid message")));
 	/* 
-	 * As per the postgresql, calling close on non existing portals is not
-	 * an error. So on the same footings we will ignore all such calls and
-	 * return the close complete message to clients with out going to backend
+	 * As per the postgresql, calling close on non existing portals or
+	 * statements is not an error. So on the same footings we will ignore all
+	 * such calls and return the close complete message to clients with out
+	 * going to backend
 	 */
 	if (!msg)
 	{
@@ -1848,21 +1855,19 @@ POOL_STATUS CloseComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 			name = session_context->uncompleted_message->name;
 			session_context->uncompleted_message = NULL;
 		}
+		else
+		{
+			ereport(ERROR,
+					(errmsg("processing CloseComplete, uncompleted message not found")));
+		}
 	}
 	
-	if (kind == 'P' || kind == 'S')
+	if (kind == ' ')
 	{
 		pool_remove_sent_message(kind, name);
-								 
 		ereport(DEBUG1,
 				(errmsg("CloseComplete: remove uncompleted message. kind:%c, name:%s",
-						session_context->uncompleted_message->kind,
-						session_context->uncompleted_message->name)));
-	}
-	else
-	{
-		ereport(ERROR,
-				(errmsg("processing CloseComplete, uncompleted message not found")));
+						kind, name)));
 	}
 
 	return status;
@@ -2377,21 +2382,21 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 			case '1':	/* ParseComplete */
 				status = ParseComplete(frontend, backend);
 				pool_set_command_success();
-				if (REPLICATION)
+				if (REPLICATION||RAW_MODE)
 					pool_unset_query_in_progress();
 				break;
 
 			case '2':	/* BindComplete */
 				status = BindComplete(frontend, backend);
 				pool_set_command_success();
-				if (REPLICATION)
+				if (REPLICATION||RAW_MODE)
 					pool_unset_query_in_progress();
 				break;
 
 			case '3':	/* CloseComplete */
 				status = CloseComplete(frontend, backend);
 				pool_set_command_success();
-				if (REPLICATION)
+				if (REPLICATION||RAW_MODE)
 					pool_unset_query_in_progress();
 				break;
 
@@ -2411,7 +2416,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 			case 'C':	/* CommandComplete */				
 				status = CommandComplete(frontend, backend);
 				pool_set_command_success();
-				if (REPLICATION && pool_is_doing_extended_query_message())
+				if ((REPLICATION || RAW_MODE) && pool_is_doing_extended_query_message())
 					pool_unset_query_in_progress();
 				break;
 
@@ -2421,25 +2426,25 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 
 			case 'I':	/* EmptyQueryResponse */
 				status = SimpleForwardToFrontend(kind, frontend, backend);
-				if (REPLICATION && pool_is_doing_extended_query_message())
+				if ((REPLICATION || RAW_MODE) && pool_is_doing_extended_query_message())
 					pool_unset_query_in_progress();
 				break;
 
 			case 'T':	/* RowDescription */
 				status = SimpleForwardToFrontend(kind, frontend, backend);
-				if (REPLICATION && pool_is_doing_extended_query_message())
+				if ((REPLICATION || RAW_MODE) && pool_is_doing_extended_query_message())
 					pool_unset_query_in_progress();
 				break;
 
 			case 'n':	/* NoData */
 				status = SimpleForwardToFrontend(kind, frontend, backend);
-				if (REPLICATION && pool_is_doing_extended_query_message())
+				if ((REPLICATION || RAW_MODE) && pool_is_doing_extended_query_message())
 					pool_unset_query_in_progress();
 				break;
 
 			case 's':	/* PortalSuspended */
 				status = SimpleForwardToFrontend(kind, frontend, backend);
-				if (REPLICATION && pool_is_doing_extended_query_message())
+				if ((REPLICATION || RAW_MODE) && pool_is_doing_extended_query_message())
 					pool_unset_query_in_progress();
 				break;
 

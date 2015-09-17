@@ -934,6 +934,9 @@ void pool_unset_pending_response(void)
  */
 bool pool_is_pending_response(void)
 {
+	if (!STREAM)
+		return false;
+
 	if (!session_context)
 		ereport(ERROR,
 				(errmsg("pool_is_pending_response: session context is not initialized")));
