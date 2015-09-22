@@ -791,6 +791,9 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 		if (pool_is_cache_safe() && !pool_is_cache_exceeded())
 		{
 			memqcache_register(kind, frontend, p1, len1);
+			ereport(DEBUG1,
+					(errmsg("SimpleForwardToFrontend: add to memqcache buffer:%c length:%d",
+							kind, len1)));
 		}
 	}
 
@@ -1038,7 +1041,7 @@ static int
 
 	pool_set_timeout(10);
 
-	if (session_context = pool_get_session_context(false))
+	if ((session_context = pool_get_session_context(false)))
 	{
 		pool_unset_query_in_progress();
 	}
@@ -3287,10 +3290,135 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		 */
 
 		/*
-		 * However here is a special case. In master slave mode, if
-		 * master gets an error at commit, while other slaves are
-		 * normal at commit, we don't need to degenrate any backend
-		 * because it is likely that the error was caused by a
+		 * If we are in streaming replication mode and kind = 'Z' (ready for
+		 * query) on master and kind on standby is not 'Z', it is likely that
+		 * following scenario happened.
+		 *
+		 * FE=>Parse("BEGIN")
+		 * FE=>Bind
+		 * FE=>Execute("BEGIN");
+		 *
+		 * At this point, Parse, Bind and Execute message are sent to both primary
+		 * and standby node (if load balancing node is not primary). Then, the
+		 * frontend sends next parse message which is supposed to be executed
+		 * on primary only, for example UPDATE.
+		 *
+		 * FE=>Parse("UPDATE ...")
+		 * FE=>Bind
+		 * FE=>Execute("Update...");
+		 * FE=>Sync
+		 *
+		 * Here, Sync message is sent to only primary, since the query context
+		 * said so. Thus responses for Parse, Bind, and Execute for "BEGIN"
+		 * are still penidng on the standby node.
+
+		 * The the frontend sends closes the transaction.
+		 *
+		 * FE=>Parse("COMMIT");
+		 * FE=>Bind
+		 * FE=>Execute
+		 * FE=>Sync
+		 *
+		 * Here, sync message is sent to both primary and standby. So both
+		 * nodes happily send back responses. Those will be:
+		 *
+		 * On the primary side: parse complete, bind complete, command
+		 * complete and ready for query[1]. These are all responses for COMMIT.
+		 *
+		 * On the standby side: parse complete, bind complete and command
+		 * complete. These are all responses for *BEGIN*. Then parse
+		 * complete[2], bind complete, command complete and ready for query
+		 * (responses for COMMIT).
+		 *
+		 * As a result, [1] and [2] are different and kind mismatch error
+		 * occurs.
+		 *
+		 * There seem to be no general solution for this at least for me. What
+		 * we can do is, discard the standby response until it matches the
+		 * response of the primary server. Although this could happen in
+		 * various scenario, probably we should employ this strategy for 'Z'
+		 * (ready for response) case only, since it's a good candidate to
+		 * re-sync primary and standby.
+		 */
+		if (kind_list[MASTER_NODE_ID] == 'Z' && STREAM && query_context->parse_tree &&
+			is_commit_query(query_context->parse_tree))
+		{
+			POOL_SESSION_CONTEXT *session_context;
+			POOL_CONNECTION *s;
+			char *buf;
+			int len;
+
+			session_context = pool_get_session_context(false);
+
+			s = CONNECTION(backend, session_context->load_balance_node_id);
+
+			/* skip len and contents corresponding standby data */
+			pool_read(s, &len, sizeof(len));
+			len = ntohl(len);
+			if ((len - sizeof(len)) > 0)
+			{
+				len -= sizeof(len);
+				buf = palloc(len);
+				pool_read(s, buf, len);
+				pfree(buf);
+			}
+			ereport(LOG,
+					(errmsg("readkind_from_backend: skipped first standy packet")));
+
+			for(;;)
+			{
+				if (!pool_ssl_pending(s) && pool_read_buffer_is_empty(s))
+				{
+					pool_set_timeout(0);
+					if (pool_check_fd(s) != 0)
+					{
+						ereport(LOG,
+								(errmsg("readkind_from_backend: no pending data")));
+						pool_set_timeout(-1);
+						break;
+					}
+				}
+
+				pool_set_timeout(-1);
+
+				pool_read(s, &kind, 1);
+
+				ereport(LOG,
+						(errmsg("read_kind_from_backend: checking kind: '%c'", kind)));
+
+				if (kind == 'Z')
+				{
+					/* succeeded in re-sync */
+					ereport(LOG,
+							(errmsg("read_kind_from_backend: succeeded in re-sync")));
+					*decided_kind = kind;
+					return;
+				}
+
+				ereport(LOG,
+						(errmsg("read_kind_from_backend: reading len")));
+				pool_read(s, &len, sizeof(len));
+				ereport(LOG,
+						(errmsg("read_kind_from_backend: finished reading len:%d", ntohl(len))));
+
+				len = ntohl(len);
+				if ((len - sizeof(len)) > 0)
+				{
+					len -= sizeof(len);
+					ereport(LOG,
+							(errmsg("read_kind_from_backend: reading message len:%d", len)));
+
+					buf = palloc(len);
+					pool_read(s, buf, len);
+					pfree(buf);
+				}
+			}
+		}
+
+		/*
+		 * In master slave mode, if master gets an error at commit, while
+		 * other slaves are normal at commit, we don't need to degenerate any
+		 * backend because it is likely that the error was caused by a
 		 * deferred trigger.
 		 */
 		if (MASTER_SLAVE && query_context->parse_tree &&
