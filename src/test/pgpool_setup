@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2013-2014 PgPool Global Development Group
+# Copyright (c) 2013-2015 PgPool Global Development Group
 #
 # Permission to use, copy, modify, and distribute this software and
 # its documentation for any purpose and without fee is hereby
@@ -17,7 +17,7 @@
 # directory for *testing* purpose.
 # Do not use this tool for production environment!
 #
-# usage: pgpool_setup [-m r|s|n][-n num_clusters][-p base_port][--no-stop]
+# usage: pgpool_setup [-m r|s|n][-n num_clusters][-p base_port][--no-stop][-d]
 # -m s: create an installation as streaming replication mode.
 # (the default)
 # -m r: create an installation as native replication mode.
@@ -28,6 +28,7 @@
 #  base_port + 2, second PostgreSQL node's port is base_port + 3
 #  and so on.
 # --no-stop: do not stop pgpool and PostgreSQL after the work
+# -d: start pgpool with debug mode
 #
 # The user run this script will become the PostgreSQL super user as
 # well.  Current directory must be empty.  Assume that appropreate
@@ -546,12 +547,12 @@ function wait_for_pgpool_reload {
 ################################################################################
 function usage()
 {
-	echo "usage: $0 [-m r|s|n] [-n num_clusters] [-p base_port] [--no-stop] ";exit 1
+	echo "usage: $0 [-m r|s|n] [-n num_clusters] [-p base_port] [--no-stop] [-d]";exit 1
 }
 
 #-------------------------------------------
 # Argument check
-# usage: $0 [-m r|s|n] [-n num_clusters] [-p base_port] [--no-stop]"
+# usage: $0 [-m r|s|n] [-n num_clusters] [-p base_port] [--no-stop] [-d]"
 #-------------------------------------------
 #
 # default mode is streaming replication mode
@@ -577,6 +578,9 @@ do
 	elif [ $1 = "--no-stop" ];then
 		shift
 		NO_STOP="true"
+	elif [ $1 = "-d" ];then
+		PGPOOLDEBUG="true"
+		shift;
 	elif [ $1 = "--help" -o $1 = "-o" ];then
 		usage
 		exit
@@ -715,7 +719,11 @@ echo "pid_file_name = '$BASEDIR/run/pgpool.pid'" >> $CONF
 test ! -d log && mkdir log
 echo "logdir = '$BASEDIR/log'" >> $CONF
 
-echo '$PGPOOL_INSTALL_DIR/bin/pgpool -D -n -f $dir/etc/pgpool.conf -F $dir/etc/pcp.conf -a $dir/etc/pool_hba.conf > $dir/log/pgpool.log 2>&1 &' >> $STARTALL
+if [ "$PGPOOLDEBUG" = "true" ];then    
+    echo '$PGPOOL_INSTALL_DIR/bin/pgpool -d -D -n -f $dir/etc/pgpool.conf -F $dir/etc/pcp.conf -a $dir/etc/pool_hba.conf > $dir/log/pgpool.log 2>&1 &' >> $STARTALL
+else
+    echo '$PGPOOL_INSTALL_DIR/bin/pgpool -D -n -f $dir/etc/pgpool.conf -F $dir/etc/pcp.conf -a $dir/etc/pool_hba.conf > $dir/log/pgpool.log 2>&1 &' >> $STARTALL
+fi
 
 # create pcp.conf
 
