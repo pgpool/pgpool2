@@ -8,6 +8,7 @@
 # -p installation path of Postgres
 # -j JDBC driver path
 # -m install (install pgpool-II and use that for tests) / noinstall : Default install
+# -d start pgpool with debug option
 
 dir=`pwd`
 MODE=install
@@ -103,6 +104,7 @@ function print_usage
 	printf "  -i   DIRECTORY           pgpool installed directory, if already installed pgpool is to be used for tests\n" >&2
 	printf "  -m   install/noinstall   make install pgpool to temp directory for executing regression tests [Default: install]\n" >&2
 	printf "  -j   FILE                Postgres jdbc jar file path\n" >&2
+	printf "  -d                       start pgpool with debug option" >&2
 	printf "  -?                       print this help and then exit\n\n" >&2
 	printf "Please read the README for details on adding new tests\n" >&2
 
@@ -110,7 +112,7 @@ function print_usage
 
 trap "echo ; exit 0" SIGINT SIGQUIT
 
-while getopts "p:m:i:j:b:?" OPTION
+while getopts "p:m:i:j:b:d?" OPTION
 do
   case $OPTION in
     p)  PG_INSTALL_DIR="$OPTARG";;
@@ -118,6 +120,7 @@ do
     i)  PGPOOL_PATH="$OPTARG";;
     j)  JDBC_DRIVER="$OPTARG";;
     b)  PGBENCH_PATH="$OPTARG";;
+    d)  export PGPOOLDEBUG="true";;
     ?)  print_usage
         exit 2;;
   esac
@@ -132,7 +135,7 @@ elif [ "$MODE" = "noinstall" ]; then
 	if [[ -n "$PGPOOL_INSTALL_PATH" ]]; then
 		PGPOOL_PATH=$PGPOOL_INSTALL_PATH
 	fi
-	export PGPOOL_SETUP=$dir/../pgpool_setup
+        export PGPOOL_SETUP=$dir/../pgpool_setup
 else
 	echo $MODE : Invalid mode
 	exit -1
