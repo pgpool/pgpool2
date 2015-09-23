@@ -586,8 +586,8 @@ int synchronize(POOL_CONNECTION *cp)
 }
 
 /*
- * set timeout in seconds for pool_check_fd
- * if timeoutval < 0, we assume no timeout(wait forever).
+ * Set timeout in seconds for pool_check_fd
+ * if timeoutval < 0, we assume no timeout (wait forever).
  */
 void pool_set_timeout(int timeoutval)
 {
@@ -3189,12 +3189,15 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	{
 		read_kind_from_one_backend(frontend, backend, (char *)&kind, MASTER_NODE_ID);
 
+			ereport(LOG,
+				(errmsg("reading backend data packet kind"),
+				 errdetail("master node id: %d", MASTER_NODE_ID)));
 		/*
 		 * If we received a notification message in master/slave mode,
 		 * other backends will not receive the message.
 		 * So we should skip other nodes otherwise we will hung in pool_read.
 		 */
-		if (kind == 'A')	
+		if (kind == 'A')
 		{
 			*decided_kind = 'A';
 			
@@ -3225,7 +3228,23 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 				char *p, *value;
 				int len;
 
-				pool_read(CONNECTION(backend, i), &kind, 1);
+				kind = 0;
+				if (pool_read(CONNECTION(backend, i), &kind, 1))
+				{
+					ereport(FATAL,
+							(return_code(2),
+							 errmsg("failed to read kind from backend %d", i),
+							 errdetail("pool_read retruns error")));
+				}
+
+				if (kind == 0)
+				{
+					ereport(FATAL,
+							(return_code(2),
+							 errmsg("failed to read kind from backend %d", i),
+							 errdetail("kind == 0")));
+				}
+
 				ereport(DEBUG2,
 					(errmsg("reading backend data packet kind"),
 						 errdetail("backend:%d kind:'%c'",i, kind)));
@@ -3282,6 +3301,10 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		else
 			kind_list[i] = 0;
 	}
+
+	ereport(DEBUG1,
+			(errmsg("read_kind_from_backend max_count:%f num_executed_nodes:%d",
+					max_count, num_executed_nodes)));
 
 	if (max_count != num_executed_nodes)
 	{
@@ -3363,7 +3386,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 				pfree(buf);
 			}
 			ereport(LOG,
-					(errmsg("readkind_from_backend: skipped first standy packet")));
+					(errmsg("read_kind_from_backend: skipped first standy packet")));
 
 			for(;;)
 			{
@@ -3421,7 +3444,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		 * backend because it is likely that the error was caused by a
 		 * deferred trigger.
 		 */
-		if (MASTER_SLAVE && query_context->parse_tree &&
+		else if (MASTER_SLAVE && query_context->parse_tree &&
 			is_commit_query(query_context->parse_tree) &&
 			kind_list[MASTER_NODE_ID] == 'E' &&
 			is_all_slaves_command_complete(kind_list, NUM_BACKENDS, MASTER_NODE_ID))

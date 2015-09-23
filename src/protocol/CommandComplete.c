@@ -94,8 +94,9 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	memcpy(p1, p, len);
 
 	/*
-	 * If operated in streaming replication mode with extended protocol, we may
-	 * need to read data from other node if any (SET or transaction statements).
+	 * If operated in streaming replication mode and extended query mode, we
+	 * may need to read data from other node if any (SET or transaction
+	 * statements).
 	 */
 	if	(STREAM && pool_is_doing_extended_query_message())
 	{
@@ -117,11 +118,12 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	}
 
 	/*
-	 * If operated in master slave mode, just forward the packet to frontend
-	 * and we are done. Otherwise, we need to do mismatch tuples process
-	 * (forwarding to frontend is done in handle_mismatch_tuples().
+	 * If operated in streaming replication mode and extended query mode, just
+	 * forward the packet to frontend and we are done. Otherwise, we need to
+	 * do mismatch tuples process (forwarding to frontend is done in
+	 * handle_mismatch_tuples().
 	 */
-	if (MASTER_SLAVE)
+	if (STREAM && pool_is_doing_extended_query_message())
 	{
 		if (foward_command_complete(frontend, p1, len1) < 0)
 			return POOL_END;

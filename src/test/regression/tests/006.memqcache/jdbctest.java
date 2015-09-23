@@ -26,7 +26,7 @@ public class jdbctest {
 		prest.close();
 
 		/*
-		 * Cache test in a explicit transaction
+		 * Cache test in an explicit transaction
 		 */
 		conn.setAutoCommit(false);
 		// execute DML. This should prevent SELECTs from using query cache in the transaction.

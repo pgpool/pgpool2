@@ -50,6 +50,9 @@ static int mystrlinelen(char *str, int upper, int *flag);
 static int save_pending_data(POOL_CONNECTION *cp, void *data, int len);
 static int consume_pending_data(POOL_CONNECTION *cp, void *data, int len);
 static MemoryContext SwitchToConnectionContext(bool backend_connection);
+#ifdef DEBUG
+static void dump_buffer(char *buf, int len);
+#endif
 
 static MemoryContext
     SwitchToConnectionContext(bool backend_connection)
@@ -173,10 +176,22 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 			}
 		}
 
-		if (cp->ssl_active > 0) {
+		if (cp->ssl_active > 0)
+		{
 		  readlen = pool_ssl_read(cp, readbuf, READBUFSZ);
-		} else {
+		}
+		else
+		{
 		  readlen = read(cp->fd, readbuf, READBUFSZ);
+		  if (cp->isbackend)
+		  {
+			  ereport(DEBUG1,
+				  (errmsg("pool_read: read %d bytes from backend %d",
+						  readlen, cp->db_node_id)));
+#ifdef DEBUG
+			  dump_buffer(readbuf, readlen);
+#endif
+		  }
 		}
 
 		if (readlen == -1)
@@ -310,10 +325,17 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
             }
 		}
 
-		if (cp->ssl_active > 0) {
+		if (cp->ssl_active > 0)
+		{
 		  readlen = pool_ssl_read(cp, buf, len);
-		} else {
+		}
+		else
+		{
 		  readlen = read(cp->fd, buf, len);
+		  if (cp->isbackend)
+			  ereport(DEBUG1,
+				  (errmsg("pool_read2: read %d bytes from backend %d",
+						  readlen, cp->db_node_id)));
 		}
 
 		if (readlen == -1)
@@ -1109,3 +1131,17 @@ void pool_unset_nonblock(int fd)
                  errdetail("fcntl system call failed with error \"%s\"", strerror(errno))));
 	}
 }
+
+#ifdef DEBUG
+/*
+ * Debug aid
+ */
+static void dump_buffer(char *buf, int len)
+{
+	while (--len)
+	{
+		ereport(DEBUG1,
+				(errmsg("%02x", *buf++)));
+	}
+}
+#endif
