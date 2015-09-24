@@ -730,7 +730,7 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context,
  */
 POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 										char *kind, int len, char *contents,
-										int send_type, int node_id)
+										int send_type, int node_id, bool nowait)
 {
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_CONNECTION *frontend;
@@ -852,6 +852,11 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 		if (*kind == 'E')
 		{
 			stat_count_up(i, query_context->parse_tree);
+
+			/* Set sync map so that we could wait for response from appropreate node */
+			pool_set_sync_map(i);
+			ereport(DEBUG1,
+					(errmsg("pool_send_and_wait: pool_set_sync_map: %d", i)));
 		}
 
 		send_extended_protocol_message(backend, i, kind, str_len, str);
@@ -865,47 +870,50 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 			str = query_context->original_query;
 	}
 
-	/* Wait for response */
-	for (i=0;i<NUM_BACKENDS;i++)
+	if (!nowait)
 	{
-		if (!VALID_BACKEND(i))
-			continue;
-		else if (send_type < 0 && i == node_id)
-			continue;
-		else if (send_type > 0 && i != node_id)
-			continue;
-
-		/*
-		 * If in master/slave mode, we do not send COMMIT/ABORT to
-		 * slaves/standbys if it's in I(idle) state.
-		 */
-		if (is_commit && MASTER_SLAVE && !IS_MASTER_NODE_ID(i) && TSTATE(backend, i) == 'I')
+		/* Wait for response */
+		for (i=0;i<NUM_BACKENDS;i++)
 		{
-			continue;
+			if (!VALID_BACKEND(i))
+				continue;
+			else if (send_type < 0 && i == node_id)
+				continue;
+			else if (send_type > 0 && i != node_id)
+				continue;
+
+			/*
+			 * If in master/slave mode, we do not send COMMIT/ABORT to
+			 * slaves/standbys if it's in I(idle) state.
+			 */
+			if (is_commit && MASTER_SLAVE && !IS_MASTER_NODE_ID(i) && TSTATE(backend, i) == 'I')
+			{
+				continue;
+			}
+
+			if (is_begin_read_write)
+			{
+				if (REAL_PRIMARY_NODE_ID == i)
+					str = query_context->original_query;
+				else
+					str = query_context->rewritten_query;
+			}
+
+			wait_for_query_response_with_trans_cleanup(frontend,
+													   CONNECTION(backend, i),
+													   MAJOR(backend),
+													   MASTER_CONNECTION(backend)->pid,
+													   MASTER_CONNECTION(backend)->key);
+
+			/*
+			 * Check if some error detected.  If so, emit
+			 * log. This is useful when invalid encoding error
+			 * occurs. In this case, PostgreSQL does not report
+			 * what statement caused that error and make users
+			 * confused.
+			 */		
+			per_node_error_log(backend, i, str, "pool_send_and_wait: Error or notice message from backend: ", true);
 		}
-
-		if (is_begin_read_write)
-		{
-			if (REAL_PRIMARY_NODE_ID == i)
-				str = query_context->original_query;
-			else
-				str = query_context->rewritten_query;
-		}
-
-        wait_for_query_response_with_trans_cleanup(frontend,
-                                                   CONNECTION(backend, i),
-                                                   MAJOR(backend),
-                                                   MASTER_CONNECTION(backend)->pid,
-                                                   MASTER_CONNECTION(backend)->key);
-
-		/*
-		 * Check if some error detected.  If so, emit
-		 * log. This is useful when invalid encoding error
-		 * occurs. In this case, PostgreSQL does not report
-		 * what statement caused that error and make users
-		 * confused.
-		 */		
-		per_node_error_log(backend, i, str, "pool_send_and_wait: Error or notice message from backend: ", true);
 	}
 
 	if(rewritten_begin)

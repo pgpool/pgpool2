@@ -26,12 +26,12 @@ cd $TESTDIR
 
 # create test environment
 echo -n "creating test environment..."
-$PGPOOL_SETUP -m s -n 2 --no-stop || exit 1
+$PGPOOL_SETUP -m s -n 2 || exit 1
 echo "done."
 
 source ./bashrc.ports
 
-#./startall
+./startall
 wait_for_pgpool_startup
 
 export PGPORT=$PGPOOL_PORT
@@ -73,7 +73,7 @@ EOF
 #
 grep "kind mismatch among backends." log/pgpool.log >/dev/null 2>&1
 if [ $? = 0 ];then
-	# cache found! The bug reveals.
+	# kind mismatch message found! The bug reveals.
 	exit 1
 fi
 exit 0

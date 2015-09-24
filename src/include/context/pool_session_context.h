@@ -74,6 +74,29 @@ typedef struct {
 } POOL_SENT_MESSAGE_LIST;
 
 /*
+ * Received message queue used in extended protocol/streaming replication
+ * mode.  The queue is an FIFO, allow to de-queue in the middle of the queue
+ * however.  When Parse/Bind/Close message are received, each message is
+ * en-queued.  The information is used to process those response messages,
+ * when Parse complete/Bind completes and Close compete message are received
+ * because they don't have any information regarding statement/portal.
+ *
+ * The memory used for the queue lives in the session context mememory.
+ */
+
+typedef enum {
+	POOL_PARSE,
+	POOL_BIND,
+	POOL_CLOSE
+} POOL_MESSAGE_TYPE;
+
+typedef struct {
+	POOL_MESSAGE_TYPE type;
+	char *contents;		/* message packet contents excluding message kind */
+	int contents_len;	/* message packet length */
+} POOL_PENDING_MESSAGE;
+
+/*
  * Per session context:
  */
 typedef struct {
@@ -152,6 +175,32 @@ typedef struct {
 	 */
 	POOL_QUERY_CACHE_ARRAY *query_cache_array;	/* pending SELECT results */
 	long long int num_selects;	/* number of successful SELECTs in this transaction */
+
+	/*
+	 * Used for managing sync message response in streaming replication
+	 * mode. In streaming replication mode, there are at most two nodes
+	 * involved. One is always primary, and the other (if any) could be
+	 * standby. If the load balancing manager chooses the primary as the load
+	 * balancing node, only the primary node is involved. Every time extended
+	 * protocol is sent to backend, we set true on the member of array
+	 * below. It is cleared after sync message is processed and command
+	 * complete or error response message is processed.
+	 */
+	bool sync_map[MAX_NUM_BACKENDS];
+
+	/*
+	 * True if parse/bind/describe/close messages are sent to backend but
+	 * still sync or flush is not sent. If the flag is true, do_query issues
+	 * flush and stashes responses such as "parse complete" sent from backend,
+	 * then inserts them to pool_read buffer after finishing the job not to
+	 * confuse the message sequence.
+	 */
+	bool is_pending_response;
+
+	/*
+	 * Parse/Bind/Close message queue.
+	 */
+	List *pending_messages;
 } POOL_SESSION_CONTEXT;
 
 extern void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
@@ -193,6 +242,20 @@ extern void pool_set_command_success(void);
 extern bool pool_is_command_success(void);
 extern void pool_copy_prep_where(bool *src, bool *dest);
 extern bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc);
+extern void pool_set_sync_map(int node_id);
+extern bool pool_is_set_sync_map(int node_id);
+extern int pool_get_nth_sync_map(int nth);
+extern void pool_clear_sync_map(void);
+extern void pool_set_pending_response(void);
+extern void pool_unset_pending_response(void);
+extern bool pool_is_pending_response(void);
+extern void pool_pending_messages_init (void);
+extern void pool_pending_messages_destroy(void);
+extern POOL_PENDING_MESSAGE *pool_pending_messages_create(char kind, int len, char *contents);
+extern void pool_pending_message_add(POOL_PENDING_MESSAGE* message);
+extern POOL_PENDING_MESSAGE *pool_pending_message_remove(POOL_MESSAGE_TYPE type);
+extern char pool_get_close_message_spec(POOL_PENDING_MESSAGE *msg);
+extern char *pool_get_close_message_name(POOL_PENDING_MESSAGE *msg);
 
 #ifdef NOT_USED
 extern void pool_add_prep_where(char *name, bool *map);

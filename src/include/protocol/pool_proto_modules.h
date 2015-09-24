@@ -182,4 +182,9 @@ extern void read_kind_from_one_backend(POOL_CONNECTION *frontend, POOL_CONNECTIO
 extern void do_error_command(POOL_CONNECTION *backend, int major);
 extern void raise_intentional_error_if_need(POOL_CONNECTION_POOL *backend);
 
+/*
+ * modules defined in CommandComplete.c
+ */
+extern POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
+
 #endif

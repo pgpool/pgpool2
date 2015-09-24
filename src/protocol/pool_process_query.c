@@ -86,7 +86,7 @@ static POOL_STATUS read_packets_and_process(POOL_CONNECTION *frontend, POOL_CONN
 static bool is_all_slaves_command_complete(unsigned char *kind_list, int num_backends, int master);
 
 /* timeout sec for pool_check_fd */
-static int timeoutsec;
+static int timeoutsec = -1;
 
 /*
  * Main module for query processing
@@ -480,7 +480,7 @@ POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *
 		/* Check to see if data from backend is ready */
 		pool_set_timeout(30);
 		status = pool_check_fd(backend);
-		pool_set_timeout(0);
+		pool_set_timeout(-1);
 
 		if (status < 0)	/* error ? */
 		{
@@ -556,13 +556,18 @@ POOL_STATUS send_extended_protocol_message(POOL_CONNECTION_POOL *backend,
 	pool_write(cp, &sendlen, sizeof(sendlen));
 	pool_write(cp, string, len);
 
-	/*
-	 * send "Flush" message so that backend notices us
-	 * the completion of the command
-	 */
-	pool_write(cp, "H", 1);
-	sendlen = htonl(4);
-	pool_write_and_flush(cp, &sendlen, sizeof(sendlen));
+	if (!STREAM)
+	{
+		/*
+		 * send "Flush" message so that backend notices us
+		 * the completion of the command
+		 */
+		pool_write(cp, "H", 1);
+		sendlen = htonl(4);
+		pool_write_and_flush(cp, &sendlen, sizeof(sendlen));
+	}
+	else
+		pool_flush(cp);
 	
 	return POOL_CONTINUE;
 }
@@ -576,15 +581,15 @@ int synchronize(POOL_CONNECTION *cp)
 }
 
 /*
- * set timeout in seconds for pool_check_fd
- * if timeoutval < 0, we assume no timeout(wait forever).
+ * Set timeout in seconds for pool_check_fd
+ * if timeoutval < 0, we assume no timeout (wait forever).
  */
 void pool_set_timeout(int timeoutval)
 {
-	if (timeoutval > 0)
+	if (timeoutval >= 0)
 		timeoutsec = timeoutval;
 	else
-		timeoutsec = 0;
+		timeoutsec = -1;
 }
 
 /*
@@ -611,7 +616,7 @@ int pool_check_fd(POOL_CONNECTION *cp)
 		
 	fd = cp->fd;
 
-	if (timeoutsec > 0)
+	if (timeoutsec >= 0)
 	{
 		timeout.tv_sec = timeoutsec;
 		timeout.tv_usec = 0;
@@ -771,12 +776,19 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	pool_write(frontend, &sendlen, sizeof(sendlen));
 	pool_write_and_flush(frontend, p1, len1);
 
+	ereport(DEBUG1,
+			(errmsg("SimpleForwardToFrontend: packet:%c length:%d",
+					kind, len1)));
+
 	/* save the received result to buffer for each kind */
 	if (pool_config->memory_cache_enabled)
 	{
 		if (pool_is_cache_safe() && !pool_is_cache_exceeded())
 		{
 			memqcache_register(kind, frontend, p1, len1);
+			ereport(DEBUG1,
+					(errmsg("SimpleForwardToFrontend: add to memqcache buffer:%c length:%d",
+							kind, len1)));
 		}
 	}
 
@@ -805,6 +817,9 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend,
 	int sendlen;
 	int i;
 	sendlen = htonl(len + 4);
+#ifdef DEBUG
+	char msgbuf[256];
+#endif
 
 	if (len == 0)
 	{
@@ -815,7 +830,7 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend,
 		{
 			if (VALID_BACKEND(i))
 			{
-#ifdef NOT_USED
+#ifdef DEBUG
 				snprintf(msgbuf, sizeof(msgbuf), "%c message", kind);
 				per_node_statement_log(backend, i, msgbuf);
 #endif
@@ -836,7 +851,7 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend,
 	{
 		if (VALID_BACKEND(i))
 		{
-#ifdef NOT_USED
+#ifdef DEBUG
 			snprintf(msgbuf, sizeof(msgbuf), "%c message", kind);
 			per_node_statement_log(backend, i, msgbuf);
 #endif
@@ -1023,13 +1038,18 @@ static int
 
 	pool_set_timeout(10);
 
+	if ((session_context = pool_get_session_context(false)))
+	{
+		pool_unset_query_in_progress();
+	}
+
 	if (SimpleQuery(NULL, backend, strlen(query)+1, query) != POOL_CONTINUE)
 	{
-		pool_set_timeout(0);
+		pool_set_timeout(-1);
 		return -1;
 	}
 
-	pool_set_timeout(0);
+	pool_set_timeout(-1);
 
 	cache = pool_get_current_cache();
 	if (cache)
@@ -1876,6 +1896,9 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 	bool doing_extended;
 	int num_close_complete;
 	int state;
+	bool data_pushed;
+
+	data_pushed = false;
 
 	doing_extended = pool_get_session_context(true) && pool_is_doing_extended_query_message();
 
@@ -1906,6 +1929,56 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 		static char prepared_name[256];
 		static int pname_len;
 		int qlen;
+
+		/*
+		 * In streaming replication mode, send flush message before going any
+		 * further to retrieve and save any pending response packet from
+		 * backend. The saved packets will be poped up before returning to
+		 * caller. This preserves the user's expectation of packet sequence.
+		 */
+		if (pool_is_pending_response())
+		{
+			pool_write(backend, "H", 1);
+			len = htonl(sizeof(len));
+			pool_write_and_flush(backend, &len, sizeof(len));
+
+			for(;;)
+			{
+				int len;
+				char *buf;
+
+				pool_set_timeout(-1);
+
+				pool_read(backend, &kind, 1);
+				pool_push(backend, &kind, 1);
+				data_pushed = true;
+
+				pool_read(backend, &len, sizeof(len));
+				pool_push(backend, &len, sizeof(len));
+
+				len = ntohl(len);
+				if ((len - sizeof(len)) > 0)
+				{
+					len -= sizeof(len);
+					buf = palloc(len);
+					pool_read(backend, buf, len);
+					pool_push(backend, buf, len);
+				}
+
+				/* check if there's any pending data */
+				if (!pool_ssl_pending(backend) && pool_read_buffer_is_empty(backend))
+				{
+					pool_set_timeout(0);
+					if (pool_check_fd(backend) != 0)
+					{
+						ereport(DEBUG1,
+								(errmsg("do_query: no pending data")));
+						pool_set_timeout(-1);
+						break;
+					}
+				}
+			}
+		}
 
 		if (pname_len == 0)
 		{
@@ -2317,6 +2390,15 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 		{
 			ereport(DEBUG1,
 					(errmsg("do_query: all state completed. returning")));
+
+			if (data_pushed)
+			{
+				int poplen;
+
+				pool_pop(backend, &poplen);
+				ereport(DEBUG1,
+						(errmsg("do_query: popped data len:%d", poplen)));
+			}
 			break;
 		}
 	}
@@ -3074,7 +3156,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
                                                  *	256 is the number of distinct values expressed by unsigned char
                                                  */
 	unsigned char kind;
-	int trust_kind;                              /* decided kind */
+	int trust_kind = 0;                         /* decided kind */
 	int max_kind = 0;
 	double max_count = 0;
 	int degenerate_node_num = 0;                /* number of backends degeneration requested */
@@ -3092,12 +3174,15 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	{
 		read_kind_from_one_backend(frontend, backend, (char *)&kind, MASTER_NODE_ID);
 
+			ereport(DEBUG1,
+				(errmsg("reading backend data packet kind"),
+				 errdetail("master node id: %d", MASTER_NODE_ID)));
 		/*
 		 * If we received a notification message in master/slave mode,
 		 * other backends will not receive the message.
 		 * So we should skip other nodes otherwise we will hung in pool_read.
 		 */
-		if (kind == 'A')	
+		if (kind == 'A')
 		{
 			*decided_kind = 'A';
 			
@@ -3128,7 +3213,23 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 				char *p, *value;
 				int len;
 
-				pool_read(CONNECTION(backend, i), &kind, 1);
+				kind = 0;
+				if (pool_read(CONNECTION(backend, i), &kind, 1))
+				{
+					ereport(FATAL,
+							(return_code(2),
+							 errmsg("failed to read kind from backend %d", i),
+							 errdetail("pool_read retruns error")));
+				}
+
+				if (kind == 0)
+				{
+					ereport(FATAL,
+							(return_code(2),
+							 errmsg("failed to read kind from backend %d", i),
+							 errdetail("kind == 0")));
+				}
+
 				ereport(DEBUG2,
 					(errmsg("reading backend data packet kind"),
 						 errdetail("backend:%d kind:'%c'",i, kind)));
@@ -3186,6 +3287,10 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 			kind_list[i] = 0;
 	}
 
+	ereport(DEBUG1,
+			(errmsg("read_kind_from_backend max_count:%f num_executed_nodes:%d",
+					max_count, num_executed_nodes)));
+
 	if (max_count != num_executed_nodes)
 	{
 		/*
@@ -3193,13 +3298,138 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		 */
 
 		/*
-		 * However here is a special case. In master slave mode, if
-		 * master gets an error at commit, while other slaves are
-		 * normal at commit, we don't need to degenrate any backend
-		 * because it is likely that the error was caused by a
+		 * If we are in streaming replication mode and kind = 'Z' (ready for
+		 * query) on master and kind on standby is not 'Z', it is likely that
+		 * following scenario happened.
+		 *
+		 * FE=>Parse("BEGIN")
+		 * FE=>Bind
+		 * FE=>Execute("BEGIN");
+		 *
+		 * At this point, Parse, Bind and Execute message are sent to both primary
+		 * and standby node (if load balancing node is not primary). Then, the
+		 * frontend sends next parse message which is supposed to be executed
+		 * on primary only, for example UPDATE.
+		 *
+		 * FE=>Parse("UPDATE ...")
+		 * FE=>Bind
+		 * FE=>Execute("Update...");
+		 * FE=>Sync
+		 *
+		 * Here, Sync message is sent to only primary, since the query context
+		 * said so. Thus responses for Parse, Bind, and Execute for "BEGIN"
+		 * are still penidng on the standby node.
+
+		 * The the frontend sends closes the transaction.
+		 *
+		 * FE=>Parse("COMMIT");
+		 * FE=>Bind
+		 * FE=>Execute
+		 * FE=>Sync
+		 *
+		 * Here, sync message is sent to both primary and standby. So both
+		 * nodes happily send back responses. Those will be:
+		 *
+		 * On the primary side: parse complete, bind complete, command
+		 * complete and ready for query[1]. These are all responses for COMMIT.
+		 *
+		 * On the standby side: parse complete, bind complete and command
+		 * complete. These are all responses for *BEGIN*. Then parse
+		 * complete[2], bind complete, command complete and ready for query
+		 * (responses for COMMIT).
+		 *
+		 * As a result, [1] and [2] are different and kind mismatch error
+		 * occurs.
+		 *
+		 * There seem to be no general solution for this at least for me. What
+		 * we can do is, discard the standby response until it matches the
+		 * response of the primary server. Although this could happen in
+		 * various scenario, probably we should employ this strategy for 'Z'
+		 * (ready for response) case only, since it's a good candidate to
+		 * re-sync primary and standby.
+		 */
+		if (kind_list[MASTER_NODE_ID] == 'Z' && STREAM && query_context->parse_tree &&
+			is_commit_query(query_context->parse_tree))
+		{
+			POOL_SESSION_CONTEXT *session_context;
+			POOL_CONNECTION *s;
+			char *buf;
+			int len;
+
+			session_context = pool_get_session_context(false);
+
+			s = CONNECTION(backend, session_context->load_balance_node_id);
+
+			/* skip len and contents corresponding standby data */
+			pool_read(s, &len, sizeof(len));
+			len = ntohl(len);
+			if ((len - sizeof(len)) > 0)
+			{
+				len -= sizeof(len);
+				buf = palloc(len);
+				pool_read(s, buf, len);
+				pfree(buf);
+			}
+			ereport(LOG,
+					(errmsg("read_kind_from_backend: skipped first standy packet")));
+
+			for(;;)
+			{
+				if (!pool_ssl_pending(s) && pool_read_buffer_is_empty(s))
+				{
+					pool_set_timeout(0);
+					if (pool_check_fd(s) != 0)
+					{
+						ereport(LOG,
+								(errmsg("readkind_from_backend: no pending data")));
+						pool_set_timeout(-1);
+						break;
+					}
+				}
+
+				pool_set_timeout(-1);
+
+				pool_read(s, &kind, 1);
+
+				ereport(LOG,
+						(errmsg("read_kind_from_backend: checking kind: '%c'", kind)));
+
+				if (kind == 'Z')
+				{
+					/* succeeded in re-sync */
+					ereport(LOG,
+							(errmsg("read_kind_from_backend: succeeded in re-sync")));
+					*decided_kind = kind;
+					return;
+				}
+
+				ereport(LOG,
+						(errmsg("read_kind_from_backend: reading len")));
+				pool_read(s, &len, sizeof(len));
+				ereport(LOG,
+						(errmsg("read_kind_from_backend: finished reading len:%d", ntohl(len))));
+
+				len = ntohl(len);
+				if ((len - sizeof(len)) > 0)
+				{
+					len -= sizeof(len);
+					ereport(LOG,
+							(errmsg("read_kind_from_backend: reading message len:%d", len)));
+
+					buf = palloc(len);
+					pool_read(s, buf, len);
+					pfree(buf);
+				}
+			}
+		}
+
+		/*
+		 * In master slave mode, if master gets an error at commit, while
+		 * other slaves are normal at commit, we don't need to degenerate any
+		 * backend because it is likely that the error was caused by a
 		 * deferred trigger.
 		 */
-		if (MASTER_SLAVE && query_context->parse_tree &&
+		else if (MASTER_SLAVE && query_context->parse_tree &&
 			is_commit_query(query_context->parse_tree) &&
 			kind_list[MASTER_NODE_ID] == 'E' &&
 			is_all_slaves_command_complete(kind_list, NUM_BACKENDS, MASTER_NODE_ID))
