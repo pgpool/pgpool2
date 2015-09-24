@@ -264,7 +264,6 @@ static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION *frontend, POOL_CONNEC
 	POOL_SESSION_CONTEXT *session_context;
 
 	int rows;
-	bool update_or_delete;
 	int i;
 	int len;
 	char *p;
@@ -279,9 +278,6 @@ static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION *frontend, POOL_CONNEC
 	 */
 	session_context->ntuples[MASTER_NODE_ID] = rows;
 
-
-	if (strstr(packet, "UPDATE") || strstr(packet, "DELETE"))
-		update_or_delete = true;
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{

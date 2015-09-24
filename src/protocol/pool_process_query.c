@@ -290,14 +290,9 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 					{
 						for (i=0;i<NUM_BACKENDS;i++)
 						{
-							int s, e;
-							
 							if (!VALID_BACKEND(i))
 								continue;
 
-							s = pool_ssl_pending(CONNECTION(backend, i));
-							e = pool_read_buffer_is_empty(CONNECTION(backend, i));
-							
 							if (pool_ssl_pending(CONNECTION(backend, i)) ||
 								!pool_read_buffer_is_empty(CONNECTION(backend, i)))
 							{
@@ -1934,10 +1929,10 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 		int qlen;
 
 		/*
-		 * Send flush message before going any further to retrieve and save
-		 * any pending response packet from backend. The saved packets will be
-		 * poped up before returning to caller. This preserves the user's
-		 * expectation of packet sequence.
+		 * In streaming replication mode, send flush message before going any
+		 * further to retrieve and save any pending response packet from
+		 * backend. The saved packets will be poped up before returning to
+		 * caller. This preserves the user's expectation of packet sequence.
 		 */
 		if (pool_is_pending_response())
 		{
@@ -1953,32 +1948,20 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 				pool_set_timeout(-1);
 
 				pool_read(backend, &kind, 1);
-				ereport(DEBUG1,
-						(errmsg("do_query: saving kind: '%c'", kind)));
 				pool_push(backend, &kind, 1);
 				data_pushed = true;
 
-				ereport(DEBUG1,
-						(errmsg("do_query: reading len")));
 				pool_read(backend, &len, sizeof(len));
-				ereport(DEBUG1,
-						(errmsg("do_query: finished reading len:%d", ntohl(len))));
 				pool_push(backend, &len, sizeof(len));
 
 				len = ntohl(len);
 				if ((len - sizeof(len)) > 0)
 				{
 					len -= sizeof(len);
-					ereport(DEBUG1,
-							(errmsg("do_query: saving message len:%d", len)));
-
 					buf = palloc(len);
 					pool_read(backend, buf, len);
 					pool_push(backend, buf, len);
 				}
-
-				ereport(DEBUG1,
-						(errmsg("do_query: save kind: '%c' len: %d", kind, len)));
 
 				/* check if there's any pending data */
 				if (!pool_ssl_pending(backend) && pool_read_buffer_is_empty(backend))
@@ -3171,7 +3154,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
                                                  *	256 is the number of distinct values expressed by unsigned char
                                                  */
 	unsigned char kind;
-	int trust_kind;                              /* decided kind */
+	int trust_kind = 0;                         /* decided kind */
 	int max_kind = 0;
 	double max_count = 0;
 	int degenerate_node_num = 0;                /* number of backends degeneration requested */

@@ -629,7 +629,7 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 		POOL_SESSION_CONTEXT *session_context;
 		POOL_CONNECTION *target_backend;
 
-		ereport(LOG,
+		ereport(DEBUG1,
 				(errmsg("memcache: fetching forwarding_pending_data")));
 
 		session_context = pool_get_session_context(true);

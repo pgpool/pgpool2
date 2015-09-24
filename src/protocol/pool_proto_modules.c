@@ -1081,7 +1081,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	}
 	else if (STREAM)
 	{
-		/* XXX fix me:even with streaming replication mode, we could have deadlock */
+		/* XXX fix me:even with streaming replication mode, couldn't we have a deadlock */
 		pool_set_query_in_progress();
 		pool_extended_send_and_wait(query_context, "P", len, contents, 1, MASTER_NODE_ID, true);
 		pool_extended_send_and_wait(query_context, "P", len, contents, -1, MASTER_NODE_ID, true);
@@ -1826,7 +1826,7 @@ POOL_STATUS CloseComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_STATUS status;
 	char kind = ' ';
-	char *name;
+	char *name = "";
 
 	/* Get session context */
 	session_context = pool_get_session_context(false);
@@ -2935,7 +2935,7 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 				(errmsg("parse before bind"),
 					 errdetail("waiting for backend %d completing parse", i)));
 
-			pool_extended_send_and_wait(qc, "P", len, contents, 1, i, true);
+			pool_extended_send_and_wait(qc, "P", len, contents, 1, i, false);
 		}
 		else
 		{
