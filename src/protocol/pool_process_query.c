@@ -817,7 +817,9 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend,
 	int sendlen;
 	int i;
 	sendlen = htonl(len + 4);
+#ifdef DEBUG
 	char msgbuf[256];
+#endif
 
 	if (len == 0)
 	{
@@ -828,10 +830,10 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend,
 		{
 			if (VALID_BACKEND(i))
 			{
-//#ifdef NOT_USED
+#ifdef DEBUG
 				snprintf(msgbuf, sizeof(msgbuf), "%c message", kind);
 				per_node_statement_log(backend, i, msgbuf);
-//#endif
+#endif
 
 				pool_write(CONNECTION(backend, i), &kind, 1);
 				pool_write_and_flush(CONNECTION(backend,i), &sendlen, sizeof(sendlen));
@@ -849,10 +851,10 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend,
 	{
 		if (VALID_BACKEND(i))
 		{
-//#ifdef NOT_USED
+#ifdef DEBUG
 			snprintf(msgbuf, sizeof(msgbuf), "%c message", kind);
 			per_node_statement_log(backend, i, msgbuf);
-//#endif
+#endif
 
 			pool_write(CONNECTION(backend, i), &kind, 1);
 			pool_write(CONNECTION(backend,i), &sendlen, sizeof(sendlen));
