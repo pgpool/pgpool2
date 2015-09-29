@@ -5,7 +5,8 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2015, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_trigger.h
@@ -23,7 +24,7 @@
 #include "catalog/genbki.h"
 
 /* ----------------
- *		pg_trigger definition.	cpp turns this into
+ *		pg_trigger definition.  cpp turns this into
  *		typedef struct FormData_pg_trigger
  *
  * Note: when tgconstraint is nonzero, tgconstrrelid, tgconstrindid,
@@ -39,7 +40,7 @@ CATALOG(pg_trigger,2620)
 	Oid			tgrelid;		/* relation trigger is attached to */
 	NameData	tgname;			/* trigger's name */
 	Oid			tgfoid;			/* OID of function to be called */
-	int2		tgtype;			/* BEFORE/AFTER/INSTEAD, UPDATE/DELETE/INSERT,
+	int16		tgtype;			/* BEFORE/AFTER/INSTEAD, UPDATE/DELETE/INSERT,
 								 * ROW/STATEMENT; see below */
 	char		tgenabled;		/* trigger's firing configuration WRT
 								 * session_replication_role */
@@ -49,7 +50,7 @@ CATALOG(pg_trigger,2620)
 	Oid			tgconstraint;	/* associated pg_constraint entry, if any */
 	bool		tgdeferrable;	/* constraint trigger is deferrable */
 	bool		tginitdeferred; /* constraint trigger is deferred initially */
-	int2		tgnargs;		/* # of extra arguments in tgargs */
+	int16		tgnargs;		/* # of extra arguments in tgargs */
 
 	/*
 	 * Variable-length fields start here, but we allow direct access to
@@ -58,7 +59,7 @@ CATALOG(pg_trigger,2620)
 	int2vector	tgattr;			/* column numbers, if trigger is on columns */
 
 #ifdef CATALOG_VARLEN
-	bytea		tgargs;			/* first\000second\000tgnargs\000 */
+	bytea tgargs BKI_FORCE_NOT_NULL;	/* first\000second\000tgnargs\000 */
 	pg_node_tree tgqual;		/* WHEN expression, or NULL if none */
 #endif
 } FormData_pg_trigger;

@@ -6,8 +6,8 @@
  * NB - this file is also used by ECPG and several frontend programs in
  * src/bin/ including pg_dump and psql
  *
- * Portions Copyright (c) 2003-2009, PgPool Global Development Group
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2015, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -51,7 +51,7 @@ ScanKeywordLookup(const char *text,
 		return NULL;
 
 	/*
-	 * Apply an ASCII-only downcasing.	We must not use tolower() since it may
+	 * Apply an ASCII-only downcasing.  We must not use tolower() since it may
 	 * produce the wrong translation in some locales (eg, Turkish).
 	 */
 	for (i = 0; i < len; i++)

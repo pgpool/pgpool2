@@ -7,8 +7,8 @@
  * It can be used to buffer either ordinary C strings (null-terminated text)
  * or arbitrary binary data.  All storage is allocated with palloc().
  *
- * Portions Copyright (c) 2003-2013, PgPool Global Development Group
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2015, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/lib/stringinfo.h
@@ -20,6 +20,7 @@
 
 #include <stdio.h>
 #include "pg_config_manual.h"
+#include "pool_parser.h"
 
 #ifdef USE_REPL_SNPRINTF
 /* port.h */
@@ -43,7 +44,23 @@ extern int pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args);
 
 /* utils.memutils.h */
 
-#include "pool_parser.h"
+/*
+ * MaxAllocSize, MaxAllocHugeSize
+ *		Quasi-arbitrary limits on size of allocations.
+ *
+ * Note:
+ *		There is no guarantee that smaller allocations will succeed, but
+ *		larger requests will be summarily denied.
+ *
+ * palloc() enforces MaxAllocSize, chosen to correspond to the limiting size
+ * of varlena objects under TOAST.  See VARSIZE_4B() and related macros in
+ * postgres.h.  Many datatypes assume that any allocatable size can be
+ * represented in a varlena header.  This limit also permits a caller to use
+ * an "int" variable for an index into or length of an allocation.  Callers
+ * careful to avoid these hazards can access the higher limit with
+ * MemoryContextAllocHuge().  Both limits permit code to assume that it may
+ * compute twice an allocation's size without overflow.
+ */
 #define MaxAllocSize    ((Size) 0x3fffffff)     /* 1 gigabyte - 1 */
 
 
@@ -90,10 +107,11 @@ typedef StringInfoData *StringInfo;
  *
  * NOTE: some routines build up a string using StringInfo, and then
  * release the StringInfoData but return the data string itself to their
- * caller.	At that point the data string looks like a plain palloc'd
+ * caller.  At that point the data string looks like a plain palloc'd
  * string.
  *-------------------------
  */
+
 /*------------------------
  * makeStringInfo
  * Create an empty 'StringInfoData' & return a pointer to it.
@@ -121,22 +139,18 @@ extern void resetStringInfo(StringInfo str);
  * to str if necessary.  This is sort of like a combination of sprintf and
  * strcat.
  */
-extern void
-appendStringInfo(StringInfo str, const char *fmt,...)
-/* This extension allows gcc to check the format string */
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
+extern void appendStringInfo(StringInfo str, const char *fmt,...) pg_attribute_printf(2, 3);
 
 /*------------------------
  * appendStringInfoVA
  * Attempt to format text data under the control of fmt (an sprintf-style
- * format string) and append it to whatever is already in str.	If successful
- * return true; if not (because there's not enough space), return false
- * without modifying str.  Typically the caller would enlarge str and retry
- * on false return --- see appendStringInfo for standard usage pattern.
+ * format string) and append it to whatever is already in str.  If successful
+ * return zero; if not (because there's not enough space), return an estimate
+ * of the space needed, without modifying str.  Typically the caller should
+ * pass the return value to enlargeStringInfo() before trying again; see
+ * appendStringInfo for standard usage pattern.
  */
-extern bool
-appendStringInfoVA(StringInfo str, const char *fmt, va_list args)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 0)));
+extern int	appendStringInfoVA(StringInfo str, const char *fmt, va_list args) pg_attribute_printf(2, 0);
 
 /*------------------------
  * appendStringInfoString

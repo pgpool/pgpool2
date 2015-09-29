@@ -4,12 +4,12 @@
  *		API for the core scanner (flex machine)
  *
  * The core scanner is also used by PL/pgsql, so we provide a public API
- * for it.	However, the rest of the backend is only expected to use the
+ * for it.  However, the rest of the backend is only expected to use the
  * higher-level API provided by parser.h.
  *
  *
- * Portions Copyright (c) 2003-2014, PgPool Global Development Group
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2015, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/parser/scanner.h
@@ -51,7 +51,8 @@ typedef union core_YYSTYPE
  * the ASCII characters plus these:
  *	%token <str>	IDENT FCONST SCONST BCONST XCONST Op
  *	%token <ival>	ICONST PARAM
- *	%token			TYPECAST DOT_DOT COLON_EQUALS
+ *	%token			TYPECAST DOT_DOT COLON_EQUALS EQUALS_GREATER
+ *	%token			LESS_EQUALS GREATER_EQUALS NOT_EQUALS
  * The above token definitions *must* be the first ones declared in any
  * bison parser built atop this scanner, so that they will have consistent
  * numbers assigned to them (specifically, IDENT = 258 and so on).
@@ -59,7 +60,7 @@ typedef union core_YYSTYPE
 
 /*
  * The YY_EXTRA data that a flex scanner allows us to pass around.
- * Private state needed by the core scanner goes here.	Note that the actual
+ * Private state needed by the core scanner goes here.  Note that the actual
  * yy_extra struct may be larger and have this as its first component, thus
  * allowing the calling parser to keep some fields of its own in YY_EXTRA.
  */
@@ -77,6 +78,16 @@ typedef struct core_yy_extra_type
 	 */
 	const ScanKeyword *keywords;
 	int			num_keywords;
+
+	/*
+	 * Scanner settings to use.  These are initialized from the corresponding
+	 * GUC variables by scanner_init().  Callers can modify them after
+	 * scanner_init() if they don't want the scanner's behavior to follow the
+	 * prevailing GUC settings.
+	 */
+	int			backslash_quote;
+	bool		escape_string_warning;
+	bool		standard_conforming_strings;
 
 	/*
 	 * literalbuf is used to accumulate literal values when multiple rules are
@@ -115,6 +126,6 @@ extern void scanner_finish(core_yyscan_t yyscanner);
 extern int core_yylex(core_YYSTYPE *lvalp, YYLTYPE *llocp,
 		   core_yyscan_t yyscanner);
 extern int	scanner_errposition(int location, core_yyscan_t yyscanner);
-extern void scanner_yyerror(const char *message, core_yyscan_t yyscanner);
+extern void scanner_yyerror(const char *message, core_yyscan_t yyscanner) pg_attribute_noreturn();
 
 #endif   /* SCANNER_H */

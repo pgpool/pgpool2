@@ -5,7 +5,7 @@
  *
  * Because of the extremely high rate at which log messages can be generated,
  * we need to be mindful of the performance cost of obtaining any information
- * that may be logged.	Also, it's important to keep in mind that this code may
+ * that may be logged.  Also, it's important to keep in mind that this code may
  * get called from within an aborted transaction, in which case operations
  * such as syscache lookups are unsafe.
  *
@@ -15,12 +15,12 @@
  * if we run out of memory, it's important to be able to report that fact.
  * There are a number of considerations that go into this.
  *
- * First, distinguish between re-entrant use and actual recursion.	It
+ * First, distinguish between re-entrant use and actual recursion.  It
  * is possible for an error or warning message to be emitted while the
  * parameters for an error message are being computed.	In this case
  * errstart has been called for the outer message, and some field values
- * may have already been saved, but we are not actually recursing.	We handle
- * this by providing a (small) stack of ErrorData records.	The inner message
+ * may have already been saved, but we are not actually recursing.  We handle
+ * this by providing a (small) stack of ErrorData records.  The inner message
  * can be computed and sent without disturbing the state of the outer message.
  * (If the inner message is actually an error, this isn't very interesting
  * because control won't come back to the outer message generator ... but
@@ -43,8 +43,8 @@
  * overflow.)
  *
  *
- * Portions Copyright (c) 2003-2014, PgPool Global Development Group
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2015, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -93,12 +93,15 @@ struct ONEXIT on_exit_prepare = {NULL,0L};
  * (or in the parent postmaster).
  */
 static bool atexit_callback_setup = false;
+
 /*
  * This flag is set during proc_exit() to change ereport()'s behavior,
  * so that an ereport() from an on_proc_exit routine cannot get us out
  * of the exit procedure.  We do NOT want to go back to the idle loop...
  */
+
 bool		proc_exit_inprogress = false;
+
 /* local functions */
 static void proc_exit_prepare(int code);
 
@@ -574,13 +577,13 @@ int pool_error_code(const char *errcode)
 		for (;;) \
 		{ \
 			va_list		args; \
-			bool		success; \
+			int			needed; \
 			va_start(args, fmt); \
-			success = appendStringInfoVA(&buf, fmtbuf, args); \
+			needed = appendStringInfoVA(&buf, fmtbuf, args); \
 			va_end(args); \
-			if (success) \
+			if (needed == 0) \
 				break; \
-			enlargeStringInfo(&buf, buf.maxlen); \
+			enlargeStringInfo(&buf, needed); \
 		} \
 		/* Done with expanded fmt */ \
 		pfree(fmtbuf); \
@@ -617,13 +620,13 @@ int pool_error_code(const char *errcode)
 		for (;;) \
 		{ \
 			va_list		args; \
-			bool		success; \
+			int			needed; \
 			va_start(args, n); \
-			success = appendStringInfoVA(&buf, fmtbuf, args); \
+			needed = appendStringInfoVA(&buf, fmtbuf, args); \
 			va_end(args); \
-			if (success) \
+			if (needed == 0) \
 				break; \
-			enlargeStringInfo(&buf, buf.maxlen); \
+			enlargeStringInfo(&buf, needed); \
 		} \
 		/* Done with expanded fmt */ \
 		pfree(fmtbuf); \

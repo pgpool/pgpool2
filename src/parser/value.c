@@ -4,8 +4,8 @@
  *	  implementation of Value nodes
  *
  *
- * Portions Copyright (c) 2003-2013, PgPool Global Development Group
- * Copyright (c) 2003-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2015, PgPool Global Development Group
+ * Copyright (c) 2003-2015, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

@@ -3586,8 +3586,8 @@ static bool is_internal_transaction_needed(Node *node)
 		 */
 		else if (IsA(node, ReindexStmt))
 		{
-			if (((ReindexStmt *)node)->kind == OBJECT_DATABASE ||
-				((ReindexStmt *)node)->do_system)
+			if (((ReindexStmt *)node)->kind == REINDEX_OBJECT_SYSTEM ||
+				((ReindexStmt *)node)->kind == REINDEX_OBJECT_DATABASE)
 				return false;
 		}
 

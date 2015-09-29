@@ -27,8 +27,8 @@
  * always be so; try to be careful to maintain the distinction.)
  *
  *
- * Portions Copyright (c) 2003-2014, PgPool Global Development Group
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2015, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/pg_list.h
@@ -208,6 +208,7 @@ extern List *lcons_oid(Oid datum, List *list);
 extern List *list_concat(List *list1, List *list2);
 extern List *list_truncate(List *list, int new_size);
 
+extern ListCell *list_nth_cell(const List *list, int n);
 extern void *list_nth(const List *list, int n);
 extern int	list_nth_int(const List *list, int n);
 extern Oid	list_nth_oid(const List *list, int n);
@@ -230,8 +231,9 @@ extern List *list_union_int(const List *list1, const List *list2);
 extern List *list_union_oid(const List *list1, const List *list2);
 
 extern List *list_intersection(const List *list1, const List *list2);
+extern List *list_intersection_int(const List *list1, const List *list2);
 
-/* currently, there's no need for list_intersection_int etc */
+/* currently, there's no need for list_intersection_ptr etc */
 
 extern List *list_difference(const List *list1, const List *list2);
 extern List *list_difference_ptr(const List *list1, const List *list2);

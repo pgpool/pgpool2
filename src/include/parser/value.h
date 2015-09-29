@@ -4,8 +4,8 @@
  *	  interface for Value nodes
  *
  *
- * Copyright (c) 2003-2013, PgPool Global Development Group
- * Copyright (c) 2003-2012, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2015, PgPool Global Development Group
+ * Copyright (c) 2003-2015, PostgreSQL Global Development Group
  *
  * src/include/nodes/value.h
  *
@@ -30,7 +30,7 @@
  *
  * (Before Postgres 7.0, we used a double to represent T_Float,
  * but that creates loss-of-precision problems when the value is
- * ultimately destined to be converted to NUMERIC.	Since Value nodes
+ * ultimately destined to be converted to NUMERIC.  Since Value nodes
  * are only used in the parsing process, not for runtime data, it's
  * better to use the more general representation.)
  *

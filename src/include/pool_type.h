@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -205,6 +205,23 @@ typedef uint8 bits8;			/* >= 8 bits */
 typedef uint16 bits16;			/* >= 16 bits */
 typedef uint32 bits32;			/* >= 32 bits */
 typedef unsigned long long int uint64;
+
+/*
+ * stdint.h limits aren't guaranteed to be present and aren't guaranteed to
+ * have compatible types with our fixed width types. So just define our own.
+ */
+#define PG_INT8_MIN		(-0x7F-1)
+#define PG_INT8_MAX		(0x7F)
+#define PG_UINT8_MAX	(0xFF)
+#define PG_INT16_MIN	(-0x7FFF-1)
+#define PG_INT16_MAX	(0x7FFF)
+#define PG_UINT16_MAX	(0xFFFF)
+#define PG_INT32_MIN	(-0x7FFFFFFF-1)
+#define PG_INT32_MAX	(0x7FFFFFFF)
+#define PG_UINT32_MAX	(0xFFFFFFFF)
+#define PG_INT64_MIN	(-INT64CONST(0x7FFFFFFFFFFFFFFF) - 1)
+#define PG_INT64_MAX	INT64CONST(0x7FFFFFFFFFFFFFFF)
+#define PG_UINT64_MAX	UINT64CONST(0xFFFFFFFFFFFFFFFF)
 
 
 typedef size_t Size;

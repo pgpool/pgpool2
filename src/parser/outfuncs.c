@@ -3,13 +3,13 @@
  * outfuncs.c
  *	  Output functions for Postgres tree nodes.
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2015, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.360 2009/06/11 14:48:58 momjian Exp $
+ *	  src/backend/nodes/outfuncs.c
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -36,6 +36,7 @@
 #define booltostr(x)  ((x) ? "true" : "false")
 
 void _outNode(String *str, void *obj);
+
 static void _outList(String *str, List *node);
 static void _outIdList(String *str, List *node);
 static void _outAlias(String *str, Alias *node);
@@ -44,6 +45,7 @@ static void _outVar(String *str, Var *node);
 static void _outConst(String *str, Const *node);
 static void _outParam(String *str, Param *node);
 static void _outAggref(String *str, Aggref *node);
+static void _outGroupingFunc(String *str, GroupingFunc *node);
 static void _outArrayRef(String *str, ArrayRef *node);
 static void _outFuncExpr(String *str, FuncExpr *node);
 static void _outNamedArgExpr(String *str, NamedArgExpr *node);
@@ -70,12 +72,16 @@ static void _outBooleanTest(String *str, BooleanTest *node);
 static void _outCoerceToDomain(String *str, CoerceToDomain *node);
 static void _outCoerceToDomainValue(String *str, CoerceToDomainValue *node);
 static void _outSetToDefault(String *str, SetToDefault *node);
+static void _outCurrentOfExpr(String *str, CurrentOfExpr *node);
+static void _outInferenceElem(String *str, InferenceElem *node);
 static void _outTargetEntry(String *str, TargetEntry *node);
 static void _outRangeTblRef(String *str, RangeTblRef *node);
 static void _outJoinExpr(String *str, JoinExpr *node);
 static void _outFromExpr(String *str, FromExpr *node);
 static void _outCreateStmt(String *str, CreateStmt *node);
 static void _outCreateTableAsStmt(String *str, CreateTableAsStmt *node);
+static void _outCreateForeignTableStmt(String *str, CreateForeignTableStmt *node);
+static void _outImportForeignSchemaStmt(String *str, ImportForeignSchemaStmt *node);
 static void _outIndexStmt(String *str, IndexStmt *node);
 static void _outNotifyStmt(String *str, NotifyStmt *node);
 static void _outDeclareCursorStmt(String *str, DeclareCursorStmt *node);
@@ -87,9 +93,11 @@ static void _outColumnDef(String *str, ColumnDef *node);
 static void _outTypeName(String *str, TypeName *node);
 static void _outTypeCast(String *str, TypeCast *node);
 static void _outIndexElem(String *str, IndexElem *node);
+static void _outGroupingSet(String *str, GroupingSet *node);
 static void _outWithClause(String *str, WithClause *node);
 static void _outCommonTableExpr(String *str, CommonTableExpr *node);
 static void _outSetOperationStmt(String *str, SetOperationStmt *node);
+static void _outTableSampleClause(String *str, TableSampleClause *node);
 static void _outAExpr(String *str, A_Expr *node);
 static void _outValue(String *str, Value *value);
 static void _outColumnRef(String *str, ColumnRef *node);
@@ -98,20 +106,19 @@ static void _outAConst(String *str, A_Const *node);
 static void _outA_Indices(String *str, A_Indices *node);
 static void _outA_Indirection(String *str, A_Indirection *node);
 static void _outResTarget(String *str, ResTarget *node);
+static void _outMultiAssignRef(String *str, MultiAssignRef *node);
 static void _outA_ArrayExpr(String *str, A_ArrayExpr *node);
 static void _outWindowDef(String *str, WindowDef *node);
 static void _outConstraint(String *str, Constraint *node);
 
 static void _outSortBy(String *str, SortBy *node);
 static void _outInsertStmt(String *str, InsertStmt *node);
+static void _outSetClause(String *str, List *node);
 static void _outUpdateStmt(String *str, UpdateStmt *node);
 static void _outDeleteStmt(String *str, DeleteStmt *node);
 static void _outTransactionStmt(String *str, TransactionStmt *node);
 static void _outTruncateStmt(String *str, TruncateStmt *node);
-#ifdef NOT_USED_IN_PGPOOL
-/* 9.0 does have this */
 static void _outVacuumStmt(String *str, VacuumStmt *node);
-#endif
 static void _outExplainStmt(String *str, ExplainStmt *node);
 static void _outClusterStmt(String *str, ClusterStmt *node);
 static void _outCheckPointStmt(String *str, CheckPointStmt *node);
@@ -175,7 +182,6 @@ static void _outSetRest(String *str, VariableSetStmt *node);
 static void _outSetTransactionModeList(String *str, List *list);
 static void _outAlterTableCmd(String *str, AlterTableCmd *node);
 static void _outOptSeqList(String *str, List *options);
-static void _outPrivGrantee(String *str, PrivGrantee *node);
 static void _outFuncWithArgs(String *str, FuncWithArgs *node);
 static void _outFunctionParameter(String *str, FunctionParameter *node);
 static void _outPrivilegeList(String *str, List *list);
@@ -183,9 +189,9 @@ static void _outFuncOptList(String *str, List *list);
 static void _outCreatedbOptList(String *str, List *options);
 static void _outOperatorArgTypes(String *str, List *args);
 static void _outRangeFunction(String *str, RangeFunction *node);
-static void _outInhRelation(String *str, TableLikeClause *node);
+static void _outRangeTableSample(String *str, RangeTableSample *node);
 static void _outWithDefinition(String *str, List *def_list);
-static void _outCurrentOfExpr(String *str, CurrentOfExpr *node);
+static void _outOnConflictClause(String *str, OnConflictClause *node);
 
 
 /*
@@ -231,7 +237,7 @@ static char *escape_string(char *str)
 {
 	int len = strlen(str), i, j;
 	char *es = palloc0(len * 2 + 1);
-	
+
 	if (es == NULL)
 	{
 		return NULL;
@@ -273,7 +279,7 @@ static void _outIdList(String *str, List *node)
 	}
 }
 
-static void _outList(String *str, List *node)
+static void _outListWith(String *str, List *node, char *op)
 {
 	ListCell   *lc;
 	char first = 0;
@@ -283,12 +289,17 @@ static void _outList(String *str, List *node)
 		if (first == 0)
 			first = 1;
 		else
-		{	
+		{
 			if (!IsA(lfirst(lc), A_Indices))
-				string_append_char(str, ",");
+				string_append_char(str, op);
 		}
 		_outNode(str, lfirst(lc));
 	}
+}
+
+static void _outList(String *str, List *node)
+{
+	_outListWith(str, node, ",");
 }
 
 
@@ -305,7 +316,7 @@ _outAlias(String *str, Alias *node)
 	string_append_char(str, " AS \"");
 	string_append_char(str, node->aliasname);
 	string_append_char(str, "\"");
-	
+
 	if (node->colnames)
 	{
 		string_append_char(str, "(");
@@ -369,6 +380,15 @@ _outAggref(String *str, Aggref *node)
 }
 
 static void
+_outGroupingFunc(String *str, GroupingFunc *node)
+{
+	string_append_char(str, "GROUPING (");
+	_outNode(str, node->args);
+	string_append_char(str, ")");
+
+}
+
+static void
 _outArrayRef(String *str, ArrayRef *node)
 {
 }
@@ -408,7 +428,26 @@ _outScalarArrayOpExpr(String *str, ScalarArrayOpExpr *node)
 static void
 _outBoolExpr(String *str, BoolExpr *node)
 {
+	switch (node->boolop)
+	{
+		case AND_EXPR:
+			string_append_char(str, " (");
+			_outListWith(str, node->args, " AND ");
+			string_append_char(str, ")");
+			break;
 
+		case OR_EXPR:
+			string_append_char(str, " (");
+			_outListWith(str, node->args, " OR ");
+			string_append_char(str, ")");
+			break;
+
+		case NOT_EXPR:
+			string_append_char(str, " (NOT ");
+			_outList(str, node->args);
+			string_append_char(str, ")");
+			break;
+	}
 }
 
 static void
@@ -545,14 +584,15 @@ _outArrayExpr(String *str, ArrayExpr *node)
 static void
 _outRowExpr(String *str, RowExpr *node)
 {
-	if (node->args == NIL)
-		string_append_char(str, "ROW ()");
-	else
-	{
+	if (node->row_format == COERCE_EXPLICIT_CAST)
 		string_append_char(str, "ROW (");
+	else
+		string_append_char(str, "(");
+
+	if (node->args != NIL)
 		_outNode(str, node->args);
-		string_append_char(str, ")");
-	}
+
+	string_append_char(str, ")");
 }
 
 static void
@@ -648,6 +688,26 @@ _outSetToDefault(String *str, SetToDefault *node)
 }
 
 static void
+_outCurrentOfExpr(String *str, CurrentOfExpr *node)
+{
+	string_append_char(str, "CURRENT OF ");
+	if (node->cursor_name == NULL)
+	{
+		char n[10];
+		snprintf(n, sizeof(n), "$%d", node->cursor_param);
+		string_append_char(str, n);
+	}
+	else
+		string_append_char(str, node->cursor_name);
+}
+
+static void
+_outInferenceElem(String *str, InferenceElem *node)
+{
+
+}
+
+static void
 _outTargetEntry(String *str, TargetEntry *node)
 {
 
@@ -700,13 +760,13 @@ _outJoinExpr(String *str, JoinExpr *node)
 				comma = 1;
 			else
 				string_append_char(str, ",");
-			
+
 			value = lfirst(lc);
 			string_append_char(str, "\"");
 			string_append_char(str, value->val.str);
 			string_append_char(str, "\"");
 		}
-		
+
 		string_append_char(str, ")");
 	}
 
@@ -719,6 +779,12 @@ _outJoinExpr(String *str, JoinExpr *node)
 
 static void
 _outFromExpr(String *str, FromExpr *node)
+{
+
+}
+
+static void
+_outOnConflictExpr(String *str, const OnConflictExpr *node)
 {
 
 }
@@ -829,6 +895,18 @@ _outCreateTableAsStmt(String *str, CreateTableAsStmt *node)
 }
 
 static void
+_outCreateForeignTableStmt(String *str, CreateForeignTableStmt *node)
+{
+
+}
+
+static void
+_outImportForeignSchemaStmt(String *str, ImportForeignSchemaStmt *node)
+{
+
+}
+
+static void
 _outIndexStmt(String *str, IndexStmt *node)
 {
 	string_append_char(str, "CREATE ");
@@ -839,7 +917,7 @@ _outIndexStmt(String *str, IndexStmt *node)
 	if (node->concurrent == true)
 		string_append_char(str, "INDEX CONCURRENTLY ");
 	else
-		string_append_char(str, "INDEX ");		
+		string_append_char(str, "INDEX ");
 	if (node->idxname)
 	{
 		string_append_char(str, "\"");
@@ -848,7 +926,7 @@ _outIndexStmt(String *str, IndexStmt *node)
 	}
 	string_append_char(str, "ON ");
 	_outNode(str, node->relation);
-	
+
 	if (strcmp(node->accessMethod, DEFAULT_INDEX_TYPE))
 	{
 		string_append_char(str, " USING ");
@@ -917,14 +995,14 @@ _outSelectStmt(String *str, SelectStmt *node)
 			case SETOP_UNION:
 				string_append_char(str, " UNION ");
 				break;
-				
+
 			case SETOP_INTERSECT:
 				string_append_char(str, " INTERSECT ");
 				break;
-				
+
 			case SETOP_EXCEPT:
 				string_append_char(str, " EXCEPT ");
-				
+
 			default:
 				break;
 		}
@@ -976,7 +1054,7 @@ _outSelectStmt(String *str, SelectStmt *node)
 				_outNode(str, into->colNames);
 				string_append_char(str, ") ");
 			}
-			
+
 			if (into->options)
 				_outWithDefinition(str, into->options);
 
@@ -1154,12 +1232,27 @@ _outLockingClause(String *str, LockingClause *node)
 		case LCS_FORUPDATE:
 			string_append_char(str, " FOR UPDATE");
 			break;
+		case LCS_NONE:
+			break;
 	}
 
-	_outNode(str, node->lockedRels);
+	if (node->lockedRels)
+	{
+		string_append_char(str, " OF ");
+		_outNode(str, node->lockedRels);
+	}
 
-	if (node->noWait == TRUE)
-		string_append_char(str, " NOWAIT ");
+	switch (node->waitPolicy)
+	{
+		case LockWaitError:
+			string_append_char(str, " NOWAIT");
+			break;
+		case LockWaitSkip:
+			string_append_char(str, " SKIP LOCKED");
+			break;
+		case LockWaitBlock:
+			break;
+	}
 }
 
 static void
@@ -1183,7 +1276,7 @@ _outTypeName(String *str, TypeName *node)
 	 * ERROR:  syntax error at or near "year"
 	 * LINE 1: SELECT '1'::"interval" year;
 	 */
-	if (list_length(node->names) == 2 && 
+	if (list_length(node->names) == 2 &&
 		strcmp("pg_catalog", strVal(linitial(node->names))) == 0)
    	{
 		string_append_char(str, strVal(lsecond(node->names)));
@@ -1200,7 +1293,7 @@ _outTypeName(String *str, TypeName *node)
 				 * use `'1.2 second'::interval(0) second'
 				 * not `'1.2 second'::interval second(0)'(standarad for 8.4).
 				 */
-				if ((INTERVAL_MASK(SECOND) & mask) && 
+				if ((INTERVAL_MASK(SECOND) & mask) &&
 					list_length(node->typmods) == 2)
 				{
 					string_append_char(str, "(");
@@ -1228,7 +1321,7 @@ _outTypeName(String *str, TypeName *node)
 				else if (mask == (INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) |
 								  INTERVAL_MASK(MINUTE)))
 					string_append_char(str, " DAY TO MINUTE");
-				else if (mask == (INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) | 
+				else if (mask == (INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) |
 								  INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND)))
 					string_append_char(str, " DAY TO SECOND");
 				else if (mask == (INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE)))
@@ -1262,11 +1355,11 @@ _outTypeName(String *str, TypeName *node)
 				string_append_char(str, "\"");
 				string_append_char(str, typename);
 				string_append_char(str, "\"");
-			} else 
+			} else
 				string_append_char(str, typename);
 		}
 	}
-	
+
 	/* precisions */
 	if (node->typmods)
 	{
@@ -1303,6 +1396,17 @@ _outTypeCast(String *str, TypeCast *node)
 }
 
 static void
+_outCollateClause(String *str, const CollateClause *node)
+{
+	if (node->arg)
+		_outNode(str, node->arg);
+	string_append_char(str, " COLLATE ");
+	string_append_char(str, "\"");
+	string_append_char(str, ((Value *)linitial(node->collname))->val.str);
+	string_append_char(str, "\"");
+}
+
+static void
 _outIndexElem(String *str, IndexElem *node)
 {
 	if (node->name)
@@ -1321,6 +1425,34 @@ _outIndexElem(String *str, IndexElem *node)
 		if (node->opclass != NIL)
 			_outNode(str, node->opclass);
 	}
+}
+
+static void
+_outGroupingSet(String *str, GroupingSet *node)
+{
+	switch (node->kind)
+	{
+		case GROUPING_SET_EMPTY:
+			string_append_char(str, " (");
+			break;
+		case GROUPING_SET_ROLLUP:
+			string_append_char(str, " ROLLUP (");
+			_outNode(str, node->content);
+			break;
+		case GROUPING_SET_CUBE:
+			string_append_char(str, " CUBE (");
+			_outNode(str, node->content);
+			break;
+		case GROUPING_SET_SETS:
+			string_append_char(str, " GROUPING SETS (");
+			_outNode(str, node->content);
+			break;
+		default:
+			break;
+	}
+
+	string_append_char(str, " )");
+
 }
 
 static void
@@ -1360,6 +1492,12 @@ _outSetOperationStmt(String *str, SetOperationStmt *node)
 
 
 static void
+_outTableSampleClause(String *str, TableSampleClause *node)
+{
+
+}
+
+static void
 _outAExpr(String *str, A_Expr *node)
 {
 	Value *v;
@@ -1377,28 +1515,6 @@ _outAExpr(String *str, A_Expr *node)
 				_outNode(str, node->rexpr);
 				string_append_char(str, " )");
 			}
-			break;
-
-		case AEXPR_AND:
-			string_append_char(str, " (");
-			_outNode(str, node->lexpr);
-			string_append_char(str, " AND ");
-			_outNode(str, node->rexpr);
-			string_append_char(str, ")");
-			break;
-				
-		case AEXPR_OR:
-			string_append_char(str, " (");
-			_outNode(str, node->lexpr);
-			string_append_char(str, " OR ");
-			_outNode(str, node->rexpr);
-			string_append_char(str, ")");
-			break;
-
-		case AEXPR_NOT:
-			string_append_char(str, " (NOT ");
-			_outNode(str, node->rexpr);
-			string_append_char(str, ")");
 			break;
 
 		case AEXPR_OP_ANY:
@@ -1424,7 +1540,7 @@ _outAExpr(String *str, A_Expr *node)
 			_outNode(str, node->lexpr);
 			string_append_char(str, " IS DISTINCT FROM ");
 			_outNode(str, node->rexpr);
-			string_append_char(str, ")");				
+			string_append_char(str, ")");
 			break;
 
 		case AEXPR_NULLIF:
@@ -1455,6 +1571,98 @@ _outAExpr(String *str, A_Expr *node)
 				string_append_char(str, " NOT IN (");
 			_outNode(str, node->rexpr);
 			string_append_char(str, ")");
+			break;
+
+		case AEXPR_LIKE:
+			_outNode(str, node->lexpr);
+			v = (Value *)lfirst(list_head(node->name));
+			if (!strcmp(v->val.str, "~~"))
+				string_append_char(str, " LIKE ");
+			else
+				string_append_char(str, " NOT LIKE ");
+			if (IsA(node->rexpr, FuncCall))
+			{
+				FuncCall *rexpr = (FuncCall*)node->rexpr;
+				_outNode(str, linitial(rexpr->args));
+				string_append_char(str, " ESCAPE ");
+				_outNode(str, lsecond(rexpr->args));
+			}
+			else
+				_outNode(str, node->rexpr);
+			break;
+
+		case AEXPR_ILIKE:
+			_outNode(str, node->lexpr);
+			v = (Value *)lfirst(list_head(node->name));
+			if (!strcmp(v->val.str, "~~*"))
+				string_append_char(str, " ILIKE ");
+			else
+				string_append_char(str, " NOT ILIKE ");
+			if (IsA(node->rexpr, FuncCall))
+			{
+				FuncCall *rexpr = (FuncCall*)node->rexpr;
+				_outNode(str, linitial(rexpr->args));
+				string_append_char(str, " ESCAPE ");
+				_outNode(str, lsecond(rexpr->args));
+			}
+			else
+				_outNode(str, node->rexpr);
+			break;
+
+		case AEXPR_SIMILAR:
+			_outNode(str, node->lexpr);
+			v = (Value *)lfirst(list_head(node->name));
+			if (!strcmp(v->val.str, "~"))
+				string_append_char(str, " SIMILAR TO ");
+			else
+				string_append_char(str, " NOT SIMILAR TO ");
+			if (IsA(node->rexpr, FuncCall))
+			{
+				FuncCall *rexpr = (FuncCall*)node->rexpr;
+				_outNode(str, linitial(rexpr->args));
+				string_append_char(str, " ESCAPE ");
+				_outNode(str, lsecond(rexpr->args));
+			}
+			else
+				_outNode(str, node->rexpr);
+			break;
+
+		case AEXPR_BETWEEN:
+			_outNode(str, node->lexpr);
+			string_append_char(str, " BETWEEN ");
+			_outNode(str, linitial((List *)node->rexpr));
+			string_append_char(str, " AND ");
+			_outNode(str, lsecond((List *)node->rexpr));
+			break;
+
+		case AEXPR_NOT_BETWEEN:
+			_outNode(str, node->lexpr);
+			string_append_char(str, " NOT BETWEEN ");
+			_outNode(str, linitial((List *)node->rexpr));
+			string_append_char(str, " AND ");
+			_outNode(str, lsecond((List *)node->rexpr));
+			break;
+
+		case AEXPR_BETWEEN_SYM:
+			_outNode(str, node->lexpr);
+			string_append_char(str, " BETWEEN SYMMETRIC ");
+			_outNode(str, linitial((List *)node->rexpr));
+			string_append_char(str, " AND ");
+			_outNode(str, lsecond((List *)node->rexpr));
+			break;
+
+		case AEXPR_NOT_BETWEEN_SYM:
+			_outNode(str, node->lexpr);
+			string_append_char(str, " NOT BETWEEN SYMMETRIC ");
+			_outNode(str, linitial((List *)node->rexpr));
+			string_append_char(str, " AND ");
+			_outNode(str, lsecond((List *)node->rexpr));
+			break;
+
+		case AEXPR_PAREN:
+			string_append_char(str, " ( ");
+			_outNode(str, node->lexpr);
+			string_append_char(str, " ) ");
 			break;
 
 		default:
@@ -1516,7 +1724,7 @@ _outColumnRef(String *str, ColumnRef *node)
 			string_append_char(str, v->val.str);
 			string_append_char(str, "\"");
 		}
-		else if (IsA(n, A_Star)) 
+		else if (IsA(n, A_Star))
 		{
 			if (first == 0)
 				first = 1;
@@ -1651,6 +1859,13 @@ _outResTarget(String *str, ResTarget *node)
 			string_append_char(str, "\" ");
 		}
 	}
+}
+
+
+static void
+_outMultiAssignRef(String *str, MultiAssignRef *node)
+{
+	_outNode(str, node->source);
 }
 
 static void
@@ -1903,7 +2118,7 @@ static void
 _outSortBy(String *str, SortBy *node)
 {
 	_outNode(str, node->node);
-	
+
 	if (node->sortby_dir == SORTBY_USING)
 	{
 		string_append_char(str, " USING ");
@@ -1920,6 +2135,9 @@ _outSortBy(String *str, SortBy *node)
 
 static void _outInsertStmt(String *str, InsertStmt *node)
 {
+	if (node->withClause)
+		_outWithClause(str, node->withClause);
+
 	string_append_char(str, "INSERT INTO ");
 	_outNode(str, node->relation);
 
@@ -1971,6 +2189,11 @@ static void _outInsertStmt(String *str, InsertStmt *node)
 		_outNode(str, node->selectStmt);
 	}
 
+	if (node->onConflictClause)
+	{
+		_outOnConflictClause(str, node->onConflictClause);
+	}
+
 	if (node->returningList)
 	{
 		string_append_char(str, " RETURNING ");
@@ -1978,48 +2201,98 @@ static void _outInsertStmt(String *str, InsertStmt *node)
 	}
 }
 
-static void _outUpdateStmt(String *str, UpdateStmt *node)
+static void _outSetClause(String *str, List *node)
 {
 	ListCell *lc;
 	char comma = 0;
+
+	ResTarget *first = linitial(node);
+	string_append_char(str, " SET ");
+
+	if (IsA(first->val, MultiAssignRef))
+	{
+		string_append_char(str, "(");
+		foreach (lc, node)
+		{
+			ResTarget *node = lfirst(lc);
+			ListCell  *lc_ind;
+
+			if (comma == 0)
+				comma = 1;
+			else
+				string_append_char(str, ", ");
+
+			string_append_char(str, "\"");
+			string_append_char(str, node->name);
+			string_append_char(str, "\"");
+
+			foreach (lc_ind, node->indirection)
+			{
+				Node	*ind = lfirst(lc_ind);
+
+				if (IsA(ind, String))
+				{
+					string_append_char(str, ".\"");
+					string_append_char(str, strVal(ind));
+					string_append_char(str, "\"");
+				}
+				else
+					/* foo[1] (A_Indices) */
+					_outNode(str, ind);
+			}
+		}
+		string_append_char(str, ") = ");
+
+		_outNode(str, first->val);
+
+	}
+	else
+	{
+		foreach (lc, node)
+		{
+			ResTarget *node = lfirst(lc);
+			ListCell  *lc_ind;
+
+			if (comma == 0)
+				comma = 1;
+			else
+				string_append_char(str, ", ");
+
+			string_append_char(str, "\"");
+			string_append_char(str, node->name);
+			string_append_char(str, "\"");
+
+			foreach (lc_ind, node->indirection)
+			{
+				Node	*ind = lfirst(lc_ind);
+
+				if (IsA(ind, String))
+				{
+					string_append_char(str, ".\"");
+					string_append_char(str, strVal(ind));
+					string_append_char(str, "\"");
+				}
+				else
+					/* foo[1] (A_Indices) */
+					_outNode(str, ind);
+			}
+
+			string_append_char(str, " = ");
+			_outNode(str, node->val);
+		}
+	}
+}
+
+static void _outUpdateStmt(String *str, UpdateStmt *node)
+{
+	if (node->withClause)
+		_outWithClause(str, node->withClause);
 
 	string_append_char(str, "UPDATE ");
 
 	_outNode(str, node->relation);
 
-	string_append_char(str, " SET ");
-	foreach (lc, node->targetList)
-	{
-		ResTarget *node = lfirst(lc);
-		ListCell  *lc_ind;
-
-		if (comma == 0)
-			comma = 1;
-		else
-			string_append_char(str, ", ");
-
-		string_append_char(str, "\"");
-		string_append_char(str, node->name);
-		string_append_char(str, "\"");
-
-		foreach (lc_ind, node->indirection)
-		{
-			Node	*ind = lfirst(lc_ind);
-
-			if (IsA(ind, String))
-			{
-				string_append_char(str, ".\"");
-				string_append_char(str, strVal(ind));
-				string_append_char(str, "\"");
-			}
-			else
-				/* foo[1] (A_Indices) */
-				_outNode(str, ind);
-		}
-
-		string_append_char(str, " = ");
-		_outNode(str, node->val);
-	}
+	_outSetClause(str, node->targetList);
 
 	if (node->fromClause)
 	{
@@ -2042,6 +2315,9 @@ static void _outUpdateStmt(String *str, UpdateStmt *node)
 
 static void _outDeleteStmt(String *str, DeleteStmt *node)
 {
+	if (node->withClause)
+		_outWithClause(str, node->withClause);
+
 	string_append_char(str, "DELETE FROM ");
 
 	_outNode(str, node->relation);
@@ -2127,25 +2403,23 @@ static void _outTruncateStmt(String *str, TruncateStmt *node)
 	_outNode(str, node->relations);
 }
 
-#ifdef NOT_USED_IN_PGPOOL
-/* 9.0 does not have */
 static void _outVacuumStmt(String *str, VacuumStmt *node)
 {
-	if (node->vacuum == true)
+	if (node->options | VACOPT_VACUUM)
 		string_append_char(str, "VACUUM ");
-	else
+	else if (node->options | VACOPT_ANALYZE)
 		string_append_char(str, "ANALYZE ");
 
-	if (node->full == TRUE)
+	if (node->options | VACOPT_FULL)
 		string_append_char(str, "FULL ");
-	
-	if (node->freeze_min_age == 0)
+
+	if (node->options | VACOPT_FREEZE)
 		string_append_char(str, "FREEZE ");
 
-	if (node->verbose == TRUE)
+	if (node->options | VACOPT_VERBOSE)
 		string_append_char(str, "VERBOSE ");
 
-	if (node->analyze)
+	if (node->options | VACOPT_VACUUM && node->options | VACOPT_ANALYZE)
 		string_append_char(str, "ANALYZE ");
 
 	_outNode(str, node->relation);
@@ -2156,14 +2430,13 @@ static void _outVacuumStmt(String *str, VacuumStmt *node)
 		string_append_char(str, ") ");
 	}
 }
-#endif
 
 static void _outExplainStmt(String *str, ExplainStmt *node)
 {
 	ListCell   *lc;
 
 	string_append_char(str, "EXPLAIN ");
-	
+
 	if (server_version_num < 90000)
 	{
 		foreach(lc, node->options)
@@ -2203,7 +2476,7 @@ static void _outExplainStmt(String *str, ExplainStmt *node)
 static void _outClusterStmt(String *str, ClusterStmt *node)
 {
 	string_append_char(str, "CLUSTER ");
-	
+
 	if (node->indexname)
 	{
 		string_append_char(str, "\"");
@@ -2238,7 +2511,7 @@ static void _outListenStmt(String *str, ListenStmt *node)
 static void _outUnlistenStmt(String *str, UnlistenStmt *node)
 {
 	string_append_char(str, "UNLISTEN ");
-	if (node->conditionname == NULL) 
+	if (node->conditionname == NULL)
 		string_append_char(str, "*");
 	else {
 		string_append_char(str, "\"");
@@ -2299,7 +2572,7 @@ static void _outCopyStmt(String *str, CopyStmt *node)
 			if (strcmp(e->defname, "format") == 0)
 			{
 				char *fmt = strVal(e->arg);
-				
+
 				if (strcmp(fmt, "text") == 0)
 					;
 				else if (strcmp(fmt, "binary") == 0)
@@ -2406,7 +2679,7 @@ static void _outRenameStmt(String *str, RenameStmt *node)
 {
 	ListCell *lc;
 	char comma = 0;
-	
+
 	string_append_char(str, "ALTER ");
 
 	switch (node->renameType)
@@ -2506,7 +2779,7 @@ static void _outRenameStmt(String *str, RenameStmt *node)
 			string_append_char(str, node->newname);
 			string_append_char(str, "\"");
 			break;
-		
+
 		case OBJECT_INDEX:
 			string_append_char(str, "INDEX ");
 			_outNode(str, node->relation);
@@ -2552,7 +2825,7 @@ static void
 _outOptRoleList(String *str, List *options)
 {
 	ListCell *lc;
-	
+
 	foreach (lc, options)
 	{
 		DefElem *elem = lfirst(lc);
@@ -2619,7 +2892,7 @@ _outOptRoleList(String *str, List *options)
 		else if (strcmp(elem->defname, "connectionlimit") == 0)
 		{
 			char buf[16];
-			
+
 			string_append_char(str, " CONNECTION LIMIT ");
 			snprintf(buf, 16, "%ld", value->val.ival);
 			string_append_char(str, buf);
@@ -2638,7 +2911,7 @@ _outOptRoleList(String *str, List *options)
 		else if (strcmp(elem->defname, "sysid") == 0)
 		{
 			char buf[16];
-			
+
 			string_append_char(str, " SYSID ");
 			snprintf(buf, 16, "%ld", value->val.ival);
 			string_append_char(str, buf);
@@ -2674,7 +2947,7 @@ _outCreateRoleStmt(String *str, CreateRoleStmt *node)
 			string_append_char(str, "GROUP \"");
 			break;
 	}
-	string_append_char(str, node->role);
+	_outNode(str, node->role);
 	string_append_char(str, "\"");
 
 	_outOptRoleList(str, node->options);
@@ -2684,7 +2957,7 @@ static void
 _outAlterRoleStmt(String *str, AlterRoleStmt *node)
 {
 	string_append_char(str, "ALTER ROLE \"");
-	string_append_char(str, node->role);
+	_outNode(str, node->role);
 	string_append_char(str, "\"");
 
 	if (node->options)
@@ -2695,7 +2968,7 @@ static void
 _outAlterRoleSetStmt(String *str, AlterRoleSetStmt *node)
 {
 	string_append_char(str, "ALTER ROLE \"");
-	string_append_char(str, node->role);
+	_outNode(str, node->role);
 	string_append_char(str, "\" ");
 
 	if (node->setstmt)
@@ -2703,7 +2976,11 @@ _outAlterRoleSetStmt(String *str, AlterRoleSetStmt *node)
 		_outNode(str, node->setstmt);
 	}
 }
-
+static void
+_outRoleSpec(String *str, RoleSpec *node)
+{
+	string_append_char(str, node->rolename);
+}
 
 static void
 _outSetTransactionModeList(String *str, List *list)
@@ -2821,10 +3098,10 @@ _outCreateSchemaStmt(String *str, CreateSchemaStmt *node)
 	string_append_char(str, "CREATE SCHEMA \"");
 	string_append_char(str, node->schemaname);
 	string_append_char(str, "\"");
-	if (node->authid)
+	if (node->authrole)
 	{
 		string_append_char(str, "AUTHORIZATION \"");
-		string_append_char(str, node->authid);
+		_outNode(str, node->authrole);
 		string_append_char(str, "\" ");
 	}
 	_outNode(str, node->schemaElts);
@@ -2846,7 +3123,7 @@ _outVariableSetStmt(String *str, VariableSetStmt *node)
 
 	if (node->is_local)
 		string_append_char(str, "LOCAL ");
-	
+
 	_outSetRest(str, node);
 }
 
@@ -2885,7 +3162,7 @@ static void
 _outAlterTableCmd(String *str, AlterTableCmd *node)
 {
 	char buf[16];
-	
+
 	switch (node->subtype)
 	{
 		case AT_AddColumn:
@@ -2946,13 +3223,6 @@ _outAlterTableCmd(String *str, AlterTableCmd *node)
 			string_append_char(str, node->name);
 			string_append_char(str, "\" TYPE ");
 			_outNode(str, node->def);
-#ifdef NOT_USED_IN_PGPOOL
-			if (node->transform)
-			{
-				string_append_char(str, " USING ");
-				_outNode(str, node->transform);
-			}
-#endif
 			break;
 
 		case AT_AddConstraint:
@@ -3117,7 +3387,7 @@ _outOptSeqList(String *str, List *options)
 				string_append_char(str, " START ");
 			else if (strcmp(e->defname, "restart") == 0)
 				string_append_char(str, " RESTART ");
-			
+
 			if (IsA(e->arg, String))
 				string_append_char(str, v->val.str);
 			else
@@ -3168,7 +3438,7 @@ _outCreatePLangStmt(String *str, CreatePLangStmt *node)
 		foreach (lc, node->plhandler)
 		{
 			Value *v = lfirst(lc);
-			
+
 			if (dot == 0)
 				dot = 1;
 			else
@@ -3189,7 +3459,7 @@ _outCreatePLangStmt(String *str, CreatePLangStmt *node)
 		foreach (lc, node->plvalidator)
 		{
 			Value *v = lfirst(lc);
-			
+
 			if (dot == 0)
 				dot = 1;
 			else
@@ -3213,7 +3483,7 @@ _outCreateTableSpaceStmt(String *str, CreateTableSpaceStmt *node)
 	if (node->owner)
 	{
 		string_append_char(str, "OWNER \"");
-		string_append_char(str, node->owner);
+		_outNode(str, node->owner);
 		string_append_char(str, "\" ");
 	}
 
@@ -3341,7 +3611,7 @@ _outDefinition(String *str, List *definition)
 
 	if (definition == NIL)
 		return;
-	
+
 	string_append_char(str, "(");
 	foreach (lc, definition)
 	{
@@ -3382,11 +3652,11 @@ _outDefineStmt(String *str, DefineStmt *node)
 
 		case OBJECT_OPERATOR:
 			string_append_char(str, "CREATE OPERATOR ");
-			
+
 			foreach (lc, node->defnames)
 			{
 				Value *v = lfirst(lc);
-				
+
 				if (dot == 0)
 					dot = 1;
 				else
@@ -3394,7 +3664,7 @@ _outDefineStmt(String *str, DefineStmt *node)
 
 				string_append_char(str, v->val.str);
 			}
-			
+
 			string_append_char(str, " ");
 			_outDefinition(str, node->definition);
 			break;
@@ -3429,7 +3699,7 @@ _outDefineStmt(String *str, DefineStmt *node)
 			_outIdList(str, node->defnames);
 			_outDefinition(str, node->definition);
 			break;
-			
+
 		default:
 			break;
 	}
@@ -3444,12 +3714,12 @@ _outOperatorName(String *str, List *list)
 	foreach (lc, list)
 	{
 		Value *v = lfirst(lc);
-		
+
 		if (dot == 0)
 			dot = 1;
 		else
 			string_append_char(str, ".");
-		
+
 		string_append_char(str, v->val.str);
 	}
 }
@@ -3458,7 +3728,7 @@ static void
 _outCreateOpClassItem(String *str, CreateOpClassItem *node)
 {
 	char buf[16];
-	
+
 	switch (node->itemtype)
 	{
 		case OPCLASS_ITEM_OPERATOR:
@@ -3499,7 +3769,7 @@ _outCreateOpClassItem(String *str, CreateOpClassItem *node)
 		default:
 			break;
 	}
-			
+
 }
 
 static void
@@ -3770,7 +4040,7 @@ _outPrivilegeList(String *str, List *list)
 {
 	ListCell *lc;
 	char comma = 0;
-	
+
 	if (list == NIL)
 		string_append_char(str, "ALL");
 	else
@@ -3778,7 +4048,7 @@ _outPrivilegeList(String *str, List *list)
 		foreach (lc, list)
 		{
 			Value *v = lfirst(lc);
-			
+
 			if (comma == 0)
 				comma = 1;
 			else
@@ -3827,19 +4097,6 @@ _outFuncWithArgs(String *str, FuncWithArgs *node)
 }
 
 static void
-_outPrivGrantee(String *str, PrivGrantee *node)
-{
-	if (node->rolname == NULL)
-		string_append_char(str, "PUBLIC");
-	else
-	{
-		string_append_char(str, "\"");
-		string_append_char(str, node->rolname);
-		string_append_char(str, "\"");
-	}
-}
-
-static void
 _outGrantStmt(String *str, GrantStmt *node)
 {
 	if (node->is_grant == true)
@@ -3850,7 +4107,7 @@ _outGrantStmt(String *str, GrantStmt *node)
 		if (node->grant_option == true)
 			string_append_char(str, "GRANT OPTION FOR ");
 	}
-	
+
 	_outPrivilegeList(str, node->privileges);
 
 	string_append_char(str, " ON ");
@@ -3900,7 +4157,7 @@ _outGrantStmt(String *str, GrantStmt *node)
 			string_append_char(str, "FOREIGN SERVER ");
 			_outIdList(str, node->objects);
 			break;
-            
+
         case ACL_OBJECT_COLUMN:
         case ACL_OBJECT_DOMAIN:
         case ACL_OBJECT_LARGEOBJECT:
@@ -3945,7 +4202,7 @@ _outGrantRoleStmt(String *str, GrantRoleStmt *node)
 	if (node->grantor != NULL)
 	{
 		string_append_char(str, " GRANTED BY \"");
-		string_append_char(str, node->grantor);
+		_outNode(str, node->grantor);
 		string_append_char(str, "\"");
 	}
 
@@ -3962,7 +4219,7 @@ _outFuncOptList(String *str, List *list)
 	{
 		DefElem *e = lfirst(lc);
 		Value *v = (Value *) e->arg;
-		
+
 		if (strcmp(e->defname, "strict") == 0)
 		{
 			if (v->val.ival == TRUE)
@@ -4038,42 +4295,6 @@ _outAlterFunctionStmt(String *str, AlterFunctionStmt *node)
 	_outFuncOptList(str, node->actions);
 }
 
-#ifdef NOT_USED_IN_PGPOOL
-static void
-_outRemoveFuncStmt(String *str, RemoveFuncStmt *node)
-{
-	switch (node->kind)
-	{
-		case OBJECT_FUNCTION:
-			string_append_char(str, "DROP FUNCTION ");
-			break;
-
-
-		case OBJECT_AGGREGATE:
-			string_append_char(str, "DROP AGGREGATE ");
-			break;
-
-		case OBJECT_OPERATOR:
-			string_append_char(str, "DROP OPERATOR CLASS ");
-			break;
-
-		default:
-			break;
-	}
-
-	if (node->missing_ok)
-		string_append_char(str, "IF EXISTS ");
-
-	_outFuncName(str, node->name);
-
-	string_append_char(str, " (");
-	_outNode(str, node->args);
-	string_append_char(str, ")");
-
-	if (node->behavior == DROP_CASCADE)
-		string_append_char(str, " CASCADE");
-}
-#endif
 
 static void
 _outCreateCastStmt(String *str, CreateCastStmt *node)
@@ -4084,7 +4305,7 @@ _outCreateCastStmt(String *str, CreateCastStmt *node)
 	_outNode(str, node->targettype);
 	string_append_char(str, ") WITH FUNCTION ");
 	_outNode(str, node->func);
-	
+
 	switch (node->context)
 	{
 		case COERCION_IMPLICIT:
@@ -4107,18 +4328,19 @@ _outReindexStmt(String *str, ReindexStmt *node)
 
 	switch (node->kind)
 	{
-		case OBJECT_DATABASE:
-			if (node->do_system == true && node->do_user == false)
-				string_append_char(str, "SYSTEM ");
-			else
-				string_append_char(str, "DATABASE ");
+		case REINDEX_OBJECT_SYSTEM:
+			string_append_char(str, "SYSTEM ");
 			break;
 
-		case OBJECT_INDEX:
+		case REINDEX_OBJECT_DATABASE:
+			string_append_char(str, "DATABASE ");
+			break;
+
+		case REINDEX_OBJECT_INDEX:
 			string_append_char(str, "INDEX ");
 			break;
 
-		case OBJECT_TABLE:
+		case REINDEX_OBJECT_TABLE:
 			string_append_char(str, "TABLE ");
 			break;
 
@@ -4220,7 +4442,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 			else
 				_outNode(str, lfirst(list_head(node->objarg)));
 			string_append_char(str, ") OWNER TO \"");
-			string_append_char(str, node->newowner);
+			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
 			break;
 
@@ -4228,7 +4450,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 			string_append_char(str, "CONVERSION \"");
 			string_append_char(str, strVal(linitial(node->object)));
 			string_append_char(str, "\" OWNER TO \"");
-			string_append_char(str, node->newowner);
+			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
 			break;
 
@@ -4236,7 +4458,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 			string_append_char(str, "DATABASE \"");
 			string_append_char(str, strVal(linitial(node->object)));
 			string_append_char(str, "\" OWNER TO \"");
-			string_append_char(str, node->newowner);
+			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
 			break;
 
@@ -4244,7 +4466,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 			string_append_char(str, "DOMAIN \"");
 			string_append_char(str, strVal(linitial(node->object)));
 			string_append_char(str, "\" OWNER TO \"");
-			string_append_char(str, node->newowner);
+			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
 			break;
 
@@ -4254,7 +4476,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 			string_append_char(str, "(");
 			_outNode(str, node->objarg);
 			string_append_char(str, ") OWNER TO \"");
-			string_append_char(str, node->newowner);
+			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
 			break;
 
@@ -4262,7 +4484,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 			string_append_char(str, "LANGUAGE \"");
 			string_append_char(str, strVal(linitial(node->object)));
 			string_append_char(str, "\" OWNER TO \"");
-			string_append_char(str, node->newowner);
+			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
 			break;
 
@@ -4272,8 +4494,8 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 			string_append_char(str, "(");
 			_outOperatorArgTypes(str, node->objarg);
 			string_append_char(str, ") OWNER TO \"");
-			string_append_char(str, node->newowner);
-			string_append_char(str, "\"");			
+			_outNode(str, node->newowner);
+			string_append_char(str, "\"");
 			break;
 
 		case OBJECT_OPCLASS:
@@ -4282,7 +4504,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 			string_append_char(str, " USING ");
 			string_append_char(str, strVal(linitial(node->objarg)));
 			string_append_char(str, " OWNER TO \"");
-			string_append_char(str, node->newowner);
+			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
 			break;
 
@@ -4292,7 +4514,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 			string_append_char(str, " USING ");
 			string_append_char(str, strVal(linitial(node->objarg)));
 			string_append_char(str, " OWNER TO \"");
-			string_append_char(str, node->newowner);
+			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
 			break;
 
@@ -4300,7 +4522,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 			string_append_char(str, "SCHEMA \"");
 			string_append_char(str, strVal(linitial(node->object)));
 			string_append_char(str, "\" OWNER TO \"");
-			string_append_char(str, node->newowner);
+			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
 			break;
 
@@ -4308,7 +4530,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 			string_append_char(str, "TYPE \"");
 			string_append_char(str, strVal(linitial(node->object)));
 			string_append_char(str, "\" OWNER TO \"");
-			string_append_char(str, node->newowner);
+			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
 			break;
 
@@ -4316,7 +4538,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 			string_append_char(str, "TABLESPACE \"");
 			string_append_char(str, strVal(linitial(node->object)));
 			string_append_char(str, "\" OWNER TO \"");
-			string_append_char(str, node->newowner);
+			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
 			break;
 
@@ -4324,7 +4546,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 			string_append_char(str, "TEXT SEARCH DICTIONARY \"");
 			string_append_char(str, strVal(linitial(node->object)));
 			string_append_char(str, "\" OWNER TO \"");
-			string_append_char(str, node->newowner);
+			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
 			break;
 
@@ -4332,7 +4554,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 			string_append_char(str, "TEXT SEARCH CONFIGURATION \"");
 			string_append_char(str, strVal(linitial(node->object)));
 			string_append_char(str, "\" OWNER TO \"");
-			string_append_char(str, node->newowner);
+			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
 			break;
 
@@ -4340,7 +4562,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 			string_append_char(str, "FOREIGN DATA WRAPPER \"");
 			string_append_char(str, strVal(linitial(node->object)));
 			string_append_char(str, "\" OWNER TO \"");
-			string_append_char(str, node->newowner);
+			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
 			break;
 
@@ -4348,7 +4570,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 			string_append_char(str, "SERVER \"");
 			string_append_char(str, strVal(linitial(node->object)));
 			string_append_char(str, "\" OWNER TO \"");
-			string_append_char(str, node->newowner);
+			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
 			break;
 
@@ -4391,7 +4613,7 @@ _outRuleStmt(String *str, RuleStmt *node)
 
 	string_append_char(str, " TO ");
 	_outNode(str, node->relation);
-	
+
 	if (node->whereClause)
 	{
 		string_append_char(str, " WHERE ");
@@ -4420,7 +4642,7 @@ _outRuleStmt(String *str, RuleStmt *node)
 				semi = 1;
 			else
 				string_append_char(str, ";");
-			
+
 			_outNode(str, lfirst(lc));
 		}
 
@@ -4640,21 +4862,6 @@ _outPrepareStmt(String *str, PrepareStmt *node)
 static void
 _outExecuteStmt(String *str, ExecuteStmt *node)
 {
-#ifdef NOT_USED_IN_PGPOOL
-	if (node->into)
-	{
-		IntoClause *into = node->into;
-		RangeVar *rel = into->rel;
-
-		string_append_char(str, "CREATE ");
-		if (rel->relpersistence == RELPERSISTENCE_TEMP)
-			string_append_char(str, "TEMP ");
-		string_append_char(str, "TABLE ");
-		_outNode(str, into->rel);
-		string_append_char(str, " AS ");
-	}
-#endif
-
 	string_append_char(str, "EXECUTE \"");
 	string_append_char(str, node->name);
 	string_append_char(str, "\" ");
@@ -4773,7 +4980,8 @@ _outCommentStmt(String *str, CommentStmt *node)
 			string_append_char(str, ")");
 			break;
 
-		case OBJECT_CONSTRAINT:
+		case OBJECT_TABCONSTRAINT:
+		case OBJECT_DOMCONSTRAINT:
 			string_append_char(str, "CONSTRAINT \"");
 			v = lsecond(node->objname);
 			string_append_char(str, v->val.str);
@@ -4896,12 +5104,29 @@ _outRangeFunction(String *str, RangeFunction *node)
 	if (node->alias)
 	{
 		_outNode(str, node->alias);
-	}		
+	}
 
 	if (node->coldeflist)
 	{
 		string_append_char(str, " (");
 		_outNode(str, node->coldeflist);
+		string_append_char(str, ")");
+	}
+}
+
+static void
+_outRangeTableSample(String *str, RangeTableSample *node)
+{
+	_outNode(str, node->relation);
+	string_append_char(str, " TABLESAMPLE ");
+	_outFuncName(str, node->method);
+	string_append_char(str, " (");
+	_outNode(str, node->args);
+	string_append_char(str, ")");
+
+	if (node->repeatable) {
+		string_append_char(str, " REPEATABLE (");
+		_outNode(str, node->repeatable);
 		string_append_char(str, ")");
 	}
 }
@@ -4943,20 +5168,6 @@ _outAlterOpFamilyStmt(String *str, AlterOpFamilyStmt *node)
 {
 }
 
-#ifdef NOT_USED_IN_PGPOOL
-static void
-_outRemoveOpFamilyStmt(String *str, RemoveOpFamilyStmt *node)
-{
-	string_append_char(str, "DROP OPERATOR FAMILY ");
-	if (node->missing_ok)
-		string_append_char(str, "IF EXISTS ");
-	_outIdList(str, node->opfamilyname);
-	string_append_char(str, " USING \"");
-	string_append_char(str, node->amname);
-	string_append_char(str, "\"");
-}
-#endif
-
 static void
 _outCreateEnumStmt(String *str, CreateEnumStmt *node)
 {
@@ -4982,7 +5193,7 @@ _outReassignOwnedStmt(String *str, ReassignOwnedStmt *node)
 	string_append_char(str, "REASSIGN OWNED BY ");
 	_outIdList(str, node->roles);
 	string_append_char(str, " TO \"");
-	string_append_char(str, node->newrole);
+	_outNode(str, node->newrole);
 	string_append_char(str, "\"");
 }
 
@@ -5118,32 +5329,6 @@ _outXmlSerialize(String *str, XmlSerialize *node)
 }
 
 static void
-_outInhRelation(String *str, TableLikeClause *node)
-{
-	string_append_char(str, "LIKE ");
-	_outNode(str, node->relation);
-
-	if (node->options == CREATE_TABLE_LIKE_ALL)
-		string_append_char(str, " INCLUDING ALL");
-	else
-	{
-		if (node->options & CREATE_TABLE_LIKE_DEFAULTS)
-			string_append_char(str, " INCLUDING DEFAULTS");
-		if (node->options & CREATE_TABLE_LIKE_CONSTRAINTS)
-			string_append_char(str, " INCLUDING CONSTRAINTS");
-		if (node->options & CREATE_TABLE_LIKE_INDEXES)
-			string_append_char(str, " INCLUDING INDEXES");
-		if (server_version_num >= 90000)
-		{
-			if (node->options & CREATE_TABLE_LIKE_STORAGE)
-				string_append_char(str, " INCLUDING STORAGE");
-			if (node->options & CREATE_TABLE_LIKE_COMMENTS)
-				string_append_char(str, " INCLUDING COMMENTS");
-		}
-	}
-}
-
-static void
 _outWithDefinition(String *str, List *def_list)
 {
 	int oid = 0;
@@ -5172,18 +5357,53 @@ _outWithDefinition(String *str, List *def_list)
 }
 
 static void
-_outCurrentOfExpr(String *str, CurrentOfExpr *node)
+_outOnConflictClause(String *str, OnConflictClause *node)
 {
-	string_append_char(str, "CURRENT OF ");
-	if (node->cursor_name == NULL)
+	string_append_char(str, " ON CONFLICT ");
+
+	if (node->infer)
 	{
-		char n[10];
-		snprintf(n, sizeof(n), "$%d", node->cursor_param);
-		string_append_char(str, n);
+		if (node->infer->indexElems != NIL)
+		{
+			string_append_char(str, " ( ");
+			_outList(str, node->infer->indexElems);
+			string_append_char(str, " ) ");
+			string_append_char(str, " WHERE ");
+			_outNode(str, node->infer->whereClause);
+		}
+		else
+		{
+			string_append_char(str, " ON CONSTRAINT ");
+			string_append_char(str, node->infer->conname);
+		}
 	}
-	else
-		string_append_char(str, node->cursor_name);
+
+	switch (node->action)
+	{
+		case ONCONFLICT_UPDATE:
+			string_append_char(str, " DO UPDATE ");
+			break;
+
+		case ONCONFLICT_NOTHING:
+			string_append_char(str, " DO NOTHING ");
+			break;
+
+		default:
+			break;
+	}
+
+	if (node->targetList)
+	{
+		_outSetClause(str, node->targetList);
+	}
+
+	if (node->whereClause)
+	{
+		string_append_char(str, " WHERE ");
+		_outNode(str, node->whereClause);
+	}
 }
+
 
 /*
  * _outNode -
@@ -5231,6 +5451,9 @@ _outNode(String *str, void *obj)
 			case T_Aggref:
 				_outAggref(str, obj);
 				break;
+			case T_GroupingFunc:
+				_outGroupingFunc(str, obj);
+				break;
 				/*
 			case T_WindowFunc:
 				_outWindowFunc(str, obj);
@@ -5250,6 +5473,9 @@ _outNode(String *str, void *obj)
 				break;
 			case T_DistinctExpr:
 				_outDistinctExpr(str, obj);
+				break;
+			case T_NullIfExpr:
+				_outNullIfExpr(str, obj);
 				break;
 			case T_ScalarArrayOpExpr:
 				_outScalarArrayOpExpr(str, obj);
@@ -5288,6 +5514,11 @@ _outNode(String *str, void *obj)
 			case T_ConvertRowtypeExpr:
 				_outConvertRowtypeExpr(str, obj);
 				break;
+				/*
+			case T_CollateExpr:
+				_outCollateExpr(str, obj);
+				break;
+				*/
 			case T_CaseExpr:
 				_outCaseExpr(str, obj);
 				break;
@@ -5317,9 +5548,6 @@ _outNode(String *str, void *obj)
 			case T_XmlExpr:
 				_outXmlExpr(str, obj);
 				break;
-			case T_NullIfExpr:
-				_outNullIfExpr(str, obj);
-				break;
 			case T_NullTest:
 				_outNullTest(str, obj);
 				break;
@@ -5338,6 +5566,9 @@ _outNode(String *str, void *obj)
 			case T_CurrentOfExpr:
 				_outCurrentOfExpr(str, obj);
 				break;
+			case T_InferenceElem:
+				_outInferenceElem(str, obj);
+				break;
 			case T_TargetEntry:
 				_outTargetEntry(str, obj);
 				break;
@@ -5350,6 +5581,9 @@ _outNode(String *str, void *obj)
 			case T_FromExpr:
 				_outFromExpr(str, obj);
 				break;
+			case T_OnConflictExpr:
+				_outOnConflictExpr(str, obj);
+				break;
 
 			case T_CreateStmt:
 				_outCreateStmt(str, obj);
@@ -5357,7 +5591,12 @@ _outNode(String *str, void *obj)
 			case T_CreateTableAsStmt:
 				_outCreateTableAsStmt(str, obj);
 				break;
-
+			case T_CreateForeignTableStmt:
+				_outCreateForeignTableStmt(str, obj);
+				break;
+			case T_ImportForeignSchemaStmt:
+				_outImportForeignSchemaStmt(str, obj);
+				break;
 			case T_IndexStmt:
 				_outIndexStmt(str, obj);
 				break;
@@ -5379,6 +5618,9 @@ _outNode(String *str, void *obj)
 			case T_TypeCast:
 				_outTypeCast(str, obj);
 				break;
+			case T_CollateClause:
+				_outCollateClause(str, obj);
+				break;
 			case T_IndexElem:
 				_outIndexElem(str, obj);
 				break;
@@ -5386,9 +5628,17 @@ _outNode(String *str, void *obj)
 			case T_Query:
 				_outQuery(str, obj);
 				break;
+			case T_WithCheckOption:
+				_outWithCheckOption(str, obj);
+				break;
 			case T_SortGroupClause:
 				_outSortGroupClause(str, obj);
 				break;
+				*/
+			case T_GroupingSet:
+				_outGroupingSet(str, obj);
+				break;
+				/*
 			case T_WindowClause:
 				_outWindowClause(str, obj);
 				break;
@@ -5405,11 +5655,14 @@ _outNode(String *str, void *obj)
 			case T_SetOperationStmt:
 				_outSetOperationStmt(str, obj);
 				break;
-/*
+			/*
 			case T_RangeTblEntry:
 				_outRangeTblEntry(str, obj);
 				break;
-*/
+			*/
+			case T_TableSampleClause:
+				_outTableSampleClause(str, obj);
+				break;
 			case T_A_Expr:
 				_outAExpr(str, obj);
 				break;
@@ -5439,6 +5692,9 @@ _outNode(String *str, void *obj)
 			case T_ResTarget:
 				_outResTarget(str, obj);
 				break;
+			case T_MultiAssignRef:
+				_outMultiAssignRef(str, obj);
+				break;
 			case T_SortBy:
 				_outSortBy(str, obj);
 				break;
@@ -5451,6 +5707,9 @@ _outNode(String *str, void *obj)
 			case T_RangeFunction:
 				_outRangeFunction(str, obj);
 				break;
+			case T_RangeTableSample:
+				_outRangeTableSample(str, obj);
+				break;
 			case T_Constraint:
 				_outConstraint(str, obj);
 				break;
@@ -5460,6 +5719,11 @@ _outNode(String *str, void *obj)
 			case T_DefElem:
 				_outDefElem(str, obj);
 				break;
+				/*
+			case T_TableLikeClause:
+				_outTableLikeClause(str, obj);
+				break;
+				*/
 			case T_LockingClause:
 				_outLockingClause(str, obj);
 				break;
@@ -5471,12 +5735,12 @@ _outNode(String *str, void *obj)
 				_outInsertStmt(str, obj);
 				break;
 
-			case T_UpdateStmt:
-				_outUpdateStmt(str, obj);
-				break;
-
 			case T_DeleteStmt:
 				_outDeleteStmt(str, obj);
+				break;
+
+			case T_UpdateStmt:
+				_outUpdateStmt(str, obj);
 				break;
 
 			case T_TransactionStmt:
@@ -5487,12 +5751,9 @@ _outNode(String *str, void *obj)
 				_outTruncateStmt(str, obj);
 				break;
 
-#ifdef NOT_USED_IN_PGPOOL
-				/* 9.0 does not have this */
 			case T_VacuumStmt:
 				_outVacuumStmt(str, obj);
 				break;
-#endif
 
 			case T_ExplainStmt:
 				_outExplainStmt(str, obj);
@@ -5546,6 +5807,10 @@ _outNode(String *str, void *obj)
 				_outAlterRoleSetStmt(str, obj);
 				break;
 
+			case T_RoleSpec:
+				_outRoleSpec(str, obj);
+				break;
+
 			case T_DropRoleStmt:
 				_outDropRoleStmt(str, obj);
 				break;
@@ -5586,12 +5851,6 @@ _outNode(String *str, void *obj)
 				_outCreatePLangStmt(str, obj);
 				break;
 
-#ifdef NOT_USED_IN_PGPOOL
-			case T_DropPLangStmt:
-				_outDropPLangStmt(str, obj);
-				break;
-#endif
-
 			case T_CreateTableSpaceStmt:
 				_outCreateTableSpaceStmt(str, obj);
 				break;
@@ -5616,12 +5875,6 @@ _outNode(String *str, void *obj)
 				_outCreateOpClassItem(str, obj);
 				break;
 
-#ifdef NOT_USED_IN_PGPOOL
-			case T_RemoveOpClassStmt:
-				_outRemoveOpClassStmt(str, obj);
-				break;
-#endif
-
 			case T_DropStmt:
 				_outDropStmt(str, obj);
 				break;
@@ -5642,10 +5895,6 @@ _outNode(String *str, void *obj)
 				_outFunctionParameter(str, obj);
 				break;
 
-			case T_PrivGrantee:
-				_outPrivGrantee(str, obj);
-				break;
-
 			case T_GrantRoleStmt:
 				_outGrantRoleStmt(str, obj);
 				break;
@@ -5658,20 +5907,9 @@ _outNode(String *str, void *obj)
 				_outAlterFunctionStmt(str, obj);
 				break;
 
-#ifdef NOT_USED_IN_PGPOOL
-			case T_RemoveFuncStmt:
-				_outRemoveFuncStmt(str, obj);
-				break;
-#endif
-
 			case T_CreateCastStmt:
 				_outCreateCastStmt(str, obj);
 				break;
-#ifdef NOT_USED_IN_PGPOOL
-			case T_DropCastStmt:
-				_outDropCastStmt(str, obj);
-				break;
-#endif
 
 			case T_ReindexStmt:
 				_outReindexStmt(str, obj);
@@ -5700,7 +5938,6 @@ _outNode(String *str, void *obj)
 			case T_AlterDatabaseStmt:
 				_outAlterDatabaseStmt(str, obj);
 				break;
-
 
 			case T_AlterDatabaseSetStmt:
 				_outAlterDatabaseSetStmt(str, obj);
@@ -5738,8 +5975,6 @@ _outNode(String *str, void *obj)
 				_outCommentStmt(str, obj);
 				break;
 
-
-
 			case T_DiscardStmt:
 				_outDiscardStmt(str, obj);
 				break;
@@ -5751,11 +5986,6 @@ _outNode(String *str, void *obj)
 			case T_AlterOpFamilyStmt:
 				_outAlterOpFamilyStmt(str, obj);
 				break;
-#ifdef NOT_USED_IN_PGPOOL
-			case T_RemoveOpFamilyStmt:
-				_outRemoveOpFamilyStmt(str, obj);
-				break;
-#endif
 
 			case T_CreateEnumStmt:
 				_outCreateEnumStmt(str, obj);
@@ -5777,8 +6007,8 @@ _outNode(String *str, void *obj)
 				_outAlterTSConfigurationStmt(str, obj);
 				break;
 
-			case T_TableLikeClause:
-				_outInhRelation(str, obj);
+			case T_OnConflictClause:
+				_outOnConflictClause(str, obj);
 				break;
 
 			default:
