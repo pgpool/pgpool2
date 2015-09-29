@@ -102,11 +102,12 @@ extern int wd_accept(int sock);
 extern int wd_send_packet(int sock, WdPacket * snd_pack);
 extern int wd_recv_packet(int sock, WdPacket * buf);
 extern int wd_escalation(void);
-extern int wd_start_recovery(void);
-extern int wd_end_recovery(void);
-extern int wd_send_failback_request(int node_id);
-extern int wd_degenerate_backend_set(int *node_id_set, int count);
-extern int wd_promote_backend(int node_id);
+extern WdCommandResult wd_start_recovery(void);
+extern WdCommandResult wd_end_recovery(void);
+extern WdCommandResult wd_send_failback_request(int node_id);
+extern WdCommandResult wd_degenerate_backend_set(int *node_id_set, int count);
+extern WdCommandResult wd_promote_backend(int node_id);
+extern WDFailoverCMDResults wd_send_failover_sync_command(WDFailoverCMDTypes cmdType, char* syncReqType);
 extern int wd_set_node_mask (WD_PACKET_NO packet_no, int *node_id_set, int count);
 extern int wd_send_packet_no(WD_PACKET_NO packet_no );
 extern int wd_send_lock_packet(WD_PACKET_NO packet_no, WD_LOCK_ID lock_id);
@@ -138,6 +139,13 @@ extern pid_t wd_hb_receiver(int fork_wait_time, WdHbIf * hb_if);
 extern pid_t wd_hb_sender(int fork_wait_time, WdHbIf * hb_if);
 
 /* wd_interlock.c */
+
+extern WDFailoverCMDResults wd_release_failover_command_lock(WDFailoverCMDTypes cmdType);
+extern WDFailoverCMDResults wd_failover_command_check_lock(WDFailoverCMDTypes cmdType);
+extern WDFailoverCMDResults wd_failover_command_end(WDFailoverCMDTypes cmdType);
+extern WDFailoverCMDResults wd_failover_command_start(WDFailoverCMDTypes cmdType);
+extern void wd_wati_until_lock_or_timeout(WDFailoverCMDTypes cmdType);
+
 extern int wd_init_interlock(void);
 extern void wd_start_interlock(bool by_health_check, int node_id);
 extern void wd_end_interlock(void);

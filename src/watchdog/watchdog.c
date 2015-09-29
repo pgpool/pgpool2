@@ -124,6 +124,18 @@ wd_main(int fork_wait_time)
 
 	/* initialize */
 //	wd_init();
+	/* allocate node list */
+	if (WD_Node_List == NULL)
+	{
+		WD_Node_List = pool_shared_memory_create(sizeof(unsigned char) * MAX_NUM_BACKENDS);
+		memset(WD_Node_List, 0, sizeof(unsigned char) * MAX_NUM_BACKENDS);
+		
+		ereport(DEBUG1,
+				(errmsg("WD_Node_List: sizeof(unsigned char) (%zu) * MAX_NUM_BACKENDS (%d) = %zu bytes requested for shared memory",
+						sizeof(unsigned char),
+						MAX_WATCHDOG_NUM,
+						sizeof(unsigned char) * MAX_NUM_BACKENDS)));
+	}
 
 	wd_ppid = getpid();
 

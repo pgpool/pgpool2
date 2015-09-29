@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2012	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -20,6 +20,13 @@
  *
  * child.c: child process main
  *
+ pgpool_command format
+ json node will contain following data
+ 1-) function
+		start_recovery
+		stop_recovery
+		node commands
+		set variable value
  */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -48,12 +55,18 @@
 #include "watchdog/watchdog.h"
 #include "parser/stringinfo.h"
 
+typedef enum IPC_CMD_PREOCESS_RES
+{
+	IPC_CMD_COMPLETE,
+	IPC_CMD_PROCESSING,
+	IPC_CMD_ERROR
+}IPC_CMD_PREOCESS_RES;
+
 #define MAX_PACKET_SIZE 512
 
 #define WD_NO_MESSAGE						0
-#define WD_INVALID_MESSAGE					'i'
 #define WD_INFO_MESSAGE						'I'
-#define WD_REQ_INFO_MESSAGE					'r'
+#define WD_REQ_INFO_MESSAGE					'B'
 #define WD_IAM_COORDINATOR_MESSAGE			'M'
 #define WD_ADD_NODE_MESSAGE					'A'
 #define WD_STAND_FOR_COORDINATOR_MESSAGE	'S'
@@ -61,9 +74,13 @@
 #define WD_ACCEPT_MESSAGE					'G'
 #define WD_REJECT_MESSAGE					'R'
 #define WD_ERROR_MESSAGE					'E'
+#define WD_DATA_MESSAGE						'D'
 #define WD_JOIN_COORDINATOR_MESSAGE			'J'
 #define WD_PGPOOL_COMMAND					'P'
-#define WD_QUORUM_IS_LOST					'q'
+#define WD_QUORUM_IS_LOST					'Q'
+#define WD_INTERLOCKING_REQUEST				'L'
+#define WD_INTERUNLOCKING_REQUEST			'U'
+#define WD_REPLICATE_VARIABLE_REQUEST		'V'
 
 
 typedef struct WDPacketData
@@ -75,18 +92,85 @@ typedef struct WDPacketData
 	char	data_buf[MAX_PACKET_SIZE];
 }WDPacketData;
 
+
+typedef enum WDNodeCommandState
+{
+	COMMAMD_STATE_INIT,
+	COMMAND_STATE_SENT,
+	COMMAND_STATE_REPLIED,
+	COMMAND_STATE_SEND_ERROR
+}WDNodeCommandState;
+
+typedef struct WDCommandNodeResult
+{
+	WatchdogNode* wdNode;
+	WDNodeCommandState cmdState;
+	char	result_type;
+	int		result_data_len;
+	char*	result_data;
+}WDCommandNodeResult;
+
+
 typedef struct WDIPCCommandData
 {
 	WD_COMMAND_ACTIONS command_action;
 	MemoryContext		memoryContext;
-	int				issueing_sock;
-	char			type;
-	struct timeval	issue_time;
-	unsigned int	internal_command_id;
-	int				data_len;
-	char			*data_buf;
-	WDIPCCommandResult* command_result;
+	int					issueing_sock;
+	char				type;
+	struct timeval		issue_time;
+	unsigned int		internal_command_id;
+	int					data_len;
+	char				*data_buf;
+
+	unsigned int	sendTo_count;
+	unsigned int	reply_from_count;
+	unsigned int	timeout_secs;
+
+	WDCommandNodeResult*	nodeResults;
+	WDIPCCommandResult* command_result; //remove it
 }WDIPCCommandData;
+
+typedef struct WDFunctionCommandData
+{
+	char				commandType;
+	unsigned int		commandID;
+	char*				funcName;
+	WatchdogNode*		wdNode;
+}WDFunctionCommandData;
+
+typedef struct WDCommandTimerData
+{
+	struct timeval  startTime;
+	unsigned int	expire_sec;
+	bool			need_tics;
+	WDFunctionCommandData*	wd_func_command;
+}WDCommandTimerData;
+
+typedef struct InterlockingNode
+{
+	WatchdogNode*	lockHolderNode;
+	bool			locked;
+}InterlockingNode;
+
+typedef struct wd_cluster
+{
+	WatchdogNode*		localNode;
+	WatchdogNode*		remoteNodes;
+	WatchdogNode*		masterNode;
+	WatchdogNode*		lockHolderNode;
+	InterlockingNode	interlockingNodes[MAX_FAILOVER_CMDS];
+	int					remoteNodeCount;
+	int					aliveNodeCount;
+	bool				quorum_exists;
+	wd_command			lastCommand;
+	unsigned int		nextCommandID;
+	int				command_server_sock;
+	List			*unidentified_socks;
+	List			*notify_clients;
+	List			*ipc_command_socks;
+	List			*ipc_commands;
+	List			*wd_timer_commands;
+}wd_cluster;
 
 
 static void FileUnlink(int code, Datum path);
@@ -107,6 +191,7 @@ static WDPacketData* fill_myinfo_in_message(WDPacketData* message);
 static WDPacketData* get_minimum_message(char type, WDPacketData* replyFor);
 
 static void finish_wdMessage(WDPacketData* pkt);
+static char* get_data_from_message(WDPacketData* pkt);
 static bool put_int_in_message(WDPacketData* pkt, int value);
 static bool put_bytes_in_message(WDPacketData* pkt, const char* value, int len);
 static void update_message_length(WDPacketData* pkt);
@@ -118,6 +203,7 @@ static WDPacketData* get_empty_packet(void);
 static unsigned int get_next_commandID(void);
 static WatchdogNode* parse_node_info_message(WDPacketData* pkt);
 static int get_quorum_status(void);
+static int get_mimimum_nodes_required_for_quorum(void);
 
 static bool write_packet_to_socket(int sock, WDPacketData* pkt);
 static WDPacketData* read_packet_of_type(int sock, char ensure_type);
@@ -130,6 +216,7 @@ static int send_cluster_command_packet(WatchdogNode* wdNode, WDPacketData *pkt, 
 static int send_message(WatchdogNode* wdNode, WDPacketData *pkt);
 static bool send_message_to_node(WatchdogNode* wdNode, WDPacketData *pkt);
 static bool reply_with_minimal_message(WatchdogNode* wdNode, char type, WDPacketData* replyFor);
+static bool reply_with_message(WatchdogNode* wdNode, char type, char* data, int data_len, WDPacketData* replyFor);
 static int send_cluster_command(WatchdogNode* wdNode, char type, int timeout_sec);
 static int accept_incomming_connections(fd_set* rmask, int pending_fds_count);
 
@@ -151,17 +238,46 @@ static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacke
 static int watchdog_state_machine_waiting_for_quorum(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt);
 
 static int write_IPCResult_To_Socket(int sock, WDIPCCommandResult* IPCResult);
-static int process_IPC_transport_command(WDIPCCommandData *IPCCommand);
+
 static bool packet_is_received_for_pgpool_command(WatchdogNode* wdNode, WDPacketData* pkt);
-static void free_IPC_command(WDIPCCommandData* ipcCommand);
+static void cleanUpIPCCommand(WDIPCCommandData* ipcCommand);
 static bool read_ipc_command_and_process(int socket, bool *remove_socket);
 
 static JsonNode* get_node_list_json(void);
 static bool add_nodeinfo_to_json(JsonNode* jNode, WatchdogNode* node);
 static bool parse_node_status_json(char* json_data, int data_len,int* nodeID, NodeStates* nodeState);
 static bool fire_node_status_event(int nodeID, NodeStates nodeState);
-static int process_IPC_nodeStatusChange_command(WDIPCCommandData* IPCCommand);
 static void resign_from_coordinator(void);
+static void init_wd_packet(WDPacketData* pkt);
+static WDIPCCommandData* get_wd_IPC_command_from_reply(WDPacketData* pkt);
+static WDIPCCommandData* get_wd_IPC_command_from_socket(int sock);
+static bool wd_commands_packet_processor(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt);
+
+static IPC_CMD_PREOCESS_RES process_IPC_command(WDIPCCommandData* IPCCommand);
+static IPC_CMD_PREOCESS_RES process_IPC_nodeStatusChange_command(WDIPCCommandData* IPCCommand);
+static IPC_CMD_PREOCESS_RES process_IPC_transport_command(WDIPCCommandData *IPCCommand);
+static IPC_CMD_PREOCESS_RES process_IPC_lock_request(WDIPCCommandData *IPCCommand);
+static IPC_CMD_PREOCESS_RES process_IPC_nodeList_command(WDIPCCommandData* IPCCommand);
+static IPC_CMD_PREOCESS_RES process_IPC_unlock_request(WDIPCCommandData *IPCCommand);
+static IPC_CMD_PREOCESS_RES process_IPC_replicate_variable(WDIPCCommandData* IPCCommand);
+static IPC_CMD_PREOCESS_RES process_IPC_failover_cmd_synchronise(WDIPCCommandData *IPCCommand);
+
+static IPC_CMD_PREOCESS_RES execute_replicate_command(WDIPCCommandData* ipcCommand);
+
+static int node_has_requested_for_interlocking(WatchdogNode* wdNode, WDPacketData* pkt);
+static bool node_has_resigned_from_interlocking(WatchdogNode* wdNode, WDPacketData* pkt);
+
+static void process_wd_func_commands_for_timer_events(void);
+static void add_wd_command_for_timer_events(unsigned int expire_secs, bool need_tics, WDFunctionCommandData* wd_func_command);
+static bool reply_is_received_for_pgpool_replicate_command(WatchdogNode* wdNode, WDPacketData* pkt, WDIPCCommandData* ipcCommand);
+static bool process_wd_command_function(WatchdogNode* wdNode, WDPacketData* pkt, char* func_name, int node_count, int* node_id_list);
+static bool process_pgpool_replicate_command(WatchdogNode* wdNode, WDPacketData* pkt);
+
+static void process_failover_command_sync_requests(WatchdogNode* wdNode, WDPacketData* pkt, WDIPCCommandData* ipcCommand);
+static WDFailoverCMDResults
+node_is_asking_for_failover_cmd_end(WatchdogNode* wdNode, WDPacketData* pkt, int failoverCmdType, bool resign);
+static WDFailoverCMDResults
+node_is_asking_for_failover_cmd_start(WatchdogNode* wdNode, WDPacketData* pkt, int failoverCmdType, bool check);
 
 /* global variables */
 wd_cluster g_cluster;
@@ -209,9 +325,8 @@ static void wd_cluster_initialize(void)
 		/* should also have upper limit???*/
 		ereport(LOG,
 				(errmsg("setting the local watchdog node name to \"%s\"",g_cluster.localNode->nodeName)));
-		
 	}
-	
+
 	/* initialize remote nodes */
 	g_cluster.remoteNodeCount = pool_config->other_wd->num_wd;
 	g_cluster.remoteNodes = palloc0((sizeof(WatchdogNode) * g_cluster.remoteNodeCount));
@@ -242,6 +357,7 @@ static void wd_cluster_initialize(void)
 	g_cluster.command_server_sock = 0;
 	g_cluster.notify_clients = NULL;
 	g_cluster.ipc_command_socks = NULL;
+	g_cluster.wd_timer_commands = NULL;
 	g_cluster.localNode->state = WD_DEAD;
 }
 
@@ -354,21 +470,7 @@ connect_with_all_configured_nodes(void)
 		else
 		{
 			if (connected)
-			{
 				wdNode->client_sock_state = WD_SOCK_CONNECTED;
-//				WDPacketData* pkt = get_addnode_message();
-//				if (write_packet_to_socket(wdNode->client_sock, pkt) == false)
-//				{
-//					ereport(LOG,
-//						(errmsg("write failed on socket to host %s:%d",wdNode->hostname,wdNode->wd_port),
-//							 errdetail("%s",strerror(errno))));
-//					/* What to do? close the connection seems a reasonable option. Any other thoughts??*/
-//					close(wdNode->client_sock);
-//					wdNode->client_sock = -1;
-//					wdNode->client_sock_state = WD_SOCK_ERROR;
-//				}
-//				free_packet(pkt);
-			}
 			else
 				wdNode->client_sock_state = WD_SOCK_WAITING_FOR_CONNECT;
 			connect_count++;
@@ -438,7 +540,6 @@ wd_child(int fork_wait_time)
 	set_ps_display("watchdog", false);
 
 	/*DEBUGING*/
-	pool_config->log_min_messages = DEBUG5;
 
 	/* initialize all the local structures for watchdog */
 	wd_cluster_initialize();
@@ -491,35 +592,19 @@ wd_child(int fork_wait_time)
 				g_timeout_sec = 0;
 			}
 		}
-
-		if (select_ret < 0 ) /* Error in select. Call select again */
-		{
-			if ( errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK )
-			{
-				if (timeout_event)
-					watchdog_state_machine(WD_EVENT_TIMEOUT, NULL, NULL);
-				continue;
-			}
-			if (timeout_event)
-				watchdog_state_machine(WD_EVENT_TIMEOUT, NULL, NULL);
-			continue;
-		}
-		else if ( select_ret == 0 ) /* timeout*/
-		{
-			if (timeout_event)
-				watchdog_state_machine(WD_EVENT_TIMEOUT, NULL, NULL);
-			continue;
-		}
-		else
+		if (select_ret > 0)
 		{
 			int processed_fds = 0;
 			processed_fds += accept_incomming_connections(&rmask, (select_ret - processed_fds));
 			processed_fds += update_successful_outgoing_cons(&wmask,(select_ret - processed_fds));
 			processed_fds += read_sockets(&rmask,(select_ret - processed_fds));
-			if (timeout_event)
-				watchdog_state_machine(WD_EVENT_TIMEOUT, NULL, NULL);
 		}
-		
+
+		if (timeout_event)
+			watchdog_state_machine(WD_EVENT_TIMEOUT, NULL, NULL);
+		if (WD_TIME_DIFF_SEC(ref_time,g_tm_set_time) >=  1)
+			process_wd_func_commands_for_timer_events();
+
 	}
 	return pid;
 }
@@ -840,7 +925,6 @@ static int read_sockets(fd_set* rmask,int pending_fds_count)
 	if (count >= pending_fds_count)
 		return count;
 
-
 	foreach(lc, g_cluster.ipc_command_socks)
 	{
 		int command_sock = lfirst_int(lc);
@@ -850,6 +934,16 @@ static int read_sockets(fd_set* rmask,int pending_fds_count)
 			read_ipc_command_and_process(command_sock, &remove_sock);
 			if (remove_sock)
 			{
+				/* Also locate the command if it has this socket */
+				WDIPCCommandData* ipcCommand = get_wd_IPC_command_from_socket(command_sock);
+				if (ipcCommand)
+				{
+					/* special case we want to remove the socket from
+					 * ipc_command_sock list manually, so mark the issuing socket
+					 * of ipcComman to invalid value
+					 */
+					ipcCommand->issueing_sock = -1;
+				}
 				close(command_sock);
 				socks_to_del = lappend_int(socks_to_del,command_sock);
 			}
@@ -899,169 +993,192 @@ static int read_sockets(fd_set* rmask,int pending_fds_count)
 	return count;
 }
 
-static bool read_ipc_command_and_process(int socket, bool *remove_socket)
+static bool read_ipc_command_and_process(int sock, bool *remove_socket)
 {
 	char type;
 	WD_COMMAND_ACTIONS command_action;
+	IPC_CMD_PREOCESS_RES res;
 	int data_len,ret;
-	*remove_socket = false;
+	WDIPCCommandData* IPCCommand = NULL;
+
+	*remove_socket = true;
+
 	/* 1st byte is command type */
-	printf("%s:%d\n",__FUNCTION__,__LINE__);
-	ret = read(socket, &type, sizeof(char));
+	ret = read(sock, &type, sizeof(char));
+	if (ret == 0) /* remote end has closed the connection */
+		return false;
+
 	if (ret != sizeof(char))
 	{
 		ereport(WARNING,
 			(errmsg("error reading from IPC socket"),
 				 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
-		*remove_socket = true;
-		close(socket);
 		return false;
 	}
-	printf("%s:%d\n",__FUNCTION__,__LINE__);
 	/* Next is is command action */
-	ret = read(socket, &command_action, sizeof(WD_COMMAND_ACTIONS));
+	ret = read(sock, &command_action, sizeof(WD_COMMAND_ACTIONS));
 	if (ret != sizeof(WD_COMMAND_ACTIONS))
 	{
 		ereport(WARNING,
 			(errmsg("error reading from IPC socket"),
 				 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
-		*remove_socket = true;
-		close(socket);
 		return false;
 	}
-	printf("%s:%d\n",__FUNCTION__,__LINE__);
 	/* We should have data length */
-	ret = read(socket, &data_len, sizeof(int));
+	ret = read(sock, &data_len, sizeof(int));
 	if (ret != sizeof(int))
 	{
 		ereport(WARNING,
 			(errmsg("error reading from IPC socket"),
 				 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
-		*remove_socket = true;
-		close(socket);
 		return false;
 	}
-	printf("%s:%d\n",__FUNCTION__,__LINE__);
+
 	data_len = ntohl(data_len);
 	/* see if we have enough information to process this command */
-	if (data_len == 0)
-	{
-		if (type == WD_REGISTER_FOR_NOTIFICATION)
-		{
-			/* Add this socket to the notify socket list*/
-			g_cluster.notify_clients = lappend_int(g_cluster.notify_clients,socket);
-			/* remove this socket from the command socket lists */
-			*remove_socket = true;
-			return true;
-		}
-		if (type == WD_GET_NODES_LIST_COMMAND)
-		{
-			printf("%s:%d\n",__FUNCTION__,__LINE__);
-
-			/* get the json for node list */
-			JsonNode* jNode = get_node_list_json();
-			int len = jw_get_json_length(jNode);
-			int nwlen = htonl(len);
-			char type = WD_NODES_LIST_DATA;
-			int ret = write(socket, &type, 1);
-			if (ret < 1)
-				return false;
-			/* write data length */
-			ret = write(socket, &nwlen, 4);
-			if (ret < 4)
-				return false;
-			/* write json data */
-			ret = write(socket, jw_get_json_string(jNode), len);
-			if (ret < len)
-				return false;
-			/* good */
-			return true;
-			
-		}
-		/* currently we do not know any other 0 length packet from IPC */
-		ereport(LOG,
-				(errmsg("invalid IPC command type %c",type)));
-		*remove_socket = true;
-		return false;
-	}
-
 	MemoryContext mCxt, oldCxt;
 	mCxt = AllocSetContextCreate(TopMemoryContext,
-															"WDIPCCommand",
-															ALLOCSET_SMALL_MINSIZE,
-															ALLOCSET_SMALL_INITSIZE,
-															ALLOCSET_SMALL_MAXSIZE);
+								 "WDIPCCommand",
+								 ALLOCSET_SMALL_MINSIZE,
+								 ALLOCSET_SMALL_INITSIZE,
+								 ALLOCSET_SMALL_MAXSIZE);
 	oldCxt = MemoryContextSwitchTo(mCxt);
 
-	WDIPCCommandData* IPCCommand = palloc0(sizeof(WDIPCCommandData));
-	IPCCommand->data_buf = palloc(data_len);
-	IPCCommand->data_len = 0;
+	IPCCommand = palloc0(sizeof(WDIPCCommandData));
+
+	IPCCommand->issueing_sock = sock;
+	IPCCommand->command_action = command_action;
+	IPCCommand->type = type;
+	gettimeofday(&IPCCommand->issue_time, NULL);
+
+	if (data_len > 0)
+		IPCCommand->data_buf = palloc(data_len);
+	else
+		IPCCommand->data_buf = NULL;
+
+	IPCCommand->nodeResults = NULL;
+
 	IPCCommand->memoryContext = mCxt;
 
 	MemoryContextSwitchTo(oldCxt);
 
 	while (IPCCommand->data_len < data_len)
 	{
-		int ret = read(socket, IPCCommand->data_buf + IPCCommand->data_len, (data_len - IPCCommand->data_len));
-		if(ret <= 0)
+		int ret = read(sock, IPCCommand->data_buf + IPCCommand->data_len, (data_len - IPCCommand->data_len));
+		if (ret <= 0)
 		{
-			*remove_socket = true;
 			ereport(NOTICE,
-					(errmsg("error reading IPC from socket"),
+				(errmsg("error reading IPC from socket"),
 					 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
-			close(socket);
-			pfree(IPCCommand->data_buf);
-			pfree(IPCCommand);
+			MemoryContextDelete(mCxt);
 			return false;
 		}
 		IPCCommand->data_len +=ret;
-		IPCCommand->issueing_sock = socket;
-		IPCCommand->command_action = command_action;
-		IPCCommand->type = type;
-		gettimeofday(&IPCCommand->issue_time, NULL);
 	}
-	if (type == WD_TRANSPORT_DATA_COMMAND)
+
+	res = process_IPC_command(IPCCommand);
+	if (res == IPC_CMD_PROCESSING)
 	{
-		/* okay we have the complete command from IPC, process it */
-		ret = process_IPC_transport_command(IPCCommand);
-		return false;
+		/*
+		 * The command still needs further processing
+		 * store it in the list
+		 */
+		*remove_socket = false;
+		g_cluster.ipc_commands = lappend(g_cluster.ipc_commands,IPCCommand);
+		return true;
 	}
-	else if (type == WD_NODE_STATUS_CHANGE_COMMAND)
-	{
-		ret = process_IPC_nodeStatusChange_command(IPCCommand);
-	}
-	else
-		ret = -1;
-	
-	/* Okay this is the transport data command */
-	if (ret < 0)
-	{
-		*remove_socket = true;
+	if (res == IPC_CMD_ERROR)
 		ereport(NOTICE,
 				(errmsg("error processing IPC from socket")));
-		close(socket);
-		pfree(IPCCommand->data_buf);
-		pfree(IPCCommand);
-		return false;
-	}
-	if (ret == 1)
-	{
-		/* The command needs further processing. Store it in cluste command list */
-		g_cluster.ipc_commands = lappend(g_cluster.ipc_commands,IPCCommand);
-	}
-	/*command is done and dusted*/
-	return true;
+
+	/* Delete the ipcCommand structure,
+	 * it is as simple as to delete the memory context
+	 */
+	MemoryContextDelete(mCxt);
+	return (res != IPC_CMD_ERROR);
 }
 
-static int process_IPC_nodeStatusChange_command(WDIPCCommandData* IPCCommand)
+static IPC_CMD_PREOCESS_RES process_IPC_command(WDIPCCommandData* IPCCommand)
+{
+	switch(IPCCommand->type)
+	{
+		case WD_TRANSPORT_DATA_COMMAND:
+			return process_IPC_transport_command(IPCCommand);
+			break;
+			
+		case WD_NODE_STATUS_CHANGE_COMMAND:
+			return process_IPC_nodeStatusChange_command(IPCCommand);
+			break;
+			
+		case WD_TRY_COMMAND_LOCK:
+			return process_IPC_lock_request(IPCCommand);
+			break;
+		
+		case WD_COMMAND_UNLOCK:
+			process_IPC_unlock_request(IPCCommand);
+			break;
+			
+		case WD_REGISTER_FOR_NOTIFICATION:
+			/* Add this socket to the notify socket list*/
+			g_cluster.notify_clients = lappend_int(g_cluster.notify_clients, IPCCommand->issueing_sock);
+			/* The command is completed successfully */
+			return IPC_CMD_COMPLETE;
+			break;
+			
+		case WD_GET_NODES_LIST_COMMAND:
+			return process_IPC_nodeList_command(IPCCommand);
+			break;
+
+		case WD_FUNCTION_COMMAND:
+			return process_IPC_replicate_variable(IPCCommand);
+			break;
+
+		case WD_FAILOVER_CMD_SYNC_REQUEST:
+			return process_IPC_failover_cmd_synchronise(IPCCommand);
+
+		default:
+			ereport(LOG,
+					(errmsg("invalid IPC command type %c",IPCCommand->type)));
+			break;
+	}
+	return IPC_CMD_ERROR;
+}
+
+
+static IPC_CMD_PREOCESS_RES process_IPC_nodeList_command(WDIPCCommandData* IPCCommand)
+{
+	/* get the json for node list */
+	JsonNode* jNode = get_node_list_json();
+	int len = jw_get_json_length(jNode);
+	int nwlen = htonl(len);
+	char type = WD_NODES_LIST_DATA;
+	int ret = write(IPCCommand->issueing_sock, &type, 1);
+	if (ret < 1)
+		return IPC_CMD_ERROR;
+
+	/* write data length */
+	ret = write(IPCCommand->issueing_sock, &nwlen, 4);
+	if (ret < 4)
+		return IPC_CMD_ERROR;
+
+	/* write json data */
+	ret = write(IPCCommand->issueing_sock, jw_get_json_string(jNode), len);
+	if (ret < len)
+		return IPC_CMD_ERROR;
+	/* good */
+	return IPC_CMD_COMPLETE;
+}
+
+static IPC_CMD_PREOCESS_RES process_IPC_nodeStatusChange_command(WDIPCCommandData* IPCCommand)
 {
 	NodeStates nodeState;
 	int nodeID;
 	if (parse_node_status_json(IPCCommand->data_buf, IPCCommand->data_len, &nodeID, &nodeState) ==false)
-		return -1;
+		return IPC_CMD_ERROR;
 	if (fire_node_status_event(nodeID,nodeState) == false)
-		return -1;
-	return 0;
+		return IPC_CMD_ERROR;
+
+	return IPC_CMD_COMPLETE;
 }
 
 static bool fire_node_status_event(int nodeID, NodeStates nodeState)
@@ -1130,7 +1247,7 @@ static bool parse_node_status_json(char* json_data, int data_len, int* nodeID, N
 				(errmsg("unable to parse json data from node status change ipc message")));
 		return false;
 	}
-	
+
 	if (json_get_int_value_for_key(root, "NodeID", nodeID))
 	{
 		json_value_free(root);
@@ -1159,137 +1276,598 @@ static bool parse_node_status_json(char* json_data, int data_len, int* nodeID, N
 }
 
 
-typedef enum NodeEvents
+static IPC_CMD_PREOCESS_RES process_IPC_replicate_variable(WDIPCCommandData* IPCCommand)
 {
-	NODE_IS_DEAD = 0,
-	NODE_IS_ALIVE,
-	TRUSTED_SERVER_NOT_REACHABLE
-}NodeEvents;
+	char res_type;
+	int res_len = 0;
+	int ret;
 
-typedef struct WDNodeAction
-{
-	int				node_id;
-	NodeEvents		event;
-	int				time_sec;
-	char*			message;
-}WDNodeAction;
-static int process_IPC_wd_node_command(WDIPCCommandData *IPCCommand)
-{
-	/* The command data format in Watchdog Node commands
-	 * Watchdog Node ID
-	 * EVENT ID on Node
-	 * Time of Event sec only
-	 * Optional Message String
+	if (get_local_node_state() == WD_STANDBY ||
+		get_local_node_state() == WD_COORDINATOR)
+	{
+		res_type = execute_replicate_command(IPCCommand);
+	}
+	else /* we are not in any stable state at the moment */
+	{
+		res_type = WD_IPC_CMD_CLUSTER_IN_TRAN;
+	}
+
+	if (res_type == IPC_CMD_PROCESSING)
+	{
+		/* Do not reply back to requester, as we are
+		 * still processing the results
+		 */
+		return res_type;
+	}
+	
+	ret = write(IPCCommand->issueing_sock, &res_type, 1);
+	if (ret < 1)
+		return IPC_CMD_ERROR;
+	/* write data length */
+	ret = write(IPCCommand->issueing_sock, &res_len, 4);
+	if (ret < 4)
+		return IPC_CMD_ERROR;
+	/*
+	 * This is the complete lifecycle of command.
+	 * we are done with it
 	 */
-	/* Okay parse the data */
-	const int MinimumNodeCommandDataSize = 4 + 4 + 4; /* node_id, event_id and time are compulsary */
-	WDNodeAction nodeAction;
-	int *ptr;
-	if (IPCCommand->data_len < MinimumNodeCommandDataSize)
-	{
-		ereport(LOG,
-				(errmsg("invalid Node command data")));
-		return -1;
-	}
-	ptr = (int*)IPCCommand->data_buf;
-	nodeAction.node_id = ntohl(ptr[0]);
-	nodeAction.event = ntohl(ptr[1]);
-	nodeAction.time_sec = ntohl(ptr[2]);
-	/* optional message string */
-	if (IPCCommand->data_len > MinimumNodeCommandDataSize)
-	{
-		int message_size = IPCCommand->data_len - MinimumNodeCommandDataSize;
-		nodeAction.message = palloc(message_size + 1);
-		memcpy(nodeAction.message, IPCCommand->data_buf + MinimumNodeCommandDataSize, message_size);
-		/* put the null terminator */
-		nodeAction.message[message_size] = 0;
-	}
-	else
-		nodeAction.message = NULL;
-	/* Well we got the event, process it */
 
-	WatchdogNode* wdNode = NULL;
-	if (nodeAction.node_id == 0) /* this is reserved for local node */
-	{
-		wdNode = g_cluster.localNode;
-	}
-	else
-	{
-		int i;
-		for (i = 0; i < g_cluster.remoteNodeCount; i++)
-		{
-			if (nodeAction.node_id == g_cluster.remoteNodes[i].private_id)
-			{
-				wdNode = &g_cluster.remoteNodes[i];
-				break;
-			}
-		}
-	}
-	if (wdNode == NULL)
-	{
-		ereport(LOG,
-				(errmsg("invalid Node id for node event")));
-		return -1;
-	}
+	return IPC_CMD_COMPLETE;
 
-	switch (nodeAction.event)
-	{
-		case NODE_IS_DEAD:
-		{
-			if (wdNode == g_cluster.localNode)
-				watchdog_state_machine(WD_EVENT_LOCAL_NODE_LOST, wdNode, NULL);
-			else
-				watchdog_state_machine(WD_EVENT_REMOTE_NODE_LOST, wdNode, NULL);
-		}
-			break;
-
-		case NODE_IS_ALIVE:
-			break;
-
-		case TRUSTED_SERVER_NOT_REACHABLE:
-		{
-			/* This event is only valid for local node */
-			if (wdNode != g_cluster.localNode)
-			{
-				ereport(LOG,
-						(errmsg("invalid Node event for remote node")));
-				return -1;
-			}
-			watchdog_state_machine(WD_EVENT_LOCAL_NODE_LOST, wdNode, NULL);
-		}
-			break;
-  default:
-		ereport(LOG,
-				(errmsg("invalid Node action")));
-			return -1;
-			break;
-	}
-	return 0;
 }
-/*
- * Return value:
- * -1 in case of error
- * 0  when command is complete
- * 1  when the command is issued and needs further processing
- */
-static int process_IPC_transport_command(WDIPCCommandData *IPCCommand)
+
+static IPC_CMD_PREOCESS_RES process_IPC_unlock_request(WDIPCCommandData *IPCCommand)
+{
+	char res_type;
+	int res_len = 0;
+	int ret;
+	/*
+	 * if cluster or myself is not in stable state
+	 * just return cluster in transaction
+	 */
+	IPCCommand->type = WD_INTERUNLOCKING_REQUEST;
+	if (g_cluster.lockHolderNode == NULL)
+	{
+		/* There is no lock holder as per our records
+		 * just ignore this request
+		 */
+		res_type = WD_IPC_CMD_RESULT_OK;
+	}
+	else if(g_cluster.lockHolderNode != g_cluster.localNode)
+	{
+		/* I am not the lockhoder node, so How can I unlonk
+		 * just return the error
+		 */
+		res_type = WD_IPC_CMD_RESULT_BAD;
+	}
+	else if (get_local_node_state() == WD_STANDBY)
+	{
+		/* I am a standby node, and also the lock holder
+		 * Just forward the request to coordinator */
+
+		printf("\t\t\t %s:%d I AM STANDBY \n",__FUNCTION__,__LINE__);
+
+		WDPacketData *wdPacket = get_minimum_message(WD_INTERUNLOCKING_REQUEST,NULL);
+		/* save the command ID */
+		IPCCommand->internal_command_id = wdPacket->command_id;
+
+		if (send_message(g_cluster.masterNode, wdPacket) <= 0)
+		{
+			printf("\t\t\t %s:%d send unlock request message failed \n",__FUNCTION__,__LINE__);
+
+			/* we have failed to send to any node, return lock failed  */
+			res_type = WD_IPC_CMD_RESULT_BAD;
+		}
+		else
+		{
+			/*
+			 * we need to wait for the results
+			 */
+			printf("\t\t\t %s:%d PROCESSING \n",__FUNCTION__,__LINE__);
+
+			res_type = IPC_CMD_PROCESSING;
+		}
+		/* whatever the case we need to resign ourself from lock
+		 * holder
+		 */
+		pfree(wdPacket);
+		g_cluster.lockHolderNode = NULL;
+	}
+	else if (get_local_node_state() == WD_COORDINATOR)
+	{
+		printf("\t\t\t %s:%d COORDINATOR \n",__FUNCTION__,__LINE__);
+		
+		/*
+		 * If I am coordinator, Just process the request locally
+		 */
+		if (node_has_resigned_from_interlocking(g_cluster.localNode, NULL))
+		{
+			printf("\t\t\t %s:%d \n",__FUNCTION__,__LINE__);
+
+			res_type = WD_IPC_CMD_RESULT_OK;
+		}
+		else
+			res_type = WD_IPC_CMD_RESULT_BAD;
+	}
+	else /* we are not in any stable state at the moment */
+	{
+		g_cluster.lockHolderNode = NULL;
+		res_type = WD_IPC_CMD_CLUSTER_IN_TRAN;
+	}
+
+	if (res_type == IPC_CMD_PROCESSING)
+	{
+		/* Do not reply back to requester, as we are
+		 * still processing the results
+		 */
+		return res_type;
+	}
+
+	ret = write(IPCCommand->issueing_sock, &res_type, 1);
+	if (ret < 1)
+		return IPC_CMD_ERROR;
+	/* write data length */
+	ret = write(IPCCommand->issueing_sock, &res_len, 4);
+	if (ret < 4)
+		return IPC_CMD_ERROR;
+	/*
+	 * This is the complete lifecycle of command.
+	 * we are done with it
+	 */
+	printf("\t\t\t %s:%d \n",__FUNCTION__,__LINE__);
+	
+	return IPC_CMD_COMPLETE;
+}
+
+
+static IPC_CMD_PREOCESS_RES process_IPC_lock_request(WDIPCCommandData *IPCCommand)
+{
+	char res_type;
+	int res_len = 0;
+	int ret;
+	/*
+	 * if cluster or myself is not in stable state
+	 * just return cluster in transaction
+	 */
+	IPCCommand->type = WD_INTERLOCKING_REQUEST;
+	if (get_local_node_state() == WD_STANDBY)
+	{
+		 printf("\t\t\t %s:%d I AM STANDBY \n",__FUNCTION__,__LINE__);
+
+		 /* I am a standby node, Just forward the request to coordinator */
+		WDPacketData * wdPacket = get_minimum_message(WD_INTERLOCKING_REQUEST,NULL);
+		/* save the command ID */
+		IPCCommand->internal_command_id = wdPacket->command_id;
+
+		if (send_message(g_cluster.masterNode, wdPacket) <= 0)
+		{
+			 printf("\t\t\t %s:%d send message failed \n",__FUNCTION__,__LINE__);
+
+			 /* we have failed to send to any node, return lock failed  */
+			res_type = WD_IPC_CMD_RESULT_BAD;
+		}
+		else
+		{
+			/*
+			 * we need to wait for the result
+			 */
+			printf("\t\t\t %s:%d PROCESSING \n",__FUNCTION__,__LINE__);
+
+			res_type = IPC_CMD_PROCESSING;
+		}
+	}
+	else if (get_local_node_state() == WD_COORDINATOR)
+	{
+		printf("\t\t\t %s:%d COORDINATOR \n",__FUNCTION__,__LINE__);
+
+		/*
+		 * If I am coordinator, Just process the request locally
+		 */
+		if (node_has_requested_for_interlocking(g_cluster.localNode, NULL))
+		{
+			printf("\t\t\t %s:%d \n",__FUNCTION__,__LINE__);
+
+			res_type = WD_IPC_CMD_RESULT_OK;
+		}
+		else
+			res_type = WD_IPC_CMD_RESULT_BAD;
+	}
+	else /* we are not in any stable state at the moment */
+		res_type = WD_IPC_CMD_CLUSTER_IN_TRAN;
+
+	if (res_type == IPC_CMD_PROCESSING)
+	{
+		/* Do not reply back to requester, as we are
+		 * still processing the results
+		 */
+		return res_type;
+	}
+
+	ret = write(IPCCommand->issueing_sock, &res_type, 1);
+	if (ret < 1)
+		return IPC_CMD_ERROR;
+	/* write data length */
+	ret = write(IPCCommand->issueing_sock, &res_len, 4);
+	if (ret < 4)
+		return IPC_CMD_ERROR;
+	/*
+	 * This is the complete lifecycle of command.
+	 * we are done with it
+	 */
+	printf("\t\t\t %s:%d \n",__FUNCTION__,__LINE__);
+
+	return IPC_CMD_COMPLETE;
+}
+
+static IPC_CMD_PREOCESS_RES process_IPC_failover_cmd_synchronise(WDIPCCommandData *IPCCommand)
+{
+	char res_type;
+	int res_len = 0;
+	int ret;
+	/*
+	 * if cluster or myself is not in stable state
+	 * just return cluster in transaction
+	 */
+	IPCCommand->type = WD_FAILOVER_CMD_SYNC_REQUEST;
+	if (get_local_node_state() == WD_STANDBY)
+	{
+		/* I am a standby node, Just forward the request to coordinator */
+
+		WDPacketData wdPacket;
+		init_wd_packet(&wdPacket);
+		set_message_type(&wdPacket, WD_FAILOVER_CMD_SYNC_REQUEST);
+		set_next_commandID_in_message(&wdPacket);
+		put_bytes_in_message(&wdPacket, IPCCommand->data_buf , IPCCommand->data_len);
+		finish_wdMessage(&wdPacket);
+		/* save the command ID */
+		IPCCommand->internal_command_id = wdPacket.command_id;
+
+		printf("\t\t\t %s:%d I AM STANDBY \n",__FUNCTION__,__LINE__);
+		
+		if (send_message(g_cluster.masterNode, &wdPacket) <= 0)
+		{
+			printf("\t\t\t %s:%d send message failed \n",__FUNCTION__,__LINE__);
+			/* we have failed to send to any node, return lock failed  */
+			res_type = WD_IPC_CMD_RESULT_BAD;
+		}
+		else
+		{
+			/*
+			 * we need to wait for the result
+			 */
+			printf("\t\t\t %s:%d PROCESSING \n",__FUNCTION__,__LINE__);
+			res_type = IPC_CMD_PROCESSING;
+		}
+	}
+	else if (get_local_node_state() == WD_COORDINATOR)
+	{
+		printf("\t\t\t %s:%d COORDINATOR \n",__FUNCTION__,__LINE__);
+
+		/*
+		 * If I am coordinator, Just process the request locally
+		 */
+		process_failover_command_sync_requests(g_cluster.localNode, NULL, IPCCommand);
+		return IPC_CMD_COMPLETE;
+	}
+	else /* we are not in any stable state at the moment */
+		res_type = WD_IPC_CMD_CLUSTER_IN_TRAN;
+	
+	if (res_type == IPC_CMD_PROCESSING)
+	{
+		/* Do not reply back to requester, as we are
+		 * still processing the results
+		 */
+		return res_type;
+	}
+	
+	ret = write(IPCCommand->issueing_sock, &res_type, 1);
+	if (ret < 1)
+		return IPC_CMD_ERROR;
+	/* write data length */
+	ret = write(IPCCommand->issueing_sock, &res_len, 4);
+	if (ret < 4)
+		return IPC_CMD_ERROR;
+	/*
+	 * This is the complete lifecycle of command.
+	 * we are done with it
+	 */
+	printf("\t\t\t %s:%d \n",__FUNCTION__,__LINE__);
+	
+	return IPC_CMD_COMPLETE;
+}
+
+static int node_has_requested_for_interlocking(WatchdogNode* wdNode, WDPacketData* pkt)
+{
+	/* only coordinator(master) node can process this request */
+	if (get_local_node_state() == WD_COORDINATOR)
+	{
+		printf("\n\t\t\t %s:%d I AM COORDINATOR \n",__FUNCTION__,__LINE__);
+		
+		/* check if we already have no lockholder node */
+		if (g_cluster.lockHolderNode == NULL || g_cluster.lockHolderNode == wdNode)
+		{
+			printf("\n\t\t\t %s:%d LOCK REQUESTED IS NULL OR FROM SAME NODE \n",__FUNCTION__,__LINE__);
+
+			if (wdNode == g_cluster.localNode)
+			{
+				g_cluster.lockHolderNode = wdNode;
+				/* TODO inform all cluster about the new lock holder */
+				return true;
+			}
+			/* reply the node with success message */
+			else if (reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt))
+			{
+			printf("\n\t\t\t %s:%d WD_ACCEPT_MESSAGE \n",__FUNCTION__,__LINE__);
+			g_cluster.lockHolderNode = wdNode;
+			/* TODO inform all cluster about the new lock holder */
+			return true;
+			}
+		}
+		else
+		{
+			printf("\n\t\t\t %s:%d WD_REJECT_MESSAGE \n",__FUNCTION__,__LINE__);
+			reply_with_minimal_message(wdNode, WD_REJECT_MESSAGE, pkt);
+		}
+	}
+	else
+	{
+		printf("\n\t\t\t %s:%d WD_ERROR_MESSAGE \n",__FUNCTION__,__LINE__);
+		reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
+	}
+	return false;
+}
+
+static void process_failover_command_sync_requests(WatchdogNode* wdNode, WDPacketData* pkt, WDIPCCommandData* ipcCommand)
+{
+
+	WDFailoverCMDResults res = FAILOVER_RES_TRANSITION;
+	JsonNode* jNode = NULL;
+	int failoverCmdType = -1;
+
+	/* only coordinator(master) node can process this request */
+	if (get_local_node_state() == WD_COORDINATOR)
+	{
+		char* json_data = NULL;
+		int data_len = 0;
+		json_value *root;
+		char* syncRequestType = NULL;
+		
+		/* We need to identify failover command type and sync function */
+		if (pkt)
+		{
+			json_data = get_data_from_message(pkt);
+			data_len = pkt->data_len;
+		}
+		else
+		{
+			json_data = ipcCommand->data_buf;
+			data_len = ipcCommand->data_len;
+		}
+
+		root = json_parse(json_data,data_len);
+		/* The root node must be object */
+		if (root == NULL || root->type != json_object)
+		{
+			ereport(NOTICE,
+					(errmsg("unable to parse json data from replicate command")));
+			res = FAILOVER_RES_ERROR;
+		}
+		if (root)
+			syncRequestType = json_get_string_value_for_key(root, "SyncRequestType");
+
+		if (syncRequestType == NULL)
+		{
+			ereport(NOTICE,
+					(errmsg("invalid json data"),
+					 errdetail("unable to find Watchdog Function Name")));
+			res = FAILOVER_RES_ERROR;
+		}
+		else
+			syncRequestType = pstrdup(syncRequestType);
+		
+		if (root && json_get_int_value_for_key(root, "FailoverCMDType", &failoverCmdType))
+		{
+			res = FAILOVER_RES_ERROR;
+		}
+		
+		if (root)
+			json_value_free(root);
+
+		/* verify the failoverCmdType */
+		if (failoverCmdType < 0 || failoverCmdType >= MAX_FAILOVER_CMDS)
+			res = FAILOVER_RES_ERROR;
+		
+		if (syncRequestType == NULL)
+			res = FAILOVER_RES_ERROR;
+		
+		if (res != FAILOVER_RES_ERROR)
+		{
+			if (strcasecmp("START_COMMAND", syncRequestType) == 0)
+				res = node_is_asking_for_failover_cmd_start(wdNode, pkt, failoverCmdType, false);
+			else if (strcasecmp("END_COMMAND", syncRequestType) == 0)
+				res = node_is_asking_for_failover_cmd_end(wdNode, pkt, failoverCmdType, true);
+			else if (strcasecmp("UNLOCK_COMMAND", syncRequestType) == 0)
+				res = node_is_asking_for_failover_cmd_end(wdNode, pkt, failoverCmdType, false);
+			else if (strcasecmp("CHECK_LOCKED", syncRequestType) == 0)
+				res = node_is_asking_for_failover_cmd_start(wdNode, pkt, failoverCmdType, true);
+			else
+				res = FAILOVER_RES_ERROR;
+		}
+	}
+	else
+	{
+		res = FAILOVER_RES_ERROR;
+	}
+
+	if (res != FAILOVER_RES_ERROR)
+	{
+		/* create the json result */
+		jNode = jw_create_with_object(true);
+		/* add the node count */
+		jw_put_int(jNode, "FailoverCMDType", failoverCmdType);
+		jw_put_int(jNode, "InterlockingResult", res);
+		/* create the packet */
+		jw_end_element(jNode);
+		jw_finish_document(jNode);
+	}
+
+	if (wdNode != g_cluster.localNode)
+	{
+		if (jNode == NULL)
+		{
+			reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
+		}
+		else
+		{
+			reply_with_message(wdNode, WD_DATA_MESSAGE, jw_get_json_string(jNode), jw_get_json_length(jNode), pkt);
+		}
+	}
+	else
+	{
+		/* Reply to IPC Socket */
+		int res_len = 0;
+		char res_type = WD_IPC_CMD_RESULT_BAD;
+		if (jNode != NULL)
+		{
+			res_len = htonl(jw_get_json_length(jNode));
+			res_type = WD_IPC_CMD_RESULT_OK;
+		}
+
+		write(ipcCommand->issueing_sock, &res_type, 1);
+		write(ipcCommand->issueing_sock, &res_len, 4);
+		if (res_len > 0)
+			write(ipcCommand->issueing_sock, jw_get_json_string(jNode), jw_get_json_length(jNode));
+	}
+	if (jNode)
+		jw_destroy(jNode);
+
+}
+
+static WDFailoverCMDResults
+node_is_asking_for_failover_cmd_start(WatchdogNode* wdNode, WDPacketData* pkt, int failoverCmdType, bool check)
+{
+	WDFailoverCMDResults res = FAILOVER_RES_TRANSITION;
+	/* only coordinator(master) node can process this request */
+	if (get_local_node_state() == WD_COORDINATOR)
+	{
+		InterlockingNode* lockingNode = NULL;
+		if (failoverCmdType < 0 || failoverCmdType >= MAX_FAILOVER_CMDS)
+			res = FAILOVER_RES_ERROR;
+		else
+			lockingNode = &g_cluster.interlockingNodes[failoverCmdType];
+
+		if (res != FAILOVER_RES_ERROR)
+		{
+			/* check if we already have no lockholder node */
+			if (lockingNode->lockHolderNode == NULL || lockingNode->lockHolderNode == wdNode)
+			{
+				printf("\n\t\t\t %s:%d LOCK REQUESTED IS NULL OR FROM SAME NODE \n",__FUNCTION__,__LINE__);
+				if (check == false)
+				{
+					lockingNode->lockHolderNode = wdNode;
+					lockingNode->locked = true;
+				}
+				res = FAILOVER_RES_PROCEED_LOCK_HOLDER;
+			}
+			else /* some other node is holding the lock */
+			{
+				printf("\n\t\t\t %s:%d Some other node is already holding the lock \n",__FUNCTION__,__LINE__);
+				if (lockingNode->locked)
+					res = FAILOVER_RES_BLOCKED;
+				else
+					res = FAILOVER_RES_PROCEED_UNLOCKED;
+			}
+		}
+	}
+	else
+	{
+		printf("\n\t\t\t %s:%d I am not in position \n",__FUNCTION__,__LINE__);
+		res = FAILOVER_RES_ERROR;
+	}
+	return res;
+}
+
+static WDFailoverCMDResults
+node_is_asking_for_failover_cmd_end(WatchdogNode* wdNode, WDPacketData* pkt, int failoverCmdType, bool resign)
+{
+	WDFailoverCMDResults res = FAILOVER_RES_TRANSITION;
+	/* only coordinator(master) node can process this request */
+	if (get_local_node_state() == WD_COORDINATOR)
+	{
+		InterlockingNode* lockingNode = NULL;
+
+		if (failoverCmdType < 0 || failoverCmdType >= MAX_FAILOVER_CMDS)
+			res = FAILOVER_RES_ERROR;
+		else
+			lockingNode = &g_cluster.interlockingNodes[failoverCmdType];
+		
+		if (res != FAILOVER_RES_ERROR)
+		{
+			/* check if we already have no lockholder node */
+			if (lockingNode->lockHolderNode == NULL || lockingNode->lockHolderNode == wdNode)
+			{
+				if (resign)
+					lockingNode->lockHolderNode = NULL;
+				lockingNode->locked = false;
+				res = FAILOVER_RES_PROCEED_UNLOCKED;
+			}
+			else /* some other node is holding the lock */
+			{
+				printf("\n\t\t\t %s:%d only lock holder can resign from it \n",__FUNCTION__,__LINE__);
+				res = FAILOVER_RES_BLOCKED;
+			}
+		}
+	}
+	else
+	{
+		printf("\n\t\t\t %s:%d I am not in position \n",__FUNCTION__,__LINE__);
+		res = FAILOVER_RES_ERROR;
+	}
+	return res;
+}
+
+static bool node_has_resigned_from_interlocking(WatchdogNode* wdNode, WDPacketData* pkt)
+{
+	/* only coordinator(master) node can process this request */
+	if (get_local_node_state() == WD_COORDINATOR)
+	{
+		/* check if we already have no lockholder node */
+		if (g_cluster.lockHolderNode == NULL || g_cluster.lockHolderNode == wdNode)
+		{
+			/* reply the node with success message */
+			if (reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt))
+			{
+				g_cluster.lockHolderNode = NULL;
+				/* TODO inform all cluster about the new lock holder */
+				return true;
+			}
+		}
+		else
+		{
+			/* only lock holder can resign itself */
+			reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
+		}
+	}
+	else
+		reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
+	return false;
+}
+
+static IPC_CMD_PREOCESS_RES process_IPC_transport_command(WDIPCCommandData *IPCCommand)
 {
 	WatchdogNode* wdNodeToSend = NULL; /* Null effectively means, send to all nodes */
-	if (IPCCommand == NULL || IPCCommand->type != WD_TRANSPORT_DATA_COMMAND)
-		return -1;
 	if (IPCCommand->command_action == WD_COMMAND_ACTION_LOCAL)
 	{
 		ereport(WARNING,(errmsg("invalid command action for watchdog IPC command")));
-		return -1;
+		return IPC_CMD_ERROR;
 	}
 	/* create the packet */
 	WDPacketData wdPacket;
-
+	init_wd_packet(&wdPacket);
 	set_message_type(&wdPacket, WD_PGPOOL_COMMAND);
 	set_next_commandID_in_message(&wdPacket);
 	put_bytes_in_message(&wdPacket, IPCCommand->data_buf , IPCCommand->data_len);
 	finish_wdMessage(&wdPacket);
-	wdPacket.command_id = WD_PGPOOL_COMMAND;
 
 	IPCCommand->internal_command_id = wdPacket.command_id;
 
@@ -1307,7 +1885,7 @@ static int process_IPC_transport_command(WDIPCCommandData *IPCCommand)
 			if (g_cluster.masterNode == NULL)
 			{
 				ereport(WARNING,(errmsg("failed to process watchdog IPC command, NO master node found ")));
-				return -1;
+				return IPC_CMD_ERROR;
 			}
 			if (g_cluster.masterNode != g_cluster.localNode)
 				wdNodeToSend = g_cluster.masterNode;
@@ -1329,11 +1907,11 @@ static int process_IPC_transport_command(WDIPCCommandData *IPCCommand)
 		 * This is the complete lifecycle of command.
 		 * we are done with it
 		 */
-		return 0;
+		return IPC_CMD_ERROR;
 	}
 
 	IPCCommand->command_result = IPCResult;
-	return 1;
+	return IPC_CMD_PROCESSING;
 }
 
 static int write_IPCResult_To_Socket(int sock, WDIPCCommandResult* IPCResult)
@@ -1380,7 +1958,7 @@ static WatchdogNode* parse_node_info_message(WDPacketData* pkt)
 	if (pkt == NULL || (pkt->type != WD_ADD_NODE_MESSAGE && pkt->type != WD_INFO_MESSAGE))
 		return NULL;
 	
-	ptr = pkt->data_buf + 1 + 4 + 4; /* skip the header */
+	ptr = get_data_from_message(pkt); /* skip the header */
 	wdNode = palloc0(sizeof(WatchdogNode));
 
 	memcpy(&temp,ptr,4);
@@ -1978,23 +2556,7 @@ static int update_successful_outgoing_cons(fd_set* wmask, int pending_fds_count)
 					/* set socket to blocking again */
 					int flags = fcntl(wdNode->client_sock, F_GETFL, 0);
 					fcntl(wdNode->client_sock, F_SETFL, flags | ~O_NONBLOCK);
-					/* Send the Add Node message */
-
-//					if (!pkt)
-//						pkt = get_addnode_message();
-//					if (write_packet_to_socket(wdNode->client_sock, pkt) == false)
-//					{
-//						ereport(LOG,
-//							(errmsg("write failed on socket to host %s:%d",wdNode->hostname,wdNode->wd_port),
-//								 errdetail("%s",strerror(errno))));
-//						/* What to do? close the connection seems a reasonable option. Any other thoughts??*/
-//						close(wdNode->client_sock);
-//						wdNode->client_sock = -1;
-//						wdNode->client_sock_state = WD_SOCK_ERROR;
-//					}
-//					else
-						watchdog_state_machine(WD_EVENT_NEW_OUTBOUND_CONNECTION, wdNode, NULL);
-
+					watchdog_state_machine(WD_EVENT_NEW_OUTBOUND_CONNECTION, wdNode, NULL);
 				}
 				count++;
 				if (count >= pending_fds_count)
@@ -2021,12 +2583,17 @@ static bool write_packet_to_socket(int sock, WDPacketData* pkt)
 	return true;
 }
 
-static WDPacketData* get_empty_packet(void)
+static void init_wd_packet(WDPacketData* pkt)
 {
-	WDPacketData *pkt = palloc0(sizeof(WDPacketData));
 	pkt->data_len = 0;
 	/* set the ptr to the start of packet data(skip header) */
 	pkt->ptr = 1+4+4; /* type(1) + len(4) + command_id(4) */
+}
+
+static WDPacketData* get_empty_packet(void)
+{
+	WDPacketData *pkt = palloc0(sizeof(WDPacketData));
+	init_wd_packet(pkt);
 	return pkt;
 }
 
@@ -2085,6 +2652,10 @@ static void finish_wdMessage(WDPacketData* pkt)
 	update_message_length(pkt);
 }
 
+static char* get_data_from_message(WDPacketData* pkt)
+{
+	return pkt->data_buf + 1 + 4 + 4; /* skip the header */
+}
 
 
 /* status | wd_port | pgpool_port | host_ip | delegate_ip | node_name */
@@ -2174,60 +2745,92 @@ static WDPacketData* get_minimum_message(char type, WDPacketData* replyFor)
 }
 
 
-static bool packet_is_received_for_pgpool_command(WatchdogNode* wdNode, WDPacketData* pkt)
+static WDIPCCommandData* get_wd_IPC_command_from_reply(WDPacketData* pkt)
 {
 	ListCell *lc;
-
 	foreach(lc, g_cluster.ipc_commands)
 	{
 		WDIPCCommandData* ipcCommand = lfirst(lc);
 		if (ipcCommand)
 		{
 			if (ipcCommand->internal_command_id == pkt->command_id)
+				return ipcCommand;
+		}
+	}
+	return NULL;
+}
+
+static WDIPCCommandData* get_wd_IPC_command_from_socket(int sock)
+{
+	ListCell *lc;
+	foreach(lc, g_cluster.ipc_commands)
+	{
+		WDIPCCommandData* ipcCommand = lfirst(lc);
+		if (ipcCommand)
+		{
+			if (ipcCommand->issueing_sock == sock)
+				return ipcCommand;
+		}
+	}
+	return NULL;
+}
+
+static bool packet_is_received_for_pgpool_command(WatchdogNode* wdNode, WDPacketData* pkt)
+{
+	WDIPCCommandData* ipcCommand = get_wd_IPC_command_from_reply(pkt);
+	if (ipcCommand)
+	{
+		/* Okay we have found the command we are looking for */
+		WDIPCCommandResult* ipcResult = ipcCommand->command_result;
+		if (ipcResult != NULL) /* Assert it should never be NULL */
+		{
+			ipcResult->commandReplyFromCount++;
+			/* create the result slot */
+			WDIPCCommandNodeResultData* resultSlot = palloc(sizeof(WDIPCCommandNodeResultData));
+			strncpy(resultSlot->nodeName, wdNode->nodeName,WD_MAX_HOST_NAMELEN);
+			resultSlot->node_id = wdNode->private_id;
+			resultSlot->data_len = pkt->data_len;
+
+			if (resultSlot->data_len > 0)
 			{
-				/* Okay we have found the command we are looking for */
-				WDIPCCommandResult* ipcResult = ipcCommand->command_result;
-				if (ipcResult != NULL) /* Assert it should never be NULL */
-				{
-					ipcResult->commandReplyFromCount++;
-					/* create the result slot */
-					WDIPCCommandNodeResultData* resultSlot = palloc(sizeof(WDIPCCommandNodeResultData));
-					strncpy(resultSlot->nodeName, wdNode->nodeName,WD_MAX_HOST_NAMELEN);
-					resultSlot->node_id = wdNode->private_id;
-					resultSlot->data_len = pkt->data_len;
-
-					if (resultSlot->data_len > 0)
-					{
-						resultSlot->data = palloc(resultSlot->data_len);
-						memcpy(resultSlot->data, pkt->data_buf, resultSlot->data_len);
-					}
-					else
-						resultSlot->data = NULL;
-
-					ipcResult->node_results = lappend(ipcResult->node_results,resultSlot);
-	
-					if (ipcResult->commandReplyFromCount >= ipcResult->commandSendToCount)
-					{
-						/* if all nodes nodes have replied, finish the command */
-						write_IPCResult_To_Socket(ipcCommand->issueing_sock, ipcResult);
-						/* remove this command from list */
-						g_cluster.ipc_commands = list_delete_ptr(g_cluster.ipc_commands,ipcCommand);
-						free_IPC_command(ipcCommand);
-					}
-					return true;
-				}
-				/*TODO handle this case, or do we can really get this situation?? */
-				break;
+				resultSlot->data = palloc(resultSlot->data_len);
+				memcpy(resultSlot->data, pkt->data_buf, resultSlot->data_len);
 			}
+			else
+				resultSlot->data = NULL;
+
+			ipcResult->node_results = lappend(ipcResult->node_results,resultSlot);
+
+			if (ipcResult->commandReplyFromCount >= ipcResult->commandSendToCount)
+			{
+				/* if all nodes nodes have replied, finish the command */
+				write_IPCResult_To_Socket(ipcCommand->issueing_sock, ipcResult);
+				/* remove this command from list */
+				cleanUpIPCCommand(ipcCommand);
+			}
+			return true;
 		}
 	}
 	return false;
 }
 
-static void free_IPC_command(WDIPCCommandData* ipcCommand)
+static void cleanUpIPCCommand(WDIPCCommandData* ipcCommand)
 {
 	/*
-	 * Everything of IPCCommand live inside its own memory context.
+	 * close the socket associated with ipcCommand
+	 * and remove it from ipcSocket list
+	 */
+	if (ipcCommand->issueing_sock > 0)
+	{
+		close(ipcCommand->issueing_sock);
+		g_cluster.ipc_command_socks = list_delete_int(g_cluster.ipc_command_socks,ipcCommand->issueing_sock);
+		ipcCommand->issueing_sock = -1;
+	}
+	/* Now remove the ipcCommand instance from the command list */
+	g_cluster.ipc_commands = list_delete_ptr(g_cluster.ipc_commands,ipcCommand);
+	/*
+	 * Finally the memory part
+	 * As everything of IPCCommand live inside its own memory context.
 	 * Delete the MemoryContext and we are good
 	 */
 	MemoryContextDelete(ipcCommand->memoryContext);
@@ -2260,9 +2863,17 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 			pfree(tempNodeInfo);
 		}
 			break;
-		case WD_PGPOOL_COMMAND:
-			packet_is_received_for_pgpool_command(wdNode, pkt);
+
+		case WD_INTERLOCKING_REQUEST:
+			printf("\n\t\t\t %s:%d INTERLOCKING REQUEST RECEIVED \n",__FUNCTION__,__LINE__);
+			node_has_requested_for_interlocking(wdNode, pkt);
 			break;
+
+		case WD_INTERUNLOCKING_REQUEST:
+			printf("\n\t\t\t %s:%d UNLOCKING_REQUEST REQUEST RECEIVED \n",__FUNCTION__,__LINE__);
+			node_has_resigned_from_interlocking(wdNode, pkt);
+			break;
+
 		case WD_JOIN_COORDINATOR_MESSAGE:
 		{
 			/*
@@ -2343,14 +2954,16 @@ static int send_message(WatchdogNode* wdNode, WDPacketData *pkt)
 	int i,count = 0;
 	if (wdNode)
 	{
-		if (send_message_to_node(wdNode,pkt) == 0)
+		if (wdNode == g_cluster.localNode) /*Always return 1 if I myself is intended receiver */
+			return 1;
+		if (send_message_to_node(wdNode,pkt))
 			return 1;
 		return 0;
 	}
 	for (i=0; i< g_cluster.remoteNodeCount; i++)
 	{
 		wdNode = &(g_cluster.remoteNodes[i]);
-		if (send_message_to_node(wdNode,pkt) == 0)
+		if (send_message_to_node(wdNode,pkt))
 			count++;
 	}
 	return count;
@@ -2454,6 +3067,23 @@ static bool reply_with_minimal_message(WatchdogNode* wdNode, char type, WDPacket
 	return ret;
 }
 
+static bool reply_with_message(WatchdogNode* wdNode, char type, char* data, int data_len, WDPacketData* replyFor)
+{
+	WDPacketData wdPacket;
+	init_wd_packet(&wdPacket);
+	set_message_type(&wdPacket, type);
+
+	if (replyFor == NULL)
+		set_next_commandID_in_message(&wdPacket);
+	else
+		set_message_commandID(&wdPacket, replyFor->command_id);
+
+	put_bytes_in_message(&wdPacket, data , data_len);
+	finish_wdMessage(&wdPacket);
+	int ret = send_message(wdNode, &wdPacket);
+	return ret;
+}
+
 static inline WD_STATES get_local_node_state(void)
 {
 	return g_cluster.localNode->state;
@@ -2489,6 +3119,127 @@ char *debug_states[] = {
 	"WD_WAITING_FOR_QUORUM",
 	"WD_LOST"};
 
+/* 
+ * returns true if no message is swollowed by the
+ * processor and no further action is required
+ */
+static bool wd_commands_packet_processor(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt)
+{
+	WDIPCCommandData* ipcCommand;
+
+	if (event != WD_EVENT_PACKET_RCV)
+		return false;
+	if (pkt == NULL)
+		return false;
+	
+	if (pkt->type == WD_PGPOOL_COMMAND)
+	{
+		packet_is_received_for_pgpool_command(wdNode, pkt);
+		return true;
+	}
+
+	if (pkt->type == WD_FAILOVER_CMD_SYNC_REQUEST)
+	{
+		process_failover_command_sync_requests(wdNode, pkt, NULL);
+		return true;
+	}
+
+	if (pkt->type == WD_REPLICATE_VARIABLE_REQUEST)
+	{
+		process_pgpool_replicate_command(wdNode, pkt);
+		return true;
+	}
+
+	if (pkt->type == WD_INTERLOCKING_REQUEST)
+	{
+		printf("\n\t\t\t %s:%d INTERLOCKING REQUEST RECEIVED \n",__FUNCTION__,__LINE__);
+		node_has_requested_for_interlocking(wdNode, pkt);
+		return true;
+	}
+	
+	if (pkt->type == WD_INTERUNLOCKING_REQUEST)
+	{
+		printf("\n\t\t\t %s:%d UNLOCKING_REQUEST REQUEST RECEIVED \n",__FUNCTION__,__LINE__);
+		node_has_resigned_from_interlocking(wdNode, pkt);
+		return true;
+	}
+	
+	if (pkt->type == WD_DATA_MESSAGE)
+	{
+		ipcCommand = get_wd_IPC_command_from_reply(pkt);
+		if (ipcCommand == NULL)
+		{
+			printf("\t\t\t %s:%d \n",__FUNCTION__,__LINE__);
+			return false;
+		}
+		int res_len = htonl(pkt->data_len);
+		char res_type = WD_IPC_CMD_RESULT_OK;
+
+		write(ipcCommand->issueing_sock, &res_type, 1);
+		write(ipcCommand->issueing_sock, &res_len, 4);
+		if (pkt->data_len > 0)
+			write(ipcCommand->issueing_sock, get_data_from_message(pkt), pkt->data_len);
+		/* ok we are done
+		 * delete this command
+		 */
+		cleanUpIPCCommand(ipcCommand);
+		return true; /* do not process this packet further */
+	
+	}
+
+
+	if (pkt->type == WD_ACCEPT_MESSAGE ||
+		pkt->type == WD_REJECT_MESSAGE ||
+		pkt->type == WD_ERROR_MESSAGE)
+	{
+		ipcCommand = get_wd_IPC_command_from_reply(pkt);
+		if (ipcCommand == NULL)
+		{
+			printf("\t\t\t %s:%d \n",__FUNCTION__,__LINE__);
+			
+			return false;
+		}
+		printf("\t\t\t %s:%d ipcCommand->type = %c\n",__FUNCTION__,__LINE__,ipcCommand->type);
+
+		if (ipcCommand->type == WD_INTERLOCKING_REQUEST ||
+			ipcCommand->type == WD_INTERUNLOCKING_REQUEST ||
+			ipcCommand->type == WD_FAILOVER_CMD_SYNC_REQUEST)
+		{
+			/*
+			 * we are expecting only one reply for this
+			 * and we got that.
+			 */
+			printf("\t\t\t %s:%d \n",__FUNCTION__,__LINE__);
+
+			int res_len = 0;
+			char res_type = WD_IPC_CMD_RESULT_BAD;
+			if (pkt->type == WD_ACCEPT_MESSAGE)
+			{
+				/* okay we are the lock holder */
+				printf("\t\t\t %s:%d \n",__FUNCTION__,__LINE__);
+
+				g_cluster.lockHolderNode = g_cluster.localNode;
+				res_type = WD_IPC_CMD_RESULT_OK;
+			}
+			printf("\t\t\t %s:%d \n",__FUNCTION__,__LINE__);
+
+			write(ipcCommand->issueing_sock, &res_type, 1);
+			write(ipcCommand->issueing_sock, &res_len, 4);
+			/*
+			 * ok we are done, delete this command
+			 */
+			cleanUpIPCCommand(ipcCommand);
+
+			return true; /* do not process this packet further */
+		}
+		
+		if (ipcCommand->type == WD_REPLICATE_VARIABLE_REQUEST)
+			return reply_is_received_for_pgpool_replicate_command(wdNode, pkt, ipcCommand);
+	}
+
+	return false;
+}
+
 static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt)
 {
 	ereport(DEBUG1,
@@ -2500,7 +3251,9 @@ static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacke
 		if (wdNode == g_cluster.masterNode)
 			g_cluster.masterNode = NULL;
 	}
-
+	if (wd_commands_packet_processor(event, wdNode, pkt) == true)
+		return 0;
+	
 	switch (get_local_node_state())
 	{
 		case WD_LOADING:
@@ -2867,7 +3620,7 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 				set_state(WD_WAITING_FOR_QUORUM);
 			}
 			else
-				set_timeout(10);
+				set_timeout(20);
 			break;
 
 		case WD_EVENT_REMOTE_NODE_LOST:
@@ -3203,22 +3956,32 @@ static int watchdog_state_machine_waiting_for_quorum(WD_EVENTS event, WatchdogNo
  */
 static int get_quorum_status(void)
 {
-	int total_nodes = g_cluster.remoteNodeCount + 1;
-	int current_cluster_nodes = get_cluster_node_count(); /* this one excluding self */
-	int fifty_prcnt_node_count = total_nodes / 2;
-	current_cluster_nodes++; /* count myself in*/
-	if (total_nodes % 2 == 0)
+	if ( get_cluster_node_count() > get_mimimum_nodes_required_for_quorum())
+		return 1;
+	else if ( get_cluster_node_count() == get_mimimum_nodes_required_for_quorum())
 	{
-		/* We have even number of nodes */
-		if (current_cluster_nodes == fifty_prcnt_node_count)
-			return 0;
-		if (current_cluster_nodes < fifty_prcnt_node_count)
-			return -1;
+		if (g_cluster.remoteNodeCount % 2 != 0)
+			return 0; /* on the edge */
 		return 1;
 	}
-	if (current_cluster_nodes <= fifty_prcnt_node_count) /* <= because we use int to store 50% node count */
-		return -1;
-	return 1;
+	return -1;
+}
+
+/* returns the minimum number of remote nodes required for quorum */
+static int get_mimimum_nodes_required_for_quorum(void)
+{
+	/*
+	 * Even numner of remote nodes, That means total number of nodes
+	 * are odd, so minimum quorum is just remote/2
+	 */
+	if (g_cluster.remoteNodeCount % 2 == 0)
+		return (g_cluster.remoteNodeCount / 2);
+	
+	/*
+	 * Total nodes including self are even, So we consider 50%
+	 * nodes as quorum, should we?
+	 */
+	return ((g_cluster.remoteNodeCount - 1 ) / 2);
 }
 
 static int set_state(WD_STATES newState)
@@ -3231,3 +3994,456 @@ static int set_state(WD_STATES newState)
 		watchdog_state_machine(WD_EVENT_WD_STATE_CHANGED, NULL, NULL);
 	return 0;
 }
+
+
+static void allocate_resultNodes_in_IPCCommand(WDIPCCommandData* ipcCommand)
+{
+	MemoryContext oldCxt;
+	int i;
+
+	if (ipcCommand->nodeResults != NULL)
+		return;
+
+	oldCxt = MemoryContextSwitchTo(ipcCommand->memoryContext);
+	ipcCommand->nodeResults = palloc0((sizeof(WDCommandNodeResult) * g_cluster.remoteNodeCount));
+	for (i=0; i< g_cluster.remoteNodeCount; i++)
+	{
+		ipcCommand->nodeResults[i].wdNode = &g_cluster.remoteNodes[i];
+	}
+	MemoryContextSwitchTo(oldCxt);
+}
+
+static IPC_CMD_PREOCESS_RES execute_replicate_command(WDIPCCommandData* ipcCommand)
+{
+	int i;
+	IPC_CMD_PREOCESS_RES res;
+
+	WDPacketData wdPacket;
+	init_wd_packet(&wdPacket);
+	set_message_type(&wdPacket, WD_REPLICATE_VARIABLE_REQUEST);
+	set_next_commandID_in_message(&wdPacket);
+
+	put_bytes_in_message(&wdPacket, ipcCommand->data_buf, ipcCommand->data_len);
+	finish_wdMessage(&wdPacket);
+
+	allocate_resultNodes_in_IPCCommand(ipcCommand);
+	ipcCommand->sendTo_count = 0;
+	ipcCommand->reply_from_count = 0;
+	ipcCommand->internal_command_id = wdPacket.command_id;
+	ipcCommand->type = wdPacket.type;
+
+	for (i=0; i< g_cluster.remoteNodeCount; i++)
+	{
+		WDCommandNodeResult* nodeResult = &ipcCommand->nodeResults[i];
+		if (send_message_to_node(nodeResult->wdNode, &wdPacket) == true)
+		{
+			nodeResult->cmdState = COMMAND_STATE_SENT;
+			ipcCommand->sendTo_count++;
+		}
+		else
+			nodeResult->cmdState = COMMAND_STATE_SEND_ERROR;
+	}
+
+	/* Okay if we are not able to send to minimum nodes required for quorum
+	 * we are already failed
+	 */
+	if (ipcCommand->sendTo_count == 0)
+	{
+		if (get_mimimum_nodes_required_for_quorum() == 0)
+			res = IPC_CMD_COMPLETE;
+		else
+			res = IPC_CMD_ERROR;
+	}
+	else if (ipcCommand->sendTo_count < get_mimimum_nodes_required_for_quorum() )
+		res = IPC_CMD_ERROR;
+	else
+		res = IPC_CMD_PROCESSING;
+
+	return res;
+}
+
+
+static bool process_pgpool_replicate_command(WatchdogNode* wdNode, WDPacketData* pkt)
+{
+	/* we need to get the function name */
+	json_value *root, *value;
+	char* func_name;
+	bool is_error = false;
+	int node_count = 0;
+	int *node_id_list = NULL;
+	char* json_data = get_data_from_message(pkt);
+	
+	root = json_parse(json_data,pkt->data_len);
+	
+	/* The root node must be object */
+	if (root == NULL || root->type != json_object)
+	{
+		json_value_free(root);
+		ereport(NOTICE,
+				(errmsg("unable to parse json data from replicate command")));
+		return false;
+	}
+	func_name = json_get_string_value_for_key(root, "Function");
+	if (func_name == NULL)
+	{
+		json_value_free(root);
+		ereport(NOTICE,
+			(errmsg("invalid json data"),
+				 errdetail("unable to find Watchdog Function Name")));
+		return false;
+	}
+	func_name = pstrdup(func_name);
+	/* If it is a node function ?*/
+	if (json_get_int_value_for_key(root, "NodeCount", &node_count))
+	{
+		json_value_free(root);
+	}
+	
+	/* find the WatchdogNodes array */
+	value = json_get_value_for_key(root,"NodeIdList");
+	if (value == NULL)
+	{
+		ereport(ERROR,
+				(errmsg("invalid json data"),
+				 errdetail("unable to find NodeIdList node from data")));
+	}
+	if (value->type != json_array)
+	{
+		is_error = true;
+		ereport(NOTICE,
+			(errmsg("invalid json data"),
+				 errdetail("NodeIdList node does not contains Array")));
+	}
+	if (node_count != value->u.array.length)
+	{
+		is_error = true;
+		ereport(NOTICE,
+			(errmsg("invalid json data"),
+				 errdetail("NodeIdList array contains %d nodes while expecting %d",value->u.array.length, node_count)));
+	}
+
+	if (is_error == false)
+	{
+		int i;
+		node_id_list = palloc(sizeof(int) * node_count);
+		for (i = 0; i < node_count; i++)
+		{
+			node_id_list[i] = value->u.array.values[i]->u.integer;
+		}
+		if (is_error)
+		{
+			pfree(node_id_list);
+			node_id_list = NULL;
+			node_count = 0;
+		}
+	}
+	int k;
+	json_value_free(root);
+	printf("***** NEW WD COMMAND *****\n FUNCTION = \"%s\"\nNode Count = %d\n",func_name, node_count);
+	for (k =0; k< node_count; k++)
+		printf("NODE ID [%d] = %d\n",k,node_id_list[k]);
+	printf("\n");
+	return process_wd_command_function(wdNode, pkt, func_name, node_count, node_id_list);
+}
+
+static bool process_wd_command_function(WatchdogNode* wdNode, WDPacketData* pkt, char* func_name, int node_count, int* node_id_list)
+{
+	if (strcasecmp(WD_FUNCTION_START_RECOVERY, func_name) == 0)
+	{
+		if (*InRecovery != RECOVERY_INIT)
+		{
+			reply_with_minimal_message(wdNode, WD_REJECT_MESSAGE, pkt);
+		}
+		else
+		{
+			*InRecovery = RECOVERY_ONLINE;
+			if (Req_info->conn_counter == 0)
+			{
+				reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
+			}
+			else if(pool_config->recovery_timeout <= 0)
+			{
+				reply_with_minimal_message(wdNode, WD_REJECT_MESSAGE, pkt);
+			}
+			else
+			{
+				WDFunctionCommandData* wd_func_command;
+				MemoryContext oldCxt = MemoryContextSwitchTo(TopMemoryContext);
+				
+				wd_func_command = palloc(sizeof(WDFunctionCommandData));
+				wd_func_command->commandType = pkt->type;
+				wd_func_command->commandID = pkt->command_id;
+				wd_func_command->funcName = MemoryContextStrdup(TopMemoryContext,func_name);
+				wd_func_command->wdNode = wdNode;
+
+				/* Add this command for timer tick */
+				add_wd_command_for_timer_events(pool_config->recovery_timeout, true, wd_func_command);
+
+				MemoryContextSwitchTo(oldCxt);
+
+			}
+		}
+	}
+	else if (strcasecmp(WD_FUNCTION_END_RECOVERY, func_name) == 0)
+	{
+		*InRecovery = RECOVERY_INIT;
+		reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
+		kill(wd_ppid, SIGUSR2);
+	}
+	
+	else if (strcasecmp(WD_FUNCTION_FAILBACK_REQUEST, func_name) == 0)
+	{
+		if (Req_info->switching)
+		{
+			ereport(LOG,
+					(errmsg("sending watchdog response"),
+					 errdetail("failover request from other pgpool is canceled because of switching")));
+			reply_with_minimal_message(wdNode, WD_REJECT_MESSAGE, pkt);
+		}
+		else
+		{
+			reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
+			wd_set_node_mask(WD_FAILBACK_REQUEST, node_id_list, node_count);
+			send_failback_request(node_id_list[0],false);
+		}
+	}
+
+	else if (strcasecmp(WD_FUNCTION_DEGENERATE_REQUEST, func_name) == 0)
+	{
+		if (Req_info->switching)
+		{
+			ereport(LOG,
+				(errmsg("sending watchdog response"),
+					 errdetail("failover request from other pgpool is canceled because of switching")));
+			reply_with_minimal_message(wdNode, WD_REJECT_MESSAGE, pkt);
+		}
+		else
+		{
+			reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
+			wd_set_node_mask(WD_DEGENERATE_BACKEND, node_id_list, node_count);
+			degenerate_backend_set(node_id_list, node_count);
+		}
+	}
+
+	else if (strcasecmp(WD_FUNCTION_PROMOTE_REQUEST, func_name) == 0)
+	{
+		if (Req_info->switching)
+		{
+			ereport(LOG,
+				(errmsg("sending watchdog response"),
+					 errdetail("failover request from other pgpool is canceled because of switching")));
+			reply_with_minimal_message(wdNode, WD_REJECT_MESSAGE, pkt);
+		}
+		else
+		{
+			reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
+			wd_set_node_mask(WD_PROMOTE_BACKEND, node_id_list, node_count);
+			promote_backend(node_id_list[0]);
+		}
+	}
+
+	else if (strcasecmp("TEST_SYSTEM", func_name) == 0)
+	{
+		printf("&&&&&&_____[%d] PROCESSING TEST_SYSTEM COMMAND\n",__LINE__);
+				WDFunctionCommandData* wd_func_command;
+				MemoryContext oldCxt = MemoryContextSwitchTo(TopMemoryContext);
+				
+				wd_func_command = palloc(sizeof(WDFunctionCommandData));
+				wd_func_command->commandType = pkt->type;
+				wd_func_command->commandID = pkt->command_id;
+				wd_func_command->funcName = MemoryContextStrdup(TopMemoryContext,func_name);
+				wd_func_command->wdNode = wdNode;
+				
+				/* Add this command for timer tick */
+				add_wd_command_for_timer_events(10, true, wd_func_command);
+
+				MemoryContextSwitchTo(oldCxt);
+	}
+	else
+	{
+		/* This is not supported function */
+		reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
+	}
+	return true;
+}
+
+
+static bool reply_is_received_for_pgpool_replicate_command(WatchdogNode* wdNode, WDPacketData* pkt, WDIPCCommandData* ipcCommand)
+{
+	int i;
+	WDCommandNodeResult* nodeResult = NULL;
+	/* get the result node for */
+	printf("----*****----- [%d] WE HAVE RECEIVED REPLY FOR REPLICATE COMMAND WE ISSUED\n",__LINE__);
+	for (i=0; i< g_cluster.remoteNodeCount; i++)
+	{
+		nodeResult = &ipcCommand->nodeResults[i];
+		if (nodeResult->wdNode == wdNode)
+			break;
+		nodeResult = NULL;
+	}
+	if (nodeResult == NULL)
+	{
+		ereport(NOTICE,(errmsg("unable to find node result")));
+		return true;
+	}
+	nodeResult->result_type = pkt->type;
+	nodeResult->cmdState = COMMAND_STATE_REPLIED;
+	ipcCommand->reply_from_count++;
+
+	printf("----*****----- [%d] reply_from_count = %d AND sendTo_count = %d\n",__LINE__,ipcCommand->reply_from_count,ipcCommand->sendTo_count);
+
+	if (ipcCommand->reply_from_count >= ipcCommand->sendTo_count)
+	{
+		/*
+		 * we have received results from all nodes
+		 * analyze the result
+		 */
+
+		int res_len = 0;
+		char res_type = WD_IPC_CMD_RESULT_OK;
+
+		for (i=0; i< g_cluster.remoteNodeCount; i++)
+		{
+			nodeResult = &ipcCommand->nodeResults[i];
+			if (nodeResult->cmdState == COMMAND_STATE_REPLIED &&
+				nodeResult->result_type != WD_ACCEPT_MESSAGE)
+			{
+				res_type = WD_IPC_CMD_RESULT_BAD;
+				break;
+			}
+		}
+		printf("----*****----- [%d] replying back to IPC SOCKET\n",__LINE__);
+
+		write(ipcCommand->issueing_sock, &res_type, 1);
+		write(ipcCommand->issueing_sock, &res_len, 4);
+		/* ok we are done, delete this command
+		 */
+		cleanUpIPCCommand(ipcCommand);
+	}
+
+	return true; /* do not process this packet further */
+}
+
+/*
+ * return true if want to cancel timer,
+ */
+static bool process_wd_command_timer_event(bool timer_expired, WDFunctionCommandData* wd_func_command)
+{
+	if (wd_func_command->commandType == WD_REPLICATE_VARIABLE_REQUEST)
+	{
+		if (wd_func_command->funcName && strcasecmp("START_RECOVERY", wd_func_command->funcName) == 0)
+		{
+			if (Req_info->conn_counter == 0)
+			{
+				WDPacketData emptyPkt;
+				emptyPkt.command_id = wd_func_command->commandID;
+				reply_with_minimal_message(wd_func_command->wdNode, WD_ACCEPT_MESSAGE, &emptyPkt);
+				// TODO delete command object
+				return true;
+			}
+			else if (timer_expired)
+			{
+				WDPacketData emptyPkt;
+				emptyPkt.command_id = wd_func_command->commandID;
+				reply_with_minimal_message(wd_func_command->wdNode, WD_REJECT_MESSAGE, &emptyPkt);
+				return true;
+			}
+			return false;
+		}
+		
+		if (wd_func_command->funcName && strcasecmp("TEST_SYSTEM", wd_func_command->funcName) == 0)
+		{
+			if (timer_expired)
+			{
+				printf("****%s:%d Timer Expired TEST_STSTEM function, Sending back accept message\n",__FUNCTION__,__LINE__);
+
+				WDPacketData emptyPkt;
+				emptyPkt.command_id = wd_func_command->commandID;
+				reply_with_minimal_message(wd_func_command->wdNode, WD_ACCEPT_MESSAGE, &emptyPkt);
+				return true;
+			}
+			else
+				printf("****%s:%d Timer tick called on TEST_STSTEM function\n",__FUNCTION__,__LINE__);
+			return false;
+		}
+
+	}
+	/* Just remove the timer.*/
+	return true;
+}
+
+static void process_wd_func_commands_for_timer_events(void)
+{
+	struct timeval currTime;
+	ListCell *lc;
+	List* timers_to_del = NIL;
+
+	gettimeofday(&currTime, NULL);
+
+	if (g_cluster.wd_timer_commands != NULL)
+		printf("****%s:%d \n",__FUNCTION__,__LINE__);
+
+	foreach(lc, g_cluster.wd_timer_commands)
+	{
+		WDCommandTimerData* timerData = lfirst(lc);
+		if (timerData)
+		{
+			bool del = false;
+			if (WD_TIME_DIFF_SEC(currTime,timerData->startTime) >=  timerData->expire_sec)
+			{
+				del = process_wd_command_timer_event(true, timerData->wd_func_command);
+
+			}
+			else if (timerData->need_tics)
+			{
+				del = process_wd_command_timer_event(false, timerData->wd_func_command);
+			}
+			if (del)
+				timers_to_del = lappend(timers_to_del,timerData);
+		}
+	}
+	foreach(lc, timers_to_del)
+	{
+		g_cluster.wd_timer_commands = list_delete_ptr(g_cluster.wd_timer_commands,lfirst(lc));
+	}
+}
+
+static void add_wd_command_for_timer_events(unsigned int expire_secs, bool need_tics, WDFunctionCommandData* wd_func_command)
+{
+	/* create a new Timer struct */
+	printf("&&&&&&_____[%d] CREATING TIMER \n",__LINE__);
+
+	MemoryContext oldCtx = MemoryContextSwitchTo(TopMemoryContext);
+	WDCommandTimerData* timerData = palloc(sizeof(WDCommandTimerData));
+	gettimeofday(&timerData->startTime,NULL);
+	timerData->expire_sec = expire_secs;
+	timerData->need_tics = need_tics;
+	timerData->wd_func_command = wd_func_command;
+
+	g_cluster.wd_timer_commands = lappend(g_cluster.wd_timer_commands,timerData);
+
+	MemoryContextSwitchTo(oldCtx);
+
+}
+
+static bool get_single_int_value_from_json_string(char* source_json, int json_len, const char* key, int* intval)
+{
+	json_value *root;
+	root = json_parse(source_json,json_len);
+	
+	/* The root node must be object */
+	if (root == NULL || root->type != json_object)
+	{
+		json_value_free(root);
+		return false;
+	}
+	if (json_get_int_value_for_key(root, key, intval))
+	{
+		json_value_free(root);
+		return false;
+	}
+	json_value_free(root);
+	return true;
+}
+
+

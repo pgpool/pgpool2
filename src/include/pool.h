@@ -377,6 +377,7 @@ extern int my_master_node_id;
 #define PCP_REQUEST_SEM			4
 #define MAX_REQUEST_QUEUE_SIZE	10
 
+#define MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION 6 /*number of sec to wait for watchdog command if cluster is stabalizing */
 /*
  * number specified when semaphore is locked/unlocked
  */

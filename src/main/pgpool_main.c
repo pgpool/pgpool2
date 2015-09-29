@@ -536,7 +536,8 @@ process_backend_health_check_failure(int health_check_node_id, int retrycnt)
 			ereport(LOG,
 					(errmsg("setting backend node %d status to NODE DOWN", health_check_node_id)));
 			health_check_timer_expired = 0;
-			register_node_operation_request(NODE_DOWN_REQUEST,&health_check_node_id,1);
+			degenerate_backend_set(&health_check_node_id,1);
+//			register_node_operation_request(NODE_DOWN_REQUEST,&health_check_node_id,1);
 			return 2;
 			/* need to distribute this info to children ??*/
 		}
@@ -1103,11 +1104,34 @@ bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool tes
 
 	if (node_count)
 	{
+		WdCommandResult res = COMMAND_OK;
 		/* If this was only a test. Inform the caller without doing anything */
 		if(test_only)
 			return true;
 
-		if (!pool_config->use_watchdog || WD_OK == wd_degenerate_backend_set(node_id_set, count))
+		if (pool_config->use_watchdog)
+		{
+			int x;
+			for (x=0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
+			{
+				WdCommandResult res = wd_degenerate_backend_set(node_id_set, count);
+				if (res != CLUSTER_IN_TRANSATIONING)
+					break;
+				sleep(1);
+			}
+		}
+		if (res == CLUSTER_IN_TRANSATIONING)
+		{
+			/*
+			 * What to do when cluster is still not stable
+			 * Is proceeding to failover is the right choice ???
+			 */
+			ereport(NOTICE,
+					(errmsg("rdegenerate backend request for %d node(s) from pid [%d], But cluster is not in stable state"
+							, node_count, getpid())));
+		}
+
+		if (res != COMMAND_FAILED)
 		{
 			register_node_operation_request(NODE_DOWN_REQUEST, node_id, node_count);
 		}
@@ -1134,6 +1158,8 @@ void degenerate_backend_set(int *node_id_set, int count)
 /* send promote node request using SIGUSR1 */
 void promote_backend(int node_id)
 {
+	WdCommandResult res = COMMAND_OK;
+
 	if (!MASTER_SLAVE || strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
 	{
 		return;
@@ -1155,7 +1181,30 @@ void promote_backend(int node_id)
 			(errmsg("received promote backend request for node_id: %d from pid [%d]",
 					node_id, getpid())));
 
-	if (!pool_config->use_watchdog || WD_OK == wd_promote_backend(node_id))
+	/* If this was only a test. Inform the caller without doing anything */
+	if (pool_config->use_watchdog)
+	{
+		int x;
+		for (x=0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
+		{
+			WdCommandResult res = wd_promote_backend(node_id);
+			if (res != CLUSTER_IN_TRANSATIONING)
+				break;
+			sleep(1);
+		}
+	}
+	if (res == CLUSTER_IN_TRANSATIONING)
+	{
+		/*
+		 * What to do when cluster is still not stable
+		 * Is proceeding to failover is the right choice ???
+		 */
+		ereport(NOTICE,
+				(errmsg("promote backend request for node_id: %d from pid [%d], But cluster is not in stable state"
+						, node_id, getpid())));
+	}
+	
+	if (res != COMMAND_FAILED)
 	{
 		register_node_operation_request(PROMOTE_NODE_REQUEST, &node_id, 1);
 	}
@@ -1170,6 +1219,8 @@ void promote_backend(int node_id)
 /* send failback request using SIGUSR1 */
 void send_failback_request(int node_id,bool throw_error)
 {
+	WdCommandResult res = COMMAND_OK;
+
     if (node_id < 0 || node_id >= MAX_NUM_BACKENDS ||
 		(RAW_MODE && BACKEND_INFO(node_id).backend_status != CON_DOWN && VALID_BACKEND(node_id)))
 	{
@@ -1188,14 +1239,39 @@ void send_failback_request(int node_id,bool throw_error)
 			(errmsg("received failback request for node_id: %d from pid [%d]",
 					node_id, getpid())));
 
-	if (pool_config->use_watchdog && WD_OK != wd_send_failback_request(node_id))
+	/* If this was only a test. Inform the caller without doing anything */
+	if (pool_config->use_watchdog)
+	{
+		int x;
+		for (x=0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
+		{
+			WdCommandResult res = wd_send_failback_request(node_id);
+			if (res != CLUSTER_IN_TRANSATIONING)
+				break;
+			sleep(1);
+		}
+	}
+	if (res == CLUSTER_IN_TRANSATIONING)
+	{
+		/*
+		 * What to do when cluster is still not stable
+		 * Is proceeding to failover is the right choice ???
+		 */
+		ereport(NOTICE,
+				(errmsg("failback request for node_id: %d from pid [%d], But cluster is not in stable state"
+						, node_id, getpid())));
+	}
+	
+	if (res != COMMAND_FAILED)
+	{
+		register_node_operation_request(NODE_UP_REQUEST, &node_id, 1);
+	}
+	else
 	{
 		ereport(throw_error?ERROR:LOG,
 				(errmsg("failback request for node_id: %d from pid [%d] is canceled  by other pgpool"
 						, node_id, getpid())));
-		return;
 	}
-	register_node_operation_request(NODE_UP_REQUEST, &node_id, 1);
 }
 
 static RETSIGTYPE exit_handler(int sig)
@@ -1332,6 +1408,7 @@ static RETSIGTYPE failover_handler(int sig)
 	POOL_SETMASK(&UnBlockSig);
 }
 
+
 /*
  * backend connection error, failover/failback request, if possible
  * failover() must be called under protecting signals.
@@ -1340,7 +1417,6 @@ static void failover(void)
 {
 	int i;
 	int node_id;
-	bool by_health_check;
 	int new_master;
 	int new_primary;
 	int nodes[MAX_NUM_BACKENDS];
@@ -1395,6 +1471,7 @@ static void failover(void)
 		int queue_index;
 		int node_id_set[MAX_NUM_BACKENDS];
 		int node_count;
+		WDFailoverCMDResults failoverLockRes;
 
 		pool_semaphore_lock(REQUEST_INFO_SEM);
 
@@ -1430,13 +1507,6 @@ static void failover(void)
 				 errdetail("starting to select new master node")));
 		node_id = node_id_set[0];
 
-		/* start of command inter-lock with watchdog */
-		if (pool_config->use_watchdog)
-		{
-			by_health_check = (!failover_request && reqkind == NODE_DOWN_REQUEST);
-			wd_start_interlock(by_health_check, node_id);
-		}
-
 		/* failback request? */
 		if (reqkind == NODE_UP_REQUEST)
 		{
@@ -1453,10 +1523,6 @@ static void failover(void)
 					ereport(LOG,
 							(errmsg("invalid failback request, status: [%d] of node id : %d is invalid for failback",BACKEND_INFO(node_id).backend_status,node_id)));
 
-				/* end of command inter-lock */
-				if (pool_config->use_watchdog)
-					wd_leave_interlock();
-
 				continue;
 			}
 
@@ -1468,20 +1534,25 @@ static void failover(void)
 			BACKEND_INFO(node_id).backend_status = CON_CONNECT_WAIT;	/* unset down status */
 			(void)write_status_file();
 
-			/* wait for failback command lock or to be lock holder */
-			if (pool_config->use_watchdog && !wd_am_I_lock_holder())
-			{
-				wd_wait_for_lock(WD_FAILBACK_COMMAND_LOCK);
-			}
-			/* execute failback command if lock holder */
-			if (!pool_config->use_watchdog || wd_am_I_lock_holder())
+			/* Aquire failback start command lock */
+			failoverLockRes = wd_failover_command_start(NODE_FAILBACK_CMD);
+
+			if (failoverLockRes != FAILOVER_RES_BLOCKED)
 			{
 				trigger_failover_command(node_id, pool_config->failback_command,
 										MASTER_NODE_ID, get_next_master_node(), PRIMARY_NODE_ID);
 
-				/* unlock failback command */
-				if (pool_config->use_watchdog)
-					wd_unlock(WD_FAILBACK_COMMAND_LOCK);
+				wd_release_failover_command_lock(NODE_FAILBACK_CMD);
+
+			}
+			else
+			{
+				/*
+				 * Okay we are not allowed to execute the failover command
+				 * so we need to wait untle the one who is executing the command
+				 * finish with it.
+				 */
+				wd_wati_until_lock_or_timeout(NODE_FAILBACK_CMD);
 			}
 		}
 		else if (reqkind == PROMOTE_NODE_REQUEST)
@@ -1489,7 +1560,7 @@ static void failover(void)
 			if (node_id != -1 && VALID_BACKEND(node_id))
 			{
 				ereport(LOG,
-						(errmsg("starting promotion. promote host %s(%d)",
+					(errmsg("starting promotion. promote host %s(%d)",
 						 BACKEND_INFO(node_id).backend_hostname,
 						 BACKEND_INFO(node_id).backend_port)));
 			}
@@ -1497,13 +1568,10 @@ static void failover(void)
 			{
 				ereport(LOG,
 						(errmsg("failover: no backends are promoted")));
-
-				/* end of command inter-lock */
-				if (pool_config->use_watchdog)
-					wd_leave_interlock();
-
 				continue;
 			}
+
+			failoverLockRes = wd_failover_command_start(NODE_PROMOTE_CMD);
 		}
 		else
 		{
@@ -1533,10 +1601,6 @@ static void failover(void)
 			{
 				ereport(LOG,
 						(errmsg("failover: no backends are degenerated")));
-
-				/* end of command inter-lock */
-				if (pool_config->use_watchdog)
-					wd_leave_interlock();
 
 				continue;
 			}
@@ -1639,14 +1703,9 @@ static void failover(void)
 			need_to_restart_children = true;
 		}
 
-		/* wait for failover command lock or to be lock holder*/
-		if (pool_config->use_watchdog && !wd_am_I_lock_holder())
-		{
-			wd_wait_for_lock(WD_FAILOVER_COMMAND_LOCK);
-		}
+		failoverLockRes = wd_failover_command_start(NODE_FAILED_CMD);
 
-		/* execute failover command if lock holder */
-		if (!pool_config->use_watchdog || wd_am_I_lock_holder())
+		if (failoverLockRes != FAILOVER_RES_BLOCKED)
 		{
 			/* Exec failover_command if needed */
 			for (i = 0; i < pool_config->backend_desc->num_backends; i++)
@@ -1655,11 +1714,9 @@ static void failover(void)
 					trigger_failover_command(i, pool_config->failover_command,
 												MASTER_NODE_ID, new_master, PRIMARY_NODE_ID);
 			}
-
-			/* unlock failover command */
-			if (pool_config->use_watchdog)
-				wd_unlock(WD_FAILOVER_COMMAND_LOCK);
 		}
+		else
+			wd_wati_until_lock_or_timeout(NODE_FAILED_CMD);
 
 
 	/* no need to wait since it will be done in reap_handler */
@@ -1708,7 +1765,8 @@ static void failover(void)
 				if (((reqkind == NODE_DOWN_REQUEST) &&
 					 (nodes[Req_info->primary_node_id])) ||
 					((reqkind == PROMOTE_NODE_REQUEST) &&
-					 (VALID_BACKEND(node_id)))) {
+					 (VALID_BACKEND(node_id))))
+				{
 
 					for (i = 0; i < pool_config->backend_desc->num_backends; i++)
 					{
@@ -1743,30 +1801,29 @@ static void failover(void)
 			}
 		}
 
-
-		/* wait for follow_master_command lock or to be lock holder */
-		if (pool_config->use_watchdog && !wd_am_I_lock_holder())
-		{
-			wd_wait_for_lock(WD_FOLLOW_MASTER_COMMAND_LOCK);
-		}
-
-		/* execute follow_master_command */
-		if (!pool_config->use_watchdog || wd_am_I_lock_holder())
+		/*
+		 * follow master command also uses the same locks used by trigring command
+		 */
+		if (failoverLockRes != FAILOVER_RES_BLOCKED)
 		{
 			if ((follow_cnt > 0) && (*pool_config->follow_master_command != '\0'))
 			{
 				follow_pid = fork_follow_child(Req_info->master_node_id, new_primary,
 											Req_info->primary_node_id);
 			}
-
-			/* unlock follow_master_command  */
-			if (pool_config->use_watchdog)
-				wd_unlock(WD_FOLLOW_MASTER_COMMAND_LOCK);
+			if (reqkind == PROMOTE_NODE_REQUEST)
+				wd_release_failover_command_lock(NODE_PROMOTE_CMD);
+			else if (reqkind == NODE_DOWN_REQUEST)
+				wd_release_failover_command_lock(NODE_FAILED_CMD);
+		}
+		else
+		{
+			if (reqkind == PROMOTE_NODE_REQUEST)
+				wd_wati_until_lock_or_timeout(NODE_PROMOTE_CMD);
+			else if (reqkind == NODE_DOWN_REQUEST)
+				wd_wati_until_lock_or_timeout(NODE_FAILED_CMD);
 		}
 
-		/* end of command inter-lock */
-		if (pool_config->use_watchdog)
-			wd_end_interlock();
 
 		/* Save primary node id */
 		Req_info->primary_node_id = new_primary;
@@ -1821,13 +1878,16 @@ static void failover(void)
 
 		if (reqkind == NODE_UP_REQUEST)
 		{
+			wd_failover_command_end(NODE_FAILBACK_CMD);
 			ereport(LOG,
 					(errmsg("failback done. reconnect host %s(%d)",
 					 BACKEND_INFO(node_id).backend_hostname,
 					 BACKEND_INFO(node_id).backend_port)));
+			
 		}
 		else if (reqkind == PROMOTE_NODE_REQUEST)
 		{
+			wd_failover_command_end(NODE_PROMOTE_CMD);
 			ereport(LOG,
 					(errmsg("promotion done. promoted host %s(%d)",
 					 BACKEND_INFO(node_id).backend_hostname,
@@ -1835,6 +1895,9 @@ static void failover(void)
 		}
 		else
 		{
+			/* Release the locks and interlocking */
+			wd_failover_command_end(NODE_FAILED_CMD);
+
 			/* Temporary black magic. Without this regression 055 does not finish */
 			fprintf(stderr, "failover done. shutdown host %s(%d)",
 					 BACKEND_INFO(node_id).backend_hostname,

@@ -57,11 +57,28 @@
                                     ((a).tv_usec - (b).tv_usec) / 1000000.0)
 
 /* IPC MESSAGES */
-#define WD_REGISTER_FOR_NOTIFICATION		'1'
-#define WD_TRANSPORT_DATA_COMMAND			'2'
-#define WD_NODE_STATUS_CHANGE_COMMAND		'3'
-#define WD_GET_NODES_LIST_COMMAND			'4'
-#define WD_NODES_LIST_DATA					'5'
+#define WD_REGISTER_FOR_NOTIFICATION		'0'
+#define WD_TRANSPORT_DATA_COMMAND			'1'
+#define WD_NODE_STATUS_CHANGE_COMMAND		'2'
+#define WD_GET_NODES_LIST_COMMAND			'3'
+#define WD_NODES_LIST_DATA					'4'
+
+#define WD_TRY_COMMAND_LOCK					'5'
+#define WD_COMMAND_UNLOCK					'6'
+
+#define WD_IPC_CMD_CLUSTER_IN_TRAN			'7'
+#define WD_IPC_CMD_RESULT_BAD				'8'
+#define WD_IPC_CMD_RESULT_OK				'9'
+
+#define WD_FUNCTION_COMMAND					'f'
+#define WD_FAILOVER_CMD_SYNC_REQUEST		's'
+
+
+#define WD_FUNCTION_START_RECOVERY		"START_RECOVERY"
+#define WD_FUNCTION_END_RECOVERY		"END_RECOVERY"
+#define WD_FUNCTION_FAILBACK_REQUEST	"FAILBACK_REQUEST"
+#define WD_FUNCTION_DEGENERATE_REQUEST	"DEGENERATE_BACKEND_REQUEST"
+#define WD_FUNCTION_PROMOTE_REQUEST		"PROMOTE_BACKEND_REQUEST"
 
 /*
  * packet number of watchdog negotiation
@@ -94,6 +111,7 @@ typedef enum {
 	WD_FAILBACK_REQUEST,	/* announce failback request */
 	WD_DEGENERATE_BACKEND,	/* announce degenerate backend */
 	WD_PROMOTE_BACKEND,		/* announce promote backend */
+
 	WD_NODE_READY,			/* answer to the node announce */
 	WD_NODE_FAILED,			/* fail answer to the node announce */
 
@@ -126,6 +144,23 @@ typedef enum {
 	WD_FOLLOW_MASTER_COMMAND_LOCK,
 	WD_MAX_LOCK_NUM
 } WD_LOCK_ID;
+
+typedef enum WDFailoverCMDTypes
+{
+	NODE_FAILED_CMD = 0,
+	NODE_FAILBACK_CMD,
+	NODE_PROMOTE_CMD,
+	MAX_FAILOVER_CMDS
+}WDFailoverCMDTypes;
+
+typedef enum WDFailoverCMDResults
+{
+	FAILOVER_RES_ERROR = 0,
+	FAILOVER_RES_TRANSITION,
+	FAILOVER_RES_PROCEED_LOCK_HOLDER,
+	FAILOVER_RES_PROCEED_UNLOCKED,
+	FAILOVER_RES_BLOCKED
+}WDFailoverCMDResults;
 
 /*
  * watchdog list
@@ -324,29 +359,32 @@ typedef struct WDIPCCommandResult
 
 
 
-typedef struct wd_cluster
-{
-	WatchdogNode*	localNode;
-	WatchdogNode*	remoteNodes;
-	WatchdogNode*	masterNode;
-	int				remoteNodeCount;
-	int				aliveNodeCount;
-	bool			quorum_exists;
-	wd_command		lastCommand;
-	unsigned int	nextCommandID;
-	List			*unidentified_socks;
-	int				command_server_sock;
-	List			*notify_clients;
-	List			*ipc_command_socks;
-	List			*ipc_commands;
-}wd_cluster;
-
 extern WDIPCCommandResult*
 issue_wd_command(char type, WD_COMMAND_ACTIONS command_action,int timeout_sec, char* data, int data_len, bool blocking);
 
 extern int open_wd_command_sock(bool throw_error);
 
 pid_t fork_escalation_process(void);
+
+typedef enum WdCommandResult
+{
+	CLUSTER_IN_TRANSATIONING,
+	COMMAND_OK,
+	COMMAND_FAILED
+}WdCommandResult;
+
+
+typedef struct WDIPCCmdResult
+{
+	char	type;
+	int		length;
+	char*	data;
+}WDIPCCmdResult;
+
+
+WdCommandResult wd_try_command_lock(void);
+void wd_command_unlock(void);
+
 #endif /* WATCHDOG_H */
 
 /* since we should have a provision to send arbitary length of data from the 

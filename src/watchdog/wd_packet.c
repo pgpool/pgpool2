@@ -20,7 +20,6 @@
  * is" without express or implied warranty.
  *
  */
-
 #include <pthread.h>
 #include <stdio.h>
 #include <errno.h>
@@ -43,6 +42,8 @@
 
 #include "pool.h"
 #include "utils/elog.h"
+#include "utils/json_writer.h"
+#include "utils/json.h"
 #include "pool_config.h"
 #include "watchdog/watchdog.h"
 #include "watchdog/wd_ext.h"
@@ -67,7 +68,16 @@ static int ntoh_wd_node_packet(WdPacket * to, WdPacket * from);
 static int hton_wd_lock_packet(WdPacket * to, WdPacket * from);
 static int ntoh_wd_lock_packet(WdPacket * to, WdPacket * from);
 
+static char* get_wd_node_function_json(char* func_name, int *node_id_set, int count);
+static char* get_wd_simple_function_json(char* func);
+
+
+static char* get_wd_failover_cmd_type_json(WDFailoverCMDTypes cmdType, char* reqType);
+WDFailoverCMDResults wd_send_failover_sync_command(WDFailoverCMDTypes cmdType, char* syncReqType);
 static int read_socket(int socket, void* buf, int len);
+static WDIPCCmdResult*
+issue_command_to_watchdog(char type, WD_COMMAND_ACTIONS command_action,int timeout_sec, char* data, int data_len, bool blocking);
+
 int
 wd_startup(void)
 {
@@ -983,7 +993,7 @@ ntoh_wd_lock_packet(WdPacket * to, WdPacket * from)
 int
 wd_escalation(void)
 {
-	int rtn, r;
+	int  r;
 	bool has_error = false;
 
 	ereport(LOG,
@@ -1041,117 +1051,324 @@ wd_escalation(void)
 	return WD_OK;
 }
 
-int
+static char* get_wd_simple_function_json(char* func)
+{
+	char* json_str;
+	JsonNode* jNode = jw_create_with_object(true);
+	jw_put_string(jNode, "Function", func);
+	jw_finish_document(jNode);
+	json_str = pstrdup(jw_get_json_string(jNode));
+	jw_destroy(jNode);
+	return json_str;
+}
+
+static char* get_wd_node_function_json(char* func_name, int *node_id_set, int count)
+{
+	char* json_str;
+	int  i;
+	JsonNode* jNode = jw_create_with_object(true);
+
+	jw_put_string(jNode, "Function", func_name);
+	jw_put_int(jNode, "NodeCount", count);
+	jw_start_array(jNode, "NodeIdList");
+	for (i=0; i < count; i++) {
+		jw_put_int_value(jNode, node_id_set[i]);
+	}
+	jw_end_element(jNode);
+	jw_finish_document(jNode);
+	json_str = pstrdup(jw_get_json_string(jNode));
+	jw_destroy(jNode);
+	printf("\n%s\n",json_str);
+	return json_str;
+}
+
+WdCommandResult
 wd_start_recovery(void)
 {
-	int rtn;
+	char type;
+	char* func = get_wd_simple_function_json(WD_FUNCTION_START_RECOVERY);
 
-	/* send start recovery packet */
-	rtn = wd_send_packet_no(WD_START_RECOVERY);
-	return rtn;
+	WDIPCCmdResult *result = issue_command_to_watchdog(WD_FUNCTION_COMMAND, WD_COMMAND_ACTION_DEFAULT,pool_config->recovery_timeout, func, strlen(func), true);
+	pfree(func);
+
+	if (result == NULL)
+	{
+		ereport(LOG,
+			(errmsg("start recovery command lock failed"),
+				 errdetail("issue command to eatchdog returned NULL")));
+		return COMMAND_FAILED;
+	}
+	
+	type = result->type;
+	pfree(result);
+	if (type == WD_IPC_CMD_CLUSTER_IN_TRAN)
+	{
+		ereport(LOG,
+			(errmsg("start recovery command lock failed"),
+				 errdetail("watchdog cluster is not in stable state"),
+					errhint("try again when the cluster is fully initialized")));
+		return CLUSTER_IN_TRANSATIONING;
+	}
+	if (type == WD_IPC_CMD_RESULT_OK)
+		return COMMAND_OK;
+
+	return COMMAND_FAILED;
 }
 
-int
+WdCommandResult
 wd_end_recovery(void)
 {
-	int rtn;
+	char type;
+	char* func = get_wd_simple_function_json(WD_FUNCTION_END_RECOVERY);
+	
+	WDIPCCmdResult *result = issue_command_to_watchdog(WD_FUNCTION_COMMAND, WD_COMMAND_ACTION_DEFAULT,2, func, strlen(func), true);
+	pfree(func);
 
-	/* send end recovery packet */
-	rtn = wd_send_packet_no(WD_END_RECOVERY);
-	return rtn;
+	if (result == NULL)
+	{
+		ereport(LOG,
+				(errmsg("start recovery command lock failed"),
+				 errdetail("issue command to eatchdog returned NULL")));
+		return COMMAND_FAILED;
+	}
+	
+	type = result->type;
+	pfree(result);
+	if (type == WD_IPC_CMD_CLUSTER_IN_TRAN)
+	{
+		ereport(LOG,
+				(errmsg("start recovery command lock failed"),
+				 errdetail("watchdog cluster is not in stable state"),
+					errhint("try again when the cluster is fully initialized")));
+		return CLUSTER_IN_TRANSATIONING;
+	}
+	if (type == WD_IPC_CMD_RESULT_OK)
+		return COMMAND_OK;
+	
+	return COMMAND_FAILED;
 }
 
-int
+
+WdCommandResult
 wd_send_failback_request(int node_id)
 {
-	int rtn = 0;
 	int n = node_id;
+	char type;
+	char* func;
+
 
 	/* if failback packet is received already, do nothing */
 	if (wd_chk_node_mask(WD_FAILBACK_REQUEST,&n,1))
-	{
-		return WD_OK;
-	}
+		return COMMAND_OK;
 
-	/* send failback packet */
-	rtn = wd_send_node_packet(WD_FAILBACK_REQUEST, &n, 1);
-	return rtn;
-}
-
-//int
-//wd_degenerate_backend_set(int *node_id_set, int count)
-//{
-//	int rtn = 0;
-//
-//	/* if degenerate packet is received already, do nothing */
-//	if (wd_chk_node_mask(WD_DEGENERATE_BACKEND,node_id_set,count))
-//	{
-//		return WD_OK;
-//	}
-//
-//	/* send degenerate packet */
-//	rtn = wd_send_node_packet(WD_DEGENERATE_BACKEND, node_id_set, count);
-//	return rtn;
-//}
-
-int
-wd_degenerate_backend_set(int *node_id_set, int count)
-{
-	int rtn = WD_OK;
-	int i;
-	int data_size = (sizeof(int) * count) + sizeof(int);
-	char* data;
-	WDIPCCommandResult* result;
-	/* if degenerate packet is received already, do nothing */
-	if (wd_chk_node_mask(WD_DEGENERATE_BACKEND,node_id_set,count))
-	{
-		return WD_OK;
-	}
-	data = palloc(data_size);
-	/* First four bytes are packet no */
-	int* ptr = (int*)data;
-	ptr[0] = WD_DEGENERATE_BACKEND;
-	for (i = 0; i < count; i++)
-	{
-		ptr[i+1] = htonl(node_id_set[i]);
-	}
-
-	/* send degenerate command */
-	result = issue_wd_command(WD_TRANSPORT_DATA_COMMAND, WD_COMMAND_ACTION_DEFAULT, 10, data, data_size, true);
+	func = get_wd_node_function_json(WD_FUNCTION_FAILBACK_REQUEST,&n, 1);
+	WDIPCCmdResult *result = issue_command_to_watchdog(WD_FUNCTION_COMMAND, WD_COMMAND_ACTION_DEFAULT,2, func, strlen(func), true);
+	pfree(func);
+	
 	if (result == NULL)
 	{
-		return WD_NG;
-	}
-	/* Analyze the result */
-	if (result->commandSendToCount == 0)
-		rtn = WD_NG;
-	/* Here we assume that no answer means agreeing to what was asked for */
-	if (result->resultSlotsCount > 0)
-	{
-		ListCell *lc;
-		foreach(lc, result->node_results)
-		{
-			WDIPCCommandNodeResultData* resultSlot = lfirst(lc);
-			/* we only expect int type result data */
-			if (resultSlot->data_len != sizeof(int))
-			{
-				ereport(NOTICE,
-						(errmsg("invalid data sent from watchdog node \"%s\"",resultSlot->nodeName)));
-				rtn = WD_NG;
-				break;
-			}
-			int reply = ntohl( *((int*)resultSlot->data));
-			if (reply != WD_NODE_READY)
-			{
-				ereport(NOTICE,
-					(errmsg("failover request is rejected by \"%s\"",resultSlot->nodeName)));
-				rtn = WD_NG;
-				break;
-			}
-		}
+		ereport(LOG,
+				(errmsg("start recovery command lock failed"),
+				 errdetail("issue command to eatchdog returned NULL")));
+		return COMMAND_FAILED;
 	}
 	
-	return rtn;
+	type = result->type;
+	pfree(result);
+	if (type == WD_IPC_CMD_CLUSTER_IN_TRAN)
+	{
+		ereport(LOG,
+				(errmsg("start recovery command lock failed"),
+				 errdetail("watchdog cluster is not in stable state"),
+					errhint("try again when the cluster is fully initialized")));
+		return CLUSTER_IN_TRANSATIONING;
+	}
+	if (type == WD_IPC_CMD_RESULT_OK)
+		return COMMAND_OK;
+	
+	return COMMAND_FAILED;
+}
+static char* get_wd_failover_cmd_type_json(WDFailoverCMDTypes cmdType, char* reqType)
+{
+	char* json_str;
+	JsonNode* jNode = jw_create_with_object(true);
+
+	jw_put_int(jNode, "FailoverCMDType", cmdType);
+	jw_put_string(jNode, "SyncRequestType", reqType);
+	jw_finish_document(jNode);
+	json_str = pstrdup(jw_get_json_string(jNode));
+	jw_destroy(jNode);
+	printf("\n%s\n",json_str);
+	return json_str;
+}
+
+
+WDFailoverCMDResults
+wd_send_failover_sync_command(WDFailoverCMDTypes cmdType, char* syncReqType)
+{
+	int failoverResCmdType;
+	int interlockingResult;
+	json_value *root;
+	
+	char* json_data = get_wd_failover_cmd_type_json(cmdType, syncReqType);
+	
+	WDIPCCmdResult *result = issue_command_to_watchdog(WD_FAILOVER_CMD_SYNC_REQUEST, WD_COMMAND_ACTION_DEFAULT,pool_config->recovery_timeout, json_data, strlen(json_data), true);
+
+	if (result == NULL || result->length <= 0)
+	{
+		ereport(LOG,
+			(errmsg("start recovery command lock failed"),
+				 errdetail("issue command to eatchdog returned NULL")));
+		return FAILOVER_RES_ERROR;
+	}
+
+	printf("RESULT DATA LEN = %d data = \"%s\"\n",result->length,result->data);
+
+	root = json_parse(result->data,result->length);
+	/* The root node must be object */
+	if (root == NULL || root->type != json_object)
+	{
+		ereport(NOTICE,
+				(errmsg("unable to parse json data from replicate command")));
+		return FAILOVER_RES_ERROR;
+	}
+
+	if (json_get_int_value_for_key(root, "FailoverCMDType", &failoverResCmdType))
+	{
+		json_value_free(root);
+		return FAILOVER_RES_ERROR;
+	}
+	if (root && json_get_int_value_for_key(root, "InterlockingResult", &interlockingResult))
+	{
+		json_value_free(root);
+		return FAILOVER_RES_ERROR;
+	}
+	json_value_free(root);
+	pfree(result);
+
+	if (failoverResCmdType != cmdType)
+		return FAILOVER_RES_ERROR;
+
+	if (interlockingResult < 0 || interlockingResult > FAILOVER_RES_BLOCKED)
+		return FAILOVER_RES_ERROR;
+
+	return interlockingResult;
+}
+
+WdCommandResult
+wd_try_command_lock(void)
+{
+	WDIPCCmdResult* result;
+	char type;
+
+	result = issue_command_to_watchdog(WD_TRY_COMMAND_LOCK, WD_COMMAND_ACTION_DEFAULT,10, NULL, 0, true);
+	if (result == NULL)
+	{
+		ereport(LOG,
+			(errmsg("watchdog command lock failed"),
+				 errdetail("issue command to eatchdog returned NULL")));
+		return COMMAND_FAILED;
+	}
+
+	type = result->type;
+	pfree(result);
+	if (type == WD_IPC_CMD_CLUSTER_IN_TRAN)
+	{
+		ereport(LOG,
+			(errmsg("watchdog command lock failed"),
+				 errdetail("watchdog cluster is not in stable state"),
+					errhint("try again when the cluster is fully initialized")));
+		return CLUSTER_IN_TRANSATIONING;
+	}
+
+	if (type == WD_IPC_CMD_RESULT_OK)
+		return COMMAND_OK;
+
+	return COMMAND_FAILED;
+}
+
+void wd_command_unlock(void)
+{
+	/* we dont really care about results here */
+	issue_command_to_watchdog(WD_COMMAND_UNLOCK, WD_COMMAND_ACTION_DEFAULT,10, NULL, 0, false);
+}
+
+WdCommandResult
+wd_degenerate_backend_set(int *node_id_set, int count)
+{
+	char type;
+	char* func;
+	
+	
+	/* if failback packet is received already, do nothing */
+	if (wd_chk_node_mask(WD_DEGENERATE_BACKEND,node_id_set,count))
+		return COMMAND_OK;
+
+	func = get_wd_node_function_json(WD_FUNCTION_DEGENERATE_REQUEST,node_id_set, count);
+	WDIPCCmdResult *result = issue_command_to_watchdog(WD_FUNCTION_COMMAND, WD_COMMAND_ACTION_DEFAULT,2, func, strlen(func), true);
+	pfree(func);
+	
+	if (result == NULL)
+	{
+		ereport(LOG,
+				(errmsg("degenerate backend set command failed"),
+				 errdetail("issue command to eatchdog returned NULL")));
+		return COMMAND_FAILED;
+	}
+
+	type = result->type;
+	pfree(result);
+	if (type == WD_IPC_CMD_CLUSTER_IN_TRAN)
+	{
+		ereport(LOG,
+				(errmsg("degenerate backend set command failed"),
+				 errdetail("watchdog cluster is not in stable state"),
+					errhint("try again when the cluster is fully initialized")));
+		return CLUSTER_IN_TRANSATIONING;
+	}
+	if (type == WD_IPC_CMD_RESULT_OK)
+		return COMMAND_OK;
+
+	return COMMAND_FAILED;
+}
+
+WdCommandResult
+wd_promote_backend(int node_id)
+{
+	int n = node_id;
+	char type;
+	char* func;
+	
+	/* if promote packet is received already, do nothing */
+	if (wd_chk_node_mask(WD_PROMOTE_BACKEND,&n,1))
+		return COMMAND_OK;
+
+	func = get_wd_node_function_json(WD_FUNCTION_PROMOTE_REQUEST,&n, 1);
+	WDIPCCmdResult *result = issue_command_to_watchdog(WD_FUNCTION_COMMAND, WD_COMMAND_ACTION_DEFAULT,2, func, strlen(func), true);
+	pfree(func);
+	
+	if (result == NULL)
+	{
+		ereport(LOG,
+				(errmsg("start recovery command lock failed"),
+				 errdetail("issue command to eatchdog returned NULL")));
+		return COMMAND_FAILED;
+	}
+
+	type = result->type;
+	pfree(result);
+	if (type == WD_IPC_CMD_CLUSTER_IN_TRAN)
+	{
+		ereport(LOG,
+				(errmsg("start recovery command lock failed"),
+				 errdetail("watchdog cluster is not in stable state"),
+					errhint("try again when the cluster is fully initialized")));
+		return CLUSTER_IN_TRANSATIONING;
+	}
+	if (type == WD_IPC_CMD_RESULT_OK)
+		return COMMAND_OK;
+	
+	return COMMAND_FAILED;
 }
 
 int
@@ -1168,6 +1385,7 @@ open_wd_command_sock(bool throw_error)
 		ereport(throw_error? ERROR:LOG,
 			(errmsg("failed to connect to watchdog command server socket"),
 				 errdetail("connect on \"%s\" failed with reason: \"%s\"", addr.sun_path, strerror(errno))));
+		printf("failed to connect to watchdog command server socket\nconnect on \"%s\" failed with reason: \"%s\"\n", addr.sun_path, strerror(errno));
 		return -1;
 	}
 
@@ -1182,10 +1400,122 @@ open_wd_command_sock(bool throw_error)
 		ereport(throw_error? ERROR:LOG,
 			(errmsg("failed to connect to watchdog command server socket"),
 				 errdetail("connect on \"%s\" failed with reason: \"%s\"", addr.sun_path, strerror(errno))));
+		printf("failed to connect to watchdog command server socket\nconnect on \"%s\" failed with reason: \"%s\"\n", addr.sun_path, strerror(errno));
 		return -1;
 	}
 	return sock;
 }
+
+
+static WDIPCCmdResult*
+issue_command_to_watchdog(char type, WD_COMMAND_ACTIONS command_action,int timeout_sec, char* data, int data_len, bool blocking)
+{
+	struct timeval start_time,tv;
+	int sock;
+	WDIPCCmdResult* result = NULL;
+	char res_type = 'P';
+	int res_length;
+	printf("\t\t\t %s:%d\n",__FUNCTION__,__LINE__);
+	gettimeofday(&start_time, NULL);
+	
+	/* open the watchdog command socket for IPC */
+	sock = open_wd_command_sock(false);
+	if (sock < 0)
+	{
+		printf("\t\t\t %s:%d\n",__FUNCTION__,__LINE__);
+		return NULL;
+	}
+	if (send(sock,&type,1,0) < 1)
+	{
+		printf("\t\t\t %s:%d\n",__FUNCTION__,__LINE__);
+		close(sock);
+		return NULL;
+	}
+	/*
+	 * since the command action will be consumed locally,
+	 * so no need to convert it to network byte order
+	 */
+	res_length = htonl(data_len);
+	send(sock,&command_action,sizeof(command_action),0);
+	send(sock,&res_length,sizeof(int),0);
+	if (data && data_len > 0)
+		send(sock,data,data_len,0);
+
+	if (blocking)
+	{
+		/* if we are asked to wait for results */
+		fd_set fds;
+		struct timeval *timeout_st = NULL;
+		if (timeout_sec > 0)
+		{
+			tv.tv_sec = timeout_sec;
+			timeout_st = &tv;
+		}
+		FD_ZERO(&fds);
+		FD_SET(sock,&fds);
+		for (;;)
+		{
+			int select_res;
+			select_res = select(sock+1,&fds,NULL,NULL,timeout_st);
+			if (select_res > 0)
+			{
+				printf("\t\t\t %s:%d\n",__FUNCTION__,__LINE__);
+
+				int ret;
+				/* read the result type char */
+				ret = read_socket(sock, &res_type, 1);
+				printf("\t\t\t %s:%d ret = %d\n",__FUNCTION__,__LINE__,ret);
+
+				if (ret != 1)
+				{
+					ereport(DEBUG1,
+						(errmsg("error reading from IPC command socket"),
+							 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
+					close(sock);
+					return result;
+				}
+				printf("\t\t\t %s:%d RESULT TYPE = %c %02X\n",__FUNCTION__,__LINE__,res_type,res_type);
+
+				/* read the result data length */
+				ret = read_socket(sock, &res_length, 4);
+				if (ret != 4)
+				{
+					ereport(DEBUG1,
+						(errmsg("error reading from IPC command socket"),
+							 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
+					close(sock);
+					return result;
+				}
+				result = palloc(sizeof(WDIPCCmdResult));
+				result->type = res_type;
+				result->length = ntohl(res_length);
+				result->data = NULL;
+
+				if (result->length > 0)
+				{
+					int ret;
+					/* read the result data length */
+					result->data = palloc(result->length);
+					ret = read_socket(sock, result->data, result->length);
+					if (ret != result->length)
+					{
+						pfree(result->data);
+						pfree(result);
+						ereport(DEBUG1,
+							(errmsg("error reading from IPC command socket"),
+								 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
+						close(sock);
+						return NULL;
+					}
+				}
+				break;
+			}
+		}
+	}
+	close(sock);
+	return result;
+}
+
 
 WDIPCCommandResult*
 issue_wd_command(char type, WD_COMMAND_ACTIONS command_action,int timeout_sec, char* data, int data_len, bool blocking)
@@ -1325,22 +1655,6 @@ static int read_socket(int socket, void* buf, int len)
 	return read_len;
 }
 
-int
-wd_promote_backend(int node_id)
-{
-	int rtn = 0;
-	int n = node_id;
-
-	/* if promote packet is received already, do nothing */
-	if (wd_chk_node_mask(WD_PROMOTE_BACKEND,&n,1))
-	{
-		return WD_OK;
-	}
-
-	/* send promote packet */
-	rtn = wd_send_node_packet(WD_PROMOTE_BACKEND, &n, 1);
-	return rtn;
-}
 
 static int
 wd_send_node_packet(WD_PACKET_NO packet_no, int *node_id_set, int count)
