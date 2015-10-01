@@ -237,13 +237,6 @@ typedef struct {
 	char hash[(MD5_PASSWD_LEN+1)*2];
 } WdHbPacket;
 
-/*
- * thread argument for lifecheck of pgpool
- */
-typedef struct {
-	PGconn * conn;	/* PGconn */
-	int retry;		/* retry times (not used?)*/
-} WdPgpoolThreadArg;
 
 /*
  * thread information for pool_thread

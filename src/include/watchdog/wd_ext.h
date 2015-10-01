@@ -41,6 +41,7 @@ typedef struct LifeCheckNode
 	char nodeName[128];
 	int	 wdPort;
 	int  pgpoolPort;
+	int  retry_lives;
 	struct timeval hb_send_time; 			/* send time */
 	struct timeval hb_last_recv_time; 		/* recv time */
 }LifeCheckNode;
@@ -77,7 +78,6 @@ extern int wd_add_wd_list(WdDesc * other_wd); extern int wd_set_wd_info(WdInfo *
 extern WdInfo * wd_is_exist_master(void);
 extern int wd_am_I_oldest(void);
 extern int wd_set_myself(struct timeval * tv, int status);
-extern WdInfo * wd_is_alive_master(void);
 
 extern WdInfo * wd_get_lock_holder(void);
 extern WdInfo * wd_get_interlocking(void);
@@ -126,7 +126,7 @@ extern int wd_get_cmd(char * buf, char * cmd);
 /* wd_lifecheck.c */
 extern int is_wd_lifecheck_ready(void);
 extern int wd_lifecheck(void);
-extern int wd_ping_pgpool(WdInfo * pgpool);
+extern int wd_ping_pgpool(LifeCheckNode* node);
 extern bool initialize_lifecheck(void);
 
 

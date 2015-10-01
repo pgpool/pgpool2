@@ -343,35 +343,7 @@ wd_set_myself(struct timeval * tv, int status)
 	return WD_OK;
 }
 
-/*
- * if master exists and it is alive actually return the master,
- * otherwise return NULL
- */
-WdInfo *
-wd_is_alive_master(void)
-{
-	WdInfo * master = NULL;
 
-	if (WD_MYSELF->status == WD_MASTER)
-		return WD_MYSELF;
-
-	master = wd_is_exist_master();
-	if (master != NULL)
-	{
-		if ((!strcmp(pool_config->wd_lifecheck_method, MODE_HEARTBEAT)) ||
-		    (!strcmp(pool_config->wd_lifecheck_method, MODE_QUERY)
-			     && wd_ping_pgpool(master) == WD_OK))
-		{
-			return master;
-		}
-	}
-
-	ereport(DEBUG1,
-		(errmsg("watchdog checking master"),
-			 errdetail("alive master not found")));
-
-	return NULL;
-}
 
 /*
  * if master exists and it is contactable return true,

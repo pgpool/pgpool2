@@ -39,6 +39,14 @@
 
 #include "libpq-fe.h"
 
+/*
+ * thread argument for lifecheck of pgpool
+ */
+typedef struct {
+	LifeCheckNode *lifeCheckNode;
+	int retry;		/* retry times (not used?)*/
+} WdPgpoolThreadArg;
+
 static void * thread_ping_pgpool(void * arg);
 static PGconn * create_conn(char * hostname, int port);
 static int pgpool_down(WdInfo * pool);
@@ -325,14 +333,14 @@ is_wd_lifecheck_ready(void)
 		/* query mode */
 		if (!strcmp(pool_config->wd_lifecheck_method, MODE_QUERY))
 		{
-//			if (wd_ping_pgpool(p) == WD_NG)
-//			{
-//				ereport(DEBUG1,
-//					(errmsg("watchdog checking life check is ready"),
-//						errdetail("pgpool:%d at \"%s:%d\" has not started yet",
-//							   i, p->hostname, p->pgpool_port)));
-//				rtn = WD_NG;
-//			}
+			if (wd_ping_pgpool(node) == WD_NG)
+			{
+				ereport(DEBUG1,
+					(errmsg("watchdog checking life check is ready"),
+						errdetail("pgpool:%d at \"%s:%d\" has not started yet",
+							   i, node->hostName, node->pgpoolPort)));
+				rtn = WD_NG;
+			}
 		}
 		/* heartbeat mode */
 		else if (!strcmp(pool_config->wd_lifecheck_method, MODE_HEARTBEAT))
@@ -466,10 +474,6 @@ check_pgpool_status_by_hb(void)
 
 		if (wd_check_heartbeat(node) == WD_NG)
 		{
-			ereport(DEBUG1,
-					(errmsg("checking pgpool status by heartbeat"),
-					 errdetail("NG; status %d", 122)));
-
 			ereport(LOG,
 				(errmsg("checking pgpool status by heartbeat"),
 					 errdetail("lifecheck failed. pgpool: %d at \"%s:%d\" seems not to be working",
@@ -496,118 +500,86 @@ check_pgpool_status_by_hb(void)
 static void
 check_pgpool_status_by_query(void)
 {
-	ereport(WARNING,
-			(errmsg("NOT YET IMPLEMENTED")));
-	return;
-
-	WdInfo * p = WD_List;
-	struct timeval tv;
 	pthread_attr_t attr;
 	pthread_t thread[MAX_WATCHDOG_NUM];
 	WdPgpoolThreadArg thread_arg[MAX_WATCHDOG_NUM];
-	int rc;
-	int i,cnt;
-
-	/* set startup time */
-	gettimeofday(&tv, NULL);
+	LifeCheckNode* node;
+	int rc,i;
 
 	/* thread init */
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
 	/* send queries to all pgpools using threads */
-	cnt = 0;
-	while (p->status != WD_END)
+	for (i = 0; i< gslifeCheckCluster->nodeCount; i++)
 	{
-		if (p->status != WD_DOWN)
-		{
-			thread_arg[cnt].conn = create_conn(p->hostname, p->pgpool_port);
-			rc = watchdog_thread_create(&thread[cnt], &attr, thread_ping_pgpool, (void*)&thread_arg[cnt]);
-		}
-		p ++;
-		cnt ++;
-		if (cnt >= MAX_WATCHDOG_NUM)
-		{
-			ereport(WARNING,
-					(errmsg("checking pgpool status by query, pgpool num is out of range:%d",cnt)));
-			break;
-		}
+		node = &gslifeCheckCluster->lifeCheckNodes[i];
+		thread_arg[i].lifeCheckNode = node;
+		rc = watchdog_thread_create(&thread[i], &attr, thread_ping_pgpool, (void*)&thread_arg[i]);
 	}
+
 	pthread_attr_destroy(&attr);
 
 	/* check results of queries */
-	p = WD_List;
-	for (i = 0; i < cnt; )
+	for (i = 0; i< gslifeCheckCluster->nodeCount; i++)
 	{
 		int result;
+		node = &gslifeCheckCluster->lifeCheckNodes[i];
 
 		ereport(DEBUG1,
 				(errmsg("checking pgpool status by query"),
 					errdetail("checking pgpool %d (%s:%d)",
-						   i, p->hostname, p->pgpool_port)));
+						   i, node->hostName, node->pgpoolPort)));
 
-		if (p->status == WD_DOWN)
+		rc = pthread_join(thread[i], (void **)&result);
+		if ((rc != 0) && (errno == EINTR))
 		{
-			ereport(LOG,
-				(errmsg("checking pgpool status by query"),
-					errdetail("pgpool %d (%s:%d) is in down status",
-						   i, p->hostname, p->pgpool_port)));
-			i++;
-			p++;
+			usleep(100);
 			continue;
-		}
-		else
-		{
-			rc = pthread_join(thread[i], (void **)&result);
-			if ((rc != 0) && (errno == EINTR))
-			{
-				usleep(100);
-				continue;
-			}
 		}
 
 		if (result == WD_OK)
 		{
 			ereport(DEBUG1,
 				(errmsg("checking pgpool status by query"),
-					 errdetail("WD_OK: status: %d", p->status)));
+					 errdetail("WD_OK: status: %d", node->nodeState)));
 
 			/* life point init */
-			p->life = pool_config->wd_life_point;
+			node->retry_lives = pool_config->wd_life_point;
 		}
 		else
 		{
 			ereport(DEBUG1,
 				(errmsg("checking pgpool status by query"),
-					 errdetail("NG; status: %d life:%d", p->status, p->life)));
-			if (p->life > 0)
+					 errdetail("NG; status: %d life:%d", node->nodeState, node->retry_lives)));
+			if (node->retry_lives > 0)
 			{
-				p->life --;
+				node->retry_lives --;
 			}
 
 			/* pgpool goes down */
-			if (p->life <= 0)
+			if (node->retry_lives <= 0)
 			{
 				ereport(LOG,
 					(errmsg("checking pgpool status by query"),
 						errdetail("lifecheck failed %d times. pgpool %d (%s:%d) seems not to be working",
-								   pool_config->wd_life_point, i, p->hostname, p->pgpool_port)));
+								   pool_config->wd_life_point, i, node->hostName, node->pgpoolPort)));
 
+				if (node->nodeState == NODE_DEAD)
+					continue;
 				/* It's me! */
-				if ((i == 0) &&
-					(WD_MYSELF->status != WD_DOWN))
-				{
-					wd_set_myself(&tv, WD_DOWN);
-					wd_notice_server_down();
-				}
+				if (i == 0)
+					inform_node_status(node,"parent process is dead");
+				else
+					inform_node_status(node,"unable to connect to node");
 
-				/* It's other pgpool */
-				else if (p->status != WD_DOWN)
-					pgpool_down(p);
+				node->nodeState = NODE_DEAD;
+//
+//				/* It's other pgpool */
+//				else if (p->status != WD_DOWN)
+//					pgpool_down(p);
 			}
 		}
-		i++;
-		p++;
 	}
 }
 
@@ -619,12 +591,8 @@ static void *
 thread_ping_pgpool(void * arg)
 {
 	uintptr_t rtn;
-	WdPgpoolThreadArg * thread_arg;
-	PGconn * conn;
-
-	thread_arg = (WdPgpoolThreadArg *)arg;
-	conn = thread_arg->conn;
-	rtn = (uintptr_t)ping_pgpool(conn);
+	WdPgpoolThreadArg * thread_arg = (WdPgpoolThreadArg *)arg;
+	rtn = (uintptr_t)wd_ping_pgpool(thread_arg->lifeCheckNode);
 
 	pthread_exit((void *)rtn);
 }
@@ -759,15 +727,14 @@ wd_check_heartbeat(LifeCheckNode* node)
  * Check if pgpool can accept the lifecheck query.
  */
 int
-wd_ping_pgpool(WdInfo * pgpool)
+wd_ping_pgpool(LifeCheckNode* node)
 {
-	int rtn;
 	PGconn * conn;
 
-	conn = create_conn(pgpool->hostname, pgpool->pgpool_port);
-	rtn = ping_pgpool(conn);
-
-	return rtn;
+	conn = create_conn(node->hostName, node->pgpoolPort);
+	if (conn == NULL)
+		return WD_NG;
+	return ping_pgpool(conn);
 }
 
 /* inner function for issueing lifecheck query */
