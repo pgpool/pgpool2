@@ -967,6 +967,17 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
+<dt><a name="HEALTH_CHECK_DATABASE"></a>health_check_database <span class="version">V3.5 -</span></dt>
+    <dd>
+    <p>The database name to perform health check.  The default is '',
+      which tries "postgres" database first, then "template1" database
+      until it succeeds. This is the same behavior as 3.4 or before.
+    </p>
+    <p>
+    You need to reload pgpool.conf if you change health_check_database.
+    </p>
+    </dd>
+
 <dt><a name="HEALTH_CHECK_MAX_RETRIES"></a>health_check_max_retries <span class="version">V3.2 -</span></dt>
     <dd>
     <p>The maximum number of times to retry a failed health check
@@ -2125,6 +2136,17 @@ The following directives can be used with this mode:
     </p>
     <p>
     You need to reload pgpool.conf if you change sr_check_password.
+    </p>
+    </dd>
+
+<dt id="SR_CHECK_DATABASE">sr_check_database <span class="version">V3.5 -</span></dt>
+    <dd>
+    <p>
+    The database to perform streaming replication delay check.
+    The default is "postgres" (which is the built-in database name in 3.4 or before).
+    </p>
+    <p>
+    You need to reload pgpool.conf if you change sr_check_database.
     </p>
     </dd>
 

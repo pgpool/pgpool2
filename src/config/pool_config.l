@@ -141,10 +141,10 @@ int pool_init_config(void)
 	pool_config->child_max_connections = 0;
 	pool_config->authentication_timeout = 60;
 	pool_config->logdir = DEFAULT_LOGDIR;
-    pool_config->logsyslog = 0;
-    pool_config->log_destination = "stderr";
-    pool_config->syslog_facility = LOG_LOCAL0;
-    pool_config->syslog_ident = "pgpool";
+	pool_config->logsyslog = 0;
+	pool_config->log_destination = "stderr";
+	pool_config->syslog_facility = LOG_LOCAL0;
+	pool_config->syslog_ident = "pgpool";
 	pool_config->pid_file_name = DEFAULT_PID_FILE_NAME;
 	pool_config->log_statement = 0;
 	pool_config->log_per_node_statement = 0;
@@ -177,12 +177,14 @@ int pool_init_config(void)
 	pool_config->health_check_period = 0;
 	pool_config->health_check_user = "nobody";
 	pool_config->health_check_password = "";
+	pool_config->health_check_database = "";
 	pool_config->health_check_max_retries = 0;
 	pool_config->health_check_retry_delay = 1;
 	pool_config->connect_timeout = 10000;
 	pool_config->sr_check_period = 0;
 	pool_config->sr_check_user = "nobody";
 	pool_config->sr_check_password = "";
+	pool_config->sr_check_database = "postgres";
 	pool_config->failover_command = "";
 	pool_config->follow_master_command = "";
 	pool_config->failback_command = "";
@@ -1415,7 +1417,28 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			pool_config->health_check_password = str;
 		}
 
-                else if (!strcmp(key, "health_check_max_retries") &&
+		else if (!strcmp(key, "health_check_database") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->health_check_database = str;
+		}
+
+
+        else if (!strcmp(key, "health_check_max_retries") &&
                                  CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
                 {
                         int v = atoi(yytext);
@@ -1448,6 +1471,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
                         }
                         pool_config->health_check_retry_delay = v;
                 }
+
 		else if (!strcmp(key, "connect_timeout") &&
 				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
@@ -1520,6 +1544,26 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->sr_check_password = str;
+		}
+
+		else if (!strcmp(key, "sr_check_database") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->sr_check_database = str;
 		}
 
 		else if (!strcmp(key, "failover_command") &&

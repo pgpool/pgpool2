@@ -332,6 +332,8 @@ sr_check_user = 'nobody'
                                    # replication delay check by sr_check_period = 0
 sr_check_password = ''
                                    # Password for streaming replication check user
+sr_check_database = 'postgres'
+                                   # Database name for streaming replication check
 delay_threshold = 0
                                    # Threshold before not dispatching query to standby node
                                    # Unit is in bytes
@@ -368,6 +370,8 @@ health_check_user = 'nobody'
                                    # Health check user
 health_check_password = ''
                                    # Password for health check user
+health_check_database = ''
+                                   # Database name for health check. If '', tries 'postgres' frist, 
 health_check_max_retries = 0
                                    # Maximum number of times to retry a failed health check before giving up.
 health_check_retry_delay = 1

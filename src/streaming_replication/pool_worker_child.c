@@ -200,7 +200,7 @@ static void establish_persistent_connection(void)
                 bkinfo = pool_get_node_info(i);
                 slots[i] = make_persistent_db_connection_noerror(bkinfo->backend_hostname,
 											  bkinfo->backend_port,
-											  "postgres",
+											  pool_config->sr_check_database,
 											  pool_config->sr_check_user,
 											  pool_config->sr_check_password, true);
 		}

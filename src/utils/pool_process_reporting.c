@@ -470,6 +470,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	StrNCpy(status[i].desc, "sr check password", POOLCONFIG_MAXDESCLEN);
 	i++;
 #endif
+	StrNCpy(status[i].name, "sr_check_database", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->sr_check_database);
+	StrNCpy(status[i].desc, "sr check database", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	StrNCpy(status[i].name, "delay_threshold", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%lld", pool_config->delay_threshold);
 	StrNCpy(status[i].desc, "standby delay threshold", POOLCONFIG_MAXDESCLEN);
@@ -518,6 +523,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	StrNCpy(status[i].desc, "health check password", POOLCONFIG_MAXDESCLEN);
 	i++;
 #endif
+	StrNCpy(status[i].name, "health_check_database", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->health_check_database);
+	StrNCpy(status[i].desc, "health check database", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	StrNCpy(status[i].name, "health_check_max_retries", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->health_check_max_retries);
 	StrNCpy(status[i].desc, "health check max retries", POOLCONFIG_MAXDESCLEN);

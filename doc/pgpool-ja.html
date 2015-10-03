@@ -1008,6 +1008,16 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
+<dt><a name="HEALTH_CHECK_DATABASE"></a>health_check_database <span class="version">V3.5 -</span></dt>
+    <dd>
+      <p>ヘルスチェックを行う対象のデータベース名を指定します。
+	デフォルトは '' で、この場合最初に「postgres」データベースを試し、それに接続できない場合は「template1」データベースを試します。これはpgpool-II 3.4以前の挙動と同じです。
+    </p>
+    <p>
+    このパラメータを変更した時には設定ファイルを再読み込みしてください。
+    </p>
+    </dd>
+
 <dt><a name="HEALTH_CHECK_MAX_RETRIES"></a>health_check_max_retries <span class="version">V3.2 〜</span></dt>
     <dd>
     <p>
@@ -2228,6 +2238,17 @@ Streaming Replicationを使う場合の雛形はpgpool.conf.sample-streamです�
     <p>
     ストリーミングレプリケーションの遅延チェックを行うユーザに対するパスワードをを指定します。
     パスワードが必要なければ空文字('')を指定します。
+    </p>
+    <p>
+    このパラメータは設定ファイルの再読込によって変更できます。
+    </p>
+    </dd>
+
+<dt id="SR_CHECK_DATABASE">sr_check_database <span class="version">V3.5 -</span></dt>
+    <dd>
+    <p>
+   ストリーミングレプリケーションの遅延チェックを行う対象のデータベース名を指定します。
+   デフォルトは「postgres」です（これは3.4以前のpgpool-IIが固定の値として使っていたデータベース名です）。
     </p>
     <p>
     このパラメータは設定ファイルの再読込によって変更できます。
