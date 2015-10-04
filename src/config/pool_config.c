@@ -1873,6 +1873,7 @@ int pool_init_config(void)
 	pool_config->pcp_socket_dir = DEFAULT_SOCKET_DIR;
 	pool_config->num_init_children = 32;
 	pool_config->listen_backlog_multiplier = 2;
+	pool_config->serialize_accept = 0;
 	pool_config->max_pool = 4;
 	pool_config->child_life_time = 300;
 	pool_config->client_idle_limit = 0;
@@ -2386,6 +2387,20 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->listen_backlog_multiplier = v;
+		}
+		else if (!strcmp(key, "serialize_accept") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			int v = eval_logical(yytext);
+
+			if (v < 0)
+			{
+				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"",yytext,key)));
+				return(-1);
+			}
+			pool_config->serialize_accept = v;
 		}
 		else if (!strcmp(key, "child_life_time") &&
 				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))

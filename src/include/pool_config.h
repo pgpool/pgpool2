@@ -77,6 +77,7 @@ typedef struct {
 	char *pcp_socket_dir;		/* PCP socket directory */
     int	num_init_children;	/* # of children initially pre-forked */
     int	listen_backlog_multiplier; /* determines the size of the connection queue */
+	int serialize_accept;		/* if non 0, serialize call to accept() to avoid thundering herd problem */
     int	child_life_time;	/* if idle for this seconds, child exits */
     int	connection_life_time;	/* if idle for this seconds, connection closes */
     int	child_max_connections;	/* if max_connections received, child exits */

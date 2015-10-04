@@ -242,6 +242,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	StrNCpy(status[i].desc, "determines the size of the queue for pending connections", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "serialize_accept", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->serialize_accept);
+	StrNCpy(status[i].desc, "whether to serialize accept() call", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	StrNCpy(status[i].name, "max_pool", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->max_pool);
 	StrNCpy(status[i].desc, "max # of connection pool per child", POOLCONFIG_MAXDESCLEN);

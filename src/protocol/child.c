@@ -1832,9 +1832,28 @@ wait_for_new_connections(int *fds, struct timeval *timeout, SockAddr *saddr)
 #endif
 	}
 
+	/*
+	 * If child life time is disabled and serialize_accept is on, we serialize
+	 * select() and accept() to avoid the "Thundering herd" problem.
+	 */
+	if (pool_config->child_life_time == 0 && pool_config->serialize_accept != 0)
+	{
+		pool_semaphore_lock(ACCEPT_FD_SEM);
+		ereport(DEBUG1,
+			   (errmsg("LOCKING select()")));
+	}
+
 	numfds = select(nsocks, &rmask, NULL, NULL, timeoutval);
 
 	save_errno = errno;
+
+	if (pool_config->child_life_time == 0 && pool_config->serialize_accept != 0)
+	{
+		pool_semaphore_unlock(ACCEPT_FD_SEM);
+		ereport(DEBUG1,
+			   (errmsg("UNLOCKING select()")));
+	}
+
 	/* check backend timer is expired */
 	if (backend_timer_expired)
 	{

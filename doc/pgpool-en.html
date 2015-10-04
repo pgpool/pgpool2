@@ -635,6 +635,43 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
 		<p>
 		This parameter can only be set at server start.</p>
 	</dd>
+
+<dt><a name="SERIALIZE_ACCEPT"></a>serialize_accept <span class="version">V3.5 -</span></dt>
+    <dd>
+		<p>
+		  Whether to serialize accept() call for incoming client connections.
+		  Default is off, which means no serializing (same behavior as pgpool-II 3.4 or before).
+		  If this is off, the kernel wakes up all of pgpool-II child process to execute accept() and one of them actually accepts the incoming connection.
+		  Problem here is, because so my child process wake up at a same time, heavy context switching occurred and
+		  the performance is affected.
+		  This phenomena is a classic problem called "the thundering herd problem".
+		  By enabling serialize_accept, only one of pgpool-II child process is woken up and executes accept() and the problem can be avoided.
+		  When you should turn on serialize_accept?
+		  For large number of num_init_children, it is recommended to turn on serialize_accept.
+		  For small number of num_init_children, it may not enhance the performance rather, it may degrade the performance because of serializing overhead.
+		  How large is actually large is depending on the environment.
+		  It is recommended to do a bench mark test to make the decision.
+		  Here is a example pgbench run:
+		</p>
+		<p>
+		  <pre>
+		    pgbench -n -S -p 9999 -c 32 -C -S -T 300 test
+		  </pre>
+		</p>
+		<p>
+		  Here, -C tells pgbench to connect to database each time a transaction gets executed.
+		  -c 32 specifies the concurrent sessions to pgpool-II. You should change this according to your system's requirement.
+		  When pgbench finishes, you want to check the number from "including connections establishing".
+		</p>
+		<p>
+		  Please note that if <a href="#CHILD_LIFE_TIME">child_life_time</a> is enabled, serialize_accept has no effect.
+		  Make sure that you set child_life_time to 0 if you want to turn on serialize_accept.
+		  If you are care about pgpool-II process memory leak or whatever potential issue, you could use <a href="#CHILD_MAX_CONNECTIONS">child_max_connections</a> instead.
+		  This is purely an implementation limitation and maybe removed in the future.
+		</p>
+		<p>
+		This parameter can only be set at server start.</p>
+    </dd>
 		
 <dt><a name="CHILD_LIFE_TIME"></a>child_life_time</dt>
     <dd>
@@ -644,6 +681,9 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
     Default value is 300 (5 minutes).
     0 disables this feature. Note that this doesn't apply for processes
     that have not accepted any connection yet.
+    </p>
+    <p>
+      Note: if this parameter is non 0, <a href="#SERIALIZE_ACCEPT">serialize_accept</a> has no effect.
     </p>
     <p>
     You need to reload pgpool.conf if you change this value.
