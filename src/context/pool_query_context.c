@@ -1041,6 +1041,19 @@ static POOL_DEST send_to_where(Node *node, char *query)
 			if (pool_has_insertinto_or_locking_clause(node))
 				return POOL_PRIMARY;
 
+			/* non-SELECT query in WITH clause ? */
+			if (((SelectStmt *)node)->withClause)
+			{
+				List *ctes = ((SelectStmt *)node)->withClause->ctes;
+				ListCell   *cte_item;
+				foreach(cte_item, ctes)
+				{
+					CommonTableExpr *cte = (CommonTableExpr *)lfirst(cte_item);
+					if (!IsA(cte->ctequery, SelectStmt))
+						return POOL_PRIMARY;
+				}
+			}
+
 			return POOL_EITHER;
 		}
 

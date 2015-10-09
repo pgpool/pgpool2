@@ -120,7 +120,6 @@ static uint32 create_hash_key(POOL_QUERY_HASH *key);
 static volatile POOL_HASH_ELEMENT *get_new_hash_element(void);
 static void put_back_hash_element(volatile POOL_HASH_ELEMENT *element);
 static bool is_free_hash_element(void);
-static char *get_relation_without_alias(RangeVar *relation);
 
 /*
  * Connect to Memcached
@@ -926,17 +925,17 @@ int pool_extract_table_oids(Node *node, int **oidsp)
 	if (IsA(node, InsertStmt))
 	{
 		InsertStmt *stmt = (InsertStmt *)node;
-		table = nodeToString(stmt->relation);
+		table = make_table_name_from_rangevar(stmt->relation);
 	}
 	else if (IsA(node, UpdateStmt))
 	{
 		UpdateStmt *stmt = (UpdateStmt *)node;
-		table = get_relation_without_alias(stmt->relation);
+		table = make_table_name_from_rangevar(stmt->relation);
 	}
 	else if (IsA(node, DeleteStmt))
 	{
 		DeleteStmt *stmt = (DeleteStmt *)node;
-		table = get_relation_without_alias(stmt->relation);
+		table = make_table_name_from_rangevar(stmt->relation);
 	}
 
 #ifdef NOT_USED
@@ -948,14 +947,14 @@ int pool_extract_table_oids(Node *node, int **oidsp)
 	else if (IsA(node, CreateStmt))
 	{
 		CreateStmt *stmt = (CreateStmt *)node;
-		table = nodeToString(stmt->relation);
+		table = make_table_name_from_rangevar(stmt->relation);
 	}
 #endif
 
 	else if (IsA(node, AlterTableStmt))
 	{
 		AlterTableStmt *stmt = (AlterTableStmt *)node;
-		table = nodeToString(stmt->relation);
+		table = make_table_name_from_rangevar(stmt->relation);
 	}
 
 	else if (IsA(node, CopyStmt))
@@ -963,7 +962,7 @@ int pool_extract_table_oids(Node *node, int **oidsp)
 		CopyStmt *stmt = (CopyStmt *)node;
 		if (stmt->is_from)		/* COPY FROM? */
 		{
-			table = nodeToString(stmt->relation);
+			table = make_table_name_from_rangevar(stmt->relation);
 		}
 		else
 		{
@@ -985,9 +984,9 @@ int pool_extract_table_oids(Node *node, int **oidsp)
 		/* Here, stmt->objects is list of target relation info.  The
 		 * first cell of target relation info is a list (possibly)
 		 * consists of database, schema and relation.  We need to call
-		 * makeRangeVarFromNameList() before passing to nodeToString.
-		 * Otherwise we get weird excessively decorated relation name
-		 * (''table_name'').
+		 * makeRangeVarFromNameList() before passing to
+		 * make_table_name_from_rangevar. Otherwise we get weird excessively
+		 * decorated relation name (''table_name'').
 		 */
 		foreach(cell, stmt->objects)
 		{
@@ -998,7 +997,7 @@ int pool_extract_table_oids(Node *node, int **oidsp)
 				return 0;
 			}
 
-			table = nodeToString(makeRangeVarFromNameList(lfirst(cell)));
+			table = make_table_name_from_rangevar(makeRangeVarFromNameList(lfirst(cell)));
 			oid = pool_table_name_to_oid(table);
 			if (oid > 0)
 			{
@@ -1024,7 +1023,7 @@ int pool_extract_table_oids(Node *node, int **oidsp)
 				return 0;
 			}
 
-			table = nodeToString(lfirst(cell));
+			table = make_table_name_from_rangevar(lfirst(cell));
 			oid = pool_table_name_to_oid(table);
 			if (oid > 0)
 			{
@@ -1050,41 +1049,6 @@ int pool_extract_table_oids(Node *node, int **oidsp)
 				(errmsg("memcache: extracting table oids: table: \"%s\" oid:%d", table, oid)));
 	}
 	return num_oids;
-}
-
-/*
- * Get relation name without alias.  NodeToString() calls
- * _outRangeVar(). Unfortunately _outRangeVar() returns table with
- * alias ("t1 AS foo") as a table name if table alias is used. This
- * function just trim down "AS..." part from the table name when table
- * alias is used.
- */
-static char *get_relation_without_alias(RangeVar *relation)
-{
-	char *table;
-	char *p;
-
-	if (!IsA(relation, RangeVar))
-	{
-		ereport(WARNING,
-			(errmsg("memcache: extracting table name without alias: invalid node, not a RangeVar"),
-				 errdetail("passed in node is of type:%d",relation->type)));
-		return "";
-	}
-	table = nodeToString(relation);
-	if (relation->alias)
-	{
-		p = strchr(table, ' ');
-		if (!p)
-		{
-			ereport(LOG,
-				(errmsg("memcache: extracting table name without alias: parsing error"),
-					 errdetail("cannot locate space in name:\"%s\"", table)));
-			return "";
-		}
-		*p = '\0';
-	}
-	return table;		
 }
 
 #define POOL_OIDBUF_SIZE 1024

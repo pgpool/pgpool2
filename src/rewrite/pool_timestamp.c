@@ -276,55 +276,89 @@ rewrite_timestamp_walker(Node *node, void *context)
 	if (node == NULL)
 		return false;
 
-	if (nodeTag(node) == T_FuncCall)
+	switch (nodeTag(node))
 	{
-		/* `now()' FuncCall */
-		FuncCall	*fcall = (FuncCall *) node;
-
-		if ((list_length(fcall->funcname) == 1 &&
-			 strcmp("now", strVal(linitial(fcall->funcname))) == 0) ||
-			(list_length(fcall->funcname) == 2 &&
-			 strcmp("pg_catalog", strVal(linitial(fcall->funcname))) == 0 &&
-			 strcmp("now", strVal(lsecond(fcall->funcname))) == 0))
-		{
-			TypeCast	*tc = makeNode(TypeCast);
-			tc->arg = makeTsExpr(ctx);
-			tc->typeName = SystemTypeName("text");
-
-			fcall->funcname = SystemFuncName("timestamptz");
-			fcall->args = list_make1(tc);
-			ctx->rewrite = true;
-		}
-	}
-	else if (IsA(node, TypeCast))
-	{
-		/* CURRENT_DATE, CURRENT_TIME, LOCALTIMESTAMP, LOCALTIME etc.*/
-		TypeCast	*tc = (TypeCast *) node;
-
-		if ((isSystemType((Node *) tc->typeName, "date") ||
-			 isSystemType((Node *) tc->typeName, "timestamp") ||
-			 isSystemType((Node *) tc->typeName, "timestamptz") ||
-			 isSystemType((Node *) tc->typeName, "time") ||
-			 isSystemType((Node *) tc->typeName, "timetz")))
-		{
-			/* rewrite `'now'::timestamp' and `'now'::text::timestamp' both */
-			if (isSystemTypeCast(tc->arg, "text"))
-				tc = (TypeCast *) tc->arg;
-
-			if (isStringConst(tc->arg, "now"))
+		case T_InsertStmt:
 			{
-				tc->arg = (Node *) makeTsExpr(ctx);
-				ctx->rewrite = true;
-			}
-		}
-	}
-	else if (IsA(node, ParamRef))
-	{
-		ParamRef	*param = (ParamRef *) node;
+				TSRewriteContext	*ctx = (TSRewriteContext *) context;
+				char *relname_old;
+				InsertStmt *i_stmt = (InsertStmt *) node;
 
-		/* count how many params in original query */
-		if (ctx->num_params < param->number)
-			ctx->num_params = param->number;
+				relname_old = ctx->relname;
+				ctx->relname = make_table_name_from_rangevar(i_stmt->relation);
+				rewrite_timestamp_insert(i_stmt, ctx);
+				ctx->relname = relname_old;
+			}
+			/* tree walker is called in rewrite_timestamp_insert() */ 
+			return false;
+		case T_UpdateStmt:
+			{
+				TSRewriteContext	*ctx = (TSRewriteContext *) context;
+				char *relname_old;
+				UpdateStmt *u_stmt = (UpdateStmt *) node;
+
+				relname_old = ctx->relname;
+				ctx->relname = make_table_name_from_rangevar(u_stmt->relation);
+				rewrite_timestamp_update(u_stmt, ctx);
+				ctx->relname = relname_old;
+			}
+			/* tree walker is called in rewrite_timestamp_update() */ 
+			return false;
+		case T_FuncCall:
+			{
+				/* `now()' FuncCall */
+				FuncCall	*fcall = (FuncCall *) node;
+
+				if ((list_length(fcall->funcname) == 1 &&
+			 		strcmp("now", strVal(linitial(fcall->funcname))) == 0) ||
+					(list_length(fcall->funcname) == 2 &&
+			 		strcmp("pg_catalog", strVal(linitial(fcall->funcname))) == 0 &&
+			 		strcmp("now", strVal(lsecond(fcall->funcname))) == 0))
+				{
+					TypeCast	*tc = makeNode(TypeCast);
+					tc->arg = makeTsExpr(ctx);
+					tc->typeName = SystemTypeName("text");
+	
+					fcall->funcname = SystemFuncName("timestamptz");
+					fcall->args = list_make1(tc);
+					ctx->rewrite = true;
+				}
+			}
+			break;
+		case T_TypeCast:
+			{
+				/* CURRENT_DATE, CURRENT_TIME, LOCALTIMESTAMP, LOCALTIME etc.*/
+				TypeCast	*tc = (TypeCast *) node;
+
+				if ((isSystemType((Node *) tc->typeName, "date") ||
+			 		isSystemType((Node *) tc->typeName, "timestamp") ||
+			 		isSystemType((Node *) tc->typeName, "timestamptz") ||
+			 		isSystemType((Node *) tc->typeName, "time") ||
+			 		isSystemType((Node *) tc->typeName, "timetz")))
+				{
+					/* rewrite `'now'::timestamp' and `'now'::text::timestamp' both */
+					if (isSystemTypeCast(tc->arg, "text"))
+						tc = (TypeCast *) tc->arg;
+
+					if (isStringConst(tc->arg, "now"))
+					{
+						tc->arg = (Node *) makeTsExpr(ctx);
+						ctx->rewrite = true;
+					}
+				}
+			}
+			break;
+		case T_ParamRef:
+			{
+				ParamRef	*param = (ParamRef *) node;
+
+				/* count how many params in original query */
+				if (ctx->num_params < param->number)
+					ctx->num_params = param->number;
+			}
+			break;
+		default:
+			break;
 	}
 
 	return raw_expression_tree_walker(node, rewrite_timestamp_walker, context);
@@ -681,13 +715,13 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 	if (IsA(stmt, InsertStmt))
 	{
 		InsertStmt *i_stmt = (InsertStmt *) stmt;
-		ctx.relname = nodeToString(i_stmt->relation);
+		ctx.relname = make_table_name_from_rangevar(i_stmt->relation);
 		rewrite = rewrite_timestamp_insert(i_stmt, &ctx);
 	}
 	else if (IsA(stmt, UpdateStmt))
 	{
 		UpdateStmt *u_stmt = (UpdateStmt *) stmt;
-		ctx.relname = nodeToString(u_stmt->relation);
+		ctx.relname = make_table_name_from_rangevar(u_stmt->relation);
 		rewrite = rewrite_timestamp_update(u_stmt, &ctx);
 	}
 	else if (IsA(stmt, DeleteStmt))
@@ -1112,17 +1146,22 @@ raw_expression_tree_walker(Node *node,
 			}
 			break;
 		case T_InsertStmt:
-			/* for rewrite_timestamp_walker only */
+			break;
 			{
-				TSRewriteContext	*ctx = (TSRewriteContext *) context;
-				char *relname_old;
-				InsertStmt *i_stmt = (InsertStmt *) node;
+				InsertStmt *stmt = (InsertStmt *) node;
 
-				relname_old = ctx->relname;
-				ctx->relname = nodeToString(i_stmt->relation);
-				rewrite_timestamp_insert(i_stmt, ctx);
-				pfree(ctx->relname);
-				ctx->relname = relname_old;
+				if (walker(stmt->relation, context))
+					return true;
+				if (walker(stmt->cols, context))
+					return true;
+				if (walker(stmt->selectStmt, context))
+					return true;
+				if (walker(stmt->onConflictClause, context))
+					return true;
+				if (walker(stmt->returningList, context))
+					return true;
+				if (walker(stmt->withClause, context))
+					return true;
 			}
 			break;
 		case T_DeleteStmt:
@@ -1142,17 +1181,21 @@ raw_expression_tree_walker(Node *node,
 			}
 			break;
 		case T_UpdateStmt:
-			/* for rewrite_timestamp_walker only */
 			{
-				TSRewriteContext	*ctx = (TSRewriteContext *) context;
-				char *relname_old;
-				UpdateStmt *u_stmt = (UpdateStmt *) node;
+				UpdateStmt *stmt = (UpdateStmt *) node;
 
-				relname_old = ctx->relname;
-				ctx->relname = nodeToString(u_stmt->relation);
-				rewrite_timestamp_update(u_stmt, ctx);
-				pfree(ctx->relname);
-				ctx->relname = relname_old;
+				if (walker(stmt->relation, context))
+					return true;
+				if (walker(stmt->targetList, context))
+					return true;
+				if (walker(stmt->whereClause, context))
+					return true;
+				if (walker(stmt->fromClause, context))
+					return true;
+				if (walker(stmt->returningList, context))
+					return true;
+				if (walker(stmt->withClause, context))
+					return true;
 			}
 			break;
 		case T_SelectStmt:
