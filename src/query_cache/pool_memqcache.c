@@ -823,6 +823,21 @@ bool pool_is_allow_to_cache(Node *node, char *query)
 		return false;
 
 	/*
+	 * TABLESAMPLE is not allowed to cache.
+	 */
+	if (IsA(node, SelectStmt) && ((SelectStmt *)node)->fromClause)
+	{
+		List *tbl_list = ((SelectStmt *)node)->fromClause;
+		ListCell   *tbl;
+		foreach(tbl, tbl_list)
+		{
+			if (IsA(lfirst(tbl), RangeTableSample))
+				return false;
+		}
+	}
+
+
+	/*
 	 * If the table is in the while list, allow to cache even if it is
 	 * VIEW or unlogged table.
 	 */
