@@ -43,7 +43,6 @@ static bool	insertinto_or_locking_clause_walker(Node *node, void *context);
 static bool is_immutable_function(char *fname);
 static bool select_table_walker(Node *node, void *context);
 static bool non_immutable_function_call_walker(Node *node, void *context);
-static char *make_table_name_from_rangevar(RangeVar *rangevar);
 
 /*
  * Return true if this SELECT has function calls *and* supposed to
@@ -1156,7 +1155,7 @@ makeRangeVarFromNameList(List *names)
  * necessary.  The returned table name is in static area. So next
  * call to this function will break previous result.
  */
-static char *make_table_name_from_rangevar(RangeVar *rangevar)
+char *make_table_name_from_rangevar(RangeVar *rangevar)
 {
 	/*
 	 * Table name. Max size is calculated as follows:

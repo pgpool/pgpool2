@@ -10,8 +10,8 @@
  * analyze.c and related files.
  *
  *
- * Portions Copyright (c) 2003-2014, PgPool Global Development Group
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2015, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -29,11 +29,8 @@
 #include "pg_wchar.h"
 #include "utils/elog.h"
 
-List	   *parsetree;			/* result of parsing is left here */
-int			server_version_num = 0;
-
-static pg_enc		server_encoding = PG_SQL_ASCII;
-static	bool		in_parser_context = false;
+int server_version_num = 0;
+static pg_enc server_encoding = PG_SQL_ASCII;
 
 static int
 parse_version(const char *versionString);
@@ -51,52 +48,53 @@ raw_parser(const char *str)
 	core_yyscan_t yyscanner;
 	base_yy_extra_type yyextra;
 	int			yyresult;
+
     MemoryContext oldContext = CurrentMemoryContext;
-	
-	parsetree = NIL;			/* in case grammar forgets to set it */
-	
+
 	/* initialize the flex scanner */
 	yyscanner = scanner_init(str, &yyextra.core_yy_extra,
 							 ScanKeywords, NumScanKeywords);
-	
+
 	/* base_yylex() only needs this much initialization */
 	yyextra.have_lookahead = false;
-	
+
 	/* initialize the bison parser */
 	parser_init(&yyextra);
-	in_parser_context = true;
+
 	PG_TRY();
 	{
+		/* Parse! */
 		yyresult = base_yyparse(yyscanner);
+
+		/* Clean up (release memory) */
 		scanner_finish(yyscanner);
-		in_parser_context = false;
 	}
 	PG_CATCH();
 	{
 		MemoryContextSwitchTo(oldContext);
 		scanner_finish(yyscanner);
-		in_parser_context = false;
 		yyresult = -1;
 		FlushErrorState();
 	}
 	PG_END_TRY();
+
 	if (yyresult)				/* error */
 		return NIL;
+
 	return yyextra.parsetree;
 }
-
 
 
 /*
  * Intermediate filter between parser and core lexer (core_yylex in scan.l).
  *
- * The filter is needed because in some cases the standard SQL grammar
+ * This filter is needed because in some cases the standard SQL grammar
  * requires more than one token lookahead.  We reduce these cases to one-token
- * lookahead by combining tokens here, in order to keep the grammar LALR(1).
+ * lookahead by replacing tokens here, in order to keep the grammar LALR(1).
  *
  * Using a filter is simpler than trying to recognize multiword tokens
  * directly in scan.l, because we'd have to allow for comments between the
- * words.  Furthermore it's not clear how to do it without re-introducing
+ * words.  Furthermore it's not clear how to do that without re-introducing
  * scanner backtrack, which would cost more performance than this filter
  * layer does.
  *
@@ -110,7 +108,7 @@ base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 	base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
 	int			cur_token;
 	int			next_token;
-	core_YYSTYPE cur_yylval;
+	int			cur_token_length;
 	YYLTYPE		cur_yylloc;
 
 	/* Get next token --- we might already have it */
@@ -119,73 +117,101 @@ base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 		cur_token = yyextra->lookahead_token;
 		lvalp->core_yystype = yyextra->lookahead_yylval;
 		*llocp = yyextra->lookahead_yylloc;
+		*(yyextra->lookahead_end) = yyextra->lookahead_hold_char;
 		yyextra->have_lookahead = false;
 	}
 	else
 		cur_token = core_yylex(&(lvalp->core_yystype), llocp, yyscanner);
 
-	/* Do we need to look ahead for a possible multiword token? */
+	/*
+	 * If this token isn't one that requires lookahead, just return it.  If it
+	 * does, determine the token length.  (We could get that via strlen(), but
+	 * since we have such a small set of possibilities, hardwiring seems
+	 * feasible and more efficient.)
+	 */
 	switch (cur_token)
 	{
+		case NOT:
+			cur_token_length = 3;
+			break;
 		case NULLS_P:
+			cur_token_length = 5;
+			break;
+		case WITH:
+			cur_token_length = 4;
+			break;
+		default:
+			return cur_token;
+	}
 
-			/*
-			 * NULLS FIRST and NULLS LAST must be reduced to one token
-			 */
-			cur_yylval = lvalp->core_yystype;
-			cur_yylloc = *llocp;
-			next_token = core_yylex(&(lvalp->core_yystype), llocp, yyscanner);
+	/*
+	 * Identify end+1 of current token.  core_yylex() has temporarily stored a
+	 * '\0' here, and will undo that when we call it again.  We need to redo
+	 * it to fully revert the lookahead call for error reporting purposes.
+	 */
+	yyextra->lookahead_end = yyextra->core_yy_extra.scanbuf +
+		*llocp + cur_token_length;
+	Assert(*(yyextra->lookahead_end) == '\0');
+
+	/*
+	 * Save and restore *llocp around the call.  It might look like we could
+	 * avoid this by just passing &lookahead_yylloc to core_yylex(), but that
+	 * does not work because flex actually holds onto the last-passed pointer
+	 * internally, and will use that for error reporting.  We need any error
+	 * reports to point to the current token, not the next one.
+	 */
+	cur_yylloc = *llocp;
+
+	/* Get next token, saving outputs into lookahead variables */
+	next_token = core_yylex(&(yyextra->lookahead_yylval), llocp, yyscanner);
+	yyextra->lookahead_token = next_token;
+	yyextra->lookahead_yylloc = *llocp;
+
+	*llocp = cur_yylloc;
+
+	/* Now revert the un-truncation of the current token */
+	yyextra->lookahead_hold_char = *(yyextra->lookahead_end);
+	*(yyextra->lookahead_end) = '\0';
+
+	yyextra->have_lookahead = true;
+
+	/* Replace cur_token if needed, based on lookahead */
+	switch (cur_token)
+	{
+		case NOT:
+			/* Replace NOT by NOT_LA if it's followed by BETWEEN, IN, etc */
+			switch (next_token)
+			{
+				case BETWEEN:
+				case IN_P:
+				case LIKE:
+				case ILIKE:
+				case SIMILAR:
+					cur_token = NOT_LA;
+					break;
+			}
+			break;
+
+		case NULLS_P:
+			/* Replace NULLS_P by NULLS_LA if it's followed by FIRST or LAST */
 			switch (next_token)
 			{
 				case FIRST_P:
-					cur_token = NULLS_FIRST;
-					break;
 				case LAST_P:
-					cur_token = NULLS_LAST;
-					break;
-				default:
-					/* save the lookahead token for next time */
-					yyextra->lookahead_token = next_token;
-					yyextra->lookahead_yylval = lvalp->core_yystype;
-					yyextra->lookahead_yylloc = *llocp;
-					yyextra->have_lookahead = true;
-					/* and back up the output info to cur_token */
-					lvalp->core_yystype = cur_yylval;
-					*llocp = cur_yylloc;
+					cur_token = NULLS_LA;
 					break;
 			}
 			break;
 
 		case WITH:
-
-			/*
-			 * WITH TIME and WITH ORDINALITY must each be reduced to one token
-			 */
-			cur_yylval = lvalp->core_yystype;
-			cur_yylloc = *llocp;
-			next_token = core_yylex(&(lvalp->core_yystype), llocp, yyscanner);
+			/* Replace WITH by WITH_LA if it's followed by TIME or ORDINALITY */
 			switch (next_token)
 			{
 				case TIME:
-					cur_token = WITH_TIME;
-					break;
 				case ORDINALITY:
-					cur_token = WITH_ORDINALITY;
-					break;
-				default:
-					/* save the lookahead token for next time */
-					yyextra->lookahead_token = next_token;
-					yyextra->lookahead_yylval = lvalp->core_yystype;
-					yyextra->lookahead_yylloc = *llocp;
-					yyextra->have_lookahead = true;
-					/* and back up the output info to cur_token */
-					lvalp->core_yystype = cur_yylval;
-					*llocp = cur_yylloc;
+					cur_token = WITH_LA;
 					break;
 			}
-			break;
-
-		default:
 			break;
 	}
 

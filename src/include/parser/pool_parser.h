@@ -2,7 +2,7 @@
 /*
  * $Header$
  *
- * Copyright (c) 2006-2014, pgpool Global Development Group
+ * Copyright (c) 2006-2015, pgpool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -22,29 +22,15 @@
 #include "../pool_type.h"
 #include <setjmp.h>
 
+
 extern jmp_buf jmpbuffer;
 extern int	server_version_num;
 
 
-/* include/c.h */
-/* integer */
-
-/* 
- * move int32 and int16 to pool_types.h since there's no point that
- * these are solely used for parser
- * typedef signed int int32;
- * typedef signed short int16;
- */
-
-/*
- * bitsN
- *		Unit of bitwise operation, AT LEAST N BITS IN SIZE.
- */
-typedef unsigned int Index;
-typedef short AttrNumber;
-
+/* from include/postgresql_ext.h */
 #define InvalidOid		((Oid) 0)
 
+/* from include/pg_config_manual.h */
 /*
  * NAMEDATALEN is the max length for system identifiers (e.g. table names,
  * attribute names, function names, etc).  It must be a multiple of
@@ -53,6 +39,66 @@ typedef short AttrNumber;
  * NOTE that databases with different NAMEDATALEN's cannot interoperate!
  */
 #define NAMEDATALEN 64
+
+/* from include/c.h */
+
+/*
+ * CppAsString
+ *		Convert the argument to a string, using the C preprocessor.
+ * CppConcat
+ *		Concatenate two arguments together, using the C preprocessor.
+ *
+ * Note: There used to be support here for pre-ANSI C compilers that didn't
+ * support # and ##.  Nowadays, these macros are just for clarity and/or
+ * backward compatibility with existing PostgreSQL code.
+ */
+#define CppAsString(identifier) #identifier
+#define CppConcat(x, y)			x##y
+
+/*
+ * Index
+ *		Index into any memory resident array.
+ *
+ * Note:
+ *		Indices are non negative.
+ */
+typedef unsigned int Index;
+
+/*
+ * lengthof
+ *		Number of elements in an array.
+ */
+#define lengthof(array) (sizeof(array) / sizeof(((array)[0])))
+
+/*
+ * endof
+ *		Address of the element one past the last in an array.
+ */
+#define endof(array) (&(array)[lengthof(array)])
+
+/* GCC and XLC support format attributes */
+#if defined(__GNUC__) || defined(__IBMC__)
+#define pg_attribute_format_arg(a) __attribute__((format_arg(a)))
+#define pg_attribute_printf(f,a) __attribute__((format(PG_PRINTF_ATTRIBUTE, f, a)))
+#else
+#define pg_attribute_format_arg(a)
+#define pg_attribute_printf(f,a)
+#endif
+
+/* GCC, Sunpro and XLC support aligned, packed and noreturn */
+#if defined(__GNUC__) || defined(__SUNPRO_C) || defined(__IBMC__)
+#define pg_attribute_aligned(a) __attribute__((aligned(a)))
+#define pg_attribute_noreturn() __attribute__((noreturn))
+#define pg_attribute_packed() __attribute__((packed))
+#define HAVE_PG_ATTRIBUTE_NORETURN 1
+#else
+/*
+ * NB: aligned and packed are not given default definitions because they
+ * affect code functionality; they *must* be implemented by the compiler
+ * if they are to be used.
+ */
+#define pg_attribute_noreturn()
+#endif
 
 /*
  * Max
@@ -65,17 +111,20 @@ typedef short AttrNumber;
  *		Return the minimum of two numbers.
  */
 #define Min(x, y)		((x) < (y) ? (x) : (y))
-/* array */
-#define lengthof(array) (sizeof(array) / sizeof(((array)[0])))
-#define endof(array) (&(array)[lengthof(array)])
 
 /* msb for char */
 #define HIGHBIT					(0x80)
 #define IS_HIGHBIT_SET(ch)		((unsigned char)(ch) & HIGHBIT)
 
 
+/* from include/access/attnum.h */
+/*
+ * user defined attribute numbers start at 1.   -ay 2/95
+ */
+typedef int16 AttrNumber;
 
-/* include/utils/datetime.h */
+
+/* from include/utils/datetime.h */
 /* date and datetime */
 #define RESERV	0
 #define MONTH	1
@@ -116,7 +165,7 @@ typedef short AttrNumber;
 #define INTERVAL_RANGE(t) (((t) >> 16) & INTERVAL_RANGE_MASK)
 
 
-/* include/storage/lock.h */
+/* from include/storage/lock.h */
 /* lock */
 /* NoLock is not a lock mode, but a flag value meaning "don't get a lock" */
 #define NoLock					0
@@ -138,72 +187,8 @@ typedef short AttrNumber;
 
 #define VARHDRSZ		((int32) sizeof(int32))
 
-#define MaxAttrSize		(10 * 1024 * 1024)
-#define BITS_PER_BYTE		8
 #define MAX_TIME_PRECISION 6
 
 
-/* ----------------------------------------------------------------
- *              Section 1: hacks to cope with non-ANSI C compilers
- *
- * type prefixes (const, signed, volatile, inline) are handled in pg_config.h.
- * ----------------------------------------------------------------
- */
-
-/*
- * CppAsString
- *      Convert the argument to a string, using the C preprocessor.
- * CppConcat
- *      Concatenate two arguments together, using the C preprocessor.
- *
- * Note: the standard Autoconf macro AC_C_STRINGIZE actually only checks
- * whether #identifier works, but if we have that we likely have ## too.
- */
-#if defined(HAVE_STRINGIZE)
-
-#define CppAsString(identifier) #identifier
-#define CppConcat(x, y)         x##y
-#else                           /* !HAVE_STRINGIZE */
-
-#define CppAsString(identifier) "identifier"
-
-/*
- * CppIdentity -- On Reiser based cpp's this is used to concatenate
- *      two tokens.  That is
- *              CppIdentity(A)B ==> AB
- *      We renamed it to _private_CppIdentity because it should not
- *      be referenced outside this file.  On other cpp's it
- *      produces  A  B.
- */
-#define _priv_CppIdentity(x)x
-#define CppConcat(x, y)         _priv_CppIdentity(x)y
-#endif   /* !HAVE_STRINGIZE */
-
-#if 0
-/* from include/catalog/pg_trigger.h  start */
-/* Bits within tgtype */
-#define TRIGGER_TYPE_ROW                (1 << 0)
-#define TRIGGER_TYPE_BEFORE             (1 << 1)
-#define TRIGGER_TYPE_INSERT             (1 << 2)
-#define TRIGGER_TYPE_DELETE             (1 << 3)
-#define TRIGGER_TYPE_UPDATE             (1 << 4)
-#define TRIGGER_TYPE_TRUNCATE           (1 << 5)
-/* from include/catalog/pg_trigger.h  end */
-#endif
-
-
-/* include/utils/elog.h 
-#define NOTICE 18
-#define WARNING 19
-#define ERROR 20
-
-extern void pool_parser_error(int level, const char *file, int line);
-#ifndef ereport
-#define ereport(elevel, rest) pool_parser_error(elevel, __FILE__, __LINE__)
-#endif
-#ifndef elog
-#define elog(elevel, fmt, ...) pool_parser_error(elevel, __FILE__, __LINE__)
-#endif
-*/
 
 #endif /* POOL_PARSER_H */

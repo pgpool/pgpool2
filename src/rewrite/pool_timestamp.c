@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -36,11 +36,11 @@
 typedef struct {
 	char	*attrname;	/* attribute name */
 	char	*adsrc;		/* default value expression */
-	int		 use_timestamp;
+	int		 use_timestamp;	/* not zero if timestamp is used in default value */
 } TSAttr;
 
 typedef struct {
-	int		relnatts;
+	int		relnatts;	/* num of attributes */
 	TSAttr	attr[1];
 } TSRel;
 
@@ -49,7 +49,7 @@ typedef struct {
 	POOL_CONNECTION_POOL	*backend;
 	char					*relname;
 	int						 num_params;		/* num of original params (for Parse) */
-	bool		 			 rewrite_to_params;	/* true if rewritten to param insread of const */
+	bool		 			 rewrite_to_params;	/* true if timestamp is rewritten to param insread of const */
 	bool		 			 rewrite;			/* has rewritten? */
 	List					*params;			/* list of additional params */
 } TSRewriteContext;
@@ -87,9 +87,11 @@ ts_register_func(POOL_SELECT_RESULT *res)
 	{
 		int index = 0;
 
+		/* attribute name */
 		rel->attr[i].attrname = strdup(res->data[i * NUM_COLS + index]);
 		index++;
 
+		/* attribute default value */
 		if (res->data[i * NUM_COLS + index])
 			rel->attr[i].adsrc = strdup(res->data[i * NUM_COLS + index]);
 		else
@@ -97,6 +99,7 @@ ts_register_func(POOL_SELECT_RESULT *res)
 
 		index++;
 
+		/* if timestamp is used in default value */
 		rel->attr[i].use_timestamp = *(res->data[i * NUM_COLS + index]) == 't';
 		ereport(DEBUG1,
 			(errmsg("timestamp register function"),
@@ -105,6 +108,7 @@ ts_register_func(POOL_SELECT_RESULT *res)
 					   rel->attr[i].use_timestamp)));
 	}
 
+	/* num of attributes */
 	rel->relnatts = res->numrows;
 	return (void *) rel;
 }
@@ -193,6 +197,10 @@ relcache_lookup(TSRewriteContext *ctx)
 	return (TSRel *) pool_search_relcache(ts_relcache, ctx->backend, table_name);
 }
 
+/* If timestamp valus is required then return ts_const. Otherwize make
+ * a new ParamRef, whose number member is 0 and is overwritten at last,
+ * and add it into params list in context.
+ */
 static Node *
 makeTsExpr(TSRewriteContext *ctx)
 {
@@ -268,55 +276,89 @@ rewrite_timestamp_walker(Node *node, void *context)
 	if (node == NULL)
 		return false;
 
-	if (nodeTag(node) == T_FuncCall)
+	switch (nodeTag(node))
 	{
-		/* `now()' FuncCall */
-		FuncCall	*fcall = (FuncCall *) node;
-
-		if ((list_length(fcall->funcname) == 1 &&
-			 strcmp("now", strVal(linitial(fcall->funcname))) == 0) ||
-			(list_length(fcall->funcname) == 2 &&
-			 strcmp("pg_catalog", strVal(linitial(fcall->funcname))) == 0 &&
-			 strcmp("now", strVal(lsecond(fcall->funcname))) == 0))
-		{
-			TypeCast	*tc = makeNode(TypeCast);
-			tc->arg = makeTsExpr(ctx);
-			tc->typeName = SystemTypeName("text");
-
-			fcall->funcname = SystemFuncName("timestamptz");
-			fcall->args = list_make1(tc);
-			ctx->rewrite = true;
-		}
-	}
-	else if (IsA(node, TypeCast))
-	{
-		/* CURRENT_DATE, CURRENT_TIME, LOCALTIMESTAMP, LOCALTIME etc.*/
-		TypeCast	*tc = (TypeCast *) node;
-
-		if ((isSystemType((Node *) tc->typeName, "date") ||
-			 isSystemType((Node *) tc->typeName, "timestamp") ||
-			 isSystemType((Node *) tc->typeName, "timestamptz") ||
-			 isSystemType((Node *) tc->typeName, "time") ||
-			 isSystemType((Node *) tc->typeName, "timetz")))
-		{
-			/* rewrite `'now'::timestamp' and `'now'::text::timestamp' both */
-			if (isSystemTypeCast(tc->arg, "text"))
-				tc = (TypeCast *) tc->arg;
-
-			if (isStringConst(tc->arg, "now"))
+		case T_InsertStmt:
 			{
-				tc->arg = (Node *) makeTsExpr(ctx);
-				ctx->rewrite = true;
-			}
-		}
-	}
-	else if (IsA(node, ParamRef))
-	{
-		ParamRef	*param = (ParamRef *) node;
+				TSRewriteContext	*ctx = (TSRewriteContext *) context;
+				char *relname_old;
+				InsertStmt *i_stmt = (InsertStmt *) node;
 
-		/* count how many params in original query */
-		if (ctx->num_params < param->number)
-			ctx->num_params = param->number;
+				relname_old = ctx->relname;
+				ctx->relname = make_table_name_from_rangevar(i_stmt->relation);
+				rewrite_timestamp_insert(i_stmt, ctx);
+				ctx->relname = relname_old;
+			}
+			/* tree walker is called in rewrite_timestamp_insert() */ 
+			return false;
+		case T_UpdateStmt:
+			{
+				TSRewriteContext	*ctx = (TSRewriteContext *) context;
+				char *relname_old;
+				UpdateStmt *u_stmt = (UpdateStmt *) node;
+
+				relname_old = ctx->relname;
+				ctx->relname = make_table_name_from_rangevar(u_stmt->relation);
+				rewrite_timestamp_update(u_stmt, ctx);
+				ctx->relname = relname_old;
+			}
+			/* tree walker is called in rewrite_timestamp_update() */ 
+			return false;
+		case T_FuncCall:
+			{
+				/* `now()' FuncCall */
+				FuncCall	*fcall = (FuncCall *) node;
+
+				if ((list_length(fcall->funcname) == 1 &&
+			 		strcmp("now", strVal(linitial(fcall->funcname))) == 0) ||
+					(list_length(fcall->funcname) == 2 &&
+			 		strcmp("pg_catalog", strVal(linitial(fcall->funcname))) == 0 &&
+			 		strcmp("now", strVal(lsecond(fcall->funcname))) == 0))
+				{
+					TypeCast	*tc = makeNode(TypeCast);
+					tc->arg = makeTsExpr(ctx);
+					tc->typeName = SystemTypeName("text");
+	
+					fcall->funcname = SystemFuncName("timestamptz");
+					fcall->args = list_make1(tc);
+					ctx->rewrite = true;
+				}
+			}
+			break;
+		case T_TypeCast:
+			{
+				/* CURRENT_DATE, CURRENT_TIME, LOCALTIMESTAMP, LOCALTIME etc.*/
+				TypeCast	*tc = (TypeCast *) node;
+
+				if ((isSystemType((Node *) tc->typeName, "date") ||
+			 		isSystemType((Node *) tc->typeName, "timestamp") ||
+			 		isSystemType((Node *) tc->typeName, "timestamptz") ||
+			 		isSystemType((Node *) tc->typeName, "time") ||
+			 		isSystemType((Node *) tc->typeName, "timetz")))
+				{
+					/* rewrite `'now'::timestamp' and `'now'::text::timestamp' both */
+					if (isSystemTypeCast(tc->arg, "text"))
+						tc = (TypeCast *) tc->arg;
+
+					if (isStringConst(tc->arg, "now"))
+					{
+						tc->arg = (Node *) makeTsExpr(ctx);
+						ctx->rewrite = true;
+					}
+				}
+			}
+			break;
+		case T_ParamRef:
+			{
+				ParamRef	*param = (ParamRef *) node;
+
+				/* count how many params in original query */
+				if (ctx->num_params < param->number)
+					ctx->num_params = param->number;
+			}
+			break;
+		default:
+			break;
 	}
 
 	return raw_expression_tree_walker(node, rewrite_timestamp_walker, context);
@@ -357,7 +399,25 @@ rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext *ctx)
 	bool	 rewrite = false;
 	TSRel	*relcache;
 
+	raw_expression_tree_walker(
+			(Node *) i_stmt->withClause,
+			rewrite_timestamp_walker, (void *) ctx);
 
+	raw_expression_tree_walker(
+			(Node *) i_stmt->onConflictClause,
+			rewrite_timestamp_walker, (void *) ctx);
+
+	raw_expression_tree_walker(
+			(Node *) i_stmt->returningList,
+			rewrite_timestamp_walker, (void *) ctx);
+
+	rewrite = ctx->rewrite;
+
+	/*
+	 * INSERT INTO rel DEFAULT VALUES
+	 * rewrite to:
+	 * INSERT INTO rel VALUES (DEFAULT, '2009-..',...)
+	 */
 	if (i_stmt->selectStmt == NULL)
 	{
 		List		*values = NIL;
@@ -366,12 +426,6 @@ rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext *ctx)
 		relcache = relcache_lookup(ctx);
 		if (relcache == NULL)
 			return false;
-
-		/*
-		 * INSERT INTO rel DEFAULT VALUES
-		 * rewrite to:
-		 * INSERT INTO rel VALUES (DEFAULT, '2009-..',...)
-		 */
 
 		for (i = 0; i < relcache->relnatts; i++)
 		{
@@ -392,8 +446,6 @@ rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext *ctx)
 			selectStmt->valuesLists = list_make1(values);
 			i_stmt->selectStmt = (Node *) selectStmt;
 		}
-
-		return rewrite;
 	}
 	else if (IsA(i_stmt->selectStmt, SelectStmt))
 	{
@@ -478,11 +530,11 @@ rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext *ctx)
 			 * if timestamp column is not given by column list
 			 * add colname to column list and add timestamp to values list.
 			 */
-			int			append_columns = 0;
-			int			*append_columns_list;
+			int			appended_columns = 0;
+			int			*appended_columns_list;
 			ResTarget	*col;
 
-			append_columns_list = (int *)malloc(sizeof(int)*relcache->relnatts);
+			appended_columns_list = (int *)malloc(sizeof(int)*relcache->relnatts);
 
 			for (i = 0; i < relcache->relnatts; i++)
 			{
@@ -497,16 +549,16 @@ rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext *ctx)
 						break;
 				}
 
+				/* If columns are not found in query, append these.*/
 				if (lc_col == NULL)
 				{
-					/* column not found in query, append it.*/
 					rewrite = true;
 					col = makeNode(ResTarget);
 					col->name = relcache->attr[i].attrname;
 					col->indirection = NIL;
 					col->val = NULL;
 					i_stmt->cols = lappend(i_stmt->cols, col);
-					append_columns_list[append_columns++] = i;
+					appended_columns_list[appended_columns++] = i;
 				}
 			}
 
@@ -514,7 +566,7 @@ rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext *ctx)
 			{
 				List		*values = lfirst(lc_row);
 
-				/* replace DEFAULT to literal */
+				/* replace DEFAULT in VALUES to literal */
 				forboth (lc_col, i_stmt->cols, lc_val, values)
 				{
 					col = lfirst(lc_col);
@@ -534,17 +586,17 @@ rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext *ctx)
 					}
 				}
 
-				/* add ts_const to values list */
-				for (i = 0; i < append_columns; i++)
+				/* add timestamp value to values list */
+				for (i = 0; i < appended_columns; i++)
 				{
 					if (ctx->rewrite_to_params)
 						values = lappend(values, makeTsExpr(ctx));
 					else
 						values = lappend(values,
-										 makeStringConstFromQuery(ctx->backend, relcache->attr[append_columns_list[i]].adsrc));
+										 makeStringConstFromQuery(ctx->backend, relcache->attr[appended_columns_list[i]].adsrc));
 				}
 			}
-			free(append_columns_list);
+			free(appended_columns_list);
 		}
 	}
 
@@ -573,6 +625,14 @@ rewrite_timestamp_update(UpdateStmt *u_stmt, TSRewriteContext *ctx)
 
 	raw_expression_tree_walker(
 			(Node *) u_stmt->fromClause,
+			rewrite_timestamp_walker, (void *) ctx);
+
+	raw_expression_tree_walker(
+			(Node *) u_stmt->withClause,
+			rewrite_timestamp_walker, (void *) ctx);
+
+	raw_expression_tree_walker(
+			(Node *) u_stmt->returningList,
 			rewrite_timestamp_walker, (void *) ctx);
 
 	rewrite = ctx->rewrite;
@@ -611,6 +671,8 @@ rewrite_timestamp_update(UpdateStmt *u_stmt, TSRewriteContext *ctx)
 
 /*
  * Rewrite `now()' to timestamp literal.
+ * If rewrite_to_params is false then, we rewrite `now()' to timestamp constant.
+ * Otherwize, we rewrite `now()' to params and expand that at Bind message.
  * returns query string as palloced string, or NULL if not to need rewrite.
  */
 char *
@@ -649,16 +711,17 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 	else
 		stmt = node;
 
+
 	if (IsA(stmt, InsertStmt))
 	{
 		InsertStmt *i_stmt = (InsertStmt *) stmt;
-		ctx.relname = nodeToString(i_stmt->relation);
+		ctx.relname = make_table_name_from_rangevar(i_stmt->relation);
 		rewrite = rewrite_timestamp_insert(i_stmt, &ctx);
 	}
 	else if (IsA(stmt, UpdateStmt))
 	{
 		UpdateStmt *u_stmt = (UpdateStmt *) stmt;
-		ctx.relname = nodeToString(u_stmt->relation);
+		ctx.relname = make_table_name_from_rangevar(u_stmt->relation);
 		rewrite = rewrite_timestamp_update(u_stmt, &ctx);
 	}
 	else if (IsA(stmt, DeleteStmt))
@@ -671,6 +734,15 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 		raw_expression_tree_walker(
 				(Node *) d_stmt->whereClause,
 				rewrite_timestamp_walker, (void *) &ctx);
+
+		raw_expression_tree_walker(
+				(Node *) d_stmt->returningList,
+				rewrite_timestamp_walker, (void *) &ctx);
+
+		raw_expression_tree_walker(
+				(Node *) d_stmt->withClause,
+				rewrite_timestamp_walker, (void *) &ctx);
+
 		rewrite = ctx.rewrite;
 	}
 	else if (IsA(stmt, ExecuteStmt))
@@ -684,7 +756,9 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 
 		rewrite = ctx.rewrite;
 
-		/* add params */
+		/* add timestamp value into params list.
+		 * The number of params is stored in message
+		 */
 		if (message)
 		{
 			int		i;
@@ -699,13 +773,19 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 	else
 		;
 
-	/* save number of parameters in original query */
+	/* PREPARE, EXECUTE or Parse:
+	 * save the number of parameters in the original query
+	 */
 	if (message)
 		message->query_context->num_original_params = ctx.num_params;
 
+	/* don't rewrite the query if not necessary */
 	if (!rewrite)
 		return NULL;
 
+	/* PREPARE or Parse:
+	 * handle additinal parameters for timestamps
+	 */
 	if (ctx.rewrite_to_params && message)
 	{
 		ListCell	*lc;
@@ -718,10 +798,10 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 			param->number = num++;
 		}
 
-		/* save to portal */
+		/* save the number of additional params to portal */
 		message->num_tsparams = list_length(ctx.params);
 
-		/* add param type */
+		/* add type names of timestamptz into argtypes */
 		if (IsA(node, PrepareStmt))
 		{
 			int				 i;
@@ -751,7 +831,7 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 
 
 /*
- * rewrite Bind message to add parameter
+ * rewrite Bind message to add parameter values
  */
 char *
 bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend,
@@ -813,7 +893,7 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend,
 
 	if (num_formats >= 1)
 	{
-		/* one means the specified format code is applied all original parameters */
+		/* this means the specified format code is applied all original parameters */
 		if (num_formats == 1)
 		{
 			*len += (num_org_params - 1) * sizeof(int16);
@@ -893,6 +973,7 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend,
 	return new_msg;
 }
 
+/* make A_Const of T_String from "SELECT <expression>"*/
 static A_Const *makeStringConstFromQuery(POOL_CONNECTION_POOL *backend, char *expression)
 {
 	A_Const *con;
@@ -937,7 +1018,9 @@ static A_Const *makeStringConstFromQuery(POOL_CONNECTION_POOL *backend, char *ex
  * that could appear under it, but not other statement types.
  */
 bool
-			raw_expression_tree_walker(Node *node, bool (*walker) (), void *context)
+raw_expression_tree_walker(Node *node,
+						   bool (*walker) (),
+						   void *context)
 {
 	ListCell   *temp;
 
@@ -972,6 +1055,8 @@ bool
 			break;
 		case T_RangeVar:
 			return walker(((RangeVar *) node)->alias, context);
+		case T_GroupingFunc:
+			return walker(((GroupingFunc *) node)->args, context);
 		case T_SubLink:
 			{
 				SubLink    *sublink = (SubLink *) node;
@@ -1048,12 +1133,68 @@ bool
 				if (walker(into->rel, context))
 					return true;
 				/* colNames, options are deemed uninteresting */
+				/* viewQuery should be null in raw parsetree, but check it */
+				if (walker(into->viewQuery, context))
+					return true;
 			}
 			break;
 		case T_List:
 			foreach(temp, (List *) node)
 			{
 				if (walker((Node *) lfirst(temp), context))
+					return true;
+			}
+			break;
+		case T_InsertStmt:
+			break;
+			{
+				InsertStmt *stmt = (InsertStmt *) node;
+
+				if (walker(stmt->relation, context))
+					return true;
+				if (walker(stmt->cols, context))
+					return true;
+				if (walker(stmt->selectStmt, context))
+					return true;
+				if (walker(stmt->onConflictClause, context))
+					return true;
+				if (walker(stmt->returningList, context))
+					return true;
+				if (walker(stmt->withClause, context))
+					return true;
+			}
+			break;
+		case T_DeleteStmt:
+			{
+				DeleteStmt *stmt = (DeleteStmt *) node;
+
+				if (walker(stmt->relation, context))
+					return true;
+				if (walker(stmt->usingClause, context))
+					return true;
+				if (walker(stmt->whereClause, context))
+					return true;
+				if (walker(stmt->returningList, context))
+					return true;
+				if (walker(stmt->withClause, context))
+					return true;
+			}
+			break;
+		case T_UpdateStmt:
+			{
+				UpdateStmt *stmt = (UpdateStmt *) node;
+
+				if (walker(stmt->relation, context))
+					return true;
+				if (walker(stmt->targetList, context))
+					return true;
+				if (walker(stmt->whereClause, context))
+					return true;
+				if (walker(stmt->fromClause, context))
+					return true;
+				if (walker(stmt->returningList, context))
+					return true;
+				if (walker(stmt->withClause, context))
 					return true;
 			}
 			break;
@@ -1077,8 +1218,6 @@ bool
 					return true;
 				if (walker(stmt->windowClause, context))
 					return true;
-				if (walker(stmt->withClause, context))
-					return true;
 				if (walker(stmt->valuesLists, context))
 					return true;
 				if (walker(stmt->sortClause, context))
@@ -1088,6 +1227,8 @@ bool
 				if (walker(stmt->limitCount, context))
 					return true;
 				if (walker(stmt->lockingClause, context))
+					return true;
+				if (walker(stmt->withClause, context))
 					return true;
 				if (walker(stmt->larg, context))
 					return true;
@@ -1106,6 +1247,14 @@ bool
 				/* operator name is deemed uninteresting */
 			}
 			break;
+		case T_BoolExpr:
+			{
+				BoolExpr   *expr = (BoolExpr *) node;
+
+				if (walker(expr->args, context))
+					return true;
+			}
+			break;
 		case T_ColumnRef:
 			/* we assume the fields contain nothing interesting */
 			break;
@@ -1115,11 +1264,17 @@ bool
 
 				if (walker(fcall->args, context))
 					return true;
+				if (walker(fcall->agg_order, context))
+					return true;
+				if (walker(fcall->agg_filter, context))
+					return true;
 				if (walker(fcall->over, context))
 					return true;
 				/* function name is deemed uninteresting */
 			}
 			break;
+		case T_NamedArgExpr:
+			return walker(((NamedArgExpr *) node)->arg, context);
 		case T_A_Indices:
 			{
 				A_Indices  *indices = (A_Indices *) node;
@@ -1152,6 +1307,8 @@ bool
 					return true;
 			}
 			break;
+		case T_MultiAssignRef:
+			return walker(((MultiAssignRef *) node)->source, context);
 		case T_TypeCast:
 			{
 				TypeCast   *tc = (TypeCast *) node;
@@ -1162,6 +1319,8 @@ bool
 					return true;
 			}
 			break;
+		case T_CollateClause:
+			return walker(((CollateClause *) node)->arg, context);
 		case T_SortBy:
 			return walker(((SortBy *) node)->node, context);
 		case T_WindowDef:
@@ -1171,6 +1330,10 @@ bool
 				if (walker(wd->partitionClause, context))
 					return true;
 				if (walker(wd->orderClause, context))
+					return true;
+				if (walker(wd->startOffset, context))
+					return true;
+				if (walker(wd->endOffset, context))
 					return true;
 			}
 			break;
@@ -1191,6 +1354,21 @@ bool
 				if (walker(rf->functions, context))
 					return true;
 				if (walker(rf->alias, context))
+					return true;
+				if (walker(rf->coldeflist, context))
+					return true;
+			}
+			break;
+		case T_RangeTableSample:
+			{
+				RangeTableSample *rts = (RangeTableSample *) node;
+
+				if (walker(rts->relation, context))
+					return true;
+				/* method name is deemed uninteresting */
+				if (walker(rts->args, context))
+					return true;
+				if (walker(rts->repeatable, context))
 					return true;
 			}
 			break;
@@ -1213,9 +1391,13 @@ bool
 					return true;
 				if (walker(coldef->raw_default, context))
 					return true;
+				if (walker(coldef->collClause, context))
+					return true;
 				/* for now, constraints are ignored */
 			}
 			break;
+		case T_GroupingSet:
+			return walker(((GroupingSet *) node)->content, context);
 		case T_LockingClause:
 			return walker(((LockingClause *) node)->lockedRels, context);
 		case T_XmlSerialize:
@@ -1230,6 +1412,28 @@ bool
 			break;
 		case T_WithClause:
 			return walker(((WithClause *) node)->ctes, context);
+		case T_InferClause:
+			{
+				InferClause *stmt = (InferClause *) node;
+
+				if (walker(stmt->indexElems, context))
+					return true;
+				if (walker(stmt->whereClause, context))
+					return true;
+			}
+			break;
+		case T_OnConflictClause:
+			{
+				OnConflictClause *stmt = (OnConflictClause *) node;
+
+				if (walker(stmt->infer, context))
+					return true;
+				if (walker(stmt->targetList, context))
+					return true;
+				if (walker(stmt->whereClause, context))
+					return true;
+			}
+			break;
 		case T_CommonTableExpr:
 			return walker(((CommonTableExpr *) node)->ctequery, context);
 		default:

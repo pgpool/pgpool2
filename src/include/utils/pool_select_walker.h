@@ -61,6 +61,7 @@ extern bool raw_expression_tree_walker(Node *node, bool (*walker) (), void *cont
 extern int pool_table_name_to_oid(char *table_name);
 extern int pool_extract_table_oids_from_select_stmt(Node *node, SelectContext *ctx);
 extern RangeVar *makeRangeVarFromNameList(List *names);
+extern char *make_table_name_from_rangevar(RangeVar *rangevar);
 extern int pattern_compare(char *str, const int type, const char *param_name);
 extern bool is_unlogged_table(char *table_name);
 extern bool is_view(char *table_name);
