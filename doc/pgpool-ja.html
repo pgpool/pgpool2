@@ -659,6 +659,45 @@ net.core.somaxconn = 256
     このパラメータを変更した時には pgpool-II を再起動してください。
     </p>
     </dd>
+
+<dt><a name="SERIALIZE_ACCEPT"></a>serialize_accept <span class="version">V3.5 -</span></dt>
+    <dd>
+      <p>
+	クライアントからの接続を受け付ける際に accept() の呼び出しをシリアライズするかどうかを指定します。
+	デフォルトはoffです(シリアライズしません)で、これは pgpool-II 3.4 以前と同じ挙動です。
+	このパラメータがoffの場合、カーネルはすべてのpgpool-II子プロセスを起こして accept() を実行させます。
+	そして子プロセスのうちひとつだけが実際に接続を受け付けます。
+	問題は、ここで多くの子プロセスが一度に起こされるため、重いコンテキストスイッチングが起こり、性能に影響がでることです。
+	この現象は「thundering herd problem」と呼ばれる古典的な問題です。
+	serialize_accept を有効にすることにより、pgpool-II子プロセスのうちひとつだけが起こされて accept() を実行するようになり、この問題は回避されます。
+	ではどんなときに serialize_accept を有効にすべきでしょう？
+	num_init_children が大きい時はserialize_accept 有効にすることをおすすめします。
+	num_init_children が小さい時はserialize_accept 有効にしても効果がないかもしれません。
+	むしろシリアライズのオーバヘッドのために性能が低下するかもしれません。
+	どの位の数が「大きい」と言えるかは環境によります。
+	どうするか決める前に、ベンチマークテストを行ってみることをおすすめします。
+	例として以下のような方法でpgbenchを実行します。
+		</p>
+		<p>
+		  <pre>
+		    pgbench -n -S -p 9999 -c 32 -C -S -T 300 test
+		  </pre>
+		</p>
+		<p>
+		  ここで、 -C は pgbench にトランザクションの実行の度に毎回データベースに接続することを指示します。
+		  -c 32 は、pgpool-II への同時接続数です。これはあなたのシステム環境にあわせて変更しましょう。
+		  pgbenchが終了すると、"including connections establishing" のところに数字が出てくるのでそれをチェックします。
+		</p>
+		<p>
+		  なお、<a href="#CHILD_LIFE_TIME">child_life_time</a> が有効だと、serialize_accept は効果がありません。
+		  serialize_accept を有効にしたい場合は、child_life_timeが 0 であることを確認してください。
+		  pgpool-IIプロセスのメモリーリークなどの潜在的な問題を気にする場合は、代わりに<a href="#CHILD_MAX_CONNECTIONS">child_max_connections</a> を使ってください。
+		  この制限は純粋に実装上の問題であり、将来はなくなるかもしれません。
+		</p>
+		<p>
+		  このパラメータを変更した時には pgpool-II を再起動してください。
+		</p>
+    </dd>
 		
 <dt><a name="CHILD_LIFE_TIME"></a>child_life_time</dt>
     <dd>
@@ -669,6 +708,9 @@ net.core.somaxconn = 256
     child_life_timeのデフォルト値は300秒、すなわち5分です。
     0を指定するとこの機能は働きません（すなわち起動しっ放し）。
     なお、まだ一度もコネクションを受け付けていないプロセスにはchild_life_timeは適用されません。
+    </p>
+    <p>
+      注意: このパラメータが0以外の場合、<a href="#SERIALIZE_ACCEPT">serialize_accept</a> の効果はなくなります。
     </p>
     <p>
     このパラメータを変更した時には設定ファイルを再読み込みしてください。
@@ -1002,6 +1044,16 @@ local0.*    /var/log/pgpool.log
     <dd>
     <p>
     ヘルスチェックを行うためのPostgreSQLパスワードです。
+    </p>
+    <p>
+    このパラメータを変更した時には設定ファイルを再読み込みしてください。
+    </p>
+    </dd>
+
+<dt><a name="HEALTH_CHECK_DATABASE"></a>health_check_database <span class="version">V3.5 -</span></dt>
+    <dd>
+      <p>ヘルスチェックを行う対象のデータベース名を指定します。
+	デフォルトは '' で、この場合最初に「postgres」データベースを試し、それに接続できない場合は「template1」データベースを試します。これはpgpool-II 3.4以前の挙動と同じです。
     </p>
     <p>
     このパラメータを変更した時には設定ファイルを再読み込みしてください。
@@ -2228,6 +2280,17 @@ Streaming Replicationを使う場合の雛形はpgpool.conf.sample-streamです�
     <p>
     ストリーミングレプリケーションの遅延チェックを行うユーザに対するパスワードをを指定します。
     パスワードが必要なければ空文字('')を指定します。
+    </p>
+    <p>
+    このパラメータは設定ファイルの再読込によって変更できます。
+    </p>
+    </dd>
+
+<dt id="SR_CHECK_DATABASE">sr_check_database <span class="version">V3.5 -</span></dt>
+    <dd>
+    <p>
+   ストリーミングレプリケーションの遅延チェックを行う対象のデータベース名を指定します。
+   デフォルトは「postgres」です（これは3.4以前のpgpool-IIが固定の値として使っていたデータベース名です）。
     </p>
     <p>
     このパラメータは設定ファイルの再読込によって変更できます。

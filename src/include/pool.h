@@ -340,6 +340,7 @@ extern int my_master_node_id;
 #define REPLICATION (pool_config->replication_mode)
 #define MASTER_SLAVE (pool_config->master_slave_mode)
 #define STREAM (MASTER_SLAVE && !strcmp("stream", pool_config->master_slave_sub_mode))
+#define SLONY (MASTER_SLAVE && !strcmp("slony", pool_config->master_slave_sub_mode))
 #define DUAL_MODE (REPLICATION || MASTER_SLAVE)
 #define RAW_MODE (!REPLICATION && !MASTER_SLAVE)
 #define MAJOR(p) MASTER_CONNECTION(p)->sp->major
@@ -356,12 +357,13 @@ extern int my_master_node_id;
 #define NO_LOAD_BALANCE "/*NO LOAD BALANCE*/"
 #define NO_LOAD_BALANCE_COMMENT_SZ (sizeof(NO_LOAD_BALANCE)-1)
 
-#define MAX_NUM_SEMAPHORES		5
+#define MAX_NUM_SEMAPHORES		6
 #define CONN_COUNTER_SEM		0
 #define REQUEST_INFO_SEM		1
 #define SHM_CACHE_SEM			2
 #define QUERY_CACHE_STATS_SEM	3
 #define PCP_REQUEST_SEM			4
+#define ACCEPT_FD_SEM			5
 #define MAX_REQUEST_QUEUE_SIZE	10
 
 /*

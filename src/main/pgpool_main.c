@@ -1887,7 +1887,15 @@ do_health_check(bool use_template_db, volatile int *health_check_node_id)
 	if (*InRecovery)
 		return false;
 
-	dbname = use_template_db ? "template1" : "postgres";
+	if (!strcmp(pool_config->health_check_database, ""))
+		dbname = use_template_db ? "template1" : "postgres";
+	else
+		dbname = pool_config->health_check_database;
+
+	ereport(DEBUG1,
+			(errmsg("doing health check against database:%s user:%s",
+					dbname, pool_config->health_check_user)));
+
 	/*
 	 * Start checking the backed nodes starting from the
 	 * previously failed node
@@ -2446,7 +2454,7 @@ static bool
 
 	s = make_persistent_db_connection_noerror(bkinfo->backend_hostname,
 										  bkinfo->backend_port,
-										  "postgres",
+										  pool_config->sr_check_database,
 										  pool_config->sr_check_user,
 										  pool_config->sr_check_password, true);
 	if (s)

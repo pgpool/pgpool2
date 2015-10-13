@@ -77,6 +77,7 @@ typedef struct {
 	char *pcp_socket_dir;		/* PCP socket directory */
     int	num_init_children;	/* # of children initially pre-forked */
     int	listen_backlog_multiplier; /* determines the size of the connection queue */
+	int serialize_accept;		/* if non 0, serialize call to accept() to avoid thundering herd problem */
     int	child_life_time;	/* if idle for this seconds, child exits */
     int	connection_life_time;	/* if idle for this seconds, connection closes */
     int	child_max_connections;	/* if max_connections received, child exits */
@@ -129,12 +130,14 @@ typedef struct {
 	int health_check_period;	/* health check period */
 	char *health_check_user;		/* PostgreSQL user name for health check */
 	char *health_check_password; /* password for health check username */
+	char *health_check_database; /* database name for health check username */
 	int health_check_max_retries;	/* health check max retries */
 	int health_check_retry_delay;	/* amount of time to wait between retries */
 	int connect_timeout;		/* timeout value before giving up connecting to backend */
 	int sr_check_period;		/* streaming replication check period */
-	char *sr_check_user;		/* PostgreSQL user name streaming replication check */
+	char *sr_check_user;		/* PostgreSQL user name for streaming replication check */
 	char *sr_check_password;	/* password for sr_check_user */
+	char *sr_check_database;	/* PostgreSQL database name for streaming replication check */
 	char *failover_command;     /* execute command when failover happens */
 	char *follow_master_command; /* execute command when failover is ended */
 	char *failback_command;     /* execute command when failback happens */

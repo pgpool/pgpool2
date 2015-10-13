@@ -120,6 +120,7 @@ static uint32 create_hash_key(POOL_QUERY_HASH *key);
 static volatile POOL_HASH_ELEMENT *get_new_hash_element(void);
 static void put_back_hash_element(volatile POOL_HASH_ELEMENT *element);
 static bool is_free_hash_element(void);
+static void forward_pending_data(POOL_CONNECTION *frontend,POOL_CONNECTION *backend);
 
 /*
  * Connect to Memcached
@@ -613,77 +614,93 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 	pool_shmem_unlock();
 	POOL_SETMASK(&oldmask);
 
-	if (sts == 0)
+	if (sts != 0)
+		/* Cache not found */
+		return POOL_CONTINUE;
+
+	/*
+	 * Cache found. If we are doing extended query and in streaming
+	 * replication mode, we need to retrieve any responses from backend and
+	 * forward them to frontend.
+	 */
+	if (pool_is_doing_extended_query_message() && STREAM)
 	{
-		/*
-		 * Cache found. send each messages to frontend
-		 */
-		send_cached_messages(frontend, qcache, qcachelen);
-		pfree(qcache);
-
-		/*
-		 * If we are doing extended query, wait and discard Sync
-		 * message from frontend. This is necessary to prevent
-		 * receiving Sync message after Sending Ready for query.
-		 */
-		if (pool_is_doing_extended_query_message())
-		{
-			char kind;
-			int32 len;
-
-			if (pool_flush(frontend))
-				return POOL_END;
-			if (pool_read(frontend, &kind, 1))
-				return POOL_END;
-
-			ereport(DEBUG2,
-					(errmsg("memcache: fetching from memory cache: expecting sync: kind '%c'", kind)));
-			if (pool_read(frontend, &len, sizeof(len)))
-				return POOL_END;
-		}
-
-		/*
-		 * send a "READY FOR QUERY"
-		 */
-		if (MAJOR(backend) == PROTO_MAJOR_V3)
-		{
-			signed char state;
-
-			/*
-			 * We keep previous transaction state.
-			 */
-			state = MASTER(backend)->tstate;
-			send_message(frontend, 'Z', 5, (char *)&state);
-		}
-		else
-		{
-			pool_write(frontend, "Z", 1);
-		}
-		if (pool_flush(frontend))
-		{
-			return POOL_END;
-		}
-
-		*foundp = true;
-
-		if (pool_config->log_per_node_statement)
-			ereport(LOG,
-				(errmsg("fetch from memory cache"),
-					errdetail("query result fetched from cache. statement: %s", contents)));
+		POOL_SESSION_CONTEXT *session_context;
+		POOL_CONNECTION *target_backend;
 
 		ereport(DEBUG1,
-			(errmsg("fetch from memory cache"),
-				 errdetail("query result found in the query cache, %s", contents)));
+				(errmsg("memcache: fetching forwarding_pending_data")));
 
-		return POOL_CONTINUE;
+		session_context = pool_get_session_context(true);
+		target_backend = CONNECTION(backend, session_context->load_balance_node_id);
+		forward_pending_data(frontend, target_backend);
 	}
 
-	/* Cache not found */
+	/*
+	 * Send each messages to frontend
+	 */
+	send_cached_messages(frontend, qcache, qcachelen);
+	pfree(qcache);
+
+	/*
+	 * If we are doing extended query, wait and discard Sync
+	 * message from frontend. This is necessary to prevent
+	 * receiving Sync message after Sending Ready for query.
+	 */
+	if (pool_is_doing_extended_query_message())
+	{
+		char kind;
+		int32 len;
+
+		if (pool_flush(frontend))
+			return POOL_END;
+		if (pool_read(frontend, &kind, 1))
+			return POOL_END;
+
+		ereport(DEBUG2,
+				(errmsg("memcache: fetching from memory cache: expecting sync: kind '%c'", kind)));
+		if (pool_read(frontend, &len, sizeof(len)))
+			return POOL_END;
+	}
+
+	/*
+	 * send a "READY FOR QUERY"
+	 */
+	if (MAJOR(backend) == PROTO_MAJOR_V3)
+	{
+		signed char state;
+
+		/*
+		 * We keep previous transaction state.
+		 */
+		state = MASTER(backend)->tstate;
+		send_message(frontend, 'Z', 5, (char *)&state);
+	}
+	else
+	{
+		pool_write(frontend, "Z", 1);
+	}
+	if (pool_flush(frontend))
+	{
+		return POOL_END;
+	}
+
+	*foundp = true;
+
+	if (pool_config->log_per_node_statement)
+		ereport(LOG,
+				(errmsg("fetch from memory cache"),
+				 errdetail("query result fetched from cache. statement: %s", contents)));
+
+	ereport(DEBUG1,
+			(errmsg("fetch from memory cache"),
+			 errdetail("query result found in the query cache, %s", contents)));
+
 	return POOL_CONTINUE;
 }
 
 /*
- * Simple and rough(thus unreliable) check if the query is likely
+ * Simple and rough (thus unreliable) check if the query is likely
  * SELECT. Just check if the query starts with SELECT or WITH. This
  * can be used before parse tree is available.
  */
@@ -3904,4 +3921,73 @@ POOL_SHMEM_STATS *pool_get_shmem_storage_stats(void)
 	memcpy(&mystats.cache_stats, stats, sizeof(mystats.cache_stats));
 
 	return &mystats;
+}
+
+/*
+ * Send flash message to backend and forward any response to frontend.
+ */
+void forward_pending_data(POOL_CONNECTION *frontend, POOL_CONNECTION *backend)
+{
+	char kind;
+	int len;
+	char *buf;
+
+	/* If are doing extended query and we are in streaming replication
+	 * mode, we need to retrieve any response from backend.
+	 */
+	if (!pool_is_pending_response())
+	{
+		ereport(DEBUG1,
+				(errmsg("forward_pending_data: no peding data")));
+	}
+
+	/* Send flush messsage to backend to retrieve response of backend */
+	pool_write(backend, "H", 1);		
+	len = htonl(sizeof(len));
+	pool_write_and_flush(backend, &len, sizeof(len));
+
+	/*
+	 * Then forward any response from backend
+	 */
+	for(;;)
+	{
+		/* check if there's any pending data */
+		if (!pool_ssl_pending(backend) && pool_read_buffer_is_empty(backend))
+		{
+			pool_set_timeout(0);
+			if (pool_check_fd(backend) != 0)
+			{
+				ereport(DEBUG1,
+						(errmsg("forward_pending_data: no pending data")));
+				pool_set_timeout(-1);
+				break;
+			}
+		}
+
+		pool_set_timeout(-1);
+
+		pool_read(backend, &kind, 1);
+		ereport(DEBUG1,
+				(errmsg("forward_pending_data: forwarding kind: '%c'", kind)));
+		pool_write(frontend, &kind, 1);
+
+		ereport(DEBUG1,
+				(errmsg("forward_pending_data: reading len")));
+		pool_read(backend, &len, sizeof(len));
+		ereport(DEBUG1,
+				(errmsg("forward_pending_data: finished reading len:%d", ntohl(len))));
+		pool_write(frontend, &kind, 1);
+
+		len = ntohl(len);
+		if ((len - sizeof(len)) > 0)
+		{
+			len -= sizeof(len);
+			ereport(DEBUG1,
+					(errmsg("forward_pending_data: saving message len:%d", len)));
+
+			buf = palloc(len);
+			pool_read(backend, buf, len);
+			pool_write(frontend, &kind, 1);
+		}
+	}
 }
