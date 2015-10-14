@@ -1470,6 +1470,19 @@ bool is_select_query(Node *node, char *sql)
 		if (select_stmt->intoClause || select_stmt->lockingClause)
 			return false;
 
+		/* non-SELECT query in WITH clause ? */
+		if (select_stmt->withClause)
+		{
+			List *ctes = select_stmt->withClause->ctes;
+			ListCell   *cte_item;
+			foreach(cte_item, ctes)
+			{
+				CommonTableExpr *cte = (CommonTableExpr *)lfirst(cte_item);
+				if (!IsA(cte->ctequery, SelectStmt))
+					return false;
+			}
+		}
+
 		if (!pool_config->allow_sql_comments)
 			/* '\0' and ';' signify empty query */
 			return (*sql == 's' || *sql == 'S' || *sql == '(' ||
