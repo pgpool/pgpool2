@@ -90,6 +90,12 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 	*result = &res;
 }
 
+char *make_table_name_from_rangevar(RangeVar *rangevar)
+{
+	/* XXX: alias (AS ...) is left */
+	return nodeToString(rangevar);
+}
+
 int
 main(int argc, char **argv)
 {
