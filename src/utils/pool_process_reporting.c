@@ -701,6 +701,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	StrNCpy(status[i].desc, "command executed when escalation occurs", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "wd_plunge_command", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->wd_plunge_command);
+	StrNCpy(status[i].desc, "command executed when master pgpool resigns occurs", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	StrNCpy(status[i].name, "trusted_servers", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->trusted_servers);
 	StrNCpy(status[i].desc, "upper server list to observe connection", POOLCONFIG_MAXDESCLEN);
@@ -719,6 +724,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	StrNCpy(status[i].name, "wd_port", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_port);
 	StrNCpy(status[i].desc, "watchdog port number", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	StrNCpy(status[i].name, "wd_priority", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_priority);
+	StrNCpy(status[i].desc, "watchdog priority", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "wd_interval", POOLCONFIG_MAXNAMELEN);

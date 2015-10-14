@@ -1469,13 +1469,17 @@ process_watchdog_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 	if (strcmp(buf, "CommandComplete") == 0)
 	{
 		char *index = NULL;
-		WdInfo* watchdog_info = NULL;
+		PCPWDNodeInfo* watchdog_info = NULL;
 
-		watchdog_info = (WdInfo *)palloc(sizeof(WdInfo));
+		watchdog_info = (PCPWDNodeInfo *)palloc(sizeof(PCPWDNodeInfo));
 
 		index = (char *) memchr(buf, '\0', len) + 1;
 		if (index != NULL)
-			strlcpy(watchdog_info->hostname, index, sizeof(watchdog_info->hostname));
+			strlcpy(watchdog_info->hostName, index, sizeof(watchdog_info->hostName));
+
+		index = (char *) memchr(index, '\0', len) + 1;
+		if (index != NULL)
+			strlcpy(watchdog_info->nodeName, index, sizeof(watchdog_info->nodeName));
 
 		index = (char *) memchr(index, '\0', len) + 1;
 		if (index != NULL)
@@ -1487,9 +1491,9 @@ process_watchdog_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 
 		index = (char *) memchr(index, '\0', len) + 1;
 		if (index != NULL)
-			watchdog_info->status = atof(index);
+			watchdog_info->state = atof(index);
 
-		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)watchdog_info,sizeof(WdInfo) , NULL) < 0)
+		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)watchdog_info,sizeof(PCPWDNodeInfo) , NULL) < 0)
 		{
 			pcp_internal_error(pcpConn,
 							   "command failed. invalid response\n");

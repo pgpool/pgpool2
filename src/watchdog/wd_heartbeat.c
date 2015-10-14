@@ -50,9 +50,21 @@
 #include "pool_config.h"
 #include "auth/md5.h"
 #include "watchdog/watchdog.h"
-#include "watchdog/wd_ext.h"
+#include "watchdog/wd_lifecheck.h"
+#include "watchdog/wd_utils.h"
 
 #define MAX_BIND_TRIES 5
+#define WD_MAX_PACKET_STRING (256)
+/*
+ * heartbeat packet
+ */
+typedef struct {
+	char from[WD_MAX_HOST_NAMELEN];
+	int from_pgpool_port;
+	struct timeval send_time;
+	char hash[(MD5_PASSWD_LEN+1)*2];
+} WdHbPacket;
+
 
 static RETSIGTYPE hb_sender_exit(int sig);
 static RETSIGTYPE hb_receiver_exit(int sig);
@@ -61,8 +73,14 @@ static int ntoh_wd_hb_packet(WdHbPacket *to, WdHbPacket *from);
 static int packet_to_string_hb(WdHbPacket *pkt, char * str, int maxlen);
 static void wd_set_reuseport(int sock);
 
+static int wd_create_hb_send_socket(WdHbIf * hb_if);
+static int wd_create_hb_recv_socket(WdHbIf * hb_if);
+
+static void wd_hb_send(int sock, WdHbPacket * pkt, int len, const char * destination, const int dest_port);
+static void wd_hb_recv(int sock, WdHbPacket * pkt);
+
 /* create socket for sending heartbeat */
-int
+static int
 wd_create_hb_send_socket(WdHbIf *hb_if)
 {
 	int sock;
@@ -137,7 +155,7 @@ wd_create_hb_send_socket(WdHbIf *hb_if)
 }
 
 /* create socket for receiving heartbeat */
-int
+static int
 wd_create_hb_recv_socket(WdHbIf *hb_if)
 {
 	struct sockaddr_in addr;
@@ -246,7 +264,7 @@ wd_create_hb_recv_socket(WdHbIf *hb_if)
 }
 
 /* send heartbeat signal */
-void
+static void
 wd_hb_send(int sock, WdHbPacket * pkt, int len, const char * host, const int port)
 {
 	int rtn;
@@ -282,13 +300,11 @@ wd_hb_send(int sock, WdHbPacket * pkt, int len, const char * host, const int por
 	ereport(DEBUG2,
 			(errmsg("watchdog heartbeat: send %d byte packet", rtn)));
 
-//	printf("+++++++watchdog heartbeat: send %d byte packet\n", rtn);
-
 }
 
 /* receive heartbeat signal */
 void
-wd_hb_recv(int sock, WdHbPacket * pkt)
+static wd_hb_recv(int sock, WdHbPacket * pkt)
 {
 	int rtn;
 	struct sockaddr_in senderinfo;
@@ -531,8 +547,6 @@ wd_hb_sender(int fork_wait_time, WdHbIf *hb_if)
 		strlcpy(pkt.from, pool_config->wd_hostname, sizeof(pkt.from));
 		pkt.from_pgpool_port = pool_config->port;
 
-//		pkt.status = p->status;
-
 		/* authentication key */
 		if (strlen(pool_config->wd_authkey))
 		{
@@ -597,7 +611,6 @@ hton_wd_hb_packet(WdHbPacket * to, WdHbPacket * from)
 		return WD_NG;
 	}
 
-	to->status = htonl(from->status);
 	to->send_time.tv_sec = htonl(from->send_time.tv_sec);
 	to->send_time.tv_usec = htonl(from->send_time.tv_usec);
 	memcpy(to->from, from->from, sizeof(to->from));
@@ -615,7 +628,6 @@ ntoh_wd_hb_packet(WdHbPacket * to, WdHbPacket * from)
 		return WD_NG;
 	}
 
-	to->status = ntohl(from->status);
 	to->send_time.tv_sec = ntohl(from->send_time.tv_sec);
 	to->send_time.tv_usec = ntohl(from->send_time.tv_usec);
 	memcpy(to->from, from->from, sizeof(to->from));
@@ -630,8 +642,8 @@ static int
 packet_to_string_hb(WdHbPacket *pkt, char *str, int maxlen)
 {
 	int len;
-	len = snprintf(str, maxlen, "status=%d tv_sec=%ld tv_usec=%ld from=%s",
-	               pkt->status, pkt->send_time.tv_sec, pkt->send_time.tv_usec, pkt->from);
+	len = snprintf(str, maxlen, "tv_sec=%ld tv_usec=%ld from=%s",
+	                pkt->send_time.tv_sec, pkt->send_time.tv_usec, pkt->from);
 
 	return len;
 }

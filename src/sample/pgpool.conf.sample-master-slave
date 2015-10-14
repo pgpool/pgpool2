@@ -478,6 +478,10 @@ wd_hostname = ''
 wd_port = 9000
                                     # port number for watchdog service
                                     # (change requires restart)
+wd_priority = 1
+									# priority of this watchdog in leader election
+									# (change requires restart)
+
 wd_authkey = ''
                                     # Authentication key for watchdog communication
                                     # (change requires restart)
@@ -516,13 +520,16 @@ clear_memqcache_on_escalation = on
 wd_escalation_command = ''
                                     # Executes this command at escalation on new active pgpool.
                                     # (change requires restart)
+wd_plunge_command = ''
+									# Executes this command when master pgpool resigns from being master.
+									# (change requires restart)
 
-# - Lifecheck Setting - 
+# - Lifecheck Setting -
 
 # -- common --
 
 wd_lifecheck_method = 'heartbeat'
-                                    # Method of watchdog lifecheck ('heartbeat' or 'query')
+                                    # Method of watchdog lifecheck ('heartbeat' or 'query' or 'external')
                                     # (change requires restart)
 wd_interval = 10
                                     # lifecheck interval (sec) > 0

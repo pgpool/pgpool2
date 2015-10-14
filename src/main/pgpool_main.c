@@ -57,7 +57,10 @@
 #include "parser/pool_string.h"
 #include "auth/pool_passwd.h"
 #include "query_cache/pool_memqcache.h"
-#include "watchdog/wd_ext.h"
+#include "watchdog/wd_ipc_commands.h"
+#include "watchdog/wd_lifecheck.h"
+
+#include "watchdog/watchdog.h"
 
 /*
  * Process pending signal actions.
@@ -131,7 +134,7 @@ static char* process_name_from_pid(pid_t pid);
 
 static struct sockaddr_un un_addr;		/* unix domain socket path */
 static struct sockaddr_un pcp_un_addr;  /* unix domain socket path for PCP */
-ProcessInfo *process_info = NULL;	/* Per child info table on shmem */
+ProcessInfo *process_info = NULL;		/* Per child info table on shmem */
 
 /*
  * Private copy of backend status
@@ -144,7 +147,6 @@ BACKEND_STATUS private_backend_status[MAX_NUM_BACKENDS];
  * con_info[pool_config->num_init_children][pool_config->max_pool][MAX_NUM_BACKENDS]
  */
 ConnectionInfo *con_info;
-char* watchdog_ipc_address;
 
 static int *fds;	/* listening file descriptors (UNIX socket, inet domain sockets) */
 
@@ -170,9 +172,11 @@ int my_proc_id;
 
 static BackendStatusRecord backend_rec;	/* Backend status record */
 
-static pid_t worker_pid = -1; /* pid of worker process */
-static pid_t follow_pid = -1; /* pid for child process handling follow command */
-static pid_t pcp_pid = -1; /* pid for child process handling PCP */
+static pid_t worker_pid = 0; /* pid of worker process */
+static pid_t follow_pid = 0; /* pid for child process handling follow command */
+static pid_t pcp_pid = 0; /* pid for child process handling PCP */
+static pid_t watchdog_pid = 0; /* pid for watchdog child process */
+static pid_t wd_lifecheck_pid = 0; /* pid for child process handling watchdog lifecheck */
 
 BACKEND_STATUS* my_backend_status[MAX_NUM_BACKENDS];		/* Backend status buffer */
 int my_master_node_id;		/* Master node id buffer */
@@ -255,14 +259,26 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 
 	initialize_shared_mem_objects(clear_memcache_oidmaps);
 
-	/* start watchdog */
-	if (pool_config->use_watchdog )
+	if (pool_config->use_watchdog)
 	{
-		if (!wd_main(1))
+		sigset_t mask;
+		pool_sighandler_t old_sig;
+		wakeup_request = 0;
+
+		old_sig = pool_signal(SIGUSR2, wakeup_handler);
+
+		sigfillset(&mask);
+		sigdelset(&mask, SIGUSR2);
+		watchdog_pid = initialize_watchdog();
+		while (wakeup_request == 0)
 		{
-            ereport(FATAL,
-                    (errmsg("wd_main error")));
+			sigsuspend(&mask);  /* and wait for parent */
 		}
+		wakeup_request = 0;
+
+		pool_signal(SIGUSR2, old_sig);
+
+		wd_lifecheck_pid = initialize_watchdog_lifecheck();
 	}
 
 	/*
@@ -537,7 +553,6 @@ process_backend_health_check_failure(int health_check_node_id, int retrycnt)
 					(errmsg("setting backend node %d status to NODE DOWN", health_check_node_id)));
 			health_check_timer_expired = 0;
 			degenerate_backend_set(&health_check_node_id,1);
-//			register_node_operation_request(NODE_DOWN_REQUEST,&health_check_node_id,1);
 			return 2;
 			/* need to distribute this info to children ??*/
 		}
@@ -1004,7 +1019,16 @@ static void terminate_all_childrens()
     worker_pid = 0;
 	if (pool_config->use_watchdog)
 	{
-		wd_kill_watchdog(SIGINT);
+		if (pool_config->use_watchdog)
+		{
+			if (watchdog_pid)
+				kill(watchdog_pid, SIGINT);
+			watchdog_pid = 0;
+			
+			if (wd_lifecheck_pid)
+				kill(wd_lifecheck_pid, SIGINT);
+			wd_lifecheck_pid = 0;
+		}
 	}
 
     /* wait for all children to exit */
@@ -1332,17 +1356,23 @@ static RETSIGTYPE exit_handler(int sig)
 		}
 	}
 
-    if(pcp_pid > 0)
+    if (pcp_pid > 0)
         kill(pcp_pid, sig);
     pcp_pid = 0;
 
-    if(worker_pid > 0)
+    if (worker_pid > 0)
         kill(worker_pid, sig);
     worker_pid = 0;
 
 	if (pool_config->use_watchdog)
 	{
-		wd_kill_watchdog(sig);
+		if (watchdog_pid)
+			kill(watchdog_pid, sig);
+		watchdog_pid = 0;
+
+		if (wd_lifecheck_pid)
+			kill(wd_lifecheck_pid, sig);
+		wd_lifecheck_pid = 0;
 	}
 
 	POOL_SETMASK(&UnBlockSig);
@@ -2077,8 +2107,13 @@ static char* process_name_from_pid(pid_t pid)
 		return "PCP child";
 	if (pid == worker_pid)
 		return "worker child";
-	if (pool_config->use_watchdog && wd_is_watchdog_pid(pid))
-		return wd_process_name_from_pid(pid);
+	if (pool_config->use_watchdog)
+	{
+		if (pid == watchdog_pid)
+			return "watchdog child";
+		else if (pid == wd_lifecheck_pid)
+			return "watchdog lifecheck";
+	}
 	return "child";
 }
 /*
@@ -2188,9 +2223,28 @@ static void reaper(void)
 		}
 
 		/* exiting process was watchdog process */
-		else if (pool_config->use_watchdog && wd_is_watchdog_pid(pid))
+		else if (pool_config->use_watchdog)
 		{
-			new_pid = wd_reaper_watchdog(pid, restart_child);
+			if (watchdog_pid == pid)
+			{
+				if(restart_child)
+				{
+					watchdog_pid = initialize_watchdog();
+					new_pid = watchdog_pid;
+				}
+				else
+					watchdog_pid = 0;
+			}
+			else if (wd_lifecheck_pid == pid)
+			{
+				if(restart_child)
+				{
+					wd_lifecheck_pid = initialize_watchdog_lifecheck();
+					new_pid = wd_lifecheck_pid;
+				}
+				else
+					wd_lifecheck_pid = 0;
+			}
 		}
 		else
 		{
@@ -2300,9 +2354,12 @@ static RETSIGTYPE wakeup_handler(int sig)
 {
 	POOL_SETMASK(&BlockSig);
 	wakeup_request = 1;
-	if(write(pipe_fds[1], "\0", 1) < 0)
-        ereport(WARNING,
-            (errmsg("wakeup_handler: write to pipe failed with error \"%s\"", strerror(errno))));
+	if (processState != INITIALIZING)
+	{
+		if(write(pipe_fds[1], "\0", 1) < 0)
+			ereport(WARNING,
+				(errmsg("wakeup_handler: write to pipe failed with error \"%s\"", strerror(errno))));
+	}
 	POOL_SETMASK(&UnBlockSig);
 }
 
@@ -2853,11 +2910,8 @@ static void initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 	/* initialize watchdog IPC unix domain socket address */
 	if (pool_config->use_watchdog)
 	{
-		watchdog_ipc_address = pool_shared_memory_create(100);
-		snprintf(watchdog_ipc_address, 100,"wd_cmd_ipc_%d",pool_config->wd_port);
+		wd_ipc_initialize_data();
 	}
-	else
-		watchdog_ipc_address = NULL;
 }
 
 /*

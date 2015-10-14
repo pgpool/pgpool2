@@ -33,8 +33,7 @@
 
 #include "libpq-fe.h"
 
-#include "watchdog/watchdog.h"
-#include "watchdog/wd_ext.h"
+#include "watchdog/wd_ipc_commands.h"
 
 #define WAIT_RETRY_COUNT (pool_config->recovery_timeout / 3)
 
@@ -113,7 +112,7 @@ void start_recovery(int recovery_node)
 			if (pool_config->use_watchdog)
 			{
 				/* announce start recovery */
-				if (WD_OK != wd_start_recovery())
+				if (COMMAND_OK != wd_start_recovery())
 					ereport(ERROR,
 							(errmsg("node recovery failed, failed to send start recovery packet")));
 			}

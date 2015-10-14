@@ -47,7 +47,8 @@
 #include "pool_config.h"
 #include "context/pool_process_context.h"
 #include "utils/pool_process_reporting.h"
-#include "watchdog/wd_ext.h"
+#include "watchdog/wd_json_data.h"
+#include "watchdog/wd_ipc_commands.h"
 #include "utils/elog.h"
 
 #define MAX_FILE_LINE_LEN    512
@@ -900,18 +901,20 @@ inform_watchdog_info(PCP_CONNECTION *frontend,char *buf)
 	char pgpool_port_str[6];
 	char wd_port_str[6];
 	char status[2];
-
-	WdInfo *wi = NULL;
-
+	json_value* root;
+	json_value* value;
+	char* json_data;
+	WDNodeInfo *nodeInfo;
+	
 	if (!pool_config->use_watchdog)
 		ereport(ERROR,
-				(errmsg("PCP: informing watchdog info failed"),
+			(errmsg("PCP: informing watchdog info failed"),
 				 errdetail("watcdhog is not enabled")));
 
 	wd_index = atoi(buf);
-	wi = wd_get_watchdog_info(wd_index);
 
-	if (wi == NULL)
+	json_data = wd_get_watchdog_nodes(wd_index);
+	if (json_data == NULL)
 		ereport(ERROR,
 				(errmsg("PCP: informing watchdog info failed"),
 				 errdetail("invalid watchdog index")));
@@ -920,13 +923,36 @@ inform_watchdog_info(PCP_CONNECTION *frontend,char *buf)
 			(errmsg("PCP: informing watchdog info"),
 			 errdetail("retrieved node information from shared memory")));
 
-	snprintf(pgpool_port_str, sizeof(pgpool_port_str), "%d", wi->pgpool_port);
-	snprintf(wd_port_str, sizeof(wd_port_str), "%d", wi->wd_port);
-	snprintf(status, sizeof(status), "%d", wi->status);
+	root = json_parse(json_data,strlen(json_data));
+	
+	/* The root node must be object */
+	if (root == NULL || root->type != json_object)
+	{
+		if(root)
+			json_value_free(root);
+		ereport(ERROR,
+			(errmsg("unable to parse json data for watchdog node info")));
+	}
+
+	value = json_get_value_for_key(root,"WatchdogNode");
+	if (value == NULL || root->type != json_object)
+	{
+		json_value_free(root);
+		ereport(ERROR,
+				(errmsg("unable to parse json data for watchdog node info")));
+	}
+
+	nodeInfo = get_WDNodeInfo_from_wd_node_json(value);
+	json_value_free(root);
+
+	snprintf(pgpool_port_str, sizeof(pgpool_port_str), "%d", nodeInfo->pgpool_port);
+	snprintf(wd_port_str, sizeof(wd_port_str), "%d", nodeInfo->wd_port);
+	snprintf(status, sizeof(status), "%d", nodeInfo->state);
 
 	pcp_write(frontend, "w", 1);
 	wsize = htonl(sizeof(code) +
-				  strlen(wi->hostname)+1 +
+				  strlen(nodeInfo->hostName)+1 +
+				  strlen(nodeInfo->nodeName)+1 +
 				  strlen(pgpool_port_str)+1 +
 				  strlen(wd_port_str)+1 +
 				  strlen(status)+1 +
@@ -934,11 +960,13 @@ inform_watchdog_info(PCP_CONNECTION *frontend,char *buf)
 	pcp_write(frontend, &wsize, sizeof(int));
 	pcp_write(frontend, code, sizeof(code));
 
-	pcp_write(frontend, wi->hostname, strlen(wi->hostname)+1);
+	pcp_write(frontend, nodeInfo->hostName, strlen(nodeInfo->hostName)+1);
+	pcp_write(frontend, nodeInfo->nodeName, strlen(nodeInfo->nodeName)+1);
 	pcp_write(frontend, pgpool_port_str, strlen(pgpool_port_str)+1);
 	pcp_write(frontend, wd_port_str, strlen(wd_port_str)+1);
 	pcp_write(frontend, status, strlen(status)+1);
 	do_pcp_flush(frontend);
+	pfree(nodeInfo);
 }
 
 static void

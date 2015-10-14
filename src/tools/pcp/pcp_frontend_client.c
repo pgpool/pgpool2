@@ -219,9 +219,9 @@ main(int argc, char **argv)
 				nodeID = atoi(optarg);
 				if (current_app_type->app_type == PCP_WATCHDOG_INFO)
 				{
-					if (nodeID < 0 || nodeID > MAX_WATCHDOG_NUM)
+					if (nodeID < 0)
 					{
-						fprintf(stderr, "%s: Invalid watchdog-id \"%s\", must be between 0 and %d\n",progname,optarg,MAX_WATCHDOG_NUM);
+						fprintf(stderr, "%s: Invalid watchdog-id \"%s\", must be a positive number\n",progname,optarg);
 						exit(0);
 					}
 				}
@@ -288,9 +288,9 @@ main(int argc, char **argv)
 		else if (current_app_type->app_type == PCP_WATCHDOG_INFO && nodeID < 0)
 		{
 			nodeID = atoi(argv[optind]);
-			if (nodeID < 0 || nodeID > MAX_WATCHDOG_NUM)
+			if (nodeID < 0 )
 			{
-				fprintf(stderr, "%s: Invalid watchdog-id \"%s\", must be between 0 and %d\n",progname,optarg,MAX_WATCHDOG_NUM);
+				fprintf(stderr, "%s: Invalid watchdog-id \"%s\", must be a positive number\n",progname,optarg);
 				exit(0);
 			}
 		}
@@ -658,22 +658,23 @@ output_ststemdb_info_result(PCPResultInfo* pcpResInfo, bool verbose)
 static void
 output_watchdog_info_result(PCPResultInfo* pcpResInfo, bool verbose)
 {
-	WdInfo *watchdog_info = (WdInfo *)pcp_get_binary_data(pcpResInfo,0);
+	PCPWDNodeInfo *watchdog_info = (PCPWDNodeInfo *)pcp_get_binary_data(pcpResInfo,0);
 	if (verbose)
 	{
-		printf("Hostname     : %s\nPgpool port  : %d\nWatchdog port: %d\nStatus       : %d\n",
-			   watchdog_info->hostname,
-			   watchdog_info->pgpool_port,
-			   watchdog_info->wd_port,
-			   watchdog_info->status);
+		printf("NodeName     : %s\n",watchdog_info->nodeName);
+		printf("HostName     : %s\n",watchdog_info->hostName);
+		printf("Pgpool port  : %d\n",watchdog_info->pgpool_port);
+		printf("Watchdog port: %d\n",watchdog_info->wd_port);
+		printf("Node priority: %d\n",watchdog_info->wd_priority);
+		printf("status       : %d\n\n",watchdog_info->state);
 	}
 	else
 	{
 		printf("%s %d %d %d\n",
-			   watchdog_info->hostname,
+			   watchdog_info->hostName,
 			   watchdog_info->pgpool_port,
 			   watchdog_info->wd_port,
-			   watchdog_info->status);
+			   watchdog_info->state);
 	}
 }
 

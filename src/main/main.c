@@ -42,7 +42,7 @@
 #include "version.h"
 #include "auth/pool_passwd.h"
 #include "query_cache/pool_memqcache.h"
-#include "watchdog/wd_ext.h"
+#include "watchdog/wd_utils.h"
 
 static void daemonize(void);
 static int read_pid_file(void);

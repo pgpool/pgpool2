@@ -1,10 +1,12 @@
+/* -*-pgsql-c-*- */
 /*
+ *
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2012	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -18,37 +20,32 @@
  * is" without express or implied warranty.
  *
  *
- * pcp.h - master header file.
  */
-
-#ifndef PCP_H
-#define PCP_H
-
-#include "pool_type.h"
+#include "utils/json.h"
 #include "pool_config.h"
+#include "watchdog/watchdog.h"
 
+#ifndef WD_JSON_DATA_H
+#define WD_JSON_DATA_H
 
-#define MAX_USER_PASSWD_LEN    128
-typedef struct PCPWDNodeInfo
+typedef struct WDNodeInfo
 {
 	int state;
 	char nodeName[WD_MAX_HOST_NAMELEN];
 	char hostName[WD_MAX_HOST_NAMELEN];		/* host name */
 	int wd_port;							/* watchdog port */
-	int wd_priority;						/* node priority in leader election */
 	int pgpool_port;						/* pgpool port */
 	char delegate_ip[WD_MAX_HOST_NAMELEN];	/* delegate IP */
 	int	id;
-}PCPWDNodeInfo;
+}WDNodeInfo;
 
-/* --------------------------------
- * pcp.c
- * --------------------------------
- */
+extern WatchdogNode* get_watchdog_node_from_json(char* json_data, int data_len);
+extern char* get_watchdog_node_info_json(WatchdogNode* wdNode);
+extern POOL_CONFIG* get_pool_config_from_json(char* json_data, int data_len);
+extern char* get_pool_config_json(void);
+extern char* get_lifecheck_node_status_change_json(int nodeID, int nodeStatus, char* message);
+extern bool parse_node_status_json(char* json_data, int data_len, int* nodeID, int* nodeStatus, char** message);
 
-/* ------------------------------
- * pcp_error.c
- * ------------------------------
- */
+extern WDNodeInfo* get_WDNodeInfo_from_wd_node_json(json_value* source);
 
-#endif /* PCP_H */
+#endif
