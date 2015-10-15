@@ -1185,12 +1185,13 @@ process_set_configration_parameter(PCP_CONNECTION *frontend,char *buf, int len)
 				(errmsg("PCP: set configuration parameter failed"),
 				 errdetail("invalid pcp packet received from client")));
 
-	param_value = (char *) memchr(buf, '\0', len) + 1;
+	param_value = (char *) memchr(buf, '\0', len);
 	if(param_value == NULL)
 		ereport(ERROR,
 			(errmsg("set configuration parameter failed"),
 				 errdetail("invalid pcp packet received from client")));
 
+	param_value +=1;
 	ereport(LOG,
 			(errmsg("set configuration parameter, \"%s TO %s\"",param_name,param_value)));
 	

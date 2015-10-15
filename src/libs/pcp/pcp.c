@@ -609,10 +609,12 @@ process_pcp_node_count_response(PCPConnInfo* pcpConn, char* buf, int len)
 	{
 		char *index = NULL;
 
-		index = (char *) memchr(buf, '\0', len) + 1;
+		index = (char *) memchr(buf, '\0', len);
 		if (index != NULL)
 		{
-			int ret = atoi(index);
+			int ret;
+			index += 1;
+			ret = atoi(index);
 			setResultIntData(pcpConn->pcpResInfo, 0, ret);
 			setCommandSuccessful(pcpConn);
 			return;
@@ -657,38 +659,41 @@ pcp_node_count(PCPConnInfo* pcpConn)
 static void
 process_node_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 {
+	BackendInfo* backend_info = NULL;
 	if (strcmp(buf, "CommandComplete") == 0)
 	{
 		char *index = NULL;
-		BackendInfo* backend_info = NULL;
 
 		backend_info = (BackendInfo *)palloc(sizeof(BackendInfo));
 
-		index = (char *) memchr(buf, '\0', len) + 1;
-		if (index != NULL)
-			strlcpy(backend_info->backend_hostname, index, sizeof(backend_info->backend_hostname));
+		index = (char *) memchr(buf, '\0', len);
+		if(index == NULL)
+			goto INVALID_RESPONSE;
+		index +=1;
+		strlcpy(backend_info->backend_hostname, index, sizeof(backend_info->backend_hostname));
 
-		index = (char *) memchr(index, '\0', len) + 1;
-		if (index != NULL)
-			backend_info->backend_port = atoi(index);
+		index = (char *) memchr(index, '\0', len);
+		if(index == NULL)
+			goto INVALID_RESPONSE;
+		index +=1;
+		backend_info->backend_port = atoi(index);
 
-		index = (char *) memchr(index, '\0', len) + 1;
-		if (index != NULL)
-			backend_info->backend_status = atoi(index);
+		index = (char *) memchr(index, '\0', len);
+		if(index == NULL)
+			goto INVALID_RESPONSE;
+		index +=1;
+		backend_info->backend_status = atoi(index);
 
-		index = (char *) memchr(index, '\0', len) + 1;
-		if (index != NULL)
-			backend_info->backend_weight = atof(index);
+		index = (char *) memchr(index, '\0', len);
+		if(index == NULL)
+			goto INVALID_RESPONSE;
+		index +=1;
+		backend_info->backend_weight = atof(index);
+
 		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)backend_info, sizeof(BackendInfo) , NULL) < 0)
-		{
-			pcp_internal_error(pcpConn,
-							   "command failed. invalid response\n");
-			setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
-		}
-		else
-		{
-			setCommandSuccessful(pcpConn);
-		}
+			goto INVALID_RESPONSE;
+
+		setCommandSuccessful(pcpConn);
 	}
 	else
 	{
@@ -696,6 +701,17 @@ process_node_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 						   "command failed with reason: \"%s\"\n",buf);
 		setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 	}
+
+	return;
+
+INVALID_RESPONSE:
+
+	if(backend_info)
+		pfree(backend_info);
+	pcp_internal_error(pcpConn,
+					   "command failed. invalid response\n");
+	setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+
 }
 /* --------------------------------
  * pcp_node_info - get information of node pointed by given argument
@@ -740,14 +756,30 @@ process_process_count_response(PCPConnInfo* pcpConn, char* buf, int len)
 		char *index = NULL;
 		int i;
 
-		index = (char *) memchr(buf, '\0', len) + 1;
+		index = (char *) memchr(buf, '\0', len);
+		if (index == NULL)
+		{
+			pcp_internal_error(pcpConn,
+							   "command failed. invalid response\n");
+			setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+			return;
+		}
+		index +=1;
 		process_count = atoi(index);
 
 		process_list = (int *)palloc(sizeof(int) * process_count);
 
 		for (i = 0; i < process_count; i++)
 		{
-			index = (char *) memchr(index, '\0', len) + 1;
+			index = (char *) memchr(index, '\0', len);
+			if (index == NULL)
+			{
+				pcp_internal_error(pcpConn,
+								   "command failed. invalid response\n");
+				setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+				return;
+			}
+			index +=1;
 			process_list[i] = atoi(index);
 		}
 		setResultSlotCount(pcpConn,1);
@@ -825,9 +857,10 @@ process_process_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 	if (strcmp(buf, "ArraySize") == 0)
 	{
 		int ci_size;
-		index = (char *) memchr(buf, '\0', len) + 1;
+		index = (char *) memchr(buf, '\0', len);
 		if(index == NULL)
 			goto INVALID_RESPONSE;
+		index +=1;
 		ci_size = atoi(index);
 
 		setResultStatus(pcpConn, PCP_RES_INCOMPLETE);
@@ -843,70 +876,72 @@ process_process_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 		processInfo = palloc0(sizeof(ProcessInfo));
 		processInfo->connection_info = palloc0(sizeof(ConnectionInfo));
 
-		index = (char *) memchr(buf, '\0', len) + 1;
+		index = (char *) memchr(buf, '\0', len);
 		if(index == NULL)
 			goto INVALID_RESPONSE;
+		index +=1;
 		processInfo->pid = atoi(index);
 
-		index = (char *) memchr(index, '\0', len) + 1;
+		index = (char *) memchr(index, '\0', len);
 		if(index == NULL)
 			goto INVALID_RESPONSE;
-
+		index +=1;
 		strlcpy(processInfo->connection_info->database, index, SM_DATABASE);
 
-		index = (char *) memchr(index, '\0', len) + 1;
+		index = (char *) memchr(index, '\0', len);
 		if(index == NULL)
 			goto INVALID_RESPONSE;
-
+		index +=1;
 		strlcpy(processInfo->connection_info->user, index, SM_USER);
 
-		index = (char *) memchr(index, '\0', len) + 1;
+		index = (char *) memchr(index, '\0', len);
 		if(index == NULL)
 			goto INVALID_RESPONSE;
-
+		index +=1;
 		processInfo->start_time = atol(index);
 
-		index = (char *) memchr(index, '\0', len) + 1;
+		index = (char *) memchr(index, '\0', len);
 		if(index == NULL)
 			goto INVALID_RESPONSE;
-
+		index +=1;
 		processInfo->connection_info->create_time = atol(index);
 
-		index = (char *) memchr(index, '\0', len) + 1;
+		index = (char *) memchr(index, '\0', len);
 		if(index == NULL)
 			goto INVALID_RESPONSE;
-
+		index +=1;
 		processInfo->connection_info->major = atoi(index);
 
-		index = (char *) memchr(index, '\0', len) + 1;
+		index = (char *) memchr(index, '\0', len);
 		if(index == NULL)
 			goto INVALID_RESPONSE;
-
+		index +=1;
 		processInfo->connection_info->minor = atoi(index);
 
-		index = (char *) memchr(index, '\0', len) + 1;
+		index = (char *) memchr(index, '\0', len);
 		if(index == NULL)
 			goto INVALID_RESPONSE;
-
+		index +=1;
 		processInfo->connection_info->counter = atoi(index);
 
-		index = (char *) memchr(index, '\0', len) + 1;
+		index = (char *) memchr(index, '\0', len);
 		if(index == NULL)
 			goto INVALID_RESPONSE;
-
+		index +=1;
 		processInfo->connection_info->backend_id = atoi(index);
 
-		index = (char *) memchr(index, '\0', len) + 1;
+		index = (char *) memchr(index, '\0', len);
 		if(index == NULL)
 			goto INVALID_RESPONSE;
-
+		index +=1;
 		processInfo->connection_info->pid = atoi(index);
 
-		index = (char *) memchr(index, '\0', len) + 1;
+		index = (char *) memchr(index, '\0', len);
 		if(index == NULL)
 			goto INVALID_RESPONSE;
-
+		index +=1;
 		processInfo->connection_info->connected = atoi(index);
+
 		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)processInfo, sizeof(ProcessInfo), free_processInfo) < 0)
 			goto INVALID_RESPONSE;
 
@@ -1099,20 +1134,24 @@ process_pool_status_response(PCPConnInfo* pcpConn, char* buf, int len)
 
 		status = palloc(sizeof(POOL_REPORT_CONFIG));
 
-		index = (char *) memchr(buf, '\0', len) + 1;
+		index = (char *) memchr(buf, '\0', len);
 		if(index == NULL)
 			goto INVALID_RESPONSE;
+		index +=1;
 		strlcpy(status->name, index, POOLCONFIG_MAXNAMELEN+1);
 
-		index = (char *) memchr(index, '\0', len) + 1;
+		index = (char *) memchr(index, '\0', len);
 		if(index == NULL)
 			goto INVALID_RESPONSE;
+		index +=1;
 		strlcpy(status->value, index, POOLCONFIG_MAXVALLEN+1);
 
-		index = (char *) memchr(index, '\0', len) + 1;
+		index = (char *) memchr(index, '\0', len);
 		if(index == NULL)
 			goto INVALID_RESPONSE;
+		index +=1;
 		strlcpy(status->desc, index, POOLCONFIG_MAXDESCLEN+1);
+
 		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)status, sizeof(POOL_REPORT_CONFIG) , NULL) < 0)
 			goto INVALID_RESPONSE;
 		return;
@@ -1240,39 +1279,42 @@ _pcp_promote_node(PCPConnInfo* pcpConn,int nid, bool gracefully)
 static void
 process_watchdog_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 {
+	WdInfo* watchdog_info = NULL;
+
 	if (strcmp(buf, "CommandComplete") == 0)
 	{
 		char *index = NULL;
-		WdInfo* watchdog_info = NULL;
 
 		watchdog_info = (WdInfo *)palloc(sizeof(WdInfo));
 
-		index = (char *) memchr(buf, '\0', len) + 1;
-		if (index != NULL)
-			strlcpy(watchdog_info->hostname, index, sizeof(watchdog_info->hostname));
+		index = (char *) memchr(buf, '\0', len);
+		if(index == NULL)
+			goto INVALID_RESPONSE;
+		index +=1;
+		strlcpy(watchdog_info->hostname, index, sizeof(watchdog_info->hostname));
 
-		index = (char *) memchr(index, '\0', len) + 1;
-		if (index != NULL)
-			watchdog_info->pgpool_port = atoi(index);
+		index = (char *) memchr(index, '\0', len);
+		if(index == NULL)
+			goto INVALID_RESPONSE;
+		index +=1;
+		watchdog_info->pgpool_port = atoi(index);
 
-		index = (char *) memchr(index, '\0', len) + 1;
-		if (index != NULL)
-			watchdog_info->wd_port = atoi(index);
+		index = (char *) memchr(index, '\0', len);
+		if(index == NULL)
+			goto INVALID_RESPONSE;
+		index +=1;
+		watchdog_info->wd_port = atoi(index);
 
-		index = (char *) memchr(index, '\0', len) + 1;
-		if (index != NULL)
-			watchdog_info->status = atof(index);
+		index = (char *) memchr(index, '\0', len);
+		if(index == NULL)
+			goto INVALID_RESPONSE;
+		index +=1;
+		watchdog_info->status = atof(index);
 
 		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)watchdog_info,sizeof(WdInfo) , NULL) < 0)
-		{
-			pcp_internal_error(pcpConn,
-							   "command failed. invalid response\n");
-			setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
-		}
-		else
-		{
-			setCommandSuccessful(pcpConn);
-		}
+			goto INVALID_RESPONSE;
+
+		setCommandSuccessful(pcpConn);
 	}
 	else
 	{
@@ -1280,6 +1322,17 @@ process_watchdog_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 						   "command failed with reason: \"%s\"\n",buf);
 		setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 	}
+
+	return;
+
+INVALID_RESPONSE:
+
+	if(watchdog_info)
+		pfree(watchdog_info);
+	pcp_internal_error(pcpConn,
+					   "command failed. invalid response\n");
+	setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+
 }
 
 /* --------------------------------

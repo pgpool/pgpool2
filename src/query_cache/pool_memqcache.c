@@ -1109,7 +1109,7 @@ void pool_add_dml_table_oid(int oid)
 		 */
 		oldcxt = MemoryContextSwitchTo(TopMemoryContext);
 		tmp = repalloc(oidbuf, sizeof(int) * oidbuf_size);
-		oldcxt = MemoryContextSwitchTo(oldcxt);
+		MemoryContextSwitchTo(oldcxt);
 		if (tmp == NULL)
 			return;
 
