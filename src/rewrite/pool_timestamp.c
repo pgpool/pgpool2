@@ -1146,7 +1146,6 @@ raw_expression_tree_walker(Node *node,
 			}
 			break;
 		case T_InsertStmt:
-			break;
 			{
 				InsertStmt *stmt = (InsertStmt *) node;
 
