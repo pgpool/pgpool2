@@ -290,7 +290,7 @@ static void _outListWith(String *str, List *node, char *op)
 			first = 1;
 		else
 		{
-			if (!IsA(lfirst(lc), A_Indices))
+			if (lfirst(lc) != NIL && !IsA(lfirst(lc), A_Indices))
 				string_append_char(str, op);
 		}
 		_outNode(str, lfirst(lc));
