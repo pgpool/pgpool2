@@ -2405,21 +2405,21 @@ static void _outTruncateStmt(String *str, TruncateStmt *node)
 
 static void _outVacuumStmt(String *str, VacuumStmt *node)
 {
-	if (node->options | VACOPT_VACUUM)
+	if (node->options & VACOPT_VACUUM)
 		string_append_char(str, "VACUUM ");
-	else if (node->options | VACOPT_ANALYZE)
+	else if (node->options & VACOPT_ANALYZE)
 		string_append_char(str, "ANALYZE ");
 
-	if (node->options | VACOPT_FULL)
+	if (node->options & VACOPT_FULL)
 		string_append_char(str, "FULL ");
 
-	if (node->options | VACOPT_FREEZE)
+	if (node->options & VACOPT_FREEZE)
 		string_append_char(str, "FREEZE ");
 
-	if (node->options | VACOPT_VERBOSE)
+	if (node->options & VACOPT_VERBOSE)
 		string_append_char(str, "VERBOSE ");
 
-	if (node->options | VACOPT_VACUUM && node->options | VACOPT_ANALYZE)
+	if (node->options & VACOPT_VACUUM && node->options & VACOPT_ANALYZE)
 		string_append_char(str, "ANALYZE ");
 
 	_outNode(str, node->relation);
