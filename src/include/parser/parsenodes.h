@@ -145,8 +145,6 @@ typedef struct Query
 
 	List	   *targetList;		/* target list (of TargetEntry) */
 
-	List	   *withCheckOptions;		/* a list of WithCheckOption's */
-
 	OnConflictExpr *onConflict; /* ON CONFLICT DO [NOTHING | UPDATE] */
 
 	List	   *returningList;	/* return-values list (of TargetEntry) */
@@ -173,6 +171,10 @@ typedef struct Query
 
 	List	   *constraintDeps; /* a list of pg_constraint OIDs that the query
 								 * depends on to be semantically valid */
+
+	List	   *withCheckOptions;	/* a list of WithCheckOption's, which are
+									 * only added during rewrite and therefore
+									 * are not written out as part of Query. */
 } Query;
 
 
@@ -943,6 +945,7 @@ typedef struct WithCheckOption
 	NodeTag		type;
 	WCOKind		kind;			/* kind of WCO */
 	char	   *relname;		/* name of relation that specified the WCO */
+	char	   *polname;		/* name of RLS policy being checked */
 	Node	   *qual;			/* constraint qual to check */
 	bool		cascaded;		/* true for a cascaded WCO on a view */
 } WithCheckOption;
@@ -1528,6 +1531,8 @@ typedef enum AlterTableType
 	AT_ReplicaIdentity,			/* REPLICA IDENTITY */
 	AT_EnableRowSecurity,		/* ENABLE ROW SECURITY */
 	AT_DisableRowSecurity,		/* DISABLE ROW SECURITY */
+	AT_ForceRowSecurity,		/* FORCE ROW SECURITY */
+	AT_NoForceRowSecurity,		/* NO FORCE ROW SECURITY */
 	AT_GenericOptions			/* OPTIONS (...) */
 } AlterTableType;
 
