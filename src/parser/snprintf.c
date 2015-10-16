@@ -31,8 +31,8 @@
  */
 
 #if 0
-
 #include "c.h"
+#endif
 
 #include <ctype.h>
 #ifdef _MSC_VER
@@ -45,7 +45,6 @@
 #endif
 #include <sys/param.h>
 
-#endif
 
 #ifndef NL_ARGMAX
 #define NL_ARGMAX 16

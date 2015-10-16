@@ -17,6 +17,7 @@
  */
 
 #include <unistd.h>
+#include <string.h>
 
 #include "pool.h"
 #include "parser/nodes.h"

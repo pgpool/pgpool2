@@ -24,7 +24,7 @@
  *
  */
 
-#include "pool_type.h"
+#include "pool.h"
 #include "utils/pool_path.h"
 #include <stdio.h>
 #include <string.h>
@@ -78,6 +78,9 @@ get_os_username(char *buf, int bufsize)
 	return true;
 }
 
+/* stolen from PostgreSQL src/port/thread.c
+ * XXX: This is from 9.4 but the latest pgsql have changed this.
+ */
 /*
  * Wrapper around getpwuid() or getpwuid_r() to mimic POSIX getpwuid_r()
  * behaviour, if it is not available or required.
