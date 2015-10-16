@@ -2539,6 +2539,15 @@ database_redirect_preference_list = 'postgres:primary,mydb[01]:1,mydb2:standby'
     <p>
     アプリケーション名によって負荷分散をしたいノード番号を、"アプリケーション名:ノード番号"で指定します。
 	アプリケーション名とは、クライアントが接続時に指定する名称で、PostgreSQL 9.0以降で使用できます。
+</p>
+    <p>
+      <blockquote>
+	<font color="red">注意: </font>
+	JDBCドライバのpostgresql-9.3以前のバージョンでは、JDBCドライバの"ApplicationName" と "assumeMinServerVersion=9.0"オプションを指定してもスタートアップパケットの中にapplication_nameを含まないため、この機能を利用できません。
+	postgresql-9.4 以降のJDBCドライバをお使いください。
+      </blockquote>
+    </p>
+    <p>
 	たとえばpsqlコマンドのアプリケーション名は"psql"です。
 	pgpool-IIは、クライアントが接続に送信するスタートアップパケットに含まれるアプリケーション名だけを認識します。
 	接続後に変更されたアプリケーション名は認識されません。
