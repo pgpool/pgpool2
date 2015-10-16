@@ -1329,6 +1329,11 @@ static int
 	session_context->reset_context = true;
 
 	/*
+	 * Make sure that we are not doing extended protocol.
+	 */
+	pool_unset_doing_extended_query_message();
+
+	/*
 	 * Reset all state variables
 	 */
 	reset_variables();

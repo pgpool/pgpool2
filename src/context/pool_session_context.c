@@ -195,6 +195,9 @@ void pool_set_query_in_progress(void)
  */
 void pool_unset_query_in_progress(void)
 {
+	ereport(DEBUG1,
+		(errmsg("session context: unsetting query in progress. DONE")));
+
 	pool_get_session_context(false)->in_progress = false;
 }
 
