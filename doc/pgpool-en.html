@@ -2433,6 +2433,16 @@ database_redirect_preference_list = 'postgres:primary,mydb[01]:1,mydb2:standby'
 	  you can set "application name:node id" pair to specify the node id when the application is used.
 	  "Application name" is a name specified by a client when it connects to database.
 	You can use it in PostgreSQL 9.0 or later.
+    </p>
+    <p>
+      <blockquote>
+	<font color="red">Caution: </font>
+	JDBC driver postgresql-9.3 or before does not send the application name in the startup packet
+	even if application name is specified for the JDBC driver option "ApplicationName" and "assumeMinServerVersion=9.0" is specified and cannot use this feature.
+	If you want to use the feature through JDBC, please use postgresql-9.4 or later version of driver.
+      </blockquote>
+    </p>
+    <p>
 	  For example, application of psql command is "psql".
 	  pgpool-II recognize application names only when clients sends a start up packet.
 	  Clients can send application names later on but pgpool-II will not recognize them.
