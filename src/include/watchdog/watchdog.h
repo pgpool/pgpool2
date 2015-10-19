@@ -64,7 +64,7 @@ typedef enum {
 	WD_SOCK_WAITING_FOR_CONNECT,
 	WD_SOCK_CONNECTED,
 	WD_SOCK_ERROR,
-	WD_CLOSED
+	WD_SOCK_CLOSED
 } WD_SOCK_STATE;
 
 typedef enum {
@@ -74,7 +74,7 @@ typedef enum {
 	WD_EVENT_CON_ERROR,
 	WD_EVENT_TIMEOUT,
 	WD_EVENT_PACKET_RCV,
-	WD_EVENT_HB_MISSED,
+	WD_EVENT_COMMAND_FINISHED,
 	WD_EVENT_NEW_OUTBOUND_CONNECTION,
 	
 	WD_EVENT_NW_IP_IS_REMOVED,
@@ -83,8 +83,20 @@ typedef enum {
 	WD_EVENT_LOCAL_NODE_LOST,
 	WD_EVENT_REMOTE_NODE_LOST,
 	WD_EVENT_REMOTE_NODE_FOUND,
-	WD_EVENT_LOCAL_NODE_FOUND
+	WD_EVENT_LOCAL_NODE_FOUND,
+
+	WD_EVENT_NODE_CON_LOST,
+	WD_EVENT_NODE_CON_FOUND
+
 } WD_EVENTS;
+
+typedef struct SocketConnection
+{
+	int				sock;
+	struct			timeval tv;
+	char			addr[48];
+	WD_SOCK_STATE	sock_state;
+}SocketConnection;
 
 typedef struct WatchdogNode
 {
@@ -101,25 +113,12 @@ typedef struct WatchdogNode
 	unsigned int	lastCommandID;
 	struct timeval hb_last_recv_time; 		/* recv time */
 	int	private_id;
-	int server_sock;
-	int client_sock;
-	WD_SOCK_STATE server_sock_state;
-	WD_SOCK_STATE client_sock_state;
-
+	SocketConnection server_socket;
+	SocketConnection client_socket;
+	bool is_connectable;					/* true if any of the socket is connected */
 	bool is_lock_holder;					/* lock holder flag */
 	bool in_interlocking;					/* interlocking is in progress */
 }WatchdogNode;
-
-typedef struct wd_command
-{
-	char			commandMessageType;
-	unsigned int	commandID;
-	unsigned int	commandSendToCount;
-	unsigned int	commandReplyFromCount;
-	unsigned int	commandTimeoutSec;
-	struct timeval  commandTime;
-	int	commandFinished;
-}wd_command;
 
 extern pid_t initialize_watchdog(void);
 
