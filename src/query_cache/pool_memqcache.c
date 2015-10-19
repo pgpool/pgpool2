@@ -3138,6 +3138,24 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 								(errmsg("ReadyForQuery: pool_commit_cache failed")));
 
 					}
+					else
+					{
+						/*
+						 * Reset temporary query cache buffer. This is
+						 * necessary if extended query protocol is used and a
+						 * bind/execute message arrives which uses a statement
+						 * created by prior parse message. In this case since
+						 * the temp_cache is not initialized by a parse
+						 * message, messages are added to pre existing temp
+						 * cache buffer. The problem was found in bug#152.
+						 * http://www.pgpool.net/mantisbt/view.php?id=152
+						 */
+						POOL_TEMP_QUERY_CACHE *cache;
+						cache = pool_get_current_cache();
+						pool_discard_temp_query_cache(cache);
+						session_context->query_context->temp_cache = pool_create_temp_query_cache(query);
+					}
+
 					pfree(cache_buffer);
 				}
 				pool_shmem_unlock();
