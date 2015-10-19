@@ -3939,6 +3939,7 @@ void forward_pending_data(POOL_CONNECTION *frontend, POOL_CONNECTION *backend)
 	{
 		ereport(DEBUG1,
 				(errmsg("forward_pending_data: no peding data")));
+		return;
 	}
 
 	/* Send flush messsage to backend to retrieve response of backend */
@@ -3951,6 +3952,27 @@ void forward_pending_data(POOL_CONNECTION *frontend, POOL_CONNECTION *backend)
 	 */
 	for(;;)
 	{
+		pool_read(backend, &kind, 1);
+		ereport(DEBUG1,
+				(errmsg("forward_pending_data: forwarding kind: '%c'", kind)));
+		pool_write(frontend, &kind, 1);
+
+		pool_read(backend, &len, sizeof(len));
+		ereport(DEBUG1,
+				(errmsg("forward_pending_data: forwarding len: '%d'", ntohl(len))));
+		pool_write(frontend, &len, sizeof(len));
+
+		len = ntohl(len);
+		if ((len - sizeof(len)) > 0)
+		{
+			len -= sizeof(len);
+			ereport(DEBUG1,
+					(errmsg("forward_pending_data: fowarding rest of packet. len:%d", len)));
+			buf = palloc(len);
+			pool_read(backend, buf, len);
+			pool_write(frontend, buf, len);
+		}
+
 		/* check if there's any pending data */
 		if (!pool_ssl_pending(backend) && pool_read_buffer_is_empty(backend))
 		{
@@ -3958,36 +3980,12 @@ void forward_pending_data(POOL_CONNECTION *frontend, POOL_CONNECTION *backend)
 			if (pool_check_fd(backend) != 0)
 			{
 				ereport(DEBUG1,
-						(errmsg("forward_pending_data: no pending data")));
+						(errmsg("forward_pending_data: select shows no pending data")));
 				pool_set_timeout(-1);
 				break;
 			}
-		}
-
-		pool_set_timeout(-1);
-
-		pool_read(backend, &kind, 1);
-		ereport(DEBUG1,
-				(errmsg("forward_pending_data: forwarding kind: '%c'", kind)));
-		pool_write(frontend, &kind, 1);
-
-		ereport(DEBUG1,
-				(errmsg("forward_pending_data: reading len")));
-		pool_read(backend, &len, sizeof(len));
-		ereport(DEBUG1,
-				(errmsg("forward_pending_data: finished reading len:%d", ntohl(len))));
-		pool_write(frontend, &kind, 1);
-
-		len = ntohl(len);
-		if ((len - sizeof(len)) > 0)
-		{
-			len -= sizeof(len);
-			ereport(DEBUG1,
-					(errmsg("forward_pending_data: saving message len:%d", len)));
-
-			buf = palloc(len);
-			pool_read(backend, buf, len);
-			pool_write(frontend, &kind, 1);
+			pool_set_timeout(-1);
 		}
 	}
+	pool_flush(frontend);
 }
