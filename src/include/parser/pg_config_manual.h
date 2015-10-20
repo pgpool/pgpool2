@@ -66,7 +66,9 @@
 /*
  * Set the upper and lower bounds of sequence values.
  */
+#ifdef NOT_USED
 #define SEQ_MAXVALUE	PG_INT64_MAX
+#endif
 #define SEQ_MINVALUE	(-SEQ_MAXVALUE)
 
 /*
@@ -203,8 +205,9 @@
  * the older rand() function, which is often different from --- and
  * considerably inferior to --- random().
  */
+#ifdef NOT_USED
 #define MAX_RANDOM_VALUE  PG_INT32_MAX
-
+#endif
 /*
  * On PPC machines, decide whether to use the mutex hint bit in LWARX
  * instructions.  Setting the hint bit will slightly improve spinlock
