@@ -19,11 +19,12 @@
 #define STRINGINFO_H
 
 #include <stdio.h>
-#include "pg_config_manual.h"
+#include "parser/pg_config_manual.h"
 #include "pool_parser.h"
 
-#ifdef USE_REPL_SNPRINTF
 /* port.h */
+
+#ifdef USE_REPL_SNPRINTF
 extern int pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args);
 
 /*

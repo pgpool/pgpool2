@@ -18,6 +18,7 @@
  * everything that should be freed.  See utils/mmgr/README for more info.
  *
  *
+ * Portions Copyright (c) 2003-2015, PgPool Global Development Group
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -28,7 +29,7 @@
 #ifndef PALLOC_H
 #define PALLOC_H
 
-#include "pg_config_manual.h"
+#include "parser/pg_config_manual.h"
 
 /*
  * Type MemoryContextData is declared in nodes/memnodes.h.	Most users

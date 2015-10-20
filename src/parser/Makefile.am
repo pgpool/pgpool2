@@ -14,13 +14,16 @@ libsql_parser_a_SOURCES  = \
 	parser.c \
 	pool_string.c \
 	scansup.c \
-	snprintf.c \
 	stringinfo.c \
 	value.c \
 	$(top_srcdir)/src/utils/mmgr/mcxt.c \
 	$(top_srcdir)/src/utils/mmgr/aset.c \
 	$(top_srcdir)/src/utils/error/elog.c \
 	wchar.c
+
+if use_repl_snprintf
+  libsql_parser_a_SOURCES  += snprintf.c
+endif
 
 EXTRA_DIST = scan.c scan.l
 
