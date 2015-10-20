@@ -78,6 +78,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@use_repl_snprintf_TRUE@am__append_1 = snprintf.c
 subdir = src/parser
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/mkinstalldirs gram.h gram.c \
@@ -104,15 +105,23 @@ am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 libsql_parser_a_AR = $(AR) $(ARFLAGS)
 libsql_parser_a_LIBADD =
+am__libsql_parser_a_SOURCES_DIST = copyfuncs.c gram.y keywords.c \
+	kwlookup.c list.c makefuncs.c nodes.c outfuncs.c parser.c \
+	pool_string.c scansup.c stringinfo.c value.c \
+	$(top_srcdir)/src/utils/mmgr/mcxt.c \
+	$(top_srcdir)/src/utils/mmgr/aset.c \
+	$(top_srcdir)/src/utils/error/elog.c wchar.c snprintf.c
 am__dirstamp = $(am__leading_dot)dirstamp
+@use_repl_snprintf_TRUE@am__objects_1 = snprintf.$(OBJEXT)
 am_libsql_parser_a_OBJECTS = copyfuncs.$(OBJEXT) gram.$(OBJEXT) \
 	keywords.$(OBJEXT) kwlookup.$(OBJEXT) list.$(OBJEXT) \
 	makefuncs.$(OBJEXT) nodes.$(OBJEXT) outfuncs.$(OBJEXT) \
 	parser.$(OBJEXT) pool_string.$(OBJEXT) scansup.$(OBJEXT) \
-	snprintf.$(OBJEXT) stringinfo.$(OBJEXT) value.$(OBJEXT) \
+	stringinfo.$(OBJEXT) value.$(OBJEXT) \
 	$(top_srcdir)/src/utils/mmgr/mcxt.$(OBJEXT) \
 	$(top_srcdir)/src/utils/mmgr/aset.$(OBJEXT) \
-	$(top_srcdir)/src/utils/error/elog.$(OBJEXT) wchar.$(OBJEXT)
+	$(top_srcdir)/src/utils/error/elog.$(OBJEXT) wchar.$(OBJEXT) \
+	$(am__objects_1)
 libsql_parser_a_OBJECTS = $(am_libsql_parser_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -164,7 +173,7 @@ am__v_YACC_0 = @echo "  YACC    " $@;
 am__v_YACC_1 = 
 YLWRAP = $(top_srcdir)/ylwrap
 SOURCES = $(libsql_parser_a_SOURCES)
-DIST_SOURCES = $(libsql_parser_a_SOURCES)
+DIST_SOURCES = $(am__libsql_parser_a_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -320,26 +329,12 @@ top_srcdir = @top_srcdir@
 parser_incdir = $(top_srcdir)/src/include/parser
 AM_CPPFLAGS = -D_GNU_SOURCE -I $(parser_incdir) -I @PGSQL_INCLUDE_DIR@
 noinst_LIBRARIES = libsql-parser.a
-libsql_parser_a_SOURCES = \
-	copyfuncs.c \
-	gram.y \
-	keywords.c \
-	kwlookup.c \
-	list.c \
-	makefuncs.c \
-	nodes.c \
-	outfuncs.c \
-	parser.c \
-	pool_string.c \
-	scansup.c \
-	snprintf.c \
-	stringinfo.c \
-	value.c \
+libsql_parser_a_SOURCES = copyfuncs.c gram.y keywords.c kwlookup.c \
+	list.c makefuncs.c nodes.c outfuncs.c parser.c pool_string.c \
+	scansup.c stringinfo.c value.c \
 	$(top_srcdir)/src/utils/mmgr/mcxt.c \
 	$(top_srcdir)/src/utils/mmgr/aset.c \
-	$(top_srcdir)/src/utils/error/elog.c \
-	wchar.c
-
+	$(top_srcdir)/src/utils/error/elog.c wchar.c $(am__append_1)
 EXTRA_DIST = scan.c scan.l
 AM_YFLAGS = -d
 all: all-am

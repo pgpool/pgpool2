@@ -643,6 +643,8 @@ MEMCACHED_RPATH_OPT
 MEMCACHED_LINK_OPT
 MEMCACHED_INCLUDE_OPT
 PGCONFIG
+use_repl_snprintf_FALSE
+use_repl_snprintf_TRUE
 LIBOBJS
 YFLAGS
 YACC
@@ -13120,6 +13122,32 @@ fi
 
 
 pgac_need_repl_snprintf=no
+for ac_func in snprintf
+do :
+  ac_fn_c_check_func "$LINENO" "snprintf" "ac_cv_func_snprintf"
+if test "x$ac_cv_func_snprintf" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SNPRINTF 1
+_ACEOF
+
+else
+  pgac_need_repl_snprintf=yes
+fi
+done
+
+for ac_func in vsnprintf
+do :
+  ac_fn_c_check_func "$LINENO" "vsnprintf" "ac_cv_func_vsnprintf"
+if test "x$ac_cv_func_vsnprintf" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_VSNPRINTF 1
+_ACEOF
+
+else
+  pgac_need_repl_snprintf=yes
+fi
+done
+
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether long int is 64 bits" >&5
 $as_echo_n "checking whether long int is 64 bits... " >&6; }
@@ -13423,6 +13451,14 @@ $as_echo "#define USE_REPL_SNPRINTF 1" >>confdefs.h
 esac
 
 fi
+ if test $pgac_need_repl_snprintf = yes; then
+  use_repl_snprintf_TRUE=
+  use_repl_snprintf_FALSE='#'
+else
+  use_repl_snprintf_TRUE='#'
+  use_repl_snprintf_FALSE=
+fi
+
 
 # Need a #define for the size of Datum (unsigned long)
 # The cast to long int works around a bug in the HP C Compiler
@@ -14723,6 +14759,10 @@ fi
 
 if test -z "${MAINTAINER_MODE_TRUE}" && test -z "${MAINTAINER_MODE_FALSE}"; then
   as_fn_error $? "conditional \"MAINTAINER_MODE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${use_repl_snprintf_TRUE}" && test -z "${use_repl_snprintf_FALSE}"; then
+  as_fn_error $? "conditional \"use_repl_snprintf\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${enable_rpath_TRUE}" && test -z "${enable_rpath_FALSE}"; then
