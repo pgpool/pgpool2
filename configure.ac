@@ -104,6 +104,8 @@ dnl This mazic variable is set to "yes" in PostgreSQL's configure.in
 dnl if PORTNAME is "win32".
 dnl pgpool-II does not suppport Windows at the moment, so we set to "no".
 pgac_need_repl_snprintf=no
+AC_CHECK_FUNCS(snprintf, [], pgac_need_repl_snprintf=yes)
+AC_CHECK_FUNCS(vsnprintf, [], pgac_need_repl_snprintf=yes)
 
 PGAC_TYPE_64BIT_INT([long int])
 
@@ -166,6 +168,7 @@ if test $pgac_need_repl_snprintf = yes; then
   AC_DEFINE(USE_REPL_SNPRINTF, 1, [Use replacement snprintf() functions.])
   AC_LIBOBJ(snprintf)
 fi
+AM_CONDITIONAL(use_repl_snprintf, test $pgac_need_repl_snprintf = yes)
 
 # Need a #define for the size of Datum (unsigned long)
 AC_CHECK_SIZEOF([unsigned long])
