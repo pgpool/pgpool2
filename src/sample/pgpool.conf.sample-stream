@@ -520,7 +520,7 @@ clear_memqcache_on_escalation = on
 wd_escalation_command = ''
                                     # Executes this command at escalation on new active pgpool.
                                     # (change requires restart)
-wd_plunge_command = ''
+wd_de_escalation_command = ''
 									# Executes this command when master pgpool resigns from being master.
 									# (change requires restart)
 

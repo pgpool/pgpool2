@@ -287,7 +287,7 @@ typedef struct {
 	char *wd_lifecheck_method;			/* method of lifecheck. 'heartbeat' or 'query' */
 	int clear_memqcache_on_escalation;	/* if no 0, clear query cache on shmem when escalating */
 	char *wd_escalation_command;		/* Executes this command at escalation on new active pgpool.*/
-	char *wd_plunge_command;			/* Executes this command when master pgpool goes down.*/
+	char *wd_de_escalation_command;		/* Executes this command when master pgpool goes down.*/
 	char *wd_hostname;					/* watchdog hostname */
 	int wd_port;						/* watchdog port */
 	int wd_priority;					/* watchdog node priority, during leader election*/

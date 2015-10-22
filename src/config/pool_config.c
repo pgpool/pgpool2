@@ -1969,7 +1969,7 @@ int pool_init_config(void)
 	pool_config->wd_lifecheck_method = MODE_HEARTBEAT;
 	pool_config->clear_memqcache_on_escalation = 1;	
     pool_config->wd_escalation_command = "";
-	pool_config->wd_plunge_command = "";
+	pool_config->wd_de_escalation_command = "";
 	pool_config->trusted_servers = "";
 	pool_config->delegate_IP = "";
 	res = gethostname(localhostname,sizeof(localhostname));
@@ -4089,7 +4089,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			pool_config->wd_escalation_command = str;
 		}
 	
-		else if (!strcmp(key, "wd_plunge_command") &&
+		else if (!strcmp(key, "wd_de_escalation_command") &&
 		CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
 			char *str;
@@ -4106,7 +4106,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
-			pool_config->wd_plunge_command = str;
+			pool_config->wd_de_escalation_command = str;
 		}
 
 

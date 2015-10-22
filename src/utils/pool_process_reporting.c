@@ -701,8 +701,8 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	StrNCpy(status[i].desc, "command executed when escalation occurs", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	StrNCpy(status[i].name, "wd_plunge_command", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->wd_plunge_command);
+	StrNCpy(status[i].name, "wd_de_escalation_command", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->wd_de_escalation_command);
 	StrNCpy(status[i].desc, "command executed when master pgpool resigns occurs", POOLCONFIG_MAXDESCLEN);
 	i++;
 

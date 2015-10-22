@@ -148,7 +148,7 @@ fork_escalation_process(void)
 }
 
 /*
- * fork plunge process
+ * fork de-escalation process
  */
 pid_t
 fork_plunging_process(void)
@@ -180,10 +180,10 @@ fork_plunging_process(void)
 	
 	MemoryContextSwitchTo(TopMemoryContext);
 	
-	set_ps_display("plunging",false);
+	set_ps_display("de-escalation",false);
 	
 	ereport(LOG,
-			(errmsg("watchdog: plunging started")));
+			(errmsg("watchdog: de-escalation started")));
 	
 	*escalation_status = 1;
 	
@@ -191,24 +191,24 @@ fork_plunging_process(void)
 	 * STEP 2
 	 * execute escalation command
 	 */
-	if (strlen(pool_config->wd_plunge_command))
+	if (strlen(pool_config->wd_de_escalation_command))
 	{
-		int r = system(pool_config->wd_plunge_command);
+		int r = system(pool_config->wd_de_escalation_command);
 		if (WIFEXITED(r))
 		{
 			if (WEXITSTATUS(r) == EXIT_SUCCESS)
 				ereport(LOG,
-						(errmsg("watchdog plunge successful")));
+						(errmsg("watchdog de-escalation successful")));
 			else
 			{
 				ereport(WARNING,
-						(errmsg("watchdog plunge command failed with exit status: %d", WEXITSTATUS(r))));
+						(errmsg("watchdog de-escalation command failed with exit status: %d", WEXITSTATUS(r))));
 			}
 		}
 		else
 		{
 			ereport(WARNING,
-					(errmsg("watchdog plunge command exit abnormally")));
+					(errmsg("watchdog de-escalation command exit abnormally")));
 		}
 	}
 	
