@@ -4541,6 +4541,17 @@ Configuration about virtual IP interface control
 	You need to restart pgpool-II if you change this value.
 	</p>
 </dd>
+
+<dt><a name="WD_IPC_SOCKET_DIR"></a>wd_ipc_socket_dir <span class="version">V3.5 -</span></dt>
+<dd>
+	<p>The directory where the UNIX domain socket accepting pgpool-II watchdog IPC
+	connections will be created. Default is <code>'/tmp'</code>. Be
+	aware that this socket might be deleted by a cron job. We recommend to
+	set this value to <code>'/var/run'</code> or such directory.
+	</p>
+	<p>
+	This parameter can only be set at server start.</p>
+</dd>
 </dl>
 
 <h4>Configuration of heartbeat mode</h4>
@@ -4729,13 +4740,13 @@ Configuration about virtual IP interface control
     </dd>
 </dl>
 
-<h2 id="#INTEGRATE_EXT_LIFECHECK">Integrating external lifecheck with watchdog <span class="version">V3.5 -</span></h2>
+<h2 id="INTEGRATE_EXT_LIFECHECK">Integrating external lifecheck with watchdog <span class="version">V3.5 -</span></h2>
 <p>
 pgpool-II watchdog process uses the BSD sockets for communicating with all pgpool-II processes and
 the same BSD socket can be used any third party system to provide the lifecheck function for
 current and remote pgpool-II watchdog nodes.
-The BSD socket file name for IPC is constructed by appending pgpool-II port after "wd_cmd_ipc_"
-string and the socket file is placed in the pgpool-II installed directory.
+The BSD socket file name for IPC is constructed by appending pgpool-II wd_port after "s.PGPOOLWD_CMD."
+string and the socket file is placed in the pgpool-II <a href="#WD_IPC_SOCKET_DIR">wd_ipc_socket_dir</a>." directory.
 </p>
 <h3 id="Watchdog_IPC_command_packet_format">Watchdog IPC command packet format</h3>
 <dl>
