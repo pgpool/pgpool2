@@ -686,6 +686,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	StrNCpy(status[i].desc, "non 0 if operating in use_watchdog", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "wd_ipc_socket_dir", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->wd_ipc_socket_dir);
+	StrNCpy(status[i].desc, "watchdog ipc socket directory", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	StrNCpy(status[i].name, "wd_lifecheck_method", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->wd_lifecheck_method);
 	StrNCpy(status[i].desc, "method of watchdog lifecheck", POOLCONFIG_MAXDESCLEN);

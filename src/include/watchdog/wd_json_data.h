@@ -39,8 +39,8 @@ typedef struct WDNodeInfo
 	int	id;
 }WDNodeInfo;
 
-extern WatchdogNode* get_watchdog_node_from_json(char* json_data, int data_len);
-extern char* get_watchdog_node_info_json(WatchdogNode* wdNode);
+extern WatchdogNode* get_watchdog_node_from_json(char* json_data, int data_len, char** authkey);
+extern char* get_watchdog_node_info_json(WatchdogNode* wdNode, char* authkey);
 extern POOL_CONFIG* get_pool_config_from_json(char* json_data, int data_len);
 extern char* get_pool_config_json(void);
 extern char* get_lifecheck_node_status_change_json(int nodeID, int nodeStatus, char* message);

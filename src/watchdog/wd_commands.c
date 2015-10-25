@@ -89,8 +89,13 @@ void wd_ipc_initialize_data(void)
 	}
 	if (watchdog_ipc_address == NULL)
 	{
-		watchdog_ipc_address = pool_shared_memory_create(100);
-		snprintf(watchdog_ipc_address, 100,"wd_cmd_ipc_%d",pool_config->wd_port);
+		char wd_ipc_sock_addr[255];
+		snprintf(wd_ipc_sock_addr, sizeof(wd_ipc_sock_addr), "%s/.s.PGPOOLWD_CMD.%d",
+				 pool_config->wd_ipc_socket_dir,
+				 pool_config->wd_port);
+
+		watchdog_ipc_address = pool_shared_memory_create(strlen(wd_ipc_sock_addr));
+		strcpy(watchdog_ipc_address, wd_ipc_sock_addr);
 	}
 }
 

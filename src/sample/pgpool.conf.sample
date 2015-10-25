@@ -486,11 +486,18 @@ wd_authkey = ''
                                     # Authentication key for watchdog communication
                                     # (change requires restart)
 
+wd_ipc_socket_dir = '/tmp'
+									# Unix domain socket path for watchdog IPC socket
+									# The Debian package defaults to
+									# /var/run/postgresql
+									# (change requires restart)
+
+
 # - Virtual IP control Setting -
 
 delegate_IP = ''
                                     # delegate IP address
-                                    # If this is empty, virtual IP never bring up. 
+                                    # If this is empty, virtual IP never bring up.
                                     # (change requires restart)
 if_cmd_path = '/sbin'
                                     # path to the directory where if_up/down_cmd exists 

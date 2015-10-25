@@ -486,6 +486,12 @@ wd_authkey = ''
                                     # Authentication key for watchdog communication
                                     # (change requires restart)
 
+wd_ipc_socket_dir = '/tmp'
+									# Unix domain socket path for watchdog IPC socket
+									# The Debian package defaults to
+									# /var/run/postgresql
+									# (change requires restart)
+
 # - Virtual IP control Setting -
 
 delegate_IP = ''

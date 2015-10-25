@@ -54,7 +54,6 @@
 #include "watchdog/wd_utils.h"
 
 #define MAX_BIND_TRIES 5
-#define WD_MAX_PACKET_STRING (256)
 /*
  * heartbeat packet
  */

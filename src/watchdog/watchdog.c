@@ -39,6 +39,7 @@
 #include <ifaddrs.h>
 
 #include "pool.h"
+#include "auth/md5.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
 #include "utils/elog.h"
@@ -84,6 +85,34 @@ typedef enum IPC_CMD_PREOCESS_RES
 #define WD_ASK_FOR_POOL_CONFIG				'Y'
 #define WD_POOL_CONFIG_DATA					'Z'
 
+typedef struct packet_types
+{
+	char type;
+	char name[100];
+}packet_types;
+packet_types all_packet_types[] = {
+	{WD_ADD_NODE_MESSAGE, "ADD NODE"},
+	{WD_REQ_INFO_MESSAGE, "REQUEST INFO"},
+	{WD_DECLARE_COORDINATOR_MESSAGE, "DECLARE COORDINATOR"},
+	{WD_DATA_MESSAGE, "DATA"},
+	{WD_ERROR_MESSAGE, "ERROR"},
+	{WD_ACCEPT_MESSAGE, "ACCEPT"},
+	{WD_INFO_MESSAGE, "NODE INFO"},
+	{WD_JOIN_COORDINATOR_MESSAGE, "JOIN COORDINATOR"},
+	{WD_INTERLOCKING_REQUEST, "INTERLOCKING REQUEST"},
+	{WD_IAM_COORDINATOR_MESSAGE, "IAM COORDINATOR"},
+	{WD_IAM_IN_NW_TROUBLE_MESSAGE, "I AM IN NETWORK TROUBLE"},
+	{WD_QUORUM_IS_LOST, "QUORUM IS LOST"},
+	{WD_REJECT_MESSAGE, "REJECT"},
+	{WD_STAND_FOR_COORDINATOR_MESSAGE, "STAND FOR COORDINATOR"},
+	
+	{WD_INTERUNLOCKING_REQUEST, "INTERUNLOCKING REQUEST"},
+	{WD_REPLICATE_VARIABLE_REQUEST, "REPLICATE VARIABLE REQUEST"},
+	{WD_INFORM_I_AM_GOING_DOWN, "INFORM I AM GOING DOWN"},
+	{WD_ASK_FOR_POOL_CONFIG, "ASK FOR POOL CONFIG"},
+	{WD_POOL_CONFIG_DATA, "CONFIG DATA"},
+	{WD_NO_MESSAGE,""}
+};
 
 char *wd_event_name[] =
 {	"WD_EVENT_WD_STATE_CHANGED",
@@ -279,7 +308,7 @@ static bool watchdog_internal_command_packet_processor(WatchdogNode* wdNode, WDP
 
 
 static unsigned int get_next_commandID(void);
-static WatchdogNode* parse_node_info_message(WDPacketData* pkt);
+static WatchdogNode* parse_node_info_message(WDPacketData* pkt, char **authkey);
 static int get_quorum_status(void);
 static int get_mimimum_nodes_required_for_quorum(void);
 
@@ -311,7 +340,7 @@ static int watchdog_state_machine_voting(WD_EVENTS event, WatchdogNode* wdNode, 
 static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt);
 static int watchdog_state_machine_standForCord(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt);
 static int watchdog_state_machine_initializing(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt);
-static int watchdog_state_machine_joing(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt);
+static int watchdog_state_machine_joining(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt);
 static int watchdog_state_machine_loading(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt);
 static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt);
 static int watchdog_state_machine_waiting_for_quorum(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt);
@@ -353,13 +382,16 @@ static WDFailoverCMDResults node_is_asking_for_failover_cmd_start(WatchdogNode* 
 static void wd_system_will_go_down(int code, Datum arg);
 static bool verify_pool_configurations(POOL_CONFIG* config);
 
+static bool get_authhash_for_node(WatchdogNode* wdNode, char* authhash);
+static bool verify_authhash_for_node(WatchdogNode* wdNode, char* authhash);
+
 static void print_watchdog_node_info(WatchdogNode* wdNode);
 static int wd_create_recv_socket(int port);
 static void wd_check_config(void);
 static pid_t watchdog_main(void);
 static pid_t fork_watchdog_child(void);
 
-
+static void print_packet_info(WDPacketData* pkt,WatchdogNode* wdNode);
 /* global variables */
 wd_cluster g_cluster;
 struct timeval g_tm_set_time;
@@ -1098,48 +1130,66 @@ static int read_sockets(fd_set* rmask,int pending_fds_count)
 			pkt = read_packet_of_type(conn,WD_ADD_NODE_MESSAGE);
 			if (pkt)
 			{
-				WatchdogNode* tempNode = parse_node_info_message(pkt);
+				char *authkey = NULL;
+				WatchdogNode* tempNode = parse_node_info_message(pkt, &authkey);
 				if (tempNode)
 				{
 					WatchdogNode* wdNode;
 					bool found = false;
+					bool authenticated = false;
+
 					print_watchdog_node_info(tempNode);
+					authenticated = verify_authhash_for_node(tempNode, authkey);
 					ereport(DEBUG1,
 							(errmsg("NODE ADD MESSAGE from Hostname:\"%s\" PORT:%d pgpool_port:%d",tempNode->hostname,tempNode->wd_port,tempNode->pgpool_port)));
 					/* verify this node */
-					for (i=0; i< g_cluster.remoteNodeCount; i++)
+					if (authenticated)
 					{
-						wdNode = &(g_cluster.remoteNodes[i]);
-						ereport(DEBUG1,
-								(errmsg("Comparing with NODE having Hostname:\"%s\" PORT:%d pgpool_port:%d",wdNode->hostname,wdNode->wd_port,wdNode->pgpool_port)));
-						
-						if ( (wdNode->wd_port == tempNode->wd_port && wdNode->pgpool_port == tempNode->pgpool_port) &&
-							( (strcmp(wdNode->hostname,conn->addr) == 0) || (strcmp(wdNode->hostname,tempNode->hostname) == 0)) )
+						for (i=0; i< g_cluster.remoteNodeCount; i++)
 						{
-							/* We have found the match */
-							found = true;
-							close_socket_connection(&wdNode->server_socket);
-							strlcpy(wdNode->delegate_ip, tempNode->delegate_ip, WD_MAX_HOST_NAMELEN);
-							strlcpy(wdNode->nodeName, tempNode->nodeName, WD_MAX_HOST_NAMELEN);
-							wdNode->state = tempNode->state;
-							wdNode->tv.tv_sec = tempNode->tv.tv_sec;
-							wdNode->wd_priority = tempNode->wd_priority;
-							wdNode->server_socket = *conn;
-							wdNode->server_socket.sock_state = WD_SOCK_CONNECTED;
-//							wdNode->server_socket.sock = ui_sock;
-							break;
+							wdNode = &(g_cluster.remoteNodes[i]);
+							ereport(DEBUG1,
+									(errmsg("Comparing with NODE having Hostname:\"%s\" PORT:%d pgpool_port:%d",wdNode->hostname,wdNode->wd_port,wdNode->pgpool_port)));
+							
+							if ( (wdNode->wd_port == tempNode->wd_port && wdNode->pgpool_port == tempNode->pgpool_port) &&
+								( (strcmp(wdNode->hostname,conn->addr) == 0) || (strcmp(wdNode->hostname,tempNode->hostname) == 0)) )
+							{
+								/* We have found the match */
+								found = true;
+								close_socket_connection(&wdNode->server_socket);
+								strlcpy(wdNode->delegate_ip, tempNode->delegate_ip, WD_MAX_HOST_NAMELEN);
+								strlcpy(wdNode->nodeName, tempNode->nodeName, WD_MAX_HOST_NAMELEN);
+								wdNode->state = tempNode->state;
+								wdNode->tv.tv_sec = tempNode->tv.tv_sec;
+								wdNode->wd_priority = tempNode->wd_priority;
+								wdNode->server_socket = *conn;
+								wdNode->server_socket.sock_state = WD_SOCK_CONNECTED;
+	//							wdNode->server_socket.sock = ui_sock;
+								break;
+							}
 						}
-					}
-					if (found)
-					{
-						/* reply with node info message */
-						ereport(NOTICE,
-								(errmsg("New node joined the cluster Hostname:\"%s\" PORT:%d pgpool_port:%d",tempNode->hostname,tempNode->wd_port,tempNode->pgpool_port)));
+						if (found)
+						{
+							/* reply with node info message */
+							ereport(NOTICE,
+									(errmsg("New node joined the cluster Hostname:\"%s\" PORT:%d pgpool_port:%d",tempNode->hostname,tempNode->wd_port,tempNode->pgpool_port)));
 
-						watchdog_state_machine(WD_EVENT_PACKET_RCV, wdNode, pkt);
+							watchdog_state_machine(WD_EVENT_PACKET_RCV, wdNode, pkt);
+						}
+						else
+							ereport(NOTICE,
+								(errmsg("add node from Hostname:\"%s\" PORT:%d pgpool_port:%d rejected.",tempNode->hostname,tempNode->wd_port,tempNode->pgpool_port),
+									 errdetail("verify the other watchdog node configurations")));
 
 					}
 					else
+					{
+						ereport(NOTICE,
+								(errmsg("Authentication failed for add node from Hostname:\"%s\" PORT:%d pgpool_port:%d",tempNode->hostname,tempNode->wd_port,tempNode->pgpool_port),
+								 errdetail("make sure wd_authkey configuration is same on all nodes")));
+					}
+
+					if (found == false || authenticated == false)
 					{
 						/* reply with reject message, We do not need to go to state processor */
 						/* For now, create a empty temp node. TODO*/
@@ -1149,13 +1199,12 @@ static int read_sockets(fd_set* rmask,int pending_fds_count)
 						tmpNode.server_socket.sock = -1;
 						tmpNode.server_socket.sock_state = WD_SOCK_UNINITIALIZED;
 						reply_with_minimal_message(&tmpNode, WD_REJECT_MESSAGE, pkt);
-						ereport(NOTICE,
-								(errmsg("NODE ADD Message rejected Hostname:\"%s\" PORT:%d pgpool_port:%d",tempNode->hostname,tempNode->wd_port,tempNode->pgpool_port)));
-
 						close_socket_connection(conn);
 					}
 					pfree(tempNode);
 				}
+				if (authkey)
+					pfree(authkey);
 				//				watchdog_state_machine(WD_EVENT_PACKET_RCV, p, packet);
 				free_packet(pkt);
 				count++;
@@ -2098,13 +2147,13 @@ static bool node_has_resigned_from_interlocking(WatchdogNode* wdNode, WDPacketDa
 }
 
 
-static WatchdogNode* parse_node_info_message(WDPacketData* pkt)
+static WatchdogNode* parse_node_info_message(WDPacketData* pkt, char **authkey)
 {
 	if (pkt == NULL || (pkt->type != WD_ADD_NODE_MESSAGE && pkt->type != WD_INFO_MESSAGE))
 		return NULL;
 	if (pkt->data == NULL || pkt->len <= 0)
 		return NULL;
-	return get_watchdog_node_from_json(pkt->data,pkt->len);
+	return get_watchdog_node_from_json(pkt->data,pkt->len, authkey);
 }
 
 static int read_from_socket(int sock, void* buf, size_t len, int timeout)
@@ -2538,9 +2587,11 @@ static JsonNode* get_node_list_json(int id)
 
 static WDPacketData* get_addnode_message(void)
 {
+	char authhash[MD5_PASSWD_LEN + MD5_PASSWD_LEN + 10]; //TODO
 	WDPacketData *message = get_empty_packet();
-	char *json_data = get_watchdog_node_info_json(g_cluster.localNode);
-	
+	bool include_hash = get_authhash_for_node(g_cluster.localNode, authhash);
+	char *json_data = get_watchdog_node_info_json(g_cluster.localNode, include_hash?authhash:NULL);
+
 	set_message_type(message, WD_ADD_NODE_MESSAGE);
 	set_next_commandID_in_message(message);
 	set_message_data(message,json_data,strlen(json_data));
@@ -2549,10 +2600,11 @@ static WDPacketData* get_addnode_message(void)
 
 static WDPacketData* get_mynode_info_message(WDPacketData* replyFor)
 {
-	
+	char authhash[MD5_PASSWD_LEN +1];
 	WDPacketData *message = get_empty_packet();
-	char *json_data = get_watchdog_node_info_json(g_cluster.localNode);
-	
+	bool include_hash = get_authhash_for_node(g_cluster.localNode, authhash);
+	char *json_data = get_watchdog_node_info_json(g_cluster.localNode, include_hash?authhash:NULL);
+
 	set_message_type(message, WD_INFO_MESSAGE);
 	if (replyFor == NULL)
 		set_next_commandID_in_message(message);
@@ -2674,7 +2726,8 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 			
 		case WD_INFO_MESSAGE:
 		{
-			WatchdogNode* tempNode = parse_node_info_message(pkt);
+			char *authkey = NULL;
+			WatchdogNode* tempNode = parse_node_info_message(pkt, &authkey);
 			wdNode->state = tempNode->state;
 			wdNode->tv.tv_sec = tempNode->tv.tv_sec;
 			strlcpy(wdNode->nodeName, tempNode->nodeName, WD_MAX_HOST_NAMELEN);
@@ -2684,7 +2737,10 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 			
 			printf("NODE INFO MESSAGE RECEVD\n");
 			print_watchdog_node_info(wdNode);
-			
+
+			if (authkey)
+				pfree(authkey);
+
 			if (wdNode->state == WD_COORDINATOR)
 			{
 				/* TODO check if we already have the coordinator */
@@ -3286,6 +3342,7 @@ static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacke
 
 	else if (event == WD_EVENT_PACKET_RCV)
 	{
+		print_packet_info(pkt,wdNode);
 		if (pkt->type == WD_INFO_MESSAGE)
 			standard_packet_processor(wdNode, pkt);
 		if (pkt->type == WD_INFORM_I_AM_GOING_DOWN)		/* TODO do it better way */
@@ -3309,7 +3366,7 @@ static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacke
 			watchdog_state_machine_loading(event,wdNode,pkt);
 			break;
 		case WD_JOINING:
-			watchdog_state_machine_joing(event,wdNode,pkt);
+			watchdog_state_machine_joining(event,wdNode,pkt);
 			break;
 		case WD_INITIALIZING:
 			watchdog_state_machine_initializing(event,wdNode,pkt);
@@ -3359,11 +3416,12 @@ static int watchdog_state_machine_loading(WD_EVENTS event, WatchdogNode* wdNode,
 			/* set the status to ADD_MESSAGE_SEND by hand */
 			for (i = 0; i< g_cluster.remoteNodeCount; i++)
 			{
-				wdNode = &(g_cluster.remoteNodes[i]);
-				if (wdNode->client_socket.sock_state == WD_SOCK_CONNECTED && wdNode->state == WD_DEAD)
+				WatchdogNode* wdTmpNode;
+				wdTmpNode = &(g_cluster.remoteNodes[i]);
+				if (wdTmpNode->client_socket.sock_state == WD_SOCK_CONNECTED && wdTmpNode->state == WD_DEAD)
 				{
-					if (send_message(wdNode, addPkt))
-						wdNode->state= WD_ADD_MESSAGE_SENT;
+					if (send_message(wdTmpNode, addPkt))
+						wdTmpNode->state = WD_ADD_MESSAGE_SENT;
 				}
 			}
 			free_packet(addPkt);
@@ -3408,9 +3466,10 @@ static int watchdog_state_machine_loading(WD_EVENTS event, WatchdogNode* wdNode,
 					break;
 
 				case WD_REJECT_MESSAGE:
-					if (wdNode->state == WD_ADD_MESSAGE_SENT)
+					if (wdNode->state == WD_ADD_MESSAGE_SENT || wdNode->state == WD_DEAD)
 						ereport(FATAL,
-							(errmsg("Add to watchdog cluster request is rejected by node \"%s:%d\"",wdNode->hostname,wdNode->wd_port),
+							(return_code(POOL_EXIT_FATAL),
+							 errmsg("Add to watchdog cluster request is rejected by node \"%s:%d\"",wdNode->hostname,wdNode->wd_port),
 								 errhint("check the watchdog configurations.")));
 					break;
 				default:
@@ -3431,7 +3490,7 @@ static int watchdog_state_machine_loading(WD_EVENTS event, WatchdogNode* wdNode,
  * initialization state. moving to this state from loading does not make
  * much sence as at loading time we already have updated node informations
  */
-static int watchdog_state_machine_joing(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt)
+static int watchdog_state_machine_joining(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt)
 {
 	switch (event)
 	{
@@ -3459,7 +3518,7 @@ static int watchdog_state_machine_joing(WD_EVENTS event, WatchdogNode* wdNode, W
 				case WD_REJECT_MESSAGE:
 					if (wdNode->state == WD_ADD_MESSAGE_SENT)
 						ereport(FATAL,
-								(errmsg("Add to watchdog cluster request is rejected by node \"%s:%d\"",wdNode->hostname,wdNode->wd_port),
+							(errmsg("Add to watchdog cluster request is rejected by node \"%s:%d\"",wdNode->hostname,wdNode->wd_port),
 								 errhint("check the watchdog configurations.")));
 					break;
 				default:
@@ -4757,6 +4816,41 @@ ERROR_EXIT:
 	return false;
 }
 
+static bool get_authhash_for_node(WatchdogNode* wdNode, char* authhash)
+{
+	if (strlen(pool_config->wd_authkey))
+	{
+		char nodeStr[WD_MAX_PACKET_STRING + 1];
+		int len = snprintf(nodeStr, WD_MAX_PACKET_STRING, "state=%d tv_sec=%ld wd_port=%d",
+					   wdNode->state, wdNode->tv.tv_sec, wdNode->wd_port);
+		
+		
+		/* calculate hash from packet */
+		wd_calc_hash(nodeStr, len, authhash);
+		return true;
+	}
+	return false;
+}
+
+static bool verify_authhash_for_node(WatchdogNode* wdNode, char* authhash)
+{
+	if (strlen(pool_config->wd_authkey))
+	{
+		char calculated_authhash[MD5_PASSWD_LEN +1];
+
+		char nodeStr[WD_MAX_PACKET_STRING];
+		int len = snprintf(nodeStr, WD_MAX_PACKET_STRING, "state=%d tv_sec=%ld wd_port=%d",
+						   wdNode->state, wdNode->tv.tv_sec, wdNode->wd_port);
+		
+		
+		/* calculate hash from packet */
+		wd_calc_hash(nodeStr, len, calculated_authhash);
+		return (strcmp(calculated_authhash,authhash) == 0);
+	}
+	/* authkey is not enabled.*/
+	return true;
+}
+
 /* DEBUG */
 static void print_watchdog_node_info(WatchdogNode* wdNode)
 {
@@ -4768,3 +4862,21 @@ static void print_watchdog_node_info(WatchdogNode* wdNode)
 	printf("********\t Priority = %d\n",wdNode->wd_priority);
 }
 
+static void print_packet_info(WDPacketData* pkt,WatchdogNode* wdNode)
+{
+	int i;
+	packet_types *pkt_type = NULL;
+	for (i =0; ; i++)
+	{
+		if (all_packet_types[i].type == WD_NO_MESSAGE)
+			break;
+		
+		if (all_packet_types[i].type == pkt->type)
+		{
+			pkt_type = &all_packet_types[i];
+			break;
+		}
+	}
+	printf("\n******Packet [ID:%d]received of type [%s] from \"%s\" My state = (%s) \n",pkt->command_id, pkt_type?pkt_type->name:"UNKNOWN",
+		   wdNode->nodeName, debug_states[get_local_node_state()]);
+}

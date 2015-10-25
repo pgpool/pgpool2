@@ -132,6 +132,7 @@ int pool_init_config(void)
 	pool_config->port = 9999;
 	pool_config->pcp_port = 9898;
 	pool_config->socket_dir = DEFAULT_SOCKET_DIR;
+	pool_config->wd_ipc_socket_dir = DEFAULT_WD_IPC_SOCKET_DIR;
 	pool_config->pcp_socket_dir = DEFAULT_SOCKET_DIR;
 	pool_config->backend_socket_dir = NULL;
 	pool_config->num_init_children = 32;
@@ -612,7 +613,25 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			pool_config->socket_dir = str;
 		}
-		else if (!strcmp(key, "pcp_socket_dir") && CHECK_CONTEXT(INIT_CONFIG, context))
+		else if (!strcmp(key, "socket_dir") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			char *str;
+			
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->socket_dir = str;
+		}
+		else if (!strcmp(key, "wd_ipc_socket_dir") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			char *str;
 
@@ -628,7 +647,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
-			pool_config->pcp_socket_dir = str;
+			pool_config->wd_ipc_socket_dir = str;
 		}
 		else if (!strcmp(key, "num_init_children") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{

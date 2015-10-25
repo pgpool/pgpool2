@@ -235,10 +235,9 @@ char* get_pool_config_json(void)
 }
 
 
-char* get_watchdog_node_info_json(WatchdogNode* wdNode)
+char* get_watchdog_node_info_json(WatchdogNode* wdNode, char* authkey)
 {
 	char* json_str;
-
 	JsonNode* jNode = jw_create_with_object(true);
 
 	jw_put_int(jNode, "StartupTimeSecs", wdNode->tv.tv_sec);
@@ -251,6 +250,9 @@ char* get_watchdog_node_info_json(WatchdogNode* wdNode)
 	jw_put_string(jNode, "HostName",wdNode->hostname);
 	jw_put_string(jNode, "VIP",wdNode->delegate_ip);
 
+	if(authkey)
+		jw_put_string(jNode, "authkey",authkey);
+
 	jw_finish_document(jNode);
 	json_str = pstrdup(jw_get_json_string(jNode));
 	jw_destroy(jNode);
@@ -258,7 +260,7 @@ char* get_watchdog_node_info_json(WatchdogNode* wdNode)
 
 }
 
-WatchdogNode* get_watchdog_node_from_json(char* json_data, int data_len)
+WatchdogNode* get_watchdog_node_from_json(char* json_data, int data_len, char** authkey)
 {
 	json_value *root = NULL;
 	char* ptr;
@@ -296,6 +298,14 @@ WatchdogNode* get_watchdog_node_from_json(char* json_data, int data_len)
 		goto ERROR_EXIT;
 	strncpy(wdNode->delegate_ip, ptr, sizeof(wdNode->delegate_ip));
 
+	if (authkey)
+	{
+		ptr = json_get_string_value_for_key(root, "authkey");
+		if (ptr != NULL)
+			*authkey = pstrdup(ptr);
+		else
+			*authkey = NULL;
+	}
 	return wdNode;
 
 	ERROR_EXIT:

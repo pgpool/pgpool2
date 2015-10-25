@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2012	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -29,6 +29,7 @@
 
 #define WD_NG (0)
 #define WD_OK (1)
+#define WD_MAX_PACKET_STRING (256)
 
 /* wd_utils.c*/
 extern int wd_chk_sticky(void);

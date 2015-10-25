@@ -77,6 +77,9 @@
 /* Unix domain socket directory */
 #define DEFAULT_SOCKET_DIR "/tmp"
 
+/* Unix domain socket directory for watchdog IPC */
+#define DEFAULT_WD_IPC_SOCKET_DIR "/tmp"
+
 /* pid file name */
 #define DEFAULT_PID_FILE_NAME "/var/run/pgpool/pgpool.pid"
 
