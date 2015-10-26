@@ -144,7 +144,7 @@ fork_escalation_process(void)
 	if (has_vip == WD_OK)
 		*escalation_status = 2;
 
-	return pid;
+	exit(0);
 }
 
 /*
@@ -224,6 +224,5 @@ fork_plunging_process(void)
 	
 	if (has_vip == WD_OK)
 		*escalation_status = 2;
-	
-	return pid;
+	exit(0);
 }

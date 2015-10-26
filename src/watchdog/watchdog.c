@@ -316,7 +316,7 @@ static bool write_packet_to_socket(int sock, WDPacketData* pkt);
 static int read_sockets(fd_set* rmask,int pending_fds_count);
 static void set_timeout(unsigned int sec);
 static int wd_create_command_server_socket(void);
-static void close_socket_connection(SocketConnection* conn);
+static void close_socket_connection(SocketConnection* conn,int line);
 static bool send_message_to_connection(SocketConnection* conn, WDPacketData *pkt);
 
 static int send_message(WatchdogNode* wdNode, WDPacketData *pkt);
@@ -484,10 +484,10 @@ static void wd_cluster_initialize(void)
 				(errmsg("watchdog remote node:%d on %s:%d",i,g_cluster.remoteNodes[i].hostname, g_cluster.remoteNodes[i].wd_port)));
 		
 	}
-	
+
 	escalation_status = pool_shared_memory_create(sizeof(int));
 	*escalation_status = 0;
-	
+
 	g_cluster.masterNode = NULL;
 	g_cluster.aliveNodeCount = 0;
 	g_cluster.quorum_exists = false;
@@ -498,7 +498,7 @@ static void wd_cluster_initialize(void)
 	g_cluster.ipc_command_socks = NULL;
 	g_cluster.wd_timer_commands = NULL;
 	g_cluster.localNode->state = WD_DEAD;
-	
+
 	/* initialize the memory for command object */
 	g_cluster.currentCommand.nodeResults = palloc0((sizeof(WDCommandNodeResult) * g_cluster.remoteNodeCount));
 	for (i=0; i< g_cluster.remoteNodeCount; i++)
@@ -592,7 +592,7 @@ wd_create_recv_socket(int port)
 				(errmsg("failed to create watchdog receive socket"),
 				 errdetail("listen failed with reason: \"%s\"", strerror(errno))));
 	}
-	
+
 	return sock;
 }
 
@@ -610,7 +610,7 @@ wd_create_client_socket(char * hostname, int port, bool *connected)
 	size_t len = 0;
 	struct sockaddr_in addr;
 	struct hostent * hp;
-	
+	printf("__FUNCTION__:%s:%d\n",__FUNCTION__,__LINE__);
 	*connected = false;
 	/* create socket */
 	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -637,6 +637,7 @@ wd_create_client_socket(char * hostname, int port, bool *connected)
 		close(sock);
 		return -1;
 	}
+	printf("__FUNCTION__:%s:%d sock = %d\n",__FUNCTION__,__LINE__,sock);
 	
 	/* set sockaddr_in */
 	memset(&addr,0,sizeof(addr));
@@ -648,7 +649,7 @@ wd_create_client_socket(char * hostname, int port, bool *connected)
 		if ((hp == NULL) || (hp->h_addrtype != AF_INET))
 		{
 			ereport(LOG,
-					(errmsg("failed to host"),
+					(errmsg("failed to get host address for \"%s\"",hostname),
 					 errdetail("gethostbyaddr failed with error: \"%s\"", hstrerror(h_errno))));
 			close(sock);
 			return -1;
@@ -673,8 +674,9 @@ wd_create_client_socket(char * hostname, int port, bool *connected)
 			*connected = true;
 			/* set socket to blocking again */
 			flags = fcntl(sock, F_GETFL, 0);
-			fcntl(sock, F_SETFL, flags | ~O_NONBLOCK);
-			
+			flags &= ~O_NONBLOCK;
+			fcntl(sock, F_SETFL, flags);
+			printf("%d New socket connected %d and set to non blocking \n",__LINE__,sock);
 			return sock;
 		}
 		ereport(LOG,
@@ -683,7 +685,12 @@ wd_create_client_socket(char * hostname, int port, bool *connected)
 		close(sock);
 		return -1;
 	}
+	/* set socket to blocking again */
+	flags = fcntl(sock, F_GETFL, 0);
+	flags &= ~O_NONBLOCK;
+	fcntl(sock, F_SETFL, flags);
 	*connected = true;
+	printf("%d New socket connected %d and set to non blocking \n",__LINE__,sock);
 	return sock;
 }
 
@@ -838,6 +845,7 @@ watchdog_main(void)
 	wd_cluster_initialize();
 	/* create a server socket for incoming watchdog connections */
 	g_cluster.localNode->server_socket.sock = wd_create_recv_socket(g_cluster.localNode->wd_port);
+	g_cluster.localNode->server_socket.sock_state = WD_SOCK_CONNECTED;
 	/* open the command server */
 	g_cluster.command_server_sock = wd_create_command_server_socket();
 	
@@ -1156,7 +1164,7 @@ static int read_sockets(fd_set* rmask,int pending_fds_count)
 							{
 								/* We have found the match */
 								found = true;
-								close_socket_connection(&wdNode->server_socket);
+								close_socket_connection(&wdNode->server_socket,__LINE__);
 								strlcpy(wdNode->delegate_ip, tempNode->delegate_ip, WD_MAX_HOST_NAMELEN);
 								strlcpy(wdNode->nodeName, tempNode->nodeName, WD_MAX_HOST_NAMELEN);
 								wdNode->state = tempNode->state;
@@ -1199,7 +1207,7 @@ static int read_sockets(fd_set* rmask,int pending_fds_count)
 						tmpNode.server_socket.sock = -1;
 						tmpNode.server_socket.sock_state = WD_SOCK_UNINITIALIZED;
 						reply_with_minimal_message(&tmpNode, WD_REJECT_MESSAGE, pkt);
-						close_socket_connection(conn);
+						close_socket_connection(conn,__LINE__);
 					}
 					pfree(tempNode);
 				}
@@ -2165,8 +2173,8 @@ static int read_from_socket(int sock, void* buf, size_t len, int timeout)
 	{
 		ret = read(sock, buf + read_len, (len - read_len));
 		if(ret < 0)
-			ereport(DEBUG1,
-				(errmsg("error reading from socket"),
+			ereport(LOG,
+				(errmsg("error reading from socket %d of length %d",sock,(len - read_len)),
 					 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
 		if(ret <= 0)
 			return ret;
@@ -2199,7 +2207,7 @@ static WDPacketData* read_packet_of_type(SocketConnection* conn, char ensure_typ
 	ret = read_from_socket(conn->sock,&type, sizeof(char), 1 );
 	if (ret != sizeof(char))
 	{
-		close_socket_connection(conn);
+		close_socket_connection(conn,__LINE__);
 		return NULL;
 	}
 
@@ -2211,14 +2219,14 @@ static WDPacketData* read_packet_of_type(SocketConnection* conn, char ensure_typ
 		/* The packet type is not what we want.*/
 		ereport(DEBUG1,
 				(errmsg("invalid packet type. expecting %c while received %c",ensure_type,type)));
-		close_socket_connection(conn);
+		close_socket_connection(conn,__LINE__);
 		return NULL;
 	}
 	
 	ret = read_from_socket(conn->sock, &cmd_id, sizeof(int) ,1);
 	if (ret != sizeof(int))
 	{
-		close_socket_connection(conn);
+		close_socket_connection(conn,__LINE__);
 		return NULL;
 	}
 	cmd_id = ntohl(cmd_id);
@@ -2229,7 +2237,7 @@ static WDPacketData* read_packet_of_type(SocketConnection* conn, char ensure_typ
 	ret = read_from_socket(conn->sock, &len, sizeof(int), 1);
 	if (ret != sizeof(int))
 	{
-		close_socket_connection(conn);
+		close_socket_connection(conn,__LINE__);
 		return NULL;
 	}
 	
@@ -2247,7 +2255,7 @@ static WDPacketData* read_packet_of_type(SocketConnection* conn, char ensure_typ
 	ret = read_from_socket(conn->sock, buf, len,1);
 	if (ret != len)
 	{
-		close_socket_connection(conn);
+		close_socket_connection(conn,__LINE__);
 		free_packet(pkt);
 		pfree(buf);
 		return NULL;
@@ -2297,17 +2305,20 @@ static void wd_system_will_go_down(int code, Datum arg)
 	
 	if (get_local_node_state() == WD_COORDINATOR)
 		resign_from_coordinator();
-	/* close all sockets */
+	/* close server socket */
+	close_socket_connection(&g_cluster.localNode->server_socket,__LINE__);
+	/* close all node sockets */
 	for (i=0; i< g_cluster.remoteNodeCount; i++)
 	{
 		WatchdogNode* wdNode = &(g_cluster.remoteNodes[i]);
-		close_socket_connection(&wdNode->client_socket);
-		close_socket_connection(&wdNode->server_socket);
+		close_socket_connection(&wdNode->client_socket,__LINE__);
+		close_socket_connection(&wdNode->server_socket,__LINE__);
 	}
 }
 
-static void close_socket_connection(SocketConnection* conn)
+static void close_socket_connection(SocketConnection* conn,int line)
 {
+	printf("Closing socket %d From %d\n",conn->sock,line);
 	if ((conn->sock > 0 && conn->sock_state == WD_SOCK_CONNECTED)
 		|| conn->sock_state == WD_SOCK_WAITING_FOR_CONNECT)
 	{
@@ -2421,7 +2432,7 @@ static int update_successful_outgoing_cons(fd_set* wmask, int pending_fds_count)
 					ereport(LOG,
 							(errmsg("error in outbond connection to %s:%d",wdNode->hostname,wdNode->wd_port),
 							 errdetail("%s",strerror(valopt))));
-					close_socket_connection(&wdNode->client_socket);
+					close_socket_connection(&wdNode->client_socket,__LINE__);
 					wdNode->client_socket.sock_state = WD_SOCK_ERROR;
 				}
 				else
@@ -2432,7 +2443,8 @@ static int update_successful_outgoing_cons(fd_set* wmask, int pending_fds_count)
 					
 					/* set socket to blocking again */
 					int flags = fcntl(wdNode->client_socket.sock, F_GETFL, 0);
-					fcntl(wdNode->client_socket.sock, F_SETFL, flags | ~O_NONBLOCK);
+					flags &= ~O_NONBLOCK;
+					fcntl(wdNode->client_socket.sock, F_SETFL, flags);
 					watchdog_state_machine(WD_EVENT_NEW_OUTBOUND_CONNECTION, wdNode, NULL);
 				}
 				count++;
@@ -2448,20 +2460,50 @@ static bool write_packet_to_socket(int sock, WDPacketData* pkt)
 {
 	int ret = 0;
 	int command_id, len;
+	int i;
+	packet_types *pkt_type = NULL;
+	for (i =0; ; i++)
+	{
+		if (all_packet_types[i].type == WD_NO_MESSAGE)
+			break;
+		
+		if (all_packet_types[i].type == pkt->type)
+		{
+			pkt_type = &all_packet_types[i];
+			break;
+		}
+	}
+
 	ereport(LOG,
-			(errmsg("sending watchdog packet Socket:%d, Type:%c, Command_ID:%d, data Length:%d",sock,pkt->type, pkt->command_id,pkt->len)));
+			(errmsg("sending watchdog packet Socket:%d, Type:[%s], Command_ID:%d, data Length:%d",sock,pkt_type?pkt_type->name:"NULL", pkt->command_id,pkt->len)));
 	
 	/* TYPE */
 	if (write(sock, &pkt->type, 1) < 1)
+	{
+		ereport(LOG,
+				(errmsg("failed to send packet Socket:%d, Type:[%s], Command_ID:%d, data Length:%d",sock,pkt_type?pkt_type->name:"NULL", pkt->command_id,pkt->len),
+				 errdetail("%s",strerror(errno))));
 		return false;
+	}
 	/* COMMAND */
 	command_id = htonl(pkt->command_id);
 	if (write(sock, &command_id, 4) < 4)
+	{
+		ereport(LOG,
+			(errmsg("failed to send command id, Socket:%d Type:[%s], Command_ID:%d, data Length:%d",sock,pkt_type?pkt_type->name:"NULL", pkt->command_id,pkt->len),
+				 errdetail("%s",strerror(errno))));
+
 		return false;
+	}
 	/* LENGTH */
 	len = htonl(pkt->len);
 	if (write(sock, &len, 4) < 4)
+	{
+		ereport(LOG,
+			(errmsg("failed to send length,Socket:%d Type:[%s], Command_ID:%d, data Length:%d",sock,pkt_type?pkt_type->name:"NULL", pkt->command_id,pkt->len),
+				 errdetail("%s",strerror(errno))));
 		return false;
+	}
 	/* DATA */
 	if (pkt->len > 0 && pkt->data)
 	{
@@ -2470,10 +2512,16 @@ static bool write_packet_to_socket(int sock, WDPacketData* pkt)
 		{
 			ret = write(sock, pkt->data + bytes_send, (pkt->len - bytes_send));
 			if (ret <=0)
+			{
+				ereport(LOG,
+					(errmsg("failed to send packet data, Socket:%d Type:[%s], Command_ID:%d, data Length:%d",sock,pkt_type?pkt_type->name:"NULL", pkt->command_id,pkt->len),
+						 errdetail("%s",strerror(errno))));
 				return false;
+			}
 			bytes_send += ret;
 		}while (bytes_send < pkt->len);
 	}
+	printf("RETURN TRUE from %d\n",__LINE__);
 	return true;
 }
 
@@ -2776,6 +2824,7 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 			else
 				reply_with_minimal_message(wdNode, WD_REJECT_MESSAGE, pkt);
 		}
+			break;
 			
 		case WD_IAM_COORDINATOR_MESSAGE:
 		{
@@ -2808,19 +2857,30 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 
 static bool send_message_to_connection(SocketConnection* conn, WDPacketData *pkt)
 {
+	printf("sending to sock:%d state:%d \n",conn->sock,conn->sock_state);
+
 	if (conn->sock > 0 && conn->sock_state == WD_SOCK_CONNECTED)
 	{
 		if (write_packet_to_socket(conn->sock, pkt) == true)
+		{
 			return true;
-		close_socket_connection(conn);
+		}
+		else
+			printf("Write failed while sending to sock:%d state:%d \n",conn->sock,conn->sock_state);
+
+		close_socket_connection(conn,__LINE__);
 	}
+
 	return false;
 }
 
 static bool send_message_to_node(WatchdogNode* wdNode, WDPacketData *pkt)
 {
+	printf("send message to client socket of %s node \n",wdNode->nodeName);
+
 	if (send_message_to_connection(&wdNode->client_socket,pkt) == true)
 		return true;
+	printf("send message to server socket of %s node \n",wdNode->nodeName);
 	if (send_message_to_connection(&wdNode->server_socket,pkt) == true)
 		return true;
 	return false;
@@ -3015,6 +3075,7 @@ static int issue_watchdog_internal_command(WatchdogNode* wdNode, WDPacketData *p
 			clear_command_node_result(nodeResult);
 			if (nodeResult->wdNode->state == WD_DEAD )
 			{
+				printf(" Not sending to DEAD node:%d name = [%s]\n",i,nodeResult->wdNode->nodeName);
 				/* Do not send to dead nodes */
 				nodeResult->cmdState = COMMAND_STATE_DO_NOT_SEND;
 			}
@@ -3022,6 +3083,8 @@ static int issue_watchdog_internal_command(WatchdogNode* wdNode, WDPacketData *p
 			{
 				if (send_message_to_node(nodeResult->wdNode, pkt) == false)
 				{
+					printf(" sending to node:%d name = [%s] FAILED \n",i,nodeResult->wdNode->nodeName);
+
 					/* failed to send. May be try again later */
 					save_message = true;
 					nodeResult->cmdState = COMMAND_STATE_SEND_ERROR;
@@ -3334,12 +3397,6 @@ static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacke
 		if (wdNode == g_cluster.masterNode)
 			g_cluster.masterNode = NULL;
 	}
-
-//	static int issue_watchdog_internal_command(WatchdogNode* wdNode, WDPacketData *pkt, int timeout_sec);
-//	static char get_current_command_resultant_message_type(void);
-//	static void check_for_current_command_timeout(void);
-//	static bool watchdog_internal_command_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt);
-
 	else if (event == WD_EVENT_PACKET_RCV)
 	{
 		print_packet_info(pkt,wdNode);
@@ -3750,9 +3807,12 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 				if (g_cluster.currentCommand.commandStatus == COMMAND_FINISHED_ALL_REPLIED ||
 					g_cluster.currentCommand.commandStatus == COMMAND_FINISHED_TIMEOUT)
 				{
-					printf("\n**************DECLARE COORDINATOR MESSAGE ACCEPTED**************\n");
+					ereport(LOG,
+							(errmsg("I am coordinator node of cluster. Starting escalation process")));
 					g_cluster.masterNode = g_cluster.localNode;
 					g_cluster.escalation_pid = fork_escalation_process();
+					ereport(LOG,
+							(errmsg("escalation process started with PID:%d",g_cluster.escalation_pid)));
 				}
 				else
 				{
@@ -3770,6 +3830,9 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 					g_cluster.currentCommand.commandStatus == COMMAND_FINISHED_TIMEOUT)
 				{
 					printf("\n**************I AM COORDINATOR MESSAGE ACCEPTED**************\n");
+					printf("Send to count = %d\n",g_cluster.currentCommand.commandSendToCount);
+					printf("Reply from count = %d\n",g_cluster.currentCommand.commandReplyFromCount);
+					printf("commandStatus = %d\n",g_cluster.currentCommand.commandStatus);
 				}
 				else
 				{

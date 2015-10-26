@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -275,10 +275,10 @@ lifecheck_exit_handler(int sig)
 pid_t initialize_watchdog_lifecheck(void)
 {
 	if (!pool_config->use_watchdog)
-		return -1;
+		return 0;
 	
 	if (!strcmp(pool_config->wd_lifecheck_method, MODE_EXTERNAL))
-		return -1;
+		return 0;
 
 	return fork_lifecheck_child();
 }
@@ -442,13 +442,24 @@ static bool inform_node_status(LifeCheckNode* node, char *message)
 	int node_status;
 	char* json_data;
 	WDIPCCmdResult* res;
+	char* new_status;
 
 	if (node->nodeState == NODE_DEAD)
+	{
+		new_status = "NODE DEAD";
 		node_status = WD_LIFECHECK_NODE_STATUS_DEAD;
+	}
 	else if (node->nodeState == NODE_ALIVE)
+	{
+		new_status = "NODE ALIVE";
 		node_status = WD_LIFECHECK_NODE_STATUS_ALIVE;
+	}
 	else
 		return false;
+
+	ereport(LOG,
+			(errmsg("informing the node status change to watchdog"),
+				 errdetail("node id :%d status = \"%s\" message:\"%s\"",node->ID,new_status,message)));
 
 	json_data = get_lifecheck_node_status_change_json(node->ID, node_status, message);
 	if (json_data == NULL)
@@ -530,7 +541,7 @@ static void load_watchdog_nodes_from_json(char* json_data, int len)
 	{
 		WDNodeInfo *nodeInfo = get_WDNodeInfo_from_wd_node_json(value->u.array.values[i]);
 
-		gslifeCheckCluster->lifeCheckNodes[i].nodeState = NODE_DEAD;
+		gslifeCheckCluster->lifeCheckNodes[i].nodeState = NODE_EMPTY;
 		gslifeCheckCluster->lifeCheckNodes[i].ID = nodeInfo->id;
 		strcpy(gslifeCheckCluster->lifeCheckNodes[i].hostName, nodeInfo->hostName);
 		strcpy(gslifeCheckCluster->lifeCheckNodes[i].nodeName, nodeInfo->nodeName);
