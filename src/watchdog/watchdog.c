@@ -144,6 +144,7 @@ char *debug_states[] = {
 	"WD_WAITING_FOR_QUORUM",
 	"WD_LOST",
 	"WD_IN_NW_TROUBLE",
+	"WD_SHUTDOWN",
 	"WD_ADD_MESSAGE_SENT"};
 
 typedef struct WDPacketData
@@ -305,7 +306,8 @@ static int issue_watchdog_internal_command(WatchdogNode* wdNode, WDPacketData *p
 static char get_current_command_resultant_message_type(void);
 static void check_for_current_command_timeout(void);
 static bool watchdog_internal_command_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt);
-
+static bool service_lost_connections(void);
+static void service_internal_command(void);
 
 static unsigned int get_next_commandID(void);
 static WatchdogNode* parse_node_info_message(WDPacketData* pkt, char **authkey);
@@ -811,8 +813,6 @@ watchdog_main(void)
 	fd_set emask;
 	const int select_timeout = 1;
 	struct timeval tv, ref_time;
-	tv.tv_sec = select_timeout;
-	tv.tv_usec = 0;
 	
 	
 	volatile int fd;
@@ -878,10 +878,10 @@ watchdog_main(void)
 		MemoryContextSwitchTo(TopMemoryContext);
 		FlushErrorState();
 	}
-	
+
 	/* We can now handle ereport(ERROR) */
 	PG_exception_stack = &local_sigjmp_buf;
-	
+
 	/* watchdog child loop */
 	for(;;)
 	{
@@ -889,16 +889,17 @@ watchdog_main(void)
 		bool timeout_event = false;
 		
 		MemoryContextSwitchTo(ProcessLoopContext);
-		//MemoryContextResetAndDeleteChildren(ProcessLoopContext); TODO
-		
+		MemoryContextResetAndDeleteChildren(ProcessLoopContext);
+
 		check_config_reload();
-		
+
 		fd_max = prepare_fds(&rmask,&wmask,&emask);
-		
+		tv.tv_sec = select_timeout;
+		tv.tv_usec = 0;
 		select_ret = select(fd_max + 1, &rmask, &wmask, &emask, &tv);
-		
+
 		gettimeofday(&ref_time,NULL);
-		
+
 		if (g_timeout_sec > 0 )
 		{
 			if (WD_TIME_DIFF_SEC(ref_time,g_tm_set_time) >=  g_timeout_sec)
@@ -914,14 +915,16 @@ watchdog_main(void)
 			processed_fds += update_successful_outgoing_cons(&wmask,(select_ret - processed_fds));
 			processed_fds += read_sockets(&rmask,(select_ret - processed_fds));
 		}
-		
+
 		if (timeout_event)
 			watchdog_state_machine(WD_EVENT_TIMEOUT, NULL, NULL);
 		if (WD_TIME_DIFF_SEC(ref_time,g_tm_set_time) >=  1)
 			process_wd_func_commands_for_timer_events();
 
 		check_for_current_command_timeout();
-		
+
+		if (service_lost_connections() == true)
+			service_internal_command();
 	}
 	return 0;
 }
@@ -2333,6 +2336,14 @@ static bool is_socket_connection_connected(SocketConnection* conn)
 	return (conn->sock > 0 && conn->sock_state == WD_SOCK_CONNECTED);
 }
 
+static bool is_node_reachable(WatchdogNode* wdNode)
+{
+	if (is_socket_connection_connected(&wdNode->client_socket))
+		return true;
+	if (is_socket_connection_connected(&wdNode->server_socket))
+		return true;
+	return false;
+}
 
 static int accept_incomming_connections(fd_set* rmask, int pending_fds_count)
 {
@@ -2911,6 +2922,30 @@ static int send_message(WatchdogNode* wdNode, WDPacketData *pkt)
 	return count;
 }
 
+static void service_internal_command(void)
+{
+	int i;
+	WDCommandNodeResult* nodeResult = NULL;
+
+	if (g_cluster.currentCommand.commandStatus != COMMAND_IN_PROGRESS)
+		return;
+	/* get the result node for */
+	for (i = 0; i< g_cluster.remoteNodeCount; i++)
+	{
+		WDCommandNodeResult* nodeRes = &g_cluster.currentCommand.nodeResults[i];
+		if (nodeRes->cmdState == COMMAND_STATE_SEND_ERROR)
+		{
+			if (is_node_reachable(nodeRes->wdNode))
+			{
+				if (send_message_to_node(nodeResult->wdNode, &g_cluster.currentCommand.packet) == true)
+				{
+					nodeResult->cmdState = COMMAND_STATE_SENT;
+					g_cluster.currentCommand.commandSendToCount++;
+				}
+			}
+		}
+	}
+}
 
 static bool watchdog_internal_command_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 {
@@ -3073,7 +3108,7 @@ static int issue_watchdog_internal_command(WatchdogNode* wdNode, WDPacketData *p
 		{
 			WDCommandNodeResult* nodeResult = &g_cluster.currentCommand.nodeResults[i];
 			clear_command_node_result(nodeResult);
-			if (nodeResult->wdNode->state == WD_DEAD )
+			if (nodeResult->wdNode->state == WD_DEAD ||  nodeResult->wdNode->state == WD_SHUTDOWN)
 			{
 				printf(" Not sending to DEAD node:%d name = [%s]\n",i,nodeResult->wdNode->nodeName);
 				/* Do not send to dead nodes */
@@ -3141,11 +3176,9 @@ static int update_connected_node_count(void)
 	for (i = 0; i< g_cluster.remoteNodeCount; i++)
 	{
 		WatchdogNode* wdNode = &(g_cluster.remoteNodes[i]);
-		if (wdNode->state == WD_DEAD)
+		if (wdNode->state == WD_DEAD || wdNode->state == WD_SHUTDOWN)
 			continue;
-		if (is_socket_connection_connected(&wdNode->client_socket))
-			g_cluster.aliveNodeCount++;
-		else if (is_socket_connection_connected(&wdNode->server_socket))
+		if (is_node_reachable(wdNode))
 			g_cluster.aliveNodeCount++;
 	}
 	return g_cluster.aliveNodeCount;
@@ -3169,23 +3202,39 @@ static void update_nodes_connection_status(void)
 	}
 }
 
-static void service_lost_connections(void)
+
+static bool service_lost_connections(void)
 {
 	int i;
 	struct timeval currTime;
+	bool ret = false;
 	gettimeofday(&currTime,NULL);
 	for (i = 0; i< g_cluster.remoteNodeCount; i++)
 	{
 		WatchdogNode* wdNode = &(g_cluster.remoteNodes[i]);
+		if (wdNode->state == WD_SHUTDOWN)
+			continue;
+
 		if (is_socket_connection_connected(&wdNode->client_socket) == false)
 		{
 			if (WD_TIME_DIFF_SEC(currTime,wdNode->client_socket.tv) <=  MIN_SECS_CONNECTION_RETRY)
 				continue;
 
 			if (wdNode->client_socket.sock_state != WD_SOCK_WAITING_FOR_CONNECT)
+			{
 				connect_to_node(wdNode);
+				if (wdNode->client_socket.sock_state == WD_SOCK_CONNECTED)
+				{
+					ereport(LOG,
+							(errmsg("connection to the remote node \"%s\" is restored",wdNode->nodeName)));
+					watchdog_state_machine(WD_EVENT_NEW_OUTBOUND_CONNECTION, wdNode, NULL);
+					ret = true;
+				}
+
+			}
 		}
 	}
+	return ret;
 }
 
 
@@ -3201,7 +3250,7 @@ static int get_cluster_node_count(void)
 	for (i = 0; i< g_cluster.remoteNodeCount; i++)
 	{
 		WatchdogNode* wdNode = &(g_cluster.remoteNodes[i]);
-		if (wdNode->state == WD_DEAD || wdNode->state == WD_LOST)
+		if (wdNode->state == WD_DEAD || wdNode->state == WD_LOST || wdNode->state == WD_SHUTDOWN)
 			continue;
 		count++;
 	}
@@ -3393,17 +3442,35 @@ static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacke
 	
 	if (event == WD_EVENT_REMOTE_NODE_LOST)
 	{
-		wdNode->state = WD_LOST;
+		if (wdNode->state == WD_SHUTDOWN)
+		{
+			ereport(LOG,
+					(errmsg("remote node \"%s\" is shutting down",wdNode->nodeName)));
+		}
+		else
+		{
+			wdNode->state = WD_LOST;
+			ereport(LOG,
+					(errmsg("remote node \"%s\" is lost",wdNode->nodeName)));
+		}
 		if (wdNode == g_cluster.masterNode)
+		{
+			ereport(LOG,
+					(errmsg("watchdog cluster has lost the coordinator node")));
 			g_cluster.masterNode = NULL;
+		}
 	}
 	else if (event == WD_EVENT_PACKET_RCV)
 	{
 		print_packet_info(pkt,wdNode);
+
 		if (pkt->type == WD_INFO_MESSAGE)
 			standard_packet_processor(wdNode, pkt);
 		if (pkt->type == WD_INFORM_I_AM_GOING_DOWN)		/* TODO do it better way */
+		{
+			wdNode->state = WD_SHUTDOWN;
 			return watchdog_state_machine(WD_EVENT_REMOTE_NODE_LOST, wdNode, NULL);
+		}
 		if (watchdog_internal_command_packet_processor(wdNode,pkt) == true)
 			return 0;
 	}
@@ -3498,6 +3565,26 @@ static int watchdog_state_machine_loading(WD_EVENTS event, WatchdogNode* wdNode,
 		{
 			switch (pkt->type)
 			{
+				case WD_STAND_FOR_COORDINATOR_MESSAGE:
+				{
+					/* We are loading but a note is already contesting for coordinator node
+					 * well we can ignore it but then this could eventually mean a lower priority
+					 * node can became a coordinator node.
+					 * So check the priority of the node in stand for coordinator state
+					 */
+					if (g_cluster.localNode->wd_priority > wdNode->wd_priority)
+					{
+						reply_with_minimal_message(wdNode, WD_REJECT_MESSAGE, pkt);
+						set_state(WD_STAND_FOR_COORDINATOR);
+					}
+					else
+					{
+						reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
+						set_state(WD_PARTICIPATE_IN_ELECTION);
+					}
+				}
+					break;
+
 				case WD_INFO_MESSAGE:
 				{
 					int i;
@@ -3578,6 +3665,27 @@ static int watchdog_state_machine_joining(WD_EVENTS event, WatchdogNode* wdNode,
 							(errmsg("Add to watchdog cluster request is rejected by node \"%s:%d\"",wdNode->hostname,wdNode->wd_port),
 								 errhint("check the watchdog configurations.")));
 					break;
+
+				case WD_STAND_FOR_COORDINATOR_MESSAGE:
+				{
+					/* We are loading but a note is already contesting for coordinator node
+					 * well we can ignore it but then this could eventually mean a lower priority
+					 * node can became a coordinator node.
+					 * So check the priority of the node in stand for coordinator state
+					 */
+					if (g_cluster.localNode->wd_priority > wdNode->wd_priority)
+					{
+						reply_with_minimal_message(wdNode, WD_REJECT_MESSAGE, pkt);
+						set_state(WD_STAND_FOR_COORDINATOR);
+					}
+					else
+					{
+						reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
+						set_state(WD_PARTICIPATE_IN_ELECTION);
+					}
+				}
+					break;
+
 				default:
 					standard_packet_processor(wdNode, pkt);
 					break;
@@ -3660,7 +3768,7 @@ static int watchdog_state_machine_initializing(WD_EVENTS event, WatchdogNode* wd
 				case WD_REJECT_MESSAGE:
 					if (wdNode->state == WD_ADD_MESSAGE_SENT)
 						ereport(FATAL,
-								(errmsg("Add to watchdog cluster request is rejected by node \"%s:%d\"",wdNode->hostname,wdNode->wd_port),
+							(errmsg("Add to watchdog cluster request is rejected by node \"%s:%d\"",wdNode->hostname,wdNode->wd_port),
 								 errhint("check the watchdog configurations.")));
 					break;
 				default:
@@ -3808,7 +3916,11 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 					g_cluster.currentCommand.commandStatus == COMMAND_FINISHED_TIMEOUT)
 				{
 					ereport(LOG,
-							(errmsg("I am coordinator node of cluster. Starting escalation process")));
+						(errmsg("I am the cluster leader node. Starting escalation process"),
+							 errdetail("our declare coordinator message is accepted by all nodes")));
+
+					ereport(LOG,
+							(errmsg("I am the cluster leader node. Starting escalation process")));
 					g_cluster.masterNode = g_cluster.localNode;
 					g_cluster.escalation_pid = fork_escalation_process();
 					ereport(LOG,
@@ -3918,9 +4030,6 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 			
 		case WD_EVENT_REMOTE_NODE_LOST:
 		{
-			ereport(LOG,
-					(errmsg("life check reported \"%s\" is lost",wdNode->nodeName)));
-			
 			/*
 			 * we have lost one remote connected node
 			 * check if the quorum still exists
@@ -4098,8 +4207,17 @@ static int watchdog_state_machine_voting(WD_EVENTS event, WatchdogNode* wdNode, 
 					set_state(WD_JOINING);
 					break;
 				case WD_DECLARE_COORDINATOR_MESSAGE:
-					reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
-					set_state(WD_INITIALIZING);
+					/* Check the node priority */
+					if (wdNode->wd_priority >= g_cluster.localNode->wd_priority)
+					{
+						reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
+						set_state(WD_INITIALIZING);
+					}
+					else
+					{
+						reply_with_minimal_message(wdNode, WD_REJECT_MESSAGE, pkt);
+						set_state(WD_STAND_FOR_COORDINATOR);
+					}
 					break;
 				default:
 					standard_packet_processor(wdNode, pkt);
@@ -4138,11 +4256,14 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 					WDPacketData* pktAsk = get_minimum_message(WD_ASK_FOR_POOL_CONFIG, NULL);
 					send_message(g_cluster.masterNode, pktAsk);
 					free_packet(pktAsk);
+					ereport(LOG,
+						(errmsg("successfully joined the watchdog cluster as standby node"),
+							 errdetail("our join coordinator request is accepted by cluster leader node \"%s\"",g_cluster.masterNode->nodeName)));
 				}
 				else
 				{
 					ereport(NOTICE,
-							(errmsg("our join coordinator is rejected by node \"%s\"",wdNode->nodeName),
+						(errmsg("our join coordinator is rejected by node \"%s\"",wdNode->nodeName),
 							 errhint("rejoining the cluster.")));
 					set_state(WD_JOINING);
 				}
@@ -4151,9 +4272,6 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 			break;
 		case WD_EVENT_REMOTE_NODE_LOST:
 		{
-			ereport(LOG,
-					(errmsg("life check reported \"%s\" is lost",wdNode->nodeName)));
-			
 			/*
 			 * we have lost one remote connected node
 			 * check if the node was coordinator
@@ -4637,8 +4755,6 @@ static bool reply_is_received_for_pgpool_replicate_command(WatchdogNode* wdNode,
 				break;
 			}
 		}
-		printf("----*****----- [%d] replying back to IPC SOCKET\n",__LINE__);
-		
 		write(ipcCommand->issueing_sock, &res_type, 1);
 		write(ipcCommand->issueing_sock, &res_len, 4);
 		/* ok we are done, delete this command

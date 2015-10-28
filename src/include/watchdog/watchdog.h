@@ -55,6 +55,7 @@ typedef enum {
 	/* the following states are only valid on local node */
 	WD_IN_NW_TROUBLE,
 	/* the following states are only valid on remote nodes */
+	WD_SHUTDOWN,
 	WD_ADD_MESSAGE_SENT
 } WD_STATES;
 

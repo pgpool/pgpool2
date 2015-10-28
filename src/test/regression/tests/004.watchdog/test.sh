@@ -10,8 +10,16 @@ cd $TESTDIR
 
 # create master environment
 echo -n "creating master pgpool..."
-$PGPOOL_SETUP -m s -n 2 -p 11000|| exit 1
+$PGPOOL_SETUP -m n -n 1 -p 11000|| exit 1
 echo "done."
+
+success_count=0
+# copy the same configurations to standby
+sdir=standby
+rm -fr $sdir
+mkdir $sdir
+cp -r etc ../$sdir/
+
 source ./bashrc.ports
 cat ../master.conf >> etc/pgpool.conf
 
@@ -21,46 +29,86 @@ wait_for_pgpool_startup
 cd ..
 
 # create standby environment
-sdir=standby
-rm -fr $sdir
-mkdir $sdir
 cd $sdir
 echo -n "creating standby pgpool..."
-$PGPOOL_SETUP -m s -n 2 -p 11100|| exit 1
-echo "done."
 source ./bashrc.ports
 cat ../standby.conf >> etc/pgpool.conf
-egrep 'backend_data_directory0|backend_data_directory1|failover_command|follow_master_command' ../$TESTDIR/etc/pgpool.conf >> etc/pgpool.conf
-./startall
+# since we are using the same pgpool-II conf as of master. so change the pid file path in standby pgpool conf
+echo "pid_file_name = '$PWD/pgpool2.pid'" >> etc/pgpool.conf
+# start the stnadby pgpool-II by hand
+$PGPOOL_INSTALL_DIR/bin/pgpool -D -n -f etc/pgpool.conf -F etc/pcp.conf -a etc/pool_hba.conf > log/pgpool.log 2>&1 &
 wait_for_pgpool_startup
 cd ..
 
-echo "wait 5sec"
-sleep 5
-
-
-# stop master pgpool and see if standby take over
-$PGPOOL_INSTALL_DIR/bin/pgpool -f master/etc/pgpool.conf -m f stop
-
-echo "Standby pgpool-II is detecting master went down and is escalating to master..."
+# First test check if both pgpool-II have found their correct place in watchdog cluster.
+echo "Waiting for the pgpool master..."
 for i in 1 2 3 4 5 6 7 8 9 10
 do
-	RESULT=`grep "watchdog escalation successful, escalated to master pgpool" standby/log/pgpool.log`
+	RESULT=`grep "I am the cluster leader node. Starting escalation process" master/log/pgpool.log`
 	if [ ! -z "$RESULT" ]; then
-		echo "Master escalation done."
+		success_count=$(( success_count + 1 ))
+		echo "Master brought up successfully."
 		break;
 	fi
 	echo "[check] $i times"
 	sleep 2
 done
 
+# now check if standby has successfully joined connected to the master.
+echo "Waiting for the pgpool master..."
+for i in 1 2 3 4 5 6 7 8 9 10
+do
+	RESULT=`grep "successfully joined the watchdog cluster as standby node" standby/log/pgpool.log`
+	if [ ! -z "$RESULT" ]; then
+		success_count=$(( success_count + 1 ))
+		echo "Standby successfully connected."
+		break;
+	fi
+	echo "[check] $i times"
+	sleep 2
+done
+
+# step 2 stop master pgpool and see if standby take over
+$PGPOOL_INSTALL_DIR/bin/pgpool -f master/etc/pgpool.conf -m f stop
+
+echo "Checking if the Standby pgpool-II detected the master shutdown..."
+for i in 1 2 3 4 5 6 7 8 9 10
+do
+	RESULT=`grep " is shutting down" standby/log/pgpool.log`
+	if [ ! -z "$RESULT" ]; then
+		success_count=$(( success_count + 1 ))
+		echo "Master shutdown detected."
+		break;
+	fi
+	echo "[check] $i times"
+	sleep 2
+done
+
+# Finally see if standby take over
+$PGPOOL_INSTALL_DIR/bin/pgpool -f master/etc/pgpool.conf -m f stop
+
+echo "Checking if the Standby pgpool-II takes over the master responsibility..."
+for i in 1 2 3 4 5 6 7 8 9 10
+do
+	RESULT=`grep "I am the cluster leader node. Starting escalation process" standby/log/pgpool.log`
+	if [ ! -z "$RESULT" ]; then
+		success_count=$(( success_count + 1 ))
+		echo "Standby successfully became the new master."
+		break;
+	fi
+	echo "[check] $i times"
+	sleep 2
+done
+
+$PGPOOL_INSTALL_DIR/bin/pgpool -f standby/etc/pgpool.conf -m f stop
 cd master
 ./shutdownall
-cd ../standby
-./shutdownall
 
-if [ -z "$RESULT" ]; then
-    exit 1
+echo "$success_count out of 4 successfull";
+
+if test $success_count -eq 4
+then
+    exit 0
 fi
 
-exit 0
+exit 1
