@@ -1279,19 +1279,22 @@ _pcp_promote_node(PCPConnInfo* pcpConn,int nid, bool gracefully)
 static void
 process_watchdog_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 {
-	WdInfo* watchdog_info = NULL;
-
+	PCPWDNodeInfo* watchdog_info = NULL;
 	if (strcmp(buf, "CommandComplete") == 0)
 	{
 		char *index = NULL;
-
-		watchdog_info = (WdInfo *)palloc(sizeof(WdInfo));
 
 		index = (char *) memchr(buf, '\0', len);
 		if(index == NULL)
 			goto INVALID_RESPONSE;
 		index +=1;
-		strlcpy(watchdog_info->hostname, index, sizeof(watchdog_info->hostname));
+		strlcpy(watchdog_info->hostName, index, sizeof(watchdog_info->hostName));
+
+		index = (char *) memchr(buf, '\0', len);
+		if(index == NULL)
+			goto INVALID_RESPONSE;
+		index +=1;
+		strlcpy(watchdog_info->nodeName, index, sizeof(watchdog_info->nodeName));
 
 		index = (char *) memchr(index, '\0', len);
 		if(index == NULL)
@@ -1309,9 +1312,9 @@ process_watchdog_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 		if(index == NULL)
 			goto INVALID_RESPONSE;
 		index +=1;
-		watchdog_info->status = atof(index);
+		watchdog_info->state = atof(index);
 
-		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)watchdog_info,sizeof(WdInfo) , NULL) < 0)
+		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)watchdog_info,sizeof(PCPWDNodeInfo) , NULL) < 0)
 			goto INVALID_RESPONSE;
 
 		setCommandSuccessful(pcpConn);

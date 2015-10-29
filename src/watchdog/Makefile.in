@@ -103,10 +103,11 @@ am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 lib_watchdog_a_AR = $(AR) $(ARFLAGS)
 lib_watchdog_a_LIBADD =
-am_lib_watchdog_a_OBJECTS = watchdog.$(OBJEXT) wd_child.$(OBJEXT) \
-	wd_if.$(OBJEXT) wd_init.$(OBJEXT) wd_lifecheck.$(OBJEXT) \
-	wd_list.$(OBJEXT) wd_packet.$(OBJEXT) wd_ping.$(OBJEXT) \
-	wd_heartbeat.$(OBJEXT) wd_interlock.$(OBJEXT)
+am_lib_watchdog_a_OBJECTS = watchdog.$(OBJEXT) wd_if.$(OBJEXT) \
+	wd_lifecheck.$(OBJEXT) wd_commands.$(OBJEXT) \
+	wd_json_data.$(OBJEXT) wd_ping.$(OBJEXT) \
+	wd_heartbeat.$(OBJEXT) wd_utils.$(OBJEXT) \
+	wd_escalation.$(OBJEXT)
 lib_watchdog_a_OBJECTS = $(am_lib_watchdog_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -304,15 +305,14 @@ AM_CPPFLAGS = -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
 noinst_LIBRARIES = lib-watchdog.a
 lib_watchdog_a_SOURCES = \
 	watchdog.c \
-	wd_child.c \
 	wd_if.c \
-	wd_init.c \
 	wd_lifecheck.c \
-	wd_list.c \
-	wd_packet.c \
+	wd_commands.c \
+	wd_json_data.c \
 	wd_ping.c \
 	wd_heartbeat.c \
-	wd_interlock.c
+	wd_utils.c \
+	wd_escalation.c
 
 all: all-am
 
@@ -364,15 +364,14 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/watchdog.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_child.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_commands.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_escalation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_heartbeat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_if.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_init.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_interlock.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_json_data.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_lifecheck.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_list.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_packet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_ping.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wd_utils.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\

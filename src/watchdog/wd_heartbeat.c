@@ -50,9 +50,20 @@
 #include "pool_config.h"
 #include "auth/md5.h"
 #include "watchdog/watchdog.h"
-#include "watchdog/wd_ext.h"
+#include "watchdog/wd_lifecheck.h"
+#include "watchdog/wd_utils.h"
 
 #define MAX_BIND_TRIES 5
+/*
+ * heartbeat packet
+ */
+typedef struct {
+	char from[WD_MAX_HOST_NAMELEN];
+	int from_pgpool_port;
+	struct timeval send_time;
+	char hash[(MD5_PASSWD_LEN+1)*2];
+} WdHbPacket;
+
 
 static RETSIGTYPE hb_sender_exit(int sig);
 static RETSIGTYPE hb_receiver_exit(int sig);
@@ -61,8 +72,14 @@ static int ntoh_wd_hb_packet(WdHbPacket *to, WdHbPacket *from);
 static int packet_to_string_hb(WdHbPacket *pkt, char * str, int maxlen);
 static void wd_set_reuseport(int sock);
 
+static int wd_create_hb_send_socket(WdHbIf * hb_if);
+static int wd_create_hb_recv_socket(WdHbIf * hb_if);
+
+static void wd_hb_send(int sock, WdHbPacket * pkt, int len, const char * destination, const int dest_port);
+static void wd_hb_recv(int sock, WdHbPacket * pkt);
+
 /* create socket for sending heartbeat */
-int
+static int
 wd_create_hb_send_socket(WdHbIf *hb_if)
 {
 	int sock;
@@ -137,7 +154,7 @@ wd_create_hb_send_socket(WdHbIf *hb_if)
 }
 
 /* create socket for receiving heartbeat */
-int
+static int
 wd_create_hb_recv_socket(WdHbIf *hb_if)
 {
 	struct sockaddr_in addr;
@@ -246,7 +263,7 @@ wd_create_hb_recv_socket(WdHbIf *hb_if)
 }
 
 /* send heartbeat signal */
-void
+static void
 wd_hb_send(int sock, WdHbPacket * pkt, int len, const char * host, const int port)
 {
 	int rtn;
@@ -281,11 +298,12 @@ wd_hb_send(int sock, WdHbPacket * pkt, int len, const char * host, const int por
 	}
 	ereport(DEBUG2,
 			(errmsg("watchdog heartbeat: send %d byte packet", rtn)));
+
 }
 
 /* receive heartbeat signal */
 void
-wd_hb_recv(int sock, WdHbPacket * pkt)
+static wd_hb_recv(int sock, WdHbPacket * pkt)
 {
 	int rtn;
 	struct sockaddr_in senderinfo;
@@ -323,9 +341,6 @@ wd_hb_receiver(int fork_wait_time, WdHbIf *hb_if)
 	char pack_str[WD_MAX_PACKET_STRING];
 	int pack_str_len;
 	sigjmp_buf	local_sigjmp_buf;
-
-
-	WdInfo * p;
 
 	pid = fork();
 	if (pid != 0)
@@ -385,6 +400,7 @@ wd_hb_receiver(int fork_wait_time, WdHbIf *hb_if)
 
 	for(;;)
 	{
+		int i;
 		MemoryContextSwitchTo(ProcessLoopContext);
 		MemoryContextResetAndDeleteChildren(ProcessLoopContext);
 
@@ -409,42 +425,43 @@ wd_hb_receiver(int fork_wait_time, WdHbIf *hb_if)
 		/* who send this packet? */
 		strlcpy(from, pkt.from, sizeof(from));
 		from_pgpool_port = pkt.from_pgpool_port;
-
-		p = WD_List;
-		while (p->status != WD_END)
+		for (i = 0; i< gslifeCheckCluster->nodeCount; i++)
 		{
-			if (!strcmp(p->hostname, from) && p->pgpool_port == from_pgpool_port)
-			{
-				/* ignore the packet from down pgpool */
-				if (pkt.status == WD_DOWN)
-				{
-					ereport(DEBUG1,
-						(errmsg("watchdog heartbeat: received heartbeat signal from \"%s:%d\" whose status is down. ignored",
-									from, from_pgpool_port)));
-					break;
-				}
+			LifeCheckNode* node = &gslifeCheckCluster->lifeCheckNodes[i];
 
+//			printf("*******watchdog heartbeat: received heartbeat signal from \"%s:%d\"\n",
+//							from, from_pgpool_port);
+
+//			ereport(DEBUG1,
+//					(errmsg("*******watchdog heartbeat: received heartbeat signal from \"%s:%d\"",
+//							from, from_pgpool_port)));
+
+			if (!strcmp(node->hostName, from) && node->pgpoolPort == from_pgpool_port)
+			{
 				/* this is the first packet or the latest packet */
-				if (!WD_TIME_ISSET(p->hb_send_time) ||
-					WD_TIME_BEFORE(p->hb_send_time, pkt.send_time))
+				if (!WD_TIME_ISSET(node->hb_send_time) ||
+					WD_TIME_BEFORE(node->hb_send_time, pkt.send_time))
 				{
-					ereport(DEBUG1,
+//					printf("\t %d*******watchdog heartbeat: received heartbeat signal from \"%s:%d\"\n",
+//						   i,from, from_pgpool_port);
+					ereport(NOTICE,
 							(errmsg("watchdog heartbeat: received heartbeat signal from \"%s:%d\"",
 									from, from_pgpool_port)));
-
-					p->hb_send_time = pkt.send_time;
-					p->hb_last_recv_time = tv;
+					
+					node->hb_send_time = pkt.send_time;
+					node->hb_last_recv_time = tv;
 				}
 				else
 				{
-					ereport(DEBUG1,
+//					printf("\t %dOLDER OLDER *******watchdog heartbeat: received heartbeat signal from \"%s:%d\"\n",
+//						   i,from, from_pgpool_port);
+
+					ereport(NOTICE,
 							(errmsg("watchdog heartbeat: received heartbeat signal is older than the latest, ignored")));
 				}
 				break;
 			}
-			p++;
 		}
-
 	}
 
 	return pid;
@@ -457,7 +474,7 @@ wd_hb_sender(int fork_wait_time, WdHbIf *hb_if)
 	int sock;
 	pid_t pid = 0;
 	WdHbPacket pkt;
-	WdInfo * p = WD_List;
+
 	char pack_str[WD_MAX_PACKET_STRING];
 	int pack_str_len;
 	sigjmp_buf	local_sigjmp_buf;
@@ -529,8 +546,6 @@ wd_hb_sender(int fork_wait_time, WdHbIf *hb_if)
 		strlcpy(pkt.from, pool_config->wd_hostname, sizeof(pkt.from));
 		pkt.from_pgpool_port = pool_config->port;
 
-		pkt.status = p->status;
-
 		/* authentication key */
 		if (strlen(pool_config->wd_authkey))
 		{
@@ -541,7 +556,7 @@ wd_hb_sender(int fork_wait_time, WdHbIf *hb_if)
 
 		/* send heartbeat signal */
 		wd_hb_send(sock, &pkt, sizeof(pkt), hb_if->addr, hb_if->dest_port);
-		ereport(DEBUG1,
+		ereport(NOTICE,
 				(errmsg("watchdog heartbeat: send heartbeat signal to %s:%d", hb_if->addr, hb_if->dest_port)));
 		sleep(pool_config->wd_heartbeat_keepalive);
 	}
@@ -595,7 +610,6 @@ hton_wd_hb_packet(WdHbPacket * to, WdHbPacket * from)
 		return WD_NG;
 	}
 
-	to->status = htonl(from->status);
 	to->send_time.tv_sec = htonl(from->send_time.tv_sec);
 	to->send_time.tv_usec = htonl(from->send_time.tv_usec);
 	memcpy(to->from, from->from, sizeof(to->from));
@@ -613,7 +627,6 @@ ntoh_wd_hb_packet(WdHbPacket * to, WdHbPacket * from)
 		return WD_NG;
 	}
 
-	to->status = ntohl(from->status);
 	to->send_time.tv_sec = ntohl(from->send_time.tv_sec);
 	to->send_time.tv_usec = ntohl(from->send_time.tv_usec);
 	memcpy(to->from, from->from, sizeof(to->from));
@@ -628,8 +641,8 @@ static int
 packet_to_string_hb(WdHbPacket *pkt, char *str, int maxlen)
 {
 	int len;
-	len = snprintf(str, maxlen, "status=%d tv_sec=%ld tv_usec=%ld from=%s",
-	               pkt->status, pkt->send_time.tv_sec, pkt->send_time.tv_usec, pkt->from);
+	len = snprintf(str, maxlen, "tv_sec=%ld tv_usec=%ld from=%s",
+	                pkt->send_time.tv_sec, pkt->send_time.tv_usec, pkt->from);
 
 	return len;
 }

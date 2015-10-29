@@ -29,7 +29,12 @@
 /*
  * watchdog
  */
-#include "watchdog/watchdog.h"
+#define WD_MAX_HOST_NAMELEN (128)
+#define WD_MAX_PATH_LEN (128)
+#define MAX_WATCHDOG_NUM (128)
+#define WD_SEND_TIMEOUT (1)
+#define WD_MAX_IF_NUM (256)
+#define WD_MAX_IF_NAME_LEN (16)
 
 /*
  * Master/slave sub mode
@@ -42,6 +47,7 @@
  */
 #define MODE_HEARTBEAT	"heartbeat"
 #define MODE_QUERY 		"query"
+#define MODE_EXTERNAL 	"external"
 
 #include "utils/regex_array.h"
 /*
@@ -66,6 +72,30 @@ typedef struct {
 #define POOL_ALLOW_TO_FAILOVER(x) (!(POOL_DISALLOW_TO_FAILOVER(x)))
 
 /*
+ * watchdog list
+ */
+typedef struct WdRemoteNodeInfo {
+	char hostname[WD_MAX_HOST_NAMELEN];		/* host name */
+	int pgpool_port;						/* pgpool port */
+	int wd_port;							/* watchdog port */
+} WdRemoteNodeInfo;
+
+typedef struct WdRemoteNodesConfig{
+	int				  num_wd;		/* number of watchdogs */
+	WdRemoteNodeInfo  wd_remote_node_info[MAX_WATCHDOG_NUM];
+} WdRemoteNodesConfig;
+
+
+typedef struct {
+	char addr[WD_MAX_HOST_NAMELEN];
+	char if_name[WD_MAX_IF_NAME_LEN];
+	int dest_port;
+} WdHbIf;
+
+#define WD_INFO(wd_id) (pool_config->wd_remote_nodes.wd_remote_node_info[(wd_id)])
+#define WD_HB_IF(if_id) (pool_config->hb_if[(if_id)])
+
+/*
  * configuration parameters
  */
 typedef struct {
@@ -74,6 +104,7 @@ typedef struct {
 	char *pcp_listen_addresses;		/* PCP listen address to listen on */
 	int pcp_port;				/* PCP port # to bind */
 	char *socket_dir;		/* pgpool socket directory */
+	char *wd_ipc_socket_dir;	/* watchdog command IPC socket directory */
 	char *pcp_socket_dir;		/* PCP socket directory */
     int	num_init_children;	/* # of children initially pre-forked */
     int	listen_backlog_multiplier; /* determines the size of the connection queue */
@@ -248,10 +279,12 @@ typedef struct {
 	int use_watchdog;					/* if non 0, use watchdog */
 	char *wd_lifecheck_method;			/* method of lifecheck. 'heartbeat' or 'query' */
 	int clear_memqcache_on_escalation;	/* if no 0, clear query cache on shmem when escalating */
-    char *wd_escalation_command;		/* Executes this command at escalation on new active pgpool.*/
+	char *wd_escalation_command;		/* Executes this command at escalation on new active pgpool.*/
+	char *wd_de_escalation_command;		/* Executes this command when master pgpool goes down.*/
 	char *wd_hostname;					/* watchdog hostname */
 	int wd_port;						/* watchdog port */
-	WdDesc * other_wd;					/* watchdog lists */
+	int wd_priority;					/* watchdog node priority, during leader election*/
+	WdRemoteNodesConfig wd_remote_nodes;/* watchdog lists */
 	char * trusted_servers;				/* icmp reachable server list (A,B,C) */
 	char * delegate_IP;					/* delegate IP address */
 	int  wd_interval;					/* lifecheck interval (sec) */

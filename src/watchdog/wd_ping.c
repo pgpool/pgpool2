@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -33,8 +33,8 @@
 #include "pool.h"
 #include "utils/elog.h"
 #include "pool_config.h"
-#include "watchdog/watchdog.h"
-#include "watchdog/wd_ext.h"
+//#include "watchdog/watchdog.h"
+#include "watchdog/wd_utils.h"
 
 #define WD_MAX_PING_RESULT 256
 
@@ -53,7 +53,7 @@ wd_is_upper_ok(char * server_list)
 	int i,cnt;
 	int len;
 	pthread_t thread[MAX_WATCHDOG_NUM];
-	WdInfo thread_arg[MAX_WATCHDOG_NUM];
+	char trusted_hostnames[MAX_WATCHDOG_NUM][WD_MAX_HOST_NAMELEN];
 
 	char * bp, *ep;
 	int rtn = WD_NG;
@@ -82,8 +82,8 @@ wd_is_upper_ok(char * server_list)
 		{
 			*ep = '\0';
 		}
-		strlcpy(thread_arg[cnt].hostname,bp,sizeof(thread_arg[cnt].hostname));
-		rc = watchdog_thread_create(&thread[cnt], &attr, exec_ping, (void*)&thread_arg[cnt]);
+		strlcpy(trusted_hostnames[cnt],bp,WD_MAX_HOST_NAMELEN);
+		rc = watchdog_thread_create(&thread[cnt], &attr, exec_ping, (void*)trusted_hostnames[cnt]);
 
 		cnt ++;
 		if (ep != NULL)
@@ -131,7 +131,7 @@ wd_is_unused_ip(char * ip)
 	pthread_attr_t attr;
 	int rc = 0;
 	pthread_t thread;
-	WdInfo thread_arg;
+	char hostname[WD_MAX_HOST_NAMELEN];
 
 	int rtn = WD_NG;
 	void * result;
@@ -146,9 +146,9 @@ wd_is_unused_ip(char * ip)
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
 	/* set hostname as a thread_arg */
-	strlcpy(thread_arg.hostname,ip,sizeof(thread_arg.hostname));
+	strlcpy(hostname,ip,WD_MAX_HOST_NAMELEN);
 
-	rc = watchdog_thread_create(&thread, &attr, exec_ping, (void*)&thread_arg);
+	rc = watchdog_thread_create(&thread, &attr, exec_ping, (void*)hostname);
 	pthread_attr_destroy(&attr);
 
 	rc = pthread_join(thread, &result);
@@ -176,7 +176,7 @@ wd_is_unused_ip(char * ip)
 static void *
 exec_ping(void * arg)
 {
-	WdInfo * thread_arg;
+	char* trusted_hostname;
 	uintptr_t rtn = (uintptr_t)WD_NG;
 	int pfd[2];
 	int status;
@@ -187,7 +187,7 @@ exec_ping(void * arg)
 	char ping_path[WD_MAX_PATH_LEN];
 
 	snprintf(ping_path,sizeof(ping_path),"%s/ping",pool_config->ping_path);
-	thread_arg = (WdInfo *)arg;
+	trusted_hostname = (char *)arg;
 	memset(result,0,sizeof(result));
 
 	if (pipe(pfd) == -1)
@@ -201,7 +201,7 @@ exec_ping(void * arg)
 	args[i++] = "ping";
 	args[i++] = "-q";
 	args[i++] = "-c3";
-	args[i++] = thread_arg->hostname;
+	args[i++] = trusted_hostname;
 	args[i++] = NULL;
 
 	pid = fork();
@@ -258,7 +258,7 @@ exec_ping(void * arg)
 			{
 				ereport(DEBUG1,
 					(errmsg("watchdog executing ping"),
-						 errdetail("failed to ping \"%s\" exit code: %d", thread_arg->hostname, WEXITSTATUS(status))));
+						 errdetail("failed to ping \"%s\" exit code: %d", trusted_hostname, WEXITSTATUS(status))));
 				close(pfd[0]);
 				return WD_NG;
 			}
@@ -266,7 +266,7 @@ exec_ping(void * arg)
 			{
 				ereport(DEBUG1,
 					(errmsg("watchdog executing ping"),
-						 errdetail("succeed to ping %s", thread_arg->hostname)));
+						 errdetail("succeed to ping %s", trusted_hostname)));
 				break;
 			}
 		}

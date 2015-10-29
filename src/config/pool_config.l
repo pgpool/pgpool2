@@ -123,7 +123,7 @@ int pool_init_config(void)
 	/*
 	 * add for watchdog
 	 */
-	pool_config->other_wd = palloc0(sizeof(WdDesc));
+	memset(&pool_config->wd_remote_nodes,0x00,sizeof(WdRemoteNodesConfig));
 
 	/* set hardcoded default values */
 	pool_config->listen_addresses = "localhost";
@@ -131,6 +131,7 @@ int pool_init_config(void)
 	pool_config->port = 9999;
 	pool_config->pcp_port = 9898;
 	pool_config->socket_dir = DEFAULT_SOCKET_DIR;
+	pool_config->wd_ipc_socket_dir = DEFAULT_WD_IPC_SOCKET_DIR;
 	pool_config->pcp_socket_dir = DEFAULT_SOCKET_DIR;
 	pool_config->num_init_children = 32;
 	pool_config->listen_backlog_multiplier = 2;
@@ -238,6 +239,7 @@ int pool_init_config(void)
 	pool_config->wd_lifecheck_method = MODE_HEARTBEAT;
 	pool_config->clear_memqcache_on_escalation = 1;	
     pool_config->wd_escalation_command = "";
+	pool_config->wd_de_escalation_command = "";
 	pool_config->trusted_servers = "";
 	pool_config->delegate_IP = "";
 	res = gethostname(localhostname,sizeof(localhostname));
@@ -249,7 +251,8 @@ int pool_init_config(void)
 	}
 	pool_config->wd_hostname = localhostname;
 	pool_config->wd_port = 9000;
-	pool_config->other_wd->num_wd = 0;
+	pool_config->wd_priority = 1;
+	pool_config->wd_remote_nodes.num_wd = 0;
 	pool_config->wd_interval = 10;
 	pool_config->wd_authkey = "";
 	pool_config->ping_path = "/bin";
@@ -603,7 +606,25 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			pool_config->socket_dir = str;
 		}
-		else if (!strcmp(key, "pcp_socket_dir") && CHECK_CONTEXT(INIT_CONFIG, context))
+		else if (!strcmp(key, "socket_dir") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			char *str;
+			
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->socket_dir = str;
+		}
+		else if (!strcmp(key, "wd_ipc_socket_dir") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			char *str;
 
@@ -619,7 +640,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
-			pool_config->pcp_socket_dir = str;
+			pool_config->wd_ipc_socket_dir = str;
 		}
 		else if (!strcmp(key, "num_init_children") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
@@ -2129,7 +2150,6 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			if (slot < 0 || slot >= MAX_CONNECTION_SLOTS)
 			{
 				fclose(fd);
-				fclose(fd);
 				ereport(error_level,
 					(errmsg("invalid configuration for key \"%s\"",key),
 						errdetail("invalid slot no :\"%d\" for key:\"%s\"", slot,key),
@@ -2156,7 +2176,6 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			slot = atoi(key + 17);
 			if (slot < 0 || slot >= MAX_CONNECTION_SLOTS)
 			{
-				fclose(fd);
 				fclose(fd);
 				ereport(error_level,
 					(errmsg("invalid configuration for key \"%s\"",key),
@@ -2189,8 +2208,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			if (context == INIT_CONFIG || (context == RELOAD_CONFIG ))
 			{
 				WD_INFO(slot).wd_port = atoi(yytext);
-				WD_INFO(slot).status = WD_INIT;
-				pool_config->other_wd->num_wd = slot + 1;
+				pool_config->wd_remote_nodes.num_wd = slot + 1;
 			}
 		}
 		else if (!strcmp(key, "use_watchdog") && CHECK_CONTEXT(INIT_CONFIG, context))
@@ -2244,6 +2262,27 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			pool_config->wd_escalation_command = str;
 		}
+	
+		else if (!strcmp(key, "wd_de_escalation_command") &&
+		CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+			
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->wd_de_escalation_command = str;
+		}
+
 
 		else if (!strcmp(key, "trusted_servers") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
@@ -2316,6 +2355,21 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->wd_port = v;
+		}
+		else if (!strcmp(key, "wd_priority") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			int v = atoi(yytext);
+			
+			if (token != POOL_INTEGER || v <= 0)
+			{
+				fclose(fd);
+				ereport(error_level,
+				(errmsg("invalid configuration for key \"%s\"",key),
+				errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key),
+				errhint("value must be greater than 0")));
+				return(-1);
+			}
+			pool_config->wd_priority = v;
 		}
 		else if (!strcmp(key, "wd_interval") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
@@ -2558,7 +2612,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 
-			if (strcmp(str, MODE_HEARTBEAT) && strcmp(str, MODE_QUERY))
+			if (strcmp(str, MODE_HEARTBEAT) && strcmp(str, MODE_QUERY) && strcmp(str, MODE_EXTERNAL))
 			{
 				fclose(fd);
 				ereport(error_level,

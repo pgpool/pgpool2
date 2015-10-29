@@ -77,6 +77,9 @@
 /* Unix domain socket directory */
 #define DEFAULT_SOCKET_DIR "/tmp"
 
+/* Unix domain socket directory for watchdog IPC */
+#define DEFAULT_WD_IPC_SOCKET_DIR "/tmp"
+
 /* pid file name */
 #define DEFAULT_PID_FILE_NAME "/var/run/pgpool/pgpool.pid"
 
@@ -366,6 +369,7 @@ extern int my_master_node_id;
 #define ACCEPT_FD_SEM			5
 #define MAX_REQUEST_QUEUE_SIZE	10
 
+#define MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION 6 /*number of sec to wait for watchdog command if cluster is stabalizing */
 /*
  * number specified when semaphore is locked/unlocked
  */
@@ -482,6 +486,7 @@ extern volatile sig_atomic_t *InRecovery;
 extern char remote_ps_data[];		/* used for set_ps_display */
 extern volatile sig_atomic_t got_sighup;
 extern volatile sig_atomic_t exit_request;
+
 
 #define QUERY_STRING_BUFFER_LEN 1024
 extern char query_string_buffer[];		/* last query string sent to simpleQuery() */
