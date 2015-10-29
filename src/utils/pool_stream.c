@@ -5,7 +5,7 @@
 * pgpool: a language independent connection pool server for PostgreSQL
 * written by Tatsuo Ishii
 *
-* Copyright (c) 2003-2013	PgPool Global Development Group
+* Copyright (c) 2003-2015	PgPool Global Development Group
 *
 * Permission to use, copy, modify, and distribute this software and
 * its documentation for any purpose and without fee is hereby
@@ -1094,4 +1094,61 @@ void pool_unset_nonblock(int fd)
             (errmsg("unable to set options on socket"),
                  errdetail("fcntl system call failed with error \"%s\"", strerror(errno))));
 	}
+}
+
+int socket_write(int fd, void* buf, size_t len)
+{
+	int bytes_send = 0;
+	do
+	{
+		int ret;
+		ret = write(fd, buf + bytes_send, (len - bytes_send));
+		if (ret <=0)
+		{
+			if (errno == EINTR || errno == EAGAIN)
+			{
+				ereport(DEBUG1,
+						(errmsg("write on socket failed with error :\"%s\"",strerror(errno)),
+						 errdetail("retrying...")));
+				continue;
+			}
+			ereport(LOG,
+					(errmsg("write on socket failed with error :\"%s\"",strerror(errno))));
+			return -1;
+		}
+		bytes_send += ret;
+	}while (bytes_send < len);
+	return bytes_send;
+}
+
+int socket_read(int fd, void* buf, size_t len, int timeout)
+{
+	int ret, read_len;
+	read_len = 0;
+
+	while (read_len < len)
+	{
+		ret = read(fd, buf + read_len, (len - read_len));
+		if(ret < 0)
+		{
+			if (errno == EINTR || errno == EAGAIN)
+			{
+				ereport(DEBUG1,
+						(errmsg("read from socket failed with error :\"%s\"",strerror(errno)),
+						 errdetail("retrying...")));
+				continue;
+			}
+			ereport(LOG,
+					(errmsg("read from socket failed with error :\"%s\"",strerror(errno))));
+			return -1;
+		}
+		if(ret == 0)
+		{
+			ereport(LOG,
+					(errmsg("read from socket failed, remote end closed the connection")));
+			return 0;
+		}
+		read_len +=ret;
+	}
+	return read_len;
 }

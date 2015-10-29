@@ -45,6 +45,7 @@
 #include "utils/elog.h"
 #include "utils/json_writer.h"
 #include "utils/json.h"
+#include "utils/pool_stream.h"
 #include "pool_config.h"
 
 #include "watchdog/wd_utils.h"
@@ -278,7 +279,6 @@ static void wd_child_exit(int exit_signo);
 
 static void wd_cluster_initialize(void);
 static int wd_create_client_socket(char * hostname, int port, bool *connected);
-static int read_from_socket(int sock, void* buf, size_t len, int timeout);
 static int connect_with_all_configured_nodes(void);
 static void try_connecting_with_all_unreachable_nodes(void);
 static bool connect_to_node(WatchdogNode* wdNode);
@@ -356,9 +356,10 @@ static bool add_nodeinfo_to_json(JsonNode* jNode, WatchdogNode* node);
 static bool fire_node_status_event(int nodeID, int nodeStatus);
 static void resign_from_coordinator(void);
 static void init_wd_packet(WDPacketData* pkt);
+static bool wd_commands_packet_processor(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt);
+
 static WDIPCCommandData* get_wd_IPC_command_from_reply(WDPacketData* pkt);
 static WDIPCCommandData* get_wd_IPC_command_from_socket(int sock);
-static bool wd_commands_packet_processor(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt);
 
 static IPC_CMD_PREOCESS_RES process_IPC_command(WDIPCCommandData* IPCCommand);
 static IPC_CMD_PREOCESS_RES process_IPC_nodeStatusChange_command(WDIPCCommandData* IPCCommand);
@@ -368,6 +369,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_unlock_request(WDIPCCommandData *IPCComm
 static IPC_CMD_PREOCESS_RES process_IPC_replicate_variable(WDIPCCommandData* IPCCommand);
 static IPC_CMD_PREOCESS_RES process_IPC_failover_cmd_synchronise(WDIPCCommandData *IPCCommand);
 static IPC_CMD_PREOCESS_RES execute_replicate_command(WDIPCCommandData* ipcCommand);
+static bool write_ipc_command_with_result_data(WDIPCCommandData* IPCCommand, char type, char* data, int len);
 
 static int node_has_requested_for_interlocking(WatchdogNode* wdNode, WDPacketData* pkt);
 static bool node_has_resigned_from_interlocking(WatchdogNode* wdNode, WDPacketData* pkt);
@@ -484,7 +486,6 @@ static void wd_cluster_initialize(void)
 		
 		ereport(LOG,
 				(errmsg("watchdog remote node:%d on %s:%d",i,g_cluster.remoteNodes[i].hostname, g_cluster.remoteNodes[i].wd_port)));
-		
 	}
 
 	escalation_status = pool_shared_memory_create(sizeof(int));
@@ -533,14 +534,9 @@ wd_create_recv_socket(int port)
 				(errmsg("failed to create watchdog receive socket"),
 				 errdetail("create socket failed with reason: \"%s\"", strerror(errno))));
 	}
-	if ( fcntl(sock, F_SETFL, O_NONBLOCK) == -1)
-	{
-		/* failed to set nonblock */
-		close(sock);
-		ereport(ERROR,
-				(errmsg("failed to create watchdog receive socket"),
-				 errdetail("setting non blocking mode on socket failed with reason: \"%s\"", strerror(errno))));
-	}
+
+	pool_set_nonblock(sock);
+
 	if ( setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(one)) == -1 )
 	{
 		/* setsockopt(SO_REUSEADDR) failed */
@@ -612,13 +608,13 @@ wd_create_client_socket(char * hostname, int port, bool *connected)
 	size_t len = 0;
 	struct sockaddr_in addr;
 	struct hostent * hp;
-	printf("__FUNCTION__:%s:%d\n",__FUNCTION__,__LINE__);
 	*connected = false;
 	/* create socket */
 	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 	{
 		/* socket create failed */
-		printf("create socket failed with reason: \"%s\"\n", strerror(errno));
+		ereport(LOG,
+				(errmsg("create socket failed with reason: \"%s\"\n", strerror(errno))));
 		return -1;
 	}
 	
@@ -627,7 +623,7 @@ wd_create_client_socket(char * hostname, int port, bool *connected)
 	{
 		close(sock);
 		ereport(LOG,
-				(errmsg("failed to set socket options"),
+			(errmsg("failed to set socket options"),
 				 errdetail("setsockopt(TCP_NODELAY) failed with error: \"%s\"", strerror(errno))));
 		return -1;
 	}
@@ -639,8 +635,6 @@ wd_create_client_socket(char * hostname, int port, bool *connected)
 		close(sock);
 		return -1;
 	}
-	printf("__FUNCTION__:%s:%d sock = %d\n",__FUNCTION__,__LINE__,sock);
-	
 	/* set sockaddr_in */
 	memset(&addr,0,sizeof(addr));
 	addr.sin_family = AF_INET;
@@ -651,7 +645,7 @@ wd_create_client_socket(char * hostname, int port, bool *connected)
 		if ((hp == NULL) || (hp->h_addrtype != AF_INET))
 		{
 			ereport(LOG,
-					(errmsg("failed to get host address for \"%s\"",hostname),
+				(errmsg("failed to get host address for \"%s\"",hostname),
 					 errdetail("gethostbyaddr failed with error: \"%s\"", hstrerror(h_errno))));
 			close(sock);
 			return -1;
@@ -660,11 +654,10 @@ wd_create_client_socket(char * hostname, int port, bool *connected)
 	memmove((char *)&(addr.sin_addr), (char *)hp->h_addr, hp->h_length);
 	addr.sin_port = htons(port);
 	len = sizeof(struct sockaddr_in);
-	
+
 	/* set socket to non blocking */
-	int flags = fcntl(sock, F_GETFL, 0);
-	fcntl(sock, F_SETFL, flags | O_NONBLOCK);
-	
+	pool_set_nonblock(sock);
+
 	if (connect(sock,(struct sockaddr*)&addr, len) < 0)
 	{
 		if (errno == EINPROGRESS)
@@ -673,26 +666,19 @@ wd_create_client_socket(char * hostname, int port, bool *connected)
 		}
 		if (errno == EISCONN)
 		{
+			pool_unset_nonblock(sock);
 			*connected = true;
-			/* set socket to blocking again */
-			flags = fcntl(sock, F_GETFL, 0);
-			flags &= ~O_NONBLOCK;
-			fcntl(sock, F_SETFL, flags);
-			printf("%d New socket connected %d and set to non blocking \n",__LINE__,sock);
 			return sock;
 		}
 		ereport(LOG,
-				(errmsg("connect on socket failed"),
+			(errmsg("connect on socket failed"),
 				 errdetail("connect failed with error: \"%s\"", strerror(errno))));
 		close(sock);
 		return -1;
 	}
 	/* set socket to blocking again */
-	flags = fcntl(sock, F_GETFL, 0);
-	flags &= ~O_NONBLOCK;
-	fcntl(sock, F_SETFL, flags);
+	pool_unset_nonblock(sock);
 	*connected = true;
-	printf("%d New socket connected %d and set to non blocking \n",__LINE__,sock);
 	return sock;
 }
 
@@ -1135,7 +1121,7 @@ static int read_sockets(fd_set* rmask,int pending_fds_count)
 		if (conn->sock > 0 &&  FD_ISSET(conn->sock, rmask))
 		{
 			WDPacketData* pkt;
-			ereport(LOG,
+			ereport(DEBUG1,
 					(errmsg("un-identified socket %d is ready for reading",conn->sock)));
 			/* we only entertain ADD NODE messages from unidentified sockets */
 			pkt = read_packet_of_type(conn,WD_ADD_NODE_MESSAGE);
@@ -1152,15 +1138,13 @@ static int read_sockets(fd_set* rmask,int pending_fds_count)
 					print_watchdog_node_info(tempNode);
 					authenticated = verify_authhash_for_node(tempNode, authkey);
 					ereport(DEBUG1,
-							(errmsg("NODE ADD MESSAGE from Hostname:\"%s\" PORT:%d pgpool_port:%d",tempNode->hostname,tempNode->wd_port,tempNode->pgpool_port)));
+							(errmsg("ADD NODE MESSAGE from Hostname:\"%s\" PORT:%d pgpool_port:%d",tempNode->hostname,tempNode->wd_port,tempNode->pgpool_port)));
 					/* verify this node */
 					if (authenticated)
 					{
 						for (i=0; i< g_cluster.remoteNodeCount; i++)
 						{
 							wdNode = &(g_cluster.remoteNodes[i]);
-							ereport(DEBUG1,
-									(errmsg("Comparing with NODE having Hostname:\"%s\" PORT:%d pgpool_port:%d",wdNode->hostname,wdNode->wd_port,wdNode->pgpool_port)));
 							
 							if ( (wdNode->wd_port == tempNode->wd_port && wdNode->pgpool_port == tempNode->pgpool_port) &&
 								( (strcmp(wdNode->hostname,conn->addr) == 0) || (strcmp(wdNode->hostname,tempNode->hostname) == 0)) )
@@ -1175,7 +1159,6 @@ static int read_sockets(fd_set* rmask,int pending_fds_count)
 								wdNode->wd_priority = tempNode->wd_priority;
 								wdNode->server_socket = *conn;
 								wdNode->server_socket.sock_state = WD_SOCK_CONNECTED;
-	//							wdNode->server_socket.sock = ui_sock;
 								break;
 							}
 						}
@@ -1196,7 +1179,7 @@ static int read_sockets(fd_set* rmask,int pending_fds_count)
 					else
 					{
 						ereport(NOTICE,
-								(errmsg("Authentication failed for add node from Hostname:\"%s\" PORT:%d pgpool_port:%d",tempNode->hostname,tempNode->wd_port,tempNode->pgpool_port),
+								(errmsg("authentication failed for add node from Hostname:\"%s\" PORT:%d pgpool_port:%d",tempNode->hostname,tempNode->wd_port,tempNode->pgpool_port),
 								 errdetail("make sure wd_authkey configuration is same on all nodes")));
 					}
 
@@ -1307,6 +1290,25 @@ static int read_sockets(fd_set* rmask,int pending_fds_count)
 	return count;
 }
 
+static bool write_ipc_command_with_result_data(WDIPCCommandData* IPCCommand, char type, char* data, int len)
+{
+	int send_len = 0;
+	if (socket_write(IPCCommand->issueing_sock, &type, 1) < 0)
+		return false;
+
+	if (len > 0)
+	{
+		send_len = htonl(len);
+		if (socket_write(IPCCommand->issueing_sock, &send_len, sizeof(int)) < 0)
+			return false;
+		if (socket_write(IPCCommand->issueing_sock, data, len) < 0)
+			return false;
+	}
+	else if (socket_write(IPCCommand->issueing_sock, &send_len, sizeof(int)) < 0)
+		return false;
+	return true;
+}
+
 static bool read_ipc_command_and_process(int sock, bool *remove_socket)
 {
 	char type;
@@ -1314,36 +1316,36 @@ static bool read_ipc_command_and_process(int sock, bool *remove_socket)
 	IPC_CMD_PREOCESS_RES res;
 	int data_len,ret;
 	WDIPCCommandData* IPCCommand = NULL;
-	
+
 	*remove_socket = true;
-	
+
 	/* 1st byte is command type */
-	ret = read(sock, &type, sizeof(char));
+	ret = socket_read(sock, &type, sizeof(char),0);
 	if (ret == 0) /* remote end has closed the connection */
 		return false;
-	
+
 	if (ret != sizeof(char))
 	{
 		ereport(WARNING,
-				(errmsg("error reading from IPC socket"),
+			(errmsg("error reading from IPC socket"),
 				 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
 		return false;
 	}
 	/* Next is is command action */
-	ret = read(sock, &command_action, sizeof(WD_COMMAND_ACTIONS));
+	ret = socket_read(sock, &command_action, sizeof(WD_COMMAND_ACTIONS),0);
 	if (ret != sizeof(WD_COMMAND_ACTIONS))
 	{
 		ereport(WARNING,
-				(errmsg("error reading from IPC socket"),
+			(errmsg("error reading from IPC socket"),
 				 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
 		return false;
 	}
 	/* We should have data length */
-	ret = read(sock, &data_len, sizeof(int));
+	ret = socket_read(sock, &data_len, sizeof(int),0);
 	if (ret != sizeof(int))
 	{
 		ereport(WARNING,
-				(errmsg("error reading from IPC socket"),
+			(errmsg("error reading from IPC socket"),
 				 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
 		return false;
 	}
@@ -1375,21 +1377,16 @@ static bool read_ipc_command_and_process(int sock, bool *remove_socket)
 	IPCCommand->memoryContext = mCxt;
 	
 	MemoryContextSwitchTo(oldCxt);
-	
-	while (IPCCommand->data_len < data_len)
+
+	if (socket_read(sock, IPCCommand->data_buf , data_len,0) <= 0)
 	{
-		int ret = read(sock, IPCCommand->data_buf + IPCCommand->data_len, (data_len - IPCCommand->data_len));
-		if (ret <= 0)
-		{
-			ereport(NOTICE,
-					(errmsg("error reading IPC from socket"),
-					 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
-			MemoryContextDelete(mCxt);
-			return false;
-		}
-		IPCCommand->data_len +=ret;
+		ereport(NOTICE,
+			(errmsg("error reading IPC from socket"),
+				 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
+		MemoryContextDelete(mCxt);
+		return false;
 	}
-	
+	IPCCommand->data_len = data_len;
 	res = process_IPC_command(IPCCommand);
 	if (res == IPC_CMD_PROCESSING)
 	{
@@ -1460,7 +1457,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_nodeList_command(WDIPCCommandData* IPCCo
 	/* get the json for node list */
 	JsonNode* jNode = NULL;
 	int NodeID = -1;
-	int len, nwlen;
+	bool ret;
 	json_value *root = json_parse(IPCCommand->data_buf,IPCCommand->data_len);
 	/* The root node must be object */
 	if (root == NULL || root->type != json_object)
@@ -1478,24 +1475,11 @@ static IPC_CMD_PREOCESS_RES process_IPC_nodeList_command(WDIPCCommandData* IPCCo
 	}
 	json_value_free(root);
 	jNode = get_node_list_json(NodeID);
-	len = jw_get_json_length(jNode);
-	nwlen = htonl(len);
-	char type = WD_IPC_CMD_RESULT_OK;
-	int ret = write(IPCCommand->issueing_sock, &type, 1);
-	if (ret < 1)
-		return IPC_CMD_ERROR;
-	
-	/* write data length */
-	ret = write(IPCCommand->issueing_sock, &nwlen, 4);
-	if (ret < 4)
-		return IPC_CMD_ERROR;
-	
-	/* write json data */
-	ret = write(IPCCommand->issueing_sock, jw_get_json_string(jNode), len);
+	ret = write_ipc_command_with_result_data(IPCCommand, WD_IPC_CMD_RESULT_OK,
+											 jw_get_json_string(jNode), jw_get_json_length(jNode));
 	jw_destroy(jNode);
-	if (ret < len)
+	if (ret == false)
 		return IPC_CMD_ERROR;
-	/* good */
 	return IPC_CMD_COMPLETE;
 }
 
@@ -1584,9 +1568,6 @@ static bool fire_node_status_event(int nodeID, int nodeStatus)
 static IPC_CMD_PREOCESS_RES process_IPC_replicate_variable(WDIPCCommandData* IPCCommand)
 {
 	char res_type;
-	int res_len = 0;
-	int ret;
-	
 	if (get_local_node_state() == WD_STANDBY ||
 		get_local_node_state() == WD_COORDINATOR)
 	{
@@ -1604,28 +1585,21 @@ static IPC_CMD_PREOCESS_RES process_IPC_replicate_variable(WDIPCCommandData* IPC
 		 */
 		return res_type;
 	}
-	
-	ret = write(IPCCommand->issueing_sock, &res_type, 1);
-	if (ret < 1)
-		return IPC_CMD_ERROR;
-	/* write data length */
-	ret = write(IPCCommand->issueing_sock, &res_len, 4);
-	if (ret < 4)
-		return IPC_CMD_ERROR;
-	/*
-	 * This is the complete lifecycle of command.
-	 * we are done with it
-	 */
-	
-	return IPC_CMD_COMPLETE;
-	
+	if (write_ipc_command_with_result_data(IPCCommand, res_type, NULL, 0))
+	{
+		/*
+		 * This is the complete lifecycle of command.
+		 * we are done with it
+		 */
+		
+		return IPC_CMD_COMPLETE;
+	}
+	return IPC_CMD_ERROR;
 }
 
 static IPC_CMD_PREOCESS_RES process_IPC_unlock_request(WDIPCCommandData *IPCCommand)
 {
 	char res_type;
-	int res_len = 0;
-	int ret;
 	/*
 	 * if cluster or myself is not in stable state
 	 * just return cluster in transaction
@@ -1650,16 +1624,12 @@ static IPC_CMD_PREOCESS_RES process_IPC_unlock_request(WDIPCCommandData *IPCComm
 		/* I am a standby node, and also the lock holder
 		 * Just forward the request to coordinator */
 		
-		printf("\t\t\t %s:%d I AM STANDBY \n",__FUNCTION__,__LINE__);
-		
 		WDPacketData *wdPacket = get_minimum_message(WD_INTERUNLOCKING_REQUEST,NULL);
 		/* save the command ID */
 		IPCCommand->internal_command_id = wdPacket->command_id;
 		
 		if (send_message(g_cluster.masterNode, wdPacket) <= 0)
 		{
-			printf("\t\t\t %s:%d send unlock request message failed \n",__FUNCTION__,__LINE__);
-			
 			/* we have failed to send to any node, return lock failed  */
 			res_type = WD_IPC_CMD_RESULT_BAD;
 		}
@@ -1668,8 +1638,6 @@ static IPC_CMD_PREOCESS_RES process_IPC_unlock_request(WDIPCCommandData *IPCComm
 			/*
 			 * we need to wait for the results
 			 */
-			printf("\t\t\t %s:%d PROCESSING \n",__FUNCTION__,__LINE__);
-			
 			res_type = IPC_CMD_PROCESSING;
 		}
 		/* whatever the case we need to resign ourself from lock
@@ -1680,15 +1648,11 @@ static IPC_CMD_PREOCESS_RES process_IPC_unlock_request(WDIPCCommandData *IPCComm
 	}
 	else if (get_local_node_state() == WD_COORDINATOR)
 	{
-		printf("\t\t\t %s:%d COORDINATOR \n",__FUNCTION__,__LINE__);
-		
 		/*
 		 * If I am coordinator, Just process the request locally
 		 */
 		if (node_has_resigned_from_interlocking(g_cluster.localNode, NULL))
 		{
-			printf("\t\t\t %s:%d \n",__FUNCTION__,__LINE__);
-			
 			res_type = WD_IPC_CMD_RESULT_OK;
 		}
 		else
@@ -1707,29 +1671,21 @@ static IPC_CMD_PREOCESS_RES process_IPC_unlock_request(WDIPCCommandData *IPCComm
 		 */
 		return res_type;
 	}
-	
-	ret = write(IPCCommand->issueing_sock, &res_type, 1);
-	if (ret < 1)
-		return IPC_CMD_ERROR;
-	/* write data length */
-	ret = write(IPCCommand->issueing_sock, &res_len, 4);
-	if (ret < 4)
-		return IPC_CMD_ERROR;
-	/*
-	 * This is the complete lifecycle of command.
-	 * we are done with it
-	 */
-	printf("\t\t\t %s:%d \n",__FUNCTION__,__LINE__);
-	
-	return IPC_CMD_COMPLETE;
+	if (write_ipc_command_with_result_data(IPCCommand, res_type, NULL, 0))
+	{
+		/*
+		 * This is the complete lifecycle of command.
+		 * we are done with it
+		 */
+		return IPC_CMD_COMPLETE;
+	}
+	return IPC_CMD_ERROR;
 }
 
 
 static IPC_CMD_PREOCESS_RES process_IPC_lock_request(WDIPCCommandData *IPCCommand)
 {
 	char res_type;
-	int res_len = 0;
-	int ret;
 	/*
 	 * if cluster or myself is not in stable state
 	 * just return cluster in transaction
@@ -1787,28 +1743,20 @@ static IPC_CMD_PREOCESS_RES process_IPC_lock_request(WDIPCCommandData *IPCComman
 		 */
 		return res_type;
 	}
-	
-	ret = write(IPCCommand->issueing_sock, &res_type, 1);
-	if (ret < 1)
-		return IPC_CMD_ERROR;
-	/* write data length */
-	ret = write(IPCCommand->issueing_sock, &res_len, 4);
-	if (ret < 4)
-		return IPC_CMD_ERROR;
-	/*
-	 * This is the complete lifecycle of command.
-	 * we are done with it
-	 */
-	printf("\t\t\t %s:%d \n",__FUNCTION__,__LINE__);
-	
-	return IPC_CMD_COMPLETE;
+	if (write_ipc_command_with_result_data(IPCCommand, res_type, NULL, 0))
+	{
+		/*
+		 * This is the complete lifecycle of command.
+		 * we are done with it
+		 */
+		return IPC_CMD_COMPLETE;
+	}
+	return IPC_CMD_ERROR;
 }
 
 static IPC_CMD_PREOCESS_RES process_IPC_failover_cmd_synchronise(WDIPCCommandData *IPCCommand)
 {
 	char res_type;
-	int res_len = 0;
-	int ret;
 	/*
 	 * if cluster or myself is not in stable state
 	 * just return cluster in transaction
@@ -1863,21 +1811,15 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_cmd_synchronise(WDIPCCommandDat
 		 */
 		return res_type;
 	}
-	
-	ret = write(IPCCommand->issueing_sock, &res_type, 1);
-	if (ret < 1)
-		return IPC_CMD_ERROR;
-	/* write data length */
-	ret = write(IPCCommand->issueing_sock, &res_len, 4);
-	if (ret < 4)
-		return IPC_CMD_ERROR;
-	/*
-	 * This is the complete lifecycle of command.
-	 * we are done with it
-	 */
-	printf("\t\t\t %s:%d \n",__FUNCTION__,__LINE__);
-	
-	return IPC_CMD_COMPLETE;
+	if (write_ipc_command_with_result_data(IPCCommand, res_type, NULL, 0))
+	{
+		/*
+		 * This is the complete lifecycle of command.
+		 * we are done with it
+		 */
+		return IPC_CMD_COMPLETE;
+	}
+	return IPC_CMD_ERROR;
 }
 
 static int node_has_requested_for_interlocking(WatchdogNode* wdNode, WDPacketData* pkt)
@@ -2029,22 +1971,19 @@ static void process_failover_command_sync_requests(WatchdogNode* wdNode, WDPacke
 	else
 	{
 		/* Reply to IPC Socket */
-		int res_len = 0;
-		char res_type = WD_IPC_CMD_RESULT_BAD;
+		bool ret;
 		if (jNode != NULL)
 		{
-			res_len = htonl(jw_get_json_length(jNode));
-			res_type = WD_IPC_CMD_RESULT_OK;
+			ret = write_ipc_command_with_result_data(ipcCommand, WD_IPC_CMD_RESULT_OK,
+											   jw_get_json_string(jNode), jw_get_json_length(jNode));
+			jw_destroy(jNode);
 		}
-		
-		write(ipcCommand->issueing_sock, &res_type, 1);
-		write(ipcCommand->issueing_sock, &res_len, 4);
-		if (res_len > 0)
-			write(ipcCommand->issueing_sock, jw_get_json_string(jNode), jw_get_json_length(jNode));
+		else
+			ret =write_ipc_command_with_result_data(ipcCommand, WD_IPC_CMD_RESULT_BAD, NULL, 0);
+		if (ret == false)
+			ereport(LOG,
+					(errmsg("failed to write results for failover sync request to IPC socket")));
 	}
-	if (jNode)
-		jw_destroy(jNode);
-	
 }
 
 static WDFailoverCMDResults
@@ -2117,14 +2056,12 @@ node_is_asking_for_failover_cmd_end(WatchdogNode* wdNode, WDPacketData* pkt, int
 			}
 			else /* some other node is holding the lock */
 			{
-				printf("\n\t\t\t %s:%d only lock holder can resign from it \n",__FUNCTION__,__LINE__);
 				res = FAILOVER_RES_BLOCKED;
 			}
 		}
 	}
 	else
 	{
-		printf("\n\t\t\t %s:%d I am not in position \n",__FUNCTION__,__LINE__);
 		res = FAILOVER_RES_ERROR;
 	}
 	return res;
@@ -2167,25 +2104,6 @@ static WatchdogNode* parse_node_info_message(WDPacketData* pkt, char **authkey)
 	return get_watchdog_node_from_json(pkt->data,pkt->len, authkey);
 }
 
-static int read_from_socket(int sock, void* buf, size_t len, int timeout)
-{
-	int ret, read_len;
-	read_len = 0;
-
-	while (read_len < len)
-	{
-		ret = read(sock, buf + read_len, (len - read_len));
-		if(ret < 0)
-			ereport(LOG,
-				(errmsg("error reading from socket %d of length %d",sock,(len - read_len)),
-					 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
-		if(ret <= 0)
-			return ret;
-		read_len +=ret;
-	}
-	return read_len;
-}
-
 static WDPacketData* read_packet(SocketConnection* conn)
 {
 	return read_packet_of_type(conn, WD_NO_MESSAGE);
@@ -2207,7 +2125,7 @@ static WDPacketData* read_packet_of_type(SocketConnection* conn, char ensure_typ
 		return NULL;
 	}
 
-	ret = read_from_socket(conn->sock,&type, sizeof(char), 1 );
+	ret = socket_read(conn->sock,&type, sizeof(char), 1 );
 	if (ret != sizeof(char))
 	{
 		close_socket_connection(conn,__LINE__);
@@ -2226,7 +2144,7 @@ static WDPacketData* read_packet_of_type(SocketConnection* conn, char ensure_typ
 		return NULL;
 	}
 	
-	ret = read_from_socket(conn->sock, &cmd_id, sizeof(int) ,1);
+	ret = socket_read(conn->sock, &cmd_id, sizeof(int) ,1);
 	if (ret != sizeof(int))
 	{
 		close_socket_connection(conn,__LINE__);
@@ -2237,7 +2155,7 @@ static WDPacketData* read_packet_of_type(SocketConnection* conn, char ensure_typ
 	ereport(DEBUG3,
 			(errmsg("PACKET COMMAND ID %d",cmd_id)));
 	
-	ret = read_from_socket(conn->sock, &len, sizeof(int), 1);
+	ret = socket_read(conn->sock, &len, sizeof(int), 1);
 	if (ret != sizeof(int))
 	{
 		close_socket_connection(conn,__LINE__);
@@ -2255,7 +2173,7 @@ static WDPacketData* read_packet_of_type(SocketConnection* conn, char ensure_typ
 
 	buf = palloc(len);
 
-	ret = read_from_socket(conn->sock, buf, len,1);
+	ret = socket_read(conn->sock, buf, len,1);
 	if (ret != len)
 	{
 		close_socket_connection(conn,__LINE__);
@@ -2453,9 +2371,7 @@ static int update_successful_outgoing_cons(fd_set* wmask, int pending_fds_count)
 							(errmsg("new outbond connection to %s:%d ",wdNode->hostname,wdNode->wd_port)));
 					
 					/* set socket to blocking again */
-					int flags = fcntl(wdNode->client_socket.sock, F_GETFL, 0);
-					flags &= ~O_NONBLOCK;
-					fcntl(wdNode->client_socket.sock, F_SETFL, flags);
+					pool_unset_nonblock(wdNode->client_socket.sock);
 					watchdog_state_machine(WD_EVENT_NEW_OUTBOUND_CONNECTION, wdNode, NULL);
 				}
 				count++;
@@ -2532,7 +2448,6 @@ static bool write_packet_to_socket(int sock, WDPacketData* pkt)
 			bytes_send += ret;
 		}while (bytes_send < pkt->len);
 	}
-	printf("RETURN TRUE from %d\n",__LINE__);
 	return true;
 }
 
@@ -3368,21 +3283,14 @@ static bool wd_commands_packet_processor(WD_EVENTS event, WatchdogNode* wdNode, 
 		ipcCommand = get_wd_IPC_command_from_reply(pkt);
 		if (ipcCommand)
 		{
-			int res_len = htonl(pkt->len);
-			char res_type = WD_IPC_CMD_RESULT_OK;
-			
-			write(ipcCommand->issueing_sock, &res_type, 1);
-			write(ipcCommand->issueing_sock, &res_len, 4);
-			if (pkt->len > 0)
-				write(ipcCommand->issueing_sock, pkt->data, pkt->len);
-			/* ok we are done
-			 * delete this command
-			 */
+			if (write_ipc_command_with_result_data(ipcCommand, WD_IPC_CMD_RESULT_OK, pkt->data, pkt->len) == false)
+				ereport(LOG,
+						(errmsg("failed to forward data message to IPC command socket")));
+
 			cleanUpIPCCommand(ipcCommand);
 			return true; /* do not process this packet further */
 		}
 		return false;
-		
 	}
 	
 	
@@ -3404,22 +3312,17 @@ static bool wd_commands_packet_processor(WD_EVENTS event, WatchdogNode* wdNode, 
 			 * we are expecting only one reply for this
 			 * and we got that.
 			 */
-			printf("\t\t\t %s:%d \n",__FUNCTION__,__LINE__);
-			
-			int res_len = 0;
 			char res_type = WD_IPC_CMD_RESULT_BAD;
 			if (pkt->type == WD_ACCEPT_MESSAGE)
 			{
 				/* okay we are the lock holder */
-				printf("\t\t\t %s:%d \n",__FUNCTION__,__LINE__);
-				
 				g_cluster.lockHolderNode = g_cluster.localNode;
 				res_type = WD_IPC_CMD_RESULT_OK;
 			}
-			printf("\t\t\t %s:%d \n",__FUNCTION__,__LINE__);
-			
-			write(ipcCommand->issueing_sock, &res_type, 1);
-			write(ipcCommand->issueing_sock, &res_len, 4);
+
+			if (write_ipc_command_with_result_data(ipcCommand, res_type, NULL, 0) == false)
+				ereport(LOG,
+						(errmsg("failed to forward data message to IPC command socket")));
 			/*
 			 * ok we are done, delete this command
 			 */
@@ -4741,8 +4644,7 @@ static bool reply_is_received_for_pgpool_replicate_command(WatchdogNode* wdNode,
 		 * we have received results from all nodes
 		 * analyze the result
 		 */
-		
-		int res_len = 0;
+
 		char res_type = WD_IPC_CMD_RESULT_OK;
 		
 		for (i=0; i< g_cluster.remoteNodeCount; i++)
@@ -4755,10 +4657,10 @@ static bool reply_is_received_for_pgpool_replicate_command(WatchdogNode* wdNode,
 				break;
 			}
 		}
-		write(ipcCommand->issueing_sock, &res_type, 1);
-		write(ipcCommand->issueing_sock, &res_len, 4);
-		/* ok we are done, delete this command
-		 */
+		if (write_ipc_command_with_result_data(ipcCommand, res_type, NULL, 0) == false)
+		ereport(LOG,
+				(errmsg("failed to forward message to IPC command socket")));
+
 		cleanUpIPCCommand(ipcCommand);
 	}
 	
