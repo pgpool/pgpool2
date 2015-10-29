@@ -423,18 +423,17 @@ static void print_lifecheck_cluster(void)
 	int i;
 	if (!gslifeCheckCluster)
 		return;
-	printf("Nodes count = %d\n",gslifeCheckCluster->nodeCount);
+	ereport(LOG,
+			(errmsg("%d watchdog nodes are configured for lifecheck",gslifeCheckCluster->nodeCount)));
 	for (i = 0; i< gslifeCheckCluster->nodeCount; i++)
 	{
-		printf("NODE NO %d\n",i);
-		printf("\t ID      = %d\n",gslifeCheckCluster->lifeCheckNodes[i].ID);
-		printf("\t Name    = %s\n",gslifeCheckCluster->lifeCheckNodes[i].nodeName);
-		printf("\t Host    = %s\n",gslifeCheckCluster->lifeCheckNodes[i].hostName);
-		printf("\t WDPort  = %d\n",gslifeCheckCluster->lifeCheckNodes[i].wdPort);
-		printf("\t pp Port = %d\n",gslifeCheckCluster->lifeCheckNodes[i].pgpoolPort);
-		printf("--------------\n");
+		ereport(LOG,
+				(errmsg("watchdog nodes ID:%d Name:\"%s\"",gslifeCheckCluster->lifeCheckNodes[i].ID,gslifeCheckCluster->lifeCheckNodes[i].nodeName),
+				 errdetail("Host:\"%s\" WD Port:%d pgpool-II port:%d",
+						   gslifeCheckCluster->lifeCheckNodes[i].hostName,
+						   gslifeCheckCluster->lifeCheckNodes[i].wdPort,
+						   gslifeCheckCluster->lifeCheckNodes[i].pgpoolPort)));
 	}
-	printf("========\n");
 }
 
 static bool inform_node_status(LifeCheckNode* node, char *message)

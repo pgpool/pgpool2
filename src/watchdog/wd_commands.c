@@ -44,6 +44,7 @@
 #include "utils/elog.h"
 #include "utils/json_writer.h"
 #include "utils/json.h"
+#include "utils/pool_stream.h"
 #include "pool_config.h"
 #include "watchdog/wd_ipc_commands.h"
 #include "watchdog/wd_ipc_defines.h"
@@ -64,7 +65,6 @@ static char* get_wd_node_function_json(char* func_name, int *node_id_set, int co
 static char* get_wd_simple_function_json(char* func);
 static char* get_wd_failover_cmd_type_json(WDFailoverCMDTypes cmdType, char* reqType);
 WDFailoverCMDResults wd_send_failover_sync_command(WDFailoverCMDTypes cmdType, char* syncReqType);
-static int read_socket(int socket, void* buf, int len);
 
 static int wd_set_node_mask (unsigned char req_mask, int *node_id_set, int count);
 static int wd_chk_node_mask (unsigned char req_mask, int *node_id_set, int count);
@@ -111,30 +111,44 @@ issue_command_to_watchdog(char type, WD_COMMAND_ACTIONS command_action,int timeo
 	int sock;
 	WDIPCCmdResult* result = NULL;
 	char res_type = 'P';
-	int res_length;
+	int res_length, action;
 	gettimeofday(&start_time, NULL);
 	
 	/* open the watchdog command socket for IPC */
 	sock = open_wd_command_sock(false);
 	if (sock < 0)
-	{
 		return NULL;
-	}
-	if (send(sock,&type,1,0) < 1)
+
+	res_length = htonl(data_len);
+	action = htonl(command_action);
+
+	if (socket_write(sock, &type, sizeof(char)) <= 0)
 	{
 		close(sock);
 		return NULL;
 	}
-	/*
-	 * since the command action will be consumed locally,
-	 * so no need to convert it to network byte order
-	 */
-	res_length = htonl(data_len);
-	send(sock,&command_action,sizeof(command_action),0);
-	send(sock,&res_length,sizeof(int),0);
-	if (data && data_len > 0)
-		send(sock,data,data_len,0);
 	
+
+	if (socket_write(sock, &action, sizeof(int)) <= 0)
+	{
+		close(sock);
+		return NULL;
+	}
+
+	if (socket_write(sock, &res_length, sizeof(int)) <= 0)
+	{
+		close(sock);
+		return NULL;
+	}
+	if (data && data_len > 0)
+	{
+		if (socket_write(sock, data, data_len) <= 0)
+		{
+			close(sock);
+			return NULL;
+		}
+	}
+
 	if (blocking)
 	{
 		/* if we are asked to wait for results */
@@ -153,40 +167,34 @@ issue_command_to_watchdog(char type, WD_COMMAND_ACTIONS command_action,int timeo
 			select_res = select(sock+1,&fds,NULL,NULL,timeout_st);
 			if (select_res > 0)
 			{
-				int ret;
 				/* read the result type char */
-				ret = read_socket(sock, &res_type, 1);
-				
-				if (ret != 1)
+				if (socket_read(sock, &res_type, 1 ,0) <=0)
 				{
-					ereport(DEBUG1,
-							(errmsg("error reading from IPC command socket"),
+					ereport(LOG,
+						(errmsg("error reading from IPC command socket"),
 							 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
 					close(sock);
 					return result;
 				}
 				/* read the result data length */
-				ret = read_socket(sock, &res_length, 4);
-				if (ret != 4)
+				if (socket_read(sock, &res_length, sizeof(int), 0) <= 0)
 				{
-					ereport(DEBUG1,
-							(errmsg("error reading from IPC command socket"),
+					ereport(LOG,
+						(errmsg("error reading from IPC command socket"),
 							 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
 					close(sock);
 					return result;
 				}
+
 				result = palloc(sizeof(WDIPCCmdResult));
 				result->type = res_type;
 				result->length = ntohl(res_length);
 				result->data = NULL;
-				
+
 				if (result->length > 0)
 				{
-					int ret;
-					/* read the result data length */
 					result->data = palloc(result->length);
-					ret = read_socket(sock, result->data, result->length);
-					if (ret != result->length)
+					if (socket_read(sock, result->data, result->length, 0) <= 0)
 					{
 						pfree(result->data);
 						pfree(result);
@@ -248,7 +256,7 @@ wd_start_recovery(void)
 	if (result == NULL)
 	{
 		ereport(LOG,
-				(errmsg("start recovery command lock failed"),
+			(errmsg("start recovery command lock failed"),
 				 errdetail("issue command to watchdog returned NULL")));
 		return COMMAND_FAILED;
 	}
@@ -258,7 +266,7 @@ wd_start_recovery(void)
 	if (type == WD_IPC_CMD_CLUSTER_IN_TRAN)
 	{
 		ereport(LOG,
-				(errmsg("start recovery command lock failed"),
+			(errmsg("start recovery command lock failed"),
 				 errdetail("watchdog cluster is not in stable state"),
 					errhint("try again when the cluster is fully initialized")));
 		return CLUSTER_IN_TRANSATIONING;
@@ -599,24 +607,6 @@ open_wd_command_sock(bool throw_error)
 	}
 	return sock;
 }
-
-
-
-static int read_socket(int socket, void* buf, int len)
-{
-	int read_len = 0;
-	while (read_len < len)
-	{
-		int nret;
-		nret =  read(socket, buf + read_len, len - read_len);
-		if (nret <= 0)
-			return nret;
-		read_len +=nret;
-	}
-	return read_len;
-}
-
-
 
 WDFailoverCMDResults wd_failover_command_start(WDFailoverCMDTypes cmdType)
 {
