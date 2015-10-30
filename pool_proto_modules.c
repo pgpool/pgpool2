@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1119,26 +1119,38 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		msg = pool_get_sent_message('Q', contents+1);
 		if (!msg)
 			msg = pool_get_sent_message('P', contents+1);
+
 		if (!msg)
-		{
-			pool_error("Close: cannot get parse message");
-			return POOL_END;
-		}
+			pool_debug("Close: cannot get parse message");
 	}
 	/* Portal */
 	else if (*contents == 'P')
 	{
 		msg = pool_get_sent_message('B', contents+1);
 		if (!msg)
-		{
-			pool_error("Close: cannot get bind message");
-			return POOL_END;
-		}
+			pool_debug("Close: cannot get bind message");
 	}
 	else
 	{
 		pool_error("Close: invalid message");
 		return POOL_END;
+	}
+
+	/*
+	 * As per the postgresql, calling close on non existing portals is not
+	 * an error. So on the same footings we will ignore all such calls and
+	 * return the close complete message to clients with out going to backend
+	 */
+	if (!msg)
+	{
+		int len = htonl(sizeof(len));
+		pool_set_command_success();
+		pool_unset_query_in_progress();
+
+		pool_write(frontend, "3", 1);
+		pool_write_and_flush(frontend, &len, sizeof(len));
+
+		return POOL_CONTINUE;
 	}
 
 	session_context->uncompleted_message = msg;
