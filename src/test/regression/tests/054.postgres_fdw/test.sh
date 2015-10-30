@@ -50,6 +50,9 @@ if [ $? != 0 ];then
 	exit 1
 fi
 
+# assure node #1 is detached 
+sleep 1
+
 # access foreign table 11003(PostgreSQL)->11000(pgpool)->11002(PostgreSQL)
 $PSQL -p 11003 test <<EOF
 SELECT * FROM fr1;
