@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2012	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -48,4 +48,6 @@ extern bool parse_node_status_json(char* json_data, int data_len, int* nodeID, i
 
 extern WDNodeInfo* get_WDNodeInfo_from_wd_node_json(json_value* source);
 
+extern char* get_wd_node_function_json(char* func_name, int *node_id_set, int count);
+extern bool parse_wd_node_function_json(char* json_data, int data_len, char** func_name, int **node_id_set, int *count);
 #endif

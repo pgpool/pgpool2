@@ -46,6 +46,7 @@
 #include "utils/json.h"
 #include "utils/pool_stream.h"
 #include "pool_config.h"
+#include "watchdog/wd_json_data.h"
 #include "watchdog/wd_ipc_commands.h"
 #include "watchdog/wd_ipc_defines.h"
 
@@ -61,8 +62,6 @@ static void sleep_in_waiting(void);
 static WDFailoverCMDResults wd_issue_failover_lock_command(WDFailoverCMDTypes cmdType, char* syncReqType);
 
 
-static char* get_wd_node_function_json(char* func_name, int *node_id_set, int count);
-static char* get_wd_simple_function_json(char* func);
 static char* get_wd_failover_cmd_type_json(WDFailoverCMDTypes cmdType, char* reqType);
 WDFailoverCMDResults wd_send_failover_sync_command(WDFailoverCMDTypes cmdType, char* syncReqType);
 
@@ -209,46 +208,24 @@ issue_command_to_watchdog(char type, WD_COMMAND_ACTIONS command_action,int timeo
 			}
 		}
 	}
+	else
+	{
+		/* For non blocking mode if we are sucessful in sending the command
+		 * that means the command is success
+		 */
+		result = palloc0(sizeof(WDIPCCmdResult));
+		result->type = WD_IPC_CMD_RESULT_OK;
+	}
 	close(sock);
 	return result;
 }
 
 
-static char* get_wd_simple_function_json(char* func)
-{
-	char* json_str;
-	JsonNode* jNode = jw_create_with_object(true);
-	jw_put_string(jNode, "Function", func);
-	jw_finish_document(jNode);
-	json_str = pstrdup(jw_get_json_string(jNode));
-	jw_destroy(jNode);
-	return json_str;
-}
-
-static char* get_wd_node_function_json(char* func_name, int *node_id_set, int count)
-{
-	char* json_str;
-	int  i;
-	JsonNode* jNode = jw_create_with_object(true);
-	
-	jw_put_string(jNode, "Function", func_name);
-	jw_put_int(jNode, "NodeCount", count);
-	jw_start_array(jNode, "NodeIdList");
-	for (i=0; i < count; i++) {
-		jw_put_int_value(jNode, node_id_set[i]);
-	}
-	jw_end_element(jNode);
-	jw_finish_document(jNode);
-	json_str = pstrdup(jw_get_json_string(jNode));
-	jw_destroy(jNode);
-	return json_str;
-}
-
 WdCommandResult
 wd_start_recovery(void)
 {
 	char type;
-	char* func = get_wd_simple_function_json(WD_FUNCTION_START_RECOVERY);
+	char* func = get_wd_node_function_json(WD_FUNCTION_START_RECOVERY, NULL,0);
 	
 	WDIPCCmdResult *result = issue_command_to_watchdog(WD_FUNCTION_COMMAND, WD_COMMAND_ACTION_DEFAULT,pool_config->recovery_timeout, func, strlen(func), true);
 	pfree(func);
@@ -281,7 +258,7 @@ WdCommandResult
 wd_end_recovery(void)
 {
 	char type;
-	char* func = get_wd_simple_function_json(WD_FUNCTION_END_RECOVERY);
+	char* func = get_wd_node_function_json(WD_FUNCTION_END_RECOVERY, NULL, 0);
 	
 	WDIPCCmdResult *result = issue_command_to_watchdog(WD_FUNCTION_COMMAND, WD_COMMAND_ACTION_DEFAULT,2, func, strlen(func), true);
 	pfree(func);
@@ -375,7 +352,9 @@ wd_send_failover_sync_command(WDFailoverCMDTypes cmdType, char* syncReqType)
 	char* json_data = get_wd_failover_cmd_type_json(cmdType, syncReqType);
 	
 	WDIPCCmdResult *result = issue_command_to_watchdog(WD_FAILOVER_CMD_SYNC_REQUEST, WD_COMMAND_ACTION_DEFAULT,pool_config->recovery_timeout, json_data, strlen(json_data), true);
-	
+
+	pfree(json_data);
+
 	if (result == NULL || result->length <= 0)
 	{
 		ereport(LOG,
@@ -497,15 +476,16 @@ wd_promote_backend(int node_id)
 	int n = node_id;
 	char type;
 	char* func;
+	WDIPCCmdResult *result;
 	
 	/* if promote packet is received already, do nothing */
 	if (wd_chk_node_mask_for_promote_req(&n,1))
 		return COMMAND_OK;
 	
 	func = get_wd_node_function_json(WD_FUNCTION_PROMOTE_REQUEST,&n, 1);
-	WDIPCCmdResult *result = issue_command_to_watchdog(WD_FUNCTION_COMMAND, WD_COMMAND_ACTION_DEFAULT,2, func, strlen(func), true);
+	result = issue_command_to_watchdog(WD_FUNCTION_COMMAND, WD_COMMAND_ACTION_DEFAULT,2, func, strlen(func), true);
 	pfree(func);
-	
+
 	if (result == NULL)
 	{
 		ereport(LOG,

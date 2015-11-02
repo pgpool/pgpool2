@@ -123,7 +123,7 @@ POOL_CONFIG* get_pool_config_from_json(char* json_data, int data_len)
 		ptr = json_get_string_value_for_key(arr_value, "backend_hostname");
 		if (ptr == NULL)
 			goto ERROR_EXIT;
-		strncpy(config->backend_desc->backend_info[i].backend_hostname, ptr,sizeof(config->backend_desc->backend_info[i].backend_hostname));
+		strncpy(config->backend_desc->backend_info[i].backend_hostname, ptr,sizeof(config->backend_desc->backend_info[i].backend_hostname) -1);
 	}
 
 	/* wd_remote_nodes array */
@@ -143,7 +143,7 @@ POOL_CONFIG* get_pool_config_from_json(char* json_data, int data_len)
 		ptr = json_get_string_value_for_key(arr_value, "hostname");
 		if (ptr == NULL)
 			goto ERROR_EXIT;
-		strncpy(config->wd_remote_nodes.wd_remote_node_info[i].hostname, ptr,sizeof(config->wd_remote_nodes.wd_remote_node_info[i].hostname));
+		strncpy(config->wd_remote_nodes.wd_remote_node_info[i].hostname, ptr,sizeof(config->wd_remote_nodes.wd_remote_node_info[i].hostname) -1);
 	}
 
 	json_value_free(root);
@@ -152,14 +152,11 @@ POOL_CONFIG* get_pool_config_from_json(char* json_data, int data_len)
 ERROR_EXIT:
 	if (root)
 		json_value_free(root);
-	if (config)
-	{
-		if (config->backend_desc)
-			pfree(config->backend_desc);
-		if (config->master_slave_sub_mode)
-			pfree(config->master_slave_sub_mode);
-		pfree(config);
-	}
+	if (config->backend_desc)
+		pfree(config->backend_desc);
+	if (config->master_slave_sub_mode)
+		pfree(config->master_slave_sub_mode);
+	pfree(config);
 	return NULL;
 }
 
@@ -283,17 +280,17 @@ WatchdogNode* get_watchdog_node_from_json(char* json_data, int data_len, char** 
 	ptr = json_get_string_value_for_key(root, "NodeName");
 	if (ptr == NULL)
 		goto ERROR_EXIT;
-	strncpy(wdNode->nodeName, ptr, sizeof(wdNode->nodeName));
+	strncpy(wdNode->nodeName, ptr, sizeof(wdNode->nodeName) -1);
 
 	ptr = json_get_string_value_for_key(root, "HostName");
 	if (ptr == NULL)
 		goto ERROR_EXIT;
-	strncpy(wdNode->hostname, ptr, sizeof(wdNode->hostname));
+	strncpy(wdNode->hostname, ptr, sizeof(wdNode->hostname) -1);
 
 	ptr = json_get_string_value_for_key(root, "VIP");
 	if (ptr == NULL)
 		goto ERROR_EXIT;
-	strncpy(wdNode->delegate_ip, ptr, sizeof(wdNode->delegate_ip));
+	strncpy(wdNode->delegate_ip, ptr, sizeof(wdNode->delegate_ip) -1);
 
 	if (authkey)
 	{
@@ -383,7 +380,7 @@ WDNodeInfo* get_WDNodeInfo_from_wd_node_json(json_value* source)
 				(errmsg("invalid json data"),
 				 errdetail("unable to find Watchdog Node Name")));
 	}
-	strncpy(wdNodeInfo->nodeName, ptr, sizeof(wdNodeInfo->nodeName));
+	strncpy(wdNodeInfo->nodeName, ptr, sizeof(wdNodeInfo->nodeName) -1);
 	
 	ptr = json_get_string_value_for_key(source, "HostName");
 	if (ptr == NULL)
@@ -392,7 +389,7 @@ WDNodeInfo* get_WDNodeInfo_from_wd_node_json(json_value* source)
 				(errmsg("invalid json data"),
 				 errdetail("unable to find Watchdog Host Name")));
 	}
-	strncpy(wdNodeInfo->hostName, ptr, sizeof(wdNodeInfo->hostName));
+	strncpy(wdNodeInfo->hostName, ptr, sizeof(wdNodeInfo->hostName) -1);
 	
 	ptr = json_get_string_value_for_key(source, "DelegateIP");
 	if (ptr == NULL)
@@ -401,7 +398,7 @@ WDNodeInfo* get_WDNodeInfo_from_wd_node_json(json_value* source)
 				(errmsg("invalid json data"),
 				 errdetail("unable to find Watchdog delegate IP")));
 	}
-	strncpy(wdNodeInfo->delegate_ip, ptr, sizeof(wdNodeInfo->delegate_ip));
+	strncpy(wdNodeInfo->delegate_ip, ptr, sizeof(wdNodeInfo->delegate_ip) -1);
 	
 	if (json_get_int_value_for_key(source, "PgpoolPort", &wdNodeInfo->wd_port))
 	{
@@ -427,4 +424,108 @@ WDNodeInfo* get_WDNodeInfo_from_wd_node_json(json_value* source)
 	return wdNodeInfo;
 	
 }
+
+char* get_wd_node_function_json(char* func_name, int *node_id_set, int count)
+{
+	char* json_str;
+	int  i;
+	JsonNode* jNode = jw_create_with_object(true);
+
+	jw_put_string(jNode, "Function", func_name);
+	jw_put_int(jNode, "NodeCount", count);
+	if (count > 0)
+	{
+		jw_start_array(jNode, "NodeIdList");
+		for (i=0; i < count; i++) {
+			jw_put_int_value(jNode, node_id_set[i]);
+		}
+		jw_end_element(jNode);
+	}
+	jw_finish_document(jNode);
+	json_str = pstrdup(jw_get_json_string(jNode));
+	jw_destroy(jNode);
+	return json_str;
+}
+
+bool parse_wd_node_function_json(char* json_data, int data_len, char** func_name, int **node_id_set, int *count)
+{
+	json_value *root, *value;
+	char* ptr;
+	int node_count = 0;
+	int i;
+
+	*node_id_set = NULL;
+	*func_name = NULL;
+	*count = 0;
+
+	root = json_parse(json_data,data_len);
+
+	/* The root node must be object */
+	if (root == NULL || root->type != json_object)
+	{
+		json_value_free(root);
+		ereport(LOG,
+			(errmsg("watchdog is unable to parse node function json"),
+				 errdetail("invalid json data \"%s\"",json_data)));
+		return false;
+	}
+	ptr = json_get_string_value_for_key(root, "Function");
+	if (ptr == NULL)
+	{
+		json_value_free(root);
+		ereport(LOG,
+			(errmsg("watchdog is unable to parse node function json"),
+				 errdetail("function node not found in json data \"%s\"",json_data)));
+		return false;
+	}
+	*func_name = pstrdup(ptr);
+	/* If it is a node function ?*/
+	if (json_get_int_value_for_key(root, "NodeCount", &node_count))
+	{
+		/*node count not found, But we don't care much about this*/
+		json_value_free(root);
+		return true;
+	}
+	if (node_count <= 0)
+	{
+		json_value_free(root);
+		return true;
+	}
+	*count = node_count;
+
+	value = json_get_value_for_key(root,"NodeIdList");
+	if (value == NULL)
+	{
+		json_value_free(root);
+		ereport(LOG,
+			(errmsg("invalid json data"),
+				 errdetail("unable to find NodeIdList node from data")));
+		return false;
+	}
+	if (value->type != json_array)
+	{
+		json_value_free(root);
+		ereport(WARNING,
+				(errmsg("invalid json data"),
+				 errdetail("NodeIdList node does not contains Array")));
+		return false;
+	}
+	if (node_count != value->u.array.length)
+	{
+		json_value_free(root);
+		ereport(WARNING,
+				(errmsg("invalid json data"),
+				 errdetail("NodeIdList array contains %d nodes while expecting %d",value->u.array.length, node_count)));
+		return false;
+	}
+
+	*node_id_set = palloc(sizeof(int) * node_count);
+	for (i = 0; i < node_count; i++)
+	{
+		*node_id_set[i] = value->u.array.values[i]->u.integer;
+	}
+	json_value_free(root);
+	return true;
+}
+
 

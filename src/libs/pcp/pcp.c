@@ -1284,17 +1284,19 @@ process_watchdog_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 	{
 		char *index = NULL;
 
-		index = (char *) memchr(buf, '\0', len);
-		if(index == NULL)
-			goto INVALID_RESPONSE;
-		index +=1;
-		strlcpy(watchdog_info->hostName, index, sizeof(watchdog_info->hostName));
+		watchdog_info = palloc(sizeof(PCPWDNodeInfo));
 
 		index = (char *) memchr(buf, '\0', len);
 		if(index == NULL)
 			goto INVALID_RESPONSE;
 		index +=1;
-		strlcpy(watchdog_info->nodeName, index, sizeof(watchdog_info->nodeName));
+		strlcpy(watchdog_info->hostName, index, sizeof(watchdog_info->hostName)-1);
+
+		index = (char *) memchr(buf, '\0', len);
+		if(index == NULL)
+			goto INVALID_RESPONSE;
+		index +=1;
+		strlcpy(watchdog_info->nodeName, index, sizeof(watchdog_info->nodeName) -1 );
 
 		index = (char *) memchr(index, '\0', len);
 		if(index == NULL)

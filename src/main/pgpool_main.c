@@ -1098,7 +1098,7 @@ bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool tes
 			int x;
 			for (x=0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
 			{
-				WdCommandResult res = wd_degenerate_backend_set(node_id_set, count);
+				res = wd_degenerate_backend_set(node_id_set, count);
 				if (res != CLUSTER_IN_TRANSATIONING)
 					break;
 				sleep(1);
@@ -1171,7 +1171,7 @@ void promote_backend(int node_id)
 		int x;
 		for (x=0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
 		{
-			WdCommandResult res = wd_promote_backend(node_id);
+			res = wd_promote_backend(node_id);
 			if (res != CLUSTER_IN_TRANSATIONING)
 				break;
 			sleep(1);
@@ -1229,7 +1229,7 @@ void send_failback_request(int node_id,bool throw_error)
 		int x;
 		for (x=0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
 		{
-			WdCommandResult res = wd_send_failback_request(node_id);
+			res = wd_send_failback_request(node_id);
 			if (res != CLUSTER_IN_TRANSATIONING)
 				break;
 			sleep(1);
@@ -1245,7 +1245,7 @@ void send_failback_request(int node_id,bool throw_error)
 				(errmsg("failback request for node_id: %d from pid [%d], But cluster is not in stable state"
 						, node_id, getpid())));
 	}
-	
+
 	if (res != COMMAND_FAILED)
 	{
 		register_node_operation_request(NODE_UP_REQUEST, &node_id, 1);

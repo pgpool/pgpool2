@@ -365,7 +365,6 @@ bool read_interface_change_event(int sock, char** ip_address, char** interface, 
 	
 	for (; NLMSG_OK(nlhdr, len) ;nlhdr = NLMSG_NEXT(nlhdr, len))
 	{
-		bool deladdr = false;
 		char addr[48];
 		char* label = NULL;
 		addr[0] = '\0';

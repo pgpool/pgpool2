@@ -116,34 +116,36 @@ packet_types all_packet_types[] = {
 };
 
 char *wd_event_name[] =
-{	"WD_EVENT_WD_STATE_CHANGED",
-	"WD_EVENT_TIMEOUT",
-	"WD_EVENT_PACKET_RCV",
-	"WD_EVENT_COMMAND_FINISHED",
-	"WD_EVENT_NEW_OUTBOUND_CONNECTION",
-	"WD_EVENT_NW_IP_IS_REMOVED",
-	"WD_EVENT_NW_IP_IS_ASSIGNED",
-	"WD_EVENT_LOCAL_NODE_LOST",
-	"WD_EVENT_REMOTE_NODE_LOST",
-	"WD_EVENT_REMOTE_NODE_FOUND",
-	"WD_EVENT_LOCAL_NODE_FOUND"
+{	"STATE CHANGED",
+	"TIMEOUT",
+	"PACKET RECEIVED",
+	"COMMAND FINISHED",
+	"NEW OUTBOUND_CONNECTION",
+	"NETWORK IP IS REMOVED",
+	"NETWORK IP IS ASSIGNED",
+	"THIS NODE LOST",
+	"REMOTE NODE LOST",
+	"REMOTE NODE FOUND",
+	"THIS NODE FOUND",
+	"NODE CONNECTION LOST",
+	"NODE CONNECTION FOUND"
 };
 
 char *debug_states[] = {
-	"WD_DEAD",
-	"WD_LOADING",
-	"WD_JOINING",
-	"WD_INITIALIZING",
-	"WD_WAITING_CONNECT",
-	"WD_COORDINATOR",
-	"WD_PARTICIPATE_IN_ELECTION",
-	"WD_STAND_FOR_COORDINATOR",
-	"WD_STANDBY",
-	"WD_WAITING_FOR_QUORUM",
-	"WD_LOST",
-	"WD_IN_NW_TROUBLE",
-	"WD_SHUTDOWN",
-	"WD_ADD_MESSAGE_SENT"};
+	"DEAD",
+	"LOADING",
+	"JOINING",
+	"INITIALIZING",
+	"WAITING_CONNECT",
+	"COORDINATOR",
+	"PARTICIPATE_IN_ELECTION",
+	"STAND_FOR_COORDINATOR",
+	"STANDBY",
+	"WAITING_FOR_QUORUM",
+	"LOST",
+	"IN_NETWORK_TROUBLE",
+	"SHUTDOWN",
+	"ADD_MESSAGE_SENT"};
 
 typedef struct WDPacketData
 {
@@ -454,8 +456,8 @@ static void wd_cluster_initialize(void)
 	g_cluster.localNode->wd_priority = pool_config->wd_priority;
 	g_cluster.localNode->pgpool_port = pool_config->port;
 	g_cluster.localNode->private_id = 0;
-	strcpy(g_cluster.localNode->hostname, pool_config->wd_hostname);
-	strcpy(g_cluster.localNode->delegate_ip, pool_config->delegate_IP);
+	strncpy(g_cluster.localNode->hostname, pool_config->wd_hostname, sizeof(g_cluster.localNode->hostname) -1);
+	strncpy(g_cluster.localNode->delegate_ip, pool_config->delegate_IP, sizeof(g_cluster.localNode->delegate_ip) -1);
 	/* Assign the node name */
 	{
 		struct utsname unameData;
@@ -909,6 +911,8 @@ watchdog_main(void)
 
 		if (service_lost_connections() == true)
 			service_internal_command();
+
+		update_connected_node_count();
 	}
 	return 0;
 }
@@ -1389,25 +1393,25 @@ static bool read_ipc_command_and_process(int sock, bool *remove_socket)
 	gettimeofday(&IPCCommand->issue_time, NULL);
 	
 	if (data_len > 0)
+	{
 		IPCCommand->data_buf = palloc(data_len);
+		if (socket_read(sock, IPCCommand->data_buf , data_len, 0) <= 0)
+		{
+			ereport(LOG,
+				(errmsg("error reading IPC from socket"),
+					 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
+			MemoryContextDelete(mCxt);
+			return false;
+		}
+	}
 	else
 		IPCCommand->data_buf = NULL;
-	
+
 	IPCCommand->nodeResults = NULL;
-	
 	IPCCommand->memoryContext = mCxt;
-	
+	IPCCommand->data_len = data_len;
 	MemoryContextSwitchTo(oldCxt);
 
-	if (socket_read(sock, IPCCommand->data_buf , data_len,0) <= 0)
-	{
-		ereport(NOTICE,
-			(errmsg("error reading IPC from socket"),
-				 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
-		MemoryContextDelete(mCxt);
-		return false;
-	}
-	IPCCommand->data_len = data_len;
 	res = process_IPC_command(IPCCommand);
 	if (res == IPC_CMD_PROCESSING)
 	{
@@ -2339,7 +2343,7 @@ static int accept_incomming_connections(fd_set* rmask, int pending_fds_count)
 			conn->sock = fd;
 			conn->sock_state = WD_SOCK_CONNECTED;
 			gettimeofday(&conn->tv, NULL);
-			strncpy(conn->addr,inet_ntoa(addr.sin_addr),sizeof(conn->addr));
+			strncpy(conn->addr,inet_ntoa(addr.sin_addr),sizeof(conn->addr)-1);
 			ereport(LOG,
 					(errmsg("new watchdog node connection is received from \"%s:%d\"",inet_ntoa(addr.sin_addr),addr.sin_port)));
 			g_cluster.unidentified_socks = lappend(g_cluster.unidentified_socks, conn);
@@ -2400,24 +2404,34 @@ static int update_successful_outgoing_cons(fd_set* wmask, int pending_fds_count)
 
 				gettimeofday(&wdNode->client_socket.tv, NULL);
 
-				getsockopt(wdNode->client_socket.sock, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &lon);
-				if (valopt)
+				if (getsockopt(wdNode->client_socket.sock, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &lon) == 0)
 				{
-					ereport(LOG,
-							(errmsg("error in outbond connection to %s:%d",wdNode->hostname,wdNode->wd_port),
-							 errdetail("%s",strerror(valopt))));
-					close_socket_connection(&wdNode->client_socket);
-					wdNode->client_socket.sock_state = WD_SOCK_ERROR;
+					if (valopt)
+					{
+						ereport(LOG,
+								(errmsg("error in outbond connection to %s:%d",wdNode->hostname,wdNode->wd_port),
+								 errdetail("%s",strerror(valopt))));
+						close_socket_connection(&wdNode->client_socket);
+						wdNode->client_socket.sock_state = WD_SOCK_ERROR;
+					}
+					else
+					{
+						wdNode->client_socket.sock_state = WD_SOCK_CONNECTED;
+						ereport(LOG,
+								(errmsg("new outbond connection to %s:%d ",wdNode->hostname,wdNode->wd_port)));
+						/* set socket to blocking again */
+						pool_unset_nonblock(wdNode->client_socket.sock);
+						watchdog_state_machine(WD_EVENT_NEW_OUTBOUND_CONNECTION, wdNode, NULL);
+					}
 				}
 				else
 				{
-					wdNode->client_socket.sock_state = WD_SOCK_CONNECTED;
 					ereport(LOG,
-							(errmsg("new outbond connection to %s:%d ",wdNode->hostname,wdNode->wd_port)));
-					
-					/* set socket to blocking again */
-					pool_unset_nonblock(wdNode->client_socket.sock);
-					watchdog_state_machine(WD_EVENT_NEW_OUTBOUND_CONNECTION, wdNode, NULL);
+						(errmsg("error in outbond connection to %s:%d ",wdNode->hostname,wdNode->wd_port),
+							 errdetail("getsockopt faile with error \"%s\"",strerror(errno))));
+					close_socket_connection(&wdNode->client_socket);
+					wdNode->client_socket.sock_state = WD_SOCK_ERROR;
+
 				}
 				count++;
 				if (count >= pending_fds_count)
@@ -2619,7 +2633,7 @@ static WDPacketData* get_addnode_message(void)
 
 static WDPacketData* get_mynode_info_message(WDPacketData* replyFor)
 {
-	char authhash[MD5_PASSWD_LEN +1];
+	char authhash[MD5_PASSWD_LEN + MD5_PASSWD_LEN + 10]; //TODO
 	WDPacketData *message = get_empty_packet();
 	bool include_hash = get_authhash_for_node(g_cluster.localNode, authhash);
 	char *json_data = get_watchdog_node_info_json(g_cluster.localNode, include_hash?authhash:NULL);
@@ -2815,7 +2829,10 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 	}
 	if (replyPkt)
 	{
-		send_message_to_node(wdNode,replyPkt);
+		if (send_message_to_node(wdNode,replyPkt) == false)
+			ereport(LOG,
+				(errmsg("sending packet to node \"%s\" failed", wdNode->nodeName)));
+
 		pfree(replyPkt);
 	}
 	return 1;
@@ -2875,17 +2892,15 @@ static int send_message(WatchdogNode* wdNode, WDPacketData *pkt)
 static void service_internal_command(void)
 {
 	int i;
-	WDCommandNodeResult* nodeResult = NULL;
-
 	if (g_cluster.currentCommand.commandStatus != COMMAND_IN_PROGRESS)
 		return;
 	/* get the result node for */
 	for (i = 0; i< g_cluster.remoteNodeCount; i++)
 	{
-		WDCommandNodeResult* nodeRes = &g_cluster.currentCommand.nodeResults[i];
-		if (nodeRes->cmdState == COMMAND_STATE_SEND_ERROR)
+		WDCommandNodeResult* nodeResult = &g_cluster.currentCommand.nodeResults[i];
+		if (nodeResult->cmdState == COMMAND_STATE_SEND_ERROR)
 		{
-			if (is_node_reachable(nodeRes->wdNode))
+			if (is_node_reachable(nodeResult->wdNode))
 			{
 				if (send_message_to_node(nodeResult->wdNode, &g_cluster.currentCommand.packet) == true)
 				{
@@ -4451,13 +4466,11 @@ static IPC_CMD_PREOCESS_RES execute_replicate_command(WDIPCCommandData* ipcComma
 
 static bool process_pgpool_replicate_command(WatchdogNode* wdNode, WDPacketData* pkt)
 {
-	/* we need to get the function name */
-	json_value *root, *value;
 	char* func_name;
-	bool is_error = false;
 	int node_count = 0;
 	int *node_id_list = NULL;
-	
+	bool ret = false;
+
 	if (pkt->data == NULL || pkt->len == 0)
 	{
 		ereport(LOG,
@@ -4469,73 +4482,14 @@ static bool process_pgpool_replicate_command(WatchdogNode* wdNode, WDPacketData*
 		(errmsg("processing pgpool replicate variable command"),
 			 errdetail("%s",pkt->data)));
 
-	root = json_parse(pkt->data,pkt->len);
-	
-	/* The root node must be object */
-	if (root == NULL || root->type != json_object)
-	{
-		json_value_free(root);
-		ereport(LOG,
-			(errmsg("watchdog is unable to process pgpool replicate command"),
-				 errdetail("invalid json data \"%s\"",pkt->data)));
-		return false;
-	}
-	func_name = json_get_string_value_for_key(root, "Function");
-	if (func_name == NULL)
-	{
-		json_value_free(root);
-		ereport(LOG,
-			(errmsg("watchdog is unable to process pgpool replicate command"),
-				 errdetail("function node not found in json data \"%s\"",pkt->data)));
-		return false;
-	}
-	func_name = pstrdup(func_name);
-	/* If it is a node function ?*/
-	if (json_get_int_value_for_key(root, "NodeCount", &node_count))
-	{
-		json_value_free(root);
-	}
-	
-	/* find the WatchdogNodes array */
-	value = json_get_value_for_key(root,"NodeIdList");
-	if (value == NULL)
-	{
-		ereport(WARNING,
-				(errmsg("invalid json data"),
-				 errdetail("unable to find NodeIdList node from data")));
-	}
-	if (value->type != json_array)
-	{
-		is_error = true;
-		ereport(WARNING,
-				(errmsg("invalid json data"),
-				 errdetail("NodeIdList node does not contains Array")));
-	}
-	if (node_count != value->u.array.length)
-	{
-		is_error = true;
-		ereport(WARNING,
-			(errmsg("invalid json data"),
-				 errdetail("NodeIdList array contains %d nodes while expecting %d",value->u.array.length, node_count)));
-	}
-	
-	if (is_error == false)
-	{
-		int i;
-		node_id_list = palloc(sizeof(int) * node_count);
-		for (i = 0; i < node_count; i++)
-		{
-			node_id_list[i] = value->u.array.values[i]->u.integer;
-		}
-		if (is_error)
-		{
-			pfree(node_id_list);
-			node_id_list = NULL;
-			node_count = 0;
-		}
-	}
-	json_value_free(root);
-	return process_wd_command_function(wdNode, pkt, func_name, node_count, node_id_list);
+	if (parse_wd_node_function_json(pkt->data, pkt->len, &func_name, &node_id_list, &node_count))
+	 ret = process_wd_command_function(wdNode, pkt, func_name, node_count, node_id_list);
+	if (func_name)
+		pfree(func_name);
+	if (node_id_list)
+		pfree(node_id_list);
+
+	return ret;
 }
 
 static bool process_wd_command_function(WatchdogNode* wdNode, WDPacketData* pkt, char* func_name, int node_count, int* node_id_list)
@@ -4872,7 +4826,7 @@ static bool verify_pool_configurations(POOL_CONFIG* config)
 							   pool_config->backend_desc->backend_info[i].backend_hostname)));
 			return false;
 		}
-		if (pool_config->backend_desc->backend_info[i].backend_port != pool_config->backend_desc->backend_info[i].backend_port)
+		if (config->backend_desc->backend_info[i].backend_port != pool_config->backend_desc->backend_info[i].backend_port)
 		{
 			ereport(FATAL,
 					(return_code(POOL_EXIT_FATAL),

@@ -438,9 +438,9 @@ static void print_lifecheck_cluster(void)
 
 static bool inform_node_status(LifeCheckNode* node, char *message)
 {
-	int node_status;
+	int node_status,x;
 	char* json_data;
-	WDIPCCmdResult* res;
+	WDIPCCmdResult* res = NULL;
 	char* new_status;
 
 	if (node->nodeState == NODE_DEAD)
@@ -464,10 +464,20 @@ static bool inform_node_status(LifeCheckNode* node, char *message)
 	if (json_data == NULL)
 		return false;
 
-	res = issue_command_to_watchdog(WD_NODE_STATUS_CHANGE_COMMAND, WD_COMMAND_ACTION_DEFAULT,0, json_data, strlen(json_data),false);
-
+	for (x=0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
+	{
+		res = issue_command_to_watchdog(WD_NODE_STATUS_CHANGE_COMMAND, WD_COMMAND_ACTION_DEFAULT,0, json_data, strlen(json_data),false);
+		if (res)
+			break;
+		sleep(1);
+	}
 	pfree(json_data);
-	return true;
+	if (res)
+	{
+		pfree(res);
+		return true;
+	}
+	return false;
 }
 
 static bool fetch_watchdog_nodes_data(void)
