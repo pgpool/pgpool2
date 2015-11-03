@@ -30,13 +30,13 @@ cd ..
 
 # create standby environment
 cd $sdir
+mkdir log
 echo -n "creating standby pgpool..."
-source ./bashrc.ports
 cat ../standby.conf >> etc/pgpool.conf
 # since we are using the same pgpool-II conf as of master. so change the pid file path in standby pgpool conf
 echo "pid_file_name = '$PWD/pgpool2.pid'" >> etc/pgpool.conf
 # start the stnadby pgpool-II by hand
-$PGPOOL_INSTALL_DIR/bin/pgpool -D -n -f etc/pgpool.conf -F etc/pcp.conf -a etc/pool_hba.conf > log/pgpool.log 2>&1 &
+$PGPOOL_INSTALL_DIR/bin/pgpool -D -n -f etc/pgpool.conf -F $PWD/etc/pcp.conf -a $PWD/etc/pool_hba.conf > $PWD/log/pgpool.log 2>&1 &
 wait_for_pgpool_startup
 cd ..
 
@@ -44,7 +44,7 @@ cd ..
 echo "Waiting for the pgpool master..."
 for i in 1 2 3 4 5 6 7 8 9 10
 do
-	RESULT=`grep "I am the cluster leader node. Starting escalation process" master/log/pgpool.log`
+	RESULT=`grep "I am the cluster leader node. Starting escalation process" $PWD/master/log/pgpool.log`
 	if [ ! -z "$RESULT" ]; then
 		success_count=$(( success_count + 1 ))
 		echo "Master brought up successfully."
@@ -58,7 +58,7 @@ done
 echo "Waiting for the pgpool master..."
 for i in 1 2 3 4 5 6 7 8 9 10
 do
-	RESULT=`grep "successfully joined the watchdog cluster as standby node" standby/log/pgpool.log`
+	RESULT=`grep "successfully joined the watchdog cluster as standby node" $PWD/standby/log/pgpool.log`
 	if [ ! -z "$RESULT" ]; then
 		success_count=$(( success_count + 1 ))
 		echo "Standby successfully connected."
@@ -74,7 +74,7 @@ $PGPOOL_INSTALL_DIR/bin/pgpool -f master/etc/pgpool.conf -m f stop
 echo "Checking if the Standby pgpool-II detected the master shutdown..."
 for i in 1 2 3 4 5 6 7 8 9 10
 do
-	RESULT=`grep " is shutting down" standby/log/pgpool.log`
+	RESULT=`grep " is shutting down" $PWD/standby/log/pgpool.log`
 	if [ ! -z "$RESULT" ]; then
 		success_count=$(( success_count + 1 ))
 		echo "Master shutdown detected."
@@ -90,7 +90,7 @@ $PGPOOL_INSTALL_DIR/bin/pgpool -f master/etc/pgpool.conf -m f stop
 echo "Checking if the Standby pgpool-II takes over the master responsibility..."
 for i in 1 2 3 4 5 6 7 8 9 10
 do
-	RESULT=`grep "I am the cluster leader node. Starting escalation process" standby/log/pgpool.log`
+	RESULT=`grep "I am the cluster leader node. Starting escalation process" $PWD/standby/log/pgpool.log`
 	if [ ! -z "$RESULT" ]; then
 		success_count=$(( success_count + 1 ))
 		echo "Standby successfully became the new master."
@@ -100,7 +100,7 @@ do
 	sleep 2
 done
 
-$PGPOOL_INSTALL_DIR/bin/pgpool -f standby/etc/pgpool.conf -m f stop
+$PGPOOL_INSTALL_DIR/bin/pgpool -f $PWD/standby/etc/pgpool.conf -m f stop
 cd master
 ./shutdownall
 

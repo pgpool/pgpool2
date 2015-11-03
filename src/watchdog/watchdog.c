@@ -1505,7 +1505,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_nodeList_command(WDIPCCommandData* IPCCo
 	json_value_free(root);
 	jNode = get_node_list_json(NodeID);
 	ret = write_ipc_command_with_result_data(IPCCommand, WD_IPC_CMD_RESULT_OK,
-											 jw_get_json_string(jNode), jw_get_json_length(jNode));
+											 jw_get_json_string(jNode), jw_get_json_length(jNode) +1);
 	jw_destroy(jNode);
 	if (ret == false)
 		return IPC_CMD_ERROR;
@@ -1998,7 +1998,7 @@ static void process_failover_command_sync_requests(WatchdogNode* wdNode, WDPacke
 		}
 		else
 		{
-			reply_with_message(wdNode, WD_DATA_MESSAGE, jw_get_json_string(jNode), jw_get_json_length(jNode), pkt);
+			reply_with_message(wdNode, WD_DATA_MESSAGE, jw_get_json_string(jNode), jw_get_json_length(jNode) + 1, pkt);
 		}
 	}
 	else
@@ -2008,7 +2008,7 @@ static void process_failover_command_sync_requests(WatchdogNode* wdNode, WDPacke
 		if (jNode != NULL)
 		{
 			ret = write_ipc_command_with_result_data(ipcCommand, WD_IPC_CMD_RESULT_OK,
-											   jw_get_json_string(jNode), jw_get_json_length(jNode));
+											   jw_get_json_string(jNode), jw_get_json_length(jNode) +1);
 			jw_destroy(jNode);
 		}
 		else
