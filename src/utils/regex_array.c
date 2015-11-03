@@ -206,6 +206,8 @@ void extract_string_tokens2(char *str, char *delimi, char delimi2, Left_right_to
 
 		if (i == len -1)
 		{
+			pfree(left_token);
+			pfree(right_token);
 			pfree(mystr);
 			return;
 		}

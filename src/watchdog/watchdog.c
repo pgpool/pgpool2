@@ -1441,33 +1441,33 @@ static IPC_CMD_PREOCESS_RES process_IPC_command(WDIPCCommandData* IPCCommand)
 		case WD_NODE_STATUS_CHANGE_COMMAND:
 			return process_IPC_nodeStatusChange_command(IPCCommand);
 			break;
-			
+
 		case WD_TRY_COMMAND_LOCK:
 			return process_IPC_lock_request(IPCCommand);
 			break;
-			
+
 		case WD_COMMAND_UNLOCK:
 			process_IPC_unlock_request(IPCCommand);
 			break;
-			
+
 		case WD_REGISTER_FOR_NOTIFICATION:
 			/* Add this socket to the notify socket list*/
 			g_cluster.notify_clients = lappend_int(g_cluster.notify_clients, IPCCommand->issueing_sock);
 			/* The command is completed successfully */
 			return IPC_CMD_COMPLETE;
 			break;
-			
+
 		case WD_GET_NODES_LIST_COMMAND:
 			return process_IPC_nodeList_command(IPCCommand);
 			break;
-			
+
 		case WD_FUNCTION_COMMAND:
 			return process_IPC_replicate_variable(IPCCommand);
 			break;
-			
+
 		case WD_FAILOVER_CMD_SYNC_REQUEST:
 			return process_IPC_failover_cmd_synchronise(IPCCommand);
-			
+
 		default:
 			ereport(LOG,
 					(errmsg("invalid IPC command type %c",IPCCommand->type)));
@@ -1483,6 +1483,10 @@ static IPC_CMD_PREOCESS_RES process_IPC_nodeList_command(WDIPCCommandData* IPCCo
 	JsonNode* jNode = NULL;
 	int NodeID = -1;
 	bool ret;
+
+	if (IPCCommand->data_len <= 0 || IPCCommand->data_buf == NULL)
+		return IPC_CMD_ERROR;
+
 	json_value *root = json_parse(IPCCommand->data_buf,IPCCommand->data_len);
 	/* The root node must be object */
 	if (root == NULL || root->type != json_object)
@@ -1514,7 +1518,10 @@ static IPC_CMD_PREOCESS_RES process_IPC_nodeStatusChange_command(WDIPCCommandDat
 	int nodeID;
 	char *message;
 	bool ret;
- 
+
+	if (IPCCommand->data_len <= 0 || IPCCommand->data_buf == NULL)
+		return IPC_CMD_ERROR;
+
 	ret = parse_node_status_json(IPCCommand->data_buf, IPCCommand->data_len, &nodeID, &nodeStatus, &message);
 	
 	if (ret == false)
@@ -1610,6 +1617,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_replicate_variable(WDIPCCommandData* IPC
 		 */
 		return res_type;
 	}
+
 	if (write_ipc_command_with_result_data(IPCCommand, res_type, NULL, 0))
 	{
 		/*
@@ -1630,6 +1638,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_unlock_request(WDIPCCommandData *IPCComm
 	 * just return cluster in transaction
 	 */
 	IPCCommand->type = WD_INTERUNLOCKING_REQUEST;
+
 	if (g_cluster.lockHolderNode == NULL)
 	{
 		/* There is no lock holder as per our records
@@ -1717,7 +1726,9 @@ static IPC_CMD_PREOCESS_RES process_IPC_lock_request(WDIPCCommandData *IPCComman
 	 */
 	ereport(LOG,
 			(errmsg("processing lock request from IPC socket")));
+
 	IPCCommand->type = WD_INTERLOCKING_REQUEST;
+
 	if (get_local_node_state() == WD_STANDBY)
 	{
 		
@@ -2620,7 +2631,7 @@ static JsonNode* get_node_list_json(int id)
 
 static WDPacketData* get_addnode_message(void)
 {
-	char authhash[MD5_PASSWD_LEN + MD5_PASSWD_LEN + 10]; //TODO
+	char authhash[(MD5_PASSWD_LEN+1)*2];
 	WDPacketData *message = get_empty_packet();
 	bool include_hash = get_authhash_for_node(g_cluster.localNode, authhash);
 	char *json_data = get_watchdog_node_info_json(g_cluster.localNode, include_hash?authhash:NULL);
@@ -2633,7 +2644,7 @@ static WDPacketData* get_addnode_message(void)
 
 static WDPacketData* get_mynode_info_message(WDPacketData* replyFor)
 {
-	char authhash[MD5_PASSWD_LEN + MD5_PASSWD_LEN + 10]; //TODO
+	char authhash[(MD5_PASSWD_LEN+1)*2];
 	WDPacketData *message = get_empty_packet();
 	bool include_hash = get_authhash_for_node(g_cluster.localNode, authhash);
 	char *json_data = get_watchdog_node_info_json(g_cluster.localNode, include_hash?authhash:NULL);
@@ -4883,7 +4894,7 @@ static bool verify_authhash_for_node(WatchdogNode* wdNode, char* authhash)
 {
 	if (strlen(pool_config->wd_authkey))
 	{
-		char calculated_authhash[MD5_PASSWD_LEN +1];
+		char calculated_authhash[(MD5_PASSWD_LEN+1)*2];
 
 		char nodeStr[WD_MAX_PACKET_STRING];
 		int len = snprintf(nodeStr, WD_MAX_PACKET_STRING, "state=%d tv_sec=%ld wd_port=%d",

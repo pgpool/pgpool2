@@ -1870,6 +1870,8 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			if (context == INIT_CONFIG ||
 				(context == RELOAD_CONFIG && BACKEND_INFO(slot).backend_status == CON_UNUSED))
 				strlcpy(BACKEND_INFO(slot).backend_hostname, str, MAX_DB_HOST_NAMELEN);
+			pfree(str);
+
 		}
 
 		else if (!strncmp(key, "backend_port", 12) &&
@@ -1985,6 +1987,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			if (context == INIT_CONFIG ||
 				(context == RELOAD_CONFIG && (status == CON_UNUSED || status == CON_DOWN)))
 				strlcpy(BACKEND_INFO(slot).backend_data_directory, str, MAX_PATH_LENGTH);
+			pfree(str);
 		}
 		else if (!strncmp(key, "backend_flag", 12) &&
 				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context) &&
@@ -2165,6 +2168,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			if (context == INIT_CONFIG || (context == RELOAD_CONFIG ))
 				strlcpy(WD_INFO(slot).hostname, str, WD_MAX_HOST_NAMELEN);
+			pfree(str);
 		}
 
 		else if (!strncmp(key, "other_pgpool_port", 17) &&
@@ -2713,7 +2717,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			if (context == INIT_CONFIG || (context == RELOAD_CONFIG ))
 				strlcpy(WD_HB_IF(slot).if_name, str, WD_MAX_IF_NAME_LEN);
-
+			pfree(str);
 		}
 		/* this must be prior to hertbeat_destination */
 		else if (!strncmp(key, "heartbeat_destination_port", 26) &&
@@ -2765,6 +2769,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			if (context == INIT_CONFIG || (context == RELOAD_CONFIG ))
 				strlcpy(WD_HB_IF(slot).addr, str, WD_MAX_HOST_NAMELEN);
+			pfree(str);
 		}
 
         else if (!strcmp(key, "ssl") && CHECK_CONTEXT(INIT_CONFIG, context))

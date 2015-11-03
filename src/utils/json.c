@@ -1072,6 +1072,19 @@ int json_get_int_value_for_key(json_value* source, const char* key, int* value)
 	return 0;
 }
 
+int json_get_long_value_for_key(json_value* source, const char* key, long* value)
+{
+	json_value* jNode;
+
+	jNode = json_get_value_for_key(source,key);
+	if (jNode == NULL)
+	return -1;
+	if (jNode->type != json_integer)
+	return -1;
+	*value = jNode->u.integer;
+	return 0;
+}
+
 /*
  * pgpool extension:
  * returns string value if found for the key.

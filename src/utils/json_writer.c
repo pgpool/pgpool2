@@ -83,6 +83,22 @@ bool jw_put_int(JsonNode* jNode, char* key, int value)
 	return true;
 }
 
+bool jw_put_long(JsonNode* jNode, char* key, long value)
+{
+	if (key == NULL)
+	return false;
+	if (jw_get_current_element_count(jNode) < 0)
+	return false;
+	if (jw_get_current_element_type(jNode) != JWOBJECT)
+	return false;
+
+	if (jw_get_current_element_count(jNode) > 0)
+	appendStringInfoChar(jNode->buf,',');
+	appendStringInfo(jNode->buf, "\"%s\":%ld",key,value);
+	jw_inc_current_element_count(jNode);
+	return true;
+}
+
 bool jw_put_null(JsonNode* jNode, char* key)
 {
 	if (key == NULL)
@@ -125,6 +141,20 @@ bool jw_put_int_value(JsonNode* jNode, int value)
 	if (jw_get_current_element_count(jNode) > 0)
 		appendStringInfoChar(jNode->buf,',');
 	appendStringInfo(jNode->buf, "%d",value);
+	jw_inc_current_element_count(jNode);
+	return true;
+}
+
+bool jw_put_long_value(JsonNode* jNode, long value)
+{
+	if (jw_get_current_element_count(jNode) < 0)
+	return false;
+	if (jw_get_current_element_type(jNode) != JWARRAY)
+	return false;
+
+	if (jw_get_current_element_count(jNode) > 0)
+	appendStringInfoChar(jNode->buf,',');
+	appendStringInfo(jNode->buf, "%ld",value);
 	jw_inc_current_element_count(jNode);
 	return true;
 }
