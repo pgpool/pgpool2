@@ -269,6 +269,8 @@ function set_postgresql_conf
 	echo "log_truncate_on_rotation = on" >> $PGCONF
 	echo "log_statement = 'all'" >> $PGCONF
 	echo "max_prepared_transactions = 10" >> $PGCONF
+	# for rhel7 rpm
+	echo "unix_socket_directories = '/tmp' >> $PGCONF
 
 	if [ $MODE = "s" ];then
 		echo "hot_standby = on" >> $PGCONF
