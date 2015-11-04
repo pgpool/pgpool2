@@ -8,6 +8,7 @@
 # -p installation path of Postgres
 # -j JDBC driver path
 # -m install (install pgpool-II and use that for tests) / noinstall : Default install
+# -s unix socket directory 
 
 dir=`pwd`
 MODE=install
@@ -17,6 +18,7 @@ JDBC_DRIVER=/usr/local/pgsql/share/postgresql-9.2-1003.jdbc4.jar
 log=$dir/log
 fail=0
 ok=0
+PGSOCKET_DIR=/tmp
 
 CRED=$(tput setaf 1)
 CGREEN=$(tput setaf 2)
@@ -80,6 +82,7 @@ function export_env_vars
 	export PGBIN=$PGBIN
 	export JDBC_DRIVER=$JDBC_DRIVER
 	export PGBENCH_PATH=$PGBENCH_PATH
+	export PGSOCKET_DIR=$PGSOCKET_DIR
 }
 function print_info
 {
@@ -103,6 +106,7 @@ function print_usage
 	printf "  -i   DIRECTORY           pgpool installed directory, if already installed pgpool is to be used for tests\n" >&2
 	printf "  -m   install/noinstall   make install pgpool to temp directory for executing regression tests [Default: install]\n" >&2
 	printf "  -j   FILE                Postgres jdbc jar file path\n" >&2
+	printf "  -s   DIRECTORY           unix socket directory" >&2
 	printf "  -?                       print this help and then exit\n\n" >&2
 	printf "Please read the README for details on adding new tests\n" >&2
 
@@ -110,7 +114,7 @@ function print_usage
 
 trap "echo ; exit 0" SIGINT SIGQUIT
 
-while getopts "p:m:i:j:b:?" OPTION
+while getopts "p:m:i:j:b:s?" OPTION
 do
   case $OPTION in
     p)  PG_INSTALL_DIR="$OPTARG";;
@@ -118,6 +122,7 @@ do
     i)  PGPOOL_PATH="$OPTARG";;
     j)  JDBC_DRIVER="$OPTARG";;
     b)  PGBENCH_PATH="$OPTARG";;
+    s)  PGSOCKET_DIR="$OPTARG";;
     ?)  print_usage
         exit 2;;
   esac
