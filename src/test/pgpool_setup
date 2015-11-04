@@ -63,6 +63,8 @@ PGPOOLDIR=${PGPOOLDIR:-${PGPOOL_INSTALL_DIR}/etc}
 PGBIN=${PGBIN:-"/usr/local/pgsql/bin"}
 # LD_LIBRARY_PATH 
 LPATH=${PGLIB:-"/usr/local/pgsql/lib"}
+# unix socket directory
+PGSOCKET_DIR=${PGSOCKET_DIR:-"/tmp"}
 # initdb args
 INITDBARG="--no-locale -E UTF_8"
 #-------------------------------------------
@@ -79,11 +81,6 @@ BASEDIR=`pwd`
 INITDB=$PGBIN/initdb
 PG_CTL=$PGBIN/pg_ctl
 PSQL=$PGBIN/psql
-
-# PostgreSQL socket directory
-INCLUDE_DIR=`$PGBIN/pg_config --includedir`
-PG_CONFIG_MANUAL=$INCLUDE_DIR/pg_config_manual.h
-PGSOCKET_DIR=`cat $PG_CONFIG_MANUAL | awk '/DEFAULT_PGSOCKET_DIR/ {print $3}' | tr -d '"'`
 
 # pgpool-II configuration file localtion.
 CONF=$BASEDIR/etc/pgpool.conf
@@ -281,6 +278,7 @@ function set_postgresql_conf
 	echo "log_truncate_on_rotation = on" >> $PGCONF
 	echo "log_statement = 'all'" >> $PGCONF
 	echo "max_prepared_transactions = 10" >> $PGCONF
+	echo "unix_socket_directories = '$PGSOCKET_DIR'" >> $PGCONF 
 
 	if [ $MODE = "s" ];then
 		echo "hot_standby = on" >> $PGCONF
@@ -507,6 +505,9 @@ function set_pgpool_conf {
 	if [ $MODE = "s" ];then
 		echo "failover_command = '$FAILOVER_SCRIPT %d %h %p %D %m %M %H %P %r %R'" >> $CONF
 	fi
+
+	echo "socket_dir = '$PGSOCKET_DIR'"
+	echo "pcp_socket_dir = '$PGSOCKET_DIR'"
 }
 
 #-------------------------------------------
