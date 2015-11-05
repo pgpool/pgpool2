@@ -1,6 +1,7 @@
 AM_CPPFLAGS = -D_GNU_SOURCE -DPOOL_PRIVATE -I @PGSQL_INCLUDE_DIR@
 
 lib_LTLIBRARIES = libpcp.la
+libpcp_la_LDFLAGS = -version-info 1:0:0
 libpcp_la_SOURCES = pcp.c \
 					pcp_stream.c \
                     md5.c \
