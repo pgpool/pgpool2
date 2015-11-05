@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -273,16 +273,7 @@ int main(int argc, char **argv)
 
 	/* check effective user id for watchdog */
 	/* watchdog must be started under the privileged user */
-	if (pool_config->use_watchdog )
-	{
-		/* check setuid bit of network interface control commands */
-		if (wd_chk_setuid() == 1)
-		{
-			/* if_up, if_down and arping command have a setuid bit */
-			ereport(NOTICE,
-				(errmsg("watchdog might call network commands which using setuid bit.")));
-		}
-	}
+	wd_check_network_command_configurations();
 
 	/* set signal masks */
 	poolinitmask();

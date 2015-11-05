@@ -33,7 +33,7 @@
 
 /* wd_utils.c*/
 extern int wd_chk_sticky(void);
-extern int wd_chk_setuid(void);
+extern void wd_check_network_command_configurations(void);
 extern int watchdog_thread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine)(void *), void *arg);
 extern char *string_replace(const char *string, const char *pattern, const char *replacement);
 extern void wd_calc_hash(const char *str, int len, char *buf);

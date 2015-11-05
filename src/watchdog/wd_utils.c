@@ -52,32 +52,37 @@ typedef struct {
 } WdThreadInfo;
 
 
-int
-wd_chk_setuid(void)
+void wd_check_network_command_configurations(void)
 {
 	char path[128];
 	char cmd[128];
-	
+
+	if (pool_config->use_watchdog == 0)
+		return;
+	/*
+	 * If delegate IP is not assigned to the node
+	 * the configuration is not used
+	 */
+	if (strlen(pool_config->delegate_IP) == 0)
+		return;
+
 	/* check setuid bit of ifup command */
 	wd_get_cmd(cmd, pool_config->if_up_cmd);
 	snprintf(path, sizeof(path), "%s/%s", pool_config->if_cmd_path, cmd);
 	if (! has_setuid_bit(path))
 	{
-		ereport(NOTICE,
-				(errmsg("checking setuid bit of if_up_cmd"),
+		ereport(WARNING,
+			(errmsg("checking setuid bit of if_up_cmd"),
 				 errdetail("ifup[%s] doesn't have setuid bit", path)));
-		return 0;
 	}
-	
 	/* check setuid bit of ifdown command */
 	wd_get_cmd(cmd, pool_config->if_down_cmd);
 	snprintf(path, sizeof(path), "%s/%s", pool_config->if_cmd_path, cmd);
 	if (! has_setuid_bit(path))
 	{
-		ereport(NOTICE,
-				(errmsg("checking setuid bit of if_down_cmd"),
+		ereport(WARNING,
+			(errmsg("checking setuid bit of if_down_cmd"),
 				 errdetail("ifdown[%s] doesn't have setuid bit", path)));
-		return 0;
 	}
 	
 	/* check setuid bit of arping command */
@@ -85,16 +90,11 @@ wd_chk_setuid(void)
 	snprintf(path, sizeof(path), "%s/%s", pool_config->arping_path, cmd);
 	if (! has_setuid_bit(path))
 	{
-		ereport(NOTICE,
-				(errmsg("checking setuid bit of arping command"),
+		ereport(WARNING,
+			(errmsg("checking setuid bit of arping command"),
 				 errdetail("arping[%s] doesn't have setuid bit", path)));
 		
-		return 0;
 	}
-	ereport(NOTICE,
-			(errmsg("checking setuid bit of required commands"),
-			 errdetail("all commands have proper setuid bit")));
-	return 1;
 }
 
 /*
@@ -107,7 +107,7 @@ has_setuid_bit(char * path)
 	if (stat(path,&buf) < 0)
 	{
 		ereport(FATAL,
-				(return_code(1),
+			(return_code(1),
 				 errmsg("has_setuid_bit: command '%s' not found", path)));
 	}
 	return ((buf.st_uid == 0) && (S_ISREG(buf.st_mode)) && (buf.st_mode & S_ISUID))?1:0;
