@@ -36,6 +36,7 @@ static POOL_SESSION_CONTEXT *session_context = NULL;
 static void GetTranIsolationErrorCb(void *arg);
 static void init_sent_message_list(void);
 static POOL_PENDING_MESSAGE *copy_pending_message(POOL_PENDING_MESSAGE *messag);
+static void dump_sent_message(char *caller, POOL_SENT_MESSAGE *m);
 
 /*
  * Initialize per session context
@@ -317,8 +318,7 @@ bool pool_remove_sent_message(char kind, const char *name)
 		if (msglist->sent_messages[i]->kind == kind &&
 			!strcmp(msglist->sent_messages[i]->name, name))
 		{
-			//XXX
-			//pool_sent_message_destroy(msglist->sent_messages[i]);
+			pool_sent_message_destroy(msglist->sent_messages[i]);
 			break;
 		}
 	}
@@ -365,6 +365,8 @@ void pool_sent_message_destroy(POOL_SENT_MESSAGE *message)
 {
 	bool in_progress;
 	POOL_QUERY_CONTEXT *qc = NULL;
+
+	dump_sent_message("pool_sent_message_destroy", message);
 
 	in_progress = pool_is_query_in_progress();
 
@@ -419,6 +421,12 @@ void pool_clear_sent_message_list(void)
 	}
 }
 
+static void dump_sent_message(char *caller, POOL_SENT_MESSAGE *m)
+{
+	ereport(DEBUG1,
+			(errmsg("called by %s: sent message: address: %x kind: %c name: =%s=", caller, m, m->kind, m->name)));
+}
+
 /*
  * Create a sent message
  * kind: one of 'P':Parse, 'B':Bind or'Q':Query(PREPARE)
@@ -460,6 +468,8 @@ void pool_add_sent_message(POOL_SENT_MESSAGE *message)
 	POOL_SENT_MESSAGE *old_msg;
 	POOL_SENT_MESSAGE_LIST *msglist;
 
+	dump_sent_message("pool_add_sent_message", message);
+
 	if (!message)
 	{
 		ereport(DEBUG1,
@@ -469,6 +479,20 @@ void pool_add_sent_message(POOL_SENT_MESSAGE *message)
 	}
 
 	old_msg = pool_get_sent_message(message->kind, message->name);
+
+	if (old_msg == message)
+	{
+		/*
+		 * It is likely caller tries to add the exact same message previously
+		 * added. We should ignore this because pool_remove_sent_message()
+		 * will free memory allocated in the message.
+		 */
+		ereport(DEBUG1,
+				(errmsg("adding sent message to list"),
+				 errdetail("adding exactly same message is prohibited")));
+		return;
+	}
+
 	msglist = &session_context->message_list;
 
 	if (old_msg)

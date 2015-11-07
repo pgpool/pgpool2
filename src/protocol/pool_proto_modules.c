@@ -1217,8 +1217,8 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	if (STREAM)
 	{
-		pool_add_sent_message(session_context->uncompleted_message);
 		pool_unset_query_in_progress();
+		pool_add_sent_message(session_context->uncompleted_message);
 	}
 	
 	if(rewrite_msg)
