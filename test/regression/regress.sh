@@ -114,7 +114,7 @@ function print_usage
 
 trap "echo ; exit 0" SIGINT SIGQUIT
 
-while getopts "p:m:i:j:b:s?" OPTION
+while getopts "p:m:i:j:b:s:?" OPTION
 do
   case $OPTION in
     p)  PG_INSTALL_DIR="$OPTARG";;
